@@ -946,9 +946,9 @@ int EVP_PKEY_sign_message_update(EVP_PKEY_CTX *ctx,
     }
 
     signature = ctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description : "no signature description";
+    desc = signature->description != NULL ? signature->description : "";
     if (signature->sign_message_update == NULL) {
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
                        "%s sign_message_update:%s", signature->type_name, desc);
         return -2;
     }
@@ -978,9 +978,9 @@ int EVP_PKEY_sign_message_final(EVP_PKEY_CTX *ctx,
     }
 
     signature = ctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description : "no signature description";
+    desc = signature->description != NULL ? signature->description : "";
     if (signature->sign_message_final == NULL) {
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
                        "%s sign_message_final:%s", signature->type_name, desc);
         return -2;
     }
@@ -1016,9 +1016,9 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
         goto legacy;
 
     signature = ctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description : "no signature description";
+    desc = signature->description != NULL ? signature->description : "";
     if (signature->sign == NULL) {
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
                        "%s sign:%s", signature->type_name, desc);
         return -2;
     }
@@ -1101,9 +1101,9 @@ int EVP_PKEY_verify_message_update(EVP_PKEY_CTX *ctx,
     }
 
     signature = ctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description : "no signature description";
+    desc = signature->description != NULL ? signature->description : "";
     if (signature->verify_message_update == NULL) {
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
                        "%s verify_message_update:%s", signature->type_name, desc);
         return -2;
     }
@@ -1132,9 +1132,9 @@ int EVP_PKEY_verify_message_final(EVP_PKEY_CTX *ctx)
     }
 
     signature = ctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description : "no signature description";
+    desc = signature->description != NULL ? signature->description : "";
     if (signature->verify_message_final == NULL) {
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
                        "%s verify_message_final:%s", signature->type_name, desc);
         return -2;
     }
@@ -1170,9 +1170,9 @@ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
         goto legacy;
 
     signature = ctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description : "no signature description";
+    desc = signature->description != NULL ? signature->description : "";
     if (signature->verify == NULL) {
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
                        "%s verify:%s", signature->type_name, desc);
         return -2;
     }
@@ -1232,9 +1232,9 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
         goto legacy;
 
     signature = ctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description : "no signature description";
+    desc = signature->description != NULL ? signature->description : "";
     if (signature->verify_recover == NULL) {
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
                        "%s verify_recover:%s", signature->type_name, desc);
         return -2;
     }
