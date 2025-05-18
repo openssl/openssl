@@ -1548,11 +1548,11 @@ ossl_ml_kem_key_reset(ML_KEM_KEY *key)
      *
      * - Otherwise, when key->d is set, cleanse the stashed seed.
      */
-    if (ossl_ml_kem_have_prvkey(key)) 
+    if (ossl_ml_kem_have_prvkey(key))
         OPENSSL_secure_clear_free(key->t, key->vinfo->prvalloc);
     else
         OPENSSL_free(key->t);
-    
+
     key->d = key->z = (uint8_t *)(key->s = key->m = key->t = NULL);
 }
 
