@@ -200,17 +200,17 @@ set of "signature" functions, i.e. at least one of:
 
 =back
 
-OSSL_FUNC_signature_set_ctx_params and OSSL_FUNC_signature_settable_ctx_params
-function are optional,
-but if one of them is present then the other one must also be present.
-The same applies to the
-OSSL_FUNC_signature_get_ctx_params and OSSL_FUNC_signature_gettable_ctx_params functions,
+The OSSL_FUNC_signature_set_ctx_params() and
+OSSL_FUNC_signature_settable_ctx_params() functions are optional,
+but if one of them is provided then the other one must also be provided.
+The same applies to the OSSL_FUNC_signature_get_ctx_params() and
+OSSL_FUNC_signature_gettable_ctx_params() functions,
 as well as the "md_params" functions.
 
-The OSSL_FUNC_signature_dupctx function is optional.
-So far it is not used by OpenSSL.
+The OSSL_FUNC_signature_dupctx() function is optional.
+It is not yet used by OpenSSL.
 
-The OSSL_FUNC_signature_query_key_types function is optional.
+The OSSL_FUNC_signature_query_key_types() function is optional.
 When present, it should return a NULL-terminated array of strings
 indicating the key types supported by the provider for signature operations.
 Otherwise the signature algorithm name must match the given key
