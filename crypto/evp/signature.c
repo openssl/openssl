@@ -73,7 +73,7 @@ static void *evp_signature_from_algorithm(int name_id,
     if ((signature->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
     signature->description = algodef->algorithm_description;
-    desc = signature->description != NULL ? signature->description : "no signature description";
+    desc = signature->description != NULL ? signature->description : "";
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -783,7 +783,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
     /* No more legacy from here down to legacy: */
 
     ctx->op.sig.signature = signature;
-    desc = signature->description != NULL ? signature->description : "no signature description";
+    desc = signature->description != NULL ? signature->description : "";
 
     ctx->op.sig.algctx =
         signature->newctx(ossl_provider_ctx(signature->prov), ctx->propquery);
@@ -796,8 +796,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
     switch (operation) {
     case EVP_PKEY_OP_SIGN:
         if (signature->sign_init == NULL) {
-            ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
-                           "missing %s sign_init:%s", signature->type_name, desc);
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
+                           "%s sign_init:%s", signature->type_name, desc);
             ret = -2;
             goto err;
         }
@@ -805,8 +805,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
         break;
     case EVP_PKEY_OP_SIGNMSG:
         if (signature->sign_message_init == NULL) {
-            ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
-                           "missing %s sign_message_init:%s", signature->type_name, desc);
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
+                           "%s sign_message_init:%s", signature->type_name, desc);
             ret = -2;
             goto err;
         }
@@ -814,8 +814,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
         break;
     case EVP_PKEY_OP_VERIFY:
         if (signature->verify_init == NULL) {
-            ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
-                           "missing %s verify_init:%s", signature->type_name, desc);
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
+                           "%s verify_init:%s", signature->type_name, desc);
             ret = -2;
             goto err;
         }
@@ -823,8 +823,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
         break;
     case EVP_PKEY_OP_VERIFYMSG:
         if (signature->verify_message_init == NULL) {
-            ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
-                           "missing %s verify_message_init:%s", signature->type_name, desc);
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
+                           "%s verify_message_init:%s", signature->type_name, desc);
             ret = -2;
             goto err;
         }
@@ -832,8 +832,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
         break;
     case EVP_PKEY_OP_VERIFYRECOVER:
         if (signature->verify_recover_init == NULL) {
-            ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
-                           "missing %s verify_recover_init:%s", signature->type_name, desc);
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
+                           "%s verify_recover_init:%s", signature->type_name, desc);
             ret = -2;
             goto err;
         }
