@@ -424,28 +424,28 @@ static void *evp_signature_from_algorithm(int name_id,
     if ((signature->sign_message_update == NULL) !=
         (signature->sign_message_final == NULL)) {
         ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
-                       "inconsistent presence of %s message signing update and final:%s",
+                       "only one of %s message signing update and final available:%s",
                        signature->type_name, desc);
         goto err;
     }
     if ((signature->verify_message_update == NULL) !=
         (signature->verify_message_final == NULL)) {
         ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
-                       "inconsistent presence of %s message verification update and final:%s",
+                       "only one of %s message verification update and final available:%s",
                        signature->type_name, desc);
         goto err;
     }
     if ((signature->digest_sign_update == NULL) !=
         (signature->digest_sign_final == NULL)) {
         ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
-                       "inconsistent presence of %s digest signing update and final:%s",
+                       "only one of %s digest signing update and final available:%s",
                        signature->type_name, desc);
         goto err;
     }
     if ((signature->digest_verify_update == NULL) !=
         (signature->digest_verify_final == NULL)) {
         ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
-                       "inconsistent presence of %s digest verification update and final:%s",
+                       "only one of %s digest verification update and final available:%s",
                        signature->type_name, desc);
         goto err;
     }
