@@ -452,11 +452,10 @@ void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
                       OSSL_CALLBACK *cb, void *cbarg)
 {
     void *ret;
-    const char *desc =
-        keymgmt->description != NULL ? keymgmt->description : "no keymgmt description";
+    const char *desc = keymgmt->description != NULL ? keymgmt->description : "";
 
     if (keymgmt->gen == NULL) {
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_KEYMGMT_NOT_SUPPORTED,
                        "%s key generation:%s", keymgmt->type_name, desc);
         return NULL;
     }
