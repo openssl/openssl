@@ -1798,13 +1798,15 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
          * QUIC needs to provide the write handshake at the same time as the read handshake
          * in case the quic stack needs to ACK packets independent of the handshake process
          */
-        if (SSL_IS_QUIC_HANDSHAKE(s)
-            && s->early_data_state != SSL_EARLY_DATA_NONE
-            && !ssl->method->ssl3_enc->change_cipher_state(s,
-             SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))
-            /* SSLfatal() already called */
-            goto err;
-
+        if (SSL_IS_QUIC_HANDSHAKE(s)) {
+            if (s->early_data_state != SSL_EARLY_DATA_NONE
+                && s->write_key_yielded == 0
+                && !ssl->method->ssl3_enc->change_cipher_state(s,
+                    SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))
+                /* SSLfatal() already called */
+                goto err;
+            s->write_key_yielded = 1;
+        }
         /*
          * If we're not doing early-data and we're not going to send a dummy CCS
          * (i.e. no middlebox compat mode) then we can change the write keys
@@ -2138,7 +2140,7 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
     }
 
     if ((clu = ssl_cert_lookup_by_pkey(pkey, &certidx,
-				       SSL_CONNECTION_GET_CTX(s))) == NULL) {
+                       SSL_CONNECTION_GET_CTX(s))) == NULL) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return WORK_ERROR;
     }
@@ -3826,19 +3828,40 @@ CON_FUNC_RETURN tls_construct_client_certificate(SSL_CONNECTION *s,
      * If we attempted to write early data or we're in middlebox compat mode
      * then we deferred changing the handshake write keys to the last possible
      * moment. We need to do it now.
+     * NOTE: We split this into quic and non-quic cases here to suppress the
+     * cipher state change if SSL_EARLY_DATA_NONE is set in the early data state
+     * to create a single update of the keys in conjunction with tls_process_server_hello
      */
-    if (SSL_CONNECTION_IS_TLS13(s)
+    if (SSL_IS_QUIC_HANDSHAKE(s)) {
+        if (SSL_CONNECTION_IS_TLS13(s)
             && SSL_IS_FIRST_HANDSHAKE(s)
             && (s->early_data_state != SSL_EARLY_DATA_NONE
                 || (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
+        && s->write_key_yielded == 0
             && (!ssl->method->ssl3_enc->change_cipher_state(s,
-                    SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {
-        /*
-         * This is a fatal error, which leaves enc_write_ctx in an inconsistent
-         * state and thus ssl3_send_alert may crash.
-         */
-        SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_CANNOT_CHANGE_CIPHER);
-        return CON_FUNC_ERROR;
+                SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {
+            /*
+             * This is a fatal error, which leaves enc_write_ctx in an inconsistent
+             * state and thus ssl3_send_alert may crash.
+             */
+            SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_CANNOT_CHANGE_CIPHER);
+            return CON_FUNC_ERROR;
+        }
+    s->write_key_yielded = 1;
+    } else {
+        if (SSL_CONNECTION_IS_TLS13(s)
+                && SSL_IS_FIRST_HANDSHAKE(s)
+                && (s->early_data_state != SSL_EARLY_DATA_NONE
+                    || (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
+                && (!ssl->method->ssl3_enc->change_cipher_state(s,
+                        SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {
+            /*
+             * This is a fatal error, which leaves enc_write_ctx in an inconsistent
+             * state and thus ssl3_send_alert may crash.
+             */
+            SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_CANNOT_CHANGE_CIPHER);
+            return CON_FUNC_ERROR;
+        }
     }
 
     return CON_FUNC_SUCCESS;
@@ -3917,17 +3940,35 @@ CON_FUNC_RETURN tls_construct_client_compressed_certificate(SSL_CONNECTION *sc,
      * then we deferred changing the handshake write keys to the last possible
      * moment. We need to do it now.
      */
-    if (SSL_IS_FIRST_HANDSHAKE(sc)
+    if (SSL_IS_QUIC_HANDSHAKE(sc)) {
+        if (SSL_CONNECTION_IS_TLS13(sc)
+            && SSL_IS_FIRST_HANDSHAKE(sc)
             && (sc->early_data_state != SSL_EARLY_DATA_NONE
                 || (sc->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
+            && sc->write_key_yielded == 0
             && (!ssl->method->ssl3_enc->change_cipher_state(sc,
-                    SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {
-        /*
-         * This is a fatal error, which leaves sc->enc_write_ctx in an
-         * inconsistent state and thus ssl3_send_alert may crash.
-         */
-        SSLfatal(sc, SSL_AD_NO_ALERT, SSL_R_CANNOT_CHANGE_CIPHER);
-        goto out;
+                SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {
+            /*
+             * This is a fatal error, which leaves enc_write_ctx in an inconsistent
+             * state and thus ssl3_send_alert may crash.
+             */
+            SSLfatal(sc, SSL_AD_NO_ALERT, SSL_R_CANNOT_CHANGE_CIPHER);
+            return CON_FUNC_ERROR;
+        }
+        sc->write_key_yielded = 1;
+    } else {
+        if (SSL_IS_FIRST_HANDSHAKE(sc)
+                && (sc->early_data_state != SSL_EARLY_DATA_NONE
+                    || (sc->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
+                && (!ssl->method->ssl3_enc->change_cipher_state(sc,
+                        SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {
+            /*
+             * This is a fatal error, which leaves sc->enc_write_ctx in an
+             * inconsistent state and thus ssl3_send_alert may crash.
+             */
+            SSLfatal(sc, SSL_AD_NO_ALERT, SSL_R_CANNOT_CHANGE_CIPHER);
+            goto out;
+        }
     }
     ret = 1;
     goto out;
