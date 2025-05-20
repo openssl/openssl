@@ -208,17 +208,17 @@ static int dh_test(void)
 
     alen = DH_size(a);
     if (!TEST_ptr(abuf = OPENSSL_malloc(alen))
-            || !TEST_true((aout = DH_compute_key(abuf, bpub_key, a)) != -1))
+            || !TEST_int_gt((aout = DH_compute_key(abuf, bpub_key, a)), 0))
         goto err3;
 
     blen = DH_size(b);
     if (!TEST_ptr(bbuf = OPENSSL_malloc(blen))
-            || !TEST_true((bout = DH_compute_key(bbuf, apub_key, b)) != -1))
+            || !TEST_int_gt((bout = DH_compute_key(bbuf, apub_key, b)), 0))
         goto err3;
 
     clen = DH_size(c);
     if (!TEST_ptr(cbuf = OPENSSL_malloc(clen))
-            || !TEST_true((cout = DH_compute_key(cbuf, apub_key, c)) != -1))
+            || !TEST_int_gt((cout = DH_compute_key(cbuf, apub_key, c)), 0))
         goto err3;
 
     if (!TEST_true(aout >= 20)
@@ -694,12 +694,12 @@ static int rfc7919_test(void)
 
     alen = DH_size(a);
     if (!TEST_int_gt(alen, 0) || !TEST_ptr(abuf = OPENSSL_malloc(alen))
-            || !TEST_true((aout = DH_compute_key(abuf, bpub_key, a)) != -1))
+            || !TEST_int_gt((aout = DH_compute_key(abuf, bpub_key, a)), 0))
         goto err;
 
     blen = DH_size(b);
     if (!TEST_int_gt(blen, 0) || !TEST_ptr(bbuf = OPENSSL_malloc(blen))
-            || !TEST_true((bout = DH_compute_key(bbuf, apub_key, b)) != -1))
+            || !TEST_int_gt((bout = DH_compute_key(bbuf, apub_key, b)), 0))
         goto err;
 
     if (!TEST_true(aout >= 20)
