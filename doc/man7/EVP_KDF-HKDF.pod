@@ -152,7 +152,7 @@ after setting the mode and digest on the B<EVP_KDF_CTX>.
 
 =head1 EXAMPLES
 
-=head2 HKDF
+=head2 HKDF Algorithm
 
 This example derives 10 bytes using SHA-256 with the secret key "secret",
 salt value "salt" and info value "label":
@@ -181,7 +181,7 @@ salt value "salt" and info value "label":
 
  EVP_KDF_CTX_free(kctx);
 
-=head2 HKDF-SHA256
+=head2 HKDF-SHA256 Algorithm
 
 This example derives 10 bytes using HKDF-SHA256 with the secret key "secret",
 salt value "salt" and info value "label":
