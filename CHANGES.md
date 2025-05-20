@@ -57,6 +57,11 @@ OpenSSL 3.6
 
    *Alexandr Nedvedicky*
 
+ * Added NIST post-quantum security strength categories for cipher, digests
+   and public key algorithms.
+
+   *Dr Paul Dale*
+
  * The VxWorks platforms have been removed. These platforms were unadopted,
    unmaintained and reported to be non-functional.
 
