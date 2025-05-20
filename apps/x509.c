@@ -465,7 +465,7 @@ int x509_main(int argc, char **argv)
                            prog, opt_arg());
                 goto opthelp;
             }
-            if (!sk_ASN1_OBJECT_push(trust, objtmp))
+            if (!sk_ASN1_OBJECT_push(reject, objtmp))
                 goto end;
             trustout = 1;
             break;

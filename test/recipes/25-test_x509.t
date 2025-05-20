@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 134;
+plan tests => 138;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -109,6 +109,16 @@ ok(run(app(["openssl", "x509", "-new", "-force_pubkey", $key, "-subj", "/CN=EE",
             "-extfile", $extfile, "-CA", $ca, "-CAkey", $pkey, "-out", $caout]))
 && run(app(["openssl", "verify", "-no_check_time",
             "-trusted", $ca, "-partial_chain", $caout])));
+
+# test trust decoration
+ok(run(app(["openssl", "x509", "-in", $ca, "-addtrust", "emailProtection",
+            "-out", "ca-trusted.pem"])));
+cert_contains("ca-trusted.pem", "Trusted Uses: E-mail Protection",
+              1, 'trusted use - E-mail Protection');
+ok(run(app(["openssl", "x509", "-in", $ca, "-addreject", "emailProtection",
+            "-out", "ca-rejected.pem"])));
+cert_contains("ca-rejected.pem", "Rejected Uses: E-mail Protection",
+              1, 'rejected use - E-mail Protection');
 
 subtest 'x509 -- x.509 v1 certificate' => sub {
     tconversion( -type => 'x509', -prefix => 'x509v1',
