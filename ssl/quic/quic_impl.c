@@ -865,24 +865,30 @@ void ossl_quic_deinit(SSL *s)
 int ossl_quic_reset(SSL *s)
 {
     QCTX ctx;
+    SSL_CONNECTION *sc;
 
     if (!expect_quic_any(s, &ctx))
         return 0;
 
-    ERR_raise(ERR_LIB_SSL, ERR_R_UNSUPPORTED);
-    return 0;
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    if (sc == NULL)
+        return 0;
+    return ossl_quic_tls_clear(sc->qtls);
 }
 
 /* ssl_clear method (unused) */
 int ossl_quic_clear(SSL *s)
 {
     QCTX ctx;
+    SSL_CONNECTION *sc;
 
     if (!expect_quic_any(s, &ctx))
         return 0;
 
-    ERR_raise(ERR_LIB_SSL, ERR_R_UNSUPPORTED);
-    return 0;
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    if (sc == NULL)
+        return 0;
+    return ossl_quic_tls_clear(sc->qtls);
 }
 
 int ossl_quic_set_override_now_cb(SSL *s,
