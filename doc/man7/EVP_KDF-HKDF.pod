@@ -152,6 +152,8 @@ after setting the mode and digest on the B<EVP_KDF_CTX>.
 
 =head1 EXAMPLES
 
+=head2 HKDF
+
 This example derives 10 bytes using SHA-256 with the secret key "secret",
 salt value "salt" and info value "label":
 
@@ -166,6 +168,33 @@ salt value "salt" and info value "label":
 
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                          SN_sha256, strlen(SN_sha256));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+                                          "secret", (size_t)6);
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+                                          "label", (size_t)5);
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+                                          "salt", (size_t)4);
+ *p = OSSL_PARAM_construct_end();
+ if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0) {
+     error("EVP_KDF_derive");
+ }
+
+ EVP_KDF_CTX_free(kctx);
+
+=head2 HKDF-SHA256
+
+This example derives 10 bytes using HKDF-SHA256 with the secret key "secret",
+salt value "salt" and info value "label":
+
+ EVP_KDF *kdf;
+ EVP_KDF_CTX *kctx;
+ unsigned char out[10];
+ OSSL_PARAM params[4], *p = params;
+
+ kdf = EVP_KDF_fetch(NULL, "HKDF-SHA256", NULL);
+ kctx = EVP_KDF_CTX_new(kdf);
+ EVP_KDF_free(kdf);
+
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                           "secret", (size_t)6);
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
