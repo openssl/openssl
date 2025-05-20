@@ -652,6 +652,8 @@ int ossl_ssl_connection_reset(SSL *s)
             return 0;
     }
 
+    ossl_quic_tls_clear(sc->qtls);
+
     if (!RECORD_LAYER_reset(&sc->rlayer))
         return 0;
 
