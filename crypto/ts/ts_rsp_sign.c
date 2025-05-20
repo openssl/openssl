@@ -649,7 +649,7 @@ static int ossl_ess_add1_signing_cert(PKCS7_SIGNER_INFO *si,
 
     OPENSSL_free(pp);
     if (!PKCS7_add_signed_attribute(si, NID_id_smime_aa_signingCertificate,
-                                      V_ASN1_SEQUENCE, seq)) {
+                                    V_ASN1_SEQUENCE, seq)) {
         ASN1_STRING_free(seq);
         return 0;
     }
@@ -676,7 +676,7 @@ static int ossl_ess_add1_signing_cert_v2(PKCS7_SIGNER_INFO *si,
 
     OPENSSL_free(pp);
     if (!PKCS7_add_signed_attribute(si, NID_id_smime_aa_signingCertificateV2,
-                                      V_ASN1_SEQUENCE, seq)) {
+                                    V_ASN1_SEQUENCE, seq)) {
         ASN1_STRING_free(seq);
         return 0;
     }
