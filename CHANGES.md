@@ -31,6 +31,10 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * Add SLH-DSA support for TLS 1.3
+
+   *Zhang Haisong*
+
  * The VxWorks platforms have been removed. These platforms were unadopted,
    unmaintained and reported to be non-functional.
 

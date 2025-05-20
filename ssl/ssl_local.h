@@ -2238,6 +2238,18 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_mldsa44                                   0x0904
 #define TLSEXT_SIGALG_mldsa65                                   0x0905
 #define TLSEXT_SIGALG_mldsa87                                   0x0906
+#define TLSEXT_SIGALG_slhdsa_sha2_128s                          0x0911
+#define TLSEXT_SIGALG_slhdsa_sha2_128f                          0x0912
+#define TLSEXT_SIGALG_slhdsa_sha2_192s                          0x0913
+#define TLSEXT_SIGALG_slhdsa_sha2_192f                          0x0914
+#define TLSEXT_SIGALG_slhdsa_sha2_256s                          0x0915
+#define TLSEXT_SIGALG_slhdsa_sha2_256f                          0x0916
+#define TLSEXT_SIGALG_slhdsa_shake_128s                         0x0917
+#define TLSEXT_SIGALG_slhdsa_shake_128f                         0x0918
+#define TLSEXT_SIGALG_slhdsa_shake_192s                         0x0919
+#define TLSEXT_SIGALG_slhdsa_shake_192f                         0x091a
+#define TLSEXT_SIGALG_slhdsa_shake_256s                         0x091b
+#define TLSEXT_SIGALG_slhdsa_shake_256f                         0x091c
 
 /* Sigalgs names */
 #define TLSEXT_SIGALG_ecdsa_secp256r1_sha256_name                    "ecdsa_secp256r1_sha256"
@@ -2280,6 +2292,18 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_mldsa44_name                                   "mldsa44"
 #define TLSEXT_SIGALG_mldsa65_name                                   "mldsa65"
 #define TLSEXT_SIGALG_mldsa87_name                                   "mldsa87"
+#define TLSEXT_SIGALG_slhdsa_sha2_128s_name                          "slhdsa_sha2_128s"
+#define TLSEXT_SIGALG_slhdsa_sha2_128f_name                          "slhdsa_sha2_128f"
+#define TLSEXT_SIGALG_slhdsa_sha2_192s_name                          "slhdsa_sha2_192s"
+#define TLSEXT_SIGALG_slhdsa_sha2_192f_name                          "slhdsa_sha2_192f"
+#define TLSEXT_SIGALG_slhdsa_sha2_256s_name                          "slhdsa_sha2_256s"
+#define TLSEXT_SIGALG_slhdsa_sha2_256f_name                          "slhdsa_sha2_256f"
+#define TLSEXT_SIGALG_slhdsa_shake_128s_name                         "slhdsa_shake_128s"
+#define TLSEXT_SIGALG_slhdsa_shake_128f_name                         "slhdsa_shake_128f"
+#define TLSEXT_SIGALG_slhdsa_shake_192s_name                         "slhdsa_shake_192s"
+#define TLSEXT_SIGALG_slhdsa_shake_192f_name                         "slhdsa_shake_192f"
+#define TLSEXT_SIGALG_slhdsa_shake_256s_name                         "slhdsa_shake_256s"
+#define TLSEXT_SIGALG_slhdsa_shake_256f_name                         "slhdsa_shake_256f"
 
 /* Known PSK key exchange modes */
 #define TLSEXT_KEX_MODE_KE                                      0x00
