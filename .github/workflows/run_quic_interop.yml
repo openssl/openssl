@@ -41,6 +41,20 @@ jobs:
                          , role: "both"
                          }' ./implementations.json > ./implementations.tmp
           mv ./implementations.tmp implementations.json
+      - name: "Update to docker-compose 2.36"
+        run: |
+          curl -SL https://github.com/docker/compose/releases/download/v2.36.0/docker-compose-linux-x86_64 -o ./docker-compose
+          echo "$PWD" >> $GITHUB_PATH
+          chmod 755 ./docker-compose
+      - name: Check docker compose version
+        run: |
+          docker-compose --version
+      - name: Patch Docker compose file
+        run: |
+          yq -i '.services.sim.networks.leftnet += {"interface_name" : "eth0"}
+                 | .services.sim.networks.rightnet += {"interface_name" : "eth1"}
+                 | .services.server.networks.rightnet += {"interface_name" : "eth0"}
+                 | .services.client.networks.leftnet += {"interface_name" : "eth0"}' docker-compose.yml
       - name: "run interop with openssl client"
         run: |
           python3 ./run.py -c openssl -t ${{ matrix.tests }} -s ${{ matrix.servers }} --log-dir ./logs-client -d
@@ -78,6 +92,20 @@ jobs:
                          , role: "both"
                          }' ./implementations.json > ./implementations.tmp
           mv ./implementations.tmp implementations.json
+      - name: "Update to docker-compose 2.36"
+        run: |
+          curl -SL https://github.com/docker/compose/releases/download/v2.36.0/docker-compose-linux-x86_64 -o ./docker-compose
+          echo "$PWD" >> $GITHUB_PATH
+          chmod 755 ./docker-compose
+      - name: Check docker-compose version
+        run: |
+          docker-compose --version
+      - name: Patch Docker compose file
+        run: |
+          yq -i '.services.sim.networks.leftnet += {"interface_name" : "eth0"}
+                 | .services.sim.networks.rightnet += {"interface_name" : "eth1"}
+                 | .services.server.networks.rightnet += {"interface_name" : "eth0"}
+                 | .services.client.networks.leftnet += {"interface_name" : "eth0"}' docker-compose.yml
       - name: "run interop with openssl server"
         run: |
           python3 ./run.py -s openssl -t ${{ matrix.tests }} -c ${{ matrix.clients }} --log-dir ./logs-server -d
