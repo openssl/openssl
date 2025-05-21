@@ -139,7 +139,17 @@ static int do_bio_cipher(const EVP_CIPHER* cipher, const unsigned char* key,
     if (!TEST_ptr(mem))
         goto err;
     BIO_push(b, mem);
+#if 0
+    /*
+     * This is wrong to do, it always fails, and incorrectly ends up
+     * calling `EVP_CipherFinal()` and setting ctx->finished = 1, ...
+     * all of which are unwanted.  But just deleting this is less
+     * instructive to future readers of the code.  Don't call BIO_flush
+     * until you're done either reading or writing and want to finalise
+     * the state.
+     */
     (void)BIO_flush(b);
+#endif
     memset(out, 0, sizeof(out));
     len = BIO_read(b, out, sizeof(out));
     BIO_free_all(b);
@@ -256,6 +266,66 @@ static int test_bio_enc_chacha20_poly1305(int idx)
 #  endif
 # endif
 
+static int test_bio_enc_eof_read_flush(void)
+{
+    /* Length chosen to ensure base64 encoding employs padding */
+    const unsigned char pbuf[] = "Attack at dawn";
+    unsigned char cbuf[16];     /* At least as long as pbuf */
+    const EVP_CIPHER *cipher = EVP_aes_256_gcm();
+    EVP_CIPHER_CTX *ctx = NULL;
+    BIO *mem = NULL, *b64 = NULL, *cbio = NULL;
+    unsigned char tag[16];
+    size_t key_size, iv_size;
+    int n, ret = 0;
+
+    memset(tag, 0, sizeof(tag));
+    if (!TEST_ptr(cipher)
+        || !TEST_int_gt((key_size = EVP_CIPHER_key_length(cipher)), 0)
+        || !TEST_int_gt((iv_size = EVP_CIPHER_iv_length(cipher)), 0)
+        || !TEST_ptr(mem = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(b64 = BIO_new(BIO_f_base64()))
+        || !TEST_ptr(cbio = BIO_new(BIO_f_cipher()))
+        || !TEST_ptr(BIO_push(b64, mem))
+        || !TEST_ptr(BIO_push(cbio, b64))
+        || !TEST_int_gt(BIO_get_cipher_ctx(cbio, &ctx), 0)
+        || !TEST_true(EVP_CipherInit_ex(ctx, cipher, NULL, KEY, IV, ENCRYPT))
+        || !TEST_int_gt(BIO_write(cbio, pbuf, sizeof(pbuf) - 1), 0)
+        || !TEST_int_gt(BIO_flush(cbio), 0)
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG,
+                                            sizeof(tag), tag), 0))
+        goto end;
+    BIO_free(cbio);
+    BIO_free(b64);
+    b64 = cbio = NULL;
+
+    BIO_set_mem_eof_return(mem, 0);
+    BIO_set_flags(mem, BIO_FLAGS_NONCLEAR_RST);
+    if (!TEST_int_gt(BIO_reset(mem), 0)
+        || !TEST_ptr(b64 = BIO_new(BIO_f_base64()))
+        || !TEST_ptr(cbio = BIO_new(BIO_f_cipher()))
+        || !TEST_ptr(BIO_push(b64, mem))
+        || !TEST_ptr(BIO_push(cbio, b64))
+        || !TEST_int_gt(BIO_get_cipher_ctx(cbio, &ctx), 0)
+        || !TEST_true(EVP_CipherInit_ex(ctx, cipher, NULL, KEY, IV, DECRYPT))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG,
+                                            sizeof(tag), tag), 0)
+        || !TEST_int_gt((n = BIO_read(cbio, cbuf, sizeof(cbuf))), 0)
+        || !TEST_true(BIO_get_cipher_status(cbio))
+        /* Evaluate both and report whether either or both failed */
+        || (!TEST_int_gt(BIO_flush(cbio), 0) +
+            !TEST_true(BIO_get_cipher_status(cbio)))
+        || !TEST_mem_eq(cbuf, n, pbuf, sizeof(pbuf) - 1))
+        goto end;
+
+    ret = 1;
+
+ end:
+    BIO_free(cbio);
+    BIO_free(b64);
+    BIO_free(mem);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_bio_enc_aes_128_cbc, 2);
@@ -268,5 +338,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_bio_enc_chacha20_poly1305, 2);
 #  endif
 # endif
+    ADD_TEST(test_bio_enc_eof_read_flush);
     return 1;
 }
