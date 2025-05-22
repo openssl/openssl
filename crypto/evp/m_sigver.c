@@ -508,12 +508,6 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
             || pctx->op.sig.signature == NULL)
         goto legacy;
 
-    if (sigret != NULL && (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) == 0) {
-        /* try dup */
-        dctx = EVP_PKEY_CTX_dup(pctx);
-        if (dctx != NULL)
-            pctx = dctx;
-    }
     signature = pctx->op.sig.signature;
     desc = signature->description != NULL ? signature->description : "";
     if (signature->digest_sign_final == NULL) {
@@ -521,6 +515,14 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                        "%s digest_sign_final:%s", signature->type_name, desc);
         return 0;
     }
+
+    if (sigret != NULL && (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) == 0) {
+        /* try dup */
+        dctx = EVP_PKEY_CTX_dup(pctx);
+        if (dctx != NULL)
+            pctx = dctx;
+    }
+
     r = signature->digest_sign_final(pctx->op.sig.algctx, sigret, siglen,
                                      sigret == NULL ? 0 : *siglen);
     if (!r)
@@ -672,13 +674,6 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
             || pctx->op.sig.signature == NULL)
         goto legacy;
 
-    if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISE) == 0) {
-        /* try dup */
-        dctx = EVP_PKEY_CTX_dup(pctx);
-        if (dctx != NULL)
-            pctx = dctx;
-    }
-
     signature = pctx->op.sig.signature;
     desc = signature->description != NULL ? signature->description : "";
     if (signature->digest_verify_final == NULL) {
@@ -686,6 +681,14 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
                        "%s digest_verify_final:%s", signature->type_name, desc);
         return 0;
     }
+
+    if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISE) == 0) {
+        /* try dup */
+        dctx = EVP_PKEY_CTX_dup(pctx);
+        if (dctx != NULL)
+            pctx = dctx;
+    }
+
     r = signature->digest_verify_final(pctx->op.sig.algctx, sig, siglen);
     if (!r)
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
