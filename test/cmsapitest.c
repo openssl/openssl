@@ -46,6 +46,12 @@ static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
             CMS_TEXT)))
         goto end;
 
+    if (!(EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
+        && !TEST_ptr(contentbio = CMS_EnvelopedData_decrypt(content->d.envelopedData,
+                         NULL, privkey, cert, NULL,
+                         CMS_TEXT, NULL, NULL)))
+        goto end;
+
     /* Check we got the message we first started with */
     if (!TEST_int_eq(BIO_gets(outmsgbio, buf, sizeof(buf)), strlen(msg))
         || !TEST_int_eq(strcmp(buf, msg), 0))
