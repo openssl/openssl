@@ -53,7 +53,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 30;
+plan tests => 31;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -1297,6 +1297,16 @@ ok(!run(app(['openssl', 'cms', '-verify',
                                 "SignedInvalidMappingFromanyPolicyTest7.eml")
             ])),
    "issue#19643");
+
+# Check that users get error when using incorrect envelope type for AEAD algorithms
+ok(!run(app(['openssl', 'cms', '-decrypt',
+             '-inform', 'PEM', '-stream',
+             '-secretkey', '000102030405060708090A0B0C0D0E0F',
+             '-secretkeyid', 'C0FEE0',
+             '-in', srctop_file("test/cms-msg",
+                                "enveloped-content-type-for-aes-gcm.pem")
+            ])),
+   "Error AES-GCM in enveloped content type");
 
 # Check that kari encryption with originator does not segfault
 with({ exit_checker => sub { return shift == 3; } },
