@@ -28,6 +28,7 @@
 #  define CMS_R_CERTIFICATE_ALREADY_PRESENT                175
 #  define CMS_R_CERTIFICATE_HAS_NO_KEYID                   160
 #  define CMS_R_CERTIFICATE_VERIFY_ERROR                   100
+#  define CMS_R_CIPHER_AEAD_IN_ENVELOPED_DATA              200
 #  define CMS_R_CIPHER_AEAD_SET_TAG_ERROR                  184
 #  define CMS_R_CIPHER_GET_TAG                             185
 #  define CMS_R_CIPHER_INITIALISATION_ERROR                101

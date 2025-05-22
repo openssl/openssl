@@ -1173,7 +1173,8 @@ static BIO *cms_EnvelopedData_Decryption_init_bio(CMS_ContentInfo *cms)
 {
     CMS_EncryptedContentInfo *ec = cms->d.envelopedData->encryptedContentInfo;
     BIO *contentBio = ossl_cms_EncryptedContent_init_bio(ec,
-                                                         ossl_cms_get0_cmsctx(cms));
+                                                         ossl_cms_get0_cmsctx(cms),
+                                                         0);
     EVP_CIPHER_CTX *ctx = NULL;
 
     if (contentBio == NULL)
@@ -1209,7 +1210,7 @@ static BIO *cms_EnvelopedData_Encryption_init_bio(CMS_ContentInfo *cms)
     /* Get BIO first to set up key */
 
     ec = env->encryptedContentInfo;
-    ret = ossl_cms_EncryptedContent_init_bio(ec, ossl_cms_get0_cmsctx(cms));
+    ret = ossl_cms_EncryptedContent_init_bio(ec, ossl_cms_get0_cmsctx(cms), 0);
 
     /* If error end of processing */
     if (!ret)
@@ -1261,7 +1262,7 @@ BIO *ossl_cms_AuthEnvelopedData_init_bio(CMS_ContentInfo *cms)
         ec->tag = aenv->mac->data;
         ec->taglen = aenv->mac->length;
     }
-    ret = ossl_cms_EncryptedContent_init_bio(ec, ossl_cms_get0_cmsctx(cms));
+    ret = ossl_cms_EncryptedContent_init_bio(ec, ossl_cms_get0_cmsctx(cms), 1);
 
     /* If error or no cipher end of processing */
     if (ret == NULL || ec->cipher == NULL)
