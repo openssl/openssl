@@ -44,7 +44,7 @@ functions.  If you're creating a new header file, it must be located in that
 directory.
 
 Functions declared in `include/openssl` header files are assumed to be part
-of the `libcrypto` library unless specifying otherwise.  *If your new
+of the `libcrypto` library unless specified otherwise.  *If your new
 functions are meant for the `libssl` library*, you will need to edit
 [Configurations/unix-Makefile.tmpl] and add the header file name in the
 array `my @sslheaders_tmpl`.
@@ -53,7 +53,7 @@ If you are adding new internal functions
 ----------------------------------------
 
 Internal functions are functions that aren't declared in any public header
-file, but is still exposed by the libraries they end up in.  This should be
+file, but are still exposed by the libraries they end up in.  This should be
 avoided if you can make them public functions (see above).
 
 If you are adding new internal functions to the custom library build, you
