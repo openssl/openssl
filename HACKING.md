@@ -32,8 +32,8 @@ To know more about `build.info` files, please read [doc/internal/man7/build.info
 For better viewing, consider converting it to HTML or PDF using `pod2html`
 or `pod2pdf`.
 
-If you are adding new public functions
---------------------------------------
+Adding new public functions
+---------------------------
 
 If you are adding new public functions to the custom library build, you need to
 either add a prototype in one of the existing OpenSSL header files, or
@@ -49,33 +49,12 @@ functions are meant for the `libssl` library*, you will need to edit
 [Configurations/unix-Makefile.tmpl] and add the header file name in the
 array `my @sslheaders_tmpl`.
 
-If you are adding new internal functions
-----------------------------------------
-
-Internal functions are functions that aren't declared in any public header
-file, but are still exposed by the libraries they end up in.  This should be
-avoided if you can make them public functions (see above).
-
-If you are adding new internal functions to the custom library build, you
-need to either add a prototype in one of the existing OpenSSL header files,
-or provide a new header file and edit.
-
-Only headers in the `include/internal` subdirectory are considered for
-internal functions.  If you're creating a new header file, it must be
-located in that directory.
-
-Furthermore, you will need to edit [Configurations/unix-Makefile.tmpl] and
-add the header file name in the arrays `my @cryptoheaders_tmpl` or `my
-@sslheaders_tmpl`, depending on if your new function is for `libcrypto` or
-`libssl`.
-
 Updating OpenSSL's bookkeeping files
 ------------------------------------
 
 OpenSSL has a few bookkeeping files to keep track of exposed functions, most
 importantly `util/libcrypto.num` and `util/libssl.num`.  Any time a new
-public or internal function - as defined above - is added, these files must
-be updated.
+public function - as defined above - is added, these files must be updated.
 
 To make such an update, please do the following:
 
