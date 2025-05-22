@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OPENSSL_NO_DEPRECATED_3_6
 /* We need to use some engine deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
@@ -432,3 +433,4 @@ void EVP_PKEY_asn1_set_get_pub_key(EVP_PKEY_ASN1_METHOD *ameth,
 {
     ameth->get_pub_key = get_pub_key;
 }
+#endif
