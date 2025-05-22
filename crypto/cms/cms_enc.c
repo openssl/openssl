@@ -23,7 +23,7 @@
 /* Return BIO based on EncryptedContentInfo and key */
 
 BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
-                                        const CMS_CTX *cms_ctx)
+                                        const CMS_CTX *cms_ctx, int auth)
 {
     BIO *b;
     EVP_CIPHER_CTX *ctx;
@@ -104,6 +104,10 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
             goto err;
         }
         if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
+            if (!auth) {
+                ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_AEAD_IN_ENVELOPED_DATA);
+                goto err;
+            }
             piv = aparams.iv;
             if (ec->taglen > 0
                     && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
@@ -255,5 +259,5 @@ BIO *ossl_cms_EncryptedData_init_bio(const CMS_ContentInfo *cms)
     if (enc->encryptedContentInfo->cipher && enc->unprotectedAttrs)
         enc->version = 2;
     return ossl_cms_EncryptedContent_init_bio(enc->encryptedContentInfo,
-                                              ossl_cms_get0_cmsctx(cms));
+                                              ossl_cms_get0_cmsctx(cms), 0);
 }
