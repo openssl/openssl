@@ -17,6 +17,14 @@ L<https://github.com/openssl/openssl/blob/master/CHANGES.md>.
 For an overview of some of the key concepts introduced in OpenSSL 3.0 see
 L<crypto(7)>.
 
+=head1 OPENSSL 3.6
+
+=head2 Main Changes from OpenSSL 3.5
+
+The functions EVP_PKEY_asn1_*() and L<EVP_PKEY_get0_asn1(3)> were deprecated in
+favour of the provider API. EVP_PKEY_assign_[DSA|SIPHASH]() were also deprecated.
+Please use the new high level and provider API.
+
 =head1 OPENSSL 3.1
 
 =head2 Main Changes from OpenSSL 3.0
