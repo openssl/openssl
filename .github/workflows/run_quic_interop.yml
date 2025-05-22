@@ -41,14 +41,21 @@ jobs:
                          , role: "both"
                          }' ./implementations.json > ./implementations.tmp
           mv ./implementations.tmp implementations.json
-      - name: "Update to docker-compose 2.36"
+      - name: "Update to docker-compose 2.36 and docker engine 28.1.1"
         run: |
-          curl -SL https://github.com/docker/compose/releases/download/v2.36.0/docker-compose-linux-x86_64 -o ./docker-compose
+          mkdir -p ~/.docker/cli-plugins/
+          curl -SL https://github.com/docker/compose/releases/download/v2.36.0/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+          curl -SL "https://download.docker.com/linux/static/stable/x86_64/docker-28.1.1.tgz" -o ./docker-28.1.1.tgz
+          tar --strip-components=1 -xvzf docker-28.1.1.tgz
           echo "$PWD" >> $GITHUB_PATH
-          chmod 755 ./docker-compose
-      - name: Check docker compose version
+          chmod 755 ~/.docker/cli-plugins/docker-compose
+          chmod 755 ./docker
+          sudo mv ./dockerd $(which dockerd)
+          sudo systemctl restart docker
+      - name: Check docker version
         run: |
-          docker-compose --version
+          docker version
+          docker compose version
       - name: Patch Docker compose file
         run: |
           yq -i '.services.sim.networks.leftnet += {"interface_name" : "eth0"}
@@ -92,14 +99,21 @@ jobs:
                          , role: "both"
                          }' ./implementations.json > ./implementations.tmp
           mv ./implementations.tmp implementations.json
-      - name: "Update to docker-compose 2.36"
+      - name: "Update to docker-compose 2.36 and docker engine 28.1.1"
         run: |
-          curl -SL https://github.com/docker/compose/releases/download/v2.36.0/docker-compose-linux-x86_64 -o ./docker-compose
+          mkdir -p ~/.docker/cli-plugins/
+          curl -SL https://github.com/docker/compose/releases/download/v2.36.0/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+          curl -SL "https://download.docker.com/linux/static/stable/x86_64/docker-28.1.1.tgz" -o ./docker-28.1.1.tgz
+          tar --strip-components=1 -xvzf docker-28.1.1.tgz
           echo "$PWD" >> $GITHUB_PATH
-          chmod 755 ./docker-compose
-      - name: Check docker-compose version
+          chmod 755 ~/.docker/cli-plugins/docker-compose
+          chmod 755 ./docker
+          sudo mv ./dockerd $(which dockerd)
+          sudo systemctl restart docker
+      - name: Check docker version
         run: |
-          docker-compose --version
+          docker version
+          docker compose version
       - name: Patch Docker compose file
         run: |
           yq -i '.services.sim.networks.leftnet += {"interface_name" : "eth0"}
