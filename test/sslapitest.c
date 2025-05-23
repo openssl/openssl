@@ -12723,6 +12723,24 @@ static int crypto_release_rcd_cb(SSL *s, size_t bytes_read, void *arg)
     return 1;
 }
 
+struct secret_yield_entry {
+    uint8_t recorded;
+    uint32_t prot_level;
+    int direction;
+};
+
+static struct secret_yield_entry secret_history[8];
+static int secret_history_idx = 0;
+/*
+ * Note, this enum needs to match the direction values passed
+ * to yield_secret_cb
+ */
+typedef enum {
+    LAST_DIR_READ = 0,
+    LAST_DIR_WRITE = 1,
+    LAST_DIR_UNSET = 2,
+} last_dir_history_state;
+
 static int yield_secret_cb(SSL *s, uint32_t prot_level, int direction,
                            const unsigned char *secret, size_t secret_len,
                            void *arg)
@@ -12757,6 +12775,9 @@ static int yield_secret_cb(SSL *s, uint32_t prot_level, int direction,
         goto err;
     }
 
+    secret_history[secret_history_idx].direction = direction;
+    secret_history[secret_history_idx].prot_level = prot_level;
+    secret_history[secret_history_idx].recorded = 1;
     return 1;
  err:
     data->err = 1;
@@ -12830,9 +12851,14 @@ static int test_quic_tls(int idx)
         0xfe, 0x01, 0x00
     };
     int i;
+    last_dir_history_state last_state = LAST_DIR_UNSET;
+    uint32_t last_prot_level = 0;
 
+    memset(secret_history, 0, sizeof(secret_history));
+    secret_history_idx = 0;
     memset(&sdata, 0, sizeof(sdata));
     memset(&cdata, 0, sizeof(cdata));
+    secret_history_idx = 0;
     sdata.peer = &cdata;
     cdata.peer = &sdata;
     if (idx == 1)
@@ -12895,6 +12921,29 @@ static int test_quic_tls(int idx)
         if (!TEST_mem_eq(sdata.wsecret[i], sdata.wsecret_len[i],
                          cdata.rsecret[i], cdata.rsecret_len[i]))
             goto end;
+    }
+
+    /*
+     * Check that our secret history yields write secrets before read secrets
+     */
+    for (i = 0; secret_history[i].recorded == 1; i++) {
+        switch (last_state) {
+        case LAST_DIR_UNSET:
+        case LAST_DIR_WRITE:
+            if (last_prot_level == secret_history[i].prot_level
+                && secret_history[i].direction == LAST_DIR_READ) {
+                TEST_info("Got read key before write key");
+                goto end;
+            }
+            /* FALLTHROUGH */
+        case LAST_DIR_READ:
+            last_prot_level = secret_history[i].prot_level;
+            last_state = secret_history[i].direction;
+            break;
+        default:
+            TEST_info("Unknown secret history state");
+            goto end;
+        }
     }
 
     /* Check the transport params */
@@ -12960,7 +13009,11 @@ static int test_quic_tls_early_data(void)
         0xfe, 0x01, 0x00
     };
     int i;
+    last_dir_history_state last_state = LAST_DIR_UNSET;
+    uint32_t last_prot_level = 0;
 
+    memset(secret_history, 0, sizeof(secret_history));
+    secret_history_idx = 0;
     memset(&sdata, 0, sizeof(sdata));
     memset(&cdata, 0, sizeof(cdata));
     sdata.peer = &cdata;
@@ -13010,6 +13063,12 @@ static int test_quic_tls_early_data(void)
                                                             sizeof(sparams))))
         goto end;
 
+    /*
+     * Reset our secret history so we get the record of the second connection
+     */
+    memset(secret_history, 0, sizeof(secret_history));
+    secret_history_idx = 0;
+
     SSL_set_quic_tls_early_data_enabled(serverssl, 1);
     SSL_set_quic_tls_early_data_enabled(clientssl, 1);
 
@@ -13047,6 +13106,26 @@ static int test_quic_tls_early_data(void)
         if (!TEST_mem_eq(sdata.wsecret[i], sdata.wsecret_len[i],
                          cdata.rsecret[i], cdata.rsecret_len[i]))
             goto end;
+    }
+
+    for (i = 0; secret_history[i].recorded == 1; i++) {
+        switch (last_state) {
+        case LAST_DIR_UNSET:
+        case LAST_DIR_WRITE:
+            if (last_prot_level == secret_history[i].prot_level
+                && secret_history[i].direction == LAST_DIR_READ) {
+                TEST_info("Got read key before write key");
+                goto end;
+            }
+            /* FALLTHROUGH */
+        case LAST_DIR_READ:
+            last_prot_level = secret_history[i].prot_level;
+            last_state = secret_history[i].direction;
+            break;
+        default:
+            TEST_info("Unknown secret history state");
+            goto end;
+        }
     }
 
     /* Check the transport params */
