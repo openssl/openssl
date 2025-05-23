@@ -12738,7 +12738,7 @@ static int secret_history_idx = 0;
 typedef enum {
     LAST_DIR_READ = 0,
     LAST_DIR_WRITE = 1,
-    LAST_DIR_UNSET = 2,
+    LAST_DIR_UNSET = 2
 } last_dir_history_state;
 
 static int yield_secret_cb(SSL *s, uint32_t prot_level, int direction,
