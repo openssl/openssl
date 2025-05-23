@@ -1787,11 +1787,26 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
      * we're done with this message
      */
     if (SSL_CONNECTION_IS_TLS13(s)) {
-        if (!ssl->method->ssl3_enc->setup_key_block(s)
-                || !ssl->method->ssl3_enc->change_cipher_state(s,
-                    SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_READ)) {
+        if (!ssl->method->ssl3_enc->setup_key_block(s))
             /* SSLfatal() already called */
             goto err;
+        if (!ssl->method->ssl3_enc->change_cipher_state(s,
+             SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_READ))
+            /* SSLfatal() already called */
+            goto err;
+        /*
+         * QUIC needs to provide the write handshake at the same time as the read handshake
+         * in case the quic stack needs to ACK packets independent of the handshake process
+         */
+        if (SSL_IS_QUIC_HANDSHAKE(s)) {
+            if (s->early_data_state != SSL_EARLY_DATA_NONE
+                && s->write_key_yielded == 0) {
+                    if (!ssl->method->ssl3_enc->change_cipher_state(s,
+                        SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))
+                        /* SSLfatal() already called */
+                        goto err;
+                s->write_key_yielded = 1;
+            }
         }
         /*
          * If we're not doing early-data and we're not going to send a dummy CCS
@@ -2126,7 +2141,7 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
     }
 
     if ((clu = ssl_cert_lookup_by_pkey(pkey, &certidx,
-				       SSL_CONNECTION_GET_CTX(s))) == NULL) {
+                                       SSL_CONNECTION_GET_CTX(s))) == NULL) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return WORK_ERROR;
     }
@@ -3810,12 +3825,8 @@ CON_FUNC_RETURN tls_construct_client_certificate(SSL_CONNECTION *s,
         return CON_FUNC_ERROR;
     }
 
-    /*
-     * If we attempted to write early data or we're in middlebox compat mode
-     * then we deferred changing the handshake write keys to the last possible
-     * moment. We need to do it now.
-     */
-    if (SSL_CONNECTION_IS_TLS13(s)
+    if (!SSL_IS_QUIC_HANDSHAKE(s)
+            && SSL_CONNECTION_IS_TLS13(s)
             && SSL_IS_FIRST_HANDSHAKE(s)
             && (s->early_data_state != SSL_EARLY_DATA_NONE
                 || (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
@@ -3900,12 +3911,8 @@ CON_FUNC_RETURN tls_construct_client_compressed_certificate(SSL_CONNECTION *sc,
             || !WPACKET_close(pkt))
         goto err;
 
-    /*
-     * If we attempted to write early data or we're in middlebox compat mode
-     * then we deferred changing the handshake write keys to the last possible
-     * moment. We need to do it now.
-     */
-    if (SSL_IS_FIRST_HANDSHAKE(sc)
+    if (!SSL_IS_QUIC_HANDSHAKE(sc)
+            && SSL_IS_FIRST_HANDSHAKE(sc)
             && (sc->early_data_state != SSL_EARLY_DATA_NONE
                 || (sc->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
             && (!ssl->method->ssl3_enc->change_cipher_state(sc,
