@@ -253,6 +253,37 @@ struct evp_kdf_st {
 #define EVP_ORIG_GLOBAL     1
 #define EVP_ORIG_METH       2
 
+/* Security categories for SHA algorithms */
+# define SHA1_COLLISION_CATEGORY        0
+# define SHA256_192_COLLISION_CATEGORY  0
+# define SHA224_COLLISION_CATEGORY      0
+# define SHA256_COLLISION_CATEGORY      2
+# define SHA384_COLLISION_CATEGORY      4
+# define SHA512_COLLISION_CATEGORY      5
+# define SHA3_224_COLLISION_CATEGORY    0
+# define SHA3_256_COLLISION_CATEGORY    2
+# define SHA3_384_COLLISION_CATEGORY    4
+# define SHA3_512_COLLISION_CATEGORY    5
+# define SHAKE128_COLLISION_CATEGORY    2
+# define SHAKE256_COLLISION_CATEGORY    5
+# define KMAC128_COLLISION_CATEGORY     2
+# define KMAC256_COLLISION_CATEGORY     5
+
+# define SHA1_PREIMAGE_CATEGORY         1
+# define SHA256_192_PREIMAGE_CATEGORY   1
+# define SHA224_PREIMAGE_CATEGORY       3
+# define SHA256_PREIMAGE_CATEGORY       5
+# define SHA384_PREIMAGE_CATEGORY       5
+# define SHA512_PREIMAGE_CATEGORY       5
+# define SHA3_224_PREIMAGE_CATEGORY     3
+# define SHA3_256_PREIMAGE_CATEGORY     5
+# define SHA3_384_PREIMAGE_CATEGORY     5
+# define SHA3_512_PREIMAGE_CATEGORY     5
+# define SHAKE128_PREIMAGE_CATEGORY     2
+# define SHAKE256_PREIMAGE_CATEGORY     5
+# define KMAC128_PREIMAGE_CATEGORY      2
+# define KMAC256_PREIMAGE_CATEGORY      5
+
 struct evp_md_st {
     /* nid */
     int type;
@@ -260,6 +291,8 @@ struct evp_md_st {
     /* Legacy structure members */
     int pkey_type;
     int md_size;
+    int security_category_collision;
+    int security_category_preimage;
     unsigned long flags;
     int origin;
     int (*init) (EVP_MD_CTX *ctx);
@@ -304,6 +337,7 @@ struct evp_cipher_st {
     /* Default value for variable length ciphers */
     int key_len;
     int iv_len;
+    int security_category;
 
     /* Legacy structure members */
     /* Various flags */
@@ -445,10 +479,10 @@ static int cname##_cfb##cbits##_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, 
         BLOCK_CIPHER_func_ofb(cname, cprefix, cbits, kstruct, ksched)
 
 #define BLOCK_CIPHER_def1(cname, nmode, mode, MODE, kstruct, nid, block_size, \
-                          key_len, iv_len, flags, init_key, cleanup, \
+                          key_len, iv_len, seccat, flags, init_key, cleanup, \
                           set_asn1, get_asn1, ctrl) \
 static const EVP_CIPHER cname##_##mode = { \
-        nid##_##nmode, block_size, key_len, iv_len, \
+        nid##_##nmode, block_size, key_len, iv_len, seccat, \
         flags | EVP_CIPH_##MODE##_MODE, \
         EVP_ORIG_GLOBAL, \
         init_key, \
@@ -462,41 +496,43 @@ static const EVP_CIPHER cname##_##mode = { \
 const EVP_CIPHER *EVP_##cname##_##mode(void) { return &cname##_##mode; }
 
 #define BLOCK_CIPHER_def_cbc(cname, kstruct, nid, block_size, key_len, \
-                             iv_len, flags, init_key, cleanup, set_asn1, \
-                             get_asn1, ctrl) \
+                             iv_len, seccat, flags, init_key, cleanup, \
+                             set_asn1, get_asn1, ctrl) \
 BLOCK_CIPHER_def1(cname, cbc, cbc, CBC, kstruct, nid, block_size, key_len, \
-                  iv_len, flags, init_key, cleanup, set_asn1, get_asn1, ctrl)
+                  iv_len, seccat, flags, init_key, cleanup, set_asn1, \
+                  get_asn1, ctrl)
 
 #define BLOCK_CIPHER_def_cfb(cname, kstruct, nid, key_len, \
-                             iv_len, cbits, flags, init_key, cleanup, \
+                             iv_len, cbits, seccat, flags, init_key, cleanup, \
                              set_asn1, get_asn1, ctrl) \
 BLOCK_CIPHER_def1(cname, cfb##cbits, cfb##cbits, CFB, kstruct, nid, 1, \
-                  key_len, iv_len, flags, init_key, cleanup, set_asn1, \
+                  key_len, iv_len, seccat, flags, init_key, cleanup, set_asn1, \
                   get_asn1, ctrl)
 
 #define BLOCK_CIPHER_def_ofb(cname, kstruct, nid, key_len, \
-                             iv_len, cbits, flags, init_key, cleanup, \
+                             iv_len, cbits, seccat, flags, init_key, cleanup, \
                              set_asn1, get_asn1, ctrl) \
 BLOCK_CIPHER_def1(cname, ofb##cbits, ofb, OFB, kstruct, nid, 1, \
-                  key_len, iv_len, flags, init_key, cleanup, set_asn1, \
+                  key_len, iv_len, seccat, flags, init_key, cleanup, set_asn1, \
                   get_asn1, ctrl)
 
 #define BLOCK_CIPHER_def_ecb(cname, kstruct, nid, block_size, key_len, \
-                             flags, init_key, cleanup, set_asn1, \
+                             seccat, flags, init_key, cleanup, set_asn1, \
                              get_asn1, ctrl) \
 BLOCK_CIPHER_def1(cname, ecb, ecb, ECB, kstruct, nid, block_size, key_len, \
-                  0, flags, init_key, cleanup, set_asn1, get_asn1, ctrl)
+                  0, seccat, flags, init_key, cleanup, set_asn1, get_asn1, \
+                  ctrl)
 
 #define BLOCK_CIPHER_defs(cname, kstruct, \
-                          nid, block_size, key_len, iv_len, cbits, flags, \
-                          init_key, cleanup, set_asn1, get_asn1, ctrl) \
-BLOCK_CIPHER_def_cbc(cname, kstruct, nid, block_size, key_len, iv_len, flags, \
-                     init_key, cleanup, set_asn1, get_asn1, ctrl) \
-BLOCK_CIPHER_def_cfb(cname, kstruct, nid, key_len, iv_len, cbits, \
+                          nid, block_size, key_len, iv_len, cbits, seccat, \
+                          flags, init_key, cleanup, set_asn1, get_asn1, ctrl) \
+BLOCK_CIPHER_def_cbc(cname, kstruct, nid, block_size, key_len, iv_len, seccat, \
                      flags, init_key, cleanup, set_asn1, get_asn1, ctrl) \
-BLOCK_CIPHER_def_ofb(cname, kstruct, nid, key_len, iv_len, cbits, \
+BLOCK_CIPHER_def_cfb(cname, kstruct, nid, key_len, iv_len, cbits, seccat, \
                      flags, init_key, cleanup, set_asn1, get_asn1, ctrl) \
-BLOCK_CIPHER_def_ecb(cname, kstruct, nid, block_size, key_len, flags, \
+BLOCK_CIPHER_def_ofb(cname, kstruct, nid, key_len, iv_len, cbits, seccat, \
+                     flags, init_key, cleanup, set_asn1, get_asn1, ctrl) \
+BLOCK_CIPHER_def_ecb(cname, kstruct, nid, block_size, key_len, seccat, flags, \
                      init_key, cleanup, set_asn1, get_asn1, ctrl)
 
 /*-
@@ -563,18 +599,18 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
 
 #define IMPLEMENT_BLOCK_CIPHER(cname, ksched, cprefix, kstruct, nid, \
                                block_size, key_len, iv_len, cbits, \
-                               flags, init_key, \
+                               seccat, flags, init_key, \
                                cleanup, set_asn1, get_asn1, ctrl) \
         BLOCK_CIPHER_all_funcs(cname, cprefix, cbits, kstruct, ksched) \
         BLOCK_CIPHER_defs(cname, kstruct, nid, block_size, key_len, iv_len, \
-                          cbits, flags, init_key, cleanup, set_asn1, \
+                          cbits, seccat, flags, init_key, cleanup, set_asn1, \
                           get_asn1, ctrl)
 
-#define IMPLEMENT_CFBR(cipher,cprefix,kstruct,ksched,keysize,cbits,iv_len,fl) \
+#define IMPLEMENT_CFBR(cipher,cprefix,kstruct,ksched,keysize,cbits,iv_len,seccat,fl) \
         BLOCK_CIPHER_func_cfb(cipher##_##keysize,cprefix,cbits,kstruct,ksched) \
         BLOCK_CIPHER_def_cfb(cipher##_##keysize,kstruct, \
                              NID_##cipher##_##keysize, keysize/8, iv_len, cbits, \
-                             (fl)|EVP_CIPH_FLAG_DEFAULT_ASN1, \
+                             seccat, (fl)|EVP_CIPH_FLAG_DEFAULT_ASN1, \
                              cipher##_init_key, NULL, NULL, NULL, NULL)
 
 typedef struct {
@@ -730,6 +766,7 @@ struct evp_pkey_st {
     struct {
         int bits;
         int security_bits;
+        int security_category;
         int size;
     } cache;
 }; /* EVP_PKEY */

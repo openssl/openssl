@@ -48,6 +48,7 @@ typedef struct evp_test_st {
     char *reason;                 /* Expected error reason string */
     void *data;                   /* test specific data */
     int expect_unapproved;
+    int security_category;        /* NIST's security category */
 } EVP_TEST;
 
 /* Test method structure */
@@ -196,6 +197,34 @@ static int rand_check_fips_approved(EVP_RAND_CTX *ctx, EVP_TEST *t)
     if (!EVP_RAND_CTX_get_params(ctx, params))
         return 0;
     return check_fips_approved(t, approved);
+}
+
+static int check_security_category(EVP_TEST *t, void *alg_obj,
+                                   int (*get_param)(void *, OSSL_PARAM *),
+                                   int (*get_security_category)(void *)) {
+    OSSL_PARAM p[2];
+    int security_category = -1;
+
+    if (t->security_category < 0)
+        return 1;
+    p[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_SECURITY_CATEGORY,
+                                    &security_category);
+    p[1] = OSSL_PARAM_construct_end();
+    if (!TEST_int_eq(get_security_category(alg_obj), t->security_category)
+            /* Test getting via the param too */
+            || !TEST_int_gt(get_param(alg_obj, p), 0)
+            || !TEST_true(OSSL_PARAM_modified(p))
+            || !TEST_int_eq(security_category, t->security_category)) {
+        t->err = "INCORRECT_SECURITY_CATEGORY";
+        return 0;
+    }
+    return 1;
+}
+
+static int pkey_check_security_category(EVP_TEST *t, EVP_PKEY *pkey) {
+    return check_security_category(t, pkey,
+                                   (int (*)(void *, OSSL_PARAM *))EVP_PKEY_get_params,
+                                   (int (*)(void *))EVP_PKEY_get_security_category);
 }
 
 static int ctrladd(STACK_OF(OPENSSL_STRING) *controls, const char *value)
@@ -660,7 +689,45 @@ typedef struct digest_data_st {
     int xof;
     /* Size for variable output length but non-XOF */
     size_t digest_size;
+    /* NIST security categories */
+    int security_category_collision;
+    int security_category_preimage;
 } DIGEST_DATA;
+
+static int md_check_security_categories(EVP_TEST *t, const DIGEST_DATA *mdat) {
+    OSSL_PARAM p[3];
+    int security_category_collision = -1;
+    int security_category_preimage = -1;
+    const EVP_MD *md = mdat->digest;
+
+    p[0] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_SECURITY_CATEGORY_COLLISION,
+                                    &security_category_collision);
+    p[1] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_SECURITY_CATEGORY_PREIMAGE,
+                                    &security_category_preimage);
+    p[2] = OSSL_PARAM_construct_end();
+    if (!TEST_int_gt(EVP_MD_get_params(md, p), 0))
+        goto err;
+
+    if (mdat->security_category_collision >= 0)
+        if (!TEST_int_eq(EVP_MD_get_security_category_collision(md),
+                         mdat->security_category_collision)
+                || !TEST_true(OSSL_PARAM_modified(p))
+                || !TEST_int_eq(security_category_collision,
+                                mdat->security_category_collision))
+            goto err;
+    if (mdat->security_category_preimage >= 0)
+        if (!TEST_int_eq(EVP_MD_get_security_category_preimage(md),
+                         mdat->security_category_preimage)
+                || !TEST_true(OSSL_PARAM_modified(p + 1))
+                || !TEST_int_eq(security_category_preimage,
+                                mdat->security_category_preimage))
+            goto err;
+    return 1;
+
+err:
+    t->err = "INCORRECT_SECURITY_CATEGORY";
+    return 0;
+}
 
 static int digest_test_init(EVP_TEST *t, const char *alg)
 {
@@ -684,6 +751,8 @@ static int digest_test_init(EVP_TEST *t, const char *alg)
     mdat->fetched_digest = fetched_digest;
     mdat->pad_type = 0;
     mdat->xof = 0;
+    mdat->security_category_collision = -1;
+    mdat->security_category_preimage = -1;
     if (fetched_digest != NULL)
         TEST_info("%s is fetched", alg);
     return 1;
@@ -702,6 +771,7 @@ static int digest_test_parse(EVP_TEST *t,
                              const char *keyword, const char *value)
 {
     DIGEST_DATA *mdata = t->data;
+    int n;
 
     if (strcmp(keyword, "Input") == 0)
         return evp_test_buffer_append(value, data_chunk_size, &mdata->input);
@@ -716,12 +786,24 @@ static int digest_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "XOF") == 0)
         return (mdata->xof = atoi(value)) > 0;
     if (strcmp(keyword, "OutputSize") == 0) {
-        int sz;
-
-        sz = atoi(value);
-        if (sz < 0)
+        n = atoi(value);
+        if (n < 0)
             return -1;
-        mdata->digest_size = sz;
+        mdata->digest_size = n;
+        return 1;
+    }
+    if (strcmp(keyword, "Security-Category-Collision") == 0) {
+        n = atoi(value);
+        if (n < 0)
+            return -1;
+        mdata->security_category_collision = n;
+        return 1;
+    }
+    if (strcmp(keyword, "Security-Category-Preimage") == 0) {
+        n = atoi(value);
+        if (n < 0)
+            return -1;
+        mdata->security_category_preimage = n;
         return 1;
     }
     return 0;
@@ -756,12 +838,20 @@ static int digest_test_run(EVP_TEST *t)
 {
     DIGEST_DATA *expected = t->data;
     EVP_TEST_BUFFER *inbuf;
-    EVP_MD_CTX *mctx;
+    EVP_MD_CTX *mctx = NULL;
     unsigned char *got = NULL;
     unsigned int got_len;
     size_t size = 0;
     int xof = 0;
     OSSL_PARAM params[4], *p = &params[0];
+
+    /* Digests don't have a single security category so fail if test is bad */
+    if (!TEST_int_eq(t->security_category, -1)) {
+        t->err = "INVALID_TEST_SECURITY_CATEGORY";
+        goto err;
+    }
+    if (!md_check_security_categories(t, expected))
+        goto err;
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
@@ -1541,6 +1631,12 @@ static int cipher_test_run(EVP_TEST *t)
     size_t params_n = 0;
 
     TEST_info("RUNNING TEST FOR CIPHER %s\n", EVP_CIPHER_get0_name(cdat->cipher));
+
+    if (!TEST_true(check_security_category(t, (void *)cdat->cipher,
+                                           (int (*)(void *, OSSL_PARAM *))EVP_CIPHER_get_params,
+                                           (int (*)(void *))EVP_CIPHER_get_security_category)))
+        return 0;
+
     if (!cdat->key) {
         t->err = "NO_KEY";
         return 0;
@@ -2460,6 +2556,9 @@ static int kem_test_run(EVP_TEST *t)
         goto err;
     }
 
+    if (!pkey_check_security_category(t, pkey))
+        goto err;
+
     if (!TEST_ptr(kdata->ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propquery)))
         goto err;
 
@@ -2761,6 +2860,9 @@ static int pkey_test_run(EVP_TEST *t)
     if (!pkey_test_run_init(t))
         goto err;
 
+   if (!pkey_check_security_category(t, EVP_PKEY_CTX_get0_pkey(expected->ctx)))
+        goto err;
+
     /* Make a copy of the EVP_PKEY context, for repeat use further down */
     if (!TEST_ptr(copy = EVP_PKEY_CTX_dup(expected->ctx))) {
         t->err = "INTERNAL_ERROR";
@@ -2889,6 +2991,9 @@ static int pkey_fromdata_test_run(EVP_TEST *t)
         t->err = "KEY_FROMDATA_ERROR";
         goto err;
     }
+    if (!pkey_check_security_category(t, key))
+        goto err;
+
 err:
     ctrl2params_free(params, params_n, params_n_allocstart);
     EVP_PKEY_free(key);
@@ -2998,6 +3103,8 @@ static int verify_test_run(EVP_TEST *t)
 
     if (!pkey_test_run_init(t))
         goto err;
+    if (!pkey_check_security_category(t, EVP_PKEY_CTX_get0_pkey(kdata->ctx)))
+        goto err;
     if (EVP_PKEY_verify(kdata->ctx, kdata->output, kdata->output_len,
                         kdata->input, kdata->input_len) <= 0) {
         t->err = "VERIFY_ERROR";
@@ -3098,6 +3205,8 @@ static int pderive_test_run(EVP_TEST *t)
         goto err;
 
     t->err = NULL;
+    if (!pkey_check_security_category(t, EVP_PKEY_CTX_get0_pkey(expected->ctx)))
+        goto err;
     if (EVP_PKEY_derive_set_peer_ex(expected->ctx, expected->peer,
                                     expected->validate) <= 0) {
         t->err = "DERIVE_SET_PEER_ERROR";
@@ -4491,6 +4600,9 @@ static int keygen_test_run(EVP_TEST *t)
         goto err;
     }
 
+    if (!pkey_check_security_category(t, pkey))
+        goto err;
+
     if (!evp_pkey_is_provided(pkey)) {
         TEST_info("Warning: legacy key generated %s", keygen->keyname);
         goto err;
@@ -4743,6 +4855,9 @@ static int digestsign_test_run(EVP_TEST *t)
     if (!check_deterministic_noncetype(t, expected))
         goto err;
 
+    if (!pkey_check_security_category(t, expected->key))
+        goto err;
+
     for (i = 0; i < sk_OPENSSL_STRING_num(expected->controls); i++) {
         char *value = sk_OPENSSL_STRING_value(expected->controls, i);
         if (!pkey_test_ctrl(t, expected->pctx, value) || t->err != NULL)
@@ -4962,6 +5077,7 @@ static void clear_test(EVP_TEST *t)
     t->skip = 0;
     t->meth = NULL;
     t->expect_unapproved = 0;
+    t->security_category = -1;
 
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
     OSSL_set_max_threads(libctx, 0);
@@ -5374,6 +5490,17 @@ start:
                 TEST_info("skipping extended test: %s:%d",
                           t->s.test_file, t->s.start);
                 t->skip = 1;
+            }
+        } else if (strcmp(pp->key, "Security-Category") == 0) {
+            if (t->security_category >= 0) {
+                TEST_info("Line %d: multiple security category lines", t->s.curr);
+                return 0;
+            }
+            t->security_category = atoi(pp->value);
+            if (t->security_category < 0 || t->security_category > 5) {
+                TEST_info("Line %d: invalid security category, should be 0..5",
+                          t->s.curr);
+                return 0;
             }
         } else {
             /* Must be test specific line: try to parse it */

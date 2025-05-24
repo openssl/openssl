@@ -479,6 +479,7 @@ Availablein = default
 Derive=ALICE_secp256k1
 PeerKey=BOB_secp256k1_PUB
 SharedSecret=af43b52790082fd87afb1d14b883c12d12bb9e554080d1f8e527920676e31f3e
+Security-Category = 0
 
 # ECDH Bob with Alice peer
 
@@ -2657,6 +2658,13 @@ PrivPubKeyPair = BOB_secp521r1:BOB_secp521r1_PUB
 Derive=ALICE_secp521r1
 PeerKey=BOB_secp521r1_PUB
 SharedSecret=018c8f33e544a0fa8854dcd96bdba75b7687d1c42b2ff1bf0a06d49c424fee96d8a7f3af3119dcbfabc1c147477c50f7c72971956f9bb17ddec6d02b2187f06cf4be
+# ECDH Alice with Bob peer
+
+FIPSversion = >=3.6.0
+Derive=ALICE_secp521r1
+PeerKey=BOB_secp521r1_PUB
+SharedSecret=018c8f33e544a0fa8854dcd96bdba75b7687d1c42b2ff1bf0a06d49c424fee96d8a7f3af3119dcbfabc1c147477c50f7c72971956f9bb17ddec6d02b2187f06cf4be
+Security-Category = 0
 
 # ECDH Bob with Alice peer
 
