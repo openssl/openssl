@@ -730,6 +730,7 @@ struct evp_pkey_st {
     struct {
         int bits;
         int security_bits;
+        int security_category;
         int size;
     } cache;
 }; /* EVP_PKEY */
