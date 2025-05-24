@@ -122,4 +122,16 @@ if ($^O eq 'VMS' && $exitcode != 0) {
         + 2                     # Severity: E(rror)
         + 0x10000000;           # bit 28 set => the shell stays silent
 }
+
+if ( $ENV{DO_MPROFILE} ) {
+    my $prof = "$ENV{HEAPPROFILE}".".0001.heap";
+    my $result = "$ENV{MPROFILE_RESULT}";
+    my $pprof_cmd = "pprof-symbolize --text --show_bytes --alloc_space";
+
+    $pprof_cmd = "$pprof_cmd "."$cmd[1]"." $prof"." |grep '^Total' >>";
+    $pprof_cmd = "$pprof_cmd"." $result";
+    system $pprof_cmd;
+    unlink( ( $prof ) );
+}
+
 exit($exitcode);
