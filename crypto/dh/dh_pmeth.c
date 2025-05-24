@@ -422,7 +422,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
             ret = DH_compute_key_padded(key, dhpubbn, dh);
         else
             ret = DH_compute_key(key, dhpubbn, dh);
-        if (ret < 0)
+        if (ret <= 0)
             return ret;
         *keylen = ret;
         return 1;
