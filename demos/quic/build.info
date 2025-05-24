@@ -1,1 +1,1 @@
-SUBDIRS=server
+SUBDIRS=server poll-server
