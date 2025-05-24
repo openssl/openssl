@@ -16,6 +16,7 @@
 #include <openssl/rand.h>
 #include <openssl/self_test.h>
 #include <openssl/param_build.h>
+#include <openssl/cms.h>
 #include "crypto/ml_kem.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
@@ -497,6 +498,8 @@ static const OSSL_PARAM *ml_kem_gettable_params(void *provctx)
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),
         /* Needed by EVP_PKEY_get1_encoded_public_key() */
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_CMS_RI_TYPE, NULL),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM, NULL, 0),
         OSSL_PARAM_END
     };
 
@@ -627,6 +630,29 @@ static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
             if (!ossl_ml_kem_encode_seed(p->data, p->return_size, key))
                 return 0;
         }
+    }
+
+    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_CMS_RI_TYPE);
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_int(p, CMS_RECIPINFO_KEM))
+            return 0;
+    }
+
+    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM);
+    if (p != NULL) {
+        X509_ALGOR kdf = { NULL, NULL };
+        unsigned char *x509_algor = NULL;
+        int x509_algor_len;
+
+        if (!X509_ALGOR_set0(&kdf, OBJ_txt2obj("HKDF-SHA256", 0), V_ASN1_UNDEF, NULL))
+            return 0;
+        if ((x509_algor_len = i2d_X509_ALGOR(&kdf, &x509_algor)) < 0)
+            return 0;
+        if (!OSSL_PARAM_set_octet_string(p, x509_algor, x509_algor_len)) {
+            OPENSSL_free(x509_algor);
+            return 0;
+        }
+        OPENSSL_free(x509_algor);
     }
 
     return 1;
