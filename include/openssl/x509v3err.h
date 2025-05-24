@@ -64,6 +64,7 @@
 # define X509V3_R_INVALID_SAFI                            164
 # define X509V3_R_INVALID_SECTION                         135
 # define X509V3_R_INVALID_SYNTAX                          143
+# define X509V3_R_INVALID_URI                             173
 # define X509V3_R_ISSUER_DECODE_ERROR                     126
 # define X509V3_R_MISSING_VALUE                           124
 # define X509V3_R_NEED_ORGANIZATION_AND_NUMBERS           142
