@@ -81,11 +81,11 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
             path++;
         if (bios == NULL)
             ossl_cmp_log4(DEBUG, ctx,
-                          "connecting to CMP server via http%s://%s:%s%s/%s",
+                          "connecting to CMP server via http%s://%s:%s/%s",
                           tls_used ? "s" : "", ctx->server, server_port, path);
         else
             ossl_cmp_log3(DEBUG, ctx,
-                          "using existing connection with CMP server %s%s and HTTP path /%s",
+                          "using existing connection with CMP server %s:%s and HTTP path /%s",
                           ctx->server, server_port, path);
     }
 
