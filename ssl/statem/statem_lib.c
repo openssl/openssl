@@ -621,20 +621,17 @@ CON_FUNC_RETURN tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt)
     /*
      * Handle the quic and non-quic cases separately here
      * For quic, we need to yield the write handshake now, if it has
-     * not already been done in tls_process_server_hello, as tracked
-     * by the write_key_yielded variable
+     * not already been done in tls_process_server_hello.
      */
     if (SSL_IS_QUIC_HANDSHAKE(s)) {
         if (!s->server
             && s->early_data_state != SSL_EARLY_DATA_NONE
-            && s->s3.tmp.cert_req == 0
-            && s->write_key_yielded == 0) {
-                if (!ssl->method->ssl3_enc->change_cipher_state(s,
-                        SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE)) {
+            && s->s3.tmp.cert_req == 0) {
+            if (!ssl->method->ssl3_enc->change_cipher_state(s,
+                SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE)) {
                     /* SSLfatal() already called */
                     return CON_FUNC_ERROR;
-                }
-                s->write_key_yielded = 1;
+            }
         }
     } else if (SSL_CONNECTION_IS_TLS13(s)) {
         /*

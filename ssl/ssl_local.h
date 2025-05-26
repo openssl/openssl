@@ -1299,7 +1299,6 @@ struct ssl_connection_st {
     /* where we are */
     OSSL_STATEM statem;
     SSL_EARLY_DATA_STATE early_data_state;
-    uint8_t write_key_yielded;
     BUF_MEM *init_buf;          /* buffer used during init */
     void *init_msg;             /* pointer to handshake message body, set by
                                  * tls_get_message_header() */
