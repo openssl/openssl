@@ -51,7 +51,7 @@ EVP_PKEY_get_security_category() returns the
 L<post-quantum security category|https://nvlpubs.nist.gov/nistpubs/ir/2024/NIST.IR.8547.ipd.pdf>
 as defined by NIST.
 The post-quantum security category is an integer value from 0 to 5 that
-is based an algorithm's classification on the range of security strengths
+is based on an algorithm's classification on the range of security strengths
 offered by the existing standards in symmetric cryptography:
 
 =begin text
