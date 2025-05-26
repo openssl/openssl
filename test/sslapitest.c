@@ -12858,7 +12858,6 @@ static int test_quic_tls(int idx)
     secret_history_idx = 0;
     memset(&sdata, 0, sizeof(sdata));
     memset(&cdata, 0, sizeof(cdata));
-    secret_history_idx = 0;
     sdata.peer = &cdata;
     cdata.peer = &sdata;
     if (idx == 1)
@@ -12932,7 +12931,7 @@ static int test_quic_tls(int idx)
         case LAST_DIR_WRITE:
             if (last_prot_level == secret_history[i].prot_level
                 && secret_history[i].direction == LAST_DIR_READ) {
-                TEST_info("Got read key before write key");
+                TEST_error("Got read key before write key");
                 goto end;
             }
             /* FALLTHROUGH */
@@ -12941,7 +12940,7 @@ static int test_quic_tls(int idx)
             last_state = secret_history[i].direction;
             break;
         default:
-            TEST_info("Unknown secret history state");
+            TEST_error("Unknown secret history state");
             goto end;
         }
     }
