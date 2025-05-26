@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "ssl3.h": "c",
+        "bio.h": "c",
+        "ssl_local.h": "c",
+        "*.inc": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c",
+        "async.h": "c",
+        "quic_local.h": "c",
+        "quic_ssl.h": "c",
+        "quic_stream.h": "c"
+    }
+}

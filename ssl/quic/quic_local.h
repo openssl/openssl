@@ -11,6 +11,7 @@
 # define OSSL_QUIC_LOCAL_H
 
 # include <openssl/ssl.h>
+# include <openssl/ossl_iovec.h>
 # include "internal/quic_ssl.h"       /* QUIC_CONNECTION */
 # include "internal/quic_txp.h"
 # include "internal/quic_statm.h"

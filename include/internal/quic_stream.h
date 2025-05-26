@@ -11,6 +11,7 @@
 # define OSSL_INTERNAL_QUIC_STREAM_H
 # pragma once
 
+#include <openssl/ossl_iovec.h>
 #include "internal/e_os.h"
 #include "internal/time.h"
 #include "internal/quic_types.h"

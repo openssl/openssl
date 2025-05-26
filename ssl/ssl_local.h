@@ -17,15 +17,16 @@
 # include <errno.h>
 # include "internal/common.h" /* for HAS_PREFIX */
 
+# include <openssl/async.h>
 # include <openssl/buffer.h>
 # include <openssl/bio.h>
 # include <openssl/comp.h>
+# include <openssl/ct.h>
 # include <openssl/dsa.h>
 # include <openssl/err.h>
 # include <openssl/ssl.h>
-# include <openssl/async.h>
 # include <openssl/symhacks.h>
-# include <openssl/ct.h>
+# include <openssl/ossl_iovec.h>
 # include "internal/recordmethod.h"
 # include "internal/statem.h"
 # include "internal/packet.h"
@@ -417,7 +418,8 @@ struct ssl_method_st {
     int (*ssl_connect) (SSL *s);
     int (*ssl_read) (SSL *s, void *buf, size_t len, size_t *readbytes);
     int (*ssl_peek) (SSL *s, void *buf, size_t len, size_t *readbytes);
-    int (*ssl_write) (SSL *s, const void *buf, size_t len, size_t *written);
+    // int (*ssl_write) (SSL *s, const void *buf, size_t len, size_t *written);
+    int (*ssl_writev) (SSL *s, const struct ossl_iovec *iov, size_t iovcnt, size_t *written);
     int (*ssl_shutdown) (SSL *s);
     int (*ssl_renegotiate) (SSL *s);
     int (*ssl_renegotiate_check) (SSL *s, int);
