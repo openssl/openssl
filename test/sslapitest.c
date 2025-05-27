@@ -12727,9 +12727,10 @@ struct secret_yield_entry {
     uint8_t recorded;
     uint32_t prot_level;
     int direction;
+    SSL *ssl;
 };
 
-static struct secret_yield_entry secret_history[8];
+static struct secret_yield_entry secret_history[16];
 static int secret_history_idx = 0;
 /*
  * Note, this enum needs to match the direction values passed
@@ -12741,12 +12742,61 @@ typedef enum {
     LAST_DIR_UNSET = 2
 } last_dir_history_state;
 
+static int check_secret_history(SSL *s)
+{
+    int i;
+    int ret = 0;
+    last_dir_history_state last_state = LAST_DIR_UNSET;
+    uint32_t last_prot_level = 0;
+
+    fprintf(stderr, "Checking history for %p\n", s);
+    for (i = 0; secret_history[i].recorded == 1; i++) {
+        if (secret_history[i].ssl != s)
+            continue;
+        fprintf(stderr, "Got %s(%d) secret for level %d, last level %d, last state %d\n", secret_history[i].direction == 1 ? "Write" : "Read", secret_history[i].direction, secret_history[i].prot_level, last_prot_level, last_state);
+
+        if (last_state == LAST_DIR_UNSET) {
+            last_prot_level = secret_history[i].prot_level;
+            last_state = secret_history[i].direction;
+            continue;
+        }
+
+        switch(secret_history[i].direction) {
+        case 1:
+            /*
+             * write case
+             */
+            if (last_prot_level == secret_history[i].prot_level
+                && last_state == LAST_DIR_READ) {
+                TEST_error("Got read key before write key");
+                goto end;
+            }
+            /* FALLTHROUGH */
+        case 0:
+            /*
+             * Read case
+             */
+            break;
+        default:
+            TEST_error("Unknown direction");
+            goto end;
+        }
+        last_prot_level = secret_history[i].prot_level;
+        last_state = secret_history[i].direction;
+    }
+
+    ret = 1;
+end:
+    return ret;
+}
+
 static int yield_secret_cb(SSL *s, uint32_t prot_level, int direction,
                            const unsigned char *secret, size_t secret_len,
                            void *arg)
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
 
+    fprintf(stderr, "Yield secret callback, level %d %s, ssl %p\n", prot_level, direction == 1 ? "Write" : "Read", s);
     if (!check_app_data(s))
         goto err;
 
@@ -12778,6 +12828,8 @@ static int yield_secret_cb(SSL *s, uint32_t prot_level, int direction,
     secret_history[secret_history_idx].direction = direction;
     secret_history[secret_history_idx].prot_level = prot_level;
     secret_history[secret_history_idx].recorded = 1;
+    secret_history[secret_history_idx].ssl = s;
+    secret_history_idx++;
     return 1;
  err:
     data->err = 1;
@@ -12851,9 +12903,14 @@ static int test_quic_tls(int idx)
         0xfe, 0x01, 0x00
     };
     int i;
-    last_dir_history_state last_state = LAST_DIR_UNSET;
-    uint32_t last_prot_level = 0;
 
+    BIO *sbio = BIO_new_file("./client_trace.ssl", "w+");
+    BIO *cbio = BIO_new_file("./server_trace.ssl", "w+");
+
+    fprintf(stderr, "TESTING QUIC TLS bios %p %p\n", cbio, sbio);
+    if (sbio == NULL || cbio == NULL) {
+        ERR_print_errors_fp(stderr);
+    }
     memset(secret_history, 0, sizeof(secret_history));
     secret_history_idx = 0;
     memset(&sdata, 0, sizeof(sdata));
@@ -12871,6 +12928,11 @@ static int test_quic_tls(int idx)
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
                                       NULL)))
         goto end;
+
+    SSL_set_msg_callback(serverssl, SSL_trace);
+    SSL_set_msg_callback(clientssl, SSL_trace);
+    SSL_set_msg_callback_arg(serverssl, sbio);
+    SSL_set_msg_callback_arg(clientssl, cbio);
 
     /* Reset the BIOs we set in create_ssl_objects. We should not need them */
     SSL_set_bio(serverssl, NULL, NULL);
@@ -12925,25 +12987,10 @@ static int test_quic_tls(int idx)
     /*
      * Check that our secret history yields write secrets before read secrets
      */
-    for (i = 0; secret_history[i].recorded == 1; i++) {
-        switch (last_state) {
-        case LAST_DIR_UNSET:
-        case LAST_DIR_WRITE:
-            if (last_prot_level == secret_history[i].prot_level
-                && secret_history[i].direction == LAST_DIR_READ) {
-                TEST_error("Got read key before write key");
-                goto end;
-            }
-            /* FALLTHROUGH */
-        case LAST_DIR_READ:
-            last_prot_level = secret_history[i].prot_level;
-            last_state = secret_history[i].direction;
-            break;
-        default:
-            TEST_error("Unknown secret history state");
-            goto end;
-        }
-    }
+    if (!TEST_int_eq(check_secret_history(serverssl), 1))
+        goto end;
+    if (!TEST_int_eq(check_secret_history(clientssl), 1))
+        goto end;
 
     /* Check the transport params */
     if (!TEST_mem_eq(sdata.params, sdata.params_len, cparams, sizeof(cparams))
@@ -12965,6 +13012,8 @@ static int test_quic_tls(int idx)
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
 
+    BIO_free(sbio);
+    BIO_free(cbio);
     /* Check that we didn't suddenly hit an unexpected failure during cleanup */
     if (!TEST_false(sdata.err) || !TEST_false(cdata.err))
         testresult = 0;
@@ -13008,9 +13057,8 @@ static int test_quic_tls_early_data(void)
         0xfe, 0x01, 0x00
     };
     int i;
-    last_dir_history_state last_state = LAST_DIR_UNSET;
-    uint32_t last_prot_level = 0;
 
+    fprintf(stderr, "TESTING QUIC EARLY DATA\n");
     memset(secret_history, 0, sizeof(secret_history));
     secret_history_idx = 0;
     memset(&sdata, 0, sizeof(sdata));
@@ -13107,25 +13155,10 @@ static int test_quic_tls_early_data(void)
             goto end;
     }
 
-    for (i = 0; secret_history[i].recorded == 1; i++) {
-        switch (last_state) {
-        case LAST_DIR_UNSET:
-        case LAST_DIR_WRITE:
-            if (last_prot_level == secret_history[i].prot_level
-                && secret_history[i].direction == LAST_DIR_READ) {
-                TEST_info("Got read key before write key");
-                goto end;
-            }
-            /* FALLTHROUGH */
-        case LAST_DIR_READ:
-            last_prot_level = secret_history[i].prot_level;
-            last_state = secret_history[i].direction;
-            break;
-        default:
-            TEST_info("Unknown secret history state");
-            goto end;
-        }
-    }
+    if (!TEST_int_eq(check_secret_history(serverssl), 1))
+        goto end;
+    if (!TEST_int_eq(check_secret_history(clientssl), 1))
+        goto end;
 
     /* Check the transport params */
     if (!TEST_mem_eq(sdata.params, sdata.params_len, cparams, sizeof(cparams))
@@ -13134,6 +13167,7 @@ static int test_quic_tls_early_data(void)
         goto end;
 
     /* Check the encryption levels are what we expect them to be */
+    fprintf(stderr, "Cdata.wenc_level = %d for %p\n", cdata.wenc_level, &cdata);
     if (!TEST_true(sdata.renc_level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
             || !TEST_true(sdata.wenc_level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
             || !TEST_true(cdata.renc_level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
