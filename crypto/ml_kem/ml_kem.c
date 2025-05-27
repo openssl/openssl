@@ -1550,11 +1550,18 @@ ossl_ml_kem_key_reset(ML_KEM_KEY *key)
      *   secret |z|, and seed |d|, we can cleanse all three in one call.
      *
      * - Otherwise, when key->d is set, cleanse the stashed seed.
+     *
+     * If the memory has been allocated with secure memory, it will be cleared
+     * before being free'd under the OPENSSL_secure_free call.
      */
-    if (ossl_ml_kem_have_prvkey(key))
-        OPENSSL_secure_clear_free(key->t, key->vinfo->prvalloc);
-    else
+    if (ossl_ml_kem_have_prvkey(key)) {
+        if(!CRYPTO_secure_allocated(key->t))
+            OPENSSL_cleanse(key->s, key->vinfo->rank * sizeof(scalar) + 2 * ML_KEM_RANDOM_BYTES);
+        OPENSSL_secure_free(key->t);
+    }
+    else {
         OPENSSL_free(key->t);
+    }
 
     key->d = key->z = (uint8_t *)(key->s = key->m = key->t = NULL);
 }
