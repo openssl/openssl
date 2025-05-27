@@ -434,8 +434,8 @@ static TSAN_QUALIFIER int abortserverthread = 0;
 static QUIC_TSERVER *globtserv;
 static const thread_t thread_zero;
 static int client_ready = 0;
-CRYPTO_CONDVAR *client_ready_cond = NULL;
-CRYPTO_MUTEX *client_ready_mutex = NULL;
+static CRYPTO_CONDVAR *client_ready_cond = NULL;
+static CRYPTO_MUTEX *client_ready_mutex = NULL;
 static void run_server_thread(void)
 {
     /*
