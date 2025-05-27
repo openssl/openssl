@@ -433,7 +433,9 @@ static int globserverret = 0;
 static TSAN_QUALIFIER int abortserverthread = 0;
 static QUIC_TSERVER *globtserv;
 static const thread_t thread_zero;
-
+static int client_ready = 0;
+CRYPTO_CONDVAR *client_ready_cond = NULL;
+CRYPTO_MUTEX *client_ready_mutex = NULL;
 static void run_server_thread(void)
 {
     /*
@@ -495,6 +497,7 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
     int retc = -1, rets = 0, abortctr = 0, ret = 0;
     int clienterr = 0, servererr = 0;
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+
     /*
      * Pointless initialisation to avoid bogus compiler warnings about using
      * t uninitialised
@@ -503,6 +506,23 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
 
     if (clientssl != NULL)
         abortserverthread = 0;
+
+    client_ready_cond = ossl_crypto_condvar_new();
+    if (client_ready_cond == NULL)
+        goto err;
+
+    client_ready_mutex = ossl_crypto_mutex_new();
+    if (client_ready_mutex == NULL)
+        goto err;
+
+    /*
+     * Only set the client_ready flag to zero if we are the client
+     */
+    if (clientssl != NULL) {
+        ossl_crypto_mutex_lock(client_ready_mutex);
+        client_ready = 0;
+        ossl_crypto_mutex_unlock(client_ready_mutex);
+    }
 #endif
 
     if (!TEST_ptr(qtserv)) {
@@ -531,6 +551,12 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
         if (!clienterr && retc <= 0) {
             int err;
 
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+            ossl_crypto_mutex_lock(client_ready_mutex);
+            client_ready = 1;
+            ossl_crypto_condvar_broadcast(client_ready_cond);
+            ossl_crypto_mutex_unlock(client_ready_mutex);
+#endif
             retc = SSL_connect(clientssl);
             if (retc <= 0) {
                 err = SSL_get_error(clientssl, retc);
@@ -557,8 +583,18 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
         qtest_add_time(1);
         if (clientssl != NULL)
             SSL_handle_events(clientssl);
-        if (qtserv != NULL)
+        if (qtserv != NULL) {
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+            ossl_crypto_mutex_lock(client_ready_mutex);
+            for (;;) {
+                if (client_ready == 1)
+                    break;
+                ossl_crypto_condvar_wait(client_ready_cond, client_ready_mutex);
+            }
+            ossl_crypto_mutex_unlock(client_ready_mutex);
+#endif
             ossl_quic_tserver_tick(qtserv);
+        }
 
         if (!servererr && rets <= 0) {
             servererr = ossl_quic_tserver_is_term_any(qtserv);
@@ -587,6 +623,14 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
 
     if (qtserv == NULL && rets > 0) {
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+        /*
+         * Make sure we unblock the server before we wait on completion here
+         * in case it didn't happen in the connect loop above
+         */
+        ossl_crypto_mutex_lock(client_ready_mutex);
+        client_ready = 1;
+        ossl_crypto_condvar_broadcast(client_ready_cond);
+        ossl_crypto_mutex_unlock(client_ready_mutex);
         if (!TEST_true(wait_for_thread(t)) || !TEST_true(globserverret))
             goto err;
 #else
@@ -598,6 +642,13 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
     if (!clienterr && !servererr)
         ret = 1;
  err:
+
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+    ossl_crypto_condvar_free(&client_ready_cond);
+    ossl_crypto_mutex_free(&client_ready_mutex);
+    client_ready_mutex = NULL;
+    client_ready_cond = NULL;
+#endif
     return ret;
 }
 
