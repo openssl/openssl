@@ -279,6 +279,31 @@ int custom_exts_copy_flags(custom_ext_methods *dst,
     return 1;
 }
 
+/* Copy old style API wrapper arguments */
+static void custom_ext_copy_old_cb(custom_ext_method *methdst,
+                                   const custom_ext_method *methsrc,
+                                   int *err)
+{
+    if (methsrc->add_cb != custom_ext_add_old_cb_wrap)
+        return;
+
+    if (*err) {
+        methdst->add_arg = NULL;
+        methdst->parse_arg = NULL;
+        return;
+    }
+
+    methdst->add_arg = OPENSSL_memdup(methsrc->add_arg,
+                                      sizeof(custom_ext_add_cb_wrap));
+    methdst->parse_arg = OPENSSL_memdup(methsrc->parse_arg,
+                                        sizeof(custom_ext_parse_cb_wrap));
+
+    if (methdst->add_arg == NULL || methdst->parse_arg == NULL)
+        *err = 1;
+
+    return;
+}
+
 /* Copy table of custom extensions */
 int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src)
 {
@@ -293,32 +318,8 @@ int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src)
             return 0;
         dst->meths_count = src->meths_count;
 
-        for (i = 0; i < src->meths_count; i++) {
-            custom_ext_method *methsrc = src->meths + i;
-            custom_ext_method *methdst = dst->meths + i;
-
-            if (methsrc->add_cb != custom_ext_add_old_cb_wrap)
-                continue;
-
-            /*
-             * We have found an old style API wrapper. We need to copy the
-             * arguments too.
-             */
-
-            if (err) {
-                methdst->add_arg = NULL;
-                methdst->parse_arg = NULL;
-                continue;
-            }
-
-            methdst->add_arg = OPENSSL_memdup(methsrc->add_arg,
-                                              sizeof(custom_ext_add_cb_wrap));
-            methdst->parse_arg = OPENSSL_memdup(methsrc->parse_arg,
-                                            sizeof(custom_ext_parse_cb_wrap));
-
-            if (methdst->add_arg == NULL || methdst->parse_arg == NULL)
-                err = 1;
-        }
+        for (i = 0; i < src->meths_count; i++)
+            custom_ext_copy_old_cb(&dst->meths[i], &src->meths[i], &err);
     }
 
     if (err) {
