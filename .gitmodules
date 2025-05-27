@@ -35,3 +35,6 @@
 [submodule "pkcs11-provider"]
 	path = pkcs11-provider
 	url = https://github.com/latchset/pkcs11-provider.git
+[submodule "rpki-client-portable"]
+	path = rpki-client-portable
+	url = https://github.com/rpki-client/rpki-client-portable
