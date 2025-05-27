@@ -16,4 +16,28 @@ struct ossl_iovec {
     size_t data_len;
 };
 
+static ossl_inline void ossl_iovec_memcpy(unsigned char *dst,
+                                          const struct ossl_iovec *src,
+                                          size_t len, size_t offset)
+{
+    size_t ptr = 0;
+
+    while (offset >= (size_t)src[ptr].data_len) {
+        offset -= src[ptr].data_len;
+        ptr++;
+    }
+
+    while (len > 0) {
+        size_t to_copy = src[ptr].data_len - offset;
+
+        if (to_copy > len)
+            to_copy = len;
+        memcpy(dst, (unsigned char *)(src[ptr].data) + offset, to_copy);
+        dst += to_copy;
+        len -= to_copy;
+        offset = 0;
+        ptr++;
+    }
+}
+
 #endif

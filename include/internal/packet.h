@@ -16,6 +16,7 @@
 # include <openssl/buffer.h>
 # include <openssl/crypto.h>
 # include <openssl/e_os2.h>
+# include <openssl/ossl_iovec.h>
 
 # include "internal/numbers.h"
 
@@ -890,6 +891,8 @@ int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize);
 
 /* Copy |len| bytes of data from |*src| into the WPACKET. */
 int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len);
+// int WPACKET_memcpy_iovec(WPACKET *pkt, const struct ossl_iovec *iov, size_t len,
+//                          size_t offset);
 
 /* Set |len| bytes of data to |ch| into the WPACKET. */
 int WPACKET_memset(WPACKET *pkt, int ch, size_t len);

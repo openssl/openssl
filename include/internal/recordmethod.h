@@ -59,6 +59,7 @@ struct ossl_record_template_st {
     unsigned int version;
     const unsigned char *buf;
     size_t buflen;
+    size_t offset;
 };
 
 typedef struct ossl_record_template_st OSSL_RECORD_TEMPLATE;
@@ -194,7 +195,9 @@ struct ossl_record_method_st {
      *  0 on retry
      * -1 on failure
      */
-    int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
+    // int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
+    //                      size_t numtempl);
+    int (*writev_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                          size_t numtempl);
 
     /*

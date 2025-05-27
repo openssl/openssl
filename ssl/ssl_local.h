@@ -426,8 +426,10 @@ struct ssl_method_st {
     int (*ssl_read_bytes) (SSL *s, uint8_t type, uint8_t *recvd_type,
                            unsigned char *buf, size_t len, int peek,
                            size_t *readbytes);
-    int (*ssl_write_bytes) (SSL *s, uint8_t type, const void *buf_, size_t len,
-                            size_t *written);
+    // int (*ssl_write_bytes) (SSL *s, uint8_t type, const void *buf_, size_t len,
+    //                         size_t *written);
+    int (*ssl_writev_bytes) (SSL *s, uint8_t type, const struct ossl_iovec *iov,
+                             size_t iovcnt, size_t *written);
     int (*ssl_dispatch_alert) (SSL *s);
     long (*ssl_ctrl) (SSL *s, int cmd, long larg, void *parg);
     long (*ssl_ctx_ctrl) (SSL_CTX *ctx, int cmd, long larg, void *parg);
