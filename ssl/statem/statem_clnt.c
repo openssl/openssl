@@ -1799,6 +1799,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
          * in case the quic stack needs to ACK packets independent of the handshake process
          */
         if (SSL_IS_QUIC_HANDSHAKE(s)) {
+            /*
+             * calling tls13_change_cipher_state here to provide a write secret
+             */
             if (s->early_data_state != SSL_EARLY_DATA_NONE) {
                 if (!ssl->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))
