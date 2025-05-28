@@ -12763,6 +12763,22 @@ static int yield_secret_cb(SSL *s, uint32_t prot_level, int direction,
     return 0;
 }
 
+static int yield_secret_cb_fail(SSL *s, uint32_t prot_level, int direction,
+                                const unsigned char *secret, size_t secret_len,
+                                void *arg)
+{
+    (void)s;
+    (void)prot_level;
+    (void)direction;
+    (void)secret;
+    (void)secret_len;
+    (void)arg;
+    /*
+     * This callback is to test double free in quic tls
+     */
+    return 0;
+}
+
 static int got_transport_params_cb(SSL *s, const unsigned char *params,
                                    size_t params_len,
                                    void *arg)
@@ -12803,13 +12819,14 @@ static int alert_cb(SSL *s, unsigned char alert_code, void *arg)
  * Test 0: Normal run
  * Test 1: Force a failure
  * Test 3: Use a CCM based ciphersuite
+ * Test 4: fail yield_secret_cb to see double free
  */
 static int test_quic_tls(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
-    const OSSL_DISPATCH qtdis[] = {
+    OSSL_DISPATCH qtdis[] = {
         {OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_SEND, (void (*)(void))crypto_send_cb},
         {OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_RECV_RCD,
          (void (*)(void))crypto_recv_rcd_cb},
@@ -12830,6 +12847,9 @@ static int test_quic_tls(int idx)
         0xfe, 0x01, 0x00
     };
     int i;
+
+    if (idx == 4)
+        qtdis[3].function = (void (*)(void))yield_secret_cb_fail;
 
     memset(&sdata, 0, sizeof(sdata));
     memset(&cdata, 0, sizeof(cdata));
@@ -12869,7 +12889,7 @@ static int test_quic_tls(int idx)
                                                             sizeof(sparams))))
         goto end;
 
-    if (idx != 1) {
+    if (idx != 1 && idx != 4) {
         if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
             goto end;
     } else {
@@ -13409,7 +13429,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_alpn, 4);
 #if !defined(OSSL_NO_USABLE_TLS1_3)
-    ADD_ALL_TESTS(test_quic_tls, 3);
+    ADD_ALL_TESTS(test_quic_tls, 5);
     ADD_TEST(test_quic_tls_early_data);
 #endif
     return 1;
