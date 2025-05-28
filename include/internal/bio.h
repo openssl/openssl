@@ -13,6 +13,7 @@
 
 # include <openssl/core.h>
 # include <openssl/bio.h>
+# include <openssl/ossl_iovec.h>
 
 struct bio_method_st {
     int type;

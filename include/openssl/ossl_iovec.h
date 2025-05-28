@@ -14,6 +14,7 @@
 #ifndef OSSL_IOVEC_H
 # define OSSL_IOVEC_H
 # include <stddef.h>
+# include <string.h>
 
 /* Abstraction layer for iovec */
 struct ossl_iovec {

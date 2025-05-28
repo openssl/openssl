@@ -18,8 +18,7 @@
 #include "internal/ssl_unwrap.h"
 #include "internal/sockets.h"
 
-// static int ssl_write(BIO *h, const char *buf, size_t size, size_t *written);
-static int ssl_writev(BIO *h, const struct ossl_iovec *iov, size_t iovcnt, size_t *written);
+static int ssl_write(BIO *h, const char *buf, size_t size, size_t *written);
 static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes);
 static int ssl_puts(BIO *h, const char *str);
 static long ssl_ctrl(BIO *h, int cmd, long arg1, void *arg2);
@@ -43,8 +42,7 @@ typedef struct bio_ssl_st {
 static const BIO_METHOD methods_sslp = {
     BIO_TYPE_SSL,
     "ssl",
-    // ssl_write,
-    ssl_writev,
+    ssl_write,
     NULL,                       /* ssl_write_old, */
     ssl_read,
     NULL,                       /* ssl_read_old,  */
@@ -226,21 +224,25 @@ static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
 //     return ret;
 // }
 
-static int ssl_writev(BIO *b, const struct ossl_iovec *iov, size_t iovcnt, size_t *written)
+static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
 {
     int ret, r = 0;
     int retry_reason = 0;
     SSL *ssl;
     BIO_SSL *bs;
 
-    if (iov == NULL)
+    if (buf == NULL)
         return 0;
     bs = BIO_get_data(b);
     ssl = bs->ssl;
 
     BIO_clear_retry_flags(b);
 
-    ret = ssl_writev_internal(ssl, iov, iovcnt, 0, written);
+    struct ossl_iovec iovec;
+    iovec.data = buf;
+    iovec.data_len = size;
+
+    ret = ssl_writev_internal(ssl, &iovec, 1, 0, written);
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
