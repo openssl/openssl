@@ -44,6 +44,8 @@ static void le_copy(unsigned char *out, size_t outlen,
     } else {
         if (outlen < inlen)
             in = (const char *)in + inlen - outlen;
+        if (!ossl_assert(outlen <= inlen))
+            return;
         swap_copy(out, in, outlen);
     }
 }
