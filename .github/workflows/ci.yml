@@ -653,7 +653,7 @@ jobs:
     - name: test external Cloudflare quiche
       run: make test TESTS="test_external_cf_quiche" VERBOSE=1
     - name: test external rpki client
-      run: make test test_external_rpki-client-portable
+      run: make test TESTS="test_external_rpki-client-portable"
     - name: test ability to produce debuginfo files
       run: |
         make debuginfo
