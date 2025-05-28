@@ -157,6 +157,11 @@ int CMS_RecipientInfo_kemri_set_ukm(CMS_RecipientInfo *ri,
         return 0;
     }
 
+    if (ukm == NULL && ukmLength != 0) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
     kemri = ri->d.ori->d.kemri;
 
     ASN1_OCTET_STRING_free(kemri->ukm);
@@ -250,8 +255,13 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     unsigned char kek[EVP_MAX_KEY_LENGTH];
     size_t keklen = kemri->kekLength;
     unsigned char *out = NULL;
-    int outlen;
+    int outlen = 0;
     int rv = 0;
+
+    if (keklen > sizeof(kek)) {
+        ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_LENGTH);
+        goto err;
+    }
 
     if (!kdf_derive(kek, keklen, ss, sslen, kemri))
         goto err;
