@@ -628,7 +628,7 @@ jobs:
     - name: package installs
       run: |
         sudo apt-get update
-        sudo apt-get -yq install bison gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python3 python3-paste python3-pyrad slapd tcsh python3-virtualenv virtualenv python3-kdcproxy gdb libretls
+        sudo apt-get -yq install bison gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python3 python3-paste python3-pyrad slapd tcsh python3-virtualenv virtualenv python3-kdcproxy gdb libtls-dev
     - name: install cpanm and Test2::V0 for gost_engine testing
       uses: perl-actions/install-with-cpanm@stable
       with:
