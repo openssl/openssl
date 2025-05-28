@@ -12866,10 +12866,11 @@ static int alert_cb(SSL *s, unsigned char alert_code, void *arg)
  * Test 1: Force a failure
  * Test 3: Use a CCM based ciphersuite
  * Test 4: fail yield_secret_cb to see double free
+ * Test 5: Normal run with SNI
  */
 static int test_quic_tls(int idx)
 {
-    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL_CTX *sctx = NULL, *sctx2 = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
     OSSL_DISPATCH qtdis[] = {
@@ -12897,6 +12898,7 @@ static int test_quic_tls(int idx)
     if (idx == 4)
         qtdis[3].function = (void (*)(void))yield_secret_cb_fail;
 
+    snicb = 0;
     memset(secret_history, 0, sizeof(secret_history));
     secret_history_idx = 0;
     memset(&sdata, 0, sizeof(sdata));
@@ -12910,6 +12912,18 @@ static int test_quic_tls(int idx)
                                        TLS_client_method(), TLS1_3_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         goto end;
+
+    if (idx == 5) {
+        if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(), NULL,
+                                           TLS1_3_VERSION, 0,
+                                           &sctx2, NULL, cert, privkey)))
+            goto end;
+
+        /* Set up SNI */
+        if (!TEST_true(SSL_CTX_set_tlsext_servername_callback(sctx, sni_cb))
+                || !TEST_true(SSL_CTX_set_tlsext_servername_arg(sctx, sctx2)))
+            goto end;
+    }
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
                                       NULL)))
@@ -12949,6 +12963,12 @@ static int test_quic_tls(int idx)
         testresult = 1;
         sdata.err = 0;
         goto end;
+    }
+
+    /* We should have had the SNI callback called exactly once */
+    if (idx == 5) {
+        if (!TEST_int_eq(snicb, 1))
+            goto end;
     }
 
     /* Check no problems during the handshake */
@@ -12992,6 +13012,7 @@ static int test_quic_tls(int idx)
  end:
     SSL_free(serverssl);
     SSL_free(clientssl);
+    SSL_CTX_free(sctx2);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
 
@@ -13573,7 +13594,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_alpn, 4);
 #if !defined(OSSL_NO_USABLE_TLS1_3)
-    ADD_ALL_TESTS(test_quic_tls, 5);
+    ADD_ALL_TESTS(test_quic_tls, 6);
     ADD_TEST(test_quic_tls_early_data);
 #endif
     ADD_ALL_TESTS(test_no_renegotiation, 2);
