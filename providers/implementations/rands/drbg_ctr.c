@@ -20,6 +20,7 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "drbg_local.h"
+#include "internal/common.h"
 
 static OSSL_FUNC_rand_newctx_fn drbg_ctr_new_wrapper;
 static OSSL_FUNC_rand_freectx_fn drbg_ctr_free;
@@ -82,6 +83,8 @@ static void ctr_XOR(PROV_DRBG_CTR *ctr, const unsigned char *in, size_t inlen)
      * are XORing. So just process however much input we have.
      */
     n = inlen < ctr->keylen ? inlen : ctr->keylen;
+    if (!ossl_assert(n <= sizeof(ctr->K)))
+        return;
     for (i = 0; i < n; i++)
         ctr->K[i] ^= in[i];
     if (inlen <= ctr->keylen)
