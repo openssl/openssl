@@ -84,10 +84,12 @@ struct ssl_async_args {
     SSL *s;
     void *buf;
     size_t num;
-    enum { READFUNC, WRITEFUNC, OTHERFUNC } type;
+    // enum { READFUNC, WRITEFUNC, OTHERFUNC } type;
+    enum { READFUNC, WRITEVFUNC, OTHERFUNC } type;
     union {
         int (*func_read) (SSL *, void *, size_t, size_t *);
-        int (*func_write) (SSL *, const void *, size_t, size_t *);
+        // int (*func_write) (SSL *, const void *, size_t, size_t *);
+        int (*func_writev) (SSL *, const struct ossl_iovec *, size_t, size_t *);
         int (*func_other) (SSL *);
     } f;
 };
@@ -2315,8 +2317,11 @@ static int ssl_io_intern(void *vargs)
     switch (args->type) {
     case READFUNC:
         return args->f.func_read(s, buf, num, &sc->asyncrw);
-    case WRITEFUNC:
-        return args->f.func_write(s, buf, num, &sc->asyncrw);
+    // case WRITEFUNC:
+    //     return args->f.func_write(s, buf, num, &sc->asyncrw);
+    case WRITEVFUNC:
+        return args->f.func_writev(s, (const struct ossl_iovec *)buf, num,
+                                   &sc->asyncrw);
     case OTHERFUNC:
         return args->f.func_other(s);
     }
@@ -2646,8 +2651,8 @@ int ssl_writev_internal(SSL *s, const struct ossl_iovec *iov, size_t iovcnt,
         args.s = s;
         args.buf = (void *)iov;
         args.num = iovcnt;
-        args.type = WRITEFUNC;
-        args.f.func_write = s->method->ssl_writev;
+        args.type = WRITEVFUNC;
+        args.f.func_writev = s->method->ssl_writev;
 
         ret = ssl_start_async_job(s, &args, ssl_io_intern);
         *written = sc->asyncrw;

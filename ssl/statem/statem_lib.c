@@ -55,6 +55,74 @@ int ossl_statem_set_mutator(SSL *s,
     return 1;
 }
 
+// /*
+//  * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
+//  * SSL3_RT_CHANGE_CIPHER_SPEC)
+//  */
+// int ssl3_do_write(SSL_CONNECTION *s, uint8_t type)
+// {
+//     int ret;
+//     size_t written = 0;
+//     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+//     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
+
+//     /*
+//      * If we're running the test suite then we may need to mutate the message
+//      * we've been asked to write. Does not happen in normal operation.
+//      */
+//     if (s->statem.mutate_handshake_cb != NULL
+//             && !s->statem.write_in_progress
+//             && type == SSL3_RT_HANDSHAKE
+//             && s->init_num >= SSL3_HM_HEADER_LENGTH) {
+//         unsigned char *msg;
+//         size_t msglen;
+
+//         if (!s->statem.mutate_handshake_cb((unsigned char *)s->init_buf->data,
+//                                            s->init_num,
+//                                            &msg, &msglen,
+//                                            s->statem.mutatearg))
+//             return -1;
+//         if (msglen < SSL3_HM_HEADER_LENGTH
+//                 || !BUF_MEM_grow(s->init_buf, msglen))
+//             return -1;
+//         memcpy(s->init_buf->data, msg, msglen);
+//         s->init_num = msglen;
+//         s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
+//         s->statem.finish_mutate_handshake_cb(s->statem.mutatearg);
+//         s->statem.write_in_progress = 1;
+//     }
+
+//     ret = ssl3_write_bytes(ssl, type, &s->init_buf->data[s->init_off],
+//                            s->init_num, &written);
+//     if (ret <= 0)
+//         return -1;
+//     if (type == SSL3_RT_HANDSHAKE)
+//         /*
+//          * should not be done for 'Hello Request's, but in that case we'll
+//          * ignore the result anyway
+//          * TLS1.3 KeyUpdate and NewSessionTicket do not need to be added
+//          */
+//         if (!SSL_CONNECTION_IS_TLS13(s)
+//             || (s->statem.hand_state != TLS_ST_SW_SESSION_TICKET
+//                                  && s->statem.hand_state != TLS_ST_CW_KEY_UPDATE
+//                                  && s->statem.hand_state != TLS_ST_SW_KEY_UPDATE))
+//             if (!ssl3_finish_mac(s,
+//                                  (unsigned char *)&s->init_buf->data[s->init_off],
+//                                  written))
+//                 return -1;
+//     if (written == s->init_num) {
+//         s->statem.write_in_progress = 0;
+//         if (s->msg_callback)
+//             s->msg_callback(1, s->version, type, s->init_buf->data,
+//                             (size_t)(s->init_off + s->init_num), ussl,
+//                             s->msg_callback_arg);
+//         return 1;
+//     }
+//     s->init_off += written;
+//     s->init_num -= written;
+//     return 0;
+// }
+
 /*
  * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
  * SSL3_RT_CHANGE_CIPHER_SPEC)
@@ -92,8 +160,11 @@ int ssl3_do_write(SSL_CONNECTION *s, uint8_t type)
         s->statem.write_in_progress = 1;
     }
 
-    ret = ssl3_write_bytes(ssl, type, &s->init_buf->data[s->init_off],
-                           s->init_num, &written);
+    struct ossl_iovec iovec;
+    iovec.data = &s->init_buf->data[s->init_off];
+    iovec.data_len = s->init_num;
+
+    ret = ssl3_writev_bytes(ssl, type, &iovec, 1, &written);
     if (ret <= 0)
         return -1;
     if (type == SSL3_RT_HANDSHAKE)

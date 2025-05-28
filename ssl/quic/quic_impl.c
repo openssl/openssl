@@ -3174,11 +3174,11 @@ out:
     return ret;
 }
 
-QUIC_TAKES_LOCK
-int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
-{
-    return ossl_quic_write_flags(s, buf, len, 0, written);
-}
+// QUIC_TAKES_LOCK
+// int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
+// {
+//     return ossl_quic_write_flags(s, buf, len, 0, written);
+// }
 
 QUIC_TAKES_LOCK
 int ossl_quic_writev(SSL *s, const struct ossl_iovec *iov, size_t iovcnt, size_t *written)

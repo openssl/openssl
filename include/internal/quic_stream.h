@@ -245,7 +245,7 @@ int ossl_quic_sstream_appendv(QUIC_SSTREAM *qss,
                              const struct ossl_iovec *iov,
                              size_t buf_len,
                              size_t offset,
-                             size_t *consumed)
+                             size_t *consumed);
 
 /*
  * Marks a stream as finished. ossl_quic_sstream_append() may not be called anymore

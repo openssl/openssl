@@ -10,6 +10,8 @@
         "async.h": "c",
         "quic_local.h": "c",
         "quic_ssl.h": "c",
-        "quic_stream.h": "c"
+        "quic_stream.h": "c",
+        "ossl_iovec.h": "c",
+        "ssl_unwrap.h": "c"
     }
 }

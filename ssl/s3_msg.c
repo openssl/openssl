@@ -127,7 +127,7 @@ int ssl3_dispatch_alert(SSL *s)
     }
 
     i = HANDLE_RLAYER_WRITE_RETURN(sc,
-            sc->rlayer.wrlmethod->write_records(sc->rlayer.wrl, &templ, 1));
+            sc->rlayer.wrlmethod->writev_records(sc->rlayer.wrl, &templ, 1));
 
     if (i <= 0) {
         sc->s3.alert_dispatch = SSL_ALERT_DISPATCH_RETRY;

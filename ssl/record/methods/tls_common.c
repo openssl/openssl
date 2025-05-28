@@ -1956,15 +1956,20 @@ int tls_writev_records_default(OSSL_RECORD_LAYER *rl,
          * thiswr->data
          */
 
-        /* first we compress */
+         /* first we compress */
         if (rl->compctx != NULL) {
+            /* need copying to support oneshot compression */
+            ossl_iovec_memcpy(thiswr->input, (const struct ossl_iovec *)thistempl->buf,
+                              thiswr->length, thistempl->offset);
+
             if (!tls_do_compress(rl, thiswr)
                     || !WPACKET_allocate_bytes(thispkt, thiswr->length, NULL)) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_COMPRESSION_FAILURE);
                 goto err;
             }
         } else if (compressdata != NULL) {
-            if (!WPACKET_memcpy(thispkt, thiswr->input, thiswr->length)) {
+            if (!WPACKET_memcpy_iovec(thispkt, (const struct ossl_iovec *)thiswr->input,
+                                      thiswr->length, thistempl->offset)) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -2016,7 +2021,7 @@ int tls_writev_records_default(OSSL_RECORD_LAYER *rl,
     }
 
     ret = 1;
- err:
+err:
     for (j = 0; j < wpinited; j++)
         WPACKET_cleanup(&pkt[j]);
     return ret;
@@ -2052,7 +2057,7 @@ int tls_writev_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-    if (!rl->funcs->write_records(rl, templates, numtempl)) {
+    if (!rl->funcs->writev_records(rl, templates, numtempl)) {
         /* RLAYERfatal already called */
         return OSSL_RECORD_RETURN_FATAL;
     }
@@ -2321,7 +2326,8 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_processed_read_pending,
     tls_app_data_pending,
     tls_get_max_records,
-    tls_write_records,
+    // tls_write_records,
+    tls_writev_records,
     tls_retry_write_records,
     tls_read_record,
     tls_release_record,

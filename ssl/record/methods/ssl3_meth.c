@@ -321,7 +321,8 @@ const struct record_functions_st ssl_3_0_funcs = {
     tls_default_validate_record_header,
     tls_default_post_process_record,
     tls_get_max_records_default,
-    tls_write_records_default,
+    // tls_write_records_default,
+    tls_writev_records_default,
     /* These 2 functions are defined in tls1_meth.c */
     tls1_allocate_write_buffers,
     tls1_initialise_write_packets,

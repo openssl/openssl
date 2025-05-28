@@ -7,8 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OSSL_INLINE
+#define OSSL_INLINE inline
+#endif
+
 #ifndef OSSL_IOVEC_H
 # define OSSL_IOVEC_H
+# include <stddef.h>
 
 /* Abstraction layer for iovec */
 struct ossl_iovec {
@@ -16,7 +21,7 @@ struct ossl_iovec {
     size_t data_len;
 };
 
-static ossl_inline void ossl_iovec_memcpy(unsigned char *dst,
+static inline void ossl_iovec_memcpy(unsigned char *dst,
                                           const struct ossl_iovec *src,
                                           size_t len, size_t offset)
 {
