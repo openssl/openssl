@@ -117,7 +117,8 @@ CMS_RecipientInfo structure B<ri> must be of type CMS_RECIPINFO_KEM.
 
 CMS_RecipientInfo_kemri_get0_kdf_alg() returns the X509_ALGOR for the
 RecipientInfo's KDF, allowing the caller to specify the KDF algorithm.  The
-CMS_RecipientInfo structure B<ri> must be of type CMS_RECIPINFO_KEM.
+CMS_RecipientInfo structure B<ri> must be of type CMS_RECIPINFO_KEM. If the
+caller doesn't specify a KDF algorithm, B<HKDF-SHA256> will be used.
 
 CMS_RecipientInfo_kemri_set_ukm() sets the RecipientInfo's optional user
 keying material (UKM).  The UKM is encoded, along with other information, into

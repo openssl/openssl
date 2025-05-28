@@ -1472,6 +1472,10 @@ int ossl_cms_RecipientInfo_wrap_init(CMS_RecipientInfo *ri,
     if (cipher == NULL)
         return 0;
     keylen = EVP_CIPHER_get_key_length(cipher);
+    if (keylen <= 0) {
+        ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
     if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_GET_WRAP_CIPHER) != 0) {
         ret = EVP_CIPHER_meth_get_ctrl(cipher)(NULL, EVP_CTRL_GET_WRAP_CIPHER,
                                                0, &kekcipher);
