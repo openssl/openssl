@@ -573,8 +573,11 @@ want to operate in a FIPS approved manner.  The algorithms are:
 
 =back
 
-The FIPS provider cannot be used by multiple copies of OpenSSL libcrypto at
-once. As the provider saves core callbacks to the libcrypto obtained in the
+You can load the FIPS provider into multiple library contexts as any other
+provider. However the following restriction applies. The FIPS provider cannot
+be used by multiple copies of OpenSSL libcrypto in a single process.
+
+As the provider saves core callbacks to the libcrypto obtained in the
 OSSL_provider_init() call to global data it will fail if subsequent
 invocations of its OSSL_provider_init() function yield different addresses
 of these callbacks than in the initial call. This happens when different
