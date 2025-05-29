@@ -446,18 +446,29 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
     return 1;
 }
 
-int tls13_store_handshake_traffic_hash(SSL_CONNECTION *s)
+static int tls13_store_hash(SSL_CONNECTION *s, unsigned char *hash, size_t len)
 {
     size_t hashlen;
 
     if (!ssl3_digest_cached_records(s, 1)
-            || !ssl_handshake_hash(s, s->handshake_traffic_hash,
-                                   sizeof(s->handshake_traffic_hash), &hashlen)) {
+            || !ssl_handshake_hash(s, hash, len, &hashlen)) {
         /* SSLfatal() already called */;
         return 0;
     }
 
     return 1;
+}
+
+int tls13_store_handshake_traffic_hash(SSL_CONNECTION *s)
+{
+    return tls13_store_hash(s, s->handshake_traffic_hash,
+                            sizeof(s->handshake_traffic_hash));
+}
+
+int tls13_store_server_finished_hash(SSL_CONNECTION *s)
+{
+    return tls13_store_hash(s, s->server_finished_hash,
+                            sizeof(s->server_finished_hash));
 }
 
 int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
@@ -661,13 +672,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             goto err;
         }
     }
-
-    /*
-     * Save the hash of handshakes up to now for use when we calculate the
-     * client application traffic secret
-     */
-    if (label == server_application_traffic)
-        memcpy(s->server_finished_hash, hashval, hashlen);
 
     if (label == client_application_traffic) {
         /*

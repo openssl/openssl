@@ -1041,6 +1041,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             if (!ssl->method->ssl3_enc->generate_master_secret(s,
                         s->master_secret, s->handshake_secret, 0,
                         &dummy)
+                || !tls13_store_server_finished_hash(s)
                 || !ssl->method->ssl3_enc->change_cipher_state(s,
                         SSL3_CC_APPLICATION | SSL3_CHANGE_CIPHER_SERVER_WRITE))
             /* SSLfatal() already called */
