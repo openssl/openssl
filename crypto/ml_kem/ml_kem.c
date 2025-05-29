@@ -1555,11 +1555,10 @@ ossl_ml_kem_key_reset(ML_KEM_KEY *key)
      * before being free'd under the OPENSSL_secure_free call.
      */
     if (ossl_ml_kem_have_prvkey(key)) {
-        if(!CRYPTO_secure_allocated(key->t))
+        if (!CRYPTO_secure_allocated(key->t))
             OPENSSL_cleanse(key->s, key->vinfo->rank * sizeof(scalar) + 2 * ML_KEM_RANDOM_BYTES);
         OPENSSL_secure_free(key->t);
-    }
-    else {
+    } else {
         OPENSSL_free(key->t);
     }
 
