@@ -86,6 +86,10 @@ providers/common/include/prov/der_wrap.h
 providers/common/include/prov/der_sm2.h
 providers/common/include/prov/der_ml_dsa.h
 
+# Files auto generated for TRIE based param decode
+providers/implementations/ciphers/cipher_chacha20_poly1305.c
+providers/implementations/ciphers/ciphercommon.c
+
 # error code files
 /crypto/err/openssl.txt.old
 /engines/e_afalg.txt.old
