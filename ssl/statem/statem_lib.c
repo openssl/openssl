@@ -618,22 +618,7 @@ CON_FUNC_RETURN tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt)
     if (!s->server && s->post_handshake_auth != SSL_PHA_REQUESTED)
         s->statem.cleanuphand = 1;
 
-    /*
-     * Handle the quic and non-quic cases separately here
-     * For quic, we need to yield the write handshake now, if it has
-     * not already been done in tls_process_server_hello.
-     */
-    if (SSL_IS_QUIC_HANDSHAKE(s)) {
-        if (!s->server
-            && s->early_data_state != SSL_EARLY_DATA_NONE
-            && s->s3.tmp.cert_req == 0) {
-            if (!ssl->method->ssl3_enc->change_cipher_state(s,
-                SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE)) {
-                    /* SSLfatal() already called */
-                    return CON_FUNC_ERROR;
-            }
-        }
-    } else if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (!SSL_IS_QUIC_HANDSHAKE(s) && SSL_CONNECTION_IS_TLS13(s)) {
         /*
          * If we attempted to write early data or we're in middlebox compat mode
          * then we deferred changing the handshake write keys to the last possible
