@@ -446,6 +446,20 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
     return 1;
 }
 
+int tls13_store_handshake_traffic_hash(SSL_CONNECTION *s)
+{
+    size_t hashlen;
+
+    if (!ssl3_digest_cached_records(s, 1)
+            || !ssl_handshake_hash(s, s->handshake_traffic_hash,
+                                   sizeof(s->handshake_traffic_hash), &hashlen)) {
+        /* SSLfatal() already called */;
+        return 0;
+    }
+
+    return 1;
+}
+
 int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
 {
     /* ASCII: "c e traffic", in hex for EBCDIC compatibility */
@@ -654,9 +668,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
      */
     if (label == server_application_traffic)
         memcpy(s->server_finished_hash, hashval, hashlen);
-
-    if (label == server_handshake_traffic)
-        memcpy(s->handshake_traffic_hash, hashval, hashlen);
 
     if (label == client_application_traffic) {
         /*
