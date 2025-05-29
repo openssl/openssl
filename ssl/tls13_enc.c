@@ -658,6 +658,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             label = server_application_traffic;
             labellen = sizeof(server_application_traffic) - 1;
             log_label = SERVER_APPLICATION_LABEL;
+            hash = s->server_finished_hash;
         }
     }
 

@@ -938,8 +938,18 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
                 /* SSLfatal() already called */
                 return MSG_PROCESS_ERROR;
             }
-            if (!ssl->method->ssl3_enc->change_cipher_state(s,
-                    SSL3_CC_APPLICATION | SSL3_CHANGE_CIPHER_CLIENT_READ)) {
+
+            /*
+             * For non-QUIC we set up the client's app data read keys now, so
+             * that we can go straight into reading 0.5RTT data from the server.
+             * For QUIC we don't do that, and instead defer setting up the keys
+             * until after we have set up the write keys in order to ensure that
+             * write keys are always set up before read keys (so that if we read
+             * a message we have the correct keys in place to ack it)
+             */
+            if (!SSL_IS_QUIC_HANDSHAKE(s)
+                    && !ssl->method->ssl3_enc->change_cipher_state(s,
+                        SSL3_CC_APPLICATION | SSL3_CHANGE_CIPHER_CLIENT_READ)) {
                 /* SSLfatal() already called */
                 return MSG_PROCESS_ERROR;
             }
