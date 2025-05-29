@@ -12752,7 +12752,7 @@ static int check_secret_history(SSL *s)
     uint32_t last_prot_level = 0;
     int last_generation = 0;
 
-    TEST_info("Checking history for %p\n", s);
+    TEST_info("Checking history for %p\n", (void *)s);
     for (i = 0; secret_history[i].recorded == 1; i++) {
         if (secret_history[i].ssl != s)
             continue;
