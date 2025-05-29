@@ -225,6 +225,17 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
 
         ret = dtls1_write_bytes(s, type, &s->init_buf->data[s->init_off], len,
                                 &written);
+
+        /* Invoke the msg callback when we wrote the first fragment.
+         * This avoids corruption of data that is going to be used in the
+         * callback when a message spans over multiple fragments. */
+        if (s->init_off == 0) {
+            if (s->msg_callback)
+                s->msg_callback(1, s->version, type, s->init_buf->data,
+                                s->init_off + s->init_num, ussl,
+                                s->msg_callback_arg);
+        }
+
         if (ret <= 0) {
             /*
              * might need to update MTU here, but we don't know which
@@ -295,11 +306,6 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
             }
 
             if (written == s->init_num) {
-                if (s->msg_callback)
-                    s->msg_callback(1, s->version, type, s->init_buf->data,
-                                    (size_t)(s->init_off + s->init_num), ussl,
-                                    s->msg_callback_arg);
-
                 s->init_off = 0; /* done writing this message */
                 s->init_num = 0;
 
