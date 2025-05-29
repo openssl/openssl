@@ -911,6 +911,17 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
                     /* SSLfatal() already called */
                     return WORK_ERROR;
                 }
+                /*
+                 * For QUIC we deferred setting up these keys until now so
+                 * that we can ensure write keys are always set up before read
+                 * keys.
+                 */
+                if (SSL_IS_QUIC_HANDSHAKE(s)
+                        && !ssl->method->ssl3_enc->change_cipher_state(s,
+                            SSL3_CC_APPLICATION | SSL3_CHANGE_CIPHER_CLIENT_READ)) {
+                    /* SSLfatal() already called */
+                    return WORK_ERROR;
+                }
             }
         }
         break;
