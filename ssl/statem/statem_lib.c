@@ -934,6 +934,10 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
                 /* SSLfatal() already called */
                 return MSG_PROCESS_ERROR;
             }
+            if (!tls13_store_server_finished_hash(s)) {
+                /* SSLfatal() already called */
+                return MSG_PROCESS_ERROR;
+            }
             if (!ssl->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_APPLICATION | SSL3_CHANGE_CIPHER_CLIENT_READ)) {
                 /* SSLfatal() already called */
