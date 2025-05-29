@@ -626,6 +626,7 @@ CON_FUNC_RETURN tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt)
      */
     if (SSL_CONNECTION_IS_TLS13(s)
             && !s->server
+            && !SSL_IS_QUIC_HANDSHAKE(s)
             && (s->early_data_state != SSL_EARLY_DATA_NONE
                 || (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
             && s->s3.tmp.cert_req == 0
