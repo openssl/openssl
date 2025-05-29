@@ -60,9 +60,6 @@
 /include/openssl/core_names.h
 /include/internal/param_names.h
 
-# Auto generated parameter name files
-/crypto/params_idx.c
-
 # Auto generated doc files
 doc/man1/openssl-*.pod
 
@@ -85,6 +82,9 @@ providers/common/include/prov/der_digests.h
 providers/common/include/prov/der_wrap.h
 providers/common/include/prov/der_sm2.h
 providers/common/include/prov/der_ml_dsa.h
+providers/implementations/ciphers/ciphercommon.c
+providers/implementations/ciphers/cipher_chacha20_poly1305.c
+providers/implementations/digests/digestcommon.c
 
 # error code files
 /crypto/err/openssl.txt.old
