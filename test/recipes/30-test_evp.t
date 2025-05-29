@@ -50,6 +50,7 @@ my @files = qw(
                 evpciph_aes_wrap.txt
                 evpciph_aes_stitched.txt
                 evpciph_des3_common.txt
+                evpciph_security_category.txt
                 evpkdf_hkdf.txt
                 evpkdf_kbkdf_counter.txt
                 evpkdf_kbkdf_kmac.txt
@@ -62,6 +63,7 @@ my @files = qw(
                 evpkdf_x942.txt
                 evpkdf_x963.txt
                 evpmac_common.txt
+                evpmd_security_category.txt
                 evpmd_sha.txt
                 evppbe_pbkdf2.txt
                 evppkey_kdf_hkdf.txt

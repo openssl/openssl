@@ -14,7 +14,7 @@
 #include "prov/implementations.h"
 
 #ifndef AES_CBC_HMAC_SHA_ETM_CAPABLE
-# define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)              \
+# define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, seccat, flags)      \
 const OSSL_DISPATCH ossl_##nm##kbits##sub##_functions[] = {                    \
     OSSL_DISPATCH_END                                                          \
 };
@@ -296,7 +296,7 @@ static void *aes_cbc_hmac_sha512_etm_dupctx(void *provctx)
     return OPENSSL_memdup(ctx, sizeof(*ctx));
 }
 
-# define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)              \
+# define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, seccat, flags)      \
 static OSSL_FUNC_cipher_newctx_fn nm##_##kbits##_##sub##_newctx;               \
 static void *nm##_##kbits##_##sub##_newctx(void *provctx)                      \
 {                                                                              \
@@ -306,7 +306,8 @@ static OSSL_FUNC_cipher_get_params_fn nm##_##kbits##_##sub##_get_params;       \
 static int nm##_##kbits##_##sub##_get_params(OSSL_PARAM params[])              \
 {                                                                              \
     return ossl_cipher_generic_get_params(params, EVP_CIPH_CBC_MODE,           \
-                                          flags, kbits, blkbits, ivbits);      \
+                                          flags, kbits, blkbits, ivbits,       \
+                                          seccat);                             \
 }                                                                              \
 const OSSL_DISPATCH ossl_##nm##kbits##sub##_functions[] = {                    \
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))nm##_##kbits##_##sub##_newctx },\
@@ -334,20 +335,20 @@ const OSSL_DISPATCH ossl_##nm##kbits##sub##_functions[] = {                    \
 #endif /* AES_CBC_HMAC_SHA_ETM_CAPABLE */
 
 /* ossl_aes128cbc_hmac_sha1_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha1_etm, 128, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha1_etm, 128, 128, 128, 1, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes192cbc_hmac_sha1_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha1_etm, 192, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha1_etm, 192, 128, 128, 3, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes256cbc_hmac_sha1_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha1_etm, 256, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha1_etm, 256, 128, 128, 5, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes128cbc_hmac_sha256_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 128, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 128, 128, 128, 1, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes192cbc_hmac_sha256_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 192, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 192, 128, 128, 3, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes256cbc_hmac_sha256_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 256, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 256, 128, 128, 5, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes128cbc_hmac_sha512_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 128, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 128, 128, 128, 1, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes192cbc_hmac_sha512_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 192, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 192, 128, 128, 3, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes256cbc_hmac_sha512_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 256, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 256, 128, 128, 5, EVP_CIPH_FLAG_ENC_THEN_MAC)
