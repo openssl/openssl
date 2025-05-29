@@ -106,5 +106,13 @@ typedef __uint128_t uint128_t;
 #  define OSSL_UINTMAX_MAX __MAXUINT__(ossl_uintmax_t)
 # endif
 
+// Fix for cross compiling 64-bit PowerPC on OS X 10.4 
+# if defined(__APPLE__) && defined(_ARCH_PPC64) && _ARCH_PPC64
+#  ifdef SIZE_MAX
+#   undef SIZE_MAX
+#  endif
+#  define SIZE_MAX __MAXUINT__(uint64_t)
+# endif
+
 #endif
 
