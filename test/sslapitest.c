@@ -12726,7 +12726,7 @@ static int crypto_release_rcd_cb(SSL *s, size_t bytes_read, void *arg)
 
 struct secret_yield_entry {
     uint8_t recorded;
-    uint32_t prot_level;
+    int prot_level;
     int direction;
     int sm_generation;
     SSL *ssl;
@@ -12749,7 +12749,7 @@ static int check_secret_history(SSL *s)
     int i;
     int ret = 0;
     last_dir_history_state last_state = LAST_DIR_UNSET;
-    uint32_t last_prot_level = 0;
+    int last_prot_level = 0;
     int last_generation = 0;
 
     TEST_info("Checking history for %p\n", (void *)s);
@@ -12847,7 +12847,7 @@ static int yield_secret_cb(SSL *s, uint32_t prot_level, int direction,
     }
 
     secret_history[secret_history_idx].direction = direction;
-    secret_history[secret_history_idx].prot_level = prot_level;
+    secret_history[secret_history_idx].prot_level = (int)prot_level;
     secret_history[secret_history_idx].recorded = 1;
     secret_history[secret_history_idx].ssl = s;
     secret_history[secret_history_idx].sm_generation = data->sm_count;
