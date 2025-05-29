@@ -28,11 +28,15 @@ int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
                        SSL **cssl, BIO *s_to_c_fbio, BIO *c_to_s_fbio);
 int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
                                int read, int listen);
+int create_bare_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
+                                  int read, int listen, int *cm_count, int *sm_count);
 int create_ssl_objects2(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
                        SSL **cssl, int sfd, int cfd);
 int wait_until_sock_readable(int sock);
 int create_test_sockets(int *cfdp, int *sfdp, int socktype, BIO_ADDR *saddr);
 int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want);
+int create_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
+                             int *cm_count, int *sm_count);
 void shutdown_ssl_connection(SSL *serverssl, SSL *clientssl);
 
 /* Note: Not thread safe! */

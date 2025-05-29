@@ -1258,8 +1258,8 @@ int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
  * has SSL_get_error() return the value in the |want| parameter. The connection
  * attempt could be restarted by a subsequent call to this function.
  */
-int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
-                               int read, int listen)
+int create_bare_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
+                                  int read, int listen, int *cm_count, int *sm_count)
 {
     int retc = -1, rets = -1, err, abortctr = 0, ret = 0;
     int clienterr = 0, servererr = 0;
@@ -1289,6 +1289,7 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
             retc = SSL_connect(clientssl);
             if (retc <= 0)
                 err = SSL_get_error(clientssl, retc);
+            (*cm_count)++;
         }
 
         if (!clienterr && retc <= 0 && err != SSL_ERROR_WANT_READ) {
@@ -1314,12 +1315,14 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
                     listen = 0;
                     rets = 0;
                 }
+                (*sm_count)++;
             } else
 #endif
             {
                 rets = SSL_accept(serverssl);
                 if (rets <= 0)
                     err = SSL_get_error(serverssl, rets);
+                (*sm_count)++;
             }
         }
 
@@ -1345,6 +1348,7 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
                     TEST_info("Unexpected SSL_read() success!");
                     goto err;
                 }
+                (*sm_count)++;
             }
             if (retc > 0 && rets <= 0) {
                 if (SSL_read(clientssl, buf, sizeof(buf)) > 0) {
@@ -1352,6 +1356,7 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
                     TEST_info("Unexpected SSL_read() success!");
                     goto err;
                 }
+                (*cm_count)++;
             }
         }
         if (++abortctr == MAXLOOPS) {
@@ -1376,17 +1381,27 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
     return ret;
 }
 
+int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
+                               int read, int listen)
+{
+    int dummy_sm = 0, dummy_cm = 0;
+    return create_bare_ssl_connection_ex(serverssl, clientssl, want, read,
+                                         listen, &dummy_cm, &dummy_sm);
+}
+
 /*
  * Create an SSL connection including any post handshake NewSessionTicket
  * messages.
  */
-int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
+int create_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
+                             int *cm_count, int *sm_count)
 {
     int i;
     unsigned char buf;
     size_t readbytes;
 
-    if (!create_bare_ssl_connection(serverssl, clientssl, want, 1, 0))
+    if (!create_bare_ssl_connection_ex(serverssl, clientssl, want, 1, 0,
+                                       cm_count, sm_count))
         return 0;
 
     /*
@@ -1402,9 +1417,16 @@ int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
                                 SSL_ERROR_WANT_READ)) {
             return 0;
         }
+        (*cm_count)++;
     }
 
     return 1;
+}
+
+int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
+{
+   int dummy_cm = 0, dummy_sm = 0;
+   return create_ssl_connection_ex(serverssl, clientssl, want, &dummy_cm, &dummy_sm);
 }
 
 void shutdown_ssl_connection(SSL *serverssl, SSL *clientssl)
