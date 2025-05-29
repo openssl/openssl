@@ -1258,12 +1258,13 @@ int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
  * has SSL_get_error() return the value in the |want| parameter. The connection
  * attempt could be restarted by a subsequent call to this function.
  */
-int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
-                               int read, int listen)
+int create_bare_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
+                                  int read, int listen, int *cm_count, int *sm_count)
 {
     int retc = -1, rets = -1, err, abortctr = 0, ret = 0;
     int clienterr = 0, servererr = 0;
     int isdtls = SSL_is_dtls(serverssl);
+    int icm_count = 0, ism_count = 0;
 #ifndef OPENSSL_NO_SOCK
     BIO_ADDR *peer = NULL;
 
@@ -1289,6 +1290,7 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
             retc = SSL_connect(clientssl);
             if (retc <= 0)
                 err = SSL_get_error(clientssl, retc);
+            icm_count++;
         }
 
         if (!clienterr && retc <= 0 && err != SSL_ERROR_WANT_READ) {
@@ -1314,12 +1316,14 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
                     listen = 0;
                     rets = 0;
                 }
+                ism_count++;
             } else
 #endif
             {
                 rets = SSL_accept(serverssl);
                 if (rets <= 0)
                     err = SSL_get_error(serverssl, rets);
+                ism_count++;
             }
         }
 
@@ -1345,6 +1349,7 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
                     TEST_info("Unexpected SSL_read() success!");
                     goto err;
                 }
+                ism_count++;
             }
             if (retc > 0 && rets <= 0) {
                 if (SSL_read(clientssl, buf, sizeof(buf)) > 0) {
@@ -1352,6 +1357,7 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
                     TEST_info("Unexpected SSL_read() success!");
                     goto err;
                 }
+                icm_count++;
             }
         }
         if (++abortctr == MAXLOOPS) {
@@ -1370,23 +1376,36 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
 
     ret = 1;
  err:
+    if (cm_count != NULL)
+        *cm_count = icm_count;
+    if (sm_count != NULL)
+        *sm_count = ism_count;
 #ifndef OPENSSL_NO_SOCK
     BIO_ADDR_free(peer);
 #endif
     return ret;
 }
 
+int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
+                               int read, int listen)
+{
+    return create_bare_ssl_connection_ex(serverssl, clientssl, want, read,
+                                         listen, NULL, NULL);
+}
+
 /*
  * Create an SSL connection including any post handshake NewSessionTicket
  * messages.
  */
-int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
+int create_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
+                             int *cm_count, int *sm_count)
 {
     int i;
     unsigned char buf;
     size_t readbytes;
 
-    if (!create_bare_ssl_connection(serverssl, clientssl, want, 1, 0))
+    if (!create_bare_ssl_connection_ex(serverssl, clientssl, want, 1, 0,
+                                       cm_count, sm_count))
         return 0;
 
     /*
@@ -1402,9 +1421,16 @@ int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
                                 SSL_ERROR_WANT_READ)) {
             return 0;
         }
+        if (cm_count != NULL)
+            (*cm_count)++;
     }
 
     return 1;
+}
+
+int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
+{
+   return create_ssl_connection_ex(serverssl, clientssl, want, NULL, NULL);
 }
 
 void shutdown_ssl_connection(SSL *serverssl, SSL *clientssl)
