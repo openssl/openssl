@@ -23,7 +23,7 @@
 # include "crypto/rand_pool.h"
 
 # if defined(__APPLE__) && !defined(OPENSSL_NO_APPLE_CRYPTO_RANDOM)
-#  if (defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1050)
+#  if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1050
 #   include <Availability.h>
 #  else
 #   include <TargetConditionals.h>
