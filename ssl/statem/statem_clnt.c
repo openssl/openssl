@@ -1788,6 +1788,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
      */
     if (SSL_CONNECTION_IS_TLS13(s)) {
         if (!ssl->method->ssl3_enc->setup_key_block(s)
+                || !tls13_store_handshake_traffic_hash(s)
                 || !ssl->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_READ)) {
             /* SSLfatal() already called */
