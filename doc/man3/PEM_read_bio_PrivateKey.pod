@@ -280,13 +280,13 @@ key is not DSA.
 
 The B<Parameters> functions read or write key parameters in PEM format using
 an EVP_PKEY structure.  The encoding depends on the type of key; for DSA key
-parameters, it will be a Dss-Parms structure as defined in RFC2459, and for DH
+parameters, it will be a Dss-Parms structure as defined in RFC 3370, and for DH
 key parameters, it will be a PKCS#3 DHparameter structure.  I<These functions
 only exist for the B<BIO> type>.
 
 The B<DSAparams> functions process DSA parameters using a DSA
 structure. The parameters are encoded using a Dss-Parms structure
-as defined in RFC2459.
+as defined in RFC 3370.
 
 The B<DHparams> functions process DH parameters using a DH
 structure. The parameters are encoded using a PKCS#3 DHparameter

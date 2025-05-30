@@ -554,7 +554,7 @@ several values:
 
 =back
 
-Note that B<utf8only> is the PKIX recommendation in RFC2459 after 2003, and the
+Note that B<utf8only> is the PKIX recommendation in RFC 5280, and the
 default B<string_mask>; B<default> is not the default option. The B<nombstr>
 value is a workaround for some software that has problems with variable-sized
 BMPStrings and UTF8Strings.

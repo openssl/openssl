@@ -47,7 +47,7 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
             continue;
         if (type->pkey_type == NID_dsaWithSHA1) {
             /*
-             * special case: RFC 2459 tells us to omit 'parameters' with
+             * special case: RFC 3370 tells us to omit 'parameters' with
              * id-dsa-with-sha1
              */
             ASN1_TYPE_free(a->parameter);
