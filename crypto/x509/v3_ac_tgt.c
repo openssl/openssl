@@ -140,6 +140,7 @@ static int i2r_OBJECT_DIGEST_INFO(X509V3_EXT_METHOD *method,
     if (BIO_printf(out, "\n%*sSignature Value: ", indent, "") <= 0)
         return 0;
     sig_nid = OBJ_obj2nid(odi->digestAlgorithm.algorithm);
+#ifndef OPENSSL_NO_DEPRECATED_3_6
     if (sig_nid != NID_undef) {
         int pkey_nid, dig_nid;
         const EVP_PKEY_ASN1_METHOD *ameth;
@@ -149,6 +150,7 @@ static int i2r_OBJECT_DIGEST_INFO(X509V3_EXT_METHOD *method,
                 return ameth->sig_print(out, digalg, sig, indent + 4, 0);
         }
     }
+#endif
     if (BIO_write(out, "\n", 1) != 1)
         return 0;
     if (sig)
