@@ -3597,7 +3597,10 @@ static int do_genm(OSSL_CMP_CTX *ctx)
             }
         }
 
-        if ((itavs = OSSL_CMP_exec_GENM_ses(ctx)) != NULL) {
+        itavs = OSSL_CMP_exec_GENM_ses(ctx);
+        if (reqout_only_done && OSSL_CMP_CTX_get_status(ctx) == OSSL_CMP_PKISTATUS_trans)
+            return 1; /* not checking response as we did not send request */
+        if (itavs != NULL) {
             int res = print_itavs(itavs);
 
             sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
