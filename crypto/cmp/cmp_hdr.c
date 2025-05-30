@@ -265,6 +265,8 @@ int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
 /* fill in all fields of the hdr according to the info given in ctx */
 int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
 {
+    const ASN1_OCTET_STRING *ref = ctx->referenceValue;
+    X509_NAME *ref_name = NULL;
     const X509_NAME *sender;
     const X509_NAME *rcp = NULL;
 
@@ -275,15 +277,31 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
     if (!ossl_cmp_hdr_set_pvno(hdr, OSSL_CMP_PVNO))
         return 0;
 
-    /*
-     * If no protection cert nor oldCert nor CSR nor subject is given,
-     * sender name is not known to the client and thus set to NULL-DN
-     */
-    sender = ctx->cert != NULL ? X509_get_subject_name(ctx->cert) : ctx->oldCert != NULL ? X509_get_subject_name(ctx->oldCert)
-        : ctx->p10CSR != NULL                                                            ? X509_REQ_get_subject_name(ctx->p10CSR)
-                                                                                         : ctx->subjectName;
-    if (!ossl_cmp_hdr_set1_sender(hdr, sender))
-        return 0;
+    if (ref != NULL) {
+        ref_name = X509_NAME_new();
+        if (ref_name == NULL
+            || X509_NAME_add_entry_by_NID(ref_name, NID_commonName, MBSTRING_UTF8,
+                   ASN1_STRING_get0_data(ref),
+                   ASN1_STRING_length(ref), -1, 0)
+                != 1)
+            goto err;
+    }
+    if (ctx->secretValue != NULL && ref != NULL) {
+        if (!ossl_cmp_hdr_set1_sender(hdr, ref_name))
+            goto err;
+    } else {
+        /*
+         * If no protection cert nor oldCert nor CSR nor subject nor ref is given,
+         * sender name is not known to the client and thus set to NULL-DN
+         */
+        sender = ctx->cert != NULL ? X509_get_subject_name(ctx->cert) : ctx->oldCert != NULL ? X509_get_subject_name(ctx->oldCert)
+            : ctx->p10CSR != NULL                                                            ? X509_REQ_get_subject_name(ctx->p10CSR)
+            : ctx->subjectName != NULL                                                       ? ctx->subjectName
+                                                                                             : ref_name;
+        if (!ossl_cmp_hdr_set1_sender(hdr, sender))
+            goto err;
+    }
+    X509_NAME_free(ref_name);
 
     /* determine recipient entry in PKIHeader */
     if (ctx->recipient != NULL)
@@ -340,4 +358,8 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         return 0;
 
     return 1;
+
+err:
+    X509_NAME_free(ref_name);
+    return 0;
 }
