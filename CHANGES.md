@@ -127,6 +127,12 @@ OpenSSL 3.6
 
    *Daniel Van Geest (CryptoNext Security)*
 
+ * Added Intel AVX-512 and VAES optimizations for AES-CFB128 algorithms.
+   Encryption performance on large buffers improved by 1.5-1.7x,
+   while decryption speed increased by 20-23x.
+
+   *Adrian Stanciu*
+
 OpenSSL 3.5
 -----------
 
