@@ -1916,8 +1916,8 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx)
             CMP_warn1("-days %s", msg);
         if (opt_popo != OSSL_CRMF_POPO_NONE - 1)
             CMP_warn1("-popo %s", msg);
-        if (opt_out_trusted != NULL)
-            CMP_warn1("-out_trusted %s", msg);
+        if (opt_cmd != CMP_P10CR && opt_out_trusted != NULL)
+            CMP_warn("-out_trusted is ignored for 'rr' and 'genm' commands");
     } else if (opt_newkey != NULL) {
         const char *file = opt_newkey;
         const int format = opt_keyform;
@@ -2039,6 +2039,13 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx)
     }
     if (opt_popo >= OSSL_CRMF_POPO_NONE)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_POPO_METHOD, opt_popo);
+
+    if (opt_cmd != CMP_RR) {
+        if (opt_revreason != CRL_REASON_NONE)
+            CMP_warn("-revreason option is ignored for commands other than 'rr'");
+        if (opt_cmd != CMP_KUR && opt_oldcert != NULL)
+            CMP_warn("-oldcert option used only as reference cert");
+    }
 
     if (opt_oldcert != NULL) {
         if (opt_cmd == CMP_GENM) {
