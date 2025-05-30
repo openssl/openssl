@@ -1125,8 +1125,10 @@ int ossl_ech_get_ch_offsets(SSL_CONNECTION *s, PACKET *pkt, size_t *sessid,
 
     if (s == NULL || pkt == NULL || sessid == NULL || exts == NULL
         || echoffset == NULL || echtype == NULL || inner == NULL
-        || snioffset == NULL)
+        || snioffset == NULL) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
+    }
     *sessid = 0;
     *exts = 0;
     *echoffset = 0;
@@ -1155,7 +1157,7 @@ int ossl_ech_get_ch_offsets(SSL_CONNECTION *s, PACKET *pkt, size_t *sessid,
     return 1;
 }
 
-static void OSSL_ECH_ENCCH_free(OSSL_ECH_ENCCH *tbf)
+static void ossl_ech_encch_free(OSSL_ECH_ENCCH *tbf)
 {
     if (tbf == NULL)
         return;
@@ -1209,7 +1211,7 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
                                   OSSL_ECH_ENCCH **retext,
                                   size_t *payload_offset)
 {
-    unsigned char innerorouter = 0xff;
+    unsigned int innerorouter = 0xff;
     unsigned int pval_tmp; /* tmp placeholder of value from packet */
     OSSL_ECH_ENCCH *extval = NULL;
     const unsigned char *startofech = NULL;
@@ -1234,10 +1236,17 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
     extval = OPENSSL_zalloc(sizeof(OSSL_ECH_ENCCH));
     if (extval == NULL)
         goto err;
+#if 0
     if (!PACKET_copy_bytes(pkt, &innerorouter, 1)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
+#else
+    if (!PACKET_get_1(pkt, &innerorouter)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+#endif
     if (innerorouter != OSSL_ECH_OUTER_CH_TYPE) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
@@ -1359,7 +1368,7 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
     return 1;
 err:
     if (extval != NULL) {
-        OSSL_ECH_ENCCH_free(extval);
+        ossl_ech_encch_free(extval);
         OPENSSL_free(extval);
         extval = NULL;
     }
@@ -1588,6 +1597,7 @@ static int ech_reconstitute_inner(SSL_CONNECTION *s, WPACKET *di, PACKET *ei,
             for (i = 0; i != n_outers; i++) {
                 if (ech_copy_ext(s, di, outers[i],
                                  outer_exts, outer_extslen) != 1)
+                    /* SSLfatal called already */
                     goto err;
             }
         } else {
@@ -1669,12 +1679,16 @@ static int ech_decode_inner(SSL_CONNECTION *s, const unsigned char *ob,
         goto err; /* SSLfatal called already */
     /* 3. store final inner CH in connection */
     WPACKET_close(&di);
-    if (!WPACKET_get_length(&di, &s->ext.ech.innerch_len))
+    if (!WPACKET_get_length(&di, &s->ext.ech.innerch_len)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
     OPENSSL_free(s->ext.ech.innerch);
     s->ext.ech.innerch = OPENSSL_malloc(s->ext.ech.innerch_len);
-    if (s->ext.ech.innerch == NULL)
+    if (s->ext.ech.innerch == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
     memcpy(s->ext.ech.innerch, di_mem->data, s->ext.ech.innerch_len);
     rv = 1;
 err:
@@ -1974,12 +1988,16 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
         OSSL_TRACE(TLS, "EARLY: no sign of an outer SNI\n");
     }
     /* trial-decrypt or check if config matches one loaded */
-    if (echoffset > opl - 4)
+    if (echoffset > opl - 4) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
+    }
     startofech = &opd[echoffset + 4];
     echlen = opd[echoffset + 2] * 256 + opd[echoffset + 3];
-    if (echlen > opl - echoffset - 4)
+    if (echlen > opl - echoffset - 4) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
+    }
     if (PACKET_buf_init(&echpkt, startofech, echlen) != 1) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
@@ -2066,7 +2084,7 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     }
 # endif
     if (extval != NULL) {
-        OSSL_ECH_ENCCH_free(extval);
+        ossl_ech_encch_free(extval);
         OPENSSL_free(extval);
         extval = NULL;
     }
@@ -2109,7 +2127,7 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     return 1;
 err:
     if (extval != NULL) {
-        OSSL_ECH_ENCCH_free(extval);
+        ossl_ech_encch_free(extval);
         OPENSSL_free(extval);
         extval = NULL;
     }
