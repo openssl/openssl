@@ -26,7 +26,7 @@ X509_NAME lookup and enumeration functions
 
 These functions allow an B<X509_NAME> structure to be examined. The
 B<X509_NAME> structure is the same as the B<Name> type defined in
-RFC2459 (and elsewhere) and used for example in certificate subject
+RFC 5280 (and elsewhere) and used for example in certificate subject
 and issuer names.
 
 X509_NAME_get_index_by_NID() and X509_NAME_get_index_by_OBJ() retrieve

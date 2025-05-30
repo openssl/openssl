@@ -41,7 +41,7 @@ unsigned long ASN1_STRING_get_default_mask(void)
  * MASK:XXXX : a numerical mask value.
  * default   : use Printable, IA5, T61, BMP, and UTF8 string types
  * nombstr   : any string type except variable-sized BMPStrings or UTF8Strings
- * pkix      : PKIX recommendation in RFC2459
+ * pkix      : PKIX recommendation in RFC 5280
  * utf8only  : this is the default, use UTF8Strings
  */
 
