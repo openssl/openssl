@@ -169,14 +169,14 @@ static size_t decompress_pub_key(void *pub, size_t compressed_len, size_t decomp
 
     switch (len) {
     case 33:
-         group_nid = NID_X9_62_prime256v1;
-       break;
+        group_nid = NID_X9_62_prime256v1;
+        break;
     case 49:
-         group_nid = NID_secp384r1;
-       break;
+        group_nid = NID_secp384r1;
+        break;
     default:
-       return len;
-       break;
+        return len;
+        break;
     }
 
     ctx = BN_CTX_new();
@@ -191,7 +191,8 @@ static size_t decompress_pub_key(void *pub, size_t compressed_len, size_t decomp
     if (!EC_POINT_oct2point(group, point, pub, len, ctx))
         goto err;
 
-    len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, pub, decompressed_len, ctx);
+    len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED,
+                             pub, decompressed_len, ctx);
 
 err:
     EC_POINT_free(point);
@@ -757,16 +758,14 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     /* Lose ownership of propq */
     propq = gctx->propq;
     gctx->propq = NULL;
-    adjusted_propq = get_adjusted_propq(propq);
     if ((key = mlx_kem_key_new(gctx->evp_type, gctx->libctx, propq)) == NULL)
         return NULL;
 
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return key;
 
-    /* For RHEL build, we need adjust "propq" for all PQ part and pass it downwards */
-/*    key->mkey = EVP_PKEY_Q_keygen(key->libctx, adjusted_propq ? adjusted_propq : key->propq,
-                                  key->minfo->algorithm_name); */
+    adjusted_propq = get_adjusted_propq(propq);
+    /* For pre-3.2 FIPS provider build, we need adjust "propq" for all PQ part and pass it downwards */
     mctx = EVP_PKEY_CTX_new_from_name(key->libctx, key->minfo->algorithm_name,
                                       adjusted_propq ? adjusted_propq : key->propq);
     mparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_PROPERTIES,

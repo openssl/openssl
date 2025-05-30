@@ -108,8 +108,7 @@ char *get_adjusted_propq(const char *propq)
 {
     char *adjusted_propq = NULL;
     const char *nofips = "-fips";
-    size_t len = propq ? strlen(propq) + 1 + strlen(nofips) + 1 :
-                                             strlen(nofips) + 1;
+    size_t len = propq ? strlen(propq) + 1 + strlen(nofips) + 1 : strlen(nofips) + 1;
     char *ptr = NULL;
 
     adjusted_propq = OPENSSL_zalloc(len);
@@ -192,7 +191,8 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
     cbuf = ctext + ml_kem_slot * key->xinfo->pubkey_bytes;
     sbuf = shsec + ml_kem_slot * key->xinfo->shsec_bytes;
     adjusted_propq = get_adjusted_propq(key->propq);
-    ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->mkey, adjusted_propq ? adjusted_propq : key->propq);
+    ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->mkey,
+                                     adjusted_propq ? adjusted_propq : key->propq);
     if (ctx == NULL
         || EVP_PKEY_encapsulate_init(ctx, NULL) <= 0
         || EVP_PKEY_encapsulate(ctx, cbuf, &encap_clen, sbuf, &encap_slen) <= 0)
@@ -315,7 +315,8 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
     cbuf = ctext + ml_kem_slot * key->xinfo->pubkey_bytes;
     sbuf = shsec + ml_kem_slot * key->xinfo->shsec_bytes;
     adjusted_propq = get_adjusted_propq(key->propq);
-    ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->mkey, adjusted_propq ? adjusted_propq : key->propq);
+    ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->mkey,
+                                     adjusted_propq ? adjusted_propq : key->propq);
     if (ctx == NULL
         || EVP_PKEY_decapsulate_init(ctx, NULL) <= 0
         || EVP_PKEY_decapsulate(ctx, sbuf, &decap_slen, cbuf, decap_clen) <= 0)
