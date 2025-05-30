@@ -432,6 +432,7 @@ static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
         get_legacy_evp_names(0, EVP_MD_get_type(md), NULL, arg);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_6
 static void get_legacy_pkey_meth_names(const EVP_PKEY_ASN1_METHOD *ameth,
                                        void *arg)
 {
@@ -471,6 +472,7 @@ static void get_legacy_pkey_meth_names(const EVP_PKEY_ASN1_METHOD *ameth,
     }
 }
 #endif
+#endif
 
 /*-
  * Constructors / destructors
@@ -509,9 +511,11 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
         OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH,
                         get_legacy_md_names, namemap);
 
+#ifndef OPENSSL_NO_DEPRECATED_3_6
         /* We also pilfer data from the legacy EVP_PKEY_ASN1_METHODs */
         for (i = 0, end = EVP_PKEY_asn1_get_count(); i < end; i++)
             get_legacy_pkey_meth_names(EVP_PKEY_asn1_get0(i), namemap);
+#endif
     }
 #endif
 

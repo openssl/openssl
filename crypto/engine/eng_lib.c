@@ -87,7 +87,9 @@ int engine_free_util(ENGINE *e, int not_locked)
     REF_ASSERT_ISNT(i < 0);
     /* Free up any dynamically allocated public key methods */
     engine_pkey_meths_free(e);
+#ifndef OPENSSL_NO_DEPRECATED_3_6
     engine_pkey_asn1_meths_free(e);
+#endif
     /*
      * Give the ENGINE a chance to do any structural cleanup corresponding to
      * allocation it did in its constructor (eg. unload error strings)

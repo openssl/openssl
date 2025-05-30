@@ -502,6 +502,7 @@ static FILE_HANDLER PKCS8Encrypted_handler = {
  * encoded ones and old style PEM ones (with the key type is encoded into
  * the PEM name).
  */
+#ifndef OPENSSL_NO_DEPRECATED_3_6
 static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
                                               const char *pem_header,
                                               const unsigned char *blob,
@@ -622,10 +623,13 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
 
     return store_info;
 }
+#endif
 
 static FILE_HANDLER PrivateKey_handler = {
     "PrivateKey",
+#ifndef OPENSSL_NO_DEPRECATED_3_6
     try_decode_PrivateKey
+#endif
 };
 
 /*
@@ -667,6 +671,7 @@ static FILE_HANDLER PUBKEY_handler = {
 /*
  * Key parameter decoder.
  */
+#ifndef OPENSSL_NO_DEPRECATED_3_6
 static OSSL_STORE_INFO *try_decode_params(const char *pem_name,
                                           const char *pem_header,
                                           const unsigned char *blob,
@@ -735,10 +740,13 @@ static OSSL_STORE_INFO *try_decode_params(const char *pem_name,
 
     return store_info;
 }
+#endif
 
 static FILE_HANDLER params_handler = {
     "params",
+#ifndef OPENSSL_NO_DEPRECATED_3_6
     try_decode_params
+#endif
 };
 
 /*
