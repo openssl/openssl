@@ -1236,17 +1236,10 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
     extval = OPENSSL_zalloc(sizeof(OSSL_ECH_ENCCH));
     if (extval == NULL)
         goto err;
-#if 0
-    if (!PACKET_copy_bytes(pkt, &innerorouter, 1)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        goto err;
-    }
-#else
     if (!PACKET_get_1(pkt, &innerorouter)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
-#endif
     if (innerorouter != OSSL_ECH_OUTER_CH_TYPE) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
@@ -1987,7 +1980,6 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     } else {
         OSSL_TRACE(TLS, "EARLY: no sign of an outer SNI\n");
     }
-    /* trial-decrypt or check if config matches one loaded */
     if (echoffset > opl - 4) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
@@ -2005,11 +1997,10 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     if (ech_decode_inbound_ech(s, &echpkt, &extval, &startofciphertext) != 1)
         goto err; /* SSLfatal already called if needed */
     /*
-     * startofciphertext so far is within the ECH value and after the
-     * length of the ciphertext, so we need to bump it by the offset
-     * of ECH within the CH plus the ECH type (2 octets) and
-     * length (also 2 octets) and that ciphertext length (another
-     * 2 octets) for a total of 6 octets
+     * startofciphertext is within the ECH value and after the length of the
+     * ciphertext, so we need to bump it by the offset of ECH within the CH
+     * plus the ECH type (2 octets) and length (also 2 octets) and that
+     * ciphertext length (another 2 octets) for a total of 6 octets
      */
     startofciphertext += echoffset + 6;
     lenofciphertext = extval->payload_len;
@@ -2019,7 +2010,6 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
 # ifdef OSSL_ECH_SUPERVERBOSE
     ossl_ech_pbuf("EARLY aad", aad, aad_len);
 # endif
-    /* See if any of our configs match, or trial decrypt if needed */
     s->ext.ech.grease = OSSL_ECH_GREASE_UNKNOWN;
     if (s->ext.ech.es == NULL) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
@@ -2030,7 +2020,6 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
            : sk_OSSL_ECHSTORE_ENTRY_num(es->entries));
     for (cfgind = 0; cfgind != num; cfgind++) {
         ee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, cfgind);
-
         OSSL_TRACE_BEGIN(TLS) {
             BIO_printf(trc_out,
                        "EARLY: rx'd config id (%x) ==? %d-th configured (%x)\n",
@@ -2061,8 +2050,7 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
             }
         }
     }
-    /* decrypting worked or not, but we're done with that now  */
-    s->ext.ech.done = 1;
+    s->ext.ech.done = 1; /* decrypting worked or not, but we're done now */
     /* 3. if decrypt fails tee-up GREASE */
     s->ext.ech.grease = OSSL_ECH_IS_GREASE;
     s->ext.ech.success = 0;
@@ -2099,12 +2087,12 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     }
     OPENSSL_free(clear);
 # ifdef OSSL_ECH_SUPERVERBOSE
-    ossl_ech_pbuf("Inner CH (decoded)", s->ext.ech.innerch, s->ext.ech.innerch_len);
+    ossl_ech_pbuf("Inner CH (decoded)", s->ext.ech.innerch,
+                  s->ext.ech.innerch_len);
 # endif
     /*
-     * The +4 below is because tls_process_client_hello doesn't
-     * want to be given the message type & length, so the buffer should
-     * start with the version octets (0x03 0x03)
+     * +4 below because tls_process_client_hello doesn't want to be given the
+     * message type & length, so the buffer starts with version octets
      */
     if (PACKET_buf_init(newpkt, s->ext.ech.innerch + 4,
                         s->ext.ech.innerch_len - 4) != 1) {
@@ -2120,7 +2108,8 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
         rwm[2] = (olen >> 8) % 256;
         rwm[3] = olen % 256;
     }
-    if (ossl_ech_intbuf_add(s, s->ext.ech.innerch, s->ext.ech.innerch_len, 0) != 1) {
+    if (ossl_ech_intbuf_add(s, s->ext.ech.innerch,
+                            s->ext.ech.innerch_len, 0) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
