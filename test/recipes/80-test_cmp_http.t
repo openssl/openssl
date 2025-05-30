@@ -333,7 +333,7 @@ sub start_server {
         my $pid0 = $pid;
         while (<$server_fh>) {
             print "$server_name server output: $_";
-            next if m/using section/;
+            next if m/[Uu]sing section/;
             s/\R$//;                # Better chomp
             ($host, $port, $pid) = ($1, $2, $3)
                 if /^ACCEPT\s(.*?):(\d+) PID=(\d+)$/;
