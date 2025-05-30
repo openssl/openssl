@@ -429,7 +429,7 @@ static EVP_PKEY *new_raw_key_int(OSSL_LIB_CTX *libctx,
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
     int result = 0;
 
-# ifndef OPENSSL_NO_ENGINE
+# if !defined(OPENSSL_NO_ENGINE) && !defined(OPENSSL_NO_DEPRECATED_3_6)
     /* Check if there is an Engine for this type */
     if (e == NULL) {
         ENGINE *tmpe = NULL;
@@ -720,6 +720,7 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
     return new_cmac_key_int(priv, len, NULL, cipher, NULL, NULL, e);
 }
 
+// TODO?
 int EVP_PKEY_set_type(EVP_PKEY *pkey, int type)
 {
     return pkey_set_type(pkey, NULL, type, NULL, -1, NULL);
@@ -1025,13 +1026,26 @@ DH *EVP_PKEY_get1_DH(EVP_PKEY *pkey)
 int EVP_PKEY_type(int type)
 {
     int ret;
-    const EVP_PKEY_ASN1_METHOD *ameth;
+# ifndef OPENSSL_NO_ENGINE
     ENGINE *e;
+# endif
+# ifndef OPENSSL_NO_DEPRECATED_3_6
+    const EVP_PKEY_ASN1_METHOD *ameth;
     ameth = EVP_PKEY_asn1_find(&e, type);
     if (ameth)
         ret = ameth->pkey_id;
     else
         ret = NID_undef;
+# else
+    const char *algname = OBJ_nid2sn(type);
+    if (algname != NULL) {
+        EVP_KEYMGMT *keymgmt = EVP_KEYMGMT_fetch(NULL, algname, NULL);
+        if (keymgmt != NULL) {
+            ret = type;
+            EVP_KEYMGMT_free(keymgmt);
+        }
+    }
+# endif
 # ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(e);
 # endif
@@ -1544,8 +1558,8 @@ EVP_PKEY *EVP_PKEY_new(void)
  * Setup a public key management method.
  *
  * For legacy keys, either |type| or |str| is expected to have the type
- * information.  In this case, the setup consists of finding an ASN1 method
- * and potentially an ENGINE, and setting those fields in |pkey|.
+ * information. In favor of deprecating asn1 functions, the |keymgmt| will
+ * be also used for the legacy key, therefore it is expected to be non-NULL.
  *
  * For provider side keys, |keymgmt| is expected to be non-NULL.  In this
  * case, the setup consists of setting the |keymgmt| field in |pkey|.
@@ -1557,7 +1571,9 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
                          int len, EVP_KEYMGMT *keymgmt)
 {
 #ifndef FIPS_MODULE
+# ifndef OPENSSL_NO_DEPRECATED_3_6
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
+# endif
     ENGINE **eptr = (e == NULL) ? &e :  NULL;
 #endif
 
@@ -1598,7 +1614,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
 # endif
 #endif
     }
-#ifndef FIPS_MODULE
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_DEPRECATED_3_6)
     if (str != NULL)
         ameth = EVP_PKEY_asn1_find_str(eptr, str, len);
     else if (type != EVP_PKEY_NONE)
@@ -1613,7 +1629,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
     {
         int check = 1;
 
-#ifndef FIPS_MODULE
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_DEPRECATED_3_6)
         check = check && ameth == NULL;
 #endif
         check = check && keymgmt == NULL;
@@ -1639,6 +1655,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
          * The main reason is that |ameth| is one factor to detect that the
          * internal "origin" key is a legacy one.
          */
+# ifndef OPENSSL_NO_DEPRECATED_3_6
         if (keymgmt == NULL)
             pkey->ameth = ameth;
 
@@ -1656,6 +1673,9 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
         } else {
             pkey->type = EVP_PKEY_KEYMGMT;
         }
+# else
+        pkey->type = EVP_PKEY_KEYMGMT;
+# endif
 # ifndef OPENSSL_NO_ENGINE
         if (eptr == NULL && e != NULL && !ENGINE_init(e)) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
@@ -1793,7 +1813,7 @@ err:
     return NULL;
 }
 
-#ifndef FIPS_MODULE
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_DEPRECATED_3_6)
 void evp_pkey_free_legacy(EVP_PKEY *x)
 {
     const EVP_PKEY_ASN1_METHOD *ameth = x->ameth;
@@ -1828,13 +1848,13 @@ void evp_pkey_free_legacy(EVP_PKEY *x)
     x->pmeth_engine = NULL;
 # endif
 }
-#endif  /* FIPS_MODULE */
+#endif  /* FIPS_MODULE and 3.6 */
 
 static void evp_pkey_free_it(EVP_PKEY *x)
 {
     /* internal function; x is never NULL */
     evp_keymgmt_util_clear_operation_cache(x);
-#ifndef FIPS_MODULE
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_DEPRECATED_3_6)
     evp_pkey_free_legacy(x);
 #endif
 
