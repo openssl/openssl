@@ -218,6 +218,9 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
             }
             dtls1_fix_message_header(s, frag_off, len - DTLS1_HM_HEADER_LENGTH);
 
+            /* Save the data that will be overwritten by
+             * dtls1_write_messsage_header so no corruption occurs when using
+             * a msg callback. */
             if (s->msg_callback && s->init_off != 0)
                 memcpy(saved_payload, &s->init_buf->data[s->init_off],
                     sizeof(saved_payload));
