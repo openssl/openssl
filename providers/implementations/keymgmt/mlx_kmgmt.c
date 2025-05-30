@@ -765,7 +765,7 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return key;
 
     adjusted_propq = get_adjusted_propq(propq);
-    /* For pre-3.2 FIPS provider build, we need adjust "propq" for all PQ part and pass it downwards */
+    /* For pre-3.2 FIPS providers we adjust "propq" for all PQ part and pass it downwards */
     mctx = EVP_PKEY_CTX_new_from_name(key->libctx, key->minfo->algorithm_name,
                                       adjusted_propq ? adjusted_propq : key->propq);
     mparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_PROPERTIES,
