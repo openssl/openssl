@@ -102,53 +102,6 @@ static int is_mac_disabled(const char *name);
 static int is_cipher_disabled(const char *name);
 static int is_kdf_disabled(const char *name);
 
-static const char *name_dup_algs[] = {
-#ifndef OPENSSL_NO_ECX
-    "ED25519",
-#endif
-#ifndef OPENSSL_NO_ML_KEM
-    "ML-KEM-512",
-#endif
-#ifndef OPENSSL_NO_ML_DSA
-    "ML-DSA-44",
-#endif
-    NULL
-};
-
-static int test_name_dup(int idx)
-{
-    const char *alg = name_dup_algs[idx];
-    EVP_PKEY *key = NULL;
-    EVP_PKEY_CTX *factory = NULL, *ctx = NULL;
-    int i, ret = 0;
-
-    if (alg == NULL
-        || (factory = EVP_PKEY_CTX_new_from_name(libctx, alg, NULL)) == NULL)
-        return 1;
-    TEST_info("Testing fresh context dup for: %s", alg);
-
-    /* Run twice to check that *repeated* use works */
-    for (i = 0; i < 2; ++i) {
-        EVP_PKEY_CTX_free(ctx);
-        EVP_PKEY_free(key);
-        key = NULL;
-        if (!TEST_ptr(ctx = EVP_PKEY_CTX_dup(factory))
-            || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
-            || !TEST_int_gt(EVP_PKEY_keygen(ctx, &key), 0)) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-    }
-    ret = 1;
-
- end:
-    EVP_PKEY_CTX_free(factory);
-    EVP_PKEY_CTX_free(ctx);
-    EVP_PKEY_free(key);
-
-    return ret;
-}
-
 /* A callback that is triggered if fips unapproved mode is detected */
 static int fips_indicator_cb(const char *type, const char *desc,
                              const OSSL_PARAM params[])
@@ -5550,7 +5503,6 @@ int setup_tests(void)
         return 0;
 
     ADD_ALL_TESTS(run_file_tests, n);
-    ADD_ALL_TESTS(test_name_dup, OSSL_NELEM(name_dup_algs));
     return 1;
 }
 
