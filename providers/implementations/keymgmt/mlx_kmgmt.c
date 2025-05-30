@@ -156,6 +156,52 @@ typedef struct export_cb_arg_st {
     size_t   prvlen;
 } EXPORT_CB_ARG;
 
+#ifndef FIPS_MODULE
+# include <openssl/bn.h>
+# include <openssl/ec.h>
+static size_t decompress_pub_key(void *pub, size_t compressed_len, size_t decompressed_len)
+{
+    EC_GROUP *group = NULL;
+    EC_POINT *point = NULL;
+    BN_CTX *ctx = NULL;
+    size_t len = compressed_len;
+    int group_nid = NID_undef;
+
+    switch (len) {
+    case 33:
+         group_nid = NID_X9_62_prime256v1;
+       break;
+    case 49:
+         group_nid = NID_secp384r1;
+       break;
+    default:
+       return len;
+       break;
+    }
+
+    ctx = BN_CTX_new();
+    group = EC_GROUP_new_by_curve_name(group_nid);
+    if (ctx == NULL || group == NULL)
+        goto err;
+
+    point = EC_POINT_new(group);
+    if (point == NULL)
+        goto err;
+
+    if (!EC_POINT_oct2point(group, point, pub, len, ctx))
+        goto err;
+
+    len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, pub, decompressed_len, ctx);
+
+err:
+    EC_POINT_free(point);
+    EC_GROUP_free(group);
+    BN_CTX_free(ctx);
+
+    return len;
+}
+#endif
+
 /* Copy any exported key material into its storage slot */
 static int export_sub_cb(const OSSL_PARAM *params, void *varg)
 {
@@ -176,6 +222,10 @@ static int export_sub_cb(const OSSL_PARAM *params, void *varg)
 
         if (OSSL_PARAM_get_octet_string(p, &pub, sub_arg->publen, &len) != 1)
             return 0;
+#ifndef FIPS_MODULE
+        if (len < sub_arg->publen)
+            len = decompress_pub_key(pub, len, sub_arg->publen);
+#endif
         if (len != sub_arg->publen) {
             ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
                            "Unexpected %s public key length %lu != %lu",
@@ -695,6 +745,9 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     PROV_ML_KEM_GEN_CTX *gctx = vgctx;
     MLX_KEY *key;
     char *propq;
+    char *adjusted_propq = NULL;
+    EVP_PKEY_CTX *mctx = NULL;
+    OSSL_PARAM mparams[] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     if (gctx == NULL
         || (gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) ==
@@ -704,15 +757,27 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     /* Lose ownership of propq */
     propq = gctx->propq;
     gctx->propq = NULL;
+    adjusted_propq = get_adjusted_propq(propq);
     if ((key = mlx_kem_key_new(gctx->evp_type, gctx->libctx, propq)) == NULL)
         return NULL;
 
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return key;
 
-    /* For now, using the same "propq" for all components */
-    key->mkey = EVP_PKEY_Q_keygen(key->libctx, key->propq,
-                                  key->minfo->algorithm_name);
+    /* For RHEL build, we need adjust "propq" for all PQ part and pass it downwards */
+/*    key->mkey = EVP_PKEY_Q_keygen(key->libctx, adjusted_propq ? adjusted_propq : key->propq,
+                                  key->minfo->algorithm_name); */
+    mctx = EVP_PKEY_CTX_new_from_name(key->libctx, key->minfo->algorithm_name,
+                                      adjusted_propq ? adjusted_propq : key->propq);
+    mparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_PROPERTIES,
+                                                  adjusted_propq ? adjusted_propq : key->propq, 0);
+    if (mctx != NULL
+            && EVP_PKEY_keygen_init(mctx) > 0
+            && EVP_PKEY_CTX_set_params(mctx, mparams))
+        (void)EVP_PKEY_generate(mctx, &(key->mkey));
+    EVP_PKEY_CTX_free(mctx);
+    OPENSSL_free(adjusted_propq);
+
     key->xkey = EVP_PKEY_Q_keygen(key->libctx, key->propq,
                                   key->xinfo->algorithm_name,
                                   key->xinfo->group_name);

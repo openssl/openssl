@@ -44,4 +44,5 @@ typedef struct mlx_key_st {
 #define mlx_kem_have_pubkey(key) ((key)->state > 0)
 #define mlx_kem_have_prvkey(key) ((key)->state > 1)
 
+char *get_adjusted_propq(const char *propq);
 #endif
