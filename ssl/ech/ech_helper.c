@@ -55,14 +55,14 @@ int ossl_ech_make_enc_info(const unsigned char *encoding,
  * Given a CH find the offsets of the session id, extensions and ECH
  * ch is the encoded client hello
  * ch_len is the length of ch
- * sessid returns offset of session_id length
- * exts points to offset of extensions
- * extlens returns length of extensions
- * echoffset returns offset of ECH
+ * sessid_off returns offset of session_id length
+ * exts_off points to offset of extensions
+ * exts_len returns length of extensions
+ * ech_off returns offset of ECH
  * echtype returns the ext type of the ECH
- * echlen returns the length of the ECH
- * snioffset returns offset of (outer) SNI
- * snilen returns the length of the SNI
+ * ech_len returns the length of the ECH
+ * sni_off returns offset of (outer) SNI
+ * sni_len returns the length of the SNI
  * inner 1 if the ECH is marked as an inner, 0 for outer
  * return 1 for success, other otherwise
  *
@@ -72,23 +72,22 @@ int ossl_ech_make_enc_info(const unsigned char *encoding,
  * Note: input here is untrusted!
  */
 int ossl_ech_helper_get_ch_offsets(const unsigned char *ch, size_t ch_len,
-                                   size_t *sessid, size_t *exts,
-                                   size_t *extlens,
-                                   size_t *echoffset, uint16_t *echtype,
-                                   size_t *echlen, size_t *snioffset,
-                                   size_t *snilen, int *inner)
+                                   size_t *sessid_off, size_t *exts_off,
+                                   size_t *exts_len,
+                                   size_t *ech_off, uint16_t *echtype,
+                                   size_t *ech_len, size_t *sni_off,
+                                   size_t *sni_len, int *inner)
 {
     unsigned int elen = 0, etype = 0, pi_tmp = 0;
     const unsigned char *pp_tmp = NULL, *chstart = NULL, *estart = NULL;
     PACKET pkt;
     int done = 0;
 
-    if (ch == NULL || ch_len == 0 || sessid == NULL || exts == NULL
-        || echoffset == NULL || echtype == NULL || echlen == NULL
-        || inner == NULL
-        || snioffset == NULL)
+    if (ch == NULL || ch_len == 0 || sessid_off == NULL || exts_off == NULL
+        || ech_off == NULL || echtype == NULL || ech_len == NULL
+        || sni_off == NULL || inner == NULL)
         return 0;
-    *sessid = *exts = *echoffset = *snioffset = *snilen = *echlen = 0;
+    *sessid_off = *exts_off = *ech_off = *sni_off = *sni_len = *ech_len = 0;
     *echtype = 0xffff;
     if (!PACKET_buf_init(&pkt, ch, ch_len))
         return 0;
@@ -100,16 +99,16 @@ int ossl_ech_helper_get_ch_offsets(const unsigned char *ch, size_t ch_len,
         return 1;
     /* chew up the packet to extensions */
     if (!PACKET_get_bytes(&pkt, &pp_tmp, SSL3_RANDOM_SIZE)
-        || (*sessid = PACKET_data(&pkt) - chstart) == 0
+        || (*sessid_off = PACKET_data(&pkt) - chstart) == 0
         || !PACKET_get_1(&pkt, &pi_tmp) /* sessid len */
         || !PACKET_get_bytes(&pkt, &pp_tmp, pi_tmp) /* sessid */
         || !PACKET_get_net_2(&pkt, &pi_tmp) /* ciphersuite len */
         || !PACKET_get_bytes(&pkt, &pp_tmp, pi_tmp) /* suites */
         || !PACKET_get_1(&pkt, &pi_tmp) /* compression meths */
         || !PACKET_get_bytes(&pkt, &pp_tmp, pi_tmp) /* comp meths */
-        || (*exts = PACKET_data(&pkt) - chstart) == 0
+        || (*exts_off = PACKET_data(&pkt) - chstart) == 0
         || !PACKET_get_net_2(&pkt, &pi_tmp) /* len(extensions) */
-        || (*extlens = (size_t) pi_tmp) == 0)
+        || (*exts_len = (size_t) pi_tmp) == 0)
         /*
          * unexpectedly, we return 1 here, as doing otherwise will
          * break some non-ECH test code that truncates CH messages
@@ -119,12 +118,12 @@ int ossl_ech_helper_get_ch_offsets(const unsigned char *ch, size_t ch_len,
          */
         return 1;
     /* no extensions is theoretically ok, if uninteresting */
-    if (*extlens == 0)
+    if (*exts_len == 0)
         return 1;
     /* find what we want from extensions */
     estart = PACKET_data(&pkt);
     while (PACKET_remaining(&pkt) > 0
-           && (size_t)(PACKET_data(&pkt) - estart) < *extlens
+           && (size_t)(PACKET_data(&pkt) - estart) < *exts_len
            && done < 2) {
         if (!PACKET_get_net_2(&pkt, &etype)
             || !PACKET_get_net_2(&pkt, &elen))
@@ -132,14 +131,14 @@ int ossl_ech_helper_get_ch_offsets(const unsigned char *ch, size_t ch_len,
         if (etype == TLSEXT_TYPE_ech) {
             if (elen == 0)
                 return 0;
-            *echoffset = PACKET_data(&pkt) - chstart - 4;
+            *ech_off = PACKET_data(&pkt) - chstart - 4;
             *echtype = etype;
-            *echlen = elen;
+            *ech_len = elen;
             done++;
         }
         if (etype == TLSEXT_TYPE_server_name) {
-            *snioffset = PACKET_data(&pkt) - chstart - 4;
-            *snilen = elen;
+            *sni_off = PACKET_data(&pkt) - chstart - 4;
+            *sni_len = elen;
             done++;
         }
         if (!PACKET_get_bytes(&pkt, &pp_tmp, elen))

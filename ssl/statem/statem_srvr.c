@@ -1536,8 +1536,10 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
             }
             s->ext.ech.innerch_len += SSL3_HM_HEADER_LENGTH; /* 4 */
             s->ext.ech.innerch = OPENSSL_malloc(s->ext.ech.innerch_len);
-            if (s->ext.ech.innerch == NULL)
+            if (s->ext.ech.innerch == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
+            }
             if (!WPACKET_init_static_len(&inner, s->ext.ech.innerch,
                                          s->ext.ech.innerch_len, 0)
                 || !WPACKET_put_bytes_u8(&inner, SSL3_MT_CLIENT_HELLO)
@@ -2087,6 +2089,9 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             && !SSL_CONNECTION_IS_DTLS(s)
             && s->ext.session_secret_cb != NULL)) {
         const SSL_CIPHER *pref_cipher = NULL;
+#elif 0
+        /* silence the style checker */
+    }
 #else
 
     if (!s->hit
@@ -2252,13 +2257,8 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
  err:
     sk_SSL_CIPHER_free(ciphers);
     sk_SSL_CIPHER_free(scsvs);
-#ifndef OPENSSL_NO_ECH
-    /* this doesn't seem to be an ECH specific change? */
     if (clienthello != NULL)
         OPENSSL_free(clienthello->pre_proc_exts);
-#else
-    OPENSSL_free(clienthello->pre_proc_exts);
-#endif
     OPENSSL_free(s->clienthello);
     s->clienthello = NULL;
 
@@ -2640,7 +2640,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
                           s->ext.ech.innerch_len);
 # endif
             md = ssl_handshake_md(s);
-            if (md == NULL) {
+            if (ctx == NULL || md == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return CON_FUNC_ERROR;
             }
@@ -2735,6 +2735,10 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
         BIO *biom = BIO_new(BIO_s_mem());
         unsigned int cbrv = 0;
 
+        if (biom == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return CON_FUNC_ERROR;
+        }
         memset(pstr, 0, OSSL_ECH_PBUF_SIZE + 1);
         ossl_ech_status_print(biom, s, OSSL_ECHSTORE_ALL);
         BIO_read(biom, pstr, OSSL_ECH_PBUF_SIZE);
