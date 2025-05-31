@@ -1923,6 +1923,10 @@ int tls_parse_compress_certificate(SSL_CONNECTION *sc, PACKET *pkt, unsigned int
             already_set[comp] = 1;
         }
     }
+    if (PACKET_remaining(&supported_comp_algs) != 0) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
 #endif
     return 1;
 }
