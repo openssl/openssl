@@ -858,6 +858,13 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
 }
 #endif
 
+void ossl_quic_tls_clear(QUIC_TLS *qtls)
+{
+    if (qtls == NULL)
+        return;
+    qtls->local_transport_params_consumed = 0;
+}
+
 int ossl_quic_tls_set_transport_params(QUIC_TLS *qtls,
                                        const unsigned char *transport_params,
                                        size_t transport_params_len)
