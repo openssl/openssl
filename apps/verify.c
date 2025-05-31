@@ -365,6 +365,7 @@ static int cb(int ok, X509_STORE_CTX *ctx)
         case X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION:
             /* errors due to strict conformance checking (-x509_strict) */
         case X509_V_ERR_INVALID_PURPOSE:
+        case X509_V_ERR_DUPLICATE_EXTENSION:
         case X509_V_ERR_PATHLEN_INVALID_FOR_NON_CA:
         case X509_V_ERR_PATHLEN_WITHOUT_KU_KEY_CERT_SIGN:
         case X509_V_ERR_CA_BCONS_NOT_CRITICAL:
