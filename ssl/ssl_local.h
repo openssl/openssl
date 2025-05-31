@@ -2772,6 +2772,8 @@ __owur int tls1_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
 __owur int tls13_setup_key_block(SSL_CONNECTION *s);
 __owur size_t tls13_final_finish_mac(SSL_CONNECTION *s, const char *str, size_t slen,
                                      unsigned char *p);
+__owur int tls13_store_handshake_traffic_hash(SSL_CONNECTION *s);
+__owur int tls13_store_server_finished_hash(SSL_CONNECTION *s);
 __owur int tls13_change_cipher_state(SSL_CONNECTION *s, int which);
 __owur int tls13_update_key(SSL_CONNECTION *s, int send);
 __owur int tls13_hkdf_expand(SSL_CONNECTION *s,
