@@ -9,10 +9,15 @@
 use strict;
 use warnings;
 
-use OpenSSL::Test qw/:DEFAULT bldtop_file srctop_file bldtop_dir with/;
+use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_dir bldtop_file with/;
 use OpenSSL::Test::Utils;
+BEGIN { setup("test_nocache"); }
 
-setup("test_nocache");
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
+use platform;
+
+my $no_modules = disabled("module");
 
 plan tests => 4;
 
@@ -24,11 +29,15 @@ my @match = grep /MAC/, <DATA>;
 close DATA;
 ok(scalar @match > 1 ? 1 : 0, "Several algorithms are listed - default configuration");
 
-$ENV{OPENSSL_CONF} = bldtop_file("test", "nocache-and-default.cnf");
-ok(run(app(["openssl", "list", "-mac-algorithms"],
-        stdout => "listout.txt")),
-"List mac algorithms");
-open DATA, "listout.txt";
-my @match = grep /MAC/, <DATA>;
-close DATA;
-ok(scalar @match > 1 ? 1 : 0, "Several algorithms are listed - nocache-and-default");
+SKIP: {
+    skip "Tests requiring loadable modules", 2 if $no_modules;
+
+    $ENV{OPENSSL_CONF} = bldtop_file("test", "nocache-and-default.cnf");
+    $ENV{OPENSSL_MODULES} = bldtop_dir("test");
+    ok(run(app(["openssl", "list", "-mac-algorithms"],
+            stdout => "listout.txt")), "List mac algorithms");
+    open DATA, "listout.txt";
+    @match = grep /MAC/, <DATA>;
+    close DATA;
+    ok(scalar @match > 1 ? 1 : 0, "Several algorithms are listed - nocache-and-default");
+}
