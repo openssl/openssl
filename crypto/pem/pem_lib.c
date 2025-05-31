@@ -139,6 +139,7 @@ static int check_pem(const char *nm, const char *name)
         if (strcmp(nm, PEM_STRING_PKCS8INF) == 0)
             return 1;
         slen = ossl_pem_check_suffix(nm, "PRIVATE KEY");
+#ifndef OPENSSL_NO_DEPRECATED_3_6
         if (slen > 0) {
             /*
              * NB: ENGINE implementations won't contain a deprecated old
@@ -148,11 +149,13 @@ static int check_pem(const char *nm, const char *name)
             if (ameth && ameth->old_priv_decode)
                 return 1;
         }
+#endif
         return 0;
     }
 
     if (strcmp(name, PEM_STRING_PARAMETERS) == 0) {
         int slen;
+#ifndef OPENSSL_NO_DEPRECATED_3_6
         const EVP_PKEY_ASN1_METHOD *ameth;
         slen = ossl_pem_check_suffix(nm, "PARAMETERS");
         if (slen > 0) {
@@ -170,6 +173,7 @@ static int check_pem(const char *nm, const char *name)
                 return r;
             }
         }
+#endif
         return 0;
     }
     /* If reading DH parameters handle X9.42 DH format too */

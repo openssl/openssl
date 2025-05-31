@@ -113,6 +113,7 @@ int ENGINE_set_pkey_asn1_meths(ENGINE *e, ENGINE_PKEY_ASN1_METHS_PTR f)
  * ENGINE is destroyed
  */
 
+#ifndef OPENSSL_NO_DEPRECATED_3_6
 void engine_pkey_asn1_meths_free(ENGINE *e)
 {
     int i;
@@ -128,6 +129,7 @@ void engine_pkey_asn1_meths_free(ENGINE *e)
         }
     }
 }
+#endif
 
 /*
  * Find a method based on a string. This does a linear search through all

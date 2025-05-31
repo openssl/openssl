@@ -93,7 +93,9 @@ void engine_set_all_null(ENGINE *e);
 /* Free up dynamically allocated public key methods associated with ENGINE */
 
 void engine_pkey_meths_free(ENGINE *e);
-void engine_pkey_asn1_meths_free(ENGINE *e);
+#ifndef OPENSSL_NO_DEPRECATED_3_6
+OSSL_DEPRECATEDIN_3_6 void engine_pkey_asn1_meths_free(ENGINE *e);
+#endif
 
 /* Once initialisation function */
 extern CRYPTO_ONCE engine_lock_init;
