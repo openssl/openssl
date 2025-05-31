@@ -64,12 +64,12 @@ jobs:
   # This checks that we use ANSI C language syntax and semantics.
   # We are not as strict with libraries, but rather adapt to what's
   # expected to be available in a certain version of each platform.
-  check-ansi:
+  check-c99:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: config
-      run: CPPFLAGS='-ansi -D_XOPEN_SOURCE=1 -D_POSIX_C_SOURCE=200809L' ./config --strict-warnings --banner=Configured enable-sslkeylog no-asm no-secure-memory no-makedepend enable-buildtest-c++ enable-fips && perl configdata.pm --dump
+      run: CPPFLAGS='-std=c99 -D_XOPEN_SOURCE=1 -D_POSIX_C_SOURCE=200809L' ./config --strict-warnings --banner=Configured enable-sslkeylog no-asm no-secure-memory no-makedepend enable-buildtest-c++ enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
 
