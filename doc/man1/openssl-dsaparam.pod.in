@@ -49,7 +49,7 @@ The DSA parameters output format; the default is B<PEM>.
 See L<openssl-format-options(1)> for details.
 
 Parameters are a sequence of B<ASN.1 INTEGER>s: B<p>, B<q>, and B<g>.
-This is compatible with RFC 2459 B<DSS-Parms> structure.
+This is compatible with RFC 3370 B<DSS-Parms> structure.
 
 =item B<-in> I<filename>
 
