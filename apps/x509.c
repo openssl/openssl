@@ -436,7 +436,7 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_ADDTRUST:
             if (trust == NULL && (trust = sk_ASN1_OBJECT_new_null()) == NULL)
-                goto end;
+                goto err;
             if ((objtmp = OBJ_txt2obj(opt_arg(), 0)) == NULL) {
                 BIO_printf(bio_err, "%s: Invalid trust object value %s\n",
                            prog, opt_arg());
@@ -447,7 +447,7 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_ADDREJECT:
             if (reject == NULL && (reject = sk_ASN1_OBJECT_new_null()) == NULL)
-                goto end;
+                goto err;
             if ((objtmp = OBJ_txt2obj(opt_arg(), 0)) == NULL) {
                 BIO_printf(bio_err, "%s: Invalid reject object value %s\n",
                            prog, opt_arg());
@@ -605,7 +605,7 @@ int x509_main(int argc, char **argv)
         goto opthelp;
 
     if (!app_RAND_load())
-        goto end;
+        goto err;
 
     if (!opt_check_md(digest))
         goto opthelp;
@@ -624,7 +624,7 @@ int x509_main(int argc, char **argv)
 
     if (!X509_STORE_set_default_paths_ex(ctx, app_get0_libctx(),
                                          app_get0_propq()))
-        goto end;
+        goto err;
 
     if (newcert && infile != NULL) {
         BIO_printf(bio_err, "The -in option cannot be used with -new\n");
@@ -637,12 +637,12 @@ int x509_main(int argc, char **argv)
     if (privkeyfile != NULL) {
         privkey = load_key(privkeyfile, keyformat, 0, passin, e, "private key");
         if (privkey == NULL)
-            goto end;
+            goto err;
     }
     if (pubkeyfile != NULL) {
         if ((pubkey = load_pubkey(pubkeyfile, keyformat, 0, NULL, e,
                                   "explicitly set public key")) == NULL)
-            goto end;
+            goto err;
     }
 
     if (newcert) {
@@ -659,10 +659,10 @@ int x509_main(int argc, char **argv)
     }
     if (issu != NULL
             && (fissu = parse_name(issu, chtype, multirdn, "issuer")) == NULL)
-        goto end;
+        goto err;
     if (subj != NULL
             && (fsubj = parse_name(subj, chtype, multirdn, "subject")) == NULL)
-        goto end;
+        goto err;
 
     if (CAkeyfile == NULL)
         CAkeyfile = CAfile;
@@ -694,7 +694,7 @@ int x509_main(int argc, char **argv)
         X509V3_CTX ctx2;
 
         if ((extconf = app_load_config(extfile)) == NULL)
-            goto end;
+            goto err;
         if (extsect == NULL) {
             extsect = app_conf_try_string(extconf, "default", "extensions");
             if (extsect == NULL)
@@ -716,7 +716,7 @@ int x509_main(int argc, char **argv)
         req = load_csr_autofmt(infile, informat, vfyopts,
                                "certificate request input");
         if (req == NULL)
-            goto end;
+            goto err;
 
         if ((pkey = X509_REQ_get0_pubkey(req)) == NULL) {
             BIO_printf(bio_err, "Error unpacking public key from CSR\n");
@@ -747,11 +747,11 @@ int x509_main(int argc, char **argv)
             goto err;
         }
         if ((x = X509_new_ex(app_get0_libctx(), app_get0_propq())) == NULL)
-            goto end;
+            goto err;
         if (CAfile == NULL && sno == NULL) {
             sno = ASN1_INTEGER_new();
             if (sno == NULL || !rand_serial(NULL, sno))
-                goto end;
+                goto err;
         }
         if (req != NULL && ext_copy != EXT_COPY_UNSET) {
             if (clrext && ext_copy != EXT_COPY_NONE) {
@@ -768,27 +768,27 @@ int x509_main(int argc, char **argv)
                        "Warning: Reading certificate from stdin since no -in or -new option is given\n");
         x = load_cert_pass(infile, informat, 1, passin, "certificate");
         if (x == NULL)
-            goto end;
+            goto err;
     }
     if ((fsubj != NULL || req != NULL)
         && !X509_set_subject_name(x, fsubj != NULL ? fsubj :
                                   X509_REQ_get_subject_name(req)))
-        goto end;
+        goto err;
     if ((pubkey != NULL || privkey != NULL || req != NULL)
         && !X509_set_pubkey(x, pubkey != NULL ? pubkey :
                             privkey != NULL ? privkey :
                             X509_REQ_get0_pubkey(req)))
-        goto end;
+        goto err;
 
     if (CAfile != NULL) {
         xca = load_cert_pass(CAfile, CAformat, 1, passin, "CA certificate");
         if (xca == NULL)
-            goto end;
+            goto err;
     }
 
     out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
-        goto end;
+        goto err;
 
     if (alias)
         X509_alias_set1(x, (unsigned char *)alias, -1);
@@ -824,9 +824,9 @@ int x509_main(int argc, char **argv)
         if (sno == NULL)
             sno = x509_load_serial(CAfile, CAserial, CA_createserial);
         if (sno == NULL)
-            goto end;
+            goto err;
         if (!x509toreq && !reqfile && !newcert && !self_signed(ctx, x))
-            goto end;
+            goto err;
     } else {
         if (privkey != NULL && !cert_matches_key(x, privkey))
             BIO_printf(bio_err,
@@ -834,17 +834,17 @@ int x509_main(int argc, char **argv)
     }
 
     if (sno != NULL && !X509_set_serialNumber(x, sno))
-        goto end;
+        goto err;
 
     if (reqfile || newcert || privkey != NULL || CAfile != NULL) {
         if (!preserve_dates && !set_cert_times(x, NULL, NULL, days))
-            goto end;
+            goto err;
         if (fissu != NULL) {
             if (!X509_set_issuer_name(x, fissu))
-                goto end;
+                goto err;
         } else {
             if (!X509_set_issuer_name(x, X509_get_subject_name(issuer_cert)))
-                goto end;
+                goto err;
         }
     }
 
@@ -852,7 +852,7 @@ int x509_main(int argc, char **argv)
     /* prepare fallback for AKID, but only if issuer cert equals subject cert */
     if (CAfile == NULL) {
         if (!X509V3_set_issuer_pkey(&ext_ctx, privkey))
-            goto end;
+            goto err;
     }
     if (extconf != NULL && !x509toreq) {
         X509V3_set_nconf(&ext_ctx, extconf);
@@ -881,7 +881,7 @@ int x509_main(int argc, char **argv)
             goto err;
         }
         if ((rq = x509_to_req(x, ext_copy, ext_names)) == NULL)
-            goto end;
+            goto err;
         if (extconf != NULL) {
             X509V3_set_nconf(&ext_ctx, extconf);
             if (!X509V3_EXT_REQ_add_nconf(extconf, &ext_ctx, extsect, rq)) {
@@ -891,7 +891,7 @@ int x509_main(int argc, char **argv)
             }
         }
         if (!do_X509_REQ_sign(rq, privkey, digest, sigopts))
-            goto end;
+            goto err;
         if (!noout) {
             if (outformat == FORMAT_ASN1) {
                 X509_REQ_print_ex(out, rq, get_nameopt(), X509_FLAG_COMPAT);
@@ -909,7 +909,7 @@ int x509_main(int argc, char **argv)
     } else if (CAfile != NULL) {
         if ((CAkey = load_key(CAkeyfile, CAkeyformat,
                               0, passin, e, "CA private key")) == NULL)
-            goto end;
+            goto err;
         if (!X509_check_private_key(xca, CAkey)) {
             BIO_printf(bio_err,
                        "CA certificate and CA private key do not match\n");
@@ -917,10 +917,10 @@ int x509_main(int argc, char **argv)
         }
 
         if (!do_X509_sign(x, 0, CAkey, digest, sigopts, &ext_ctx))
-            goto end;
+            goto err;
     } else if (privkey != NULL) {
         if (!do_X509_sign(x, 0, privkey, digest, sigopts, &ext_ctx))
-            goto end;
+            goto err;
     }
     if (badsig) {
         const ASN1_BIT_STRING *signature;
@@ -944,11 +944,11 @@ int x509_main(int argc, char **argv)
             BIGNUM *bnser = ASN1_INTEGER_to_BN(X509_get0_serialNumber(x), NULL);
 
             if (bnser == NULL)
-                goto end;
+                goto err;
             if (!BN_add_word(bnser, 1)
                     || (ser = BN_to_ASN1_INTEGER(bnser, NULL)) == NULL) {
                 BN_free(bnser);
-                goto end;
+                goto err;
             }
             BN_free(bnser);
             i2a_ASN1_INTEGER(out, ser);
