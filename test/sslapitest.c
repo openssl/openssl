@@ -13140,7 +13140,7 @@ static int test_no_renegotiation(int idx)
     /*
      * We've not sent any application data, so we expect this to fail. It should
      * also read the renegotiation attempt, and send back a no_renegotiation
-     * warning alert because we have reneogitation disabled.
+     * warning alert because we have renegotiation disabled.
      */
     if (!TEST_int_le(ret = SSL_read(serverssl, buf, sizeof(buf)), 0))
         goto end;
