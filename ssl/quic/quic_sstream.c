@@ -357,12 +357,15 @@ int ossl_quic_sstream_appendv(QUIC_SSTREAM *qss,
      */
 
     while (offset >= iov[ptr].data_len) {
-    offset -= iov[ptr].data_len;
-    ptr++;
+        offset -= iov[ptr].data_len;
+        ptr++;
     }
 
     while (buf_len > 0) {
         size_t to_copy = iov[ptr].data_len - offset;
+
+        if (to_copy > buf_len)
+            to_copy = buf_len;
 
         l = ring_buf_push(&qss->ring_buf,
                           (unsigned char *)(iov[ptr].data) + offset,

@@ -20,6 +20,7 @@ use OpenSSL::stackhash qw(generate_stack_macros generate_const_stack_macros);
 # pragma once
 
 # include <openssl/macros.h>
+# include <openssl/ossl_iovec.h>
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_SSL_H
 # endif

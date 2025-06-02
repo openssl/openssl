@@ -38,7 +38,7 @@
 // }
 
 int dtls1_writev_app_data_bytes(SSL *s, uint8_t type, const struct ossl_iovec *iov,
-                               size_t iovcnt, size_t *written)
+                                size_t iovcnt, size_t *written)
 {
     size_t i, len = 0;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
@@ -67,6 +67,48 @@ int dtls1_writev_app_data_bytes(SSL *s, uint8_t type, const struct ossl_iovec *i
     return dtls1_writev_bytes(sc, type, iov, len, written);
 }
 
+// int dtls1_dispatch_alert(SSL *ssl)
+// {
+//     int i, j;
+//     void (*cb) (const SSL *ssl, int type, int val) = NULL;
+//     unsigned char buf[DTLS1_AL_HEADER_LENGTH];
+//     unsigned char *ptr = &buf[0];
+//     size_t written;
+//     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+
+//     if (s == NULL)
+//         return 0;
+
+//     s->s3.alert_dispatch = SSL_ALERT_DISPATCH_NONE;
+
+//     memset(buf, 0, sizeof(buf));
+//     *ptr++ = s->s3.send_alert[0];
+//     *ptr++ = s->s3.send_alert[1];
+
+//     i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), &written);
+//     if (i <= 0) {
+//         s->s3.alert_dispatch = 1;
+//         /* fprintf(stderr, "not done with alert\n"); */
+//     } else {
+//         (void)BIO_flush(s->wbio);
+
+//         if (s->msg_callback)
+//             s->msg_callback(1, s->version, SSL3_RT_ALERT, s->s3.send_alert,
+//                             2, ssl, s->msg_callback_arg);
+
+//         if (s->info_callback != NULL)
+//             cb = s->info_callback;
+//         else if (ssl->ctx->info_callback != NULL)
+//             cb = ssl->ctx->info_callback;
+
+//         if (cb != NULL) {
+//             j = (s->s3.send_alert[0] << 8) | s->s3.send_alert[1];
+//             cb(ssl, SSL_CB_WRITE_ALERT, j);
+//         }
+//     }
+//     return i;
+// }
+
 int dtls1_dispatch_alert(SSL *ssl)
 {
     int i, j;
@@ -86,10 +128,10 @@ int dtls1_dispatch_alert(SSL *ssl)
     *ptr++ = s->s3.send_alert[1];
 
     struct ossl_iovec iov;
-    iov.data = buf;
-    iov.data_len = DTLS1_AL_HEADER_LENGTH;
+    iov.data = &buf[0];
+    iov.data_len = sizeof(buf);
 
-    i = do_dtls1_writev(s, SSL3_RT_ALERT, &iov, DTLS1_AL_HEADER_LENGTH, &written);
+    i = do_dtls1_writev(s, SSL3_RT_ALERT, &iov, sizeof(buf), &written);
     if (i <= 0) {
         s->s3.alert_dispatch = 1;
         /* fprintf(stderr, "not done with alert\n"); */

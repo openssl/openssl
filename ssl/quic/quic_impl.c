@@ -2609,7 +2609,7 @@ static int quic_writev_again(void *arg)
     quic_post_write(args->xso, actual_written > 0,
                     args->len == actual_written, args->flags, 0);
 
-    args->buf           += actual_written;
+    args->offset        += actual_written;
     args->len           -= actual_written;
     args->total_written += actual_written;
 
@@ -3120,9 +3120,8 @@ int ossl_quic_writev_flags(SSL *s, const struct ossl_iovec *iov, size_t iovcnt,
             return 0;
 
         qctx_lock_for_io(&ctx);
-    } else {
-        if (!expect_quic_with_stream_lock(s, /*remote_init=*/0, /*io=*/1, &ctx))
-            return 0;
+    } else if (!expect_quic_with_stream_lock(s, /*remote_init=*/0, /*io=*/1, &ctx)) {
+        return 0;
     }
 
     partial_write = ((ctx.xso != NULL)
