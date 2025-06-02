@@ -640,11 +640,13 @@ static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
         }
     }
 
+#ifndef OPENSSL_NO_CMS
     p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_CMS_RI_TYPE);
     if (p != NULL) {
         if (!OSSL_PARAM_set_int(p, CMS_RECIPINFO_KEM))
             return 0;
     }
+#endif
 
     p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM);
     if (p != NULL) {

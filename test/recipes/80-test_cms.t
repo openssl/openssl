@@ -1536,7 +1536,7 @@ subtest "ML-KEM KEMRecipientInfo tests for CMS" => sub {
            && compare_text($smcont, "mlkem512.txt") == 0,
            "CMS decrypt with ML-KEM-512 and default KDF");
 
-        ok(run(app(["openssl", "rand", @prov, "-out", "mlkem768.ukm", "32"])),
+        ok(run(app(["openssl", "rand", "-out", "mlkem768.ukm", "32"])),
            "Generate random UKM");
 
         ok(run(app(["openssl", "cms", @prov, "-encrypt", "-in", $smcont,
