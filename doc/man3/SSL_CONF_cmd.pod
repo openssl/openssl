@@ -74,7 +74,7 @@ B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
 
 =item B<-no_renegotiation>
 
-Disables all attempts at renegotiation in TLSv1.2 and earlier, same as setting
+Disables all attempts at renegotiation in (D)TLSv1.2 and earlier, same as setting
 B<SSL_OP_NO_RENEGOTIATION>.
 
 =item B<-no_resumption_on_reneg>
