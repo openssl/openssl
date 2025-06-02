@@ -379,10 +379,13 @@ static int create_popo_signature(OSSL_CRMF_POPOSIGNINGKEY *ps,
             && strcmp(name, "UNDEF") == 0) /* at least for Ed25519, Ed448 */
         digest = NULL;
 
-    return ASN1_item_sign_ex(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
-                             ps->algorithmIdentifier, /* sets this X509_ALGOR */
-                             NULL, ps->signature, /* sets the ASN1_BIT_STRING */
-                             cr, NULL, pkey, digest, libctx, propq);
+    if (ASN1_item_sign_ex(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
+                          ps->algorithmIdentifier, /* sets this X509_ALGOR */
+                          NULL, ps->signature, /* sets the ASN1_BIT_STRING */
+                          cr, NULL, pkey, digest, libctx, propq) != 0)
+        return 1;
+    ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_SIGNING_POPO);
+    return 0;
 }
 
 int OSSL_CRMF_MSG_create_popo(int meth, OSSL_CRMF_MSG *crm,
