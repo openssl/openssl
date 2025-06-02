@@ -87,7 +87,7 @@ int ssl3_dispatch_alert(SSL *s)
         return -1;
 
     if (sc->rlayer.wrlmethod == NULL) {
-        /* No write record layer so we can't sent and alert. We just ignore it */
+        /* No write record layer so we can't send and alert. We just ignore it */
         sc->s3.alert_dispatch = SSL_ALERT_DISPATCH_NONE;
         return 1;
     }
@@ -127,7 +127,7 @@ int ssl3_dispatch_alert(SSL *s)
     }
 
     i = HANDLE_RLAYER_WRITE_RETURN(sc,
-            sc->rlayer.wrlmethod->writev_records(sc->rlayer.wrl, &templ, 1));
+            sc->rlayer.wrlmethod->write_records(sc->rlayer.wrl, &templ, 1));
 
     if (i <= 0) {
         sc->s3.alert_dispatch = SSL_ALERT_DISPATCH_RETRY;

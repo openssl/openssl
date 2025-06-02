@@ -140,9 +140,9 @@ struct record_functions_st {
     size_t (*get_max_records)(OSSL_RECORD_LAYER *rl, uint8_t type, size_t len,
                               size_t maxfrag, size_t *preffrag);
 
-    // /* Return 1 for success or 0 for error */
-    // int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
-    //                      size_t numtempl);
+    /* Return 1 for success or 0 for error */
+    int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
+                         size_t numtempl);
     /* Return 1 for success or 0 for error */
     int (*writev_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                          size_t numtempl);
@@ -454,8 +454,8 @@ int tls_processed_read_pending(OSSL_RECORD_LAYER *rl);
 size_t tls_app_data_pending(OSSL_RECORD_LAYER *rl);
 size_t tls_get_max_records(OSSL_RECORD_LAYER *rl, uint8_t type, size_t len,
                            size_t maxfrag, size_t *preffrag);
-// int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
-//                       size_t numtempl);
+int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
+                      size_t numtempl);
 int tls_writev_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                       size_t numtempl);
 int tls_retry_write_records(OSSL_RECORD_LAYER *rl);
@@ -523,9 +523,9 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
                                            OSSL_RECORD_TEMPLATE *thistempl,
                                            WPACKET *thispkt,
                                            TLS_RL_RECORD *thiswr);
-// int tls_write_records_default(OSSL_RECORD_LAYER *rl,
-//                               OSSL_RECORD_TEMPLATE *templates,
-//                               size_t numtempl);
+int tls_write_records_default(OSSL_RECORD_LAYER *rl,
+                              OSSL_RECORD_TEMPLATE *templates,
+                              size_t numtempl);
 int tls_writev_records_default(OSSL_RECORD_LAYER *rl,
                               OSSL_RECORD_TEMPLATE *templates,
                               size_t numtempl);

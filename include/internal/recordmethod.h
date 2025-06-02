@@ -195,8 +195,8 @@ struct ossl_record_method_st {
      *  0 on retry
      * -1 on failure
      */
-    // int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
-    //                      size_t numtempl);
+    int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
+                         size_t numtempl);
     int (*writev_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                          size_t numtempl);
 

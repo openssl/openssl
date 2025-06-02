@@ -661,7 +661,7 @@ const struct record_functions_st tls_1_funcs = {
     tls_default_validate_record_header,
     tls_default_post_process_record,
     tls_get_max_records_multiblock,
-    // tls_write_records_multiblock, /* Defined in tls_multib.c */
+    tls_write_records_multiblock, /* Defined in tls_multib.c */
     tls_writev_records_default,
     tls1_allocate_write_buffers,
     tls1_initialise_write_packets,
@@ -683,7 +683,7 @@ const struct record_functions_st dtls_1_funcs = {
     NULL,
     NULL,
     NULL,
-    // tls_write_records_default,
+    tls_write_records_default,
     tls_writev_records_default,
     /*
      * Don't use tls1_allocate_write_buffers since that handles empty fragment
