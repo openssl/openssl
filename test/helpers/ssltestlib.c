@@ -1264,6 +1264,7 @@ int create_bare_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
     int retc = -1, rets = -1, err, abortctr = 0, ret = 0;
     int clienterr = 0, servererr = 0;
     int isdtls = SSL_is_dtls(serverssl);
+    int icm_count = 0, ism_count = 0;
 #ifndef OPENSSL_NO_SOCK
     BIO_ADDR *peer = NULL;
 
@@ -1289,7 +1290,7 @@ int create_bare_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
             retc = SSL_connect(clientssl);
             if (retc <= 0)
                 err = SSL_get_error(clientssl, retc);
-            (*cm_count)++;
+            icm_count++;
         }
 
         if (!clienterr && retc <= 0 && err != SSL_ERROR_WANT_READ) {
@@ -1315,14 +1316,14 @@ int create_bare_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
                     listen = 0;
                     rets = 0;
                 }
-                (*sm_count)++;
+                ism_count++;
             } else
 #endif
             {
                 rets = SSL_accept(serverssl);
                 if (rets <= 0)
                     err = SSL_get_error(serverssl, rets);
-                (*sm_count)++;
+                ism_count++;
             }
         }
 
@@ -1348,7 +1349,7 @@ int create_bare_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
                     TEST_info("Unexpected SSL_read() success!");
                     goto err;
                 }
-                (*sm_count)++;
+                ism_count++;
             }
             if (retc > 0 && rets <= 0) {
                 if (SSL_read(clientssl, buf, sizeof(buf)) > 0) {
@@ -1356,7 +1357,7 @@ int create_bare_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
                     TEST_info("Unexpected SSL_read() success!");
                     goto err;
                 }
-                (*cm_count)++;
+                icm_count++;
             }
         }
         if (++abortctr == MAXLOOPS) {
@@ -1375,6 +1376,10 @@ int create_bare_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
 
     ret = 1;
  err:
+    if (cm_count != NULL)
+        *cm_count = icm_count;
+    if (sm_count != NULL)
+        *sm_count = ism_count;
 #ifndef OPENSSL_NO_SOCK
     BIO_ADDR_free(peer);
 #endif
@@ -1384,9 +1389,8 @@ int create_bare_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
 int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
                                int read, int listen)
 {
-    int dummy_sm = 0, dummy_cm = 0;
     return create_bare_ssl_connection_ex(serverssl, clientssl, want, read,
-                                         listen, &dummy_cm, &dummy_sm);
+                                         listen, NULL, NULL);
 }
 
 /*
@@ -1417,7 +1421,8 @@ int create_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
                                 SSL_ERROR_WANT_READ)) {
             return 0;
         }
-        (*cm_count)++;
+        if (cm_count != NULL)
+            (*cm_count)++;
     }
 
     return 1;
@@ -1425,8 +1430,7 @@ int create_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
 
 int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
 {
-   int dummy_cm = 0, dummy_sm = 0;
-   return create_ssl_connection_ex(serverssl, clientssl, want, &dummy_cm, &dummy_sm);
+   return create_ssl_connection_ex(serverssl, clientssl, want, NULL, NULL);
 }
 
 void shutdown_ssl_connection(SSL *serverssl, SSL *clientssl)
