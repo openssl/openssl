@@ -1374,7 +1374,8 @@ int ossl_cms_pkey_get_ri_type(EVP_PKEY *pk)
      * multiple types, e.g. an RSA key and provider may support RSA key transport
      * and/or RSA-KEM.
      */
-    if (EVP_PKEY_get_int_param(pk, OSSL_PKEY_PARAM_CMS_RI_TYPE, &ri_type))
+    if (evp_pkey_is_provided(pk)
+        && EVP_PKEY_get_int_param(pk, OSSL_PKEY_PARAM_CMS_RI_TYPE, &ri_type))
         return ri_type;
 
     /* Check types that we know about */
