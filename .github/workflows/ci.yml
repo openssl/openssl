@@ -628,7 +628,7 @@ jobs:
     - name: package installs
       run: |
         sudo apt-get update
-        sudo apt-get -yq install bison gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python3 python3-paste python3-pyrad slapd tcsh python3-virtualenv virtualenv python3-kdcproxy gdb
+        sudo apt-get -yq install bison gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python3 python3-paste python3-pyrad slapd tcsh python3-virtualenv virtualenv python3-kdcproxy gdb libtls-dev
     - name: install cpanm and Test2::V0 for gost_engine testing
       uses: perl-actions/install-with-cpanm@stable
       with:
@@ -652,6 +652,8 @@ jobs:
       run: make test TESTS="test_external_tlsfuzzer"
     - name: test external Cloudflare quiche
       run: make test TESTS="test_external_cf_quiche" VERBOSE=1
+    - name: test external rpki client
+      run: make test TESTS="test_external_rpki-client-portable"
     - name: test ability to produce debuginfo files
       run: |
         make debuginfo

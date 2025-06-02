@@ -177,6 +177,8 @@ quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         if (!ossl_assert("Should not happen" == NULL))
             goto err;
 #endif
+    } else {
+        kdfdigest = NULL;
     }
 
     if (!rl->qtls->args.yield_secret_cb(level, qdir, suite_id,
