@@ -302,7 +302,9 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         type = evp_get_digestbyname_ex(locpctx->libctx, mdname);
 
     if (ctx->pctx->pmeth == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+                       ver ? "%s digest_verify_init" : "%s digest_sign_init",
+                       EVP_PKEY_get0_type_name(locpctx->pkey));
         return 0;
     }
 
