@@ -621,14 +621,14 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
                 ri = sk_PKCS7_RECIP_INFO_value(rsk, i);
                 ri->ctx = p7_ctx;
                 if (pkcs7_decrypt_rinfo(&ek, &eklen, ri, pkey,
-                        EVP_CIPHER_get_key_length(cipher)) < 0)
+                        EVP_CIPHER_get_key_length(cipher)) <= 0)
                     goto err;
                 ERR_clear_error();
             }
         } else {
             ri->ctx = p7_ctx;
             /* Only exit on fatal errors, not decrypt failure */
-            if (pkcs7_decrypt_rinfo(&ek, &eklen, ri, pkey, 0) < 0)
+            if (pkcs7_decrypt_rinfo(&ek, &eklen, ri, pkey, 0) <= 0)
                 goto err;
             ERR_clear_error();
         }
