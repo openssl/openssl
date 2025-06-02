@@ -20,6 +20,9 @@
 #include "crypto/ml_kem.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
+#include "internal/sizes.h"
+#include "prov/der_hkdf.h"
+#include "prov/der_wrap.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
@@ -645,19 +648,27 @@ static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM);
     if (p != NULL) {
-        X509_ALGOR kdf = { NULL, NULL };
-        unsigned char *x509_algor = NULL;
-        int x509_algor_len;
+        uint8_t aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
+        int ret;
+        size_t aid_len = 0;
+        WPACKET pkt;
+        uint8_t *aid = NULL;
 
-        if (!X509_ALGOR_set0(&kdf, OBJ_txt2obj("HKDF-SHA256", 0), V_ASN1_UNDEF, NULL))
-            return 0;
-        if ((x509_algor_len = i2d_X509_ALGOR(&kdf, &x509_algor)) < 0)
-            return 0;
-        if (!OSSL_PARAM_set_octet_string(p, x509_algor, x509_algor_len)) {
-            OPENSSL_free(x509_algor);
-            return 0;
+        ret = WPACKET_init_der(&pkt, aid_buf, sizeof(aid_buf));
+        ret &= ossl_DER_w_begin_sequence(&pkt, -1)
+            && ossl_DER_w_precompiled(&pkt, -1, ossl_der_oid_id_alg_hkdf_with_sha256,
+                                      sizeof(ossl_der_oid_id_alg_hkdf_with_sha256))
+            && ossl_DER_w_end_sequence(&pkt, -1);
+        if (ret && WPACKET_finish(&pkt)) {
+            WPACKET_get_total_written(&pkt, &aid_len);
+            aid = WPACKET_get_curr(&pkt);
         }
-        OPENSSL_free(x509_algor);
+        WPACKET_cleanup(&pkt);
+        if (!ret)
+            return 0;
+        if (aid != NULL && aid_len != 0 &&
+            !OSSL_PARAM_set_octet_string(p, aid, aid_len))
+            return 0;
     }
 
     return 1;
