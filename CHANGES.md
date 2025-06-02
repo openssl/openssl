@@ -29,6 +29,15 @@ OpenSSL 3.4
 
 ### Changes between 3.4.1 and 3.4.2 [xx XXX xxxx]
 
+ * Aligned the behaviour of TLS and DTLS in the event of a no_renegotiation
+   alert being received. Older versions of OpenSSL failed with DTLS if a
+   no_renegotiation alert was received. All versions of OpenSSL do this for TLS.
+   From 3.2 a bug was exposed that meant that DTLS ignored no_rengotiation. We
+   have now restored the original behaviour and brought DTLS back into line with
+   TLS.
+
+   *Matt Caswell*
+
  * When displaying distinguished names in the openssl application escape control
    characters by default.
 
