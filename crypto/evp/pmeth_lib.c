@@ -762,6 +762,8 @@ int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
         return evp_pkey_ctx_get_params_to_ctrl(ctx, params);
 #endif
     }
+    ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_GET_CTX_PARAMS_NOT_SUPPORTED,
+                   "EVP_PKEY_OP=0x%x", ctx->operation);
     return 0;
 }
 
