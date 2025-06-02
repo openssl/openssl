@@ -116,7 +116,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         if (ASN1_item_sign_ex(ASN1_ITEM_rptr(OSSL_CMP_PROTECTEDPART),
                               msg->header->protectionAlg, /* sets X509_ALGOR */
                               NULL, prot, &prot_part, NULL, ctx->pkey, md,
-                              ctx->libctx, ctx->propq))
+                              ctx->libctx, ctx->propq) != 0)
             return prot;
         ASN1_BIT_STRING_free(prot);
         return NULL;
