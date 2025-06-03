@@ -494,7 +494,7 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
 int ssl3_writev_bytes(SSL *ssl, uint8_t type, const struct ossl_iovec *iov,
                       size_t iovcnt, size_t *written)
 {
-    size_t len = 0;
+    size_t j, len = 0;
     size_t tot;
     size_t n, max_send_fragment, split_send_fragment, maxpipes;
     int i;
@@ -516,8 +516,8 @@ int ssl3_writev_bytes(SSL *ssl, uint8_t type, const struct ossl_iovec *iov,
      * promptly send beyond the end of the users buffer ... so we trap and
      * report the error in a way the user will notice
      */
-    for (size_t i = 0; i < iovcnt; i++)
-        len += iov[i].data_len;
+    for (j = 0; j < iovcnt; j++)
+        len += iov[j].data_len;
     if ((len < s->rlayer.wnum)
         || ((s->rlayer.wpend_tot != 0)
             && (len < (s->rlayer.wnum + s->rlayer.wpend_tot)))) {
@@ -600,7 +600,7 @@ int ssl3_writev_bytes(SSL *ssl, uint8_t type, const struct ossl_iovec *iov,
         /* if it went, fall through and send more stuff */
     }
 
-    n = (len - tot);
+    n = len - tot;
 
     max_send_fragment = ssl_get_max_send_fragment(s);
     split_send_fragment = ssl_get_split_send_fragment(s);
@@ -629,7 +629,7 @@ int ssl3_writev_bytes(SSL *ssl, uint8_t type, const struct ossl_iovec *iov,
 
     for (;;) {
         size_t tmppipelen, remain;
-        size_t j, lensofar = tot;
+        size_t lensofar = tot;
 
         /*
         * Ask the record layer how it would like to split the amount of data
