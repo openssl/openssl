@@ -15,7 +15,8 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(generate_public_macros
                     generate_internal_macros
-                    produce_decoder);
+                    produce_decoder
+                    produce_param_list);
 
 my $case_sensitive = 1;
 
@@ -797,4 +798,33 @@ sub produce_decoder {
     generate_code_from_trie(0, \%t);
     print "    return -1;\n}\n";
     return $s;
+}
+
+sub produce_param_list {
+    my $static_array = shift;
+    my $array_name = shift;
+    my $static_func = shift;
+    my $func_name = shift;
+    my @params = @_;
+    my @keys = ();
+    my $s;
+
+    open local *STDOUT, '>', \$s;
+    print $static_array . ' ' if $static_array ne '';
+    printf "const OSSL_PARAM %s[] = {\n", $array_name;
+    for (my $i = 0; $i <= $#params; $i++) {
+        my $pname = $params[$i][0];
+        my $ptype = $params[$i][1];
+
+        print "    OSSL_PARAM_$ptype(OSSL_$pname, NULL";
+        print ", 0" if $ptype eq "octet_string" || $ptype eq "octet_ptr"
+                       || $ptype eq "utf8_string" || $ptype eq "utf8_ptr";
+        printf "),\n";
+
+        push(@keys, $pname);
+    }
+    print "    OSSL_PARAM_END\n};\n\n";
+
+    print $static_func . ' ' if $static_func ne '';
+    return $s .  produce_decoder($func_name, @keys);
 }
