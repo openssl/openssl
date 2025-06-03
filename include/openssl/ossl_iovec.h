@@ -18,7 +18,7 @@
 
 /* Abstraction layer for iovec */
 struct ossl_iovec {
-    void *data;
+    const void *data;
     size_t data_len;
 };
 

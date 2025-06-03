@@ -142,8 +142,8 @@ int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl);
 __owur size_t ssl3_pending(const SSL *s);
-// __owur int ssl3_write_bytes(SSL *s, uint8_t type, const void *buf, size_t len,
-//                             size_t *written);
+__owur int ssl3_write_bytes(SSL *s, uint8_t type, const void *buf, size_t len,
+                            size_t *written);
 __owur int ssl3_writev_bytes(SSL *s, uint8_t type, const struct ossl_iovec *iov,
                              size_t len, size_t *written);
 __owur int ssl3_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
