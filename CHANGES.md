@@ -31,6 +31,10 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * OpenSSL starts to move from ANSI-C to C-99. See NOTES-C99.md for details.
+
+   *Alexandr Nedvedicky*
+
  * The VxWorks platforms have been removed. These platforms were unadopted,
    unmaintained and reported to be non-functional.
 
