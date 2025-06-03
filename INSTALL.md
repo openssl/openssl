@@ -51,7 +51,7 @@ To install OpenSSL, you will need:
  * A "make" implementation
  * Perl 5 with core modules (please read [NOTES-PERL.md](NOTES-PERL.md))
  * The Perl module `Text::Template` (please read [NOTES-PERL.md](NOTES-PERL.md))
- * an ANSI C compiler
+ * a C-99 compiler
  * POSIX C library (at least POSIX.1-2008), or compatible types and
    functionality.
  * a development environment in the form of development libraries and C
