@@ -15,7 +15,6 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(generate_public_macros
                     generate_internal_macros
-                    produce_decoder
                     produce_param_list);
 
 my $case_sensitive = 1;
