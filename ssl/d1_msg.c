@@ -10,32 +10,32 @@
 #include "ssl_local.h"
 #include "internal/ssl_unwrap.h"
 
-// int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
-//                                size_t len, size_t *written)
-// {
-//     int i;
-//     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
+                               size_t len, size_t *written)
+{
+    int i;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
-//     if (sc == NULL)
-//         return -1;
+    if (sc == NULL)
+        return -1;
 
-//     if (SSL_in_init(s) && !ossl_statem_get_in_handshake(sc)) {
-//         i = sc->handshake_func(s);
-//         if (i < 0)
-//             return i;
-//         if (i == 0) {
-//             ERR_raise(ERR_LIB_SSL, SSL_R_SSL_HANDSHAKE_FAILURE);
-//             return -1;
-//         }
-//     }
+    if (SSL_in_init(s) && !ossl_statem_get_in_handshake(sc)) {
+        i = sc->handshake_func(s);
+        if (i < 0)
+            return i;
+        if (i == 0) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_SSL_HANDSHAKE_FAILURE);
+            return -1;
+        }
+    }
 
-//     if (len > SSL3_RT_MAX_PLAIN_LENGTH) {
-//         ERR_raise(ERR_LIB_SSL, SSL_R_DTLS_MESSAGE_TOO_BIG);
-//         return -1;
-//     }
+    if (len > SSL3_RT_MAX_PLAIN_LENGTH) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_DTLS_MESSAGE_TOO_BIG);
+        return -1;
+    }
 
-//     return dtls1_write_bytes(sc, type, buf_, len, written);
-// }
+    return dtls1_write_bytes(sc, type, buf_, len, written);
+}
 
 int dtls1_writev_app_data_bytes(SSL *s, uint8_t type, const struct ossl_iovec *iov,
                                 size_t iovcnt, size_t *written)
@@ -127,11 +127,7 @@ int dtls1_dispatch_alert(SSL *ssl)
     *ptr++ = s->s3.send_alert[0];
     *ptr++ = s->s3.send_alert[1];
 
-    struct ossl_iovec iov;
-    iov.data = &buf[0];
-    iov.data_len = sizeof(buf);
-
-    i = do_dtls1_writev(s, SSL3_RT_ALERT, &iov, sizeof(buf), &written);
+    i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), &written);
     if (i <= 0) {
         s->s3.alert_dispatch = 1;
         /* fprintf(stderr, "not done with alert\n"); */

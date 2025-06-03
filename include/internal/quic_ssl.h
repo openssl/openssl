@@ -56,9 +56,9 @@ __owur int ossl_quic_accept(SSL *s);
 __owur int ossl_quic_connect(SSL *s);
 __owur int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *readbytes);
 __owur int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *readbytes);
-// __owur int ossl_quic_write_flags(SSL *s, const void *buf, size_t len,
-//                                  uint64_t flags, size_t *written);
-// __owur int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written);
+__owur int ossl_quic_write_flags(SSL *s, const void *buf, size_t len,
+                                 uint64_t flags, size_t *written);
+__owur int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written);
 __owur int ossl_quic_writev_flags(SSL *s, const struct ossl_iovec *iov, size_t iovcnt,
                                   uint64_t flags, size_t *written);
 __owur int ossl_quic_writev(SSL *s, const struct ossl_iovec *iov, size_t iovcnt, size_t *written);

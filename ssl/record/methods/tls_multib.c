@@ -177,7 +177,7 @@ int tls_write_records_multiblock(OSSL_RECORD_LAYER *rl,
     }
     if (ret == 0) {
         /* Multiblock wasn't suitable so just do a standard write */
-        if (!tls_writev_records_default(rl, templates, numtempl)) {
+        if (!tls_write_records_default(rl, templates, numtempl)) {
             /* RLAYERfatal already called */
             return 0;
         }
