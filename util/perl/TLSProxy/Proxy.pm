@@ -100,6 +100,34 @@ sub init
         $debug,
         $isdtls) = @_;
 
+    my $test_client_port;
+
+    # Sometimes, our random selection of client ports gets unlucky
+    # And we randomly select a port thats already in use.  This causes
+    # this test to fail, so lets harden ourselves against that by doing
+    # a test bind to the randomly selected port, and only continue once we
+    # find a port thats available.
+    while (1) {
+        my $test_client_addr = $have_IPv6 ? "[::1]" : "127.0.0.1";
+        $test_client_port = 49152 + int(rand(65535 - 49152));
+        my $test_sock;
+        if ($have_IPv6) {
+            $test_sock = IO::Socket::IP->new(Family => AF_INET6,
+                                             LocalPort => $test_client_port,
+                                             LocalAddr => $test_client_addr);
+        } else {
+            $test_sock = IO::Socket::IP->new(Family => AF_INET,
+                                             LocalPort => $test_client_port,
+                                             LocalAddr => $test_client_addr);
+        }
+        if ($test_sock) {
+            $test_sock->close();
+            print "Found available client port\n";
+            last;
+        }
+        print "Trying another client port\n";
+    }
+   
     my $self = {
         #Public read/write
         proxy_addr => $have_IPv6 ? "[::1]" : "127.0.0.1",
@@ -114,7 +142,7 @@ sub init
         #Public read
         isdtls => $isdtls,
         proxy_port => 0,
-        client_port => 49152 + int(rand(65535 - 49152)),
+        client_port => $test_client_port,
         server_port => 0,
         serverpid => 0,
         clientpid => 0,
