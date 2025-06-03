@@ -19,13 +19,13 @@ jobs:
       matrix:
         platform:
           - arch: win64
-            os: windows-2019
+            os: windows-2022
             config: enable-fips
           - arch: win64
-            os: windows-2022
+            os: windows-2025
             config: enable-fips no-thread-pool no-quic
           - arch: win32
-            os: windows-2022
+            os: windows-2025
             config: --strict-warnings no-fips
     runs-on: ${{ matrix.platform.os }}
     steps:
@@ -78,7 +78,6 @@ jobs:
     strategy:
       matrix:
         os:
-# Reducing CI footprint  - windows-2019
           - windows-2022
     runs-on: ${{ matrix.os }}
     steps:
@@ -115,8 +114,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - windows-2019
-# Reducing CI footprint  - windows-2022
+          - windows-2022
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -153,9 +151,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - windows-2019
-# really worth while running, too? cygwin should mask this
-#          - windows-2022
+          - windows-2022
         platform:
           - arch: win64
             config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips
