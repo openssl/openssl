@@ -1501,12 +1501,6 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
      * For split-mode we want to have a way to point at the CH octets
      * for the accept-confirmation calculation.
      */
-    if (s == NULL)
-        return 0;
-    if (pkt == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     if (s->server == 1 && PACKET_remaining(pkt) != 0) {
         int rv = 0, innerflag = -1;
         size_t startofsessid = 0, startofexts = 0, echoffset = 0;
@@ -2639,8 +2633,12 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
             ossl_ech_pbuf("innerch", s->ext.ech.innerch,
                           s->ext.ech.innerch_len);
 # endif
+            if (ctx == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return CON_FUNC_ERROR;
+            }
             md = ssl_handshake_md(s);
-            if (ctx == NULL || md == NULL) {
+            if (md == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return CON_FUNC_ERROR;
             }

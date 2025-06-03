@@ -1103,12 +1103,12 @@ end:
 /*!
  * Given a CH find the offsets of the session id, extensions and ECH
  * pkt is the CH
- * sessid points to offset of session_id length
- * exts points to offset of extensions
- * echoffset points to offset of ECH
+ * sessid_off points to offset of session_id length
+ * exts_off points to offset of extensions
+ * ech_off points to offset of ECH
  * echtype points to the ext type of the ECH
  * inner 1 if the ECH is marked as an inner, 0 for outer
- * snioffset points to offset of (outer) SNI
+ * sni_off points to offset of (outer) SNI
  * return 1 for success, other otherwise
  *
  * Offsets are set to zero if relevant thing not found.
@@ -1116,32 +1116,32 @@ end:
  *
  * Note: input here is untrusted!
  */
-int ossl_ech_get_ch_offsets(SSL_CONNECTION *s, PACKET *pkt, size_t *sessid,
-                            size_t *exts, size_t *echoffset, uint16_t *echtype,
-                            int *inner, size_t *snioffset)
+int ossl_ech_get_ch_offsets(SSL_CONNECTION *s, PACKET *pkt, size_t *sessid_off,
+                            size_t *exts_off, size_t *ech_off, uint16_t *echtype,
+                            int *inner, size_t *sni_off)
 {
     const unsigned char *ch = NULL;
-    size_t ch_len = 0, extlens = 0, snilen = 0, echlen = 0;
+    size_t ch_len = 0, exts_len = 0, sni_len = 0, ech_len = 0;
 
-    if (s == NULL || pkt == NULL || sessid == NULL || exts == NULL
-        || echoffset == NULL || echtype == NULL || inner == NULL
-        || snioffset == NULL) {
+    if (s == NULL || pkt == NULL || sessid_off == NULL || exts_off == NULL
+        || ech_off == NULL || echtype == NULL || inner == NULL
+        || sni_off == NULL) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
-    *sessid = 0;
-    *exts = 0;
-    *echoffset = 0;
+    *sessid_off = 0;
+    *exts_off = 0;
+    *ech_off = 0;
     *echtype = OSSL_ECH_type_unknown;
-    *snioffset = 0;
+    *sni_off = 0;
     ch_len = PACKET_remaining(pkt);
     if (PACKET_peek_bytes(pkt, &ch, ch_len) != 1) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
-    if (ossl_ech_helper_get_ch_offsets(ch, ch_len, sessid, exts, &extlens,
-                                       echoffset, echtype, &echlen,
-                                       snioffset, &snilen, inner) != 1) {
+    if (ossl_ech_helper_get_ch_offsets(ch, ch_len, sessid_off, exts_off,
+                                       &exts_len, ech_off, echtype, &ech_len,
+                                       sni_off, &sni_len, inner) != 1) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
@@ -1150,9 +1150,9 @@ int ossl_ech_get_ch_offsets(SSL_CONNECTION *s, PACKET *pkt, size_t *sessid,
         BIO_printf(trc_out, "orig CH/ECH type: %4x\n", *echtype);
     } OSSL_TRACE_END(TLS);
     ossl_ech_pbuf("orig CH", (unsigned char *)ch, ch_len);
-    ossl_ech_pbuf("orig CH exts", (unsigned char *)ch + *exts, extlens);
-    ossl_ech_pbuf("orig CH/ECH", (unsigned char *)ch + *echoffset, echlen);
-    ossl_ech_pbuf("orig CH SNI", (unsigned char *)ch + *snioffset, snilen);
+    ossl_ech_pbuf("orig CH exts", (unsigned char *)ch + *exts_off, exts_len);
+    ossl_ech_pbuf("orig CH/ECH", (unsigned char *)ch + *ech_off, ech_len);
+    ossl_ech_pbuf("orig CH SNI", (unsigned char *)ch + *sni_off, sni_len);
 # endif
     return 1;
 }
@@ -1677,12 +1677,8 @@ static int ech_decode_inner(SSL_CONNECTION *s, const unsigned char *ob,
         goto err;
     }
     OPENSSL_free(s->ext.ech.innerch);
-    s->ext.ech.innerch = OPENSSL_malloc(s->ext.ech.innerch_len);
-    if (s->ext.ech.innerch == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    memcpy(s->ext.ech.innerch, di_mem->data, s->ext.ech.innerch_len);
+    s->ext.ech.innerch = (unsigned char *)di_mem->data;
+    di_mem->data = NULL;
     rv = 1;
 err:
     WPACKET_cleanup(&di);
@@ -1927,8 +1923,8 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     OSSL_ECH_ENCCH *extval = NULL;
     PACKET echpkt;
     const unsigned char *startofech = NULL, *opd = NULL;
-    size_t echlen = 0, clearlen = 0, aad_len = SSL3_RT_MAX_PLAIN_LENGTH;
-    unsigned char *clear = NULL, aad[SSL3_RT_MAX_PLAIN_LENGTH];
+    size_t echlen = 0, clearlen = 0, aad_len = 0;
+    unsigned char *clear = NULL, *aad = NULL;
     /* offsets of things within CH */
     size_t startofsessid = 0, startofexts = 0, echoffset = 0, opl = 0;
     size_t outersnioffset = 0, startofciphertext = 0, lenofciphertext = 0;
@@ -2005,6 +2001,9 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     startofciphertext += echoffset + 6;
     lenofciphertext = extval->payload_len;
     aad_len = opl;
+    aad = OPENSSL_malloc(aad_len);
+    if (aad == NULL || aad_len < (startofciphertext + lenofciphertext))
+        goto err;
     memcpy(aad, opd, aad_len);
     memset(aad + startofciphertext, 0, lenofciphertext);
 # ifdef OSSL_ECH_SUPERVERBOSE
@@ -2050,6 +2049,8 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
             }
         }
     }
+    OPENSSL_free(aad);
+    aad = NULL;
     s->ext.ech.done = 1; /* decrypting worked or not, but we're done now */
     /* 3. if decrypt fails tee-up GREASE */
     s->ext.ech.grease = OSSL_ECH_IS_GREASE;
@@ -2115,6 +2116,7 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     }
     return 1;
 err:
+    OPENSSL_free(aad);
     if (extval != NULL) {
         ossl_ech_encch_free(extval);
         OPENSSL_free(extval);
