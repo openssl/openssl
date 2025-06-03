@@ -93,6 +93,7 @@ sub new_dtls {
 
 sub init
 {
+    require IO::Socket::IP;
     my $class = shift;
     my ($filter,
         $execute,
