@@ -503,7 +503,7 @@ static const OSSL_PARAM *ml_kem_gettable_params(void *provctx)
         /* Needed by EVP_PKEY_get1_encoded_public_key() */
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_CMS_RI_TYPE, NULL),
-        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM, NULL, 0),
         OSSL_PARAM_END
     };
 
