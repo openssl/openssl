@@ -2656,7 +2656,6 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
 # endif
             EVP_MD_CTX_free(ctx);
             if (ossl_ech_reset_hs_buffer(s, NULL, 0) != 1) {
-                EVP_MD_CTX_free(ctx);
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return CON_FUNC_ERROR;
             }
