@@ -144,10 +144,10 @@ int ASN1_item_sign_ex(const ASN1_ITEM *it, X509_ALGOR *algor1,
     return rv;
 }
 
-static int replace_algor_contents_from_DER(X509_ALGOR *algor, const unsigned char *aid, size_t aid_len)
+static int replace_algor_contents_from_DER(X509_ALGOR *algor, const unsigned char *aid, size_t len)
 {
     /* as a workaround for d2i_*() freeing its first argument, using NULL instead: */
-    X509_ALGOR *alg = d2i_X509_ALGOR(NULL, &aid, aid_len);
+    X509_ALGOR *alg = d2i_X509_ALGOR(NULL, &aid, len);
 
     if (alg == NULL) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_DECODE_ERROR);
