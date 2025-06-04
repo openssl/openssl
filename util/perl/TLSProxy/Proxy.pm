@@ -108,8 +108,9 @@ sub init
     # this test to fail, so lets harden ourselves against that by doing
     # a test bind to the randomly selected port, and only continue once we
     # find a port thats available.
-    while (1) {
-        my $test_client_addr = $have_IPv6 ? "[::1]" : "127.0.0.1";
+    my $test_client_addr = $have_IPv6 ? "[::1]" : "127.0.0.1";
+    my $found_port = 0;
+    for (my $i = 0; $i <= 10; $i++) {
         $test_client_port = 49152 + int(rand(65535 - 49152));
         my $test_sock;
         if ($have_IPv6) {
@@ -122,17 +123,22 @@ sub init
                                              LocalAddr => $test_client_addr);
         }
         if ($test_sock) {
+            $found_port = 1;
             $test_sock->close();
-            print "Found available client port\n";
+            print "Found available client port ${test_client_port}\n";
             last;
         }
-        print "Trying another client port\n";
+        print "Port ${test_client_port} in use.  Trying again\n";
     }
-   
+  
+    if ($found_port == 0) {
+        die "Unable to find usable port for TLSProxy";
+    }
+
     my $self = {
         #Public read/write
-        proxy_addr => $have_IPv6 ? "[::1]" : "127.0.0.1",
-        client_addr => $have_IPv6 ? "[::1]" : "127.0.0.1",
+        proxy_addr => $test_client_addr,
+        client_addr => $test_client_addr,
         filter => $filter,
         serverflags => "",
         clientflags => "",
