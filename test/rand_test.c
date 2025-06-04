@@ -19,6 +19,7 @@ static int test_rand(void)
     OSSL_PARAM params[2], *p = params;
     unsigned char entropy1[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05 };
     unsigned char entropy2[] = { 0xff, 0xfe, 0xfd };
+    unsigned char nonce[] = { 0x00, 0x01, 0x02, 0x03, 0x04 };
     unsigned char outbuf[3];
 
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
@@ -41,6 +42,14 @@ static int test_rand(void)
             || !TEST_int_gt(RAND_priv_bytes(outbuf, sizeof(outbuf)), 0)
             || !TEST_mem_eq(outbuf, sizeof(outbuf), entropy2, sizeof(outbuf)))
         return 0;
+
+    *params = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
+                                                nonce, sizeof(nonce));
+    if (!TEST_true(EVP_RAND_CTX_set_params(privctx, params))
+            || !TEST_true(EVP_RAND_nonce(privctx, outbuf, sizeof(outbuf)))
+            || !TEST_mem_eq(outbuf, sizeof(outbuf), nonce, sizeof(outbuf)))
+        return 0;
+
     return 1;
 }
 
