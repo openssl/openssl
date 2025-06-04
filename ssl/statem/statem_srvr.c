@@ -1501,7 +1501,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
      * For split-mode we want to have a way to point at the CH octets
      * for the accept-confirmation calculation.
      */
-    if (s->server == 1 && PACKET_remaining(pkt) != 0) {
+    if (s->server && PACKET_remaining(pkt) != 0) {
         int rv = 0, innerflag = -1;
         size_t startofsessid = 0, startofexts = 0, echoffset = 0;
         size_t outersnioffset = 0; /* offset to SNI in outer */
@@ -2639,6 +2639,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
             }
             md = ssl_handshake_md(s);
             if (md == NULL) {
+                EVP_MD_CTX_free(ctx);
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return CON_FUNC_ERROR;
             }
@@ -2646,6 +2647,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
                 || EVP_DigestUpdate(ctx, s->ext.ech.innerch,
                                     s->ext.ech.innerch_len) <= 0
                 || EVP_DigestFinal_ex(ctx, hashval, &hashlen) <= 0) {
+                EVP_MD_CTX_free(ctx);
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return CON_FUNC_ERROR;
             }
@@ -2654,6 +2656,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
 # endif
             EVP_MD_CTX_free(ctx);
             if (ossl_ech_reset_hs_buffer(s, NULL, 0) != 1) {
+                EVP_MD_CTX_free(ctx);
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return CON_FUNC_ERROR;
             }
