@@ -31,11 +31,6 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
- * Writing ANSI-C compliant code is no longer required
-    (see NOTES-C99.md for details).
-
-   *Alexandr Nedvedicky*
-
  * The VxWorks platforms have been removed. These platforms were unadopted,
    unmaintained and reported to be non-functional.
 

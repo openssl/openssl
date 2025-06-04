@@ -33,9 +33,6 @@ changes:
   * Added an `openssl configutl` utility for processing the openssl
     configuration file and dumping the equal configuration file.
 
-  * Writing ANSI-C compliant code is no longer required
-    (see NOTES-C99.md for details).
-
 ### Major changes between OpenSSL 3.4 and OpenSSL 3.5 [under development]
 
 OpenSSL 3.5.0 is a feature release adding significant new functionality to
