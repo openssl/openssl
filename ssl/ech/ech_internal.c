@@ -2001,10 +2001,15 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     startofciphertext += echoffset + 6;
     lenofciphertext = extval->payload_len;
     aad_len = opl;
-    aad = OPENSSL_malloc(aad_len);
-    if (aad == NULL || aad_len < (startofciphertext + lenofciphertext))
+    if (aad_len < startofciphertext + lenofciphertext) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
-    memcpy(aad, opd, aad_len);
+    }
+    aad = OPENSSL_memdup(opd, aad_len);
+    if (aad == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     memset(aad + startofciphertext, 0, lenofciphertext);
 # ifdef OSSL_ECH_SUPERVERBOSE
     ossl_ech_pbuf("EARLY aad", aad, aad_len);
