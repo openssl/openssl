@@ -85,6 +85,8 @@ providers/common/include/prov/der_digests.h
 providers/common/include/prov/der_wrap.h
 providers/common/include/prov/der_sm2.h
 providers/common/include/prov/der_ml_dsa.h
+providers/implementations/keymgmt/ml_dsa_kmgmt.c
+providers/implementations/keymgmt/ml_kem_kmgmt.c
 providers/implementations/ciphers/ciphercommon.c
 providers/implementations/ciphers/cipher_chacha20_poly1305.c
 
