@@ -217,6 +217,9 @@ void ossl_cms_RecipientInfos_set_cmsctx(CMS_ContentInfo *cms)
             case CMS_RECIPINFO_PASS:
                 ri->d.pwri->cms_ctx = ctx;
                 break;
+            case CMS_RECIPINFO_KEM:
+                ri->d.ori->d.kemri->cms_ctx = ctx;
+                break;
             default:
                 break;
             }
