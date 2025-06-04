@@ -31,7 +31,8 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
- * OpenSSL starts to move from ANSI-C to C-99. See NOTES-C99.md for details.
+ * Writing ANSI-C compliant code is no longer required
+    (see NOTES-C99.md for details).
 
    *Alexandr Nedvedicky*
 
