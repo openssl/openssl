@@ -615,7 +615,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                  * the future we might have a renegotiation where we don't care
                  * if the peer refused it where we carry on.
                  */
-                SSLfatal(sc, SSL_AD_HANDSHAKE_FAILURE, SSL_R_NO_RENEGOTIATION);
+                SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_NO_RENEGOTIATION);
                 return -1;
             }
         } else if (alert_level == SSL3_AL_FATAL) {
