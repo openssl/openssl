@@ -162,68 +162,6 @@ static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
     return ret;
 }
 
-// static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
-// {
-//     int ret, r = 0;
-//     int retry_reason = 0;
-//     SSL *ssl;
-//     BIO_SSL *bs;
-
-//     if (buf == NULL)
-//         return 0;
-//     bs = BIO_get_data(b);
-//     ssl = bs->ssl;
-
-//     BIO_clear_retry_flags(b);
-
-//     ret = ssl_write_internal(ssl, buf, size, 0, written);
-
-//     switch (SSL_get_error(ssl, ret)) {
-//     case SSL_ERROR_NONE:
-//         if (bs->renegotiate_count > 0) {
-//             bs->byte_count += *written;
-//             if (bs->byte_count > bs->renegotiate_count) {
-//                 bs->byte_count = 0;
-//                 bs->num_renegotiates++;
-//                 SSL_renegotiate(ssl);
-//                 r = 1;
-//             }
-//         }
-//         if ((bs->renegotiate_timeout > 0) && (!r)) {
-//             unsigned long tm;
-
-//             tm = (unsigned long)time(NULL);
-//             if (tm > bs->last_time + bs->renegotiate_timeout) {
-//                 bs->last_time = tm;
-//                 bs->num_renegotiates++;
-//                 SSL_renegotiate(ssl);
-//             }
-//         }
-//         break;
-//     case SSL_ERROR_WANT_WRITE:
-//         BIO_set_retry_write(b);
-//         break;
-//     case SSL_ERROR_WANT_READ:
-//         BIO_set_retry_read(b);
-//         break;
-//     case SSL_ERROR_WANT_X509_LOOKUP:
-//         BIO_set_retry_special(b);
-//         retry_reason = BIO_RR_SSL_X509_LOOKUP;
-//         break;
-//     case SSL_ERROR_WANT_CONNECT:
-//         BIO_set_retry_special(b);
-//         retry_reason = BIO_RR_CONNECT;
-//     case SSL_ERROR_SYSCALL:
-//     case SSL_ERROR_SSL:
-//     default:
-//         break;
-//     }
-
-//     BIO_set_retry_reason(b, retry_reason);
-
-//     return ret;
-// }
-
 static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
 {
     int ret, r = 0;

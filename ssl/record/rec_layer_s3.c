@@ -558,7 +558,10 @@ int ssl3_writev_bytes(SSL *ssl, uint8_t type, const struct ossl_iovec *iov,
         }
     }
 
-    i = tls_write_check_pending(s, type, (const unsigned char *)iov, len);
+    if (iovcnt == 1)
+        i = tls_write_check_pending(s, type, (const unsigned char *)iov[0].data, len);
+    else
+        i = tls_write_check_pending(s, type, (const unsigned char *)iov, len);
     if (i < 0) {
         /* SSLfatal() already called */
         return i;
@@ -581,7 +584,10 @@ int ssl3_writev_bytes(SSL *ssl, uint8_t type, const struct ossl_iovec *iov,
          */
         s->rlayer.wpend_tot = 0;
         s->rlayer.wpend_type = type;
-        s->rlayer.wpend_buf = (const unsigned char *)iov;
+        if (iovcnt == 1)
+            s->rlayer.wpend_buf = (const unsigned char *)iov[0].data;
+        else
+            s->rlayer.wpend_buf = (const unsigned char *)iov;
     }
 
     if (tot == len) {           /* done? */
@@ -663,9 +669,13 @@ int ssl3_writev_bytes(SSL *ssl, uint8_t type, const struct ossl_iovec *iov,
             for (j = 0; j < maxpipes; j++) {
                 tmpls[j].type = type;
                 tmpls[j].version = recversion;
-                tmpls[j].buf = (const unsigned char *)iov;
+                if (iovcnt == 1) {
+                    tmpls[j].buf = iov[0].data + lensofar;
+                } else {
+                    tmpls[j].buf = (const unsigned char *)iov;
+                    tmpls[j].offset = lensofar;
+                }
                 tmpls[j].buflen = split_send_fragment;
-                tmpls[j].offset = lensofar;
                 lensofar += split_send_fragment;
             }
             /* Remember how much data we are going to be sending */
@@ -683,9 +693,13 @@ int ssl3_writev_bytes(SSL *ssl, uint8_t type, const struct ossl_iovec *iov,
             for (j = 0; j < maxpipes; j++) {
                 tmpls[j].type = type;
                 tmpls[j].version = recversion;
-                tmpls[j].buf = (const unsigned char *)iov;
+                if (iovcnt == 1) {
+                    tmpls[j].buf = iov[0].data + lensofar;
+                } else {
+                    tmpls[j].buf = (const unsigned char *)iov;
+                    tmpls[j].offset = lensofar;
+                }
                 tmpls[j].buflen = tmppipelen;
-                tmpls[j].offset = lensofar;
                 lensofar += tmppipelen;
                 if (j + 1 == remain)
                     tmppipelen--;
@@ -693,9 +707,13 @@ int ssl3_writev_bytes(SSL *ssl, uint8_t type, const struct ossl_iovec *iov,
             /* Remember how much data we are going to be sending */
             s->rlayer.wpend_tot = n;
         }
+        if (iovcnt == 1)
+            i = HANDLE_RLAYER_WRITE_RETURN(s,
+                s->rlayer.wrlmethod->write_records(s->rlayer.wrl, tmpls, maxpipes));
+        else
+            i = HANDLE_RLAYER_WRITE_RETURN(s,
+                s->rlayer.wrlmethod->writev_records(s->rlayer.wrl, tmpls, maxpipes));
 
-        i = HANDLE_RLAYER_WRITE_RETURN(s,
-            s->rlayer.wrlmethod->writev_records(s->rlayer.wrl, tmpls, maxpipes));
         if (i <= 0) {
             /* SSLfatal() already called if appropriate */
             s->rlayer.wnum = tot;

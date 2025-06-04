@@ -4634,21 +4634,6 @@ int ssl3_shutdown(SSL *s)
         return 0;
 }
 
-// int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written)
-// {
-//     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
-
-//     if (sc == NULL)
-//         return 0;
-
-//     clear_sys_error();
-//     if (sc->s3.renegotiate)
-//         ssl3_renegotiate_check(s, 0);
-
-//     return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len,
-//                                       written);
-// }
-
 int ssl3_writev(SSL *s, const struct ossl_iovec *iov, size_t iovcnt, size_t *written)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);

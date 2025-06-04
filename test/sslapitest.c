@@ -9391,10 +9391,8 @@ static int test_multiblock_write(int test_index)
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
 
-    if (!TEST_true(SSL_write_ex(serverssl, msg, sizeof(msg), &written)))
-        goto end;
-
-    if (!TEST_size_t_eq(written, sizeof(msg)))
+    if (!TEST_true(SSL_write_ex(serverssl, msg, sizeof(msg), &written))
+        || !TEST_size_t_eq(written, sizeof(msg)))
         goto end;
 
     len = written;

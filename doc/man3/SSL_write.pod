@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-SSL_write_ex2, SSL_write_ex, SSL_write, SSL_sendfile, SSL_WRITE_FLAG_CONCLUDE -
-write bytes to a TLS/SSL connection
+SSL_write_ex2, SSL_write_ex, SSL_write, SSL_writev_ex2, SSL_writev_ex, SSL_writev,
+SSL_sendfile, SSL_WRITE_FLAG_CONCLUDE - write bytes to a TLS/SSL connection
 
 =head1 SYNOPSIS
 
@@ -17,6 +17,17 @@ write bytes to a TLS/SSL connection
                    size_t *written);
  int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written);
  int SSL_write(SSL *ssl, const void *buf, int num);
+  int SSL_write_ex2(SSL *s, const struct ossl_iovec *iov, size_t iovcnt,
+                   uint64_t flags,
+                   size_t *written);
+ int SSL_write_ex(SSL *s, const struct ossl_iovec *iov, size_t iovcnt,
+                  size_t *written);
+ int SSL_write(SSL *ssl, const struct ossl_iovec *iov, int iovcnt);
+
+ struct ossl_iovec {
+    const void *data;
+    size_t data_len;
+};
 
 =head1 DESCRIPTION
 
@@ -27,6 +38,9 @@ of bytes written in B<*written>.
 SSL_write_ex2() functions similarly to SSL_write_ex() but can also accept
 optional flags which modify its behaviour. Calling SSL_write_ex2() with a
 I<flags> argument of 0 is exactly equivalent to calling SSL_write_ex().
+
+Each of these methods has a B<_writev> counterpart to accept vectored IO.
+The definition of the B<ossl_iovec> structure is included above.
 
 SSL_sendfile() writes B<size> bytes from offset B<offset> in the file
 descriptor B<fd> to the specified SSL connection B<s>. This function provides
