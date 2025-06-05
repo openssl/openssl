@@ -182,7 +182,7 @@ int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))
 void *CRYPTO_THREAD_get_local(CRYPTO_THREAD_LOCAL *key)
 {
     if (*key >= OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX)
-        return 0;
+        return NULL;
 
     return thread_local_storage[*key].data;
 }
