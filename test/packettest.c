@@ -603,7 +603,6 @@ static int test_PACKET_msg_start(void)
     return 1;
 }
 
-
 int setup_tests(void)
 {
     unsigned int i;
