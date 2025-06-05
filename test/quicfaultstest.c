@@ -118,7 +118,7 @@ static int test_iov(void)
     SSL_free(cssl);
     ossl_quic_tserver_free(qtserv);
     SSL_CTX_free(cctx);
-    return testresult; 
+    return testresult;
 }
 
 /*

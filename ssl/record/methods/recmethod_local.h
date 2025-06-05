@@ -145,7 +145,7 @@ struct record_functions_st {
                          size_t numtempl);
     /* Return 1 for success or 0 for error */
     int (*writev_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
-                         size_t numtempl);
+                          size_t numtempl);
 
     /* Allocate the rl->wbuf buffers. Return 1 for success or 0 for error */
     int (*allocate_write_buffers)(OSSL_RECORD_LAYER *rl,
@@ -457,7 +457,7 @@ size_t tls_get_max_records(OSSL_RECORD_LAYER *rl, uint8_t type, size_t len,
 int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                       size_t numtempl);
 int tls_writev_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
-                      size_t numtempl);
+                       size_t numtempl);
 int tls_retry_write_records(OSSL_RECORD_LAYER *rl);
 int tls_get_alert_code(OSSL_RECORD_LAYER *rl);
 int tls_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio);
@@ -527,8 +527,8 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                               OSSL_RECORD_TEMPLATE *templates,
                               size_t numtempl);
 int tls_writev_records_default(OSSL_RECORD_LAYER *rl,
-                              OSSL_RECORD_TEMPLATE *templates,
-                              size_t numtempl);
+                               OSSL_RECORD_TEMPLATE *templates,
+                               size_t numtempl);
 
 /* Macros/functions provided by the TLS_BUFFER component */
 

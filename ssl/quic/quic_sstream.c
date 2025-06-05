@@ -330,10 +330,10 @@ int ossl_quic_sstream_append(QUIC_SSTREAM *qss,
 }
 
 int ossl_quic_sstream_appendv(QUIC_SSTREAM *qss,
-                             const struct ossl_iovec *iov,
-                             size_t buf_len,
-                             size_t offset,
-                             size_t *consumed)
+                              const struct ossl_iovec *iov,
+                              size_t buf_len,
+                              size_t offset,
+                              size_t *consumed)
 {
     size_t ptr = 0, l, consumed_ = 0;
     UINT_RANGE r;

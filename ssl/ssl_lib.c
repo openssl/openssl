@@ -2545,7 +2545,7 @@ int SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
 }
 
 int ssl_writev_internal(SSL *s, const struct ossl_iovec *iov, size_t iovcnt,
-                       uint64_t flags, size_t *written)
+                        uint64_t flags, size_t *written)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
@@ -2696,7 +2696,8 @@ int SSL_write(SSL *s, const void *buf, int num)
     return ret;
 }
 
-int SSL_writev(SSL *s, const struct ossl_iovec *iov, int iovcnt) {
+int SSL_writev(SSL *s, const struct ossl_iovec *iov, int iovcnt)
+{
     int ret;
     size_t written;
 
@@ -2726,6 +2727,7 @@ int SSL_write_ex2(SSL *s, const void *buf, size_t num, uint64_t flags,
                   size_t *written)
 {
     struct ossl_iovec iovec;
+    
     iovec.data = buf;
     iovec.data_len = num;
 

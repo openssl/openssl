@@ -328,9 +328,8 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
         /* SSLfatal() already called */
         if (i < 0)
             return i;
-        if (i == 0) {
+        if (i == 0)
             return -1;
-        }
     }
 
     i = tls_write_check_pending(s, type, buf, len);
@@ -553,9 +552,8 @@ int ssl3_writev_bytes(SSL *ssl, uint8_t type, const struct ossl_iovec *iov,
         /* SSLfatal() already called */
         if (i < 0)
             return i;
-        if (i == 0) {
+        if (i == 0)
             return -1;
-        }
     }
 
     if (iovcnt == 1)
@@ -638,18 +636,18 @@ int ssl3_writev_bytes(SSL *ssl, uint8_t type, const struct ossl_iovec *iov,
         size_t lensofar = tot;
 
         /*
-        * Ask the record layer how it would like to split the amount of data
-        * that we have, and how many of those records it would like in one go.
-        */
+         * Ask the record layer how it would like to split the amount of data
+         * that we have, and how many of those records it would like in one go.
+         */
         maxpipes = s->rlayer.wrlmethod->get_max_records(s->rlayer.wrl, type, n,
                                                         max_send_fragment,
                                                         &split_send_fragment);
         /*
-        * If max_pipelines is 0 then this means "undefined" and we default to
-        * whatever the record layer wants to do. Otherwise we use the smallest
-        * value from the number requested by the record layer, and max number
-        * configured by the user.
-        */
+         * If max_pipelines is 0 then this means "undefined" and we default to
+         * whatever the record layer wants to do. Otherwise we use the smallest
+         * value from the number requested by the record layer, and max number
+         * configured by the user.
+         */
         if (s->max_pipelines > 0 && maxpipes > s->max_pipelines)
             maxpipes = s->max_pipelines;
 
@@ -670,7 +668,7 @@ int ssl3_writev_bytes(SSL *ssl, uint8_t type, const struct ossl_iovec *iov,
                 tmpls[j].type = type;
                 tmpls[j].version = recversion;
                 if (iovcnt == 1) {
-                    tmpls[j].buf = iov[0].data + lensofar;
+                    tmpls[j].buf = (const unsigned char *)iov[0].data + lensofar;
                 } else {
                     tmpls[j].buf = (const unsigned char *)iov;
                     tmpls[j].offset = lensofar;
@@ -694,7 +692,7 @@ int ssl3_writev_bytes(SSL *ssl, uint8_t type, const struct ossl_iovec *iov,
                 tmpls[j].type = type;
                 tmpls[j].version = recversion;
                 if (iovcnt == 1) {
-                    tmpls[j].buf = iov[0].data + lensofar;
+                    tmpls[j].buf = (const unsigned char *)iov[0].data + lensofar;
                 } else {
                     tmpls[j].buf = (const unsigned char *)iov;
                     tmpls[j].offset = lensofar;

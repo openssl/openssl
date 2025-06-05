@@ -2514,7 +2514,7 @@ static int sstream_ensure_spare(QUIC_SSTREAM *sstream, uint64_t spare)
  */
 QUIC_NEEDS_LOCK
 static int xso_sstream_appendv(QUIC_XSO *xso, const struct ossl_iovec *iov,
-                              size_t len, size_t offset, size_t *actual_written)
+                               size_t len, size_t offset, size_t *actual_written)
 {
     QUIC_SSTREAM *sstream = xso->stream->sstream;
     uint64_t cur = ossl_quic_sstream_get_cur_size(sstream);
@@ -2652,8 +2652,8 @@ static void aon_write_finish(QUIC_XSO *xso)
 
 QUIC_NEEDS_LOCK
 static int quic_writev_nonblocking_aon(QCTX *ctx, const struct ossl_iovec *iov,
-                                      size_t len, uint64_t flags,
-                                      size_t *written)
+                                       size_t len, uint64_t flags,
+                                       size_t *written)
 {
     QUIC_XSO *xso = ctx->xso;
     size_t actual_offset, actual_len, actual_written = 0;
@@ -2740,7 +2740,7 @@ static int quic_writev_nonblocking_aon(QCTX *ctx, const struct ossl_iovec *iov,
 
 QUIC_NEEDS_LOCK
 static int quic_writev_nonblocking_epw(QCTX *ctx, const struct ossl_iovec *iov,
-                                      size_t len, uint64_t flags, size_t *written)
+                                       size_t len, uint64_t flags, size_t *written)
 {
     QUIC_XSO *xso = ctx->xso;
 
@@ -2807,7 +2807,7 @@ static int quic_validate_for_write(QUIC_XSO *xso, int *err)
 
 QUIC_TAKES_LOCK
 int ossl_quic_writev_flags(SSL *s, const struct ossl_iovec *iov, size_t iovcnt,
-                          uint64_t flags, size_t *written)
+                           uint64_t flags, size_t *written)
 {
     int ret;
     QCTX ctx;
@@ -2825,9 +2825,8 @@ int ossl_quic_writev_flags(SSL *s, const struct ossl_iovec *iov, size_t iovcnt,
             return 0;
 
         qctx_lock_for_io(&ctx);
-    } else if (!expect_quic_with_stream_lock(s, /*remote_init=*/0, /*io=*/1, &ctx)) {
+    } else if (!expect_quic_with_stream_lock(s, /*remote_init=*/0, /*io=*/1, &ctx))
         return 0;
-    }
 
     partial_write = ((ctx.xso != NULL)
         ? ((ctx.xso->ssl_mode & SSL_MODE_ENABLE_PARTIAL_WRITE) != 0) : 0);

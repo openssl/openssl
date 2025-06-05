@@ -691,7 +691,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
 }
 
 int do_dtls1_writev(SSL_CONNECTION *sc, uint8_t type, const struct ossl_iovec *iov,
-                   size_t len, size_t *written)
+                    size_t len, size_t *written)
 {
     int i;
     OSSL_RECORD_TEMPLATE tmpl;

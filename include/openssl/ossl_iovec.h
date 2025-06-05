@@ -7,10 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_INLINE
-#define OSSL_INLINE inline
-#endif
-
 #ifndef OSSL_IOVEC_H
 # define OSSL_IOVEC_H
 # include <stddef.h>
@@ -23,8 +19,8 @@ struct ossl_iovec {
 };
 
 static inline void ossl_iovec_memcpy(unsigned char *dst,
-                                          const struct ossl_iovec *src,
-                                          size_t len, size_t offset)
+                                     const struct ossl_iovec *src,
+                                     size_t len, size_t offset)
 {
     size_t ptr = 0;
 

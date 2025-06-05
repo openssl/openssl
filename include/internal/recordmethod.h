@@ -198,7 +198,7 @@ struct ossl_record_method_st {
     int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                          size_t numtempl);
     int (*writev_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
-                         size_t numtempl);
+                          size_t numtempl);
 
     /*
      * Retry a previous call to write_records. The caller should continue to
