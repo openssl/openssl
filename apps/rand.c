@@ -199,7 +199,7 @@ int rand_main(int argc, char **argv)
         int chunk;
 
         chunk = scaled_num > buflen ? (int)buflen : (int)scaled_num;
-        r = RAND_bytes(buf, chunk);
+        r = RAND_bytes_ex(app_get0_libctx(), buf, chunk, 0);
         if (r <= 0)
             goto end;
         if (format != FORMAT_TEXT) {

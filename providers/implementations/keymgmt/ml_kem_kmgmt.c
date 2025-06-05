@@ -16,9 +16,13 @@
 #include <openssl/rand.h>
 #include <openssl/self_test.h>
 #include <openssl/param_build.h>
+#include <openssl/cms.h>
 #include "crypto/ml_kem.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
+#include "internal/sizes.h"
+#include "prov/der_hkdf.h"
+#include "prov/der_wrap.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
@@ -498,6 +502,8 @@ static const OSSL_PARAM *ml_kem_gettable_params(void *provctx)
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),
         /* Needed by EVP_PKEY_get1_encoded_public_key() */
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_CMS_RI_TYPE, NULL),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM, NULL, 0),
         OSSL_PARAM_END
     };
 
@@ -632,6 +638,39 @@ static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
             if (!ossl_ml_kem_encode_seed(p->data, p->return_size, key))
                 return 0;
         }
+    }
+
+#ifndef OPENSSL_NO_CMS
+    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_CMS_RI_TYPE);
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_int(p, CMS_RECIPINFO_KEM))
+            return 0;
+    }
+#endif
+
+    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM);
+    if (p != NULL) {
+        uint8_t aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
+        int ret;
+        size_t aid_len = 0;
+        WPACKET pkt;
+        uint8_t *aid = NULL;
+
+        ret = WPACKET_init_der(&pkt, aid_buf, sizeof(aid_buf));
+        ret &= ossl_DER_w_begin_sequence(&pkt, -1)
+            && ossl_DER_w_precompiled(&pkt, -1, ossl_der_oid_id_alg_hkdf_with_sha256,
+                                      sizeof(ossl_der_oid_id_alg_hkdf_with_sha256))
+            && ossl_DER_w_end_sequence(&pkt, -1);
+        if (ret && WPACKET_finish(&pkt)) {
+            WPACKET_get_total_written(&pkt, &aid_len);
+            aid = WPACKET_get_curr(&pkt);
+        }
+        WPACKET_cleanup(&pkt);
+        if (!ret)
+            return 0;
+        if (aid != NULL && aid_len != 0 &&
+            !OSSL_PARAM_set_octet_string(p, aid, aid_len))
+            return 0;
     }
 
     return 1;
