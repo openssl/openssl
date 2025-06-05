@@ -6,7 +6,7 @@
 # https://www.openssl.org/source/license.html
 
 # ACVP test data for SLH-DSA keyGen generated from
-# https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/SLH-DSA-keyGen-FIPS204/internalProjection.json
+# https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/SLH-DSA-keyGen-FIPS205/internalProjection.json
 # [version 53]
 
 FIPSversion = >=3.5.0
