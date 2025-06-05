@@ -588,7 +588,7 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
 {
     OSSL_STATEM *st = &s->statem;
     int ret, mt;
-    size_t len = 0;
+    size_t len = 0, headerlen;
     int (*transition) (SSL_CONNECTION *s, int mt);
     PACKET pkt;
     MSG_PROCESS_RETURN(*process_message) (SSL_CONNECTION *s, PACKET *pkt);
@@ -682,10 +682,23 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
             }
 
             s->first_packet = 0;
-            if (!PACKET_buf_init(&pkt, s->init_msg, len)) {
+            /*
+             * We initialise the buffer including the message header, and
+             * then skip over header ready to process the message. This
+             * ensures that calls to PACKET_msg_start() gives us the whole
+             * message
+             */
+            headerlen = (char *)s->init_msg - s->init_buf->data;
+            if (!PACKET_buf_init(&pkt, (unsigned char *)s->init_buf->data,
+                                 len + headerlen)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return SUB_STATE_ERROR;
             }
+            if (!PACKET_forward(&pkt, headerlen)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return SUB_STATE_ERROR;
+            }
+
             ret = process_message(s, &pkt);
 
             /* Discard the packet data */
