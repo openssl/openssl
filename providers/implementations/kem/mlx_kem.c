@@ -113,8 +113,7 @@ char *ml_kem_strip_fips(const char *propq)
 {
     char *adjusted_propq = NULL;
     const char *nofips = "-fips";
-    size_t len = propq ? strlen(propq) + 1 + strlen(nofips) + 1 :
-                                             strlen(nofips) + 1;
+    size_t len = propq ? strlen(propq) + 1 + strlen(nofips) + 1 : strlen(nofips) + 1;
     char *ptr = NULL;
 
     adjusted_propq = OPENSSL_zalloc(len);

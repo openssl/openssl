@@ -1595,7 +1595,7 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
     adjusted_propq = ml_kem_strip_fips(properties);
     if (adjusted_propq == NULL) {
         ossl_ml_kem_key_free(key);
-	return NULL;
+        return NULL;
     }
     key->vinfo = vinfo;
     key->libctx = libctx;

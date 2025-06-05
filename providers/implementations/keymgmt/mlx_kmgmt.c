@@ -169,14 +169,14 @@ static size_t decompress_pub_key(void *pub, size_t compressed_len, size_t decomp
 
     switch (len) {
     case 33:
-         group_nid = NID_X9_62_prime256v1;
-       break;
+        group_nid = NID_X9_62_prime256v1;
+        break;
     case 49:
-         group_nid = NID_secp384r1;
-       break;
+        group_nid = NID_secp384r1;
+        break;
     default:
-       return len;
-       break;
+        return len;
+        break;
     }
 
     ctx = BN_CTX_new();
@@ -191,7 +191,8 @@ static size_t decompress_pub_key(void *pub, size_t compressed_len, size_t decomp
     if (!EC_POINT_oct2point(group, point, pub, len, ctx))
         goto err;
 
-    len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, pub, decompressed_len, ctx);
+    len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED,
+                             pub, decompressed_len, ctx);
 
 err:
     EC_POINT_free(point);
@@ -385,7 +386,7 @@ load_slot(OSSL_LIB_CTX *libctx, const char *propq, const char *pname,
           int selection, MLX_KEY *key, int slot, const uint8_t *in,
           int mbytes, int xbytes)
 {
-    EVP_PKEY_CTX *ctx;
+    EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY **ppkey;
     OSSL_PARAM parr[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
     const char *alg;
