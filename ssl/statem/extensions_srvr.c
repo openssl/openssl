@@ -1508,7 +1508,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     if (sess == NULL)
         return 1;
 
-    binderoffset = PACKET_data(pkt) - (const unsigned char *)s->init_buf->data;
+    binderoffset = PACKET_data(pkt) - PACKET_msg_start(pkt);
     hashsize = EVP_MD_get_size(md);
     if (hashsize <= 0)
         goto err;
@@ -1529,9 +1529,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
-    if (tls_psk_do_binder(s, md, (const unsigned char *)s->init_buf->data,
-                          binderoffset, PACKET_data(&binder), NULL, sess, 0,
-                          ext) != 1) {
+    if (tls_psk_do_binder(s, md, PACKET_msg_start(pkt), binderoffset,
+                          PACKET_data(&binder), NULL, sess, 0, ext) != 1) {
         /* SSLfatal() already called */
         goto err;
     }
