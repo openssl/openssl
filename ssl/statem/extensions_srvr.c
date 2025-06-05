@@ -1514,7 +1514,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     if (sess == NULL)
         return 1;
 
-    binderoffset = PACKET_data(pkt) - (const unsigned char *)s->init_buf->data;
+    binderoffset = PACKET_data(pkt) - PACKET_msg_start(pkt);
     hashsize = EVP_MD_get_size(md);
     if (hashsize <= 0)
         goto err;
