@@ -401,7 +401,9 @@ load_slot(OSSL_LIB_CTX *libctx, const char *propq, const char *pname,
         ppkey = &key->mkey;
         off = slot * xbytes;
         len = mbytes;
-        adjusted_propq = get_adjusted_propq(propq);
+        adjusted_propq = ml_kem_strip_fips(propq);
+        if (adjusted_propq == NULL)
+            goto err;
     } else {
         alg = key->xinfo->algorithm_name;
         group = (char *) key->xinfo->group_name;
@@ -765,9 +767,12 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return key;
 
-    /* For now, using the same "propq" for all components */
-    adjusted_propq = get_adjusted_propq(propq);
-    key->mkey = EVP_PKEY_Q_keygen(key->libctx, adjusted_propq ? adjusted_propq : key->propq,
+    adjusted_propq = ml_kem_strip_fips(key->propq);
+    if (adjusted_propq == NULL) {
+        mlx_kem_key_free(key);
+        return NULL;
+    }
+    key->mkey = EVP_PKEY_Q_keygen(key->libctx, adjusted_propq,
                                   key->minfo->algorithm_name);
     OPENSSL_free(adjusted_propq);
     key->xkey = EVP_PKEY_Q_keygen(key->libctx, key->propq,

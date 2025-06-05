@@ -104,7 +104,12 @@ mlx_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-char *get_adjusted_propq(const char *propq)
+/*
+ * This function either adds '-fips' to the passed propq,
+ * or allocates string '-fips' and return it.
+ * So we can get "fips=yes,-fips" as a result
+ */
+char *ml_kem_strip_fips(const char *propq)
 {
     char *adjusted_propq = NULL;
     const char *nofips = "-fips";
@@ -191,8 +196,10 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
     encap_slen = ML_KEM_SHARED_SECRET_BYTES;
     cbuf = ctext + ml_kem_slot * key->xinfo->pubkey_bytes;
     sbuf = shsec + ml_kem_slot * key->xinfo->shsec_bytes;
-    adjusted_propq = get_adjusted_propq(key->propq);
-    ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->mkey, adjusted_propq ? adjusted_propq : key->propq);
+    adjusted_propq = ml_kem_strip_fips(key->propq);
+    if (adjusted_propq == NULL)
+        goto end;
+    ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->mkey, adjusted_propq);
     if (ctx == NULL
         || EVP_PKEY_encapsulate_init(ctx, NULL) <= 0
         || EVP_PKEY_encapsulate(ctx, cbuf, &encap_clen, sbuf, &encap_slen) <= 0)
@@ -314,8 +321,10 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
     decap_slen = ML_KEM_SHARED_SECRET_BYTES;
     cbuf = ctext + ml_kem_slot * key->xinfo->pubkey_bytes;
     sbuf = shsec + ml_kem_slot * key->xinfo->shsec_bytes;
-    adjusted_propq = get_adjusted_propq(key->propq);
-    ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->mkey, adjusted_propq ? adjusted_propq : key->propq);
+    adjusted_propq = ml_kem_strip_fips(key->propq);
+    if (adjusted_propq == NULL)
+        goto end;
+    ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->mkey, adjusted_propq);
     if (ctx == NULL
         || EVP_PKEY_decapsulate_init(ctx, NULL) <= 0
         || EVP_PKEY_decapsulate(ctx, sbuf, &decap_slen, cbuf, decap_clen) <= 0)

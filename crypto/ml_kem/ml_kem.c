@@ -1592,14 +1592,18 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
     if ((key = OPENSSL_malloc(sizeof(*key))) == NULL)
         return NULL;
 
-    adjusted_propq = get_adjusted_propq(properties);
+    adjusted_propq = ml_kem_strip_fips(properties);
+    if (adjusted_propq == NULL) {
+        ossl_ml_kem_key_free(key);
+	return NULL;
+    }
     key->vinfo = vinfo;
     key->libctx = libctx;
     key->prov_flags = ML_KEM_KEY_PROV_FLAGS_DEFAULT;
-    key->shake128_md = EVP_MD_fetch(libctx, "SHAKE128", adjusted_propq ? adjusted_propq : properties);
-    key->shake256_md = EVP_MD_fetch(libctx, "SHAKE256", adjusted_propq ? adjusted_propq : properties);
-    key->sha3_256_md = EVP_MD_fetch(libctx, "SHA3-256", adjusted_propq ? adjusted_propq : properties);
-    key->sha3_512_md = EVP_MD_fetch(libctx, "SHA3-512", adjusted_propq ? adjusted_propq : properties);
+    key->shake128_md = EVP_MD_fetch(libctx, "SHAKE128", adjusted_propq);
+    key->shake256_md = EVP_MD_fetch(libctx, "SHAKE256", adjusted_propq);
+    key->sha3_256_md = EVP_MD_fetch(libctx, "SHA3-256", adjusted_propq);
+    key->sha3_512_md = EVP_MD_fetch(libctx, "SHA3-512", adjusted_propq);
     key->d = key->z = key->rho = key->pkhash = key->encoded_dk = NULL;
     key->s = key->m = key->t = NULL;
     OPENSSL_free(adjusted_propq);
