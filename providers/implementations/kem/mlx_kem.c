@@ -104,32 +104,6 @@ mlx_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-/*
- * This function either adds '-fips' to the passed propq,
- * or allocates string '-fips' and return it.
- * So we can get "fips=yes,-fips" as a result
- */
-char *ml_kem_strip_fips(const char *propq)
-{
-    char *adjusted_propq = NULL;
-    const char *nofips = "-fips";
-    size_t len = propq ? strlen(propq) + 1 + strlen(nofips) + 1 : strlen(nofips) + 1;
-    char *ptr = NULL;
-
-    adjusted_propq = OPENSSL_zalloc(len);
-    if (adjusted_propq != NULL) {
-        ptr = adjusted_propq;
-        if (propq && strlen(propq) > 0) {
-            memcpy(ptr, propq, strlen(propq));
-            ptr += strlen(propq);
-            *ptr = ',';
-            ptr++;
-        }
-        memcpy(ptr, nofips, strlen(nofips));
-    }
-    return adjusted_propq;
-}
-
 static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
                                unsigned char *shsec, size_t *slen)
 {

@@ -1579,6 +1579,32 @@ const ML_KEM_VINFO *ossl_ml_kem_get_vinfo(int evp_type)
     return NULL;
 }
 
+/*
+ * This function either adds '-fips' to the passed propq,
+ * or allocates string '-fips' and return it.
+ * So we can get "fips=yes,-fips" as a result
+ */
+char *ml_kem_strip_fips(const char *propq)
+{
+    char *adjusted_propq = NULL;
+    const char *nofips = "-fips";
+    size_t len = propq ? strlen(propq) + 1 + strlen(nofips) + 1 : strlen(nofips) + 1;
+    char *ptr = NULL;
+
+    adjusted_propq = OPENSSL_zalloc(len);
+    if (adjusted_propq != NULL) {
+        ptr = adjusted_propq;
+        if (propq && strlen(propq) > 0) {
+            memcpy(ptr, propq, strlen(propq));
+            ptr += strlen(propq);
+            *ptr = ',';
+            ptr++;
+        }
+        memcpy(ptr, nofips, strlen(nofips));
+    }
+    return adjusted_propq;
+}
+
 ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
                                 int evp_type)
 {
