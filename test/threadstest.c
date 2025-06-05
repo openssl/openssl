@@ -590,6 +590,29 @@ static int test_thread_local(void)
     return 1;
 }
 
+/*
+ * Basic test to ensure that we can repeatedly create and
+ * destroy local keys without leaking anything
+ */
+static int test_thread_local_multi_key(void)
+{
+    int dummy;
+    int i;
+
+    for (i = 0; i < 1000; i++) {
+        if (!TEST_true(CRYPTO_THREAD_init_local(&thread_local_key,
+                                                thread_local_destructor)))
+            return 0;
+
+        if (!TEST_true(CRYPTO_THREAD_set_local(&thread_local_key, &dummy)))
+            return 0;
+
+        if (!TEST_true(CRYPTO_THREAD_cleanup_local(&thread_local_key)))
+            return 0;
+    }
+    return 1;
+}
+
 static int test_atomic(void)
 {
     int val = 0, ret = 0, testresult = 0;
@@ -1339,6 +1362,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
+    ADD_TEST(test_thread_local_multi_key);
     ADD_TEST(test_atomic);
     ADD_TEST(test_multi_load);
     ADD_TEST(test_multi_general_worker_default_provider);
