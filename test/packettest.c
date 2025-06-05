@@ -570,8 +570,38 @@ static int test_PACKET_get_quic_length_prefixed(void)
 
     return 1;
 }
-
 #endif
+
+static int test_PACKET_msg_start(void)
+{
+    unsigned char buf[16] = { 0 };
+    PACKET pkt, subpkt;
+
+    if (!TEST_true(PACKET_buf_init(&pkt, buf, sizeof(buf))))
+        return 0;
+
+    if (!TEST_ptr_eq(PACKET_msg_start(&pkt), buf))
+        return 0;
+
+    if (!TEST_true(PACKET_forward(&pkt, 1))
+            || !TEST_ptr_eq(PACKET_msg_start(&pkt), buf))
+        return 0;
+
+    if (!TEST_true(PACKET_get_sub_packet(&pkt, &subpkt, 1))
+            || !TEST_ptr_eq(PACKET_msg_start(&subpkt), buf)
+            || !TEST_ptr_eq(PACKET_msg_start(&pkt), buf))
+        return 0;
+
+    if (!TEST_true(PACKET_forward(&subpkt, 1))
+            || !TEST_ptr_eq(PACKET_msg_start(&pkt), buf))
+        return 0;
+
+    PACKET_null_init(&pkt);
+    if (!TEST_ptr_null(PACKET_msg_start(&pkt)))
+        return 0;
+
+    return 1;
+}
 
 int setup_tests(void)
 {
@@ -607,5 +637,6 @@ int setup_tests(void)
     ADD_TEST(test_PACKET_get_quic_vlint);
     ADD_TEST(test_PACKET_get_quic_length_prefixed);
 #endif
+    ADD_TEST(test_PACKET_msg_start);
     return 1;
 }
