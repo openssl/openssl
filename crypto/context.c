@@ -32,7 +32,6 @@ struct ossl_lib_ctx_st {
     void *global_properties;
     void *drbg;
     void *drbg_nonce;
-    CRYPTO_THREAD_LOCAL rcu_local_key;
 #ifndef FIPS_MODULE
     void *provider_conf;
     void *bio_core;
@@ -92,9 +91,6 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx);
 static int context_init(OSSL_LIB_CTX *ctx)
 {
     int exdata_done = 0;
-
-    if (!CRYPTO_THREAD_init_local(&ctx->rcu_local_key, NULL))
-        return 0;
 
     ctx->lock = CRYPTO_THREAD_lock_new();
     if (ctx->lock == NULL)
@@ -227,7 +223,6 @@ static int context_init(OSSL_LIB_CTX *ctx)
         ossl_crypto_cleanup_all_ex_data_int(ctx);
 
     CRYPTO_THREAD_lock_free(ctx->lock);
-    CRYPTO_THREAD_cleanup_local(&ctx->rcu_local_key);
     memset(ctx, '\0', sizeof(*ctx));
     return 0;
 }
@@ -380,7 +375,6 @@ static int context_deinit(OSSL_LIB_CTX *ctx)
 
     CRYPTO_THREAD_lock_free(ctx->lock);
     ctx->lock = NULL;
-    CRYPTO_THREAD_cleanup_local(&ctx->rcu_local_key);
     return 1;
 }
 
@@ -663,10 +657,7 @@ const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx)
 
 CRYPTO_THREAD_LOCAL *ossl_lib_ctx_get_rcukey(OSSL_LIB_CTX *libctx)
 {
-    libctx = ossl_lib_ctx_get_concrete(libctx);
-    if (libctx == NULL)
-        return NULL;
-    return &libctx->rcu_local_key;
+    return CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_RCU_KEY_ID);
 }
 
 int OSSL_LIB_CTX_get_conf_diagnostics(OSSL_LIB_CTX *libctx)

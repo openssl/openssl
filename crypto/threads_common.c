@@ -17,6 +17,9 @@ static CRYPTO_LOCAL_KEY_ENTRY key_table[] = {
     [CRYPTO_THREAD_DEF_CTX_KEY_ID] = {
             .cleanup = NULL,
         },
+    [CRYPTO_THREAD_RCU_KEY_ID] = {
+            .cleanup = NULL,
+        },
 };
 
 static size_t key_table_len = ARRAY_LEN(key_table);
