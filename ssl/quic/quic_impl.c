@@ -2513,7 +2513,7 @@ static int sstream_ensure_spare(QUIC_SSTREAM *sstream, uint64_t spare)
  * as needed according to flow control.
  */
 QUIC_NEEDS_LOCK
-static int xso_sstream_appendv(QUIC_XSO *xso, const struct ossl_iovec *iov,
+static int xso_sstream_append(QUIC_XSO *xso, const OSSL_IOVEC *iov,
                                size_t len, size_t offset, size_t *actual_written)
 {
     QUIC_SSTREAM *sstream = xso->stream->sstream;
@@ -2531,7 +2531,7 @@ static int xso_sstream_appendv(QUIC_XSO *xso, const struct ossl_iovec *iov,
 }
 
 QUIC_NEEDS_LOCK
-static int quic_writev_again(void *arg)
+static int quic_write_again(void *arg)
 {
     struct quic_write_again_args *args = arg;
     size_t actual_written = 0;
@@ -2548,7 +2548,7 @@ static int quic_writev_again(void *arg)
         return -2;
 
     args->err = ERR_R_INTERNAL_ERROR;
-    if (!xso_sstream_appendv(args->xso, (const struct ossl_iovec *)args->buf,
+    if (!xso_sstream_append(args->xso, (const OSSL_IOVEC *)args->buf,
                              args->len, args->offset, &actual_written))
         return -2;
 
@@ -2568,7 +2568,7 @@ static int quic_writev_again(void *arg)
 }
 
 QUIC_NEEDS_LOCK
-static int quic_writev_blocking(QCTX *ctx, const struct ossl_iovec *iov,
+static int quic_write_blocking(QCTX *ctx, const OSSL_IOVEC *iov,
                                 size_t len, uint64_t flags, size_t *written)
 {
     int res;
@@ -2577,7 +2577,7 @@ static int quic_writev_blocking(QCTX *ctx, const struct ossl_iovec *iov,
     size_t actual_written = 0;
 
     /* First make a best effort to append as much of the data as possible. */
-    if (!xso_sstream_appendv(xso, iov, len, 0, &actual_written)) {
+    if (!xso_sstream_append(xso, iov, len, 0, &actual_written)) {
         /* Stream already finished or allocation error. */
         *written = 0;
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
@@ -2608,7 +2608,7 @@ static int quic_writev_blocking(QCTX *ctx, const struct ossl_iovec *iov,
     args.err            = ERR_R_INTERNAL_ERROR;
     args.flags          = flags;
 
-    res = block_until_pred(ctx, quic_writev_again, &args, 0);
+    res = block_until_pred(ctx, quic_write_again, &args, 0);
     if (res <= 0) {
         if (!quic_mutation_allowed(xso->conn, /*req_active=*/1))
             return QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
@@ -2651,7 +2651,7 @@ static void aon_write_finish(QUIC_XSO *xso)
 }
 
 QUIC_NEEDS_LOCK
-static int quic_writev_nonblocking_aon(QCTX *ctx, const struct ossl_iovec *iov,
+static int quic_write_nonblocking_aon(QCTX *ctx, const OSSL_IOVEC *iov,
                                        size_t len, uint64_t flags,
                                        size_t *written)
 {
@@ -2683,7 +2683,7 @@ static int quic_writev_nonblocking_aon(QCTX *ctx, const struct ossl_iovec *iov,
     }
 
     /* First make a best effort to append as much of the data as possible. */
-    if (!xso_sstream_appendv(xso, iov, actual_len, actual_offset, &actual_written)) {
+    if (!xso_sstream_append(xso, iov, actual_len, actual_offset, &actual_written)) {
         /* Stream already finished or allocation error. */
         *written = 0;
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
@@ -2739,13 +2739,13 @@ static int quic_writev_nonblocking_aon(QCTX *ctx, const struct ossl_iovec *iov,
 }
 
 QUIC_NEEDS_LOCK
-static int quic_writev_nonblocking_epw(QCTX *ctx, const struct ossl_iovec *iov,
+static int quic_write_nonblocking_epw(QCTX *ctx, const OSSL_IOVEC *iov,
                                        size_t len, uint64_t flags, size_t *written)
 {
     QUIC_XSO *xso = ctx->xso;
 
     /* Simple best effort operation. */
-    if (!xso_sstream_appendv(xso, iov, len, 0, written)) {
+    if (!xso_sstream_append(xso, iov, len, 0, written)) {
         /* Stream already finished or allocation error. */
         *written = 0;
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
@@ -2806,16 +2806,15 @@ static int quic_validate_for_write(QUIC_XSO *xso, int *err)
 }
 
 QUIC_TAKES_LOCK
-int ossl_quic_writev_flags(SSL *s, const struct ossl_iovec *iov, size_t iovcnt,
+int ossl_quic_write_flags(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
                            uint64_t flags, size_t *written)
 {
-    int ret;
+    int ret, partial_write, err;
     QCTX ctx;
-    int partial_write, err;
+    size_t len = 0;
 
     *written = 0;
 
-    size_t len = 0;
     for (size_t i = 0; i < iovcnt; i++)
         len += iov[i].data_len;
 
@@ -2825,8 +2824,9 @@ int ossl_quic_writev_flags(SSL *s, const struct ossl_iovec *iov, size_t iovcnt,
             return 0;
 
         qctx_lock_for_io(&ctx);
-    } else if (!expect_quic_with_stream_lock(s, /*remote_init=*/0, /*io=*/1, &ctx))
+    } else if (!expect_quic_with_stream_lock(s, /*remote_init=*/0, /*io=*/1, &ctx)) {
         return 0;
+    }
 
     partial_write = ((ctx.xso != NULL)
         ? ((ctx.xso->ssl_mode & SSL_MODE_ENABLE_PARTIAL_WRITE) != 0) : 0);
@@ -2866,11 +2866,11 @@ int ossl_quic_writev_flags(SSL *s, const struct ossl_iovec *iov, size_t iovcnt,
     }
 
     if (qctx_blocking(&ctx))
-        ret = quic_writev_blocking(&ctx, iov, len, flags, written);
+        ret = quic_write_blocking(&ctx, iov, len, flags, written);
     else if (partial_write)
-        ret = quic_writev_nonblocking_epw(&ctx, iov, len, flags, written);
+        ret = quic_write_nonblocking_epw(&ctx, iov, len, flags, written);
     else
-        ret = quic_writev_nonblocking_aon(&ctx, iov, len, flags, written);
+        ret = quic_write_nonblocking_aon(&ctx, iov, len, flags, written);
 
 out:
     qctx_unlock(&ctx);
@@ -2878,9 +2878,9 @@ out:
 }
 
 QUIC_TAKES_LOCK
-int ossl_quic_writev(SSL *s, const struct ossl_iovec *iov, size_t iovcnt, size_t *written)
+int ossl_quic_write(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, size_t *written)
 {
-    return ossl_quic_writev_flags(s, iov, iovcnt, 0, written);
+    return ossl_quic_write_flags(s, iov, iovcnt, 0, written);
 }
 
 /*

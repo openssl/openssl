@@ -220,7 +220,7 @@ static int test_sstream_iov(void)
     OSSL_QUIC_FRAME_STREAM hdr;
     OSSL_QTX_IOVEC iov[2];
     size_t i, num_iov = 0, wr = 0, init_size = 8192, offset = 2, buffer_len = 4;
-    struct ossl_iovec data_1_iov[4];
+    OSSL_IOVEC data_1_iov[4];
 
     if (!TEST_ptr(sstream = ossl_quic_sstream_new(init_size)))
         goto err;

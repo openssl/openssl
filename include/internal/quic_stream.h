@@ -241,7 +241,7 @@ int ossl_quic_sstream_append(QUIC_SSTREAM *qss,
                              size_t buf_len,
                              size_t *consumed);
 int ossl_quic_sstream_appendv(QUIC_SSTREAM *qss,
-                              const struct ossl_iovec *iov,
+                              const OSSL_IOVEC *iov,
                               size_t buf_len,
                               size_t offset,
                               size_t *consumed);

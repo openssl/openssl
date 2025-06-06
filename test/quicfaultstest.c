@@ -78,7 +78,7 @@ static int test_iov(void)
     size_t msglen = strlen(msg);
     unsigned char buf[80];
     size_t num_iov, bytesread;
-    struct ossl_iovec iov[4];
+    OSSL_IOVEC iov[4];
 
     if (!TEST_ptr(cctx))
         goto err;

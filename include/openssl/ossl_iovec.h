@@ -13,13 +13,13 @@
 # include <string.h>
 
 /* Abstraction layer for iovec */
-struct ossl_iovec {
+typedef struct ossl_iovec {
     const void *data;
     size_t data_len;
-};
+} OSSL_IOVEC;
 
 static inline void ossl_iovec_memcpy(unsigned char *dst,
-                                     const struct ossl_iovec *src,
+                                     const OSSL_IOVEC *src,
                                      size_t len, size_t offset)
 {
     size_t ptr = 0;

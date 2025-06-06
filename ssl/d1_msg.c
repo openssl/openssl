@@ -10,7 +10,7 @@
 #include "ssl_local.h"
 #include "internal/ssl_unwrap.h"
 
-int dtls1_writev_app_data_bytes(SSL *s, uint8_t type, const struct ossl_iovec *iov,
+int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const OSSL_IOVEC *iov,
                                 size_t iovcnt, size_t *written)
 {
     size_t i, len = 0;

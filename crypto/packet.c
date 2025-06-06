@@ -26,7 +26,7 @@ int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
     return 1;
 }
 
-int WPACKET_memcpy_iovec(WPACKET *pkt, const struct ossl_iovec *iov, size_t len,
+int WPACKET_memcpy_iovec(WPACKET *pkt, const OSSL_IOVEC *iov, size_t len,
                          size_t offset)
 {
     unsigned char *dest;

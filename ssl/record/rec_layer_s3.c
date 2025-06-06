@@ -490,7 +490,7 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
  * Call this to write data in records of type 'type' It will return <= 0 if
  * not all data has been sent or non-blocking IO.
  */
-int ssl3_writev_bytes(SSL *ssl, uint8_t type, const struct ossl_iovec *iov,
+int ssl3_writev_bytes(SSL *ssl, uint8_t type, const OSSL_IOVEC *iov,
                       size_t iovcnt, size_t *written)
 {
     size_t j, len = 0;
