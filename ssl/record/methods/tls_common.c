@@ -2035,29 +2035,16 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-    if (!rl->funcs->write_records(rl, templates, numtempl)) {
-        /* RLAYERfatal already called */
-        return OSSL_RECORD_RETURN_FATAL;
-    }
-
-    rl->nextwbuf = 0;
-    /* we now just need to write the buffers */
-    return tls_retry_write_records(rl);
-}
-
-int tls_writev_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
-                      size_t numtempl)
-{
-    /* Check we don't have pending data waiting to write */
-    if (!ossl_assert(rl->nextwbuf >= rl->numwpipes
-                     || TLS_BUFFER_get_left(&rl->wbuf[rl->nextwbuf]) == 0)) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-        return OSSL_RECORD_RETURN_FATAL;
-    }
-
-    if (!rl->funcs->writev_records(rl, templates, numtempl)) {
-        /* RLAYERfatal already called */
-        return OSSL_RECORD_RETURN_FATAL;
+    if (templates->buf) {
+        if (!rl->funcs->write_records(rl, templates, numtempl)) {
+            /* RLAYERfatal already called */
+            return OSSL_RECORD_RETURN_FATAL;
+        }
+    } else {
+        if (!rl->funcs->writev_records(rl, templates, numtempl)) {
+            /* RLAYERfatal already called */
+            return OSSL_RECORD_RETURN_FATAL;
+        }
     }
 
     rl->nextwbuf = 0;
@@ -2325,7 +2312,6 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_app_data_pending,
     tls_get_max_records,
     tls_write_records,
-    tls_writev_records,
     tls_retry_write_records,
     tls_read_record,
     tls_release_record,

@@ -646,48 +646,11 @@ int dtls1_writev_bytes(SSL_CONNECTION *s, uint8_t type, const OSSL_IOVEC *iov,
 int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
                    size_t len, size_t *written)
 {
-    int i;
-    OSSL_RECORD_TEMPLATE tmpl;
-    SSL *s = SSL_CONNECTION_GET_SSL(sc);
-    int ret;
+    OSSL_IOVEC iovec;
+    iovec.data = buf;
+    iovec.data_len = len;
 
-    /* If we have an alert to send, lets send it */
-    if (sc->s3.alert_dispatch > 0) {
-        i = s->method->ssl_dispatch_alert(s);
-        if (i <= 0)
-            return i;
-        /* if it went, fall through and send more stuff */
-    }
-
-    if (len == 0)
-        return 0;
-
-    if (len > ssl_get_max_send_fragment(sc)) {
-        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
-        return 0;
-    }
-
-    tmpl.type = type;
-    /*
-     * Special case: for hello verify request, client version 1.0 and we
-     * haven't decided which version to use yet send back using version 1.0
-     * header: otherwise some clients will ignore it.
-     */
-    if (s->method->version == DTLS_ANY_VERSION
-            && sc->max_proto_version != DTLS1_BAD_VER)
-        tmpl.version = DTLS1_VERSION;
-    else
-        tmpl.version = sc->version;
-    tmpl.buf = buf;
-    tmpl.buflen = len;
-
-    ret = HANDLE_RLAYER_WRITE_RETURN(sc,
-              sc->rlayer.wrlmethod->write_records(sc->rlayer.wrl, &tmpl, 1));
-
-    if (ret > 0)
-        *written = (int)len;
-
-    return ret;
+    return do_dtls1_writev(sc, type, &iovec, len, written);
 }
 
 int do_dtls1_writev(SSL_CONNECTION *sc, uint8_t type, const OSSL_IOVEC *iov,
@@ -725,12 +688,18 @@ int do_dtls1_writev(SSL_CONNECTION *sc, uint8_t type, const OSSL_IOVEC *iov,
         tmpl.version = DTLS1_VERSION;
     else
         tmpl.version = sc->version;
-    tmpl.buf = (const unsigned char *)iov;
-    tmpl.buflen = len;
-    tmpl.offset = 0;
+
+    if (iov[0].data_len == len) {
+        tmpl.buf = iov[0].data;
+        tmpl.buflen = len;
+    } else {
+        tmpl.iov = iov;
+        tmpl.buflen = len;
+        tmpl.offset = 0;
+    }
 
     ret = HANDLE_RLAYER_WRITE_RETURN(sc,
-              sc->rlayer.wrlmethod->writev_records(sc->rlayer.wrl, &tmpl, 1));
+              sc->rlayer.wrlmethod->write_records(sc->rlayer.wrl, &tmpl, 1));
 
     if (ret > 0)
         *written = (int)len;

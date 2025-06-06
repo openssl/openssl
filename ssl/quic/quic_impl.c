@@ -2470,7 +2470,7 @@ static void quic_post_write(QUIC_XSO *xso, int did_append,
 
 struct quic_write_again_args {
     QUIC_XSO            *xso;
-    const unsigned char *buf;
+    const OSSL_IOVEC    *iov;
     size_t              len;
     size_t              offset;
     size_t              total_written;
@@ -2548,8 +2548,8 @@ static int quic_write_again(void *arg)
         return -2;
 
     args->err = ERR_R_INTERNAL_ERROR;
-    if (!xso_sstream_append(args->xso, (const OSSL_IOVEC *)args->buf,
-                             args->len, args->offset, &actual_written))
+    if (!xso_sstream_append(args->xso, args->iov, args->len,
+                            args->offset, &actual_written))
         return -2;
 
     quic_post_write(args->xso, actual_written > 0,
@@ -2601,7 +2601,7 @@ static int quic_write_blocking(QCTX *ctx, const OSSL_IOVEC *iov,
      * it is freed up.
      */
     args.xso            = xso;
-    args.buf            = (const unsigned char *)iov;
+    args.iov            = iov;
     args.len            = len - actual_written;
     args.offset         = actual_written;
     args.total_written  = 0;
