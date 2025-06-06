@@ -917,6 +917,11 @@ void ossl_quic_stream_iter_init(QUIC_STREAM_ITER *it, QUIC_STREAM_MAP *qsm,
  */
 void ossl_quic_stream_iter_next(QUIC_STREAM_ITER *it);
 
+/*
+ * notify streams the underlying connection is being closed
+ */
+void ossl_quic_stream_map_notify_close(QUIC_STREAM_MAP *qsm);
+
 # endif
 
 #endif
