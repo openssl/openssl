@@ -2756,12 +2756,23 @@ static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
     return ret;
 }
 
-static int test_ssl_accept_connection(void)
+
+/*
+ * Test ssl accept connection and then write with vectored IO
+ * Test 0: SSL_writev
+ * Test 1: SSL_writev_ex
+ * Test 2: SSL_writev_ex2
+ */
+static int test_ssl_accept_connection_then_writev(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
     int testresult = 0;
     int ret, i;
+    const size_t iovcnt = 2;
+    OSSL_IOVEC iov[iovcnt];
+    size_t message_len = 0, written;
+    char readbuf[1024] = {0};
 
     if (!TEST_ptr(sctx = create_server_ctx())
         || !TEST_ptr(cctx = create_client_ctx()))
@@ -2793,6 +2804,46 @@ static int test_ssl_accept_connection(void)
     /* Call SSL_accept() and SSL_connect() until we are connected */
     if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
                                               SSL_ERROR_NONE, 0, 0)))
+        goto err;
+
+    /* Create an iovec array to test ssl_writev */
+    for (size_t i = 0; i < iovcnt; i++) {
+        iov[i].data = "testingmessage";
+        iov[i].data_len = strlen("testingmessage");
+        message_len += strlen("testingmessage");
+    }
+
+    switch (idx) {
+        case 0:
+            if (!TEST_true(ret = SSL_writev(clientssl, iov, iovcnt)))
+                goto err;
+            if (!TEST_size_t_eq(ret, message_len))
+                goto err;
+            break;
+        case 1:
+            if (!TEST_true(SSL_writev_ex(clientssl, iov, iovcnt, &written)))
+                goto err;
+            if (!TEST_size_t_eq(written, message_len))
+                goto err;
+            break;
+        case 2:
+            if (!TEST_true(SSL_writev_ex2(clientssl, iov, iovcnt, 0, &written)))
+                goto err;
+            if (!TEST_size_t_eq(written, message_len))
+                goto err;
+            break;
+        default:
+            goto err;
+    }
+
+    ret = SSL_read(serverssl, readbuf, sizeof(readbuf));
+    if (!TEST_int_ge(ret, 0))
+        goto err;
+
+    printf("%s\n", readbuf);
+
+    /* Ensure the data read matches the data written */
+    if (!TEST_mem_eq(readbuf, ret, "testingmessagetestingmessage", message_len))
         goto err;
 
     testresult = 1;
@@ -2906,7 +2957,7 @@ int setup_tests(void)
     ADD_TEST(test_new_token);
 #endif
     ADD_TEST(test_server_method_with_ssl_new);
-    ADD_TEST(test_ssl_accept_connection);
+    ADD_ALL_TESTS(test_ssl_accept_connection_then_writev, 3);
     return 1;
  err:
     cleanup_tests();

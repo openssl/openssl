@@ -217,6 +217,7 @@ providers/implementations/ciphers/cipher_chacha20_poly1305.c
 *.ld
 /apps/progs.c
 /apps/progs.h
+.vscode/
 
 # macOS
 .DS_Store
