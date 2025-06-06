@@ -269,7 +269,7 @@ static int tls_write_check_pending(SSL_CONNECTION *s, uint8_t type,
  * not all data has been sent or non-blocking IO.
  */
 int ssl3_write_bytes(SSL *ssl, uint8_t type, const OSSL_IOVEC *iov,
-                      size_t iovcnt, size_t *written)
+                     size_t iovcnt, size_t *written)
 {
     size_t j, len = 0;
     size_t tot;

@@ -2761,10 +2761,10 @@ static int test_ssl_accept_connection_then_writev(void)
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
     int testresult = 0;
-    int ret, i;
+    int ret;
     const size_t iovcnt = 2;
     OSSL_IOVEC iov[iovcnt];
-    size_t message_len = 0, written;
+    size_t message_len = 0, written, i;
     char readbuf[1024] = {0};
 
     if (!TEST_ptr(sctx = create_server_ctx())
@@ -2806,7 +2806,7 @@ static int test_ssl_accept_connection_then_writev(void)
         message_len += strlen("testingmessage");
     }
 
-    if (!TEST_true(SSL_writev(clientssl, iov, iovcnt, &written)))
+    if (!TEST_true(SSL_writev(clientssl, iov, iovcnt, 0, &written)))
         goto err;
 
     if (!TEST_size_t_eq(written, message_len))

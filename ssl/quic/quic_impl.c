@@ -2824,7 +2824,7 @@ int ossl_quic_write_flags(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
             return 0;
 
         qctx_lock_for_io(&ctx);
-    } else if (!expect_quic_with_stream_lock(s, /* remote_init= */0, /* io= */1, &ctx)) {
+    } else if (!expect_quic_with_stream_lock(s, /* remote_init= */ 0, /* io= */ 1, &ctx)) {
         return 0;
     }
 

@@ -18,7 +18,7 @@ SSL_WRITE_FLAG_CONCLUDE - write bytes to a TLS/SSL connection
  int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written);
  int SSL_write(SSL *ssl, const void *buf, int num);
  int SSL_writev(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
-                size_t *written);
+                uint64_t flags, size_t *written);
 
  OSSL_IOVEC {
     const void *data;

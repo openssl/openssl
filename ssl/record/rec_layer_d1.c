@@ -617,7 +617,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
  * not all data has been sent or non-blocking IO.
  */
 int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const OSSL_IOVEC *iov,
-                       size_t len, size_t *written)
+                      size_t len, size_t *written)
 {
     int i;
 
@@ -631,7 +631,7 @@ int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const OSSL_IOVEC *iov,
 }
 
 int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const OSSL_IOVEC *iov,
-                    size_t len, size_t *written)
+                   size_t len, size_t *written)
 {
     int i;
     OSSL_RECORD_TEMPLATE tmpl;

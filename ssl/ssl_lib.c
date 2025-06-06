@@ -2716,15 +2716,16 @@ int SSL_write_ex2(SSL *s, const void *buf, size_t num, uint64_t flags,
     return ret;
 }
 
-int SSL_writev(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, size_t *written)
+int SSL_writev(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, uint64_t flags,
+               size_t *written)
 {
     int ret;
     size_t local_written;
 
     if (written == NULL)
-        ret = ssl_write_internal(s, iov, iovcnt, 0, &local_written);
+        ret = ssl_write_internal(s, iov, iovcnt, flags, &local_written);
     else
-        ret = ssl_write_internal(s, iov, iovcnt, 0, written);
+        ret = ssl_write_internal(s, iov, iovcnt, flags, written);
 
     if (ret < 0)
         ret = 0;
