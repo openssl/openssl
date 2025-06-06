@@ -40,8 +40,6 @@ DEFINE_RUN_ONCE_STATIC(do_key_table_init)
 CRYPTO_THREAD_LOCAL*
 CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_KEY_ENTRY_ID id)
 {
-    size_t i;
-
     if (!RUN_ONCE(&key_table_init, do_key_table_init))
         return NULL;
 
