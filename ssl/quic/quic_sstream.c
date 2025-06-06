@@ -285,6 +285,7 @@ int ossl_quic_sstream_append(QUIC_SSTREAM *qss,
                              size_t *consumed)
 {
     OSSL_IOVEC iovec;
+    
     iovec.data = buf;
     iovec.data_len = buf_len;
 

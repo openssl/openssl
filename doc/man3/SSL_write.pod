@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-SSL_write_ex2, SSL_write_ex, SSL_write, SSL_writev_ex2, SSL_writev_ex, SSL_writev,
-SSL_sendfile, SSL_WRITE_FLAG_CONCLUDE - write bytes to a TLS/SSL connection
+SSL_write_ex2, SSL_write_ex, SSL_write, SSL_writev, SSL_sendfile,
+SSL_WRITE_FLAG_CONCLUDE - write bytes to a TLS/SSL connection
 
 =head1 SYNOPSIS
 
@@ -17,12 +17,8 @@ SSL_sendfile, SSL_WRITE_FLAG_CONCLUDE - write bytes to a TLS/SSL connection
                    size_t *written);
  int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written);
  int SSL_write(SSL *ssl, const void *buf, int num);
- int SSL_writev_ex2(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
-                   uint64_t flags,
-                   size_t *written);
- int SSL_writev_ex(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
-                  size_t *written);
- int SSL_writev(SSL *ssl, const OSSL_IOVEC *iov, int iovcnt);
+ int SSL_writev(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
+                size_t *written);
 
  OSSL_IOVEC {
     const void *data;
@@ -39,12 +35,12 @@ SSL_write_ex2() functions similarly to SSL_write_ex() but can also accept
 optional flags which modify its behaviour. Calling SSL_write_ex2() with a
 I<flags> argument of 0 is exactly equivalent to calling SSL_write_ex().
 
-Each of these methods has a B<_writev> counterpart to accept vectored IO.
-Instead of accepting a single buffer, these methods accept an array of
-propietary B<ossl_iovec> structures, which emulate the UNIX/Linux B<iovec>
+There is also a B<SSL_writev> counterpart to accept vectored IO.
+Instead of accepting a single buffer, this method accept an array of
+proprietary B<ossl_iovec> structures, which emulate the UNIX/Linux B<iovec>
 structure since it is not universal on all platforms. More specifically,
 the B<ossl_iovec> describes a region of memory, beginning at B<data> address
-and with the size of B<data_len> bytes. B<_wwritev> calls use arrays of this
+and with the size of B<data_len> bytes. B<_writev> calls use arrays of this
 structure, where each element of the array represents a memory region, and
 the whole array represents a vector of memory regions. The definition of
 the B<ossl_iovec> structure is included above.

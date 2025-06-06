@@ -2317,7 +2317,7 @@ static int ssl_io_intern(void *vargs)
         return args->f.func_read(s, buf, num, &sc->asyncrw);
     case WRITEVFUNC:
         return args->f.func_write(s, (const OSSL_IOVEC *)buf, num,
-                                   &sc->asyncrw);
+                                  &sc->asyncrw);
     case OTHERFUNC:
         return args->f.func_other(s);
     }
@@ -2545,7 +2545,7 @@ int SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
 }
 
 int ssl_write_internal(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
-                        uint64_t flags, size_t *written)
+                       uint64_t flags, size_t *written)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
@@ -2696,28 +2696,6 @@ int SSL_write(SSL *s, const void *buf, int num)
     return ret;
 }
 
-int SSL_writev(SSL *s, const OSSL_IOVEC *iov, int iovcnt)
-{
-    int ret;
-    size_t written;
-
-    if (iovcnt < 0) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_LENGTH);
-        return -1;
-    }
-
-    ret = ssl_write_internal(s, iov, (size_t)iovcnt, 0, &written);
-
-    /*
-     * The cast is safe here because ret should be <= INT_MAX because num is
-     * <= INT_MAX
-     */
-    if (ret > 0)
-        ret = (int)written;
-
-    return ret;
-}
-
 int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
 {
     return SSL_write_ex2(s, buf, num, 0, written);
@@ -2738,15 +2716,15 @@ int SSL_write_ex2(SSL *s, const void *buf, size_t num, uint64_t flags,
     return ret;
 }
 
-int SSL_writev_ex(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, size_t *written)
+int SSL_writev(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, size_t *written)
 {
-    return SSL_writev_ex2(s, iov, iovcnt, 0, written);
-}
+    int ret;
+    size_t local_written;
 
-int SSL_writev_ex2(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, uint64_t flags,
-                   size_t *written)
-{
-    int ret = ssl_write_internal(s, iov, iovcnt, flags, written);
+    if (written == NULL)
+        ret = ssl_write_internal(s, iov, iovcnt, 0, &local_written);
+    else
+        ret = ssl_write_internal(s, iov, iovcnt, 0, written);
 
     if (ret < 0)
         ret = 0;

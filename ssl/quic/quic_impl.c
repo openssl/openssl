@@ -2514,7 +2514,7 @@ static int sstream_ensure_spare(QUIC_SSTREAM *sstream, uint64_t spare)
  */
 QUIC_NEEDS_LOCK
 static int xso_sstream_append(QUIC_XSO *xso, const OSSL_IOVEC *iov,
-                               size_t len, size_t offset, size_t *actual_written)
+                              size_t len, size_t offset, size_t *actual_written)
 {
     QUIC_SSTREAM *sstream = xso->stream->sstream;
     uint64_t cur = ossl_quic_sstream_get_cur_size(sstream);
@@ -2569,7 +2569,7 @@ static int quic_write_again(void *arg)
 
 QUIC_NEEDS_LOCK
 static int quic_write_blocking(QCTX *ctx, const OSSL_IOVEC *iov,
-                                size_t len, uint64_t flags, size_t *written)
+                               size_t len, uint64_t flags, size_t *written)
 {
     int res;
     QUIC_XSO *xso = ctx->xso;
@@ -2652,8 +2652,8 @@ static void aon_write_finish(QUIC_XSO *xso)
 
 QUIC_NEEDS_LOCK
 static int quic_write_nonblocking_aon(QCTX *ctx, const OSSL_IOVEC *iov,
-                                       size_t len, uint64_t flags,
-                                       size_t *written)
+                                      size_t len, uint64_t flags,
+                                      size_t *written)
 {
     QUIC_XSO *xso = ctx->xso;
     size_t actual_offset, actual_len, actual_written = 0;
@@ -2740,7 +2740,7 @@ static int quic_write_nonblocking_aon(QCTX *ctx, const OSSL_IOVEC *iov,
 
 QUIC_NEEDS_LOCK
 static int quic_write_nonblocking_epw(QCTX *ctx, const OSSL_IOVEC *iov,
-                                       size_t len, uint64_t flags, size_t *written)
+                                      size_t len, uint64_t flags, size_t *written)
 {
     QUIC_XSO *xso = ctx->xso;
 
@@ -2807,7 +2807,7 @@ static int quic_validate_for_write(QUIC_XSO *xso, int *err)
 
 QUIC_TAKES_LOCK
 int ossl_quic_write_flags(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
-                           uint64_t flags, size_t *written)
+                          uint64_t flags, size_t *written)
 {
     int ret, partial_write, err;
     QCTX ctx;
@@ -2824,7 +2824,7 @@ int ossl_quic_write_flags(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
             return 0;
 
         qctx_lock_for_io(&ctx);
-    } else if (!expect_quic_with_stream_lock(s, /*remote_init=*/0, /*io=*/1, &ctx)) {
+    } else if (!expect_quic_with_stream_lock(s, /* remote_init= */0, /* io= */1, &ctx)) {
         return 0;
     }
 

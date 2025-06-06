@@ -4646,7 +4646,7 @@ int ssl3_writev(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, size_t *written)
         ssl3_renegotiate_check(s, 0);
 
     return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA, iov, iovcnt,
-                                       written);
+                                      written);
 }
 
 static int ssl3_read_internal(SSL *s, void *buf, size_t len, int peek,

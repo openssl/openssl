@@ -2756,14 +2756,7 @@ static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
     return ret;
 }
 
-
-/*
- * Test ssl accept connection and then write with vectored IO
- * Test 0: SSL_writev
- * Test 1: SSL_writev_ex
- * Test 2: SSL_writev_ex2
- */
-static int test_ssl_accept_connection_then_writev(int idx)
+static int test_ssl_accept_connection_then_writev(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
@@ -2807,34 +2800,17 @@ static int test_ssl_accept_connection_then_writev(int idx)
         goto err;
 
     /* Create an iovec array to test ssl_writev */
-    for (size_t i = 0; i < iovcnt; i++) {
+    for (i = 0; i < iovcnt; i++) {
         iov[i].data = "testingmessage";
         iov[i].data_len = strlen("testingmessage");
         message_len += strlen("testingmessage");
     }
 
-    switch (idx) {
-        case 0:
-            if (!TEST_true(ret = SSL_writev(clientssl, iov, iovcnt)))
-                goto err;
-            if (!TEST_size_t_eq(ret, message_len))
-                goto err;
-            break;
-        case 1:
-            if (!TEST_true(SSL_writev_ex(clientssl, iov, iovcnt, &written)))
-                goto err;
-            if (!TEST_size_t_eq(written, message_len))
-                goto err;
-            break;
-        case 2:
-            if (!TEST_true(SSL_writev_ex2(clientssl, iov, iovcnt, 0, &written)))
-                goto err;
-            if (!TEST_size_t_eq(written, message_len))
-                goto err;
-            break;
-        default:
-            goto err;
-    }
+    if (!TEST_true(SSL_writev(clientssl, iov, iovcnt, &written)))
+        goto err;
+
+    if (!TEST_size_t_eq(written, message_len))
+        goto err;
 
     ret = SSL_read(serverssl, readbuf, sizeof(readbuf));
     if (!TEST_int_ge(ret, 0))
@@ -2957,7 +2933,7 @@ int setup_tests(void)
     ADD_TEST(test_new_token);
 #endif
     ADD_TEST(test_server_method_with_ssl_new);
-    ADD_ALL_TESTS(test_ssl_accept_connection_then_writev, 3);
+    ADD_TEST(test_ssl_accept_connection_then_writev);
     return 1;
  err:
     cleanup_tests();

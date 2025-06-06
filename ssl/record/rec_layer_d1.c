@@ -647,6 +647,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
                    size_t len, size_t *written)
 {
     OSSL_IOVEC iovec;
+    
     iovec.data = buf;
     iovec.data_len = len;
 

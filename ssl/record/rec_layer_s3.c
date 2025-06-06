@@ -272,6 +272,7 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
                      size_t *written)
 {
     OSSL_IOVEC iovec;
+
     iovec.data = buf_;
     iovec.data_len = len;
 
@@ -499,7 +500,7 @@ int ssl3_writev_bytes(SSL *ssl, uint8_t type, const OSSL_IOVEC *iov,
             /* Remember how much data we are going to be sending */
             s->rlayer.wpend_tot = n;
         }
-        
+
         i = HANDLE_RLAYER_WRITE_RETURN(s,
             s->rlayer.wrlmethod->write_records(s->rlayer.wrl, tmpls, maxpipes));
 

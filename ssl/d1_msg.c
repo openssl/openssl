@@ -11,7 +11,7 @@
 #include "internal/ssl_unwrap.h"
 
 int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const OSSL_IOVEC *iov,
-                                size_t iovcnt, size_t *written)
+                               size_t iovcnt, size_t *written)
 {
     size_t i, len = 0;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
