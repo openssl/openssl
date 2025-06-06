@@ -55,7 +55,7 @@ static ossl_inline const unsigned char *PACKET_end(const PACKET *pkt)
 }
 
 /*
- * Retruns a pointer to the very start of the buffer. If this is a sub packet
+ * Returns a pointer to the very start of the buffer. If this is a sub packet
  * this will be the start of the buffer for the top of the PACKET tree.
  */
 static ossl_inline const unsigned char *PACKET_msg_start(const PACKET *pkt)
