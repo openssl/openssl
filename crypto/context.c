@@ -13,6 +13,7 @@
 #include "internal/thread_once.h"
 #include "internal/property.h"
 #include "internal/cryptlib.h"
+#include "internal/threads_common.h"
 #include "internal/core.h"
 #include "internal/bio.h"
 #include "internal/provider.h"
@@ -388,24 +389,15 @@ static int context_deinit(OSSL_LIB_CTX *ctx)
 static OSSL_LIB_CTX default_context_int;
 
 static CRYPTO_ONCE default_context_init = CRYPTO_ONCE_STATIC_INIT;
-static CRYPTO_THREAD_LOCAL default_context_thread_local;
 static int default_context_inited = 0;
 
 DEFINE_RUN_ONCE_STATIC(default_context_do_init)
 {
-    if (!CRYPTO_THREAD_init_local(&default_context_thread_local, NULL))
-        goto err;
-
     if (!context_init(&default_context_int))
-        goto deinit_thread;
+        return 0; 
 
     default_context_inited = 1;
     return 1;
-
-deinit_thread:
-    CRYPTO_THREAD_cleanup_local(&default_context_thread_local);
-err:
-    return 0;
 }
 
 void ossl_lib_ctx_default_deinit(void)
@@ -413,16 +405,20 @@ void ossl_lib_ctx_default_deinit(void)
     if (!default_context_inited)
         return;
     context_deinit(&default_context_int);
-    CRYPTO_THREAD_cleanup_local(&default_context_thread_local);
     default_context_inited = 0;
 }
 
 static OSSL_LIB_CTX *get_thread_default_context(void)
 {
+    CRYPTO_THREAD_LOCAL *key;
+
     if (!RUN_ONCE(&default_context_init, default_context_do_init))
         return NULL;
 
-    return CRYPTO_THREAD_get_local(&default_context_thread_local);
+    key = CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_DEF_CTX_KEY_ID);
+    if (key == NULL)
+        return NULL;
+    return CRYPTO_THREAD_get_local(key);
 }
 
 static OSSL_LIB_CTX *get_default_context(void)
@@ -436,10 +432,15 @@ static OSSL_LIB_CTX *get_default_context(void)
 
 static int set_default_context(OSSL_LIB_CTX *defctx)
 {
+    CRYPTO_THREAD_LOCAL *key;
+
     if (defctx == &default_context_int)
         defctx = NULL;
 
-    return CRYPTO_THREAD_set_local(&default_context_thread_local, defctx);
+    key = CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_DEF_CTX_KEY_ID);
+    if (key == NULL)
+        return 0;
+    return CRYPTO_THREAD_set_local(key, defctx);
 }
 #endif
 
@@ -513,6 +514,10 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void)
     if (!RUN_ONCE(&default_context_init, default_context_do_init))
         return NULL;
 
+    /*
+     * Call to initalize the thread local key store
+     */
+    CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_DEF_CTX_KEY_ID);
     return &default_context_int;
 }
 
