@@ -2357,12 +2357,12 @@ const SSL_METHOD *func_name(void)  \
                 s_connect, \
                 ssl3_read, \
                 ssl3_peek, \
-                ssl3_writev, \
+                ssl3_write, \
                 ssl3_shutdown, \
                 ssl3_renegotiate, \
                 ssl3_renegotiate_check, \
                 ssl3_read_bytes, \
-                ssl3_writev_bytes, \
+                ssl3_write_bytes, \
                 ssl3_dispatch_alert, \
                 ssl3_ctrl, \
                 ssl3_ctx_ctrl, \
@@ -2397,12 +2397,12 @@ const SSL_METHOD *func_name(void)  \
                 s_connect, \
                 ssl3_read, \
                 ssl3_peek, \
-                ssl3_writev, \
+                ssl3_write, \
                 ssl3_shutdown, \
                 ssl3_renegotiate, \
                 ssl3_renegotiate_check, \
                 ssl3_read_bytes, \
-                ssl3_writev_bytes, \
+                ssl3_write_bytes, \
                 ssl3_dispatch_alert, \
                 ssl3_ctrl, \
                 ssl3_ctx_ctrl, \
@@ -2438,7 +2438,7 @@ const SSL_METHOD *func_name(void)  \
                 s_connect, \
                 ssl3_read, \
                 ssl3_peek, \
-                ssl3_writev, \
+                ssl3_write, \
                 dtls1_shutdown, \
                 ssl3_renegotiate, \
                 ssl3_renegotiate_check, \
@@ -2680,8 +2680,8 @@ __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
 __owur int ssl3_read(SSL *s, void *buf, size_t len, size_t *readbytes);
 __owur int ssl3_peek(SSL *s, void *buf, size_t len, size_t *readbytes);
-__owur int ssl3_writev(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
-                       size_t *written);
+__owur int ssl3_write(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
+                      size_t *written);
 __owur int ssl3_shutdown(SSL *s);
 int ssl3_clear(SSL *s);
 __owur long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg);

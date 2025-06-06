@@ -268,22 +268,7 @@ static int tls_write_check_pending(SSL_CONNECTION *s, uint8_t type,
  * Call this to write data in records of type 'type' It will return <= 0 if
  * not all data has been sent or non-blocking IO.
  */
-int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
-                     size_t *written)
-{
-    OSSL_IOVEC iovec;
-
-    iovec.data = buf_;
-    iovec.data_len = len;
-
-    return ssl3_writev_bytes(ssl, type, &iovec, 1, written);
-}
-
-/*
- * Call this to write data in records of type 'type' It will return <= 0 if
- * not all data has been sent or non-blocking IO.
- */
-int ssl3_writev_bytes(SSL *ssl, uint8_t type, const OSSL_IOVEC *iov,
+int ssl3_write_bytes(SSL *ssl, uint8_t type, const OSSL_IOVEC *iov,
                       size_t iovcnt, size_t *written)
 {
     size_t j, len = 0;
