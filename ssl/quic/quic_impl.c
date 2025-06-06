@@ -2631,23 +2631,23 @@ static int quic_write_blocking(QCTX *ctx, const OSSL_IOVEC *iov,
  * Functions to manage All-or-Nothing (AON) (that is, non-ENABLE_PARTIAL_WRITE)
  * write semantics.
  */
-static void aon_write_begin(QUIC_XSO *xso, const unsigned char *buf,
-                            size_t buf_len, size_t already_sent)
+static void aon_write_begin(QUIC_XSO *xso, const OSSL_IOVEC *iov,
+                            size_t total_len, size_t already_sent)
 {
     assert(!xso->aon_write_in_progress);
 
     xso->aon_write_in_progress = 1;
-    xso->aon_buf_base          = buf;
-    xso->aon_buf_pos           = already_sent;
-    xso->aon_buf_len           = buf_len;
+    xso->aon_iov               = iov;
+    xso->aon_offset            = already_sent;
+    xso->aon_total_len         = total_len;
 }
 
 static void aon_write_finish(QUIC_XSO *xso)
 {
     xso->aon_write_in_progress   = 0;
-    xso->aon_buf_base            = NULL;
-    xso->aon_buf_pos             = 0;
-    xso->aon_buf_len             = 0;
+    xso->aon_iov                 = NULL;
+    xso->aon_offset              = 0;
+    xso->aon_total_len           = 0;
 }
 
 QUIC_NEEDS_LOCK
@@ -2666,16 +2666,16 @@ static int quic_write_nonblocking_aon(QCTX *ctx, const OSSL_IOVEC *iov,
          * manage to append all data to the SSTREAM and we have Enable Partial
          * Write (EPW) mode disabled.)
          */
-        if ((!accept_moving_buffer && xso->aon_buf_base != (const unsigned char *)iov)
-            || len != xso->aon_buf_len)
+        if ((!accept_moving_buffer && xso->aon_iov != iov)
+            || len != xso->aon_total_len)
             /*
              * Pointer must not have changed if we are not in accept moving
              * buffer mode. Length must never change.
              */
             return QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_BAD_WRITE_RETRY, NULL);
 
-        actual_offset = + xso->aon_buf_pos;
-        actual_len = len - xso->aon_buf_pos;
+        actual_offset = + xso->aon_offset;
+        actual_len = len - xso->aon_offset;
         assert(actual_len > 0);
     } else {
         actual_offset = 0;
@@ -2698,10 +2698,10 @@ static int quic_write_nonblocking_aon(QCTX *ctx, const OSSL_IOVEC *iov,
             /*
              * We have sent everything, and we were in the middle of an AON
              * write. The output write length is the total length of the AON
-             * buffer, not however many bytes we managed to write to the stream
+             * iovec, not however many bytes we managed to write to the stream
              * in this call.
              */
-            *written = xso->aon_buf_len;
+            *written = xso->aon_total_len;
             aon_write_finish(xso);
         } else {
             *written = actual_written;
@@ -2717,8 +2717,8 @@ static int quic_write_nonblocking_aon(QCTX *ctx, const OSSL_IOVEC *iov,
          * than the total remaining which need to be appended during this
          * AON operation.
          */
-        xso->aon_buf_pos += actual_written;
-        assert(xso->aon_buf_pos < xso->aon_buf_len);
+        xso->aon_offset += actual_written;
+        assert(xso->aon_offset < xso->aon_total_len);
         return QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_WANT_WRITE);
     }
 
@@ -2728,7 +2728,7 @@ static int quic_write_nonblocking_aon(QCTX *ctx, const OSSL_IOVEC *iov,
      * actually append anything.
      */
     if (actual_written > 0)
-        aon_write_begin(xso, (const unsigned char *)iov, len, actual_written);
+        aon_write_begin(xso, iov, len, actual_written);
 
     /*
      * AON - We do not publicly admit to having appended anything until AON

@@ -60,12 +60,12 @@ struct quic_xso_st {
      *   t=0:  aon_write_in_progress=0
      *   t=1:  SSL_write(ssl, b1, l1) called;
      *         too big to enqueue into sstream at once, SSL_ERROR_WANT_WRITE;
-     *         aon_write_in_progress=1; aon_buf_base=b1; aon_buf_len=l1;
-     *         aon_buf_pos < l1 (depends on how much room was in sstream);
+     *         aon_write_in_progress=1; aon_iov=b1; aon_offset=l1;
+     *         aon_offset < l1 (depends on how much room was in sstream);
      *   t=2:  SSL_write(ssl, b2, l2);
      *         b2 must equal b1 (validated unless ACCEPT_MOVING_WRITE_BUFFER)
      *         l2 must equal l1 (always validated)
-     *         append into sstream from [b2 + aon_buf_pos, b2 + aon_buf_len)
+     *         append into sstream from [b2 + aon_offset, b2 + aon_offset)
      *         if done, aon_write_in_progress=0
      *
      */
@@ -81,14 +81,14 @@ struct quic_xso_st {
      * (but identical) buffer if using ACCEPT_MOVING_WRITE_BUFFER. It is for
      * validation by pointer comparison only.
      */
-    const unsigned char             *aon_buf_base;
+    const OSSL_IOVEC                *aon_iov;
     /* The total length of the AON buffer being sent, in bytes. */
-    size_t                          aon_buf_len;
+    size_t                          aon_total_len;
     /*
      * The position in the AON buffer up to which we have successfully sent data
      * so far.
      */
-    size_t                          aon_buf_pos;
+    size_t                          aon_offset;
 
     /* SSL_set_mode */
     uint32_t                        ssl_mode;
