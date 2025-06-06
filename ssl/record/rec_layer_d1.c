@@ -616,20 +616,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
  * Call this to write data in records of type 'type' It will return <= 0 if
  * not all data has been sent or non-blocking IO.
  */
-int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const void *buf,
-                      size_t len, size_t *written)
-{
-    int i;
-
-    if (!ossl_assert(len <= SSL3_RT_MAX_PLAIN_LENGTH)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return -1;
-    }
-    s->rwstate = SSL_NOTHING;
-    i = do_dtls1_write(s, type, buf, len, written);
-    return i;
-}
-int dtls1_writev_bytes(SSL_CONNECTION *s, uint8_t type, const OSSL_IOVEC *iov,
+int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const OSSL_IOVEC *iov,
                        size_t len, size_t *written)
 {
     int i;
@@ -639,22 +626,11 @@ int dtls1_writev_bytes(SSL_CONNECTION *s, uint8_t type, const OSSL_IOVEC *iov,
         return -1;
     }
     s->rwstate = SSL_NOTHING;
-    i = do_dtls1_writev(s, type, iov, len, written);
+    i = do_dtls1_write(s, type, iov, len, written);
     return i;
 }
 
-int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
-                   size_t len, size_t *written)
-{
-    OSSL_IOVEC iovec;
-    
-    iovec.data = buf;
-    iovec.data_len = len;
-
-    return do_dtls1_writev(sc, type, &iovec, len, written);
-}
-
-int do_dtls1_writev(SSL_CONNECTION *sc, uint8_t type, const OSSL_IOVEC *iov,
+int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const OSSL_IOVEC *iov,
                     size_t len, size_t *written)
 {
     int i;

@@ -37,7 +37,7 @@ int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const OSSL_IOVEC *iov,
         return -1;
     }
 
-    return dtls1_writev_bytes(sc, type, iov, len, written);
+    return dtls1_write_bytes(sc, type, iov, len, written);
 }
 
 int dtls1_dispatch_alert(SSL *ssl)
@@ -58,7 +58,12 @@ int dtls1_dispatch_alert(SSL *ssl)
     *ptr++ = s->s3.send_alert[0];
     *ptr++ = s->s3.send_alert[1];
 
-    i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), &written);
+    OSSL_IOVEC iovec;
+
+    iovec.data = &buf[0];
+    iovec.data_len = sizeof(buf);
+
+    i = do_dtls1_write(s, SSL3_RT_ALERT, &iovec, sizeof(buf), &written);
     if (i <= 0) {
         s->s3.alert_dispatch = 1;
         /* fprintf(stderr, "not done with alert\n"); */
