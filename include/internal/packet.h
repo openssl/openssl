@@ -22,6 +22,8 @@
 typedef struct {
     /* Pointer to where we are currently reading from */
     const unsigned char *curr;
+    /* Pointer to the start of the message */
+    const unsigned char *msgstart;
     /* Number of bytes remaining */
     size_t remaining;
 } PACKET;
@@ -53,6 +55,15 @@ static ossl_inline const unsigned char *PACKET_end(const PACKET *pkt)
 }
 
 /*
+ * Returns a pointer to the very start of the buffer. If this is a sub packet
+ * this will be the start of the buffer for the top of the PACKET tree.
+ */
+static ossl_inline const unsigned char *PACKET_msg_start(const PACKET *pkt)
+{
+    return pkt->msgstart;
+}
+
+/*
  * Returns a pointer to the PACKET's current position.
  * For use in non-PACKETized APIs.
  */
@@ -74,7 +85,7 @@ __owur static ossl_inline int PACKET_buf_init(PACKET *pkt,
     if (len > (size_t)(SIZE_MAX / 2))
         return 0;
 
-    pkt->curr = buf;
+    pkt->curr = pkt->msgstart = buf;
     pkt->remaining = len;
     return 1;
 }
@@ -82,7 +93,7 @@ __owur static ossl_inline int PACKET_buf_init(PACKET *pkt,
 /* Initialize a PACKET to hold zero bytes. */
 static ossl_inline void PACKET_null_init(PACKET *pkt)
 {
-    pkt->curr = NULL;
+    pkt->curr = pkt->msgstart = NULL;
     pkt->remaining = 0;
 }
 
@@ -110,7 +121,11 @@ __owur static ossl_inline int PACKET_peek_sub_packet(const PACKET *pkt,
     if (PACKET_remaining(pkt) < len)
         return 0;
 
-    return PACKET_buf_init(subpkt, pkt->curr, len);
+    if (!PACKET_buf_init(subpkt, pkt->curr, len))
+        return 0;
+
+    subpkt->msgstart = pkt->msgstart;
+    return 1;
 }
 
 /*
@@ -524,6 +539,7 @@ __owur static ossl_inline int PACKET_get_length_prefixed_1(PACKET *pkt,
 
     *pkt = tmp;
     subpkt->curr = data;
+    subpkt->msgstart = pkt->msgstart;
     subpkt->remaining = length;
 
     return 1;
@@ -547,6 +563,7 @@ __owur static ossl_inline int PACKET_as_length_prefixed_1(PACKET *pkt,
 
     *pkt = tmp;
     subpkt->curr = data;
+    subpkt->msgstart = pkt->msgstart;
     subpkt->remaining = length;
 
     return 1;
@@ -573,6 +590,7 @@ __owur static ossl_inline int PACKET_get_length_prefixed_2(PACKET *pkt,
 
     *pkt = tmp;
     subpkt->curr = data;
+    subpkt->msgstart = pkt->msgstart;
     subpkt->remaining = length;
 
     return 1;
@@ -597,6 +615,7 @@ __owur static ossl_inline int PACKET_as_length_prefixed_2(PACKET *pkt,
 
     *pkt = tmp;
     subpkt->curr = data;
+    subpkt->msgstart = pkt->msgstart;
     subpkt->remaining = length;
 
     return 1;
@@ -622,6 +641,7 @@ __owur static ossl_inline int PACKET_get_length_prefixed_3(PACKET *pkt,
 
     *pkt = tmp;
     subpkt->curr = data;
+    subpkt->msgstart = pkt->msgstart;
     subpkt->remaining = length;
 
     return 1;
