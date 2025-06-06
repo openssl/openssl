@@ -26,6 +26,7 @@ use TLSProxy::NewSessionTicket;
 use TLSProxy::NextProto;
 
 my $have_IPv6;
+my $useINET6;
 my $IP_factory;
 
 BEGIN
@@ -48,6 +49,7 @@ BEGIN
     if ($@ eq "") {
         $IP_factory = sub { IO::Socket::INET6->new(Domain => AF_INET6, @_); };
         $have_IPv6 = 1;
+        $useINET6 = 1;
     } else {
         eval {
             require IO::Socket::IP;
@@ -62,9 +64,11 @@ BEGIN
         if ($@ eq "") {
             $IP_factory = sub { IO::Socket::IP->new(@_); };
             $have_IPv6 = 1;
+            $useINET6 = 0;
         } else {
             $IP_factory = sub { IO::Socket::INET->new(@_); };
             $have_IPv6 = 0;
+            $useINET6 = 0;
         }
     }
 }
@@ -93,14 +97,13 @@ sub new
     for (my $i = 0; $i <= 10; $i++) {
         $test_client_port = 49152 + int(rand(65535 - 49152));
         my $test_sock;
-        if ($have_IPv6) {
-            $test_sock = IO::Socket::IP->new(Family => AF_INET6,
-                                             LocalPort => $test_client_port,
+        if ($useINET6 == 0) {
+            $test_sock = IO::Socket::IP->new(LocalPort => $test_client_port,
                                              LocalAddr => $test_client_addr);
         } else {
-            $test_sock = IO::Socket::IP->new(Family => AF_INET,
-                                             LocalPort => $test_client_port,
-                                             LocalAddr => $test_client_addr);
+            $test_sock = IO::Socket::INET6->new(LocalAddr => $test_client_addr,
+                                                LocalPort => $test_client_port,
+                                                Domain => AF_INET6);
         }
         if ($test_sock) {
             $found_port = 1;
@@ -108,7 +111,7 @@ sub new
             print "Found available client port ${test_client_port}\n";
             last;
         }
-        print "Port ${test_client_port} in use.  Trying again\n";
+        print "Port ${test_client_port} in use - $@\n";
     }
   
     if ($found_port == 0) {
