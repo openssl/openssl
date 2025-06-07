@@ -96,6 +96,12 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
+ * Added Intel AVX-512 and VAES optimizations for AES*-CFB128 algorithms.
+   Encryption performance on large buffers improved by 1.5-1.7x,
+   while decryption speed increased by 20-23x.
+
+   *Adrian Stanciu*
+
 OpenSSL 3.5
 -----------
 
