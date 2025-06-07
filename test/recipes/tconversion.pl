@@ -180,7 +180,7 @@ sub get_field {
     my $string = "";
     open my $fh, $f or die;
     while (my $line = <$fh>) {
-        if ($line =~ /$field:\s+(.*)/) {
+        if ($line =~ /$field:\s*(.*)/) {
             $string = $1;
         }
     }
