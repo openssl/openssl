@@ -11,6 +11,7 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include "internal/e_os.h"
+#include "internal/threads_common.h"
 #include "crypto/cryptlib.h"
 #include <openssl/err.h>
 #include "crypto/rand.h"
@@ -50,7 +51,6 @@ static OPENSSL_INIT_STOP *stop_handlers = NULL;
 static CRYPTO_RWLOCK *optsdone_lock = NULL;
 /* Guards simultaneous INIT_LOAD_CONFIG calls with non-NULL settings */
 static CRYPTO_RWLOCK *init_lock = NULL;
-static CRYPTO_THREAD_LOCAL in_init_config_local;
 
 static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
@@ -70,9 +70,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
     OPENSSL_cpuid_setup();
 
     if (!ossl_init_thread())
-        goto err;
-
-    if (!CRYPTO_THREAD_init_local(&in_init_config_local, NULL))
         goto err;
 
     base_inited = 1;
@@ -412,8 +409,6 @@ void OPENSSL_cleanup(void)
     CRYPTO_THREAD_lock_free(init_lock);
     init_lock = NULL;
 
-    CRYPTO_THREAD_cleanup_local(&in_init_config_local);
-
     /*
      * We assume we are single-threaded for this function, i.e. no race
      * conditions for the various "*_inited" vars below.
@@ -500,6 +495,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
     uint64_t tmp;
     int aloaddone = 0;
+    CRYPTO_THREAD_LOCAL *key = CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_INIT_CFG_KEY_ID);
 
    /* Applications depend on 0 being returned when cleanup was already done */
     if (stopped) {
@@ -622,13 +618,13 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
 
     if (opts & OPENSSL_INIT_LOAD_CONFIG) {
-        int loading = CRYPTO_THREAD_get_local(&in_init_config_local) != NULL;
+        int loading = CRYPTO_THREAD_get_local(key) != NULL;
 
         /* If called recursively from OBJ_ calls, just skip it. */
         if (!loading) {
             int ret;
 
-            if (!CRYPTO_THREAD_set_local(&in_init_config_local, (void *)-1))
+            if (!CRYPTO_THREAD_set_local(key, (void *)-1))
                 return 0;
             if (settings == NULL) {
                 ret = RUN_ONCE(&config, ossl_init_config);

@@ -34,6 +34,9 @@ static CRYPTO_LOCAL_KEY_ENTRY key_table[] = {
     [CRYPTO_THREAD_ERR_KEY_ID] = {
             .cleanup = NULL,
         },
+    [CRYPTO_THREAD_INIT_CFG_KEY_ID] = {
+            .cleanup = NULL,
+        },
 
 };
 

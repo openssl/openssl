@@ -139,8 +139,6 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
 };
 #endif
 
-static CRYPTO_ONCE err_init = CRYPTO_ONCE_STATIC_INIT;
-
 static CRYPTO_ONCE err_string_init = CRYPTO_ONCE_STATIC_INIT;
 static CRYPTO_RWLOCK *err_string_lock = NULL;
 
