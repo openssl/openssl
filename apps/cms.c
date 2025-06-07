@@ -64,7 +64,7 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_ENCRYPT,
     OPT_DECRYPT, OPT_SIGN, OPT_CADES, OPT_SIGN_RECEIPT, OPT_RESIGN,
-    OPT_VERIFY, OPT_VERIFY_RETCODE, OPT_VERIFY_RECEIPT,
+    OPT_VERIFY, OPT_VERIFY_PARTIAL, OPT_VERIFY_RETCODE, OPT_VERIFY_RECEIPT,
     OPT_CMSOUT, OPT_DATA_OUT, OPT_DATA_CREATE, OPT_DIGEST_VERIFY,
     OPT_DIGEST, OPT_DIGEST_CREATE, OPT_COMPRESS, OPT_UNCOMPRESS,
     OPT_ED_DECRYPT, OPT_ED_ENCRYPT, OPT_DEBUG_DECRYPT, OPT_TEXT,
@@ -211,8 +211,10 @@ const OPTIONS cms_options[] = {
     {"nointern", OPT_NOINTERN, '-',
      "Don't search certificates in message for signer"},
     {"cades", OPT_DUP, '-', "Check signingCertificate (CAdES-BES)"},
+    {"verify_partial", OPT_VERIFY_PARTIAL, '-',
+     "Return success if at least one signature can be verified"},
     {"verify_retcode", OPT_VERIFY_RETCODE, '-',
-     "Exit non-zero on verification failure"},
+     "Exit non-zero on verification failure (depends on other verification options)"},
     {"CAfile", OPT_CAFILE, '<', "Trusted certificates file"},
     {"CApath", OPT_CAPATH, '/', "Trusted certificates directory"},
     {"CAstore", OPT_CASTORE, ':', "Trusted certificates store URI"},
@@ -452,6 +454,9 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_NO_ATTR_VERIFY:
             flags |= CMS_NO_ATTR_VERIFY;
+            break;
+        case OPT_VERIFY_PARTIAL:
+            flags |= CMS_VERIFY_PARTIAL;
             break;
         case OPT_INDEF:
             flags |= CMS_STREAM;
@@ -1221,6 +1226,39 @@ int cms_main(int argc, char **argv)
             if (verify_retcode)
                 ret = verify_err + 32;
             goto end;
+        }
+        if (flags & CMS_VERIFY_PARTIAL) {
+            int i;
+            STACK_OF(CMS_SignerInfo) *sinfos = CMS_get0_SignerInfos(cms);
+
+            for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+                CMS_SignerInfo *si = sk_CMS_SignerInfo_value(sinfos, i);
+                X509 *si_signer = CMS_SignerInfo_get0_signer_cert(si);
+                X509_NAME *si_subject = NULL;
+
+                if (si_signer == NULL) {
+                    BIO_printf(bio_err, "Signer %d: no certificate\n", i);
+                    continue;
+                }
+
+                si_subject = X509_get_subject_name(si_signer);
+                if (si_subject == NULL) {
+                    BIO_printf(bio_err, "Signer %d: no subject name", i);
+                    continue;
+                }
+
+                BIO_printf(bio_err, "Signer %d: ", i);
+                X509_NAME_print_ex(bio_err, si_subject, 0, XN_FLAG_ONELINE);
+                BIO_printf(bio_err, "\n  Verification %s (cert: %s, attrs: %s, content: %s)\n",
+                           CMS_SignerInfo_get_verification_result(si, CMS_VERIFY_RESULT) ?
+                           "successful" : "failed",
+                           CMS_SignerInfo_get_verification_result(si, CMS_VERIFY_CERT) ?
+                           "success" : "failure",
+                           CMS_SignerInfo_get_verification_result(si, CMS_VERIFY_ATTR) ?
+                           "success" : "failure",
+                           CMS_SignerInfo_get_verification_result(si, CMS_VERIFY_CONTENT) ?
+                           "success" : "failure");
+            }
         }
         if (signerfile != NULL) {
             STACK_OF(X509) *signers = CMS_get0_signers(cms);
