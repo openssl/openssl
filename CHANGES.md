@@ -31,6 +31,11 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * An ANSI-C toolchain is no longer sufficient for building OpenSSL. The code
+   should build on compilers supporting C-99 features.
+
+   *Alexandr Nedvedicky*
+
  * The VxWorks platforms have been removed. These platforms were unadopted,
    unmaintained and reported to be non-functional.
 

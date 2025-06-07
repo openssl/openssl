@@ -28,6 +28,9 @@ OpenSSL 3.5
 This release incorporates the following potentially significant or incompatible
 changes:
 
+  * An ANSI-C toolchain is no longer sufficient for building OpenSSL. The code
+    should build on compilers supporting C-99 features.
+
   * The VxWorks platforms have been removed.
 
   * Added an `openssl configutl` utility for processing the openssl
