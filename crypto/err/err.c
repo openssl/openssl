@@ -14,6 +14,7 @@
 #include <string.h>
 #include "crypto/cryptlib.h"
 #include "internal/err.h"
+#include "internal/threads_common.h"
 #include "crypto/err.h"
 #include <openssl/err.h>
 #include <openssl/crypto.h>
@@ -139,8 +140,6 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
 #endif
 
 static CRYPTO_ONCE err_init = CRYPTO_ONCE_STATIC_INIT;
-static int set_err_thread_local;
-static CRYPTO_THREAD_LOCAL err_thread_local;
 
 static CRYPTO_ONCE err_string_init = CRYPTO_ONCE_STATIC_INIT;
 static CRYPTO_RWLOCK *err_string_lock = NULL;
@@ -231,8 +230,6 @@ DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 
 void err_cleanup(void)
 {
-    if (set_err_thread_local != 0)
-        CRYPTO_THREAD_cleanup_local(&err_thread_local);
     CRYPTO_THREAD_lock_free(err_string_lock);
     err_string_lock = NULL;
 #ifndef OPENSSL_NO_ERR
@@ -643,11 +640,13 @@ const char *ERR_reason_error_string(unsigned long e)
 
 static void err_delete_thread_state(void *unused)
 {
-    ERR_STATE *state = CRYPTO_THREAD_get_local(&err_thread_local);
+    CRYPTO_THREAD_LOCAL *key = CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_ERR_KEY_ID);
+
+    ERR_STATE *state = CRYPTO_THREAD_get_local(key);
     if (state == NULL)
         return;
 
-    CRYPTO_THREAD_set_local(&err_thread_local, NULL);
+    CRYPTO_THREAD_set_local(key, NULL);
     OSSL_ERR_STATE_free(state);
 }
 
@@ -663,41 +662,33 @@ void ERR_remove_state(unsigned long pid)
 }
 #endif
 
-DEFINE_RUN_ONCE_STATIC(err_do_init)
-{
-    set_err_thread_local = 1;
-    return CRYPTO_THREAD_init_local(&err_thread_local, NULL);
-}
-
 ERR_STATE *ossl_err_get_state_int(void)
 {
     ERR_STATE *state;
+    CRYPTO_THREAD_LOCAL *key = CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_ERR_KEY_ID);
     int saveerrno = get_last_sys_error();
 
     if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
         return NULL;
 
-    if (!RUN_ONCE(&err_init, err_do_init))
-        return NULL;
-
-    state = CRYPTO_THREAD_get_local(&err_thread_local);
+    state = CRYPTO_THREAD_get_local(key);
     if (state == (ERR_STATE*)-1)
         return NULL;
 
     if (state == NULL) {
-        if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
+        if (!CRYPTO_THREAD_set_local(key, (ERR_STATE*)-1))
             return NULL;
 
         state = OSSL_ERR_STATE_new();
         if (state == NULL) {
-            CRYPTO_THREAD_set_local(&err_thread_local, NULL);
+            CRYPTO_THREAD_set_local(key, NULL);
             return NULL;
         }
 
         if (!ossl_init_thread_start(NULL, NULL, err_delete_thread_state)
-                || !CRYPTO_THREAD_set_local(&err_thread_local, state)) {
+                || !CRYPTO_THREAD_set_local(key, state)) {
             OSSL_ERR_STATE_free(state);
-            CRYPTO_THREAD_set_local(&err_thread_local, NULL);
+            CRYPTO_THREAD_set_local(key, NULL);
             return NULL;
         }
 
@@ -723,6 +714,7 @@ ERR_STATE *ERR_get_state(void)
  */
 int err_shelve_state(void **state)
 {
+    CRYPTO_THREAD_LOCAL *key = CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_ERR_KEY_ID);
     int saveerrno = get_last_sys_error();
 
     /*
@@ -740,11 +732,8 @@ int err_shelve_state(void **state)
     if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
         return 0;
 
-    if (!RUN_ONCE(&err_init, err_do_init))
-        return 0;
-
-    *state = CRYPTO_THREAD_get_local(&err_thread_local);
-    if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
+    *state = CRYPTO_THREAD_get_local(key);
+    if (!CRYPTO_THREAD_set_local(key, (ERR_STATE*)-1))
         return 0;
 
     set_sys_error(saveerrno);
@@ -757,8 +746,9 @@ int err_shelve_state(void **state)
  */
 void err_unshelve_state(void* state)
 {
+    CRYPTO_THREAD_LOCAL *key = CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_ERR_KEY_ID);
     if (state != (void*)-1)
-        CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)state);
+        CRYPTO_THREAD_set_local(key, (ERR_STATE*)state);
 }
 
 int ERR_get_next_error_library(void)

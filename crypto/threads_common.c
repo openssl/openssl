@@ -31,6 +31,9 @@ static CRYPTO_LOCAL_KEY_ENTRY key_table[] = {
     [CRYPTO_THREAD_ASYNC_JOB_POOL_KEY_ID] = {
             .cleanup = NULL,
         },
+    [CRYPTO_THREAD_ERR_KEY_ID] = {
+            .cleanup = NULL,
+        },
 
 };
 
