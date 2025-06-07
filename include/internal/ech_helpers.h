@@ -17,6 +17,12 @@
 
 # ifndef OPENSSL_NO_ECH
 
+/*
+ * the max HPKE 'info' we'll process is the max ECHConfig size
+ * (OSSL_ECH_MAX_ECHCONFIG_LEN) plus OSSL_ECH_CONTEXT_STRING(len=7) + 1
+ */
+#define OSSL_ECH_MAX_INFO_LEN (OSSL_ECH_MAX_ECHCONFIG_LEN + 8)
+
 int ossl_ech_make_enc_info(const unsigned char *encoding,
                            size_t encoding_length,
                            unsigned char *info, size_t *info_len);

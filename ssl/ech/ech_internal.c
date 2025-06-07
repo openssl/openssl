@@ -1688,7 +1688,7 @@ err:
 
 /*
  * wrapper for hpke_dec just to save code repetition
- * ech is the selected ECHConfig
+ * ee is the selected ECH_STORE entry
  * the_ech is the value sent by the client
  * aad_len is the length of the AAD to use
  * aad is the AAD to use
@@ -1713,8 +1713,8 @@ static unsigned char *hpke_decrypt_encch(SSL_CONNECTION *s,
     unsigned char *clear = NULL;
     int hpke_mode = OSSL_HPKE_MODE_BASE;
     OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
-    unsigned char info[SSL3_RT_MAX_PLAIN_LENGTH];
-    size_t info_len = SSL3_RT_MAX_PLAIN_LENGTH;
+    unsigned char info[OSSL_ECH_MAX_INFO_LEN];
+    size_t info_len = OSSL_ECH_MAX_INFO_LEN;
     int rv = 0;
     OSSL_HPKE_CTX *hctx = NULL;
 # ifdef OSSL_ECH_SUPERVERBOSE
@@ -1722,6 +1722,8 @@ static unsigned char *hpke_decrypt_encch(SSL_CONNECTION *s,
     unsigned char *pub = NULL;
 # endif
 
+    if (ee == NULL || ee->nsuites == 0)
+        return NULL;
     cipherlen = the_ech->payload_len;
     cipher = the_ech->payload;
     senderpublen = the_ech->enc_len;
@@ -1730,7 +1732,7 @@ static unsigned char *hpke_decrypt_encch(SSL_CONNECTION *s,
     hpke_suite.kdf_id = the_ech->kdf_id;
     clearlen = cipherlen; /* small overestimate */
     clear = OPENSSL_malloc(clearlen);
-    if (clear == NULL || ee == NULL || ee->nsuites == 0)
+    if (clear == NULL)
         return NULL;
     /* The kem_id will be the same for all suites in the entry */
     hpke_suite.kem_id = ee->suites[0].kem_id;
@@ -1759,17 +1761,10 @@ static unsigned char *hpke_decrypt_encch(SSL_CONNECTION *s,
      * We may generate externally visible OpenSSL errors
      * if decryption fails (which is normal) but we'll
      * ignore those as we might be dealing with a GREASEd
-     * ECH. The way to do that is to consume all
-     * errors generated internally during the attempt
-     * to decrypt. Failing to clear those errors can
-     * trigger an application to consider TLS session
-     * establishment has failed when someone just
-     * GREASEd or used an old key.  But to do that we
-     * first need to know there are no other errors in
-     * the queue that we ought not consume as the application
-     * really should know about those.
+     * ECH. To do that we need to know ingore some errors
+     * so we use ERR_set_mark() then later ERR_pop_to_mark().
      */
-    if (ERR_peek_error() != 0) {
+    if (ERR_set_mark() != 0) {
         OPENSSL_free(clear);
         return NULL;
     }
@@ -1792,16 +1787,9 @@ static unsigned char *hpke_decrypt_encch(SSL_CONNECTION *s,
     }
     rv = OSSL_HPKE_open(hctx, clear, &clearlen, aad, aad_len,
                         cipher, cipherlen);
-    if (rv != 1)
-        goto clearerrs;
-
 clearerrs:
-    /*
-     * clear errors from failed decryption as per the above
-     * we do this before checking the result from hpke_dec
-     * then return, or carry on
-     */
-    while (ERR_get_error() != 0);
+    /* close off our error handling */
+    ERR_pop_to_mark();
 end:
     OSSL_HPKE_CTX_free(hctx);
     if (rv != 1) {
@@ -1863,7 +1851,6 @@ end:
 # ifdef CHECKZEROS
         {
             size_t zind = 0;
-            size_t nonzeros = 0;
             size_t zeros = 0;
 
             if (*innerlen < ch_len) {
@@ -1874,10 +1861,11 @@ end:
                 if (clear[zind] == 0x00) {
                     zeros++;
                 } else {
-                    nonzeros++;
+                    OPENSSL_free(clear);
+                    return NULL;
                 }
             }
-            if (nonzeros > 0 || zeros != (*innerlen - ch_len)) {
+            if (zeros != (*innerlen - ch_len)) {
                 OPENSSL_free(clear);
                 return NULL;
             }
