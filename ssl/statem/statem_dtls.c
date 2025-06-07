@@ -223,8 +223,12 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
                                        data[s->init_off]);
         }
 
-        ret = dtls1_write_bytes(s, type, &s->init_buf->data[s->init_off], len,
-                                &written);
+        OSSL_IOVEC iovec;
+
+        iovec.data = &s->init_buf->data[s->init_off];
+        iovec.data_len = len;
+
+        ret = dtls1_write_bytes(s, type, &iovec, len, &written);
         if (ret <= 0) {
             /*
              * might need to update MTU here, but we don't know which

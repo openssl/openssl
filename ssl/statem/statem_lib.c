@@ -92,8 +92,12 @@ int ssl3_do_write(SSL_CONNECTION *s, uint8_t type)
         s->statem.write_in_progress = 1;
     }
 
-    ret = ssl3_write_bytes(ssl, type, &s->init_buf->data[s->init_off],
-                           s->init_num, &written);
+    OSSL_IOVEC iovec;
+
+    iovec.data = &s->init_buf->data[s->init_off];
+    iovec.data_len = s->init_num;
+
+    ret = ssl3_write_bytes(ssl, type, &iovec, 1, &written);
     if (ret <= 0)
         return -1;
     if (type == SSL3_RT_HANDSHAKE)

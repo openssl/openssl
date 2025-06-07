@@ -142,8 +142,8 @@ int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl);
 __owur size_t ssl3_pending(const SSL *s);
-__owur int ssl3_write_bytes(SSL *s, uint8_t type, const void *buf, size_t len,
-                            size_t *written);
+__owur int ssl3_write_bytes(SSL *s, uint8_t type, const OSSL_IOVEC *iov,
+                            size_t len, size_t *written);
 __owur int ssl3_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
                            unsigned char *buf, size_t len, int peek,
                            size_t *readbytes);
@@ -154,9 +154,9 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
 __owur int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
                             unsigned char *buf, size_t len, int peek,
                             size_t *readbytes);
-__owur int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const void *buf,
+__owur int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const OSSL_IOVEC *iov,
                              size_t len, size_t *written);
-int do_dtls1_write(SSL_CONNECTION *s, uint8_t type, const unsigned char *buf,
+int do_dtls1_write(SSL_CONNECTION *s, uint8_t type, const OSSL_IOVEC *iov,
                    size_t len, size_t *written);
 void dtls1_increment_epoch(SSL_CONNECTION *s, int rw);
 uint16_t dtls1_get_epoch(SSL_CONNECTION *s, int rw);

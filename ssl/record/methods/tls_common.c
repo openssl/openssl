@@ -1883,6 +1883,148 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     return ret;
 }
 
+int tls_writev_records_default(OSSL_RECORD_LAYER *rl,
+                               OSSL_RECORD_TEMPLATE *templates,
+                               size_t numtempl)
+{
+    WPACKET pkt[SSL_MAX_PIPELINES + 1];
+    TLS_RL_RECORD wr[SSL_MAX_PIPELINES + 1];
+    WPACKET *thispkt;
+    TLS_RL_RECORD *thiswr;
+    int mac_size = 0, ret = 0;
+    size_t wpinited = 0;
+    size_t j, prefix = 0;
+    OSSL_RECORD_TEMPLATE prefixtempl;
+    OSSL_RECORD_TEMPLATE *thistempl;
+
+    if (rl->md_ctx != NULL && EVP_MD_CTX_get0_md(rl->md_ctx) != NULL) {
+        mac_size = EVP_MD_CTX_get_size(rl->md_ctx);
+        if (mac_size < 0) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+    }
+
+    if (!rl->funcs->allocate_write_buffers(rl, templates, numtempl, &prefix)) {
+        /* RLAYERfatal() already called */
+        goto err;
+    }
+
+    if (!rl->funcs->initialise_write_packets(rl, templates, numtempl,
+                                             &prefixtempl, pkt, rl->wbuf,
+                                             &wpinited)) {
+        /* RLAYERfatal() already called */
+        goto err;
+    }
+
+    /* Clear our TLS_RL_RECORD structures */
+    memset(wr, 0, sizeof(wr));
+    for (j = 0; j < numtempl + prefix; j++) {
+        unsigned char *compressdata = NULL;
+        uint8_t rectype;
+
+        thispkt = &pkt[j];
+        thiswr = &wr[j];
+        thistempl = (j < prefix) ? &prefixtempl : &templates[j - prefix];
+
+        /*
+         * Default to the record type as specified in the template unless the
+         * protocol implementation says differently.
+         */
+        if (rl->funcs->get_record_type != NULL)
+            rectype = rl->funcs->get_record_type(rl, thistempl);
+        else
+            rectype = thistempl->type;
+
+        TLS_RL_RECORD_set_type(thiswr, rectype);
+        TLS_RL_RECORD_set_rec_version(thiswr, thistempl->version);
+
+        if (!rl->funcs->prepare_record_header(rl, thispkt, thistempl, rectype,
+                                              &compressdata)) {
+            /* RLAYERfatal() already called */
+            goto err;
+        }
+
+        /* lets setup the record stuff. */
+        TLS_RL_RECORD_set_data(thiswr, compressdata);
+        TLS_RL_RECORD_set_length(thiswr, thistempl->buflen);
+
+        TLS_RL_RECORD_set_input(thiswr, (unsigned char *)thistempl->buf);
+
+        /*
+         * we now 'read' from thiswr->input, thiswr->length bytes into
+         * thiswr->data
+         */
+
+        /* first we compress */
+        if (rl->compctx != NULL) {
+            /* need copying to support oneshot compression */
+            ossl_iovec_memcpy(thiswr->input, (const OSSL_IOVEC *)thistempl->buf,
+                              thiswr->length, thistempl->offset);
+
+            if (!tls_do_compress(rl, thiswr)
+                    || !WPACKET_allocate_bytes(thispkt, thiswr->length, NULL)) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_COMPRESSION_FAILURE);
+                goto err;
+            }
+        } else if (compressdata != NULL) {
+            if (!WPACKET_memcpy_iovec(thispkt, (const OSSL_IOVEC *)thiswr->input,
+                                      thiswr->length, thistempl->offset)) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            TLS_RL_RECORD_reset_input(&wr[j]);
+        }
+
+        if (rl->funcs->add_record_padding != NULL
+                && !rl->funcs->add_record_padding(rl, thistempl, thispkt,
+                                                  thiswr)) {
+            /* RLAYERfatal() already called */
+            goto err;
+        }
+
+        if (!rl->funcs->prepare_for_encryption(rl, mac_size, thispkt, thiswr)) {
+            /* RLAYERfatal() already called */
+            goto err;
+        }
+    }
+
+    if (prefix) {
+        if (rl->funcs->cipher(rl, wr, 1, 1, NULL, mac_size) < 1) {
+            if (rl->alert == SSL_AD_NO_ALERT)
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+    }
+
+    if (rl->funcs->cipher(rl, wr + prefix, numtempl, 1, NULL, mac_size) < 1) {
+        if (rl->alert == SSL_AD_NO_ALERT)
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    for (j = 0; j < numtempl + prefix; j++) {
+        thispkt = &pkt[j];
+        thiswr = &wr[j];
+        thistempl = (j < prefix) ? &prefixtempl : &templates[j - prefix];
+
+        if (!rl->funcs->post_encryption_processing(rl, mac_size, thistempl,
+                                                   thispkt, thiswr)) {
+            /* RLAYERfatal() already called */
+            goto err;
+        }
+
+        /* now let's set up wb */
+        TLS_BUFFER_set_left(&rl->wbuf[j], TLS_RL_RECORD_get_length(thiswr));
+    }
+
+    ret = 1;
+err:
+    for (j = 0; j < wpinited; j++)
+        WPACKET_cleanup(&pkt[j]);
+    return ret;
+}
+
 int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                       size_t numtempl)
 {
@@ -1893,9 +2035,16 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-    if (!rl->funcs->write_records(rl, templates, numtempl)) {
-        /* RLAYERfatal already called */
-        return OSSL_RECORD_RETURN_FATAL;
+    if (templates->buf) {
+        if (!rl->funcs->write_records(rl, templates, numtempl)) {
+            /* RLAYERfatal already called */
+            return OSSL_RECORD_RETURN_FATAL;
+        }
+    } else {
+        if (!rl->funcs->writev_records(rl, templates, numtempl)) {
+            /* RLAYERfatal already called */
+            return OSSL_RECORD_RETURN_FATAL;
+        }
     }
 
     rl->nextwbuf = 0;

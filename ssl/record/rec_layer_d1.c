@@ -616,7 +616,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
  * Call this to write data in records of type 'type' It will return <= 0 if
  * not all data has been sent or non-blocking IO.
  */
-int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const void *buf,
+int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const OSSL_IOVEC *iov,
                       size_t len, size_t *written)
 {
     int i;
@@ -626,11 +626,11 @@ int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const void *buf,
         return -1;
     }
     s->rwstate = SSL_NOTHING;
-    i = do_dtls1_write(s, type, buf, len, written);
+    i = do_dtls1_write(s, type, iov, len, written);
     return i;
 }
 
-int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
+int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const OSSL_IOVEC *iov,
                    size_t len, size_t *written)
 {
     int i;
@@ -665,8 +665,15 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
         tmpl.version = DTLS1_VERSION;
     else
         tmpl.version = sc->version;
-    tmpl.buf = buf;
-    tmpl.buflen = len;
+
+    if (iov[0].data_len == len) {
+        tmpl.buf = iov[0].data;
+        tmpl.buflen = len;
+    } else {
+        tmpl.iov = iov;
+        tmpl.buflen = len;
+        tmpl.offset = 0;
+    }
 
     ret = HANDLE_RLAYER_WRITE_RETURN(sc,
               sc->rlayer.wrlmethod->write_records(sc->rlayer.wrl, &tmpl, 1));

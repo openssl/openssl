@@ -143,6 +143,9 @@ struct record_functions_st {
     /* Return 1 for success or 0 for error */
     int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                          size_t numtempl);
+    /* Return 1 for success or 0 for error */
+    int (*writev_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
+                          size_t numtempl);
 
     /* Allocate the rl->wbuf buffers. Return 1 for success or 0 for error */
     int (*allocate_write_buffers)(OSSL_RECORD_LAYER *rl,
@@ -521,6 +524,9 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
 int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                               OSSL_RECORD_TEMPLATE *templates,
                               size_t numtempl);
+int tls_writev_records_default(OSSL_RECORD_LAYER *rl,
+                               OSSL_RECORD_TEMPLATE *templates,
+                               size_t numtempl);
 
 /* Macros/functions provided by the TLS_BUFFER component */
 
