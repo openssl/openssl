@@ -636,18 +636,6 @@ const char *ERR_reason_error_string(unsigned long e)
 #endif
 }
 
-static void err_delete_thread_state(void *unused)
-{
-    CRYPTO_THREAD_LOCAL *key = CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_ERR_KEY_ID);
-
-    ERR_STATE *state = CRYPTO_THREAD_get_local(key);
-    if (state == NULL)
-        return;
-
-    CRYPTO_THREAD_set_local(key, NULL);
-    OSSL_ERR_STATE_free(state);
-}
-
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 void ERR_remove_thread_state(void *dummy)
 {
@@ -683,10 +671,8 @@ ERR_STATE *ossl_err_get_state_int(void)
             return NULL;
         }
 
-        if (!ossl_init_thread_start(NULL, NULL, err_delete_thread_state)
-                || !CRYPTO_THREAD_set_local(key, state)) {
+        if (!CRYPTO_THREAD_set_local(key, state)) {
             OSSL_ERR_STATE_free(state);
-            CRYPTO_THREAD_set_local(key, NULL);
             return NULL;
         }
 
