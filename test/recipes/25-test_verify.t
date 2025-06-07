@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 205;
+plan tests => 207;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -607,19 +607,29 @@ SKIP: {
         if $^O =~ /^(MsWin32|VMS)$/;
     my $foo_file = "foo:cert.pem";
     copy($rootcert, $foo_file);
-    ok(vfy_root("-CAstore", $foo_file), "CAstore foo:file");
-    ok(vfy_root("-CAstore", "file:".$foo_file), "CAstore file:foo:file");
+    ok(vfy_root("-CAstore", $foo_file), "CAstore foo:cert");
+    ok(vfy_root("-CAstore", "file:".$foo_file), "CAstore file:foo:cert");
 }
-my $foo_file = "cert.pem";
-copy($rootcert, $foo_file);
-ok(vfy_root("-CAstore", $foo_file), "CAstore foo:file");
-ok(vfy_root("-CAstore", "file:".$foo_file), "CAstore file:foo:file");
+
+my $rel_cert = "cert.pem";
+copy($rootcert, $rel_cert);
+ok(vfy_root("-CAstore", $rel_cert), "CAstore cert");
+ok(vfy_root("-CAstore", "file:".$rel_cert), "CAstore file:cert");
 my $abs_cert = abs_path($rootcert);
+SKIP: {
+    skip "drive letter with relative filename on Windows only", 2
+        unless $^O =~ /^MsWin32$/;
+    my $drive_rel_cert = substr($abs_cert, 0, 2).$rel_cert;
+    ok(vfy_root("-CAstore", $drive_rel_cert), "CAstore D:cert");
+    ok(vfy_root("-CAstore", "file:".$drive_rel_cert), "CAstore file:D:cert");
+}
+
 # Windows file: URIs should have a path part starting with a slash, i.e.
 # file://authority/C:/what/ever/foo.pem and file:///C:/what/ever/foo.pem
 # file://C:/what/ever/foo.pem is non-standard and may not be accepted.
 # See RFC 8089 for details.
 $abs_cert = "/" . $abs_cert if ($^O eq "MSWin32");
+
 ok(vfy_root("-CAstore", "file://".$abs_cert), "CAstore file:///path");
 ok(vfy_root("-CAstore", "file://localhost".$abs_cert), "CAstore file://localhost/path");
 ok(!vfy_root("-CAstore", "file://otherhost".$abs_cert), "CAstore file://otherhost/path");
