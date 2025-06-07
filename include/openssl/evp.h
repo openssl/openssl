@@ -1618,25 +1618,30 @@ int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num);
 # define ASN1_PKEY_CTRL_GET1_TLS_ENCPT   0xa
 # define ASN1_PKEY_CTRL_CMS_IS_RI_TYPE_SUPPORTED 0xb
 
-int EVP_PKEY_asn1_get_count(void);
-const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);
+#ifndef OPENSSL_NO_DEPRECATED_3_6
+OSSL_DEPRECATEDIN_3_6 int EVP_PKEY_asn1_get_count(void);
+OSSL_DEPRECATEDIN_3_6 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);
+OSSL_DEPRECATEDIN_3_6
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type);
+OSSL_DEPRECATEDIN_3_6
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
                                                    const char *str, int len);
-int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth);
-int EVP_PKEY_asn1_add_alias(int to, int from);
+OSSL_DEPRECATEDIN_3_6 int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth);
+OSSL_DEPRECATEDIN_3_6 int EVP_PKEY_asn1_add_alias(int to, int from);
+OSSL_DEPRECATEDIN_3_6
 int EVP_PKEY_asn1_get0_info(int *ppkey_id, int *pkey_base_id,
                             int *ppkey_flags, const char **pinfo,
                             const char **ppem_str,
                             const EVP_PKEY_ASN1_METHOD *ameth);
 
-const EVP_PKEY_ASN1_METHOD *EVP_PKEY_get0_asn1(const EVP_PKEY *pkey);
-EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags,
+OSSL_DEPRECATEDIN_3_6 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_get0_asn1(const EVP_PKEY *pkey);
+OSSL_DEPRECATEDIN_3_6 EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags,
                                         const char *pem_str,
                                         const char *info);
-void EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst,
+OSSL_DEPRECATEDIN_3_6 void EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst,
                         const EVP_PKEY_ASN1_METHOD *src);
-void EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth);
+OSSL_DEPRECATEDIN_3_6 void EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth);
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_public(EVP_PKEY_ASN1_METHOD *ameth,
                               int (*pub_decode) (EVP_PKEY *pk,
                                                  const X509_PUBKEY *pub),
@@ -1649,6 +1654,7 @@ void EVP_PKEY_asn1_set_public(EVP_PKEY_ASN1_METHOD *ameth,
                                                 int indent, ASN1_PCTX *pctx),
                               int (*pkey_size) (const EVP_PKEY *pk),
                               int (*pkey_bits) (const EVP_PKEY *pk));
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
                                int (*priv_decode) (EVP_PKEY *pk,
                                                    const PKCS8_PRIV_KEY_INFO
@@ -1659,6 +1665,7 @@ void EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
                                                   const EVP_PKEY *pkey,
                                                   int indent,
                                                   ASN1_PCTX *pctx));
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_param(EVP_PKEY_ASN1_METHOD *ameth,
                              int (*param_decode) (EVP_PKEY *pkey,
                                                   const unsigned char **pder,
@@ -1675,11 +1682,14 @@ void EVP_PKEY_asn1_set_param(EVP_PKEY_ASN1_METHOD *ameth,
                                                  int indent,
                                                  ASN1_PCTX *pctx));
 
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_free(EVP_PKEY_ASN1_METHOD *ameth,
                             void (*pkey_free) (EVP_PKEY *pkey));
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
                             int (*pkey_ctrl) (EVP_PKEY *pkey, int op,
                                               long arg1, void *arg2));
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_item(EVP_PKEY_ASN1_METHOD *ameth,
                             int (*item_verify) (EVP_MD_CTX *ctx,
                                                 const ASN1_ITEM *it,
@@ -1694,41 +1704,51 @@ void EVP_PKEY_asn1_set_item(EVP_PKEY_ASN1_METHOD *ameth,
                                               X509_ALGOR *alg2,
                                               ASN1_BIT_STRING *sig));
 
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_siginf(EVP_PKEY_ASN1_METHOD *ameth,
                               int (*siginf_set) (X509_SIG_INFO *siginf,
                                                  const X509_ALGOR *alg,
                                                  const ASN1_STRING *sig));
 
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_check(EVP_PKEY_ASN1_METHOD *ameth,
                              int (*pkey_check) (const EVP_PKEY *pk));
 
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_public_check(EVP_PKEY_ASN1_METHOD *ameth,
                                     int (*pkey_pub_check) (const EVP_PKEY *pk));
 
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_param_check(EVP_PKEY_ASN1_METHOD *ameth,
                                    int (*pkey_param_check) (const EVP_PKEY *pk));
 
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_set_priv_key(EVP_PKEY_ASN1_METHOD *ameth,
                                     int (*set_priv_key) (EVP_PKEY *pk,
                                                          const unsigned char
                                                             *priv,
                                                          size_t len));
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_set_pub_key(EVP_PKEY_ASN1_METHOD *ameth,
                                    int (*set_pub_key) (EVP_PKEY *pk,
                                                        const unsigned char *pub,
                                                        size_t len));
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_get_priv_key(EVP_PKEY_ASN1_METHOD *ameth,
                                     int (*get_priv_key) (const EVP_PKEY *pk,
                                                          unsigned char *priv,
                                                          size_t *len));
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_get_pub_key(EVP_PKEY_ASN1_METHOD *ameth,
                                    int (*get_pub_key) (const EVP_PKEY *pk,
                                                        unsigned char *pub,
                                                        size_t *len));
 
+OSSL_DEPRECATEDIN_3_6 
 void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
                                      int (*pkey_security_bits) (const EVP_PKEY
                                                                 *pk));
+#endif
 
 int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
 int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);

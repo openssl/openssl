@@ -294,6 +294,7 @@ static int get_optional_pkey_id(const char *pkey_name)
 
 #else
 
+# ifndef OPENSSL_NO_DEPRECATED_3_6
 static int get_optional_pkey_id(const char *pkey_name)
 {
     const EVP_PKEY_ASN1_METHOD *ameth;
@@ -308,6 +309,7 @@ static int get_optional_pkey_id(const char *pkey_name)
     tls_engine_finish(tmpeng);
     return pkey_id;
 }
+# endif
 
 #endif
 
@@ -391,6 +393,7 @@ int ssl_load_ciphers(SSL_CTX *ctx)
     memcpy(ctx->ssl_mac_pkey_id, default_mac_pkey_id,
            sizeof(ctx->ssl_mac_pkey_id));
 
+#ifndef OPENSSL_NO_DEPRECATED_3_6
     ctx->ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] =
         get_optional_pkey_id(SN_id_Gost28147_89_MAC);
     if (ctx->ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX])
@@ -425,6 +428,7 @@ int ssl_load_ciphers(SSL_CTX *ctx)
         ctx->disabled_auth_mask |= SSL_aGOST12;
     if (!get_optional_pkey_id(SN_id_GostR3410_2012_512))
         ctx->disabled_auth_mask |= SSL_aGOST12;
+#endif
     /*
      * Disable GOST key exchange if no GOST signature algs are available *
      */

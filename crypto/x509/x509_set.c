@@ -230,11 +230,13 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
 
     switch (mdnid) {
     case NID_undef:
+#ifndef OPENSSL_NO_DEPRECATED_3_6
         /* If we have one, use a custom handler for this algorithm */
         ameth = EVP_PKEY_asn1_find(NULL, pknid);
         if (ameth != NULL && ameth->siginf_set != NULL
                 && ameth->siginf_set(siginf, alg, sig))
            break;
+#endif
         if (pubkey != NULL) {
             int secbits;
 
