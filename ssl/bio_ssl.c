@@ -177,7 +177,7 @@ static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
     BIO_clear_retry_flags(b);
 
     OSSL_IOVEC iovec;
-    iovec.data = buf;
+    iovec.data = (void *)buf;
     iovec.data_len = size;
 
     ret = ssl_write_internal(ssl, &iovec, 1, 0, written);

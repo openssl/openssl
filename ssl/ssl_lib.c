@@ -2681,7 +2681,7 @@ int SSL_write(SSL *s, const void *buf, int num)
     }
 
     OSSL_IOVEC iovec;
-    iovec.data = buf;
+    iovec.data = (void *)buf;
     iovec.data_len = num;
 
     ret = ssl_write_internal(s, &iovec, 1, 0, &written);
@@ -2706,7 +2706,7 @@ int SSL_write_ex2(SSL *s, const void *buf, size_t num, uint64_t flags,
 {
     OSSL_IOVEC iovec;
     
-    iovec.data = buf;
+    iovec.data = (void *)buf;
     iovec.data_len = num;
 
     int ret = ssl_write_internal(s, &iovec, 1, flags, written);
