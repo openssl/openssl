@@ -13,6 +13,11 @@
 
 #define ARRAY_LEN(x) (sizeof(x)/sizeof((x)[0]))
 
+typedef struct crypto_local_key_entry {
+    CRYPTO_THREAD_LOCAL key;
+    void (*cleanup)(void *);
+} CRYPTO_LOCAL_KEY_ENTRY;
+
 static CRYPTO_LOCAL_KEY_ENTRY key_table[] = {
     [CRYPTO_THREAD_DEF_CTX_KEY_ID] = {
             .cleanup = NULL,
@@ -23,9 +28,8 @@ static CRYPTO_LOCAL_KEY_ENTRY key_table[] = {
 };
 
 static size_t key_table_len = ARRAY_LEN(key_table);
-static CRYPTO_ONCE key_table_init = CRYPTO_ONCE_STATIC_INIT;
 
-DEFINE_RUN_ONCE_STATIC(do_key_table_init)
+static int init_keytable_once()
 {
     size_t i;
 
@@ -37,11 +41,70 @@ DEFINE_RUN_ONCE_STATIC(do_key_table_init)
     return 1;
 }
 
+#ifdef FIPS_MODULE
+# ifdef OPENSSL_SYS_UNIX
+# include <pthread.h>
+
+static int keytable_init_state = 0;
+static pthread_once_t keytable_once = PTHREAD_ONCE_INIT;
+static void pthread_init_keytable_once(void)
+{
+   keytable_init_state = init_keytable_once(); 
+}
+
+static int do_init_keytable_once()
+{
+    if (pthread_once(&keytable_once, pthread_init_keytable_once))
+        keytable_init_state = 0;
+    return keytable_init_state;
+}
+
+# elif OPENSSL_SYS_WIN
+# define ONCE_UNINITED     0
+# define ONCE_ININIT       1
+# define ONCE_DONE         2
+static volatile LONG win_once = ONCE_UNINITED;
+
+static int do_init_keytable_once()
+{
+    LONG result;
+
+    if (win_once == ONCE_DONE)
+        return 1;
+
+    do {
+        result = InterlockedCompareExchange(&lock, ONCE_ININIT, ONCE_UNINITED);
+        if (result == ONCE_UNINITED) {
+            init_keytable_once();
+            lock = ONCE_DONE;
+            return 1;
+        }
+    } while (result == ONCE_ININIT);
+
+    return (lock == ONCE_DONE);
+}
+# endif
+#endif
+
+#ifndef FIPS_MODULE
+static CRYPTO_ONCE key_table_init = CRYPTO_ONCE_STATIC_INIT;
+
+DEFINE_RUN_ONCE_STATIC(do_key_table_init)
+{
+    return init_keytable_once();
+}
+#endif
+
 CRYPTO_THREAD_LOCAL*
 CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_KEY_ENTRY_ID id)
 {
+#ifndef FIPS_MODULE
     if (!RUN_ONCE(&key_table_init, do_key_table_init))
         return NULL;
+#else
+    if (!do_init_keytable_once())
+        return NULL;
+#endif
 
     if (id >= CRYPTO_THREAD_KEY_ID_MAX)
         return NULL;
