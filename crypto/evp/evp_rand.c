@@ -646,16 +646,19 @@ static int evp_rand_nonce_locked(EVP_RAND_CTX *ctx, unsigned char *out,
 {
     unsigned int str = evp_rand_strength_locked(ctx);
 
-    if (ctx->meth->nonce == NULL)
-        return 0;
-    if (ctx->meth->nonce(ctx->algctx, out, str, outlen, outlen))
-        return 1;
+    if (ctx->meth->nonce != NULL)
+        return ctx->meth->nonce(ctx->algctx, out, str, outlen, outlen) > 0;
     return evp_rand_generate_locked(ctx, out, outlen, str, 0, NULL, 0);
 }
 
 int EVP_RAND_nonce(EVP_RAND_CTX *ctx, unsigned char *out, size_t outlen)
 {
     int res;
+
+    if (ctx == NULL || out == NULL || outlen == 0) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
 
     if (!evp_rand_lock(ctx))
         return 0;
