@@ -11,17 +11,14 @@
 # include <internal/threads_common.h>
 # include <internal/thread_once.h>
 
+#include <openssl/err.h>
+
 #define ARRAY_LEN(x) (sizeof(x)/sizeof((x)[0]))
 
 typedef struct crypto_local_key_entry {
     CRYPTO_THREAD_LOCAL key;
     void (*cleanup)(void *);
 } CRYPTO_LOCAL_KEY_ENTRY;
-
-static void cleanup_err_state(void *ptr)
-{
-    CRYPTO_free(ptr, NULL, 0);
-}
 
 static CRYPTO_LOCAL_KEY_ENTRY key_table[] = {
     [CRYPTO_THREAD_DEF_CTX_KEY_ID] = {
@@ -37,7 +34,7 @@ static CRYPTO_LOCAL_KEY_ENTRY key_table[] = {
             .cleanup = NULL,
         },
     [CRYPTO_THREAD_ERR_KEY_ID] = {
-            .cleanup = cleanup_err_state,
+            .cleanup = NULL,
         },
     [CRYPTO_THREAD_INIT_CFG_KEY_ID] = {
             .cleanup = NULL,
