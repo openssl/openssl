@@ -33,6 +33,7 @@
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
 
+extern CRYPTO_THREAD_LOCAL rcu_local_key;
 CRYPTO_THREAD_LOCAL rcu_local_key;
 
 /*
