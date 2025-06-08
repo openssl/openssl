@@ -112,6 +112,10 @@ OSSL_CORE_MAKE_FUNC(int, core_obj_create,
                     (const OSSL_CORE_HANDLE *prov, const char *oid,
                      const char *sn, const char *ln))
 
+/* Function to get the thread local storage indicies */
+#define OSSL_FUNC_CORE_GET_KEY_TABLE          13
+OSSL_CORE_MAKE_FUNC(void *, core_obj_get_thread_key_table, (size_t *table_len))
+
 /* Memory allocation, freeing, clearing. */
 #define OSSL_FUNC_CRYPTO_MALLOC               20
 OSSL_CORE_MAKE_FUNC(void *,
@@ -304,6 +308,7 @@ OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_got_transport_params,
 #define OSSL_FUNC_SSL_QUIC_TLS_ALERT                2006
 OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_alert,
                     (SSL *s, unsigned char alert_code, void *arg))
+
 
 /* Operations */
 

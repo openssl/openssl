@@ -30,4 +30,10 @@ typedef struct crypto_local_key_entry {
 CRYPTO_THREAD_LOCAL*
 CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_KEY_ENTRY_ID id);
 
+#ifdef FIPS_MODULE
+void set_thread_key_table(void *tbl, size_t table_len);
+#endif
+
+void *get_thread_key_table(size_t *table_len);
+
 #endif /* OPENSSL_INTERNAL_THREAD_COMMON_H */

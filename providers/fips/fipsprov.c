@@ -29,6 +29,8 @@
 #include "crypto/context.h"
 #include "fipscommon.h"
 #include "internal/core.h"
+#include "internal/threads_common.h"
+
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
@@ -80,6 +82,7 @@ static OSSL_FUNC_BIO_vsnprintf_fn *c_BIO_vsnprintf;
 static OSSL_FUNC_self_test_cb_fn *c_stcbfn = NULL;
 static OSSL_FUNC_indicator_cb_fn *c_indcbfn = NULL;
 static OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
+static OSSL_FUNC_core_obj_get_thread_key_table_fn *c_get_keytbl = NULL;
 
 typedef struct {
     const char *option;
@@ -771,6 +774,8 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     FIPS_GLOBAL *fgbl;
     OSSL_LIB_CTX *libctx = NULL;
     SELF_TEST_POST_PARAMS selftest_params;
+    size_t table_len;
+    void *tbl;
 
     memset(&selftest_params, 0, sizeof(selftest_params));
 
@@ -786,6 +791,11 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GET_LIBCTX:
             set_func(c_get_libctx, OSSL_FUNC_core_get_libctx(in));
+            break;
+        case OSSL_FUNC_CORE_GET_KEY_TABLE:
+            set_func(c_get_keytbl, OSSL_FUNC_core_obj_get_thread_key_table(in));
+            tbl = c_get_keytbl(&table_len);
+            set_thread_key_table(tbl, table_len);
             break;
         case OSSL_FUNC_CORE_GETTABLE_PARAMS:
             set_func(c_gettable_params, OSSL_FUNC_core_gettable_params(in));
