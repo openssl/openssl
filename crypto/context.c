@@ -31,7 +31,7 @@ struct ossl_lib_ctx_st {
     void *global_properties;
     void *drbg;
     void *drbg_nonce;
-    CRYPTO_THREAD_LOCAL rcu_local_key;
+    CRYPTO_THREAD_LOCAL *rcu_local_key;
 #ifndef FIPS_MODULE
     void *provider_conf;
     void *bio_core;
@@ -88,12 +88,32 @@ int ossl_lib_ctx_is_child(OSSL_LIB_CTX *ctx)
 
 static void context_deinit_objs(OSSL_LIB_CTX *ctx);
 
+#ifndef FIPS_MODULE
+static CRYPTO_THREAD_LOCAL rcu_local_key;
+static CRYPTO_ONCE init_rcu_key = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(do_init_rcu_key)
+{
+   return CRYPTO_THREAD_init_local(&rcu_local_key, NULL);
+}
+#else
+/*
+ * For FIPS module building, this gets defined and created in fipsprov.c
+ * Which isn't great, as it would be better to pass all these keys from libcrypto
+ * to the fips provider for reuse, but that requires creating dispatch table
+ * upcalls to get the info, which is also undesireable
+ */
+extern CRYPTO_THREAD_LOCAL rcu_local_key;
+#endif
+
 static int context_init(OSSL_LIB_CTX *ctx)
 {
     int exdata_done = 0;
 
-    if (!CRYPTO_THREAD_init_local(&ctx->rcu_local_key, NULL))
+#ifndef FIPS_MODULE
+    if (!RUN_ONCE(&init_rcu_key, do_init_rcu_key))
         return 0;
+#endif
+    ctx->rcu_local_key = &rcu_local_key;
 
     ctx->lock = CRYPTO_THREAD_lock_new();
     if (ctx->lock == NULL)
@@ -226,7 +246,6 @@ static int context_init(OSSL_LIB_CTX *ctx)
         ossl_crypto_cleanup_all_ex_data_int(ctx);
 
     CRYPTO_THREAD_lock_free(ctx->lock);
-    CRYPTO_THREAD_cleanup_local(&ctx->rcu_local_key);
     memset(ctx, '\0', sizeof(*ctx));
     return 0;
 }
@@ -379,7 +398,6 @@ static int context_deinit(OSSL_LIB_CTX *ctx)
 
     CRYPTO_THREAD_lock_free(ctx->lock);
     ctx->lock = NULL;
-    CRYPTO_THREAD_cleanup_local(&ctx->rcu_local_key);
     return 1;
 }
 
@@ -661,7 +679,7 @@ CRYPTO_THREAD_LOCAL *ossl_lib_ctx_get_rcukey(OSSL_LIB_CTX *libctx)
     libctx = ossl_lib_ctx_get_concrete(libctx);
     if (libctx == NULL)
         return NULL;
-    return &libctx->rcu_local_key;
+    return libctx->rcu_local_key;
 }
 
 int OSSL_LIB_CTX_get_conf_diagnostics(OSSL_LIB_CTX *libctx)

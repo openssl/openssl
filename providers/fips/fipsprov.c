@@ -33,6 +33,8 @@
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
 
+CRYPTO_THREAD_LOCAL rcu_local_key;
+
 /*
  * Forward declarations to ensure that interface functions are correctly
  * defined.
@@ -716,6 +718,7 @@ static void fips_teardown(void *provctx)
 {
     OSSL_LIB_CTX_free(PROV_LIBCTX_OF(provctx));
     ossl_prov_ctx_free(provctx);
+    CRYPTO_THREAD_cleanup_local(&rcu_local_key);
 }
 
 static void fips_intern_teardown(void *provctx)
@@ -885,6 +888,9 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     }
 
     OPENSSL_cpuid_setup();
+
+    if (!CRYPTO_THREAD_init_local(&rcu_local_key, NULL))
+        goto err;
 
     /*  Create a context. */
     if ((*provctx = ossl_prov_ctx_new()) == NULL
