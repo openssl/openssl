@@ -93,7 +93,7 @@ static CRYPTO_THREAD_LOCAL rcu_local_key;
 static CRYPTO_ONCE init_rcu_key = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(do_init_rcu_key)
 {
-   return CRYPTO_THREAD_init_local(&rcu_local_key, NULL);
+    return CRYPTO_THREAD_init_local(&rcu_local_key, NULL);
 }
 #else
 /*
