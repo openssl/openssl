@@ -182,6 +182,7 @@ void test_close_streams(void)
 
 #if defined(OPENSSL_THREADS)
     CRYPTO_THREAD_lock_free(io_lock);
+    CRYPTO_THREAD_cleanup_local(&local_test_data);
 #endif
 }
 

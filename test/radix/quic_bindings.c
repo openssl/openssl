@@ -622,6 +622,8 @@ static int bindings_process_finish(int testresult_main)
         BIO_printf(bio_err, "==> ERROR (main=%d, children=%d)\n\n",
                    testresult_main, testresult_child);
 
+    CRYPTO_THREAD_cleanup_local(&radix_thread);
+
     return testresult;
 }
 
