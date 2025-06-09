@@ -376,8 +376,8 @@ static int poll_readout(SSL_POLL_ITEM *items,
                 /*
                  * Current testing happens on local end, that's when
                  * local application closes connection. From QUIC stack
-		 * point of view there are two events: we first see
-		 * SSL_POLL_EVENT_EC, followed by SSL_POLL_EVENT_ECD.
+                 * point of view there are two events: we first see
+                 * SSL_POLL_EVENT_EC, followed by SSL_POLL_EVENT_ECD.
                  * More tests are needed to see if it is always the case,
                  * like:
                  *     what happens when connection is closed by remote
@@ -394,7 +394,8 @@ static int poll_readout(SSL_POLL_ITEM *items,
                     ossl_quic_conn_notify_close(ssl);
                     ++result_count;
                 } else if (revents != 0) {
-                    ++result_count;
+                    result_count++;
+                    (void)(0); /* to keep c-style happy */
                 }
 
                 break;

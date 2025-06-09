@@ -5137,8 +5137,8 @@ static int test_poll_event_r(QUIC_XSO *xso)
         return 1;
 
     return ossl_quic_stream_has_recv_buffer(xso->stream)
-        && ossl_quic_rstream_available(xso->stream->rstream, &avail, &fin)
-        && (avail > 0 || (fin && !xso->retired_fin));
+            && ossl_quic_rstream_available(xso->stream->rstream, &avail, &fin)
+            && (avail > 0 || (fin && !xso->retired_fin));
 }
 
 /* Do we have the ER (exception: read) condition? */
@@ -5168,9 +5168,9 @@ QUIC_NEEDS_LOCK
 static int test_poll_event_ew(QUIC_XSO *xso)
 {
     return (ossl_quic_stream_has_send(xso->stream)
-        && xso->stream->peer_stop_sending
-        && !xso->requested_reset
-        && !xso->conn->shutting_down) || xso->stream->conn_tearing_down;
+            && xso->stream->peer_stop_sending
+            && !xso->requested_reset
+            && !xso->conn->shutting_down) || xso->stream->conn_tearing_down;
 }
 
 /* Do we have the EC (exception: connection) condition? */

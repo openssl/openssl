@@ -848,11 +848,11 @@ static void notify_close_each(QUIC_STREAM *qs, void *arg)
         qs->recv_state = QUIC_RSTREAM_STATE_RESET_RECVD;
         qs->peer_reset_stream_aec = -1; /* should say something remote peer closes conection */
 
-        /* RFC 9000 s. 3.3: No point sending STOP_SENDING if already reset. */
-        /* note: could not find in RFC how we should treat situation when remote peer
+        /*
+         * RFC 9000 s. 3.3: No point sending STOP_SENDING if already reset.
+         * note: could not find in RFC how we should treat situation when remote peer
          * closes connection while there are streams still opened
          */
-        /* qs->want_stop_sending = 0; */
         ossl_quic_rstream_free(qs->rstream);
         qs->rstream = NULL;
         mark_active = 1;
