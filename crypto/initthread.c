@@ -12,6 +12,7 @@
 #include "crypto/cryptlib.h"
 #include "prov/providercommon.h"
 #include "internal/thread_once.h"
+#include "internal/threads_common.h"
 #include "crypto/context.h"
 
 #ifdef FIPS_MODULE
@@ -138,7 +139,7 @@ init_get_thread_local(CRYPTO_THREAD_LOCAL *local, int alloc, int keep)
  */
 static union {
     long sane;
-    CRYPTO_THREAD_LOCAL value;
+    CRYPTO_THREAD_LOCAL *value;
 } destructor_key = { -1 };
 
 /*
@@ -199,11 +200,17 @@ static void init_thread_destructor(void *hands)
     OPENSSL_free(hands);
 }
 
+int ossl_init_destructor_key(CRYPTO_THREAD_LOCAL *key)
+{
+    return CRYPTO_THREAD_init_local(key, init_thread_destructor);
+}
+
 int ossl_init_thread(void)
 {
-    if (!CRYPTO_THREAD_init_local(&destructor_key.value,
-                                  init_thread_destructor))
+    CRYPTO_THREAD_LOCAL *key = CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_DESTRUCTOR_KEY_ID);
+    if (key == NULL)
         return 0;
+    destructor_key.value = key;
 
     return 1;
 }
@@ -211,7 +218,6 @@ int ossl_init_thread(void)
 void ossl_cleanup_thread(void)
 {
     init_thread_deregister(NULL, 1);
-    CRYPTO_THREAD_cleanup_local(&destructor_key.value);
     destructor_key.sane = -1;
 }
 
@@ -230,7 +236,7 @@ void OPENSSL_thread_stop(void)
 {
     if (destructor_key.sane != -1) {
         THREAD_EVENT_HANDLER **hands
-            = init_get_thread_local(&destructor_key.value, 0, 0);
+            = init_get_thread_local(destructor_key.value, 0, 0);
         init_thread_stop(NULL, hands);
 
         init_thread_remove_handlers(hands);
@@ -242,7 +248,7 @@ void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
 {
     if (destructor_key.sane != -1) {
         THREAD_EVENT_HANDLER **hands
-            = init_get_thread_local(&destructor_key.value, 0, 1);
+            = init_get_thread_local(destructor_key.value, 0, 1);
         init_thread_stop(ctx, hands);
     }
 }
@@ -386,7 +392,7 @@ int ossl_init_thread_start(const void *index, void *arg,
      * thread stop events globally, so we have to ensure all affected
      * OSSL_LIB_CTXs are informed.
      */
-    CRYPTO_THREAD_LOCAL *local = &destructor_key.value;
+    CRYPTO_THREAD_LOCAL *local = destructor_key.value;
 #endif
 
     hands = init_get_thread_local(local, 1, 0);

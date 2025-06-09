@@ -2623,8 +2623,8 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_GET_USER_NONCE, (void (*)(void))rand_get_user_nonce },
     { OSSL_FUNC_CLEANUP_NONCE, (void (*)(void))rand_cleanup_nonce },
     { OSSL_FUNC_CLEANUP_USER_NONCE, (void (*)(void))rand_cleanup_user_nonce },
-#endif
     { OSSL_FUNC_CORE_GET_KEY_TABLE, (void (*)(void))get_thread_key_table },
+#endif
     { OSSL_FUNC_CRYPTO_MALLOC, (void (*)(void))CRYPTO_malloc },
     { OSSL_FUNC_CRYPTO_ZALLOC, (void (*)(void))CRYPTO_zalloc },
     { OSSL_FUNC_CRYPTO_FREE, (void (*)(void))CRYPTO_free },

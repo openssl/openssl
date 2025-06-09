@@ -14,36 +14,43 @@
 #include <openssl/err.h>
 
 #define ARRAY_LEN(x) (sizeof(x)/sizeof((x)[0]))
-
 typedef struct crypto_local_key_entry {
     CRYPTO_THREAD_LOCAL key;
-    void (*cleanup)(void *);
+    int (*initfn)(CRYPTO_THREAD_LOCAL *);
 } CRYPTO_LOCAL_KEY_ENTRY;
 
+#ifndef FIPS_MODULE
 static CRYPTO_LOCAL_KEY_ENTRY key_table[] = {
     [CRYPTO_THREAD_DEF_CTX_KEY_ID] = {
-            .cleanup = NULL,
+            .initfn = NULL,
         },
     [CRYPTO_THREAD_RCU_KEY_ID] = {
-            .cleanup = NULL,
+            .initfn = NULL,
         },
     [CRYPTO_THREAD_ASYNC_JOB_CTX_KEY_ID] = {
-            .cleanup = NULL,
+            .initfn = NULL,
         },
     [CRYPTO_THREAD_ASYNC_JOB_POOL_KEY_ID] = {
-            .cleanup = NULL,
+            .initfn = NULL,
         },
     [CRYPTO_THREAD_ERR_KEY_ID] = {
-            .cleanup = NULL,
+            .initfn = NULL,
         },
     [CRYPTO_THREAD_INIT_CFG_KEY_ID] = {
-            .cleanup = NULL,
+            .initfn = NULL,
+        },
+    [CRYPTO_THREAD_DESTRUCTOR_KEY_ID] = {
+            .initfn = ossl_init_destructor_key,
         },
 
 };
 
 static CRYPTO_LOCAL_KEY_ENTRY *key_table_ptr = key_table;
 static size_t key_table_len = ARRAY_LEN(key_table);
+#else
+static CRYPTO_LOCAL_KEY_ENTRY *key_table_ptr = NULL;
+static size_t key_table_len = 0;
+#endif
 
 #ifndef FIPS_MODULE
 static int init_keytable_once()
@@ -51,9 +58,14 @@ static int init_keytable_once()
     size_t i;
 
     for (i = 0; i < key_table_len; i++) {
-        if (!CRYPTO_THREAD_init_local(&key_table[i].key,
-                                      key_table[i].cleanup))
-            return 0;
+        if (key_table_ptr[i].initfn == NULL) {
+            if (!CRYPTO_THREAD_init_local(&key_table_ptr[i].key,
+                                          NULL))
+                return 0;
+        } else {
+            if (!key_table_ptr[i].initfn(&key_table_ptr[i].key))
+                return 0;
+        }
     }
     return 1;
 }
@@ -80,15 +92,19 @@ CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_KEY_ENTRY_ID id)
     return &key_table_ptr[id].key;
 }
 
+#ifndef FIPS_MODULE
 void *get_thread_key_table(size_t *table_len)
 {
     *table_len = key_table_len;
+    fprintf(stderr, "REturning thread key table at %p\n", (void *)key_table);
     return key_table;
 }
+#endif
 
 #ifdef FIPS_MODULE
 void set_thread_key_table(void *key_tbl, size_t table_len)
 {
+    fprintf(stderr, "Setting thread key table to %p\n", key_tbl);
     key_table_ptr = key_tbl;
     key_table_len = table_len;
 }

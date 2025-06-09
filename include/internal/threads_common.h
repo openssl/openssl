@@ -19,21 +19,18 @@ typedef enum {
    CRYPTO_THREAD_ASYNC_JOB_POOL_KEY_ID,
    CRYPTO_THREAD_ERR_KEY_ID,
    CRYPTO_THREAD_INIT_CFG_KEY_ID,
+   CRYPTO_THREAD_DESTRUCTOR_KEY_ID,
    CRYPTO_THREAD_KEY_ID_MAX
 } CRYPTO_THREAD_KEY_ENTRY_ID;
-
-typedef struct crypto_local_key_entry {
-    CRYPTO_THREAD_LOCAL key;
-    void (*cleanup)(void *);
-} CRYPTO_LOCAL_KEY_ENTRY;
 
 CRYPTO_THREAD_LOCAL*
 CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_KEY_ENTRY_ID id);
 
 #ifdef FIPS_MODULE
 void set_thread_key_table(void *tbl, size_t table_len);
+#else
+void *get_thread_key_table(size_t *table_len);
 #endif
 
-void *get_thread_key_table(size_t *table_len);
-
+extern int ossl_init_destructor_key(CRYPTO_THREAD_LOCAL *key);
 #endif /* OPENSSL_INTERNAL_THREAD_COMMON_H */
