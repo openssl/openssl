@@ -465,7 +465,9 @@ sub update_nested_indents { # may reset $in_paren_expr and in this case also res
                 push @nested_block_indents, $block_indent;
                 push @nested_hanging_offsets, $in_expr ? $hanging_offset : 0;
                 push @nested_in_typedecl, $in_typedecl if $in_typedecl != 0;
-                $block_indent += INDENT_LEVEL + $hanging_offset;
+                my $indent_inc = INDENT_LEVEL;
+                $indent_inc = 0 if (m/^[\s@]*(case|default)\W.*\{[\s@]*$/);  # leading 'case' or 'default' and trailing '{'
+                $block_indent += $indent_inc + $hanging_offset;
                 $hanging_offset = 0;
             }
             if ($c ne "{" || $in_stmt) { # for '{' inside stmt/expr (not: decl), for '(', '[', or '?' anywhere
@@ -911,8 +913,9 @@ while (<>) { # loop over all lines of all input files
         }
 
         if (m/^[\s@]*(case|default)(\W.*$|$)/) { # leading 'case' or 'default'
-            my $keyword = $1;
-            report("code after $keyword: ") if $2 =~ /:.*[^\s@].*$/;
+            my ($keyword, $rest) = ($1, $2);
+            report("code after $keyword: ") if $rest =~ /:.*[^\s@]/ && !
+                ($rest =~ /:[\s@]*\{[\s@]*$/); # after, ':', trailing '{';
             $local_offset = -INDENT_LEVEL;
         } else {
             if (m/^([\s@]*)(\w+):/) { # (leading) label, cannot be "default"
