@@ -302,12 +302,14 @@ int genpkey_main(int argc, char **argv)
         if (mem_outpubkey != NULL) {
             rv = mem_bio_to_file(mem_outpubkey, outpubkeyfile, outformat, private);
             if (!rv)
-                BIO_printf(bio_err, "Error writing to outpubkey: '%s'. Error: %s\n", outpubkeyfile, strerror(errno));
+                BIO_printf(bio_err, "Error writing to outpubkey: '%s'. Error: %s\n",
+                           outpubkeyfile, strerror(errno));
         }
         if (mem_out != NULL) {
             rv = mem_bio_to_file(mem_out, outfile, outformat, private);
             if (!rv)
-                BIO_printf(bio_err, "Error writing to outfile: '%s'. Error: %s\n", outpubkeyfile, strerror(errno));
+                BIO_printf(bio_err, "Error writing to outfile: '%s'. Error: %s\n",
+                           outfile, strerror(errno));
         }
     }
     EVP_PKEY_free(pkey);
