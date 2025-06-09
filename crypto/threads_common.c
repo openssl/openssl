@@ -42,7 +42,9 @@ static CRYPTO_LOCAL_KEY_ENTRY key_table[] = {
     [CRYPTO_THREAD_DESTRUCTOR_KEY_ID] = {
             .initfn = ossl_init_destructor_key,
         },
-
+    [CRYPTO_THREAD_TEVENT_KEY_ID] = {
+            .initfn = NULL,
+        },
 };
 
 static CRYPTO_LOCAL_KEY_ENTRY *key_table_ptr = key_table;
@@ -96,7 +98,6 @@ CRYPTO_THREAD_get_key_entry(CRYPTO_THREAD_KEY_ENTRY_ID id)
 void *get_thread_key_table(size_t *table_len)
 {
     *table_len = key_table_len;
-    fprintf(stderr, "REturning thread key table at %p\n", (void *)key_table);
     return key_table;
 }
 #endif
@@ -104,7 +105,6 @@ void *get_thread_key_table(size_t *table_len)
 #ifdef FIPS_MODULE
 void set_thread_key_table(void *key_tbl, size_t table_len)
 {
-    fprintf(stderr, "Setting thread key table to %p\n", key_tbl);
     key_table_ptr = key_tbl;
     key_table_len = table_len;
 }
