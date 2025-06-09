@@ -161,6 +161,13 @@ int g(void)
         while (1);
     while (2);
 
+    if (pcrl != NULL) {
+        1;
+        2;
+    } else if (pcrls != NULL) {
+        1;
+    }
+
     if (1)
         f(a, b);
     do

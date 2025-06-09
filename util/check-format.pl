@@ -62,7 +62,8 @@
 #   except within if ... else constructs where some branch contains more than one
 #   statement. Since the exception is hard to recognize when such branches occur
 #   after the current position (such that false positives would be reported)
-#   the tool by checks for this rule by default only for do/while/for bodies.
+#   the tool checks for this rule by default only for do/while/for bodies
+#   and for 'if' without 'else'.
 #   Yet with the --1-stmt option false positives are preferred over negatives.
 #   False negatives occur if the braces are more than two non-blank lines apart.
 #
@@ -168,9 +169,9 @@ my $local_offset;          # current extra indent due to label, switch case/defa
 my $line_body_start;       # number of line where last function body started, or 0
 my $line_function_start;   # number of line where last function definition started, used for $line_body_start
 my $last_function_header;  # header containing name of last function defined, used if $line_body_start != 0
-my $line_opening_brace;    # number of previous line with opening brace after if/do/while/for, optionally for 'else'
+my $line_opening_brace;    # number of previous line with opening brace after if/do/while/for, partly for 'else/else if' - used for detection of { 1 stmt }
 
-my $keyword_opening_brace; # name of previous keyword, used if $line_opening_brace != 0
+my $keyword_opening_brace; # name of keyword (or combination 'else if') just before '{', used if $line_opening_brace != 0
 my $block_indent;          # currently required normal indentation at block/statement level
 my $hanging_offset;        # extra indent, which may be nested, for just one hanging statement or expr or typedef
 my @in_do_hanging_offsets; # stack of hanging offsets for nested 'do' ... 'while'
@@ -981,7 +982,7 @@ while (<>) { # loop over all lines of all input files
         my $next_word = $1;
         if ($line_opening_brace > 0 &&
             ($keyword_opening_brace ne "if" ||
-             $extended_1_stmt || $next_word ne "else") &&
+             $extended_1_stmt || $next_word ne "else") && # --1-stmt or 'if' without 'else'
             ($line_opening_brace == $line_before2 ||
              $line_opening_brace == $line_before)
             && $contents_before =~ m/;/) { # there is at least one terminator ';', so there is some stmt
@@ -1019,8 +1020,9 @@ while (<>) { # loop over all lines of all input files
     }
     if ($paren_expr_start || $return_enum_start || $assignment_start)
     {
-        my ($head, $mid, $tail) = ($1, $3, $4);
+        my ($head, $pre, $mid, $tail) = ($1, $2, $3, $4);
         $keyword_opening_brace = $mid if $mid ne "=";
+        $keyword_opening_brace = "else if" if $pre =~ m/(^|\W)else[\s@]+$/ && $mid eq "if" && !$extended_1_stmt; # prevent reporting "{ 1 stmt }" on "else if" unless --1-stmt
         # to cope with multi-line expressions, do this also if !($tail =~ m/\{/)
         push @in_if_hanging_offsets, $hanging_offset if $mid eq "if";
 
@@ -1138,10 +1140,10 @@ while (<>) { # loop over all lines of all input files
                     report("'{' not at line start") if length($head) != $preproc_offset && $head =~ m/\)\s*/; # at end of function definition header
                     $line_body_start = $contents =~ m/LONG BODY/ ? 0 : $line if $line_function_start != 0;
                 }
-            } else {
-                $line_opening_brace = $line if $keyword_opening_brace =~ m/if|do|while|for|(OSSL_)?LIST_FOREACH(_\w+)?/;
+            } else { # prepare detection of { 1 stmt }
+                $line_opening_brace = $line if $keyword_opening_brace =~ m/^(if|do|while|for|(OSSL_)?LIST_FOREACH(_\w+)?)$/;
                 # using, not assigning, $keyword_opening_brace here because it could be on an earlier line
-                $line_opening_brace = $line if $keyword_opening_brace eq "else" && $extended_1_stmt &&
+                $line_opening_brace = $line if $keyword_opening_brace =~ m/else|else if/ && $extended_1_stmt &&
                 # TODO prevent false positives for if/else where braces around single-statement branches
                 # should be avoided but only if all branches have just single statements
                 # The following helps detecting the exception when handling multiple 'if ... else' branches:
