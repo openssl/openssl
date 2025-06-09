@@ -236,6 +236,9 @@ int g(void)
                     return 0;
             }
             break;
+        case 1: {
+            ;
+        }
         default:
             /* This should be dead code */
             return 0;
