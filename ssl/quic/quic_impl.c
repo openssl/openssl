@@ -5146,8 +5146,8 @@ QUIC_NEEDS_LOCK
 static int test_poll_event_er(QUIC_XSO *xso)
 {
     return (ossl_quic_stream_has_recv(xso->stream)
-        && ossl_quic_stream_recv_is_reset(xso->stream)
-        && !xso->retired_fin) || xso->stream->conn_tearing_down;
+            && ossl_quic_stream_recv_is_reset(xso->stream)
+            && !xso->retired_fin) || xso->stream->conn_tearing_down;
 }
 
 /* Do we have the W (write) condition? */
