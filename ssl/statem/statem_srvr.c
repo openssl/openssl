@@ -1558,11 +1558,11 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
                  * space, which there better be! (a bug triggered a bigger
                  * inner CH once;-)
                  */
-                if (PACKET_remaining(&newpkt) > PACKET_remaining(pkt)
-                    || PACKET_replace(pkt, &newpkt) != 1) {
+                if (PACKET_remaining(&newpkt) > PACKET_remaining(pkt)) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
+                *pkt = newpkt;
             }
         }
     }

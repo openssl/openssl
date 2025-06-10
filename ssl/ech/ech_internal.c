@@ -2084,24 +2084,20 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     ossl_ech_pbuf("Inner CH (decoded)", s->ext.ech.innerch,
                   s->ext.ech.innerch_len);
 # endif
-    /*
-     * +4 below because tls_process_client_hello doesn't want to be given the
-     * message type & length, so the buffer starts with version octets
-     */
-    if (PACKET_buf_init(newpkt, s->ext.ech.innerch + 4,
-                        s->ext.ech.innerch_len - 4) != 1) {
+    if (PACKET_buf_init(newpkt, s->ext.ech.innerch,
+                        s->ext.ech.innerch_len) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    /* we may need to fix up the overall 3-octet CH length */
-    if (s->init_buf != NULL && s->init_buf->data != NULL) {
-        unsigned char *rwm = (unsigned char *)s->init_buf->data;
-        size_t olen = s->ext.ech.innerch_len - 4;
-
-        rwm[1] = (olen >> 16) % 256;
-        rwm[2] = (olen >> 8) % 256;
-        rwm[3] = olen % 256;
+    /*
+     * tls_process_client_hello doesn't want to be given the message header,
+     * so we skip over it
+     */
+    if (!PACKET_forward(newpkt, SSL3_HM_HEADER_LENGTH)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
     }
+
     if (ossl_ech_intbuf_add(s, s->ext.ech.innerch,
                             s->ext.ech.innerch_len, 0) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
