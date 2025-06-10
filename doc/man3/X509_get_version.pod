@@ -81,6 +81,9 @@ L<X509_verify_cert(3)>
 X509_get_version(), X509_REQ_get_version() and X509_CRL_get_version() are
 functions in OpenSSL 1.1.0, in previous versions they were macros.
 
+X509_ACERT_get_version(), X509_ACERT_set_version()
+were added in OpenSSL 3.4.
+
 =head1 COPYRIGHT
 
 Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,16 @@
 #include "internal/core.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+static void evp_kem_free(void *data)
+{
+    EVP_KEM_free(data);
+}
+
+static int evp_kem_up_ref(void *data)
+{
+    return EVP_KEM_up_ref(data);
+}
 
 static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
                         const OSSL_PARAM params[], EVP_PKEY *authkey)
@@ -278,12 +288,13 @@ static EVP_KEM *evp_kem_new(OSSL_PROVIDER *prov)
     if (kem == NULL)
         return NULL;
 
-    if (!CRYPTO_NEW_REF(&kem->refcnt, 1)) {
+    if (!CRYPTO_NEW_REF(&kem->refcnt, 1)
+        || !ossl_provider_up_ref(prov)) {
+        CRYPTO_FREE_REF(&kem->refcnt);
         OPENSSL_free(kem);
         return NULL;
     }
     kem->prov = prov;
-    ossl_provider_up_ref(prov);
 
     return kem;
 }
@@ -452,8 +463,8 @@ EVP_KEM *EVP_KEM_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 {
     return evp_generic_fetch(ctx, OSSL_OP_KEM, algorithm, properties,
                              evp_kem_from_algorithm,
-                             (int (*)(void *))EVP_KEM_up_ref,
-                             (void (*)(void *))EVP_KEM_free);
+                             evp_kem_up_ref,
+                             evp_kem_free);
 }
 
 EVP_KEM *evp_kem_fetch_from_prov(OSSL_PROVIDER *prov, const char *algorithm,
@@ -461,8 +472,8 @@ EVP_KEM *evp_kem_fetch_from_prov(OSSL_PROVIDER *prov, const char *algorithm,
 {
     return evp_generic_fetch_from_prov(prov, OSSL_OP_KEM, algorithm, properties,
                                        evp_kem_from_algorithm,
-                                       (int (*)(void *))EVP_KEM_up_ref,
-                                       (void (*)(void *))EVP_KEM_free);
+                                       evp_kem_up_ref,
+                                       evp_kem_free);
 }
 
 int EVP_KEM_is_a(const EVP_KEM *kem, const char *name)
@@ -491,8 +502,8 @@ void EVP_KEM_do_all_provided(OSSL_LIB_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_KEM, (void (*)(void *, void *))fn, arg,
                        evp_kem_from_algorithm,
-                       (int (*)(void *))EVP_KEM_up_ref,
-                       (void (*)(void *))EVP_KEM_free);
+                       evp_kem_up_ref,
+                       evp_kem_free);
 }
 
 int EVP_KEM_names_do_all(const EVP_KEM *kem,

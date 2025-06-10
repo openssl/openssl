@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -613,15 +613,23 @@ static void do_mt_hash_work(void)
         case DO_DELETE:
             ossl_ht_write_lock(m_ht);
             expected_rc = expected_m->in_table;
+            if (expected_rc == 1) {
+                /*
+                 * We must set pending_delete before the actual deletion
+                 * as another inserting or deleting thread can pick up
+                 * the delete callback before the ossl_ht_write_unlock() call.
+                 * This can happen only if no read locks are pending and
+                 * only on Windows where we do not use the write mutex
+                 * to get the callback list.
+                 */
+                expected_m->in_table = 0;
+                CRYPTO_atomic_add(&expected_m->pending_delete, 1, &ret, worker_lock);
+            }
             if (expected_rc != ossl_ht_delete(m_ht, TO_HT_KEY(&key))) {
                 TEST_info("Iteration %d Expected rc %d on delete of element %u which is %s\n",
                           giter, expected_rc, (unsigned int)index,
                           expected_m->in_table ? "in table" : "not in table");
                 worker_exits[num] = "Failure on delete";
-            }
-            if (expected_rc == 1) {
-                expected_m->in_table = 0;
-                CRYPTO_atomic_add(&expected_m->pending_delete, 1, &ret, worker_lock); 
             }
             ossl_ht_write_unlock(m_ht);
             if (worker_exits[num] != NULL)
@@ -702,9 +710,9 @@ shutdown:
 
 end_free:
     shutting_down = 1;
+    ossl_ht_free(m_ht);
     CRYPTO_THREAD_lock_free(worker_lock);
     CRYPTO_THREAD_lock_free(testrand_lock);
-    ossl_ht_free(m_ht);
 end:
     return ret;
 }

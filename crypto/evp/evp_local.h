@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -52,6 +52,7 @@ struct evp_cipher_ctx_st {
     int final_used;
     int block_mask;
     unsigned char final[EVP_MAX_BLOCK_LENGTH]; /* possible final block */
+    size_t numpipes;
 
     /*
      * Opaque ctx returned from a providers cipher algorithm implementation
@@ -200,6 +201,29 @@ struct evp_signature_st {
     OSSL_FUNC_signature_query_key_types_fn *query_key_types;
 } /* EVP_SIGNATURE */;
 
+struct evp_skeymgmt_st {
+    int name_id;
+    char *type_name;
+    const char *description;
+    OSSL_PROVIDER *prov;
+    CRYPTO_REF_COUNT refcnt;
+
+    /* Import and export routines */
+    OSSL_FUNC_skeymgmt_imp_settable_params_fn *imp_params;
+    OSSL_FUNC_skeymgmt_import_fn *import;
+    OSSL_FUNC_skeymgmt_export_fn *export;
+
+    /* Key generation */
+    OSSL_FUNC_skeymgmt_gen_settable_params_fn *gen_params;
+    OSSL_FUNC_skeymgmt_generate_fn *generate;
+
+    /* Key identifier */
+    OSSL_FUNC_skeymgmt_get_key_id_fn *get_key_id;
+
+    /* destructor */
+    OSSL_FUNC_skeymgmt_free_fn *free;
+} /* EVP_SKEYMGMT */;
+
 struct evp_asym_cipher_st {
     int name_id;
     char *type_name;
@@ -315,6 +339,15 @@ EVP_KEYEXCH *evp_keyexch_fetch_from_prov(OSSL_PROVIDER *prov,
                                          const char *properties);
 EVP_KEM *evp_kem_fetch_from_prov(OSSL_PROVIDER *prov,
                                  const char *name,
+                                 const char *properties);
+EVP_CIPHER *evp_cipher_fetch_from_prov(OSSL_PROVIDER *prov,
+                                       const char *algorithm,
+                                       const char *properties);
+EVP_MD *evp_digest_fetch_from_prov(OSSL_PROVIDER *prov,
+                                   const char *algorithm,
+                                   const char *properties);
+EVP_MAC *evp_mac_fetch_from_prov(OSSL_PROVIDER *prov,
+                                 const char *algorithm,
                                  const char *properties);
 
 /* Internal structure constructors for fetched methods */

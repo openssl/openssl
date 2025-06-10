@@ -164,16 +164,19 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
         md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
         md_nid = ossl_digest_get_approved_nid(md);
 
-        if (md == NULL || md_nid < 0) {
-            if (md == NULL)
-                ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
-                               "%s could not be fetched", mdname);
-            if (md_nid == NID_undef)
-                ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
-                               "digest=%s", mdname);
-            if (mdname_len >= sizeof(ctx->mdname))
-                ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
-                               "%s exceeds name buffer length", mdname);
+        if (md == NULL) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                           "%s could not be fetched", mdname);
+            goto err;
+        }
+        if (md_nid == NID_undef) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
+                           "digest=%s", mdname);
+            goto err;
+        }
+        if (mdname_len >= sizeof(ctx->mdname)) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                           "%s exceeds name buffer length", mdname);
             goto err;
         }
         /* XOF digests don't work */
@@ -987,11 +990,11 @@ static int dsa_sigalg_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
     dsa_##md##_sign_init(void *vpdsactx, void *vdsa,                    \
                          const OSSL_PARAM params[])                     \
     {                                                                   \
-        static const char desc[] = "DSA-" #MD " Sign Init";             \
+        static const char desc[] = "DSA-" MD " Sign Init";             \
                                                                         \
         return dsa_sigalg_signverify_init(vpdsactx, vdsa,               \
                                           dsa_sigalg_set_ctx_params,    \
-                                          params, #MD,                  \
+                                          params, MD,                  \
                                           EVP_PKEY_OP_SIGN,             \
                                           desc);                        \
     }                                                                   \
@@ -1000,11 +1003,11 @@ static int dsa_sigalg_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
     dsa_##md##_sign_message_init(void *vpdsactx, void *vdsa,            \
                                  const OSSL_PARAM params[])             \
     {                                                                   \
-        static const char desc[] = "DSA-" #MD " Sign Message Init";     \
+        static const char desc[] = "DSA-" MD " Sign Message Init";     \
                                                                         \
         return dsa_sigalg_signverify_init(vpdsactx, vdsa,               \
                                           dsa_sigalg_set_ctx_params,    \
-                                          params, #MD,                  \
+                                          params, MD,                  \
                                           EVP_PKEY_OP_SIGNMSG,          \
                                           desc);                        \
     }                                                                   \
@@ -1013,11 +1016,11 @@ static int dsa_sigalg_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
     dsa_##md##_verify_init(void *vpdsactx, void *vdsa,                  \
                            const OSSL_PARAM params[])                   \
     {                                                                   \
-        static const char desc[] = "DSA-" #MD " Verify Init";           \
+        static const char desc[] = "DSA-" MD " Verify Init";           \
                                                                         \
         return dsa_sigalg_signverify_init(vpdsactx, vdsa,               \
                                           dsa_sigalg_set_ctx_params,    \
-                                          params, #MD,                  \
+                                          params, MD,                  \
                                           EVP_PKEY_OP_VERIFY,           \
                                           desc);                        \
     }                                                                   \
@@ -1026,11 +1029,11 @@ static int dsa_sigalg_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
     dsa_##md##_verify_message_init(void *vpdsactx, void *vdsa,          \
                                    const OSSL_PARAM params[])           \
     {                                                                   \
-        static const char desc[] = "DSA-" #MD " Verify Message Init";   \
+        static const char desc[] = "DSA-" MD " Verify Message Init";   \
                                                                         \
         return dsa_sigalg_signverify_init(vpdsactx, vdsa,               \
                                           dsa_sigalg_set_ctx_params,    \
-                                          params, #MD,                  \
+                                          params, MD,                  \
                                           EVP_PKEY_OP_VERIFYMSG,        \
                                           desc);                        \
     }                                                                   \
@@ -1071,12 +1074,12 @@ static int dsa_sigalg_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
         OSSL_DISPATCH_END                                               \
     }
 
-IMPL_DSA_SIGALG(sha1, SHA1);
-IMPL_DSA_SIGALG(sha224, SHA2-224);
-IMPL_DSA_SIGALG(sha256, SHA2-256);
-IMPL_DSA_SIGALG(sha384, SHA2-384);
-IMPL_DSA_SIGALG(sha512, SHA2-512);
-IMPL_DSA_SIGALG(sha3_224, SHA3-224);
-IMPL_DSA_SIGALG(sha3_256, SHA3-256);
-IMPL_DSA_SIGALG(sha3_384, SHA3-384);
-IMPL_DSA_SIGALG(sha3_512, SHA3-512);
+IMPL_DSA_SIGALG(sha1, "SHA1");
+IMPL_DSA_SIGALG(sha224, "SHA2-224");
+IMPL_DSA_SIGALG(sha256, "SHA2-256");
+IMPL_DSA_SIGALG(sha384, "SHA2-384");
+IMPL_DSA_SIGALG(sha512, "SHA2-512");
+IMPL_DSA_SIGALG(sha3_224, "SHA3-224");
+IMPL_DSA_SIGALG(sha3_256, "SHA3-256");
+IMPL_DSA_SIGALG(sha3_384, "SHA3-384");
+IMPL_DSA_SIGALG(sha3_512, "SHA3-512");

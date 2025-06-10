@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -8,10 +8,10 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # June 2015
@@ -140,7 +140,7 @@ $code.=<<___;
 .extern ChaCha20_ctr32_sve
 #endif
 
-.text
+.rodata
 
 .align	5
 .Lsigma:
@@ -150,6 +150,8 @@ $code.=<<___;
 .Lrot24:
 .long	0x02010003,0x06050407,0x0a09080b,0x0e0d0c0f
 .asciz	"ChaCha20 for ARMv8, CRYPTOGAMS by \@dot-asm"
+
+.text
 
 .globl	ChaCha20_ctr32_dflt
 .type	ChaCha20_ctr32_dflt,%function
@@ -170,7 +172,8 @@ ChaCha20_ctr32_dflt:
 	stp	x29,x30,[sp,#-96]!
 	add	x29,sp,#0
 
-	adr	@x[0],.Lsigma
+	adrp	@x[0],.Lsigma
+	add	@x[0],@x[0],:lo12:.Lsigma
 	stp	x19,x20,[sp,#16]
 	stp	x21,x22,[sp,#32]
 	stp	x23,x24,[sp,#48]
@@ -473,7 +476,8 @@ ChaCha20_neon:
 	stp	x29,x30,[sp,#-96]!
 	add	x29,sp,#0
 
-	adr	@x[0],.Lsigma
+	adrp	@x[0],.Lsigma
+	add	@x[0],@x[0],:lo12:.Lsigma
 	stp	x19,x20,[sp,#16]
 	stp	x21,x22,[sp,#32]
 	stp	x23,x24,[sp,#48]
@@ -884,7 +888,8 @@ ChaCha20_512_neon:
 	stp	x29,x30,[sp,#-96]!
 	add	x29,sp,#0
 
-	adr	@x[0],.Lsigma
+	adrp	@x[0],.Lsigma
+	add	@x[0],@x[0],:lo12:.Lsigma
 	stp	x19,x20,[sp,#16]
 	stp	x21,x22,[sp,#32]
 	stp	x23,x24,[sp,#48]

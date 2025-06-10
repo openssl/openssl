@@ -176,9 +176,15 @@ EVP_DecodeBlock() returns the length of the data decoded or -1 on error.
 
 L<evp(7)>
 
+=head1 HISTORY
+
+The EVP_DecodeUpdate() function was fixed in OpenSSL 3.5,
+so now it produces the number of bytes specified in B<outl*>
+and does not decode padding bytes (B<=>) to 6 zero bits.
+
 =head1 COPYRIGHT
 
-Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -252,13 +252,14 @@ BIGNUM *BN_new(void)
     return ret;
 }
 
- BIGNUM *BN_secure_new(void)
- {
-     BIGNUM *ret = BN_new();
-     if (ret != NULL)
-         ret->flags |= BN_FLG_SECURE;
-     return ret;
- }
+BIGNUM *BN_secure_new(void)
+{
+    BIGNUM *ret = BN_new();
+
+    if (ret != NULL)
+        ret->flags |= BN_FLG_SECURE;
+    return ret;
+}
 
 /* This is used by bn_expand2() */
 /* The caller MUST check that words > b->dmax before calling this */

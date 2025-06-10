@@ -8,10 +8,10 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # This module implements support for Intel AES-NI extension. In
@@ -4764,7 +4764,7 @@ $code.=<<___;
 .Lkey_rcon1b:
 	.long	0x1b,0x1b,0x1b,0x1b
 
-.asciz  "AES for Intel AES-NI, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz  "AES for Intel AES-NI, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	64
 .previous
 ___

@@ -2,6 +2,8 @@
 *.der binary
 /fuzz/corpora/** binary
 *.pfx binary
+test/recipes/15-test_ml_dsa_codecs_data/*.dat   binary
+test/recipes/15-test_ml_kem_codecs_data/*.dat binary
 
 # For git archive
 fuzz/corpora/**                         export-ignore

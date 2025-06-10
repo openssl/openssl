@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -14,6 +14,7 @@
 #include <openssl/md5.h>
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 
 static int ssl3_generate_key_block(SSL_CONNECTION *s, unsigned char *km, int num)
 {

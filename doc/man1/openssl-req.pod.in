@@ -554,7 +554,7 @@ several values:
 
 =back
 
-Note that B<utf8only> is the PKIX recommendation in RFC2459 after 2003, and the
+Note that B<utf8only> is the PKIX recommendation in RFC 5280, and the
 default B<string_mask>; B<default> is not the default option. The B<nombstr>
 value is a workaround for some software that has problems with variable-sized
 BMPStrings and UTF8Strings.
@@ -705,7 +705,7 @@ Sample configuration file prompting for field values:
  attributes             = req_attributes
  req_extensions         = v3_ca
 
- dirstring_type = nobmp
+ dirstring_type = nombstr
 
  [ req_distinguished_name ]
  countryName                    = Country Name (2 letter code)
@@ -855,7 +855,7 @@ Since OpenSSL 3.3, the B<-verify> option will exit with 1 on failure.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

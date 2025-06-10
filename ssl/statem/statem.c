@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,7 @@
 #endif
 
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 #include <openssl/rand.h>
 #include "../ssl_local.h"
 #include "statem_local.h"
@@ -241,7 +242,7 @@ int ossl_statem_skip_early_data(SSL_CONNECTION *s)
  * attempting to read data (SSL_read*()), or -1 if we are in SSL_do_handshake()
  * or similar.
  */
-void ossl_statem_check_finish_init(SSL_CONNECTION *s, int sending)
+int ossl_statem_check_finish_init(SSL_CONNECTION *s, int sending)
 {
     if (sending == -1) {
         if (s->statem.hand_state == TLS_ST_PENDING_EARLY_DATA_END
@@ -273,6 +274,7 @@ void ossl_statem_check_finish_init(SSL_CONNECTION *s, int sending)
                 && s->statem.hand_state == TLS_ST_EARLY_DATA)
             ossl_statem_set_in_init(s, 1);
     }
+    return 1;
 }
 
 void ossl_statem_set_hello_verify_done(SSL_CONNECTION *s)
@@ -726,6 +728,7 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
                 st->read_state = READ_STATE_HEADER;
                 break;
 
+            case WORK_FINISHED_SWAP:
             case WORK_FINISHED_STOP:
                 if (SSL_CONNECTION_IS_DTLS(s)) {
                     dtls1_stop_timer(s);
@@ -850,7 +853,6 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
 
             case WRITE_TRAN_FINISHED:
                 return SUB_STATE_FINISHED;
-                break;
 
             case WRITE_TRAN_ERROR:
                 check_fatal(s);
@@ -871,6 +873,9 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
             case WORK_FINISHED_CONTINUE:
                 st->write_state = WRITE_STATE_SEND;
                 break;
+
+            case WORK_FINISHED_SWAP:
+                return SUB_STATE_FINISHED;
 
             case WORK_FINISHED_STOP:
                 return SUB_STATE_END_HANDSHAKE;
@@ -944,6 +949,9 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
             case WORK_FINISHED_CONTINUE:
                 st->write_state = WRITE_STATE_TRANSITION;
                 break;
+
+            case WORK_FINISHED_SWAP:
+                return SUB_STATE_FINISHED;
 
             case WORK_FINISHED_STOP:
                 return SUB_STATE_END_HANDSHAKE;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -175,6 +175,7 @@ struct ossl_provider_st {
     OSSL_FUNC_provider_get_params_fn *get_params;
     OSSL_FUNC_provider_get_capabilities_fn *get_capabilities;
     OSSL_FUNC_provider_self_test_fn *self_test;
+    OSSL_FUNC_provider_random_bytes_fn *random_bytes;
     OSSL_FUNC_provider_query_operation_fn *query_operation;
     OSSL_FUNC_provider_unquery_operation_fn *unquery_operation;
 
@@ -530,26 +531,42 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
     if (init_function == NULL) {
         const OSSL_PROVIDER_INFO *p;
         size_t i;
+        int chosen = 0;
 
         /* Check if this is a predefined builtin provider */
         for (p = ossl_predefined_providers; p->name != NULL; p++) {
-            if (strcmp(p->name, name) == 0) {
+            if (strcmp(p->name, name) != 0)
+                continue;
+            /* These compile-time templates always have NULL parameters */
+            template = *p;
+            chosen = 1;
+            break;
+        }
+        if (!CRYPTO_THREAD_read_lock(store->lock))
+            return NULL;
+        for (i = 0, p = store->provinfo; i < store->numprovinfo; p++, i++) {
+            if (strcmp(p->name, name) != 0)
+                continue;
+            /* For built-in providers, copy just implicit parameters. */
+            if (!chosen)
                 template = *p;
+            /*
+             * Explicit parameters override config-file defaults.  If an empty
+             * parameter set is desired, a non-NULL empty set must be provided.
+             */
+            if (params != NULL || p->parameters == NULL) {
+                template.parameters = NULL;
                 break;
             }
-        }
-        if (p->name == NULL) {
-            /* Check if this is a user added provider */
-            if (!CRYPTO_THREAD_read_lock(store->lock))
+            /* Always copy to avoid sharing/mutation. */
+            template.parameters = sk_INFOPAIR_deep_copy(p->parameters,
+                                                        infopair_copy,
+                                                        infopair_free);
+            if (template.parameters == NULL)
                 return NULL;
-            for (i = 0, p = store->provinfo; i < store->numprovinfo; p++, i++) {
-                if (strcmp(p->name, name) == 0) {
-                    template = *p;
-                    break;
-                }
-            }
-            CRYPTO_THREAD_unlock(store->lock);
+            break;
         }
+        CRYPTO_THREAD_unlock(store->lock);
     } else {
         template.init = init_function;
     }
@@ -557,7 +574,9 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
     if (params != NULL) {
         int i;
 
-        template.parameters = sk_INFOPAIR_new_null();
+        /* Don't leak if already non-NULL */
+        if (template.parameters == NULL)
+            template.parameters = sk_INFOPAIR_new_null();
         if (template.parameters == NULL)
             return NULL;
 
@@ -575,7 +594,8 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
     /* provider_new() generates an error, so no need here */
     prov = provider_new(name, template.init, template.parameters);
 
-    if (params != NULL) /* We copied the parameters, let's free them */
+    /* If we copied the parameters, free them */
+    if (template.parameters != NULL)
         sk_INFOPAIR_pop_free(template.parameters, infopair_free);
 
     if (prov == NULL)
@@ -800,10 +820,59 @@ static int infopair_add(STACK_OF(INFOPAIR) **infopairsk, const char *name,
     return 0;
 }
 
-int ossl_provider_add_parameter(OSSL_PROVIDER *prov,
-                                const char *name, const char *value)
+int OSSL_PROVIDER_add_conf_parameter(OSSL_PROVIDER *prov,
+                                     const char *name, const char *value)
 {
     return infopair_add(&prov->parameters, name, value);
+}
+
+int OSSL_PROVIDER_get_conf_parameters(const OSSL_PROVIDER *prov,
+                                      OSSL_PARAM params[])
+{
+    int i;
+
+    if (prov->parameters == NULL)
+        return 1;
+
+    for (i = 0; i < sk_INFOPAIR_num(prov->parameters); i++) {
+        INFOPAIR *pair = sk_INFOPAIR_value(prov->parameters, i);
+        OSSL_PARAM *p = OSSL_PARAM_locate(params, pair->name);
+
+        if (p != NULL
+            && !OSSL_PARAM_set_utf8_ptr(p, pair->value))
+            return 0;
+    }
+    return 1;
+}
+
+int OSSL_PROVIDER_conf_get_bool(const OSSL_PROVIDER *prov,
+                                const char *name, int defval)
+{
+    char *val = NULL;
+    OSSL_PARAM param[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+    param[0].key = (char *)name;
+    param[0].data_type = OSSL_PARAM_UTF8_PTR;
+    param[0].data = (void *) &val;
+    param[0].data_size = sizeof(val);
+    param[0].return_size = OSSL_PARAM_UNMODIFIED;
+
+    /* Errors are ignored, returning the default value */
+    if (OSSL_PROVIDER_get_conf_parameters(prov, param)
+        && OSSL_PARAM_modified(param)
+        && val != NULL) {
+        if ((strcmp(val, "1") == 0)
+            || (OPENSSL_strcasecmp(val, "yes") == 0)
+            || (OPENSSL_strcasecmp(val, "true") == 0)
+            || (OPENSSL_strcasecmp(val, "on") == 0))
+            return 1;
+        else if ((strcmp(val, "0") == 0)
+                   || (OPENSSL_strcasecmp(val, "no") == 0)
+                   || (OPENSSL_strcasecmp(val, "false") == 0)
+                   || (OPENSSL_strcasecmp(val, "off") == 0))
+            return 0;
+    }
+    return defval;
 }
 
 int ossl_provider_info_add_parameter(OSSL_PROVIDER_INFO *provinfo,
@@ -999,6 +1068,10 @@ static int provider_init(OSSL_PROVIDER *prov)
                 prov->self_test =
                     OSSL_FUNC_provider_self_test(provider_dispatch);
                 break;
+            case OSSL_FUNC_PROVIDER_RANDOM_BYTES:
+                prov->random_bytes =
+                    OSSL_FUNC_provider_random_bytes(provider_dispatch);
+                break;
             case OSSL_FUNC_PROVIDER_GET_CAPABILITIES:
                 prov->get_capabilities =
                     OSSL_FUNC_provider_get_capabilities(provider_dispatch);
@@ -1096,6 +1169,12 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
     if (!ossl_assert(prov != NULL))
         return -1;
 
+#ifndef FIPS_MODULE
+    if (prov->random_bytes != NULL
+            && !ossl_rand_check_random_provider_on_unload(prov->libctx, prov))
+        return -1;
+#endif
+
     /*
      * No need to lock if we've got no store because we've not been shared with
      * other threads.
@@ -1111,7 +1190,14 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
         return -1;
     }
 
-    CRYPTO_atomic_add(&prov->activatecnt, -1, &count, prov->activatecnt_lock);
+    if (!CRYPTO_atomic_add(&prov->activatecnt, -1, &count, prov->activatecnt_lock)) {
+        if (lock) {
+            CRYPTO_THREAD_unlock(prov->flag_lock);
+            CRYPTO_THREAD_unlock(store->lock);
+        }
+        return -1;
+    }
+
 #ifndef FIPS_MODULE
     if (count >= 1 && prov->ischild && upcalls) {
         /*
@@ -1185,6 +1271,10 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
     }
 
 #ifndef FIPS_MODULE
+    if (prov->random_bytes != NULL
+            && !ossl_rand_check_random_provider_on_load(prov->libctx, prov))
+        return -1;
+
     if (prov->ischild && upcalls && !ossl_provider_up_ref_parent(prov, 1))
         return -1;
 #endif
@@ -1368,14 +1458,25 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
 
     for (p = ossl_predefined_providers; p->name != NULL; p++) {
         OSSL_PROVIDER *prov = NULL;
+        OSSL_PROVIDER_INFO *info = store->provinfo;
+        STACK_OF(INFOPAIR) *params = NULL;
+        size_t i;
 
         if (!p->is_fallback)
             continue;
+
+        for (i = 0; i < store->numprovinfo; info++, i++) {
+            if (strcmp(info->name, p->name) != 0)
+                continue;
+            params = info->parameters;
+            break;
+        }
+
         /*
          * We use the internal constructor directly here,
          * otherwise we get a call loop
          */
-        prov = provider_new(p->name, p->init, NULL);
+        prov = provider_new(p->name, p->init, params);
         if (prov == NULL)
             goto err;
         prov->libctx = store->libctx;
@@ -1408,6 +1509,16 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
  err:
     CRYPTO_THREAD_unlock(store->lock);
     return ret;
+}
+
+int ossl_provider_activate_fallbacks(OSSL_LIB_CTX *ctx)
+{
+    struct provider_store_st *store = get_provider_store(ctx);
+
+    if (store == NULL)
+        return 0;
+
+    return provider_activate_fallbacks(store);
 }
 
 int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
@@ -1597,14 +1708,6 @@ const char *ossl_provider_module_path(const OSSL_PROVIDER *prov)
 #endif
 }
 
-void *ossl_provider_prov_ctx(const OSSL_PROVIDER *prov)
-{
-    if (prov != NULL)
-        return prov->provctx;
-
-    return NULL;
-}
-
 const OSSL_DISPATCH *ossl_provider_get0_dispatch(const OSSL_PROVIDER *prov)
 {
     if (prov != NULL)
@@ -1782,6 +1885,14 @@ int ossl_provider_self_test(const OSSL_PROVIDER *prov)
  * If tracing is enabled, a message is printed indicating the requested
  * capabilities.
  */
+int ossl_provider_random_bytes(const OSSL_PROVIDER *prov, int which,
+                               void *buf, size_t n, unsigned int strength)
+{
+    return prov->random_bytes == NULL ? 0
+                                      : prov->random_bytes(prov->provctx, which,
+                                                           buf, n, strength);
+}
+
 int ossl_provider_get_capabilities(const OSSL_PROVIDER *prov,
                                    const char *capability,
                                    OSSL_CALLBACK *cb,
@@ -1847,12 +1958,12 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                 BIO_printf(trc_out,
                            "(provider %s) names %s, prop_def %s, desc %s\n",
                            prov->name,
-                           res->algorithm_names == NULL ? "none" :
-                           res->algorithm_names,
-                           res->property_definition == NULL ? "none" :
-                           res->property_definition,
-                           res->algorithm_description == NULL ? "none" :
-                           res->algorithm_description);
+                           idx->algorithm_names == NULL ? "none" :
+                           idx->algorithm_names,
+                           idx->property_definition == NULL ? "none" :
+                           idx->property_definition,
+                           idx->algorithm_description == NULL ? "none" :
+                           idx->algorithm_description);
             }
         } else {
             BIO_printf(trc_out, "(provider %s) query_operation failed\n", prov->name);
@@ -2196,7 +2307,6 @@ static const OSSL_PARAM *core_gettable_params(const OSSL_CORE_HANDLE *handle)
 
 static int core_get_params(const OSSL_CORE_HANDLE *handle, OSSL_PARAM params[])
 {
-    int i;
     OSSL_PARAM *p;
     /*
      * We created this object originally and we know it is actually an
@@ -2215,16 +2325,7 @@ static int core_get_params(const OSSL_CORE_HANDLE *handle, OSSL_PARAM params[])
         OSSL_PARAM_set_utf8_ptr(p, ossl_provider_module_path(prov));
 #endif
 
-    if (prov->parameters == NULL)
-        return 1;
-
-    for (i = 0; i < sk_INFOPAIR_num(prov->parameters); i++) {
-        INFOPAIR *pair = sk_INFOPAIR_value(prov->parameters, i);
-
-        if ((p = OSSL_PARAM_locate(params, pair->name)) != NULL)
-            OSSL_PARAM_set_utf8_ptr(p, pair->value);
-    }
-    return 1;
+    return OSSL_PROVIDER_get_conf_parameters(prov, params);
 }
 
 static OPENSSL_CORE_CTX *core_get_libctx(const OSSL_CORE_HANDLE *handle)
@@ -2330,6 +2431,7 @@ static void core_self_test_get_callback(OPENSSL_CORE_CTX *libctx,
     OSSL_SELF_TEST_get_callback((OSSL_LIB_CTX *)libctx, cb, cbarg);
 }
 
+# ifdef OPENSSL_NO_FIPS_JITTER
 static size_t rand_get_entropy(const OSSL_CORE_HANDLE *handle,
                                unsigned char **pout, int entropy,
                                size_t min_len, size_t max_len)
@@ -2337,6 +2439,31 @@ static size_t rand_get_entropy(const OSSL_CORE_HANDLE *handle,
     return ossl_rand_get_entropy((OSSL_LIB_CTX *)core_get_libctx(handle),
                                  pout, entropy, min_len, max_len);
 }
+# else
+/*
+ * OpenSSL FIPS providers prior to 3.2 call rand_get_entropy API from
+ * core, instead of the newer get_user_entropy. Newer API call honors
+ * runtime configuration of random seed source and can be configured
+ * to use os getranom() or another seed source, such as
+ * JITTER. However, 3.0.9 only calls this API. Note that no other
+ * providers known to use this, and it is core <-> provider only
+ * API. Public facing EVP and getrandom bytes already correctly honor
+ * runtime configuration for seed source. There are no other providers
+ * packaged in Wolfi, or even known to exist that use this api. Thus
+ * it is safe to say any caller of this API is in fact 3.0.9 FIPS
+ * provider. Also note that the passed in handle is invalid and cannot
+ * be safely dereferences in such cases. Due to a bug in FIPS
+ * providers 3.0.0, 3.0.8 and 3.0.9. See
+ * https://github.com/openssl/openssl/blob/master/doc/internal/man3/ossl_rand_get_entropy.pod#notes
+ */
+size_t ossl_rand_jitter_get_seed(unsigned char **, int, size_t, size_t);
+static size_t rand_get_entropy(const OSSL_CORE_HANDLE *handle,
+                               unsigned char **pout, int entropy,
+                               size_t min_len, size_t max_len)
+{
+    return ossl_rand_jitter_get_seed(pout, entropy, min_len, max_len);
+}
+# endif
 
 static size_t rand_get_user_entropy(const OSSL_CORE_HANDLE *handle,
                                     unsigned char **pout, int entropy,

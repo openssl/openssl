@@ -27,7 +27,7 @@ void ossl_ffc_params_init(FFC_PARAMS *params)
 
 void ossl_ffc_params_cleanup(FFC_PARAMS *params)
 {
-#ifdef FIPS_MODULE
+#ifdef OPENSSL_PEDANTIC_ZEROIZATION
     BN_clear_free(params->p);
     BN_clear_free(params->q);
     BN_clear_free(params->g);

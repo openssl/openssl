@@ -214,6 +214,29 @@ static int test_hmac_single_shot(void)
     return 1;
 }
 
+/* https://github.com/openssl/openssl/issues/13210 */
+static int test_hmac_final_update_fail(void)
+{
+    HMAC_CTX *ctx = NULL;
+    unsigned char buf[EVP_MAX_MD_SIZE];
+    unsigned int len;
+    int ret = 0;
+
+    /* HMAC_Update() after HMAC_Final() must return an error. */
+    if (!TEST_ptr(ctx = HMAC_CTX_new()))
+        goto err;
+    if (!TEST_true(HMAC_Init_ex(ctx, test[5].key, test[5].key_len, EVP_sha256(), NULL))
+        || !TEST_true(HMAC_Update(ctx, test[5].data, test[5].data_len))
+        || !TEST_true(HMAC_Final(ctx, buf, &len))
+        || !TEST_false(HMAC_Update(ctx, test[5].data, test[5].data_len))
+        || !TEST_false(HMAC_Final(ctx, buf, &len)))
+        goto err;
+
+    ret = 1;
+err:
+    HMAC_CTX_free(ctx);
+    return ret;
+}
 
 static int test_hmac_copy(void)
 {
@@ -435,6 +458,7 @@ int setup_tests(void)
     ADD_TEST(test_hmac_single_shot);
     ADD_TEST(test_hmac_bad);
     ADD_TEST(test_hmac_run);
+    ADD_TEST(test_hmac_final_update_fail);
     ADD_TEST(test_hmac_copy);
     ADD_TEST(test_hmac_copy_uninited);
     ADD_ALL_TESTS(test_hmac_chunks,

@@ -1,6 +1,7 @@
 abort
 accept
 aligned_alloc
+atoi
 bcmp
 bind
 calloc
@@ -57,6 +58,7 @@ __gmon_start__
 gmtime_r
 gmtime
 ioctl
+__isoc23_strtol
 __isoc99_sscanf
 _ITM_deregisterTMCloneTable
 _ITM_registerTMCloneTable
@@ -129,6 +131,7 @@ shutdown
 sigaction
 sleep
 socket
+socketpair
 sprintf
 stderr
 stdin
@@ -142,6 +145,7 @@ strdup
 strlen
 strncmp
 strncpy
+strpbrk
 strrchr
 strspn
 strstr

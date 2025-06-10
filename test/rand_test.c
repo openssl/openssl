@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the >License>).  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,8 @@
 #include "crypto/rand.h"
 #include "testutil.h"
 
+static char *configfile;
+
 static int test_rand(void)
 {
     EVP_RAND_CTX *privctx;
@@ -23,6 +25,7 @@ static int test_rand(void)
     OSSL_PARAM params[2], *p = params;
     unsigned char entropy1[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05 };
     unsigned char entropy2[] = { 0xff, 0xfe, 0xfd };
+    unsigned char nonce[] = { 0x00, 0x01, 0x02, 0x03, 0x04 };
     unsigned char outbuf[3];
 
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
@@ -44,6 +47,13 @@ static int test_rand(void)
     if (!TEST_true(EVP_RAND_CTX_set_params(privctx, params))
             || !TEST_int_gt(RAND_priv_bytes(outbuf, sizeof(outbuf)), 0)
             || !TEST_mem_eq(outbuf, sizeof(outbuf), entropy2, sizeof(outbuf)))
+        return 0;
+
+    *params = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
+                                                nonce, sizeof(nonce));
+    if (!TEST_true(EVP_RAND_CTX_set_params(privctx, params))
+            || !TEST_true(EVP_RAND_nonce(privctx, outbuf, sizeof(outbuf)))
+            || !TEST_mem_eq(outbuf, sizeof(outbuf), nonce, sizeof(outbuf)))
         return 0;
 
     if (fips_provider_version_lt(NULL, 3, 4, 0)) {
@@ -162,9 +172,115 @@ static int fips_health_tests(void)
     return 1;
 }
 
+typedef struct r_test_ctx {
+    const OSSL_CORE_HANDLE *handle;
+} R_TEST_CTX;
+
+static void r_teardown(void *provctx)
+{
+    R_TEST_CTX *ctx = (R_TEST_CTX *)provctx;
+
+    free(ctx);
+}
+
+static int r_random_bytes(ossl_unused void *vprov, ossl_unused int which,
+                          void *buf, size_t n, ossl_unused unsigned int strength)
+{
+    while (n-- > 0)
+        ((unsigned char *)buf)[n] = 0xff & n;
+    return 1;
+}
+
+static const OSSL_DISPATCH r_test_table[] = {
+    { OSSL_FUNC_PROVIDER_RANDOM_BYTES, (void (*)(void))r_random_bytes },
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))r_teardown },
+    OSSL_DISPATCH_END
+};
+
+static int r_init(const OSSL_CORE_HANDLE *handle,
+                  ossl_unused const OSSL_DISPATCH *oin,
+                  const OSSL_DISPATCH **out,
+                  void **provctx)
+{
+    R_TEST_CTX *ctx;
+
+    ctx = malloc(sizeof(*ctx));
+    if (ctx == NULL)
+        return 0;
+    ctx->handle = handle;
+
+    *provctx = (void *)ctx;
+    *out = r_test_table;
+    return 1;
+}
+
+static int test_rand_random_provider(void)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov = NULL;
+    int res = 0;
+    static const unsigned char data[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    unsigned char buf[sizeof(data)], privbuf[sizeof(data)];
+
+    memset(buf, 255, sizeof(buf));
+    memset(privbuf, 255, sizeof(privbuf));
+
+    if (!test_get_libctx(&ctx, NULL, NULL, NULL, NULL)
+            || !TEST_true(OSSL_PROVIDER_add_builtin(ctx, "r_prov", &r_init))
+            || !TEST_ptr(prov = OSSL_PROVIDER_try_load(ctx, "r_prov", 1))
+            || !TEST_true(RAND_set1_random_provider(ctx, prov))
+            || !RAND_bytes_ex(ctx, buf, sizeof(buf), 256)
+            || !TEST_mem_eq(buf, sizeof(buf), data, sizeof(data))
+            || !RAND_priv_bytes_ex(ctx, privbuf, sizeof(privbuf), 256)
+            || !TEST_mem_eq(privbuf, sizeof(privbuf), data, sizeof(data)))
+        goto err;
+
+    /* Test we can revert to not using the provider based randomness */
+    if (!TEST_true(RAND_set1_random_provider(ctx, NULL))
+            || !RAND_bytes_ex(ctx, buf, sizeof(buf), 256)
+            || !TEST_mem_ne(buf, sizeof(buf), data, sizeof(data)))
+        goto err;
+
+    /* And back to the provided randomness */
+    if (!TEST_true(RAND_set1_random_provider(ctx, prov))
+            || !RAND_bytes_ex(ctx, buf, sizeof(buf), 256)
+            || !TEST_mem_eq(buf, sizeof(buf), data, sizeof(data)))
+        goto err;
+
+    res = 1;
+ err:
+    OSSL_PROVIDER_unload(prov);
+    OSSL_LIB_CTX_free(ctx);
+    return res;
+}
+
+static int test_rand_get0_primary(void)
+{
+    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
+    int res = 0;
+
+    if (!TEST_ptr(ctx))
+        return 0;
+
+    if (!TEST_true(OSSL_LIB_CTX_load_config(ctx, configfile)))
+        goto err;
+
+    /* We simply test that we get a valid primary */
+    if (!TEST_ptr(RAND_get0_primary(ctx)))
+        goto err;
+
+    res = 1;
+ err:
+    OSSL_LIB_CTX_free(ctx);
+    return res;
+}
+
 int setup_tests(void)
 {
-    char *configfile;
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
 
     if (!TEST_ptr(configfile = test_get_argument(0))
             || !TEST_true(RAND_set_DRBG_type(NULL, "TEST-RAND", "fips=no",
@@ -180,5 +296,10 @@ int setup_tests(void)
             && fips_provider_version_ge(NULL, 3, 4, 0))
         ADD_TEST(fips_health_tests);
 
+    ADD_TEST(test_rand_random_provider);
+
+    if (!OSSL_PROVIDER_available(NULL, "fips")
+            || fips_provider_version_ge(NULL, 3, 5, 1))
+        ADD_TEST(test_rand_get0_primary);
     return 1;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -316,10 +316,11 @@ int PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
 }
 #endif
 
-int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
-                       const void *x, const EVP_CIPHER *enc,
-                       const unsigned char *kstr, int klen,
-                       pem_password_cb *callback, void *u)
+static int
+PEM_ASN1_write_bio_internal(
+    i2d_of_void *i2d, OSSL_i2d_of_void_ctx *i2d_ctx, void *vctx,
+    const char *name, BIO *bp, const void *x, const EVP_CIPHER *enc,
+    const unsigned char *kstr, int klen, pem_password_cb *callback, void *u)
 {
     EVP_CIPHER_CTX *ctx = NULL;
     int dsize = 0, i = 0, j = 0, ret = 0;
@@ -344,18 +345,23 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
         }
     }
 
-    if ((dsize = i2d(x, NULL)) <= 0) {
+    if (i2d == NULL && i2d_ctx == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_INVALID_NULL_ARGUMENT);
+        dsize = 0;
+        goto err;
+    }
+    dsize = i2d != NULL ? i2d(x, NULL) : i2d_ctx(x, NULL, vctx);
+    if (dsize <= 0) {
         ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
         dsize = 0;
         goto err;
     }
-    /* dsize + 8 bytes are needed */
-    /* actually it needs the cipher block size extra... */
-    data = OPENSSL_malloc((unsigned int)dsize + 20);
+    /* Allocate enough space for one extra cipher block */
+    data = OPENSSL_malloc((unsigned int)dsize + EVP_MAX_BLOCK_LENGTH);
     if (data == NULL)
         goto err;
     p = data;
-    i = i2d(x, &p);
+    i = i2d != NULL ? i2d(x, &p) : i2d_ctx(x, &p, vctx);
 
     if (enc != NULL) {
         if (kstr == NULL) {
@@ -414,6 +420,24 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
     OPENSSL_cleanse(buf, PEM_BUFSIZE);
     OPENSSL_clear_free(data, (unsigned int)dsize);
     return ret;
+}
+
+int
+PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp, const void *x,
+                   const EVP_CIPHER *enc, const unsigned char *kstr, int klen,
+                   pem_password_cb *callback, void *u)
+{
+    return PEM_ASN1_write_bio_internal(i2d, NULL, NULL, name, bp, x, enc,
+                                       kstr, klen, callback, u);
+}
+
+int PEM_ASN1_write_bio_ctx(OSSL_i2d_of_void_ctx *i2d, void *vctx,
+                           const char *name, BIO *bp, const void *x,
+                           const EVP_CIPHER *enc, const unsigned char *kstr,
+                           int klen, pem_password_cb *callback, void *u)
+{
+    return PEM_ASN1_write_bio_internal(NULL, i2d, vctx, name, bp, x, enc,
+                                       kstr, klen, callback, u);
 }
 
 int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,

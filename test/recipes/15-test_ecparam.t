@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -30,7 +30,7 @@ if (disabled("sm2")) {
     @valid = grep { !/sm2-.*\.pem/} @valid;
 }
 
-plan tests => 13;
+plan tests => 14;
 
 sub checkload {
     my $files = shift; # List of files
@@ -198,3 +198,5 @@ subtest "Check loading of fips and non-fips params" => sub {
 
     $ENV{OPENSSL_CONF} = $defaultconf;
 };
+
+ok(run(app(['openssl', 'ecparam', '-list_curves'])), "Test -list_curves");

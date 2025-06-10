@@ -1234,38 +1234,20 @@ ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK_OF(X509_ATTRIBUTE) *sk)
 int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si,
                                 STACK_OF(X509_ATTRIBUTE) *sk)
 {
-    int i;
-
     sk_X509_ATTRIBUTE_pop_free(p7si->auth_attr, X509_ATTRIBUTE_free);
-    p7si->auth_attr = sk_X509_ATTRIBUTE_dup(sk);
+    p7si->auth_attr = sk_X509_ATTRIBUTE_deep_copy(sk, X509_ATTRIBUTE_dup, X509_ATTRIBUTE_free);
     if (p7si->auth_attr == NULL)
         return 0;
-    for (i = 0; i < sk_X509_ATTRIBUTE_num(sk); i++) {
-        if ((sk_X509_ATTRIBUTE_set(p7si->auth_attr, i,
-                                   X509_ATTRIBUTE_dup(sk_X509_ATTRIBUTE_value
-                                                      (sk, i))))
-            == NULL)
-            return 0;
-    }
     return 1;
 }
 
 int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,
                          STACK_OF(X509_ATTRIBUTE) *sk)
 {
-    int i;
-
     sk_X509_ATTRIBUTE_pop_free(p7si->unauth_attr, X509_ATTRIBUTE_free);
-    p7si->unauth_attr = sk_X509_ATTRIBUTE_dup(sk);
+    p7si->unauth_attr = sk_X509_ATTRIBUTE_deep_copy(sk, X509_ATTRIBUTE_dup, X509_ATTRIBUTE_free);
     if (p7si->unauth_attr == NULL)
         return 0;
-    for (i = 0; i < sk_X509_ATTRIBUTE_num(sk); i++) {
-        if ((sk_X509_ATTRIBUTE_set(p7si->unauth_attr, i,
-                                   X509_ATTRIBUTE_dup(sk_X509_ATTRIBUTE_value
-                                                      (sk, i))))
-            == NULL)
-            return 0;
-    }
     return 1;
 }
 

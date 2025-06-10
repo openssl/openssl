@@ -130,7 +130,7 @@ See L<openssl-format-options(1)> for details.
 The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
-=item B<-stream>, B<-indef>, B<-noindef>
+=item B<-stream>, B<-indef>
 
 The B<-stream> and B<-indef> options are equivalent and enable streaming I/O
 for encoding operations. This permits single pass processing of data without

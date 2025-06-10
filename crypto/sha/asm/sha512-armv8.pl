@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2014-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2014-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -7,10 +7,10 @@
 # https://www.openssl.org/source/license.html
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 #
 # Permission to use under GPLv2 terms is granted.
 # ====================================================================
@@ -235,7 +235,8 @@ $code.=<<___;
 	ldp	$E,$F,[$ctx,#4*$SZ]
 	add	$num,$inp,$num,lsl#`log(16*$SZ)/log(2)`	// end of input
 	ldp	$G,$H,[$ctx,#6*$SZ]
-	adr	$Ktbl,.LK$BITS
+	adrp	$Ktbl,.LK$BITS
+	add	$Ktbl,$Ktbl,:lo12:.LK$BITS
 	stp	$ctx,$num,[x29,#96]
 
 .Loop:
@@ -284,6 +285,8 @@ $code.=<<___;
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	$func,.-$func
+
+.rodata
 
 .align	6
 .type	.LK$BITS,%object
@@ -353,8 +356,10 @@ $code.=<<___ if ($SZ==4);
 ___
 $code.=<<___;
 .size	.LK$BITS,.-.LK$BITS
-.asciz	"SHA$BITS block transform for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"SHA$BITS block transform for ARMv8, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	2
+
+.text
 ___
 
 if ($SZ==4) {
@@ -376,7 +381,8 @@ sha256_block_armv8:
 	add		x29,sp,#0
 
 	ld1.32		{$ABCD,$EFGH},[$ctx]
-	adr		$Ktbl,.LK256
+	adrp		$Ktbl,.LK256
+	add		$Ktbl,$Ktbl,:lo12:.LK256
 
 .Loop_hw:
 	ld1		{@MSG[0]-@MSG[3]},[$inp],#64
@@ -641,7 +647,8 @@ sha256_block_neon:
 	mov	x29, sp
 	sub	sp,sp,#16*4
 
-	adr	$Ktbl,.LK256
+	adrp	$Ktbl,.LK256
+	add	$Ktbl,$Ktbl,:lo12:.LK256
 	add	$num,$inp,$num,lsl#6	// len to point at the end of inp
 
 	ld1.8	{@X[0]},[$inp], #16
@@ -755,7 +762,8 @@ sha512_block_armv8:
 	ld1		{@MSG[4]-@MSG[7]},[$inp],#64
 
 	ld1.64		{@H[0]-@H[3]},[$ctx]		// load context
-	adr		$Ktbl,.LK512
+	adrp		$Ktbl,.LK512
+	add		$Ktbl,$Ktbl,:lo12:.LK512
 
 	rev64		@MSG[0],@MSG[0]
 	rev64		@MSG[1],@MSG[1]

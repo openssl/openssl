@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -53,6 +53,7 @@
 #include <string.h>
 #include <internal/rcu.h>
 #include <internal/hashtable.h>
+#include <internal/hashfunc.h>
 #include <openssl/rand.h>
 
 /*
@@ -85,18 +86,6 @@
 # define PREFETCH_NEIGHBORHOOD(x)
 # define PREFETCH(x)
 #endif
-
-static ossl_unused uint64_t fnv1a_hash(uint8_t *key, size_t len)
-{
-    uint64_t hash = 0xcbf29ce484222325ULL;
-    size_t i;
-
-    for (i = 0; i < len; i++) {
-        hash ^= key[i];
-        hash *= 0x00000100000001B3ULL;
-    }
-    return hash;
-}
 
 /*
  * Define our neighborhood list length
@@ -229,7 +218,7 @@ HT *ossl_ht_new(const HT_CONFIG *conf)
         goto err;
 
     if (new->config.ht_hash_fn == NULL)
-        new->config.ht_hash_fn = fnv1a_hash;
+        new->config.ht_hash_fn = ossl_fnv1a_hash;
 
     return new;
 

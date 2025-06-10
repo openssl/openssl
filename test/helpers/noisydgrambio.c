@@ -56,7 +56,7 @@ static long noisy_dgram_ctrl(BIO *bio, int cmd, long num, void *ptr)
             data = BIO_get_data(bio);
             if (!TEST_ptr(data))
                 return 0;
-            data->backoff = 1;
+            data->backoff = (int)num;
             ret = 1;
             break;
         }
@@ -363,8 +363,8 @@ static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
          i++, thismsg++, data->this_dgram++) {
         uint64_t reinject;
         int should_drop;
-        uint16_t flip;
-        size_t flip_offset;
+        uint16_t flip = 0;
+        size_t flip_offset = 0;
 
         /* If we have a message to reinject then insert it now */
         if (data->reinject_dgram > 0
@@ -399,13 +399,15 @@ static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
              * we always ensure that the next datagram does not get dropped so
              * that the connection always survives. After that we can resume
              * with normal noise
+             * Note that the backoff value is configurable via BIO ctrl,
+             * allowing for multiframe backoff.
              */
 #ifdef OSSL_NOISY_DGRAM_DEBUG
             printf("**Back off applied\n");
 #endif
             should_drop = 0;
             flip = 0;
-            data->backoff = 0;
+            data->backoff--;
         }
 
         flip_bits(thismsg->data, thismsg->data_len, flip, flip_offset);

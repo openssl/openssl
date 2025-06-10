@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -262,11 +262,11 @@ static int test_MSG_protect_certificate_based_without_cert(void)
     if (!TEST_ptr(fixture->msg =
                   OSSL_CMP_MSG_dup(ir_unprotected))
             || !TEST_true(SET_OPT_UNPROTECTED_SEND(ctx, 0))
+            || !TEST_true(EVP_PKEY_up_ref(server_key))
             || !TEST_true(OSSL_CMP_CTX_set0_newPkey(ctx, 1, server_key))) {
         tear_down(fixture);
         fixture = NULL;
     }
-    EVP_PKEY_up_ref(server_key);
     EXECUTE_TEST(execute_MSG_protect_test, tear_down);
     return result;
 }

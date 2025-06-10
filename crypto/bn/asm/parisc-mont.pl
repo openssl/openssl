@@ -8,10 +8,10 @@
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 
 # On PA-7100LC this module performs ~90-50% better, less for longer
@@ -890,7 +890,7 @@ L\$abort
 	.EXIT
 	$POPMB	-$FRAME(%sp),%r3
 	.PROCEND
-	.STRINGZ "Montgomery Multiplication for PA-RISC, CRYPTOGAMS by <appro\@openssl.org>"
+	.STRINGZ "Montgomery Multiplication for PA-RISC, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 # Explicitly encode PA-RISC 2.0 instructions used in this module, so

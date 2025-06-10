@@ -67,6 +67,7 @@
 doc/man1/openssl-*.pod
 
 # Auto generated der files
+providers/common/der/der_slh_dsa_gen.c
 providers/common/der/der_digests_gen.c
 providers/common/der/der_dsa_gen.c
 providers/common/der/der_ec_gen.c
@@ -74,6 +75,8 @@ providers/common/der/der_ecx_gen.c
 providers/common/der/der_rsa_gen.c
 providers/common/der/der_wrap_gen.c
 providers/common/der/der_sm2_gen.c
+providers/common/der/der_ml_dsa_gen.c
+providers/common/include/prov/der_slh_dsa.h
 providers/common/include/prov/der_dsa.h
 providers/common/include/prov/der_ec.h
 providers/common/include/prov/der_ecx.h
@@ -81,6 +84,11 @@ providers/common/include/prov/der_rsa.h
 providers/common/include/prov/der_digests.h
 providers/common/include/prov/der_wrap.h
 providers/common/include/prov/der_sm2.h
+providers/common/include/prov/der_ml_dsa.h
+providers/implementations/keymgmt/ml_dsa_kmgmt.c
+providers/implementations/keymgmt/ml_kem_kmgmt.c
+providers/implementations/ciphers/ciphercommon.c
+providers/implementations/ciphers/cipher_chacha20_poly1305.c
 
 # error code files
 /crypto/err/openssl.txt.old
@@ -130,6 +138,15 @@ providers/common/include/prov/der_sm2.h
 /demos/cipher/aesgcm
 /demos/cipher/aeskeywrap
 /demos/cipher/ariacbc
+/demos/cms/cms_comp
+/demos/cms/cms_ddec
+/demos/cms/cms_dec
+/demos/cms/cms_denc
+/demos/cms/cms_enc
+/demos/cms/cms_sign
+/demos/cms/cms_sign2
+/demos/cms/cms_uncomp
+/demos/cms/cms_ver
 /demos/digest/BIO_f_md
 /demos/digest/EVP_MD_demo
 /demos/digest/EVP_MD_stdin
@@ -137,8 +154,15 @@ providers/common/include/prov/der_sm2.h
 /demos/encode/ec_encode
 /demos/encode/rsa_encode
 /demos/encrypt/rsa_encrypt
+/demos/guide/quic-client-block
+/demos/guide/quic-client-non-block
+/demos/guide/quic-hq-interop
+/demos/guide/quic-multi-stream
+/demos/guide/tls-client-block
+/demos/guide/tls-client-non-block
 /demos/http3/libnghttp3.pc
 /demos/http3/nghttp3/
+/demos/http3/ossl-nghttp3-demo
 /demos/kdf/argon2
 /demos/kdf/hkdf
 /demos/kdf/pbkdf2
@@ -159,6 +183,11 @@ providers/common/include/prov/der_sm2.h
 /demos/signature/EVP_ED_Signature_demo
 /demos/signature/rsa_pss_direct
 /demos/signature/rsa_pss_hash
+/demos/smime/smdec
+/demos/smime/smenc
+/demos/smime/smsign
+/demos/smime/smsign2
+/demos/smime/smver
 /demos/sslecho/sslecho
 
 # Certain files that get created by tests on the fly
@@ -184,7 +213,6 @@ providers/common/include/prov/der_sm2.h
 /tools/c_rehash.pl
 /util/shlib_wrap.sh
 /util/wrap.pl
-/util/quicserver
 /tags
 /TAGS
 *.map
@@ -215,7 +243,6 @@ providers/common/include/prov/der_sm2.h
 
 # Files created on other branches that are not held in git, and are not
 # needed on this branch
-/include/openssl/asn1_mac.h
 /include/openssl/des_old.h
 /include/openssl/fips.h
 /include/openssl/fips_rand.h

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -348,7 +348,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
 
     /* Insert into the hash table if required */
     if (!ossl_property_write_lock(store)) {
-        OPENSSL_free(impl);
+        impl_free(impl);
         return 0;
     }
 
@@ -394,6 +394,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
         alg->nid = nid;
         if (!ossl_method_store_insert(store, alg))
             goto err;
+        OSSL_TRACE2(QUERY, "Inserted an alg with nid %d into the store %p\n", nid, (void *)store);
     }
 
     /* Push onto stack if there isn't one there already */
@@ -408,6 +409,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     if (i == sk_IMPLEMENTATION_num(alg->impls)
         && sk_IMPLEMENTATION_push(alg->impls, impl)) {
         ret = 1;
+#ifndef FIPS_MODULE
         OSSL_TRACE_BEGIN(QUERY) {
             BIO_printf(trc_out, "Adding to method store "
                        "nid: %d\nproperties: %s\nprovider: %s\n",
@@ -415,6 +417,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
                        ossl_provider_name(prov) == NULL ? "none" :
                        ossl_provider_name(prov));
         } OSSL_TRACE_END(QUERY);
+#endif
     }
     ossl_property_unlock(store);
     if (ret == 0)
@@ -499,7 +502,7 @@ alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
         IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(alg->impls, i);
 
         if (impl->provider == data->prov) {
-
+#ifndef FIPS_MODULE
             OSSL_TRACE_BEGIN(QUERY) {
                 char buf[512];
                 size_t size;
@@ -512,6 +515,7 @@ alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
                            ossl_provider_name(impl->provider) == NULL ? "none" :
                            ossl_provider_name(impl->provider));
             } OSSL_TRACE_END(QUERY);
+#endif
 
             (void)sk_IMPLEMENTATION_delete(alg->impls, i);
             count++;
@@ -639,11 +643,14 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     if (!ossl_property_read_lock(store))
         return 0;
 
+    OSSL_TRACE2(QUERY, "Retrieving by nid %d from store %p\n", nid, (void *)store);
     alg = ossl_method_store_retrieve(store, nid);
     if (alg == NULL) {
         ossl_property_unlock(store);
+        OSSL_TRACE2(QUERY, "Failed to retrieve by nid %d from store %p\n", nid, (void *)store);
         return 0;
     }
+    OSSL_TRACE2(QUERY, "Retrieved by nid %d from store %p\n", nid, (void *)store);
 
     /*
      * If a property query string is provided, convert it to an
@@ -716,6 +723,7 @@ fin:
         ret = 0;
     }
 
+#ifndef FIPS_MODULE
     OSSL_TRACE_BEGIN(QUERY) {
         char buf[512];
         int size;
@@ -727,6 +735,7 @@ fin:
                    best_impl == NULL ? "none" :
                    ossl_provider_name(best_impl->provider));
     } OSSL_TRACE_END(QUERY);
+#endif
 
     ossl_property_unlock(store);
     ossl_property_free(p2);

@@ -134,7 +134,7 @@ jobs:
                     issue_number: pr_num,
                     owner: context.repo.owner,
                     repo: context.repo.repo,
-                    name: 'severity: fips change'
+                    name: 'severity: ABI change'
                   });
                 }
               }

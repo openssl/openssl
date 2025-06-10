@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -295,7 +295,6 @@ static int torture_rw_high(void)
 }
 
 
-# ifndef OPENSSL_SYS_MACOSX 
 static CRYPTO_RCU_LOCK *rcu_lock = NULL;
 
 static int writer1_done = 0;
@@ -435,7 +434,7 @@ static int _torture_rcu(void)
     writer2_done = 0;
     rcu_torture_result = 1;
 
-    rcu_lock = ossl_rcu_lock_new(1, NULL);
+    rcu_lock = ossl_rcu_lock_new(contention == 2 ? 4 : 1, NULL);
     if (rcu_lock == NULL)
         goto out;
 
@@ -492,7 +491,12 @@ static int torture_rcu_high(void)
     contention = 1;
     return _torture_rcu();
 }
-# endif
+
+static int torture_rcu_high2(void)
+{
+    contention = 2;
+    return _torture_rcu();
+}
 #endif
 
 static CRYPTO_ONCE once_run = CRYPTO_ONCE_STATIC_INIT;
@@ -583,6 +587,29 @@ static int test_thread_local(void)
 
     if (!TEST_true(CRYPTO_THREAD_cleanup_local(&thread_local_key)))
         return 0;
+    return 1;
+}
+
+/*
+ * Basic test to ensure that we can repeatedly create and
+ * destroy local keys without leaking anything
+ */
+static int test_thread_local_multi_key(void)
+{
+    int dummy;
+    int i;
+
+    for (i = 0; i < 1000; i++) {
+        if (!TEST_true(CRYPTO_THREAD_init_local(&thread_local_key,
+                                                thread_local_destructor)))
+            return 0;
+
+        if (!TEST_true(CRYPTO_THREAD_set_local(&thread_local_key, &dummy)))
+            return 0;
+
+        if (!TEST_true(CRYPTO_THREAD_cleanup_local(&thread_local_key)))
+            return 0;
+    }
     return 1;
 }
 
@@ -1014,6 +1041,45 @@ static int test_multi_shared_pkey(void)
     return test_multi_shared_pkey_common(&thread_shared_evp_pkey);
 }
 
+static void thread_release_shared_pkey(void)
+{
+    OSSL_sleep(0);
+    EVP_PKEY_free(shared_evp_pkey);
+}
+
+static int test_multi_shared_pkey_release(void)
+{
+    int testresult = 0;
+    size_t i = 1;
+
+    multi_intialise();
+    shared_evp_pkey = NULL;
+    if (!thread_setup_libctx(1, do_fips ? fips_and_default_providers
+                                        : default_provider)
+            || !TEST_ptr(shared_evp_pkey = load_pkey_pem(privkey, multi_libctx)))
+        goto err;
+    for (; i < 10; ++i) {
+        if (!TEST_true(EVP_PKEY_up_ref(shared_evp_pkey)))
+            goto err;
+    }
+
+    if (!start_threads(10, &thread_release_shared_pkey))
+        goto err;
+    i = 0;
+
+    if (!teardown_threads()
+            || !TEST_true(multi_success))
+        goto err;
+    testresult = 1;
+ err:
+    while (i > 0) {
+        EVP_PKEY_free(shared_evp_pkey);
+        --i;
+    }
+    thead_teardown_libctx();
+    return testresult;
+}
+
 static int test_multi_load_unload_provider(void)
 {
     EVP_MD *sha256 = NULL;
@@ -1290,13 +1356,13 @@ int setup_tests(void)
 #if defined(OPENSSL_THREADS)
     ADD_TEST(torture_rw_low);
     ADD_TEST(torture_rw_high);
-# ifndef OPENSSL_SYS_MACOSX
     ADD_TEST(torture_rcu_low);
     ADD_TEST(torture_rcu_high);
-# endif
+    ADD_TEST(torture_rcu_high2);
 #endif
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
+    ADD_TEST(test_thread_local_multi_key);
     ADD_TEST(test_atomic);
     ADD_TEST(test_multi_load);
     ADD_TEST(test_multi_general_worker_default_provider);
@@ -1306,6 +1372,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_multi_downgrade_shared_pkey);
 #endif
+    ADD_TEST(test_multi_shared_pkey_release);
     ADD_TEST(test_multi_load_unload_provider);
     ADD_TEST(test_obj_add);
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)

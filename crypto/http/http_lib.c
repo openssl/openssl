@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -59,7 +59,7 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
     const char *user, *user_end;
     const char *host, *host_end;
     const char *port, *port_end;
-    unsigned int portnum;
+    unsigned int portnum = 0;
     const char *path, *path_end;
     const char *query, *query_end;
     const char *frag, *frag_end;
@@ -107,13 +107,7 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
         p = ++host_end;
     } else {
         /* look for start of optional port, path, query, or fragment */
-        host_end = strchr(host, ':');
-        if (host_end == NULL)
-            host_end = strchr(host, '/');
-        if (host_end == NULL)
-            host_end = strchr(host, '?');
-        if (host_end == NULL)
-            host_end = strchr(host, '#');
+        host_end = strpbrk(host, ":/?#");
         if (host_end == NULL) /* the remaining string is just the hostname */
             host_end = host + strlen(host);
         p = host_end;
@@ -195,6 +189,8 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
     free_pstring(pfrag);
     return 0;
 }
+
+#ifndef OPENSSL_NO_HTTP
 
 int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
                         char **pport, int *pport_num,
@@ -299,9 +295,11 @@ const char *OSSL_HTTP_adapt_proxy(const char *proxy, const char *no_proxy,
     if (proxy == NULL)
         proxy = ossl_safe_getenv(use_ssl ? "https_proxy" : "http_proxy");
     if (proxy == NULL)
-        proxy = ossl_safe_getenv(use_ssl ? OPENSSL_HTTP_PROXY : OPENSSL_HTTPS_PROXY);
+        proxy = ossl_safe_getenv(use_ssl ? OPENSSL_HTTPS_PROXY : OPENSSL_HTTP_PROXY);
 
     if (proxy == NULL || *proxy == '\0' || !use_proxy(no_proxy, server))
         return NULL;
     return proxy;
 }
+
+#endif /* !defined(OPENSSL_NO_HTTP) */

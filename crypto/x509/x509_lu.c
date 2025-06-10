@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -232,7 +232,7 @@ void X509_STORE_free(X509_STORE *xs)
     if (xs == NULL)
         return;
     CRYPTO_DOWN_REF(&xs->references, &i);
-    REF_PRINT_COUNT("X509_STORE", xs);
+    REF_PRINT_COUNT("X509_STORE", i, xs);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
@@ -260,7 +260,7 @@ int X509_STORE_up_ref(X509_STORE *xs)
     if (CRYPTO_UP_REF(&xs->references, &i) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("X509_STORE", xs);
+    REF_PRINT_COUNT("X509_STORE", i, xs);
     REF_ASSERT_ISNT(i < 2);
     return i > 1 ? 1 : 0;
 }
@@ -317,10 +317,8 @@ X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *ctx,
  * 0 if not found or X509_LOOKUP_by_subject_ex() returns an error,
  * -1 on failure
  */
-static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx,
-                                              X509_LOOKUP_TYPE type,
-                                              const X509_NAME *name,
-                                              X509_OBJECT *ret)
+int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TYPE type,
+                                       const X509_NAME *name, X509_OBJECT *ret)
 {
     X509_STORE *store = ctx->store;
     X509_LOOKUP *lu;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -192,7 +192,11 @@ int set_nameopt(const char *arg)
 unsigned long get_nameopt(void)
 {
     return
-        nmflag_set ? nmflag : XN_FLAG_SEP_CPLUS_SPC | ASN1_STRFLGS_UTF8_CONVERT;
+        nmflag_set ? nmflag : XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_SN
+                              | ASN1_STRFLGS_ESC_CTRL
+                              | ASN1_STRFLGS_UTF8_CONVERT
+                              | ASN1_STRFLGS_DUMP_UNKNOWN
+                              | ASN1_STRFLGS_DUMP_DER;
 }
 
 void dump_cert_text(BIO *out, X509 *x)
@@ -898,6 +902,10 @@ static const char *format2string(int format)
         return "PEM";
     case FORMAT_ASN1:
         return "DER";
+    case FORMAT_PVK:
+        return "PVK";
+    case FORMAT_MSBLOB:
+        return "MSBLOB";
     }
     return NULL;
 }
@@ -1750,6 +1758,9 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
     }
 
     retdb->dbfname = OPENSSL_strdup(dbfile);
+    if (retdb->dbfname == NULL)
+        goto err;
+
 #ifndef OPENSSL_NO_POSIX_IO
     retdb->dbst = dbst;
 #endif
@@ -2515,18 +2526,24 @@ static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
     crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, NULL, NULL);
     crl = load_crl_crldp(crldp);
     sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
-    if (!crl) {
-        sk_X509_CRL_free(crls);
-        return NULL;
-    }
-    sk_X509_CRL_push(crls, crl);
+
+    if (crl == NULL || !sk_X509_CRL_push(crls, crl))
+        goto error;
+
     /* Try to download delta CRL */
     crldp = X509_get_ext_d2i(x, NID_freshest_crl, NULL, NULL);
     crl = load_crl_crldp(crldp);
     sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
-    if (crl)
-        sk_X509_CRL_push(crls, crl);
+
+    if (crl != NULL && !sk_X509_CRL_push(crls, crl))
+        goto error;
+
     return crls;
+
+error:
+    X509_CRL_free(crl);
+    sk_X509_CRL_free(crls);
+    return NULL;
 }
 
 void store_setup_crl_download(X509_STORE *st)
@@ -3223,6 +3240,32 @@ BIO *bio_open_default(const char *filename, char mode, int format)
 BIO *bio_open_default_quiet(const char *filename, char mode, int format)
 {
     return bio_open_default_(filename, mode, format, 1);
+}
+
+int mem_bio_to_file(BIO *in, const char *filename, int format, int private)
+{
+    int rv = 0, ret = 0;
+    BIO *out = NULL;
+    BUF_MEM *mem_buffer = NULL;
+
+    rv = BIO_get_mem_ptr(in, &mem_buffer);
+    if (rv <= 0) {
+        BIO_puts(bio_err, "Error reading mem buffer\n");
+        goto end;
+    }
+    out = bio_open_owner(filename, format, private);
+    if (out == NULL)
+        goto end;
+    rv = BIO_write(out, mem_buffer->data, mem_buffer->length);
+    if (rv < 0 || (size_t)rv != mem_buffer->length)
+        BIO_printf(bio_err, "Error writing to output file: '%s'\n", filename);
+    else
+        ret = 1;
+end:
+    if (!ret)
+        ERR_print_errors(bio_err);
+    BIO_free_all(out);
+    return ret;
 }
 
 void wait_for_async(SSL *s)

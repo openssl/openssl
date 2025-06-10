@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -26,6 +26,7 @@
 #include "ssl_local.h"
 #include "ssl_cert_table.h"
 #include "internal/thread_once.h"
+#include "internal/ssl_unwrap.h"
 #ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
 # ifdef _WIN32
@@ -118,8 +119,9 @@ CERT *ssl_cert_dup(CERT *cert)
     }
 
     if (cert->dh_tmp != NULL) {
+        if (!EVP_PKEY_up_ref(cert->dh_tmp))
+            goto err;
         ret->dh_tmp = cert->dh_tmp;
-        EVP_PKEY_up_ref(ret->dh_tmp);
     }
 
     ret->dh_tmp_cb = cert->dh_tmp_cb;
@@ -130,13 +132,15 @@ CERT *ssl_cert_dup(CERT *cert)
         CERT_PKEY *rpk = ret->pkeys + i;
 
         if (cpk->x509 != NULL) {
+            if (!X509_up_ref(cpk->x509))
+                goto err;
             rpk->x509 = cpk->x509;
-            X509_up_ref(rpk->x509);
         }
 
         if (cpk->privatekey != NULL) {
+            if (!EVP_PKEY_up_ref(cpk->privatekey))
+                goto err;
             rpk->privatekey = cpk->privatekey;
-            EVP_PKEY_up_ref(cpk->privatekey);
         }
 
         if (cpk->chain) {
@@ -200,12 +204,14 @@ CERT *ssl_cert_dup(CERT *cert)
     ret->cert_cb_arg = cert->cert_cb_arg;
 
     if (cert->verify_store) {
-        X509_STORE_up_ref(cert->verify_store);
+        if (!X509_STORE_up_ref(cert->verify_store))
+            goto err;
         ret->verify_store = cert->verify_store;
     }
 
     if (cert->chain_store) {
-        X509_STORE_up_ref(cert->chain_store);
+        if (!X509_STORE_up_ref(cert->chain_store))
+            goto err;
         ret->chain_store = cert->chain_store;
     }
 
@@ -269,7 +275,7 @@ void ssl_cert_free(CERT *c)
     if (c == NULL)
         return;
     CRYPTO_DOWN_REF(&c->references, &i);
-    REF_PRINT_COUNT("CERT", c);
+    REF_PRINT_COUNT("CERT", i, c);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
@@ -349,9 +355,12 @@ int ssl_cert_add0_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
 
 int ssl_cert_add1_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
 {
-    if (!ssl_cert_add0_chain_cert(s, ctx, x))
+    if (!X509_up_ref(x))
         return 0;
-    X509_up_ref(x);
+    if (!ssl_cert_add0_chain_cert(s, ctx, x)) {
+        X509_free(x);
+        return 0;
+    }
     return 1;
 }
 
@@ -993,16 +1002,17 @@ static int add_uris_recursive(STACK_OF(X509_NAME) *stack,
     OSSL_STORE_CTX *ctx = NULL;
     X509 *x = NULL;
     X509_NAME *xn = NULL;
+    OSSL_STORE_INFO *info = NULL;
 
     if ((ctx = OSSL_STORE_open(uri, NULL, NULL, NULL, NULL)) == NULL)
         goto err;
 
     while (!OSSL_STORE_eof(ctx) && !OSSL_STORE_error(ctx)) {
-        OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
-        int infotype = info == 0 ? 0 : OSSL_STORE_INFO_get_type(info);
+        int infotype;
 
-        if (info == NULL)
+        if ((info = OSSL_STORE_load(ctx)) == NULL)
             continue;
+        infotype = OSSL_STORE_INFO_get_type(info);
 
         if (infotype == OSSL_STORE_INFO_NAME) {
             /*
@@ -1027,6 +1037,7 @@ static int add_uris_recursive(STACK_OF(X509_NAME) *stack,
         }
 
         OSSL_STORE_INFO_free(info);
+        info = NULL;
     }
 
     ERR_clear_error();
@@ -1034,6 +1045,7 @@ static int add_uris_recursive(STACK_OF(X509_NAME) *stack,
 
  err:
     ok = 0;
+    OSSL_STORE_INFO_free(info);
  done:
     OSSL_STORE_close(ctx);
 
@@ -1161,14 +1173,17 @@ int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags)
 int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
 {
     X509_STORE **pstore;
+
+    if (ref && store && !X509_STORE_up_ref(store))
+        return 0;
+
     if (chain)
         pstore = &c->chain_store;
     else
         pstore = &c->verify_store;
     X509_STORE_free(*pstore);
     *pstore = store;
-    if (ref && store)
-        X509_STORE_up_ref(store);
+
     return 1;
 }
 
@@ -1323,7 +1338,7 @@ const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx,
         }
     }
     /* check provider-loaded pk types */
-    for (i = 0; ctx->sigalg_list_len; i++) {
+    for (i = 0; i < ctx->sigalg_list_len; i++) {
         SSL_CERT_LOOKUP *tmp_lu = &(ctx->ssl_cert_info[i]);
 
         if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->nid))

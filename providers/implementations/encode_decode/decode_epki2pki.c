@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,6 +20,7 @@
 #include "internal/asn1.h"
 #include "internal/sizes.h"
 #include "prov/bio.h"
+#include "prov/decoders.h"
 #include "prov/implementations.h"
 #include "endecoder_local.h"
 
@@ -87,11 +88,7 @@ static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     struct epki2pki_ctx_st *ctx = vctx;
     BUF_MEM *mem = NULL;
     unsigned char *der = NULL;
-    const unsigned char *pder = NULL;
     long der_len = 0;
-    X509_SIG *p8 = NULL;
-    PKCS8_PRIV_KEY_INFO *p8inf = NULL;
-    const X509_ALGOR *alg = NULL;
     BIO *in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
     int ok = 0;
 
@@ -105,11 +102,29 @@ static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     if (!ok)
         return 1;
 
-    pder = der = (unsigned char *)mem->data;
+    der = (unsigned char *)mem->data;
     der_len = (long)mem->length;
     OPENSSL_free(mem);
 
-    ok = 1;                      /* Assume good */
+    ok = ossl_epki2pki_der_decode(der, der_len, selection, data_cb, data_cbarg,
+                                  pw_cb, pw_cbarg, PROV_LIBCTX_OF(ctx->provctx),
+                                  ctx->propq);
+    OPENSSL_free(der);
+    return ok;
+}
+
+int ossl_epki2pki_der_decode(unsigned char *der, long der_len, int selection,
+                             OSSL_CALLBACK *data_cb, void *data_cbarg,
+                             OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg,
+                             OSSL_LIB_CTX *libctx, const char *propq)
+{
+    const unsigned char *pder = der;
+    unsigned char *new_der = NULL;
+    X509_SIG *p8 = NULL;
+    PKCS8_PRIV_KEY_INFO *p8inf = NULL;
+    const X509_ALGOR *alg = NULL;
+    int ok = 1;     /* Assume good */
+
     ERR_set_mark();
     if ((p8 = d2i_X509_SIG(NULL, &pder, der_len)) != NULL) {
         char pbuf[1024];
@@ -122,18 +137,15 @@ static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             ok = 0;
         } else {
             const ASN1_OCTET_STRING *oct;
-            unsigned char *new_der = NULL;
             int new_der_len = 0;
 
             X509_SIG_get0(p8, &alg, &oct);
             if (!PKCS12_pbe_crypt_ex(alg, pbuf, plen,
                                      oct->data, oct->length,
                                      &new_der, &new_der_len, 0,
-                                     PROV_LIBCTX_OF(ctx->provctx),
-                                     ctx->propq)) {
+                                     libctx, propq)) {
                 ok = 0;
             } else {
-                OPENSSL_free(der);
                 der = new_der;
                 der_len = new_der_len;
             }
@@ -155,13 +167,15 @@ static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
          * pass all the applicable data to the callback.
          */
         char keytype[OSSL_MAX_NAME_SIZE];
-        OSSL_PARAM params[5], *p = params;
+        OSSL_PARAM params[6], *p = params;
         int objtype = OSSL_OBJECT_PKEY;
 
         OBJ_obj2txt(keytype, sizeof(keytype), alg->algorithm, 0);
 
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
                                                 keytype, 0);
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_INPUT_TYPE,
+                                                "DER", 0);
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
                                                 "PrivateKeyInfo", 0);
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA,
@@ -172,7 +186,7 @@ static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         ok = data_cb(params, data_cbarg);
     }
     PKCS8_PRIV_KEY_INFO_free(p8inf);
-    OPENSSL_free(der);
+    OPENSSL_free(new_der);
     return ok;
 }
 

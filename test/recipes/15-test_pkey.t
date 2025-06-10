@@ -11,7 +11,7 @@ use warnings;
 
 use OpenSSL::Test::Utils;
 use File::Copy;
-use File::Compare qw(compare);
+use File::Compare qw(compare_text);
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_pkey");
@@ -40,7 +40,7 @@ subtest "=== pkey typical en-/decryption (using AES256-CBC) ===" => sub {
     ok(run(app([@app, '-in', $encrypted_key, '-out', $decrypted_key,
                 '-passin', $pass])),
        "decrypt key");
-    is(compare($in_key, $decrypted_key), 0,
+    is(compare_text($in_key, $decrypted_key), 0,
        "Same file contents after encrypting and decrypting in separate files");
 };
 
@@ -61,7 +61,7 @@ subtest "=== pkey handling of identical input and output files (using 3DES) and 
 
     ok(run(app([@app, '-in', $inout, '-out', $inout, '-passin', $pass])),
        "decrypt using identical infile and outfile");
-    is(compare($in_key, $inout), 0,
+    is(compare_text($in_key, $inout), 0,
        "Same file contents after encrypting and decrypting using same file");
 };
 
@@ -75,19 +75,19 @@ subtest "=== pkey handling of public keys (Ed25519) ===" => sub {
     my $pub_out1 = 'pub1.pem';
     ok(run(app([@app, '-in', $in_ed_key, '-pubout', '-out', $pub_out1])),
        "extract public key");
-    is(compare($in_pubkey, $pub_out1), 0,
+    is(compare_text($in_pubkey, $pub_out1), 0,
        "extracted public key is same as original public key");
 
     my $pub_out2 = 'pub2.pem';
     ok(run(app([@app, '-in', $in_pubkey, '-pubin', '-pubout', '-out', $pub_out2])),
        "read public key from pubfile");
-    is(compare($in_pubkey, $pub_out2), 0,
+    is(compare_text($in_pubkey, $pub_out2), 0,
        "public key read using pubfile is same as original public key");
 
     my $pub_out3 = 'pub3.pem';
     ok(run(app([@app, '-in', $in_ed_key, '-pubin', '-pubout', '-out', $pub_out3])),
        "extract public key from pkey file with -pubin");
-    is(compare($in_pubkey, $pub_out3), 0,
+    is(compare_text($in_pubkey, $pub_out3), 0,
        "public key extraced from pkey file with -pubin is same as original");
 };
 
@@ -97,8 +97,8 @@ subtest "=== pkey handling of DER encoding ===" => sub {
 
     my $der_out = 'key.der';
     my $pem_out = 'key.pem';
-    ok(run(app([@app, '-in', $in_key, '-outform', 'DER',
-                 '-out', $der_out])),
+    ok(run(app([@app, '-in', $in_key, qw(-traditional -outform DER -out),
+                $der_out])),
        "write DER-encoded pkey");
 
     ok(run(app(['openssl', 'asn1parse', '-in', $der_out, '-inform', 'DER',
@@ -108,7 +108,7 @@ subtest "=== pkey handling of DER encoding ===" => sub {
     ok(run(app([@app, '-in', $der_out, '-inform', 'DER',
                  '-out', $pem_out])),
        "read DER-encoded key");
-    is(compare($in_key, $pem_out), 0,
+    is(compare_text($in_key, $pem_out), 0,
        "Same file contents after converting to DER and back");
 };
 

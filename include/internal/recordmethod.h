@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -42,14 +42,6 @@ typedef struct ossl_record_layer_st OSSL_RECORD_LAYER;
 
 # define OSSL_RECORD_DIRECTION_READ  0
 # define OSSL_RECORD_DIRECTION_WRITE 1
-
-/*
- * Protection level. For <= TLSv1.2 only "NONE" and "APPLICATION" are used.
- */
-# define OSSL_RECORD_PROTECTION_LEVEL_NONE        0
-# define OSSL_RECORD_PROTECTION_LEVEL_EARLY       1
-# define OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE   2
-# define OSSL_RECORD_PROTECTION_LEVEL_APPLICATION 3
 
 # define OSSL_RECORD_RETURN_SUCCESS           1
 # define OSSL_RECORD_RETURN_RETRY             0

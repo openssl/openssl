@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -911,6 +911,11 @@ static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
 int X509v3_addr_canonize(IPAddrBlocks *addr)
 {
     int i;
+
+    if (addr == NULL) {
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NULL_ARGUMENT);
+        return 0;
+    }
 
     for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
         IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);

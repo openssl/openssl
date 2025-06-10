@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,16 @@
 #include "internal/numbers.h"  /* UINT64_C */
 
 static const char *certfile, *keyfile;
+
+#if defined(_AIX)
+/*
+ * Some versions of AIX define macros for events and revents for use when
+ * accessing pollfd structures (see Github issue #24236). That interferes
+ * with our use of these names here. We simply undef them.
+ */
+# undef revents
+# undef events
+#endif
 
 #if defined(OPENSSL_THREADS)
 struct child_thread_args {
@@ -681,6 +691,7 @@ static int helper_init(struct helper *h, const char *script_name,
     QUIC_TSERVER_ARGS s_args = {0};
     union BIO_sock_info_u info;
     char title[128];
+    QTEST_DATA *bdata = NULL;
 
     memset(h, 0, sizeof(*h));
     h->c_fd = -1;
@@ -689,6 +700,10 @@ static int helper_init(struct helper *h, const char *script_name,
     h->blocking = blocking;
     h->need_injector = need_injector;
     h->time_slip = ossl_time_zero();
+
+    bdata = OPENSSL_zalloc(sizeof(QTEST_DATA));
+    if (bdata == NULL)
+        goto err;
 
     if (!TEST_ptr(h->time_lock = CRYPTO_THREAD_lock_new()))
         goto err;
@@ -763,8 +778,8 @@ static int helper_init(struct helper *h, const char *script_name,
         h->qtf = qtest_create_injector(h->s_priv);
         if (!TEST_ptr(h->qtf))
             goto err;
-
-        BIO_set_data(h->s_qtf_wbio, h->qtf);
+        bdata->fault = h->qtf;
+        BIO_set_data(h->s_qtf_wbio, bdata);
     }
 
     h->s_net_bio_own = NULL;
@@ -795,7 +810,7 @@ static int helper_init(struct helper *h, const char *script_name,
         goto err;
 
     /* Use custom time function for virtual time skip. */
-    if (!TEST_true(ossl_quic_conn_set_override_now_cb(h->c_conn, get_time, h)))
+    if (!TEST_true(ossl_quic_set_override_now_cb(h->c_conn, get_time, h)))
         goto err;
 
     /* Takes ownership of our reference to the BIO. */
@@ -2822,7 +2837,7 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 {
     int ok = 0;
     WPACKET wpkt;
-    unsigned char frame_buf[8];
+    unsigned char frame_buf[21];
     size_t written;
 
     if (h->inject_word0 == 0 || hdr->type != h->inject_word0)
@@ -2834,6 +2849,94 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 
     if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word1)))
         goto err;
+
+    switch (h->inject_word1) {
+    case OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE:
+    case OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE:
+    case OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID:
+        /*
+         * These cases to be formatted properly need a single uint64_t
+         */
+        if (!TEST_true(WPACKET_put_bytes_u64(&wpkt, (uint64_t)0)))
+            goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_MAX_DATA:
+    case OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI:
+    case OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI:
+    case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI:
+    case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI:
+    case OSSL_QUIC_FRAME_TYPE_DATA_BLOCKED:
+        /*
+         * These cases require a single vlint
+         */
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_STOP_SENDING:
+    case OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA:
+    case OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED:
+        /*
+         * These cases require 2 variable integers
+         */
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_STREAM:
+    case OSSL_QUIC_FRAME_TYPE_RESET_STREAM:
+    case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP:
+        /*
+         * These cases require 3 variable integers
+         */
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_NEW_TOKEN:
+        /*
+         * Special case for new token
+         */
+
+        /* New token length, cannot be zero */
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)1)))
+            goto err;
+
+        /* 1 bytes of token data, to match the above length */
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, (uint8_t)0)))
+            goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID:
+        /*
+         * Special case for New Connection ids, has a combination
+         * of vlints and fixed width values
+         */
+
+        /* seq number */
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+
+        /* retire prior to */
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+
+        /* Connection id length, arbitrary at 1 bytes */
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, (uint8_t)1)))
+            goto err;
+
+        /* The connection id, to match the above length */
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, (uint8_t)0)))
+            goto err;
+
+        /* 16 bytes total for the SRT */
+        if (!TEST_true(WPACKET_memset(&wpkt, 0, 16)))
+            goto err;
+
+        break;
+    }
 
     if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
         goto err;
@@ -4919,6 +5022,7 @@ static int generate_version_neg(WPACKET *wpkt, uint32_t version)
     QUIC_PKT_HDR hdr = {0};
 
     hdr.type                = QUIC_PKT_TYPE_VERSION_NEG;
+    hdr.version             = 0;
     hdr.fixed               = 1;
     hdr.dst_conn_id.id_len  = 0;
     hdr.src_conn_id.id_len  = 8;
@@ -4980,10 +5084,64 @@ err:
     return rc;
 }
 
-static const struct script_op script_74[] = {
-    OP_S_SET_INJECT_DATAGRAM (server_gen_version_neg)
-    OP_SET_INJECT_WORD       (1, 0)
+static int do_mutation = 0;
+static QUIC_PKT_HDR *hdr_to_free = NULL;
 
+/*
+ * Check packets to transmit, if we have an initial packet
+ * Modify the version number to something incorrect
+ * so that we trigger a version negotiation
+ * Note, this is a use once function, it will only modify the
+ * first INITIAL packet it sees, after which it needs to be
+ * armed again
+ */
+static int script_74_alter_version(const QUIC_PKT_HDR *hdrin,
+                                   const OSSL_QTX_IOVEC *iovecin, size_t numin,
+                                   QUIC_PKT_HDR **hdrout,
+                                   const OSSL_QTX_IOVEC **iovecout,
+                                   size_t *numout,
+                                   void *arg)
+{
+    *hdrout = OPENSSL_memdup(hdrin, sizeof(QUIC_PKT_HDR));
+    *iovecout = iovecin;
+    *numout = numin;
+    hdr_to_free = *hdrout;
+
+    if (do_mutation == 0)
+        return 1;
+    do_mutation = 0;
+
+    if (hdrin->type == QUIC_PKT_TYPE_INITIAL)
+        (*hdrout)->version = 0xdeadbeef;
+    return 1;
+}
+
+static void script_74_finish_mutation(void *arg)
+{
+    OPENSSL_free(hdr_to_free);
+}
+
+/*
+ * Enable the packet mutator for the client channel
+ * So that when we send a Initial packet
+ * We modify the version to be something invalid
+ * to force a version negotiation
+ */
+static int script_74_arm_packet_mutator(struct helper *h,
+                                        struct helper_local *hl)
+{
+    QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
+
+    do_mutation = 1;
+    if (!ossl_quic_channel_set_mutator(ch, script_74_alter_version,
+                                       script_74_finish_mutation,
+                                       NULL))
+        return 0;
+    return 1;
+}
+
+static const struct script_op script_74[] = {
+    OP_CHECK                (script_74_arm_packet_mutator, 0)
     OP_C_SET_ALPN            ("ossltest")
     OP_C_CONNECT_WAIT        ()
 
@@ -5482,7 +5640,6 @@ static const struct script_op script_84[] = {
     OP_S_READ_EXPECT        (a, "apple", 5)
     OP_S_WRITE              (a, "orange", 6)
     OP_C_READ_EXPECT        (a, "orange", 6)
-    OP_CHECK2               (check_write_buf_stat, 0, 0)
 
     OP_END
 };
@@ -5492,7 +5649,6 @@ ossl_unused static int script_85_poll(struct helper *h, struct helper_local *hl)
 {
     int ok = 1, ret, expected_ret = 1;
     static const struct timeval timeout = {0};
-    static const struct timeval nz_timeout = {0, 1};
     size_t result_count, expected_result_count = 0;
     SSL_POLL_ITEM items[5] = {0}, *item = items;
     SSL *c_a, *c_b, *c_c, *c_d;
@@ -5530,16 +5686,6 @@ ossl_unused static int script_85_poll(struct helper *h, struct helper_local *hl)
     item->revents = UINT64_MAX;
     ++item;
 
-    /* Non-zero timeout is not supported. */
-    result_count = SIZE_MAX;
-    ERR_set_mark();
-    if (!TEST_false(SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
-                             &nz_timeout, 0,
-                             &result_count))
-        || !TEST_size_t_eq(result_count, 0))
-        return 0;
-
-    ERR_pop_to_mark();
     result_count = SIZE_MAX;
     ret = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
                    &timeout, 0,

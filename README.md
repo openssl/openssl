@@ -4,14 +4,13 @@ Welcome to the OpenSSL Project
 [![openssl logo]][www.openssl.org]
 
 [![github actions ci badge]][github actions ci]
-![Nightly OS Zoo ci badge](https://github.com/openssl/openssl/actions/workflows/os-zoo.yml/badge.svg)
-![Provider Compatibility](https://github.com/openssl/openssl/actions/workflows/provider-compatibility.yml/badge.svg)
-![Quic Interop](https://github.com/openssl/openssl/actions/workflows/run_quic_interop.yml/badge.svg)
-![Daily checks](https://github.com/openssl/openssl/actions/workflows/run-checker-daily.yml/badge.svg)
+[![Nightly OS Zoo ci badge](https://github.com/openssl/openssl/actions/workflows/os-zoo.yml/badge.svg)](https://github.com/openssl/openssl/actions/workflows/os-zoo.yml)
+[![Provider Compatibility](https://github.com/openssl/openssl/actions/workflows/provider-compatibility.yml/badge.svg)](https://github.com/openssl/openssl/actions/workflows/provider-compatibility.yml)
+[![Quic Interop](https://github.com/openssl/openssl/actions/workflows/run_quic_interop.yml/badge.svg)](https://github.com/openssl/openssl/actions/workflows/run_quic_interop.yml)
+[![Daily checks](https://github.com/openssl/openssl/actions/workflows/run-checker-daily.yml/badge.svg)](https://github.com/openssl/openssl/actions/workflows/run-checker-daily.yml)
 
 OpenSSL is a robust, commercial-grade, full-featured Open Source Toolkit
-for the TLS (formerly SSL), DTLS and QUIC (currently client side only)
-protocols.
+for the TLS (formerly SSL), DTLS and QUIC protocols.
 
 The protocol implementations are based on a full-strength general purpose
 cryptographic library, which can also be used stand-alone. Also included is a
@@ -42,7 +41,7 @@ The OpenSSL toolkit includes:
 - **libssl**
   an implementation of all TLS protocol versions up to TLSv1.3 ([RFC 8446]),
   DTLS protocol versions up to DTLSv1.2 ([RFC 6347]) and
-  the QUIC (currently client side only) version 1 protocol ([RFC 9000]).
+  the QUIC version 1 protocol ([RFC 9000]).
 
 - **libcrypto**
   a full-strength general purpose cryptographic library. It constitutes the
@@ -67,7 +66,7 @@ For Production Use
 ------------------
 
 Source code tarballs of the official releases can be downloaded from
-[www.openssl.org/source](https://www.openssl.org/source).
+[openssl-library.org/source/](https://openssl-library.org/source/).
 The OpenSSL project does not distribute the toolkit in binary form.
 
 However, for a large variety of operating systems precompiled versions
@@ -87,22 +86,18 @@ the source tarballs, having a local copy of the git repository with
 the entire project history gives you much more insight into the
 code base.
 
-The official OpenSSL Git Repository is located at [git.openssl.org].
-There is a GitHub mirror of the repository at [github.com/openssl/openssl],
+The main OpenSSL Git repository is private.
+There is a public GitHub mirror of it at [github.com/openssl/openssl],
 which is updated automatically from the former on every commit.
 
-A local copy of the Git Repository can be obtained by cloning it from
-the original OpenSSL repository using
-
-    git clone git://git.openssl.org/openssl.git
-
-or from the GitHub mirror using
+A local copy of the Git repository can be obtained by cloning it from
+the GitHub mirror using
 
     git clone https://github.com/openssl/openssl.git
 
 If you intend to contribute to OpenSSL, either to fix bugs or contribute
-new features, you need to fork the OpenSSL repository openssl/openssl on
-GitHub and clone your public fork instead.
+new features, you need to fork the GitHub mirror and clone your public fork
+instead.
 
     git clone https://github.com/yourname/openssl.git
 
@@ -154,10 +149,12 @@ Manual Pages
 The manual pages for the master branch and all current stable releases are
 available online.
 
-- [OpenSSL master](https://www.openssl.org/docs/manmaster)
-- [OpenSSL 3.0](https://www.openssl.org/docs/man3.0)
-- [OpenSSL 3.1](https://www.openssl.org/docs/man3.1)
-- [OpenSSL 3.2](https://www.openssl.org/docs/man3.2)
+- [OpenSSL master](https://docs.openssl.org/master/)
+- [OpenSSL 3.5](https://docs.openssl.org/3.5/)
+- [OpenSSL 3.4](https://docs.openssl.org/3.4/)
+- [OpenSSL 3.3](https://docs.openssl.org/3.3/)
+- [OpenSSL 3.2](https://docs.openssl.org/3.2/)
+- [OpenSSL 3.0](https://docs.openssl.org/3.0/)
 
 Demos
 -----
@@ -168,8 +165,7 @@ There are numerous source code demos for using various OpenSSL capabilities in t
 Wiki
 ----
 
-There is a Wiki at [wiki.openssl.org] which is currently not very active.
-It contains a lot of useful information, not all of which is up-to-date.
+There is a [GitHub Wiki] which is currently not very active.
 
 License
 =======
@@ -202,7 +198,7 @@ attempting to develop or distribute cryptographic code.
 Copyright
 =========
 
-Copyright (c) 1998-2024 The OpenSSL Project Authors
+Copyright (c) 1998-2025 The OpenSSL Project Authors
 
 Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
 
@@ -214,24 +210,16 @@ All rights reserved.
     <https://www.openssl.org>
     "OpenSSL Homepage"
 
-[git.openssl.org]:
-    <https://git.openssl.org>
-    "OpenSSL Git Repository"
-
-[git.openssl.org]:
-    <https://git.openssl.org>
-    "OpenSSL Git Repository"
-
 [github.com/openssl/openssl]:
     <https://github.com/openssl/openssl>
     "OpenSSL GitHub Mirror"
 
-[wiki.openssl.org]:
-    <https://wiki.openssl.org>
+[GitHub Wiki]:
+    <https://github.com/openssl/openssl/wiki>
     "OpenSSL Wiki"
 
 [ossl-guide-migration(7ossl)]:
-    <https://www.openssl.org/docs/manmaster/man7/ossl-guide-migration.html>
+    <https://docs.openssl.org/master/man7/ossl-guide-migration>
     "OpenSSL Migration Guide"
 
 [RFC 8446]:
@@ -244,11 +232,11 @@ All rights reserved.
      <https://tools.ietf.org/html/rfc9000>
 
 [Binaries]:
-    <https://wiki.openssl.org/index.php/Binaries>
+    <https://github.com/openssl/openssl/wiki/Binaries>
     "List of third party OpenSSL binaries"
 
 [OpenSSL Guide]:
-    <https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html>
+    <https://docs.openssl.org/master/man7/ossl-guide-introduction>
     "An introduction to OpenSSL"
 
 <!-- Logos and Badges -->
@@ -262,7 +250,7 @@ All rights reserved.
     "GitHub Actions CI Status"
 
 [github actions ci]:
-    <https://github.com/openssl/openssl/actions?query=workflow%3A%22GitHub+CI%22>
+    <https://github.com/openssl/openssl/actions/workflows/ci.yml>
     "GitHub Actions CI"
 
 [appveyor badge]:

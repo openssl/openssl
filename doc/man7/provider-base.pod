@@ -462,7 +462,7 @@ This points to a string that is a build information associated with this provide
 OpenSSL in-built providers use OPENSSL_FULL_VERSION_STR, but this may be
 different for any third party provider.
 
-=item "status" (B<OSSL_PROV_PARAM_STATUS>) <unsigned integer>
+=item "status" (B<OSSL_PROV_PARAM_STATUS>) <signed integer>
 
 This returns 0 if the provider has entered an error state, otherwise it returns
 1.
@@ -759,14 +759,18 @@ This value must be supplied.
 
 =item "tls-max-tls" (B<OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS>) <integer>
 
-These parameters can be used to describe the minimum and maximum TLS
+=item "tls-min-dtls" (B<OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS>) <integer>
+
+=item "tls-max-dtls" (B<OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS>) <integer>
+
+These parameters can be used to describe the minimum and maximum TLS and DTLS
 versions supported by the signature algorithm. The values equate to the
 on-the-wire encoding of the various TLS versions. For example TLSv1.3 is
 0x0304 (772 decimal), and TLSv1.2 is 0x0303 (771 decimal). A 0 indicates that
-there is no defined minimum or maximum. A -1 indicates that the signature
-algorithm should not be used in that protocol.
-Presently values representing anything other than TLS1.3 mean that the
-complete algorithm is ignored.
+there is no defined minimum or maximum. A -1 in either the min or max field
+indicates that the signature algorithm should not be used in that protocol.
+Presently, provider signature algorithms are used only with TLS 1.3, if
+that's enclosed in the specified range.
 
 =back
 
@@ -973,9 +977,15 @@ L<provider(7)>
 The concept of providers and everything surrounding them was
 introduced in OpenSSL 3.0.
 
+Definitions for
+B<OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS>
+and
+B<OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS>
+were added in OpenSSL 3.5.
+
 =head1 COPYRIGHT
 
-Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

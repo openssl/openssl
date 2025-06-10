@@ -275,3 +275,12 @@ Ctrl.iter = iter:10
 Ctrl.digest = digest:sha1
 Result = KDF_CTRL_ERROR
 Reason = invalid iteration count
+
+Availablein = default
+KDF = PBKDF2
+Ctrl.pass = pass:password
+Ctrl.salt = salt:salt
+Ctrl.iter = iter:0
+Ctrl.digest = digest:sha1
+Result = KDF_CTRL_ERROR
+Reason = invalid iteration count

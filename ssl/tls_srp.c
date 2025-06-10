@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -21,6 +21,7 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include "ssl_local.h"
+#include "internal/ssl_unwrap.h"
 
 #ifndef OPENSSL_NO_SRP
 # include <openssl/srp.h>

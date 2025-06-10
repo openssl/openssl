@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -209,7 +209,9 @@ static int psk_find_session_cb(SSL *ssl, const unsigned char *identity,
     }
 
     if (psksess != NULL) {
-        SSL_SESSION_up_ref(psksess);
+        if (!SSL_SESSION_up_ref(psksess))
+            return 0;
+
         *sess = psksess;
         return 1;
     }

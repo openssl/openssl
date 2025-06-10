@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,8 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(generate_public_macros
                     generate_internal_macros
-                    produce_decoder);
+                    produce_decoder
+                    produce_param_list);
 
 my $case_sensitive = 1;
 
@@ -80,6 +81,7 @@ my %params = (
     'OBJECT_PARAM_REFERENCE' =>         "reference",# OCTET_STRING
     'OBJECT_PARAM_DATA' =>              "data",# OCTET_STRING or UTF8_STRING
     'OBJECT_PARAM_DESC' =>              "desc",     # UTF8_STRING
+    'OBJECT_PARAM_INPUT_TYPE' =>        "input-type", # UTF8_STRING
 
 # Algorithm parameters
 # If "engine",or "properties",are specified, they should always be paired
@@ -93,6 +95,7 @@ my %params = (
     'ALG_PARAM_MAC' =>          "mac",          # utf8_string
     'ALG_PARAM_PROPERTIES' =>   "properties",   # utf8_string
     'ALG_PARAM_FIPS_APPROVED_INDICATOR' => 'fips-indicator',   # int, -1, 0 or 1
+    'ALG_PARAM_SECURITY_CATEGORY' => "security-category", # int, 0 .. 5
 
     # For any operation that deals with AlgorithmIdentifier, they should
     # implement both of these.
@@ -124,6 +127,7 @@ my %params = (
     'CIPHER_PARAM_NUM' =>                  "num",         # uint
     'CIPHER_PARAM_ROUNDS' =>               "rounds",      # uint
     'CIPHER_PARAM_AEAD_TAG' =>             "tag",         # octet_string
+    'CIPHER_PARAM_PIPELINE_AEAD_TAG' =>    "pipeline-tag",# octet_ptr
     'CIPHER_PARAM_AEAD_TLS1_AAD' =>        "tlsaad",      # octet_string
     'CIPHER_PARAM_AEAD_TLS1_AAD_PAD' =>    "tlsaadpad",   # size_t
     'CIPHER_PARAM_AEAD_TLS1_IV_FIXED' =>   "tlsivfixed",  # octet_string
@@ -148,6 +152,8 @@ my %params = (
     'CIPHER_PARAM_ALGORITHM_ID_PARAMS' =>  '*ALG_PARAM_ALGORITHM_ID_PARAMS',
     'CIPHER_PARAM_ALGORITHM_ID_PARAMS_OLD' => "alg_id_param", # octet_string
     'CIPHER_PARAM_XTS_STANDARD' =>         "xts_standard",# utf8_string
+    'CIPHER_PARAM_ENCRYPT_THEN_MAC' =>     "encrypt-then-mac",# int, 0 or 1
+    'CIPHER_HMAC_PARAM_MAC' =>             "*CIPHER_PARAM_AEAD_TAG",
 
     'CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT' =>  "tls1multi_maxsndfrag",# uint
     'CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE' =>        "tls1multi_maxbufsz",  # size_t
@@ -286,6 +292,7 @@ my %params = (
     'PKEY_PARAM_BITS' =>                "bits",# integer
     'PKEY_PARAM_MAX_SIZE' =>            "max-size",# integer
     'PKEY_PARAM_SECURITY_BITS' =>       "security-bits",# integer
+    'PKEY_PARAM_SECURITY_CATEGORY' =>   '*ALG_PARAM_SECURITY_CATEGORY',
     'PKEY_PARAM_DIGEST' =>              '*ALG_PARAM_DIGEST',
     'PKEY_PARAM_CIPHER' =>              '*ALG_PARAM_CIPHER', # utf8 string
     'PKEY_PARAM_ENGINE' =>              '*ALG_PARAM_ENGINE', # utf8 string
@@ -302,6 +309,9 @@ my %params = (
     'PKEY_PARAM_DIST_ID' =>             "distid",
     'PKEY_PARAM_PUB_KEY' =>             "pub",
     'PKEY_PARAM_PRIV_KEY' =>            "priv",
+    # PKEY_PARAM_IMPLICIT_REJECTION isn't actually used, or meaningful.  We keep
+    # it for API stability, but please use ASYM_CIPHER_PARAM_IMPLICIT_REJECTION
+    # instead.
     'PKEY_PARAM_IMPLICIT_REJECTION' =>  "implicit-rejection",
     'PKEY_PARAM_FIPS_DIGEST_CHECK' =>   "digest-check",
     'PKEY_PARAM_FIPS_KEY_CHECK' =>      "key-check",
@@ -413,6 +423,14 @@ my %params = (
 # EC, X25519 and X448 Key generation parameters
     'PKEY_PARAM_DHKEM_IKM' =>        "dhkem-ikm",
 
+# ML-KEM parameters
+    'PKEY_PARAM_ML_KEM_SEED' => "seed",
+    'PKEY_PARAM_ML_KEM_PREFER_SEED' => "ml-kem.prefer_seed",
+    'PKEY_PARAM_ML_KEM_RETAIN_SEED' => "ml-kem.retain_seed",
+    'PKEY_PARAM_ML_KEM_INPUT_FORMATS' => "ml-kem.input_formats",
+    'PKEY_PARAM_ML_KEM_OUTPUT_FORMATS' => "ml-kem.output_formats",
+    'PKEY_PARAM_ML_KEM_IMPORT_PCT_TYPE' => "ml-kem.import_pct_type",
+
 # Key generation parameters
     'PKEY_PARAM_FFC_TYPE' =>         "type",
     'PKEY_PARAM_FFC_PBITS' =>        "pbits",
@@ -426,6 +444,16 @@ my %params = (
     'PKEY_PARAM_EC_INCLUDE_PUBLIC' =>          "include-public",
     'PKEY_PARAM_FIPS_SIGN_CHECK' =>            "sign-check",
     'PKEY_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
+
+# ML_DSA Key generation parameter
+    'PKEY_PARAM_ML_DSA_SEED' =>             "seed",
+    'PKEY_PARAM_ML_DSA_RETAIN_SEED' =>      "ml-dsa.retain_seed",
+    'PKEY_PARAM_ML_DSA_PREFER_SEED' =>      "ml-dsa.prefer_seed",
+    'PKEY_PARAM_ML_DSA_INPUT_FORMATS' =>    "ml-dsa.input_formats",
+    'PKEY_PARAM_ML_DSA_OUTPUT_FORMATS' =>   "ml-dsa.output_formats",
+
+# SLH_DSA Key generation parameters
+    'PKEY_PARAM_SLH_DSA_SEED' =>              "seed",
 
 # Key Exchange parameters
     'EXCHANGE_PARAM_PAD' =>                   "pad",# uint
@@ -462,6 +490,11 @@ my %params = (
     'SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK' => "sign-x931-pad-check",
     'SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
     'SIGNATURE_PARAM_SIGNATURE' =>          "signature",
+    'SIGNATURE_PARAM_MESSAGE_ENCODING' =>   "message-encoding",
+    'SIGNATURE_PARAM_DETERMINISTIC' =>      "deterministic",
+    'SIGNATURE_PARAM_MU' =>                 "mu", # int
+    'SIGNATURE_PARAM_TEST_ENTROPY' =>       "test-entropy",
+    'SIGNATURE_PARAM_ADD_RANDOM' =>         "additional-random",
 
 # Asym cipher parameters
     'ASYM_CIPHER_PARAM_DIGEST' =>                   '*PKEY_PARAM_DIGEST',
@@ -545,6 +578,8 @@ my %params = (
     'CAPABILITY_TLS_SIGALG_SECURITY_BITS' =>     "tls-sigalg-sec-bits",
     'CAPABILITY_TLS_SIGALG_MIN_TLS' =>           "tls-min-tls",
     'CAPABILITY_TLS_SIGALG_MAX_TLS' =>           "tls-max-tls",
+    'CAPABILITY_TLS_SIGALG_MIN_DTLS' =>          "tls-min-dtls",
+    'CAPABILITY_TLS_SIGALG_MAX_DTLS' =>          "tls-max-dtls",
 
 # storemgmt parameters
 
@@ -587,6 +622,10 @@ my %params = (
     'LIBSSL_RECORD_LAYER_PARAM_MAX_EARLY_DATA' => "max_early_data",
     'LIBSSL_RECORD_LAYER_PARAM_BLOCK_PADDING' =>  "block_padding",
     'LIBSSL_RECORD_LAYER_PARAM_HS_PADDING' =>     "hs_padding",
+
+# Symmetric Key parametes
+    'SKEY_PARAM_RAW_BYTES' => "raw-bytes",
+    'SKEY_PARAM_KEY_LENGTH' => "key-length",
 );
 
 # Generate string based macros for public consumption
@@ -640,32 +679,37 @@ sub generate_internal_macros {
 }
 
 sub generate_trie {
+    my @keys = @_;
     my %trie;
     my $nodes = 0;
     my $chars = 0;
 
-    foreach my $name (sort keys %params) {
+    foreach my $name (sort @keys) {
         my $val = $params{$name};
-        if (substr($val, 0, 1) ne '*') {
-            my $cursor = \%trie;
-
-            $chars += length($val);
-            for my $i (0 .. length($val) - 1) {
-                my $c = substr($val, $i, 1);
-
-                if (not $case_sensitive) {
-                    $c = '_' if $c eq '-';
-                    $c = lc $c;
-                }
-
-                if (not defined $$cursor{$c}) {
-                    $cursor->{$c} = {};
-                    $nodes++;
-                }
-                $cursor = $cursor->{$c};
-            }
-            $cursor->{'val'} = $name;
+        die("Unknown parameter name '$name'\n") if !defined $val;
+        while (substr($val, 0, 1) eq '*') {
+            $val = $params{substr($val, 1)};
+            die("Unknown referenced parameter from '$name'\n")
+                if !defined $val;
         }
+        my $cursor = \%trie;
+
+        $chars += length($val);
+        for my $i (0 .. length($val) - 1) {
+            my $c = substr($val, $i, 1);
+
+            if (not $case_sensitive) {
+                $c = '_' if $c eq '-';
+                $c = lc $c;
+            }
+
+            if (not defined $$cursor{$c}) {
+                $cursor->{$c} = {};
+                $nodes++;
+            }
+            $cursor = $cursor->{$c};
+        }
+        $cursor->{'val'} = $name;
     }
     #print "\n\n/* $nodes nodes for $chars letters*/\n\n";
     return %trie;
@@ -678,8 +722,6 @@ sub generate_code_from_trie {
     my $indent0 = $idt x ($n + 1);
     my $indent1 = $indent0 . $idt;
     my $strcmp = $case_sensitive ? 'strcmp' : 'strcasecmp';
-
-    print "int ossl_param_find_pidx(const char *s)\n{\n" if $n == 0;
 
     if ($trieref->{'suffix'}) {
         my $suf = $trieref->{'suffix'};
@@ -714,7 +756,6 @@ sub generate_code_from_trie {
         }
     }
     printf "%s}\n", $indent0;
-    print "    return -1;\n}\n" if $n == 0;
     return "";
 }
 
@@ -745,12 +786,45 @@ sub locate_long_endings {
 }
 
 sub produce_decoder {
-    my %t = generate_trie();
+    my $func_name = shift;
+    my @keys = @_;
+    my %t = generate_trie(@keys);
     my $s;
 
     locate_long_endings(\%t);
 
     open local *STDOUT, '>', \$s;
+    printf "int %s(const char *s)\n{\n", $func_name;
     generate_code_from_trie(0, \%t);
+    print "    return -1;\n}\n";
     return $s;
+}
+
+sub produce_param_list {
+    my $static_array = shift;
+    my $array_name = shift;
+    my $static_func = shift;
+    my $func_name = shift;
+    my @params = @_;
+    my @keys = ();
+    my $s;
+
+    open local *STDOUT, '>', \$s;
+    print $static_array . ' ' if $static_array ne '';
+    printf "const OSSL_PARAM %s[] = {\n", $array_name;
+    for (my $i = 0; $i <= $#params; $i++) {
+        my $pname = $params[$i][0];
+        my $ptype = $params[$i][1];
+
+        print "    OSSL_PARAM_$ptype(OSSL_$pname, NULL";
+        print ", 0" if $ptype eq "octet_string" || $ptype eq "octet_ptr"
+                       || $ptype eq "utf8_string" || $ptype eq "utf8_ptr";
+        printf "),\n";
+
+        push(@keys, $pname);
+    }
+    print "    OSSL_PARAM_END\n};\n\n";
+
+    print $static_func . ' ' if $static_func ne '';
+    return $s .  produce_decoder($func_name, @keys);
 }

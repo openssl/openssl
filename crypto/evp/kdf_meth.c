@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -68,10 +68,9 @@ static void *evp_kdf_from_algorithm(int name_id,
         return NULL;
     }
     kdf->name_id = name_id;
-    if ((kdf->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
-        evp_kdf_free(kdf);
-        return NULL;
-    }
+    if ((kdf->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
+        goto err;
+
     kdf->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
@@ -145,15 +144,19 @@ static void *evp_kdf_from_algorithm(int name_id,
          * a derive function, and a complete set of context management
          * functions.
          */
-        evp_kdf_free(kdf);
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
-        return NULL;
+        goto err;
     }
+    if (prov != NULL && !ossl_provider_up_ref(prov))
+        goto err;
+
     kdf->prov = prov;
-    if (prov != NULL)
-        ossl_provider_up_ref(prov);
 
     return kdf;
+
+err:
+    evp_kdf_free(kdf);
+    return NULL;
 }
 
 EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,

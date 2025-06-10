@@ -50,31 +50,31 @@ I<ctx> for verifying an unlimited size message using the algorithm given by
 I<algo> and the key given through L<EVP_PKEY_CTX_new(3)> or
 L<EVP_PKEY_CTX_new_from_pkey(3)>.
 Passing the message is supported both in a one-shot fashion using
-EVP_PKEY_verify(), and through the combination of EVP_PKEY_verify_update() and
-EVP_PKEY_verify_final().
+EVP_PKEY_verify(), and through the combination of
+EVP_PKEY_verify_message_update() and EVP_PKEY_verify_message_final().
 This function enables using algorithms that can process input of arbitrary
 length, such as ED25519, RSA-SHA256 and similar.
 
 EVP_PKEY_CTX_set_signature() specifies the I<siglen> bytes long signature
-I<sig> to be verified against by EVP_PKEY_verify_final().
-It I<must> be used together with EVP_PKEY_verify_update() and
-EVP_PKEY_verify_final().
+I<sig> to be verified against by EVP_PKEY_verify_message_final().
+It I<must> be used together with EVP_PKEY_verify_message_update() and
+EVP_PKEY_verify_message_final().
 See L</NOTES> below for a deeper explanation.
 
-EVP_PKEY_verify_update() adds I<inlen> bytes from I<in> to the data to be
-processed for verification.  The signature algorithm specification and
+EVP_PKEY_verify_message_update() adds I<inlen> bytes from I<in> to the data
+to be processed for verification.  The signature algorithm specification and
 implementation determine how the input bytes are processed and if there's a
 limit on the total size of the input.  See L</NOTES> below for a deeper
 explanation.
 
-EVP_PKEY_verify_final() verifies the processed data, given only I<ctx>.
+EVP_PKEY_verify_message_final() verifies the processed data, given only I<ctx>.
 The signature to verify against must have been given with
 EVP_PKEY_CTX_set_signature().
 
 EVP_PKEY_verify() is a one-shot function that performs the same thing as
 EVP_PKEY_CTX_set_signature() call with I<sig> and I<siglen> as parameters,
-followed by a single EVP_PKEY_verify_update() call with I<tbs> and I<tbslen>,
-followed by EVP_PKEY_verify_final() call.
+followed by a single EVP_PKEY_verify_message_update() call with I<tbs> and
+I<tbslen>, followed by EVP_PKEY_verify_message_final() call.
 
 =head1 NOTES
 

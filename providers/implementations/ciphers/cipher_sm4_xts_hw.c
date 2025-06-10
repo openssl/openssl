@@ -91,6 +91,9 @@ static const PROV_CIPHER_HW sm4_generic_xts = {
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 # include "cipher_sm4_xts_hw_rv64i.inc"
+#elif defined(OPENSSL_CPUID_OBJ) && (defined(__x86_64) || defined(__x86_64__)  \
+                                    || defined(_M_AMD64) || defined(_M_X64))
+# include "cipher_sm4_xts_hw_x86_64.inc"
 #else
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_sm4_xts(size_t keybits)
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -562,6 +562,10 @@ void test_perror(const char *s);
 extern BIO *bio_out;
 extern BIO *bio_err;
 
+/* Thread local BIO overrides. */
+int set_override_bio_out(BIO *bio);
+int set_override_bio_err(BIO *bio);
+
 /*
  * Formatted output for strings, memory and bignums.
  */
@@ -591,7 +595,6 @@ typedef struct stanza_st {
     int numpairs;
     PAIR pairs[TESTMAXPAIRS];
     BIO *key;                   /* temp memory BIO for reading in keys */
-    char buff[4096];            /* Input buffer for a single key/value */
 } STANZA;
 
 /*

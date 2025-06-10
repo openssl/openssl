@@ -2,7 +2,7 @@ Using OpenSSL with QUIC
 =======================
 
 From OpenSSL 3.2, OpenSSL features support for making QUIC connections as a
-client.
+client. Starting with OpenSSL 3.5, server-side QUIC support has also been added.
 
 Users interested in using the new QUIC functionality are encouraged to look at
 some of the following resources:
@@ -70,11 +70,39 @@ using simple TCP/TLS-like usage. Note that OpenSSL has no direct support for
 HTTP/3 so connecting to an HTTP/3 server should be possible but sending an
 HTTP/3 request or receiving any response data is not.
 
-[openssl-quic(7) manual page]: https://www.openssl.org/docs/manmaster/man7/openssl-quic.html
-[OpenSSL Guide]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html
+### How can I create a QUIC server with OpenSSL?
+
+Starting with OpenSSL 3.5, you can create a QUIC server. OpenSSL provides a server
+implementation example that you can use as a reference:
+
+The example QUIC server implementation can be found in the source tree under
+[`demos/quic/server`](./demos/quic/server/). This demonstrates how to implement a
+basic QUIC server using the OpenSSL API.
+
+To run the example QUIC server:
+
+```shell
+$ ./demos/quic/server/server <port-number> <certificate-file> <key-file>
+```
+
+For example:
+
+```shell
+$ ./demos/quic/server/server 4433 server.pem server.key
+```
+
+Replace `server.pem` and `server.key` with your certificate and private key files.
+Note that the standard `openssl s_server` command does NOT support QUIC - you must
+use this dedicated server example instead.
+
+For more information about implementing QUIC servers with OpenSSL, refer to the
+[OpenSSL Guide] and the [openssl-quic(7) manual page].
+
+[openssl-quic(7) manual page]: https://docs.openssl.org/master/man7/openssl-quic
+[OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
 [DDD]: https://github.com/openssl/openssl/tree/master/doc/designs/ddd
 [found in the source tree under `doc/designs/ddd`]: ./doc/designs/ddd/
 [demo found in `demos/http3`]: ./demos/http3/
-[QUIC Introduction]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-quic-introduction.html
+[QUIC Introduction]: https://docs.openssl.org/master/man7/ossl-guide-quic-introduction
 [RFC 9114]: https://tools.ietf.org/html/rfc9114
 [ALPN ids]: https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids

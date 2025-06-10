@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,16 @@
 #include "internal/core.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+static void evp_keymgmt_free(void *data)
+{
+    EVP_KEYMGMT_free(data);
+}
+
+static int evp_keymgmt_up_ref(void *data)
+{
+    return EVP_KEYMGMT_up_ref(data);
+}
 
 static void *keymgmt_new(void)
 {
@@ -268,8 +278,8 @@ EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
     return evp_generic_fetch_from_prov(prov, OSSL_OP_KEYMGMT,
                                        name, properties,
                                        keymgmt_from_algorithm,
-                                       (int (*)(void *))EVP_KEYMGMT_up_ref,
-                                       (void (*)(void *))EVP_KEYMGMT_free);
+                                       evp_keymgmt_up_ref,
+                                       evp_keymgmt_free);
 }
 
 EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
@@ -277,8 +287,8 @@ EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 {
     return evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
                              keymgmt_from_algorithm,
-                             (int (*)(void *))EVP_KEYMGMT_up_ref,
-                             (void (*)(void *))EVP_KEYMGMT_free);
+                             evp_keymgmt_up_ref,
+                             evp_keymgmt_free);
 }
 
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
@@ -343,8 +353,8 @@ void EVP_KEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
     evp_generic_do_all(libctx, OSSL_OP_KEYMGMT,
                        (void (*)(void *, void *))fn, arg,
                        keymgmt_from_algorithm,
-                       (int (*)(void *))EVP_KEYMGMT_up_ref,
-                       (void (*)(void *))EVP_KEYMGMT_free);
+                       evp_keymgmt_up_ref,
+                       evp_keymgmt_free);
 }
 
 int EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
@@ -441,9 +451,20 @@ const OSSL_PARAM *EVP_KEYMGMT_gen_gettable_params(const EVP_KEYMGMT *keymgmt)
 void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
                       OSSL_CALLBACK *cb, void *cbarg)
 {
-    if (keymgmt->gen == NULL)
+    void *ret;
+    const char *desc = keymgmt->description != NULL ? keymgmt->description : "";
+
+    if (keymgmt->gen == NULL) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_KEYMGMT_NOT_SUPPORTED,
+                       "%s key generation:%s", keymgmt->type_name, desc);
         return NULL;
-    return keymgmt->gen(genctx, cb, cbarg);
+    }
+
+    ret = keymgmt->gen(genctx, cb, cbarg);
+    if (ret == NULL)
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_KEYMGMT_FAILURE,
+                       "%s key generation:%s", keymgmt->type_name, desc);
+    return ret;
 }
 
 void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx)

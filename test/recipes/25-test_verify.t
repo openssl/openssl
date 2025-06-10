@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 use strict;
 use warnings;
 
+use Cwd qw(abs_path);
 use File::Spec::Functions qw/canonpath/;
 use File::Copy;
 use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir ok_nofips with/;
@@ -17,19 +18,19 @@ use OpenSSL::Test::Utils;
 
 setup("test_verify");
 
+my @certspath = qw(test certs);
 sub verify {
     my ($cert, $purpose, $trusted, $untrusted, @opts) = @_;
-    my @path = qw(test certs);
     my @args = qw(openssl verify -auth_level 1);
     push(@args, "-purpose", $purpose) if $purpose ne "";
     push(@args, @opts);
-    for (@$trusted) { push(@args, "-trusted", srctop_file(@path, "$_.pem")) }
-    for (@$untrusted) { push(@args, "-untrusted", srctop_file(@path, "$_.pem")) }
-    push(@args, srctop_file(@path, "$cert.pem"));
+    for (@$trusted) { push(@args, "-trusted", srctop_file(@certspath, "$_.pem")) }
+    for (@$untrusted) { push(@args, "-untrusted", srctop_file(@certspath, "$_.pem")) }
+    push(@args, srctop_file(@certspath, "$cert.pem"));
     run(app([@args]));
 }
 
-plan tests => 193;
+plan tests => 205;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -61,7 +62,7 @@ ok(verify("ee-cert-ocsp-nocheck", "", ["root-cert"], ["ca-cert"]),
 ok(verify("ee-cert", "sslserver", [qw(sroot-cert)], [qw(ca-cert)]),
    "accept server purpose");
 ok(!verify("ee-cert", "sslserver", [qw(croot-cert)], [qw(ca-cert)]),
-   "fail client purpose");
+   "fail client purpose"); # beware, questionable non-standard EKU check on trust anchor
 ok(verify("ee-cert", "sslserver", [qw(root+serverAuth)], [qw(ca-cert)]),
    "accept server trust");
 ok(verify("ee-cert", "sslserver", [qw(sroot+serverAuth)], [qw(ca-cert)]),
@@ -81,7 +82,7 @@ ok(verify("ee-cert", "sslserver", [qw(root-clientAuth)], [qw(ca-cert)]),
 ok(verify("ee-cert", "sslserver", [qw(sroot-clientAuth)], [qw(ca-cert)]),
    "accept client mistrust with server purpose");
 ok(!verify("ee-cert", "sslserver", [qw(croot-clientAuth)], [qw(ca-cert)]),
-   "fail client mistrust with client purpose");
+   "fail client mistrust with client purpose"); # beware, questionable non-standard EKU check on trust anchor
 # Inapplicable trust
 ok(!verify("ee-cert", "sslserver", [qw(root+clientAuth)], [qw(ca-cert)]),
    "fail client trust");
@@ -150,7 +151,7 @@ ok(!verify("ee-cert", "sslserver", [qw(root-expired)], [qw(ca-cert)]),
 ok(verify("ee-cert", "sslserver", [qw(sca-cert)], [], "-partial_chain"),
    "accept partial chain with server purpose");
 ok(!verify("ee-cert", "sslserver", [qw(cca-cert)], [], "-partial_chain"),
-   "fail partial chain with client purpose");
+   "fail partial chain with client purpose"); # beware, questionable non-standard EKU check on trust anchor
 ok(verify("ee-cert", "sslserver", [qw(ca+serverAuth)], [], "-partial_chain"),
    "accept server trust partial chain");
 ok(verify("ee-cert", "sslserver", [qw(cca+serverAuth)], [], "-partial_chain"),
@@ -188,7 +189,7 @@ ok(verify("ee-cert", "sslserver", [qw(root-cert cca+serverAuth)], [qw(ca-cert)])
 ok(verify("ee-cert", "sslserver", [qw(root-cert cca+anyEKU)], [qw(ca-cert)]),
    "accept wildcard trust and client purpose");
 ok(!verify("ee-cert", "sslserver", [qw(root-cert cca-cert)], [qw(ca-cert)]),
-   "fail client purpose");
+   "fail client purpose intermediate trusted"); # beware, questionable non-standard EKU check on trust anchor
 ok(!verify("ee-cert", "sslserver", [qw(root-cert ca-anyEKU)], [qw(ca-cert)]),
    "fail wildcard mistrust");
 ok(!verify("ee-cert", "sslserver", [qw(root-cert ca-serverAuth)], [qw(ca-cert)]),
@@ -467,6 +468,9 @@ ok(!verify("badalt10-cert", "", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
 ok(!verify("bad-othername-cert", "", ["root-cert"], ["nccaothername-cert"], ),
    "CVE-2022-4203 type confusion test");
 
+ok(verify("nc-uri-cert", "", ["root-cert"], ["ncca4-cert"], ),
+   "Name constraints URI with userinfo");
+
 #Check that we get the expected failure return code
 with({ exit_checker => sub { return shift == 2; } },
      sub {
@@ -589,3 +593,33 @@ ok(!verify("ee-cert-policies-bad", "", ["root-cert"], ["ca-pol-cert"],
            "-policy_check", "-policy", "1.3.6.1.4.1.16604.998855.1",
            "-explicit_policy"),
    "Bad certificate policy");
+
+# CAstore option
+my $rootcertname = "root-cert";
+my $rootcert = srctop_file(@certspath, "${rootcertname}.pem");
+sub vfy_root { verify($rootcertname, "", [], [], @_) }
+ok(vfy_root("-CAfile", $rootcert), "CAfile");
+ok(vfy_root("-CAstore", $rootcert), "CAstore");
+ok(vfy_root("-CAstore", $rootcert, "-CAfile", $rootcert), "CAfile and existing CAstore");
+ok(!vfy_root("-CAstore", "non-existing", "-CAfile", $rootcert), "CAfile and non-existing CAstore");
+SKIP: {
+    skip "file names with colons aren't supported on Windows and VMS", 2
+        if $^O =~ /^(MsWin32|VMS)$/;
+    my $foo_file = "foo:cert.pem";
+    copy($rootcert, $foo_file);
+    ok(vfy_root("-CAstore", $foo_file), "CAstore foo:file");
+    ok(vfy_root("-CAstore", "file:".$foo_file), "CAstore file:foo:file");
+}
+my $foo_file = "cert.pem";
+copy($rootcert, $foo_file);
+ok(vfy_root("-CAstore", $foo_file), "CAstore foo:file");
+ok(vfy_root("-CAstore", "file:".$foo_file), "CAstore file:foo:file");
+my $abs_cert = abs_path($rootcert);
+# Windows file: URIs should have a path part starting with a slash, i.e.
+# file://authority/C:/what/ever/foo.pem and file:///C:/what/ever/foo.pem
+# file://C:/what/ever/foo.pem is non-standard and may not be accepted.
+# See RFC 8089 for details.
+$abs_cert = "/" . $abs_cert if ($^O eq "MSWin32");
+ok(vfy_root("-CAstore", "file://".$abs_cert), "CAstore file:///path");
+ok(vfy_root("-CAstore", "file://localhost".$abs_cert), "CAstore file://localhost/path");
+ok(!vfy_root("-CAstore", "file://otherhost".$abs_cert), "CAstore file://otherhost/path");

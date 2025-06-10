@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 #include <openssl/ct.h>
 #include "../ssl_local.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 #include "statem_local.h"
 
 typedef struct {

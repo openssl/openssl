@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -43,17 +43,15 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
                         int filesize, unsigned char *sig, int siglen,
                         unsigned char **out, size_t *poutlen);
 
-static int is_EdDSA(const EVP_PKEY *pkey)
+static int only_nomd(EVP_PKEY *pkey)
 {
-    if (pkey == NULL)
-        return 0;
-    return EVP_PKEY_is_a(pkey, "ED25519")
-        || EVP_PKEY_is_a(pkey, "ED448");
-}
+#define MADE_UP_MAX_MD_NAME_LEN 100
+    char defname[MADE_UP_MAX_MD_NAME_LEN];
+    int deftype;
 
-static int only_rawin(const EVP_PKEY *pkey)
-{
-    return is_EdDSA(pkey);
+    deftype = EVP_PKEY_get_default_digest_name(pkey, defname, sizeof(defname));
+    return deftype == 2 /* Mandatory */
+        && strcmp(defname, "UNDEF") == 0;
 }
 
 typedef enum OPTION_choice {
@@ -81,7 +79,7 @@ const OPTIONS pkeyutl_options[] = {
     {"verify", OPT_VERIFY, '-', "Verify with public key"},
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt input data with public key"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt input data with private key"},
-    {"derive", OPT_DERIVE, '-', "Derive shared secret"},
+    {"derive", OPT_DERIVE, '-', "Derive shared secret from own and peer (EC)DH keys"},
     {"decap", OPT_DECAP, '-', "Decapsulate shared secret"},
     {"encap", OPT_ENCAP, '-', "Encapsulate shared secret"},
     OPT_CONFIG_OPTION,
@@ -247,6 +245,7 @@ int pkeyutl_main(int argc, char **argv)
             pkey_op = EVP_PKEY_OP_DECAPSULATE;
             break;
         case OPT_ENCAP:
+            key_type = KEY_PUBKEY;
             pkey_op = EVP_PKEY_OP_ENCAPSULATE;
             break;
         case OPT_KEMOP:
@@ -310,11 +309,19 @@ int pkeyutl_main(int argc, char **argv)
         goto opthelp;
     } else if (peerkey != NULL && pkey_op != EVP_PKEY_OP_DERIVE) {
         BIO_printf(bio_err,
-                   "%s: no peer key given (-peerkey parameter).\n", prog);
+                   "%s: -peerkey option not allowed without -derive.\n", prog);
+        goto opthelp;
+    } else if (peerkey == NULL && pkey_op == EVP_PKEY_OP_DERIVE) {
+        BIO_printf(bio_err,
+                   "%s: missing -peerkey option for -derive operation.\n", prog);
         goto opthelp;
     }
 
     pkey = get_pkey(kdfalg, inkey, keyform, key_type, passinarg, pkey_op, e);
+    if (key_type != KEY_NONE && pkey == NULL) {
+        BIO_printf(bio_err, "%s: Error loading key\n", prog);
+        goto end;
+    }
 
     if (pkey_op == EVP_PKEY_OP_VERIFYRECOVER && !EVP_PKEY_is_a(pkey, "RSA")) {
         BIO_printf(bio_err, "%s: -verifyrecover can be used only with RSA\n", prog);
@@ -322,13 +329,16 @@ int pkeyutl_main(int argc, char **argv)
     }
 
     if (pkey_op == EVP_PKEY_OP_SIGN || pkey_op == EVP_PKEY_OP_VERIFY) {
-        if (only_rawin(pkey)) {
-            if (is_EdDSA(pkey) && digestname != NULL) {
+        if (only_nomd(pkey)) {
+            if (digestname != NULL) {
+                const char *alg = EVP_PKEY_get0_type_name(pkey);
+
                 BIO_printf(bio_err,
-                           "%s: -digest (prehash) is not supported with EdDSA\n", prog);
+                           "%s: -digest (prehash) is not supported with %s\n",
+                           prog, alg != NULL ? alg : "(unknown key type)");
                 goto end;
             }
-            rawin = 1; /* implied for Ed25519(ph) and Ed448(ph) and maybe others in the future */
+            rawin = 1;
         }
     } else if (digestname != NULL || rawin) {
         BIO_printf(bio_err,
@@ -416,6 +426,7 @@ int pkeyutl_main(int argc, char **argv)
             if (EVP_PKEY_CTX_ctrl_str(ctx, opt, passwd) <= 0) {
                 BIO_printf(bio_err, "%s: Can't set parameter \"%s\":\n",
                            prog, opt);
+                OPENSSL_free(passwd);
                 goto end;
             }
             OPENSSL_free(passwd);
@@ -445,17 +456,31 @@ int pkeyutl_main(int argc, char **argv)
         if (in == NULL)
             goto end;
     }
-    out = bio_open_default(outfile, 'w', FORMAT_BINARY);
-    if (out == NULL)
-        goto end;
-
-    if (pkey_op == EVP_PKEY_OP_ENCAPSULATE) {
-        if (secoutfile == NULL) {
-            BIO_printf(bio_err, "Encapsulation requires '-secret' argument\n");
+    if (pkey_op == EVP_PKEY_OP_DECAPSULATE && outfile != NULL) {
+        if (secoutfile != NULL) {
+            BIO_printf(bio_err, "%s: Decapsulation produces only a shared "
+                                "secret and no output. The '-out' option "
+                                "is not applicable.\n", prog);
             goto end;
         }
-        secout = bio_open_default(secoutfile, 'w', FORMAT_BINARY);
-        if (secout == NULL)
+        if ((out = bio_open_owner(outfile, 'w', FORMAT_BINARY)) == NULL)
+            goto end;
+    } else {
+        out = bio_open_default(outfile, 'w', FORMAT_BINARY);
+        if (out == NULL)
+            goto end;
+    }
+
+    if (pkey_op == EVP_PKEY_OP_ENCAPSULATE
+        || pkey_op == EVP_PKEY_OP_DECAPSULATE) {
+        if (secoutfile == NULL && pkey_op == EVP_PKEY_OP_ENCAPSULATE) {
+            BIO_printf(bio_err, "KEM-based shared-secret derivation requires "
+                                "the '-secret <file>' option\n");
+            goto end;
+        }
+        /* For backwards compatibility, default decap secrets to the output */
+        if (secoutfile != NULL
+            && (secout = bio_open_owner(secoutfile, 'w', FORMAT_BINARY)) == NULL)
             goto end;
     }
 
@@ -534,8 +559,12 @@ int pkeyutl_main(int argc, char **argv)
             rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
                           buf_in, (size_t)buf_inlen, NULL, (size_t *)&secretlen);
         }
-        if (rv > 0 && buf_outlen != 0) {
-            buf_out = app_malloc(buf_outlen, "buffer output");
+        if (rv > 0
+            && (secretlen > 0 || (pkey_op != EVP_PKEY_OP_ENCAPSULATE
+                                  && pkey_op != EVP_PKEY_OP_DECAPSULATE))
+            && (buf_outlen > 0 || pkey_op == EVP_PKEY_OP_DECAPSULATE)) {
+            if (buf_outlen > 0)
+                buf_out = app_malloc(buf_outlen, "buffer output");
             if (secretlen > 0)
                 secret = app_malloc(secretlen, "secret output");
             rv = do_keyop(ctx, pkey_op,
@@ -561,8 +590,9 @@ int pkeyutl_main(int argc, char **argv)
     } else {
         BIO_write(out, buf_out, buf_outlen);
     }
+    /* Backwards compatible decap output fallback */
     if (secretlen > 0)
-        BIO_write(secout, secret, secretlen);
+        BIO_write(secout ? secout : out, secret, secretlen);
 
  end:
     if (ret != 0)
@@ -739,9 +769,10 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
 static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
                       ENGINE *e)
 {
+    EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(ctx);
     EVP_PKEY *peer = NULL;
     ENGINE *engine = NULL;
-    int ret;
+    int ret = 1;
 
     if (peerform == FORMAT_ENGINE)
         engine = e;
@@ -750,8 +781,14 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
         BIO_printf(bio_err, "Error reading peer key %s\n", file);
         return 0;
     }
-
-    ret = EVP_PKEY_derive_set_peer(ctx, peer) > 0;
+    if (strcmp(EVP_PKEY_get0_type_name(peer), EVP_PKEY_get0_type_name(pkey)) != 0) {
+        BIO_printf(bio_err,
+                   "Type of peer public key: %s does not match type of private key: %s\n",
+                   EVP_PKEY_get0_type_name(peer), EVP_PKEY_get0_type_name(pkey));
+        ret = 0;
+    } else {
+        ret = EVP_PKEY_derive_set_peer(ctx, peer) > 0;
+    }
 
     EVP_PKEY_free(peer);
     return ret;
@@ -790,7 +827,7 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
         break;
 
     case EVP_PKEY_OP_DECAPSULATE:
-        rv = EVP_PKEY_decapsulate(ctx, out, poutlen, in, inlen);
+        rv = EVP_PKEY_decapsulate(ctx, secret, pseclen, in, inlen);
         break;
 
     }
@@ -810,7 +847,7 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
     int buf_len = 0;
 
     /* Some algorithms only support oneshot digests */
-    if (only_rawin(pkey)) {
+    if (only_nomd(pkey)) {
         if (filesize < 0) {
             BIO_printf(bio_err,
                        "Error: unable to determine file size for oneshot operation\n");

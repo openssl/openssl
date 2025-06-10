@@ -275,7 +275,7 @@ static int fixup_des3_key(unsigned char *key)
  *
  * block = 0
  * for k: 1 -> K
- *   block += s[N(k-1)..(N-1)k] (one's complement addition)
+ *   block += s[N(k-1)..(N-1)k] (ones'-complement addition)
  *
  * Optimizing for space we compute:
  * for each l in L-1 -> 0:

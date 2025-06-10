@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -842,15 +842,19 @@ int ossl_qtx_write_pkt(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt)
 
         if (!was_coalescing) {
             /* Set addresses in TXE. */
-            if (pkt->peer != NULL)
-                txe->peer = *pkt->peer;
-            else
+            if (pkt->peer != NULL) {
+                if (!BIO_ADDR_copy(&txe->peer, pkt->peer))
+                    return 0;
+            } else {
                 BIO_ADDR_clear(&txe->peer);
+            }
 
-            if (pkt->local != NULL)
-                txe->local = *pkt->local;
-            else
+            if (pkt->local != NULL) {
+                if (!BIO_ADDR_copy(&txe->local, pkt->local))
+                    return 0;
+            } else {
                 BIO_ADDR_clear(&txe->local);
+            }
         }
 
         ret = qtx_mutate_write(qtx, pkt, txe, enc_level);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -43,6 +43,34 @@ int OSSL_PROVIDER_get_capabilities(const OSSL_PROVIDER *prov,
                                    const char *capability,
                                    OSSL_CALLBACK *cb,
                                    void *arg);
+
+/*-
+ * Provider configuration parameters are normally set in the configuration file,
+ * but can also be set early in the main program before a provider is in use by
+ * multiple threads.
+ *
+ * Only UTF8-string values are supported.
+ */
+int OSSL_PROVIDER_add_conf_parameter(OSSL_PROVIDER *prov, const char *name,
+                                     const char *value);
+/*
+ * Retrieves any of the requested configuration parameters for the given
+ * provider that were set in the configuration file or via the above
+ * OSSL_PROVIDER_add_parameter() function.
+ *
+ * The |params| array elements MUST have type OSSL_PARAM_UTF8_PTR, values are
+ * returned by reference, not as copies.
+ */
+int OSSL_PROVIDER_get_conf_parameters(const OSSL_PROVIDER *prov,
+                                      OSSL_PARAM params[]);
+/*
+ * Parse a provider configuration parameter as a boolean value,
+ * or return a default value if unable to retrieve the parameter.
+ * Values like "1", "yes", "true", ... are true (nonzero).
+ * Values like "0", "no", "false", ... are false (zero).
+ */
+int OSSL_PROVIDER_conf_get_bool(const OSSL_PROVIDER *prov,
+                                const char *name, int defval);
 
 const OSSL_ALGORITHM *OSSL_PROVIDER_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,

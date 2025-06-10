@@ -267,7 +267,11 @@ L<crypto(7)>, L<openssl-threads(7)>.
 
 =head1 HISTORY
 
-CRYPTO_atomic_store() was added in OpenSSL 3.4.0
+CRYPTO_atomic_load_int(), OSSL_set_max_threads(), OSSL_get_max_threads(),
+OSSL_get_thread_support_flags() were added in OpenSSL 3.2.
+
+CRYPTO_atomic_store(), CRYPTO_atomic_add64(), CRYPTO_atomic_and()
+were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

@@ -135,9 +135,6 @@ static unsigned long getauxval(unsigned long key)
 #define HWCAP_ARCH_3_00         (1U << 23)
 #define HWCAP_ARCH_3_1          (1U << 18)
 
-# if defined(__GNUC__) && __GNUC__>=2
-__attribute__ ((constructor))
-# endif
 void OPENSSL_cpuid_setup(void)
 {
     char *e;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -196,6 +196,8 @@ int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (cert == NULL)
+        return 0;
     if ((flags & X509_ADD_FLAG_NO_DUP) != 0) {
         /*
          * not using sk_X509_set_cmp_func() and sk_X509_find()
@@ -214,13 +216,15 @@ int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
         if (ret != 0)
             return ret > 0 ? 1 : 0;
     }
+    if ((flags & X509_ADD_FLAG_UP_REF) != 0 && !X509_up_ref(cert))
+        return 0;
     if (!sk_X509_insert(sk, cert,
                         (flags & X509_ADD_FLAG_PREPEND) != 0 ? 0 : -1)) {
+        if ((flags & X509_ADD_FLAG_UP_REF) != 0)
+            X509_free(cert);
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return 0;
     }
-    if ((flags & X509_ADD_FLAG_UP_REF) != 0)
-        (void)X509_up_ref(cert);
     return 1;
 }
 

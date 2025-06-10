@@ -137,7 +137,28 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&mov	("eax",7);
 	&xor	("ecx","ecx");
 	&cpuid	();
-	&mov	(&DWP(8,"edi"),"ebx");	# save extended feature flag
+	&mov	(&DWP(8,"edi"),"ebx");	# save cpuid(EAX=0x7, ECX=0x0).EBX to OPENSSL_ia32cap_P[2]
+	&mov	(&DWP(12,"edi"),"ecx");	# save cpuid(EAX=0x7, ECX=0x0).ECX to OPENSSL_ia32cap_P[3]
+	&mov	(&DWP(16,"edi"),"edx");	# save cpuid(EAX=0x7, ECX=0x0).EDX to OPENSSL_ia32cap_P[4]
+	&cmp	("eax",1);				# Do we have cpuid(EAX=0x7, ECX=0x1)?
+	&jb	(&label("no_extended_info"));
+	&mov	("eax",7);
+	&mov	("ecx",1);
+	&cpuid	();						# cpuid(EAX=0x7, ECX=0x1)
+	&mov	(&DWP(20,"edi"),"eax");	# save cpuid(EAX=0x7, ECX=0x1).EAX to OPENSSL_ia32cap_P[5]
+	&mov	(&DWP(24,"edi"),"edx");	# save cpuid(EAX=0x7, ECX=0x1).EDX to OPENSSL_ia32cap_P[6]
+	&mov	(&DWP(28,"edi"),"ebx");	# save cpuid(EAX=0x7, ECX=0x1).EBX to OPENSSL_ia32cap_P[7]
+	&mov	(&DWP(32,"edi"),"ecx");	# save cpuid(EAX=0x7, ECX=0x1).ECX to OPENSSL_ia32cap_P[8]
+
+	&and	("edx",0x80000);		# Mask cpuid(EAX=0x7, ECX=0x1).EDX bit 19 to detect AVX10 support
+	&cmp	("edx",0x0);
+	&je (&label("no_extended_info"));
+
+	&mov	("eax",0x24);			# Have AVX10 Support, query for details
+	&mov	("ecx",0x0);
+	&cpuid	();						# cpuid(EAX=0x24, ECX=0x0) AVX10 Leaf
+	&mov	(&DWP(36,"edi"),"ebx");	# save cpuid(EAX=0x24, ECX=0x0).EBX to OPENSSL_ia32cap_P[9]
+
 &set_label("no_extended_info");
 
 	&bt	("ebp",27);		# check OSXSAVE bit
@@ -154,6 +175,9 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&and	("esi",0xfeffffff);	# clear FXSR
 &set_label("clear_avx");
 	&and	("ebp",0xefffe7ff);	# clear AVX, FMA and AMD XOP bits
+	&and	(&DWP(20,"edi"),0xff7fffff);	# ~(1<<23) clear AVXIFMA,
+											# which is VEX-encoded
+											# and requires YMM state support
 	&and	(&DWP(8,"edi"),0xffffffdf);	# clear AVX2
 &set_label("done");
 	&mov	("eax","esi");
@@ -243,34 +267,6 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&xor	("edx","edx");
 	&ret	();
 &function_end_B("OPENSSL_far_spin");
-
-&function_begin_B("OPENSSL_wipe_cpu","EXTRN\t_OPENSSL_ia32cap_P:DWORD");
-	&xor	("eax","eax");
-	&xor	("edx","edx");
-	&picmeup("ecx","OPENSSL_ia32cap_P");
-	&mov	("ecx",&DWP(0,"ecx"));
-	&bt	(&DWP(0,"ecx"),1);
-	&jnc	(&label("no_x87"));
-	if ($sse2) {
-		&and	("ecx",1<<26|1<<24);	# check SSE2 and FXSR bits
-		&cmp	("ecx",1<<26|1<<24);
-		&jne	(&label("no_sse2"));
-		&pxor	("xmm0","xmm0");
-		&pxor	("xmm1","xmm1");
-		&pxor	("xmm2","xmm2");
-		&pxor	("xmm3","xmm3");
-		&pxor	("xmm4","xmm4");
-		&pxor	("xmm5","xmm5");
-		&pxor	("xmm6","xmm6");
-		&pxor	("xmm7","xmm7");
-	&set_label("no_sse2");
-	}
-	# just a bunch of fldz to zap the fp/mm bank followed by finit...
-	&data_word(0xeed9eed9,0xeed9eed9,0xeed9eed9,0xeed9eed9,0x90e3db9b);
-&set_label("no_x87");
-	&lea	("eax",&DWP(4,"esp"));
-	&ret	();
-&function_end_B("OPENSSL_wipe_cpu");
 
 &function_begin_B("OPENSSL_atomic_add");
 	&mov	("edx",&DWP(4,"esp"));	# fetch the pointer, 1st arg
@@ -496,8 +492,6 @@ my $rdop = shift;
 }
 &gen_random("rdrand");
 &gen_random("rdseed");
-
-&initseg("OPENSSL_cpuid_setup");
 
 &hidden("OPENSSL_cpuid_setup");
 &hidden("OPENSSL_ia32cap_P");

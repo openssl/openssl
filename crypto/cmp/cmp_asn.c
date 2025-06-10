@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -797,9 +797,10 @@ OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_crls(const X509_CRL *crl)
 
     if (crl != NULL) {
         if ((crls = sk_X509_CRL_new_reserve(NULL, 1)) == NULL
-                || (crl_copy = X509_CRL_dup(crl)) == NULL)
+                || (crl_copy = X509_CRL_dup(crl)) == NULL
+                || !sk_X509_CRL_push(crls, crl_copy))
             goto err;
-        (void)sk_X509_CRL_push(crls, crl_copy); /* cannot fail */
+        crl_copy = NULL; /* ownership transferred to crls */
     }
 
     itav->infoType = OBJ_nid2obj(NID_id_it_crls);
@@ -807,6 +808,7 @@ OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_crls(const X509_CRL *crl)
     return itav;
 
  err:
+    OPENSSL_free(crl_copy);
     sk_X509_CRL_free(crls);
     OSSL_CMP_ITAV_free(itav);
     return NULL;
@@ -889,7 +891,7 @@ ASN1_CHOICE(OSSL_CMP_CERTORENCCERT) = {
     /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     ASN1_EXP(OSSL_CMP_CERTORENCCERT, value.certificate, X509, 0),
     ASN1_EXP(OSSL_CMP_CERTORENCCERT, value.encryptedCert,
-             OSSL_CRMF_ENCRYPTEDVALUE, 1),
+             OSSL_CRMF_ENCRYPTEDKEY, 1),
 } ASN1_CHOICE_END(OSSL_CMP_CERTORENCCERT)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_CERTORENCCERT)
 
@@ -897,7 +899,7 @@ ASN1_SEQUENCE(OSSL_CMP_CERTIFIEDKEYPAIR) = {
     ASN1_SIMPLE(OSSL_CMP_CERTIFIEDKEYPAIR, certOrEncCert,
                 OSSL_CMP_CERTORENCCERT),
     ASN1_EXP_OPT(OSSL_CMP_CERTIFIEDKEYPAIR, privateKey,
-                 OSSL_CRMF_ENCRYPTEDVALUE, 0),
+                 OSSL_CRMF_ENCRYPTEDKEY, 0),
     ASN1_EXP_OPT(OSSL_CMP_CERTIFIEDKEYPAIR, publicationInfo,
                  OSSL_CRMF_PKIPUBLICATIONINFO, 1)
 } ASN1_SEQUENCE_END(OSSL_CMP_CERTIFIEDKEYPAIR)

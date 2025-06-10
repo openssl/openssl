@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -47,8 +47,6 @@ typedef struct quic_thread_assist_st {
     CRYPTO_CONDVAR *cv;
     CRYPTO_THREAD *t;
     int teardown, joined;
-    OSSL_TIME (*now_cb)(void *arg);
-    void *now_cb_arg;
 } QUIC_THREAD_ASSIST;
 
 /*
@@ -58,9 +56,7 @@ typedef struct quic_thread_assist_st {
  * not affect the state of the mutex.
  */
 int ossl_quic_thread_assist_init_start(QUIC_THREAD_ASSIST *qta,
-                                       QUIC_CHANNEL *ch,
-                                       OSSL_TIME (*now_cb)(void *arg),
-                                       void *now_cb_arg);
+                                       QUIC_CHANNEL *ch);
 
 /*
  * Request the thread assist helper to begin stopping the assist thread. This

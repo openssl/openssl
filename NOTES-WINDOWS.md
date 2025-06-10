@@ -87,6 +87,11 @@ Quick start
        on the Universal CRT or
     - `perl Configure`              to let Configure figure out the platform
 
+    a. If you don't plan to develop OpenSSL yourself and don't need to rebuild,
+       in other words, if you always do a new build, turning off the build
+       dependency feature can speed up build times by up to 50%:
+       `perl Configure no-makedepend`
+
  6. `nmake`
 
  7. `nmake test`
@@ -114,7 +119,7 @@ Can be administratively set, and openssl will take the paths found there as the
 values for OPENSSLDIR, ENGINESDIR and MODULESDIR respectively.
 
 To enable the reading of registry keys from windows builds, add
-`-DOPENSSL_WINCTX=<string>`to the Configure command line.  This define is used
+`-DOSSL_WINCTX=<string>`to the Configure command line.  This define is used
 at build-time to construct library build specific registry key paths of the
 format:
 `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432node\OpenSSL-<version>-<ctx>`
@@ -148,8 +153,8 @@ Native builds using Embarcadero C++Builder
 =========================================
 
 This toolchain (a descendant of Turbo/Borland C++) is an alternative to MSVC.
-OpenSSL currently includes an experimental 32-bit configuration targeting the
-Clang-based compiler (`bcc32c.exe`) in v10.3.3 Community Edition.
+OpenSSL currently includes experimental 32-bit and 64-bit configurations targeting the
+Clang-based compiler (`bcc32c.exe` and `bcc64.exe`) in v10.3.3 Community Edition.
 <https://www.embarcadero.com/products/cbuilder/starter>
 
  1. Install Perl.
@@ -158,6 +163,8 @@ Clang-based compiler (`bcc32c.exe`) in v10.3.3 Community Edition.
 
  3. Go to the root of the OpenSSL source directory and run:
     `perl Configure BC-32 --prefix=%CD%`
+    for Win64 builds use:
+    `perl Configure BC-64 --prefix=%CD%`
 
  4. `make -N`
 

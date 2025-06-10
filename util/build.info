@@ -5,10 +5,3 @@ ENDIF
 SCRIPTS{noinst}=wrap.pl
 SOURCE[wrap.pl]=wrap.pl.in
 DEPEND[wrap.pl]=../configdata.pm
-
-IF[{- !$disabled{quic} && !$disabled{stdio} && !$disabled{apps} -}]
-  PROGRAMS{noinst}=quicserver
-  SOURCE[quicserver]=quicserver.c
-  INCLUDE[quicserver]=../include ../apps/include
-  DEPEND[quicserver]=../libcrypto.a ../libssl.a
-ENDIF

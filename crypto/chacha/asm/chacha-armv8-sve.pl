@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2022-2023  The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2022-2025  The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -30,6 +30,7 @@ sub AUTOLOAD()		# thunk [simplified] x86-style perlasm
     $code .= "\t$opcode\t".join(',',@_,$arg)."\n";
 }
 
+$prefix="chacha_sve";
 my ($outp,$inp,$len,$key,$ctr) = map("x$_",(0..4));
 my ($veclen) = ("x5");
 my ($counter) = ("x6");
@@ -247,9 +248,6 @@ sub load_regs() {
 	my $next_offset = $offset + 1;
 $code.=<<___;
 	ld1w	{$reg.s},p0/z,[$inp,#$offset,MUL VL]
-#ifdef  __AARCH64EB__
-	revb    $reg.s,p0/m,$reg.s
-#endif
 ___
 	if (@_) {
 		&load_regs($next_offset, @_);
@@ -271,9 +269,6 @@ sub store_regs() {
 	my $reg = shift;
 	my $next_offset = $offset + 1;
 $code.=<<___;
-#ifdef  __AARCH64EB__
-	revb	$reg.s,p0/m,$reg.s
-#endif
 	st1w	{$reg.s},p0,[$outp,#$offset,MUL VL]
 ___
 	if (@_) {
@@ -479,13 +474,29 @@ sub SVE_TRANSFORMS() {
 $code.=<<___;
 #ifdef	__AARCH64EB__
 	rev	@sxx[0],@sxx[0]
+	revb	@mx[0].s,p0/m,@mx[0].s
+	revb	@mx[1].s,p0/m,@mx[1].s
 	rev	@sxx[2],@sxx[2]
+	revb	@mx[2].s,p0/m,@mx[2].s
+	revb	@mx[3].s,p0/m,@mx[3].s
 	rev	@sxx[4],@sxx[4]
+	revb	@mx[4].s,p0/m,@mx[4].s
+	revb	@mx[5].s,p0/m,@mx[5].s
 	rev	@sxx[6],@sxx[6]
+	revb	@mx[6].s,p0/m,@mx[6].s
+	revb	@mx[7].s,p0/m,@mx[7].s
 	rev	@sxx[8],@sxx[8]
+	revb	@mx[8].s,p0/m,@mx[8].s
+	revb	@mx[9].s,p0/m,@mx[9].s
 	rev	@sxx[10],@sxx[10]
+	revb	@mx[10].s,p0/m,@mx[10].s
+	revb	@mx[11].s,p0/m,@mx[11].s
 	rev	@sxx[12],@sxx[12]
+	revb	@mx[12].s,p0/m,@mx[12].s
+	revb	@mx[13].s,p0/m,@mx[13].s
 	rev	@sxx[14],@sxx[14]
+	revb	@mx[14].s,p0/m,@mx[14].s
+	revb	@mx[15].s,p0/m,@mx[15].s
 #endif
 	.if mixin == 1
 		add	@K[6],@K[6],#1
@@ -721,11 +732,19 @@ $code.=<<___;
 .hidden	OPENSSL_armcap_P
 
 .text
+
+.rodata
 .align	5
+.type _${prefix}_consts,%object
+_${prefix}_consts:
 .Lchacha20_consts:
 .quad	0x3320646e61707865,0x6b20657479622d32		// endian-neutral
 .Lrot8:
 	.word 0x02010003,0x04040404,0x02010003,0x04040404
+.size _${prefix}_consts,.-_${prefix}_consts
+
+.previous
+
 .globl	ChaCha20_ctr32_sve
 .type	ChaCha20_ctr32_sve,%function
 .align	5
@@ -744,7 +763,8 @@ ChaCha20_ctr32_sve:
 1:
 	cmp	$veclen,4
 	b.le	.Lreturn
-	adr	$tmp,.Lrot8
+	adrp	$tmp,.Lrot8
+	add	$tmp,$tmp,#:lo12:.Lrot8
 	ldp	$tmpw0,$tmpw1,[$tmp]
 	index	$rot8.s,$tmpw0,$tmpw1
 2:
@@ -762,7 +782,8 @@ ChaCha20_ctr32_sve:
 	stp	x28,x29,[sp,160]
 	str	x30,[sp,176]
 
-	adr	$tmp,.Lchacha20_consts
+	adrp	$tmp,.Lchacha20_consts
+	add	$tmp,$tmp,#:lo12:.Lchacha20_consts
 	ldp	@K[0],@K[1],[$tmp]
 	ldp	@K[2],@K[3],[$key]
 	ldp	@K[4],@K[5],[$key, 16]

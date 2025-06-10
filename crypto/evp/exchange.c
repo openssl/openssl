@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,16 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+static void evp_keyexch_free(void *data)
+{
+    EVP_KEYEXCH_free(data);
+}
+
+static int evp_keyexch_up_ref(void *data)
+{
+    return EVP_KEYEXCH_up_ref(data);
+}
+
 static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
 {
     EVP_KEYEXCH *exchange = OPENSSL_zalloc(sizeof(EVP_KEYEXCH));
@@ -25,12 +35,13 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
     if (exchange == NULL)
         return NULL;
 
-    if (!CRYPTO_NEW_REF(&exchange->refcnt, 1)) {
+    if (!CRYPTO_NEW_REF(&exchange->refcnt, 1)
+        || !ossl_provider_up_ref(prov)) {
+        CRYPTO_FREE_REF(&exchange->refcnt);
         OPENSSL_free(exchange);
         return NULL;
     }
     exchange->prov = prov;
-    ossl_provider_up_ref(prov);
 
     return exchange;
 }
@@ -172,8 +183,8 @@ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 {
     return evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
                              evp_keyexch_from_algorithm,
-                             (int (*)(void *))EVP_KEYEXCH_up_ref,
-                             (void (*)(void *))EVP_KEYEXCH_free);
+                             evp_keyexch_up_ref,
+                             evp_keyexch_free);
 }
 
 EVP_KEYEXCH *evp_keyexch_fetch_from_prov(OSSL_PROVIDER *prov,
@@ -183,8 +194,8 @@ EVP_KEYEXCH *evp_keyexch_fetch_from_prov(OSSL_PROVIDER *prov,
     return evp_generic_fetch_from_prov(prov, OSSL_OP_KEYEXCH,
                                        algorithm, properties,
                                        evp_keyexch_from_algorithm,
-                                       (int (*)(void *))EVP_KEYEXCH_up_ref,
-                                       (void (*)(void *))EVP_KEYEXCH_free);
+                                       evp_keyexch_up_ref,
+                                       evp_keyexch_free);
 }
 
 int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
@@ -431,7 +442,10 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
      */
     if (provkey == NULL)
         goto legacy;
-    return ctx->op.kex.exchange->set_peer(ctx->op.kex.algctx, provkey);
+    ret = ctx->op.kex.exchange->set_peer(ctx->op.kex.algctx, provkey);
+    if (ret <= 0)
+        return ret;
+    goto common;
 
  legacy:
 #ifdef FIPS_MODULE
@@ -483,19 +497,19 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
         return -1;
     }
 
+    ret = ctx->pmeth->ctrl(ctx, EVP_PKEY_CTRL_PEER_KEY, 1, peer);
+    if (ret <= 0)
+        return ret;
+#endif
+
+ common:
+    if (!EVP_PKEY_up_ref(peer))
+        return -1;
+
     EVP_PKEY_free(ctx->peerkey);
     ctx->peerkey = peer;
 
-    ret = ctx->pmeth->ctrl(ctx, EVP_PKEY_CTRL_PEER_KEY, 1, peer);
-
-    if (ret <= 0) {
-        ctx->peerkey = NULL;
-        return ret;
-    }
-
-    EVP_PKEY_up_ref(peer);
     return 1;
-#endif
 }
 
 int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
@@ -562,8 +576,8 @@ void EVP_KEYEXCH_do_all_provided(OSSL_LIB_CTX *libctx,
     evp_generic_do_all(libctx, OSSL_OP_KEYEXCH,
                        (void (*)(void *, void *))fn, arg,
                        evp_keyexch_from_algorithm,
-                       (int (*)(void *))EVP_KEYEXCH_up_ref,
-                       (void (*)(void *))EVP_KEYEXCH_free);
+                       evp_keyexch_up_ref,
+                       evp_keyexch_free);
 }
 
 int EVP_KEYEXCH_names_do_all(const EVP_KEYEXCH *keyexch,

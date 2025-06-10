@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -66,7 +66,7 @@ typedef CON_FUNC_RETURN (*confunc_f) (SSL_CONNECTION *s, WPACKET *pkt);
 
 int ssl3_take_mac(SSL_CONNECTION *s);
 int check_in_list(SSL_CONNECTION *s, uint16_t group_id, const uint16_t *groups,
-                  size_t num_groups, int checkallow);
+                  size_t num_groups, int checkallow, size_t *pos);
 int create_synthetic_message_hash(SSL_CONNECTION *s,
                                   const unsigned char *hashval,
                                   size_t hashlen, const unsigned char *hrr,

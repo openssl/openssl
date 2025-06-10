@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 # pragma once
 
 # include <openssl/opensslconf.h>
+# include "internal/common.h"
 
 # if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
 #  define NO_SYS_PARAM_H
@@ -54,7 +55,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
  * Even though sizeof(SOCKET) is 8, it's safe to cast it to int, because
  * the value constitutes an index in per-process table of limited size
  * and not a real pointer. And we also depend on fact that all processors
- * Windows run on happen to be two's-complement, which allows to
+ * Windows run on happen to be two's complement, which allows to
  * interchange INVALID_SOCKET and -1.
  */
 #   define socket(d,t,p)   ((int)socket(d,t,p))
@@ -97,7 +98,6 @@ typedef size_t socklen_t;        /* Currently appears to be missing on VMS */
 #   include <in.h>
 #   include <inet.h>
 #  else
-#   include <poll.h>
 #   include <sys/socket.h>
 #   if !defined(NO_SYS_UN_H) && defined(AF_UNIX) && !defined(OPENSSL_NO_UNIX_SOCK)
 #    include <sys/un.h>

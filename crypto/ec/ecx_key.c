@@ -69,12 +69,15 @@ void ossl_ecx_key_free(ECX_KEY *key)
         return;
 
     CRYPTO_DOWN_REF(&key->references, &i);
-    REF_PRINT_COUNT("ECX_KEY", key);
+    REF_PRINT_COUNT("ECX_KEY", i, key);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
 
     OPENSSL_free(key->propq);
+#ifdef OPENSSL_PEDANTIC_ZEROIZATION
+    OPENSSL_cleanse(&key->pubkey, sizeof(key->pubkey));
+#endif
     OPENSSL_secure_clear_free(key->privkey, key->keylen);
     CRYPTO_FREE_REF(&key->references);
     OPENSSL_free(key);
@@ -92,7 +95,7 @@ int ossl_ecx_key_up_ref(ECX_KEY *key)
     if (CRYPTO_UP_REF(&key->references, &i) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("ECX_KEY", key);
+    REF_PRINT_COUNT("ECX_KEY", i, key);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }

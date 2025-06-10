@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
      */
     bio = create_socket_bio(hostname, port, ipv6 ? AF_INET6 : AF_INET);
     if (bio == NULL) {
-        printf("Failed to crete the BIO\n");
+        printf("Failed to create the BIO\n");
         goto end;
     }
     SSL_set_bio(ssl, bio, bio);

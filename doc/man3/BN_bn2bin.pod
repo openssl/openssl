@@ -132,9 +132,15 @@ L<ERR_get_error(3)>, L<BN_zero(3)>,
 L<ASN1_INTEGER_to_BN(3)>,
 L<BN_num_bytes(3)>
 
+=head1 HISTORY
+
+The functions BN_signed_bin2bn(), BN_signed_bn2bin(), BN_signed_lebin2bn(),
+BN_signed_bn2lebin(), BN_signed_native2bn(), BN_signed_bn2native()
+were added in OpenSSL 3.2.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

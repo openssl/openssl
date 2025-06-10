@@ -108,27 +108,6 @@ Data from I<cert>, if present, is preferred over data from I<crl>.
 If no distribution point names are available,
 candidate issuer names are taken from following sources, as far as present:
 
-OSSL_CMP_ITAV_new0_certReqTemplate() creates an B<OSSL_CMP_ITAV> structure
-of type B<certReqTemplate>.
-If I<certTemplate> is NULL then also I<keySpec> must be NULL,
-and the resulting ITAV can be used in a B<genm> message to obtain the
-requirements a PKI has on the certificate template used to request certificates,
-or in a B<genp> message stating that there are no such requirements.
-Otherwise the resulting ITAV includes a CertReqTemplateValue structure
-with I<certTemplate> of type B<OSSL_CRMF_CERTTEMPLATE> and an optional list
-of key specifications I<keySpec>, each being of type B<OSSL_CMP_ATAV>, and
-the resulting ATAV can be used in a B<genp> message to provide requirements.
-
-OSSL_CMP_ITAV_get1_certReqTemplate()
-requires that I<itav> has type B<certReqTemplate>.
-If assigns NULL to I<*certTemplate> if no B<OSSL_CRMF_CERTTEMPLATE> structure
-with a certificate template value is in I<itav>,
-otherwise a copy of the certTemplate field value.
-If I<keySpec> is not NULL, it is assigned NULL
-if the structure is not present in I<itav> or the keySpec field is absent.
-Otherwise, the function checks that all elements of keySpec field are of type
-B<algId> or B<rsaKeyLen> and assigns to I<*keySpec> a copy of the keySpec field.
-
 =over 4
 
 =item the list of distribution points in the first cRLDistributionPoints
@@ -171,6 +150,27 @@ the list of CRLs contained in the infoValue field of I<itav>.
 The pointer may be NULL if no CRL is included.
 It is an error if the infoType of I<itav> is not B<crls>.
 
+OSSL_CMP_ITAV_new0_certReqTemplate() creates an B<OSSL_CMP_ITAV> structure
+of type B<certReqTemplate>.
+If I<certTemplate> is NULL then also I<keySpec> must be NULL,
+and the resulting ITAV can be used in a B<genm> message to obtain the
+requirements a PKI has on the certificate template used to request certificates,
+or in a B<genp> message stating that there are no such requirements.
+Otherwise the resulting ITAV includes a CertReqTemplateValue structure
+with I<certTemplate> of type B<OSSL_CRMF_CERTTEMPLATE> and an optional list
+of key specifications I<keySpec>, each being of type B<OSSL_CMP_ATAV>, and
+the resulting ATAV can be used in a B<genp> message to provide requirements.
+
+OSSL_CMP_ITAV_get1_certReqTemplate()
+requires that I<itav> has type B<certReqTemplate>.
+If assigns NULL to I<*certTemplate> if no B<OSSL_CRMF_CERTTEMPLATE> structure
+with a certificate template value is in I<itav>,
+otherwise a copy of the certTemplate field value.
+If I<keySpec> is not NULL, it is assigned NULL
+if the structure is not present in I<itav> or the keySpec field is absent.
+Otherwise, the function checks that all elements of keySpec field are of type
+B<algId> or B<rsaKeyLen> and assigns to I<*keySpec> a copy of the keySpec field.
+
 =head1 NOTES
 
 CMP is defined in RFC 4210.
@@ -208,7 +208,7 @@ and OSSL_CMP_ITAV_get1_certReqTemplate() were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
-Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

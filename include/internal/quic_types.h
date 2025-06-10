@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,8 +20,8 @@
 /* QUIC encryption levels. */
 enum {
     QUIC_ENC_LEVEL_INITIAL = 0,
-    QUIC_ENC_LEVEL_HANDSHAKE,
     QUIC_ENC_LEVEL_0RTT,
+    QUIC_ENC_LEVEL_HANDSHAKE,
     QUIC_ENC_LEVEL_1RTT,
     QUIC_ENC_LEVEL_NUM       /* Must be the ultimate entry */
 };

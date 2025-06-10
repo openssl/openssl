@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -48,12 +48,15 @@ static OSSL_STORE_LOADER *new_loader(OSSL_PROVIDER *prov)
     OSSL_STORE_LOADER *loader;
 
     if ((loader = OPENSSL_zalloc(sizeof(*loader))) == NULL
-        || !CRYPTO_NEW_REF(&loader->refcnt, 1)) {
+        || !CRYPTO_NEW_REF(&loader->refcnt, 1)
+        || !ossl_provider_up_ref(prov)) {
+        if (loader != NULL)
+            CRYPTO_FREE_REF(&loader->refcnt);
         OPENSSL_free(loader);
         return NULL;
     }
+
     loader->prov = prov;
-    ossl_provider_up_ref(prov);
 
     return loader;
 }
@@ -498,4 +501,12 @@ int OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
     }
 
     return 1;
+}
+
+const OSSL_PARAM *
+OSSL_STORE_LOADER_settable_ctx_params(const OSSL_STORE_LOADER *loader)
+{
+    if (loader != NULL && loader->p_settable_ctx_params != NULL)
+        return loader->p_settable_ctx_params(NULL);
+    return NULL;
 }

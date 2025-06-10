@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -195,6 +195,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
                 goto err;
             }
             if (!sk_POLICYQUALINFO_push(pol->qualifiers, qual)) {
+                POLICYQUALINFO_free(qual);
                 ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
                 goto err;
             }
@@ -232,6 +233,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
             if (pol->qualifiers == NULL)
                 pol->qualifiers = sk_POLICYQUALINFO_new_null();
             if (!sk_POLICYQUALINFO_push(pol->qualifiers, qual)) {
+                POLICYQUALINFO_free(qual);
                 ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
                 goto err;
             }

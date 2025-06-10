@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -147,6 +147,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
                 goto err;
             if (!sk_BIGNUM_insert(pplist, tmp, sk_BIGNUM_num(pplist)))
                 goto err;
+            tmp = NULL;
             break;
         default:
             factor = sk_BIGNUM_value(factors, i);
@@ -158,6 +159,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
                 goto err;
             if (!sk_BIGNUM_insert(pplist, tmp, sk_BIGNUM_num(pplist)))
                 goto err;
+            tmp = NULL;
             break;
         }
     }
@@ -182,6 +184,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
             goto err;
         if (!sk_BIGNUM_insert(pdlist, dval, sk_BIGNUM_num(pdlist)))
             goto err;
+        dval = NULL;
     }
 
     /* Calculate dmp1, dmq1 and additional exponents */
@@ -209,12 +212,11 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
         newexp = BN_new();
         if (newexp == NULL)
             goto err;
-        if (!BN_mod(newexp, rsa->d, newpd, ctx)) {
-            BN_free(newexp);
+        if (!BN_mod(newexp, rsa->d, newpd, ctx))
             goto err;
-        }
         if (!sk_BIGNUM_insert(exps, newexp, sk_BIGNUM_num(exps)))
             goto err;
+        newexp = NULL;
     }
 
     /* Calculate iqmp and additional coefficients */
@@ -235,16 +237,19 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
         if (newcoeff == NULL)
             goto err;
         if (BN_mod_inverse(newcoeff, newpp, sk_BIGNUM_value(factors, i),
-                           ctx) == NULL) {
-            BN_free(newcoeff);
+                           ctx) == NULL)
             goto err;
-        }
         if (!sk_BIGNUM_insert(coeffs, newcoeff, sk_BIGNUM_num(coeffs)))
             goto err;
+        newcoeff = NULL;
     }
 
     ret = 1;
  err:
+    BN_free(newcoeff);
+    BN_free(newexp);
+    BN_free(dval);
+    BN_free(tmp);
     sk_BIGNUM_pop_free(pplist, BN_free);
     sk_BIGNUM_pop_free(pdlist, BN_free);
     BN_CTX_end(ctx);

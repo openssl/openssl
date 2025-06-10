@@ -356,7 +356,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
         BIO_free(bio);
     else if (s >= 0)
         BIO_closesocket(s);
-  end:
+ end:
     return ret;
 }
 

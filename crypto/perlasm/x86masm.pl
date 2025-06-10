@@ -14,7 +14,6 @@ package x86masm;
 $::lbdecor="\$L";	# local label decoration
 $nmdecor="_";		# external name decoration
 
-$initseg="";
 $segment="";
 
 sub ::generic
@@ -139,16 +138,16 @@ ___
     push(@out,"$segment	ENDS\n");
 
     if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out)
+    # OPENSSL_ia32cap_P size should match with internal/cryptlib.h OPENSSL_IA32CAP_P_MAX_INDEXES
     {	my $comm=<<___;
 .bss	SEGMENT 'BSS'
-COMM	${nmdecor}OPENSSL_ia32cap_P:DWORD:4
+COMM	${nmdecor}OPENSSL_ia32cap_P:DWORD:10
 .bss	ENDS
 ___
 	# comment out OPENSSL_ia32cap_P declarations
 	grep {s/(^EXTERN\s+${nmdecor}OPENSSL_ia32cap_P)/\;$1/} @out;
 	push (@out,$comm);
     }
-    push (@out,$initseg) if ($initseg);
     push (@out,"END\n");
 }
 
@@ -180,17 +179,6 @@ sub ::align
 sub ::picmeup
 { my($dst,$sym)=@_;
     &::lea($dst,&::DWP($sym));
-}
-
-sub ::initseg
-{ my $f=$nmdecor.shift;
-
-    $initseg.=<<___;
-.CRT\$XCU	SEGMENT DWORD PUBLIC 'DATA'
-EXTERN	$f:NEAR
-DD	$f
-.CRT\$XCU	ENDS
-___
 }
 
 sub ::dataseg

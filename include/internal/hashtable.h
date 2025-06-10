@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -137,6 +137,26 @@ memset((key), 0, sizeof(*(key))); \
  */
 #define HT_SET_KEY_STRING_CASE(key, member, value) do { \
    ossl_ht_strcase((key)->keyfields.member, value, sizeof((key)->keyfields.member) -1); \
+} while(0)
+
+/*
+ * Same as HT_SET_KEY_STRING but also takes length of the string.
+ */
+#define HT_SET_KEY_STRING_N(key, member, value, len) do { \
+    if ((value) != NULL) { \
+        if (len < sizeof((key)->keyfields.member)) \
+            strncpy((key)->keyfields.member, value, len); \
+        else \
+            strncpy((key)->keyfields.member, value, sizeof((key)->keyfields.member) - 1); \
+    } \
+} while(0)
+
+/* Same as HT_SET_KEY_STRING_CASE but also takes length of the string. */
+#define HT_SET_KEY_STRING_CASE_N(key, member, value, len) do { \
+    if (len < sizeof((key)->keyfields.member)) \
+        ossl_ht_strcase((key)->keyfields.member, value, len); \
+    else \
+        ossl_ht_strcase((key)->keyfields.member, value, sizeof((key)->keyfields.member) - 1); \
 } while(0)
 
 /*

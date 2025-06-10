@@ -125,6 +125,7 @@ tolower
 strspn
 strcspn
 strncpy
+strpbrk
 strncmp
 strcmp
 strcat_s
@@ -179,6 +180,7 @@ TryEnterCriticalSection
 DeleteCriticalSection
 ReleaseSemaphore
 WaitForSingleObject
+WSASocketA
 GetCurrentThreadId
 SetUnhandledExceptionFilter
 GetExitCodeThread

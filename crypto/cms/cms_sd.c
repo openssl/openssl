@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -225,6 +225,14 @@ int ossl_cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert)
         return -1;
 }
 
+static int cms_signature_nomd(EVP_PKEY *pkey)
+{
+    char def_md[80];
+
+    return EVP_PKEY_get_default_digest_name(pkey, def_md, sizeof(def_md)) == 2
+        && strcmp(def_md, "UNDEF") == 0 ? 1 : 0;
+}
+
 /* Method to map any, incl. provider-implemented PKEY types to OIDs */
 /* (EC)DSA and all provider-delivered signatures implementation is the same */
 static int cms_generic_sign(CMS_SignerInfo *si, int verify)
@@ -249,7 +257,9 @@ static int cms_generic_sign(CMS_SignerInfo *si, int verify)
             if (typename != NULL)
                 pknid = OBJ_txt2nid(typename);
         }
-        if (!OBJ_find_sigid_by_algs(&snid, hnid, pknid))
+        if (pknid > 0 && cms_signature_nomd(pkey))
+            snid = pknid;
+        else if (!OBJ_find_sigid_by_algs(&snid, hnid, pknid))
             return -1;
         return X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, NULL);
     }
@@ -356,14 +366,19 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(signer, -1, -1);
 
-    X509_up_ref(signer);
-    EVP_PKEY_up_ref(pk);
+    if (!X509_up_ref(signer))
+        goto err;
+    if (!EVP_PKEY_up_ref(pk)) {
+        X509_free(signer);
+        goto err;
+    }
 
     si->cms_ctx = ctx;
     si->pkey = pk;
     si->signer = signer;
     si->mctx = EVP_MD_CTX_new();
     si->pctx = NULL;
+    si->omit_signing_time = 0;
 
     if (si->mctx == NULL) {
         ERR_raise(ERR_LIB_CMS, ERR_R_EVP_LIB);
@@ -455,6 +470,14 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                 ERR_raise(ERR_LIB_CMS, ERR_R_CMS_LIB);
                 goto err;
             }
+        }
+        if ((flags & CMS_NO_SIGNING_TIME) != 0) {
+            /*
+             * The signing-time signed attribute (NID_pkcs9_signingTime)
+             * would normally be added later, in CMS_SignerInfo_sign(),
+             * unless we set this flag here
+             */
+            si->omit_signing_time = 1;
         }
         if (flags & CMS_CADES) {
             ESS_SIGNING_CERT *sc = NULL;
@@ -624,7 +647,8 @@ STACK_OF(X509) *CMS_get0_signers(CMS_ContentInfo *cms)
 void CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer)
 {
     if (signer != NULL) {
-        X509_up_ref(signer);
+        if (!X509_up_ref(signer))
+            return;
         EVP_PKEY_free(si->pkey);
         si->pkey = X509_get_pubkey(signer);
     }
@@ -833,13 +857,15 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
     int alen;
     size_t siglen;
     const CMS_CTX *ctx = si->cms_ctx;
-    char md_name[OSSL_MAX_NAME_SIZE];
+    char md_name_buf[OSSL_MAX_NAME_SIZE], *md_name;
 
-    if (OBJ_obj2txt(md_name, sizeof(md_name),
+    if (OBJ_obj2txt(md_name_buf, sizeof(md_name_buf),
                     si->digestAlgorithm->algorithm, 0) <= 0)
         return 0;
+    md_name = cms_signature_nomd(si->pkey) ? NULL : md_name_buf;
 
-    if (CMS_signed_get_attr_by_NID(si, NID_pkcs9_signingTime, -1) < 0) {
+    if (!si->omit_signing_time
+        && CMS_signed_get_attr_by_NID(si, NID_pkcs9_signingTime, -1) < 0) {
         if (!cms_add1_signingTime(si, NULL))
             goto err;
     }
@@ -858,6 +884,13 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
             goto err;
         EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
         si->pctx = pctx;
+    }
+
+    if (md_name == NULL) {
+        if (ASN1_item_sign_ctx(ASN1_ITEM_rptr(CMS_Attributes_Sign), NULL,
+                               NULL, si->signature, si->signedAttrs, mctx) <= 0)
+            goto err;
+        return 1;
     }
 
     alen = ASN1_item_i2d((ASN1_VALUE *)si->signedAttrs, &abuf,
@@ -906,6 +939,16 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
 
     if (!ossl_cms_si_check_attributes(si))
         return -1;
+
+    if (cms_signature_nomd(si->pkey)) {
+        r = ASN1_item_verify_ex(ASN1_ITEM_rptr(CMS_Attributes_Sign),
+                                si->signatureAlgorithm, si->signature,
+                                si->signedAttrs, NULL, si->pkey,
+                                libctx, propq);
+        if (r <= 0)
+            ERR_raise(ERR_LIB_CMS, CMS_R_VERIFICATION_FAILURE);
+        return r;
+    }
 
     OBJ_obj2txt(name, sizeof(name), si->digestAlgorithm->algorithm, 0);
 

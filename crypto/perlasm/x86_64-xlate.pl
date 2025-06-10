@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2005-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,7 @@
 # https://www.openssl.org/source/license.html
 
 
-# Ascetic x86_64 AT&T to MASM/NASM assembler translator by <appro>.
+# Ascetic x86_64 AT&T to MASM/NASM assembler translator by <@dot-asm>.
 #
 # Why AT&T to MASM and not vice versa? Several reasons. Because AT&T
 # format is way easier to parse. Because it's simpler to "gear" from
@@ -218,6 +218,25 @@ my @segment_stack = ();
 my $current_function;
 my %globals;
 
+{ package vex_prefix;	# pick up vex prefixes, example: {vex} vpmadd52luq m256, %ymm, %ymm
+    sub re {
+	my ($class, $line) = @_;
+	my $self = {};
+	my $ret;
+
+	if ($$line =~ /(^\{vex\})/) {
+	    bless $self,$class;
+	    $self->{value} = $1;
+	    $ret = $self;
+	    $$line = substr($$line,@+[0]); $$line =~ s/^\s+//;
+	}
+	$ret;
+	}
+    sub out {
+	my $self = shift;
+	$self->{value};
+	}
+}
 { package opcode;	# pick up opcodes
     sub re {
 	my	($class, $line) = @_;
@@ -957,7 +976,9 @@ my %globals;
                         $current_segment = ".text";
                         push(@segment_stack, $current_segment);
                     }
-		    $self->{value} = $current_segment if ($flavour eq "mingw64");
+                    if ($flavour eq "mingw64" || $flavour eq "macosx") {
+		        $self->{value} = $current_segment;
+                    }
 		}
 		$$line = "";
 		return $self;
@@ -1394,7 +1415,11 @@ while(defined(my $line=<>)) {
 
     if (my $directive=directive->re(\$line)) {
 	printf "%s",$directive->out();
-    } elsif (my $opcode=opcode->re(\$line)) {
+    } else {
+	if (my $vex_prefix=vex_prefix->re(\$line)) {
+	printf "%s",$vex_prefix->out();
+	}
+	if (my $opcode=opcode->re(\$line)) {
 	my $asm = eval("\$".$opcode->mnemonic());
 
 	if ((ref($asm) eq 'CODE') && scalar(my @bytes=&$asm($line))) {
@@ -1443,6 +1468,7 @@ while(defined(my $line=<>)) {
 	    }
 	} else {
 	    printf "\t%s",$opcode->out();
+	}
 	}
     }
 

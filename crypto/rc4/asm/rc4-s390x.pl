@@ -8,10 +8,10 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # February 2009
@@ -162,7 +162,7 @@ $code.=<<___;
 	lm${g}	%r6,%r11,6*$SIZE_T($sp)
 	br	$rp
 .size	RC4,.-RC4
-.string	"RC4 for s390x, CRYPTOGAMS by <appro\@openssl.org>"
+.string	"RC4 for s390x, CRYPTOGAMS by <https://github.com/dot-asm>"
 
 ___
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -320,11 +320,12 @@ int EVP_CIPHER_get_type(const EVP_CIPHER *cipher)
 int evp_cipher_cache_constants(EVP_CIPHER *cipher)
 {
     int ok, aead = 0, custom_iv = 0, cts = 0, multiblock = 0, randkey = 0;
+    int encrypt_then_mac = 0;
     size_t ivlen = 0;
     size_t blksz = 0;
     size_t keylen = 0;
     unsigned int mode = 0;
-    OSSL_PARAM params[10];
+    OSSL_PARAM params[11];
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, &blksz);
     params[1] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &ivlen);
@@ -338,7 +339,9 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
                                          &multiblock);
     params[8] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_HAS_RAND_KEY,
                                          &randkey);
-    params[9] = OSSL_PARAM_construct_end();
+    params[9] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_ENCRYPT_THEN_MAC,
+                                         &encrypt_then_mac);
+    params[10] = OSSL_PARAM_construct_end();
     ok = evp_do_ciph_getparams(cipher, params) > 0;
     if (ok) {
         cipher->block_size = blksz;
@@ -357,6 +360,8 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
             cipher->flags |= EVP_CIPH_FLAG_CUSTOM_CIPHER;
         if (randkey)
             cipher->flags |= EVP_CIPH_RAND_KEY;
+        if (encrypt_then_mac)
+            cipher->flags |= EVP_CIPH_FLAG_ENC_THEN_MAC;
         if (OSSL_PARAM_locate_const(EVP_CIPHER_gettable_ctx_params(cipher),
                                     OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS))
             cipher->flags |= EVP_CIPH_FLAG_CUSTOM_ASN1;
@@ -371,7 +376,7 @@ int EVP_CIPHER_get_block_size(const EVP_CIPHER *cipher)
 
 int EVP_CIPHER_CTX_get_block_size(const EVP_CIPHER_CTX *ctx)
 {
-    return EVP_CIPHER_get_block_size(ctx->cipher);
+    return (ctx == NULL) ? 0 : EVP_CIPHER_get_block_size(ctx->cipher);
 }
 
 int EVP_CIPHER_impl_ctx_size(const EVP_CIPHER *e)
@@ -1193,6 +1198,7 @@ int EVP_PKEY_CTX_get_group_name(EVP_PKEY_CTX *ctx, char *name, size_t namelen)
         return -1;
     return 1;
 }
+#endif  /* !FIPS_MODULE */
 
 /*
  * evp_pkey_keygen() abstracts from the explicit use of B<EVP_PKEY_CTX>
@@ -1244,6 +1250,7 @@ EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
     return ret;
 }
 
+#if !defined(FIPS_MODULE)
 int EVP_CIPHER_CTX_set_algor_params(EVP_CIPHER_CTX *ctx, const X509_ALGOR *alg)
 {
     int ret = -1;                /* Assume the worst */

@@ -1,5 +1,5 @@
 /*
-* Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+* Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
 *
 * Licensed under the Apache License 2.0 (the "License").  You may not use
 * this file except in compliance with the License.  You can obtain a copy
@@ -252,6 +252,18 @@ int ossl_quic_lcidm_debug_add(QUIC_LCIDM *lcidm, void *opaque,
                               const QUIC_CONN_ID *lcid,
                               uint64_t seq_num);
 
+/*
+ * Obtain a local connection id which is not used yet.
+ * Returns 1 on succes, 0 on failure.
+ */
+int ossl_quic_lcidm_get_unused_cid(QUIC_LCIDM *lcidm, QUIC_CONN_ID *cid);
+
+/*
+ * Attempts to bind channel to connection id specified in `lcid`.
+ * This should be connection ID we generated during client validation.
+ */
+int ossl_quic_lcidm_bind_channel(QUIC_LCIDM *lcidm, void *opaque,
+                                 const QUIC_CONN_ID *lcid);
 # endif
 
 #endif

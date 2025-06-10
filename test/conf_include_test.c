@@ -59,7 +59,7 @@ static char *change_path(const char *file)
 
     ret = chdir(s);
     if (ret == 0)
-        new_config_name = strdup(last + DIRSEP_PRESERVE + 1);
+        new_config_name = OPENSSL_strdup(last + DIRSEP_PRESERVE + 1);
  err:
     OPENSSL_free(s);
     return new_config_name;

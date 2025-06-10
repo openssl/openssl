@@ -153,18 +153,28 @@ int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
 
 # define OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX 256
 
-static void *thread_local_storage[OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX];
+struct thread_local_storage_entry {
+    void *data;
+    uint8_t used;
+};
+
+static struct thread_local_storage_entry thread_local_storage[OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX];
 
 int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))
 {
-    static unsigned int thread_local_key = 0;
+    int entry_idx = 0;
 
-    if (thread_local_key >= OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX)
+    for (entry_idx = 0; entry_idx < OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX; entry_idx++) {
+        if (!thread_local_storage[entry_idx].used)
+            break;
+    }
+
+    if (entry_idx == OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX)
         return 0;
 
-    *key = thread_local_key++;
-
-    thread_local_storage[*key] = NULL;
+    *key = entry_idx;
+    thread_local_storage[*key].used = 1;
+    thread_local_storage[*key].data = NULL;
 
     return 1;
 }
@@ -174,7 +184,7 @@ void *CRYPTO_THREAD_get_local(CRYPTO_THREAD_LOCAL *key)
     if (*key >= OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX)
         return NULL;
 
-    return thread_local_storage[*key];
+    return thread_local_storage[*key].data;
 }
 
 int CRYPTO_THREAD_set_local(CRYPTO_THREAD_LOCAL *key, void *val)
@@ -182,13 +192,18 @@ int CRYPTO_THREAD_set_local(CRYPTO_THREAD_LOCAL *key, void *val)
     if (*key >= OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX)
         return 0;
 
-    thread_local_storage[*key] = val;
+    thread_local_storage[*key].data = val;
 
     return 1;
 }
 
 int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL *key)
 {
+    if (*key >= OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX)
+        return 0;
+
+    thread_local_storage[*key].used = 0;
+    thread_local_storage[*key].data = NULL;
     *key = OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX + 1;
     return 1;
 }

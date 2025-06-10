@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -12,7 +12,7 @@
 # derived from https://github.com/ARM-software/AArch64cryptolib, original
 # author Samuel Lee <Samuel.Lee@arm.com>. The module is, however, dual
 # licensed under OpenSSL and CRYPTOGAMS licenses depending on where you
-# obtain it. For further details see http://www.openssl.org/~appro/cryptogams/.
+# obtain it. For further details see https://github.com/dot-asm/cryptogams/.
 #========================================================================
 #
 # Approach - assume we don't want to reload constants, so reserve ~half of vector register file for constants
@@ -6035,7 +6035,8 @@ ___
 }
 
 $code.=<<___;
-.asciz  "GHASH for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.rodata
+.asciz  "GHASH for ARMv8, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align  2
 #endif
 ___

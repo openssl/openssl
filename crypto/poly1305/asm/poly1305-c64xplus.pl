@@ -8,10 +8,10 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # Poly1305 hash for C64x+.
@@ -323,7 +323,7 @@ ___
 }
 $code.=<<___;
 	.sect	.const
-	.cstring "Poly1305 for C64x+, CRYPTOGAMS by <appro\@openssl.org>"
+	.cstring "Poly1305 for C64x+, CRYPTOGAMS by <https://github.com/dot-asm>"
 	.align	4
 ___
 

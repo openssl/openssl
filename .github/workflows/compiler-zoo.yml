@@ -1,4 +1,4 @@
-# Copyright 2021-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -19,17 +19,11 @@ jobs:
       matrix:
         zoo: [
           {
-            cc: gcc-7,
-            distro: ubuntu-20.04
-          }, {
-            cc: gcc-8,
-            distro: ubuntu-20.04
-          }, {
             cc: gcc-9,
-            distro: ubuntu-20.04
+            distro: ubuntu-22.04
           }, {
             cc: gcc-10,
-            distro: ubuntu-20.04
+            distro: ubuntu-22.04
           }, {
             cc: gcc-11,
             distro: ubuntu-22.04
@@ -41,26 +35,11 @@ jobs:
             distro: ubuntu-22.04,
             gcc-ppa-name: ubuntu-toolchain-r/test
           }, {
-            cc: clang-6.0,
-            distro: ubuntu-20.04
-          }, {
-            cc: clang-7,
-            distro: ubuntu-20.04
-          }, {
-            cc: clang-8,
-            distro: ubuntu-20.04
-          }, {
-            cc: clang-9,
-            distro: ubuntu-20.04
-          }, {
-            cc: clang-10,
-            distro: ubuntu-20.04
-          }, {
             cc: clang-11,
-            distro: ubuntu-20.04
+            distro: ubuntu-22.04
           }, {
             cc: clang-12,
-            distro: ubuntu-20.04
+            distro: ubuntu-22.04
           }, {
             cc: clang-13,
             distro: ubuntu-22.04
@@ -124,8 +103,8 @@ jobs:
 
     - name: config
       run: |
-        CC=${{ matrix.zoo.cc }} ./config --banner=Configured no-shared \
-            -Wall -Werror enable-fips --strict-warnings
+        CC=${{ matrix.zoo.cc }} ./config --strict-warnings --banner=Configured \
+            no-shared enable-fips
 
     - name: config dump
       run: ./configdata.pm --dump

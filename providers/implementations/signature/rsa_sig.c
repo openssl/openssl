@@ -2023,7 +2023,7 @@ static int rsa_sigalg_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
                                                                         \
         return rsa_sigalg_signverify_init(vprsactx, vrsa,               \
                                           rsa_sigalg_set_ctx_params,    \
-                                          params, #MD,                  \
+                                          params, MD,                  \
                                           EVP_PKEY_OP_SIGN,             \
                                           RSA_PKCS1_PADDING,            \
                                           desc);                        \
@@ -2037,7 +2037,7 @@ static int rsa_sigalg_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
                                                                         \
         return rsa_sigalg_signverify_init(vprsactx, vrsa,               \
                                           rsa_sigalg_set_ctx_params,    \
-                                          params, #MD,                  \
+                                          params, MD,                  \
                                           EVP_PKEY_OP_SIGNMSG,          \
                                           RSA_PKCS1_PADDING,            \
                                           desc);                        \
@@ -2051,7 +2051,7 @@ static int rsa_sigalg_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
                                                                         \
         return rsa_sigalg_signverify_init(vprsactx, vrsa,               \
                                           rsa_sigalg_set_ctx_params,    \
-                                          params, #MD,                  \
+                                          params, MD,                  \
                                           EVP_PKEY_OP_VERIFY,           \
                                           RSA_PKCS1_PADDING,            \
                                           desc);                        \
@@ -2065,7 +2065,7 @@ static int rsa_sigalg_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
                                                                         \
         return rsa_sigalg_signverify_init(vprsactx, vrsa,               \
                                           rsa_sigalg_set_ctx_params,    \
-                                          params, #MD,                  \
+                                          params, MD,                  \
                                           EVP_PKEY_OP_VERIFYRECOVER,    \
                                           RSA_PKCS1_PADDING,            \
                                           desc);                        \
@@ -2079,7 +2079,7 @@ static int rsa_sigalg_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
                                                                         \
         return rsa_sigalg_signverify_init(vprsactx, vrsa,               \
                                           rsa_sigalg_set_ctx_params,    \
-                                          params, #MD,                  \
+                                          params, MD,                  \
                                           EVP_PKEY_OP_VERIFYMSG,        \
                                           RSA_PKCS1_PADDING,            \
                                           desc);                        \
@@ -2126,19 +2126,19 @@ static int rsa_sigalg_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     }
 
 #if !defined(OPENSSL_NO_RMD160) && !defined(FIPS_MODULE)
-IMPL_RSA_SIGALG(ripemd160, RIPEMD160);
+IMPL_RSA_SIGALG(ripemd160, "RIPEMD160");
 #endif
-IMPL_RSA_SIGALG(sha1, SHA1);
-IMPL_RSA_SIGALG(sha224, SHA2-224);
-IMPL_RSA_SIGALG(sha256, SHA2-256);
-IMPL_RSA_SIGALG(sha384, SHA2-384);
-IMPL_RSA_SIGALG(sha512, SHA2-512);
-IMPL_RSA_SIGALG(sha512_224, SHA2-512/224);
-IMPL_RSA_SIGALG(sha512_256, SHA2-512/256);
-IMPL_RSA_SIGALG(sha3_224, SHA3-224);
-IMPL_RSA_SIGALG(sha3_256, SHA3-256);
-IMPL_RSA_SIGALG(sha3_384, SHA3-384);
-IMPL_RSA_SIGALG(sha3_512, SHA3-512);
+IMPL_RSA_SIGALG(sha1, "SHA1");
+IMPL_RSA_SIGALG(sha224, "SHA2-224");
+IMPL_RSA_SIGALG(sha256, "SHA2-256");
+IMPL_RSA_SIGALG(sha384, "SHA2-384");
+IMPL_RSA_SIGALG(sha512, "SHA2-512");
+IMPL_RSA_SIGALG(sha512_224, "SHA2-512/224");
+IMPL_RSA_SIGALG(sha512_256, "SHA2-512/256");
+IMPL_RSA_SIGALG(sha3_224, "SHA3-224");
+IMPL_RSA_SIGALG(sha3_256, "SHA3-256");
+IMPL_RSA_SIGALG(sha3_384, "SHA3-384");
+IMPL_RSA_SIGALG(sha3_512, "SHA3-512");
 #if !defined(OPENSSL_NO_SM3) && !defined(FIPS_MODULE)
-IMPL_RSA_SIGALG(sm3, SM3);
+IMPL_RSA_SIGALG(sm3, "SM3");
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -235,7 +235,8 @@ static size_t get_entropy(PROV_DRBG *drbg, unsigned char **pout, int entropy,
      *       a warning in some static code analyzers, but it's
      *       intentional and correct here.
      */
-    bytes = drbg->parent_get_seed(drbg->parent, pout, drbg->strength,
+    bytes = drbg->parent_get_seed(drbg->parent, pout,
+                                  entropy > 0 ? entropy : (int) drbg->strength,
                                   min_len, max_len, prediction_resistance,
                                   (unsigned char *)&drbg, sizeof(drbg));
     ossl_drbg_unlock_parent(drbg);

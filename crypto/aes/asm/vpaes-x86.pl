@@ -52,7 +52,7 @@
 #	and +15% on Atom (as implied, over "hyper-threading-safe"
 #	code path).
 #
-#						<appro@openssl.org>
+#						<https://github.com/dot-asm>
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");

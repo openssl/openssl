@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Siemens AG 2018-2020
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -33,6 +33,11 @@ extern "C" {
 # define OPENSSL_HTTP_PROXY "HTTP_PROXY"
 # define OPENSSL_HTTPS_PROXY "HTTPS_PROXY"
 
+/* We want to have this even in case of OPENSSL_NO_HTTP */
+int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
+                   char **pport, int *pport_num,
+                   char **ppath, char **pquery, char **pfrag);
+
 # ifndef OPENSSL_NO_HTTP
 
 #  define OSSL_HTTP_DEFAULT_MAX_LINE_LEN (4 * 1024)
@@ -62,6 +67,8 @@ BIO *OSSL_HTTP_REQ_CTX_get0_mem_bio(const OSSL_HTTP_REQ_CTX *rctx);
 size_t OSSL_HTTP_REQ_CTX_get_resp_len(const OSSL_HTTP_REQ_CTX *rctx);
 void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
                                                unsigned long len);
+void OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines(OSSL_HTTP_REQ_CTX *rctx,
+                                                  size_t count);
 int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx);
 
 /* High-level HTTP API */
@@ -99,17 +106,11 @@ BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
 int OSSL_HTTP_close(OSSL_HTTP_REQ_CTX *rctx, int ok);
 
 /* Auxiliary functions */
-int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
-                   char **pport, int *pport_num,
-                   char **ppath, char **pquery, char **pfrag);
 int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
                         char **pport, int *pport_num,
                         char **ppath, char **pquery, char **pfrag);
 const char *OSSL_HTTP_adapt_proxy(const char *proxy, const char *no_proxy,
                                   const char *server, int use_ssl);
-
-void OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines(OSSL_HTTP_REQ_CTX *rctx,
-                                                  size_t count);
 
 # endif /* !defined(OPENSSL_NO_HTTP) */
 # ifdef  __cplusplus

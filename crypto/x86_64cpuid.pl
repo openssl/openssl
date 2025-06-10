@@ -27,14 +27,11 @@ open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
 				 ("%rdi","%rsi","%rdx","%rcx");	# Unix order
 
 print<<___;
+#include crypto/cryptlib.h
 .extern		OPENSSL_cpuid_setup
 .hidden		OPENSSL_cpuid_setup
-.section	.init
-	call	OPENSSL_cpuid_setup
-
 .hidden	OPENSSL_ia32cap_P
-.comm	OPENSSL_ia32cap_P,16,4
-
+.comm	OPENSSL_ia32cap_P,40,4	# <--Should match with internal/cryptlib.h OPENSSL_IA32CAP_P_MAX_INDEXES
 .text
 
 .globl	OPENSSL_atomic_add
@@ -192,6 +189,7 @@ OPENSSL_ia32_cpuid:
 	mov	\$7,%eax
 	xor	%ecx,%ecx
 	cpuid
+	movd	%eax,%xmm1		# put aside leaf 07H Max Sub-leaves
 	bt	\$26,%r9d		# check XSAVE bit, cleared on Knights
 	jc	.Lnotknights
 	and	\$0xfff7ffff,%ebx	# clear ADCX/ADOX flag
@@ -202,9 +200,31 @@ OPENSSL_ia32_cpuid:
 	jne	.Lnotskylakex
 	and	\$0xfffeffff,%ebx	# ~(1<<16)
 					# suppress AVX512F flag on Skylake-X
-.Lnotskylakex:
-	mov	%ebx,8(%rdi)		# save extended feature flags
-	mov	%ecx,12(%rdi)
+
+.Lnotskylakex:		# save extended feature flags
+	mov	%ebx,8(%rdi)		# save cpuid(EAX=0x7, ECX=0x0).EBX to OPENSSL_ia32cap_P[2]
+	mov	%ecx,12(%rdi)		# save cpuid(EAX=0x7, ECX=0x0).ECX to OPENSSL_ia32cap_P[3]
+	mov	%edx,16(%rdi)		# save cpuid(EAX=0x7, ECX=0x0).EDX to OPENSSL_ia32cap_P[4]
+
+	movd	%xmm1,%eax		# Restore leaf 07H Max Sub-leaves
+	cmp	\$0x1,%eax		# Do we have cpuid(EAX=0x7, ECX=0x1)?
+	jb .Lno_extended_info
+	mov	\$0x7,%eax
+	mov \$0x1,%ecx
+	cpuid		# cpuid(EAX=0x7, ECX=0x1)
+	mov	%eax,20(%rdi)		# save cpuid(EAX=0x7, ECX=0x1).EAX to OPENSSL_ia32cap_P[5]
+	mov	%edx,24(%rdi)		# save cpuid(EAX=0x7, ECX=0x1).EDX to OPENSSL_ia32cap_P[6]
+	mov	%ebx,28(%rdi)		# save cpuid(EAX=0x7, ECX=0x1).EBX to OPENSSL_ia32cap_P[7]
+	mov	%ecx,32(%rdi)		# save cpuid(EAX=0x7, ECX=0x1).ECX to OPENSSL_ia32cap_P[8]
+
+	and \$0x80000,%edx		# Mask cpuid(EAX=0x7, ECX=0x1).EDX bit 19 to detect AVX10 support
+	cmp \$0x0,%edx
+	je .Lno_extended_info
+	mov	\$0x24,%eax		# Have AVX10 Support, query for details
+	mov \$0x0,%ecx
+	cpuid		# cpuid(EAX=0x24, ECX=0x0) AVX10 Leaf
+	mov	%ebx,36(%rdi)		# save cpuid(EAX=0x24, ECX=0x0).EBX to OPENSSL_ia32cap_P[9]
+
 .Lno_extended_info:
 
 	bt	\$27,%r9d		# check OSXSAVE bit
@@ -223,6 +243,9 @@ OPENSSL_ia32_cpuid:
 	cmp	\$6,%eax
 	je	.Ldone
 .Lclear_avx:
+	andl	\$0xff7fffff,20(%rdi)   # ~(1<<23)
+									# clear AVXIFMA, which is VEX-encoded
+									# and requires YMM state support
 	mov	\$0xefffe7ff,%eax	# ~(1<<28|1<<12|1<<11)
 	and	%eax,%r9d		# clear AVX, FMA and AMD XOP bits
 	mov	\$0x3fdeffdf,%eax	# ~(1<<31|1<<30|1<<21|1<<16|1<<5)
@@ -313,63 +336,6 @@ CRYPTO_memcmp:
 .size	CRYPTO_memcmp,.-CRYPTO_memcmp
 ___
 
-print<<___ if (!$win64);
-.globl	OPENSSL_wipe_cpu
-.type	OPENSSL_wipe_cpu,\@abi-omnipotent
-.align	16
-OPENSSL_wipe_cpu:
-.cfi_startproc
-	endbranch
-	pxor	%xmm0,%xmm0
-	pxor	%xmm1,%xmm1
-	pxor	%xmm2,%xmm2
-	pxor	%xmm3,%xmm3
-	pxor	%xmm4,%xmm4
-	pxor	%xmm5,%xmm5
-	pxor	%xmm6,%xmm6
-	pxor	%xmm7,%xmm7
-	pxor	%xmm8,%xmm8
-	pxor	%xmm9,%xmm9
-	pxor	%xmm10,%xmm10
-	pxor	%xmm11,%xmm11
-	pxor	%xmm12,%xmm12
-	pxor	%xmm13,%xmm13
-	pxor	%xmm14,%xmm14
-	pxor	%xmm15,%xmm15
-	xorq	%rcx,%rcx
-	xorq	%rdx,%rdx
-	xorq	%rsi,%rsi
-	xorq	%rdi,%rdi
-	xorq	%r8,%r8
-	xorq	%r9,%r9
-	xorq	%r10,%r10
-	xorq	%r11,%r11
-	leaq	8(%rsp),%rax
-	ret
-.cfi_endproc
-.size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
-___
-print<<___ if ($win64);
-.globl	OPENSSL_wipe_cpu
-.type	OPENSSL_wipe_cpu,\@abi-omnipotent
-.align	16
-OPENSSL_wipe_cpu:
-	pxor	%xmm0,%xmm0
-	pxor	%xmm1,%xmm1
-	pxor	%xmm2,%xmm2
-	pxor	%xmm3,%xmm3
-	pxor	%xmm4,%xmm4
-	pxor	%xmm5,%xmm5
-	xorq	%rcx,%rcx
-	xorq	%rdx,%rdx
-	xorq	%r8,%r8
-	xorq	%r9,%r9
-	xorq	%r10,%r10
-	xorq	%r11,%r11
-	leaq	8(%rsp),%rax
-	ret
-.size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
-___
 {
 my $out="%r10";
 my $cnt="%rcx";

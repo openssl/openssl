@@ -32,6 +32,7 @@
 #include "prov/securitycheck.h"
 #include "internal/e_os.h"
 #include "internal/params.h"
+#include "internal/sizes.h"
 
 #define HKDF_MAXBUF 2048
 #define HKDF_MAXINFO (32*1024)
@@ -74,9 +75,16 @@ static int HKDF_Expand(const EVP_MD *evp_md,
     OSSL_PARAM_octet_string(OSSL_KDF_PARAM_KEY, NULL, 0),           \
     OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0)
 
-/* Gettable context parameters that are common across HKDF and the TLS KDF */
+/*
+ * Gettable context parameters that are common across HKDF and the TLS KDF.
+ *   OSSL_KDF_PARAM_KEY is not gettable because it is a secret value.
+ */
 #define HKDF_COMMON_GETTABLES                                       \
     OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),                   \
+    OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MODE, NULL, 0),           \
+    OSSL_PARAM_int(OSSL_KDF_PARAM_MODE, NULL),                      \
+    OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),         \
+    OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0),          \
     OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0)
 
 typedef struct {
@@ -128,7 +136,7 @@ static void kdf_hkdf_reset(void *vctx)
     void *provctx = ctx->provctx;
 
     ossl_prov_digest_reset(&ctx->digest);
-#ifdef FIPS_MODULE
+#ifdef OPENSSL_PEDANTIC_ZEROIZATION
     OPENSSL_clear_free(ctx->salt, ctx->salt_len);
 #else
     OPENSSL_free(ctx->salt);
@@ -307,13 +315,11 @@ static int hkdf_common_set_ctx_params(KDF_HKDF *ctx, const OSSL_PARAM params[])
     }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SALT)) != NULL) {
-        if (p->data_size != 0 && p->data != NULL) {
-            OPENSSL_free(ctx->salt);
-            ctx->salt = NULL;
-            if (!OSSL_PARAM_get_octet_string(p, (void **)&ctx->salt, 0,
-                                             &ctx->salt_len))
-                return 0;
-        }
+        OPENSSL_free(ctx->salt);
+        ctx->salt = NULL;
+        if (!OSSL_PARAM_get_octet_string(p, (void **)&ctx->salt, 0,
+                                         &ctx->salt_len))
+            return 0;
     }
 
     return 1;
@@ -372,6 +378,49 @@ static int hkdf_common_get_ctx_params(KDF_HKDF *ctx, OSSL_PARAM params[])
         if (sz == 0)
             return 0;
         if (!OSSL_PARAM_set_size_t(p, sz))
+            return 0;
+    }
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
+        const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+
+        if (md == NULL)
+            return 0;
+        else if (!OSSL_PARAM_set_utf8_string(p, EVP_MD_get0_name(md)))
+            return 0;
+    }
+
+    /* OSSL_KDF_PARAM_MODE has multiple parameter types, so look for all instances */
+    p = params;
+    while ((p = OSSL_PARAM_locate(p, OSSL_KDF_PARAM_MODE)) != NULL) {
+        if (p->data_type == OSSL_PARAM_UTF8_STRING) {
+            switch (ctx->mode) {
+            case EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND:
+                if (!OSSL_PARAM_set_utf8_string(p, "EXTRACT_AND_EXPAND"))
+                    return 0;
+                break;
+            case EVP_KDF_HKDF_MODE_EXTRACT_ONLY:
+                if (!OSSL_PARAM_set_utf8_string(p, "EXTRACT_ONLY"))
+                    return 0;
+                break;
+            case EVP_KDF_HKDF_MODE_EXPAND_ONLY:
+                if (!OSSL_PARAM_set_utf8_string(p, "EXPAND_ONLY"))
+                    return 0;
+                break;
+            default:
+                return 0;
+            }
+        } else if (p->data_type == OSSL_PARAM_INTEGER) {
+            if (!OSSL_PARAM_set_int(p, ctx->mode))
+                return 0;
+        }
+        p++;
+    }
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SALT)) != NULL) {
+        if (ctx->salt == NULL || ctx->salt_len == 0)
+            p->return_size = 0;
+        if (!OSSL_PARAM_set_octet_string(p, ctx->salt, ctx->salt_len))
             return 0;
     }
 

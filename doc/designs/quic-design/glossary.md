@@ -21,28 +21,28 @@ stream.
 **CC:** Congestion controller. Estimates network channel capacity and imposes
 limits on transmissions accordingly.
 
-**CFQ:** Control Frame Queue. Considered part of the FIFM, this implements
-the CFQ strategy for frame in flight management. For details, see FIFM
-design document.
+**CFQ:** Control Frame Queue. Considered part of the FIFM, this implements the
+GCR strategy for frame in flight management. For details, see FIFM design
+document.
 
 **Channel:** See `QUIC_CHANNEL`.
 
 **CID:** Connection ID.
 
-**CMPL:** The maximum number of bytes left to serialize another QUIC packet into
-the same datagram as one or more previous packets. This is just the MDPL minus
-the total size of all previous packets already serialized into to the same
-datagram.
+**CMPL:** Coalescing Maximum Packet Length. The maximum number of bytes left to
+serialize another QUIC packet into the same datagram as one or more previous
+packets. This is just the MDPL minus the total size of all previous packets
+already serialized into to the same datagram.
 
-**CMPPL:** The maximum number of payload bytes we can put in the payload of
-another QUIC packet which is to be coalesced with one or more previous QUIC
-packets and placed into the same datagram. Essentially, this is the room we have
-left for another packet payload.
+**CMPPL:** Coalescing Maximum Packet Payload Length. The maximum number of
+payload bytes we can put in the payload of another QUIC packet which is to be
+coalesced with one or more previous QUIC packets and placed into the same
+datagram. Essentially, this is the room we have left for another packet payload.
 
 **CSM:** Connection state machine. Refers to some aspects of a QUIC channel. Not
 implemented as an explicit state machine.
 
-**DCID:** Destination Connection ID. Found in most QUIC packet headers.
+**DCID:** Destination Connection ID. Found in all QUIC packet headers.
 
 **DEMUX:** The demuxer routes incoming packets to the correct connection QRX by
 DCID.
@@ -56,6 +56,11 @@ dispatches calls to libssl public APIs to the APL.
 
 **Engine:** See `QUIC_ENGINE`.
 
+**Event Leader:** The QSO which is is the top-level QSO in a hierarchy of QSOs,
+and which is responsible for event processing for all QSOs in that hierarchy.
+This may be a QLSO or QCSO. See [the server API
+design](server/quic-server-api.md).
+
 **FC:** Flow control. Comprises TXFC and RXFC.
 
 **FIFD:** Frame-in-flight dispatcher. Ties together the CFQ and TXPIM to handle
@@ -67,7 +72,7 @@ retransmitted if necessary. Comprises the CFQ, TXPIM and FIFD.
 
 **GCR:** Generic Control Frame Retransmission. A strategy for regenerating lost
 frames. Stores raw frame in a queue so that it can be retransmitted if lost. See
-FIFM design document for details.
+FIFM design document for details. Implemented by the CFQ.
 
 **Key epoch:** Non-negative number designating a generation of QUIC keys used to
 encrypt or decrypt packets, starting at 0. This increases by 1 when a QUIC key
@@ -100,27 +105,28 @@ is also the maximum size of a single QUIC packet if we place only one packet in
 a datagram. The MDPL may vary based on both local source IP and destination IP
 due to different path MTUs.
 
-**MinDPL:** In some cases we must ensure a datagram has a minimum size of a
-certain number of bytes. This does not need to be accomplished with a single
-packet, but we may need to add PADDING frames to the final packet added to a
-datagram in this case.
+**MinDPL:** Minimum Datagram Payload Length. In some cases we must ensure a
+datagram has a minimum size of a certain number of bytes. This does not need to
+be accomplished with a single packet, but we may need to add PADDING frames to
+the final packet added to a datagram in this case.
 
-**MinPL:** The minimum serialized packet length we are using while serializing a
-given packet. May often be 0. Used to meet MinDPL requirements, and thus equal
-to MinDPL minus the length of any packets we have already encoded into the
-datagram.
+**MinPL:** Minimum Packet Length. The minimum serialized packet length we are
+using while serializing a given packet. May often be 0. Used to meet MinDPL
+requirements, and thus equal to MinDPL minus the length of any packets we have
+already encoded into the datagram.
 
-**MinPPL:** The minimum number of bytes which must be placed into a packet
-payload in order to meet the MinPL minimum size when the packet is encoded.
+**MinPPL:** Minimum Packet Payload Length. The minimum number of bytes which
+must be placed into a packet payload in order to meet the MinPL minimum size
+when the packet is encoded.
 
 **MPL:** Maximum Packet Length. The maximum size of a fully encrypted and
 serialized QUIC packet in bytes in some given context. Typically equal to the
 MDPL and never greater than it.
 
-**MPPL:** The maximum number of plaintext bytes we can put in the payload of a
-QUIC packet. This is related to the MDPL by the size of the encoded header and
-the size of any AEAD authentication tag which will be attached to the
-ciphertext.
+**MPPL:** Maximum Packet Payload Length. The maximum number of plaintext bytes
+we can put in the payload of a QUIC packet. This is related to the MDPL by the
+size of the encoded header and the size of any AEAD authentication tag which
+will be attached to the ciphertext.
 
 **MSMT:** Multi-stream multi-thread. Refers to a type of multi-stream QUIC usage
 in which API calls can be made on different threads.
@@ -143,16 +149,35 @@ Initial packets. It is only used temporarily.
 
 **Port:** See `QUIC_PORT`.
 
+**Port Leader:** The QSO which is responsible for servicing a given UDP socket.
+This may be a QCSO or a QLSO. See [the server API design](server/quic-server-api.md).
+
 **PTO:** Probe timeout. See RFC 9000.
 
 **QC:** See `QUIC_CONNECTION`.
 
 **QCSO:** QUIC Connection SSL Object. This is an SSL object created using
-`SSL_new` using a QUIC method.
+`SSL_new` using a QUIC method, or by a QLSO.
 
 **QCTX**: QUIC Context. This is a utility object defined within the QUIC APL
-which helps to unwrap an SSL object pointer (a QCSO or QSSO) into the relevant
-structure pointers such as `QUIC_CONNECTION` or `QUIC_XSO`.
+which helps to unwrap an SSL object pointer (a QLSO, QCSO or QSSO) into the
+relevant structure pointers such as `QUIC_LISTENER`, `QUIC_CONNECTION` or
+`QUIC_XSO`.
+
+**QL:** See `QUIC_LISTENER`.
+
+**QLSO:** QUIC Listener SSL Object. An object created to represent a socket
+which can accept one or more incoming QUIC connections and/or make multiple
+outgoing QUIC connections. Parent of zero or more QCSOs.
+
+**QUIC_LISTENER:** QUIC listener. This is the APL object representing a QUIC
+listener (QLSO) in the APL.
+
+**QP:** See `QUIC_PORT`.
+
+**QUIC_PORT:** Internal object owning the network socket BIO which services a
+QLSO. This is the QUIC core object corresponding to the APL's `QUIC_LISTENER`
+object (a QLSO). Owns zero more `QUIC_CHANNEL` instances.
 
 **QRL:** QUIC record layer. Refers collectively to the QRX and QTX.
 
@@ -165,7 +190,7 @@ processing by upper layers.
 **QSM:** QUIC Streams Mapper. Manages internal `QUIC_STREAM` objects and maps
 IDs to those objects. Allows iteration of active streams.
 
-**QSO:** QUIC SSL Object. May be a QCSO or a QSSO.
+**QSO:** QUIC SSL Object. May be a QLSO, QCSO or QSSO.
 
 **QSSO:** QUIC Stream SSL Object. This is an SSL object which is subsidiary to a
 given QCSO, obtained using (for example) `SSL_new_stream` or
@@ -241,8 +266,9 @@ Causes a solicited TXKU. See also TXKU.
 
 **RXL:** RXE list. See RXE.
 
-**RCMPPL:** The number of bytes left in a packet whose payload we are currently
-forming. This is the CMPPL minus any bytes we have already put into the payload.
+**RCMPPL:** Remaining CMPPL. The number of bytes left in a packet whose payload
+we are currently forming. This is the CMPPL minus any bytes we have already put
+into the payload.
 
 **SCID:** Source Connection ID. Found in some QUIC packet headers.
 
@@ -259,7 +285,7 @@ transmitted, or not yet been acknowledged.
 
 **TA:** Thread assisted mode.
 
-**TPARAM:** Transport parameter.  See RFC 9000.
+**TPARAM:** Transport parameter. See RFC 9000.
 
 **TSERVER:** Test server. Internal test server object built around a channel.
 

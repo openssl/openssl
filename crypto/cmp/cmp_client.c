@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -656,7 +656,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                          ossl_unused int req_type,
                          ossl_unused int expected_type)
 {
-    EVP_PKEY *rkey = ossl_cmp_ctx_get0_newPubkey(ctx);
+    EVP_PKEY *rkey = NULL;
     int fail_info = 0; /* no failure */
     const char *txt = NULL;
     OSSL_CMP_CERTREPMESSAGE *crepmsg = NULL;
@@ -736,8 +736,10 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         ERR_add_error_data(1, "; cannot extract certificate from response");
         return 0;
     }
-    if (!ossl_cmp_ctx_set0_newCert(ctx, cert))
+    if (!ossl_cmp_ctx_set0_newCert(ctx, cert)) {
+        X509_free(cert);
         return 0;
+    }
 
     /*
      * if the CMP server returned certificates in the caPubs field, copy them
@@ -748,6 +750,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         return 0;
 
     subj = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
+    rkey = ossl_cmp_ctx_get0_newPubkey(ctx);
     if (rkey != NULL
         /* X509_check_private_key() also works if rkey is just public key */
             && !(X509_check_private_key(ctx->newCert, rkey))) {

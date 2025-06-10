@@ -74,7 +74,7 @@ TLSv1.2 is chosen.
 =head1 CERTIFICATES
 
 In order for a client to establish a connection to a server it must authenticate
-the identify of that server, i.e. it needs to confirm that the server is really
+the identity of that server, i.e. it needs to confirm that the server is really
 the server that it claims to be and not some imposter. In order to do this the
 server will send to the client a digital certificate (also commonly referred to
 as an X.509 certificate). The certificate contains various information about the

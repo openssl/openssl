@@ -26,6 +26,10 @@ algorithms can be activated, e.g., if suitable providers are missing.
 NULL may be returned if no memory could be allocated. Otherwise, a
 newly allocated string is always returned but it may have strlen == 0.
 
+=head1 HISTORY
+
+This function was added in OpenSSL 3.4.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -122,6 +122,8 @@ OSSL_FUNC_cipher_set_ctx_params_fn ossl_cipher_var_keylen_set_ctx_params;
 OSSL_FUNC_cipher_settable_ctx_params_fn ossl_cipher_var_keylen_settable_ctx_params;
 OSSL_FUNC_cipher_gettable_ctx_params_fn ossl_cipher_aead_gettable_ctx_params;
 OSSL_FUNC_cipher_settable_ctx_params_fn ossl_cipher_aead_settable_ctx_params;
+OSSL_FUNC_cipher_encrypt_skey_init_fn ossl_cipher_generic_skey_einit;
+OSSL_FUNC_cipher_decrypt_skey_init_fn ossl_cipher_generic_skey_dinit;
 
 int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                                    uint64_t flags,
@@ -155,6 +157,8 @@ const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_functions[] = {                \
       (void (*)(void))ossl_cipher_generic_gettable_ctx_params },               \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))ossl_cipher_generic_settable_ctx_params },                \
+    { OSSL_FUNC_CIPHER_ENCRYPT_SKEY_INIT, (void (*)(void))ossl_cipher_generic_skey_einit },\
+    { OSSL_FUNC_CIPHER_DECRYPT_SKEY_INIT, (void (*)(void))ossl_cipher_generic_skey_dinit },\
     OSSL_DISPATCH_END                                                          \
 };
 
@@ -182,6 +186,8 @@ const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_functions[] = {                \
       (void (*)(void))ossl_cipher_generic_gettable_ctx_params },               \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))ossl_cipher_var_keylen_settable_ctx_params },             \
+    { OSSL_FUNC_CIPHER_ENCRYPT_SKEY_INIT, (void (*)(void))ossl_cipher_generic_skey_einit },\
+    { OSSL_FUNC_CIPHER_DECRYPT_SKEY_INIT, (void (*)(void))ossl_cipher_generic_skey_dinit },\
     OSSL_DISPATCH_END                                                          \
 };
 
@@ -365,5 +371,9 @@ size_t ossl_cipher_fillblock(unsigned char *buf, size_t *buflen,
 int ossl_cipher_trailingdata(unsigned char *buf, size_t *buflen,
                              size_t blocksize,
                              const unsigned char **in, size_t *inlen);
+
+/* Machine generated TRIE based OSSL_PARAM name parsers */
+int ossl_cipher_aead_get_ctx_params_find_pidx(const char *);
+int ossl_cipher_aead_set_ctx_params_find_pidx(const char *);
 
 #endif

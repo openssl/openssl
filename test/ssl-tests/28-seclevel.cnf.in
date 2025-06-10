@@ -1,5 +1,5 @@
 # -*- mode: perl; -*-
-# Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -27,9 +27,11 @@ our @tests_ec = (
     {
         name => "SECLEVEL 4 with ED448 key",
         server => { "CipherString" => "DEFAULT:\@SECLEVEL=4",
+                    "Groups" => "?X448:?secp521r1",
                     "Certificate" => test_pem("server-ed448-cert.pem"),
                     "PrivateKey" => test_pem("server-ed448-key.pem") },
         client => { "CipherString" => "DEFAULT:\@SECLEVEL=4",
+                    "Groups" => "?X448:?secp521r1",
                     "VerifyCAFile" => test_pem("root-ed448-cert.pem") },
         test   => { "ExpectedResult" => "Success" },
     },
@@ -40,9 +42,11 @@ our @tests_ec = (
         # the order will be reversed and it will instead fail to load the key.
         name => "SECLEVEL 5 server with ED448 key",
         server => { "CipherString" => "DEFAULT:\@SECLEVEL=5",
+                    "Groups" => "?X448:?secp521r1",
                     "Certificate" => test_pem("server-ed448-cert.pem"),
                     "PrivateKey" => test_pem("server-ed448-key.pem") },
         client => { "CipherString" => "DEFAULT:\@SECLEVEL=4",
+                    "Groups" => "?X448:?secp521r1",
                     "VerifyCAFile" => test_pem("root-ed448-cert.pem") },
         test   => { "ExpectedResult" => "ServerFail" },
     },
@@ -51,9 +55,11 @@ our @tests_ec = (
         # doesn't have a usable signature algorithm for the certificate.
         name => "SECLEVEL 5 client with ED448 key",
         server => { "CipherString" => "DEFAULT:\@SECLEVEL=4",
+                    "Groups" => "?X448:?secp521r1",
                     "Certificate" => test_pem("server-ed448-cert.pem"),
                     "PrivateKey" => test_pem("server-ed448-key.pem") },
         client => { "CipherString" => "DEFAULT:\@SECLEVEL=5",
+                    "Groups" => "?X448:?secp521r1",
                     "VerifyCAFile" => test_pem("root-ed448-cert.pem") },
         test   => { "ExpectedResult" => "ServerFail" },
     }

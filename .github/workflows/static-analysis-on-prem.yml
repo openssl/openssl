@@ -17,6 +17,7 @@ permissions:
 
 jobs:
   coverity-analysis:
+    if: github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     container: quay.io/openssl-ci/coverity-analysis:2024.3.1
     steps:
@@ -28,7 +29,7 @@ jobs:
         chmod 0600 /auth_key_file.txt
     - uses: actions/checkout@v4
     - name: Config
-      run: CC=gcc ./config --banner=Configured --debug enable-fips enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests -DPEDANTIC
+      run: CC=gcc ./config --strict-warnings --banner=Configured --debug enable-fips enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests -DPEDANTIC
     - name: Config dump
       run: ./configdata.pm --dump
     - name: Make

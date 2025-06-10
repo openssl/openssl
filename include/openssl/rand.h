@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,9 +22,9 @@
 # include <openssl/randerr.h>
 # include <openssl/evp.h>
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 extern "C" {
-#endif
+# endif
 
 /*
  * Default security strength (in the sense of [NIST SP 800-90Ar1])
@@ -118,8 +118,14 @@ OSSL_DEPRECATEDIN_1_1_0 int RAND_event(UINT, WPARAM, LPARAM);
 #  endif
 # endif
 
-#ifdef  __cplusplus
+int RAND_set1_random_provider(OSSL_LIB_CTX *ctx, OSSL_PROVIDER *p);
+
+/* Which parameter to provider_random call */
+# define OSSL_PROV_RANDOM_PUBLIC     0
+# define OSSL_PROV_RANDOM_PRIVATE    1
+
+# ifdef  __cplusplus
 }
-#endif
+# endif
 
 #endif

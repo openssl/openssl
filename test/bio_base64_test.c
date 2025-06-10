@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -457,7 +457,7 @@ int setup_tests(void)
      *
      * Followed by zero, one or two additional bytes that may involve padding,
      * or else (truncation) 1, 2 or 3 bytes with missing padding.
-     * Only the the first four variants make sense with padding or truncated
+     * Only the first four variants make sense with padding or truncated
      * groups.
      *
      * With two types of underlying BIO

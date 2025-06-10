@@ -141,7 +141,7 @@ void RSA_free(RSA *r)
         return;
 
     CRYPTO_DOWN_REF(&r->references, &i);
-    REF_PRINT_COUNT("RSA", r);
+    REF_PRINT_COUNT("RSA", i, r);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
@@ -159,7 +159,7 @@ void RSA_free(RSA *r)
     CRYPTO_THREAD_lock_free(r->lock);
     CRYPTO_FREE_REF(&r->references);
 
-#ifdef FIPS_MODULE
+#ifdef OPENSSL_PEDANTIC_ZEROIZATION
     BN_clear_free(r->n);
     BN_clear_free(r->e);
 #else
@@ -193,7 +193,7 @@ int RSA_up_ref(RSA *r)
     if (CRYPTO_UP_REF(&r->references, &i) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("RSA", r);
+    REF_PRINT_COUNT("RSA", i, r);
     REF_ASSERT_ISNT(i < 2);
     return i > 1 ? 1 : 0;
 }

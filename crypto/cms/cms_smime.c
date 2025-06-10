@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -361,7 +361,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             if (si_chains == NULL)
                 goto err;
         }
-        if ((untrusted = CMS_get1_certs(cms)) == NULL)
+        if (!ossl_cms_get1_certs_ex(cms, &untrusted))
             goto err;
         if (sk_X509_num(certs) > 0
             && !ossl_x509_add_certs_new(&untrusted, certs,
@@ -370,7 +370,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             goto err;
 
         if ((flags & CMS_NOCRL) == 0
-            && (crls = CMS_get1_crls(cms)) == NULL)
+            && !ossl_cms_get1_crls_ex(cms, &crls))
             goto err;
         for (i = 0; i < scount; i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
@@ -753,7 +753,8 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
         }
         /* If we have a cert, try matching RecipientInfo, else try them all */
         else if (cert == NULL || !CMS_RecipientInfo_ktri_cert_cmp(ri, cert)) {
-            EVP_PKEY_up_ref(pk);
+            if (!EVP_PKEY_up_ref(pk))
+                return 0;
             CMS_RecipientInfo_set0_pkey(ri, pk);
             r = CMS_RecipientInfo_decrypt(cms, ri);
             CMS_RecipientInfo_set0_pkey(ri, NULL);

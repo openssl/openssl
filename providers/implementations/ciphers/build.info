@@ -90,6 +90,9 @@ SOURCE[$COMMON_GOAL]=\
         ciphercommon_gcm.c ciphercommon_gcm_hw.c \
         ciphercommon_ccm.c ciphercommon_ccm_hw.c
 
+INCLUDE[ciphercommon.o]=.
+INCLUDE[cipher_chacha20_poly1305.o]=.
+
 IF[{- !$disabled{des} -}]
   SOURCE[$TDES_1_GOAL]=cipher_tdes.c cipher_tdes_common.c cipher_tdes_hw.c
 ENDIF
@@ -105,6 +108,10 @@ SOURCE[$AES_GOAL]=\
         cipher_aes_wrp.c \
         cipher_aes_cbc_hmac_sha.c \
         cipher_aes_cbc_hmac_sha256_hw.c cipher_aes_cbc_hmac_sha1_hw.c \
+        cipher_aes_cbc_hmac_sha_etm.c \
+        cipher_aes_cbc_hmac_sha1_etm_hw.c \
+        cipher_aes_cbc_hmac_sha256_etm_hw.c \
+        cipher_aes_cbc_hmac_sha512_etm_hw.c \
         cipher_cts.c
 DEFINE[$AES_GOAL]=$AESXTSDEF
 

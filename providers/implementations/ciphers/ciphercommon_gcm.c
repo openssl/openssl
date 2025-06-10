@@ -146,11 +146,9 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     OSSL_PARAM *p;
     size_t sz;
-    int type;
 
-    for (p = params; p->key != NULL; p++) {
-        type = ossl_param_find_pidx(p->key);
-        switch (type) {
+    for (p = params; p->key != NULL; p++)
+        switch (ossl_cipher_aead_get_ctx_params_find_pidx(p->key)) {
         default:
             break;
 
@@ -187,8 +185,7 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
                 ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
                 return 0;
             }
-            if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen)
-                && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)) {
+            if (!OSSL_PARAM_set_octet_string_or_ptr(p, ctx->iv, ctx->ivlen)) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
                 return 0;
             }
@@ -201,8 +198,7 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
                 ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
                 return 0;
             }
-            if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen)
-                && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)) {
+            if (!OSSL_PARAM_set_octet_string_or_ptr(p, ctx->iv, ctx->ivlen)) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
                 return 0;
             }
@@ -240,7 +236,6 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
             if (!OSSL_PARAM_set_uint(p, ctx->iv_gen_rand))
                 return 0;
         }
-    }
     return 1;
 }
 
@@ -250,14 +245,12 @@ int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     size_t sz;
     void *vp;
-    int type;
 
     if (ossl_param_is_empty(params))
         return 1;
 
-    for (p = params; p->key != NULL; p++) {
-        type = ossl_param_find_pidx(p->key);
-        switch (type) {
+    for (p = params; p->key != NULL; p++)
+        switch (ossl_cipher_aead_set_ctx_params_find_pidx(p->key)) {
         default:
             break;
 
@@ -322,8 +315,6 @@ int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                 return 0;
             break;
         }
-    }
-
     return 1;
 }
 

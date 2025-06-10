@@ -29,7 +29,7 @@ Not applicable.
 
 =head1 HISTORY
 
-The macros described here were added in OpenSSL 3.0.
+These macro functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

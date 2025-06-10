@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -292,6 +292,7 @@ struct pkcs8_priv_key_info_st {
     X509_ALGOR *pkeyalg;
     ASN1_OCTET_STRING *pkey;
     STACK_OF(X509_ATTRIBUTE) *attributes;
+    ASN1_OCTET_STRING *kpub;
 };
 
 struct X509_sig_st {
@@ -363,6 +364,7 @@ ECX_KEY *ossl_d2i_X448_PUBKEY(ECX_KEY **a,
                               const unsigned char **pp, long length);
 int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp);
 # endif /* OPENSSL_NO_EC */
+
 EVP_PKEY *ossl_d2i_PUBKEY_legacy(EVP_PKEY **a, const unsigned char **pp,
                                  long length);
 int ossl_x509_check_private_key(const EVP_PKEY *k, const EVP_PKEY *pkey);

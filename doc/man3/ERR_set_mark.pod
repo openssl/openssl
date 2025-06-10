@@ -46,11 +46,12 @@ ERR_pop() returns 1 if an error was popped or 0 if the error stack was empty.
 
 =head1 HISTORY
 
+ERR_count_to_mark() was added in OpenSSL 3.2.
 ERR_pop() was added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 
-Copyright 2003-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2003-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

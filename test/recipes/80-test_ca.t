@@ -21,9 +21,7 @@ setup("test_ca");
 $ENV{OPENSSL} = cmdstr(app(["openssl"]), display => 1);
 
 my $cnf = srctop_file("test","ca-and-certs.cnf");
-my $std_openssl_cnf = '"'
-    . srctop_file("apps", $^O eq "VMS" ? "openssl-vms.cnf" : "openssl.cnf")
-    . '"';
+my $std_openssl_cnf = srctop_file("apps", $^O eq "VMS" ? "openssl-vms.cnf" : "openssl.cnf");
 
 sub src_file {
     return srctop_file("test", "certs", shift);
@@ -40,14 +38,14 @@ require_ok(srctop_file("test", "recipes", "tconversion.pl"));
      $ENV{OPENSSL_CONFIG} = qq(-config "$cnf");
      skip "failed creating CA structure", 4
          if !ok(run(perlapp(["CA.pl","-newca",
-                             "-extra-req", "-key $cakey"], stdin => undef)),
+                             "-extra-req", qq{-key "$cakey"}], stdin => undef)),
                 'creating CA structure');
 
      my $eekey = src_file("ee-key.pem");
      $ENV{OPENSSL_CONFIG} = qq(-config "$cnf");
      skip "failed creating new certificate request", 3
          if !ok(run(perlapp(["CA.pl","-newreq",
-                             '-extra-req', "-outform DER -section userreq -key $eekey"])),
+                             '-extra-req', qq{-outform DER -section userreq -key "$eekey"}])),
                 'creating certificate request');
      $ENV{OPENSSL_CONFIG} = qq(-rand_serial -inform DER -config "$std_openssl_cnf");
      skip "failed to sign certificate request", 2
@@ -62,7 +60,8 @@ require_ok(srctop_file("test", "recipes", "tconversion.pl"));
 
      my $eekey2 = src_file("ee-key-3072.pem");
      $ENV{OPENSSL_CONFIG} = qq(-config "$cnf");
-     ok(run(perlapp(["CA.pl", "-precert", '-extra-req', "-section userreq -key $eekey2"], stderr => undef)),
+     ok(run(perlapp(["CA.pl", "-precert",
+                     '-extra-req', qq{-section userreq -key "$eekey2"}], stderr => undef)),
         'creating new pre-certificate');
 }
 

@@ -102,6 +102,7 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 
 # define ARM_CPU_IMP_ARM           0x41
 # define HISI_CPU_IMP              0x48
+# define ARM_CPU_IMP_QCOMM         0x51
 # define ARM_CPU_IMP_APPLE         0x61
 # define ARM_CPU_IMP_MICROSOFT     0x6D
 # define ARM_CPU_IMP_AMPERE        0xC0
@@ -112,6 +113,10 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 # define ARM_CPU_PART_N2           0xD49
 # define HISI_CPU_PART_KP920       0xD01
 # define ARM_CPU_PART_V2           0xD4F
+# define ARM_CPU_PART_N3           0xD8E
+# define ARM_CPU_PART_V3           0xD84
+
+# define QCOM_CPU_PART_ORYON_X1    0x001
 
 # define APPLE_CPU_PART_M1_ICESTORM         0x022
 # define APPLE_CPU_PART_M1_FIRESTORM        0x023

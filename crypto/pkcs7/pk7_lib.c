@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -28,6 +28,11 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
     /* NOTE(emilia): does not support detached digested data. */
     case PKCS7_OP_SET_DETACHED_SIGNATURE:
         if (nid == NID_pkcs7_signed) {
+            if (p7->d.sign == NULL) {
+                ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
+                ret = 0;
+                break;
+            }
             ret = p7->detached = (int)larg;
             if (ret && PKCS7_type_is_data(p7->d.sign->contents)) {
                 ASN1_OCTET_STRING *os;
@@ -294,7 +299,8 @@ int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
         return 0;
     }
 
-    X509_CRL_up_ref(crl);
+    if (!X509_CRL_up_ref(crl))
+        return 0;
     if (!sk_X509_CRL_push(*sk, crl)) {
         X509_CRL_free(crl);
         return 0;
@@ -358,7 +364,9 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
         return 0;
 
     /* lets keep the pkey around for a while */
-    EVP_PKEY_up_ref(pkey);
+    if (!EVP_PKEY_up_ref(pkey))
+        return 0;
+
     p7i->pkey = pkey;
 
     /* Set the algorithms */
@@ -658,7 +666,9 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
         goto err;
     }
 finished:
-    X509_up_ref(x509);
+    if (!X509_up_ref(x509))
+        goto err;
+
     p7i->cert = x509;
 
     return 1;

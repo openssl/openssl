@@ -112,6 +112,8 @@ L<ssl(7)>, L<SSL_get_error(3)>
 The SSL_want_client_hello_cb() function and the SSL_CLIENT_HELLO_CB return value
 were added in OpenSSL 1.1.1.
 
+SSL_want_retry_verify() was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2001-2023 The OpenSSL Project Authors. All Rights Reserved.

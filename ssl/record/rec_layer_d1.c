@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,7 @@
 #include "record_local.h"
 #include "internal/packet.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 {
@@ -435,6 +436,17 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
 #endif
                 sc->shutdown |= SSL_RECEIVED_SHUTDOWN;
                 return 0;
+            } else if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
+                /*
+                 * This is a warning but we receive it if we requested
+                 * renegotiation and the peer denied it. Terminate with a fatal
+                 * alert because if the application tried to renegotiate it
+                 * presumably had a good reason and expects it to succeed. In
+                 * the future we might have a renegotiation where we don't care
+                 * if the peer refused it where we carry on.
+                 */
+                SSLfatal(sc, SSL_AD_HANDSHAKE_FAILURE, SSL_R_NO_RENEGOTIATION);
+                return -1;
             }
         } else if (alert_level == SSL3_AL_FATAL) {
             sc->rwstate = SSL_NOTHING;

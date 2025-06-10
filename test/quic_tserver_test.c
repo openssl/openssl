@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -166,7 +166,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
         goto err;
 
     if (use_fake_time)
-        if (!TEST_true(ossl_quic_conn_set_override_now_cb(c_ssl, fake_now, NULL)))
+        if (!TEST_true(ossl_quic_set_override_now_cb(c_ssl, fake_now, NULL)))
             goto err;
 
     /* 0 is a success for SSL_set_alpn_protos() */
@@ -211,8 +211,21 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
             if (!TEST_true(ret == 1 || is_want(c_ssl, ret)))
                 goto err;
 
-            if (ret == 1)
+            if (ret == 1) {
                 c_connected = 1;
+            } else {
+                /*
+                 * keep timer ticking to keep handshake running.
+                 * The timer is important for calculation of ping deadline.
+                 * If things stall for whatever reason we at least send
+                 * ACK eliciting ping to let peer know we are here ready
+                 * to hear back.
+                 */
+                if (!TEST_true(CRYPTO_THREAD_write_lock(fake_time_lock)))
+                    goto err;
+                fake_time = ossl_time_add(fake_time, ossl_ms2time(100));
+                CRYPTO_THREAD_unlock(fake_time_lock);
+            }
         }
 
         if (c_connected && !c_write_done) {

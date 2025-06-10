@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -48,13 +48,18 @@ static void *get_tmp_evp_method_store(void *data)
 {
     struct evp_method_data_st *methdata = data;
 
-    if (methdata->tmp_store == NULL)
+    if (methdata->tmp_store == NULL) {
         methdata->tmp_store = ossl_method_store_new(methdata->libctx);
+        OSSL_TRACE1(QUERY, "Allocating a new tmp_store %p\n", (void *)methdata->tmp_store);
+    } else {
+        OSSL_TRACE1(QUERY, "Using the existing tmp_store %p\n", (void *)methdata->tmp_store);
+    }
     return methdata->tmp_store;
 }
 
  static void dealloc_tmp_evp_method_store(void *store)
 {
+    OSSL_TRACE1(QUERY, "Deallocating the tmp_store %p\n", store);
     if (store != NULL)
         ossl_method_store_free(store);
 }
@@ -184,10 +189,15 @@ static int put_evp_method_in_store(void *store, void *method,
         || (meth_id = evp_method_id(name_id, methdata->operation_id)) == 0)
         return 0;
 
+    OSSL_TRACE1(QUERY, "put_evp_method_in_store: original store: %p\n", store);
     if (store == NULL
         && (store = get_evp_method_store(methdata->libctx)) == NULL)
         return 0;
 
+    OSSL_TRACE5(QUERY,
+                "put_evp_method_in_store: "
+                "store: %p, names: %s, operation_id %d, method_id: %d, properties: %s\n",
+                store, names, methdata->operation_id, meth_id, propdef ? propdef : "<null>");
     return ossl_method_store_add(store, prov, meth_id, propdef, method,
                                  methdata->refcnt_up_method,
                                  methdata->destruct_method);
@@ -240,7 +250,7 @@ static void destruct_evp_method(void *method, void *data)
 static void *
 inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                         OSSL_PROVIDER *prov, int operation_id,
-                        const char *name, const char *properties,
+                        const char *name, ossl_unused const char *properties,
                         void *(*new_method)(int name_id,
                                             const OSSL_ALGORITHM *algodef,
                                             OSSL_PROVIDER *prov),
@@ -249,7 +259,17 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
 {
     OSSL_METHOD_STORE *store = get_evp_method_store(methdata->libctx);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(methdata->libctx);
+#ifdef FIPS_MODULE
+    /*
+     * The FIPS provider has its own internal library context where only it
+     * is loaded.  Consequently, property queries aren't relevant because
+     * there is only one fetchable algorithm and it is assumed that the
+     * FIPS-ness is handled by the using algorithm.
+     */
+    const char *const propq = "";
+#else
     const char *const propq = properties != NULL ? properties : "";
+#endif  /* FIPS_MODULE */
     uint32_t meth_id = 0;
     void *method = NULL;
     int unsupported, name_id;
@@ -357,6 +377,11 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                        ossl_lib_ctx_get_descriptor(methdata->libctx),
                        name == NULL ? "<null>" : name, name_id,
                        properties == NULL ? "<null>" : properties);
+    } else {
+        OSSL_TRACE4(QUERY, "%s, Algorithm (%s : %d), Properties (%s)\n",
+                    ossl_lib_ctx_get_descriptor(methdata->libctx),
+                    name == NULL ? "<null>" : name, name_id,
+                    properties == NULL ? "<null>" : properties);
     }
 
     return method;

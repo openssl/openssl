@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -88,30 +88,31 @@ int test_readstanza(STANZA *s)
     PAIR *pp = s->pairs;
     char *p, *equals, *key;
     const char *value;
+    static char buff[131072];
 
-    for (s->numpairs = 0; BIO_gets(s->fp, s->buff, sizeof(s->buff)); ) {
+    for (s->numpairs = 0; BIO_gets(s->fp, buff, sizeof(buff)); ) {
         s->curr++;
-        if (!TEST_ptr(p = strchr(s->buff, '\n'))) {
+        if (!TEST_ptr(p = strchr(buff, '\n'))) {
             TEST_info("Line %d too long", s->curr);
             return 0;
         }
         *p = '\0';
 
         /* Blank line marks end of tests. */
-        if (s->buff[0] == '\0')
+        if (buff[0] == '\0')
             break;
 
         /* Lines starting with a pound sign are ignored. */
-        if (s->buff[0] == '#')
+        if (buff[0] == '#')
             continue;
 
         /* Parse into key=value */
-        if (!TEST_ptr(equals = strchr(s->buff, '='))) {
+        if (!TEST_ptr(equals = strchr(buff, '='))) {
             TEST_info("Missing = at line %d\n", s->curr);
             return 0;
         }
         *equals++ = '\0';
-        if (!TEST_ptr(key = strip_spaces(s->buff))) {
+        if (!TEST_ptr(key = strip_spaces(buff))) {
             TEST_info("Empty field at line %d\n", s->curr);
             return 0;
         }

@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2017-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -7,10 +7,10 @@
 # https://www.openssl.org/source/license.html
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # Keccak-1600 for ARMv8.
@@ -82,7 +82,7 @@ my @rhotates = ([  0,  1, 62, 28, 27 ],
 $code.=<<___;
 #include "arm_arch.h"
 
-.text
+.rodata
 
 .align 8	// strategic alignment and padding that allows to use
 		// address value as loop termination condition...
@@ -123,11 +123,14 @@ my @A = map([ "x$_", "x".($_+1), "x".($_+2), "x".($_+3), "x".($_+4) ],
 my @C = map("x$_", (26,27,28,30));
 
 $code.=<<___;
+.text
+
 .type	KeccakF1600_int,%function
 .align	5
 KeccakF1600_int:
 	AARCH64_SIGN_LINK_REGISTER
-	adr	$C[2],iotas
+	adrp	$C[2],iotas
+	add	$C[2],$C[2],:lo12:iotas
 	stp	$C[2],x30,[sp,#16]		// 32 bytes on top are mine
 	b	.Loop
 .align	4
@@ -556,7 +559,8 @@ $code.=<<___;
 .align	5
 KeccakF1600_ce:
 	mov	x9,#24
-	adr	x10,iotas
+	adrp	x10,iotas
+	add	x10,x10,:lo12:iotas
 	b	.Loop_ce
 .align	4
 .Loop_ce:
@@ -849,7 +853,7 @@ SHA3_squeeze_cext:
 ___
 }								}}}
 $code.=<<___;
-.asciz	"Keccak-1600 absorb and squeeze for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Keccak-1600 absorb and squeeze for ARMv8, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 {   my  %opcode = (

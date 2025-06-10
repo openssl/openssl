@@ -223,7 +223,8 @@ BIO_set_conn_int_port(), BIO_get_conn_int_port(), BIO_set_conn_ip(), and BIO_get
 were removed in OpenSSL 1.1.0.
 Use BIO_set_conn_address() and BIO_get_conn_address() instead.
 
-Connect BIOs support BIO_gets() since OpenSSL 3.2.
+Connect BIOs support BIO_gets(), BIO_get0_dgram_bio(), BIO_get_sock_type(),
+BIO_set_sock_type() were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

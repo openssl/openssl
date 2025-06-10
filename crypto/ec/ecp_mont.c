@@ -258,7 +258,7 @@ int ossl_ec_GFp_mont_field_inv(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a
 
     ret = 1;
 
-  err:
+ err:
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     return ret;

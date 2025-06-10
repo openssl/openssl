@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 #include <openssl/safestack.h>
 #include <openssl/encoder.h>
 #include <openssl/decoder.h>
+#include "crypto/decoder.h"
 #include "internal/cryptlib.h"
 #include "internal/passphrase.h"
 #include "internal/property.h"
@@ -156,6 +157,9 @@ struct ossl_decoder_ctx_st {
 
     /* For any function that needs a passphrase reader */
     struct ossl_passphrase_data_st pwdata;
+
+    /* Signal that further processing should not continue. */
+    int harderr;
 };
 
 const OSSL_PROPERTY_LIST *

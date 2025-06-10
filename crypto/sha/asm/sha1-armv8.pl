@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2014-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2014-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -8,10 +8,10 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # SHA1 for ARMv8.
@@ -259,7 +259,8 @@ sha1_block_armv8:
 	stp	x29,x30,[sp,#-16]!
 	add	x29,sp,#0
 
-	adr	x4,.Lconst
+	adrp	x4,.Lconst
+	add	x4,x4,:lo12:.Lconst
 	eor	$E,$E,$E
 	ld1.32	{$ABCD},[$ctx],#16
 	ld1.32	{$E}[0],[$ctx]
@@ -319,13 +320,16 @@ $code.=<<___;
 	ldr	x29,[sp],#16
 	ret
 .size	sha1_block_armv8,.-sha1_block_armv8
+
+.rodata
+
 .align	6
 .Lconst:
 .long	0x5a827999,0x5a827999,0x5a827999,0x5a827999	//K_00_19
 .long	0x6ed9eba1,0x6ed9eba1,0x6ed9eba1,0x6ed9eba1	//K_20_39
 .long	0x8f1bbcdc,0x8f1bbcdc,0x8f1bbcdc,0x8f1bbcdc	//K_40_59
 .long	0xca62c1d6,0xca62c1d6,0xca62c1d6,0xca62c1d6	//K_60_79
-.asciz	"SHA1 block transform for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"SHA1 block transform for ARMv8, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	2
 ___
 }}}

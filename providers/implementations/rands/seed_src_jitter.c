@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -197,8 +197,13 @@ static int jitter_generate(void *vseed, unsigned char *out, size_t outlen,
     /* Get entropy from jitter entropy library. */
     entropy_available = ossl_prov_acquire_entropy_from_jitter(s, pool);
 
-    if (entropy_available > 0)
+    if (entropy_available > 0) {
+        if (!ossl_rand_pool_adin_mix_in(pool, adin, adin_len)) {
+            ossl_rand_pool_free(pool);
+            return 0;
+        }
         memcpy(out, ossl_rand_pool_buffer(pool), ossl_rand_pool_length(pool));
+    }
 
     ossl_rand_pool_free(pool);
     return entropy_available > 0;
@@ -267,7 +272,6 @@ static size_t jitter_get_seed(void *vseed, unsigned char **pout,
 {
     size_t ret = 0;
     size_t entropy_available = 0;
-    size_t i;
     RAND_POOL *pool;
     PROV_JITTER *s = (PROV_JITTER *)vseed;
 
@@ -280,19 +284,34 @@ static size_t jitter_get_seed(void *vseed, unsigned char **pout,
     /* Get entropy from jitter entropy library. */
     entropy_available = ossl_prov_acquire_entropy_from_jitter(s, pool);
 
-    if (entropy_available > 0) {
+    if (entropy_available > 0
+        && ossl_rand_pool_adin_mix_in(pool, adin, adin_len)) {
         ret = ossl_rand_pool_length(pool);
         *pout = ossl_rand_pool_detach(pool);
-
-        /* xor the additional data into the output */
-        for (i = 0; i < adin_len; ++i)
-            (*pout)[i % ret] ^= adin[i];
     } else {
         ERR_raise(ERR_LIB_PROV, PROV_R_ENTROPY_SOURCE_STRENGTH_TOO_WEAK);
     }
     ossl_rand_pool_free(pool);
     return ret;
 }
+
+# ifndef OPENSSL_NO_FIPS_JITTER
+size_t ossl_rand_jitter_get_seed(unsigned char **pout, int entropy, size_t min_len, size_t max_len)
+{
+    size_t ret = 0;
+    OSSL_PARAM params[1] = { OSSL_PARAM_END };
+    PROV_JITTER *s = jitter_new(NULL, NULL, NULL);
+
+    if (s == NULL)
+        return ret;
+    if (!jitter_instantiate(s, 0, 0, NULL, 0, params))
+        goto end;
+    ret = jitter_get_seed(s, pout, entropy, min_len, max_len, 0, NULL, 0);
+ end:
+    jitter_free(s);
+    return ret;
+}
+# endif
 
 static void jitter_clear_seed(ossl_unused void *vdrbg,
                               unsigned char *out, size_t outlen)

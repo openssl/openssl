@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -39,6 +39,8 @@ static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *libprov = NULL;
 static STACK_OF(OPENSSL_STRING) *cipher_names = NULL;
+static int is_fips = 0;
+static int is_fips_lt_3_5 = 0;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -485,7 +487,8 @@ static int test_cipher_reinit_partialupdate(int test_id)
 
     /* skip any ciphers that don't allow partial updates */
     if (((EVP_CIPHER_get_flags(cipher)
-          & (EVP_CIPH_FLAG_CTS | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) != 0)
+          & (EVP_CIPH_FLAG_CTS | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK |
+             EVP_CIPH_FLAG_ENC_THEN_MAC)) != 0)
         || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_CCM_MODE
         || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE
         || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_WRAP_MODE) {
@@ -684,9 +687,13 @@ static int kem_rsa_params(void)
         && TEST_int_eq(EVP_PKEY_decapsulate(pubctx, secret, &secretlen, ct,
                                             sizeof(ct)), 0)
         && TEST_uchar_eq(secret[0], 0)
-        /* Test encapsulate fails if the mode is not set */
+        /* Unless older FIPS, test encapsulate succeeds even if the mode is not set */
         && TEST_int_eq(EVP_PKEY_encapsulate_init(pubctx, NULL), 1)
-        && TEST_int_eq(EVP_PKEY_encapsulate(pubctx, ct, &ctlen, secret, &secretlen), -2)
+        && (is_fips_lt_3_5 ||
+            (TEST_int_eq(EVP_PKEY_encapsulate(pubctx, NULL, &ctlen, NULL, &secretlen), 1)
+             && TEST_true(ctlen <= sizeof(ct))
+             && TEST_true(secretlen <= sizeof(secret))
+             && TEST_int_eq(EVP_PKEY_encapsulate(pubctx, ct, &ctlen, secret, &secretlen), 1)))
         /* Test setting a bad kem ops fail */
         && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(pubctx, "RSA"), 0)
         && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(pubctx, NULL), 0)
@@ -798,9 +805,13 @@ int setup_tests(void)
 
     ADD_TEST(test_evp_cipher_api_safety);
 
+    if (strcmp(prov_name, "fips") == 0)
+        is_fips = 1;
+
+    is_fips_lt_3_5 = is_fips && fips_provider_version_lt(libctx, 3, 5, 0);
+
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DH)
-    if (strcmp(prov_name, "fips") != 0
-            || fips_provider_version_lt(libctx, 3, 4, 0))
+    if (!is_fips || fips_provider_version_lt(libctx, 3, 4, 0))
         ADD_ALL_TESTS(test_dsa_param_keygen, 3 * 3 * 3);
 #endif
 #ifndef OPENSSL_NO_DH

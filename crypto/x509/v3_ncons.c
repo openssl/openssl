@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2003-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,7 @@
 #include "crypto/asn1.h"
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
+#include <openssl/http.h>
 #include <openssl/x509v3.h>
 #include <openssl/bn.h>
 
@@ -782,50 +783,57 @@ static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
 {
     const char *baseptr = (char *)base->data;
-    const char *hostptr = (char *)uri->data;
-    const char *p = ia5memchr(uri, (char *)uri->data, ':');
+    char *uri_copy;
+    char *scheme;
+    char *host;
     int hostlen;
+    int ret;
 
-    /* Check for foo:// and skip past it */
-    if (p == NULL
-            || IA5_OFFSET_LEN(uri, p) < 3
-            || p[1] != '/'
-            || p[2] != '/')
+    if ((uri_copy = OPENSSL_strndup((const char *)uri->data, uri->length)) == NULL)
+        return X509_V_ERR_UNSPECIFIED;
+
+    if (!OSSL_parse_url(uri_copy, &scheme, NULL, &host, NULL, NULL, NULL, NULL, NULL)) {
+        OPENSSL_free(uri_copy);
         return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
-    hostptr = p + 3;
+    }
 
-    /* Determine length of hostname part of URI */
+    /* Make sure the scheme is there */
+    if (scheme == NULL || *scheme == '\0') {
+        ERR_raise_data(ERR_LIB_X509V3, X509_V_ERR_UNSUPPORTED_NAME_SYNTAX,
+                       "x509: missing scheme in URI: %s\n", uri_copy);
+        OPENSSL_free(uri_copy);
+        ret = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+        goto end;
+    }
 
-    /* Look for a port indicator as end of hostname first */
+    /* We don't need these anymore */
+    OPENSSL_free(scheme);
+    OPENSSL_free(uri_copy);
 
-    p = ia5memchr(uri, hostptr, ':');
-    /* Otherwise look for trailing slash */
-    if (p == NULL)
-        p = ia5memchr(uri, hostptr, '/');
-
-    if (p == NULL)
-        hostlen = IA5_OFFSET_LEN(uri, hostptr);
-    else
-        hostlen = p - hostptr;
-
-    if (hostlen == 0)
-        return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+    hostlen = strlen(host);
 
     /* Special case: initial '.' is RHS match */
     if (base->length > 0 && *baseptr == '.') {
         if (hostlen > base->length) {
-            p = hostptr + hostlen - base->length;
-            if (ia5ncasecmp(p, baseptr, base->length) == 0)
-                return X509_V_OK;
+            if (ia5ncasecmp(host + hostlen - base->length, baseptr, base->length) == 0) {
+                ret = X509_V_OK;
+                goto end;
+            }
         }
-        return X509_V_ERR_PERMITTED_VIOLATION;
+        ret = X509_V_ERR_PERMITTED_VIOLATION;
+        goto end;
     }
 
-    if ((base->length != (int)hostlen)
-        || ia5ncasecmp(hostptr, baseptr, hostlen))
-        return X509_V_ERR_PERMITTED_VIOLATION;
+    if ((base->length != hostlen)
+        || ia5ncasecmp(host, baseptr, hostlen) != 0) {
+        ret = X509_V_ERR_PERMITTED_VIOLATION;
+        goto end;
+    }
 
-    return X509_V_OK;
+    ret = X509_V_OK;
+end:
+    OPENSSL_free(host);
+    return ret;
 
 }
 

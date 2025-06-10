@@ -304,6 +304,10 @@ static int ecx_get_params(void *key, OSSL_PARAM params[], int bits, int secbits,
         if (!OSSL_PARAM_set_octet_string(p, ecx->pubkey, ecx->keylen))
             return 0;
     }
+    if ((p = OSSL_PARAM_locate(params,
+                               OSSL_PKEY_PARAM_SECURITY_CATEGORY)) != NULL
+        && !OSSL_PARAM_set_int(p, 0))
+            return 0;
 #ifdef FIPS_MODULE
     {
         /* X25519 and X448 are not approved */
@@ -359,7 +363,7 @@ static const OSSL_PARAM ecx_gettable_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
-    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_MANDATORY_DIGEST, NULL, 0),
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_CATEGORY, NULL),
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
     ECX_KEY_TYPES(),
     OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
@@ -370,6 +374,7 @@ static const OSSL_PARAM ed_gettable_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
+    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_MANDATORY_DIGEST, NULL, 0),
     ECX_KEY_TYPES(),
     OSSL_PARAM_END
 };

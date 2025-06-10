@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -63,6 +63,7 @@ BIO *dup_bio_err(int format);
 BIO *bio_open_owner(const char *filename, int format, int private);
 BIO *bio_open_default(const char *filename, char mode, int format);
 BIO *bio_open_default_quiet(const char *filename, char mode, int format);
+int mem_bio_to_file(BIO *in, const char *filename, int format, int private);
 char *app_conf_try_string(const CONF *cnf, const char *group, const char *name);
 int app_conf_try_number(const CONF *conf, const char *group, const char *name,
                         long *result);

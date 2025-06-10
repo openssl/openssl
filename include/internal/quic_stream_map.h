@@ -1,5 +1,5 @@
 /*
-* Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
+* Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
 *
 * Licensed under the Apache License 2.0 (the "License").  You may not use
 * this file except in compliance with the License.  You can obtain a copy
@@ -487,6 +487,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_recv_get_final_size(const QU
 {
     switch (s->recv_state) {
     default:
+        assert(0);
     case QUIC_RSTREAM_STATE_NONE:
     case QUIC_RSTREAM_STATE_RECV:
         return 0;
@@ -515,6 +516,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_recv_pending(const QUIC_STRE
 
     switch (s->recv_state) {
     default:
+        assert(0);
     case QUIC_RSTREAM_STATE_NONE:
         return 0;
 

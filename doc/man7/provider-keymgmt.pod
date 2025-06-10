@@ -32,7 +32,7 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  void OSSL_FUNC_keymgmt_gen_cleanup(void *genctx);
 
  /* Key loading by object reference, also a constructor */
- void *OSSL_FUNC_keymgmt_load(const void *reference, size_t *reference_sz);
+ void *OSSL_FUNC_keymgmt_load(const void *reference, size_t reference_sz);
 
  /* Key object information */
  int OSSL_FUNC_keymgmt_get_params(void *keydata, OSSL_PARAM params[]);
@@ -406,6 +406,12 @@ dimensions handled in the rest of the same provider.
 The value should be the number of security bits of the given key.
 Bits of security is defined in SP800-57.
 
+=item "security-category" (B<OSSL_PKEY_PARAM_SECURITY_CATEGORY>) <integer>
+
+The value is the NIST
+L<post-quantum security category|https://nvlpubs.nist.gov/nistpubs/ir/2024/NIST.IR.8547.ipd.pdf>
+for the algorithm.  It is an integer value in the range [0, 5] inclusive.
+
 =item "mandatory-digest" (B<OSSL_PKEY_PARAM_MANDATORY_DIGEST>) <UTF8 string>
 
 If there is a mandatory digest for performing a signature operation with
@@ -500,9 +506,17 @@ L<EVP_PKEY_get_size(3)>,
 L<EVP_PKEY_get_bits(3)>,
 L<EVP_PKEY_get_security_bits(3)>,
 L<provider(7)>,
-L<EVP_PKEY-X25519(7)>, L<EVP_PKEY-X448(7)>, L<EVP_PKEY-ED25519(7)>,
-L<EVP_PKEY-ED448(7)>, L<EVP_PKEY-EC(7)>, L<EVP_PKEY-RSA(7)>,
-L<EVP_PKEY-DSA(7)>, L<EVP_PKEY-DH(7)>
+L<EVP_PKEY-X25519(7)>,
+L<EVP_PKEY-X448(7)>,
+L<EVP_PKEY-ED25519(7)>,
+L<EVP_PKEY-ED448(7)>,
+L<EVP_PKEY-EC(7)>,
+L<EVP_PKEY-RSA(7)>,
+L<EVP_PKEY-DSA(7)>,
+L<EVP_PKEY-DH(7)>,
+L<EVP_PKEY-ML-DSA(7)>,
+L<EVP_PKEY-ML-KEM(7)>,
+L<EVP_PKEY-SLH-DSA(7)>.
 
 =head1 HISTORY
 
@@ -516,9 +530,11 @@ OSSL_FUNC_keymgmt_gen_gettable_params() were added in OpenSSL 3.4.
 
 The parameters "sign-check" and "fips-indicator" were added in OpenSSL 3.4.
 
+Support for the B<ML-DSA>, B<ML-KEM> and B<SLH-DSA> algorithms was added in OpenSSL 3.5.
+
 =head1 COPYRIGHT
 
-Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -135,7 +135,7 @@ GENERATED_PODS={- # common0.tmpl provides @generated
                        fill_lines(" ", $COLUMNS - 15,
                                   map { my $x = $_;
                                         (
-                                          grep { 
+                                          grep {
                                                  $unified_info{attributes}->{depends}
                                                  ->{$x}->{$_}->{pod} // 0
                                                }
@@ -650,7 +650,11 @@ depend: Makefile
 # Install helper targets #############################################
 ##@ Installation
 
-install: install_sw install_ssldirs {- "install_docs" if !$disabled{docs}; -} {- $disabled{fips} ? "" : "install_fips" -} ## Install software and documentation, create OpenSSL directories
+install: Makefile ## Install software and documentation, create OpenSSL directories
+	$(MAKE) install_sw
+	$(MAKE) install_ssldirs
+	{- "\$(MAKE) install_docs" if !$disabled{docs} -}
+	{- "\$(MAKE) install_fips" if !$disabled{fips} -}
 
 uninstall: {- "uninstall_docs" if !$disabled{docs}; -} uninstall_sw {- $disabled{fips} ? "" : "uninstall_fips" -} ## Uninstall software and documentation
 
@@ -809,12 +813,12 @@ install_dev: install_runtime_libs
 		cp $$e "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
 		chmod 644 "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
 	done
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(CMAKECONFIGDIR)
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(CMAKECONFIGDIR)"
 	@for e in $(INSTALL_EXPORTERS_CMAKE); do \
 		fn=`basename $$e`; \
 		$(ECHO) "install $$e -> $(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
-		cp $$e $(DESTDIR)$(CMAKECONFIGDIR)/$$fn; \
-		chmod 644 $(DESTDIR)$(CMAKECONFIGDIR)/$$fn; \
+		cp $$e "$(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
+		chmod 644 "$(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
 	done
 
 uninstall_dev: uninstall_runtime_libs
@@ -1173,7 +1177,7 @@ generate_buildinfo: generate_doc_buildinfo
 
 .PHONY: doc-nits md-nits
 doc-nits: build_generated_pods ## Evaluate OpenSSL documentation
-	$(PERL) $(SRCDIR)/util/find-doc-nits -c -n -l -e
+	$(PERL) $(SRCDIR)/util/find-doc-nits -c -n -l -e -i
 
 # This uses "mdl", the markdownlint application, which is written in ruby.
 # The source is at https://github.com/markdownlint/markdownlint
@@ -1338,8 +1342,7 @@ errors:
            include/internal/asn1.h
            include/internal/sslconf.h );
    my @cryptoskipheaders = ( @sslheaders_tmpl,
-       qw( include/openssl/asn1_mac.h
-           include/openssl/conf_api.h
+       qw( include/openssl/conf_api.h
            include/openssl/ebcdic.h
            include/openssl/opensslconf.h
            include/openssl/symhacks.h ) );

@@ -1,12 +1,12 @@
 Useful Links:
 
-OpenSSL API Documentation: https://www.openssl.org/docs
+OpenSSL API Documentation: https://docs.openssl.org/master
 
 Github: https://github.com/openssl/openssl
 
-OpenSSL Wiki: https://wiki.openssl.org/index.php/Main_Page
+OpenSSL Wiki: https://github.com/openssl/openssl/wiki
 
-Original Simple Server: https://wiki.openssl.org/index.php/Simple_TLS_Server
+Original Simple Server: https://github.com/openssl/openssl/wiki/Simple_TLS_Server
 
 ---------------------------------------------------------------
 

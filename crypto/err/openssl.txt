@@ -1,4 +1,4 @@
-# Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -231,6 +231,7 @@ CMP_R_ERROR_VALIDATING_PROTECTION:140:error validating protection
 CMP_R_ERROR_VALIDATING_SIGNATURE:171:error validating signature
 CMP_R_EXPECTED_POLLREQ:104:expected pollreq
 CMP_R_FAILED_BUILDING_OWN_CHAIN:164:failed building own chain
+CMP_R_FAILED_EXTRACTING_CENTRAL_GEN_KEY:203:failed extracting central gen key
 CMP_R_FAILED_EXTRACTING_PUBKEY:141:failed extracting pubkey
 CMP_R_FAILURE_OBTAINING_RANDOM:110:failure obtaining random
 CMP_R_FAIL_INFO_OUT_OF_RANGE:129:fail info out of range
@@ -243,6 +244,7 @@ CMP_R_INVALID_GENP:193:invalid genp
 CMP_R_INVALID_KEYSPEC:202:invalid keyspec
 CMP_R_INVALID_OPTION:174:invalid option
 CMP_R_INVALID_ROOTCAKEYUPDATE:195:invalid rootcakeyupdate
+CMP_R_MISSING_CENTRAL_GEN_KEY:204:missing central gen key
 CMP_R_MISSING_CERTID:165:missing certid
 CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION:130:\
 	missing key input for creating protection
@@ -279,6 +281,7 @@ CMP_R_TOTAL_TIMEOUT:184:total timeout
 CMP_R_TRANSACTIONID_UNMATCHED:152:transactionid unmatched
 CMP_R_TRANSFER_ERROR:159:transfer error
 CMP_R_UNCLEAN_CTX:191:unclean ctx
+CMP_R_UNEXPECTED_CENTRAL_GEN_KEY:205:unexpected central gen key
 CMP_R_UNEXPECTED_CERTPROFILE:196:unexpected certprofile
 CMP_R_UNEXPECTED_CRLSTATUSLIST:201:unexpected crlstatuslist
 CMP_R_UNEXPECTED_PKIBODY:133:unexpected pkibody
@@ -331,6 +334,8 @@ CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE:114:\
 	error reading messagedigest attribute
 CMS_R_ERROR_SETTING_KEY:115:error setting key
 CMS_R_ERROR_SETTING_RECIPIENTINFO:116:error setting recipientinfo
+CMS_R_ERROR_UNSUPPORTED_STATIC_KEY_AGREEMENT:196:\
+	error unsupported static key agreement
 CMS_R_ESS_SIGNING_CERTID_MISMATCH_ERROR:183:ess signing certid mismatch error
 CMS_R_INVALID_ENCRYPTED_KEY_LENGTH:117:invalid encrypted key length
 CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER:176:invalid key encryption parameter
@@ -407,17 +412,15 @@ CMS_R_UNWRAP_FAILURE:180:unwrap failure
 CMS_R_VERIFICATION_FAILURE:158:verification failure
 CMS_R_WRAP_ERROR:159:wrap error
 COMP_R_BROTLI_DECODE_ERROR:102:brotli decode error
-COMP_R_BROTLI_DEFLATE_ERROR:103:brotli deflate error
-COMP_R_BROTLI_ENCODE_ERROR:106:brotli encode error
-COMP_R_BROTLI_INFLATE_ERROR:104:brotli inflate error
-COMP_R_BROTLI_NOT_SUPPORTED:105:brotli not supported
+COMP_R_BROTLI_ENCODE_ERROR:103:brotli encode error
+COMP_R_BROTLI_NOT_SUPPORTED:104:brotli not supported
 COMP_R_ZLIB_DEFLATE_ERROR:99:zlib deflate error
 COMP_R_ZLIB_INFLATE_ERROR:100:zlib inflate error
 COMP_R_ZLIB_NOT_SUPPORTED:101:zlib not supported
-COMP_R_ZSTD_COMPRESS_ERROR:107:zstd compress error
-COMP_R_ZSTD_DECODE_ERROR:108:zstd decode error
-COMP_R_ZSTD_DECOMPRESS_ERROR:109:zstd decompress error
-COMP_R_ZSTD_NOT_SUPPORTED:110:zstd not supported
+COMP_R_ZSTD_COMPRESS_ERROR:105:zstd compress error
+COMP_R_ZSTD_DECODE_ERROR:106:zstd decode error
+COMP_R_ZSTD_DECOMPRESS_ERROR:107:zstd decompress error
+COMP_R_ZSTD_NOT_SUPPORTED:108:zstd not supported
 CONF_R_ERROR_LOADING_DSO:110:error loading dso
 CONF_R_INVALID_PRAGMA:122:invalid pragma
 CONF_R_LIST_CANNOT_BE_NULL:115:list cannot be null
@@ -448,16 +451,23 @@ CONF_R_UNKNOWN_MODULE_NAME:113:unknown module name
 CONF_R_VARIABLE_EXPANSION_TOO_LONG:116:variable expansion too long
 CONF_R_VARIABLE_HAS_NO_VALUE:104:variable has no value
 CRMF_R_BAD_PBM_ITERATIONCOUNT:100:bad pbm iterationcount
+CRMF_R_CMS_NOT_SUPPORTED:122:cms not supported
 CRMF_R_CRMFERROR:102:crmferror
 CRMF_R_ERROR:103:error
 CRMF_R_ERROR_DECODING_CERTIFICATE:104:error decoding certificate
+CRMF_R_ERROR_DECODING_ENCRYPTEDKEY:123:error decoding encryptedkey
 CRMF_R_ERROR_DECRYPTING_CERTIFICATE:105:error decrypting certificate
+CRMF_R_ERROR_DECRYPTING_ENCRYPTEDKEY:124:error decrypting encryptedkey
+CRMF_R_ERROR_DECRYPTING_ENCRYPTEDVALUE:125:error decrypting encryptedvalue
 CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY:106:error decrypting symmetric key
+CRMF_R_ERROR_SETTING_PURPOSE:126:error setting purpose
+CRMF_R_ERROR_VERIFYING_ENCRYPTEDKEY:127:error verifying encryptedkey
 CRMF_R_FAILURE_OBTAINING_RANDOM:107:failure obtaining random
 CRMF_R_ITERATIONCOUNT_BELOW_100:108:iterationcount below 100
 CRMF_R_MALFORMED_IV:101:malformed iv
 CRMF_R_NULL_ARGUMENT:109:null argument
 CRMF_R_POPOSKINPUT_NOT_SUPPORTED:113:poposkinput not supported
+CRMF_R_POPO_INCONSISTENT_CENTRAL_KEYGEN:128:popo inconsistent central keygen
 CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY:117:popo inconsistent public key
 CRMF_R_POPO_MISSING:121:popo missing
 CRMF_R_POPO_MISSING_PUBLIC_KEY:118:popo missing public key
@@ -788,15 +798,23 @@ EVP_R_OUTPUT_WOULD_OVERFLOW:202:output would overflow
 EVP_R_PARAMETER_TOO_LARGE:187:parameter too large
 EVP_R_PARTIALLY_OVERLAPPING:162:partially overlapping buffers
 EVP_R_PBKDF2_ERROR:181:pbkdf2 error
+EVP_R_PIPELINE_NOT_SUPPORTED:230:pipeline not supported
 EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED:179:\
 	pkey application asn1 method already registered
 EVP_R_PRIVATE_KEY_DECODE_ERROR:145:private key decode error
 EVP_R_PRIVATE_KEY_ENCODE_ERROR:146:private key encode error
+EVP_R_PROVIDER_ASYM_CIPHER_FAILURE:232:provider asym cipher failure
+EVP_R_PROVIDER_ASYM_CIPHER_NOT_SUPPORTED:235:provider asym cipher not supported
+EVP_R_PROVIDER_KEYMGMT_FAILURE:233:provider keymgmt failure
+EVP_R_PROVIDER_KEYMGMT_NOT_SUPPORTED:236:provider keymgmt not supported
+EVP_R_PROVIDER_SIGNATURE_FAILURE:234:provider signature failure
+EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED:237:provider signature not supported
 EVP_R_PUBLIC_KEY_NOT_RSA:106:public key not rsa
 EVP_R_SETTING_XOF_FAILED:227:setting xof failed
 EVP_R_SET_DEFAULT_PROPERTY_FAILURE:209:set default property failure
 EVP_R_SIGNATURE_TYPE_AND_KEY_TYPE_INCOMPATIBLE:228:\
 	signature type and key type incompatible
+EVP_R_TOO_MANY_PIPES:231:too many pipes
 EVP_R_TOO_MANY_RECORDS:183:too many records
 EVP_R_UNABLE_TO_ENABLE_LOCKING:212:unable to enable locking
 EVP_R_UNABLE_TO_GET_MAXIMUM_REQUEST_SIZE:215:unable to get maximum request size
@@ -954,6 +972,7 @@ PEM_R_UNSUPPORTED_CIPHER:113:unsupported cipher
 PEM_R_UNSUPPORTED_ENCRYPTION:114:unsupported encryption
 PEM_R_UNSUPPORTED_KEY_COMPONENTS:126:unsupported key components
 PEM_R_UNSUPPORTED_PUBLIC_KEY_TYPE:110:unsupported public key type
+PEM_R_UNSUPPORTED_PVK_KEY_TYPE:133:unsupported pvk key type
 PKCS12_R_CALLBACK_FAILED:115:callback failed
 PKCS12_R_CANT_PACK_STRUCTURE:100:can't pack structure
 PKCS12_R_CONTENT_TYPE_NOT_DATA:121:content type not data
@@ -1119,6 +1138,8 @@ PROV_R_MISSING_SEED:140:missing seed
 PROV_R_MISSING_SESSION_ID:133:missing session id
 PROV_R_MISSING_TYPE:134:missing type
 PROV_R_MISSING_XCGHASH:135:missing xcghash
+PROV_R_ML_DSA_NO_FORMAT:245:ml dsa no format
+PROV_R_ML_KEM_NO_FORMAT:246:ml kem no format
 PROV_R_MODULE_INTEGRITY_FAILURE:214:module integrity failure
 PROV_R_NOT_A_PRIVATE_KEY:221:not a private key
 PROV_R_NOT_A_PUBLIC_KEY:220:not a public key
@@ -1129,6 +1150,8 @@ PROV_R_NOT_XOF_OR_INVALID_LENGTH:113:not xof or invalid length
 PROV_R_NO_INSTANCE_ALLOWED:242:no instance allowed
 PROV_R_NO_KEY_SET:114:no key set
 PROV_R_NO_PARAMETERS_SET:177:no parameters set
+PROV_R_NULL_LENGTH_POINTER:247:null length pointer
+PROV_R_NULL_OUTPUT_BUFFER:248:null output buffer
 PROV_R_ONESHOT_CALL_OUT_OF_ORDER:239:oneshot call out of order
 PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:178:\
 	operation not supported for this keytype
@@ -1160,13 +1183,16 @@ PROV_R_UNABLE_TO_INITIALISE_CIPHERS:208:unable to initialise ciphers
 PROV_R_UNABLE_TO_LOAD_SHA256:147:unable to load sha256
 PROV_R_UNABLE_TO_LOCK_PARENT:201:unable to lock parent
 PROV_R_UNABLE_TO_RESEED:204:unable to reseed
+PROV_R_UNEXPECTED_KEY_PARAMETERS:249:unexpected key parameters
 PROV_R_UNSUPPORTED_CEK_ALG:145:unsupported cek alg
 PROV_R_UNSUPPORTED_KEY_SIZE:153:unsupported key size
 PROV_R_UNSUPPORTED_MAC_TYPE:137:unsupported mac type
 PROV_R_UNSUPPORTED_NUMBER_OF_ROUNDS:152:unsupported number of rounds
+PROV_R_UNSUPPORTED_SELECTION:250:unsupported selection
 PROV_R_UPDATE_CALL_OUT_OF_ORDER:240:update call out of order
 PROV_R_URI_AUTHORITY_UNSUPPORTED:223:uri authority unsupported
 PROV_R_VALUE_ERROR:138:value error
+PROV_R_WRONG_CIPHERTEXT_SIZE:251:wrong ciphertext size
 PROV_R_WRONG_FINAL_BLOCK_LENGTH:107:wrong final block length
 PROV_R_WRONG_OUTPUT_BUFFER_SIZE:139:wrong output buffer size
 PROV_R_XOF_DIGESTS_NOT_ALLOWED:183:xof digests not allowed
@@ -1203,6 +1229,7 @@ RAND_R_PERSONALISATION_STRING_TOO_LONG:116:personalisation string too long
 RAND_R_PREDICTION_RESISTANCE_NOT_SUPPORTED:133:\
 	prediction resistance not supported
 RAND_R_PRNG_NOT_SEEDED:100:PRNG not seeded
+RAND_R_RANDOM_POOL_IS_EMPTY:142:random pool is empty
 RAND_R_RANDOM_POOL_OVERFLOW:125:random pool overflow
 RAND_R_RANDOM_POOL_UNDERFLOW:134:random pool underflow
 RAND_R_REQUEST_TOO_LARGE_FOR_DRBG:117:request too large for drbg
@@ -1411,6 +1438,7 @@ SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC:281:\
 SSL_R_DH_KEY_TOO_SMALL:394:dh key too small
 SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG:148:dh public value length is wrong
 SSL_R_DIGEST_CHECK_FAILED:149:digest check failed
+SSL_R_DOMAIN_USE_ONLY:422:domain use only
 SSL_R_DTLS_MESSAGE_TOO_BIG:334:dtls message too big
 SSL_R_DUPLICATE_COMPRESSION_ID:309:duplicate compression id
 SSL_R_ECC_CERT_NOT_FOR_SIGNING:318:ecc cert not for signing
@@ -1470,12 +1498,14 @@ SSL_R_LENGTH_TOO_LONG:404:length too long
 SSL_R_LENGTH_TOO_SHORT:160:length too short
 SSL_R_LIBRARY_BUG:274:library bug
 SSL_R_LIBRARY_HAS_NO_CIPHERS:161:library has no ciphers
+SSL_R_LISTENER_USE_ONLY:421:listener use only
 SSL_R_MAXIMUM_ENCRYPTED_PKTS_REACHED:395:maximum encrypted pkts reached
 SSL_R_MISSING_DSA_SIGNING_CERT:165:missing dsa signing cert
 SSL_R_MISSING_ECDSA_SIGNING_CERT:381:missing ecdsa signing cert
 SSL_R_MISSING_FATAL:256:missing fatal
 SSL_R_MISSING_PARAMETERS:290:missing parameters
 SSL_R_MISSING_PSK_KEX_MODES_EXTENSION:310:missing psk kex modes extension
+SSL_R_MISSING_QUIC_TLS_FUNCTIONS:423:missing quic tls functions
 SSL_R_MISSING_RSA_CERTIFICATE:168:missing rsa certificate
 SSL_R_MISSING_RSA_ENCRYPTING_CERT:169:missing rsa encrypting cert
 SSL_R_MISSING_RSA_SIGNING_CERT:170:missing rsa signing cert
@@ -1808,6 +1838,7 @@ X509V3_R_POLICY_PATH_LENGTH_ALREADY_DEFINED:157:\
 	policy path length already defined
 X509V3_R_POLICY_WHEN_PROXY_LANGUAGE_REQUIRES_NO_POLICY:159:\
 	policy when proxy language requires no policy
+X509V3_R_PURPOSE_NOT_UNIQUE:173:purpose not unique
 X509V3_R_SECTION_NOT_FOUND:150:section not found
 X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS:122:unable to get issuer details
 X509V3_R_UNABLE_TO_GET_ISSUER_KEYID:123:unable to get issuer keyid

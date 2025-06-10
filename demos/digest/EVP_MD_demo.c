@@ -1,5 +1,5 @@
 /*-
- * Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -153,7 +153,7 @@ static int demonstrate_digest(void)
     /* Check digest_value against the known answer */
     if ((size_t)digest_length != sizeof(known_answer)) {
         fprintf(stdout, "Digest length(%d) not equal to known answer length(%lu).\n",
-            digest_length, sizeof(known_answer));
+            digest_length, (unsigned long) sizeof(known_answer));
     } else if (memcmp(digest_value, known_answer, digest_length) != 0) {
         for (j=0; j<sizeof(known_answer); j++) {
             fprintf(stdout, "%02x", known_answer[j] );

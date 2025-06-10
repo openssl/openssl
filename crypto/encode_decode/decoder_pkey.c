@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -65,6 +65,7 @@ struct decoder_pkey_data_st {
     STACK_OF(EVP_KEYMGMT) *keymgmts;
     char *object_type;           /* recorded object data type, may be NULL */
     void **object;               /* Where the result should end up */
+    OSSL_DECODER_CTX *ctx;       /* The parent decoder context */
 };
 
 static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
@@ -171,6 +172,14 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
             keydata = import_data.keydata;
             import_data.keydata = NULL;
         }
+        /*
+         * When load or import fails, because this is not an acceptable key
+         * (despite the provided key material being syntactically valid), the
+         * reason why the key is rejected would be lost, unless we signal a
+         * hard error, and suppress resetting for another try.
+         */
+        if (keydata == NULL)
+            ossl_decoder_ctx_set_harderr(data->ctx);
 
         if (keydata != NULL
             && (pkey = evp_keymgmt_util_make_pkey(keymgmt, keydata)) == NULL)
@@ -240,6 +249,20 @@ static void collect_decoder_keymgmt(EVP_KEYMGMT *keymgmt, OSSL_DECODER *decoder,
     if ((di = ossl_decoder_instance_new(decoder, decoderctx)) == NULL) {
         decoder->freectx(decoderctx);
         data->error_occurred = 1;
+        return;
+    }
+
+    /*
+     * Input types must be compatible, but we must accept DER encoders when the
+     * start input type is "PEM".
+     */
+    if (data->ctx->start_input_type != NULL
+        && di->input_type != NULL
+        && OPENSSL_strcasecmp(di->input_type, data->ctx->start_input_type) != 0
+        && (OPENSSL_strcasecmp(di->input_type, "DER") != 0
+            || OPENSSL_strcasecmp(data->ctx->start_input_type, "PEM") != 0)) {
+        /* Mismatch is not an error, continue. */
+        ossl_decoder_instance_free(di);
         return;
     }
 
@@ -561,6 +584,7 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
         process_data_dest->object    = (void **)pkey;
         process_data_dest->libctx    = process_data_src->libctx;
         process_data_dest->selection = process_data_src->selection;
+        process_data_dest->ctx       = dest;
         if (!OSSL_DECODER_CTX_set_construct_data(dest, process_data_dest)) {
             ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
             goto err;
@@ -576,11 +600,7 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
 
     return dest;
  err:
-    if (process_data_dest != NULL) {
-        OPENSSL_free(process_data_dest->propq);
-        sk_EVP_KEYMGMT_pop_free(process_data_dest->keymgmts, EVP_KEYMGMT_free);
-        OPENSSL_free(process_data_dest);
-    }
+    decoder_clean_pkey_construct_arg(process_data_dest);
     OSSL_DECODER_CTX_free(dest);
     return NULL;
 }
@@ -747,19 +767,26 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
     OSSL_DECODER_CTX *ctx = NULL;
     OSSL_PARAM decoder_params[] = {
         OSSL_PARAM_END,
+        OSSL_PARAM_END,
         OSSL_PARAM_END
     };
     DECODER_CACHE *cache
         = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DECODER_CACHE_INDEX);
     DECODER_CACHE_ENTRY cacheent, *res, *newcache = NULL;
+    int i = 0;
 
     if (cache == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
         return NULL;
     }
+    if (input_structure != NULL)
+        decoder_params[i++] =
+            OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
+                                             (char *)input_structure, 0);
     if (propquery != NULL)
-        decoder_params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DECODER_PARAM_PROPERTIES,
-                                                             (char *)propquery, 0);
+        decoder_params[i++] =
+            OSSL_PARAM_construct_utf8_string(OSSL_DECODER_PARAM_PROPERTIES,
+                                             (char *)propquery, 0);
 
     /* It is safe to cast away the const here */
     cacheent.input_type = (char *)input_type;

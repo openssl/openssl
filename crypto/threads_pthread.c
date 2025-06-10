@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -90,49 +90,14 @@ __tsan_mutex_post_lock((x), 0, 0)
  * fallback function names.
  */
 typedef void *pvoid;
-typedef struct rcu_cb_item *prcu_cb_item;
 
 # if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS) \
     && !defined(USE_ATOMIC_FALLBACKS)
-#  if defined(__APPLE__) && defined(__clang__) && defined(__aarch64__)
-/*
- * For pointers, Apple M1 virtualized cpu seems to have some problem using the
- * ldapr instruction (see https://github.com/openssl/openssl/pull/23974)
- * When using the native apple clang compiler, this instruction is emitted for
- * atomic loads, which is bad.  So, if
- * 1) We are building on a target that defines __APPLE__ AND
- * 2) We are building on a target using clang (__clang__) AND
- * 3) We are building for an M1 processor (__aarch64__)
- * Then we should not use __atomic_load_n and instead implement our own
- * function to issue the ldar instruction instead, which produces the proper
- * sequencing guarantees
- */
-static inline void *apple_atomic_load_n_pvoid(void **p,
-                                              ossl_unused int memorder)
-{
-    void *ret;
-
-    __asm volatile("ldar %0, [%1]" : "=r" (ret): "r" (p):);
-
-    return ret;
-}
-
-/* For uint64_t, we should be fine, though */
-#   define apple_atomic_load_n_uint32_t(p, o) __atomic_load_n(p, o)
-#   define apple_atomic_load_n_uint64_t(p, o) __atomic_load_n(p, o)
-
-#   define ATOMIC_LOAD_N(t, p, o) apple_atomic_load_n_##t(p, o)
-#  else
-#   define ATOMIC_LOAD_N(t, p, o) __atomic_load_n(p, o)
-#  endif
+#  define ATOMIC_LOAD_N(t, p, o) __atomic_load_n(p, o)
 #  define ATOMIC_STORE_N(t, p, v, o) __atomic_store_n(p, v, o)
 #  define ATOMIC_STORE(t, p, v, o) __atomic_store(p, v, o)
-#  define ATOMIC_EXCHANGE_N(t, p, v, o) __atomic_exchange_n(p, v, o)
 #  define ATOMIC_ADD_FETCH(p, v, o) __atomic_add_fetch(p, v, o)
-#  define ATOMIC_FETCH_ADD(p, v, o) __atomic_fetch_add(p, v, o)
 #  define ATOMIC_SUB_FETCH(p, v, o) __atomic_sub_fetch(p, v, o)
-#  define ATOMIC_AND_FETCH(p, m, o) __atomic_and_fetch(p, m, o)
-#  define ATOMIC_OR_FETCH(p, m, o) __atomic_or_fetch(p, m, o)
 # else
 static pthread_mutex_t atomic_sim_lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -164,7 +129,6 @@ IMPL_fallback_atomic_load_n(pvoid)
         return ret;                                             \
     }
 IMPL_fallback_atomic_store_n(uint32_t)
-IMPL_fallback_atomic_store_n(uint64_t)
 
 #  define ATOMIC_STORE_N(t, p, v, o) fallback_atomic_store_n_##t(p, v)
 
@@ -175,26 +139,9 @@ IMPL_fallback_atomic_store_n(uint64_t)
         *p = *v;                                                \
         pthread_mutex_unlock(&atomic_sim_lock);                 \
     }
-IMPL_fallback_atomic_store(uint64_t)
 IMPL_fallback_atomic_store(pvoid)
 
 #  define ATOMIC_STORE(t, p, v, o) fallback_atomic_store_##t(p, v)
-
-#  define IMPL_fallback_atomic_exchange_n(t)                            \
-    static ossl_inline t fallback_atomic_exchange_n_##t(t *p, t v)           \
-    {                                                                   \
-        t ret;                                                          \
-                                                                        \
-        pthread_mutex_lock(&atomic_sim_lock);                           \
-        ret = *p;                                                       \
-        *p = v;                                                         \
-        pthread_mutex_unlock(&atomic_sim_lock);                         \
-        return ret;                                                     \
-    }
-IMPL_fallback_atomic_exchange_n(uint64_t)
-IMPL_fallback_atomic_exchange_n(prcu_cb_item)
-
-#  define ATOMIC_EXCHANGE_N(t, p, v, o) fallback_atomic_exchange_n_##t(p, v)
 
 /*
  * The fallbacks that follow don't need any per type implementation, as
@@ -216,19 +163,6 @@ static ossl_inline uint64_t fallback_atomic_add_fetch(uint64_t *p, uint64_t v)
 
 #  define ATOMIC_ADD_FETCH(p, v, o) fallback_atomic_add_fetch(p, v)
 
-static ossl_inline uint64_t fallback_atomic_fetch_add(uint64_t *p, uint64_t v)
-{
-    uint64_t ret;
-
-    pthread_mutex_lock(&atomic_sim_lock);
-    ret = *p;
-    *p += v;
-    pthread_mutex_unlock(&atomic_sim_lock);
-    return ret;
-}
-
-#  define ATOMIC_FETCH_ADD(p, v, o) fallback_atomic_fetch_add(p, v)
-
 static ossl_inline uint64_t fallback_atomic_sub_fetch(uint64_t *p, uint64_t v)
 {
     uint64_t ret;
@@ -241,52 +175,7 @@ static ossl_inline uint64_t fallback_atomic_sub_fetch(uint64_t *p, uint64_t v)
 }
 
 #  define ATOMIC_SUB_FETCH(p, v, o) fallback_atomic_sub_fetch(p, v)
-
-static ossl_inline uint64_t fallback_atomic_and_fetch(uint64_t *p, uint64_t m)
-{
-    uint64_t ret;
-
-    pthread_mutex_lock(&atomic_sim_lock);
-    *p &= m;
-    ret = *p;
-    pthread_mutex_unlock(&atomic_sim_lock);
-    return ret;
-}
-
-#  define ATOMIC_AND_FETCH(p, v, o) fallback_atomic_and_fetch(p, v)
-
-static ossl_inline uint64_t fallback_atomic_or_fetch(uint64_t *p, uint64_t m)
-{
-    uint64_t ret;
-
-    pthread_mutex_lock(&atomic_sim_lock);
-    *p |= m;
-    ret = *p;
-    pthread_mutex_unlock(&atomic_sim_lock);
-    return ret;
-}
-
-#  define ATOMIC_OR_FETCH(p, v, o) fallback_atomic_or_fetch(p, v)
 # endif
-
-/*
- * users is broken up into 2 parts
- * bits 0-15 current readers
- * bit 32-63 ID
- */
-# define READER_SHIFT 0
-# define ID_SHIFT 32
-/* TODO: READER_SIZE 32 in threads_win.c */
-# define READER_SIZE 16
-# define ID_SIZE 32
-
-# define READER_MASK     (((uint64_t)1 << READER_SIZE) - 1)
-# define ID_MASK         (((uint64_t)1 << ID_SIZE) - 1)
-# define READER_COUNT(x) ((uint32_t)(((uint64_t)(x) >> READER_SHIFT) & \
-                                     READER_MASK))
-# define ID_VAL(x)       ((uint32_t)(((uint64_t)(x) >> ID_SHIFT) & ID_MASK))
-# define VAL_READER      ((uint64_t)1 << READER_SHIFT)
-# define VAL_ID(x)       ((uint64_t)x << ID_SHIFT)
 
 /*
  * This is the core of an rcu lock. It tracks the readers and writers for the
@@ -328,12 +217,11 @@ struct rcu_lock_st {
     /* The context we are being created against */
     OSSL_LIB_CTX *ctx;
 
-    /* rcu generation counter for in-order retirement */
-    uint32_t id_ctr;
-
-    /* TODO: can be moved before id_ctr for better alignment */
     /* Array of quiescent points for synchronization */
     struct rcu_qp *qp_group;
+
+    /* rcu generation counter for in-order retirement */
+    uint32_t id_ctr;
 
     /* Number of elements in qp_group array */
     uint32_t group_count;
@@ -373,6 +261,8 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
 
     /* get the current qp index */
     for (;;) {
+        qp_idx = ATOMIC_LOAD_N(uint32_t, &lock->reader_idx, __ATOMIC_RELAXED);
+
         /*
          * Notes on use of __ATOMIC_ACQUIRE
          * We need to ensure the following:
@@ -383,33 +273,17 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
          * of the lock is flushed from a local cpu cache so that we see any
          * updates prior to the load.  This is a non-issue on cache coherent
          * systems like x86, but is relevant on other arches
-         * Note: This applies to the reload below as well
          */
-        qp_idx = ATOMIC_LOAD_N(uint32_t, &lock->reader_idx, __ATOMIC_ACQUIRE);
-
-        /*
-         * Notes of use of __ATOMIC_RELEASE
-         * This counter is only read by the write side of the lock, and so we
-         * specify __ATOMIC_RELEASE here to ensure that the write side of the
-         * lock see this during the spin loop read of users, as it waits for the
-         * reader count to approach zero
-         */
-        ATOMIC_ADD_FETCH(&lock->qp_group[qp_idx].users, VAL_READER,
-                         __ATOMIC_RELEASE);
+        ATOMIC_ADD_FETCH(&lock->qp_group[qp_idx].users, (uint64_t)1,
+                         __ATOMIC_ACQUIRE);
 
         /* if the idx hasn't changed, we're good, else try again */
         if (qp_idx == ATOMIC_LOAD_N(uint32_t, &lock->reader_idx,
-                                    __ATOMIC_ACQUIRE))
+                                    __ATOMIC_RELAXED))
             break;
 
-        /*
-         * Notes on use of __ATOMIC_RELEASE
-         * As with the add above, we want to ensure that this decrement is
-         * seen by the write side of the lock as soon as it happens to prevent
-         * undue spinning waiting for write side completion
-         */
-        ATOMIC_SUB_FETCH(&lock->qp_group[qp_idx].users, VAL_READER,
-                         __ATOMIC_RELEASE);
+        ATOMIC_SUB_FETCH(&lock->qp_group[qp_idx].users, (uint64_t)1,
+                         __ATOMIC_RELAXED);
     }
 
     return &lock->qp_group[qp_idx];
@@ -476,14 +350,14 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
     for (i = 0; i < MAX_QPS; i++) {
         if (data->thread_qps[i].lock == lock) {
             /*
-             * As with read side acquisition, we use __ATOMIC_RELEASE here
-             * to ensure that the decrement is published immediately
-             * to any write side waiters
+             * we have to use __ATOMIC_RELEASE here
+             * to ensure that all preceding read instructions complete
+             * before the decrement is visible to ossl_synchronize_rcu
              */
             data->thread_qps[i].depth--;
             if (data->thread_qps[i].depth == 0) {
                 ret = ATOMIC_SUB_FETCH(&data->thread_qps[i].qp->users,
-                                       VAL_READER, __ATOMIC_RELEASE);
+                                       (uint64_t)1, __ATOMIC_RELEASE);
                 OPENSSL_assert(ret != UINT64_MAX);
                 data->thread_qps[i].qp = NULL;
                 data->thread_qps[i].lock = NULL;
@@ -502,9 +376,8 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
  * Write side allocation routine to get the current qp
  * and replace it with a new one
  */
-static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock)
+static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
 {
-    uint64_t new_id;
     uint32_t current_idx;
 
     pthread_mutex_lock(&lock->alloc_lock);
@@ -527,29 +400,18 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock)
     lock->current_alloc_idx =
         (lock->current_alloc_idx + 1) % lock->group_count;
 
-    /* get and insert a new id */
-    new_id = VAL_ID(lock->id_ctr);
+    *curr_id = lock->id_ctr;
     lock->id_ctr++;
 
-    /*
-     * Even though we are under a write side lock here
-     * We need to use atomic instructions to ensure that the results
-     * of this update are published to the read side prior to updating the
-     * reader idx below
-     */
-    ATOMIC_AND_FETCH(&lock->qp_group[current_idx].users, ID_MASK,
-                     __ATOMIC_RELEASE);
-    ATOMIC_OR_FETCH(&lock->qp_group[current_idx].users, new_id,
-                    __ATOMIC_RELEASE);
+    ATOMIC_STORE_N(uint32_t, &lock->reader_idx, lock->current_alloc_idx,
+                   __ATOMIC_RELAXED);
 
     /*
-     * Update the reader index to be the prior qp.
-     * Note the use of __ATOMIC_RELEASE here is based on the corresponding use
-     * of __ATOMIC_ACQUIRE in get_hold_current_qp, as we want any publication
-     * of this value to be seen on the read side immediately after it happens
+     * this should make sure that the new value of reader_idx is visible in
+     * get_hold_current_qp, directly after incrementing the users count
      */
-    ATOMIC_STORE_N(uint32_t, &lock->reader_idx, lock->current_alloc_idx,
-                   __ATOMIC_RELEASE);
+    ATOMIC_ADD_FETCH(&lock->qp_group[current_idx].users, (uint64_t)0,
+                     __ATOMIC_RELEASE);
 
     /* wake up any waiters */
     pthread_cond_signal(&lock->alloc_signal);
@@ -565,10 +427,8 @@ static void retire_qp(CRYPTO_RCU_LOCK *lock, struct rcu_qp *qp)
     pthread_mutex_unlock(&lock->alloc_lock);
 }
 
-/* TODO: count should be unsigned, e.g uint32_t */
-/* a negative value could result in unexpected behaviour */
 static struct rcu_qp *allocate_new_qp_group(CRYPTO_RCU_LOCK *lock,
-                                            int count)
+                                            uint32_t count)
 {
     struct rcu_qp *new =
         OPENSSL_zalloc(sizeof(*new) * count);
@@ -593,6 +453,7 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 {
     struct rcu_qp *qp;
     uint64_t count;
+    uint32_t curr_id;
     struct rcu_cb_item *cb_items, *tmpcb;
 
     pthread_mutex_lock(&lock->write_lock);
@@ -600,22 +461,26 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     lock->cb_items = NULL;
     pthread_mutex_unlock(&lock->write_lock);
 
-    qp = update_qp(lock);
+    qp = update_qp(lock, &curr_id);
+
+    /* retire in order */
+    pthread_mutex_lock(&lock->prior_lock);
+    while (lock->next_to_retire != curr_id)
+        pthread_cond_wait(&lock->prior_signal, &lock->prior_lock);
 
     /*
      * wait for the reader count to reach zero
      * Note the use of __ATOMIC_ACQUIRE here to ensure that any
-     * prior __ATOMIC_RELEASE write operation in get_hold_current_qp
+     * prior __ATOMIC_RELEASE write operation in ossl_rcu_read_unlock
      * is visible prior to our read
+     * however this is likely just necessary to silence a tsan warning
+     * because the read side should not do any write operation
+     * outside the atomic itself
      */
     do {
         count = ATOMIC_LOAD_N(uint64_t, &qp->users, __ATOMIC_ACQUIRE);
-    } while (READER_COUNT(count) != 0);
+    } while (count != (uint64_t)0);
 
-    /* retire in order */
-    pthread_mutex_lock(&lock->prior_lock);
-    while (lock->next_to_retire != ID_VAL(count))
-        pthread_cond_wait(&lock->prior_signal, &lock->prior_lock);
     lock->next_to_retire++;
     pthread_cond_broadcast(&lock->prior_signal);
     pthread_mutex_unlock(&lock->prior_lock);
@@ -631,6 +496,10 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     }
 }
 
+/*
+ * Note: This call assumes its made under the protection of
+ * ossl_rcu_write_lock
+ */
 int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
 {
     struct rcu_cb_item *new =
@@ -641,13 +510,9 @@ int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
 
     new->data = data;
     new->fn = cb;
-    /*
-     * Use __ATOMIC_ACQ_REL here to indicate that any prior writes to this
-     * list are visible to us prior to reading, and publish the new value
-     * immediately
-     */
-    new->next = ATOMIC_EXCHANGE_N(prcu_cb_item, &lock->cb_items, new,
-                                  __ATOMIC_ACQ_REL);
+
+    new->next = lock->cb_items;
+    lock->cb_items = new;
 
     return 1;
 }
@@ -666,8 +531,11 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
 {
     struct rcu_lock_st *new;
 
-    if (num_writers < 1)
-        num_writers = 1;
+    /*
+     * We need a minimum of 2 qp's
+     */
+    if (num_writers < 2)
+        num_writers = 2;
 
     ctx = ossl_lib_ctx_get_concrete(ctx);
     if (ctx == NULL)
@@ -683,11 +551,13 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
     pthread_mutex_init(&new->alloc_lock, NULL);
     pthread_cond_init(&new->prior_signal, NULL);
     pthread_cond_init(&new->alloc_signal, NULL);
-    new->qp_group = allocate_new_qp_group(new, num_writers + 1);
+
+    new->qp_group = allocate_new_qp_group(new, num_writers);
     if (new->qp_group == NULL) {
         OPENSSL_free(new);
         new = NULL;
     }
+
     return new;
 }
 
@@ -754,7 +624,7 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
-    if (pthread_rwlock_rdlock(lock) != 0)
+    if (!ossl_assert(pthread_rwlock_rdlock(lock) == 0))
         return 0;
 # else
     if (pthread_mutex_lock(lock) != 0) {
@@ -769,7 +639,7 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
-    if (pthread_rwlock_wrlock(lock) != 0)
+    if (!ossl_assert(pthread_rwlock_wrlock(lock) == 0))
         return 0;
 # else
     if (pthread_mutex_lock(lock) != 0) {
@@ -964,7 +834,7 @@ int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
 
 int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
 {
-# if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS)
+# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS)
     if (__atomic_is_lock_free(sizeof(*val), val)) {
         __atomic_load(val, ret, __ATOMIC_ACQUIRE);
         return 1;
@@ -987,14 +857,14 @@ int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
 
 int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
 {
-# if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS)
+# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS)
     if (__atomic_is_lock_free(sizeof(*dst), dst)) {
         __atomic_store(dst, &val, __ATOMIC_RELEASE);
         return 1;
     }
 # elif defined(__sun) && (defined(__SunOS_5_10) || defined(__SunOS_5_11))
     /* This will work for all future Solaris versions. */
-    if (ret != NULL) {
+    if (dst != NULL) {
         atomic_swap_64(dst, val);
         return 1;
     }
@@ -1010,7 +880,7 @@ int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
 
 int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
 {
-# if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS)
+# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS)
     if (__atomic_is_lock_free(sizeof(*val), val)) {
         __atomic_load(val, ret, __ATOMIC_ACQUIRE);
         return 1;

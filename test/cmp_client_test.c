@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -187,8 +187,11 @@ static int test_exec_IR_ses(void)
     fixture->req_type = OSSL_CMP_PKIBODY_IR;
     fixture->expected = OSSL_CMP_PKISTATUS_accepted;
     fixture->caPubs = sk_X509_new_null();
-    sk_X509_push(fixture->caPubs, server_cert);
-    sk_X509_push(fixture->caPubs, server_cert);
+    if (!sk_X509_push(fixture->caPubs, server_cert)
+        || !sk_X509_push(fixture->caPubs, server_cert)) {
+        tear_down(fixture);
+        return 0;
+    }
     ossl_cmp_mock_srv_set1_caPubsOut(fixture->srv_ctx, fixture->caPubs);
     EXECUTE_TEST(execute_exec_certrequest_ses_test, tear_down);
     return result;
@@ -224,7 +227,8 @@ static int test_exec_IR_ses_poll_ok(void)
 static int test_exec_IR_ses_poll_no_timeout(void)
 {
     return test_exec_REQ_ses_poll(OSSL_CMP_PKIBODY_IR, checkAfter,
-                                  2 /* pollCount */, checkAfter + 4,
+                                  2 /* pollCount */,
+                                  checkAfter + 14, /* usually 4 is sufficient */
                                   OSSL_CMP_PKISTATUS_accepted);
 }
 
@@ -273,7 +277,9 @@ static int test_exec_KUR_ses(int transfer_error, int pubkey, int raverified)
     if (pubkey) {
         EVP_PKEY *key = raverified /* wrong key */ ? server_key : client_key;
 
-        EVP_PKEY_up_ref(key);
+        if (!EVP_PKEY_up_ref(key))
+            return 0;
+
         OSSL_CMP_CTX_set0_newPkey(fixture->cmp_ctx, 0 /* not priv */, key);
         OSSL_CMP_SRV_CTX_set_accept_raverified(fixture->srv_ctx, 1);
     }

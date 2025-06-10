@@ -230,12 +230,21 @@ static const OSSL_ITEM *p_get_reason_strings(void *_)
     return reason_strings;
 }
 
+static const OSSL_ALGORITHM *p_query(OSSL_PROVIDER *prov,
+                                     int operation_id,
+                                     int *no_cache)
+{
+    *no_cache = 1;
+    return NULL;
+}
+
 static const OSSL_DISPATCH p_test_table[] = {
     { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))p_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))p_get_params },
     { OSSL_FUNC_PROVIDER_GET_REASON_STRINGS,
         (void (*)(void))p_get_reason_strings},
     { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))p_teardown },
+    { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))p_query },
     OSSL_DISPATCH_END
 };
 

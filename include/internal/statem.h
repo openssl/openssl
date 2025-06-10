@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,6 +26,8 @@ typedef enum {
     WORK_FINISHED_STOP,
     /* We're done working move onto the next thing */
     WORK_FINISHED_CONTINUE,
+    /* We're done writing, start reading (or vice versa) */
+    WORK_FINISHED_SWAP,
     /* We're working on phase A */
     WORK_MORE_A,
     /* We're working on phase B */
@@ -154,7 +156,7 @@ void ossl_statem_set_in_init(SSL_CONNECTION *s, int init);
 int ossl_statem_get_in_handshake(SSL_CONNECTION *s);
 void ossl_statem_set_in_handshake(SSL_CONNECTION *s, int inhand);
 __owur int ossl_statem_skip_early_data(SSL_CONNECTION *s);
-void ossl_statem_check_finish_init(SSL_CONNECTION *s, int send);
+int ossl_statem_check_finish_init(SSL_CONNECTION *s, int send);
 void ossl_statem_set_hello_verify_done(SSL_CONNECTION *s);
 __owur int ossl_statem_app_data_allowed(SSL_CONNECTION *s);
 __owur int ossl_statem_export_allowed(SSL_CONNECTION *s);

@@ -97,12 +97,12 @@ L<SSL_get_wpoll_descriptor(3)>, L<bio(7)>
 
 =head1 HISTORY
 
-The SSL_get_rpoll_descriptor() and SSL_get_wpoll_descriptor() functions were
+The BIO_get_rpoll_descriptor() and BIO_get_wpoll_descriptor() functions were
 added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

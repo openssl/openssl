@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -80,6 +80,7 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
     &ossl_v3_role_spec_cert_identifier,
     &ossl_v3_battcons,
     &ossl_v3_delegated_name_constraints,
+    &ossl_v3_time_specification,
     &ossl_v3_attribute_descriptor,
     &ossl_v3_user_notice,
     &ossl_v3_soa_identifier,
@@ -87,9 +88,12 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
     &ossl_v3_acc_priv_policies,
     &ossl_v3_indirect_issuer,
     &ossl_v3_no_assertion,
+    &ossl_v3_aa_issuing_dist_point,
     &ossl_v3_issued_on_behalf_of,
     &ossl_v3_single_use,
     &ossl_v3_group_ac,
+    &ossl_v3_allowed_attribute_assignments,
+    &ossl_v3_attribute_mappings,
     &ossl_v3_holder_name_constraints,
     &ossl_v3_associated_info,
 };

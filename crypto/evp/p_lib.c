@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -54,11 +54,10 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
                          int len, EVP_KEYMGMT *keymgmt);
 static void evp_pkey_free_it(EVP_PKEY *key);
 
-#ifndef FIPS_MODULE
-
 /* The type of parameters selected in key parameter functions */
 # define SELECT_PARAMETERS OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
 
+#ifndef FIPS_MODULE
 int EVP_PKEY_get_bits(const EVP_PKEY *pkey)
 {
     int size = 0;
@@ -89,6 +88,11 @@ int EVP_PKEY_get_security_bits(const EVP_PKEY *pkey)
         return 0;
     }
     return size;
+}
+
+int EVP_PKEY_get_security_category(const EVP_PKEY *pkey)
+{
+    return pkey != NULL ? pkey->cache.security_category : -1;
 }
 
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
@@ -123,6 +127,7 @@ void *EVP_PKEY_get_ex_data(const EVP_PKEY *key, int idx)
 {
     return CRYPTO_get_ex_data(&key->ex_data, idx);
 }
+#endif  /* !FIPS_MODULE */
 
 int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 {
@@ -133,6 +138,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
     EVP_PKEY *downgraded_from = NULL;
     int ok = 0;
 
+#ifndef FIPS_MODULE
     /*
      * If |to| is a legacy key and |from| isn't, we must make a downgraded
      * copy of |from|.  If that fails, this function fails.
@@ -142,6 +148,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
             goto end;
         from = downgraded_from;
     }
+#endif  /* !FIPS_MODULE */
 
     /*
      * Make sure |to| is typed.  Content is less important at this early
@@ -156,19 +163,25 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
      * further down help us find out if they are the same or not.
      */
     if (evp_pkey_is_blank(to)) {
+#ifndef FIPS_MODULE
         if (evp_pkey_is_legacy(from)) {
             if (EVP_PKEY_set_type(to, from->type) == 0)
                 goto end;
-        } else {
+        } else
+#endif  /* !FIPS_MODULE */
+        {
             if (EVP_PKEY_set_type_by_keymgmt(to, from->keymgmt) == 0)
                 goto end;
         }
-    } else if (evp_pkey_is_legacy(to)) {
+    }
+#ifndef FIPS_MODULE
+    else if (evp_pkey_is_legacy(to)) {
         if (to->type != from->type) {
             ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
             goto end;
         }
     }
+#endif  /* !FIPS_MODULE */
 
     if (EVP_PKEY_missing_parameters(from)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_PARAMETERS);
@@ -189,6 +202,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
         goto end;
     }
 
+#ifndef FIPS_MODULE
     /*
      * If |to| is provided, we know that |from| is legacy at this point.
      * Try exporting |from| to |to|'s keymgmt, then use evp_keymgmt_dup()
@@ -218,6 +232,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
     /* Both keys are legacy */
     if (from->ameth != NULL && from->ameth->param_copy != NULL)
         ok = from->ameth->param_copy(to, from);
+#endif  /* !FIPS_MODULE */
  end:
     EVP_PKEY_free(downgraded_from);
     return ok;
@@ -226,10 +241,14 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
 {
     if (pkey != NULL) {
+#ifdef FIPS_MODULE
+        return !evp_keymgmt_util_has((EVP_PKEY *)pkey, SELECT_PARAMETERS);
+#else
         if (pkey->keymgmt != NULL)
             return !evp_keymgmt_util_has((EVP_PKEY *)pkey, SELECT_PARAMETERS);
-        else if (pkey->ameth != NULL && pkey->ameth->param_missing != NULL)
+        if (pkey->ameth != NULL && pkey->ameth->param_missing != NULL)
             return pkey->ameth->param_missing(pkey);
+#endif  /* FIPS_MODULE */
     }
     return 0;
 }
@@ -242,6 +261,9 @@ int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
 static int evp_pkey_cmp_any(const EVP_PKEY *a, const EVP_PKEY *b,
                             int selection)
 {
+#ifdef FIPS_MODULE
+    return evp_keymgmt_util_match((EVP_PKEY *)a, (EVP_PKEY *)b, selection);
+#else
     EVP_KEYMGMT *keymgmt1 = NULL, *keymgmt2 = NULL;
     void *keydata1 = NULL, *keydata2 = NULL, *tmp_keydata = NULL;
 
@@ -300,17 +322,23 @@ static int evp_pkey_cmp_any(const EVP_PKEY *a, const EVP_PKEY *b,
         return -2;
 
     return evp_keymgmt_match(keymgmt1, keydata1, keydata2, selection);
+#endif  /* FIPS_MODULE */
 }
 
+#ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     return EVP_PKEY_parameters_eq(a, b);
 }
-#endif
+# endif
+#endif  /* FIPS_MODULE */
 
 int EVP_PKEY_parameters_eq(const EVP_PKEY *a, const EVP_PKEY *b)
 {
+#ifdef FIPS_MODULE
+    return evp_pkey_cmp_any(a, b, SELECT_PARAMETERS);
+#else
     /*
      * This will just call evp_keymgmt_util_match when legacy support
      * is gone.
@@ -325,14 +353,17 @@ int EVP_PKEY_parameters_eq(const EVP_PKEY *a, const EVP_PKEY *b)
     if (a->ameth != NULL && a->ameth->param_cmp != NULL)
         return a->ameth->param_cmp(a, b);
     return -2;
+#endif  /* !FIPS_MODULE */
 }
 
+#ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     return EVP_PKEY_eq(a, b);
 }
-#endif
+# endif
+#endif  /* !FIPS_MODULE */
 
 int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b)
 {
@@ -347,7 +378,10 @@ int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b)
     if (a == NULL || b == NULL)
         return 0;
 
-    if (a->keymgmt != NULL || b->keymgmt != NULL) {
+#ifndef FIPS_MODULE
+    if (a->keymgmt != NULL || b->keymgmt != NULL)
+#endif  /* !FIPS_MODULE */
+    {
         int selection = SELECT_PARAMETERS;
 
         if (evp_keymgmt_util_has((EVP_PKEY *)a, OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
@@ -358,6 +392,7 @@ int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b)
         return evp_pkey_cmp_any(a, b, selection);
     }
 
+#ifndef FIPS_MODULE
     /* All legacy keys */
     if (a->type != b->type)
         return -1;
@@ -376,9 +411,10 @@ int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b)
     }
 
     return -2;
+#endif  /* !FIPS_MODULE */
 }
 
-
+#ifndef FIPS_MODULE
 static EVP_PKEY *new_raw_key_int(OSSL_LIB_CTX *libctx,
                                  const char *strtype,
                                  const char *propq,
@@ -866,17 +902,25 @@ const DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
 
 int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
 {
-    int ret = EVP_PKEY_assign_DSA(pkey, key);
-    if (ret)
-        DSA_up_ref(key);
+    int ret;
+
+    if (!DSA_up_ref(key))
+        return 0;
+
+    ret = EVP_PKEY_assign_DSA(pkey, key);
+
+    if (!ret)
+        DSA_free(key);
+
     return ret;
 }
 DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 {
     DSA *ret = evp_pkey_get0_DSA_int(pkey);
 
-    if (ret != NULL)
-        DSA_up_ref(ret);
+    if (ret != NULL && !DSA_up_ref(ret))
+        return NULL;
+
     return ret;
 }
 # endif /*  OPENSSL_NO_DSA */
@@ -942,10 +986,14 @@ int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *dhkey)
     else
         type = DH_get0_q(dhkey) == NULL ? EVP_PKEY_DH : EVP_PKEY_DHX;
 
+    if (!DH_up_ref(dhkey))
+        return 0;
+
     ret = EVP_PKEY_assign(pkey, type, dhkey);
 
-    if (ret)
-        DH_up_ref(dhkey);
+    if (!ret)
+        DH_free(dhkey);
+
     return ret;
 }
 
@@ -967,8 +1015,9 @@ DH *EVP_PKEY_get1_DH(EVP_PKEY *pkey)
 {
     DH *ret = evp_pkey_get0_DH_int(pkey);
 
-    if (ret != NULL)
-        DH_up_ref(ret);
+    if (ret != NULL && !DH_up_ref(ret))
+        ret = NULL;
+
     return ret;
 }
 # endif
@@ -1382,18 +1431,22 @@ int EVP_PKEY_digestsign_supports_digest(EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
     EVP_MD_CTX_free(ctx);
     return rv;
 }
+#endif  /* !FIPS_MODULE */
 
 int EVP_PKEY_set1_encoded_public_key(EVP_PKEY *pkey, const unsigned char *pub,
                                      size_t publen)
 {
     if (pkey == NULL)
         return 0;
+#ifndef FIPS_MODULE
     if (evp_pkey_is_provided(pkey))
+#endif  /* !FIPS_MODULE */
         return
             EVP_PKEY_set_octet_string_param(pkey,
                                             OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
                                             (unsigned char *)pub, publen);
 
+#ifndef FIPS_MODULE
     if (publen > INT_MAX)
         return 0;
     /* Historically this function was EVP_PKEY_set1_tls_encodedpoint */
@@ -1401,15 +1454,17 @@ int EVP_PKEY_set1_encoded_public_key(EVP_PKEY *pkey, const unsigned char *pub,
                            (void *)pub) <= 0)
         return 0;
     return 1;
+#endif  /* !FIPS_MODULE */
 }
 
 size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub)
 {
-    int rv;
-
     if (pkey == NULL)
         return 0;
-    if (evp_pkey_is_provided(pkey)) {
+#ifndef FIPS_MODULE
+    if (evp_pkey_is_provided(pkey))
+#endif
+    {
         size_t return_size = OSSL_PARAM_UNMODIFIED;
         unsigned char *buf;
 
@@ -1438,14 +1493,15 @@ size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub)
         return return_size;
     }
 
-
-    rv = evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_GET1_TLS_ENCPT, 0, ppub);
-    if (rv <= 0)
-        return 0;
-    return rv;
+#ifndef FIPS_MODULE
+    {
+        int rv = evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_GET1_TLS_ENCPT, 0, ppub);
+        if (rv <= 0)
+            return 0;
+        return rv;
+    }
+#endif  /* !FIPS_MODULE */
 }
-
-#endif /* FIPS_MODULE */
 
 /*- All methods below can also be used in FIPS_MODULE */
 
@@ -1671,12 +1727,11 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
     if (CRYPTO_UP_REF(&pkey->references, &i) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("EVP_PKEY", pkey);
+    REF_PRINT_COUNT("EVP_PKEY", i, pkey);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }
 
-#ifndef FIPS_MODULE
 EVP_PKEY *EVP_PKEY_dup(EVP_PKEY *pkey)
 {
     EVP_PKEY *dup_pk;
@@ -1692,13 +1747,17 @@ EVP_PKEY *EVP_PKEY_dup(EVP_PKEY *pkey)
     if (evp_pkey_is_blank(pkey))
         goto done;
 
-    if (evp_pkey_is_provided(pkey)) {
+#ifndef FIPS_MODULE
+    if (evp_pkey_is_provided(pkey))
+#endif  /* !FIPS_MODULE */
+    {
         if (!evp_keymgmt_util_copy(dup_pk, pkey,
                                    OSSL_KEYMGMT_SELECT_ALL))
             goto err;
         goto done;
     }
 
+#ifndef FIPS_MODULE
     if (evp_pkey_is_legacy(pkey)) {
         const EVP_PKEY_ASN1_METHOD *ameth = pkey->ameth;
 
@@ -1713,9 +1772,11 @@ EVP_PKEY *EVP_PKEY_dup(EVP_PKEY *pkey)
             goto err;
         goto done;
     }
+#endif  /* !FIPS_MODULE */
 
     goto err;
 done:
+#ifndef FIPS_MODULE
     /* copy auxiliary data */
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_EVP_PKEY,
                             &dup_pk->ex_data, &pkey->ex_data))
@@ -1725,12 +1786,14 @@ done:
         if ((dup_pk->attributes = ossl_x509at_dup(pkey->attributes)) == NULL)
             goto err;
     }
+#endif  /* !FIPS_MODULE */
     return dup_pk;
 err:
     EVP_PKEY_free(dup_pk);
     return NULL;
 }
 
+#ifndef FIPS_MODULE
 void evp_pkey_free_legacy(EVP_PKEY *x)
 {
     const EVP_PKEY_ASN1_METHOD *ameth = x->ameth;
@@ -1792,7 +1855,7 @@ void EVP_PKEY_free(EVP_PKEY *x)
         return;
 
     CRYPTO_DOWN_REF(&x->references, &i);
-    REF_PRINT_COUNT("EVP_PKEY", x);
+    REF_PRINT_COUNT("EVP_PKEY", i, x);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);

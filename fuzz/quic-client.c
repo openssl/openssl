@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         goto end;
 
     fake_now = ossl_ms2time(1);
-    if (!ossl_quic_conn_set_override_now_cb(client, fake_now_cb, NULL))
+    if (!ossl_quic_set_override_now_cb(client, fake_now_cb, NULL))
         goto end;
 
     peer_addr = BIO_ADDR_new();

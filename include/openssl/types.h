@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -114,6 +114,7 @@ typedef struct evp_md_ctx_st EVP_MD_CTX;
 typedef struct evp_mac_st EVP_MAC;
 typedef struct evp_mac_ctx_st EVP_MAC_CTX;
 typedef struct evp_pkey_st EVP_PKEY;
+typedef struct evp_skey_st EVP_SKEY;
 
 typedef struct evp_pkey_asn1_method_st EVP_PKEY_ASN1_METHOD;
 
@@ -131,6 +132,8 @@ typedef struct evp_rand_ctx_st EVP_RAND_CTX;
 typedef struct evp_keyexch_st EVP_KEYEXCH;
 
 typedef struct evp_signature_st EVP_SIGNATURE;
+
+typedef struct evp_skeymgmt_st EVP_SKEYMGMT;
 
 typedef struct evp_asym_cipher_st EVP_ASYM_CIPHER;
 

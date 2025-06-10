@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -30,6 +30,7 @@
 #include "internal/ktls.h"
 #include "../ssl/ssl_local.h"
 #include "../ssl/statem/statem_local.h"
+#include "internal/ssl_unwrap.h"
 
 static OSSL_LIB_CTX *libctx = NULL;
 static char *cert = NULL;

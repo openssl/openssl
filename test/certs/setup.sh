@@ -411,6 +411,18 @@ REQMASK=MASK:0x800 ./mkcert.sh req badalt7-key "O = Bad NC Test Certificate 7" \
     "email.1 = good@good.org" "email.2 = any@good.com" \
     "IP = 127.0.0.1" "IP = 192.168.0.1"
 
+# NC CA4 only permits URIs matching good.org.
+
+NC="permitted;URI:good.org"
+NC=$NC ./mkcert.sh genca "Test NC CA 4" ncca4-key ncca4-cert root-key root-cert
+
+# A certificate with an URI SAN
+./mkcert.sh req alt1-key "O = Good NC Test Certificate 1" \
+    "CN=Joe Bloggs" | \
+    ./mkcert.sh geneealt nc-uri-key nc-uri-cert ncca4-key ncca4-cert \
+    "URI.1 = foo://%40something@good.org" \
+    "URI.2 = bar://other@good.org/baz/quux"
+
 # Certs for CVE-2022-4203 testcase
 
 NC="excluded;otherName:SRVName;UTF8STRING:foo@example.org" ./mkcert.sh genca \
@@ -481,3 +493,8 @@ OPENSSL_SIGALG="sha3-224" ./mkcert.sh genee server.example ee-key-ec-named-named
 OPENSSL_SIGALG="sha3-256" ./mkcert.sh genee server.example ee-key-ec-named-named ee-cert-ec-sha3-256 ca-key-ec-named ca-cert-ec-named
 OPENSSL_SIGALG="sha3-384" ./mkcert.sh genee server.example ee-key-ec-named-named ee-cert-ec-sha3-384 ca-key-ec-named ca-cert-ec-named
 OPENSSL_SIGALG="sha3-512" ./mkcert.sh genee server.example ee-key-ec-named-named ee-cert-ec-sha3-512 ca-key-ec-named ca-cert-ec-named
+
+# EC cert seigned RSA intermediate CA
+OPENSSL_KEYALG=ec OPENSSL_KEYBITS=prime256v1 ./mkcert.sh genee \
+    "P-256 cert EE issuer" p256-ee-rsa-ca-key \
+    p256-ee-rsa-ca-cert ca-key ca-cert

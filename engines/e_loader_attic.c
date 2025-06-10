@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -947,18 +947,14 @@ static OSSL_STORE_LOADER_CTX *file_open_ex
 {
     OSSL_STORE_LOADER_CTX *ctx = NULL;
     struct stat st;
-    struct {
-        const char *path;
-        unsigned int check_absolute:1;
-    } path_data[2];
+    const char *path_data[2];
     size_t path_data_n = 0, i;
     const char *path, *p = uri, *q;
 
     /*
      * First step, just take the URI as is.
      */
-    path_data[path_data_n].check_absolute = 0;
-    path_data[path_data_n++].path = uri;
+    path_data[path_data_n++] = uri;
 
     /*
      * Second step, if the URI appears to start with the "file" scheme,
@@ -971,48 +967,39 @@ static OSSL_STORE_LOADER_CTX *file_open_ex
         if (CHECK_AND_SKIP_PREFIX(q, "//")) {
             path_data_n--;           /* Invalidate using the full URI */
             if (CHECK_AND_SKIP_CASE_PREFIX(q, "localhost/")
-                    || CHECK_AND_SKIP_PREFIX(q, "/")) {
+                || CHECK_AND_SKIP_PREFIX(q, "/")) {
+                /*
+                 * In this case, we step back on char to ensure that the
+                 * first slash is preserved, making the path always absolute
+                 */
                 p = q - 1;
             } else {
                 ATTICerr(0, ATTIC_R_URI_AUTHORITY_UNSUPPORTED);
                 return NULL;
             }
         }
-
-        path_data[path_data_n].check_absolute = 1;
 #ifdef _WIN32
         /* Windows "file:" URIs with a drive letter start with a '/' */
         if (p[0] == '/' && p[2] == ':' && p[3] == '/') {
             char c = tolower((unsigned char)p[1]);
 
             if (c >= 'a' && c <= 'z') {
+                /* Skip past the slash, making the path a normal Windows path */
                 p++;
-                /* We know it's absolute, so no need to check */
-                path_data[path_data_n].check_absolute = 0;
             }
         }
 #endif
-        path_data[path_data_n++].path = p;
+        path_data[path_data_n++] = p;
     }
 
 
     for (i = 0, path = NULL; path == NULL && i < path_data_n; i++) {
-        /*
-         * If the scheme "file" was an explicit part of the URI, the path must
-         * be absolute.  So says RFC 8089
-         */
-        if (path_data[i].check_absolute && path_data[i].path[0] != '/') {
-            ATTICerr(0, ATTIC_R_PATH_MUST_BE_ABSOLUTE);
-            ERR_add_error_data(1, path_data[i].path);
-            return NULL;
-        }
-
-        if (stat(path_data[i].path, &st) < 0) {
+        if (stat(path_data[i], &st) < 0) {
             ERR_raise_data(ERR_LIB_SYS, errno,
                            "calling stat(%s)",
-                           path_data[i].path);
+                           path_data[i]);
         } else {
-            path = path_data[i].path;
+            path = path_data[i];
         }
     }
     if (path == NULL) {
@@ -1368,12 +1355,13 @@ static OSSL_STORE_INFO *file_try_read_PVK(BIO *bp, const UI_METHOD *ui_method,
 
     {
         unsigned int saltlen = 0, keylen = 0;
+        int isdss = -1;
         unsigned char peekbuf[24] = { 0, };
         const unsigned char *p = peekbuf;
 
         if (BIO_buffer_peek(bp, peekbuf, sizeof(peekbuf)) <= 0)
             return 0;
-        if (!ossl_do_PVK_header(&p, sizeof(peekbuf), 0, &saltlen, &keylen))
+        if (!ossl_do_PVK_header(&p, sizeof(peekbuf), 0, &isdss, &saltlen, &keylen))
             return 0;
     }
 

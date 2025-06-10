@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -197,6 +197,7 @@ static void *eckem_newctx(void *provctx)
     if (ctx == NULL)
         return NULL;
     ctx->libctx = PROV_LIBCTX_OF(provctx);
+    ctx->mode = KEM_MODE_DHKEM;
 
     return ctx;
 }
@@ -405,10 +406,10 @@ int ossl_ec_dhkem_derive_private(EC_KEY *ec, BIGNUM *priv,
         return 0;
 
     /* ikmlen should have a length of at least Nsk */
-    if (ikmlen < info->Nsecret) {
+    if (ikmlen < info->Nsk) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH,
                        "ikm length is :%zu, should be at least %zu",
-                       ikmlen, info->Nsecret);
+                       ikmlen, info->Nsk);
         goto err;
     }
 

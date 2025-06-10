@@ -7,6 +7,8 @@ openssl-cms - CMS command
 
 =head1 SYNOPSIS
 
+=for openssl duplicate options
+
 B<openssl> B<cms>
 [B<-help>]
 
@@ -83,6 +85,7 @@ Signing options:
 [B<-nocerts>]
 [B<-noattr>]
 [B<-nosmimecap>]
+[B<-no_signing_time>]
 [B<-receipt_request_all>]
 [B<-receipt_request_first>]
 [B<-receipt_request_from> I<emailaddress>]
@@ -191,6 +194,10 @@ to the output file.
 
 Verify signed data. Expects a signed data on input and outputs
 the signed data. Both clear text and opaque signing is supported.
+
+By default, validation of signer certificates and their chain
+is done w.r.t. the S/MIME signing (C<smimesign>) purpose.
+For details see L<openssl-verification-options(1)/Certificate Extensions>.
 
 =item B<-resign>
 
@@ -385,7 +392,8 @@ See L<openssl-format-options(1)> for details.
 =item B<-originator> I<file>
 
 A certificate of the originator of the encrypted message. Necessary for
-decryption when Key Agreement is in use for a shared key.
+decryption when Key Agreement is in use for a shared key. Currently, not
+allowed for encryption.
 
 =item B<-recip> I<file>
 
@@ -488,7 +496,12 @@ option they are not included.
 =item B<-nosmimecap>
 
 Exclude the list of supported algorithms from signed attributes, other options
-such as signing time and content type are still included.
+such as content type and (optionally) signing time are still included.
+
+=item B<-no_signing_time>
+
+Exclude the signing time from signed attributes, other options
+such as content type are still included.
 
 =item B<-receipt_request_all>, B<-receipt_request_first>
 
@@ -918,7 +931,7 @@ The B<-digest> option was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2008-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2008-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

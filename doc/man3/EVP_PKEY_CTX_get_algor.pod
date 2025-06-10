@@ -64,6 +64,10 @@ All functions return 1 for success, and 0 or a negative number if an error
 occurs.  In particular, -2 is returned when the function isn't supported by
 the B<EVP_I<TYPE>> implementation.
 
+=head1 HISTORY
+
+These functions were added in OpenSSL 3.4.
+
 =head1 COPYRIGHT
 
 Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.

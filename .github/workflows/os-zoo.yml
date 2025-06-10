@@ -1,4 +1,4 @@
-# Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -38,7 +38,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: config
       run: |
-        ./config --banner=Configured no-shared -Wall -Werror enable-fips --strict-warnings \
+        ./config --strict-warnings --banner=Configured no-shared enable-fips \
                  ${EXTRA_CFLAGS}
     - name: config dump
       run: ./configdata.pm --dump
@@ -109,7 +109,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --banner=Configured -Wall -Werror --strict-warnings enable-fips
+      run: ./config --strict-warnings --banner=Configured enable-fips
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -125,14 +125,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, windows-2022]
+        os: [windows-2022, windows-2025]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - uses: ilammy/msvc-dev-cmd@v1
-    - uses: ilammy/setup-nasm@v1
+    - name: install nasm
+      run: |
+        choco install nasm
+        "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: prepare the build directory
       run: mkdir _build
     - name: config
@@ -159,16 +162,12 @@ jobs:
       working-directory: _build
       run: nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
 
-  self-hosted:
-    strategy:
-      matrix:
-        os: [freebsd-13.2, ubuntu-arm64-22.04]
-    runs-on: ${{ matrix.os }}-self-hosted
-    continue-on-error: true
+  linux-arm64:
+    runs-on: linux-arm64
     steps:
     - uses: actions/checkout@v4
     - name: config
-      run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -177,3 +176,90 @@ jobs:
       run: ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  linux-ppc64le:
+    runs-on: linux-ppc64le
+    steps:
+    - uses: actions/checkout@v4
+    - name: config
+      run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  linux-s390x:
+    runs-on: linux-s390x
+    steps:
+    - uses: actions/checkout@v4
+    - name: config
+      run: ./config --strict-warnings -Wno-stringop-overflow enable-fips enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  linux-riscv64:
+    runs-on: linux-riscv64
+    steps:
+    - uses: actions/checkout@v4
+    - name: config
+      run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -j8
+    - name: get cpu info
+      run: ./util/opensslwrap.sh version -c
+    - name: make test
+      env:
+        OPENSSL_riscvcap: ZBA_ZBB_ZBC_ZBS_ZKT
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  freebsd-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: config
+      uses: cross-platform-actions/action@v0.26.0
+      with:
+        operating_system: freebsd
+        version: "13.4"
+        shutdown_vm: false
+        run: |
+          sudo pkg install -y gcc perl5
+          ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+    - name: config dump
+      uses: cross-platform-actions/action@v0.26.0
+      with:
+        operating_system: freebsd
+        version: "13.4"
+        shutdown_vm: false
+        run: ./configdata.pm --dump
+    - name: make
+      uses: cross-platform-actions/action@v0.26.0
+      with:
+        operating_system: freebsd
+        version: "13.4"
+        shutdown_vm: false
+        run: make -j4
+    - name: make test
+      uses: cross-platform-actions/action@v0.26.0
+      with:
+        operating_system: freebsd
+        version: "13.4"
+        run: |
+          ./util/opensslwrap.sh version -c
+          .github/workflows/make-test

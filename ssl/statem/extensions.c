@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,7 @@
 #include <string.h>
 #include "internal/nelem.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 #include "../ssl_local.h"
 #include "statem_local.h"
 
@@ -1448,36 +1449,12 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
             /* No suitable key_share */
             if (s->hello_retry_request == SSL_HRR_NONE && sent
                     && (!s->hit
-                        || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE)
-                           != 0)) {
-                const uint16_t *pgroups, *clntgroups;
-                size_t num_groups, clnt_num_groups, i;
-                unsigned int group_id = 0;
+                        || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) != 0)) {
 
-                /* Check if a shared group exists */
-
-                /* Get the clients list of supported groups. */
-                tls1_get_peer_groups(s, &clntgroups, &clnt_num_groups);
-                tls1_get_supported_groups(s, &pgroups, &num_groups);
-
-                /*
-                 * Find the first group we allow that is also in client's list
-                 */
-                for (i = 0; i < num_groups; i++) {
-                    group_id = pgroups[i];
-
-                    if (check_in_list(s, group_id, clntgroups, clnt_num_groups,
-                                      1)
-                            && tls_group_allowed(s, group_id,
-                                                 SSL_SECOP_CURVE_SUPPORTED)
-                            && tls_valid_group(s, group_id, TLS1_3_VERSION,
-                                               TLS1_3_VERSION, 0, NULL))
-                        break;
-                }
-
-                if (i < num_groups) {
+                /* Did we detect group overlap in tls_parse_ctos_key_share ? */
+                if (s->s3.group_id_candidate != 0) {
                     /* A shared group exists so send a HelloRetryRequest */
-                    s->s3.group_id = group_id;
+                    s->s3.group_id = s->s3.group_id_candidate;
                     s->hello_retry_request = SSL_HRR_PENDING;
                     return 1;
                 }
@@ -1759,11 +1736,14 @@ static int final_early_data(SSL_CONNECTION *s, unsigned int context, int sent)
 static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
                                 int sent)
 {
+    if (s->session == NULL)
+        return 1;
+
     /* MaxFragmentLength defaults to disabled */
     if (s->session->ext.max_fragment_len_mode == TLSEXT_max_fragment_length_UNSPECIFIED)
         s->session->ext.max_fragment_len_mode = TLSEXT_max_fragment_length_DISABLED;
 
-    if (s->session && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
+    if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
         s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
                                               GET_MAX_FRAGMENT_LENGTH(s->session));
         s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -104,9 +104,36 @@ static int cipher_hw_aesni_xts_initkey(PROV_CIPHER_CTX *ctx,
 {
     PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)ctx;
 
+    void (*aesni_xts_enc)(const unsigned char *in,
+                          unsigned char *out,
+                          size_t length,
+                          const AES_KEY *key1, const AES_KEY *key2,
+                          const unsigned char iv[16]);
+    void (*aesni_xts_dec)(const unsigned char *in,
+                          unsigned char *out,
+                          size_t length,
+                          const AES_KEY *key1, const AES_KEY *key2,
+                          const unsigned char iv[16]);
+
+    aesni_xts_enc = aesni_xts_encrypt;
+    aesni_xts_dec = aesni_xts_decrypt;
+
+# if (defined(__x86_64) || defined(__x86_64__) || \
+  defined(_M_AMD64) || defined(_M_X64))
+    if (aesni_xts_avx512_eligible()) {
+        if (keylen == 64) {
+            aesni_xts_enc = aesni_xts_256_encrypt_avx512;
+            aesni_xts_dec = aesni_xts_256_decrypt_avx512;
+        } else if (keylen == 32) {
+            aesni_xts_enc = aesni_xts_128_encrypt_avx512;
+            aesni_xts_dec = aesni_xts_128_decrypt_avx512;
+        }
+    }
+# endif
+
     XTS_SET_KEY_FN(aesni_set_encrypt_key, aesni_set_decrypt_key,
                    aesni_encrypt, aesni_decrypt,
-                   aesni_xts_encrypt, aesni_xts_decrypt);
+                   aesni_xts_enc, aesni_xts_dec);
     return 1;
 }
 

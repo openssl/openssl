@@ -427,7 +427,7 @@ in delta CRLs which are not currently implemented.
 
 This sets the CRL revocation reason code to B<certificateHold> and the hold
 instruction to I<instruction> which must be an OID. Although any OID can be
-used only B<holdInstructionNone> (the use of which is discouraged by RFC2459)
+used, only B<holdInstructionNone> (the use of which is deprecated in RFC 5280),
 B<holdInstructionCallIssuer> or B<holdInstructionReject> will normally be used.
 
 =item B<-crl_compromise> I<time>

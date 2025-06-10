@@ -565,6 +565,9 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
             return -1;
         break;
 
+    case V_ASN1_UNDEF:
+        return -2;
+
     case V_ASN1_NULL:
         cont = NULL;
         len = 0;

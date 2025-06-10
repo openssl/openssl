@@ -19,7 +19,7 @@
 #  define __MAXINT__(T) ((T) ((((T) 1) << ((sizeof(T) * CHAR_BIT) - 1)) ^ __MAXUINT__(T)))
 #  define __MININT__(T) (-__MAXINT__(T) - 1)
 
-# elif (-1 & 3) == 0x02         /* One's complement */
+# elif (-1 & 3) == 0x02         /* Ones' complement */
 
 #  define __MAXUINT__(T) (((T) -1) + 1)
 #  define __MAXINT__(T) ((T) ((((T) 1) << ((sizeof(T) * CHAR_BIT) - 1)) ^ __MAXUINT__(T)))

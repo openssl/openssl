@@ -7,6 +7,8 @@ openssl-ts - Time Stamping Authority command
 
 =head1 SYNOPSIS
 
+=for openssl duplicate options
+
 B<openssl> B<ts>
 B<-help>
 

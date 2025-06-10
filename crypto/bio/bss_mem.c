@@ -76,7 +76,7 @@ const BIO_METHOD *BIO_s_mem(void)
 
 const BIO_METHOD *BIO_s_secmem(void)
 {
-    return(&secmem_method);
+    return &secmem_method;
 }
 
 BIO *BIO_new_mem_buf(const void *buf, int len)

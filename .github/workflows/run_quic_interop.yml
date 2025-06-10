@@ -7,33 +7,119 @@ on:
   workflow_dispatch:
 
 jobs:
-  run_quic_interop:
+  run_quic_interop_openssl_client:
     strategy:
       matrix:
-        tests: [http3, transfer, handshake, retry, chacha20, resumption]
+        tests: [http3, transfer, handshake, retry, chacha20, resumption, multiplexing, ipv6]
         servers: [quic-go, ngtcp2, mvfst, quiche, nginx, msquic, haproxy]
+        exclude:
+          - servers: msquic
+            tests: retry
       fail-fast: false
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
          repository: 'quic-interop/quic-interop-runner'
          fetch-depth: 0
-      - name: Install dependencies
+      - name: Install python requirements
         run: |
-          pip install -r requirements.txt
-          sudo add-apt-repository ppa:wireshark-dev/stable
-          sudo apt-get update
-          sudo apt-get install -y tshark
+          for i in {1..3}; do pip install -r requirements.txt && break; sleep 10; done
+      - name: Add tshark repo
+        run: |
+          for i in {1..3}; do sudo add-apt-repository ppa:wireshark-dev/stable && break; sleep 10; done
+      - name: Update apt repos
+        run: |
+          for i in {1..3}; do sudo apt-get update && break; sleep 10; done
+      - name: Install tshark
+        run: |
+          for i in {1..3}; do sudo apt-get install -y tshark && break; sleep 10; done
       - name: Patch implementations file
         run: |
           jq '.openssl = { image: "quay.io/openssl-ci/openssl-quic-interop"
                          , url: "https://github.com/openssl/openssl"
-                         , role: "client"
+                         , role: "both"
                          }' ./implementations.json > ./implementations.tmp
           mv ./implementations.tmp implementations.json
-      - name: "run interop"
+      - name: "Update to docker-compose 2.36 and docker engine 28.1.1"
         run: |
-          python3 ./run.py -c openssl -t ${{ matrix.tests }} -s ${{ matrix.servers }} --log-dir ./logs -d
-
-
+          mkdir -p ~/.docker/cli-plugins/
+          curl -SL https://github.com/docker/compose/releases/download/v2.36.0/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+          curl -SL "https://download.docker.com/linux/static/stable/x86_64/docker-28.1.1.tgz" -o ./docker-28.1.1.tgz
+          tar --strip-components=1 -xvzf docker-28.1.1.tgz
+          echo "$PWD" >> $GITHUB_PATH
+          chmod 755 ~/.docker/cli-plugins/docker-compose
+          chmod 755 ./docker
+          sudo mv ./dockerd $(which dockerd)
+          sudo systemctl restart docker
+      - name: Check docker version
+        run: |
+          docker version
+          docker compose version
+      - name: Patch Docker compose file
+        run: |
+          yq -i '.services.sim.networks.leftnet += {"interface_name" : "eth0"}
+                 | .services.sim.networks.rightnet += {"interface_name" : "eth1"}
+                 | .services.server.networks.rightnet += {"interface_name" : "eth0"}
+                 | .services.client.networks.leftnet += {"interface_name" : "eth0"}' docker-compose.yml
+      - name: "run interop with openssl client"
+        run: |
+          python3 ./run.py -c openssl -t ${{ matrix.tests }} -s ${{ matrix.servers }} --log-dir ./logs-client -d
+  run_quic_interop_openssl_server:
+    strategy:
+      matrix:
+        tests: [http3, transfer, handshake, retry, chacha20, resumption, amplificationlimit, ipv6]
+        clients: [quic-go, ngtcp2, mvfst, quiche, msquic, openssl, chrome]
+        exclude:
+          - clients: mvfst
+            tests: amplificationlimit
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+         repository: 'quic-interop/quic-interop-runner'
+         fetch-depth: 0
+      - name: Install python requirements
+        run: |
+          for i in {1..3}; do pip install -r requirements.txt && break; sleep 10; done
+      - name: Add tshark repo
+        run: |
+          for i in {1..3}; do sudo add-apt-repository ppa:wireshark-dev/stable && break; done
+      - name: Update apt repos
+        run: |
+          for i in {1..3}; do sudo apt-get update && break; done
+      - name: Install tshark
+        run: |
+          for i in {1..3}; do sudo apt-get install -y tshark && break; done
+      - name: Patch implementations file
+        run: |
+          jq '.openssl = { image: "quay.io/openssl-ci/openssl-quic-interop"
+                         , url: "https://github.com/openssl/openssl"
+                         , role: "both"
+                         }' ./implementations.json > ./implementations.tmp
+          mv ./implementations.tmp implementations.json
+      - name: "Update to docker-compose 2.36 and docker engine 28.1.1"
+        run: |
+          mkdir -p ~/.docker/cli-plugins/
+          curl -SL https://github.com/docker/compose/releases/download/v2.36.0/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+          curl -SL "https://download.docker.com/linux/static/stable/x86_64/docker-28.1.1.tgz" -o ./docker-28.1.1.tgz
+          tar --strip-components=1 -xvzf docker-28.1.1.tgz
+          echo "$PWD" >> $GITHUB_PATH
+          chmod 755 ~/.docker/cli-plugins/docker-compose
+          chmod 755 ./docker
+          sudo mv ./dockerd $(which dockerd)
+          sudo systemctl restart docker
+      - name: Check docker version
+        run: |
+          docker version
+          docker compose version
+      - name: Patch Docker compose file
+        run: |
+          yq -i '.services.sim.networks.leftnet += {"interface_name" : "eth0"}
+                 | .services.sim.networks.rightnet += {"interface_name" : "eth1"}
+                 | .services.server.networks.rightnet += {"interface_name" : "eth0"}
+                 | .services.client.networks.leftnet += {"interface_name" : "eth0"}' docker-compose.yml
+      - name: "run interop with openssl server"
+        run: |
+          python3 ./run.py -s openssl -t ${{ matrix.tests }} -c ${{ matrix.clients }} --log-dir ./logs-server -d
