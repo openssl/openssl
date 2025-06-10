@@ -1498,8 +1498,14 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
 
 #ifndef OPENSSL_NO_ECH
     /*
-     * For split-mode we want to have a way to point at the CH octets
-     * for the accept-confirmation calculation.
+     * For a split-mode backend we want to have a way to point at the CH octets
+     * for the accept-confirmation calculation. The split-mode backend does not
+     * need any ECH secrets, but it does need to see the inner CH and be the TLS
+     * endpoint with which the ECH encrypting client sets up the TLS session.
+     * The split-mode backend however does need to do an ECH confirm calculation
+     * so we need to tee that up. The result of that calculation will be put in
+     * the ServerHello.random (or ECH extension if HRR) to signal to the client
+     * that ECH "worked."
      */
     if (s->server && PACKET_remaining(pkt) != 0) {
         int rv = 0, innerflag = -1;
@@ -1515,7 +1521,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
         }
-        if (innerflag == 1) {
+        if (innerflag == OSSL_ECH_INNER_CH_TYPE) {
             WPACKET inner;
 
             OSSL_TRACE(TLS, "Got inner ECH so setting backend\n");
