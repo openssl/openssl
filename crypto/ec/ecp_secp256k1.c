@@ -422,17 +422,6 @@ static ossl_inline int secp256k1_fe_is_zero(const secp256k1_fe *a) {
     return (t[0] | t[1] | t[2] | t[3] | t[4]) == 0;
 }
 
-static ossl_inline int secp256k1_fe_is_odd(const secp256k1_fe *a) {
-    return a->n[0] & 1;
-}
-
-static ossl_inline void secp256k1_fe_clear(secp256k1_fe *a) {
-    int i;
-    for (i=0; i<5; i++) {
-        a->n[i] = 0;
-    }
-}
-
 static ossl_inline void secp256k1_fe_negate(secp256k1_fe *r, const secp256k1_fe *a, int m) {
     r->n[0] = 0xFFFFEFFFFFC2FULL * 2 * (m + 1) - a->n[0];
     r->n[1] = 0xFFFFFFFFFFFFFULL * 2 * (m + 1) - a->n[1];
@@ -642,17 +631,6 @@ typedef struct {
 #define SECP256K1_N_H_2 ((uint64_t)0xFFFFFFFFFFFFFFFFULL)
 #define SECP256K1_N_H_3 ((uint64_t)0x7FFFFFFFFFFFFFFFULL)
 
-ossl_inline static void secp256k1_scalar_clear(secp256k1_scalar *r) {
-    r->d[0] = r->d[1] = r->d[2] = r->d[3] = 0;
-}
-
-ossl_inline static void secp256k1_scalar_set_int(secp256k1_scalar *r, unsigned int v) {
-    r->d[0] = v;
-    r->d[1] = 0;
-    r->d[2] = 0;
-    r->d[3] = 0;
-}
-
 ossl_inline static unsigned int secp256k1_scalar_get_bits(const secp256k1_scalar *a, unsigned int offset, unsigned int count) {
     return (a->d[offset >> 6] >> (offset & 0x3F)) & ((((uint64_t)1) << count) - 1);
 }
@@ -665,18 +643,7 @@ ossl_inline static unsigned int secp256k1_scalar_get_bits_var(const secp256k1_sc
     }
 }
 
-ossl_inline static int secp256k1_scalar_check_overflow(const secp256k1_scalar *a) {
-    int yes = 0;
-    int no = 0;
-    no |= (a->d[3] < SECP256K1_N_3); /* No need for a > check. */
-    no |= (a->d[2] < SECP256K1_N_2);
-    yes |= (a->d[2] > SECP256K1_N_2) & ~no;
-    no |= (a->d[1] < SECP256K1_N_1);
-    yes |= (a->d[1] > SECP256K1_N_1) & ~no;
-    yes |= (a->d[0] >= SECP256K1_N_0) & ~no;
-    return yes;
-}
-
+#if 0
 ossl_inline static int secp256k1_scalar_reduce(secp256k1_scalar *r, unsigned int overflow) {
     secp256k1_uint128 t;
 
@@ -694,6 +661,7 @@ ossl_inline static int secp256k1_scalar_reduce(secp256k1_scalar *r, unsigned int
 
     return overflow;
 }
+#endif
 
 static void secp256k1_scalar_cadd_bit(secp256k1_scalar *r, unsigned int bit, int flag) {
     secp256k1_uint128 t;
@@ -734,10 +702,6 @@ static void secp256k1_scalar_negate(secp256k1_scalar *r, const secp256k1_scalar 
     secp256k1_u128_accum_u64(&t, ~a->d[3]);
     secp256k1_u128_accum_u64(&t, SECP256K1_N_3);
     r->d[3] = secp256k1_u128_to_u64(&t) & nonzero;
-}
-
-ossl_inline static int secp256k1_scalar_is_one(const secp256k1_scalar *a) {
-    return ((a->d[0] ^ 1) | a->d[1] | a->d[2] | a->d[3]) == 0;
 }
 
 /* Inspired by the macros in OpenSSL's crypto/bn/asm/x86_64-gcc.c. */
@@ -933,11 +897,7 @@ static int secp256k1_scalar_shr_int(secp256k1_scalar *r, int n) {
     r->d[3] = (r->d[3] >> n);
     return ret;
 }
-#endif
 
-ossl_inline static int secp256k1_scalar_eq(const secp256k1_scalar *a, const secp256k1_scalar *b) {
-    return ((a->d[0] ^ b->d[0]) | (a->d[1] ^ b->d[1]) | (a->d[2] ^ b->d[2]) | (a->d[3] ^ b->d[3])) == 0;
-}
 
 ossl_inline static void secp256k1_scalar_mul_shift_var(secp256k1_scalar *r, const secp256k1_scalar *a, const secp256k1_scalar *b, unsigned int shift) {
     uint64_t l[8];
@@ -955,7 +915,7 @@ ossl_inline static void secp256k1_scalar_mul_shift_var(secp256k1_scalar *r, cons
     r->d[3] = shift < 320 ? (l[3 + shiftlimbs] >> shiftlow) : 0;
     secp256k1_scalar_cadd_bit(r, 0, (l[(shift - 1) >> 6] >> ((shift - 1) & 0x3f)) & 1);
 }
-
+#endif
 static void secp256k1_scalar_from_signed62(secp256k1_scalar *r, const secp256k1_modinv64_signed62 *a) {
     const uint64_t a0 = a->v[0], a1 = a->v[1], a2 = a->v[2], a3 = a->v[3], a4 = a->v[4];
 
@@ -982,11 +942,6 @@ static void secp256k1_scalar_inverse(secp256k1_scalar *r, const secp256k1_scalar
     secp256k1_scalar_to_signed62(&s, x);
     secp256k1_modinv64(&s, &secp256k1_const_modinfo_scalar);
     secp256k1_scalar_from_signed62(r, &s);
-}
-
-ossl_inline static int secp256k1_scalar_is_even(const secp256k1_scalar *a) {
-    /* d[0] is present and is the lowest word for all representations */
-    return !(a->d[0] & 1);
 }
 
 /** A group element of the secp256k1 curve, in affine coordinates. */
