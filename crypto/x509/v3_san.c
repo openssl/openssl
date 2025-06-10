@@ -300,7 +300,8 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
 
     case GEN_DIRNAME:
         BIO_printf(out, "DirName:");
-        X509_NAME_print_ex(out, gen->d.dirn, 0, XN_FLAG_ONELINE);
+        X509_NAME_print_ex(out, gen->d.dirn, 0,
+                           XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB);
         break;
 
     case GEN_IPADD:
