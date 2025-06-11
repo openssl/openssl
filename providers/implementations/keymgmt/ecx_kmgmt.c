@@ -486,12 +486,12 @@ static void *ecx_gen_init(void *provctx, int selection,
         gctx->libctx = libctx;
         gctx->type = type;
         gctx->selection = selection;
+    } else {
+        return NULL;
     }
     if (!ecx_gen_set_params(gctx, params)) {
-        if (gctx != NULL) {
-            ecx_gen_cleanup(gctx);
-            gctx = NULL;
-        }
+        ecx_gen_cleanup(gctx);
+        gctx = NULL;
     }
     return gctx;
 }
