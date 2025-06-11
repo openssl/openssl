@@ -115,8 +115,11 @@ int ossl_rio_poll_builder_add_fd(RIO_POLL_BUILDER *rpb, int fd,
     if (i >= rpb->pfd_alloc) {
         if (!rpb_ensure_alloc(rpb, rpb->pfd_alloc * 2))
             return 0;
+        pfds = rpb->pfd_heap;
     }
 
+    assert((rpb->pfd_heap != NULL && rpb->pfd_heap == pfds) ||
+           (rpb->pfd_heap == NULL && rpb->pfds == pfds));
     assert(i <= rpb->pfd_num && rpb->pfd_num <= rpb->pfd_alloc);
     pfds[i].fd      = fd;
     pfds[i].events  = 0;
