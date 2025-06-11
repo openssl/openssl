@@ -2317,14 +2317,14 @@ static int test_tlsext_status_type_multi(void)
     OSSL_LIB_CTX *tmpctx = OSSL_LIB_CTX_set0_default(libctx);
     X509_VERIFY_PARAM *vpm = X509_VERIFY_PARAM_new(), *out_vpm = NULL;
 
-    if (!create_ssl_ctx_pair(libctx, TLS_server_method(), TLS_client_method(),
-                             TLS1_VERSION, 0, &sctx, &cctx, leaf, skey))
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(), TLS_client_method(),
+                                       TLS1_VERSION, 0, &sctx, &cctx, leaf, skey)))
         goto end;
-    if (SSL_CTX_use_certificate_chain_file(sctx, leaf_chain) <= 0)
+    if (TEST_int_lt(SSL_CTX_use_certificate_chain_file(sctx, leaf_chain), 0))
         goto end;
     if (!TEST_true(SSL_CTX_load_verify_locations(cctx, root, NULL)))
         goto end;
-    if (SSL_CTX_get_tlsext_status_type(cctx) != -1)
+    if (TEST_int_ne(SSL_CTX_get_tlsext_status_type(cctx), -1))
         goto end;
 
     /* set verify callback function */
@@ -2344,8 +2344,8 @@ static int test_tlsext_status_type_multi(void)
     SSL_free(clientssl);
     clientssl = NULL;
 
-    if (!SSL_CTX_set_tlsext_status_type(cctx, TLSEXT_STATUSTYPE_ocsp)
-        || SSL_CTX_get_tlsext_status_type(cctx) != TLSEXT_STATUSTYPE_ocsp)
+    if (!TEST_true(SSL_CTX_set_tlsext_status_type(cctx, TLSEXT_STATUSTYPE_ocsp))
+        || TEST_int_ne(SSL_CTX_get_tlsext_status_type(cctx), TLSEXT_STATUSTYPE_ocsp))
         goto end;
 
     /*
@@ -2361,7 +2361,7 @@ static int test_tlsext_status_type_multi(void)
     ocsp_verify_cb_called = 0;
     cdummyarg = 3; /* expect three OCSP responses */
     X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_OCSP_RESP_CHECK | X509_V_FLAG_OCSP_RESP_CHECK_ALL);
-    if (!SSL_CTX_set1_param(cctx, vpm))
+    if (!TEST_true(SSL_CTX_set1_param(cctx, vpm)))
         goto end;
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))

@@ -54,10 +54,10 @@ typedef unsigned int u_int;
 #include "s_apps.h"
 #include "timeouts.h"
 #ifdef CHARSET_EBCDIC
-#include <openssl/ebcdic.h>
+# include <openssl/ebcdic.h>
 #endif
 #include "internal/sockets.h"
-# include "internal/statem.h"
+#include "internal/statem.h"
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(int s, int stype, int prot, unsigned char *context);
@@ -615,7 +615,7 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
 
     SSL_get0_chain_certs(s, &server_certs);
     /*
-     * TODO: in future DTLS should also be considered
+     * TODO(DTLS-1.3): in future DTLS should also be considered
      */
     if (server_certs != NULL && srctx->status_all &&
         !SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) {
@@ -632,6 +632,7 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
     if (ssl_cert == NULL)
         return SSL_TLSEXT_ERR_OK;
 
+    /* reserve enough space so the pushes to the stack would not fail */
     *sk_resp = sk_OCSP_RESPONSE_new_reserve(NULL, num);
 
     if (sk_resp == NULL)
@@ -671,7 +672,7 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
         OCSP_CERTID_free(cert_id);
 
         /* add response to stack; also insert null response */
-        sk_OCSP_RESPONSE_push(*sk_resp, resp);
+        (void)sk_OCSP_RESPONSE_push(*sk_resp, resp);
     }
 
     return SSL_TLSEXT_ERR_OK;
@@ -743,7 +744,7 @@ err:
  * In case of a missing response, the respective list element will be NULL.
  * This is a simplified version. It examines certificates each time and
  * makes one OCSP responder query for each request. A full version would
- *  store details such as the OCSP certificate IDs and minimise the number of
+ * store details such as the OCSP certificate IDs and minimise the number of
  * OCSP queries by caching responses until they were considered "expired".
  */
 static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
@@ -759,7 +760,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
 
     SSL_get0_chain_certs(s, &server_certs);
     /*
-     * TODO: in future DTLS should also be considered
+     * TODO(DTLS-1.3): in future DTLS should also be considered
      */
     if (server_certs != NULL && srctx->status_all &&
         !SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) {

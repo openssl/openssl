@@ -442,7 +442,7 @@ recognized by the OCSP responder.
 
 =item B<X509_V_ERR_OCSP_RESP_INVALID: OCSP response(s) invalid>
 
-Returned by the verify callback to indicate that one more more OCSP
+Returned by the verify callback to indicate that one or more OCSP
 responses are invalid.
 
 =item B<X509_V_ERR_OCSP_SIGNATURE_FAILURE: OCSP response signature failure>

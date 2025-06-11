@@ -5925,7 +5925,7 @@ OSSL_AA_DIST_POINT_new                  ?	3_5_0	EXIST::FUNCTION:
 OSSL_AA_DIST_POINT_it                   ?	3_5_0	EXIST::FUNCTION:
 PEM_ASN1_write_bio_ctx                  ?	3_5_0	EXIST::FUNCTION:
 EVP_PKEY_get_security_category          ?	3_6_0	EXIST::FUNCTION:
-X509_STORE_CTX_set0_ocsp_resp           ?	3_6_0	EXIST::FUNCTION:OCSP
+X509_STORE_CTX_set_ocsp_resp            ?	3_6_0	EXIST::FUNCTION:OCSP
 OPENSSL_sk_set_thunks                   ?	3_6_0	EXIST::FUNCTION:
 i2d_PKCS8PrivateKey                     ?	3_6_0	EXIST::FUNCTION:
 OSSL_PARAM_set_octet_string_or_ptr      ?	3_6_0	EXIST::FUNCTION:

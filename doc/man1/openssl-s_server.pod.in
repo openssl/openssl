@@ -936,6 +936,8 @@ B<-no_tx_cert_comp>,
 and B<-tfo>
 options were added in OpenSSL 3.2.
 
+The B<-status_all> option was added in OpenSSL 3.6.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.

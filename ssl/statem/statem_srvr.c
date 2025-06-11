@@ -4421,6 +4421,7 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
                     !(ASN1_OCTET_STRING_set(certIssuerNameHash, md, len))) {
                     ASN1_OCTET_STRING_free(certIssuerNameHash);
                     OCSP_BASICRESP_free(bs);
+                    ERR_clear_last_mark();
                     return 0;
                 }
 

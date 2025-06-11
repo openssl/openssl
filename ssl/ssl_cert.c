@@ -497,12 +497,15 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
      */
 #ifndef OPENSSL_NO_OCSP
     ssl = SSL_CONNECTION_GET_SSL(s);
-    if (SSL_version(ssl) >= TLS1_3_VERSION) {
+    /*
+     * TODO(DTLS-1.3): in future DTLS should also be considered
+     */
+    if (!SSL_is_dtls(ssl) && SSL_version(ssl) >= TLS1_3_VERSION) {
         /* ignore status_request_v2 if TLS version < 1.3 */
         int status = SSL_get_tlsext_status_type(ssl);
 
         if (status == TLSEXT_STATUSTYPE_ocsp)
-            X509_STORE_CTX_set0_ocsp_resp(ctx, s->ext.ocsp.resp_ex);
+            X509_STORE_CTX_set_ocsp_resp(ctx, s->ext.ocsp.resp_ex);
     }
 #endif
 

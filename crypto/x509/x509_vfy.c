@@ -191,7 +191,7 @@ static int verify_cb_crl(X509_STORE_CTX *ctx, int err)
 #ifndef OPENSSL_NO_OCSP
 /*
  * Inform the verify callback of an error, OCSP-specific variant.
- * It is called also on OSCP response errors, if the
+ * It is called also on OCSP response errors, if the
  * X509_V_FLAG_OCSP_RESP_CHECK or X509_V_FLAG_OCSP_RESP_CHECK_ALL flag
  * is set.
  * Here, the error depth and certificate are already set, we just specify
@@ -1272,6 +1272,9 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
     ctx->current_crl_score = 0;
     ctx->current_reasons = 0;
 
+    /* skip if cert is apparently self-signed */
+    if (ctx->current_cert->ex_flags & EXFLAG_SS)
+        return 1;
     if ((x->ex_flags & EXFLAG_PROXY) != 0)
         return 1;
 
@@ -1847,7 +1850,7 @@ static int get_crl_delta(X509_STORE_CTX *ctx,
 
     sk_X509_CRL_pop_free(skcrl, X509_CRL_free);
 
- done:
+done:
     /* If we got any kind of CRL use it and return success */
     if (crl != NULL) {
         ctx->current_issuer = issuer;
@@ -2577,7 +2580,7 @@ void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk)
 }
 
 #ifndef OPENSSL_NO_OCSP
-void X509_STORE_CTX_set0_ocsp_resp(X509_STORE_CTX *ctx, STACK_OF(OCSP_RESPONSE) *sk)
+void X509_STORE_CTX_set_ocsp_resp(X509_STORE_CTX *ctx, STACK_OF(OCSP_RESPONSE) *sk)
 {
     ctx->ocsp_resp = sk;
 }
