@@ -1129,11 +1129,22 @@ int ossl_ech_get_ch_offsets(SSL_CONNECTION *s, PACKET *pkt, size_t *sessid_off,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
+    /* check if we've already done the work */
+    if (s->ext.ech.ch_offsets_done == 1) {
+        *sessid_off = s->ext.ech.sessid_off;
+        *exts_off = s->ext.ech.exts_off;
+        *ech_off = s->ext.ech.ech_off;
+        *echtype = s->ext.ech.echtype;
+        *inner = s->ext.ech.inner;
+        *sni_off = s->ext.ech.sni_off;;
+        return 1;
+    }
     *sessid_off = 0;
     *exts_off = 0;
     *ech_off = 0;
     *echtype = OSSL_ECH_type_unknown;
     *sni_off = 0;
+    /* do the work */
     ch_len = PACKET_remaining(pkt);
     if (PACKET_peek_bytes(pkt, &ch, ch_len) != 1) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
@@ -1154,6 +1165,13 @@ int ossl_ech_get_ch_offsets(SSL_CONNECTION *s, PACKET *pkt, size_t *sessid_off,
     ossl_ech_pbuf("orig CH/ECH", (unsigned char *)ch + *ech_off, ech_len);
     ossl_ech_pbuf("orig CH SNI", (unsigned char *)ch + *sni_off, sni_len);
 # endif
+    s->ext.ech.sessid_off = *sessid_off;
+    s->ext.ech.exts_off = *exts_off;
+    s->ext.ech.ech_off = *ech_off;
+    s->ext.ech.echtype = *echtype;
+    s->ext.ech.inner = *inner;
+    s->ext.ech.sni_off = *sni_off;
+    s->ext.ech.ch_offsets_done = 1;
     return 1;
 }
 
@@ -1819,6 +1837,8 @@ end:
             OPENSSL_free(clear);
             return NULL;
         }
+        /* reset the offsets, as we move from outer to inner CH */
+        s->ext.ech.ch_offsets_done = 0;
         rv = ossl_ech_get_ch_offsets(s, &innerchpkt, &startofsessid,
                                      &extsoffset, &echoffset, &echtype,
                                      &innerflag, &outersnioffset);

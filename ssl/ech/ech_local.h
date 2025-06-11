@@ -233,6 +233,22 @@ typedef struct ossl_ech_conn_st {
     size_t pub_len;
     OSSL_HPKE_CTX *hpke_ctx; /* HPKE context, needed for HRR */
     /*
+     * Offsets of various things we need to know about in an inbound
+     * ClientHello (CH) plus the type of ECH and whether that CH is an inner or
+     * outer CH. We find these once for the outer CH, by roughly parsing the CH
+     * so store them for later re-use. We need to re-do this parsing when we
+     * get the 2nd CH in the case of HRR, and when we move to processing the
+     * inner CH after successful ECH decyption, so we have a flag to say if
+     * we've done the work or not.
+     */
+    int ch_offsets_done;
+    size_t sessid_off; /* offset of session_id length */
+    size_t exts_off; /* to offset of extensions */
+    size_t ech_off; /* offset of ECH */
+    size_t sni_off; /* offset of (outer) SNI */
+    int echtype; /* ext type of the ECH */
+    int inner; /* 1 if the ECH is marked as an inner, 0 for outer */
+    /*
      * A pointer to, and copy of, the hrrsignal from an HRR message.
      * We need both, as we zero-out the octets when re-calculating and
      * may need to put back what the server included so the transcript

@@ -1514,6 +1514,8 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
         uint16_t echtype = OSSL_ECH_type_unknown; /* type of ECH seen */
         const unsigned char *pbuf = NULL;
 
+        /* reset needed in case of HRR */
+        s->ext.ech.ch_offsets_done = 0;
         rv = ossl_ech_get_ch_offsets(s, pkt, &startofsessid, &startofexts,
                                      &echoffset, &echtype, &innerflag,
                                      &outersnioffset);
