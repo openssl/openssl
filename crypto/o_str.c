@@ -22,12 +22,15 @@
 char *CRYPTO_strdup(const char *str, const char* file, int line)
 {
     char *ret;
+    size_t len;
 
     if (str == NULL)
         return NULL;
-    ret = CRYPTO_malloc(strlen(str) + 1, file, line);
+
+    len = strlen(str) + 1;
+    ret = CRYPTO_malloc(len, file, line);
     if (ret != NULL)
-        strcpy(ret, str);
+        memcpy(ret, str, len);
     return ret;
 }
 

@@ -236,7 +236,7 @@ static int put_quic_value(unsigned char *data, size_t value, size_t len)
     if (ossl_quic_vlint_encode_len(value) > len)
         return 0;
 
-    ossl_quic_vlint_encode_n(data, value, len);
+    ossl_quic_vlint_encode_n(data, value, (int)len);
     return 1;
 }
 #endif

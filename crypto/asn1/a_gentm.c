@@ -38,9 +38,13 @@ int ASN1_GENERALIZEDTIME_check(const ASN1_GENERALIZEDTIME *d)
 int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str)
 {
     ASN1_GENERALIZEDTIME t;
+    size_t len;
+
+    if ((len = strlen(str)) >= INT_MAX)
+        return 0;
 
     t.type = V_ASN1_GENERALIZEDTIME;
-    t.length = strlen(str);
+    t.length = (int)len;
     t.data = (unsigned char *)str;
     t.flags = 0;
 

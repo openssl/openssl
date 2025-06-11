@@ -219,7 +219,7 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     int outlen;
 
     keklen = EVP_CIPHER_CTX_get_key_length(kari->ctx);
-    if (keklen > EVP_MAX_KEY_LENGTH)
+    if (keklen > EVP_MAX_KEY_LENGTH || inlen > INT_MAX)
         return 0;
     /* Derive KEK */
     if (EVP_PKEY_derive(kari->pctx, kek, &keklen) <= 0)
@@ -228,12 +228,12 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     if (!EVP_CipherInit_ex(kari->ctx, NULL, NULL, kek, NULL, enc))
         goto err;
     /* obtain output length of ciphered key */
-    if (!EVP_CipherUpdate(kari->ctx, NULL, &outlen, in, inlen))
+    if (!EVP_CipherUpdate(kari->ctx, NULL, &outlen, in, (int)inlen))
         goto err;
     out = OPENSSL_malloc(outlen);
     if (out == NULL)
         goto err;
-    if (!EVP_CipherUpdate(kari->ctx, out, &outlen, in, inlen))
+    if (!EVP_CipherUpdate(kari->ctx, out, &outlen, in, (int)inlen))
         goto err;
     *pout = out;
     *poutlen = (size_t)outlen;
@@ -525,7 +525,7 @@ int ossl_cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
         if (!cms_kek_cipher(&enckey, &enckeylen, ec->key, ec->keylen,
                             kari, 1))
             return 0;
-        ASN1_STRING_set0(rek->encryptedKey, enckey, enckeylen);
+        ASN1_STRING_set0(rek->encryptedKey, enckey, (int)enckeylen);
     }
 
     return 1;

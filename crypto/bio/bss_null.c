@@ -79,7 +79,12 @@ static int null_gets(BIO *bp, char *buf, int size)
 
 static int null_puts(BIO *bp, const char *str)
 {
+    size_t n;
+
     if (str == NULL)
         return 0;
-    return strlen(str);
+    n = strlen(str);
+    if (n > INT_MAX)
+        return -1;
+    return (int)n;
 }

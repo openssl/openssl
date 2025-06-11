@@ -192,7 +192,7 @@ CONF_VALUE *_CONF_new_section(CONF *conf, const char *section)
         goto err;
     if ((v = OPENSSL_malloc(sizeof(*v))) == NULL)
         goto err;
-    i = strlen(section) + 1;
+    i = (int)strlen(section) + 1;
     if ((v->section = OPENSSL_malloc(i)) == NULL)
         goto err;
 

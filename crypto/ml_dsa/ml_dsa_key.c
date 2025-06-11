@@ -312,7 +312,7 @@ static int public_from_private(const ML_DSA_KEY *key, EVP_MD_CTX *md_ctx,
                                VECTOR *t1, VECTOR *t0)
 {
     const ML_DSA_PARAMS *params = key->params;
-    uint32_t k = params->k, l = params->l;
+    uint32_t k = (uint32_t)params->k, l = (uint32_t)params->l;
     POLY *polys;
     MATRIX a_ntt;
     VECTOR s1_ntt;
@@ -374,7 +374,7 @@ int ossl_ml_dsa_key_pairwise_check(const ML_DSA_KEY *key)
     int ret = 0;
     VECTOR t1, t0;
     POLY *polys = NULL;
-    uint32_t k = key->params->k;
+    uint32_t k = (uint32_t)key->params->k;
     EVP_MD_CTX *md_ctx = NULL;
 
     if (key->pub_encoding == NULL || key->priv_encoding == 0)

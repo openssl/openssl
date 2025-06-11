@@ -225,7 +225,7 @@ int RAND_poll(void)
 
         if (meth->add == NULL
             || meth->add(ossl_rand_pool_buffer(pool),
-                         ossl_rand_pool_length(pool),
+                         (int)ossl_rand_pool_length(pool),
                          (ossl_rand_pool_entropy(pool) / 8.0)) == 0)
             goto err;
 
@@ -423,8 +423,12 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL()) {
+        if (num > INT_MAX) {
+            ERR_raise(ERR_LIB_RAND, RAND_R_ARGUMENT_OUT_OF_RANGE);
+            return -1;
+        }
         if (meth->bytes != NULL)
-            return meth->bytes(buf, num);
+            return meth->bytes(buf, (int)num);
         ERR_raise(ERR_LIB_RAND, RAND_R_FUNC_NOT_IMPLEMENTED);
         return -1;
     }
@@ -462,8 +466,12 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL()) {
+        if (num > INT_MAX) {
+            ERR_raise(ERR_LIB_RAND, RAND_R_ARGUMENT_OUT_OF_RANGE);
+            return -1;
+        }
         if (meth->bytes != NULL)
-            return meth->bytes(buf, num);
+            return meth->bytes(buf, (int)num);
         ERR_raise(ERR_LIB_RAND, RAND_R_FUNC_NOT_IMPLEMENTED);
         return -1;
     }

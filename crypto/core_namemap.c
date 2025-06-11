@@ -179,7 +179,7 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
         return 0;
 
     HT_INIT_KEY(&key);
-    HT_SET_KEY_STRING_CASE_N(&key, name, name, name_len);
+    HT_SET_KEY_STRING_CASE_N(&key, name, name, (int)name_len);
 
     val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
 
@@ -191,7 +191,7 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
 }
 
 const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,
-                                  size_t idx)
+                                  int idx)
 {
     NAMES *names;
     const char *ret = NULL;

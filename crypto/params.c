@@ -1143,13 +1143,13 @@ int OSSL_PARAM_set_BN(OSSL_PARAM *p, const BIGNUM *val)
 
         switch (p->data_type) {
         case OSSL_PARAM_UNSIGNED_INTEGER:
-            if (BN_bn2nativepad(val, p->data, p->data_size) < 0) {
+            if (BN_bn2nativepad(val, p->data, (int)p->data_size) < 0) {
                 ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_INTEGER_OVERFLOW);
                 return 0;
             }
             break;
         case OSSL_PARAM_INTEGER:
-            if (BN_signed_bn2native(val, p->data, p->data_size) < 0) {
+            if (BN_signed_bn2native(val, p->data, (int)p->data_size) < 0) {
                 ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_INTEGER_OVERFLOW);
                 return 0;
             }

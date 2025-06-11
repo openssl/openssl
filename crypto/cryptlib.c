@@ -60,7 +60,7 @@ int OPENSSL_isservice(void)
     }
 
     if (_OPENSSL_isservice.p != (void *)-1)
-        return (*_OPENSSL_isservice.f) ();
+        return (int)((*_OPENSSL_isservice.f)());
 
     h = GetProcessWindowStation();
     if (h == NULL)
@@ -144,7 +144,7 @@ void OPENSSL_showfatal(const char *fmta, ...)
                 fmt = (const TCHAR *)L"no stack?";
                 break;
             }
-            if (!MultiByteToWideChar(CP_ACP, 0, fmta, len_0, fmtw, len_0))
+            if (!MultiByteToWideChar(CP_ACP, 0, fmta, (int)len_0, fmtw, (int)len_0))
                 for (i = 0; i < len_0; i++)
                     fmtw[i] = (WCHAR)fmta[i];
             for (i = 0; i < len_0; i++) {

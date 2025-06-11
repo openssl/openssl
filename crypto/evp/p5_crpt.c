@@ -75,7 +75,7 @@ int PKCS5_PBE_keyivgen_ex(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     if (pass == NULL)
         passlen = 0;
     else if (passlen == -1)
-        passlen = strlen(pass);
+        passlen = (int)strlen(pass);
 
     mdsize = EVP_MD_get_size(md);
     if (mdsize <= 0)

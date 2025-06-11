@@ -55,7 +55,7 @@ static OSSL_CMP_severity parse_level(const char *level)
 
     if (HAS_PREFIX(level, OSSL_CMP_LOG_PREFIX))
         level += strlen(OSSL_CMP_LOG_PREFIX);
-    len = end_level - level;
+    len = (int)(end_level - level);
     if (len > max_level_len)
         return -1;
     OPENSSL_strlcpy(level_copy, level, len + 1);

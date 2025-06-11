@@ -184,7 +184,7 @@ static int ok_read(BIO *b, char *out, int outl)
 
         /* copy clean bytes to output buffer */
         if (ctx->blockout) {
-            i = ctx->buf_len - ctx->buf_off;
+            i = (int)(ctx->buf_len - ctx->buf_off);
             if (i > outl)
                 i = outl;
             memcpy(out, &(ctx->buf[ctx->buf_off]), i);
@@ -216,7 +216,7 @@ static int ok_read(BIO *b, char *out, int outl)
             break;
 
         /* no clean bytes in buffer -- fill it */
-        n = IOBS - ctx->buf_len;
+        n = (int)(IOBS - ctx->buf_len);
         i = BIO_read(next, &(ctx->buf[ctx->buf_len]), n);
 
         if (i <= 0)
@@ -272,7 +272,7 @@ static int ok_write(BIO *b, const char *in, int inl)
 
     do {
         BIO_clear_retry_flags(b);
-        n = ctx->buf_len - ctx->buf_off;
+        n = (int)(ctx->buf_len - ctx->buf_off);
         while (ctx->blockout && n > 0) {
             i = BIO_write(next, &(ctx->buf[ctx->buf_off]), n);
             if (i <= 0) {
@@ -348,7 +348,7 @@ static long ok_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_PENDING:     /* More to read in buffer */
     case BIO_CTRL_WPENDING:    /* More to read in buffer */
-        ret = ctx->blockout ? ctx->buf_len - ctx->buf_off : 0;
+        ret = ctx->blockout ? (long)(ctx->buf_len - ctx->buf_off) : 0;
         if (ret <= 0)
             ret = BIO_ctrl(next, cmd, num, ptr);
         break;
@@ -538,7 +538,7 @@ static int block_out(BIO *b)
     if (md_size <= 0)
         goto berr;
 
-    tl = ctx->buf_len - OK_BLOCK_BLOCK;
+    tl = (unsigned long)(ctx->buf_len - OK_BLOCK_BLOCK);
     ctx->buf[0] = (unsigned char)(tl >> 24);
     ctx->buf[1] = (unsigned char)(tl >> 16);
     ctx->buf[2] = (unsigned char)(tl >> 8);

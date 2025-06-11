@@ -579,7 +579,7 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
             && out != NULL
             && OSSL_ENCODER_to_bio(ctx, out)
             && BIO_get_mem_ptr(out, &buf) > 0) {
-            ret = buf->length;
+            ret = (int)buf->length;
 
             if (pp != NULL) {
                 if (*pp == NULL) {
