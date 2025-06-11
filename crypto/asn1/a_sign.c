@@ -183,7 +183,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
         if (EVP_PKEY_CTX_get_params(pctx, params) <= 0)
             goto err;
 
-        if ((aid_len = params[0].return_size) == 0) {
+        if ((aid_len = params[0].return_size) == 0 || aid_len > LONG_MAX) {
             ERR_raise(ERR_LIB_ASN1, ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
             goto err;
         }
@@ -191,7 +191,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
         if (algor1 != NULL) {
             const unsigned char *pp = aid;
 
-            if (d2i_X509_ALGOR(&algor1, &pp, aid_len) == NULL) {
+            if (d2i_X509_ALGOR(&algor1, &pp, (long)aid_len) == NULL) {
                 ERR_raise(ERR_LIB_ASN1, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -200,7 +200,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
         if (algor2 != NULL) {
             const unsigned char *pp = aid;
 
-            if (d2i_X509_ALGOR(&algor2, &pp, aid_len) == NULL) {
+            if (d2i_X509_ALGOR(&algor2, &pp, (long)aid_len) == NULL) {
                 ERR_raise(ERR_LIB_ASN1, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -277,7 +277,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         goto err;
     }
-    ASN1_STRING_set0(signature, buf_out, outl);
+    ASN1_STRING_set0(signature, buf_out, (int)outl);
     buf_out = NULL;
     /*
      * In the interests of compatibility, I'll make sure that the bit string
@@ -287,5 +287,5 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
  err:
     OPENSSL_clear_free((char *)buf_in, inl);
     OPENSSL_clear_free((char *)buf_out, outll);
-    return outl;
+    return (int)outl;
 }

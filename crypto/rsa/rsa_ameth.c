@@ -698,19 +698,19 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, const void *asn,
 
         if (EVP_PKEY_CTX_get_params(pkctx, params) <= 0)
             return 0;
-        if ((aid_len = params[0].return_size) == 0)
+        if ((aid_len = params[0].return_size) == 0 || aid_len > LONG_MAX)
             return 0;
 
         if (alg1 != NULL) {
             const unsigned char *pp = aid;
 
-            if (d2i_X509_ALGOR(&alg1, &pp, aid_len) == NULL)
+            if (d2i_X509_ALGOR(&alg1, &pp, (long)aid_len) == NULL)
                 return 0;
         }
         if (alg2 != NULL) {
             const unsigned char *pp = aid;
 
-            if (d2i_X509_ALGOR(&alg2, &pp, aid_len) == NULL)
+            if (d2i_X509_ALGOR(&alg2, &pp, (long)aid_len) == NULL)
                 return 0;
         }
 

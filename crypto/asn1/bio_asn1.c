@@ -302,7 +302,12 @@ static int asn1_bio_read(BIO *b, char *in, int inl)
 
 static int asn1_bio_puts(BIO *b, const char *str)
 {
-    return asn1_bio_write(b, str, strlen(str));
+    size_t len = strlen(str);
+
+    if (len > INT_MAX)
+        return -1;
+
+    return asn1_bio_write(b, str, (int)len);
 }
 
 static int asn1_bio_gets(BIO *b, char *str, int size)

@@ -504,7 +504,7 @@ void ossl_crypto_condvar_broadcast(CRYPTO_CONDVAR *cv_)
     cv->closed     = 1;
 
     ossl_crypto_mutex_unlock(cv->int_m);
-    ReleaseSemaphore(cv->sema, num_wake, NULL);
+    ReleaseSemaphore(cv->sema, (LONG)num_wake, NULL);
 }
 
 void ossl_crypto_condvar_signal(CRYPTO_CONDVAR *cv_)

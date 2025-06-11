@@ -530,7 +530,7 @@ int ossl_ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
         num_val += (size_t)1 << (wsize[i] - 1);
         wNAF[i + 1] = NULL;     /* make sure we always have a pivot */
         wNAF[i] =
-            bn_compute_wNAF((i < num ? scalars[i] : scalar), wsize[i],
+            bn_compute_wNAF((i < num ? scalars[i] : scalar), (int)wsize[i],
                             &wNAF_len[i]);
         if (wNAF[i] == NULL)
             goto err;
@@ -560,7 +560,7 @@ int ossl_ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
              * use the window size for which we have precomputation
              */
             wsize[num] = pre_comp->w;
-            tmp_wNAF = bn_compute_wNAF(scalar, wsize[num], &tmp_len);
+            tmp_wNAF = bn_compute_wNAF(scalar, (int)wsize[num], &tmp_len);
             if (!tmp_wNAF)
                 goto err;
 
@@ -708,7 +708,9 @@ int ossl_ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 
     r_is_at_infinity = 1;
 
-    for (k = max_len - 1; k >= 0; k--) {
+    if (max_len > INT_MAX)
+        goto err;
+    for (k = (int)(max_len - 1); k >= 0; k--) {
         if (!r_is_at_infinity) {
             if (!EC_POINT_dbl(group, r, r, ctx))
                 goto err;

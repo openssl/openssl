@@ -59,8 +59,15 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 
     if (num == 0)
         return 0;
-    else if (num == -1)
-        num = strlen(buf);
+    else if (num == -1) {
+        size_t num_s = strlen(buf);
+
+        if (num_s >= INT_MAX) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_LENGTH_TOO_LONG);
+            goto err;
+        }
+        num = (int)num_s;
+    }
 
     p = buf;
     c = *(p++);

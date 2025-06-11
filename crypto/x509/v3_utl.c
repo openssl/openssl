@@ -431,7 +431,8 @@ static char *strip_spaces(char *name)
 
 int ossl_v3_name_cmp(const char *name, const char *cmp)
 {
-    int len, ret;
+    size_t len;
+    int ret;
     char c;
 
     len = strlen(cmp);

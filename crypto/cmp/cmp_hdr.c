@@ -119,7 +119,7 @@ int ossl_cmp_hdr_update_messageTime(OSSL_CMP_PKIHEADER *hdr)
 }
 
 /* assign to *tgt a random byte array of given length */
-static int set_random(ASN1_OCTET_STRING **tgt, OSSL_CMP_CTX *ctx, size_t len)
+static int set_random(ASN1_OCTET_STRING **tgt, OSSL_CMP_CTX *ctx, int len)
 {
     unsigned char *bytes = OPENSSL_malloc(len);
     int res = 0;

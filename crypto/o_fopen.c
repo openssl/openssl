@@ -71,7 +71,7 @@ FILE *openssl_fopen(const char *filename, const char *mode)
 
         if (MultiByteToWideChar(CP_UTF8, flags,
                                 filename, len_0, wfilename, sz) &&
-            MultiByteToWideChar(CP_UTF8, 0, mode, strlen(mode) + 1,
+            MultiByteToWideChar(CP_UTF8, 0, mode, (int)(strlen(mode) + 1),
                                 wmode, OSSL_NELEM(wmode)) &&
             (file = _wfopen(wfilename, wmode)) == NULL &&
             (errno == ENOENT || errno == EBADF)

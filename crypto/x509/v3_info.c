@@ -63,7 +63,8 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
     STACK_OF(CONF_VALUE) *ret)
 {
     ACCESS_DESCRIPTION *desc;
-    int i, nlen;
+    int i;
+    size_t nlen;
     char objtmp[80], *ntmp;
     CONF_VALUE *vtmp;
     STACK_OF(CONF_VALUE) *tret = ret;

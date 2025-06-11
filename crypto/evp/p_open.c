@@ -48,7 +48,7 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
     if (EVP_PKEY_decrypt(pctx, key, &keylen, ek, ekl) <= 0)
         goto err;
 
-    if (EVP_CIPHER_CTX_set_key_length(ctx, keylen) <= 0
+    if (EVP_CIPHER_CTX_set_key_length(ctx, (int)keylen) <= 0
         || !EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv))
         goto err;
 

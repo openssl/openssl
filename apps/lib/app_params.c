@@ -112,7 +112,7 @@ static void print_param_utf8(const char **s_ptr, size_t len)
     }
     BIO_puts(bio_out, "'");
     if (len > 0)
-        BIO_write(bio_out, s, len);
+        BIO_write(bio_out, s, (int)len);
     BIO_puts(bio_out, "'\n");
 }
 

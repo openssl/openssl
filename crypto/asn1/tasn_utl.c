@@ -170,8 +170,10 @@ int ossl_asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
         return 1;
 
     OPENSSL_free(enc->enc);
-    if (inlen <= 0)
+    if (inlen <= 0) {
+        enc->enc = NULL;
         return 0;
+    }
     if ((enc->enc = OPENSSL_malloc(inlen)) == NULL)
         return 0;
     memcpy(enc->enc, in, inlen);
