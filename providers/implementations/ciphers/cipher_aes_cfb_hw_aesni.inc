@@ -27,6 +27,9 @@
 #define cipher_hw_aesni_cfb8   ossl_cipher_hw_generic_cfb8
 #define cipher_hw_aesni_cfb1   ossl_cipher_hw_generic_cfb1
 
+static int ossl_aes_cfb8_vaes_eligible(void) { return 0; }
+static int ossl_aes_cfb1_vaes_eligible(void) { return 0; }
+
 /* active in 64-bit builds when AES-NI, AVX512F, and VAES are detected */
 static int aes_cfb128_vaes_encdec_wrapper(
     PROV_CIPHER_CTX* dat,
@@ -89,7 +92,7 @@ static const PROV_CIPHER_HW vaes_##mode = {                                    \
 };
 #define PROV_CIPHER_HW_select(mode)                                            \
 if (AESNI_CAPABLE) {                                                           \
-    if (ossl_aes_cfb128_vaes_eligible())                                       \
+    if (ossl_aes_##mode##_vaes_eligible())                                     \
         return &vaes_##mode;                                                   \
     return &aesni_##mode;                                                      \
 }
