@@ -299,7 +299,7 @@ int TS_RESP_CTX_set_status_info(TS_RESP_CTX *ctx,
     }
     if (text) {
         if ((utf8_text = ASN1_UTF8STRING_new()) == NULL
-            || !ASN1_STRING_set(utf8_text, text, strlen(text))) {
+            || !ASN1_STRING_set(utf8_text, text, (int)strlen(text))) {
             ERR_raise(ERR_LIB_TS, ERR_R_ASN1_LIB);
             goto err;
         }

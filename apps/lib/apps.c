@@ -1595,7 +1595,7 @@ int save_serial(const char *serialfile, const char *suffix,
     BIO *out = NULL;
     int ret = 0;
     ASN1_INTEGER *ai = NULL;
-    int j;
+    size_t j;
 
     if (suffix == NULL)
         j = strlen(serialfile);
@@ -1643,7 +1643,7 @@ int rotate_serial(const char *serialfile, const char *new_suffix,
                   const char *old_suffix)
 {
     char buf[2][BSIZE];
-    int i, j;
+    size_t i, j;
 
     i = strlen(serialfile) + strlen(old_suffix);
     j = strlen(serialfile) + strlen(new_suffix);
@@ -1807,7 +1807,7 @@ int save_index(const char *dbfile, const char *suffix, CA_DB *db)
     BIO *out;
     int j;
 
-    j = strlen(dbfile) + strlen(suffix);
+    j = (int)(strlen(dbfile) + strlen(suffix));
     if (j + 6 >= BSIZE) {
         BIO_printf(bio_err, "File name too long\n");
         goto err;
@@ -1852,7 +1852,7 @@ int rotate_index(const char *dbfile, const char *new_suffix,
                  const char *old_suffix)
 {
     char buf[5][BSIZE];
-    int i, j;
+    size_t i, j;
 
     i = strlen(dbfile) + strlen(old_suffix);
     j = strlen(dbfile) + strlen(new_suffix);
@@ -2039,7 +2039,7 @@ X509_NAME *parse_name(const char *cp, int chtype, int canmulti,
             continue;
         }
         if (!X509_NAME_add_entry_by_NID(n, nid, chtype,
-                                        valstr, strlen((char *)valstr),
+                                        valstr, (int)strlen((char *)valstr),
                                         -1, ismulti ? -1 : 0)) {
             ERR_print_errors(bio_err);
             BIO_printf(bio_err,
@@ -2764,12 +2764,12 @@ static int WIN32_rename(const char *from, const char *to)
             goto err;
         tto = tfrom + flen;
 # if !defined(_WIN32_WCE) || _WIN32_WCE >= 101
-        if (!MultiByteToWideChar(CP_ACP, 0, from, flen, (WCHAR *)tfrom, flen))
+        if (!MultiByteToWideChar(CP_ACP, 0, from, (int)flen, (WCHAR *)tfrom, (int)flen))
 # endif
             for (i = 0; i < flen; i++)
                 tfrom[i] = (TCHAR)from[i];
 # if !defined(_WIN32_WCE) || _WIN32_WCE >= 101
-        if (!MultiByteToWideChar(CP_ACP, 0, to, tlen, (WCHAR *)tto, tlen))
+        if (!MultiByteToWideChar(CP_ACP, 0, to, (int)tlen, (WCHAR *)tto, (int)tlen))
 # endif
             for (i = 0; i < tlen; i++)
                 tto[i] = (TCHAR)to[i];
@@ -3256,7 +3256,7 @@ int mem_bio_to_file(BIO *in, const char *filename, int format, int private)
     out = bio_open_owner(filename, format, private);
     if (out == NULL)
         goto end;
-    rv = BIO_write(out, mem_buffer->data, mem_buffer->length);
+    rv = BIO_write(out, mem_buffer->data, (int)mem_buffer->length);
     if (rv < 0 || (size_t)rv != mem_buffer->length)
         BIO_printf(bio_err, "Error writing to output file: '%s'\n", filename);
     else

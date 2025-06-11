@@ -28,7 +28,7 @@
 static int bits2int(BIGNUM *out, int qlen_bits,
                     const unsigned char *in, size_t inlen)
 {
-    int blen_bits = inlen * 8;
+    int blen_bits = (int)(inlen * 8);
     int shift;
 
     if (BN_bin2bn(in, (int)inlen, out) == NULL)
@@ -55,7 +55,7 @@ static int bits2int(BIGNUM *out, int qlen_bits,
 static int bits2int_consttime(BIGNUM *out, int qlen_bits,
                               const unsigned char *in, size_t inlen)
 {
-    int blen_bits = (inlen - sizeof(BN_ULONG)) * 8;
+    int blen_bits = (int)((inlen - sizeof(BN_ULONG)) * 8);
     int shift;
 
     if (BN_bin2bn(in, (int)inlen, out) == NULL)

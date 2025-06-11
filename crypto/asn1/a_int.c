@@ -206,7 +206,7 @@ static size_t c2i_ibuf(unsigned char *b, int *pneg,
 
 int ossl_i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 {
-    return i2c_ibuf(a->data, a->length, a->type & V_ASN1_NEG, pp);
+    return (int)i2c_ibuf(a->data, a->length, a->type & V_ASN1_NEG, pp);
 }
 
 /* Convert big endian buffer into uint64_t, return 0 on error */
@@ -307,7 +307,7 @@ ASN1_INTEGER *ossl_c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
     } else
         ret = *a;
 
-    if (ASN1_STRING_set(ret, NULL, r) == 0) {
+    if (r > INT_MAX || ASN1_STRING_set(ret, NULL, (int)r) == 0) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
         goto err;
     }
@@ -362,7 +362,7 @@ static int asn1_string_set_int64(ASN1_STRING *a, int64_t r, int itype)
         off = asn1_put_uint64(tbuf, r);
         a->type &= ~V_ASN1_NEG;
     }
-    return ASN1_STRING_set(a, tbuf + off, sizeof(tbuf) - off);
+    return ASN1_STRING_set(a, tbuf + off, (int)(sizeof(tbuf) - off));
 }
 
 static int asn1_string_get_uint64(uint64_t *pr, const ASN1_STRING *a,
@@ -390,7 +390,7 @@ static int asn1_string_set_uint64(ASN1_STRING *a, uint64_t r, int itype)
 
     a->type = itype;
     off = asn1_put_uint64(tbuf, r);
-    return ASN1_STRING_set(a, tbuf + off, sizeof(tbuf) - off);
+    return ASN1_STRING_set(a, tbuf + off, (int)(sizeof(tbuf) - off));
 }
 
 /*
@@ -642,6 +642,6 @@ int ossl_i2c_uint64_int(unsigned char *p, uint64_t r, int neg)
     size_t off;
 
     off = asn1_put_uint64(buf, r);
-    return i2c_ibuf(buf + off, sizeof(buf) - off, neg, &p);
+    return (int)i2c_ibuf(buf + off, sizeof(buf) - off, neg, &p);
 }
 

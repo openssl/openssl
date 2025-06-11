@@ -22,7 +22,7 @@ int ASN1_PRINTABLE_type(const unsigned char *s, int len)
         return V_ASN1_PRINTABLESTRING;
 
     if (len < 0)
-        len = strlen((const char *)s);
+        len = (int)strlen((const char *)s);
 
     while (len-- > 0) {
         c = *(s++);

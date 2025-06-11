@@ -344,7 +344,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
     async_pool *pool;
     size_t curr_size = 0;
 
-    if (init_size > max_size) {
+    if (init_size > max_size || max_size > INT_MAX) {
         ERR_raise(ERR_LIB_ASYNC, ASYNC_R_INVALID_POOL_SIZE);
         return 0;
     }
@@ -359,7 +359,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
     if (pool == NULL)
         return 0;
 
-    pool->jobs = sk_ASYNC_JOB_new_reserve(NULL, init_size);
+    pool->jobs = sk_ASYNC_JOB_new_reserve(NULL, (int)init_size);
     if (pool->jobs == NULL) {
         ERR_raise(ERR_LIB_ASYNC, ERR_R_CRYPTO_LIB);
         OPENSSL_free(pool);

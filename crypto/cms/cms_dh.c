@@ -85,7 +85,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     ASN1_OCTET_STRING *ukm;
     const unsigned char *p;
     unsigned char *dukm = NULL;
-    size_t dukmlen = 0;
+    int dukmlen = 0;
     int keylen, plen;
     EVP_CIPHER *kekcipher = NULL;
     EVP_CIPHER_CTX *kekctx;
@@ -201,7 +201,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
     ASN1_OCTET_STRING *ukm;
     unsigned char *penc = NULL, *dukm = NULL;
     int penclen;
-    size_t dukmlen = 0;
+    int dukmlen = 0;
     int rv = 0;
     int kdf_type, wrap_nid;
     const EVP_MD *kdf_md;

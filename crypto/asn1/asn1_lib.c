@@ -318,7 +318,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
             return 0;
         }
     }
-    str->length = len;
+    str->length = (int)len;
     if (data != NULL) {
         memcpy(str->data, data, len);
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION

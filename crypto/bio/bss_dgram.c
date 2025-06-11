@@ -1028,10 +1028,12 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 static int dgram_puts(BIO *bp, const char *str)
 {
-    int n, ret;
+    int ret;
+    size_t n = strlen(str);
 
-    n = strlen(str);
-    ret = dgram_write(bp, str, n);
+    if (n > INT_MAX)
+        return -1;
+    ret = dgram_write(bp, str, (int)n);
     return ret;
 }
 

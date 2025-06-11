@@ -813,7 +813,8 @@ void ERR_add_error_data(int num, ...)
 
 void ERR_add_error_vdata(int num, va_list args)
 {
-    int i, len, size;
+    int i;
+    size_t len, size;
     int flags = ERR_TXT_MALLOCED | ERR_TXT_STRING;
     char *str, *arg;
     ERR_STATE *es;
@@ -865,7 +866,7 @@ void ERR_add_error_vdata(int num, va_list args)
             }
             str = p;
         }
-        OPENSSL_strlcat(str, arg, (size_t)size);
+        OPENSSL_strlcat(str, arg, size);
     }
     if (!err_set_error_data_int(str, size, flags, 0))
         OPENSSL_free(str);
