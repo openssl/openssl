@@ -153,7 +153,7 @@ memset((key), 0, sizeof(*(key))); \
 
 /* Same as HT_SET_KEY_STRING_CASE but also takes length of the string. */
 #define HT_SET_KEY_STRING_CASE_N(key, member, value, len) do { \
-    if (len < sizeof((key)->keyfields.member)) \
+    if ((size_t)len < sizeof((key)->keyfields.member)) \
         ossl_ht_strcase((key)->keyfields.member, value, len); \
     else \
         ossl_ht_strcase((key)->keyfields.member, value, sizeof((key)->keyfields.member) - 1); \

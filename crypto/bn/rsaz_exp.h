@@ -72,7 +72,7 @@ static ossl_inline BN_ULONG bn_reduce_once_in_place(BN_ULONG *r,
                                                     const BN_ULONG *m,
                                                     BN_ULONG *tmp, size_t num)
 {
-    carry -= bn_sub_words(tmp, r, m, num);
+    carry -= bn_sub_words(tmp, r, m, (int)num);
     bn_select_words(r, carry, r /* tmp < 0 */, tmp /* tmp >= 0 */, num);
     return carry;
 }

@@ -331,9 +331,9 @@ static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
         if (pd->bn != NULL) {
             /* BIGNUM */
             if (pd->type == OSSL_PARAM_UNSIGNED_INTEGER)
-                BN_bn2nativepad(pd->bn, (unsigned char *)p, pd->size);
+                BN_bn2nativepad(pd->bn, (unsigned char *)p, (int)pd->size);
             else
-                BN_signed_bn2native(pd->bn, (unsigned char *)p, pd->size);
+                BN_signed_bn2native(pd->bn, (unsigned char *)p, (int)pd->size);
         } else if (pd->type == OSSL_PARAM_OCTET_PTR
                    || pd->type == OSSL_PARAM_UTF8_PTR) {
             /* PTR */

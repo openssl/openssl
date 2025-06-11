@@ -37,7 +37,7 @@ int BN_lshift1(BIGNUM *r, const BIGNUM *a)
         c = t >> (BN_BITS2 - 1);
     }
     *rp = c;
-    r->top += c;
+    r->top += (int)c;
     bn_check_top(r);
     return 1;
 }

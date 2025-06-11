@@ -30,9 +30,9 @@ struct decoder_process_data_st {
     BIO *bio;
 
     /* Index of the current decoder instance to be processed */
-    size_t current_decoder_inst_index;
+    int current_decoder_inst_index;
     /* For tracing, count recursion level */
-    size_t recursion;
+    int recursion;
 
     /*-
      * Flags
@@ -419,8 +419,8 @@ struct collect_extra_decoder_data_st {
      * 1 to check that the decoder's input type differs from the decoder name
      */
     enum { IS_SAME = 0, IS_DIFFERENT = 1 } type_check;
-    size_t w_prev_start, w_prev_end; /* "previous" decoders */
-    size_t w_new_start, w_new_end;   /* "new" decoders */
+    int w_prev_start, w_prev_end; /* "previous" decoders */
+    int w_new_start, w_new_end;   /* "new" decoders */
 };
 
 DEFINE_STACK_OF(OSSL_DECODER)
@@ -437,7 +437,7 @@ static void collect_all_decoders(OSSL_DECODER *decoder, void *arg)
 static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
 {
     struct collect_extra_decoder_data_st *data = arg;
-    size_t j;
+    int j;
     const OSSL_PROVIDER *prov = OSSL_DECODER_get0_provider(decoder);
     void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
@@ -574,7 +574,7 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
     struct collect_extra_decoder_data_st data;
     size_t depth = 0; /* Counts the number of iterations */
     size_t count; /* Calculates how many were added in each iteration */
-    size_t numdecoders;
+    int numdecoders;
     STACK_OF(OSSL_DECODER) *skdecoders;
 
     if (!ossl_assert(ctx != NULL)) {
@@ -628,7 +628,7 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
     data.w_prev_start = 0;
     data.w_prev_end = sk_OSSL_DECODER_INSTANCE_num(ctx->decoder_insts);
     do {
-        size_t i, j;
+        int i, j;
 
         data.w_new_start = data.w_new_end = data.w_prev_end;
 
@@ -797,7 +797,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     OSSL_CORE_BIO *cbio = NULL;
     BIO *bio = data->bio;
     long loc;
-    size_t i;
+    int i;
     int ok = 0;
     /* For recursions */
     struct decoder_process_data_st new_data;
@@ -817,7 +817,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     new_data.recursion = data->recursion + 1;
 
 #define LEVEL_STR ">>>>>>>>>>>>>>>>"
-#define LEVEL (new_data.recursion < sizeof(LEVEL_STR)                   \
+#define LEVEL ((size_t)new_data.recursion < sizeof(LEVEL_STR)           \
                ? &LEVEL_STR[sizeof(LEVEL_STR) - new_data.recursion - 1] \
                : LEVEL_STR "...")
 

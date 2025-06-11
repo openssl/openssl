@@ -57,7 +57,7 @@ int EVP_SignFinal_ex(EVP_MD_CTX *ctx, unsigned char *sigret,
         goto err;
     if (EVP_PKEY_sign(pkctx, sigret, &sltmp, m, m_len) <= 0)
         goto err;
-    *siglen = sltmp;
+    *siglen = (unsigned int)sltmp;
     i = 1;
  err:
     EVP_PKEY_CTX_free(pkctx);

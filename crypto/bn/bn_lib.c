@@ -718,9 +718,9 @@ int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
         int res = 0;
 
         for (i = 0; i < b->top; i++) {
-            res = constant_time_select_int(constant_time_lt_bn(ap[i], bp[i]),
+            res = constant_time_select_int((int)constant_time_lt_bn(ap[i], bp[i]),
                                            -1, res);
-            res = constant_time_select_int(constant_time_lt_bn(bp[i], ap[i]),
+            res = constant_time_select_int((int)constant_time_lt_bn(bp[i], ap[i]),
                                            1, res);
         }
         return res;
@@ -1057,10 +1057,10 @@ int ossl_bn_is_word_fixed_top(const BIGNUM *a, const BN_ULONG w)
     if (a->neg || a->top == 0)
         return 0;
 
-    res = constant_time_select_int(constant_time_eq_bn(ap[0], w), 1, 0);
+    res = constant_time_select_int((int)constant_time_eq_bn(ap[0], w), 1, 0);
 
     for (i = 1; i < a->top; i++)
-        res = constant_time_select_int(constant_time_is_zero_bn(ap[i]),
+        res = constant_time_select_int((int)constant_time_is_zero_bn(ap[i]),
                                        res, 0);
     return res;
 }

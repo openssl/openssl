@@ -574,9 +574,9 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
 
         if (!ossl_property_read_lock(store))
             return;
-       
+
         tmpalgs = sk_ALGORITHM_new_reserve(NULL,
-                                           ossl_sa_ALGORITHM_num(store->algs));
+                                           (int)ossl_sa_ALGORITHM_num(store->algs));
         if (tmpalgs == NULL) {
             ossl_property_unlock(store);
             return;
@@ -726,7 +726,7 @@ fin:
 #ifndef FIPS_MODULE
     OSSL_TRACE_BEGIN(QUERY) {
         char buf[512];
-        int size;
+        size_t size;
 
         size = ossl_property_list_to_string(NULL, pq, buf, 512);
         BIO_printf(trc_out, "method store query with properties %s "

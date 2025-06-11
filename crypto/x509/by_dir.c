@@ -266,7 +266,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         BY_DIR_HASH htmp, *hent;
 
         ent = sk_BY_DIR_ENTRY_value(ctx->dirs, i);
-        j = strlen(ent->dir) + 1 + 8 + 6 + 1 + 1;
+        j = (int)strlen(ent->dir) + 1 + 8 + 6 + 1 + 1;
         if (!BUF_MEM_grow(b, j)) {
             ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
             goto finish;

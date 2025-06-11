@@ -1206,7 +1206,7 @@ void opt_help(const OPTIONS *list)
 
         i = 2 + (int)strlen(o->name);
         if (o->valtype != '-')
-            i += 1 + strlen(valtype2param(o));
+            i += 1 + (int)strlen(valtype2param(o));
 
         if (i > width)
             width = i;
@@ -1243,7 +1243,7 @@ int opt_isdir(const char *name)
         return -1;
 
 #  if !defined(_WIN32_WCE) || _WIN32_WCE>=101
-    if (!MultiByteToWideChar(CP_ACP, 0, name, len_0, tempname, MAX_PATH))
+    if (!MultiByteToWideChar(CP_ACP, 0, name, (int)len_0, tempname, MAX_PATH))
 #  endif
         for (i = 0; i < len_0; i++)
             tempname[i] = (WCHAR)name[i];

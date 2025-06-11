@@ -449,9 +449,9 @@ static char *win32_name_converter(DSO *dso, const char *filename)
                  (strstr(filename, ":") == NULL));
     /* If transform != 0, then we convert to %s.dll, else just dupe filename */
 
-    len = strlen(filename) + 1;
+    len = (int)strlen(filename) + 1;
     if (transform)
-        len += strlen(".dll");
+        len += (int)strlen(".dll");
     translated = OPENSSL_malloc(len);
     if (translated == NULL) {
         ERR_raise(ERR_LIB_DSO, DSO_R_NAME_TRANSLATION_FAILED);
