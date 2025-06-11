@@ -215,6 +215,7 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
     ret = evp_pkey_decrypt_alloc(pctx, &ek, &eklen, fixlen,
                                  ri->enc_key->data, ri->enc_key->length);
     if (ret <= 0)
+		if (ret == 0) ret = -1;
         goto err;
 
     ret = 1;
