@@ -308,7 +308,7 @@ int ossl_blake2b_final(unsigned char *md, BLAKE2B_CTX *c)
 {
     uint8_t outbuffer[BLAKE2B_OUTBYTES] = {0};
     uint8_t *target = outbuffer;
-    int iter = (c->outlen + 7) / 8;
+    int iter = (int)((c->outlen + 7) / 8);
     int i;
 
     /* Avoid writing to the temporary buffer if possible */

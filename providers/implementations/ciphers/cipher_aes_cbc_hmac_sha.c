@@ -173,11 +173,11 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD);
     if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_OCTET_STRING) {
+        if (p->data_type != OSSL_PARAM_OCTET_STRING || p->data_size > INT_MAX) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
-        if (hw->set_tls1_aad(ctx, p->data, p->data_size) <= 0)
+        if (hw->set_tls1_aad(ctx, p->data, (int)p->data_size) <= 0)
             return 0;
     }
 

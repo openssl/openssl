@@ -345,14 +345,14 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
                        v->algorithm_name);
         goto end;
     }
-    len = p8fmt->p8_bytes;
+    len = (int)p8fmt->p8_bytes;
 
     if (out == NULL) {
         ret = len;
         goto end;
     }
 
-    if ((pos = buf = OPENSSL_malloc((size_t) len)) == NULL)
+    if ((pos = buf = OPENSSL_malloc((size_t)len)) == NULL)
         goto end;
 
     switch (p8fmt->p8_shift) {

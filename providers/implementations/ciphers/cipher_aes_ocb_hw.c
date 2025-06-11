@@ -19,8 +19,8 @@
                        fn_block_enc, fn_block_dec,                             \
                        fn_stream_enc, fn_stream_dec)                           \
 CRYPTO_ocb128_cleanup(&ctx->ocb);                                              \
-fn_set_enc_key(key, keylen * 8, &ctx->ksenc.ks);                               \
-fn_set_dec_key(key, keylen * 8, &ctx->ksdec.ks);                               \
+fn_set_enc_key(key, (int)(keylen * 8), &ctx->ksenc.ks);                        \
+fn_set_dec_key(key, (int)(keylen * 8), &ctx->ksdec.ks);                        \
 if (!CRYPTO_ocb128_init(&ctx->ocb, &ctx->ksenc.ks, &ctx->ksdec.ks,             \
                         (block128_f)fn_block_enc, (block128_f)fn_block_dec,    \
                         ctx->base.enc ? (ocb128_f)fn_stream_enc :              \

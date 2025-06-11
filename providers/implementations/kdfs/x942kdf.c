@@ -217,7 +217,7 @@ x942_encode_otherinfo(size_t keylen,
     /* keylenbits must fit into 4 bytes */
     if (keylen > 0xFFFFFF)
         return 0;
-    keylen_bits = 8 * keylen;
+    keylen_bits = (uint32_t)(8 * keylen);
 
     /* Calculate the size of the buffer */
     if (!der_encode_sharedinfo(&pkt, NULL, 0, cek_oid, cek_oid_len,

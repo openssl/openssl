@@ -272,7 +272,7 @@ static int kdf_pbkdf2_derive(void *vctx, unsigned char *key, size_t keylen,
 
     md = ossl_prov_digest_md(&ctx->digest);
     return pbkdf2_derive(ctx, (char *)ctx->pass, ctx->pass_len,
-                         ctx->salt, ctx->salt_len, ctx->iter,
+                         ctx->salt, (int)ctx->salt_len, ctx->iter,
                          md, key, keylen, ctx->lower_bound_checks);
 }
 
@@ -314,7 +314,7 @@ static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SALT)) != NULL) {
-        if (!lower_bound_check_passed(ctx, p->data_size, UINT64_MAX, SIZE_MAX,
+        if (!lower_bound_check_passed(ctx, (int)p->data_size, UINT64_MAX, SIZE_MAX,
                                       ctx->lower_bound_checks))
             return 0;
         if (!pbkdf2_set_membuf(&ctx->salt, &ctx->salt_len, p))
@@ -428,8 +428,8 @@ static int pbkdf2_derive(KDF_PBKDF2 *ctx, const char *pass, size_t passlen,
     if (hctx_tpl == NULL)
         return 0;
     p = key;
-    tkeylen = keylen;
-    if (!HMAC_Init_ex(hctx_tpl, pass, passlen, digest, NULL))
+    tkeylen = (int)keylen;
+    if (!HMAC_Init_ex(hctx_tpl, pass, (int)passlen, digest, NULL))
         goto err;
     hctx = HMAC_CTX_new();
     if (hctx == NULL)

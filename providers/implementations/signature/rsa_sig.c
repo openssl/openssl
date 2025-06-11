@@ -160,7 +160,7 @@ typedef struct {
 /* True if PSS parameters are restricted */
 #define rsa_pss_restricted(prsactx) (prsactx->min_saltlen != -1)
 
-static size_t rsa_get_md_size(const PROV_RSA_CTX *prsactx)
+static int rsa_get_md_size(const PROV_RSA_CTX *prsactx)
 {
     int md_size;
 
@@ -710,8 +710,8 @@ static int rsa_sign_directly(PROV_RSA_CTX *prsactx,
                                "only PKCS#1 padding supported with MDC2");
                 return 0;
             }
-            ret = RSA_sign_ASN1_OCTET_STRING(0, tbs, tbslen, sig, &sltmp,
-                                             prsactx->rsa);
+            ret = RSA_sign_ASN1_OCTET_STRING(0, tbs, (unsigned int)tbslen, sig,
+                                             &sltmp, prsactx->rsa);
 
             if (ret <= 0) {
                 ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
@@ -735,7 +735,7 @@ static int rsa_sign_directly(PROV_RSA_CTX *prsactx,
             }
             memcpy(prsactx->tbuf, tbs, tbslen);
             prsactx->tbuf[tbslen] = RSA_X931_hash_id(prsactx->mdnid);
-            ret = RSA_private_encrypt(tbslen + 1, prsactx->tbuf,
+            ret = RSA_private_encrypt((int)(tbslen + 1), prsactx->tbuf,
                                       sig, prsactx->rsa, RSA_X931_PADDING);
             clean_tbuf(prsactx);
             break;
@@ -743,8 +743,8 @@ static int rsa_sign_directly(PROV_RSA_CTX *prsactx,
             {
                 unsigned int sltmp;
 
-                ret = RSA_sign(prsactx->mdnid, tbs, tbslen, sig, &sltmp,
-                               prsactx->rsa);
+                ret = RSA_sign(prsactx->mdnid, tbs, (unsigned int)tbslen,
+                               sig, &sltmp, prsactx->rsa);
                 if (ret <= 0) {
                     ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                     return 0;
@@ -811,7 +811,7 @@ static int rsa_sign_directly(PROV_RSA_CTX *prsactx,
             return 0;
         }
     } else {
-        ret = RSA_private_encrypt(tbslen, tbs, sig, prsactx->rsa,
+        ret = RSA_private_encrypt((int)tbslen, tbs, sig, prsactx->rsa,
                                   prsactx->pad_mode);
     }
 
@@ -950,7 +950,7 @@ static int rsa_verify_recover(void *vprsactx,
         case RSA_X931_PADDING:
             if (!setup_tbuf(prsactx))
                 return 0;
-            ret = RSA_public_decrypt(siglen, sig, prsactx->tbuf, prsactx->rsa,
+            ret = RSA_public_decrypt((int)siglen, sig, prsactx->tbuf, prsactx->rsa,
                                      RSA_X931_PADDING);
             if (ret < 1) {
                 ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
@@ -990,7 +990,7 @@ static int rsa_verify_recover(void *vprsactx,
                     ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                     return 0;
                 }
-                ret = sltmp;
+                ret = (int)sltmp;
             }
             break;
 
@@ -1000,7 +1000,7 @@ static int rsa_verify_recover(void *vprsactx,
             return 0;
         }
     } else {
-        ret = RSA_public_decrypt(siglen, sig, rout, prsactx->rsa,
+        ret = RSA_public_decrypt((int)siglen, sig, rout, prsactx->rsa,
                                  prsactx->pad_mode);
         if (ret < 0) {
             ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
@@ -1036,8 +1036,8 @@ static int rsa_verify_directly(PROV_RSA_CTX *prsactx,
     if (prsactx->md != NULL) {
         switch (prsactx->pad_mode) {
         case RSA_PKCS1_PADDING:
-            if (!RSA_verify(prsactx->mdnid, tbs, tbslen, sig, siglen,
-                            prsactx->rsa)) {
+            if (!RSA_verify(prsactx->mdnid, tbs, (unsigned int)tbslen,
+                            sig, (unsigned int)siglen, prsactx->rsa)) {
                 ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                 return 0;
             }
@@ -1069,7 +1069,7 @@ static int rsa_verify_directly(PROV_RSA_CTX *prsactx,
 
                 if (!setup_tbuf(prsactx))
                     return 0;
-                ret = RSA_public_decrypt(siglen, sig, prsactx->tbuf,
+                ret = RSA_public_decrypt((int)siglen, sig, prsactx->tbuf,
                                          prsactx->rsa, RSA_NO_PADDING);
                 if (ret <= 0) {
                     ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
@@ -1100,7 +1100,7 @@ static int rsa_verify_directly(PROV_RSA_CTX *prsactx,
 
         if (!setup_tbuf(prsactx))
             return 0;
-        ret = RSA_public_decrypt(siglen, sig, prsactx->tbuf, prsactx->rsa,
+        ret = RSA_public_decrypt((int)siglen, sig, prsactx->tbuf, prsactx->rsa,
                                  prsactx->pad_mode);
         if (ret <= 0) {
             ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);

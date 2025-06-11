@@ -288,7 +288,7 @@ static size_t crng_test_get_seed(void *vcrngt, unsigned char **pout,
 {
     CRNG_TEST *crngt = (CRNG_TEST *)vcrngt;
     size_t n;
-    int r = 0;
+    size_t r = 0;
 
     /* Without a parent, we rely on the up calls */
     if (crngt->parent == NULL

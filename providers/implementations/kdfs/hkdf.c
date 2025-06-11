@@ -638,7 +638,7 @@ static int HKDF_Expand(const EVP_MD *evp_md,
     if ((hmac = HMAC_CTX_new()) == NULL)
         return 0;
 
-    if (!HMAC_Init_ex(hmac, prk, prk_len, evp_md, NULL))
+    if (!HMAC_Init_ex(hmac, prk, (int)prk_len, evp_md, NULL))
         goto err;
 
     for (i = 1; i <= n; i++) {

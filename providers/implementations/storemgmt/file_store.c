@@ -339,7 +339,8 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
         int ok = 0;
 
         if (!OSSL_PARAM_get_octet_string_ptr(p, (const void **)&der, &der_len)
-            || (x509_name = d2i_X509_NAME(NULL, &der, der_len)) == NULL)
+            || der_len > LONG_MAX
+            || (x509_name = d2i_X509_NAME(NULL, &der, (long)der_len)) == NULL)
             return 0;
         if (ctx->type != IS_DIR) {
             char *str = X509_NAME_oneline(x509_name, NULL, 0);
@@ -587,7 +588,7 @@ static char *file_name_to_uri(struct file_ctx_st *ctx, const char *name)
     assert(name != NULL);
     {
         const char *pathsep = ossl_ends_with_dirsep(ctx->uri) ? "" : "/";
-        long calculated_length = strlen(ctx->uri) + strlen(pathsep)
+        size_t calculated_length = strlen(ctx->uri) + strlen(pathsep)
             + strlen(name) + 1 /* \0 */;
 
         data = OPENSSL_zalloc(calculated_length);
