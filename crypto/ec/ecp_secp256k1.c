@@ -661,7 +661,6 @@ ossl_inline static int secp256k1_scalar_reduce(secp256k1_scalar *r, unsigned int
 
     return overflow;
 }
-#endif
 
 static void secp256k1_scalar_cadd_bit(secp256k1_scalar *r, unsigned int bit, int flag) {
     secp256k1_uint128 t;
@@ -681,6 +680,7 @@ static void secp256k1_scalar_cadd_bit(secp256k1_scalar *r, unsigned int bit, int
     secp256k1_u128_accum_u64(&t, ((uint64_t)((bit >> 6) == 3)) << (bit & 0x3F));
     r->d[3] = secp256k1_u128_to_u64(&t);
 }
+#endif
 
 ossl_inline static int secp256k1_scalar_is_zero(const secp256k1_scalar *a) {
     return (a->d[0] | a->d[1] | a->d[2] | a->d[3]) == 0;
@@ -704,6 +704,7 @@ static void secp256k1_scalar_negate(secp256k1_scalar *r, const secp256k1_scalar 
     r->d[3] = secp256k1_u128_to_u64(&t) & nonzero;
 }
 
+#if 0
 /* Inspired by the macros in OpenSSL's crypto/bn/asm/x86_64-gcc.c. */
 
 /** Add a*b to the number defined by (c0,c1,c2). c2 must never overflow. */
@@ -764,7 +765,7 @@ static void secp256k1_scalar_negate(secp256k1_scalar *r, const secp256k1_scalar 
     c0 = c1; \
     c1 = 0; \
 }
-#if 0
+
 static void secp256k1_scalar_reduce_512(secp256k1_scalar *r, const uint64_t *l) {
     secp256k1_uint128 c128;
     uint64_t c, c0, c1, c2;
@@ -838,7 +839,6 @@ static void secp256k1_scalar_reduce_512(secp256k1_scalar *r, const uint64_t *l) 
     /* Final reduction of r. */
     secp256k1_scalar_reduce(r, c + secp256k1_scalar_check_overflow(r));
 }
-#endif
 
 static void secp256k1_scalar_mul_512(uint64_t *l8, const secp256k1_scalar *a, const secp256k1_scalar *b) {
     /* 160 bit accumulator. */
@@ -880,8 +880,6 @@ static void secp256k1_scalar_mul_512(uint64_t *l8, const secp256k1_scalar *a, co
 #undef extract
 #undef extract_fast
 
-
-#if 0
 static void secp256k1_scalar_mul(secp256k1_scalar *r, const secp256k1_scalar *a, const secp256k1_scalar *b) {
     uint64_t l[8];
     secp256k1_scalar_mul_512(l, a, b);
@@ -1424,6 +1422,14 @@ static ossl_inline void secp256k1_ge_storage_cmov(secp256k1_ge_storage *r, const
     secp256k1_fe_storage_cmov(&r->y, &a->y, flag);
 }
 
+static int secp256k1_gej_eq_var(const secp256k1_gej *a, const secp256k1_gej *b) {
+    secp256k1_gej tmp;
+
+    secp256k1_gej_neg(&tmp, a);
+    secp256k1_gej_add_var(&tmp, &tmp, b, NULL);
+    return secp256k1_gej_is_infinity(&tmp);
+}
+
 /** Fill a table 'prej' with precomputed odd multiples of a. Prej will contain
  *  the values [1*a,3*a,...,(2*n-1)*a], so it space for n values. zr[0] will
  *  contain prej[0].z / a.z. The other zr[i] values = prej[i].z / prej[i-1].z.
@@ -1958,6 +1964,40 @@ static int ecp_secp256k1_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC
     return ret;
 }
 
+static int ecp_secp256k1_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
+                           const EC_POINT *b, ossl_unused BN_CTX *ctx)
+{
+    secp256k1_gej a_j, b_j;
+    int ret = 0;
+    if (!group || !r || !a) {
+        goto err;
+    }
+
+    if (a == b)
+        return ecp_secp256k1_simple_dbl(group, r, a, ctx);
+    if (EC_POINT_is_at_infinity(group, a))
+        return EC_POINT_copy(r, b);
+    if (EC_POINT_is_at_infinity(group, b))
+        return EC_POINT_copy(r, a);
+
+    if (!ecp_secp256k1_import_point(&a_j, group, a)) {
+        goto err;
+    }
+    if (!ecp_secp256k1_import_point(&b_j, group, b)) {
+        goto err;
+    }
+
+    secp256k1_gej_add_var(&a_j, &a_j, &b_j, NULL);
+    if (!ecp_secp256k1_export_point(r, &a_j, group)) {
+        goto err;
+    }
+
+    ret = 1;
+
+ err:
+    return ret;
+}
+
 static int ecp_secp256k1_is_on_curve(const EC_GROUP *group, const EC_POINT *a,
                            ossl_unused BN_CTX *ctx)
 {
@@ -1977,6 +2017,43 @@ static int ecp_secp256k1_is_on_curve(const EC_GROUP *group, const EC_POINT *a,
     ret = secp256k1_gej_is_valid_var(&a_j);
 
  err:
+    return ret;
+}
+
+static int ecp_secp256k1_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
+                           const EC_POINT *b, ossl_unused BN_CTX *ctx)
+{
+    /*-
+     * return values:
+     *  -1   error
+     *   0   equal (in affine coordinates)
+     *   1   not equal
+     */
+
+    int ret = -1;
+    secp256k1_gej a_j, b_j;
+
+    if (EC_POINT_is_at_infinity(group, a)) {
+        return EC_POINT_is_at_infinity(group, b) ? 0 : 1;
+    }
+
+    if (EC_POINT_is_at_infinity(group, b))
+        return 1;
+
+    if (a->Z_is_one && b->Z_is_one) {
+        return ((BN_cmp(a->X, b->X) == 0) && BN_cmp(a->Y, b->Y) == 0) ? 0 : 1;
+    }
+
+    if (!ecp_secp256k1_import_point(&a_j, group, a)) {
+        goto err;
+    }
+    if (!ecp_secp256k1_import_point(&b_j, group, b)) {
+        goto err;
+    }
+
+    ret = secp256k1_gej_eq_var(&a_j, &b_j) == 1 ? 0 : 1;
+
+err:
     return ret;
 }
 
@@ -2002,12 +2079,12 @@ const EC_METHOD *EC_GFp_secp256k1_method(void)
         ossl_ec_GFp_simple_point_set_affine_coordinates,
         ecp_secp256k1_get_affine,
         0, 0, 0,
-        ossl_ec_GFp_simple_add,
+        ecp_secp256k1_simple_add,
         ecp_secp256k1_simple_dbl,
         ossl_ec_GFp_simple_invert,
         ossl_ec_GFp_simple_is_at_infinity,
         ecp_secp256k1_is_on_curve,
-        ossl_ec_GFp_simple_cmp,
+        ecp_secp256k1_simple_cmp,
         ossl_ec_GFp_simple_make_affine,
         ossl_ec_GFp_simple_points_make_affine,
         ecp_secp256k1_points_mul,                    /* mul */
