@@ -234,9 +234,9 @@ static int rsa_cms_sign(CMS_SignerInfo *si)
 
     if (EVP_PKEY_CTX_get_params(pkctx, params) <= 0)
         return 0;
-    if ((aid_len = params[0].return_size) == 0)
+    if ((aid_len = params[0].return_size) == 0 || aid_len > LONG_MAX)
         return 0;
-    if (d2i_X509_ALGOR(&alg, &pp, aid_len) == NULL)
+    if (d2i_X509_ALGOR(&alg, &pp, (long)aid_len) == NULL)
         return 0;
     return 1;
 }

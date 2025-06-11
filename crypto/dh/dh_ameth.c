@@ -410,7 +410,7 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         dh = (DH *) EVP_PKEY_get0_DH(pkey);
         if (dh == NULL)
             return 0;
-        return ossl_dh_key2buf(dh, arg2, 0, 1);
+        return (int)ossl_dh_key2buf(dh, arg2, 0, 1);
     default:
         return -2;
     }

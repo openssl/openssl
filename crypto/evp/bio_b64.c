@@ -224,7 +224,7 @@ static int b64_read(BIO *b, char *out, int outl)
                     continue;
                 }
 
-                k = EVP_DecodeUpdate(ctx->base64, ctx->buf, &num, p, q - p);
+                k = EVP_DecodeUpdate(ctx->base64, ctx->buf, &num, p, (int)(q - p));
                 EVP_DecodeInit(ctx->base64);
                 if (k <= 0 && num == 0) {
                     p = q;
@@ -233,7 +233,7 @@ static int b64_read(BIO *b, char *out, int outl)
 
                 ctx->start = 0;
                 if (p != ctx->tmp) {
-                    i -= p - ctx->tmp;
+                    i -= (int)(p - ctx->tmp);
                     for (x = 0; x < i; x++)
                         ctx->tmp[x] = p[x];
                 }
@@ -254,7 +254,7 @@ static int b64_read(BIO *b, char *out, int outl)
                     }
                 } else if (p != q) {
                     /* Retain partial line at end of buffer */
-                    n = q - p;
+                    n = (int)(q - p);
                     for (ii = 0; ii < n; ii++)
                         ctx->tmp[ii] = p[ii];
                     ctx->tmp_len = n;
@@ -580,5 +580,9 @@ static long b64_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 
 static int b64_puts(BIO *b, const char *str)
 {
-    return b64_write(b, str, strlen(str));
+    size_t len = strlen(str);
+
+    if (len > INT_MAX)
+        return -1;
+    return b64_write(b, str, (int)len);
 }

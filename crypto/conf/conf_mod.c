@@ -396,7 +396,8 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
 static CONF_MODULE *module_find(const char *name)
 {
     CONF_MODULE *tmod;
-    int i, nchar;
+    int i;
+    size_t nchar;
     char *p;
     STACK_OF(CONF_MODULE) *mods;
 
@@ -754,7 +755,7 @@ int CONF_parse_list(const char *list_, int sep, int nospc,
                 while (isspace((unsigned char)*tmpend))
                     tmpend--;
             }
-            ret = list_cb(lstart, tmpend - lstart + 1, arg);
+            ret = list_cb(lstart, (int)(tmpend - lstart + 1), arg);
         }
         if (ret <= 0)
             return ret;

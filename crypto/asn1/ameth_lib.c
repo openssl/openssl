@@ -110,7 +110,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
 
     if (len == -1)
-        len = strlen(str);
+        len = (int)strlen(str);
     if (pe) {
 #ifndef OPENSSL_NO_ENGINE
         ENGINE *e;

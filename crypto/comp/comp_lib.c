@@ -68,7 +68,7 @@ int COMP_compress_block(COMP_CTX *ctx, unsigned char *out, int olen,
     if (ctx->meth->compress == NULL) {
         return -1;
     }
-    ret = ctx->meth->compress(ctx, out, olen, in, ilen);
+    ret = (int)ctx->meth->compress(ctx, out, olen, in, ilen);
     if (ret > 0) {
         ctx->compress_in += ilen;
         ctx->compress_out += ret;
@@ -84,7 +84,7 @@ int COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
     if (ctx->meth->expand == NULL) {
         return -1;
     }
-    ret = ctx->meth->expand(ctx, out, olen, in, ilen);
+    ret = (int)ctx->meth->expand(ctx, out, olen, in, ilen);
     if (ret > 0) {
         ctx->expand_in += ilen;
         ctx->expand_out += ret;

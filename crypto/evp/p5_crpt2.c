@@ -36,7 +36,7 @@ int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
         pass = empty;
         passlen = 0;
     } else if (passlen == -1) {
-        passlen = strlen(pass);
+        passlen = (int)strlen(pass);
     }
     if (salt == NULL && saltlen == 0)
         salt = (unsigned char *)empty;

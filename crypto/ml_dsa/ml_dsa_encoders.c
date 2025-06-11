@@ -836,7 +836,7 @@ int ossl_ml_dsa_sk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len)
  */
 static int hint_bits_encode(const VECTOR *hint, WPACKET *pkt, uint32_t omega)
 {
-    int i, j, k = hint->num_poly;
+    int i, j, k = (int)hint->num_poly;
     size_t coeff_index = 0;
     POLY *p = hint->poly;
     uint8_t *data;
