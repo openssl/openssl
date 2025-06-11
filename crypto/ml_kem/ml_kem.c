@@ -1523,12 +1523,11 @@ int add_storage(scalar *pub, scalar *priv, int private, ML_KEM_KEY *key)
     }
 
     /*
-     * We're adding key material, the seed buffer will now hold |rho| and
-     * |pkhash|.
+     * We're adding key material, set up rho and pkhash to point to the rho_pkhash buffer
      */
-    memset(key->seedbuf, 0, sizeof(key->seedbuf));
-    key->rho = key->seedbuf;
-    key->pkhash = key->seedbuf + ML_KEM_RANDOM_BYTES;
+    memset(key->rho_pkhash, 0, sizeof(key->rho_pkhash));
+    key->rho = key->rho_pkhash;
+    key->pkhash = key->rho_pkhash + ML_KEM_RANDOM_BYTES;
     key->d = key->z = NULL;
 
     /* A public key needs space for |t| and |m| */
@@ -1560,21 +1559,16 @@ ossl_ml_kem_key_reset(ML_KEM_KEY *key)
      * - The private vector |s| is immediately followed by the FO failure
      *   secret |z|, and seed |d|, we can cleanse all three in one call.
      *
-     * - Otherwise, when key->d is set, cleanse the stashed seed.
-     *
-     * If the memory has been allocated with secure memory, it will be cleared
-     * before being free'd under the OPENSSL_secure_free call.
+     * - seedbuf can be allocated and contain |z| and |d| if the key is
+     *   being created from a private key encoding, so free/clear that data now
      */
-    if (ossl_ml_kem_have_prvkey(key)) {
-        if (!CRYPTO_secure_allocated(key->s))
-            OPENSSL_cleanse(key->s, key->vinfo->rank * sizeof(scalar) + 2 * ML_KEM_RANDOM_BYTES);
-        OPENSSL_free(key->t);
-        OPENSSL_secure_free(key->s);
-    } else {
-        OPENSSL_free(key->t);
-    }
+    if (ossl_ml_kem_have_prvkey(key))
+        OPENSSL_secure_clear_free(key->s, key->vinfo->prvalloc);
 
-    key->d = key->z = (uint8_t *)(key->s = key->m = key->t = NULL);
+    OPENSSL_free(key->t);
+    OPENSSL_secure_clear_free(key->seedbuf, ML_KEM_SEED_BYTES);
+
+    key->d = key->z = key->seedbuf = (uint8_t *)(key->s = key->m = key->t = NULL);
 }
 
 /*
@@ -1607,11 +1601,7 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
     if (vinfo == NULL)
         return NULL;
 
-    /*
-     * key->seedbuf can contain z and d (the seed from which the keypair is generated),
-     * so allocate the key structure with secure memory to protect this section
-     */
-    if ((key = OPENSSL_secure_malloc(sizeof(*key))) == NULL)
+    if ((key = OPENSSL_malloc(sizeof(*key))) == NULL)
         return NULL;
 
     key->vinfo = vinfo;
@@ -1621,7 +1611,7 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
     key->shake256_md = EVP_MD_fetch(libctx, "SHAKE256", properties);
     key->sha3_256_md = EVP_MD_fetch(libctx, "SHA3-256", properties);
     key->sha3_512_md = EVP_MD_fetch(libctx, "SHA3-512", properties);
-    key->d = key->z = key->rho = key->pkhash = key->encoded_dk = NULL;
+    key->d = key->z = key->rho = key->pkhash = key->encoded_dk = key->seedbuf = NULL;
     key->s = key->m = key->t = NULL;
 
     if (key->shake128_md != NULL
@@ -1710,14 +1700,11 @@ void ossl_ml_kem_key_free(ML_KEM_KEY *key)
     EVP_MD_free(key->sha3_256_md);
     EVP_MD_free(key->sha3_512_md);
 
-    if (ossl_ml_kem_decoded_key(key)) {
-        if (!CRYPTO_secure_allocated(key))
-            OPENSSL_cleanse(key->seedbuf, sizeof(key->seedbuf));
-        if (ossl_ml_kem_have_dkenc(key))
-            OPENSSL_secure_clear_free(key->encoded_dk, key->vinfo->prvkey_bytes);
-    }
+    if (ossl_ml_kem_have_dkenc(key))
+        OPENSSL_secure_clear_free(key->encoded_dk, key->vinfo->prvkey_bytes);
+
     ossl_ml_kem_key_reset(key);
-    OPENSSL_secure_free(key);
+    OPENSSL_free(key);
 }
 
 /* Serialise the public component of an ML-KEM key */
@@ -1769,10 +1756,13 @@ ML_KEM_KEY *ossl_ml_kem_set_seed(const uint8_t *seed, size_t seedlen, ML_KEM_KEY
         || ossl_ml_kem_have_seed(key)
         || seedlen != ML_KEM_SEED_BYTES)
         return NULL;
-    /*
-     * With no public or private key material on hand, we can use the seed
-     * buffer for |z| and |d|, in that order.
-     */
+
+    if (key->seedbuf == NULL) {
+        key->seedbuf = OPENSSL_secure_malloc(seedlen);
+        if (key->seedbuf == NULL)
+            return NULL;
+    }
+
     key->z = key->seedbuf;
     key->d = key->z + ML_KEM_RANDOM_BYTES;
     memcpy(key->d, seed, ML_KEM_RANDOM_BYTES);
