@@ -485,7 +485,8 @@ static int derive_secret(PROV_ECX_CTX *ctx, unsigned char *secret,
     int auth = ctx->sender_authkey != NULL;
     size_t encodedkeylen = info->Npk;
 
-    if (!generate_ecxdhkm(privkey1, peerkey1, dhkm, sizeof(dhkm), encodedkeylen))
+    if (!generate_ecxdhkm(privkey1, peerkey1, dhkm, sizeof(dhkm),
+                          (unsigned int)encodedkeylen))
         goto err;
     dhkmlen = encodedkeylen;
 
@@ -493,7 +494,7 @@ static int derive_secret(PROV_ECX_CTX *ctx, unsigned char *secret,
     if (auth) {
         if (!generate_ecxdhkm(privkey2, peerkey2,
                               dhkm + dhkmlen, sizeof(dhkm) - dhkmlen,
-                              encodedkeylen))
+                              (unsigned int)encodedkeylen))
             goto err;
         /* Get the public key of the auth sender in encoded form */
         sender_authpub = ecx_pubkey(ctx->sender_authkey);

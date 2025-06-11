@@ -178,7 +178,7 @@ static int sm2sig_sign(void *vpsm2ctx, unsigned char *sig, size_t *siglen,
     if (ctx->mdsize != 0 && tbslen != ctx->mdsize)
         return 0;
 
-    ret = ossl_sm2_internal_sign(tbs, tbslen, sig, &sltmp, ctx->ec);
+    ret = ossl_sm2_internal_sign(tbs, (int)tbslen, sig, &sltmp, ctx->ec);
     if (ret <= 0)
         return 0;
 
@@ -194,7 +194,7 @@ static int sm2sig_verify(void *vpsm2ctx, const unsigned char *sig, size_t siglen
     if (ctx->mdsize != 0 && tbslen != ctx->mdsize)
         return 0;
 
-    return ossl_sm2_internal_verify(tbs, tbslen, sig, siglen, ctx->ec);
+    return ossl_sm2_internal_verify(tbs, (int)tbslen, sig, (int)siglen, ctx->ec);
 }
 
 static void free_md(PROV_SM2_CTX *ctx)

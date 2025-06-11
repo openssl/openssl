@@ -50,7 +50,7 @@ static int ccm_tls_init(PROV_CCM_CTX *ctx, unsigned char *aad, size_t alen)
     ctx->buf[alen - 1] = (unsigned char)(len & 0xff);
 
     /* Extra padding: tag appended to record. */
-    return ctx->m;
+    return (int)ctx->m;
 }
 
 static int ccm_tls_iv_set_fixed(PROV_CCM_CTX *ctx, unsigned char *fixed,

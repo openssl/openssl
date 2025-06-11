@@ -149,7 +149,7 @@ static void blake2s_compress(BLAKE2S_CTX *S,
     uint32_t m[16];
     uint32_t v[16];
     size_t i;
-    size_t increment;
+    uint32_t increment;
 
     /*
      * There are two distinct usage vectors for this function:
@@ -170,7 +170,7 @@ static void blake2s_compress(BLAKE2S_CTX *S,
      * including even zero), which is why following assignment doesn't
      * have to reside inside the main loop below.
      */
-    increment = len < BLAKE2S_BLOCKBYTES ? len : BLAKE2S_BLOCKBYTES;
+    increment = len < BLAKE2S_BLOCKBYTES ? (uint32_t)len : BLAKE2S_BLOCKBYTES;
 
     for (i = 0; i < 8; ++i) {
         v[i] = S->h[i];
@@ -296,7 +296,7 @@ int ossl_blake2s_final(unsigned char *md, BLAKE2S_CTX *c)
 {
     uint8_t outbuffer[BLAKE2S_OUTBYTES] = {0};
     uint8_t *target = outbuffer;
-    int iter = (c->outlen + 3) / 4;
+    int iter = (int)((c->outlen + 3) / 4);
     int i;
 
     /* Avoid writing to the temporary buffer if possible */

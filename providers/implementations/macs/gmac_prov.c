@@ -139,7 +139,7 @@ static int gmac_update(void *vmacctx, const unsigned char *data,
         data += INT_MAX;
         datalen -= INT_MAX;
     }
-    return EVP_EncryptUpdate(ctx, NULL, &outlen, data, datalen);
+    return EVP_EncryptUpdate(ctx, NULL, &outlen, data, (int)datalen);
 }
 
 static int gmac_final(void *vmacctx, unsigned char *out, size_t *outl,
@@ -155,7 +155,7 @@ static int gmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     if (!EVP_EncryptFinal_ex(macctx->ctx, out, &hlen))
         return 0;
 
-    hlen = gmac_size();
+    hlen = (int)gmac_size();
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
                                                   out, (size_t)hlen);
     if (!EVP_CIPHER_CTX_get_params(macctx->ctx, params))
@@ -236,7 +236,7 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
             return 0;
 
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
-                                 p->data_size, NULL) <= 0
+                                 (int)p->data_size, NULL) <= 0
             || !EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, p->data))
             return 0;
     }

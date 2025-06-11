@@ -347,7 +347,7 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen,
     }
 
     if (ctx->use_l != 0)
-        l = be32(keylen * 8);
+        l = be32((uint32_t)(keylen * 8));
 
     k_i = OPENSSL_zalloc(h);
     if (k_i == NULL)
