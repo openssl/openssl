@@ -510,15 +510,15 @@ static void *ecx_gen_init(void *provctx, int selection,
         if (algdesc != NULL
                 && !ossl_FIPS_IND_callback(libctx, algdesc, "KeyGen Init")) {
             OPENSSL_free(gctx);
-            return 0;
+            return NULL;
         }
 #endif
+    } else {
+        return NULL;
     }
     if (!ecx_gen_set_params(gctx, params)) {
-        if (gctx != NULL) {
-            ecx_gen_cleanup(gctx);
-            gctx = NULL;
-        }
+        ecx_gen_cleanup(gctx);
+        gctx = NULL;
     }
     return gctx;
 }
