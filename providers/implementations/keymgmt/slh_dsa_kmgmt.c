@@ -410,6 +410,9 @@ static void slh_dsa_gen_cleanup(void *genctx)
 {
     struct slh_dsa_gen_ctx *gctx = genctx;
 
+    if (gctx == NULL)
+        return;
+
     OPENSSL_cleanse(gctx->entropy, gctx->entropy_len);
     OPENSSL_free(gctx->propq);
     OPENSSL_free(gctx);

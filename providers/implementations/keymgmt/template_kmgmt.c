@@ -387,6 +387,9 @@ static void template_gen_cleanup(void *genctx)
 {
     struct template_gen_ctx *gctx = genctx;
 
+    if (gctx == NULL)
+        return;
+
     debug_print("gen cleanup for %p\n", gctx);
     OPENSSL_free(gctx);
 }
