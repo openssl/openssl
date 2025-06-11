@@ -5128,7 +5128,8 @@ static int test_poll_event_r(QUIC_XSO *xso)
      * is only set if the last stream frame received had the fin bit set, and
      * the client read the data.  This catches our poll/read/poll case
      */
-    if (xso->stream->recv_state == QUIC_RSTREAM_STATE_DATA_READ)
+    if (ossl_quic_stream_has_recv_buffer(xso->stream) &&
+        xso->stream->recv_state == QUIC_RSTREAM_STATE_DATA_READ)
         return 1;
 
     return ossl_quic_stream_has_recv_buffer(xso->stream)
