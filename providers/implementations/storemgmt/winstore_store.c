@@ -65,7 +65,7 @@ static void winstore_win_advance(struct winstore_ctx_st *ctx)
     if (ctx->state == STATE_EOF)
         return;
 
-    name.cbData = ctx->subject_len;
+    name.cbData = (DWORD)ctx->subject_len;
     name.pbData = ctx->subject;
 
     ctx->win_ctx = (name.cbData == 0 ? NULL :

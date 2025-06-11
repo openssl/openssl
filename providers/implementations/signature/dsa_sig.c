@@ -356,7 +356,7 @@ static int dsa_sign_directly(void *vpdsactx,
     if (mdsize != 0 && tbslen != mdsize)
         return 0;
 
-    ret = ossl_dsa_sign_int(0, tbs, tbslen, sig, &sltmp, pdsactx->dsa,
+    ret = ossl_dsa_sign_int(0, tbs, (int)tbslen, sig, &sltmp, pdsactx->dsa,
                             pdsactx->nonce_type, pdsactx->mdname,
                             pdsactx->libctx, pdsactx->propq);
     if (ret <= 0)
@@ -446,7 +446,7 @@ static int dsa_verify_directly(void *vpdsactx,
     if (!ossl_prov_is_running() || (mdsize != 0 && tbslen != mdsize))
         return 0;
 
-    return DSA_verify(0, tbs, tbslen, sig, siglen, pdsactx->dsa);
+    return DSA_verify(0, tbs, (int)tbslen, sig, (int)siglen, pdsactx->dsa);
 }
 
 static int dsa_verify_set_sig(void *vpdsactx,

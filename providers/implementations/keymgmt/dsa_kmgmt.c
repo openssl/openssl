@@ -666,8 +666,8 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
 
          if (ossl_dsa_generate_ffc_parameters(dsa, gctx->gen_type,
-                                              gctx->pbits, gctx->qbits,
-                                              gencb) <= 0)
+                                              (int)gctx->pbits,
+                                              (int)gctx->qbits, gencb) <= 0)
              goto end;
     }
     ossl_ffc_params_enable_flags(ffc, FFC_PARAM_FLAG_VALIDATE_LEGACY,

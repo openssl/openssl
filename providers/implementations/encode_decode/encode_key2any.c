@@ -124,7 +124,8 @@ static X509_SIG *p8info_to_encp8(PKCS8_PRIV_KEY_INFO *p8info,
         return NULL;
     }
     /* First argument == -1 means "standard" */
-    p8 = PKCS8_encrypt_ex(-1, ctx->cipher, kstr, klen, NULL, 0, 0, p8info, libctx, NULL);
+    p8 = PKCS8_encrypt_ex(-1, ctx->cipher, kstr, (int)klen, NULL, 0, 0, p8info,
+                          libctx, NULL);
     OPENSSL_cleanse(kstr, klen);
     return p8;
 }
@@ -803,7 +804,7 @@ static int ecx_spki_pub_to_der(const void *vecxkey, unsigned char **pder,
         return 0;
 
     *pder = keyblob;
-    return ecxkey->keylen;
+    return (int)ecxkey->keylen;
 }
 
 static int ecx_pki_priv_to_der(const void *vecxkey, unsigned char **pder,
@@ -819,7 +820,7 @@ static int ecx_pki_priv_to_der(const void *vecxkey, unsigned char **pder,
     }
 
     oct.data = ecxkey->privkey;
-    oct.length = ecxkey->keylen;
+    oct.length = (int)ecxkey->keylen;
     oct.flags = 0;
 
     keybloblen = i2d_ASN1_OCTET_STRING(&oct, pder);
@@ -1043,7 +1044,7 @@ static int slh_dsa_spki_pub_to_der(const void *vkey, unsigned char **pder,
         return 0;
 
     *pder = key_blob;
-    return key_len;
+    return (int)key_len;
 }
 
 static int slh_dsa_pki_priv_to_der(const void *vkey, unsigned char **pder,
@@ -1062,7 +1063,7 @@ static int slh_dsa_pki_priv_to_der(const void *vkey, unsigned char **pder,
             && ((*pder = OPENSSL_memdup(ossl_slh_dsa_key_get_priv(key), len)) == NULL))
         return 0;
 
-    return len;
+    return (int)len;
 }
 # define slh_dsa_epki_priv_to_der slh_dsa_pki_priv_to_der
 
