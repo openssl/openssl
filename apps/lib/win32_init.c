@@ -223,7 +223,7 @@ void win32_utf8argv(int *argc, char **argv[])
                         if ((p - q) % 2 == 1)
                             *wend++ = *p++;
                     } else {
-                        for (i = p - q; i > 0; i--)
+                        for (i = (int)(p - q); i > 0; i--)
                             *wend++ = L'\\';
                     }
                 }
