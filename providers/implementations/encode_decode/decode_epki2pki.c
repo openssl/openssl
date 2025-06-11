@@ -140,7 +140,7 @@ int ossl_epki2pki_der_decode(unsigned char *der, long der_len, int selection,
             int new_der_len = 0;
 
             X509_SIG_get0(p8, &alg, &oct);
-            if (!PKCS12_pbe_crypt_ex(alg, pbuf, plen,
+            if (!PKCS12_pbe_crypt_ex(alg, pbuf, (int)plen,
                                      oct->data, oct->length,
                                      &new_der, &new_der_len, 0,
                                      libctx, propq)) {

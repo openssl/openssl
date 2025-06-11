@@ -352,7 +352,8 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
 {
     unsigned char *nonce = NULL, *entropy = NULL;
     size_t noncelen = 0, entropylen = 0;
-    size_t min_entropy, min_entropylen, max_entropylen;
+    unsigned int min_entropy;
+    size_t min_entropylen, max_entropylen;
 
     if (strength > drbg->strength) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INSUFFICIENT_DRBG_STRENGTH);

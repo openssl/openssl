@@ -25,7 +25,7 @@ static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
     CAMELLIA_KEY *ks = &adat->ks.ks;
 
     dat->ks = ks;
-    ret = Camellia_set_key(key, keylen * 8, ks);
+    ret = Camellia_set_key(key, (int)(keylen * 8), ks);
     if (ret < 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SETUP_FAILED);
         return 0;

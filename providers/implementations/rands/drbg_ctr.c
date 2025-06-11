@@ -437,7 +437,7 @@ static int drbg_ctr_generate(PROV_DRBG *drbg,
          * requests in 2^30 byte chunks, which is the greatest multiple
          * of AES block size lower than or equal to 2^31-1.
          */
-        buflen = outlen > (1U << 30) ? (1U << 30) : outlen;
+        buflen = outlen > (1U << 30) ? (1 << 30) : (int)outlen;
         blocks = (buflen + 15) / 16;
 
         ctr32 = GETU32(ctr->V + 12) + blocks;
@@ -587,7 +587,7 @@ static int drbg_ctr_init(PROV_DRBG *drbg)
         goto err;
     }
 
-    drbg->strength = keylen * 8;
+    drbg->strength = (unsigned int)(keylen * 8);
     drbg->seedlen = keylen + 16;
 
     if (ctr->use_df) {

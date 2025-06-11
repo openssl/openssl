@@ -409,7 +409,7 @@ int ossl_gcm_cipher(void *vctx,
  */
 static int gcm_iv_generate(PROV_GCM_CTX *ctx, int offset)
 {
-    int sz = ctx->ivlen - offset;
+    int sz = (int)(ctx->ivlen - offset);
 
     /* Must be at least 96 bits */
     if (sz <= 0 || ctx->ivlen < GCM_IV_DEFAULT_SIZE)

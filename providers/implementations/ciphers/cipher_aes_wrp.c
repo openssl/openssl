@@ -138,10 +138,10 @@ static int aes_wrap_init(void *vctx, const unsigned char *key,
         else
             use_forward_transform = !ctx->enc;
         if (use_forward_transform) {
-            AES_set_encrypt_key(key, keylen * 8, &wctx->ks.ks);
+            AES_set_encrypt_key(key, (int)(keylen * 8), &wctx->ks.ks);
             ctx->block = (block128_f)AES_encrypt;
         } else {
-            AES_set_decrypt_key(key, keylen * 8, &wctx->ks.ks);
+            AES_set_decrypt_key(key, (int)(keylen * 8), &wctx->ks.ks);
             ctx->block = (block128_f)AES_decrypt;
         }
     }
@@ -175,7 +175,7 @@ static int aes_wrap_cipher_internal(void *vctx, unsigned char *out,
         return 0;
 
     /* Input length must always be non-zero */
-    if (inlen == 0) {
+    if (inlen == 0 || inlen > INT_MAX) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH);
         return -1;
     }
@@ -198,14 +198,14 @@ static int aes_wrap_cipher_internal(void *vctx, unsigned char *out,
             if (pad)
                 inlen = (inlen + 7) / 8 * 8;
             /* 8 byte prefix */
-            return inlen + 8;
+            return (int)(inlen + 8);
         } else {
             /*
              * If not padding output will be exactly 8 bytes smaller than
              * input. If padding it will be at least 8 bytes smaller but we
              * don't know how much.
              */
-            return inlen - 8;
+            return (int)(inlen - 8);
         }
     }
 

@@ -88,8 +88,8 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
         /* poll the CryptoAPI PRNG */
         if (CryptAcquireContextW(&hProvider, NULL, NULL, PROV_RSA_FULL,
                                  CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
-            if (CryptGenRandom(hProvider, bytes_needed, buffer) != 0)
-                bytes = bytes_needed;
+            if (CryptGenRandom(hProvider, (DWORD)bytes_needed, buffer) != 0)
+                bytes = (DWORD)bytes_needed;
 
             CryptReleaseContext(hProvider, 0);
         }
@@ -108,8 +108,8 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
         if (CryptAcquireContextW(&hProvider, NULL,
                                  INTEL_DEF_PROV, PROV_INTEL_SEC,
                                  CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
-            if (CryptGenRandom(hProvider, bytes_needed, buffer) != 0)
-                bytes = bytes_needed;
+            if (CryptGenRandom(hProvider, (DWORD)bytes_needed, buffer) != 0)
+                bytes = (DWORD)bytes_needed;
 
             CryptReleaseContext(hProvider, 0);
         }

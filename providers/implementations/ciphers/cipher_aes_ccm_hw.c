@@ -18,8 +18,9 @@
 #include "cipher_aes_ccm.h"
 
 #define AES_HW_CCM_SET_KEY_FN(fn_set_enc_key, fn_blk, fn_ccm_enc, fn_ccm_dec)  \
-    fn_set_enc_key(key, keylen * 8, &actx->ccm.ks.ks);                         \
-    CRYPTO_ccm128_init(&ctx->ccm_ctx, ctx->m, ctx->l, &actx->ccm.ks.ks,        \
+    fn_set_enc_key(key, (int)(keylen * 8), &actx->ccm.ks.ks);                  \
+    CRYPTO_ccm128_init(&ctx->ccm_ctx, (unsigned int)ctx->m,                    \
+                       (unsigned int)ctx->l, &actx->ccm.ks.ks,                 \
                        (block128_f)fn_blk);                                    \
     ctx->str = ctx->enc ? (ccm128_f)fn_ccm_enc : (ccm128_f)fn_ccm_dec;         \
     ctx->key_set = 1;

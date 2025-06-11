@@ -430,7 +430,7 @@ int ossl_ec_dhkem_derive_private(EC_KEY *ec, BIGNUM *priv,
                                       &counter, 1))
             goto err;
         privbuf[0] &= info->bitmask;
-        if (BN_bin2bn(privbuf, info->Nsk, priv) == NULL)
+        if (BN_bin2bn(privbuf, (int)info->Nsk, priv) == NULL)
             goto err;
         if (counter == 0xFF) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GENERATE_KEY);
@@ -576,7 +576,8 @@ static int derive_secret(PROV_EC_CTX *ctx, unsigned char *secret,
     size_t encodedprivlen = info->Nsk;
     int auth = ctx->sender_authkey != NULL;
 
-    if (!generate_ecdhkm(privkey1, peerkey1, dhkm, sizeof(dhkm), encodedprivlen))
+    if (!generate_ecdhkm(privkey1, peerkey1, dhkm, sizeof(dhkm),
+                         (unsigned int)encodedprivlen))
         goto err;
     dhkmlen = encodedprivlen;
     kemctxlen = 2 * encodedpublen;
@@ -594,7 +595,7 @@ static int derive_secret(PROV_EC_CTX *ctx, unsigned char *secret,
         }
         if (!generate_ecdhkm(privkey2, peerkey2,
                              dhkm + dhkmlen, sizeof(dhkm) - dhkmlen,
-                             encodedprivlen))
+                             (unsigned int)encodedprivlen))
             goto err;
         dhkmlen += encodedprivlen;
         kemctxlen += encodedpublen;

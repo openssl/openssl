@@ -734,7 +734,7 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
             && gctx->ffc_params == NULL) {
         /* Select a named group if there is not one already */
         if (gctx->group_nid == NID_undef)
-            gctx->group_nid = ossl_dh_get_named_group_uid_from_size(gctx->pbits);
+            gctx->group_nid = ossl_dh_get_named_group_uid_from_size((int)gctx->pbits);
         if (gctx->group_nid == NID_undef)
             return NULL;
         dh = ossl_dh_new_by_nid_ex(gctx->libctx, gctx->group_nid);
@@ -776,12 +776,12 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
              * group based on pbits.
              */
             if (gctx->gen_type == DH_PARAMGEN_TYPE_GENERATOR)
-                ret = DH_generate_parameters_ex(dh, gctx->pbits,
+                ret = DH_generate_parameters_ex(dh, (int)gctx->pbits,
                                                 gctx->generator, gencb);
             else
                 ret = ossl_dh_generate_ffc_parameters(dh, gctx->gen_type,
-                                                      gctx->pbits, gctx->qbits,
-                                                      gencb);
+                                                      (int)gctx->pbits,
+                                                      (int)gctx->qbits, gencb);
             if (ret <= 0)
                 goto end;
         }

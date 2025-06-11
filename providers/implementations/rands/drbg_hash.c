@@ -585,7 +585,7 @@ static int drbg_hash_set_ctx_params_locked(void *vctx, const OSSL_PARAM params[]
             return 0;
         hash->blocklen = md_size;
         /* See SP800-57 Part1 Rev4 5.6.1 Table 3 */
-        ctx->strength = 64 * (hash->blocklen >> 3);
+        ctx->strength = (unsigned int)(64 * (hash->blocklen >> 3));
         if (ctx->strength > 256)
             ctx->strength = 256;
         if (hash->blocklen > MAX_BLOCKLEN_USING_SMALL_SEEDLEN)

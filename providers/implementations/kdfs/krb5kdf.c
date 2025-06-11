@@ -284,7 +284,7 @@ static int fixup_des3_key(unsigned char *key)
  * finally add carry if any
  */
 static void n_fold(unsigned char *block, unsigned int blocksize,
-                   const unsigned char *constant, size_t constant_len)
+                   const unsigned char *constant, unsigned int constant_len)
 {
     unsigned int tmp, gcd, remainder, lcm, carry;
     int b, l;
@@ -356,7 +356,7 @@ static int cipher_init(EVP_CIPHER_CTX *ctx,
     /* set the key len for the odd variable key len cipher */
     klen = EVP_CIPHER_CTX_get_key_length(ctx);
     if (key_len != (size_t)klen) {
-        ret = EVP_CIPHER_CTX_set_key_length(ctx, key_len);
+        ret = EVP_CIPHER_CTX_set_key_length(ctx, (int)key_len);
         if (ret <= 0) {
             ret = 0;
             goto out;
@@ -428,7 +428,7 @@ static int KRB5KDF(const EVP_CIPHER *cipher, ENGINE *engine,
         goto out;
     }
 
-    n_fold(block, blocksize, constant, constant_len);
+    n_fold(block, (unsigned int)blocksize, constant, (unsigned int)constant_len);
     plainblock = block;
     cipherblock = block + EVP_MAX_BLOCK_LENGTH;
 
@@ -436,7 +436,7 @@ static int KRB5KDF(const EVP_CIPHER *cipher, ENGINE *engine,
         int olen;
 
         ret = EVP_EncryptUpdate(ctx, cipherblock, &olen,
-                                plainblock, blocksize);
+                                plainblock, (int)blocksize);
         if (!ret)
             goto out;
         cipherlen = olen;

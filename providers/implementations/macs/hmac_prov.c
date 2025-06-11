@@ -190,7 +190,7 @@ static int hmac_setkey(struct hmac_data_st *macctx,
     digest = ossl_prov_digest_md(&macctx->digest);
     /* HMAC_Init_ex doesn't tolerate all zero params, so we must be careful */
     if (key != NULL || (macctx->tls_data_size == 0 && digest != NULL))
-        return HMAC_Init_ex(macctx->ctx, key, keylen, digest,
+        return HMAC_Init_ex(macctx->ctx, key, (int)keylen, digest,
                             ossl_prov_digest_engine(&macctx->digest));
     return 1;
 }
