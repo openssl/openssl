@@ -97,7 +97,7 @@ int ossl_sm2_ciphertext_size(const EC_KEY *key, const EVP_MD *digest,
     /* Integer and string are simple type; set constructed = 0, means primitive and definite length encoding. */
     sz = 2 * ASN1_object_size(0, field_size + 1, V_ASN1_INTEGER)
          + ASN1_object_size(0, md_size, V_ASN1_OCTET_STRING)
-         + ASN1_object_size(0, msg_len, V_ASN1_OCTET_STRING);
+         + ASN1_object_size(0, (int)msg_len, V_ASN1_OCTET_STRING);
     /* Sequence is structured type; set constructed = 1, means constructed and definite length encoding. */
     *ct_size = (size_t)ASN1_object_size(1, sz, V_ASN1_SEQUENCE);
 

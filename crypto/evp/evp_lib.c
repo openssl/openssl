@@ -1440,11 +1440,11 @@ int EVP_PKEY_CTX_get_algor_params(EVP_PKEY_CTX *ctx, X509_ALGOR *alg)
         && (der = OPENSSL_malloc(derl)) != NULL) {
         unsigned char *derp = der;
 
-        params[0] = OSSL_PARAM_construct_octet_string(k, der, (long)derl);
+        params[0] = OSSL_PARAM_construct_octet_string(k, der, derl);
         if (EVP_PKEY_CTX_get_params(ctx, params)
             && OSSL_PARAM_modified(&params[0])
             && d2i_ASN1_TYPE(&type, (const unsigned char **)&derp,
-                             derl) != NULL) {
+                             (long)derl) != NULL) {
             /*
              * Don't free alg->parameter, see comment further up.
              * Worst case, alg->parameter gets assigned its own value.

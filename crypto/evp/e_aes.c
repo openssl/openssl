@@ -3600,7 +3600,7 @@ static int aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                     15 - cctx->L, len))
                 return -1;
             cctx->len_set = 1;
-            return len;
+            return (int)len;
         }
         /* If have AAD need message length */
         if (!cctx->len_set && len)

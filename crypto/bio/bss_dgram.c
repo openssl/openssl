@@ -1033,7 +1033,7 @@ static int dgram_puts(BIO *bp, const char *str)
 
     if (n > INT_MAX)
         return -1;
-    ret = dgram_write(bp, str, n);
+    ret = dgram_write(bp, str, (int)n);
     return ret;
 }
 

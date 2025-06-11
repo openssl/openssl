@@ -149,7 +149,7 @@ int ossl_punycode_decode(const char *pEncoded, const size_t enc_len,
         processed_in = basic_count + 1;
     }
 
-    for (loop = processed_in; loop < enc_len;) {
+    for (loop = processed_in; loop < (unsigned int)enc_len;) {
         unsigned int oldi = i;
         unsigned int w = 1;
         unsigned int k, t;

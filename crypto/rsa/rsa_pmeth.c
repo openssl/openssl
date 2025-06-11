@@ -253,7 +253,7 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
             return -1;
         }
     } else {
-        ret = RSA_public_decrypt(siglen, sig, rout, rsa, rctx->pad_mode);
+        ret = RSA_public_decrypt((int)siglen, sig, rout, rsa, rctx->pad_mode);
     }
     if (ret < 0)
         return ret;
