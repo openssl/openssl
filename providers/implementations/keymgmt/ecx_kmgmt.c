@@ -696,6 +696,9 @@ static void ecx_gen_cleanup(void *genctx)
 {
     struct ecx_gen_ctx *gctx = genctx;
 
+    if (gctx == NULL)
+        return;
+
     OPENSSL_free(gctx->propq);
     OPENSSL_free(gctx);
 }
