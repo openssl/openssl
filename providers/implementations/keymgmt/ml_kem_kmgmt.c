@@ -794,6 +794,9 @@ static void ml_kem_gen_cleanup(void *vgctx)
 {
     PROV_ML_KEM_GEN_CTX *gctx = vgctx;
 
+    if (gctx == NULL)
+        return;
+
     if (gctx->seed != NULL)
         OPENSSL_cleanse(gctx->seed, ML_KEM_RANDOM_BYTES);
     OPENSSL_free(gctx->propq);
