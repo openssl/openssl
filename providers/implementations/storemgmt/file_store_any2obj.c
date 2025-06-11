@@ -176,7 +176,7 @@ static int msblob2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     }
 
     ERR_set_mark();
-    ok = BIO_read(in, &mem->data[0], mem_want) == (int)mem_want;
+    ok = BIO_read(in, &mem->data[0], (int)mem_want) == (int)mem_want;
     mem_len += mem_want;
     ERR_pop_to_mark();
     if (!ok)
@@ -198,7 +198,7 @@ static int msblob2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     }
 
     ERR_set_mark();
-    ok = BIO_read(in, &mem->data[mem_len], mem_want) == (int)mem_want;
+    ok = BIO_read(in, &mem->data[mem_len], (int)mem_want) == (int)mem_want;
     mem_len += mem_want;
     ERR_pop_to_mark();
 
@@ -245,7 +245,7 @@ static int pvk2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     }
 
     ERR_set_mark();
-    ok = BIO_read(in, &mem->data[0], mem_want) == (int)mem_want;
+    ok = BIO_read(in, &mem->data[0], (int)mem_want) == (int)mem_want;
     mem_len += mem_want;
     ERR_pop_to_mark();
     if (!ok)
@@ -267,7 +267,7 @@ static int pvk2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     }
 
     ERR_set_mark();
-    ok = BIO_read(in, &mem->data[mem_len], mem_want) == (int)mem_want;
+    ok = BIO_read(in, &mem->data[mem_len], (int)mem_want) == (int)mem_want;
     mem_len += mem_want;
     ERR_pop_to_mark();
 

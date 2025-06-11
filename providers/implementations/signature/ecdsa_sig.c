@@ -353,13 +353,13 @@ static int ecdsa_sign_directly(void *vctx,
 
         if (ctx->mdname[0] != '\0')
             mdname = ctx->mdname;
-        ret = ossl_ecdsa_deterministic_sign(tbs, tbslen, sig, &sltmp,
+        ret = ossl_ecdsa_deterministic_sign(tbs, (int)tbslen, sig, &sltmp,
                                             ctx->ec, ctx->nonce_type,
                                             mdname,
                                             ctx->libctx, ctx->propq);
     } else {
-        ret = ECDSA_sign_ex(0, tbs, tbslen, sig, &sltmp, ctx->kinv, ctx->r,
-                            ctx->ec);
+        ret = ECDSA_sign_ex(0, tbs, (int)tbslen, sig, &sltmp,
+                            ctx->kinv, ctx->r, ctx->ec);
     }
     if (ret <= 0)
         return 0;
@@ -445,7 +445,7 @@ static int ecdsa_verify_directly(void *vctx,
     if (!ossl_prov_is_running() || (ctx->mdsize != 0 && tbslen != ctx->mdsize))
         return 0;
 
-    return ECDSA_verify(0, tbs, tbslen, sig, siglen, ctx->ec);
+    return ECDSA_verify(0, tbs, (int)tbslen, sig, (int)siglen, ctx->ec);
 }
 
 static int ecdsa_verify_set_sig(void *vctx,
