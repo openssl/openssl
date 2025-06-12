@@ -1552,23 +1552,29 @@ int add_storage(scalar *pub, scalar *priv, int private, ML_KEM_KEY *key)
 void
 ossl_ml_kem_key_reset(ML_KEM_KEY *key)
 {
-    if (key->t == NULL)
-        return;
+    /*
+     * seedbuf can be allocated and contain |z| and |d| if the key is
+     * being created from a private key encoding.  Similarly a pending
+     * serialised (encoded) private key may be queued up to load.
+     * Clear and free that data now.
+     */
+    if (key->seedbuf != NULL)
+        OPENSSL_secure_clear_free(key->seedbuf, ML_KEM_SEED_BYTES);
+    if (ossl_ml_kem_have_dkenc(key))
+        OPENSSL_secure_clear_free(key->encoded_dk, key->vinfo->prvkey_bytes);
+
     /*-
      * Cleanse any sensitive data:
      * - The private vector |s| is immediately followed by the FO failure
      *   secret |z|, and seed |d|, we can cleanse all three in one call.
-     *
-     * - seedbuf can be allocated and contain |z| and |d| if the key is
-     *   being created from a private key encoding, so free/clear that data now
      */
-    if (ossl_ml_kem_have_prvkey(key))
-        OPENSSL_secure_clear_free(key->s, key->vinfo->prvalloc);
-
-    OPENSSL_free(key->t);
-    OPENSSL_secure_clear_free(key->seedbuf, ML_KEM_SEED_BYTES);
-
-    key->d = key->z = key->seedbuf = (uint8_t *)(key->s = key->m = key->t = NULL);
+    if (key->t != NULL) {
+        if (ossl_ml_kem_have_prvkey(key))
+            OPENSSL_secure_clear_free(key->s, key->vinfo->prvalloc);
+        OPENSSL_free(key->t);
+    }
+    key->d = key->z = key->seedbuf = key->encoded_dk =
+        (uint8_t *)(key->s = key->m = key->t = NULL);
 }
 
 /*
@@ -1699,9 +1705,6 @@ void ossl_ml_kem_key_free(ML_KEM_KEY *key)
     EVP_MD_free(key->shake256_md);
     EVP_MD_free(key->sha3_256_md);
     EVP_MD_free(key->sha3_512_md);
-
-    if (ossl_ml_kem_have_dkenc(key))
-        OPENSSL_secure_clear_free(key->encoded_dk, key->vinfo->prvkey_bytes);
 
     ossl_ml_kem_key_reset(key);
     OPENSSL_free(key);
@@ -1847,10 +1850,10 @@ int ossl_ml_kem_genkey(uint8_t *pubenc, size_t publen, ML_KEM_KEY *key)
     if (pubenc != NULL && publen != vinfo->pubkey_bytes)
         return 0;
 
-    if (ossl_ml_kem_have_seed(key)) {
+    if (key->seedbuf != NULL) {
         if (!ossl_ml_kem_encode_seed(seed, sizeof(seed), key))
             return 0;
-        key->d = key->z = NULL;
+        ossl_ml_kem_key_reset(key);
     } else if (RAND_priv_bytes_ex(key->libctx, seed, sizeof(seed),
                                   key->vinfo->secbits) <= 0) {
         return 0;
