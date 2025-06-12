@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_crl");
 
-plan tests => 10;
+plan tests => 12;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -50,6 +50,12 @@ ok(run(app(["openssl", "crl", "-text", "-in", $pem, "-inform", "PEM",
             "-out", $out, "-nameopt", "utf8"])));
 is(cmp_text($out, srctop_file("test/certs", "cyrillic_crl.utf8")),
    0, 'Comparing utf8 output');
+
+my $crl_in = srctop_file('test/certs', 'crl_Chinese_AuthorityCertIssuer.pem');
+my $crl_out = "crl_Chinese_AuthorityCertIssuer.out";
+
+ok(run(app([qw{openssl crl -text -in}, $crl_in, '-out', $crl_out])));
+ok(get_field($crl_out, "DirName") =~ /C = CN, ST = 中文, L = 中文, O = 中文, OU = 中文, CN = 中文/);
 
 sub compare1stline {
     my ($cmdarray, $str) = @_;
