@@ -747,7 +747,7 @@ int ossl_ml_dsa_sk_encode(ML_DSA_KEY *key)
 err:
     WPACKET_finish(&pkt);
     if (ret == 0)
-        OPENSSL_clear_free(enc, enc_len);
+        OPENSSL_secure_clear_free(enc, enc_len);
     return ret;
 }
 
