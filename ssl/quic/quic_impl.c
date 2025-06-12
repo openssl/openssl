@@ -5234,6 +5234,24 @@ void ossl_quic_conn_notify_close(SSL *qc_ssl)
 }
 
 QUIC_TAKES_LOCK
+unsigned int ossl_quic_conn_count_streams(SSL *qc_ssl)
+{
+    QCTX ctx;
+    QUIC_STREAM_MAP *qsm;
+    unsigned int count;
+
+    if (!expect_quic_c(qc_ssl, &ctx))
+        return 0;
+
+    qctx_lock(&ctx);
+    qsm = ossl_quic_channel_get_qsm(ctx.qc->ch);
+    count = ossl_quic_stream_map_count_streams(qsm);
+    qctx_unlock(&ctx);
+
+    return count;
+}
+
+QUIC_TAKES_LOCK
 int ossl_quic_conn_poll_events(SSL *ssl, uint64_t events, int do_tick,
                                uint64_t *p_revents)
 {

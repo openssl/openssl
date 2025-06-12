@@ -886,6 +886,32 @@ void ossl_quic_stream_map_notify_close(QUIC_STREAM_MAP *qsm)
     ossl_quic_stream_map_visit(qsm, notify_close_each, qsm);
 }
 
+static void count_streams(QUIC_STREAM *qs, void *arg)
+{
+    unsigned int *count = (unsigned int *)arg;
+
+    if (qs->recv_state != QUIC_RSTREAM_STATE_NONE &&
+        qs->recv_state < QUIC_RSTREAM_STATE_RESET_RECVD) {
+        *count = *count + 1;
+        fprintf(stderr, "%s recv_state: %u\n", __func__, qs->recv_state);
+    }
+
+    if (qs->send_state != QUIC_SSTREAM_STATE_NONE &&
+        qs->send_state < QUIC_SSTREAM_STATE_RESET_SENT) {
+        *count = *count + 1;
+        fprintf(stderr, "%s recv_state: %u\n", __func__, qs->send_state);
+    }
+}
+
+unsigned int ossl_quic_stream_map_count_streams(QUIC_STREAM_MAP *qsm)
+{
+    unsigned int count = 0;
+
+    ossl_quic_stream_map_visit(qsm, count_streams, &count);
+
+    return count;
+}
+
 /*
  * QUIC Stream Iterator
  * ====================

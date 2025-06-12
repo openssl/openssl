@@ -923,6 +923,11 @@ void ossl_quic_stream_iter_next(QUIC_STREAM_ITER *it);
  */
 void ossl_quic_stream_map_notify_close(QUIC_STREAM_MAP *qsm);
 
+/*
+ * returns number of opened streams
+ */
+unsigned int ossl_quic_stream_map_count_streams(QUIC_STREAM_MAP *qsm);
+
 # endif
 
 #endif

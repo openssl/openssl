@@ -393,9 +393,14 @@ static int poll_readout(SSL_POLL_ITEM *items,
                 if (revents & SSL_POLL_EVENT_EC) {
                     ossl_quic_conn_notify_close(ssl);
                     ++result_count;
-                } else if (revents != 0) {
-                    result_count++;
-                    (void)(0); /* to keep c-style happy */
+                } else if (revents & SSL_POLL_EVENT_ECD) {
+                    /*
+                     * Suppress ECD if there are streams still attached.
+                     */
+                    if (ossl_quic_conn_count_streams(ssl) == 0)
+                        result_count++;
+                    else
+                        revents &= ~SSL_POLL_EVENT_ECD;
                 }
 
                 break;

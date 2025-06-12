@@ -180,6 +180,7 @@ int ossl_quic_get_notifier_fd(SSL *ssl);
 void ossl_quic_enter_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx);
 void ossl_quic_leave_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx);
 void ossl_quic_conn_notify_close(SSL *qc_ssl);
+unsigned int ossl_quic_conn_count_streams(SSL *qc_ssl);
 
 # endif
 
