@@ -31,6 +31,12 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * Introduces use of `<stdbool.h>` when handling JSON encoding in
+   the OpenSSL codebase, replacing the previous use of `int` for
+   these boolean values.
+
+   *Alexis Goodfellow*
+
  * An ANSI-C toolchain is no longer sufficient for building OpenSSL. The code
    should build on compilers supporting C-99 features.
 
