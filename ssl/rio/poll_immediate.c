@@ -401,6 +401,8 @@ static int poll_readout(SSL_POLL_ITEM *items,
                         result_count++;
                     else
                         revents &= ~SSL_POLL_EVENT_ECD;
+                } else if (revents != 0) {
+                    result_count++;
                 }
 
                 break;
