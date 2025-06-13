@@ -103,9 +103,9 @@ typedef struct ossl_ex_data_global_st {
 # define OSSL_LIB_CTX_DRBG_INDEX                     5
 # define OSSL_LIB_CTX_DRBG_NONCE_INDEX               6
 /* slot 7 unused, was CRNG test data and can be reused */
-# ifdef FIPS_MODULE
-#  define OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX    8
-# endif
+/*
+ * slot 8 unused, was OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX
+ */
 # define OSSL_LIB_CTX_FIPS_PROV_INDEX                9
 # define OSSL_LIB_CTX_ENCODER_STORE_INDEX           10
 # define OSSL_LIB_CTX_DECODER_STORE_INDEX           11
@@ -133,7 +133,6 @@ void ossl_lib_ctx_default_deinit(void);
 OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx);
 
 const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx);
-CRYPTO_THREAD_LOCAL *ossl_lib_ctx_get_rcukey(OSSL_LIB_CTX *libctx);
 
 OSSL_LIB_CTX *ossl_crypto_ex_data_get_ossl_lib_ctx(const CRYPTO_EX_DATA *ad);
 int ossl_crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
