@@ -164,6 +164,7 @@ jobs:
 
   linux-arm64:
     runs-on: linux-arm64
+    if: github.repository == 'openssl/openssl'
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -179,6 +180,7 @@ jobs:
 
   linux-ppc64le:
     runs-on: linux-ppc64le
+    if: github.repository == 'openssl/openssl'
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -196,6 +198,7 @@ jobs:
 
   linux-s390x:
     runs-on: linux-s390x
+    if: github.repository == 'openssl/openssl'
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -213,6 +216,7 @@ jobs:
 
   linux-riscv64:
     runs-on: linux-riscv64
+    if: github.repository == 'openssl/openssl'
     steps:
     - uses: actions/checkout@v4
     - name: config
