@@ -401,10 +401,7 @@ static int poll_readout(SSL_POLL_ITEM *items,
                         result_count++;
                     else
                         revents &= ~SSL_POLL_EVENT_ECD;
-                } else if (revents != 0) {
-                    result_count++;
                 }
-
                 break;
             case SSL_TYPE_QUIC_XSO:
                 if (!ossl_quic_conn_poll_events(ssl, events, do_tick, &revents))
