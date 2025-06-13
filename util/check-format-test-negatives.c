@@ -10,7 +10,7 @@
 
 /*
  * A collection of test cases where check-format.pl should not report issues.
- * There are some known false positives, though, which are marked below.
+ * There are some known false positives, though, which are marked below using /*@
  */
 
 #include <errno.h> /* should not report whitespace nits within <...> */
@@ -264,7 +264,14 @@ int g(void)
             && expr_line3)
         hanging_stmt;
 }
-#define m \
+
+#define m1                           \
+    if (ctx == NULL)                 \
+        return 0;                    \
+    if (ossl_param_is_empty(params)) \
+        return 1;                    \
+
+#define m2                                                               \
     do { /* should not be confused with function header followed by '{' */ \
     } while (0)
 
