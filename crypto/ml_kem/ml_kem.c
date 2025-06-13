@@ -1506,6 +1506,9 @@ int decap(uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
 /*
  * After allocating storage for public or private key data, update the key
  * component pointers to reference that storage.
+ *
+ * The caller should only store private data in `priv` *after* a successful
+ * (non-zero) return from this function.
  */
 static __owur
 int add_storage(scalar *pub, scalar *priv, int private, ML_KEM_KEY *key)
@@ -1646,9 +1649,8 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
 
     if (key == NULL)
         return NULL;
-    else if ((ret = OPENSSL_secure_malloc(sizeof(*key))) == NULL)
+    else if ((ret = OPENSSL_memdup(key, sizeof(*key))) == NULL)
         return NULL;
-    memcpy(ret, key, sizeof(*key));
 
     ret->d = ret->z = ret->rho = ret->pkhash = NULL;
     ret->s = ret->m = ret->t = NULL;
@@ -1675,8 +1677,8 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
             OPENSSL_free(tmp_pub);
             break;
         }
-        memcpy(tmp_priv, key->s, key->vinfo->prvalloc);
-        ok = add_storage(tmp_pub, tmp_priv, 1, ret);
+        if ((ok = add_storage(tmp_pub, tmp_priv, 1, ret)) != 0)
+            memcpy(tmp_priv, key->s, key->vinfo->prvalloc);
         /* Duplicated keys retain |d|, if available */
         if (key->d != NULL)
             ret->d = ret->z + ML_KEM_RANDOM_BYTES;
@@ -1684,7 +1686,7 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
     }
 
     if (!ok) {
-        OPENSSL_secure_free(ret);
+        OPENSSL_free(ret);
         return NULL;
     }
 

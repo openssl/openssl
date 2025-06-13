@@ -59,9 +59,9 @@ void vector_free(VECTOR *v)
 }
 
 static ossl_inline ossl_unused
-void vector_secure_free(VECTOR *v)
+void vector_secure_free(VECTOR *v, size_t rank)
 {
-    OPENSSL_secure_clear_free(v->poly, v->num_poly * sizeof(POLY));
+    OPENSSL_secure_clear_free(v->poly, rank * sizeof(POLY));
     v->poly = NULL;
     v->num_poly = 0;
 }

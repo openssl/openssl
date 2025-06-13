@@ -770,7 +770,7 @@ int ossl_ml_dsa_sk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len)
     PACKET pkt;
 
     /* When loading from an explicit key, drop the seed. */
-    OPENSSL_clear_free(key->seed, ML_DSA_SEED_BYTES);
+    OPENSSL_secure_clear_free(key->seed, ML_DSA_SEED_BYTES);
     key->seed = NULL;
 
     /* Allow the key encoding to be already set to the provided pointer */
