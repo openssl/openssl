@@ -47,10 +47,10 @@ static void *seed_dupctx(void *ctx)
 }
 
 /* ossl_seed128ecb_functions */
-IMPLEMENT_generic_cipher(seed, SEED, ecb, ECB, 0, 128, 128, 0, block)
+IMPLEMENT_generic_cipher(seed, SEED, ecb, ECB, 0, 128, 128, 0, 1, block)
 /* ossl_seed128cbc_functions */
-IMPLEMENT_generic_cipher(seed, SEED, cbc, CBC, 0, 128, 128, 128, block)
+IMPLEMENT_generic_cipher(seed, SEED, cbc, CBC, 0, 128, 128, 128, 1, block)
 /* ossl_seed128ofb128_functions */
-IMPLEMENT_generic_cipher(seed, SEED, ofb128, OFB, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(seed, SEED, ofb128, OFB, 0, 128, 8, 128, 1, stream)
 /* ossl_seed128cfb128_functions */
-IMPLEMENT_generic_cipher(seed, SEED, cfb128,  CFB, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(seed, SEED, cfb128,  CFB, 0, 128, 8, 128, 1, stream)

@@ -97,7 +97,8 @@ static int chacha20_get_params(OSSL_PARAM params[])
     return ossl_cipher_generic_get_params(params, 0, CHACHA20_FLAGS,
                                           CHACHA20_KEYLEN * 8,
                                           CHACHA20_BLKLEN * 8,
-                                          CHACHA20_IVLEN * 8);
+                                          CHACHA20_IVLEN * 8,
+                                          5);
 }
 
 static int chacha20_get_ctx_params(void *vctx, OSSL_PARAM params[])
