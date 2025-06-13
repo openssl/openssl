@@ -2743,18 +2743,21 @@ static int quic_write_nonblocking_epw(QCTX *ctx, const OSSL_IOVEC *iov,
                                       size_t len, uint64_t flags, size_t *written)
 {
     QUIC_XSO *xso = ctx->xso;
+    size_t offset = *written;
 
     /* Simple best effort operation. */
-    if (!xso_sstream_append(xso, iov, len, 0, written)) {
+    if (!xso_sstream_append(xso, iov, len, offset, written)) {
         /* Stream already finished or allocation error. */
         *written = 0;
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
     }
 
-    quic_post_write(xso, *written > 0, *written == len, flags,
+    quic_post_write(xso, *written > 0, (*written + offset) == len, flags,
                     qctx_should_autotick(ctx));
 
-    if (*written == 0)
+    *written += offset;
+
+    if (*written == offset)
         /* SSL_write_ex returns 0 if it didn't write anything. */
         return QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_WANT_WRITE);
 

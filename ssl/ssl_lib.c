@@ -2722,6 +2722,8 @@ int SSL_writev(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, uint64_t flags,
     int ret;
     size_t local_written;
 
+    if (written == NULL && flags == SSL_MODE_ENABLE_PARTIAL_WRITE)
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_WRITE_FLAG);
     if (written == NULL)
         ret = ssl_write_internal(s, iov, iovcnt, flags, &local_written);
     else
