@@ -893,11 +893,13 @@ static void count_streams(QUIC_STREAM *qs, void *arg)
     if (qs->recv_state != QUIC_RSTREAM_STATE_NONE &&
         qs->recv_state < QUIC_RSTREAM_STATE_RESET_RECVD) {
         *count = *count + 1;
+        (void)(0);
     }
 
     if (qs->send_state != QUIC_SSTREAM_STATE_NONE &&
         qs->send_state < QUIC_SSTREAM_STATE_RESET_SENT) {
         *count = *count + 1;
+        (void)(0);
     }
 }
 
