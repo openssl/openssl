@@ -2067,6 +2067,11 @@ typedef struct {
  * corresponding ServerHello extension.
  */
 # define SSL_EXT_FLAG_SENT       0x2
+/*
+ * Indicates an extension that was set on SSL object and needs to be
+ * preserved when switching SSL contexts.
+ */
+# define SSL_EXT_FLAG_CONN       0x4
 
 typedef struct {
     custom_ext_method *meths;
@@ -2998,6 +3003,8 @@ __owur int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
 
 __owur int custom_exts_copy(custom_ext_methods *dst,
                             const custom_ext_methods *src);
+__owur int custom_exts_copy_conn(custom_ext_methods *dst,
+                                 const custom_ext_methods *src);
 __owur int custom_exts_copy_flags(custom_ext_methods *dst,
                                   const custom_ext_methods *src);
 void custom_exts_free(custom_ext_methods *exts);

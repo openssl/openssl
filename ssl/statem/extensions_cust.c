@@ -107,7 +107,7 @@ void custom_ext_init(custom_ext_methods *exts)
     custom_ext_method *meth = exts->meths;
 
     for (i = 0; i < exts->meths_count; i++, meth++)
-        meth->ext_flags = 0;
+        meth->ext_flags &= ~(SSL_EXT_FLAG_SENT | SSL_EXT_FLAG_RECEIVED);
 }
 
 /* Pass received custom extension data to the application for parsing. */
@@ -279,6 +279,31 @@ int custom_exts_copy_flags(custom_ext_methods *dst,
     return 1;
 }
 
+/* Copy old style API wrapper arguments */
+static void custom_ext_copy_old_cb(custom_ext_method *methdst,
+                                   const custom_ext_method *methsrc,
+                                   int *err)
+{
+    if (methsrc->add_cb != custom_ext_add_old_cb_wrap)
+        return;
+
+    if (*err) {
+        methdst->add_arg = NULL;
+        methdst->parse_arg = NULL;
+        return;
+    }
+
+    methdst->add_arg = OPENSSL_memdup(methsrc->add_arg,
+                                      sizeof(custom_ext_add_cb_wrap));
+    methdst->parse_arg = OPENSSL_memdup(methsrc->parse_arg,
+                                        sizeof(custom_ext_parse_cb_wrap));
+
+    if (methdst->add_arg == NULL || methdst->parse_arg == NULL)
+        *err = 1;
+
+    return;
+}
+
 /* Copy table of custom extensions */
 int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src)
 {
@@ -293,31 +318,59 @@ int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src)
             return 0;
         dst->meths_count = src->meths_count;
 
-        for (i = 0; i < src->meths_count; i++) {
-            custom_ext_method *methsrc = src->meths + i;
-            custom_ext_method *methdst = dst->meths + i;
+        for (i = 0; i < src->meths_count; i++)
+            custom_ext_copy_old_cb(&dst->meths[i], &src->meths[i], &err);
+    }
 
-            if (methsrc->add_cb != custom_ext_add_old_cb_wrap)
-                continue;
+    if (err) {
+        custom_exts_free(dst);
+        return 0;
+    }
 
-            /*
-             * We have found an old style API wrapper. We need to copy the
-             * arguments too.
-             */
+    return 1;
+}
 
-            if (err) {
-                methdst->add_arg = NULL;
-                methdst->parse_arg = NULL;
-                continue;
+/* Copy custom extensions that were set on connection */
+int custom_exts_copy_conn(custom_ext_methods *dst,
+                          const custom_ext_methods *src)
+{
+    size_t i;
+    int err = 0;
+
+    if (src->meths_count > 0) {
+        size_t meths_count = 0;
+
+        for (i = 0; i < src->meths_count; i++)
+            if ((src->meths[i].ext_flags & SSL_EXT_FLAG_CONN) != 0)
+                meths_count++;
+
+        if (meths_count > 0) {
+            custom_ext_method *methdst =
+                OPENSSL_realloc(dst->meths,
+                                (dst->meths_count + meths_count) *
+                                sizeof(custom_ext_method));
+
+            if (methdst == NULL)
+                return 0;
+
+            for (i = 0; i < dst->meths_count; i++)
+                custom_ext_copy_old_cb(&methdst[i], &dst->meths[i], &err);
+
+            dst->meths = methdst;
+            methdst += dst->meths_count;
+
+            for (i = 0; i < src->meths_count; i++) {
+                custom_ext_method *methsrc = &src->meths[i];
+
+                if ((methsrc->ext_flags & SSL_EXT_FLAG_CONN) == 0)
+                    continue;
+
+                memcpy(methdst, methsrc, sizeof(custom_ext_method));
+                custom_ext_copy_old_cb(methdst, methsrc, &err);
+                methdst++;
             }
 
-            methdst->add_arg = OPENSSL_memdup(methsrc->add_arg,
-                                              sizeof(custom_ext_add_cb_wrap));
-            methdst->parse_arg = OPENSSL_memdup(methsrc->parse_arg,
-                                            sizeof(custom_ext_parse_cb_wrap));
-
-            if (methdst->add_arg == NULL || methdst->parse_arg == NULL)
-                err = 1;
+            dst->meths_count += meths_count;
         }
     }
 
@@ -416,6 +469,7 @@ int ossl_tls_add_custom_ext_intern(SSL_CTX *ctx, custom_ext_methods *exts,
     meth->add_cb = add_cb;
     meth->free_cb = free_cb;
     meth->ext_type = ext_type;
+    meth->ext_flags = (ctx == NULL) ? SSL_EXT_FLAG_CONN : 0;
     meth->add_arg = add_arg;
     meth->parse_arg = parse_arg;
     exts->meths_count++;
