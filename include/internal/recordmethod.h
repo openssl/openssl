@@ -58,7 +58,9 @@ struct ossl_record_template_st {
     unsigned char type;
     unsigned int version;
     const unsigned char *buf;
+    const OSSL_IOVEC *iov;
     size_t buflen;
+    size_t offset;
 };
 
 typedef struct ossl_record_template_st OSSL_RECORD_TEMPLATE;

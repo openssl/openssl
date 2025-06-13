@@ -4634,7 +4634,7 @@ int ssl3_shutdown(SSL *s)
         return 0;
 }
 
-int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written)
+int ssl3_write(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, size_t *written)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
@@ -4645,7 +4645,7 @@ int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written)
     if (sc->s3.renegotiate)
         ssl3_renegotiate_check(s, 0);
 
-    return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len,
+    return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA, iov, iovcnt,
                                       written);
 }
 
