@@ -958,11 +958,17 @@ uint32_t SSL_get_recv_max_early_data(const SSL *s);
 #endif
 
 # include <openssl/ssl2.h>
-# include <openssl/ssl3.h>
+# ifndef OPENSSL_SSL3_H
+#  include <openssl/ssl3.h>
+# endif
 # include <openssl/tls1.h>      /* This is mostly sslv3 with a few tweaks */
 # include <openssl/dtls1.h>     /* Datagram TLS */
-# include <openssl/srtp.h>      /* Support for the use_srtp extension */
-# include <openssl/quic.h>
+# ifndef OPENSSL_SRTP_H
+#  include <openssl/srtp.h>      /* Support for the use_srtp extension */
+# endif
+# ifndef OPENSSL_QUIC_H
+#  include <openssl/quic.h>
+# endif
 
 #ifdef  __cplusplus
 extern "C" {
