@@ -266,6 +266,8 @@ static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
 
         if (ok <= 0)
             ossl_provider_free(prov);
+    } else {
+        ok = 1;
     }
     CRYPTO_THREAD_unlock(pcgbl->lock);
 
@@ -309,7 +311,8 @@ static int provider_conf_parse_bool_setting(const char *confname,
 }
 
 static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
-                              const char *value, const CONF *cnf)
+                              const char *value, const CONF *cnf,
+                              unsigned long flags)
 {
     int i;
     STACK_OF(CONF_VALUE) *ecmds;
@@ -390,16 +393,23 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
      * 1 for successful activation
      * 0 for non-fatal activation failure
      * < 0 for fatal activation failure
-     * We return success (1) for activation, (1) for non-fatal activation
-     * failure, and (0) for fatal activation failure
+     * When configuration errors are tolerated, we return success (1) for
+     * activation, (1) for non-fatal activation failure, and (0) for fatal
+     * activation failure.
      */
-    return ok >= 0;
+    if (flags & (CONF_MFLAGS_IGNORE_RETURN_CODES
+                 | CONF_MFLAGS_SILENT_ACTIVATION))
+        ok = ok >= 0;
+    else
+        ok = ok > 0;
+    return ok;
 }
 
 static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
 {
     STACK_OF(CONF_VALUE) *elist;
     CONF_VALUE *cval;
+    unsigned long flags = CONF_imodule_get_flags(md);
     int i;
 
     OSSL_TRACE1(CONF, "Loading providers module: section %s\n",
@@ -416,7 +426,7 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
     for (i = 0; i < sk_CONF_VALUE_num(elist); i++) {
         cval = sk_CONF_VALUE_value(elist, i);
         if (!provider_conf_load(NCONF_get0_libctx((CONF *)cnf),
-                                cval->name, cval->value, cnf))
+                                cval->name, cval->value, cnf, flags))
             return 0;
     }
 
