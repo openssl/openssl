@@ -1015,8 +1015,12 @@ struct ssl_ctx_st {
         void *status_arg;
         /* ext status type used for CSR extension (OCSP Stapling) */
         int status_type;
+
         /* RFC 4366 Maximum Fragment Length Negotiation */
         uint8_t max_fragment_len_mode;
+
+        /* RFC 8449 Record Size Limit Extension */
+        uint16_t record_size_limit;
 
         /* EC extension values inherited by SSL structure */
         size_t ecpointformats_len;
