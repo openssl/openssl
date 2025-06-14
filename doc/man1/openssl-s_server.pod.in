@@ -74,6 +74,7 @@ B<openssl> B<s_server>
 [B<-no_ign_eof>]
 [B<-no_ems>]
 [B<-status>]
+[B<-status_all>]
 [B<-status_verbose>]
 [B<-status_timeout> I<int>]
 [B<-proxy> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>]
@@ -487,7 +488,15 @@ Disable Extended master secret negotiation.
 
 =item B<-status>
 
-Enables certificate status request support (aka OCSP stapling).
+Enables certificate status request support (aka OCSP stapling):
+an OCSP response is provided for the leaf (server) certificate
+if requested by the client side.
+
+=item B<-status_all>
+
+Like before, but for TLS v1.3 and beyond, status responses for all
+certificates in the chain (except the trust anchor) are provided
+if requested by the client side.
 
 =item B<-status_verbose>
 
@@ -530,6 +539,8 @@ Any given query component is handled as part of the path component.
 
 Overrides any OCSP responder URLs from the certificate and always provides the
 OCSP Response stored in the file. The file must be in DER format.
+This option may be used multiple times to specify OCSP responses for all
+certificates in the server certificate chain.
 
 =item B<-ssl_config> I<val>
 
@@ -924,6 +935,8 @@ B<-no_rx_cert_comp>,
 B<-no_tx_cert_comp>,
 and B<-tfo>
 options were added in OpenSSL 3.2.
+
+The B<-status_all> option was added in OpenSSL 3.6.
 
 =head1 COPYRIGHT
 
