@@ -12,7 +12,9 @@
 # pragma once
 
 # include <openssl/macros.h>
-# include <openssl/ssl.h>
+# ifndef OPENSSL_SSL_H
+#  include <openssl/ssl.h>
+# endif
 
 # ifndef OPENSSL_NO_QUIC
 

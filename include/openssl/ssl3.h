@@ -20,7 +20,9 @@
 # include <openssl/comp.h>
 # include <openssl/buffer.h>
 # include <openssl/evp.h>
-# include <openssl/ssl.h>
+# ifndef OPENSSL_SSL_H
+#  include <openssl/ssl.h>
+# endif
 
 #ifdef  __cplusplus
 extern "C" {
