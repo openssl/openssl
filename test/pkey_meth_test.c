@@ -18,6 +18,7 @@
 #include <openssl/evp.h>
 #include "testutil.h"
 
+#ifndef OPENSSL_NO_DEPRECATED_3_6
 /* Test of EVP_PKEY_ASN1_METHOD ordering */
 static int test_asn1_meths(void)
 {
@@ -49,6 +50,7 @@ static int test_asn1_meths(void)
     }
     return good;
 }
+#endif
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 /* Test of EVP_PKEY_METHOD ordering */
@@ -82,7 +84,9 @@ static int test_pkey_meths(void)
 
 int setup_tests(void)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_6
     ADD_TEST(test_asn1_meths);
+#endif
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_pkey_meths);
 #endif

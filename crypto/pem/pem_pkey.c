@@ -172,12 +172,14 @@ static EVP_PKEY *pem_read_bio_key_legacy(BIO *bp, EVP_PKEY **x,
         }
         PKCS8_PRIV_KEY_INFO_free(p8inf);
     } else if ((slen = ossl_pem_check_suffix(nm, "PRIVATE KEY")) > 0) {
+#ifndef OPENSSL_NO_DEPRECATED_3_6
         const EVP_PKEY_ASN1_METHOD *ameth;
         ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);
         if (ameth == NULL || ameth->old_priv_decode == NULL)
             goto p8err;
         ret = ossl_d2i_PrivateKey_legacy(ameth->pkey_id, x, &p, len, libctx,
                                          propq);
+#endif
     } else if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) == 0
                && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         /* Trying legacy PUBKEY decoding only if we do not want private key. */
