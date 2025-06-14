@@ -110,9 +110,20 @@ typedef limb limb_aX __attribute((__aligned__(1)));
 typedef limb felem[NLIMBS];
 typedef widelimb widefelem[2*NLIMBS-1];
 
+/* Helper functions (de)serialising reduced field elements in little endian */
+#ifdef B_ENDIAN
+static void bin48_to_felem(felem out, const u8 in[48])
+{
+    ec_nistp_pre_comp_deserialize(out, in, 56/8, 48, 384);
+}
+
+static void felem_to_bin48(u8 out[48], const felem in)
+{
+    ec_nistp_pre_comp_serialize(out, in, 56/8, 48);
+}
+#else
 static const limb bottom56bits = 0xffffffffffffff;
 
-/* Helper functions (de)serialising reduced field elements in little endian */
 static void bin48_to_felem(felem out, const u8 in[48])
 {
     memset(out, 0, 56);
@@ -136,6 +147,7 @@ static void felem_to_bin48(u8 out[48], const felem in)
     (*((limb_aX *) & out[35])) |= (in[5] & bottom56bits);
     memmove(&out[42], &in[6], 6);
 }
+#endif /* B_ENDIAN */
 
 /* BN_to_felem converts an OpenSSL BIGNUM into an felem */
 static int BN_to_felem(felem out, const BIGNUM *bn)
