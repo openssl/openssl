@@ -27,7 +27,7 @@ int TS_ASN1_INTEGER_print_bio(BIO *bio, const ASN1_INTEGER *num)
         return -1;
     if ((hex = BN_bn2hex(num_bn))) {
         result = BIO_write(bio, "0x", 2) > 0;
-        result = result && BIO_write(bio, hex, strlen(hex)) > 0;
+        result = result && BIO_write(bio, hex, (int)strlen(hex)) > 0;
         OPENSSL_free(hex);
     }
     BN_free(num_bn);

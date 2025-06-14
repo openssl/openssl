@@ -328,14 +328,14 @@ int ossl_ml_dsa_i2d_prvkey(const ML_DSA_KEY *key, uint8_t **out,
                        params->alg);
         goto end;
     }
-    len = p8fmt->p8_bytes;
+    len = (int)p8fmt->p8_bytes;
 
     if (out == NULL) {
         ret = len;
         goto end;
     }
 
-    if ((pos = buf = OPENSSL_malloc((size_t) len)) == NULL)
+    if ((pos = buf = OPENSSL_malloc((size_t)len)) == NULL)
         goto end;
 
     switch (p8fmt->p8_shift) {

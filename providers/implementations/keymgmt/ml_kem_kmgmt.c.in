@@ -590,7 +590,7 @@ static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
             break;
 
         case PIDX_PKEY_PARAM_MAX_SIZE:
-            if (!OSSL_PARAM_set_int(p, v->ctext_bytes))
+            if (!OSSL_PARAM_set_size_t(p, v->ctext_bytes))
                 return 0;
             break;
 

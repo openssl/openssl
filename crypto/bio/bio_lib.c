@@ -65,7 +65,7 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
     if (inret > 0 && (oper & BIO_CB_RETURN) && bareoper != BIO_CB_CTRL) {
         if (*processed > INT_MAX)
             return -1;
-        inret = *processed;
+        inret = (long)*processed;
     }
 
     ret = b->callback(b, oper, argp, argi, argl, inret);
@@ -433,9 +433,9 @@ int BIO_sendmmsg(BIO *b, BIO_MSG *msg,
 
     if (HAS_CALLBACK(b))
         ret = (size_t)bio_call_callback(b, BIO_CB_SENDMMSG | BIO_CB_RETURN,
-                                        (void *)&args, ret, 0, 0, ret, NULL);
+                                        (void *)&args, ret, 0, 0, (long)ret, NULL);
 
-    return ret;
+    return ret > 0;
 }
 
 int BIO_recvmmsg(BIO *b, BIO_MSG *msg,
@@ -480,9 +480,9 @@ int BIO_recvmmsg(BIO *b, BIO_MSG *msg,
 
     if (HAS_CALLBACK(b))
         ret = (size_t)bio_call_callback(b, BIO_CB_RECVMMSG | BIO_CB_RETURN,
-                                        (void *)&args, ret, 0, 0, ret, NULL);
+                                        (void *)&args, ret, 0, 0, (long)ret, NULL);
 
-    return ret;
+    return ret > 0;
 }
 
 int BIO_get_rpoll_descriptor(BIO *b, BIO_POLL_DESCRIPTOR *desc)
@@ -624,7 +624,7 @@ int BIO_get_line(BIO *bio, char *buf, int size)
         if (*ptr++ == '\n')
             break;
     *ptr = '\0';
-    return ret > 0 || BIO_eof(bio) ? ptr - buf : ret;
+    return ret > 0 || BIO_eof(bio) ? (int)(ptr - buf) : ret;
 }
 
 int BIO_indent(BIO *b, int indent, int max)

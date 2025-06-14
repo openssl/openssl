@@ -52,7 +52,7 @@ static int sha1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_SSL3_MS);
     if (p != NULL && p->data_type == OSSL_PARAM_OCTET_STRING)
         return ossl_sha1_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                              p->data_size, p->data);
+                              (int)p->data_size, p->data);
     return 1;
 }
 

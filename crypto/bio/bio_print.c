@@ -103,7 +103,8 @@ _dopr(char **sbuffer,
     size_t currlen;
 
     state = DP_S_DEFAULT;
-    flags = currlen = cflags = min = 0;
+    currlen = 0;
+    flags = cflags = min = 0;
     max = -1;
     ch = *format++;
 
@@ -316,10 +317,10 @@ _dopr(char **sbuffer,
             case 's':
                 strvalue = va_arg(args, char *);
                 if (max < 0) {
-                    if (buffer)
+                    if (buffer || *maxlen > INT_MAX)
                         max = INT_MAX;
                     else
-                        max = *maxlen;
+                        max = (int)*maxlen;
                 }
                 if (!fmtstr(sbuffer, buffer, &currlen, maxlen, strvalue,
                             flags, min, max))
@@ -334,8 +335,9 @@ _dopr(char **sbuffer,
             case 'n':
                 {
                     int *num;
+
                     num = va_arg(args, int *);
-                    *num = currlen;
+                    *num = (int)currlen;
                 }
                 break;
             case '%':
@@ -391,7 +393,7 @@ fmtstr(char **sbuffer,
 
     strln = OPENSSL_strnlen(value, max < 0 ? SIZE_MAX : (size_t)max);
 
-    padlen = min - strln;
+    padlen = (int)(min - strln);
     if (min < 0 || padlen < 0)
         padlen = 0;
     if (max >= 0) {
@@ -474,7 +476,7 @@ fmtint(char **sbuffer,
 
     zpadlen = max - place;
     spadlen =
-        min - OSSL_MAX(max, place) - (signvalue ? 1 : 0) - strlen(prefix);
+        min - OSSL_MAX(max, place) - (signvalue ? 1 : 0) - (int)strlen(prefix);
     if (zpadlen < 0)
         zpadlen = 0;
     if (spadlen < 0)

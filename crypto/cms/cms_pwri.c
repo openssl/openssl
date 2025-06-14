@@ -199,18 +199,18 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
                           const unsigned char *in, size_t inlen,
                           EVP_CIPHER_CTX *ctx)
 {
-    size_t blocklen = EVP_CIPHER_CTX_get_block_size(ctx);
+    int blocklen = EVP_CIPHER_CTX_get_block_size(ctx);
     unsigned char *tmp;
     int outl, rv = 0;
 
-    if (blocklen == 0)
+    if (blocklen <= 0)
         return 0;
 
-    if (inlen < 2 * blocklen) {
+    if (inlen < 2 * (size_t)blocklen) {
         /* too small */
         return 0;
     }
-    if (inlen % blocklen) {
+    if (inlen > INT_MAX || inlen % blocklen) {
         /* Invalid size */
         return 0;
     }
@@ -227,12 +227,12 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
         || !EVP_DecryptUpdate(ctx, tmp, &outl,
                               tmp + inlen - blocklen, blocklen)
         /* Can now decrypt first n - 1 blocks */
-        || !EVP_DecryptUpdate(ctx, tmp, &outl, in, inlen - blocklen)
+        || !EVP_DecryptUpdate(ctx, tmp, &outl, in, (int)(inlen - blocklen))
 
         /* Reset IV to original value */
         || !EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, NULL)
         /* Decrypt again */
-        || !EVP_DecryptUpdate(ctx, tmp, &outl, tmp, inlen))
+        || !EVP_DecryptUpdate(ctx, tmp, &outl, tmp, (int)inlen))
         goto err;
     /* Check check bytes */
     if (((tmp[1] ^ tmp[4]) & (tmp[2] ^ tmp[5]) & (tmp[3] ^ tmp[6])) != 0xff) {
@@ -290,8 +290,8 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
                              olen - 4 - inlen, 0) <= 0)
             return 0;
         /* Encrypt twice */
-        if (!EVP_EncryptUpdate(ctx, out, &dummy, out, olen)
-            || !EVP_EncryptUpdate(ctx, out, &dummy, out, olen))
+        if (!EVP_EncryptUpdate(ctx, out, &dummy, out, (int)olen)
+            || !EVP_EncryptUpdate(ctx, out, &dummy, out, (int)olen))
             return 0;
     }
 
@@ -367,7 +367,7 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     /* Finish password based key derivation to setup key in "ctx" */
 
     if (EVP_PBE_CipherInit_ex(algtmp->algorithm,
-                              (char *)pwri->pass, pwri->passlen,
+                              (char *)pwri->pass, (int)pwri->passlen,
                               algtmp->parameter, kekctx, en_de,
                               cms_ctx->libctx, cms_ctx->propq) < 0) {
         ERR_raise(ERR_LIB_CMS, ERR_R_EVP_LIB);
@@ -389,7 +389,7 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
         if (!kek_wrap_key(key, &keylen, ec->key, ec->keylen, kekctx, cms_ctx))
             goto err;
         pwri->encryptedKey->data = key;
-        pwri->encryptedKey->length = keylen;
+        pwri->encryptedKey->length = (int)keylen;
     } else {
         key = OPENSSL_malloc(pwri->encryptedKey->length);
         if (key == NULL)

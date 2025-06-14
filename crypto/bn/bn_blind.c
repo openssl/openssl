@@ -186,7 +186,7 @@ int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
             }
             mask = (BN_ULONG)0 - ((rtop - ntop) >> (8 * sizeof(ntop) - 1));
             /* always true, if (rtop >= ntop) n->top = r->top; */
-            n->top = (int)(rtop & ~mask) | (ntop & mask);
+            n->top = (int)((rtop & ~mask) | (ntop & mask));
             n->flags |= (BN_FLG_FIXED_TOP & ~mask);
         }
         ret = bn_mul_mont_fixed_top(n, n, r, b->m_ctx, ctx);

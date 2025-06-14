@@ -137,7 +137,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
                 ERR_raise(ERR_LIB_ASN1, ERR_R_BUF_LIB);
                 goto err;
             }
-            i = BIO_read(in, &(b->data[len]), want);
+            i = BIO_read(in, &(b->data[len]), (int)want);
             if (i < 0 && diff == 0) {
                 ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);
                 goto err;
@@ -160,7 +160,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
         diff = len - off;
         if (diff == 0)
             goto err;
-        inf = ASN1_get_object(&q, &slen, &tag, &xclass, diff);
+        inf = ASN1_get_object(&q, &slen, &tag, &xclass, (int)diff);
         if (inf & 0x80) {
             unsigned long e;
 
@@ -169,7 +169,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
                 goto err;
             ERR_pop_to_mark();
         }
-        i = q - p;            /* header length */
+        i = (int)(q - p);       /* header length */
         off += i;               /* end of data */
 
         if (inf & 1) {
@@ -214,7 +214,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
                     }
                     want -= chunk;
                     while (chunk > 0) {
-                        i = BIO_read(in, &(b->data[len]), chunk);
+                        i = BIO_read(in, &(b->data[len]), (int)chunk);
                         if (i <= 0) {
                             ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);
                             goto err;
@@ -248,7 +248,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
     }
 
     *pb = b;
-    return off;
+    return (int)off;
  err:
     ERR_clear_last_mark();
     BUF_MEM_free(b);

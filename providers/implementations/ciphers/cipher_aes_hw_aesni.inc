@@ -29,12 +29,12 @@ static int cipher_hw_aesni_initkey(PROV_CIPHER_CTX *dat,
 
     if ((dat->mode == EVP_CIPH_ECB_MODE || dat->mode == EVP_CIPH_CBC_MODE)
         && !dat->enc) {
-        ret = aesni_set_decrypt_key(key, keylen * 8, ks);
+        ret = aesni_set_decrypt_key(key, (int)(keylen * 8), ks);
         dat->block = (block128_f) aesni_decrypt;
         dat->stream.cbc = dat->mode == EVP_CIPH_CBC_MODE ?
             (cbc128_f) aesni_cbc_encrypt : NULL;
     } else {
-        ret = aesni_set_encrypt_key(key, keylen * 8, ks);
+        ret = aesni_set_encrypt_key(key, (int)(keylen * 8), ks);
         dat->block = (block128_f) aesni_encrypt;
         if (dat->mode == EVP_CIPH_CBC_MODE)
             dat->stream.cbc = (cbc128_f) aesni_cbc_encrypt;

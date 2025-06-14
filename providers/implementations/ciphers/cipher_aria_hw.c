@@ -18,9 +18,9 @@ static int cipher_hw_aria_initkey(PROV_CIPHER_CTX *dat,
     ARIA_KEY *ks = &adat->ks.ks;
 
     if (dat->enc || (mode != EVP_CIPH_ECB_MODE && mode != EVP_CIPH_CBC_MODE))
-        ret = ossl_aria_set_encrypt_key(key, keylen * 8, ks);
+        ret = ossl_aria_set_encrypt_key(key, (int)(keylen * 8), ks);
     else
-        ret = ossl_aria_set_decrypt_key(key, keylen * 8, ks);
+        ret = ossl_aria_set_decrypt_key(key, (int)(keylen * 8), ks);
     if (ret < 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SETUP_FAILED);
         return 0;
