@@ -684,7 +684,7 @@ $code.=<<___;
 
 	vst1.32	{${temp}[0]}, [$toutptr, :32]		@ top-most bit
 	sub	$nptr,$nptr,$num,lsl#2			@ rewind $nptr
-	subs	$aptr,sp,#0				@ clear carry flag
+	subs	$aptr,sp,#0				@ set carry flag
 	add	$bptr,sp,$num,lsl#2
 
 .LNEON_sub:
