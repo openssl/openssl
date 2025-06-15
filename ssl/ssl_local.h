@@ -657,13 +657,14 @@ typedef struct {
 } CLIENTHELLO_MSG;
 
 /*
- * Extension index values NOTE: Any updates to these defines should be mirrored
- * with equivalent updates to ext_defs in extensions.c
+ * Extension index values NOTE: Any updates to these definitions should be
+ * mirrored with equivalent updates to ext_defs in extensions.c
  */
 typedef enum tlsext_index_en {
     TLSEXT_IDX_renegotiate,
     TLSEXT_IDX_server_name,
     TLSEXT_IDX_max_fragment_length,
+    TLSEXT_IDX_record_size_limit,
     TLSEXT_IDX_srp,
     TLSEXT_IDX_ec_point_formats,
     TLSEXT_IDX_supported_groups,

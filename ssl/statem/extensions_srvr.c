@@ -216,6 +216,31 @@ int tls_parse_ctos_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
     return 1;
 }
 
+int tls_parse_ctos_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
+                                  unsigned int context,
+                                  X509 *x, size_t chainidx) {
+    uint16_t limit;
+
+    if (PACKET_remaining(pkt) != 2
+            || !PACKET_get_net_2(pkt, (unsigned int *)&limit)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+            }
+
+    // TODO: validate the value.
+
+    if (s->session->ext.max_fragment_len_mode >= TLSEXT_max_fragment_length_512
+            && s->session->ext.max_fragment_len_mode
+            <= TLSEXT_max_fragment_length_4096) {
+        /*
+         * Ignore the max_fragment_length extension if both extensions appear.
+         * See RFC 8449 Section 5.
+         */
+        s->session->ext.max_fragment_len_mode =
+            TLSEXT_max_fragment_length_UNSPECIFIED;
+    }
+}
+
 #ifndef OPENSSL_NO_SRP
 int tls_parse_ctos_srp(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                        X509 *x, size_t chainidx)

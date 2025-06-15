@@ -160,7 +160,8 @@ extern "C" {
 # define TLSEXT_TYPE_key_share                   51
 # define TLSEXT_TYPE_quic_transport_parameters   57
 
-# define TLSEXT_TYPE_record_size_limit           58
+/* ExtensionType value from RFC8449 */
+# define TLSEXT_TYPE_record_size_limit           28
 
 /* Temporary extension type */
 # define TLSEXT_TYPE_renegotiate                 0xff01
@@ -251,7 +252,7 @@ int SSL_CTX_set_tlsext_max_fragment_length(SSL_CTX *ctx, uint8_t mode);
 int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode);
 
 int SSL_CTX_set_tlsext_record_size_limit(SSL_CTX *ctx, uint16_t limit);
-int SSL_CTX_set_tlsext_record_size_limit(SSL *ssl, uint16_t limit);
+int SSL_set_tlsext_record_size_limit(SSL *ssl, uint16_t limit);
 
 # define TLSEXT_MAXLEN_host_name 255
 

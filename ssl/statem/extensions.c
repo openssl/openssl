@@ -118,16 +118,16 @@ typedef struct extensions_definition_st {
  * Extensions should be added to test/ext_internal_test.c as well, as that
  * tests the ordering of the extensions.
  *
- * Each extension has an initialiser, a client and
- * server side parser and a finaliser. The initialiser is called (if the
+ * Each extension has an initializer, a client and
+ * server side parser and a finalizer. The initializer is called (if the
  * extension is relevant to the given context) even if we did not see the
  * extension in the message that we received. The parser functions are only
- * called if we see the extension in the message. The finalisers are always
- * called if the initialiser was called.
- * There are also server and client side constructor functions which are always
+ * called if we see the extension in the message. The finalizers are always
+ * called if the initializer was called.
+ * There are also server and client side constructor functions that are always
  * called during message construction if the extension is relevant for the
  * given context.
- * The initialisation, parsing, finalisation and construction functions are
+ * The initialization, parsing, finalization and construction functions are
  * always called in the order defined in this list. Some extensions may depend
  * on others having been processed first, so the order of this list is
  * significant.
@@ -164,6 +164,11 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL, tls_parse_ctos_maxfragmentlen, tls_parse_stoc_maxfragmentlen,
         tls_construct_stoc_maxfragmentlen, tls_construct_ctos_maxfragmentlen,
         final_maxfragmentlen
+    },
+    {
+        TLSEXT_TYPE_record_size_limit,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
+        | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
     },
 #ifndef OPENSSL_NO_SRP
     {
