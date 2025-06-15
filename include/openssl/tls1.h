@@ -160,6 +160,8 @@ extern "C" {
 # define TLSEXT_TYPE_key_share                   51
 # define TLSEXT_TYPE_quic_transport_parameters   57
 
+# define TLSEXT_TYPE_record_size_limit           58
+
 /* Temporary extension type */
 # define TLSEXT_TYPE_renegotiate                 0xff01
 

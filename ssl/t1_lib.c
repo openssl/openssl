@@ -4806,6 +4806,7 @@ int SSL_CTX_set_tlsext_record_size_limit(SSL_CTX *ctx, uint16_t limit) {
     }
 
     ctx->ext.record_size_limit = limit;
+
     return 1;
 }
 

@@ -782,6 +782,7 @@ static const STRINT_PAIR tlsext_types[] = {
     {"certificate authorities", TLSEXT_TYPE_certificate_authorities},
     {"post handshake auth", TLSEXT_TYPE_post_handshake_auth},
     {"early_data", TLSEXT_TYPE_early_data},
+    {"record_size_limit", TLSEXT_TYPE_record_size_limit},
     {NULL}
 };
 
