@@ -61,6 +61,8 @@ static int test_engines(void)
     ENGINE *new_h4 = NULL;
 
     memset(block, 0, sizeof(block));
+    memset(eid, 0, sizeof(eid));
+    memset(ename, 0, sizeof(ename));
     if (!TEST_ptr(new_h1 = ENGINE_new())
             || !TEST_true(ENGINE_set_id(new_h1, "test_id0"))
             || !TEST_true(ENGINE_set_name(new_h1, "First test item"))
@@ -171,10 +173,6 @@ static int test_engines(void)
             goto end;
         ENGINE_free(ptr);
     }
-    for (loop = 0; loop < NUMTOADD; loop++) {
-        OPENSSL_free(eid[loop]);
-        OPENSSL_free(ename[loop]);
-    }
     to_return = 1;
 
  end:
@@ -182,8 +180,11 @@ static int test_engines(void)
     ENGINE_free(new_h2);
     ENGINE_free(new_h3);
     ENGINE_free(new_h4);
-    for (loop = 0; loop < NUMTOADD; loop++)
+    for (loop = 0; loop < NUMTOADD; loop++) {
+        OPENSSL_free(eid[loop]);
+        OPENSSL_free(ename[loop]);
         ENGINE_free(block[loop]);
+    }
     return to_return;
 }
 
