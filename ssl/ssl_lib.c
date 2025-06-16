@@ -84,10 +84,10 @@ struct ssl_async_args {
     SSL *s;
     void *buf;
     size_t num;
-    enum { READFUNC, WRITEFUNC, OTHERFUNC } type;
+    enum { READFUNC, WRITEVFUNC, OTHERFUNC } type;
     union {
         int (*func_read) (SSL *, void *, size_t, size_t *);
-        int (*func_write) (SSL *, const void *, size_t, size_t *);
+        int (*func_write) (SSL *, const OSSL_IOVEC *, size_t, size_t *);
         int (*func_other) (SSL *);
     } f;
 };
@@ -2315,8 +2315,9 @@ static int ssl_io_intern(void *vargs)
     switch (args->type) {
     case READFUNC:
         return args->f.func_read(s, buf, num, &sc->asyncrw);
-    case WRITEFUNC:
-        return args->f.func_write(s, buf, num, &sc->asyncrw);
+    case WRITEVFUNC:
+        return args->f.func_write(s, (const OSSL_IOVEC *)buf, num,
+                                  &sc->asyncrw);
     case OTHERFUNC:
         return args->f.func_other(s);
     }
@@ -2543,14 +2544,14 @@ int SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
     return ret;
 }
 
-int ssl_write_internal(SSL *s, const void *buf, size_t num,
-                       uint64_t flags, size_t *written)
+int ssl_write_internal(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
+                       uint64_t flags, size_t offset, size_t *written)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
-        return ossl_quic_write_flags(s, buf, num, flags, written);
+        return ossl_quic_write_flags(s, iov, iovcnt, flags, offset, written);
 #endif
 
     if (sc == NULL)
@@ -2587,16 +2588,16 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num,
         struct ssl_async_args args;
 
         args.s = s;
-        args.buf = (void *)buf;
-        args.num = num;
-        args.type = WRITEFUNC;
+        args.buf = (void *)iov;
+        args.num = iovcnt;
+        args.type = WRITEVFUNC;
         args.f.func_write = s->method->ssl_write;
 
         ret = ssl_start_async_job(s, &args, ssl_io_intern);
         *written = sc->asyncrw;
         return ret;
     } else {
-        return s->method->ssl_write(s, buf, num, written);
+        return s->method->ssl_write(s, iov, iovcnt, written);
     }
 }
 
@@ -2679,7 +2680,11 @@ int SSL_write(SSL *s, const void *buf, int num)
         return -1;
     }
 
-    ret = ssl_write_internal(s, buf, (size_t)num, 0, &written);
+    OSSL_IOVEC iovec;
+    iovec.data = (void *)buf;
+    iovec.data_len = num;
+
+    ret = ssl_write_internal(s, &iovec, 1, 0, 0, &written);
 
     /*
      * The cast is safe here because ret should be <= INT_MAX because num is
@@ -2699,7 +2704,28 @@ int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
 int SSL_write_ex2(SSL *s, const void *buf, size_t num, uint64_t flags,
                   size_t *written)
 {
-    int ret = ssl_write_internal(s, buf, num, flags, written);
+    OSSL_IOVEC iovec;
+
+    iovec.data = (void *)buf;
+    iovec.data_len = num;
+
+    int ret = ssl_write_internal(s, &iovec, 1, flags, 0, written);
+
+    if (ret < 0)
+        ret = 0;
+    return ret;
+}
+
+int SSL_writev(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, uint64_t flags,
+               size_t offset, size_t *written)
+{
+    int ret;
+    size_t local_written;
+
+    if (written == NULL)
+        ret = ssl_write_internal(s, iov, iovcnt, flags, offset, &local_written);
+    else
+        ret = ssl_write_internal(s, iov, iovcnt, flags, offset, written);
 
     if (ret < 0)
         ret = 0;

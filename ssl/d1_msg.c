@@ -10,10 +10,10 @@
 #include "ssl_local.h"
 #include "internal/ssl_unwrap.h"
 
-int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
-                               size_t len, size_t *written)
+int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const OSSL_IOVEC *iov,
+                               size_t iovcnt, size_t *written)
 {
-    int i;
+    size_t i, len = 0;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
     if (sc == NULL)
@@ -29,12 +29,15 @@ int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
         }
     }
 
+    for (i = 0; i < iovcnt; i++)
+        len += iov[i].data_len;
+
     if (len > SSL3_RT_MAX_PLAIN_LENGTH) {
         ERR_raise(ERR_LIB_SSL, SSL_R_DTLS_MESSAGE_TOO_BIG);
         return -1;
     }
 
-    return dtls1_write_bytes(sc, type, buf_, len, written);
+    return dtls1_write_bytes(sc, type, iov, len, written);
 }
 
 int dtls1_dispatch_alert(SSL *ssl)
@@ -55,7 +58,12 @@ int dtls1_dispatch_alert(SSL *ssl)
     *ptr++ = s->s3.send_alert[0];
     *ptr++ = s->s3.send_alert[1];
 
-    i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), &written);
+    OSSL_IOVEC iovec;
+
+    iovec.data = &buf[0];
+    iovec.data_len = sizeof(buf);
+
+    i = do_dtls1_write(s, SSL3_RT_ALERT, &iovec, sizeof(buf), &written);
     if (i <= 0) {
         s->s3.alert_dispatch = 1;
         /* fprintf(stderr, "not done with alert\n"); */

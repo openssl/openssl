@@ -284,7 +284,21 @@ int ossl_quic_sstream_append(QUIC_SSTREAM *qss,
                              size_t buf_len,
                              size_t *consumed)
 {
-    size_t l, consumed_ = 0;
+    OSSL_IOVEC iovec;
+
+    iovec.data = (void *)buf;
+    iovec.data_len = buf_len;
+
+    return ossl_quic_sstream_appendv(qss, &iovec, buf_len, 0, consumed);
+}
+
+int ossl_quic_sstream_appendv(QUIC_SSTREAM *qss,
+                              const OSSL_IOVEC *iov,
+                              size_t buf_len,
+                              size_t offset,
+                              size_t *consumed)
+{
+    size_t ptr = 0, l, consumed_ = 0;
     UINT_RANGE r;
     struct ring_buf old_ring_buf = qss->ring_buf;
 
@@ -294,9 +308,9 @@ int ossl_quic_sstream_append(QUIC_SSTREAM *qss,
     }
 
     /*
-     * Note: It is assumed that ossl_quic_sstream_append will be called during a
-     * call to e.g. SSL_write and this function is therefore designed to support
-     * such semantics. In particular, the buffer pointed to by buf is only
+     * Note: It is assumed that ossl_quic_sstream_appendv will be called during a
+     * call to e.g. SSL_writev and this function is therefore designed to support
+     * such semantics. In particular, the iovecs pointed to by iov is only
      * assumed to be valid for the duration of this call, therefore we must copy
      * the data here. We will later copy-and-encrypt the data during packet
      * encryption, so this is a two-copy design. Supporting a one-copy design in
@@ -304,14 +318,32 @@ int ossl_quic_sstream_append(QUIC_SSTREAM *qss,
      * Supporting such changes in future will require corresponding enhancements
      * to this code.
      */
+
+    while (offset >= iov[ptr].data_len) {
+        offset -= iov[ptr].data_len;
+        ptr++;
+    }
+
     while (buf_len > 0) {
-        l = ring_buf_push(&qss->ring_buf, buf, buf_len);
+        size_t to_copy = iov[ptr].data_len - offset;
+
+        if (to_copy > buf_len)
+            to_copy = buf_len;
+
+        l = ring_buf_push(&qss->ring_buf,
+                          (unsigned char *)(iov[ptr].data) + offset,
+                          to_copy);
         if (l == 0)
             break;
 
-        buf         += l;
+        offset      += l;
         buf_len     -= l;
         consumed_   += l;
+
+        if (offset == iov[ptr].data_len) {
+            offset = 0;
+            ptr++;
+        }
     }
 
     if (consumed_ > 0) {

@@ -20,6 +20,7 @@ use OpenSSL::stackhash qw(generate_stack_macros generate_const_stack_macros);
 # pragma once
 
 # include <openssl/macros.h>
+# include <openssl/ossl_iovec.h>
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_SSL_H
 # endif
@@ -1973,6 +1974,8 @@ long SSL_CTX_callback_ctrl(SSL_CTX *, int, void (*)(void));
 __owur int SSL_write_ex2(SSL *s, const void *buf, size_t num,
                          uint64_t flags,
                          size_t *written);
+__owur int SSL_writev(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
+                      uint64_t flags, size_t offset, size_t *written);
 
 # define SSL_EARLY_DATA_NOT_SENT    0
 # define SSL_EARLY_DATA_REJECTED    1

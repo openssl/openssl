@@ -17,15 +17,16 @@
 # include <errno.h>
 # include "internal/common.h" /* for HAS_PREFIX */
 
+# include <openssl/async.h>
 # include <openssl/buffer.h>
 # include <openssl/bio.h>
 # include <openssl/comp.h>
+# include <openssl/ct.h>
 # include <openssl/dsa.h>
 # include <openssl/err.h>
 # include <openssl/ssl.h>
-# include <openssl/async.h>
 # include <openssl/symhacks.h>
-# include <openssl/ct.h>
+# include <openssl/ossl_iovec.h>
 # include "internal/recordmethod.h"
 # include "internal/statem.h"
 # include "internal/packet.h"
@@ -417,15 +418,15 @@ struct ssl_method_st {
     int (*ssl_connect) (SSL *s);
     int (*ssl_read) (SSL *s, void *buf, size_t len, size_t *readbytes);
     int (*ssl_peek) (SSL *s, void *buf, size_t len, size_t *readbytes);
-    int (*ssl_write) (SSL *s, const void *buf, size_t len, size_t *written);
+    int (*ssl_write) (SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, size_t *written);
     int (*ssl_shutdown) (SSL *s);
     int (*ssl_renegotiate) (SSL *s);
     int (*ssl_renegotiate_check) (SSL *s, int);
     int (*ssl_read_bytes) (SSL *s, uint8_t type, uint8_t *recvd_type,
                            unsigned char *buf, size_t len, int peek,
                            size_t *readbytes);
-    int (*ssl_write_bytes) (SSL *s, uint8_t type, const void *buf_, size_t len,
-                            size_t *written);
+    int (*ssl_write_bytes) (SSL *s, uint8_t type, const OSSL_IOVEC *iov,
+                            size_t iovcnt, size_t *written);
     int (*ssl_dispatch_alert) (SSL *s);
     long (*ssl_ctrl) (SSL *s, int cmd, long larg, void *parg);
     long (*ssl_ctx_ctrl) (SSL_CTX *ctx, int cmd, long larg, void *parg);
@@ -2530,8 +2531,8 @@ void ossl_ssl_connection_free(SSL *ssl);
 __owur int ossl_ssl_connection_reset(SSL *ssl);
 
 __owur int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes);
-__owur int ssl_write_internal(SSL *s, const void *buf, size_t num,
-                              uint64_t flags, size_t *written);
+__owur int ssl_write_internal(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
+                              uint64_t flags, size_t offset, size_t *written);
 int ssl_clear_bad_session(SSL_CONNECTION *s);
 __owur CERT *ssl_cert_new(size_t ssl_pkey_num);
 __owur CERT *ssl_cert_dup(CERT *cert);
@@ -2679,7 +2680,8 @@ __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
 __owur int ssl3_read(SSL *s, void *buf, size_t len, size_t *readbytes);
 __owur int ssl3_peek(SSL *s, void *buf, size_t len, size_t *readbytes);
-__owur int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written);
+__owur int ssl3_write(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
+                      size_t *written);
 __owur int ssl3_shutdown(SSL *s);
 int ssl3_clear(SSL *s);
 __owur long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg);
@@ -2721,8 +2723,8 @@ void dtls1_set_message_header(SSL_CONNECTION *s,
                               size_t len,
                               size_t frag_off, size_t frag_len);
 
-int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
-                               size_t len, size_t *written);
+int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const OSSL_IOVEC *iov,
+                               size_t iovcnt, size_t *written);
 
 __owur int dtls1_read_failed(SSL_CONNECTION *s, int code);
 __owur int dtls1_buffer_message(SSL_CONNECTION *s, int ccs);

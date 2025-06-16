@@ -268,10 +268,10 @@ static int tls_write_check_pending(SSL_CONNECTION *s, uint8_t type,
  * Call this to write data in records of type 'type' It will return <= 0 if
  * not all data has been sent or non-blocking IO.
  */
-int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
-                     size_t *written)
+int ssl3_write_bytes(SSL *ssl, uint8_t type, const OSSL_IOVEC *iov,
+                     size_t iovcnt, size_t *written)
 {
-    const unsigned char *buf = buf_;
+    size_t j, len = 0;
     size_t tot;
     size_t n, max_send_fragment, split_send_fragment, maxpipes;
     int i;
@@ -293,6 +293,8 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
      * promptly send beyond the end of the users buffer ... so we trap and
      * report the error in a way the user will notice
      */
+    for (j = 0; j < iovcnt; j++)
+        len += iov[j].data_len;
     if ((len < s->rlayer.wnum)
         || ((s->rlayer.wpend_tot != 0)
             && (len < (s->rlayer.wnum + s->rlayer.wpend_tot)))) {
@@ -328,12 +330,14 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
         /* SSLfatal() already called */
         if (i < 0)
             return i;
-        if (i == 0) {
+        if (i == 0)
             return -1;
-        }
     }
 
-    i = tls_write_check_pending(s, type, buf, len);
+    if (iovcnt == 1)
+        i = tls_write_check_pending(s, type, (const unsigned char *)iov[0].data, len);
+    else
+        i = tls_write_check_pending(s, type, (const unsigned char *)iov, len);
     if (i < 0) {
         /* SSLfatal() already called */
         return i;
@@ -356,7 +360,10 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
          */
         s->rlayer.wpend_tot = 0;
         s->rlayer.wpend_type = type;
-        s->rlayer.wpend_buf = buf;
+        if (iovcnt == 1)
+            s->rlayer.wpend_buf = (const unsigned char *)iov[0].data;
+        else
+            s->rlayer.wpend_buf = (const unsigned char *)iov;
     }
 
     if (tot == len) {           /* done? */
@@ -375,7 +382,7 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
         /* if it went, fall through and send more stuff */
     }
 
-    n = (len - tot);
+    n = len - tot;
 
     max_send_fragment = ssl_get_max_send_fragment(s);
     split_send_fragment = ssl_get_split_send_fragment(s);
@@ -404,21 +411,21 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
 
     for (;;) {
         size_t tmppipelen, remain;
-        size_t j, lensofar = 0;
+        size_t lensofar = tot;
 
         /*
-        * Ask the record layer how it would like to split the amount of data
-        * that we have, and how many of those records it would like in one go.
-        */
+         * Ask the record layer how it would like to split the amount of data
+         * that we have, and how many of those records it would like in one go.
+         */
         maxpipes = s->rlayer.wrlmethod->get_max_records(s->rlayer.wrl, type, n,
                                                         max_send_fragment,
                                                         &split_send_fragment);
         /*
-        * If max_pipelines is 0 then this means "undefined" and we default to
-        * whatever the record layer wants to do. Otherwise we use the smallest
-        * value from the number requested by the record layer, and max number
-        * configured by the user.
-        */
+         * If max_pipelines is 0 then this means "undefined" and we default to
+         * whatever the record layer wants to do. Otherwise we use the smallest
+         * value from the number requested by the record layer, and max number
+         * configured by the user.
+         */
         if (s->max_pipelines > 0 && maxpipes > s->max_pipelines)
             maxpipes = s->max_pipelines;
 
@@ -438,8 +445,15 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
             for (j = 0; j < maxpipes; j++) {
                 tmpls[j].type = type;
                 tmpls[j].version = recversion;
-                tmpls[j].buf = &(buf[tot]) + (j * split_send_fragment);
+                if (iovcnt == 1) {
+                    tmpls[j].buf = (const unsigned char *)iov[0].data + lensofar;
+                } else {
+                    tmpls[j].buf = 0;
+                    tmpls[j].iov = iov;
+                    tmpls[j].offset = lensofar;
+                }
                 tmpls[j].buflen = split_send_fragment;
+                lensofar += split_send_fragment;
             }
             /* Remember how much data we are going to be sending */
             s->rlayer.wpend_tot = maxpipes * split_send_fragment;
@@ -456,7 +470,13 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
             for (j = 0; j < maxpipes; j++) {
                 tmpls[j].type = type;
                 tmpls[j].version = recversion;
-                tmpls[j].buf = &(buf[tot]) + lensofar;
+                if (iovcnt == 1) {
+                    tmpls[j].buf = (const unsigned char *)iov[0].data + lensofar;
+                } else {
+                    tmpls[j].buf = 0;
+                    tmpls[j].iov = iov;
+                    tmpls[j].offset = lensofar;
+                }
                 tmpls[j].buflen = tmppipelen;
                 lensofar += tmppipelen;
                 if (j + 1 == remain)
@@ -468,6 +488,7 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
 
         i = HANDLE_RLAYER_WRITE_RETURN(s,
             s->rlayer.wrlmethod->write_records(s->rlayer.wrl, tmpls, maxpipes));
+
         if (i <= 0) {
             /* SSLfatal() already called if appropriate */
             s->rlayer.wnum = tot;
