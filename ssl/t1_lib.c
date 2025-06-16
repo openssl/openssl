@@ -4791,8 +4791,6 @@ int SSL_CTX_set_tlsext_max_fragment_length(SSL_CTX *ctx, uint8_t mode)
 }
 
 int SSL_CTX_set_tlsext_record_size_limit(SSL_CTX *ctx, uint16_t limit) {
-    // TODO: if version is not set, raise error ?
-
     if (ctx->max_proto_version <= TLS1_2_VERSION
         || ctx->max_proto_version == DTLS1_2_VERSION) {
             if (limit > SSL3_RT_MAX_PLAIN_LENGTH) {

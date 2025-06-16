@@ -547,6 +547,7 @@ struct ssl_session_st {
          * performed at all.
          */
         uint8_t max_fragment_len_mode;
+        uint16_t record_size_limit;
     } ext;
 # ifndef OPENSSL_NO_SRP
     char *srp_username;
@@ -1723,6 +1724,13 @@ struct ssl_connection_st {
          * as this extension is optional on server side.
          */
         uint8_t max_fragment_len_mode;
+
+        /*
+         * Record Size Limit as per RFC 8449.
+         * This extension deprecates RFC 4366.
+        * Value of zero means no record size limit.
+         */
+        uint16_t record_size_limit;
 
         /*
          * On the client side the number of ticket identities we sent in the

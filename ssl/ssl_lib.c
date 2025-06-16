@@ -809,8 +809,10 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
     X509_VERIFY_PARAM_inherit(s->param, ctx->param);
     s->quiet_shutdown = IS_QUIC_CTX(ctx) ? 0 : ctx->quiet_shutdown;
 
-    if (!IS_QUIC_CTX(ctx))
+    if (!IS_QUIC_CTX(ctx)) {
         s->ext.max_fragment_len_mode = ctx->ext.max_fragment_len_mode;
+        s->ext.record_size_limit = ctx->ext.record_size_limit;
+    }
 
     s->max_send_fragment = ctx->max_send_fragment;
     s->split_send_fragment = ctx->split_send_fragment;

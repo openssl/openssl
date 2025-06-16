@@ -221,12 +221,20 @@ int tls_parse_ctos_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
                                   X509 *x, size_t chainidx) {
     uint16_t limit;
 
+    (void) chainidx;
+    (void) x;
+
     if (PACKET_remaining(pkt) != 2
             || !PACKET_get_net_2(pkt, (unsigned int *)&limit)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
             }
 
+    if (limit < TLSEXT_record_size_limit_min) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR,
+                 SSL_R_SSL3_EXT_INVALID_RECORD_SIZE_LIMIT);
+        return 0;
+    }
     // TODO: validate the value.
 
     if (s->session->ext.max_fragment_len_mode >= TLSEXT_max_fragment_length_512
@@ -239,6 +247,10 @@ int tls_parse_ctos_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
         s->session->ext.max_fragment_len_mode =
             TLSEXT_max_fragment_length_UNSPECIFIED;
     }
+
+    s->session->ext.record_size_limit = limit;
+
+    return 1;
 }
 
 #ifndef OPENSSL_NO_SRP
@@ -256,7 +268,7 @@ int tls_parse_ctos_srp(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     if (!PACKET_strndup(&srp_I, &s->srp_ctx.login)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
-    }
+        }
 
     return 1;
 }

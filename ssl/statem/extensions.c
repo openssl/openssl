@@ -169,6 +169,9 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_record_size_limit,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
         | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
+        NULL, tls_parse_ctos_record_size_limit, NULL,
+        NULL, tls_construct_ctos_record_size_limit,
+        NULL
     },
 #ifndef OPENSSL_NO_SRP
     {

@@ -111,6 +111,7 @@ SSL_SESSION *SSL_SESSION_new(void)
         return NULL;
 
     ss->ext.max_fragment_len_mode = TLSEXT_max_fragment_length_UNSPECIFIED;
+    ss->ext.record_size_limit = 0;
     ss->verify_result = 1;      /* avoid 0 (= X509_V_OK) just in case */
    /* 5 minute timeout by default */
     ss->timeout = ossl_seconds2time(60 * 5 + 4);
