@@ -478,9 +478,9 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     /* Set suite B flags if needed */
     X509_STORE_CTX_set_flags(ctx, tls1_suiteb(s));
     if (!X509_STORE_CTX_set_ex_data(ctx,
-            SSL_get_ex_data_X509_STORE_CTX_idx(), s)) {
+            SSL_get_ex_data_X509_STORE_CTX_idx(),
+            SSL_CONNECTION_GET_USER_SSL(s)))
         goto end;
-    }
 
     /* Verify via DANE if enabled */
     if (DANETLS_ENABLED(&s->dane))
