@@ -833,7 +833,8 @@ while (<>) { # loop over all lines of all input files
         report("space after function/macro name")
                                       if $intra_line =~ m/(\w+)\s+\(/        # fn/macro name with space before '('
        && !($1 =~ m/^(sizeof|if|else|while|do|for|switch|case|default|break|continue|goto|return|void|char|signed|unsigned|int|short|long|float|double|typedef|enum|struct|union|auto|extern|static|const|volatile|register)$/) # not keyword
-                                    && !(m/^\s*#\s*define\s+\w+\s+\(/); # not a macro without parameters having a body that starts with '('
+                                    && !(m/^\s*#\s*define\s+\w+\s+\(/) # not a macro without parameters having a body that starts with '('
+                                    && !(m/^\s*typedef\W/); # not a typedef
         report("missing space before '{'")   if $intra_line =~ m/[^\s{(\[]\{/;      # '{' without preceding space or {([
         report("missing space after '}'")    if $intra_line =~ m/\}[^\s,;\])}]/;    # '}' without following space or ,;])}
     }

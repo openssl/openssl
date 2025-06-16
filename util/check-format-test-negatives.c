@@ -296,6 +296,7 @@ const OPTIONS passwd_options[] = {
     {NULL}
 };
 
+typedef bool (*LOG_cb_t)(int lineno, severity level, const char *msg);
 typedef * d(int)
     x;
 typedef (int)
