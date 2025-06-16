@@ -367,35 +367,27 @@ static int poll_readout(SSL_POLL_ITEM *items,
 
             switch (ssl->type) {
 #ifndef OPENSSL_NO_QUIC
-            case SSL_TYPE_QUIC_LISTENER:
             case SSL_TYPE_QUIC_CONNECTION:
                 if (!ossl_quic_conn_poll_events(ssl, events, do_tick, &revents))
                     /* above call raises ERR */
                     FAIL_ITEM(i);
 
                 /*
-                 * Current testing happens on local end, that's when
-                 * local application closes connection. From QUIC stack
-                 * point of view there are two events: we first see
-                 * SSL_POLL_EVENT_EC, followed by SSL_POLL_EVENT_ECD.
-                 * More tests are needed to see if it is always the case,
-                 * like:
-                 *     what happens when connection is closed by remote
-                 *     peer,
-                 *     what happens when connection is closed by various
-                 *     shutdown options.
-                 *
-                 * The current plan is to notify all stream which belong
-                 * to connection (channel) when _EC event is triggered.
-                 * We are going to signal error to all streams so application
-                 * can cleanup those streams as a part of its error handling.
+                 * With SSL_POLL_EVENT_EC we notify application
+                 * the connection entered a SHUTDOWN state.
+                 * We also notify all stream objects associated with
+                 * connection.
                  */
                 if (revents & SSL_POLL_EVENT_EC) {
                     ossl_quic_conn_notify_close(ssl);
                     ++result_count;
                 } else if (revents & SSL_POLL_EVENT_ECD) {
                     /*
-                     * Suppress ECD if there are streams still attached.
+		     * SSL_POLL_EVENT_ECD signals application the connection
+		     * object is ready to be freed. We must suppress ECD event
+                     * if there are streams still attached to connection.
+                     * After  removes SSL stream objects from SSL_poll()
+                     * set, then we can signal ECD event.
                      */
                     if (ossl_quic_conn_count_streams(ssl) == 0)
                         result_count++;
@@ -403,6 +395,7 @@ static int poll_readout(SSL_POLL_ITEM *items,
                         revents &= ~SSL_POLL_EVENT_ECD;
                 }
                 break;
+            case SSL_TYPE_QUIC_LISTENER:
             case SSL_TYPE_QUIC_XSO:
                 if (!ossl_quic_conn_poll_events(ssl, events, do_tick, &revents))
                     /* above call raises ERR */

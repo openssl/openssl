@@ -111,7 +111,7 @@ DEF_FUNC(ssl_poll_check)
         expected_result_count = 0;
         break;
     case 1: /* Various events reported correctly */
-        expected_result_count       = 5;
+        expected_result_count       = 4;
         items[0].events             = SSL_POLL_EVENT_OS;
         expected_items[0].revents   = SSL_POLL_EVENT_OS;
 
@@ -148,8 +148,10 @@ DEF_FUNC(ssl_poll_check)
         goto err;
 
     time_after = ossl_time_now();
-    if (!TEST_size_t_eq(result_count, expected_result_count))
+    if (!TEST_size_t_eq(result_count, expected_result_count)) {
+        fprintf(stderr, "%s error in mode: %llu\n", __func__, mode);
         goto err;
+    }
 
     for (i = 0; i < OSSL_NELEM(items); ++i)
         if (!TEST_uint64_t_eq(items[i].revents, expected_items[i].revents))
