@@ -335,6 +335,14 @@ Build OpenSSL with debugging symbols and zero optimization level.
 
 Build OpenSSL without debugging symbols.  This is the default.
 
+    --coverage
+
+Build OpenSSL with gcov profiling information included
+
+    --pgo
+
+Build OpenSSL optimized using gcov data obtained from --coverage build
+
 Directories
 -----------
 
@@ -2032,6 +2040,24 @@ around the problem by forcing the build procedure to use the following script:
 
 instead of the real clang. In which case it doesn't matter what clang version
 is used, as it is the version of the GNU assembler that will be checked.
+
+Notes on profile guided optimization
+------------------------------------
+
+Some compilers support the concept of profile guided optimization.  This feature
+allows a user to build openssl and use profiling data gathered while running an
+application such that it can then be rebuilt in a way that is optimized specifically
+for that application, increasing performance.  Currently this feature is built into
+the openssl build system for x86_64 only.
+
+1) Configure openssl with the --coverage option.  This will configure the compiler to
+   record profiling data for the libcrypto and libssl libraries
+2) Run the application(s) which you wish to optimize for, ensuring that they use
+   the libraries compiled in step (1) (note this may entail the use of LD_LIBRARY_PATH)
+3) Clean the openssl build with make clean.  Note that the profile data (the .gcda and .gcno
+   files are retained through the clean operation). This is intentional.
+4) Configure openssl again, but this time select the --pgo build type.  This will use the
+   profiled data to optimize code layout for the application in question.
 
 ---
 
