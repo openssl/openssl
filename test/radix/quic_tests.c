@@ -148,10 +148,8 @@ DEF_FUNC(ssl_poll_check)
         goto err;
 
     time_after = ossl_time_now();
-    if (!TEST_size_t_eq(result_count, expected_result_count)) {
-        fprintf(stderr, "%s error in mode: %llu\n", __func__, mode);
+    if (!TEST_size_t_eq(result_count, expected_result_count))
         goto err;
-    }
 
     for (i = 0; i < OSSL_NELEM(items); ++i)
         if (!TEST_uint64_t_eq(items[i].revents, expected_items[i].revents))
