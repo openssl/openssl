@@ -540,6 +540,9 @@ debuginfo: $(SHLIBS)
 		$(OBJCOPY) --strip-debug --add-gnu-debuglink=$$i.debug $$i; \
 	done;
 
+cov-report: $(SHLIBS)
+    @set -e; gcovr -r . --txt-metric=branch --html --html-details -o openssl-metrics.html
+
 ##@ Documentation
 build_generated_pods: $(GENERATED_PODS)
 build_docs: build_man_docs build_html_docs ## Create documentation
