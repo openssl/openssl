@@ -2806,7 +2806,7 @@ static int test_ssl_accept_connection_then_writev(void)
         message_len += strlen("testingmessage");
     }
 
-    if (!TEST_true(SSL_writev(clientssl, iov, iovcnt, 0, &written)))
+    if (!TEST_true(SSL_writev(clientssl, iov, iovcnt, 0, 0, &written)))
         goto err;
 
     if (!TEST_size_t_eq(written, message_len))

@@ -2545,13 +2545,13 @@ int SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
 }
 
 int ssl_write_internal(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
-                       uint64_t flags, size_t *written)
+                       uint64_t flags, size_t offset, size_t *written)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
-        return ossl_quic_write_flags(s, iov, iovcnt, flags, written);
+        return ossl_quic_write_flags(s, iov, iovcnt, flags, offset, written);
 #endif
 
     if (sc == NULL)
@@ -2684,7 +2684,7 @@ int SSL_write(SSL *s, const void *buf, int num)
     iovec.data = (void *)buf;
     iovec.data_len = num;
 
-    ret = ssl_write_internal(s, &iovec, 1, 0, &written);
+    ret = ssl_write_internal(s, &iovec, 1, 0, 0, &written);
 
     /*
      * The cast is safe here because ret should be <= INT_MAX because num is
@@ -2705,11 +2705,11 @@ int SSL_write_ex2(SSL *s, const void *buf, size_t num, uint64_t flags,
                   size_t *written)
 {
     OSSL_IOVEC iovec;
-    
+
     iovec.data = (void *)buf;
     iovec.data_len = num;
 
-    int ret = ssl_write_internal(s, &iovec, 1, flags, written);
+    int ret = ssl_write_internal(s, &iovec, 1, flags, 0, written);
 
     if (ret < 0)
         ret = 0;
@@ -2717,17 +2717,15 @@ int SSL_write_ex2(SSL *s, const void *buf, size_t num, uint64_t flags,
 }
 
 int SSL_writev(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, uint64_t flags,
-               size_t *written)
+               size_t offset, size_t *written)
 {
     int ret;
     size_t local_written;
 
-    if (written == NULL && flags == SSL_MODE_ENABLE_PARTIAL_WRITE)
-        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_WRITE_FLAG);
     if (written == NULL)
-        ret = ssl_write_internal(s, iov, iovcnt, flags, &local_written);
+        ret = ssl_write_internal(s, iov, iovcnt, flags, offset, &local_written);
     else
-        ret = ssl_write_internal(s, iov, iovcnt, flags, written);
+        ret = ssl_write_internal(s, iov, iovcnt, flags, offset, written);
 
     if (ret < 0)
         ret = 0;

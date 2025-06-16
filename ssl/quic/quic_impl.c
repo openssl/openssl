@@ -2739,11 +2739,10 @@ static int quic_write_nonblocking_aon(QCTX *ctx, const OSSL_IOVEC *iov,
 }
 
 QUIC_NEEDS_LOCK
-static int quic_write_nonblocking_epw(QCTX *ctx, const OSSL_IOVEC *iov,
-                                      size_t len, uint64_t flags, size_t *written)
+static int quic_write_nonblocking_epw(QCTX *ctx, const OSSL_IOVEC *iov, size_t len,
+                                      uint64_t flags, size_t offset, size_t *written)
 {
     QUIC_XSO *xso = ctx->xso;
-    size_t offset = *written;
 
     /* Simple best effort operation. */
     if (!xso_sstream_append(xso, iov, len, offset, written)) {
@@ -2755,9 +2754,7 @@ static int quic_write_nonblocking_epw(QCTX *ctx, const OSSL_IOVEC *iov,
     quic_post_write(xso, *written > 0, (*written + offset) == len, flags,
                     qctx_should_autotick(ctx));
 
-    *written += offset;
-
-    if (*written == offset)
+    if (*written == 0)
         /* SSL_write_ex returns 0 if it didn't write anything. */
         return QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_WANT_WRITE);
 
@@ -2810,7 +2807,7 @@ static int quic_validate_for_write(QUIC_XSO *xso, int *err)
 
 QUIC_TAKES_LOCK
 int ossl_quic_write_flags(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
-                          uint64_t flags, size_t *written)
+                          uint64_t flags, size_t offset, size_t *written)
 {
     int ret, partial_write, err;
     QCTX ctx;
@@ -2871,7 +2868,7 @@ int ossl_quic_write_flags(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
     if (qctx_blocking(&ctx))
         ret = quic_write_blocking(&ctx, iov, len, flags, written);
     else if (partial_write)
-        ret = quic_write_nonblocking_epw(&ctx, iov, len, flags, written);
+        ret = quic_write_nonblocking_epw(&ctx, iov, len, flags, offset, written);
     else
         ret = quic_write_nonblocking_aon(&ctx, iov, len, flags, written);
 
@@ -2883,7 +2880,7 @@ out:
 QUIC_TAKES_LOCK
 int ossl_quic_write(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, size_t *written)
 {
-    return ossl_quic_write_flags(s, iov, iovcnt, 0, written);
+    return ossl_quic_write_flags(s, iov, iovcnt, 0, 0, written);
 }
 
 /*

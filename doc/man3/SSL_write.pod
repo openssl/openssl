@@ -18,7 +18,7 @@ SSL_WRITE_FLAG_CONCLUDE - write bytes to a TLS/SSL connection
  int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written);
  int SSL_write(SSL *ssl, const void *buf, int num);
  int SSL_writev(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
-                uint64_t flags, size_t *written);
+                uint64_t flags, size_t offset, size_t *written);
 
  OSSL_IOVEC {
     void *data;
@@ -33,7 +33,7 @@ of bytes written in B<*written>.
 
 SSL_write_ex2() functions similarly to SSL_write_ex() but can also accept
 optional flags which modify its behaviour. Calling SSL_write_ex2() with a
-I<flags> argument of 0 is exactly equivalent to calling SSL_write_ex().
+B<flags> argument of 0 is exactly equivalent to calling SSL_write_ex().
 
 There is also a B<SSL_writev> counterpart to accept vectored IO.
 Instead of accepting a single buffer, this method accept an array of
@@ -44,6 +44,14 @@ and with the size of B<data_len> bytes. B<_writev> calls use arrays of this
 structure, where each element of the array represents a memory region, and
 the whole array represents a vector of memory regions. The definition of
 the B<ossl_iovec> structure is included above.
+
+For the B<SSL_writev> method, aside from the B<flags> and B<*written>
+arguments which mean the same as the non-vectored IO version, there is an
+additional argument B<offset>. The B<offset> argument specifies how many
+bytes starting from B<data> of the first B<OSSL_IOVEC> should be skipped
+in the write process. The purpose of this is to enable correct
+B<SSL_MODE_ENABLE_PARTIAL_WRITE> behaviour without needing the caller to
+manually update the pointers of the B<OSSL_IOVEC>s.
 
 SSL_sendfile() writes B<size> bytes from offset B<offset> in the file
 descriptor B<fd> to the specified SSL connection B<s>. This function provides

@@ -180,7 +180,7 @@ static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
     iovec.data = (void *)buf;
     iovec.data_len = size;
 
-    ret = ssl_write_internal(ssl, &iovec, 1, 0, written);
+    ret = ssl_write_internal(ssl, &iovec, 1, 0, 0, written);
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
