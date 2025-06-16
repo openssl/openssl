@@ -2807,6 +2807,62 @@ static int test_ssl_accept_connection(void)
     return testresult;
 }
 
+static SSL *quic_verify_ssl = NULL;
+
+static int quic_verify_cb(int ok, X509_STORE_CTX *ctx)
+{
+    SSL *cssl = (SSL *)X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
+
+    /* Confirm we got the SSL object we were expecting */
+    return TEST_ptr_eq(cssl, quic_verify_ssl);
+}
+
+static int test_ssl_set_verify(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    int testresult = 0;
+    int ret, i;
+
+    if (!TEST_ptr(sctx = create_server_ctx())
+        || !TEST_ptr(cctx = create_client_ctx()))
+        goto err;
+
+    if (!create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl))
+        goto err;
+
+    quic_verify_ssl = clientssl;
+    SSL_set_verify(clientssl, SSL_VERIFY_PEER, quic_verify_cb);
+
+    /* Send ClientHello and server retry */
+    for (i = 0; i < 2; i++) {
+        ret = SSL_connect(clientssl);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+            goto err;
+        SSL_handle_events(qlistener);
+    }
+
+    /* We expect a server SSL object which has not yet completed its handshake */
+    serverssl = SSL_accept_connection(qlistener, 0);
+
+    /* Call SSL_accept() and SSL_connect() until we are connected */
+    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+                                              SSL_ERROR_NONE, 0, 0)))
+        goto err;
+
+    testresult = 1;
+
+ err:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(qlistener);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 /***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
@@ -2907,6 +2963,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_server_method_with_ssl_new);
     ADD_TEST(test_ssl_accept_connection);
+    ADD_TEST(test_ssl_set_verify);
     return 1;
  err:
     cleanup_tests();
