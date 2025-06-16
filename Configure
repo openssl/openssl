@@ -990,6 +990,10 @@ while (@argvcopy)
                 {
                 $config{build_type} = "debug";
                 }
+        elsif (/^-p$/)
+                {
+                $config{build_type} = "profiled";
+                }
         elsif (/^-v$/)          # From older 'config'
                 {
                 $guess_opts{verbose} = 1;
@@ -1016,6 +1020,14 @@ while (@argvcopy)
         elsif (/^--release$/)
                 {
                 $config{build_type} = "release";
+                }
+        elsif (/^--profiled$/)
+                {
+                $config{build_type} = "profiled";
+                }
+        elsif (/^--pgo$/)
+                {
+                $config{build_type} = "pgo";
                 }
         elsif (/^386$/)
                 { $config{processor}=386; }
