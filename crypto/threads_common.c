@@ -23,38 +23,39 @@
  *
  * Data Design:
  *
- * per-thread master key data->  ┌──────────────┬─┐
- *                               │              │ │
- *                               │              │ │
- *                               └──────────────┘ │
- *                               ┌──────────────┐ │
- *                               │              │ │
- *                               │              │ │
- *                               └──────────────┘ │  sparse  array indexed
- *                                      .         │      by key id
- *                                      .         │
- *                                      .         │
- *                               ┌──────────────┐ │
- *                               │              │ │
- *                               │       │      │ │
- *                               └───────┼──────┴─┘
- *                                       │
- *          ┌┬───────────────┐           │
- *          ││               │◄──────────┘
- *          ││               │
- *          │└───────────────┘
- *          │┌───────────────┐
- *          ││               │
- *          ││               │  sparse array indexed
- *          │└───────────────┘     by libctx pointer
- *          │        .              cast to uintptr_t
- *          │        .
- *          │        .
- *          │┌───────────────┐
- *          ││        ┌──────┼────► ┌─────────────────┐
- *          ││        │      │      │                 │
- *          └┴────────┴──────┘      └─────────────────┘
+ * per-thread master key data  -> +--------------+-+
+ *                                |              | |
+ *                                |              | |
+ *                                +--------------+ |
+ *                                +--------------+ |
+ *                                |              | |
+ *                                |              | |
+ *                                +--------------+ |  sparse  array indexed
+ *                                       .         |      by key id
+ *                                       .         |
+ *                                       .         |
+ *                                +--------------+ |
+ *                                |              | |
+ *                                |       |      | |
+ *                                +-------+------+-+
+ *                                        |
+ *           ++---------------+           |
+ *           ||               |<----------+
+ *           ||               |
+ *           |+---------------+
+ *           |+---------------+
+ *           ||               |
+ *           ||               |  sparse array indexed
+ *           |+---------------+     by libctx pointer
+ *           |        .              cast to uintptr_t
+ *           |        .
+ *           |        .
+ *           |+---------------+
+ *           ||        +------+----> +-----------------+
+ *           ||        |      |      |                 |
+ *           ++--------+------+      +-----------------+
  *                                  per-<thread*ctx> data
+ *
  * It uses sparse arrays to map:
  *   - Thread-local key IDs to master key entries.
  *   - Library context pointers to context-specific data.
@@ -131,7 +132,7 @@ typedef struct master_key_entry {
 DEFINE_SPARSE_ARRAY_OF(MASTER_KEY_ENTRY);
 
 /**
- * @brief holds our per therad data with the operating system
+ * @brief holds our per thread data with the operating system
  *
  * Global thread local storage pointer, used to create a platform
  * specific thread-local key
@@ -141,9 +142,9 @@ static CRYPTO_THREAD_LOCAL master_key;
 /**
  * @brief Informs the library if the master key has been set up
  *
- * State variable to track if we have initalized the master_key
+ * State variable to track if we have initialized the master_key
  * If this isn't set to 1, then we need to skip any cleanup
- * in CRYPTO_THREAD_clean_for_fips, as the uninitalized key
+ * in CRYPTO_THREAD_clean_for_fips, as the uninitialized key
  * will return garbage data
  */
 static uint8_t master_key_init = 0;
@@ -151,7 +152,7 @@ static uint8_t master_key_init = 0;
 /**
  * @brief gate variable to do one time init of the master key
  *
- * Run once gate for doing one-time initalization
+ * Run once gate for doing one-time initialization
  */
 static CRYPTO_ONCE master_once = CRYPTO_ONCE_STATIC_INIT;
 
@@ -283,14 +284,14 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
     CTX_TABLE_ENTRY *ctxd;
 
     /*
-     * Make sure the master key has been initalized
+     * Make sure the master key has been initialized
      * NOTE: We use CRYPTO_THREAD_run_once here, rather than the
      * RUN_ONCE macros.  We do this because this code is included both in
      * libcrypto, and in fips.[dll|dylib|so].  FIPS attempts to avoid doing
-     * one time initalization of global data, and so supresses the definition
+     * one time initialization of global data, and so suppresses the definition
      * of RUN_ONCE, etc, meaning the build breaks if we were to use that with
      * fips-enabled.  However, this is a special case in which we want/need
-     * this one bit of global data to be initalized in both the fips provider
+     * this one bit of global data to be initialized in both the fips provider
      * and in libcrypto, so we use CRYPTO_THREAD_run_one directly, which is
      * always defined.
      */
@@ -360,7 +361,7 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
     CTX_TABLE_ENTRY *ctxd;
 
     /*
-     * Make sure our master key is initalized
+     * Make sure our master key is initialized
      * See notes above on the use of CRYPTO_THREAD_run_once here
      */
     if (!CRYPTO_THREAD_run_once(&master_once, init_master_key))
@@ -373,7 +374,7 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
     mkey = CRYPTO_THREAD_get_local(&master_key);
     if (mkey == NULL) {
         /*
-         * we didn't find one, but thats ok, just initalize it now
+         * we didn't find one, but that's ok, just initialize it now
          */
         mkey = ossl_sa_MASTER_KEY_ENTRY_new();
         if (mkey == NULL)
@@ -391,7 +392,7 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
     if (entry == NULL) {
 
         /*
-         * Didn't find it, thats ok, just add it now
+         * Didn't find it, that's ok, just add it now
          */
         entry = OPENSSL_zalloc(sizeof(MASTER_KEY_ENTRY));
         if (entry == NULL)
@@ -438,7 +439,7 @@ void CRYPTO_THREAD_clean_local_for_fips(void)
     SPARSE_ARRAY_OF(MASTER_KEY_ENTRY) *mkey;
 
     /*
-     * If we never initalized the master key, there
+     * If we never initialized the master key, there
      * is no data to clean, so we are done here
      */
     if (master_key_init == 0)
