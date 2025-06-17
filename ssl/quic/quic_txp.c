@@ -1320,7 +1320,7 @@ static int txp_determine_geometry(OSSL_QUIC_TX_PACKETISER *txp,
     /* Assemble packet header. */
     phdr->type          = ossl_quic_enc_level_to_pkt_type(enc_level);
     phdr->spin_bit      = 0;
-    phdr->pn_len        = txp_determine_pn_len(txp);
+    phdr->pn_len        = (unsigned int)txp_determine_pn_len(txp);
     phdr->partial       = 0;
     phdr->fixed         = 1;
     phdr->reserved      = 0;

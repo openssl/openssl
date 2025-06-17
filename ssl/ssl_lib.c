@@ -3463,7 +3463,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
         if (sk_SSL_CIPHER_find(srvrsk, c) < 0)
             continue;
 
-        n = OPENSSL_strnlen(c->name, size);
+        n = (int)OPENSSL_strnlen(c->name, size);
         if (n >= size) {
             if (p != buf)
                 --p;
@@ -7296,7 +7296,7 @@ __owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc)
         return GET_MAX_FRAGMENT_LENGTH(sc->session);
 
     /* return current SSL connection setting */
-    return sc->max_send_fragment;
+    return (unsigned int)sc->max_send_fragment;
 }
 
 __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc)
@@ -7308,10 +7308,10 @@ __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc)
 
     /* else limit |split_send_fragment| to current |max_send_fragment| */
     if (sc->split_send_fragment > sc->max_send_fragment)
-        return sc->max_send_fragment;
+        return (unsigned int)sc->max_send_fragment;
 
     /* return current SSL connection setting */
-    return sc->split_send_fragment;
+    return (unsigned int)sc->split_send_fragment;
 }
 
 int SSL_stateless(SSL *s)
