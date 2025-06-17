@@ -401,7 +401,8 @@ void CRYPTO_THREAD_clean_local_for_fips(void)
         return;
 
     mkey = CRYPTO_THREAD_get_local(&master_key);
-    clean_master_key(mkey);
+    if (mkey != NULL)
+        clean_master_key(mkey);
     CRYPTO_THREAD_cleanup_local(&master_key);
 }
 #endif
