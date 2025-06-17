@@ -402,7 +402,8 @@ static OSSL_LIB_CTX *get_thread_default_context(void)
     if (!RUN_ONCE(&default_context_init, default_context_do_init))
         return NULL;
 
-    return CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_DEF_CTX_KEY, NULL);
+    return CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_DEF_CTX_KEY,
+                                      CRYPTO_THREAD_NO_CONTEXT);
 }
 
 static OSSL_LIB_CTX *get_default_context(void)
@@ -419,7 +420,8 @@ static int set_default_context(OSSL_LIB_CTX *defctx)
     if (defctx == &default_context_int)
         defctx = NULL;
 
-    return CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_DEF_CTX_KEY, NULL, defctx);
+    return CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_DEF_CTX_KEY,
+                                      CRYPTO_THREAD_NO_CONTEXT, defctx);
 }
 #endif
 

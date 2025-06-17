@@ -22,6 +22,8 @@ typedef enum {
     CRYPTO_THREAD_LOCAL_KEY_MAX
 } CRYPTO_THREAD_LOCAL_KEY_ID;
 
+#define CRYPTO_THREAD_NO_CONTEXT (void *)1
+
 void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
                                  OSSL_LIB_CTX *ctx);
 int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,

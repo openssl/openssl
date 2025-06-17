@@ -254,6 +254,7 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
     MASTER_KEY_ENTRY *mkey;
     CTX_TABLE_ENTRY ctxd;
 
+    ctx = (ctx == CRYPTO_THREAD_NO_CONTEXT) ? NULL : ossl_lib_ctx_get_concrete(ctx);
     /*
      * Make sure the master key has been initialized
      * NOTE: We use CRYPTO_THREAD_run_once here, rather than the
@@ -331,6 +332,7 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
 {
     MASTER_KEY_ENTRY *mkey;
 
+    ctx = (ctx == CRYPTO_THREAD_NO_CONTEXT) ? NULL : ossl_lib_ctx_get_concrete(ctx);
     /*
      * Make sure our master key is initialized
      * See notes above on the use of CRYPTO_THREAD_run_once here
