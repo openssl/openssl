@@ -3914,6 +3914,7 @@ static int test_RSA_OAEP_set_null_label(void)
     int ret = 0;
     EVP_PKEY *key = NULL;
     EVP_PKEY_CTX *key_ctx = NULL;
+    char *label = NULL;
 
     if (!TEST_ptr(key = load_example_rsa_key())
         || !TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(testctx, key, NULL))
@@ -3923,8 +3924,13 @@ static int test_RSA_OAEP_set_null_label(void)
     if (!TEST_true(EVP_PKEY_CTX_set_rsa_padding(key_ctx, RSA_PKCS1_OAEP_PADDING)))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_CTX_set0_rsa_oaep_label(key_ctx, OPENSSL_strdup("foo"), 0)))
+    if (!TEST_ptr(label = OPENSSL_strdup("foo")))
         goto err;
+
+    if (!TEST_true(EVP_PKEY_CTX_set0_rsa_oaep_label(key_ctx, label, 0))) {
+        OPENSSL_free(label);
+        goto err;
+    }
 
     if (!TEST_true(EVP_PKEY_CTX_set0_rsa_oaep_label(key_ctx, NULL, 0)))
         goto err;
