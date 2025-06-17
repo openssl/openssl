@@ -373,7 +373,7 @@ padlock_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 
         out_arg += chunk;
         in_arg += chunk;
-        EVP_CIPHER_CTX_set_num(ctx, nbytes);
+        EVP_CIPHER_CTX_set_num(ctx, (int)nbytes);
         if (cdata->cword.b.encdec) {
             cdata->cword.b.encdec = 0;
             padlock_reload_key();
@@ -441,7 +441,7 @@ padlock_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 
         out_arg += chunk;
         in_arg += chunk;
-        EVP_CIPHER_CTX_set_num(ctx, nbytes);
+        EVP_CIPHER_CTX_set_num(ctx, (int)nbytes);
         padlock_reload_key();   /* empirically found */
         padlock_aes_block(ivp, ivp, cdata);
         padlock_reload_key();   /* empirically found */
