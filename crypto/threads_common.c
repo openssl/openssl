@@ -30,7 +30,7 @@
  *                                +--------------+ |
  *                                |              | |
  *                                |              | |
- *                                +--------------+ |  sparse  array indexed
+ *                                +--------------+ |  fixed  array indexed
  *                                       .         |      by key id
  *                                       .         |
  *                                       .         |
@@ -126,11 +126,6 @@ typedef struct master_key_entry {
     SPARSE_ARRAY_OF(CTX_TABLE_ENTRY) *ctx_table;
 } MASTER_KEY_ENTRY;
 
-/*
- * Define our sparse array functions for MASTER_KEY_ENTRY structs
- */
-DEFINE_SPARSE_ARRAY_OF(MASTER_KEY_ENTRY);
-
 /**
  * @brief holds our per thread data with the operating system
  *
@@ -197,11 +192,10 @@ static void clean_ctx_entry(ossl_uintmax_t idx, CTX_TABLE_ENTRY *ctxentry, void 
  * @param arg
  *        Unused parameter.
  */
-static void clean_master_key_id(ossl_uintmax_t idx, MASTER_KEY_ENTRY *entry, void *arg)
+static void clean_master_key_id(MASTER_KEY_ENTRY *entry)
 {
     ossl_sa_CTX_TABLE_ENTRY_doall_arg(entry->ctx_table, clean_ctx_entry, entry);
     ossl_sa_CTX_TABLE_ENTRY_free(entry->ctx_table);
-    OPENSSL_free(entry);
 }
 
 /**
@@ -219,10 +213,14 @@ static void clean_master_key_id(ossl_uintmax_t idx, MASTER_KEY_ENTRY *entry, voi
  */
 static void clean_master_key(void *data)
 {
-    SPARSE_ARRAY_OF(MASTER_KEY_ENTRY) *mkey = data;
+    MASTER_KEY_ENTRY *mkey = data;
+    int i;
 
-    ossl_sa_MASTER_KEY_ENTRY_doall_arg(mkey, clean_master_key_id, NULL);
-    ossl_sa_MASTER_KEY_ENTRY_free(mkey);
+    for (i = 0; i < CRYPTO_THREAD_LOCAL_KEY_MAX; i++) {
+        if (mkey[i].ctx_table != NULL)
+            clean_master_key_id(&mkey[i]);
+    }
+    OPENSSL_free(mkey);
 }
 
 /**
@@ -279,8 +277,7 @@ static void init_master_key(void)
  */
 void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ctx)
 {
-    SPARSE_ARRAY_OF(MASTER_KEY_ENTRY) *mkey;
-    MASTER_KEY_ENTRY *entry;
+    MASTER_KEY_ENTRY *mkey;
     CTX_TABLE_ENTRY *ctxd;
 
     /*
@@ -298,6 +295,9 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
     if (!CRYPTO_THREAD_run_once(&master_once, init_master_key))
         return NULL;
 
+    if (id >= CRYPTO_THREAD_LOCAL_KEY_MAX)
+        return NULL;
+
     /*
      * Get our master table sparse array, indexed by key id
      */
@@ -309,19 +309,18 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
      * Get the specific data entry in the master key
      * table for the key id we are searching for
      */
-    entry = ossl_sa_MASTER_KEY_ENTRY_get(mkey, id);
-    if (entry == NULL || entry->ctx_table == NULL)
+    if (mkey[id].ctx_table == NULL)
         return NULL;
 
     /*
-     * If we find an entry above, that will be a second sparse array,
+     * If we find an entry above, that will be a sparse array,
      * indexed by OSSL_LIB_CTX.
      * Note: Because we're using sparse arrays here, we can do an easy
      * trick, since we know all OSSL_LIB_CTX pointers are unique.  By casting
      * the pointer to a unitptr_t, we can use that as an ordinal index into
      * the sparse array.
      */
-    ctxd = ossl_sa_CTX_TABLE_ENTRY_get(entry->ctx_table, (uintptr_t)ctx);
+    ctxd = ossl_sa_CTX_TABLE_ENTRY_get(mkey[id].ctx_table, (uintptr_t)ctx);
 
     /*
      * If we find an entry for the passed in context, return its data pointer
@@ -356,8 +355,7 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
 int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
                                OSSL_LIB_CTX *ctx, void *data)
 {
-    SPARSE_ARRAY_OF(MASTER_KEY_ENTRY) *mkey;
-    MASTER_KEY_ENTRY *entry;
+    MASTER_KEY_ENTRY *mkey;
     CTX_TABLE_ENTRY *ctxd;
 
     /*
@@ -365,6 +363,9 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
      * See notes above on the use of CRYPTO_THREAD_run_once here
      */
     if (!CRYPTO_THREAD_run_once(&master_once, init_master_key))
+        return 0;
+
+    if (id >= CRYPTO_THREAD_LOCAL_KEY_MAX)
         return 0;
 
     /*
@@ -376,7 +377,7 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
         /*
          * we didn't find one, but that's ok, just initialize it now
          */
-        mkey = ossl_sa_MASTER_KEY_ENTRY_new();
+        mkey = OPENSSL_zalloc(sizeof(MASTER_KEY_ENTRY) * CRYPTO_THREAD_LOCAL_KEY_MAX);
         if (mkey == NULL)
             return 0;
         /*
@@ -388,24 +389,14 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
     /*
      * Find the entry that we are looking for using our id index
      */
-    entry = ossl_sa_MASTER_KEY_ENTRY_get(mkey, id);
-    if (entry == NULL) {
+    if (mkey[id].ctx_table == NULL) {
 
         /*
          * Didn't find it, that's ok, just add it now
          */
-        entry = OPENSSL_zalloc(sizeof(MASTER_KEY_ENTRY));
-        if (entry == NULL)
+        mkey[id].ctx_table = ossl_sa_CTX_TABLE_ENTRY_new();
+        if (mkey[id].ctx_table == NULL)
             return 0;
-        entry->ctx_table = ossl_sa_CTX_TABLE_ENTRY_new();
-        if (entry->ctx_table == NULL) {
-            OPENSSL_free(entry);
-            return 0;
-        }
-        /*
-         * Assign it to the appropriate entry in the master key sparse array
-         */
-        ossl_sa_MASTER_KEY_ENTRY_set(mkey, id, entry);
     }
 
     /*
@@ -413,7 +404,7 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
      * that we've been provided.  Note we cast the pointer to a uintptr_t so
      * as to use it as an index in the sparse array
      */
-    ctxd = ossl_sa_CTX_TABLE_ENTRY_get(entry->ctx_table, (uintptr_t)ctx);
+    ctxd = ossl_sa_CTX_TABLE_ENTRY_get(mkey[id].ctx_table, (uintptr_t)ctx);
     if (ctxd == NULL) {
         /*
          * No entry for this context, build one
@@ -424,7 +415,7 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
         /*
          * Assign to the entry in the table so that we can find it later
          */
-        ossl_sa_CTX_TABLE_ENTRY_set(entry->ctx_table, (uintptr_t)ctx, ctxd);
+        ossl_sa_CTX_TABLE_ENTRY_set(mkey[id].ctx_table, (uintptr_t)ctx, ctxd);
     }
     /*
      * Lastly assign our data pointer
@@ -436,7 +427,7 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
 #ifdef FIPS_MODULE
 void CRYPTO_THREAD_clean_local_for_fips(void)
 {
-    SPARSE_ARRAY_OF(MASTER_KEY_ENTRY) *mkey;
+    MASTER_KEY_ENTRY *mkey;
 
     /*
      * If we never initialized the master key, there
