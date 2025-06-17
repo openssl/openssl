@@ -15,8 +15,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(generate_public_macros
                     generate_internal_macros
-                    produce_decoder
-                    produce_param_list);
+                    produce_param_decoder);
 
 my $case_sensitive = 1;
 
@@ -785,31 +784,36 @@ sub locate_long_endings {
     return 0, '';
 }
 
-sub produce_decoder {
+sub output_decoder {
+    my $static_func = shift;
     my $func_name = shift;
     my @keys = @_;
     my %t = generate_trie(@keys);
-    my $s;
 
     locate_long_endings(\%t);
 
-    open local *STDOUT, '>', \$s;
+    print $static_func . ' ' if $static_func ne '';
     printf "int %s(const char *s)\n{\n", $func_name;
     generate_code_from_trie(0, \%t);
     print "    return -1;\n}\n";
+}
+
+sub produce_decoder {
+    my $s;
+
+    open local *STDOUT, '>', \$s;
+    output_decoder('', @_);
     return $s;
 }
 
-sub produce_param_list {
+sub output_param_list {
     my $static_array = shift;
     my $array_name = shift;
     my $static_func = shift;
     my $func_name = shift;
     my @params = @_;
     my @keys = ();
-    my $s;
 
-    open local *STDOUT, '>', \$s;
     print $static_array . ' ' if $static_array ne '';
     printf "const OSSL_PARAM %s[] = {\n", $array_name;
     for (my $i = 0; $i <= $#params; $i++) {
@@ -825,6 +829,116 @@ sub produce_param_list {
     }
     print "    OSSL_PARAM_END\n};\n\n";
 
-    print $static_func . ' ' if $static_func ne '';
-    return $s .  produce_decoder($func_name, @keys);
+    output_decoder($static_func, $func_name, @keys);
+}
+
+sub produce_param_list {
+    my $s;
+
+    open local *STDOUT, '>', \$s;
+    output_param_list(@_);
+    return $s;
+}
+
+sub generate_decoder_from_trie {
+    my $n = shift;
+    my $trieref = shift;
+    my $identmap = shift;
+    my $idt = "    ";
+    my $indent0 = $idt x ($n + 2);
+    my $indent1 = $indent0 . $idt;
+    my $strcmp = $case_sensitive ? 'strcmp' : 'strcasecmp';
+
+    if ($trieref->{'suffix'}) {
+        my $suf = $trieref->{'suffix'};
+
+        printf "%sif ($strcmp(\"$suf\", s + $n) == 0", $indent0;
+        if (not $case_sensitive) {
+            $suf =~ tr/_/-/;
+            print " || $strcmp(\"$suf\", s + $n) == 0"
+                if ($suf ne $trieref->{'suffix'});
+        }
+        printf ")\n%sr.%s = (OSSL_PARAM *)p;\n", $indent1, $identmap->{$trieref->{'name'}};
+        #printf "%sbreak;\n", $indent0;
+        return;
+    }
+
+    printf "%sswitch(s\[%d\]) {\n", $indent0, $n;
+    printf "%sdefault:\n", $indent0;
+    for my $l (sort keys %$trieref) {
+        if ($l eq 'val') {
+            printf "%sbreak;\n", $indent1;
+            printf "%scase '\\0':\n", $indent0;
+            printf "%sr.%s = (OSSL_PARAM *)p;\n", $indent1, $identmap->{$trieref->{'val'}};
+        } else {
+            printf "%sbreak;\n", $indent1;
+            printf "%scase '%s':", $indent0, $l;
+            if (not $case_sensitive) {
+                print "   case '-':" if ($l eq '_');
+                printf "   case '%s':", uc $l if ($l =~ /[a-z]/);
+            }
+            print "\n";
+            generate_decoder_from_trie($n + 1, $trieref->{$l}, $identmap);
+        }
+    }
+    printf "%s}\n", $indent0;
+    return;
+}
+
+sub output_param_decoder {
+    my $decoder_name_base = shift;
+    my @params = @_;
+    my @keys = ();
+    my @idents = ();
+    my %prms = ();
+
+    # Output ettable param array
+    printf "static const OSSL_PARAM %s_ettable[] = {\n", $decoder_name_base;
+    for (my $i = 0; $i <= $#params; $i++) {
+        my $pname = $params[$i][0];
+        my $pident = $params[$i][1];
+        my $ptype = $params[$i][2];
+
+        print "    OSSL_PARAM_$ptype(OSSL_$pname, NULL";
+        print ", 0" if $ptype eq "octet_string" || $ptype eq "octet_ptr"
+                       || $ptype eq "utf8_string" || $ptype eq "utf8_ptr";
+        printf "),\n";
+
+        push(@keys, $pname);
+        push(@idents, $pident);
+        $prms{$pname} = $pident;
+    }
+    print "    OSSL_PARAM_END\n};\n\n";
+
+    # Output param pointer structure
+    printf "struct %s_st {\n", $decoder_name_base;
+    for (my $i = 0; $i <= $#keys; $i++) {
+        my $pident = $idents[$i];
+
+        printf "    OSSL_PARAM *%s;\n", $pident;
+    }
+    print "};\n\n";
+
+    # Output param decoder
+    my %t = generate_trie(@keys);
+    locate_long_endings(\%t);
+
+    printf "static struct %s_st %s_decoder(const OSSL_PARAM params[]) {\n",
+        $decoder_name_base, $decoder_name_base;
+    printf "    struct %s_st r;\n", $decoder_name_base;
+    print "    const OSSL_PARAM *p;\n";
+    print "    const char *s;\n\n";
+    print "    memset(&r, 0, sizeof(r));\n";
+    print "    for (p = params; (s = p->key) != NULL; p++)\n";
+    generate_decoder_from_trie(0, \%t, \%prms);
+    print "    return r;\n";
+    print "}";
+}
+
+sub produce_param_decoder {
+    my $s;
+
+    open local *STDOUT, '>', \$s;
+    output_param_decoder(@_);
+    return $s;
 }
