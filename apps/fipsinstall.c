@@ -853,7 +853,7 @@ int fipsinstall_main(int argc, char **argv)
 
     /* Calculate the MAC for the indicator status - it may not be used */
     mem_bio = BIO_new_mem_buf((const void *)INSTALL_STATUS_VAL,
-                              strlen(INSTALL_STATUS_VAL));
+                              (int)strlen(INSTALL_STATUS_VAL));
     if (mem_bio == NULL) {
         BIO_printf(bio_err, "Unable to create memory BIO\n");
         goto end;

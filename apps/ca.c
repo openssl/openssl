@@ -707,7 +707,7 @@ end_of_options:
             goto end;
         }
         p = pp[DB_serial];
-        j = strlen(p);
+        j = (int)strlen(p);
         if (*p == '-') {
             p++;
             j--;
@@ -2406,9 +2406,9 @@ static char *make_revocation_str(REVINFO_TYPE rev_type, const char *rev_arg)
     i = revtm->length + 1;
 
     if (reason)
-        i += strlen(reason) + 1;
+        i += (int)(strlen(reason) + 1);
     if (other)
-        i += strlen(other) + 1;
+        i += (int)(strlen(other) + 1);
 
     str = app_malloc(i, "revocation reason");
     OPENSSL_strlcpy(str, (char *)revtm->data, i);

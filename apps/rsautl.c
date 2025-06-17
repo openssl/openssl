@@ -271,13 +271,13 @@ int rsautl_main(int argc, char **argv)
     }
     ret = 0;
     if (asn1parse) {
-        if (!ASN1_parse_dump(out, rsa_out, rsa_outlen, 1, -1)) {
+        if (!ASN1_parse_dump(out, rsa_out, (long)rsa_outlen, 1, -1)) {
             ERR_print_errors(bio_err);
         }
     } else if (hexdump) {
-        BIO_dump(out, (char *)rsa_out, rsa_outlen);
+        BIO_dump(out, (char *)rsa_out, (int)rsa_outlen);
     } else {
-        BIO_write(out, rsa_out, rsa_outlen);
+        BIO_write(out, rsa_out, (int)rsa_outlen);
     }
  end:
     EVP_PKEY_CTX_free(ctx);

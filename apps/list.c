@@ -847,7 +847,7 @@ static void list_tls_groups(int version, int all)
 {
     SSL_CTX *ctx = NULL;
     STACK_OF(OPENSSL_CSTRING) *groups;
-    size_t i, num;
+    int i, num;
 
     if ((groups = sk_OPENSSL_CSTRING_new_null()) == NULL) {
         BIO_printf(bio_err, "ERROR: Memory allocation\n");
