@@ -193,7 +193,7 @@ opthelp:
                         continue;
                     }
 
-                    valid_digits_length = strspn(file_read_buf, "1234567890abcdefABCDEF");
+                    valid_digits_length = (int)strspn(file_read_buf, "1234567890abcdefABCDEF");
                     file_read_buf[valid_digits_length] = '\0';
 
                     process_num(file_read_buf, hex);
