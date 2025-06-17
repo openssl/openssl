@@ -108,13 +108,11 @@ init_get_thread_local(CRYPTO_THREAD_LOCAL *local, int alloc, int keep)
                 return NULL;
             }
 
-#ifndef FIPS_MODULE
             if (!init_thread_push_handlers(hands)) {
                 CRYPTO_THREAD_set_local(local, NULL);
                 OPENSSL_free(hands);
                 return NULL;
             }
-#endif
         }
     } else if (!keep) {
         CRYPTO_THREAD_set_local(local, NULL);
