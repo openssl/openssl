@@ -638,12 +638,14 @@ const char *ERR_reason_error_string(unsigned long e)
 
 static void err_delete_thread_state(void *unused)
 {
-    ERR_STATE *state = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY, NULL);
+    ERR_STATE *state = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
+                                                  CRYPTO_THREAD_NO_CONTEXT);
 
     if (state == NULL)
         return;
 
-    CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY, NULL, NULL);
+    CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
+                               CRYPTO_THREAD_NO_CONTEXT, NULL);
     OSSL_ERR_STATE_free(state);
 }
 
@@ -667,24 +669,29 @@ ERR_STATE *ossl_err_get_state_int(void)
     if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
         return NULL;
 
-    state = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY, NULL);
+    state = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
+                                       CRYPTO_THREAD_NO_CONTEXT);
     if (state == (ERR_STATE *)-1)
         return NULL;
 
     if (state == NULL) {
-        if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY, NULL, (ERR_STATE *)-1))
+        if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
+                                        CRYPTO_THREAD_NO_CONTEXT, (ERR_STATE *)-1))
             return NULL;
 
         state = OSSL_ERR_STATE_new();
         if (state == NULL) {
-            CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY, NULL, NULL);
+            CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
+                                       CRYPTO_THREAD_NO_CONTEXT, NULL);
             return NULL;
         }
 
         if (!ossl_init_thread_start(NULL, NULL, err_delete_thread_state)
-                || !CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY, NULL, state)) {
+                || !CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
+                                               CRYPTO_THREAD_NO_CONTEXT, state)) {
             OSSL_ERR_STATE_free(state);
-            CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY, NULL, NULL);
+            CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
+                                       CRYPTO_THREAD_NO_CONTEXT, NULL);
             return NULL;
         }
 
@@ -727,8 +734,10 @@ int err_shelve_state(void **state)
     if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
         return 0;
 
-    *state = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY, NULL);
-    if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY, NULL, (ERR_STATE *)-1))
+    *state = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
+                                        CRYPTO_THREAD_NO_CONTEXT);
+    if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
+                                    CRYPTO_THREAD_NO_CONTEXT, (ERR_STATE *)-1))
         return 0;
 
     set_sys_error(saveerrno);
@@ -742,7 +751,8 @@ int err_shelve_state(void **state)
 void err_unshelve_state(void* state)
 {
     if (state != (void*)-1)
-        CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY, NULL, (ERR_STATE *)state);
+        CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
+                                   CRYPTO_THREAD_NO_CONTEXT, (ERR_STATE *)state);
 }
 
 int ERR_get_next_error_library(void)
