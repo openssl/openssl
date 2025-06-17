@@ -7,6 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * because of EVP_PKEY_asn1_find deprecation
+ */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
@@ -287,7 +292,9 @@ int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent)
 int X509_signature_print(BIO *bp, const X509_ALGOR *sigalg,
                          const ASN1_STRING *sig)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_6
     int sig_nid;
+#endif
     int indent = 4;
     if (BIO_printf(bp, "%*sSignature Algorithm: ", indent, "") <= 0)
         return 0;
@@ -296,6 +303,7 @@ int X509_signature_print(BIO *bp, const X509_ALGOR *sigalg,
 
     if (sig && BIO_printf(bp, "\n%*sSignature Value:", indent, "") <= 0)
         return 0;
+#ifndef OPENSSL_NO_DEPRECATED_3_6
     sig_nid = OBJ_obj2nid(sigalg->algorithm);
     if (sig_nid != NID_undef) {
         int pkey_nid, dig_nid;
@@ -306,6 +314,7 @@ int X509_signature_print(BIO *bp, const X509_ALGOR *sigalg,
                 return ameth->sig_print(bp, sigalg, sig, indent + 4, 0);
         }
     }
+#endif
     if (BIO_write(bp, "\n", 1) != 1)
         return 0;
     if (sig)

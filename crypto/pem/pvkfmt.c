@@ -67,7 +67,6 @@ static int read_lebn(const unsigned char **in, unsigned int nbyte, BIGNUM **r)
     return 1;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_6
 /*
  * Create an EVP_PKEY from a type specific key.
  * This takes ownership of |key|, as long as the |evp_type| is acceptable
@@ -153,13 +152,14 @@ static EVP_PKEY *evp_pkey_new0_key(void *key, int evp_type)
 /* Maximum salt length */
 # define PVK_MAX_SALTLEN         10240
 
-
+#ifdef OPENSSL_NO_DEPRECATED_3_6
 EVP_PKEY *ossl_b2i_RSA_after_header(const unsigned char **in,
                                     unsigned int bitlen,
                                     int ispub);
 EVP_PKEY *ossl_b2i_DSA_after_header(const unsigned char **in,
                                     unsigned int bitlen,
                                     int ispub);
+#endif
 
 /*
  * Read the MSBLOB header and get relevant data from it.
@@ -395,7 +395,7 @@ EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub)
 }
 
 #ifndef OPENSSL_NO_DSA
-#ifndef OPENSSL_NO_DEPRECATED_3_6
+# ifndef OPENSSL_NO_DEPRECATED_3_6
 DSA *ossl_b2i_DSA_after_header(const unsigned char **in, unsigned int bitlen,
                                int ispub)
 {
@@ -467,7 +467,7 @@ DSA *ossl_b2i_DSA_after_header(const unsigned char **in, unsigned int bitlen,
     BN_CTX_free(ctx);
     return NULL;
 }
-#else
+# else
 EVP_PKEY *ossl_b2i_DSA_after_header(const unsigned char **in,
                                     unsigned int bitlen,
                                     int ispub)
@@ -524,7 +524,7 @@ EVP_PKEY *ossl_b2i_DSA_after_header(const unsigned char **in,
     if (!OSSL_PARAM_BLD_push_BN(bld, "q", qbn))
         goto dsaerr;
     if (!OSSL_PARAM_BLD_push_BN(bld, "g", gbn))
-        goto dsaerr; 
+        goto dsaerr;
     if (!OSSL_PARAM_BLD_push_BN(bld, "priv_key", priv_key))
         goto dsaerr;
     if (!OSSL_PARAM_BLD_push_BN(bld, "pub_key", pub_key))
@@ -571,7 +571,7 @@ EVP_PKEY *ossl_b2i_DSA_after_header(const unsigned char **in,
     OSSL_PARAM_free(params);
     return NULL;
 }
-#endif
+# endif
 #endif
 
 #ifndef OPENSSL_NO_DEPRECATED_3_6
@@ -798,12 +798,13 @@ static int write_rsa(unsigned char **out, const EVP_PKEY *pkey, int ispub);
 #endif
 
 #ifndef OPENSSL_NO_DSA
-#ifndef OPENSSL_NO_DEPRECATED_3_6
+# ifndef OPENSSL_NO_DEPRECATED_3_6
 static int check_bitlen_dsa(const DSA *dsa, int ispub, unsigned int *magic);
 static void write_dsa(unsigned char **out, const DSA *dsa, int ispub);
-#else
+# else
 static int check_bitlen_dsa(const EVP_PKEY *pkey, int ispub, unsigned int *magic);
 static int write_dsa(unsigned char **out, const EVP_PKEY *pkey, int ispub);
+# endif
 #endif
 
 static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
@@ -821,11 +822,11 @@ static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
         keyalg = MS_KEYALG_RSA_KEYX;
 #ifndef OPENSSL_NO_DSA
     } else if (EVP_PKEY_is_a(pk, "DSA")) {
-#ifndef OPENSSL_NO_DEPRECATED_3_6
+# ifndef OPENSSL_NO_DEPRECATED_3_6
         bitlen = check_bitlen_dsa(EVP_PKEY_get0_DSA(pk), ispub, &magic);
-#else
+# else
         bitlen = check_bitlen_dsa(pk, ispub, &magic);
-#endif
+# endif
         keyalg = MS_KEYALG_DSS_SIGN;
 #endif
     }
@@ -864,11 +865,11 @@ static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
 #endif
 #ifndef OPENSSL_NO_DSA
     else
-#ifndef OPENSSL_NO_DEPRECATED_3_6
+# ifndef OPENSSL_NO_DEPRECATED_3_6
         write_dsa(&p, EVP_PKEY_get0_DSA(pk), ispub);
-#else
+# else
         write_dsa(&p, pk, ispub);
-#endif
+# endif
 #endif
     if (!noinc)
         *out += outlen;
@@ -1021,7 +1022,7 @@ static int write_rsa(unsigned char **out, const EVP_PKEY *pkey, int ispub)
     nbyte = EVP_PKEY_size(pkey);
     hnbyte = (bitlen + 15) >> 4;
     if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_N, &n)
-        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, &e)) 
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, &e))
         goto out;
     write_lebn(out, e, 4);
     write_lebn(out, n, nbyte);
@@ -1060,7 +1061,7 @@ out:
 #endif
 
 #ifndef OPENSSL_NO_DSA
-#ifndef OPENSSL_NO_DEPRECATED_3_6
+# ifndef OPENSSL_NO_DEPRECATED_3_6
 static int check_bitlen_dsa(const DSA *dsa, int ispub, unsigned int *pmagic)
 {
     int bitlen;
@@ -1088,7 +1089,7 @@ static int check_bitlen_dsa(const DSA *dsa, int ispub, unsigned int *pmagic)
     ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_KEY_COMPONENTS);
     return 0;
 }
-#else
+# else
 static int check_bitlen_dsa(const EVP_PKEY *pkey, int ispub, unsigned int *pmagic)
 {
     int bitlen, ret = 0;
@@ -1122,7 +1123,7 @@ static int check_bitlen_dsa(const EVP_PKEY *pkey, int ispub, unsigned int *pmagi
         }
         *pmagic = MS_DSS2MAGIC;
     }
-    
+
     ret = bitlen;
  out:
     BN_free(p);
@@ -1132,9 +1133,9 @@ static int check_bitlen_dsa(const EVP_PKEY *pkey, int ispub, unsigned int *pmagi
     BN_free(priv_key);
     return ret;
 }
-#endif
+# endif
 
-#ifndef OPENSSL_NO_DEPRECATED_3_6
+# ifndef OPENSSL_NO_DEPRECATED_3_6
 static void write_dsa(unsigned char **out, const DSA *dsa, int ispub)
 {
     int nbyte;
@@ -1156,7 +1157,7 @@ static void write_dsa(unsigned char **out, const DSA *dsa, int ispub)
     *out += 24;
     return;
 }
-#else
+# else
 static int write_dsa(unsigned char **out, const EVP_PKEY *pkey, int ispub)
 {
     int nbyte, ret = 0;
@@ -1167,9 +1168,8 @@ static int write_dsa(unsigned char **out, const EVP_PKEY *pkey, int ispub)
         || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_FFC_Q, &q)
         || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_FFC_G, &g)
         || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PUB_KEY, &pub_key)
-        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY, &priv_key)) {
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY, &priv_key))
         goto out;
-    }
     nbyte = BN_num_bytes(p);
     write_lebn(out, p, nbyte);
     write_lebn(out, q, 20);
@@ -1189,7 +1189,7 @@ out:
     BN_free(priv_key);
     return ret;
 }
-#endif
+# endif
 #endif
 
 int i2b_PrivateKey_bio(BIO *out, const EVP_PKEY *pk)
@@ -1599,3 +1599,4 @@ int i2b_PVK_bio(BIO *out, const EVP_PKEY *pk, int enclevel,
 {
     return i2b_PVK_bio_ex(out, pk, enclevel, cb, u, NULL, NULL);
 }
+

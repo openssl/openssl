@@ -184,7 +184,9 @@ int init_engine(ENGINE *e);
 int finish_engine(ENGINE *e);
 char *make_engine_uri(ENGINE *e, const char *key_id, const char *desc);
 
+# ifndef OPENSSL_NO_DEPRECATED_3_6
 int get_legacy_pkey_id(OSSL_LIB_CTX *libctx, const char *algname, ENGINE *e);
+# endif
 const EVP_MD *get_digest_from_engine(const char *name);
 const EVP_CIPHER *get_cipher_from_engine(const char *name);
 
