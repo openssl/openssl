@@ -23,6 +23,17 @@
 #endif
 #include "internal/numbers.h"  /* UINT64_C */
 
+#if defined(_AIX)
+/*
+ * Some versions of AIX define macros for events and revents for use when
+ * accessing pollfd structures (see Github issue #24236). That interferes
+ * with our use of these names here. We simply undef them.
+ */
+# undef revents
+# undef events
+#endif
+
+
 static const char *certfile, *keyfile;
 
 #if defined(_AIX)
