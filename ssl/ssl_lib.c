@@ -812,6 +812,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
     if (!IS_QUIC_CTX(ctx)) {
         s->ext.max_fragment_len_mode = ctx->ext.max_fragment_len_mode;
         s->ext.record_size_limit = ctx->ext.record_size_limit;
+        s->ext.peer_record_size_limit = TLSEXT_record_size_limit_DISABLED;
     }
 
     s->max_send_fragment = ctx->max_send_fragment;

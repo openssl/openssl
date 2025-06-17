@@ -1408,6 +1408,21 @@ int tls_parse_stoc_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
     return 1;
 }
 
+int tls_parse_stoc_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
+                                  unsigned int context,
+                                  X509 *x, size_t chainidx) {
+    unsigned int peer_limit;
+
+    if (PACKET_remaining(pkt) != 2 || !PACKET_get_net_2(pkt, &peer_limit)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    s->ext.peer_record_size_limit = peer_limit;
+
+    return 1;
+}
+
 int tls_parse_stoc_server_name(SSL_CONNECTION *s, PACKET *pkt,
                                unsigned int context,
                                X509 *x, size_t chainidx)

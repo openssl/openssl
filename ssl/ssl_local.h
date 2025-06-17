@@ -298,6 +298,9 @@
 # define GET_MAX_FRAGMENT_LENGTH(session) \
     (512U << (session->ext.max_fragment_len_mode - 1))
 
+# define USE_RECORD_SIZE_LIMIT_EXT(session) \
+    (session->ext.record_size_limit != TLSEXT_record_size_limit_DISABLED)
+
 # define SSL_READ_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_READ)
 # define SSL_WRITE_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)
 
@@ -548,6 +551,7 @@ struct ssl_session_st {
          */
         uint8_t max_fragment_len_mode;
         uint16_t record_size_limit;
+        uint16_t peer_record_size_limit;
     } ext;
 # ifndef OPENSSL_NO_SRP
     char *srp_username;
@@ -1727,10 +1731,9 @@ struct ssl_connection_st {
 
         /*
          * Record Size Limit as per RFC 8449.
-         * This extension deprecates RFC 4366.
-        * Value of zero means no record size limit.
          */
         uint16_t record_size_limit;
+        uint16_t peer_record_size_limit;
 
         /*
          * On the client side the number of ticket identities we sent in the
