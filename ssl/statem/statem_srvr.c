@@ -1778,7 +1778,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         if (SSL_get_options(ssl) & SSL_OP_COOKIE_EXCHANGE) {
             if (sctx->app_verify_cookie_cb != NULL) {
                 if (sctx->app_verify_cookie_cb(ussl, clienthello->dtls_cookie,
-                                               clienthello->dtls_cookie_len) == 0) {
+                                               (unsigned int)clienthello->dtls_cookie_len) == 0) {
                     SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                              SSL_R_COOKIE_MISMATCH);
                     goto err;
@@ -3276,7 +3276,7 @@ static int tls_process_cke_gost(SSL_CONNECTION *s, PACKET *pkt)
     ptr = PACKET_data(pkt);
     /* Some implementations provide extra data in the opaqueBlob
      * We have nothing to do with this blob so we just skip it */
-    pKX = d2i_GOST_KX_MESSAGE(NULL, &ptr, PACKET_remaining(pkt));
+    pKX = d2i_GOST_KX_MESSAGE(NULL, &ptr, (long)PACKET_remaining(pkt));
     if (pKX == NULL
        || pKX->kxBlob == NULL
        || ASN1_TYPE_get(pKX->kxBlob) != V_ASN1_SEQUENCE) {
