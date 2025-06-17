@@ -224,8 +224,8 @@ static void ossl_rcu_free_local_data(void *arg)
     OSSL_LIB_CTX *ctx = arg;
     struct rcu_thr_data *data = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_RCU_KEY, ctx);
 
-    OPENSSL_free(data);
     CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_RCU_KEY, ctx, NULL);
+    OPENSSL_free(data);
 }
 
 void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
