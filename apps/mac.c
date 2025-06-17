@@ -212,7 +212,7 @@ opthelp:
     }
 
     if (out_bin) {
-        BIO_write(out, buf, len);
+        BIO_write(out, buf, (int)len);
     } else {
         for (i = 0; i < (int)len; ++i)
             BIO_printf(out, "%02X", buf[i]);

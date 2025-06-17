@@ -311,7 +311,8 @@ static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen,
     }
 
     ctx->status =
-        SSL_select_next_proto(out, outlen, in, inlen, ctx->data, ctx->len);
+        SSL_select_next_proto(out, outlen, in, inlen,
+                              ctx->data, (unsigned int)ctx->len);
     return SSL_TLSEXT_ERR_OK;
 }
 #endif                         /* ndef OPENSSL_NO_NEXTPROTONEG */
@@ -333,7 +334,7 @@ static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
 
     BIO_snprintf(pem_name, sizeof(pem_name), "SERVERINFO FOR EXTENSION %d",
                  ext_type);
-    PEM_write_bio(bio_c_out, pem_name, "", ext_buf, 4 + inlen);
+    PEM_write_bio(bio_c_out, pem_name, "", ext_buf, (long)(4 + inlen));
     return 1;
 }
 
@@ -1482,7 +1483,7 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_SERVERINFO:
             p = opt_arg();
-            len = strlen(p);
+            len = (int)strlen(p);
             for (start = 0, i = 0; i <= len; ++i) {
                 if (i == len || p[i] == ',') {
                     serverinfo_types[serverinfo_count] = atoi(p + start);
@@ -1965,7 +1966,7 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
         /* Returns 0 on success! */
-        if (SSL_CTX_set_alpn_protos(ctx, alpn, alpn_len) != 0) {
+        if (SSL_CTX_set_alpn_protos(ctx, alpn, (unsigned int)alpn_len) != 0) {
             BIO_printf(bio_err, "Error setting ALPN\n");
             goto end;
         }
@@ -3687,7 +3688,7 @@ static int ldap_ExtendedResponse_parse(const char *buf, long rem)
     /* pull SEQUENCE */
     inf = ASN1_get_object(&cur, &len, &tag, &xclass, rem);
     if (inf != V_ASN1_CONSTRUCTED || tag != V_ASN1_SEQUENCE ||
-        (rem = end - cur, len > rem)) {
+        (rem = (long)(end - cur), len > rem)) {
         BIO_printf(bio_err, "Unexpected LDAP response\n");
         goto end;
     }
@@ -3697,7 +3698,7 @@ static int ldap_ExtendedResponse_parse(const char *buf, long rem)
     /* pull MessageID */
     inf = ASN1_get_object(&cur, &len, &tag, &xclass, rem);
     if (inf != V_ASN1_UNIVERSAL || tag != V_ASN1_INTEGER ||
-        (rem = end - cur, len > rem)) {
+        (rem = (long)(end - cur), len > rem)) {
         BIO_printf(bio_err, "No MessageID\n");
         goto end;
     }
@@ -3705,7 +3706,7 @@ static int ldap_ExtendedResponse_parse(const char *buf, long rem)
     cur += len; /* shall we check for MessageId match or just skip? */
 
     /* pull [APPLICATION 24] */
-    rem = end - cur;
+    rem = (long)(end - cur);
     inf = ASN1_get_object(&cur, &len, &tag, &xclass, rem);
     if (inf != V_ASN1_CONSTRUCTED || xclass != V_ASN1_APPLICATION ||
         tag != 24) {
@@ -3714,10 +3715,10 @@ static int ldap_ExtendedResponse_parse(const char *buf, long rem)
     }
 
     /* pull resultCode */
-    rem = end - cur;
+    rem = (long)(end - cur);
     inf = ASN1_get_object(&cur, &len, &tag, &xclass, rem);
     if (inf != V_ASN1_UNIVERSAL || tag != V_ASN1_ENUMERATED || len == 0 ||
-        (rem = end - cur, len > rem)) {
+        (rem = (long)(end - cur), len > rem)) {
         BIO_printf(bio_err, "Not LDAPResult\n");
         goto end;
     }
