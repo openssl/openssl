@@ -65,6 +65,8 @@ static int final_supported_versions(SSL_CONNECTION *s, unsigned int context,
 static int final_early_data(SSL_CONNECTION *s, unsigned int context, int sent);
 static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
                                 int sent);
+static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
+                                int sent);
 static int init_post_handshake_auth(SSL_CONNECTION *s, unsigned int context);
 static int final_psk(SSL_CONNECTION *s, unsigned int context, int sent);
 static int tls_init_compress_certificate(SSL_CONNECTION *sc, unsigned int context);
@@ -171,7 +173,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
         NULL, tls_parse_ctos_record_size_limit, tls_parse_stoc_record_size_limit,
         tls_construct_stoc_record_size_limit, tls_construct_ctos_record_size_limit,
-        NULL
+        final_record_size_limit
     },
 #ifndef OPENSSL_NO_SRP
     {
@@ -1757,6 +1759,17 @@ static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
         s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
                                               ssl_get_max_send_fragment(s));
     }
+
+    return 1;
+}
+
+static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
+                                   int sent) {
+    if (s->session == NULL)
+        return 1;
+
+    if (s->session->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED)
+        s->session->ext.record_size_limit = TLSEXT_record_size_limit_DISABLED;
 
     return 1;
 }
