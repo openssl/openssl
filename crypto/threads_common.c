@@ -358,7 +358,10 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
         /*
          * make sure to assign it to our master key thread-local storage
          */
-        CRYPTO_THREAD_set_local(&master_key, mkey);
+        if (!CRYPTO_THREAD_set_local(&master_key, mkey)) {
+            OPENSSL_free(mkey);
+            return 0;
+        }
     }
 
     /*
