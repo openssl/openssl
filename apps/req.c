@@ -1608,6 +1608,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         *pkeylen = EVP_PKEY_get_bits(param);
         EVP_PKEY_free(param);
     } else {
+#ifndef OPENSSL_NO_DEPRECATED_3_6
         if (keygen_engine != NULL) {
             int pkey_id = get_legacy_pkey_id(app_get0_libctx(), *pkeytype,
                                              keygen_engine);
@@ -1615,9 +1616,12 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
             if (pkey_id != NID_undef)
                 gctx = EVP_PKEY_CTX_new_id(pkey_id, keygen_engine);
         } else {
+#endif
             gctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(),
                                               *pkeytype, app_get0_propq());
+#ifndef OPENSSL_NO_DEPRECATED_3_6
         }
+#endif
     }
 
     if (gctx == NULL) {
