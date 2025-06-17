@@ -18,8 +18,8 @@
  *
  * NOTE: This differs from the CRYPTO_THREAD_[get|set]_local api set in that
  * this api stores a single OS level thread-local key per-process, and manages
- * subsequent keys using a series of sparse arrays stored against that aforementioned
- * thread local key
+ * subsequent keys using a series of arrays and sparse arrays stored against
+ * that aforementioned thread local key
  *
  * Data Design:
  *
@@ -56,9 +56,11 @@
  *           ++--------+------+      +-----------------+
  *                                  per-<thread*ctx> data
  *
- * It uses sparse arrays to map:
- *   - Thread-local key IDs to master key entries.
- *   - Library context pointers to context-specific data.
+ * It uses the following lookup pattern:
+ *   1) A global os defined key to a per-thread fixed array
+ *   2) A libcrypto defined key id as an index to (1) to get a sparse array
+ *   3) A Library context pointer as an index to (2) to produce a per
+ *      thread*context data pointer
  *
  * Two primary functions are provided:
  *   - CRYPTO_THREAD_get_local_ex() retrieves data associated with a key and
@@ -100,9 +102,7 @@
  * @var CTX_TABLE_ENTRY::ctx_data
  * Pointer to the data associated with a given library context.
  */
-typedef struct ctx_table_entry {
-    void *ctx_data;
-} CTX_TABLE_ENTRY;
+typedef void *CTX_TABLE_ENTRY;
 
 /*
  * define our sparse array of CTX_TABLE_ENTRY functions
@@ -152,29 +152,6 @@ static uint8_t master_key_init = 0;
 static CRYPTO_ONCE master_once = CRYPTO_ONCE_STATIC_INIT;
 
 /**
- * @brief Cleans up a single context-specific entry.
- *
- * This function is used as a callback in sparse array traversal to free
- * a `CTX_TABLE_ENTRY`. If a cleanup function is defined in the associated
- * `MASTER_KEY_ENTRY`, it is called prior to freeing the entry.
- *
- * @param idx
- *        Unused index value corresponding to the key in the sparse array.
- *
- * @param ctxentry
- *        Pointer to the `CTX_TABLE_ENTRY` that holds the context-specific
- *        data to be freed.
- *
- * @param arg
- *        Pointer to the parent `MASTER_KEY_ENTRY` which may contain a
- *        cleanup function.
- */
-static void clean_ctx_entry(ossl_uintmax_t idx, CTX_TABLE_ENTRY *ctxentry, void *arg)
-{
-    OPENSSL_free(ctxentry);
-}
-
-/**
  * @brief Cleans up all context-specific entries for a given key ID.
  *
  * This function is used to release all context data associated with a
@@ -194,7 +171,6 @@ static void clean_ctx_entry(ossl_uintmax_t idx, CTX_TABLE_ENTRY *ctxentry, void 
  */
 static void clean_master_key_id(MASTER_KEY_ENTRY *entry)
 {
-    ossl_sa_CTX_TABLE_ENTRY_doall_arg(entry->ctx_table, clean_ctx_entry, entry);
     ossl_sa_CTX_TABLE_ENTRY_free(entry->ctx_table);
 }
 
@@ -278,7 +254,7 @@ static void init_master_key(void)
 void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ctx)
 {
     MASTER_KEY_ENTRY *mkey;
-    CTX_TABLE_ENTRY *ctxd;
+    CTX_TABLE_ENTRY ctxd;
 
     /*
      * Make sure the master key has been initialized
@@ -295,7 +271,7 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
     if (!CRYPTO_THREAD_run_once(&master_once, init_master_key))
         return NULL;
 
-    if (id >= CRYPTO_THREAD_LOCAL_KEY_MAX)
+    if (!ossl_assert(id < CRYPTO_THREAD_LOCAL_KEY_MAX))
         return NULL;
 
     /*
@@ -325,7 +301,7 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
     /*
      * If we find an entry for the passed in context, return its data pointer
      */
-    return ctxd == NULL ? NULL : ctxd->ctx_data;
+    return ctxd;
 }
 
 /**
@@ -356,7 +332,6 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
                                OSSL_LIB_CTX *ctx, void *data)
 {
     MASTER_KEY_ENTRY *mkey;
-    CTX_TABLE_ENTRY *ctxd;
 
     /*
      * Make sure our master key is initialized
@@ -365,7 +340,7 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
     if (!CRYPTO_THREAD_run_once(&master_once, init_master_key))
         return 0;
 
-    if (id >= CRYPTO_THREAD_LOCAL_KEY_MAX)
+    if (!ossl_assert(id < CRYPTO_THREAD_LOCAL_KEY_MAX))
         return 0;
 
     /*
@@ -403,25 +378,11 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
      * Now go look up our per context entry, using the OSSL_LIB_CTX pointer
      * that we've been provided.  Note we cast the pointer to a uintptr_t so
      * as to use it as an index in the sparse array
+     *
+     * Assign to the entry in the table so that we can find it later
      */
-    ctxd = ossl_sa_CTX_TABLE_ENTRY_get(mkey[id].ctx_table, (uintptr_t)ctx);
-    if (ctxd == NULL) {
-        /*
-         * No entry for this context, build one
-         */
-        ctxd = OPENSSL_zalloc(sizeof(CTX_TABLE_ENTRY));
-        if (ctxd == NULL)
-            return 0;
-        /*
-         * Assign to the entry in the table so that we can find it later
-         */
-        ossl_sa_CTX_TABLE_ENTRY_set(mkey[id].ctx_table, (uintptr_t)ctx, ctxd);
-    }
-    /*
-     * Lastly assign our data pointer
-     */
-    ctxd->ctx_data = data;
-    return 1;
+    return ossl_sa_CTX_TABLE_ENTRY_set(mkey[id].ctx_table,
+                                       (uintptr_t)ctx, data);
 }
 
 #ifdef FIPS_MODULE
