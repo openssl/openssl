@@ -17,7 +17,7 @@
  * and an `OSSL_LIB_CTX *` context.
  *
  * NOTE: This differs from the CRYPTO_THREAD_[get|set]_local api set in that
- * this api stores a single OS level thread-local key per-thread, and manages
+ * this api stores a single OS level thread-local key per-process, and manages
  * subsequent keys using a series of sparse arrays stored against that aforementioned
  * thread local key
  *
