@@ -100,9 +100,7 @@
  * @var CTX_TABLE_ENTRY::ctx_data
  * Pointer to the data associated with a given library context.
  */
-typedef struct ctx_table_entry {
-    void *ctx_data;
-} CTX_TABLE_ENTRY;
+typedef void* CTX_TABLE_ENTRY;
 
 /*
  * define our sparse array of CTX_TABLE_ENTRY functions
@@ -152,29 +150,6 @@ static uint8_t master_key_init = 0;
 static CRYPTO_ONCE master_once = CRYPTO_ONCE_STATIC_INIT;
 
 /**
- * @brief Cleans up a single context-specific entry.
- *
- * This function is used as a callback in sparse array traversal to free
- * a `CTX_TABLE_ENTRY`. If a cleanup function is defined in the associated
- * `MASTER_KEY_ENTRY`, it is called prior to freeing the entry.
- *
- * @param idx
- *        Unused index value corresponding to the key in the sparse array.
- *
- * @param ctxentry
- *        Pointer to the `CTX_TABLE_ENTRY` that holds the context-specific
- *        data to be freed.
- *
- * @param arg
- *        Pointer to the parent `MASTER_KEY_ENTRY` which may contain a
- *        cleanup function.
- */
-static void clean_ctx_entry(ossl_uintmax_t idx, CTX_TABLE_ENTRY *ctxentry, void *arg)
-{
-    OPENSSL_free(ctxentry);
-}
-
-/**
  * @brief Cleans up all context-specific entries for a given key ID.
  *
  * This function is used to release all context data associated with a
@@ -194,7 +169,6 @@ static void clean_ctx_entry(ossl_uintmax_t idx, CTX_TABLE_ENTRY *ctxentry, void 
  */
 static void clean_master_key_id(MASTER_KEY_ENTRY *entry)
 {
-    ossl_sa_CTX_TABLE_ENTRY_doall_arg(entry->ctx_table, clean_ctx_entry, entry);
     ossl_sa_CTX_TABLE_ENTRY_free(entry->ctx_table);
 }
 
@@ -278,7 +252,7 @@ static void init_master_key(void)
 void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ctx)
 {
     MASTER_KEY_ENTRY *mkey;
-    CTX_TABLE_ENTRY *ctxd;
+    CTX_TABLE_ENTRY ctxd;
 
     /*
      * Make sure the master key has been initialized
@@ -325,7 +299,7 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
     /*
      * If we find an entry for the passed in context, return its data pointer
      */
-    return ctxd == NULL ? NULL : ctxd->ctx_data;
+    return ctxd;
 }
 
 /**
@@ -356,7 +330,6 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
                                OSSL_LIB_CTX *ctx, void *data)
 {
     MASTER_KEY_ENTRY *mkey;
-    CTX_TABLE_ENTRY *ctxd;
 
     /*
      * Make sure our master key is initialized
@@ -403,24 +376,10 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
      * Now go look up our per context entry, using the OSSL_LIB_CTX pointer
      * that we've been provided.  Note we cast the pointer to a uintptr_t so
      * as to use it as an index in the sparse array
+     *
+     * Assign to the entry in the table so that we can find it later
      */
-    ctxd = ossl_sa_CTX_TABLE_ENTRY_get(mkey[id].ctx_table, (uintptr_t)ctx);
-    if (ctxd == NULL) {
-        /*
-         * No entry for this context, build one
-         */
-        ctxd = OPENSSL_zalloc(sizeof(CTX_TABLE_ENTRY));
-        if (ctxd == NULL)
-            return 0;
-        /*
-         * Assign to the entry in the table so that we can find it later
-         */
-        ossl_sa_CTX_TABLE_ENTRY_set(mkey[id].ctx_table, (uintptr_t)ctx, ctxd);
-    }
-    /*
-     * Lastly assign our data pointer
-     */
-    ctxd->ctx_data = data;
+     ossl_sa_CTX_TABLE_ENTRY_set(mkey[id].ctx_table, (uintptr_t)ctx, data);
     return 1;
 }
 
