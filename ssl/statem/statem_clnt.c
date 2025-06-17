@@ -3909,8 +3909,8 @@ CON_FUNC_RETURN tls_construct_client_compressed_certificate(SSL_CONNECTION *sc,
             || !WPACKET_reserve_bytes(pkt, max_length, NULL))
         goto err;
 
-    comp_len = COMP_compress_block(comp, WPACKET_get_curr(pkt), max_length,
-                                   (unsigned char *)buf->data, length);
+    comp_len = COMP_compress_block(comp, WPACKET_get_curr(pkt), (int)max_length,
+                                   (unsigned char *)buf->data, (int)length);
     if (comp_len <= 0)
         goto err;
 

@@ -534,7 +534,7 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
         BIO_printf(trc_out, "seq:\n");
         BIO_dump_indent(trc_out, seq, 8, 4);
         BIO_printf(trc_out, "rec:\n");
-        BIO_dump_indent(trc_out, rec->data, rec->length, 4);
+        BIO_dump_indent(trc_out, rec->data, (int)rec->length, 4);
     } OSSL_TRACE_END(TLS);
 
     if (!rl->isdtls && !tls_increment_sequence_ctr(rl)) {
@@ -544,7 +544,7 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
 
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "md:\n");
-        BIO_dump_indent(trc_out, md, md_size, 4);
+        BIO_dump_indent(trc_out, md, (int)md_size, 4);
     } OSSL_TRACE_END(TLS);
     ret = 1;
  end:

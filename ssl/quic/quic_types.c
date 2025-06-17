@@ -19,7 +19,7 @@ int ossl_quic_gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len,
 
     cid->id_len = (unsigned char)len;
 
-    if (RAND_bytes_ex(libctx, cid->id, len, len * 8) != 1) {
+    if (RAND_bytes_ex(libctx, cid->id, len, 0) != 1) {
         ERR_raise(ERR_LIB_SSL, ERR_R_RAND_LIB);
         cid->id_len = 0;
         return 0;

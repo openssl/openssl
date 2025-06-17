@@ -509,8 +509,8 @@ static ossl_inline ossl_unused int ossl_quic_stream_recv_get_final_size(const QU
  * Determines the number of bytes available still to be read, and (if
  * include_fin is 1) whether a FIN or reset has yet to be read.
  */
-static ossl_inline ossl_unused int ossl_quic_stream_recv_pending(const QUIC_STREAM *s,
-                                                                 int include_fin)
+static ossl_inline ossl_unused size_t ossl_quic_stream_recv_pending(const QUIC_STREAM *s,
+                                                                    int include_fin)
 {
     size_t avail;
     int fin = 0;

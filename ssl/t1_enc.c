@@ -245,7 +245,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         BIO_printf(trc_out, "which = %04X, key:\n", which);
         BIO_dump_indent(trc_out, key, EVP_CIPHER_get_key_length(c), 4);
         BIO_printf(trc_out, "iv:\n");
-        BIO_dump_indent(trc_out, iv, k, 4);
+        BIO_dump_indent(trc_out, iv, (int)k, 4);
     } OSSL_TRACE_END(TLS);
 
     return 1;
@@ -308,7 +308,7 @@ int tls1_setup_key_block(SSL_CONNECTION *s)
         BIO_printf(trc_out, "master key\n");
         BIO_dump_indent(trc_out,
                         s->session->master_key,
-                        s->session->master_key_length, 4);
+                        (int)s->session->master_key_length, 4);
     } OSSL_TRACE_END(TLS);
 
     if (!tls1_generate_key_block(s, p, num)) {
@@ -318,7 +318,7 @@ int tls1_setup_key_block(SSL_CONNECTION *s)
 
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "key block\n");
-        BIO_dump_indent(trc_out, p, num, 4);
+        BIO_dump_indent(trc_out, p, (int)num, 4);
     } OSSL_TRACE_END(TLS);
 
     ret = 1;
@@ -375,7 +375,7 @@ int tls1_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
         }
         OSSL_TRACE_BEGIN(TLS) {
             BIO_printf(trc_out, "Handshake hashes:\n");
-            BIO_dump(trc_out, (char *)hash, hashlen);
+            BIO_dump(trc_out, (char *)hash, (int)hashlen);
         } OSSL_TRACE_END(TLS);
         if (!tls1_PRF(s,
                       TLS_MD_EXTENDED_MASTER_SECRET_CONST,
@@ -405,7 +405,7 @@ int tls1_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
 
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "Premaster Secret:\n");
-        BIO_dump_indent(trc_out, p, len, 4);
+        BIO_dump_indent(trc_out, p, (int)len, 4);
         BIO_printf(trc_out, "Client Random:\n");
         BIO_dump_indent(trc_out, s->s3.client_random, SSL3_RANDOM_SIZE, 4);
         BIO_printf(trc_out, "Server Random:\n");
