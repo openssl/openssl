@@ -383,13 +383,10 @@ static int default_context_inited = 0;
 DEFINE_RUN_ONCE_STATIC(default_context_do_init)
 {
     if (!context_init(&default_context_int))
-        goto err;
+        return 0;
 
     default_context_inited = 1;
     return 1;
-
-err:
-    return 0;
 }
 
 void ossl_lib_ctx_default_deinit(void)
