@@ -946,10 +946,10 @@ static int encrypt_validation_token(const QUIC_PORT *port,
                                     size_t *ct_len)
 {
     int iv_len, len, ret = 0;
-    size_t tag_len;
+    int tag_len;
     unsigned char *iv = ciphertext, *data, *tag;
 
-    if ((tag_len = EVP_CIPHER_CTX_get_tag_length(port->token_ctx)) == 0
+    if ((tag_len = EVP_CIPHER_CTX_get_tag_length(port->token_ctx)) <= 0
         || (iv_len = EVP_CIPHER_CTX_get_iv_length(port->token_ctx)) <= 0)
         goto err;
 
@@ -964,7 +964,7 @@ static int encrypt_validation_token(const QUIC_PORT *port,
 
     if (!RAND_bytes_ex(port->engine->libctx, ciphertext, iv_len, 0)
         || !EVP_EncryptInit_ex(port->token_ctx, NULL, NULL, NULL, iv)
-        || !EVP_EncryptUpdate(port->token_ctx, data, &len, plaintext, pt_len)
+        || !EVP_EncryptUpdate(port->token_ctx, data, &len, plaintext, (int)pt_len)
         || !EVP_EncryptFinal_ex(port->token_ctx, data + pt_len, &len)
         || !EVP_CIPHER_CTX_ctrl(port->token_ctx, EVP_CTRL_GCM_GET_TAG, tag_len, tag))
         goto err;
@@ -996,15 +996,15 @@ static int decrypt_validation_token(const QUIC_PORT *port,
                                     size_t *pt_len)
 {
     int iv_len, len = 0, ret = 0;
-    size_t tag_len;
+    int tag_len;
     const unsigned char *iv = ciphertext, *data, *tag;
 
-    if ((tag_len = EVP_CIPHER_CTX_get_tag_length(port->token_ctx)) == 0
+    if ((tag_len = EVP_CIPHER_CTX_get_tag_length(port->token_ctx)) <= 0
         || (iv_len = EVP_CIPHER_CTX_get_iv_length(port->token_ctx)) <= 0)
         goto err;
 
     /* Prevent decryption of a buffer that is not within reasonable bounds */
-    if (ct_len < (iv_len + tag_len) || ct_len > ENCRYPTED_TOKEN_MAX_LEN)
+    if (ct_len < (size_t)(iv_len + tag_len) || ct_len > ENCRYPTED_TOKEN_MAX_LEN)
         goto err;
 
     *pt_len = ct_len - iv_len - tag_len;
@@ -1018,7 +1018,7 @@ static int decrypt_validation_token(const QUIC_PORT *port,
 
     if (!EVP_DecryptInit_ex(port->token_ctx, NULL, NULL, NULL, iv)
         || !EVP_DecryptUpdate(port->token_ctx, plaintext, &len, data,
-                              ct_len - iv_len - tag_len)
+                              (int)(ct_len - iv_len - tag_len))
         || !EVP_CIPHER_CTX_ctrl(port->token_ctx, EVP_CTRL_GCM_SET_TAG, tag_len,
                                 (void *)tag)
         || !EVP_DecryptFinal_ex(port->token_ctx, plaintext + len, &len))

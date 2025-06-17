@@ -768,7 +768,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             BIO_ADDR_free(tmpclient);
             tmpclient = NULL;
 
-            if (BIO_write(wbio, wbuf, wreclen) < (int)wreclen) {
+            if (BIO_write(wbio, wbuf, (int)wreclen) < (int)wreclen) {
                 if (BIO_should_retry(wbio)) {
                     /*
                      * Non-blocking IO...but we're stateless, so we're just

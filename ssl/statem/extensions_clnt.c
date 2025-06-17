@@ -1466,7 +1466,7 @@ int tls_parse_stoc_session_ticket(SSL_CONNECTION *s, PACKET *pkt,
 
     if (s->ext.session_ticket_cb != NULL &&
         !s->ext.session_ticket_cb(ssl, PACKET_data(pkt),
-                                  PACKET_remaining(pkt),
+                                  (int)PACKET_remaining(pkt),
                                   s->ext.session_ticket_cb_arg)) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_BAD_EXTENSION);
         return 0;
@@ -1638,7 +1638,7 @@ int tls_parse_stoc_npn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
     if (sctx->ext.npn_select_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                 &selected, &selected_len,
-                                PACKET_data(pkt), PACKET_remaining(pkt),
+                                PACKET_data(pkt), (unsigned int)PACKET_remaining(pkt),
                                 sctx->ext.npn_select_cb_arg) != SSL_TLSEXT_ERR_OK
             || selected_len == 0) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_BAD_EXTENSION);

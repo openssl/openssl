@@ -3163,10 +3163,11 @@ static size_t ossl_quic_pending_int(const SSL *s, int check_channel)
     }
 
     if (check_channel)
+        /* We care about boolean result here only */
         avail = ossl_quic_stream_recv_pending(ctx.xso->stream,
-                                              /*include_fin=*/1)
-             || ossl_quic_channel_has_pending(ctx.qc->ch)
-             || ossl_quic_channel_is_term_any(ctx.qc->ch);
+                                              /*include_fin=*/1) > 0
+              || ossl_quic_channel_has_pending(ctx.qc->ch)
+              || ossl_quic_channel_is_term_any(ctx.qc->ch);
     else
         avail = ossl_quic_stream_recv_pending(ctx.xso->stream,
                                               /*include_fin=*/0);
@@ -4938,7 +4939,7 @@ size_t ossl_quic_get_accept_connection_queue_len(SSL *ssl)
 
     qctx_lock(&ctx);
 
-    ret = ossl_quic_port_get_num_incoming_channels(ctx.ql->port);
+    ret = (int)ossl_quic_port_get_num_incoming_channels(ctx.ql->port);
 
     qctx_unlock(&ctx);
     return ret;
@@ -5187,7 +5188,7 @@ QUIC_NEEDS_LOCK
 static int test_poll_event_is(QUIC_CONNECTION *qc, int is_uni)
 {
     return ossl_quic_stream_map_get_accept_queue_len(ossl_quic_channel_get_qsm(qc->ch),
-                                                     is_uni);
+                                                     is_uni) > 0;
 }
 
 /* Do we have the OS (outgoing: stream) condition? */
