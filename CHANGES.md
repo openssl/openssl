@@ -125,6 +125,10 @@ OpenSSL Releases
    no interest in session tickets and session resumption.
 
    *Daniel Kubec*
+ * API calls `RAND_set_default_parameters`, and
+    `RAND_set_default_primary_parameters` have been added to libcrypto.
+
+   *Christian Vögl*
 
  * Added test framework for testing function memory allocation failures.
 

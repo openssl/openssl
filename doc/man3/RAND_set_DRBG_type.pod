@@ -3,8 +3,10 @@
 =head1 NAME
 
 RAND_set_DRBG_type,
-RAND_set_seed_source_type
-- specify the global random number generator types
+RAND_set_seed_source_type,
+RAND_set_default_parameters,
+RAND_set_default_primary_parameters
+- specify the global random number generator types and default parameters
 
 =head1 SYNOPSIS
 
@@ -14,6 +16,11 @@ RAND_set_seed_source_type
                         const char *cipher, const char *digest);
  int RAND_set_seed_source_type(OSSL_LIB_CTX *ctx, const char *seed,
                                const char *propq);
+ int RAND_set_default_primary_parameters(OSSL_LIB_CTX *ctx,
+                                         const OSSL_PARAM *parameters);
+ int RAND_set_default_parameters(OSSL_LIB_CTX *ctx,
+                                 const OSSL_PARAM *parameters);
+
 
 =head1 DESCRIPTION
 
@@ -28,6 +35,16 @@ RAND_set_seed_source_type() specifies the seed source that will be used
 within the library context I<ctx>.  The seed source of name I<seed>
 with properties I<propq> will be fetched and used to seed the primary
 random bit generator.
+
+RAND_set_default_primary_parameters() specifies parameters that will be used to
+instantiate the primary DRBG in the library context I<ctx>. If this function
+is called multiple times with the same I<ctx> the last value of I<parameters>
+will be used.
+If I<parameters> is NULL, previously set parameters will be deleted.
+
+RAND_set_default_parameters() is like RAND_set_default_primary_parameters(),
+except the parameters will be used to construct the public and private
+threadlocal DRBGs
 
 =head1 RETURN VALUES
 
