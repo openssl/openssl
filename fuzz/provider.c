@@ -214,7 +214,7 @@ static int read_octet_string(const uint8_t **buf, size_t *len, char **res)
 
     *res = (char *) *buf;
 
-    r = ptr - *buf;
+    r = (int)(ptr - *buf);
     *len -= r;
     *buf = ptr;
 
@@ -409,7 +409,8 @@ static int do_evp_cipher(const EVP_CIPHER *evp_cipher, const OSSL_PARAM param[])
         return 0;
     }
 
-    if (!EVP_EncryptUpdate(ctx, outbuf, &outlen, (const unsigned char *) intext, strlen(intext))) {
+    if (!EVP_EncryptUpdate(ctx, outbuf, &outlen, (const unsigned char *) intext,
+                           (int)strlen(intext))) {
         /* Error */
         EVP_CIPHER_CTX_free(ctx);
         return 0;

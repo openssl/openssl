@@ -34,7 +34,7 @@ int FuzzerInitialize(int *argc, char ***argv)
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    (void)ASN1_parse_dump(bio_out, buf, len, 0, 0);
+    (void)ASN1_parse_dump(bio_out, buf, (long)len, 0, 0);
     ERR_clear_error();
     return 0;
 }
