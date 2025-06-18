@@ -276,7 +276,8 @@ const OPTIONS *test_get_options(void)
 int setup_tests(void)
 {
     OPTION_CHOICE o;
-    int n, x509 = 0, spki = 0, testcount = 0;
+    size_t n;
+    int x509 = 0, spki = 0, testcount = 0;
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

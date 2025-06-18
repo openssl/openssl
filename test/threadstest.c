@@ -880,7 +880,7 @@ static void thread_general_worker(void)
         if (!TEST_true(EVP_EncryptInit_ex(cipherctx, ciph, NULL, key, iv))
                 || !TEST_true(EVP_EncryptUpdate(cipherctx, out, &ciphoutl,
                                                 (unsigned char *)message,
-                                                messlen))
+                                                (int)messlen))
                 || !TEST_true(EVP_EncryptFinal(cipherctx, out, &ciphoutl)))
             goto err;
     }
@@ -1272,7 +1272,7 @@ static void test_pem_read_one(void)
         goto err;
     }
 
-    pem = BIO_new_mem_buf(pemdata, len);
+    pem = BIO_new_mem_buf(pemdata, (int)len);
     if (pem == NULL) {
         multi_set_success(0);
         goto err;

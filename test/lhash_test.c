@@ -109,7 +109,7 @@ static int test_int_lhash(void)
         }
 
     /* num_items */
-    if (!TEST_int_eq((size_t)lh_int_num_items(h), n_int_tests))
+    if (!TEST_size_t_eq((size_t)lh_int_num_items(h), n_int_tests))
         goto end;
 
     /* retrieve */
@@ -257,7 +257,7 @@ static int test_int_hashtable(void)
     }
 
     /* num_items */
-    if (!TEST_int_eq((size_t)ossl_ht_count(ht), n_int_tests))
+    if (!TEST_size_t_eq(ossl_ht_count(ht), n_int_tests))
         goto end;
 
     /* foreach, no arg */
@@ -277,7 +277,7 @@ static int test_int_hashtable(void)
 
     /* filter */
     list = ossl_ht_filter(ht, 64, int_filter_all, NULL);
-    if (!TEST_int_eq((size_t)list->list_len, n_int_tests))
+    if (!TEST_size_t_eq(list->list_len, n_int_tests))
         goto end;
     ossl_ht_value_list_free(list);
 
@@ -448,7 +448,7 @@ static int test_hashtable_stress(int idx)
     }
 
     /* make sure we stored everything */
-    if (!TEST_int_eq((size_t)ossl_ht_count(h), n))
+    if (!TEST_size_t_eq(ossl_ht_count(h), n))
             goto end;
 
     /* delete or get in a different order */

@@ -534,7 +534,7 @@ static int test_bio_dgram_pair(int idx)
          * set a buffer big enough for 9 full sized datagrams.
          */
         bufsz = 9 * (mtu1 + (sizeof(BIO_ADDR) * 2) + sizeof(size_t));
-        if (!TEST_true(BIO_set_write_buf_size(bio1, bufsz)))
+        if (!TEST_true(BIO_set_write_buf_size(bio1, (long)bufsz)))
             goto err;
     }
 
@@ -576,7 +576,7 @@ static int test_bio_dgram_pair(int idx)
      * the mtu. The default write buffer size is 9 * (sizeof(header) + mtu) so
      * we expect at least 9 maximally sized datagrams to fit in the buffer.
      */
-    if (!TEST_int_ge(i, 9))
+    if (!TEST_size_t_ge(i, 9))
         goto err;
 
     /* Check we read back the same data */

@@ -1271,7 +1271,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
 
                 /* 0 is the success case for SSL_set_alpn_protos(). */
                 if (!TEST_false(SSL_set_alpn_protos(h->c_conn, tmp_buf,
-                                                    alpn_len + 1)))
+                                                    (unsigned int)(alpn_len + 1))))
                     goto out;
 
                 OPENSSL_free(tmp_buf);
@@ -1640,7 +1640,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_ptr(c_tgt))
                     goto out;
 
-                if (!TEST_true(SSL_set_default_stream_mode(c_tgt, op->arg1)))
+                if (!TEST_true(SSL_set_default_stream_mode(c_tgt, (uint32_t)op->arg1)))
                     goto out;
             }
             break;
@@ -1651,7 +1651,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     goto out;
 
                 if (!TEST_true(SSL_set_incoming_stream_policy(c_tgt,
-                                                              op->arg1, 0)))
+                                                              (int)op->arg1, 0)))
                     goto out;
             }
             break;
@@ -1894,7 +1894,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     h->threads[i].h            = h;
                     h->threads[i].script       = op->arg0;
                     h->threads[i].script_name  = script_name;
-                    h->threads[i].thread_idx   = i;
+                    h->threads[i].thread_idx   = (int)i;
 
                     h->threads[i].m = ossl_crypto_mutex_new();
                     if (!TEST_ptr(h->threads[i].m))
@@ -1998,7 +1998,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
 
                 ossl_quic_engine_set_inhibit_tick(ossl_quic_channel_get0_engine(ch),
-                                                  op->arg1);
+                                                  (int)op->arg1);
             }
             break;
 
@@ -5447,7 +5447,7 @@ static int check_idle_timeout(struct helper *h, struct helper_local *hl)
 {
     uint64_t v = 0;
 
-    if (!TEST_true(SSL_get_value_uint(h->c_conn, hl->check_op->arg1,
+    if (!TEST_true(SSL_get_value_uint(h->c_conn, (uint32_t)hl->check_op->arg1,
                                       SSL_VALUE_QUIC_IDLE_TIMEOUT,
                                       &v)))
         return 0;

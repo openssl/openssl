@@ -26,7 +26,7 @@ static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
     int testresult = 0;
     STACK_OF(X509) *certstack = sk_X509_new_null();
     const char *msg = "Hello world";
-    BIO *msgbio = BIO_new_mem_buf(msg, strlen(msg));
+    BIO *msgbio = BIO_new_mem_buf(msg, (int)strlen(msg));
     BIO *outmsgbio = BIO_new(BIO_s_mem());
     CMS_ContentInfo* content = NULL;
     BIO *contentbio = NULL;
@@ -53,7 +53,7 @@ static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
         goto end;
 
     /* Check we got the message we first started with */
-    if (!TEST_int_eq(BIO_gets(outmsgbio, buf, sizeof(buf)), strlen(msg))
+    if (!TEST_int_eq(BIO_gets(outmsgbio, buf, sizeof(buf)), (int)strlen(msg))
             || !TEST_int_eq(strcmp(buf, msg), 0))
         goto end;
 

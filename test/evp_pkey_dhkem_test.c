@@ -471,7 +471,8 @@ static int test_ec_dhkem_derivekey(int tstid)
     const TEST_DERIVEKEY_DATA *t = &ec_derivekey_data[tstid];
     unsigned char pubkey[133];
     unsigned char privkey[66];
-    size_t pubkeylen = 0, privkeylen = 0;
+    size_t pubkeylen = 0;
+    int privkeylen = 0;
     BIGNUM *priv = NULL;
 
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,

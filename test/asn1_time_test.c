@@ -167,7 +167,7 @@ static int test_table(struct testdata *tbl, int idx)
     int day, sec;
 
     atime.data = (unsigned char*)td->data;
-    atime.length = strlen((char*)atime.data);
+    atime.length = (int)strlen((char*)atime.data);
     atime.type = td->type;
     atime.flags = 0;
 

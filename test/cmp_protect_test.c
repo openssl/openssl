@@ -211,7 +211,7 @@ static int test_MSG_protect_unprotected_request(void)
 
 static int test_MSG_protect_with_msg_sig_alg_protection_plus_rsa_key(void)
 {
-    const size_t size = sizeof(rand_data) / 2;
+    const int size = sizeof(rand_data) / 2;
 
     SETUP_TEST_FIXTURE(CMP_PROTECT_TEST_FIXTURE, set_up);
     fixture->expected = 1;

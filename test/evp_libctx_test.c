@@ -561,7 +561,7 @@ static int rsa_keygen(int bits, EVP_PKEY **pub, EVP_PKEY **priv)
         || !TEST_true(OSSL_ENCODER_to_data(ectx, &pub_der, &len)))
         goto err;
     pp = pub_der;
-    if (!TEST_ptr(d2i_PublicKey(EVP_PKEY_RSA, pub, &pp, len)))
+    if (!TEST_ptr(d2i_PublicKey(EVP_PKEY_RSA, pub, &pp, (long)len)))
         goto err;
     ret = 1;
 err:
@@ -591,8 +591,8 @@ static int kem_rsa_gen_recover(void)
           && TEST_int_eq(EVP_PKEY_encapsulate(dctx, NULL, NULL, NULL, NULL), 0)
           && TEST_int_eq(EVP_PKEY_encapsulate(dctx, NULL, &ctlen, NULL,
                                               &secretlen), 1)
-          && TEST_int_eq(ctlen, secretlen)
-          && TEST_int_eq(ctlen, bits / 8)
+          && TEST_size_t_eq(ctlen, secretlen)
+          && TEST_size_t_eq(ctlen, bits / 8)
           && TEST_int_eq(EVP_PKEY_encapsulate(dctx, ct, &ctlen, secret,
                                               &secretlen), 1)
           && TEST_ptr(rctx = EVP_PKEY_CTX_new_from_pkey(libctx, priv, NULL))
@@ -721,7 +721,7 @@ static int kem_rsa_params(void)
         && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(privctx, "RSASVE"), 1)
         && TEST_int_eq(EVP_PKEY_decapsulate(privctx, secret, NULL, ct, sizeof(ct)), 1)
         && TEST_int_eq(EVP_PKEY_decapsulate(privctx, NULL, &secretlen, ct, sizeof(ct)), 1)
-        && TEST_int_eq(secretlen, 256)
+        && TEST_size_t_eq(secretlen, 256)
         /* Fail if passed NULL arguments */
         && TEST_int_eq(EVP_PKEY_decapsulate(privctx, NULL, NULL, ct, sizeof(ct)), 0)
         && TEST_int_eq(EVP_PKEY_decapsulate(privctx, secret, &secretlen, NULL, 0), 0)

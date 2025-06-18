@@ -811,7 +811,7 @@ static int packet_plain_mutate(const QUIC_PKT_HDR *hdrin,
      * 14 long header (we assume token length is 0,
      * which is fine for server not so fine for client)
      */
-    grow_allowance = 1200 - bufsz - 16 - 14;
+    grow_allowance = 1200 - (int)bufsz - 16 - 14;
     grow_allowance -= hdrin->dst_conn_id.id_len;
     grow_allowance -= hdrin->src_conn_id.id_len;
     assert(grow_allowance >= 0);
@@ -1168,7 +1168,7 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
                             size_t *num_processed)
 {
     BIO *next = BIO_next(b);
-    ossl_ssize_t ret = 0;
+    int ret = 0;
     size_t i = 0, tmpnump;
     QUIC_PKT_HDR hdr;
     PACKET pkt;

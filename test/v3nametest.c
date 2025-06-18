@@ -675,9 +675,9 @@ static int test_GENERAL_NAME_cmp(void)
          * We create two versions of each GENERAL_NAME so that we ensure when
          * we compare them they are always different pointers.
          */
-        namesa[i] = d2i_GENERAL_NAME(NULL, &derp, gennames[i].derlen);
+        namesa[i] = d2i_GENERAL_NAME(NULL, &derp, (long)gennames[i].derlen);
         derp = gennames[i].der;
-        namesb[i] = d2i_GENERAL_NAME(NULL, &derp, gennames[i].derlen);
+        namesb[i] = d2i_GENERAL_NAME(NULL, &derp, (long)gennames[i].derlen);
         if (!TEST_ptr(namesa[i]) || !TEST_ptr(namesb[i]))
             goto end;
     }

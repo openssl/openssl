@@ -172,7 +172,7 @@ static void generate_p12(PKCS12_BUILDER *pb, const PKCS12_ENC *mac)
         else
             md = EVP_MD_fetch(test_ctx, OBJ_nid2sn(mac->nid), test_propq);
 
-        if (!TEST_true(PKCS12_set_mac(p12, mac->pass, strlen(mac->pass),
+        if (!TEST_true(PKCS12_set_mac(p12, mac->pass, (int)strlen(mac->pass),
                                       NULL, 0, mac->iter, md))) {
             pb->success = 0;
             goto err;
@@ -262,7 +262,7 @@ err:
 static int check_p12_mac(PKCS12 *p12, const PKCS12_ENC *mac)
 {
     return TEST_true(PKCS12_mac_present(p12))
-        && TEST_true(PKCS12_verify_mac(p12, mac->pass, strlen(mac->pass)));
+        && TEST_true(PKCS12_verify_mac(p12, mac->pass, (int)strlen(mac->pass)));
 }
 
 
@@ -319,7 +319,7 @@ static STACK_OF(PKCS12_SAFEBAG) *decode_contentinfo(STACK_OF(PKCS7) *safes, int 
     if (enc) {
         if (!TEST_int_eq(bagnid, NID_pkcs7_encrypted))
             goto err;
-        bags = PKCS12_unpack_p7encdata(p7, enc->pass, strlen(enc->pass));
+        bags = PKCS12_unpack_p7encdata(p7, enc->pass, (int)strlen(enc->pass));
     } else {
         if (!TEST_int_eq(bagnid, NID_pkcs7_data))
             goto err;
@@ -358,7 +358,7 @@ static int add_attributes(PKCS12_SAFEBAG *bag, const PKCS12_ATTR *attr)
                 goto err;
         } else if (attr_nid == NID_localKeyID) {
             if (!TEST_true(PKCS12_add_localkeyid(bag, (unsigned char *)p_attr->value,
-                                                 strlen(p_attr->value))))
+                                                 (int)strlen(p_attr->value))))
                 goto err;
         } else if (attr_nid == NID_oracle_jdk_trustedkeyusage) {
             attrs = (STACK_OF(X509_ATTRIBUTE)*)PKCS12_SAFEBAG_get0_attrs(bag);
@@ -370,7 +370,7 @@ static int add_attributes(PKCS12_SAFEBAG *bag, const PKCS12_ATTR *attr)
             /* Custom attribute values limited to ASCII in these tests */
             if (!TEST_true(PKCS12_add1_attr_by_txt(bag, p_attr->oid, MBSTRING_ASC,
                                                    (unsigned char *)p_attr->value,
-                                                   strlen(p_attr->value))))
+                                                   (int)strlen(p_attr->value))))
                 goto err;
         }
         p_attr++;
@@ -456,7 +456,8 @@ void add_secretbag(PKCS12_BUILDER *pb, int secret_nid, const char *secret,
 
     TEST_info("Adding secret <%s>", secret);
 
-    bag = PKCS12_add_secret(&pb->bags, secret_nid, (const unsigned char *)secret, strlen(secret));
+    bag = PKCS12_add_secret(&pb->bags, secret_nid,
+                            (const unsigned char *)secret, (int)strlen(secret));
     if (!TEST_ptr(bag)) {
         pb->success = 0;
         return;
@@ -614,9 +615,10 @@ void check_keybag(PKCS12_BUILDER *pb, const unsigned char *bytes, int len,
 
     case NID_pkcs8ShroudedKeyBag:
         if (legacy)
-            p8 = PKCS12_decrypt_skey(bag, enc->pass, strlen(enc->pass));
+            p8 = PKCS12_decrypt_skey(bag, enc->pass, (int)strlen(enc->pass));
         else
-            p8 = PKCS12_decrypt_skey_ex(bag, enc->pass, strlen(enc->pass), test_ctx, test_propq);
+            p8 = PKCS12_decrypt_skey_ex(bag, enc->pass, (int)strlen(enc->pass),
+                                        test_ctx, test_propq);
         if (!TEST_ptr(p8)) {
             pb->success = 0;
             goto err;

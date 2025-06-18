@@ -1704,7 +1704,7 @@ int setup_tests(void)
 {
     ADD_ALL_TESTS(test_script, OSSL_NELEM(scripts));
     ADD_ALL_TESTS(test_dyn_script_1,
-                  OSSL_NELEM(dyn_script_1_crypto_1a)
-                  - dyn_script_1_start_from + 1);
+                  (int)(OSSL_NELEM(dyn_script_1_crypto_1a)
+                        - dyn_script_1_start_from + 1));
     return 1;
 }

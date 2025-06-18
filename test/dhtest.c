@@ -593,13 +593,13 @@ static int rfc5114_test(void)
                 || !TEST_ptr(dhB = td->get_param()))
             goto bad_err;
 
-        if (!TEST_ptr(priv_key = BN_bin2bn(td->xA, td->xA_len, NULL))
-                || !TEST_ptr(pub_key = BN_bin2bn(td->yA, td->yA_len, NULL))
+        if (!TEST_ptr(priv_key = BN_bin2bn(td->xA, (int)td->xA_len, NULL))
+                || !TEST_ptr(pub_key = BN_bin2bn(td->yA, (int)td->yA_len, NULL))
                 || !TEST_true(DH_set0_key(dhA, pub_key, priv_key)))
             goto bad_err;
 
-        if (!TEST_ptr(priv_key = BN_bin2bn(td->xB, td->xB_len, NULL))
-                || !TEST_ptr(pub_key = BN_bin2bn(td->yB, td->yB_len, NULL))
+        if (!TEST_ptr(priv_key = BN_bin2bn(td->xB, (int)td->xB_len, NULL))
+                || !TEST_ptr(pub_key = BN_bin2bn(td->yB, (int)td->yB_len, NULL))
                 || !TEST_true(DH_set0_key(dhB, pub_key, priv_key)))
             goto bad_err;
         priv_key = pub_key = NULL;

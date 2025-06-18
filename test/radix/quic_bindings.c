@@ -330,14 +330,14 @@ static void RADIX_PROCESS_report_state(RADIX_PROCESS *rp, BIO *bio,
 
 static void RADIX_PROCESS_report_thread_results(RADIX_PROCESS *rp, BIO *bio)
 {
-    size_t i;
+    int i;
     RADIX_THREAD *rt;
     char *p;
     long l;
     char pfx_buf[64];
     int rt_testresult;
 
-    for (i = 1; i < (size_t)sk_RADIX_THREAD_num(rp->threads); ++i) {
+    for (i = 1; i < sk_RADIX_THREAD_num(rp->threads); ++i) {
         rt = sk_RADIX_THREAD_value(rp->threads, i);
 
         ossl_crypto_mutex_lock(rt->m);
@@ -372,7 +372,7 @@ static int RADIX_THREAD_join(RADIX_THREAD *rt);
 static int RADIX_PROCESS_join_all_threads(RADIX_PROCESS *rp, int *testresult)
 {
     int ok = 1;
-    size_t i;
+    int i;
     RADIX_THREAD *rt;
     int composite_testresult = 1;
 
@@ -381,10 +381,10 @@ static int RADIX_PROCESS_join_all_threads(RADIX_PROCESS *rp, int *testresult)
         return 1;
     }
 
-    for (i = 1; i < (size_t)sk_RADIX_THREAD_num(rp->threads); ++i) {
+    for (i = 1; i < sk_RADIX_THREAD_num(rp->threads); ++i) {
         rt = sk_RADIX_THREAD_value(rp->threads, i);
 
-        BIO_printf(bio_err, "==> Joining thread %zu\n", i);
+        BIO_printf(bio_err, "==> Joining thread %d\n", i);
 
         if (!TEST_true(RADIX_THREAD_join(rt)))
             ok = 0;
@@ -411,11 +411,11 @@ static void RADIX_THREAD_free(RADIX_THREAD *rt);
 
 static void RADIX_PROCESS_cleanup(RADIX_PROCESS *rp)
 {
-    size_t i;
+    int i;
 
     assert(rp->done_join_all_threads);
 
-    for (i = 0; i < (size_t)sk_RADIX_THREAD_num(rp->threads); ++i)
+    for (i = 0; i < sk_RADIX_THREAD_num(rp->threads); ++i)
         RADIX_THREAD_free(sk_RADIX_THREAD_value(rp->threads, i));
 
     sk_RADIX_THREAD_free(rp->threads);
