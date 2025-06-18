@@ -341,7 +341,7 @@ Build OpenSSL with gcov profiling information included
 
     --pgo
 
-Build OpenSSL optimized using gcov data obtained from --profiled build
+Build OpenSSL optimized using gcov data obtained from --coverage build
 
 Directories
 -----------
