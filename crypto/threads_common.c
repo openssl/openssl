@@ -100,7 +100,7 @@
  * @var CTX_TABLE_ENTRY::ctx_data
  * Pointer to the data associated with a given library context.
  */
-typedef void* CTX_TABLE_ENTRY;
+typedef void *CTX_TABLE_ENTRY;
 
 /*
  * define our sparse array of CTX_TABLE_ENTRY functions
