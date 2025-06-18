@@ -43,7 +43,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 
 const OSSL_PARAM *ossl_cipher_generic_gettable_params(ossl_unused void *provctx)
 {
-    return ossl_cipher_generic_get_ctx_params_ettable;
+    return ossl_cipher_generic_get_ctx_params_list;
 }
 
 int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
