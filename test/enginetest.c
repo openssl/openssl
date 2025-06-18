@@ -446,7 +446,7 @@ int setup_tests(void)
 #ifdef OPENSSL_NO_ENGINE
     TEST_note("No ENGINE support");
 #else
-    int n;
+    size_t n;
 
     if (!test_skip_common_options()) {
         TEST_error("Error parsing test options\n");

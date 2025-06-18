@@ -102,7 +102,7 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
     for (s = mtus[0]; s <= mtus[29]; s++) {
         size_t reclen;
 
-        if (!TEST_int_eq(SSL_write(clnt_ssl, buf, s), (int)s))
+        if (!TEST_int_eq(SSL_write(clnt_ssl, buf, (int)s), (int)s))
             goto end;
         reclen = BIO_read(sc_bio, buf, sizeof(buf));
         if (debug)

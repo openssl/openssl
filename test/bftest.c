@@ -298,7 +298,7 @@ static int test_bf_ecb_raw(int n)
     BF_KEY key;
     BF_LONG data[2];
 
-    BF_set_key(&key, strlen(bf_key[n]), (unsigned char *)bf_key[n]);
+    BF_set_key(&key, (int)strlen(bf_key[n]), (unsigned char *)bf_key[n]);
 
     data[0] = bf_plain[n][0];
     data[1] = bf_plain[n][1];
@@ -354,7 +354,7 @@ static int test_bf_cbc(void)
     BF_KEY key;
     BF_LONG len;
 
-    len = strlen(cbc_data) + 1;
+    len = (BF_LONG)(strlen(cbc_data) + 1);
 
     BF_set_key(&key, 16, cbc_key);
     memset(cbc_in, 0, sizeof(cbc_in));
@@ -380,7 +380,7 @@ static int test_bf_cfb64(void)
     BF_KEY key;
     BF_LONG len;
 
-    len = strlen(cbc_data) + 1;
+    len = (BF_LONG)(strlen(cbc_data) + 1);
 
     BF_set_key(&key, 16, cbc_key);
     memset(cbc_in, 0, 40);
@@ -412,7 +412,7 @@ static int test_bf_ofb64(void)
     BF_KEY key;
     BF_LONG len;
 
-    len = strlen(cbc_data) + 1;
+    len = (BF_LONG)(strlen(cbc_data) + 1);
 
     BF_set_key(&key, 16, cbc_key);
     memset(cbc_in, 0, 40);

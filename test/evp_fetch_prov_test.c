@@ -270,7 +270,7 @@ static int encrypt_decrypt(const EVP_CIPHER *cipher, const unsigned char *msg,
     memset(key, 0, sizeof(key));
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
             || !TEST_true(EVP_CipherInit_ex(ctx, cipher, NULL, key, NULL, 1))
-            || !TEST_true(EVP_CipherUpdate(ctx, ct, &ctlen, msg, len))
+            || !TEST_true(EVP_CipherUpdate(ctx, ct, &ctlen, msg, (int)len))
             || !TEST_true(EVP_CipherFinal_ex(ctx, ct, &ctlen))
             || !TEST_true(EVP_CipherInit_ex(ctx, cipher, NULL, key, NULL, 0))
             || !TEST_true(EVP_CipherUpdate(ctx, pt, &ptlen, ct, ctlen))

@@ -913,6 +913,7 @@ static int test_rx_ack_actual(int tidx, int space)
     OSSL_ACKM_TX_PKT *txs = NULL, *tx;
     OSSL_TIME ack_deadline[QUIC_PN_SPACE_NUM];
     size_t opn = 0;
+    int j;
 
     for (i = 0; i < QUIC_PN_SPACE_NUM; ++i)
         ack_deadline[i] = ossl_time_infinite();
@@ -988,13 +989,13 @@ static int test_rx_ack_actual(int tidx, int space)
                              s->expect_deadline))
                 goto err;
 
-            for (i = 0; i < QUIC_PN_SPACE_NUM; ++i) {
-                if (i != (size_t)space
-                        && !TEST_true(ossl_time_is_infinite(ossl_ackm_get_ack_deadline(h.ackm, i))))
+            for (j = 0; j < QUIC_PN_SPACE_NUM; ++j) {
+                if (j != space
+                        && !TEST_true(ossl_time_is_infinite(ossl_ackm_get_ack_deadline(h.ackm, j))))
                     goto err;
 
-                if (!TEST_int_eq(ossl_time_compare(ossl_ackm_get_ack_deadline(h.ackm, i),
-                                                   ack_deadline[i]), 0))
+                if (!TEST_int_eq(ossl_time_compare(ossl_ackm_get_ack_deadline(h.ackm, j),
+                                                   ack_deadline[j]), 0))
                     goto err;
             }
 

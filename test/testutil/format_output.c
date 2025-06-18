@@ -113,7 +113,7 @@ static void test_fail_string_common(const char *prefix, const char *file,
             m2 += n2;
         l1 -= n1;
         l2 -= n2;
-        cnt += width;
+        cnt += (unsigned int)width;
     }
 fin:
     test_flush_stderr();
@@ -206,7 +206,7 @@ static void test_bignum_zero_print(const BIGNUM *bn, char sep)
 static int convert_bn_memory(const unsigned char *in, size_t bytes,
                              char *out, int *lz, const BIGNUM *bn)
 {
-    int n = bytes * 2, i;
+    int n = (int)(bytes * 2), i;
     char *p = out, *q = NULL;
     const char *r;
 
@@ -307,15 +307,15 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
 
     if (bn1 != NULL) {
         m1 = bufp;
-        BN_bn2binpad(bn1, m1, len);
+        BN_bn2binpad(bn1, m1, (int)len);
     }
     if (bn2 != NULL) {
         m2 = bufp + len;
-        BN_bn2binpad(bn2, m2, len);
+        BN_bn2binpad(bn2, m2, (int)len);
     }
 
     while (len > 0) {
-        cnt = 8 * (len - bytes);
+        cnt = (unsigned int)(8 * (len - bytes));
         n1 = convert_bn_memory(m1, bytes, b1, &lz1, bn1);
         n2 = convert_bn_memory(m2, bytes, b2, &lz2, bn2);
 
@@ -504,7 +504,7 @@ static void test_fail_memory_common(const char *prefix, const char *file,
             m2 += n2;
         l1 -= n1;
         l2 -= n2;
-        cnt += bytes;
+        cnt += (unsigned int)bytes;
     }
 fin:
     test_flush_stderr();

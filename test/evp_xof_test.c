@@ -261,7 +261,7 @@ static int shake_kat_digestfinal_xoflen_test(void)
 
     if (!TEST_int_eq(EVP_MD_CTX_size(ctx), -1)
         || !TEST_int_eq(EVP_MD_CTX_set_params(ctx, params), 1)
-        || !TEST_int_eq(EVP_MD_CTX_size(ctx), sz)
+        || !TEST_int_eq(EVP_MD_CTX_size(ctx), (int)sz)
         || !TEST_int_eq(EVP_MD_get_size(md), 0)
         || !TEST_true(EVP_MD_xof(md))
         || !TEST_true(EVP_DigestUpdate(ctx, shake256_input,

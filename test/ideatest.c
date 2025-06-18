@@ -77,7 +77,7 @@ static int test_idea_cbc(void)
 {
     IDEA_KEY_SCHEDULE key, dkey;
     unsigned char iv[IDEA_BLOCK];
-    const size_t text_len = sizeof(text);
+    const long text_len = sizeof(text);
 
     IDEA_set_encrypt_key(k, &key);
     IDEA_set_decrypt_key(&key, &dkey);

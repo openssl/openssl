@@ -69,7 +69,7 @@ static int test_fatalerr(void)
         TEST_error("Unexpected success reading data: %s\n", buf);
         goto err;
     }
-    if (!TEST_int_le(SSL_write(sssl, msg, strlen(msg)), 0))
+    if (!TEST_int_le(SSL_write(sssl, msg, (int)strlen(msg)), 0))
         goto err;
 
     ret = 1;
