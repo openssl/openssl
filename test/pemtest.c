@@ -48,7 +48,7 @@ static int test_b64(int idx)
                                       PEM_FLAG_ONLY_B64)))
         goto err;
     if (!TEST_int_eq(memcmp(pemtype, name, strlen(pemtype)), 0)
-        || !TEST_int_eq(len, strlen(raw))
+        || !TEST_long_eq(len, (long)strlen(raw))
         || !TEST_int_eq(memcmp(data, raw, strlen(raw)), 0))
         goto err;
     ret = 1;
@@ -108,7 +108,7 @@ static int test_empty_payload(void)
     long len;
     int ret = 0;
 
-    b = BIO_new_mem_buf(emptypay, strlen(emptypay));
+    b = BIO_new_mem_buf(emptypay, (int)strlen(emptypay));
     if (!TEST_ptr(b))
         return 0;
 
@@ -138,7 +138,7 @@ static int test_protected_params(void)
     EVP_PKEY *pkey = NULL;
     int ret = 0;
 
-    b = BIO_new_mem_buf(protectedpay, strlen(protectedpay));
+    b = BIO_new_mem_buf(protectedpay, (int)strlen(protectedpay));
     if (!TEST_ptr(b))
         return 0;
 

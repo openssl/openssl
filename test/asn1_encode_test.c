@@ -681,7 +681,7 @@ static int do_decode_custom(const TEST_CUSTOM_DATA *custom_data,
     if (encoding_length == 0)
         return -1;
 
-    ret = do_decode(encoding, encoding_length, expected, expected_size,
+    ret = do_decode(encoding, (long)encoding_length, expected, expected_size,
                     package);
     OPENSSL_free(encoding);
 
@@ -797,7 +797,8 @@ static int test_intern(const TEST_PACKAGE *package)
         EXPECTED *expected
             = (EXPECTED *)&((unsigned char *)package->encdec_data)[pos];
 
-        switch (do_enc_dec(expected, package->encdec_data_elem_size, package)) {
+        switch (do_enc_dec(expected, (long)package->encdec_data_elem_size,
+                           package)) {
         case -1:
             if (expected->success) {
                 TEST_error("Failed encode/decode round trip %u of %s",

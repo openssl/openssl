@@ -274,7 +274,7 @@ static int slh_dsa_sign_verify_test(int tst_id)
                                           td->msg, td->msg_len), 1)
             || !TEST_true(EVP_PKEY_get_size_t_param(pkey, OSSL_PKEY_PARAM_MAX_SIZE,
                                                     &sig_len2))
-            || !TEST_int_eq(sig_len2, psig_len)
+            || !TEST_size_t_eq(sig_len2, psig_len)
             || !TEST_ptr(psig = OPENSSL_zalloc(psig_len))
             || !TEST_int_eq(EVP_PKEY_sign(sctx, psig, &psig_len,
                                           td->msg, td->msg_len), 1))
@@ -338,10 +338,10 @@ static int slh_dsa_keygen_test(int tst_id)
                                                    pub, sizeof(pub), &pub_len)))
         goto err;
     if (!TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_BITS, &bits))
-            || !TEST_int_eq(bits, 8 * 2 * n)
+            || !TEST_size_t_eq((size_t)bits, 8 * 2 * n)
             || !TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_SECURITY_BITS,
                                                  &sec_bits))
-            || !TEST_int_eq(sec_bits, 8 * n)
+            || !TEST_size_t_eq((size_t)sec_bits, 8 * n)
             || !TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_MAX_SIZE,
                                                  &sig_len))
             || !TEST_int_ge(sig_len, 7856)

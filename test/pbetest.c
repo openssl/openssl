@@ -75,7 +75,7 @@ static int test_pkcs5_pbe(const EVP_CIPHER *cipher, const EVP_MD *md,
 
     if (!TEST_true(PKCS5_pbe_set0_algor(algor, EVP_CIPHER_nid(cipher), pbe_iter,
                                         pbe_salt, sizeof(pbe_salt)))
-        || !TEST_true(PKCS5_PBE_keyivgen(ctx, pbe_password, strlen(pbe_password),
+        || !TEST_true(PKCS5_PBE_keyivgen(ctx, pbe_password, (int)strlen(pbe_password),
                                           algor->parameter, cipher, md, 1))
         || !TEST_true(EVP_CipherUpdate(ctx, out, &i, pbe_plaintext,
                                        sizeof(pbe_plaintext))))
@@ -91,7 +91,7 @@ static int test_pkcs5_pbe(const EVP_CIPHER *cipher, const EVP_MD *md,
 
     /* Decrypt */
 
-    if (!TEST_true(PKCS5_PBE_keyivgen(ctx, pbe_password, strlen(pbe_password),
+    if (!TEST_true(PKCS5_PBE_keyivgen(ctx, pbe_password, (int)strlen(pbe_password),
                                           algor->parameter, cipher, md, 0))
         || !TEST_true(EVP_CipherUpdate(ctx, out, &i, exp, exp_len)))
         goto err;

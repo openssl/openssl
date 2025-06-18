@@ -1361,11 +1361,11 @@ static int test_EC_priv_pub(void)
         goto err;
 
     /* Positive and negative testcase for EVP_PKEY_get1_encoded_public_key */
-    if (!TEST_int_gt(EVP_PKEY_get1_encoded_public_key(params_and_pub, &encoded), 0))
+    if (!TEST_size_t_gt(EVP_PKEY_get1_encoded_public_key(params_and_pub, &encoded), 0))
         goto err;
     OPENSSL_free(encoded);
     encoded = NULL;
-    if (!TEST_int_eq(EVP_PKEY_get1_encoded_public_key(just_params, &encoded), 0)) {
+    if (!TEST_size_t_eq(EVP_PKEY_get1_encoded_public_key(just_params, &encoded), 0)) {
         OPENSSL_free(encoded);
         encoded = NULL;
         goto err;
@@ -1375,14 +1375,14 @@ static int test_EC_priv_pub(void)
     if (!TEST_int_eq(EVP_PKEY_get_octet_string_param(params_and_pub,
                                                      OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
                                                      buffer, sizeof(buffer), &len), 1)
-        || !TEST_int_eq(len, 65))
+        || !TEST_size_t_eq(len, 65))
         goto err;
 
     len = 0;
     if (!TEST_int_eq(EVP_PKEY_get_octet_string_param(params_and_pub,
                                                      OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
                                                      NULL, 0, &len), 1)
-        || !TEST_int_eq(len, 65))
+        || !TEST_size_t_eq(len, 65))
         goto err;
 
     /* too-short buffer len*/
@@ -2201,7 +2201,7 @@ static int test_d2i_AutoPrivateKey(int i)
     int expected_id = ak->evptype;
 
     p = input;
-    if (!TEST_ptr(pkey = d2i_AutoPrivateKey(NULL, &p, input_len))
+    if (!TEST_ptr(pkey = d2i_AutoPrivateKey(NULL, &p, (long)input_len))
             || !TEST_ptr_eq(p, input + input_len)
             || !TEST_int_eq(EVP_PKEY_get_id(pkey), expected_id))
         goto done;
@@ -2310,7 +2310,7 @@ static int test_EVP_PKCS82PKEY_v2(int i)
 
     /* Can we parse PKCS#8 v2, ignoring the public key for now? */
     p = input;
-    p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, input_len);
+    p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, (long)input_len);
     if (!TEST_ptr(p8inf)
         || !TEST_true(p == input + input_len))
         goto done;
@@ -2494,7 +2494,7 @@ static int test_EVP_SM2_verify(void)
     EVP_PKEY_CTX *pctx = NULL;
     EVP_MD *sm3 = NULL;
 
-    bio = BIO_new_mem_buf(pubkey, strlen(pubkey));
+    bio = BIO_new_mem_buf(pubkey, (int)strlen(pubkey));
     if (!TEST_true(bio != NULL))
         goto done;
 
@@ -2519,7 +2519,7 @@ static int test_EVP_SM2_verify(void)
     if (!TEST_true(EVP_DigestVerifyInit(mctx, NULL, sm3, NULL, pkey)))
         goto done;
 
-    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, id, strlen(id)), 0))
+    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, id, (int)strlen(id)), 0))
         goto done;
 
     if (!TEST_true(EVP_DigestVerifyUpdate(mctx, msg, strlen(msg))))
@@ -3127,7 +3127,7 @@ static struct keys_st {
 
 #ifndef OPENSSL_NO_ML_KEM
 static int
-ml_kem_seed_to_priv(const char *alg, const unsigned char *seed, int seedlen,
+ml_kem_seed_to_priv(const char *alg, const unsigned char *seed, size_t seedlen,
                     unsigned char **ret, size_t *retlen)
 {
     OSSL_PARAM parr[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
@@ -3571,7 +3571,7 @@ static int test_X509_PUBKEY_inplace(void)
 
     if (!TEST_ptr(xp))
         goto done;
-    if (!TEST_ptr(d2i_X509_PUBKEY(&xp, &p, input_len)))
+    if (!TEST_ptr(d2i_X509_PUBKEY(&xp, &p, (long)input_len)))
         goto done;
 
     if (!TEST_ptr(X509_PUBKEY_get0(xp)))
@@ -3580,7 +3580,7 @@ static int test_X509_PUBKEY_inplace(void)
     p = kExampleBadECPubKeyDER;
     input_len = sizeof(kExampleBadECPubKeyDER);
 
-    if (!TEST_ptr(xp = d2i_X509_PUBKEY(&xp, &p, input_len)))
+    if (!TEST_ptr(xp = d2i_X509_PUBKEY(&xp, &p, (long)input_len)))
         goto done;
 
     if (!TEST_true(X509_PUBKEY_get0(xp) == NULL))
@@ -3602,7 +3602,7 @@ static int test_X509_PUBKEY_dup(void)
 
     xp = X509_PUBKEY_new_ex(testctx, testpropq);
     if (!TEST_ptr(xp)
-            || !TEST_ptr(d2i_X509_PUBKEY(&xp, &p, input_len))
+            || !TEST_ptr(d2i_X509_PUBKEY(&xp, &p, (long)input_len))
             || !TEST_ptr(xq = X509_PUBKEY_dup(xp))
             || !TEST_ptr_ne(xp, xq))
         goto done;
@@ -3617,7 +3617,7 @@ static int test_X509_PUBKEY_dup(void)
     p = kExampleBadECPubKeyDER;
     input_len = sizeof(kExampleBadECPubKeyDER);
 
-    if (!TEST_ptr(xp = d2i_X509_PUBKEY(&xp, &p, input_len))
+    if (!TEST_ptr(xp = d2i_X509_PUBKEY(&xp, &p, (long)input_len))
             || !TEST_ptr(xq = X509_PUBKEY_dup(xp)))
         goto done;
 
@@ -4434,7 +4434,7 @@ static int test_evp_iv_aes(int idx)
         goto err;
     ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
 
-    if (!TEST_int_gt(ivlen, 0))
+    if (!TEST_size_t_gt(ivlen, 0))
         goto err;
 
     if (!TEST_mem_eq(init_iv, ivlen, oiv, ivlen)
@@ -4551,7 +4551,7 @@ static int test_evp_iv_des(int idx)
         goto err;
     ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
 
-    if (!TEST_int_gt(ivlen, 0))
+    if (!TEST_size_t_gt(ivlen, 0))
         goto err;
 
     if (!TEST_mem_eq(init_iv, ivlen, oiv, ivlen)
@@ -4873,7 +4873,8 @@ static int evp_init_seq_set_iv(EVP_CIPHER_CTX *ctx, const EVP_INIT_TEST_st *t)
     int res = 0;
 
     if (t->ivlen != 0) {
-        if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, t->ivlen, NULL), 0))
+        if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN,
+                                             (int)t->ivlen, NULL), 0))
             goto err;
     }
     if (!TEST_true(EVP_CipherInit_ex(ctx, NULL, NULL, NULL, t->iv, -1)))
@@ -4933,14 +4934,14 @@ static int test_evp_init_seq(int idx)
         errmsg = "FINAL_ENC_INIT";
         goto err;
     }
-    if (!TEST_true(EVP_CipherUpdate(ctx, outbuf, &outlen1, t->input, t->inlen))) {
+    if (!TEST_true(EVP_CipherUpdate(ctx, outbuf, &outlen1, t->input, (int)t->inlen))) {
         errmsg = "CIPHER_UPDATE";
         goto err;
     }
     if (t->finalenc == 0 && t->tag != NULL) {
         /* Set expected tag */
         if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                           t->taglen, (void *)t->tag), 0)) {
+                                             (int)t->taglen, (void *)t->tag), 0)) {
             errmsg = "SET_TAG";
             goto err;
         }
@@ -4954,7 +4955,8 @@ static int test_evp_init_seq(int idx)
         goto err;
     }
     if (t->finalenc != 0 && t->tag != NULL) {
-        if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag), 0)) {
+        if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                                             (int)taglen, tag), 0)) {
             errmsg = "GET_TAG";
             goto err;
         }
@@ -4991,14 +4993,16 @@ static int test_evp_reinit_seq(int idx)
             /* setup cipher context */
             || !TEST_true(EVP_CipherInit_ex2(ctx, type, t->key, t->iv, t->initenc, NULL))
             /* first iteration */
-            || !TEST_true(EVP_CipherUpdate(ctx, outbuf1, &outlen1, t->input, t->inlen))
+            || !TEST_true(EVP_CipherUpdate(ctx, outbuf1, &outlen1, t->input,
+                                           (int)t->inlen))
             || !TEST_true(EVP_CipherFinal_ex(ctx, outbuf1, &outlen_final))
             /* check test results iteration 1 */
             || !TEST_mem_eq(t->expected, t->expectedlen, outbuf1, outlen1 + outlen_final)
             /* now re-init the context (same cipher, key and iv) */
             || !TEST_true(EVP_CipherInit_ex2(ctx, NULL, NULL, NULL, -1, NULL))
             /* second iteration */
-            || !TEST_true(EVP_CipherUpdate(ctx, outbuf2, &outlen2, t->input, t->inlen))
+            || !TEST_true(EVP_CipherUpdate(ctx, outbuf2, &outlen2,
+                                           t->input, (int)t->inlen))
             || !TEST_true(EVP_CipherFinal_ex(ctx, outbuf2, &outlen_final))
             /* check test results iteration 2 */
             || !TEST_mem_eq(t->expected, t->expectedlen, outbuf2, outlen2 + outlen_final))
@@ -5059,7 +5063,8 @@ static int test_evp_reset(int idx)
         errmsg = "PADDING";
         goto err;
     }
-    if (!TEST_true(EVP_CipherUpdate(ctx, outbuf, &outlen1, t->input, t->inlen))) {
+    if (!TEST_true(EVP_CipherUpdate(ctx, outbuf, &outlen1,
+                                    t->input, (int)t->inlen))) {
         errmsg = "CIPHER_UPDATE";
         goto err;
     }
@@ -5075,7 +5080,8 @@ static int test_evp_reset(int idx)
         errmsg = "CIPHER_REINIT";
         goto err;
     }
-    if (!TEST_true(EVP_CipherUpdate(ctx, outbuf, &outlen1, t->input, t->inlen))) {
+    if (!TEST_true(EVP_CipherUpdate(ctx, outbuf, &outlen1,
+                                    t->input, (int)t->inlen))) {
         errmsg = "CIPHER_UPDATE (reinit)";
         goto err;
     }
@@ -5259,7 +5265,8 @@ static int test_gcm_reinit(int idx)
         errmsg = "ENC_INIT";
         goto err;
     }
-    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, t->ivlen1, NULL), 0)) {
+    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN,
+                                         (int)t->ivlen1, NULL), 0)) {
         errmsg = "SET_IVLEN1";
         goto err;
     }
@@ -5285,7 +5292,8 @@ static int test_gcm_reinit(int idx)
         errmsg = "WRONG_RESULT1";
         goto err;
     }
-    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag), 0)) {
+    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                                         (int)taglen, tag), 0)) {
         errmsg = "GET_TAG1";
         goto err;
     }
@@ -5294,7 +5302,8 @@ static int test_gcm_reinit(int idx)
         goto err;
     }
     /* Now reinit */
-    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, t->ivlen2, NULL), 0)) {
+    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN,
+                                         (int)t->ivlen2, NULL), 0)) {
         errmsg = "SET_IVLEN2";
         goto err;
     }
@@ -5319,7 +5328,8 @@ static int test_gcm_reinit(int idx)
         errmsg = "WRONG_RESULT2";
         goto err;
     }
-    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag), 0)) {
+    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                                         (int)taglen, tag), 0)) {
         errmsg = "GET_TAG2";
         goto err;
     }
@@ -6262,9 +6272,9 @@ static int aes_gcm_encrypt(const unsigned char *gcm_key, size_t gcm_key_s,
     if (!TEST_true(EVP_EncryptInit_ex2(ctx, cipher, gcm_key, gcm_iv, params))
             || (gcm_aad != NULL
                 && !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outlen,
-                                                gcm_aad, gcm_aad_s)))
+                                                gcm_aad, (int)gcm_aad_s)))
             || !TEST_true(EVP_EncryptUpdate(ctx, outbuf, &outlen,
-                                            gcm_pt, gcm_pt_s))
+                                            gcm_pt, (int)gcm_pt_s))
             || !TEST_true(EVP_EncryptFinal_ex(ctx, outbuf, &tmplen)))
         goto err;
 
@@ -6312,9 +6322,9 @@ static int aes_gcm_decrypt(const unsigned char *gcm_key, size_t gcm_key_s,
     if (!TEST_true(EVP_DecryptInit_ex2(ctx, cipher, gcm_key, gcm_iv, params))
             || (gcm_aad != NULL
                 && !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outlen,
-                                                gcm_aad, gcm_aad_s)))
+                                                gcm_aad, (int)gcm_aad_s)))
             || !TEST_true(EVP_DecryptUpdate(ctx, outbuf, &outlen,
-                                            gcm_ct, gcm_ct_s))
+                                            gcm_ct, (int)gcm_ct_s))
             || !TEST_mem_eq(outbuf, outlen, gcm_pt, gcm_pt_s))
         goto err;
 
@@ -6398,7 +6408,7 @@ static int rc4_encrypt(const unsigned char *rc4_key, size_t rc4_key_s,
 
     if (!TEST_true(EVP_EncryptInit_ex2(ctx, cipher, rc4_key, NULL, params))
             || !TEST_true(EVP_EncryptUpdate(ctx, outbuf, &outlen,
-                                            rc4_pt, rc4_pt_s))
+                                            rc4_pt, (int)rc4_pt_s))
             || !TEST_true(EVP_EncryptFinal_ex(ctx, outbuf, &tmplen)))
         goto err;
 
@@ -6437,7 +6447,7 @@ static int rc4_decrypt(const unsigned char *rc4_key, size_t rc4_key_s,
 
     if (!TEST_true(EVP_DecryptInit_ex2(ctx, cipher, rc4_key, NULL, params))
             || !TEST_true(EVP_DecryptUpdate(ctx, outbuf, &outlen,
-                                            rc4_ct, rc4_ct_s))
+                                            rc4_ct, (int)rc4_ct_s))
             || !TEST_mem_eq(outbuf, outlen, rc4_pt, rc4_pt_s))
         goto err;
 
@@ -6568,8 +6578,8 @@ static int test_evp_cipher_pipeline(void)
                     || !TEST_ptr(tag_array[i] = OPENSSL_malloc(taglen)))
                     goto err;
 
-                memset(iv_array[i], i + 33, ivlen);
-                memset(plaintext_array[i], i + 1, plaintextlen);
+                memset(iv_array[i], (unsigned char)(i + 33), ivlen);
+                memset(plaintext_array[i], (unsigned char)(i + 1), plaintextlen);
                 inlen_array[i] = plaintextlen;
                 outlen_array[i] = 0;
                 ciphertextlen_array[i] = 0;
@@ -6623,10 +6633,10 @@ static int test_evp_cipher_pipeline(void)
                 if (!TEST_true(EVP_EncryptInit(ctx, cipher, key, iv_array[i]))
                     || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outlen,
                                                     plaintext_array[i],
-                                                    plaintextlen))
+                                                    (int)plaintextlen))
                     || !TEST_true(EVP_EncryptUpdate(ctx, ciphertext, &outlen,
                                                     plaintext_array[i],
-                                                    plaintextlen)))
+                                                    (int)plaintextlen)))
                     goto err;
                 ciphertextlen = outlen;
 
@@ -6676,7 +6686,7 @@ static int test_evp_cipher_pipeline(void)
                 goto err;
 
             for (i = 0; i < numpipes; i++) {
-                memset(exp_plaintext, i + 1, plaintextlen);
+                memset(exp_plaintext, (unsigned char)(i + 1), plaintextlen);
                 if (!TEST_mem_eq(plaintext_array[i], plaintextlen,
                                  exp_plaintext, plaintextlen))
                     goto err;

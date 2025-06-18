@@ -103,13 +103,13 @@ static int put_trace_output(void)
     int res = 1;
 
     OSSL_TRACE_BEGIN(HTTP) {
-        res = TEST_int_eq(BIO_printf(trc_out, OSSL_HELLO), strlen(OSSL_HELLO));
-        res += TEST_int_eq(trace_string(0, 0, OSSL_STR80), strlen(OSSL_STR80));
-        res += TEST_int_eq(trace_string(0, 0, OSSL_STR81), strlen(OSSL_STR80));
-        res += TEST_int_eq(trace_string(1, 1, OSSL_CTRL), strlen(OSSL_CTRL));
-        res += TEST_int_eq(trace_string(0, 1, OSSL_MASKED), strlen(OSSL_MASKED)
+        res = TEST_int_eq(BIO_printf(trc_out, OSSL_HELLO), (int)strlen(OSSL_HELLO));
+        res += TEST_int_eq(trace_string(0, 0, OSSL_STR80), (int)strlen(OSSL_STR80));
+        res += TEST_int_eq(trace_string(0, 0, OSSL_STR81), (int)strlen(OSSL_STR80));
+        res += TEST_int_eq(trace_string(1, 1, OSSL_CTRL), (int)strlen(OSSL_CTRL));
+        res += TEST_int_eq(trace_string(0, 1, OSSL_MASKED), (int)strlen(OSSL_MASKED)
                            + 1); /* newline added */
-        res += TEST_int_eq(BIO_printf(trc_out, OSSL_BYE), strlen(OSSL_BYE));
+        res += TEST_int_eq(BIO_printf(trc_out, OSSL_BYE), (int)strlen(OSSL_BYE));
         res = res == 6;
         /* not using '&&' but '+' to catch potentially multiple test failures */
     } OSSL_TRACE_END(HTTP);

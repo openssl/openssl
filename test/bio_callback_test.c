@@ -60,8 +60,8 @@ static int test_bio_callback_ex(void)
         goto err;
 
     BIO_set_callback_ex(bio, my_bio_cb_ex);
-    i = BIO_write(bio, test1, test1len);
-    if (!TEST_int_eq(i, test1len)
+    i = BIO_write(bio, test1, (int)test1len);
+    if (!TEST_int_eq(i, (int)test1len)
             || !TEST_int_eq(my_param_count, 2)
             || !TEST_ptr_eq(my_param_b[0], bio)
             || !TEST_int_eq(my_param_oper[0], BIO_CB_WRITE)

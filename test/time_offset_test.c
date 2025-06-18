@@ -72,7 +72,7 @@ static int test_offset(int idx)
     int day, sec;
 
     at.data = (unsigned char*)testdata->data;
-    at.length = strlen(testdata->data);
+    at.length = (int)strlen(testdata->data);
     at.type = testdata->type;
     at.flags = 0;
 

@@ -376,7 +376,7 @@ static int test_ext_syntax(void)
     for (i = 0; i < OSSL_NELEM(extvalues); i++) {
         X509V3_CTX ctx;
         BIO *extbio = BIO_new_mem_buf(extvalues[i].value,
-                                      strlen(extvalues[i].value));
+                                      (int)strlen(extvalues[i].value));
         CONF *conf;
         long eline;
 

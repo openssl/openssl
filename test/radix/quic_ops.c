@@ -583,7 +583,7 @@ DEF_FUNC(hf_write_rand)
             buf = OPENSSL_malloc(thislen);
         if (!TEST_ptr(buf))
             goto err;
-        if (!TEST_int_eq(RAND_bytes(buf, thislen), 1))
+        if (!TEST_int_eq(RAND_bytes(buf, (int)thislen), 1))
             goto err;
         r = SSL_write_ex(ssl, buf, thislen, &bytes_written);
         if (!TEST_true(r)
