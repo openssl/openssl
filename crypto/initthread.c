@@ -167,7 +167,7 @@ static ossl_inline THREAD_EVENT_HANDLER **init_fetch_clear_thread_local(OSSL_LIB
     return init_manage_thread_local(ctx, 0, 0);
 }
 
-static ossl_inline THREAD_EVENT_HANDLER **init_fetch_thread_local(OSSL_LIB_CTX *ctx)
+static ossl_inline ossl_unused THREAD_EVENT_HANDLER **init_fetch_thread_local(OSSL_LIB_CTX *ctx)
 {
     return init_manage_thread_local(ctx, 0, 1);
 }
