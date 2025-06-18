@@ -607,7 +607,7 @@ static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
 
     if (p.seed != NULL && ossl_ml_kem_have_seed(key)) {
         /* Exported for import */
-        if (!ml_kem_get_key_param(key, p.seed, v->prvkey_bytes,
+        if (!ml_kem_get_key_param(key, p.seed, ML_KEM_SEED_BYTES,
                                   &ossl_ml_kem_encode_seed))
             return 0;
     }
