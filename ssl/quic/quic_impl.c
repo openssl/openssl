@@ -2443,10 +2443,14 @@ int ossl_quic_want(const SSL *s)
  *
  */
 QUIC_NEEDS_LOCK
-static void quic_post_write(QUIC_XSO *xso, int did_append,
+static int quic_post_write(QUIC_XSO *xso, int did_append,
                             int did_append_all, uint64_t flags,
                             int do_tick)
 {
+    if ((did_append && (!xso || !xso->conn || !xso->conn->ch)) ||
+        ((did_append_all && (flags & SSL_WRITE_FLAG_CONCLUDE) != 0) && (!xso || !xso->stream || !xso->stream->sstream)))
+       return 0;
+    
     /*
      * We have appended at least one byte to the stream.
      * Potentially mark stream as active, depending on FC.
@@ -2466,6 +2470,8 @@ static void quic_post_write(QUIC_XSO *xso, int did_append,
      */
     if (do_tick)
         ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(xso->conn->ch), 0);
+
+    return 1;
 }
 
 struct quic_write_again_args {
@@ -2550,8 +2556,9 @@ static int quic_write_again(void *arg)
     if (!xso_sstream_append(args->xso, args->buf, args->len, &actual_written))
         return -2;
 
-    quic_post_write(args->xso, actual_written > 0,
-                    args->len == actual_written, args->flags, 0);
+    if (!quic_post_write(args->xso, actual_written > 0,
+                    args->len == actual_written, args->flags, 0))
+        return -2;
 
     args->buf           += actual_written;
     args->len           -= actual_written;
@@ -2581,7 +2588,8 @@ static int quic_write_blocking(QCTX *ctx, const void *buf, size_t len,
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
     }
 
-    quic_post_write(xso, actual_written > 0, actual_written == len, flags, 1);
+    if (!quic_post_write(xso, actual_written > 0, actual_written == len, flags, 1))
+        return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
 
     /*
      * Record however much data we wrote
@@ -2687,8 +2695,9 @@ static int quic_write_nonblocking_aon(QCTX *ctx, const void *buf,
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
     }
 
-    quic_post_write(xso, actual_written > 0, actual_written == actual_len,
-                    flags, qctx_should_autotick(ctx));
+    if (!quic_post_write(xso, actual_written > 0, actual_written == actual_len,
+                    flags, qctx_should_autotick(ctx)))
+        return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
 
     if (actual_written == actual_len) {
         /* We have sent everything. */
@@ -2749,8 +2758,9 @@ static int quic_write_nonblocking_epw(QCTX *ctx, const void *buf, size_t len,
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
     }
 
-    quic_post_write(xso, *written > 0, *written == len, flags,
-                    qctx_should_autotick(ctx));
+    if (!quic_post_write(xso, *written > 0, *written == len, flags,
+                    qctx_should_autotick(ctx)))
+        return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
 
     if (*written == 0)
         /* SSL_write_ex returns 0 if it didn't write anything. */
@@ -2854,8 +2864,9 @@ int ossl_quic_write_flags(SSL *s, const void *buf, size_t len,
 
     if (len == 0) {
         if ((flags & SSL_WRITE_FLAG_CONCLUDE) != 0)
-            quic_post_write(ctx.xso, 0, 1, flags,
-                            qctx_should_autotick(&ctx));
+            if (!quic_post_write(ctx.xso, 0, 1, flags,
+                            qctx_should_autotick(&ctx)))
+                return QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_INTERNAL_ERROR, NULL);
 
         ret = 1;
         goto out;
@@ -3219,7 +3230,8 @@ int ossl_quic_conn_stream_conclude(SSL *s)
     }
 
     ossl_quic_sstream_fin(qs->sstream);
-    quic_post_write(ctx.xso, 1, 0, 0, qctx_should_autotick(&ctx));
+    if (!quic_post_write(ctx.xso, 1, 0, 0, qctx_should_autotick(&ctx)))
+        return QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_INTERNAL_ERROR, NULL);
     qctx_unlock(&ctx);
     return 1;
 }
