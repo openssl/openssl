@@ -160,7 +160,7 @@ static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
 static const OSSL_PARAM *chacha20_poly1305_gettable_ctx_params
     (ossl_unused void *cctx, ossl_unused void *provctx)
 {
-    return chacha20_poly1305_get_ctx_params_ettable;
+    return chacha20_poly1305_get_ctx_params_list;
 }
 
 {- produce_param_decoder('chacha20_poly1305_set_ctx_params',
@@ -175,7 +175,7 @@ static const OSSL_PARAM *chacha20_poly1305_settable_ctx_params(
         ossl_unused void *cctx, ossl_unused void *provctx
     )
 {
-    return chacha20_poly1305_set_ctx_params_ettable;
+    return chacha20_poly1305_set_ctx_params_list;
 }
 
 static int chacha20_poly1305_set_ctx_params(void *vctx,
