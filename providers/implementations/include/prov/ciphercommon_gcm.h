@@ -111,6 +111,9 @@ OSSL_FUNC_cipher_set_ctx_params_fn ossl_gcm_set_ctx_params;
 OSSL_FUNC_cipher_cipher_fn ossl_gcm_cipher;
 OSSL_FUNC_cipher_update_fn ossl_gcm_stream_update;
 OSSL_FUNC_cipher_final_fn ossl_gcm_stream_final;
+OSSL_FUNC_cipher_gettable_ctx_params_fn ossl_gcm_gettable_ctx_params;
+OSSL_FUNC_cipher_settable_ctx_params_fn ossl_gcm_settable_ctx_params;
+
 void ossl_gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
                       const PROV_GCM_HW *hw);
 
