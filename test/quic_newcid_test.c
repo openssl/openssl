@@ -74,7 +74,7 @@ static int test_ncid_frame(int fail)
     if (!TEST_true(qtest_create_quic_connection(qtserv, cssl)))
         goto err;
 
-    if (!TEST_int_eq(SSL_write(cssl, msg, msglen), msglen))
+    if (!TEST_int_eq(SSL_write(cssl, msg, (int)msglen), (int)msglen))
         goto err;
 
     ossl_quic_tserver_tick(qtserv);
@@ -115,13 +115,13 @@ static int test_ncid_frame(int fail)
     if (!TEST_true(SSL_handle_events(cssl)))
         goto err;
 
-    if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), msglen))
+    if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)msglen))
         goto err;
 
     if (!TEST_mem_eq(msg, msglen, buf, bytesread))
         goto err;
 
-    if (!TEST_int_eq(SSL_write(cssl, msg, msglen), msglen))
+    if (!TEST_int_eq(SSL_write(cssl, msg, (int)msglen), (int)msglen))
         goto err;
 
     ossl_quic_tserver_tick(qtserv);

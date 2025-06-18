@@ -575,7 +575,7 @@ static EVP_PKEY *new_raw_private_key(const char *curvename,
                                              (char *)priv, privlen))
             goto err;
     } else {
-        privbn = BN_bin2bn(priv, privlen, NULL);
+        privbn = BN_bin2bn(priv, (int)privlen, NULL);
         if (privbn == NULL)
             goto err;
         if (!OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_GROUP_NAME,

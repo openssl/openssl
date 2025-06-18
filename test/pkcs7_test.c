@@ -151,7 +151,7 @@ static int pkcs7_verify_test(void)
     for  (i = 0; i < OSSL_NELEM(sig); ++i)
         BIO_puts(bio, sig[i]);
 
-    ret = TEST_ptr(msg_bio = BIO_new_mem_buf(signed_data, strlen(signed_data)))
+    ret = TEST_ptr(msg_bio = BIO_new_mem_buf(signed_data, (int)strlen(signed_data)))
           && TEST_ptr(x509_bio = BIO_new_mem_buf(cert_der, sizeof(cert_der)))
           && TEST_ptr(cert = d2i_X509_bio(x509_bio, NULL))
           && TEST_int_eq(ERR_peek_error(), 0)

@@ -387,8 +387,8 @@ static const struct ecdsa_pub_verify_st eddsa_pv_data[] = {
 #ifndef OPENSSL_NO_DSA
 
 struct dsa_paramgen_st {
-    size_t L;
-    size_t N;
+    int L;
+    int N;
 };
 
 struct dsa_pqver_st {
@@ -404,8 +404,8 @@ struct dsa_pqver_st {
 
 struct dsa_siggen_st {
     const char *digest_alg;
-    size_t L;
-    size_t N;
+    int L;
+    int N;
     const unsigned char *msg;
     size_t msg_len;
 };
@@ -1161,7 +1161,7 @@ static const struct dh_safe_prime_keyver_st dh_safe_prime_keyver_data[] = {
 #endif /* OPENSSL_NO_DH */
 
 struct rsa_keygen_st {
-    size_t mod;
+    int mod;
     const unsigned char *e;
     size_t e_len;
     const unsigned char *xp1;
@@ -1344,7 +1344,7 @@ static const struct rsa_keygen_st rsa_keygen_data[] = {
 #define NO_PSS_SALT_LEN -1
 struct rsa_siggen_st {
     const char *sig_pad_mode;
-    size_t mod;
+    int mod;
     const char *digest_alg;
     const unsigned char *msg;
     size_t msg_len;
@@ -1381,7 +1381,7 @@ static const struct rsa_siggen_st rsa_siggen_data[] = {
 
 struct rsa_sigver_st {
     const char *sig_pad_mode;
-    size_t mod;
+    int mod;
     const char *digest_alg;
     const unsigned char *msg;
     size_t msg_len;

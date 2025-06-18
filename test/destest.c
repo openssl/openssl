@@ -382,13 +382,13 @@ static int test_des_cbc(void)
     memset(cbc_out, 0, sizeof(cbc_out));
     memset(cbc_in, 0, sizeof(cbc_in));
     memcpy(iv3, cbc_iv, sizeof(cbc_iv));
-    DES_ncbc_encrypt(cbc_data, cbc_out, cbc_data_len + 1, &ks,
+    DES_ncbc_encrypt(cbc_data, cbc_out, (long)(cbc_data_len + 1), &ks,
                      &iv3, DES_ENCRYPT);
     if (!TEST_mem_eq(cbc_out, 32, cbc_ok, 32))
         return 0;
 
     memcpy(iv3, cbc_iv, sizeof(cbc_iv));
-    DES_ncbc_encrypt(cbc_out, cbc_in, cbc_data_len + 1, &ks,
+    DES_ncbc_encrypt(cbc_out, cbc_in, (long)(cbc_data_len + 1), &ks,
                      &iv3, DES_DECRYPT);
     return TEST_mem_eq(cbc_in, cbc_data_len, cbc_data, cbc_data_len);
 }
@@ -406,12 +406,12 @@ static int test_des_ede_cbc(void)
     memset(cbc_out, 0, sizeof(cbc_out));
     memset(cbc_in, 0, sizeof(cbc_in));
     memcpy(iv3, cbc_iv, sizeof(cbc_iv));
-    DES_xcbc_encrypt(cbc_data, cbc_out, n, &ks, &iv3, &cbc2_key, &cbc3_key,
+    DES_xcbc_encrypt(cbc_data, cbc_out, (long)n, &ks, &iv3, &cbc2_key, &cbc3_key,
                      DES_ENCRYPT);
     if (!TEST_mem_eq(cbc_out, sizeof(xcbc_ok), xcbc_ok, sizeof(xcbc_ok)))
         return 0;
     memcpy(iv3, cbc_iv, sizeof(cbc_iv));
-    DES_xcbc_encrypt(cbc_out, cbc_in, n, &ks, &iv3, &cbc2_key, &cbc3_key,
+    DES_xcbc_encrypt(cbc_out, cbc_in, (long)n, &ks, &iv3, &cbc2_key, &cbc3_key,
                      DES_DECRYPT);
     return TEST_mem_eq(cbc_data, n, cbc_data, n);
 }
@@ -437,13 +437,13 @@ static int test_ede_cbc(void)
 
     DES_ede3_cbc_encrypt(cbc_data, cbc_out, 16L, &ks, &ks2, &ks3, &iv3,
                          DES_ENCRYPT);
-    DES_ede3_cbc_encrypt(&cbc_data[16], &cbc_out[16], i - 16, &ks, &ks2,
+    DES_ede3_cbc_encrypt(&cbc_data[16], &cbc_out[16], (long)(i - 16), &ks, &ks2,
                          &ks3, &iv3, DES_ENCRYPT);
     if (!TEST_mem_eq(cbc_out, n, cbc3_ok, n))
         return 0;
 
     memcpy(iv3, cbc_iv, sizeof(cbc_iv));
-    DES_ede3_cbc_encrypt(cbc_out, cbc_in, i, &ks, &ks2, &ks3, &iv3,
+    DES_ede3_cbc_encrypt(cbc_out, cbc_in, (long)i, &ks, &ks2, &ks3, &iv3,
                          DES_DECRYPT);
     return TEST_mem_eq(cbc_in, i, cbc_data, i);
 }
@@ -459,7 +459,7 @@ static int test_input_align(int i)
     memcpy(iv, cbc_iv, sizeof(cbc_iv));
     if (!TEST_int_eq(DES_set_key_checked(&cbc_key, &ks), 0))
         return 0;
-    DES_ncbc_encrypt(&cbc_data[i], cbc_out, n, &ks, &iv, DES_ENCRYPT);
+    DES_ncbc_encrypt(&cbc_data[i], cbc_out, (long)n, &ks, &iv, DES_ENCRYPT);
     return 1;
 }
 
@@ -474,7 +474,7 @@ static int test_output_align(int i)
     memcpy(iv, cbc_iv, sizeof(cbc_iv));
     if (!TEST_int_eq(DES_set_key_checked(&cbc_key, &ks), 0))
         return 0;
-    DES_ncbc_encrypt(cbc_data, &cbc_out[i], n, &ks, &iv, DES_ENCRYPT);
+    DES_ncbc_encrypt(cbc_data, &cbc_out[i], (long)n, &ks, &iv, DES_ENCRYPT);
     return 1;
 }
 
@@ -499,7 +499,7 @@ static int test_des_pcbc(void)
     unsigned char cbc_in[40];
     unsigned char cbc_out[40];
     DES_key_schedule ks;
-    const int n = strlen((char *)cbc_data) + 1;
+    const int n = (int)(strlen((char *)cbc_data) + 1);
 
     if (!TEST_int_eq(DES_set_key_checked(&cbc_key, &ks), 0))
         return 0;
@@ -682,7 +682,7 @@ static int test_des_cbc_cksum(void)
     unsigned char cret[8];
 
     DES_set_key_checked(&cbc_key, &ks);
-    cs = DES_cbc_cksum(cbc_data, &cret, strlen((char *)cbc_data), &ks,
+    cs = DES_cbc_cksum(cbc_data, &cret, (long)strlen((char *)cbc_data), &ks,
                        &cbc_iv);
     if (!TEST_cs_eq(cs, cbc_cksum_ret))
         return 0;

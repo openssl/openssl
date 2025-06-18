@@ -41,7 +41,7 @@ static int test_basic(void)
     if (!TEST_true(qtest_create_quic_connection(qtserv, cssl)))
         goto err;
 
-    if (!TEST_int_eq(SSL_write(cssl, msg, msglen), msglen))
+    if (!TEST_int_eq(SSL_write(cssl, msg, (int)msglen), (int)msglen))
         goto err;
 
     ossl_quic_tserver_tick(qtserv);

@@ -98,7 +98,7 @@ static int test_thread_internal(void)
     uint32_t retval[3];
     uint32_t local[3] = { 0 };
     uint32_t threads_supported;
-    size_t i;
+    uint32_t i;
     void *t[3];
     int status = 0;
     OSSL_LIB_CTX *cust_ctx = OSSL_LIB_CTX_new();
@@ -180,7 +180,7 @@ static int test_thread_internal(void)
         if (!TEST_int_eq(ossl_crypto_thread_join(t[i], &retval[0]), 1))
             goto cleanup;
 
-        if (!TEST_int_eq(retval[0], i + 1) || !TEST_int_eq(local[0], i + 2))
+        if (!TEST_uint_eq(retval[0], i + 1) || !TEST_uint_eq(local[0], i + 2))
             goto cleanup;
 
         if (!TEST_int_eq(ossl_crypto_thread_clean(t[i]), 1))
@@ -207,7 +207,7 @@ static int test_thread_internal(void)
             goto cleanup;
     }
     for (i = 0; i < OSSL_NELEM(t); ++i) {
-        if (!TEST_int_eq(retval[i], i + 1) || !TEST_int_eq(local[i], i + 2))
+        if (!TEST_uint_eq(retval[i], i + 1) || !TEST_uint_eq(local[i], i + 2))
             goto cleanup;
         if (!TEST_int_eq(ossl_crypto_thread_clean(t[i]), 1))
             goto cleanup;
@@ -229,7 +229,7 @@ static int test_thread_internal(void)
             goto cleanup;
     }
     for (i = 0; i < OSSL_NELEM(t); ++i) {
-        if (!TEST_int_eq(retval[i], i + 1) || !TEST_int_eq(local[i], i + 2))
+        if (!TEST_uint_eq(retval[i], i + 1) || !TEST_uint_eq(local[i], i + 2))
             goto cleanup;
         if (!TEST_int_eq(ossl_crypto_thread_clean(t[i]), 1))
             goto cleanup;

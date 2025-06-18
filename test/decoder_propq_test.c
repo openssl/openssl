@@ -42,7 +42,7 @@ const OPTIONS *test_get_options(void)
 static int passcb(char *buf, int size, int rwflag, void *userdata)
 {
     strcpy(buf, "pass");
-    return strlen(buf);
+    return (int)strlen(buf);
 }
 
 static int test_decode_nonfipsalg(void)

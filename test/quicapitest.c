@@ -147,7 +147,7 @@ static int test_quic_write_read(int idx)
             if (!TEST_true(SSL_read_ex(clientquic, buf, 1, &numbytes))
                     || !TEST_size_t_eq(numbytes, 1)
                     || !TEST_true(SSL_has_pending(clientquic))
-                    || !TEST_int_eq(SSL_pending(clientquic), msglen - 1)
+                    || !TEST_int_eq(SSL_pending(clientquic), (int)(msglen - 1))
                     || !TEST_true(SSL_read_ex(clientquic, buf + 1,
                                               sizeof(buf) - 1, &numbytes))
                     || !TEST_mem_eq(buf, numbytes + 1, msg, msglen))
@@ -298,7 +298,8 @@ static int test_ciphersuites(void)
 #endif
         TLS1_3_CK_AES_128_GCM_SHA256
     };
-    size_t i, j;
+    size_t i;
+    int j;
 
     if (!TEST_ptr(ctx))
         return 0;
@@ -701,11 +702,12 @@ static int test_new_token(void)
 
 static int ensure_valid_ciphers(const STACK_OF(SSL_CIPHER) *ciphers)
 {
-    size_t i;
+    int i;
 
     /* Ensure ciphersuite list is suitably subsetted. */
-    for (i = 0; i < (size_t)sk_SSL_CIPHER_num(ciphers); ++i) {
+    for (i = 0; i < sk_SSL_CIPHER_num(ciphers); ++i) {
         const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(ciphers, i);
+
         switch (SSL_CIPHER_get_id(cipher)) {
             case TLS1_3_CK_AES_128_GCM_SHA256:
             case TLS1_3_CK_AES_256_GCM_SHA384:
