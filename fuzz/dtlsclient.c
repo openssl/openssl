@@ -60,7 +60,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     BIO *out;
     SSL_CTX *ctx;
 
-    if (len == 0)
+    if (len == 0 || len > INT_MAX)
         return 0;
 
     /* This only fuzzes the initial flow from the client so far. */
@@ -84,7 +84,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     }
     SSL_set_bio(client, in, out);
     SSL_set_connect_state(client);
-    OPENSSL_assert((size_t)BIO_write(in, buf, len) == len);
+    OPENSSL_assert((size_t)BIO_write(in, buf, (int)len) == len);
     if (SSL_do_handshake(client) == 1) {
         /* Keep reading application data until error or EOF. */
         uint8_t tmp[1024];
