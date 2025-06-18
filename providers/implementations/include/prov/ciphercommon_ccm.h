@@ -89,6 +89,9 @@ OSSL_FUNC_cipher_set_ctx_params_fn ossl_ccm_set_ctx_params;
 OSSL_FUNC_cipher_update_fn ossl_ccm_stream_update;
 OSSL_FUNC_cipher_final_fn ossl_ccm_stream_final;
 OSSL_FUNC_cipher_cipher_fn ossl_ccm_cipher;
+OSSL_FUNC_cipher_gettable_ctx_params_fn ossl_ccm_gettable_ctx_params;
+OSSL_FUNC_cipher_settable_ctx_params_fn ossl_ccm_settable_ctx_params;
+
 void ossl_ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits, const PROV_CCM_HW *hw);
 
 int ossl_ccm_generic_setiv(PROV_CCM_CTX *ctx, const unsigned char *nonce,
