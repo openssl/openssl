@@ -3260,9 +3260,14 @@ void ossl_quic_channel_on_remote_conn_close(QUIC_CHANNEL *ch,
                                             OSSL_QUIC_FRAME_CONN_CLOSE *f)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
+    QUIC_STREAM_MAP *qsm;
 
     if (!ossl_quic_channel_is_active(ch))
         return;
+
+    qsm = ossl_quic_channel_get_qsm(ch);
+    if (qsm != NULL)
+        ossl_quic_stream_map_notify_close(qsm);
 
     tcause.remote     = 1;
     tcause.app        = f->is_app;

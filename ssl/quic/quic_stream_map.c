@@ -869,12 +869,10 @@ static void notify_close_each(QUIC_STREAM *qs, void *arg)
     }
 
     /*
-     * I need to re-read RFC 9000. I could miss this part in my earlier walkthroughts of this
-     * document. The information I'm looking for is how existing streams should be treated
-     * when connection close is initiated. In this particular case we are in situation there
-     * streams around when we handle connection close (_EC event) in poller. The chosen
-     * approach to pretend RESET is received on all existing streams so we can signal
-     * application streams are gone.
+     * Keep in mind we deal with connection shutdown initiated by remote peer.
+     * This is described at RFC 9000, Section 10.2 Immediate Close. Upon
+     * reception of CONNECTION_CLOSE frame we need to reset all streams which
+     * belong to connection.
      */
     qs->conn_tearing_down = 1;
     if (mark_active)
@@ -891,13 +889,13 @@ static void count_streams(QUIC_STREAM *qs, void *arg)
     unsigned int *count = (unsigned int *)arg;
 
     if (qs->recv_state != QUIC_RSTREAM_STATE_NONE &&
-        qs->recv_state < QUIC_RSTREAM_STATE_RESET_RECVD) {
+        qs->recv_state < QUIC_RSTREAM_STATE_DATA_READ) {
         *count = *count + 1;
         (void)(0);
     }
 
     if (qs->send_state != QUIC_SSTREAM_STATE_NONE &&
-        qs->send_state < QUIC_SSTREAM_STATE_RESET_SENT) {
+        qs->send_state < QUIC_SSTREAM_STATE_DATA_RECVD) {
         *count = *count + 1;
         (void)(0);
     }

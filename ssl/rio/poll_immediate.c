@@ -373,26 +373,21 @@ static int poll_readout(SSL_POLL_ITEM *items,
                     FAIL_ITEM(i);
 
                 /*
-                 * With SSL_POLL_EVENT_EC we notify application
-                 * the connection entered a SHUTDOWN state.
-                 * We also notify all stream objects associated with
-                 * connection.
+                 * SSL_POLL_EVENT_ECD signals application the connection
+                 * object is ready to be freed. We must suppress ECD event
+                 * if there are streams still attached to connection.
+                 * After application destroys SSL stream objects attached
+                 * to connection, then we let SSL_poll() to signal ECD event
+                 * to note application it's time to destroy connection
+                 * object.
                  */
-                if (revents & SSL_POLL_EVENT_EC) {
-                    ossl_quic_conn_notify_close(ssl);
-                    ++result_count;
-                } else if (revents & SSL_POLL_EVENT_ECD) {
-                    /*
-		     * SSL_POLL_EVENT_ECD signals application the connection
-		     * object is ready to be freed. We must suppress ECD event
-                     * if there are streams still attached to connection.
-                     * After  removes SSL stream objects from SSL_poll()
-                     * set, then we can signal ECD event.
-                     */
+                if (revents & SSL_POLL_EVENT_ECD) {
                     if (ossl_quic_conn_count_streams(ssl) == 0)
                         result_count++;
                     else
                         revents &= ~SSL_POLL_EVENT_ECD;
+                } else if (revents & SSL_POLL_EVENT_EC) {
+                    result_count++;
                 }
                 break;
             case SSL_TYPE_QUIC_LISTENER:
