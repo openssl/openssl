@@ -89,6 +89,24 @@ int RAND_set_DRBG_type(OSSL_LIB_CTX *ctx, const char *drbg, const char *propq,
 int RAND_set_seed_source_type(OSSL_LIB_CTX *ctx, const char *seed,
     const char *propq);
 
+/**
+ * @brief specifies parameters used to instantiate the thread local DRBGs.
+ * @param ctx the library context to operate on.
+ * @param params the parameter array to use.
+ * @returns 1 on success and 0 on failure.
+ * @see RAND_set1_default_params(3)
+ */
+int RAND_set1_default_params(OSSL_LIB_CTX *ctx, const OSSL_PARAM *p);
+
+/**
+ * @brief specifies parameters used to instantiate the primary DRBG.
+ * @param ctx the library context to operate on.
+ * @param params the parameter array to use.
+ * @returns 1 on success and 0 on failure.
+ * @see RAND_set1_primary_default_params(3)
+ */
+int RAND_set1_primary_default_params(OSSL_LIB_CTX *ctx, const OSSL_PARAM *p);
+
 void RAND_seed(const void *buf, int num);
 void RAND_keep_random_devices_open(int keep);
 

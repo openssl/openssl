@@ -6245,3 +6245,5 @@ OSSL_KDF_PURPOSE_server_cipher_key      ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_iv              ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_key             ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_mac_key         ?	4_2_0	EXIST::VARIABLE:
+RAND_set1_default_params                ?	4_2_0	EXIST::FUNCTION:
+RAND_set1_primary_default_params        ?	4_2_0	EXIST::FUNCTION:

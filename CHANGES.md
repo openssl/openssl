@@ -133,6 +133,11 @@ OpenSSL 4.2
    <!-- https://github.com/openssl/openssl/pull/33084-->
 
    *Daniel Kubec*
+ * Added `RAND_set1_default_params()`
+   and `RAND_set1_primary_default_params()` API functions, that provide
+   ability to set parameters used to instantiate DRBGs.
+
+   *Christian Vögl*
 
  * `EVP_SKEY_get0_raw_key()` now accepts a NULL key pointer to retrieve only
    the key length.  The length is obtained from the `OSSL_SKEY_PARAM_KEY_LENGTH`
