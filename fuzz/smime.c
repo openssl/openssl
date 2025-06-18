@@ -21,7 +21,7 @@ int FuzzerInitialize(int *argc, char ***argv)
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    BIO *b = BIO_new_mem_buf(buf, len);
+    BIO *b = BIO_new_mem_buf(buf, (int)len);
     PKCS7 *p7 = SMIME_read_PKCS7(b, NULL);
 
     if (p7 != NULL) {

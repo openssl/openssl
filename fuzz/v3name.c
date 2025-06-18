@@ -28,9 +28,9 @@ int FuzzerTestOneInput(const uint8_t* data, size_t size){
      * We create two versions of each GENERAL_NAME so that we ensure when
      * we compare them they are always different pointers.
      */
-    namesa = d2i_GENERAL_NAME(NULL, &derp, size);
+    namesa = d2i_GENERAL_NAME(NULL, &derp, (long)size);
     derp = data;
-    namesb = d2i_GENERAL_NAME(NULL, &derp, size);
+    namesb = d2i_GENERAL_NAME(NULL, &derp, (long)size);
     GENERAL_NAME_cmp(namesa, namesb);
     if (namesa != NULL)
         GENERAL_NAME_free(namesa);

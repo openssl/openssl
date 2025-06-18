@@ -63,10 +63,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         s3 = buf[0] & 4;
         ++buf;
     }
-    OPENSSL_assert(BN_bin2bn(buf, l1, b1) == b1);
+    OPENSSL_assert(BN_bin2bn(buf, (int)l1, b1) == b1);
     BN_set_negative(b1, s1);
-    OPENSSL_assert(BN_bin2bn(buf + l1, l2, b2) == b2);
-    OPENSSL_assert(BN_bin2bn(buf + l1 + l2, l3, b3) == b3);
+    OPENSSL_assert(BN_bin2bn(buf + l1, (int)l2, b2) == b2);
+    OPENSSL_assert(BN_bin2bn(buf + l1 + l2, (int)l3, b3) == b3);
     BN_set_negative(b3, s3);
 
     /* mod 0 is undefined */
