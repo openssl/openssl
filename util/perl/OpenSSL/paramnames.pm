@@ -782,7 +782,7 @@ sub output_param_decoder {
     # Output param pointer structure
     printf "#ifndef %s_st\n", $decoder_name_base;
     printf "struct %s_st {\n", $decoder_name_base;
-    foreach my $pident (values %prms) {
+    foreach my $pident (sort values %prms) {
         printf "    OSSL_PARAM *%s;\n", $pident;
     }
     print "};\n#endif\n\n";
