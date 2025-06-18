@@ -293,7 +293,7 @@ static const OSSL_PARAM *ml_dsa_imexport_types(int selection)
 {
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return NULL;
-    return ml_dsa_key_type_params_ettable;
+    return ml_dsa_key_type_params_list;
 }
 
 {- produce_param_decoder('ml_dsa_get_params',
@@ -309,7 +309,7 @@ static const OSSL_PARAM *ml_dsa_imexport_types(int selection)
 
 static const OSSL_PARAM *ml_dsa_gettable_params(void *provctx)
 {
-    return ml_dsa_get_params_ettable;
+    return ml_dsa_get_params_list;
 }
 
 static int ml_dsa_get_params(void *keydata, OSSL_PARAM params[])
@@ -541,7 +541,7 @@ static int ml_dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 static const OSSL_PARAM *ml_dsa_gen_settable_params(ossl_unused void *genctx,
                                                     ossl_unused void *provctx)
 {
-    return ml_dsa_gen_set_params_ettable;
+    return ml_dsa_gen_set_params_list;
 }
 
 static void ml_dsa_gen_cleanup(void *genctx)

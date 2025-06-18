@@ -159,7 +159,7 @@ const OSSL_PARAM *ossl_gcm_gettable_ctx_params(
         ossl_unused void *cctx, ossl_unused void *provctx
     )
 {
-    return ossl_cipher_gcm_get_ctx_params_ettable;
+    return ossl_cipher_gcm_get_ctx_params_list;
 }
 
 int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
@@ -261,7 +261,7 @@ const OSSL_PARAM *ossl_gcm_settable_ctx_params(
         ossl_unused void *cctx, ossl_unused void *provctx
     )
 {
-    return ossl_cipher_gcm_set_ctx_params_ettable;
+    return ossl_cipher_gcm_set_ctx_params_list;
 }
 
 int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
