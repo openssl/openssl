@@ -140,7 +140,7 @@ jobs:
       run: mkdir _build
     - name: config
       working-directory: _build
-      run: perl ..\Configure --banner=Configured no-makedepend enable-fips
+      run: perl ..\Configure --banner=Configured --strict-warnings no-makedepend enable-fips
     - name: config dump
       working-directory: _build
       run: ./configdata.pm --dump
