@@ -2210,18 +2210,19 @@ int speed_main(int argc, char **argv)
 
     for (idx = 0; idx < (unsigned int)sk_EVP_KEM_num(kem_stack); idx++) {
         EVP_KEM *kem = sk_EVP_KEM_value(kem_stack, idx);
+        const char *kem_name = EVP_KEM_get0_name(kem);
 
-        if (strcmp(EVP_KEM_get0_name(kem), "RSA") == 0) {
-            if (kems_algs_len + OSSL_NELEM(rsa_choices) >= MAX_KEM_NUM) {
+        if (strcmp(kem_name, "RSA") == 0) {
+            if (kems_algs_len + RSA_NUM >= MAX_KEM_NUM) {
                 BIO_printf(bio_err,
                            "Too many KEMs registered. Change MAX_KEM_NUM.\n");
                 goto end;
             }
-            for (i = 0; i < OSSL_NELEM(rsa_choices); i++) {
+            for (i = 0; i < RSA_NUM; i++) {
                 kems_doit[kems_algs_len] = 1;
                 kems_algname[kems_algs_len++] = OPENSSL_strdup(rsa_choices[i].name);
             }
-        } else if (strcmp(EVP_KEM_get0_name(kem), "EC") == 0) {
+        } else if (strcmp(kem_name, "EC") == 0) {
             if (kems_algs_len + 3 >= MAX_KEM_NUM) {
                 BIO_printf(bio_err,
                            "Too many KEMs registered. Change MAX_KEM_NUM.\n");
@@ -2240,7 +2241,7 @@ int speed_main(int argc, char **argv)
                 goto end;
             }
             kems_doit[kems_algs_len] = 1;
-            kems_algname[kems_algs_len++] = OPENSSL_strdup(EVP_KEM_get0_name(kem));
+            kems_algname[kems_algs_len++] = OPENSSL_strdup(kem_name);
         }
     }
     sk_EVP_KEM_pop_free(kem_stack, EVP_KEM_free);
@@ -2257,12 +2258,12 @@ int speed_main(int argc, char **argv)
         const char *sig_name = EVP_SIGNATURE_get0_name(s);
 
         if (strcmp(sig_name, "RSA") == 0) {
-            if (sigs_algs_len + OSSL_NELEM(rsa_choices) >= MAX_SIG_NUM) {
+            if (sigs_algs_len + RSA_NUM >= MAX_SIG_NUM) {
                 BIO_printf(bio_err,
                            "Too many signatures registered. Change MAX_SIG_NUM.\n");
                 goto end;
             }
-            for (i = 0; i < OSSL_NELEM(rsa_choices); i++) {
+            for (i = 0; i < RSA_NUM; i++) {
                 sigs_doit[sigs_algs_len] = 1;
                 sigs_algname[sigs_algs_len++] = OPENSSL_strdup(rsa_choices[i].name);
             }
