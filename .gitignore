@@ -86,6 +86,7 @@ providers/common/include/prov/der_sm2.h
 providers/common/include/prov/der_ml_dsa.h
 providers/implementations/keymgmt/ml_dsa_kmgmt.c
 providers/implementations/keymgmt/ml_kem_kmgmt.c
+providers/implementations/signature/ml_dsa_sig.c
 providers/implementations/ciphers/ciphercommon.c
 providers/implementations/ciphers/ciphercommon_ccm.c
 providers/implementations/ciphers/ciphercommon_gcm.c
