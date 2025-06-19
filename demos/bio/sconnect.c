@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     out = BIO_push(ssl_bio, out);
 
     p = "GET / HTTP/1.0\r\n\r\n";
-    len = strlen(p);
+    len = (int)strlen(p);
 
     off = 0;
     for (;;) {

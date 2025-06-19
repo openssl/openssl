@@ -185,7 +185,7 @@ static int keyexch_x25519_after(
     }
 
     printf("Shared secret (%s):\n", local_peer->name);
-    BIO_dump_indent_fp(stdout, local_peer->secret, local_peer->secret_len, 2);
+    BIO_dump_indent_fp(stdout, local_peer->secret, (int)local_peer->secret_len, 2);
     putchar('\n');
 
     ret = 1;

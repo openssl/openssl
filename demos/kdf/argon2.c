@@ -113,7 +113,7 @@ int main(int argc, char **argv)
         if (max_threads == 0)
             threads = 1;
         else if (max_threads < parallel_cost)
-            threads = max_threads;
+            threads = (unsigned int)max_threads;
     }
 
     /* Set password */
