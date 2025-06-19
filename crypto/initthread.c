@@ -133,7 +133,7 @@ static int set_thread_event_handler(OSSL_LIB_CTX *ctx, THREAD_EVENT_HANDLER **ha
 }
 
 static THREAD_EVENT_HANDLER **
-init_manage_thread_local(OSSL_LIB_CTX *ctx, int alloc, int keep)
+manage_thread_local(OSSL_LIB_CTX *ctx, int alloc, int keep)
 {
     THREAD_EVENT_HANDLER **hands = get_thread_event_handler(ctx);
 
@@ -162,19 +162,19 @@ init_manage_thread_local(OSSL_LIB_CTX *ctx, int alloc, int keep)
     return hands;
 }
 
-static ossl_inline THREAD_EVENT_HANDLER **init_fetch_clear_thread_local(OSSL_LIB_CTX *ctx)
+static ossl_inline THREAD_EVENT_HANDLER **clear_thread_local(OSSL_LIB_CTX *ctx)
 {
-    return init_manage_thread_local(ctx, 0, 0);
+    return manage_thread_local(ctx, 0, 0);
 }
 
-static ossl_inline ossl_unused THREAD_EVENT_HANDLER **init_fetch_thread_local(OSSL_LIB_CTX *ctx)
+static ossl_inline ossl_unused THREAD_EVENT_HANDLER **fetch_thread_local(OSSL_LIB_CTX *ctx)
 {
-    return init_manage_thread_local(ctx, 0, 1);
+    return manage_thread_local(ctx, 0, 1);
 }
 
-static ossl_inline THREAD_EVENT_HANDLER **init_fetch_alloc_thread_local(OSSL_LIB_CTX *ctx)
+static ossl_inline THREAD_EVENT_HANDLER **alloc_thread_local(OSSL_LIB_CTX *ctx)
 {
-    return init_manage_thread_local(ctx, 1, 0);
+    return manage_thread_local(ctx, 1, 0);
 }
 
 #ifndef FIPS_MODULE
@@ -266,7 +266,7 @@ void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx)
 void OPENSSL_thread_stop(void)
 {
     if (destructor_key.sane != -1) {
-        THREAD_EVENT_HANDLER **hands = init_fetch_clear_thread_local(NULL);
+        THREAD_EVENT_HANDLER **hands = clear_thread_local(NULL);
 
         init_thread_stop(NULL, hands);
 
@@ -278,7 +278,7 @@ void OPENSSL_thread_stop(void)
 void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
 {
     if (destructor_key.sane != -1) {
-        THREAD_EVENT_HANDLER **hands = init_fetch_thread_local(ctx);
+        THREAD_EVENT_HANDLER **hands = fetch_thread_local(ctx);
 
         init_thread_stop(ctx, hands);
     }
@@ -336,7 +336,7 @@ void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
 {
     THREAD_EVENT_HANDLER **hands;
 
-    hands = init_fetch_clear_thread_local(ctx);
+    hands = clear_thread_local(ctx);
     init_thread_stop(ctx, hands);
     OPENSSL_free(hands);
 }
@@ -402,7 +402,7 @@ int ossl_init_thread_start(const void *index, void *arg,
     ctx = arg;
 #endif
 
-    hands = init_fetch_alloc_thread_local(ctx);
+    hands = alloc_thread_local(ctx);
 
     if (hands == NULL)
         return 0;
