@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 205;
+plan tests => 208;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -47,6 +47,12 @@ ok(!verify("ee-cert", "sslserver", [qw(root-cert2)], [qw(ca-cert)]),
    "fail wrong root key");
 ok(!verify("ee-cert", "sslserver", [qw(root-name2)], [qw(ca-cert)]),
    "fail wrong root DN");
+ok(!verify("ee-cert", "sslserver", ["root-distrust2016"], ["ca-cert"]),
+   "fail leaf notbefore after root's disturst after date"); #ee notbefore is 2016-01-15
+ok(verify("ee-cert", "sslserver", ["root-distrust2017"], ["ca-cert"]),
+   "accept leaf notbefore before root's disturst after date");
+ok(!verify("ee-cert", "sslserver", ["root-cert"], ["ca-distrust2016"]),
+   "fail because of ica disturst after date");
 
 # Critical extensions
 

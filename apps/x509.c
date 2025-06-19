@@ -45,13 +45,13 @@ typedef enum OPTION_choice {
     OPT_CAKEYFORM, OPT_VFYOPT, OPT_SIGOPT, OPT_DAYS, OPT_PASSIN, OPT_EXTFILE,
     OPT_EXTENSIONS, OPT_IN, OPT_OUT, OPT_KEY, OPT_SIGNKEY, OPT_CA, OPT_CAKEY,
     OPT_CASERIAL, OPT_SET_SERIAL, OPT_NEW, OPT_FORCE_PUBKEY, OPT_ISSU, OPT_SUBJ,
-    OPT_ADDTRUST, OPT_ADDREJECT, OPT_SETALIAS, OPT_CERTOPT, OPT_DATEOPT, OPT_NAMEOPT,
-    OPT_EMAIL, OPT_OCSP_URI, OPT_SERIAL, OPT_NEXT_SERIAL,
+    OPT_ADDTRUST, OPT_ADDREJECT, OPT_SETALIAS, OPT_SETDISTRUST_AFTER, OPT_CERTOPT,
+    OPT_DATEOPT, OPT_NAMEOPT, OPT_EMAIL, OPT_OCSP_URI, OPT_SERIAL, OPT_NEXT_SERIAL,
     OPT_MODULUS, OPT_MULTI, OPT_PUBKEY, OPT_X509TOREQ, OPT_TEXT, OPT_HASH,
     OPT_ISSUER_HASH, OPT_SUBJECT, OPT_ISSUER, OPT_FINGERPRINT, OPT_DATES,
     OPT_PURPOSE, OPT_STARTDATE, OPT_ENDDATE, OPT_CHECKEND, OPT_CHECKHOST,
-    OPT_CHECKEMAIL, OPT_CHECKIP, OPT_NOOUT, OPT_TRUSTOUT, OPT_CLRTRUST,
-    OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
+    OPT_CHECKEMAIL, OPT_CHECKIP, OPT_NOOUT, OPT_TRUSTOUT, OPT_CLRTRUST, OPT_CLRREJECT,
+    OPT_CLROTHER, OPT_CLRDISTURST_AFTER, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
     OPT_SUBJECT_HASH_OLD, OPT_ISSUER_HASH_OLD, OPT_COPY_EXTENSIONS,
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
     OPT_NOT_BEFORE, OPT_NOT_AFTER,
@@ -181,6 +181,9 @@ const OPTIONS x509_options[] = {
      "Clears all the prohibited or rejected uses of the certificate"},
     {"addreject", OPT_ADDREJECT, 's',
      "Reject certificate for a given purpose"},
+    {"clrother", OPT_CLROTHER, '-', "Clear all other aux attachments"},
+    {"setdistrustafter", OPT_SETDISTRUST_AFTER, 's', "Distrust new leafs chain to this that signed after given date"},
+    {"clrdistrustafter", OPT_CLRDISTURST_AFTER, '-', "Clear distrust_after_date tag"},
 
     OPT_R_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE
@@ -262,6 +265,7 @@ static int self_signed(X509_STORE *ctx, X509 *cert)
 
 int x509_main(int argc, char **argv)
 {
+    ASN1_GENERALIZEDTIME *distrustafter = NULL;
     ASN1_INTEGER *sno = NULL;
     ASN1_OBJECT *objtmp = NULL;
     BIO *out = NULL;
@@ -294,8 +298,8 @@ int x509_main(int argc, char **argv)
     int fingerprint = 0, reqfile = 0, checkend = 0;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyformat = FORMAT_UNDEF;
     int next_serial = 0, subject_hash = 0, issuer_hash = 0, ocspid = 0;
-    int noout = 0, CA_createserial = 0, email = 0;
-    int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
+    int noout = 0, CA_createserial = 0, email = 0, ocsp_uri = 0, clrdistrustafter = 0;
+    int clrother = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
     int ret = 1, i, j, k = 0, num = 0, badsig = 0, clrext = 0, nocert = 0;
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0, ext = 0;
     int enddate = 0;
@@ -471,6 +475,14 @@ int x509_main(int argc, char **argv)
                 goto err;
             trustout = 1;
             break;
+        case OPT_SETDISTRUST_AFTER:
+            if (distrustafter == NULL && (distrustafter = ASN1_GENERALIZEDTIME_new()) == NULL)
+                goto err;
+            if (!ASN1_GENERALIZEDTIME_set_string(distrustafter, opt_arg())) {
+                BIO_printf(bio_err, "%s isn't valid asn1_generalizedtime string", opt_arg());
+                goto opthelp;
+            }
+            break;
         case OPT_SETALIAS:
             alias = opt_arg();
             trustout = 1;
@@ -555,6 +567,12 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_CLRREJECT:
             clrreject = ++num;
+            break;
+        case OPT_CLROTHER:
+            clrother = ++num;
+            break;
+        case OPT_CLRDISTURST_AFTER:
+            clrdistrustafter = ++num;
             break;
         case OPT_ALIAS:
             aliasout = ++num;
@@ -845,6 +863,10 @@ int x509_main(int argc, char **argv)
         X509_trust_clear(x);
     if (clrreject)
         X509_reject_clear(x);
+    if (clrother)
+        X509_other_clear(x);
+    if (clrdistrustafter)
+        X509_other_clear_nid(x, NID_openssl_distrustafter);
 
     if (trust != NULL) {
         for (i = 0; i < sk_ASN1_OBJECT_num(trust); i++)
@@ -855,6 +877,9 @@ int x509_main(int argc, char **argv)
         for (i = 0; i < sk_ASN1_OBJECT_num(reject); i++)
             X509_add1_reject_object(x, sk_ASN1_OBJECT_value(reject, i));
     }
+
+    if (distrustafter)
+        X509_set0_aux_distrustafterdate(x, distrustafter);
 
     if (clrext && ext_names != NULL)
         BIO_printf(bio_err, "Warning: Ignoring -ext since -clrext is given\n");

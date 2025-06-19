@@ -30,6 +30,17 @@ OpenSSL 3.6
 -----------
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
+ * Added Distrust after date into certificates aux info to encode method
+    used by root programs gradually retires a root certificate.
+    it can be set by X509_set0_aux_distrustafterdate()
+    and accessed by X509_get0_other_algors()
+    'openssl x509' now have `-setdistrustafter` and `-clrdistrustafter`
+    to handle this setting, and `-clrother` to clear other unknown aux infomation in
+    trusted certificate.
+
+    Added general handling of 'other' struct inside certificate aux info.
+
+    *Seo Suchan*
 
  * Introduce SSL_OP_SERVER_PREFERENCE superceding misleadingly
    named SSL_OP_CIPHER_SERVER_PREFERENCE.
