@@ -172,3 +172,99 @@ STACK_OF(ASN1_OBJECT) *X509_get0_reject_objects(X509 *x)
         return x->aux->reject;
     return NULL;
 }
+
+int X509_add1_other_algor(X509 *x, const X509_ALGOR *alg)
+{
+    X509_CERT_AUX *aux;
+    X509_ALGOR *algtmp = NULL;
+
+    if (alg != NULL) {
+        algtmp = X509_ALGOR_dup(alg);
+        if (!algtmp)
+            return 0;
+    }
+    if ((aux = aux_get(x)) == NULL)
+        goto err;
+    if (aux->other == NULL
+        && (aux->other = sk_X509_ALGOR_new_null()) == NULL)
+        goto err;
+    if (!algtmp || sk_X509_ALGOR_push(aux->other, algtmp))
+        return 1;
+ err:
+    X509_ALGOR_free(algtmp);
+    return 0;
+}
+
+void X509_other_clear(X509 *x)
+{
+    if (x->aux) {
+        sk_X509_ALGOR_pop_free(x->aux->other, X509_ALGOR_free);
+        x->aux->other = NULL;
+    }
+}
+
+STACK_OF(X509_ALGOR) *X509_get0_other_algors(X509 *x)
+{
+    if (x->aux != NULL)
+        return x->aux->other;
+    return NULL;
+}
+
+/* this only returns first member with mathing nid */
+X509_ALGOR *X509_get0_other_by_nid(X509 *x, int nid)
+{
+    int i;
+
+    if (x->aux == NULL)
+        return NULL;
+    for (i = sk_X509_ALGOR_num(x->aux->other); i >= 0; i--) {
+        /* search from top so we get newest one */
+        X509_ALGOR *current = sk_X509_ALGOR_value(x->aux->other, i);
+
+        if (current->algorithm != NULL && nid == OBJ_obj2nid(current->algorithm))
+            return current;
+    }
+    return NULL;
+}
+
+/* remove every occerance of this nid in aux->other */
+int X509_other_clear_nid(X509 *x, int nid)
+{
+    int i;
+    X509_ALGOR *current;
+
+    if (nid == NID_undef)
+        return 0;
+    if (x->aux == NULL)
+        return 1;
+    for (i = sk_X509_ALGOR_num(x->aux->other)-1; i >= 0; i--) {
+        current = sk_X509_ALGOR_value(x->aux->other, i);
+        if (current->algorithm != NULL && OBJ_obj2nid(current->algorithm) == nid)
+            sk_X509_ALGOR_delete_ptr(x->aux->other, current);
+    }
+    return 1;
+}
+
+int X509_set0_aux_distrustafterdate(X509 *x, ASN1_GENERALIZEDTIME *time)
+{
+    X509_ALGOR *dtaft = X509_ALGOR_new();
+
+    if (dtaft == NULL)
+        return 0;
+    X509_other_clear_nid(x, NID_openssl_distrustafter);
+    X509_ALGOR_set0(dtaft, OBJ_nid2obj(NID_openssl_distrustafter), V_ASN1_GENERALIZEDTIME, time);
+    X509_add1_other_algor(x, dtaft);
+    X509_ALGOR_free(dtaft);
+    return 1;
+}
+
+ASN1_TIME *X509_get0_aux_distrustafterdate(X509 *x)
+{
+    X509_ALGOR *alg = X509_get0_other_by_nid(x, NID_openssl_distrustafter);
+
+    if (alg == NULL)
+        return NULL;
+    if (ASN1_TYPE_get(alg->parameter) != V_ASN1_GENERALIZEDTIME)
+        return NULL;
+    return alg->parameter->value.generalizedtime;
+}

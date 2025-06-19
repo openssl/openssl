@@ -6623,6 +6623,16 @@
 #define NID_ML_KEM_1024         1456
 #define OBJ_ML_KEM_1024         OBJ_nistKems,3L
 
+#define SN_openssl              "openssl"
+#define LN_openssl              "OpenSSL Software Foundation"
+#define NID_openssl             1496
+#define OBJ_openssl             1L,3L,6L,1L,4L,1L,16604L
+
+#define SN_openssl_distrustafter                "openssl-distrustafter"
+#define LN_openssl_distrustafter                "Distrust new leafs that signed after"
+#define NID_openssl_distrustafter               1497
+#define OBJ_openssl_distrustafter               OBJ_openssl,1L
+
 #endif /* OPENSSL_OBJ_MAC_H */
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0

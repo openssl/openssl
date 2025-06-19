@@ -633,6 +633,24 @@ Clears all the prohibited or rejected uses of the certificate.
 Adds a prohibited trust anchor purpose.
 It accepts the same values as the B<-addtrust> option.
 
+=item B<-clrother>
+
+Clears everything in X509->aux->other .
+unfortunately it will remove any option in this list:
+B<distrustafterdate>
+
+=item B<-adddistrustafter> I<arg>
+
+Adds a distrust after date.
+if leaf certficiate chained to it was signed after this date it will be rejected.
+it only accepts valid asn1 generalizedtime string in RFC5280 format,
+"YYYYMMDDHHMMSSZ". it requires seconds and only exccepts UTC(Z).
+
+=item B<-clrdistrustafter>
+
+Clears any distrust after date in certificate.
+
+
 =back
 
 =head2 Generic options
