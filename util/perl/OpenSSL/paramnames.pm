@@ -792,7 +792,7 @@ sub output_param_decoder {
     locate_long_endings(\%t);
 
     printf "#ifndef %s_decoder\n", $decoder_name_base;
-    printf "static struct %s_st %s_decoder(const OSSL_PARAM params[]) {\n",
+    printf "static struct %s_st\n%s_decoder(const OSSL_PARAM params[]) {\n",
         $decoder_name_base, $decoder_name_base;
     printf "    struct %s_st r;\n", $decoder_name_base;
     print "    const OSSL_PARAM *p;\n";
