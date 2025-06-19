@@ -1496,3 +1496,6 @@ aes_256_cbc_hmac_sha512_etm		1495
 HKDF_SHA256		1496
 HKDF_SHA384		1497
 HKDF_SHA512		1498
+openssl		1499
+openssl_distrustafter		1500
+openssl_additionalnameconstraint		1501
