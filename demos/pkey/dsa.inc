@@ -129,7 +129,7 @@ static int dsa_print_key(const EVP_PKEY *pkey, int keypair,
     if (EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_FFC_SEED, seed,
                                         sizeof(seed), &seedlen) > 0) {
         BIO_printf(bio, "  %s\n", OSSL_PKEY_PARAM_FFC_SEED);
-        BIO_dump(bio, seed, seedlen);
+        BIO_dump(bio, seed, (int)seedlen);
     }
     if (EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_FFC_GINDEX, &gindex) > 0) {
         if (gindex != -1)
