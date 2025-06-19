@@ -160,7 +160,7 @@ static int create_socket(uint16_t port)
     struct sockaddr_in sa = {0};
 
     /* Retrieve the file descriptor for a new UDP socket */
-    if ((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+    if ((fd = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         fprintf(stderr, "cannot create socket");
         return -1;
     }
@@ -423,7 +423,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         }
 
         if (total_read != total_written)
-            fprintf(stderr, "Failed to echo data [read: %lu, written: %lu]\n",
+            fprintf(stderr, "Failed to echo data [read: %zu, written: %zu]\n",
                     total_read, total_written);
 
         /*

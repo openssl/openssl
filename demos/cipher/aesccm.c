@@ -142,7 +142,7 @@ static int aes_ccm_encrypt(void)
 
     /* Output tag */
     printf("Tag:\n");
-    BIO_dump_fp(stdout, outtag, ccm_tag_len);
+    BIO_dump_fp(stdout, outtag, (int)ccm_tag_len);
 
     ret = 1;
 err:

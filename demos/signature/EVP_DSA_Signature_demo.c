@@ -220,7 +220,7 @@ end:
     EVP_PKEY_CTX_free(pkey_ctx);
 
     fprintf(stdout, "Generating signature:\n");
-    BIO_dump_indent_fp(stdout, sig_value, sig_len, 2);
+    BIO_dump_indent_fp(stdout, sig_value, (int)sig_len, 2);
     fprintf(stdout, "\n");
     return ret;
 }

@@ -134,7 +134,7 @@ static int demo_sign(OSSL_LIB_CTX *libctx,  const char *sig_name,
     *sig_out_len = sig_len;
     *sig_out_value = sig_value;
     fprintf(stdout, "Generating signature:\n");
-    BIO_dump_indent_fp(stdout, sig_value, sig_len, 2);
+    BIO_dump_indent_fp(stdout, sig_value, (int)sig_len, 2);
     fprintf(stdout, "\n");
     ret = 1;
 
