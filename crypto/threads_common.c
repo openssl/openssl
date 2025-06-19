@@ -58,7 +58,7 @@
  *
  * It uses the following lookup pattern:
  *   1) A global os defined key to a per-thread fixed array
- *   2) An os defined key id as an index to (1) to get a sparse array
+ *   2) A libcrypto defined key id as an index to (1) to get a sparse array
  *   3) A Library context pointer as an index to (2) to produce a per
  *      thread*context data pointer
  *
