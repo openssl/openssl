@@ -73,7 +73,7 @@ static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_get_params;              \
 static int alg##_##kbits##_get_params(OSSL_PARAM params[])                     \
 {                                                                              \
     return ossl_cipher_generic_get_params(params, 0, flags,                    \
-                                     kbits, blkbits, ivbits);                  \
+                                     kbits, blkbits, ivbits, 0);               \
 }                                                                              \
 static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_newctx;                      \
 static void *alg##_##kbits##_newctx(void *provctx)                             \
