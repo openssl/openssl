@@ -18,8 +18,8 @@
  *
  * NOTE: This differs from the CRYPTO_THREAD_[get|set]_local api set in that
  * this api stores a single OS level thread-local key per-process, and manages
- * subsequent keys using a series of sparse arrays stored against that aforementioned
- * thread local key
+ * subsequent keys using a series of arrays and sparse arrays stored against
+ * that aforementioned thread local key
  *
  * Data Design:
  *
@@ -56,9 +56,11 @@
  *           ++--------+------+      +-----------------+
  *                                  per-<thread*ctx> data
  *
- * It uses sparse arrays to map:
- *   - Thread-local key IDs to master key entries.
- *   - Library context pointers to context-specific data.
+ * It uses the following lookup pattern:
+ *   1) A global os defined key to a per-thread fixed array
+ *   2) An os defined key id as an index to (1) to get a sparse array
+ *   3) A Library context pointer as an index to (2) to produce a per
+ *      thread*context data pointer
  *
  * Two primary functions are provided:
  *   - CRYPTO_THREAD_get_local_ex() retrieves data associated with a key and
@@ -270,7 +272,7 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
     if (!CRYPTO_THREAD_run_once(&master_once, init_master_key))
         return NULL;
 
-    if (id >= CRYPTO_THREAD_LOCAL_KEY_MAX)
+    if (!ossl_assert(id < CRYPTO_THREAD_LOCAL_KEY_MAX))
         return NULL;
 
     /*
@@ -340,7 +342,7 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
     if (!CRYPTO_THREAD_run_once(&master_once, init_master_key))
         return 0;
 
-    if (id >= CRYPTO_THREAD_LOCAL_KEY_MAX)
+    if (!ossl_assert(id < CRYPTO_THREAD_LOCAL_KEY_MAX))
         return 0;
 
     /*
@@ -384,8 +386,8 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
      *
      * Assign to the entry in the table so that we can find it later
      */
-     ossl_sa_CTX_TABLE_ENTRY_set(mkey[id].ctx_table, (uintptr_t)ctx, data);
-    return 1;
+    return ossl_sa_CTX_TABLE_ENTRY_set(mkey[id].ctx_table,
+                                       (uintptr_t)ctx, data);
 }
 
 #ifdef FIPS_MODULE
