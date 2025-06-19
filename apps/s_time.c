@@ -323,8 +323,10 @@ int s_time_main(int argc, char **argv)
      */
 
  next:
-    if (!(perform & 2))
+    if (!(perform & 2)) {
+        ret = 0;
         goto end;
+    }
     printf("\n\nNow timing with session id reuse.\n");
 
     /* Get an SSL object so we can reuse the session id */
