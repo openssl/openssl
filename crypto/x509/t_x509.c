@@ -317,6 +317,7 @@ int X509_aux_print(BIO *out, X509 *x, int indent)
 {
     char oidstr[80], first;
     STACK_OF(ASN1_OBJECT) *trust, *reject;
+    STACK_OF(X509_ALGOR) *others;
     const unsigned char *alias, *keyid;
     int keyidlen;
     int i;
@@ -362,6 +363,12 @@ int X509_aux_print(BIO *out, X509 *x, int indent)
         BIO_printf(out, "%*sKey Id: ", indent, "");
         for (i = 0; i < keyidlen; i++)
             BIO_printf(out, "%s%02X", i ? ":" : "", keyid[i]);
+        BIO_write(out, "\n", 1);
+    }
+    others = X509_get0_other_algors(x);
+    if (others) {
+        BIO_printf(out, "%*sOthers: len(%d)\n", indent, "", sk_X509_ALGOR_num(others));
+        ASN1_item_print(out, (ASN1_VALUE *)others, indent + 4, ASN1_ITEM_rptr(X509_ALGORS), NULL);
         BIO_write(out, "\n", 1);
     }
     return 1;
