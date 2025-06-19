@@ -86,6 +86,7 @@ __current_exception
 __C_specific_handler
 wcsstr
 __current_exception_context
+strlen
 strstr
 strchr
 memmove
