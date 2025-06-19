@@ -82,7 +82,7 @@ static int create_socket(uint16_t port)
     int fd = -1;
     struct sockaddr_in sa = {0};
 
-    if ((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+    if ((fd = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         fprintf(stderr, "cannot create socket");
         goto err;
     }

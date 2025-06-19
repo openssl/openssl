@@ -128,7 +128,7 @@ int main(void)
     }
 
     printf("Generated MAC:\n");
-    BIO_dump_indent_fp(stdout, out, out_len, 2);
+    BIO_dump_indent_fp(stdout, out, (int)out_len, 2);
     putchar('\n');
 
     if (out_len != sizeof(expected_output)) {
