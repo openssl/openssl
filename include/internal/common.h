@@ -22,8 +22,8 @@
 #  define ossl_likely(x)     __builtin_expect(!!(x), 1)
 #  define ossl_unlikely(x)   __builtin_expect(!!(x), 0)
 # else
-#  define ossl_likely(x)     x
-#  define ossl_unlikely(x)   x
+#  define ossl_likely(x)     (x)
+#  define ossl_unlikely(x)   (x)
 # endif
 
 # if defined(__GNUC__) || defined(__clang__)
