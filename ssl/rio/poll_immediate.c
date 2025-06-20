@@ -387,6 +387,7 @@ static int poll_readout(SSL_POLL_ITEM *items,
                     else
                         revents &= ~SSL_POLL_EVENT_ECD;
                 } else if (revents & SSL_POLL_EVENT_EC) {
+                    ossl_quic_conn_notify_close(ssl);
                     result_count++;
                 }
                 break;
