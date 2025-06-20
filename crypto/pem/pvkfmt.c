@@ -13,10 +13,9 @@
  */
 
 /*
- * RSA and DSA low level APIs are deprecated for public use, but still ok for
- * internal use.
+ * For asn1 related functions
  */
-#include "internal/deprecated.h"
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/pem.h>
 #include <openssl/rand.h>
@@ -34,6 +33,10 @@
 #ifdef OPENSSL_NO_DEPRECATED_3_6
 # include <openssl/param_build.h>
 #endif
+/*
+ * for evp_pkey_new0_key
+ */
+#include "pem_local.h"
 
 /*
  * Utility function: read a DWORD (4 byte unsigned integer) in little endian
@@ -65,67 +68,6 @@ static int read_lebn(const unsigned char **in, unsigned int nbyte, BIGNUM **r)
         return 0;
     *in += nbyte;
     return 1;
-}
-
-/*
- * Create an EVP_PKEY from a type specific key.
- * This takes ownership of |key|, as long as the |evp_type| is acceptable
- * (EVP_PKEY_RSA or EVP_PKEY_DSA), even if the resulting EVP_PKEY wasn't
- * created.
- */
-#define isdss_to_evp_type(isdss)                                \
-    (isdss == 0 ? EVP_PKEY_RSA : isdss == 1 ? EVP_PKEY_DSA : EVP_PKEY_NONE)
-static EVP_PKEY *evp_pkey_new0_key(void *key, int evp_type)
-{
-    EVP_PKEY *pkey = NULL;
-
-    /*
-     * It's assumed that if |key| is NULL, something went wrong elsewhere
-     * and suitable errors are already reported.
-     */
-    if (key == NULL)
-        return NULL;
-
-    if (!ossl_assert(evp_type == EVP_PKEY_RSA || evp_type == EVP_PKEY_DSA)) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_INTERNAL_ERROR);
-        return NULL;
-    }
-
-    if ((pkey = EVP_PKEY_new()) != NULL) {
-        switch (evp_type) {
-        case EVP_PKEY_RSA:
-            if (EVP_PKEY_set1_RSA(pkey, key))
-                break;
-            ERR_raise(ERR_LIB_PEM, ERR_R_EVP_LIB);
-            EVP_PKEY_free(pkey);
-            pkey = NULL;
-            break;
-#ifndef OPENSSL_NO_DSA
-        case EVP_PKEY_DSA:
-            if (EVP_PKEY_set1_DSA(pkey, key))
-                break;
-            ERR_raise(ERR_LIB_PEM, ERR_R_EVP_LIB);
-            EVP_PKEY_free(pkey);
-            pkey = NULL;
-            break;
-#endif
-        }
-    } else {
-        ERR_raise(ERR_LIB_PEM, ERR_R_EVP_LIB);
-    }
-
-    switch (evp_type) {
-    case EVP_PKEY_RSA:
-        RSA_free(key);
-        break;
-#ifndef OPENSSL_NO_DSA
-    case EVP_PKEY_DSA:
-        DSA_free(key);
-        break;
-#endif
-    }
-
-    return pkey;
 }
 
 /* Convert private key blob to EVP_PKEY: RSA and DSA keys supported */
