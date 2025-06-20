@@ -173,7 +173,6 @@ opthelp:
     } else {
         for ( ; *argv; argv++) {
             int bytes_read = 0;
-            int valid_digits_length = 0;
 
             if (!in_file) {
                 process_num(argv[0], hex);
@@ -185,6 +184,8 @@ opthelp:
                 }
 
                 while ((bytes_read = BIO_get_line(in, file_read_buf, BUFSIZE)) > 0) {
+                    size_t valid_digits_length;
+
                     /* Number is too long. Discard remainder of the line */
                     if (bytes_read == BUFSIZE - 1 && file_read_buf[BUFSIZE - 2] != '\n') {
                         BIO_printf(bio_err, "Value in %s is over the maximum size (%d digits)\n",
@@ -193,7 +194,7 @@ opthelp:
                         continue;
                     }
 
-                    valid_digits_length = (int)strspn(file_read_buf, "1234567890abcdefABCDEF");
+                    valid_digits_length = strspn(file_read_buf, "1234567890abcdefABCDEF");
                     file_read_buf[valid_digits_length] = '\0';
 
                     process_num(file_read_buf, hex);
