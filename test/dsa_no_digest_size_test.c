@@ -190,12 +190,12 @@ static int sign_and_verify(int len)
     }
 
     /* Verify again using the raw DSA interface */
-    if (DSA_verify(0, dataToSign, len, signature, sigLength, dsakey) != 1) {
+    if (DSA_verify(0, dataToSign, len, signature, (int)sigLength, dsakey) != 1) {
         TEST_error("Verification with unpadded data failed, len=%d", len);
         goto end;
     }
 
-    if (DSA_verify(0, paddedData, digestlen, signature, sigLength, dsakey) != 1) {
+    if (DSA_verify(0, paddedData, digestlen, signature, (int)sigLength, dsakey) != 1) {
         TEST_error("verify with length %d failed\n", len);
         goto end;
     }

@@ -171,7 +171,7 @@ int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
         memcpy(out, sec, outlen);
     }
     OPENSSL_clear_free(sec, seclen);
-    return outlen;
+    return (int)outlen;
 }
 
 EC_KEY_METHOD *EC_KEY_METHOD_new(const EC_KEY_METHOD *meth)

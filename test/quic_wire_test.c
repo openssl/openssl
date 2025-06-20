@@ -39,7 +39,7 @@ static int encode_case_1_dec(PACKET *pkt, ossl_ssize_t fail)
         /* No failure modes for padding */
         return 1;
 
-    if (!TEST_int_eq(ossl_quic_wire_decode_padding(pkt), 3))
+    if (!TEST_size_t_eq(ossl_quic_wire_decode_padding(pkt), 3))
         return 0;
 
     return 1;

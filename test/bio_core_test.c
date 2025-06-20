@@ -93,7 +93,7 @@ static int test_bio_core(void)
         goto err;
 
     buf[0] = '\0';
-    if (!TEST_int_gt(BIO_write(cbio, msg, strlen(msg) + 1), 0)
+    if (!TEST_int_gt(BIO_write(cbio, msg, (int)(strlen(msg) + 1)), 0)
             || !TEST_int_gt(BIO_read(cbio, buf, sizeof(buf)), 0)
             || !TEST_str_eq(buf, msg))
         goto err;

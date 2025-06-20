@@ -111,7 +111,7 @@ long BIO_debug_callback_ex(BIO *bio, int cmd, const char *argp, size_t len,
 
     b = (BIO *)bio->cb_arg;
     if (b != NULL)
-        BIO_write(b, buf, strlen(buf));
+        BIO_write(b, buf, (int)strlen(buf));
 #if !defined(OPENSSL_NO_STDIO)
     else
         fputs(buf, stderr);

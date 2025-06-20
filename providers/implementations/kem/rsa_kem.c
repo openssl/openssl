@@ -312,11 +312,12 @@ static int rsasve_generate(PROV_RSA_CTX *prsactx,
      * Step (2): Generate a random byte string z of nlen bytes where
      *            1 < z < n - 1
      */
-    if (!rsasve_gen_rand_bytes(prsactx->rsa, secret, nlen))
+    if (!rsasve_gen_rand_bytes(prsactx->rsa, secret, (int)nlen))
         return 0;
 
     /* Step(3): out = RSAEP((n,e), z) */
-    ret = RSA_public_encrypt(nlen, secret, out, prsactx->rsa, RSA_NO_PADDING);
+    ret = RSA_public_encrypt((int)nlen, secret, out, prsactx->rsa,
+                             RSA_NO_PADDING);
     if (ret) {
         ret = 1;
         if (outlen != NULL)
@@ -389,7 +390,7 @@ static int rsasve_recover(PROV_RSA_CTX *prsactx,
     }
 
     /* Step (3): out = RSADP((n,d), in) */
-    ret = RSA_private_decrypt(inlen, in, out, prsactx->rsa, RSA_NO_PADDING);
+    ret = RSA_private_decrypt((int)inlen, in, out, prsactx->rsa, RSA_NO_PADDING);
     if (ret > 0 && outlen != NULL)
         *outlen = ret;
     return ret > 0;

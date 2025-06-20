@@ -1418,7 +1418,7 @@ static int build_data(char *text, const char *def, char *value,
         return 1;
     }
 
-    i = strlen(buf);
+    i = (int)strlen(buf);
     if (buf[i - 1] != '\n') {
         BIO_printf(bio_err, "Missing newline at end of input\n");
         return 0;
@@ -1512,9 +1512,9 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         int len;
 
         if (p != NULL)
-            len = p - gstr;
+            len = (int)(p - gstr);
         else
-            len = strlen(gstr);
+            len = (int)strlen(gstr);
 
         if (strncmp(gstr, "param", len) == 0) {
             expect_paramfile = 1;

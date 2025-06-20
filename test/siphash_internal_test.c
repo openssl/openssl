@@ -185,7 +185,7 @@ static int test_siphash(int idx)
         return 0;
     }
 
-    if (!TEST_int_le(inlen, sizeof(in)))
+    if (!TEST_size_t_le(inlen, sizeof(in)))
         return 0;
 
     /* key and in data are 00 01 02 ... */

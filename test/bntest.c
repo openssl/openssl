@@ -117,7 +117,7 @@ static int getint(STANZA *s, int *out, const char *attribute)
     int st = 0;
 
     if (!TEST_ptr(ret = getBN(s, attribute))
-            || !TEST_ulong_le(word = BN_get_word(ret), INT_MAX))
+            || !TEST_uint64_t_le(word = BN_get_word(ret), INT_MAX))
         goto err;
 
     *out = (int)word;
@@ -1808,7 +1808,7 @@ static int file_gcd(STANZA *s)
 static int test_bn2padded(void)
 {
     uint8_t zeros[256], out[256], reference[128];
-    size_t bytes;
+    int bytes;
     BIGNUM *n;
     int st = 0;
 
@@ -1941,7 +1941,7 @@ static int test_bn2signed(int i)
      * The interesting stuff happens in the last bytes of the buffers,
      * the beginning is just padding (i.e. sign extension).
      */
-    i = sizeof(scratch) - test->mpi_len;
+    i = (int)(sizeof(scratch) - test->mpi_len);
     if (!TEST_int_eq(BN_signed_bn2bin(bn, scratch, sizeof(scratch)),
                      sizeof(scratch))
         || !TEST_true(copy_reversed(reversed, scratch, sizeof(scratch)))
@@ -1968,7 +1968,7 @@ static int test_bn2signed(int i)
      * The interesting stuff happens in the first bytes of the buffers,
      * the end is just padding (i.e. sign extension).
      */
-    i = sizeof(reversed) - test->mpi_len;
+    i = (int)(sizeof(reversed) - test->mpi_len);
     if (!TEST_int_eq(BN_signed_bn2lebin(bn, scratch, sizeof(scratch)),
                      sizeof(scratch))
         || !TEST_true(copy_reversed(reversed, scratch, sizeof(scratch)))
@@ -2212,7 +2212,7 @@ static int test_mpi(int i)
             || !TEST_mem_eq(test->mpi, test->mpi_len, scratch, mpi_len))
         goto err;
 
-    if (!TEST_ptr(bn2 = BN_mpi2bn(scratch, mpi_len, NULL)))
+    if (!TEST_ptr(bn2 = BN_mpi2bn(scratch, (int)mpi_len, NULL)))
         goto err;
 
     if (!TEST_BN_eq(bn, bn2)) {
@@ -3358,7 +3358,8 @@ const OPTIONS *test_get_options(void)
 int setup_tests(void)
 {
     OPTION_CHOICE o;
-    int n, stochastic = 0;
+    size_t n;
+    int stochastic = 0;
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -3372,7 +3373,7 @@ int setup_tests(void)
             return 0;
         }
     }
-    n  = test_get_argument_count();
+    n = test_get_argument_count();
 
     if (!TEST_ptr(ctx = BN_CTX_new()))
         return 0;
@@ -3425,7 +3426,7 @@ int setup_tests(void)
         if (stochastic)
             ADD_TEST(test_rand_range);
     } else {
-        ADD_ALL_TESTS(run_file_tests, n);
+        ADD_ALL_TESTS(run_file_tests, (int)n);
     }
     return 1;
 }

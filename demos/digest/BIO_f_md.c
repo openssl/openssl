@@ -27,6 +27,10 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 
+#ifdef OPENSSL_SYS_WINDOWS
+# define fileno _fileno
+#endif
+
 /*-
  * This demonstration will show how to digest data using
  * a BIO configured with a message digest

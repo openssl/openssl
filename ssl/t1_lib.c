@@ -958,13 +958,13 @@ int tls1_get0_implemented_groups(int min_proto_version, int max_proto_version,
     TLS_GROUP_IX *gix;
     uint16_t id = 0;
     int ret = 0;
-    size_t ix;
+    int ix;
 
-    if (grps == NULL || out == NULL)
+    if (grps == NULL || out == NULL || num > INT_MAX)
         return 0;
     if ((collect = sk_TLS_GROUP_IX_new(tls_group_ix_cmp)) == NULL)
         return 0;
-    for (ix = 0; ix < num; ++ix, ++grps) {
+    for (ix = 0; ix < (int)num; ++ix, ++grps) {
         if (grps->mintls > 0 && max_proto_version > 0
              && grps->mintls > max_proto_version)
             continue;
@@ -984,7 +984,7 @@ int tls1_get0_implemented_groups(int min_proto_version, int max_proto_version,
 
     sk_TLS_GROUP_IX_sort(collect);
     num = sk_TLS_GROUP_IX_num(collect);
-    for (ix = 0; ix < num; ++ix) {
+    for (ix = 0; ix < (int)num; ++ix) {
         gix = sk_TLS_GROUP_IX_value(collect, ix);
         if (!all && gix->grp->group_id == id)
             continue;
@@ -2245,7 +2245,7 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
         cache[cache_idx].hash = si.hash_name?OBJ_txt2nid(si.hash_name):NID_undef;
         cache[cache_idx].hash_idx = ssl_get_md_idx(cache[cache_idx].hash);
         cache[cache_idx].sig = OBJ_txt2nid(si.sigalg_name);
-        cache[cache_idx].sig_idx = i + SSL_PKEY_NUM;
+        cache[cache_idx].sig_idx = (int)(i + SSL_PKEY_NUM);
         cache[cache_idx].sigandhash = OBJ_txt2nid(si.sigalg_name);
         cache[cache_idx].curve = NID_undef;
         cache[cache_idx].mintls = TLS1_3_VERSION;
@@ -2457,7 +2457,7 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL_CONNECTION *s,
                 if (clu == NULL)
                     continue;
                 if (clu->amask & s->s3.tmp.new_cipher->algorithm_auth) {
-                    idx = i;
+                    idx = (int)i;
                     break;
                 }
             }
@@ -2492,7 +2492,7 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL_CONNECTION *s,
                 }
             }
         } else {
-            idx = s->cert->key - s->cert->pkeys;
+            idx = (int)(s->cert->key - s->cert->pkeys);
         }
     }
     if (idx < 0 || idx >= (int)OSSL_NELEM(tls_default_sigalg))
@@ -2523,7 +2523,7 @@ int tls1_set_peer_legacy_sigalg(SSL_CONNECTION *s, const EVP_PKEY *pkey)
 
     if (ssl_cert_lookup_by_pkey(pkey, &idx, SSL_CONNECTION_GET_CTX(s)) == NULL)
         return 0;
-    lu = tls1_get_legacy_sigalg(s, idx);
+    lu = tls1_get_legacy_sigalg(s, (int)idx);
     if (lu == NULL)
         return 0;
     s->s3.tmp.peer_sigalg = lu;
@@ -2968,7 +2968,7 @@ int tls1_set_server_sigalgs(SSL_CONNECTION *s)
         size_t sent_sigslen = tls12_get_psigalgs(s, 1, &sent_sigs);
 
         for (i = 0; i < s->ssl_pkey_num; i++) {
-            const SIGALG_LOOKUP *lu = tls1_get_legacy_sigalg(s, i);
+            const SIGALG_LOOKUP *lu = tls1_get_legacy_sigalg(s, (int)i);
             size_t j;
 
             if (lu == NULL)
@@ -3222,7 +3222,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
     p = sdec;
 
     sess = d2i_SSL_SESSION_ex(NULL, &p, slen, sctx->libctx, sctx->propq);
-    slen -= p - sdec;
+    slen -= (int)(p - sdec);
     OPENSSL_free(sdec);
     if (sess) {
         /* Some additional consistency checks */
@@ -4050,7 +4050,7 @@ int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
         if (ssl_cert_lookup_by_pkey(pk, &certidx,
                                     SSL_CONNECTION_GET_CTX(s)) == NULL)
             return 0;
-        idx = certidx;
+        idx = (int)certidx;
         pvalid = s->s3.tmp.valid_flags + idx;
 
         if (c->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)
@@ -4655,7 +4655,7 @@ int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs)
         /* If ciphersuite doesn't require a cert nothing to do */
         if (!(s->s3.tmp.new_cipher->algorithm_auth & SSL_aCERT))
             return 1;
-        if (!s->server && !ssl_has_cert(s, s->cert->key - s->cert->pkeys))
+        if (!s->server && !ssl_has_cert(s, (int)(s->cert->key - s->cert->pkeys)))
                 return 1;
 
         if (SSL_USE_SIGALGS(s)) {
@@ -4682,7 +4682,7 @@ int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs)
                         if ((sig_idx = tls12_get_cert_sigalg_idx(s, lu)) == -1)
                             continue;
                     } else {
-                        int cc_idx = s->cert->key - s->cert->pkeys;
+                        int cc_idx = (int)(s->cert->key - s->cert->pkeys);
 
                         sig_idx = lu->sig_idx;
                         if (cc_idx != sig_idx)

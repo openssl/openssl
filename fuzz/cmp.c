@@ -172,11 +172,11 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     OSSL_CMP_MSG *msg;
     BIO *in;
 
-    if (len == 0)
+    if (len == 0 || len > INT_MAX)
         return 0;
 
     in = BIO_new(BIO_s_mem());
-    OPENSSL_assert((size_t)BIO_write(in, buf, len) == len);
+    OPENSSL_assert((size_t)BIO_write(in, buf, (int)len) == len);
     msg = d2i_OSSL_CMP_MSG_bio(in, NULL);
     if (msg != NULL) {
         BIO *out = BIO_new(BIO_s_null());

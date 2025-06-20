@@ -237,7 +237,7 @@ static int watchccs_gets(BIO *bio, char *buf, int size)
 
 static int watchccs_puts(BIO *bio, const char *str)
 {
-    return watchccs_write(bio, str, strlen(str));
+    return watchccs_write(bio, str, (int)strlen(str));
 }
 
 static int test_tls13ccs(int tst)

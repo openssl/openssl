@@ -150,7 +150,7 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     if (*ndef_aux->boundary == NULL)
         return 0;
 
-    *plen = *ndef_aux->boundary - *pbuf;
+    *plen = (int)(*ndef_aux->boundary - *pbuf);
 
     return 1;
 }
@@ -223,7 +223,7 @@ static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     if (*ndef_aux->boundary == NULL)
         return 0;
     *pbuf = *ndef_aux->boundary;
-    *plen = derlen - (*ndef_aux->boundary - ndef_aux->derbuf);
+    *plen = derlen - (int)(*ndef_aux->boundary - ndef_aux->derbuf);
 
     return 1;
 }

@@ -265,7 +265,7 @@ static int ecx_set_priv_key(EVP_PKEY *pkey, const unsigned char *priv,
     if (pkey->keymgmt != NULL)
         libctx = ossl_provider_libctx(EVP_KEYMGMT_get0_provider(pkey->keymgmt));
 
-    ecx = ossl_ecx_key_op(NULL, priv, len, pkey->ameth->pkey_id,
+    ecx = ossl_ecx_key_op(NULL, priv, (int)len, pkey->ameth->pkey_id,
                           KEY_OP_PRIVATE, libctx, NULL);
 
     if (ecx != NULL) {
@@ -283,7 +283,7 @@ static int ecx_set_pub_key(EVP_PKEY *pkey, const unsigned char *pub, size_t len)
     if (pkey->keymgmt != NULL)
         libctx = ossl_provider_libctx(EVP_KEYMGMT_get0_provider(pkey->keymgmt));
 
-    ecx = ossl_ecx_key_op(NULL, pub, len, pkey->ameth->pkey_id,
+    ecx = ossl_ecx_key_op(NULL, pub, (int)len, pkey->ameth->pkey_id,
                           KEY_OP_PUBLIC, libctx, NULL);
 
     if (ecx != NULL) {

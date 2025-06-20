@@ -496,7 +496,7 @@ BIO *OSSL_trace_begin(int category)
             break;
         case CALLBACK_CHANNEL:
             (void)BIO_ctrl(channel, OSSL_TRACE_CTRL_BEGIN,
-                           prefix == NULL ? 0 : strlen(prefix), prefix);
+                           prefix == NULL ? 0 : (int)strlen(prefix), prefix);
             break;
         }
     }
@@ -525,7 +525,7 @@ void OSSL_trace_end(int category, BIO *channel)
             break;
         case CALLBACK_CHANNEL:
             (void)BIO_ctrl(channel, OSSL_TRACE_CTRL_END,
-                           suffix == NULL ? 0 : strlen(suffix), suffix);
+                           suffix == NULL ? 0 : (int)strlen(suffix), suffix);
             break;
         }
         current_channel = NULL;

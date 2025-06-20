@@ -3803,7 +3803,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 return 0;
             if (pctype)
                 *pctype = sc->s3.tmp.ctype;
-            return sc->s3.tmp.ctype_len;
+            return (long)sc->s3.tmp.ctype_len;
         }
 
     case SSL_CTRL_SET_CLIENT_CERT_TYPES:
@@ -4412,7 +4412,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
          * that.
          */
         if (s->psk_server_callback != NULL) {
-            for (j = 0; j < s->ssl_pkey_num && !ssl_has_cert(s, j); j++);
+            for (j = 0; j < s->ssl_pkey_num && !ssl_has_cert(s, (int)j); j++);
             if (j == s->ssl_pkey_num) {
                 /* There are no certificates */
                 prefer_sha256 = 1;

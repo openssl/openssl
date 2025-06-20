@@ -320,15 +320,15 @@ static int ml_dsa_get_params(void *keydata, OSSL_PARAM params[])
     struct ml_dsa_get_params_st p = ml_dsa_get_params_decoder(params);
 
     if (p.bits != NULL
-            && !OSSL_PARAM_set_int(p.bits, 8 * ossl_ml_dsa_key_get_pub_len(key)))
+            && !OSSL_PARAM_set_size_t(p.bits, 8 * ossl_ml_dsa_key_get_pub_len(key)))
         return 0;
 
     if (p.secbits != NULL
-            && !OSSL_PARAM_set_int(p.secbits, ossl_ml_dsa_key_get_collision_strength_bits(key)))
+            && !OSSL_PARAM_set_size_t(p.secbits, ossl_ml_dsa_key_get_collision_strength_bits(key)))
         return 0;
 
     if (p.maxsize != NULL
-            && !OSSL_PARAM_set_int(p.maxsize, ossl_ml_dsa_key_get_sig_len(key)))
+            && !OSSL_PARAM_set_size_t(p.maxsize, ossl_ml_dsa_key_get_sig_len(key)))
         return 0;
 
     if (p.seccat != NULL

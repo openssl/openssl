@@ -199,7 +199,7 @@ static BIO *glue2bio(const char **pem, char **out)
     size_t s = 0;
 
     *out = glue_strings(pem, &s);
-    return BIO_new_mem_buf(*out, s);
+    return BIO_new_mem_buf(*out, (int)s);
 }
 
 /*
