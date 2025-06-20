@@ -92,6 +92,7 @@ providers/implementations/ciphers/ciphercommon.c
 providers/implementations/ciphers/ciphercommon_ccm.c
 providers/implementations/ciphers/ciphercommon_gcm.c
 providers/implementations/ciphers/cipher_chacha20_poly1305.c
+providers/implementations/digest/digestcommon.c
 
 # error code files
 /crypto/err/openssl.txt.old
