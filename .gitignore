@@ -1,6 +1,6 @@
 # Ignore editor artefacts
 /.dir-locals.el
-
+build
 # Top level excludes
 /Makefile.in
 /Makefile
