@@ -327,12 +327,12 @@ static int generate_key(DH *dh)
                 goto err;
 #else
             if (dh->params.q == NULL) {
-                /* secret exponent length, must satisfy 2^(l-1) <= p */
+                /* secret exponent length, must satisfy 2^l < (p-1)/2 */
                 if (dh->length != 0
                     && dh->length >= BN_num_bits(dh->params.p))
                     goto err;
                 l = dh->length ? dh->length : BN_num_bits(dh->params.p) - 1;
-                if (!BN_priv_rand_ex(priv_key, l, BN_RAND_TOP_ONE,
+                if (!BN_priv_rand_ex(priv_key, l - 1, BN_RAND_TOP_ONE,
                                      BN_RAND_BOTTOM_ANY, 0, ctx))
                     goto err;
                 /*
