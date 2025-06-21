@@ -13,10 +13,9 @@
  */
 
 /*
- * RSA and DSA low level APIs are deprecated for public use, but still ok for
- * internal use.
+ * For asn1 related functions
  */
-#include "internal/deprecated.h"
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/pem.h>
 #include <openssl/rand.h>
@@ -25,9 +24,19 @@
 #include <openssl/rsa.h>
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
+#include <sys/types.h>
 #include "internal/cryptlib.h"
 #include "crypto/pem.h"
 #include "crypto/evp.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
+#ifdef OPENSSL_NO_DEPRECATED_3_6
+# include <openssl/param_build.h>
+#endif
+/*
+ * for evp_pkey_new0_key
+ */
+#include "pem_local.h"
 
 /*
  * Utility function: read a DWORD (4 byte unsigned integer) in little endian
@@ -61,67 +70,6 @@ static int read_lebn(const unsigned char **in, unsigned int nbyte, BIGNUM **r)
     return 1;
 }
 
-/*
- * Create an EVP_PKEY from a type specific key.
- * This takes ownership of |key|, as long as the |evp_type| is acceptable
- * (EVP_PKEY_RSA or EVP_PKEY_DSA), even if the resulting EVP_PKEY wasn't
- * created.
- */
-#define isdss_to_evp_type(isdss)                                \
-    (isdss == 0 ? EVP_PKEY_RSA : isdss == 1 ? EVP_PKEY_DSA : EVP_PKEY_NONE)
-static EVP_PKEY *evp_pkey_new0_key(void *key, int evp_type)
-{
-    EVP_PKEY *pkey = NULL;
-
-    /*
-     * It's assumed that if |key| is NULL, something went wrong elsewhere
-     * and suitable errors are already reported.
-     */
-    if (key == NULL)
-        return NULL;
-
-    if (!ossl_assert(evp_type == EVP_PKEY_RSA || evp_type == EVP_PKEY_DSA)) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_INTERNAL_ERROR);
-        return NULL;
-    }
-
-    if ((pkey = EVP_PKEY_new()) != NULL) {
-        switch (evp_type) {
-        case EVP_PKEY_RSA:
-            if (EVP_PKEY_set1_RSA(pkey, key))
-                break;
-            ERR_raise(ERR_LIB_PEM, ERR_R_EVP_LIB);
-            EVP_PKEY_free(pkey);
-            pkey = NULL;
-            break;
-#ifndef OPENSSL_NO_DSA
-        case EVP_PKEY_DSA:
-            if (EVP_PKEY_set1_DSA(pkey, key))
-                break;
-            ERR_raise(ERR_LIB_PEM, ERR_R_EVP_LIB);
-            EVP_PKEY_free(pkey);
-            pkey = NULL;
-            break;
-#endif
-        }
-    } else {
-        ERR_raise(ERR_LIB_PEM, ERR_R_EVP_LIB);
-    }
-
-    switch (evp_type) {
-    case EVP_PKEY_RSA:
-        RSA_free(key);
-        break;
-#ifndef OPENSSL_NO_DSA
-    case EVP_PKEY_DSA:
-        DSA_free(key);
-        break;
-#endif
-    }
-
-    return pkey;
-}
-
 /* Convert private key blob to EVP_PKEY: RSA and DSA keys supported */
 
 # define MS_PUBLICKEYBLOB        0x6
@@ -145,6 +93,15 @@ static EVP_PKEY *evp_pkey_new0_key(void *key, int evp_type)
 # define PVK_MAX_KEYLEN          102400
 /* Maximum salt length */
 # define PVK_MAX_SALTLEN         10240
+
+#ifdef OPENSSL_NO_DEPRECATED_3_6
+EVP_PKEY *ossl_b2i_RSA_after_header(const unsigned char **in,
+                                    unsigned int bitlen,
+                                    int ispub);
+EVP_PKEY *ossl_b2i_DSA_after_header(const unsigned char **in,
+                                    unsigned int bitlen,
+                                    int ispub);
+#endif
 
 /*
  * Read the MSBLOB header and get relevant data from it.
@@ -319,7 +276,11 @@ EVP_PKEY *ossl_b2i(const unsigned char **in, unsigned int length, int *ispub)
     int isdss = -1;
     void *key = do_b2i_key(in, length, &isdss, ispub);
 
+#ifndef OPENSSL_NO_DEPRECATED_3_6
     return evp_pkey_new0_key(key, isdss_to_evp_type(isdss));
+#else
+    return key;
+#endif
 }
 
 EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub)
@@ -365,13 +326,18 @@ EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub)
         goto err;
     }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_6
     pkey = evp_pkey_new0_key(key, isdss_to_evp_type(isdss));
+#else
+    pkey = key;
+#endif
  err:
     OPENSSL_free(buf);
     return pkey;
 }
 
 #ifndef OPENSSL_NO_DSA
+# ifndef OPENSSL_NO_DEPRECATED_3_6
 DSA *ossl_b2i_DSA_after_header(const unsigned char **in, unsigned int bitlen,
                                int ispub)
 {
@@ -443,8 +409,114 @@ DSA *ossl_b2i_DSA_after_header(const unsigned char **in, unsigned int bitlen,
     BN_CTX_free(ctx);
     return NULL;
 }
+# else
+EVP_PKEY *ossl_b2i_DSA_after_header(const unsigned char **in,
+                                    unsigned int bitlen,
+                                    int ispub)
+{
+    const unsigned char *p = *in;
+    BN_CTX *ctx = NULL;
+    BIGNUM *pbn = NULL, *qbn = NULL, *gbn = NULL, *priv_key = NULL;
+    BIGNUM *pub_key = NULL;
+    unsigned int nbyte = (bitlen + 7) >> 3;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *evp_ctx = NULL;
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
+
+    if (!(evp_ctx = EVP_PKEY_CTX_new_from_name(NULL, "DSA", NULL)))
+        goto dsaerr;
+    if (!(bld = OSSL_PARAM_BLD_new()))
+        goto dsaerr;
+
+    if (!read_lebn(&p, nbyte, &pbn))
+        goto bnerr;
+
+    if (!read_lebn(&p, 20, &qbn))
+        goto bnerr;
+
+    if (!read_lebn(&p, nbyte, &gbn))
+        goto bnerr;
+
+    if (ispub) {
+        if (!read_lebn(&p, nbyte, &pub_key))
+            goto bnerr;
+    } else {
+        if (!read_lebn(&p, 20, &priv_key))
+            goto bnerr;
+
+        /* Set constant time flag before public key calculation */
+        BN_set_flags(priv_key, BN_FLG_CONSTTIME);
+
+        /* Calculate public key */
+        pub_key = BN_new();
+        if (pub_key == NULL)
+            goto bnerr;
+        if ((ctx = BN_CTX_new()) == NULL)
+            goto bnerr;
+
+        if (!BN_mod_exp(pub_key, gbn, priv_key, pbn, ctx))
+            goto bnerr;
+
+        BN_CTX_free(ctx);
+        ctx = NULL;
+    }
+    if (!OSSL_PARAM_BLD_push_BN(bld, "p", pbn))
+        goto dsaerr;
+    if (!OSSL_PARAM_BLD_push_BN(bld, "q", qbn))
+        goto dsaerr;
+    if (!OSSL_PARAM_BLD_push_BN(bld, "g", gbn))
+        goto dsaerr;
+    if (!OSSL_PARAM_BLD_push_BN(bld, "priv_key", priv_key))
+        goto dsaerr;
+    if (!OSSL_PARAM_BLD_push_BN(bld, "pub_key", pub_key))
+        goto dsaerr;
+
+    if (!(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto dsaerr;
+    if (EVP_PKEY_fromdata_init(evp_ctx) <= 0)
+        goto dsaerr;
+    if (EVP_PKEY_fromdata(evp_ctx, &pkey, EVP_PKEY_KEYPAIR, params) <= 0)
+        goto dsaerr;
+    if (pkey == NULL)
+        goto dsaerr;
+
+    BN_free(pbn);
+    BN_free(qbn);
+    BN_free(gbn);
+    BN_free(pub_key);
+    BN_free(priv_key);
+    BN_CTX_free(ctx);
+    EVP_PKEY_CTX_free(evp_ctx);
+    OSSL_PARAM_BLD_free(bld);
+    OSSL_PARAM_free(params);
+
+    *in = p;
+    return pkey;
+
+ dsaerr:
+    ERR_raise(ERR_LIB_PEM, ERR_R_DSA_LIB);
+    goto err;
+ bnerr:
+    ERR_raise(ERR_LIB_PEM, ERR_R_BN_LIB);
+
+ err:
+    BN_free(pbn);
+    BN_free(qbn);
+    BN_free(gbn);
+    BN_free(pub_key);
+    BN_free(priv_key);
+    BN_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(evp_ctx);
+    OSSL_PARAM_BLD_free(bld);
+    OSSL_PARAM_free(params);
+    return NULL;
+}
+# endif
 #endif
 
+#ifndef OPENSSL_NO_DEPRECATED_3_6
 RSA *ossl_b2i_RSA_after_header(const unsigned char **in, unsigned int bitlen,
                                int ispub)
 {
@@ -510,6 +582,109 @@ RSA *ossl_b2i_RSA_after_header(const unsigned char **in, unsigned int bitlen,
     RSA_free(rsa);
     return NULL;
 }
+#else
+EVP_PKEY *ossl_b2i_RSA_after_header(const unsigned char **in,
+                                    unsigned int bitlen,
+                                    int ispub)
+{
+    const unsigned char *pin = *in;
+    BIGNUM *e = NULL, *n = NULL, *d = NULL;
+    BIGNUM *p = NULL, *q = NULL, *dmp1 = NULL, *dmq1 = NULL, *iqmp = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
+    unsigned int nbyte = (bitlen + 7) >> 3;
+    unsigned int hnbyte = (bitlen + 15) >> 4;
+
+    if (!(ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL)))
+        goto rsaerr;
+    if (!(bld = OSSL_PARAM_BLD_new()))
+        goto rsaerr;
+    e = BN_new();
+    if (e == NULL)
+        goto bnerr;
+    if (!BN_set_word(e, read_ledword(&pin)))
+        goto bnerr;
+    if (!read_lebn(&pin, nbyte, &n))
+        goto bnerr;
+    if (!OSSL_PARAM_BLD_push_BN(bld, "e", e))
+        goto rsaerr;
+    if (!OSSL_PARAM_BLD_push_BN(bld, "n", n))
+        goto rsaerr;
+    if (!ispub) {
+        if (!read_lebn(&pin, hnbyte, &p))
+            goto bnerr;
+        if (!read_lebn(&pin, hnbyte, &q))
+            goto bnerr;
+        if (!read_lebn(&pin, hnbyte, &dmp1))
+            goto bnerr;
+        if (!read_lebn(&pin, hnbyte, &dmq1))
+            goto bnerr;
+        if (!read_lebn(&pin, hnbyte, &iqmp))
+            goto bnerr;
+        if (!read_lebn(&pin, nbyte, &d))
+            goto bnerr;
+        if (!OSSL_PARAM_BLD_push_BN(bld, "p", p))
+            goto rsaerr;
+        if (!OSSL_PARAM_BLD_push_BN(bld, "q", q))
+            goto rsaerr;
+        if (!OSSL_PARAM_BLD_push_BN(bld, "dmp1", dmp1))
+            goto rsaerr;
+        if (!OSSL_PARAM_BLD_push_BN(bld, "dmq1", dmq1))
+            goto rsaerr;
+        if (!OSSL_PARAM_BLD_push_BN(bld, "iqmp", iqmp))
+            goto rsaerr;
+    }
+    if (!OSSL_PARAM_BLD_push_BN(bld, "d", d))
+        goto rsaerr;
+
+    if ((params = OSSL_PARAM_BLD_to_param(bld)) == NULL)
+        goto rsaerr;
+    if (EVP_PKEY_fromdata_init(ctx) <= 0)
+        goto rsaerr;
+    if (EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params) <= 0)
+        goto rsaerr;
+    if (pkey == NULL)
+        goto rsaerr;
+
+    BN_free(e);
+    BN_free(n);
+    BN_free(p);
+    BN_free(q);
+    BN_free(dmp1);
+    BN_free(dmq1);
+    BN_free(iqmp);
+    BN_free(d);
+    EVP_PKEY_CTX_free(ctx);
+    OSSL_PARAM_BLD_free(bld);
+    OSSL_PARAM_free(params);
+
+    *in = pin;
+    return pkey;
+
+ rsaerr:
+    ERR_raise(ERR_LIB_PEM, ERR_R_RSA_LIB);
+    goto err;
+ bnerr:
+    ERR_raise(ERR_LIB_PEM, ERR_R_BN_LIB);
+
+ err:
+    BN_free(e);
+    BN_free(n);
+    BN_free(p);
+    BN_free(q);
+    BN_free(dmp1);
+    BN_free(dmq1);
+    BN_free(iqmp);
+    BN_free(d);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    OSSL_PARAM_BLD_free(bld);
+    OSSL_PARAM_free(params);
+    return NULL;
+}
+#endif
 
 EVP_PKEY *b2i_PrivateKey(const unsigned char **in, long length)
 {
@@ -556,12 +731,22 @@ static void write_lebn(unsigned char **out, const BIGNUM *bn, int len)
     *out += len;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_6
 static int check_bitlen_rsa(const RSA *rsa, int ispub, unsigned int *magic);
 static void write_rsa(unsigned char **out, const RSA *rsa, int ispub);
+#else
+static int check_bitlen_rsa(const EVP_PKEY *pkey, int ispub, unsigned int *magic);
+static int write_rsa(unsigned char **out, const EVP_PKEY *pkey, int ispub);
+#endif
 
 #ifndef OPENSSL_NO_DSA
+# ifndef OPENSSL_NO_DEPRECATED_3_6
 static int check_bitlen_dsa(const DSA *dsa, int ispub, unsigned int *magic);
 static void write_dsa(unsigned char **out, const DSA *dsa, int ispub);
+# else
+static int check_bitlen_dsa(const EVP_PKEY *pkey, int ispub, unsigned int *magic);
+static int write_dsa(unsigned char **out, const EVP_PKEY *pkey, int ispub);
+# endif
 #endif
 
 static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
@@ -571,11 +756,19 @@ static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
     int outlen = -1, noinc = 0;
 
     if (EVP_PKEY_is_a(pk, "RSA")) {
+#ifndef OPENSSL_NO_DEPRECATED_3_6
         bitlen = check_bitlen_rsa(EVP_PKEY_get0_RSA(pk), ispub, &magic);
+#else
+        bitlen = check_bitlen_rsa(pk, ispub, &magic);
+#endif
         keyalg = MS_KEYALG_RSA_KEYX;
 #ifndef OPENSSL_NO_DSA
     } else if (EVP_PKEY_is_a(pk, "DSA")) {
+# ifndef OPENSSL_NO_DEPRECATED_3_6
         bitlen = check_bitlen_dsa(EVP_PKEY_get0_DSA(pk), ispub, &magic);
+# else
+        bitlen = check_bitlen_dsa(pk, ispub, &magic);
+# endif
         keyalg = MS_KEYALG_DSS_SIGN;
 #endif
     }
@@ -607,10 +800,18 @@ static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
     write_ledword(&p, magic);
     write_ledword(&p, bitlen);
     if (keyalg == MS_KEYALG_RSA_KEYX)
+#ifndef OPENSSL_NO_DEPRECATED_3_6
         write_rsa(&p, EVP_PKEY_get0_RSA(pk), ispub);
+#else
+        write_rsa(&p, pk, ispub);
+#endif
 #ifndef OPENSSL_NO_DSA
     else
+# ifndef OPENSSL_NO_DEPRECATED_3_6
         write_dsa(&p, EVP_PKEY_get0_DSA(pk), ispub);
+# else
+        write_dsa(&p, pk, ispub);
+# endif
 #endif
     if (!noinc)
         *out += outlen;
@@ -633,6 +834,7 @@ static int do_i2b_bio(BIO *out, const EVP_PKEY *pk, int ispub)
     return -1;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_6
 static int check_bitlen_rsa(const RSA *rsa, int ispub, unsigned int *pmagic)
 {
     int nbyte, hnbyte, bitlen;
@@ -672,7 +874,64 @@ static int check_bitlen_rsa(const RSA *rsa, int ispub, unsigned int *pmagic)
     ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_KEY_COMPONENTS);
     return 0;
 }
+#else
+static int check_bitlen_rsa(const EVP_PKEY *pkey, int ispub, unsigned int *pmagic)
+{
+    int nbyte, hnbyte, bitlen, ret = 0;
+    BIGNUM *e = NULL;
 
+    if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, &e)
+        || BN_num_bits(e) > 32) {
+        BN_free(e);
+        ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_KEY_COMPONENTS);
+        return 0;
+    }
+    BN_free(e);
+    bitlen = EVP_PKEY_get_bits(pkey);
+    nbyte = EVP_PKEY_size(pkey);
+    hnbyte = (bitlen + 15) >> 4;
+    if (ispub) {
+        *pmagic = MS_RSA1MAGIC;
+        return bitlen;
+    } else {
+        BIGNUM *d = NULL, *p = NULL, *q = NULL, *iqmp = NULL, *dmp1 = NULL;
+        BIGNUM *dmq1 = NULL;
+
+        *pmagic = MS_RSA2MAGIC;
+
+        /*
+         * For private key each component must fit within nbyte or hnbyte.
+         */
+        if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_D, &d)
+            || BN_num_bytes(d) > nbyte
+            || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_FACTOR1, &p)
+            || BN_num_bytes(p) > hnbyte
+            || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_FACTOR2, &q)
+            || BN_num_bytes(q) > hnbyte
+            || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_EXPONENT1, &dmp1)
+            || BN_num_bytes(dmp1) > hnbyte
+            || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_EXPONENT2, &dmq1)
+            || BN_num_bytes(dmq1) > hnbyte
+            || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_COEFFICIENT, &iqmp)
+            || BN_num_bytes(iqmp) > hnbyte) {
+            ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_KEY_COMPONENTS);
+            goto out;
+        }
+        ret = bitlen;
+out:
+        BN_free(d);
+        BN_free(p);
+        BN_free(q);
+        BN_free(iqmp);
+        BN_free(dmp1);
+        BN_free(dmq1);
+    }
+
+    return ret;
+}
+#endif
+
+#ifndef OPENSSL_NO_DEPRECATED_3_6
 static void write_rsa(unsigned char **out, const RSA *rsa, int ispub)
 {
     int nbyte, hnbyte;
@@ -694,8 +953,57 @@ static void write_rsa(unsigned char **out, const RSA *rsa, int ispub)
     write_lebn(out, iqmp, hnbyte);
     write_lebn(out, d, nbyte);
 }
+#else
+static int write_rsa(unsigned char **out, const EVP_PKEY *pkey, int ispub)
+{
+    int nbyte, hnbyte, bitlen, ret = 0;
+    BIGNUM *n = NULL, *d = NULL, *e = NULL, *p = NULL, *q = NULL, *iqmp = NULL;
+    BIGNUM *dmp1 = NULL, *dmq1 = NULL;
+
+    bitlen = EVP_PKEY_get_bits(pkey);
+    nbyte = EVP_PKEY_size(pkey);
+    hnbyte = (bitlen + 15) >> 4;
+    if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_N, &n)
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, &e))
+        goto out;
+    write_lebn(out, e, 4);
+    write_lebn(out, n, nbyte);
+    if (ispub) {
+        BN_free(n);
+        BN_free(e);
+        return 1;
+    }
+    if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_D, &d)
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_FACTOR1, &p)
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_FACTOR2, &q)
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_EXPONENT1, &dmp1)
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_EXPONENT2, &dmq1)
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_COEFFICIENT, &iqmp))
+        goto out;
+
+    write_lebn(out, p, hnbyte);
+    write_lebn(out, q, hnbyte);
+    write_lebn(out, dmp1, hnbyte);
+    write_lebn(out, dmq1, hnbyte);
+    write_lebn(out, iqmp, hnbyte);
+    write_lebn(out, d, nbyte);
+
+    ret = 1;
+out:
+    BN_free(n);
+    BN_free(d);
+    BN_free(e);
+    BN_free(p);
+    BN_free(q);
+    BN_free(iqmp);
+    BN_free(dmp1);
+    BN_free(dmq1);
+    return ret;
+}
+#endif
 
 #ifndef OPENSSL_NO_DSA
+# ifndef OPENSSL_NO_DEPRECATED_3_6
 static int check_bitlen_dsa(const DSA *dsa, int ispub, unsigned int *pmagic)
 {
     int bitlen;
@@ -723,7 +1031,53 @@ static int check_bitlen_dsa(const DSA *dsa, int ispub, unsigned int *pmagic)
     ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_KEY_COMPONENTS);
     return 0;
 }
+# else
+static int check_bitlen_dsa(const EVP_PKEY *pkey, int ispub, unsigned int *pmagic)
+{
+    int bitlen, ret = 0;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL;
+    BIGNUM *pub_key = NULL, *priv_key = NULL;
 
+    if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_FFC_P, &p)
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_FFC_Q, &q)
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_FFC_G, &g)
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PUB_KEY, &pub_key)
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY, &priv_key)) {
+        ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_KEY_COMPONENTS);
+        goto out;
+    }
+    bitlen = BN_num_bits(p);
+    if ((bitlen & 7) || (BN_num_bits(q) != 160)
+        || (BN_num_bits(g) > bitlen)) {
+        ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_KEY_COMPONENTS);
+        goto out;
+    }
+    if (ispub) {
+        if (BN_num_bits(pub_key) > bitlen) {
+            ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_KEY_COMPONENTS);
+            goto out;
+        }
+        *pmagic = MS_DSS1MAGIC;
+    } else {
+        if (BN_num_bits(priv_key) > 160) {
+            ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_KEY_COMPONENTS);
+            goto out;
+        }
+        *pmagic = MS_DSS2MAGIC;
+    }
+
+    ret = bitlen;
+ out:
+    BN_free(p);
+    BN_free(q);
+    BN_free(g);
+    BN_free(pub_key);
+    BN_free(priv_key);
+    return ret;
+}
+# endif
+
+# ifndef OPENSSL_NO_DEPRECATED_3_6
 static void write_dsa(unsigned char **out, const DSA *dsa, int ispub)
 {
     int nbyte;
@@ -745,6 +1099,39 @@ static void write_dsa(unsigned char **out, const DSA *dsa, int ispub)
     *out += 24;
     return;
 }
+# else
+static int write_dsa(unsigned char **out, const EVP_PKEY *pkey, int ispub)
+{
+    int nbyte, ret = 0;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL;
+    BIGNUM *pub_key = NULL, *priv_key = NULL;
+
+    if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_FFC_P, &p)
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_FFC_Q, &q)
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_FFC_G, &g)
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PUB_KEY, &pub_key)
+        || !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY, &priv_key))
+        goto out;
+    nbyte = BN_num_bytes(p);
+    write_lebn(out, p, nbyte);
+    write_lebn(out, q, 20);
+    write_lebn(out, g, nbyte);
+    if (ispub)
+        write_lebn(out, pub_key, nbyte);
+    else
+        write_lebn(out, priv_key, 20);
+    /* Set "invalid" for seed structure values */
+    memset(*out, 0xff, 24);
+    *out += 24;
+out:
+    BN_free(p);
+    BN_free(q);
+    BN_free(g);
+    BN_free(pub_key);
+    BN_free(priv_key);
+    return ret;
+}
+# endif
 #endif
 
 int i2b_PrivateKey_bio(BIO *out, const EVP_PKEY *pk)
@@ -1017,7 +1404,11 @@ EVP_PKEY *b2i_PVK_bio_ex(BIO *in, pem_password_cb *cb, void *u,
     int ispub = -1;
     void *key = do_PVK_key_bio(in, cb, u, &isdss, &ispub, NULL, NULL);
 
+#ifndef OPENSSL_NO_DEPRECATED_3_6
     return evp_pkey_new0_key(key, isdss_to_evp_type(isdss));
+#else
+    return key;
+#endif
 }
 
 EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)

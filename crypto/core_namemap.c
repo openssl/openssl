@@ -7,6 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * because of EVP_PKEY_asn1_get0_info, EVP_PKEY_asn1_get_count deprecation
+ */
+#include "internal/deprecated.h"
+
 #include "internal/namemap.h"
 #include "internal/tsan_assist.h"
 #include "internal/hashtable.h"

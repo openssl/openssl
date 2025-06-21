@@ -165,3 +165,8 @@
     IMPLEMENT_PEM_read(name, TYPE, str, asn1)                             \
     IMPLEMENT_PEM_provided_write_cb(name, TYPE, type, str, asn1)
 
+# ifndef OPENSSL_NO_DEPRECATED_3_6
+# define isdss_to_evp_type(isdss)                                \
+    (isdss == 0 ? EVP_PKEY_RSA : isdss == 1 ? EVP_PKEY_DSA : EVP_PKEY_NONE)
+EVP_PKEY *evp_pkey_new0_key(void *key, int evp_type);
+# endif

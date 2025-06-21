@@ -7,6 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * because of EVP_PKEY_asn1_find deprecation
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"

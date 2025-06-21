@@ -913,9 +913,8 @@ static int fix_kdf_type(enum state state,
                 break;
             }
         ctx->p2 = NULL;
-    } else if (state == PRE_PARAMS_TO_CTRL && ctx->action_type == OSSL_ACTION_GET) {
+    } else if (state == PRE_PARAMS_TO_CTRL && ctx->action_type == OSSL_ACTION_GET)
         ctx->p1 = -2;
-    }
  end:
     return ret;
 }
