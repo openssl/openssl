@@ -156,6 +156,53 @@ typedef struct export_cb_arg_st {
     size_t   prvlen;
 } EXPORT_CB_ARG;
 
+#ifndef FIPS_MODULE
+# include <openssl/bn.h>
+# include <openssl/ec.h>
+static size_t decompress_pub_key(void *pub, size_t compressed_len, size_t decompressed_len)
+{
+    EC_GROUP *group = NULL;
+    EC_POINT *point = NULL;
+    BN_CTX *ctx = NULL;
+    size_t len = compressed_len;
+    int group_nid = NID_undef;
+
+    switch (len) {
+    case 33:
+        group_nid = NID_X9_62_prime256v1;
+        break;
+    case 49:
+        group_nid = NID_secp384r1;
+        break;
+    default:
+        return len;
+        break;
+    }
+
+    ctx = BN_CTX_new();
+    group = EC_GROUP_new_by_curve_name(group_nid);
+    if (ctx == NULL || group == NULL)
+        goto err;
+
+    point = EC_POINT_new(group);
+    if (point == NULL)
+        goto err;
+
+    if (!EC_POINT_oct2point(group, point, pub, len, ctx))
+        goto err;
+
+    len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED,
+                             pub, decompressed_len, ctx);
+
+err:
+    EC_POINT_free(point);
+    EC_GROUP_free(group);
+    BN_CTX_free(ctx);
+
+    return len;
+}
+#endif
+
 /* Copy any exported key material into its storage slot */
 static int export_sub_cb(const OSSL_PARAM *params, void *varg)
 {
@@ -176,6 +223,10 @@ static int export_sub_cb(const OSSL_PARAM *params, void *varg)
 
         if (OSSL_PARAM_get_octet_string(p, &pub, sub_arg->publen, &len) != 1)
             return 0;
+#ifndef FIPS_MODULE
+        if (len < sub_arg->publen)
+            len = decompress_pub_key(pub, len, sub_arg->publen);
+#endif
         if (len != sub_arg->publen) {
             ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
                            "Unexpected %s public key length %lu != %lu",
@@ -335,7 +386,7 @@ load_slot(OSSL_LIB_CTX *libctx, const char *propq, const char *pname,
           int selection, MLX_KEY *key, int slot, const uint8_t *in,
           int mbytes, int xbytes)
 {
-    EVP_PKEY_CTX *ctx;
+    EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY **ppkey;
     OSSL_PARAM parr[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
     const char *alg;
@@ -344,12 +395,16 @@ load_slot(OSSL_LIB_CTX *libctx, const char *propq, const char *pname,
     void *val;
     int ml_kem_slot = key->xinfo->ml_kem_slot;
     int ret = 0;
+    char *adjusted_propq = NULL;
 
     if (slot == ml_kem_slot) {
         alg = key->minfo->algorithm_name;
         ppkey = &key->mkey;
         off = slot * xbytes;
         len = mbytes;
+        adjusted_propq = ml_kem_strip_fips(propq);
+        if (adjusted_propq == NULL)
+            goto err;
     } else {
         alg = key->xinfo->algorithm_name;
         group = (char *) key->xinfo->group_name;
@@ -359,7 +414,8 @@ load_slot(OSSL_LIB_CTX *libctx, const char *propq, const char *pname,
     }
     val = (void *)(in + off);
 
-    if ((ctx = EVP_PKEY_CTX_new_from_name(libctx, alg, propq)) == NULL
+    if ((ctx = EVP_PKEY_CTX_new_from_name(libctx, alg,
+                                          adjusted_propq ? adjusted_propq : propq)) == NULL
         || EVP_PKEY_fromdata_init(ctx) <= 0)
         goto err;
     parr[0] = OSSL_PARAM_construct_octet_string(pname, val, len);
@@ -370,6 +426,7 @@ load_slot(OSSL_LIB_CTX *libctx, const char *propq, const char *pname,
         ret = 1;
 
  err:
+    OPENSSL_free(adjusted_propq);
     EVP_PKEY_CTX_free(ctx);
     return ret;
 }
@@ -695,6 +752,7 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     PROV_ML_KEM_GEN_CTX *gctx = vgctx;
     MLX_KEY *key;
     char *propq;
+    char *adjusted_propq = NULL;
 
     if (gctx == NULL
         || (gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) ==
@@ -710,9 +768,14 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return key;
 
-    /* For now, using the same "propq" for all components */
-    key->mkey = EVP_PKEY_Q_keygen(key->libctx, key->propq,
+    adjusted_propq = ml_kem_strip_fips(key->propq);
+    if (adjusted_propq == NULL) {
+        mlx_kem_key_free(key);
+        return NULL;
+    }
+    key->mkey = EVP_PKEY_Q_keygen(key->libctx, adjusted_propq,
                                   key->minfo->algorithm_name);
+    OPENSSL_free(adjusted_propq);
     key->xkey = EVP_PKEY_Q_keygen(key->libctx, key->propq,
                                   key->xinfo->algorithm_name,
                                   key->xinfo->group_name);
