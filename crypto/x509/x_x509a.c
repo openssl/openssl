@@ -217,7 +217,7 @@ X509_ALGOR *X509_get0_other_by_nid(X509 *x, int nid)
 
     if (x->aux == NULL)
         return NULL;
-    for (i = sk_X509_ALGOR_num(x->aux->other); i >= 0; i--) {
+    for (i = sk_X509_ALGOR_num(x->aux->other) -1; i >= 0; i--) {
         /* search from top so we get newest one */
         X509_ALGOR *current = sk_X509_ALGOR_value(x->aux->other, i);
 
