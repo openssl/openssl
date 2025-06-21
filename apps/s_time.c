@@ -118,6 +118,7 @@ int s_time_main(int argc, char **argv)
     SSL *scon = NULL;
     SSL_CTX *ctx = NULL;
     const SSL_METHOD *meth = NULL;
+    int verify = SSL_VERIFY_PEER;
     char *CApath = NULL, *CAfile = NULL, *CAstore = NULL;
     char *cipher = NULL, *ciphersuites = NULL;
     char *www_path = NULL;
@@ -157,6 +158,7 @@ int s_time_main(int argc, char **argv)
             verify_args.depth = opt_int_arg();
             BIO_printf(bio_err, "%s: verify depth is %d\n",
                        prog, verify_args.depth);
+            verify_args.return_error = 1;
             break;
         case OPT_CERT:
             certfile = opt_arg();
@@ -240,9 +242,10 @@ int s_time_main(int argc, char **argv)
     if (cipher == NULL)
         cipher = getenv("SSL_CIPHER");
 
-    if ((ctx = SSL_CTX_new(meth)) == NULL)
+    if ((ctx = SSL_CTX_new(meth)) == NULL) {
         goto end;
-
+    }
+    SSL_CTX_set_verify(ctx, verify, verify_callback);
     SSL_CTX_set_quiet_shutdown(ctx, 1);
     if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
         goto end;
