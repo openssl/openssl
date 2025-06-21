@@ -13,7 +13,7 @@
 #include "internal/sizes.h"
 #include "crypto/context.h"
 
-#define NAMEMAP_HT_BUCKETS 2048
+#define NAMEMAP_HT_BUCKETS 512
 
 HT_START_KEY_DEFN(namenum_key)
 HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
