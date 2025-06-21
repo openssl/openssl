@@ -43,8 +43,8 @@ static void qc_set_default_xso_keep_ref(QUIC_CONNECTION *qc, QUIC_XSO *xso,
 static SSL *quic_conn_stream_new(QCTX *ctx, uint64_t flags, int need_lock);
 static int quic_validate_for_write(QUIC_XSO *xso, int *err);
 static int quic_mutation_allowed(QUIC_CONNECTION *qc, int req_active);
-static void qctx_maybe_autotick(QCTX *ctx);
-static int qctx_should_autotick(QCTX *ctx);
+static int qctx_maybe_autotick(QCTX *ctx);
+static int qctx_should_autotick(QCTX *ctx, int* ret);
 
 /*
  * QCTX is a utility structure which provides information we commonly wish to
@@ -1539,7 +1539,11 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
                     goto err;
                 }
             } else {
-                qctx_maybe_autotick(&ctx);
+                if(!qctx_maybe_autotick(&ctx)) {
+                    QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+                    ret = -1;
+                    goto err;
+                }
             }
         }
 
@@ -1558,7 +1562,11 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
                 goto err;
             }
         } else {
-            qctx_maybe_autotick(&ctx);
+            if(!qctx_maybe_autotick(&ctx)) {
+                QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+                ret = -1;
+                goto err;
+            }
         }
 
         if (!ossl_quic_channel_is_term_any(ctx.qc->ch)) {
@@ -1599,7 +1607,11 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
             goto err;
         }
     } else {
-        qctx_maybe_autotick(&ctx);
+        if(!qctx_maybe_autotick(&ctx)) {
+            QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+            ret = -1;
+            goto err;
+        }
     }
 
     ret = ossl_quic_channel_is_terminated(ctx.qc->ch);
@@ -1943,7 +1955,10 @@ static int quic_do_handshake(QCTX *ctx)
 
     if (!qctx_blocking(ctx)) {
         /* Try to advance the reactor. */
-        qctx_maybe_autotick(ctx);
+        if(!qctx_maybe_autotick(ctx)) {
+            QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+            return -1;
+        }
 
         if (ossl_quic_channel_is_handshake_complete(qc->ch))
             /* The handshake is now done. */
@@ -2149,7 +2164,8 @@ static int qc_wait_for_default_xso_for_read(QCTX *ctx, int peek)
                                             expect_id | QUIC_STREAM_DIR_UNI);
 
     if (qs == NULL) {
-        qctx_maybe_autotick(ctx);
+        if(!qctx_maybe_autotick(ctx))
+            return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
 
         qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(qc->ch),
                                             expect_id);
@@ -2655,6 +2671,7 @@ static int quic_write_nonblocking_aon(QCTX *ctx, const void *buf,
     QUIC_XSO *xso = ctx->xso;
     const void *actual_buf;
     size_t actual_len, actual_written = 0;
+    int is_autotick;
     int accept_moving_buffer
         = ((xso->ssl_mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER) != 0);
 
@@ -2687,8 +2704,11 @@ static int quic_write_nonblocking_aon(QCTX *ctx, const void *buf,
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
     }
 
+    if (!qctx_should_autotick(ctx, &is_autotick))
+        return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+
     quic_post_write(xso, actual_written > 0, actual_written == actual_len,
-                    flags, qctx_should_autotick(ctx));
+                    flags, is_autotick);
 
     if (actual_written == actual_len) {
         /* We have sent everything. */
@@ -2740,6 +2760,7 @@ QUIC_NEEDS_LOCK
 static int quic_write_nonblocking_epw(QCTX *ctx, const void *buf, size_t len,
                                       uint64_t flags, size_t *written)
 {
+    int is_autotick;
     QUIC_XSO *xso = ctx->xso;
 
     /* Simple best effort operation. */
@@ -2749,8 +2770,10 @@ static int quic_write_nonblocking_epw(QCTX *ctx, const void *buf, size_t len,
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
     }
 
-    quic_post_write(xso, *written > 0, *written == len, flags,
-                    qctx_should_autotick(ctx));
+    if (!qctx_should_autotick(ctx, &is_autotick))
+        return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+
+    quic_post_write(xso, *written > 0, *written == len, flags, is_autotick);
 
     if (*written == 0)
         /* SSL_write_ex returns 0 if it didn't write anything. */
@@ -2809,7 +2832,7 @@ int ossl_quic_write_flags(SSL *s, const void *buf, size_t len,
 {
     int ret;
     QCTX ctx;
-    int partial_write, err;
+    int partial_write, err, is_autotick;
 
     *written = 0;
 
@@ -2853,9 +2876,14 @@ int ossl_quic_write_flags(SSL *s, const void *buf, size_t len,
     }
 
     if (len == 0) {
-        if ((flags & SSL_WRITE_FLAG_CONCLUDE) != 0)
-            quic_post_write(ctx.xso, 0, 1, flags,
-                            qctx_should_autotick(&ctx));
+        if ((flags & SSL_WRITE_FLAG_CONCLUDE) != 0) {
+            if (!qctx_should_autotick(&ctx, &is_autotick)) {
+                ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+                goto out;
+            }
+
+            quic_post_write(ctx.xso, 0, 1, flags, is_autotick);
+        }
 
         ret = 1;
         goto out;
@@ -3064,8 +3092,12 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
          * Even though we succeeded, tick the reactor here to ensure we are
          * handling other aspects of the QUIC connection.
          */
-        if (quic_mutation_allowed(ctx.qc, /*req_active=*/0))
-            qctx_maybe_autotick(&ctx);
+        if (quic_mutation_allowed(ctx.qc, /*req_active=*/0)) {
+            if(!qctx_maybe_autotick(&ctx)) {
+                ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+                goto out;
+            }
+        }
 
         ret = 1;
     } else if (!quic_mutation_allowed(ctx.qc, /*req_active=*/0)) {
@@ -3099,7 +3131,10 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
          * We did not get any bytes and are not in blocking mode.
          * Tick to see if this delivers any more.
          */
-        qctx_maybe_autotick(&ctx);
+        if(!qctx_maybe_autotick(&ctx)) {
+            ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+            goto out;
+        }
 
         /* Try the read again. */
         if (!quic_read_actual(&ctx, ctx.xso->stream, buf, len, bytes_read, peek)) {
@@ -3196,6 +3231,7 @@ int ossl_quic_conn_stream_conclude(SSL *s)
 {
     QCTX ctx;
     QUIC_STREAM *qs;
+    int is_autotick;
     int err;
 
     if (!expect_quic_with_stream_lock(s, /*remote_init=*/0, /*io=*/0, &ctx))
@@ -3219,7 +3255,11 @@ int ossl_quic_conn_stream_conclude(SSL *s)
     }
 
     ossl_quic_sstream_fin(qs->sstream);
-    quic_post_write(ctx.xso, 1, 0, 0, qctx_should_autotick(&ctx));
+    if (!qctx_should_autotick(&ctx, &is_autotick)) {
+        qctx_unlock(&ctx);
+        return QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+    }
+    quic_post_write(ctx.xso, 1, 0, 0, is_autotick);
     qctx_unlock(&ctx);
     return 1;
 }
@@ -3659,24 +3699,31 @@ static int qc_get_stream_avail(QCTX *ctx, uint32_t class_,
 }
 
 QUIC_NEEDS_LOCK
-static int qctx_should_autotick(QCTX *ctx)
+static int qctx_should_autotick(QCTX *ctx, int* ret)
 {
     int event_handling_mode;
+
+    if (!ctx || !ctx->obj)
+        return 0;
+
     QUIC_OBJ *obj = ctx->obj;
 
     for (; (event_handling_mode = obj->event_handling_mode) == SSL_VALUE_EVENT_HANDLING_MODE_INHERIT
            && obj->parent_obj != NULL; obj = obj->parent_obj);
 
-    return event_handling_mode != SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT;
+    if (ret)
+        *ret = event_handling_mode != SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT;
+    return 1;
 }
 
 QUIC_NEEDS_LOCK
-static void qctx_maybe_autotick(QCTX *ctx)
+static int qctx_maybe_autotick(QCTX *ctx)
 {
-    if (!qctx_should_autotick(ctx))
-        return;
+    if (!qctx_should_autotick(ctx, NULL))
+        return 0;
 
     ossl_quic_reactor_tick(ossl_quic_obj_get0_reactor(ctx->obj), 0);
+    return 1;
 }
 
 QUIC_TAKES_LOCK
@@ -4618,7 +4665,10 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
             if (ret < 1)
                 goto out;
         } else {
-            qctx_maybe_autotick(&ctx);
+            if(!qctx_maybe_autotick(&ctx)) {
+                QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+                goto out;
+            }
         }
 
         if (!ossl_quic_port_is_running(ctx.ql->port))
