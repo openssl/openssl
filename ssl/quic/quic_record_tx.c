@@ -837,7 +837,9 @@ int ossl_qtx_write_pkt(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt)
          * Ensure TXE has at least MDPL bytes allocated. This should only be
          * possible if the MDPL has increased.
          */
-        if (!qtx_reserve_txe(qtx, NULL, txe, qtx->mdpl))
+        TXE_LIST *txl = &qtx->free;
+        txe = qtx_reserve_txe(qtx, txl, txe, qtx->mdpl);
+        if (txe == NULL)
             return 0;
 
         if (!was_coalescing) {
