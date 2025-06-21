@@ -2059,3 +2059,7 @@ tcg-tr-category 37 : tcg-tr-cat-PublicKey 								: Public Key Trait Category
 nistKems 1 : id-alg-ml-kem-512  : ML-KEM-512
 nistKems 2 : id-alg-ml-kem-768  : ML-KEM-768
 nistKems 3 : id-alg-ml-kem-1024 : ML-KEM-1024
+
+# Openssl internal 
+1 3 6 1 4 1 16604 : openssl : OpenSSL Software Foundation
+openssl 1 : openssl-distrustafter					: Distrust new leafs that signed after
