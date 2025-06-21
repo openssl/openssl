@@ -267,7 +267,7 @@ static int generate_key(DH *dh)
     int ok = 0;
     int generate_new_key = 0;
 #ifndef FIPS_MODULE
-    unsigned l;
+    int l;
 #endif
     BN_CTX *ctx = NULL;
     BIGNUM *pub_key = NULL, *priv_key = NULL;
@@ -327,11 +327,13 @@ static int generate_key(DH *dh)
                 goto err;
 #else
             if (dh->params.q == NULL) {
-                /* secret exponent length, must satisfy 2^(l-1) <= p */
-                if (dh->length != 0
-                    && dh->length >= BN_num_bits(dh->params.p))
+                /* secret exponent length, must satisfy 2^l < (p-1)/2 */
+                l = BN_num_bits(dh->params.p);
+                if (dh->length >= l)
                     goto err;
-                l = dh->length ? dh->length : BN_num_bits(dh->params.p) - 1;
+                l -= 2;
+                if (dh->length != 0 && dh->length < l)
+                    l = dh->length;
                 if (!BN_priv_rand_ex(priv_key, l, BN_RAND_TOP_ONE,
                                      BN_RAND_BOTTOM_ANY, 0, ctx))
                     goto err;
