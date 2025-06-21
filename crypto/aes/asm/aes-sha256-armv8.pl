@@ -38,6 +38,8 @@ $code=<<___;
 #define CIPHER_IV	16
 #define HMAC_IKEYPAD	24
 #define HMAC_OKEYPAD	32
+#define HMAC_INLEN	40
+#define HMAC_MODE	48
 
 .text
 .arch armv8-a+crypto
@@ -149,67 +151,71 @@ ___
 }
 
 $code.=<<___;
-# Description:
-#
-# Combined Enc/Auth Primitive = aes128cbc/sha256_hmac
-#
-# Operations:
-#
-# out = encrypt-AES128CBC(in)
-# return_hash_ptr = SHA256(o_key_pad | SHA256(i_key_pad | out))
-#
-# Prototype:
-# void asm_aescbc_sha256_hmac(uint8_t *csrc, uint8_t *cdst, uint64_t clen,
-#			uint8_t *dsrc, uint8_t *ddst, uint64_t dlen,
-#			CIPH_DIGEST *arg)
-#
-# Registers used:
-#
-# asm_aescbc_sha256_hmac(
-#	csrc,	x0	(cipher src address)
-#	cdst,	x1	(cipher dst address)
-#	clen	x2	(cipher length)
-#	dsrc,	x3	(digest src address)
-#	ddst,	x4	(digest dst address)
-#	dlen,	x5	(digest length)
-#	arg	x6	:
-#		arg->cipher.key			(round keys)
-#		arg->cipher.key_rounds		(key rounds)
-#		arg->cipher.iv			(initialization vector)
-#		arg->digest.hmac.i_key_pad	(partially hashed i_key_pad)
-#		arg->digest.hmac.o_key_pad	(partially hashed o_key_pad)
-#	)
-#
-# Routine register definitions:
-#
-# v0  -- v3 -- aes results
-# v4  -- v7 -- round consts for sha
-# v8  -- v18 -- round keys
-# v19 -- v20 -- round keys
-# v21 -- ABCD tmp
-# v22 -- sha working state ABCD (q22)
-# v23 -- sha working state EFGH (q23)
-# v24 -- sha state ABCD
-# v25 -- sha state EFGH
-# v26 -- sha block 0
-# v27 -- sha block 1
-# v28 -- sha block 2
-# v29 -- sha block 3
-# v30 -- reserved
-# v31 -- reserved
-#
-# Constraints:
-#
-# The variable "clen" must be a multiple of 16, otherwise results
-# are not defined. For AES partial blocks the user is required
-# to pad the input to modulus 16 = 0.
-# The variable "dlen" must be a multiple of 8 and greater or equal
-# to "clen". This constrain is strictly related to the needs of the IPSec
-# ESP packet. Encrypted payload is hashed along with the 8 byte ESP header,
-# forming ICV. Speed gain is achieved by doing both things at the same time,
-# hence lengths are required to match at least at the cipher level.
-#
-# Short lengths are not optimized at < 12 AES blocks
+/*
+ * Description:
+ *
+ * Combined Enc/Auth Primitive = aes128cbc/sha256_hmac
+ *
+ * Operations:
+ *
+ * out = encrypt-AES128CBC(in)
+ * return_hash_ptr = SHA256(o_key_pad | SHA256(i_key_pad | out))
+ *
+ * Prototype:
+ * void asm_aescbc_sha256_hmac(uint8_t *csrc, uint8_t *cdst, uint64_t clen,
+ *			uint8_t *dsrc, uint8_t *ddst, uint64_t dlen,
+ *			CIPH_DIGEST *arg)
+ *
+ * Registers used:
+ *
+ * asm_aescbc_sha256_hmac(
+ *	csrc,	x0	(cipher src address)
+ *	cdst,	x1	(cipher dst address)
+ *	clen	x2	(cipher length)
+ *	dsrc,	x3	(digest src address)
+ *	ddst,	x4	(digest dst address)
+ *	dlen,	x5	(digest length)
+ *	arg	x6	:
+ *		arg->cipher.key			(round keys)
+ *		arg->cipher.key_rounds		(key rounds)
+ *		arg->cipher.iv			(initialization vector)
+ *		arg->digest.hmac.i_key_pad	(partially hashed i_key_pad)
+ *		arg->digest.hmac.o_key_pad	(partially hashed o_key_pad)
+ *		arg->digest.in_len		(length of hash input processed so far)
+ *		arg->digest.hmac_mode		(flag enabling hmac final tag calculation)
+ *	)
+ *
+ * Routine register definitions:
+ *
+ * v0  -- v3 -- aes results
+ * v4  -- v7 -- round consts for sha
+ * v8  -- v18 -- round keys
+ * v19 -- v20 -- round keys
+ * v21 -- ABCD tmp
+ * v22 -- sha working state ABCD (q22)
+ * v23 -- sha working state EFGH (q23)
+ * v24 -- sha state ABCD
+ * v25 -- sha state EFGH
+ * v26 -- sha block 0
+ * v27 -- sha block 1
+ * v28 -- sha block 2
+ * v29 -- sha block 3
+ * v30 -- reserved
+ * v31 -- reserved
+ *
+ * Constraints:
+ *
+ * The variable "clen" must be a multiple of 16, otherwise results
+ * are not defined. For AES partial blocks the user is required
+ * to pad the input to modulus 16 = 0.
+ * The variable "dlen" must be a multiple of 8 and greater or equal
+ * to "clen". This constrain is strictly related to the needs of the IPSec
+ * ESP packet. Encrypted payload is hashed along with the 8 byte ESP header,
+ * forming ICV. Speed gain is achieved by doing both things at the same time,
+ * hence lengths are required to match at least at the cipher level.
+ *
+ * Short lengths are not optimized at < 12 AES blocks
+ */
 
 .global	asm_aescbc_sha256_hmac
 .type	asm_aescbc_sha256_hmac,%function
@@ -245,8 +251,6 @@ asm_aescbc_sha256_hmac:
 	ldr		x7, [x6, #HMAC_IKEYPAD]
 	/* init ABCD, EFGH. */
 	ldp		q24,q25,[x7]
-	/* save pointer to o_key_pad partial hash */
-	ldr		x7, [x6, #HMAC_OKEYPAD]
 
 	stp		d10,d11,[sp,#16]
 
@@ -260,8 +264,18 @@ asm_aescbc_sha256_hmac:
 
 	ldr		x9, [x6, #CIPHER_KEY]
 	ldr		x16, [x6, #CIPHER_KEY_ROUNDS]
-	ldr		x6, [x6, #CIPHER_IV]
+	ldr		x7, [x6, #CIPHER_IV]
+	ld1		{v3.16b},[x7]		/* get 1st ivec */
+
 	add		x17, x9, #160		/* point to the last 5 rounds keys */
+	mov		x11,x2			/* len -> x11 needed at end */
+
+	/* If the input length is 0, then there is no data to encrypt. This
+	 * will be the EVP final call with no pending data in internal buf. Just
+	 * calculate the final HMAC tag using the partially hashed i_key_pad
+	 * and partially hashed o_key_pad.
+	*/
+	cbz		x2,.Lonly_hmac_final
 
 	/*
 	 * Init sha state, prefetch, check for small cases.
@@ -272,10 +286,8 @@ asm_aescbc_sha256_hmac:
 	b.lt		.Lenc_short_cases	/* branch if < 12 */
 
 	/* proceed */
-	ld1		{v3.16b},[x6]		/* get 1st ivec */
 	/* read first aes block, bump aes_ptr_in */
 	ld1		{v0.16b},[x0],16
-	mov		x11,x2			/* len -> x11 needed at end */
 	lsr		x12,x11,6		/* total_blocks */
 	/*
 	 * now we can do the loop prolog, 1st aes sequence of 4 blocks
@@ -1303,8 +1315,32 @@ $code.=<<___;
 	b.ne		.Lpost_long_Q0
 	/* set "1" of the padding if this was a final block */
 	mov		v26.b[3],w15
+	b       .Lpost_long_loop
+
+.Lonly_hmac_final:
+	eor		v26.16b,v26.16b,v26.16b		/* zero sha src 0 */
+	eor		v27.16b,v27.16b,v27.16b		/* zero sha src 1 */
+	eor		v28.16b,v28.16b,v28.16b		/* zero sha src 2 */
+	eor		v29.16b,v29.16b,v29.16b		/* zero sha src 3 */
+	ldr		x7, [x6, #HMAC_IKEYPAD]
+	ldp		q24,q25,[x7]
+	mov		w15,0x80			/* that's the 1 of the pad */
+	mov		v26.b[3],w15
+	sub		x12,x5,x2			/* outstanding bytes of the digest */
 
 .Lpost_long_loop:
+	/* Save inner hash state so far */
+	ldr		x7, [x6, #HMAC_IKEYPAD]
+	stp 		q24, q25, [x7]
+
+	/* Skip HMAC final tag calculation for update calls */
+	ldr		x7, [x6, #HMAC_MODE]
+	cbz		x7,.Lskip_hmac_tag1
+
+	/* Fetch number of blocks already processed and add to x11 */
+	ldr		x7, [x6, #HMAC_INLEN]
+	add		x11, x11, x7
+
 	/* Add outstanding bytes of digest source */
 	add		x11,x11,x12
 	/* Add one SHA-256 block since hash is calculated including i_key_pad */
@@ -1460,6 +1496,7 @@ $code.=<<___;
 	/* base address for sha round consts */
 	adr		x8,.Lrcon
 	/* load o_key_pad partial hash */
+	ldr		x7, [x6, #HMAC_OKEYPAD]
 	ldp		q24,q25,[x7]
 
 	/* Set padding 1 to the first reg */
@@ -1590,7 +1627,7 @@ $code.=<<___;
 	mov		v21.16b, v22.16b	/* copy abcd */
 	sha256h		q22, q23, v6.4s
 	sha256h2	q23, q21, v6.4s
-
+.Lskip_hmac_tag1:
 	ldp		d10,d11,[sp,#16]
 	ldp		d12,d13,[sp,#32]
 
@@ -1618,7 +1655,6 @@ $code.=<<___;
  * x10 = aes_blocks
  */
 .Lenc_short_cases:
-	ld1		{v3.16b},[x6]			/* get ivec */
 	ldp		q8,q9,[x9],32			/* rk[0-1] */
 	eor		v26.16b,v26.16b,v26.16b		/* zero sha src 0 */
 	ldp		q10,q11,[x9],32			/* rk[2-3] */
@@ -2163,6 +2199,18 @@ $code.=<<___;
  * there are between 0 and 3 aes blocks in the final sha256 blocks
  */
 .Lpost_short_loop:
+	/* Save inner hash state so far */
+	ldr		x7, [x6, #HMAC_IKEYPAD]
+	stp 		q24, q25, [x7]
+
+	/* Skip HMAC final tag calculation for update calls */
+	ldr		x7, [x6, #HMAC_MODE]
+	cbz		x7,.Lskip_hmac_tag2
+
+	/* Fetch number of blocks already processed and add to x11 */
+	ldr		x7, [x6, #HMAC_INLEN]
+	add		x11, x11, x7
+
 	/* Add outstanding bytes of digest source */
 	add		x11,x11,x12
 	/* Add one SHA-256 block since hash is calculated including i_key_pad */
@@ -2317,6 +2365,7 @@ $code.=<<___;
 	/* base address for sha round consts */
 	adr		x8,.Lrcon
 	/* load o_key_pad partial hash */
+	ldr		x7, [x6, #HMAC_OKEYPAD]
 	ldp		q24,q25,[x7]
 
 	/* Set padding 1 to the first reg */
@@ -2447,7 +2496,7 @@ $code.=<<___;
 	mov		v21.16b, v22.16b	/* copy abcd */
 	sha256h		q22, q23, v6.4s
 	sha256h2	q23, q21, v6.4s
-
+.Lskip_hmac_tag2:
 	ldp		d10,d11,[sp,#16]
 	ldp		d12,d13,[sp,#32]
 
@@ -2472,68 +2521,72 @@ $code.=<<___;
 
 .size	asm_aescbc_sha256_hmac, .-asm_aescbc_sha256_hmac
 
-# Description:
-#
-# Combined Auth/Dec Primitive = sha256_hmac/aes128cbc
-#
-# Operations:
-#
-# out = decrypt-AES128CBC(in)
-# return_ash_ptr = SHA256(o_key_pad | SHA256(i_key_pad | in))
-#
-# Prototype:
-#
-# void asm_sha256_hmac_aescbc_dec(uint8_t *csrc, uint8_t *cdst, uint64_t clen,
-#			uint8_t *dsrc, uint8_t *ddst, uint64_t dlen,
-#			CIPH_DIGEST *arg)
-#
-# Registers used:
-#
-# asm_sha256_hmac_aescbc_dec(
-#	csrc,	x0	(cipher src address)
-#	cdst,	x1	(cipher dst address)
-#	clen	x2	(cipher length)
-#	dsrc,	x3	(digest src address)
-#	ddst,	x4	(digest dst address)
-#	dlen,	x5	(digest length)
-#	arg	x6:
-#		arg->cipher.key			(round keys)
-#		arg->cipher.key_rounds		(key rounds)
-#		arg->cipher.iv			(initialization vector)
-#		arg->digest.hmac.i_key_pad	(partially hashed i_key_pad)
-#		arg->digest.hmac.o_key_pad	(partially hashed o_key_pad)
-#	)
-#
-# Routine register definitions:
-#
-# v0 - v3 -- aes results
-# v4 - v7 -- round consts for sha
-# v8 - v18 -- round keys
-# v19 - v20 -- round keys
-# v21 -- ABCD tmp
-# v22 -- sha working state ABCD (q22)
-# v23 -- sha working state EFGH (q23)
-# v24 -- sha state ABCD
-# v25 -- sha state EFGH
-# v26 -- sha block 0
-# v27 -- sha block 1
-# v28 -- sha block 2
-# v29 -- sha block 3
-# v30 -- reserved
-# v31 -- reserved
-#
-#
-# Constraints:
-#
-# The variable "clen" must be a multiple of 16, otherwise results are not
-# defined For AES partial blocks the user is required to pad the input to
-# modulus 16 = 0.
-#
-# The variable "dlen" must be a multiple of 8 and greater or equal to "clen".
-# The maximum difference between "dlen" and "clen" cannot exceed 64 bytes.
-# This constrain is strictly related to the needs of the IPSec ESP packet.
-# Short lengths are less optimized at < 16 AES blocks, however they are
-# somewhat optimized, and more so than the enc/auth versions.
+
+/*
+ * Description:
+ *
+ * Combined Auth/Dec Primitive = sha256_hmac/aes128cbc
+ *
+ * Operations:
+ *
+ * out = decrypt-AES128CBC(in)
+ * return_ash_ptr = SHA256(o_key_pad | SHA256(i_key_pad | in))
+ *
+ * Prototype:
+ *
+ * void asm_sha256_hmac_aescbc_dec(uint8_t *csrc, uint8_t *cdst, uint64_t clen,
+ *			uint8_t *dsrc, uint8_t *ddst, uint64_t dlen,
+ *			CIPH_DIGEST *arg)
+ *
+ * Registers used:
+ *
+ * asm_sha256_hmac_aescbc_dec(
+ *	csrc,	x0	(cipher src address)
+ *	cdst,	x1	(cipher dst address)
+ *	clen,	x2	(cipher length)
+ *	dsrc,	x3	(digest src address)
+ *	ddst,	x4	(digest dst address)
+ *	dlen,	x5	(digest length)
+ *	arg		x6:
+ *		arg->cipher.key			(round keys)
+ *		arg->cipher.iv			(initialization vector)
+ *		arg->digest.hmac.i_key_pad	(partially hashed i_key_pad)
+ *		arg->digest.hmac.o_key_pad	(partially hashed o_key_pad)
+ *		arg->digest.in_len		(length of hash input processed so far)
+ *		arg->digest.hmac_mode		(flag enabling hmac final tag calculation)
+ *	)
+ *
+ * Routine register definitions:
+ *
+ * v0 - v3 -- aes results
+ * v4 - v7 -- round consts for sha
+ * v8 - v18 -- round keys
+ * v19 - v20 -- round keys
+ * v21 -- ABCD tmp
+ * v22 -- sha working state ABCD (q22)
+ * v23 -- sha working state EFGH (q23)
+ * v24 -- sha state ABCD
+ * v25 -- sha state EFGH
+ * v26 -- sha block 0
+ * v27 -- sha block 1
+ * v28 -- sha block 2
+ * v29 -- sha block 3
+ * v30 -- reserved
+ * v31 -- reserved
+ *
+ *
+ * Constraints:
+ *
+ * The variable "clen" must be a multiple of 16, otherwise results are not
+ * defined For AES partial blocks the user is required to pad the input to
+ * modulus 16 = 0.
+ *
+ * The variable "dlen" must be a multiple of 8 and greater or equal to "clen".
+ * The maximum difference between "dlen" and "clen" cannot exceed 64 bytes.
+ * This constrain is strictly related to the needs of the IPSec ESP packet.
+ * Short lengths are less optimized at < 16 AES blocks, however they are
+ * somewhat optimized, and more so than the enc/auth versions.
+ */
 
 .global	asm_sha256_hmac_aescbc_dec
 .type	asm_sha256_hmac_aescbc_dec,%function
@@ -2547,8 +2600,6 @@ asm_sha256_hmac_aescbc_dec:
 	ldr		x7, [x6, #HMAC_IKEYPAD]
 	/* init ABCD, EFGH */
 	ldp		q24,q25,[x7]
-	/* save pointer to o_key_pad partial hash */
-	ldr		x7, [x6, #HMAC_OKEYPAD]
 
 	stp		d10,d11,[sp,#16]
 
@@ -2563,7 +2614,9 @@ asm_sha256_hmac_aescbc_dec:
 
 	ldr		x9, [x6, #CIPHER_KEY]
 	ldr		x16, [x6, #CIPHER_KEY_ROUNDS]
-	ldr		x6, [x6, #CIPHER_IV]
+	ldr		x7, [x6, #CIPHER_IV]
+	ld1		{v30.16b},[x7]		/* get 1st ivec */
+
 	add		x17, x9, #160		/* point to the last 5 rounds keys */
 	/*
 	 * Init sha state, prefetch, check for small cases.
@@ -2576,7 +2629,6 @@ asm_sha256_hmac_aescbc_dec:
 	sub		x20,x5,x2
 
 	mov		x11,x2			/* len -> x11 needed at end */
-	ld1		{v30.16b},[x6]		/* get 1st ivec */
 	lsr		x12,x11,6		/* total_blocks (sha) */
 
 	ldp		q26,q27,[x3],32
@@ -3623,6 +3675,14 @@ $code.=<<___;
 	mov		v26.b[0],w15
 
 .Lpost_loop:
+	/* Save inner hash state so far */
+	ldr		x7, [x6, #HMAC_IKEYPAD]
+	stp		q24, q25, [x7]
+
+	/* Fetch number of blocks already processed and add to x11 */
+	ldr		x7, [x6, #HMAC_INLEN]
+	add		x11,x11,x7
+
 	/* Add outstanding bytes of digest source */
 	add		x11,x11,x20
 	/* Add one SHA-2 block since hash is calculated including i_key_pad */
@@ -3650,6 +3710,10 @@ $code.=<<___;
 	stp		q0,q1,[x1],32
 	stp		q2,q3,[x1],32
 1:
+	/* Skip HMAC final tag calculation for update calls */
+	ldr		x7, [x6, #HMAC_MODE]
+	cbz		x7,.Lskip_hmac_tag3
+
 	/*
 	 * final sha block
 	 * the strategy is to combine the 0-3 aes blocks, which is faster but
@@ -3988,6 +4052,7 @@ $code.=<<___;
 	/* base address for sha round consts */
 	adr		x8,.Lrcon
 	/* load o_key_pad partial hash */
+	ldr     	x7, [x6, #HMAC_OKEYPAD]
 	ld1		{v24.16b},[x7],16
 	ld1		{v25.16b},[x7]
 
@@ -4130,6 +4195,7 @@ $code.=<<___;
 
 	sha256h		q22, q23, v6.4s
 	add		v7.4s,v7.4s,v29.4s	/* wk = key15+w3 */
+.Lskip_hmac_tag3:
 	ldp		d10,d11,[sp,#16]
 	sha256h2	q23, q21, v6.4s
 
@@ -4165,7 +4231,6 @@ $code.=<<___;
 
 	ldp		q12,q13,[x9],32
 	ldp		q14,q15,[x9],32
-	ld1		{v30.16b},[x6]		/* get ivec */
 	ldp		q16,q17,[x9],32
 	ld1		{v18.16b},[x9]
 
