@@ -125,6 +125,8 @@ static void rwwriter_fn(int id, int *iterations)
 
     for (count = 0; ; count++) {
         new = CRYPTO_zalloc(sizeof (int), NULL, 0);
+        if (!TEST_ptr(new))
+            abort();
         if (contention == 0)
             OSSL_sleep(1000);
         if (!CRYPTO_THREAD_write_lock(rwtorturelock))
@@ -321,6 +323,8 @@ static void writer_fn(int id, int *iterations)
 
     for (count = 0; ; count++) {
         new = CRYPTO_zalloc(sizeof(uint64_t), NULL, 0);
+        if (!TEST_ptr(new))
+            abort();
         if (contention == 0)
             OSSL_sleep(1000);
         ossl_rcu_write_lock(rcu_lock);
