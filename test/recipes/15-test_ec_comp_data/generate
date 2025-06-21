@@ -1,0 +1,25 @@
+#!/bin/sh
+set -e
+rm -f *.param *.priv *.pub
+openssl ecparam -list_curves |cut -d: -f1|tr -d ' '|grep '^[a-zA-Z0-9]'|grep -v Oakley-EC >known_curves
+for curve in $(cat known_curves); do
+  openssl ecparam -name "$curve" -check -param_enc named_curve -text -out "${curve}-named_curve.param"
+  openssl ecparam -name "$curve" -check -param_enc explicit -text -out "${curve}-explicit.param"
+done
+for param_enc in named_curve explicit; do
+  for curve in $(cat known_curves); do
+    openssl ecparam -check -in "${curve}-named_curve.param" -conv_form uncompressed -param_enc "$param_enc" -genkey -noout > "${curve}-${param_enc}-uncompressed.priv"
+  done
+  for curve in $(cat known_curves); do
+    openssl ec -check -in "${curve}-${param_enc}-uncompressed.priv" -conv_form compressed -param_enc "$param_enc" -out "${curve}-${param_enc}-compressed.priv"
+  done
+  for curve in $(cat known_curves); do
+    openssl ec -check -in "${curve}-${param_enc}-uncompressed.priv" -conv_form hybrid -param_enc "$param_enc" -out "${curve}-${param_enc}-hybrid.priv"
+  done
+  for convForm in uncompressed compressed hybrid; do
+    for curve in $(cat known_curves); do
+      openssl ec -check -in "${curve}-${param_enc}-uncompressed.priv" -conv_form "$convForm" -param_enc "$param_enc" -pubout > "${curve}-${param_enc}-${convForm}.pub"
+    done
+  done
+done
+rm -f known_curves
