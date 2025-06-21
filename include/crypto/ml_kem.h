@@ -194,7 +194,8 @@ typedef struct ossl_ml_kem_key_st {
      * With seed-only keys, that are not yet expanded, this instead holds the
      * |z| and |d| components in that order.
      */
-    uint8_t seedbuf[64];                    /* |rho| + |pkhash| / |z| + |d| */
+    uint8_t rho_pkhash[64];                 /* |rho| + |pkhash| */
+    uint8_t *seedbuf;                       /* |z| + |d| temporary secure storage buffer */
     uint8_t *encoded_dk;                    /* Unparsed P8 private key */
 } ML_KEM_KEY;
 
