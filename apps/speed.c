@@ -2023,6 +2023,14 @@ int speed_main(int argc, char **argv)
     uint8_t do_kems = 0;
     uint8_t do_sigs = 0;
 
+    /*
+     * checks if fips_module
+     * "#define FIPS_MODULE" does not work in this file
+     */
+    static int fips_module = 0;
+    if (OSSL_PROVIDER_available(NULL, "fips"))
+        fips_module = 1;
+
     /* checks declared curves against choices list. */
 #ifndef OPENSSL_NO_ECX
     OPENSSL_assert(ed_curves[EdDSA_NUM - 1].nid == NID_ED448);
@@ -2257,6 +2265,51 @@ int speed_main(int argc, char **argv)
         EVP_SIGNATURE *s = sk_EVP_SIGNATURE_value(sig_stack, idx);
         const char *sig_name = EVP_SIGNATURE_get0_name(s);
 
+        /* skip signature-algorithms for sigs_doit */
+        if (0 /* 0 is to avoid missing/redundant "||" after list selection */
+            /* sig_name's below are tested elsewhere - and b/o setup is a pain */
+#ifndef OPENSSL_NO_ECX
+            || strcmp(sig_name, "ED25519") == 0
+            || strcmp(sig_name, "ED448") == 0
+#endif /* OPENSSL_NO_ECX */
+            || strcmp(sig_name, "ECDSA") == 0
+            || strcmp(sig_name, "HMAC") == 0
+            || strcmp(sig_name, "SIPHASH") == 0
+            || strcmp(sig_name, "POLY1305") == 0
+            || strcmp(sig_name, "CMAC") == 0
+#ifndef OPENSSL_NO_SM2
+            || strcmp(sig_name, "SM2") == 0
+#endif
+            /* below cause "error while initializing signing data structs" */
+            /* uncomment the next two lines if #27108 is not yet fixed */
+            /* || strncmp(sig_name, "ML-DSA", 6) == 0 */
+            /* || strncmp(sig_name, "SLH-DSA", 7) == 0 */
+            /* below cause "error initializing keygen ctx" */
+            || strncmp(sig_name, "RSA-SHA", 7) == 0
+            || strncmp(sig_name, "ECDSA-SHA", 9) == 0
+#ifndef OPENSSL_NO_ECX
+            || strcmp(sig_name, "ED25519ph") == 0
+            || strcmp(sig_name, "ED25519ctx") == 0
+            || strcmp(sig_name, "ED448ph") == 0
+#endif /* OPENSSL_NO_ECX */
+#ifndef OPENSSL_NO_DSA
+            || strncmp(sig_name, "DSA-SHA", 7) == 0
+            || (fips_module && strcmp(sig_name, "DSA") == 0)
+#endif /* OPENSSL_NO_DSA */
+            || (!fips_module
+                && (0 /* this 0 is to deal with list change */
+#ifndef OPENSSL_NO_RMD160
+                    || strcmp(sig_name, "RSA-RIPEMD160") == 0
+#endif
+#ifndef OPENSSL_NO_SM3
+                    || strncmp(sig_name, "RSA-SM3", 7) == 0
+#endif
+            ))) continue;
+
+        /*
+         * initial sigs_doit, which may be changed later,
+         * especially for fips_module
+         */
         if (strcmp(sig_name, "RSA") == 0) {
             if (sigs_algs_len + RSA_NUM >= MAX_SIG_NUM) {
                 BIO_printf(bio_err,
@@ -2281,15 +2334,7 @@ int speed_main(int argc, char **argv)
             }
         }
 #endif /* OPENSSL_NO_DSA */
-        /* skipping these algs as tested elsewhere - and b/o setup is a pain */
-        else if (strcmp(sig_name, "ED25519") &&
-                 strcmp(sig_name, "ED448") &&
-                 strcmp(sig_name, "ECDSA") &&
-                 strcmp(sig_name, "HMAC") &&
-                 strcmp(sig_name, "SIPHASH") &&
-                 strcmp(sig_name, "POLY1305") &&
-                 strcmp(sig_name, "CMAC") &&
-                 strcmp(sig_name, "SM2")) { /* skip alg */
+        else {
             if (sigs_algs_len + 1 >= MAX_SIG_NUM) {
                 BIO_printf(bio_err,
                            "Too many signatures registered. Change MAX_SIG_NUM.\n");
@@ -2336,7 +2381,7 @@ int speed_main(int argc, char **argv)
                 algo_found = 1;
             }
             if (opt_found(algo, rsa_choices, &i)) {
-                rsa_doit[i] = 1;
+                rsa_doit[i] = 1; /* set "2" to distinguish with the above "1" */
                 algo_found = 1;
             }
         }
@@ -2592,9 +2637,9 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DSA
         memset(dsa_doit, 1, sizeof(dsa_doit));
 #endif
-#ifndef OPENSSL_NO_ECX
         memset(ecdsa_doit, 1, sizeof(ecdsa_doit));
         memset(ecdh_doit, 1, sizeof(ecdh_doit));
+#ifndef OPENSSL_NO_ECX
         memset(eddsa_doit, 1, sizeof(eddsa_doit));
 #endif /* OPENSSL_NO_ECX */
 #ifndef OPENSSL_NO_SM2
@@ -3218,6 +3263,125 @@ int speed_main(int argc, char **argv)
         if (RAND_bytes(loopargs[i].buf, 36) <= 0)
             goto end;
 
+    /*
+     * Skip algorithms where fips_module does not support.
+     * Algorithms available only in sigs_doit are skipped
+     * in the for-loop using sk_EVP_SIGNATURE_num(sig_stack).
+     */
+    if (fips_module) {
+        /* below 112 bit-security */
+        if (opt_found("rsa512", rsa_choices, &i))
+            rsa_doit[i] = 0;
+        if (kem_locate("rsa512", &idx))
+            kems_doit[idx] = 0;
+        if (sig_locate("rsa512", &idx))
+            sigs_doit[idx] = 0;
+        if (opt_found("rsa1024", rsa_choices, &i))
+            rsa_doit[i] = 0;
+        if (kem_locate("rsa1024", &idx))
+            kems_doit[idx] = 0;
+        if (sig_locate("rsa1024", &idx))
+            sigs_doit[idx] = 0;
+        if (opt_found("ecdsap160", ecdsa_choices, &i))
+            ecdsa_doit[i] = 0;
+        if (opt_found("ecdsap192", ecdsa_choices, &i))
+            ecdsa_doit[i] = 0;
+        if (sig_locate("ecdsap160", &idx))
+            sigs_doit[idx] = 0;
+        if (sig_locate("ecdsap192", &idx))
+            sigs_doit[idx] = 0;
+        if (opt_found("ecdhp160", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (opt_found("ecdhp192", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+#ifndef OPENSSL_NO_EC2M
+        if (opt_found("ecdsak163", ecdsa_choices, &i))
+            ecdsa_doit[i] = 0;
+        if (opt_found("ecdsab163", ecdsa_choices, &i))
+            ecdsa_doit[i] = 0;
+        if (opt_found("ecdhk163", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (opt_found("ecdhb163", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (sig_locate("ecdsak163", &idx))
+            sigs_doit[idx] = 0;
+        if (sig_locate("ecdsab163", &idx))
+            sigs_doit[idx] = 0;
+#endif /* OPENSSL_NO_EC2M */
+
+        /* failure */
+#ifndef OPENSSL_NO_SM2
+        /* init failure for 256 bits SM2 (CurveSM2) */
+        memset(sm2_doit, 0, SM2_NUM);
+#endif
+#ifndef OPENSSL_NO_DSA
+        /* sign setup failure for both dsa1024 and dsa2048 */
+        memset(dsa_doit, 0, DSA_NUM);
+        /*
+         * If only dsa1024 causes failure,
+         * uncomment the next four lines instead:
+         * if (opt_found("dsa1024", dsa_choices, &i))
+         *   dsa_doit[i] = 0;
+         * if (sig_locate("dsa1024", &idx))
+         *   sigs_doit[idx] = 0;
+         */
+#endif /* OPENSSL_NO_DSA */
+#ifndef OPENSSL_NO_EC2M
+        /* computation failure */
+        if (opt_found("ecdhk233", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (opt_found("ecdhk283", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (opt_found("ecdhk409", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (opt_found("ecdhk571", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (opt_found("ecdhb233", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (opt_found("ecdhb283", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (opt_found("ecdhb409", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (opt_found("ecdhb571", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+#endif /* OPENSSL_NO_EC2M */
+
+        /* params init failure */
+        /* "ecdsabrp"'s positions, idx and i, depend on OPENSSL_NO_EC2M */
+        if (opt_found("ecdsabrp256r1", ecdsa_choices, &i))
+            ecdsa_doit[i] = 0;
+        if (opt_found("ecdsabrp256t1", ecdsa_choices, &i))
+            ecdsa_doit[i] = 0;
+        if (opt_found("ecdsabrp384r1", ecdsa_choices, &i))
+            ecdsa_doit[i] = 0;
+        if (opt_found("ecdsabrp384t1", ecdsa_choices, &i))
+            ecdsa_doit[i] = 0;
+        if (opt_found("ecdsabrp512r1", ecdsa_choices, &i))
+            ecdsa_doit[i] = 0;
+        if (opt_found("ecdsabrp512t1", ecdsa_choices, &i))
+            ecdsa_doit[i] = 0;
+        if (opt_found("ecdhbrp256r1", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (opt_found("ecdhbrp256t1", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (opt_found("ecdhbrp384r1", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (opt_found("ecdhbrp384t1", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (opt_found("ecdhbrp512r1", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+        if (opt_found("ecdhbrp512t1", ecdh_choices, &i))
+            ecdh_doit[i] = 0;
+    }
+    /*
+     * RSA keygen's in kem/sig take time,
+     * especially for 7680-bits and larger.
+     * To speed up (for debug), uncomment the next two lines:
+     *  memset(kems_doit, 0, RSA_NUM);
+     *  memset(sigs_doit, 0, RSA_NUM);
+     */
+
+    /* init and run_benchmark */
     for (testnum = 0; testnum < RSA_NUM; testnum++) {
         EVP_PKEY *rsa_key = NULL;
         int st = 0;
@@ -3306,67 +3470,78 @@ int speed_main(int argc, char **argv)
             rsa_results[testnum][1] = (double)count / d;
         }
 
-        for (i = 0; st && i < loopargs_len; i++) {
-            loopargs[i].rsa_encrypt_ctx[testnum] = EVP_PKEY_CTX_new(rsa_key, NULL);
-            loopargs[i].encsize = loopargs[i].buflen;
-            if (loopargs[i].rsa_encrypt_ctx[testnum] == NULL
-                || EVP_PKEY_encrypt_init(loopargs[i].rsa_encrypt_ctx[testnum]) <= 0
-                || EVP_PKEY_encrypt(loopargs[i].rsa_encrypt_ctx[testnum],
-                                    loopargs[i].buf2,
-                                    &loopargs[i].encsize,
-                                    loopargs[i].buf, 36) <= 0)
-                st = 0;
-        }
-        if (!st) {
-            BIO_printf(bio_err,
-                       "RSA encrypt setup failure.  No RSA encrypt will be done.\n");
-            dofail();
-            op_count = 1;
-        } else {
-            pkey_print_message("public", "rsa encrypt",
-                               rsa_keys[testnum].bits, seconds.rsa);
-            /* RSA_blinding_on(rsa_key[testnum],NULL); */
-            Time_F(START);
-            count = run_benchmark(async_jobs, RSA_encrypt_loop, loopargs);
-            d = Time_F(STOP);
-            BIO_printf(bio_err,
-                       mr ? "+R3:%ld:%d:%.2f\n"
-                       : "%ld %u bits public RSA encrypt ops in %.2fs\n",
-                       count, rsa_keys[testnum].bits, d);
-            rsa_results[testnum][2] = (double)count / d;
-            op_count = count;
-        }
+        if (!fips_module) {
+            /*
+             * In fips_module, EVP_PKEY_encrypt() fails with
+             * the following error:
+             *   Provider routines:rsa_encrypt:invalid padding mode:
+             *     providers/implementations/asymciphers/rsa_enc.c:166:
+             *   digital envelope routines:
+             *     EVP_PKEY_encrypt:provider asym cipher failure:
+             *     crypto/evp/asymcipher.c:266:RSA encrypt:
+             */
+            for (i = 0; st && i < loopargs_len; i++) {
+                loopargs[i].rsa_encrypt_ctx[testnum] = EVP_PKEY_CTX_new(rsa_key, NULL);
+                loopargs[i].encsize = loopargs[i].buflen;
+                if (loopargs[i].rsa_encrypt_ctx[testnum] == NULL
+                    || EVP_PKEY_encrypt_init(loopargs[i].rsa_encrypt_ctx[testnum]) <= 0
+                    || EVP_PKEY_encrypt(loopargs[i].rsa_encrypt_ctx[testnum],
+                                        loopargs[i].buf2,
+                                        &loopargs[i].encsize,
+                                        loopargs[i].buf, 36) <= 0)
+                    st = 0;
+            }
+            if (!st) {
+                BIO_printf(bio_err,
+                        "RSA encrypt setup failure.  No RSA encrypt will be done.\n");
+                dofail();
+                op_count = 1;
+            } else {
+                pkey_print_message("public", "rsa encrypt",
+                                rsa_keys[testnum].bits, seconds.rsa);
+                /* RSA_blinding_on(rsa_key[testnum],NULL); */
+                Time_F(START);
+                count = run_benchmark(async_jobs, RSA_encrypt_loop, loopargs);
+                d = Time_F(STOP);
+                BIO_printf(bio_err,
+                        mr ? "+R3:%ld:%d:%.2f\n"
+                        : "%ld %u bits public RSA encrypt ops in %.2fs\n",
+                        count, rsa_keys[testnum].bits, d);
+                rsa_results[testnum][2] = (double)count / d;
+                op_count = count;
+            }
 
-        for (i = 0; st && i < loopargs_len; i++) {
-            loopargs[i].rsa_decrypt_ctx[testnum] = EVP_PKEY_CTX_new(rsa_key, NULL);
-            declen = loopargs[i].buflen;
-            if (loopargs[i].rsa_decrypt_ctx[testnum] == NULL
-                || EVP_PKEY_decrypt_init(loopargs[i].rsa_decrypt_ctx[testnum]) <= 0
-                || EVP_PKEY_decrypt(loopargs[i].rsa_decrypt_ctx[testnum],
-                                    loopargs[i].buf,
-                                    &declen,
-                                    loopargs[i].buf2,
-                                    loopargs[i].encsize) <= 0)
-                st = 0;
-        }
-        if (!st) {
-            BIO_printf(bio_err,
-                       "RSA decrypt setup failure.  No RSA decrypt will be done.\n");
-            dofail();
-            op_count = 1;
-        } else {
-            pkey_print_message("private", "rsa decrypt",
-                               rsa_keys[testnum].bits, seconds.rsa);
-            /* RSA_blinding_on(rsa_key[testnum],NULL); */
-            Time_F(START);
-            count = run_benchmark(async_jobs, RSA_decrypt_loop, loopargs);
-            d = Time_F(STOP);
-            BIO_printf(bio_err,
-                       mr ? "+R4:%ld:%d:%.2f\n"
-                       : "%ld %u bits private RSA decrypt ops in %.2fs\n",
-                       count, rsa_keys[testnum].bits, d);
-            rsa_results[testnum][3] = (double)count / d;
-            op_count = count;
+            for (i = 0; st && i < loopargs_len; i++) {
+                loopargs[i].rsa_decrypt_ctx[testnum] = EVP_PKEY_CTX_new(rsa_key, NULL);
+                declen = loopargs[i].buflen;
+                if (loopargs[i].rsa_decrypt_ctx[testnum] == NULL
+                    || EVP_PKEY_decrypt_init(loopargs[i].rsa_decrypt_ctx[testnum]) <= 0
+                    || EVP_PKEY_decrypt(loopargs[i].rsa_decrypt_ctx[testnum],
+                                        loopargs[i].buf,
+                                        &declen,
+                                        loopargs[i].buf2,
+                                        loopargs[i].encsize) <= 0)
+                    st = 0;
+            }
+            if (!st) {
+                BIO_printf(bio_err,
+                        "RSA decrypt setup failure.  No RSA decrypt will be done.\n");
+                dofail();
+                op_count = 1;
+            } else {
+                pkey_print_message("private", "rsa decrypt",
+                                rsa_keys[testnum].bits, seconds.rsa);
+                /* RSA_blinding_on(rsa_key[testnum],NULL); */
+                Time_F(START);
+                count = run_benchmark(async_jobs, RSA_decrypt_loop, loopargs);
+                d = Time_F(STOP);
+                BIO_printf(bio_err,
+                        mr ? "+R4:%ld:%d:%.2f\n"
+                        : "%ld %u bits private RSA decrypt ops in %.2fs\n",
+                        count, rsa_keys[testnum].bits, d);
+                rsa_results[testnum][3] = (double)count / d;
+                op_count = count;
+            }
         }
 
         if (op_count <= 1) {
@@ -4470,21 +4645,36 @@ int speed_main(int argc, char **argv)
     for (k = 0; k < RSA_NUM; k++) {
         if (!rsa_doit[k])
             continue;
-        if (testnum && !mr) {
-            printf("%19ssign    verify    encrypt   decrypt   sign/s verify/s  encr./s  decr./s\n", " ");
-            testnum = 0;
+        if (fips_module) {
+            if (testnum && !mr) {
+                printf("%19ssign    verify    sign/s verify/s\n", " ");
+                testnum = 0;
+            }
+            if (mr)
+                printf("+F2:%u:%u:%f:%f\n",
+                    k, rsa_keys[k].bits, rsa_results[k][0], rsa_results[k][1]);
+            else
+                printf("rsa %5u bits %8.6fs %8.6fs %8.1f %8.1f\n",
+                    rsa_keys[k].bits, 1.0 / rsa_results[k][0], 1.0 / rsa_results[k][1],
+                    rsa_results[k][0], rsa_results[k][1]);
+        } else {
+            /* non fips_module */
+            if (testnum && !mr) {
+                printf("%19ssign    verify    encrypt   decrypt   sign/s verify/s  encr./s  decr./s\n", " ");
+                testnum = 0;
+            }
+            if (mr)
+                printf("+F2:%u:%u:%f:%f:%f:%f\n",
+                    k, rsa_keys[k].bits, rsa_results[k][0], rsa_results[k][1],
+                    rsa_results[k][2], rsa_results[k][3]);
+            else
+                printf("rsa %5u bits %8.6fs %8.6fs %8.6fs %8.6fs %8.1f %8.1f %8.1f %8.1f\n",
+                    rsa_keys[k].bits, 1.0 / rsa_results[k][0],
+                    1.0 / rsa_results[k][1], 1.0 / rsa_results[k][2],
+                    1.0 / rsa_results[k][3],
+                    rsa_results[k][0], rsa_results[k][1],
+                    rsa_results[k][2], rsa_results[k][3]);
         }
-        if (mr)
-            printf("+F2:%u:%u:%f:%f:%f:%f\n",
-                   k, rsa_keys[k].bits, rsa_results[k][0], rsa_results[k][1],
-                   rsa_results[k][2], rsa_results[k][3]);
-        else
-            printf("rsa %5u bits %8.6fs %8.6fs %8.6fs %8.6fs %8.1f %8.1f %8.1f %8.1f\n",
-                   rsa_keys[k].bits, 1.0 / rsa_results[k][0],
-                   1.0 / rsa_results[k][1], 1.0 / rsa_results[k][2],
-                   1.0 / rsa_results[k][3],
-                   rsa_results[k][0], rsa_results[k][1],
-                   rsa_results[k][2], rsa_results[k][3]);
     }
     testnum = 1;
 #ifndef OPENSSL_NO_DSA
