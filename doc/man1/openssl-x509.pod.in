@@ -81,6 +81,9 @@ B<openssl> B<x509>
 [B<-addtrust> I<arg>]
 [B<-clrreject>]
 [B<-addreject> I<arg>]
+[B<-clrother>]
+[B<-setdistrustafter> I<arg>]
+[B<-clrdistrustafter>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
@@ -639,7 +642,7 @@ Clears everything in X509->aux->other .
 unfortunately it will remove any option in this list:
 B<distrustafterdate>
 
-=item B<-adddistrustafter> I<arg>
+=item B<-setdistrustafter> I<arg>
 
 Adds a distrust after date.
 if leaf certficiate chained to it was signed after this date it will be rejected.
