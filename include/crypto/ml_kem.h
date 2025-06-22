@@ -282,4 +282,6 @@ int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
 __owur
 int ossl_ml_kem_pubkey_cmp(const ML_KEM_KEY *key1, const ML_KEM_KEY *key2);
 
+char *ml_kem_strip_fips(const char *propq);
+
 #endif  /* OPENSSL_HEADER_ML_KEM_H */

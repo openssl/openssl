@@ -1611,11 +1611,38 @@ const ML_KEM_VINFO *ossl_ml_kem_get_vinfo(int evp_type)
     return NULL;
 }
 
+/*
+ * This function either adds '-fips' to the passed propq,
+ * or allocates string '-fips' and return it.
+ * So we can get "fips=yes,-fips" as a result
+ */
+char *ml_kem_strip_fips(const char *propq)
+{
+    char *adjusted_propq = NULL;
+    const char *nofips = "-fips";
+    size_t len = propq ? strlen(propq) + 1 + strlen(nofips) + 1 : strlen(nofips) + 1;
+    char *ptr = NULL;
+
+    adjusted_propq = OPENSSL_zalloc(len);
+    if (adjusted_propq != NULL) {
+        ptr = adjusted_propq;
+        if (propq && strlen(propq) > 0) {
+            memcpy(ptr, propq, strlen(propq));
+            ptr += strlen(propq);
+            *ptr = ',';
+            ptr++;
+        }
+        memcpy(ptr, nofips, strlen(nofips));
+    }
+    return adjusted_propq;
+}
+
 ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
                                 int evp_type)
 {
     const ML_KEM_VINFO *vinfo = ossl_ml_kem_get_vinfo(evp_type);
     ML_KEM_KEY *key;
+    char *adjusted_propq = NULL;
 
     if (vinfo == NULL) {
         ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
@@ -1626,15 +1653,21 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
     if ((key = OPENSSL_malloc(sizeof(*key))) == NULL)
         return NULL;
 
+    adjusted_propq = ml_kem_strip_fips(properties);
+    if (adjusted_propq == NULL) {
+        ossl_ml_kem_key_free(key);
+        return NULL;
+    }
     key->vinfo = vinfo;
     key->libctx = libctx;
     key->prov_flags = ML_KEM_KEY_PROV_FLAGS_DEFAULT;
-    key->shake128_md = EVP_MD_fetch(libctx, "SHAKE128", properties);
-    key->shake256_md = EVP_MD_fetch(libctx, "SHAKE256", properties);
-    key->sha3_256_md = EVP_MD_fetch(libctx, "SHA3-256", properties);
-    key->sha3_512_md = EVP_MD_fetch(libctx, "SHA3-512", properties);
+    key->shake128_md = EVP_MD_fetch(libctx, "SHAKE128", adjusted_propq);
+    key->shake256_md = EVP_MD_fetch(libctx, "SHAKE256", adjusted_propq);
+    key->sha3_256_md = EVP_MD_fetch(libctx, "SHA3-256", adjusted_propq);
+    key->sha3_512_md = EVP_MD_fetch(libctx, "SHA3-512", adjusted_propq);
     key->d = key->z = key->rho = key->pkhash = key->encoded_dk = NULL;
     key->s = key->m = key->t = NULL;
+    OPENSSL_free(adjusted_propq);
 
     if (key->shake128_md != NULL
         && key->shake256_md != NULL
