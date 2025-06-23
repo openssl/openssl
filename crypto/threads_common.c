@@ -222,7 +222,8 @@ static void init_master_key(void)
      * (that is assigned via CRYPTO_THREAD_set_local_ex), are still expected
      * to be cleaned via the ossl_init_thread_start/stop api.
      */
-    CRYPTO_THREAD_init_local(&master_key, clean_master_key);
+    if (!CRYPTO_THREAD_init_local(&master_key, clean_master_key))
+        return;
 
     /*
      * Indicate that the key has been set up.
