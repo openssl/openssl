@@ -507,7 +507,7 @@ static size_t kems_algs_len = 0;
 static char *kems_algname[MAX_KEM_NUM] = { NULL };
 static double kems_results[MAX_KEM_NUM][3];  /* keygen, encaps, decaps */
 
-#define MAX_SIG_NUM 111
+#define MAX_SIG_NUM 256
 static size_t sigs_algs_len = 0;
 static char *sigs_algname[MAX_SIG_NUM] = { NULL };
 static double sigs_results[MAX_SIG_NUM][3];  /* keygen, sign, verify */
@@ -573,12 +573,12 @@ typedef struct loopargs_st {
     unsigned char *kem_out[MAX_KEM_NUM];
     unsigned char *kem_send_secret[MAX_KEM_NUM];
     unsigned char *kem_rcv_secret[MAX_KEM_NUM];
-    EVP_PKEY_CTX *sig_gen_ctx[MAX_KEM_NUM];
-    EVP_PKEY_CTX *sig_sign_ctx[MAX_KEM_NUM];
-    EVP_PKEY_CTX *sig_verify_ctx[MAX_KEM_NUM];
-    size_t sig_max_sig_len[MAX_KEM_NUM];
-    size_t sig_act_sig_len[MAX_KEM_NUM];
-    unsigned char *sig_sig[MAX_KEM_NUM];
+    EVP_PKEY_CTX *sig_gen_ctx[MAX_SIG_NUM];
+    EVP_PKEY_CTX *sig_sign_ctx[MAX_SIG_NUM];
+    EVP_PKEY_CTX *sig_verify_ctx[MAX_SIG_NUM];
+    size_t sig_max_sig_len[MAX_SIG_NUM];
+    size_t sig_act_sig_len[MAX_SIG_NUM];
+    unsigned char *sig_sig[MAX_SIG_NUM];
 } loopargs_t;
 static int run_benchmark(int async_jobs, int (*loop_function) (void *),
                          loopargs_t *loopargs);
