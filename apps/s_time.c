@@ -47,8 +47,8 @@ typedef enum OPTION_choice {
     OPT_CONNECT, OPT_CIPHER, OPT_CIPHERSUITES, OPT_CERT, OPT_NAMEOPT, OPT_KEY,
     OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
-    OPT_NEW, OPT_REUSE, OPT_BUGS, OPT_VERIFY, OPT_TIME, OPT_SSL3,
-    OPT_WWW, OPT_TLS1, OPT_TLS1_1, OPT_TLS1_2, OPT_TLS1_3,
+    OPT_NEW, OPT_REUSE, OPT_BUGS, OPT_VERIFY, OPT_VERIFY_RET_ERROR, OPT_TIME,
+    OPT_SSL3, OPT_WWW, OPT_TLS1, OPT_TLS1_1, OPT_TLS1_2, OPT_TLS1_3,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -82,6 +82,8 @@ const OPTIONS s_time_options[] = {
 #endif
     {"verify", OPT_VERIFY, 'p',
      "Turn on peer certificate verification, set depth"},
+    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-',
+     "Close connection on verification error"},
     {"time", OPT_TIME, 'p', "Seconds to collect data, default " SECONDSSTR},
     {"www", OPT_WWW, 's', "Fetch specified page from the site"},
 
@@ -129,6 +131,7 @@ int s_time_main(int argc, char **argv)
     OPTION_CHOICE o;
     int min_version = 0, max_version = 0, ver, buf_len, fd;
     size_t buf_size;
+    int verify = SSL_VERIFY_NONE;
 
     meth = TLS_client_method();
 
@@ -154,6 +157,7 @@ int s_time_main(int argc, char **argv)
             perform = 1;
             break;
         case OPT_VERIFY:
+            verify = SSL_VERIFY_PEER;
             verify_args.depth = opt_int_arg();
             BIO_printf(bio_err, "%s: verify depth is %d\n",
                        prog, verify_args.depth);
@@ -185,6 +189,10 @@ int s_time_main(int argc, char **argv)
             break;
         case OPT_NOCASTORE:
             noCAstore = 1;
+            break;
+        case OPT_VERIFY_RET_ERROR:
+            verify = SSL_VERIFY_PEER;
+            verify_args.return_error = 1;
             break;
         case OPT_CIPHER:
             cipher = opt_arg();
@@ -242,6 +250,9 @@ int s_time_main(int argc, char **argv)
 
     if ((ctx = SSL_CTX_new(meth)) == NULL)
         goto end;
+
+    verify_args.quiet = 1;
+    SSL_CTX_set_verify(ctx, verify, verify_callback);
 
     SSL_CTX_set_quiet_shutdown(ctx, 1);
     if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
