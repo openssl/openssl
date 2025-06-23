@@ -96,7 +96,7 @@ operation. The value returned will be the intermediate fixed-length pseudorandom
 key K.  The I<keylen> parameter must match the size of K, which can be looked
 up by calling EVP_KDF_CTX_get_kdf_size() after setting the mode and digest.
 
-The, key and salt values must be set before a key is derived otherwise
+The key and salt values must be set before a key is derived otherwise
 an error will occur. For non-fixed-mode (B<HKDF>) the digest
 must also be set.
 

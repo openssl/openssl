@@ -56,7 +56,7 @@ static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha384_new;
 static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha512_new;
 
 static void *kdf_hkdf_fixed_digest_new(void *provctx, const char *digest);
-static void kdf_hkdf_reset_ex(void *vctx, int full_reset);
+static void kdf_hkdf_reset_ex(void *vctx, int on_free);
 
 static int HKDF(OSSL_LIB_CTX *libctx, const EVP_MD *evp_md,
                 const unsigned char *salt, size_t salt_len,
@@ -142,11 +142,11 @@ static void kdf_hkdf_reset(void *vctx)
     kdf_hkdf_reset_ex(vctx, 0);
 }
 
-static void kdf_hkdf_reset_ex(void *vctx, int full_reset)
+static void kdf_hkdf_reset_ex(void *vctx, int on_free)
 {
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
     void *provctx = ctx->provctx;
-    int preserve_digest = full_reset ? 0 : ctx->fixed_digest;
+    int preserve_digest = on_free ? 0 : ctx->fixed_digest;
     PROV_DIGEST save_prov_digest = { 0 };
 
     /* For fixed digests just save and restore the PROV_DIGEST object */
@@ -449,7 +449,7 @@ static int hkdf_common_get_ctx_params(KDF_HKDF *ctx, OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SALT)) != NULL) {
         if (ctx->salt == NULL || ctx->salt_len == 0)
             p->return_size = 0;
-        if (!OSSL_PARAM_set_octet_string(p, ctx->salt, ctx->salt_len))
+        else if (!OSSL_PARAM_set_octet_string(p, ctx->salt, ctx->salt_len))
             return 0;
     }
 
