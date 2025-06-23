@@ -214,7 +214,7 @@ int ossl_i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
         return 0;
     }
     *pp = ptr;
-    return ret;
+    return (int)ret;
 }
 
 /* Convert big endian buffer into uint64_t, return 0 on error */
