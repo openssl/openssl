@@ -70,7 +70,7 @@ static int kem_cms_encrypt(CMS_RecipientInfo *ri)
     EVP_PKEY *pkey;
     int security_bits;
     const ASN1_OBJECT *kdf_obj = NULL;
-    unsigned char kemri_x509_algor[OSSL_MAX_NAME_SIZE];
+    unsigned char kemri_x509_algor[OSSL_MAX_ALGORITHM_ID_SIZE];
     OSSL_PARAM params[2];
     X509_ALGOR *x509_algor = NULL;
     EVP_CIPHER_CTX *kekctx;
