@@ -109,7 +109,8 @@ struct ossl_decoder_instance_st {
     const char *input_type;      /* Never NULL */
     const char *input_structure; /* May be NULL */
     int input_type_id;
-    int score;
+    int order;                   /* For stable ordering of decoders wrt proqs */
+    int score;                   /* For ordering decoders wrt proqs */
 
     unsigned int flag_input_structure_was_set : 1;
 };

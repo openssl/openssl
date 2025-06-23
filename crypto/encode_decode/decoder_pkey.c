@@ -503,11 +503,11 @@ static int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
      * upfront, as this ensures that the names for all loaded providers have
      * been registered by the time we try to resolve the keytype string.
      */
-    collect_data.ctx        = ctx;
-    collect_data.libctx     = libctx;
-    collect_data.keymgmts   = keymgmts;
-    collect_data.keytype    = keytype;
-    collect_data.pq         = pq;
+    collect_data.ctx            = ctx;
+    collect_data.libctx         = libctx;
+    collect_data.keymgmts       = keymgmts;
+    collect_data.keytype        = keytype;
+    collect_data.pq             = pq;
     EVP_KEYMGMT_do_all_provided(libctx, collect_keymgmt, &collect_data);
 
     if (collect_data.error_occurred)
