@@ -221,32 +221,29 @@ int tls_parse_ctos_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
                                   X509 *x, size_t chainidx) {
     unsigned int peer_limit;
 
-    (void) x;
-    (void) chainidx;
-    (void) context;
-
     if (PACKET_remaining(pkt) != 2
             || !PACKET_get_net_2(pkt, &peer_limit)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
             }
 
+    /*
+     * According to RFC 8449:
+     *
+     * An endpoint MUST treat receipt of a smaller value as a fatal error and
+     * generate an "illegal_parameter" alert.
+     */
     if (peer_limit < TLSEXT_record_size_limit_min) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_R_SSL3_EXT_INVALID_RECORD_SIZE_LIMIT);
         return 0;
     }
 
-    // TODO: validate the value for the different TLS version.
-
-    if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
-        /*
-         * Ignore the max_fragment_length extension if both extensions appear.
-         */
-
-        s->session->ext.max_fragment_len_mode =
-            TLSEXT_max_fragment_length_UNSPECIFIED;
-    }
+    /*
+     * A server must not send any alert if the peer record size limit exceeds the
+     * protocol-defined record size, but must not send records larger.
+     * TODO
+     */
 
     s->session->ext.peer_record_size_limit = (uint16_t)peer_limit;
 
@@ -1677,12 +1674,21 @@ EXT_RETURN tls_construct_stoc_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,
                                              size_t chainidx)
 {
-    uint16_t limit = 0;
+    if (s->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED) {
+        if (s->version <= TLS1_2_VERSION || s->version == DTLS1_2_VERSION) {
+            if (s->max_send_fragment != SSL3_RT_MAX_PLAIN_LENGTH) {
+                s->session->ext.record_size_limit = s->max_send_fragment;
+            }
 
-    if (!USE_RECORD_SIZE_LIMIT_EXT(s->session)) {
-        limit = s->max_send_fragment;
-    } else {
-        limit = s->session->ext.record_size_limit;
+            s->session->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH;
+        } else {
+            if (s->max_send_fragment != SSL3_RT_MAX_PLAIN_LENGTH + 1) {
+                s->session->ext.record_size_limit = s->max_send_fragment;
+            }
+
+            /* The additional byte is for the content type in TLS 1.3. */
+            s->session->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH + 1;
+        }
     }
 
     /*-
@@ -1691,7 +1697,7 @@ EXT_RETURN tls_construct_stoc_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
      */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_record_size_limit)
         || !WPACKET_start_sub_packet_u16(pkt)
-        || !WPACKET_put_bytes_u16(pkt, limit)
+        || !WPACKET_put_bytes_u16(pkt, s->session->ext.record_size_limit)
         || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;

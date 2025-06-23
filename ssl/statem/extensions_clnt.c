@@ -117,6 +117,32 @@ EXT_RETURN tls_construct_ctos_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_NOT_SENT;
     }
 
+    /*
+     * According to RFC 8449:
+     *
+     * Endpoints SHOULD advertise the "record_size_limit" extension, even if
+     * they have no need to limit the size of records.
+     *
+     * Thus, if the user has not disabled the extension through the API,
+     * we send it as a default behavior.
+     */
+    if (s->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED) {
+        if (s->version <= TLS1_2_VERSION || s->version == DTLS1_2_VERSION) {
+            if (s->max_send_fragment != SSL3_RT_MAX_PLAIN_LENGTH) {
+                s->ext.record_size_limit = s->max_send_fragment;
+            }
+
+            s->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH;
+        } else {
+            if (s->max_send_fragment != SSL3_RT_MAX_PLAIN_LENGTH + 1) {
+                s->ext.record_size_limit = s->max_send_fragment;
+            }
+
+            /* The additional byte is for the content type in TLS 1.3. */
+            s->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH + 1;
+        }
+    }
+
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_record_size_limit)
             /* Sub-packet for Record Size Limit extension (2 bytes) */
             || !WPACKET_start_sub_packet_u16(pkt)
