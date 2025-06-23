@@ -206,14 +206,15 @@ static size_t c2i_ibuf(unsigned char *b, int *pneg,
 
 int ossl_i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 {
-    unsigned char *ptr = *pp;
+    unsigned char *ptr = pp != NULL ? *pp : NULL;
     size_t ret = i2c_ibuf(a->data, a->length, a->type & V_ASN1_NEG, &ptr);
 
     if (ret > INT_MAX) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
         return 0;
     }
-    *pp = ptr;
+    if (pp != NULL)
+        *pp = ptr;
     return (int)ret;
 }
 
