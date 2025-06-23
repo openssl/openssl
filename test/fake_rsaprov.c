@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -9,12 +9,15 @@
  */
 
 #include <string.h>
+#include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
 #include <openssl/rand.h>
 #include <openssl/provider.h>
 #include "testutil.h"
 #include "fake_rsaprov.h"
+#include "internal/asn1.h"
 
 static OSSL_FUNC_keymgmt_new_fn fake_rsa_keymgmt_new;
 static OSSL_FUNC_keymgmt_free_fn fake_rsa_keymgmt_free;
@@ -31,6 +34,16 @@ static int imptypes_selection;
 static int exptypes_selection;
 static int query_id;
 static int key_deleted;
+
+typedef struct {
+    OSSL_LIB_CTX *libctx;
+} PROV_FAKE_RSA_CTX;
+
+#define PROV_FAKE_RSA_LIBCTX_OF(provctx) (((PROV_FAKE_RSA_CTX *)provctx)->libctx)
+
+#define FAKE_RSA_STATUS_IMPORTED    1
+#define FAKE_RSA_STATUS_GENERATED   2
+#define FAKE_RSA_STATUS_DECODED     3
 
 struct fake_rsa_keydata {
     int selection;
@@ -86,7 +99,7 @@ static int fake_rsa_keymgmt_import(void *keydata, int selection,
     struct fake_rsa_keydata *fake_rsa_key = keydata;
 
     /* key was imported */
-    fake_rsa_key->status = 1;
+    fake_rsa_key->status = FAKE_RSA_STATUS_IMPORTED;
 
     return 1;
 }
@@ -219,11 +232,11 @@ static void *fake_rsa_keymgmt_load(const void *reference, size_t reference_sz)
 {
     struct fake_rsa_keydata *key = NULL;
 
-    if (reference_sz != sizeof(*key))
+    if (reference_sz != sizeof(key))
         return NULL;
 
     key = *(struct fake_rsa_keydata **)reference;
-    if (key->status != 1)
+    if (key->status != FAKE_RSA_STATUS_IMPORTED && key->status != FAKE_RSA_STATUS_DECODED)
         return NULL;
 
     /* detach the reference */
@@ -258,7 +271,7 @@ static void *fake_rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (!TEST_ptr(keydata = fake_rsa_keymgmt_new(NULL)))
         return NULL;
 
-    keydata->status = 2;
+    keydata->status = FAKE_RSA_STATUS_GENERATED;
     return keydata;
 }
 
@@ -638,7 +651,7 @@ static int fake_rsa_st_load(void *loaderctx,
         /* The address of the key becomes the octet string */
         params[2] =
             OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_REFERENCE,
-                                              &key, sizeof(*key));
+                                              &key, sizeof(key));
         params[3] = OSSL_PARAM_construct_end();
         rv = object_cb(params, object_cbarg);
         *storectx = 1;
@@ -702,6 +715,502 @@ static const OSSL_ALGORITHM fake_rsa_store_algs[] = {
     { NULL, NULL, NULL }
 };
 
+struct der2key_ctx_st;           /* Forward declaration */
+typedef int check_key_fn(void *, struct der2key_ctx_st *ctx);
+typedef void adjust_key_fn(void *, struct der2key_ctx_st *ctx);
+typedef void free_key_fn(void *);
+typedef void *d2i_PKCS8_fn(void **, const unsigned char **, long,
+                           struct der2key_ctx_st *);
+struct keytype_desc_st {
+    const char *keytype_name;
+    const OSSL_DISPATCH *fns; /* Keymgmt (to pilfer functions from) */
+
+    /* The input structure name */
+    const char *structure_name;
+
+    /*
+     * The EVP_PKEY_xxx type macro.  Should be zero for type specific
+     * structures, non-zero when the outermost structure is PKCS#8 or
+     * SubjectPublicKeyInfo.  This determines which of the function
+     * pointers below will be used.
+     */
+    int evp_type;
+
+    /* The selection mask for OSSL_FUNC_decoder_does_selection() */
+    int selection_mask;
+
+    /* For type specific decoders, we use the corresponding d2i */
+    d2i_of_void *d2i_private_key; /* From type-specific DER */
+    d2i_of_void *d2i_public_key;  /* From type-specific DER */
+    d2i_of_void *d2i_key_params;  /* From type-specific DER */
+    d2i_PKCS8_fn *d2i_PKCS8;      /* Wrapped in a PrivateKeyInfo */
+    d2i_of_void *d2i_PUBKEY;      /* Wrapped in a SubjectPublicKeyInfo */
+
+    /*
+     * For any key, we may need to check that the key meets expectations.
+     * This is useful when the same functions can decode several variants
+     * of a key.
+     */
+    check_key_fn *check_key;
+
+    /*
+     * For any key, we may need to make provider specific adjustments, such
+     * as ensure the key carries the correct library context.
+     */
+    adjust_key_fn *adjust_key;
+    /* {type}_free() */
+    free_key_fn *free_key;
+};
+
+/*
+ * Start blatant code steal. Alternative: Open up d2i_X509_PUBKEY_INTERNAL
+ * as per https://github.com/openssl/openssl/issues/16697 (TBD)
+ * Code from openssl/crypto/x509/x_pubkey.c as
+ * ossl_d2i_X509_PUBKEY_INTERNAL is presently not public
+ */
+struct X509_pubkey_st {
+    X509_ALGOR *algor;
+    ASN1_BIT_STRING *public_key;
+
+    EVP_PKEY *pkey;
+
+    /* extra data for the callback, used by d2i_PUBKEY_ex */
+    OSSL_LIB_CTX *libctx;
+    char *propq;
+};
+
+ASN1_SEQUENCE(X509_PUBKEY_INTERNAL) = {
+        ASN1_SIMPLE(X509_PUBKEY, algor, X509_ALGOR),
+        ASN1_SIMPLE(X509_PUBKEY, public_key, ASN1_BIT_STRING)
+} static_ASN1_SEQUENCE_END_name(X509_PUBKEY, X509_PUBKEY_INTERNAL)
+
+static X509_PUBKEY *fake_rsa_d2i_X509_PUBKEY_INTERNAL(const unsigned char **pp,
+                                                      long len, OSSL_LIB_CTX *libctx)
+{
+    X509_PUBKEY *xpub = OPENSSL_zalloc(sizeof(*xpub));
+
+    if (xpub == NULL)
+        return NULL;
+    return (X509_PUBKEY *)ASN1_item_d2i_ex((ASN1_VALUE **)&xpub, pp, len,
+                                           ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL),
+                                           libctx, NULL);
+}
+/* end steal https://github.com/openssl/openssl/issues/16697 */
+
+/*
+ * Context used for DER to key decoding.
+ */
+struct der2key_ctx_st {
+    PROV_FAKE_RSA_CTX *provctx;
+    struct keytype_desc_st *desc;
+    /* The selection that is passed to fake_rsa_der2key_decode() */
+    int selection;
+    /* Flag used to signal that a failure is fatal */
+    unsigned int flag_fatal : 1;
+};
+
+static int fake_rsa_read_der(PROV_FAKE_RSA_CTX *provctx, OSSL_CORE_BIO *cin,
+                             unsigned char **data, long *len)
+{
+    BUF_MEM *mem = NULL;
+    BIO *in = BIO_new_from_core_bio(provctx->libctx, cin);
+    int ok = (asn1_d2i_read_bio(in, &mem) >= 0);
+
+    if (ok) {
+        *data = (unsigned char *)mem->data;
+        *len = (long)mem->length;
+        OPENSSL_free(mem);
+    }
+    BIO_free(in);
+    return ok;
+}
+
+typedef void *key_from_pkcs8_t(const PKCS8_PRIV_KEY_INFO *p8inf,
+                               OSSL_LIB_CTX *libctx, const char *propq);
+static void *fake_rsa_der2key_decode_p8(const unsigned char **input_der,
+                                        long input_der_len, struct der2key_ctx_st *ctx,
+                                        key_from_pkcs8_t *key_from_pkcs8)
+{
+    PKCS8_PRIV_KEY_INFO *p8inf = NULL;
+    const X509_ALGOR *alg = NULL;
+    void *key = NULL;
+
+    if ((p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, input_der, input_der_len)) != NULL
+        && PKCS8_pkey_get0(NULL, NULL, NULL, &alg, p8inf)
+        && OBJ_obj2nid(alg->algorithm) == ctx->desc->evp_type)
+        key = key_from_pkcs8(p8inf, PROV_FAKE_RSA_LIBCTX_OF(ctx->provctx), NULL);
+    PKCS8_PRIV_KEY_INFO_free(p8inf);
+
+    return key;
+}
+
+static struct fake_rsa_keydata *fake_rsa_d2i_PUBKEY(struct fake_rsa_keydata **a,
+                                                    const unsigned char **pp, long length)
+{
+    struct fake_rsa_keydata *key = NULL;
+    X509_PUBKEY *xpk;
+
+    xpk = fake_rsa_d2i_X509_PUBKEY_INTERNAL(pp, length, NULL);
+    if (xpk == NULL)
+        goto err_exit;
+
+    key = fake_rsa_keymgmt_new(NULL);
+    if (key == NULL)
+        goto err_exit;
+
+    key->status = FAKE_RSA_STATUS_DECODED;
+
+    if (a != NULL) {
+        fake_rsa_keymgmt_free(*a);
+        *a = key;
+    }
+
+err_exit:
+    X509_PUBKEY_free(xpk);
+    return key;
+}
+
+/* ---------------------------------------------------------------------- */
+
+static OSSL_FUNC_decoder_freectx_fn der2key_freectx;
+static OSSL_FUNC_decoder_decode_fn fake_rsa_der2key_decode;
+static OSSL_FUNC_decoder_export_object_fn der2key_export_object;
+
+static struct der2key_ctx_st *
+der2key_newctx(void *provctx, struct keytype_desc_st *desc, const char *tls_name)
+{
+    struct der2key_ctx_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
+
+    if (ctx != NULL) {
+        ctx->provctx = provctx;
+        ctx->desc = desc;
+        if (desc->evp_type == 0)
+            ctx->desc->evp_type = OBJ_sn2nid(tls_name);
+    }
+    return ctx;
+}
+
+static void der2key_freectx(void *vctx)
+{
+    struct der2key_ctx_st *ctx = vctx;
+
+    OPENSSL_free(ctx);
+}
+
+static int der2key_check_selection(int selection,
+                                   const struct keytype_desc_st *desc)
+{
+    /*
+     * The selections are kinda sorta "levels", i.e. each selection given
+     * here is assumed to include those following.
+     */
+    int checks[] = {
+        OSSL_KEYMGMT_SELECT_PRIVATE_KEY,
+        OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+        OSSL_KEYMGMT_SELECT_ALL_PARAMETERS
+    };
+    size_t i;
+
+    /* The decoder implementations made here support guessing */
+    if (selection == 0)
+        return 1;
+
+    for (i = 0; i < OSSL_NELEM(checks); i++) {
+        int check1 = (selection & checks[i]) != 0;
+        int check2 = (desc->selection_mask & checks[i]) != 0;
+
+        /*
+         * If the caller asked for the currently checked bit(s), return
+         * whether the decoder description says it's supported.
+         */
+        if (check1)
+            return check2;
+    }
+
+    /* This should be dead code, but just to be safe... */
+    return 0;
+}
+
+static int fake_rsa_der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
+                                   OSSL_CALLBACK *data_cb, void *data_cbarg,
+                                   OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
+{
+    struct der2key_ctx_st *ctx = vctx;
+    unsigned char *der = NULL;
+    const unsigned char *derp;
+    long der_len = 0;
+    void *key = NULL;
+    int ok = 0;
+
+    ctx->selection = selection;
+    /*
+     * The caller is allowed to specify 0 as a selection mark, to have the
+     * structure and key type guessed.  For type-specific structures, this
+     * is not recommended, as some structures are very similar.
+     * Note that 0 isn't the same as OSSL_KEYMGMT_SELECT_ALL, as the latter
+     * signifies a private key structure, where everything else is assumed
+     * to be present as well.
+     */
+    if (selection == 0)
+        selection = ctx->desc->selection_mask;
+    if ((selection & ctx->desc->selection_mask) == 0) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    ok = fake_rsa_read_der(ctx->provctx, cin, &der, &der_len);
+    if (!ok)
+        goto next;
+
+    ok = 0;                      /* Assume that we fail */
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        derp = der;
+        if (ctx->desc->d2i_PKCS8 != NULL) {
+            key = ctx->desc->d2i_PKCS8(NULL, &derp, der_len, ctx);
+            if (ctx->flag_fatal)
+                goto end;
+        } else if (ctx->desc->d2i_private_key != NULL) {
+            key = ctx->desc->d2i_private_key(NULL, &derp, der_len);
+        }
+        if (key == NULL && ctx->selection != 0)
+            goto next;
+    }
+    if (key == NULL && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        derp = der;
+        if (ctx->desc->d2i_PUBKEY != NULL)
+            key = ctx->desc->d2i_PUBKEY(NULL, &derp, der_len);
+        else
+            key = ctx->desc->d2i_public_key(NULL, &derp, der_len);
+        if (key == NULL && ctx->selection != 0)
+            goto next;
+    }
+    if (key == NULL && (selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0) {
+        derp = der;
+        if (ctx->desc->d2i_key_params != NULL)
+            key = ctx->desc->d2i_key_params(NULL, &derp, der_len);
+        if (key == NULL && ctx->selection != 0)
+            goto next;
+    }
+
+    /*
+     * Last minute check to see if this was the correct type of key.  This
+     * should never lead to a fatal error, i.e. the decoding itself was
+     * correct, it was just an unexpected key type.  This is generally for
+     * classes of key types that have subtle variants, like RSA-PSS keys as
+     * opposed to plain RSA keys.
+     */
+    if (key != NULL
+        && ctx->desc->check_key != NULL
+        && !ctx->desc->check_key(key, ctx)) {
+        ctx->desc->free_key(key);
+        key = NULL;
+    }
+
+    if (key != NULL && ctx->desc->adjust_key != NULL)
+        ctx->desc->adjust_key(key, ctx);
+
+ next:
+    /*
+     * Indicated that we successfully decoded something, or not at all.
+     * Ending up "empty handed" is not an error.
+     */
+    ok = 1;
+
+    /*
+     * We free memory here so it's not held up during the callback, because
+     * we know the process is recursive and the allocated chunks of memory
+     * add up.
+     */
+    OPENSSL_free(der);
+    der = NULL;
+
+    if (key != NULL) {
+        OSSL_PARAM params[4];
+        int object_type = OSSL_OBJECT_PKEY;
+
+        params[0] =
+            OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &object_type);
+        params[1] =
+            OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+                                             (char *)ctx->desc->keytype_name,
+                                             0);
+        /* The address of the key becomes the octet string */
+        params[2] =
+            OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_REFERENCE,
+                                              &key, sizeof(key));
+        params[3] = OSSL_PARAM_construct_end();
+
+        ok = data_cb(params, data_cbarg);
+    }
+
+ end:
+    ctx->desc->free_key(key);
+    OPENSSL_free(der);
+
+    return ok;
+}
+
+static OSSL_FUNC_keymgmt_export_fn *
+fake_rsa_prov_get_keymgmt_export(const OSSL_DISPATCH *fns)
+{
+    /* Pilfer the keymgmt dispatch table */
+    for (; fns->function_id != 0; fns++)
+        if (fns->function_id == OSSL_FUNC_KEYMGMT_EXPORT)
+            return OSSL_FUNC_keymgmt_export(fns);
+
+    return NULL;
+}
+
+static int der2key_export_object(void *vctx,
+                                 const void *reference, size_t reference_sz,
+                                 OSSL_CALLBACK *export_cb, void *export_cbarg)
+{
+    struct der2key_ctx_st *ctx = vctx;
+    OSSL_FUNC_keymgmt_export_fn *export = fake_rsa_prov_get_keymgmt_export(ctx->desc->fns);
+    void *keydata;
+
+    if (reference_sz == sizeof(keydata) && export != NULL) {
+        /* The contents of the reference is the address to our object */
+        keydata = *(void **)reference;
+
+        return export(keydata, ctx->selection, export_cb, export_cbarg);
+    }
+    return 0;
+}
+
+/* ---------------------------------------------------------------------- */
+
+static struct fake_rsa_keydata *fake_rsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
+                                                        OSSL_LIB_CTX *libctx, const char *propq)
+{
+    struct fake_rsa_keydata *key = fake_rsa_keymgmt_new(NULL);
+
+    if (key)
+        key->status = FAKE_RSA_STATUS_DECODED;
+    return key;
+}
+
+#define rsa_evp_type EVP_PKEY_RSA
+
+static void *fake_rsa_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
+                                struct der2key_ctx_st *ctx)
+{
+    return fake_rsa_der2key_decode_p8(der, der_len, ctx,
+                                      (key_from_pkcs8_t *)fake_rsa_key_from_pkcs8);
+}
+
+static void fake_rsa_key_adjust(void *key, struct der2key_ctx_st *ctx)
+{
+}
+
+/* ---------------------------------------------------------------------- */
+
+#define DO_PrivateKeyInfo(keytype)                      \
+    "PrivateKeyInfo", keytype##_evp_type,               \
+        (OSSL_KEYMGMT_SELECT_PRIVATE_KEY),              \
+        NULL,                                           \
+        NULL,                                           \
+        NULL,                                           \
+        fake_rsa_d2i_PKCS8,                             \
+        NULL,                                           \
+        NULL,                                           \
+        fake_rsa_key_adjust,                            \
+        (free_key_fn *)fake_rsa_keymgmt_free
+
+#define DO_SubjectPublicKeyInfo(keytype)                \
+    "SubjectPublicKeyInfo", keytype##_evp_type,         \
+        (OSSL_KEYMGMT_SELECT_PUBLIC_KEY),               \
+        NULL,                                           \
+        NULL,                                           \
+        NULL,                                           \
+        NULL,                                           \
+        (d2i_of_void *)fake_rsa_d2i_PUBKEY,             \
+        NULL,                                           \
+        fake_rsa_key_adjust,                            \
+        (free_key_fn *)fake_rsa_keymgmt_free
+
+/*
+ * MAKE_DECODER is the single driver for creating OSSL_DISPATCH tables.
+ * It takes the following arguments:
+ *
+ * keytype_name The implementation key type as a string.
+ * keytype      The implementation key type.  This must correspond exactly
+ *              to our existing keymgmt keytype names...  in other words,
+ *              there must exist an ossl_##keytype##_keymgmt_functions.
+ * type         The type name for the set of functions that implement the
+ *              decoder for the key type.  This isn't necessarily the same
+ *              as keytype.  For example, the key types ed25519, ed448,
+ *              x25519 and x448 are all handled by the same functions with
+ *              the common type name ecx.
+ * kind         The kind of support to implement.  This translates into
+ *              the DO_##kind macros above, to populate the keytype_desc_st
+ *              structure.
+ */
+#define MAKE_DECODER(keytype_name, keytype, type, kind)                 \
+    static struct keytype_desc_st kind##_##keytype##_desc =             \
+        { keytype_name, fake_rsa_keymgmt_funcs,                         \
+          DO_##kind(keytype) };                                         \
+                                                                        \
+    static OSSL_FUNC_decoder_newctx_fn kind##_der2##keytype##_newctx;   \
+                                                                        \
+    static void *kind##_der2##keytype##_newctx(void *provctx)           \
+    {                                                                   \
+        return der2key_newctx(provctx, &kind##_##keytype##_desc, keytype_name);\
+    }                                                                   \
+    static int kind##_der2##keytype##_does_selection(void *provctx,     \
+                                                     int selection)     \
+    {                                                                   \
+        return der2key_check_selection(selection,                       \
+                                       &kind##_##keytype##_desc);       \
+    }                                                                   \
+    static const OSSL_DISPATCH                                          \
+    fake_rsa_##kind##_der_to_##keytype##_decoder_functions[] = {        \
+        { OSSL_FUNC_DECODER_NEWCTX,                                     \
+          (void (*)(void))kind##_der2##keytype##_newctx },              \
+        { OSSL_FUNC_DECODER_FREECTX,                                    \
+          (void (*)(void))der2key_freectx },                            \
+        { OSSL_FUNC_DECODER_DOES_SELECTION,                             \
+          (void (*)(void))kind##_der2##keytype##_does_selection },      \
+        { OSSL_FUNC_DECODER_DECODE,                                     \
+          (void (*)(void))fake_rsa_der2key_decode },                    \
+        { OSSL_FUNC_DECODER_EXPORT_OBJECT,                              \
+          (void (*)(void))der2key_export_object },                      \
+        OSSL_DISPATCH_END                                               \
+    }
+
+MAKE_DECODER("RSA", rsa, rsa, PrivateKeyInfo);
+MAKE_DECODER("RSA", rsa, rsa, SubjectPublicKeyInfo);
+
+static const OSSL_ALGORITHM fake_rsa_decoder_algs[] = {
+#define DECODER_PROVIDER "fake-rsa"
+#define DECODER_STRUCTURE_SubjectPublicKeyInfo          "SubjectPublicKeyInfo"
+#define DECODER_STRUCTURE_PrivateKeyInfo                "PrivateKeyInfo"
+
+/* Arguments are prefixed with '_' to avoid build breaks on certain platforms */
+/*
+ * Obviously this is not FIPS approved, but in order to test in conjunction
+ * with the FIPS provider we pretend that it is.
+ */
+
+#define DECODER(_name, _input, _output)                         \
+    { _name,                                                    \
+      "provider=" DECODER_PROVIDER ",fips=yes,input=" #_input,  \
+      (fake_rsa_##_input##_to_##_output##_decoder_functions)    \
+    }
+#define DECODER_w_structure(_name, _input, _structure, _output) \
+    { _name,                                                    \
+      "provider=" DECODER_PROVIDER ",fips=yes,input=" #_input   \
+      ",structure=" DECODER_STRUCTURE_##_structure,             \
+      (fake_rsa_##_structure##_##_input##_to_##_output##_decoder_functions) \
+    }
+
+DECODER_w_structure("RSA:rsaEncryption", der, PrivateKeyInfo, rsa),
+DECODER_w_structure("RSA:rsaEncryption", der, SubjectPublicKeyInfo, rsa),
+#undef DECODER_PROVIDER
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM *fake_rsa_query(void *provctx,
                                             int operation_id,
                                             int *no_cache)
@@ -716,13 +1225,24 @@ static const OSSL_ALGORITHM *fake_rsa_query(void *provctx,
 
     case OSSL_OP_STORE:
         return fake_rsa_store_algs;
+
+    case OSSL_OP_DECODER:
+        return fake_rsa_decoder_algs;
     }
     return NULL;
 }
 
+static void fake_rsa_prov_teardown(void *provctx)
+{
+    PROV_FAKE_RSA_CTX *pctx = (PROV_FAKE_RSA_CTX *)provctx;
+
+    OSSL_LIB_CTX_free(pctx->libctx);
+    OPENSSL_free(pctx);
+}
+
 /* Functions we provide to the core */
 static const OSSL_DISPATCH fake_rsa_method[] = {
-    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OSSL_LIB_CTX_free },
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))fake_rsa_prov_teardown },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fake_rsa_query },
     OSSL_DISPATCH_END
 };
@@ -731,8 +1251,20 @@ static int fake_rsa_provider_init(const OSSL_CORE_HANDLE *handle,
                                   const OSSL_DISPATCH *in,
                                   const OSSL_DISPATCH **out, void **provctx)
 {
-    if (!TEST_ptr(*provctx = OSSL_LIB_CTX_new()))
+    OSSL_LIB_CTX *libctx;
+    PROV_FAKE_RSA_CTX *prov_ctx;
+
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new_from_dispatch(handle, in)))
         return 0;
+
+    if (!TEST_ptr(prov_ctx = OPENSSL_malloc(sizeof(*prov_ctx)))) {
+        OSSL_LIB_CTX_free(libctx);
+        return 0;
+    }
+
+    prov_ctx->libctx = libctx;
+
+    *provctx = prov_ctx;
     *out = fake_rsa_method;
     return 1;
 }
