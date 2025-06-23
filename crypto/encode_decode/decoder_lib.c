@@ -609,7 +609,7 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
      * first.
      */
     if (propq != NULL || ossl_ctx_global_properties(libctx, 0) != NULL) {
-        size_t num_decoder_insts = sk_OSSL_DECODER_INSTANCE_num(ctx->decoder_insts);
+        int num_decoder_insts = sk_OSSL_DECODER_INSTANCE_num(ctx->decoder_insts);
         int i;
         OSSL_DECODER_INSTANCE *di;
         sk_OSSL_DECODER_INSTANCE_compfunc old_cmp =
