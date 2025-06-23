@@ -68,14 +68,9 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     if (!ok) {
         BIO_printf(bio_err, "verify error:num=%d:%s\n", err,
                    X509_verify_cert_error_string(err));
-        if (verify_args.depth < 0 || verify_args.depth >= depth) {
-            if (!verify_args.return_error)
-                ok = 1;
-            verify_args.error = err;
-        } else {
-            ok = 0;
-            verify_args.error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
-        }
+        if (!verify_args.return_error)
+            ok = 1;
+        verify_args.error = err;
     }
     switch (err) {
     case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
