@@ -537,6 +537,12 @@ static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
     }
 }
 
+static int decoder_sk_cmp(const OSSL_DECODER_INSTANCE *const *a,
+                          const OSSL_DECODER_INSTANCE *const *b)
+{
+    return (*a)->score - (*b)->score;
+}
+
 int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
                                OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -594,6 +600,19 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
     }
     OSSL_DECODER_do_all_provided(libctx, collect_all_decoders, skdecoders);
     numdecoders = sk_OSSL_DECODER_num(skdecoders);
+
+    /*
+     * If there are provided or default properties, sort the initial decoder list
+     * by property matching score so that the highest scored provider is selected
+     * first.
+     */
+    if (propq != NULL || ossl_ctx_global_properties(libctx, 0) != NULL) {
+        sk_OSSL_DECODER_INSTANCE_compfunc old_cmp =
+            sk_OSSL_DECODER_INSTANCE_set_cmp_func(ctx->decoder_insts, decoder_sk_cmp);
+
+        sk_OSSL_DECODER_INSTANCE_sort(ctx->decoder_insts);
+        sk_OSSL_DECODER_INSTANCE_set_cmp_func(ctx->decoder_insts, old_cmp);
+    }
 
     memset(&data, 0, sizeof(data));
     data.ctx = ctx;

@@ -109,6 +109,7 @@ struct ossl_decoder_instance_st {
     const char *input_type;      /* Never NULL */
     const char *input_structure; /* May be NULL */
     int input_type_id;
+    int score;
 
     unsigned int flag_input_structure_was_set : 1;
 };

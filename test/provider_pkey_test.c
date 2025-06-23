@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -424,6 +424,125 @@ end:
     return ret;
 }
 
+#define DEFAULT_PROVIDER_IDX    0
+#define FAKE_RSA_PROVIDER_IDX   1
+
+static int reset_ctx_providers(OSSL_LIB_CTX **ctx, OSSL_PROVIDER *providers[2], const char *prop)
+{
+    OSSL_PROVIDER_unload(providers[DEFAULT_PROVIDER_IDX]);
+    providers[DEFAULT_PROVIDER_IDX] = NULL;
+    fake_rsa_finish(providers[FAKE_RSA_PROVIDER_IDX]);
+    providers[FAKE_RSA_PROVIDER_IDX] = NULL;
+    OSSL_LIB_CTX_free(*ctx);
+    *ctx = NULL;
+
+    if (!TEST_ptr(*ctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(providers[DEFAULT_PROVIDER_IDX] = OSSL_PROVIDER_load(*ctx, "default"))
+        || !TEST_ptr(providers[FAKE_RSA_PROVIDER_IDX] = fake_rsa_start(*ctx))
+        || !TEST_true(EVP_set_default_properties(*ctx, prop)))
+        return 0;
+    return 1;
+}
+
+struct test_pkey_decoder_properties_t {
+    const char *provider_props;
+    const char *explicit_props;
+    int curr_provider_idx;
+};
+
+static int test_pkey_provider_decoder_props(void)
+{
+    OSSL_LIB_CTX *my_libctx = NULL;
+    OSSL_PROVIDER *providers[2] = { NULL };
+    struct test_pkey_decoder_properties_t properties_test[] = {
+        { "?provider=fake-rsa", NULL, FAKE_RSA_PROVIDER_IDX },
+        { "?provider=default", NULL, DEFAULT_PROVIDER_IDX },
+        { NULL, "?provider=fake-rsa", FAKE_RSA_PROVIDER_IDX },
+        { NULL, "?provider=default", DEFAULT_PROVIDER_IDX },
+        { NULL, "provider=fake-rsa", FAKE_RSA_PROVIDER_IDX },
+        { NULL, "provider=default", DEFAULT_PROVIDER_IDX },
+    };
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    X509_PUBKEY *pubkey = NULL;
+    unsigned char *encoded_priv = NULL;
+    int len_priv;
+    BIO *bio_priv = NULL;
+    unsigned char *encoded_pub = NULL;
+    int len_pub;
+    const unsigned char *p;
+    PKCS8_PRIV_KEY_INFO *p8 = NULL;
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", "provider=default"))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0)
+        || !TEST_int_gt((len_priv = i2d_PrivateKey(pkey, &encoded_priv)), 0)
+        || !TEST_ptr(bio_priv = BIO_new(BIO_s_mem()))
+        || !TEST_true(PEM_write_bio_PrivateKey(bio_priv, pkey, NULL, NULL, 0, NULL, NULL))
+        || !TEST_int_eq(X509_PUBKEY_set(&pubkey, pkey), 1)
+        || !TEST_int_gt((len_pub = i2d_X509_PUBKEY(pubkey, &encoded_pub)), 0)
+        || !TEST_ptr(p8 = EVP_PKEY2PKCS8(pkey)))
+        goto end;
+    EVP_PKEY_free(pkey);
+    pkey = NULL;
+
+    for (i = 0; i < OSSL_NELEM(properties_test); i++) {
+        const char *libctx_prop = properties_test[i].provider_props;
+        const char *explicit_prop = properties_test[i].explicit_props;
+        OSSL_PROVIDER **curr_provider = &providers[properties_test[i].curr_provider_idx];
+
+        /*
+         * Decoding a PEM-encoded key uses the properties to select the right provider.
+         * Using a PEM-encoding adds an extra decoder before the key is created.
+         */
+        if (!TEST_int_eq(reset_ctx_providers(&my_libctx, providers, libctx_prop), 1))
+            goto end;
+        if (!TEST_int_ge(BIO_seek(bio_priv, 0), 0)
+            || !TEST_ptr(pkey = PEM_read_bio_PrivateKey_ex(bio_priv, NULL, NULL, NULL, my_libctx,
+                                                           explicit_prop))
+            || !TEST_ptr_eq(EVP_PKEY_get0_provider(pkey), *curr_provider))
+            goto end;
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+
+        /* Decoding a DER-encoded X509_PUBKEY uses the properties to select the right provider */
+        if (!TEST_int_eq(reset_ctx_providers(&my_libctx, providers, libctx_prop), 1))
+            goto end;
+        p = encoded_pub;
+        if (!TEST_ptr(pkey = d2i_PUBKEY_ex(NULL, &p, len_pub, my_libctx, explicit_prop))
+            || !TEST_ptr_eq(EVP_PKEY_get0_provider(pkey), *curr_provider))
+            goto end;
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+
+        /* Decoding a PKCS8_PRIV_KEY_INFO uses the properties to select the right provider */
+        if (!TEST_int_eq(reset_ctx_providers(&my_libctx, providers, libctx_prop), 1))
+            goto end;
+        if (!TEST_ptr(pkey = EVP_PKCS82PKEY_ex(p8, my_libctx, explicit_prop))
+            || !TEST_ptr_eq(EVP_PKEY_get0_provider(pkey), *curr_provider))
+            goto end;
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+    }
+
+    ret = 1;
+
+end:
+    PKCS8_PRIV_KEY_INFO_free(p8);
+    BIO_free(bio_priv);
+    OPENSSL_free(encoded_priv);
+    OPENSSL_free(encoded_pub);
+    X509_PUBKEY_free(pubkey);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    OSSL_PROVIDER_unload(providers[DEFAULT_PROVIDER_IDX]);
+    fake_rsa_finish(providers[FAKE_RSA_PROVIDER_IDX]);
+    OSSL_LIB_CTX_free(my_libctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     libctx = OSSL_LIB_CTX_new();
@@ -436,6 +555,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_pkey_store, 2);
     ADD_TEST(test_pkey_delete);
     ADD_TEST(test_pkey_store_open_ex);
+    ADD_TEST(test_pkey_provider_decoder_props);
 
     return 1;
 }
