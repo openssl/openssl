@@ -93,6 +93,14 @@ EXT_RETURN tls_construct_ctos_maxfragmentlen(SSL_CONNECTION *s, WPACKET *pkt,
     if (s->ext.max_fragment_len_mode == TLSEXT_max_fragment_length_DISABLED)
         return EXT_RETURN_NOT_SENT;
 
+    /*
+     * Avoid sending both extensions. Since Record Size Limit deprecates the
+     * Max Fragment Length extension, it takes precedence over it.
+     * A server respecting the RFC will discard Max Fragment Length extension.
+     */
+    if (s->ext.record_size_limit != TLSEXT_record_size_limit_DISABLED)
+        return EXT_RETURN_NOT_SENT;
+
     /* Add Max Fragment Length extension if client enabled it. */
     /*-
      * 4 bytes for this extension type and extension length
@@ -128,17 +136,8 @@ EXT_RETURN tls_construct_ctos_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
      */
     if (s->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED) {
         if (s->version <= TLS1_2_VERSION || s->version == DTLS1_2_VERSION) {
-            if (s->max_send_fragment != SSL3_RT_MAX_PLAIN_LENGTH) {
-                s->ext.record_size_limit = s->max_send_fragment;
-            }
-
             s->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH;
         } else {
-            if (s->max_send_fragment != SSL3_RT_MAX_PLAIN_LENGTH + 1) {
-                s->ext.record_size_limit = s->max_send_fragment;
-            }
-
-            /* The additional byte is for the content type in TLS 1.3. */
             s->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH + 1;
         }
     }
@@ -1438,6 +1437,14 @@ int tls_parse_stoc_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
                                   unsigned int context,
                                   X509 *x, size_t chainidx) {
     unsigned int peer_limit;
+
+    /*
+     * If a client receives both extensions, this is a fatal error.
+     */
+    if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
 
     if (PACKET_remaining(pkt) != 2 || !PACKET_get_net_2(pkt, &peer_limit)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);

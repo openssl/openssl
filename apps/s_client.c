@@ -1900,9 +1900,7 @@ int s_client_main(int argc, char **argv)
         goto end;
     }
 
-    if (record_size_limit > 0) {
-       SSL_CTX_set_tlsext_record_size_limit(ctx, record_size_limit);
-    }
+    SSL_CTX_set_tlsext_record_size_limit(ctx, 1024);
 
     if (!ssl_load_stores(ctx,
                          vfyCApath, vfyCAfile, vfyCAstore,
