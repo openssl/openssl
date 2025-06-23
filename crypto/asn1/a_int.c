@@ -206,7 +206,15 @@ static size_t c2i_ibuf(unsigned char *b, int *pneg,
 
 int ossl_i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 {
-    return (int)i2c_ibuf(a->data, a->length, a->type & V_ASN1_NEG, pp);
+    unsigned char *ptr = *pp;
+    size_t ret = i2c_ibuf(a->data, a->length, a->type & V_ASN1_NEG, &ptr);
+
+    if (ret > INT_MAX) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
+        return 0;
+    }
+    *pp = ptr;
+    return ret;
 }
 
 /* Convert big endian buffer into uint64_t, return 0 on error */

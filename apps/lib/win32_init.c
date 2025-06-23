@@ -205,14 +205,12 @@ void win32_utf8argv(int *argc, char **argv[])
                  */
                 {
                     const WCHAR *q = p;
-                    int i;
+                    size_t i;
 
                     while (*p == L'\\')
                         p++;
 
                     if (*p == L'"') {
-                        size_t i;
-
                         for (i = (p - q) / 2; i > 0; i--)
                             *wend++ = L'\\';
 
@@ -223,7 +221,7 @@ void win32_utf8argv(int *argc, char **argv[])
                         if ((p - q) % 2 == 1)
                             *wend++ = *p++;
                     } else {
-                        for (i = (int)(p - q); i > 0; i--)
+                        for (i = p - q; i > 0; i--)
                             *wend++ = L'\\';
                     }
                 }

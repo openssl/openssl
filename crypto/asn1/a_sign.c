@@ -183,7 +183,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
         if (EVP_PKEY_CTX_get_params(pctx, params) <= 0)
             goto err;
 
-        if ((aid_len = params[0].return_size) == 0 || aid_len > LONG_MAX) {
+        if ((aid_len = params[0].return_size) == 0) {
             ERR_raise(ERR_LIB_ASN1, ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
             goto err;
         }

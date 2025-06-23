@@ -698,7 +698,7 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, const void *asn,
 
         if (EVP_PKEY_CTX_get_params(pkctx, params) <= 0)
             return 0;
-        if ((aid_len = params[0].return_size) == 0 || aid_len > LONG_MAX)
+        if ((aid_len = params[0].return_size) == 0)
             return 0;
 
         if (alg1 != NULL) {
