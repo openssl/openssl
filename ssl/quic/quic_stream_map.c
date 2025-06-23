@@ -889,16 +889,12 @@ static void count_streams(QUIC_STREAM *qs, void *arg)
     unsigned int *count = (unsigned int *)arg;
 
     if (qs->recv_state != QUIC_RSTREAM_STATE_NONE &&
-        qs->recv_state < QUIC_RSTREAM_STATE_DATA_READ) {
+        qs->recv_state < QUIC_RSTREAM_STATE_DATA_READ)
         *count = *count + 1;
-        (void)(0);
-    }
 
     if (qs->send_state != QUIC_SSTREAM_STATE_NONE &&
-        qs->send_state < QUIC_SSTREAM_STATE_DATA_RECVD) {
+        qs->send_state < QUIC_SSTREAM_STATE_DATA_RECVD)
         *count = *count + 1;
-        (void)(0);
-    }
 }
 
 unsigned int ossl_quic_stream_map_count_streams(QUIC_STREAM_MAP *qsm)
