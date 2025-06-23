@@ -75,7 +75,7 @@ int kdf_main(int argc, char **argv)
     char *prog, *hexout = NULL;
     const char *outfile = NULL;
     unsigned char *dkm_bytes = NULL;
-    size_t dkm_len = 0;
+    int dkm_len = 0;
     BIO *out = NULL;
     EVP_KDF *kdf = NULL;
     EVP_KDF_CTX *ctx = NULL;
@@ -96,7 +96,7 @@ opthelp:
             out_bin = 1;
             break;
         case OPT_KEYLEN:
-            dkm_len = (size_t)atoi(opt_arg());
+            dkm_len = atoi(opt_arg());
             break;
         case OPT_OUT:
             outfile = opt_arg();
@@ -184,9 +184,9 @@ opthelp:
     }
 
     if (out_bin) {
-        BIO_write(out, dkm_bytes, (int)dkm_len);
+        BIO_write(out, dkm_bytes, dkm_len);
     } else {
-        hexout = OPENSSL_buf2hexstr(dkm_bytes, (long)dkm_len);
+        hexout = OPENSSL_buf2hexstr(dkm_bytes, dkm_len);
         if (hexout == NULL) {
             BIO_printf(bio_err, "Memory allocation failure\n");
             goto err;
