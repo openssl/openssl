@@ -1271,14 +1271,15 @@ static int test_pkey_export(void)
     /* Now, try with a legacy key */
     pdata = keydata[0].kder;
     pdata_len = keydata[0].size;
-    if (!TEST_ptr(rsa = d2i_RSAPrivateKey(NULL, &pdata, pdata_len))
-        || !TEST_ptr(pkey = EVP_PKEY_new())
-        || !TEST_true(EVP_PKEY_assign_RSA(pkey, rsa))
+    if (!TEST_ptr(pkey = EVP_PKEY_new())
+        || !TEST_ptr(rsa = d2i_RSAPrivateKey(NULL, &pdata, pdata_len))
+        || !TEST_true(EVP_PKEY_set1_RSA(pkey, rsa))
         || !TEST_true(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
                                       test_pkey_export_cb, pkey))
         || !TEST_false(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
                                        test_pkey_export_cb, NULL)))
         ret = 0;
+    RSA_free(rsa);
     EVP_PKEY_free(pkey);
 #endif
     return ret;
