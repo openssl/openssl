@@ -2357,6 +2357,8 @@ __owur SSL *SSL_new_stream(SSL *s, uint64_t flags);
 __owur int SSL_set_incoming_stream_policy(SSL *s, int policy, uint64_t aec);
 
 #define SSL_ACCEPT_STREAM_NO_BLOCK      (1U << 0)
+#define SSL_ACCEPT_STREAM_UNI           (1U << 1)
+#define SSL_ACCEPT_STREAM_BIDI          (1U << 2)
 __owur SSL *SSL_accept_stream(SSL *s, uint64_t flags);
 __owur size_t SSL_get_accept_stream_queue_len(SSL *s);
 
