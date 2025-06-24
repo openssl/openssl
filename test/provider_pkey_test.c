@@ -462,7 +462,6 @@ static int test_pkey_provider_decoder_props(void)
         { NULL, "provider=fake-rsa", FAKE_RSA_PROVIDER_IDX },
         { NULL, "provider=default", DEFAULT_PROVIDER_IDX },
     };
-    EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey = NULL;
     BIO *bio_priv = NULL;
     unsigned char *encoded_pub = NULL;
@@ -471,12 +470,41 @@ static int test_pkey_provider_decoder_props(void)
     PKCS8_PRIV_KEY_INFO *p8 = NULL;
     size_t i;
     int ret = 0;
+    const char pem_rsa_priv_key[] =
+        "-----BEGIN PRIVATE KEY-----\n"
+        "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDEkC4ZWv3ucFbU\n"
+        "F8YwlUrmQlLCZwAgr4DPUAFVHl+wFcXypVgScVY4K7QmdWKsYqb8tpOxqw0NwZWX\n"
+        "O+ta4+y27COufoOhRTMwNyN2LwSNTPN3eEk4ee5QnppEyDrqoCgvTlAAdToFaXvj\n"
+        "x13Ybj7jfhwN74qKdqsSEtPWyggeotiQSPy6KyBIuWtIxPAA8jAvfAnQj1eXhghF\n"
+        "N2NxkqgxvBYdNy1m3+jXACPLRzc11ZbNHKiwhCY1/HiSBkwHlIK+/VLj2smCKdUQ\n"
+        "gvLXSnnVgQulHioD6UgY8xA2a4M1rhYuTV8BrPRZ4BFx2o0jYWvGbA/Hlp7fTOy+\n"
+        "F5OkiHS7AgMBAAECggEAYgCu81ZiQBVDvWiDGKr+1pIf2CxprGJEm1h86ZcEx3L7\n"
+        "qFDW+g8HGWd04S3qvh9LublAJzetAPxRXL9zx3PXjJZs7e3HLEuny3TaWez0XI0O\n"
+        "4LSY8S8d6pVBPmUEtwGWN4vYqHnKLXOb4QQAXs4MzfkM/Me/b+zdu1umwjMl3Dud\n"
+        "5rVhkgvt8uhDUG3XSHeoJYBMbT9ikJDVMJ51rre/1Riddgxp8SktVkvGmMl9kQR8\n"
+        "8dv3Px/kTN94EuRg0CkXBhHpoGo4qnM3Q3B5PlmSK5gkuPvWy9l8L/TVt8Lb6/zL\n"
+        "ByQW+g02wxeNGhw1fkD+XFH7KkSeWl+QnrLcePM0hQKBgQDxoqUk0PLOY5WgOkgr\n"
+        "umgie/K1WKs+izTtApjzcM76sza63b5R9w+P+NssMV4aeV9epEGZO68IUmi0QjvQ\n"
+        "npluQoadFYweFwSQ11BXHoeQBA4nNpkrV58hgzZN3m9JLR7JxyrIqXsRnUzl13Kj\n"
+        "GzZBCJxCpJjfTze/yme8d3pa5QKBgQDQP5mB4jI+g3XH3MuLyBjMoTIvoy7CYMhZ\n"
+        "6/+Kkpw132J16mqkLrwUOZfT0e1rJBsCUkEoBmgKNtRkHo3/SjUI/9fHj3uStPHV\n"
+        "oPcfXj/gFRUkDDzY+auB3dHONF1U1z06EANkkPCC3a538UANBIaPjwpRdBzNw1xl\n"
+        "bvn5aCt3HwKBgBfOl4jGEXYmN6K+u0ebqRDkt2gIoW6bFo7Xd6xci/gFWjoVCOBY\n"
+        "gC8GLMnw3z2qgav4cQIg8EDYpbpE4FHQnntPkKW/bru0Nt3yaNb8igy1aZORfIvZ\n"
+        "qTMLE3melcZW7LaiqeN1V0vH/MCUdpX9Y14K9CJYxzsROgPqdEgMWYDFAoGAAe9l\n"
+        "XMieUOhl0sqhdZYRbO1eiwTILXQ6yGMiB8ae/v0pbBEWlpn8k2+JkqVTwHggbCAZ\n"
+        "jOaqVtX1mUyTYzjsTz4ZYjhaHJ3j1WlegoMcstdfT+txMU74ogdOqMzhxSUO45g8\n"
+        "f9W89mpa8bBjOPu+yFy66tDaZ6sWE7c5SXEHXl8CgYEAtAWwFPoDSTdzoXAwRof0\n"
+        "QMO08+PnQGoPbMJTqrgxrHYCS8u4cYSHdDMJDCOMo5gFXyC+5FfTiGwBhy58z5b7\n"
+        "gBwFKI9RgRfV1D/NimxPrlj3WHyec1/Cs+Br+/vekMVFg5gekeHr4aGSF4bk0AjV\n"
+        "Tv/pQjyRuZAt66IbRZdl2II=\n"
+        "-----END PRIVATE KEY-----";
 
-    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", "provider=default"))
-        || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
-        || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0)
-        || !TEST_ptr(bio_priv = BIO_new(BIO_s_mem()))
-        || !TEST_true(PEM_write_bio_PrivateKey(bio_priv, pkey, NULL, NULL, 0, NULL, NULL))
+    /* Load private key BIO, DER-encoded public key and PKCS#8 private key for testing */
+    if (!TEST_ptr(bio_priv = BIO_new(BIO_s_mem()))
+        || !TEST_int_gt(BIO_write(bio_priv, pem_rsa_priv_key, sizeof(pem_rsa_priv_key)), 0)
+        || !TEST_ptr(pkey = PEM_read_bio_PrivateKey_ex(bio_priv, NULL, NULL, NULL, NULL, NULL))
+        || !TEST_int_ge(BIO_seek(bio_priv, 0), 0)
         || !TEST_int_gt((len_pub = i2d_PUBKEY(pkey, &encoded_pub)), 0)
         || !TEST_ptr(p8 = EVP_PKEY2PKCS8(pkey)))
         goto end;
@@ -530,7 +558,6 @@ end:
     BIO_free(bio_priv);
     OPENSSL_free(encoded_pub);
     EVP_PKEY_free(pkey);
-    EVP_PKEY_CTX_free(ctx);
     OSSL_PROVIDER_unload(providers[DEFAULT_PROVIDER_IDX]);
     fake_rsa_finish(providers[FAKE_RSA_PROVIDER_IDX]);
     OSSL_LIB_CTX_free(my_libctx);
