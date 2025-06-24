@@ -228,7 +228,7 @@ static void *fake_rsa_keymgmt_load(const void *reference, size_t reference_sz)
 {
     struct fake_rsa_keydata *key = NULL;
 
-    if (reference_sz != sizeof(*key))
+    if (reference_sz != sizeof(key))
         return NULL;
 
     key = *(struct fake_rsa_keydata **)reference;
@@ -647,7 +647,7 @@ static int fake_rsa_st_load(void *loaderctx,
         /* The address of the key becomes the octet string */
         params[2] =
             OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_REFERENCE,
-                                              &key, sizeof(*key));
+                                              &key, sizeof(key));
         params[3] = OSSL_PARAM_construct_end();
         rv = object_cb(params, object_cbarg);
         *storectx = 1;

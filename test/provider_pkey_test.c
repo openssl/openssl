@@ -491,6 +491,7 @@ static int test_pkey_provider_decoder_props(void)
     for (i = 0; i < OSSL_NELEM(properties_test); i++) {
         const char *libctx_prop = properties_test[i].provider_props;
         const char *explicit_prop = properties_test[i].explicit_props;
+        /* *curr_provider will be updated in reset_ctx_providers */
         OSSL_PROVIDER **curr_provider = &providers[properties_test[i].curr_provider_idx];
 
         /*
