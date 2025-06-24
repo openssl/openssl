@@ -464,9 +464,6 @@ static int test_pkey_provider_decoder_props(void)
     };
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey = NULL;
-    X509_PUBKEY *pubkey = NULL;
-    unsigned char *encoded_priv = NULL;
-    int len_priv;
     BIO *bio_priv = NULL;
     unsigned char *encoded_pub = NULL;
     int len_pub;
@@ -478,11 +475,9 @@ static int test_pkey_provider_decoder_props(void)
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", "provider=default"))
         || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
         || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0)
-        || !TEST_int_gt((len_priv = i2d_PrivateKey(pkey, &encoded_priv)), 0)
         || !TEST_ptr(bio_priv = BIO_new(BIO_s_mem()))
         || !TEST_true(PEM_write_bio_PrivateKey(bio_priv, pkey, NULL, NULL, 0, NULL, NULL))
-        || !TEST_int_eq(X509_PUBKEY_set(&pubkey, pkey), 1)
-        || !TEST_int_gt((len_pub = i2d_X509_PUBKEY(pubkey, &encoded_pub)), 0)
+        || !TEST_int_gt((len_pub = i2d_PUBKEY(pkey, &encoded_pub)), 0)
         || !TEST_ptr(p8 = EVP_PKEY2PKCS8(pkey)))
         goto end;
     EVP_PKEY_free(pkey);
@@ -533,9 +528,7 @@ static int test_pkey_provider_decoder_props(void)
 end:
     PKCS8_PRIV_KEY_INFO_free(p8);
     BIO_free(bio_priv);
-    OPENSSL_free(encoded_priv);
     OPENSSL_free(encoded_pub);
-    X509_PUBKEY_free(pubkey);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
     OSSL_PROVIDER_unload(providers[DEFAULT_PROVIDER_IDX]);

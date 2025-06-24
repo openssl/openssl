@@ -41,6 +41,10 @@ typedef struct {
 
 #define PROV_FAKE_RSA_LIBCTX_OF(provctx) (((PROV_FAKE_RSA_CTX *)provctx)->libctx)
 
+#define FAKE_RSA_STATUS_IMPORTED    1
+#define FAKE_RSA_STATUS_GENERATED   2
+#define FAKE_RSA_STATUS_DECODED     3
+
 struct fake_rsa_keydata {
     int selection;
     int status;
@@ -95,7 +99,7 @@ static int fake_rsa_keymgmt_import(void *keydata, int selection,
     struct fake_rsa_keydata *fake_rsa_key = keydata;
 
     /* key was imported */
-    fake_rsa_key->status = 1;
+    fake_rsa_key->status = FAKE_RSA_STATUS_IMPORTED;
 
     return 1;
 }
@@ -232,7 +236,7 @@ static void *fake_rsa_keymgmt_load(const void *reference, size_t reference_sz)
         return NULL;
 
     key = *(struct fake_rsa_keydata **)reference;
-    if (key->status != 1 && key->status != 3)
+    if (key->status != FAKE_RSA_STATUS_IMPORTED && key->status != FAKE_RSA_STATUS_DECODED)
         return NULL;
 
     /* detach the reference */
@@ -267,7 +271,7 @@ static void *fake_rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (!TEST_ptr(keydata = fake_rsa_keymgmt_new(NULL)))
         return NULL;
 
-    keydata->status = 2;
+    keydata->status = FAKE_RSA_STATUS_GENERATED;
     return keydata;
 }
 
@@ -854,7 +858,7 @@ static struct fake_rsa_keydata *fake_rsa_d2i_PUBKEY(struct fake_rsa_keydata **a,
     if (key == NULL)
         goto err_exit;
 
-    key->status = 3;
+    key->status = FAKE_RSA_STATUS_DECODED;
 
     if (a != NULL) {
         fake_rsa_keymgmt_free(*a);
@@ -1083,7 +1087,7 @@ static struct fake_rsa_keydata *fake_rsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INF
     struct fake_rsa_keydata *key = fake_rsa_keymgmt_new(NULL);
 
     if (key)
-        key->status = 3;
+        key->status = FAKE_RSA_STATUS_DECODED;
     return key;
 }
 
@@ -1253,7 +1257,7 @@ static int fake_rsa_provider_init(const OSSL_CORE_HANDLE *handle,
     if (!TEST_ptr(libctx = OSSL_LIB_CTX_new_from_dispatch(handle, in)))
         return 0;
 
-    if (!TEST_ptr(prov_ctx = OPENSSL_malloc(sizeof(PROV_FAKE_RSA_CTX)))) {
+    if (!TEST_ptr(prov_ctx = OPENSSL_malloc(sizeof(*prov_ctx)))) {
         OSSL_LIB_CTX_free(libctx);
         return 0;
     }
