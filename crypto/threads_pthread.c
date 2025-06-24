@@ -10,12 +10,33 @@
 /* We need to use the OPENSSL_fork_*() deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#if !defined(__GNUC__) || !defined(__ATOMIC_ACQ_REL) || defined(BROKEN_CLANG_ATOMICS)
+/*
+ * we only enable REPORT_RWLOCK_CONTENTION on clang/gcc when we have
+ * atomics available.  We do this because we need to use an atomic to track
+ * when we can close the log file.  we could use the CRYPTO_atomic_ api
+ * but that requires lock creation which gets us into a bad recursive loop
+ * when we try to initalize the file pointer
+ */
+# ifdef REPORT_RWLOCK_CONTENTION
+#  warning "RWLOCK CONTENTION REPORTING NOT SUPPORTED, Disabling"
+#  undef REPORT_RWLOCK_CONTENTION
+# endif
+#endif
+
+#ifdef REPORT_RWLOCK_CONTENTION
+# include <execinfo.h>
+#endif
+
 #include <openssl/crypto.h>
 #include <crypto/cryptlib.h>
 #include <crypto/sparse_array.h>
 #include "internal/cryptlib.h"
 #include "internal/threads_common.h"
 #include "internal/rcu.h"
+#ifdef REPORT_RWLOCK_CONTENTION
+# include "internal/time.h"
+#endif
 #include "rcu_internal.h"
 
 #if defined(__clang__) && defined(__has_feature)
@@ -575,10 +596,38 @@ void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock)
     OPENSSL_free(rlock);
 }
 
+# ifdef REPORT_RWLOCK_CONTENTION
+/*
+ * Normally we would use a BIO here to do this, but we create locks during
+ * library initalization, and creating a bio too early, creates a recursive set
+ * of stack calls that leads us to call CRYPTO_thread_run_once while currently
+ * executing the init routine for various run_once functions, which leads to
+ * deadlock.  Avoid that by just using a FILE pointer.  Its gross, but here we
+ * are
+ */
+static FILE *contention_fp = NULL;
+static CRYPTO_ONCE init_contention_fp = CRYPTO_ONCE_STATIC_INIT;
+static int rwlock_count = 0;
+static void init_contention_fp_once(void)
+{
+#  ifdef FIPS_MODULE
+    contention_fp = fopen("bio-lock-contention-log-fips.txt", "w");
+#  else
+    contention_fp = fopen("bio-lock-contention-log.txt", "w");
+#  endif
+    return;
+}
+# endif
+
 CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 {
 # ifdef USE_RWLOCK
     CRYPTO_RWLOCK *lock;
+
+#  ifdef REPORT_RWLOCK_CONTENTION
+    CRYPTO_THREAD_run_once(&init_contention_fp, init_contention_fp_once);
+    __atomic_add_fetch(&rwlock_count, 1, __ATOMIC_ACQ_REL);
+#  endif
 
     if ((lock = OPENSSL_zalloc(sizeof(pthread_rwlock_t))) == NULL)
         /* Don't set error, to avoid recursion blowup. */
@@ -620,11 +669,38 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
     return lock;
 }
 
+# define BT_BUF_SIZE 1024
+
 __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
+#  ifdef REPORT_RWLOCK_CONTENTION
+    if (pthread_rwlock_tryrdlock(lock)) {
+        int nptrs;
+        void *buffer[BT_BUF_SIZE];
+        char **strings;
+        OSSL_TIME start, end;
+
+        start = ossl_time_now();
+        pthread_rwlock_rdlock(lock);
+        if (contention_fp == NULL)
+            return 1;
+        end = ossl_time_now();
+        nptrs = backtrace(buffer, BT_BUF_SIZE);
+        strings = backtrace_symbols(buffer, nptrs);
+        fprintf(contention_fp, "lock blocked on READ for %zu usec\n",
+                ossl_time2us(ossl_time_subtract(end, start)));
+        if (strings != NULL) {
+            for (int j = 0; j < nptrs; j++)
+                fprintf(contention_fp, "%s\n", strings[j]);
+            free(strings);
+        }
+        fprintf(contention_fp, "\n");
+    }
+#  else
     if (!ossl_assert(pthread_rwlock_rdlock(lock) == 0))
         return 0;
+#  endif
 # else
     if (pthread_mutex_lock(lock) != 0) {
         assert(errno != EDEADLK && errno != EBUSY);
@@ -638,8 +714,33 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
+#  ifdef REPORT_RWLOCK_CONTENTION
+    if (pthread_rwlock_trywrlock(lock)) {
+        int nptrs;
+        void *buffer[BT_BUF_SIZE];
+        char **strings;
+        OSSL_TIME start, end;
+
+        start = ossl_time_now();
+        pthread_rwlock_wrlock(lock);
+        end = ossl_time_now();
+        if (contention_fp == NULL)
+            return 1;
+        nptrs = backtrace(buffer, BT_BUF_SIZE);
+        strings = backtrace_symbols(buffer, nptrs);
+        fprintf(contention_fp, "lock blocked on WRITE for %zu usec\n",
+                ossl_time2us(ossl_time_subtract(end, start)));
+        if (strings != NULL) {
+            for (int j = 0; j < nptrs; j++)
+                fprintf(contention_fp, "%s\n", strings[j]);
+            free(strings);
+        }
+        fprintf(contention_fp, "\n");
+    }
+#  else
     if (!ossl_assert(pthread_rwlock_wrlock(lock) == 0))
         return 0;
+#  endif
 # else
     if (pthread_mutex_lock(lock) != 0) {
         assert(errno != EDEADLK && errno != EBUSY);
@@ -669,6 +770,12 @@ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock)
 {
     if (lock == NULL)
         return;
+# ifdef REPORT_RWLOCK_CONTENTION
+    if (__atomic_add_fetch(&rwlock_count, -1, __ATOMIC_ACQ_REL) == 0) {
+        fclose(contention_fp);
+        contention_fp = NULL;
+    }
+# endif
 
 # ifdef USE_RWLOCK
     pthread_rwlock_destroy(lock);
