@@ -835,6 +835,13 @@ void ossl_quic_stream_map_push_accept_queue(QUIC_STREAM_MAP *qsm,
 QUIC_STREAM *ossl_quic_stream_map_peek_accept_queue(QUIC_STREAM_MAP *qsm);
 
 /*
+ * Returns the next item to be popped from the accept queue matching the given
+ * stream type, or NULL if it there are no items that match.
+ */
+QUIC_STREAM *ossl_quic_stream_map_find_in_accept_queue(QUIC_STREAM_MAP *qsm,
+                                                       int is_uni);
+
+/*
  * Removes a stream from the accept queue. rtt is the estimated connection RTT.
  * The stream is retired for the purposes of MAX_STREAMS RXFC.
  *

@@ -734,6 +734,24 @@ QUIC_STREAM *ossl_quic_stream_map_peek_accept_queue(QUIC_STREAM_MAP *qsm)
     return accept_head(&qsm->accept_list);
 }
 
+QUIC_STREAM *ossl_quic_stream_map_find_in_accept_queue(QUIC_STREAM_MAP *qsm,
+                                                       int is_uni)
+{
+    QUIC_STREAM *qs;
+
+    if (ossl_quic_stream_map_get_accept_queue_len(qsm, is_uni) == 0)
+        return NULL;
+
+    qs = ossl_quic_stream_map_peek_accept_queue(qsm);
+    while (qs != NULL) {
+        if ((is_uni && !ossl_quic_stream_is_bidi(qs))
+            || (!is_uni && ossl_quic_stream_is_bidi(qs)))
+            break;
+        qs = accept_next(&qsm->accept_list, qs);
+    }
+    return qs;
+}
+
 void ossl_quic_stream_map_push_accept_queue(QUIC_STREAM_MAP *qsm,
                                             QUIC_STREAM *s)
 {

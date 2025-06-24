@@ -762,6 +762,8 @@ SSL_STREAM_STATE_RESET_REMOTE           define
 SSL_STREAM_STATE_CONN_CLOSED            define
 SSL_ACCEPT_CONNECTION_NO_BLOCK          define
 SSL_ACCEPT_STREAM_NO_BLOCK              define
+SSL_ACCEPT_STREAM_UNI                   define
+SSL_ACCEPT_STREAM_BIDI                  define
 SSL_DEFAULT_STREAM_MODE_AUTO_BIDI       define
 SSL_DEFAULT_STREAM_MODE_AUTO_UNI        define
 SSL_DEFAULT_STREAM_MODE_NONE            define

@@ -3897,7 +3897,15 @@ SSL *ossl_quic_accept_stream(SSL *s, uint64_t flags)
 
     qsm = ossl_quic_channel_get_qsm(ctx.qc->ch);
 
-    qs = ossl_quic_stream_map_peek_accept_queue(qsm);
+    if ((flags & SSL_ACCEPT_STREAM_UNI) && !(flags & SSL_ACCEPT_STREAM_BIDI)) {
+        qs = ossl_quic_stream_map_find_in_accept_queue(qsm, 1);
+    } else if ((flags & SSL_ACCEPT_STREAM_BIDI)
+               && !(flags & SSL_ACCEPT_STREAM_UNI)) {
+        qs = ossl_quic_stream_map_find_in_accept_queue(qsm, 0);
+    } else {
+        qs = ossl_quic_stream_map_peek_accept_queue(qsm);
+    }
+
     if (qs == NULL) {
         if (qctx_blocking(&ctx)
             && (flags & SSL_ACCEPT_STREAM_NO_BLOCK) == 0) {
