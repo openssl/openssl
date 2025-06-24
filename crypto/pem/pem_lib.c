@@ -978,7 +978,7 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
         goto end;
 
     BIO_get_mem_ptr(dataB, &buf_mem);
-    if (buf_mem->length >= INT_MAX) {
+    if (buf_mem->length > INT_MAX) {
         ERR_raise(ERR_LIB_PEM, PEM_R_BAD_BASE64_DECODE);
         goto end;
     }

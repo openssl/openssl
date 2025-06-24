@@ -1532,8 +1532,10 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         params[0] =
             OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, &sz);
         ret = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
-        if (ret <= 0 || sz > INT_MAX)
+        if (ret <= 0)
             goto end;
+        if (sz > INT_MAX)
+            return 0;
         return (int)sz;
 #ifndef OPENSSL_NO_RC2
     case EVP_CTRL_GET_RC2_KEY_BITS:
