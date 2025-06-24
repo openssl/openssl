@@ -593,7 +593,7 @@ L<https://www.openssl.org/source/>
 
 =head1 HISTORY
 
-The HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 digests were added in OpenSSL 3.6.
+The HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 algorithms were added in OpenSSL 3.6.
 
 All other functionality was added in OpenSSL 3.0.
 

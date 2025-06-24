@@ -86,7 +86,7 @@ The derived key returned will be the result after the expand operation. The
 intermediate fixed-length pseudorandom key K is not returned.
 
 In this mode the key, salt and info values must be set before a key is
-derived otherwise an error will occur. For non-fixed-mode (B<HKDF>) the digest
+derived otherwise an error will occur. For non-fixed mode (B<HKDF>) the digest
 must also be set.
 
 =item "EXTRACT_ONLY" or B<EVP_KDF_HKDF_MODE_EXTRACT_ONLY>
@@ -97,7 +97,7 @@ key K.  The I<keylen> parameter must match the size of K, which can be looked
 up by calling EVP_KDF_CTX_get_kdf_size() after setting the mode and digest.
 
 The key and salt values must be set before a key is derived otherwise
-an error will occur. For non-fixed-mode (B<HKDF>) the digest
+an error will occur. For non-fixed mode (B<HKDF>) the digest
 must also be set.
 
 =item "EXPAND_ONLY" or B<EVP_KDF_HKDF_MODE_EXPAND_ONLY>
@@ -107,7 +107,7 @@ operation. The input key should be set to the intermediate fixed-length
 pseudorandom key K returned from a previous extract operation.
 
 The key and info values must be set before a key is derived otherwise
-an error will occur. For non-fixed-mode (B<HKDF>) the digest
+an error will occur. For non-fixed mode (B<HKDF>) the digest
 must also be set.
 
 =back
