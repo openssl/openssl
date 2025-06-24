@@ -252,7 +252,8 @@ int tls_parse_ctos_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
      * an illegal_parameter fatal alert.
      */
      if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
-        s->session->ext.max_fragment_len_mode = TLSEXT_max_fragment_length_DISABLED;
+        s->session->ext.max_fragment_len_mode =
+            TLSEXT_max_fragment_length_DISABLED;
      }
 
     s->session->ext.peer_record_size_limit = (uint16_t)peer_limit;
@@ -1684,19 +1685,13 @@ EXT_RETURN tls_construct_stoc_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,
                                              size_t chainidx)
 {
+    /* If peer did not send a Record Size Limit. */
     if (s->session->ext.peer_record_size_limit ==
         TLSEXT_record_size_limit_UNSPECIFIED) {
         return EXT_RETURN_NOT_SENT;
     }
 
-    if (s->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED) {
-        if (s->version <= TLS1_2_VERSION || s->version == DTLS1_2_VERSION) {
-            s->session->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH;
-        } else {
-            /* The additional byte is for the content type in TLS 1.3. */
-            s->session->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH + 1;
-        }
-    }
+
 
     /*-
      * 4 bytes for this extension type and extension length

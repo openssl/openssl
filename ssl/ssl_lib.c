@@ -7293,6 +7293,10 @@ uint32_t SSL_get_recv_max_early_data(const SSL *s)
 
 __owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc)
 {
+    /* Return any active Record Size Limit extension */
+    if (sc->session != NULL && USE_RECORD_SIZE_LIMIT_EXT(sc->session))
+        return sc->session->ext.peer_record_size_limit;
+
     /* Return any active Max Fragment Len extension */
     if (sc->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(sc->session))
         return GET_MAX_FRAGMENT_LENGTH(sc->session);
@@ -7303,6 +7307,11 @@ __owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc)
 
 __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc)
 {
+
+    if (sc->session != NULL && USE_RECORD_SIZE_LIMIT_EXT(sc->session)
+        && sc->split_send_fragment > sc->session->ext.peer_record_size_limit)
+        return sc->session->ext.peer_record_size_limit;
+
     /* Return a value regarding an active Max Fragment Len extension */
     if (sc->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(sc->session)
         && sc->split_send_fragment > GET_MAX_FRAGMENT_LENGTH(sc->session))

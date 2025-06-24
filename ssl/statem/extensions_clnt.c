@@ -136,16 +136,18 @@ EXT_RETURN tls_construct_ctos_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
      */
     if (s->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED) {
         if (s->version <= TLS1_2_VERSION || s->version == DTLS1_2_VERSION) {
-            s->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH;
+            s->session->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH;
         } else {
-            s->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH + 1;
+            s->session->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH + 1;
         }
+    } else {
+        s->session->ext.record_size_limit = s->ext.record_size_limit;
     }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_record_size_limit)
             /* Sub-packet for Record Size Limit extension (2 bytes) */
             || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_put_bytes_u16(pkt, s->ext.record_size_limit)
+            || !WPACKET_put_bytes_u16(pkt, s->session->ext.record_size_limit)
             || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
@@ -1451,7 +1453,7 @@ int tls_parse_stoc_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    s->ext.peer_record_size_limit = peer_limit;
+    s->session->ext.peer_record_size_limit = peer_limit;
 
     return 1;
 }

@@ -299,7 +299,8 @@
     (512U << (session->ext.max_fragment_len_mode - 1))
 
 # define USE_RECORD_SIZE_LIMIT_EXT(session) \
-    (session->ext.record_size_limit != TLSEXT_record_size_limit_DISABLED)
+    (session->ext.record_size_limit >= TLSEXT_record_size_limit_min && \
+     session->ext.peer_record_size_limit >= TLSEXT_record_size_limit_min)
 
 # define SSL_READ_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_READ)
 # define SSL_WRITE_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)

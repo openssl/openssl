@@ -1761,6 +1761,7 @@ static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
     if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
         s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
                                               GET_MAX_FRAGMENT_LENGTH(s->session));
+
         s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
                                               ssl_get_max_send_fragment(s));
     }
@@ -1773,8 +1774,22 @@ static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
     if (s->session == NULL)
         return 1;
 
-    if (s->session->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED)
-        s->session->ext.record_size_limit = TLSEXT_record_size_limit_DISABLED;
+    if (s->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED) {
+        if (s->version <= TLS1_2_VERSION || s->version == DTLS1_2_VERSION) {
+            s->session->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH;
+        } else {
+            /* The additional byte is for the content type in TLS 1.3. */
+            s->session->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH + 1;
+        }
+    }
+
+    if (USE_RECORD_SIZE_LIMIT_EXT(s->session)) {
+        s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
+            s->session->ext.record_size_limit);
+
+        s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
+            s->session->ext.peer_record_size_limit);
+    }
 
     return 1;
 }
