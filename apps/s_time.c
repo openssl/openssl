@@ -80,7 +80,7 @@ const OPTIONS s_time_options[] = {
 #ifndef OPENSSL_NO_TLS1_3
     {"tls1_3", OPT_TLS1_3, '-', "Just use TLSv1.3"},
 #endif
-    {"verify", OPT_VERIFY, 'p',
+    {"verify", OPT_VERIFY, 'N',
      "Turn on peer certificate verification, set depth"},
     {"verify_return_error", OPT_VERIFY_RET_ERROR, '-',
      "Close connection on verification error"},
@@ -131,9 +131,16 @@ int s_time_main(int argc, char **argv)
     OPTION_CHOICE o;
     int min_version = 0, max_version = 0, ver, buf_len, fd;
     size_t buf_size;
-    int verify = SSL_VERIFY_NONE;
+    X509_VERIFY_PARAM *vpm = NULL;
+    int verify = SSL_VERIFY_NONE, vpmtouched = 0;
 
     meth = TLS_client_method();
+
+    vpm = X509_VERIFY_PARAM_new();
+    if (vpm == NULL) {
+        BIO_printf(bio_err, "%s: out of memory\n", opt_getprog());
+        goto end;
+    }
 
     prog = opt_init(argc, argv, s_time_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -157,8 +164,11 @@ int s_time_main(int argc, char **argv)
             perform = 1;
             break;
         case OPT_VERIFY:
-            verify = SSL_VERIFY_PEER;
             verify_args.depth = opt_int_arg();
+            if (verify_args.depth >= 0) {
+                X509_VERIFY_PARAM_set_depth(vpm, verify_args.depth);
+                vpmtouched++;
+            }
             BIO_printf(bio_err, "%s: verify depth is %d\n",
                        prog, verify_args.depth);
             break;
@@ -253,6 +263,10 @@ int s_time_main(int argc, char **argv)
 
     verify_args.quiet = 1;
     SSL_CTX_set_verify(ctx, verify, verify_callback);
+    if (vpmtouched && !SSL_CTX_set1_param(ctx, vpm)) {
+        BIO_printf(bio_err, "Error setting verify params\n");
+        goto end;
+    }
 
     SSL_CTX_set_quiet_shutdown(ctx, 1);
     if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
@@ -415,6 +429,7 @@ int s_time_main(int argc, char **argv)
     ret = 0;
 
  end:
+    X509_VERIFY_PARAM_free(vpm);
     SSL_free(scon);
     SSL_CTX_free(ctx);
     return ret;
@@ -460,6 +475,7 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
                        X509_verify_cert_error_string(verify_args.error));
         else
             ERR_print_errors(bio_err);
+        OSSL_sleep(1000);
         if (scon == NULL)
             SSL_free(serverCon);
         return NULL;
