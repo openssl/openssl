@@ -18,7 +18,6 @@ struct bn_blinding_st {
     BIGNUM *Ai;
     BIGNUM *e;
     BIGNUM *mod;                /* just a reference */
-    CRYPTO_THREAD_ID tid;
     int counter;
     unsigned long flags;
     BN_MONT_CTX *m_ctx;
@@ -42,8 +41,6 @@ BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
         OPENSSL_free(ret);
         return NULL;
     }
-
-    BN_BLINDING_set_current_thread(ret);
 
     if (A != NULL) {
         if ((ret->A = BN_dup(A)) == NULL)
@@ -201,12 +198,12 @@ int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
 
 int BN_BLINDING_is_current_thread(BN_BLINDING *b)
 {
-    return CRYPTO_THREAD_compare_id(CRYPTO_THREAD_get_current_id(), b->tid);
+    return 1;
 }
 
 void BN_BLINDING_set_current_thread(BN_BLINDING *b)
 {
-    b->tid = CRYPTO_THREAD_get_current_id();
+    return;
 }
 
 int BN_BLINDING_lock(BN_BLINDING *b)

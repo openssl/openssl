@@ -25,6 +25,7 @@
 #include "crypto/bn.h"
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
+#include "crypto/sparse_array.h"
 #include "crypto/security_bits.h"
 #include "rsa_local.h"
 
@@ -87,6 +88,13 @@ static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     }
 
     if (!CRYPTO_NEW_REF(&ret->references, 1)) {
+        CRYPTO_THREAD_lock_free(ret->lock);
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
+    ret->blindings_sa = ossl_rsa_alloc_blinding();
+    if (ret->blindings_sa == NULL) {
         CRYPTO_THREAD_lock_free(ret->lock);
         OPENSSL_free(ret);
         return NULL;
@@ -181,8 +189,7 @@ void RSA_free(RSA *r)
     RSA_PSS_PARAMS_free(r->pss);
     sk_RSA_PRIME_INFO_pop_free(r->prime_infos, ossl_rsa_multip_info_free);
 #endif
-    BN_BLINDING_free(r->blinding);
-    BN_BLINDING_free(r->mt_blinding);
+    ossl_rsa_free_blinding(r);
     OPENSSL_free(r);
 }
 
@@ -1380,4 +1387,5 @@ int EVP_PKEY_CTX_set_rsa_keygen_primes(EVP_PKEY_CTX *ctx, int primes)
 
     return evp_pkey_ctx_set_params_strict(ctx, params);
 }
+
 #endif
