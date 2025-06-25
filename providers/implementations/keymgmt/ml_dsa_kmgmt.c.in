@@ -203,7 +203,10 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
     const ML_DSA_PARAMS *key_params = ossl_ml_dsa_key_params(key);
     const uint8_t *pk = NULL, *sk = NULL, *seed = NULL;
     size_t pk_len = 0, sk_len = 0, seed_len = 0;
-    struct ml_dsa_key_type_params_st p = ml_dsa_key_type_params_decoder(params);
+    struct ml_dsa_key_type_params_st p;
+
+    if (key == NULL || !ml_dsa_key_type_params_decoder(params, &p))
+        return 0;
 
     if (p.pubkey != NULL) {
         if (!OSSL_PARAM_get_octet_string_ptr(p.pubkey, (const void **)&pk, &pk_len))
@@ -317,7 +320,10 @@ static int ml_dsa_get_params(void *keydata, OSSL_PARAM params[])
     ML_DSA_KEY *key = keydata;
     const uint8_t *d;
     size_t len;
-    struct ml_dsa_get_params_st p = ml_dsa_get_params_decoder(params);
+    struct ml_dsa_get_params_st p;
+
+    if (key == NULL || !ml_dsa_get_params_decoder(params, &p))
+        return 0;
 
     if (p.bits != NULL
             && !OSSL_PARAM_set_int(p.bits, 8 * ossl_ml_dsa_key_get_pub_len(key)))
@@ -512,12 +518,8 @@ static int ml_dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     struct ml_dsa_gen_ctx *gctx = genctx;
     struct ml_dsa_gen_set_params_st p;
 
-    if (gctx == NULL)
+    if (gctx == NULL || !ml_dsa_gen_set_params_decoder(params, &p))
         return 0;
-    if (ossl_param_is_empty(params))
-        return 1;
-
-    p = ml_dsa_gen_set_params_decoder(params);
 
     if (p.seed != NULL) {
         void *vp = gctx->entropy;

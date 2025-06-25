@@ -52,7 +52,8 @@ int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
 {
     struct ossl_cipher_generic_get_params_st p;
 
-    p = ossl_cipher_generic_get_params_decoder(params);
+    if (!ossl_cipher_generic_get_params_decoder(params, &p))
+        return 0;
 
     if (p.mode != NULL && !OSSL_PARAM_set_uint(p.mode, md)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
@@ -162,11 +163,9 @@ int ossl_cipher_var_keylen_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     struct ossl_cipher_set_ctx_param_list_st p;
 
-    if (ossl_param_is_empty(params))
-        return 1;
-
-    p = cipher_var_keylen_set_ctx_params_decoder(params);
-    if (!ossl_cipher_common_set_ctx_params(ctx, &p))
+    if (ctx == NULL
+            || !cipher_var_keylen_set_ctx_params_decoder(params, &p)
+            || !ossl_cipher_common_set_ctx_params(ctx, &p))
         return 0;
 
     if (p.keylen != NULL) {
@@ -649,7 +648,8 @@ int ossl_cipher_generic_get_ctx_params(void *vctx, OSSL_PARAM params[])
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     struct ossl_cipher_get_ctx_param_list_st p;
 
-    p = cipher_generic_get_ctx_params_decoder(params);
+    if (ctx == NULL || !cipher_generic_get_ctx_params_decoder(params, &p))
+        return 0;
     return ossl_cipher_common_get_ctx_params(ctx, &p);
 }
 
@@ -710,7 +710,8 @@ int ossl_cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (ossl_param_is_empty(params))
         return 1;
 
-    p = cipher_generic_set_ctx_params_decoder(params);
+    if (ctx == NULL || !cipher_generic_set_ctx_params_decoder(params, &p))
+        return 0;
     return ossl_cipher_common_set_ctx_params(ctx, &p);
 }
 

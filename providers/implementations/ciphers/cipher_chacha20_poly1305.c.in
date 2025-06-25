@@ -113,7 +113,8 @@ static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
     PROV_CHACHA20_POLY1305_CTX *ctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
     struct chacha20_poly1305_get_ctx_params_st p;
 
-    p = chacha20_poly1305_get_ctx_params_decoder(params);
+    if (ctx == NULL || !chacha20_poly1305_get_ctx_params_decoder(params, &p))
+        return 0;
 
     if (p.ivlen != NULL
             && !OSSL_PARAM_set_size_t(p.ivlen, CHACHA20_POLY1305_IVLEN)) {
@@ -187,10 +188,8 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
         (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->base.hw;
     struct chacha20_poly1305_set_ctx_params_st p;
 
-    if (ossl_param_is_empty(params))
-        return 1;
-
-    p = chacha20_poly1305_set_ctx_params_decoder(params);
+    if (ctx == NULL || !chacha20_poly1305_set_ctx_params_decoder(params, &p))
+        return 0;
 
 
     if (p.keylen != NULL) {
