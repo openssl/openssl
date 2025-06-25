@@ -463,12 +463,7 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
     /* ok, lets connect */
     i = SSL_connect(serverCon);
     if (i <= 0) {
-        BIO_printf(bio_err, "ERROR\n");
-        if (verify_args.error != X509_V_OK)
-            BIO_printf(bio_err, "verify error:%s\n",
-                       X509_verify_cert_error_string(verify_args.error));
-        else
-            ERR_print_errors(bio_err);
+        ERR_print_errors(bio_err);
         OSSL_sleep(1000);
         if (scon == NULL)
             SSL_free(serverCon);
