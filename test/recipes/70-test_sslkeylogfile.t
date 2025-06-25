@@ -19,7 +19,12 @@ setup($test_name);
 plan skip_all => "$test_name requires SSLKEYLOGFILE support"
     if disabled("sslkeylog");
 
-plan tests => 1;
+my $tests = 1;
+if ($^O =~ /^(linux)$/) {
+    $tests = 2;
+}
+
+plan tests => $tests;
 
 
 my $shlib_wrap   = srctop_file("util", "wrap.pl");
@@ -75,3 +80,9 @@ kill 'HUP', $s_server_pid;
 # Test 1: Compare the output of -keylogfile  and SSLKEYLOGFILE, and make sure they match
 # Note, the former adds a comment, that the latter does not, so ignore comments with -I in diff
 ok(run(cmd(["diff", "-I" ,"^#.*\$", $sslkeylogfile, $trace_file])));
+
+# Test 2, linux-specific: the keylog file should have permission 0600
+if ($^O =~ /^(linux)$/) {
+    my $mode = sprintf("%04o", (stat($sslkeylogfile))[2] & 07777);
+    ok($mode eq "0600");
+}
