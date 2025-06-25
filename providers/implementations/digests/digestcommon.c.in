@@ -28,7 +28,8 @@ int ossl_digest_default_get_params(OSSL_PARAM params[], size_t blksz,
 {
     struct digest_default_get_params_st p;
 
-    p = digest_default_get_params_decoder(params);
+    if (!digest_default_get_params_decoder(params, &p))
+        return 0;
 
     if (p.bsize != NULL && !OSSL_PARAM_set_size_t(p.bsize, blksz)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
