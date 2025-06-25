@@ -10,11 +10,12 @@
 /* We need to use the OPENSSL_fork_*() deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#if !defined(__GNUC__) || !defined(__ATOMIC_ACQ_REL) || defined(BROKEN_CLANG_ATOMICS)
+#if !defined(__GNUC__) || !defined(__ATOMIC_ACQ_REL) || \
+    defined(BROKEN_CLANG_ATOMICS) || defined(OPENSSL_NO_STDIO)
 /*
  * we only enable REPORT_RWLOCK_CONTENTION on clang/gcc when we have
  * atomics available.  We do this because we need to use an atomic to track
- * when we can close the log file.  we could use the CRYPTO_atomic_ api
+ * when we can close the log file.  We could use the CRYPTO_atomic_ api
  * but that requires lock creation which gets us into a bad recursive loop
  * when we try to initalize the file pointer
  */
@@ -602,7 +603,7 @@ void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock)
  * library initalization, and creating a bio too early, creates a recursive set
  * of stack calls that leads us to call CRYPTO_thread_run_once while currently
  * executing the init routine for various run_once functions, which leads to
- * deadlock.  Avoid that by just using a FILE pointer.  Its gross, but here we
+ * deadlock.  Avoid that by just using a FILE pointer.  It's gross, but here we
  * are
  */
 static FILE *contention_fp = NULL;
@@ -611,9 +612,9 @@ static int rwlock_count = 0;
 static void init_contention_fp_once(void)
 {
 #  ifdef FIPS_MODULE
-    contention_fp = fopen("bio-lock-contention-log-fips.txt", "w");
+    contention_fp = fopen("lock-contention-log-fips.txt", "w");
 #  else
-    contention_fp = fopen("bio-lock-contention-log.txt", "w");
+    contention_fp = fopen("lock-contention-log.txt", "w");
 #  endif
     return;
 }
@@ -682,10 +683,11 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
         OSSL_TIME start, end;
 
         start = ossl_time_now();
-        pthread_rwlock_rdlock(lock);
+        if (!ossl_assert(pthread_rwlock_rdlock(lock) == 0))
+            return 0;
+        end = ossl_time_now();
         if (contention_fp == NULL)
             return 1;
-        end = ossl_time_now();
         nptrs = backtrace(buffer, BT_BUF_SIZE);
         strings = backtrace_symbols(buffer, nptrs);
         fprintf(contention_fp, "lock blocked on READ for %zu usec\n",
@@ -722,7 +724,8 @@ __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
         OSSL_TIME start, end;
 
         start = ossl_time_now();
-        pthread_rwlock_wrlock(lock);
+        if (!ossl_assert(pthread_rwlock_wrlock(lock) == 0))
+            return 0;
         end = ossl_time_now();
         if (contention_fp == NULL)
             return 1;
