@@ -372,8 +372,10 @@ int setup_tests(void)
     if (!TEST_ptr(bio = BIO_new_file(key_file, "r")))
         return 0;
     if (!TEST_ptr(PEM_read_bio_PrivateKey(bio, &original_pkey,
-                                          callback_original_pw, NULL)))
+                                          callback_original_pw, NULL))) {
+        BIO_free(bio);
         return 0;
+    }
     BIO_free(bio);
 
     /* add all tests */
