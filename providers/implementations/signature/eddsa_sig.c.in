@@ -801,10 +801,8 @@ static int eddsa_get_ctx_params(void *vpeddsactx, OSSL_PARAM *params)
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     struct eddsa_get_ctx_params_st p;
 
-    if (peddsactx == NULL)
+    if (peddsactx == NULL || !eddsa_get_ctx_params_decoder(params, &p))
         return 0;
-
-    p = eddsa_get_ctx_params_decoder(params);
 
     if (p.id != NULL
         && !OSSL_PARAM_set_octet_string(p.id,
@@ -899,12 +897,8 @@ static int eddsa_set_ctx_params(void *vpeddsactx, const OSSL_PARAM params[])
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     struct eddsa_set_ctx_params_st p;
 
-    if (peddsactx == NULL)
+    if (peddsactx == NULL || !eddsa_set_ctx_params_decoder(params, &p))
         return 0;
-    if (ossl_param_is_empty(params))
-        return 1;
-
-    p = eddsa_set_ctx_params_decoder(params);
     return eddsa_set_ctx_params_internal(peddsactx, &p);
 }
 
@@ -926,12 +920,8 @@ static int eddsa_set_variant_ctx_params(void *vpeddsactx,
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     struct eddsa_set_ctx_params_st p;
 
-    if (peddsactx == NULL)
+    if (peddsactx == NULL || !eddsa_set_variant_ctx_params_decoder(params, &p))
         return 0;
-    if (ossl_param_is_empty(params))
-        return 1;
-
-    p = eddsa_set_variant_ctx_params_decoder(params);
     return eddsa_set_ctx_params_internal(peddsactx, &p);
 }
 
