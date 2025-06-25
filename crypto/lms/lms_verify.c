@@ -148,7 +148,12 @@ int ossl_lms_sig_verify(const LMS_SIG *lms_sig, const LMS_KEY *pub,
     U32STR(qbuf, node_num);
     U16STR(d_leaf, OSSL_LMS_D_LEAF);
     ctxI = ctxIq;
-    /* Tc = H(I || u32str(node_num) || u16str(D_LEAF) || Kc) */
+    /*
+     * Tc = H(I || u32str(node_num) || u16str(D_LEAF) || Kc)
+     *
+     * ctx is left initialised with the md from ossl_lm_ots_compute_pubkey,
+     * so there is no need to reinitialise it here.
+     */
     if (!EVP_DigestInit_ex2(ctx, NULL, NULL)
             || !EVP_DigestUpdate(ctx, pub->Id, LMS_SIZE_I)
             || !EVP_MD_CTX_copy_ex(ctxI, ctx)

@@ -112,9 +112,9 @@ int ossl_lms_key_valid(const LMS_KEY *key, int selection)
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        if (key->pub.encoded == NULL || key->pub.encodedlen == 0)
-            return 0;
-    /* There is no private key currently */
+        return key->pub.encoded != NULL && key->pub.encodedlen != 0;
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        return 0; /* a private key that doesn't exist can't be valid */
     return 1;
 }
 
@@ -127,10 +127,10 @@ int ossl_lms_key_valid(const LMS_KEY *key, int selection)
  */
 int ossl_lms_key_has(const LMS_KEY *key, int selection)
 {
-    int ok = 1;
-
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = (key != NULL && key->pub.K != NULL);
+        return (key != NULL) && (key->pub.K != NULL);
     /* There is no private key currently */
-    return ok;
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        return 0;
+    return 1;
 }

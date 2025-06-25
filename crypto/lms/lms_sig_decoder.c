@@ -46,15 +46,17 @@ LMS_SIG *ossl_lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub)
     lsig->sig.params = sig_params;
     lsig->params = lparams;
 
-    if (!PACKET_get_bytes_shallow(pkt, &lsig->sig.C, sig_params->n)
-            || !PACKET_get_bytes_shallow(pkt, &lsig->sig.y,
-                                         sig_params->p * sig_params->n)
+    if (!PACKET_get_bytes(pkt, (const unsigned char **)&lsig->sig.C,
+                          sig_params->n)
+            || !PACKET_get_bytes(pkt, (const unsigned char **)&lsig->sig.y,
+                                 sig_params->p * sig_params->n)
             || !PACKET_get_4_len(pkt, &sig_lms_type)
             || (lparams->lms_type != sig_lms_type)
             || HASH_NOT_MATCHED(lparams, sig_params)
             || lsig->q >= (uint32_t)(1 << lparams->h)
-            || !PACKET_get_bytes_shallow(pkt, &lsig->paths,
-                                         lparams->h * lparams->n))
+            || !PACKET_get_bytes(pkt, (const unsigned char **)&lsig->paths,
+                                 lparams->h * lparams->n)
+            || PACKET_remaining(pkt) > 0)
         goto err;
     return lsig;
 err:

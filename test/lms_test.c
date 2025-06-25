@@ -271,6 +271,7 @@ static int lms_digest_verify_fail_test(void)
         return 0;
     if (!TEST_ptr(vctx = EVP_MD_CTX_new()))
         goto err;
+    /* Only one shot mode is supported, streaming fails to initialise */
     if (!TEST_int_eq(EVP_DigestVerifyInit_ex(vctx, NULL, NULL, libctx, NULL,
                                              pub, NULL), 0))
         goto err;
@@ -291,6 +292,7 @@ static int lms_verify_fail_test(void)
     if (!TEST_ptr(pkey = lms_pubkey_from_data(td->pub, td->publen))
             || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL)))
         goto end;
+    /* Only one shot mode is supported, streaming fails to initialise */
     if (!TEST_int_eq(EVP_PKEY_verify_init(ctx), -2))
         goto end;
     ret = 1;
@@ -339,22 +341,20 @@ static int lms_verify_bad_sig_test(void)
 
         if (!TEST_int_eq(EVP_PKEY_verify(ctx, sig_data, td->siglen,
                                          td->msg, td->msglen), 0)) {
-            ret = -1;
+            TEST_note("Incorrectly passed when %dth byte of signature"
+                      " was corrupted", i);
             goto end;
         }
     }
 
     ret = 1;
 end:
-    if (ret == -1)
-        TEST_note("Incorrectly passed when %dth byte of signature"
-                  " was corrupted", i);
     EVP_SIGNATURE_free(sig);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     OPENSSL_free(sig_data);
 
-    return ret == 1;
+    return ret;
 }
 
 /*
@@ -393,21 +393,19 @@ static int lms_verify_bad_sig_len_test(void)
             goto end;
         if (!TEST_int_eq(EVP_PKEY_verify(ctx, sigdata, siglen,
                                          td->msg, td->msglen), 0)) {
-            ret = -1;
+            TEST_note("Incorrectly accepted signature key of length"
+                      " %u (expected %u)", (unsigned)siglen, (unsigned)td->siglen);
             goto end;
         }
     }
 
     ret = 1;
 end:
-    if (ret == -1)
-        TEST_note("Incorrectly accepted signature key of length"
-                  " %u (expected %u)", (unsigned)siglen, (unsigned)td->siglen);
     EVP_SIGNATURE_free(sig);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
 
-    return ret == 1;
+    return ret;
 }
 
 static int lms_verify_bad_pub_sig_test(void)
@@ -435,7 +433,7 @@ static int lms_verify_bad_pub_sig_test(void)
             ctx = NULL;
             pub[i - step] ^= 1;
         }
-        pub[3] ^= 1;
+        pub[i] ^= 1;
         /* Corrupting the public key may cause the key load to fail */
         pkey = lms_pubkey_from_data(pub, td->publen);
         if (pkey == NULL)
@@ -447,22 +445,20 @@ static int lms_verify_bad_pub_sig_test(void)
         /* We expect the verify to fail */
         if (!TEST_int_eq(EVP_PKEY_verify(ctx, td->sig, td->siglen,
                                          td->msg, td->msglen), 0)) {
-            ret = -1;
+            TEST_note("Incorrectly passed when byte %d of the public key"
+                      " was corrupted", i);
             goto end;
         }
     }
 
     ret = 1;
 end:
-    if (ret == -1)
-        TEST_note("Incorrectly passed when byte %d of the public key"
-                  " was corrupted", i);
     EVP_SIGNATURE_free(sig);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     OPENSSL_free(pub);
 
-    return ret == 1;
+    return ret;
 }
 
 int setup_tests(void)

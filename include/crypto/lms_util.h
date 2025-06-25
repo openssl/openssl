@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* @brief Internal LMS internal helper functions */
+/* @brief Internal LMS helper functions */
 
 #include "internal/packet.h"
 #include <openssl/params.h>
@@ -34,48 +34,6 @@
 #define U16STR(out, in)                             \
     (out)[0] = (unsigned char)(((in) >> 8) & 0xff); \
     (out)[1] = (unsigned char)((in) & 0xff)
-
-/**
- * @brief Helper function to return a ptr to a pkt buffer and move forward.
- * Used when decoding byte array XDR data.
- *
- * @param pkt A PACKET object that needs to have at least len bytes remaining.
- * @param out The returned ptr to the current position in the pkt buffer.
- * @param len The amount that we will move forward in the pkt buffer.
- * @returns 1 if there is enough bytes remaining to be able to skip forward,
- *          or 0 otherwise.
- */
-static ossl_unused ossl_inline
-int PACKET_get_bytes_shallow(PACKET *pkt, unsigned char **out, size_t len)
-{
-    const unsigned char **data = (const unsigned char **)out;
-
-    if (!PACKET_peek_bytes(pkt, data, len))
-        return 0;
-
-    packet_forward(pkt, len);
-
-    return 1;
-}
-
-/**
- * @brief Get 4 bytes in network order from |pkt| and store the value in |*data|
- * Similar to PACKET_get_net_4() except the data is uint32_t
- *
- * @param pkt Contains a buffer to read from
- * @param data The object to write the data to.
- * @returns 1 on success, or 0 otherwise.
- */
-static ossl_unused ossl_inline
-int PACKET_get_4_len(PACKET *pkt, uint32_t *data)
-{
-    size_t i = 0;
-    int ret = PACKET_get_net_4_len(pkt, &i);
-
-    if (ret)
-        *data = (uint32_t)i;
-    return ret;
-}
 
 /*
  * See RFC 8554 Section 3.1.3: Strings of w-bit Elements
