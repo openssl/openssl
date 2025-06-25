@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 
     dout = BIO_new_file("smencr.out", "wb");
 
-    if (!in)
+    if (in == NULL || dout == NULL)
         goto err;
 
     /* encrypt content */
