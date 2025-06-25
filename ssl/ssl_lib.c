@@ -7291,6 +7291,24 @@ uint32_t SSL_get_recv_max_early_data(const SSL *s)
     return sc->recv_max_early_data;
 }
 
+static unsigned int get_proto_record_hard_limit(int version) {
+    if (version <= TLS1_2_VERSION || version == DTLS1_2_VERSION) {
+        return SSL3_RT_MAX_PLAIN_LENGTH;
+    } else if (version == TLS1_3_VERSION) {
+        return SSL3_RT_MAX_PLAIN_LENGTH + 1;
+    }
+
+    return 0;
+}
+
+__owur unsigned int ssl_get_proto_record_hard_limit(const SSL_CONNECTION *sc) {
+    if (sc->session) {
+        return get_proto_record_hard_limit(sc->session->ssl_version);
+    } else {
+        return get_proto_record_hard_limit(sc->version);
+    }
+}
+
 __owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc)
 {
     /* Return any active Record Size Limit extension */

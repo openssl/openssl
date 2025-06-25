@@ -1771,25 +1771,50 @@ static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
 
 static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
                                    int sent) {
+    unsigned int proto_record_hard_limit;
+
     if (s->session == NULL)
         return 1;
 
-    if (s->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED) {
-        if (s->version <= TLS1_2_VERSION || s->version == DTLS1_2_VERSION) {
-            s->session->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH;
-        } else {
-            /* The additional byte is for the content type in TLS 1.3. */
-            s->session->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH + 1;
-        }
+    proto_record_hard_limit = ssl_get_proto_record_hard_limit(s);
+    if (proto_record_hard_limit == 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
 
-    if (USE_RECORD_SIZE_LIMIT_EXT(s->session)) {
+    /*
+     * Only happens server-side. The final() function is called before the
+     * construct() one. Default value should be set here.
+     * This is not ideal, but I have not come up with a better solution with
+     * my current knowledge of the codebase.
+     */
+    if (s->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED
+        && IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.peer_record_size_limit)) {
+        s->session->ext.record_size_limit = proto_record_hard_limit;
+    }
+
+    /*
+     * According to RFC 8449:
+     *
+     * Even if a larger record size limit is provided by a peer, an endpoint
+     * MUST NOT send records larger than the protocol-defined limit, unless
+     * explicitly allowed by a future TLS version or extension.
+     */
+    if (s->session->ext.peer_record_size_limit > proto_record_hard_limit) {
+        s->session->ext.peer_record_size_limit = proto_record_hard_limit;
+    }
+
+    /*
+     * Server-side, Record Size limit extension can be disabled, but the client
+     * might have sent a Record Size Limit that we must respect.
+     */
+    if (IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.record_size_limit))
         s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
-            s->session->ext.record_size_limit);
+                                         s->session->ext.record_size_limit);
 
+    if (IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.peer_record_size_limit))
         s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
-            s->session->ext.peer_record_size_limit);
-    }
+                                         s->session->ext.peer_record_size_limit);
 
     return 1;
 }

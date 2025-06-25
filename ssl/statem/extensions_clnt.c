@@ -93,14 +93,6 @@ EXT_RETURN tls_construct_ctos_maxfragmentlen(SSL_CONNECTION *s, WPACKET *pkt,
     if (s->ext.max_fragment_len_mode == TLSEXT_max_fragment_length_DISABLED)
         return EXT_RETURN_NOT_SENT;
 
-    /*
-     * Avoid sending both extensions. Since Record Size Limit deprecates the
-     * Max Fragment Length extension, it takes precedence over it.
-     * A server respecting the RFC will discard Max Fragment Length extension.
-     */
-    if (s->ext.record_size_limit != TLSEXT_record_size_limit_DISABLED)
-        return EXT_RETURN_NOT_SENT;
-
     /* Add Max Fragment Length extension if client enabled it. */
     /*-
      * 4 bytes for this extension type and extension length
@@ -121,37 +113,49 @@ EXT_RETURN tls_construct_ctos_maxfragmentlen(SSL_CONNECTION *s, WPACKET *pkt,
 EXT_RETURN tls_construct_ctos_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
                                                 unsigned int context, X509 *x,
                                                 size_t chainidx) {
+    /*
+     * According to RFC 8449:
+     *
+     * "Endpoints SHOULD advertise the "record_size_limit" extension, even if
+     * they have no need to limit the size of records."
+     *
+     * The extension is by default sent, unless disabled by the user.
+     * If a Max Fragment Length extension has been configured, then send both extensions with the
+     * same value.
+     */
+
     if (s->ext.record_size_limit == TLSEXT_record_size_limit_DISABLED) {
         return EXT_RETURN_NOT_SENT;
     }
 
-    /*
-     * According to RFC 8449:
-     *
-     * Endpoints SHOULD advertise the "record_size_limit" extension, even if
-     * they have no need to limit the size of records.
-     *
-     * Thus, if the user has not disabled the extension through the API,
-     * we send it as a default behavior.
-     */
-    if (s->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED) {
-        if (s->version <= TLS1_2_VERSION || s->version == DTLS1_2_VERSION) {
-            s->session->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH;
-        } else {
-            s->session->ext.record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH + 1;
+    if (IS_MAX_FRAGMENT_LENGTH_EXT_VALID(s->ext.max_fragment_len_mode)) {
+        s->ext.record_size_limit =
+                GET_MAX_FRAGMENT_LENGTH_VALUE(s->ext.max_fragment_len_mode);
+    } else if (s->ext.record_size_limit ==
+               TLSEXT_record_size_limit_UNSPECIFIED) {
+        s->ext.record_size_limit = ssl_get_proto_record_hard_limit(s);
+        if (s->ext.record_size_limit == 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
         }
     } else {
-        s->session->ext.record_size_limit = s->ext.record_size_limit;
+        s->ext.record_size_limit = s->ext.record_size_limit;
     }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_record_size_limit)
             /* Sub-packet for Record Size Limit extension (2 bytes) */
             || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_put_bytes_u16(pkt, s->session->ext.record_size_limit)
+            || !WPACKET_put_bytes_u16(pkt, s->ext.record_size_limit)
             || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
-            }
+    }
+
+    /*
+     * Bind the record size limit to the current session.
+     * No need to wait to receive the server response.
+     */
+    s->session->ext.record_size_limit = s->ext.record_size_limit;
 
     return EXT_RETURN_SENT;
 }
@@ -1438,22 +1442,37 @@ int tls_parse_stoc_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
 int tls_parse_stoc_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
                                   unsigned int context,
                                   X509 *x, size_t chainidx) {
-    unsigned int peer_limit;
+    unsigned int peer_record_size_limit;
 
     /*
-     * If a client receives both extensions, this is a fatal error.
+     * According to RFC 8449:
+     *
+     * A client MUST treat receipt of both "max_fragment_length" and
+     * "record_size_limit" as a fatal error, and it SHOULD generate
+     * an "illegal_parameter" alert.
      */
     if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
         return 0;
     }
 
-    if (PACKET_remaining(pkt) != 2 || !PACKET_get_net_2(pkt, &peer_limit)) {
+    if (PACKET_remaining(pkt) != 2 || !PACKET_get_net_2(pkt, &peer_record_size_limit)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
 
-    s->session->ext.peer_record_size_limit = peer_limit;
+    /*
+     * According to RFC 8449:
+     *
+     * An endpoint MUST treat receipt of a smaller value as a fatal error and
+     * generate an "illegal_parameter" alert.
+     */
+    if (!IS_RECORD_SIZE_LIMIT_VALID(peer_record_size_limit)) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    s->session->ext.peer_record_size_limit = peer_record_size_limit;
 
     return 1;
 }

@@ -4790,22 +4790,6 @@ int SSL_CTX_set_tlsext_max_fragment_length(SSL_CTX *ctx, uint8_t mode)
     return 1;
 }
 
-int SSL_CTX_set_tlsext_record_size_limit(SSL_CTX *ctx, uint16_t limit) {
-    if (limit == 0) {
-        ctx->ext.record_size_limit = TLSEXT_record_size_limit_DISABLED;
-        return 1;
-    }
-
-    if (limit < TLSEXT_record_size_limit_min) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_EXT_INVALID_RECORD_SIZE_LIMIT);
-        return 0;
-    }
-
-    ctx->ext.record_size_limit = limit;
-
-    return 1;
-}
-
 int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
@@ -4821,6 +4805,48 @@ int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode)
     }
 
     sc->ext.max_fragment_len_mode = mode;
+    return 1;
+}
+
+int SSL_CTX_set_tlsext_record_size_limit(SSL_CTX *ctx, uint16_t limit) {
+    if (limit == 0) {
+        ctx->ext.record_size_limit = TLSEXT_record_size_limit_DISABLED;
+        return 1;
+    }
+
+    if (!IS_RECORD_SIZE_LIMIT_VALID(limit)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_EXT_INVALID_RECORD_SIZE_LIMIT);
+        return 0;
+    }
+
+    ctx->ext.record_size_limit = limit;
+
+    return 1;
+}
+
+int SSL_set_tlsext_record_size_limit(SSL *ssl, uint16_t limit) {
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (sc == NULL) {
+        return 0;
+    }
+
+    if (limit == 0) {
+        sc->ext.record_size_limit = TLSEXT_record_size_limit_DISABLED;
+        return 1;
+    }
+
+    if (IS_QUIC(ssl)) {
+        return 0;
+    }
+
+    if (!IS_RECORD_SIZE_LIMIT_VALID(limit)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_EXT_INVALID_RECORD_SIZE_LIMIT);
+        return 0;
+    }
+
+    sc->ext.record_size_limit = limit;
+
     return 1;
 }
 

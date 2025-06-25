@@ -295,12 +295,17 @@
      ((value) <= TLSEXT_max_fragment_length_4096))
 # define USE_MAX_FRAGMENT_LENGTH_EXT(session) \
     IS_MAX_FRAGMENT_LENGTH_EXT_VALID(session->ext.max_fragment_len_mode)
-# define GET_MAX_FRAGMENT_LENGTH(session) \
-    (512U << (session->ext.max_fragment_len_mode - 1))
+# define GET_MAX_FRAGMENT_LENGTH_VALUE(max_fragment_len_mode) \
+    (512U << (max_fragment_len_mode - 1))
+
+# define GET_MAX_FRAGMENT_LENGTH(session) GET_MAX_FRAGMENT_LENGTH_VALUE(session->ext.max_fragment_len_mode)
+
+# define IS_RECORD_SIZE_LIMIT_VALID(value) \
+    (value >= TLSEXT_record_size_limit_min)
 
 # define USE_RECORD_SIZE_LIMIT_EXT(session) \
-    (session->ext.record_size_limit >= TLSEXT_record_size_limit_min && \
-     session->ext.peer_record_size_limit >= TLSEXT_record_size_limit_min)
+    (IS_RECORD_SIZE_LIMIT_VALID(session->ext.record_size_limit) && \
+     IS_RECORD_SIZE_LIMIT_VALID(session->ext.peer_record_size_limit))
 
 # define SSL_READ_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_READ)
 # define SSL_WRITE_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)
@@ -2656,6 +2661,8 @@ __owur int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
                                    uint16_t **ksext, size_t *ksextlen,
                                    size_t **tplext, size_t *tplextlen,
                                    void *key);
+
+__owur unsigned int ssl_get_proto_record_hard_limit(const SSL_CONNECTION *sc);
 __owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc);
 __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc);
 

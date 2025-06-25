@@ -219,10 +219,10 @@ int tls_parse_ctos_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
 int tls_parse_ctos_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
                                   unsigned int context,
                                   X509 *x, size_t chainidx) {
-    unsigned int peer_limit;
+    unsigned int peer_record_size_limit;
 
     if (PACKET_remaining(pkt) != 2
-            || !PACKET_get_net_2(pkt, &peer_limit)) {
+            || !PACKET_get_net_2(pkt, &peer_record_size_limit)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
             }
@@ -233,30 +233,24 @@ int tls_parse_ctos_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
      * An endpoint MUST treat receipt of a smaller value as a fatal error and
      * generate an "illegal_parameter" alert.
      */
-    if (peer_limit < TLSEXT_record_size_limit_min) {
+    if (!IS_RECORD_SIZE_LIMIT_VALID(peer_record_size_limit)) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_R_SSL3_EXT_INVALID_RECORD_SIZE_LIMIT);
         return 0;
     }
 
-    /*
-     * A server must not send any alert if the peer record size limit exceeds the
-     * protocol-defined record size, but must not send records larger.
-     * TODO
-     */
-
-    /*
-     * A server that supports both extensions must ignore if the Max Fragment
-     * Length extension is also present.
-     * If we do send both extensions, a well-behaved client should generate
-     * an illegal_parameter fatal alert.
+    /* According to RFC 8449:
+     *
+     * A server that supports the "record_size_limit" extension MUST ignore a
+     * "max_fragment_length" that appears in a ClientHello if both extensions
+     * appear.
      */
      if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
         s->session->ext.max_fragment_len_mode =
             TLSEXT_max_fragment_length_DISABLED;
      }
 
-    s->session->ext.peer_record_size_limit = (uint16_t)peer_limit;
+    s->session->ext.peer_record_size_limit = (uint16_t)peer_record_size_limit;
 
     return 1;
 }
