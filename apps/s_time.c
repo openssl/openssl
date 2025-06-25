@@ -132,15 +132,9 @@ int s_time_main(int argc, char **argv)
     int min_version = 0, max_version = 0, ver, buf_len, fd;
     size_t buf_size;
     X509_VERIFY_PARAM *vpm = NULL;
-    int verify = SSL_VERIFY_NONE, vpmtouched = 0;
+    int verify = SSL_VERIFY_NONE;
 
     meth = TLS_client_method();
-
-    vpm = X509_VERIFY_PARAM_new();
-    if (vpm == NULL) {
-        BIO_printf(bio_err, "%s: out of memory\n", opt_getprog());
-        goto end;
-    }
 
     prog = opt_init(argc, argv, s_time_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -165,10 +159,10 @@ int s_time_main(int argc, char **argv)
             break;
         case OPT_VERIFY:
             verify_args.depth = opt_int_arg();
-            if (verify_args.depth >= 0) {
+            if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
+                goto end;
+            if (verify_args.depth >= 0)
                 X509_VERIFY_PARAM_set_depth(vpm, verify_args.depth);
-                vpmtouched++;
-            }
             BIO_printf(bio_err, "%s: verify depth is %d\n",
                        prog, verify_args.depth);
             break;
@@ -263,7 +257,7 @@ int s_time_main(int argc, char **argv)
 
     verify_args.quiet = 1;
     SSL_CTX_set_verify(ctx, verify, verify_callback);
-    if (vpmtouched && !SSL_CTX_set1_param(ctx, vpm)) {
+    if (vpm != NULL && !SSL_CTX_set1_param(ctx, vpm)) {
         BIO_printf(bio_err, "Error setting verify params\n");
         goto end;
     }
