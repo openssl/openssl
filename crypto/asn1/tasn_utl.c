@@ -161,7 +161,7 @@ void ossl_asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
     }
 }
 
-int ossl_asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
+int ossl_asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, long inlen,
                        const ASN1_ITEM *it)
 {
     ASN1_ENCODING *enc = asn1_get_enc_ptr(pval, it);

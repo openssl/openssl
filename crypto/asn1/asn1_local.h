@@ -69,7 +69,7 @@ void ossl_asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it);
 void ossl_asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
 int ossl_asn1_enc_restore(int *len, unsigned char **out, const ASN1_VALUE **pval,
                           const ASN1_ITEM *it);
-int ossl_asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
+int ossl_asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, long inlen,
                        const ASN1_ITEM *it);
 
 void ossl_asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed);

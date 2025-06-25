@@ -1031,9 +1031,8 @@ static void mime_param_free(MIME_PARAM *param)
  */
 static int mime_bound_check(char *line, int linelen, const char *bound, int blen)
 {
-    if (linelen < 0 || blen < 0) {
+    if (linelen < 0 || blen < 0)
         return 0;
-    }
     /* Quickly eliminate if line length too short */
     if (blen + 2 > linelen)
         return 0;

@@ -467,8 +467,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             }
         }
         /* Save encoding */
-        if (p - *in > INT_MAX
-            || !ossl_asn1_enc_save(pval, *in, (int)(p - *in), it))
+        if (!ossl_asn1_enc_save(pval, *in, (long)(p - *in), it))
             goto auxerr;
         if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
             goto auxerr;
