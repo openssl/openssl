@@ -649,7 +649,7 @@ sub generate_decoder_from_trie {
     my $trieref = shift;
     my $identmap = shift;
     my $idt = "    ";
-    my $indent0 = $idt x ($n + 2);
+    my $indent0 = $idt x ($n + 3);
     my $indent1 = $indent0 . $idt;
     my $strcmp = $case_sensitive ? 'strcmp' : 'strcasecmp';
     my $field;
@@ -658,13 +658,13 @@ sub generate_decoder_from_trie {
         my $suf = $trieref->{'suffix'};
 
         $field = $identmap->{$trieref->{'name'}};
-        printf "%sif (ossl_likely(r.%s == NULL && $strcmp(\"$suf\", s + $n) == 0", $indent0, $field;
+        printf "%sif (ossl_likely(r->%s == NULL && $strcmp(\"$suf\", s + $n) == 0", $indent0, $field;
         if (not $case_sensitive) {
             $suf =~ tr/_/-/;
             print " || $strcmp(\"$suf\", s + $n) == 0"
                 if ($suf ne $trieref->{'suffix'});
         }
-        printf "))\n%sr.%s = (OSSL_PARAM *)p;\n",
+        printf "))\n%sr->%s = (OSSL_PARAM *)p;\n",
                $indent1, $field;
         return;
     }
@@ -676,7 +676,7 @@ sub generate_decoder_from_trie {
             $field = $identmap->{$trieref->{'val'}};
             printf "%sbreak;\n", $indent1;
             printf "%scase '\\0':\n", $indent0;
-            printf "%sr.%s = ossl_likely(r.%s == NULL) ? (OSSL_PARAM *)p : r.%s;\n",
+            printf "%sr->%s = ossl_likely(r->%s == NULL) ? (OSSL_PARAM *)p : r->%s;\n",
                    $indent1, $field, $field, $field;
         } else {
             printf "%sbreak;\n", $indent1;
@@ -792,15 +792,15 @@ sub output_param_decoder {
     locate_long_endings(\%t);
 
     printf "#ifndef %s_decoder\n", $decoder_name_base;
-    printf "static struct %s_st\n%s_decoder(const OSSL_PARAM params[]) {\n",
-        $decoder_name_base, $decoder_name_base;
-    printf "    struct %s_st r;\n", $decoder_name_base;
-    print "    const OSSL_PARAM *p;\n";
+    printf "static int %s_decoder\n", $decoder_name_base;
+    printf "    (const OSSL_PARAM *p, struct %s_st *r)\n", $decoder_name_base;
+    print "{\n";
     print "    const char *s;\n\n";
-    print "    memset(&r, 0, sizeof(r));\n";
-    print "    for (p = params; (s = p->key) != NULL; p++)\n";
+    print "    memset(r, 0, sizeof(*r));\n";
+    print "    if (p != NULL)\n";
+    print "        for (; (s = p->key) != NULL; p++)\n";
     generate_decoder_from_trie(0, \%t, \%prms);
-    print "    return r;\n";
+    print "    return 1;\n";
     print "}\n#endif\n";
     print "/* End of machine generated */";
 }
