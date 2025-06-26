@@ -336,13 +336,25 @@ static int lms_message_signing_fail_test(void)
     return ret;
 }
 
-static int lms_keygen_fail_test(void)
+static int lms_paramgen_fail_test(void)
 {
     int ret;
     EVP_PKEY_CTX *ctx = NULL;
 
     ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "LMS", NULL))
         && TEST_int_eq(EVP_PKEY_paramgen_init(ctx), -2);
+
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
+static int lms_keygen_fail_test(void)
+{
+    int ret;
+    EVP_PKEY_CTX *ctx = NULL;
+
+    ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "LMS", NULL))
+        && TEST_int_eq(EVP_PKEY_keygen_init(ctx), -2);
 
     EVP_PKEY_CTX_free(ctx);
     return ret;
@@ -573,6 +585,7 @@ int setup_tests(void)
     ADD_TEST(lms_digest_verify_fail_test);
     ADD_TEST(lms_digest_signing_fail_test);
     ADD_TEST(lms_message_signing_fail_test);
+    ADD_TEST(lms_paramgen_fail_test);
     ADD_TEST(lms_keygen_fail_test);
     ADD_TEST(lms_verify_bad_sig_test);
     ADD_TEST(lms_verify_bad_sig_len_test);
