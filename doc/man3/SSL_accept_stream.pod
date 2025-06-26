@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_accept_stream, SSL_get_accept_stream_queue_len, SSL_ACCEPT_STREAM_NO_BLOCK -
+SSL_accept_stream, SSL_get_accept_stream_queue_len, SSL_ACCEPT_STREAM_NO_BLOCK,
+SSL_ACCEPT_STREAM_UNI, SSL_ACCEPT_STREAM_BIDI -
 accept an incoming QUIC stream from a QUIC peer
 
 =head1 SYNOPSIS
@@ -10,6 +11,8 @@ accept an incoming QUIC stream from a QUIC peer
  #include <openssl/ssl.h>
 
  #define SSL_ACCEPT_STREAM_NO_BLOCK
+ #define SSL_ACCEPT_STREAM_UNI
+ #define SSL_ACCEPT_STREAM_BIDI
 
  SSL *SSL_accept_stream(SSL *ssl, uint64_t flags);
 
@@ -33,6 +36,13 @@ This function will block if the QUIC connection SSL object is configured in
 blocking mode (see L<SSL_set_blocking_mode(3)>), but this may be bypassed by
 passing the flag B<SSL_ACCEPT_STREAM_NO_BLOCK> in I<flags>. If this flag is set,
 this function never blocks.
+
+By default, this function will return the first incoming stream, whether it is
+unidirectional or bidirectional. Passing the flag B<SSL_ACCEPT_STREAM_UNI> or
+B<SSL_ACCEPT_STREAM_BIDI> will return the first stream that is unidirectional or
+bidirectional, respectively. If these flags are both set, either type can be
+returned. A NULL return value may mean that there are still streams that can
+be dequeued.
 
 Calling SSL_accept_stream() if there is no default stream already present
 inhibits the future creation of a default stream. See L<openssl-quic(7)>.
