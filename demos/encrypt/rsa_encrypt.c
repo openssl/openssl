@@ -139,7 +139,7 @@ static int do_encrypt(OSSL_LIB_CTX *libctx,
     *out_len = buf_len;
     *out = buf;
     fprintf(stdout, "Encrypted:\n");
-    BIO_dump_indent_fp(stdout, buf, buf_len, 2);
+    BIO_dump_indent_fp(stdout, buf, (int)buf_len, 2);
     fprintf(stdout, "\n");
     ret = 1;
 
@@ -198,7 +198,7 @@ static int do_decrypt(OSSL_LIB_CTX *libctx, const unsigned char *in, size_t in_l
     *out_len = buf_len;
     *out = buf;
     fprintf(stdout, "Decrypted:\n");
-    BIO_dump_indent_fp(stdout, buf, buf_len, 2);
+    BIO_dump_indent_fp(stdout, buf, (int)buf_len, 2);
     fprintf(stdout, "\n");
     ret = 1;
 

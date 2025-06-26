@@ -372,14 +372,14 @@ static int parse_protos(const char *protos, unsigned char **out, size_t *outlen)
     i = prefix + 1;
     while (i <= len) {
         if ((*out)[i] == ',') {
-            if (!TEST_int_gt(i - 1, prefix))
+            if (!TEST_size_t_gt(i - 1, prefix))
                 goto err;
             (*out)[prefix] = (unsigned char)(i - 1 - prefix);
             prefix = i;
         }
         i++;
     }
-    if (!TEST_int_gt(len, prefix))
+    if (!TEST_size_t_gt(len, prefix))
         goto err;
     (*out)[prefix] = (unsigned char)(len - prefix);
     return 1;
@@ -406,7 +406,7 @@ static int client_npn_cb(SSL *s, unsigned char **out, unsigned char *outlen,
 
     ret = SSL_select_next_proto(out, outlen, in, inlen,
                                 ctx_data->npn_protocols,
-                                ctx_data->npn_protocols_len);
+                                (unsigned int)ctx_data->npn_protocols_len);
     /* Accept both OPENSSL_NPN_NEGOTIATED and OPENSSL_NPN_NO_OVERLAP. */
     return TEST_true(ret == OPENSSL_NPN_NEGOTIATED || ret == OPENSSL_NPN_NO_OVERLAP)
         ? SSL_TLSEXT_ERR_OK : SSL_TLSEXT_ERR_ALERT_FATAL;
@@ -417,7 +417,7 @@ static int server_npn_cb(SSL *s, const unsigned char **data,
 {
     CTX_DATA *ctx_data = (CTX_DATA*)(arg);
     *data = ctx_data->npn_protocols;
-    *len = ctx_data->npn_protocols_len;
+    *len = (unsigned int)ctx_data->npn_protocols_len;
     return SSL_TLSEXT_ERR_OK;
 }
 #endif
@@ -445,7 +445,7 @@ static int server_alpn_cb(SSL *s, const unsigned char **out,
      */
     ret = SSL_select_next_proto(&tmp_out, outlen,
                                 ctx_data->alpn_protocols,
-                                ctx_data->alpn_protocols_len, in, inlen);
+                                (unsigned int)ctx_data->alpn_protocols_len, in, inlen);
 
     *out = tmp_out;
     /* Unlike NPN, we don't tolerate a mismatch. */
@@ -498,7 +498,7 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                    CTX_DATA *client_ctx_data)
 {
     unsigned char *ticket_keys;
-    size_t ticket_key_len;
+    long ticket_key_len;
 
     if (!TEST_int_eq(SSL_CTX_set_max_send_fragment(server_ctx,
                                                    test->max_fragment_size), 1))
@@ -640,7 +640,7 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                     &alpn_protos, &alpn_protos_len))
                 /* Reversed return value convention... */
                 || !TEST_int_eq(SSL_CTX_set_alpn_protos(client_ctx, alpn_protos,
-                                                        alpn_protos_len), 0))
+                                                        (unsigned int)alpn_protos_len), 0))
             goto err;
         OPENSSL_free(alpn_protos);
     }
@@ -670,9 +670,9 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
      */
     ticket_key_len = SSL_CTX_set_tlsext_ticket_keys(server_ctx, NULL, 0);
     if (!TEST_ptr(ticket_keys = OPENSSL_zalloc(ticket_key_len))
-            || !TEST_int_eq(SSL_CTX_set_tlsext_ticket_keys(server_ctx,
-                                                           ticket_keys,
-                                                           ticket_key_len), 1)) {
+            || !TEST_long_eq(SSL_CTX_set_tlsext_ticket_keys(server_ctx,
+                                                            ticket_keys,
+                                                            ticket_key_len), 1)) {
         OPENSSL_free(ticket_keys);
         goto err;
     }

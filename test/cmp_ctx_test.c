@@ -136,7 +136,7 @@ static int msg_total_size = 0;
 static int msg_total_size_log_cb(const char *func, const char *file, int line,
                                  OSSL_CMP_severity level, const char *msg)
 {
-    msg_total_size += strlen(msg);
+    msg_total_size += (int)strlen(msg);
     TEST_note("total=%d len=%zu msg='%s'\n", msg_total_size, strlen(msg), msg);
     return 1;
 }
@@ -171,28 +171,28 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
         res = 0;
     } else {
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
-        base_err_msg_size = strlen("INVALID_ARGS");
+        base_err_msg_size = (int)strlen("INVALID_ARGS");
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
-        base_err_msg_size += strlen("NULL_ARGUMENT");
+        base_err_msg_size += (int)strlen("NULL_ARGUMENT");
         expected_size = base_err_msg_size;
         ossl_cmp_add_error_data("data1"); /* should prepend separator ":" */
-        expected_size += strlen(":" "data1");
+        expected_size += (int)strlen(":" "data1");
         ossl_cmp_add_error_data("data2"); /* should prepend separator " : " */
-        expected_size += strlen(" : " "data2");
+        expected_size += (int)strlen(" : " "data2");
         ossl_cmp_add_error_line("new line"); /* should prepend separator "\n" */
-        expected_size += strlen("\n" "new line");
+        expected_size += (int)strlen("\n" "new line");
         OSSL_CMP_CTX_print_errors(ctx);
         if (!TEST_int_eq(msg_total_size, expected_size))
             res = 0;
 
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
-        base_err_msg_size = strlen("INVALID_ARGS") + strlen(":");
+        base_err_msg_size = (int)(strlen("INVALID_ARGS") + strlen(":"));
         expected_size = base_err_msg_size;
         while (expected_size < 4096) { /* force split */
             ERR_add_error_txt(STR_SEP, max_str_literal);
-            expected_size += strlen(STR_SEP) + strlen(max_str_literal);
+            expected_size += (int)(strlen(STR_SEP) + strlen(max_str_literal));
         }
-        expected_size += base_err_msg_size - 2 * strlen(STR_SEP);
+        expected_size += base_err_msg_size - 2 * (int)strlen(STR_SEP);
         msg_total_size = 0;
         OSSL_CMP_CTX_print_errors(ctx);
         if (!TEST_int_eq(msg_total_size, expected_size))
@@ -609,7 +609,7 @@ typedef OSSL_HTTP_bio_cb_t OSSL_CMP_http_cb_t;
     static int OSSL_CMP_CTX_##SETN##_##FIELD##_str(CMP_CTX *ctx, char *val)\
     { \
         return OSSL_CMP_CTX_##SETN##_##FIELD(ctx, (unsigned char *)val, \
-                                             strlen(val));              \
+                                             (int)strlen(val));         \
     } \
     \
     static char *OSSL_CMP_CTX_get1_##FIELD##_str(const CMP_CTX *ctx) \

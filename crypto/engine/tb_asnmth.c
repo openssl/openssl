@@ -146,7 +146,7 @@ const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth_str(ENGINE *e,
     if (!e->pkey_asn1_meths)
         return NULL;
     if (len == -1)
-        len = strlen(str);
+        len = (int)strlen(str);
     nidcount = e->pkey_asn1_meths(e, NULL, &nids, 0);
     for (i = 0; i < nidcount; i++) {
         e->pkey_asn1_meths(e, &ameth, NULL, nids[i]);

@@ -387,13 +387,15 @@ load_keys(MLX_KEY *key,
             /* Ignore public keys when private provided */
             if (!load_slot(key->libctx, key->propq, OSSL_PKEY_PARAM_PRIV_KEY,
                            minimal_selection, key, slot, prvenc,
-                           key->minfo->prvkey_bytes, key->xinfo->prvkey_bytes))
+                           (int)key->minfo->prvkey_bytes,
+                           (int)key->xinfo->prvkey_bytes))
                 goto err;
         } else if (publen) {
             /* Absent private key data, import public keys */
             if (!load_slot(key->libctx, key->propq, OSSL_PKEY_PARAM_PUB_KEY,
                            minimal_selection, key, slot, pubenc,
-                           key->minfo->pubkey_bytes, key->xinfo->pubkey_bytes))
+                           (int)key->minfo->pubkey_bytes,
+                           (int)key->xinfo->pubkey_bytes))
                 goto err;
         }
     }
@@ -518,7 +520,7 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
 
     /* The ciphertext sizes are additive */
     if (p.maxsize != NULL)
-        if (!OSSL_PARAM_set_int(p.maxsize, key->minfo->ctext_bytes + key->xinfo->pubkey_bytes))
+        if (!OSSL_PARAM_set_size_t(p.maxsize, key->minfo->ctext_bytes + key->xinfo->pubkey_bytes))
             return 0;
 
     if (!mlx_kem_have_pubkey(key))

@@ -1258,7 +1258,7 @@ static int parse_ext_names(char *names, const char **result)
     int cnt = 0, len = 0;
 
     p = q = names;
-    len = strlen(names);
+    len = (int)strlen(names);
 
     while (q - names <= len) {
         if (*q != ',' && *q != '\0') {

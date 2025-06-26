@@ -184,14 +184,13 @@ static int test_sm2_crypt(const EC_GROUP *group,
         goto done;
 
     if (!TEST_true(ossl_sm2_plaintext_size(ctext, ctext_len, &ptext_len))
-            || !TEST_int_eq(ptext_len, msg_len))
+            || !TEST_size_t_eq(ptext_len, msg_len))
         goto done;
 
     recovered = OPENSSL_zalloc(ptext_len);
     if (!TEST_ptr(recovered)
             || !TEST_true(ossl_sm2_decrypt(key, digest, ctext, ctext_len,
                                            recovered, &recovered_len))
-            || !TEST_int_eq(recovered_len, msg_len)
             || !TEST_mem_eq(recovered, recovered_len, message, msg_len))
         goto done;
 

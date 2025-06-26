@@ -1450,7 +1450,7 @@ int EVP_PKEY_set1_encoded_public_key(EVP_PKEY *pkey, const unsigned char *pub,
     if (publen > INT_MAX)
         return 0;
     /* Historically this function was EVP_PKEY_set1_tls_encodedpoint */
-    if (evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_SET1_TLS_ENCPT, publen,
+    if (evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_SET1_TLS_ENCPT, (int)publen,
                            (void *)pub) <= 0)
         return 0;
     return 1;
@@ -1679,7 +1679,7 @@ static void find_ameth(const char *name, void *data)
      */
     ERR_set_mark();
 
-    if (pkey_set_type(NULL, NULL, EVP_PKEY_NONE, name, strlen(name),
+    if (pkey_set_type(NULL, NULL, EVP_PKEY_NONE, name, (int)strlen(name),
                       NULL)) {
         if (str[0] == NULL)
             str[0] = name;

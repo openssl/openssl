@@ -82,13 +82,13 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         in_tag = (unsigned char *)t->tag;
 
     return EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc)
-           && (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, t->iv_len, NULL) > 0)
+           && (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, (int)t->iv_len, NULL) > 0)
            && (in_tag == NULL
-               || EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, t->tag_len,
+               || EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)t->tag_len,
                                       in_tag) > 0)
            && EVP_CipherInit_ex(ctx, NULL, NULL, t->key, t->iv, enc)
            && EVP_CIPHER_CTX_set_padding(ctx, pad)
-           && EVP_CipherUpdate(ctx, NULL, &tmp, t->aad, t->aad_len);
+           && EVP_CipherUpdate(ctx, NULL, &tmp, t->aad, (int)t->aad_len);
 }
 
 /* Test a single KAT for encrypt/decrypt */
@@ -114,7 +114,7 @@ static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
     if ((t->mode & CIPHER_MODE_ENCRYPT) != 0) {
         if (!cipher_init(ctx, cipher, t, encrypt)
                 || !EVP_CipherUpdate(ctx, ct_buf, &len, t->base.pt,
-                                     t->base.pt_len)
+                                     (int)t->base.pt_len)
                 || !EVP_CipherFinal_ex(ctx, ct_buf + len, &ct_len))
             goto err;
 
@@ -127,7 +127,7 @@ static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
         if (t->tag != NULL) {
             unsigned char tag[16] = { 0 };
 
-            if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, t->tag_len,
+            if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)t->tag_len,
                                      tag) <= 0
                 || memcmp(tag, t->tag, t->tag_len) != 0)
                 goto err;
@@ -138,7 +138,7 @@ static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
     if ((t->mode & CIPHER_MODE_DECRYPT) != 0) {
         if (!(cipher_init(ctx, cipher, t, !encrypt)
               && EVP_CipherUpdate(ctx, pt_buf, &len,
-                                  t->base.expected, t->base.expected_len)
+                                  t->base.expected, (int)t->base.expected_len)
               && EVP_CipherFinal_ex(ctx, pt_buf + len, &pt_len)))
             goto err;
         OSSL_SELF_TEST_oncorrupt_byte(st, pt_buf);
@@ -170,7 +170,7 @@ static int add_params(OSSL_PARAM_BLD *bld, const ST_KAT_PARAM *params,
             BIGNUM *bn = BN_CTX_get(ctx);
 
             if (bn == NULL
-                || (BN_bin2bn(p->data, p->data_len, bn) == NULL)
+                || (BN_bin2bn(p->data, (int)p->data_len, bn) == NULL)
                 || !OSSL_PARAM_BLD_push_BN(bld, p->name, bn))
                 goto err;
             break;

@@ -89,7 +89,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OSSL_LIB_CTX *libctx, size_t slen,
         goto err;
     }
 
-    if (!ASN1_INTEGER_set(pbm->iterationCount, itercnt)) {
+    if (!ASN1_INTEGER_set(pbm->iterationCount, (long)itercnt)) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_CRMFERROR);
         goto err;
     }

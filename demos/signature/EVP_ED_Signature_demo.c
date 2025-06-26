@@ -73,7 +73,7 @@ static int demo_sign(EVP_PKEY *priv,
     }
     *sig_out_len = sig_len;
     *sig_out_value = sig_value;
-    BIO_dump_indent_fp(stdout, sig_value, sig_len, 2);
+    BIO_dump_indent_fp(stdout, sig_value, (int)sig_len, 2);
     fprintf(stdout, "\n");
     ret = 1;
 

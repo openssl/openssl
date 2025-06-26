@@ -273,7 +273,7 @@ static int encode_EVP_PKEY_prov(const char *file, const int line,
         || !TEST_FL_true(OSSL_ENCODER_to_bio(ectx, mem_ser))
         || !TEST_FL_true(BIO_get_mem_ptr(mem_ser, &mem_buf) > 0)
         || !TEST_FL_ptr(*encoded = mem_buf->data)
-        || !TEST_FL_long_gt(*encoded_len = mem_buf->length, 0))
+        || !TEST_FL_long_gt(*encoded_len = (long)mem_buf->length, 0))
         goto end;
 
     /* Detach the encoded output */
@@ -412,11 +412,11 @@ static int encode_EVP_PKEY_legacy_PEM(const char *file, const int line,
     if (!TEST_FL_ptr(mem_ser = BIO_new(BIO_s_mem()))
         || !TEST_FL_true(PEM_write_bio_PrivateKey_traditional(mem_ser, pkey,
                                                            cipher,
-                                                           upass, passlen,
+                                                           upass, (int)passlen,
                                                            NULL, NULL))
         || !TEST_FL_true(BIO_get_mem_ptr(mem_ser, &mem_buf) > 0)
         || !TEST_FL_ptr(*encoded = mem_buf->data)
-        || !TEST_FL_long_gt(*encoded_len = mem_buf->length, 0))
+        || !TEST_FL_long_gt(*encoded_len = (long)mem_buf->length, 0))
         goto end;
 
     /* Detach the encoded output */
@@ -455,7 +455,7 @@ static int encode_EVP_PKEY_MSBLOB(const char *file, const int line,
 
     if (!TEST_FL_true(BIO_get_mem_ptr(mem_ser, &mem_buf) > 0)
         || !TEST_FL_ptr(*encoded = mem_buf->data)
-        || !TEST_FL_long_gt(*encoded_len = mem_buf->length, 0))
+        || !TEST_FL_long_gt(*encoded_len = (long)mem_buf->length, 0))
         goto end;
 
     /* Detach the encoded output */
@@ -471,7 +471,7 @@ static pem_password_cb pass_pw;
 static int pass_pw(char *buf, int size, int rwflag, void *userdata)
 {
     OPENSSL_strlcpy(buf, userdata, size);
-    return strlen(userdata);
+    return (int)strlen(userdata);
 }
 
 static int encode_EVP_PKEY_PVK(const char *file, const int line,
@@ -495,7 +495,7 @@ static int encode_EVP_PKEY_PVK(const char *file, const int line,
                                           pass_pw, (void *)pass, testctx, testpropq), 0)
         || !TEST_FL_true(BIO_get_mem_ptr(mem_ser, &mem_buf) > 0)
         || !TEST_FL_ptr(*encoded = mem_buf->data)
-        || !TEST_FL_long_gt(*encoded_len = mem_buf->length, 0))
+        || !TEST_FL_long_gt(*encoded_len = (long)mem_buf->length, 0))
         goto end;
 
     /* Detach the encoded output */
@@ -562,7 +562,7 @@ static int check_unprotected_PKCS8_DER(const char *file, const int line,
 {
     const unsigned char *datap = data;
     PKCS8_PRIV_KEY_INFO *p8inf =
-        d2i_PKCS8_PRIV_KEY_INFO(NULL, &datap, data_len);
+        d2i_PKCS8_PRIV_KEY_INFO(NULL, &datap, (long)data_len);
     int ok = 0;
 
     if (TEST_FL_ptr(p8inf)) {
@@ -647,7 +647,7 @@ static int check_params_DER(const char *file, const int line,
         itype = EVP_PKEY_EC;
 
     if (itype != NID_undef) {
-        pkey = d2i_KeyParams(itype, NULL, &datap, data_len);
+        pkey = d2i_KeyParams(itype, NULL, &datap, (long)data_len);
         ok = (pkey != NULL);
         EVP_PKEY_free(pkey);
     }
@@ -718,7 +718,7 @@ static int check_MSBLOB(const char *file, const int line,
                         const char *type, const void *data, size_t data_len)
 {
     const unsigned char *datap = data;
-    EVP_PKEY *pkey = b2i_PrivateKey(&datap, data_len);
+    EVP_PKEY *pkey = b2i_PrivateKey(&datap, (long)data_len);
     int ok = TEST_FL_ptr(pkey);
 
     EVP_PKEY_free(pkey);
@@ -743,7 +743,8 @@ static int check_PVK(const char *file, const int line,
     unsigned int saltlen = 0, keylen = 0;
     int isdss = -1;
 
-    return ossl_do_PVK_header(&in, data_len, 0, &isdss, &saltlen, &keylen);
+    return ossl_do_PVK_header(&in, (unsigned int)data_len, 0, &isdss, &saltlen,
+                              &keylen);
 }
 
 static int test_unprotected_via_PVK(const char *type, EVP_PKEY *key)
@@ -765,7 +766,7 @@ static int check_protected_PKCS8_DER(const char *file, const int line,
                                      const void *data, size_t data_len)
 {
     const unsigned char *datap = data;
-    X509_SIG *p8 = d2i_X509_SIG(NULL, &datap, data_len);
+    X509_SIG *p8 = d2i_X509_SIG(NULL, &datap, (long)data_len);
     int ok = TEST_FL_ptr(p8);
 
     X509_SIG_free(p8);
@@ -858,7 +859,8 @@ static int check_public_DER(const char *file, const int line,
                             const char *type, const void *data, size_t data_len)
 {
     const unsigned char *datap = data;
-    EVP_PKEY *pkey = d2i_PUBKEY_ex(NULL, &datap, data_len, testctx, testpropq);
+    EVP_PKEY *pkey = d2i_PUBKEY_ex(NULL, &datap, (long)data_len, testctx,
+                                   testpropq);
     int ok = (TEST_FL_ptr(pkey) && TEST_FL_true(EVP_PKEY_is_a(pkey, type)));
 
     EVP_PKEY_free(pkey);
@@ -903,7 +905,7 @@ static int check_public_MSBLOB(const char *file, const int line,
                                const void *data, size_t data_len)
 {
     const unsigned char *datap = data;
-    EVP_PKEY *pkey = b2i_PublicKey(&datap, data_len);
+    EVP_PKEY *pkey = b2i_PublicKey(&datap, (long)data_len);
     int ok = TEST_FL_ptr(pkey);
 
     EVP_PKEY_free(pkey);

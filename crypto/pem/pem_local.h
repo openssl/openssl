@@ -55,7 +55,7 @@
     if (kstr == NULL && cb == NULL) {                                   \
         if (u != NULL) {                                                \
             kstr = u;                                                   \
-            klen = strlen(u);                                           \
+            klen = (int)strlen(u);                                      \
         } else {                                                        \
             cb = PEM_def_callback;                                      \
         }                                                               \

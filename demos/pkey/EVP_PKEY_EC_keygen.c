@@ -118,9 +118,9 @@ static int get_key_values(EVP_PKEY *pkey)
 
     fprintf(stdout, "Curve name: %s\n", out_curvename);
     fprintf(stdout, "Public key:\n");
-    BIO_dump_indent_fp(stdout, out_pubkey, out_pubkey_len, 2);
+    BIO_dump_indent_fp(stdout, out_pubkey, (int)out_pubkey_len, 2);
     fprintf(stdout, "Private Key:\n");
-    BIO_dump_indent_fp(stdout, out_privkey, out_privkey_len, 2);
+    BIO_dump_indent_fp(stdout, out_privkey, (int)out_privkey_len, 2);
 
     ret = 1;
 cleanup:

@@ -355,7 +355,7 @@ static int chacha20_poly1305_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         }
     }
 
-    return len;
+    return (int)len;
 }
 #  else
 static const unsigned char zero[CHACHA_BLK_SIZE] = { 0 };
@@ -393,7 +393,7 @@ static int chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             Poly1305_Update(POLY1305_ctx(actx), in, len);
             actx->len.aad += len;
             actx->aad = 1;
-            return len;
+            return (int)len;
         } else {                                /* plain- or ciphertext */
             if (actx->aad) {                    /* wrap up aad */
                 if ((rem = (size_t)actx->len.aad % POLY1305_BLOCK_SIZE))
@@ -482,7 +482,7 @@ static int chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 return -1;
         }
     }
-    return len;
+    return (int)len;
 }
 
 static int chacha20_poly1305_cleanup(EVP_CIPHER_CTX *ctx)

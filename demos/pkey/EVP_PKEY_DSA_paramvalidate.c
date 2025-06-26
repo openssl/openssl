@@ -120,7 +120,7 @@ int main(int argc, char **argv)
      * This example loads the PEM data from a memory buffer
      * Use BIO_new_fp() to load a PEM file instead
      */
-    in = BIO_new_mem_buf(dsapem, strlen(dsapem));
+    in = BIO_new_mem_buf(dsapem, (int)strlen(dsapem));
     if (in == NULL) {
         fprintf(stderr, "BIO_new_mem_buf() failed\n");
         goto cleanup;

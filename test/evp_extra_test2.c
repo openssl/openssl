@@ -601,8 +601,8 @@ static int test_d2i_AutoPrivateKey_ex(int i)
     BIGNUM *priv_bn = NULL;
 
     p = input;
-    if (!TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &p, input_len, mainctx,
-                                               NULL))
+    if (!TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &p, (long)input_len,
+                                               mainctx, NULL))
             || !TEST_ptr_eq(p, input + input_len)
             || !TEST_int_eq(EVP_PKEY_get_id(pkey), expected_id))
         goto done;
@@ -759,7 +759,7 @@ static int test_d2i_PrivateKey_ex(int testid)
 
     if (!TEST_ptr(provider = OSSL_PROVIDER_load(NULL, "default")))
         goto err;
-    if (!TEST_ptr(key_bio = BIO_new_mem_buf(keydata[id].kder, keydata[id].size)))
+    if (!TEST_ptr(key_bio = BIO_new_mem_buf(keydata[id].kder, (int)keydata[id].size)))
         goto err;
     if (!TEST_ptr_null(pkey = PEM_read_bio_PrivateKey(key_bio, NULL, NULL, NULL)))
         goto err;
@@ -786,7 +786,8 @@ static int test_PEM_read_bio_negative(int testid)
     BIO *key_bio = NULL;
     EVP_PKEY *pkey = NULL;
 
-    if (!TEST_ptr(key_bio = BIO_new_mem_buf(keydata[testid].kder, keydata[testid].size)))
+    if (!TEST_ptr(key_bio = BIO_new_mem_buf(keydata[testid].kder,
+                                            (int)keydata[testid].size)))
         goto err;
     ERR_clear_error();
     if (!TEST_ptr_null(pkey = PEM_read_bio_PrivateKey(key_bio, NULL, NULL, NULL)))
@@ -1058,7 +1059,7 @@ static int do_check_bn(OSSL_PARAM params[], const char *key,
 
     ret = TEST_ptr(p = OSSL_PARAM_locate(params, key))
           && TEST_true(OSSL_PARAM_get_BN(p, &bn))
-          && TEST_int_gt(len = BN_bn2binpad(bn, buffer, expected_len), 0)
+          && TEST_int_gt(len = BN_bn2binpad(bn, buffer, (int)expected_len), 0)
           && TEST_mem_eq(expected, expected_len, buffer, len);
     BN_free(bn);
     return ret;
@@ -1216,7 +1217,7 @@ static int test_pkey_todata_null(void)
     int ret = 0;
     const unsigned char *pdata = keydata[0].kder;
 
-    ret = TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, keydata[0].size,
+    ret = TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, (long)keydata[0].size,
                                                 mainctx, NULL))
           && TEST_int_eq(EVP_PKEY_todata(NULL, EVP_PKEY_KEYPAIR, &params), 0)
           && TEST_int_eq(EVP_PKEY_todata(pkey, EVP_PKEY_KEYPAIR, NULL), 0);
@@ -1239,7 +1240,7 @@ static int test_pkey_export_null(void)
     int ret = 0;
     const unsigned char *pdata = keydata[0].kder;
 
-    ret = TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, keydata[0].size,
+    ret = TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, (long)keydata[0].size,
                                                 mainctx, NULL))
           && TEST_int_eq(EVP_PKEY_export(NULL, EVP_PKEY_KEYPAIR,
                                          test_pkey_export_cb, NULL), 0)
@@ -1256,7 +1257,7 @@ static int test_pkey_export(void)
 #endif
     int ret = 1;
     const unsigned char *pdata = keydata[0].kder;
-    int pdata_len = keydata[0].size;
+    int pdata_len = (int)keydata[0].size;
 
     if (!TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, pdata_len,
                                                mainctx, NULL))
@@ -1270,7 +1271,7 @@ static int test_pkey_export(void)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     /* Now, try with a legacy key */
     pdata = keydata[0].kder;
-    pdata_len = keydata[0].size;
+    pdata_len = (int)keydata[0].size;
     if (!TEST_ptr(pkey = EVP_PKEY_new())
         || !TEST_ptr(rsa = d2i_RSAPrivateKey(NULL, &pdata, pdata_len))
         || !TEST_true(EVP_PKEY_set1_RSA(pkey, rsa))
@@ -1304,13 +1305,13 @@ static int test_rsa_pss_sign(void)
                                                      (char *)mdname, 0);
     sig_params[2] = OSSL_PARAM_construct_end();
 
-    ret = TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, keydata[0].size,
+    ret = TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, (long)keydata[0].size,
                                                 mainctx, NULL))
           && TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(mainctx, pkey, NULL))
           && TEST_int_gt(EVP_PKEY_sign_init_ex(pctx, sig_params), 0)
           && TEST_int_gt(EVP_PKEY_sign(pctx, NULL, &sig_len, mdbuf,
                                        sizeof(mdbuf)), 0)
-          && TEST_int_gt(sig_len, 0)
+          && TEST_size_t_gt(sig_len, 0)
           && TEST_ptr(sig = OPENSSL_malloc(sig_len))
           && TEST_int_gt(EVP_PKEY_sign(pctx, sig, &sig_len, mdbuf,
                                        sizeof(mdbuf)), 0);

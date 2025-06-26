@@ -660,7 +660,7 @@ static int next_proto_cb(SSL *s, const unsigned char **data,
     tlsextnextprotoctx *next_proto = arg;
 
     *data = next_proto->data;
-    *len = next_proto->len;
+    *len = (unsigned int)next_proto->len;
 
     return SSL_TLSEXT_ERR_OK;
 }
@@ -691,8 +691,8 @@ static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
     }
 
     if (SSL_select_next_proto
-        ((unsigned char **)out, outlen, alpn_ctx->data, alpn_ctx->len, in,
-         inlen) != OPENSSL_NPN_NEGOTIATED) {
+        ((unsigned char **)out, outlen, alpn_ctx->data,
+         (unsigned int)alpn_ctx->len, in, inlen) != OPENSSL_NPN_NEGOTIATED) {
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
 
@@ -2476,7 +2476,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
 
     if (context != NULL
         && !SSL_set_session_id_context(con, context,
-                                       strlen((char *)context))) {
+                                       (unsigned int)strlen((char *)context))) {
         BIO_printf(bio_err, "Error setting session id context\n");
         ret = -1;
         goto err;
@@ -3205,7 +3205,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
 
     if (context != NULL
         && !SSL_set_session_id_context(con, context,
-                                       strlen((char *)context))) {
+                                       (unsigned int)strlen((char *)context))) {
         SSL_free(con);
         goto err;
     }
@@ -3518,7 +3518,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                 BIO_printf(bio_err, "FILE:%s\n", p);
 
             if (www == 2) {
-                i = strlen(p);
+                i = (int)strlen(p);
                 if (((i > 5) && (strcmp(&(p[i - 5]), ".html") == 0)) ||
                     ((i > 4) && (strcmp(&(p[i - 4]), ".php") == 0)) ||
                     ((i > 4) && (strcmp(&(p[i - 4]), ".htm") == 0)))
@@ -3667,7 +3667,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
     }
     if (context != NULL
         && !SSL_set_session_id_context(con, context,
-                                       strlen((char *)context))) {
+                                       (unsigned int)strlen((char *)context))) {
         SSL_free(con);
         ERR_print_errors(bio_err);
         goto err;
@@ -3798,7 +3798,7 @@ static int generate_session_id(SSL *ssl, unsigned char *id,
                                unsigned int *id_len)
 {
     unsigned int count = 0;
-    unsigned int session_id_prefix_len = strlen(session_id_prefix);
+    unsigned int session_id_prefix_len = (unsigned int)strlen(session_id_prefix);
 
     do {
         if (RAND_bytes(id, *id_len) <= 0)

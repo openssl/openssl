@@ -508,11 +508,11 @@ new_txt_simple_respoonse(const char *fill_pattern, unsigned int fsize)
     if (rts == NULL)
         return NULL;
 
-    if ((rts->rts_pattern = strdup(fill_pattern)) == NULL) {
+    if ((rts->rts_pattern = OPENSSL_strdup(fill_pattern)) == NULL) {
         OPENSSL_free(rts);
         return NULL;
     }
-    rts->rts_pattern_len = strlen(fill_pattern);
+    rts->rts_pattern_len = (unsigned int)strlen(fill_pattern);
     rts->rts_len = fsize;
 
     rb = (struct response_buffer *)rts;
@@ -603,11 +603,11 @@ new_txt_full_respoonse(const char *fill_pattern, unsigned int fsize)
     if (rtf == NULL)
         return NULL;
 
-    if ((rtf->rtf_pattern = strdup(fill_pattern)) == NULL) {
+    if ((rtf->rtf_pattern = OPENSSL_strdup(fill_pattern)) == NULL) {
         OPENSSL_free(rtf);
         return NULL;
     }
-    rtf->rtf_pattern_len = strlen(fill_pattern);
+    rtf->rtf_pattern_len = (unsigned int)strlen(fill_pattern);
 
     t = time(&t);
     ctime_r(&t, date_str);
@@ -1037,7 +1037,7 @@ rebuild_poll_set(struct poll_manager *pm)
                 POLL_PRINTA(pe->pe_poll_item.events),
                 POLL_PRINTA(~pe->pe_want_mask));
     }
-    pm->pm_event_count = i;
+    pm->pm_event_count = (unsigned int)i;
     pm->pm_need_rebuild = 0;
 
     return 0;
@@ -1456,7 +1456,7 @@ app_read_cb(struct poll_event *pe)
         return rv;
     }
     pes->pes_wpos += read_len;
-    pes->pes_wpos_sz -= read_len;
+    pes->pes_wpos_sz -= (unsigned int)read_len;
 
     rv = parse_request(pes);
 
@@ -1869,7 +1869,7 @@ create_socket(uint16_t port)
     struct sockaddr_in sa = {0};
 
     /* Retrieve the file descriptor for a new UDP socket */
-    if ((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+    if ((fd = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         DPRINTF(stderr, "cannot create socket");
         return -1;
     }

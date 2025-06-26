@@ -40,7 +40,7 @@ jobs:
     - name: config
       working-directory: _build
       run: |
-        perl ..\Configure enable-comp enable-zstd --with-zstd-include=C:\vcpkg\packages\zstd_x64-windows\include --with-zstd-lib=C:\vcpkg\packages\zstd_x64-windows\lib\zstd.lib no-makedepend -DOSSL_WINCTX=openssl VC-WIN64A
+        perl ..\Configure --strict-warnings enable-comp enable-zstd --with-zstd-include=C:\vcpkg\packages\zstd_x64-windows\include --with-zstd-lib=C:\vcpkg\packages\zstd_x64-windows\lib\zstd.lib no-makedepend -DOSSL_WINCTX=openssl VC-WIN64A
         perl configdata.pm --dump
     - name: build
       working-directory: _build
@@ -102,7 +102,7 @@ jobs:
     - name: config
       working-directory: _build
       run: |
-        perl ..\Configure enable-comp enable-brotli --with-brotli-include=C:\vcpkg\packages\brotli_x64-windows\include --with-brotli-lib=C:\vcpkg\packages\brotli_x64-windows\lib no-makedepend -DOSSL_WINCTX=openssl VC-WIN64A
+        perl ..\Configure --strict-warnings enable-comp enable-brotli --with-brotli-include=C:\vcpkg\packages\brotli_x64-windows\include --with-brotli-lib=C:\vcpkg\packages\brotli_x64-windows\lib no-makedepend -DOSSL_WINCTX=openssl VC-WIN64A
         perl configdata.pm --dump
     - name: build
       working-directory: _build

@@ -840,8 +840,8 @@ static int digest_test_run(EVP_TEST *t)
         if (!test_duplicate_md_ctx(t, EVP_MD_CTX_dup(mctx)))
             goto err;
 
-        got_len = expected->output_len;
-        if (!EVP_DigestFinalXOF(mctx, got, got_len)) {
+        got_len = (unsigned int)expected->output_len;
+        if (!EVP_DigestFinalXOF(mctx, got, expected->output_len)) {
             t->err = "DIGESTFINALXOF_ERROR";
             goto err;
         }
@@ -851,7 +851,7 @@ static int digest_test_run(EVP_TEST *t)
             goto err;
         }
     }
-    if (!TEST_int_eq(expected->output_len, got_len)) {
+    if (!TEST_size_t_eq(expected->output_len, got_len)) {
         t->err = "DIGEST_LENGTH_MISMATCH";
         goto err;
     }
@@ -1181,7 +1181,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     if (expected->iv) {
         if (expected->aead) {
             if (EVP_CIPHER_CTX_ctrl(ctx_base, EVP_CTRL_AEAD_SET_IVLEN,
-                                     expected->iv_len, 0) <= 0) {
+                                    (int)expected->iv_len, 0) <= 0) {
                 t->err = "INVALID_IV_LENGTH";
                 goto err;
             }
@@ -1205,7 +1205,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
         }
         if (tag || expected->aead != EVP_CIPH_GCM_MODE) {
             if (EVP_CIPHER_CTX_ctrl(ctx_base, EVP_CTRL_AEAD_SET_TAG,
-                                     expected->tag_len, tag) <= 0)
+                                    (int)expected->tag_len, tag) <= 0)
                 goto err;
         }
     }
@@ -1219,7 +1219,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
         }
     }
 
-    if (!EVP_CIPHER_CTX_set_key_length(ctx_base, expected->key_len)) {
+    if (!EVP_CIPHER_CTX_set_key_length(ctx_base, (int)expected->key_len)) {
         t->err = "INVALID_KEY_LENGTH";
         goto err;
     }
@@ -1309,7 +1309,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     }
 
     if (expected->aead == EVP_CIPH_CCM_MODE) {
-        if (!EVP_CipherUpdate(ctx, NULL, &tmplen, NULL, out_len)) {
+        if (!EVP_CipherUpdate(ctx, NULL, &tmplen, NULL, (int)out_len)) {
             t->err = "CCM_PLAINTEXT_LENGTH_SET_ERROR";
             goto err;
         }
@@ -1323,13 +1323,13 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
                 donelen = 0;
 
                 do {
-                    size_t current_aad_len = (size_t) data_chunk_size;
+                    size_t current_aad_len = (size_t)data_chunk_size;
 
-                    if (data_chunk_size == 0 || (size_t) data_chunk_size > aad_len)
+                    if (data_chunk_size == 0 || current_aad_len > aad_len)
                         current_aad_len = aad_len;
                     if (!EVP_CipherUpdate(ctx, NULL, &chunklen,
                                           expected->aad[i] + donelen,
-                                          current_aad_len))
+                                          (int)current_aad_len))
                         goto err;
                     donelen += current_aad_len;
                     aad_len -= current_aad_len;
@@ -1346,7 +1346,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
                 if (expected->aad_len[i] > 2) {
                     if (!EVP_CipherUpdate(ctx, NULL, &chunklen,
                                           expected->aad[i] + donelen,
-                                          expected->aad_len[i] - 2))
+                                          (int)(expected->aad_len[i] - 2)))
                         goto err;
                     donelen += expected->aad_len[i] - 2;
                 }
@@ -1379,13 +1379,13 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     } else if (!enc && (expected->aead == EVP_CIPH_OCB_MODE
                         || expected->tag_late)) {
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                expected->tag_len, expected->tag) <= 0) {
+                                (int)expected->tag_len, expected->tag) <= 0) {
             t->err = "TAG_SET_ERROR";
             goto err;
         }
     } else if (!enc && expected->mac_key && expected->tag) {
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                expected->tag_len, expected->tag) <= 0) {
+                                (int)expected->tag_len, expected->tag) <= 0) {
             t->err = "TAG_SET_ERROR";
             goto err;
         }
@@ -1408,12 +1408,12 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     if (!frag) {
         do {
             /* Supply the data all in one go or according to data_chunk_size */
-            size_t current_in_len = (size_t) data_chunk_size;
+            size_t current_in_len = (size_t)data_chunk_size;
 
-            if (data_chunk_size == 0 || (size_t) data_chunk_size > in_len)
+            if (data_chunk_size == 0 || current_in_len > in_len)
                 current_in_len = in_len;
             if (!EVP_CipherUpdate(ctx, tmp + out_misalign + tmplen, &chunklen,
-                                  in, current_in_len))
+                                  in, (int)current_in_len))
                 goto err;
             tmplen += chunklen;
             in += current_in_len;
@@ -1430,7 +1430,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
         }
         if (in_len > 1) {
             if (!EVP_CipherUpdate(ctx, tmp + out_misalign + tmplen, &chunklen,
-                                  in, in_len - 1))
+                                  in, (int)(in_len - 1)))
                 goto err;
             tmplen += chunklen;
             in += in_len - 1;
@@ -1456,7 +1456,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
         if (expected->tls_version >= TLS1_1_VERSION
             && (EVP_CIPHER_is_a(expected->cipher, "AES-128-CBC-HMAC-SHA1")
                 || EVP_CIPHER_is_a(expected->cipher, "AES-256-CBC-HMAC-SHA1"))) {
-            tmplen -= expected->iv_len;
+            tmplen -= (int)expected->iv_len;
             expected_out += expected->iv_len;
             out_misalign += expected->iv_len;
         }
@@ -1474,7 +1474,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
             goto err;
         }
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
-                                 expected->tag_len, rtag) <= 0) {
+                                (int)expected->tag_len, rtag) <= 0) {
             t->err = "TAG_RETRIEVE_ERROR";
             goto err;
         }
@@ -3362,10 +3362,10 @@ static int pbe_test_run(EVP_TEST *t)
         goto err;
     }
     if (expected->pbe_type == PBE_TYPE_PBKDF2) {
-        if (PKCS5_PBKDF2_HMAC((char *)expected->pass, expected->pass_len,
-                              expected->salt, expected->salt_len,
+        if (PKCS5_PBKDF2_HMAC((char *)expected->pass, (int)expected->pass_len,
+                              expected->salt, (int)expected->salt_len,
                               expected->iter, expected->md,
-                              expected->key_len, key) == 0) {
+                              (int)expected->key_len, key) == 0) {
             t->err = "PBKDF2_ERROR";
             goto err;
         }
@@ -3386,9 +3386,9 @@ static int pbe_test_run(EVP_TEST *t)
             t->err = "PKCS12_ERROR";
             goto err;
         }
-        if (PKCS12_key_gen_uni(expected->pass, expected->pass_len,
-                               expected->salt, expected->salt_len,
-                               expected->id, expected->iter, expected->key_len,
+        if (PKCS12_key_gen_uni(expected->pass, (int)expected->pass_len,
+                               expected->salt, (int)expected->salt_len,
+                               expected->id, expected->iter, (int)expected->key_len,
                                key, fetched_digest) == 0) {
             t->err = "PKCS12_ERROR";
             goto err;
@@ -3509,13 +3509,13 @@ static int encode_test_run(EVP_TEST *t)
         donelen = 0;
         output_len = 0;
         do {
-            size_t current_len = (size_t) data_chunk_size;
+            size_t current_len = (size_t)data_chunk_size;
 
-            if (data_chunk_size == 0 || (size_t) data_chunk_size > input_len)
+            if (data_chunk_size == 0 || current_len > input_len)
                 current_len = input_len;
             if (!TEST_true(EVP_EncodeUpdate(encode_ctx, encode_out, &chunk_len,
                                             expected->input + donelen,
-                                            current_len)))
+                                            (int)current_len)))
                 goto err;
             donelen += current_len;
             input_len -= current_len;
@@ -3551,7 +3551,7 @@ static int encode_test_run(EVP_TEST *t)
         if (data_chunk_size == 0 || (size_t) data_chunk_size > input_len)
             current_len = input_len;
         if (EVP_DecodeUpdate(decode_ctx, decode_out + output_len, &chunk_len,
-                                expected->output + donelen, current_len) < 0) {
+                                expected->output + donelen, (int)current_len) < 0) {
             t->err = "DECODE_ERROR";
             goto err;
         }
@@ -5560,7 +5560,7 @@ int setup_tests(void)
     if (n == 0)
         return 0;
 
-    ADD_ALL_TESTS(run_file_tests, n);
+    ADD_ALL_TESTS(run_file_tests, (int)n);
     return 1;
 }
 

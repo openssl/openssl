@@ -275,7 +275,7 @@ static int test_bio_enc_eof_read_flush(void)
     EVP_CIPHER_CTX *ctx = NULL;
     BIO *mem = NULL, *b64 = NULL, *cbio = NULL;
     unsigned char tag[16];
-    size_t key_size, iv_size;
+    int key_size, iv_size;
     int n, ret = 0;
 
     memset(tag, 0, sizeof(tag));

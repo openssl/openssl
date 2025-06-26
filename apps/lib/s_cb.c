@@ -509,7 +509,8 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
                 BIO_printf(out, "read from %p [%p] (%zu bytes => %zu (0x%zX))\n",
                            (void *)bio, (void *)msg->data, msg->data_len,
                            msg->data_len, msg->data_len);
-                BIO_dump(out, msg->data, msg->data_len);
+                if (msg->data_len <= INT_MAX)
+                    BIO_dump(out, msg->data, (int)msg->data_len);
             }
         } else if (mmsgargs->num_msg > 0) {
             BIO_MSG *msg = mmsgargs->msg;
@@ -529,7 +530,8 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
                 BIO_printf(out, "write to %p [%p] (%zu bytes => %zu (0x%zX))\n",
                            (void *)bio, (void *)msg->data, msg->data_len,
                            msg->data_len, msg->data_len);
-                BIO_dump(out, msg->data, msg->data_len);
+                if (msg->data_len <= INT_MAX)
+                    BIO_dump(out, msg->data, (int)msg->data_len);
             }
         } else if (mmsgargs->num_msg > 0) {
             BIO_MSG *msg = mmsgargs->msg;

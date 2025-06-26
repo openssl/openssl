@@ -18,7 +18,7 @@ void calculate_columns(FUNCTION *functions, DISPLAY_COLUMNS *dc)
 
     for (f = functions; f->name != NULL; ++f)
         if (f->type == FT_general || f->type == FT_md || f->type == FT_cipher)
-            if ((len = strlen(f->name)) > maxlen)
+            if ((len = (int)strlen(f->name)) > maxlen)
                 maxlen = len;
 
     dc->width = maxlen + 2;

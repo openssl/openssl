@@ -2727,7 +2727,7 @@ int speed_main(int argc, char **argv)
 
     if (doit[D_HMAC]) {
         static const char hmac_key[] = "This is a key...";
-        int len = strlen(hmac_key);
+        int len = (int)strlen(hmac_key);
         size_t hmac_name_len = sizeof("hmac()") + strlen(evp_mac_mdname);
         OSSL_PARAM params[3];
 
@@ -5128,7 +5128,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
                 aad[12] = (unsigned char)(len);
                 pad = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD,
                                           EVP_AEAD_TLS1_AAD_LEN, aad);
-                ciph_success = EVP_Cipher(ctx, out, inp, len + pad);
+                ciph_success = EVP_Cipher(ctx, out, inp, (unsigned int)(len + pad));
             }
         }
         d = Time_F(STOP);

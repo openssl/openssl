@@ -862,7 +862,7 @@ static int test_gcm128(int idx)
     if (C.size == 1)
         C.data = NULL;
 
-    AES_set_encrypt_key(K.data, K.size * 8, &key);
+    AES_set_encrypt_key(K.data, (int)(K.size * 8), &key);
 
     CRYPTO_gcm128_init(&ctx, &key, (block128_f)AES_encrypt);
     CRYPTO_gcm128_setiv(&ctx, IV.data, IV.size);

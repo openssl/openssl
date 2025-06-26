@@ -97,11 +97,11 @@ static int test_insert(void)
     INTL *c, *d;
     OSSL_LIST(int) l;
     INTL elem[20];
-    size_t i;
+    int i;
     int n = 1;
 
     ossl_list_int_init(&l);
-    for (i = 0; i < OSSL_NELEM(elem); i++) {
+    for (i = 0; i < (int)OSSL_NELEM(elem); i++) {
         ossl_list_int_init_elem(elem + i);
         elem[i].n = i;
     }

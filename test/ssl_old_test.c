@@ -299,9 +299,9 @@ static int cb_server_alpn(SSL *s, const unsigned char **out,
         abort();
     }
 
-    if (SSL_select_next_proto
-        ((unsigned char **)out, outlen, protos, protos_len, in,
-         inlen) != OPENSSL_NPN_NEGOTIATED) {
+    if (SSL_select_next_proto((unsigned char **)out, outlen, protos,
+                              (unsigned int)protos_len,
+                              in, inlen) != OPENSSL_NPN_NEGOTIATED) {
         OPENSSL_free(protos);
         return SSL_TLSEXT_ERR_NOACK;
     }
@@ -1056,7 +1056,7 @@ int main(int argc, char *argv[])
             bytes = atol(*(++argv));
             if (bytes == 0L)
                 bytes = 1L;
-            i = strlen(argv[0]);
+            i = (int)strlen(argv[0]);
             if (argv[0][i - 1] == 'k')
                 bytes *= 1024L;
             if (argv[0][i - 1] == 'm')
@@ -1735,7 +1735,7 @@ int main(int argc, char *argv[])
             goto end;
         }
         /* Returns 0 on success!! */
-        if (SSL_CTX_set_alpn_protos(c_ctx, alpn, alpn_len)) {
+        if (SSL_CTX_set_alpn_protos(c_ctx, alpn, (unsigned int)alpn_len)) {
             BIO_printf(bio_err, "Error setting ALPN\n");
             OPENSSL_free(alpn);
             goto end;
