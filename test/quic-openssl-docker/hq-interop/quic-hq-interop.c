@@ -883,6 +883,11 @@ int main(int argc, char *argv[])
         goto end;
     }
 
+    if (reqnames == NULL) {
+        fprintf(stderr, "Failed to allocate memory for request names\n");
+        goto end;
+    }
+
     hostname = argv[argnext++];
     port = argv[argnext++];
     reqfile = argv[argnext];
