@@ -27,7 +27,8 @@ The default provider understands these RSA padding modes in string form:
 
 This padding mode is no longer supported by the FIPS provider for key
 agreement and key transport.
-(This is a FIPS 140-3 requirement)
+(This is a FIPS 140-3 requirement).
+See L<openssl-fipsinstall(1)/OPTIONS> B<-rsa_pkcs15_pad_disabled>.
 
 =item "x931" (B<OSSL_PKEY_RSA_PAD_MODE_X931>)
 
