@@ -171,14 +171,14 @@ static int export_sub_cb(const OSSL_PARAM *params, void *varg)
     struct ml_kem_import_export_st p;
     size_t len;
 
+    if (!ml_kem_import_export_decoder(params, &p))
+        return 0;
+
     /*
      * The caller will decide whether anything essential is missing, but, if
      * some key material was returned, it should have the right (parameter)
      * data type and length.
      */
-    if (ossl_param_is_empty(params))
-        return 1;
-    p = ml_kem_import_export_decoder(params);
     if (sub_arg->pubenc != NULL && p.pubkey != NULL) {
         void *pub = sub_arg->pubenc + sub_arg->puboff;
 
@@ -423,7 +423,8 @@ static int mlx_kem_key_fromdata(MLX_KEY *key,
     pubkey_bytes = key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes;
     prvkey_bytes = key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes;
 
-    p = ml_kem_import_export_decoder(params);
+    if (!ml_kem_import_export_decoder(params, &p))
+        return 0;
 
     /* What does the caller want to set? */
     if (p.pubkey != NULL &&
@@ -499,7 +500,8 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     size_t publen = key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes;
     size_t prvlen = key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes;
 
-    p = mlx_get_params_decoder(params);
+    if (key == NULL || !mlx_get_params_decoder(params, &p))
+        return 0;
 
     /* The reported "bit" count is those of the ML-KEM key */
     if (p.bits != NULL)
@@ -595,10 +597,8 @@ static int mlx_kem_set_params(void *vkey, const OSSL_PARAM params[])
     const void *pubenc = NULL;
     size_t publen = 0;
 
-    if (ossl_param_is_empty(params))
-        return 1;
-
-    p = mlx_set_params_decoder(params);
+    if (key == NULL || !mlx_set_params_decoder(params, &p))
+        return 0;
 
     if (p.propq != NULL) {
         OPENSSL_free(key->propq);
@@ -638,12 +638,8 @@ static int mlx_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
     PROV_ML_KEM_GEN_CTX *gctx = vgctx;
     struct mlx_gen_set_params_st p;
 
-    if (gctx == NULL)
+    if (gctx == NULL || !mlx_gen_set_params_decoder(params, &p))
         return 0;
-    if (ossl_param_is_empty(params))
-        return 1;
-
-    p = mlx_gen_set_params_decoder(params);
 
     if (p.propq != NULL) {
         if (p.propq->data_type != OSSL_PARAM_UTF8_STRING)
