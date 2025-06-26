@@ -2865,6 +2865,140 @@ static int test_ssl_set_verify(void)
     return testresult;
 }
 
+/*
+ * Creates a server-initiated stream (unidirectional if is_uni=1, bidirectional
+ * otherwise) and tests that client calling SSL_accept_stream with accept_flags
+ * behaves as expected.
+ */
+static int create_accept_stream(SSL *serverssl, SSL *clientssl,
+                                uint64_t accept_flags, int is_uni)
+{
+    unsigned char buf[16], msg[] = "Hello, World!";
+    SSL *clientstream = NULL, *serverstream = NULL, *stream = NULL;
+    int ret = 0, should_accept = 1;
+    uint64_t new_stream_flags = is_uni ? SSL_STREAM_FLAG_UNI : 0;
+    size_t nread, nwritten;
+
+    if (is_uni != 0 && is_uni != 1)
+        goto err;
+
+    if ((accept_flags & SSL_ACCEPT_STREAM_UNI)
+        && !(accept_flags & SSL_ACCEPT_STREAM_BIDI))
+        should_accept = is_uni;
+    else if ((accept_flags & SSL_ACCEPT_STREAM_BIDI)
+             && !(accept_flags & SSL_ACCEPT_STREAM_UNI))
+        should_accept = !is_uni;
+
+    if (!TEST_ptr(serverstream = SSL_new_stream(serverssl, new_stream_flags))
+        || !TEST_int_gt(SSL_write_ex(serverstream, msg, sizeof(msg), &nwritten), 0)
+        || !TEST_int_eq(nwritten, sizeof(msg))
+        || !TEST_int_eq(SSL_handle_events(clientssl), 1))
+        goto err;
+
+    clientstream = SSL_accept_stream(clientssl, accept_flags);
+    if (should_accept && clientstream == NULL) {
+        TEST_info("Should have accepted stream but did not");
+        goto err;
+    } else if (!should_accept && clientstream != NULL) {
+        TEST_info("Should not have accepted stream but did");
+        goto err;
+    } else if (!should_accept && clientstream == NULL) {
+        ret = 1;
+        goto err;
+    }
+
+    if (!TEST_int_gt(SSL_read_ex(clientstream, buf, sizeof(buf), &nread), 0)
+        || !TEST_int_eq(nread, sizeof(msg)))
+        goto err;
+
+    ret = 1;
+err:
+    /* In case there is a stream still in the queue */
+    stream = SSL_accept_stream(clientssl, 0);
+
+    SSL_free(serverstream);
+    SSL_free(clientstream);
+    SSL_free(stream);
+
+    return ret;
+}
+
+static int test_accept_stream(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    int testresult = 0;
+    int ret, i;
+    long unsigned int j;
+    uint64_t accept_flags[] = {
+        0,
+        SSL_ACCEPT_STREAM_UNI,
+        SSL_ACCEPT_STREAM_BIDI,
+        SSL_ACCEPT_STREAM_UNI | SSL_ACCEPT_STREAM_BIDI
+    };
+
+    if (!TEST_ptr(sctx = create_server_ctx())
+        || !TEST_ptr(cctx = create_client_ctx())
+        || !create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl))
+        goto err;
+
+    /* Calling SSL_accept() on a listener is expected to fail */
+    ret = SSL_accept(qlistener);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(qlistener, ret), SSL_ERROR_SSL))
+        goto err;
+
+    /* Send ClientHello and server retry */
+    for (i = 0; i < 2; i++) {
+        ret = SSL_connect(clientssl);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+            goto err;
+        SSL_handle_events(qlistener);
+    }
+
+    /* We expect a server SSL object which has not yet completed its handshake */
+    serverssl = SSL_accept_connection(qlistener, 0);
+    if (!TEST_ptr(serverssl) || !TEST_false(SSL_is_init_finished(serverssl)))
+        goto err;
+
+    /* Call SSL_accept() and SSL_connect() until we are connected */
+    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+                                              SSL_ERROR_NONE, 0, 0)))
+        goto err;
+
+    if (!TEST_int_eq(SSL_set_default_stream_mode(clientssl,
+                                                 SSL_DEFAULT_STREAM_MODE_NONE), 1)
+        || !TEST_int_eq(SSL_set_default_stream_mode(serverssl,
+                                                    SSL_DEFAULT_STREAM_MODE_NONE), 1)
+        || !TEST_int_eq(SSL_set_incoming_stream_policy(clientssl,
+                                                       SSL_INCOMING_STREAM_POLICY_ACCEPT,
+                                                       0), 1)
+        || !TEST_int_eq(SSL_set_incoming_stream_policy(serverssl,
+                                                       SSL_INCOMING_STREAM_POLICY_ACCEPT,
+                                                       0), 1))
+        goto err;
+
+    for (j = 0; j < sizeof(accept_flags) / sizeof(accept_flags[0]); j++) {
+        if (!TEST_int_eq(create_accept_stream(serverssl, clientssl,
+                                              accept_flags[j], 0), 1)
+            || !TEST_int_eq(create_accept_stream(serverssl, clientssl,
+                                                 accept_flags[i], 1), 1)
+            )
+            goto err;
+    }
+
+    testresult = 1;
+ err:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(qlistener);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 /***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
@@ -2966,6 +3100,7 @@ int setup_tests(void)
     ADD_TEST(test_server_method_with_ssl_new);
     ADD_TEST(test_ssl_accept_connection);
     ADD_TEST(test_ssl_set_verify);
+    ADD_TEST(test_accept_stream);
     return 1;
  err:
     cleanup_tests();
