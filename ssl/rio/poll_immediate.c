@@ -225,8 +225,15 @@ static int poll_translate(SSL_POLL_ITEM *items,
 
             switch (ssl->type) {
 # ifndef OPENSSL_NO_QUIC
-            case SSL_TYPE_QUIC_LISTENER:
             case SSL_TYPE_QUIC_CONNECTION:
+                /*
+                 * Re-issue shutdown as condition prveinting shutdown to complete
+                 * could have changed.
+                 */
+                if (ossl_quic_conn_in_shutdown(ssl))
+                    SSL_shutdown(ssl);
+
+            case SSL_TYPE_QUIC_LISTENER:
             case SSL_TYPE_QUIC_XSO:
                 if (!poll_translate_ssl_quic(ssl, wctx, rpb, item->events,
                                              abort_blocking))
