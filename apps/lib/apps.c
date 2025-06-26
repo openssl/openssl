@@ -3048,18 +3048,30 @@ BIO *dup_bio_out(int format)
     BIO *b = BIO_new_fp(stdout,
                         BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0));
     void *prefix = NULL;
+    BIO *btmp;
 
     if (b == NULL)
         return NULL;
 
 #ifdef OPENSSL_SYS_VMS
-    if (FMT_istext(format))
-        b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
+    if (FMT_istext(format)) {
+        btmp = BIO_new(BIO_f_linebuffer());
+        if (btmp == NULL) {
+            BIO_free_all(b);
+            return NULL;
+        }
+        b = BIO_push(btmp, b);
+    }
 #endif
 
     if (FMT_istext(format)
         && (prefix = getenv("HARNESS_OSSL_PREFIX")) != NULL) {
-        b = BIO_push(BIO_new(BIO_f_prefix()), b);
+        btmp = BIO_new(BIO_f_prefix());
+        if (btmp == NULL) {
+            BIO_free_all(b);
+            return NULL;
+        }
+        b = BIO_push(btmp, b);
         BIO_set_prefix(b, prefix);
     }
 
@@ -3072,8 +3084,15 @@ BIO *dup_bio_err(int format)
                         BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0));
 
 #ifdef OPENSSL_SYS_VMS
-    if (b != NULL && FMT_istext(format))
-        b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
+    if (b != NULL && FMT_istext(format)) {
+        BIO *btmp = BIO_new(BIO_f_linebuffer());
+
+        if (btmp == NULL) {
+            BIO_free_all(b);
+            return NULL;
+        }
+        b = BIO_push(btmp, b);
+    }
 #endif
     return b;
 }
