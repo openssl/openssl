@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_accept_stream, SSL_get_accept_stream_queue_len, SSL_ACCEPT_STREAM_NO_BLOCK -
+SSL_accept_stream, SSL_get_accept_stream_queue_len, SSL_ACCEPT_STREAM_NO_BLOCK,
+SSL_ACCEPT_STREAM_UNI, SSL_ACCEPT_STREAM_BIDI -
 accept an incoming QUIC stream from a QUIC peer
 
 =head1 SYNOPSIS
