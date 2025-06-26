@@ -315,6 +315,11 @@ struct quic_stream_st {
     unsigned int    ready_for_gc            : 1;
     /* Set to 1 if this is currently counted in the shutdown flush stream count. */
     unsigned int    shutdown_flush          : 1;
+    /*
+     * set when underlying connection signals EC, the connection is being closed
+     * by removte peer, while there are still streams hanging around
+     */
+    unsigned int conn_tearing_down : 1;
 };
 
 #define QUIC_STREAM_INITIATOR_CLIENT        0
@@ -913,6 +918,16 @@ void ossl_quic_stream_iter_init(QUIC_STREAM_ITER *it, QUIC_STREAM_MAP *qsm,
  * list is reached, it->stream will be NULL after calling this.
  */
 void ossl_quic_stream_iter_next(QUIC_STREAM_ITER *it);
+
+/*
+ * notify streams the underlying connection is being closed
+ */
+void ossl_quic_stream_map_notify_close(QUIC_STREAM_MAP *qsm);
+
+/*
+ * returns number of opened streams
+ */
+unsigned int ossl_quic_stream_map_count_streams(QUIC_STREAM_MAP *qsm);
 
 # endif
 

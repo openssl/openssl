@@ -835,6 +835,78 @@ int ossl_quic_stream_map_is_shutdown_flush_finished(QUIC_STREAM_MAP *qsm)
 }
 
 /*
+ * notify_close_each() notifies local streams the application deals
+ * with connection close initiated by remote peer.
+ */
+static void notify_close_each(QUIC_STREAM *qs, void *arg)
+{
+    QUIC_STREAM_MAP *qsm = arg;
+    int mark_active = 0;
+
+    if (qs->recv_state != QUIC_RSTREAM_STATE_NONE) {
+        /* pretend we received reset */
+        qs->recv_state = QUIC_RSTREAM_STATE_RESET_RECVD;
+        qs->peer_reset_stream_aec = -1; /* should say something remote peer closes conection */
+
+        /*
+         * RFC 9000 s. 3.3: No point sending STOP_SENDING if already reset.
+         * note: could not find in RFC how we should treat situation when remote peer
+         * closes connection while there are streams still opened
+         */
+        ossl_quic_rstream_free(qs->rstream);
+        qs->rstream = NULL;
+        mark_active = 1;
+    }
+
+    if (qs->send_state != QUIC_SSTREAM_STATE_NONE) {
+        /* pretend we received reset */
+        qs->send_state = QUIC_SSTREAM_STATE_RESET_RECVD;
+        qs->peer_reset_stream_aec = -1; /* should say something remote peer closes conection */
+        /* qs->want_stop_sending = 0; */
+        ossl_quic_sstream_free(qs->sstream);
+        qs->sstream = NULL;
+        mark_active = 1;
+    }
+
+    /*
+     * Keep in mind we deal with connection shutdown initiated by remote peer.
+     * This is described at RFC 9000, Section 10.2 Immediate Close. Upon
+     * reception of CONNECTION_CLOSE frame we need to reset all streams which
+     * belong to connection.
+     */
+    qs->conn_tearing_down = 1;
+    if (mark_active)
+        stream_map_mark_active(qsm, qs);
+}
+
+void ossl_quic_stream_map_notify_close(QUIC_STREAM_MAP *qsm)
+{
+    ossl_quic_stream_map_visit(qsm, notify_close_each, qsm);
+}
+
+static void count_streams(QUIC_STREAM *qs, void *arg)
+{
+    unsigned int *count = (unsigned int *)arg;
+
+    if (qs->recv_state != QUIC_RSTREAM_STATE_NONE &&
+        qs->recv_state < QUIC_RSTREAM_STATE_DATA_READ)
+        *count = *count + 1;
+
+    if (qs->send_state != QUIC_SSTREAM_STATE_NONE &&
+        qs->send_state < QUIC_SSTREAM_STATE_DATA_RECVD)
+        *count = *count + 1;
+}
+
+unsigned int ossl_quic_stream_map_count_streams(QUIC_STREAM_MAP *qsm)
+{
+    unsigned int count = 0;
+
+    ossl_quic_stream_map_visit(qsm, count_streams, &count);
+
+    return count;
+}
+
+/*
  * QUIC Stream Iterator
  * ====================
  */

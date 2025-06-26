@@ -367,8 +367,31 @@ static int poll_readout(SSL_POLL_ITEM *items,
 
             switch (ssl->type) {
 #ifndef OPENSSL_NO_QUIC
-            case SSL_TYPE_QUIC_LISTENER:
             case SSL_TYPE_QUIC_CONNECTION:
+                if (!ossl_quic_conn_poll_events(ssl, events, do_tick, &revents))
+                    /* above call raises ERR */
+                    FAIL_ITEM(i);
+
+                /*
+                 * SSL_POLL_EVENT_ECD signals application the connection
+                 * object is ready to be freed. We must suppress ECD event
+                 * if there are streams still attached to connection.
+                 * After application destroys SSL stream objects attached
+                 * to connection, then we let SSL_poll() to signal ECD event
+                 * to note application it's time to destroy connection
+                 * object.
+                 */
+                if (revents & SSL_POLL_EVENT_ECD) {
+                    if (ossl_quic_conn_count_streams(ssl) == 0)
+                        result_count++;
+                    else
+                        revents &= ~SSL_POLL_EVENT_ECD;
+                } else if (revents & SSL_POLL_EVENT_EC) {
+                    ossl_quic_conn_notify_close(ssl);
+                    result_count++;
+                }
+                break;
+            case SSL_TYPE_QUIC_LISTENER:
             case SSL_TYPE_QUIC_XSO:
                 if (!ossl_quic_conn_poll_events(ssl, events, do_tick, &revents))
                     /* above call raises ERR */
