@@ -1501,6 +1501,18 @@ static int quic_shutdown_peer_wait(void *arg)
     return ossl_quic_channel_is_term_any(qc->ch);
 }
 
+int ossl_quic_conn_in_shutdown(SSL *s)
+{
+    QCTX ctx;
+    QUIC_CONNECTION *qc;
+
+    if (!expect_quic_as(s, &ctx, QCTX_C))
+        return 0;
+
+    qc = (QUIC_CONNECTION *)s;
+    return qc->shutting_down;
+}
+
 QUIC_TAKES_LOCK
 int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
                             const SSL_SHUTDOWN_EX_ARGS *args,

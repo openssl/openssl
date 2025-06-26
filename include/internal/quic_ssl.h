@@ -134,6 +134,7 @@ __owur int ossl_quic_get_stream_write_error_code(SSL *ssl,
 __owur int ossl_quic_get_conn_close_info(SSL *ssl,
                                          SSL_CONN_CLOSE_INFO *info,
                                          size_t info_len);
+__owur int ossl_quic_conn_in_shutdown(SSL *ssl);
 
 uint64_t ossl_quic_set_options(SSL *s, uint64_t opts);
 uint64_t ossl_quic_clear_options(SSL *s, uint64_t opts);
