@@ -196,6 +196,6 @@ int ossl_rsa_padding_add_PKCS1_type_2_ex(OSSL_LIB_CTX *libctx, unsigned char *to
                                          int tlen, const unsigned char *from,
                                          int flen);
 void ossl_rsa_free_blinding(RSA *rsa);
-void *ossl_rsa_alloc_blinding();
+void *ossl_rsa_alloc_blinding(void);
 
 #endif /* OSSL_CRYPTO_RSA_LOCAL_H */

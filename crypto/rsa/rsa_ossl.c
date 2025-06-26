@@ -222,7 +222,7 @@ void ossl_rsa_free_blinding(RSA *rsa)
     ossl_sa_BN_BLINDING_free(blindings);
 }
 
-void *ossl_rsa_alloc_blinding()
+void *ossl_rsa_alloc_blinding(void)
 {
     return ossl_sa_BN_BLINDING_new();
 }
