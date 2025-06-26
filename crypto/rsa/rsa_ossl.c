@@ -218,6 +218,7 @@ static void free_bn_blinding(ossl_uintmax_t idx, BN_BLINDING *b, void *arg)
 void ossl_rsa_free_blinding(RSA *rsa)
 {
     SPARSE_ARRAY_OF(BN_BLINDING) *blindings = rsa->blindings_sa;
+
     ossl_sa_BN_BLINDING_doall_arg(blindings, free_bn_blinding, NULL);
     ossl_sa_BN_BLINDING_free(blindings);
 }
