@@ -296,7 +296,7 @@ static int lms_digest_verify_fail_test(void)
     return ret;
 }
 
-static int lms_signing_fail_test(void)
+static int lms_digest_signing_fail_test(void)
 {
     int ret = 0;
     LMS_ACVP_TEST_DATA *td = &lms_testdata[0];
@@ -307,7 +307,6 @@ static int lms_signing_fail_test(void)
         return 0;
     if (!TEST_ptr(vctx = EVP_MD_CTX_new()))
         goto err;
-    /* Only one shot mode is supported, streaming fails to initialise */
     if (!TEST_int_eq(EVP_DigestSignInit_ex(vctx, NULL, NULL, libctx, NULL,
                                            pub, NULL), 0))
         goto err;
@@ -315,6 +314,37 @@ static int lms_signing_fail_test(void)
  err:
     EVP_PKEY_free(pub);
     EVP_MD_CTX_free(vctx);
+    return ret;
+}
+
+static int lms_message_signing_fail_test(void)
+{
+    int ret = 0;
+    LMS_ACVP_TEST_DATA *td = &lms_testdata[0];
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_SIGNATURE *sig = NULL;
+
+    ret = TEST_ptr(pkey = lms_pubkey_from_data(td->pub, td->publen))
+        && TEST_ptr(sig = EVP_SIGNATURE_fetch(libctx, "LMS", NULL))
+        && TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL))
+        && TEST_int_eq(EVP_PKEY_sign_message_init(ctx, sig, NULL), -2);
+
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_SIGNATURE_free(sig);
+    return ret;
+}
+
+static int lms_keygen_fail_test(void)
+{
+    int ret;
+    EVP_PKEY_CTX *ctx = NULL;
+
+    ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "LMS", NULL))
+        && TEST_int_eq(EVP_PKEY_paramgen_init(ctx), -2);
+
+    EVP_PKEY_CTX_free(ctx);
     return ret;
 }
 
@@ -541,7 +571,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(lms_verify_test, OSSL_NELEM(lms_testdata));
     ADD_TEST(lms_verify_fail_test);
     ADD_TEST(lms_digest_verify_fail_test);
-    ADD_TEST(lms_signing_fail_test);
+    ADD_TEST(lms_digest_signing_fail_test);
+    ADD_TEST(lms_message_signing_fail_test);
+    ADD_TEST(lms_keygen_fail_test);
     ADD_TEST(lms_verify_bad_sig_test);
     ADD_TEST(lms_verify_bad_sig_len_test);
     ADD_TEST(lms_verify_bad_pub_sig_test);
