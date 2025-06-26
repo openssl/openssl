@@ -106,7 +106,7 @@ See L<openssl-fipsinstall(1)/OPTIONS> B<-signature_digest_check>
 
 =item B<hkdf-digest-check>
 
-See L<openssl-fipsinstall(1)/OPTIONS> B<-hkdf_digest_check>
+This option is deprecated.
 
 =item B<tls13-kdf-digest-check>
 
@@ -122,7 +122,7 @@ See L<openssl-fipsinstall(1)/OPTIONS> B<-sshkdf_digest_check>
 
 =item B<sskdf-digest-check>
 
-See L<openssl-fipsinstall(1)/OPTIONS> B<-sskdf_digest_check>
+This option is deprecated.
 
 =item B<x963kdf-digest-check>
 

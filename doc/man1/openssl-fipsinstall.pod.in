@@ -237,9 +237,7 @@ explicitly permitted by the various standards.
 
 =item B<-hkdf_digest_check>
 
-Configure the module to enable a run-time digest check when deriving a key by
-HKDF.
-See NIST SP 800-56Cr2 for details.
+This option is deprecated.
 
 =item B<-tls13_kdf_digest_check>
 
@@ -261,9 +259,7 @@ See NIST SP 800-135r1 for details.
 
 =item B<-sskdf_digest_check>
 
-Configure the module to enable a run-time digest check when deriving a key by
-SSKDF.
-See NIST SP 800-56Cr2 for details.
+This option is deprecated.
 
 =item B<-x963kdf_digest_check>
 
