@@ -167,7 +167,7 @@ struct record_functions_st {
 
     /* Get the actual record type to be used for a given template */
     uint8_t (*get_record_type)(OSSL_RECORD_LAYER *rl,
-                               OSSL_RECORD_TEMPLATE *template);
+                               uint8_t type);
 
     /* Write the record header data to the WPACKET */
     int (*prepare_record_header)(OSSL_RECORD_LAYER *rl, WPACKET *thispkt,

@@ -241,6 +241,18 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
+    /*
+     * Server-side, Record Size limit extension can be disabled, but the client
+     * might have sent a Record Size Limit that we must respect.
+     */
+    if (IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.record_size_limit))
+        s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
+        s->session->ext.record_size_limit);
+
+    if (IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.peer_record_size_limit))
+        s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
+        s->session->ext.peer_record_size_limit);
+
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "which = %04X, key:\n", which);
         BIO_dump_indent(trc_out, key, EVP_CIPHER_get_key_length(c), 4);

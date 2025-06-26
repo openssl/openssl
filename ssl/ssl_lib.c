@@ -13,25 +13,26 @@
 #include "internal/e_winsock.h"
 #include "ssl_local.h"
 
-#include <openssl/objects.h>
-#include <openssl/x509v3.h>
-#include <openssl/rand.h>
-#include <openssl/ocsp.h>
-#include <openssl/dh.h>
-#include <openssl/engine.h>
-#include <openssl/async.h>
-#include <openssl/ct.h>
-#include <openssl/trace.h>
-#include <openssl/core_names.h>
-#include <openssl/provider.h>
 #include "internal/cryptlib.h"
+#include "internal/ktls.h"
 #include "internal/nelem.h"
 #include "internal/refcount.h"
-#include "internal/thread_once.h"
-#include "internal/ktls.h"
-#include "internal/to_hex.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/thread_once.h"
+#include "internal/to_hex.h"
 #include "quic/quic_local.h"
+#include "record/methods/recmethod_local.h"
+#include <openssl/async.h>
+#include <openssl/core_names.h>
+#include <openssl/ct.h>
+#include <openssl/dh.h>
+#include <openssl/engine.h>
+#include <openssl/objects.h>
+#include <openssl/ocsp.h>
+#include <openssl/provider.h>
+#include <openssl/rand.h>
+#include <openssl/trace.h>
+#include <openssl/x509v3.h>
 
 static int ssl_undefined_function_3(SSL_CONNECTION *sc, unsigned char *r,
                                     unsigned char *s, size_t t, size_t *u)
@@ -7309,10 +7310,17 @@ __owur unsigned int ssl_get_proto_record_hard_limit(const SSL_CONNECTION *sc) {
     }
 }
 
-__owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc)
+__owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc,
+                                              uint8_t type)
 {
+    if (sc->rlayer.wrl
+        && sc->rlayer.wrl->funcs->get_record_type != NULL) {
+        type = sc->rlayer.wrl->funcs->get_record_type(sc->rlayer.wrl, type);
+    }
+
     /* Return any active Record Size Limit extension */
-    if (sc->session != NULL && USE_RECORD_SIZE_LIMIT_EXT(sc->session))
+    if (sc->session != NULL && USE_RECORD_SIZE_LIMIT_EXT(sc->session)
+        && type == SSL3_RT_APPLICATION_DATA)
         return sc->session->ext.peer_record_size_limit;
 
     /* Return any active Max Fragment Len extension */
@@ -7323,11 +7331,17 @@ __owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc)
     return sc->max_send_fragment;
 }
 
-__owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc)
+__owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc,
+                                                uint8_t type)
 {
+    if (sc->rlayer.wrl != NULL
+        && sc->rlayer.wrl->funcs->get_record_type != NULL) {
+        type = sc->rlayer.wrl->funcs->get_record_type(sc->rlayer.wrl, type);
+    }
 
     if (sc->session != NULL && USE_RECORD_SIZE_LIMIT_EXT(sc->session)
-        && sc->split_send_fragment > sc->session->ext.peer_record_size_limit)
+        && sc->split_send_fragment > sc->session->ext.peer_record_size_limit
+        && type == SSL3_RT_APPLICATION_DATA)
         return sc->session->ext.peer_record_size_limit;
 
     /* Return a value regarding an active Max Fragment Len extension */

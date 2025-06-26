@@ -649,7 +649,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
     if (len == 0)
         return 0;
 
-    if (len > ssl_get_max_send_fragment(sc)) {
+    if (len > ssl_get_max_send_fragment(sc, 0)) {
         SSLfatal(sc, SSL_AD_INTERNAL_ERROR, SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
         return 0;
     }

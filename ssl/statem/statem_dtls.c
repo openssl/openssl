@@ -202,8 +202,8 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
         else
             len = s->init_num;
 
-        if (len > ssl_get_max_send_fragment(s))
-            len = ssl_get_max_send_fragment(s);
+        if (len > ssl_get_max_send_fragment(s, 0))
+            len = ssl_get_max_send_fragment(s, 0);
 
         /*
          * XDTLS: this function is too long.  split out the CCS part
