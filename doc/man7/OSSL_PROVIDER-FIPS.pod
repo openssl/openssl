@@ -284,7 +284,7 @@ TEST-RAND is an unapproved algorithm.
 =head1 SELF TESTING
 
 A requirement of FIPS modules is to run cryptographic algorithm self tests.
-FIPS 140-3 requires known answer tests to be run always on startup as well as
+FIPS 140-3 requires known answer tests to be run on startup as well as
 conditional tests that run during cryptographic operations.
 
 An optional callback mechanism is available to return information to the user using
