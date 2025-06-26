@@ -780,6 +780,7 @@ static int helper_init(struct helper *h, const char *script_name,
             goto err;
         bdata->fault = h->qtf;
         BIO_set_data(h->s_qtf_wbio, bdata);
+        bdata = NULL;
     }
 
     h->s_net_bio_own = NULL;
@@ -855,6 +856,7 @@ static int helper_init(struct helper *h, const char *script_name,
     return 1;
 
 err:
+    OPENSSL_free(bdata);
     helper_cleanup(h);
     return 0;
 }
