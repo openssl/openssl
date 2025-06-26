@@ -692,6 +692,33 @@ static int test_param_copy_null(void)
     OSSL_PARAM_free(cp1);
     return ret;
 }
+static int test_param_merge(void)
+{
+    int val, ret;
+    int values[] = {1, 2, 3, 4};
+    OSSL_PARAM *p = NULL, *cp = NULL;
+    OSSL_PARAM param[3], param1[3];
+
+    param[0] = OSSL_PARAM_construct_int("diff1", &values[0]);
+    param[1] = OSSL_PARAM_construct_int("same", &values[1]);
+    param[2] = OSSL_PARAM_construct_end();
+    param1[0] = OSSL_PARAM_construct_int("diff2", &values[2]);
+    param1[1] = OSSL_PARAM_construct_int("same", &values[3]);
+    param1[2] = OSSL_PARAM_construct_end();
+
+    ret = TEST_ptr(p = OSSL_PARAM_merge(param, param1))
+        && TEST_ptr(cp = OSSL_PARAM_locate(p, "diff1"))
+        && TEST_true(OSSL_PARAM_get_int(p, &val))
+        && TEST_int_eq(val, values[0])
+        && TEST_ptr(cp = OSSL_PARAM_locate(p, "diff2"))
+        && TEST_true(OSSL_PARAM_get_int(cp, &val))
+        && TEST_int_eq(val, values[2])
+        && TEST_ptr(cp = OSSL_PARAM_locate(p, "same"))
+        && TEST_true(OSSL_PARAM_get_int(cp, &val))
+        && TEST_int_eq(val, values[3]);
+    OSSL_PARAM_free(p);
+    return ret;
+}
 
 int setup_tests(void)
 {
@@ -710,5 +737,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_param_construct, 4);
     ADD_TEST(test_param_modified);
     ADD_TEST(test_param_copy_null);
+    ADD_TEST(test_param_merge);
     return 1;
 }

@@ -189,18 +189,18 @@ OSSL_PARAM *OSSL_PARAM_merge(const OSSL_PARAM *p1, const OSSL_PARAM *p2)
     while (1) {
         /* If list1 is finished just tack list2 onto the end */
         if (*p1cur == NULL) {
-            do {
+            while (*p2cur != NULL) {
                 *dst++ = **p2cur;
                 p2cur++;
-            } while (*p2cur != NULL);
+            }
             break;
         }
         /* If list2 is finished just tack list1 onto the end */
         if (*p2cur == NULL) {
-            do {
+            while (*p1cur != NULL) {
                 *dst++ = **p1cur;
                 p1cur++;
-            } while (*p1cur != NULL);
+            }
             break;
         }
         /* consume the list element with the smaller key */
