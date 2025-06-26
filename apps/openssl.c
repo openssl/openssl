@@ -190,6 +190,7 @@ static void setup_trace_category(int category)
 
         OSSL_trace_set_callback(category, NULL, NULL);
         BIO_free_all(channel);
+        OPENSSL_free(trace_data);
     }
 }
 
