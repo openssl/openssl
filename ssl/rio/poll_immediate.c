@@ -232,6 +232,7 @@ static int poll_translate(SSL_POLL_ITEM *items,
                  */
                 if (ossl_quic_conn_in_shutdown(ssl))
                     SSL_shutdown(ssl);
+                /* FALLTHRU */
 
             case SSL_TYPE_QUIC_LISTENER:
             case SSL_TYPE_QUIC_XSO:
