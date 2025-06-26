@@ -575,7 +575,7 @@ const OPTIONS s_client_options[] = {
     {"key", OPT_KEY, 's', "Private key file to use; default: -cert file"},
     {"keyform", OPT_KEYFORM, 'E', "Key format (ENGINE, other values ignored)"},
     {"pass", OPT_PASS, 's', "Private key and cert file pass phrase source"},
-    {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
+    {"verify", OPT_VERIFY, 'N', "Turn on peer certificate verification, set depth"},
     {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
     {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
     {"CAfile", OPT_CAFILE, '<', "PEM format file of CA's"},
@@ -1077,8 +1077,12 @@ int s_client_main(int argc, char **argv)
             protohost = opt_arg();
             break;
         case OPT_VERIFY:
-            verify = SSL_VERIFY_PEER;
+            /* Alias for -verify_depth int */
             verify_args.depth = atoi(opt_arg());
+            if (verify_args.depth >= 0) {
+                X509_VERIFY_PARAM_set_depth(vpm, verify_args.depth);
+                vpmtouched++;
+            }
             if (!c_quiet)
                 BIO_printf(bio_err, "verify depth is %d\n", verify_args.depth);
             break;
