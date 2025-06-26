@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -424,6 +424,146 @@ end:
     return ret;
 }
 
+#define DEFAULT_PROVIDER_IDX    0
+#define FAKE_RSA_PROVIDER_IDX   1
+
+static int reset_ctx_providers(OSSL_LIB_CTX **ctx, OSSL_PROVIDER *providers[2], const char *prop)
+{
+    OSSL_PROVIDER_unload(providers[DEFAULT_PROVIDER_IDX]);
+    providers[DEFAULT_PROVIDER_IDX] = NULL;
+    fake_rsa_finish(providers[FAKE_RSA_PROVIDER_IDX]);
+    providers[FAKE_RSA_PROVIDER_IDX] = NULL;
+    OSSL_LIB_CTX_free(*ctx);
+    *ctx = NULL;
+
+    if (!TEST_ptr(*ctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(providers[DEFAULT_PROVIDER_IDX] = OSSL_PROVIDER_load(*ctx, "default"))
+        || !TEST_ptr(providers[FAKE_RSA_PROVIDER_IDX] = fake_rsa_start(*ctx))
+        || !TEST_true(EVP_set_default_properties(*ctx, prop)))
+        return 0;
+    return 1;
+}
+
+struct test_pkey_decoder_properties_t {
+    const char *provider_props;
+    const char *explicit_props;
+    int curr_provider_idx;
+};
+
+static int test_pkey_provider_decoder_props(void)
+{
+    OSSL_LIB_CTX *my_libctx = NULL;
+    OSSL_PROVIDER *providers[2] = { NULL };
+    struct test_pkey_decoder_properties_t properties_test[] = {
+        { "?provider=fake-rsa", NULL, FAKE_RSA_PROVIDER_IDX },
+        { "?provider=default", NULL, DEFAULT_PROVIDER_IDX },
+        { NULL, "?provider=fake-rsa", FAKE_RSA_PROVIDER_IDX },
+        { NULL, "?provider=default", DEFAULT_PROVIDER_IDX },
+        { NULL, "provider=fake-rsa", FAKE_RSA_PROVIDER_IDX },
+        { NULL, "provider=default", DEFAULT_PROVIDER_IDX },
+    };
+    EVP_PKEY *pkey = NULL;
+    BIO *bio_priv = NULL;
+    unsigned char *encoded_pub = NULL;
+    int len_pub;
+    const unsigned char *p;
+    PKCS8_PRIV_KEY_INFO *p8 = NULL;
+    size_t i;
+    int ret = 0;
+    const char pem_rsa_priv_key[] =
+        "-----BEGIN PRIVATE KEY-----\n"
+        "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDEkC4ZWv3ucFbU\n"
+        "F8YwlUrmQlLCZwAgr4DPUAFVHl+wFcXypVgScVY4K7QmdWKsYqb8tpOxqw0NwZWX\n"
+        "O+ta4+y27COufoOhRTMwNyN2LwSNTPN3eEk4ee5QnppEyDrqoCgvTlAAdToFaXvj\n"
+        "x13Ybj7jfhwN74qKdqsSEtPWyggeotiQSPy6KyBIuWtIxPAA8jAvfAnQj1eXhghF\n"
+        "N2NxkqgxvBYdNy1m3+jXACPLRzc11ZbNHKiwhCY1/HiSBkwHlIK+/VLj2smCKdUQ\n"
+        "gvLXSnnVgQulHioD6UgY8xA2a4M1rhYuTV8BrPRZ4BFx2o0jYWvGbA/Hlp7fTOy+\n"
+        "F5OkiHS7AgMBAAECggEAYgCu81ZiQBVDvWiDGKr+1pIf2CxprGJEm1h86ZcEx3L7\n"
+        "qFDW+g8HGWd04S3qvh9LublAJzetAPxRXL9zx3PXjJZs7e3HLEuny3TaWez0XI0O\n"
+        "4LSY8S8d6pVBPmUEtwGWN4vYqHnKLXOb4QQAXs4MzfkM/Me/b+zdu1umwjMl3Dud\n"
+        "5rVhkgvt8uhDUG3XSHeoJYBMbT9ikJDVMJ51rre/1Riddgxp8SktVkvGmMl9kQR8\n"
+        "8dv3Px/kTN94EuRg0CkXBhHpoGo4qnM3Q3B5PlmSK5gkuPvWy9l8L/TVt8Lb6/zL\n"
+        "ByQW+g02wxeNGhw1fkD+XFH7KkSeWl+QnrLcePM0hQKBgQDxoqUk0PLOY5WgOkgr\n"
+        "umgie/K1WKs+izTtApjzcM76sza63b5R9w+P+NssMV4aeV9epEGZO68IUmi0QjvQ\n"
+        "npluQoadFYweFwSQ11BXHoeQBA4nNpkrV58hgzZN3m9JLR7JxyrIqXsRnUzl13Kj\n"
+        "GzZBCJxCpJjfTze/yme8d3pa5QKBgQDQP5mB4jI+g3XH3MuLyBjMoTIvoy7CYMhZ\n"
+        "6/+Kkpw132J16mqkLrwUOZfT0e1rJBsCUkEoBmgKNtRkHo3/SjUI/9fHj3uStPHV\n"
+        "oPcfXj/gFRUkDDzY+auB3dHONF1U1z06EANkkPCC3a538UANBIaPjwpRdBzNw1xl\n"
+        "bvn5aCt3HwKBgBfOl4jGEXYmN6K+u0ebqRDkt2gIoW6bFo7Xd6xci/gFWjoVCOBY\n"
+        "gC8GLMnw3z2qgav4cQIg8EDYpbpE4FHQnntPkKW/bru0Nt3yaNb8igy1aZORfIvZ\n"
+        "qTMLE3melcZW7LaiqeN1V0vH/MCUdpX9Y14K9CJYxzsROgPqdEgMWYDFAoGAAe9l\n"
+        "XMieUOhl0sqhdZYRbO1eiwTILXQ6yGMiB8ae/v0pbBEWlpn8k2+JkqVTwHggbCAZ\n"
+        "jOaqVtX1mUyTYzjsTz4ZYjhaHJ3j1WlegoMcstdfT+txMU74ogdOqMzhxSUO45g8\n"
+        "f9W89mpa8bBjOPu+yFy66tDaZ6sWE7c5SXEHXl8CgYEAtAWwFPoDSTdzoXAwRof0\n"
+        "QMO08+PnQGoPbMJTqrgxrHYCS8u4cYSHdDMJDCOMo5gFXyC+5FfTiGwBhy58z5b7\n"
+        "gBwFKI9RgRfV1D/NimxPrlj3WHyec1/Cs+Br+/vekMVFg5gekeHr4aGSF4bk0AjV\n"
+        "Tv/pQjyRuZAt66IbRZdl2II=\n"
+        "-----END PRIVATE KEY-----";
+
+    /* Load private key BIO, DER-encoded public key and PKCS#8 private key for testing */
+    if (!TEST_ptr(bio_priv = BIO_new(BIO_s_mem()))
+        || !TEST_int_gt(BIO_write(bio_priv, pem_rsa_priv_key, sizeof(pem_rsa_priv_key)), 0)
+        || !TEST_ptr(pkey = PEM_read_bio_PrivateKey_ex(bio_priv, NULL, NULL, NULL, NULL, NULL))
+        || !TEST_int_ge(BIO_seek(bio_priv, 0), 0)
+        || !TEST_int_gt((len_pub = i2d_PUBKEY(pkey, &encoded_pub)), 0)
+        || !TEST_ptr(p8 = EVP_PKEY2PKCS8(pkey)))
+        goto end;
+    EVP_PKEY_free(pkey);
+    pkey = NULL;
+
+    for (i = 0; i < OSSL_NELEM(properties_test); i++) {
+        const char *libctx_prop = properties_test[i].provider_props;
+        const char *explicit_prop = properties_test[i].explicit_props;
+        /* *curr_provider will be updated in reset_ctx_providers */
+        OSSL_PROVIDER **curr_provider = &providers[properties_test[i].curr_provider_idx];
+
+        /*
+         * Decoding a PEM-encoded key uses the properties to select the right provider.
+         * Using a PEM-encoding adds an extra decoder before the key is created.
+         */
+        if (!TEST_int_eq(reset_ctx_providers(&my_libctx, providers, libctx_prop), 1))
+            goto end;
+        if (!TEST_int_ge(BIO_seek(bio_priv, 0), 0)
+            || !TEST_ptr(pkey = PEM_read_bio_PrivateKey_ex(bio_priv, NULL, NULL, NULL, my_libctx,
+                                                           explicit_prop))
+            || !TEST_ptr_eq(EVP_PKEY_get0_provider(pkey), *curr_provider))
+            goto end;
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+
+        /* Decoding a DER-encoded X509_PUBKEY uses the properties to select the right provider */
+        if (!TEST_int_eq(reset_ctx_providers(&my_libctx, providers, libctx_prop), 1))
+            goto end;
+        p = encoded_pub;
+        if (!TEST_ptr(pkey = d2i_PUBKEY_ex(NULL, &p, len_pub, my_libctx, explicit_prop))
+            || !TEST_ptr_eq(EVP_PKEY_get0_provider(pkey), *curr_provider))
+            goto end;
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+
+        /* Decoding a PKCS8_PRIV_KEY_INFO uses the properties to select the right provider */
+        if (!TEST_int_eq(reset_ctx_providers(&my_libctx, providers, libctx_prop), 1))
+            goto end;
+        if (!TEST_ptr(pkey = EVP_PKCS82PKEY_ex(p8, my_libctx, explicit_prop))
+            || !TEST_ptr_eq(EVP_PKEY_get0_provider(pkey), *curr_provider))
+            goto end;
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+    }
+
+    ret = 1;
+
+end:
+    PKCS8_PRIV_KEY_INFO_free(p8);
+    BIO_free(bio_priv);
+    OPENSSL_free(encoded_pub);
+    EVP_PKEY_free(pkey);
+    OSSL_PROVIDER_unload(providers[DEFAULT_PROVIDER_IDX]);
+    fake_rsa_finish(providers[FAKE_RSA_PROVIDER_IDX]);
+    OSSL_LIB_CTX_free(my_libctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     libctx = OSSL_LIB_CTX_new();
@@ -436,6 +576,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_pkey_store, 2);
     ADD_TEST(test_pkey_delete);
     ADD_TEST(test_pkey_store_open_ex);
+    ADD_TEST(test_pkey_provider_decoder_props);
 
     return 1;
 }
