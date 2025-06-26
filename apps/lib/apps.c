@@ -3057,7 +3057,7 @@ BIO *dup_bio_out(int format)
     if (FMT_istext(format)) {
         btmp = BIO_new(BIO_f_linebuffer());
         if (btmp == NULL) {
-            BIO_free_all(b);
+            BIO_free(b);
             return NULL;
         }
         b = BIO_push(btmp, b);
@@ -3088,7 +3088,7 @@ BIO *dup_bio_err(int format)
         BIO *btmp = BIO_new(BIO_f_linebuffer());
 
         if (btmp == NULL) {
-            BIO_free_all(b);
+            BIO_free(b);
             return NULL;
         }
         b = BIO_push(btmp, b);
