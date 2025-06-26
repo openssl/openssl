@@ -1728,15 +1728,6 @@ int SSL_set_fd(SSL *s, int fd)
     }
     BIO_set_fd(bio, fd, BIO_NOCLOSE);
     SSL_set_bio(s, bio, bio);
-#ifndef OPENSSL_NO_KTLS
-    /*
-     * The new socket is created successfully regardless of ktls_enable.
-     * ktls_enable doesn't change any functionality of the socket, except
-     * changing the setsockopt to enable the processing of ktls_start.
-     * Thus, it is not a problem to call it for non-TLS sockets.
-     */
-    ktls_enable(fd);
-#endif /* OPENSSL_NO_KTLS */
     ret = 1;
  err:
     return ret;
@@ -1762,15 +1753,6 @@ int SSL_set_wfd(SSL *s, int fd)
         }
         BIO_set_fd(bio, fd, BIO_NOCLOSE);
         SSL_set0_wbio(s, bio);
-#ifndef OPENSSL_NO_KTLS
-        /*
-         * The new socket is created successfully regardless of ktls_enable.
-         * ktls_enable doesn't change any functionality of the socket, except
-         * changing the setsockopt to enable the processing of ktls_start.
-         * Thus, it is not a problem to call it for non-TLS sockets.
-         */
-        ktls_enable(fd);
-#endif /* OPENSSL_NO_KTLS */
     } else {
         if (!BIO_up_ref(rbio))
             return 0;

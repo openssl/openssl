@@ -72,17 +72,6 @@ BIO *BIO_new_socket(int fd, int close_flag)
     if (ret == NULL)
         return NULL;
     BIO_set_fd(ret, fd, close_flag);
-# ifndef OPENSSL_NO_KTLS
-    {
-        /*
-         * The new socket is created successfully regardless of ktls_enable.
-         * ktls_enable doesn't change any functionality of the socket, except
-         * changing the setsockopt to enable the processing of ktls_start.
-         * Thus, it is not a problem to call it for non-TLS sockets.
-         */
-        ktls_enable(fd);
-    }
-# endif
     return ret;
 }
 
