@@ -14,7 +14,7 @@ accredited testing laboratory.
 =head2 Properties
 
 The implementations in this provider specifically have these properties
-defined:
+defined for approved algorithms:
 
 =over 4
 
@@ -41,20 +41,17 @@ query.  Including C<provider=fips> in your property query guarantees
 that the OpenSSL FIPS provider is used for cryptographic operations
 rather than other FIPS capable providers.
 
+=head2 Approved algorithms
+
+Algorithms that are fetched using "fips=yes" may still be unapproved if certain
+conditions are not met. See L<fips_module(7)/FIPS indicators> for additional
+information.
+
 =head2 Provider parameters
 
 See L<provider-base(7)/Provider parameters> for a list of base parameters.
-Additionally the OpenSSL FIPS provider also supports the following gettable
-parameters:
-
-=over 4
-
-=item "security-checks" (B<OSSL_OSSL_PROV_PARAM_SECURITY_CHECKS>) <unsigned integer>
-
-For further information refer to the L<openssl-fipsinstall(1)> option
-B<-no_security_checks>.
-
-=back
+The OpenSSL FIPS provider also handles FIPS indicator related parameters as
+specified by L<fips_config(5)/FIPS indicator options>.
 
 =head1 OPERATIONS AND ALGORITHMS
 
@@ -83,8 +80,6 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 =item AES, see L<EVP_CIPHER-AES(7)>
 
 =item 3DES, see L<EVP_CIPHER-DES(7)>
-
-This is an unapproved algorithm.
 
 =back
 
@@ -212,21 +207,21 @@ for signature generation, but may be used for verification for legacy use cases.
 
 =item EC, see L<EVP_KEYMGMT-EC(7)>
 
+=item ED25519, see L<EVP_KEYMGMT-ED25519(7)>
+
+=item ED448, see L<EVP_KEYMGMT-ED448(7)>
+
 =item X25519, see L<EVP_KEYMGMT-X25519(7)>
 
 This is an unapproved algorithm.
+The FIPS 140-3 IG states that "Curves that are included in SP 800-186 but not
+included in SP 800-56Arev3 are not approved for key agreement".
 
 =item X448, see L<EVP_KEYMGMT-X448(7)>
 
 This is an unapproved algorithm.
-
-=item ED25519, see L<EVP_KEYMGMT-ED25519(7)>
-
-This is an unapproved algorithm.
-
-=item ED448, see L<EVP_KEYMGMT-ED448(7)>
-
-This is an unapproved algorithm.
+The FIPS 140-3 IG states that "Curves that are included in SP 800-186 but not"
+included in SP 800-56Arev3 are not approved for key agreement".
 
 =item TLS1-PRF
 
@@ -288,8 +283,11 @@ TEST-RAND is an unapproved algorithm.
 
 =head1 SELF TESTING
 
-One of the requirements for the FIPS module is self testing. An optional callback
-mechanism is available to return information to the user using
+A requirement of FIPS modules is to run cryptographic algorithm self tests.
+FIPS 140-3 requires known answer tests to be run on startup as well as
+conditional tests that run during cryptographic operations.
+
+An optional callback mechanism is available to return information to the user using
 L<OSSL_SELF_TEST_set_callback(3)>.
 
 The parameters passed to the callback are described in L<OSSL_SELF_TEST_new(3)>
@@ -311,12 +309,10 @@ Uses HMAC SHA256 on the module file to validate that the module has not been
 modified. The integrity value is compared to a value written to a configuration
 file during installation.
 
-=item "Install_Integrity" (B<OSSL_SELF_TEST_TYPE_INSTALL_INTEGRITY>)
+=item "KAT_Integrity" (B<OSSL_SELF_TEST_TYPE_KAT_INTEGRITY>)
 
-Uses HMAC SHA256 on a fixed string to validate that the installation process
-has already been performed and the self test KATS have already been tested,
-The integrity value is compared to a value written to a configuration
-file after successfully running the self tests during installation.
+Used during the Module Integrity test to perform a known answer test on
+HMAC SHA256 prior to using it.
 
 =item "KAT_Cipher" (B<OSSL_SELF_TEST_TYPE_KAT_CIPHER>)
 
@@ -362,22 +358,22 @@ Known answer test for a Deterministic Random Bit Generator.
 
 Conditional test that is run during the generation or importing of key pairs.
 
+=item "Conditional_KAT" (B<OSSL_SELF_TEST_TYPE_PCT_KAT>)
+
+Conditional test run during generation that derive the public key from the
+private key and checks that the public key matches. This is a SP 800-56A requirement.
+
 =item "Continuous_RNG_Test" (B<OSSL_SELF_TEST_TYPE_CRNG>)
 
 Continuous random number generator test.
 
+=item "Install_Integrity" (B<OSSL_SELF_TEST_TYPE_INSTALL_INTEGRITY>)
+
+This is deprecated. The option is no longer used since FIPS 140-3 requires
+self tests to always run on startup. Previous FIPS 140-2 validations allowed
+the self tests to be run just once.
+
 =back
-
-The "Module_Integrity" self test is always run at startup.
-The "Install_Integrity" self test is used to check if the self tests have
-already been run at installation time. If they have already run then the
-self tests are not run on subsequent startups.
-All other self test categories are run once at installation time, except for the
-"Pairwise_Consistency_Test".
-
-There is only one instance of the "Module_Integrity" and "Install_Integrity"
-self tests. All other self tests may have multiple instances.
-
 
 The FIPS module passes the following descriptions(s) to OSSL_SELF_TEST_onbegin().
 
@@ -385,7 +381,7 @@ The FIPS module passes the following descriptions(s) to OSSL_SELF_TEST_onbegin()
 
 =item "HMAC" (B<OSSL_SELF_TEST_DESC_INTEGRITY_HMAC>)
 
-"Module_Integrity" and "Install_Integrity" use this.
+"Module_Integrity" uses this.
 
 =item "RSA" (B<OSSL_SELF_TEST_DESC_PCT_RSA_PKCS1>)
 
@@ -558,20 +554,6 @@ it is possible to utilize a FIPS provider constructed from one of the
 validated versions alongside F<libcrypto> and F<libssl> compiled from any
 release within the same major release series.  This flexibility enables
 you to address bug fixes and CVEs that fall outside the FIPS boundary.
-
-The FIPS provider in OpenSSL 3.1 includes some non-FIPS validated algorithms,
-consequently the property query C<fips=yes> is mandatory for applications that
-want to operate in a FIPS approved manner.  The algorithms are:
-
-=over 4
-
-=item Triple DES ECB
-
-=item Triple DES CBC
-
-=item EdDSA
-
-=back
 
 You can load the FIPS provider into multiple library contexts as any other
 provider. However the following restriction applies. The FIPS provider cannot
