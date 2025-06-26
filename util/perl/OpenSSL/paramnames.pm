@@ -658,14 +658,17 @@ sub generate_decoder_from_trie {
         my $suf = $trieref->{'suffix'};
 
         $field = $identmap->{$trieref->{'name'}};
-        printf "%sif (ossl_likely(r->%s == NULL && $strcmp(\"$suf\", s + $n) == 0", $indent0, $field;
+        printf "%sif (ossl_likely($strcmp(\"$suf\", s + $n) == 0", $indent0;
         if (not $case_sensitive) {
             $suf =~ tr/_/-/;
             print " || $strcmp(\"$suf\", s + $n) == 0"
                 if ($suf ne $trieref->{'suffix'});
         }
-        printf "))\n%sr->%s = (OSSL_PARAM *)p;\n",
-               $indent1, $field;
+        print ")) {\n";
+        printf "%sif (ossl_unlikely(r->%s != NULL))\n", $indent1, $field;
+        printf "%s    return 0;\n", $indent1;
+        printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent1, $field;
+        printf "%s}\n", $indent0;
         return;
     }
 
@@ -676,8 +679,9 @@ sub generate_decoder_from_trie {
             $field = $identmap->{$trieref->{'val'}};
             printf "%sbreak;\n", $indent1;
             printf "%scase '\\0':\n", $indent0;
-            printf "%sr->%s = ossl_likely(r->%s == NULL) ? (OSSL_PARAM *)p : r->%s;\n",
-                   $indent1, $field, $field, $field;
+            printf "%sif (ossl_unlikely(r->%s != NULL))\n", $indent1, $field;
+            printf "%s    return 0;\n", $indent1;
+            printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent1, $field;
         } else {
             printf "%sbreak;\n", $indent1;
             printf "%scase '%s':", $indent0, $l;
