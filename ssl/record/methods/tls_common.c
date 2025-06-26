@@ -1793,7 +1793,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
          * protocol implementation says differently.
          */
         if (rl->funcs->get_record_type != NULL)
-            rectype = rl->funcs->get_record_type(rl, thistempl);
+            rectype = rl->funcs->get_record_type(rl, thistempl->type);
         else
             rectype = thistempl->type;
 

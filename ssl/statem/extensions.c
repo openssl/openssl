@@ -1763,7 +1763,7 @@ static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
                                               GET_MAX_FRAGMENT_LENGTH(s->session));
 
         s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
-                                              ssl_get_max_send_fragment(s));
+                                              ssl_get_max_send_fragment(s, 0));
     }
 
     return 1;
@@ -1804,17 +1804,7 @@ static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
         s->session->ext.peer_record_size_limit = proto_record_hard_limit;
     }
 
-    /*
-     * Server-side, Record Size limit extension can be disabled, but the client
-     * might have sent a Record Size Limit that we must respect.
-     */
-    if (IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.record_size_limit))
-        s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
-                                         s->session->ext.record_size_limit);
 
-    if (IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.peer_record_size_limit))
-        s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
-                                         s->session->ext.peer_record_size_limit);
 
     return 1;
 }

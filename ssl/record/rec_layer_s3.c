@@ -377,8 +377,8 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
 
     n = (len - tot);
 
-    max_send_fragment = ssl_get_max_send_fragment(s);
-    split_send_fragment = ssl_get_split_send_fragment(s);
+    max_send_fragment = ssl_get_max_send_fragment(s, type);
+    split_send_fragment = ssl_get_split_send_fragment(s, type);
 
     if (max_send_fragment == 0
             || split_send_fragment == 0
@@ -1257,7 +1257,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     const OSSL_RECORD_METHOD *meth;
     int use_etm, stream_mac = 0, tlstree = 0;
     unsigned int maxfrag = (direction == OSSL_RECORD_DIRECTION_WRITE)
-                           ? ssl_get_max_send_fragment(s)
+                           ? ssl_get_max_send_fragment(s, 0)
                            : SSL3_RT_MAX_PLAIN_LENGTH;
     int use_early_data = 0;
     uint32_t max_early_data;

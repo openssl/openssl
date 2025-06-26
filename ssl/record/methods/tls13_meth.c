@@ -306,10 +306,9 @@ static int tls13_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
     return 1;
 }
 
-static uint8_t tls13_get_record_type(OSSL_RECORD_LAYER *rl,
-                                     OSSL_RECORD_TEMPLATE *template)
+static uint8_t tls13_get_record_type(OSSL_RECORD_LAYER *rl, uint8_t type)
 {
-    if (rl->allow_plain_alerts && template->type == SSL3_RT_ALERT)
+    if (rl->allow_plain_alerts && type == SSL3_RT_ALERT)
         return SSL3_RT_ALERT;
 
     /*
