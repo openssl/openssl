@@ -30,6 +30,9 @@ SSL_SESSION_get_max_fragment_length - Control fragment size settings and pipelin
  int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode);
  uint8_t SSL_SESSION_get_max_fragment_length(const SSL_SESSION *session);
 
+ int SSL_CTX_set_tlsext_record_size_limit(SSL_CTX *ctx, uint16_t limit);
+ int SSL_set_tlsext_record_size_limit(SSL_CTX *ctx, uint16_t limit);
+
 =head1 DESCRIPTION
 
 Some engines are able to process multiple simultaneous crypto operations. This
@@ -123,6 +126,23 @@ It affects the client-side as only its side may initiate this extension use.
 SSL_SESSION_get_max_fragment_length() gets the maximum fragment length
 negotiated in B<session>.
 
+SSL_CTX_set_tlsext_record_size_limit() sets the maximum size of record in octets that the endpoint
+is willing to receive.
+This extension is sent by default, and can be disabled by providing a B<limit> of 0.
+If the max_fragment_length extension is configured via SSL_CTX_set_tlsext_max_fragment_length(),
+a value set by SSL_CTX_set_tlsext_record_size_limit() will be ignored and the limit will be the
+same as the max_fragment_length value. Both extensions are gonna be sent, and a server will choose
+record_size_limit if it supports the extension.
+It affects both the client and server side.
+See the B<Notes> to understand the differences between Maximum Fragmentation Length and the Record Size Limit.
+
+SSL_set_tlsext_record_size_limit() has the same semantics of the above function.
+
+SSL_SESSION_get_record_size_limit() returns the Record Size Limit of the calling endpoint.
+SSL_SESSION_get_peer_record_size_limit() returns the Record Size Limit of the peer endpoint.
+Both functions can return B<TLSEXT_record_size_limit_DISABLED> if the Record Size Limit extension is disabled, or the
+peer did not specify a Record Size Limit.
+
 These functions cannot be used with QUIC SSL objects.
 SSL_set_max_send_fragment(), SSL_set_max_pipelines(),
 SSL_set_split_send_fragment(), SSL_set_default_read_buffer_len() and
@@ -162,6 +182,14 @@ Sets Maximum Fragment Length to 2048.
 =item TLSEXT_max_fragment_length_4096
 
 Sets Maximum Fragment Length to 4096.
+
+A valid Record Size Limit cannot be lower than 64 bytes.
+Unlike the Maximum Fragment Length extension, Record Size Limit is asymmetric : a server can advertise
+a limit that is different than the client. This is not possible with the Maximum Fragment Length extension,
+as the server was require to echo the Maximum Fragment Length sent by the client.
+More information about the limitation of the Maximum Fragment Length extension can be found in RFC 8449.
+
+If a Record Size Limit has been negotiated, the max_send_fragment or split_send_fragment will not be used OpenSSL.
 
 =back
 
