@@ -135,7 +135,9 @@ fingerprints (see above).
 
 =item B<SSL_CERT_DIR>
 
-Colon separated list of directories to operate on.
+List of directories to operate on.
+On Unix-like systems the list entries are separated by a colon.
+On Windows they are separated by a semicolon.
 Ignored if directories are listed on the command line.
 
 =back
