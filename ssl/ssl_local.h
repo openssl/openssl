@@ -1063,7 +1063,15 @@ struct ssl_ctx_st {
 
     /* Do we advertise Post-handshake auth support? */
     int pha_enabled;
+
+    /* whether GREASE (RFC 8701) is enabled
+     * used to control injection of GREASE values in ClientHello
+     */
+    int grease_enabled;
 };
+
+// for GREASE value retrieval per extension
+uint16_t get_client_grease_value(SSL *s, int extension_type);
 
 struct ssl_st {
     /*
@@ -1364,6 +1372,11 @@ struct ssl_st {
          * selected.
          */
         int tick_identity;
+
+        // custom client session ID
+        unsigned char custom_session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
+        size_t custom_session_id_len;
+        int custom_session_id_set;
     } ext;
 
     /*
@@ -1479,6 +1492,20 @@ struct ssl_st {
      */
     const struct sigalg_lookup_st **shared_sigalgs;
     size_t shared_sigalgslen;
+
+    /* whether GREASE (RFC 8701) is enabled
+     * used to control injection of GREASE values in ClientHello.
+     */
+    int grease_enabled;
+
+    // fields for GREASE values
+    uint16_t grease_version;  // GREASE version value
+    uint16_t grease_group;    // GREASE group value
+    uint16_t grease_cipher;   // GREASE cipher value
+
+    //whether client_random should be external
+    unsigned char custom_client_random[SSL3_RANDOM_SIZE];
+    int custom_client_random_set;
 };
 
 /*
@@ -2670,3 +2697,13 @@ void ssl_ctx_system_config(SSL_CTX *ctx);
 
 # endif
 #endif
+
+// GREASE injection points in ClientHello, like boringSSL index types enum
+typedef enum {
+    SSL_GREASE_CIPHER = 0,
+    SSL_GREASE_GROUP,
+    SSL_GREASE_EXTENSION1,
+    SSL_GREASE_EXTENSION2,
+    SSL_GREASE_VERSION,
+    SSL_GREASE_LAST_INDEX = SSL_GREASE_VERSION
+} ssl_grease_index_t;

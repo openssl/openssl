@@ -207,6 +207,18 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
                  ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
+
+    // inject GREASE into supported groups
+    if (s->grease_enabled) {
+        uint16_t grease_group = get_client_grease_value(s, SSL_GREASE_GROUP);
+        if (!WPACKET_put_bytes_u16(pkt, grease_group)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                    SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
+                    ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+    }
+
     /* Copy curve ID if supported */
     for (i = 0; i < num_groups; i++) {
         uint16_t ctmp = pgroups[i];
@@ -545,6 +557,17 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
                  SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS,
                  ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
+    }
+
+    //inject GREASE into supported versions
+    if (s->grease_enabled) {
+        uint16_t grease_version = get_client_grease_value(s, SSL_GREASE_VERSION);
+        if (!WPACKET_put_bytes_u16(pkt, grease_version)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                    SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS,
+                    ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
     }
 
     for (currv = max_version; currv >= min_version; currv--) {

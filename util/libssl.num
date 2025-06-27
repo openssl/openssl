@@ -498,3 +498,10 @@ SSL_CTX_get_recv_max_early_data         498	1_1_1	EXIST::FUNCTION:
 SSL_CTX_set_recv_max_early_data         499	1_1_1	EXIST::FUNCTION:
 SSL_CTX_set_post_handshake_auth         500	1_1_1	EXIST::FUNCTION:
 SSL_get_signature_type_nid              501	1_1_1a	EXIST::FUNCTION:
+SSL_CTX_set_grease_enabled              502	1_1_0   EXIST::FUNCTION:STD
+SSL_set_grease_enabled                  503	1_1_0   EXIST::FUNCTION:STD
+SSL_set_grease_version                  504	1_1_0   EXIST::FUNCTION:STD
+SSL_set_grease_group                    505	1_1_0   EXIST::FUNCTION:STD
+SSL_set_grease_cipher                   506	1_1_0   EXIST::FUNCTION:STD
+SSL_set_client_random                   507 1_1_0   EXIST::FUNCTION:STD
+SSL_set_client_hello_session_id         508 1_1_0   EXIST::FUNCTION:STD

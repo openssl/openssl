@@ -1200,11 +1200,28 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
             sess_id_len = sizeof(s->tmp_session_id);
             s->tmp_session_id_len = sess_id_len;
             session_id = s->tmp_session_id;
-            if (s->hello_retry_request == SSL_HRR_NONE
+            // if (s->hello_retry_request == SSL_HRR_NONE
+            //         && RAND_bytes(s->tmp_session_id, sess_id_len) <= 0) {
+            //     SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+            //              SSL_F_TLS_CONSTRUCT_CLIENT_HELLO,
+            //              ERR_R_INTERNAL_ERROR);
+            //     return 0;
+            // }
+
+            //add external client session_id
+            if (s->ext.custom_session_id_set) {
+                if (s->ext.custom_session_id_len != sess_id_len) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                            SSL_F_TLS_CONSTRUCT_CLIENT_HELLO,
+                            ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+                memcpy(s->tmp_session_id, s->ext.custom_session_id, sess_id_len);
+            } else if (s->hello_retry_request == SSL_HRR_NONE
                     && RAND_bytes(s->tmp_session_id, sess_id_len) <= 0) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_F_TLS_CONSTRUCT_CLIENT_HELLO,
-                         ERR_R_INTERNAL_ERROR);
+                        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                                SSL_F_TLS_CONSTRUCT_CLIENT_HELLO,
+                                ERR_R_INTERNAL_ERROR);
                 return 0;
             }
         } else {
@@ -3773,6 +3790,23 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, WPACKET *pkt)
     if (s->mode & SSL_MODE_SEND_FALLBACK_SCSV)
         maxlen -= 2;
 
+    //the following for writes ciphersuites to packet, so we add grease before
+    uint16_t grease_cipher;
+    unsigned char gc[2];
+    
+    if (s->grease_enabled) {
+        uint16_t grease_cipher = get_client_grease_value(s, SSL_GREASE_CIPHER);
+        unsigned char gc[2];
+        gc[0] = (grease_cipher >> 8) & 0xff;
+        gc[1] = grease_cipher & 0xff;
+        if (!WPACKET_memcpy(pkt, gc, 2)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                    SSL_F_SSL_CIPHER_LIST_TO_BYTES, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        totlen += 2;
+    }
+    
     for (i = 0; i < sk_SSL_CIPHER_num(sk) && totlen < maxlen; i++) {
         const SSL_CIPHER *c;
 

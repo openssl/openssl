@@ -692,6 +692,9 @@ SSL *SSL_new(SSL_CTX *ctx)
     if (s == NULL)
         goto err;
 
+    //inherit grease from ctx
+    s->grease_enabled = ctx->grease_enabled;
+
     s->references = 1;
     s->lock = CRYPTO_THREAD_lock_new();
     if (s->lock == NULL) {
@@ -856,6 +859,20 @@ SSL *SSL_new(SSL_CTX *ctx)
     SSL_free(s);
     SSLerr(SSL_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
     return NULL;
+}
+
+//helper function to get GREASE value based on extension type
+uint16_t get_client_grease_value(SSL *s, int extension_type) {
+    switch (extension_type) {
+        case SSL_GREASE_VERSION:
+            return s->grease_version;   //GREASE value for supported versions
+        case SSL_GREASE_GROUP:
+            return s->grease_group;     //GREASE value for supported groups
+        case SSL_GREASE_CIPHER:
+            return s->grease_cipher;    //GREASE value for cipher suites
+        default:
+            return 0;  //return 0 for unrecognized extension types
+    }
 }
 
 int SSL_is_dtls(const SSL *s)
@@ -5706,4 +5723,45 @@ void SSL_set_allow_early_data_cb(SSL *s,
 {
     s->allow_early_data_cb = cb;
     s->allow_early_data_cb_data = arg;
+}
+
+// add GREASE enabled to SSL_CTX and SSL
+void SSL_CTX_set_grease_enabled(SSL_CTX *ctx, int enabled) {
+    ctx->grease_enabled = !!enabled;
+}
+
+void SSL_set_grease_enabled(SSL *s, int enabled) {
+    s->grease_enabled = !!enabled;
+}
+// define setter functions for GREASE
+void SSL_set_grease_version(SSL *s, uint16_t value) {
+    s->grease_version = value;
+}
+
+void SSL_set_grease_group(SSL *s, uint16_t value) {
+    s->grease_group = value;
+}
+
+void SSL_set_grease_cipher(SSL *s, uint16_t value) {
+    s->grease_cipher = value;
+}
+
+//added for external client random
+int SSL_set_client_random(SSL *s, const unsigned char *rand, size_t len) {
+    if (s == NULL || rand == NULL || len != SSL3_RANDOM_SIZE)
+        return 0;
+    memcpy(s->custom_client_random, rand, SSL3_RANDOM_SIZE);
+    s->custom_client_random_set = 1;
+    return 1;
+}
+
+//added for external client session_id
+int SSL_set_client_hello_session_id(SSL *s, const unsigned char *sid, size_t sid_len)
+{
+    if (s == NULL || sid == NULL || sid_len > SSL_MAX_SSL_SESSION_ID_LENGTH)
+        return 0;
+    memcpy(s->ext.custom_session_id, sid, sid_len);
+    s->ext.custom_session_id_len = sid_len;
+    s->ext.custom_session_id_set = 1;
+    return 1;
 }

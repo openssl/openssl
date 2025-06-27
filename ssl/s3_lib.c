@@ -4578,6 +4578,11 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len,
 
     if (len < 4)
         return 0;
+    //check if external client random is set
+    if (!server && s->custom_client_random_set) {
+        memcpy(result, s->custom_client_random, len);
+        return 1;
+    }
     if (server)
         send_time = (s->mode & SSL_MODE_SEND_SERVERHELLO_TIME) != 0;
     else

@@ -2446,3 +2446,15 @@ void SSL_set_allow_early_data_cb(SSL *s,
 }
 # endif
 #endif
+
+// Declarations for enabling GREASE
+void SSL_CTX_set_grease_enabled(SSL_CTX *ctx, int enabled);
+void SSL_set_grease_enabled(SSL *s, int enabled);
+//additional declarations for setting GREASE
+void SSL_set_grease_version(SSL *s, uint16_t value);
+void SSL_set_grease_group(SSL *s, uint16_t value);
+void SSL_set_grease_cipher(SSL *s, uint16_t value);
+//declaration for external client random
+int SSL_set_client_random(SSL *s, const unsigned char *rand, size_t len);
+//declaration for external client session_id
+int SSL_set_client_hello_session_id(SSL *s, const unsigned char *sid, size_t sid_len);
