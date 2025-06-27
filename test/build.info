@@ -69,7 +69,8 @@ IF[{- !$disabled{tests} -}]
           ca_internals_test bio_tfo_test membio_test bio_dgram_test list_test \
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
-          x509_acert_test x509_req_test strtoultest bio_pw_callback_test
+          x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
+          grease_test
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -582,6 +583,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[rpktest]=rpktest.c helpers/ssltestlib.c
   INCLUDE[rpktest]=../include ../apps/include ..
   DEPEND[rpktest]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[grease_test]=grease_test.c helpers/ssltestlib.c
+  INCLUDE[grease_test]=../include ../apps/include ..
+  DEPEND[grease_test]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[defltfips_test]=defltfips_test.c
   INCLUDE[defltfips_test]=../include  ../apps/include
