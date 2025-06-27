@@ -128,10 +128,17 @@ int X509_TRUST_get_trust(const X509_TRUST *xp);
 int X509_trusted(const X509 *x);
 int X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj);
 int X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj);
+int X509_add1_other_algor(X509 *x, const X509_ALGOR *obj);
 void X509_trust_clear(X509 *x);
 void X509_reject_clear(X509 *x);
+void X509_other_clear(X509 *x);
 STACK_OF(ASN1_OBJECT) *X509_get0_trust_objects(X509 *x);
 STACK_OF(ASN1_OBJECT) *X509_get0_reject_objects(X509 *x);
+STACK_OF(X509_ALGOR) *X509_get0_other_algors(X509 *x);
+int X509_other_clear_nid(X509 *x, int nid);
+X509_ALGOR *X509_get0_other_by_nid(X509 *x, int nid);
+int X509_set0_aux_distrustafterdate(X509 *x, ASN1_GENERALIZEDTIME *time);
+ASN1_TIME *X509_get0_aux_distrustafterdate(X509 *x);
 
 int (*X509_TRUST_set_default(int (*trust) (int, X509 *, int))) (int, X509 *,
                                                                 int);

@@ -31,6 +31,18 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+  * Added Distrust after date into certificates aux info to encode method
+    used by root programs gradually retires a root certificate.
+    it can be set by X509_set0_aux_distrustafterdate()
+    and accessed by X509_get0_other_algors()
+    'openssl x509' now have `-setdistrustafter` and `-clrdistrustafter`
+    to handle this setting, and `-clrother` to clear other unknown aux infomation in
+    trusted certificate.
+
+    Added general handling of 'other' struct inside certificate aux info.
+
+    *Seo Suchan*
+
  * Introduces use of `<stdbool.h>` when handling JSON encoding in
    the OpenSSL codebase, replacing the previous use of `int` for
    these boolean values.

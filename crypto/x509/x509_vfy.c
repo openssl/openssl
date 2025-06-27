@@ -1857,6 +1857,7 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 {
     time_t *ptime;
     int i;
+    ASN1_TIME *auxdistrustafter;
 
     if ((ctx->param->flags & X509_V_FLAG_USE_CHECK_TIME) != 0)
         ptime = &ctx->param->check_time;
@@ -1876,6 +1877,13 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
         return 0;
     CB_FAIL_IF(i == 0, ctx, x, depth, X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD);
     CB_FAIL_IF(i < 0, ctx, x, depth, X509_V_ERR_CERT_HAS_EXPIRED);
+    auxdistrustafter = X509_get0_aux_distrustafterdate(x);
+    if (auxdistrustafter != NULL) {
+        i = ASN1_TIME_compare(auxdistrustafter, X509_get0_notBefore(ctx->cert));
+        if (i <= 0 && depth < 0)
+            return 0;
+        CB_FAIL_IF(i < 0, ctx, x, depth, X509_V_ERR_CERT_REJECTED);
+    }
     return 1;
 }
 
