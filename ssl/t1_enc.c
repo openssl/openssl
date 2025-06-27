@@ -241,7 +241,9 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
-    ssl_set_ext_record_size_limit(s);
+    /* Record Size Limit does not apply to unprotected messages. */
+    if (c != NULL)
+      ssl_set_ext_record_size_limit(s);
 
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "which = %04X, key:\n", which);
