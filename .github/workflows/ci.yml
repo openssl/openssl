@@ -156,7 +156,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: config
-      uses: cross-platform-actions/action@v0.26.0
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: freebsd
         version: "13.4"
@@ -165,21 +165,21 @@ jobs:
           sudo pkg install -y gcc perl5
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
-      uses: cross-platform-actions/action@v0.26.0
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: freebsd
         version: "13.4"
         shutdown_vm: false
         run: ./configdata.pm --dump
     - name: make
-      uses: cross-platform-actions/action@v0.26.0
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: freebsd
         version: "13.4"
         shutdown_vm: false
         run: make -j4
     - name: make test
-      uses: cross-platform-actions/action@v0.26.0
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: freebsd
         version: "13.4"
@@ -630,7 +630,7 @@ jobs:
         sudo apt-get update
         sudo apt-get -yq install bison gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python3 python3-paste python3-pyrad slapd tcsh python3-virtualenv virtualenv python3-kdcproxy gdb libtls-dev
     - name: install cpanm and Test2::V0 for gost_engine testing
-      uses: perl-actions/install-with-cpanm@stable
+      uses: perl-actions/install-with-cpanm@10d60f00b4073f484fc29d45bfbe2f776397ab3d # v1.7
       with:
         install: Test2::V0
     - name: setup hostname workaround
@@ -639,7 +639,7 @@ jobs:
       run: ./config --strict-warnings --banner=Configured --debug no-afalgeng enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
-    - uses: dtolnay/rust-toolchain@stable
+    - uses: dtolnay/rust-toolchain@fcf085fcb4b4b8f63f96906cd713eb52181b5ea4
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -728,9 +728,9 @@ jobs:
       uses: actions/setup-python@v5.3.0
       with:
         python-version: ${{ matrix.PYTHON }}
-    - uses: dtolnay/rust-toolchain@stable
+    - uses: dtolnay/rust-toolchain@fcf085fcb4b4b8f63f96906cd713eb52181b5ea4
       with:
-        toolchain: stable 
+        toolchain: stable
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
