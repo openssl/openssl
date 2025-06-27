@@ -58,7 +58,7 @@ int main(int argc, char **argv)
     /* Open file containing detached content */
     dcont = BIO_new_file("smencr.out", "rb");
 
-    if (!in)
+    if (dcont == NULL)
         goto err;
 
     out = BIO_new_file("encrout.txt", "w");
