@@ -84,9 +84,9 @@ see L<openssl_user_macros(7)>:
 
 =head1 DESCRIPTION
 
-All of the functions described on this page are deprecated.
-Applications should use OSSL_ENCODER_to_bio() and OSSL_DECODER_from_bio()
-instead.
+To replace the deprecated functions listed above, applications should use the
+B<EVP_PKEY> type and OSSL_DECODER_from_bio() and OSSL_ENCODER_to_bio() to
+read and write PEM data containing key parameters or private and public keys.
 
 In the description below, B<I<TYPE>> is used
 as a placeholder for any of the OpenSSL datatypes, such as B<X509>.
