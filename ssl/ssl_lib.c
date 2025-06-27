@@ -7308,9 +7308,8 @@ static unsigned int get_proto_record_hard_limit(int version) {
 }
 
 __owur unsigned int ssl_get_proto_record_hard_limit(const SSL_CONNECTION *sc) {
-    if (sc->session) {
+    if (sc->session)
         return get_proto_record_hard_limit(sc->session->ssl_version);
-    }
 
     return get_proto_record_hard_limit(sc->version);
 }

@@ -1804,7 +1804,9 @@ static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
         s->session->ext.peer_record_size_limit = proto_record_hard_limit;
     }
 
-
+    /*
+     * Unlike Maximum Fragment Length, wait until the cipher spec changes.
+     */
 
     return 1;
 }

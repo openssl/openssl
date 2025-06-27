@@ -1679,12 +1679,11 @@ EXT_RETURN tls_construct_stoc_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,
                                              size_t chainidx)
 {
-    /* If peer did not send a Record Size Limit. */
+    /* If the peer did not send a Record Size Limit. */
     if (s->session->ext.peer_record_size_limit ==
         TLSEXT_record_size_limit_UNSPECIFIED) {
         return EXT_RETURN_NOT_SENT;
     }
-
 
 
     /*-
