@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 {-
-use OpenSSL::paramnames qw(produce_param_list);
+use OpenSSL::paramnames qw(produce_param_decoder);
 -}
 
 /*
@@ -23,88 +23,80 @@ use OpenSSL::paramnames qw(produce_param_list);
 #include "prov/providercommon.h"
 #include "internal/skey.h"
 #include "internal/e_os.h"
-#include "internal/param_names.h"
 #include "crypto/types.h"
 
 /*-
  * Generic cipher functions for OSSL_PARAM gettables and settables
  */
-static const OSSL_PARAM cipher_known_gettable_params[] = {
-    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_MODE, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, NULL),
-    OSSL_PARAM_int(OSSL_CIPHER_PARAM_AEAD, NULL),
-    OSSL_PARAM_int(OSSL_CIPHER_PARAM_CUSTOM_IV, NULL),
-    OSSL_PARAM_int(OSSL_CIPHER_PARAM_CTS, NULL),
-    OSSL_PARAM_int(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK, NULL),
-    OSSL_PARAM_int(OSSL_CIPHER_PARAM_HAS_RAND_KEY, NULL),
-    OSSL_PARAM_END
-};
+{- produce_param_decoder('ossl_cipher_generic_get_ctx_params',
+                         (['CIPHER_PARAM_MODE',             'mode',   'uint'],
+                          ['CIPHER_PARAM_KEYLEN',           'keylen', 'size_t'],
+                          ['CIPHER_PARAM_IVLEN',            'ivlen',  'size_t'],
+                          ['CIPHER_PARAM_BLOCK_SIZE',       'bsize',  'size_t'],
+                          ['CIPHER_PARAM_AEAD',             'aead',   'int' ],
+                          ['CIPHER_PARAM_CUSTOM_IV',        'custiv', 'int' ],
+                          ['CIPHER_PARAM_CTS',              'cts',    'int' ],
+                          ['CIPHER_PARAM_TLS1_MULTIBLOCK',  'mb',     'int' ],
+                          ['CIPHER_PARAM_HAS_RAND_KEY',     'rand',   'int' ],
+                          ['CIPHER_PARAM_ENCRYPT_THEN_MAC', 'etm',    'int' ],
+                         )); -}
+
 const OSSL_PARAM *ossl_cipher_generic_gettable_params(ossl_unused void *provctx)
 {
-    return cipher_known_gettable_params;
+    return ossl_cipher_generic_get_ctx_params_list;
 }
 
 int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                                    uint64_t flags,
                                    size_t kbits, size_t blkbits, size_t ivbits)
 {
-    OSSL_PARAM *p;
+    struct ossl_cipher_generic_get_ctx_params_st p;
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_MODE);
-    if (p != NULL && !OSSL_PARAM_set_uint(p, md)) {
+    p = ossl_cipher_generic_get_ctx_params_decoder(params);
+
+    if (p.mode != NULL && !OSSL_PARAM_set_uint(p.mode, md)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD);
-    if (p != NULL
-        && !OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_AEAD) != 0)) {
+    if (p.aead != NULL
+            && !OSSL_PARAM_set_int(p.aead, (flags & PROV_CIPHER_FLAG_AEAD) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_CUSTOM_IV);
-    if (p != NULL
-        && !OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_CUSTOM_IV) != 0)) {
+    if (p.custiv != NULL
+            && !OSSL_PARAM_set_int(p.custiv, (flags & PROV_CIPHER_FLAG_CUSTOM_IV) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_CTS);
-    if (p != NULL
-        && !OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_CTS) != 0)) {
+    if (p.cts != NULL
+            && !OSSL_PARAM_set_int(p.cts, (flags & PROV_CIPHER_FLAG_CTS) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK);
-    if (p != NULL
-        && !OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_TLS1_MULTIBLOCK) != 0)) {
+    if (p.mb != NULL
+            && !OSSL_PARAM_set_int(p.mb, (flags & PROV_CIPHER_FLAG_TLS1_MULTIBLOCK) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_HAS_RAND_KEY);
-    if (p != NULL
-        && !OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_RAND_KEY) != 0)) {
+    if (p.rand != NULL
+            && !OSSL_PARAM_set_int(p.rand, (flags & PROV_CIPHER_FLAG_RAND_KEY) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ENCRYPT_THEN_MAC);
-    if (p != NULL
-        && !OSSL_PARAM_set_int(p, (flags & EVP_CIPH_FLAG_ENC_THEN_MAC) != 0)) {
+    if (p.etm != NULL
+            && !OSSL_PARAM_set_int(p.etm, (flags & EVP_CIPH_FLAG_ENC_THEN_MAC) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, kbits / 8)) {
+    if (p.keylen != NULL && !OSSL_PARAM_set_size_t(p.keylen, kbits / 8)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_BLOCK_SIZE);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, blkbits / 8)) {
+    if (p.bsize != NULL && !OSSL_PARAM_set_size_t(p.bsize, blkbits / 8)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, ivbits / 8)) {
+    if (p.ivlen != NULL && !OSSL_PARAM_set_size_t(p.ivlen, ivbits / 8)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -154,49 +146,6 @@ CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(ossl_cipher_var_keylen)
 OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(ossl_cipher_var_keylen)
 
-/*-
- * AEAD cipher functions for OSSL_PARAM gettables and settables
- */
-
-/* Machine generated by util/perl/OpenSSL/paramnames.pm */
-{- produce_param_list('static', 'cipher_aead_known_gettable_ctx_params',
-                      '', 'ossl_cipher_aead_get_ctx_params_find_pidx',
-                      (['CIPHER_PARAM_KEYLEN',                  'size_t'],
-                       ['CIPHER_PARAM_IVLEN',                   'size_t'],
-                       ['CIPHER_PARAM_AEAD_TAGLEN',             'size_t'],
-                       ['CIPHER_PARAM_IV',                      'octet_string'],
-                       ['CIPHER_PARAM_UPDATED_IV',              'octet_string'],
-                       ['CIPHER_PARAM_AEAD_TAG',                'octet_string'],
-                       ['CIPHER_PARAM_AEAD_TLS1_AAD_PAD',       'size_t'],
-                       ['CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN',    'octet_string'],
-                       ['CIPHER_PARAM_AEAD_IV_GENERATED',       'uint'],
-                      )); -}
-/* End of machine generated */
-
-const OSSL_PARAM *ossl_cipher_aead_gettable_ctx_params(
-        ossl_unused void *cctx, ossl_unused void *provctx
-    )
-{
-    return cipher_aead_known_gettable_ctx_params;
-}
-
-/* Machine generated by util/perl/OpenSSL/paramnames.pm */
-{- produce_param_list('static', 'cipher_aead_known_settable_ctx_params',
-                      '', 'ossl_cipher_aead_set_ctx_params_find_pidx',
-                      (['CIPHER_PARAM_AEAD_IVLEN',              'size_t'],
-                       ['CIPHER_PARAM_AEAD_TAG',                'octet_string'],
-                       ['CIPHER_PARAM_AEAD_TLS1_AAD',           'octet_string'],
-                       ['CIPHER_PARAM_AEAD_TLS1_IV_FIXED',      'octet_string'],
-                       ['CIPHER_PARAM_AEAD_TLS1_SET_IV_INV',    'octet_string'],
-                      )); -}
-/* End of machine generated */
-
-const OSSL_PARAM *ossl_cipher_aead_settable_ctx_params(
-        ossl_unused void *cctx, ossl_unused void *provctx
-    )
-{
-    return cipher_aead_known_settable_ctx_params;
-}
 
 void ossl_cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx)
 {

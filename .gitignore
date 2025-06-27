@@ -58,7 +58,6 @@
 /include/openssl/x509_acert.h
 /include/openssl/x509_vfy.h
 /include/openssl/core_names.h
-/include/internal/param_names.h
 
 # Auto generated parameter name files
 /crypto/params_idx.c
@@ -88,6 +87,8 @@ providers/common/include/prov/der_ml_dsa.h
 providers/implementations/keymgmt/ml_dsa_kmgmt.c
 providers/implementations/keymgmt/ml_kem_kmgmt.c
 providers/implementations/ciphers/ciphercommon.c
+providers/implementations/ciphers/ciphercommon_ccm.c
+providers/implementations/ciphers/ciphercommon_gcm.c
 providers/implementations/ciphers/cipher_chacha20_poly1305.c
 
 # error code files

@@ -1017,6 +1017,10 @@ while (@argvcopy)
                 {
                 $config{build_type} = "release";
                 }
+        elsif (/^--pgo$/)
+                {
+                $config{build_type} = "pgo";
+                }
         elsif (/^386$/)
                 { $config{processor}=386; }
         elsif (/^rsaref$/)

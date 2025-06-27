@@ -164,6 +164,7 @@ jobs:
 
   linux-arm64:
     runs-on: linux-arm64
+    if: github.repository == 'openssl/openssl'
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -179,6 +180,7 @@ jobs:
 
   linux-ppc64le:
     runs-on: linux-ppc64le
+    if: github.repository == 'openssl/openssl'
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -196,10 +198,11 @@ jobs:
 
   linux-s390x:
     runs-on: linux-s390x
+    if: github.repository == 'openssl/openssl'
     steps:
     - uses: actions/checkout@v4
     - name: config
-      run: ./config --strict-warnings -Wno-stringop-overflow enable-fips enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config --strict-warnings enable-fips enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -213,6 +216,7 @@ jobs:
 
   linux-riscv64:
     runs-on: linux-riscv64
+    if: github.repository == 'openssl/openssl'
     steps:
     - uses: actions/checkout@v4
     - name: config

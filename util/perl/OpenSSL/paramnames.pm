@@ -14,9 +14,7 @@ use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(generate_public_macros
-                    generate_internal_macros
-                    produce_decoder
-                    produce_param_list);
+                    produce_param_decoder);
 
 my $case_sensitive = 1;
 
@@ -646,36 +644,53 @@ sub generate_public_macros {
     return join("\n", sort @macros);
 }
 
-# Generate number based macros for internal use
-# The numbers are unique per string
-sub generate_internal_macros {
-    my @macros = ();
-    my $count = 0;
-    my %reverse;
+sub generate_decoder_from_trie {
+    my $n = shift;
+    my $trieref = shift;
+    my $identmap = shift;
+    my $idt = "    ";
+    my $indent0 = $idt x ($n + 2);
+    my $indent1 = $indent0 . $idt;
+    my $strcmp = $case_sensitive ? 'strcmp' : 'strcasecmp';
+    my $field;
 
-    # Determine the number for each unique string
-    # Sort the names to improve the chance of cache coherency
-    foreach my $name (sort keys %params) {
-        my $val = $params{$name};
+    if ($trieref->{'suffix'}) {
+        my $suf = $trieref->{'suffix'};
 
-        if (substr($val, 0, 1) ne '*' and not defined $reverse{$val}) {
-            $reverse{$val} = $count++;
+        $field = $identmap->{$trieref->{'name'}};
+        printf "%sif (ossl_likely(r.%s == NULL && $strcmp(\"$suf\", s + $n) == 0", $indent0, $field;
+        if (not $case_sensitive) {
+            $suf =~ tr/_/-/;
+            print " || $strcmp(\"$suf\", s + $n) == 0"
+                if ($suf ne $trieref->{'suffix'});
         }
+        printf "))\n%sr.%s = (OSSL_PARAM *)p;\n",
+               $indent1, $field;
+        return;
     }
 
-    # Output the defines
-    foreach my $name (keys %params) {
-        my $val = $params{$name};
-        my $def = '#define PIDX_' . $name . ' ';
-
-        if (substr($val, 0, 1) eq '*') {
-            $def .= 'PIDX_' . substr($val, 1);
+    printf "%sswitch(s\[%d\]) {\n", $indent0, $n;
+    printf "%sdefault:\n", $indent0;
+    for my $l (sort keys %$trieref) {
+        if ($l eq 'val') {
+            $field = $identmap->{$trieref->{'val'}};
+            printf "%sbreak;\n", $indent1;
+            printf "%scase '\\0':\n", $indent0;
+            printf "%sr.%s = ossl_likely(r.%s == NULL) ? (OSSL_PARAM *)p : r.%s;\n",
+                   $indent1, $field, $field, $field;
         } else {
-            $def .= $reverse{$val};
+            printf "%sbreak;\n", $indent1;
+            printf "%scase '%s':", $indent0, $l;
+            if (not $case_sensitive) {
+                print "   case '-':" if ($l eq '_');
+                printf "   case '%s':", uc $l if ($l =~ /[a-z]/);
+            }
+            print "\n";
+            generate_decoder_from_trie($n + 1, $trieref->{$l}, $identmap);
         }
-        push(@macros, $def)
     }
-    return "#define NUM_PIDX $count\n\n" . join("\n", sort @macros);
+    printf "%s}\n", $indent0;
+    return;
 }
 
 sub generate_trie {
@@ -711,52 +726,7 @@ sub generate_trie {
         }
         $cursor->{'val'} = $name;
     }
-    #print "\n\n/* $nodes nodes for $chars letters*/\n\n";
     return %trie;
-}
-
-sub generate_code_from_trie {
-    my $n = shift;
-    my $trieref = shift;
-    my $idt = "    ";
-    my $indent0 = $idt x ($n + 1);
-    my $indent1 = $indent0 . $idt;
-    my $strcmp = $case_sensitive ? 'strcmp' : 'strcasecmp';
-
-    if ($trieref->{'suffix'}) {
-        my $suf = $trieref->{'suffix'};
-
-        printf "%sif ($strcmp(\"$suf\", s + $n) == 0", $indent0;
-        if (not $case_sensitive) {
-            $suf =~ tr/_/-/;
-            print " || $strcmp(\"$suf\", s + $n) == 0"
-                if ($suf ne $trieref->{'suffix'});
-        }
-        printf ")\n%sreturn PIDX_%s;\n", $indent1, $trieref->{'name'};
-        #printf "%sbreak;\n", $indent0;
-        return;
-    }
-
-    printf "%sswitch(s\[%d\]) {\n", $indent0, $n;
-    printf "%sdefault:\n", $indent0;
-    for my $l (sort keys %$trieref) {
-        if ($l eq 'val') {
-            printf "%sbreak;\n", $indent1;
-            printf "%scase '\\0':\n", $indent0;
-            printf "%sreturn PIDX_%s;\n", $indent1, $trieref->{'val'};
-        } else {
-            printf "%sbreak;\n", $indent1;
-            printf "%scase '%s':", $indent0, $l;
-            if (not $case_sensitive) {
-                print "   case '-':" if ($l eq '_');
-                printf "   case '%s':", uc $l if ($l =~ /[a-z]/);
-            }
-            print "\n";
-            generate_code_from_trie($n + 1, $trieref->{$l});
-        }
-    }
-    printf "%s}\n", $indent0;
-    return "";
 }
 
 # Find long endings and cache what they resolve to
@@ -785,46 +755,60 @@ sub locate_long_endings {
     return 0, '';
 }
 
-sub produce_decoder {
-    my $func_name = shift;
-    my @keys = @_;
-    my %t = generate_trie(@keys);
-    my $s;
-
-    locate_long_endings(\%t);
-
-    open local *STDOUT, '>', \$s;
-    printf "int %s(const char *s)\n{\n", $func_name;
-    generate_code_from_trie(0, \%t);
-    print "    return -1;\n}\n";
-    return $s;
-}
-
-sub produce_param_list {
-    my $static_array = shift;
-    my $array_name = shift;
-    my $static_func = shift;
-    my $func_name = shift;
+sub output_param_decoder {
+    my $decoder_name_base = shift;
     my @params = @_;
     my @keys = ();
-    my $s;
+    my %prms = ();
 
-    open local *STDOUT, '>', \$s;
-    print $static_array . ' ' if $static_array ne '';
-    printf "const OSSL_PARAM %s[] = {\n", $array_name;
+    print "/* Machine generated by util/perl/OpenSSL/paramnames.pm */\n";
+    # Output ettable param array
+    printf "#ifndef %s_list\n", $decoder_name_base;
+    printf "static const OSSL_PARAM %s_list[] = {\n", $decoder_name_base;
     for (my $i = 0; $i <= $#params; $i++) {
         my $pname = $params[$i][0];
-        my $ptype = $params[$i][1];
+        my $pident = $params[$i][1];
+        my $ptype = $params[$i][2];
 
         print "    OSSL_PARAM_$ptype(OSSL_$pname, NULL";
         print ", 0" if $ptype eq "octet_string" || $ptype eq "octet_ptr"
                        || $ptype eq "utf8_string" || $ptype eq "utf8_ptr";
         printf "),\n";
 
-        push(@keys, $pname);
+        $prms{$pname} = $pident;
     }
-    print "    OSSL_PARAM_END\n};\n\n";
+    print "    OSSL_PARAM_END\n};\n#endif\n\n";
 
-    print $static_func . ' ' if $static_func ne '';
-    return $s .  produce_decoder($func_name, @keys);
+    # Output param pointer structure
+    printf "#ifndef %s_st\n", $decoder_name_base;
+    printf "struct %s_st {\n", $decoder_name_base;
+    foreach my $pident (sort values %prms) {
+        printf "    OSSL_PARAM *%s;\n", $pident;
+    }
+    print "};\n#endif\n\n";
+
+    # Output param decoder
+    my %t = generate_trie(keys(%prms));
+    locate_long_endings(\%t);
+
+    printf "#ifndef %s_decoder\n", $decoder_name_base;
+    printf "static struct %s_st %s_decoder(const OSSL_PARAM params[]) {\n",
+        $decoder_name_base, $decoder_name_base;
+    printf "    struct %s_st r;\n", $decoder_name_base;
+    print "    const OSSL_PARAM *p;\n";
+    print "    const char *s;\n\n";
+    print "    memset(&r, 0, sizeof(r));\n";
+    print "    for (p = params; (s = p->key) != NULL; p++)\n";
+    generate_decoder_from_trie(0, \%t, \%prms);
+    print "    return r;\n";
+    print "}\n#endif\n";
+    print "/* End of machine generated */";
+}
+
+sub produce_param_decoder {
+    my $s;
+
+    open local *STDOUT, '>', \$s;
+    output_param_decoder(@_);
+    return $s;
 }

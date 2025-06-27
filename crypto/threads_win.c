@@ -31,6 +31,7 @@
 #include <crypto/cryptlib.h>
 #include "internal/common.h"
 #include "internal/thread_arch.h"
+#include "internal/threads_common.h"
 #include "internal/rcu.h"
 #include "rcu_internal.h"
 
@@ -221,10 +222,10 @@ static ossl_inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK *lock)
 static void ossl_rcu_free_local_data(void *arg)
 {
     OSSL_LIB_CTX *ctx = arg;
-    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_rcukey(ctx);
-    struct rcu_thr_data *data = CRYPTO_THREAD_get_local(lkey);
+    struct rcu_thr_data *data = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_RCU_KEY, ctx);
+
+    CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_RCU_KEY, ctx, NULL);
     OPENSSL_free(data);
-    CRYPTO_THREAD_set_local(lkey, NULL);
 }
 
 void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
@@ -232,18 +233,17 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
     struct rcu_thr_data *data;
     int i;
     int available_qp = -1;
-    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_rcukey(lock->ctx);
 
     /*
      * we're going to access current_qp here so ask the
      * processor to fetch it
      */
-    data = CRYPTO_THREAD_get_local(lkey);
+    data = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_RCU_KEY, lock->ctx);
 
     if (data == NULL) {
         data = OPENSSL_zalloc(sizeof(*data));
         OPENSSL_assert(data != NULL);
-        CRYPTO_THREAD_set_local(lkey, data);
+        CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_RCU_KEY, lock->ctx, data);
         ossl_init_thread_start(NULL, lock->ctx, ossl_rcu_free_local_data);
     }
 
@@ -277,8 +277,7 @@ void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK *lock)
 
 void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
 {
-    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_rcukey(lock->ctx);
-    struct rcu_thr_data *data = CRYPTO_THREAD_get_local(lkey);
+    struct rcu_thr_data *data = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_RCU_KEY, lock->ctx);
     int i;
     LONG64 ret;
 

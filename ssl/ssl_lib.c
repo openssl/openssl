@@ -5481,6 +5481,8 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
     new_cert = ssl_cert_dup(ctx->cert);
     if (new_cert == NULL)
         goto err;
+    if (!custom_exts_copy_conn(&new_cert->custext, &sc->cert->custext))
+        goto err;
     if (!custom_exts_copy_flags(&new_cert->custext, &sc->cert->custext))
         goto err;
 
