@@ -122,34 +122,72 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
 
                 a = X509_REQ_get_attr(x, i);
                 aobj = X509_ATTRIBUTE_get0_object(a);
-		if (OBJ_obj2nid(aobj) == NID_id_aa_relatedCertRequest) {
+                
+                // Debug: print the OID to see what we're dealing with
+                char oid_buf[256];
+                OBJ_obj2txt(oid_buf, sizeof(oid_buf), aobj, 1);
+            
+                
+		if (OBJ_obj2nid(aobj) == NID_id_aa_relatedCertRequest || 
+		    strcmp(oid_buf, "1.2.840.113549.1.9.16.2.60") == 0) {
    	            ASN1_TYPE *at = X509_ATTRIBUTE_get0_type(a, 0);
+    		    if (!at || at->type != V_ASN1_SEQUENCE) {
+        		        BIO_printf(bp, "%12srelatedCertRequest: <invalid format>\n", "");
+        		        continue;
+    		    }
     		    const unsigned char *p = at->value.sequence->data;
     		    REQUESTER_CERTIFICATE *rc = d2i_REQUESTER_CERTIFICATE(NULL, &p, at->value.sequence->length);
 
     		    if (rc != NULL) {
        		        BIO_printf(bp, "%12srelatedCertRequest:\n", "");
-       		        BIO_printf(bp, "%16sIssuer: ", "");
-       		        X509_NAME_print_ex(bp, rc->certID->issuer, 0, nmflags);
-       		        BIO_printf(bp, "\n%16sSerial: ", "");
+       		        if (rc->certID && rc->certID->issuer) {
+       		            BIO_printf(bp, "%16sIssuer: ", "");
+       		            X509_NAME_print_ex(bp, rc->certID->issuer, 0, nmflags);
+       		            BIO_printf(bp, "\n");
+       		        }
+       		        if (rc->certID && rc->certID->serialNumber) {
+       		            BIO_printf(bp, "%16sSerial: ", "");
                         i2a_ASN1_INTEGER(bp, rc->certID->serialNumber);
-       		        BIO_printf(bp, "\n%16sRequest Time: ", "");
-       		        ASN1_GENERALIZEDTIME_print(bp, rc->requestTime);
-       		        BIO_printf(bp, "\n%16sLocation Info: %.*s\n", "", rc->locationInfo->length, rc->locationInfo->data);
-        		BIO_printf(bp, "%16sSignature Value:\n%20s", "", "");
-        		for (int k = 0; k < rc->signature->length; k++){
-            		    BIO_printf(bp, "%02X", rc->signature->data[k]);
-			    if (k + 1 != rc->signature->length)
-        		        BIO_printf(bp, ":");
-    			    if ((k + 1) % 16 == 0 && (k + 1) != rc->signature->length)
-        			BIO_printf(bp, "\n%20s", "");
+       		            BIO_printf(bp, "\n");
+       		        }
+       		        if (rc->requestTime && rc->requestTime->time) {
+       		            BIO_printf(bp, "%16sRequest Time: ", "");
+       		            for (int k = 0; k < rc->requestTime->time->length; k++) {
+       		                BIO_printf(bp, "%02X", rc->requestTime->time->data[k]);
+       		                if (k + 1 != rc->requestTime->time->length)
+       		                    BIO_printf(bp, ":");
+       		            }
+       		            BIO_printf(bp, "\n");
+       		        }
+       		        if (rc->locationInfo && rc->locationInfo->uris) {
+       		            BIO_printf(bp, "%16sURI: ", "");
+       		            int uri_count = sk_ASN1_STRING_num((STACK_OF(ASN1_STRING) *)rc->locationInfo->uris);
+       		            for (int k = 0; k < uri_count; k++) {
+       		                ASN1_STRING *uri_str = sk_ASN1_STRING_value((STACK_OF(ASN1_STRING) *)rc->locationInfo->uris, k);
+       		                if (k > 0) BIO_printf(bp, ", ");
+       		                BIO_write(bp, uri_str->data, uri_str->length);
+       		            }
+       		            BIO_printf(bp, "\n");
+       		        }
+        		if (rc->signature) {
+        		    BIO_printf(bp, "%16sSignature Value:\n%20s", "", "");
+        		    for (int k = 0; k < rc->signature->length; k++){
+            		        BIO_printf(bp, "%02X", rc->signature->data[k]);
+			        if (k + 1 != rc->signature->length)
+        		            BIO_printf(bp, ":");
+    			        if ((k + 1) % 16 == 0 && (k + 1) != rc->signature->length)
+        			    BIO_printf(bp, "\n%20s", "");
+        		    }
+        		    BIO_printf(bp, "\n");
+        		} else {
+        		    BIO_printf(bp, "%16sSignature Present: No\n", "");
         		}
 
    			BIO_printf(bp, "\n");
 
         		REQUESTER_CERTIFICATE_free(rc);
     		    } else {
-        		BIO_printf(bp, "%12s[Unable to parse relatedCertRequest]\n", "");
+        		BIO_printf(bp, "%12srelatedCertRequest: <unable to parse attribute>\n", "");
     		    }
    		    continue;
 		}

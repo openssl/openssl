@@ -932,7 +932,7 @@ int req_main(int argc, char **argv)
           	     goto end;
                  }
 
-   		 if (!add_related_cert_request_to_csr(req, pkey, related_cert, related_uri)) {
+   		 if (!add_related_cert_request_to_csr(req, pkey, related_cert, related_uri, NULL)) {
        		     BIO_printf(bio_err, "Failed to add related cert to CSR\n");
         	     X509_free(related_cert);
        		     goto end;

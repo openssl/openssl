@@ -256,3 +256,222 @@ All rights reserved.
 [appveyor jobs]:
     <https://ci.appveyor.com/project/openssl/openssl/branch/master>
     "AppVeyor Jobs"
+
+# RFC 9763 Related Certificate Implementation for OpenSSL
+
+This project implements the "bound certificate" approach as defined in [RFC 9763](https://datatracker.ietf.org/doc/html/rfc9763) for the OpenSSL cryptographic library. The implementation provides support for the `relatedCertRequest` attribute in Certificate Signing Requests (CSRs) and the `RelatedCertificate` extension in X.509 certificates.
+
+## Overview
+
+RFC 9763 defines a mechanism to bind certificates together, allowing one certificate to reference another certificate through cryptographic means. This is particularly useful for:
+
+- Certificate chaining and relationship verification
+- Cross-certification scenarios
+- Certificate binding in multi-certificate environments
+- Post-quantum cryptography certificate binding
+
+## Features
+
+### Implemented Components
+
+1. **relatedCertRequest Attribute** (`id-aa-relatedCertRequest`)
+   - Added to Certificate Signing Requests (CSRs)
+   - Contains requester certificate information
+   - Includes timestamp and location information
+   - Digitally signed for integrity
+
+2. **RelatedCertificate Extension** (`id-pe-relatedCert`)
+   - Added to X.509 certificates
+   - Contains hash of the related certificate
+   - Supports multiple hash algorithms (SHA-256, SHA-512, etc.)
+
+### Key Functions
+
+- `add_related_cert_request_to_csr()` - Add relatedCertRequest attribute to CSR
+- `add_related_certificate_extension()` - Add RelatedCertificate extension to certificate
+- `verify_related_cert_request()` - Verify relatedCertRequest attribute
+- `verify_related_certificate_extension()` - Verify RelatedCertificate extension
+- `get_related_certificate_extension()` - Extract RelatedCertificate extension
+- `print_related_cert_request()` - Print relatedCertRequest attribute details
+- `print_related_certificate_extension()` - Print RelatedCertificate extension details
+
+## ASN.1 Structures
+
+The implementation defines the following ASN.1 structures according to RFC 9763:
+
+```asn.1
+CertID ::= SEQUENCE {
+    issuer           Name,
+    serialNumber     CertificateSerialNumber
+}
+
+BinaryTime ::= SEQUENCE {
+    time            OCTET STRING (SIZE(8))
+}
+
+UniformResourceIdentifiers ::= SEQUENCE OF IA5String
+
+RequesterCertificate ::= SEQUENCE {
+    certID          CertID,
+    requestTime     BinaryTime,
+    locationInfo    UniformResourceIdentifiers,
+    signature       BIT STRING OPTIONAL
+}
+
+RelatedCertificate ::= SEQUENCE {
+    hashAlgorithm   AlgorithmIdentifier,
+    hashValue       OCTET STRING
+}
+```
+
+## Building and Testing
+
+### Prerequisites
+
+- OpenSSL 3.0 or later
+- GCC compiler
+- Make
+
+### Build Options
+
+```bash
+# Build with system OpenSSL (recommended)
+make test_certbind_system
+
+# Build with custom OpenSSL installation
+make test_certbind
+
+# Build with debug information
+make debug
+
+# Run tests
+make test
+
+# Clean build artifacts
+make clean
+```
+
+### Test Program
+
+The included test program (`test_certbind.c`) performs comprehensive testing:
+
+1. **Test 1**: Adding relatedCertRequest attribute to CSR
+2. **Test 2**: Saving CSR with attribute
+3. **Test 3**: Printing relatedCertRequest attribute
+4. **Test 4**: Verifying relatedCertRequest attribute
+5. **Test 5**: Creating certificate with RelatedCertificate extension
+6. **Test 6**: Saving certificate with extension
+7. **Test 7**: Printing RelatedCertificate extension
+8. **Test 8**: Verifying RelatedCertificate extension
+9. **Test 9**: Extracting RelatedCertificate extension
+10. **Test 10**: Testing with SHA-512 hash algorithm
+
+## Usage Examples
+
+### Adding relatedCertRequest to CSR
+
+```c
+#include <openssl/x509.h>
+#include <openssl/evp.h>
+#include "crypto/x509/v3_certbind.h"
+
+// Create CSR and related certificate
+X509_REQ *req = /* your CSR */;
+EVP_PKEY *pkey = /* your private key */;
+X509 *related_cert = /* related certificate */;
+
+// Add relatedCertRequest attribute
+if (add_related_cert_request_to_csr(req, pkey, related_cert, 
+                                   "related_cert.pem", EVP_sha256())) {
+    printf("relatedCertRequest attribute added successfully\n");
+}
+```
+
+### Adding RelatedCertificate Extension
+
+```c
+#include <openssl/x509.h>
+#include <openssl/evp.h>
+#include "crypto/x509/v3_certbind.h"
+
+// Create certificate and related certificate
+X509 *cert = /* your certificate */;
+X509 *related_cert = /* related certificate */;
+
+// Add RelatedCertificate extension
+if (add_related_certificate_extension(cert, related_cert, EVP_sha256())) {
+    printf("RelatedCertificate extension added successfully\n");
+}
+```
+
+### Verification
+
+```c
+// Verify relatedCertRequest attribute
+if (verify_related_cert_request(req)) {
+    printf("relatedCertRequest verification passed\n");
+}
+
+// Verify RelatedCertificate extension
+if (verify_related_certificate_extension(cert, related_cert)) {
+    printf("RelatedCertificate verification passed\n");
+}
+```
+
+## OID Registration
+
+The implementation uses the following Object Identifiers as defined in RFC 9763:
+
+- `id-aa-relatedCertRequest`: `1.2.840.113549.1.9.16.2.60`
+- `id-pe-relatedCert`: `1.3.6.1.5.5.7.1.36`
+
+These OIDs are already defined in OpenSSL's `objects.txt` and will be available after regenerating the object macros.
+
+## Conformance to RFC 9763
+
+The implementation follows RFC 9763 specifications:
+
+- ✅ Correct ASN.1 structure definitions
+- ✅ BinaryTime format for timestamps (RFC 6019)
+- ✅ UniformResourceIdentifiers as SEQUENCE OF IA5String
+- ✅ Proper signature handling in RequesterCertificate
+- ✅ Hash algorithm support in RelatedCertificate
+- ✅ OID usage as specified in the RFC
+- ✅ Timestamp freshness checking (5-minute timeout)
+
+## Security Considerations
+
+1. **Timestamp Freshness**: The implementation enforces a 5-minute timeout for requestTime freshness as recommended in RFC 9763.
+
+2. **Signature Verification**: All relatedCertRequest attributes are digitally signed and verified using the requester's private key.
+
+3. **Hash Algorithm Support**: The implementation supports multiple hash algorithms, with SHA-256 as the default.
+
+4. **Memory Management**: Proper cleanup of ASN.1 structures and memory allocation.
+
+## Limitations
+
+1. **Extension Registration**: The implementation uses raw ASN.1 encoding for extensions to avoid OpenSSL extension registration complexities.
+
+2. **URI Handling**: Currently supports file-based URIs for testing. Production use may require HTTP/HTTPS URI support.
+
+3. **Stack API Compatibility**: Some OpenSSL stack API functions may show deprecation warnings but remain functional.
+
+## Contributing
+
+This implementation is designed to be integrated into the OpenSSL codebase. Contributions should:
+
+1. Follow OpenSSL coding standards
+2. Include comprehensive tests
+3. Maintain RFC 9763 compliance
+4. Handle error conditions gracefully
+
+## License
+
+This implementation follows the OpenSSL license model. See the Apache License 2.0 for details.
+
+## References
+
+- [RFC 9763: Related Certificate Request and Response](https://datatracker.ietf.org/doc/html/rfc9763)
+- [RFC 6019: BinaryTime: An Alternate Format for Representing Date and Time in ASN.1](https://datatracker.ietf.org/doc/html/rfc6019)
+- [OpenSSL Documentation](https://www.openssl.org/docs/)

@@ -26,6 +26,7 @@
 # include <openssl/dsa.h>
 #endif
 #include "internal/e_os.h"    /* For isatty() */
+#include <openssl/v3_certbind.h>
 
 #undef POSTFIX
 #define POSTFIX ".srl"
@@ -54,7 +55,9 @@ typedef enum OPTION_choice {
     OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
     OPT_SUBJECT_HASH_OLD, OPT_ISSUER_HASH_OLD, OPT_COPY_EXTENSIONS,
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
-    OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT
+    OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT,
+    OPT_ADD_RELATED_CERT = 3001,
+    OPT_RELATED_URI = 3002,
 } OPTION_CHOICE;
 
 const OPTIONS x509_options[] = {
@@ -149,6 +152,8 @@ const OPTIONS x509_options[] = {
     {"extfile", OPT_EXTFILE, '<', "Config file with X509V3 extensions to add"},
     {"extensions", OPT_EXTENSIONS, 's',
      "Section of extfile to use - default: unnamed section"},
+    {"add_related_cert", OPT_ADD_RELATED_CERT, '<', "PEM file of related certificate"},
+    {"related_uri", OPT_RELATED_URI, 's', "URI pointing to related certificate"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter, in n:v form"},
     {"badsig", OPT_BADSIG, '-',
      "Corrupt last byte of certificate signature (for test)"},
@@ -279,6 +284,7 @@ int x509_main(int argc, char **argv)
     char *ext_names = NULL;
     char *extsect = NULL, *extfile = NULL, *passin = NULL, *passinarg = NULL;
     char *infile = NULL, *outfile = NULL, *privkeyfile = NULL, *CAfile = NULL;
+    char *related_cert_path = NULL, *related_uri = NULL;
     char *prog;
     int days = UNSET_DAYS; /* not explicitly set */
     int x509toreq = 0, modulus = 0, print_pubkey = 0, pprint = 0;
@@ -595,6 +601,12 @@ int x509_main(int argc, char **argv)
         case OPT_PRESERVE_DATES:
             preserve_dates = 1;
             break;
+        case OPT_ADD_RELATED_CERT:
+            related_cert_path = opt_arg();
+            break;
+        case OPT_RELATED_URI:
+            related_uri = opt_arg();
+            break;
         case OPT_MD:
             digest = opt_unknown();
             break;
@@ -863,6 +875,23 @@ int x509_main(int argc, char **argv)
         }
     }
 
+    // Add the RelatedCertificate extension to the certificate
+    if (related_cert_path != NULL && !x509toreq) {
+        X509 *related_cert = load_cert_pass(related_cert_path, FORMAT_PEM, 1, passin, "related certificate");
+        if (related_cert == NULL) {
+            BIO_printf(bio_err, "Failed to load related certificate\n");
+            goto err;
+        }
+
+        if (!add_related_certificate_extension(x, related_cert, EVP_sha256())) {
+            BIO_printf(bio_err, "Failed to add related certificate extension\n");
+            X509_free(related_cert);
+            goto err;
+        }
+
+        X509_free(related_cert);
+    }
+
     /* At this point the contents of the certificate x have been finished. */
 
     pkey = X509_get0_pubkey(x);
@@ -1061,6 +1090,16 @@ int x509_main(int argc, char **argv)
 
     if (!check_cert_attributes(out, x, checkhost, checkemail, checkip, 1))
         goto err;
+
+    // Verify RelatedCertificate extension if present
+    if (X509_get_ext_by_NID(x, OBJ_txt2nid("1.3.6.1.5.5.7.1.36"), -1) >= 0) {
+        if (!verify_related_certificate_extension(x, NULL)) {
+            BIO_printf(bio_err, "RelatedCertificate extension verification failed\n");
+            goto err;
+        } else {
+            BIO_printf(bio_out, "RelatedCertificate extension verification OK\n");
+        }
+    }
 
     if (noout || nocert) {
         ret = 0;

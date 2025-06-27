@@ -9,25 +9,69 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "internal/common.h"
-#include <openssl/bio.h>
-#include <openssl/crypto.h>
-#include <openssl/trace.h>
-#include <openssl/lhash.h>
-#include <openssl/conf.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/ssl.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <string.h>
+#include <signal.h>
+#include <openssl/opensslconf.h>
 #include <openssl/err.h>
-/* Needed to get the other O_xxx flags. */
-#ifdef OPENSSL_SYS_VMS
-# include <unixio.h>
-#endif
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include <openssl/pem.h>
+#include <openssl/engine.h>
+#include <openssl/rand.h>
+#include <openssl/ui.h>
+#include <openssl/provider.h>
+#include <openssl/trace.h>
+#include <openssl/core_names.h>
+#include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include "apps.h"
 #include "progs.h"
+#include "opt.h"
+#include "names.h"
+#include "app_libctx.h"
+#include "crypto/x509/v3_certbind.h"
+
+// Fonction d'affichage pour l'extension RelatedCertificate
+static int i2r_related_certificate(const X509V3_EXT_METHOD *method, void *ext, BIO *out, int indent)
+{
+    RELATED_CERTIFICATE *rc = (RELATED_CERTIFICATE *)ext;
+    if (!rc) return 0;
+    BIO_printf(out, "%*sRelatedCertificate:\n", indent, "");
+    BIO_printf(out, "%*sHash Algorithm: ", indent + 2, "");
+    i2a_ASN1_OBJECT(out, rc->hashAlgorithm->algorithm);
+    BIO_printf(out, "\n%*sHash Value: ", indent + 2, "");
+    for (int i = 0; i < rc->hashValue->length; i++) {
+        BIO_printf(out, "%02X", rc->hashValue->data[i]);
+        if (i + 1 != rc->hashValue->length)
+            BIO_printf(out, ":");
+        if ((i + 1) % 16 == 0 && (i + 1) != rc->hashValue->length)
+            BIO_printf(out, "\n%*s", indent + 4, "");
+    }
+    BIO_printf(out, "\n");
+    return 1;
+}
+
+// Fonction de décodage pour l'extension RelatedCertificate
+static void *d2i_related_certificate(const X509V3_EXT_METHOD *method, const unsigned char **in, long len) {
+    return d2i_RELATED_CERTIFICATE(NULL, in, len);
+}
+
+// Méthode d'extension pour RelatedCertificate (ordre strict OpenSSL)
+static X509V3_EXT_METHOD v3_related_certificate = {
+    NID_undef,                      /* ext_nid - sera défini dynamiquement */
+    X509V3_EXT_MULTILINE,           /* ext_flags */
+    ASN1_ITEM_ref(RELATED_CERTIFICATE), /* it */
+    NULL, NULL,                     /* ext_new, ext_free */
+    d2i_related_certificate,        /* d2i */
+    NULL,                           /* i2d */
+    NULL, NULL,                     /* i2s, s2i */
+    NULL, NULL,                     /* i2v, v2i */
+    i2r_related_certificate,        /* i2r */
+    NULL,                           /* r2i */
+    NULL                            /* usr_data */
+};
 
 /*
  * The LHASH callbacks ("hash" & "cmp") have been replaced by functions with
@@ -81,6 +125,16 @@ static int apps_startup(void)
             if (app_create_libctx() == NULL)
                 return 0;
         }
+    }
+
+    /* Enregistrer l'extension RelatedCertificate pour l'affichage correct */
+    OBJ_create("1.3.6.1.5.5.7.1.36", "relatedCert", "Related Certificate Extension");
+    
+    /* Enregistrer la méthode d'affichage de l'extension */
+    int nid = OBJ_txt2nid("1.3.6.1.5.5.7.1.36");
+    v3_related_certificate.ext_nid = nid;
+    if (!X509V3_EXT_add(&v3_related_certificate)) {
+        fprintf(stderr, "Warning: Failed to register RelatedCertificate extension method\n");
     }
 
     return 1;

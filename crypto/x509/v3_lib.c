@@ -52,12 +52,13 @@ IMPLEMENT_OBJ_BSEARCH_CMP_FN(const X509V3_EXT_METHOD *,
 const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
 {
     X509V3_EXT_METHOD tmp;
-    const X509V3_EXT_METHOD *t = &tmp, *const *ret;
+    const X509V3_EXT_METHOD *t = &tmp, *const **ret;
     int idx;
 
     if (nid < 0)
         return NULL;
     tmp.ext_nid = nid;
+    
     ret = OBJ_bsearch_ext(&t, standard_exts, STANDARD_EXTENSION_COUNT);
     if (ret)
         return *ret;
@@ -66,7 +67,9 @@ const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
     /* Ideally, this would be done under a lock */
     sk_X509V3_EXT_METHOD_sort(ext_list);
     idx = sk_X509V3_EXT_METHOD_find(ext_list, &tmp);
-    /* A failure to locate the item is handled by the value method */
+    /* A failure here means the extension is not in the list */
+    if (idx < 0)
+        return NULL;
     return sk_X509V3_EXT_METHOD_value(ext_list, idx);
 }
 
