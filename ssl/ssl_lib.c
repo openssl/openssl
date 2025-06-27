@@ -7317,7 +7317,7 @@ __owur unsigned int ssl_get_proto_record_hard_limit(const SSL_CONNECTION *sc) {
 __owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc,
                                               uint8_t type)
 {
-    if (sc->rlayer.wrl
+    if (sc->rlayer.wrl != NULL && sc->rlayer.wrl->funcs != NULL
         && sc->rlayer.wrl->funcs->get_record_type != NULL) {
         type = sc->rlayer.wrl->funcs->get_record_type(sc->rlayer.wrl, type);
     }
@@ -7338,7 +7338,7 @@ __owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc,
 __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc,
                                                 uint8_t type)
 {
-    if (sc->rlayer.wrl != NULL
+    if (sc->rlayer.wrl != NULL && sc->rlayer.wrl->funcs != NULL
         && sc->rlayer.wrl->funcs->get_record_type != NULL) {
         type = sc->rlayer.wrl->funcs->get_record_type(sc->rlayer.wrl, type);
     }

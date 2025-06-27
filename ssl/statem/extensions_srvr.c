@@ -245,10 +245,9 @@ int tls_parse_ctos_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
      * "max_fragment_length" that appears in a ClientHello if both extensions
      * appear.
      */
-     if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
+     if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session))
         s->session->ext.max_fragment_len_mode =
             TLSEXT_max_fragment_length_DISABLED;
-     }
 
     s->session->ext.peer_record_size_limit = (uint16_t)peer_record_size_limit;
 
@@ -1674,7 +1673,6 @@ EXT_RETURN tls_construct_stoc_maxfragmentlen(SSL_CONNECTION *s, WPACKET *pkt,
     return EXT_RETURN_SENT;
 }
 
-
 EXT_RETURN tls_construct_stoc_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,
                                              size_t chainidx)
@@ -1684,7 +1682,6 @@ EXT_RETURN tls_construct_stoc_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
         TLSEXT_record_size_limit_UNSPECIFIED) {
         return EXT_RETURN_NOT_SENT;
     }
-
 
     /*-
      * 4 bytes for this extension type and extension length
