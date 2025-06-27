@@ -49,6 +49,8 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/x509_vfy.h \
          include/crypto/bn_conf.h include/crypto/dso_conf.h \
          providers/implementations/kdfs/hkdf.c \
+         providers/implementations/kdfs/kbkdf.c \
+         providers/implementations/kdfs/sskdf.c \
          providers/implementations/keymgmt/ml_dsa_kmgmt.c \
          providers/implementations/keymgmt/ml_kem_kmgmt.c \
          providers/implementations/keymgmt/mlx_kmgmt.c \
@@ -94,6 +96,8 @@ GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 
 DEPEND[providers/implementations/kdfs/hkdf.c \
+       providers/implementations/kdfs/kbkdf.c \
+       providers/implementations/kdfs/sskdf.c \
        providers/implementations/keymgmt/ml_dsa_kmgmt.c \
        providers/implementations/keymgmt/ml_kem_kmgmt.c \
        providers/implementations/keymgmt/mlx_kmgmt.c \
@@ -107,6 +111,10 @@ DEPEND[providers/implementations/kdfs/hkdf.c \
        include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
 GENERATE[providers/implementations/kdfs/hkdf.c]=\
     providers/implementations/kdfs/hkdf.c.in
+GENERATE[providers/implementations/kdfs/kbkdf.c]=\
+    providers/implementations/kdfs/kbkdf.c.in
+GENERATE[providers/implementations/kdfs/sskdf.c]=\
+    providers/implementations/kdfs/sskdf.c.in
 GENERATE[providers/implementations/keymgmt/ml_dsa_kmgmt.c]=\
     providers/implementations/keymgmt/ml_dsa_kmgmt.c.in
 GENERATE[providers/implementations/keymgmt/ml_kem_kmgmt.c]=\
