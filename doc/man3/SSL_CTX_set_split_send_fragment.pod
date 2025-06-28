@@ -128,7 +128,7 @@ negotiated in B<session>.
 
 SSL_CTX_set_tlsext_record_size_limit() sets the maximum size of record in octets that the endpoint
 is willing to receive.
-This extension is sent by default, and can be disabled by providing a B<limit> of 0.
+This extension is sent by default, and can be disabled by calling SSL_CTX_set_options(SSL_OP_NO_RECORD_SIZE_LIMIT_EXT).
 If the max_fragment_length extension is configured via SSL_CTX_set_tlsext_max_fragment_length(),
 a value set by SSL_CTX_set_tlsext_record_size_limit() will be ignored and the limit will be the
 same as the max_fragment_length value. Both extensions are gonna be sent, and a server will choose

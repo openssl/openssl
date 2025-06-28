@@ -368,6 +368,13 @@ only understands up to SSLv3. In this case the client must still use the
 same SSLv3.1=TLSv1 announcement. Some clients step down to SSLv3 with respect
 to the server's answer and violate the version rollback protection.)
 
+=item SSL_OP_NO_RECORD_SIZE_LIMIT_EXT
+
+Disable the Record Size Limit extension.
+
+Clients will not send the extension in the ClientHello and a server will ignore
+if a Record Size Limit is present in the ServerHello.
+
 =back
 
 The following options no longer have any effect but their identifiers are

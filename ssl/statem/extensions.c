@@ -1773,6 +1773,9 @@ static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
                                    int sent) {
     unsigned int proto_record_hard_limit;
 
+    if (s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT)
+        return 1;
+
     if (s->session == NULL)
         return 1;
 
@@ -1789,9 +1792,8 @@ static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
      * my current knowledge of the codebase.
      */
     if (s->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED
-        && IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.peer_record_size_limit)) {
+        && IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.peer_record_size_limit))
         s->session->ext.record_size_limit = proto_record_hard_limit;
-    }
 
     /*
      * According to RFC 8449:
@@ -1800,9 +1802,8 @@ static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
      * MUST NOT send records larger than the protocol-defined limit, unless
      * explicitly allowed by a future TLS version or extension.
      */
-    if (s->session->ext.peer_record_size_limit > proto_record_hard_limit) {
+    if (s->session->ext.peer_record_size_limit > proto_record_hard_limit)
         s->session->ext.peer_record_size_limit = proto_record_hard_limit;
-    }
 
     /*
      * Unlike Maximum Fragment Length, wait until the cipher spec changes.

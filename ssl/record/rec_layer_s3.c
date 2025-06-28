@@ -1239,17 +1239,13 @@ static int ssl_post_record_layer_select(SSL_CONNECTION *s, int direction)
 }
 
 void ssl_set_ext_record_size_limit(const SSL_CONNECTION *s) {
-    /*
-     * Server-side, the Record Size Limit extension can be disabled, but the
-     * client might have sent a Record Size Limit that we must respect.
-     */
-    if (IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.record_size_limit))
+    if (IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.record_size_limit)
+        && IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.peer_record_size_limit)) {
         s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
-        s->session->ext.record_size_limit);
-
-    if (IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.peer_record_size_limit))
+            s->session->ext.record_size_limit);
         s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
-        s->session->ext.peer_record_size_limit);
+            s->session->ext.peer_record_size_limit);
+    }
 }
 
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,

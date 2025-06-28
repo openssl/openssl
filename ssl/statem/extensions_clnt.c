@@ -124,7 +124,7 @@ EXT_RETURN tls_construct_ctos_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
      * same value.
      */
 
-    if (s->ext.record_size_limit == TLSEXT_record_size_limit_DISABLED) {
+    if (s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT) {
         return EXT_RETURN_NOT_SENT;
     }
 
