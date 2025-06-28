@@ -377,8 +377,8 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
 
     n = (len - tot);
 
-    max_send_fragment = ssl_get_max_send_fragment(s);
-    split_send_fragment = ssl_get_split_send_fragment(s);
+    max_send_fragment = ssl_get_max_send_fragment(s, type);
+    split_send_fragment = ssl_get_split_send_fragment(s, type);
 
     if (max_send_fragment == 0
             || split_send_fragment == 0
@@ -1238,6 +1238,16 @@ static int ssl_post_record_layer_select(SSL_CONNECTION *s, int direction)
     return 1;
 }
 
+void ssl_set_ext_record_size_limit(const SSL_CONNECTION *s) {
+    if (IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.record_size_limit)
+        && IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.peer_record_size_limit)) {
+        s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
+            s->session->ext.record_size_limit);
+        s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
+            s->session->ext.peer_record_size_limit);
+    }
+}
+
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                              int direction, int level,
                              unsigned char *secret, size_t secretlen,
@@ -1257,7 +1267,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     const OSSL_RECORD_METHOD *meth;
     int use_etm, stream_mac = 0, tlstree = 0;
     unsigned int maxfrag = (direction == OSSL_RECORD_DIRECTION_WRITE)
-                           ? ssl_get_max_send_fragment(s)
+                           ? ssl_get_max_send_fragment(s, 0)
                            : SSL3_RT_MAX_PLAIN_LENGTH;
     int use_early_data = 0;
     uint32_t max_early_data;

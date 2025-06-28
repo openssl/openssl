@@ -682,7 +682,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             /* Construct the record and message headers */
             if (!WPACKET_init_static_len(&wpkt,
                                          wbuf,
-                                         ssl_get_max_send_fragment(s)
+                                         ssl_get_max_send_fragment(s, 0)
                                          + DTLS1_RT_HEADER_LENGTH,
                                          0)
                     || !WPACKET_put_bytes_u8(&wpkt, SSL3_RT_HANDSHAKE)

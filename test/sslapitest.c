@@ -726,7 +726,7 @@ static int full_client_hello_callback(SSL *s, int *al, void *arg)
 #ifndef OPENSSL_NO_EC
                                        11, 10,
 #endif
-                                       35, 22, 23, 13};
+                                       28, 35, 22, 23, 13};
     size_t len;
 
     /* Make sure we can defer processing and get called back. */

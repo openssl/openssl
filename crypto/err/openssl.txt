@@ -1608,6 +1608,7 @@ SSL_R_SRTP_PROTECTION_PROFILE_LIST_TOO_LONG:363:\
 SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE:364:srtp unknown protection profile
 SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH:232:\
 	ssl3 ext invalid max fragment length
+SSL_R_SSL3_EXT_INVALID_RECORD_SIZE_LIMIT:424:ssl3 ext invalid record size limit
 SSL_R_SSL3_EXT_INVALID_SERVERNAME:319:ssl3 ext invalid servername
 SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE:320:ssl3 ext invalid servername type
 SSL_R_SSL3_SESSION_ID_TOO_LONG:300:ssl3 session id too long
