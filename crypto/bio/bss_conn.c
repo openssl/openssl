@@ -252,15 +252,6 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                 if (!conn_create_dgram_bio(b, c))
                     break;
                 c->state = BIO_CONN_S_OK;
-# ifndef OPENSSL_NO_KTLS
-                /*
-                 * The new socket is created successfully regardless of ktls_enable.
-                 * ktls_enable doesn't change any functionality of the socket, except
-                 * changing the setsockopt to enable the processing of ktls_start.
-                 * Thus, it is not a problem to call it for non-TLS sockets.
-                 */
-                ktls_enable(b->num);
-# endif
             }
             break;
 
