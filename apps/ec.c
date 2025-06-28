@@ -170,8 +170,6 @@ int ec_main(int argc, char **argv)
         goto end;
     }
 
-    BIO_printf(bio_err, "read EC key\n");
-
     if (pubin)
         eckey = load_pubkey(infile, informat, 1, passin, e, "public key");
     else
@@ -240,7 +238,6 @@ int ec_main(int argc, char **argv)
         const char *output_type = outformat == FORMAT_ASN1 ? "DER" : "PEM";
         const char *output_structure = "type-specific";
 
-        BIO_printf(bio_err, "writing EC key\n");
         if (param_out) {
             selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         } else if (pubin || pubout) {
