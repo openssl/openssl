@@ -23,7 +23,8 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 unless ($no_fips) {
     run(test(["fips_version_test", "-config", $fipsconf, ">=3.6.0"]),
-        capture => 1, statusvar => $no_fips);
+        capture => 1, statusvar => \my $exit);
+    $no_fips = !$exit;
 }
 
 use lib srctop_dir('Configurations');
