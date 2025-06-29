@@ -70,9 +70,11 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item SHA3, see L<EVP_MD-SHA3(7)>
 
+=item SHAKE, see L<EVP_MD-SHAKE(7)>
+
 =item KECCAK-KMAC, see L<EVP_MD-KECCAK-KMAC(7)>
 
-=item SHAKE, see L<EVP_MD-SHAKE(7)>
+KECCAK-KMAC is only used internally as a sub algorithm of KMAC.
 
 =back
 
@@ -177,6 +179,8 @@ for signature generation, but may be used for verification for legacy use cases.
 =item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
 
 =item CMAC, see L<EVP_SIGNATURE-CMAC(7)>
+
+=item LMS, see L<EVP_SIGNATURE-LMS(7)>
 
 =back
 
@@ -442,6 +446,8 @@ Digest tests used with the "KAT_Digest" type.
 =item "ECDSA" (B<OSSL_SELF_TEST_DESC_SIGN_ECDSA>)
 
 =item "EDDSA" (B<OSSL_SELF_TEST_DESC_SIGN_EDDSA>)
+
+=item "LMS" (B<OSSL_SELF_TEST_DESC_SIGN_LMS>)
 
 =item "ML-DSA" (B<OSSL_SELF_TEST_DESC_SIGN_ML_DSA>)
 

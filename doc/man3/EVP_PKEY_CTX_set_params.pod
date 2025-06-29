@@ -57,6 +57,7 @@ L<EVP_PKEY-DH(7)/DH parameters>
 L<EVP_PKEY-DH(7)/DH key generation parameters>
 L<EVP_PKEY-EC(7)/Common EC parameters>
 L<EVP_PKEY-X25519(7)/Common X25519, X448, ED25519 and ED448 parameters>
+L<EVP_PKEY-LMS(7)/Common LMS parameters>
 L<EVP_PKEY-ML-DSA(7)/Common parameters>
 L<EVP_PKEY-ML-KEM(7)/Common parameters>
 
@@ -87,6 +88,8 @@ L<EVP_PKEY_keygen(3)>
 All functions were added in OpenSSL 3.0.
 
 Support for B<ML-DSA>> and B<ML-KEM> was added in OpenSSL 3.5.
+
+Support for B<LMS> was added in OpenSSL 3.6.
 
 =head1 COPYRIGHT
 

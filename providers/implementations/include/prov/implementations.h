@@ -332,6 +332,9 @@ extern const OSSL_DISPATCH ossl_ed448_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_sm2_keymgmt_functions[];
 # endif
 #endif
+#ifndef OPENSSL_NO_LMS
+extern const OSSL_DISPATCH ossl_lms_keymgmt_functions[];
+#endif
 extern const OSSL_DISPATCH ossl_ml_dsa_44_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_65_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_87_keymgmt_functions[];
@@ -428,6 +431,7 @@ extern const OSSL_DISPATCH ossl_mac_legacy_siphash_signature_functions[];
 extern const OSSL_DISPATCH ossl_mac_legacy_poly1305_signature_functions[];
 extern const OSSL_DISPATCH ossl_mac_legacy_cmac_signature_functions[];
 extern const OSSL_DISPATCH ossl_sm2_signature_functions[];
+extern const OSSL_DISPATCH ossl_lms_signature_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_44_signature_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_65_signature_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_87_signature_functions[];
@@ -844,6 +848,8 @@ extern const OSSL_DISPATCH ossl_pem_to_der_decoder_functions[];
 
 extern const OSSL_DISPATCH ossl_file_store_functions[];
 extern const OSSL_DISPATCH ossl_winstore_store_functions[];
+
+extern const OSSL_DISPATCH ossl_xdr_to_lms_decoder_functions[];
 
 extern const OSSL_DISPATCH ossl_PrivateKeyInfo_der_to_ml_dsa_44_decoder_functions[];
 extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_ml_dsa_44_decoder_functions[];
