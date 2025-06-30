@@ -175,13 +175,13 @@ jobs:
     - name: config with FIPS
       if: matrix.platform.fips != 'no'
       run: |
-        ./config --banner=Configured --strict-warnings enable-fips \
+        ./config --banner=Configured --strict-warnings enable-fips enable-lms \
                  --cross-compile-prefix=${{ matrix.platform.arch }}- \
                  ${{ matrix.platform.target }}
     - name: config without FIPS
       if: matrix.platform.fips == 'no'
       run: |
-        ./config --banner=Configured --strict-warnings \
+        ./config --banner=Configured --strict-warnings enable-lms \
                  --cross-compile-prefix=${{ matrix.platform.arch }}- \
                  ${{ matrix.platform.target }}
     - name: config dump

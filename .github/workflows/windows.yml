@@ -20,13 +20,13 @@ jobs:
         platform:
           - arch: win64
             os: windows-2022
-            config: enable-fips
+            config: enable-lms enable-fips
           - arch: win64
             os: windows-2025
-            config: enable-fips no-thread-pool no-quic
+            config: enable-lms enable-fips no-thread-pool no-quic
           - arch: win32
             os: windows-2025
-            config: --strict-warnings no-fips
+            config: --strict-warnings enable-lms no-fips
     runs-on: ${{ matrix.platform.os }}
     steps:
     - uses: actions/checkout@v4
