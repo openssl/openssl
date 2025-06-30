@@ -76,6 +76,7 @@ jobs:
           no-hw,
           no-hw-padlock,
           no-idea,
+          enable-lms,
           no-makedepend,
           enable-md2,
           no-md4,

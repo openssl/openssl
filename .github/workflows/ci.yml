@@ -69,7 +69,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: config
-      run: CPPFLAGS='-std=c99 -D_XOPEN_SOURCE=1 -D_POSIX_C_SOURCE=200809L' ./config --strict-warnings --banner=Configured enable-sslkeylog no-asm no-secure-memory no-makedepend enable-buildtest-c++ enable-fips && perl configdata.pm --dump
+      run: CPPFLAGS='-std=c99 -D_XOPEN_SOURCE=1 -D_POSIX_C_SOURCE=200809L' ./config --strict-warnings --banner=Configured enable-sslkeylog no-asm no-secure-memory no-makedepend enable-buildtest-c++ enable-fips enable-lms && perl configdata.pm --dump
     - name: make
       run: make -s -j4
 
@@ -86,7 +86,7 @@ jobs:
       run: echo "FIPS_VENDOR=CI" >> VERSION.dat
     - name: config
       # enable-quic is on by default, but we leave it here to check we're testing the explicit enable somewhere
-      run: CC=gcc ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-sslkeylog enable-fips enable-quic && perl configdata.pm --dump
+      run: CC=gcc ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-sslkeylog enable-fips enable-quic enable-lms && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -133,7 +133,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: config
-      run: ./config --strict-warnings enable-demos enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config --strict-warnings enable-demos enable-fips enable-lms enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -163,7 +163,7 @@ jobs:
         shutdown_vm: false
         run: |
           sudo pkg install -y gcc perl5
-          ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+          ./config --strict-warnings enable-fips enable-lms enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
       uses: cross-platform-actions/action@v0.26.0
       with:
@@ -200,7 +200,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo no-bulk no-pic no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo no-bulk no-pic no-asm no-lms -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
     - name: make
       run: make -j4 # verbose, so no -s here
     - name: get cpu info
@@ -327,7 +327,7 @@ jobs:
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
-      run: ./config --strict-warnings --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips enable-lms && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -383,7 +383,7 @@ jobs:
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
       # --debug -O1 is to produce a debug build that runs in a reasonable amount of time
-      run: CC=clang ./config --strict-warnings --banner=Configured --debug no-shared -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips no-slh-dsa && perl configdata.pm --dump
+      run: CC=clang ./config --strict-warnings --banner=Configured --debug no-shared -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips enable-lms no-slh-dsa && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -435,7 +435,7 @@ jobs:
     - name: modprobe tls
       run: sudo modprobe tls
     - name: config
-      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-egd enable-ktls enable-fips no-threads && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-egd enable-ktls enable-fips enable-lms no-threads && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -466,7 +466,7 @@ jobs:
     - name: install extra config support
       run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
     - name: config
-      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-ktls enable-fips enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-ktls enable-fips enable-lms enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -489,7 +489,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo no-legacy enable-fips && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo no-legacy enable-fips enable-lms && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -550,7 +550,7 @@ jobs:
         mkdir ./install
     - name: config
       run: |
-        ../source/config --banner=Configured enable-demos enable-h3demo enable-fips enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
+        ../source/config --banner=Configured enable-demos enable-h3demo enable-fips enable-lms enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
         perl configdata.pm --dump
       working-directory: ./build
     - name: make
@@ -595,7 +595,7 @@ jobs:
         mkdir ./install
     - name: config
       run: |
-        ../source/config --banner=Configured enable-fips enable-demos enable-h3demo enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
+        ../source/config --banner=Configured enable-fips enable-lms enable-demos enable-h3demo enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
         perl configdata.pm --dump
       working-directory: ./build
     - name: make
