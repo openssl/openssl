@@ -46,6 +46,9 @@ typedef struct {
 int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
                                       const OSSL_PARAM params[],
                                       OSSL_LIB_CTX *ctx);
+int ossl_prov_cipher_load(PROV_CIPHER *pc, const OSSL_PARAM *cipher,
+                          const OSSL_PARAM *propq, const OSSL_PARAM *engine,
+                          OSSL_LIB_CTX *ctx);
 
 /* Reset the PROV_CIPHER fields and free any allocated cipher reference */
 void ossl_prov_cipher_reset(PROV_CIPHER *pc);
@@ -75,6 +78,9 @@ const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OSSL_LIB_CTX *libctx,
 int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
                                       const OSSL_PARAM params[],
                                       OSSL_LIB_CTX *ctx);
+int ossl_prov_digest_load(PROV_DIGEST *pd,const OSSL_PARAM *digest,
+                          const OSSL_PARAM *propq, const OSSL_PARAM *engine,
+                          OSSL_LIB_CTX *ctx);
 
 /* Reset the PROV_DIGEST fields and free any allocated digest reference */
 void ossl_prov_digest_reset(PROV_DIGEST *pd);
@@ -94,14 +100,18 @@ void ossl_prov_digest_set_md(PROV_DIGEST *pd, EVP_MD *md);
  * If any of the supplied ciphername/mdname etc are NULL then the values
  * from the supplied params (if non NULL) are used instead.
  */
+int ossl_prov_macctx_load(EVP_MAC_CTX **macctx,
+                          const OSSL_PARAM *pmac, const OSSL_PARAM *pcipher,
+                          const OSSL_PARAM *pdigest, const OSSL_PARAM *propq,
+                          const OSSL_PARAM *pengine,
+                          const char *macname, const char *ciphername,
+                          const char *mdname, OSSL_LIB_CTX *libctx);
+
 int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
-                         const OSSL_PARAM params[],
                          const char *ciphername,
                          const char *mdname,
                          const char *engine,
-                         const char *properties,
-                         const unsigned char *key,
-                         size_t keylen);
+                         const char *properties);
 
 /* MAC functions */
 /*
