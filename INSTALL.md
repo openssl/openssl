@@ -895,9 +895,9 @@ Don't build the legacy provider.
 
 Disabling this also disables the legacy algorithms: MD2 (already disabled by default).
 
-### no-lms
+### enable-lms
 
-Disable Leighton-Micali Signatures (LMS) support.
+Enable Leighton-Micali Signatures (LMS) support.
 Support is currently limited to verification only as per
 [SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final).
 

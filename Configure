@@ -606,6 +606,7 @@ our %disabled = ( # "what"         => "comment"
                   "pie"                 => "default",
                   "jitter"              => "default",
                   "ktls"                => "default",
+                  "lms"                 => "default",
                   "md2"                 => "default",
                   "msan"                => "default",
                   "rc5"                 => "default",
