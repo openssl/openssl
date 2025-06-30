@@ -43,6 +43,8 @@ BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
         return NULL;
     }
 
+    BN_BLINDING_set_current_thread(ret);
+
     if (A != NULL) {
         if ((ret->A = BN_dup(A)) == NULL)
             goto err;
