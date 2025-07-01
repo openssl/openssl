@@ -22,7 +22,7 @@ OpenSSL Releases
 OpenSSL 3.4
 -----------
 
-### Major changes between OpenSSL 3.4.1 and OpenSSL 3.4.2 [under development]
+### Major changes between OpenSSL 3.4.1 and OpenSSL 3.4.2 [1 Jul 2025]
 
 OpenSSL 3.4.2 is a bug fix release.
 
