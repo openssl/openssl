@@ -36,6 +36,16 @@ changes:
   * Added an `openssl configutl` utility for processing the openssl
     configuration file and dumping the equal configuration file.
 
+### Major changes between OpenSSL 3.5.0 and OpenSSL 3.5.1 [under development]
+
+OpenSSL 3.5.1 is a security patch release. The most severe CVE fixed in this
+release is Low.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fix x509 application adds trusted use instead of rejected use.
+   ([CVE-2025-4575])
+
 ### Major changes between OpenSSL 3.4 and OpenSSL 3.5 [under development]
 
 OpenSSL 3.5.0 is a feature release adding significant new functionality to
@@ -1902,7 +1912,7 @@ OpenSSL 0.9.x
   * Support for various new platforms
 
 <!-- Links -->
-
+[CVE-2025-4575]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-4575
 [CVE-2024-13176]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-13176
 [CVE-2024-9143]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-9143
 [CVE-2024-6119]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-6119
