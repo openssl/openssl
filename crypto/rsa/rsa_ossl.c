@@ -350,10 +350,10 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
             ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-    }
 
-    if (!rsa_blinding_convert(blinding, f, ctx))
-        goto err;
+        if (!rsa_blinding_convert(blinding, f, ctx))
+            goto err;
+    }
 
     if ((rsa->flags & RSA_FLAG_EXT_PKEY) ||
         (rsa->version == RSA_ASN1_VERSION_MULTI) ||
@@ -584,9 +584,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
             ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-    }
 
-    if (blinding != NULL) {
         if (!rsa_blinding_convert(blinding, f, ctx))
             goto err;
     }

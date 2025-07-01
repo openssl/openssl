@@ -94,11 +94,8 @@ static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     }
 
     ret->blindings_sa = ossl_rsa_alloc_blinding();
-    if (ret->blindings_sa == NULL) {
-        CRYPTO_THREAD_lock_free(ret->lock);
-        OPENSSL_free(ret);
-        return NULL;
-    }
+    if (ret->blindings_sa == NULL)
+        goto err;
 
     ret->libctx = libctx;
     ret->meth = RSA_get_default_method();
