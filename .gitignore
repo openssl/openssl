@@ -87,6 +87,7 @@ providers/common/include/prov/der_ml_dsa.h
 providers/implementations/kdfs/hkdf.c
 providers/implementations/kdfs/kbkdf.c
 providers/implementations/kdfs/sskdf.c
+providers/implementations/kdfs/tls1_prf.c
 providers/implementations/keymgmt/ml_dsa_kmgmt.c
 providers/implementations/keymgmt/ml_kem_kmgmt.c
 providers/implementations/keymgmt/mlx_kmgmt.c
