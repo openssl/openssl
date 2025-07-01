@@ -20,7 +20,11 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 3.0.16 and OpenSSL 3.0.17 [under development]
 
-  * none
+OpenSSL 3.0.17 is a bug fix release.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Miscellaneous minor bug fixes.
 
 ### Major changes between OpenSSL 3.0.15 and OpenSSL 3.0.16 [11 Feb 2025]
 
