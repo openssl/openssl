@@ -281,15 +281,15 @@ static void *encoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
         }
     }
     /*
-     * Try to check that the method is sensible.
-     * If you have a constructor, you must have a destructor and vice versa.
-     * You must have the encoding driver functions.
+     * In order to be a consistent set of functions we must have at least
+     * a set of context functions (newctx and freectx) as well as a pair of
+     * "object" functions: (import_object, free_object). encode and 
+     * does_selection are required as well.
      */
-    if (!((encoder->newctx == NULL && encoder->freectx == NULL)
-          || (encoder->newctx != NULL && encoder->freectx != NULL)
-          || (encoder->import_object != NULL && encoder->free_object != NULL)
-          || (encoder->import_object == NULL && encoder->free_object == NULL))
-        || encoder->encode == NULL) {
+    if ((encoder->import_object != NULL && encoder->free_object == NULL)
+        || (encoder->import_object == NULL && encoder->free_object != NULL)
+        || encoder->encode == NULL || encoder->does_selection == NULL
+        || encoder->newctx == NULL || encoder->freectx == NULL) {
         OSSL_ENCODER_free(encoder);
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
