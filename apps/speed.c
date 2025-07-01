@@ -24,6 +24,18 @@
 
 #define MAX_ALGNAME_SUFFIX 100
 
+/*
+ * If SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE is not defined,
+ * algorithms with intended failures such as "unsupported" and
+ * "invalid key length" are automatically skipped with "Skip" messages
+ * (instead of stopping all the consecutive algorithms in the same algorithm type).
+ *
+ * If these "Skip" messages are redundant and the combination of
+ * used providers matches with your environment,
+ * uncomment the next directive and define it:
+ */
+/* #define SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE */
+
 /* We need to use some deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 #include "internal/e_os.h"
@@ -1782,8 +1794,19 @@ static EVP_PKEY *get_ecdsa(const EC_CURVE *curve)
             || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx,
                                                       curve->nid) <= 0
             || EVP_PKEY_paramgen(pctx, &params) <= 0) {
+# ifndef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+            error = ERR_peek_error();
+            if (0x030000E9 != error    /* provider keymgmt failure */
+                && 0x08000081 != error /* unknown group */
+                && 0x1C800069 != error /* invalid key length */
+                ) {
+                BIO_printf(bio_err, "EC params init failure.\n");
+                dofail();
+            }
+# else
             BIO_printf(bio_err, "EC params init failure.\n");
             dofail();
+# endif
             EVP_PKEY_CTX_free(pctx);
             return NULL;
         }
@@ -1924,6 +1947,10 @@ int speed_main(int argc, char **argv)
     unsigned int idx;
     int keylen = 0;
     int buflen;
+    int rsa_no_enc_dec = 0;
+#ifndef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+    unsigned long error, uh_error;
+#endif
     size_t declen;
     BIGNUM *bn = NULL;
     EVP_PKEY_CTX *genctx = NULL;
@@ -2052,13 +2079,21 @@ int speed_main(int argc, char **argv)
     uint8_t do_kems = 0;
     uint8_t do_sigs = 0;
 
+#ifdef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
     /*
-     * checks if fips_module
-     * "#define FIPS_MODULE" does not work in this file
+     * This is for the case that either fips or default provider is loaded.
+     * For the other cases, try automatic skip by
+     * undefining SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE.
+     *
+     * In this file, "#define FIPS_MODULE" does not work.
      */
     static int fips_module = 0;
+    static int default_module = 0;
     if (OSSL_PROVIDER_available(NULL, "fips"))
         fips_module = 1;
+    if (OSSL_PROVIDER_available(NULL, "default"))
+        default_module = 1;
+#endif /* SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE */
 
     /* checks declared curves against choices list. */
 #ifndef OPENSSL_NO_EC
@@ -2302,45 +2337,60 @@ int speed_main(int argc, char **argv)
         const char *sig_name = EVP_SIGNATURE_get0_name(s);
 
         /* skip signature-algorithms for sigs_doit */
-        if (0 /* 0 is to avoid missing/redundant "||" after list selection */
-            /* sig_name's below are tested elsewhere - and b/o setup is a pain */
-#ifndef OPENSSL_NO_ECX
-            || strcmp(sig_name, "ED25519") == 0
-            || strcmp(sig_name, "ED448") == 0
-#endif /* OPENSSL_NO_ECX */
-            || strcmp(sig_name, "ECDSA") == 0
-            || strcmp(sig_name, "HMAC") == 0
-            || strcmp(sig_name, "SIPHASH") == 0
-            || strcmp(sig_name, "POLY1305") == 0
-            || strcmp(sig_name, "CMAC") == 0
-#ifndef OPENSSL_NO_SM2
-            || strcmp(sig_name, "SM2") == 0
-#endif
-            /* below cause "error while initializing signing data structs" */
-            /* uncomment the next two lines if #27108 is not yet fixed */
-            /* || strncmp(sig_name, "ML-DSA", 6) == 0 */
-            /* || strncmp(sig_name, "SLH-DSA", 7) == 0 */
-            /* below cause "error initializing keygen ctx" */
-            || strncmp(sig_name, "RSA-SHA", 7) == 0
-            || strncmp(sig_name, "ECDSA-SHA", 9) == 0
-#ifndef OPENSSL_NO_ECX
-            || strcmp(sig_name, "ED25519ph") == 0
-            || strcmp(sig_name, "ED25519ctx") == 0
-            || strcmp(sig_name, "ED448ph") == 0
-#endif /* OPENSSL_NO_ECX */
-#ifndef OPENSSL_NO_DSA
-            || strncmp(sig_name, "DSA-SHA", 7) == 0
-            || (fips_module && strcmp(sig_name, "DSA") == 0)
-#endif /* OPENSSL_NO_DSA */
-            || (!fips_module
+        if (/* sig_name's below are tested elsewhere - and b/o setup is a pain */
+            (strcmp(sig_name, "HMAC") == 0)
+            || (strcmp(sig_name, "SIPHASH") == 0)
+            || (strcmp(sig_name, "POLY1305") == 0)
+            || (strcmp(sig_name, "CMAC") == 0)
+#ifndef OPENSSL_NO_EC
+            || (strcmp(sig_name, "ECDSA") == 0)
+# ifndef OPENSSL_NO_ECX
+            || (strcmp(sig_name, "ED25519") == 0)
+            || (strcmp(sig_name, "ED448") == 0)
+# endif /* OPENSSL_NO_ECX */
+# ifndef OPENSSL_NO_SM2
+            || (strcmp(sig_name, "SM2") == 0)
+# endif
+#endif /* OPENSSL_NO_EC */
+#ifdef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+            /*
+             * If SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE is not defiend,
+             * failure algorithms are automatically skipped depending
+             * on the error code.
+             */
+            || ((fips_module || default_module)
+                && (/* below cause "error initializing keygen ctx" */
+                    (strncmp(sig_name, "RSA-SHA", 7) == 0)
+                    || (strncmp(sig_name, "ECDSA-SHA", 9) == 0)
+# ifndef OPENSSL_NO_ECX
+                    || (strcmp(sig_name, "ED25519ph") == 0)
+                    || (strcmp(sig_name, "ED25519ctx") == 0)
+                    || (strcmp(sig_name, "ED448ph") == 0)
+# endif /* OPENSSL_NO_ECX */
+# ifndef OPENSSL_NO_DSA
+                    || (strncmp(sig_name, "DSA-SHA", 7) == 0)
+# endif /* OPENSSL_NO_DSA */
+                    /* below cause "error while initializing signing data structs" */
+                    /* uncomment the next two lines if #27108 is not yet fixed */
+                    /* || (strncmp(sig_name, "ML-DSA", 6) == 0) */
+                    /* || (strncmp(sig_name, "SLH-DSA", 7) == 0) */
+                    ))
+# ifndef OPENSSL_NO_DSA
+            || (fips_module && !default_module
+                && (strcmp(sig_name, "DSA") == 0))
+# endif /* OPENSSL_NO_DSA */
+            || (!fips_module && default_module
                 && (0 /* this 0 is to deal with list change */
-#ifndef OPENSSL_NO_RMD160
-                    || strcmp(sig_name, "RSA-RIPEMD160") == 0
-#endif
-#ifndef OPENSSL_NO_SM3
-                    || strncmp(sig_name, "RSA-SM3", 7) == 0
-#endif
-            ))) continue;
+# ifndef OPENSSL_NO_RMD160
+                    || (strcmp(sig_name, "RSA-RIPEMD160") == 0)
+# endif
+# ifndef OPENSSL_NO_SM3
+                    || (strncmp(sig_name, "RSA-SM3", 7) == 0)
+# endif
+                    ))
+#endif /* SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE */
+            )
+            continue;
 
         /*
          * initial sigs_doit, which may be changed later,
@@ -3305,12 +3355,14 @@ int speed_main(int argc, char **argv)
         if (RAND_bytes(loopargs[i].buf, 36) <= 0)
             goto end;
 
+#ifdef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
     /*
      * Skip algorithms where fips_module does not support.
      * Algorithms available only in sigs_doit are skipped
      * in the for-loop using sk_EVP_SIGNATURE_num(sig_stack).
      */
-    if (fips_module) {
+    if (fips_module && !default_module) {
+        rsa_no_enc_dec = 1;
         /* below 112 bit-security */
         if (opt_found("rsa512", rsa_choices, &i))
             rsa_doit[i] = 0;
@@ -3324,7 +3376,7 @@ int speed_main(int argc, char **argv)
             kems_doit[idx] = 0;
         if (sig_locate("rsa1024", &idx))
             sigs_doit[idx] = 0;
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
         if (opt_found("ecdsap160", ecdsa_choices, &i))
             ecdsa_doit[i] = 0;
         if (opt_found("ecdsap192", ecdsa_choices, &i))
@@ -3337,7 +3389,7 @@ int speed_main(int argc, char **argv)
             ecdh_doit[i] = 0;
         if (opt_found("ecdhp192", ecdh_choices, &i))
             ecdh_doit[i] = 0;
-# ifndef OPENSSL_NO_EC2M
+#  ifndef OPENSSL_NO_EC2M
         if (opt_found("ecdsak163", ecdsa_choices, &i))
             ecdsa_doit[i] = 0;
         if (opt_found("ecdsab163", ecdsa_choices, &i))
@@ -3350,12 +3402,16 @@ int speed_main(int argc, char **argv)
             sigs_doit[idx] = 0;
         if (sig_locate("ecdsab163", &idx))
             sigs_doit[idx] = 0;
-# endif /* OPENSSL_NO_EC2M */
-#endif /* OPENSSL_NO_EC */
+#  endif /* OPENSSL_NO_EC2M */
+# endif /* OPENSSL_NO_EC */
 
         /* failure */
-#ifndef OPENSSL_NO_DSA
-        /* sign setup failure for both dsa1024 and dsa2048 */
+# ifndef OPENSSL_NO_DSA
+        /*
+         * sign setup failure
+         * at (EVP_PKEY_sign_init(loopargs[i].dsa_sign_ctx[testnum]) <= 0)
+         * for both dsa1024 and dsa2048
+         */
         memset(dsa_doit, 0, DSA_NUM);
         /*
          * If only dsa1024 causes failure,
@@ -3365,14 +3421,14 @@ int speed_main(int argc, char **argv)
          * if (sig_locate("dsa1024", &idx))
          *   sigs_doit[idx] = 0;
          */
-#endif /* OPENSSL_NO_DSA */
-#ifndef OPENSSL_NO_EC
-# ifndef OPENSSL_NO_SM2
+# endif /* OPENSSL_NO_DSA */
+# ifndef OPENSSL_NO_EC
+#  ifndef OPENSSL_NO_SM2
         /* init failure for 256 bits SM2 (CurveSM2) */
         memset(sm2_doit, 0, SM2_NUM);
-# endif /* OPENSSL_NO_SM2 */
-# ifndef OPENSSL_NO_EC2M
-        /* computation failure */
+#  endif /* OPENSSL_NO_SM2 */
+#  ifndef OPENSSL_NO_EC2M
+        /* computation failure with cofactor required */
         if (opt_found("ecdhk233", ecdh_choices, &i))
             ecdh_doit[i] = 0;
         if (opt_found("ecdhk283", ecdh_choices, &i))
@@ -3389,7 +3445,7 @@ int speed_main(int argc, char **argv)
             ecdh_doit[i] = 0;
         if (opt_found("ecdhb571", ecdh_choices, &i))
             ecdh_doit[i] = 0;
-# endif /* OPENSSL_NO_EC2M */
+#  endif /* OPENSSL_NO_EC2M */
         /* params init failure */
         /* "ecdsabrp"'s positions, idx and i, depend on OPENSSL_NO_EC2M */
         if (opt_found("ecdsabrp256r1", ecdsa_choices, &i))
@@ -3416,7 +3472,7 @@ int speed_main(int argc, char **argv)
             ecdh_doit[i] = 0;
         if (opt_found("ecdhbrp512t1", ecdh_choices, &i))
             ecdh_doit[i] = 0;
-#endif /* OPENSSL_NO_EC */
+# endif /* OPENSSL_NO_EC */
     }
     /*
      * RSA keygen's in kem/sig take time,
@@ -3425,6 +3481,7 @@ int speed_main(int argc, char **argv)
      *  memset(kems_doit, 0, RSA_NUM);
      *  memset(sigs_doit, 0, RSA_NUM);
      */
+#endif /* SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE */
 
     /* init and run_benchmark */
     for (testnum = 0; testnum < RSA_NUM; testnum++) {
@@ -3467,10 +3524,31 @@ int speed_main(int argc, char **argv)
                 st = 0;
         }
         if (!st) {
+#ifndef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+            error = ERR_peek_error();
+            if (0x1C800069 == error) {     /* invalid key length */
+                rsa_doit[testnum] = 0;     /* skip only this key length */
+                ERR_get_error();           /* skip this error */
+                ERR_print_errors(bio_err); /* print unhandled errors if exist */
+                BIO_printf(bio_err, "Skip  %-9s with invalid key length\n",
+                           rsa_choices[testnum].name);
+                goto rsa_err_break;
+            } else {
+                /* stop all rsa's except in kems and sigs */
+                ERR_print_errors(bio_err);
+                BIO_printf(bio_err,
+                           "RSA sign setup failure.  No RSA sign will be done.\n");
+                dofail();
+                op_count = 1;
+            }
+#else
+            /* stop all rsa's except in kems and sigs */
+            ERR_print_errors(bio_err);
             BIO_printf(bio_err,
                        "RSA sign setup failure.  No RSA sign will be done.\n");
             dofail();
             op_count = 1;
+#endif /* SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE */
         } else {
             pkey_print_message("private", "rsa sign",
                                rsa_keys[testnum].bits, seconds.rsa);
@@ -3515,16 +3593,7 @@ int speed_main(int argc, char **argv)
             rsa_results[testnum][1] = (double)count / d;
         }
 
-        if (!fips_module) {
-            /*
-             * In fips_module, EVP_PKEY_encrypt() fails with
-             * the following error:
-             *   Provider routines:rsa_encrypt:invalid padding mode:
-             *     providers/implementations/asymciphers/rsa_enc.c:166:
-             *   digital envelope routines:
-             *     EVP_PKEY_encrypt:provider asym cipher failure:
-             *     crypto/evp/asymcipher.c:266:RSA encrypt:
-             */
+        if (!rsa_no_enc_dec) {
             for (i = 0; st && i < loopargs_len; i++) {
                 loopargs[i].rsa_encrypt_ctx[testnum] = EVP_PKEY_CTX_new(rsa_key, NULL);
                 loopargs[i].encsize = loopargs[i].buflen;
@@ -3537,10 +3606,35 @@ int speed_main(int argc, char **argv)
                     st = 0;
             }
             if (!st) {
+#ifndef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+                error = ERR_peek_error();
+                if (0x1C8000A8 == error) {     /* invalid padding mode */
+                    /* skip rsa encrypt and decrypt only */
+                    rsa_no_enc_dec = 1;
+                    ERR_get_error();           /* skip this error */
+                    uh_error = ERR_peek_error();
+                    if (0x030000E8 == uh_error) {
+                        /* EVP_PKEY_encrypt:provider asym cipher failure */
+                        ERR_get_error();       /* skip this error */
+                    }
+                    ERR_print_errors(bio_err); /* print unhandled errors if exist */
+                    BIO_printf(bio_err, "Skip  %-9s enc/dec with invalid padding mode\n",
+                               rsa_choices[testnum].name);
+                    goto rsa_err_break;
+                } else {
+                    /* stop all rsa's */
+                    BIO_printf(bio_err,
+                               "RSA encrypt setup failure.  No RSA encrypt will be done.\n");
+                    dofail();
+                    op_count = 1;
+                }
+#else
+                /* stop all rsa's except in kems and sigs */
                 BIO_printf(bio_err,
-                        "RSA encrypt setup failure.  No RSA encrypt will be done.\n");
+                           "RSA encrypt setup failure.  No RSA encrypt will be done.\n");
                 dofail();
                 op_count = 1;
+#endif /* SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE */
             } else {
                 pkey_print_message("public", "rsa encrypt",
                                 rsa_keys[testnum].bits, seconds.rsa);
@@ -3591,8 +3685,12 @@ int speed_main(int argc, char **argv)
 
         if (op_count <= 1) {
             /* if longer than 10s, don't do any more */
-            stop_it(rsa_doit, testnum);
+            if (rsa_doit[testnum] != 0) /* skip this or all */
+                stop_it(rsa_doit, testnum);
         }
+#ifndef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+    rsa_err_break:
+#endif
         EVP_PKEY_free(rsa_key);
     }
 
@@ -3619,6 +3717,8 @@ int speed_main(int argc, char **argv)
                 st = 0;
         }
         if (!st) {
+            /* stop all */
+            ERR_print_errors(bio_err); /* print unhandled errors if exist */
             BIO_printf(bio_err,
                        "DSA sign setup failure.  No DSA sign will be done.\n");
             dofail();
@@ -3683,7 +3783,31 @@ int speed_main(int argc, char **argv)
             continue;
 
         st = (ecdsa_key = get_ecdsa(&ec_curves[testnum])) != NULL;
-
+# ifndef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+        if (!st) {
+            error = ERR_peek_error();
+            if (0x08000081 == error           /* unknown group */
+                || 0x1C800069 == error        /* invalid key length */
+                ) {
+                ecdsa_doit[testnum] = 0;      /* skip only this */
+                ERR_get_error();              /* skip this error */
+                uh_error = ERR_peek_error();
+                if (0x030000E9 == uh_error) {
+                    /* provider keymgmt failure */
+                    ERR_get_error();          /* skip this error */
+                }
+                ERR_print_errors(bio_err);    /* print unhandled errors if exist */
+                if (0x08000081 == error)      /* unknown group */
+                    BIO_printf(bio_err, "Skip  %s with unkown group\n",
+                               ecdsa_choices[testnum].name);
+                else if (0x1C800069 == error) /* invalid key length */
+                    BIO_printf(bio_err, "Skip  %s with invalid key length\n",
+                               ecdsa_choices[testnum].name);
+                /* goto ecdsa_err_break; */
+                continue;
+            }
+        }
+# endif
         for (i = 0; st && i < loopargs_len; i++) {
             loopargs[i].ecdsa_sign_ctx[testnum] = EVP_PKEY_CTX_new(ecdsa_key,
                                                                    NULL);
@@ -3697,6 +3821,8 @@ int speed_main(int argc, char **argv)
                 st = 0;
         }
         if (!st) {
+            /* stop all */
+            ERR_print_errors(bio_err); /* print unhandled errors if exist */
             BIO_printf(bio_err,
                        "ECDSA sign setup failure.  No ECDSA sign will be done.\n");
             dofail();
@@ -3746,7 +3872,8 @@ int speed_main(int argc, char **argv)
 
         if (op_count <= 1) {
             /* if longer than 10s, don't do any more */
-            stop_it(ecdsa_doit, testnum);
+            if (ecdsa_doit[testnum] != 0) /* skip this or all */
+                stop_it(ecdsa_doit, testnum);
         }
         EVP_PKEY_free(ecdsa_key);
     }
@@ -3774,10 +3901,35 @@ int speed_main(int argc, char **argv)
                 || outlen == 0 /* ensure outlen is a valid size */
                 || outlen > MAX_ECDH_SIZE /* avoid buffer overflow */) {
                 ecdh_checks = 0;
+# ifndef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+                error = ERR_peek_error();
+                if (0x08000081 == error        /* unknown group */
+                    || 0x1C800069 == error     /* invalid key length */
+                    ) {
+                    ecdh_doit[testnum] = 0;    /* skip only this */
+                    ERR_get_error();           /* skip this error */
+                    uh_error = ERR_peek_error();
+                    if (0x030000E9 == uh_error) {
+                        /* provider keymgmt failure */
+                        ERR_get_error();       /* skip this error */
+                    }
+                    ERR_print_errors(bio_err); /* print unhandled errors if exist */
+                    if (0x08000081 == error)   /* unknown group */
+                        BIO_printf(bio_err, "Skip  %s with unkown group\n",
+                                   ecdh_choices[testnum].name);
+                    else if (0x1C800069 == error) /* invalid key length */
+                        BIO_printf(bio_err, "Skip  %s with invalid key length\n",
+                                   ecdh_choices[testnum].name);
+                } else {
+                    BIO_printf(bio_err, "ECDH key generation failure.\n");
+                    dofail();
+                }
+# else
                 BIO_printf(bio_err, "ECDH key generation failure.\n");
                 dofail();
+# endif /* SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE */
                 op_count = 1;
-                break;
+                goto ecdh_err_break;
             }
 
             /*
@@ -3794,10 +3946,25 @@ int speed_main(int argc, char **argv)
                 || EVP_PKEY_derive(test_ctx, loopargs[i].secret_b, &test_outlen) <= 0 /* compute b*A */
                 || test_outlen != outlen /* compare output length */) {
                 ecdh_checks = 0;
+# ifndef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+                error = ERR_peek_error();
+                if (0x1C8000EC == error) {     /* cofactor required */
+                    ecdh_doit[testnum] = 0;    /* skip only this */
+                    ERR_get_error();           /* skip this error */
+                    ERR_print_errors(bio_err); /* print unhandled errors if exist */
+                    BIO_printf(bio_err, "Skip  %s with cofactor required\n",
+                               ecdh_choices[testnum].name);
+                    /*
+                     * BIO_printf(bio_err, "Skip  %s with %s\n",
+                     *            ecdh_choices[testnum].name, ERR_error_string(error, NULL));
+                     */
+                }
+# else
                 BIO_printf(bio_err, "ECDH computation failure.\n");
                 dofail();
+# endif /* SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE */
                 op_count = 1;
-                break;
+                goto ecdh_err_break;
             }
 
             /* Compare the computation results: CRYPTO_memcmp() returns 0 if equal */
@@ -3807,16 +3974,19 @@ int speed_main(int argc, char **argv)
                 BIO_printf(bio_err, "ECDH computations don't match.\n");
                 dofail();
                 op_count = 1;
-                break;
+                goto ecdh_err_break;
             }
 
-            loopargs[i].ecdh_ctx[testnum] = ctx;
+            loopargs[i].ecdh_ctx[testnum] = ctx; /* freed at end: */
             loopargs[i].outlen[testnum] = outlen;
 
+        ecdh_err_break:
             EVP_PKEY_free(key_A);
             EVP_PKEY_free(key_B);
             EVP_PKEY_CTX_free(test_ctx);
             test_ctx = NULL;
+            if (!ecdh_checks)
+                break;
         }
         if (ecdh_checks != 0) {
             pkey_print_message("", "ecdh",
@@ -3835,7 +4005,8 @@ int speed_main(int argc, char **argv)
 
         if (op_count <= 1) {
             /* if longer than 10s, don't do any more */
-            stop_it(ecdh_doit, testnum);
+            if (ecdh_doit[testnum] != 0) /* skip this or all */
+                stop_it(ecdh_doit, testnum);
         }
     }
 
@@ -4018,8 +4189,23 @@ int speed_main(int argc, char **argv)
             st = 1;         /* mark loop as succeeded */
         }
         if (st == 0) {
+#  ifndef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+            error = ERR_peek_error();
+            if (0x0308010C == error) {     /* unsupported */
+                /* skip only this though SM2_NUM == 1 so far */
+                sm2_doit[testnum] = 0;
+                ERR_get_error();           /* skip this error */
+                ERR_print_errors(bio_err); /* print unhandled errors if exist */
+                BIO_printf(bio_err, "Skip  %s with unsupported\n",
+                           sm2_choices[testnum].name);
+            } else {
+                BIO_printf(bio_err, "SM2 init failure.\n");
+                dofail();
+            }
+#  else
             BIO_printf(bio_err, "SM2 init failure.\n");
             dofail();
+#  endif /* SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE */
             op_count = 1;
         } else {
             for (i = 0; i < loopargs_len; i++) {
@@ -4336,7 +4522,25 @@ int speed_main(int argc, char **argv)
                 goto kem_err_break;
             }
             if (EVP_PKEY_keygen(kem_gen_ctx, &pkey) <= 0) {
+#ifndef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+                error = ERR_peek_error();
+                if (0x020000AE == error) {     /* invalid modulus */
+                    kems_doit[testnum] = 0;    /* skip only this key length */
+                    ERR_get_error();           /* skip this error */
+                    uh_error = ERR_peek_error();
+                    if (0x030000E9 == uh_error) {
+                        /* evp_keymgmt_gen:provider keymgmt failure */
+                        ERR_get_error();       /* skip this error */
+                    }
+                    ERR_print_errors(bio_err); /* print unhandled errors if exist */
+                    BIO_printf(bio_err, "Skip  %s in kems with invalid modulus\n",
+                               kems_algname[testnum]);
+                } else {
+                    BIO_printf(bio_err, "Error while generating KEM EVP_PKEY.\n");
+                }
+#else
                 BIO_printf(bio_err, "Error while generating KEM EVP_PKEY.\n");
+#endif
                 goto kem_err_break;
             }
             /* Now prepare encaps data structs */
@@ -4414,7 +4618,8 @@ int speed_main(int argc, char **argv)
             continue;
 
         kem_err_break:
-            dofail();
+            if (kems_doit[testnum] != 0)
+                dofail();
             EVP_PKEY_free(pkey);
             op_count = 1;
             kem_checks = 0;
@@ -4457,7 +4662,8 @@ int speed_main(int argc, char **argv)
         }
         if (op_count <= 1) {
             /* if longer than 10s, don't do any more */
-            stop_it(kems_doit, testnum);
+            if (kems_doit[testnum] != 0) /* skip this or all */
+                stop_it(kems_doit, testnum);
         }
     }
 
@@ -4510,9 +4716,24 @@ int speed_main(int argc, char **argv)
                     || EVP_PKEY_paramgen(ctx_params, &pkey_params) <= 0
                     || (sig_gen_ctx = EVP_PKEY_CTX_new(pkey_params, NULL)) == NULL
                     || EVP_PKEY_keygen_init(sig_gen_ctx) <= 0) {
+#ifndef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+                    error = ERR_peek_error();
+                    if (0x030000E9 == error) {     /* provider keymgmt failure */
+                        sigs_doit[testnum] = 0;    /* skip only this */
+                        ERR_get_error();           /* skip this error */
+                        ERR_print_errors(bio_err); /* print unhandled errors if exist */
+                        BIO_printf(bio_err, "Skip  %s in sigs with classic keygen\n",
+                                   sigs_algname[testnum]);
+                    } else {
+                        BIO_printf(bio_err,
+                                   "Error initializing classic keygen ctx for %s.\n",
+                                   sig_name);
+                    }
+#else
                     BIO_printf(bio_err,
                                "Error initializing classic keygen ctx for %s.\n",
                                sig_name);
+#endif /* SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE */
                     goto sig_err_break;
                 }
             }
@@ -4525,14 +4746,48 @@ int speed_main(int argc, char **argv)
             if (!sig_gen_ctx || EVP_PKEY_keygen_init(sig_gen_ctx) <= 0
                 || (use_params &&
                     EVP_PKEY_CTX_set_params(sig_gen_ctx, params) <= 0)) {
+#ifndef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+                error = ERR_peek_error();
+                if (0x0308010C == error) {     /* unsupported */
+                    sigs_doit[testnum] = 0;    /* skip only this */
+                    ERR_get_error();           /* skip this error */
+                    ERR_print_errors(bio_err); /* print unhandled errors if exist */
+                    BIO_printf(bio_err, "Skip  %s in sigs with unsupported\n",
+                               sigs_algname[testnum]);
+                } else {
+                    BIO_printf(bio_err, "Error initializing keygen ctx for %s.\n",
+                               sig_name);
+                }
+#else
                 BIO_printf(bio_err, "Error initializing keygen ctx for %s.\n",
                            sig_name);
+#endif /* SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE */
                 goto sig_err_break;
             }
             if (EVP_PKEY_keygen(sig_gen_ctx, &pkey) <= 0) {
+#ifndef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+                error = ERR_peek_error();
+                if (0x020000AE == error) {     /* invalid modulus */
+                    sigs_doit[testnum] = 0;    /* skip only this key length */
+                    ERR_get_error();           /* skip this error */
+                    uh_error = ERR_peek_error();
+                    if (0x030000E9 == uh_error) {
+                        /* evp_keymgmt_gen:provider keymgmt failure */
+                        ERR_get_error();       /* skip this error */
+                    }
+                    ERR_print_errors(bio_err); /* print unhandled errors if exist */
+                    BIO_printf(bio_err, "Skip  %s in sigs with invalid modulus\n",
+                               sigs_algname[testnum]);
+                } else {
+                    BIO_printf(bio_err,
+                               "Error while generating signature EVP_PKEY for %s.\n",
+                               sig_name);
+                }
+#else
                 BIO_printf(bio_err,
                            "Error while generating signature EVP_PKEY for %s.\n",
                            sig_name);
+#endif /* SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE */
                 goto sig_err_break;
             }
             /* Now prepare signature data structs */
@@ -4546,10 +4801,25 @@ int speed_main(int argc, char **argv)
                                                      RSA_PKCS1_PADDING) <= 0))
                 || EVP_PKEY_sign(sig_sign_ctx, NULL, &max_sig_len,
                                  md, md_len) <= 0) {
+#ifndef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
+                error = ERR_peek_error();
+                if (0x030000ED == error) {     /* signature not supported */
+                    sigs_doit[testnum] = 0;    /* skip only this */
+                    ERR_get_error();           /* skip this error */
+                    ERR_print_errors(bio_err); /* print unhandled errors if exist */
+                    BIO_printf(bio_err, "Skip  %s in sigs with signature not supported\n",
+                               sigs_algname[testnum]);
+                } else {
                     BIO_printf(bio_err,
                                "Error while initializing signing data structs for %s.\n",
                                sig_name);
-                    goto sig_err_break;
+                }
+#else
+                BIO_printf(bio_err,
+                           "Error while initializing signing data structs for %s.\n",
+                           sig_name);
+#endif /* SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE */
+                goto sig_err_break;
             }
             sig = app_malloc(sig_len = max_sig_len, "signature buffer");
             if (sig == NULL) {
@@ -4594,7 +4864,12 @@ int speed_main(int argc, char **argv)
             continue;
 
         sig_err_break:
+#ifdef SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE
             dofail();
+#else
+            if (sigs_doit[testnum] != 0)
+                dofail();
+#endif
             EVP_PKEY_free(pkey);
             op_count = 1;
             sig_checks = 0;
@@ -4636,8 +4911,10 @@ int speed_main(int argc, char **argv)
             sigs_results[testnum][2] = (double)count / d;
             op_count = count;
         }
-        if (op_count <= 1)
-            stop_it(sigs_doit, testnum);
+        if (op_count <= 1) {
+            if (sigs_doit[testnum] != 0) /* skip this or all */
+                stop_it(sigs_doit, testnum);
+        }
     }
 
 #ifndef NO_FORK
@@ -4693,7 +4970,7 @@ int speed_main(int argc, char **argv)
     for (k = 0; k < RSA_NUM; k++) {
         if (!rsa_doit[k])
             continue;
-        if (fips_module) {
+        if (rsa_no_enc_dec) {
             if (testnum && !mr) {
                 printf("%19ssign    verify    sign/s verify/s\n", " ");
                 testnum = 0;
@@ -4706,7 +4983,7 @@ int speed_main(int argc, char **argv)
                     rsa_keys[k].bits, 1.0 / rsa_results[k][0], 1.0 / rsa_results[k][1],
                     rsa_results[k][0], rsa_results[k][1]);
         } else {
-            /* non fips_module */
+            /* !rsa_no_enc_dec */
             if (testnum && !mr) {
                 printf("%19ssign    verify    encrypt   decrypt   sign/s verify/s  encr./s  decr./s\n", " ");
                 testnum = 0;
