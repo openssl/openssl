@@ -18,6 +18,10 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
+### Major changes between OpenSSL 3.0.17 and OpenSSL 3.0.18 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.0.16 and OpenSSL 3.0.17 [1 Jul 2025]
 
 OpenSSL 3.0.17 is a bug fix release.

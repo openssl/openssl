@@ -28,6 +28,10 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
+### Changes between 3.0.17 and 3.0.18 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.0.16 and 3.0.17 [1 Jul 2025]
 
  * none yet
