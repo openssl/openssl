@@ -1624,8 +1624,7 @@ err:
 }
 
 int ossl_param_get1_concat_octet_string(size_t n, OSSL_PARAM *params[],
-                                        unsigned char **out,
-                                        size_t *out_len, size_t maxsize)
+                                        unsigned char **out, size_t *out_len)
 {
     unsigned char *res;
     size_t sz = 0;
@@ -1635,10 +1634,6 @@ int ossl_param_get1_concat_octet_string(size_t n, OSSL_PARAM *params[],
 
     /* Calculate the total size */
     if (!setbuf_fromparams(n, params, NULL, &sz))
-        return 0;
-
-    /* Check that it's not oversized */
-    if (maxsize > 0 && sz > maxsize)
         return 0;
 
     /* Special case zero length */
