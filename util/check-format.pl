@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 #
-# Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright Siemens AG 2019-2022
 #
 # Licensed under the Apache License 2.0 (the "License").
