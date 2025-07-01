@@ -22,7 +22,11 @@ OpenSSL 3.2
 
 ### Major changes between OpenSSL 3.2.4 and OpenSSL 3.2.5 [under development]
 
-  * none
+OpenSSL 3.2.5 is a bug fix release.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Miscellaneous minor bug fixes.
 
 ### Major changes between OpenSSL 3.2.3 and OpenSSL 3.2.4 [11 Feb 2025]
 
