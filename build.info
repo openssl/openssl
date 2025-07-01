@@ -51,6 +51,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/kdfs/hkdf.c \
          providers/implementations/kdfs/kbkdf.c \
          providers/implementations/kdfs/sskdf.c \
+         providers/implementations/kdfs/tls1_prf.c \
          providers/implementations/keymgmt/ml_dsa_kmgmt.c \
          providers/implementations/keymgmt/ml_kem_kmgmt.c \
          providers/implementations/keymgmt/mlx_kmgmt.c \
@@ -98,6 +99,7 @@ GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 DEPEND[providers/implementations/kdfs/hkdf.c \
        providers/implementations/kdfs/kbkdf.c \
        providers/implementations/kdfs/sskdf.c \
+       providers/implementations/kdfs/tls1_prf.c \
        providers/implementations/keymgmt/ml_dsa_kmgmt.c \
        providers/implementations/keymgmt/ml_kem_kmgmt.c \
        providers/implementations/keymgmt/mlx_kmgmt.c \
@@ -115,6 +117,8 @@ GENERATE[providers/implementations/kdfs/kbkdf.c]=\
     providers/implementations/kdfs/kbkdf.c.in
 GENERATE[providers/implementations/kdfs/sskdf.c]=\
     providers/implementations/kdfs/sskdf.c.in
+GENERATE[providers/implementations/kdfs/tls1_prf.c]=\
+    providers/implementations/kdfs/tls1_prf.c.in
 GENERATE[providers/implementations/keymgmt/ml_dsa_kmgmt.c]=\
     providers/implementations/keymgmt/ml_dsa_kmgmt.c.in
 GENERATE[providers/implementations/keymgmt/ml_kem_kmgmt.c]=\
