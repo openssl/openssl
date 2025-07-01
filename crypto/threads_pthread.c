@@ -604,9 +604,9 @@ void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock)
  * of stack calls that leads us to call CRYPTO_thread_run_once while currently
  * executing the init routine for various run_once functions, which leads to
  * deadlock.  Avoid that by just using a FILE pointer.  Also note that we
- * directly use a pthread_mutex_t to protect access from mutliple threads
+ * directly use a pthread_mutex_t to protect access from mutltiple threads
  * to the contention log file.  We do this because we want to avoid use
- * of the CRYPTO_THREAD api so as to prevent recursive blocking reports
+ * of the CRYPTO_THREAD api so as to prevent recursive blocking reports.
  */
 static FILE *contention_fp = NULL;
 static CRYPTO_ONCE init_contention_fp = CRYPTO_ONCE_STATIC_INIT;
@@ -846,11 +846,11 @@ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock)
 # ifdef REPORT_RWLOCK_CONTENTION
 
     /*
-     * Note: Its possible here that OpenSSL may allocate a lock and immediately
+     * Note: It's possible here that OpenSSL may allocate a lock and immediately
      * free it, in which case we would erroneously close the contention log
      * prior to the library going on to do more real work.  In practice
      * that never happens though, and since this is a debug facility
-     * we don't worry about that here
+     * we don't worry about that here.
      */
     if (__atomic_add_fetch(&rwlock_count, -1, __ATOMIC_ACQ_REL) == 0) {
         fclose(contention_fp);
