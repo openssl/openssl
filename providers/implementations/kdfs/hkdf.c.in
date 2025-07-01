@@ -380,7 +380,7 @@ static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
 
     if (ossl_param_get1_concat_octet_string(p.num_info, p.info,
-                                            &ctx->info, &ctx->info_len, 0) == 0)
+                                            &ctx->info, &ctx->info_len) == 0)
         return 0;
 
 #ifdef FIPS_MODULE

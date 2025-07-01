@@ -595,7 +595,7 @@ static int sskdf_common_set_ctx_params
         return 0;
 
     if (ossl_param_get1_concat_octet_string(p->num_info, p->info, &ctx->info,
-                                            &ctx->info_len, 0) == 0)
+                                            &ctx->info_len) == 0)
         return 0;
 
     if (ossl_param_get1_octet_string_from_param(p->salt, &ctx->salt,
