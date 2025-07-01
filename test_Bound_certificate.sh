@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Variables d'environnement pour utiliser OpenSSL 3.3.0 + OQS provider
+export PATH=/usr/local/ssl/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/ssl/lib64:$LD_LIBRARY_PATH
+export PKG_CONFIG_PATH=/usr/local/ssl/lib64/pkgconfig
+export OPENSSL_MODULES=/usr/local/ssl/lib64/ossl-modules
+export OPENSSL_CONF=/usr/local/ssl/openssl.cnf
+
 # RFC 9763 Related Certificate Test Script
 # This script automates the testing process for RFC 9763 implementation
 # with OpenSSL 3.3.4 + OQS support
@@ -42,20 +49,29 @@ check_command() {
     fi
 }
 
+# Set absolute path to the modified OpenSSL binary
+OPENSSL_BIN="$(cd $(dirname "$0") && pwd)/apps/openssl"
+
 # Function to check OpenSSL version and OQS support
 check_openssl() {
     print_status "Checking OpenSSL installation..."
     
-    if ! command -v openssl &> /dev/null; then
-        print_error "OpenSSL is not installed or not in PATH"
+    if [ ! -f "$OPENSSL_BIN" ]; then
+        print_error "Modified OpenSSL binary not found at $OPENSSL_BIN"
+        print_error "Please build OpenSSL first with 'make'"
         exit 1
     fi
     
-    OPENSSL_VERSION=$(openssl version | awk '{print $2}')
-    print_status "OpenSSL version: $OPENSSL_VERSION"
+    if ! $OPENSSL_BIN version &>/dev/null; then
+        print_error "Modified OpenSSL is not executable"
+        exit 1
+    fi
+    
+    OPENSSL_VERSION=$($OPENSSL_BIN version | awk '{print $2}')
+    print_status "Modified OpenSSL version: $OPENSSL_VERSION"
     
     # Check if OQS provider is available
-    if ! openssl list -providers 2>/dev/null | grep -q "oqs"; then
+    if ! $OPENSSL_BIN list -providers 2>/dev/null | grep -q "oqs"; then
         print_warning "OQS provider not found. Falcon512 may not be available."
         print_warning "Make sure OpenSSL is compiled with OQS support."
     else
@@ -83,10 +99,10 @@ generate_ca() {
     print_status "Generating CA infrastructure..."
     
     # Generate CA private key (RSA)
-    openssl genpkey -algorithm RSA -out ca_key.pem -aes256 -pass pass:testpass
+    $OPENSSL_BIN genpkey -algorithm RSA -out ca_key.pem -aes256 -pass pass:testpass
     
     # Create CA certificate
-    openssl req -new -x509 -key ca_key.pem -out ca_cert.pem -days 365 \
+    $OPENSSL_BIN req -new -x509 -key ca_key.pem -out ca_cert.pem -days 365 \
         -subj "/C=US/ST=CA/L=San Francisco/O=TestOrg/CN=TestCA" \
         -passin pass:testpass
     
@@ -98,14 +114,14 @@ generate_bound_cert() {
     print_status "Generating bound certificate (RSA)..."
     
     # Generate bound certificate private key (RSA)
-    openssl genpkey -algorithm RSA -out bound_key.pem
+    $OPENSSL_BIN genpkey -algorithm RSA -out bound_key.pem
     
     # Create bound certificate request
-    openssl req -new -key bound_key.pem -out bound_cert_req.pem \
+    $OPENSSL_BIN req -new -key bound_key.pem -out bound_cert_req.pem \
         -subj "/C=US/ST=CA/L=San Francisco/O=TestOrg/CN=bound.example.com"
     
     # Sign bound certificate
-    openssl x509 -req -in bound_cert_req.pem -CA ca_cert.pem -CAkey ca_key.pem \
+    $OPENSSL_BIN x509 -req -in bound_cert_req.pem -CA ca_cert.pem -CAkey ca_key.pem \
         -CAcreateserial -out bound_cert.pem -days 365 \
         -passin pass:testpass
     
@@ -117,29 +133,38 @@ generate_new_cert() {
     print_status "Generating new certificate (Falcon512)..."
     
     # Generate new certificate private key (Falcon512)
-    if ! openssl genpkey -algorithm falcon512 -out new_key.pem 2>/dev/null; then
+    if ! $OPENSSL_BIN genpkey -algorithm falcon512 -out new_key.pem 2>/dev/null; then
         print_error "Failed to generate Falcon512 key. OQS provider may not be available."
         print_warning "Falling back to RSA for testing..."
-        openssl genpkey -algorithm RSA -out new_key.pem
+        $OPENSSL_BIN genpkey -algorithm RSA -out new_key.pem
     fi
     
     # Create CSR with relatedCertRequest attribute
-    if openssl req -new -key new_key.pem -out new_cert_req.pem \
+    if $OPENSSL_BIN req -new -key new_key.pem -out new_cert_req.pem \
         -subj "/C=US/ST=CA/L=San Francisco/O=TestOrg/CN=new.example.com" \
-        -add-related-cert bound_cert.pem \
-        -related-uri "file://$(pwd)/bound_cert.pem" 2>/dev/null; then
+        -add_related_cert bound_cert.pem \
+        -related_uri "file://$(pwd)/bound_cert.pem" 2>/dev/null; then
         print_success "CSR with relatedCertRequest attribute created"
     else
         print_warning "relatedCertRequest attribute not supported in this OpenSSL build"
         print_warning "Creating CSR without relatedCertRequest attribute..."
-        openssl req -new -key new_key.pem -out new_cert_req.pem \
+        $OPENSSL_BIN req -new -key new_key.pem -out new_cert_req.pem \
             -subj "/C=US/ST=CA/L=San Francisco/O=TestOrg/CN=new.example.com"
     fi
     
-    # Sign the CSR to create the new certificate
-    openssl x509 -req -in new_cert_req.pem -CA ca_cert.pem -CAkey ca_key.pem \
+    # Sign the CSR to create the new certificate with RelatedCertificate extension
+    if $OPENSSL_BIN x509 -req -in new_cert_req.pem -CA ca_cert.pem -CAkey ca_key.pem \
         -CAcreateserial -out new_cert.pem -days 365 \
-        -passin pass:testpass
+        -add_related_cert bound_cert.pem \
+        -related_uri "file://$(pwd)/bound_cert.pem" \
+        -passin pass:testpass 2>/dev/null; then
+        print_success "New certificate with RelatedCertificate extension generated"
+    else
+        print_warning "RelatedCertificate extension not supported, creating certificate without extension..."
+        $OPENSSL_BIN x509 -req -in new_cert_req.pem -CA ca_cert.pem -CAkey ca_key.pem \
+            -CAcreateserial -out new_cert.pem -days 365 \
+            -passin pass:testpass
+    fi
     
     print_success "New certificate generated"
 }
@@ -150,31 +175,31 @@ verify_certificates() {
     
     echo ""
     print_status "=== CSR Verification ==="
-    if openssl req -in new_cert_req.pem -text -noout 2>/dev/null | grep -q "relatedCertRequest"; then
+    if $OPENSSL_BIN req -in new_cert_req.pem -text -noout 2>/dev/null | grep -q "relatedCertRequest"; then
         print_success "relatedCertRequest attribute found in CSR"
-        openssl req -in new_cert_req.pem -text -noout | grep -A 20 "relatedCertRequest"
+        $OPENSSL_BIN req -in new_cert_req.pem -text -noout | grep -A 20 "relatedCertRequest"
     else
         print_warning "relatedCertRequest attribute not found in CSR"
     fi
     
     echo ""
     print_status "=== Certificate Verification ==="
-    if openssl x509 -in new_cert.pem -text -noout 2>/dev/null | grep -q "RelatedCertificate"; then
+    if $OPENSSL_BIN x509 -in new_cert.pem -text -noout 2>/dev/null | grep -q "RelatedCertificate"; then
         print_success "RelatedCertificate extension found in certificate"
-        openssl x509 -in new_cert.pem -text -noout | grep -A 10 "RelatedCertificate"
+        $OPENSSL_BIN x509 -in new_cert.pem -text -noout | grep -A 10 "RelatedCertificate"
     else
         print_warning "RelatedCertificate extension not found in certificate"
     fi
     
     echo ""
     print_status "=== Signature Verification ==="
-    if openssl req -in new_cert_req.pem -verify -noout 2>/dev/null; then
+    if $OPENSSL_BIN req -in new_cert_req.pem -verify -noout 2>/dev/null; then
         print_success "CSR signature verification passed"
     else
         print_error "CSR signature verification failed"
     fi
     
-    if openssl x509 -in new_cert.pem -verify -noout 2>/dev/null; then
+    if $OPENSSL_BIN verify -CAfile ca_cert.pem new_cert.pem 2>/dev/null; then
         print_success "Certificate signature verification passed"
     else
         print_error "Certificate signature verification failed"

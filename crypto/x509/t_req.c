@@ -123,7 +123,6 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
                 a = X509_REQ_get_attr(x, i);
                 aobj = X509_ATTRIBUTE_get0_object(a);
                 
-                // Debug: print the OID to see what we're dealing with
                 char oid_buf[256];
                 OBJ_obj2txt(oid_buf, sizeof(oid_buf), aobj, 1);
             

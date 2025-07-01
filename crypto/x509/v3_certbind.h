@@ -71,6 +71,9 @@ int print_related_certificate_extension(BIO *bio, X509 *cert, int indent);
 /* Print relatedCertRequest attribute from CSR */
 int print_related_cert_request(BIO *bio, X509_REQ *req, int indent);
 
+/* Initialize RelatedCertificate extension support */
+int v3_certbind_init(void);
+
 /* ASN.1 function declarations */
 DECLARE_ASN1_FUNCTIONS(CERT_ID)
 DECLARE_ASN1_FUNCTIONS(BINARY_TIME)

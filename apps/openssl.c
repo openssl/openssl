@@ -26,6 +26,7 @@
 #include <openssl/core_names.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#include <openssl/obj_mac.h>
 #include "apps.h"
 #include "progs.h"
 #include "opt.h"
@@ -33,45 +34,22 @@
 #include "app_libctx.h"
 #include "crypto/x509/v3_certbind.h"
 
-// Fonction d'affichage pour l'extension RelatedCertificate
-static int i2r_related_certificate(const X509V3_EXT_METHOD *method, void *ext, BIO *out, int indent)
-{
-    RELATED_CERTIFICATE *rc = (RELATED_CERTIFICATE *)ext;
-    if (!rc) return 0;
-    BIO_printf(out, "%*sRelatedCertificate:\n", indent, "");
-    BIO_printf(out, "%*sHash Algorithm: ", indent + 2, "");
-    i2a_ASN1_OBJECT(out, rc->hashAlgorithm->algorithm);
-    BIO_printf(out, "\n%*sHash Value: ", indent + 2, "");
-    for (int i = 0; i < rc->hashValue->length; i++) {
-        BIO_printf(out, "%02X", rc->hashValue->data[i]);
-        if (i + 1 != rc->hashValue->length)
-            BIO_printf(out, ":");
-        if ((i + 1) % 16 == 0 && (i + 1) != rc->hashValue->length)
-            BIO_printf(out, "\n%*s", indent + 4, "");
+// --- RelatedCertificate extension support (restored) ---
+// External declaration of the extension method defined in v3_certbind.c
+extern X509V3_EXT_METHOD v3_related_certificate;
+
+// Register the RelatedCertificate extension method defined in v3_certbind.c
+__attribute__((constructor))
+static void register_related_certificate_ext(void) {
+    /* Register the extension display method */
+    /* Use the NID that's already defined in obj_mac.h */
+    v3_related_certificate.ext_nid = NID_id_pe_relatedCert;
+
+    if (!X509V3_EXT_add(&v3_related_certificate)) {
+        fprintf(stderr, "Warning: Failed to register RelatedCertificate extension method\n");
     }
-    BIO_printf(out, "\n");
-    return 1;
 }
-
-// Fonction de décodage pour l'extension RelatedCertificate
-static void *d2i_related_certificate(const X509V3_EXT_METHOD *method, const unsigned char **in, long len) {
-    return d2i_RELATED_CERTIFICATE(NULL, in, len);
-}
-
-// Méthode d'extension pour RelatedCertificate (ordre strict OpenSSL)
-static X509V3_EXT_METHOD v3_related_certificate = {
-    NID_undef,                      /* ext_nid - sera défini dynamiquement */
-    X509V3_EXT_MULTILINE,           /* ext_flags */
-    ASN1_ITEM_ref(RELATED_CERTIFICATE), /* it */
-    NULL, NULL,                     /* ext_new, ext_free */
-    d2i_related_certificate,        /* d2i */
-    NULL,                           /* i2d */
-    NULL, NULL,                     /* i2s, s2i */
-    NULL, NULL,                     /* i2v, v2i */
-    i2r_related_certificate,        /* i2r */
-    NULL,                           /* r2i */
-    NULL                            /* usr_data */
-};
+// --- End RelatedCertificate extension support ---
 
 /*
  * The LHASH callbacks ("hash" & "cmp") have been replaced by functions with
@@ -125,16 +103,6 @@ static int apps_startup(void)
             if (app_create_libctx() == NULL)
                 return 0;
         }
-    }
-
-    /* Enregistrer l'extension RelatedCertificate pour l'affichage correct */
-    OBJ_create("1.3.6.1.5.5.7.1.36", "relatedCert", "Related Certificate Extension");
-    
-    /* Enregistrer la méthode d'affichage de l'extension */
-    int nid = OBJ_txt2nid("1.3.6.1.5.5.7.1.36");
-    v3_related_certificate.ext_nid = nid;
-    if (!X509V3_EXT_add(&v3_related_certificate)) {
-        fprintf(stderr, "Warning: Failed to register RelatedCertificate extension method\n");
     }
 
     return 1;

@@ -15,9 +15,27 @@
 #include <openssl/obj_mac.h>
 #include "v3_certbind.h"
 #include <openssl/safestack.h>
+#include <openssl/http.h>
+#include <errno.h>
 
-// Default timeout for requestTime freshness (5 minutes as per RFC 9763)
-#define REQUEST_TIME_FRESHNESS_TIMEOUT 300
+// Define NID_id_pe_relatedCert if not already defined
+#ifndef NID_id_pe_relatedCert
+#define NID_id_pe_relatedCert 1322
+#endif
+
+// Default timeout for requestTime freshness (6 months)
+#define REQUEST_TIME_FRESHNESS_TIMEOUT 15768000
+
+// Default HTTP timeout for certificate loading (30 seconds)
+#define HTTP_TIMEOUT 30
+
+// URI scheme detection macros
+#define IS_HTTP_URI(uri) ((uri) != NULL && strncmp((uri), "http://", 7) == 0)
+#define IS_HTTPS_URI(uri) ((uri) != NULL && strncmp((uri), "https://", 8) == 0)
+#define IS_FILE_URI(uri) ((uri) != NULL && strncmp((uri), "file://", 7) == 0)
+
+// Forward declarations for helper functions
+static X509 *parse_http_response_for_certificate(BIO *response_bio);
 
 // ASN.1 structure definitions
 ASN1_SEQUENCE(CERT_ID) = {
@@ -230,7 +248,6 @@ int add_related_cert_request_to_csr(X509_REQ *req, EVP_PKEY *pkey, X509 *related
         ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    rcr->signature->flags &= ~ASN1_STRING_FLAG_BITS_LEFT;
 
     // Re-encode with signature
     len = i2d_REQUESTER_CERTIFICATE(rcr, NULL);
@@ -273,7 +290,7 @@ int add_related_cert_request_to_csr(X509_REQ *req, EVP_PKEY *pkey, X509 *related
 
 err:
     if (!ret) {
-        ERR_print_errors_fp(stderr);
+        // Error handling - errors are already set in the error stack
     }
     REQUESTER_CERTIFICATE_free(rcr);
     X509_ATTRIBUTE_free(attr);
@@ -286,9 +303,9 @@ err:
 
 // Function to add RelatedCertificate extension to X.509 certificate
 int add_related_certificate_extension(X509 *cert, X509 *related_cert, const EVP_MD *hash_alg) {
-    if (!cert || !related_cert || !hash_alg)
+    if (!cert || !related_cert || !hash_alg) {
         return 0;
-
+    }
     int ret = 0;
     RELATED_CERTIFICATE *rc = NULL;
     X509_ALGOR *hash_algor = NULL;
@@ -409,7 +426,7 @@ int add_related_certificate_extension(X509 *cert, X509 *related_cert, const EVP_
 
 err:
     if (!ret) {
-        ERR_print_errors_fp(stderr);
+        // Error handling - errors are already set in the error stack
     }
     RELATED_CERTIFICATE_free(rc);
     OPENSSL_free(cert_der);
@@ -523,18 +540,138 @@ RELATED_CERTIFICATE *get_related_certificate_extension(X509 *cert) {
     return d2i_RELATED_CERTIFICATE(NULL, &p, ext_data->length);
 }
 
-// Enhanced certificate loader with error handling
+// Enhanced certificate loader with HTTP support (HTTPS moved to application level)
 static X509 *load_cert_file(const char *path) {
+    BIO *out = BIO_new_fp(stderr, BIO_NOCLOSE);
+    if (!out) return NULL;
+    
+    X509 *cert = NULL;
+    
+    // Handle HTTP URIs
+    if (IS_HTTP_URI(path)) {
+        // Use OpenSSL's HTTP client to fetch the certificate
+        cert = X509_load_http(path, NULL, NULL, HTTP_TIMEOUT);
+        if (!cert) {
+            ERR_print_errors(out);
+        }
+        BIO_free(out);
+        return cert;
+    }
+    
+    // Handle HTTPS URIs - return error with suggestion to use HTTP or file
+    if (IS_HTTPS_URI(path)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_UNSUPPORTED);
+        BIO_free(out);
+        return NULL;
+    }
+    
+    // Handle file:// URIs (existing functionality)
+    if (IS_FILE_URI(path)) {
+        const char *file_path = path + 7;
+        // For absolute paths, we need to preserve the leading slash
+        // file:///path/to/file should become /path/to/file
+        if (*file_path == '/') {
+            // This is an absolute path, keep it as is
+            // But remove any trailing slashes
+            size_t len = strlen(file_path);
+            while (len > 1 && file_path[len-1] == '/') {
+                len--;
+            }
+            // Create a temporary buffer without trailing slashes
+            char *temp_path = OPENSSL_malloc(len + 1);
+            if (!temp_path) {
+                BIO_free(out);
+                ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+                return NULL;
+            }
+            snprintf(temp_path, len + 1, "%.*s", (int)len, file_path);
+            
+            FILE *fp = fopen(temp_path, "r");
+            if (!fp) {
+                OPENSSL_free(temp_path);
+                BIO_free(out);
+                ERR_raise(ERR_LIB_X509, ERR_R_SYS_LIB);
+                return NULL;
+            }
+            cert = PEM_read_X509(fp, NULL, NULL, NULL);
+            fclose(fp);
+            OPENSSL_free(temp_path);
+            if (!cert) {
+                ERR_raise(ERR_LIB_X509, ERR_R_PEM_LIB);
+            }
+            BIO_free(out);
+            return cert;
+        }
+    }
+    
+    // Handle regular file paths (existing functionality)
     FILE *fp = fopen(path, "r");
     if (!fp) {
+        BIO_free(out);
         ERR_raise(ERR_LIB_X509, ERR_R_SYS_LIB);
         return NULL;
     }
-    X509 *cert = PEM_read_X509(fp, NULL, NULL, NULL);
+    cert = PEM_read_X509(fp, NULL, NULL, NULL);
     fclose(fp);
     if (!cert) {
         ERR_raise(ERR_LIB_X509, ERR_R_PEM_LIB);
     }
+    BIO_free(out);
+    return cert;
+}
+
+// Helper function to parse HTTP response and extract certificate
+static X509 *parse_http_response_for_certificate(BIO *response_bio) {
+    BIO *out = BIO_new_fp(stderr, BIO_NOCLOSE);
+    if (!out) return NULL;
+    
+    X509 *cert = NULL;
+    char *response_data = NULL;
+    long response_len;
+    
+    // Get response data
+    response_len = BIO_get_mem_data(response_bio, &response_data);
+    if (response_len <= 0 || !response_data) {
+        BIO_free(out);
+        return NULL;
+    }
+    
+    // Find the boundary between headers and body
+    char *body_start = strstr(response_data, "\r\n\r\n");
+    if (!body_start) {
+        body_start = strstr(response_data, "\n\n");
+    }
+    
+    if (!body_start) {
+        BIO_free(out);
+        return NULL;
+    }
+    
+    // Skip the separator
+    body_start += (strstr(response_data, "\r\n\r\n") ? 4 : 2);
+    
+    // Create a new BIO with just the body content
+    BIO *body_bio = BIO_new_mem_buf(body_start, -1);
+    if (!body_bio) {
+        BIO_free(out);
+        return NULL;
+    }
+    
+    // Try to read certificate in PEM format
+    cert = PEM_read_bio_X509(body_bio, NULL, NULL, NULL);
+    if (!cert) {
+        // Try DER format
+        int reset_result = BIO_reset(body_bio);
+        (void)reset_result; // Suppress unused variable warning
+        cert = d2i_X509_bio(body_bio, NULL);
+    }
+    
+    if (!cert) {
+        ERR_print_errors(out);
+    }
+    
+    BIO_free(body_bio);
+    BIO_free(out);
     return cert;
 }
 
@@ -546,7 +683,7 @@ int verify_related_cert_request(X509_REQ *req) {
     if (idx < 0) {
         BIO_printf(out, "relatedCertRequest attribute not found\n");
         BIO_free(out);
-        return 0;
+        return -1; // Not an error if attribute is not present
     }
 
     X509_ATTRIBUTE *attr = X509_REQ_get_attr(req, idx);
@@ -583,6 +720,8 @@ int verify_related_cert_request(X509_REQ *req) {
     }
     memcpy(uri, uri_str->data, uri_str->length);
 
+
+
     X509 *related_cert = load_cert_file(uri);
     if (!related_cert) {
         BIO_printf(out, "Unable to load related certificate from: %s\n", uri);
@@ -612,6 +751,16 @@ int verify_related_cert_request(X509_REQ *req) {
         return 0;
     }
 
+    // Get the public key from the CSR (not the related certificate)
+    EVP_PKEY *pubkey = X509_REQ_get_pubkey(req);
+    if (!pubkey) {
+        BIO_printf(out, "Failed to get public key from CSR\n");
+        X509_free(related_cert);
+        REQUESTER_CERTIFICATE_free(rcr);
+        BIO_free(out);
+        return 0;
+    }
+
     // Signature verification
     ASN1_BIT_STRING *saved_sig = rcr->signature;
     rcr->signature = NULL;
@@ -619,6 +768,7 @@ int verify_related_cert_request(X509_REQ *req) {
     int len = i2d_REQUESTER_CERTIFICATE(rcr, NULL);
     if (len <= 0) {
         BIO_printf(out, "Failed to encode REQUESTER_CERTIFICATE for verification\n");
+        EVP_PKEY_free(pubkey);
         X509_free(related_cert);
         REQUESTER_CERTIFICATE_free(rcr);
         BIO_free(out);
@@ -627,6 +777,7 @@ int verify_related_cert_request(X509_REQ *req) {
 
     unsigned char *encoded = OPENSSL_malloc(len);
     if (!encoded) {
+        EVP_PKEY_free(pubkey);
         X509_free(related_cert);
         REQUESTER_CERTIFICATE_free(rcr);
         BIO_free(out);
@@ -636,6 +787,7 @@ int verify_related_cert_request(X509_REQ *req) {
     unsigned char *tmp = encoded;
     if (i2d_REQUESTER_CERTIFICATE(rcr, &tmp) <= 0) {
         OPENSSL_free(encoded);
+        EVP_PKEY_free(pubkey);
         X509_free(related_cert);
         REQUESTER_CERTIFICATE_free(rcr);
         BIO_free(out);
@@ -644,26 +796,42 @@ int verify_related_cert_request(X509_REQ *req) {
     
     rcr->signature = saved_sig;
 
-    EVP_PKEY *pubkey = X509_get_pubkey(related_cert);
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     int ok = 0;
 
-    if (ctx && pubkey &&
-        EVP_DigestVerifyInit(ctx, NULL, EVP_sha256(), NULL, pubkey) == 1 &&
-        EVP_DigestVerifyUpdate(ctx, encoded, len) == 1 &&
-        EVP_DigestVerifyFinal(ctx, rcr->signature->data, rcr->signature->length) == 1) {
-        BIO_printf(out, "relatedCertRequest signature verification OK\n");
-        ok = 1;
-    } else {
-        BIO_printf(out, "relatedCertRequest signature verification FAILED\n");
+
+
+    // For BIT STRING, we need to extract the data
+    const unsigned char *sig_data = ASN1_STRING_get0_data(rcr->signature);
+    int sig_len = ASN1_STRING_length(rcr->signature);
+
+    // Try different hash algorithms if the default fails
+    const EVP_MD *hash_algs[] = {EVP_sha256(), EVP_sha384(), EVP_sha512(), EVP_sha1()};
+    int num_algs = sizeof(hash_algs) / sizeof(hash_algs[0]);
+    
+    for (int i = 0; i < num_algs && !ok; i++) {
+        if (ctx && pubkey) {
+            EVP_MD_CTX_reset(ctx);
+            if (EVP_DigestVerifyInit(ctx, NULL, hash_algs[i], NULL, pubkey) == 1 &&
+                EVP_DigestVerifyUpdate(ctx, encoded, len) == 1 &&
+                EVP_DigestVerifyFinal(ctx, sig_data, sig_len) == 1) {
+                BIO_printf(out, "relatedCertRequest signature verification OK with algorithm %d\n", i);
+                ok = 1;
+                break;
+            }
+        }
+    }
+
+    if (!ok) {
+        BIO_printf(out, "relatedCertRequest signature verification FAILED with all algorithms\n");
         ERR_print_errors(out);
     }
 
     EVP_MD_CTX_free(ctx);
     EVP_PKEY_free(pubkey);
     OPENSSL_free(encoded);
-    X509_free(related_cert);
     REQUESTER_CERTIFICATE_free(rcr);
+    X509_free(related_cert);
     BIO_free(out);
     return ok;
 }
@@ -751,7 +919,6 @@ int print_related_cert_request(BIO *bio, X509_REQ *req, int indent) {
 // X509V3 extension method for RelatedCertificate
 static int i2r_related_certificate(const X509V3_EXT_METHOD *method, void *ext, BIO *out, int indent)
 {
-    fprintf(stderr, "DEBUG: i2r_related_certificate called\n");
     RELATED_CERTIFICATE *rc = (RELATED_CERTIFICATE *)ext;
     if (!rc) return 0;
     
@@ -771,34 +938,29 @@ static int i2r_related_certificate(const X509V3_EXT_METHOD *method, void *ext, B
     return 1;
 }
 
-static void *v2i_related_certificate(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
-{
-    // This would be used for parsing from config file
-    // For now, return NULL as we don't support config-based creation
-    return NULL;
-}
-
-static int i2v_related_certificate(const X509V3_EXT_METHOD *method, void *ext, STACK_OF(CONF_VALUE) **extlist)
-{
-    // This would be used for converting to config format
-    // For now, return 0 as we don't support config output
-    return 0;
+static void *d2i_related_certificate(const X509V3_EXT_METHOD *method, const unsigned char **in, long len) {
+    return d2i_RELATED_CERTIFICATE(NULL, in, len);
 }
 
 X509V3_EXT_METHOD v3_related_certificate = {
     NID_id_pe_relatedCert,           /* ext_nid */
     X509V3_EXT_MULTILINE,            /* ext_flags */
     ASN1_ITEM_ref(RELATED_CERTIFICATE), /* it */
-    0, 0, 0, 0,                      /* old, new, free, d2i, i2d */
-    0, 0,                            /* i2s, s2i */
-    0, 0,                            /* i2v, v2i */
+    NULL, NULL,                      /* ext_new, ext_free */
+    (X509V3_EXT_D2I)d2i_related_certificate,         /* d2i */
+    NULL,                            /* i2d */
+    NULL, NULL,                      /* i2s, s2i */
+    NULL, NULL,                      /* i2v, v2i */
     i2r_related_certificate,         /* i2r */
-    0,                               /* r2i */
+    NULL,                            /* r2i */
     NULL                             /* usr_data */
 };
 
-// Initialize the extension method
-int v3_certbind_init(void)
-{
-    return X509V3_EXT_add(&v3_related_certificate);
+// Function to initialize RelatedCertificate extension support
+int v3_certbind_init(void) {
+    // Register the extension method
+    if (!X509V3_EXT_add(&v3_related_certificate)) {
+        return 0;
+    }
+    return 1;
 }

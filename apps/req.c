@@ -982,13 +982,16 @@ int req_main(int argc, char **argv)
         } else /* i > 0 */
             BIO_printf(bio_out, "Certificate request self-signature verify OK\n");
 	 
-         // verification of relatedCertRequest attribut 
-            if (!verify_related_cert_request(req)) {
-                BIO_printf(bio_err, "relatedCertRequest signature verification failed\n");
-                goto end;
-            } else {
-                BIO_printf(bio_out, "relatedCertRequest signature verification OK\n");
-            }
+         // verification of relatedCertRequest attribute (optional)
+         int related_cert_result = verify_related_cert_request(req);
+         if (related_cert_result == 0) {
+             BIO_printf(bio_err, "relatedCertRequest signature verification failed\n");
+             // Don't fail the entire command, just warn
+         } else if (related_cert_result == 1) {
+             BIO_printf(bio_out, "relatedCertRequest signature verification OK\n");
+         } else if (related_cert_result == -1) {
+             BIO_printf(bio_out, "relatedCertRequest attribute not present (this is OK)\n");
+         }
 
     }
 

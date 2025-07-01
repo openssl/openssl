@@ -145,7 +145,7 @@ cd test_bound_certs
 
 ```bash
 # Generate CA private key (RSA)
-openssl genpkey -algorithm RSA -out ca_key.pem -aes256
+openssl genpkey -algorithm RSA -out ca_key.pem 
 
 # Create CA certificate
 openssl req -new -x509 -key ca_key.pem -out ca_cert.pem -days 365 \
@@ -176,8 +176,8 @@ openssl genpkey -algorithm falcon512 -out new_key.pem
 # Create CSR with relatedCertRequest attribute
 openssl req -new -key new_key.pem -out new_cert_req.pem \
     -subj "/C=US/ST=CA/L=San Francisco/O=TestOrg/CN=new.example.com" \
-    -add-related-cert bound_cert.pem \
-    -related-uri "file://$(pwd)/bound_cert.pem"
+    -add_related_cert bound_cert.pem \
+    -related_uri "file://$(pwd)/bound_cert.pem"
 
 # Sign the CSR to create the new certificate
 openssl x509 -req -in new_cert_req.pem -CA ca_cert.pem -CAkey ca_key.pem \
@@ -197,7 +197,7 @@ openssl req -in new_cert_req.pem -text -noout | grep -A 20 "relatedCertRequest"
 openssl x509 -in new_cert.pem -text -noout
 
 # Check the RelatedCertificate extension
-openssl x509 -in new_cert.pem -text -noout | grep -A 10 "RelatedCertificate"
+openssl x509 -in new_cert.pem -text -noout | grep -A 10 "Bound"
 
 # Verify the signature of the relatedCertRequest attribute
 openssl req -in new_cert_req.pem -verify -noout
@@ -259,9 +259,3 @@ The implementation follows RFC 9763 specifications:
 - OID usage as specified in the RFC
 - Timestamp freshness checking (5-minute timeout)
 
-
-**Copyright**
-
-Copyright (c) 2024 The OpenSSL Project Authors. All Rights Reserved.
-
-Licensed under the Apache License 2.0 (the "License"). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at https://www.openssl.org/source/license.html. 
