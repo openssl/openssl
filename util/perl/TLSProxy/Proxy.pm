@@ -78,7 +78,23 @@ my $ciphersuite = undef;
 
 sub new
 {
-    require IO::Socket::IP;
+    my $useSockInet = 0;
+    eval {
+        require IO::Socket::IP;
+        my $s = IO::Socket::IP->new(
+                LocalAddr => "::1",
+                LocalPort => 0,
+                Listen=>1,
+                );
+            $s or die "\n";
+            $s->close();
+    };
+    if ($@ eq "") {
+        require IO::Socket::IP;
+    } else {
+        $useSockInet = 1;
+    }
+
     my $class = shift;
     my ($filter,
         $execute,
@@ -98,8 +114,13 @@ sub new
         $test_client_port = 49152 + int(rand(65535 - 49152));
         my $test_sock;
         if ($useINET6 == 0) {
-            $test_sock = IO::Socket::IP->new(LocalPort => $test_client_port,
-                                             LocalAddr => $test_client_addr);
+            if ($useSockInet == 0) {
+                $test_sock = IO::Socket::IP->new(LocalPort => $test_client_port,
+                                                 LocalAddr => $test_client_addr);
+            } else {
+                $test_sock = IO::Socket::INET->new(LocalAddr => $test_client_addr,
+                                                   LocalPort => $test_client_port);
+            }
         } else {
             $test_sock = IO::Socket::INET6->new(LocalAddr => $test_client_addr,
                                                 LocalPort => $test_client_port,
