@@ -795,13 +795,17 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
 
     switch (operation) {
     case EVP_PKEY_OP_SIGN:
-        if (signature->sign_init == NULL) {
+        if (signature->sign_init != NULL) {
+            ret = signature->sign_init(ctx->op.sig.algctx, provkey, params);
+        } else if (signature->sign_message_init != NULL) {
+            /* for openssl speed ML-DSA-{44,65,87} SLH-DSA-SHA{2,KE}-{128,192,256}{s,f} */
+            ret = signature->sign_message_init(ctx->op.sig.algctx, provkey, params);
+        } else {
             ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
                            "%s sign_init:%s", signature->type_name, desc);
             ret = -2;
             goto err;
         }
-        ret = signature->sign_init(ctx->op.sig.algctx, provkey, params);
         break;
     case EVP_PKEY_OP_SIGNMSG:
         if (signature->sign_message_init == NULL) {
@@ -813,13 +817,17 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
         ret = signature->sign_message_init(ctx->op.sig.algctx, provkey, params);
         break;
     case EVP_PKEY_OP_VERIFY:
-        if (signature->verify_init == NULL) {
+        if (signature->verify_init != NULL) {
+            ret = signature->verify_init(ctx->op.sig.algctx, provkey, params);
+        } else if (signature->verify_message_init != NULL) {
+            /* for openssl speed ML-DSA-{44,65,87} SLH-DSA-SHA{2,KE}-{128,192,256}{s,f} */
+            ret = signature->verify_message_init(ctx->op.sig.algctx, provkey, params);
+        } else {
             ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
                            "%s verify_init:%s", signature->type_name, desc);
             ret = -2;
             goto err;
         }
-        ret = signature->verify_init(ctx->op.sig.algctx, provkey, params);
         break;
     case EVP_PKEY_OP_VERIFYMSG:
         if (signature->verify_message_init == NULL) {
