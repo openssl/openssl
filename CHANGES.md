@@ -27,6 +27,10 @@ OpenSSL Releases
 OpenSSL 3.4
 -----------
 
+### Changes between 3.4.2 and 3.4.3 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.4.1 and 3.4.2 [1 Jul 2025]
 
  * Aligned the behaviour of TLS and DTLS in the event of a no_renegotiation
