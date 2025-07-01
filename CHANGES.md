@@ -25,6 +25,10 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
+### Changes between 3.2.5 and 3.2.6 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.2.4 and 3.2.5 [1 Jul 2025]
 
  * Aligned the behaviour of TLS and DTLS in the event of a no_renegotiation
