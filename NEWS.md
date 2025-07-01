@@ -23,7 +23,11 @@ OpenSSL 3.3
 
 ### Major changes between OpenSSL 3.3.3 and OpenSSL 3.3.4 [under development]
 
-  * none
+OpenSSL 3.3.4 is a bug fix release.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Miscellaneous minor bug fixes.
 
 ### Major changes between OpenSSL 3.3.2 and OpenSSL 3.3.3 [11 Feb 2025]
 
