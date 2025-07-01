@@ -28,7 +28,7 @@ OpenSSL Releases
 OpenSSL 3.5
 -----------
 
-### Changes between 3.5.0 and 3.5.1 [xx XXX xxxx]
+### Changes between 3.5.0 and 3.5.1 [1 Jul 2025]
 
  * Fix x509 application adds trusted use instead of rejected use.
 
