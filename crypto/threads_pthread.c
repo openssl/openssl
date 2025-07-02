@@ -642,6 +642,9 @@ static void init_contention_fp_once(void)
 #  else
     contention_fp = fopen("lock-contention-log.txt", "w");
 #  endif
+    if (contention_fp == NULL)
+        fprintf(stderr, "Contention log file could not be opened, log will not be recorded\n");
+
     /*
      * Create a thread local key here to store our list of stack traces
      * to be printed when we unlock the lock we are holding
@@ -727,6 +730,8 @@ static void print_stack_traces(struct stack_traces *traces, FILE *fptr)
             for (j = 0; j < traces->stacks[traces->idx].nptrs; j++)
                 fprintf(fptr, "%s\n", traces->stacks[traces->idx].strings[j]);
             free(traces->stacks[traces->idx].strings);
+        } else {
+            fprintf(fptr, "No stack trace available\n");
         }
         fprintf(contention_fp, "\n");
     }
