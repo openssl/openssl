@@ -88,6 +88,7 @@ providers/common/include/prov/der_ml_dsa.h
 providers/common/include/prov/der_hkdf.h
 providers/implementations/kdfs/hkdf.c
 providers/implementations/kdfs/kbkdf.c
+providers/implementations/kdfs/pbkdf2.c
 providers/implementations/kdfs/pvkkdf.c
 providers/implementations/kdfs/sshkdf.c
 providers/implementations/kdfs/sskdf.c
