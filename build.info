@@ -50,6 +50,7 @@ DEPEND[]=include/openssl/asn1.h \
          include/crypto/bn_conf.h include/crypto/dso_conf.h \
          providers/implementations/kdfs/argon2.c \
          providers/implementations/kdfs/hkdf.c \
+         providers/implementations/kdfs/hmacdrbg_kdf.c \
          providers/implementations/kdfs/kbkdf.c \
          providers/implementations/kdfs/krb5kdf.c \
          providers/implementations/kdfs/pbkdf1.c \
@@ -107,6 +108,7 @@ GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 
 DEPEND[providers/implementations/kdfs/argon2.c \
        providers/implementations/kdfs/hkdf.c \
+       providers/implementations/kdfs/hmacdrbg_kdf.c \
        providers/implementations/kdfs/kbkdf.c \
        providers/implementations/kdfs/krb5kdf.c \
        providers/implementations/kdfs/pbkdf1.c \
@@ -133,6 +135,8 @@ GENERATE[providers/implementations/kdfs/argon2.c]=\
     providers/implementations/kdfs/argon2.c.in
 GENERATE[providers/implementations/kdfs/hkdf.c]=\
     providers/implementations/kdfs/hkdf.c.in
+GENERATE[providers/implementations/kdfs/hmacdrbg_kdf.c]=\
+    providers/implementations/kdfs/hmacdrbg_kdf.c.in
 GENERATE[providers/implementations/kdfs/kbkdf.c]=\
     providers/implementations/kdfs/kbkdf.c.in
 GENERATE[providers/implementations/kdfs/krb5kdf.c]=\
