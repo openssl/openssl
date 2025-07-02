@@ -125,7 +125,7 @@ int ossl_lms_pubkey_from_params(const OSSL_PARAM params[], LMS_KEY *lmskey)
 {
     const OSSL_PARAM *p = NULL;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
     if (p != NULL) {
         if (p->data == NULL
                 || p->data_type != OSSL_PARAM_OCTET_STRING
