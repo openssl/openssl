@@ -20,7 +20,7 @@ LMS keymanager for import and export.
 
 =over 4
 
-=item "encoded-pub-key" (B<OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY>) <octet string>
+=item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <octet string>
 
 Used for getting and setting the encoding of an LMS public key. The public key
 is expected to be in XDR format.

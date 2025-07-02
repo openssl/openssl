@@ -13,24 +13,24 @@
 
 /* Refer to SP800-208 Section 4 LM-OTS parameter sets */
 static const LM_OTS_PARAMS lm_ots_params[] = {
-    { OSSL_LM_OTS_TYPE_SHA256_N32_W1, 32, 1, 265, "SHA256"},
-    { OSSL_LM_OTS_TYPE_SHA256_N32_W2, 32, 2, 133, "SHA256"},
-    { OSSL_LM_OTS_TYPE_SHA256_N32_W4, 32, 4,  67, "SHA256"},
-    { OSSL_LM_OTS_TYPE_SHA256_N32_W8, 32, 8,  34, "SHA256"},
-    { OSSL_LM_OTS_TYPE_SHA256_N24_W1, 24, 1, 200, "SHA256-192"},
-    { OSSL_LM_OTS_TYPE_SHA256_N24_W2, 24, 2, 101, "SHA256-192"},
-    { OSSL_LM_OTS_TYPE_SHA256_N24_W4, 24, 4,  51, "SHA256-192"},
-    { OSSL_LM_OTS_TYPE_SHA256_N24_W8, 24, 8,  26, "SHA256-192"},
-    { OSSL_LM_OTS_TYPE_SHAKE_N32_W1,  32, 1, 265, "SHAKE-256"},
-    { OSSL_LM_OTS_TYPE_SHAKE_N32_W2,  32, 2, 133, "SHAKE-256"},
-    { OSSL_LM_OTS_TYPE_SHAKE_N32_W4,  32, 4,  67, "SHAKE-256"},
-    { OSSL_LM_OTS_TYPE_SHAKE_N32_W8,  32, 8,  34, "SHAKE-256"},
+    { OSSL_LM_OTS_TYPE_SHA256_N32_W1, 32, 1, 265, 7, "SHA256"},
+    { OSSL_LM_OTS_TYPE_SHA256_N32_W2, 32, 2, 133, 6, "SHA256"},
+    { OSSL_LM_OTS_TYPE_SHA256_N32_W4, 32, 4,  67, 4, "SHA256"},
+    { OSSL_LM_OTS_TYPE_SHA256_N32_W8, 32, 8,  34, 0, "SHA256"},
+    { OSSL_LM_OTS_TYPE_SHA256_N24_W1, 24, 1, 200, 8, "SHA256-192"},
+    { OSSL_LM_OTS_TYPE_SHA256_N24_W2, 24, 2, 101, 6, "SHA256-192"},
+    { OSSL_LM_OTS_TYPE_SHA256_N24_W4, 24, 4,  51, 4, "SHA256-192"},
+    { OSSL_LM_OTS_TYPE_SHA256_N24_W8, 24, 8,  26, 0, "SHA256-192"},
+    { OSSL_LM_OTS_TYPE_SHAKE_N32_W1,  32, 1, 265, 7, "SHAKE-256"},
+    { OSSL_LM_OTS_TYPE_SHAKE_N32_W2,  32, 2, 133, 6, "SHAKE-256"},
+    { OSSL_LM_OTS_TYPE_SHAKE_N32_W4,  32, 4,  67, 4, "SHAKE-256"},
+    { OSSL_LM_OTS_TYPE_SHAKE_N32_W8,  32, 8,  34, 0, "SHAKE-256"},
     /* SHAKE-256/192 - OpenSSL does not support this as a name */
-    { OSSL_LM_OTS_TYPE_SHAKE_N24_W1,  24, 1, 200, "SHAKE-256"},
-    { OSSL_LM_OTS_TYPE_SHAKE_N24_W2,  24, 2, 101, "SHAKE-256"},
-    { OSSL_LM_OTS_TYPE_SHAKE_N24_W4,  24, 4,  51, "SHAKE-256"},
-    { OSSL_LM_OTS_TYPE_SHAKE_N24_W8,  24, 8,  26, "SHAKE-256"},
-    { 0, 0, 0, 0, NULL },
+    { OSSL_LM_OTS_TYPE_SHAKE_N24_W1,  24, 1, 200, 8, "SHAKE-256"},
+    { OSSL_LM_OTS_TYPE_SHAKE_N24_W2,  24, 2, 101, 6, "SHAKE-256"},
+    { OSSL_LM_OTS_TYPE_SHAKE_N24_W4,  24, 4,  51, 4, "SHAKE-256"},
+    { OSSL_LM_OTS_TYPE_SHAKE_N24_W8,  24, 8,  26, 0, "SHAKE-256"},
+    { 0, 0, 0, 0, 0, NULL },
 };
 
 /**
@@ -62,5 +62,5 @@ uint16_t ossl_lm_ots_params_checksum(const LM_OTS_PARAMS *params,
 
     for (i = 0; i < bytes; ++i)
         sum += end - coef(S, i, params->w);
-    return (sum << (8 - params->w));
+    return (sum << params->ls);
 }

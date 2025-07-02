@@ -5278,7 +5278,6 @@ start:
         char *strnid = NULL, *keydata = NULL;
         unsigned char *keybin;
         size_t keylen;
-        int nid;
 
         if (strcmp(pp->key, "PrivateKeyRaw") == 0)
             klist = &private_keys;
@@ -5297,11 +5296,6 @@ start:
             return 0;
         }
 
-        nid = OBJ_txt2nid(strnid);
-        if (nid == NID_undef) {
-            TEST_info("Unrecognised algorithm NID");
-            return 0;
-        }
         if (!parse_bin(keydata, &keybin, &keylen)) {
             TEST_info("Failed to create binary key");
             return 0;
