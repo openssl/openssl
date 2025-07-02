@@ -460,6 +460,58 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
     return ossl_ml_kem_parse_public_key(pubenc, publen, key);
 }
 
+#ifndef FIPS_MODULE
+static int ml_kem_refetch_digests(ML_KEM_KEY *key, const OSSL_PARAM params[])
+{
+    const OSSL_PARAM *p;
+    const char *properties = NULL;
+    EVP_MD *tmp = NULL;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_PROPERTIES);
+    if (p == NULL)
+        return 1;
+
+    if (p->data_type != OSSL_PARAM_UTF8_STRING)
+        return 0;
+    properties = p->data;
+
+    tmp = EVP_MD_fetch(key->libctx, "SHAKE128", properties);
+    if (tmp != NULL) {
+        EVP_MD_free(key->shake128_md);
+        key->shake128_md = tmp;
+    } else {
+        return 0;
+    }
+
+    tmp = EVP_MD_fetch(key->libctx, "SHAKE256", properties);
+    if (tmp != NULL) {
+        EVP_MD_free(key->shake256_md);
+        key->shake256_md = tmp;
+    } else {
+        return 0;
+    }
+
+    tmp = EVP_MD_fetch(key->libctx, "SHA3-256", properties);
+    if (tmp != NULL) {
+        EVP_MD_free(key->sha3_256_md);
+        key->sha3_256_md = tmp;
+    } else {
+        return 0;
+    }
+
+    tmp = EVP_MD_fetch(key->libctx, "SHA3-512", properties);
+    if (tmp != NULL) {
+        EVP_MD_free(key->sha3_512_md);
+        key->sha3_512_md = tmp;
+    } else {
+        return 0;
+    }
+
+    return 1;
+}
+#endif
+
+
 static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
 {
     ML_KEM_KEY *key = vkey;
@@ -473,6 +525,11 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
         return 0;
 
     include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
+#ifndef FIPS_MODULE
+    /* We may have specific propquery given via params */
+    if (ml_kem_refetch_digests(key, params) != 1)
+        return 0;
+#endif
     res = ml_kem_key_fromdata(key, params, include_private);
     if (res > 0 && include_private
         && !ml_kem_pairwise_test(key, key->prov_flags)) {
