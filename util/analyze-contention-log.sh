@@ -101,7 +101,7 @@ done
 
 #
 # Now because we have our cumulative latencies recorded in files named
-# after their total cumulative latency, we can easily to a numerical
+# after their total cumulative latency, we can easily do a numerical
 # sort on them in reverse order to display them from greatest to least
 #
 echo "Top latencies"
