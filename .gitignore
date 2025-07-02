@@ -84,6 +84,7 @@ providers/common/include/prov/der_digests.h
 providers/common/include/prov/der_wrap.h
 providers/common/include/prov/der_sm2.h
 providers/common/include/prov/der_ml_dsa.h
+providers/implementations/kdfs/argon2.c
 providers/implementations/kdfs/hkdf.c
 providers/implementations/kdfs/kbkdf.c
 providers/implementations/kdfs/krb5kdf.c
