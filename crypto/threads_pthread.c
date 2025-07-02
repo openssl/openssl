@@ -26,7 +26,9 @@
 #endif
 
 #ifdef REPORT_RWLOCK_CONTENTION
+# define _GNU_SOURCE
 # include <execinfo.h>
+# include <unistd.h>
 #endif
 
 #include <openssl/crypto.h>
@@ -622,12 +624,14 @@ static void destroy_contention_data(void *data)
 struct stack_info {
     unsigned int nptrs;
     int write;
+    OSSL_TIME start;
     OSSL_TIME duration;
     char **strings;
 };
 
 #  define STACKS_COUNT 32
 struct stack_traces {
+    size_t lock_depth;
     size_t idx;
     struct stack_info stacks[STACKS_COUNT];
 };
@@ -711,20 +715,22 @@ static void print_stack_traces(struct stack_traces *traces, FILE *fptr)
 {
     unsigned int j;
 
+    pthread_mutex_lock(&log_lock);
     while (traces != NULL && traces->idx >= 1) {
         traces->idx--;
-        pthread_mutex_lock(&log_lock);
-        fprintf(fptr, "lock blocked on %s for %zu usec\n",
+        fprintf(fptr, "lock blocked on %s for %zu usec at time %zu tid %d\n",
                 traces->stacks[traces->idx].write == 1 ? "WRITE" : "READ",
-                ossl_time2us(traces->stacks[traces->idx].duration));
+                ossl_time2us(traces->stacks[traces->idx].duration),
+                ossl_time2us(traces->stacks[traces->idx].start),
+                gettid());
         if (traces->stacks[traces->idx].strings != NULL) {
             for (j = 0; j < traces->stacks[traces->idx].nptrs; j++)
                 fprintf(fptr, "%s\n", traces->stacks[traces->idx].strings[j]);
             free(traces->stacks[traces->idx].strings);
         }
         fprintf(contention_fp, "\n");
-        pthread_mutex_unlock(&log_lock);
     }
+    pthread_mutex_unlock(&log_lock);
 }
 # endif
 
@@ -747,11 +753,13 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
         if (!ossl_assert(pthread_rwlock_rdlock(lock) == 0))
             return 0;
         end = ossl_time_now();
+        traces->lock_depth++;
         traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
         traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
         traces->stacks[traces->idx].strings = backtrace_symbols(buffer,
                                                                 traces->stacks[traces->idx].nptrs);
         traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
+        traces->stacks[traces->idx].start = start;
         traces->stacks[traces->idx].write = 0;
         traces->idx++;
         if (traces->idx >= STACKS_COUNT) {
@@ -790,10 +798,12 @@ __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
         if (!ossl_assert(pthread_rwlock_wrlock(lock) == 0))
             return 0;
         end = ossl_time_now();
+        traces->lock_depth++;
         traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
         traces->stacks[traces->idx].strings = backtrace_symbols(buffer,
                                                                 traces->stacks[traces->idx].nptrs);
         traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
+        traces->stacks[traces->idx].start = start;
         traces->stacks[traces->idx].write = 1;
         traces->idx++;
         if (traces->idx >= STACKS_COUNT) {
@@ -826,7 +836,20 @@ int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock)
 
         if (contention_fp == NULL)
             return 1;
-        print_stack_traces(traces, contention_fp);
+        if (traces != NULL) {
+            /*
+             * We often in openssl have code points where we unlock a lock
+             * that wasn't locked in the first place.  pthread_rwlock_unlock
+             * is tolerant of that condition, but it prevents us from presuming
+             * that an unlock has a paired lock operation that incremented this
+             * count, so we have to bound reduction at zero here
+             */
+            if (traces->lock_depth > 0)
+                traces->lock_depth--;
+
+            if (traces->lock_depth == 0)
+                print_stack_traces(traces, contention_fp);
+        }
     }
 #  endif
 # else
