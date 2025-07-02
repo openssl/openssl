@@ -493,7 +493,7 @@ static int self_test_LMS(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_SIGNATURE,
                            OSSL_SELF_TEST_DESC_SIGN_LMS);
 
-    pm[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+    pm[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
                                               (unsigned char *)t->pub,
                                               t->publen);
     pm[1] = OSSL_PARAM_construct_end();

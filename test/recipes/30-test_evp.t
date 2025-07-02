@@ -34,6 +34,7 @@ my $no_siv = disabled("siv");
 my $no_argon2 = disabled("argon2");
 my $no_ml_dsa = disabled("ml-dsa");
 my $no_ml_kem = disabled("ml-kem");
+my $no_lms = disabled("lms");
 
 # Default config depends on if the legacy module is built or not
 my $defaultcnf = $no_legacy ? 'default.cnf' : 'default-and-legacy.cnf';
@@ -124,6 +125,9 @@ push @files, qw(
                 evppkey_ml_kem_keygen.txt
                 evppkey_ml_kem_encap_decap.txt
                ) unless $no_ml_kem;
+push @files, qw(
+                evppkey_lms_sigver.txt
+               ) unless $no_lms;
 
 # A list of tests that only run with the default provider
 # (i.e. The algorithms are not present in the fips provider)

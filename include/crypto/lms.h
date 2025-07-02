@@ -98,6 +98,12 @@ typedef struct lm_ots_params_st {
      * One of (200, 101, 51, 26) for n = 24, for w=1,2,4,8
      */
     uint32_t p;
+    /*
+     * The size of the shift needed to move the checksum so
+     * that it appears in the checksum digits.
+     * See RFC 8554 Appendix B.  LM-OTS Parameter Options
+     */
+    uint32_t ls;
     const char *digestname; /* Hash Name */
 } LM_OTS_PARAMS;
 

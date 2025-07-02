@@ -79,8 +79,7 @@ static int lms_import(void *keydata, int selection, const OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM lms_key_types[] = {
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
-    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *lms_imexport_types(int selection)
@@ -109,7 +108,7 @@ static int lms_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         return 0;
 
     if (!ossl_param_build_set_octet_string(tmpl, params,
-                                           OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                           OSSL_PKEY_PARAM_PUB_KEY,
                                            lmskey->pub.encoded,
                                            lmskey->pub.encodedlen))
         goto err;
