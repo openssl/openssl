@@ -511,7 +511,6 @@ static int ml_kem_refetch_digests(ML_KEM_KEY *key, const OSSL_PARAM params[])
 }
 #endif
 
-
 static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
 {
     ML_KEM_KEY *key = vkey;
