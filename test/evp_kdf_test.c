@@ -2072,9 +2072,14 @@ static int test_kdf_hmac_drbg_settables(void)
     /* Fail if we pass the wrong type for params */
     params[1] = OSSL_PARAM_construct_end();
     for (i = 0; settableparams[i].key != NULL; ++i) {
-        /* Skip "properties" key since it returns 1 unless the digest is also set */
+        /*
+         * Skip "properties" and "engine" keys since they returns 1 unless
+         * the digest is also set
+         */
         if (OPENSSL_strcasecmp(settableparams[i].key,
-                               OSSL_KDF_PARAM_PROPERTIES) != 0) {
+                               OSSL_KDF_PARAM_PROPERTIES) != 0
+                && OPENSSL_strcasecmp(settableparams[i].key,
+                               OSSL_ALG_PARAM_ENGINE) != 0) {
             TEST_note("Testing set int into %s fails", settableparams[i].key);
             params[0] = OSSL_PARAM_construct_int(settableparams[i].key, &j);
             if (!TEST_int_le(EVP_KDF_CTX_set_params(kctx, params), 0))
