@@ -7,12 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "pbkdf2.h"
-
 /*
  * For backwards compatibility reasons,
  * Extra checks are done by default in fips mode only.
  */
+extern const int ossl_kdf_pbkdf2_default_checks;
 #ifdef FIPS_MODULE
 const int ossl_kdf_pbkdf2_default_checks = 1;
 #else
