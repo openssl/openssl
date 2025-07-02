@@ -37,10 +37,10 @@ jobs:
            git cherry-pick $REFSTART..$REFEND
     - name: config
       if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.branch) }}
-      run: CC=gcc ./config --strict-warnings --banner=Configured enable-fips && perl configdata.pm --dump
+      run: CPPFLAGS=-ansi ./config --strict-warnings --banner=Configured no-asm enable-fips --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
     - name: make
       if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.branch) }}
       run: make -s -j4
     - name: make test
       if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.branch) }}
-      run: .github/workflows/make-test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
