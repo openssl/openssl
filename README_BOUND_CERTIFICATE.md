@@ -12,9 +12,7 @@ This project implements the "bound certificate" approach as defined in [RFC 9763
  - [Building and Testing](#building-and-testing)
  - [Test Script](#test-script)
  - [OID Registration](#oid-registration)
- - [Conformance to RFC 9763](#conformance-to-rfc-9763)
- - [Security Considerations](#security-considerations)
- - [Limitations](#limitations)
+
 
 **Overview**
 
@@ -85,46 +83,10 @@ RequesterCertificate ::= SEQUENCE {
 RelatedCertificate ::= SEQUENCE {
     hashAlgorithm   AlgorithmIdentifier,
     hashValue       OCTET STRING
+    uri             IA5String 
 }
 ```
 
-**Extended RelatedCertificate Extension with URI**
-
-The implementation includes an extended version of the RelatedCertificate extension that can optionally include the URI from the relatedCertRequest attribute. This provides additional context and allows the certificate to directly reference the location of the related certificate.
-
-**Extended ASN.1 Structure**
-
-```asn.1
-RelatedCertificate ::= SEQUENCE {
-    hashAlgorithm   AlgorithmIdentifier,
-    hashValue       OCTET STRING,
-    uri             IA5String OPTIONAL
-}
-```
-
-**Usage Example**
-
-```c
-// Create CSR with relatedCertRequest attribute
-const char *uri = "file:///path/to/related_cert.pem";
-add_related_cert_request_to_csr(req, pkey, related_cert, uri, EVP_sha256());
-
-// Extract URI from CSR
-char *extracted_uri = extract_uri_from_related_cert_request(req);
-
-// Create certificate with RelatedCertificate extension including URI
-add_related_certificate_extension_with_uri(cert, related_cert, EVP_sha256(), extracted_uri);
-
-// Clean up
-OPENSSL_free(extracted_uri);
-```
-
-**Benefits of URI in Extension**
-
-1. **Direct Reference**: The certificate directly contains the URI to the related certificate
-2. **Simplified Verification**: No need to parse the CSR to find the URI
-3. **Enhanced Context**: Provides additional metadata about the certificate relationship
-4. **Backward Compatibility**: The URI field is optional, maintaining compatibility with RFC 9763
 
 **Building and Testing**
 
@@ -258,23 +220,177 @@ chmod +x test_Bound_certificate.sh
 ./test_Bound_certificate.sh
 ```
 
-### Script Features
 
-- **Automatic environment setup**: Creates test directory and cleans up old files
-- **Prerequisite checking**: Verifies OpenSSL installation and OQS provider availability
-- **Error handling**: Graceful fallback if Falcon512 is not available
-- **Colored output**: Clear status messages with color coding
-- **Comprehensive verification**: Checks all certificates and signatures
-- **File information**: Displays generated files and their sizes
+**TLS Handshake Testing Process**
 
+This section describes how to test the RelatedCertificate extension in a real TLS handshake context using OpenSSL.
 
-### Troubleshooting
+### Step 1: Test Certificate Generation
 
-If the script fails:
+#### 1.1 Compiling the Test Program
 
-1. **OQS provider not found**: Ensure OpenSSL is compiled with OQS support
-2. **Falcon512 not available**: The script will fall back to RSA for testing
-3. **relatedCertRequest not supported**: Check that RFC 9763 implementation is properly integrated
+```bash
+# Compile the TLS test program
+gcc -o test_tls_related_cert test_tls_related_cert.c -lssl -lcrypto -ldl -lpthread
+
+# Verify that compilation was successful
+./test_tls_related_cert
+```
+
+The program automatically generates:
+- `ca_cert.pem` : CA certificate
+- `ca_key.pem` : CA private key
+- `server_cert.pem` : Server certificate with RelatedCertificate extension
+- `server_key.pem` : Server private key
+- `server_chain.pem` : Server certificate chain
+- `related_cert.pem` : Related certificate
+
+#### 1.2 Verifying the RelatedCertificate Extension
+
+```bash
+# Verify that the RelatedCertificate extension is present
+openssl x509 -in server_cert.pem -text -noout | grep -A 10 "RelatedCertificate"
+
+# Verify the detailed content of the extension
+openssl x509 -in server_cert.pem -text -noout | grep -A 20 "RelatedCertificate"
+```
+
+### Step 2: TLS Handshake Testing
+
+#### 2.1 Starting the OpenSSL Server
+
+```bash
+# Start the TLS server with the generated certificates
+openssl s_server -cert server_cert.pem -key server_key.pem -CAfile ca_cert.pem -accept 4433 -www -msg
+```
+
+Options used:
+- `-cert server_cert.pem` : Server certificate with RelatedCertificate extension
+- `-key server_key.pem` : Server private key
+- `-CAfile ca_cert.pem` : CA certificate for validation
+- `-accept 4433` : Listening port
+- `-www` : Simple web server mode
+- `-msg` : Display detailed TLS messages
+
+#### 2.2 Connecting the OpenSSL Client
+
+```bash
+# In another terminal, connect a TLS client
+openssl s_client -connect localhost:4433 -CAfile ca_cert.pem -msg
+```
+
+Options used:
+- `-connect localhost:4433` : Connect to local server
+- `-CAfile ca_cert.pem` : CA certificate for validation
+- `-msg` : Display detailed TLS messages
+
+### Step 3: Results Analysis
+
+#### 3.1 Expected TLS Messages
+
+The TLS 1.3 handshake should proceed as follows:
+
+1. **ClientHello** → **ServerHello**
+2. **EncryptedExtensions**
+3. **Certificate** (contains the RelatedCertificate extension)
+4. **CertificateVerify**
+5. **Finished** (successful exchange)
+
+#### 3.2 Extension Validation
+
+In the server's `Certificate` message, you should see:
+
+```
+30 56 06 08 2b 06 01 05 05 07 01 24 04 4a 30 48 30 0d 06 09 60 86 48 01 65 03 04 02 01 05 00 04 20 30 07 15 56 cd 39 67 c7 f4 c4 45 92 84 28 12 03 ab 37 e3 c8 c5 31 60 20 af b4 b5 0f aa 38 65 c6 16 15 66 69 6c 65 3a 72 65 6c 61 74 65 64 5f 63 65 72 74 2e 70 65 6d
+```
+
+This hexadecimal sequence contains:
+- **Extension OID** : `2b 06 01 05 05 07 01 24` (RelatedCertificate)
+- **SHA-256 hash** of the related certificate
+- **URI** : `file:related_cert.pem`
+
+#### 3.3 Success Indicators
+
+**Successful handshake** if you see:
+- Complete TLS 1.3 message exchange
+- `NewSessionTicket` generation
+- No errors related to the RelatedCertificate extension
+- TLS session successfully established
+
+⚠️ **Note** : The `fatal decode_error` at the end is normal - it occurs when the client closes the connection after receiving session tickets.
+
+### Step 4: Automated Test Script
+
+To automate the complete process:
+
+```bash
+#!/bin/bash
+# test_tls_handshake.sh
+
+echo "=== TLS Handshake Test with RelatedCertificate ==="
+
+# 1. Generate certificates
+echo "1. Generating certificates..."
+./test_tls_related_cert
+
+# 2. Verify extension
+echo "2. Verifying RelatedCertificate extension..."
+if openssl x509 -in server_cert.pem -text -noout | grep -q "RelatedCertificate"; then
+    echo "RelatedCertificate extension found"
+else
+    echo " RelatedCertificate extension not found"
+    exit 1
+fi
+
+# 3. Start server in background
+echo "3. Starting TLS server..."
+openssl s_server -cert server_cert.pem -key server_key.pem -CAfile ca_cert.pem -accept 4433 -www &
+SERVER_PID=$!
+
+# 4. Wait for server to start
+sleep 2
+
+# 5. Test client connection
+echo "4. Testing client connection..."
+timeout 10 openssl s_client -connect localhost:4433 -CAfile ca_cert.pem -quiet
+
+# 6. Cleanup
+echo "5. Cleaning up..."
+kill $SERVER_PID 2>/dev/null
+echo "=== Test completed ==="
+```
+
+### Step 5: Troubleshooting
+
+#### Common Issues
+
+1. **Port already in use** :
+   ```bash
+   # Change port
+   openssl s_server -cert server_cert.pem -key server_key.pem -CAfile ca_cert.pem -accept 8443 -www
+   ```
+
+2. **Certificate not found** :
+   ```bash
+   # Verify that files exist
+   ls -la *.pem
+   ```
+
+3. **Validation error** :
+   ```bash
+   # Verify certificate chain
+   openssl verify -CAfile ca_cert.pem server_cert.pem
+   ```
+
+#### Additional Verifications
+
+```bash
+# Verify the hash of the related certificate
+openssl x509 -in related_cert.pem -outform DER | openssl dgst -sha256
+
+# Compare with the extension
+openssl x509 -in server_cert.pem -text -noout | grep -A 5 "RelatedCertificate"
+```
 
 **OID Registration**
 
@@ -286,16 +402,5 @@ The implementation uses the following Object Identifiers as defined in RFC 9763:
 
 These OIDs are already defined in OpenSSL's `objects.txt` and will be available after regenerating the object macros.
 
-**Conformance to RFC 9763**
 
-
-The implementation follows RFC 9763 specifications:
-
-- Correct ASN.1 structure definitions
-- BinaryTime format for timestamps (RFC 6019)
-- UniformResourceIdentifiers as SEQUENCE OF IA5String
-- Proper signature handling in RequesterCertificate
-- Hash algorithm support in RelatedCertificate
-- OID usage as specified in the RFC
-- Timestamp freshness checking (5-minute timeout)
 

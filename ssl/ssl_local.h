@@ -27,6 +27,7 @@
 # include <openssl/async.h>
 # include <openssl/symhacks.h>
 # include <openssl/ct.h>
+# include <openssl/x509v3.h>
 # include "internal/recordmethod.h"
 # include "internal/statem.h"
 # include "internal/packet.h"
@@ -706,6 +707,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_cookie,
     TLSEXT_IDX_cryptopro_bug,
     TLSEXT_IDX_compress_certificate,
+    TLSEXT_IDX_related_certificate,
     TLSEXT_IDX_early_data,
     TLSEXT_IDX_certificate_authorities,
     TLSEXT_IDX_padding,

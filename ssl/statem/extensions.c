@@ -18,6 +18,7 @@
 #include "../ssl_local.h"
 #include "statem_local.h"
 
+
 static int final_renegotiate(SSL_CONNECTION *s, unsigned int context, int sent);
 static int init_server_name(SSL_CONNECTION *s, unsigned int context);
 static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent);
@@ -71,6 +72,16 @@ static EXT_RETURN tls_construct_compress_certificate(SSL_CONNECTION *sc, WPACKET
 static int tls_parse_compress_certificate(SSL_CONNECTION *sc, PACKET *pkt,
                                           unsigned int context,
                                           X509 *x, size_t chainidx);
+
+/* Related Certificate extension functions */
+static int tls_init_related_certificate(SSL_CONNECTION *sc, unsigned int context);
+static EXT_RETURN tls_construct_related_certificate(SSL_CONNECTION *sc, WPACKET *pkt,
+                                                    unsigned int context,
+                                                    X509 *x, size_t chainidx);
+static int tls_parse_related_certificate(SSL_CONNECTION *sc, PACKET *pkt,
+                                         unsigned int context,
+                                         X509 *x, size_t chainidx);
+
 
 /* Structure to define a built-in extension */
 typedef struct extensions_definition_st {
@@ -392,6 +403,14 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_init_compress_certificate,
         tls_parse_compress_certificate, tls_parse_compress_certificate,
         tls_construct_compress_certificate, tls_construct_compress_certificate,
+        NULL
+    },
+    {
+        TLSEXT_TYPE_related_certificate,
+        SSL_EXT_TLS1_3_CERTIFICATE | SSL_EXT_TLS1_3_ONLY,
+        tls_init_related_certificate,
+        tls_parse_related_certificate, tls_parse_related_certificate,
+        tls_construct_related_certificate, tls_construct_related_certificate,
         NULL
     },
     {
@@ -1926,3 +1945,46 @@ static int init_client_cert_type(SSL_CONNECTION *sc, unsigned int context)
     }
     return 1;
 }
+
+/* Related Certificate extension implementation */
+
+static int tls_init_related_certificate(SSL_CONNECTION *sc, unsigned int context)
+{
+    /* Initialize any necessary state for the Related Certificate extension */
+    return 1;
+}
+
+static EXT_RETURN tls_construct_related_certificate(SSL_CONNECTION *sc, WPACKET *pkt,
+                                                    unsigned int context,
+                                                    X509 *x, size_t chainidx)
+{
+    /* For now, we don't construct the extension in TLS */
+    /* This would require the certificate to already have the extension */
+    return EXT_RETURN_NOT_SENT;
+}
+
+static int tls_parse_related_certificate(SSL_CONNECTION *sc, PACKET *pkt,
+                                         unsigned int context,
+                                         X509 *x, size_t chainidx)
+{
+    /* For now, we just skip the extension data */
+    /* In a full implementation, we would parse and validate the extension */
+    unsigned char *ext_data = NULL;
+    size_t ext_len = 0;
+
+    /* Only process the extension for the first certificate in the chain */
+    if (x == NULL || chainidx != 0) {
+        return 1;
+    }
+
+    /* Skip the extension data for now */
+    if (!PACKET_memdup(pkt, &ext_data, &ext_len)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    OPENSSL_free(ext_data);
+    return 1;
+}
+
+

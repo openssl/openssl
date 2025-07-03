@@ -160,6 +160,9 @@ extern "C" {
 # define TLSEXT_TYPE_key_share                   51
 # define TLSEXT_TYPE_quic_transport_parameters   57
 
+/* Extension type for Related Certificate (RFC 9763) */
+# define TLSEXT_TYPE_related_certificate         58
+
 /* Temporary extension type */
 # define TLSEXT_TYPE_renegotiate                 0xff01
 
