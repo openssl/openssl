@@ -1119,6 +1119,35 @@ int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
+int CRYPTO_atomic_cmp_exch(void **ptr, void **expect, void **desired, CRYPTO_RWLOCK *lock)
+{
+# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS)
+    if (__atomic_compare_exchange(ptr, expect, desired, 0,
+                                  __ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE))
+        return 1;
+    return 0;
+# elif defined(__sun) && (defined(__SunOS_5_10) || defined(__SunOS_5_11))
+    void *ret = atomic_cas_ptr((volatile void **)ptr, expect, desired);
+    if (ret == ptr) {
+        return 1;
+    }
+    *expect = ret;
+    return 0;
+# else
+    int ret = 0;
+    if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
+        return 0;
+    if (*ptr == *expect) {
+        *ptr = *desired;
+        ret = 1;
+    } else {
+       *expect = *ptr; 
+    }
+    CRYPTO_THREAD_unlock(lock);
+    return ret;
+# endif
+}
+
 # ifndef FIPS_MODULE
 int openssl_init_fork_handlers(void)
 {

@@ -613,6 +613,67 @@ static int test_thread_local_multi_key(void)
     return 1;
 }
 
+static int test_atomic_cmp_exch(void)
+{
+    int ret = 0;
+    uint64_t val1 = 1;
+    uint64_t *valptr1 = &val1;
+    uint64_t val2 = 2;
+    uint64_t *valptr2 = &val2;
+    uint64_t *testptr = valptr1;
+    uint64_t *retptr;
+    CRYPTO_RWLOCK *testlock = CRYPTO_THREAD_lock_new();
+
+    /*
+     * Make sure the lock is valid
+     */
+    if (!TEST_ptr(testlock))
+        return 0;
+
+    /*
+     * Do a compare and exchange of testptr to valptr2
+     */
+    if (!TEST_int_eq(CRYPTO_atomic_cmp_exch((void **)&testptr, (void **)&valptr1,
+                                            (void **)&valptr2, testlock), 1))
+        goto err;
+
+    /*
+     * make sure testptr got updated properly
+     */
+    if (!TEST_ptr_eq(testptr, valptr2))
+        goto err;
+
+    /*
+     * Make sure that we fail properly as well
+     * testptr is equal to valptr2 at this point, so we set retptr to
+     * valptr1 so as to get a failure, when *ptr doesn't match *expected
+     * the result should be that the operation returns 0, and retptr holds the
+     * value of testptr, which should be the address of valptr2
+     */
+    retptr = valptr1;
+    if (!TEST_int_eq(CRYPTO_atomic_cmp_exch((void **)&testptr, (void **)&retptr,
+                                            (void **)&valptr1, testlock), 0))
+        goto err;
+
+    if (!TEST_ptr_eq(retptr, valptr2))
+        goto err;
+
+    /*
+     * lastly lets make sure we can swap the pointers back
+     */
+    if (!TEST_int_eq(CRYPTO_atomic_cmp_exch((void **)&testptr, (void **)&valptr2,
+                                            (void **)&valptr1, testlock), 1))
+        goto err;
+
+    if (!TEST_ptr_eq(testptr, valptr1))
+        goto err;
+
+    ret = 1;
+err:
+    CRYPTO_THREAD_lock_free(testlock);
+    return ret;
+}
+
 static int test_atomic(void)
 {
     int val = 0, ret = 0, testresult = 0;
@@ -1364,6 +1425,7 @@ int setup_tests(void)
     ADD_TEST(test_thread_local);
     ADD_TEST(test_thread_local_multi_key);
     ADD_TEST(test_atomic);
+    ADD_TEST(test_atomic_cmp_exch);
     ADD_TEST(test_multi_load);
     ADD_TEST(test_multi_general_worker_default_provider);
     ADD_TEST(test_multi_general_worker_fips_provider);
