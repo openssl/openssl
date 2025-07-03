@@ -6,8 +6,8 @@ CRYPTO_THREAD_run_once,
 CRYPTO_THREAD_lock_new, CRYPTO_THREAD_read_lock, CRYPTO_THREAD_write_lock,
 CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free,
 CRYPTO_atomic_add, CRYPTO_atomic_add64, CRYPTO_atomic_and, CRYPTO_atomic_or,
-CRYPTO_atomic_load, CRYPTO_atomic_store, CRYPTO_atomic_load_int,
-CRYPTO_atomic_cmp_exch, OSSL_set_max_threads, OSSL_get_max_threads,
+CRYPTO_atomic_load, CRYPTO_atomic_load_ptr, CRYPTO_atomic_store, CRYPTO_atomic_store_ptr,
+CRYPTO_atomic_load_int, CRYPTO_atomic_cmp_exch, OSSL_set_max_threads, OSSL_get_max_threads,
 OSSL_get_thread_support_flags, OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL,
 OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN - OpenSSL thread support
 
@@ -32,7 +32,9 @@ OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN - OpenSSL thread support
  int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
                       CRYPTO_RWLOCK *lock);
  int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock);
+ int CRYPTO_atomic_load_ptr(void **val, void **ret, CRYPTO_RWLOCK *lock);
  int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock);
+ int CRYPTO_atomic_store_ptr(void **dst, void *val, CRYPTO_RWLOCK *lock);
  int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock);
  int CRYPTO_atomic_cmp_exch(void **ptr, void **expected, void *desired, CRYPTO_RWLOCK *lock);
 
@@ -138,9 +140,19 @@ NULL, then the function will fail.
 
 =item *
 
+CRYPTO_atomic_load_ptr() work exactly the same as CRYPTO_atomic_load but allows
+for the fetching of pointer values, rather than integer types.
+
+=item *
+
 CRYPTO_atomic_store() atomically stores the contents of I<val> into I<*dst>.
 I<lock> will be locked, unless atomic operations are supported on the specific
 platform.
+
+=item *
+
+CRYPTO_atomic_store_ptr() works exactly as CRYPTO_atomic_store() does, but stores
+pointer values rather than integer types.
 
 =item *
 
@@ -281,7 +293,8 @@ OSSL_get_thread_support_flags() were added in OpenSSL 3.2.
 CRYPTO_atomic_store(), CRYPTO_atomic_add64(), CRYPTO_atomic_and()
 were added in OpenSSL 3.4.
 
-CRYPTO_atomic_cmp_exch() was added in OpenSSL 3.6.
+CRYPTO_atomic_cmp_exch(), CRYPTO_atomic_load_ptr(), CRYPTO_atomic_store_ptr(),
+were added in OpenSSL 3.6.
 
 =head1 COPYRIGHT
 
