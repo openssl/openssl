@@ -378,7 +378,7 @@ done:
                           ['KDF_PARAM_MAC',                 'mac',    'utf8_string'],
                           ['KDF_PARAM_MODE',                'mode',   'utf8_string'],
                           ['KDF_PARAM_PROPERTIES',          'propq',  'utf8_string'],
-                          ['ALG_PARAM_ENGINE',              'engine', 'utf8_string'],
+                          ['ALG_PARAM_ENGINE',              'engine', 'utf8_string', 'hidden'],
                           ['KDF_PARAM_KBKDF_USE_L',         'use_l',  'int'],
                           ['KDF_PARAM_KBKDF_USE_SEPARATOR', 'sep',    'int'],
                           ['KDF_PARAM_KBKDF_R',             'r',      'int'],

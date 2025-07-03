@@ -156,7 +156,7 @@ static int krb5kdf_derive(void *vctx, unsigned char *key, size_t keylen,
 
 {- produce_param_decoder('krb5kdf_set_ctx_params',
                          (['KDF_PARAM_PROPERTIES',  'propq',    'utf8_string'],
-                          ['ALG_PARAM_ENGINE',      'engine',   'utf8_string'],
+                          ['ALG_PARAM_ENGINE',      'engine',   'utf8_string', 'hidden'],
                           ['KDF_PARAM_CIPHER',      'cipher',   'utf8_string'],
                           ['KDF_PARAM_KEY',         'key',      'octet_string'],
                           ['KDF_PARAM_CONSTANT',    'cnst',     'octet_string'],
