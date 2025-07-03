@@ -24,7 +24,7 @@ open OUT,"| \"$^X\" $xlate $flavour \"$output\""
 $code=<<___;
 #include "arm_arch.h"
 
-# Theses are offsets into the CIPH_DIGEST struct
+/* These are offsets into the CIPH_DIGEST struct */
 #define CIPHER_KEY	0
 #define CIPHER_KEY_ROUNDS	8
 #define CIPHER_IV	16
