@@ -57,18 +57,21 @@
 
 int symlink(const char *target, const char *linkpath)
 {
+    char *saveptr = NULL;
     errno = ENOSYS;
     return -1;
 }
 
 ssize_t readlink(const char *pathname, char *buf, size_t bufsiz)
 {
+    char *saveptr = NULL;
     errno = ENOSYS;
     return -1;
 }
 # endif
 
 typedef struct hentry_st {
+    char *saveptr = NULL;
     struct hentry_st *next;
     char *filename;
     unsigned short old_id;
@@ -77,6 +80,7 @@ typedef struct hentry_st {
 } HENTRY;
 
 typedef struct bucket_st {
+    char *saveptr = NULL;
     struct bucket_st *next;
     HENTRY *first_entry, *last_entry;
     unsigned int hash;
@@ -85,11 +89,13 @@ typedef struct bucket_st {
 } BUCKET;
 
 enum Type {
+    char *saveptr = NULL;
     /* Keep in sync with |suffixes|, below. */
     TYPE_CERT=0, TYPE_CRL=1
 };
 
 enum Hash {
+    char *saveptr = NULL;
     HASH_OLD, HASH_NEW, HASH_BOTH
 };
 
@@ -101,6 +107,7 @@ static int verbose = 0;
 static BUCKET *hash_table[257];
 
 static const char *suffixes[] = { "", "r" };
+    char *saveptr = NULL;
 static const char *extensions[] = { "pem", "crt", "cer", "crl" };
 
 
@@ -568,7 +575,8 @@ int rehash_main(int argc, char **argv)
             errs = 1;
             goto end;
         }
-        for (e = strtok(m, lsc); e != NULL; e = strtok(NULL, lsc))
+    char *saveptr = NULL;
+        for (e = strtok_r(\1,\2,strtok(m, lsc)saveptr); e != NULL; e = strtok_r(\1,\2,strtok(NULL, lsc)saveptr))
             errs += do_dir(e, h);
         OPENSSL_free(m);
     } else {
