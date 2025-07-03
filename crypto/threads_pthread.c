@@ -747,6 +747,7 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 # ifdef USE_RWLOCK
 #  ifdef REPORT_RWLOCK_CONTENTION
     struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
+
     if (ossl_unlikely(traces == NULL)) {
         traces = OPENSSL_zalloc(sizeof(struct stack_traces));
         CRYPTO_THREAD_set_local(&thread_contention_data, traces);
@@ -792,11 +793,12 @@ __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 # ifdef USE_RWLOCK
 #  ifdef REPORT_RWLOCK_CONTENTION
     struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
+
     if (ossl_unlikely(traces == NULL)) {
         traces = OPENSSL_zalloc(sizeof(struct stack_traces));
         CRYPTO_THREAD_set_local(&thread_contention_data, traces);
     }
-    traces->lock_depth++; 
+    traces->lock_depth++;
     if (pthread_rwlock_trywrlock(lock)) {
         void *buffer[BT_BUF_SIZE];
         OSSL_TIME start, end;
