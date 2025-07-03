@@ -195,7 +195,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         goto err;
     }
 
-    if (num == 0)
+    if (ossl_unlikely(num == 0))
         return NULL;
 
     FAILTEST();
@@ -209,7 +209,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
     }
 
     ptr = malloc(num);
-    if (ptr != NULL)
+    if (ossl_likely(ptr != NULL))
         return ptr;
  err:
     /*
