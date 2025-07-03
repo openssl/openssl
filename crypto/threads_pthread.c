@@ -631,10 +631,11 @@ struct stack_info {
 
 #  define STACKS_COUNT 32
 struct stack_traces {
-    size_t lock_depth;
+    int lock_depth;
     size_t idx;
     struct stack_info stacks[STACKS_COUNT];
 };
+
 static void init_contention_fp_once(void)
 {
 #  ifdef FIPS_MODULE
@@ -744,13 +745,13 @@ static void print_stack_traces(struct stack_traces *traces, FILE *fptr)
 __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
+#  ifdef REPORT_RWLOCK_CONTENTION
     struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
     if (ossl_unlikely(traces == NULL)) {
         traces = OPENSSL_zalloc(sizeof(struct stack_traces));
         CRYPTO_THREAD_set_local(&thread_contention_data, traces);
     }
     traces->lock_depth++;
-#  ifdef REPORT_RWLOCK_CONTENTION
     if (pthread_rwlock_tryrdlock(lock)) {
         void *buffer[BT_BUF_SIZE];
         OSSL_TIME start, end;
@@ -789,13 +790,13 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
+#  ifdef REPORT_RWLOCK_CONTENTION
     struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
     if (ossl_unlikely(traces == NULL)) {
         traces = OPENSSL_zalloc(sizeof(struct stack_traces));
         CRYPTO_THREAD_set_local(&thread_contention_data, traces);
     }
     traces->lock_depth++; 
-#  ifdef REPORT_RWLOCK_CONTENTION
     if (pthread_rwlock_trywrlock(lock)) {
         void *buffer[BT_BUF_SIZE];
         OSSL_TIME start, end;
