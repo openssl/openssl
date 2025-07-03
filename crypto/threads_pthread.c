@@ -744,21 +744,21 @@ static void print_stack_traces(struct stack_traces *traces, FILE *fptr)
 __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
+    struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
+    if (ossl_unlikely(traces == NULL)) {
+        traces = OPENSSL_zalloc(sizeof(struct stack_traces));
+        CRYPTO_THREAD_set_local(&thread_contention_data, traces);
+    }
+    traces->lock_depth++;
 #  ifdef REPORT_RWLOCK_CONTENTION
     if (pthread_rwlock_tryrdlock(lock)) {
         void *buffer[BT_BUF_SIZE];
-        struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
         OSSL_TIME start, end;
 
-        if (ossl_unlikely(traces == NULL)) {
-            traces = OPENSSL_zalloc(sizeof(struct stack_traces));
-            CRYPTO_THREAD_set_local(&thread_contention_data, traces);
-        }
         start = ossl_time_now();
         if (!ossl_assert(pthread_rwlock_rdlock(lock) == 0))
             return 0;
         end = ossl_time_now();
-        traces->lock_depth++;
         traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
         traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
         traces->stacks[traces->idx].strings = backtrace_symbols(buffer,
@@ -789,10 +789,15 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
+    struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
+    if (ossl_unlikely(traces == NULL)) {
+        traces = OPENSSL_zalloc(sizeof(struct stack_traces));
+        CRYPTO_THREAD_set_local(&thread_contention_data, traces);
+    }
+    traces->lock_depth++; 
 #  ifdef REPORT_RWLOCK_CONTENTION
     if (pthread_rwlock_trywrlock(lock)) {
         void *buffer[BT_BUF_SIZE];
-        struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
         OSSL_TIME start, end;
 
         if (ossl_unlikely(traces == NULL)) {
@@ -803,7 +808,6 @@ __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
         if (!ossl_assert(pthread_rwlock_wrlock(lock) == 0))
             return 0;
         end = ossl_time_now();
-        traces->lock_depth++;
         traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
         traces->stacks[traces->idx].strings = backtrace_symbols(buffer,
                                                                 traces->stacks[traces->idx].nptrs);
@@ -842,16 +846,8 @@ int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock)
         if (contention_fp == NULL)
             return 1;
         if (traces != NULL) {
-            /*
-             * We often in openssl have code points where we unlock a lock
-             * that wasn't locked in the first place.  pthread_rwlock_unlock
-             * is tolerant of that condition, but it prevents us from presuming
-             * that an unlock has a paired lock operation that incremented this
-             * count, so we have to bound reduction at zero here
-             */
-            if (traces->lock_depth > 0)
-                traces->lock_depth--;
-
+            traces->lock_depth--;
+            assert(traces->lock_depth >= 0);
             if (traces->lock_depth == 0)
                 print_stack_traces(traces, contention_fp);
         }
