@@ -886,7 +886,7 @@ int x509_main(int argc, char **argv)
             goto err;
         }
 
-        if (!add_related_certificate_extension(x, related_cert, EVP_sha256())) {
+        if (!add_related_certificate_extension(x, related_cert, EVP_sha256(), related_cert_path)) {
             BIO_printf(bio_err, "Failed to add related certificate extension\n");
             X509_free(related_cert);
             goto err;
@@ -921,13 +921,13 @@ int x509_main(int argc, char **argv)
                         // Load the related certificate from the URI
                         X509 *related_cert = load_cert_pass(file_path, FORMAT_PEM, 1, passin, "related certificate");
                         if (related_cert != NULL) {
-                            if (!add_related_certificate_extension(x, related_cert, EVP_sha256())) {
+                            if (!add_related_certificate_extension(x, related_cert, EVP_sha256(), uri_path)) {
                                 BIO_printf(bio_err, "Failed to add related certificate extension from CSR\n");
                                 X509_free(related_cert);
                                 REQUESTER_CERTIFICATE_free(rcr);
                                 goto err;
                             }
-                            BIO_printf(bio_err, "Successfully added RelatedCertificate extension from CSR\n");
+                            BIO_printf(bio_err, "Successfully added RelatedCertificate extension\n");
                             X509_free(related_cert);
                         } else {
                             BIO_printf(bio_err, "Warning: Could not load related certificate from URI: %s\n", file_path);

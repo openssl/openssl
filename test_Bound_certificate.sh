@@ -245,6 +245,57 @@ main() {
     print_status "Test files are located in: $(pwd)"
     echo ""
     print_status "To clean up test files, run: rm -rf $TEST_DIR"
+
+    echo "✅ Certificate verification completed successfully"
+    echo ""
+
+    # Test the new URI extension functionality
+    echo "🔗 Testing RelatedCertificate extension with URI functionality..."
+    echo ""
+
+    # Create a new certificate with URI in the extension
+    echo "📝 Creating certificate with URI in RelatedCertificate extension..."
+    $OPENSSL_BIN req -new -key new_key.pem -out new_cert_with_uri_req.pem \
+        -subj "/C=US/ST=CA/L=San Francisco/O=TestOrg/CN=new-with-uri.example.com" \
+        -add_related_cert bound_cert.pem \
+        -related_uri "file://$(pwd)/bound_cert.pem"
+
+    if [ $? -eq 0 ]; then
+        echo "✅ CSR with relatedCertRequest created successfully"
+        
+        # Sign the CSR to create the new certificate with URI extension
+        $OPENSSL_BIN x509 -req -in new_cert_with_uri_req.pem -CA ca_cert.pem -CAkey ca_key.pem \
+            -CAcreateserial -out new_cert_with_uri.pem -days 365 \
+            -add_related_cert_extension bound_cert.pem \
+            -related_uri "file://$(pwd)/bound_cert.pem"
+        
+        if [ $? -eq 0 ]; then
+            echo "✅ Certificate with URI extension created successfully"
+            
+            # Display the certificate with URI extension
+            echo ""
+            echo "📋 Certificate with URI extension details:"
+            $OPENSSL_BIN x509 -in new_cert_with_uri.pem -text -noout | grep -A 15 "RelatedCertificate"
+            
+            # Verify the certificate
+            echo ""
+            echo "🔍 Verifying certificate with URI extension..."
+            $OPENSSL_BIN verify -CAfile ca_cert.pem new_cert_with_uri.pem
+            
+            if [ $? -eq 0 ]; then
+                echo "✅ Certificate with URI extension verified successfully"
+            else
+                echo "❌ Certificate with URI extension verification failed"
+            fi
+        else
+            echo "❌ Failed to create certificate with URI extension"
+        fi
+    else
+        echo "❌ Failed to create CSR with relatedCertRequest"
+    fi
+
+    echo ""
+    echo "🎉 All tests completed!"
 }
 
 # Run main function

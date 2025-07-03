@@ -32,7 +32,7 @@
 #include "opt.h"
 #include "names.h"
 #include "app_libctx.h"
-#include "crypto/x509/v3_certbind.h"
+#include <openssl/v3_certbind.h>
 
 // --- RelatedCertificate extension support (restored) ---
 // External declaration of the extension method defined in v3_certbind.c

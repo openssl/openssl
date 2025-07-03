@@ -5,7 +5,7 @@
 #include <openssl/err.h>
 #include <stdio.h>
 #include <string.h>
-#include "crypto/x509/v3_certbind.h"
+#include "include/openssl/v3_certbind.h"
 
 int main() {
     // Initialize OpenSSL
@@ -125,7 +125,7 @@ int main() {
         X509_set_subject_name(new_cert, new_name);
         X509_set_pubkey(new_cert, pkey);
         
-        if (add_related_certificate_extension(new_cert, test_cert, EVP_sha256())) {
+        if (add_related_certificate_extension(new_cert, test_cert, EVP_sha256(), "file:///tmp/test_cert.pem")) {
             printf("Successfully added RelatedCertificate extension\n");
             
             // Test verification
@@ -139,6 +139,88 @@ int main() {
         }
         
         X509_free(new_cert);
+    }
+    
+    // Test 11: Test adding RelatedCertificate extension with URI
+    printf("\n=== Test 11: Adding RelatedCertificate extension with URI ===\n");
+    X509 *new_cert_with_uri = X509_new();
+    if (new_cert_with_uri) {
+        X509_set_version(new_cert_with_uri, 2);
+        ASN1_INTEGER_set(X509_get_serialNumber(new_cert_with_uri), 11111);
+        X509_gmtime_adj(X509_get_notBefore(new_cert_with_uri), 0);
+        X509_gmtime_adj(X509_get_notAfter(new_cert_with_uri), 365*24*60*60);
+        
+        X509_NAME *new_name_with_uri = X509_get_subject_name(new_cert_with_uri);
+        X509_NAME_add_entry_by_txt(new_name_with_uri, "CN", MBSTRING_ASC, "New Certificate With URI", -1, -1, 0);
+        X509_NAME_add_entry_by_txt(new_name_with_uri, "O", MBSTRING_ASC, "New Organization With URI", -1, -1, 0);
+        X509_set_issuer_name(new_cert_with_uri, new_name_with_uri);
+        X509_set_subject_name(new_cert_with_uri, new_name_with_uri);
+        X509_set_pubkey(new_cert_with_uri, pkey);
+        
+        const char *test_uri_for_extension = "file:///tmp/test_cert_with_uri.pem";
+        if (add_related_certificate_extension(new_cert_with_uri, test_cert, EVP_sha256(), test_uri_for_extension)) {
+            printf("Successfully added RelatedCertificate extension with URI\n");
+            
+            // Test verification
+            if (verify_related_certificate_extension(new_cert_with_uri, test_cert)) {
+                printf("Successfully verified RelatedCertificate extension with URI\n");
+            } else {
+                printf("Failed to verify RelatedCertificate extension with URI\n");
+            }
+            
+            // Print the extension to see the URI
+            BIO *bio = BIO_new_fp(stdout, BIO_NOCLOSE);
+            if (bio) {
+                print_related_certificate_extension(bio, new_cert_with_uri, 0);
+                BIO_free(bio);
+            }
+        } else {
+            printf("Failed to add RelatedCertificate extension with URI\n");
+        }
+        
+        X509_free(new_cert_with_uri);
+    }
+    
+    // Test 12: Test extracting URI from CSR and using it in certificate
+    printf("\n=== Test 12: Extract URI from CSR and use in certificate ===\n");
+    X509 *new_cert_from_csr = X509_new();
+    if (new_cert_from_csr) {
+        X509_set_version(new_cert_from_csr, 2);
+        ASN1_INTEGER_set(X509_get_serialNumber(new_cert_from_csr), 22222);
+        X509_gmtime_adj(X509_get_notBefore(new_cert_from_csr), 0);
+        X509_gmtime_adj(X509_get_notAfter(new_cert_from_csr), 365*24*60*60);
+        
+        X509_NAME *new_name_from_csr = X509_get_subject_name(new_cert_from_csr);
+        X509_NAME_add_entry_by_txt(new_name_from_csr, "CN", MBSTRING_ASC, "New Certificate From CSR", -1, -1, 0);
+        X509_NAME_add_entry_by_txt(new_name_from_csr, "O", MBSTRING_ASC, "New Organization From CSR", -1, -1, 0);
+        X509_set_issuer_name(new_cert_from_csr, new_name_from_csr);
+        X509_set_subject_name(new_cert_from_csr, new_name_from_csr);
+        X509_set_pubkey(new_cert_from_csr, pkey);
+        
+        // Extract URI from the CSR we created earlier
+        char *extracted_uri = extract_uri_from_related_cert_request(req);
+        if (extracted_uri) {
+            printf("Extracted URI from CSR: %s\n", extracted_uri);
+            
+            if (add_related_certificate_extension(new_cert_from_csr, test_cert, EVP_sha256(), extracted_uri)) {
+                printf("Successfully added RelatedCertificate extension with extracted URI\n");
+                
+                // Print the extension to see the URI
+                BIO *bio = BIO_new_fp(stdout, BIO_NOCLOSE);
+                if (bio) {
+                    print_related_certificate_extension(bio, new_cert_from_csr, 0);
+                    BIO_free(bio);
+                }
+            } else {
+                printf("Failed to add RelatedCertificate extension with extracted URI\n");
+            }
+            
+            OPENSSL_free(extracted_uri);
+        } else {
+            printf("Failed to extract URI from CSR\n");
+        }
+        
+        X509_free(new_cert_from_csr);
     }
     
     // Cleanup

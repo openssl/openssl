@@ -50,6 +50,8 @@ The implementation provides a complete solution for creating and verifying bound
 
 - `add_related_cert_request_to_csr()` - Add relatedCertRequest attribute to CSR
 - `add_related_certificate_extension()` - Add RelatedCertificate extension to certificate
+- `add_related_certificate_extension_with_uri()` - Add RelatedCertificate extension with URI to certificate
+- `extract_uri_from_related_cert_request()` - Extract URI from relatedCertRequest attribute
 - `verify_related_cert_request()` - Verify relatedCertRequest attribute
 - `verify_related_certificate_extension()` - Verify RelatedCertificate extension
 - `get_related_certificate_extension()` - Extract RelatedCertificate extension
@@ -85,6 +87,44 @@ RelatedCertificate ::= SEQUENCE {
     hashValue       OCTET STRING
 }
 ```
+
+**Extended RelatedCertificate Extension with URI**
+
+The implementation includes an extended version of the RelatedCertificate extension that can optionally include the URI from the relatedCertRequest attribute. This provides additional context and allows the certificate to directly reference the location of the related certificate.
+
+**Extended ASN.1 Structure**
+
+```asn.1
+RelatedCertificate ::= SEQUENCE {
+    hashAlgorithm   AlgorithmIdentifier,
+    hashValue       OCTET STRING,
+    uri             IA5String OPTIONAL
+}
+```
+
+**Usage Example**
+
+```c
+// Create CSR with relatedCertRequest attribute
+const char *uri = "file:///path/to/related_cert.pem";
+add_related_cert_request_to_csr(req, pkey, related_cert, uri, EVP_sha256());
+
+// Extract URI from CSR
+char *extracted_uri = extract_uri_from_related_cert_request(req);
+
+// Create certificate with RelatedCertificate extension including URI
+add_related_certificate_extension_with_uri(cert, related_cert, EVP_sha256(), extracted_uri);
+
+// Clean up
+OPENSSL_free(extracted_uri);
+```
+
+**Benefits of URI in Extension**
+
+1. **Direct Reference**: The certificate directly contains the URI to the related certificate
+2. **Simplified Verification**: No need to parse the CSR to find the URI
+3. **Enhanced Context**: Provides additional metadata about the certificate relationship
+4. **Backward Compatibility**: The URI field is optional, maintaining compatibility with RFC 9763
 
 **Building and Testing**
 

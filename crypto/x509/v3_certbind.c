@@ -13,7 +13,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <openssl/obj_mac.h>
-#include "v3_certbind.h"
+#include <openssl/v3_certbind.h>
 #include <openssl/safestack.h>
 #include <openssl/http.h>
 #include <errno.h>
@@ -64,7 +64,8 @@ IMPLEMENT_ASN1_FUNCTIONS(REQUESTER_CERTIFICATE)
 
 ASN1_SEQUENCE(RELATED_CERTIFICATE) = {
     ASN1_SIMPLE(RELATED_CERTIFICATE, hashAlgorithm, X509_ALGOR),
-    ASN1_SIMPLE(RELATED_CERTIFICATE, hashValue, ASN1_OCTET_STRING)
+    ASN1_SIMPLE(RELATED_CERTIFICATE, hashValue, ASN1_OCTET_STRING),
+    ASN1_SIMPLE(RELATED_CERTIFICATE, uri, ASN1_IA5STRING)
 } ASN1_SEQUENCE_END(RELATED_CERTIFICATE)
 IMPLEMENT_ASN1_FUNCTIONS(RELATED_CERTIFICATE)
 
@@ -302,8 +303,8 @@ err:
 }
 
 // Function to add RelatedCertificate extension to X.509 certificate
-int add_related_certificate_extension(X509 *cert, X509 *related_cert, const EVP_MD *hash_alg) {
-    if (!cert || !related_cert || !hash_alg) {
+int add_related_certificate_extension(X509 *cert, X509 *related_cert, const EVP_MD *hash_alg, const char *uri) {
+    if (!cert || !related_cert || !hash_alg || !uri) {
         return 0;
     }
     int ret = 0;
@@ -360,6 +361,23 @@ int add_related_certificate_extension(X509 *cert, X509 *related_cert, const EVP_
         goto err;
     }
     rc->hashValue = hash_value;
+
+    // Set URI (now mandatory)
+    if (!uri || strlen(uri) == 0) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
+    
+    ASN1_IA5STRING *uri_str = ASN1_IA5STRING_new();
+    if (!uri_str) {
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (!ASN1_STRING_set(uri_str, uri, strlen(uri))) {
+        ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
+        goto err;
+    }
+    rc->uri = uri_str;
 
     // Encode the RelatedCertificate structure
     ext_len = i2d_RELATED_CERTIFICATE(rc, &ext_der);
@@ -433,6 +451,8 @@ err:
     OPENSSL_free(ext_der);
     return ret;
 }
+
+
 
 // Function to verify RelatedCertificate extension
 int verify_related_certificate_extension(X509 *cert, X509 *related_cert) {
@@ -861,6 +881,19 @@ int print_related_certificate_extension(BIO *bio, X509 *cert, int indent) {
     }
     BIO_printf(bio, "\n");
 
+    // Print URI if present
+    if (rc->uri && rc->uri->length > 0) {
+        BIO_printf(bio, "%*s", indent + 2, "");
+        // Convert file:// to file: for display
+        if (rc->uri->length >= 7 && strncmp((char*)rc->uri->data, "file://", 7) == 0) {
+            BIO_printf(bio, "file:");
+            BIO_write(bio, rc->uri->data + 7, rc->uri->length - 7);
+        } else {
+            BIO_write(bio, rc->uri->data, rc->uri->length);
+        }
+        BIO_printf(bio, "\n");
+    }
+
     RELATED_CERTIFICATE_free(rc);
     return 1;
 }
@@ -916,6 +949,48 @@ int print_related_cert_request(BIO *bio, X509_REQ *req, int indent) {
     return 1;
 }
 
+// Function to extract URI from relatedCertRequest attribute in CSR
+char *extract_uri_from_related_cert_request(X509_REQ *req) {
+    if (!req)
+        return NULL;
+
+    int idx = X509_REQ_get_attr_by_NID(req, OBJ_txt2nid("1.2.840.113549.1.9.16.2.60"), -1);
+    if (idx < 0) {
+        return NULL; // Attribute not found
+    }
+
+    X509_ATTRIBUTE *attr = X509_REQ_get_attr(req, idx);
+    const ASN1_TYPE *av = X509_ATTRIBUTE_get0_type(attr, 0);
+    if (!av || av->type != V_ASN1_SEQUENCE) {
+        return NULL; // Invalid format
+    }
+
+    const unsigned char *p = av->value.sequence->data;
+    REQUESTER_CERTIFICATE *rcr = d2i_REQUESTER_CERTIFICATE(NULL, &p, av->value.sequence->length);
+    if (!rcr) {
+        return NULL; 
+    }
+
+    // Extract URI from locationInfo
+    if (!rcr->locationInfo || sk_ASN1_STRING_num(rcr->locationInfo->uris) == 0) {
+        REQUESTER_CERTIFICATE_free(rcr);
+        return NULL;
+    }
+
+    ASN1_STRING *uri_str = sk_ASN1_STRING_value(rcr->locationInfo->uris, 0);
+    char *uri = OPENSSL_malloc(uri_str->length + 1);
+    if (!uri) {
+        REQUESTER_CERTIFICATE_free(rcr);
+        return NULL;
+    }
+
+    memcpy(uri, uri_str->data, uri_str->length);
+    uri[uri_str->length] = '\0';
+
+    REQUESTER_CERTIFICATE_free(rcr);
+    return uri;
+}
+
 // X509V3 extension method for RelatedCertificate
 static int i2r_related_certificate(const X509V3_EXT_METHOD *method, void *ext, BIO *out, int indent)
 {
@@ -934,6 +1009,19 @@ static int i2r_related_certificate(const X509V3_EXT_METHOD *method, void *ext, B
             BIO_printf(out, "\n%*s", indent + 4, "");
     }
     BIO_printf(out, "\n");
+    
+    // Print URI 
+    if (rc->uri && rc->uri->length > 0) {
+        BIO_printf(out, "%*s", indent, "");
+        // Convert file:// to file: for display
+        if (rc->uri->length >= 7 && strncmp((char*)rc->uri->data, "file://", 7) == 0) {
+            BIO_printf(out, "file:");
+            BIO_write(out, rc->uri->data + 7, rc->uri->length - 7);
+        } else {
+            BIO_write(out, rc->uri->data, rc->uri->length);
+        }
+        BIO_printf(out, "\n");
+    }
     
     return 1;
 }
