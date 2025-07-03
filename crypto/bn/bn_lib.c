@@ -194,7 +194,7 @@ int BN_num_bits(const BIGNUM *a)
         return bn_num_bits_consttime(a);
     }
 
-    if (BN_is_zero(a))
+    if (ossl_unlikely(BN_is_zero(a)))
         return 0;
 
     return ((i * BN_BITS2) + BN_num_bits_word(a->d[i]));
@@ -267,11 +267,11 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 {
     BN_ULONG *a = NULL;
 
-    if (words > (INT_MAX / (4 * BN_BITS2))) {
+    if (ossl_unlikely(words > (INT_MAX / (4 * BN_BITS2)))) {
         ERR_raise(ERR_LIB_BN, BN_R_BIGNUM_TOO_LONG);
         return NULL;
     }
-    if (BN_get_flags(b, BN_FLG_STATIC_DATA)) {
+    if (ossl_unlikely(BN_get_flags(b, BN_FLG_STATIC_DATA))) {
         ERR_raise(ERR_LIB_BN, BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
         return NULL;
     }
@@ -279,7 +279,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         a = OPENSSL_secure_zalloc(words * sizeof(*a));
     else
         a = OPENSSL_zalloc(words * sizeof(*a));
-    if (a == NULL)
+    if (ossl_unlikely(a == NULL))
         return NULL;
 
     assert(b->top <= words);
@@ -299,9 +299,10 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 
 BIGNUM *bn_expand2(BIGNUM *b, int words)
 {
-    if (words > b->dmax) {
+    if (ossl_likely(words > b->dmax)) {
         BN_ULONG *a = bn_expand_internal(b, words);
-        if (!a)
+
+        if (ossl_unlikely(!a))
             return NULL;
         if (b->d != NULL)
             bn_free_d(b, 1);
@@ -339,12 +340,12 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
 
     bn_words = BN_get_flags(b, BN_FLG_CONSTTIME) ? b->dmax : b->top;
 
-    if (a == b)
+    if (ossl_unlikely(a == b))
         return a;
-    if (bn_wexpand(a, bn_words) == NULL)
+    if (ossl_unlikely(bn_wexpand(a, bn_words) == NULL))
         return NULL;
 
-    if (b->top > 0)
+    if (ossl_likely(b->top > 0))
         memcpy(a->d, b->d, sizeof(b->d[0]) * bn_words);
 
     a->neg = b->neg;
@@ -835,11 +836,11 @@ int BN_is_bit_set(const BIGNUM *a, int n)
     int i, j;
 
     bn_check_top(a);
-    if (n < 0)
+    if (ossl_unlikely(n < 0))
         return 0;
     i = n / BN_BITS2;
     j = n % BN_BITS2;
-    if (a->top <= i)
+    if (ossl_unlikely(a->top <= i))
         return 0;
     return (int)(((a->d[i]) >> j) & ((BN_ULONG)1));
 }
@@ -889,12 +890,12 @@ int bn_cmp_words(const BN_ULONG *a, const BN_ULONG *b, int n)
     int i;
     BN_ULONG aa, bb;
 
-    if (n == 0)
+    if (ossl_unlikely(n == 0))
         return 0;
 
     aa = a[n - 1];
     bb = b[n - 1];
-    if (aa != bb)
+    if (ossl_likely(aa != bb))
         return ((aa > bb) ? 1 : -1);
     for (i = n - 2; i >= 0; i--) {
         aa = a[i];
@@ -1176,7 +1177,7 @@ void bn_correct_top(BIGNUM *a)
     BN_ULONG *ftl;
     int tmp_top = a->top;
 
-    if (tmp_top > 0) {
+    if (ossl_likely(tmp_top > 0)) {
         for (ftl = &(a->d[tmp_top]); tmp_top > 0; tmp_top--) {
             ftl--;
             if (*ftl != 0)
