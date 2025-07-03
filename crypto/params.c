@@ -16,6 +16,7 @@
 #include "internal/endian.h"
 #include "internal/params.h"
 #include "internal/packet.h"
+#include "internal/common.h"
 
 /* Shortcuts for raising errors that are widely used */
 #define err_unsigned_negative \
@@ -52,7 +53,7 @@ static unsigned int real_shift(void)
 
 OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key)
 {
-    if (p != NULL && key != NULL)
+    if (ossl_likely(p != NULL && key != NULL))
         for (; p->key != NULL; p++)
             if (strcmp(key, p->key) == 0)
                 return p;
@@ -868,7 +869,7 @@ int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
         return 0;
     }
 
-    if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
+    if (ossl_likely(p->data_type == OSSL_PARAM_UNSIGNED_INTEGER)) {
 #ifndef OPENSSL_SMALL_FOOTPRINT
         switch (p->data_size) {
         case sizeof(uint32_t):
