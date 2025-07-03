@@ -281,7 +281,7 @@ static int kdf_pbkdf2_derive(void *vctx, unsigned char *key, size_t keylen,
 
 {- produce_param_decoder('pbkdf2_set_ctx_params',
                          (['KDF_PARAM_PROPERTIES',  'propq',    'utf8_string'],
-                          ['ALG_PARAM_ENGINE',      'engine',   'utf8_string'],
+                          ['ALG_PARAM_ENGINE',      'engine',   'utf8_string', 'hidden'],
                           ['KDF_PARAM_DIGEST',      'digest',   'utf8_string'],
                           ['KDF_PARAM_PASSWORD',    'pw',       'octet_string'],
                           ['KDF_PARAM_SALT',        'salt',     'octet_string'],
