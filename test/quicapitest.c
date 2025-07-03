@@ -2892,14 +2892,14 @@ static int create_accept_stream(SSL *serverssl, SSL *clientssl,
     if (create_uni
         && (!TEST_ptr(serverstream = SSL_new_stream(serverssl, SSL_STREAM_FLAG_UNI))
             || !TEST_int_gt(SSL_write_ex(serverstream, msg, sizeof(msg), &nwritten), 0)
-            || !TEST_int_eq(nwritten, sizeof(msg))
+            || !TEST_size_t_eq(nwritten, sizeof(msg))
             || !TEST_int_eq(SSL_handle_events(clientssl), 1)))
         goto err;
 
     if (create_bidi
         && (!TEST_ptr(serverstream2 = SSL_new_stream(serverssl, 0))
             || !TEST_int_gt(SSL_write_ex(serverstream2, msg, sizeof(msg), &nwritten), 0)
-            || !TEST_int_eq(nwritten, sizeof(msg))
+            || !TEST_size_t_eq(nwritten, sizeof(msg))
             || !TEST_int_eq(SSL_handle_events(clientssl), 1)))
         goto err;
 
@@ -2922,7 +2922,7 @@ static int create_accept_stream(SSL *serverssl, SSL *clientssl,
         goto err;
 
     if (!TEST_int_gt(SSL_read_ex(clientstream, buf, sizeof(buf), &nread), 0)
-        || !TEST_int_eq(nread, sizeof(msg)))
+        || !TEST_size_t_eq(nread, sizeof(msg)))
         goto err;
 
     ret = 1;
