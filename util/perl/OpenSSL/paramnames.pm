@@ -792,12 +792,21 @@ sub output_param_decoder {
         my $ptype = $params[$i][2];
         my $pnum = $params[$i][3];
 
-        print "    OSSL_PARAM_$ptype(OSSL_$pname, NULL";
-        print ", 0" if $ptype eq "octet_string" || $ptype eq "octet_ptr"
-                       || $ptype eq "utf8_string" || $ptype eq "utf8_ptr";
-        printf "),\n";
-
         $prms{$pname} = $pident;
+
+        if (defined $pnum && $pnum eq 'hidden') {
+            # Don't output the list entry for hidden items.
+            # Otherwise treat them as scalars, by deleting the count entry.
+            # Hidden arrays will not be supported until necessary.
+            undef $pnum;
+            $params[$i][3] = undef;
+        } else {
+            print "    OSSL_PARAM_$ptype(OSSL_$pname, NULL";
+            print ", 0" if $ptype eq "octet_string" || $ptype eq "octet_ptr"
+                           || $ptype eq "utf8_string" || $ptype eq "utf8_ptr";
+            printf "),\n";
+        }
+
         $concat_num{$pident} = $pnum if defined($pnum);
     }
     print "    OSSL_PARAM_END\n};\n#endif\n\n";
