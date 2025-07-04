@@ -124,10 +124,10 @@ servers. See the B<SECURE RENEGOTIATION> section for more details.
 
 =item SSL_OP_CIPHER_SERVER_PREFERENCE
 
-When choosing a cipher, use the server's preferences instead of the client
-preferences. When not set, the SSL server will always follow the clients
-preferences. When set, the SSL/TLS server will choose following its
-own preferences.
+When choosing a cipher, signature, elliptic curve (TLS 1.2) or group (TLS 1.3)
+use the server's preferences instead of the client preferences. When not set,
+the SSL server will always follow the clients preferences. When set, the
+SSL/TLS server will choose following its own preferences.
 
 =item SSL_OP_CISCO_ANYCONNECT
 
