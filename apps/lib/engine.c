@@ -135,6 +135,7 @@ char *make_engine_uri(ENGINE *e, const char *key_id, const char *desc)
     return new_uri;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_6
 int get_legacy_pkey_id(OSSL_LIB_CTX *libctx, const char *algname, ENGINE *e)
 {
     const EVP_PKEY_ASN1_METHOD *ameth;
@@ -163,6 +164,7 @@ int get_legacy_pkey_id(OSSL_LIB_CTX *libctx, const char *algname, ENGINE *e)
 
     return pkey_id;
 }
+#endif
 
 const EVP_MD *get_digest_from_engine(const char *name)
 {

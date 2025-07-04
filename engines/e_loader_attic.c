@@ -11,7 +11,9 @@
 
 /* This file has quite some overlap with providers/implementations/storemgmt/file_store.c */
 
-/* We need to use some engine deprecated APIs */
+/*
+ * We need to use some asn1_meth deprecated APIs
+ */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include "internal/e_os.h" /* for stat */
