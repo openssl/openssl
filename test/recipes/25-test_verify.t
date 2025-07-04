@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 208;
+plan tests => 209;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -47,15 +47,8 @@ ok(!verify("ee-cert", "sslserver", [qw(root-cert2)], [qw(ca-cert)]),
    "fail wrong root key");
 ok(!verify("ee-cert", "sslserver", [qw(root-name2)], [qw(ca-cert)]),
    "fail wrong root DN");
-ok(!verify("ee-cert", "sslserver", ["root-distrust2016"], ["ca-cert"]),
-   "fail leaf notbefore after root's disturst after date"); #ee notbefore is 2016-01-15
-ok(verify("ee-cert", "sslserver", ["root-distrust2017"], ["ca-cert"]),
-   "accept leaf notbefore before root's disturst after date");
-ok(!verify("ee-cert", "sslserver", ["root-cert"], ["ca-distrust2016"]),
-   "fail because of ica disturst after date");
 
 # Critical extensions
-
 ok(verify("ee-cert-noncrit-unknown-ext", "", ["root-cert"], ["ca-cert"]),
    "accept non-critical unknown extension");
 ok(!verify("ee-cert-crit-unknown-ext", "", ["root-cert"], ["ca-cert"]),
@@ -110,6 +103,15 @@ ok(!verify("ee-cert", "sslserver", [qw(sroot-anyEKU)], [qw(ca-cert)]),
    "fail wildcard mistrust with server purpose");
 ok(!verify("ee-cert", "sslserver", [qw(croot-anyEKU)], [qw(ca-cert)]),
    "fail wildcard mistrust with client purpose");
+# {server/email}-distrust-after
+ok(!verify("ee-cert", "sslserver", ["root-serverdistrust2016"], ["ca-cert"]),
+   "fail leaf notbefore after root's disturst after date"); #ee notbefore is 2016-01-15
+ok(verify("ee-cert", "sslserver", ["root-serverdistrust2017"], ["ca-cert"]),
+   "accept leaf notbefore before root's disturst after date");
+ok(!verify("ee-cert", "sslserver", ["root-cert"], ["ca-serverdistrust2016"]),
+   "fail because of ica disturst after date");
+ok(verify("ee-client", "sslclient", ["root-serverdistrust2016"], ["ca-cert"]),
+   "accept out of scope distrust parameter"); 
 
 # Check that trusted-first is on by setting up paths to different roots
 # depending on whether the intermediate is the trusted or untrusted one.

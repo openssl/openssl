@@ -33,9 +33,9 @@ OpenSSL 3.6
 
   * Added Distrust after date into certificates aux info to encode method
     used by root programs gradually retires a root certificate.
-    it can be set by X509_set0_aux_distrustafterdate()
+    it can be set by X509_set0_aux_server_distrust_after()
     and accessed by X509_get0_other_algors()
-    'openssl x509' now have `-setdistrustafter` and `-clrdistrustafter`
+    'openssl x509' now have `-setdistrustafterserver`, `-setdistrustafteremail` and `-clrdistrustafter`
     to handle this setting, and `-clrother` to clear other unknown aux infomation in
     trusted certificate.
 

@@ -137,8 +137,10 @@ STACK_OF(ASN1_OBJECT) *X509_get0_reject_objects(X509 *x);
 STACK_OF(X509_ALGOR) *X509_get0_other_algors(X509 *x);
 int X509_other_clear_nid(X509 *x, int nid);
 X509_ALGOR *X509_get0_other_by_nid(X509 *x, int nid);
-int X509_set0_aux_distrustafterdate(X509 *x, ASN1_GENERALIZEDTIME *time);
-ASN1_TIME *X509_get0_aux_distrustafterdate(X509 *x);
+int X509_set0_aux_server_distrust_after(X509 *x, ASN1_GENERALIZEDTIME *time);
+ASN1_TIME *X509_get0_aux_server_distrust_after(X509 *x);
+int X509_set0_aux_email_distrust_after(X509 *x, ASN1_GENERALIZEDTIME *time);
+ASN1_TIME *X509_get0_aux_email_distrust_after(X509 *x);
 
 int (*X509_TRUST_set_default(int (*trust) (int, X509 *, int))) (int, X509 *,
                                                                 int);
