@@ -6628,10 +6628,15 @@
 #define NID_openssl             1496
 #define OBJ_openssl             1L,3L,6L,1L,4L,1L,16604L
 
-#define SN_openssl_distrustafter                "openssl-distrustafter"
-#define LN_openssl_distrustafter                "Distrust new leafs that signed after"
-#define NID_openssl_distrustafter               1497
-#define OBJ_openssl_distrustafter               OBJ_openssl,1L
+#define SN_openssl_server_distrust_after                "openssl-server-distrust-after"
+#define LN_openssl_server_distrust_after                "Distrust new serverauth leafs that signed after"
+#define NID_openssl_server_distrust_after               1499
+#define OBJ_openssl_server_distrust_after               OBJ_openssl,1L
+
+#define SN_openssl_email_distrust_after         "openssl-email-distrust-after"
+#define LN_openssl_email_distrust_after         "Distrust new smime leafs that signed after"
+#define NID_openssl_email_distrust_after                1501
+#define OBJ_openssl_email_distrust_after                OBJ_openssl,2L
 
 #endif /* OPENSSL_OBJ_MAC_H */
 

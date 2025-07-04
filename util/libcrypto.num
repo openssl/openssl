@@ -5934,5 +5934,7 @@ X509_other_clear                        ?	3_6_0	EXIST::FUNCTION:
 X509_get0_other_algors                  ?	3_6_0	EXIST::FUNCTION:
 X509_get0_other_by_nid                  ?	3_6_0	EXIST::FUNCTION:
 X509_other_clear_nid                    ?	3_6_0	EXIST::FUNCTION:
-X509_get0_aux_distrustafterdate         ?	3_6_0	EXIST::FUNCTION:
-X509_set0_aux_distrustafterdate         ?	3_6_0	EXIST::FUNCTION:
+X509_get0_aux_server_distrust_after     ?	3_6_0	EXIST::FUNCTION:
+X509_set0_aux_server_distrust_after     ?	3_6_0	EXIST::FUNCTION:
+X509_set0_aux_email_distrust_after      ?	3_6_0	EXIST::FUNCTION:
+X509_get0_aux_email_distrust_after      ?	3_6_0	EXIST::FUNCTION:
