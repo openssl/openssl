@@ -3023,6 +3023,10 @@ DEPEND[html/man3/X509_VERIFY_PARAM_set_flags.html]=man3/X509_VERIFY_PARAM_set_fl
 GENERATE[html/man3/X509_VERIFY_PARAM_set_flags.html]=man3/X509_VERIFY_PARAM_set_flags.pod
 DEPEND[man/man3/X509_VERIFY_PARAM_set_flags.3]=man3/X509_VERIFY_PARAM_set_flags.pod
 GENERATE[man/man3/X509_VERIFY_PARAM_set_flags.3]=man3/X509_VERIFY_PARAM_set_flags.pod
+DEPEND[html/man3/X509_add1_other_algor.html]=man3/X509_add1_other_algor.pod
+GENERATE[html/man3/X509_add1_other_algor.html]=man3/X509_add1_other_algor.pod
+DEPEND[man/man3/X509_add1_other_algor.3]=man3/X509_add1_other_algor.pod
+GENERATE[man/man3/X509_add1_other_algor.3]=man3/X509_add1_other_algor.pod
 DEPEND[html/man3/X509_add_cert.html]=man3/X509_add_cert.pod
 GENERATE[html/man3/X509_add_cert.html]=man3/X509_add_cert.pod
 DEPEND[man/man3/X509_add_cert.3]=man3/X509_add_cert.pod
@@ -3807,6 +3811,7 @@ html/man3/X509_STORE_get0_param.html \
 html/man3/X509_STORE_new.html \
 html/man3/X509_STORE_set_verify_cb_func.html \
 html/man3/X509_VERIFY_PARAM_set_flags.html \
+html/man3/X509_add1_other_algor.html \
 html/man3/X509_add_cert.html \
 html/man3/X509_check_ca.html \
 html/man3/X509_check_host.html \
@@ -4479,6 +4484,7 @@ man/man3/X509_STORE_get0_param.3 \
 man/man3/X509_STORE_new.3 \
 man/man3/X509_STORE_set_verify_cb_func.3 \
 man/man3/X509_VERIFY_PARAM_set_flags.3 \
+man/man3/X509_add1_other_algor.3 \
 man/man3/X509_add_cert.3 \
 man/man3/X509_check_ca.3 \
 man/man3/X509_check_host.3 \
