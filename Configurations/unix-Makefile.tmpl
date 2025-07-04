@@ -1419,7 +1419,7 @@ ordinals: build_generated
 test_ordinals:
 	"$(MAKE)" run_tests TESTS=test_ordinals
 
-tags TAGS: FORCE
+tags TAGS: FORCE build_generated
 	rm -f TAGS tags
 	-( cd $(SRCDIR); util/ctags.sh )
 	-etags `find . -name '*.[ch]' -o -name '*.pm'`
