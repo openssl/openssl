@@ -104,6 +104,8 @@ resumption and the historical servername callback.
 The SSL_client_hello_* family of functions may only be called from code executing
 within a ClientHello callback.
 
+TODO(ECH): How ECH is handled here needs to be documented.
+
 =head1 RETURN VALUES
 
 The application's supplied ClientHello callback returns
