@@ -132,36 +132,36 @@ static void aria_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 }
 
 IMPLEMENT_BLOCK_CIPHER(aria_128, ks, aria, EVP_ARIA_KEY,
-                        NID_aria_128, 16, 16, 16, 128,
+                        NID_aria_128, 16, 16, 16, 128, 1,
                         0, aria_init_key, NULL,
                         EVP_CIPHER_set_asn1_iv,
                         EVP_CIPHER_get_asn1_iv,
                         NULL)
 IMPLEMENT_BLOCK_CIPHER(aria_192, ks, aria, EVP_ARIA_KEY,
-                        NID_aria_192, 16, 24, 16, 128,
+                        NID_aria_192, 16, 24, 16, 128, 3,
                         0, aria_init_key, NULL,
                         EVP_CIPHER_set_asn1_iv,
                         EVP_CIPHER_get_asn1_iv,
                         NULL)
 IMPLEMENT_BLOCK_CIPHER(aria_256, ks, aria, EVP_ARIA_KEY,
-                        NID_aria_256, 16, 32, 16, 128,
+                        NID_aria_256, 16, 32, 16, 128, 5,
                         0, aria_init_key, NULL,
                         EVP_CIPHER_set_asn1_iv,
                         EVP_CIPHER_get_asn1_iv,
                         NULL)
 
-# define IMPLEMENT_ARIA_CFBR(ksize,cbits) \
-                IMPLEMENT_CFBR(aria,aria,EVP_ARIA_KEY,ks,ksize,cbits,16,0)
-IMPLEMENT_ARIA_CFBR(128,1)
-IMPLEMENT_ARIA_CFBR(192,1)
-IMPLEMENT_ARIA_CFBR(256,1)
-IMPLEMENT_ARIA_CFBR(128,8)
-IMPLEMENT_ARIA_CFBR(192,8)
-IMPLEMENT_ARIA_CFBR(256,8)
+# define IMPLEMENT_ARIA_CFBR(ksize,cbits,seccat) \
+                IMPLEMENT_CFBR(aria,aria,EVP_ARIA_KEY,ks,ksize,cbits,16,seccat,0)
+IMPLEMENT_ARIA_CFBR(128,1,1)
+IMPLEMENT_ARIA_CFBR(192,1,3)
+IMPLEMENT_ARIA_CFBR(256,1,5)
+IMPLEMENT_ARIA_CFBR(128,8,1)
+IMPLEMENT_ARIA_CFBR(192,8,3)
+IMPLEMENT_ARIA_CFBR(256,8,5)
 
-# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
+# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,seccat,nmode,mode,MODE,flags) \
 static const EVP_CIPHER aria_##keylen##_##mode = { \
-        nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
+        nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, seccat, \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                \
         aria_init_key,                  \
@@ -190,9 +190,9 @@ static int aria_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
-BLOCK_CIPHER_generic(NID_aria, 128, 1, 16, ctr, ctr, CTR, 0)
-BLOCK_CIPHER_generic(NID_aria, 192, 1, 16, ctr, ctr, CTR, 0)
-BLOCK_CIPHER_generic(NID_aria, 256, 1, 16, ctr, ctr, CTR, 0)
+BLOCK_CIPHER_generic(NID_aria, 128, 1, 16, 1, ctr, ctr, CTR, 0)
+BLOCK_CIPHER_generic(NID_aria, 192, 1, 16, 3, ctr, ctr, CTR, 0)
+BLOCK_CIPHER_generic(NID_aria, 256, 1, 16, 5, ctr, ctr, CTR, 0)
 
 /* Authenticated cipher modes (GCM/CCM) */
 
@@ -761,10 +761,10 @@ static int aria_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                           | EVP_CIPH_CUSTOM_COPY | EVP_CIPH_FLAG_AEAD_CIPHER \
                           | EVP_CIPH_CUSTOM_IV_LENGTH)
 
-#define BLOCK_CIPHER_aead(keylen,mode,MODE)        \
+#define BLOCK_CIPHER_aead(keylen,seccat,mode,MODE) \
 static const EVP_CIPHER aria_##keylen##_##mode = { \
         NID_aria_##keylen##_##mode,                \
-        1, keylen/8, 12,                           \
+        1, keylen/8, 12, seccat,                   \
         ARIA_AUTH_FLAGS|EVP_CIPH_##MODE##_MODE,    \
         EVP_ORIG_GLOBAL,                           \
         aria_##mode##_init_key,                    \
@@ -775,12 +775,12 @@ static const EVP_CIPHER aria_##keylen##_##mode = { \
 const EVP_CIPHER *EVP_aria_##keylen##_##mode(void) \
 { return (EVP_CIPHER*)&aria_##keylen##_##mode; }
 
-BLOCK_CIPHER_aead(128, gcm, GCM)
-BLOCK_CIPHER_aead(192, gcm, GCM)
-BLOCK_CIPHER_aead(256, gcm, GCM)
+BLOCK_CIPHER_aead(128, 1, gcm, GCM)
+BLOCK_CIPHER_aead(192, 3, gcm, GCM)
+BLOCK_CIPHER_aead(256, 5, gcm, GCM)
 
-BLOCK_CIPHER_aead(128, ccm, CCM)
-BLOCK_CIPHER_aead(192, ccm, CCM)
-BLOCK_CIPHER_aead(256, ccm, CCM)
+BLOCK_CIPHER_aead(128, 1, ccm, CCM)
+BLOCK_CIPHER_aead(192, 3, ccm, CCM)
+BLOCK_CIPHER_aead(256, 5, ccm, CCM)
 
 #endif

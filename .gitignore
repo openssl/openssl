@@ -59,9 +59,6 @@
 /include/openssl/x509_vfy.h
 /include/openssl/core_names.h
 
-# Auto generated parameter name files
-/crypto/params_idx.c
-
 # Auto generated doc files
 doc/man1/openssl-*.pod
 
@@ -93,7 +90,7 @@ providers/implementations/ciphers/ciphercommon.c
 providers/implementations/ciphers/ciphercommon_ccm.c
 providers/implementations/ciphers/ciphercommon_gcm.c
 providers/implementations/ciphers/cipher_chacha20_poly1305.c
-providers/implementations/digest/digestcommon.c
+providers/implementations/digests/digestcommon.c
 
 # error code files
 /crypto/err/openssl.txt.old
