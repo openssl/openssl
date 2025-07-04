@@ -2091,9 +2091,6 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             && !SSL_CONNECTION_IS_DTLS(s)
             && s->ext.session_secret_cb != NULL)) {
         const SSL_CIPHER *pref_cipher = NULL;
-#elif 0
-        /* silence the style checker */
-    }
 #else
 
     if (!s->hit

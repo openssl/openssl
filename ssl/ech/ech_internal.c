@@ -1219,7 +1219,7 @@ static int ech_get_outer_sni(SSL_CONNECTION *s, char **osni_str,
 /*
  * decode EncryptedClientHello extension value
  * pkt contains the ECH value as a PACKET
- * extval is the returned decoded structure
+ * retext is the returned decoded structure
  * payload_offset is the offset to the ciphertext
  * return 1 for good, 0 for bad
  *
@@ -1320,7 +1320,7 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
         }
-        if (memcmp(tmpenc, s->ext.ech.pub, pval_tmp)) {
+        if (memcmp(tmpenc, s->ext.ech.pub, pval_tmp) != 0) {
             OPENSSL_free(tmpenc);
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
@@ -1448,7 +1448,7 @@ static int ech_find_outers(SSL_CONNECTION *s, PACKET *pkt,
         return 1;
     }
     /*
-     * outers has a silly internal length as well and that betterk
+     * outers has a silly internal length as well and that better
      * be one less than the extension length and an even number
      * and we only support a certain max of outers
      */
@@ -1779,7 +1779,7 @@ static unsigned char *hpke_decrypt_encch(SSL_CONNECTION *s,
      * We may generate externally visible OpenSSL errors
      * if decryption fails (which is normal) but we'll
      * ignore those as we might be dealing with a GREASEd
-     * ECH. To do that we need to know ingore some errors
+     * ECH. To do that we need to now ingore some errors
      * so we use ERR_set_mark() then later ERR_pop_to_mark().
      */
     if (ERR_set_mark() != 0) {
@@ -1799,6 +1799,7 @@ static unsigned char *hpke_decrypt_encch(SSL_CONNECTION *s,
         rv = OSSL_HPKE_CTX_set_seq(hctx, 1);
         if (rv != 1) {
             /* don't clear this error - GREASE can't cause it */
+            ERR_clear_last_mark();
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto end;
         }
@@ -1871,23 +1872,16 @@ end:
 # ifdef CHECKZEROS
         {
             size_t zind = 0;
-            size_t zeros = 0;
 
             if (*innerlen < ch_len) {
                 OPENSSL_free(clear);
                 return NULL;
             }
             for (zind = ch_len; zind != *innerlen; zind++) {
-                if (clear[zind] == 0x00) {
-                    zeros++;
-                } else {
+                if (clear[zind] != 0x00) {
                     OPENSSL_free(clear);
                     return NULL;
                 }
-            }
-            if (zeros != (*innerlen - ch_len)) {
-                OPENSSL_free(clear);
-                return NULL;
             }
         }
 # endif

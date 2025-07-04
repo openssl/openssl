@@ -2477,7 +2477,7 @@ int tls_parse_ctos_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 }
 
 /*
- * answer a draft-13 ECH, as needed
+ * Answer an ECH, as needed
  * return 1 for good, 0 otherwise
  *
  * Return most-recent ECH config for retry, as needed.
