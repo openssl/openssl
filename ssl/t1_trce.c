@@ -13,8 +13,9 @@
 
 /* Packet trace support for OpenSSL */
 #include "internal/nelem.h"
-#include "internal/ssl_unwrap.h"
 #include "internal/quic_trace.h"
+#include "internal/ssl_unwrap.h"
+#include "openssl/byteorder.h"
 
 typedef struct {
     int num;
@@ -464,6 +465,7 @@ static const ssl_trace_tbl ssl_comp_tbl[] = {
 static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_server_name, "server_name"},
     {TLSEXT_TYPE_max_fragment_length, "max_fragment_length"},
+    {TLSEXT_TYPE_record_size_limit, "record_size_limit"},
     {TLSEXT_TYPE_client_certificate_url, "client_certificate_url"},
     {TLSEXT_TYPE_trusted_ca_keys, "trusted_ca_keys"},
     {TLSEXT_TYPE_truncated_hmac, "truncated_hmac"},
@@ -774,6 +776,13 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
         xlen = extlen;
         return ssl_trace_list(bio, indent + 2, ext, xlen, 1, ssl_mfl_tbl);
 
+    case TLSEXT_TYPE_record_size_limit:
+        if (extlen < 2)
+            return 0;
+        BIO_indent(bio, indent + 2, 80);
+        BIO_printf(bio, "value=%u\n", (uint16_t)(ext[0] << 8 | ext[1]));
+        return 1;
+
     case TLSEXT_TYPE_ec_point_formats:
         if (extlen < 1)
             return 0;
@@ -788,7 +797,8 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
         xlen = (ext[0] << 8) | ext[1];
         if (extlen != xlen + 2)
             return 0;
-        return ssl_trace_list(bio, indent + 2, ext + 2, xlen, 2, ssl_groups_tbl);
+        return 1;
+
     case TLSEXT_TYPE_application_layer_protocol_negotiation:
         if (extlen < 2)
             return 0;
