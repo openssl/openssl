@@ -326,14 +326,19 @@ int X509_aux_print(BIO *out, X509 *x, int indent)
 {
     char oidstr[80], first;
     STACK_OF(ASN1_OBJECT) *trust, *reject;
+    ASN1_TIME *serverdistrustafter, *emaildistrustafter;
     STACK_OF(X509_ALGOR) *others;
     const unsigned char *alias, *keyid;
     int keyidlen;
-    int i;
+    int i, j;
+
     if (X509_trusted(x) == 0)
         return 1;
     trust = X509_get0_trust_objects(x);
     reject = X509_get0_reject_objects(x);
+    serverdistrustafter = X509_get0_aux_server_distrust_after(x);
+    emaildistrustafter = X509_get0_aux_email_distrust_after(x);
+
     if (trust) {
         first = 1;
         BIO_printf(out, "%*sTrusted Uses:\n%*s", indent, "", indent + 2, "");
@@ -364,6 +369,19 @@ int X509_aux_print(BIO *out, X509 *x, int indent)
         BIO_puts(out, "\n");
     } else
         BIO_printf(out, "%*sNo Rejected Uses.\n", indent, "");
+    j = 0;
+    if (serverdistrustafter) {
+        j++;
+        BIO_printf(out, "%*sDistrust for TLS After Date: ", indent, "");
+        ossl_asn1_time_print_ex(out, serverdistrustafter, ASN1_DTFLGS_RFC822);
+        BIO_printf(out, "\n");
+    }
+    if (emaildistrustafter) {
+        j++;
+        BIO_printf(out, "%*sDistrust for S/MIME After Date: ", indent, "");
+        ossl_asn1_time_print_ex(out, emaildistrustafter, ASN1_DTFLGS_RFC822);
+        BIO_printf(out, "\n");
+    }
     alias = X509_alias_get0(x, &i);
     if (alias)
         BIO_printf(out, "%*sAlias: %.*s\n", indent, "", i, alias);
@@ -375,8 +393,8 @@ int X509_aux_print(BIO *out, X509 *x, int indent)
         BIO_write(out, "\n", 1);
     }
     others = X509_get0_other_algors(x);
-    if (others) {
-        BIO_printf(out, "%*sOthers: len(%d)\n", indent, "", sk_X509_ALGOR_num(others));
+    if (others && sk_X509_ALGOR_num(others) > j) {
+        BIO_printf(out, "%*sUnknown object in Other, dump below:\n", indent, "");
         ASN1_item_print(out, (ASN1_VALUE *)others, indent + 4, ASN1_ITEM_rptr(X509_ALGORS), NULL);
         BIO_write(out, "\n", 1);
     }

@@ -245,22 +245,48 @@ int X509_other_clear_nid(X509 *x, int nid)
     return 1;
 }
 
-int X509_set0_aux_distrustafterdate(X509 *x, ASN1_GENERALIZEDTIME *time)
+int X509_set0_aux_server_distrust_after(X509 *x, ASN1_GENERALIZEDTIME *time)
 {
     X509_ALGOR *dtaft = X509_ALGOR_new();
+    ASN1_OBJECT *obj = OBJ_nid2obj(NID_openssl_server_distrust_after);
 
     if (dtaft == NULL)
         return 0;
-    X509_other_clear_nid(x, NID_openssl_distrustafter);
-    X509_ALGOR_set0(dtaft, OBJ_nid2obj(NID_openssl_distrustafter), V_ASN1_GENERALIZEDTIME, time);
+    X509_other_clear_nid(x, NID_openssl_server_distrust_after);
+    X509_ALGOR_set0(dtaft, obj, V_ASN1_GENERALIZEDTIME, time);
     X509_add1_other_algor(x, dtaft);
     X509_ALGOR_free(dtaft);
     return 1;
 }
 
-ASN1_TIME *X509_get0_aux_distrustafterdate(X509 *x)
+ASN1_TIME *X509_get0_aux_server_distrust_after(X509 *x)
 {
-    X509_ALGOR *alg = X509_get0_other_by_nid(x, NID_openssl_distrustafter);
+    X509_ALGOR *alg = X509_get0_other_by_nid(x, NID_openssl_server_distrust_after);
+
+    if (alg == NULL)
+        return NULL;
+    if (ASN1_TYPE_get(alg->parameter) != V_ASN1_GENERALIZEDTIME)
+        return NULL;
+    return alg->parameter->value.generalizedtime;
+}
+
+int X509_set0_aux_email_distrust_after(X509 *x, ASN1_GENERALIZEDTIME *time)
+{
+    X509_ALGOR *dtaft = X509_ALGOR_new();
+    ASN1_OBJECT *obj = OBJ_nid2obj(NID_openssl_email_distrust_after);
+
+    if (dtaft == NULL)
+        return 0;
+    X509_other_clear_nid(x, NID_openssl_email_distrust_after);
+    X509_ALGOR_set0(dtaft, obj, V_ASN1_GENERALIZEDTIME, time);
+    X509_add1_other_algor(x, dtaft);
+    X509_ALGOR_free(dtaft);
+    return 1;
+}
+
+ASN1_TIME *X509_get0_aux_email_distrust_after(X509 *x)
+{
+    X509_ALGOR *alg = X509_get0_other_by_nid(x, NID_openssl_email_distrust_after);
 
     if (alg == NULL)
         return NULL;

@@ -5,8 +5,10 @@
 X509_add1_other_algor, 
 X509_get0_other_algors, X509_get0_other_by_nid, 
 X509_other_clear_nid, X509_other_clear,
-X509_get0_aux_distrustafterdate,
-X509_set0_aux_distrustafterdate
+X509_get0_aux_server_distrust_after,
+X509_set0_aux_server_distrust_after,
+X509_get0_aux_email_distrust_after,
+X509_set0_aux_email_distrust_after
 - X509 certificate auxiliary informations other type functions
 
 =head1 SYNOPSIS
@@ -17,8 +19,10 @@ X509_set0_aux_distrustafterdate
  STACK_OF(X509_ALGOR) *X509_get0_other_algors(X509 *x);
  X509_ALGOR *X509_get0_other_by_nid(X509 *x, int nid);
  int X509_other_clear_nid(X509 *x, int nid);
- int X509_set0_aux_distrustafterdate(X509 *x, ASN1_GENERALIZEDTIME *time);
- ASN1_TIME *X509_get0_aux_distrustafterdate(X509 *x);
+ int X509_set0_aux_server_distrust_after(X509 *x, ASN1_GENERALIZEDTIME *time);
+ ASN1_TIME *X509_get0_aux_server_distrust_after(X509 *x);
+ int X509_set0_aux_email_distrust_after(X509 *x, ASN1_GENERALIZEDTIME *time);
+ ASN1_TIME *X509_get0_aux_email_distrust_after(X509 *x);
  int X509_add1_other_algor(X509 *x, const X509_ALGOR *alg);
 
 =head1 DESCRIPTION
@@ -36,12 +40,21 @@ if not found it will return NULL.
 X509_other_clear_nid();
 lopps over cert->aux->other and frees every member that have matching nid.
 
-int X509_set0_aux_distrustafterdate(X509 *x, ASN1_GENERALIZEDTIME *time);
-set distrust after date to the certificate time in *time.
-leaf certificate that chained to this CA but signed ifter 'time' will be rejected.
+int X509_set0_aux_server_distrust_after(X509 *x, ASN1_GENERALIZEDTIME *time);
+set distrust-server-after date to the certificate time in *time.
+leaf certificate that chained to this CA but signed after 'time' will be rejected, if used for serverAuth purpose.
+equiervent with CKA_NSS_SERVER_DISTRUST_AFTER from Mozilla root store certdata.txt
 
-ASN1_TIME *X509_get0_aux_distrustafterdate(X509 *x);
-get current distrust after date of this certificate, NULL if it doesn't have any.
+ASN1_TIME *X509_get0_aux_server_distrust_after(X509 *x);
+get current distrust after date of this certificate for tls serverAuth purpose, NULL if it doesn't have any.
+
+int X509_set0_aux_email_distrust_after(X509 *x, ASN1_GENERALIZEDTIME *time);
+set distrust after date to the certificate time in *time.
+leaf certificate that chained to this CA but signed after 'time' will be rejected for smime context.
+equiervent with CKA_NSS_EMAIL_DISTRUST_AFTER from Mozilla root store certdata.txt
+
+ASN1_TIME *X509_get0_aux_email_distrust_after(X509 *x);
+get current distrust after date of this certificate for smime purpose, NULL if it doesn't have any.
 
 =head1 RETURN VALUES
 
@@ -51,7 +64,8 @@ Described above.
 
 The functions X509_add1_other_algor(), X509_get0_other_algors(),
  X509_get0_other_by_nid(), X509_other_clear_nid(),
-X509_other_clear(), X509_get0_aux_distrustafterdate(), X509_set0_aux_distrustafterdate(),
+X509_other_clear(), X509_get0_aux_server_distrust_after(), X509_set0_aux_server_distrust_after(),
+X509_get0_aux_email_distrust_after(), X509_set0_aux_email_distrust_after(),
 was added in openssl 3.6
 
 =head1 COPYRIGHT

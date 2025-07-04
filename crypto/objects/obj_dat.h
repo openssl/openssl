@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[9567] = {
+static const unsigned char so[9576] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1352,10 +1352,11 @@ static const unsigned char so[9567] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x03,0x1D,  /* [ 9527] OBJ_HKDF_SHA384 */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x03,0x1E,  /* [ 9538] OBJ_HKDF_SHA512 */
     0x2B,0x06,0x01,0x04,0x01,0x81,0x81,0x5C,       /* [ 9549] OBJ_openssl */
-    0x2B,0x06,0x01,0x04,0x01,0x81,0x81,0x5C,0x01,  /* [ 9557] OBJ_openssl_distrustafter */
+    0x2B,0x06,0x01,0x04,0x01,0x81,0x81,0x5C,0x01,  /* [ 9557] OBJ_openssl_server_distrust_after */
+    0x2B,0x06,0x01,0x04,0x01,0x81,0x81,0x5C,0x02,  /* [ 9566] OBJ_openssl_email_distrust_after */
 };
 
-#define NUM_NID 1501
+#define NUM_NID 1505
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2857,10 +2858,14 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-alg-hkdf-with-sha384", "HKDF-SHA384", NID_HKDF_SHA384, 11, &so[9527]},
     {"id-alg-hkdf-with-sha512", "HKDF-SHA512", NID_HKDF_SHA512, 11, &so[9538]},
     {"openssl", "OpenSSL Software Foundation", NID_openssl, 8, &so[9549]},
-    {"openssl-distrustafter", "Distrust new leafs that signed after", NID_openssl_distrustafter, 9, &so[9557]},
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    {"openssl-server-distrust-after", "Distrust new serverauth leafs that signed after", NID_openssl_server_distrust_after, 9, &so[9557]},
+    { NULL, NULL, NID_undef },
+    {"openssl-email-distrust-after", "Distrust new smime leafs that signed after", NID_openssl_email_distrust_after, 9, &so[9566]},
 };
 
-#define NUM_SN 1492
+#define NUM_SN 1493
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3888,7 +3893,8 @@ static const unsigned int sn_objs[NUM_SN] = {
       77,    /* "nsSslServerName" */
      681,    /* "onBasis" */
     1499,    /* "openssl" */
-    1500,    /* "openssl-distrustafter" */
+    1504,    /* "openssl-email-distrust-after" */
+    1502,    /* "openssl-server-distrust-after" */
     1283,    /* "oracle-jdk-trustedkeyusage" */
     1282,    /* "oracle-organization" */
     1089,    /* "organizationIdentifier" */
@@ -4356,7 +4362,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1492
+#define NUM_LN 1493
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4435,7 +4441,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      382,    /* "Directory" */
     1391,    /* "Disk Component Class" */
     1389,    /* "Distributed Management Task Force Registry" */
-    1500,    /* "Distrust new leafs that signed after" */
+    1502,    /* "Distrust new serverauth leafs that signed after" */
+    1504,    /* "Distrust new smime leafs that signed after" */
      392,    /* "Domain" */
      132,    /* "E-mail Protection" */
     1087,    /* "ED25519" */
@@ -5852,7 +5859,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1349
+#define NUM_OBJ 1350
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -6837,7 +6844,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      681,    /* OBJ_X9_62_onBasis                1 2 840 10045 1 2 3 1 */
      682,    /* OBJ_X9_62_tpBasis                1 2 840 10045 1 2 3 2 */
      683,    /* OBJ_X9_62_ppBasis                1 2 840 10045 1 2 3 3 */
-    1500,    /* OBJ_openssl_distrustafter        1 3 6 1 4 1 16604 1 */
+    1502,    /* OBJ_openssl_server_distrust_after 1 3 6 1 4 1 16604 1 */
+    1504,    /* OBJ_openssl_email_distrust_after 1 3 6 1 4 1 16604 2 */
      417,    /* OBJ_ms_csp_name                  1 3 6 1 4 1 311 17 1 */
      856,    /* OBJ_LocalKeySet                  1 3 6 1 4 1 311 17 2 */
     1293,    /* OBJ_ms_cert_templ                1 3 6 1 4 1 311 21 7 */
