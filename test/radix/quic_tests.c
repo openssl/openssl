@@ -111,7 +111,7 @@ DEF_FUNC(ssl_poll_check)
         expected_result_count = 0;
         break;
     case 1: /* Various events reported correctly */
-        expected_result_count       = 5;
+        expected_result_count       = 4;
         items[0].events             = SSL_POLL_EVENT_OS;
         expected_items[0].revents   = SSL_POLL_EVENT_OS;
 

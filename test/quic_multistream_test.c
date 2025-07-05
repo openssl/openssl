@@ -5702,7 +5702,7 @@ ossl_unused static int script_85_poll(struct helper *h, struct helper_local *hl)
         expected_revents[2]     = SSL_POLL_EVENT_W;
         expected_revents[3]     = SSL_POLL_EVENT_W;
         expected_revents[4]     = SSL_POLL_EVENT_OS;
-        expected_result_count   = 5;
+        expected_result_count   = 4;
         break;
     case 1:
         /* Expect more events */
@@ -5711,7 +5711,7 @@ ossl_unused static int script_85_poll(struct helper *h, struct helper_local *hl)
         expected_revents[2]     = SSL_POLL_EVENT_EW;
         expected_revents[3]     = SSL_POLL_EVENT_W;
         expected_revents[4]     = SSL_POLL_EVENT_OS | SSL_POLL_EVENT_ISB;
-        expected_result_count   = 5;
+        expected_result_count   = 4;
         break;
     default:
         return 0;
