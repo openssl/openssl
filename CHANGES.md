@@ -107,6 +107,11 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
+ * Add optional 64-bit optimized implementation of elliptic curve for
+    SECP256-K1
+
+   *Michael Adjedj*
+
 OpenSSL 3.5
 -----------
 
