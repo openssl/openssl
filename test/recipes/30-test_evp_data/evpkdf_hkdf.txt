@@ -259,3 +259,45 @@ Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b
 Ctrl.salt = hexsalt:000102030405060708090a0b0c
 Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
 Output = 085a01ea1b10f36933068b56efa5ad81a4f14b822f5b091568a9cdd4f155fda2c22e422478d305f3f896
+
+Title = HKDF Fixed Digest Consistency Tests
+
+# From RFC5869 test vectors
+FIPSversion = >=3.6.0
+KDF = HKDF-SHA256
+Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
+Ctrl.salt = hexsalt:000102030405060708090a0b0c
+Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
+Output = 3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865
+
+# OpenSSL-derived test vectors, to check consistency between HKDF with SHA384 and HKDF-SHA384
+KDF = HKDF
+Ctrl.digest = digest:SHA384
+Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
+Ctrl.salt = hexsalt:000102030405060708090a0b0c
+Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
+Output = 9B5097A86038B805309076A44B3A9F38063E25B516DCBF369F394CFAB43685F748B6457763E4F0204FC5
+
+# OpenSSL-derived test vectors, to check consistency between HKDF with SHA384 and HKDF-SHA384
+FIPSversion = >=3.6.0
+KDF = HKDF-SHA384
+Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
+Ctrl.salt = hexsalt:000102030405060708090a0b0c
+Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
+Output = 9B5097A86038B805309076A44B3A9F38063E25B516DCBF369F394CFAB43685F748B6457763E4F0204FC5
+
+# OpenSSL-derived test vectors, to check consistency between HKDF with SHA512 and HKDF-SHA512
+KDF = HKDF
+Ctrl.digest = digest:SHA512
+Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
+Ctrl.salt = hexsalt:000102030405060708090a0b0c
+Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
+Output = 832390086CDA71FB47625BB5CEB168E4C8E26A1A16ED34D9FC7FE92C1481579338DA362CB8D9F925D7CB
+
+# OpenSSL-derived test vectors, to check consistency between HKDF with SHA512 and HKDF-SHA512
+FIPSversion = >=3.6.0
+KDF = HKDF-SHA512
+Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
+Ctrl.salt = hexsalt:000102030405060708090a0b0c
+Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
+Output = 832390086CDA71FB47625BB5CEB168E4C8E26A1A16ED34D9FC7FE92C1481579338DA362CB8D9F925D7CB
