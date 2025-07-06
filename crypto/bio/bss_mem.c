@@ -283,7 +283,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
         off = (ossl_ssize_t)num;
         /* FALLTHRU */
     case BIO_C_FILE_TELL:
-        ret = off;
+        ret = (long)off;
         break;
     case BIO_CTRL_EOF:
         ret = (long)(bm->length == 0);
