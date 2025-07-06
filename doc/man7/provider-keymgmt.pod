@@ -500,6 +500,11 @@ OSSL_FUNC_keymgmt_export_types(), OSSL_FUNC_keymgmt_export_types_ex()
 should
 always return a constant L<OSSL_PARAM(3)> array.
 
+=head1 NOTES
+
+LMS support is disabled by default at compile-time.
+To enable, specify the B<enable-lms> build configuration option.
+
 =head1 SEE ALSO
 
 L<EVP_PKEY_get_size(3)>,

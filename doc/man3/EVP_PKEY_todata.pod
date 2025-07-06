@@ -35,6 +35,9 @@ EVP_PKEY_todata() if persistence is required.
 These functions only work with key management methods coming from a provider.
 This is the mirror function to L<EVP_PKEY_fromdata(3)>.
 
+LMS support is disabled by default at compile-time.
+To enable, specify the B<enable-lms> build configuration option.
+
 =head1 RETURN VALUES
 
 EVP_PKEY_todata() and EVP_PKEY_export() return 1 for success and 0 for failure.

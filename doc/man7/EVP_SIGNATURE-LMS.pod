@@ -19,6 +19,11 @@ functions used for LMS signatures. Streaming is not currently supported,
 and since the signature data contains data related to the digest used, functions
 that specify the digest name are not necessary.
 
+=head1 NOTES
+
+LMS support is disabled by default at compile-time.
+To enable, specify the B<enable-lms> build configuration option.
+
 =head1 EXAMPLES
 
 Error checking has been omitted from the following examples
@@ -46,7 +51,7 @@ L<provider-signature(7)>,
 
 =head1 HISTORY
 
-This functionality was added in OpenSSL 3.6.0.
+This functionality was added in OpenSSL 3.6.
 
 =head1 COPYRIGHT
 

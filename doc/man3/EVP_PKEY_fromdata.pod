@@ -86,6 +86,9 @@ public key and key parameters.
 These functions only work with key management methods coming from a provider.
 This is the mirror function to L<EVP_PKEY_todata(3)>.
 
+LMS support is disabled by default at compile-time.
+To enable, specify the B<enable-lms> build configuration option.
+
 =for comment We may choose to make this available for legacy methods too...
 
 =head1 RETURN VALUES
