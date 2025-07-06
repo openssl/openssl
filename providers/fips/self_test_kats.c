@@ -1131,7 +1131,7 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
      * FIPS 140-3 IG 10.3.A Note 5 mandates a CAST for LMS.
      *
      * It permits this to be omitted if HSS is also implemented and has
-     * the relevant self tests.  One HSS is implemented, this test can be
+     * the relevant self tests.  Once HSS is implemented, this test can be
      * removed.  This IG permits the digest's CAST to be subsumed into this
      * test, however, because this will be removed, the underlying digest
      * test has been retained elsewhere lest it is accidentally omitted.
