@@ -117,6 +117,11 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
+ * Add X509_CRL_get0_tbs_sigalg() accessor for the signature AlgorithmIdentifier
+   inside a CRL's TBSCertList.
+
+   *Theo Buehler*
+
  * HKDF with (SHA-256, SHA-384, SHA-512) has assigned OIDs. Added ability to load
    HKDF configured with these explicit digests by name or OID.
 
