@@ -200,7 +200,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo no-bulk no-pic no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo no-bulk no-pic no-asm no-lms -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
     - name: make
       run: make -j4 # verbose, so no -s here
     - name: get cpu info
