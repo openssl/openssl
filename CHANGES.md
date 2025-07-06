@@ -107,6 +107,11 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
+ * Add X509_CRL_get0_tbs_sigalg() accessor for the signature AlgorithmIdentifier
+   inside a CRL's TBSCertList.
+
+   *Theo Buehler*
+
 OpenSSL 3.5
 -----------
 

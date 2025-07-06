@@ -5929,3 +5929,4 @@ OPENSSL_sk_set_thunks                   ?	3_6_0	EXIST::FUNCTION:
 i2d_PKCS8PrivateKey                     ?	3_6_0	EXIST::FUNCTION:
 OSSL_PARAM_set_octet_string_or_ptr      ?	3_6_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_settable_ctx_params   ?	3_6_0	EXIST::FUNCTION:
+X509_CRL_get0_tbs_sigalg                ?	3_6_0	EXIST::FUNCTION:

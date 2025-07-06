@@ -335,6 +335,7 @@ static int test_basic_crl(void)
 {
     X509_CRL *basic_crl = CRL_from_strings(kBasicCRL);
     X509_CRL *revoked_crl = CRL_from_strings(kRevokedCRL);
+    const X509_ALGOR *alg = NULL, *tbsalg;
     int r;
 
     r = TEST_ptr(basic_crl)
@@ -345,6 +346,14 @@ static int test_basic_crl(void)
         && TEST_int_eq(verify(test_leaf, test_root,
                               make_CRL_stack(basic_crl, revoked_crl),
                               X509_V_FLAG_CRL_CHECK), X509_V_ERR_CERT_REVOKED);
+    if (r) {
+        X509_CRL_get0_signature(basic_crl, NULL, &alg);
+        tbsalg = X509_CRL_get0_tbs_sigalg(basic_crl);
+        r = TEST_ptr(alg)
+            && TEST_ptr(tbsalg)
+            && TEST_int_eq(X509_ALGOR_cmp(alg, tbsalg), 0);
+    }
+
     X509_CRL_free(basic_crl);
     X509_CRL_free(revoked_crl);
     return r;

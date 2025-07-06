@@ -5,9 +5,10 @@
 X509_get0_signature, X509_REQ_set0_signature, X509_REQ_set1_signature_algo,
 X509_get_signature_nid, X509_get0_tbs_sigalg, X509_REQ_get0_signature,
 X509_REQ_get_signature_nid, X509_CRL_get0_signature, X509_CRL_get_signature_nid,
+X509_CRL_get0_tbs_sigalg, X509_get_signature_info,
+X509_SIG_INFO_get, X509_SIG_INFO_set,
 X509_ACERT_get0_signature, X509_ACERT_get0_info_sigalg,
-X509_ACERT_get_signature_nid, X509_get_signature_info,
-X509_SIG_INFO_get, X509_SIG_INFO_set - signature information
+X509_ACERT_get_signature_nid - signature information
 
 =head1 SYNOPSIS
 
@@ -32,6 +33,7 @@ X509_SIG_INFO_get, X509_SIG_INFO_set - signature information
                               const ASN1_BIT_STRING **psig,
                               const X509_ALGOR **palg);
  int X509_CRL_get_signature_nid(const X509_CRL *crl);
+ const X509_ALGOR *X509_CRL_get0_tbs_sigalg(const X509_crl *crl);
 
  int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
                              uint32_t *flags);
@@ -56,8 +58,8 @@ pointers which B<MUST NOT> be freed up after the call.
 X509_set0_signature() and X509_REQ_set1_signature_algo() are the
 equivalent setters for the two values of X509_get0_signature().
 
-X509_get0_tbs_sigalg() returns the signature algorithm in the signed
-portion of B<x>.
+X509_get0_tbs_sigalg() and X509_CRL_get0_tbs_sigalg() return the signature
+algorithm in the signed portion of the certificate or CRL.
 
 X509_get_signature_nid() returns the NID corresponding to the signature
 algorithm of B<x>.
@@ -65,10 +67,6 @@ algorithm of B<x>.
 X509_REQ_get0_signature(), X509_REQ_get_signature_nid()
 X509_CRL_get0_signature() and X509_CRL_get_signature_nid() perform the
 same function for certificate requests and CRLs.
-
-X509_ACERT_get0_signature(), X509_ACERT_get_signature_nid() and
-X509_ACERT_get0_info_sigalg() perform the same function for attribute
-certificates.
 
 X509_get_signature_info() retrieves information about the signature of
 certificate B<x>. The NID of the signing digest is written to B<*mdnid>,
@@ -81,6 +79,10 @@ about a signature in an B<X509_SIG_INFO> structure. They are only
 used by implementations of algorithms which need to set custom
 signature information: most applications will never need to call
 them.
+
+X509_ACERT_get0_signature(), X509_ACERT_get_signature_nid() and
+X509_ACERT_get0_info_sigalg() perform the same function for attribute
+certificates.
 
 =head1 NOTES
 
@@ -146,6 +148,8 @@ were added in OpenSSL 1.1.1e.
 
 The X509_ACERT_get0_signature(), X509_ACERT_get0_info_sigalg() and
 X509_ACERT_get_signature_nid() functions were added in OpenSSL 3.4.
+
+The X509_CRL_get0_tbs_sigalg() function was added in OpenSSL 3.6.
 
 =head1 COPYRIGHT
 
