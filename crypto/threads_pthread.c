@@ -733,7 +733,6 @@ static ossl_inline int ossl_rwlock_rdlock(pthread_rwlock_t *lock)
             return ret;
         }
         end = ossl_time_now();
-        traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
         traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
         traces->stacks[traces->idx].strings = backtrace_symbols(buffer,
                                                                 traces->stacks[traces->idx].nptrs);
