@@ -8,6 +8,7 @@
  */
 
 #include <openssl/evp.h>
+#include <openssl/byteorder.h>
 #include "crypto/lms_sig.h"
 #include "crypto/lms_util.h"
 
@@ -45,8 +46,8 @@ int ossl_lm_ots_compute_pubkey(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
     if (sig->params != pub)
         return 0;
 
-    U32STR(qbuf, q);
-    U16STR(d_mesg, OSSL_LMS_D_MESG);
+    OPENSSL_store_u32_be(qbuf, q);
+    OPENSSL_store_u16_be(d_mesg, OSSL_LMS_D_MESG);
 
     return (EVP_DigestUpdate(ctxIq, Id, LMS_SIZE_I)
             && EVP_DigestUpdate(ctxIq, qbuf, sizeof(qbuf))
@@ -106,8 +107,8 @@ static int lm_ots_compute_pubkey_final(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
     sum = ossl_lm_ots_params_checksum(params, Q);
     Qsum = Q + n;
     /* Q || Cksm(Q) */
-    U16STR(Qsum, sum);
-    U16STR(d_pblc, OSSL_LMS_D_PBLC);
+    OPENSSL_store_u16_be(Qsum, sum);
+    OPENSSL_store_u16_be(d_pblc, OSSL_LMS_D_PBLC);
 
     if (!(EVP_MD_CTX_copy_ex(ctxKc, ctxIq))
             || !EVP_DigestUpdate(ctxKc, d_pblc, sizeof(d_pblc)))
@@ -123,7 +124,7 @@ static int lm_ots_compute_pubkey_final(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
      * the inner loop |end| is in the range 0...(2^w)-1
      */
     for (i = 0; i < p; ++i) {
-        a = coef(Q, i, w);
+        a = lms_ots_coef(Q, i, w);
         memcpy(z, y, n);
         y += n;
         for (j = a; j < end; ++j) {

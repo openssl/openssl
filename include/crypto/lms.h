@@ -135,13 +135,13 @@ typedef struct lms_pub_key_st {
     unsigned char *K;
 } LMS_PUB_KEY;
 
-struct lms_key_st {
+typedef struct lms_key_st {
     const LMS_PARAMS *lms_params;
     const LM_OTS_PARAMS *ots_params;
     OSSL_LIB_CTX *libctx;
     unsigned char *Id;        /* A pointer to 16 bytes (I[16]) */
     LMS_PUB_KEY pub;
-};
+} LMS_KEY;
 
 const LMS_PARAMS *ossl_lms_params_get(uint32_t lms_type);
 const LM_OTS_PARAMS *ossl_lm_ots_params_get(uint32_t ots_type);

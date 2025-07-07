@@ -295,7 +295,7 @@ static const OSSL_ALGORITHM fips_digests_internal[] = {
     FIPS_DIGESTS_COMMON(),
     /* Used by LMS/HSS */
     { PROV_NAMES_SHA2_256_192, FIPS_DEFAULT_PROPERTIES,
-      ossl_sha256_192_functions },
+      ossl_sha256_192_internal_functions },
     /*
      * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
      * KMAC128 and KMAC256.

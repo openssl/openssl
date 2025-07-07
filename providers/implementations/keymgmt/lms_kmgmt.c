@@ -60,8 +60,6 @@ static int lms_match(const void *keydata1, const void *keydata2, int selection)
 
     if (!ossl_prov_is_running())
         return 0;
-    if (key1 == NULL || key2 == NULL)
-        return 0;
     return ossl_lms_key_equal(key1, key2, selection);
 }
 

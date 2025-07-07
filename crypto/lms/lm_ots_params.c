@@ -61,6 +61,6 @@ uint16_t ossl_lm_ots_params_checksum(const LM_OTS_PARAMS *params,
     uint16_t end = (1 << params->w) - 1;
 
     for (i = 0; i < bytes; ++i)
-        sum += end - coef(S, i, params->w);
+        sum += end - lms_ots_coef(S, i, params->w);
     return (sum << params->ls);
 }

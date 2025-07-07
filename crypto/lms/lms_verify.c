@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/byteorder.h>
 #include "crypto/lms_sig.h"
 #include "crypto/lms_util.h"
 #include "internal/common.h"
@@ -46,7 +47,7 @@ int lms_sig_compute_tc_from_path(const unsigned char *paths, uint32_t n,
     unsigned char d_intr[sizeof(uint16_t)];
     const unsigned char *path = paths;
 
-    U16STR(d_intr, OSSL_LMS_D_INTR);
+    OPENSSL_store_u16_be(d_intr, OSSL_LMS_D_INTR);
 
     /*
      * Calculate the public key Tc using the path
@@ -60,7 +61,7 @@ int lms_sig_compute_tc_from_path(const unsigned char *paths, uint32_t n,
         int odd = node_num & 1;
 
         node_num = node_num >> 1; /* get the parent node_num */
-        U32STR(qbuf, node_num);
+        OPENSSL_store_u32_be(qbuf, node_num);
 
         /*
          * Calculate Tc as either
@@ -125,7 +126,7 @@ int ossl_lms_sig_verify(const LMS_SIG *lms_sig, const LMS_KEY *pub,
     if (ctx == NULL || ctxIq == NULL)
         goto err;
 
-    if (!evp_md_ctx_init(ctxIq, md, lms_sig->params))
+    if (!lms_evp_md_ctx_init(ctxIq, md, lms_sig->params))
         goto err;
     /*
      * Algorithm 6a: Step 3.
@@ -145,8 +146,8 @@ int ossl_lms_sig_verify(const LMS_SIG *lms_sig, const LMS_KEY *pub,
         return 0;
     node_num = (1 << lms_params->h) + lms_sig->q;
 
-    U32STR(qbuf, node_num);
-    U16STR(d_leaf, OSSL_LMS_D_LEAF);
+    OPENSSL_store_u32_be(qbuf, node_num);
+    OPENSSL_store_u16_be(d_leaf, OSSL_LMS_D_LEAF);
     ctxI = ctxIq;
     /*
      * Tc = H(I || u32str(node_num) || u16str(D_LEAF) || Kc)
