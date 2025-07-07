@@ -7,7 +7,7 @@
 
 name: Windows GitHub CI
 
-on: [pull_request, push]
+on: [workflow_dispatch]
 
 permissions:
   contents: read
