@@ -15,29 +15,21 @@
 #
 TEMPDIR=$(mktemp -d /tmp/contention.XXXXXX)
 
-LOGFILE=$1
 trap "rm -rf $TEMPDIR" EXIT
-
-if [ ! -f $LOGFILE ]
-then
-    echo "No log file found"
-    exit 1
-fi
-LOGFILEBASE=$(basename $LOGFILE)
 
 echo "Splitting files"
 
 #
 #start by splitting the log into separate stack traces
 #
-mkdir $TEMPDIR/individual_files
-cp $LOGFILE $TEMPDIR/individual_files/$LOGFILEBASE
+mkdir "$TEMPDIR/individual_files"
+cat "$@" > "$TEMPDIR/individual_files/log"
 pushd $TEMPDIR/individual_files/ > /dev/null
 awk '
     BEGIN {RS = ""; FS = "\n"}
-    {file_num++; print > ("stacktrace" file_num ".txt")}' ./$LOGFILEBASE
+    {file_num++; print > ("stacktrace" file_num ".txt")}' ./log
 popd > /dev/null
-rm -f $TEMPDIR/individual_files/$LOGFILEBASE
+rm -f $TEMPDIR/individual_files/log
 
 #
 # Make some associative arrays to track our stats

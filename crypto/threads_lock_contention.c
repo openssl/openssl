@@ -12,8 +12,10 @@
 
 #include <assert.h>
 #include <execinfo.h>
+#include <fcntl.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <sys/uio.h>
 
 #include "internal/common.h"
 #include "internal/time.h"
@@ -33,16 +35,9 @@
  * to the contention log file.  We do this because we want to avoid use
  * of the CRYPTO_THREAD api so as to prevent recursive blocking reports.
  */
-static FILE *contention_fp = NULL;
-static CRYPTO_ONCE init_contention_fp = CRYPTO_ONCE_STATIC_INIT;
-static int rwlock_count = 0;
+static CRYPTO_ONCE init_contention_data_flag = CRYPTO_ONCE_STATIC_INIT;
 pthread_mutex_t log_lock = PTHREAD_MUTEX_INITIALIZER;
 CRYPTO_THREAD_LOCAL thread_contention_data;
-
-static void destroy_contention_data(void *data)
-{
-    OPENSSL_free(data);
-}
 
 struct stack_info {
     unsigned int nptrs;
@@ -54,6 +49,7 @@ struct stack_info {
 
 #  define STACKS_COUNT 32
 struct stack_traces {
+    int fd;
     int lock_depth;
     size_t idx;
     struct stack_info stacks[STACKS_COUNT];
@@ -64,12 +60,31 @@ struct stack_traces {
 #  else
 #   define FIPS_SFX ""
 #  endif
-static void init_contention_fp_once(void)
+static void *init_contention_data(void)
 {
-    contention_fp = fopen("lock-contention-log" FIPS_SFX ".txt", "w");
-    if (contention_fp == NULL)
-        fprintf(stderr, "Contention log file could not be opened, log will not be recorded\n");
+    struct stack_traces *traces;
+    char fname_fmt[] = "lock-contention-log" FIPS_SFX ".%d.txt";
+    char fname[sizeof(fname_fmt) + sizeof(int) * 3];
 
+    traces = OPENSSL_zalloc(sizeof(struct stack_traces));
+
+    snprintf(fname, sizeof(fname), fname_fmt, gettid());
+
+    traces->fd = open(fname, O_WRONLY | O_APPEND | O_CLOEXEC | O_CREAT, 0600);
+
+    return traces;
+}
+
+static void destroy_contention_data(void *data)
+{
+    struct stack_traces *st = data;
+
+    close(st->fd);
+    OPENSSL_free(data);
+}
+
+static void init_contention_data_once(void)
+{
     /*
      * Create a thread local key here to store our list of stack traces
      * to be printed when we unlock the lock we are holding
@@ -82,56 +97,58 @@ static struct stack_traces *get_stack_traces(bool init)
 {
     struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
     if (!traces && init) {
-        traces = OPENSSL_zalloc(sizeof(*traces));
+        traces = init_contention_data();
         CRYPTO_THREAD_set_local(&thread_contention_data, traces);
     }
 
     return traces;
 }
 
-static void print_stack_traces(struct stack_traces *traces, FILE *fptr)
+static void print_stack_traces(struct stack_traces *traces)
 {
     unsigned int j;
+    struct iovec *iov;
+    int iovcnt;
 
-    pthread_mutex_lock(&log_lock);
     while (traces != NULL && traces->idx >= 1) {
         traces->idx--;
-        fprintf(fptr, "lock blocked on %s for %zu usec at time %zu tid %d\n",
+        dprintf(traces->fd,
+                "lock blocked on %s for %zu usec at time %zu tid %d\n",
                 traces->stacks[traces->idx].write == 1 ? "WRITE" : "READ",
                 ossl_time2us(traces->stacks[traces->idx].duration),
                 ossl_time2us(traces->stacks[traces->idx].start),
                 gettid());
         if (traces->stacks[traces->idx].strings != NULL) {
-            for (j = 0; j < traces->stacks[traces->idx].nptrs; j++)
-                fprintf(fptr, "%s\n", traces->stacks[traces->idx].strings[j]);
-            free(traces->stacks[traces->idx].strings);
+            static const char lf = '\n';
+            iovcnt = traces->stacks[traces->idx].nptrs * 2 + 1;
+            iov = alloca(iovcnt * sizeof(*iov));
+            for (j = 0; j < traces->stacks[traces->idx].nptrs; j++) {
+                iov[2 * j].iov_base = traces->stacks[traces->idx].strings[j];
+               iov[2 * j].iov_len = strlen(traces->stacks[traces->idx].strings[j]);
+                iov[2 * j + 1].iov_base = (char *) &lf;
+               iov[2 * j + 1].iov_len = 1;
+            }
+            iov[traces->stacks[traces->idx].nptrs * 2].iov_base = (char *) &lf;
+            iov[traces->stacks[traces->idx].nptrs * 2].iov_len = 1;
         } else {
-            fprintf(fptr, "No stack trace available\n");
+            static const char no_bt[] = "No stack trace available\n\n";
+            iovcnt = 1;
+            iov = alloca(iovcnt * sizeof(*iov));
+            iov[0].iov_base = (char *) no_bt;
+            iov[0].iov_len = sizeof(no_bt) - 1;
         }
-        fprintf(contention_fp, "\n");
+        writev(traces->fd, iov, iovcnt);
+        free(traces->stacks[traces->idx].strings);
     }
-    pthread_mutex_unlock(&log_lock);
 }
 
 void ossl_init_rwlock_contention_data(void)
 {
-    CRYPTO_THREAD_run_once(&init_contention_fp, init_contention_fp_once);
-    __atomic_add_fetch(&rwlock_count, 1, __ATOMIC_ACQ_REL);
+    CRYPTO_THREAD_run_once(&init_contention_data_flag, init_contention_data_once);
 }
 
 void ossl_free_rwlock_contention_data(void)
 {
-    /*
-     * Note: It's possible here that OpenSSL may allocate a lock and immediately
-     * free it, in which case we would erroneously close the contention log
-     * prior to the library going on to do more real work.  In practice
-     * that never happens though, and since this is a debug facility
-     * we don't worry about that here.
-     */
-    if (__atomic_add_fetch(&rwlock_count, -1, __ATOMIC_ACQ_REL) == 0) {
-        fclose(contention_fp);
-        contention_fp = NULL;
-    }
 }
 
 static int record_lock_contention(pthread_rwlock_t *lock,
@@ -155,7 +172,7 @@ static int record_lock_contention(pthread_rwlock_t *lock,
     traces->idx++;
     if (traces->idx >= STACKS_COUNT) {
         fprintf(stderr, "STACK RECORD OVERFLOW!\n");
-        print_stack_traces(traces, contention_fp);
+        print_stack_traces(traces);
     }
 
     return 0;
@@ -194,13 +211,11 @@ int ossl_rwlock_unlock(pthread_rwlock_t *lock)
     {
         struct stack_traces *traces = get_stack_traces(false);
 
-        if (contention_fp == NULL)
-            return 0;
         if (traces != NULL) {
             traces->lock_depth--;
             assert(traces->lock_depth >= 0);
             if (traces->lock_depth == 0)
-                print_stack_traces(traces, contention_fp);
+                print_stack_traces(traces);
         }
     }
 
