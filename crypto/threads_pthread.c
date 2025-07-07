@@ -714,6 +714,33 @@ static ossl_inline void ossl_free_rwlock_contention_data(void)
     }
 }
 
+static int record_lock_contention(pthread_rwlock_t *lock,
+                                  struct stack_traces *traces, bool write)
+{
+    void *buffer[BT_BUF_SIZE];
+    OSSL_TIME start, end;
+    int ret;
+
+    start = ossl_time_now();
+    ret = (write ? pthread_rwlock_wrlock : pthread_rwlock_rdlock)(lock);
+    if (ret)
+        return ret;
+    end = ossl_time_now();
+    traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
+    traces->stacks[traces->idx].strings = backtrace_symbols(buffer,
+                                                            traces->stacks[traces->idx].nptrs);
+    traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
+    traces->stacks[traces->idx].start = start;
+    traces->stacks[traces->idx].write = write;
+    traces->idx++;
+    if (traces->idx >= STACKS_COUNT) {
+        fprintf(stderr, "STACK RECORD OVERFLOW!\n");
+        print_stack_traces(traces, contention_fp);
+    }
+
+    return 0;
+}
+
 static ossl_inline int ossl_rwlock_rdlock(pthread_rwlock_t *lock)
 {
     struct stack_traces *traces = get_stack_traces(true);
@@ -723,28 +750,12 @@ static ossl_inline int ossl_rwlock_rdlock(pthread_rwlock_t *lock)
 
     traces->lock_depth++;
     if (pthread_rwlock_tryrdlock(lock)) {
-        void *buffer[BT_BUF_SIZE];
-        OSSL_TIME start, end;
-        int ret;
+        int ret = record_lock_contention(lock, traces, false);
 
-        start = ossl_time_now();
-        ret = pthread_rwlock_rdlock(lock);
-        if (ret) {
+        if (ret)
             traces->lock_depth--;
-            return ret;
-        }
-        end = ossl_time_now();
-        traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
-        traces->stacks[traces->idx].strings = backtrace_symbols(buffer,
-                                                                traces->stacks[traces->idx].nptrs);
-        traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
-        traces->stacks[traces->idx].start = start;
-        traces->stacks[traces->idx].write = 0;
-        traces->idx++;
-        if (traces->idx >= STACKS_COUNT) {
-            fprintf(stderr, "STACK RECORD OVERFLOW!\n");
-            print_stack_traces(traces, contention_fp);
-        }
+
+        return ret;
     }
 
     return 0;
@@ -759,28 +770,12 @@ static ossl_inline int ossl_rwlock_wrlock(pthread_rwlock_t *lock)
 
     traces->lock_depth++;
     if (pthread_rwlock_trywrlock(lock)) {
-        void *buffer[BT_BUF_SIZE];
-        OSSL_TIME start, end;
-        int ret;
+        int ret = record_lock_contention(lock, traces, true);
 
-        start = ossl_time_now();
-        ret = pthread_rwlock_wrlock(lock);
-        if (ret) {
+        if (ret)
             traces->lock_depth--;
-            return ret;
-        }
-        end = ossl_time_now();
-        traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
-        traces->stacks[traces->idx].strings = backtrace_symbols(buffer,
-                                                                traces->stacks[traces->idx].nptrs);
-        traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
-        traces->stacks[traces->idx].start = start;
-        traces->stacks[traces->idx].write = 1;
-        traces->idx++;
-        if (traces->idx >= STACKS_COUNT) {
-            fprintf(stderr, "STACK RECORD OVERFLOW!\n");
-            print_stack_traces(traces, contention_fp);
-        }
+
+        return ret;
     }
 
     return 0;
