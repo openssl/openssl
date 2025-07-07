@@ -9,10 +9,7 @@ name: Run-checker daily
 # Jobs run daily
 
 on:
-  schedule:
-    - cron: '0 6 * * *'
-permissions:
-  contents: read
+  workflow_dispatch:
 
 jobs:
   run-checker:
