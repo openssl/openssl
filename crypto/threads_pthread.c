@@ -630,6 +630,7 @@ struct stack_info {
 };
 
 #  define STACKS_COUNT 32
+#  define BT_BUF_SIZE 1024
 struct stack_traces {
     int lock_depth;
     size_t idx;
@@ -653,14 +654,33 @@ static void init_contention_fp_once(void)
     CRYPTO_THREAD_init_local(&thread_contention_data, destroy_contention_data);
     return;
 }
-# endif
 
-CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
+static void print_stack_traces(struct stack_traces *traces, FILE *fptr)
 {
-# ifdef USE_RWLOCK
-    CRYPTO_RWLOCK *lock;
+    unsigned int j;
 
-#  ifdef REPORT_RWLOCK_CONTENTION
+    pthread_mutex_lock(&log_lock);
+    while (traces != NULL && traces->idx >= 1) {
+        traces->idx--;
+        fprintf(fptr, "lock blocked on %s for %zu usec at time %zu tid %d\n",
+                traces->stacks[traces->idx].write == 1 ? "WRITE" : "READ",
+                ossl_time2us(traces->stacks[traces->idx].duration),
+                ossl_time2us(traces->stacks[traces->idx].start),
+                gettid());
+        if (traces->stacks[traces->idx].strings != NULL) {
+            for (j = 0; j < traces->stacks[traces->idx].nptrs; j++)
+                fprintf(fptr, "%s\n", traces->stacks[traces->idx].strings[j]);
+            free(traces->stacks[traces->idx].strings);
+        } else {
+            fprintf(fptr, "No stack trace available\n");
+        }
+        fprintf(contention_fp, "\n");
+    }
+    pthread_mutex_unlock(&log_lock);
+}
+
+static ossl_inline void ossl_init_rwlock_contention_data(void)
+{
     CRYPTO_THREAD_run_once(&init_contention_fp, init_contention_fp_once);
     __atomic_add_fetch(&rwlock_count, 1, __ATOMIC_ACQ_REL);
     {
@@ -672,7 +692,158 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
             CRYPTO_THREAD_set_local(&thread_contention_data, thread_stack_info);
         }
     }
-#  endif
+}
+
+static ossl_inline void ossl_free_rwlock_contention_data(void)
+{
+    /*
+     * Note: It's possible here that OpenSSL may allocate a lock and immediately
+     * free it, in which case we would erroneously close the contention log
+     * prior to the library going on to do more real work.  In practice
+     * that never happens though, and since this is a debug facility
+     * we don't worry about that here.
+     */
+    if (__atomic_add_fetch(&rwlock_count, -1, __ATOMIC_ACQ_REL) == 0) {
+        fclose(contention_fp);
+        contention_fp = NULL;
+    }
+}
+
+static ossl_inline int ossl_rwlock_rdlock(pthread_rwlock_t *lock)
+{
+    struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
+
+    if (ossl_unlikely(traces == NULL)) {
+        traces = OPENSSL_zalloc(sizeof(struct stack_traces));
+        CRYPTO_THREAD_set_local(&thread_contention_data, traces);
+        if (ossl_unlikely(traces == NULL))
+            return ENOMEM;
+    }
+
+    traces->lock_depth++;
+    if (pthread_rwlock_tryrdlock(lock)) {
+        void *buffer[BT_BUF_SIZE];
+        OSSL_TIME start, end;
+        int ret;
+
+        start = ossl_time_now();
+        ret = pthread_rwlock_rdlock(lock);
+        if (ret) {
+            traces->lock_depth--;
+            return ret;
+        }
+        end = ossl_time_now();
+        traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
+        traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
+        traces->stacks[traces->idx].strings = backtrace_symbols(buffer,
+                                                                traces->stacks[traces->idx].nptrs);
+        traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
+        traces->stacks[traces->idx].start = start;
+        traces->stacks[traces->idx].write = 0;
+        traces->idx++;
+        if (traces->idx >= STACKS_COUNT) {
+            fprintf(stderr, "STACK RECORD OVERFLOW!\n");
+            print_stack_traces(traces, contention_fp);
+        }
+    }
+
+    return 0;
+}
+
+static ossl_inline int ossl_rwlock_wrlock(pthread_rwlock_t *lock)
+{
+    struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
+
+    if (ossl_unlikely(traces == NULL)) {
+        traces = OPENSSL_zalloc(sizeof(struct stack_traces));
+        CRYPTO_THREAD_set_local(&thread_contention_data, traces);
+        if (ossl_unlikely(traces == NULL))
+            return ENOMEM;
+    }
+
+    traces->lock_depth++;
+    if (pthread_rwlock_trywrlock(lock)) {
+        void *buffer[BT_BUF_SIZE];
+        OSSL_TIME start, end;
+        int ret;
+
+        start = ossl_time_now();
+        ret = pthread_rwlock_wrlock(lock);
+        if (ret) {
+            traces->lock_depth--;
+            return ret;
+        }
+        end = ossl_time_now();
+        traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
+        traces->stacks[traces->idx].strings = backtrace_symbols(buffer,
+                                                                traces->stacks[traces->idx].nptrs);
+        traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
+        traces->stacks[traces->idx].start = start;
+        traces->stacks[traces->idx].write = 1;
+        traces->idx++;
+        if (traces->idx >= STACKS_COUNT) {
+            fprintf(stderr, "STACK RECORD OVERFLOW!\n");
+            print_stack_traces(traces, contention_fp);
+        }
+    }
+
+    return 0;
+}
+
+static ossl_inline int ossl_rwlock_unlock(pthread_rwlock_t *lock)
+{
+    int ret;
+
+    ret = pthread_rwlock_unlock(lock);
+    if (ret)
+        return ret;
+
+    {
+        struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
+
+        if (contention_fp != NULL && traces != NULL) {
+            traces->lock_depth--;
+            assert(traces->lock_depth >= 0);
+            if (traces->lock_depth == 0)
+                print_stack_traces(traces, contention_fp);
+        }
+    }
+
+    return 0;
+}
+
+# else /* !REPORT_RWLOCK_CONTENTION */
+
+static ossl_inline void ossl_init_rwlock_contention_data(void)
+{
+}
+
+static ossl_inline void ossl_free_rwlock_contention_data(void)
+{
+}
+
+static ossl_inline int ossl_rwlock_rdlock(pthread_rwlock_t *rwlock)
+{
+    return pthread_rwlock_rdlock(rwlock);
+}
+
+static ossl_inline int ossl_rwlock_wrlock(pthread_rwlock_t *rwlock)
+{
+    return pthread_rwlock_wrlock(rwlock);
+}
+
+static ossl_inline int ossl_rwlock_unlock(pthread_rwlock_t *rwlock)
+{
+    return pthread_rwlock_unlock(rwlock);
+}
+# endif /* REPORT_RWLOCK_CONTENTION */
+
+CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
+{
+# ifdef USE_RWLOCK
+    CRYPTO_RWLOCK *lock;
+
+    ossl_init_rwlock_contention_data();
 
     if ((lock = OPENSSL_zalloc(sizeof(pthread_rwlock_t))) == NULL)
         /* Don't set error, to avoid recursion blowup. */
@@ -714,75 +885,11 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
     return lock;
 }
 
-# ifdef REPORT_RWLOCK_CONTENTION
-static void print_stack_traces(struct stack_traces *traces, FILE *fptr)
-{
-    unsigned int j;
-
-    pthread_mutex_lock(&log_lock);
-    while (traces != NULL && traces->idx >= 1) {
-        traces->idx--;
-        fprintf(fptr, "lock blocked on %s for %zu usec at time %zu tid %d\n",
-                traces->stacks[traces->idx].write == 1 ? "WRITE" : "READ",
-                ossl_time2us(traces->stacks[traces->idx].duration),
-                ossl_time2us(traces->stacks[traces->idx].start),
-                gettid());
-        if (traces->stacks[traces->idx].strings != NULL) {
-            for (j = 0; j < traces->stacks[traces->idx].nptrs; j++)
-                fprintf(fptr, "%s\n", traces->stacks[traces->idx].strings[j]);
-            free(traces->stacks[traces->idx].strings);
-        } else {
-            fprintf(fptr, "No stack trace available\n");
-        }
-        fprintf(contention_fp, "\n");
-    }
-    pthread_mutex_unlock(&log_lock);
-}
-# endif
-
-# define BT_BUF_SIZE 1024
-
 __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
-#  ifdef REPORT_RWLOCK_CONTENTION
-    struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
-
-    if (ossl_unlikely(traces == NULL)) {
-        traces = OPENSSL_zalloc(sizeof(struct stack_traces));
-        CRYPTO_THREAD_set_local(&thread_contention_data, traces);
-        if (ossl_unlikely(traces == NULL))
-            return 0;
-    }
-
-    traces->lock_depth++;
-    if (pthread_rwlock_tryrdlock(lock)) {
-        void *buffer[BT_BUF_SIZE];
-        OSSL_TIME start, end;
-
-        start = ossl_time_now();
-        if (!ossl_assert(pthread_rwlock_rdlock(lock) == 0)) {
-            traces->lock_depth--;
-            return 0;
-        }
-        end = ossl_time_now();
-        traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
-        traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
-        traces->stacks[traces->idx].strings = backtrace_symbols(buffer,
-                                                                traces->stacks[traces->idx].nptrs);
-        traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
-        traces->stacks[traces->idx].start = start;
-        traces->stacks[traces->idx].write = 0;
-        traces->idx++;
-        if (traces->idx >= STACKS_COUNT) {
-            fprintf(stderr, "STACK RECORD OVERFLOW!\n");
-            print_stack_traces(traces, contention_fp);
-        }
-    }
-#  else
-    if (!ossl_assert(pthread_rwlock_rdlock(lock) == 0))
+    if (!ossl_assert(ossl_rwlock_rdlock(lock) == 0))
         return 0;
-#  endif
 # else
     if (pthread_mutex_lock(lock) != 0) {
         assert(errno != EDEADLK && errno != EBUSY);
@@ -796,43 +903,8 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
-#  ifdef REPORT_RWLOCK_CONTENTION
-    struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
-
-    if (ossl_unlikely(traces == NULL)) {
-        traces = OPENSSL_zalloc(sizeof(struct stack_traces));
-        CRYPTO_THREAD_set_local(&thread_contention_data, traces);
-        if (ossl_unlikely(traces == NULL))
-            return 0;
-    }
-
-    traces->lock_depth++;
-    if (pthread_rwlock_trywrlock(lock)) {
-        void *buffer[BT_BUF_SIZE];
-        OSSL_TIME start, end;
-
-        start = ossl_time_now();
-        if (!ossl_assert(pthread_rwlock_wrlock(lock) == 0)) {
-            traces->lock_depth--;
-            return 0;
-        }
-        end = ossl_time_now();
-        traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
-        traces->stacks[traces->idx].strings = backtrace_symbols(buffer,
-                                                                traces->stacks[traces->idx].nptrs);
-        traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
-        traces->stacks[traces->idx].start = start;
-        traces->stacks[traces->idx].write = 1;
-        traces->idx++;
-        if (traces->idx >= STACKS_COUNT) {
-            fprintf(stderr, "STACK RECORD OVERFLOW!\n");
-            print_stack_traces(traces, contention_fp);
-        }
-    }
-#  else
-    if (!ossl_assert(pthread_rwlock_wrlock(lock) == 0))
+    if (!ossl_assert(ossl_rwlock_wrlock(lock) == 0))
         return 0;
-#  endif
 # else
     if (pthread_mutex_lock(lock) != 0) {
         assert(errno != EDEADLK && errno != EBUSY);
@@ -846,20 +918,8 @@ __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
-    if (pthread_rwlock_unlock(lock) != 0)
+    if (ossl_rwlock_unlock(lock) != 0)
         return 0;
-#  ifdef REPORT_RWLOCK_CONTENTION
-    {
-        struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
-
-        if (contention_fp != NULL && traces != NULL) {
-            traces->lock_depth--;
-            assert(traces->lock_depth >= 0);
-            if (traces->lock_depth == 0)
-                print_stack_traces(traces, contention_fp);
-        }
-    }
-#  endif
 # else
     if (pthread_mutex_unlock(lock) != 0) {
         assert(errno != EPERM);
@@ -874,22 +934,9 @@ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock)
 {
     if (lock == NULL)
         return;
-# ifdef REPORT_RWLOCK_CONTENTION
-
-    /*
-     * Note: It's possible here that OpenSSL may allocate a lock and immediately
-     * free it, in which case we would erroneously close the contention log
-     * prior to the library going on to do more real work.  In practice
-     * that never happens though, and since this is a debug facility
-     * we don't worry about that here.
-     */
-    if (__atomic_add_fetch(&rwlock_count, -1, __ATOMIC_ACQ_REL) == 0) {
-        fclose(contention_fp);
-        contention_fp = NULL;
-    }
-# endif
 
 # ifdef USE_RWLOCK
+    ossl_free_rwlock_contention_data();
     pthread_rwlock_destroy(lock);
 # else
     pthread_mutex_destroy(lock);
