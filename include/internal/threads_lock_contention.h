@@ -16,15 +16,7 @@
 
 #  include "internal/threads_common.h"
 
-#  if !defined(__GNUC__) || !defined(__ATOMIC_ACQ_REL) || \
-    defined(BROKEN_CLANG_ATOMICS) || defined(OPENSSL_NO_STDIO)
-/*
- * we only enable REPORT_RWLOCK_CONTENTION on clang/gcc when we have
- * atomics available.  We do this because we need to use an atomic to track
- * when we can close the log file.  We could use the CRYPTO_atomic_ api
- * but that requires lock creation which gets us into a bad recursive loop
- * when we try to initialize the file pointer
- */
+#  if defined(OPENSSL_NO_STDIO)
 #   ifdef REPORT_RWLOCK_CONTENTION
 #    warning "RWLOCK CONTENTION REPORTING NOT SUPPORTED, Disabling"
 #    undef REPORT_RWLOCK_CONTENTION
