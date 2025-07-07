@@ -7,7 +7,7 @@
 
 name: Cross Compile
 
-on: [pull_request, push]
+on: [workflow_dispatch]
 
 permissions:
   contents: read
