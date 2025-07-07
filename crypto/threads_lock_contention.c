@@ -149,7 +149,6 @@ int ossl_rwlock_rdlock(pthread_rwlock_t *lock)
         if (ret)
             return ret;
         end = ossl_time_now();
-        traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
         traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
         traces->stacks[traces->idx].strings = backtrace_symbols(buffer,
                                                                 traces->stacks[traces->idx].nptrs);
@@ -180,10 +179,6 @@ int ossl_rwlock_wrlock(pthread_rwlock_t *lock)
         OSSL_TIME start, end;
         int ret;
 
-        if (ossl_unlikely(traces == NULL)) {
-            traces = OPENSSL_zalloc(sizeof(struct stack_traces));
-            CRYPTO_THREAD_set_local(&thread_contention_data, traces);
-        }
         start = ossl_time_now();
         ret = pthread_rwlock_wrlock(lock);
         if (ret)
