@@ -385,7 +385,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
      * Set on servers to choose cipher, curve or group according to server's
      * preferences.
      */
-# define SSL_OP_SERVER_PREFERENCE SSL_OP_BIT(22)
+# define SSL_OP_SERVER_PREFERENCE                        SSL_OP_BIT(22)
     /* Equivalent definition for backwards compatibility: */
 # define SSL_OP_CIPHER_SERVER_PREFERENCE SSL_OP_SERVER_PREFERENCE
     /*
