@@ -7,10 +7,7 @@
 
 name: FIPS Changed Label
 on:
-  workflow_run:
-    workflows: ["FIPS Checksums"]
-    types:
-      - completed
+  workflow_dispatch:
 
 permissions:
   contents: read
