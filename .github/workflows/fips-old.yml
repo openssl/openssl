@@ -6,7 +6,7 @@
 # https://www.openssl.org/source/license.html
 
 name: Provider old versions compat
-on: [pull_request, push]
+on: [workflow_dispatch]
 
 permissions:
   contents: read
