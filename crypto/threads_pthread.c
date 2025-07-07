@@ -684,7 +684,7 @@ static ossl_inline void ossl_init_rwlock_contention_data(void)
     CRYPTO_THREAD_run_once(&init_contention_fp, init_contention_fp_once);
     __atomic_add_fetch(&rwlock_count, 1, __ATOMIC_ACQ_REL);
     {
-        struct stack_info *thread_stack_info;
+        struct stack_traces *thread_stack_info;
 
         thread_stack_info = CRYPTO_THREAD_get_local(&thread_contention_data);
         if (thread_stack_info == NULL) {
