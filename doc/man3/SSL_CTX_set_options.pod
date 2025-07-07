@@ -122,12 +122,14 @@ being set as well. Always ignored on the client.
 Allow legacy insecure renegotiation between OpenSSL and unpatched clients or
 servers. See the B<SECURE RENEGOTIATION> section for more details.
 
-=item SSL_OP_CIPHER_SERVER_PREFERENCE
+=item SSL_OP_SERVER_PREFERENCE
 
-When choosing a cipher, use the server's preferences instead of the client
-preferences. When not set, the SSL server will always follow the clients
-preferences. When set, the SSL/TLS server will choose following its
-own preferences.
+When choosing a cipher, signature, (TLS 1.2) curve or (TLS 1.3) group, use the
+server's preferences instead of the client preferences. When not set, the SSL
+server will always follow the clients preferences. When set, the SSL/TLS server
+will choose following its own preferences.
+Use of the old but somewhat misleading name SSL_OP_CIPHER_SERVER_PREFERENCE
+is still possible but discouraged.
 
 =item SSL_OP_CISCO_ANYCONNECT
 
@@ -349,12 +351,12 @@ L<SSL_set_num_tickets(3)>.
 
 =item SSL_OP_PRIORITIZE_CHACHA
 
-When SSL_OP_CIPHER_SERVER_PREFERENCE is set, temporarily reprioritize
+When SSL_OP_SERVER_PREFERENCE is set, temporarily reprioritize
 ChaCha20-Poly1305 ciphers to the top of the server cipher list if a
 ChaCha20-Poly1305 cipher is at the top of the client cipher list. This helps
 those clients (e.g. mobile) use ChaCha20-Poly1305 if that cipher is anywhere
 in the server cipher list; but still allows other clients to use AES and other
-ciphers. Requires B<SSL_OP_CIPHER_SERVER_PREFERENCE>.
+ciphers. Requires B<SSL_OP_SERVER_PREFERENCE>.
 
 =item SSL_OP_TLS_ROLLBACK_BUG
 
@@ -545,6 +547,10 @@ of the affected functions were changed to C<uint64_t> type in OpenSSL 3.0.
 For that reason it is no longer possible use the B<SSL_OP_> macro values
 in preprocessor C<#if> conditions. However it is still possible to test
 whether these macros are defined or not.
+
+As of OpenSSL 3.6, use of the B<SSL_OP_CIPHER_SERVER_PREFERENCE> constant
+is discouraged and its semantics became available using the more aptly named
+B<SSL_OP_SERVER_PREFERENCE> constant.
 
 =head1 COPYRIGHT
 

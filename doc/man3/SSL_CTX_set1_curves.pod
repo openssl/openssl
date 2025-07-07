@@ -69,7 +69,7 @@ extension. The extension's preference order, to be evaluated by the server, is
 determined by the order of the elements in the array.
 
 For a TLS 1.2 server, the groups determine the selected group. If
-B<SSL_OP_CIPHER_SERVER_PREFERENCE> is set, the order of the elements in the
+B<SSL_OP_SERVER_PREFERENCE> is set, the order of the elements in the
 array determines the selected group. Otherwise, the order is ignored and the
 client's order determines the selection.
 
@@ -144,7 +144,7 @@ For a TLS 1.3 server, the groups in the string I<list> will be used to determine
 is used for the key agreement. The preference order of the group tuples is determined
 by the order of the tuples in the array, and the preference order of the groups within
 a group tuple is determined by the order of the groups in the tuple. Server preference
-can be enforced by setting B<SSL_OP_CIPHER_SERVER_PREFERENCE> using
+can be enforced by setting B<SSL_OP_SERVER_PREFERENCE> using
 B<SSL_set_options> (default: client preference).
 
 The server will select the group to be used for a key agreement using the following
@@ -156,7 +156,7 @@ pseudo-code algorithm:
              IF current key-share group is also part of current group tuple: SH, return success
          FOR each client supported groups
              IF current supported group is also part of current group tuple: HRR, return success
-     ELSE (= server preference = with SSL_OP_CIPHER_SERVER_PREFERENCE option set)
+     ELSE (= server preference = with SSL_OP_SERVER_PREFERENCE option set)
          FOR each group in current tuple
              IF current group is also part of client key-share groups: SH, return success
          FOR each group in current tuple

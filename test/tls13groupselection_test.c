@@ -441,7 +441,7 @@ static int test_groupnegotiation(const struct tls13groupselection_test_st *curre
         TEST_true_or_end(SSL_CTX_set_min_proto_version(client_ctx, TLS1_3_VERSION));
         TEST_true_or_end(SSL_CTX_set_min_proto_version(server_ctx, TLS1_3_VERSION));
         if (current_test_vector->preference == SERVER_PREFERENCE)
-            SSL_CTX_set_options(server_ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+            SSL_CTX_set_options(server_ctx, SSL_OP_SERVER_PREFERENCE);
     }
     /* Creation of the SSL objects */
     if (!TEST_true(create_ssl_objects(server_ctx, client_ctx,
@@ -461,7 +461,7 @@ static int test_groupnegotiation(const struct tls13groupselection_test_st *curre
         TEST_true_or_end(SSL_set_min_proto_version(serverssl, TLS1_3_VERSION));
 
         if (current_test_vector->preference == SERVER_PREFERENCE)
-            SSL_set_options(serverssl, SSL_OP_CIPHER_SERVER_PREFERENCE);
+            SSL_set_options(serverssl, SSL_OP_SERVER_PREFERENCE);
     }
 
     /* We set the message callback on the client side (which checks SH/HRR) */

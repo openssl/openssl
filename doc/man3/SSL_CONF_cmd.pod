@@ -59,7 +59,7 @@ Disables support for session tickets, same as setting B<SSL_OP_NO_TICKET>.
 
 Use server and not client preference order when determining which cipher suite,
 signature algorithm or elliptic curve to use for an incoming connection.
-Equivalent to B<SSL_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
+Equivalent to B<SSL_OP_SERVER_PREFERENCE>. Only used by servers.
 
 =item B<-client_renegotiation>
 
@@ -570,7 +570,7 @@ B<SSL_OP_ECDH_SINGLE>. Only used by servers.
 B<ServerPreference>: use server and not client preference order when
 determining which cipher suite, signature algorithm or elliptic curve
 to use for an incoming connection.  Equivalent to
-B<SSL_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
+B<SSL_OP_SERVER_PREFERENCE>. Only used by servers.
 
 B<PrioritizeChaCha>: prioritizes ChaCha ciphers when the client has a
 ChaCha20 cipher at the top of its preference list. This usually indicates

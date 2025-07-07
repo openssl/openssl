@@ -1038,7 +1038,7 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
      * If server preference set, our groups are the preference order
      * otherwise peer decides.
      */
-    if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) {
+    if (s->options & SSL_OP_SERVER_PREFERENCE) {
         tls1_get_supported_groups(s, &pref, &num_pref);
         tls1_get_peer_groups(s, &supp, &num_supp);
     } else {
@@ -3515,7 +3515,7 @@ static int tls1_set_shared_sigalgs(SSL_CONNECTION *s)
         conflen = c->conf_sigalgslen;
     } else
         conflen = tls12_get_psigalgs(s, 0, &conf);
-    if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE || is_suiteb) {
+    if (s->options & SSL_OP_SERVER_PREFERENCE || is_suiteb) {
         pref = conf;
         preflen = conflen;
         allow = s->s3.tmp.peer_sigalgs;

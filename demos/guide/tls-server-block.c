@@ -127,10 +127,10 @@ int main(int argc, char *argv[])
     opts |= SSL_OP_NO_RENEGOTIATION;
 
     /*
-     * Most servers elect to use their own cipher preference rather than that of
-     * the client.
+     * Most servers elect to use their own cipher or group preference rather
+     * than that of the client.
      */
-    opts |= SSL_OP_CIPHER_SERVER_PREFERENCE;
+    opts |= SSL_OP_SERVER_PREFERENCE;
 
     /* Apply the selection options */
     SSL_CTX_set_options(ctx, opts);
