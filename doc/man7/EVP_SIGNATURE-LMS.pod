@@ -10,9 +10,9 @@ EVP_SIGNATURE-LMS
 The B<LMS> EVP_PKEY implementation supports Leighton-Micali Signatures (LMS)
 described in [RFC 8554](https://datatracker.ietf.org/doc/html/rfc8854)
 and [SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final).
-
 The OpenSSL providers only support LMS signature verification, as this is a
-SP 800-208 requirement for software modules.
+[SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final) requirement for
+FIPS software modules.
 
 EVP_PKEY_verify_message_init() and EVP_PKEY_verify() are the only supported
 functions used for LMS signatures. Streaming is not currently supported,
@@ -23,6 +23,10 @@ that specify the digest name are not necessary.
 
 LMS support is disabled by default at compile-time.
 To enable, specify the B<enable-lms> build configuration option.
+
+LMS should only be used for older deployments.
+New deployments should use either L<EVP_SIGNATURE-ML-DSA(7)>
+or <L/EVP_SIGNATURE-SLH-DSA(7)>.
 
 =head1 EXAMPLES
 

@@ -13,6 +13,7 @@
 #include <openssl/proverr.h>
 #include <openssl/params.h>
 #include <openssl/evp.h>
+#include <openssl/err.h>
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
@@ -56,7 +57,6 @@ static void lms_freectx(void *vctx)
 
     if (ctx == NULL)
         return;
-    ossl_lms_key_free(ctx->key);
     OPENSSL_free(ctx->propq);
     EVP_MD_free(ctx->md);
     OPENSSL_free(ctx);
@@ -97,14 +97,8 @@ static int lms_verify_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[]
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return 0;
     }
-
-    if (!ossl_lms_key_up_ref(key))
-        return 0;
-    ossl_lms_key_free(ctx->key);
     ctx->key = key;
-    if (!setdigest(ctx, NULL))
-        return 0;
-    return 1;
+    return setdigest(ctx, NULL);
 }
 
 static int lms_verify(void *vctx, const unsigned char *sigbuf, size_t sigbuf_len,

@@ -20,9 +20,9 @@
  *
  * @param pkt Contains the signature data to decode. There may still be data
  *            remaining in pkt after decoding.
- * @param pub A  public key that contains LMS_PARAMS and LM_OTS_PARAMS associated
+ * @param pub A public key that contains LMS_PARAMS and LM_OTS_PARAMS associated
  *            with the signature.
- * @returns The created LMS_SIG object is successful, or NULL on failure. A
+ * @returns The created LMS_SIG object if successful, or NULL on failure. A
  *          failure may occur if the passed in LMS public key |pub| is not
  *          compatible with the decoded LMS_SIG object,
  */
@@ -38,8 +38,8 @@ LMS_SIG *ossl_lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub)
     if (lsig == NULL)
         return NULL;
 
-    if (!PACKET_get_4_len(pkt, &lsig->q)    /* q = Leaf Index */
-            || !PACKET_get_4_len(pkt, &sig_ots_type)
+    if (!PACKET_get_net_4_len_u32(pkt, &lsig->q)    /* q = Leaf Index */
+            || !PACKET_get_net_4_len_u32(pkt, &sig_ots_type)
             || pub_ots_params->lm_ots_type != sig_ots_type)
         goto err;
     sig_params = pub_ots_params;
@@ -50,7 +50,7 @@ LMS_SIG *ossl_lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub)
                           sig_params->n)
             || !PACKET_get_bytes(pkt, (const unsigned char **)&lsig->sig.y,
                                  sig_params->p * sig_params->n)
-            || !PACKET_get_4_len(pkt, &sig_lms_type)
+            || !PACKET_get_net_4_len_u32(pkt, &sig_lms_type)
             || (lparams->lms_type != sig_lms_type)
             || HASH_NOT_MATCHED(lparams, sig_params)
             || lsig->q >= (uint32_t)(1 << lparams->h)

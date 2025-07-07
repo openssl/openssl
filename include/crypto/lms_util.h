@@ -23,24 +23,12 @@
 #define HASH_NOT_MATCHED(a, b) \
     (a)->n != (b)->n || (strcmp((a)->digestname, (b)->digestname) != 0)
 
-/* Convert a 32 bit value |in| to 4 bytes |out| */
-#define U32STR(out, in)                             \
-    (out)[0] = (unsigned char)(((in) >> 24) & 0xff); \
-    (out)[1] = (unsigned char)(((in) >> 16) & 0xff); \
-    (out)[2] = (unsigned char)(((in) >> 8) & 0xff);  \
-    (out)[3] = (unsigned char)((in) & 0xff)
-
-/* Convert a 16 bit value |in| to 2 bytes |out| */
-#define U16STR(out, in)                             \
-    (out)[0] = (unsigned char)(((in) >> 8) & 0xff); \
-    (out)[1] = (unsigned char)((in) & 0xff)
-
 /*
  * See RFC 8554 Section 3.1.3: Strings of w-bit Elements
  * w: Is one of {1,2,4,8}
  */
 static ossl_unused ossl_inline
-uint8_t coef(const unsigned char *S, uint16_t i, uint8_t w)
+uint8_t lms_ots_coef(const unsigned char *S, uint16_t i, uint8_t w)
 {
     uint8_t bitmask = (1 << w) - 1;
     uint8_t shift = 8 - (w * (i % (8 / w)) + w);
@@ -50,8 +38,8 @@ uint8_t coef(const unsigned char *S, uint16_t i, uint8_t w)
 }
 
 static ossl_unused ossl_inline
-int evp_md_ctx_init(EVP_MD_CTX *ctx, const EVP_MD *md,
-                    const LMS_PARAMS *lms_params)
+int lms_evp_md_ctx_init(EVP_MD_CTX *ctx, const EVP_MD *md,
+                        const LMS_PARAMS *lms_params)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     OSSL_PARAM *p = NULL;

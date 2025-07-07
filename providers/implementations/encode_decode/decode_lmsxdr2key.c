@@ -63,24 +63,33 @@ static int lmsxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     LMS_KEY *key = NULL;
     unsigned char buf[LMS_MAX_PUBKEY];
     size_t length;
-    int ok = 0;
+    int ok = 0, inlen, readlen;
     BIO *in;
 
     in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
     if (in == NULL)
         return 0;
 
-    ERR_set_mark();
     ctx->selection = selection;
+
     /* Read the header to determine the size */
-    if (BIO_read(in, buf, 4) != 4)
+    ERR_set_mark();
+    readlen = BIO_read(in, buf, 4);
+    ERR_pop_to_mark();
+    if (readlen != 4)
         goto next;
 
     length = ossl_lms_pubkey_length(buf, 4);
-    if (length == 0)
+    if (length <= 4)
         goto next;
-    if (BIO_read(in, buf + 4, length - 4) != (int)(length - 4))
+    inlen = (int)length - 4;
+
+    ERR_set_mark();
+    readlen = BIO_read(in, buf + 4, inlen);
+    ERR_pop_to_mark();
+    if (readlen != inlen)
         goto next;
+
     if (selection == 0 || (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         key = ossl_lms_key_new(PROV_LIBCTX_OF(ctx->provctx));
         if (key == NULL || !ossl_lms_pubkey_decode(buf, length, key)) {
@@ -89,7 +98,6 @@ static int lmsxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         }
     }
  next:
-    ERR_clear_last_mark();
     /*
      * Indicated that we successfully decoded something, or not at all.
      * Ending up "empty handed" is not an error.

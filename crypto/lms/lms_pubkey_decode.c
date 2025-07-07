@@ -26,7 +26,7 @@ size_t ossl_lms_pubkey_length(const unsigned char *data, size_t datalen)
     const LMS_PARAMS *params;
 
     if (!PACKET_buf_init(&pkt, data, datalen)
-            || !PACKET_get_4_len(&pkt, &lms_type)
+            || !PACKET_get_net_4_len_u32(&pkt, &lms_type)
             || (params = ossl_lms_params_get(lms_type)) == NULL)
         return 0;
     return LMS_SIZE_LMS_TYPE + LMS_SIZE_OTS_TYPE + LMS_SIZE_I + params->n;
@@ -56,12 +56,12 @@ int lms_pubkey_from_pkt(LMS_KEY *lmskey, const unsigned char *pubkeydata,
 
     if (!PACKET_buf_init(&pkt, pubkeydata, publen))
         goto err;
-    key->encoded = (unsigned char *)pkt.curr;
-    if (!PACKET_get_4_len(&pkt, &lms_type))
+    key->encoded = (unsigned char *)PACKET_data(&pkt);
+    if (!PACKET_get_net_4_len_u32(&pkt, &lms_type))
         goto err;
     lmskey->lms_params = ossl_lms_params_get(lms_type);
     if (lmskey->lms_params == NULL
-            || !PACKET_get_4_len(&pkt, &ots_type))
+            || !PACKET_get_net_4_len_u32(&pkt, &ots_type))
         goto err;
     lmskey->ots_params = ossl_lm_ots_params_get(ots_type);
     if (lmskey->ots_params == NULL)
@@ -74,7 +74,7 @@ int lms_pubkey_from_pkt(LMS_KEY *lmskey, const unsigned char *pubkeydata,
             || !PACKET_get_bytes(&pkt, (const unsigned char **)&key->K,
                                  lmskey->lms_params->n))
         goto err;
-    key->encodedlen = pkt.curr - key->encoded;
+    key->encodedlen = (unsigned char *)PACKET_data(&pkt) - key->encoded;
     return PACKET_remaining(&pkt) == 0;
 err:
     return 0;

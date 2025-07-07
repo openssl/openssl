@@ -21,13 +21,8 @@ LMS_KEY *ossl_lms_key_new(OSSL_LIB_CTX *libctx)
 {
     LMS_KEY *ret = OPENSSL_zalloc(sizeof(LMS_KEY));
 
-    if (ret != NULL) {
-        if (!CRYPTO_NEW_REF(&ret->references, 1)) {
-            OPENSSL_free(ret);
-            return NULL;
-        }
+    if (ret != NULL)
         ret->libctx = libctx;
-    }
     return ret;
 }
 
@@ -37,37 +32,13 @@ LMS_KEY *ossl_lms_key_new(OSSL_LIB_CTX *libctx)
 void ossl_lms_key_free(LMS_KEY *lmskey)
 {
     LMS_PUB_KEY *pub;
-    int i;
 
     if (lmskey == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&lmskey->references, &i);
-    REF_PRINT_COUNT("LMS_KEY", i, lmskey);
-    if (i > 0)
-        return;
-    REF_ASSERT_ISNT(i < 0);
-
     pub = &lmskey->pub;
     OPENSSL_free(pub->encoded);
-    CRYPTO_FREE_REF(&lmskey->references);
     OPENSSL_free(lmskey);
-}
-
-/*
- * @brief Increase the reference count for a LMS_KEY object.
- * @returns 1 on success or 0 otherwise.
- */
-int ossl_lms_key_up_ref(LMS_KEY *key)
-{
-    int i;
-
-    if (CRYPTO_UP_REF(&key->references, &i) <= 0)
-        return 0;
-
-    REF_PRINT_COUNT("LMS_KEY", i, key);
-    REF_ASSERT_ISNT(i < 2);
-    return ((i > 1) ? 1 : 0);
 }
 
 /**

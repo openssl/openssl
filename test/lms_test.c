@@ -151,7 +151,7 @@ static EVP_PKEY *key_decode_from_data(const unsigned char *data, size_t datalen,
     BIO *bio;
     EVP_PKEY *key = NULL;
 
-    if (!TEST_ptr(bio = BIO_new_mem_buf(data, datalen)))
+    if (!TEST_ptr(bio = BIO_new_mem_buf(data, (int)datalen)))
         return NULL;
     key = key_decode_from_bio(bio, keytype);
     BIO_free(bio);

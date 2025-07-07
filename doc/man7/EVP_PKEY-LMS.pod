@@ -10,7 +10,7 @@ EVP_PKEY-LMS, EVP_KEYMGMT-LMS, LMS
 The B<LMS> keytype is implemented in OpenSSL's default and FIPS providers.
 The OpenSSL providers only support LMS signature verification, as this is a
 [SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final) requirement for
-software modules.
+FIPS software modules.
 
 =head2 Common LMS parameters
 
@@ -39,7 +39,7 @@ Leighton-Micali Hash-Based Signatures
 
 Recommendation for Stateful Hash-Based Signature Schemes
 
-=item CSNA 2.0
+=item CNSA 2.0
 
 Commercial National Security Algorithm Suite
 

@@ -8,6 +8,7 @@
  */
 
 #include <openssl/evp.h>
+#include <openssl/byteorder.h>
 #include "crypto/lms_sig.h"
 #include "crypto/lms_util.h"
 
@@ -39,38 +40,33 @@ int ossl_lm_ots_compute_pubkey(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
                                const unsigned char *msg, size_t msglen,
                                unsigned char *Kc)
 {
-    int ret = 0;
     unsigned char qbuf[LMS_SIZE_q];
     unsigned char d_mesg[sizeof(uint16_t)];
 
     if (sig->params != pub)
         return 0;
 
-    U32STR(qbuf, q);
-    U16STR(d_mesg, OSSL_LMS_D_MESG);
+    OPENSSL_store_u32_be(qbuf, q);
+    OPENSSL_store_u16_be(d_mesg, OSSL_LMS_D_MESG);
 
-    if (!EVP_DigestUpdate(ctxIq, Id, LMS_SIZE_I)
-            || !EVP_DigestUpdate(ctxIq, qbuf, sizeof(qbuf))
-            || !EVP_MD_CTX_copy_ex(ctx, ctxIq)
+    return (EVP_DigestUpdate(ctxIq, Id, LMS_SIZE_I)
+            && EVP_DigestUpdate(ctxIq, qbuf, sizeof(qbuf))
+            && EVP_MD_CTX_copy_ex(ctx, ctxIq)
             /* Q = H(I || u32str(q) || u16str(D_MESG) || C || msg) */
-            || !EVP_DigestUpdate(ctx, d_mesg, sizeof(d_mesg))
-            || !EVP_DigestUpdate(ctx, sig->C, sig->params->n)
-            || !EVP_DigestUpdate(ctx, msg, msglen)
-            || !lm_ots_compute_pubkey_final(ctx, ctxIq, sig, Kc))
-        goto err;
-    ret = 1;
-err:
-    return ret;
+            && EVP_DigestUpdate(ctx, d_mesg, sizeof(d_mesg))
+            && EVP_DigestUpdate(ctx, sig->C, sig->params->n)
+            && EVP_DigestUpdate(ctx, msg, msglen)
+            && lm_ots_compute_pubkey_final(ctx, ctxIq, sig, Kc));
 }
 
 /**
- * @brief simple function to increment a 16 bit counter by 1.
+ * @brief simple function to increment a big-endian 16 bit counter by 1.
  * It assumes checking for overflow is not required.
  */
 static ossl_inline void INC16(unsigned char *tag)
 {
     if (++(tag[1]) == 0)
-        ++*tag;
+        ++tag[0];
 }
 
 /*
@@ -83,7 +79,7 @@ static ossl_inline void INC16(unsigned char *tag)
  *            Q = H(I || u32str(q) || u16str(D_MESG) || C || msg)
  *            This ctx is reused for other calculations.
  * @param ctxIq A EVP_MD_CTX object that contains a non finalized value of H(I || q).
- * @param sig An object that containing LM_OTS signature data.
+ * @param sig An object containing LM_OTS signature data.
  * @param Kc The computed public key. It is assumed the size is n.
  * @returns 1 on success, or 0 otherwise.
  */
@@ -104,17 +100,15 @@ static int lm_ots_compute_pubkey_final(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
     int a;
     unsigned char *y;
 
-    if (!EVP_DigestFinal_ex(ctx, Q, NULL))
-        goto err;
+    if (!EVP_DigestFinal_ex(ctx, Q, NULL)
+            || (ctxKc = EVP_MD_CTX_create()) == NULL)
+        return 0;
 
-    ctxKc = EVP_MD_CTX_create();
-    if (ctxKc == NULL)
-        goto err;
     sum = ossl_lm_ots_params_checksum(params, Q);
     Qsum = Q + n;
     /* Q || Cksm(Q) */
-    U16STR(Qsum, sum);
-    U16STR(d_pblc, OSSL_LMS_D_PBLC);
+    OPENSSL_store_u16_be(Qsum, sum);
+    OPENSSL_store_u16_be(d_pblc, OSSL_LMS_D_PBLC);
 
     if (!(EVP_MD_CTX_copy_ex(ctxKc, ctxIq))
             || !EVP_DigestUpdate(ctxKc, d_pblc, sizeof(d_pblc)))
@@ -130,7 +124,7 @@ static int lm_ots_compute_pubkey_final(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
      * the inner loop |end| is in the range 0...(2^w)-1
      */
     for (i = 0; i < p; ++i) {
-        a = coef(Q, i, w);
+        a = lms_ots_coef(Q, i, w);
         memcpy(z, y, n);
         y += n;
         for (j = a; j < end; ++j) {

@@ -31,8 +31,4 @@ typedef struct ecx_key_st ECX_KEY;
 
 typedef struct prov_skey_st PROV_SKEY;
 
-# ifndef OPENSSL_NO_LMS
-typedef struct lms_key_st LMS_KEY;
-# endif
-
 #endif
