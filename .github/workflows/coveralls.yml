@@ -9,8 +9,7 @@ name: Coverage
 
 #Run once a day
 on:
-  schedule:
-    - cron:  '49 0 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
