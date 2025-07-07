@@ -7,7 +7,7 @@
 
 name: Compiler Zoo CI
 
-on: [push]
+on: [workflow_dispatch]
 
 permissions:
   contents: read
