@@ -31,6 +31,11 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * Introduce SSL_OP_SERVER_PREFERENCE superceding misleadingly
+   named SSL_OP_CIPHER_SERVER_PREFERENCE.
+
+   *Michael Baentsch*
+
  * Introduces use of `<stdbool.h>` when handling JSON encoding in
    the OpenSSL codebase, replacing the previous use of `int` for
    these boolean values.
