@@ -1,0 +1,102 @@
+name: C/C++ CI (Windows)
+
+on:
+  push:
+    branches: ["openssl-3.1"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, x86]
+    steps:
+      - name: Setup TDM-GCC
+        run: |
+          Write-Host Downloading TDM-GCC v10.3.0...
+          Invoke-WebRequest -Uri 'https://github.com/jmeubank/tdm-gcc/releases/download/v10.3.0-tdm64-2/tdm64-gcc-10.3.0-2.exe' -OutFile 'C:\Windows\temp\TDM-GCC-64.exe'
+          Write-Host Creating directory...
+          New-Item -ItemType Directory -Path 'C:\TDM-GCC-64'
+          Write-Host Copying files [Set 1/3]...
+          Start-Process '7z' -ArgumentList 'e C:\Windows\temp\TDM-GCC-64.exe -oC:\TDM-GCC-64 -y' -Wait
+          Write-Host Copying files [Set 2/3]...
+          Start-Process '7z' -ArgumentList 'e C:\TDM-GCC-64\*.tar.xz -oC:\TDM-GCC-64 -y' -Wait
+          Write-Host Copying files [Set 3/3]...
+          Start-Process '7z' -ArgumentList 'x C:\TDM-GCC-64\*.tar -oC:\TDM-GCC-64 -y' -Wait
+          Write-Host Adding environment variables...
+          $env:PATH = 'C:\TDM-GCC-64\bin;' + $env:PATH
+          [Environment]::SetEnvironmentVariable('PATH', $env:PATH, [EnvironmentVariableTarget]::Machine)
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.arch == 'x86' && 'MINGW32' || 'MINGW64' }}
+          update: true
+          install: >-
+            mingw-w64-${{ matrix.arch == 'x86' && 'i686' || 'x86_64' }}-gcc
+            mingw-w64-${{ matrix.arch == 'x86' && 'i686' || 'x86_64' }}-make
+            mingw-w64-x86_64-perl
+            perl
+            git
+
+      - name: Checkout and Compile OpenSSL 3.1.2
+        shell: msys2 {0}
+        run: |
+          # Clone UMSKT's OpenSSL fork
+          echo "Cloning UMSKT OpenSSL fork..."
+          git clone https://github.com/UMSKT/openssl.git --depth 1 openssl-3.1.2
+
+      - name: Checkout and Compile OpenSSL 3.1.2 (32-bit)
+        if: matrix.arch == 'x86'
+        shell: msys2 {0}
+        run: |
+          # Set up proper MSYS2 environment
+          export MSYS=winsymlinks:nativestrict
+          export MSYS2_PATH_TYPE=strict
+          export LANG=en_US.UTF-8
+          export PATH="/usr/bin:/mingw64/bin:$PATH"
+          export PATH="/c/TDM-GCC-64/bin:$PATH"
+          export MSYSTEM=MINGW32
+          echo "Compiling 32-bit OpenSSL..."
+          cd openssl-3.1.2
+          /usr/bin/perl Configure mingw --prefix=$(cygpath -u "$GITHUB_WORKSPACE")/OpenSSL-TDM-32 --openssldir=$(cygpath -u "$GITHUB_WORKSPACE")/OpenSSL-TDM-32 no-tests no-sse2 no-asm no-threads -DOPENSSL_DEV_NO_ATOMICS -mno-mmx -mno-sse -mno-sse2 -march=i686 -mtune=generic
+          mingw32-make -j
+          mingw32-make install_sw
+          cd ..
+      
+      - name: Checkout and Compile OpenSSL 3.1.2 (64-bit)
+        if: matrix.arch == 'x64'
+        shell: msys2 {0}
+        run: |
+          # Set up proper MSYS2 environment
+          export MSYS=winsymlinks:nativestrict
+          export MSYS2_PATH_TYPE=strict
+          export LANG=en_US.UTF-8
+          export PATH="/usr/bin:/mingw64/bin:$PATH"
+          export PATH="/c/TDM-GCC-64/bin:$PATH"
+          export MSYSTEM=MINGW64
+          echo "Compiling 64-bit OpenSSL..."
+          cd openssl-3.1.2
+          /usr/bin/perl Configure mingw64 --prefix=$(cygpath -u "$GITHUB_WORKSPACE")/OpenSSL-TDM-64 --openssldir=$(cygpath -u "$GITHUB_WORKSPACE")/OpenSSL-TDM-64 no-tests no-asm -DOPENSSL_DEV_NO_ATOMICS -mno-mmx
+          mingw32-make -j
+          mingw32-make install_sw
+          cd ..
+
+      - name: Upload OpenSSL 3.1.2 (32-bit)
+        if: matrix.arch == 'x86'
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: OpenSSL-TDM-32
+          path: |
+            ${{ github.workspace }}/OpenSSL-TDM-32
+
+      - name: Upload OpenSSL 3.1.2 (64-bit)
+        if: matrix.arch == 'x64'
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: OpenSSL-TDM-64
+          path: |
+            ${{ github.workspace }}/OpenSSL-TDM-64
+      
