@@ -59,13 +59,14 @@ struct stack_traces {
     struct stack_info stacks[STACKS_COUNT];
 };
 
-static void init_contention_fp_once(void)
-{
 # ifdef FIPS_MODULE
-    contention_fp = fopen("lock-contention-log-fips.txt", "w");
+#  define FIPS_SFX "-fips"
 # else
-    contention_fp = fopen("lock-contention-log.txt", "w");
+#  define FIPS_SFX ""
 # endif
+static void *init_contention_data(void)
+{
+    contention_fp = fopen("lock-contention-log" FIPS_SFX ".txt", "w");
     if (contention_fp == NULL)
         fprintf(stderr, "Contention log file could not be opened, log will not be recorded\n");
 
