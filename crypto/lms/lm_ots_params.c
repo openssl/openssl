@@ -44,7 +44,7 @@ const LM_OTS_PARAMS *ossl_lm_ots_params_get(uint32_t ots_type)
 {
     const LM_OTS_PARAMS *p;
 
-    for (p = lm_ots_params; p->lm_ots_type != 0; ++p)
+    for (p = lm_ots_params; p->digestname != NULL; ++p)
         if (p->lm_ots_type == ots_type)
             return p;
     return NULL;

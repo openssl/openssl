@@ -39,7 +39,6 @@ int ossl_lm_ots_compute_pubkey(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
                                const unsigned char *msg, size_t msglen,
                                unsigned char *Kc)
 {
-    int ret = 0;
     unsigned char qbuf[LMS_SIZE_q];
     unsigned char d_mesg[sizeof(uint16_t)];
 
@@ -49,28 +48,24 @@ int ossl_lm_ots_compute_pubkey(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
     U32STR(qbuf, q);
     U16STR(d_mesg, OSSL_LMS_D_MESG);
 
-    if (!EVP_DigestUpdate(ctxIq, Id, LMS_SIZE_I)
-            || !EVP_DigestUpdate(ctxIq, qbuf, sizeof(qbuf))
-            || !EVP_MD_CTX_copy_ex(ctx, ctxIq)
+    return (EVP_DigestUpdate(ctxIq, Id, LMS_SIZE_I)
+            && EVP_DigestUpdate(ctxIq, qbuf, sizeof(qbuf))
+            && EVP_MD_CTX_copy_ex(ctx, ctxIq)
             /* Q = H(I || u32str(q) || u16str(D_MESG) || C || msg) */
-            || !EVP_DigestUpdate(ctx, d_mesg, sizeof(d_mesg))
-            || !EVP_DigestUpdate(ctx, sig->C, sig->params->n)
-            || !EVP_DigestUpdate(ctx, msg, msglen)
-            || !lm_ots_compute_pubkey_final(ctx, ctxIq, sig, Kc))
-        goto err;
-    ret = 1;
-err:
-    return ret;
+            && EVP_DigestUpdate(ctx, d_mesg, sizeof(d_mesg))
+            && EVP_DigestUpdate(ctx, sig->C, sig->params->n)
+            && EVP_DigestUpdate(ctx, msg, msglen)
+            && lm_ots_compute_pubkey_final(ctx, ctxIq, sig, Kc));
 }
 
 /**
- * @brief simple function to increment a 16 bit counter by 1.
+ * @brief simple function to increment a big-endian 16 bit counter by 1.
  * It assumes checking for overflow is not required.
  */
 static ossl_inline void INC16(unsigned char *tag)
 {
     if (++(tag[1]) == 0)
-        ++*tag;
+        ++tag[0];
 }
 
 /*
@@ -104,12 +99,10 @@ static int lm_ots_compute_pubkey_final(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
     int a;
     unsigned char *y;
 
-    if (!EVP_DigestFinal_ex(ctx, Q, NULL))
-        goto err;
+    if (!EVP_DigestFinal_ex(ctx, Q, NULL)
+            || (ctxKc = EVP_MD_CTX_create()) == NULL)
+        return 0;
 
-    ctxKc = EVP_MD_CTX_create();
-    if (ctxKc == NULL)
-        goto err;
     sum = ossl_lm_ots_params_checksum(params, Q);
     Qsum = Q + n;
     /* Q || Cksm(Q) */

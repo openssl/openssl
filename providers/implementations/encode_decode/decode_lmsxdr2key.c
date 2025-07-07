@@ -63,7 +63,7 @@ static int lmsxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     LMS_KEY *key = NULL;
     unsigned char buf[LMS_MAX_PUBKEY];
     size_t length;
-    int ok = 0;
+    int ok = 0, inlen;
     BIO *in;
 
     in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
@@ -77,9 +77,10 @@ static int lmsxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         goto next;
 
     length = ossl_lms_pubkey_length(buf, 4);
-    if (length == 0)
+    if (length <= 4)
         goto next;
-    if (BIO_read(in, buf + 4, length - 4) != (int)(length - 4))
+    inlen = (int)length - 4;
+    if (BIO_read(in, buf + 4, inlen) != inlen)
         goto next;
     if (selection == 0 || (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         key = ossl_lms_key_new(PROV_LIBCTX_OF(ctx->provctx));

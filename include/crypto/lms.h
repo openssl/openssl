@@ -141,14 +141,12 @@ struct lms_key_st {
     OSSL_LIB_CTX *libctx;
     unsigned char *Id;        /* A pointer to 16 bytes (I[16]) */
     LMS_PUB_KEY pub;
-    CRYPTO_REF_COUNT references;
 };
 
 const LMS_PARAMS *ossl_lms_params_get(uint32_t lms_type);
 const LM_OTS_PARAMS *ossl_lm_ots_params_get(uint32_t ots_type);
 
 LMS_KEY *ossl_lms_key_new(OSSL_LIB_CTX *libctx);
-int ossl_lms_key_up_ref(LMS_KEY *key);
 void ossl_lms_key_free(LMS_KEY *lmskey);
 int ossl_lms_key_equal(const LMS_KEY *key1, const LMS_KEY *key2, int selection);
 int ossl_lms_key_valid(const LMS_KEY *key, int selection);

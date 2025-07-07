@@ -13,6 +13,7 @@
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
+#include <openssl/byteorder.h>
 
 /*
  * This LMS implementation assumes that the hash algorithm must be the same for
@@ -24,16 +25,10 @@
     (a)->n != (b)->n || (strcmp((a)->digestname, (b)->digestname) != 0)
 
 /* Convert a 32 bit value |in| to 4 bytes |out| */
-#define U32STR(out, in)                             \
-    (out)[0] = (unsigned char)(((in) >> 24) & 0xff); \
-    (out)[1] = (unsigned char)(((in) >> 16) & 0xff); \
-    (out)[2] = (unsigned char)(((in) >> 8) & 0xff);  \
-    (out)[3] = (unsigned char)((in) & 0xff)
+#define U32STR(out, in) OPENSSL_store_u32_be(out, in)
 
 /* Convert a 16 bit value |in| to 2 bytes |out| */
-#define U16STR(out, in)                             \
-    (out)[0] = (unsigned char)(((in) >> 8) & 0xff); \
-    (out)[1] = (unsigned char)((in) & 0xff)
+#define U16STR(out, in) OPENSSL_store_u16_be(out, in)
 
 /*
  * See RFC 8554 Section 3.1.3: Strings of w-bit Elements
