@@ -6,7 +6,7 @@
 # https://www.openssl.org/source/license.html
 
 name: FIPS Checksums
-on: [pull_request]
+on: [workflow_dispatch]
 
 permissions:
   contents: read
