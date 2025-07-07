@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <execinfo.h>
+#include <stdbool.h>
 #include <unistd.h>
 
 #include "internal/common.h"
@@ -77,6 +78,17 @@ static void init_contention_fp_once(void)
     return;
 }
 
+static struct stack_traces *get_stack_traces(bool init)
+{
+    struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
+    if (!traces && init) {
+        traces = OPENSSL_zalloc(sizeof(*traces));
+        CRYPTO_THREAD_set_local(&thread_contention_data, traces);
+    }
+
+    return traces;
+}
+
 static void print_stack_traces(struct stack_traces *traces, FILE *fptr)
 {
     unsigned int j;
@@ -105,15 +117,6 @@ void ossl_init_rwlock_contention_data(void)
 {
     CRYPTO_THREAD_run_once(&init_contention_fp, init_contention_fp_once);
     __atomic_add_fetch(&rwlock_count, 1, __ATOMIC_ACQ_REL);
-    {
-        struct stack_traces *thread_stack_info;
-
-        thread_stack_info = CRYPTO_THREAD_get_local(&thread_contention_data);
-        if (thread_stack_info == NULL) {
-            thread_stack_info = OPENSSL_zalloc(sizeof(struct stack_traces));
-            CRYPTO_THREAD_set_local(&thread_contention_data, thread_stack_info);
-        }
-    }
 }
 
 void ossl_free_rwlock_contention_data(void)
@@ -133,12 +136,8 @@ void ossl_free_rwlock_contention_data(void)
 
 int ossl_rwlock_rdlock(pthread_rwlock_t *lock)
 {
-    struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
+    struct stack_traces *traces = get_stack_traces(true);
 
-    if (ossl_unlikely(traces == NULL)) {
-        traces = OPENSSL_zalloc(sizeof(struct stack_traces));
-        CRYPTO_THREAD_set_local(&thread_contention_data, traces);
-    }
     traces->lock_depth++;
     if (pthread_rwlock_tryrdlock(lock)) {
         void *buffer[BT_BUF_SIZE];
@@ -168,12 +167,8 @@ int ossl_rwlock_rdlock(pthread_rwlock_t *lock)
 
 int ossl_rwlock_wrlock(pthread_rwlock_t *lock)
 {
-    struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
+    struct stack_traces *traces = get_stack_traces(true);
 
-    if (ossl_unlikely(traces == NULL)) {
-        traces = OPENSSL_zalloc(sizeof(struct stack_traces));
-        CRYPTO_THREAD_set_local(&thread_contention_data, traces);
-    }
     traces->lock_depth++;
     if (pthread_rwlock_trywrlock(lock)) {
         void *buffer[BT_BUF_SIZE];
@@ -210,7 +205,7 @@ int ossl_rwlock_unlock(pthread_rwlock_t *lock)
         return ret;
 
     {
-        struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
+        struct stack_traces *traces = get_stack_traces(false);
 
         if (contention_fp == NULL)
             return 0;
