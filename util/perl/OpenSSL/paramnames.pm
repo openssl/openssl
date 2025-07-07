@@ -646,6 +646,23 @@ sub generate_public_macros {
     return join("\n", sort @macros);
 }
 
+sub trie_matched {
+  my $field = shift;
+  my $num = shift;
+  my $indent1 = shift;
+  my $indent2 = shift;
+
+  if (defined($num)) {
+    printf "%sif (ossl_unlikely(r->num_%s >= %s))\n", $indent1, $field, $num;
+    printf "%sreturn 0;\n", $indent2;
+    printf "%sr->%s[r->num_%s++] = (OSSL_PARAM *)p;\n", $indent1, $field, $field;
+  } else {
+    printf "%sif (ossl_unlikely(r->%s != NULL))\n", $indent1, $field;
+    printf "%sreturn 0;\n", $indent2;
+    printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent1, $field;
+  }
+}
+
 sub generate_decoder_from_trie {
     my $n = shift;
     my $trieref = shift;
@@ -670,16 +687,8 @@ sub generate_decoder_from_trie {
                 if ($suf ne $trieref->{'suffix'});
         }
         print ")) {\n";
-        if (defined($num)) {
-            printf "%sif (ossl_unlikely(r->num_%s >= %s))\n", $indent1, $field, $num;
-            printf "%sreturn 0;\n", $indent2;
-            printf "%sr->%s[r->num_%s++] = (OSSL_PARAM *)p;\n", $indent1, $field, $field;
-        } else {
-            printf "%sif (ossl_unlikely(r->%s != NULL))\n", $indent1, $field;
-            printf "%sreturn 0;\n", $indent2;
-            printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent1, $field;
-        }
-        printf "%s}\n", $indent0;
+        trie_matched($field, $num, $indent1, $indent2);
+       printf "%s}\n", $indent0;
         return;
     }
 
@@ -691,15 +700,7 @@ sub generate_decoder_from_trie {
             my $num = $concat_num->{$field};
             printf "%sbreak;\n", $indent1;
             printf "%scase '\\0':\n", $indent0;
-            if (defined($num)) {
-                printf "%sif (ossl_unlikely(r->num_%s >= %s))\n", $indent1, $field, $num;
-                printf "%sreturn 0;\n", $indent2;
-                printf "%sr->%s[r->num_%s++] = (OSSL_PARAM *)p;\n", $indent1, $field, $field;
-            } else {
-                printf "%sif (ossl_unlikely(r->%s != NULL))\n", $indent1, $field;
-                printf "%sreturn 0;\n", $indent2;
-                printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent1, $field;
-           }
+            trie_matched($field, $num, $indent1, $indent2);
         } else {
             printf "%sbreak;\n", $indent1;
             printf "%scase '%s':", $indent0, $l;
