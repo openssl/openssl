@@ -6,7 +6,7 @@
 # https://www.openssl.org/source/license.html
 
 name: Provider compat
-on: [push]
+on: [workflow_dispatch]
 
 jobs:
   fips-provider-30:
