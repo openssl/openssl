@@ -464,7 +464,6 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
     i = SSL_connect(serverCon);
     if (i <= 0) {
         ERR_print_errors(bio_err);
-        OSSL_sleep(1000);
         if (scon == NULL)
             SSL_free(serverCon);
         return NULL;
