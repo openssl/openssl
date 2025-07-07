@@ -4353,7 +4353,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
     if (tls1_suiteb(s)) {
         prio = srvr;
         allow = clnt;
-    } else if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) {
+    } else if (s->options & SSL_OP_SERVER_PREFERENCE) {
         prio = srvr;
         allow = clnt;
 

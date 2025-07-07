@@ -3139,7 +3139,7 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic);
 #define OSSL_QUIC_PERMITTED_OPTIONS_CONN        \
     (OSSL_LEGACY_SSL_OPTIONS                  | \
      OSSL_TLS1_2_OPTIONS                      | \
-     SSL_OP_CIPHER_SERVER_PREFERENCE          | \
+     SSL_OP_SERVER_PREFERENCE                 | \
      SSL_OP_DISABLE_TLSEXT_CA_NAMES           | \
      SSL_OP_NO_TX_CERTIFICATE_COMPRESSION     | \
      SSL_OP_NO_RX_CERTIFICATE_COMPRESSION     | \

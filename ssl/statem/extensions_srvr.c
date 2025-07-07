@@ -920,7 +920,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
         int prio_group_idx = 0, candidate_group_idx = 0;
 
         /* Server or client preference ? */
-        if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) {
+        if (s->options & SSL_OP_SERVER_PREFERENCE) {
             /* Server preference */
             /* Is there overlap with a key share group?  */
             check_overlap(s,

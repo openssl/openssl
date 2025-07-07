@@ -382,7 +382,7 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
                          SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS),
         SSL_FLAG_TBL("Bugs", SSL_OP_ALL),
         SSL_FLAG_TBL_INV("Compression", SSL_OP_NO_COMPRESSION),
-        SSL_FLAG_TBL_SRV("ServerPreference", SSL_OP_CIPHER_SERVER_PREFERENCE),
+        SSL_FLAG_TBL_SRV("ServerPreference", SSL_OP_SERVER_PREFERENCE),
         SSL_FLAG_TBL_SRV("NoResumptionOnRenegotiation",
                          SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION),
         SSL_FLAG_TBL_SRV("DHSingle", SSL_OP_SINGLE_DH_USE),
@@ -842,7 +842,7 @@ static const ssl_switch_tbl ssl_cmd_switches[] = {
     {SSL_OP_NO_RX_CERTIFICATE_COMPRESSION, SSL_TFLAG_INV}, /* rx_cert_comp */
     {SSL_OP_SINGLE_ECDH_USE, 0}, /* ecdh_single */
     {SSL_OP_NO_TICKET, 0},      /* no_ticket */
-    {SSL_OP_CIPHER_SERVER_PREFERENCE, 0}, /* serverpref */
+    {SSL_OP_SERVER_PREFERENCE, 0}, /* serverpref */
     /* legacy_renegotiation */
     {SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION, 0},
     /* Allow client renegotiation */

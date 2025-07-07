@@ -378,13 +378,16 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 # define SSL_OP_ENABLE_MIDDLEBOX_COMPAT                  SSL_OP_BIT(20)
     /*
      * Prioritize Chacha20Poly1305 when client does.
-     * Modifies SSL_OP_CIPHER_SERVER_PREFERENCE
+     * Modifies SSL_OP_SERVER_PREFERENCE
      */
 # define SSL_OP_PRIORITIZE_CHACHA                        SSL_OP_BIT(21)
     /*
-     * Set on servers to choose the cipher according to server's preferences.
+     * Set on servers to choose cipher, curve or group according to server's
+     * preferences.
      */
-# define SSL_OP_CIPHER_SERVER_PREFERENCE                 SSL_OP_BIT(22)
+# define SSL_OP_SERVER_PREFERENCE                        SSL_OP_BIT(22)
+    /* Equivalent definition for backwards compatibility: */
+# define SSL_OP_CIPHER_SERVER_PREFERENCE SSL_OP_SERVER_PREFERENCE
     /*
      * If set, a server will allow a client to issue an SSLv3.0 version
      * number as latest version supported in the premaster secret, even when
