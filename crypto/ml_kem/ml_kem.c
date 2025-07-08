@@ -1678,6 +1678,8 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
     void *tmp_pub;
     void *tmp_priv;
 
+    if (key == NULL)
+        return NULL;
     /*
      * Partially decoded keys, not yet imported or loaded, should never be
      * duplicated.
@@ -1685,8 +1687,6 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
     if (ossl_ml_kem_decoded_key(key))
         return NULL;
 
-    if (key == NULL)
-        return NULL;
     else if ((ret = OPENSSL_memdup(key, sizeof(*key))) == NULL)
         return NULL;
 
