@@ -289,6 +289,15 @@ ___
     return $code;
 }
 
+sub orn_rv64i {
+    my ($rd, $rs1, $rs2) = @_;
+    my $code=<<___;
+    not $rd, $rs2
+    or $rd, $rd, $rs1
+___
+    return $code;
+}
+
 # Scalar crypto instructions
 
 sub aes64ds {
@@ -382,6 +391,16 @@ sub clmulh {
     # Encoding for clmulh rd, rs1, rs2 instruction on RV64
     #                XXXXXXX_ rs2 _ rs1 _XXX_ rd  _XXXXXXX
     my $template = 0b0000101_00000_00000_011_00000_0110011;
+    my $rd = read_reg shift;
+    my $rs1 = read_reg shift;
+    my $rs2 = read_reg shift;
+    return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($rd << 7));
+}
+
+sub orn {
+    # Encoding for orn rd, rs1, rs2
+    #               0100000 _ rs2 _ rs1 _110_ rd  _0110011
+    my $template = 0b0100000_00000_00000_110_00000_0110011;
     my $rd = read_reg shift;
     my $rs1 = read_reg shift;
     my $rs2 = read_reg shift;
