@@ -17,7 +17,7 @@ TEMPDIR=$(mktemp -d /tmp/contention.XXXXXX)
 
 trap "rm -rf $TEMPDIR" EXIT
 
-echo "Splitting files"
+echo "Splitting files" > /dev/stderr
 
 #
 #start by splitting the log into separate stack traces
@@ -38,7 +38,7 @@ declare -A filenames
 declare -A total_latency
 declare -A latency_counts
 
-echo "Gathering latencies"
+echo "Gathering latencies" > /dev/stderr
 FILECOUNT=$(ls $TEMPDIR/individual_files/stacktrace*.* | wc -l)
 currentidx=0
 
@@ -73,7 +73,7 @@ do
     #
     total_latency["$SHA1SUM"]=$(dc -e "$CUR_LATENCY $LATENCY + p")
     latency_counts["$SHA1SUM"]=$(dc -e "$LATENCY_COUNT 1 + p")
-    echo -e -n "FILE $currentidx/$FILECOUNT \r"
+    echo -e -n "FILE $currentidx/$FILECOUNT \r" > /dev/stderr
     currentidx=$((currentidx + 1))
 done
 
