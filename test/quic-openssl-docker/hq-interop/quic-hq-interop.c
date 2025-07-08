@@ -906,8 +906,6 @@ int main(int argc, char *argv[])
             goto end;
         }
     }
-    BIO_free(req_bio);
-    req_bio = NULL;
     reqnames[read_offset + 1] = '\0';
 
     if (!setup_connection(hostname, port, &ctx, &ssl)) {
@@ -1037,6 +1035,7 @@ int main(int argc, char *argv[])
      */
     BIO_ADDR_free(peer_addr);
     OPENSSL_free(reqnames);
+    BIO_free(req_bio);
     BIO_free(session_bio);
     for (poll_idx = 0; poll_idx < poll_count; poll_idx++) {
         BIO_free(outbiolist[poll_idx]);
