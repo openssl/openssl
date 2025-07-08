@@ -95,6 +95,8 @@ static int tls1_prf_alg(EVP_MAC_CTX *mdctx, EVP_MAC_CTX *sha1ctx,
 #define TLS_MD_MASTER_SECRET_CONST        "\x6d\x61\x73\x74\x65\x72\x20\x73\x65\x63\x72\x65\x74"
 #define TLS_MD_MASTER_SECRET_CONST_SIZE   13
 
+#define TLSPRF_MAX_SEEDS    6
+
 /* TLS KDF kdf context structure */
 typedef struct {
     void *provctx;
@@ -289,7 +291,7 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
                           ['ALG_PARAM_ENGINE',            'engine', 'utf8_string', 'hidden'],
                           ['KDF_PARAM_DIGEST',            'digest', 'utf8_string'],
                           ['KDF_PARAM_SECRET',            'secret', 'octet_string'],
-                          ['KDF_PARAM_SEED',              'seed',   'octet_string', 6],
+                          ['KDF_PARAM_SEED',              'seed',   'octet_string', TLSPRF_MAX_SEEDS],
                           ['KDF_PARAM_FIPS_EMS_CHECK',    'ind_e',  'int'],
                           ['KDF_PARAM_FIPS_DIGEST_CHECK', 'ind_d',  'int'],
                           ['KDF_PARAM_FIPS_KEY_CHECK',    'ind_k',  'int'],
@@ -300,7 +302,6 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     struct tls1prf_set_ctx_params_st p;
     TLS1_PRF *ctx = vctx;
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    int i;
 
     if (ctx == NULL || !tls1prf_set_ctx_params_decoder(params, &p))
         return 0;
@@ -373,31 +374,45 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 #endif
     }
 
-    /* The seed fields concatenate across set calls, so process them all */
+    /*
+     * The seed fields concatenate across set calls, so process them all
+     * but only reallocate once.
+     */
     if (p.num_seed > 0) {
+        const void *vals[TLSPRF_MAX_SEEDS];
+        size_t sizes[TLSPRF_MAX_SEEDS];
+        size_t seedlen = ctx->seedlen;
+        int i, n = 0;
+
         for (i = 0; i < p.num_seed; i++) {
+            sizes[i] = 0;
+            vals[i] = NULL;
             if (p.seed[i]->data_size != 0 && p.seed[i]->data != NULL) {
-                const void *val = NULL;
-                size_t sz = 0;
-                unsigned char *seed;
-                size_t seedlen;
                 int err = 0;
 
-                if (!OSSL_PARAM_get_octet_string_ptr(p.seed[i], &val, &sz))
+                if (!OSSL_PARAM_get_octet_string_ptr(p.seed[i],
+                                                     vals + n, sizes + n))
                     return 0;
 
-                seedlen = safe_add_size_t(ctx->seedlen, sz, &err);
+                seedlen = safe_add_size_t(seedlen, sizes[n], &err);
                 if (err)
                     return 0;
+                n++;
+            }
+        }
 
-                seed = OPENSSL_clear_realloc(ctx->seed, ctx->seedlen, seedlen);
-                if (!seed)
-                    return 0;
+        if (seedlen != ctx->seedlen) {
+            unsigned char *seed = OPENSSL_clear_realloc(ctx->seed,
+                                                        ctx->seedlen, seedlen);
 
-                ctx->seed = seed;
-                if (ossl_assert(sz != 0))
-                    memcpy(ctx->seed + ctx->seedlen, val, sz);
-                ctx->seedlen = seedlen;
+            if (seed == NULL)
+                return 0;
+            ctx->seed = seed;
+
+            /* No errors are possible, so copy them across */
+            for (i = 0; i < n; i++) {
+                memcpy(ctx->seed + ctx->seedlen, vals[i], sizes[i]);
+                ctx->seedlen += sizes[i];
             }
         }
     }
