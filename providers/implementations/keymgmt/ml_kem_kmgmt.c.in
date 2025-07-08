@@ -542,7 +542,8 @@ void *ml_kem_load(const void *reference, size_t reference_sz)
     }
 
  err:
-    OPENSSL_secure_clear_free(encoded_dk, key->vinfo->prvkey_bytes);
+    if (key != NULL && key->vinfo != NULL)
+        OPENSSL_secure_clear_free(encoded_dk, key->vinfo->prvkey_bytes);
     ossl_ml_kem_key_free(key);
     return NULL;
 }
