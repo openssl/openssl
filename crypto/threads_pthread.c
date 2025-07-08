@@ -17,7 +17,7 @@
  * atomics available.  We do this because we need to use an atomic to track
  * when we can close the log file.  We could use the CRYPTO_atomic_ api
  * but that requires lock creation which gets us into a bad recursive loop
- * when we try to initalize the file pointer
+ * when we try to initialize the file pointer
  */
 # ifdef REPORT_RWLOCK_CONTENTION
 #  warning "RWLOCK CONTENTION REPORTING NOT SUPPORTED, Disabling"
@@ -602,11 +602,11 @@ void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock)
 # ifdef REPORT_RWLOCK_CONTENTION
 /*
  * Normally we would use a BIO here to do this, but we create locks during
- * library initalization, and creating a bio too early, creates a recursive set
+ * library initialization, and creating a bio too early, creates a recursive set
  * of stack calls that leads us to call CRYPTO_thread_run_once while currently
  * executing the init routine for various run_once functions, which leads to
  * deadlock.  Avoid that by just using a FILE pointer.  Also note that we
- * directly use a pthread_mutex_t to protect access from mutltiple threads
+ * directly use a pthread_mutex_t to protect access from multiple threads
  * to the contention log file.  We do this because we want to avoid use
  * of the CRYPTO_THREAD api so as to prevent recursive blocking reports.
  */
@@ -751,15 +751,20 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
     if (ossl_unlikely(traces == NULL)) {
         traces = OPENSSL_zalloc(sizeof(struct stack_traces));
         CRYPTO_THREAD_set_local(&thread_contention_data, traces);
+        if (ossl_unlikely(traces == NULL))
+            return 0;
     }
+
     traces->lock_depth++;
     if (pthread_rwlock_tryrdlock(lock)) {
         void *buffer[BT_BUF_SIZE];
         OSSL_TIME start, end;
 
         start = ossl_time_now();
-        if (!ossl_assert(pthread_rwlock_rdlock(lock) == 0))
+        if (!ossl_assert(pthread_rwlock_rdlock(lock) == 0)) {
+            traces->lock_depth--;
             return 0;
+        }
         end = ossl_time_now();
         traces->stacks[traces->idx].duration = ossl_time_subtract(end, start);
         traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
@@ -797,19 +802,20 @@ __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
     if (ossl_unlikely(traces == NULL)) {
         traces = OPENSSL_zalloc(sizeof(struct stack_traces));
         CRYPTO_THREAD_set_local(&thread_contention_data, traces);
+        if (ossl_unlikely(traces == NULL))
+            return 0;
     }
+
     traces->lock_depth++;
     if (pthread_rwlock_trywrlock(lock)) {
         void *buffer[BT_BUF_SIZE];
         OSSL_TIME start, end;
 
-        if (ossl_unlikely(traces == NULL)) {
-            traces = OPENSSL_zalloc(sizeof(struct stack_traces));
-            CRYPTO_THREAD_set_local(&thread_contention_data, traces);
-        }
         start = ossl_time_now();
-        if (!ossl_assert(pthread_rwlock_wrlock(lock) == 0))
+        if (!ossl_assert(pthread_rwlock_wrlock(lock) == 0)) {
+            traces->lock_depth--;
             return 0;
+        }
         end = ossl_time_now();
         traces->stacks[traces->idx].nptrs = backtrace(buffer, BT_BUF_SIZE);
         traces->stacks[traces->idx].strings = backtrace_symbols(buffer,
@@ -846,9 +852,7 @@ int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock)
     {
         struct stack_traces *traces = CRYPTO_THREAD_get_local(&thread_contention_data);
 
-        if (contention_fp == NULL)
-            return 1;
-        if (traces != NULL) {
+        if (contention_fp != NULL && traces != NULL) {
             traces->lock_depth--;
             assert(traces->lock_depth >= 0);
             if (traces->lock_depth == 0)
