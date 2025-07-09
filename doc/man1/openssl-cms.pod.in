@@ -421,7 +421,7 @@ Currently the AES variants with GCM mode are the only supported AEAD
 algorithms.
 
 If not specified triple DES is used. Only used with B<-encrypt> and
-B<-EncryptedData_create> commands.
+B<-EncryptedData_encrypt> commands.
 
 =item B<-wrap> I<cipher>
 
@@ -776,7 +776,7 @@ The use of PSS with B<-sign>.
 
 The use of OAEP or non-RSA keys with B<-encrypt>.
 
-Additionally the B<-EncryptedData_create> and B<-data_create> type cannot
+Additionally the B<-EncryptedData_encrypt> and B<-data_create> type cannot
 be processed by the older L<openssl-smime(1)> command.
 
 =head1 EXAMPLES
