@@ -49,6 +49,8 @@ typedef struct evp_test_st {
     void *data;                   /* test specific data */
     int expect_unapproved;
     int security_category;        /* NIST's security category */
+    unsigned char *entropy;
+    size_t entropy_len;
 } EVP_TEST;
 
 /* Test method structure */
@@ -102,6 +104,28 @@ static int is_pkey_disabled(const char *name);
 static int is_mac_disabled(const char *name);
 static int is_cipher_disabled(const char *name);
 static int is_kdf_disabled(const char *name);
+
+/* Random bit generator */
+static OSSL_PROVIDER *fake_rand = NULL;
+static uint8_t *fake_rand_bytes = NULL;
+static size_t fake_rand_bytes_offset = 0;
+static size_t fake_rand_size = 0;
+
+static int get_faked_bytes(unsigned char *buf, size_t num,
+                           ossl_unused const char *name,
+                           ossl_unused EVP_RAND_CTX *ctx)
+{
+    if (!TEST_ptr(fake_rand_bytes) || !TEST_size_t_gt(fake_rand_size, 0))
+        return 0;
+
+    while (num-- > 0) {
+        if (fake_rand_bytes_offset >= fake_rand_size)
+            fake_rand_bytes_offset = 0;
+        *buf++ = fake_rand_bytes[fake_rand_bytes_offset++];
+    }
+
+    return 1;
+}
 
 /* A callback that is triggered if fips unapproved mode is detected */
 static int fips_indicator_cb(const char *type, const char *desc,
@@ -5002,6 +5026,9 @@ static void clear_test(EVP_TEST *t)
     t->expected_err = NULL;
     OPENSSL_free(t->reason);
     t->reason = NULL;
+    OPENSSL_free(t->entropy);
+    t->entropy = NULL;
+    t->entropy_len = 0;
 
     /* Text literal. */
     t->err = NULL;
@@ -5081,17 +5108,25 @@ static int check_test_error(EVP_TEST *t)
 /* Run a parsed test. Log a message and return 0 on error. */
 static int run_test(EVP_TEST *t)
 {
+    int res = 0;
+
     if (t->meth == NULL)
         return 1;
     t->s.numtests++;
     if (t->skip) {
         t->s.numskip++;
     } else {
+        if (t->entropy != NULL) {
+            fake_rand_bytes = t->entropy;
+            fake_rand_bytes_offset = 0;
+            fake_rand_size = t->entropy_len;
+            fake_rand_set_public_private_callbacks(libctx, &get_faked_bytes);
+        }
         /* run the test */
         if (t->err == NULL && t->meth->run_test(t) != 1) {
             TEST_info("%s:%d %s error",
                       t->s.test_file, t->s.start, t->meth->name);
-            return 0;
+            goto err;
         }
         if (!check_test_error(t)) {
             TEST_openssl_errors();
@@ -5099,8 +5134,16 @@ static int run_test(EVP_TEST *t)
         }
     }
 
+    res = 1;
+err:
     /* clean it up */
-    return 1;
+    if (fake_rand_bytes != NULL) {
+        fake_rand_set_public_private_callbacks(libctx, NULL);
+        fake_rand_bytes = NULL;
+        fake_rand_bytes_offset = 0;
+        fake_rand_size = 0;
+    }
+    return res;
 }
 
 static int find_key(EVP_PKEY **ppk, const char *name, KEY_LIST *lst)
@@ -5433,6 +5476,11 @@ start:
                           t->s.curr);
                 return 0;
             }
+        } else if (strcmp(pp->key, "Test-Entropy") == 0) {
+            if (!parse_bin(pp->value, &t->entropy, &t->entropy_len)) {
+                TEST_info("Line %d: invalid entropy", t->s.curr);
+                return 0;
+            }
         } else {
             /* Must be test specific line: try to parse it */
             int rv = t->meth->parse(t, pp->key, pp->value);
@@ -5560,12 +5608,16 @@ int setup_tests(void)
     if (n == 0)
         return 0;
 
+    if ((fake_rand = fake_rand_start(libctx)) == NULL)
+        return 0;
+
     ADD_ALL_TESTS(run_file_tests, (int)n);
     return 1;
 }
 
 void cleanup_tests(void)
 {
+    fake_rand_finish(fake_rand);
     OSSL_PROVIDER_unload(libprov);
     OSSL_PROVIDER_unload(prov_null);
     OSSL_LIB_CTX_free(libctx);
