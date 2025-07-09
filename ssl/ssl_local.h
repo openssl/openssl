@@ -27,7 +27,6 @@
 # include <openssl/async.h>
 # include <openssl/symhacks.h>
 # include <openssl/ct.h>
-# include <openssl/x509v3.h>
 # include "internal/recordmethod.h"
 # include "internal/statem.h"
 # include "internal/packet.h"
@@ -512,6 +511,7 @@ struct ssl_session_st {
      */
     size_t sid_ctx_length;
     unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
+       
 # ifndef OPENSSL_NO_PSK
     char *psk_identity_hint;
     char *psk_identity;
@@ -528,6 +528,9 @@ struct ssl_session_st {
     X509 *peer;
     /* Certificate chain peer sent. */
     STACK_OF(X509) *peer_chain;
+    STACK_OF(X509) *peer_pqc_chain;
+    /* Flag to indicate if dual certificates are enabled for this session */
+    int dual_certs_enabled;
     /*
      * when app_verify_callback accepts a session where the peer's
      * certificate is not ok, we must remember the error for session reuse:
@@ -707,11 +710,11 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_cookie,
     TLSEXT_IDX_cryptopro_bug,
     TLSEXT_IDX_compress_certificate,
-    TLSEXT_IDX_related_certificate,
     TLSEXT_IDX_early_data,
     TLSEXT_IDX_certificate_authorities,
     TLSEXT_IDX_padding,
     TLSEXT_IDX_psk,
+    TLSEXT_IDX_dual_signature_algorithms,
     /* Dummy index - must always be the last entry */
     TLSEXT_IDX_num_builtins
 } TLSEXT_INDEX;
@@ -1359,6 +1362,8 @@ struct ssl_connection_st {
 # endif
             /* Signature algorithm we actually use */
             const struct sigalg_lookup_st *sigalg;
+            /* PQC signature algorithm for dual certificate mode */
+            const struct sigalg_lookup_st *pq_sigalg;
             /* Pointer to certificate we use */
             CERT_PKEY *cert;
             /*
@@ -1372,6 +1377,12 @@ struct ssl_connection_st {
             /* Size of above arrays */
             size_t peer_sigalgslen;
             size_t peer_cert_sigalgslen;
+            /* Dual signature algorithms peer reports for post-quantum readiness */
+            uint16_t *peer_dual_sigalgs;
+            uint16_t *peer_dual_pq_sigalgs;
+            /* Size of above dual signature algorithm arrays */
+            size_t peer_dual_sigalgslen;
+            size_t peer_dual_pq_sigalgslen;
             /* Sigalg peer actually uses */
             const struct sigalg_lookup_st *peer_sigalg;
             /*
@@ -1818,6 +1829,35 @@ struct ssl_connection_st {
     size_t client_cert_type_len;
     unsigned char *server_cert_type;
     size_t server_cert_type_len;
+    /*
+     * Client authentication signature algorithms, if not set then uses
+     * conf_sigalgs. On servers these will be the signature algorithms sent
+     * to the client in a certificate request for TLS 1.2. On a client this
+     * represents the signature algorithms we are willing to use for client
+     * authentication.
+     */
+    uint16_t *client_sigalgs;
+    /* Size of above array */
+    size_t client_sigalgslen;
+    /*
+     * Dual signature algorithms for post-quantum readiness.
+     * These contain two lists: first_signature_algorithms and second_signature_algorithms.
+     * When set on a client this is sent in the client hello as the dual_signature_algorithms extension.
+     * For servers it represents the dual signature algorithms we are willing to use.
+     */
+    uint16_t *dual_conf_sigalgs;
+    /* Size of above array */
+    size_t dual_conf_sigalgslen;
+    /*
+     * Client authentication dual signature algorithms, if not set then uses
+     * dual_conf_sigalgs. On servers these will be the dual signature algorithms sent
+     * to the client in a certificate request for TLS 1.2. On a client this
+     * represents the dual signature algorithms we are willing to use for client
+     * authentication.
+     */
+    uint16_t *dual_client_sigalgs;
+    /* Size of above array */
+    size_t dual_client_sigalgslen;
 };
 
 # define SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, c) \
@@ -2098,6 +2138,25 @@ typedef struct cert_st {
     /* Size of above array */
     size_t client_sigalgslen;
     /*
+     * Dual signature algorithms for post-quantum readiness.
+     * These contain two lists: first_signature_algorithms and second_signature_algorithms.
+     * When set on a client this is sent in the client hello as the dual_signature_algorithms extension.
+     * For servers it represents the dual signature algorithms we are willing to use.
+     */
+    uint16_t *dual_conf_sigalgs;
+    /* Size of above array */
+    size_t dual_conf_sigalgslen;
+    /*
+     * Client authentication dual signature algorithms, if not set then uses
+     * dual_conf_sigalgs. On servers these will be the dual signature algorithms sent
+     * to the client in a certificate request for TLS 1.2. On a client this
+     * represents the dual signature algorithms we are willing to use for client
+     * authentication.
+     */
+    uint16_t *dual_client_sigalgs;
+    /* Size of above array */
+    size_t dual_client_sigalgslen;
+    /*
      * Certificate setup callback: if set is called whenever a certificate
      * may be required (client or server). the callback can then examine any
      * appropriate parameters and setup any certificates required. This
@@ -2124,8 +2183,16 @@ typedef struct cert_st {
     /* If not NULL psk identity hint to use for servers */
     char *psk_identity_hint;
 # endif
+    /* Dual certificate support for post-quantum readiness */
+    CERT_PKEY *pqkey;          /* Post-quantum certificate and key */
+    STACK_OF(X509) *pq_chain;  /* Post-quantum certificate chain */
+    int dual_certs_enabled;    /* Flag to enable dual certificate mode */
     CRYPTO_REF_COUNT references;             /* >1 only if SSL_copy_session_id is used */
 } CERT;
+/* Post-quantum signature algorithm functions for dual certificate mode */
+int tls1_set_pq_sigalgs_list(SSL_CTX *ctx, CERT *c, const char *str, int client);
+int tls1_set_raw_pq_sigalgs(CERT *c, const uint16_t *psigs, size_t salglen, int client);
+size_t tls12_get_pq_sigalgs(SSL_CONNECTION *s, int sent, const uint16_t **psigs);
 
 # define FP_ICC  (int (*)(const void *,const void *))
 
@@ -2816,8 +2883,7 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL_CONNECTION *s, int op);
 __owur int tls1_set_sigalgs_list(SSL_CTX *ctx, CERT *c, const char *str, int client);
 __owur int tls1_set_raw_sigalgs(CERT *c, const uint16_t *psigs, size_t salglen,
                                 int client);
-__owur int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen,
-                            int client);
+__owur int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client);
 int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
                      STACK_OF(X509) *chain, int idx);
 void tls1_set_cert_validity(SSL_CONNECTION *s);
@@ -3080,4 +3146,44 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic);
     (OSSL_QUIC_PERMITTED_OPTIONS_CONN |         \
      OSSL_QUIC_PERMITTED_OPTIONS_STREAM)
 
-#endif
+/* Certificate key types */
+# define SSL_PKEY_RSA                   0
+# define SSL_PKEY_RSA_PSS_SIGN          1
+# define SSL_PKEY_DSA_SIGN              2
+# define SSL_PKEY_ECC                   3
+# define SSL_PKEY_GOST01                4
+# define SSL_PKEY_GOST12_256            5
+# define SSL_PKEY_GOST12_512            6
+# define SSL_PKEY_ED25519               7
+# define SSL_PKEY_ED448                 8
+# define SSL_PKEY_NUM                   9
+
+/* Post-quantum certificate key types for dual certificate mode */
+# define SSL_PKEY_PQ_MLDSA_44           10
+# define SSL_PKEY_PQ_MLDSA_65           11
+# define SSL_PKEY_PQ_FALCON_512         12
+# define SSL_PKEY_PQ_FALCON_1024        13
+# define SSL_PKEY_PQ_DILITHIUM_2        14
+# define SSL_PKEY_PQ_DILITHIUM_3        15
+# define SSL_PKEY_PQ_DILITHIUM_5        16
+# define SSL_PKEY_PQ_SPHINCS_128F       17
+# define SSL_PKEY_PQ_SPHINCS_192F       18
+# define SSL_PKEY_PQ_SPHINCS_256F       19
+# define SSL_PKEY_PQ_NUM                20
+
+typedef enum {
+    KEY_TYPE_UNKNOWN = 0,
+    KEY_TYPE_RSA,
+    KEY_TYPE_EC,
+    KEY_TYPE_ED25519,
+    KEY_TYPE_ED448,
+    KEY_TYPE_DILITHIUM,
+    KEY_TYPE_FALCON,
+    KEY_TYPE_SPHINCS,
+    KEY_TYPE_MLDSA,
+    // ... autres types si besoin
+} KEY_TYPE;
+
+KEY_TYPE get_key_type_from_evp_pkey(const EVP_PKEY *pkey);
+
+#endif 

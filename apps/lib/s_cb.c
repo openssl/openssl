@@ -326,6 +326,55 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
     return 1;
 }
 
+/* Get PQC signature digest NID from PQC certificate */
+static int ssl_get_pqc_signature_nid(SSL *s, int *psig_nid)
+{
+    SSL_SESSION *session = SSL_get_session(s);
+    if (session == NULL || !SSL_SESSION_has_dual_certs(session)) {
+        return 0;
+    }
+    
+    STACK_OF(X509) *pqc_chain = SSL_SESSION_get0_peer_pqc_chain(session);
+    if (pqc_chain == NULL || sk_X509_num(pqc_chain) == 0) {
+        return 0;
+    }
+    
+    X509 *pq_cert = sk_X509_value(pqc_chain, 0);
+    if (pq_cert == NULL) {
+        return 0;
+    }
+    
+    *psig_nid = X509_get_signature_nid(pq_cert);
+    return 1;
+}
+
+/* Get PQC signature type NID from PQC certificate */
+static int ssl_get_pqc_signature_type_nid(SSL *s, int *psigtype_nid)
+{
+    SSL_SESSION *session = SSL_get_session(s);
+    if (session == NULL || !SSL_SESSION_has_dual_certs(session)) {
+        return 0;
+    }
+    
+    STACK_OF(X509) *pqc_chain = SSL_SESSION_get0_peer_pqc_chain(session);
+    if (pqc_chain == NULL || sk_X509_num(pqc_chain) == 0) {
+        return 0;
+    }
+    
+    X509 *pq_cert = sk_X509_value(pqc_chain, 0);
+    if (pq_cert == NULL) {
+        return 0;
+    }
+    
+    EVP_PKEY *pq_pkey = X509_get0_pubkey(pq_cert);
+    if (pq_pkey == NULL) {
+        return 0;
+    }
+    
+    *psigtype_nid = EVP_PKEY_get_id(pq_pkey);
+    return 1;
+}
+
 int ssl_print_sigalgs(BIO *out, SSL *s)
 {
     int nid;
@@ -338,6 +387,15 @@ int ssl_print_sigalgs(BIO *out, SSL *s)
         BIO_printf(out, "Peer signing digest: %s\n", OBJ_nid2sn(nid));
     if (SSL_get_peer_signature_type_nid(s, &nid))
         BIO_printf(out, "Peer signature type: %s\n", get_sigtype(nid));
+    
+    /* Display PQC signature information if dual certificates are enabled */
+    SSL_SESSION *session = SSL_get_session(s);
+    if (session != NULL && SSL_SESSION_has_dual_certs(session)) {
+        if (ssl_get_pqc_signature_nid(s, &nid) && nid != NID_undef)
+            BIO_printf(out, "PQC signing digest: %s\n", OBJ_nid2sn(nid));
+        if (ssl_get_pqc_signature_type_nid(s, &nid))
+            BIO_printf(out, "PQC signature type: %s\n", get_sigtype(nid));
+    }
     return 1;
 }
 
@@ -662,7 +720,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
         case SSL3_RT_ALERT:
             /* type 21 */
             str_content_type = ", Alert";
-            str_details1 = ", ???";
+            str_details1 = "???";
             if (len == 2) {
                 switch (bp[0]) {
                 case 1:

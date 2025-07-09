@@ -18,7 +18,6 @@
 #include "../ssl_local.h"
 #include "statem_local.h"
 
-
 static int final_renegotiate(SSL_CONNECTION *s, unsigned int context, int sent);
 static int init_server_name(SSL_CONNECTION *s, unsigned int context);
 static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent);
@@ -35,6 +34,8 @@ static int init_alpn(SSL_CONNECTION *s, unsigned int context);
 static int final_alpn(SSL_CONNECTION *s, unsigned int context, int sent);
 static int init_sig_algs_cert(SSL_CONNECTION *s, unsigned int context);
 static int init_sig_algs(SSL_CONNECTION *s, unsigned int context);
+static int init_dual_sig_algs(SSL_CONNECTION *s, unsigned int context);
+static int final_dual_sig_algs(SSL_CONNECTION *s, unsigned int context, int sent);
 static int init_server_cert_type(SSL_CONNECTION *sc, unsigned int context);
 static int init_client_cert_type(SSL_CONNECTION *sc, unsigned int context);
 static int init_certificate_authorities(SSL_CONNECTION *s,
@@ -73,16 +74,9 @@ static int tls_parse_compress_certificate(SSL_CONNECTION *sc, PACKET *pkt,
                                           unsigned int context,
                                           X509 *x, size_t chainidx);
 
-/* Related Certificate extension functions */
-static int tls_init_related_certificate(SSL_CONNECTION *sc, unsigned int context);
-static EXT_RETURN tls_construct_related_certificate(SSL_CONNECTION *sc, WPACKET *pkt,
-                                                    unsigned int context,
-                                                    X509 *x, size_t chainidx);
-static int tls_parse_related_certificate(SSL_CONNECTION *sc, PACKET *pkt,
-                                         unsigned int context,
-                                         X509 *x, size_t chainidx);
-
-
+static EXT_RETURN tls_construct_stoc_dual_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
+                                                   unsigned int context, X509 *x,
+                                                   size_t chainidx);
 /* Structure to define a built-in extension */
 typedef struct extensions_definition_st {
     /* The defined type for the extension */
@@ -406,14 +400,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL
     },
     {
-        TLSEXT_TYPE_related_certificate,
-        SSL_EXT_TLS1_3_CERTIFICATE | SSL_EXT_TLS1_3_ONLY,
-        tls_init_related_certificate,
-        tls_parse_related_certificate, tls_parse_related_certificate,
-        tls_construct_related_certificate, tls_construct_related_certificate,
-        NULL
-    },
-    {
         TLSEXT_TYPE_early_data,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS
         | SSL_EXT_TLS1_3_NEW_SESSION_TICKET | SSL_EXT_TLS1_3_ONLY,
@@ -445,7 +431,15 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         | SSL_EXT_TLS_IMPLEMENTATION_ONLY | SSL_EXT_TLS1_3_ONLY,
         NULL, tls_parse_ctos_psk, tls_parse_stoc_psk, tls_construct_stoc_psk,
         tls_construct_ctos_psk, final_psk
-    }
+    },
+    {
+        /* Dual signature algorithms extension - must be the last extension */
+        TLSEXT_TYPE_dual_signature_algorithms,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST | SSL_EXT_TLS1_3_SERVER_HELLO,
+        init_dual_sig_algs, tls_parse_ctos_dual_sig_algs,
+        tls_parse_stoc_dual_sig_algs, tls_construct_stoc_dual_sig_algs,
+        tls_construct_ctos_dual_sig_algs, final_dual_sig_algs
+    },
 };
 
 /* Returns a TLSEXT_TYPE for the given index */
@@ -1946,45 +1940,165 @@ static int init_client_cert_type(SSL_CONNECTION *sc, unsigned int context)
     return 1;
 }
 
-/* Related Certificate extension implementation */
-
-static int tls_init_related_certificate(SSL_CONNECTION *sc, unsigned int context)
+static int init_dual_sig_algs(SSL_CONNECTION *s, unsigned int context)
 {
-    /* Initialize any necessary state for the Related Certificate extension */
+    /* Clear any dual signature algorithms extension received */
+    OPENSSL_free(s->s3.tmp.peer_dual_sigalgs);
+    s->s3.tmp.peer_dual_sigalgs = NULL;
+    s->s3.tmp.peer_dual_sigalgslen = 0;
+    
+    OPENSSL_free(s->s3.tmp.peer_dual_pq_sigalgs);
+    s->s3.tmp.peer_dual_pq_sigalgs = NULL;
+    s->s3.tmp.peer_dual_pq_sigalgslen = 0;
+
     return 1;
 }
 
-static EXT_RETURN tls_construct_related_certificate(SSL_CONNECTION *sc, WPACKET *pkt,
-                                                    unsigned int context,
-                                                    X509 *x, size_t chainidx)
+static int final_dual_sig_algs(SSL_CONNECTION *s, unsigned int context, int sent)
 {
-    /* For now, we don't construct the extension in TLS */
-    /* This would require the certificate to already have the extension */
-    return EXT_RETURN_NOT_SENT;
-}
-
-static int tls_parse_related_certificate(SSL_CONNECTION *sc, PACKET *pkt,
-                                         unsigned int context,
-                                         X509 *x, size_t chainidx)
-{
-    /* For now, we just skip the extension data */
-    /* In a full implementation, we would parse and validate the extension */
-    unsigned char *ext_data = NULL;
-    size_t ext_len = 0;
-
-    /* Only process the extension for the first certificate in the chain */
-    if (x == NULL || chainidx != 0) {
-        return 1;
+    /* For TLS 1.3, dual signature algorithms extension is optional but recommended */
+    if (!sent && SSL_CONNECTION_IS_TLS13(s) && !s->hit) {
+        /* Log that dual signature algorithms extension was not received */
+        /* This is not fatal, but we should note it for debugging */
     }
 
-    /* Skip the extension data for now */
-    if (!PACKET_memdup(pkt, &ext_data, &ext_len)) {
-        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+    return 1;
+}
+
+int tls_parse_ctos_dual_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
+                                 unsigned int context, X509 *x, size_t chainidx)
+{
+    PACKET classical_sig_algs, pq_sig_algs;
+
+    /* Parse the dual signature algorithms extension */
+    /* Format: classical_sig_algs (2 bytes length + data) + pq_sig_algs (2 bytes length + data) */
+    
+    /* Parse classical signature algorithms */
+    if (!PACKET_get_length_prefixed_2(pkt, &classical_sig_algs)
+            || PACKET_remaining(&classical_sig_algs) == 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
 
-    OPENSSL_free(ext_data);
+    /* Parse post-quantum signature algorithms */
+    if (!PACKET_get_length_prefixed_2(pkt, &pq_sig_algs)
+            || PACKET_remaining(&pq_sig_algs) == 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    /* Save the classical signature algorithms */
+    if (!s->hit && !tls1_save_u16(&classical_sig_algs, &s->s3.tmp.peer_dual_sigalgs,
+                                  &s->s3.tmp.peer_dual_sigalgslen)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    /* Save the post-quantum signature algorithms */
+    if (!s->hit && !tls1_save_u16(&pq_sig_algs, &s->s3.tmp.peer_dual_pq_sigalgs,
+                                  &s->s3.tmp.peer_dual_pq_sigalgslen)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
     return 1;
 }
 
+EXT_RETURN tls_construct_ctos_dual_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
+                                            unsigned int context, X509 *x,
+                                            size_t chainidx)
+{
+    size_t classical_salglen, pq_salglen;
+    const uint16_t *classical_salg, *pq_salg;
 
+    /* Check if we should send dual signature algorithms */
+    if (!SSL_CLIENT_USE_SIGALGS(s))
+        return EXT_RETURN_NOT_SENT;
+
+    /* Get classical signature algorithms */
+    classical_salglen = tls12_get_psigalgs(s, 1, &classical_salg);
+    
+    /* Get post-quantum signature algorithms - for now use the same as classical */
+    /* TODO: Implement proper PQ signature algorithm selection */
+    pq_salglen = tls12_get_psigalgs(s, 1, &pq_salg);
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_dual_signature_algorithms)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            /* Classical signature algorithms sub-packet */
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !tls12_copy_sigalgs(s, pkt, classical_salg, classical_salglen)
+            || !WPACKET_close(pkt)
+            /* Post-quantum signature algorithms sub-packet */
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !tls12_copy_sigalgs(s, pkt, pq_salg, pq_salglen)
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+}
+
+int tls_parse_stoc_dual_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
+                                 unsigned int context, X509 *x, size_t chainidx)
+{
+    PACKET classical_sig_algs, pq_sig_algs;
+
+    /* Parse the dual signature algorithms extension from server */
+    /* Format: classical_sig_algs (2 bytes length + data) + pq_sig_algs (2 bytes length + data) */
+    if (!PACKET_get_length_prefixed_2(pkt, &classical_sig_algs)
+            || !PACKET_get_length_prefixed_2(pkt, &pq_sig_algs)
+            || PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    /* Save the classical signature algorithms */
+    if (!s->hit && !tls1_save_u16(&classical_sig_algs, &s->s3.tmp.peer_dual_sigalgs,
+                                  &s->s3.tmp.peer_dual_sigalgslen)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    /* Save the post-quantum signature algorithms */
+    if (!s->hit && !tls1_save_u16(&pq_sig_algs, &s->s3.tmp.peer_dual_pq_sigalgs,
+                                  &s->s3.tmp.peer_dual_pq_sigalgslen)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    return 1;
+}
+
+EXT_RETURN tls_construct_stoc_dual_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
+                                            unsigned int context, X509 *x,
+                                            size_t chainidx)
+{
+    const uint16_t *classical_salg, *pq_salg;
+    size_t classical_salglen, pq_salglen;
+
+    /* Get classical signature algorithms */
+    classical_salglen = tls12_get_psigalgs(s, 0, &classical_salg);
+
+    /* Get post-quantum signature algorithms - for now use the same as classical */
+    /* TODO: Implement proper PQ signature algorithm selection */
+    pq_salglen = tls12_get_psigalgs(s, 0, &pq_salg);
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_dual_signature_algorithms)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            /* Classical signature algorithms sub-packet */
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !tls12_copy_sigalgs(s, pkt, classical_salg, classical_salglen)
+            || !WPACKET_close(pkt)
+            /* Post-quantum signature algorithms sub-packet */
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !tls12_copy_sigalgs(s, pkt, pq_salg, pq_salglen)
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+}

@@ -455,14 +455,14 @@ err:
 
 
 // Function to verify RelatedCertificate extension
-int verify_related_certificate_extension(X509 *cert, X509 *related_cert) {
+OPENSSL_EXPORT int verify_related_certificate_extension(X509 *cert, X509 *related_cert) {
     if (!cert || !related_cert)
-        return 0;
+        return -1; // Invalid parameters
 
     RELATED_CERTIFICATE *rc = NULL;
     X509_EXTENSION *ext = NULL;
     int idx = -1;
-    int ret = 0;
+    int ret = -1;
     unsigned char *cert_der = NULL;
     unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned int hash_len = 0;
@@ -472,21 +472,21 @@ int verify_related_certificate_extension(X509 *cert, X509 *related_cert) {
     // Find the RelatedCertificate extension
     idx = X509_get_ext_by_NID(cert, OBJ_txt2nid("1.3.6.1.5.5.7.1.36"), -1);
     if (idx < 0) {
-        ERR_raise(ERR_LIB_X509, X509V3_R_EXTENSION_NOT_FOUND);
-        return 0;
+        // Extension not found - this is acceptable, return -1 to indicate no extension
+        return -1;
     }
 
     ext = X509_get_ext(cert, idx);
     if (!ext) {
         ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
-        return 0;
+        return 0; // Extension found but invalid
     }
 
     // Get the extension data
     ASN1_OCTET_STRING *ext_data = X509_EXTENSION_get_data(ext);
     if (!ext_data) {
         ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
-        return 0;
+        return 0; // Extension found but invalid
     }
 
     // Decode the RelatedCertificate structure
@@ -494,7 +494,7 @@ int verify_related_certificate_extension(X509 *cert, X509 *related_cert) {
     rc = d2i_RELATED_CERTIFICATE(NULL, &p, ext_data->length);
     if (!rc) {
         ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
-        return 0;
+        return 0; // Extension found but invalid
     }
 
     // Get hash algorithm
@@ -502,20 +502,20 @@ int verify_related_certificate_extension(X509 *cert, X509 *related_cert) {
     if (!hash_alg) {
         ERR_raise(ERR_LIB_X509, ERR_R_EVP_LIB);
         RELATED_CERTIFICATE_free(rc);
-        return 0;
+        return 0; // Extension found but invalid
     }
 
     // Calculate hash of the related certificate
     cert_len = i2d_X509(related_cert, &cert_der);
     if (cert_len <= 0) {
         RELATED_CERTIFICATE_free(rc);
-        return 0;
+        return 0; // Extension found but invalid
     }
 
     if (!EVP_Digest(cert_der, cert_len, hash, &hash_len, hash_alg, NULL)) {
         OPENSSL_free(cert_der);
         RELATED_CERTIFICATE_free(rc);
-        return 0;
+        return 0; // Extension found but invalid
     }
 
     // Compare hashes
@@ -524,10 +524,10 @@ int verify_related_certificate_extension(X509 *cert, X509 *related_cert) {
         ERR_raise(ERR_LIB_X509, X509_R_CERTIFICATE_VERIFICATION_FAILED);
         OPENSSL_free(cert_der);
         RELATED_CERTIFICATE_free(rc);
-        return 0;
+        return 0; // Extension found but validation failed
     }
 
-    ret = 1;
+    ret = 1; // Extension found and validation successful
 
     OPENSSL_free(cert_der);
     RELATED_CERTIFICATE_free(rc);
@@ -535,7 +535,7 @@ int verify_related_certificate_extension(X509 *cert, X509 *related_cert) {
 }
 
 // Function to extract RelatedCertificate extension from certificate
-RELATED_CERTIFICATE *get_related_certificate_extension(X509 *cert) {
+OPENSSL_EXPORT RELATED_CERTIFICATE *get_related_certificate_extension(X509 *cert) {
     if (!cert)
         return NULL;
 

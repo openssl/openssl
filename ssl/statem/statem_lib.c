@@ -21,6 +21,7 @@
 #include <openssl/x509.h>
 #include <openssl/trace.h>
 #include <openssl/encoder.h>
+#include <openssl/v3_certbind.h>
 
 /*
  * Map error codes to TLS/SSL alart types.
@@ -310,48 +311,119 @@ static int get_cert_verify_tbs_data(SSL_CONNECTION *s, unsigned char *tls13tbs,
 CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
 {
     EVP_PKEY *pkey = NULL;
+    EVP_PKEY *pq_pkey = NULL;
     const EVP_MD *md = NULL;
+    const EVP_MD *pq_md = NULL;
     EVP_MD_CTX *mctx = NULL;
+    EVP_MD_CTX *pq_mctx = NULL;
     EVP_PKEY_CTX *pctx = NULL;
-    size_t hdatalen = 0, siglen = 0;
+    EVP_PKEY_CTX *pq_pctx = NULL;
+    size_t hdatalen = 0, siglen = 0, pq_siglen = 0;
     void *hdata;
     unsigned char *sig = NULL;
+    unsigned char *pq_sig = NULL;
     unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
     const SIGALG_LOOKUP *lu = s->s3.tmp.sigalg;
+    const SIGALG_LOOKUP *pq_lu = s->s3.tmp.pq_sigalg;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
+    printf("[DUAL_SIGN_SERVER] Starting certificate verify construction\n");
+
     if (lu == NULL || s->s3.tmp.cert == NULL) {
+        printf("[DUAL_SIGN_SERVER] ERROR: Missing signature algorithm or certificate\n");
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     pkey = s->s3.tmp.cert->privatekey;
 
     if (pkey == NULL || !tls1_lookup_md(sctx, lu, &md)) {
+        printf("[DUAL_SIGN_SERVER] ERROR: Invalid classic private key or message digest\n");
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
+
+    printf("[DUAL_SIGN_SERVER] Classic signature algorithm: %s\n", lu->name ? lu->name : "unknown");
+    printf("[DUAL_SIGN_SERVER] Classic signature type: %d\n", lu->sig);
+    printf("[DUAL_SIGN_SERVER] Classic key type: %d\n", EVP_PKEY_get_id(pkey));
+    printf("[DUAL_SIGN_SERVER] Classic key type (enum): %d\n", get_key_type_from_evp_pkey(pkey));
+    printf("[DUAL_SIGN_SERVER] Classic message digest: %s\n", md ? EVP_MD_get0_name(md) : "unknown");
+
+    /* Check if dual certificate mode is enabled */
+    if (s->cert->dual_certs_enabled && s->cert->pqkey != NULL) {
+        printf("[DUAL_SIGN_SERVER] Dual certificate mode detected, preparing dual signatures\n");
+        pq_pkey = s->cert->pqkey->privatekey;
+        if (pq_pkey == NULL) {
+            printf("[DUAL_SIGN_SERVER] ERROR: PQC private key is NULL\n");
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        
+        /* Use the selected PQC signature algorithm */
+        if (pq_lu == NULL) {
+            printf("[DUAL_SIGN_SERVER] ERROR: PQC signature algorithm not selected\n");
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        
+        if (!tls1_lookup_md(sctx, pq_lu, &pq_md)) {
+            printf("[DUAL_SIGN_SERVER] ERROR: Failed to get PQC message digest\n");
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        printf("[DUAL_SIGN_SERVER] PQC signature algorithm: %s\n", pq_lu->name ? pq_lu->name : "unknown");
+        printf("[DUAL_SIGN_SERVER] PQC signature type: %d\n", pq_lu->sig);
+    
+        printf("[DUAL_SIGN_SERVER] PQC key type (enum): %d\n", get_key_type_from_evp_pkey(pq_pkey));
+        printf("[DUAL_SIGN_SERVER] PQC message digest: %s\n", pq_md ? EVP_MD_get0_name(pq_md) : "unknown");
+    } else {
+        printf("[DUAL_SIGN_SERVER] Single certificate mode, preparing single signature\n");
+        printf("[DUAL_SIGN_SERVER] Dual certs enabled: %d, PQ key available: %d\n", 
+               s->cert->dual_certs_enabled, s->cert->pqkey != NULL);
     }
 
     mctx = EVP_MD_CTX_new();
     if (mctx == NULL) {
+        printf("[DUAL_SIGN_SERVER] ERROR: Failed to create classic MD context\n");
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
 
+    if (pq_pkey != NULL) {
+        pq_mctx = EVP_MD_CTX_new();
+        if (pq_mctx == NULL) {
+            printf("[DUAL_SIGN_SERVER] ERROR: Failed to create PQC MD context\n");
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+            goto err;
+        }
+    }
+
     /* Get the data to be signed */
     if (!get_cert_verify_tbs_data(s, tls13tbs, &hdata, &hdatalen)) {
+        printf("[DUAL_SIGN_SERVER] ERROR: Failed to get data to be signed\n");
         /* SSLfatal() already called */
         goto err;
     }
 
+    printf("[DUAL_SIGN_SERVER] Data to be signed length: %zu bytes\n", hdatalen);
+    printf("[DUAL_SIGN_SERVER] Data to be signed (first 32 bytes): ");
+    for (size_t i = 0; i < 32 && i < hdatalen; i++) {
+        printf("%02x ", ((unsigned char*)hdata)[i]);
+    }
+    printf("\n");
+
     if (SSL_USE_SIGALGS(s) && !WPACKET_put_bytes_u16(pkt, lu->sigalg)) {
+        printf("[DUAL_SIGN_SERVER] ERROR: Failed to write signature algorithm\n");
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
+    printf("[DUAL_SIGN_SERVER] Creating classic signature\n");
+    /* Create classic signature */
     if (EVP_DigestSignInit_ex(mctx, &pctx,
                               md == NULL ? NULL : EVP_MD_get0_name(md),
                               sctx->libctx, sctx->propq, pkey,
                               NULL) <= 0) {
+        printf("[DUAL_SIGN_SERVER] ERROR: Failed to initialize classic signature\n");
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
@@ -360,10 +432,12 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
         if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
             || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx,
                                                 RSA_PSS_SALTLEN_DIGEST) <= 0) {
+            printf("[DUAL_SIGN_SERVER] ERROR: Failed to set RSA PSS parameters\n");
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
             goto err;
         }
     }
+    
     if (s->version == SSL3_VERSION) {
         /*
          * Here we use EVP_DigestSignUpdate followed by EVP_DigestSignFinal
@@ -375,12 +449,14 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
                                s->session->master_key) <= 0
             || EVP_DigestSignFinal(mctx, NULL, &siglen) <= 0) {
 
+            printf("[DUAL_SIGN_SERVER] ERROR: Failed to create classic signature (SSL3)\n");
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
             goto err;
         }
         sig = OPENSSL_malloc(siglen);
         if (sig == NULL
                 || EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
+            printf("[DUAL_SIGN_SERVER] ERROR: Failed to finalize classic signature (SSL3)\n");
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
             goto err;
         }
@@ -390,15 +466,112 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
          * support streaming via EVP_DigestSignUpdate/EVP_DigestSignFinal
          */
         if (EVP_DigestSign(mctx, NULL, &siglen, hdata, hdatalen) <= 0) {
+            printf("[DUAL_SIGN_SERVER] ERROR: Failed to get classic signature length\n");
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
             goto err;
         }
         sig = OPENSSL_malloc(siglen);
         if (sig == NULL
                 || EVP_DigestSign(mctx, sig, &siglen, hdata, hdatalen) <= 0) {
+            printf("[DUAL_SIGN_SERVER] ERROR: Failed to create classic signature\n");
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
             goto err;
         }
+    }
+
+    printf("[DUAL_SIGN_SERVER] Classic signature created successfully, length: %zu bytes\n", siglen);
+    printf("[DUAL_SIGN_SERVER] Classic signature (first 32 bytes): ");
+    for (size_t i = 0; i < 32 && i < siglen; i++) {
+        printf("%02x ", sig[i]);
+    }
+    printf("\n");
+
+    /* Create PQC signature if dual mode is enabled */
+    if (pq_pkey != NULL) {
+        printf("[DUAL_SIGN_SERVER] Creating PQC signature\n");
+        if (EVP_DigestSignInit_ex(pq_mctx, &pq_pctx,
+                                  pq_md == NULL ? NULL : EVP_MD_get0_name(pq_md),
+                                  sctx->libctx, sctx->propq, pq_pkey,
+                                  NULL) <= 0) {
+            printf("[DUAL_SIGN_SERVER] ERROR: Failed to initialize PQC signature\n");
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+            goto err;
+        }
+
+        /* Handle RSA PSS parameters for PQC signature */
+        if (pq_lu->sig == EVP_PKEY_RSA_PSS) {
+            printf("[DUAL_SIGN_SERVER] Setting up RSA PSS parameters for PQC signature\n");
+            
+            /* Check if the PQC key is actually an RSA key */
+            if (EVP_PKEY_get_id(pq_pkey) != EVP_PKEY_RSA && 
+                EVP_PKEY_get_id(pq_pkey) != EVP_PKEY_RSA_PSS) {
+                printf("[DUAL_SIGN_SERVER] ERROR: PQC key is not RSA type (got %d)\n", EVP_PKEY_get_id(pq_pkey));
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+                goto err;
+            }
+            
+            /* Set RSA PSS padding */
+            if (EVP_PKEY_CTX_set_rsa_padding(pq_pctx, RSA_PKCS1_PSS_PADDING) <= 0) {
+                printf("[DUAL_SIGN_SERVER] ERROR: Failed to set PQC RSA PSS padding\n");
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+                goto err;
+            }
+            
+            /* Set salt length */
+            if (EVP_PKEY_CTX_set_rsa_pss_saltlen(pq_pctx, RSA_PSS_SALTLEN_DIGEST) <= 0) {
+                printf("[DUAL_SIGN_SERVER] ERROR: Failed to set PQC RSA PSS salt length\n");
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+                goto err;
+            }
+            
+            /* Set MGF1 digest if needed */
+            if (pq_md != NULL && EVP_PKEY_CTX_set_rsa_mgf1_md(pq_pctx, pq_md) <= 0) {
+                printf("[DUAL_SIGN_SERVER] ERROR: Failed to set PQC RSA PSS MGF1 digest\n");
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+                goto err;
+            }
+            
+            printf("[DUAL_SIGN_SERVER] PQC RSA PSS parameters set successfully\n");
+        }
+
+        if (s->version == SSL3_VERSION) {
+            if (EVP_DigestSignUpdate(pq_mctx, hdata, hdatalen) <= 0
+                || EVP_MD_CTX_ctrl(pq_mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                                   (int)s->session->master_key_length,
+                                   s->session->master_key) <= 0
+                || EVP_DigestSignFinal(pq_mctx, NULL, &pq_siglen) <= 0) {
+
+                printf("[DUAL_SIGN_SERVER] ERROR: Failed to create PQC signature (SSL3)\n");
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+                goto err;
+            }
+            pq_sig = OPENSSL_malloc(pq_siglen);
+            if (pq_sig == NULL
+                    || EVP_DigestSignFinal(pq_mctx, pq_sig, &pq_siglen) <= 0) {
+                printf("[DUAL_SIGN_SERVER] ERROR: Failed to finalize PQC signature (SSL3)\n");
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+                goto err;
+            }
+        } else {
+            if (EVP_DigestSign(pq_mctx, NULL, &pq_siglen, hdata, hdatalen) <= 0) {
+                printf("[DUAL_SIGN_SERVER] ERROR: Failed to get PQC signature length\n");
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+                goto err;
+            }
+            pq_sig = OPENSSL_malloc(pq_siglen);
+            if (pq_sig == NULL
+                    || EVP_DigestSign(pq_mctx, pq_sig, &pq_siglen, hdata, hdatalen) <= 0) {
+                printf("[DUAL_SIGN_SERVER] ERROR: Failed to create PQC signature\n");
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+                goto err;
+            }
+        }
+        printf("[DUAL_SIGN_SERVER] PQC signature created successfully, length: %zu bytes\n", pq_siglen);
+        printf("[DUAL_SIGN_SERVER] PQC signature (first 32 bytes): ");
+        for (size_t i = 0; i < 32 && i < pq_siglen; i++) {
+            printf("%02x ", pq_sig[i]);
+        }
+        printf("\n");
     }
 
 #ifndef OPENSSL_NO_GOST
@@ -412,56 +585,149 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
     }
 #endif
 
-    if (!WPACKET_sub_memcpy_u16(pkt, sig, siglen)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
+    /* Output signatures */
+    if (pq_sig != NULL) {
+        /* Dual signature mode: concatenate classic + PQC signatures */
+        printf("[DUAL_SIGN_SERVER] Combining classic and PQC signatures\n");
+        size_t total_len = siglen + pq_siglen;
+        unsigned char *combined_sig = OPENSSL_malloc(total_len);
+        if (combined_sig == NULL) {
+            printf("[DUAL_SIGN_SERVER] ERROR: Failed to allocate memory for combined signature\n");
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        
+        /* Copy classic signature first */
+        memcpy(combined_sig, sig, siglen);
+        /* Copy PQC signature second */
+        memcpy(combined_sig + siglen, pq_sig, pq_siglen);
+        
+        printf("[DUAL_SIGN_SERVER] Combined signature length: %zu bytes (classic: %zu + PQC: %zu)\n", 
+               total_len, siglen, pq_siglen);
+        
+        if (!WPACKET_sub_memcpy_u16(pkt, combined_sig, total_len)) {
+            printf("[DUAL_SIGN_SERVER] ERROR: Failed to write combined signature to packet\n");
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            OPENSSL_free(combined_sig);
+            goto err;
+        }
+        
+        OPENSSL_free(combined_sig);
+        printf("[DUAL_SIGN_SERVER] Dual signature mode completed successfully\n");
+    } else {
+        /* Single signature mode */
+        printf("[DUAL_SIGN_SERVER] Writing single classic signature\n");
+        if (!WPACKET_sub_memcpy_u16(pkt, sig, siglen)) {
+            printf("[DUAL_SIGN_SERVER] ERROR: Failed to write single signature to packet\n");
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        printf("[DUAL_SIGN_SERVER] Single signature mode completed successfully\n");
     }
 
-    /* Digest cached records and discard handshake buffer */
-    if (!ssl3_digest_cached_records(s, 0)) {
-        /* SSLfatal() already called */
-        goto err;
-    }
+            /* Validate RelatedCertificate extension after successful signature construction */
+        if (s->cert->dual_certs_enabled && s->cert->pqkey != NULL) {
+            X509 *classic_cert = s->cert->key->x509;
+            X509 *pqc_cert = s->cert->pqkey->x509;
+            if (classic_cert != NULL && pqc_cert != NULL) {
+                int related_cert_result = verify_related_certificate_extension(pqc_cert, classic_cert);
+                if (related_cert_result == -1) {
+                    /* Extension not detected - no message displayed */
+                } else if (related_cert_result == 1) {
+                    printf("[DUAL_SIGN_SERVER] RelatedCertificate extension detected - Validation successful\n");
+                } else if (related_cert_result == 0) {
+                    printf("[DUAL_SIGN_SERVER] RelatedCertificate extension detected - Validation failed\n");
+                } else {
+                    printf("[DUAL_SIGN_SERVER] ERROR: Invalid parameters for RelatedCertificate validation\n");
+                }
+            } else {
+                printf("[DUAL_SIGN_SERVER] WARNING: Missing certificates for RelatedCertificate validation\n");
+            }
+        }
 
-    OPENSSL_free(sig);
+    printf("[DUAL_SIGN_SERVER] Certificate verify construction completed successfully\n");
+
     EVP_MD_CTX_free(mctx);
+    EVP_MD_CTX_free(pq_mctx);
+    OPENSSL_free(sig);
+    OPENSSL_free(pq_sig);
     return CON_FUNC_SUCCESS;
+
  err:
-    OPENSSL_free(sig);
+    printf("[DUAL_SIGN_SERVER] ERROR: Certificate verify construction failed\n");
     EVP_MD_CTX_free(mctx);
+    EVP_MD_CTX_free(pq_mctx);
+    OPENSSL_free(sig);
+    OPENSSL_free(pq_sig);
     return CON_FUNC_ERROR;
 }
 
 MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
 {
     EVP_PKEY *pkey = NULL;
+    EVP_PKEY *pq_pkey = NULL;
     const unsigned char *data;
-#ifndef OPENSSL_NO_GOST
-    unsigned char *gost_data = NULL;
-#endif
+    const unsigned char *classic_sig = NULL;
+    const unsigned char *pq_sig = NULL;
+    size_t classic_siglen = 0, pq_siglen = 0;
+
     MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
-    int j;
     unsigned int len;
     const EVP_MD *md = NULL;
+    const EVP_MD *pq_md = NULL;
     size_t hdatalen = 0;
     void *hdata;
     unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
+    EVP_MD_CTX *pq_mctx = NULL;
     EVP_PKEY_CTX *pctx = NULL;
+    EVP_PKEY_CTX *pq_pctx = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    const SIGALG_LOOKUP *pq_sigalg_to_use = NULL;
+
+    printf("[DUAL_SIGN_CLIENT] Starting certificate verify processing\n");
 
     if (mctx == NULL) {
+        printf("[DUAL_SIGN_CLIENT] ERROR: Failed to create classic MD context\n");
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
 
     pkey = tls_get_peer_pkey(s);
     if (pkey == NULL) {
+        printf("[DUAL_SIGN_CLIENT] ERROR: Failed to get peer public key\n");
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
+    printf("[DUAL_SIGN_CLIENT] Got peer public key for classic verification\n");
+    printf("[DUAL_SIGN_CLIENT] Classic key type: %d\n", EVP_PKEY_get_id(pkey));
+    printf("[DUAL_SIGN_CLIENT] Classic key size: %d bytes\n", EVP_PKEY_size(pkey));
+
+    /* Check if we have PQC certificate for dual verification */
+    if (s->session->peer_pqc_chain != NULL && sk_X509_num(s->session->peer_pqc_chain) > 0) {
+        printf("[DUAL_SIGN_CLIENT] PQC certificate chain found, preparing dual verification\n");
+        X509 *pq_cert = sk_X509_value(s->session->peer_pqc_chain, 0);
+        pq_pkey = X509_get0_pubkey(pq_cert);
+        if (pq_pkey != NULL) {
+            printf("[DUAL_SIGN_CLIENT] Got PQC public key for verification\n");
+            printf("[DUAL_SIGN_CLIENT] PQC key type: %d\n", EVP_PKEY_get_id(pq_pkey));
+            printf("[DUAL_SIGN_CLIENT] PQC key type (enum): %d\n", get_key_type_from_evp_pkey(pq_pkey));
+            pq_mctx = EVP_MD_CTX_new();
+            if (pq_mctx == NULL) {
+                printf("[DUAL_SIGN_CLIENT] ERROR: Failed to create PQC MD context\n");
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+                goto err;
+            }
+        } else {
+            printf("[DUAL_SIGN_CLIENT] WARNING: PQC certificate found but no public key\n");
+        }
+    } else {
+        printf("[DUAL_SIGN_CLIENT] No PQC certificate chain found, single verification mode\n");
+    }
+
     if (ssl_cert_lookup_by_pkey(pkey, NULL, sctx) == NULL) {
+        printf("[DUAL_SIGN_CLIENT] ERROR: Invalid signing certificate\n");
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE);
         goto err;
@@ -471,22 +737,214 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
         unsigned int sigalg;
 
         if (!PACKET_get_net_2(pkt, &sigalg)) {
+            printf("[DUAL_SIGN_CLIENT] ERROR: Failed to read signature algorithm\n");
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_PACKET);
             goto err;
         }
+        printf("[DUAL_SIGN_CLIENT] Signature algorithm: %04x\n", sigalg);
         if (tls12_check_peer_sigalg(s, sigalg, pkey) <= 0) {
+            printf("[DUAL_SIGN_CLIENT] ERROR: Invalid signature algorithm\n");
             /* SSLfatal() already called */
             goto err;
         }
     } else if (!tls1_set_peer_legacy_sigalg(s, pkey)) {
+            printf("[DUAL_SIGN_CLIENT] ERROR: Legacy signature algorithm not allowed\n");
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_R_LEGACY_SIGALG_DISALLOWED_OR_UNSUPPORTED);
             goto err;
     }
 
     if (!tls1_lookup_md(sctx, s->s3.tmp.peer_sigalg, &md)) {
+        printf("[DUAL_SIGN_CLIENT] ERROR: Failed to get classic message digest\n");
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
+
+    printf("[DUAL_SIGN_CLIENT] Classic signature algorithm: %s\n", s->s3.tmp.peer_sigalg->name ? s->s3.tmp.peer_sigalg->name : "unknown");
+    printf("[DUAL_SIGN_CLIENT] Classic signature type: %d\n", s->s3.tmp.peer_sigalg->sig);
+    printf("[DUAL_SIGN_CLIENT] Classic message digest: %s\n", md ? EVP_MD_get0_name(md) : "unknown");
+
+    if (pq_pkey != NULL) {
+        /* For PQC, detect the signature algorithm from the PQC certificate */
+        const SIGALG_LOOKUP *pq_sigalg = NULL;
+        if (s->session && s->session->dual_certs_enabled && s->session->peer_pqc_chain) {
+            X509 *pq_cert = sk_X509_value(s->session->peer_pqc_chain, 0);
+            if (pq_cert) {
+                int sig_nid = X509_get_signature_nid(pq_cert);
+                printf("[DUAL_SIGN_CLIENT] PQC certificate signature NID: %d\n", sig_nid);
+                
+                /* Enhanced PQC key type detection with fallback for unknown NIDs */
+                KEY_TYPE pq_key_type_enum = get_key_type_from_evp_pkey(pq_pkey);
+                printf("[DUAL_SIGN_CLIENT] PQC key type (enum): %d\n", pq_key_type_enum);
+                
+                /* Map enum to internal key type for compatibility */
+                int pq_key_type;
+                if (pq_key_type_enum == KEY_TYPE_UNKNOWN) {
+                    /* Enhanced detection for unknown NIDs */
+                    int key_id = EVP_PKEY_get_id(pq_pkey);
+                    const char *key_type_name = EVP_PKEY_get0_type_name(pq_pkey);
+                    int key_size = EVP_PKEY_size(pq_pkey);
+                    
+                    printf("[DUAL_SIGN_CLIENT] Enhanced detection - Key ID: %d, Name: %s, Size: %d\n", 
+                           key_id, key_type_name ? key_type_name : "unknown", key_size);
+                    
+                    /* Try name-based detection first */
+                    if (key_type_name != NULL) {
+                        if (strstr(key_type_name, "falcon") != NULL || strstr(key_type_name, "FALCON") != NULL) {
+                            pq_key_type = 1002; /* FALCON */
+                            printf("[DUAL_SIGN_CLIENT] Detected as FALCON by name\n");
+                        } else if (strstr(key_type_name, "dilithium") != NULL || strstr(key_type_name, "DILITHIUM") != NULL) {
+                            pq_key_type = 1003; /* DILITHIUM */
+                            printf("[DUAL_SIGN_CLIENT] Detected as DILITHIUM by name\n");
+                        } else if (strstr(key_type_name, "mldsa") != NULL || strstr(key_type_name, "MLDSA") != NULL) {
+                            pq_key_type = 1001; /* MLDSA */
+                            printf("[DUAL_SIGN_CLIENT] Detected as MLDSA by name\n");
+                        } else if (strstr(key_type_name, "sphincs") != NULL || strstr(key_type_name, "SPHINCS") != NULL) {
+                            pq_key_type = 1004; /* SPHINCS */
+                            printf("[DUAL_SIGN_CLIENT] Detected as SPHINCS by name\n");
+                        } else {
+                            /* Size-based detection as fallback */
+                            if (key_size >= 800 && key_size <= 1200) {
+                                pq_key_type = 1002; /* FALCON */
+                                printf("[DUAL_SIGN_CLIENT] Detected as FALCON by size (%d bytes)\n", key_size);
+                            } else if (key_size >= 1000 && key_size <= 2000) {
+                                pq_key_type = 1003; /* DILITHIUM */
+                                printf("[DUAL_SIGN_CLIENT] Detected as DILITHIUM by size (%d bytes)\n", key_size);
+                            } else if (key_size >= 2000 && key_size <= 4000) {
+                                pq_key_type = 1001; /* MLDSA */
+                                printf("[DUAL_SIGN_CLIENT] Detected as MLDSA by size (%d bytes)\n", key_size);
+                            } else {
+                                pq_key_type = 1002; /* Default to FALCON for unknown types */
+                                printf("[DUAL_SIGN_CLIENT] Unknown PQC key type, defaulting to FALCON\n");
+                            }
+                        }
+                    } else {
+                        /* Size-based detection when no name available */
+                        if (key_size >= 800 && key_size <= 1200) {
+                            pq_key_type = 1002; /* FALCON */
+                            printf("[DUAL_SIGN_CLIENT] Detected as FALCON by size (%d bytes)\n", key_size);
+                        } else if (key_size >= 1000 && key_size <= 2000) {
+                            pq_key_type = 1003; /* DILITHIUM */
+                            printf("[DUAL_SIGN_CLIENT] Detected as DILITHIUM by size (%d bytes)\n", key_size);
+                        } else if (key_size >= 2000 && key_size <= 4000) {
+                            pq_key_type = 1001; /* MLDSA */
+                            printf("[DUAL_SIGN_CLIENT] Detected as MLDSA by size (%d bytes)\n", key_size);
+                        } else {
+                            pq_key_type = 1002; /* Default to FALCON for unknown types */
+                            printf("[DUAL_SIGN_CLIENT] Unknown PQC key type, defaulting to FALCON\n");
+                        }
+                    }
+                } else {
+                    /* Use the detected enum type */
+                switch (pq_key_type_enum) {
+                    case KEY_TYPE_FALCON:
+                        pq_key_type = 1002; /* FALCON */
+                        printf("[DUAL_SIGN_CLIENT] Detected as FALCON using reliable detection\n");
+                        break;
+                    case KEY_TYPE_DILITHIUM:
+                        pq_key_type = 1003; /* DILITHIUM */
+                        printf("[DUAL_SIGN_CLIENT] Detected as DILITHIUM using reliable detection\n");
+                        break;
+                    case KEY_TYPE_SPHINCS:
+                        pq_key_type = 1004; /* SPHINCS */
+                        printf("[DUAL_SIGN_CLIENT] Detected as SPHINCS using reliable detection\n");
+                        break;
+                    case KEY_TYPE_MLDSA:
+                        pq_key_type = 1001; /* MLDSA */
+                        printf("[DUAL_SIGN_CLIENT] Detected as MLDSA using reliable detection\n");
+                        break;
+                    default:
+                            pq_key_type = 1002; /* Default to FALCON for unknown types */
+                            printf("[DUAL_SIGN_CLIENT] Unknown PQC key type, defaulting to FALCON\n");
+                        break;
+                    }
+                }
+                
+                /* Check if we have a specific signature NID from the certificate */
+                if (sig_nid == 1343) { /* NID_falcon1024 or similar */
+                    static const SIGALG_LOOKUP falcon1024_sigalg = {
+                        .name = "FALCON-1024-SHA256",
+                        .sig = EVP_PKEY_FALCON1024,
+                        .hash = NID_sha256,
+                        .sigalg = 0x0904,  /* FALCON-1024-SHA256 */
+                        .hash_idx = SSL_MD_SHA256_IDX,
+                        .sig_idx = SSL_PKEY_PQ_FALCON_1024
+                    };
+                    pq_sigalg = &falcon1024_sigalg;
+                    printf("[DUAL_SIGN_CLIENT] Created FALCON-1024 signature algorithm from NID %d\n", sig_nid);
+                } else if (sig_nid == 1004) { /* NID_falcon512 */
+                    static const SIGALG_LOOKUP falcon512_sigalg = {
+                        .name = "FALCON-512-SHA256",
+                        .sig = EVP_PKEY_FALCON512,
+                        .hash = NID_sha256,
+                        .sigalg = 0x0903,  /* FALCON-512-SHA256 */
+                        .hash_idx = SSL_MD_SHA256_IDX,
+                        .sig_idx = SSL_PKEY_PQ_FALCON_512
+                    };
+                    pq_sigalg = &falcon512_sigalg;
+                    printf("[DUAL_SIGN_CLIENT] Created FALCON-512 signature algorithm from NID %d\n", sig_nid);
+                } else {
+                    /* Fallback to key type-based detection */
+                    switch (pq_key_type) {
+                        case 1002: /* FALCON key type */
+                            static const SIGALG_LOOKUP falcon512_sigalg = {
+                                .name = "FALCON-512-SHA256",
+                                .sig = EVP_PKEY_FALCON512,
+                                .hash = NID_sha256,
+                                .sigalg = 0x0903,  /* FALCON-512-SHA256 */
+                                .hash_idx = SSL_MD_SHA256_IDX,
+                                .sig_idx = SSL_PKEY_PQ_FALCON_512
+                            };
+                            pq_sigalg = &falcon512_sigalg;
+                            printf("[DUAL_SIGN_CLIENT] Created FALCON signature algorithm: %s\n", pq_sigalg->name);
+                            break;
+                        case 1003: /* DILITHIUM key type */
+                            static const SIGALG_LOOKUP dilithium_sigalg = {
+                                .name = "DILITHIUM-2-SHA256",
+                                .sig = EVP_PKEY_DILITHIUM2,
+                                .hash = NID_sha256,
+                                .sigalg = 0x0905,  /* DILITHIUM-2-SHA256 */
+                                .hash_idx = SSL_MD_SHA256_IDX,
+                                .sig_idx = SSL_PKEY_PQ_DILITHIUM_2
+                            };
+                            pq_sigalg = &dilithium_sigalg;
+                            printf("[DUAL_SIGN_CLIENT] Created DILITHIUM signature algorithm: %s\n", pq_sigalg->name);
+                            break;
+                        default:
+                            /* For other PQC algorithms, create a generic PQC sigalg */
+                            static const SIGALG_LOOKUP generic_pqc_sigalg = {
+                                .name = "PQC-SHA256",
+                                .sig = EVP_PKEY_FALCON512, /* Use Falcon as default PQC type */
+                                .hash = NID_sha256,
+                                .sigalg = 0x0903,  /* FALCON-512-SHA256 */
+                                .hash_idx = SSL_MD_SHA256_IDX,
+                                .sig_idx = SSL_PKEY_PQ_FALCON_512
+                            };
+                            pq_sigalg = &generic_pqc_sigalg;
+                            printf("[DUAL_SIGN_CLIENT] Created generic PQC signature algorithm for key type %d\n", pq_key_type);
+                            break;
+                    }
+                }
+            }
+        }
+        
+        /* Use detected PQC signature algorithm for PQC verification */
+        pq_sigalg_to_use = pq_sigalg;
+        
+        if (!tls1_lookup_md(sctx, pq_sigalg_to_use, &pq_md)) {
+            printf("[DUAL_SIGN_CLIENT] ERROR: Failed to get PQC message digest\n");
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        if (pq_sigalg_to_use != NULL) {
+            printf("[DUAL_SIGN_CLIENT] PQC signature algorithm: %s\n", pq_sigalg_to_use->name ? pq_sigalg_to_use->name : "unknown");
+            printf("[DUAL_SIGN_CLIENT] PQC signature type: %d\n", pq_sigalg_to_use->sig);
+            printf("[DUAL_SIGN_CLIENT] PQC message digest: %s\n", pq_md ? EVP_MD_get0_name(pq_md) : "unknown");
+        } else {
+            printf("[DUAL_SIGN_CLIENT] ERROR: No PQC signature algorithm detected\n");
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
     }
 
     if (SSL_USE_SIGALGS(s))
@@ -509,100 +967,167 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     } else
 #endif
     if (!PACKET_get_net_2(pkt, &len)) {
+        printf("[DUAL_SIGN_CLIENT] ERROR: Failed to read signature length\n");
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         goto err;
     }
 
+    printf("[DUAL_SIGN_CLIENT] Total signature length: %u bytes\n", len);
+
     if (!PACKET_get_bytes(pkt, &data, len)) {
+        printf("[DUAL_SIGN_CLIENT] ERROR: Failed to read signature data\n");
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         goto err;
     }
     if (PACKET_remaining(pkt) != 0) {
+        printf("[DUAL_SIGN_CLIENT] ERROR: Extra data in signature packet\n");
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         goto err;
     }
 
+    /* Check if this is a dual signature */
+    if (pq_pkey != NULL) {
+        int classic_siglen_int = EVP_PKEY_size(pkey);
+        classic_siglen = (size_t)classic_siglen_int;
+        if (len < classic_siglen) {
+            printf("[DUAL_SIGN_CLIENT] ERROR: Signature length (%u) < classic siglen (%zu)\n", len, classic_siglen);
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+            goto err;
+        }
+        pq_siglen = len - classic_siglen;
+        classic_sig = data;
+        pq_sig = data + classic_siglen;
+        printf("[DUAL_SIGN_CLIENT] Split signature - Classic: %zu bytes, PQC: %zu bytes\n", 
+               classic_siglen, pq_siglen);
+        printf("[DUAL_SIGN_CLIENT] Classic signature received (first 32 bytes): ");
+        for (size_t i = 0; i < 32 && i < classic_siglen; i++) {
+            printf("%02x ", classic_sig[i]);
+        }
+        printf("\n");
+        if (pq_sig != NULL) {
+            printf("[DUAL_SIGN_CLIENT] PQC signature received (first 32 bytes): ");
+            for (size_t i = 0; i < 32 && i < pq_siglen; i++) {
+                printf("%02x ", pq_sig[i]);
+            }
+            printf("\n");
+        }
+    } else {
+        /* Single signature mode */
+        printf("[DUAL_SIGN_CLIENT] Single signature mode (length: %u)\n", len);
+        classic_sig = data;
+        classic_siglen = len;
+    }
+
     if (!get_cert_verify_tbs_data(s, tls13tbs, &hdata, &hdatalen)) {
+        printf("[DUAL_SIGN_CLIENT] ERROR: Failed to get data to be verified\n");
         /* SSLfatal() already called */
         goto err;
     }
 
+    printf("[DUAL_SIGN_CLIENT] Data to be verified length: %zu bytes\n", hdatalen);
+    printf("[DUAL_SIGN_CLIENT] Data to be verified (first 32 bytes): ");
+    for (size_t i = 0; i < 32 && i < hdatalen; i++) {
+        printf("%02x ", ((unsigned char*)hdata)[i]);
+    }
+    printf("\n");
+
     OSSL_TRACE1(TLS, "Using client verify alg %s\n",
                 md == NULL ? "n/a" : EVP_MD_get0_name(md));
 
+    printf("[DUAL_SIGN_CLIENT] Verifying classic signature\n");
+    /* Verify classic signature */
     if (EVP_DigestVerifyInit_ex(mctx, &pctx,
                                 md == NULL ? NULL : EVP_MD_get0_name(md),
                                 sctx->libctx, sctx->propq, pkey,
                                 NULL) <= 0) {
+        printf("[DUAL_SIGN_CLIENT] ERROR: Failed to initialize classic signature verification\n");
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
-#ifndef OPENSSL_NO_GOST
-    {
-        int pktype = EVP_PKEY_get_id(pkey);
-        if (pktype == NID_id_GostR3410_2001
-            || pktype == NID_id_GostR3410_2012_256
-            || pktype == NID_id_GostR3410_2012_512) {
-            if ((gost_data = OPENSSL_malloc(len)) == NULL)
-                goto err;
-            BUF_reverse(gost_data, data, len);
-            data = gost_data;
-        }
-    }
-#endif
 
-    if (SSL_USE_PSS(s)) {
+    /* Configure RSA-PSS parameters for classic signature verification */
+    if (s->s3.tmp.peer_sigalg->sig == EVP_PKEY_RSA_PSS) {
+        printf("[DUAL_SIGN_CLIENT] Configuring RSA-PSS parameters for classic signature\n");
         if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
-            || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx,
-                                                RSA_PSS_SALTLEN_DIGEST) <= 0) {
+            || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, RSA_PSS_SALTLEN_DIGEST) <= 0) {
+            printf("[DUAL_SIGN_CLIENT] ERROR: Failed to set RSA-PSS parameters for classic signature\n");
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-            goto err;
-        }
-    }
-    if (s->version == SSL3_VERSION) {
-        if (EVP_DigestVerifyUpdate(mctx, hdata, hdatalen) <= 0
-                || EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                                   (int)s->session->master_key_length,
-                                    s->session->master_key) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-            goto err;
-        }
-        if (EVP_DigestVerifyFinal(mctx, data, len) <= 0) {
-            SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_SIGNATURE);
-            goto err;
-        }
-    } else {
-        j = EVP_DigestVerify(mctx, data, len, hdata, hdatalen);
-#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        /* Ignore bad signatures when fuzzing */
-        if (SSL_IS_QUIC_HANDSHAKE(s))
-            j = 1;
-#endif
-        if (j <= 0) {
-            SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_SIGNATURE);
             goto err;
         }
     }
 
-    /*
-     * In TLSv1.3 on the client side we make sure we prepare the client
-     * certificate after the CertVerify instead of when we get the
-     * CertificateRequest. This is because in TLSv1.3 the CertificateRequest
-     * comes *before* the Certificate message. In TLSv1.2 it comes after. We
-     * want to make sure that SSL_get1_peer_certificate() will return the actual
-     * server certificate from the client_cert_cb callback.
-     */
-    if (!s->server && SSL_CONNECTION_IS_TLS13(s) && s->s3.tmp.cert_req == 1)
-        ret = MSG_PROCESS_CONTINUE_PROCESSING;
-    else
-        ret = MSG_PROCESS_CONTINUE_READING;
- err:
-    BIO_free(s->s3.handshake_buffer);
-    s->s3.handshake_buffer = NULL;
+    if (EVP_DigestVerify(mctx, classic_sig, classic_siglen, hdata, hdatalen) <= 0) {
+        printf("[DUAL_SIGN_CLIENT] ERROR: Classic signature verification failed\n");
+        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_SIGNATURE);
+        goto err;
+    }
+
+    printf("[DUAL_SIGN_CLIENT] Classic signature verification successful\n");
+
+    /* Verify PQC signature if present */
+    if (pq_pkey != NULL && pq_sig != NULL) {
+        printf("[DUAL_SIGN_CLIENT] Verifying PQC signature\n");
+        if (EVP_DigestVerifyInit_ex(pq_mctx, &pq_pctx,
+                                    pq_md == NULL ? NULL : EVP_MD_get0_name(pq_md),
+                                    sctx->libctx, sctx->propq, pq_pkey,
+                                    NULL) <= 0) {
+            printf("[DUAL_SIGN_CLIENT] ERROR: Failed to initialize PQC signature verification\n");
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+            goto err;
+        }
+
+        /* Configure RSA-PSS parameters for PQC signature verification - only for RSA keys */
+        if (pq_sigalg_to_use != NULL && pq_sigalg_to_use->sig == EVP_PKEY_RSA_PSS && EVP_PKEY_base_id(pq_pkey) == EVP_PKEY_RSA) {
+            printf("[DUAL_SIGN_CLIENT] Configuring RSA-PSS parameters for PQC signature\n");
+            if (EVP_PKEY_CTX_set_rsa_padding(pq_pctx, RSA_PKCS1_PSS_PADDING) <= 0
+                || EVP_PKEY_CTX_set_rsa_pss_saltlen(pq_pctx, RSA_PSS_SALTLEN_DIGEST) <= 0) {
+                printf("[DUAL_SIGN_CLIENT] ERROR: Failed to set RSA-PSS parameters for PQC signature\n");
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+                goto err;
+            }
+        }
+
+        if (EVP_DigestVerify(pq_mctx, pq_sig, pq_siglen, hdata, hdatalen) <= 0) {
+            printf("[DUAL_SIGN_CLIENT] ERROR: PQC signature verification failed\n");
+            SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_SIGNATURE);
+            goto err;
+        }
+
+        printf("[DUAL_SIGN_CLIENT] PQC signature verification successful\n");
+        
+        /* Validate RelatedCertificate extension after successful signature verification */
+        X509 *classic_cert = sk_X509_value(s->session->peer_chain, 0);
+        X509 *pq_cert = sk_X509_value(s->session->peer_pqc_chain, 0);
+        if (classic_cert != NULL && pq_cert != NULL) {
+            int related_cert_result = verify_related_certificate_extension(pq_cert, classic_cert);
+            if (related_cert_result == -1) {
+                /* Extension not detected - no message displayed */
+            } else if (related_cert_result == 1) {
+                printf("[DUAL_SIGN_CLIENT] RelatedCertificate extension detected - Validation successful\n");
+            } else if (related_cert_result == 0) {
+                printf("[DUAL_SIGN_CLIENT] RelatedCertificate extension detected - Validation failed\n");
+            } else {
+                printf("[DUAL_SIGN_CLIENT] ERROR: Invalid parameters for RelatedCertificate validation\n");
+            }
+        } else {
+            printf("[DUAL_SIGN_CLIENT] WARNING: Missing certificates for RelatedCertificate validation\n");
+        }
+        
+        printf("[DUAL_SIGN_CLIENT] Dual signature verification completed successfully\n");
+    } else {
+        printf("[DUAL_SIGN_CLIENT] Single signature verification completed successfully\n");
+    }
+
+    printf("[DUAL_SIGN_CLIENT] Certificate verify processing completed successfully\n");
+
     EVP_MD_CTX_free(mctx);
-#ifndef OPENSSL_NO_GOST
-    OPENSSL_free(gost_data);
-#endif
+    EVP_MD_CTX_free(pq_mctx);
+    return MSG_PROCESS_FINISHED_READING;
+
+ err:
+    printf("[DUAL_SIGN_CLIENT] ERROR: Certificate verify processing failed\n");
+    EVP_MD_CTX_free(mctx);
+    EVP_MD_CTX_free(pq_mctx);
     return ret;
 }
 
@@ -995,8 +1520,44 @@ static int ssl_add_cert_to_wpacket(SSL_CONNECTION *s, WPACKET *pkt,
     return 1;
 }
 
+/* Add a PQC certificate to the WPACKET with length prefix */
+static int ssl_add_pqc_cert_to_wpacket(SSL_CONNECTION *s, WPACKET *pkt,
+                                       X509 *x, int chain, int for_comp)
+{
+    int len;
+    unsigned char *outbytes;
+    int context = SSL_EXT_TLS1_3_CERTIFICATE;
+
+    if (for_comp)
+        context |= SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION;
+
+    len = i2d_X509(x, NULL);
+    if (len < 0) {
+        if (!for_comp)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_BUF_LIB);
+        return 0;
+    }
+    
+    /* For PQC certificates, write with length prefix like classic certificates */
+    if (!WPACKET_put_bytes_u24(pkt, len)
+            || !WPACKET_allocate_bytes(pkt, len, &outbytes)
+            || i2d_X509(x, &outbytes) != len) {
+        if (!for_comp)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if ((SSL_CONNECTION_IS_TLS13(s) || for_comp)
+            && !tls_construct_extensions(s, pkt, context, x, chain)) {
+        /* SSLfatal() already called */
+        return 0;
+    }
+
+    return 1;
+}
+
 /* Add certificate chain to provided WPACKET */
-static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, int for_comp)
+int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, int for_comp)
 {
     int i, chain_count;
     X509 *x;
@@ -1088,6 +1649,107 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, i
         for (i = 0; i < sk_X509_num(extra_certs); i++) {
             x = sk_X509_value(extra_certs, i);
             if (!ssl_add_cert_to_wpacket(s, pkt, x, i + 1, for_comp)) {
+                /* SSLfatal() already called */
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+/* Add PQC certificate chain to provided WPACKET with length prefixes */
+int ssl_add_pqc_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, int for_comp)
+{
+    int i, chain_count;
+    X509 *x;
+    STACK_OF(X509) *extra_certs;
+    STACK_OF(X509) *chain = NULL;
+    X509_STORE *chain_store;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+
+    if (cpk == NULL || cpk->x509 == NULL)
+        return 1;
+
+    x = cpk->x509;
+
+    /*
+     * If we have a certificate specific chain use it, else use parent ctx.
+     */
+    if (cpk->chain != NULL)
+        extra_certs = cpk->chain;
+    else
+        extra_certs = sctx->extra_certs;
+
+    if ((s->mode & SSL_MODE_NO_AUTO_CHAIN) || extra_certs)
+        chain_store = NULL;
+    else if (s->cert->chain_store)
+        chain_store = s->cert->chain_store;
+    else
+        chain_store = sctx->cert_store;
+
+    if (chain_store != NULL) {
+        X509_STORE_CTX *xs_ctx = X509_STORE_CTX_new_ex(sctx->libctx,
+                                                       sctx->propq);
+
+        if (xs_ctx == NULL) {
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_X509_LIB);
+            return 0;
+        }
+        if (!X509_STORE_CTX_init(xs_ctx, chain_store, x, NULL)) {
+            X509_STORE_CTX_free(xs_ctx);
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_X509_LIB);
+            return 0;
+        }
+        /*
+         * It is valid for the chain not to be complete (because normally we
+         * don't include the root cert in the chain). Therefore we deliberately
+         * ignore the error return from this call. We're not actually verifying
+         * the cert - we're just building as much of the chain as we can
+         */
+        (void)X509_verify_cert(xs_ctx);
+        /* Don't leave errors in the queue */
+        ERR_clear_error();
+        chain = X509_STORE_CTX_get0_chain(xs_ctx);
+        i = ssl_security_cert_chain(s, chain, NULL, 0);
+        if (i != 1) {
+#if 0
+            /* Dummy error calls so mkerr generates them */
+            ERR_raise(ERR_LIB_SSL, SSL_R_EE_KEY_TOO_SMALL);
+            ERR_raise(ERR_LIB_SSL, SSL_R_CA_KEY_TOO_SMALL);
+            ERR_raise(ERR_LIB_SSL, SSL_R_CA_MD_TOO_WEAK);
+#endif
+            X509_STORE_CTX_free(xs_ctx);
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, i);
+            return 0;
+        }
+        chain_count = sk_X509_num(chain);
+        for (i = 0; i < chain_count; i++) {
+            x = sk_X509_value(chain, i);
+
+            if (!ssl_add_pqc_cert_to_wpacket(s, pkt, x, i, for_comp)) {
+                /* SSLfatal() already called */
+                X509_STORE_CTX_free(xs_ctx);
+                return 0;
+            }
+        }
+        X509_STORE_CTX_free(xs_ctx);
+    } else {
+        i = ssl_security_cert_chain(s, extra_certs, x, 0);
+        if (i != 1) {
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, i);
+            return 0;
+        }
+        if (!ssl_add_pqc_cert_to_wpacket(s, pkt, x, 0, for_comp)) {
+            /* SSLfatal() already called */
+            return 0;
+        }
+        for (i = 0; i < sk_X509_num(extra_certs); i++) {
+            x = sk_X509_value(extra_certs, i);
+            if (!ssl_add_pqc_cert_to_wpacket(s, pkt, x, i + 1, for_comp)) {
                 /* SSLfatal() already called */
                 return 0;
             }

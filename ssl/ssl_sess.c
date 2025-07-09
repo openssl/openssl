@@ -161,6 +161,8 @@ static SSL_SESSION *ssl_session_dup_intern(const SSL_SESSION *src, int ticket)
     dest->srp_username = NULL;
 #endif
     dest->peer_chain = NULL;
+    dest->peer_pqc_chain = NULL;
+    dest->dual_certs_enabled = 0;
     dest->peer = NULL;
     dest->peer_rpk = NULL;
     dest->ticket_appdata = NULL;
@@ -202,6 +204,16 @@ static SSL_SESSION *ssl_session_dup_intern(const SSL_SESSION *src, int ticket)
             goto err;
         dest->peer_rpk = src->peer_rpk;
     }
+
+    if (src->peer_pqc_chain != NULL) {
+        dest->peer_pqc_chain = X509_chain_up_ref(src->peer_pqc_chain);
+        if (dest->peer_pqc_chain == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+            goto err;
+        }
+    }
+
+    dest->dual_certs_enabled = src->dual_certs_enabled;
 
 #ifndef OPENSSL_NO_PSK
     if (src->psk_identity_hint) {
@@ -855,6 +867,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     X509_free(ss->peer);
     EVP_PKEY_free(ss->peer_rpk);
     OSSL_STACK_OF_X509_free(ss->peer_chain);
+    OSSL_STACK_OF_X509_free(ss->peer_pqc_chain);
     OPENSSL_free(ss->ext.hostname);
     OPENSSL_free(ss->ext.tick);
 #ifndef OPENSSL_NO_PSK
@@ -1087,6 +1100,21 @@ X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
 EVP_PKEY *SSL_SESSION_get0_peer_rpk(SSL_SESSION *s)
 {
     return s->peer_rpk;
+}
+
+STACK_OF(X509) *SSL_SESSION_get0_peer_chain(SSL_SESSION *s)
+{
+    return s->peer_chain;
+}
+
+STACK_OF(X509) *SSL_SESSION_get0_peer_pqc_chain(SSL_SESSION *s)
+{
+    return s->peer_pqc_chain;
+}
+
+int SSL_SESSION_has_dual_certs(SSL_SESSION *s)
+{
+    return s->dual_certs_enabled;
 }
 
 int SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,

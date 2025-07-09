@@ -7855,3 +7855,247 @@ int SSL_CTX_get0_server_cert_type(const SSL_CTX *ctx, unsigned char **t, size_t 
     *len = ctx->server_cert_type_len;
     return 1;
 }
+
+/*
+ * Enable dual certificate mode for post-quantum readiness.
+ * This allows the SSL context to use both classic and post-quantum certificates.
+ */
+int SSL_CTX_enable_dual_certs(SSL_CTX *ctx)
+{
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ctx->cert == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* Enable dual certificate mode */
+    ctx->cert->dual_certs_enabled = 1;
+
+    return 1;
+}
+
+/*
+ * Set the post-quantum certificate, private key, and certificate chain for dual certificate mode.
+ * This function sets the certificate, its associated private key, and the complete certificate chain.
+ */
+int SSL_CTX_set_pq_certificate(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key, STACK_OF(X509) *chain)
+{
+    CERT_PKEY *pqkey;
+    EVP_PKEY *pubkey;
+    size_t i;
+
+    if (ctx == NULL || cert == NULL || key == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ctx->cert == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* Verify that dual certificate mode is enabled */
+    if (!ctx->cert->dual_certs_enabled) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_DUAL_CERTS_NOT_ENABLED);
+        return 0;
+    }
+
+    /* Get the public key from the certificate */
+    pubkey = X509_get0_pubkey(cert);
+    if (pubkey == NULL) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_X509_LIB);
+        return 0;
+    }
+
+    /* Verify that the private key matches the certificate */
+    if (!X509_check_private_key(cert, key)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_PRIVATE_KEY_MISMATCH);
+        return 0;
+    }
+
+    /* Check if the key type is supported for post-quantum certificates */
+    if (ssl_cert_lookup_by_pkey(pubkey, &i, ctx) == NULL) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+        return 0;
+    }
+
+    /* Allocate pqkey if not already allocated */
+    if (ctx->cert->pqkey == NULL) {
+        ctx->cert->pqkey = OPENSSL_zalloc(sizeof(CERT_PKEY));
+        if (ctx->cert->pqkey == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+    }
+
+    pqkey = ctx->cert->pqkey;
+
+    /* Free any existing certificate and key */
+    X509_free(pqkey->x509);
+    EVP_PKEY_free(pqkey->privatekey);
+
+    /* Set the new certificate and private key */
+    X509_up_ref(cert);
+    pqkey->x509 = cert;
+    EVP_PKEY_up_ref(key);
+    pqkey->privatekey = key;
+
+    /* Set the certificate chain */
+    sk_X509_pop_free(ctx->cert->pq_chain, X509_free);
+    ctx->cert->pq_chain = NULL;
+
+    if (chain != NULL) {
+        ctx->cert->pq_chain = sk_X509_dup(chain);
+        if (ctx->cert->pq_chain == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+/*
+ * Détection fiable du type de clé (classique ou PQC)
+ * Utilise les NID OpenSSL pour une détection fiable et standard
+ */
+KEY_TYPE get_key_type_from_evp_pkey(const EVP_PKEY *pkey) {
+    if (!pkey) {
+        printf("[KEY_TYPE_DETECTION] ERROR: NULL pkey provided\n");
+        return KEY_TYPE_UNKNOWN;
+    }
+    
+    int nid = EVP_PKEY_id(pkey);
+    
+    
+    KEY_TYPE result;
+    switch (nid) {
+        case EVP_PKEY_RSA: 
+            result = KEY_TYPE_RSA;
+            printf("[KEY_TYPE_DETECTION] Detected RSA key\n");
+            break;
+        case EVP_PKEY_EC: 
+            result = KEY_TYPE_EC;
+            printf("[KEY_TYPE_DETECTION] Detected EC key\n");
+            break;
+        case EVP_PKEY_ED25519: 
+            result = KEY_TYPE_ED25519;
+            printf("[KEY_TYPE_DETECTION] Detected ED25519 key\n");
+            break;
+        case EVP_PKEY_ED448: 
+            result = KEY_TYPE_ED448;
+            printf("[KEY_TYPE_DETECTION] Detected ED448 key\n");
+            break;
+        // PQC NIDs (à adapter selon vos définitions)
+#ifdef NID_dilithium2
+        case NID_dilithium2:
+#endif
+#ifdef NID_dilithium3
+        case NID_dilithium3:
+#endif
+#ifdef NID_dilithium5
+        case NID_dilithium5:
+#endif
+            result = KEY_TYPE_DILITHIUM;
+            printf("[KEY_TYPE_DETECTION] Detected DILITHIUM key\n");
+            break;
+#ifdef NID_falcon512
+        case NID_falcon512:
+#endif
+#ifdef NID_falcon1024
+        case NID_falcon1024:
+#endif
+            result = KEY_TYPE_FALCON;
+            printf("[KEY_TYPE_DETECTION] Detected FALCON key\n");
+            break;
+#ifdef NID_sphincs_sha256_128f_robust
+        case NID_sphincs_sha256_128f_robust:
+#endif
+#ifdef NID_sphincs_sha256_192f_robust
+        case NID_sphincs_sha256_192f_robust:
+#endif
+#ifdef NID_sphincs_sha256_256f_robust
+        case NID_sphincs_sha256_256f_robust:
+#endif
+            result = KEY_TYPE_SPHINCS;
+            printf("[KEY_TYPE_DETECTION] Detected SPHINCS key\n");
+            break;
+#ifdef NID_mldsa_44
+        case NID_mldsa_44:
+#endif
+#ifdef NID_mldsa_65
+        case NID_mldsa_65:
+#endif
+            result = KEY_TYPE_MLDSA;
+            printf("[KEY_TYPE_DETECTION] Detected MLDSA key\n");
+            break;
+        default:
+            /* Enhanced detection for unknown NIDs */
+            if (nid == -1) {
+        
+                /* Try to get key properties for better detection */
+                int key_size = EVP_PKEY_size(pkey);
+                const char *key_type_name = EVP_PKEY_get0_type_name(pkey);
+                
+                printf("[KEY_TYPE_DETECTION] Key size: %d bytes, Name: %s\n", 
+                       key_size, key_type_name ? key_type_name : "unknown");
+                
+                /* Try name-based detection first */
+                if (key_type_name != NULL) {
+                    if (strstr(key_type_name, "falcon") != NULL || strstr(key_type_name, "FALCON") != NULL) {
+                        result = KEY_TYPE_FALCON;
+                        printf("[KEY_TYPE_DETECTION] Detected FALCON by name\n");
+                    } else if (strstr(key_type_name, "dilithium") != NULL || strstr(key_type_name, "DILITHIUM") != NULL) {
+                        result = KEY_TYPE_DILITHIUM;
+                        printf("[KEY_TYPE_DETECTION] Detected DILITHIUM by name\n");
+                    } else if (strstr(key_type_name, "mldsa") != NULL || strstr(key_type_name, "MLDSA") != NULL) {
+                        result = KEY_TYPE_MLDSA;
+                        printf("[KEY_TYPE_DETECTION] Detected MLDSA by name\n");
+                    } else if (strstr(key_type_name, "sphincs") != NULL || strstr(key_type_name, "SPHINCS") != NULL) {
+                        result = KEY_TYPE_SPHINCS;
+                        printf("[KEY_TYPE_DETECTION] Detected SPHINCS by name\n");
+                    } else {
+                        /* Size-based detection as fallback */
+                        if (key_size >= 800 && key_size <= 1200) {
+                            result = KEY_TYPE_FALCON;
+                            printf("[KEY_TYPE_DETECTION] Detected FALCON by size (%d bytes)\n", key_size);
+                        } else if (key_size >= 1000 && key_size <= 2000) {
+                            result = KEY_TYPE_DILITHIUM;
+                            printf("[KEY_TYPE_DETECTION] Detected DILITHIUM by size (%d bytes)\n", key_size);
+                        } else if (key_size >= 2000 && key_size <= 4000) {
+                            result = KEY_TYPE_MLDSA;
+                            printf("[KEY_TYPE_DETECTION] Detected MLDSA by size (%d bytes)\n", key_size);
+                        } else {
+                            result = KEY_TYPE_FALCON; /* Default to FALCON for unknown types */
+                            printf("[KEY_TYPE_DETECTION] Unknown PQC key type, defaulting to FALCON\n");
+                        }
+                    }
+                } else {
+                    /* Size-based detection when no name available */
+                    if (key_size >= 800 && key_size <= 1200) {
+                        result = KEY_TYPE_FALCON;
+                        printf("[KEY_TYPE_DETECTION] Detected FALCON by size (%d bytes)\n", key_size);
+                    } else if (key_size >= 1000 && key_size <= 2000) {
+                        result = KEY_TYPE_DILITHIUM;
+                        printf("[KEY_TYPE_DETECTION] Detected DILITHIUM by size (%d bytes)\n", key_size);
+                    } else if (key_size >= 2000 && key_size <= 4000) {
+                        result = KEY_TYPE_MLDSA;
+                        printf("[KEY_TYPE_DETECTION] Detected MLDSA by size (%d bytes)\n", key_size);
+                    } else {
+                        result = KEY_TYPE_FALCON; /* Default to FALCON for unknown types */
+                        printf("[KEY_TYPE_DETECTION] Unknown PQC key type, defaulting to FALCON\n");
+                    }
+                }
+            } else {
+            result = KEY_TYPE_UNKNOWN;
+            printf("[KEY_TYPE_DETECTION] Unknown key type (NID: %d)\n", nid);
+            }
+            break;
+    }
+    
+    return result;
+}

@@ -440,6 +440,8 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
 {
     OSSL_STATEM *st = &s->statem;
 
+    printf("[DUAL_STATE_CLIENT] Current handshake state: %d\n", st->hand_state);
+
     /*
      * Note: There are no cases for TLS_ST_BEFORE because we haven't negotiated
      * TLSv1.3 yet at that point. They are handled by
@@ -448,6 +450,7 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
     switch (st->hand_state) {
     default:
         /* Shouldn't happen */
+        printf("[DUAL_STATE_CLIENT] ERROR: Unknown handshake state: %d\n", st->hand_state);
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return WRITE_TRAN_ERROR;
 
@@ -470,6 +473,22 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
         }
         st->hand_state = TLS_ST_OK;
         return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_CR_CERT:
+        /* After receiving certificate, wait for certificate verify */
+        return WRITE_TRAN_FINISHED;
+
+    case TLS_ST_CR_COMP_CERT:
+        /* After receiving compressed certificate, wait for certificate verify */
+        return WRITE_TRAN_FINISHED;
+
+    case TLS_ST_CR_ENCRYPTED_EXTENSIONS:
+        /* After receiving encrypted extensions, wait for next message */
+        return WRITE_TRAN_FINISHED;
+
+    case TLS_ST_CR_CERT_VRFY:
+        /* After receiving certificate verify, wait for next message */
+        return WRITE_TRAN_FINISHED;
 
     case TLS_ST_CR_FINISHED:
         if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY
@@ -1981,15 +2000,22 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL_CONNECTION *s,
     unsigned int context = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
+    printf("[DUAL_CERT_CLIENT_DEBUG] === Starting certificate processing ===\n");
+    printf("[DUAL_CERT_CLIENT_DEBUG] Server cert type: %d\n", s->ext.server_cert_type);
+    printf("[DUAL_CERT_CLIENT_DEBUG] TLS version: %s\n", SSL_CONNECTION_IS_TLS13(s) ? "TLS 1.3" : "TLS 1.2");
+
     if (s->ext.server_cert_type == TLSEXT_cert_type_rpk)
         return tls_process_server_rpk(s, pkt);
     if (s->ext.server_cert_type != TLSEXT_cert_type_x509) {
+        printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Unsupported certificate type: %d\n", s->ext.server_cert_type);
         SSLfatal(s, SSL_AD_UNSUPPORTED_CERTIFICATE,
                  SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         goto err;
     }
 
+    printf("[DUAL_CERT_CLIENT_DEBUG] Creating peer chain for classic certificates\n");
     if ((s->session->peer_chain = sk_X509_new_null()) == NULL) {
+        printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to create peer chain\n");
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         goto err;
     }
@@ -1997,68 +2023,209 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL_CONNECTION *s,
     if ((SSL_CONNECTION_IS_TLS13(s) && !PACKET_get_1(pkt, &context))
             || context != 0
             || !PACKET_get_net_3(pkt, &cert_list_len)
-            || PACKET_remaining(pkt) != cert_list_len
             || PACKET_remaining(pkt) == 0) {
+        printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to read certificate list header\n");
+        printf("[DUAL_CERT_CLIENT_DEBUG] Context: %u, Cert list len: %lu, Remaining: %zu\n", 
+               context, cert_list_len, PACKET_remaining(pkt));
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         goto err;
     }
+    
+    printf("[DUAL_CERT_CLIENT_DEBUG] Certificate list length: %lu bytes\n", cert_list_len);
+    printf("[DUAL_CERT_CLIENT_DEBUG] Remaining data: %zu bytes\n", PACKET_remaining(pkt));
+    
     for (chainidx = 0; PACKET_remaining(pkt); chainidx++) {
-        if (!PACKET_get_net_3(pkt, &cert_len)
-            || !PACKET_get_bytes(pkt, &certbytes, cert_len)) {
+        printf("[DUAL_CERT_CLIENT_DEBUG] --- Processing certificate %zu ---\n", chainidx);
+        
+        if (!PACKET_get_net_3(pkt, &cert_len)) {
+            printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to read certificate length for cert %zu\n", chainidx);
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_CERT_LENGTH_MISMATCH);
+        goto err;
+    }
+        
+        printf("[DUAL_CERT_CLIENT_DEBUG] Certificate %zu length: %lu bytes\n", chainidx, cert_len);
+
+        // Si la longueur est 0, c'est probablement le délimiteur
+        if (cert_len == 0) {
+            printf("[DUAL_CERT_CLIENT_DEBUG] *** DELIMITER DETECTED after %zu certificates ***\n", chainidx);
+            printf("[DUAL_CERT_CLIENT_DEBUG] Remaining data after delimiter: %zu bytes\n", PACKET_remaining(pkt));
+
+            // Lire les certificats PQC après le délimiteur
+            printf("[DUAL_CERT_CLIENT_DEBUG] *** READING PQC CERTIFICATES ***\n");
+        
+            // Créer la chaîne PQC dans la session
+            printf("[DUAL_CERT_CLIENT_DEBUG] Creating PQC peer chain\n");
+            if (s->session->peer_pqc_chain == NULL) {
+                s->session->peer_pqc_chain = sk_X509_new_null();
+                if (s->session->peer_pqc_chain == NULL) {
+                    printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to create PQC peer chain\n");
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+                    goto err;
+                }
+                printf("[DUAL_CERT_CLIENT_DEBUG] PQC peer chain created successfully\n");
+            }
+            
+            // Marquer que les certificats dual sont activés
+            s->session->dual_certs_enabled = 1;
+            printf("[DUAL_CERT_CLIENT_DEBUG] Dual certificates mode enabled\n");
+            
+            size_t pqc_chainidx = 0;
+            printf("[DUAL_CERT_CLIENT_DEBUG] Starting PQC certificate parsing loop\n");
+            while (PACKET_remaining(pkt) > 3) {
+                printf("[DUAL_CERT_CLIENT_DEBUG] PQC loop iteration %zu, remaining: %zu bytes\n", pqc_chainidx, PACKET_remaining(pkt));
+                
+                unsigned long pqc_cert_len;
+                if (!PACKET_get_net_3(pkt, &pqc_cert_len)) {
+                    printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to read PQC certificate length\n");
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_CERT_LENGTH_MISMATCH);
             goto err;
         }
-
-        certstart = certbytes;
-        x = X509_new_ex(sctx->libctx, sctx->propq);
-        if (x == NULL) {
+                
+                printf("[DUAL_CERT_CLIENT_DEBUG] PQC certificate %zu length: %lu bytes\n", pqc_chainidx, pqc_cert_len);
+        
+                if (pqc_cert_len == 0) {
+                    printf("[DUAL_CERT_CLIENT_DEBUG] *** END OF PQC CERTIFICATES ***\n");
+                    break;
+                }
+                
+                printf("[DUAL_CERT_CLIENT_DEBUG] [PQC] Certificate %zu length: %lu\n", pqc_chainidx, pqc_cert_len);
+        
+                const unsigned char *pqc_certbytes;
+                if (!PACKET_get_bytes(pkt, &pqc_certbytes, pqc_cert_len)) {
+                    printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to read PQC certificate data\n");
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_CERT_LENGTH_MISMATCH);
+            goto err;
+        }
+                
+                printf("[DUAL_CERT_CLIENT_DEBUG] PQC certificate data read successfully\n");
+        
+                // Parser le certificat PQC
+                const unsigned char *pqc_certstart = pqc_certbytes;
+                X509 *pqc_x = X509_new_ex(sctx->libctx, sctx->propq);
+                if (pqc_x == NULL) {
+                    printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to create X509 object for PQC certificate\n");
             SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_ASN1_LIB);
             goto err;
         }
-        if (d2i_X509(&x, (const unsigned char **)&certbytes,
-                     cert_len) == NULL) {
+        
+                printf("[DUAL_CERT_CLIENT_DEBUG] Parsing PQC certificate %zu...\n", pqc_chainidx);
+                if (d2i_X509(&pqc_x, (const unsigned char **)&pqc_certbytes, pqc_cert_len) == NULL) {
+                    printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to parse PQC certificate %zu\n", pqc_chainidx);
             SSLfatal(s, SSL_AD_BAD_CERTIFICATE, ERR_R_ASN1_LIB);
             goto err;
         }
-
-        if (certbytes != (certstart + cert_len)) {
+                
+                printf("[DUAL_CERT_CLIENT_DEBUG] PQC certificate %zu parsed successfully\n", pqc_chainidx);
+        
+                if (pqc_certbytes != (pqc_certstart + pqc_cert_len)) {
+                    printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Certificate length mismatch for PQC cert %zu\n", pqc_chainidx);
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_CERT_LENGTH_MISMATCH);
             goto err;
         }
-
-        if (SSL_CONNECTION_IS_TLS13(s)) {
-            RAW_EXTENSION *rawexts = NULL;
-            PACKET extensions;
-
-            if (!PACKET_get_length_prefixed_2(pkt, &extensions)) {
-                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_LENGTH);
+        
+                // Stocker le certificat PQC dans la chaîne PQC de la session
+                printf("[DUAL_CERT_CLIENT_DEBUG] Adding PQC certificate %zu to chain\n", pqc_chainidx);
+                if (!sk_X509_push(s->session->peer_pqc_chain, pqc_x)) {
+                    printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to add PQC certificate %zu to chain\n", pqc_chainidx);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+            goto err;
+        }
+                
+                printf("[DUAL_CERT_CLIENT_DEBUG] [PQC] Successfully stored PQC certificate %zu in session\n", pqc_chainidx);
+                
+                pqc_chainidx++;
+            }
+            
+            printf("[DUAL_CERT_CLIENT_DEBUG] PQC certificate processing completed\n");
+            break;
+        }
+        
+                    printf("[DUAL_CERT_CLIENT_DEBUG] Reading certificate %zu data (%lu bytes)\n", chainidx, cert_len);
+            if (!PACKET_get_bytes(pkt, &certbytes, cert_len)) {
+            printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to read certificate %zu data\n", chainidx);
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_CERT_LENGTH_MISMATCH);
                 goto err;
             }
+            
+        printf("[DUAL_CERT_CLIENT_DEBUG] Certificate %zu data read successfully\n", chainidx);
+            certstart = certbytes;
+            x = X509_new_ex(sctx->libctx, sctx->propq);
+            if (x == NULL) {
+            printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to create X509 object for certificate %zu\n", chainidx);
+                SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_ASN1_LIB);
+                goto err;
+            }
+        
+        printf("[DUAL_CERT_CLIENT_DEBUG] Parsing certificate %zu...\n", chainidx);
+        if (d2i_X509(&x, (const unsigned char **)&certbytes,
+                     cert_len) == NULL) {
+            printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to parse certificate %zu\n", chainidx);
+                SSLfatal(s, SSL_AD_BAD_CERTIFICATE, ERR_R_ASN1_LIB);
+                goto err;
+            }
+        
+        printf("[DUAL_CERT_CLIENT_DEBUG] Certificate %zu parsed successfully\n", chainidx);
+            
+            if (certbytes != (certstart + cert_len)) {
+            printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Certificate %zu length mismatch\n", chainidx);
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_CERT_LENGTH_MISMATCH);
+                goto err;
+            }
+            
+            if (SSL_CONNECTION_IS_TLS13(s)) {
+            printf("[DUAL_CERT_CLIENT_DEBUG] Processing TLS 1.3 extensions for certificate %zu\n", chainidx);
+                RAW_EXTENSION *rawexts = NULL;
+                PACKET extensions;
+
+                if (!PACKET_get_length_prefixed_2(pkt, &extensions)) {
+                printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to read extensions for certificate %zu\n", chainidx);
+                    SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_LENGTH);
+                    goto err;
+                }
             if (!tls_collect_extensions(s, &extensions,
                                         SSL_EXT_TLS1_3_CERTIFICATE, &rawexts,
                                         NULL, chainidx == 0)
                 || !tls_parse_all_extensions(s, SSL_EXT_TLS1_3_CERTIFICATE,
                                              rawexts, x, chainidx,
                                              PACKET_remaining(pkt) == 0)) {
-                OPENSSL_free(rawexts);
+                printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to process extensions for certificate %zu\n", chainidx);
+                    OPENSSL_free(rawexts);
                 /* SSLfatal already called */
-                goto err;
+                    goto err;
+                }
+                OPENSSL_free(rawexts);
+            printf("[DUAL_CERT_CLIENT_DEBUG] TLS 1.3 extensions processed for certificate %zu\n", chainidx);
             }
-            OPENSSL_free(rawexts);
-        }
-
+            
+        printf("[DUAL_CERT_CLIENT_DEBUG] Adding certificate %zu to classic chain\n", chainidx);
         if (!sk_X509_push(s->session->peer_chain, x)) {
+            printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to add certificate %zu to chain\n", chainidx);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
         }
+        printf("[DUAL_CERT_CLIENT_DEBUG] Certificate %zu added to classic chain successfully\n", chainidx);
         x = NULL;
     }
+    
+    printf("[DUAL_CERT_CLIENT_DEBUG] === Certificate processing completed ===\n");
+    printf("[DUAL_CERT_CLIENT_DEBUG] Classic certificates in chain: %d\n", sk_X509_num(s->session->peer_chain));
+    if (s->session->peer_pqc_chain != NULL) {
+        printf("[DUAL_CERT_CLIENT_DEBUG] PQC certificates in chain: %d\n", sk_X509_num(s->session->peer_pqc_chain));
+    } else {
+        printf("[DUAL_CERT_CLIENT_DEBUG] No PQC certificates in chain\n");
+    }
+    printf("[DUAL_CERT_CLIENT_DEBUG] Dual certificates enabled: %d\n", s->session->dual_certs_enabled);
+    
     return MSG_PROCESS_CONTINUE_PROCESSING;
 
- err:
+err:
+    printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Certificate processing failed\n");
     X509_free(x);
     OSSL_STACK_OF_X509_free(s->session->peer_chain);
     s->session->peer_chain = NULL;
+    OSSL_STACK_OF_X509_free(s->session->peer_pqc_chain);
+    s->session->peer_pqc_chain = NULL;
+    s->session->dual_certs_enabled = 0;
     return MSG_PROCESS_ERROR;
 }
 
@@ -2075,6 +2242,10 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
     const SSL_CERT_LOOKUP *clu;
     size_t certidx;
     int i;
+
+    printf("[DUAL_CERT_CLIENT_DEBUG] === Starting certificate post-processing ===\n");
+    printf("[DUAL_CERT_CLIENT_DEBUG] Server cert type: %d\n", s->ext.server_cert_type);
+    printf("[DUAL_CERT_CLIENT_DEBUG] Dual certs enabled: %d\n", s->session->dual_certs_enabled);
 
     if (s->ext.server_cert_type == TLSEXT_cert_type_rpk)
         return tls_post_process_server_rpk(s, wst);
@@ -2113,20 +2284,26 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
      * which we don't include in statem_srvr.c
      */
     x = sk_X509_value(s->session->peer_chain, 0);
+    printf("[DUAL_CERT_CLIENT_DEBUG] Got peer certificate from classic chain\n");
 
     pkey = X509_get0_pubkey(x);
+    printf("[DUAL_CERT_CLIENT_DEBUG] Classic peer public key type: %d\n", EVP_PKEY_get_id(pkey));
 
     if (pkey == NULL || EVP_PKEY_missing_parameters(pkey)) {
+        printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Invalid classic peer public key\n");
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS);
         return WORK_ERROR;
     }
 
+    printf("[DUAL_CERT_CLIENT_DEBUG] Looking up certificate type for classic key\n");
     if ((clu = ssl_cert_lookup_by_pkey(pkey, &certidx,
 				       SSL_CONNECTION_GET_CTX(s))) == NULL) {
+        printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Unknown classic certificate type\n");
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return WORK_ERROR;
     }
+    printf("[DUAL_CERT_CLIENT_DEBUG] Classic certificate type: %d\n", clu->nid);
     /*
      * Check certificate type is consistent with ciphersuite. For TLS 1.3
      * skip check since TLS 1.3 ciphersuites can be used with any certificate
@@ -2139,6 +2316,7 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
         }
     }
 
+    printf("[DUAL_CERT_CLIENT_DEBUG] Setting peer certificate and verification result\n");
     X509_free(s->session->peer);
     X509_up_ref(x);
     s->session->peer = x;
@@ -2146,6 +2324,9 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
     /* Ensure there is no RPK */
     EVP_PKEY_free(s->session->peer_rpk);
     s->session->peer_rpk = NULL;
+
+    printf("[DUAL_CERT_CLIENT_DEBUG] Classic certificate verification completed successfully\n");
+    printf("[DUAL_CERT_CLIENT_DEBUG] === Certificate post-processing completed ===\n");
 
     /* Save the current hash state for when we receive the CertificateVerify */
     if (SSL_CONNECTION_IS_TLS13(s)
@@ -2493,7 +2674,76 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL_CONNECTION *s, PACKET *pkt)
             goto err;
         }
 
-        if (!tls1_lookup_md(sctx, s->s3.tmp.peer_sigalg, &md)) {
+        /* Check if we have dual certificates and need to detect PQC signature algorithm */
+        const SIGALG_LOOKUP *pq_sigalg = NULL;
+        if (s->session && s->session->dual_certs_enabled && s->session->peer_pqc_chain) {
+            /* Get the first PQC certificate to determine signature algorithm */
+            X509 *pq_cert = sk_X509_value(s->session->peer_pqc_chain, 0);
+            if (pq_cert) {
+                int sig_nid = X509_get_signature_nid(pq_cert);
+                printf("[DUAL_SIGN_CLIENT] PQC certificate signature NID: %d\n", sig_nid);
+                
+                /* Map signature NID to SIGALG_LOOKUP - enhanced detection */
+                if (sig_nid == 1004) { /* NID_falcon512 */
+                    printf("[DUAL_SIGN_CLIENT] Detected falcon512 signature in PQC certificate\n");
+                    /* Create a SIGALG_LOOKUP for falcon512 manually, like the server does */
+                    static const SIGALG_LOOKUP falcon512_sigalg = {
+                        .name = "FALCON-512-SHA256",
+                        .sig = EVP_PKEY_FALCON512,
+                        .hash = NID_sha256,
+                        .sigalg = 0x0903,  /* FALCON-512-SHA256 */
+                        .hash_idx = SSL_MD_SHA256_IDX,
+                        .sig_idx = SSL_PKEY_PQ_FALCON_512
+                    };
+                    pq_sigalg = &falcon512_sigalg;
+                    printf("[DUAL_SIGN_CLIENT] Created PQC signature algorithm: %s\n", pq_sigalg->name);
+                } else if (sig_nid == 1343) { /* NID_falcon1024 or similar */
+                    printf("[DUAL_SIGN_CLIENT] Detected falcon1024 signature in PQC certificate\n");
+                    /* Create a SIGALG_LOOKUP for falcon1024 */
+                    static const SIGALG_LOOKUP falcon1024_sigalg = {
+                        .name = "FALCON-1024-SHA256",
+                        .sig = EVP_PKEY_FALCON1024,
+                        .hash = NID_sha256,
+                        .sigalg = 0x0904,  /* FALCON-1024-SHA256 */
+                        .hash_idx = SSL_MD_SHA256_IDX,
+                        .sig_idx = SSL_PKEY_PQ_FALCON_1024
+                    };
+                    pq_sigalg = &falcon1024_sigalg;
+                    printf("[DUAL_SIGN_CLIENT] Created PQC signature algorithm: %s\n", pq_sigalg->name);
+                } else if (sig_nid == 1001) { /* NID_dilithium2 */
+                    printf("[DUAL_SIGN_CLIENT] Detected dilithium2 signature in PQC certificate\n");
+                    /* Create a SIGALG_LOOKUP for dilithium2 */
+                    static const SIGALG_LOOKUP dilithium2_sigalg = {
+                        .name = "DILITHIUM-2-SHA256",
+                        .sig = EVP_PKEY_DILITHIUM2,
+                        .hash = NID_sha256,
+                        .sigalg = 0x0905,  /* DILITHIUM-2-SHA256 */
+                        .hash_idx = SSL_MD_SHA256_IDX,
+                        .sig_idx = SSL_PKEY_PQ_DILITHIUM_2
+                    };
+                    pq_sigalg = &dilithium2_sigalg;
+                    printf("[DUAL_SIGN_CLIENT] Created PQC signature algorithm: %s\n", pq_sigalg->name);
+                } else {
+                    printf("[DUAL_SIGN_CLIENT] Unknown PQC signature NID: %d, using fallback\n", sig_nid);
+                    /* Create a generic PQC sigalg as fallback */
+                    static const SIGALG_LOOKUP generic_pqc_sigalg = {
+                        .name = "PQC-SHA256",
+                        .sig = EVP_PKEY_FALCON512, /* Use Falcon as default PQC type */
+                        .hash = NID_sha256,
+                        .sigalg = 0x0903,  /* FALCON-512-SHA256 */
+                        .hash_idx = SSL_MD_SHA256_IDX,
+                        .sig_idx = SSL_PKEY_PQ_FALCON_512
+                    };
+                    pq_sigalg = &generic_pqc_sigalg;
+                    printf("[DUAL_SIGN_CLIENT] Created generic PQC signature algorithm for NID %d\n", sig_nid);
+                }
+            }
+        }
+        
+        /* Use PQC signature algorithm if available, otherwise fall back to classic */
+        const SIGALG_LOOKUP *sigalg_to_use = (pq_sigalg != NULL) ? pq_sigalg : s->s3.tmp.peer_sigalg;
+        
+        if (!tls1_lookup_md(sctx, sigalg_to_use, &md)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_R_NO_SUITABLE_DIGEST_ALGORITHM);
             goto err;
@@ -2514,14 +2764,28 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL_CONNECTION *s, PACKET *pkt)
             goto err;
         }
 
+        /* For dual certificates, use PQC public key if available */
+        EVP_PKEY *pkey_to_use = pkey;
+        if (s->session && s->session->dual_certs_enabled && s->session->peer_pqc_chain) {
+            X509 *pq_cert = sk_X509_value(s->session->peer_pqc_chain, 0);
+            if (pq_cert) {
+                EVP_PKEY *pq_pkey = X509_get0_pubkey(pq_cert);
+                if (pq_pkey) {
+                    pkey_to_use = pq_pkey;
+                    printf("[DUAL_SIGN_CLIENT] Using PQC public key for verification\n");
+                }
+            }
+        }
+
         if (EVP_DigestVerifyInit_ex(md_ctx, &pctx,
                                     md == NULL ? NULL : EVP_MD_get0_name(md),
-                                    sctx->libctx, sctx->propq, pkey,
+                                    sctx->libctx, sctx->propq, pkey_to_use,
                                     NULL) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
             goto err;
         }
-        if (SSL_USE_PSS(s)) {
+        /* Only configure RSA-PSS for classic certificates, not for PQC */
+        if (SSL_USE_PSS(s) && pkey_to_use == pkey && EVP_PKEY_base_id(pkey_to_use) == EVP_PKEY_RSA) {
             if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
                 || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx,
                                                 RSA_PSS_SALTLEN_DIGEST) <= 0) {

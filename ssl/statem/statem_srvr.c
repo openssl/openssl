@@ -3826,6 +3826,7 @@ CON_FUNC_RETURN tls_construct_server_certificate(SSL_CONNECTION *s, WPACKET *pkt
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return CON_FUNC_ERROR;
     }
+    
     switch (s->ext.server_cert_type) {
     case TLSEXT_cert_type_rpk:
         if (!tls_output_rpk(s, pkt, cpk)) {
@@ -3834,9 +3835,53 @@ CON_FUNC_RETURN tls_construct_server_certificate(SSL_CONNECTION *s, WPACKET *pkt
         }
         break;
     case TLSEXT_cert_type_x509:
-        if (!ssl3_output_cert_chain(s, pkt, cpk, 0)) {
-            /* SSLfatal() already called */
-            return 0;
+        /* Check if dual certificate mode is enabled */
+        if (s->cert->dual_certs_enabled && s->cert->pqkey != NULL) {
+            printf("[DUAL_CERT_SERVER] Starting dual certificate encoding\n");
+            printf("[DUAL_CERT_SERVER] Classic cert enabled: %d, PQ cert enabled: %d\n", 
+                   s->cert->dual_certs_enabled, s->cert->pqkey != NULL);
+            
+            printf("[DUAL_CERT_SERVER] Encoding classic certificate chain\n");
+            /* Output classic certificate chain in its own sub-packet */
+            if (!ssl3_output_cert_chain(s, pkt, cpk, 0)) {
+                printf("[DUAL_CERT_SERVER] ERROR: Failed to encode classic certificate chain\n");
+                /* SSLfatal() already called */
+                return 0;
+            }
+            printf("[DUAL_CERT_SERVER] Classic certificate chain encoded successfully\n");
+            
+            printf("[DUAL_CERT_SERVER] Adding delimiter (0x00 0x00 0x00)\n");
+            /* Add delimiter: 0x00 0x00 0x00 */
+            if (!WPACKET_put_bytes_u8(pkt, 0x00) ||
+                !WPACKET_put_bytes_u8(pkt, 0x00) ||
+                !WPACKET_put_bytes_u8(pkt, 0x00)) {
+                printf("[DUAL_CERT_SERVER] ERROR: Failed to add delimiter\n");
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+            printf("[DUAL_CERT_SERVER] Delimiter added successfully (0x00 0x00 0x00)\n");
+            
+            printf("[DUAL_CERT_SERVER] Encoding PQC certificate chain\n");
+            /* Output PQC certificate chain with length prefixes */
+            if (!ssl_add_pqc_cert_chain(s, pkt, s->cert->pqkey, 0)) {
+                printf("[DUAL_CERT_SERVER] ERROR: Failed to encode PQC certificate chain\n");
+                /* SSLfatal() already called */
+                return 0;
+            }
+            printf("[DUAL_CERT_SERVER] PQC certificate chain encoded successfully\n");
+            
+            printf("[DUAL_CERT_SERVER] Dual certificate encoding completed successfully\n");
+        } else {
+            printf("[DUAL_CERT_SERVER] Using standard single certificate mode\n");
+            printf("[DUAL_CERT_SERVER] Dual certs enabled: %d, PQ key available: %d\n", 
+                   s->cert->dual_certs_enabled, s->cert->pqkey != NULL);
+            /* Standard single certificate mode */
+            if (!ssl3_output_cert_chain(s, pkt, cpk, 0)) {
+                printf("[DUAL_CERT_SERVER] ERROR: Failed to encode single certificate chain\n");
+                /* SSLfatal() already called */
+                return 0;
+            }
+            printf("[DUAL_CERT_SERVER] Single certificate chain encoded successfully\n");
         }
         break;
     default:

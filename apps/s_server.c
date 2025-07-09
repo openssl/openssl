@@ -716,8 +716,7 @@ typedef enum OPTION_choice {
     OPT_DKEYFORM, OPT_DPASS, OPT_DKEY, OPT_DCERT_CHAIN, OPT_NOCERT,
     OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH, OPT_NO_CACHE,
     OPT_EXT_CACHE, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
-    OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE, OPT_CHAINCAFILE,
-    OPT_VERIFYCAFILE,
+    OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE, OPT_CHAINCAFILE, OPT_VERIFYCAFILE,
     OPT_CASTORE, OPT_NOCASTORE, OPT_CHAINCASTORE, OPT_VERIFYCASTORE,
     OPT_NBIO, OPT_NBIO_TEST, OPT_IGN_EOF, OPT_NO_IGN_EOF,
     OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_VERBOSE,
@@ -741,6 +740,9 @@ typedef enum OPTION_choice {
     OPT_TFO, OPT_CERT_COMP,
     OPT_ENABLE_SERVER_RPK,
     OPT_ENABLE_CLIENT_RPK,
+    OPT_ENABLE_DUAL_CERTS,
+    OPT_PQCERT,
+    OPT_PQKEY,
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -994,6 +996,10 @@ const OPTIONS s_server_options[] = {
 #endif
     {"enable_server_rpk", OPT_ENABLE_SERVER_RPK, '-', "Enable raw public keys (RFC7250) from the server"},
     {"enable_client_rpk", OPT_ENABLE_CLIENT_RPK, '-', "Enable raw public keys (RFC7250) from the client"},
+    {"enable_dual_certs", OPT_ENABLE_DUAL_CERTS, '-', "Enable dual certificate support (classic + PQC)"},
+    {"dual_certs", OPT_ENABLE_DUAL_CERTS, '-', "Alias for -enable_dual_certs"},
+    {"pqcert", OPT_PQCERT, '<', "Post-quantum certificate file to use"},
+    {"pqkey", OPT_PQKEY, '<', "Post-quantum private key file to use"},
     OPT_R_OPTIONS,
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
@@ -1092,6 +1098,9 @@ int s_server_main(int argc, char *argv[])
     int tfo = 0;
     int cert_comp = 0;
     int enable_server_rpk = 0;
+    int enable_dual_certs = 0;
+    const char *pqc_cert = NULL;
+    const char *pqc_key = NULL;
 
     /* Init of few remaining global variables */
     local_argc = argc;
@@ -1703,6 +1712,15 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_ENABLE_CLIENT_RPK:
             enable_client_rpk = 1;
+            break;
+        case OPT_ENABLE_DUAL_CERTS:
+            enable_dual_certs = 1;
+            break;
+        case OPT_PQCERT:
+            pqc_cert = opt_arg();
+            break;
+        case OPT_PQKEY:
+            pqc_key = opt_arg();
             break;
         }
     }
@@ -2318,6 +2336,54 @@ int s_server_main(int argc, char *argv[])
             BIO_printf(bio_s_out, "Error setting server certificate types\n");
             goto end;
         }
+
+    if (enable_dual_certs) {
+        EVP_PKEY *pqc_key_obj = NULL;
+        X509 *pqc_cert_obj = NULL;
+        STACK_OF(X509) *pqc_chain = NULL;
+        
+        if (pqc_cert == NULL || pqc_key == NULL) {
+            BIO_printf(bio_err, "Dual certificates enabled but PQC certificate or key not provided\n");
+            goto end;
+        }
+        
+        /* Load PQC certificate */
+        pqc_cert_obj = load_cert_pass(pqc_cert, FORMAT_PEM, 1, pass, "PQC certificate");
+        if (pqc_cert_obj == NULL) {
+            BIO_printf(bio_err, "Error loading PQC certificate\n");
+            goto end;
+        }
+        
+        /* Load PQC private key */
+        pqc_key_obj = load_key(pqc_key, FORMAT_PEM, 0, pass, engine, "PQC private key");
+        if (pqc_key_obj == NULL) {
+            BIO_printf(bio_err, "Error loading PQC private key\n");
+            X509_free(pqc_cert_obj);
+            goto end;
+        }
+        
+        /* Enable dual certificates on the SSL context */
+        if (!SSL_CTX_enable_dual_certs(ctx)) {
+            BIO_printf(bio_err, "Error enabling dual certificates\n");
+            X509_free(pqc_cert_obj);
+            EVP_PKEY_free(pqc_key_obj);
+            goto end;
+        }
+        
+        /* Set the PQC certificate and key */
+        if (!SSL_CTX_set_pq_certificate(ctx, pqc_cert_obj, pqc_key_obj, pqc_chain)) {
+            BIO_printf(bio_err, "Error setting PQC certificate and key\n");
+            X509_free(pqc_cert_obj);
+            EVP_PKEY_free(pqc_key_obj);
+            goto end;
+        }
+        
+        BIO_printf(bio_s_out, "Dual certificates enabled with PQC support\n");
+        
+        /* Clean up the loaded objects as they are now owned by the SSL context */
+        X509_free(pqc_cert_obj);
+        EVP_PKEY_free(pqc_key_obj);
+    }
 
     if (rev)
         server_cb = rev_body;

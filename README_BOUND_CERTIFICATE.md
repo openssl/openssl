@@ -103,7 +103,7 @@ RelatedCertificate ::= SEQUENCE {
 
 
 ```bash
-git clone -b bound-openssl3.3 https://github.com/wibs2401/opensslForPQCert.git
+git clone -b bound-openssl-3.3 https://github.com/wibs2401/opensslForPQCert.git
 cd opensslForPQCert
 ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl
 make -j$(nproc)
@@ -307,7 +307,7 @@ In the server's `Certificate` message, you should see:
 This hexadecimal sequence contains:
 - **Extension OID** : `2b 06 01 05 05 07 01 24` (RelatedCertificate)
 - **SHA-256 hash** of the related certificate
-- **URI** : `file:related_cert.pem`
+`
 
 #### 3.3 Success Indicators
 
@@ -400,7 +400,6 @@ The implementation uses the following Object Identifiers as defined in RFC 9763:
 - `id-aa-relatedCertRequest`: `1.2.840.113549.1.9.16.2.60`
 - `id-pe-relatedCert`: `1.3.6.1.5.5.7.1.36`
 
-These OIDs are already defined in OpenSSL's `objects.txt` and will be available after regenerating the object macros.
 
 
 

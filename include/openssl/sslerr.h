@@ -374,4 +374,9 @@
 # define SSL_R_X509_LIB                                   268
 # define SSL_R_X509_VERIFICATION_SETUP_PROBLEMS           269
 
+/* Post-Quantum Certificate related error codes */
+# define SSL_R_DUAL_CERTS_NOT_ENABLED                     1121
+# define SSL_R_OQS_PROVIDER_NOT_AVAILABLE                 1122
+# define SSL_R_NO_PQC_ALGORITHMS_AVAILABLE                1123
+
 #endif

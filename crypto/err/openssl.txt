@@ -1665,6 +1665,10 @@ SSL_R_WRONG_SSL_VERSION:266:wrong ssl version
 SSL_R_WRONG_VERSION_NUMBER:267:wrong version number
 SSL_R_X509_LIB:268:x509 lib
 SSL_R_X509_VERIFICATION_SETUP_PROBLEMS:269:x509 verification setup problems
+SSL_R_INVALID_RELATED_CERTIFICATE:420:invalid related certificate
+SSL_R_CANNOT_FETCH_RELATED_CERTIFICATE:421:cannot fetch related certificate
+SSL_R_RELATED_CERTIFICATE_HASH_MISMATCH:422:related certificate hash mismatch
+SSL_R_RELATED_CERTIFICATE_CHAIN_VERIFY_FAILED:423:related certificate chain verify failed
 TS_R_BAD_PKCS7_TYPE:132:bad pkcs7 type
 TS_R_BAD_TYPE:133:bad type
 TS_R_CANNOT_LOAD_CERT:137:cannot load certificate

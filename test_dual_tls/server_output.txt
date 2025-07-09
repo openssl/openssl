@@ -1,0 +1,16 @@
+Using default temp DH parameters
+00A6D819AF720000:error:80000062:system library:BIO_bind:Address already in use:crypto/bio/bio_sock2.c:240:calling bind()
+00A6D819AF720000:error:10000075:BIO routines:BIO_bind:unable to bind socket:crypto/bio/bio_sock2.c:242:
+Dual certificates enabled with PQC support
+   0 items in the session cache
+   0 client connects (SSL_connect())
+   0 client renegotiates (SSL_connect())
+   0 client connects that finished
+   0 server accepts (SSL_accept())
+   0 server renegotiates (SSL_accept())
+   0 server accepts that finished
+   0 session cache hits
+   0 session cache misses
+   0 session cache timeouts
+   0 callback cache hits
+   0 cache full overflows (128 allowed)

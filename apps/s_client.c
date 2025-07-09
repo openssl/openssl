@@ -515,6 +515,9 @@ typedef enum OPTION_choice {
     OPT_ENABLE_CLIENT_RPK,
     OPT_SCTP_LABEL_BUG,
     OPT_KTLS,
+    OPT_ENABLE_DUAL_CERTS,
+    OPT_PQCERT,
+    OPT_PQKEY,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -597,6 +600,10 @@ const OPTIONS s_client_options[] = {
     {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity"},
     {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
     {"psk_session", OPT_PSK_SESS, '<', "File to read PSK SSL session from"},
+    {"enable_dual_certs", OPT_ENABLE_DUAL_CERTS, '-', "Enable dual certificate mode (classic + PQC)"},
+    {"dual_certs", OPT_ENABLE_DUAL_CERTS, '-', "Alias for -enable_dual_certs"},
+    {"pqcert", OPT_PQCERT, '<', "Post-quantum certificate file to use"},
+    {"pqkey", OPT_PQKEY, 's', "Post-quantum private key file to use"},
     {"name", OPT_PROTOHOST, 's',
      "Hostname to use for \"-starttls lmtp\", \"-starttls smtp\" or \"-starttls xmpp[-server]\""},
 
@@ -863,6 +870,8 @@ int s_client_main(int argc, char **argv)
     char *proxypassarg = NULL, *proxypass = NULL;
     char *connectstr = NULL, *bindstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
+    char *pqcert_file = NULL, *pqkey_file = NULL;
+    int enable_dual_certs = 0;
     char *chCApath = NULL, *chCAfile = NULL, *chCAstore = NULL, *host = NULL;
     char *thost = NULL, *tport = NULL;
     char *port = NULL;
@@ -1571,6 +1580,15 @@ int s_client_main(int argc, char **argv)
         case OPT_ENABLE_CLIENT_RPK:
             enable_client_rpk = 1;
             break;
+        case OPT_ENABLE_DUAL_CERTS:
+            enable_dual_certs = 1;
+            break;
+        case OPT_PQCERT:
+            pqcert_file = opt_arg();
+            break;
+        case OPT_PQKEY:
+            pqkey_file = opt_arg();
+            break;
         }
     }
 
@@ -1760,6 +1778,43 @@ int s_client_main(int argc, char **argv)
     if (chain_file != NULL) {
         if (!load_certs(chain_file, 0, &chain, pass, "client certificate chain"))
             goto end;
+    }
+
+    /* Load PQC certificate and key if dual certificate mode is enabled */
+    X509 *pqcert = NULL;
+    EVP_PKEY *pqkey = NULL;
+    STACK_OF(X509) *pqchain = NULL;
+    
+    if (enable_dual_certs) {
+        if (pqcert_file == NULL) {
+            BIO_printf(bio_err, "Error: -enable_dual_certs requires -pqcert option\n");
+            goto end;
+        }
+        if (pqkey_file == NULL) {
+            BIO_printf(bio_err, "Error: -enable_dual_certs requires -pqkey option\n");
+            goto end;
+        }
+        
+        /* Load PQC certificate */
+        pqcert = load_cert_pass(pqcert_file, cert_format, 1, pass,
+                                "post-quantum certificate");
+        if (pqcert == NULL)
+            goto end;
+            
+        /* Load PQC private key */
+        pqkey = load_key(pqkey_file, key_format, 0, pass, e,
+                         "post-quantum certificate private key");
+        if (pqkey == NULL)
+            goto end;
+            
+        /* For now, we'll use the same chain for PQC certificate */
+        if (chain != NULL) {
+            pqchain = sk_X509_dup(chain);
+            if (pqchain == NULL) {
+                BIO_printf(bio_err, "Error duplicating certificate chain for PQC\n");
+                goto end;
+            }
+        }
     }
 
     if (crl_file != NULL) {
@@ -2031,6 +2086,23 @@ int s_client_main(int argc, char **argv)
 
     if (!set_cert_key_stuff(ctx, cert, key, chain, build_chain))
         goto end;
+
+    /* Set up dual certificates if enabled */
+    if (enable_dual_certs) {
+        if (!SSL_CTX_enable_dual_certs(ctx)) {
+            BIO_printf(bio_err, "Error enabling dual certificate mode\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        
+        if (!SSL_CTX_set_pq_certificate(ctx, pqcert, pqkey, pqchain)) {
+            BIO_printf(bio_err, "Error setting post-quantum certificate\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        
+        BIO_printf(bio_err, "Dual certificate mode enabled\n");
+    }
 
     if (!noservername) {
         tlsextcbp.biodebug = bio_err;
@@ -3328,6 +3400,13 @@ int s_client_main(int argc, char **argv)
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
     EVP_PKEY_free(key);
     OSSL_STACK_OF_X509_free(chain);
+    
+    /* Clean up PQC certificate variables */
+    if (enable_dual_certs) {
+        X509_free(pqcert);
+        EVP_PKEY_free(pqkey);
+        OSSL_STACK_OF_X509_free(pqchain);
+    }
     OPENSSL_free(pass);
 #ifndef OPENSSL_NO_SRP
     OPENSSL_free(srp_arg.srppassin);
@@ -3408,6 +3487,54 @@ static void print_stuff(BIO *bio, SSL *s, int full)
             }
         }
 
+        /* Display PQC certificate chain if available */
+        SSL_SESSION *session = SSL_get_session(s);
+        STACK_OF(X509) *pqc_chain = (session != NULL) ? SSL_SESSION_get0_peer_pqc_chain(session) : NULL;
+        BIO_printf(bio, "---\nPQC certificate chain status: %s\n", 
+                   (pqc_chain != NULL) ? "available" : "not available");
+        BIO_printf(bio, "Dual certificates enabled: %s\n", 
+                   (session != NULL && SSL_SESSION_has_dual_certs(session)) ? "yes" : "no");
+        
+        /* Debug information */
+        if (session != NULL) {
+            BIO_printf(bio, "Session pointer: %p\n", (void*)session);
+            STACK_OF(X509) *session_pqc_chain = SSL_SESSION_get0_peer_pqc_chain(session);
+            BIO_printf(bio, "peer_pqc_chain pointer: %p\n", (void*)session_pqc_chain);
+            if (session_pqc_chain != NULL) {
+                BIO_printf(bio, "PQC chain count: %d\n", sk_X509_num(session_pqc_chain));
+            }
+        }
+        
+        if (pqc_chain != NULL && sk_X509_num(pqc_chain) > 0) {
+            BIO_printf(bio, "---\nPQC Certificate chain\n");
+            BIO_printf(bio, "PQC certificates found: %d\n", sk_X509_num(pqc_chain));
+            for (i = 0; i < sk_X509_num(pqc_chain); i++) {
+                BIO_printf(bio, "%2d s:", i);
+                X509_NAME_print_ex(bio, X509_get_subject_name(sk_X509_value(pqc_chain, i)), 0, get_nameopt());
+                BIO_puts(bio, "\n");
+                BIO_printf(bio, "   i:");
+                X509_NAME_print_ex(bio, X509_get_issuer_name(sk_X509_value(pqc_chain, i)), 0, get_nameopt());
+                BIO_puts(bio, "\n");
+                public_key = X509_get_pubkey(sk_X509_value(pqc_chain, i));
+                if (public_key != NULL) {
+                    BIO_printf(bio, "   a:PKEY: %s, %d (bit); sigalg: %s\n",
+                               OBJ_nid2sn(EVP_PKEY_get_base_id(public_key)),
+                               EVP_PKEY_get_bits(public_key),
+                               OBJ_nid2sn(X509_get_signature_nid(sk_X509_value(pqc_chain, i))));
+                    EVP_PKEY_free(public_key);
+                }
+                BIO_printf(bio, "   v:NotBefore: ");
+                ASN1_TIME_print(bio, X509_get0_notBefore(sk_X509_value(pqc_chain, i)));
+                BIO_printf(bio, "; NotAfter: ");
+                ASN1_TIME_print(bio, X509_get0_notAfter(sk_X509_value(pqc_chain, i)));
+                BIO_puts(bio, "\n");
+                if (c_showcerts)
+                    PEM_write_bio_X509(bio, sk_X509_value(pqc_chain, i));
+            }
+        } else {
+            BIO_printf(bio, "---\nNo PQC certificate chain available\n");
+        }
+
         BIO_printf(bio, "---\n");
         peer = SSL_get0_peer_certificate(s);
         if (peer != NULL) {
@@ -3419,6 +3546,22 @@ static void print_stuff(BIO *bio, SSL *s, int full)
             dump_cert_text(bio, peer);
         } else {
             BIO_printf(bio, "no peer certificate available\n");
+        }
+
+        /* Display PQC server certificate if available */
+        if (session != NULL && SSL_SESSION_has_dual_certs(session)) {
+            STACK_OF(X509) *session_pqc_chain = SSL_SESSION_get0_peer_pqc_chain(session);
+            if (session_pqc_chain != NULL && sk_X509_num(session_pqc_chain) > 0) {
+                X509 *pqc_peer = sk_X509_value(session_pqc_chain, 0);
+                if (pqc_peer != NULL) {
+                    BIO_printf(bio, "---\nPQC Server certificate\n");
+                    
+                    /* Redundant if we showed the whole chain */
+                    if (!(c_showcerts && got_a_chain))
+                        PEM_write_bio_X509(bio, pqc_peer);
+                    dump_cert_text(bio, pqc_peer);
+                }
+            }
         }
 
         /* Only display RPK information if configured */

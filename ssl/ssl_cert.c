@@ -81,6 +81,12 @@ CERT *ssl_cert_new(size_t ssl_pkey_num)
     ret->sec_cb = ssl_security_default_callback;
     ret->sec_level = OPENSSL_TLS_SECURITY_LEVEL;
     ret->sec_ex = NULL;
+    
+    /* Initialize dual certificate fields */
+    ret->pqkey = NULL;
+    ret->pq_chain = NULL;
+    ret->dual_certs_enabled = 0;
+    
     if (!CRYPTO_NEW_REF(&ret->references, 1)) {
         OPENSSL_free(ret->pkeys);
         OPENSSL_free(ret);
@@ -220,6 +226,50 @@ CERT *ssl_cert_dup(CERT *cert)
             goto err;
     }
 #endif
+
+    /* Copy dual certificate fields */
+    ret->dual_certs_enabled = cert->dual_certs_enabled;
+    
+    if (cert->pqkey != NULL) {
+        ret->pqkey = OPENSSL_zalloc(sizeof(CERT_PKEY));
+        if (ret->pqkey == NULL)
+            goto err;
+        
+        if (cert->pqkey->x509 != NULL) {
+            ret->pqkey->x509 = cert->pqkey->x509;
+            X509_up_ref(ret->pqkey->x509);
+        }
+        
+        if (cert->pqkey->privatekey != NULL) {
+            ret->pqkey->privatekey = cert->pqkey->privatekey;
+            EVP_PKEY_up_ref(cert->pqkey->privatekey);
+        }
+        
+        if (cert->pqkey->chain) {
+            ret->pqkey->chain = X509_chain_up_ref(cert->pqkey->chain);
+            if (!ret->pqkey->chain) {
+                ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+                goto err;
+            }
+        }
+        
+        if (cert->pqkey->serverinfo != NULL) {
+            ret->pqkey->serverinfo = OPENSSL_memdup(cert->pqkey->serverinfo, 
+                                                   cert->pqkey->serverinfo_length);
+            if (ret->pqkey->serverinfo == NULL)
+                goto err;
+            ret->pqkey->serverinfo_length = cert->pqkey->serverinfo_length;
+        }
+    }
+    
+    if (cert->pq_chain) {
+        ret->pq_chain = X509_chain_up_ref(cert->pq_chain);
+        if (!ret->pq_chain) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+            goto err;
+        }
+    }
+
     return ret;
 
  err:
@@ -284,6 +334,17 @@ void ssl_cert_free(CERT *c)
 #ifndef OPENSSL_NO_PSK
     OPENSSL_free(c->psk_identity_hint);
 #endif
+
+    /* Free dual certificate fields */
+    if (c->pqkey != NULL) {
+        X509_free(c->pqkey->x509);
+        EVP_PKEY_free(c->pqkey->privatekey);
+        OSSL_STACK_OF_X509_free(c->pqkey->chain);
+        OPENSSL_free(c->pqkey->serverinfo);
+        OPENSSL_free(c->pqkey);
+    }
+    OSSL_STACK_OF_X509_free(c->pq_chain);
+
     OPENSSL_free(c->pkeys);
     CRYPTO_FREE_REF(&c->references);
     OPENSSL_free(c);

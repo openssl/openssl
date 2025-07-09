@@ -583,3 +583,8 @@ SSL_set_value_uint                      583	3_3_0	EXIST::FUNCTION:
 SSL_poll                                584	3_3_0	EXIST::FUNCTION:
 SSL_SESSION_get_time_ex                 585	3_3_0	EXIST::FUNCTION:
 SSL_SESSION_set_time_ex                 586	3_3_0	EXIST::FUNCTION:
+SSL_CTX_enable_dual_certs               587	3_3_0	EXIST::FUNCTION:
+SSL_CTX_set_pq_certificate              588	3_3_0	EXIST::FUNCTION:
+SSL_SESSION_get0_peer_chain             589	3_3_0	EXIST::FUNCTION:
+SSL_SESSION_get0_peer_pqc_chain         590	3_3_0	EXIST::FUNCTION:
+SSL_SESSION_has_dual_certs               591	3_3_0	EXIST::FUNCTION:

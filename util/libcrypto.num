@@ -5548,3 +5548,4 @@ X509_STORE_get1_objects                 5675	3_3_0	EXIST::FUNCTION:
 OPENSSL_LH_set_thunks                   5676	3_3_0	EXIST::FUNCTION:
 OPENSSL_LH_doall_arg_thunk              5677	3_3_0	EXIST::FUNCTION:
 OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines 5678	3_3_0	EXIST::FUNCTION:HTTP
+verify_related_certificate_extension    5678    3_3_0   EXIST::FUNCTION:

@@ -5767,6 +5767,47 @@
 #define NID_id_pe_relatedCert           1322
 #define OBJ_id_pe_relatedCert           1L,3L,6L,1L,5L,5L,7L,1L,36L
 
+/* PQC Algorithm NIDs */
+#define SN_dilithium2           "dilithium2"
+#define LN_dilithium2           "Dilithium2"
+#define NID_dilithium2          1323
+
+#define SN_dilithium3           "dilithium3"
+#define LN_dilithium3           "Dilithium3"
+#define NID_dilithium3          1324
+
+#define SN_dilithium5           "dilithium5"
+#define LN_dilithium5           "Dilithium5"
+#define NID_dilithium5          1325
+
+#define SN_falcon512            "falcon512"
+#define LN_falcon512            "Falcon512"
+#define NID_falcon512           1326
+
+#define SN_falcon1024           "falcon1024"
+#define LN_falcon1024           "Falcon1024"
+#define NID_falcon1024          1327
+
+#define SN_sphincs_sha256_128f_simple         "sphincs-sha256-128f-simple"
+#define LN_sphincs_sha256_128f_simple         "SPHINCS-SHA256-128F-SIMPLE"
+#define NID_sphincs_sha256_128f_simple        1328
+
+#define SN_sphincs_sha256_192f_simple         "sphincs-sha256-192f-simple"
+#define LN_sphincs_sha256_192f_simple         "SPHINCS-SHA256-192F-SIMPLE"
+#define NID_sphincs_sha256_192f_simple        1329
+
+#define SN_sphincs_sha256_256f_simple         "sphincs-sha256-256f-simple"
+#define LN_sphincs_sha256_256f_simple         "SPHINCS-SHA256-256F-SIMPLE"
+#define NID_sphincs_sha256_256f_simple        1330
+
+#define SN_mldsa_44             "mldsa-44"
+#define LN_mldsa_44             "MLDSA-44"
+#define NID_mldsa_44            1331
+
+#define SN_mldsa_65             "mldsa-65"
+#define LN_mldsa_65             "MLDSA-65"
+#define NID_mldsa_65            1332
+
 #endif /* OPENSSL_OBJ_MAC_H */
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
