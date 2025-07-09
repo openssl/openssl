@@ -1822,7 +1822,12 @@ int ssl_version_cmp(const SSL_CONNECTION *s, int versiona, int versionb)
 {
     int dtls = SSL_CONNECTION_IS_DTLS(s);
 
-    return PROTOCOL_VERSION_CMP(dtls, versiona, versionb);
+    if (versiona == versionb)
+            return 0;
+    if (!dtls)
+            return versiona < versionb ? -1 : 1;
+    return DTLS_VERSION_LT(versiona, versionb) ? -1 : 1;
+
 }
 
 typedef struct {
