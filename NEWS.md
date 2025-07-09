@@ -1188,7 +1188,7 @@ OpenSSL 1.0.1
 
 ### Major changes between OpenSSL 1.0.1d and OpenSSL 1.0.1e [11 Feb 2013]
 
-  * Corrected fix for ([CVE-2013-0169])
+  * Corrected fix for [CVE-2013-0169]
 
 ### Major changes between OpenSSL 1.0.1c and OpenSSL 1.0.1d [4 Feb 2013]
 
@@ -1322,7 +1322,7 @@ OpenSSL 1.0.0
 ### Major changes between OpenSSL 1.0.0g and OpenSSL 1.0.0h [12 Mar 2012]
 
   * Fix for CMS/PKCS#7 MMA ([CVE-2012-0884])
-  * Corrected fix for ([CVE-2011-4619])
+  * Corrected fix for [CVE-2011-4619]
   * Various DTLS fixes.
 
 ### Major changes between OpenSSL 1.0.0f and OpenSSL 1.0.0g [18 Jan 2012]
@@ -1352,7 +1352,7 @@ OpenSSL 1.0.0
 ### Major changes between OpenSSL 1.0.0b and OpenSSL 1.0.0c [2 Dec 2010]
 
   * Fix for security issue ([CVE-2010-4180])
-  * Fix for ([CVE-2010-4252])
+  * Fix for [CVE-2010-4252]
   * Fix mishandling of absent EC point format extension.
   * Fix various platform compilation issues.
   * Corrected fix for security issue ([CVE-2010-3864]).
@@ -1360,7 +1360,7 @@ OpenSSL 1.0.0
 ### Major changes between OpenSSL 1.0.0a and OpenSSL 1.0.0b [16 Nov 2010]
 
   * Fix for security issue ([CVE-2010-3864]).
-  * Fix for ([CVE-2010-2939])
+  * Fix for [CVE-2010-2939]
   * Fix WIN32 build system for GOST ENGINE.
 
 ### Major changes between OpenSSL 1.0.0 and OpenSSL 1.0.0a [1 Jun 2010]
