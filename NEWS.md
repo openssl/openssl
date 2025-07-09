@@ -1914,6 +1914,7 @@ OpenSSL 0.9.x
 <!-- Links -->
 [CVE-2025-4575]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-4575
 [CVE-2024-13176]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-13176
+[CVE-2024-12797]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-12797
 [CVE-2024-9143]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-9143
 [CVE-2024-6119]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-6119
 [CVE-2024-5535]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-5535
@@ -1945,6 +1946,9 @@ OpenSSL 0.9.x
 [CVE-2022-3996]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-3996
 [CVE-2022-2274]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2274
 [CVE-2022-2097]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2097
+[CVE-2022-2068]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2068
+[CVE-2022-1292]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-1292
+[CVE-2022-0778]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-0778
 [CVE-2020-1971]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1971
 [CVE-2020-1967]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1967
 [CVE-2019-1563]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1563
