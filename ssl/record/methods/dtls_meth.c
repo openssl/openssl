@@ -497,13 +497,13 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
          * rfc9147:
          * Implementations can demultiplex DTLS 1.3 records by examining the first
          * byte as follows:
-         *   • If the first byte is alert(21), handshake(22), or ack(proposed, 26),
+         *   * If the first byte is alert(21), handshake(22), or ack(proposed, 26),
          *     the record MUST be interpreted as a DTLSPlaintext record.
-         *   • If the first byte is any other value, then receivers MUST check to
+         *   * If the first byte is any other value, then receivers MUST check to
          *     see if the leading bits of the first byte are 001. If so, the implementation
          *     MUST process the record as DTLSCiphertext; the true content type
          *     will be inside the protected portion.
-         *   • Otherwise, the record MUST be rejected as if it had failed deprotection,
+         *   * Otherwise, the record MUST be rejected as if it had failed deprotection,
          *     as described in Section 4.5.2.
          */
         if (rl->version == DTLS1_3_VERSION
