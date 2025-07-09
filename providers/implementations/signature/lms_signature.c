@@ -13,6 +13,7 @@
 #include <openssl/proverr.h>
 #include <openssl/params.h>
 #include <openssl/evp.h>
+#include <openssl/err.h>
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
