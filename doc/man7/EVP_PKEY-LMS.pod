@@ -39,7 +39,7 @@ Leighton-Micali Hash-Based Signatures
 
 Recommendation for Stateful Hash-Based Signature Schemes
 
-=item CSNA 2.0
+=item CNSA 2.0
 
 Commercial National Security Algorithm Suite
 

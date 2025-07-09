@@ -20,9 +20,9 @@
  *
  * @param pkt Contains the signature data to decode. There may still be data
  *            remaining in pkt after decoding.
- * @param pub A  public key that contains LMS_PARAMS and LM_OTS_PARAMS associated
+ * @param pub A public key that contains LMS_PARAMS and LM_OTS_PARAMS associated
  *            with the signature.
- * @returns The created LMS_SIG object is successful, or NULL on failure. A
+ * @returns The created LMS_SIG object if successful, or NULL on failure. A
  *          failure may occur if the passed in LMS public key |pub| is not
  *          compatible with the decoded LMS_SIG object,
  */

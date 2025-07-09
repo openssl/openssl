@@ -79,7 +79,7 @@ static ossl_inline void INC16(unsigned char *tag)
  *            Q = H(I || u32str(q) || u16str(D_MESG) || C || msg)
  *            This ctx is reused for other calculations.
  * @param ctxIq A EVP_MD_CTX object that contains a non finalized value of H(I || q).
- * @param sig An object that containing LM_OTS signature data.
+ * @param sig An object containing LM_OTS signature data.
  * @param Kc The computed public key. It is assumed the size is n.
  * @returns 1 on success, or 0 otherwise.
  */

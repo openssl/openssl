@@ -18,7 +18,6 @@
 # ifndef OPENSSL_NO_LMS
 #  include "types.h"
 #  include <openssl/params.h>
-#  include "internal/refcount.h"
 
 /*
  * Numeric identifiers associated with Leighton-Micali Signatures (LMS)

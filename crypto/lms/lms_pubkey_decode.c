@@ -56,7 +56,7 @@ int lms_pubkey_from_pkt(LMS_KEY *lmskey, const unsigned char *pubkeydata,
 
     if (!PACKET_buf_init(&pkt, pubkeydata, publen))
         goto err;
-    key->encoded = (unsigned char *)pkt.curr;
+    key->encoded = (unsigned char *)PACKET_data(&pkt);
     if (!PACKET_get_net_4_len_u32(&pkt, &lms_type))
         goto err;
     lmskey->lms_params = ossl_lms_params_get(lms_type);
@@ -74,7 +74,7 @@ int lms_pubkey_from_pkt(LMS_KEY *lmskey, const unsigned char *pubkeydata,
             || !PACKET_get_bytes(&pkt, (const unsigned char **)&key->K,
                                  lmskey->lms_params->n))
         goto err;
-    key->encodedlen = pkt.curr - key->encoded;
+    key->encodedlen = (unsigned char *)PACKET_data(&pkt) - key->encoded;
     return PACKET_remaining(&pkt) == 0;
 err:
     return 0;
