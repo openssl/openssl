@@ -1823,9 +1823,9 @@ int ssl_version_cmp(const SSL_CONNECTION *s, int versiona, int versionb)
     int dtls = SSL_CONNECTION_IS_DTLS(s);
 
     if (versiona == versionb)
-            return 0;
+        return 0;
     if (!dtls)
-            return versiona < versionb ? -1 : 1;
+        return versiona < versionb ? -1 : 1;
     return DTLS_VERSION_LT(versiona, versionb) ? -1 : 1;
 
 }
