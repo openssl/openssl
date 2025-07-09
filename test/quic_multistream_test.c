@@ -853,6 +853,7 @@ static int helper_init(struct helper *h, const char *script_name,
 
     h->start_time   = ossl_time_now();
     h->init         = 1;
+    OPENSSL_free(bdata);
     return 1;
 
 err:
