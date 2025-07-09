@@ -150,6 +150,7 @@ int main(int ac, char **av)
     }
     fp = fopen(av[0], "r");
     if ((long)fread(contents, 1, sb.st_size, fp) != sb.st_size) {
+        fclose(fp);
         OPENSSL_free(contents);
         perror("fread");
         exit(EXIT_FAILURE);
