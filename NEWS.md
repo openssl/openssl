@@ -7,6 +7,7 @@ release. For more details please read the CHANGES file.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 3.6](#openssl-36)
  - [OpenSSL 3.5](#openssl-35)
  - [OpenSSL 3.4](#openssl-34)
  - [OpenSSL 3.3](#openssl-33)
@@ -18,9 +19,16 @@ OpenSSL Releases
  - [OpenSSL 1.0.2](#openssl-102)
  - [OpenSSL 1.0.1](#openssl-101)
  - [OpenSSL 1.0.0](#openssl-100)
- - [OpenSSL 0.9.x](#openssl-09x)
+ - [OpenSSL 0.9.8](#openssl-098)
+ - [OpenSSL 0.9.7](#openssl-097)
+ - [OpenSSL 0.9.6](#openssl-096)
+ - [OpenSSL 0.9.5](#openssl-095)
+ - [OpenSSL 0.9.4](#openssl-094)
+ - [OpenSSL 0.9.3](#openssl-093)
+ - [OpenSSL 0.9.2](#openssl-092)
+ - [OpenSSL 0.9.1](#openssl-091)
 
-OpenSSL 3.5
+OpenSSL 3.6
 -----------
 
 ### Major changes between OpenSSL 3.5 and OpenSSL 3.6 [under development]
@@ -36,7 +44,10 @@ changes:
   * Added an `openssl configutl` utility for processing the openssl
     configuration file and dumping the equal configuration file.
 
-### Major changes between OpenSSL 3.5.0 and OpenSSL 3.5.1 [under development]
+OpenSSL 3.5
+-----------
+
+### Major changes between OpenSSL 3.5.0 and OpenSSL 3.5.1 [1 Jul 2025]
 
 OpenSSL 3.5.1 is a security patch release. The most severe CVE fixed in this
 release is Low.
@@ -46,7 +57,7 @@ This release incorporates the following bug fixes and mitigations:
   * Fix x509 application adds trusted use instead of rejected use.
    ([CVE-2025-4575])
 
-### Major changes between OpenSSL 3.4 and OpenSSL 3.5 [under development]
+### Major changes between OpenSSL 3.4 and OpenSSL 3.5
 
 OpenSSL 3.5.0 is a feature release adding significant new functionality to
 OpenSSL.
@@ -100,6 +111,14 @@ Known issues in 3.5.0
 
 OpenSSL 3.4
 -----------
+
+### Major changes between OpenSSL 3.4.1 and OpenSSL 3.4.2 [1 Jul 2025]
+
+OpenSSL 3.4.2 is a bug fix release.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Miscellaneous minor bug fixes.
 
 ### Major changes between OpenSSL 3.4.0 and OpenSSL 3.4.1 [11 Feb 2025]
 
@@ -179,12 +198,26 @@ This release adds the following new features:
 OpenSSL 3.3
 -----------
 
-### Major changes between OpenSSL 3.3.2 and OpenSSL 3.3.3 [under development]
+### Major changes between OpenSSL 3.3.3 and OpenSSL 3.3.4 [1 Jul 2025]
 
-OpenSSL 3.3.3 is a security patch release. The most severe CVE fixed in this
-release is Low.
+OpenSSL 3.3.4 is a bug fix release.
 
 This release incorporates the following bug fixes and mitigations:
+
+  * Miscellaneous minor bug fixes.
+
+### Major changes between OpenSSL 3.3.2 and OpenSSL 3.3.3 [11 Feb 2025]
+
+OpenSSL 3.3.3 is a security patch release. The most severe CVE fixed in this
+release is High.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed RFC7250 handshakes with unauthenticated servers don't abort as expected.
+    ([CVE-2024-12797])
+
+  * Fixed timing side-channel in ECDSA signature computation.
+    ([CVE-2024-13176])
 
   * Fixed possible OOB memory access with invalid low-level GF(2^m) elliptic
     curve parameters.
@@ -338,12 +371,57 @@ tracker][issue tracker].
 OpenSSL 3.2
 -----------
 
-### Major changes between OpenSSL 3.2.1 and OpenSSL 3.2.2 [under development]
+### Major changes between OpenSSL 3.2.4 and OpenSSL 3.2.5 [1 Jul 2025]
+
+OpenSSL 3.2.5 is a bug fix release.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Miscellaneous minor bug fixes.
+
+### Major changes between OpenSSL 3.2.3 and OpenSSL 3.2.4 [11 Feb 2025]
+
+OpenSSL 3.2.4 is a security patch release. The most severe CVE fixed in this
+release is High.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed RFC7250 handshakes with unauthenticated servers don't abort as expected.
+    ([CVE-2024-12797])
+
+  * Fixed timing side-channel in ECDSA signature computation.
+    ([CVE-2024-13176])
+
+  * Fixed possible OOB memory access with invalid low-level GF(2^m) elliptic
+    curve parameters.
+    ([CVE-2024-9143])
+
+### Major changes between OpenSSL 3.2.2 and OpenSSL 3.2.3 [3 Sep 2024]
+
+OpenSSL 3.2.3 is a security patch release. The most severe CVE fixed in this
+release is Moderate.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed possible denial of service in X.509 name checks
+    ([CVE-2024-6119])
+
+  * Fixed possible buffer overread in SSL_select_next_proto()
+    ([CVE-2024-5535])
+
+### Major changes between OpenSSL 3.2.1 and OpenSSL 3.2.2 [4 Jun 2024]
 
 OpenSSL 3.2.2 is a security patch release. The most severe CVE fixed in this
 release is Low.
 
 This release incorporates the following bug fixes and mitigations:
+
+  * Fixed potential use after free after SSL_free_buffers() is called
+    ([CVE-2024-4741])
+
+  * Fixed an issue where checking excessively long DSA keys or parameters may
+    be very slow
+    ([CVE-2024-4603])
 
   * Fixed unbounded memory growth with session handling in TLSv1.3
     ([CVE-2024-2511])
@@ -458,6 +536,57 @@ tracker][issue tracker].
 OpenSSL 3.1
 -----------
 
+### Major changes between OpenSSL 3.1.7 and OpenSSL 3.1.8 [11 Feb 2025]
+
+OpenSSL 3.1.8 is a security patch release. The most severe CVE fixed in this
+release is Low.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed timing side-channel in ECDSA signature computation.
+    ([CVE-2024-13176])
+
+  * Fixed possible OOB memory access with invalid low-level GF(2^m) elliptic
+    curve parameters.
+    ([CVE-2024-9143])
+
+### Major changes between OpenSSL 3.1.6 and OpenSSL 3.1.7 [3 Sep 2024]
+
+OpenSSL 3.1.7 is a security patch release. The most severe CVE fixed in this
+release is Moderate.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed possible denial of service in X.509 name checks
+    ([CVE-2024-6119])
+
+  * Fixed possible buffer overread in SSL_select_next_proto()
+    ([CVE-2024-5535])
+
+### Major changes between OpenSSL 3.1.5 and OpenSSL 3.1.6 [4 Jun 2024]
+
+  * Fixed potential use after free after SSL_free_buffers() is called
+    ([CVE-2024-4741])
+
+  * Fixed an issue where checking excessively long DSA keys or parameters may
+    be very slow
+    ([CVE-2024-4603])
+
+  * Fixed unbounded memory growth with session handling in TLSv1.3
+    ([CVE-2024-2511])
+
+### Major changes between OpenSSL 3.1.4 and OpenSSL 3.1.5 [30 Jan 2024]
+
+  * Fixed PKCS12 Decoding crashes
+    ([CVE-2024-0727])
+  * Fixed Excessive time spent checking invalid RSA public keys
+    ([CVE-2023-6237])
+  * Fixed POLY1305 MAC implementation corrupting vector registers on PowerPC
+    CPUs which support PowerISA 2.07
+    ([CVE-2023-6129])
+  * Fix excessive time spent in DH check / generation with large Q parameter
+    value ([CVE-2023-5678])
+
 ### Major changes between OpenSSL 3.1.3 and OpenSSL 3.1.4 [24 Oct 2023]
 
   * Mitigate incorrect resize handling for symmetric cipher keys and IVs.
@@ -499,6 +628,92 @@ OpenSSL 3.1
 
 OpenSSL 3.0
 -----------
+
+### Major changes between OpenSSL 3.0.16 and OpenSSL 3.0.17 [1 Jul 2025]
+
+OpenSSL 3.0.17 is a bug fix release.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Miscellaneous minor bug fixes.
+
+### Major changes between OpenSSL 3.0.15 and OpenSSL 3.0.16 [11 Feb 2025]
+
+OpenSSL 3.0.16 is a security patch release. The most severe CVE fixed in this
+release is Low.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed timing side-channel in ECDSA signature computation.
+    ([CVE-2024-13176])
+
+  * Fixed possible OOB memory access with invalid low-level GF(2^m) elliptic
+    curve parameters.
+    ([CVE-2024-9143])
+
+### Major changes between OpenSSL 3.0.14 and OpenSSL 3.0.15 [3 Sep 2024]
+
+OpenSSL 3.0.15 is a security patch release. The most severe CVE fixed in this
+release is Moderate.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed possible denial of service in X.509 name checks
+    ([CVE-2024-6119])
+
+  * Fixed possible buffer overread in SSL_select_next_proto()
+    ([CVE-2024-5535])
+
+### Major changes between OpenSSL 3.0.13 and OpenSSL 3.0.14 [4 Jun 2024]
+
+  * Fixed potential use after free after SSL_free_buffers() is called
+    ([CVE-2024-4741])
+
+  * Fixed an issue where checking excessively long DSA keys or parameters may
+    be very slow
+    ([CVE-2024-4603])
+
+  * Fixed unbounded memory growth with session handling in TLSv1.3
+    ([CVE-2024-2511])
+
+### Major changes between OpenSSL 3.0.12 and OpenSSL 3.0.13 [30 Jan 2024]
+
+  * Fixed PKCS12 Decoding crashes
+    ([CVE-2024-0727])
+  * Fixed Excessive time spent checking invalid RSA public keys
+    ([CVE-2023-6237])
+  * Fixed POLY1305 MAC implementation corrupting vector registers on PowerPC
+    CPUs which support PowerISA 2.07
+    ([CVE-2023-6129])
+  * Fix excessive time spent in DH check / generation with large Q parameter
+    value ([CVE-2023-5678])
+
+### Major changes between OpenSSL 3.0.11 and OpenSSL 3.0.12 [24 Oct 2023]
+
+  * Mitigate incorrect resize handling for symmetric cipher keys and IVs.
+    ([CVE-2023-5363])
+
+### Major changes between OpenSSL 3.0.10 and OpenSSL 3.0.11 [19 Sep 2023]
+
+  * Fix POLY1305 MAC implementation corrupting XMM registers on Windows
+    ([CVE-2023-4807])
+
+### Major changes between OpenSSL 3.0.9 and OpenSSL 3.0.10 [1 Aug 2023]
+
+  * Fix excessive time spent checking DH q parameter value ([CVE-2023-3817])
+  * Fix DH_check() excessive time with over sized modulus ([CVE-2023-3446])
+  * Do not ignore empty associated data entries with AES-SIV ([CVE-2023-2975])
+
+### Major changes between OpenSSL 3.0.8 and OpenSSL 3.0.9 [30 May 2023]
+
+  * Mitigate for very slow `OBJ_obj2txt()` performance with gigantic OBJECT
+    IDENTIFIER sub-identities.  ([CVE-2023-2650])
+  * Fixed buffer overread in AES-XTS decryption on ARM 64 bit platforms
+    ([CVE-2023-1255])
+  * Fixed documentation of X509_VERIFY_PARAM_add0_policy() ([CVE-2023-0466])
+  * Fixed handling of invalid certificate policies in leaf certificates
+    ([CVE-2023-0465])
+  * Limited the number of nodes created in a policy tree ([CVE-2023-0464])
 
 ### Major changes between OpenSSL 3.0.7 and OpenSSL 3.0.8 [7 Feb 2023]
 
@@ -637,6 +852,67 @@ OpenSSL 3.0
 
 OpenSSL 1.1.1
 -------------
+
+### Major changes between OpenSSL 1.1.1v and OpenSSL 1.1.1w [11 Sep 2023]
+
+  * Fix POLY1305 MAC implementation corrupting XMM registers on Windows
+    ([CVE-2023-4807])
+
+### Major changes between OpenSSL 1.1.1u and OpenSSL 1.1.1v [1 Aug 2023]
+
+  * Fix excessive time spent checking DH q parameter value ([CVE-2023-3817])
+  * Fix DH_check() excessive time with over sized modulus ([CVE-2023-3446])
+
+### Major changes between OpenSSL 1.1.1t and OpenSSL 1.1.1u [30 May 2023]
+
+  * Mitigate for very slow `OBJ_obj2txt()` performance with gigantic
+    OBJECT IDENTIFIER sub-identities.  ([CVE-2023-2650])
+  * Fixed documentation of X509_VERIFY_PARAM_add0_policy() ([CVE-2023-0466])
+  * Fixed handling of invalid certificate policies in leaf certificates
+    ([CVE-2023-0465])
+  * Limited the number of nodes created in a policy tree ([CVE-2023-0464])
+
+### Major changes between OpenSSL 1.1.1s and OpenSSL 1.1.1t [7 Feb 2023]
+
+  * Fixed X.400 address type confusion in X.509 GeneralName ([CVE-2023-0286])
+  * Fixed Use-after-free following BIO_new_NDEF ([CVE-2023-0215])
+  * Fixed Double free after calling PEM_read_bio_ex ([CVE-2022-4450])
+  * Fixed Timing Oracle in RSA Decryption ([CVE-2022-4304])
+
+### Major changes between OpenSSL 1.1.1r and OpenSSL 1.1.1s [1 Nov 2022]
+
+  * Fixed a regression introduced in OpenSSL 1.1.1r not refreshing the
+    certificate data to be signed before signing the certificate.
+
+### Major changes between OpenSSL 1.1.1q and OpenSSL 1.1.1r [11 Oct 2022]
+
+  * Added a missing header for memcmp that caused compilation failure on
+    some platforms
+
+### Major changes between OpenSSL 1.1.1p and OpenSSL 1.1.1q [5 Jul 2022]
+
+  * Fixed AES OCB failure to encrypt some bytes on 32-bit x86 platforms
+    ([CVE-2022-2097])
+
+### Major changes between OpenSSL 1.1.1o and OpenSSL 1.1.1p [21 Jun 2022]
+
+  * Fixed additional bugs in the c_rehash script which was not properly
+    sanitising shell metacharacters to prevent command injection
+    ([CVE-2022-2068])
+
+### Major changes between OpenSSL 1.1.1n and OpenSSL 1.1.1o [3 May 2022]
+
+  * Fixed a bug in the c_rehash script which was not properly sanitising
+    shell metacharacters to prevent command injection ([CVE-2022-1292])
+
+### Major changes between OpenSSL 1.1.1m and OpenSSL 1.1.1n [15 Mar 2022]
+
+  * Fixed a bug in the BN_mod_sqrt() function that can cause it to loop
+    forever for non-prime moduli ([CVE-2022-0778])
+
+### Major changes between OpenSSL 1.1.1l and OpenSSL 1.1.1m [14 Dec 2021]
+
+  * None
 
 ### Major changes between OpenSSL 1.1.1k and OpenSSL 1.1.1l [24 Aug 2021]
 
@@ -890,6 +1166,11 @@ OpenSSL 1.1.0
 
 OpenSSL 1.0.2
 -------------
+
+Major changes between OpenSSL 1.0.2t and OpenSSL 1.0.2u [20 Dec 2019]
+
+  * Fixed an an overflow bug in the x64_64 Montgomery squaring procedure
+    used in exponentiation with 512-bit moduli ([CVE-2019-1551])
 
 ### Major changes between OpenSSL 1.0.2s and OpenSSL 1.0.2t [10 Sep 2019]
 
@@ -1391,8 +1672,132 @@ OpenSSL 1.0.0
   * Opaque PRF Input TLS extension support.
   * Updated time routines to avoid OS limitations.
 
-OpenSSL 0.9.x
+OpenSSL 0.9.8
 -------------
+
+### Major changes between OpenSSL 0.9.8zg and OpenSSL 0.9.8zh [3 Dec 2015]
+
+  * X509_ATTRIBUTE memory leak ([CVE-2015-3195])
+
+### Major changes between OpenSSL 0.9.8zf and OpenSSL 0.9.8zg [11 Jun 2015]
+
+  * Malformed ECParameters causes infinite loop ([CVE-2015-1788])
+  * Exploitable out-of-bounds read in X509_cmp_time ([CVE-2015-1789])
+  * PKCS7 crash with missing EnvelopedContent ([CVE-2015-1790])
+  * CMS verify infinite loop with unknown hash function ([CVE-2015-1792])
+  * Race condition handling NewSessionTicket ([CVE-2015-1791])
+
+### Major changes between OpenSSL 0.9.8ze and OpenSSL 0.9.8zf [19 Mar 2015]
+
+  * Segmentation fault in ASN1_TYPE_cmp fix ([CVE-2015-0286])
+  * ASN.1 structure reuse memory corruption fix ([CVE-2015-0287])
+  * PKCS7 NULL pointer dereferences fix ([CVE-2015-0289])
+  * DoS via reachable assert in SSLv2 servers fix ([CVE-2015-0293])
+  * Use After Free following d2i_ECPrivatekey error fix ([CVE-2015-0209])
+  * X509_to_X509_REQ NULL pointer deref fix ([CVE-2015-0288])
+  * Removed the export ciphers from the DEFAULT ciphers
+
+### Major changes between OpenSSL 0.9.8zd and OpenSSL 0.9.8ze [15 Jan 2015]
+
+  * Build fixes for the Windows and OpenVMS platforms
+
+### Major changes between OpenSSL 0.9.8zc and OpenSSL 0.9.8zd [8 Jan 2015]
+
+  * Fix for [CVE-2014-3571]
+  * Fix for [CVE-2014-3569]
+  * Fix for [CVE-2014-3572)
+  * Fix for [CVE-2015-0204]
+  * Fix for [CVE-2014-8275]
+  * Fix for [CVE-2014-3570]
+
+### Major changes between OpenSSL 0.9.8zb and OpenSSL 0.9.8zc [15 Oct 2014]:
+
+  * Fix for [CVE-2014-3513]
+  * Fix for [CVE-2014-3567]
+  * Mitigation for [CVE-2014-3566] (SSL protocol vulnerability)
+  * Fix for [CVE-2014-3568]
+
+### Major changes between OpenSSL 0.9.8za and OpenSSL 0.9.8zb [6 Aug 2014]:
+
+  * Fix for [CVE-2014-3510]
+  * Fix for [CVE-2014-3507]
+  * Fix for [CVE-2014-3506]
+  * Fix for [CVE-2014-3505]
+  * Fix for [CVE-2014-3508]
+
+  Known issues in OpenSSL 0.9.8za:
+
+  * Compilation failure of s3_pkt.c on some platforms due to missing
+    <limits.h> include. Fixed in 0.9.8zb-dev.
+  * FIPS capable link failure with missing symbol BN_consttime_swap.
+    Fixed in 0.9.8zb-dev. Workaround is to compile with no-ec: the EC
+    algorithms are not FIPS approved in OpenSSL 0.9.8 anyway.
+
+### Major changes between OpenSSL 0.9.8y and OpenSSL 0.9.8za [5 Jun 2014]:
+
+  * Fix for [CVE-2014-0224]
+  * Fix for [CVE-2014-0221]
+  * Fix for [CVE-2014-0195]
+  * Fix for [CVE-2014-3470]
+  * Fix for [CVE-2014-0076]
+  * Fix for [CVE-2010-5298]
+  * Fix to TLS alert handling.
+
+### Major changes between OpenSSL 0.9.8x and OpenSSL 0.9.8y [5 Feb 2013]:
+
+  * Fix for SSL/TLS/DTLS CBC plaintext recovery attack ([CVE-2013-0169])
+  * Fix OCSP bad key DoS attack ([CVE-2013-0166])
+
+### Major changes between OpenSSL 0.9.8w and OpenSSL 0.9.8x [10 May 2012]:
+
+  * Fix DTLS record length checking bug ([CVE-2012-2333])
+
+### Major changes between OpenSSL 0.9.8v and OpenSSL 0.9.8w [23 Apr 2012]:
+
+  * Fix for [CVE-2012-2131] (corrected fix for 0.9.8 and [CVE-2012-2110])
+
+### Major changes between OpenSSL 0.9.8u and OpenSSL 0.9.8v [19 Apr 2012]:
+
+  * Fix for ASN1 overflow bug ([CVE-2012-2110])
+
+### Major changes between OpenSSL 0.9.8t and OpenSSL 0.9.8u [12 Mar 2012]:
+
+  * Fix for CMS/PKCS#7 MMA ([CVE-2012-0884])
+  * Corrected fix for [CVE-2011-4619]
+  * Various DTLS fixes.
+
+### Major changes between OpenSSL 0.9.8s and OpenSSL 0.9.8t [18 Jan 2012]:
+
+  * Fix for DTLS DoS issue ([CVE-2012-0050])
+
+### Major changes between OpenSSL 0.9.8r and OpenSSL 0.9.8s [4 Jan 2012]:
+
+  * Fix for DTLS plaintext recovery attack ([CVE-2011-4108])
+  * Fix policy check double free error ([CVE-2011-4109])
+  * Clear block padding bytes of SSL 3.0 records ([CVE-2011-4576])
+  * Only allow one SGC handshake restart for SSL/TLS ([CVE-2011-4619])
+  * Check for malformed RFC3779 data ([CVE-2011-4577])
+
+### Major changes between OpenSSL 0.9.8q and OpenSSL 0.9.8r [8 Feb 2011]:
+
+  * Fix for security issue [CVE-2011-0014]
+
+### Major changes between OpenSSL 0.9.8p and OpenSSL 0.9.8q [2 Dec 2010]:
+
+  * Fix for security issue [CVE-2010-4180]
+  * Fix for [CVE-2010-4252]
+
+### Major changes between OpenSSL 0.9.8o and OpenSSL 0.9.8p [16 Nov 2010]:
+
+  * Fix for security issue [CVE-2010-3864].
+
+### Major changes between OpenSSL 0.9.8n and OpenSSL 0.9.8o [1 Jun 2010]:
+
+  * Fix for security issue [CVE-2010-0742].
+  * Various DTLS fixes.
+  * Recognise SHA2 certificates if only SSL algorithms added.
+  * Fix for no-rc4 compilation.
+  * Chil ENGINE unload workaround.
 
 ### Major changes between OpenSSL 0.9.8m and OpenSSL 0.9.8n [24 Mar 2010]
 
@@ -1553,6 +1958,9 @@ OpenSSL 0.9.x
   * Added initial support for Win64.
   * Added alternate pkg-config files.
 
+OpenSSL 0.9.7
+-------------
+
 ### Major changes between OpenSSL 0.9.7l and OpenSSL 0.9.7m [23 Feb 2007]
 
   * FIPS 1.1.1 module linking.
@@ -1687,6 +2095,17 @@ OpenSSL 0.9.x
   * SSL/TLS: add callback to retrieve SSL/TLS messages.
   * SSL/TLS: support AES cipher suites (RFC3268).
 
+OpenSSL 0.9.6
+-------------
+
+### Major changes between OpenSSL 0.9.6l and OpenSSL 0.9.6m [17 Mar 2004]
+
+  * Security: fix null-pointer bug leading to crash ([CVE-2004-0079])
+
+### Major changes between OpenSSL 0.9.6k and OpenSSL 0.9.6l [4 Nov 2003]
+
+  * Security: fix ASN1 bug leading to large recursion ([CVE-2003-0851])
+
 ### Major changes between OpenSSL 0.9.6j and OpenSSL 0.9.6k [30 Sep 2003]
 
   * Security: fix various ASN1 parsing bugs.
@@ -1805,6 +2224,9 @@ OpenSSL 0.9.x
   [1] The support for external crypto devices is currently a separate
       distribution.  See the file README-Engine.md.
 
+OpenSSL 0.9.5
+-------------
+
 ### Major changes between OpenSSL 0.9.5 and OpenSSL 0.9.5a [1 Apr 2000]
 
   * Bug fixes for Win32, SuSE Linux, NeXTSTEP and FreeBSD 2.2.8
@@ -1813,6 +2235,9 @@ OpenSSL 0.9.x
   * Assembler support for Mingw32
   * New 'rand' application
   * New way to check for existence of algorithms from scripts
+
+OpenSSL 0.9.4
+-------------
 
 ### Major changes between OpenSSL 0.9.4 and OpenSSL 0.9.5 [25 May 2000]
 
@@ -1850,6 +2275,9 @@ OpenSSL 0.9.x
   * Enhanced support for Alpha Linux
   * Experimental macOS support
 
+OpenSSL 0.9.3
+-------------
+
 ### Major changes between OpenSSL 0.9.3 and OpenSSL 0.9.4 [9 Aug 1999]
 
   * Transparent support for PKCS#8 format private keys: these are used
@@ -1876,6 +2304,9 @@ OpenSSL 0.9.x
   * Sparc assembler bignum implementation, optimized hash functions
   * Option to disable selected ciphers
 
+OpenSSL 0.9.2
+-------------
+
 ### Major changes between OpenSSL 0.9.1c and OpenSSL 0.9.2b [22 Mar 1999]
 
   * Fixed a security hole related to session resumption
@@ -1898,6 +2329,9 @@ OpenSSL 0.9.x
   * Lots of source tree cleanups.
   * Lots of memory leak fixes.
   * Lots of bug fixes.
+
+OpenSSL 0.9.1
+-------------
 
 ### Major changes between SSLeay 0.9.0b and OpenSSL 0.9.1c [23 Dec 1998]
 
@@ -2062,6 +2496,7 @@ OpenSSL 0.9.x
 [CVE-2013-0166]: https://www.openssl.org/news/vulnerabilities.html#CVE-2013-0166
 [CVE-2012-2686]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-2686
 [CVE-2012-2333]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-2333
+[CVE-2012-2131]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-2131
 [CVE-2012-2110]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-2110
 [CVE-2012-0884]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-0884
 [CVE-2012-0050]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-0050
@@ -2069,6 +2504,7 @@ OpenSSL 0.9.x
 [CVE-2011-4619]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-4619
 [CVE-2011-4577]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-4577
 [CVE-2011-4576]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-4576
+[CVE-2011-4109]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-4109
 [CVE-2011-4108]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-4108
 [CVE-2011-3210]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-3210
 [CVE-2011-3207]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-3207
@@ -2079,6 +2515,7 @@ OpenSSL 0.9.x
 [CVE-2010-3864]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-3864
 [CVE-2010-2939]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-2939
 [CVE-2010-1633]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-1633
+[CVE-2010-0742]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-0742
 [CVE-2010-0740]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-0740
 [CVE-2010-0433]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-0433
 [CVE-2009-3555]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-3555
@@ -2092,6 +2529,8 @@ OpenSSL 0.9.x
 [CVE-2006-2940]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-2940
 [CVE-2006-2937]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-2937
 [CVE-2005-2969]: https://www.openssl.org/news/vulnerabilities.html#CVE-2005-2969
+[CVE-2004-0079]: https://www.openssl.org/news/vulnerabilities.html#CVE-2004-0079
+[CVE-2003-0851]: https://www.openssl.org/news/vulnerabilities.html#CVE-2003-0851
 [OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
 [CHANGES.md]: ./CHANGES.md
 [README-QUIC.md]: ./README-QUIC.md
