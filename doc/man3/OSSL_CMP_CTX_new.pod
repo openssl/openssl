@@ -343,13 +343,18 @@ Else, 'digitalSignature' must be allowed by CMP signer certificates.
 
 =item B<OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR>
 
-Allow retrieving a trust anchor from extraCerts and using that
-to validate the certificate chain of an IP message.
 This is a quirk option added to support 3GPP TS 33.310.
+It leads to behavior violating RFCs 4210 and 9810.
+It allows using self-issued certificates from the extraCerts in an IP message
+as trust anchors when validating the CMP message protection certificate
+in this and any subsequent responses from the server in the same transaction,
+but only if these extraCerts can also be used as trust anchors for validating
+the newly enrolled certificate received in the IP message.
 
-Note that using this option is dangerous as the certificate obtained
-this way has not been authenticated (at least not at CMP level).
-Taking it over as a trust anchor implements trust-on-first-use (TOFU).
+Note that using this option is dangerous as the to-be-trusted certificates
+obtained this way have not been authenticated (at least not at CMP level).
+Taking them over as initial trust anchors
+implements a form of trust-on-first-use (TOFU).
 
 =item B<OSSL_CMP_OPT_NO_CACHE_EXTRACERTS>
 

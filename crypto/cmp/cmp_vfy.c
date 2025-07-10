@@ -327,21 +327,31 @@ static int check_cert_path(const OSSL_CMP_CTX *ctx, X509_STORE *store,
 /*
  * Exceptional handling for 3GPP TS 33.310 [3G/LTE Network Domain Security
  * (NDS); Authentication Framework (AF)], only to use for IP messages
- * and if the ctx option is explicitly set: use self-issued certificates
- * from extraCerts as trust anchor to validate sender cert -
- * provided it also can validate the newly enrolled certificate
+ * and if the ctx option is explicitly set: use self-issued certificates from
+ * extraCerts as trust anchors when validating the CMP message protection cert
+ * in this and any subsequent responses from the server in the same transaction,
+ * but only if these extraCerts can also be used as trust anchors for validating
+ * the newly enrolled certificate received in the IP message.
  */
 static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
     const OSSL_CMP_MSG *msg, X509 *scrt)
 {
     int valid = 0;
     X509_STORE *store;
+    STACK_OF(X509) *extraCerts;
 
     if (!ctx->permitTAInExtraCertsForIR)
         return 0;
 
+    /*
+     * Initially, use extraCerts from the IP message.
+     * For subsequent msgs (pollRep or PKIConf) in the same transaction,
+     * use extraCertsIn remembered from earlier message (typically, the IP message).
+     * The extraCertsIn field will be cleared by OSSL_CMP_CTX_reinit().
+     */
+    extraCerts = ctx->extraCertsIn == NULL ? msg->extraCerts : ctx->extraCertsIn;
     if ((store = X509_STORE_new()) == NULL
-        || !ossl_cmp_X509_STORE_add1_certs(store, msg->extraCerts,
+        || !ossl_cmp_X509_STORE_add1_certs(store, extraCerts,
             1 /* self-issued only */))
         goto err;
 
@@ -554,10 +564,11 @@ end:
  * (in this order) and is path is validated against ctx->trusted.
  * On success cache the found cert using ossl_cmp_ctx_set1_validatedSrvCert().
  *
- * If ctx->permitTAInExtraCertsForIR is true and when validating a CMP IP msg,
- * the trust anchor for validating the IP msg may be taken from msg->extraCerts
- * if a self-issued certificate is found there that can be used to
- * validate the enrolled certificate returned in the IP.
+ * If ctx->permitTAInExtraCertsForIR is true, when validating a CMP IP message,
+ * trust anchors for validating the IP message (and any subsequent responses
+ * by the server in the same transaction) may be taken from msg->extraCerts
+ * if self-issued certificates are found there that can also be used
+ * to validate the newly enrolled certificate returned in the IP msg.
  * This is according to the need given in 3GPP TS 33.310.
  *
  * Returns 1 on success, 0 on error or validation failed.
