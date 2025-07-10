@@ -275,6 +275,66 @@ static int test_rand_get0_primary(void)
     return res;
 }
 
+static int test_rand_set_default_parameters(void)
+{
+    OSSL_PARAM prim_par[3];
+    OSSL_PARAM sec_par[3];
+    OSSL_PARAM test_par[3];
+    unsigned reseed_request_prim = 314;
+    unsigned reseed_request_sec = 42;
+    int reseed_time_interval_prim = 1024;
+    int reseed_time_interval_sec = 2048;
+    unsigned reseed_request_test = 0;
+    int reseed_time_interval_test = 0;
+    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
+    EVP_RAND_CTX *rctx;
+    int res = 0;
+
+    prim_par[0] = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS,
+                                            &reseed_request_prim);
+    prim_par[1] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL,
+                                           &reseed_time_interval_prim);
+    prim_par[2] = OSSL_PARAM_construct_end();
+    sec_par[0] = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS,
+                                           &reseed_request_sec);
+    sec_par[1] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL,
+                                          &reseed_time_interval_sec);
+    sec_par[2] = OSSL_PARAM_construct_end();
+    test_par[0] = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS,
+                                            &reseed_request_test);
+    test_par[1] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL,
+                                           &reseed_time_interval_test);
+    test_par[2] = OSSL_PARAM_construct_end();
+    if (!TEST_ptr(ctx))
+        return 0;
+    if (!TEST_true(RAND_set_default_primary_parameters(ctx, prim_par))
+            || !TEST_true(RAND_set_default_parameters(ctx, sec_par))
+            || !TEST_ptr(rctx = RAND_get0_primary(ctx))
+            || !TEST_int_eq(EVP_RAND_CTX_get_params(rctx, test_par), 1)
+            || !TEST_uint_eq(reseed_request_prim, reseed_request_test)
+            || !TEST_int_eq(reseed_time_interval_prim,
+                            reseed_time_interval_test)
+            || !TEST_ptr(rctx = RAND_get0_private(ctx))
+            || !TEST_int_eq(EVP_RAND_CTX_get_params(rctx, test_par), 1)
+            || !TEST_uint_eq(reseed_request_sec, reseed_request_test)
+            || !TEST_int_eq(reseed_time_interval_sec,
+                            reseed_time_interval_test))
+        goto err;
+    reseed_time_interval_test = 0;
+    reseed_request_test = 0;
+    if (!TEST_ptr(rctx = RAND_get0_public(ctx))
+            || !TEST_int_eq(EVP_RAND_CTX_get_params(rctx, test_par), 1)
+            || !TEST_uint_eq(reseed_request_sec, reseed_request_test)
+            || !TEST_int_eq(reseed_time_interval_sec,
+                            reseed_time_interval_test))
+        goto err;
+
+    res = 1;
+err:
+    OSSL_LIB_CTX_free(ctx);
+    return res;
+
+}
 int setup_tests(void)
 {
     if (!test_skip_common_options()) {
@@ -301,5 +361,6 @@ int setup_tests(void)
     if (!OSSL_PROVIDER_available(NULL, "fips")
             || fips_provider_version_ge(NULL, 3, 5, 1))
         ADD_TEST(test_rand_get0_primary);
+    ADD_TEST(test_rand_set_default_parameters);
     return 1;
 }
