@@ -45,12 +45,12 @@ the program's dynamic memory area, where keys and other sensitive
 information might be stored, OpenSSL supports the concept of a "secure heap."
 The level and type of security guarantees depend on the operating system.
 It is a good idea to review the code and see if it addresses your
-threat model and concerns. It should be noted that the secure heap is
-using single read/write B<sec_malloc_lock> lock, and therefore any operations
-that requires allocation or freeing of memory will block other threads. Having
-that it in mind, highly concurrent applications should use secure heap with care
-and be aware of the performance implications especially when lock is heavily
-contended.
+threat model and concerns. It should be noted that the secure heap
+uses a single read/write lock, and therefore any operations
+that involve allocation or freeing of secure heap memory are serialised,
+blocking other threads. Having that it in mind, highly concurrent applications
+should enable the secure heap with caution and be aware of the performance
+implications for multi-threaded code.
 
 If a secure heap is used, then private key B<BIGNUM> values are stored there.
 This protects long-term storage of private keys, but will not necessarily
