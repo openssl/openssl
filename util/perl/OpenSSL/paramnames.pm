@@ -686,7 +686,7 @@ sub generate_decoder_from_trie {
         }
         print ")) {\n";
         trie_matched($field, $num, $indent1, $indent2);
-       printf "%s}\n", $indent0;
+        printf "%s}\n", $indent0;
         return;
     }
 
@@ -815,12 +815,16 @@ sub output_param_decoder {
     # Output param pointer structure
     printf "#ifndef %s_st\n", $decoder_name_base;
     printf "struct %s_st {\n", $decoder_name_base;
+    my %done_prms = ();
     foreach my $pident (sort values %prms) {
-        if (defined($concat_num{$pident})) {
-            printf "    OSSL_PARAM *%s[%s];\n", $pident, $concat_num{$pident};
-            printf "    int num_%s;\n", $pident;
-        } else {
-            printf "    OSSL_PARAM *%s;\n", $pident;
+        if (not defined $done_prms{$pident}) {
+            $done_prms{$pident} = 1;
+            if (defined($concat_num{$pident})) {
+                printf "    OSSL_PARAM *%s[%s];\n", $pident, $concat_num{$pident};
+                printf "    int num_%s;\n", $pident;
+            } else {
+                printf "    OSSL_PARAM *%s;\n", $pident;
+            }
         }
     }
     print "};\n#endif\n\n";
