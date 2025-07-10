@@ -70,6 +70,7 @@ Server authentication options:
 [B<-expect_sender> I<name>]
 [B<-ignore_keyusage>]
 [B<-unprotected_errors>]
+[B<-ta_in_ip_extracerts>]
 [B<-no_cache_extracerts>]
 [B<-srvcertout> I<filename>]
 [B<-extracertsout> I<filename>]
@@ -714,6 +715,22 @@ with a signature key."
 =item * appendix D.4 shows PKIConf message having protection
 
 =back
+
+=item B<-ta_in_ip_extracerts>
+
+This is a quirk option added to support 3GPP TS 33.310.
+B<WARNING:> This leads to behavior violating RFCs 4210 and 9810.
+
+It allows using self-issued certificates from the extraCerts in an IP message
+as non-authenticated trust anchors when validating the CMP message protection certificate
+in this and any subsequent responses from the server in the same transaction,
+but only if these extraCerts can also be used as trust anchors for validating
+the newly enrolled certificate received in the IP message.
+
+Note that using this option is dangerous as the to-be-trusted certificates
+obtained this way have not been authenticated (at least not at CMP level).
+Taking them over as initial trust anchors
+implements a form of trust-on-first-use (TOFU).
 
 =item B<-no_cache_extracerts>
 
@@ -1512,6 +1529,8 @@ and B<-rsp_crl> options were added in OpenSSL 3.4.
 
 B<-centralkeygen>, B<-newkeyout>, B<-rsp_key> and
 B<-rsp_keypass> were added in OpenSSL 3.5.
+
+The B<-ta_in_ip_extracerts> quirk option was added in OpenSSL 4.0.
 
 The B<-engine> option was removed in OpenSSL 4.0.
 
