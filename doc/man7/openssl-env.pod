@@ -18,6 +18,11 @@ the executable is set-user-ID or set-group-ID.
 Specifies the path to a certificate transparency log list.
 See L<CTLOG_STORE_new(3)>.
 
+=item B<NO_PROXY>, B<HTTPS_PROXY>, B<HTTP_PROXY>
+
+Specify a proxy hostname.
+See L<OSSL_HTTP_parse_url(3)>.
+
 =item B<OPENSSL>
 
 Specifies the path to the B<openssl> executable. Used by
@@ -166,21 +171,6 @@ the L<openssl(1)> program also transcodes the command-line parameters
 from the current code page to UTF-8.
 This environment variable is only checked on Microsoft Windows platforms.
 
-=item B<RANDFILE>
-
-The state file for the random number generator.
-This should not be needed in normal use.
-See L<RAND_load_file(3)>.
-
-=item B<SSL_CERT_DIR>, B<SSL_CERT_FILE>
-
-Specify the default directory or file containing CA certificates.
-See L<SSL_CTX_load_verify_locations(3)>.
-
-=item B<TSGET>
-
-Additional arguments for the L<tsget(1)> command.
-
 =item B<OPENSSL_armcap>, B<OPENSSL_ia32cap>, B<OPENSSL_ppccap>, B<OPENSSL_riscvcap>, B<OPENSSL_s390xcap>, B<OPENSSL_sparcv9cap>
 
 OpenSSL supports a number of different algorithm implementations for
@@ -189,18 +179,19 @@ processor capabilities and run time feature enquiry.  These environment
 variables can be used to exert more control over this selection process.
 See L<OPENSSL_ia32cap(3)>, L<OPENSSL_riscvcap(3)>, and L<OPENSSL_s390xcap(3)>.
 
-=item B<NO_PROXY>, B<HTTPS_PROXY>, B<HTTP_PROXY>
+=item B<OSSL_QFILTER>
 
-Specify a proxy hostname.
-See L<OSSL_HTTP_parse_url(3)>.
+Used to set a QUIC qlog filter specification. See L<openssl-qlog(7)>.
 
 =item B<QLOGDIR>
 
 Specifies a QUIC qlog output directory. See L<openssl-qlog(7)>.
 
-=item B<OSSL_QFILTER>
+=item B<RANDFILE>
 
-Used to set a QUIC qlog filter specification. See L<openssl-qlog(7)>.
+The state file for the random number generator.
+This should not be needed in normal use.
+See L<RAND_load_file(3)>.
 
 =item B<SSLKEYLOGFILE>
 
@@ -213,6 +204,15 @@ Note: the use of B<SSLKEYLOGFILE> poses an explicit security risk.  By recording
 the exchanged keys during an SSL session, it allows any available party with
 read access to the file to decrypt application traffic sent over that session.
 Use of this feature should be restricted to test and debug environments only.
+
+=item B<SSL_CERT_DIR>, B<SSL_CERT_FILE>
+
+Specify the default directory or file containing CA certificates.
+See L<SSL_CTX_load_verify_locations(3)>.
+
+=item B<TSGET>
+
+Additional arguments for the L<tsget(1)> command.
 
 =back
 
