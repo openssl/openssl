@@ -16,8 +16,8 @@
 typedef struct dtls_bitmap_st {
     /* Track 64 packets */
     uint64_t map;
-    /* Max record number seen so far, 64-bit value in big-endian encoding */
-    unsigned char max_seq_num[SEQ_NUM_SIZE];
+    /* Max record number seen so far */
+    uint64_t max_seq_num;
 } DTLS_BITMAP;
 
 typedef struct ssl_mac_buf_st {
@@ -75,7 +75,7 @@ typedef struct tls_rl_record_st {
     uint16_t epoch;
     /* sequence number, needed by DTLS1 */
     /* r */
-    unsigned char seq_num[SEQ_NUM_SIZE];
+    uint64_t seq_num;
 } TLS_RL_RECORD;
 
 /* Macros/functions provided by the TLS_RL_RECORD component */
@@ -272,7 +272,7 @@ struct ossl_record_layer_st {
     size_t packet_length;
 
     /* Sequence number for the next record */
-    unsigned char sequence[SEQ_NUM_SIZE];
+    uint64_t sequence;
 
     /* Alert code to be used if an error occurs */
     int alert;
@@ -407,9 +407,6 @@ void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
                                     || (rl)->version == DTLS1_VERSION \
                                     || (rl)->version == DTLS1_2_VERSION)
 
-void ossl_tls_rl_record_set_seq_num(TLS_RL_RECORD *r,
-                                    const unsigned char *seq_num);
-
 int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
                                      EVP_CIPHER_CTX *ctx,
                                      const EVP_CIPHER *ciph,
@@ -485,7 +482,7 @@ int tls_get_alert_code(OSSL_RECORD_LAYER *rl);
 int tls_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio);
 int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
                     uint8_t *type, const unsigned char **data, size_t *datalen,
-                    uint16_t *epoch, unsigned char *seq_num);
+                    uint16_t *epoch, uint64_t *seq_num);
 int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle, size_t length);
 int tls_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 void tls_set_plain_alerts(OSSL_RECORD_LAYER *rl, int allow);
