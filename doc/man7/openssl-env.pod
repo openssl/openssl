@@ -18,6 +18,12 @@ the executable is set-user-ID or set-group-ID.
 Specifies the path to a certificate transparency log list.
 See L<CTLOG_STORE_new(3)>.
 
+=item B<HARNESS_OSSL_PREFIX>
+
+Allows specification of a prefix prepended to each line sent to the I<stdout>
+by L<openssl(1)>, used by the test harness to avoid commingling the command
+under test output with the output for the TAP consumer.
+
 =item B<HTTPS_PROXY>, B<HTTP_PROXY>, B<NO_PROXY>, B<https_proxy>, B<http_proxy>, B<no_proxy>
 
 Specify a proxy hostname.
