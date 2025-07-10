@@ -210,6 +210,12 @@ Use of this feature should be restricted to test and debug environments only.
 Specify the default directory or file containing CA certificates.
 See L<SSL_CTX_load_verify_locations(3)>.
 
+=item B<SSL_CIPHER>
+
+Used by L<openssl-s_time(1)> in case B<-cipher> option (that allows modifying
+TLSv1.2 and below cipher list sent by the client) is not provided,
+for specification of the aforementioned ciphers.
+
 =item B<TSGET>
 
 Additional arguments for the L<tsget(1)> command.
