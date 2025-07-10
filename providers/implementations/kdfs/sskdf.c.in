@@ -539,7 +539,6 @@ static int x963kdf_derive(void *vctx, unsigned char *key, size_t keylen,
 
 struct sskdf_all_set_ctx_params_st {
     OSSL_PARAM *secret;
-    OSSL_PARAM *key;
     OSSL_PARAM *propq;
     OSSL_PARAM *engine;
     OSSL_PARAM *digest;
@@ -588,9 +587,6 @@ static int sskdf_common_set_ctx_params
 
     r = ossl_param_get1_octet_string_from_param(p->secret, &ctx->secret,
                                                 &ctx->secret_len);
-    if (r == -1)
-        r = ossl_param_get1_octet_string_from_param(p->key, &ctx->secret,
-                                                    &ctx->secret_len);
     if (r == 0)
         return 0;
 
@@ -614,7 +610,7 @@ static int sskdf_common_set_ctx_params
 
 {- produce_param_decoder('sskdf_set_ctx_params',
                          (['KDF_PARAM_SECRET',         'secret', 'octet_string'],
-                          ['KDF_PARAM_KEY',            'key',    'octet_string'],
+                          ['KDF_PARAM_KEY',            'secret', 'octet_string'],
                           ['KDF_PARAM_INFO',           'info',   'octet_string', SSKDF_MAX_INFOS],
                           ['KDF_PARAM_PROPERTIES',     'propq',  'utf8_string'],
                           ['ALG_PARAM_ENGINE',         'engine', 'utf8_string', 'hidden'],
@@ -640,7 +636,7 @@ static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
 
 #ifdef FIPS_MODULE
-    if (p.key != NULL || p.secret != NULL)
+    if (p.secret != NULL)
         if (!fips_sskdf_key_check_passed(ctx))
             return 0;
 #endif
@@ -688,7 +684,7 @@ static const OSSL_PARAM *sskdf_common_gettable_ctx_params
 
 {- produce_param_decoder('x963kdf_set_ctx_params',
                          (['KDF_PARAM_SECRET',            'secret', 'octet_string'],
-                          ['KDF_PARAM_KEY',               'key',    'octet_string'],
+                          ['KDF_PARAM_KEY',               'secret', 'octet_string'],
                           ['KDF_PARAM_INFO',              'info',   'octet_string', SSKDF_MAX_INFOS],
                           ['KDF_PARAM_PROPERTIES',        'propq',  'utf8_string'],
                           ['ALG_PARAM_ENGINE',            'engine', 'utf8_string', 'hidden'],
@@ -724,7 +720,7 @@ static int x963kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
     }
 
-    if (p.key != NULL || p.secret != NULL)
+    if (p.secret != NULL)
         if (!fips_x963kdf_key_check_passed(ctx))
             return 0;
 #endif
