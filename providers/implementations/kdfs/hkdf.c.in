@@ -39,6 +39,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 
 #define HKDF_MAXBUF 2048
 #define HKDF_MAXINFO (32*1024)
+#define HKDF_MAX_INFOS    5
 
 static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_new;
 static OSSL_FUNC_kdf_dupctx_fn kdf_hkdf_dup;
@@ -52,11 +53,11 @@ static OSSL_FUNC_kdf_get_ctx_params_fn hkdf_common_get_ctx_params;
 static OSSL_FUNC_kdf_derive_fn kdf_tls1_3_derive;
 static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_tls1_3_settable_ctx_params;
 static OSSL_FUNC_kdf_set_ctx_params_fn kdf_tls1_3_set_ctx_params;
-static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_tls1_3_gettable_ctx_params;
-static OSSL_FUNC_kdf_get_ctx_params_fn kdf_tls1_3_get_ctx_params;
 static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha256_new;
 static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha384_new;
 static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha512_new;
+static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_hkdf_fixed_digest_settable_ctx_params;
+static OSSL_FUNC_kdf_set_ctx_params_fn kdf_hkdf_fixed_digest_set_ctx_params;
 
 static void *kdf_hkdf_fixed_digest_new(void *provctx, const char *digest);
 static void kdf_hkdf_reset_ex(void *vctx, int on_free);
@@ -275,24 +276,18 @@ struct hkdf_all_set_ctx_params_st {
     OSSL_PARAM *prefix;
     OSSL_PARAM *label;
     OSSL_PARAM *data;
-    OSSL_PARAM *info[5];
+    OSSL_PARAM *info[HKDF_MAX_INFOS];
     int num_info;
 };
 
 static int hkdf_common_set_ctx_params
-        (KDF_HKDF *ctx, const struct hkdf_all_set_ctx_params_st *p)
+        (KDF_HKDF *ctx, struct hkdf_all_set_ctx_params_st *p)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
     int n;
 
     if (p->digest != NULL) {
         const EVP_MD *md = NULL;
-
-        if (ctx->fixed_digest) {
-            ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
-                           "Setting the digest is not supported for fixed-digest HKDFs");
-            return 0;
-        }
 
         if (!ossl_prov_digest_load(&ctx->digest, p->digest,
                                    p->propq, p->engine, libctx))
@@ -347,6 +342,11 @@ static int hkdf_common_set_ctx_params
             return 0;
     }
 
+    /* Only relevant for HKDF not to the TLS 1.3 KDF */
+    if (ossl_param_get1_concat_octet_string(p->num_info, p->info,
+                                        &ctx->info, &ctx->info_len) == 0)
+        return 0;
+
     return 1;
 }
 
@@ -361,7 +361,7 @@ static int hkdf_common_set_ctx_params
                           ['KDF_PARAM_KEY',            'key',    'octet_string'],
                           ['KDF_PARAM_SALT',           'salt',   'octet_string'],
                           ['KDF_PARAM_FIPS_KEY_CHECK', 'ind_k',  'int'],
-                          ['KDF_PARAM_INFO',           'info',   'octet_string', 5],
+                          ['KDF_PARAM_INFO',           'info',   'octet_string', HKDF_MAX_INFOS],
                          )); -}
 
 static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
@@ -372,15 +372,10 @@ static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (ctx == NULL || !hkdf_set_ctx_params_decoder(params, &p))
         return 0;
 
-    if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, params,
-                                     OSSL_KDF_PARAM_FIPS_KEY_CHECK))
+    if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, p.ind_k))
         return 0;
 
     if (!hkdf_common_set_ctx_params(ctx, &p))
-        return 0;
-
-    if (ossl_param_get1_concat_octet_string(p.num_info, p.info,
-                                            &ctx->info, &ctx->info_len) == 0)
         return 0;
 
 #ifdef FIPS_MODULE
@@ -405,7 +400,7 @@ static const OSSL_PARAM *kdf_hkdf_settable_ctx_params(ossl_unused void *ctx,
                           ['KDF_PARAM_MODE',                    'mode',   'int'],
                           ['KDF_PARAM_SALT',                    'salt',   'octet_string'],
                           ['KDF_PARAM_INFO',                    'info',   'octet_string'],
-                          ['ALG_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int'],
+                          ['KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int'],
                          )); -}
 
 static const OSSL_PARAM *hkdf_gettable_ctx_params(ossl_unused void *ctx,
@@ -524,6 +519,54 @@ static void *kdf_hkdf_fixed_digest_new(void *provctx, const char *digest)
     return ctx;
 }
 
+#define hkdf_fixed_digest_set_ctx_params_st  hkdf_all_set_ctx_params_st
+
+{- produce_param_decoder('hkdf_fixed_digest_set_ctx_params',
+                         (['KDF_PARAM_MODE',           'mode',   'utf8_string'],
+                          ['KDF_PARAM_MODE',           'mode',   'int'],
+                          ['KDF_PARAM_DIGEST',         'digest', 'utf8_string',  'hidden'],
+                          ['KDF_PARAM_KEY',            'key',    'octet_string'],
+                          ['KDF_PARAM_SALT',           'salt',   'octet_string'],
+                          ['KDF_PARAM_FIPS_KEY_CHECK', 'ind_k',  'int'],
+                          ['KDF_PARAM_INFO',           'info',   'octet_string', HKDF_MAX_INFOS],
+                         )); -}
+
+static int kdf_hkdf_fixed_digest_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    struct hkdf_all_set_ctx_params_st p;
+    KDF_HKDF *ctx = vctx;
+
+    if (ctx == NULL || !hkdf_fixed_digest_set_ctx_params_decoder(params, &p))
+        return 0;
+
+    if (p.digest != NULL) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
+                       "Setting the digest is not supported for fixed-digest HKDFs");
+        return 0;
+    }
+
+    if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, p.ind_k))
+        return 0;
+
+    if (!hkdf_common_set_ctx_params(ctx, &p))
+        return 0;
+
+#ifdef FIPS_MODULE
+    if (p.key != NULL)
+        if (!fips_hkdf_key_check_passed(ctx))
+            return 0;
+#endif
+
+    return 1;
+}
+
+static const OSSL_PARAM *kdf_hkdf_fixed_digest_settable_ctx_params
+        (ossl_unused void *ctx, ossl_unused void *provctx)
+{
+    return hkdf_fixed_digest_set_ctx_params_list;
+}
+
+
 #define KDF_HKDF_FIXED_DIGEST_NEW(hashname, hashstring) \
     static void *kdf_hkdf_##hashname##_new(void *provctx) \
     { \
@@ -541,10 +584,10 @@ KDF_HKDF_FIXED_DIGEST_NEW(sha512, "SHA512")
         { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_hkdf_free }, \
         { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_hkdf_reset }, \
         { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_hkdf_derive }, \
-        { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS, (void(*)(void))kdf_hkdf_settable_ctx_params }, \
-        { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))kdf_hkdf_set_ctx_params }, \
-        { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS, (void(*)(void))kdf_hkdf_gettable_ctx_params }, \
-        { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_hkdf_get_ctx_params }, \
+        { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS, (void(*)(void))kdf_hkdf_fixed_digest_settable_ctx_params }, \
+        { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))kdf_hkdf_fixed_digest_set_ctx_params }, \
+        { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS, (void(*)(void))hkdf_gettable_ctx_params }, \
+        { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))hkdf_common_get_ctx_params }, \
         OSSL_DISPATCH_END \
     };
 
