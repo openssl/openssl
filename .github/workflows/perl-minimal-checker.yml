@@ -1,0 +1,51 @@
+# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Jobs run per pull request submission
+name: Perl-minimal-checker CI
+on: [pull_request, push]
+permissions:
+  contents: read
+
+jobs:
+  perl-minimal-checker:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install perl 5.10
+      run: |
+        pushd /tmp
+        mkdir perl
+        wget https://www.cpan.org/src/5.0/perl-5.10.1.tar.bz2
+        tar xf perl-5.10.1.tar.bz2
+        cd perl-5.10.1
+        ./Configure -des -Dprefix=/tmp/perl -A ccflags='-Wno-incompatible-pointer-types' -A define:malloctype='void *' -A define:freetype='void' -Dlibs='-ldl -lm -lutil -lc'
+        make -j $(nproc) perl
+        make install
+        popd
+    - name: Install Test::More 0.96
+      run: |
+        pushd /tmp
+        wget https://cpan.metacpan.org/authors/id/M/MS/MSCHWERN/Test-Simple-0.96.tar.gz
+        tar xf Test-Simple-0.96.tar.gz
+        cd Test-Simple-0.96
+        PATH="/tmp/perl/bin:$PATH"
+        perl Makefile.PL
+        make -j$(nproc) && make install
+        perl -MTest::More -e 'print "$Test::More::VERSION\n"'
+        popd
+    - uses: actions/checkout@v4
+    - name: Build openssl
+      run: ./config && make -j $(nproc)
+    - name: Install sed
+      run: sudo apt update && sudo apt install sed
+    - name: Check minimal version compliance
+      run: |
+        PM_FILES=($(find . -name "*.pm"))
+        perl -v
+        status=0
+        for p in "${PM_FILES[@]}"; do perl -I"$(pwd)/util/perl" -I"$(pwd)" -I"$(pwd)/external/perl/Text-Template-1.56/lib" -c "$p" | sed -n '/@INC/{p; q1}' || status=1; done;
+        exit $status
