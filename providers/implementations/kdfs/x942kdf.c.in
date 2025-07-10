@@ -534,8 +534,8 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen,
                           ['ALG_PARAM_ENGINE',              'engine',   'utf8_string', 'hidden'],
                           ['KDF_PARAM_DIGEST',              'digest',   'utf8_string'],
                           ['KDF_PARAM_SECRET',              'secret',   'octet_string'],
-                          ['KDF_PARAM_KEY',                 'key',      'octet_string'],
-                          ['KDF_PARAM_UKM',                 'ukm',      'octet_string'],
+                          ['KDF_PARAM_KEY',                 'secret',   'octet_string'],
+                          ['KDF_PARAM_UKM',                 'uinfo',    'octet_string'],
                           ['KDF_PARAM_X942_ACVPINFO',       'acvp',     'octet_string'],
                           ['KDF_PARAM_X942_PARTYUINFO',     'uinfo',    'octet_string'],
                           ['KDF_PARAM_X942_PARTYVINFO',     'vinfo',    'octet_string'],
@@ -549,7 +549,6 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen,
 static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct sshkdf_set_ctx_params_st p;
-    const OSSL_PARAM *pq;
     KDF_X942 *ctx = vctx;
     OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(ctx->provctx);
     const char *cekalg, *propq = NULL;
@@ -573,9 +572,8 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         }
     }
 
-    pq = p.secret == NULL ? p.key : p.secret;
-    if (pq != NULL) {
-        if (!x942kdf_set_buffer(&ctx->secret, &ctx->secret_len, pq))
+    if (p.secret != NULL) {
+        if (!x942kdf_set_buffer(&ctx->secret, &ctx->secret_len, p.secret))
             return 0;
 #ifdef FIPS_MODULE
         if (!fips_x942kdf_key_check_passed(ctx))
@@ -587,9 +585,8 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         && !x942kdf_set_buffer(&ctx->acvpinfo, &ctx->acvpinfo_len, p.acvp))
         return 0;
 
-    pq = p.uinfo == NULL ? p.ukm : p.uinfo;
-    if (pq != NULL
-        && !x942kdf_set_buffer(&ctx->partyuinfo, &ctx->partyuinfo_len, pq))
+    if (p.uinfo != NULL
+        && !x942kdf_set_buffer(&ctx->partyuinfo, &ctx->partyuinfo_len, p.uinfo))
         return 0;
 
     if (p.vinfo != NULL
