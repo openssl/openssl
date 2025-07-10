@@ -183,9 +183,9 @@ For more information, see L<OpenSSL_version(3)>.
 
 =head3 Other major new features
 
-=head4 Certificate Management Protocol (CMP, RFC 4210)
+=head4 Certificate Management Protocol (CMP, RFC 9810)
 
-This also covers CRMF (RFC 4211) and HTTP transfer (RFC 6712)
+This also covers CRMF (RFC 4211) and HTTP transfer (RFC 9811)
 See L<openssl-cmp(1)> and L<OSSL_CMP_exec_certreq(3)> as starting points.
 
 =head4 HTTP(S) client
