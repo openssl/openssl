@@ -222,6 +222,24 @@ Additional arguments for the L<tsget(1)> command.
 
 =back
 
+=head1 HISTORY
+
+This section contains environment variables that are no longer considered
+by the OpenSSL libraries and commands.
+
+=over 4
+
+=item B<HARNESS_OSSL_PREFIX>
+
+This environment variable, existed in OpenSSL versions from 1.1.1 up to 3.5,
+allowed specification of a prefix prepended to each line sent to the I<stdout>
+by L<openssl(1)>, used by the test harness to avoid commingling the command
+under test output with the output for the TAP consumer.
+
+This variable was not considered security-sensitive.
+
+=back
+
 =head1 COPYRIGHT
 
 Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
