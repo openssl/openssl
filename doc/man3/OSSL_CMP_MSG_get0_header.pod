@@ -114,7 +114,7 @@ to BIO I<bio>.
 
 =head1 NOTES
 
-CMP is defined in RFC 4210.
+CMP is defined in RFC 9810.
 
 =head1 RETURN VALUES
 

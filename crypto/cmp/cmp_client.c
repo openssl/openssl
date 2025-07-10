@@ -557,11 +557,11 @@ static X509 *get1_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
  * ctx->certConf_cb_arg, which has been initialized using opt_out_trusted, and
  * ctx->untrusted, which at this point already contains msg->extraCerts.
  * Returns 0 on acceptance, else a bit field reflecting PKIFailureInfo.
- * Quoting from RFC 4210 section 5.1. Overall PKI Message:
+ * Quoting from RFC 9810 section 5.1. Overall PKI Message:
  *     The extraCerts field can contain certificates that may be useful to
  *     the recipient.  For example, this can be used by a CA or RA to
  *     present an end entity with certificates that it needs to verify its
- *     own new certificate (if, for example, the CA that issued the end
+ *     own new certificate (for example, if the CA that issued the end
  *     entity's certificate is not a root CA for the end entity).  Note that
  *     this field does not necessarily contain a certification path; the
  *     recipient may have to sort, select from, or otherwise process the
