@@ -657,9 +657,8 @@ sub trie_matched {
     printf "%sreturn 0;\n", $indent2;
     printf "%sr->%s[r->num_%s++] = (OSSL_PARAM *)p;\n", $indent1, $field, $field;
   } else {
-    printf "%sif (ossl_unlikely(r->%s != NULL))\n", $indent1, $field;
-    printf "%sreturn 0;\n", $indent2;
-    printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent1, $field;
+    printf "%sif (ossl_likely(r->%s == NULL))\n", $indent1, $field;
+    printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent2, $field;
   }
 }
 
