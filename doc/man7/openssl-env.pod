@@ -18,7 +18,7 @@ the executable is set-user-ID or set-group-ID.
 Specifies the path to a certificate transparency log list.
 See L<CTLOG_STORE_new(3)>.
 
-=item B<NO_PROXY>, B<HTTPS_PROXY>, B<HTTP_PROXY>
+=item B<HTTPS_PROXY>, B<HTTP_PROXY>, B<NO_PROXY>, B<https_proxy>, B<http_proxy>, B<no_proxy>
 
 Specify a proxy hostname.
 See L<OSSL_HTTP_parse_url(3)>.
