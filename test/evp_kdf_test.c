@@ -295,12 +295,18 @@ static int do_kdf_hkdf_gettables(int extract_only, int has_digest)
             goto err;
     }
 
+    params_get[0] = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_int);
+    params_get[1] = OSSL_PARAM_construct_end();
+    if (!TEST_int_eq(EVP_KDF_CTX_get_params(kctx, params_get), 1)
+        || !TEST_int_eq(mode_int, extract_only ? EVP_KDF_HKDF_MODE_EXTRACT_ONLY :
+                        EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND))
+        goto err;
+
     params_get[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MODE, mode_utf8,
                                                      sizeof(mode_utf8));
-    params_get[1] = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_int);
-    params_get[2] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, salt, sizeof(salt));
-    params_get[3] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, info, sizeof(info));
-    params_get[4] = OSSL_PARAM_construct_end();
+    params_get[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, salt, sizeof(salt));
+    params_get[2] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, info, sizeof(info));
+    params_get[3] = OSSL_PARAM_construct_end();
     if (!TEST_int_eq(EVP_KDF_CTX_get_params(kctx, params_get), 1)
         || !TEST_str_eq(mode_utf8, extract_only ? "EXTRACT_ONLY" : "EXTRACT_AND_EXPAND")
         || !TEST_int_eq(mode_int, extract_only ? EVP_KDF_HKDF_MODE_EXTRACT_ONLY :
@@ -2066,9 +2072,14 @@ static int test_kdf_hmac_drbg_settables(void)
     /* Fail if we pass the wrong type for params */
     params[1] = OSSL_PARAM_construct_end();
     for (i = 0; settableparams[i].key != NULL; ++i) {
-        /* Skip "properties" key since it returns 1 unless the digest is also set */
+        /*
+         * Skip "properties" and "engine" keys since they returns 1 unless
+         * the digest is also set
+         */
         if (OPENSSL_strcasecmp(settableparams[i].key,
-                               OSSL_KDF_PARAM_PROPERTIES) != 0) {
+                               OSSL_KDF_PARAM_PROPERTIES) != 0
+                && OPENSSL_strcasecmp(settableparams[i].key,
+                               OSSL_ALG_PARAM_ENGINE) != 0) {
             TEST_note("Testing set int into %s fails", settableparams[i].key);
             params[0] = OSSL_PARAM_construct_int(settableparams[i].key, &j);
             if (!TEST_int_le(EVP_KDF_CTX_set_params(kctx, params), 0))

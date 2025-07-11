@@ -19,8 +19,12 @@
  * *out and *out_len are guaranteed to be untouched if this function
  * doesn't return success.
  */
+int ossl_param_get1_octet_string_from_param(const OSSL_PARAM *p,
+                                            unsigned char **out,
+                                            size_t *out_len);
 int ossl_param_get1_octet_string(const OSSL_PARAM *params, const char *name,
                                  unsigned char **out, size_t *out_len);
+
 /*
  * Concatenate all of the matching params together.
  * *out will point to an allocated buffer on successful return.
@@ -28,11 +32,10 @@ int ossl_param_get1_octet_string(const OSSL_PARAM *params, const char *name,
  *
  * Passing 0 for maxsize means unlimited size output.
  *
- * Returns 1 on success, 0 on failure and -1 if there are no matching params.
+ * Returns 1 on success and 0 on failure.
  *
  * *out and *out_len are guaranteed to be untouched if this function
  * doesn't return success.
  */
-int ossl_param_get1_concat_octet_string(const OSSL_PARAM *params, const char *name,
-                                        unsigned char **out, size_t *out_len,
-                                        size_t maxsize);
+int ossl_param_get1_concat_octet_string(size_t n, OSSL_PARAM *params[],
+                                        unsigned char **out, size_t *out_len);
