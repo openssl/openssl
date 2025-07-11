@@ -30,6 +30,7 @@ OpenSSL 3.6
 -----------
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
+
  * Added Distrust after date into certificates aux info to encode method
     used by root programs gradually retires a root certificate.
     it can be set by X509_set0_aux_server_distrust_after()

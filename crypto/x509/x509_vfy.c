@@ -1882,7 +1882,7 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
     if (purpose == X509_PURPOSE_SSL_SERVER)
         auxdistrustafter = X509_get0_aux_server_distrust_after(x);
     if (purpose == X509_PURPOSE_SMIME_SIGN || purpose == X509_PURPOSE_SMIME_ENCRYPT)
-        auxdistrustafter = X509_get0_aux_server_distrust_after(x);
+        auxdistrustafter = X509_get0_aux_email_distrust_after(x);
     if (auxdistrustafter != NULL) {
         i = ASN1_TIME_compare(auxdistrustafter, X509_get0_notBefore(ctx->cert));
         if (i <= 0 && depth < 0)

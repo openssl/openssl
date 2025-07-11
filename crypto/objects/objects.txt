@@ -2065,5 +2065,5 @@ nistKems 3 : id-alg-ml-kem-1024 : ML-KEM-1024
 
 # OpenSSL private zone
 1 3 6 1 4 1 16604 : openssl : OpenSSL Software Foundation
-openssl 1 : openssl-server-distrust-after					: Distrust new serverauth leafs that signed after
-openssl 2 : openssl-email-distrust-after					: Distrust new smime leafs that signed after 
+openssl 1 1 : openssl-server-distrust-after					: Distrust new serverauth leafs that signed after
+openssl 1 2 : openssl-email-distrust-after					: Distrust new smime leafs that signed after 

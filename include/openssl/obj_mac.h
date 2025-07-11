@@ -6646,12 +6646,12 @@
 #define SN_openssl_server_distrust_after                "openssl-server-distrust-after"
 #define LN_openssl_server_distrust_after                "Distrust new serverauth leafs that signed after"
 #define NID_openssl_server_distrust_after               1502
-#define OBJ_openssl_server_distrust_after               OBJ_openssl,1L
+#define OBJ_openssl_server_distrust_after               OBJ_openssl,1L,1L
 
 #define SN_openssl_email_distrust_after         "openssl-email-distrust-after"
 #define LN_openssl_email_distrust_after         "Distrust new smime leafs that signed after"
 #define NID_openssl_email_distrust_after                1504
-#define OBJ_openssl_email_distrust_after                OBJ_openssl,2L
+#define OBJ_openssl_email_distrust_after                OBJ_openssl,1L,2L
 
 #endif /* OPENSSL_OBJ_MAC_H */
 
