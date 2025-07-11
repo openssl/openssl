@@ -167,12 +167,13 @@ respectively.  If a pointer is NULL, then the corresponding count is not stored.
 The variable
 B<OPENSSL_MALLOC_FAILURES> controls how often allocations should fail.
 It is a set of fields separated by semicolons, which each field is a count
-(defaulting to zero) and an optional atsign and percentage (defaulting
-to 100).  If the count is zero, then it lasts forever.  For example,
-C<100;@25> or C<100@0;0@25> means the first 100 allocations pass, then all
-other allocations (until the program exits or crashes) have a 25% chance of
-failing. The length of the value of B<OPENSSL_MALLOC_FAILURES> must be 256 or
-fewer characters.
+(defaulting to zero) and an optional atsign and percentage (interpreted
+as a floating point number that is rounded up to two decimal digits
+of precision, defaulting to 100).  If the count is zero, then it lasts forever.
+For example, C<100;@0.258> or C<100@0;0@0.258> means the first 100 allocations
+pass, then all other allocations (until the program exits or crashes) have
+a 0.26% chance of failing. The length of the value of B<OPENSSL_MALLOC_FAILURES>
+must be 256 or fewer characters.
 
 If the variable B<OPENSSL_MALLOC_FD> is parsed as a positive integer, then
 it is taken as an open file descriptor. This is used in conjunction with
