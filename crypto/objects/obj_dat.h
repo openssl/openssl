@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[9576] = {
+static const unsigned char so[9578] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1352,8 +1352,8 @@ static const unsigned char so[9576] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x03,0x1D,  /* [ 9527] OBJ_HKDF_SHA384 */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x03,0x1E,  /* [ 9538] OBJ_HKDF_SHA512 */
     0x2B,0x06,0x01,0x04,0x01,0x81,0x81,0x5C,       /* [ 9549] OBJ_openssl */
-    0x2B,0x06,0x01,0x04,0x01,0x81,0x81,0x5C,0x01,  /* [ 9557] OBJ_openssl_server_distrust_after */
-    0x2B,0x06,0x01,0x04,0x01,0x81,0x81,0x5C,0x02,  /* [ 9566] OBJ_openssl_email_distrust_after */
+    0x2B,0x06,0x01,0x04,0x01,0x81,0x81,0x5C,0x01,0x01,  /* [ 9557] OBJ_openssl_server_distrust_after */
+    0x2B,0x06,0x01,0x04,0x01,0x81,0x81,0x5C,0x01,0x02,  /* [ 9567] OBJ_openssl_email_distrust_after */
 };
 
 #define NUM_NID 1505
@@ -2860,9 +2860,9 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"openssl", "OpenSSL Software Foundation", NID_openssl, 8, &so[9549]},
     { NULL, NULL, NID_undef },
     { NULL, NULL, NID_undef },
-    {"openssl-server-distrust-after", "Distrust new serverauth leafs that signed after", NID_openssl_server_distrust_after, 9, &so[9557]},
+    {"openssl-server-distrust-after", "Distrust new serverauth leafs that signed after", NID_openssl_server_distrust_after, 10, &so[9557]},
     { NULL, NULL, NID_undef },
-    {"openssl-email-distrust-after", "Distrust new smime leafs that signed after", NID_openssl_email_distrust_after, 9, &so[9566]},
+    {"openssl-email-distrust-after", "Distrust new smime leafs that signed after", NID_openssl_email_distrust_after, 10, &so[9567]},
 };
 
 #define NUM_SN 1493
@@ -6844,8 +6844,6 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      681,    /* OBJ_X9_62_onBasis                1 2 840 10045 1 2 3 1 */
      682,    /* OBJ_X9_62_tpBasis                1 2 840 10045 1 2 3 2 */
      683,    /* OBJ_X9_62_ppBasis                1 2 840 10045 1 2 3 3 */
-    1502,    /* OBJ_openssl_server_distrust_after 1 3 6 1 4 1 16604 1 */
-    1504,    /* OBJ_openssl_email_distrust_after 1 3 6 1 4 1 16604 2 */
      417,    /* OBJ_ms_csp_name                  1 3 6 1 4 1 311 17 1 */
      856,    /* OBJ_LocalKeySet                  1 3 6 1 4 1 311 17 2 */
     1293,    /* OBJ_ms_cert_templ                1 3 6 1 4 1 311 21 7 */
@@ -7078,6 +7076,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      147,    /* OBJ_pbe_WithSHA1And2_Key_TripleDES_CBC 1 2 840 113549 1 12 1 4 */
      148,    /* OBJ_pbe_WithSHA1And128BitRC2_CBC 1 2 840 113549 1 12 1 5 */
      149,    /* OBJ_pbe_WithSHA1And40BitRC2_CBC  1 2 840 113549 1 12 1 6 */
+    1502,    /* OBJ_openssl_server_distrust_after 1 3 6 1 4 1 16604 1 1 */
+    1504,    /* OBJ_openssl_email_distrust_after 1 3 6 1 4 1 16604 1 2 */
      171,    /* OBJ_ms_ext_req                   1 3 6 1 4 1 311 2 1 14 */
      134,    /* OBJ_ms_code_ind                  1 3 6 1 4 1 311 2 1 21 */
      135,    /* OBJ_ms_code_com                  1 3 6 1 4 1 311 2 1 22 */

@@ -498,3 +498,11 @@ OPENSSL_SIGALG="sha3-512" ./mkcert.sh genee server.example ee-key-ec-named-named
 OPENSSL_KEYALG=ec OPENSSL_KEYBITS=prime256v1 ./mkcert.sh genee \
     "P-256 cert EE issuer" p256-ee-rsa-ca-key \
     p256-ee-rsa-ca-cert ca-key ca-cert
+
+# SERVER_DISTRUST_AFTER root and CA
+openssl x509 -in root-cert.pem -trustout \
+    -setdistrustafterserver 20170101000000Z -out root-serverdistrust2017.pem
+openssl x509 -in root-cert.pem -trustout \
+    -setdistrustafterserver 20160101000001Z -out root-serverdistrust2016.pem
+openssl x509 -in ca-cert.pem -trustout \
+    -setdistrustafterserver 20160101000001Z -out ca-serverdistrust2016.pem
