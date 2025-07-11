@@ -56,6 +56,6 @@ static int mdc2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
 /* ossl_mdc2_functions */
 IMPLEMENT_digest_functions_with_settable_ctx(
-    mdc2, MDC2_CTX, MDC2_BLOCK, MDC2_DIGEST_LENGTH, 0,
+    mdc2, MDC2_CTX, MDC2_BLOCK, MDC2_DIGEST_LENGTH, 0, 0, 0,
     MDC2_Init, MDC2_Update, MDC2_Final,
     mdc2_settable_ctx_params, mdc2_set_ctx_params)
