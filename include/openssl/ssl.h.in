@@ -428,6 +428,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 # define SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE         SSL_OP_BIT(34)
 # define SSL_OP_PREFER_NO_DHE_KEX                        SSL_OP_BIT(35)
 # define SSL_OP_LEGACY_EC_POINT_FORMATS                  SSL_OP_BIT(36)
+# define SSL_OP_NO_RECORD_SIZE_LIMIT_EXT                 SSL_OP_BIT(37)
 
 /*
  * Option "collections."
@@ -2162,6 +2163,8 @@ __owur size_t SSL_SESSION_get_master_key(const SSL_SESSION *sess,
 __owur int SSL_SESSION_set1_master_key(SSL_SESSION *sess,
                                        const unsigned char *in, size_t len);
 uint8_t SSL_SESSION_get_max_fragment_length(const SSL_SESSION *sess);
+uint16_t SSL_SESSION_get_record_size_limit(const SSL_SESSION *sess);
+uint16_t SSL_SESSION_get_peer_record_size_limit(const SSL_SESSION *sess);
 
 #define SSL_get_ex_new_index(l, p, newf, dupf, freef) \
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_SSL, l, p, newf, dupf, freef)
