@@ -2,11 +2,15 @@
 # that don't appear in lib*.num -- because they are define's, in
 # assembly language, etc.
 #
+OPENSSL_armcap                          environment
 OPENSSL_ia32cap                         environment
-OPENSSL_s390xcap                        environment
+OPENSSL_ppccap                          environment
 OPENSSL_riscvcap                        environment
+OPENSSL_s390xcap                        environment
+OPENSSL_sparcv9cap                      environment
 OPENSSL_MALLOC_FD                       environment
 OPENSSL_MALLOC_FAILURES                 environment
+OPENSSL_MALLOC_SEED                     environment
 OPENSSL_instrument_bus                  assembler
 OPENSSL_instrument_bus2                 assembler
 #
