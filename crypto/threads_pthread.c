@@ -15,6 +15,7 @@
 #include <crypto/sparse_array.h>
 #include "internal/cryptlib.h"
 #include "internal/threads_common.h"
+#include "internal/threads_lock_contention.h"
 #include "internal/rcu.h"
 #include "rcu_internal.h"
 
@@ -580,6 +581,8 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 # ifdef USE_RWLOCK
     CRYPTO_RWLOCK *lock;
 
+    ossl_init_rwlock_contention_data();
+
     if ((lock = OPENSSL_zalloc(sizeof(pthread_rwlock_t))) == NULL)
         /* Don't set error, to avoid recursion blowup. */
         return NULL;
@@ -623,7 +626,7 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
-    if (!ossl_assert(pthread_rwlock_rdlock(lock) == 0))
+    if (!ossl_assert(ossl_rwlock_rdlock(lock) == 0))
         return 0;
 # else
     if (pthread_mutex_lock(lock) != 0) {
@@ -638,7 +641,7 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
-    if (!ossl_assert(pthread_rwlock_wrlock(lock) == 0))
+    if (!ossl_assert(ossl_rwlock_wrlock(lock) == 0))
         return 0;
 # else
     if (pthread_mutex_lock(lock) != 0) {
@@ -653,7 +656,7 @@ __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
-    if (pthread_rwlock_unlock(lock) != 0)
+    if (ossl_rwlock_unlock(lock) != 0)
         return 0;
 # else
     if (pthread_mutex_unlock(lock) != 0) {
@@ -671,6 +674,7 @@ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock)
         return;
 
 # ifdef USE_RWLOCK
+    ossl_free_rwlock_contention_data();
     pthread_rwlock_destroy(lock);
 # else
     pthread_mutex_destroy(lock);
