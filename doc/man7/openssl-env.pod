@@ -46,6 +46,13 @@ Specifies a configuration option and filename for the B<req> and B<ca>
 commands invoked by the B<CA.pl> script.
 See L<CA.pl(1)>.
 
+=item B<OPENSSL_DEBUG_DECC_INIT>
+
+On VMS only:  if this variable is set, enables verbose output of parsing
+of C<DECC$*> logical names, that contain C RTL features, during library
+initialisation (C<LIB$INITIALIZE>).  If the value of the variable is more
+than 1, outputs information about every processed feature.
+
 =item B<OPENSSL_ENGINES>
 
 Specifies the directory from which dynamic engines are loaded.
