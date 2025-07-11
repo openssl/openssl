@@ -46,7 +46,7 @@ See L<CA.pl(1)>.
 Specifies the directory from which dynamic engines are loaded.
 See L<openssl-engine(1)>.
 
-=item B<OPENSSL_MALLOC_FD>, B<OPENSSL_MALLOC_FAILURES>
+=item B<OPENSSL_MALLOC_FAILURES>, B<OPENSSL_MALLOC_FD>, B<OPENSSL_MALLOC_SEED>
 
 If built with debugging, this allows memory allocation to fail.
 See L<OPENSSL_malloc(3)>.
