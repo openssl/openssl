@@ -111,30 +111,37 @@ jobs:
           #     `dir' directory that will be used to build and test in.
           #     `tgz' is the name of the tarball use to keep the artifacts of
           #         the build.
+          #     `extra_config` adds extra config build option for the branch.
           {
             name: openssl-3.0,
             dir: branch-3.0,
             tgz: branch-3.0.tar.gz,
+            extra_config: "",
           }, {
             name: openssl-3.2,
             dir: branch-3.2,
             tgz: branch-3.2.tar.gz,
+            extra_config: "",
           }, {
             name: openssl-3.3,
             dir: branch-3.3,
             tgz: branch-3.3.tar.gz,
+            extra_config: "",
           }, {
             name: openssl-3.4,
             dir: branch-3.4,
             tgz: branch-3.4.tar.gz,
+            extra_config: "",
           }, {
             name: openssl-3.5,
             dir: branch-3.5,
             tgz: branch-3.5.tar.gz,
+            extra_config: "",
           }, {
             name: master,
             dir: branch-master,
             tgz: branch-master.tar.gz,
+            extra_config: "enable-lms",
           },
         ]
 
@@ -150,7 +157,7 @@ jobs:
 
       - name: config branch
         run: |
-          ./config --banner=Configured enable-shared enable-fips ${{ env.opts }}
+          ./config --banner=Configured enable-shared enable-fips ${{ env.opts }} ${{ matrix.branch.extra_config }}
         working-directory: ${{ matrix.branch.dir }}
       - name: config dump current
         run: ./configdata.pm --dump
