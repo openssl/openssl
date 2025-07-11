@@ -686,7 +686,7 @@ sub generate_decoder_from_trie {
         }
         print ")) {\n";
         trie_matched($field, $num, $indent1, $indent2);
-       printf "%s}\n", $indent0;
+        printf "%s}\n", $indent0;
         return;
     }
 
