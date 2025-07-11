@@ -344,7 +344,7 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
         d0 = p[0] % BN_BITS2;
         d1 = BN_BITS2 - d0;
         z[j - n] ^= (zz >> d0);
-        if (d0)
+        if (ossl_likely(d0))
             z[j - n - 1] ^= (zz << d1);
     }
 
@@ -358,7 +358,7 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
         d1 = BN_BITS2 - d0;
 
         /* clear up the top d1 bits */
-        if (d0)
+        if (ossl_likely(d0))
             z[dN] = (z[dN] << d1) >> d1;
         else
             z[dN] = 0;
