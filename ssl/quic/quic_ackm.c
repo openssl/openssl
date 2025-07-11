@@ -1207,10 +1207,25 @@ int ossl_ackm_on_rx_ack_frame(OSSL_ACKM *ackm, const OSSL_QUIC_FRAME_ACK *ack,
     if (ack->ecn_present)
         ackm_process_ecn(ackm, ack, pkt_space);
 
-    /* Handle inferred loss. */
-    lost_pkts = ackm_detect_and_remove_lost_pkts(ackm, pkt_space);
-    if (lost_pkts != NULL)
-        ackm_on_pkts_lost(ackm, pkt_space, lost_pkts, /*pseudo=*/0);
+    /*
+     * Keep in mind ACKM also controls calculation of probe timeout.  QUIC
+     * stack must be able to send probes when packet loss is detected.
+     * In order to calculate probe timeout we first subtract ACKed bytes
+     * from in_flight bytes (call to ackm_on_pkts_acked())
+     *
+     * Then we calculate probe time out (call to
+     * ackm_set_loss_detection_timer())
+     *
+     * Finally we remove unACKed pkts (bytes) from in_flight bytes. We must
+     * remove them here because we are scheduling them for retransmission
+     * (think of them as they are no longer lost, we just found them as yet to
+     * be transmitted).
+     *
+     * The order of operations outlined above is important, because if
+     * ackm_set_loss_detection_timer() finds out there are no in_flight bytes,
+     * than it sets probe timer to infinity. This is not desired, because
+     * it may prevent channel to retransmit lost (and found) bytes.
+     */
 
     ackm_on_pkts_acked(ackm, na_pkts);
 
@@ -1222,6 +1237,12 @@ int ossl_ackm_on_rx_ack_frame(OSSL_ACKM *ackm, const OSSL_QUIC_FRAME_ACK *ack,
         ackm->pto_count = 0;
 
     ackm_set_loss_detection_timer(ackm);
+
+    /* Handle inferred loss. */
+    lost_pkts = ackm_detect_and_remove_lost_pkts(ackm, pkt_space);
+    if (lost_pkts != NULL)
+        ackm_on_pkts_lost(ackm, pkt_space, lost_pkts, /*pseudo=*/0);
+
     return 1;
 }
 
@@ -1308,7 +1329,6 @@ int ossl_ackm_on_timeout(OSSL_ACKM *ackm)
     }
 
     if (ackm_ack_eliciting_bytes_in_flight(ackm) == 0) {
-        assert(!ackm->peer_completed_addr_validation);
         /*
          * Client sends an anti-deadlock packet: Initial is padded to earn more
          * anti-amplification credit. A handshake packet proves address
