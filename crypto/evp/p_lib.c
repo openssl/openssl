@@ -1022,22 +1022,6 @@ DH *EVP_PKEY_get1_DH(EVP_PKEY *pkey)
 }
 # endif
 
-int EVP_PKEY_type(int type)
-{
-    int ret;
-    const EVP_PKEY_ASN1_METHOD *ameth;
-    ENGINE *e;
-    ameth = EVP_PKEY_asn1_find(&e, type);
-    if (ameth)
-        ret = ameth->pkey_id;
-    else
-        ret = NID_undef;
-# ifndef OPENSSL_NO_ENGINE
-    ENGINE_finish(e);
-# endif
-    return ret;
-}
-
 int EVP_PKEY_get_id(const EVP_PKEY *pkey)
 {
     return pkey->type;
@@ -1558,7 +1542,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
 {
 #ifndef FIPS_MODULE
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
-    ENGINE **eptr = (e == NULL) ? &e :  NULL;
+    ENGINE **eptr = (e == NULL) ? &e : NULL;
 #endif
 
     /*
