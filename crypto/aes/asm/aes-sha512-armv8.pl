@@ -30,6 +30,8 @@ $code=<<___;
 #define CIPHER_IV	16
 #define HMAC_IKEYPAD	24
 #define HMAC_OKEYPAD	32
+#define HMAC_INLEN	40
+#define HMAC_MODE	48
 
 .text
 .arch armv8-a+crypto
@@ -304,6 +306,8 @@ $code.=<<___;
  *		arg->cipher.iv			(initialization vector)
  *		arg->digest.hmac.i_key_pad	(partially hashed i_key_pad)
  *		arg->digest.hmac.o_key_pad	(partially hashed o_key_pad)
+ *		arg->digest.in_len		(length of hash input processed so far)
+ *		arg->digest.hmac_mode		(flag enabling hmac final tag calculation)
  *	)
  */
 
@@ -375,7 +379,9 @@ asm_aescbc_sha512_hmac:
 	adr		x10, .LK512
 
 	lsr		x11, x2, #4			/* aes_block = len/16 */
-	cbz		x11, .Lret			/* return if aes_block = 0 */
+
+	/* process hmac tag if aes_block = 0 */
+	cbz		x11, .Lenc_short_no_more_aes_block
 
 	cmp		x11, #16
 	b.lt		.Lenc_short_case
@@ -1908,6 +1914,7 @@ ___
 }
 $code.=<<___;
 .Lenc_short_no_more_aes_block:
+	mov		w12, #0x80				/* sha padding 0b10000000 */
 	eor		v0.16b, v0.16b, v0.16b
 	eor		v1.16b, v1.16b, v1.16b
 	eor		v2.16b, v2.16b, v2.16b
@@ -1980,6 +1987,18 @@ $code.=<<___;
 	eor		v6.16b, v6.16b, v6.16b
 	eor		v7.16b, v7.16b, v7.16b
 .Lenc_short_post_sha:
+	/* Save inner hash state so far */
+	ldr 		x7, [x6, #HMAC_IKEYPAD]
+	st1 		{v24.2d, v25.2d, v26.2d, v27.2d}, [x7]
+
+	/* Skip HMAC final tag calculation for update calls */
+	ldr		x7, [x6, #HMAC_MODE]
+	cbz		x7,.Lret
+
+	/* Fetch number of blocks already processed and add to x2 */
+	ldr		x7, [x6, #HMAC_INLEN]
+	add		x2, x2, x7
+
 	/* we have last padded sha512 block now */
 	eor		x13, x13, x13			/* length_lo */
 	eor		x14, x14, x14			/* length_hi */
@@ -2017,9 +2036,6 @@ $code.=<<___;
 ___
 &sha512_block(0);
 $code.=<<___;
-.Lret:
-	mov		x0, xzr				/* return 0 */
-
 	rev64		v24.16b, v24.16b
 	rev64		v25.16b, v25.16b
 	rev64		v26.16b, v26.16b
@@ -2027,6 +2043,9 @@ $code.=<<___;
 
 	/* store hash result */
 	st1		{v24.2d,v25.2d,v26.2d,v27.2d},[x4]
+
+.Lret:
+	mov		x0, xzr				/* return 0 */
 
 	/* restore callee save register */
 	ldp		d10, d11, [sp,#16]
@@ -2063,6 +2082,8 @@ $code.=<<___;
  *		arg->cipher.iv			(initialization vector)
  *		arg->digest.hmac.i_key_pad	(partially hashed i_key_pad)
  *		arg->digest.hmac.o_key_pad	(partially hashed o_key_pad)
+ *		arg->digest.in_len			(length of hash input processed so far)
+ *		arg->digest.hmac_mode		(flag enabling hmac final tag calculation)
  *	)
  */
 
@@ -2090,7 +2111,7 @@ asm_sha512_hmac_aescbc_dec:
 	adr		x10, .LK512
 
 	lsr		x11, x2, #4		/* aes_block = len/16 */
-	cbz		x11, .Ldec_ret		/* return if aes_block = 0 */
+	cbz		x11, .Ldec_short_case		/* process hmac tag if aes_block = 0 */
 
 	ld1		{v20.16b}, [x8]		/* load iv */
 	cmp		x11, #8
@@ -2877,6 +2898,18 @@ $code.=<<___;
 	mov		v3.b[0], w12
 	b		.Ldec_short_post_sha
 .Ldec_short_post_sha:
+	/* Save inner hash state so far */
+	ldr 		x7, [x6, #HMAC_IKEYPAD]
+	st1 		{v24.2d, v25.2d, v26.2d, v27.2d}, [x7]
+
+	/* Skip HMAC final tag calculation for update calls */
+	ldr		x7, [x6, #HMAC_MODE]
+	cbz		x7,.Ldec_ret
+
+	/* Fetch number of blocks already processed and add to x2 */
+	ldr		x7, [x6, #HMAC_INLEN]
+	add		x2, x2, x7
+
 	/* we have last padded sha512 block now */
 	eor		x13, x13, x13		/* length_lo */
 	eor		x14, x14, x14		/* length_hi */
@@ -2914,9 +2947,6 @@ $code.=<<___;
 ___
 &sha512_block(0);
 $code.=<<___;
-.Ldec_ret:
-	mov		x0, xzr			/* return 0 */
-
 	rev64		v24.16b, v24.16b
 	rev64		v25.16b, v25.16b
 	rev64		v26.16b, v26.16b
@@ -2924,6 +2954,9 @@ $code.=<<___;
 
 	/* store hash result */
 	st1		{v24.2d,v25.2d,v26.2d,v27.2d},[x4]
+
+.Ldec_ret:
+	mov		x0, xzr			/* return 0 */
 
 	/* restore callee save register */
 	ldp		d10, d11, [sp,#16]
