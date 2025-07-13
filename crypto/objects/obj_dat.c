@@ -37,6 +37,9 @@ struct added_obj_st {
     ASN1_OBJECT *obj;
 };
 
+static unsigned long added_obj_hash(const ADDED_OBJ *ca);
+static int added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb);
+
 static LHASH_OF(ADDED_OBJ) *added = NULL;
 static CRYPTO_RWLOCK *ossl_obj_lock = NULL;
 #ifdef TSAN_REQUIRES_LOCKING
@@ -68,6 +71,10 @@ DEFINE_RUN_ONCE_STATIC(obj_lock_initialise)
         return 0;
     }
 #endif
+    added = lh_ADDED_OBJ_new(added_obj_hash, added_obj_cmp);
+    if (added == NULL)
+        return 0;
+
     return 1;
 }
 
@@ -82,19 +89,19 @@ static ossl_inline int ossl_init_added_lock(void)
 
 static ossl_inline int ossl_obj_write_lock(int lock)
 {
-    if (!lock)
-        return 1;
     if (!ossl_init_added_lock())
         return 0;
+    if (!lock)
+        return 1;
     return CRYPTO_THREAD_write_lock(ossl_obj_lock);
 }
 
 static ossl_inline int ossl_obj_read_lock(int lock)
 {
-    if (!lock)
-        return 1;
     if (!ossl_init_added_lock())
         return 0;
+    if (!lock)
+        return 1;
     return CRYPTO_THREAD_read_lock(ossl_obj_lock);
 }
 
@@ -281,13 +288,6 @@ static int ossl_obj_add_object(const ASN1_OBJECT *obj, int lock)
     if (!ossl_obj_write_lock(lock)) {
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
         goto err2;
-    }
-    if (added == NULL) {
-        added = lh_ADDED_OBJ_new(added_obj_hash, added_obj_cmp);
-        if (added == NULL) {
-            ERR_raise(ERR_LIB_OBJ, ERR_R_CRYPTO_LIB);
-            goto err;
-        }
     }
 
     for (i = ADDED_DATA; i <= ADDED_NID; i++) {
