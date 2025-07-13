@@ -112,6 +112,12 @@ providers/implementations/ciphers/cipher_chacha20_poly1305.c
 providers/implementations/digests/blake2_prov.c
 providers/implementations/digests/digestcommon.c
 providers/implementations/digests/sha3_prov.c
+providers/implementations/macs/cmac_prov.c
+providers/implementations/macs/gmac_prov.c
+providers/implementations/macs/hmac_prov.c
+providers/implementations/macs/kmac_prov.c
+providers/implementations/macs/poly1305_prov.c
+providers/implementations/macs/siphash_prov.c
 
 # error code files
 /crypto/err/openssl.txt.old
