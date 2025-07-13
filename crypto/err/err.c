@@ -35,7 +35,7 @@ static int err_load_strings(const ERR_STRING_DATA *str);
 #endif
 
 #ifndef OPENSSL_NO_ERR
-static ERR_STRING_DATA ERR_str_libraries[] = {
+static const ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_NONE, 0, 0), "unknown library"},
     {ERR_PACK(ERR_LIB_SYS, 0, 0), "system library"},
     {ERR_PACK(ERR_LIB_BN, 0, 0), "bignum routines"},
