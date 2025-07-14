@@ -35,6 +35,36 @@ static int sig_list_cmp(void *a, void *b, void *arg, int restart)
     return ret;
 }
 
+static int sig_app_list_find_by_nid(void *a, void *b, void *arg, int restart)
+{
+    nid_triple *at = (nid_triple *)a;
+    nid_triple *key = (nid_triple *)arg;
+    int ret = at->sign_id - key->sign_id;
+
+    if (ret == 0) {
+        key->hash_id = at->hash_id;
+        key->pkey_id = at->pkey_id;
+    }
+    return ret;
+}
+
+static int sig_app_list_find_by_algs(void *a, void *b, void *arg, int restart)
+{
+    int ret;
+    nid_triple *at = (nid_triple *)a;
+    nid_triple *key = (nid_triple *)arg;
+
+    ret = at->hash_id - key->hash_id;
+    if ((ret != 0) && (at->hash_id != NID_undef))
+        return -1;
+    ret = at->pkey_id - key->pkey_id;
+    if (ret == 0) {
+        key->sign_id = at->sign_id;
+        return 0;
+    }
+    return -1;
+}
+
 static void sig_list_free(void *d)
 {
     /*
@@ -93,35 +123,30 @@ static int ossl_obj_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid,
 {
     nid_triple tmp;
     const nid_triple *rv;
-    int idx;
-
     if (signid == NID_undef)
         return 0;
 
     tmp.sign_id = signid;
+    tmp.hash_id = -1;
+    tmp.pkey_id = -1;
     rv = OBJ_bsearch_sig(&tmp, sigoid_srt, OSSL_NELEM(sigoid_srt));
     if (rv == NULL) {
         if (!obj_sig_init())
             return 0;
-        if (lock && !CRYPTO_THREAD_read_lock(sig_lock)) {
-            ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_READ_LOCK);
+        if (!LLL_iterate(sig_app_list, sig_app_list_find_by_nid, &tmp))
             return 0;
-        }
-        if (sig_app != NULL) {
-            idx = sk_nid_triple_find(sig_app, &tmp);
-            if (idx >= 0)
-                rv = sk_nid_triple_value(sig_app, idx);
-        }
-        if (lock)
-            CRYPTO_THREAD_unlock(sig_lock);
-        if (rv == NULL)
+        if (tmp.hash_id == -1)
             return 0;
+        if (pdig_nid != NULL)
+            *pdig_nid = tmp.hash_id;
+        if (ppkey_nid != NULL)
+            *ppkey_nid = tmp.pkey_id;
+     } else {
+        if (pdig_nid != NULL)
+            *pdig_nid = rv->hash_id;
+        if (ppkey_nid != NULL)
+            *ppkey_nid = rv->pkey_id;
     }
-
-    if (pdig_nid != NULL)
-        *pdig_nid = rv->hash_id;
-    if (ppkey_nid != NULL)
-        *ppkey_nid = rv->pkey_id;
     return 1;
 }
 
@@ -133,10 +158,8 @@ int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)
 int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
 {
     nid_triple tmp;
-    const nid_triple *t = &tmp;
     const nid_triple **rv;
-    int idx;
-
+    const nid_triple *t = &tmp;
     /* permitting searches for sig algs without digest: */
     if (pkey_nid == NID_undef)
         return 0;
@@ -148,24 +171,17 @@ int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
     if (rv == NULL) {
         if (!obj_sig_init())
             return 0;
-        if (!CRYPTO_THREAD_read_lock(sig_lock)) {
-            ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_READ_LOCK);
+        tmp.sign_id = -1;
+        if (!LLL_iterate(sig_app_list, sig_app_list_find_by_algs, &tmp))
             return 0;
-        }
-        if (sigx_app != NULL) {
-            idx = sk_nid_triple_find(sigx_app, &tmp);
-            if (idx >= 0) {
-                t = sk_nid_triple_value(sigx_app, idx);
-                rv = &t;
-            }
-        }
-        CRYPTO_THREAD_unlock(sig_lock);
-        if (rv == NULL)
+        if (tmp.sign_id == -1)
             return 0;
+        if (psignid != NULL)
+            *psignid = tmp.sign_id;
+    } else {
+        if (psignid != NULL)
+            *psignid = (*rv)->sign_id;
     }
-
-    if (psignid != NULL)
-        *psignid = (*rv)->sign_id;
     return 1;
 }
 
