@@ -198,6 +198,12 @@ Traces decrementing certain ASN.1 structure references.
 
 Traces the HTTP client and server, such as messages being sent and received.
 
+=item B<PROVIDER>
+
+Traces various operations that are performed on OpenSSL providers during their
+handling by the library (see L<provider(7)>), such as initialisation, tear down,
+parameter and capability retrieval, self-test, and so on.
+
 =back
 
 This variable is not considered security-sensitive.
