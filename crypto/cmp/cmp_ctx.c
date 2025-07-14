@@ -81,11 +81,12 @@ err:
 
 static int cmp_ctx_set_md(OSSL_CMP_CTX *ctx, EVP_MD **pmd, int nid)
 {
-    EVP_MD *md = EVP_MD_fetch(ctx->libctx, OBJ_nid2sn(nid), ctx->propq);
+    const char *name = OBJ_nid2sn(nid);
+    EVP_MD *md = EVP_MD_fetch(ctx->libctx, name, ctx->propq);
     /* fetching in advance to be able to throw error early if unsupported */
 
     if (md == NULL) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_UNSUPPORTED_ALGORITHM);
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_UNSUPPORTED_ALGORITHM, "name=%s,nid=%d", name, nid);
         return 0;
     }
     EVP_MD_free(*pmd);
