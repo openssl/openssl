@@ -142,25 +142,10 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
             ERR_clear_error();
     }
 
-    if (ec->keylen != tkeylen) {
-        /* If necessary set key length */
-        if (EVP_CIPHER_CTX_set_key_length(ctx, (int)ec->keylen) <= 0) {
-            /*
-             * Only reveal failure if debugging so we don't leak information
-             * which may be useful in MMA.
-             */
-            if (enc || ec->debug) {
-                ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_LENGTH);
-                goto err;
-            } else {
-                /* Use random key */
-                OPENSSL_clear_free(ec->key, ec->keylen);
-                ec->key = tkey;
-                ec->keylen = tkeylen;
-                tkey = NULL;
-                ERR_clear_error();
-            }
-        }
+    if (ec->keylen != tkeylen
+            && EVP_CIPHER_CTX_set_key_length(ctx, ec->keylen) <= 0) {
+        ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_LENGTH);
+        goto err;
     }
 
     if (EVP_CipherInit_ex(ctx, NULL, NULL, ec->key, piv, enc) <= 0) {
