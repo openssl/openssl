@@ -97,7 +97,8 @@ static int lms_verify_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[]
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return 0;
     }
-    ctx->key = key;
+    if (key != NULL)
+        ctx->key = key;
     return setdigest(ctx, NULL);
 }
 
