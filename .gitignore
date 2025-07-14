@@ -110,6 +110,7 @@ providers/implementations/ciphers/ciphercommon_gcm.c
 providers/implementations/ciphers/cipher_chacha20_poly1305.c
 providers/implementations/digest/digestcommon.c
 providers/implementations/macs/cmac_prov.c
+providers/implementations/macs/gmac_prov.c
 providers/implementations/macs/hmac_prov.c
 providers/implementations/macs/kmac_prov.c
 
