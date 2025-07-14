@@ -181,6 +181,9 @@ static void lll_free_all_nodes(LLL *list)
 void LLL_free(LLL *list)
 {
     uint64_t readers;
+
+    if (list == NULL)
+        return;
     /*
      * If we're freeing, traverse the list and free every item on
      * it.

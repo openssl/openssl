@@ -11,14 +11,32 @@
 #include "obj_xref.h"
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
+#include "internal/lockless.h"
 #include <openssl/err.h>
 
 static STACK_OF(nid_triple) *sig_app, *sigx_app;
 static CRYPTO_RWLOCK *sig_lock;
+static LLL *sig_app_list = NULL;
 
 static int sig_cmp(const nid_triple *a, const nid_triple *b)
 {
     return a->sign_id - b->sign_id;
+}
+
+static int sig_list_cmp(void *a, void *b, void *arg, int restart)
+{
+    nid_triple *at = (nid_triple *)a;
+    nid_triple *bt = (nid_triple *)b;
+
+    return at->sign_id - bt->sign_id;
+}
+
+static void sig_list_free(void *d)
+{
+    /*
+     * Nothing to do for now, but will take over pop_free soon
+     */
+    return;
 }
 
 DECLARE_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, sig);
@@ -57,7 +75,8 @@ DEFINE_RUN_ONCE_STATIC(o_sig_init)
     sig_lock = CRYPTO_THREAD_lock_new();
     sig_app = sk_nid_triple_new(sig_sk_cmp);
     sigx_app = sk_nid_triple_new(sigx_cmp);
-    return sig_lock != NULL && sig_app != NULL && sigx_app != NULL;
+    sig_app_list = LLL_new(sig_list_cmp, sig_list_free, 0);
+    return sig_lock != NULL && sig_app != NULL && sigx_app != NULL && sig_app_list != NULL;
 }
 
 static ossl_inline int obj_sig_init(void)
@@ -206,8 +225,10 @@ void OBJ_sigid_free(void)
 {
     sk_nid_triple_pop_free(sig_app, sid_free);
     sk_nid_triple_free(sigx_app);
+    LLL_free(sig_app_list);
     CRYPTO_THREAD_lock_free(sig_lock);
     sig_app = NULL;
     sigx_app = NULL;
+    sig_app_list = NULL;
     sig_lock = NULL;
 }
