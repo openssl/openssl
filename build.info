@@ -72,6 +72,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/ciphers/ciphercommon_gcm.c \
          providers/implementations/ciphers/cipher_chacha20_poly1305.c \
          providers/implementations/digests/digestcommon.c \
+         providers/implementations/macs/cmac_prov.c \
          providers/implementations/macs/hmac_prov.c \
          providers/implementations/macs/kmac_prov.c
 
@@ -132,6 +133,7 @@ DEPEND[providers/implementations/kdfs/argon2.c \
        providers/implementations/ciphers/ciphercommon_gcm.c \
        providers/implementations/ciphers/cipher_chacha20_poly1305.c \
        providers/implementations/digests/digestcommon.c \
+       providers/implementations/macs/cmac_prov.c \
        providers/implementations/macs/hmac_prov.c \
        providers/implementations/macs/kmac_prov.c \
        include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
@@ -183,6 +185,8 @@ GENERATE[providers/implementations/ciphers/cipher_chacha20_poly1305.c]=\
     providers/implementations/ciphers/cipher_chacha20_poly1305.c.in
 GENERATE[providers/implementations/digests/digestcommon.c]=\
     providers/implementations/digests/digestcommon.c.in
+GENERATE[providers/implementations/macs/cmac_prov.c]=\
+    providers/implementations/macs/cmac_prov.c.in
 GENERATE[providers/implementations/macs/hmac_prov.c]=\
     providers/implementations/macs/hmac_prov.c.in
 GENERATE[providers/implementations/macs/kmac_prov.c]=\
