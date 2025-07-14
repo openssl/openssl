@@ -27,8 +27,12 @@ static int sig_list_cmp(void *a, void *b, void *arg, int restart)
 {
     nid_triple *at = (nid_triple *)a;
     nid_triple *bt = (nid_triple *)b;
+    int *located_pkey_id = (int *)arg;
+    int ret = at->sign_id - bt->sign_id;
 
-    return at->sign_id - bt->sign_id;
+    if (ret == 0)
+        *located_pkey_id = at->pkey_id;    
+    return ret;
 }
 
 static void sig_list_free(void *d)
@@ -169,6 +173,7 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
 {
     nid_triple *ntr;
     int dnid = NID_undef, pnid = NID_undef, ret = 0;
+    int located_pkey_id = -1;
 
     if (signid == NID_undef || pkey_id == NID_undef)
         return 0;
@@ -198,6 +203,16 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
      * Better might be to find where to insert the element and insert it there.
      * This would avoid the sorting steps below.
      */
+    if (!LLL_insert(sig_app_list, ntr, &located_pkey_id)) {
+        /*
+         * We failed the insert, which may be because we already have this entry in the 
+         * list.  If we do, its not a failure, return the pkey_id of the found entry
+         */
+        if (located_pkey_id != -1)
+            ret = located_pkey_id;
+        goto err;
+    }
+
     if (!sk_nid_triple_push(sig_app, ntr))
         goto err;
     if (!sk_nid_triple_push(sigx_app, ntr)) {
