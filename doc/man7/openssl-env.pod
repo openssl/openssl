@@ -204,6 +204,12 @@ Traces various operations that are performed on OpenSSL providers during their
 handling by the library (see L<provider(7)>), such as initialisation, tear down,
 parameter and capability retrieval, self-test, and so on.
 
+=item B<QUERY>
+
+Traces operation related to addition, removal, and fetching of methods
+in the so-called method store, that holds pointers to functions provided
+by various providers.
+
 =back
 
 This variable is not considered security-sensitive.
