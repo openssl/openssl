@@ -6,8 +6,8 @@ openssl-env - OpenSSL environment variables
 
 =head1 DESCRIPTION
 
-The OpenSSL libraries use environment variables to override the
-compiled-in default paths for various data.
+The OpenSSL libraries and commands use environment variables to override
+compiled-in defaults for various aspects of their behaviour.
 To avoid security risks, the environment is not consulted
 for security-sensitive environment variables when the executable
 is set-user-ID or set-group-ID.
