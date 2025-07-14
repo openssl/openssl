@@ -55,7 +55,9 @@ static CRYPTO_ONCE sig_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(o_sig_init)
 {
     sig_lock = CRYPTO_THREAD_lock_new();
-    return sig_lock != NULL;
+    sig_app = sk_nid_triple_new(sig_sk_cmp);
+    sigx_app = sk_nid_triple_new(sigx_cmp);
+    return sig_lock != NULL && sig_app != NULL && sigx_app != NULL;
 }
 
 static ossl_inline int obj_sig_init(void)
@@ -171,17 +173,6 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
     if (ossl_obj_find_sigid_algs(signid, &dnid, &pnid, 0)) {
         ret = dnid == dig_id && pnid == pkey_id;
         goto err;
-    }
-
-    if (sig_app == NULL) {
-        sig_app = sk_nid_triple_new(sig_sk_cmp);
-        if (sig_app == NULL)
-            goto err;
-    }
-    if (sigx_app == NULL) {
-        sigx_app = sk_nid_triple_new(sigx_cmp);
-        if (sigx_app == NULL)
-            goto err;
     }
 
     /*
