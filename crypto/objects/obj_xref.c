@@ -14,8 +14,6 @@
 #include "internal/lockless.h"
 #include <openssl/err.h>
 
-static STACK_OF(nid_triple) *sig_app, *sigx_app;
-static CRYPTO_RWLOCK *sig_lock;
 static LLL *sig_app_list = NULL;
 
 static int sig_cmp(const nid_triple *a, const nid_triple *b)
@@ -68,18 +66,14 @@ static int sig_app_list_find_by_algs(void *a, void *b, void *arg, int restart)
 static void sig_list_free(void *d)
 {
     /*
-     * Nothing to do for now, but will take over pop_free soon
+     * Free this nid_triple
      */
+    OPENSSL_free(d);
     return;
 }
 
 DECLARE_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, sig);
 IMPLEMENT_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, sig);
-
-static int sig_sk_cmp(const nid_triple *const *a, const nid_triple *const *b)
-{
-    return (*a)->sign_id - (*b)->sign_id;
-}
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const nid_triple *, const nid_triple *, sigx);
 
@@ -106,11 +100,8 @@ static CRYPTO_ONCE sig_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(o_sig_init)
 {
-    sig_lock = CRYPTO_THREAD_lock_new();
-    sig_app = sk_nid_triple_new(sig_sk_cmp);
-    sigx_app = sk_nid_triple_new(sigx_cmp);
     sig_app_list = LLL_new(sig_list_cmp, sig_list_free, 0);
-    return sig_lock != NULL && sig_app != NULL && sigx_app != NULL && sig_app_list != NULL;
+    return sig_app_list != NULL;
 }
 
 static ossl_inline int obj_sig_init(void)
@@ -188,7 +179,7 @@ int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
 int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
 {
     nid_triple *ntr;
-    int dnid = NID_undef, pnid = NID_undef, ret = 0;
+    int ret = 0;
     int located_pkey_id = -1;
 
     if (signid == NID_undef || pkey_id == NID_undef)
@@ -202,18 +193,6 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
     ntr->sign_id = signid;
     ntr->hash_id = dig_id;
     ntr->pkey_id = pkey_id;
-
-    if (!CRYPTO_THREAD_write_lock(sig_lock)) {
-        ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
-        OPENSSL_free(ntr);
-        return 0;
-    }
-
-    /* Check that the entry doesn't exist or exists as desired */
-    if (ossl_obj_find_sigid_algs(signid, &dnid, &pnid, 0)) {
-        ret = dnid == dig_id && pnid == pkey_id;
-        goto err;
-    }
 
     /*
      * Better might be to find where to insert the element and insert it there.
@@ -229,37 +208,15 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
         goto err;
     }
 
-    if (!sk_nid_triple_push(sig_app, ntr))
-        goto err;
-    if (!sk_nid_triple_push(sigx_app, ntr)) {
-        ntr = NULL;             /* This is referenced by sig_app still */
-        goto err;
-    }
-
-    sk_nid_triple_sort(sig_app);
-    sk_nid_triple_sort(sigx_app);
-
     ntr = NULL;
     ret = 1;
  err:
     OPENSSL_free(ntr);
-    CRYPTO_THREAD_unlock(sig_lock);
     return ret;
-}
-
-static void sid_free(nid_triple *tt)
-{
-    OPENSSL_free(tt);
 }
 
 void OBJ_sigid_free(void)
 {
-    sk_nid_triple_pop_free(sig_app, sid_free);
-    sk_nid_triple_free(sigx_app);
     LLL_free(sig_app_list);
-    CRYPTO_THREAD_lock_free(sig_lock);
-    sig_app = NULL;
-    sigx_app = NULL;
     sig_app_list = NULL;
-    sig_lock = NULL;
 }
