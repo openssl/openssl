@@ -51,6 +51,20 @@ See L<OPENSSL_malloc(3)>.
 Specifies the directory from which cryptographic providers are loaded.
 Equivalently, the generic B<-provider-path> command-line option may be used.
 
+=item B<OPENSSL_SEC_MEM>
+
+Initializes the secure memory at the beginning of the application which makes
+the secure memory calls not to fall back to regular memory calls. The value
+indicates the B<size> parameter in bytes. The value can be expressed in
+binary, octal, decimal and hexadecimal. For formatting see B<strtol(3)>.
+For further restrictions see L<CRYPTO_secure_malloc_init(3)>.
+
+=item B<OPENSSL_SEC_MEM_MINSIZE>
+
+An optional variable used with B<OPENSSL_SEC_MEM>. The value indicates
+B<minsize> parameter in bytes. The same formatting applies as above.
+Default is 0. For more info see L<CRYPTO_secure_malloc_init(3)>.
+
 =item B<OPENSSL_TRACE>
 
 By default the OpenSSL trace feature is disabled statically.
