@@ -21,6 +21,15 @@ See L<CTLOG_STORE_new(3)>.
 
 This variable is considered a security-sensitive environment variable.
 
+=item B<HOME>, B<SYSTEMROOT>, B<USERPROFILE>
+
+Path which L<RAND_file_name(3)> uses as a directory for the random seed file
+name when the B<RANDFILE> environment variable is not set.
+B<HOME> is the only variable that is considered on Unix-like systems;
+B<USERPROFILE> and B<SYSTEMROOT> are used as fallbacks on Windows platforms.
+
+B<HOME> variable is considered a security-sensitive environment variable.
+
 =item B<HTTPS_PROXY>, B<HTTP_PROXY>, B<NO_PROXY>, B<https_proxy>, B<http_proxy>, B<no_proxy>
 
 Specify a proxy hostname.
