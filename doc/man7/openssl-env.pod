@@ -29,6 +29,13 @@ under test output with the output for the TAP consumer.
 
 This variable is not considered as a security-sensitive.
 
+=item B<HOME>
+
+Path which L<RAND_file_name(3)> uses as a directory for the random seed file
+name when the B<RANDFILE> environment variable is not set.
+
+This variable is considered as a security-sensitive environment variable.
+
 =item B<HTTPS_PROXY>, B<HTTP_PROXY>, B<NO_PROXY>, B<https_proxy>, B<http_proxy>, B<no_proxy>
 
 Specify a proxy hostname.
