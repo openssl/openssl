@@ -122,53 +122,9 @@ with the following available:
 
 =over 4
 
-=item B<TRACE>
+=item B<ALL>
 
-Traces the OpenSSL trace API itself.
-
-=item B<INIT>
-
-Traces OpenSSL library initialization and cleanup.
-
-=item B<TLS>
-
-Traces the TLS/SSL protocol.
-
-=item B<TLS_CIPHER>
-
-Traces the ciphers used by the TLS/SSL protocol.
-
-=item B<CONF>
-
-Show details about provider and engine configuration.
-
-=item B<ENGINE_TABLE>
-
-The function that is used by RSA, DSA (etc) code to select registered
-ENGINEs, cache defaults and functional references (etc), will generate
-debugging summaries.
-
-=item B<ENGINE_REF_COUNT>
-
-Reference counts in the ENGINE structure will be monitored with a line
-of generated for each change.
-
-=item B<PKCS5V2>
-
-Traces PKCS#5 v2 key generation.
-
-=item B<PKCS12_KEYGEN>
-
-Traces PKCS#12 key generation.
-
-=item B<PKCS12_DECRYPT>
-
-Traces PKCS#12 decryption.
-
-=item B<X509V3_POLICY>
-
-Generates the complete policy tree at various points during X.509 v3
-policy evaluation.
+Traces everything.
 
 =item B<BN_CTX>
 
@@ -178,9 +134,9 @@ Traces BIGNUM context operations.
 
 Traces CMP client and server activity.
 
-=item B<STORE>
+=item B<CONF>
 
-Traces STORE operations.
+Show details about provider and engine configuration.
 
 =item B<DECODER>
 
@@ -190,16 +146,36 @@ Traces decoder operations.
 
 Traces encoder operations.
 
-=item B<REF_COUNT>
+=item B<ENGINE_REF_COUNT>
 
-Traces reference count changes in various structures,
-including C<BIO>, C<DH>, C<DSA>, C<EC_KEY>, C<ECX_KEY>,
-C<EVP_PKEY>, C<EVP_SKEY>, C<RSA>, C<SSL>, C<SSL_CTX>, C<SSL_SESSION>,
-C<X509_CRL>, C<X509_STORE>, C<X509>, and some others.
+Reference counts in the ENGINE structure will be monitored with a line
+of generated for each change.
+
+=item B<ENGINE_TABLE>
+
+The function that is used by RSA, DSA (etc) code to select registered
+ENGINEs, cache defaults and functional references (etc), will generate
+debugging summaries.
 
 =item B<HTTP>
 
 Traces the HTTP client and server, such as messages being sent and received.
+
+=item B<INIT>
+
+Traces OpenSSL library initialization and cleanup.
+
+=item B<PKCS12_DECRYPT>
+
+Traces PKCS#12 decryption.
+
+=item B<PKCS12_KEYGEN>
+
+Traces PKCS#12 key generation.
+
+=item B<PKCS5V2>
+
+Traces PKCS#5 v2 key generation.
 
 =item B<PROVIDER>
 
@@ -212,6 +188,34 @@ parameter and capability retrieval, self-test, and so on.
 Traces operation related to addition, removal, and fetching of methods
 in the so-called method store, that holds pointers to functions provided
 by various providers.
+
+=item B<REF_COUNT>
+
+Traces reference count changes in various structures,
+including C<BIO>, C<DH>, C<DSA>, C<EC_KEY>, C<ECX_KEY>,
+C<EVP_PKEY>, C<EVP_SKEY>, C<RSA>, C<SSL>, C<SSL_CTX>, C<SSL_SESSION>,
+C<X509_CRL>, C<X509_STORE>, C<X509>, and some others.
+
+=item B<STORE>
+
+Traces STORE operations.
+
+=item B<TLS>
+
+Traces the TLS/SSL protocol.
+
+=item B<TLS_CIPHER>
+
+Traces the ciphers used by the TLS/SSL protocol.
+
+=item B<TRACE>
+
+Traces the OpenSSL trace API itself.
+
+=item B<X509V3_POLICY>
+
+Generates the complete policy tree at various points during X.509 v3
+policy evaluation.
 
 =back
 
