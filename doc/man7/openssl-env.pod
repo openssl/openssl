@@ -107,6 +107,14 @@ Default is 0. For more info see L<CRYPTO_secure_malloc_init(3)>.
 
 This variable is not considered security-sensitive.
 
+=item B<OPENSSL_TEST_LIBCTX>
+
+This test-only environment variable, that is recognised by the L<openssl(1)>
+command, when is set to "1", leads to creation of a nondefault library context
+by the command, for which the B<-config> option then takes effect.
+
+This variable is not considered security-sensitive.
+
 =item B<OPENSSL_TRACE>
 
 By default the OpenSSL trace feature is disabled statically.
