@@ -504,29 +504,26 @@ static int lms_verify_bad_pub_sig_test(void)
         goto end;
 
     for (i = 0; i < (int)td->publen; i += step) {
-        if (i > 0) {
-            EVP_PKEY_free(pkey);
-            EVP_PKEY_CTX_free(ctx);
-            pkey = NULL;
-            ctx = NULL;
-            pub[i - step] ^= 1;
-        }
-        pub[i] ^= 1;
+        pub[i] ^= 1; /* corrupt a byte */
         /* Corrupting the public key may cause the key load to fail */
         pkey = lms_pubkey_from_data(pub, td->publen);
-        if (pkey == NULL)
-            continue;
-        if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL)))
-            continue;
-        if (!TEST_int_eq(EVP_PKEY_verify_message_init(ctx, sig, NULL), 1))
-            continue;
-        /* We expect the verify to fail */
-        if (!TEST_int_eq(EVP_PKEY_verify(ctx, td->sig, td->siglen,
-                                         td->msg, td->msglen), 0)) {
-            TEST_note("Incorrectly passed when byte %d of the public key"
-                      " was corrupted", i);
-            goto end;
+        if (pkey != NULL) {
+            if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL)))
+                goto end;
+            /* We expect the verify to fail */
+            if ((EVP_PKEY_verify_message_init(ctx, sig, NULL) == 1)
+                    && !TEST_int_eq(EVP_PKEY_verify(ctx, td->sig, td->siglen,
+                                                    td->msg, td->msglen), 0)) {
+                TEST_note("Incorrectly passed when byte %d of the public key"
+                          " was corrupted", i);
+                goto end;
+            }
+            EVP_PKEY_free(pkey);
+            pkey = NULL;
+            EVP_PKEY_CTX_free(ctx);
+            ctx = NULL;
         }
+        pub[i] ^= 1; /* restore the corrupted byte */
     }
 
     ret = 1;
