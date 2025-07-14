@@ -75,7 +75,8 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/macs/gmac_prov.c \
          providers/implementations/macs/cmac_prov.c \
          providers/implementations/macs/hmac_prov.c \
-         providers/implementations/macs/kmac_prov.c
+         providers/implementations/macs/kmac_prov.c \
+         providers/implementations/macs/siphash_prov.c
 
 GENERATE[include/openssl/asn1.h]=include/openssl/asn1.h.in
 GENERATE[include/openssl/asn1t.h]=include/openssl/asn1t.h.in
@@ -138,6 +139,7 @@ DEPEND[providers/implementations/kdfs/argon2.c \
        providers/implementations/macs/gmac_prov.c \
        providers/implementations/macs/hmac_prov.c \
        providers/implementations/macs/kmac_prov.c \
+       providers/implementations/macs/siphash_prov.c \
        include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
 GENERATE[providers/implementations/kdfs/argon2.c]=\
     providers/implementations/kdfs/argon2.c.in
@@ -195,6 +197,8 @@ GENERATE[providers/implementations/macs/hmac_prov.c]=\
     providers/implementations/macs/hmac_prov.c.in
 GENERATE[providers/implementations/macs/kmac_prov.c]=\
     providers/implementations/macs/kmac_prov.c.in
+GENERATE[providers/implementations/macs/siphash_prov.c]=\
+    providers/implementations/macs/siphash_prov.c.in
 GENERATE[include/openssl/core_names.h]=include/openssl/core_names.h.in
 
 IF[{- defined $target{shared_defflag} -}]
