@@ -13,7 +13,7 @@ use OpenSSL::Test::Utils;
 setup("test_clienthello");
 
 plan skip_all => "No TLS/SSL protocols are supported by this OpenSSL build"
-    if alldisabled(grep { $_ ne "ssl3" } available_protocols("tls"));
+    if alldisabled(available_protocols("tls"));
 
 #No EC with TLSv1.3 confuses the padding calculations in this test
 plan skip_all => "No EC with TLSv1.3 is not supported by this test"

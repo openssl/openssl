@@ -74,7 +74,7 @@ handshake.
   another alert.)
 
 * ExpectedProtocol - expected negotiated protocol. One of
-  SSLv3, TLSv1, TLSv1.1, TLSv1.2.
+  TLSv1, TLSv1.1, TLSv1.2.
 
 * SessionTicketExpected - whether or not a session ticket is expected
   - Ignore - do not check for a session ticket (default)
