@@ -33,13 +33,12 @@ typedef struct {
 static const version_test version_testdata[] = {
     /* proto     min                     max                     ok    expected min        expected max */
     {PROTO_TLS,  0,                      0,                      1, 1, 0,                  0},
-    {PROTO_TLS,  SSL3_VERSION,           TLS1_3_VERSION,         1, 1, SSL3_VERSION,       TLS1_3_VERSION},
     {PROTO_TLS,  TLS1_VERSION,           TLS1_3_VERSION,         1, 1, TLS1_VERSION,       TLS1_3_VERSION},
     {PROTO_TLS,  TLS1_VERSION,           TLS1_2_VERSION,         1, 1, TLS1_VERSION,       TLS1_2_VERSION},
     {PROTO_TLS,  TLS1_2_VERSION,         TLS1_2_VERSION,         1, 1, TLS1_2_VERSION,     TLS1_2_VERSION},
     {PROTO_TLS,  TLS1_2_VERSION,         TLS1_1_VERSION,         1, 1, TLS1_2_VERSION,     TLS1_1_VERSION},
-    {PROTO_TLS,  SSL3_VERSION - 1,       TLS1_3_VERSION,         0, 1, 0,                  TLS1_3_VERSION},
-    {PROTO_TLS,  SSL3_VERSION,           TLS1_3_VERSION + 1,     1, 0, SSL3_VERSION,       0},
+    {PROTO_TLS,  SSL3_VERSION,           TLS1_3_VERSION,         0, 1, 0,                  TLS1_3_VERSION},
+    {PROTO_TLS,  TLS1_VERSION,           TLS1_3_VERSION + 1,     1, 0, TLS1_VERSION,       0},
 #ifndef OPENSSL_NO_DTLS
     {PROTO_TLS,  DTLS1_VERSION,          DTLS1_2_VERSION,        1, 1, 0,                  0},
 #endif

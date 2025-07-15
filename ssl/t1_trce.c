@@ -63,7 +63,6 @@ static int do_ssl_trace_list(BIO *bio, int indent,
 /* Version number */
 
 static const ssl_trace_tbl ssl_version_tbl[] = {
-    {SSL3_VERSION, "SSL 3.0"},
     {TLS1_VERSION, "TLS 1.0"},
     {TLS1_1_VERSION, "TLS 1.1"},
     {TLS1_2_VERSION, "TLS 1.2"},
@@ -1180,14 +1179,9 @@ static int ssl_print_client_keyex(BIO *bio, int indent, const SSL_CONNECTION *sc
 
     case SSL_kRSA:
     case SSL_kRSAPSK:
-        if (TLS1_get_version(SSL_CONNECTION_GET_SSL(sc)) == SSL3_VERSION) {
-            ssl_print_hex(bio, indent + 2,
-                          "EncryptedPreMasterSecret", msg, msglen);
-        } else {
-            if (!ssl_print_hexbuf(bio, indent + 2,
-                                  "EncryptedPreMasterSecret", 2, &msg, &msglen))
-                return 0;
-        }
+        if (!ssl_print_hexbuf(bio, indent + 2,
+                              "EncryptedPreMasterSecret", 2, &msg, &msglen))
+            return 0;
         break;
 
     case SSL_kDHE:

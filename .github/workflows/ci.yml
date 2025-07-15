@@ -133,7 +133,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: config
-      run: ./config --strict-warnings enable-demos enable-fips enable-lms enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config --strict-warnings enable-demos enable-fips enable-lms enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -163,7 +163,7 @@ jobs:
         shutdown_vm: false
         run: |
           sudo pkg install -y gcc perl5
-          ./config --strict-warnings enable-fips enable-lms enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+          ./config --strict-warnings enable-fips enable-lms enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
@@ -354,7 +354,7 @@ jobs:
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
-      run: ./config --strict-warnings --banner=Configured --debug -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-weak-ssl-ciphers enable-ssl3 enable-ssl3-method enable-nextprotoneg && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-weak-ssl-ciphers enable-nextprotoneg && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -466,7 +466,7 @@ jobs:
     - name: install extra config support
       run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
     - name: config
-      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-ktls enable-fips enable-lms enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-ktls enable-fips enable-lms enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-weak-ssl-ciphers enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -512,7 +512,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --strict-warnings --banner=Configured --debug no-afalgeng enable-demos enable-h3demo no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-fips && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug no-afalgeng enable-demos enable-h3demo no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -636,7 +636,7 @@ jobs:
     - name: setup hostname workaround
       run: sudo hostname localhost
     - name: config
-      run: ./config --strict-warnings --banner=Configured --debug no-afalgeng enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug no-afalgeng enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - uses: dtolnay/rust-toolchain@fcf085fcb4b4b8f63f96906cd713eb52181b5ea4

@@ -25,7 +25,7 @@ plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
 plan skip_all => "$test_name needs TLS <= 1.2 enabled"
-    if alldisabled(("ssl3", "tls1", "tls1_1", "tls1_2"));
+    if alldisabled(("tls1", "tls1_1", "tls1_2"));
 
 plan tests => 9;
 
