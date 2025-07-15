@@ -32,7 +32,7 @@ my $boundary_test_type = undef;
 my $fatal_alert = undef; # set by filters at expected fatal alerts
 my $proxy_start_success = 0;
 
-plan tests => 39;
+plan tests => 34;
 
 SKIP: {
     skip "TLS 1.2 is disabled", 22 if disabled("tls1_2");
