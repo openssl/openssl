@@ -91,6 +91,7 @@ sub load_configdata {
     # been run yet.
     my $configdata = bldtop_file("configdata.pm");
     eval { require $configdata;
+	   no warnings 'once';
 	   %available_protocols = %configdata::available_protocols;
 	   %disabled = %configdata::disabled;
 	   %config = %configdata::config;

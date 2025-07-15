@@ -76,7 +76,7 @@ sub init{
     my $self = $class->SUPER::new(
         $isdtls,
         $server,
-        TLSProxy::Message::MT_NEW_SESSION_TICKET,
+        TLSProxy::Message::MT_NEW_SESSION_TICKET(),
         $msgseq,
         $msgfrag,
         $msgfragoffs,

@@ -28,7 +28,7 @@ sub new
     my $self = $class->SUPER::new(
         $isdtls,
         $server,
-        TLSProxy::Message::MT_SERVER_KEY_EXCHANGE,
+        TLSProxy::Message::MT_SERVER_KEY_EXCHANGE(),
         $msgseq,
         $msgfrag,
         $msgfragoffs,
@@ -54,9 +54,9 @@ sub parse
 
     #Minimal SKE parsing. Only supports one known DHE ciphersuite at the moment
     return if TLSProxy::Proxy->ciphersuite()
-                 != TLSProxy::Message::CIPHER_ADH_AES_128_SHA
+                 != TLSProxy::Message::CIPHER_ADH_AES_128_SHA()
               && TLSProxy::Proxy->ciphersuite()
-                 != TLSProxy::Message::CIPHER_DHE_RSA_AES_128_SHA;
+                 != TLSProxy::Message::CIPHER_DHE_RSA_AES_128_SHA();
 
     my $p_len = unpack('n', $self->data);
     my $ptr = 2;
@@ -77,7 +77,7 @@ sub parse
     my $record = ${$self->records}[0];
 
     if (TLSProxy::Proxy->is_tls13()
-            || $record->version() == TLSProxy::Record::VERS_TLS_1_2) {
+            || $record->version() == TLSProxy::Record::VERS_TLS_1_2()) {
         $sigalg = unpack('n', substr($self->data, $ptr));
         $ptr += 2;
     }

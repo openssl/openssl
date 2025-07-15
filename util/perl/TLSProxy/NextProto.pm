@@ -28,7 +28,7 @@ sub new
     my $self = $class->SUPER::new(
         $isdtls,
         $server,
-        TLSProxy::Message::MT_NEXT_PROTO,
+        TLSProxy::Message::MT_NEXT_PROTO(),
         $msgseq,
         $msgfrag,
         $msgfragoffs,

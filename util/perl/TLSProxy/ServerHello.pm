@@ -111,7 +111,7 @@ sub parse
 
     if ($random eq $hrrrandom) {
         TLSProxy::Proxy->is_tls13(1);
-    } elsif ($neg_version == TLSProxy::Record::VERS_TLS_1_3) {
+    } elsif ($neg_version == TLSProxy::Record::VERS_TLS_1_3()) {
         TLSProxy::Proxy->is_tls13(1);
 
         TLSProxy::Record->server_encrypting(1);
