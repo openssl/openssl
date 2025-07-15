@@ -103,7 +103,7 @@ sub run_tests
        "In context empty records test".($run_test_as_dtls == 1) ? " for DTLS" : " for TLS");
 
     SKIP: {
-        skip "Record tests not intended for dtls", 7 if $run_test_as_dtls == 1;
+        skip "Record tests not intended for dtls", 2 if $run_test_as_dtls == 1;
         #Test 3: Injecting too many in context empty records should fail
         $fatal_alert = 0;
         $proxy->clear();
@@ -127,7 +127,7 @@ sub run_tests
    }
     #Unrecognised record type tests
 
-    #Test 10: Sending an unrecognised record type in TLS1.2 should fail
+    #Test 5: Sending an unrecognised record type in TLS1.2 should fail
     $fatal_alert = 0;
     $proxy->clear();
     if ($run_test_as_dtls == 1) {
@@ -150,7 +150,7 @@ sub run_tests
         skip "TLSv1.1 or DTLSv1 disabled", 1 if ($run_test_as_dtls == 0 && disabled("tls1_1"))
                                                  || ($run_test_as_dtls == 1 && disabled("dtls1"));
 
-        #Test 11: Sending an unrecognised record type in TLS1.1 should fail
+        #Test 6: Sending an unrecognised record type in TLS1.1 should fail
         $fatal_alert = 0;
         $proxy->clear();
         if ($run_test_as_dtls == 1) {
@@ -169,7 +169,7 @@ sub run_tests
 
     SKIP: {
         skip "Record tests not intended for dtls", 10 if $run_test_as_dtls == 1;
-        #Test 12: Sending a different record version in TLS1.2 should fail
+        #Test 7: Sending a different record version in TLS1.2 should fail
         $fatal_alert = 0;
         $proxy->clear();
         $proxy->clientflags("-tls1_2");
@@ -182,20 +182,20 @@ sub run_tests
             skip "TLSv1.3 disabled", 9
                 if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
 
-            #Test 13: Sending a different record version in TLS1.3 should fail
+            #Test 8: Sending a different record version in TLS1.3 should fail
             $proxy->clear();
             $proxy->filter(\&change_version);
             $proxy->start();
             ok(TLSProxy::Message->fail(), "Changed record version in TLS1.3");
 
-            #Test 14: Sending an unrecognised record type in TLS1.3 should fail
+            #Test 9: Sending an unrecognised record type in TLS1.3 should fail
             $fatal_alert = 0;
             $proxy->clear();
             $proxy->filter(\&add_unknown_record_type);
             $proxy->start();
             ok($fatal_alert, "Unrecognised record type in TLS1.3");
 
-            #Test 15: Sending an outer record type other than app data once encrypted
+            #Test 10: Sending an outer record type other than app data once encrypted
             #should fail
             $fatal_alert = 0;
             $proxy->clear();
@@ -211,7 +211,7 @@ sub run_tests
                 NO_DATA_BETWEEN_KEY_UPDATE => 4,
             };
 
-            #Test 16: Sending a ServerHello which doesn't end on a record boundary
+            #Test 11: Sending a ServerHello which doesn't end on a record boundary
             #         should fail
             $fatal_alert = 0;
             $proxy->clear();
@@ -220,7 +220,7 @@ sub run_tests
             $proxy->start();
             ok($fatal_alert, "Record not on boundary in TLS1.3 (ServerHello)");
 
-            #Test 17: Sending a Finished which doesn't end on a record boundary
+            #Test 12: Sending a Finished which doesn't end on a record boundary
             #         should fail
             $fatal_alert = 0;
             $proxy->clear();
@@ -228,7 +228,7 @@ sub run_tests
             $proxy->start();
             ok($fatal_alert, "Record not on boundary in TLS1.3 (Finished)");
 
-            #Test 18: Sending a KeyUpdate which doesn't end on a record boundary
+            #Test 13: Sending a KeyUpdate which doesn't end on a record boundary
             #         should fail
             $fatal_alert = 0;
             $proxy->clear();
@@ -236,7 +236,7 @@ sub run_tests
             $proxy->start();
             ok($fatal_alert, "Record not on boundary in TLS1.3 (KeyUpdate)");
 
-            #Test 19: Sending application data in the middle of a fragmented KeyUpdate
+            #Test 14: Sending application data in the middle of a fragmented KeyUpdate
             #         should fail. Strictly speaking this is not a record boundary test
             #         but we use the same filter.
             $fatal_alert = 0;
@@ -245,7 +245,7 @@ sub run_tests
             $proxy->start();
             ok($fatal_alert, "Data between KeyUpdate");
 
-            #Test 20: Fragmented KeyUpdate. This should succeed. Strictly speaking this
+            #Test 15: Fragmented KeyUpdate. This should succeed. Strictly speaking this
             #         is not a record boundary test but we use the same filter.
             $proxy->clear();
             $boundary_test_type = NO_DATA_BETWEEN_KEY_UPDATE;
@@ -255,7 +255,7 @@ sub run_tests
             SKIP: {
                 skip "EC disabled", 1 if disabled("ec");
 
-                #Test 21: Force an HRR and change the "real" ServerHello to have a protocol
+                #Test 16: Force an HRR and change the "real" ServerHello to have a protocol
                 #         record version of 0x0301 (TLSv1.0). At this point we have already
                 #         decided that we are doing TLSv1.3 but are still using plaintext
                 #         records. The server should be sending a record version of 0x303
@@ -272,7 +272,7 @@ sub run_tests
 
     SKIP: {
         skip "DTLS only record tests", 1 if $run_test_as_dtls != 1;
-        #Test 22: We should ignore empty app data records
+        #Test 17: We should ignore empty app data records
         $proxy->clear();
         $proxy->filter(\&empty_app_data);
         $proxy->start();
