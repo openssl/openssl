@@ -7080,8 +7080,6 @@ int ssl_log_secret(SSL_CONNECTION *sc,
                           secret_len);
 }
 
-#define SSLV2_CIPHER_LEN    3
-
 int ssl_cache_cipherlist(SSL_CONNECTION *s, PACKET *cipher_suites)
 {
     if (PACKET_remaining(cipher_suites) == 0) {
