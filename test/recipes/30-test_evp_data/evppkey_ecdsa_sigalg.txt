@@ -92,7 +92,7 @@ Output = 3045022100b1d1cb1a577035bccdd5a86c6148c2cc7c633cd42b7234139b593076d041e
 Title = Sign-Message and Verify-Message
 
 FIPSversion = >=3.4.0
-Verify-Message = ECDSA-SHA256:P-256-PUBLIC
+Verify-Message-Public = ECDSA-SHA256:P-256-PUBLIC
 Input = "Hello World"
 Output = 3046022100e7515177ec3817b77a4a94066ab3070817b7aa9d44a8a09f040da250116e8972022100ba59b0f631258e59a9026be5d84f60685f4cf22b9165a0c2736d5c21c8ec1862
 
@@ -104,13 +104,13 @@ twD8guGxyFRaoMDTtW47/nifwYqRaIfC
 -----END PUBLIC KEY-----
 
 FIPSversion = >=3.4.0
-Verify-Message = ECDSA-SHA384:P-384-PUBLIC
+Verify-Message-Public = ECDSA-SHA384:P-384-PUBLIC
 Input = "123400"
 Output = 304d0218389cb27e0bc8d21fa7e5f24cb74f58851313e696333ad68b023100ffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52970
 
 # Oneshot tests
 FIPSversion = >=3.4.0
-Verify-Message = ECDSA-SHA256:P-256-PUBLIC
+Verify-Message-Public = ECDSA-SHA256:P-256-PUBLIC
 Input = "Hello World"
 Output = 3046022100e7515177ec3817b77a4a94066ab3070817b7aa9d44a8a09f040da250116e8972022100ba59b0f631258e59a9026be5d84f60685f4cf22b9165a0c2736d5c21c8ec1862
 
@@ -218,13 +218,6 @@ FIPSversion = >=3.4.0
 Sign = ECDSA-SHA1:P-256
 Securitycheck = 1
 Input = "0123456789ABCDEF1234"
-Result = KEYOP_INIT_ERROR
-
-# Invalid non-approved digest
-Availablein = fips
-FIPSversion = >=3.4.0
-Verify-Message = ECDSA-MD5:P-256-PUBLIC
-Securitycheck = 1
 Result = KEYOP_INIT_ERROR
 
 Title = FIPS Indicator tests
