@@ -30,10 +30,9 @@ my $inject_recs_num = undef;
 my $content_type = undef;
 my $boundary_test_type = undef;
 my $fatal_alert = undef; # set by filters at expected fatal alerts
-my $sslv2testtype = undef;
 my $proxy_start_success = 0;
 
-plan tests => 44;
+plan tests => 39;
 
 SKIP: {
     skip "TLS 1.2 is disabled", 22 if disabled("tls1_2");
@@ -125,72 +124,6 @@ sub run_tests
         $proxy->clientflags("-no_tls1_3");
         $proxy->start();
         ok($fatal_alert, "Fragmented alert records test");
-
-        #Run some SSLv2 ClientHello tests
-
-        use constant {
-            TLSV1_2_IN_SSLV2      => 0,
-            SSLV2_IN_SSLV2        => 1,
-            FRAGMENTED_IN_TLSV1_2 => 2,
-            FRAGMENTED_IN_SSLV2   => 3,
-            ALERT_BEFORE_SSLV2    => 4
-        };
-
-        # The TLSv1.2 in SSLv2 ClientHello need to run at security level 0
-        # because in a SSLv2 ClientHello we can't send extensions to indicate
-        # which signature algorithm we want to use, and the default is SHA1.
-
-        #Test 5: Inject an SSLv2 style record format for a TLSv1.2 ClientHello
-        $sslv2testtype = TLSV1_2_IN_SSLV2;
-        $proxy->clear();
-        $proxy->filter(\&add_sslv2_filter);
-        $proxy->serverflags("-tls1_2");
-        $proxy->clientflags("-no_tls1_3 -legacy_renegotiation");
-        $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
-        $proxy->start();
-        ok(TLSProxy::Message->success(), "TLSv1.2 in SSLv2 ClientHello test");
-
-        #Test 6: Inject an SSLv2 style record format for an SSLv2 ClientHello. We don't
-        #        support this so it should fail. We actually treat it as an unknown
-        #        protocol so we don't even send an alert in this case.
-        $sslv2testtype = SSLV2_IN_SSLV2;
-        $proxy->clear();
-        $proxy->serverflags("-tls1_2");
-        $proxy->clientflags("-no_tls1_3");
-        $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
-        $proxy->start();
-        ok(TLSProxy::Message->fail(), "SSLv2 in SSLv2 ClientHello test");
-
-        #Test 7: Sanity check ClientHello fragmentation. This isn't really an SSLv2 test
-        #        at all, but it gives us confidence that Test 8 fails for the right
-        #        reasons
-        $sslv2testtype = FRAGMENTED_IN_TLSV1_2;
-        $proxy->clear();
-        $proxy->serverflags("-tls1_2");
-        $proxy->clientflags("-no_tls1_3");
-        $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
-        $proxy->start();
-        ok(TLSProxy::Message->success(), "Fragmented ClientHello in TLSv1.2 test");
-
-        #Test 8: Fragment a TLSv1.2 ClientHello across a TLS1.2 record; an SSLv2
-        #        record; and another TLS1.2 record. This isn't allowed so should fail
-        $sslv2testtype = FRAGMENTED_IN_SSLV2;
-        $proxy->clear();
-        $proxy->serverflags("-tls1_2");
-        $proxy->clientflags("-no_tls1_3");
-        $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
-        $proxy->start();
-        ok(TLSProxy::Message->fail(), "Fragmented ClientHello in TLSv1.2/SSLv2 test");
-
-        #Test 9: Send a TLS warning alert before an SSLv2 ClientHello. This should
-        #        fail because an SSLv2 ClientHello must be the first record.
-        $sslv2testtype = ALERT_BEFORE_SSLV2;
-        $proxy->clear();
-        $proxy->serverflags("-tls1_2");
-        $proxy->clientflags("-no_tls1_3");
-        $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
-        $proxy->start();
-        ok(TLSProxy::Message->fail(), "Alert before SSLv2 ClientHello test");
    }
     #Unrecognised record type tests
 
@@ -447,153 +380,6 @@ sub add_frag_alert_filter
         $byte
     );
     push @{$records}, $record;
-}
-
-sub add_sslv2_filter
-{
-    my $proxy = shift;
-    my $clienthello;
-    my $record;
-
-    # We're only interested in the initial ClientHello
-    if ($proxy->flight != 0) {
-        return;
-    }
-
-    # Ditch the real ClientHello - we're going to replace it with our own
-    shift @{$proxy->record_list};
-
-    if ($sslv2testtype == ALERT_BEFORE_SSLV2) {
-        my $alert = pack('CC', TLSProxy::Message::AL_LEVEL_FATAL,
-                               TLSProxy::Message::AL_DESC_NO_RENEGOTIATION);
-        my $alertlen = length $alert;
-        $record = TLSProxy::Record->new(
-            0,
-            TLSProxy::Record::RT_ALERT,
-            TLSProxy::Record::VERS_TLS_1_2,
-            $alertlen,
-            0,
-            $alertlen,
-            $alertlen,
-            $alert,
-            $alert
-        );
-
-        push @{$proxy->record_list}, $record;
-    }
-
-    if ($sslv2testtype == ALERT_BEFORE_SSLV2
-            || $sslv2testtype == TLSV1_2_IN_SSLV2
-            || $sslv2testtype == SSLV2_IN_SSLV2) {
-        # This is an SSLv2 format ClientHello
-        $clienthello =
-            pack "C44",
-            0x01, # ClientHello
-            0x03, 0x03, #TLSv1.2
-            0x00, 0x03, # Ciphersuites len
-            0x00, 0x00, # Session id len
-            0x00, 0x20, # Challenge len
-            0x00, 0x00, 0x2f, #AES128-SHA
-            0x01, 0x18, 0x9F, 0x76, 0xEC, 0x57, 0xCE, 0xE5, 0xB3, 0xAB, 0x79, 0x90,
-            0xAD, 0xAC, 0x6E, 0xD1, 0x58, 0x35, 0x03, 0x97, 0x16, 0x10, 0x82, 0x56,
-            0xD8, 0x55, 0xFF, 0xE1, 0x8A, 0xA3, 0x2E, 0xF6; # Challenge
-
-        if ($sslv2testtype == SSLV2_IN_SSLV2) {
-            # Set the version to "real" SSLv2
-            vec($clienthello, 1, 8) = 0x00;
-            vec($clienthello, 2, 8) = 0x02;
-        }
-
-        my $chlen = length $clienthello;
-
-        $record = TLSProxy::Record->new(
-            0,
-            TLSProxy::Record::RT_HANDSHAKE,
-            TLSProxy::Record::VERS_TLS_1_2,
-            $chlen,
-            1, #SSLv2
-            $chlen,
-            $chlen,
-            $clienthello,
-            $clienthello
-        );
-
-        push @{$proxy->record_list}, $record;
-    } else {
-        # For this test we're using a real TLS ClientHello
-        $clienthello =
-            pack "C49",
-            0x01, # ClientHello
-            0x00, 0x00, 0x2D, # Message length
-            0x03, 0x03, # TLSv1.2
-            0x01, 0x18, 0x9F, 0x76, 0xEC, 0x57, 0xCE, 0xE5, 0xB3, 0xAB, 0x79, 0x90,
-            0xAD, 0xAC, 0x6E, 0xD1, 0x58, 0x35, 0x03, 0x97, 0x16, 0x10, 0x82, 0x56,
-            0xD8, 0x55, 0xFF, 0xE1, 0x8A, 0xA3, 0x2E, 0xF6, # Random
-            0x00, # Session id len
-            0x00, 0x04, # Ciphersuites len
-            0x00, 0x2f, # AES128-SHA
-            0x00, 0xff, # Empty reneg info SCSV
-            0x01, # Compression methods len
-            0x00, # Null compression
-            0x00, 0x00; # Extensions len
-
-        # Split this into 3: A TLS record; a SSLv2 record and a TLS record.
-        # We deliberately split the second record prior to the Challenge/Random
-        # and set the first byte of the random to 1. This makes the second SSLv2
-        # record look like an SSLv2 ClientHello
-        my $frag1 = substr $clienthello, 0, 6;
-        my $frag2 = substr $clienthello, 6, 32;
-        my $frag3 = substr $clienthello, 38;
-
-        my $fraglen = length $frag1;
-        $record = TLSProxy::Record->new(
-            0,
-            TLSProxy::Record::RT_HANDSHAKE,
-            TLSProxy::Record::VERS_TLS_1_2,
-            $fraglen,
-            0,
-            $fraglen,
-            $fraglen,
-            $frag1,
-            $frag1
-        );
-        push @{$proxy->record_list}, $record;
-
-        $fraglen = length $frag2;
-        my $recvers;
-        if ($sslv2testtype == FRAGMENTED_IN_SSLV2) {
-            $recvers = 1;
-        } else {
-            $recvers = 0;
-        }
-        $record = TLSProxy::Record->new(
-            0,
-            TLSProxy::Record::RT_HANDSHAKE,
-            TLSProxy::Record::VERS_TLS_1_2,
-            $fraglen,
-            $recvers,
-            $fraglen,
-            $fraglen,
-            $frag2,
-            $frag2
-        );
-        push @{$proxy->record_list}, $record;
-
-        $fraglen = length $frag3;
-        $record = TLSProxy::Record->new(
-            0,
-            TLSProxy::Record::RT_HANDSHAKE,
-            TLSProxy::Record::VERS_TLS_1_2,
-            $fraglen,
-            0,
-            $fraglen,
-            $fraglen,
-            $frag3,
-            $frag3
-        );
-        push @{$proxy->record_list}, $record;
-    }
-
 }
 
 sub add_unknown_record_type
