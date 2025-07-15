@@ -530,7 +530,6 @@ typedef enum OPTION_choice {
     OPT_SRP_LATEUSER,
     OPT_SRP_MOREGROUPS,
 #endif
-    OPT_SSL3,
     OPT_SSL_CONFIG,
     OPT_TLS1_3,
     OPT_TLS1_2,
@@ -760,9 +759,6 @@ const OPTIONS s_client_options[] = {
     { "nbio", OPT_NBIO, '-', "Use non-blocking IO" },
 
     OPT_SECTION("Protocol and version"),
-#ifndef OPENSSL_NO_SSL3
-    { "ssl3", OPT_SSL3, '-', "Just use SSLv3" },
-#endif
 #ifndef OPENSSL_NO_TLS1
     { "tls1", OPT_TLS1, '-', "Just use TLSv1" },
 #endif
@@ -888,7 +884,7 @@ static const OPT_PAIR services[] = {
 #define IS_UNIX_FLAG(o) (o == OPT_UNIX)
 
 #define IS_PROT_FLAG(o)                                                           \
-    (o == OPT_SSL3 || o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2         \
+    (o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2                          \
         || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2 \
         || o == OPT_QUIC)
 
@@ -1368,15 +1364,6 @@ int s_client_main(int argc, char **argv)
 #endif
         case OPT_SSL_CONFIG:
             ssl_config = opt_arg();
-            break;
-        case OPT_SSL3:
-            min_version = SSL3_VERSION;
-            max_version = SSL3_VERSION;
-            socket_type = SOCK_STREAM;
-#ifndef OPENSSL_NO_DTLS
-            isdtls = 0;
-#endif
-            isquic = 0;
             break;
         case OPT_TLS1_3:
             min_version = TLS1_3_VERSION;
