@@ -6732,17 +6732,12 @@ void SSL_CTX_set_new_pending_conn_cb(SSL_CTX *c, SSL_new_pending_conn_cb_fn cb,
     c->new_pending_conn_arg = arg;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_4_0
 int SSL_client_hello_isv2(SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
-
-    if (sc == NULL)
-        return 0;
-
-    if (sc->clienthello == NULL)
-        return 0;
-    return sc->clienthello->isv2;
+    return 0;
 }
+#endif
 
 unsigned int SSL_client_hello_get0_legacy_version(SSL *s)
 {
@@ -7045,20 +7040,14 @@ int ssl_log_secret(SSL_CONNECTION *sc,
         secret_len);
 }
 
-#define SSLV2_CIPHER_LEN 3
-
-int ssl_cache_cipherlist(SSL_CONNECTION *s, PACKET *cipher_suites, int sslv2format)
+int ssl_cache_cipherlist(SSL_CONNECTION *s, PACKET *cipher_suites)
 {
-    int n;
-
-    n = sslv2format ? SSLV2_CIPHER_LEN : TLS_CIPHER_LEN;
-
     if (PACKET_remaining(cipher_suites) == 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_NO_CIPHERS_SPECIFIED);
         return 0;
     }
 
-    if (PACKET_remaining(cipher_suites) % n != 0) {
+    if (PACKET_remaining(cipher_suites) % TLS_CIPHER_LEN != 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
         return 0;
     }
@@ -7067,45 +7056,8 @@ int ssl_cache_cipherlist(SSL_CONNECTION *s, PACKET *cipher_suites, int sslv2form
     s->s3.tmp.ciphers_raw = NULL;
     s->s3.tmp.ciphers_rawlen = 0;
 
-    if (sslv2format) {
-        size_t numciphers = PACKET_remaining(cipher_suites) / n;
-        PACKET sslv2ciphers = *cipher_suites;
-        unsigned int leadbyte;
-        unsigned char *raw;
-
-        /*
-         * We store the raw ciphers list in SSLv3+ format so we need to do some
-         * preprocessing to convert the list first. If there are any SSLv2 only
-         * ciphersuites with a non-zero leading byte then we are going to
-         * slightly over allocate because we won't store those. But that isn't a
-         * problem.
-         */
-        raw = OPENSSL_malloc_array(numciphers, TLS_CIPHER_LEN);
-        s->s3.tmp.ciphers_raw = raw;
-        if (raw == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
-            return 0;
-        }
-        for (s->s3.tmp.ciphers_rawlen = 0;
-            PACKET_remaining(&sslv2ciphers) > 0;
-            raw += TLS_CIPHER_LEN) {
-            if (!PACKET_get_1(&sslv2ciphers, &leadbyte)
-                || (leadbyte == 0
-                    && !PACKET_copy_bytes(&sslv2ciphers, raw,
-                        TLS_CIPHER_LEN))
-                || (leadbyte != 0
-                    && !PACKET_forward(&sslv2ciphers, TLS_CIPHER_LEN))) {
-                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_PACKET);
-                OPENSSL_free(s->s3.tmp.ciphers_raw);
-                s->s3.tmp.ciphers_raw = NULL;
-                s->s3.tmp.ciphers_rawlen = 0;
-                return 0;
-            }
-            if (leadbyte == 0)
-                s->s3.tmp.ciphers_rawlen += TLS_CIPHER_LEN;
-        }
-    } else if (!PACKET_memdup(cipher_suites, &s->s3.tmp.ciphers_raw,
-                   &s->s3.tmp.ciphers_rawlen)) {
+    if (!PACKET_memdup(cipher_suites, &s->s3.tmp.ciphers_raw,
+            &s->s3.tmp.ciphers_rawlen)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -7119,27 +7071,24 @@ int SSL_bytes_to_cipher_list(SSL *s, const unsigned char *bytes, size_t len,
     PACKET pkt;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL)
+    if (sc == NULL || isv2format)
         return 0;
 
     if (!PACKET_buf_init(&pkt, bytes, len))
         return 0;
-    return ossl_bytes_to_cipher_list(sc, &pkt, sk, scsvs, isv2format, 0);
+    return ossl_bytes_to_cipher_list(sc, &pkt, sk, scsvs, 0);
 }
 
 int ossl_bytes_to_cipher_list(SSL_CONNECTION *s, PACKET *cipher_suites,
     STACK_OF(SSL_CIPHER) **skp,
     STACK_OF(SSL_CIPHER) **scsvs_out,
-    int sslv2format, int fatal)
+    int fatal)
 {
     const SSL_CIPHER *c;
     STACK_OF(SSL_CIPHER) *sk = NULL;
     STACK_OF(SSL_CIPHER) *scsvs = NULL;
-    int n;
-    /* 3 = SSLV2_CIPHER_LEN > TLS_CIPHER_LEN = 2. */
-    unsigned char cipher[SSLV2_CIPHER_LEN];
-
-    n = sslv2format ? SSLV2_CIPHER_LEN : TLS_CIPHER_LEN;
+    int n = TLS_CIPHER_LEN;
+    unsigned char cipher[TLS_CIPHER_LEN];
 
     if (PACKET_remaining(cipher_suites) == 0) {
         if (fatal)
@@ -7169,16 +7118,7 @@ int ossl_bytes_to_cipher_list(SSL_CONNECTION *s, PACKET *cipher_suites,
     }
 
     while (PACKET_copy_bytes(cipher_suites, cipher, n)) {
-        /*
-         * SSLv3 ciphers wrapped in an SSLv2-compatible ClientHello have the
-         * first byte set to zero, while true SSLv2 ciphers have a non-zero
-         * first byte. We don't support any true SSLv2 ciphers, so skip them.
-         */
-        if (sslv2format && cipher[0] != '\0')
-            continue;
-
-        /* For SSLv2-compat, ignore leading 0-byte. */
-        c = ssl_get_cipher_by_char(s, sslv2format ? &cipher[1] : cipher, 1);
+        c = ssl_get_cipher_by_char(s, cipher, 1);
         if (c != NULL) {
             if ((c->valid && !sk_SSL_CIPHER_push(sk, c)) || (!c->valid && !sk_SSL_CIPHER_push(scsvs, c))) {
                 if (fatal)

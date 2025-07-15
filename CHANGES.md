@@ -32,6 +32,15 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Remove support for an SSLv2 Client Hello. When a client wanted to support
+   both SSLv2 and higher versions like SSLv3 or even TLSv1, it needed to
+   send an SSLv2 Client Hello. SSLv2 support itself was removed in version
+   1.1.0, but there was still compatibility code for clients sending an SSLv2
+   Client Hello. Since we no longer support SSLv2 Client Hello,
+   SSL_client_hello_isv2() is now deprecated and always returns 0.
+
+   *Kurt Roeckx*
+
  * Added "ML-DSA-MU" digest algorithm support.
 
    *Shane Lontis*

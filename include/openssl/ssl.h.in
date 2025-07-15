@@ -1922,7 +1922,9 @@ typedef int (*SSL_new_pending_conn_cb_fn)(SSL_CTX *ctx, SSL *new_ssl,
 void SSL_CTX_set_new_pending_conn_cb(SSL_CTX *c, SSL_new_pending_conn_cb_fn cb,
     void *arg);
 
-int SSL_client_hello_isv2(SSL *s);
+#ifndef OPENSSL_NO_DEPRECATED_4_0
+OSSL_DEPRECATEDIN_4_0 int SSL_client_hello_isv2(SSL *s);
+#endif
 unsigned int SSL_client_hello_get0_legacy_version(SSL *s);
 size_t SSL_client_hello_get0_random(SSL *s, const unsigned char **out);
 size_t SSL_client_hello_get0_session_id(SSL *s, const unsigned char **out);

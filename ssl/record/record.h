@@ -140,7 +140,6 @@ int RECORD_LAYER_reset(RECORD_LAYER *rl);
 int RECORD_LAYER_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl);
-int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl);
 __owur size_t ssl3_pending(const SSL *s);
 __owur int ssl3_write_bytes(SSL *s, uint8_t type, const void *buf, size_t len,
     size_t *written);

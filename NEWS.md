@@ -36,6 +36,8 @@ OpenSSL 4.0
 
   * The crypto-mdebug-backtrace configuration option has been entirely removed.
 
+  * Support for the SSLv2 Client Hello was removed
+
 OpenSSL 3.6
 -----------
 

@@ -639,7 +639,6 @@ typedef struct raw_extension_st {
 } RAW_EXTENSION;
 
 typedef struct {
-    unsigned int isv2;
     unsigned int legacy_version;
     unsigned char random[SSL3_RANDOM_SIZE];
     size_t session_id_len;
@@ -2506,11 +2505,10 @@ __owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
     STACK_OF(SSL_CIPHER) **cipher_list_by_id,
     const char *rule_str,
     CERT *c);
-__owur int ssl_cache_cipherlist(SSL_CONNECTION *s, PACKET *cipher_suites,
-    int sslv2format);
+__owur int ssl_cache_cipherlist(SSL_CONNECTION *s, PACKET *cipher_suites);
 __owur int ossl_bytes_to_cipher_list(SSL_CONNECTION *s, PACKET *cipher_suites,
     STACK_OF(SSL_CIPHER) **skp,
-    STACK_OF(SSL_CIPHER) **scsvs, int sslv2format,
+    STACK_OF(SSL_CIPHER) **scsvs,
     int fatal);
 void ssl_update_cache(SSL_CONNECTION *s, int mode);
 __owur int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,

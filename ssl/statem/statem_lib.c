@@ -1595,32 +1595,16 @@ int tls_get_message_header(SSL_CONNECTION *s, int *mt)
     *mt = *p;
     s->s3.tmp.message_type = *(p++);
 
-    if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
-        /*
-         * Only happens with SSLv3+ in an SSLv2 backward compatible
-         * ClientHello
-         *
-         * Total message size is the remaining record bytes to read
-         * plus the SSL3_HM_HEADER_LENGTH bytes that we already read
-         */
-        l = s->rlayer.tlsrecs[0].length + SSL3_HM_HEADER_LENGTH;
-        s->s3.tmp.message_size = l;
-
-        s->init_msg = s->init_buf->data;
-        s->init_num = SSL3_HM_HEADER_LENGTH;
-    } else {
-        n2l3(p, l);
-        /* BUF_MEM_grow takes an 'int' parameter */
-        if (l > (INT_MAX - SSL3_HM_HEADER_LENGTH)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                SSL_R_EXCESSIVE_MESSAGE_SIZE);
-            return 0;
-        }
-        s->s3.tmp.message_size = l;
-
-        s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
-        s->init_num = 0;
+    n2l3(p, l);
+    /* BUF_MEM_grow takes an 'int' parameter */
+    if (l > (INT_MAX - SSL3_HM_HEADER_LENGTH)) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_EXCESSIVE_MESSAGE_SIZE);
+        return 0;
     }
+    s->s3.tmp.message_size = l;
+
+    s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
+    s->init_num = 0;
 
     return 1;
 }
@@ -1663,48 +1647,35 @@ int tls_get_message_body(SSL_CONNECTION *s, size_t *len)
         return 0;
     }
 
-    /* Feed this message into MAC computation. */
-    if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
-        if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                s->init_num)) {
-            /* SSLfatal() already called */
-            *len = 0;
-            return 0;
-        }
-        if (s->msg_callback)
-            s->msg_callback(0, SSL2_VERSION, 0, s->init_buf->data,
-                (size_t)s->init_num, ussl, s->msg_callback_arg);
-    } else {
-        /*
-         * We defer feeding in the HRR until later. We'll do it as part of
-         * processing the message
-         * The TLsv1.3 handshake transcript stops at the ClientFinished
-         * message.
-         */
+    /*
+     * We defer feeding in the HRR until later. We'll do it as part of
+     * processing the message
+     * The TLsv1.3 handshake transcript stops at the ClientFinished
+     * message.
+     */
 #define SERVER_HELLO_RANDOM_OFFSET (SSL3_HM_HEADER_LENGTH + 2)
-        /* KeyUpdate and NewSessionTicket do not need to be added */
-        if (!SSL_CONNECTION_IS_TLS13(s)
-            || (s->s3.tmp.message_type != SSL3_MT_NEWSESSION_TICKET
-                && s->s3.tmp.message_type != SSL3_MT_KEY_UPDATE)) {
-            if (s->s3.tmp.message_type != SSL3_MT_SERVER_HELLO
-                || s->init_num < SERVER_HELLO_RANDOM_OFFSET + SSL3_RANDOM_SIZE
-                || memcmp(hrrrandom,
-                       s->init_buf->data + SERVER_HELLO_RANDOM_OFFSET,
-                       SSL3_RANDOM_SIZE)
-                    != 0) {
-                if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                        s->init_num + SSL3_HM_HEADER_LENGTH)) {
-                    /* SSLfatal() already called */
-                    *len = 0;
-                    return 0;
-                }
+    /* KeyUpdate and NewSessionTicket do not need to be added */
+    if (!SSL_CONNECTION_IS_TLS13(s)
+        || (s->s3.tmp.message_type != SSL3_MT_NEWSESSION_TICKET
+            && s->s3.tmp.message_type != SSL3_MT_KEY_UPDATE)) {
+        if (s->s3.tmp.message_type != SSL3_MT_SERVER_HELLO
+            || s->init_num < SERVER_HELLO_RANDOM_OFFSET + SSL3_RANDOM_SIZE
+            || memcmp(hrrrandom,
+                   s->init_buf->data + SERVER_HELLO_RANDOM_OFFSET,
+                   SSL3_RANDOM_SIZE)
+                != 0) {
+            if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
+                    s->init_num + SSL3_HM_HEADER_LENGTH)) {
+                /* SSLfatal() already called */
+                *len = 0;
+                return 0;
             }
         }
-        if (s->msg_callback)
-            s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data,
-                (size_t)s->init_num + SSL3_HM_HEADER_LENGTH, ussl,
-                s->msg_callback_arg);
     }
+    if (s->msg_callback)
+        s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data,
+            (size_t)s->init_num + SSL3_HM_HEADER_LENGTH, ussl,
+            s->msg_callback_arg);
 
     *len = s->init_num;
     return 1;

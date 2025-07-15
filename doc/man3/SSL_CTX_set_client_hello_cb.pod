@@ -9,7 +9,6 @@ SSL_CTX_set_client_hello_cb, SSL_client_hello_cb_fn, SSL_client_hello_isv2, SSL_
  typedef int (*SSL_client_hello_cb_fn)(SSL *s, int *al, void *arg);
  void SSL_CTX_set_client_hello_cb(SSL_CTX *c, SSL_client_hello_cb_fn *f,
                                   void *arg);
- int SSL_client_hello_isv2(SSL *s);
  unsigned int SSL_client_hello_get0_legacy_version(SSL *s);
  size_t SSL_client_hello_get0_random(SSL *s, const unsigned char **out);
  size_t SSL_client_hello_get0_session_id(SSL *s, const unsigned char **out);
@@ -22,6 +21,12 @@ SSL_CTX_set_client_hello_cb, SSL_client_hello_cb_fn, SSL_client_hello_isv2, SSL_
                                           size_t *num_exts);
  int SSL_client_hello_get0_ext(SSL *s, unsigned int type, const unsigned char **out,
                                size_t *outlen);
+
+The following functions have been deprecated since OpenSSL 4.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
+ int SSL_client_hello_isv2(SSL *s);
 
 =head1 DESCRIPTION
 
@@ -40,14 +45,9 @@ function, the ClientHello callback will be called again, and, if it returns
 success, normal handshake processing will continue from that point.
 
 SSL_client_hello_isv2() indicates whether the ClientHello was carried in a
-SSLv2 record and is in the SSLv2 format.  The SSLv2 format has substantial
-differences from the normal SSLv3 format, including using three bytes per
-cipher suite, and not allowing extensions.  Additionally, the SSLv2 format
-'challenge' field is exposed via SSL_client_hello_get0_random(), padded to
-SSL3_RANDOM_SIZE bytes with zeros if needed.  For SSLv2 format ClientHellos,
-SSL_client_hello_get0_compression_methods() returns a dummy list that only includes
-the null compression method, since the SSLv2 format does not include a
-mechanism by which to negotiate compression.
+SSLv2 record and is in the SSLv2 format.
+Support for the SSLv2 format was removed in 4.0 and this function
+will always return 0.
 
 SSL_client_hello_get0_random(), SSL_client_hello_get0_session_id(),
 SSL_client_hello_get0_ciphers(), and
@@ -117,7 +117,7 @@ The application's supplied ClientHello callback returns
 SSL_CLIENT_HELLO_SUCCESS on success, SSL_CLIENT_HELLO_ERROR on failure, and
 SSL_CLIENT_HELLO_RETRY to suspend processing.
 
-SSL_client_hello_isv2() returns 1 for SSLv2-format ClientHellos and 0 otherwise.
+SSL_client_hello_isv2() returns 0.
 
 SSL_client_hello_get0_random(), SSL_client_hello_get0_session_id(),
 SSL_client_hello_get0_ciphers(), and
