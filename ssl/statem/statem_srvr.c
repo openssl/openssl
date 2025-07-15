@@ -211,30 +211,10 @@ int ossl_statem_server_read_transition(SSL_CONNECTION *s, int mt)
          * If we get a CKE message after a ServerDone then either
          * 1) We didn't request a Certificate
          * OR
-         * 2) If we did request one then
-         *      a) We allow no Certificate to be returned
-         *      AND
-         *      b) We are running SSL3 (in TLS1.0+ the client must return a 0
-         *         list if we requested a certificate)
+         * 2) We did request one and we allow no Certificate to be returned
          */
         if (mt == SSL3_MT_CLIENT_KEY_EXCHANGE) {
-            if (s->s3.tmp.cert_request) {
-                if (s->version == SSL3_VERSION) {
-                    if ((s->verify_mode & SSL_VERIFY_PEER)
-                        && (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
-                        /*
-                         * This isn't an unexpected message as such - we're just
-                         * not going to accept it because we require a client
-                         * cert.
-                         */
-                        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
-                                 SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
-                        return 0;
-                    }
-                    st->hand_state = TLS_ST_SR_KEY_EXCH;
-                    return 1;
-                }
-            } else {
+            if (!s->s3.tmp.cert_request) {
                 st->hand_state = TLS_ST_SR_KEY_EXCH;
                 return 1;
             }
@@ -3139,8 +3119,8 @@ static int tls_process_cke_rsa(SSL_CONNECTION *s, PACKET *pkt)
         return 0;
     }
 
-    /* SSLv3 and pre-standard DTLS omit the length bytes. */
-    if (s->version == SSL3_VERSION || s->version == DTLS1_BAD_VER) {
+    /* pre-standard DTLS omits the length bytes. */
+    if (s->version == DTLS1_BAD_VER) {
         enc_premaster = *pkt;
     } else {
         if (!PACKET_get_length_prefixed_2(pkt, &enc_premaster)
@@ -3868,15 +3848,9 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
     }
 
     if (sk_X509_num(sk) <= 0) {
-        /* TLS does not mind 0 certs returned */
-        if (s->version == SSL3_VERSION) {
-            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
-                     SSL_R_NO_CERTIFICATES_RETURNED);
-            goto err;
-        }
-        /* Fail for TLS only if we required a certificate */
-        else if ((s->verify_mode & SSL_VERIFY_PEER) &&
-                 (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
+        /* Fail only if we required a certificate */
+        if ((s->verify_mode & SSL_VERIFY_PEER) &&
+            (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
             SSLfatal(s, SSL_AD_CERTIFICATE_REQUIRED,
                      SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
             goto err;

@@ -3314,44 +3314,6 @@ void ssl_sort_cipher_list(void)
     qsort(ssl3_scsvs, SSL3_NUM_SCSVS, sizeof(ssl3_scsvs[0]), cipher_compare);
 }
 
-static int sslcon_undefined_function_1(SSL_CONNECTION *sc, unsigned char *r,
-                                       size_t s, const char *t, size_t u,
-                                       const unsigned char *v, size_t w, int x)
-{
-    (void)r;
-    (void)s;
-    (void)t;
-    (void)u;
-    (void)v;
-    (void)w;
-    (void)x;
-    return ssl_undefined_function(SSL_CONNECTION_GET_SSL(sc));
-}
-
-const SSL3_ENC_METHOD SSLv3_enc_data = {
-    ssl3_setup_key_block,
-    ssl3_generate_master_secret,
-    ssl3_change_cipher_state,
-    ssl3_final_finish_mac,
-    SSL3_MD_CLIENT_FINISHED_CONST, 4,
-    SSL3_MD_SERVER_FINISHED_CONST, 4,
-    ssl3_alert_code,
-    sslcon_undefined_function_1,
-    0,
-    ssl3_set_handshake_header,
-    tls_close_construct_packet,
-    ssl3_handshake_write
-};
-
-OSSL_TIME ssl3_default_timeout(void)
-{
-    /*
-     * 2 hours, the 24 hours mentioned in the SSLv3 spec is way too long for
-     * http, the cache would over fill
-     */
-    return ossl_seconds2time(60 * 60 * 2);
-}
-
 int ssl3_num_ciphers(void)
 {
     return SSL3_NUM_CIPHERS;
@@ -3506,7 +3468,7 @@ int ssl3_clear(SSL *s)
     if (!ssl_free_wbio_buffer(sc))
         return 0;
 
-    sc->version = SSL3_VERSION;
+    sc->version = TLS1_VERSION;
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(sc->ext.npn);
@@ -4584,7 +4546,10 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
 
 int ssl3_get_req_cert_type(SSL_CONNECTION *s, WPACKET *pkt)
 {
-    uint32_t alg_k, alg_a = 0;
+#ifndef OPENSSL_NO_GOST
+    uint32_t alg_k;
+#endif
+    uint32_t alg_a = 0;
 
     /* If we have custom certificate types set, use them */
     if (s->cert->ctype)
@@ -4592,9 +4557,9 @@ int ssl3_get_req_cert_type(SSL_CONNECTION *s, WPACKET *pkt)
     /* Get mask of algorithms disabled by signature list */
     ssl_set_sig_mask(&alg_a, s, SSL_SECOP_SIGALG_MASK);
 
+#ifndef OPENSSL_NO_GOST
     alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
 
-#ifndef OPENSSL_NO_GOST
     if (s->version >= TLS1_VERSION && (alg_k & SSL_kGOST))
         if (!WPACKET_put_bytes_u8(pkt, TLS_CT_GOST01_SIGN)
             || !WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_IANA_SIGN)
@@ -4609,13 +4574,6 @@ int ssl3_get_req_cert_type(SSL_CONNECTION *s, WPACKET *pkt)
             return 0;
 #endif
 
-    if ((s->version == SSL3_VERSION) && (alg_k & SSL_kDHE)) {
-        if (!WPACKET_put_bytes_u8(pkt, SSL3_CT_RSA_EPHEMERAL_DH))
-            return 0;
-        if (!(alg_a & SSL_aDSS)
-                && !WPACKET_put_bytes_u8(pkt, SSL3_CT_DSS_EPHEMERAL_DH))
-            return 0;
-    }
     if (!(alg_a & SSL_aRSA) && !WPACKET_put_bytes_u8(pkt, SSL3_CT_RSA_SIGN))
         return 0;
     if (!(alg_a & SSL_aDSS) && !WPACKET_put_bytes_u8(pkt, SSL3_CT_DSS_SIGN))

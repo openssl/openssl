@@ -597,7 +597,7 @@ OpenSSL was built.
 
 =over 4
 
-=item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
+=item B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
 
 These options require or disable the use of the specified SSL or TLS protocols.
 When a specific TLS version is required, only that version will be offered or

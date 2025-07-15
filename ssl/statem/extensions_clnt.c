@@ -146,10 +146,6 @@ static int use_ecc(SSL_CONNECTION *s, int min_version, int max_version)
     size_t num_groups, j;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
-    /* See if we support any ECC ciphersuites */
-    if (s->version == SSL3_VERSION)
-        return 0;
-
     cipher_stack = SSL_get1_supported_ciphers(ssl);
     end = sk_SSL_CIPHER_num(cipher_stack);
     for (i = 0; i < end; i++) {

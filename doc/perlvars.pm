@@ -131,19 +131,17 @@ $OpenSSL::safe::opt_trust_item = ""
 
 # TLS Version Options
 $OpenSSL::safe::opt_versiontls_synopsis = ""
-. "[B<-no_ssl3>]\n"
 . "[B<-no_tls1>]\n"
 . "[B<-no_tls1_1>]\n"
 . "[B<-no_tls1_2>]\n"
 . "[B<-no_tls1_3>]\n"
-. "[B<-ssl3>]\n"
 . "[B<-tls1>]\n"
 . "[B<-tls1_1>]\n"
 . "[B<-tls1_2>]\n"
 . "[B<-tls1_3>]";
 $OpenSSL::safe::opt_versiontls_item = ""
-. "=item B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>,\n"
-. "B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>\n"
+. "=item B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>,\n"
+. "B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>\n"
 . "\n"
 . "See L<openssl(1)/TLS Version Options>.";
 

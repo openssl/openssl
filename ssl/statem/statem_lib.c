@@ -365,41 +365,20 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
             goto err;
         }
     }
-    if (s->version == SSL3_VERSION) {
-        /*
-         * Here we use EVP_DigestSignUpdate followed by EVP_DigestSignFinal
-         * in order to add the EVP_CTRL_SSL3_MASTER_SECRET call between them.
-         */
-        if (EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0
-            || EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                               (int)s->session->master_key_length,
-                               s->session->master_key) <= 0
-            || EVP_DigestSignFinal(mctx, NULL, &siglen) <= 0) {
 
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-            goto err;
-        }
-        sig = OPENSSL_malloc(siglen);
-        if (sig == NULL
-                || EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-            goto err;
-        }
-    } else {
-        /*
-         * Here we *must* use EVP_DigestSign() because Ed25519/Ed448 does not
-         * support streaming via EVP_DigestSignUpdate/EVP_DigestSignFinal
-         */
-        if (EVP_DigestSign(mctx, NULL, &siglen, hdata, hdatalen) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-            goto err;
-        }
-        sig = OPENSSL_malloc(siglen);
-        if (sig == NULL
-                || EVP_DigestSign(mctx, sig, &siglen, hdata, hdatalen) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-            goto err;
-        }
+    /*
+     * Here we *must* use EVP_DigestSign() because Ed25519/Ed448 does not
+     * support streaming via EVP_DigestSignUpdate/EVP_DigestSignFinal
+     */
+    if (EVP_DigestSign(mctx, NULL, &siglen, hdata, hdatalen) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+        goto err;
+    }
+    sig = OPENSSL_malloc(siglen);
+    if (sig == NULL
+            || EVP_DigestSign(mctx, sig, &siglen, hdata, hdatalen) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+        goto err;
     }
 
 #ifndef OPENSSL_NO_GOST
@@ -560,29 +539,16 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
             goto err;
         }
     }
-    if (s->version == SSL3_VERSION) {
-        if (EVP_DigestVerifyUpdate(mctx, hdata, hdatalen) <= 0
-                || EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                                   (int)s->session->master_key_length,
-                                    s->session->master_key) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-            goto err;
-        }
-        if (EVP_DigestVerifyFinal(mctx, data, len) <= 0) {
-            SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_SIGNATURE);
-            goto err;
-        }
-    } else {
-        j = EVP_DigestVerify(mctx, data, len, hdata, hdatalen);
+
+    j = EVP_DigestVerify(mctx, data, len, hdata, hdatalen);
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        /* Ignore bad signatures when fuzzing */
-        if (SSL_IS_QUIC_HANDSHAKE(s))
-            j = 1;
+    /* Ignore bad signatures when fuzzing */
+    if (SSL_IS_QUIC_HANDSHAKE(s))
+        j = 1;
 #endif
-        if (j <= 0) {
-            SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_SIGNATURE);
-            goto err;
-        }
+    if (j <= 0) {
+        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_SIGNATURE);
+        goto err;
     }
 
     /*
@@ -1853,11 +1819,6 @@ static const version_info tls_version_table[] = {
 #else
     {TLS1_VERSION, NULL, NULL},
 #endif
-#ifndef OPENSSL_NO_SSL3
-    {SSL3_VERSION, sslv3_client_method, sslv3_server_method},
-#else
-    {SSL3_VERSION, NULL, NULL},
-#endif
     {0, NULL, NULL},
 };
 
@@ -2082,7 +2043,7 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
         return 1;
     }
 
-    valid_tls = version >= SSL3_VERSION && version <= TLS_MAX_VERSION_INTERNAL;
+    valid_tls = version > SSL3_VERSION && version <= TLS_MAX_VERSION_INTERNAL;
     valid_dtls =
         /* We support client side pre-standardisation version of DTLS */
         (version == DTLS1_BAD_VER)

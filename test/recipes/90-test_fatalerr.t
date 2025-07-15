@@ -13,7 +13,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 setup("test_fatalerr");
 
 plan skip_all => "No TLS/SSL protocols are supported by this OpenSSL build"
-    if alldisabled(grep { $_ ne "ssl3" } available_protocols("tls"));
+    if alldisabled(available_protocols("tls"));
 
 plan tests => 1;
 
