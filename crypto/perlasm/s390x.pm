@@ -3172,4 +3172,4 @@ sub err {
 	return $ERR{$_[0]};
 }
 
-1;
+no warnings 'void'; 1;
