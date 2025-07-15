@@ -66,38 +66,6 @@ err:
     return ret;
 }
 
-static int test_v2(void)
-{
-    STACK_OF(SSL_CIPHER) *sk, *scsv;
-    /* ECDHE-ECDSA-AES256GCM, SSL2_RC4_1238_WITH_MD5,
-     * ECDHE-ECDSA-CHACHA20-POLY1305 */
-    const unsigned char bytes[] = { 0x00, 0x00, 0x35, 0x01, 0x00, 0x80,
-        0x00, 0x00, 0x33 };
-    int ret = 0;
-
-    if (!TEST_true(SSL_bytes_to_cipher_list(s, bytes, sizeof(bytes), 1,
-            &sk, &scsv))
-        || !TEST_ptr(sk)
-        || !TEST_int_eq(sk_SSL_CIPHER_num(sk), 2)
-        || !TEST_ptr(scsv)
-        || !TEST_int_eq(sk_SSL_CIPHER_num(scsv), 0))
-        goto err;
-    if (strcmp(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(sk, 0)),
-            "AES256-SHA")
-            != 0
-        || strcmp(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(sk, 1)),
-               "DHE-RSA-AES128-SHA")
-            != 0)
-        goto err;
-
-    ret = 1;
-
-err:
-    sk_SSL_CIPHER_free(sk);
-    sk_SSL_CIPHER_free(scsv);
-    return ret;
-}
-
 static int test_v3(void)
 {
     STACK_OF(SSL_CIPHER) *sk = NULL, *scsv = NULL;
@@ -139,7 +107,6 @@ int setup_tests(void)
 
     ADD_TEST(test_empty);
     ADD_TEST(test_unsupported);
-    ADD_TEST(test_v2);
     ADD_TEST(test_v3);
     return 1;
 }

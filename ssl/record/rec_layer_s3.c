@@ -1122,17 +1122,6 @@ start:
     }
 }
 
-/*
- * Returns true if the current rrec was sent in SSLv2 backwards compatible
- * format and false otherwise.
- */
-int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl)
-{
-    if (SSL_CONNECTION_IS_DTLS(rl->s))
-        return 0;
-    return rl->tlsrecs[0].version == SSL2_VERSION;
-}
-
 static OSSL_FUNC_rlayer_msg_callback_fn rlayer_msg_callback_wrapper;
 static void rlayer_msg_callback_wrapper(int write_p, int version,
     int content_type, const void *buf,

@@ -1627,7 +1627,6 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
 {
     /* |cookie| will only be initialized for DTLS. */
     PACKET session_id, compression, extensions, cookie;
-    static const unsigned char null_compression = 0;
     CLIENTHELLO_MSG *clienthello = NULL;
 
     /* Check if this is actually an unexpected renegotiation ClientHello */
@@ -1657,155 +1656,64 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
     /*
      * First, parse the raw ClientHello data into the CLIENTHELLO_MSG structure.
      */
-    clienthello->isv2 = RECORD_LAYER_is_sslv2_record(&s->rlayer);
     PACKET_null_init(&cookie);
-
-    if (clienthello->isv2) {
-        unsigned int mt;
-
-        if (!SSL_IS_FIRST_HANDSHAKE(s)
-            || s->hello_retry_request != SSL_HRR_NONE) {
-            SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
-            goto err;
-        }
-
-        /*-
-         * An SSLv3/TLSv1 backwards-compatible CLIENT-HELLO in an SSLv2
-         * header is sent directly on the wire, not wrapped as a TLS
-         * record. Our record layer just processes the message length and passes
-         * the rest right through. Its format is:
-         * Byte  Content
-         * 0-1   msg_length - decoded by the record layer
-         * 2     msg_type - s->init_msg points here
-         * 3-4   version
-         * 5-6   cipher_spec_length
-         * 7-8   session_id_length
-         * 9-10  challenge_length
-         * ...   ...
-         */
-
-        if (!PACKET_get_1(pkt, &mt)
-            || mt != SSL2_MT_CLIENT_HELLO) {
-            /*
-             * Should never happen. We should have tested this in the record
-             * layer in order to have determined that this is an SSLv2 record
-             * in the first place
-             */
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-    }
 
     if (!PACKET_get_net_2(pkt, &clienthello->legacy_version)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_TOO_SHORT);
         goto err;
     }
 
-    /* Parse the message and load client random. */
-    if (clienthello->isv2) {
-        /*
-         * Handle an SSLv2 backwards compatible ClientHello
-         * Note, this is only for SSLv3+ using the backward compatible format.
-         * Real SSLv2 is not supported, and is rejected below.
-         */
-        unsigned int ciphersuite_len, session_id_len, challenge_len;
-        PACKET challenge;
+    if (!PACKET_copy_bytes(pkt, clienthello->random, SSL3_RANDOM_SIZE)
+        || !PACKET_get_length_prefixed_1(pkt, &session_id)
+        || !PACKET_copy_all(&session_id, clienthello->session_id,
+            SSL_MAX_SSL_SESSION_ID_LENGTH,
+            &clienthello->session_id_len)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
 
-        if (!PACKET_get_net_2(pkt, &ciphersuite_len)
-            || !PACKET_get_net_2(pkt, &session_id_len)
-            || !PACKET_get_net_2(pkt, &challenge_len)) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_RECORD_LENGTH_MISMATCH);
+    if (SSL_CONNECTION_IS_DTLS(s)) {
+        if (!PACKET_get_length_prefixed_1(pkt, &cookie)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
             goto err;
         }
-
-        if (session_id_len > SSL_MAX_SSL_SESSION_ID_LENGTH) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_LENGTH_MISMATCH);
-            goto err;
-        }
-
-        if (!PACKET_get_sub_packet(pkt, &clienthello->ciphersuites,
-                ciphersuite_len)
-            || !PACKET_copy_bytes(pkt, clienthello->session_id, session_id_len)
-            || !PACKET_get_sub_packet(pkt, &challenge, challenge_len)
-            /* No extensions. */
-            || PACKET_remaining(pkt) != 0) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_RECORD_LENGTH_MISMATCH);
-            goto err;
-        }
-        clienthello->session_id_len = session_id_len;
-
-        /* Load the client random and compression list. We use SSL3_RANDOM_SIZE
-         * here rather than sizeof(clienthello->random) because that is the limit
-         * for SSLv3 and it is fixed. It won't change even if
-         * sizeof(clienthello->random) does.
-         */
-        challenge_len = challenge_len > SSL3_RANDOM_SIZE
-            ? SSL3_RANDOM_SIZE
-            : challenge_len;
-        memset(clienthello->random, 0, SSL3_RANDOM_SIZE);
-        if (!PACKET_copy_bytes(&challenge,
-                clienthello->random + SSL3_RANDOM_SIZE - challenge_len, challenge_len)
-            /* Advertise only null compression. */
-            || !PACKET_buf_init(&compression, &null_compression, 1)) {
+        if (!PACKET_copy_all(&cookie, clienthello->dtls_cookie,
+                DTLS1_COOKIE_LENGTH,
+                &clienthello->dtls_cookie_len)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
+        /*
+         * If we require cookies and this ClientHello doesn't contain one,
+         * just return since we do not want to allocate any memory yet.
+         * So check cookie length...
+         */
+        if (SSL_get_options(SSL_CONNECTION_GET_SSL(s)) & SSL_OP_COOKIE_EXCHANGE) {
+            if (clienthello->dtls_cookie_len == 0) {
+                OPENSSL_free(clienthello);
+                return MSG_PROCESS_FINISHED_READING;
+            }
+        }
+    }
 
+    if (!PACKET_get_length_prefixed_2(pkt, &clienthello->ciphersuites)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+
+    if (!PACKET_get_length_prefixed_1(pkt, &compression)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+
+    /* Could be empty. */
+    if (PACKET_remaining(pkt) == 0) {
         PACKET_null_init(&clienthello->extensions);
     } else {
-        /* Regular ClientHello. */
-        if (!PACKET_copy_bytes(pkt, clienthello->random, SSL3_RANDOM_SIZE)
-            || !PACKET_get_length_prefixed_1(pkt, &session_id)
-            || !PACKET_copy_all(&session_id, clienthello->session_id,
-                SSL_MAX_SSL_SESSION_ID_LENGTH,
-                &clienthello->session_id_len)) {
+        if (!PACKET_get_length_prefixed_2(pkt, &clienthello->extensions)
+            || PACKET_remaining(pkt) != 0) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
             goto err;
-        }
-
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            if (!PACKET_get_length_prefixed_1(pkt, &cookie)) {
-                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
-                goto err;
-            }
-            if (!PACKET_copy_all(&cookie, clienthello->dtls_cookie,
-                    sizeof(clienthello->dtls_cookie),
-                    &clienthello->dtls_cookie_len)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            /*
-             * If we require cookies and this ClientHello doesn't contain one,
-             * just return since we do not want to allocate any memory yet.
-             * So check cookie length...
-             */
-            if (SSL_get_options(SSL_CONNECTION_GET_SSL(s)) & SSL_OP_COOKIE_EXCHANGE) {
-                if (clienthello->dtls_cookie_len == 0) {
-                    OPENSSL_free(clienthello);
-                    return MSG_PROCESS_FINISHED_READING;
-                }
-            }
-        }
-
-        if (!PACKET_get_length_prefixed_2(pkt, &clienthello->ciphersuites)) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
-            goto err;
-        }
-
-        if (!PACKET_get_length_prefixed_1(pkt, &compression)) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
-            goto err;
-        }
-
-        /* Could be empty. */
-        if (PACKET_remaining(pkt) == 0) {
-            PACKET_null_init(&clienthello->extensions);
-        } else {
-            if (!PACKET_get_length_prefixed_2(pkt, &clienthello->extensions)
-                || PACKET_remaining(pkt) != 0) {
-                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
-                goto err;
-            }
         }
     }
 
@@ -1874,23 +1782,6 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     /* Set up the client_random */
     memcpy(s->s3.client_random, clienthello->random, SSL3_RANDOM_SIZE);
 
-    /* Choose the version */
-
-    if (clienthello->isv2) {
-        if (clienthello->legacy_version == SSL2_VERSION
-            || (clienthello->legacy_version & 0xff00)
-                != (SSL3_VERSION_MAJOR << 8)) {
-            /*
-             * This is real SSLv2 or something completely unknown. We don't
-             * support it.
-             */
-            SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_UNKNOWN_PROTOCOL);
-            goto err;
-        }
-        /* SSLv3/TLS */
-        s->client_version = clienthello->legacy_version;
-    }
-
     /* Choose the server SSL/TLS/DTLS version. */
     protverr = ssl_choose_server_version(s, clienthello, &dgrd);
 
@@ -1936,10 +1827,8 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 
     s->hit = 0;
 
-    if (!ssl_cache_cipherlist(s, &clienthello->ciphersuites,
-            clienthello->isv2)
-        || !ossl_bytes_to_cipher_list(s, &clienthello->ciphersuites, &ciphers,
-            &scsvs, clienthello->isv2, 1)) {
+    if (!ssl_cache_cipherlist(s, &clienthello->ciphersuites)
+        || !ossl_bytes_to_cipher_list(s, &clienthello->ciphersuites, &ciphers, &scsvs, 1)) {
         /* SSLfatal() already called */
         goto err;
     }
@@ -2017,7 +1906,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
      * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION setting will be
      * ignored.
      */
-    if (clienthello->isv2 || (s->new_session && (s->options & SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION))) {
+    if (s->new_session && (s->options & SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION)) {
         if (!ssl_get_new_session(s, 1)) {
             /* SSLfatal() already called */
             goto err;
