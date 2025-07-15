@@ -21,8 +21,8 @@ if ($fips_mode) {
     @protocols = (undef, "TLSv1.2", "DTLSv1.2");
     push @is_disabled, anydisabled("tls1_2", "dtls1_2");
 } else {
-    @protocols = (undef, "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "DTLSv1", "DTLSv1.2");
-    push @is_disabled, anydisabled("ssl3", "tls1", "tls1_1", "tls1_2", "dtls1", "dtls1_2");
+    @protocols = (undef, "TLSv1", "TLSv1.1", "TLSv1.2", "DTLSv1", "DTLSv1.2");
+    push @is_disabled, anydisabled("tls1", "tls1_1", "tls1_2", "dtls1", "dtls1_2");
 }
 
 our @tests = ();
@@ -47,11 +47,7 @@ sub generate_tests() {
         my $method;
         my $sctpenabled = 0;
         if (!$is_disabled[$_]) {
-            if ($protocol_name eq "SSLv3") {
-                $caalert = "BadCertificate";
-            } else {
-                $caalert = "UnknownCA";
-            }
+            $caalert = "UnknownCA";
             if ($protocol_name =~ m/^DTLS/) {
                 $method = "DTLS";
                 $sctpenabled = 1 if !disabled("sctp");
