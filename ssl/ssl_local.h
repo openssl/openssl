@@ -2307,9 +2307,6 @@ extern const unsigned char tls12downgrade[8];
 
 extern const SSL3_ENC_METHOD ssl3_undef_enc_method;
 
-__owur const SSL_METHOD *sslv3_method(void);
-__owur const SSL_METHOD *sslv3_server_method(void);
-__owur const SSL_METHOD *sslv3_client_method(void);
 __owur const SSL_METHOD *tlsv1_method(void);
 __owur const SSL_METHOD *tlsv1_server_method(void);
 __owur const SSL_METHOD *tlsv1_client_method(void);
@@ -2334,7 +2331,6 @@ extern const SSL3_ENC_METHOD TLSv1_enc_data;
 extern const SSL3_ENC_METHOD TLSv1_1_enc_data;
 extern const SSL3_ENC_METHOD TLSv1_2_enc_data;
 extern const SSL3_ENC_METHOD TLSv1_3_enc_data;
-extern const SSL3_ENC_METHOD SSLv3_enc_data;
 extern const SSL3_ENC_METHOD DTLSv1_enc_data;
 extern const SSL3_ENC_METHOD DTLSv1_2_enc_data;
 
@@ -2378,46 +2374,6 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_get_cipher, \
                 tls1_default_timeout, \
                 &enc_data, \
-                ssl_undefined_void_function, \
-                ssl3_callback_ctrl, \
-                ssl3_ctx_callback_ctrl, \
-        }; \
-        return &func_name##_data; \
-        }
-
-# define IMPLEMENT_ssl3_meth_func(func_name, s_accept, s_connect) \
-const SSL_METHOD *func_name(void)  \
-        { \
-        static const SSL_METHOD func_name##_data= { \
-                SSL3_VERSION, \
-                SSL_METHOD_NO_FIPS | SSL_METHOD_NO_SUITEB, \
-                SSL_OP_NO_SSLv3, \
-                ossl_ssl_connection_new, \
-                ossl_ssl_connection_free, \
-                ossl_ssl_connection_reset, \
-                ssl3_new, \
-                ssl3_clear, \
-                ssl3_free, \
-                s_accept, \
-                s_connect, \
-                ssl3_read, \
-                ssl3_peek, \
-                ssl3_write, \
-                ssl3_shutdown, \
-                ssl3_renegotiate, \
-                ssl3_renegotiate_check, \
-                ssl3_read_bytes, \
-                ssl3_write_bytes, \
-                ssl3_dispatch_alert, \
-                ssl3_ctrl, \
-                ssl3_ctx_ctrl, \
-                ssl3_get_cipher_by_char, \
-                ssl3_put_cipher_by_char, \
-                ssl3_pending, \
-                ssl3_num_ciphers, \
-                ssl3_get_cipher, \
-                ssl3_default_timeout, \
-                &SSLv3_enc_data, \
                 ssl_undefined_void_function, \
                 ssl3_callback_ctrl, \
                 ssl3_ctx_callback_ctrl, \
@@ -3122,7 +3078,6 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic);
      SSL_OP_ALLOW_CLIENT_RENEGOTIATION        | \
      SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION | \
      SSL_OP_NO_COMPRESSION                    | \
-     SSL_OP_NO_SSLv3                          | \
      SSL_OP_NO_TLSv1                          | \
      SSL_OP_NO_TLSv1_1                        | \
      SSL_OP_NO_TLSv1_2                        | \

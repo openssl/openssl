@@ -153,7 +153,7 @@
  */
 # define OPT_S_ENUM \
         OPT_S__FIRST=3000, \
-        OPT_S_NOSSL3, OPT_S_NOTLS1, OPT_S_NOTLS1_1, OPT_S_NOTLS1_2, \
+        OPT_S_NOTLS1, OPT_S_NOTLS1_1, OPT_S_NOTLS1_2, \
         OPT_S_NOTLS1_3, OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
         OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_CLIENTRENEG, \
         OPT_S_LEGACYCONN, \
@@ -172,7 +172,6 @@
 
 # define OPT_S_OPTIONS \
         OPT_SECTION("TLS/SSL"), \
-        {"no_ssl3", OPT_S_NOSSL3, '-',"Just disable SSLv3" }, \
         {"no_tls1", OPT_S_NOTLS1, '-', "Just disable TLSv1"}, \
         {"no_tls1_1", OPT_S_NOTLS1_1, '-', "Just disable TLSv1.1" }, \
         {"no_tls1_2", OPT_S_NOTLS1_2, '-', "Just disable TLSv1.2"}, \
@@ -233,7 +232,6 @@
 
 # define OPT_S_CASES \
         OPT_S__FIRST: case OPT_S__LAST: break; \
-        case OPT_S_NOSSL3: \
         case OPT_S_NOTLS1: \
         case OPT_S_NOTLS1_1: \
         case OPT_S_NOTLS1_2: \
@@ -271,7 +269,7 @@
         case OPT_S_NO_EMS
 
 #define IS_NO_PROT_FLAG(o) \
- (o == OPT_S_NOSSL3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
+ (o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
   || o == OPT_S_NOTLS1_2 || o == OPT_S_NOTLS1_3)
 
 /*

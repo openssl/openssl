@@ -413,7 +413,7 @@ my $auto_threads=1;    # enable threads automatically? true by default
 my $default_ranlib;
 
 # Known TLS and DTLS protocols
-my @tls = qw(ssl3 tls1 tls1_1 tls1_2 tls1_3);
+my @tls = qw(tls1 tls1_1 tls1_2 tls1_3);
 my @dtls = qw(dtls1 dtls1_2);
 
 # Explicitly known options that are possible to disable.  They can

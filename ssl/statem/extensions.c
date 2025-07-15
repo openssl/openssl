@@ -144,7 +144,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_renegotiate,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
-        | SSL_EXT_SSL3_ALLOWED | SSL_EXT_TLS1_2_AND_BELOW_ONLY,
+        | SSL_EXT_TLS1_2_AND_BELOW_ONLY,
         NULL, tls_parse_ctos_renegotiate, tls_parse_stoc_renegotiate,
         tls_construct_stoc_renegotiate, tls_construct_ctos_renegotiate,
         final_renegotiate
@@ -571,8 +571,6 @@ int extension_is_relevant(SSL_CONNECTION *s, unsigned int extctx,
 
     if ((SSL_CONNECTION_IS_DTLS(s)
                 && (extctx & SSL_EXT_TLS_IMPLEMENTATION_ONLY) != 0)
-            || (s->version == SSL3_VERSION
-                    && (extctx & SSL_EXT_SSL3_ALLOWED) == 0)
             /*
              * Note that SSL_IS_TLS13() means "TLS 1.3 has been negotiated",
              * which is never true when generating the ClientHello.
