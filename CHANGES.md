@@ -72,11 +72,6 @@ OpenSSL 3.5
 
    *Paul Dale*
 
-  * Add optional 64-bit optimized implementation of elliptic curve for
-    SECP256-K1
-
-   *Michael Adjedj*
-
 OpenSSL 3.4
 -----------
 
