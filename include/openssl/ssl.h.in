@@ -1826,6 +1826,7 @@ int SSL_up_ref(SSL *s);
 int SSL_is_dtls(const SSL *s);
 int SSL_is_tls(const SSL *s);
 int SSL_is_quic(const SSL *s);
+
 __owur int SSL_set_session_id_context(SSL *ssl, const unsigned char *sid_ctx,
                                       unsigned int sid_ctx_len);
 
@@ -2827,7 +2828,6 @@ typedef unsigned int (*DTLS_timer_cb)(SSL *s, unsigned int timer_us);
 
 void DTLS_set_timer_cb(SSL *s, DTLS_timer_cb cb);
 
-
 typedef int (*SSL_allow_early_data_cb_fn)(SSL *s, void *arg);
 void SSL_CTX_set_allow_early_data_cb(SSL_CTX *ctx,
                                      SSL_allow_early_data_cb_fn cb,
@@ -2884,6 +2884,14 @@ int SSL_set_quic_tls_transport_params(SSL *s,
                                       size_t params_len);
 
 int SSL_set_quic_tls_early_data_enabled(SSL *s, int enabled);
+
+/* Client cache implementation */
+__owur SSL_SESSION *SSL_get1_previous_client_session(SSL *s);
+__owur int SSL_set1_cache_id(SSL *s, const unsigned char *data, size_t len);
+__owur int SSL_get1_cache_id(const SSL *s, unsigned char **data, size_t *len);
+__owur int SSL_SESSION_set1_cache_id(SSL_SESSION *ss, const unsigned char *data, size_t len);
+__owur int SSL_SESSION_get1_cache_id(const SSL_SESSION *ss, unsigned char **data,
+                                     size_t *len);
 
 # ifdef  __cplusplus
 }
