@@ -145,8 +145,8 @@ typedef struct {
 #ifdef FIPS_MODULE
     /*
      * FIPS 140-3 IG 2.4.B mandates that verification based on a digest of a
-     * message is not permitted.  However, signing based on a digest is still
-     * permitted.
+     * message is not permitted.  However, signing based on a digest might be
+     * permitted, depending on vendor choices and padding.
      */
     int verify_message;
 #endif
@@ -661,7 +661,7 @@ static int rsa_sign_init(void *vprsactx, void *vrsa, const OSSL_PARAM params[])
 
 #ifdef FIPS_MODULE
     if (prsactx != NULL)
-        prsactx->verify_message = 1;
+        prsactx->verify_message = 0;
 #endif
 
     return rsa_signverify_init(prsactx, vrsa, rsa_set_ctx_params, params,
@@ -873,6 +873,9 @@ static int rsa_sign_message_final(void *vprsactx, unsigned char *sig,
         if (!EVP_DigestFinal_ex(prsactx->mdctx, digest, &dlen))
             return 0;
 
+#ifdef FIPS_MODULE
+        prsactx->verify_message = 1;
+#endif
         prsactx->flag_allow_update = 0;
         prsactx->flag_allow_oneshot = 0;
         prsactx->flag_allow_final = 0;
