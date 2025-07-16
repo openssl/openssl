@@ -112,6 +112,7 @@ providers/implementations/ciphers/cipher_chacha20_poly1305.c
 providers/implementations/digests/blake2_prov.c
 providers/implementations/digests/digestcommon.c
 providers/implementations/digests/sha3_prov.c
+providers/implementations/include/prov/blake2_params.inc
 providers/implementations/macs/cmac_prov.c
 providers/implementations/macs/gmac_prov.c
 providers/implementations/macs/hmac_prov.c
