@@ -24,7 +24,7 @@ jobs:
         run: |
           docker push quay.io/openssl-ci/openssl-quic-interop:latest
 
-  update_msqic_quay_container:
+  update_msquic_quay_container:
     if: github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
