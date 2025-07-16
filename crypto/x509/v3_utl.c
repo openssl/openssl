@@ -35,6 +35,9 @@ static int ipv6_from_asc(unsigned char *v6, const char *in);
 static int ipv6_cb(const char *elem, int len, void *usr);
 static int ipv6_hex(unsigned char *out, const char *in, int inlen);
 
+static int is_valid_uri_char(char c);
+static int is_valid_uri(const char *uri);
+
 /* Add a CONF_VALUE name value pair to stack */
 
 static int x509v3_add_len_value(const char *name, const char *value,
@@ -58,6 +61,14 @@ static int x509v3_add_len_value(const char *name, const char *value,
         goto err;
     if (sk_allocated && (*extlist = sk_CONF_VALUE_new_null()) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
+    int err_raised = 0;
+    if (!is_valid_uri(value) && strncmp(name, "URI", 3) == 0) {
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_URI);
+        err_raised = 1;
+    }
+    if (err_raised) {
         goto err;
     }
     vtmp->section = NULL;
@@ -1451,4 +1462,75 @@ int ossl_bio_print_hex(BIO *out, unsigned char *buf, int len)
 
     OPENSSL_free(hexbuf);
     return result;
+}
+
+static int isalnum(int c)
+{
+    return ((c >= 'A' && c <= 'Z') ||
+            (c >= 'a' && c <= 'z') ||
+            (c >= '0' && c <= '9'));
+}
+
+static int is_valid_uri_char(char c)
+{
+    /* Valid characters include alphanumeric, '-', '_', '.', '~', and reserved characters */
+    switch (c) {
+        /* Unreserved characters */ 
+        case '-': case '_': case '.': case '~':
+        /* Reserved characters */ 
+        case '!': case '*': case '\'': case '(': case ')':
+        case ';': case ':': case '@': case '&': case '=':
+        case '+': case '$': case ',': case '/': case '?':
+        case '#': case '[': case ']':
+            return 1;
+        default:
+            /* Check if alphanumeric */ 
+            if (isalnum(c)) {
+                return 1;
+            }
+            return 0;
+    }  
+}
+
+static int is_valid_uri_scheme(const char *input)
+{
+    int i;
+    char c;
+   
+    /* Input may not be null and first character must be a letter */ 
+    if (input == NULL || !((input[0] >= 'A' && input[0] <= 'Z') || (input[0] >= 'a' && input[0] <= 'z'))) {
+        return 0;
+    }
+    
+    for (i = 1; input[i] != '\0'; i++) {
+        c = input[i];
+
+        if (c == ':') {
+            /* Valid scheme found */ 
+            return 1;
+        }
+            
+        /* Characters must be alphanumeric or '+', '-', '.' */ 
+        if (!isalnum(c) && c != '+' && c != '-' && c != '.') {
+            return 0;
+        } 
+    }
+    return 0;
+}
+
+static int is_valid_uri(const char *uri)
+{
+    /* Check if URI begins with a valid scheme */
+    if (!is_valid_uri_scheme(uri)) {
+        return 0;
+    } 
+ 
+    /* Check the validity of each character in the URI */
+    for (const char *p = uri; *p != '\0'; ++p) {
+        if (!is_valid_uri_char(*p)) {
+            return 0;
+        }
+    }
+    
+    return 1; /* URI is valid */
 }
