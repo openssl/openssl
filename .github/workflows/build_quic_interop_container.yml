@@ -1,4 +1,4 @@
-name: "Build openssl interop container from master"
+name: "Build openssl interop containers"
 
 on:
   schedule:
@@ -24,3 +24,24 @@ jobs:
         run: |
           docker push quay.io/openssl-ci/openssl-quic-interop:latest
 
+  update_msquic_quay_container:
+    if: github.repository == 'openssl/openssl'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: microsoft/msquic
+          ref: main
+          submodules: recursive
+      - name: "log in to quay.io"
+        run: |
+          docker login -u openssl-ci+machine -p ${{ secrets.QUAY_IO_PASSWORD }} quay.io
+      - name: Patch qns.Dockerfile
+        run: |
+          sed 's/RUN     cmake -DQUIC_BUILD_TOOLS=on -DQUIC_ENABLE_LOGGING=on ../RUN     cmake -DQUIC_BUILD_TOOLS=on -DQUIC_ENABLE_LOGGING=on -DQUIC_TLS_LIB=openssl ../' ./scripts/qns.Dockerfile
+      - name: "Build container"
+        run: |
+          docker build -f ./scripts/qns.Dockerfile -t quay.io/openssl-ci/msquic-openssl:latest .
+      - name: "Push to quay"
+        run: |
+          docker push quay.io/openssl-ci/msquic-openssl:latest
