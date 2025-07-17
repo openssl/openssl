@@ -63,7 +63,7 @@ int bn_mod_add_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
         return 0;
 
     if (mtop > OSSL_NELEM(storage)) {
-        tp = OPENSSL_malloc(mtop * sizeof(BN_ULONG));
+        tp = OPENSSL_malloc_array(mtop, sizeof(BN_ULONG));
         if (tp == NULL)
             return 0;
     }
