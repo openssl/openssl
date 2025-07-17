@@ -46,7 +46,7 @@ success, normal handshake processing will continue from that point.
 
 SSL_client_hello_isv2() indicates whether the ClientHello was carried in a
 SSLv2 record and is in the SSLv2 format.
-Support for the SSLv2 format has been removed since 3.6 and this function
+Support for the SSLv2 format was removed in 3.6 and this function
 will always return 0.
 
 SSL_client_hello_get0_random(), SSL_client_hello_get0_session_id(),
