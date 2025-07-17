@@ -277,7 +277,7 @@ int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
 int CRYPTO_atomic_cmp_exch(void **ptr, void **expect, void **desired, CRYPTO_RWLOCK *lock)
 {
     if (*expect == *ptr) {
-        *expect = *desired;
+        *ptr = *desired;
         return 1;
     }
     *expect = *ptr;
