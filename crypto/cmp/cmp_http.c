@@ -9,22 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
-#include <stdio.h>
-
-#include <openssl/asn1t.h>
-#include <openssl/http.h>
-
-#include <openssl/cmp.h>
 #include "cmp_local.h"
-
-/* explicit #includes not strictly needed since implied by the above: */
-#include <ctype.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <openssl/bio.h>
-#include <openssl/buffer.h>
-#include <openssl/err.h>
 
 static int keep_alive(int keep_alive, int body_type, BIO **bios)
 {

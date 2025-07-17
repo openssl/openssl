@@ -10,14 +10,7 @@
  */
 
 #include "cmp_local.h"
-#include "crypto/asn1.h"
-
-/* explicit #includes not strictly needed since implied by the above: */
-#include <openssl/asn1t.h>
-#include <openssl/cmp.h>
-#include <openssl/crmf.h>
-#include <openssl/err.h>
-#include <openssl/x509.h>
+#include "crypto/asn1.h" /* for ossl_X509_ALGOR_from_nid() */
 
 /*
  * This function is also used by the internal verify_PBMAC() in cmp_vfy.c.
