@@ -549,7 +549,7 @@ static int named_group_creation_test(void)
 int setup_tests(void)
 {
     crv_len = EC_get_builtin_curves(NULL, 0);
-    if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
+    if (!TEST_ptr(curves = OPENSSL_malloc_array(crv_len, sizeof(*curves)))
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
         return 0;
 
