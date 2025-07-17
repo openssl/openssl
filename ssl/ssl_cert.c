@@ -422,8 +422,8 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg)
  * Verify a certificate chain/raw public key
  * Return codes:
  *  1: Verify success
+ *  1 && SSL_set_retry_verify called: Retry required
  *  0: Verify failure or error
- * -1: Retry required
  */
 static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *rpk)
 {
@@ -534,8 +534,8 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
  * Verify a raw public key
  * Return codes:
  *  1: Verify success
+ *  1 && SSL_set_retry_verify called: Retry required
  *  0: Verify failure or error
- * -1: Retry required
  */
 int ssl_verify_rpk(SSL_CONNECTION *s, EVP_PKEY *rpk)
 {
@@ -546,8 +546,8 @@ int ssl_verify_rpk(SSL_CONNECTION *s, EVP_PKEY *rpk)
  * Verify a certificate chain
  * Return codes:
  *  1: Verify success
+ *  1 && SSL_set_retry_verify called: Retry required
  *  0: Verify failure or error
- * -1: Retry required
  */
 int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk)
 {
