@@ -183,6 +183,19 @@ void ossl_malloc_setup_failures(void)
 }
 #endif
 
+static inline void report_alloc_err(const char *file, int line)
+{
+    /*
+     * ossl_err_get_state_int() in err.c uses CRYPTO_zalloc(num, NULL, 0) for
+     * ERR_STATE allocation. Prevent mem alloc error loop while reporting error.
+     */
+    if (file != NULL || line != 0) {
+        ERR_new();
+        ERR_set_debug(file, line, NULL);
+        ERR_set_error(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE, NULL);
+    }
+}
+
 void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
     void *ptr;
@@ -212,15 +225,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
     if (ossl_likely(ptr != NULL))
         return ptr;
  err:
-    /*
-     * ossl_err_get_state_int() in err.c uses CRYPTO_zalloc(num, NULL, 0) for
-     * ERR_STATE allocation. Prevent mem alloc error loop while reporting error.
-     */
-    if (file != NULL || line != 0) {
-        ERR_new();
-        ERR_set_debug(file, line, NULL);
-        ERR_set_error(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE, NULL);
-    }
+    report_alloc_err(file, line);
     return NULL;
 }
 
