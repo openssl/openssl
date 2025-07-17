@@ -103,8 +103,10 @@ static void notify_read_end(LLL *list)
  */
 LLL* LLL_new(lll_cmp cmpfn, lll_free freefn, int allow_delete)
 {
-    LLL *new = OPENSSL_zalloc(sizeof(LLL) + (sizeof(LLL_NODE) * 2));
+    uintptr_t sentry = (uintptr_t)0xdeadbeee;
 
+    LLL *new = OPENSSL_zalloc(sizeof(LLL) + (sizeof(LLL_NODE) * 2));
+    
     if (new == NULL)
         return NULL;
     new->lck = CRYPTO_THREAD_lock_new();
@@ -114,10 +116,10 @@ LLL* LLL_new(lll_cmp cmpfn, lll_free freefn, int allow_delete)
     }
     new->head = (LLL_NODE *)(new + 1);
     new->tail = (LLL_NODE *)(new->head + 1);
-    new->head->data = (void *)0xdeadbeee;
+    new->head->data = (void *)sentry;
     new->head->next = new->tail;
 
-    new->tail->data = (void *)0xdeadbeee;
+    new->tail->data = (void *)sentry;
     new->tail->next = NULL;
     
     new->cmpfn = cmpfn;
@@ -282,6 +284,7 @@ retry:
  */
 int LLL_insert(LLL *list, void *data, void *arg)
 {
+    uintptr_t sentry = 0xdeadbeee;
     LLL_IDX idx = { NULL, NULL, NULL, NULL };
     LLL_NODE *new = OPENSSL_zalloc(sizeof(LLL_NODE));
     int ret = 0;
@@ -302,7 +305,7 @@ int LLL_insert(LLL *list, void *data, void *arg)
         new->next = idx.curr;
         if (CRYPTO_atomic_cmp_exch((void **)&idx.pred->next, (void **)&idx.curr,
                                    (void **)&new, list->lck)) {
-            if(list->head->next == (LLL_NODE *)0xdeadbeee)
+            if(list->head->next == (LLL_NODE *)sentry)
                 abort();
             ret = 1;
             break;
