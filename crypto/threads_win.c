@@ -742,6 +742,7 @@ int CRYPTO_atomic_store_ptr(void **dst, void *val, CRYPTO_RWLOCK *lock)
     volatile void *tmp = val;
     volatile void **tmpdst = dst;
     *dst = val;
+    return 1;
 }
 
 int CRYPTO_atomic_cmp_exch(void **ptr, void **expect, void **desired, CRYPTO_RWLOCK *lock)
