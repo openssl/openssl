@@ -82,4 +82,23 @@ ossl_size_mul(const size_t num, const size_t size, size_t *bytes,
     return true;
 }
 
+/*
+ * Check the result of size1 and size2 addition for overflow
+ * and set error if it is the case.
+ */
+static ossl_inline ossl_unused bool
+ossl_size_add_of(const size_t size1, const size_t size2, size_t *bytes,
+                 const char * const file, const int line)
+{
+    *bytes = size1 + size2;
+
+    if (ossl_unlikely(*bytes < size1)) {
+        ossl_report_alloc_err_of(file, line);
+
+        return true;
+    }
+
+    return false;
+}
+
 #endif /* OSSL_INTERNAL_CHECK_SIZE_OVERFLOW_H */
