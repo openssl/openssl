@@ -2406,9 +2406,8 @@ int speed_main(int argc, char **argv)
                 sigs_doit[sigs_algs_len] = 1;
                 sigs_algname[sigs_algs_len++] = OPENSSL_strdup(rsa_choices[i].name);
             }
-        }
 #ifndef OPENSSL_NO_DSA
-        else if (strcmp(sig_name, "DSA") == 0) {
+        } else if (strcmp(sig_name, "DSA") == 0) {
             if (sigs_algs_len + DSA_NUM >= MAX_SIG_NUM) {
                 BIO_printf(bio_err,
                            "Too many signatures registered. Change MAX_SIG_NUM.\n");
@@ -2418,9 +2417,8 @@ int speed_main(int argc, char **argv)
                 sigs_doit[sigs_algs_len] = 1;
                 sigs_algname[sigs_algs_len++] = OPENSSL_strdup(dsa_choices[i].name);
             }
-        }
 #endif /* OPENSSL_NO_DSA */
-        else {
+        } else {
             if (sigs_algs_len + 1 >= MAX_SIG_NUM) {
                 BIO_printf(bio_err,
                            "Too many signatures registered. Change MAX_SIG_NUM.\n");
@@ -3637,15 +3635,15 @@ int speed_main(int argc, char **argv)
 #endif /* SKIP_KNOWN_FAILING_ALGS_IN_ADVANCE */
             } else {
                 pkey_print_message("public", "rsa encrypt",
-                                rsa_keys[testnum].bits, seconds.rsa);
+                                   rsa_keys[testnum].bits, seconds.rsa);
                 /* RSA_blinding_on(rsa_key[testnum],NULL); */
                 Time_F(START);
                 count = run_benchmark(async_jobs, RSA_encrypt_loop, loopargs);
                 d = Time_F(STOP);
                 BIO_printf(bio_err,
-                        mr ? "+R3:%ld:%d:%.2f\n"
-                        : "%ld %u bits public RSA encrypt ops in %.2fs\n",
-                        count, rsa_keys[testnum].bits, d);
+                           mr ? "+R3:%ld:%d:%.2f\n"
+                           : "%ld %u bits public RSA encrypt ops in %.2fs\n",
+                           count, rsa_keys[testnum].bits, d);
                 rsa_results[testnum][2] = (double)count / d;
                 op_count = count;
             }
@@ -3664,20 +3662,20 @@ int speed_main(int argc, char **argv)
             }
             if (!st) {
                 BIO_printf(bio_err,
-                        "RSA decrypt setup failure.  No RSA decrypt will be done.\n");
+                           "RSA decrypt setup failure.  No RSA decrypt will be done.\n");
                 dofail();
                 op_count = 1;
             } else {
                 pkey_print_message("private", "rsa decrypt",
-                                rsa_keys[testnum].bits, seconds.rsa);
+                                   rsa_keys[testnum].bits, seconds.rsa);
                 /* RSA_blinding_on(rsa_key[testnum],NULL); */
                 Time_F(START);
                 count = run_benchmark(async_jobs, RSA_decrypt_loop, loopargs);
                 d = Time_F(STOP);
                 BIO_printf(bio_err,
-                        mr ? "+R4:%ld:%d:%.2f\n"
-                        : "%ld %u bits private RSA decrypt ops in %.2fs\n",
-                        count, rsa_keys[testnum].bits, d);
+                           mr ? "+R4:%ld:%d:%.2f\n"
+                           : "%ld %u bits private RSA decrypt ops in %.2fs\n",
+                           count, rsa_keys[testnum].bits, d);
                 rsa_results[testnum][3] = (double)count / d;
                 op_count = count;
             }
@@ -4977,28 +4975,29 @@ int speed_main(int argc, char **argv)
             }
             if (mr)
                 printf("+F2:%u:%u:%f:%f\n",
-                    k, rsa_keys[k].bits, rsa_results[k][0], rsa_results[k][1]);
+                       k, rsa_keys[k].bits, rsa_results[k][0], rsa_results[k][1]);
             else
                 printf("rsa %5u bits %8.6fs %8.6fs %8.1f %8.1f\n",
-                    rsa_keys[k].bits, 1.0 / rsa_results[k][0], 1.0 / rsa_results[k][1],
-                    rsa_results[k][0], rsa_results[k][1]);
+                       rsa_keys[k].bits, 1.0 / rsa_results[k][0], 1.0 / rsa_results[k][1],
+                       rsa_results[k][0], rsa_results[k][1]);
         } else {
             /* !rsa_no_enc_dec */
             if (testnum && !mr) {
-                printf("%19ssign    verify    encrypt   decrypt   sign/s verify/s  encr./s  decr./s\n", " ");
+                printf("%19ssign    verify    encrypt   decrypt   "
+                       "sign/s verify/s  encr./s  decr./s\n", " ");
                 testnum = 0;
             }
             if (mr)
                 printf("+F2:%u:%u:%f:%f:%f:%f\n",
-                    k, rsa_keys[k].bits, rsa_results[k][0], rsa_results[k][1],
-                    rsa_results[k][2], rsa_results[k][3]);
+                       k, rsa_keys[k].bits, rsa_results[k][0], rsa_results[k][1],
+                       rsa_results[k][2], rsa_results[k][3]);
             else
                 printf("rsa %5u bits %8.6fs %8.6fs %8.6fs %8.6fs %8.1f %8.1f %8.1f %8.1f\n",
-                    rsa_keys[k].bits, 1.0 / rsa_results[k][0],
-                    1.0 / rsa_results[k][1], 1.0 / rsa_results[k][2],
-                    1.0 / rsa_results[k][3],
-                    rsa_results[k][0], rsa_results[k][1],
-                    rsa_results[k][2], rsa_results[k][3]);
+                       rsa_keys[k].bits, 1.0 / rsa_results[k][0],
+                       1.0 / rsa_results[k][1], 1.0 / rsa_results[k][2],
+                       1.0 / rsa_results[k][3],
+                       rsa_results[k][0], rsa_results[k][1],
+                       rsa_results[k][2], rsa_results[k][3]);
         }
     }
 
