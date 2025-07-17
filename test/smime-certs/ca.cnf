@@ -58,6 +58,14 @@ keyUsage = critical, digitalSignature
 basicConstraints = CA:FALSE
 keyUsage = critical, keyAgreement
 
+[ kem_cert ]
+
+# These extensions are added when 'ca' signs a request for an end-entity
+# KEM certificate, for which only key encipherment makes sense
+
+basicConstraints = CA:FALSE
+keyUsage = critical, keyEncipherment
+
 [ codesign_cert ]
 
 # These extensions are added when 'ca' signs a request for a code-signing

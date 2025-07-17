@@ -70,6 +70,7 @@ CMS_ContentInfo *CMS_ContentInfo_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 # define CMS_RECIPINFO_KEK               2
 # define CMS_RECIPINFO_PASS              3
 # define CMS_RECIPINFO_OTHER             4
+# define CMS_RECIPINFO_KEM               5
 
 /* S/MIME related flags */
 
@@ -400,6 +401,14 @@ int CMS_RecipientInfo_kari_decrypt(CMS_ContentInfo *cms,
 
 int CMS_SharedInfo_encode(unsigned char **pder, X509_ALGOR *kekalg,
                           ASN1_OCTET_STRING *ukm, int keylen);
+
+int CMS_RecipientInfo_kemri_cert_cmp(CMS_RecipientInfo *ri, X509 *cert);
+int CMS_RecipientInfo_kemri_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pk);
+EVP_CIPHER_CTX *CMS_RecipientInfo_kemri_get0_ctx(CMS_RecipientInfo *ri);
+X509_ALGOR *CMS_RecipientInfo_kemri_get0_kdf_alg(CMS_RecipientInfo *ri);
+int CMS_RecipientInfo_kemri_set_ukm(CMS_RecipientInfo *ri,
+                                    const unsigned char *ukm,
+                                    int ukmLength);
 
 /* Backward compatibility for spelling errors. */
 # define CMS_R_UNKNOWN_DIGEST_ALGORITM CMS_R_UNKNOWN_DIGEST_ALGORITHM
