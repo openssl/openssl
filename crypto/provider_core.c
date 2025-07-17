@@ -371,8 +371,8 @@ int ossl_provider_info_add_to_store(OSSL_LIB_CTX *libctx,
     if (!CRYPTO_THREAD_write_lock(store->lock))
         return 0;
     if (store->provinfosz == 0) {
-        store->provinfo = OPENSSL_zalloc(sizeof(*store->provinfo)
-                                         * BUILTINS_BLOCK_SIZE);
+        store->provinfo = OPENSSL_calloc(BUILTINS_BLOCK_SIZE,
+                                         sizeof(*store->provinfo));
         if (store->provinfo == NULL)
             goto err;
         store->provinfosz = BUILTINS_BLOCK_SIZE;
@@ -380,8 +380,8 @@ int ossl_provider_info_add_to_store(OSSL_LIB_CTX *libctx,
         OSSL_PROVIDER_INFO *tmpbuiltins;
         size_t newsz = store->provinfosz + BUILTINS_BLOCK_SIZE;
 
-        tmpbuiltins = OPENSSL_realloc(store->provinfo,
-                                      sizeof(*store->provinfo) * newsz);
+        tmpbuiltins = OPENSSL_realloc_array(store->provinfo,
+                                            newsz, sizeof(*store->provinfo));
         if (tmpbuiltins == NULL)
             goto err;
         store->provinfo = tmpbuiltins;
@@ -1119,7 +1119,7 @@ static int provider_init(OSSL_PROVIDER *prov)
 
         /* Allocate one extra item for the "library" name */
         prov->error_strings =
-            OPENSSL_zalloc(sizeof(ERR_STRING_DATA) * (cnt + 1));
+            OPENSSL_calloc(cnt + 1, sizeof(ERR_STRING_DATA));
         if (prov->error_strings == NULL)
             goto end;
 

@@ -188,7 +188,7 @@ OSSL_PARAM *OSSL_PARAM_merge(const OSSL_PARAM *p1, const OSSL_PARAM *p2)
     qsort(list2, list2_sz, sizeof(OSSL_PARAM *), compare_params);
 
    /* Allocate enough space to store the merged parameters */
-    params = OPENSSL_zalloc((list1_sz + list2_sz + 1) * sizeof(*p1));
+    params = OPENSSL_calloc(list1_sz + list2_sz + 1, sizeof(*p1));
     if (params == NULL)
         return NULL;
     dst = params;
