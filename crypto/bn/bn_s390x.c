@@ -31,7 +31,7 @@ static int s390x_mod_exp_hw(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     if (OPENSSL_s390xcex == -1 || OPENSSL_s390xcex_nodev)
         return 0;
     size = BN_num_bytes(m);
-    buffer = OPENSSL_zalloc(4 * size);
+    buffer = OPENSSL_calloc(size, 4);
     if (buffer == NULL)
         return 0;
     me.inputdata = buffer;

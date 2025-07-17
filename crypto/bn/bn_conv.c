@@ -63,7 +63,7 @@ char *BN_bn2dec(const BIGNUM *a)
     num = (i / 10 + i / 1000 + 1) + 1;
     tbytes = num + 3;   /* negative and terminator and one spare? */
     bn_data_num = num / BN_DEC_NUM + 1;
-    bn_data = OPENSSL_malloc(bn_data_num * sizeof(BN_ULONG));
+    bn_data = OPENSSL_malloc_array(bn_data_num, sizeof(BN_ULONG));
     buf = OPENSSL_malloc(tbytes);
     if (buf == NULL || bn_data == NULL)
         goto err;
