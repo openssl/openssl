@@ -266,6 +266,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "missing rsa signing cert"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_SIGALGS_EXTENSION),
     "missing sigalgs extension"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_DUAL_SIGALGS_EXTENSION),
+    "missing dual sigalgs extension"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_SIGNING_CERT),
     "missing signing cert"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_SRP_PARAM),

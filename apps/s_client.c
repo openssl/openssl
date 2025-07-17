@@ -518,6 +518,7 @@ typedef enum OPTION_choice {
     OPT_ENABLE_DUAL_CERTS,
     OPT_PQCERT,
     OPT_PQKEY,
+    OPT_PQCAFILE,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -604,6 +605,7 @@ const OPTIONS s_client_options[] = {
     {"dual_certs", OPT_ENABLE_DUAL_CERTS, '-', "Alias for -enable_dual_certs"},
     {"pqcert", OPT_PQCERT, '<', "Post-quantum certificate file to use"},
     {"pqkey", OPT_PQKEY, 's', "Post-quantum private key file to use"},
+    {"pqcafile", OPT_PQCAFILE, '<', "PEM format file of PQC CA's"},
     {"name", OPT_PROTOHOST, 's',
      "Hostname to use for \"-starttls lmtp\", \"-starttls smtp\" or \"-starttls xmpp[-server]\""},
 
@@ -870,7 +872,7 @@ int s_client_main(int argc, char **argv)
     char *proxypassarg = NULL, *proxypass = NULL;
     char *connectstr = NULL, *bindstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
-    char *pqcert_file = NULL, *pqkey_file = NULL;
+    char *pqcert_file = NULL, *pqkey_file = NULL, *pqcafile = NULL;
     int enable_dual_certs = 0;
     char *chCApath = NULL, *chCAfile = NULL, *chCAstore = NULL, *host = NULL;
     char *thost = NULL, *tport = NULL;
@@ -1589,6 +1591,9 @@ int s_client_main(int argc, char **argv)
         case OPT_PQKEY:
             pqkey_file = opt_arg();
             break;
+        case OPT_PQCAFILE:
+            pqcafile = opt_arg();
+            break;
         }
     }
 
@@ -1807,12 +1812,23 @@ int s_client_main(int argc, char **argv)
         if (pqkey == NULL)
             goto end;
             
-        /* For now, we'll use the same chain for PQC certificate */
-        if (chain != NULL) {
-            pqchain = sk_X509_dup(chain);
-            if (pqchain == NULL) {
-                BIO_printf(bio_err, "Error duplicating certificate chain for PQC\n");
+        /* Load PQC CA file if specified */
+        if (pqcafile != NULL) {
+            STACK_OF(X509) *pqca_chain = NULL;
+            if (!load_certs(pqcafile, 0, &pqca_chain, NULL, "PQC CA certificates")) {
+                BIO_printf(bio_err, "Error loading PQC CA certificates from %s\n", pqcafile);
                 goto end;
+            }
+            /* Use PQC CA chain for PQC certificate validation */
+            pqchain = pqca_chain;
+        } else {
+            /* For now, we'll use the same chain for PQC certificate */
+            if (chain != NULL) {
+                pqchain = sk_X509_dup(chain);
+                if (pqchain == NULL) {
+                    BIO_printf(bio_err, "Error duplicating certificate chain for PQC\n");
+                    goto end;
+                }
             }
         }
     }
@@ -2095,10 +2111,14 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
         
+        /* For client, we only need to enable dual cert mode to process PQ messages */
+        /* Only set PQ certificates if they are provided */
+        if (pqcert != NULL) {
         if (!SSL_CTX_set_pq_certificate(ctx, pqcert, pqkey, pqchain)) {
             BIO_printf(bio_err, "Error setting post-quantum certificate\n");
             ERR_print_errors(bio_err);
             goto end;
+            }
         }
         
         BIO_printf(bio_err, "Dual certificate mode enabled\n");

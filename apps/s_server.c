@@ -743,6 +743,7 @@ typedef enum OPTION_choice {
     OPT_ENABLE_DUAL_CERTS,
     OPT_PQCERT,
     OPT_PQKEY,
+    OPT_PQCAFILE,
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -1000,6 +1001,7 @@ const OPTIONS s_server_options[] = {
     {"dual_certs", OPT_ENABLE_DUAL_CERTS, '-', "Alias for -enable_dual_certs"},
     {"pqcert", OPT_PQCERT, '<', "Post-quantum certificate file to use"},
     {"pqkey", OPT_PQKEY, '<', "Post-quantum private key file to use"},
+    {"pqcafile", OPT_PQCAFILE, '<', "PEM format file of PQC CA's"},
     OPT_R_OPTIONS,
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
@@ -1101,6 +1103,7 @@ int s_server_main(int argc, char *argv[])
     int enable_dual_certs = 0;
     const char *pqc_cert = NULL;
     const char *pqc_key = NULL;
+    const char *pqc_cafile = NULL;
 
     /* Init of few remaining global variables */
     local_argc = argc;
@@ -1721,6 +1724,9 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_PQKEY:
             pqc_key = opt_arg();
+            break;
+        case OPT_PQCAFILE:
+            pqc_cafile = opt_arg();
             break;
         }
     }
@@ -2362,12 +2368,24 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
         
-        /* Enable dual certificates on the SSL context */
+        /* Enable dual certificates on the SSL context first */
         if (!SSL_CTX_enable_dual_certs(ctx)) {
             BIO_printf(bio_err, "Error enabling dual certificates\n");
             X509_free(pqc_cert_obj);
             EVP_PKEY_free(pqc_key_obj);
             goto end;
+        }
+        
+        /* Load PQC CA file if specified */
+        if (pqc_cafile != NULL) {
+            if (!load_certs(pqc_cafile, 0, &pqc_chain, NULL, "PQC CA certificates")) {
+                BIO_printf(bio_err, "Error loading PQC CA certificates from %s\n", pqc_cafile);
+                X509_free(pqc_cert_obj);
+                EVP_PKEY_free(pqc_key_obj);
+                goto end;
+            }
+            
+            BIO_printf(bio_s_out, "PQC CA certificates loaded for verification (CA list temporarily disabled)\n");
         }
         
         /* Set the PQC certificate and key */
@@ -2380,9 +2398,8 @@ int s_server_main(int argc, char *argv[])
         
         BIO_printf(bio_s_out, "Dual certificates enabled with PQC support\n");
         
-        /* Clean up the loaded objects as they are now owned by the SSL context */
-        X509_free(pqc_cert_obj);
-        EVP_PKEY_free(pqc_key_obj);
+        /* Note: The SSL context now owns references to these objects */
+        /* We don't free them here as they are managed by the SSL context */
     }
 
     if (rev)

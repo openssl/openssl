@@ -1117,6 +1117,16 @@ int SSL_SESSION_has_dual_certs(SSL_SESSION *s)
     return s->dual_certs_enabled;
 }
 
+int SSL_get_dual_certs_enabled(const SSL *s)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    
+    if (sc == NULL || sc->session == NULL)
+        return 0;
+    
+    return sc->session->dual_certs_enabled;
+}
+
 int SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,
                                 unsigned int sid_ctx_len)
 {

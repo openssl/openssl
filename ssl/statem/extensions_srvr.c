@@ -2135,3 +2135,118 @@ int tls_parse_ctos_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
     SSLfatal(sc, SSL_AD_UNSUPPORTED_CERTIFICATE, SSL_R_BAD_EXTENSION);
     return 0;
 }
+
+/* Parse the client's dual signature algorithms extension packet */
+int tls_parse_stoc_dual_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
+                                 unsigned int context,
+                                 X509 *x, size_t chainidx)
+{
+    PACKET classical_sig_algs, pq_sig_algs;
+    size_t classical_sig_algs_len, pq_sig_algs_len;
+    
+    /* Parse the classical signature algorithms */
+    printf("[DUAL_EXT_PARSE_SERVER] Parsing classical signature algorithms\n");
+    if (!PACKET_get_length_prefixed_2(pkt, &classical_sig_algs)) {
+        printf("[DUAL_EXT_PARSE_SERVER] ERROR: Failed to parse classical signature algorithms\n");
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    
+    /* Parse the post-quantum signature algorithms */
+    printf("[DUAL_EXT_PARSE_SERVER] Parsing post-quantum signature algorithms\n");
+    if (!PACKET_get_length_prefixed_2(pkt, &pq_sig_algs)) {
+        printf("[DUAL_EXT_PARSE_SERVER] ERROR: Failed to parse post-quantum signature algorithms\n");
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    
+    /* Check that we have consumed all data */
+    if (PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    
+    /* Store the classical signature algorithms */
+    classical_sig_algs_len = PACKET_remaining(&classical_sig_algs);
+    if (classical_sig_algs_len == 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_LENGTH);
+        return 0;
+    }
+    
+    if (classical_sig_algs_len % 2 != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_LENGTH);
+        return 0;
+    }
+    
+    size_t num_classical_algs = classical_sig_algs_len / 2;
+    s->s3.tmp.peer_dual_sigalgslen = 0;
+    OPENSSL_free(s->s3.tmp.peer_dual_sigalgs);
+    s->s3.tmp.peer_dual_sigalgs = OPENSSL_malloc(num_classical_algs * sizeof(uint16_t));
+    if (s->s3.tmp.peer_dual_sigalgs == NULL) {
+        s->s3.tmp.peer_dual_sigalgslen = 0;
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    
+    /* Read each 16-bit algorithm value */
+    for (size_t i = 0; i < num_classical_algs; i++) {
+        unsigned int alg;
+        if (!PACKET_get_net_2(&classical_sig_algs, &alg)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+        s->s3.tmp.peer_dual_sigalgs[i] = (uint16_t)alg;
+    }
+    s->s3.tmp.peer_dual_sigalgslen = num_classical_algs * sizeof(uint16_t);
+    
+    printf("[DUAL_EXT_PARSE_SERVER] Classical sig algs: ");
+    for (size_t i = 0; i < num_classical_algs; i++) {
+        printf("0x%04x ", s->s3.tmp.peer_dual_sigalgs[i]);
+    }
+    printf("\n");
+    
+    /* Store the post-quantum signature algorithms */
+    pq_sig_algs_len = PACKET_remaining(&pq_sig_algs);
+    if (pq_sig_algs_len == 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_LENGTH);
+        return 0;
+    }
+    
+    if (pq_sig_algs_len % 2 != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_LENGTH);
+        return 0;
+    }
+    
+    size_t num_pq_algs = pq_sig_algs_len / 2;
+    s->s3.tmp.peer_dual_pq_sigalgslen = 0;
+    OPENSSL_free(s->s3.tmp.peer_dual_pq_sigalgs);
+    s->s3.tmp.peer_dual_pq_sigalgs = OPENSSL_malloc(num_pq_algs * sizeof(uint16_t));
+    if (s->s3.tmp.peer_dual_pq_sigalgs == NULL) {
+        s->s3.tmp.peer_dual_pq_sigalgslen = 0;
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    
+    /* Read each 16-bit algorithm value */
+    for (size_t i = 0; i < num_pq_algs; i++) {
+        unsigned int alg;
+        if (!PACKET_get_net_2(&pq_sig_algs, &alg)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+        s->s3.tmp.peer_dual_pq_sigalgs[i] = (uint16_t)alg;
+    }
+    s->s3.tmp.peer_dual_pq_sigalgslen = num_pq_algs * sizeof(uint16_t);
+    
+    printf("[DUAL_EXT_PARSE_SERVER] PQ sig algs: ");
+    for (size_t i = 0; i < num_pq_algs; i++) {
+        printf("0x%04x ", s->s3.tmp.peer_dual_pq_sigalgs[i]);
+    }
+    printf("\n");
+    
+    printf("[DUAL_EXT_PARSE_SERVER] Received dual signature algorithms from client:\n");
+    printf("[DUAL_EXT_PARSE_SERVER]    Classical algorithms: %zu\n", num_classical_algs);
+    printf("[DUAL_EXT_PARSE_SERVER]    PQ algorithms: %zu\n", num_pq_algs);
+    
+    return 1;
+}

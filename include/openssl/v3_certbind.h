@@ -51,34 +51,34 @@ typedef struct RELATED_CERTIFICATE_st {
 /* Function declarations */
 
 /* Add relatedCertRequest attribute to CSR */
-int add_related_cert_request_to_csr(X509_REQ *req, EVP_PKEY *pkey, X509 *related_cert, 
+OPENSSL_EXPORT int add_related_cert_request_to_csr(X509_REQ *req, EVP_PKEY *pkey, X509 *related_cert, 
                                    const char *uri, const EVP_MD *hash_alg);
 
 /* Add RelatedCertificate extension to X.509 certificate */
-int add_related_certificate_extension(X509 *cert, X509 *related_cert, const EVP_MD *hash_alg, const char *uri);
+OPENSSL_EXPORT int add_related_certificate_extension(X509 *cert, X509 *related_cert, const EVP_MD *hash_alg, const char *uri);
 
 
 
 /* Verify RelatedCertificate extension */
-int verify_related_certificate_extension(X509 *cert, X509 *related_cert);
+OPENSSL_EXPORT int verify_related_certificate_extension(X509 *cert, X509 *related_cert);
 
 /* Extract RelatedCertificate extension from certificate */
-RELATED_CERTIFICATE *get_related_certificate_extension(X509 *cert);
+OPENSSL_EXPORT RELATED_CERTIFICATE *get_related_certificate_extension(X509 *cert);
 
 /* Verify relatedCertRequest attribute in CSR */
-int verify_related_cert_request(X509_REQ *req);
+OPENSSL_EXPORT int verify_related_cert_request(X509_REQ *req);
 
 /* Print RelatedCertificate extension */
-int print_related_certificate_extension(BIO *bio, X509 *cert, int indent);
+OPENSSL_EXPORT int print_related_certificate_extension(BIO *bio, X509 *cert, int indent);
 
 /* Print relatedCertRequest attribute from CSR */
-int print_related_cert_request(BIO *bio, X509_REQ *req, int indent);
+OPENSSL_EXPORT int print_related_cert_request(BIO *bio, X509_REQ *req, int indent);
 
 /* Extract URI from relatedCertRequest attribute in CSR */
-char *extract_uri_from_related_cert_request(X509_REQ *req);
+OPENSSL_EXPORT char *extract_uri_from_related_cert_request(X509_REQ *req);
 
 /* Initialize RelatedCertificate extension support */
-int v3_certbind_init(void);
+OPENSSL_EXPORT int v3_certbind_init(void);
 
 /* ASN.1 function declarations */
 DECLARE_ASN1_FUNCTIONS(CERT_ID)

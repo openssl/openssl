@@ -2160,3 +2160,189 @@ int tls_parse_stoc_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
     sc->ext.server_cert_type = type;
     return 1;
 }
+
+int tls_parse_ctos_dual_sig_algs(SSL_CONNECTION *s, PACKET *pkt, unsigned int context, X509 *x, size_t chainidx)
+{
+    PACKET classical_sig_algs, pq_sig_algs;
+    size_t classical_sig_algs_len, pq_sig_algs_len;
+    
+    printf("[DUAL_EXT_PARSE] Parsing dual signature algorithms extension\n");
+    printf("[DUAL_EXT_PARSE] Remaining bytes: %zu\n", PACKET_remaining(pkt));
+    printf("[DUAL_EXT_PARSE] Extension type: 0x%04x\n", TLSEXT_TYPE_dual_signature_algorithms);
+    
+    /* Parse the classical signature algorithms */
+    if (!PACKET_get_length_prefixed_2(pkt, &classical_sig_algs)) {
+        printf("[DUAL_EXT_PARSE] ERROR: Failed to parse classical signature algorithms\n");
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    
+    /* Parse the post-quantum signature algorithms */
+    if (!PACKET_get_length_prefixed_2(pkt, &pq_sig_algs)) {
+        printf("[DUAL_EXT_PARSE] ERROR: Failed to parse post-quantum signature algorithms\n");
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    
+    /* Store the classical signature algorithms */
+    classical_sig_algs_len = PACKET_remaining(&classical_sig_algs);
+    printf("[DUAL_EXT_PARSE] Classical sig algs length: %zu\n", classical_sig_algs_len);
+    if (classical_sig_algs_len > 0) {
+        size_t num_algs = classical_sig_algs_len / 2;
+        s->s3.tmp.peer_dual_sigalgs = OPENSSL_malloc(num_algs * sizeof(uint16_t));
+        if (s->s3.tmp.peer_dual_sigalgs == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        
+        /* Read each 16-bit algorithm value */
+        for (size_t i = 0; i < num_algs; i++) {
+            unsigned int alg;
+            if (!PACKET_get_net_2(&classical_sig_algs, &alg)) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+                return 0;
+            }
+            s->s3.tmp.peer_dual_sigalgs[i] = (uint16_t)alg;
+        }
+        s->s3.tmp.peer_dual_sigalgslen = num_algs * sizeof(uint16_t);
+        printf("[DUAL_EXT_PARSE] Classical sig algs: ");
+        for (size_t i = 0; i < num_algs; i++) {
+            printf("0x%04x ", s->s3.tmp.peer_dual_sigalgs[i]);
+        }
+        printf("\n");
+    }
+    
+    /* Store the post-quantum signature algorithms */
+    pq_sig_algs_len = PACKET_remaining(&pq_sig_algs);
+    printf("[DUAL_EXT_PARSE] PQ sig algs length: %zu\n", pq_sig_algs_len);
+    if (pq_sig_algs_len > 0) {
+        size_t num_algs = pq_sig_algs_len / 2;
+        s->s3.tmp.peer_dual_pq_sigalgs = OPENSSL_malloc(num_algs * sizeof(uint16_t));
+        if (s->s3.tmp.peer_dual_pq_sigalgs == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        
+        /* Read each 16-bit algorithm value */
+        for (size_t i = 0; i < num_algs; i++) {
+            unsigned int alg;
+            if (!PACKET_get_net_2(&pq_sig_algs, &alg)) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+                return 0;
+            }
+            s->s3.tmp.peer_dual_pq_sigalgs[i] = (uint16_t)alg;
+        }
+        s->s3.tmp.peer_dual_pq_sigalgslen = num_algs * sizeof(uint16_t);
+        printf("[DUAL_EXT_PARSE] PQ sig algs: ");
+        for (size_t i = 0; i < num_algs; i++) {
+            printf("0x%04x ", s->s3.tmp.peer_dual_pq_sigalgs[i]);
+        }
+        printf("\n");
+    }
+    
+    /* Validate algorithm compatibility */
+    int valid = validate_dual_algorithm_compatibility(s);
+    printf("[DUAL_EXT_PARSE] validate_dual_algorithm_compatibility returned: %d\n", valid);
+    if (!valid) {
+        printf("[DUAL_EXT_PARSE] ERROR: Algorithm compatibility validation failed\n");
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    
+    if (PACKET_remaining(pkt) != 0) {
+        printf("[DUAL_EXT_PARSE] ERROR: Extra bytes remaining: %zu\n", PACKET_remaining(pkt));
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    
+    printf("[DUAL_EXT_PARSE] Successfully parsed dual signature algorithms extension\n");
+    return 1;
+}
+
+EXT_RETURN tls_construct_ctos_dual_sig_algs(SSL_CONNECTION *s, WPACKET *pkt, unsigned int context, X509 *x, size_t chainidx)
+{
+    const uint16_t *classical_sigalgs = NULL;
+    const uint16_t *pq_sigalgs = NULL;
+    size_t classical_sigalgslen = 0, pq_sigalgslen = 0;
+    
+    printf("[DUAL_EXT_CONSTRUCT] Constructing dual signature algorithms extension\n");
+    
+    /* Get the classical signature algorithms */
+    if (!get_dual_classical_sigalgs(s, &classical_sigalgs, &classical_sigalgslen)) {
+        printf("[DUAL_EXT_CONSTRUCT] Failed to get classical signature algorithms\n");
+        return EXT_RETURN_NOT_SENT;
+    }
+    
+    /* Get the post-quantum signature algorithms */
+    if (!get_dual_pq_sigalgs(s, &pq_sigalgs, &pq_sigalgslen)) {
+        printf("[DUAL_EXT_CONSTRUCT] Failed to get PQ signature algorithms\n");
+        return EXT_RETURN_NOT_SENT;
+    }
+    
+    printf("[DUAL_EXT_CONSTRUCT] Classical sig algs count: %zu\n", classical_sigalgslen);
+    printf("[DUAL_EXT_CONSTRUCT] PQ sig algs count: %zu\n", pq_sigalgslen);
+    
+    /* Don't send if we have no algorithms */
+    if (classical_sigalgslen == 0 && pq_sigalgslen == 0) {
+        printf("[DUAL_EXT_CONSTRUCT] No algorithms to send\n");
+        return EXT_RETURN_NOT_SENT;
+    }
+    
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_dual_signature_algorithms)
+        || !WPACKET_start_sub_packet_u16(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    
+    /* Write classical signature algorithms */
+    if (!WPACKET_start_sub_packet_u16(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    
+    printf("[DUAL_EXT_CONSTRUCT] Writing classical sig algs: ");
+    for (size_t i = 0; i < classical_sigalgslen; i++) {
+        printf("0x%04x ", classical_sigalgs[i]);
+        if (!WPACKET_put_bytes_u16(pkt, classical_sigalgs[i])) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+    }
+    printf("\n");
+    
+    if (!WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    
+    /* Write post-quantum signature algorithms */
+    if (!WPACKET_start_sub_packet_u16(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    
+    printf("[DUAL_EXT_CONSTRUCT] Writing PQ sig algs: ");
+    for (size_t i = 0; i < pq_sigalgslen; i++) {
+        printf("0x%04x ", pq_sigalgs[i]);
+        if (!WPACKET_put_bytes_u16(pkt, pq_sigalgs[i])) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+    }
+    printf("\n");
+    
+    if (!WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    
+    if (!WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    
+    printf("[DUAL_EXT_CONSTRUCT] Successfully constructed dual signature algorithms extension\n");
+    return EXT_RETURN_SENT;
+}
+
+

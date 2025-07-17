@@ -97,4 +97,23 @@ int SSL_CTX_config(SSL_CTX *ctx, const char *name)
 void ssl_ctx_system_config(SSL_CTX *ctx)
 {
     ssl_do_config(NULL, ctx, NULL, 1);
+    
+    /* Check for PQC CA file configuration */
+    const char *pqcafile = getenv("OPENSSL_PQCAFILE");
+    if (pqcafile != NULL) {
+        /* TODO: Implement PQC CA file loading when the function is available */
+        /* SSL_CTX_load_pq_verify_file(ctx, pqcafile); */
+    }
+
+    /* Register RelatedCertificate extension for TLS handshake */
+    SSL_CTX_add_custom_ext(
+        ctx,
+        TLSEXT_TYPE_related_certificate,
+        SSL_EXT_TLS1_3_CERTIFICATE, 
+        add_related_certificate_cb,  
+        NULL,                        
+        NULL,                        
+        parse_related_certificate_cb,
+        NULL                        
+    );
 }

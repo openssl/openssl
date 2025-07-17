@@ -1138,18 +1138,6 @@ int x509_main(int argc, char **argv)
     if (!check_cert_attributes(out, x, checkhost, checkemail, checkip, 1))
         goto err;
 
-    // Verify RelatedCertificate extension if present
-    // Temporarily disabled to allow extension addition
-    /*
-    if (X509_get_ext_by_NID(x, OBJ_txt2nid("1.3.6.1.5.5.7.1.36"), -1) >= 0) {
-        if (!verify_related_certificate_extension(x, NULL)) {
-            BIO_printf(bio_err, "RelatedCertificate extension verification failed\n");
-            goto err;
-        } else {
-            BIO_printf(bio_out, "RelatedCertificate extension verification OK\n");
-        }
-    }
-    */
 
     if (noout || nocert) {
         ret = 0;

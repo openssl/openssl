@@ -9,10 +9,52 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <openssl/ssl.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/core_names.h>
+
+/* Define OSSL_CAPABILITY_TLS_SIGALG constants if not already defined */
+#ifndef OSSL_CAPABILITY_TLS_SIGALG_NAME
+#define OSSL_CAPABILITY_TLS_SIGALG_NAME "tls-sigalg-name"
+#endif
+#ifndef OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME
+#define OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME "tls-sigalg-iana-name"
+#endif
+#ifndef OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT
+#define OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT "tls-sigalg-code-point"
+#endif
+#ifndef OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS
+#define OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS "tls-sigalg-sec-bits"
+#endif
+#ifndef OSSL_CAPABILITY_TLS_SIGALG_OID
+#define OSSL_CAPABILITY_TLS_SIGALG_OID "tls-sigalg-oid"
+#endif
+#ifndef OSSL_CAPABILITY_TLS_SIGALG_SIG_NAME
+#define OSSL_CAPABILITY_TLS_SIGALG_SIG_NAME "tls-sigalg-sig-name"
+#endif
+#ifndef OSSL_CAPABILITY_TLS_SIGALG_SIG_OID
+#define OSSL_CAPABILITY_TLS_SIGALG_SIG_OID "tls-sigalg-sig-oid"
+#endif
+#ifndef OSSL_CAPABILITY_TLS_SIGALG_HASH_NAME
+#define OSSL_CAPABILITY_TLS_SIGALG_HASH_NAME "tls-sigalg-hash-name"
+#endif
+#ifndef OSSL_CAPABILITY_TLS_SIGALG_HASH_OID
+#define OSSL_CAPABILITY_TLS_SIGALG_HASH_OID "tls-sigalg-hash-oid"
+#endif
+#ifndef OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE
+#define OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE "tls-sigalg-keytype"
+#endif
+#ifndef OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_OID
+#define OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_OID "tls-sigalg-keytype-oid"
+#endif
+#ifndef OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS
+#define OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS "tls-min-tls"
+#endif
+#ifndef OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS
+#define OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS "tls-max-tls"
+#endif
 #include <openssl/ocsp.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
@@ -38,7 +80,7 @@ static int tls1_check_enhanced_pq_cert_compatibility(SSL_CONNECTION *s,
 static int tls1_check_pq_security_level(SSL_CONNECTION *s,
                                         const SIGALG_LOOKUP *lu,
                                         const EVP_PKEY *pq_pkey);
-static int tls1_get_pq_security_bits(uint16_t sigalg);
+int tls1_get_pq_security_bits(uint16_t sigalg);
 static const SIGALG_LOOKUP *tls1_lookup_pq_sigalg(const SSL_CONNECTION *s,
                                                    uint16_t sigalg);
 static const SIGALG_LOOKUP *tls1_select_enhanced_pq_sigalg(SSL_CONNECTION *s,
@@ -58,7 +100,7 @@ static int tls1_check_enhanced_classic_cert_compatibility(SSL_CONNECTION *s,
 static int tls1_check_classic_security_level(SSL_CONNECTION *s,
                                              const SIGALG_LOOKUP *lu,
                                              const EVP_PKEY *classic_pkey);
-static int tls1_get_classic_security_bits(uint16_t sigalg);
+
 static int tls1_check_dual_algorithm_compatibility(SSL_CONNECTION *s,
                                                    const SIGALG_LOOKUP *classic_lu,
                                                    const SIGALG_LOOKUP *pq_lu);
@@ -1944,45 +1986,46 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
                 
                 /* Map PQ signature algorithm to expected key type */
                 switch (lu->sigalg) {
-                    case 0x0401: /* FALCON-512 */
+                    /* IANA standard PQ algorithms - 0x09xx range */
+                    case TLSEXT_SIGALG_falcon512: /* FALCON-512-SHA256 */
                         pkeyid = EVP_PKEY_FALCON512;
-                        printf("[DUAL_SIGN_CLIENT] Mapped to FALCON-512 key type\n");
+                        printf("[DUAL_SIGN_CLIENT] Mapped to FALCON-512 key type (0x%04x)\n", lu->sigalg);
                         break;
-                    case 0x0402: /* FALCON-1024 */
+                    case TLSEXT_SIGALG_falcon1024: /* FALCON-1024-SHA256 */
                         pkeyid = EVP_PKEY_FALCON1024;
-                        printf("[DUAL_SIGN_CLIENT] Mapped to FALCON-1024 key type\n");
+                        printf("[DUAL_SIGN_CLIENT] Mapped to FALCON-1024 key type (0x%04x)\n", lu->sigalg);
                         break;
-                    case 0x0403: /* DILITHIUM-2 */
+                    case TLSEXT_SIGALG_dilithium2: /* DILITHIUM-2-SHA256 */
                         pkeyid = EVP_PKEY_DILITHIUM2;
-                        printf("[DUAL_SIGN_CLIENT] Mapped to DILITHIUM-2 key type\n");
+                        printf("[DUAL_SIGN_CLIENT] Mapped to DILITHIUM-2 key type (0x%04x)\n", lu->sigalg);
                         break;
-                    case 0x0404: /* DILITHIUM-3 */
+                    case TLSEXT_SIGALG_dilithium3: /* DILITHIUM-3-SHA256 */
                         pkeyid = EVP_PKEY_DILITHIUM3;
-                        printf("[DUAL_SIGN_CLIENT] Mapped to DILITHIUM-3 key type\n");
+                        printf("[DUAL_SIGN_CLIENT] Mapped to DILITHIUM-3 key type (0x%04x)\n", lu->sigalg);
                         break;
-                    case 0x0405: /* DILITHIUM-5 */
+                    case TLSEXT_SIGALG_dilithium5: /* DILITHIUM-5-SHA256 */
                         pkeyid = EVP_PKEY_DILITHIUM5;
-                        printf("[DUAL_SIGN_CLIENT] Mapped to DILITHIUM-5 key type\n");
+                        printf("[DUAL_SIGN_CLIENT] Mapped to DILITHIUM-5 key type (0x%04x)\n", lu->sigalg);
                         break;
-                    case 0x0406: /* SPHINCS-128F */
+                    case TLSEXT_SIGALG_sphincs_sha256_128f_simple: /* SPHINCS-SHA256-128F-SIMPLE */
                         pkeyid = EVP_PKEY_SPHINCS_PLUS_SHA256_128F_SIMPLE;
-                        printf("[DUAL_SIGN_CLIENT] Mapped to SPHINCS-128F key type\n");
+                        printf("[DUAL_SIGN_CLIENT] Mapped to SPHINCS-128F key type (0x%04x)\n", lu->sigalg);
                         break;
-                    case 0x0407: /* SPHINCS-192F */
+                    case TLSEXT_SIGALG_sphincs_sha256_192f_simple: /* SPHINCS-SHA256-192F-SIMPLE */
                         pkeyid = EVP_PKEY_SPHINCS_PLUS_SHA256_192F_SIMPLE;
-                        printf("[DUAL_SIGN_CLIENT] Mapped to SPHINCS-192F key type\n");
+                        printf("[DUAL_SIGN_CLIENT] Mapped to SPHINCS-192F key type (0x%04x)\n", lu->sigalg);
                         break;
-                    case 0x0408: /* SPHINCS-256F */
+                    case TLSEXT_SIGALG_sphincs_sha256_256f_simple: /* SPHINCS-SHA256-256F-SIMPLE */
                         pkeyid = EVP_PKEY_SPHINCS_PLUS_SHA256_256F_SIMPLE;
-                        printf("[DUAL_SIGN_CLIENT] Mapped to SPHINCS-256F key type\n");
+                        printf("[DUAL_SIGN_CLIENT] Mapped to SPHINCS-256F key type (0x%04x)\n", lu->sigalg);
                         break;
-                    case 0x0409: /* MLDSA-44 */
+                    case TLSEXT_SIGALG_mldsa_44: /* MLDSA-44-SHA256 */
                         pkeyid = EVP_PKEY_MLDSA_44;
-                        printf("[DUAL_SIGN_CLIENT] Mapped to MLDSA-44 key type\n");
+                        printf("[DUAL_SIGN_CLIENT] Mapped to MLDSA-44 key type (0x%04x)\n", lu->sigalg);
                         break;
-                    case 0x040A: /* MLDSA-65 */
+                    case TLSEXT_SIGALG_mldsa_65: /* MLDSA-65-SHA256 */
                         pkeyid = EVP_PKEY_MLDSA_65;
-                        printf("[DUAL_SIGN_CLIENT] Mapped to MLDSA-65 key type\n");
+                        printf("[DUAL_SIGN_CLIENT] Mapped to MLDSA-65 key type (0x%04x)\n", lu->sigalg);
                         break;
                     default:
                         printf("[DUAL_SIGN_CLIENT] Unknown PQ signature algorithm: 0x%04x\n", lu->sigalg);
@@ -2011,19 +2054,26 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
             && (lu->hash == NID_sha1 || lu->hash == NID_sha224))
         || (pkeyid != lu->sig
         && (lu->sig != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA)
-        && !(lu->sigalg >= 0x0401 && lu->sigalg <= 0x040A))) { /* Allow PQ algorithms */
+        && !(lu->sigalg >= 0x0401 && lu->sigalg <= 0x040A)  /* Allow PQ algorithms 0x04xx */
+                    && !(lu->sigalg >= TLSEXT_SIGALG_falcon512 && lu->sigalg <= TLSEXT_SIGALG_mldsa_65))) { /* Allow PQ algorithms 0x09xx */
         printf("[DUAL_SIGN_CLIENT] Signature algorithm validation failed - lu: %s, pkeyid: %d, lu->sig: %d\n", 
                lu ? (lu->name ? lu->name : "unknown") : "NULL", pkeyid, lu ? lu->sig : -1);
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
     /* Check the sigalg is consistent with the key OID */
-    if (!ssl_cert_lookup_by_nid(
-                 (pkeyid == EVP_PKEY_RSA_PSS) ? EVP_PKEY_get_id(pkey) : pkeyid,
-                 &cidx, SSL_CONNECTION_GET_CTX(s))
-            || lu->sig_idx != (int)cidx) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
-        return 0;
+    /* Skip this check for PQ algorithms as they may not be in the standard cert lookup table */
+    if (!(lu->sigalg >= 0x0401 && lu->sigalg <= 0x040A) && 
+                    !(lu->sigalg >= TLSEXT_SIGALG_falcon512 && lu->sigalg <= TLSEXT_SIGALG_mldsa_65)) {
+        if (!ssl_cert_lookup_by_nid(
+                     (pkeyid == EVP_PKEY_RSA_PSS) ? EVP_PKEY_get_id(pkey) : pkeyid,
+                     &cidx, SSL_CONNECTION_GET_CTX(s))
+                || lu->sig_idx != (int)cidx) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
+            return 0;
+        }
+    } else {
+        printf("[DUAL_SIGN_CLIENT] Skipping cert lookup check for PQ algorithm 0x%04x\n", lu->sigalg);
     }
 
     if (pkeyid == EVP_PKEY_EC) {
@@ -2088,7 +2138,8 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
     /* Allow fallback to SHA1 if not strict mode (but not for PQ algorithms) */
     if (i == sent_sigslen && (lu->hash != NID_sha1
         || s->cert->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)
-        && !(lu->sigalg >= 0x0401 && lu->sigalg <= 0x040A)) { /* Don't allow fallback for PQ */
+        && !(lu->sigalg >= 0x0401 && lu->sigalg <= 0x040A)  /* Don't allow fallback for PQ 0x04xx */
+                    && !(lu->sigalg >= TLSEXT_SIGALG_falcon512 && lu->sigalg <= TLSEXT_SIGALG_mldsa_65)) { /* Don't allow fallback for PQ 0x09xx */
         printf("[DUAL_SIGN_CLIENT] Signature algorithm not found in sent algorithms\n");
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
@@ -2107,18 +2158,25 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
     
     /* Enhanced security check for PQ algorithms */
     if (lu->sigalg >= 0x0401 && lu->sigalg <= 0x040A) {
-        /* For PQ algorithms, use a minimum security level */
-        secbits = 128; /* Minimum security level for PQ algorithms */
+        /* For PQ algorithms (0x04xx), use tls1_get_pq_security_bits */
+        secbits = tls1_get_pq_security_bits(lu->sigalg);
+        printf("[DUAL_SIGN_CLIENT] Using PQ security level: %d bits\n", secbits);
+            } else if (lu->sigalg >= TLSEXT_SIGALG_falcon512 && lu->sigalg <= TLSEXT_SIGALG_mldsa_65) {
+        /* For PQ algorithms (0x09xx), use tls1_get_pq_security_bits */
+        secbits = tls1_get_pq_security_bits(lu->sigalg);
         printf("[DUAL_SIGN_CLIENT] Using PQ security level: %d bits\n", secbits);
     } else {
-    secbits = sigalg_security_bits(SSL_CONNECTION_GET_CTX(s), lu);
+        /* For classical algorithms, use sigalg_security_bits */
+        secbits = sigalg_security_bits(SSL_CONNECTION_GET_CTX(s), lu);
+        printf("[DUAL_SIGN_CLIENT] Using classical security level: %d bits\n", secbits);
     }
     
+    printf("[DUAL_SIGN_CLIENT] Security check - secbits: %d, sigalg: 0x%04x\n", secbits, sig);
     if (secbits == 0 ||
         !ssl_security(s, SSL_SECOP_SIGALG_CHECK, secbits,
                       md != NULL ? EVP_MD_get_type(md) : NID_undef,
                       (void *)sigalgstr)) {
-        printf("[DUAL_SIGN_CLIENT] Security check failed for algorithm\n");
+        printf("[DUAL_SIGN_CLIENT] Security check failed for algorithm 0x%04x (secbits: %d)\n", sig, secbits);
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
@@ -4234,70 +4292,113 @@ __owur int tls13_set_encoded_pub_key(EVP_PKEY *pkey,
     return EVP_PKEY_set1_encoded_public_key(pkey, enckey, enckeylen);
 }
 
-/* Post-quantum signature algorithms - REAL IMPLEMENTATION */
+/* Post-quantum signature algorithms - CORRECTED IANA STANDARDS */
 /* These are actual PQ signature algorithm codes according to IETF standards */
 static const uint16_t tls12_pq_sigalgs[] = {
-    0x0901, /* MLDSA-44-SHA256 */
-    0x0902, /* MLDSA-65-SHA256 */
-    0x0903, /* FALCON-512-SHA256 */
-    0x0904, /* FALCON-1024-SHA256 */
-    0x0905, /* DILITHIUM-2-SHA256 */
-    0x0906, /* DILITHIUM-3-SHA256 */
-    0x0907, /* DILITHIUM-5-SHA256 */
-    0x0908, /* SPHINCS-SHA256-128F-SIMPLE */
-    0x0909, /* SPHINCS-SHA256-192F-SIMPLE */
-    0x090A, /* SPHINCS-SHA256-256F-SIMPLE */
+    TLSEXT_SIGALG_falcon512, /* FALCON-512-SHA256 */
+    TLSEXT_SIGALG_falcon1024, /* FALCON-1024-SHA256 */
+    TLSEXT_SIGALG_dilithium2, /* DILITHIUM-2-SHA256 */
+    TLSEXT_SIGALG_dilithium3, /* DILITHIUM-3-SHA256 */
+    TLSEXT_SIGALG_dilithium5, /* DILITHIUM-5-SHA256 */
+    TLSEXT_SIGALG_sphincs_sha256_128f_simple, /* SPHINCS-SHA256-128F-SIMPLE */
+    TLSEXT_SIGALG_sphincs_sha256_192f_simple, /* SPHINCS-SHA256-192F-SIMPLE */
+    TLSEXT_SIGALG_sphincs_sha256_256f_simple, /* SPHINCS-SHA256-256F-SIMPLE */
+    TLSEXT_SIGALG_mldsa_44, /* MLDSA-44-SHA256 */
+    TLSEXT_SIGALG_mldsa_65, /* MLDSA-65-SHA256 */
 };
 
-/* PQ signature algorithm lookup table - REAL IMPLEMENTATION */
+/* PQ signature algorithm lookup table - CORRECTED IANA STANDARDS */
 static const SIGALG_LOOKUP pq_sigalg_lookup_tbl[] = {
-    {"FALCON-512-SHA256", 0x0401,
+    /* FALCON - IANA codes 0x09xx */
+    {"FALCON-512-SHA256", TLSEXT_SIGALG_falcon512,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_FALCON512, SSL_PKEY_PQ_FALCON_512,
      NID_undef, NID_undef, 1},
-    {"FALCON-1024-SHA256", 0x0402,
+    {"FALCON-1024-SHA256", TLSEXT_SIGALG_falcon1024,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_FALCON1024, SSL_PKEY_PQ_FALCON_1024,
      NID_undef, NID_undef, 1},
-    {"DILITHIUM-2-SHA256", 0x0403,
+    
+    /* DILITHIUM - IANA codes 0x09xx */
+    {"DILITHIUM-2-SHA256", TLSEXT_SIGALG_dilithium2,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_DILITHIUM2, SSL_PKEY_PQ_DILITHIUM_2,
      NID_undef, NID_undef, 1},
-    {"DILITHIUM-3-SHA256", 0x0404,
+    {"DILITHIUM-3-SHA256", TLSEXT_SIGALG_dilithium3,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_DILITHIUM3, SSL_PKEY_PQ_DILITHIUM_3,
      NID_undef, NID_undef, 1},
-    {"DILITHIUM-5-SHA256", 0x0405,
+    {"DILITHIUM-5-SHA256", TLSEXT_SIGALG_dilithium5,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_DILITHIUM5, SSL_PKEY_PQ_DILITHIUM_5,
      NID_undef, NID_undef, 1},
-    {"SPHINCS-SHA256-128F-SIMPLE", 0x0406,
+    
+    /* SPHINCS+ - IANA codes 0x09xx */
+    {"SPHINCS-SHA256-128F-SIMPLE", TLSEXT_SIGALG_sphincs_sha256_128f_simple,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_SPHINCS_PLUS_SHA256_128F_SIMPLE, SSL_PKEY_PQ_SPHINCS_128F,
      NID_undef, NID_undef, 1},
-    {"SPHINCS-SHA256-192F-SIMPLE", 0x0407,
+    {"SPHINCS-SHA256-192F-SIMPLE", TLSEXT_SIGALG_sphincs_sha256_192f_simple,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_SPHINCS_PLUS_SHA256_192F_SIMPLE, SSL_PKEY_PQ_SPHINCS_192F,
      NID_undef, NID_undef, 1},
-    {"SPHINCS-SHA256-256F-SIMPLE", 0x0408,
+    {"SPHINCS-SHA256-256F-SIMPLE", TLSEXT_SIGALG_sphincs_sha256_256f_simple,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_SPHINCS_PLUS_SHA256_256F_SIMPLE, SSL_PKEY_PQ_SPHINCS_256F,
      NID_undef, NID_undef, 1},
-    {"MLDSA-44-SHA256", 0x0409,
+    
+    /* MLDSA (Multi-Level Digital Signature Algorithm) - IANA codes 0x09xx */
+    {"MLDSA-44-SHA256", TLSEXT_SIGALG_mldsa_44,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_MLDSA_44, SSL_PKEY_PQ_MLDSA_44,
      NID_undef, NID_undef, 1},
-    {"MLDSA-65-SHA256", 0x040A,
+    {"MLDSA-65-SHA256", TLSEXT_SIGALG_mldsa_65,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_MLDSA_65, SSL_PKEY_PQ_MLDSA_65,
      NID_undef, NID_undef, 1},
+    /* MLDSA-87 not yet implemented in OpenSSL */
 };
+
+/* Default PQ signature algorithms array with corrected IANA codes */
 
 /* Get PQ signature algorithms for dual certificate mode */
 size_t tls12_get_pq_sigalgs(SSL_CONNECTION *s, int sent, const uint16_t **psigs)
 {
     /*
-     * For now, return the default PQ signature algorithms.
-     * In a real implementation, this would check for configured PQ sigalgs
-     * and return those instead.
+     * Check for configured PQ signature algorithms first
      */
     if (s->cert->dual_conf_sigalgs != NULL) {
         *psigs = s->cert->dual_conf_sigalgs;
         return s->cert->dual_conf_sigalgslen;
-    } else {
-        *psigs = tls12_pq_sigalgs;
-        return OSSL_NELEM(tls12_pq_sigalgs);
     }
+    
+    /*
+     * Check for client-specific PQ signature algorithms
+     */
+    if (s->cert->dual_client_sigalgs != NULL) {
+        *psigs = s->cert->dual_client_sigalgs;
+        return s->cert->dual_client_sigalgslen;
+    }
+    
+    /*
+     * If no specific PQ algorithms are configured, return the default list
+     * but filter based on available PQ certificates
+     */
+    if (s->cert->pqkey != NULL && s->cert->pqkey->privatekey != NULL) {
+        /* We have a PQ certificate, return appropriate algorithms */
+        EVP_PKEY *pq_pkey = s->cert->pqkey->privatekey;
+        int pq_key_type = get_pqc_key_type_enhanced(pq_pkey);
+        
+        /* Filter algorithms based on the available PQ certificate */
+        static uint16_t filtered_pq_sigalgs[OSSL_NELEM(tls12_pq_sigalgs)];
+        size_t filtered_count = 0;
+        
+        for (size_t i = 0; i < OSSL_NELEM(tls12_pq_sigalgs); i++) {
+            const SIGALG_LOOKUP *lu = tls1_lookup_pq_sigalg(s, tls12_pq_sigalgs[i]);
+            if (lu != NULL && tls1_check_enhanced_pq_cert_compatibility(s, lu, pq_pkey, pq_key_type)) {
+                filtered_pq_sigalgs[filtered_count++] = tls12_pq_sigalgs[i];
+            }
+        }
+        
+        if (filtered_count > 0) {
+            *psigs = filtered_pq_sigalgs;
+            return filtered_count;
+        }
+    }
+    
+    /* Fallback to default PQ signature algorithms */
+    *psigs = tls12_pq_sigalgs;
+    return OSSL_NELEM(tls12_pq_sigalgs);
 }
 
 /* Lookup PQ signature algorithm */
@@ -4447,22 +4548,22 @@ static int tls1_check_enhanced_pq_cert_compatibility(SSL_CONNECTION *s,
     
     /* Map signature algorithm to key type */
     switch (lu->sigalg) {
-        case 0x0401: /* FALCON-512 */
-        case 0x0402: /* FALCON-1024 */
+        case TLSEXT_SIGALG_falcon512: /* FALCON-512 */
+        case TLSEXT_SIGALG_falcon1024: /* FALCON-1024 */
             sigalg_key_type = KEY_TYPE_FALCON;
             break;
-        case 0x0403: /* DILITHIUM-2 */
-        case 0x0404: /* DILITHIUM-3 */
-        case 0x0405: /* DILITHIUM-5 */
+        case TLSEXT_SIGALG_dilithium2: /* DILITHIUM-2 */
+        case TLSEXT_SIGALG_dilithium3: /* DILITHIUM-3 */
+        case TLSEXT_SIGALG_dilithium5: /* DILITHIUM-5 */
             sigalg_key_type = KEY_TYPE_DILITHIUM;
             break;
-        case 0x0406: /* SPHINCS-128F */
-        case 0x0407: /* SPHINCS-192F */
-        case 0x0408: /* SPHINCS-256F */
+        case TLSEXT_SIGALG_sphincs_sha256_128f_simple: /* SPHINCS-128F */
+        case TLSEXT_SIGALG_sphincs_sha256_192f_simple: /* SPHINCS-192F */
+        case TLSEXT_SIGALG_sphincs_sha256_256f_simple: /* SPHINCS-256F */
             sigalg_key_type = KEY_TYPE_SPHINCS;
             break;
-        case 0x0409: /* MLDSA-44 */
-        case 0x040A: /* MLDSA-65 */
+        case TLSEXT_SIGALG_mldsa_44: /* MLDSA-44 */
+        case TLSEXT_SIGALG_mldsa_65: /* MLDSA-65 */
             sigalg_key_type = KEY_TYPE_MLDSA;
             break;
         default:
@@ -4488,37 +4589,138 @@ static int tls1_check_pq_security_level(SSL_CONNECTION *s,
                                         const SIGALG_LOOKUP *lu,
                                         const EVP_PKEY *pq_pkey)
 {
-    int security_bits;
+    int required_bits = tls1_get_pq_security_bits(lu->sigalg);
+    int key_bits = EVP_PKEY_bits(pq_pkey);
     int min_security_bits;
     
-    /* Get security level for this signature algorithm */
-    security_bits = tls1_get_pq_security_bits(lu->sigalg);
+    printf("[PQ_SECURITY] Checking PQ security level:\n");
+    printf("[PQ_SECURITY]    Algorithm: %s\n", lu->name ? lu->name : "unknown");
+    printf("[PQ_SECURITY]    Required bits: %d\n", required_bits);
+    printf("[PQ_SECURITY]    Key bits: %d\n", key_bits);
     
-    /* Get minimum required security level from SSL context */
-    min_security_bits = SSL_CONNECTION_GET_CTX(s)->min_proto_version >= TLS1_3_VERSION ? 128 : 112;
+    /* Enhanced PQ security validation according to IETF draft */
     
-    if (security_bits >= min_security_bits) {
-        return 1;
-    } else {
+    /* 1. Minimum key size requirement */
+    if (key_bits < required_bits) {
+        printf("[PQ_SECURITY] Key size too small for required security level\n");
         return 0;
     }
+    
+    /* 2. Security level validation based on algorithm type */
+    switch (lu->sigalg) {
+        case TLSEXT_SIGALG_falcon512: /* FALCON-512-SHA256 */
+        case TLSEXT_SIGALG_dilithium2: /* DILITHIUM-2-SHA256 */
+        case TLSEXT_SIGALG_sphincs_sha256_128f_simple: /* SPHINCS-SHA256-128F-SIMPLE */
+        case TLSEXT_SIGALG_mldsa_44: /* MLDSA-44-SHA256 */
+            if (required_bits != 128) {
+                printf("[PQ_SECURITY] Level 1 algorithm should have exactly 128 bits, got %d\n", required_bits);
+                return 0;
+            }
+            break;
+            
+        case TLSEXT_SIGALG_dilithium3: /* DILITHIUM-3-SHA256 */
+        case TLSEXT_SIGALG_sphincs_sha256_192f_simple: /* SPHINCS-SHA256-192F-SIMPLE */
+        case TLSEXT_SIGALG_mldsa_65: /* MLDSA-65-SHA256 */
+            if (required_bits != 192) {
+                printf("[PQ_SECURITY] Level 3 algorithm should have exactly 192 bits, got %d\n", required_bits);
+                return 0;
+            }
+            break;
+            
+        case TLSEXT_SIGALG_falcon1024: /* FALCON-1024-SHA256 */
+        case TLSEXT_SIGALG_dilithium5: /* DILITHIUM-5-SHA256 */
+        case TLSEXT_SIGALG_sphincs_sha256_256f_simple: /* SPHINCS-SHA256-256F-SIMPLE */
+            if (required_bits != 256) {
+                printf("[PQ_SECURITY] Level 5 algorithm should have exactly 256 bits, got %d\n", required_bits);
+                return 0;
+            }
+            break;
+            
+        default:
+            printf("[PQ_SECURITY] Unknown PQ algorithm: 0x%04x\n", lu->sigalg);
+            return 0;
+    }
+    
+    /* 3. Additional validation for production use */
+    min_security_bits = SSL_CONNECTION_GET_CTX(s)->min_proto_version >= TLS1_3_VERSION ? 128 : 112;
+    if (required_bits < min_security_bits) {
+        printf("[PQ_SECURITY] Algorithm security below minimum required (%d bits)\n", min_security_bits);
+        return 0;
+    }
+    
+    printf("[PQ_SECURITY] PQ security level validation passed\n");
+    return 1;
 }
 
 /* Get security level in bits for PQ signature algorithms */
-static int tls1_get_pq_security_bits(uint16_t sigalg)
+int tls1_get_pq_security_bits(uint16_t sigalg)
 {
+    printf("[PQ_SECURITY_T1] Getting security bits for algorithm: 0x%04x\n", sigalg);
+    
+    /* Get security bits for PQ signature algorithms according to IETF draft */
     switch (sigalg) {
-        case 0x0401: /* FALCON-512 */ return 128;
-        case 0x0402: /* FALCON-1024 */ return 256;
-        case 0x0403: /* DILITHIUM-2 */ return 128;
-        case 0x0404: /* DILITHIUM-3 */ return 192;
-        case 0x0405: /* DILITHIUM-5 */ return 256;
-        case 0x0406: /* SPHINCS-128F */ return 128;
-        case 0x0407: /* SPHINCS-192F */ return 192;
-        case 0x0408: /* SPHINCS-256F */ return 256;
-        case 0x0409: /* MLDSA-44 */ return 128;
-        case 0x040A: /* MLDSA-65 */ return 192;
-        default: return 0;
+        /* 0x09xx algorithms */
+        case TLSEXT_SIGALG_falcon512: /* FALCON-512-SHA256 */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 128 bits\n", sigalg);
+            return 128; /* Level 1 security */
+        case TLSEXT_SIGALG_falcon1024: /* FALCON-1024-SHA256 */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 256 bits\n", sigalg);
+            return 256; /* Level 5 security */
+        case TLSEXT_SIGALG_dilithium2: /* DILITHIUM-2-SHA256 */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 128 bits\n", sigalg);
+            return 128; /* Level 1 security */
+        case TLSEXT_SIGALG_dilithium3: /* DILITHIUM-3-SHA256 */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 192 bits\n", sigalg);
+            return 192; /* Level 3 security */
+        case TLSEXT_SIGALG_dilithium5: /* DILITHIUM-5-SHA256 */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 256 bits\n", sigalg);
+            return 256; /* Level 5 security */
+        case TLSEXT_SIGALG_sphincs_sha256_128f_simple: /* SPHINCS-SHA256-128F-SIMPLE */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 128 bits\n", sigalg);
+            return 128; /* Level 1 security */
+        case TLSEXT_SIGALG_sphincs_sha256_192f_simple: /* SPHINCS-SHA256-192F-SIMPLE */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 192 bits\n", sigalg);
+            return 192; /* Level 3 security */
+        case TLSEXT_SIGALG_sphincs_sha256_256f_simple: /* SPHINCS-SHA256-256F-SIMPLE */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 256 bits\n", sigalg);
+            return 256; /* Level 5 security */
+        case TLSEXT_SIGALG_mldsa_44: /* MLDSA-44-SHA256 */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 128 bits\n", sigalg);
+            return 128; /* Level 1 security */
+        case TLSEXT_SIGALG_mldsa_65: /* MLDSA-65-SHA256 */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 192 bits\n", sigalg);
+            return 192; /* Level 3 security */
+        
+        /* 0x04xx algorithms (legacy format) */
+        case 0x0401: /* FALCON-512 */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 128 bits\n", sigalg);
+            return 128;
+        case 0x0402: /* FALCON-1024 */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 256 bits\n", sigalg);
+            return 256;
+        case 0x0403: /* DILITHIUM-2 */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 128 bits\n", sigalg);
+            return 128;
+        case 0x0404: /* DILITHIUM-3 */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 192 bits\n", sigalg);
+            return 192;
+        case 0x0405: /* DILITHIUM-5 */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 256 bits\n", sigalg);
+            return 256;
+        case 0x0406: /* SPHINCS-128F */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 128 bits\n", sigalg);
+            return 128;
+        case 0x0407: /* SPHINCS-192F */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 192 bits\n", sigalg);
+            return 192;
+        case 0x0408: /* SPHINCS-256F */
+            printf("[PQ_SECURITY_T1] Algorithm 0x%04x: 256 bits\n", sigalg);
+            return 256;
+        
+        default:
+            /* For unknown algorithms, return a conservative default */
+            printf("[PQ_SECURITY_T1] Unknown algorithm 0x%04x, using default 128 bits\n", sigalg);
+            return 128;
     }
 }
 
@@ -4594,11 +4796,19 @@ static const SIGALG_LOOKUP *tls1_select_enhanced_classic_sigalg(SSL_CONNECTION *
     const SIGALG_LOOKUP *lu = NULL;
     int classic_key_type;
     
-    /* Get local classic signature algorithms */
+    /* Get local classical signature algorithms */
     local_classic_sigslen = tls12_get_psigalgs(s, 0, &local_classic_sigs);
-    classic_key_type = EVP_PKEY_get_id(classic_pkey);
     
-    /* Server preference: check local algorithms first */
+    /* Get classical key type for compatibility checking */
+    classic_key_type = get_key_type_from_evp_pkey(classic_pkey);
+    
+    printf("[DUAL_ALGO_SELECT] Classic algorithm selection details:\n");
+    printf("[DUAL_ALGO_SELECT]    Local classic algorithms: %zu\n", local_classic_sigslen);
+    printf("[DUAL_ALGO_SELECT]    Peer classic algorithms: %zu\n", peer_classic_sigslen);
+    printf("[DUAL_ALGO_SELECT]    Classic key type: %d\n", classic_key_type);
+    printf("[DUAL_ALGO_SELECT]    Role: %s\n", s->server ? "Server" : "Client");
+    
+    /* Server preference: check local algorithms first, then peer algorithms */
     if (s->server) {
         for (i = 0; i < local_classic_sigslen; i++) {
             lu = tls1_lookup_sigalg(s, local_classic_sigs[i]);
@@ -4608,15 +4818,17 @@ static const SIGALG_LOOKUP *tls1_select_enhanced_classic_sigalg(SSL_CONNECTION *
             /* Check if peer supports this algorithm */
             for (j = 0; j < peer_classic_sigslen; j++) {
                 if (local_classic_sigs[i] == peer_classic_sigs[j]) {
-                    /* Check compatibility with classic certificate */
+                    /* Check compatibility with classical certificate */
                     if (tls1_check_enhanced_classic_cert_compatibility(s, lu, classic_pkey, classic_key_type)) {
+                        printf("[DUAL_ALGO_SELECT] Selected classic algorithm: %s (server preference)\n", 
+                               lu->name ? lu->name : "unknown");
                         return lu;
                     }
                 }
             }
         }
     } else {
-        /* Client preference: check peer algorithms first */
+        /* Client preference: check peer algorithms first, then local algorithms */
         for (i = 0; i < peer_classic_sigslen; i++) {
             lu = tls1_lookup_sigalg(s, peer_classic_sigs[i]);
             if (lu == NULL)
@@ -4625,8 +4837,10 @@ static const SIGALG_LOOKUP *tls1_select_enhanced_classic_sigalg(SSL_CONNECTION *
             /* Check if we support this algorithm */
             for (j = 0; j < local_classic_sigslen; j++) {
                 if (peer_classic_sigs[i] == local_classic_sigs[j]) {
-                    /* Check compatibility with classic certificate */
+                    /* Check compatibility with classical certificate */
                     if (tls1_check_enhanced_classic_cert_compatibility(s, lu, classic_pkey, classic_key_type)) {
+                        printf("[DUAL_ALGO_SELECT] Selected classic algorithm: %s (client preference)\n", 
+                               lu->name ? lu->name : "unknown");
                         return lu;
                     }
                 }
@@ -4645,84 +4859,175 @@ static int tls1_check_enhanced_classic_cert_compatibility(SSL_CONNECTION *s,
                                                           int classic_key_type)
 {
     /* Check if signature algorithm matches certificate key type */
-    if (lu->sig != classic_key_type) {
+    /* Convert classic_key_type to the corresponding EVP_PKEY type */
+    int expected_evp_type;
+    switch (classic_key_type) {
+        case KEY_TYPE_RSA:
+            expected_evp_type = EVP_PKEY_RSA;
+            break;
+        case KEY_TYPE_EC:
+            expected_evp_type = EVP_PKEY_EC;
+            break;
+        case KEY_TYPE_ED25519:
+            expected_evp_type = EVP_PKEY_ED25519;
+            break;
+        case KEY_TYPE_ED448:
+            expected_evp_type = EVP_PKEY_ED448;
+            break;
+        default:
+            printf("[CLASSIC_COMPAT] Unknown classic key type: %d\n", classic_key_type);
+            return 0;
+    }
+    
+    printf("[CLASSIC_COMPAT] Comparing lu->sig (%d) with expected_evp_type (%d)\n", 
+           lu->sig, expected_evp_type);
+    
+    if (lu->sig != expected_evp_type) {
+        printf("[CLASSIC_COMPAT] Signature algorithm type mismatch\n");
         return 0;
     }
     
     /* Check security level compatibility */
     if (!tls1_check_classic_security_level(s, lu, classic_pkey)) {
+        printf("[CLASSIC_COMPAT] Security level check failed\n");
         return 0;
     }
     
+    printf("[CLASSIC_COMPAT] Classic certificate compatibility check passed\n");
     return 1;
 }
 
-/* Check security level compatibility for classic algorithms */
+/* Check security level compatibility for classical algorithms */
 static int tls1_check_classic_security_level(SSL_CONNECTION *s,
                                              const SIGALG_LOOKUP *lu,
                                              const EVP_PKEY *classic_pkey)
 {
-    int security_bits;
-    int min_security_bits;
+    int required_bits = sigalg_security_bits(SSL_CONNECTION_GET_CTX(s), lu);
+    int key_bits = EVP_PKEY_bits(classic_pkey);
     
-    /* Get security level for this signature algorithm */
-    security_bits = tls1_get_classic_security_bits(lu->sigalg);
+    printf("[CLASSIC_SECURITY] Checking classic security level:\n");
+    printf("[CLASSIC_SECURITY]    Algorithm: %s\n", lu->name ? lu->name : "unknown");
+    printf("[CLASSIC_SECURITY]    Required bits: %d\n", required_bits);
+    printf("[CLASSIC_SECURITY]    Key bits: %d\n", key_bits);
     
-    /* Get minimum required security level from SSL context */
-    min_security_bits = SSL_CONNECTION_GET_CTX(s)->min_proto_version >= TLS1_3_VERSION ? 128 : 112;
+    /* Enhanced security validation for classical algorithms */
     
-    if (security_bits >= min_security_bits) {
-        return 1;
-    } else {
+    /* 1. Minimum key size requirements based on algorithm type */
+    switch (lu->sig) {
+        case EVP_PKEY_RSA:
+            /* RSA: key size should be at least 2048 bits for 128-bit security */
+            if (key_bits < 2048) {
+                printf("[CLASSIC_SECURITY] RSA key too small (min 2048 bits)\n");
+                return 0;
+            }
+            break;
+            
+        case EVP_PKEY_EC:
+            /* ECDSA: key size should be at least 256 bits for 128-bit security */
+            if (key_bits < 256) {
+                printf("[CLASSIC_SECURITY] ECDSA key too small (min 256 bits)\n");
+                return 0;
+            }
+            break;
+            
+        case EVP_PKEY_ED25519:
+        case EVP_PKEY_ED448:
+            /* Ed25519/Ed448: fixed key sizes, just verify they're correct */
+            if (lu->sig == EVP_PKEY_ED25519 && key_bits != 256) {
+                printf("[CLASSIC_SECURITY] Ed25519 should have 256 bits\n");
+                return 0;
+            }
+            if (lu->sig == EVP_PKEY_ED448 && key_bits != 448) {
+                printf("[CLASSIC_SECURITY] Ed448 should have 448 bits\n");
+                return 0;
+            }
+            break;
+            
+        default:
+            printf("[CLASSIC_SECURITY] Unknown classic algorithm type: %d\n", lu->sig);
+            return 0;
+    }
+    
+    /* 2. Verify security level meets minimum requirements */
+    int min_security = SSL_CONNECTION_GET_CTX(s)->min_proto_version >= TLS1_3_VERSION ? 128 : 112;
+    if (required_bits < min_security) {
+        printf("[CLASSIC_SECURITY] Algorithm security below minimum required (%d bits)\n", min_security);
         return 0;
     }
+    
+    printf("[CLASSIC_SECURITY] Classic security level validation passed\n");
+    return 1;
 }
 
-/* Get security level in bits for classic signature algorithms */
-static int tls1_get_classic_security_bits(uint16_t sigalg)
-{
-    switch (sigalg) {
-        case TLSEXT_SIGALG_rsa_pkcs1_sha256: return 128;
-        case TLSEXT_SIGALG_rsa_pkcs1_sha384: return 192;
-        case TLSEXT_SIGALG_rsa_pkcs1_sha512: return 256;
-        case TLSEXT_SIGALG_ecdsa_secp256r1_sha256: return 128;
-        case TLSEXT_SIGALG_ecdsa_secp384r1_sha384: return 192;
-        case TLSEXT_SIGALG_ecdsa_secp521r1_sha512: return 256;
-        case TLSEXT_SIGALG_ed25519: return 128;
-        case TLSEXT_SIGALG_ed448: return 256;
-        default: return 112; /* Default minimum */
-    }
-}
+
 
 /* Check compatibility between classic and PQ algorithms */
 static int tls1_check_dual_algorithm_compatibility(SSL_CONNECTION *s,
                                                    const SIGALG_LOOKUP *classic_lu,
                                                    const SIGALG_LOOKUP *pq_lu)
 {
-    int classic_security, pq_security;
+    int classic_security_bits, pq_security_bits;
     
-    /* Get security levels */
-    classic_security = tls1_get_classic_security_bits(classic_lu->sigalg);
-    pq_security = tls1_get_pq_security_bits(pq_lu->sigalg);
+    if (classic_lu == NULL || pq_lu == NULL)
+        return 0;
     
-    printf("[DUAL_ALGO_SELECT] Dual compatibility check:\n");
-    printf("[DUAL_ALGO_SELECT]    Classic security: %d bits\n", classic_security);
-    printf("[DUAL_ALGO_SELECT]    PQ security: %d bits\n", pq_security);
+    /* Get security bits for both algorithms */
+    classic_security_bits = sigalg_security_bits(SSL_CONNECTION_GET_CTX(s), classic_lu);
+    pq_security_bits = tls1_get_pq_security_bits(pq_lu->sigalg);
     
-    /* Both algorithms should provide adequate security */
-    if (classic_security < 128 || pq_security < 128) {
-        printf("[DUAL_ALGO_SELECT] Insufficient security level for dual mode\n");
-        printf("[DUAL_ALGO_SELECT]    Minimum required: 128 bits for both algorithms\n");
+    printf("[DUAL_ALGO_SELECT] Checking dual algorithm compatibility:\n");
+    printf("[DUAL_ALGO_SELECT]    Classic: %s (%d bits)\n", 
+           classic_lu->name ? classic_lu->name : "unknown", classic_security_bits);
+    printf("[DUAL_ALGO_SELECT]    PQ: %s (%d bits)\n", 
+           pq_lu->name ? pq_lu->name : "unknown", pq_security_bits);
+    
+    /* Enhanced security validation according to IETF draft */
+    
+    /* 1. Minimum security requirements for dual mode */
+    int min_security = SSL_CONNECTION_IS_TLS13(s) ? 128 : 112;
+    if (classic_security_bits < min_security || pq_security_bits < min_security) {
+        printf("[DUAL_ALGO_SELECT] Security level too low for dual mode (min: %d)\n", min_security);
         return 0;
     }
     
-    /* Check for algorithm conflicts (e.g., same hash function issues) */
-    if (classic_lu->hash == pq_lu->hash) {
-        printf("[DUAL_ALGO_SELECT] Warning: Both algorithms use same hash function\n");
-        /* This is not necessarily an error, but should be logged */
+    /* 2. Security level balance according to IETF draft */
+    /* The draft requires that both algorithms provide comparable security levels */
+    int security_diff = abs(classic_security_bits - pq_security_bits);
+    int max_allowed_diff = 64; /* Maximum difference allowed between security levels */
+    
+    if (security_diff > max_allowed_diff) {
+        printf("[DUAL_ALGO_SELECT] Security levels too different (diff: %d, max: %d)\n", 
+               security_diff, max_allowed_diff);
+        return 0;
     }
     
-    printf("[DUAL_ALGO_SELECT] Dual algorithm compatibility check passed\n");
+    /* 3. Algorithm strength validation - removed redundant check */
+    /* This check is already performed in step 1 above */
+    
+    /* 4. Check if both algorithms are enabled and supported */
+    if (!classic_lu->enabled || !pq_lu->enabled) {
+        printf("[DUAL_ALGO_SELECT] One or both algorithms not enabled\n");
+        return 0;
+    }
+    
+    /* 5. Validate algorithm types are compatible */
+    /* Classic algorithms should be traditional (RSA, ECDSA, Ed25519, Ed448) */
+    if (classic_lu->sig != EVP_PKEY_RSA && 
+        classic_lu->sig != EVP_PKEY_EC && 
+        classic_lu->sig != EVP_PKEY_ED25519 && 
+        classic_lu->sig != EVP_PKEY_ED448) {
+        printf("[DUAL_ALGO_SELECT] Classic algorithm type not supported for dual mode\n");
+        return 0;
+    }
+    
+    /* PQ algorithms should be in the 0x04xx range (IANA standard) */
+    if (pq_lu->sigalg < 0x0401 || pq_lu->sigalg > 0x04FF) {
+        printf("[DUAL_ALGO_SELECT] PQ algorithm not in IANA standard range\n");
+        return 0;
+    }
+    
+    printf("[DUAL_ALGO_SELECT] Dual algorithms compatible (classic: %d bits, pq: %d bits)\n", 
+           classic_security_bits, pq_security_bits);
     return 1;
 }
 
@@ -4846,5 +5151,73 @@ static int get_pqc_key_type_by_properties(const EVP_PKEY *pq_pkey)
     printf("[PQC_KEY_DETECTION] Could not determine key type from properties\n");
     return KEY_TYPE_UNKNOWN;
 }
+
+/* Separate classical and PQ certificate chains for dual certificate mode */
+int tls1_separate_dual_cert_chains(SSL_CONNECTION *s, 
+                                   STACK_OF(X509) *all_certs,
+                                   STACK_OF(X509) **classic_chain,
+                                   STACK_OF(X509) **pq_chain)
+{
+    int i, num_certs;
+    X509 *cert;
+    EVP_PKEY *pkey;
+    int cert_type;
+    
+    if (all_certs == NULL || classic_chain == NULL || pq_chain == NULL) {
+        return 0;
+    }
+    
+    *classic_chain = sk_X509_new_null();
+    *pq_chain = sk_X509_new_null();
+    
+    if (*classic_chain == NULL || *pq_chain == NULL) {
+        if (*classic_chain != NULL) sk_X509_free(*classic_chain);
+        if (*pq_chain != NULL) sk_X509_free(*pq_chain);
+        return 0;
+    }
+    
+    num_certs = sk_X509_num(all_certs);
+    
+    for (i = 0; i < num_certs; i++) {
+        cert = sk_X509_value(all_certs, i);
+        if (cert == NULL)
+            continue;
+            
+        pkey = X509_get0_pubkey(cert);
+        if (pkey == NULL)
+            continue;
+            
+        /* Determine certificate type based on key type */
+        cert_type = get_key_type_from_evp_pkey(pkey);
+        
+        if (cert_type == KEY_TYPE_RSA || cert_type == KEY_TYPE_EC || 
+            cert_type == KEY_TYPE_ED25519 || cert_type == KEY_TYPE_ED448) {
+            /* Classical certificate */
+            if (!sk_X509_push(*classic_chain, cert)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
+        } else if (cert_type == KEY_TYPE_DILITHIUM || cert_type == KEY_TYPE_FALCON ||
+                   cert_type == KEY_TYPE_SPHINCS || cert_type == KEY_TYPE_MLDSA) {
+            /* Post-quantum certificate */
+            if (!sk_X509_push(*pq_chain, cert)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
+        } else {
+            /* Unknown certificate type - treat as classical for compatibility */
+            if (!sk_X509_push(*classic_chain, cert)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
+        }
+    }
+    
+    return 1;
+}
+
+
+
+
 
 

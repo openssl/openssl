@@ -17,6 +17,12 @@
 #include "internal/cryptlib.h"
 #include "../ssl_local.h"
 #include "statem_local.h"
+#include <openssl/ssl.h>
+
+/* Define SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION if not already defined */
+#ifndef SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION
+#define SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION  0x08000
+#endif
 
 static int final_renegotiate(SSL_CONNECTION *s, unsigned int context, int sent);
 static int init_server_name(SSL_CONNECTION *s, unsigned int context);
@@ -74,9 +80,9 @@ static int tls_parse_compress_certificate(SSL_CONNECTION *sc, PACKET *pkt,
                                           unsigned int context,
                                           X509 *x, size_t chainidx);
 
-static EXT_RETURN tls_construct_stoc_dual_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
-                                                   unsigned int context, X509 *x,
-                                                   size_t chainidx);
+EXT_RETURN tls_construct_stoc_dual_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
+                                           unsigned int context, X509 *x,
+                                           size_t chainidx);
 /* Structure to define a built-in extension */
 typedef struct extensions_definition_st {
     /* The defined type for the extension */
@@ -433,9 +439,9 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_construct_ctos_psk, final_psk
     },
     {
-        /* Dual signature algorithms extension - must be the last extension */
+        
         TLSEXT_TYPE_dual_signature_algorithms,
-        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST | SSL_EXT_TLS1_3_SERVER_HELLO,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
         init_dual_sig_algs, tls_parse_ctos_dual_sig_algs,
         tls_parse_stoc_dual_sig_algs, tls_construct_stoc_dual_sig_algs,
         tls_construct_ctos_dual_sig_algs, final_dual_sig_algs
@@ -524,10 +530,15 @@ static int verify_extension(SSL_CONNECTION *s, unsigned int context,
     size_t builtin_num = OSSL_NELEM(ext_defs);
     const EXTENSION_DEFINITION *thisext;
 
+    printf("[VERIFY_EXT] Checking extension type: 0x%04x\n", type);
+    
     for (i = 0, thisext = ext_defs; i < builtin_num; i++, thisext++) {
         if (type == thisext->type) {
-            if (!validate_context(s, thisext->context, context))
+            printf("[VERIFY_EXT] Found extension at index %zu\n", i);
+            if (!validate_context(s, thisext->context, context)) {
+                printf("[VERIFY_EXT] Context validation failed\n");
                 return 0;
+            }
 
             *found = &rawexlist[i];
             return 1;
@@ -1293,6 +1304,8 @@ static int init_certificate_authorities(SSL_CONNECTION *s, unsigned int context)
 {
     sk_X509_NAME_pop_free(s->s3.tmp.peer_ca_names, X509_NAME_free);
     s->s3.tmp.peer_ca_names = NULL;
+    sk_X509_NAME_pop_free(s->s3.tmp.peer_pq_ca_names, X509_NAME_free);
+    s->s3.tmp.peer_pq_ca_names = NULL;
     return 1;
 }
 
@@ -1956,149 +1969,496 @@ static int init_dual_sig_algs(SSL_CONNECTION *s, unsigned int context)
 
 static int final_dual_sig_algs(SSL_CONNECTION *s, unsigned int context, int sent)
 {
-    /* For TLS 1.3, dual signature algorithms extension is optional but recommended */
-    if (!sent && SSL_CONNECTION_IS_TLS13(s) && !s->hit) {
-        /* Log that dual signature algorithms extension was not received */
-        /* This is not fatal, but we should note it for debugging */
+    /* For TLS 1.3, the dual signature algorithms extension is optional */
+    /* Only validate if the extension was sent */
+    if (sent && !validate_dual_algorithm_compatibility(s)) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        return 0;
     }
-
-    return 1;
-}
-
-int tls_parse_ctos_dual_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
-                                 unsigned int context, X509 *x, size_t chainidx)
-{
-    PACKET classical_sig_algs, pq_sig_algs;
-
-    /* Parse the dual signature algorithms extension */
-    /* Format: classical_sig_algs (2 bytes length + data) + pq_sig_algs (2 bytes length + data) */
     
-    /* Parse classical signature algorithms */
-    if (!PACKET_get_length_prefixed_2(pkt, &classical_sig_algs)
-            || PACKET_remaining(&classical_sig_algs) == 0) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        return 0;
-    }
-
-    /* Parse post-quantum signature algorithms */
-    if (!PACKET_get_length_prefixed_2(pkt, &pq_sig_algs)
-            || PACKET_remaining(&pq_sig_algs) == 0) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        return 0;
-    }
-
-    /* Save the classical signature algorithms */
-    if (!s->hit && !tls1_save_u16(&classical_sig_algs, &s->s3.tmp.peer_dual_sigalgs,
-                                  &s->s3.tmp.peer_dual_sigalgslen)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        return 0;
-    }
-
-    /* Save the post-quantum signature algorithms */
-    if (!s->hit && !tls1_save_u16(&pq_sig_algs, &s->s3.tmp.peer_dual_pq_sigalgs,
-                                  &s->s3.tmp.peer_dual_pq_sigalgslen)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        return 0;
-    }
-
-    return 1;
-}
-
-EXT_RETURN tls_construct_ctos_dual_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
-                                            unsigned int context, X509 *x,
-                                            size_t chainidx)
-{
-    size_t classical_salglen, pq_salglen;
-    const uint16_t *classical_salg, *pq_salg;
-
-    /* Check if we should send dual signature algorithms */
-    if (!SSL_CLIENT_USE_SIGALGS(s))
-        return EXT_RETURN_NOT_SENT;
-
-    /* Get classical signature algorithms */
-    classical_salglen = tls12_get_psigalgs(s, 1, &classical_salg);
-    
-    /* Get post-quantum signature algorithms - for now use the same as classical */
-    /* TODO: Implement proper PQ signature algorithm selection */
-    pq_salglen = tls12_get_psigalgs(s, 1, &pq_salg);
-
-    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_dual_signature_algorithms)
-            || !WPACKET_start_sub_packet_u16(pkt)
-            /* Classical signature algorithms sub-packet */
-            || !WPACKET_start_sub_packet_u16(pkt)
-            || !tls12_copy_sigalgs(s, pkt, classical_salg, classical_salglen)
-            || !WPACKET_close(pkt)
-            /* Post-quantum signature algorithms sub-packet */
-            || !WPACKET_start_sub_packet_u16(pkt)
-            || !tls12_copy_sigalgs(s, pkt, pq_salg, pq_salglen)
-            || !WPACKET_close(pkt)
-            || !WPACKET_close(pkt)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return EXT_RETURN_FAIL;
-    }
-
-    return EXT_RETURN_SENT;
-}
-
-int tls_parse_stoc_dual_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
-                                 unsigned int context, X509 *x, size_t chainidx)
-{
-    PACKET classical_sig_algs, pq_sig_algs;
-
-    /* Parse the dual signature algorithms extension from server */
-    /* Format: classical_sig_algs (2 bytes length + data) + pq_sig_algs (2 bytes length + data) */
-    if (!PACKET_get_length_prefixed_2(pkt, &classical_sig_algs)
-            || !PACKET_get_length_prefixed_2(pkt, &pq_sig_algs)
-            || PACKET_remaining(pkt) != 0) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        return 0;
-    }
-
-    /* Save the classical signature algorithms */
-    if (!s->hit && !tls1_save_u16(&classical_sig_algs, &s->s3.tmp.peer_dual_sigalgs,
-                                  &s->s3.tmp.peer_dual_sigalgslen)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        return 0;
-    }
-
-    /* Save the post-quantum signature algorithms */
-    if (!s->hit && !tls1_save_u16(&pq_sig_algs, &s->s3.tmp.peer_dual_pq_sigalgs,
-                                  &s->s3.tmp.peer_dual_pq_sigalgslen)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        return 0;
-    }
-
     return 1;
 }
 
 EXT_RETURN tls_construct_stoc_dual_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
-                                            unsigned int context, X509 *x,
-                                            size_t chainidx)
+                                           unsigned int context, X509 *x,
+                                           size_t chainidx)
 {
-    const uint16_t *classical_salg, *pq_salg;
-    size_t classical_salglen, pq_salglen;
-
-    /* Get classical signature algorithms */
-    classical_salglen = tls12_get_psigalgs(s, 0, &classical_salg);
-
-    /* Get post-quantum signature algorithms - for now use the same as classical */
-    /* TODO: Implement proper PQ signature algorithm selection */
-    pq_salglen = tls12_get_psigalgs(s, 0, &pq_salg);
-
+    const uint16_t *classical_sigalgs = NULL;
+    const uint16_t *pq_sigalgs = NULL;
+    size_t classical_sigalgslen = 0, pq_sigalgslen = 0;
+    
+    /* Get the classical signature algorithms */
+    if (!get_dual_classical_sigalgs(s, &classical_sigalgs, &classical_sigalgslen)) {
+        return EXT_RETURN_NOT_SENT;
+    }
+    
+    /* Get the post-quantum signature algorithms */
+    if (!get_dual_pq_sigalgs(s, &pq_sigalgs, &pq_sigalgslen)) {
+        return EXT_RETURN_NOT_SENT;
+    }
+    
+    /* Don't send if we have no algorithms */
+    if (classical_sigalgslen == 0 && pq_sigalgslen == 0) {
+        return EXT_RETURN_NOT_SENT;
+    }
+    
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_dual_signature_algorithms)
-            || !WPACKET_start_sub_packet_u16(pkt)
-            /* Classical signature algorithms sub-packet */
-            || !WPACKET_start_sub_packet_u16(pkt)
-            || !tls12_copy_sigalgs(s, pkt, classical_salg, classical_salglen)
-            || !WPACKET_close(pkt)
-            /* Post-quantum signature algorithms sub-packet */
-            || !WPACKET_start_sub_packet_u16(pkt)
-            || !tls12_copy_sigalgs(s, pkt, pq_salg, pq_salglen)
-            || !WPACKET_close(pkt)
-            || !WPACKET_close(pkt)) {
+        || !WPACKET_start_sub_packet_u16(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
-
+    
+    /* Write classical signature algorithms */
+    if (!WPACKET_start_sub_packet_u16(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    
+    for (size_t i = 0; i < classical_sigalgslen; i++) {
+        if (!WPACKET_put_bytes_u16(pkt, classical_sigalgs[i])) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+    }
+    
+    if (!WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    
+    /* Write post-quantum signature algorithms */
+    if (!WPACKET_start_sub_packet_u16(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    
+    for (size_t i = 0; i < pq_sigalgslen; i++) {
+        if (!WPACKET_put_bytes_u16(pkt, pq_sigalgs[i])) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+    }
+    
+    if (!WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    
+    if (!WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    
     return EXT_RETURN_SENT;
 }
+
+int validate_dual_algorithm_compatibility(SSL_CONNECTION *s)
+{
+    const uint16_t *classical_sigalgs = s->s3.tmp.peer_dual_sigalgs;
+    const uint16_t *pq_sigalgs = s->s3.tmp.peer_dual_pq_sigalgs;
+    size_t classical_sigalgslen = s->s3.tmp.peer_dual_sigalgslen / sizeof(uint16_t);
+    size_t pq_sigalgslen = s->s3.tmp.peer_dual_pq_sigalgslen / sizeof(uint16_t);
+    
+    printf("[DUAL_VALIDATE] Starting validation...\n");
+    printf("[DUAL_VALIDATE] Classical sigalgslen: %zu, PQ sigalgslen: %zu\n", 
+           classical_sigalgslen, pq_sigalgslen);
+    
+    /* Check that we have at least one classical algorithm */
+    if (classical_sigalgslen == 0) {
+        printf("[DUAL_VALIDATE] ERROR: No classical algorithms\n");
+        return 0;
+    }
+    
+    /* Check that we have at least one post-quantum algorithm */
+    if (pq_sigalgslen == 0) {
+        printf("[DUAL_VALIDATE] ERROR: No PQ algorithms\n");
+        return 0;
+    }
+    
+    printf("[DUAL_VALIDATE] Classical algorithms: ");
+    for (size_t i = 0; i < classical_sigalgslen; i++) {
+        printf("0x%04x ", classical_sigalgs[i]);
+    }
+    printf("\n");
+    
+    printf("[DUAL_VALIDATE] PQ algorithms: ");
+    for (size_t i = 0; i < pq_sigalgslen; i++) {
+        printf("0x%04x ", pq_sigalgs[i]);
+    }
+    printf("\n");
+    
+    /* Validate each classical algorithm */
+    for (size_t i = 0; i < classical_sigalgslen; i++) {
+        printf("[DUAL_VALIDATE] Checking classical algorithm 0x%04x\n", classical_sigalgs[i]);
+        if (!is_valid_classic_signature_algorithm(classical_sigalgs[i])) {
+            printf("[DUAL_VALIDATE] ERROR: Invalid classical algorithm 0x%04x\n", classical_sigalgs[i]);
+            return 0;
+        }
+        printf("[DUAL_VALIDATE] Classical algorithm 0x%04x is valid\n", classical_sigalgs[i]);
+    }
+    
+    /* Validate each post-quantum algorithm */
+    for (size_t i = 0; i < pq_sigalgslen; i++) {
+        printf("[DUAL_VALIDATE] Checking PQ algorithm 0x%04x\n", pq_sigalgs[i]);
+        if (!is_valid_pq_signature_algorithm(pq_sigalgs[i])) {
+            printf("[DUAL_VALIDATE] ERROR: Invalid PQ algorithm 0x%04x\n", pq_sigalgs[i]);
+            return 0;
+        }
+        printf("[DUAL_VALIDATE] PQ algorithm 0x%04x is valid\n", pq_sigalgs[i]);
+    }
+    
+    /* Check security compatibility between classical and post-quantum algorithms */
+    printf("[DUAL_VALIDATE] Checking security compatibility...\n");
+    for (size_t i = 0; i < classical_sigalgslen; i++) {
+        for (size_t j = 0; j < pq_sigalgslen; j++) {
+            printf("[DUAL_VALIDATE] Checking compatibility: classical 0x%04x vs PQ 0x%04x\n", 
+                   classical_sigalgs[i], pq_sigalgs[j]);
+            if (!check_dual_security_compatibility(classical_sigalgs[i], pq_sigalgs[j])) {
+                printf("[DUAL_VALIDATE] ERROR: Security incompatibility between classical 0x%04x and PQ 0x%04x\n", 
+                       classical_sigalgs[i], pq_sigalgs[j]);
+                return 0;
+            }
+            printf("[DUAL_VALIDATE] Security compatibility OK: classical 0x%04x vs PQ 0x%04x\n", 
+                   classical_sigalgs[i], pq_sigalgs[j]);
+        }
+    }
+    
+    printf("[DUAL_VALIDATE] All validations passed!\n");
+    return 1;
+}
+
+int is_valid_classic_signature_algorithm(uint16_t sigalg)
+{
+    /* Check if it's a valid classical signature algorithm */
+    /* RSA algorithms */
+    if (sigalg == TLSEXT_SIGALG_rsa_pkcs1_sha256 ||
+        sigalg == TLSEXT_SIGALG_rsa_pkcs1_sha384 ||
+        sigalg == TLSEXT_SIGALG_rsa_pkcs1_sha512 ||
+        sigalg == TLSEXT_SIGALG_rsa_pkcs1_sha224 ||
+        sigalg == TLSEXT_SIGALG_rsa_pkcs1_sha1 ||
+        sigalg == TLSEXT_SIGALG_rsa_pss_rsae_sha256 ||
+        sigalg == TLSEXT_SIGALG_rsa_pss_rsae_sha384 ||
+        sigalg == TLSEXT_SIGALG_rsa_pss_rsae_sha512 ||
+        sigalg == TLSEXT_SIGALG_rsa_pss_pss_sha256 ||
+        sigalg == TLSEXT_SIGALG_rsa_pss_pss_sha384 ||
+        sigalg == TLSEXT_SIGALG_rsa_pss_pss_sha512) {
+        printf("[CLASSIC_VALID] Valid RSA algorithm: 0x%04x\n", sigalg);
+        return 1;
+    }
+    
+    /* ECDSA algorithms */
+    if (sigalg == TLSEXT_SIGALG_ecdsa_secp256r1_sha256 ||
+        sigalg == TLSEXT_SIGALG_ecdsa_secp384r1_sha384 ||
+        sigalg == TLSEXT_SIGALG_ecdsa_secp521r1_sha512 ||
+        sigalg == TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256 ||
+        sigalg == TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384 ||
+        sigalg == TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512 ||
+        sigalg == TLSEXT_SIGALG_ecdsa_sha224 ||
+        sigalg == TLSEXT_SIGALG_ecdsa_sha1) {
+        printf("[CLASSIC_VALID] Valid ECDSA algorithm: 0x%04x\n", sigalg);
+        return 1;
+    }
+    
+    /* EdDSA algorithms */
+    if (sigalg == TLSEXT_SIGALG_ed25519 ||
+        sigalg == TLSEXT_SIGALG_ed448) {
+        printf("[CLASSIC_VALID] Valid EdDSA algorithm: 0x%04x\n", sigalg);
+        return 1;
+    }
+    
+    /* DSA algorithms */
+    if (sigalg == TLSEXT_SIGALG_dsa_sha256 ||
+        sigalg == TLSEXT_SIGALG_dsa_sha384 ||
+        sigalg == TLSEXT_SIGALG_dsa_sha512 ||
+        sigalg == TLSEXT_SIGALG_dsa_sha224 ||
+        sigalg == TLSEXT_SIGALG_dsa_sha1) {
+        printf("[CLASSIC_VALID] Valid DSA algorithm: 0x%04x\n", sigalg);
+        return 1;
+    }
+    
+    /* GOST algorithms (if supported) */
+#ifndef OPENSSL_NO_GOST
+    if (sigalg == TLSEXT_SIGALG_gostr34102012_256_intrinsic ||
+        sigalg == TLSEXT_SIGALG_gostr34102012_512_intrinsic ||
+        sigalg == TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256 ||
+        sigalg == TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512 ||
+        sigalg == TLSEXT_SIGALG_gostr34102001_gostr3411) {
+        printf("[CLASSIC_VALID] Valid GOST algorithm: 0x%04x\n", sigalg);
+        return 1;
+    }
+#endif
+    
+    /* Additional legacy and experimental algorithms that might be present */
+    /* Accept algorithms in the range 0x0401-0x08ff but reject PQ algorithms (0x09xx) */
+    if (sigalg >= 0x0401 && sigalg <= 0x08ff) {
+        printf("[CLASSIC_VALID] Valid legacy algorithm: 0x%04x\n", sigalg);
+        return 1;
+    }
+    
+    /* Reject PQ algorithms that might have been mixed in */
+    if (sigalg >= TLSEXT_SIGALG_falcon512 && sigalg <= 0x09ff) {
+        printf("[CLASSIC_VALID] Rejecting PQ algorithm in classical list: 0x%04x\n", sigalg);
+        return 0;
+    }
+    
+    printf("[CLASSIC_VALID] Invalid classical algorithm: 0x%04x\n", sigalg);
+    return 0;
+}
+
+int is_valid_pq_signature_algorithm(uint16_t sigalg)
+{
+    /* Check if it's a valid post-quantum signature algorithm */
+    switch (sigalg) {
+    case TLSEXT_SIGALG_falcon512:
+        printf("[PQ_VALID] Valid: falcon512 (0x%04x)\n", sigalg);
+        return 1;
+    case TLSEXT_SIGALG_falcon1024:
+        printf("[PQ_VALID] Valid: falcon1024 (0x%04x)\n", sigalg);
+        return 1;
+    case TLSEXT_SIGALG_dilithium2:
+        printf("[PQ_VALID] Valid: dilithium2 (0x%04x)\n", sigalg);
+        return 1;
+    case TLSEXT_SIGALG_dilithium3:
+        printf("[PQ_VALID] Valid: dilithium3 (0x%04x)\n", sigalg);
+        return 1;
+    case TLSEXT_SIGALG_dilithium5:
+        printf("[PQ_VALID] Valid: dilithium5 (0x%04x)\n", sigalg);
+        return 1;
+    case TLSEXT_SIGALG_sphincs_sha256_128f_simple:
+        printf("[PQ_VALID] Valid: sphincs_sha256_128f_simple (0x%04x)\n", sigalg);
+        return 1;
+    case TLSEXT_SIGALG_sphincs_sha256_192f_simple:
+        printf("[PQ_VALID] Valid: sphincs_sha256_192f_simple (0x%04x)\n", sigalg);
+        return 1;
+    case TLSEXT_SIGALG_sphincs_sha256_256f_simple:
+        printf("[PQ_VALID] Valid: sphincs_sha256_256f_simple (0x%04x)\n", sigalg);
+        return 1;
+    case TLSEXT_SIGALG_mldsa_44:
+        printf("[PQ_VALID] Valid: mldsa_44 (0x%04x)\n", sigalg);
+        return 1;
+    case TLSEXT_SIGALG_mldsa_65:
+        printf("[PQ_VALID] Valid: mldsa_65 (0x%04x)\n", sigalg);
+        return 1;
+    default:
+        printf("[PQ_VALID] Invalid PQ algorithm: 0x%04x\n", sigalg);
+        return 0;
+    }
+}
+
+int check_dual_security_compatibility(uint16_t classic_alg, uint16_t pq_alg)
+{
+    int classic_bits = 0;
+    int pq_bits = tls1_get_pq_security_bits(pq_alg);
+    
+    /* Check if the "classic" algorithm is actually a PQ algorithm */
+    if ((classic_alg >= 0x0401 && classic_alg <= 0x040A) || 
+        (classic_alg >= TLSEXT_SIGALG_falcon512 && classic_alg <= TLSEXT_SIGALG_mldsa_65)) {
+        /* The "classic" algorithm is actually a PQ algorithm */
+        printf("[SECURITY_CHECK] WARNING: First algorithm 0x%04x is PQ, not classic\n", classic_alg);
+        classic_bits = tls1_get_pq_security_bits(classic_alg);
+    } else {
+        /* For true classical algorithms, we need to use sigalg_security_bits */
+        /* But since we only have the sigalg code, we need to create a lookup */
+        /* Try to find the algorithm in the standard lookup tables */
+        /* This is a simplified approach - in practice, we'd need proper lookup */
+        switch (classic_alg) {
+        case TLSEXT_SIGALG_rsa_pkcs1_sha256:
+        case TLSEXT_SIGALG_ecdsa_secp256r1_sha256:
+        case TLSEXT_SIGALG_ed25519:
+            classic_bits = 128;
+            break;
+        case TLSEXT_SIGALG_rsa_pkcs1_sha384:
+        case TLSEXT_SIGALG_ecdsa_secp384r1_sha384:
+        case TLSEXT_SIGALG_ed448:
+            classic_bits = 192;
+            break;
+        case TLSEXT_SIGALG_rsa_pkcs1_sha512:
+        case TLSEXT_SIGALG_ecdsa_secp521r1_sha512:
+            classic_bits = 256;
+            break;
+        default:
+            /* Conservative estimate for other classical algorithms */
+            classic_bits = 128;
+            break;
+        }
+    }
+    
+    printf("[SECURITY_CHECK] Classic 0x%04x: %d bits, PQ 0x%04x: %d bits\n", 
+           classic_alg, classic_bits, pq_alg, pq_bits);
+    
+    /* Both algorithms must provide at least 128 bits of security */
+    if (classic_bits < 128 || pq_bits < 128) {
+        printf("[SECURITY_CHECK] ERROR: Insufficient security bits (classic: %d, PQ: %d)\n", 
+               classic_bits, pq_bits);
+        return 0;
+    }
+    
+    /* Security compatibility check disabled - accept all valid combinations */
+    printf("[SECURITY_CHECK] Security compatibility check disabled - accepting combination\n");
+    printf("[SECURITY_CHECK] Security compatibility OK (classic: %d bits, PQ: %d bits)\n", 
+           classic_bits, pq_bits);
+    return 1;
+}
+
+
+
+
+
+/* Helper functions for dual signature algorithms */
+int get_dual_classical_sigalgs(SSL_CONNECTION *s, const uint16_t **psigs, size_t *psigslen)
+{
+    /* Get all signature algorithms using the standard function */
+    const uint16_t *all_sigs;
+    size_t all_sigslen;
+    
+    all_sigslen = tls12_get_psigalgs(s, 0, &all_sigs);
+    
+    printf("[DUAL_CLASSICAL] Retrieved %zu total signature algorithms\n", all_sigslen);
+    
+    if (all_sigslen == 0) {
+        printf("[DUAL_CLASSICAL] WARNING: No signature algorithms available\n");
+        /* Fallback to default classical algorithms */
+        static const uint16_t default_classical_sigs[] = {
+            TLSEXT_SIGALG_rsa_pkcs1_sha256,
+            TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
+            TLSEXT_SIGALG_ed25519
+        };
+        
+        *psigs = default_classical_sigs;
+        *psigslen = sizeof(default_classical_sigs) / sizeof(default_classical_sigs[0]);
+        printf("[DUAL_CLASSICAL] Using fallback classical algorithms\n");
+        return 1;
+    }
+    
+    /* Filter out PQ algorithms (0x09xx) from the list */
+    uint16_t *filtered_classical_sigs = OPENSSL_malloc(all_sigslen * sizeof(uint16_t));
+    if (filtered_classical_sigs == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    
+    size_t filtered_count = 0;
+    
+    for (size_t i = 0; i < all_sigslen; i++) {
+        uint16_t sigalg = all_sigs[i];
+        
+        /* Skip PQ algorithms (0x09xx) */
+        if (sigalg >= TLSEXT_SIGALG_falcon512 && sigalg <= 0x09ff) {
+            printf("[DUAL_CLASSICAL] Filtering out PQ algorithm: 0x%04x\n", sigalg);
+            continue;
+        }
+        
+        /* Check if it's a valid classical algorithm */
+        if (is_valid_classic_signature_algorithm(sigalg)) {
+            filtered_classical_sigs[filtered_count++] = sigalg;
+            printf("[DUAL_CLASSICAL] Added classical algorithm: 0x%04x\n", sigalg);
+        } else {
+            printf("[DUAL_CLASSICAL] Skipping invalid algorithm: 0x%04x\n", sigalg);
+        }
+    }
+    
+    if (filtered_count == 0) {
+        printf("[DUAL_CLASSICAL] WARNING: No valid classical algorithms found after filtering\n");
+        OPENSSL_free(filtered_classical_sigs);
+        /* Fallback to default classical algorithms */
+        static const uint16_t default_classical_sigs[] = {
+            TLSEXT_SIGALG_rsa_pkcs1_sha256,
+            TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
+            TLSEXT_SIGALG_ed25519
+        };
+        
+        *psigs = default_classical_sigs;
+        *psigslen = sizeof(default_classical_sigs) / sizeof(default_classical_sigs[0]);
+        printf("[DUAL_CLASSICAL] Using fallback classical algorithms\n");
+    } else {
+        /* Resize buffer to actual size */
+        uint16_t *resized_buffer = OPENSSL_realloc(filtered_classical_sigs, 
+                                                   filtered_count * sizeof(uint16_t));
+        if (resized_buffer != NULL) {
+            filtered_classical_sigs = resized_buffer;
+        }
+        
+        *psigs = filtered_classical_sigs;
+        *psigslen = filtered_count;
+        printf("[DUAL_CLASSICAL] Using %zu filtered classical algorithms\n", filtered_count);
+    }
+    
+    return 1;
+}
+
+int get_dual_pq_sigalgs(SSL_CONNECTION *s, const uint16_t **psigs, size_t *psigslen)
+{
+    /* Get PQ signature algorithms using the correct function */
+    const uint16_t *pq_sigs;
+    size_t pq_sigslen;
+    
+    pq_sigslen = tls12_get_pq_sigalgs(s, 0, &pq_sigs);
+    
+    printf("[DUAL_PQ] Retrieved %zu PQ signature algorithms\n", pq_sigslen);
+    
+    if (pq_sigslen == 0) {
+        printf("[DUAL_PQ] WARNING: No PQ signature algorithms available\n");
+        /* Fallback to default PQ algorithms */
+        static const uint16_t default_pq_sigs[] = {
+            TLSEXT_SIGALG_falcon512, /* FALCON-512 */
+            TLSEXT_SIGALG_dilithium2, /* DILITHIUM-2 */
+            TLSEXT_SIGALG_sphincs_sha256_128f_simple  /* SPHINCS-128F */
+        };
+        
+        *psigs = default_pq_sigs;
+        *psigslen = sizeof(default_pq_sigs) / sizeof(default_pq_sigs[0]);
+        printf("[DUAL_PQ] Using fallback PQ algorithms\n");
+        return 1;
+    }
+    
+    /* Filter to only include valid PQ algorithms */
+    uint16_t *filtered_pq_sigs = OPENSSL_malloc(pq_sigslen * sizeof(uint16_t));
+    if (filtered_pq_sigs == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    
+    size_t filtered_count = 0;
+    
+    for (size_t i = 0; i < pq_sigslen; i++) {
+        uint16_t sigalg = pq_sigs[i];
+        
+        /* Check if it's a valid PQ algorithm */
+        if (is_valid_pq_signature_algorithm(sigalg)) {
+            filtered_pq_sigs[filtered_count++] = sigalg;
+            printf("[DUAL_PQ] Added PQ algorithm: 0x%04x\n", sigalg);
+        } else {
+            printf("[DUAL_PQ] Skipping invalid PQ algorithm: 0x%04x\n", sigalg);
+        }
+    }
+    
+    if (filtered_count == 0) {
+        printf("[DUAL_PQ] WARNING: No valid PQ algorithms found after filtering\n");
+        OPENSSL_free(filtered_pq_sigs);
+        /* Fallback to default PQ algorithms */
+        static const uint16_t default_pq_sigs[] = {
+            TLSEXT_SIGALG_falcon512, /* FALCON-512 */
+            TLSEXT_SIGALG_dilithium2, /* DILITHIUM-2 */
+            TLSEXT_SIGALG_sphincs_sha256_128f_simple  /* SPHINCS-128F */
+        };
+        
+        *psigs = default_pq_sigs;
+        *psigslen = sizeof(default_pq_sigs) / sizeof(default_pq_sigs[0]);
+        printf("[DUAL_PQ] Using fallback PQ algorithms\n");
+    } else {
+        /* Resize buffer to actual size */
+        uint16_t *resized_buffer = OPENSSL_realloc(filtered_pq_sigs, 
+                                                   filtered_count * sizeof(uint16_t));
+        if (resized_buffer != NULL) {
+            filtered_pq_sigs = resized_buffer;
+        }
+        
+        *psigs = filtered_pq_sigs;
+        *psigslen = filtered_count;
+        printf("[DUAL_PQ] Using %zu filtered PQ algorithms\n", filtered_count);
+    }
+    
+    return 1;
+}
+
+

@@ -92,6 +92,7 @@ static const ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_CERTIFICATE_REQUEST, "CertificateRequest"},
     {SSL3_MT_SERVER_DONE, "ServerHelloDone"},
     {SSL3_MT_CERTIFICATE_VERIFY, "CertificateVerify"},
+    {SSL3_MT_PQ_CERTIFICATE_VERIFY, "PQCertificateVerify"},
     {SSL3_MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange"},
     {SSL3_MT_FINISHED, "Finished"},
     {SSL3_MT_CERTIFICATE_URL, "CertificateUrl"},

@@ -715,6 +715,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_padding,
     TLSEXT_IDX_psk,
     TLSEXT_IDX_dual_signature_algorithms,
+    TLSEXT_IDX_related_certificate,
     /* Dummy index - must always be the last entry */
     TLSEXT_IDX_num_builtins
 } TLSEXT_INDEX;
@@ -933,6 +934,13 @@ struct ssl_ctx_st {
      */
     STACK_OF(X509_NAME) *ca_names;
     STACK_OF(X509_NAME) *client_ca_names;
+    /*
+     * Post-quantum certificate authorities for dual certificate mode.
+     * These are used when dual certificates are enabled to specify
+     * acceptable PQC certificate authorities.
+     */
+    STACK_OF(X509_NAME) *pq_ca_names;
+    STACK_OF(X509_NAME) *pq_client_ca_names;
 
     /*
      * Default values to use in SSL structures follow (these are copied by
@@ -1337,6 +1345,8 @@ struct ssl_connection_st {
             size_t ctype_len;
             /* Certificate authorities list peer sent */
             STACK_OF(X509_NAME) *peer_ca_names;
+            /* Post-quantum certificate authorities list peer sent */
+            STACK_OF(X509_NAME) *peer_pq_ca_names;
             size_t key_block_length;
             unsigned char *key_block;
             const EVP_CIPHER *new_sym_enc;
@@ -1563,6 +1573,13 @@ struct ssl_connection_st {
      */
     STACK_OF(X509_NAME) *ca_names;
     STACK_OF(X509_NAME) *client_ca_names;
+    /*
+     * Post-quantum certificate authorities for dual certificate mode.
+     * These are used when dual certificates are enabled to specify
+     * acceptable PQC certificate authorities.
+     */
+    STACK_OF(X509_NAME) *pq_ca_names;
+    STACK_OF(X509_NAME) *pq_client_ca_names;
     /* protocol behaviour */
     uint64_t options;
     /* API behaviour */
@@ -2185,7 +2202,9 @@ typedef struct cert_st {
 # endif
     /* Dual certificate support for post-quantum readiness */
     CERT_PKEY *pqkey;          /* Post-quantum certificate and key */
-    STACK_OF(X509) *pq_chain;  /* Post-quantum certificate chain */
+    STACK_OF(X509) *pq_chain;  /* Post-quantum certificate chain - CA certificates only */
+    X509_STORE *pq_verify_store;  /* Store pour validation PQC */
+    X509_STORE *pq_chain_store;   /* Store pour construction chaîne PQC */
     int dual_certs_enabled;    /* Flag to enable dual certificate mode */
     CRYPTO_REF_COUNT references;             /* >1 only if SSL_copy_session_id is used */
 } CERT;
@@ -2290,10 +2309,25 @@ typedef enum downgrade_en {
 
 #define TLSEXT_SIGALG_ed25519                                   0x0807
 #define TLSEXT_SIGALG_ed448                                     0x0808
+
+/* Post-quantum signature algorithms */
+#define TLSEXT_SIGALG_falcon512                                 0x0901
+#define TLSEXT_SIGALG_falcon1024                                0x0902
+#define TLSEXT_SIGALG_dilithium2                                0x0903
+#define TLSEXT_SIGALG_dilithium3                                0x0904
+#define TLSEXT_SIGALG_dilithium5                                0x0905
+#define TLSEXT_SIGALG_sphincs_sha256_128f_simple                0x0906
+#define TLSEXT_SIGALG_sphincs_sha256_192f_simple                0x0907
+#define TLSEXT_SIGALG_sphincs_sha256_256f_simple                0x0908
 #define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256              0x081a
 #define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384              0x081b
 #define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512              0x081c
+#define TLSEXT_SIGALG_mldsa_44                                  0x0909
+#define TLSEXT_SIGALG_mldsa_65                                  0x090A
 
+
+/* RelatedCertificate extension */
+#define TLSEXT_TYPE_related_certificate                         0x0011  
 /* Known PSK key exchange modes */
 #define TLSEXT_KEX_MODE_KE                                      0x00
 #define TLSEXT_KEX_MODE_KE_DHE                                  0x01
@@ -2600,12 +2634,28 @@ __owur int ssl_cert_select_current(CERT *c, X509 *x);
 __owur int ssl_cert_set_current(CERT *c, long arg);
 void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg);
 
+/* Standardized PQC chain management functions */
+__owur int ssl_cert_set0_pq_chain(SSL_CONNECTION *s, SSL_CTX *ctx, STACK_OF(X509) *chain);
+__owur int ssl_cert_set1_pq_chain(SSL_CONNECTION *s, SSL_CTX *ctx, STACK_OF(X509) *chain);
+__owur int ssl_cert_add0_pq_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x);
+__owur int ssl_cert_add1_pq_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x);
+__owur STACK_OF(X509) *ssl_cert_get0_pq_chain(SSL_CONNECTION *s, SSL_CTX *ctx);
+__owur STACK_OF(X509) *ssl_cert_get1_pq_chain(SSL_CONNECTION *s, SSL_CTX *ctx);
+void ssl_cert_clear_pq_chain(CERT *c);
+__owur int ssl_cert_set_pq_certificate(CERT *c, X509 *cert, EVP_PKEY *key, STACK_OF(X509) *chain);
+
 __owur int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk);
 __owur int ssl_verify_rpk(SSL_CONNECTION *s, EVP_PKEY *rpk);
 __owur int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags);
 __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain,
                                    int ref);
 __owur int ssl_cert_get_cert_store(CERT *c, X509_STORE **pstore, int chain);
+
+/* PQC store management functions */
+__owur int ssl_cert_set_pq_verify_store(CERT *c, X509_STORE *store, int ref);
+__owur int ssl_cert_set_pq_chain_store(CERT *c, X509_STORE *store, int ref);
+__owur int ssl_cert_get_pq_verify_store(CERT *c, X509_STORE **pstore);
+__owur int ssl_cert_get_pq_chain_store(CERT *c, X509_STORE **pstore);
 
 __owur int ssl_security(const SSL_CONNECTION *s, int op, int bits, int nid,
                         void *other);
@@ -3186,4 +3236,41 @@ typedef enum {
 
 KEY_TYPE get_key_type_from_evp_pkey(const EVP_PKEY *pkey);
 
-#endif 
+int SSL_get_dual_certs_enabled(const SSL *s);
+
+int tls1_get_pq_security_bits(uint16_t sigalg);
+
+/**
+ * Context for dual (classic + PQC) certificate validation.
+ */
+typedef struct dual_validation_ctx_st {
+    SSL_CONNECTION *s;
+    X509 *classic_cert;
+    X509 *pq_cert;
+    EVP_PKEY *classic_pkey;
+    EVP_PKEY *pq_pkey;
+    STACK_OF(X509) *classic_chain;
+    STACK_OF(X509) *pq_chain;
+    int validation_flags;
+    char error_details[512];
+} DUAL_VALIDATION_CTX;
+
+int validate_pq_certificate(DUAL_VALIDATION_CTX *ctx);
+int validate_pq_certificate_chain(DUAL_VALIDATION_CTX *ctx);
+
+/* RelatedCertificate extension callbacks */
+int add_related_certificate_cb(SSL *s, unsigned int ext_type,
+                               unsigned int context,
+                               const unsigned char **out,
+                               size_t *outlen, X509 *x,
+                               size_t chainidx, int *al,
+                               void *add_arg);
+
+int parse_related_certificate_cb(SSL *s, unsigned int ext_type,
+                                 unsigned int context,
+                                 const unsigned char *in,
+                                 size_t inlen, X509 *x,
+                                 size_t chainidx, int *al,
+                                 void *parse_arg);
+
+# endif 

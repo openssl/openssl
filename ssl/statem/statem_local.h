@@ -75,6 +75,10 @@ int parse_ca_names(SSL_CONNECTION *s, PACKET *pkt);
 const STACK_OF(X509_NAME) *get_ca_names(SSL_CONNECTION *s);
 int construct_ca_names(SSL_CONNECTION *s, const STACK_OF(X509_NAME) *ca_sk,
                        WPACKET *pkt);
+int parse_pq_ca_names(SSL_CONNECTION *s, PACKET *pkt);
+const STACK_OF(X509_NAME) *get_pq_ca_names(SSL_CONNECTION *s);
+int construct_pq_ca_names(SSL_CONNECTION *s, const STACK_OF(X509_NAME) *ca_sk,
+                          WPACKET *pkt);
 size_t construct_key_exchange_tbs(SSL_CONNECTION *s, unsigned char **ptbs,
                                   const void *param, size_t paramlen);
 
@@ -155,6 +159,10 @@ __owur MSG_PROCESS_RETURN tls_process_server_done(SSL_CONNECTION *s,
                                                   PACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s,
                                                  WPACKET *pkt);
+__owur CON_FUNC_RETURN tls_construct_pq_cert_verify(SSL_CONNECTION *s,
+                                                    WPACKET *pkt);
+__owur MSG_PROCESS_RETURN tls_process_pq_certificate_verify(SSL_CONNECTION *s,
+                                                            PACKET *pkt);
 __owur WORK_STATE tls_prepare_client_certificate(SSL_CONNECTION *s,
                                                  WORK_STATE wst);
 __owur CON_FUNC_RETURN tls_construct_client_certificate(SSL_CONNECTION *s,
@@ -592,3 +600,23 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                        X509 *x, size_t chainidx);
 int tls_parse_stoc_dual_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
                                  unsigned int context, X509 *x, size_t chainidx);
+
+/* Dual signature algorithms extension functions */
+EXT_RETURN tls_construct_ctos_dual_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
+                                            unsigned int context, X509 *x,
+                                            size_t chainidx);
+EXT_RETURN tls_construct_stoc_dual_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
+                                            unsigned int context, X509 *x,
+                                            size_t chainidx);
+int tls_parse_ctos_dual_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
+                                 unsigned int context, X509 *x, size_t chainidx);
+int tls_parse_stoc_dual_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
+                                 unsigned int context, X509 *x, size_t chainidx);
+
+/* Dual signature algorithms validation functions */
+int validate_dual_algorithm_compatibility(SSL_CONNECTION *s);
+int is_valid_classic_signature_algorithm(uint16_t sigalg);
+int is_valid_pq_signature_algorithm(uint16_t sigalg);
+int check_dual_security_compatibility(uint16_t classic_alg, uint16_t pq_alg);
+int get_dual_classical_sigalgs(SSL_CONNECTION *s, const uint16_t **psigs, size_t *psigslen);
+int get_dual_pq_sigalgs(SSL_CONNECTION *s, const uint16_t **psigs, size_t *psigslen);

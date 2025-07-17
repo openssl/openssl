@@ -20,10 +20,13 @@
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
+#include <openssl/v3_certbind.h>
 #include "internal/refcount.h"
 #include "ssl_local.h"
 #include "ssl_cert_table.h"
 #include "internal/thread_once.h"
+
+
 #ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
 # ifdef _WIN32
@@ -82,9 +85,10 @@ CERT *ssl_cert_new(size_t ssl_pkey_num)
     ret->sec_level = OPENSSL_TLS_SECURITY_LEVEL;
     ret->sec_ex = NULL;
     
-    /* Initialize dual certificate fields */
     ret->pqkey = NULL;
     ret->pq_chain = NULL;
+    ret->pq_verify_store = NULL;
+    ret->pq_chain_store = NULL;
     ret->dual_certs_enabled = 0;
     
     if (!CRYPTO_NEW_REF(&ret->references, 1)) {
@@ -151,7 +155,6 @@ CERT *ssl_cert_dup(CERT *cert)
             }
         }
         if (cpk->serverinfo != NULL) {
-            /* Just copy everything. */
             rpk->serverinfo = OPENSSL_memdup(cpk->serverinfo, cpk->serverinfo_length);
             if (rpk->serverinfo == NULL)
                 goto err;
@@ -168,7 +171,6 @@ CERT *ssl_cert_dup(CERT *cert)
 #endif
     }
 
-    /* Configured sigalgs copied across */
     if (cert->conf_sigalgs) {
         ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen
                                            * sizeof(*cert->conf_sigalgs));
@@ -190,7 +192,6 @@ CERT *ssl_cert_dup(CERT *cert)
         ret->client_sigalgslen = cert->client_sigalgslen;
     } else
         ret->client_sigalgs = NULL;
-    /* Copy any custom client certificate types */
     if (cert->ctype) {
         ret->ctype = OPENSSL_memdup(cert->ctype, cert->ctype_len);
         if (ret->ctype == NULL)
@@ -227,8 +228,17 @@ CERT *ssl_cert_dup(CERT *cert)
     }
 #endif
 
-    /* Copy dual certificate fields */
     ret->dual_certs_enabled = cert->dual_certs_enabled;
+    
+    if (cert->pq_verify_store != NULL) {
+        X509_STORE_up_ref(cert->pq_verify_store);
+        ret->pq_verify_store = cert->pq_verify_store;
+    }
+    
+    if (cert->pq_chain_store != NULL) {
+        X509_STORE_up_ref(cert->pq_chain_store);
+        ret->pq_chain_store = cert->pq_chain_store;
+    }
     
     if (cert->pqkey != NULL) {
         ret->pqkey = OPENSSL_zalloc(sizeof(CERT_PKEY));
@@ -245,13 +255,7 @@ CERT *ssl_cert_dup(CERT *cert)
             EVP_PKEY_up_ref(cert->pqkey->privatekey);
         }
         
-        if (cert->pqkey->chain) {
-            ret->pqkey->chain = X509_chain_up_ref(cert->pqkey->chain);
-            if (!ret->pqkey->chain) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
-                goto err;
-            }
-        }
+        ret->pqkey->chain = NULL;
         
         if (cert->pqkey->serverinfo != NULL) {
             ret->pqkey->serverinfo = OPENSSL_memdup(cert->pqkey->serverinfo, 
@@ -308,6 +312,19 @@ void ssl_cert_clear_certs(CERT *c)
         }
 #endif
     }
+    
+    if (c->pqkey != NULL) {
+        X509_free(c->pqkey->x509);
+        c->pqkey->x509 = NULL;
+        EVP_PKEY_free(c->pqkey->privatekey);
+        c->pqkey->privatekey = NULL;
+        OSSL_STACK_OF_X509_free(c->pqkey->chain);
+        c->pqkey->chain = NULL;
+        OPENSSL_free(c->pqkey->serverinfo);
+        c->pqkey->serverinfo = NULL;
+        c->pqkey->serverinfo_length = 0;
+    }
+    ssl_cert_clear_pq_chain(c);
 }
 
 void ssl_cert_free(CERT *c)
@@ -335,7 +352,6 @@ void ssl_cert_free(CERT *c)
     OPENSSL_free(c->psk_identity_hint);
 #endif
 
-    /* Free dual certificate fields */
     if (c->pqkey != NULL) {
         X509_free(c->pqkey->x509);
         EVP_PKEY_free(c->pqkey->privatekey);
@@ -343,7 +359,9 @@ void ssl_cert_free(CERT *c)
         OPENSSL_free(c->pqkey->serverinfo);
         OPENSSL_free(c->pqkey);
     }
-    OSSL_STACK_OF_X509_free(c->pq_chain);
+    ssl_cert_clear_pq_chain(c);
+    X509_STORE_free(c->pq_verify_store);
+    X509_STORE_free(c->pq_chain_store);
 
     OPENSSL_free(c->pkeys);
     CRYPTO_FREE_REF(&c->references);
@@ -468,6 +486,184 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg)
     c->cert_cb_arg = arg;
 }
 
+/* PQC certificate chain management functions */
+
+/*
+ * Set the PQC certificate chain (CA certificates only)
+ */
+int ssl_cert_set0_pq_chain(SSL_CONNECTION *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
+{
+    CERT *c = s != NULL ? s->cert : ctx->cert;
+    int i, r;
+
+    if (!c)
+        return 0;
+
+    if (chain != NULL) {
+        for (i = 0; i < sk_X509_num(chain); i++) {
+            X509 *x = sk_X509_value(chain, i);
+            r = ssl_security_cert(s, ctx, x, 0, 0);
+            if (r != 1) {
+                ERR_raise(ERR_LIB_SSL, r);
+                return 0;
+            }
+        }
+    }
+
+    OSSL_STACK_OF_X509_free(c->pq_chain);
+    c->pq_chain = chain;
+    return 1;
+}
+
+/*
+ * Set the PQC certificate chain with reference counting
+ */
+int ssl_cert_set1_pq_chain(SSL_CONNECTION *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
+{
+    STACK_OF(X509) *dchain;
+
+    if (!chain)
+        return ssl_cert_set0_pq_chain(s, ctx, NULL);
+    
+    dchain = X509_chain_up_ref(chain);
+    if (!dchain)
+        return 0;
+    
+    if (!ssl_cert_set0_pq_chain(s, ctx, dchain)) {
+        OSSL_STACK_OF_X509_free(dchain);
+        return 0;
+    }
+    return 1;
+}
+
+/*
+ * Add a single certificate to the PQC chain
+ */
+int ssl_cert_add0_pq_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
+{
+    CERT *c = s != NULL ? s->cert : ctx->cert;
+    int r;
+
+    if (!c)
+        return 0;
+
+    r = ssl_security_cert(s, ctx, x, 0, 0);
+    if (r != 1) {
+        ERR_raise(ERR_LIB_SSL, r);
+        return 0;
+    }
+
+    if (!c->pq_chain)
+        c->pq_chain = sk_X509_new_null();
+    if (!c->pq_chain || !sk_X509_push(c->pq_chain, x))
+        return 0;
+    return 1;
+}
+
+/*
+ * Add a single certificate to the PQC chain with reference counting
+ */
+int ssl_cert_add1_pq_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
+{
+    if (!ssl_cert_add0_pq_chain_cert(s, ctx, x))
+        return 0;
+    X509_up_ref(x);
+    return 1;
+}
+
+/*
+ * Get the PQC certificate chain
+ */
+STACK_OF(X509) *ssl_cert_get0_pq_chain(SSL_CONNECTION *s, SSL_CTX *ctx)
+{
+    CERT *c = s != NULL ? s->cert : ctx->cert;
+    return c != NULL ? c->pq_chain : NULL;
+}
+
+/*
+ * Get the PQC certificate chain with reference counting
+ */
+STACK_OF(X509) *ssl_cert_get1_pq_chain(SSL_CONNECTION *s, SSL_CTX *ctx)
+{
+    STACK_OF(X509) *chain = ssl_cert_get0_pq_chain(s, ctx);
+    if (chain != NULL) {
+        return X509_chain_up_ref(chain);
+    }
+    return NULL;
+}
+
+/*
+ * Clear the PQC certificate chain
+ */
+void ssl_cert_clear_pq_chain(CERT *c)
+{
+    if (c != NULL) {
+        OSSL_STACK_OF_X509_free(c->pq_chain);
+        c->pq_chain = NULL;
+    }
+}
+
+/*
+ * Set the PQC certificate and key with chain
+ */
+int ssl_cert_set_pq_certificate(CERT *c, X509 *cert, EVP_PKEY *key, STACK_OF(X509) *chain)
+{
+    if (c == NULL || cert == NULL || key == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (!c->dual_certs_enabled) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_DUAL_CERTS_NOT_ENABLED);
+        return 0;
+    }
+
+    EVP_PKEY *pubkey = X509_get0_pubkey(cert);
+    if (pubkey == NULL) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_X509_LIB);
+        return 0;
+    }
+
+    if (!X509_check_private_key(cert, key)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_PRIVATE_KEY_MISMATCH);
+        return 0;
+    }
+
+    if (c->pqkey == NULL) {
+        c->pqkey = OPENSSL_zalloc(sizeof(CERT_PKEY));
+        if (c->pqkey == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+    }
+
+    if (c->pqkey->x509 != NULL) {
+        X509_free(c->pqkey->x509);
+    }
+    if (c->pqkey->privatekey != NULL) {
+        EVP_PKEY_free(c->pqkey->privatekey);
+    }
+
+    X509_up_ref(cert);
+    c->pqkey->x509 = cert;
+    EVP_PKEY_up_ref(key);
+    c->pqkey->privatekey = key;
+
+    if (chain != NULL) {
+        OSSL_STACK_OF_X509_free(c->pq_chain);
+        c->pq_chain = X509_chain_up_ref(chain);
+        if (!c->pq_chain) {
+            X509_free(c->pqkey->x509);
+            EVP_PKEY_free(c->pqkey->privatekey);
+            c->pqkey->x509 = NULL;
+            c->pqkey->privatekey = NULL;
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 /*
  * Verify a certificate chain/raw public key
  * Return codes:
@@ -493,10 +689,25 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
         return 0;
 
     sctx = SSL_CONNECTION_GET_CTX(s);
+    
+    /* Determine which verify store to use */
     if (s->cert->verify_store)
         verify_store = s->cert->verify_store;
     else
         verify_store = sctx->cert_store;
+    
+    if (s->cert->dual_certs_enabled && s->cert->pq_verify_store != NULL && sk != NULL) {
+        X509 *first_cert = sk_X509_value(sk, 0);
+        if (first_cert != NULL) {
+            EVP_PKEY *pkey = X509_get0_pubkey(first_cert);
+            if (pkey != NULL) {
+                int nid = EVP_PKEY_id(pkey);
+                if (nid >= 1000) {
+                    verify_store = s->cert->pq_verify_store;
+                }
+            }
+        }
+    }
 
     ctx = X509_STORE_CTX_new_ex(sctx->libctx, sctx->propq);
     if (ctx == NULL) {
@@ -759,6 +970,101 @@ int SSL_add_client_CA(SSL *ssl, X509 *x)
 int SSL_CTX_add_client_CA(SSL_CTX *ctx, X509 *x)
 {
     return add_ca_name(&ctx->client_ca_names, x);
+}
+
+/* Post-quantum CA list functions */
+
+void SSL_set0_pq_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return;
+
+    set0_CA_list(&sc->pq_ca_names, name_list);
+}
+
+void SSL_CTX_set0_pq_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list)
+{
+    set0_CA_list(&ctx->pq_ca_names, name_list);
+}
+
+const STACK_OF(X509_NAME) *SSL_CTX_get0_pq_CA_list(const SSL_CTX *ctx)
+{
+    return ctx->pq_ca_names;
+}
+
+const STACK_OF(X509_NAME) *SSL_get0_pq_CA_list(const SSL *s)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+
+    if (sc == NULL)
+        return NULL;
+
+    return sc->pq_ca_names != NULL ? sc->pq_ca_names : s->ctx->pq_ca_names;
+}
+
+void SSL_CTX_set_pq_client_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list)
+{
+    set0_CA_list(&ctx->pq_client_ca_names, name_list);
+}
+
+STACK_OF(X509_NAME) *SSL_CTX_get_pq_client_CA_list(const SSL_CTX *ctx)
+{
+    return ctx->pq_client_ca_names;
+}
+
+void SSL_set_pq_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return;
+
+    set0_CA_list(&sc->pq_client_ca_names, name_list);
+}
+
+STACK_OF(X509_NAME) *SSL_get_pq_client_CA_list(const SSL *s)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+
+    if (sc == NULL)
+        return NULL;
+
+    if (!sc->server)
+        return sc->s3.tmp.peer_pq_ca_names;
+    return sc->pq_client_ca_names != NULL ? sc->pq_client_ca_names
+                                          : s->ctx->pq_client_ca_names;
+}
+
+int SSL_add1_to_pq_CA_list(SSL *ssl, const X509 *x)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (sc == NULL)
+        return 0;
+
+    return add_ca_name(&sc->pq_ca_names, x);
+}
+
+int SSL_CTX_add1_to_pq_CA_list(SSL_CTX *ctx, const X509 *x)
+{
+    return add_ca_name(&ctx->pq_ca_names, x);
+}
+
+int SSL_add_pq_client_CA(SSL *ssl, X509 *x)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (sc == NULL)
+        return 0;
+
+    return add_ca_name(&sc->pq_client_ca_names, x);
+}
+
+int SSL_CTX_add_pq_client_CA(SSL_CTX *ctx, X509 *x)
+{
+    return add_ca_name(&ctx->pq_client_ca_names, x);
 }
 
 static int xname_cmp(const X509_NAME *a, const X509_NAME *b)
@@ -1048,6 +1354,104 @@ int SSL_add_store_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     return ret;
 }
 
+/**
+ * Validate a PQ certificate (harmonized with classic logic).
+ * @param ctx Dual validation context
+ * @return 1 if valid, 0 otherwise
+ */
+int validate_pq_certificate(DUAL_VALIDATION_CTX *ctx)
+{
+    X509 *cert = ctx->pq_cert;
+    EVP_PKEY *pkey = ctx->pq_pkey;
+    
+    if (cert == NULL || pkey == NULL) {
+        snprintf(ctx->error_details, sizeof(ctx->error_details),
+                "PQ certificate or private key is NULL");
+        printf("[DUAL_VALIDATION] PQ certificate or private key is NULL\n");
+        return 0;
+    }
+    
+    printf("[DUAL_VALIDATION] Validating PQ certificate\n");
+    
+    /* Check certificate validity period */
+    if (X509_cmp_current_time(X509_get_notBefore(cert)) > 0) {
+        snprintf(ctx->error_details, sizeof(ctx->error_details),
+                "PQ certificate not yet valid");
+        printf("[DUAL_VALIDATION] PQ certificate not yet valid\n");
+        return 0;
+    }
+    
+    if (X509_cmp_current_time(X509_get_notAfter(cert)) < 0) {
+        snprintf(ctx->error_details, sizeof(ctx->error_details),
+                "PQ certificate has expired");
+        printf("[DUAL_VALIDATION] PQ certificate has expired\n");
+        return 0;
+    }
+    
+    /* Verify certificate signature */
+    if (X509_verify(cert, pkey) != 1) {
+        snprintf(ctx->error_details, sizeof(ctx->error_details),
+                "PQ certificate signature verification failed");
+        printf("[DUAL_VALIDATION] PQ certificate signature verification failed\n");
+        return 0;
+    }
+    
+    /* Check key type compatibility */
+    int cert_key_type = EVP_PKEY_get_id(pkey);
+    if (cert_key_type < 1000) { /* Assuming PQ key types start at 1000 */
+        snprintf(ctx->error_details, sizeof(ctx->error_details),
+                "Invalid PQ certificate key type: %d", cert_key_type);
+        printf("[DUAL_VALIDATION] Invalid PQ certificate key type: %d\n", cert_key_type);
+        return 0;
+    }
+    
+    printf("[DUAL_VALIDATION] PQ certificate validation passed\n");
+    return 1;
+}
+
+/**
+ * Validate a PQ certificate chain (harmonized with classic logic).
+ * @param ctx Dual validation context
+ * @return 1 if valid, 0 otherwise
+ */
+int validate_pq_certificate_chain(DUAL_VALIDATION_CTX *ctx)
+{
+    STACK_OF(X509) *chain = ctx->pq_chain;
+
+    if (chain == NULL) {
+        printf("[DUAL_VALIDATION] PQ certificate chain is NULL\n");
+        return 1; /* Not an error if no chain */
+    }
+
+    printf("[DUAL_VALIDATION] Validating PQ certificate chain\n");
+
+    int num_certs = sk_X509_num(chain);
+    printf("[DUAL_VALIDATION] PQ chain contains %d certificates\n", num_certs);
+
+    /* Validate each certificate in the chain */
+    for (int i = 0; i < num_certs; i++) {
+        X509 *cert = sk_X509_value(chain, i);
+
+        /* Check validity period */
+        if (X509_cmp_current_time(X509_get_notBefore(cert)) > 0) {
+            snprintf(ctx->error_details, sizeof(ctx->error_details),
+                     "PQ chain certificate %d not yet valid", i);
+            printf("[DUAL_VALIDATION] PQ chain certificate %d not yet valid\n", i);
+            return 0;
+        }
+
+        if (X509_cmp_current_time(X509_get_notAfter(cert)) < 0) {
+            snprintf(ctx->error_details, sizeof(ctx->error_details),
+                     "PQ chain certificate %d has expired", i);
+            printf("[DUAL_VALIDATION] PQ chain certificate %d has expired\n", i);
+            return 0;
+        }
+    }
+
+    printf("[DUAL_VALIDATION] PQ certificate chain validation passed\n");
+    return 1;
+}
+
 /* Build a certificate chain for current certificate */
 int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags)
 {
@@ -1078,10 +1482,30 @@ int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags)
         if (!X509_STORE_add_cert(chain_store, cpk->x509))
             goto err;
     } else {
-        if (c->chain_store != NULL)
-            chain_store = c->chain_store;
-        else
-            chain_store = real_ctx->cert_store;
+        if (c->dual_certs_enabled && c->pq_chain_store != NULL && cpk->x509 != NULL) {
+            EVP_PKEY *pkey = X509_get0_pubkey(cpk->x509);
+            if (pkey != NULL) {
+                int nid = EVP_PKEY_id(pkey);
+                if (nid >= 1000) {
+                    chain_store = c->pq_chain_store;
+                } else {
+                    if (c->chain_store != NULL)
+                        chain_store = c->chain_store;
+                    else
+                        chain_store = real_ctx->cert_store;
+                }
+            } else {
+                if (c->chain_store != NULL)
+                    chain_store = c->chain_store;
+                else
+                    chain_store = real_ctx->cert_store;
+            }
+        } else {
+            if (c->chain_store != NULL)
+                chain_store = c->chain_store;
+            else
+                chain_store = real_ctx->cert_store;
+        }
 
         if (flags & SSL_BUILD_CHAIN_FLAG_UNTRUSTED)
             untrusted = cpk->chain;
@@ -1172,6 +1596,62 @@ int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
 int ssl_cert_get_cert_store(CERT *c, X509_STORE **pstore, int chain)
 {
     *pstore = (chain ? c->chain_store : c->verify_store);
+    return 1;
+}
+
+/* PQC store management functions */
+
+/*
+ * Set the PQC verify store
+ */
+int ssl_cert_set_pq_verify_store(CERT *c, X509_STORE *store, int ref)
+{
+    if (c == NULL)
+        return 0;
+    
+    X509_STORE_free(c->pq_verify_store);
+    c->pq_verify_store = store;
+    if (ref && store)
+        X509_STORE_up_ref(store);
+    return 1;
+}
+
+/*
+ * Set the PQC chain store
+ */
+int ssl_cert_set_pq_chain_store(CERT *c, X509_STORE *store, int ref)
+{
+    if (c == NULL)
+        return 0;
+    
+    X509_STORE_free(c->pq_chain_store);
+    c->pq_chain_store = store;
+    if (ref && store)
+        X509_STORE_up_ref(store);
+    return 1;
+}
+
+/*
+ * Get the PQC verify store
+ */
+int ssl_cert_get_pq_verify_store(CERT *c, X509_STORE **pstore)
+{
+    if (c == NULL || pstore == NULL)
+        return 0;
+    
+    *pstore = c->pq_verify_store;
+    return 1;
+}
+
+/*
+ * Get the PQC chain store
+ */
+int ssl_cert_get_pq_chain_store(CERT *c, X509_STORE **pstore)
+{
+    if (c == NULL || pstore == NULL)
+        return 0;
+    
+    *pstore = c->pq_chain_store;
     return 1;
 }
 
@@ -1308,7 +1788,6 @@ const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx,
 {
     size_t i;
 
-    /* check classic pk types */
     for (i = 0; i < OSSL_NELEM(ssl_cert_info); i++) {
         const SSL_CERT_LOOKUP *tmp_lu = &ssl_cert_info[i];
 
@@ -1319,7 +1798,6 @@ const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx,
             return tmp_lu;
         }
     }
-    /* check provider-loaded pk types */
     for (i = 0; i < ctx->sigalg_list_len; i++) {
         SSL_CERT_LOOKUP *tmp_lu = &(ctx->ssl_cert_info[i]);
 
@@ -1341,4 +1819,170 @@ const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx, SSL_CTX *ctx)
     else if (idx >= (OSSL_NELEM(ssl_cert_info)))
         return &(ctx->ssl_cert_info[idx - SSL_PKEY_NUM]);
     return &ssl_cert_info[idx];
+}
+
+/* RelatedCertificate extension callbacks implementation */
+
+int add_related_certificate_cb(SSL *s, unsigned int ext_type,
+                               unsigned int context,
+                               const unsigned char **out,
+                               size_t *outlen, X509 *x,
+                               size_t chainidx, int *al,
+                               void *add_arg)
+{
+    /* This callback is called when constructing TLS messages that contain certificates */
+    /* For now, we return 0 to indicate we don't want to add the extension */
+    /* In a full implementation, you would extract the RelatedCertificate extension */
+    /* from the certificate and return it in *out and *outlen */
+    
+    (void)s;
+    (void)ext_type;
+    (void)context;
+    (void)x;
+    (void)chainidx;
+    (void)add_arg;
+    
+    *out = NULL;
+    *outlen = 0;
+    return 0; /* Don't add extension for now */
+}
+
+int parse_related_certificate_cb(SSL *s, unsigned int ext_type,
+                                 unsigned int context,
+                                 const unsigned char *in,
+                                 size_t inlen, X509 *x,
+                                 size_t chainidx, int *al,
+                                 void *parse_arg)
+{
+    /* This callback is called when parsing TLS messages that contain certificates */
+    /* Here we validate the RelatedCertificate extension data */
+    
+    (void)s;
+    (void)ext_type;
+    (void)context;
+    (void)in;
+    (void)inlen;
+    (void)parse_arg;
+    
+    /* If the certificate doesn't have the RelatedCertificate extension, continue */
+    RELATED_CERTIFICATE *rc = get_related_certificate_extension(x);
+    if (!rc) {
+        /* Extension not present - this is acceptable, continue */
+        return 1;
+    }
+    
+    /* Extension is present - we need to validate it */
+    printf("[RELATED_CERT_DEBUG] Validating RelatedCertificate extension for certificate at index %zu\n", chainidx);
+    
+    /* Get the peer certificate chain to find the classical certificate */
+    STACK_OF(X509) *chain = SSL_get_peer_cert_chain(s);
+    if (!chain || sk_X509_num(chain) < 2) {
+        printf("[RELATED_CERT_DEBUG] ERROR: Certificate chain too short for dual validation\n");
+        *al = SSL_AD_BAD_CERTIFICATE;
+        RELATED_CERTIFICATE_free(rc);
+        return 0;
+    }
+    
+    /* Find the classical certificate in the chain */
+    /* Assuming classical cert is first (index 0) and PQC cert is second (index 1) */
+    /* Adjust this logic based on your specific chain ordering */
+    X509 *classic_cert = NULL;
+    X509 *pqc_cert = NULL;
+    
+    if (chainidx == 0) {
+        /* This is the classical certificate - no RelatedCertificate extension expected */
+        printf("[RELATED_CERT_DEBUG] Classical certificate (index 0) - no validation needed\n");
+        RELATED_CERTIFICATE_free(rc);
+        return 1;
+    } else if (chainidx == 1) {
+        /* This is the PQC certificate - should contain RelatedCertificate extension */
+        classic_cert = sk_X509_value(chain, 0);
+        pqc_cert = x;
+        printf("[RELATED_CERT_DEBUG] PQC certificate (index 1) - validating RelatedCertificate extension\n");
+    } else {
+        /* Unexpected certificate position */
+        printf("[RELATED_CERT_DEBUG] ERROR: Unexpected certificate position %zu\n", chainidx);
+        *al = SSL_AD_BAD_CERTIFICATE;
+        RELATED_CERTIFICATE_free(rc);
+        return 0;
+    }
+    
+    if (!classic_cert || !pqc_cert) {
+        printf("[RELATED_CERT_DEBUG] ERROR: Failed to identify classical and PQC certificates\n");
+        *al = SSL_AD_BAD_CERTIFICATE;
+        RELATED_CERTIFICATE_free(rc);
+        return 0;
+    }
+    
+    /* Get the hash algorithm from the extension */
+    const EVP_MD *md = EVP_get_digestbyobj(rc->hashAlgorithm->algorithm);
+    if (!md) {
+        printf("[RELATED_CERT_DEBUG] ERROR: Unsupported hash algorithm in RelatedCertificate extension\n");
+        *al = SSL_AD_BAD_CERTIFICATE;
+        RELATED_CERTIFICATE_free(rc);
+        return 0;
+    }
+    
+    printf("[RELATED_CERT_DEBUG] Hash algorithm: %s\n", EVP_MD_get0_name(md));
+    
+    /* Serialize the classical certificate */
+    unsigned char *der = NULL;
+    int derlen = i2d_X509(classic_cert, &der);
+    if (derlen <= 0) {
+        printf("[RELATED_CERT_DEBUG] ERROR: Failed to serialize classical certificate\n");
+        *al = SSL_AD_BAD_CERTIFICATE;
+        RELATED_CERTIFICATE_free(rc);
+        return 0;
+    }
+    
+    /* Calculate hash of the classical certificate */
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    unsigned int hashlen = 0;
+    if (!EVP_Digest(der, derlen, hash, &hashlen, md, NULL)) {
+        printf("[RELATED_CERT_DEBUG] ERROR: Failed to calculate hash of classical certificate\n");
+        OPENSSL_free(der);
+        *al = SSL_AD_BAD_CERTIFICATE;
+        RELATED_CERTIFICATE_free(rc);
+        return 0;
+    }
+    
+    OPENSSL_free(der);
+    
+    /* Compare the calculated hash with the hash in the extension */
+    if (hashlen != (unsigned int)rc->hashValue->length) {
+        printf("[RELATED_CERT_DEBUG] ERROR: Hash length mismatch: calculated=%u, extension=%d\n", 
+               hashlen, rc->hashValue->length);
+        *al = SSL_AD_BAD_CERTIFICATE;
+        RELATED_CERTIFICATE_free(rc);
+        return 0;
+    }
+    
+    if (memcmp(hash, rc->hashValue->data, hashlen) != 0) {
+        printf("[RELATED_CERT_DEBUG] ERROR: Hash value mismatch\n");
+        printf("[RELATED_CERT_DEBUG] Calculated hash: ");
+        for (unsigned int i = 0; i < hashlen; i++) {
+            printf("%02X", hash[i]);
+        }
+        printf("\n");
+        printf("[RELATED_CERT_DEBUG] Extension hash: ");
+        for (int i = 0; i < rc->hashValue->length; i++) {
+            printf("%02X", rc->hashValue->data[i]);
+        }
+        printf("\n");
+        *al = SSL_AD_BAD_CERTIFICATE;
+        RELATED_CERTIFICATE_free(rc);
+        return 0;
+    }
+    
+    printf("[RELATED_CERT_DEBUG] RelatedCertificate extension validation SUCCESS\n");
+    
+    /* Print URI if present */
+    if (rc->uri && rc->uri->length > 0) {
+        printf("[RELATED_CERT_DEBUG] Related certificate URI: ");
+        fwrite(rc->uri->data, 1, rc->uri->length, stdout);
+        printf("\n");
+    }
+    
+    RELATED_CERTIFICATE_free(rc);
+    return 1; /* Validation successful */
 }

@@ -587,4 +587,7 @@ SSL_CTX_enable_dual_certs               587	3_3_0	EXIST::FUNCTION:
 SSL_CTX_set_pq_certificate              588	3_3_0	EXIST::FUNCTION:
 SSL_SESSION_get0_peer_chain             589	3_3_0	EXIST::FUNCTION:
 SSL_SESSION_get0_peer_pqc_chain         590	3_3_0	EXIST::FUNCTION:
-SSL_SESSION_has_dual_certs               591	3_3_0	EXIST::FUNCTION:
+SSL_SESSION_has_dual_certs              591	3_3_0	EXIST::FUNCTION:
+SSL_get_dual_certs_enabled              592	3_3_0	EXIST::FUNCTION:
+SSL_CTX_set_pq_client_CA_list           593     3_3_0   EXIST::FUNCTION:
+

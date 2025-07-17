@@ -47,6 +47,12 @@ IMPLEMENT_ASN1_FUNCTIONS(GOST_KX_MESSAGE)
 static CON_FUNC_RETURN tls_construct_encrypted_extensions(SSL_CONNECTION *s,
                                                           WPACKET *pkt);
 
+/* Prototype for PQC certificate chain construction */
+static int ssl_add_pqc_cert_chain_ietf_format(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, int depth);
+
+/* Prototype for certificate chain with delimiter */
+int ssl3_output_cert_chain_with_delimiter(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, int for_comp);
+
 static ossl_inline int received_client_cert(const SSL_CONNECTION *sc)
 {
     return sc->session->peer_rpk != NULL || sc->session->peer != NULL;
@@ -542,6 +548,16 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_CERT_VRFY:
+        /* Check if dual certificates are enabled and we need to send PQ certificate verify */
+        if (s->cert->dual_certs_enabled) {
+            printf("[SERVER] Transition vers TLS_ST_SW_PQ_CERT_VRFY (dual_certs_enabled)\n");
+            st->hand_state = TLS_ST_SW_PQ_CERT_VRFY;
+            return WRITE_TRAN_CONTINUE;
+        }
+        st->hand_state = TLS_ST_SW_FINISHED;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_PQ_CERT_VRFY:
         st->hand_state = TLS_ST_SW_FINISHED;
         return WRITE_TRAN_CONTINUE;
 
@@ -1139,6 +1155,12 @@ int ossl_statem_server_construct_message(SSL_CONNECTION *s,
         *mt = SSL3_MT_CERTIFICATE_VERIFY;
         break;
 
+    case TLS_ST_SW_PQ_CERT_VRFY:
+        printf("[SERVER] Appel à tls_construct_pq_cert_verify (état TLS_ST_SW_PQ_CERT_VRFY)\n");
+        *confunc = tls_construct_pq_cert_verify;
+        *mt = SSL3_MT_PQ_CERTIFICATE_VERIFY;
+        break;
+
 
     case TLS_ST_SW_KEY_EXCH:
         *confunc = tls_construct_server_key_exchange;
@@ -1288,6 +1310,9 @@ MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL_CONNECTION *s,
     case TLS_ST_SR_CERT_VRFY:
         return tls_process_cert_verify(s, pkt);
 
+    case TLS_ST_SR_PQ_CERT_VRFY:
+        return tls_process_pq_certificate_verify(s, pkt);
+
 #ifndef OPENSSL_NO_NEXTPROTONEG
     case TLS_ST_SR_NEXT_PROTO:
         return tls_process_next_proto(s, pkt);
@@ -1325,7 +1350,12 @@ WORK_STATE ossl_statem_server_post_process_message(SSL_CONNECTION *s,
 
     case TLS_ST_SR_KEY_EXCH:
         return tls_post_process_client_key_exchange(s, wst);
+
+    case TLS_ST_SR_CERT_VRFY:
+        break;
     }
+
+    return WORK_FINISHED_CONTINUE;
 }
 
 #ifndef OPENSSL_NO_SRP
@@ -3837,33 +3867,30 @@ CON_FUNC_RETURN tls_construct_server_certificate(SSL_CONNECTION *s, WPACKET *pkt
     case TLSEXT_cert_type_x509:
         /* Check if dual certificate mode is enabled */
         if (s->cert->dual_certs_enabled && s->cert->pqkey != NULL) {
-            printf("[DUAL_CERT_SERVER] Starting dual certificate encoding\n");
+            printf("[DUAL_CERT_SERVER] Starting dual certificate encoding according to IETF draft\n");
             printf("[DUAL_CERT_SERVER] Classic cert enabled: %d, PQ cert enabled: %d\n", 
                    s->cert->dual_certs_enabled, s->cert->pqkey != NULL);
             
-            printf("[DUAL_CERT_SERVER] Encoding classic certificate chain\n");
-            /* Output classic certificate chain in its own sub-packet */
-            if (!ssl3_output_cert_chain(s, pkt, cpk, 0)) {
-                printf("[DUAL_CERT_SERVER] ERROR: Failed to encode classic certificate chain\n");
+            /* Format according to IETF draft: 
+             * Certificate chain format:
+             * - Length of classic certificate chain (3 bytes)
+             * - Classic certificate chain
+             * - Length of PQ certificate chain (3 bytes) 
+             * - PQ certificate chain
+             */
+            
+            printf("[DUAL_CERT_SERVER] Encoding classic certificate chain with delimiter\n");
+            /* First, encode classic certificate chain with delimiter included */
+            if (!ssl3_output_cert_chain_with_delimiter(s, pkt, cpk, 0)) {
+                printf("[DUAL_CERT_SERVER] ERROR: Failed to encode classic certificate chain with delimiter\n");
                 /* SSLfatal() already called */
                 return 0;
             }
-            printf("[DUAL_CERT_SERVER] Classic certificate chain encoded successfully\n");
-            
-            printf("[DUAL_CERT_SERVER] Adding delimiter (0x00 0x00 0x00)\n");
-            /* Add delimiter: 0x00 0x00 0x00 */
-            if (!WPACKET_put_bytes_u8(pkt, 0x00) ||
-                !WPACKET_put_bytes_u8(pkt, 0x00) ||
-                !WPACKET_put_bytes_u8(pkt, 0x00)) {
-                printf("[DUAL_CERT_SERVER] ERROR: Failed to add delimiter\n");
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
-            printf("[DUAL_CERT_SERVER] Delimiter added successfully (0x00 0x00 0x00)\n");
+            printf("[DUAL_CERT_SERVER] Classic certificate chain with delimiter encoded successfully\n");
             
             printf("[DUAL_CERT_SERVER] Encoding PQC certificate chain\n");
-            /* Output PQC certificate chain with length prefixes */
-            if (!ssl_add_pqc_cert_chain(s, pkt, s->cert->pqkey, 0)) {
+            /* Then encode PQC certificate chain with proper length prefix */
+            if (!ssl_add_pqc_cert_chain_ietf_format(s, pkt, s->cert->pqkey, 0)) {
                 printf("[DUAL_CERT_SERVER] ERROR: Failed to encode PQC certificate chain\n");
                 /* SSLfatal() already called */
                 return 0;

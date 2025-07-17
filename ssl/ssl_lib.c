@@ -5524,6 +5524,134 @@ void SSL_CTX_set1_cert_store(SSL_CTX *ctx, X509_STORE *store)
     SSL_CTX_set_cert_store(ctx, store);
 }
 
+/* PQC store management functions */
+
+int SSL_CTX_set_pq_verify_store(SSL_CTX *ctx, X509_STORE *store)
+{
+    if (ctx == NULL || ctx->cert == NULL)
+        return 0;
+    
+    return ssl_cert_set_pq_verify_store(ctx->cert, store, 0);
+}
+
+int SSL_CTX_set1_pq_verify_store(SSL_CTX *ctx, X509_STORE *store)
+{
+    if (ctx == NULL || ctx->cert == NULL)
+        return 0;
+    
+    return ssl_cert_set_pq_verify_store(ctx->cert, store, 1);
+}
+
+int SSL_CTX_set_pq_chain_store(SSL_CTX *ctx, X509_STORE *store)
+{
+    if (ctx == NULL || ctx->cert == NULL)
+        return 0;
+    
+    return ssl_cert_set_pq_chain_store(ctx->cert, store, 0);
+}
+
+int SSL_CTX_set1_pq_chain_store(SSL_CTX *ctx, X509_STORE *store)
+{
+    if (ctx == NULL || ctx->cert == NULL)
+        return 0;
+    
+    return ssl_cert_set_pq_chain_store(ctx->cert, store, 1);
+}
+
+X509_STORE *SSL_CTX_get_pq_verify_store(const SSL_CTX *ctx)
+{
+    X509_STORE *store;
+    
+    if (ctx == NULL || ctx->cert == NULL)
+        return NULL;
+    
+    if (!ssl_cert_get_pq_verify_store(ctx->cert, &store))
+        return NULL;
+    
+    return store;
+}
+
+X509_STORE *SSL_CTX_get_pq_chain_store(const SSL_CTX *ctx)
+{
+    X509_STORE *store;
+    
+    if (ctx == NULL || ctx->cert == NULL)
+        return NULL;
+    
+    if (!ssl_cert_get_pq_chain_store(ctx->cert, &store))
+        return NULL;
+    
+    return store;
+}
+
+int SSL_set_pq_verify_store(SSL *s, X509_STORE *store)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    
+    if (sc == NULL || sc->cert == NULL)
+        return 0;
+    
+    return ssl_cert_set_pq_verify_store(sc->cert, store, 0);
+}
+
+int SSL_set1_pq_verify_store(SSL *s, X509_STORE *store)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    
+    if (sc == NULL || sc->cert == NULL)
+        return 0;
+    
+    return ssl_cert_set_pq_verify_store(sc->cert, store, 1);
+}
+
+int SSL_set_pq_chain_store(SSL *s, X509_STORE *store)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    
+    if (sc == NULL || sc->cert == NULL)
+        return 0;
+    
+    return ssl_cert_set_pq_chain_store(sc->cert, store, 0);
+}
+
+int SSL_set1_pq_chain_store(SSL *s, X509_STORE *store)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    
+    if (sc == NULL || sc->cert == NULL)
+        return 0;
+    
+    return ssl_cert_set_pq_chain_store(sc->cert, store, 1);
+}
+
+X509_STORE *SSL_get_pq_verify_store(const SSL *s)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    X509_STORE *store;
+    
+    if (sc == NULL || sc->cert == NULL)
+        return NULL;
+    
+    if (!ssl_cert_get_pq_verify_store(sc->cert, &store))
+        return NULL;
+    
+    return store;
+}
+
+X509_STORE *SSL_get_pq_chain_store(const SSL *s)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    X509_STORE *store;
+    
+    if (sc == NULL || sc->cert == NULL)
+        return NULL;
+    
+    if (!ssl_cert_get_pq_chain_store(sc->cert, &store))
+        return NULL;
+    
+    return store;
+}
+
 int SSL_want(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
@@ -6185,7 +6313,7 @@ static int ct_extract_ocsp_response_scts(SSL_CONNECTION *s)
     return scts_extracted;
 # else
     /* Behave as if no OCSP response exists */
-    return 0;
+        return 0;
 # endif
 }
 
@@ -6257,9 +6385,9 @@ static int ct_strict(const CT_POLICY_EVAL_CTX *ctx,
             return 1;
     }
     ERR_raise(ERR_LIB_SSL, SSL_R_NO_VALID_SCTS);
-    return 0;
-}
-
+            return 0;
+    }
+    
 int SSL_set_ct_validation_callback(SSL *s, ssl_ct_validation_cb callback,
                                    void *arg)
 {
@@ -7875,6 +8003,23 @@ int SSL_CTX_enable_dual_certs(SSL_CTX *ctx)
     /* Enable dual certificate mode */
     ctx->cert->dual_certs_enabled = 1;
 
+    /* Initialize PQC stores if not already done */
+    if (ctx->cert->pq_verify_store == NULL) {
+        ctx->cert->pq_verify_store = X509_STORE_new();
+        if (ctx->cert->pq_verify_store == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+    }
+    
+    if (ctx->cert->pq_chain_store == NULL) {
+        ctx->cert->pq_chain_store = X509_STORE_new();
+        if (ctx->cert->pq_chain_store == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+    }
+
     return 1;
 }
 
@@ -7935,8 +8080,12 @@ int SSL_CTX_set_pq_certificate(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key, STACK_OF
     pqkey = ctx->cert->pqkey;
 
     /* Free any existing certificate and key */
-    X509_free(pqkey->x509);
-    EVP_PKEY_free(pqkey->privatekey);
+    if (pqkey->x509 != NULL) {
+        X509_free(pqkey->x509);
+    }
+    if (pqkey->privatekey != NULL) {
+        EVP_PKEY_free(pqkey->privatekey);
+    }
 
     /* Set the new certificate and private key */
     X509_up_ref(cert);
@@ -7944,20 +8093,48 @@ int SSL_CTX_set_pq_certificate(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key, STACK_OF
     EVP_PKEY_up_ref(key);
     pqkey->privatekey = key;
 
-    /* Set the certificate chain */
-    sk_X509_pop_free(ctx->cert->pq_chain, X509_free);
-    ctx->cert->pq_chain = NULL;
+    /* Set the certificate chain using standardized function */
+    if (!ssl_cert_set1_pq_chain(NULL, ctx, chain)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
 
-    if (chain != NULL) {
-        ctx->cert->pq_chain = sk_X509_dup(chain);
-        if (ctx->cert->pq_chain == NULL) {
+    /* Create PQC verify store if not exists */
+    if (ctx->cert->pq_verify_store == NULL) {
+        ctx->cert->pq_verify_store = X509_STORE_new();
+        if (ctx->cert->pq_verify_store == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
             return 0;
         }
     }
 
+    /* Create PQC chain store if not exists */
+    if (ctx->cert->pq_chain_store == NULL) {
+        ctx->cert->pq_chain_store = X509_STORE_new();
+        if (ctx->cert->pq_chain_store == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+    }
+
+    /* Add PQC CA certificates to stores if chain is provided */
+    if (chain != NULL) {
+        for (int i = 0; i < sk_X509_num(chain); i++) {
+            X509 *ca_cert = sk_X509_value(chain, i);
+            /* Add all certificates to stores for now - let validation handle PQC detection */
+            if (ctx->cert->pq_verify_store != NULL) {
+                X509_STORE_add_cert(ctx->cert->pq_verify_store, ca_cert);
+            }
+            if (ctx->cert->pq_chain_store != NULL) {
+                X509_STORE_add_cert(ctx->cert->pq_chain_store, ca_cert);
+            }
+        }
+    }
+
     return 1;
 }
+
+
 
 /*
  * Détection fiable du type de clé (classique ou PQC)
@@ -7965,7 +8142,6 @@ int SSL_CTX_set_pq_certificate(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key, STACK_OF
  */
 KEY_TYPE get_key_type_from_evp_pkey(const EVP_PKEY *pkey) {
     if (!pkey) {
-        printf("[KEY_TYPE_DETECTION] ERROR: NULL pkey provided\n");
         return KEY_TYPE_UNKNOWN;
     }
     
@@ -7976,19 +8152,15 @@ KEY_TYPE get_key_type_from_evp_pkey(const EVP_PKEY *pkey) {
     switch (nid) {
         case EVP_PKEY_RSA: 
             result = KEY_TYPE_RSA;
-            printf("[KEY_TYPE_DETECTION] Detected RSA key\n");
             break;
         case EVP_PKEY_EC: 
             result = KEY_TYPE_EC;
-            printf("[KEY_TYPE_DETECTION] Detected EC key\n");
             break;
         case EVP_PKEY_ED25519: 
             result = KEY_TYPE_ED25519;
-            printf("[KEY_TYPE_DETECTION] Detected ED25519 key\n");
             break;
         case EVP_PKEY_ED448: 
             result = KEY_TYPE_ED448;
-            printf("[KEY_TYPE_DETECTION] Detected ED448 key\n");
             break;
         // PQC NIDs (à adapter selon vos définitions)
 #ifdef NID_dilithium2
@@ -8001,7 +8173,6 @@ KEY_TYPE get_key_type_from_evp_pkey(const EVP_PKEY *pkey) {
         case NID_dilithium5:
 #endif
             result = KEY_TYPE_DILITHIUM;
-            printf("[KEY_TYPE_DETECTION] Detected DILITHIUM key\n");
             break;
 #ifdef NID_falcon512
         case NID_falcon512:
@@ -8010,7 +8181,6 @@ KEY_TYPE get_key_type_from_evp_pkey(const EVP_PKEY *pkey) {
         case NID_falcon1024:
 #endif
             result = KEY_TYPE_FALCON;
-            printf("[KEY_TYPE_DETECTION] Detected FALCON key\n");
             break;
 #ifdef NID_sphincs_sha256_128f_robust
         case NID_sphincs_sha256_128f_robust:
@@ -8022,7 +8192,6 @@ KEY_TYPE get_key_type_from_evp_pkey(const EVP_PKEY *pkey) {
         case NID_sphincs_sha256_256f_robust:
 #endif
             result = KEY_TYPE_SPHINCS;
-            printf("[KEY_TYPE_DETECTION] Detected SPHINCS key\n");
             break;
 #ifdef NID_mldsa_44
         case NID_mldsa_44:
@@ -8031,7 +8200,6 @@ KEY_TYPE get_key_type_from_evp_pkey(const EVP_PKEY *pkey) {
         case NID_mldsa_65:
 #endif
             result = KEY_TYPE_MLDSA;
-            printf("[KEY_TYPE_DETECTION] Detected MLDSA key\n");
             break;
         default:
             /* Enhanced detection for unknown NIDs */
@@ -8041,61 +8209,112 @@ KEY_TYPE get_key_type_from_evp_pkey(const EVP_PKEY *pkey) {
                 int key_size = EVP_PKEY_size(pkey);
                 const char *key_type_name = EVP_PKEY_get0_type_name(pkey);
                 
-                printf("[KEY_TYPE_DETECTION] Key size: %d bytes, Name: %s\n", 
-                       key_size, key_type_name ? key_type_name : "unknown");
-                
                 /* Try name-based detection first */
                 if (key_type_name != NULL) {
                     if (strstr(key_type_name, "falcon") != NULL || strstr(key_type_name, "FALCON") != NULL) {
                         result = KEY_TYPE_FALCON;
-                        printf("[KEY_TYPE_DETECTION] Detected FALCON by name\n");
                     } else if (strstr(key_type_name, "dilithium") != NULL || strstr(key_type_name, "DILITHIUM") != NULL) {
                         result = KEY_TYPE_DILITHIUM;
-                        printf("[KEY_TYPE_DETECTION] Detected DILITHIUM by name\n");
                     } else if (strstr(key_type_name, "mldsa") != NULL || strstr(key_type_name, "MLDSA") != NULL) {
                         result = KEY_TYPE_MLDSA;
-                        printf("[KEY_TYPE_DETECTION] Detected MLDSA by name\n");
                     } else if (strstr(key_type_name, "sphincs") != NULL || strstr(key_type_name, "SPHINCS") != NULL) {
                         result = KEY_TYPE_SPHINCS;
-                        printf("[KEY_TYPE_DETECTION] Detected SPHINCS by name\n");
                     } else {
                         /* Size-based detection as fallback */
                         if (key_size >= 800 && key_size <= 1200) {
                             result = KEY_TYPE_FALCON;
-                            printf("[KEY_TYPE_DETECTION] Detected FALCON by size (%d bytes)\n", key_size);
                         } else if (key_size >= 1000 && key_size <= 2000) {
                             result = KEY_TYPE_DILITHIUM;
-                            printf("[KEY_TYPE_DETECTION] Detected DILITHIUM by size (%d bytes)\n", key_size);
                         } else if (key_size >= 2000 && key_size <= 4000) {
                             result = KEY_TYPE_MLDSA;
-                            printf("[KEY_TYPE_DETECTION] Detected MLDSA by size (%d bytes)\n", key_size);
                         } else {
                             result = KEY_TYPE_FALCON; /* Default to FALCON for unknown types */
-                            printf("[KEY_TYPE_DETECTION] Unknown PQC key type, defaulting to FALCON\n");
                         }
                     }
                 } else {
                     /* Size-based detection when no name available */
                     if (key_size >= 800 && key_size <= 1200) {
                         result = KEY_TYPE_FALCON;
-                        printf("[KEY_TYPE_DETECTION] Detected FALCON by size (%d bytes)\n", key_size);
                     } else if (key_size >= 1000 && key_size <= 2000) {
                         result = KEY_TYPE_DILITHIUM;
-                        printf("[KEY_TYPE_DETECTION] Detected DILITHIUM by size (%d bytes)\n", key_size);
                     } else if (key_size >= 2000 && key_size <= 4000) {
                         result = KEY_TYPE_MLDSA;
-                        printf("[KEY_TYPE_DETECTION] Detected MLDSA by size (%d bytes)\n", key_size);
                     } else {
                         result = KEY_TYPE_FALCON; /* Default to FALCON for unknown types */
-                        printf("[KEY_TYPE_DETECTION] Unknown PQC key type, defaulting to FALCON\n");
                     }
                 }
             } else {
             result = KEY_TYPE_UNKNOWN;
-            printf("[KEY_TYPE_DETECTION] Unknown key type (NID: %d)\n", nid);
             }
             break;
     }
     
     return result;
+}
+
+/*
+ * Load PQC CA certificates from file and add them to the PQC verify store
+ */
+int SSL_CTX_load_pq_verify_file(SSL_CTX *ctx, const char *CAfile)
+{
+    if (ctx == NULL || CAfile == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    
+    /* Enable dual certificates if not already enabled */
+    if (!ctx->cert->dual_certs_enabled) {
+        if (!SSL_CTX_enable_dual_certs(ctx)) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_CERTIFICATE_VERIFY_FAILED);
+        return 0;
+        }
+    }
+
+    /* Create PQC verify store if not exists */
+    if (ctx->cert->pq_verify_store == NULL) {
+        ctx->cert->pq_verify_store = X509_STORE_new();
+        if (ctx->cert->pq_verify_store == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        return 0;
+        }
+    }
+
+    /* Create PQC chain store if not exists */
+    if (ctx->cert->pq_chain_store == NULL) {
+        ctx->cert->pq_chain_store = X509_STORE_new();
+        if (ctx->cert->pq_chain_store == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        return 0;
+        }
+    }
+
+    /* Load certificates from file */
+    BIO *bio = BIO_new_file(CAfile, "r");
+    if (bio == NULL) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_CERTIFICATE_VERIFY_FAILED);
+        return 0;
+    }
+
+    X509 *cert;
+    int loaded = 0;
+    while ((cert = PEM_read_bio_X509(bio, NULL, NULL, NULL)) != NULL) {
+        /* Add all certificates to stores for now - let validation handle PQC detection */
+        if (ctx->cert->pq_verify_store != NULL && X509_STORE_add_cert(ctx->cert->pq_verify_store, cert)) {
+            /* Also add to chain store for chain building */
+            if (ctx->cert->pq_chain_store != NULL) {
+                X509_STORE_add_cert(ctx->cert->pq_chain_store, cert);
+            }
+            loaded++;
+        }
+        X509_free(cert);
+    }
+
+    BIO_free(bio);
+
+    if (loaded == 0) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_CERTIFICATE_VERIFY_FAILED);
+        return 0;
+    }
+    
+    return 1;
 }

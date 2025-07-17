@@ -682,6 +682,7 @@ static STRINT_PAIR handshakes[] = {
     {", CertificateRequest", SSL3_MT_CERTIFICATE_REQUEST},
     {", ServerHelloDone", SSL3_MT_SERVER_DONE},
     {", CertificateVerify", SSL3_MT_CERTIFICATE_VERIFY},
+    {", PQCertificateVerify", SSL3_MT_PQ_CERTIFICATE_VERIFY},
     {", ClientKeyExchange", SSL3_MT_CLIENT_KEY_EXCHANGE},
     {", Finished", SSL3_MT_FINISHED},
     {", CertificateUrl", SSL3_MT_CERTIFICATE_URL},

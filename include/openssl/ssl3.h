@@ -320,6 +320,7 @@ extern "C" {
 # define SSL3_MT_CERTIFICATE_REQUEST             13
 # define SSL3_MT_SERVER_DONE                     14
 # define SSL3_MT_CERTIFICATE_VERIFY              15
+#define SSL3_MT_PQ_CERTIFICATE_VERIFY          250
 # define SSL3_MT_CLIENT_KEY_EXCHANGE             16
 # define SSL3_MT_FINISHED                        20
 # define SSL3_MT_CERTIFICATE_URL                 21

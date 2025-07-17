@@ -192,7 +192,7 @@ openssl x509 -req -in server_pq_req.pem -CA ca_pq_cert.pem -CAkey ca_pq_key.pem 
 ```bash
 # Test dual certificate validation
 openssl s_server -cert server_classic_cert.pem -key server_classic_key.pem \
-    -pqcert server_pq_cert.pem -pqkey server_pq_key.pem -enable_dual_certs \
+    -pqcert server_pq_cert.pem -pqkey server_pq_key.pem -pqcafile ca_pq_cert.pem  -enable_dual_certs \
     -accept 4433 -www
 
 # In another terminal, test client connection

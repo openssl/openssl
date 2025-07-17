@@ -1030,6 +1030,7 @@ typedef enum {
     TLS_ST_CW_COMP_CERT,
     TLS_ST_CW_KEY_EXCH,
     TLS_ST_CW_CERT_VRFY,
+    TLS_ST_CW_PQ_CERT_VRFY,
     TLS_ST_CW_CHANGE,
     TLS_ST_CW_NEXT_PROTO,
     TLS_ST_CW_FINISHED,
@@ -1046,6 +1047,7 @@ typedef enum {
     TLS_ST_SR_COMP_CERT,
     TLS_ST_SR_KEY_EXCH,
     TLS_ST_SR_CERT_VRFY,
+    TLS_ST_SR_PQ_CERT_VRFY,
     TLS_ST_SR_NEXT_PROTO,
     TLS_ST_SR_CHANGE,
     TLS_ST_SR_FINISHED,
@@ -1056,7 +1058,9 @@ typedef enum {
     TLS_ST_SW_ENCRYPTED_EXTENSIONS,
     TLS_ST_CR_ENCRYPTED_EXTENSIONS,
     TLS_ST_CR_CERT_VRFY,
+    TLS_ST_CR_PQ_CERT_VRFY,
     TLS_ST_SW_CERT_VRFY,
+    TLS_ST_SW_PQ_CERT_VRFY,
     TLS_ST_CR_HELLO_REQ,
     TLS_ST_SW_KEY_UPDATE,
     TLS_ST_CW_KEY_UPDATE,
@@ -2078,6 +2082,20 @@ __owur STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s);
 __owur STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(const SSL_CTX *s);
 __owur int SSL_add_client_CA(SSL *ssl, X509 *x);
 __owur int SSL_CTX_add_client_CA(SSL_CTX *ctx, X509 *x);
+
+/* Post-quantum CA list functions */
+void SSL_set0_pq_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list);
+void SSL_CTX_set0_pq_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list);
+__owur const STACK_OF(X509_NAME) *SSL_get0_pq_CA_list(const SSL *s);
+__owur const STACK_OF(X509_NAME) *SSL_CTX_get0_pq_CA_list(const SSL_CTX *ctx);
+__owur int SSL_add1_to_pq_CA_list(SSL *ssl, const X509 *x);
+__owur int SSL_CTX_add1_to_pq_CA_list(SSL_CTX *ctx, const X509 *x);
+__owur STACK_OF(X509_NAME) *SSL_get_pq_client_CA_list(const SSL *s);
+__owur STACK_OF(X509_NAME) *SSL_CTX_get_pq_client_CA_list(const SSL_CTX *s);
+void SSL_set_pq_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list);
+void SSL_CTX_set_pq_client_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list);
+__owur int SSL_add_pq_client_CA(SSL *ssl, X509 *x);
+__owur int SSL_CTX_add_pq_client_CA(SSL_CTX *ctx, X509 *x);
 
 void SSL_set_connect_state(SSL *s);
 void SSL_set_accept_state(SSL *s);

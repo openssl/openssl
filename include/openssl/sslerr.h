@@ -175,6 +175,7 @@
 # define SSL_R_MISSING_RSA_ENCRYPTING_CERT                169
 # define SSL_R_MISSING_RSA_SIGNING_CERT                   170
 # define SSL_R_MISSING_SIGALGS_EXTENSION                  112
+# define SSL_R_MISSING_DUAL_SIGALGS_EXTENSION             113
 # define SSL_R_MISSING_SIGNING_CERT                       221
 # define SSL_R_MISSING_SRP_PARAM                          358
 # define SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION         209
