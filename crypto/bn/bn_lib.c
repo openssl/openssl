@@ -276,9 +276,9 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         return NULL;
     }
     if (BN_get_flags(b, BN_FLG_SECURE))
-        a = OPENSSL_secure_zalloc(words * sizeof(*a));
+        a = OPENSSL_secure_calloc(words, sizeof(*a));
     else
-        a = OPENSSL_zalloc(words * sizeof(*a));
+        a = OPENSSL_calloc(words, sizeof(*a));
     if (ossl_unlikely(a == NULL))
         return NULL;
 
