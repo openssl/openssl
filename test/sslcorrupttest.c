@@ -154,8 +154,8 @@ static int setup_cipher_list(void)
      * so that some of the allocated space will be wasted, but the loss
      * is deemed acceptable...
      */
-    cipher_list = OPENSSL_malloc(sk_SSL_CIPHER_num(sk_ciphers) *
-                                 sizeof(cipher_list[0]));
+    cipher_list = OPENSSL_malloc_array(sk_SSL_CIPHER_num(sk_ciphers),
+                                       sizeof(cipher_list[0]));
     if (!TEST_ptr(cipher_list))
         goto err;
 

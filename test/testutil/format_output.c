@@ -299,7 +299,7 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
 
     len = ((l1 > l2 ? l1 : l2) + bytes - 1) / bytes * bytes;
 
-    if (len > MEM_BUFFER_SIZE && (bufp = OPENSSL_malloc(len * 2)) == NULL) {
+    if (len > MEM_BUFFER_SIZE && (bufp = OPENSSL_malloc_array(2, len)) == NULL) {
         bufp = buffer;
         len = MEM_BUFFER_SIZE;
         test_printf_stderr("WARNING: these BIGNUMs have been truncated\n");

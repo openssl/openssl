@@ -112,7 +112,7 @@ static int helper_init(struct helper *h, size_t num_pkts)
     /* Allocate our array of packet information. */
     h->num_pkts = num_pkts;
     if (num_pkts > 0) {
-        h->pkts = OPENSSL_zalloc(sizeof(struct pkt_info) * num_pkts);
+        h->pkts = OPENSSL_calloc(num_pkts, sizeof(struct pkt_info));
         if (!TEST_ptr(h->pkts))
             goto err;
     } else {
@@ -936,11 +936,11 @@ static int test_rx_ack_actual(int tidx, int space)
             num_tx += s->num_pn;
 
     /* Allocate packet information structures. */
-    txs = OPENSSL_zalloc(sizeof(*txs) * num_tx);
+    txs = OPENSSL_calloc(num_tx, sizeof(*txs));
     if (!TEST_ptr(txs))
         goto err;
 
-    pkts = OPENSSL_zalloc(sizeof(*pkts) * num_tx);
+    pkts = OPENSSL_calloc(num_tx, sizeof(*pkts));
     if (!TEST_ptr(pkts))
         goto err;
 
