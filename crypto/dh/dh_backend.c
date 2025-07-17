@@ -80,6 +80,12 @@ int ossl_dh_key_fromdata(DH *dh, const OSSL_PARAM params[], int include_private)
     if (!DH_set0_key(dh, pub_key, priv_key))
         goto err;
 
+#ifdef FIPS_MODULE
+    if (pub_key != NULL && priv_key != NULL)
+        if (ossl_dh_check_pairwise(dh) == 0)
+            return 0;
+#endif
+
     return 1;
 
  err:
