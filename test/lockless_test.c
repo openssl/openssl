@@ -339,8 +339,6 @@ static int test_linkedlist_multithread_int(void)
 {
     int ret = 0;
 
-    srandom(47);
-
     if (!TEST_ptr((alock = CRYPTO_THREAD_lock_new())))
         goto err;
 
