@@ -651,8 +651,11 @@ sub trie_matched {
   my $indent2 = shift;
 
   if (defined($num)) {
-    printf "%sif (ossl_unlikely(r->num_%s >= %s))\n", $indent1, $field, $num;
+    printf "%sif (ossl_unlikely(r->num_%s >= %s)) {\n", $indent1, $field, $num;
+    printf "%sERR_raise_data(ERR_LIB_PROV, PROV_R_TOO_MANY_RECORDS,\n", $indent2;
+    printf "%s               \"param %%s present >%%d times\", s, $num);\n", $indent2;
     printf "%sreturn 0;\n", $indent2;
+    printf "%s}\n", $indent1;
     printf "%sr->%s[r->num_%s++] = (OSSL_PARAM *)p;\n", $indent1, $field, $field;
   } else {
     printf "%sif (ossl_likely(r->%s == NULL))\n", $indent1, $field;
