@@ -5936,3 +5936,10 @@ CMS_RecipientInfo_kemri_set0_pkey       ?	3_6_0	EXIST::FUNCTION:CMS
 CMS_RecipientInfo_kemri_get0_ctx        ?	3_6_0	EXIST::FUNCTION:CMS
 CMS_RecipientInfo_kemri_get0_kdf_alg    ?	3_6_0	EXIST::FUNCTION:CMS
 CMS_RecipientInfo_kemri_set_ukm         ?	3_6_0	EXIST::FUNCTION:CMS
+CRYPTO_malloc_array                     ?	3_6_0	EXIST::FUNCTION:
+CRYPTO_calloc                           ?	3_6_0	EXIST::FUNCTION:
+CRYPTO_aligned_alloc_array              ?	3_6_0	EXIST::FUNCTION:
+CRYPTO_realloc_array                    ?	3_6_0	EXIST::FUNCTION:
+CRYPTO_clear_realloc_array              ?	3_6_0	EXIST::FUNCTION:
+CRYPTO_secure_malloc_array              ?	3_6_0	EXIST::FUNCTION:
+CRYPTO_secure_calloc                    ?	3_6_0	EXIST::FUNCTION:

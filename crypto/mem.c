@@ -349,6 +349,11 @@ void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
     return ret;
 }
 
+/*
+ * Array allocation wraper routines implementations.
+ */
+#include "internal/array_alloc.inc"
+
 void CRYPTO_free(void *str, const char *file, int line)
 {
     INCREMENT(free_count);

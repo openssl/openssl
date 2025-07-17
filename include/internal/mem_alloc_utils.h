@@ -14,6 +14,10 @@
 #ifndef OSSL_INTERNAL_CHECK_SIZE_OVERFLOW_H
 # define OSSL_INTERNAL_CHECK_SIZE_OVERFLOW_H
 
+# include <limits.h>
+# include <stdbool.h>
+# include <stdint.h>
+
 # include "internal/common.h"
 
 # include <openssl/cryptoerr.h>
@@ -45,6 +49,39 @@ static inline void
 ossl_report_alloc_err(const char * const file, const int line)
 {
     ossl_report_alloc_err_ex(file, line, ERR_R_MALLOC_FAILURE);
+}
+
+/* Report an integer overflow during allocation size calculation. */
+static inline void
+ossl_report_alloc_err_of(const char * const file, const int line)
+{
+    ossl_report_alloc_err_ex(file, line, CRYPTO_R_INTEGER_OVERFLOW);
+}
+
+/*
+ * A small (premature) optimisation:  do not check for multiplication overflow
+ * if neither of the operands is at least half the type size.
+ */
+# define SQRT_SIZE_T ((size_t) 1 << (sizeof(size_t) * (CHAR_BIT / 2)))
+
+/*
+ * Check the result of num and size multiplication for overflow
+ * and set error if it is the case.
+ */
+static ossl_inline ossl_unused bool
+ossl_size_mul_of(const size_t num, const size_t size, size_t *bytes,
+                 const char * const file, const int line)
+{
+    *bytes = num * size;
+
+    if (ossl_unlikely(((num | size) >= SQRT_SIZE_T)
+                      && size != 0 && ((*bytes / size) != num))) {
+        ossl_report_alloc_err_of(file, line);
+
+        return true;
+    }
+
+    return false;
 }
 
 #endif /* OSSL_INTERNAL_CHECK_SIZE_OVERFLOW_H */
