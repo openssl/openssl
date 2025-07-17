@@ -69,7 +69,7 @@ OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
     }
 
     /* duplicate |sk->data| content */
-    ret->data = OPENSSL_malloc(sizeof(*ret->data) * sk->num_alloc);
+    ret->data = OPENSSL_malloc_array(sk->num_alloc, sizeof(*ret->data));
     if (ret->data == NULL)
         goto err;
     memcpy(ret->data, sk->data, sizeof(void *) * sk->num);
@@ -107,7 +107,7 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
     }
 
     ret->num_alloc = sk->num > min_nodes ? sk->num : min_nodes;
-    ret->data = OPENSSL_zalloc(sizeof(*ret->data) * ret->num_alloc);
+    ret->data = OPENSSL_calloc(ret->num_alloc, sizeof(*ret->data));
     if (ret->data == NULL)
         goto err;
 
@@ -197,7 +197,7 @@ static int sk_reserve(OPENSSL_STACK *st, int n, int exact)
          * At this point, |st->num_alloc| and |st->num| are 0;
          * so |num_alloc| value is |n| or |min_nodes| if greater than |n|.
          */
-        if ((st->data = OPENSSL_zalloc(sizeof(void *) * num_alloc)) == NULL)
+        if ((st->data = OPENSSL_calloc(num_alloc, sizeof(void *))) == NULL)
             return 0;
         st->num_alloc = num_alloc;
         return 1;
@@ -215,7 +215,7 @@ static int sk_reserve(OPENSSL_STACK *st, int n, int exact)
         return 1;
     }
 
-    tmpdata = OPENSSL_realloc((void *)st->data, sizeof(void *) * num_alloc);
+    tmpdata = OPENSSL_realloc_array((void *)st->data, num_alloc, sizeof(void *));
     if (tmpdata == NULL)
         return 0;
 

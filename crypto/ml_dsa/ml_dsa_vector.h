@@ -33,7 +33,7 @@ void vector_init(VECTOR *v, POLY *polys, size_t num_polys)
 static ossl_inline ossl_unused
 int vector_alloc(VECTOR *v, size_t num_polys)
 {
-    v->poly = OPENSSL_malloc(num_polys * sizeof(POLY));
+    v->poly = OPENSSL_malloc_array(num_polys, sizeof(POLY));
     if (v->poly == NULL)
         return 0;
     v->num_poly = num_polys;
@@ -43,7 +43,7 @@ int vector_alloc(VECTOR *v, size_t num_polys)
 static ossl_inline ossl_unused
 int vector_secure_alloc(VECTOR *v, size_t num_polys)
 {
-    v->poly = OPENSSL_secure_malloc(num_polys * sizeof(POLY));
+    v->poly = OPENSSL_secure_malloc_array(num_polys, sizeof(POLY));
     if (v->poly == NULL)
         return 0;
     v->num_poly = num_polys;

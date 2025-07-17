@@ -681,9 +681,8 @@ char *SRP_create_verifier_ex(const char *user, const char *pass, char **salt,
     if (*salt == NULL) {
         char *tmp_salt;
 
-        if ((tmp_salt = OPENSSL_malloc(SRP_RANDOM_SALT_LEN * 2)) == NULL) {
+        if ((tmp_salt = OPENSSL_malloc_array(SRP_RANDOM_SALT_LEN, 2)) == NULL)
             goto err;
-        }
         if (!t_tob64(tmp_salt, tmp2, SRP_RANDOM_SALT_LEN)) {
             OPENSSL_free(tmp_salt);
             goto err;

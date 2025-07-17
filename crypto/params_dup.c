@@ -38,9 +38,8 @@ static int ossl_param_buf_alloc(OSSL_PARAM_BUF *out, size_t extra_blocks,
     size_t sz;
 
     if (is_size_overflow(extra_blocks + out->blocks, OSSL_PARAM_ALIGN_SIZE, &sz,
-                         OPENSSL_FILE, OPENSSL_LINE)) {
+                         OPENSSL_FILE, OPENSSL_LINE))
         return 0;
-    }
 
     out->alloc = is_secure ? OPENSSL_secure_zalloc(sz) : OPENSSL_zalloc(sz);
     if (out->alloc == NULL)
@@ -187,7 +186,7 @@ OSSL_PARAM *OSSL_PARAM_merge(const OSSL_PARAM *p1, const OSSL_PARAM *p2)
     qsort(list2, list2_sz, sizeof(OSSL_PARAM *), compare_params);
 
    /* Allocate enough space to store the merged parameters */
-    params = OPENSSL_zalloc((list1_sz + list2_sz + 1) * sizeof(*p1));
+    params = OPENSSL_calloc(list1_sz + list2_sz + 1, sizeof(*p1));
     if (params == NULL)
         return NULL;
     dst = params;
