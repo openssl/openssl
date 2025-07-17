@@ -704,7 +704,7 @@ static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg)
      * decoded.
      */
     plaintxt_len = RSA_size(rsa);
-    plaintxt = OPENSSL_zalloc(plaintxt_len * 3);
+    plaintxt = OPENSSL_calloc(plaintxt_len, 3);
     if (plaintxt == NULL)
         goto err;
     ciphertxt = plaintxt + plaintxt_len;

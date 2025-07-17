@@ -480,7 +480,7 @@ static int sh_init(size_t size, size_t minsize)
     for (i = sh.bittable_size; i; i >>= 1)
         sh.freelist_size++;
 
-    sh.freelist = OPENSSL_zalloc(sh.freelist_size * sizeof(char *));
+    sh.freelist = OPENSSL_calloc(sh.freelist_size, sizeof(char *));
     OPENSSL_assert(sh.freelist != NULL);
     if (sh.freelist == NULL)
         goto err;

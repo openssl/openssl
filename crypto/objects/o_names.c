@@ -333,7 +333,7 @@ void OBJ_NAME_do_all_sorted(int type,
 
     d.type = type;
     d.names =
-        OPENSSL_malloc(sizeof(*d.names) * lh_OBJ_NAME_num_items(names_lh));
+        OPENSSL_malloc_array(lh_OBJ_NAME_num_items(names_lh), sizeof(*d.names));
     /* Really should return an error if !d.names...but its a void function! */
     if (d.names != NULL) {
         d.n = 0;

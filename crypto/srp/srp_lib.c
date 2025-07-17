@@ -39,7 +39,7 @@ static BIGNUM *srp_Calc_xy(const BIGNUM *x, const BIGNUM *y, const BIGNUM *N,
         goto err;
     if (y != N && BN_ucmp(y, N) >= 0)
         goto err;
-    if ((tmp = OPENSSL_malloc(numN * 2)) == NULL)
+    if ((tmp = OPENSSL_malloc_array(numN, 2)) == NULL)
         goto err;
     if (BN_bn2binpad(x, tmp, numN) < 0
         || BN_bn2binpad(y, tmp + numN, numN) < 0

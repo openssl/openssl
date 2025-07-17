@@ -40,9 +40,9 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
     ret->qual = NULL;
     if ((ret->data = sk_OPENSSL_PSTRING_new_null()) == NULL)
         goto err;
-    if ((ret->index = OPENSSL_malloc(sizeof(*ret->index) * num)) == NULL)
+    if ((ret->index = OPENSSL_malloc_array(num, sizeof(*ret->index))) == NULL)
         goto err;
-    if ((ret->qual = OPENSSL_malloc(sizeof(*(ret->qual)) * num)) == NULL)
+    if ((ret->qual = OPENSSL_malloc_array(num, sizeof(*(ret->qual)))) == NULL)
         goto err;
     for (i = 0; i < num; i++) {
         ret->index[i] = NULL;

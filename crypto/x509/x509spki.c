@@ -61,7 +61,7 @@ char *NETSCAPE_SPKI_b64_encode(NETSCAPE_SPKI *spki)
     if (der_len <= 0)
         return NULL;
     der_spki = OPENSSL_malloc(der_len);
-    b64_str = OPENSSL_malloc(der_len * 2);
+    b64_str = OPENSSL_malloc_array(der_len, 2);
     if (der_spki == NULL || b64_str == NULL) {
         OPENSSL_free(der_spki);
         OPENSSL_free(b64_str);
