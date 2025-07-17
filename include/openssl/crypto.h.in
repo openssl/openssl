@@ -100,36 +100,36 @@ int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock);
 #define OPENSSL_malloc_init() while(0) continue
 
 # define OPENSSL_malloc(num) \
-        CRYPTO_malloc(num, OPENSSL_FILE, OPENSSL_LINE)
+    CRYPTO_malloc(num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_zalloc(num) \
-        CRYPTO_zalloc(num, OPENSSL_FILE, OPENSSL_LINE)
+    CRYPTO_zalloc(num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_aligned_alloc(num, alignment, freeptr) \
-        CRYPTO_aligned_alloc(num, alignment, freeptr, \
-                             OPENSSL_FILE, OPENSSL_LINE)
+    CRYPTO_aligned_alloc(num, alignment, freeptr, \
+                         OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_realloc(addr, num) \
-        CRYPTO_realloc(addr, num, OPENSSL_FILE, OPENSSL_LINE)
+    CRYPTO_realloc(addr, num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_clear_realloc(addr, old_num, num) \
-        CRYPTO_clear_realloc(addr, old_num, num, OPENSSL_FILE, OPENSSL_LINE)
+    CRYPTO_clear_realloc(addr, old_num, num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_clear_free(addr, num) \
-        CRYPTO_clear_free(addr, num, OPENSSL_FILE, OPENSSL_LINE)
+    CRYPTO_clear_free(addr, num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_free(addr) \
-        CRYPTO_free(addr, OPENSSL_FILE, OPENSSL_LINE)
+    CRYPTO_free(addr, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_memdup(str, s) \
-        CRYPTO_memdup((str), s, OPENSSL_FILE, OPENSSL_LINE)
+    CRYPTO_memdup((str), s, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_strdup(str) \
-        CRYPTO_strdup(str, OPENSSL_FILE, OPENSSL_LINE)
+    CRYPTO_strdup(str, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_strndup(str, n) \
-        CRYPTO_strndup(str, n, OPENSSL_FILE, OPENSSL_LINE)
+    CRYPTO_strndup(str, n, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_malloc(num) \
-        CRYPTO_secure_malloc(num, OPENSSL_FILE, OPENSSL_LINE)
+    CRYPTO_secure_malloc(num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_zalloc(num) \
-        CRYPTO_secure_zalloc(num, OPENSSL_FILE, OPENSSL_LINE)
+    CRYPTO_secure_zalloc(num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_free(addr) \
-        CRYPTO_secure_free(addr, OPENSSL_FILE, OPENSSL_LINE)
+    CRYPTO_secure_free(addr, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_clear_free(addr, num) \
-        CRYPTO_secure_clear_free(addr, num, OPENSSL_FILE, OPENSSL_LINE)
+    CRYPTO_secure_clear_free(addr, num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_actual_size(ptr) \
-        CRYPTO_secure_actual_size(ptr)
+    CRYPTO_secure_actual_size(ptr)
 
 size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
