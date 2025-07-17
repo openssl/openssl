@@ -1334,9 +1334,10 @@ static int gid_cb(const char *elem, int len, void *arg)
                      * First, we restore any keyshare prefix in a new zero-terminated string
                      * (if not already present)
                      */
-                    restored_default_group_string = OPENSSL_malloc((1 /* max prefix length */ +
-                                                                    strlen(default_group_strings[i].group_string) +
-                                                                    1 /* \0 */) * sizeof(char));
+                    restored_default_group_string =
+                        OPENSSL_malloc(1 /* max prefix length */ +
+                                       strlen(default_group_strings[i].group_string) +
+                                       1 /* \0 */);
                     if (restored_default_group_string == NULL)
                         return 0;
                     if (add_keyshare
@@ -1552,7 +1553,7 @@ static int tuple_cb(const char *tuple, int len, void *arg)
     }
 
     /* Convert to \0-terminated string */
-    restored_tuple_string = OPENSSL_malloc((len + 1 /* \0 */) * sizeof(char));
+    restored_tuple_string = OPENSSL_malloc(len + 1 /* \0 */);
     if (restored_tuple_string == NULL)
         return 0;
     memcpy(restored_tuple_string, tuple, len);
