@@ -173,7 +173,7 @@ void *ossl_sa_get(const OPENSSL_SA *sa, ossl_uintmax_t n)
 
 static ossl_inline void **alloc_node(void)
 {
-    return OPENSSL_zalloc(SA_BLOCK_MAX * sizeof(void *));
+    return OPENSSL_calloc(SA_BLOCK_MAX, sizeof(void *));
 }
 
 int ossl_sa_set(OPENSSL_SA *sa, ossl_uintmax_t posn, void *val)

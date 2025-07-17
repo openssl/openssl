@@ -154,12 +154,13 @@ static struct ht_neighborhood_st *alloc_new_neighborhood_list(size_t len,
 {
     struct ht_neighborhood_st *ret;
 
-    ret = OPENSSL_aligned_alloc(sizeof(struct ht_neighborhood_st) * len,
-                                CACHE_LINE_BYTES, freeptr);
+    ret = OPENSSL_aligned_alloc_array(len, sizeof(struct ht_neighborhood_st),
+                                      CACHE_LINE_BYTES, freeptr);
 
     /* fall back to regular malloc */
     if (ret == NULL) {
-        ret = *freeptr = OPENSSL_malloc(sizeof(struct ht_neighborhood_st) * len);
+        ret = *freeptr =
+            OPENSSL_malloc_array(len, sizeof(struct ht_neighborhood_st));
         if (ret == NULL)
             return NULL;
     }

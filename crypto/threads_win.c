@@ -128,7 +128,7 @@ static struct rcu_qp *allocate_new_qp_group(struct rcu_lock_st *lock,
                                             uint32_t count)
 {
     struct rcu_qp *new =
-        OPENSSL_zalloc(sizeof(*new) * count);
+        OPENSSL_calloc(count, sizeof(*new));
 
     lock->group_count = count;
     return new;
