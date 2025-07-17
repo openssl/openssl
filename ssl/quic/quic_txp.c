@@ -3160,7 +3160,7 @@ static int txp_el_ensure_iovec(struct txp_el *el, size_t num)
 
     num = el->alloc_iovec != 0 ? el->alloc_iovec * 2 : 8;
 
-    iovec = OPENSSL_realloc(el->iovec, sizeof(OSSL_QTX_IOVEC) * num);
+    iovec = OPENSSL_realloc_array(el->iovec, num, sizeof(OSSL_QTX_IOVEC));
     if (iovec == NULL)
         return 0;
 
