@@ -304,6 +304,8 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
 
 void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
 {
+    void *ret;
+
     INCREMENT(realloc_count);
     if (realloc_impl != CRYPTO_realloc)
         return realloc_impl(str, num, file, line);
@@ -317,7 +319,12 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
     }
 
     FAILTEST();
-    return realloc(str, num);
+    ret = realloc(str, num);
+
+    if (num && !ret)
+        report_alloc_err(file, line);
+
+    return ret;
 }
 
 void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
