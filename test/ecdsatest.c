@@ -399,7 +399,7 @@ int setup_tests(void)
 
     /* get a list of all internal curves */
     crv_len = EC_get_builtin_curves(NULL, 0);
-    if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
+    if (!TEST_ptr(curves = OPENSSL_malloc_array(crv_len, sizeof(*curves)))
         || !TEST_true(EC_get_builtin_curves(curves, crv_len))) {
         fake_rand_finish(fake_rand);
         return 0;
