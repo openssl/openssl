@@ -42,11 +42,13 @@ our($opt_u);
 our($opt_v);
 our($opt_c);
 our($opt_i);
+our($opt_a);
 
 # Print usage message and exit.
 sub help {
     print <<EOF;
 Find small errors (nits) in documentation.  Options:
+    -a List undocumented env vars
     -c List undocumented commands, undocumented options and unimplemented options.
     -d Detailed list of undocumented (implies -u)
     -e Detailed list of new undocumented (implies -v)
@@ -62,7 +64,7 @@ EOF
     exit;
 }
 
-getopts('cdehlm:noiuv');
+getopts('acdehlm:noiuv');
 
 help() if $opt_h;
 $opt_u = 1 if $opt_d;
@@ -74,8 +76,8 @@ die "Cannot use both -d and -e"
 
 # We only need to check c, l, n, u and v.
 # Options d, e, o imply one of the above.
-die "Need one of -[cdehlnouv] flags.\n"
-    unless $opt_c or $opt_l or $opt_n or $opt_u or $opt_v;
+die "Need one of -[acdehlnouv] flags.\n"
+    unless $opt_a or $opt_c or $opt_l or $opt_n or $opt_u or $opt_v;
 
 
 my $temp = '/tmp/docnits.txt';
@@ -1275,6 +1277,104 @@ sub checkflags {
     }
 }
 
+sub check_env_vars {
+    # initialized with the list of "untracable" variables
+    my %env_list = ("SSL_CERT_FILE" => 1);
+    my @env_files;
+    my @except_env_files = (
+        "$config{sourcedir}/providers/implementations/keymgmt/template_kmgmt.c",
+        "$config{sourcedir}/providers/implementations/kem/template_kem.c",
+        "$config{sourcedir}/Makefile.in",
+    );
+    my @env_headers;
+    my @env_macro;
+
+    # look for source files
+    find(sub { push @env_files, $File::Find::name if /\.c$|\.in$/; },
+         $config{sourcedir});
+
+    foreach my $filename (@env_files) {
+        next if $filename =~ /test\/|demos\//
+                || grep { $_ eq $filename } @except_env_files;
+
+        open my $fh, '<', $filename or die "Can't open $filename: $!";
+        while (my $line = <$fh>) {
+            # for windows
+            # for .in files
+            $env_list{$1} = 1 if ($line =~ /GetEnvironmentVariableW\([\s\S]*"([^"]+)",/
+                || $line =~ /\$ENV\{([^}"']+)\}/);
+            # this also handles ossl_safe_getenv
+            if ($line =~ /getenv\(([^()\s]+)\)/) {
+                my $env1 = $1;
+                if ($env1 =~ /"([^"]+)"/) {
+                    $env_list{$1} = 1;
+                } elsif ($env1 =~ /([A-Z0-9_])/) {
+                    push(@env_macro, $env1);
+                }
+            }
+            # match ternary operators; $1 - true, $2 - false
+            if ($line =~ /env\(\s*[^?]+\?\s*([^:( ]+)\s*:\s*([^(]+)\s*\)/) {
+                my ($env1, $env2) = ($1, $2);
+                # if it's a string just add to the list
+                # otherwise look for the constant value later
+                if ($env1 =~ /"([^"]+)"/) {
+                    $env_list{$1} = 1;
+                } else {
+                    push(@env_macro, $env1);
+                }
+                if ($env2 =~ /"([^"]+)"/) {
+                    $env_list{$1} = 1;
+                } else {
+                    push(@env_macro, $env2);
+                }
+            }
+        }
+        close $fh;
+    }
+
+    # look for constants in header files
+    find(sub { push @env_headers, $File::Find::name if /\.h$/; },
+         $config{sourcedir});
+
+     foreach my $filename (@env_headers) {
+        open my $fh, '<', $filename or die "Can't open $filename: $!";
+        while (my $line = <$fh>) {
+            foreach my $em (@env_macro) {
+                $env_list{$1} = 1 if ($line =~ /define\s+\Q$em\E\s+"(\S+)"/);
+            }
+        }
+     }
+
+    # need to save the value before starting to delete from the hash
+    my $number_of_env = scalar keys %env_list;
+
+    # check for env vars in pod files
+    foreach ( files(TAGS => [ 'manual' ]) ) {
+        my %podinfo = extract_pod_info($_, { debug => $debug });
+        my $contents = $podinfo{contents};
+
+        # openssl-env.pod does not have ENVIRONMENT section, but the whole file
+        # is about environment variables
+        if ( $contents =~ /=head1 ENVIRONMENT(.*)=head1/ms ) {
+            $contents = $1;
+        } elsif ( $_ !~ /openssl-env.pod/ ) {
+            next;
+        }
+
+        for my $env_name (keys %env_list) {
+            delete($env_list{$env_name}) if $contents =~ $env_name;
+        }
+    }
+
+    print "Number of env vars found:".$number_of_env."\n" if $debug;
+    $number_of_env = scalar keys %env_list;
+    if ($number_of_env != 0) {
+        print "Undocumented environment variables:\n";
+        print join("\n", sort keys %env_list)."\n";
+        err("Total:".$number_of_env."\n");
+    }
+}
+
 ##
 ##  MAIN()
 ##  Do the work requested by the various getopt flags.
@@ -1371,6 +1471,10 @@ if ( $opt_n ) {
             err("$_ doesn't start with openssl-") unless /openssl-/;
         }
     }
+}
+
+if ( $opt_a ) {
+    check_env_vars();
 }
 
 checkstate();
