@@ -812,7 +812,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     }
 
     if (mac_size > 0) {
-        macbufs = OPENSSL_zalloc(sizeof(*macbufs) * num_recs);
+        macbufs = OPENSSL_calloc(num_recs, sizeof(*macbufs));
         if (macbufs == NULL) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             return OSSL_RECORD_RETURN_FATAL;
