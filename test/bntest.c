@@ -2355,7 +2355,7 @@ static int test_rand_range_single(size_t n)
     unsigned int i, v;
     int res = 0;
 
-    if (!TEST_ptr(counts = OPENSSL_zalloc(sizeof(*counts) * range))
+    if (!TEST_ptr(counts = OPENSSL_calloc(range, sizeof(*counts)))
         || !TEST_ptr(rng = BN_new())
         || !TEST_ptr(val = BN_new())
         || !TEST_true(BN_set_word(rng, range)))
