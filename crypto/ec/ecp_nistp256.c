@@ -2088,8 +2088,8 @@ int ossl_ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
              */
             mixed = 1;
         }
-        secrets = OPENSSL_malloc(sizeof(*secrets) * num_points);
-        pre_comp = OPENSSL_malloc(sizeof(*pre_comp) * num_points);
+        secrets = OPENSSL_zalloc(sizeof(*secrets) * num_points);
+        pre_comp = OPENSSL_zalloc(sizeof(*pre_comp) * num_points);
         if (mixed)
             tmp_smallfelems =
               OPENSSL_malloc(sizeof(*tmp_smallfelems) * (num_points * 17 + 1));
@@ -2101,8 +2101,6 @@ int ossl_ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
          * we treat NULL scalars as 0, and NULL points as points at infinity,
          * i.e., they contribute nothing to the linear combination
          */
-        memset(secrets, 0, sizeof(*secrets) * num_points);
-        memset(pre_comp, 0, sizeof(*pre_comp) * num_points);
         for (i = 0; i < num_points; ++i) {
             if (i == num) {
                 /*
