@@ -269,8 +269,8 @@
         case OPT_S_NO_EMS
 
 #define IS_NO_PROT_FLAG(o) \
- (o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
-  || o == OPT_S_NOTLS1_2 || o == OPT_S_NOTLS1_3)
+    (o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
+     || o == OPT_S_NOTLS1_2 || o == OPT_S_NOTLS1_3)
 
 /*
  * Random state options.

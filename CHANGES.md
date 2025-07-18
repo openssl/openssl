@@ -31,6 +31,11 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * Support for SSLv3 was removed. SSLv3 has been deprecated since
+   2015, and OpenSSL had it disabled by default since 1.1.0 (2016).
+
+   *Kurt Roeckx*
+
  * Introduce SSL_OP_SERVER_PREFERENCE superceding misleadingly
    named SSL_OP_CIPHER_SERVER_PREFERENCE.
 
