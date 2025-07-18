@@ -2611,24 +2611,15 @@ __owur const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 __owur int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt,
                                    size_t *len);
 int ssl3_init_finished_mac(SSL_CONNECTION *s);
-__owur int ssl3_setup_key_block(SSL_CONNECTION *s);
-__owur int ssl3_change_cipher_state(SSL_CONNECTION *s, int which);
 void ssl3_cleanup_key_block(SSL_CONNECTION *s);
 __owur int ssl3_do_write(SSL_CONNECTION *s, uint8_t type);
 int ssl3_send_alert(SSL_CONNECTION *s, int level, int desc);
-__owur int ssl3_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
-                                       unsigned char *p, size_t len,
-                                       size_t *secret_size);
 __owur int ssl3_get_req_cert_type(SSL_CONNECTION *s, WPACKET *pkt);
 __owur int ssl3_num_ciphers(void);
 __owur const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
 int ssl3_renegotiate(SSL *ssl);
 int ssl3_renegotiate_check(SSL *ssl, int initok);
-void ssl3_digest_master_key_set_params(const SSL_SESSION *session,
-                                       OSSL_PARAM params[]);
 __owur int ssl3_dispatch_alert(SSL *s);
-__owur size_t ssl3_final_finish_mac(SSL_CONNECTION *s, const char *sender,
-                                    size_t slen, unsigned char *p);
 __owur int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf,
                            size_t len);
 void ssl3_free_digest_list(SSL_CONNECTION *s);
@@ -2651,7 +2642,6 @@ __owur long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
 __owur long ssl3_ctx_callback_ctrl(SSL_CTX *s, int cmd, void (*fp) (void));
 
 __owur int ssl3_do_change_cipher_spec(SSL_CONNECTION *s);
-__owur OSSL_TIME ssl3_default_timeout(void);
 
 __owur int ssl3_set_handshake_header(SSL_CONNECTION *s, WPACKET *pkt,
                                      int htype);
@@ -2789,7 +2779,6 @@ __owur int tls13_export_keying_material_early(SSL_CONNECTION *s,
                                               size_t contextlen);
 __owur int tls1_alert_code(int code);
 __owur int tls13_alert_code(int code);
-__owur int ssl3_alert_code(int code);
 
 __owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CONNECTION *s);
 

@@ -3314,44 +3314,6 @@ void ssl_sort_cipher_list(void)
     qsort(ssl3_scsvs, SSL3_NUM_SCSVS, sizeof(ssl3_scsvs[0]), cipher_compare);
 }
 
-static int sslcon_undefined_function_1(SSL_CONNECTION *sc, unsigned char *r,
-                                       size_t s, const char *t, size_t u,
-                                       const unsigned char *v, size_t w, int x)
-{
-    (void)r;
-    (void)s;
-    (void)t;
-    (void)u;
-    (void)v;
-    (void)w;
-    (void)x;
-    return ssl_undefined_function(SSL_CONNECTION_GET_SSL(sc));
-}
-
-const SSL3_ENC_METHOD SSLv3_enc_data = {
-    ssl3_setup_key_block,
-    ssl3_generate_master_secret,
-    ssl3_change_cipher_state,
-    ssl3_final_finish_mac,
-    SSL3_MD_CLIENT_FINISHED_CONST, 4,
-    SSL3_MD_SERVER_FINISHED_CONST, 4,
-    ssl3_alert_code,
-    sslcon_undefined_function_1,
-    0,
-    ssl3_set_handshake_header,
-    tls_close_construct_packet,
-    ssl3_handshake_write
-};
-
-OSSL_TIME ssl3_default_timeout(void)
-{
-    /*
-     * 2 hours, the 24 hours mentioned in the SSLv3 spec is way too long for
-     * http, the cache would over fill
-     */
-    return ossl_seconds2time(60 * 60 * 2);
-}
-
 int ssl3_num_ciphers(void)
 {
     return SSL3_NUM_CIPHERS;
