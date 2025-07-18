@@ -390,12 +390,8 @@ static int ml_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_ML_DSA_CTX *pctx = (PROV_ML_DSA_CTX *)vctx;
     struct ml_dsa_verifymsg_set_ctx_params_st p;
 
-    if (pctx == NULL)
+    if (pctx == NULL || !ml_dsa_verifymsg_set_ctx_params_decoder(params, &p))
         return 0;
-    if (ossl_param_is_empty(params))
-        return 1;
-
-    p = ml_dsa_verifymsg_set_ctx_params_decoder(params);
 
     if (p.ctx != NULL) {
         void *vp = pctx->context_string;
@@ -468,10 +464,8 @@ static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
     PROV_ML_DSA_CTX *ctx = (PROV_ML_DSA_CTX *)vctx;
     struct ml_dsa_get_ctx_params_st p;
 
-    if (ctx == NULL)
+    if (ctx == NULL || !ml_dsa_get_ctx_params_decoder(params, &p))
         return 0;
-
-    p = ml_dsa_get_ctx_params_decoder(params);
 
     if (p.id != NULL
         && !OSSL_PARAM_set_octet_string(p.id,

@@ -122,12 +122,11 @@ static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey,
         engine = (char *)ENGINE_get_id(pmacctx->key->cipher.engine);
 #endif
 
-    if (!ossl_prov_set_macctx(pmacctx->macctx, NULL,
+    if (!ossl_prov_set_macctx(pmacctx->macctx,
                               (char *)ciphername,
                               (char *)mdname,
                               (char *)engine,
-                              pmacctx->key->properties,
-                              NULL, 0))
+                              pmacctx->key->properties))
         return 0;
 
     if (!EVP_MAC_init(pmacctx->macctx, pmacctx->key->priv_key,
