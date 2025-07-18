@@ -26,7 +26,7 @@ const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *ossl_prov_cipher_hw_aes_cbc_hmac_sha512_e
     return NULL;
 }
 #else
-# if defined(__aarch64__)
+# if defined(__aarch64__) || defined(_M_ARM64)
 void asm_aescbc_sha512_hmac(const uint8_t *csrc, uint8_t *cdst, uint64_t clen,
                             uint8_t *dsrc, uint8_t *ddst, uint64_t dlen,
                             CIPH_DIGEST *arg);
