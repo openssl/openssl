@@ -808,7 +808,7 @@ sub output_param_decoder {
 sub produce_param_decoder {
     my $s;
 
-    open local *STDOUT, '>', \$s;
+    open(local *STDOUT, '>', \$s);
     output_param_decoder(@_);
     return $s;
 }

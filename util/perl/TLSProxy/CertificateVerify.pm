@@ -28,7 +28,7 @@ sub new
     my $self = $class->SUPER::new(
         $isdtls,
         $server,
-        TLSProxy::Message::MT_CERTIFICATE_VERIFY,
+        TLSProxy::Message::MT_CERTIFICATE_VERIFY(),
         $msgseq,
         $msgfrag,
         $msgfragoffs,
@@ -52,8 +52,8 @@ sub parse
     my $record = ${$self->records}[0];
 
     if (TLSProxy::Proxy->is_tls13()
-            || $record->version() == TLSProxy::Record::VERS_TLS_1_2
-            || $record->version() == TLSProxy::Record::VERS_DTLS_1_2) {
+            || $record->version() == TLSProxy::Record::VERS_TLS_1_2()
+            || $record->version() == TLSProxy::Record::VERS_DTLS_1_2()) {
         $sigalg = unpack('n', $remdata);
         $remdata = substr($remdata, 2);
     }
