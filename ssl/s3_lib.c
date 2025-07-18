@@ -4544,7 +4544,10 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
 
 int ssl3_get_req_cert_type(SSL_CONNECTION *s, WPACKET *pkt)
 {
-    uint32_t alg_k, alg_a = 0;
+#ifndef OPENSSL_NO_GOST
+    uint32_t alg_k;
+#endif
+    uint32_t alg_a = 0;
 
     /* If we have custom certificate types set, use them */
     if (s->cert->ctype)
