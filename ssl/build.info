@@ -4,7 +4,7 @@ LIBS=../libssl
 
 SOURCE[../libssl]=\
         pqueue.c \
-        statem/statem_srvr.c statem/statem_clnt.c  s3_lib.c  s3_enc.c \
+        statem/statem_srvr.c statem/statem_clnt.c s3_lib.c s3_enc.c \
         statem/statem_lib.c statem/extensions.c statem/extensions_srvr.c \
         statem/extensions_clnt.c statem/extensions_cust.c s3_msg.c \
         methods.c t1_lib.c  t1_enc.c tls13_enc.c \
