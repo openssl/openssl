@@ -109,8 +109,6 @@ jobs:
           no-sock,
           no-sse2,
           no-ssl,
-          enable-ssl3,
-          enable-ssl3-method,
           enable-sslkeylog,
           no-static-engine no-shared,
           no-tests,
