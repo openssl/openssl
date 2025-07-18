@@ -182,7 +182,8 @@ static int helper_init(struct helper *h)
     if (!TEST_ptr(h->args.ackm = ossl_ackm_new(fake_now, NULL,
                                                &h->statm,
                                                h->cc_method,
-                                               h->cc_data)))
+                                               h->cc_data,
+                                               /* is_server */0)))
         goto err;
 
     if (!TEST_true(ossl_quic_stream_map_init(&h->qsm, NULL, NULL,

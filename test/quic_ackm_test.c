@@ -104,7 +104,8 @@ static int helper_init(struct helper *h, size_t num_pkts)
 
     /* Initialise ACK manager. */
     h->ackm = ossl_ackm_new(fake_now, NULL, &h->statm,
-                            &ossl_cc_dummy_method, h->ccdata);
+                            &ossl_cc_dummy_method, h->ccdata,
+                            /* is_server */0);
     if (!TEST_ptr(h->ackm))
         goto err;
 
