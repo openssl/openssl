@@ -733,7 +733,7 @@ int CRYPTO_atomic_load_ptr(void **val, void **ret, CRYPTO_RWLOCK *lock)
 {
     volatile void *tgt = *val;
 
-    *ret = val;
+    *ret = tgt;
     return 1;
 }
 
@@ -760,8 +760,9 @@ int CRYPTO_atomic_cmp_exch(void **ptr, void **expect, void **desired, CRYPTO_RWL
     CRYPTO_THREAD_unlock(lock);
     return ret;
 #else
-    if (InterlockedCompareExchangePointer(ptr, desired, expect) == *expect)
+    if (InterlockedCompareExchangePointer(ptr, *desired, *expect) == *expect)
         return 1;
+    *expect = *ptr;
     return 0;
 #endif
 }
