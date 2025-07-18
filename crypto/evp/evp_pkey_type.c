@@ -31,7 +31,7 @@ struct pkid2bid {
     int pkey_base_id;
 };
 
-const struct pkid2bid base_id_conversion[] = {
+static const struct pkid2bid base_id_conversion[] = {
     {EVP_PKEY_RSA, EVP_PKEY_RSA},
     {EVP_PKEY_RSA2, EVP_PKEY_RSA},
     {EVP_PKEY_RSA_PSS, EVP_PKEY_RSA_PSS},
