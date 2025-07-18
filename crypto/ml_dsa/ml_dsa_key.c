@@ -326,7 +326,7 @@ static int public_from_private(const ML_DSA_KEY *key, EVP_MD_CTX *md_ctx,
     VECTOR s1_ntt;
     VECTOR t;
 
-    polys = OPENSSL_malloc(sizeof(*polys) * (k + l + k * l));
+    polys = OPENSSL_malloc_array(k + l + k * l, sizeof(*polys));
     if (polys == NULL)
         return 0;
 
@@ -388,7 +388,7 @@ int ossl_ml_dsa_key_pairwise_check(const ML_DSA_KEY *key)
     if (key->pub_encoding == NULL || key->priv_encoding == 0)
         return 0;
 
-    polys = OPENSSL_malloc(sizeof(*polys) * (2 * k));
+    polys = OPENSSL_malloc_array(2 * k, sizeof(*polys));
     if (polys == NULL)
         return 0;
     md_ctx = EVP_MD_CTX_new();

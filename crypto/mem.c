@@ -9,6 +9,7 @@
 
 #include "internal/e_os.h"
 #include "internal/cryptlib.h"
+#include "internal/check_size_overflow.h"
 #include "crypto/cryptlib.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -183,6 +184,19 @@ void ossl_malloc_setup_failures(void)
 }
 #endif
 
+static inline void report_alloc_err(const char *file, int line)
+{
+    /*
+     * ossl_err_get_state_int() in err.c uses CRYPTO_zalloc(num, NULL, 0) for
+     * ERR_STATE allocation. Prevent mem alloc error loop while reporting error.
+     */
+    if (file != NULL || line != 0) {
+        ERR_new();
+        ERR_set_debug(file, line, NULL);
+        ERR_set_error(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE, NULL);
+    }
+}
+
 void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
     void *ptr;
@@ -212,15 +226,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
     if (ossl_likely(ptr != NULL))
         return ptr;
  err:
-    /*
-     * ossl_err_get_state_int() in err.c uses CRYPTO_zalloc(num, NULL, 0) for
-     * ERR_STATE allocation. Prevent mem alloc error loop while reporting error.
-     */
-    if (file != NULL || line != 0) {
-        ERR_new();
-        ERR_set_debug(file, line, NULL);
-        ERR_set_error(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE, NULL);
-    }
+    report_alloc_err(file, line);
     return NULL;
 }
 
@@ -233,6 +239,26 @@ void *CRYPTO_zalloc(size_t num, const char *file, int line)
         memset(ret, 0, num);
 
     return ret;
+}
+
+void *CRYPTO_malloc_array(size_t num, size_t size, const char *file, int line)
+{
+    size_t bytes;
+
+    if (is_size_overflow(num, size, &bytes, file, line))
+        return NULL;
+
+    return CRYPTO_malloc(bytes, file, line);
+}
+
+void *CRYPTO_calloc(size_t num, size_t size, const char *file, int line)
+{
+    size_t bytes;
+
+    if (is_size_overflow(num, size, &bytes, file, line))
+        return NULL;
+
+    return CRYPTO_zalloc(bytes, file, line);
 }
 
 void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
@@ -297,8 +323,21 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
     return ret;
 }
 
+void *CRYPTO_aligned_alloc_array(size_t num, size_t size, size_t align,
+                                 void **freeptr, const char *file, int line)
+{
+    size_t bytes;
+
+    if (is_size_overflow(num, size, &bytes, file, line))
+        return NULL;
+
+    return CRYPTO_aligned_alloc(bytes, align, freeptr, file, line);
+}
+
 void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
 {
+    void *ret;
+
     INCREMENT(realloc_count);
     if (realloc_impl != CRYPTO_realloc)
         return realloc_impl(str, num, file, line);
@@ -312,7 +351,23 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
     }
 
     FAILTEST();
-    return realloc(str, num);
+    ret = realloc(str, num);
+
+    if (num && !ret)
+        report_alloc_err(file, line);
+
+    return ret;
+}
+
+void *CRYPTO_realloc_array(void *addr, size_t num, size_t size,
+                           const char *file, int line)
+{
+    size_t bytes;
+
+    if (is_size_overflow(num, size, &bytes, file, line))
+        return NULL;
+
+    return CRYPTO_realloc(addr, bytes, file, line);
 }
 
 void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
@@ -340,6 +395,18 @@ void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
         CRYPTO_clear_free(str, old_len, file, line);
     }
     return ret;
+}
+
+void *CRYPTO_clear_realloc_array(void *addr, size_t old_num, size_t num,
+                                 size_t size, const char *file, int line)
+{
+    size_t old_bytes, bytes;
+
+    if (is_size_overflow(old_num, size, &old_bytes, file, line) ||
+        is_size_overflow(num, size, &bytes, file, line))
+        return NULL;
+
+    return CRYPTO_clear_realloc(addr, old_bytes, bytes, file, line);
 }
 
 void CRYPTO_free(void *str, const char *file, int line)

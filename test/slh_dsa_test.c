@@ -480,7 +480,7 @@ static int slh_dsa_deterministic_usage_test(void)
     if (!TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &sig_len, msg, msg_len), 1))
         goto err;
     len = sig_len;
-    if (!TEST_ptr(sig = OPENSSL_zalloc(sig_len * 2))
+    if (!TEST_ptr(sig = OPENSSL_calloc(2, sig_len))
             || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &len, msg, msg_len), 1)
             || !TEST_size_t_eq(sig_len, len)
             || !TEST_int_eq(EVP_PKEY_sign(dupctx, sig + sig_len, &len,

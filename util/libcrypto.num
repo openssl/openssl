@@ -5930,3 +5930,10 @@ i2d_PKCS8PrivateKey                     ?	3_6_0	EXIST::FUNCTION:
 OSSL_PARAM_set_octet_string_or_ptr      ?	3_6_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_settable_ctx_params   ?	3_6_0	EXIST::FUNCTION:
 X509_CRL_get0_tbs_sigalg                ?	3_6_0	EXIST::FUNCTION:
+CRYPTO_malloc_array                     ?	3_6_0	EXIST::FUNCTION:
+CRYPTO_calloc                           ?	3_6_0	EXIST::FUNCTION:
+CRYPTO_aligned_alloc_array              ?	3_6_0	EXIST::FUNCTION:
+CRYPTO_realloc_array                    ?	3_6_0	EXIST::FUNCTION:
+CRYPTO_clear_realloc_array              ?	3_6_0	EXIST::FUNCTION:
+CRYPTO_secure_malloc_array              ?	3_6_0	EXIST::FUNCTION:
+CRYPTO_secure_calloc                    ?	3_6_0	EXIST::FUNCTION:

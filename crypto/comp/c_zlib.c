@@ -40,7 +40,7 @@ static void *zlib_zalloc(void *opaque, unsigned int no, unsigned int size)
 {
     void *p;
 
-    p = OPENSSL_zalloc(no * size);
+    p = OPENSSL_calloc(no, size);
     return p;
 }
 

@@ -2143,7 +2143,7 @@ static int test_check_dsa(void)
 static OSSL_PARAM *do_construct_hkdf_params(char *digest, char *key,
                                             size_t keylen, char *salt)
 {
-    OSSL_PARAM *params = OPENSSL_malloc(sizeof(OSSL_PARAM) * 5);
+    OSSL_PARAM *params = OPENSSL_malloc_array(5, sizeof(OSSL_PARAM));
     OSSL_PARAM *p = params;
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, digest, 0);

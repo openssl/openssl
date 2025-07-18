@@ -15,6 +15,7 @@
  * For details on that implementation, see below (look for uppercase
  * "SECURE HEAP IMPLEMENTATION").
  */
+#include "internal/check_size_overflow.h"
 #include "internal/e_os.h"
 #include <openssl/crypto.h>
 #include <openssl/err.h>
@@ -189,6 +190,27 @@ void *CRYPTO_secure_zalloc(size_t num, const char *file, int line)
         return CRYPTO_secure_malloc(num, file, line);
 #endif
     return CRYPTO_zalloc(num, file, line);
+}
+
+void *CRYPTO_secure_malloc_array(size_t num, size_t size,
+                                 const char *file, int line)
+{
+    size_t bytes;
+
+    if (is_size_overflow(num, size, &bytes, file, line))
+        return NULL;
+
+    return CRYPTO_secure_malloc(bytes, file, line);
+}
+
+void *CRYPTO_secure_calloc(size_t num, size_t size, const char *file, int line)
+{
+    size_t bytes;
+
+    if (is_size_overflow(num, size, &bytes, file, line))
+        return NULL;
+
+    return CRYPTO_secure_zalloc(bytes, file, line);
 }
 
 void CRYPTO_secure_free(void *ptr, const char *file, int line)
