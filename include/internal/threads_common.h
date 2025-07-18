@@ -10,6 +10,18 @@
 #ifndef _CRYPTO_THREADS_COMMON_H_
 # define _CRYPTO_THREADS_COMMON_H_
 
+# if defined(__apple_build_version__) && __apple_build_version__ < 6000000
+/*
+ * OS/X 10.7 and 10.8 had a weird version of clang which has __ATOMIC_ACQUIRE and
+ * __ATOMIC_ACQ_REL but which expects only one parameter for __atomic_is_lock_free()
+ * rather than two which has signature __atomic_is_lock_free(sizeof(_Atomic(T))).
+ * All of this makes impossible to use __atomic_is_lock_free here.
+ *
+ * See: https://github.com/llvm/llvm-project/commit/a4c2602b714e6c6edb98164550a5ae829b2de760
+ */
+#  define BROKEN_CLANG_ATOMICS
+# endif
+
 typedef enum {
     CRYPTO_THREAD_LOCAL_RCU_KEY = 0,
     CRYPTO_THREAD_LOCAL_DRBG_PRIV_KEY,
