@@ -20,7 +20,6 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_STDNAME,
     OPT_CONVERT,
-    OPT_SSL3,
     OPT_TLS1,
     OPT_TLS1_1,
     OPT_TLS1_2,
@@ -45,9 +44,6 @@ const OPTIONS ciphers_options[] = {
 
     OPT_SECTION("Cipher specification"),
     {"s", OPT_S, '-', "Only supported ciphers"},
-#ifndef OPENSSL_NO_SSL3
-    {"ssl3", OPT_SSL3, '-', "Ciphers compatible with SSL3"},
-#endif
 #ifndef OPENSSL_NO_TLS1
     {"tls1", OPT_TLS1, '-', "Ciphers compatible with TLS1"},
 #endif
@@ -131,10 +127,6 @@ int ciphers_main(int argc, char **argv)
             break;
         case OPT_CONVERT:
             convert = opt_arg();
-            break;
-        case OPT_SSL3:
-            min_version = SSL3_VERSION;
-            max_version = SSL3_VERSION;
             break;
         case OPT_TLS1:
             min_version = TLS1_VERSION;
