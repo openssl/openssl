@@ -89,10 +89,8 @@ int ossl_ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     size_t sz, ivlen;
     struct ossl_cipher_ccm_set_ctx_params_st p;
 
-    if (ossl_param_is_empty(params))
-        return 1;
-
-    p = ossl_cipher_ccm_set_ctx_params_decoder(params);
+    if (ctx == NULL || !ossl_cipher_ccm_set_ctx_params_decoder(params, &p))
+        return 0;
 
     if (p.tag != NULL) {
         if (p.tag->data_type != OSSL_PARAM_OCTET_STRING) {
@@ -179,7 +177,8 @@ int ossl_ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
     struct ossl_cipher_ccm_get_ctx_params_st p;
 
-    p = ossl_cipher_ccm_get_ctx_params_decoder(params);
+    if (ctx == NULL || !ossl_cipher_ccm_get_ctx_params_decoder(params, &p))
+        return 0;
 
     if (p.ivlen != NULL && !OSSL_PARAM_set_size_t(p.ivlen, ccm_get_ivlen(ctx))) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
