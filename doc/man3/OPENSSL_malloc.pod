@@ -18,7 +18,8 @@ CRYPTO_get_alloc_counts,
 CRYPTO_set_mem_debug, CRYPTO_mem_ctrl,
 CRYPTO_mem_leaks, CRYPTO_mem_leaks_fp, CRYPTO_mem_leaks_cb,
 OPENSSL_MALLOC_FAILURES,
-OPENSSL_MALLOC_FD
+OPENSSL_MALLOC_FD,
+OPENSSL_MALLOC_SEED
 - Memory allocation functions
 
 =head1 SYNOPSIS
@@ -69,6 +70,7 @@ OPENSSL_MALLOC_FD
 
  env OPENSSL_MALLOC_FAILURES=... <application>
  env OPENSSL_MALLOC_FD=... <application>
+ env OPENSSL_MALLOC_SEED=... <application>
 
 The following functions have been deprecated since OpenSSL 3.0, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
@@ -155,9 +157,9 @@ with CRYPTO_set_mem_functions(), it's recommended to swap them all out
 at once.
 
 If the library is built with the C<crypto-mdebug> option, then one
-function, CRYPTO_get_alloc_counts(), and two additional environment
-variables, B<OPENSSL_MALLOC_FAILURES> and B<OPENSSL_MALLOC_FD>,
-are available.
+function, CRYPTO_get_alloc_counts(), and three additional environment
+variables, B<OPENSSL_MALLOC_FAILURES>, B<OPENSSL_MALLOC_FD>,
+and B<OPENSSL_MALLOC_SEED>, are available.
 
 The function CRYPTO_get_alloc_counts() fills in the number of times
 each of CRYPTO_malloc(), CRYPTO_realloc(), and CRYPTO_free() have been
@@ -167,12 +169,14 @@ respectively.  If a pointer is NULL, then the corresponding count is not stored.
 The variable
 B<OPENSSL_MALLOC_FAILURES> controls how often allocations should fail.
 It is a set of fields separated by semicolons, which each field is a count
-(defaulting to zero) and an optional atsign and percentage (defaulting
-to 100).  If the count is zero, then it lasts forever.  For example,
-C<100;@25> or C<100@0;0@25> means the first 100 allocations pass, then all
-other allocations (until the program exits or crashes) have a 25% chance of
-failing. The length of the value of B<OPENSSL_MALLOC_FAILURES> must be 256 or
-fewer characters.
+(defaulting to zero) and an optional atsign and percentage (interpreted
+as a floating point number that is rounded up to two decimal digits
+of precision, defaulting to 100).  If the count is zero, then it lasts forever.
+For example, C<100;@0.258> or C<100@0;0@0.258> means the first 100 allocations
+pass, then all other allocations (until the program exits or crashes) have
+a 0.26% chance of failing, with random(3) used as a source of randomness.
+The length of the value of B<OPENSSL_MALLOC_FAILURES> must be 256 or fewer
+characters.
 
 If the variable B<OPENSSL_MALLOC_FD> is parsed as a positive integer, then
 it is taken as an open file descriptor. This is used in conjunction with
@@ -187,6 +191,10 @@ work on all platforms):
   OPENSSL_MALLOC_FD=3
   export OPENSSL_MALLOC_FD
   ...app invocation... 3>/tmp/log$$
+
+If the environment variable B<OPENSSL_MALLOC_SEED> is set, its value
+is interpreted as an integer using atoi(3) and supplied to the srandom(3)
+call for the random number generator initialisation.
 
 =head1 RETURN VALUES
 
