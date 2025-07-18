@@ -17,7 +17,6 @@ B<openssl> B<s_time>
 [B<-new>]
 [B<-verify> I<depth>]
 [B<-time> I<seconds>]
-[B<-ssl3>]
 [B<-tls1>]
 [B<-tls1_1>]
 [B<-tls1_2>]
@@ -128,7 +127,7 @@ can establish.
 
 This is an obsolete synonym for B<-CAfile>.
 
-=item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>
+=item B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>
 
 See L<openssl(1)/TLS Version Options>.
 
@@ -151,7 +150,7 @@ by the client the same way the aforementioned option does.
 This command can be used to measure the performance of an SSL connection.
 To connect to an SSL HTTP server and get the default page the command
 
- openssl s_time -connect servername:443 -www / -CApath yourdir -CAfile yourfile.pem -cipher commoncipher [-ssl3]
+ openssl s_time -connect servername:443 -www / -CApath yourdir -CAfile yourfile.pem -cipher commoncipher
 
 would typically be used (https uses port 443). I<commoncipher> is a cipher to
 which both client and server can agree, see the L<openssl-ciphers(1)> command
@@ -159,7 +158,7 @@ for details.
 
 If the handshake fails then there are several possible causes, if it is
 nothing obvious like no client certificate then the B<-bugs> and
-B<-ssl3> options can be tried
+B<-tls1> options can be tried
 in case it is a buggy server. In particular you should play with these
 options B<before> submitting a bug report to an OpenSSL mailing list.
 

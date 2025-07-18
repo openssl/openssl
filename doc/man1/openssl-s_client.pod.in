@@ -926,7 +926,7 @@ then an HTTP command can be given such as "GET /" to retrieve a web page.
 
 If the handshake fails then there are several possible causes, if it is
 nothing obvious like no client certificate then the B<-bugs>,
-B<-ssl3>, B<-tls1>, B<-no_ssl3>, B<-no_tls1> options can be tried
+B<-tls1>, B<-no_tls1> options can be tried
 in case it is a buggy server. In particular you should play with these
 options B<before> submitting a bug report to an OpenSSL mailing list.
 
