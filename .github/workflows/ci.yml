@@ -496,6 +496,8 @@ jobs:
       run: |
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
+    - name: test lockless
+      run: make TESTS=test_lockless V=1 test
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
