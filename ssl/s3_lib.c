@@ -4555,9 +4555,9 @@ int ssl3_get_req_cert_type(SSL_CONNECTION *s, WPACKET *pkt)
     /* Get mask of algorithms disabled by signature list */
     ssl_set_sig_mask(&alg_a, s, SSL_SECOP_SIGALG_MASK);
 
+#ifndef OPENSSL_NO_GOST
     alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
 
-#ifndef OPENSSL_NO_GOST
     if (s->version >= TLS1_VERSION && (alg_k & SSL_kGOST))
         if (!WPACKET_put_bytes_u8(pkt, TLS_CT_GOST01_SIGN)
             || !WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_IANA_SIGN)
