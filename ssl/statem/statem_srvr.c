@@ -3709,7 +3709,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
     if (sk_X509_num(sk) <= 0) {
         /* Fail only if we required a certificate */
         if ((s->verify_mode & SSL_VERIFY_PEER) &&
-                 (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
+            (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
             SSLfatal(s, SSL_AD_CERTIFICATE_REQUIRED,
                      SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
             goto err;

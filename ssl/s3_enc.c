@@ -112,4 +112,3 @@ int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
 
     return 1;
 }
-

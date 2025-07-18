@@ -807,9 +807,9 @@ static const OPT_PAIR services[] = {
 #define IS_UNIX_FLAG(o) (o == OPT_UNIX)
 
 #define IS_PROT_FLAG(o) \
- (o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
-  || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2 \
-  || o == OPT_QUIC)
+    (o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
+     || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2 \
+     || o == OPT_QUIC)
 
 /* Free |*dest| and optionally set it to a copy of |source|. */
 static void freeandcopy(char **dest, const char *source)

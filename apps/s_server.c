@@ -1222,8 +1222,8 @@ const OPTIONS s_server_options[] = {
 };
 
 #define IS_PROT_FLAG(o) \
- (o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
-  || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2)
+    (o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
+     || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2)
 
 int s_server_main(int argc, char *argv[])
 {

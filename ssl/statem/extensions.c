@@ -570,7 +570,7 @@ int extension_is_relevant(SSL_CONNECTION *s, unsigned int extctx,
         is_tls13 = SSL_CONNECTION_IS_TLS13(s);
 
     if ((SSL_CONNECTION_IS_DTLS(s)
-                && (extctx & SSL_EXT_TLS_IMPLEMENTATION_ONLY) != 0)
+        && (extctx & SSL_EXT_TLS_IMPLEMENTATION_ONLY) != 0)
             /*
              * Note that SSL_IS_TLS13() means "TLS 1.3 has been negotiated",
              * which is never true when generating the ClientHello.
