@@ -154,13 +154,13 @@ static void *des_##lcmode##_newctx(void *provctx)                              \
 {                                                                              \
     return des_newctx(provctx, kbits, blkbits, ivbits,                         \
                       EVP_CIPH_##UCMODE##_MODE, flags,                         \
-                      ossl_prov_cipher_hw_des_##lcmode());                          \
+                      ossl_prov_cipher_hw_des_##lcmode());                     \
 }                                                                              \
 static OSSL_FUNC_cipher_get_params_fn des_##lcmode##_get_params;               \
 static int des_##lcmode##_get_params(OSSL_PARAM params[])                      \
 {                                                                              \
     return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,    \
-                                          flags, kbits, blkbits, ivbits);      \
+                                          flags, kbits, blkbits, ivbits, 0);   \
 }                                                                              \
 const OSSL_DISPATCH ossl_##des_##lcmode##_functions[] = {                      \
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))des_einit },              \

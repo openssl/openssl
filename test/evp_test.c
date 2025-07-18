@@ -200,7 +200,8 @@ static int rand_check_fips_approved(EVP_RAND_CTX *ctx, EVP_TEST *t)
 }
 
 static int check_security_category(EVP_TEST *t, void *alg_obj,
-                                   int (*get_param)(void *, OSSL_PARAM *)) {
+                                   int (*get_param)(void *, OSSL_PARAM *),
+                                   int (*get_security_category)(void *)) {
     OSSL_PARAM p[2];
     int security_category = -1;
 
@@ -209,7 +210,9 @@ static int check_security_category(EVP_TEST *t, void *alg_obj,
     p[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_SECURITY_CATEGORY,
                                     &security_category);
     p[1] = OSSL_PARAM_construct_end();
-    if (!TEST_int_gt(get_param(alg_obj, p), 0)
+    if (!TEST_int_eq(get_security_category(alg_obj), t->security_category)
+            /* Test getting via the param too */
+            || !TEST_int_gt(get_param(alg_obj, p), 0)
             || !TEST_true(OSSL_PARAM_modified(p))
             || !TEST_int_eq(security_category, t->security_category)) {
         t->err = "INCORRECT_SECURITY_CATEGORY";
@@ -220,7 +223,8 @@ static int check_security_category(EVP_TEST *t, void *alg_obj,
 
 static int pkey_check_security_category(EVP_TEST *t, EVP_PKEY *pkey) {
     return check_security_category(t, pkey,
-                                   (int (*)(void *, OSSL_PARAM *))EVP_PKEY_get_params);
+                                   (int (*)(void *, OSSL_PARAM *))EVP_PKEY_get_params,
+                                   (int (*)(void *))EVP_PKEY_get_security_category);
 }
 
 static int ctrladd(STACK_OF(OPENSSL_STRING) *controls, const char *value)
@@ -685,7 +689,45 @@ typedef struct digest_data_st {
     int xof;
     /* Size for variable output length but non-XOF */
     size_t digest_size;
+    /* NIST security categories */
+    int security_category_collision;
+    int security_category_preimage;
 } DIGEST_DATA;
+
+static int md_check_security_categories(EVP_TEST *t, const DIGEST_DATA *mdat) {
+    OSSL_PARAM p[3];
+    int security_category_collision = -1;
+    int security_category_preimage = -1;
+    const EVP_MD *md = mdat->digest;
+
+    p[0] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_SECURITY_CATEGORY_COLLISION,
+                                    &security_category_collision);
+    p[1] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_SECURITY_CATEGORY_PREIMAGE,
+                                    &security_category_preimage);
+    p[2] = OSSL_PARAM_construct_end();
+    if (!TEST_int_gt(EVP_MD_get_params(md, p), 0))
+        goto err;
+
+    if (mdat->security_category_collision >= 0)
+        if (!TEST_int_eq(EVP_MD_get_security_category_collision(md),
+                         mdat->security_category_collision)
+                || !TEST_true(OSSL_PARAM_modified(p))
+                || !TEST_int_eq(security_category_collision,
+                                mdat->security_category_collision))
+            goto err;
+    if (mdat->security_category_preimage >= 0)
+        if (!TEST_int_eq(EVP_MD_get_security_category_preimage(md),
+                         mdat->security_category_preimage)
+                || !TEST_true(OSSL_PARAM_modified(p + 1))
+                || !TEST_int_eq(security_category_preimage,
+                                mdat->security_category_preimage))
+            goto err;
+    return 1;
+
+err:
+    t->err = "INCORRECT_SECURITY_CATEGORY";
+    return 0;
+}
 
 static int digest_test_init(EVP_TEST *t, const char *alg)
 {
@@ -711,6 +753,8 @@ static int digest_test_init(EVP_TEST *t, const char *alg)
     mdat->fetched_digest = fetched_digest;
     mdat->pad_type = 0;
     mdat->xof = 0;
+    mdat->security_category_collision = -1;
+    mdat->security_category_preimage = -1;
     if (fetched_digest != NULL)
         TEST_info("%s is fetched", alg);
     return 1;
@@ -729,6 +773,7 @@ static int digest_test_parse(EVP_TEST *t,
                              const char *keyword, const char *value)
 {
     DIGEST_DATA *mdata = t->data;
+    int n;
 
     if (strcmp(keyword, "Input") == 0)
         return evp_test_buffer_append(value, data_chunk_size, &mdata->input);
@@ -743,12 +788,24 @@ static int digest_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "XOF") == 0)
         return (mdata->xof = atoi(value)) > 0;
     if (strcmp(keyword, "OutputSize") == 0) {
-        int sz;
-
-        sz = atoi(value);
-        if (sz < 0)
+        n = atoi(value);
+        if (n < 0)
             return -1;
-        mdata->digest_size = sz;
+        mdata->digest_size = n;
+        return 1;
+    }
+    if (strcmp(keyword, "Security-Category-Collision") == 0) {
+        n = atoi(value);
+        if (n < 0)
+            return -1;
+        mdata->security_category_collision = n;
+        return 1;
+    }
+    if (strcmp(keyword, "Security-Category-Preimage") == 0) {
+        n = atoi(value);
+        if (n < 0)
+            return -1;
+        mdata->security_category_preimage = n;
         return 1;
     }
     return 0;
@@ -783,12 +840,20 @@ static int digest_test_run(EVP_TEST *t)
 {
     DIGEST_DATA *expected = t->data;
     EVP_TEST_BUFFER *inbuf;
-    EVP_MD_CTX *mctx;
+    EVP_MD_CTX *mctx = NULL;
     unsigned char *got = NULL;
     unsigned int got_len;
     size_t size = 0;
     int xof = 0;
     OSSL_PARAM params[4], *p = &params[0];
+
+    /* Digests don't have a single security category so fail if test is bad */
+    if (!TEST_int_eq(t->security_category, -1)) {
+        t->err = "INVALID_TEST_SECURITY_CATEGORY";
+        goto err;
+    }
+    if (!md_check_security_categories(t, expected))
+        goto err;
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
@@ -1568,6 +1633,12 @@ static int cipher_test_run(EVP_TEST *t)
     size_t params_n = 0;
 
     TEST_info("RUNNING TEST FOR CIPHER %s\n", EVP_CIPHER_get0_name(cdat->cipher));
+
+    if (!TEST_true(check_security_category(t, (void *)cdat->cipher,
+                                           (int (*)(void *, OSSL_PARAM *))EVP_CIPHER_get_params,
+                                           (int (*)(void *))EVP_CIPHER_get_security_category)))
+        return 0;
+
     if (!cdat->key) {
         t->err = "NO_KEY";
         return 0;
