@@ -37,6 +37,9 @@ struct added_obj_st {
     ASN1_OBJECT *obj;
 };
 
+static unsigned long added_obj_hash(const ADDED_OBJ *ca);
+static int added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb);
+
 static LHASH_OF(ADDED_OBJ) *added = NULL;
 static CRYPTO_RWLOCK *ossl_obj_lock = NULL;
 #ifdef TSAN_REQUIRES_LOCKING
@@ -68,6 +71,10 @@ DEFINE_RUN_ONCE_STATIC(obj_lock_initialise)
         return 0;
     }
 #endif
+    added = lh_ADDED_OBJ_new(added_obj_hash, added_obj_cmp);
+    if (added == NULL)
+        return 0;
+
     return 1;
 }
 
@@ -82,19 +89,19 @@ static ossl_inline int ossl_init_added_lock(void)
 
 static ossl_inline int ossl_obj_write_lock(int lock)
 {
-    if (!lock)
-        return 1;
     if (!ossl_init_added_lock())
         return 0;
+    if (!lock)
+        return 1;
     return CRYPTO_THREAD_write_lock(ossl_obj_lock);
 }
 
 static ossl_inline int ossl_obj_read_lock(int lock)
 {
-    if (!lock)
-        return 1;
     if (!ossl_init_added_lock())
         return 0;
+    if (!lock)
+        return 1;
     return CRYPTO_THREAD_read_lock(ossl_obj_lock);
 }
 
@@ -231,9 +238,10 @@ static int obj_new_nid_unlocked(int num)
 #ifdef TSAN_REQUIRES_LOCKING
     int i;
 
+    ossl_obj_write_lock(1);
     i = new_nid;
     new_nid += num;
-
+    ossl_obj_unlock(1);
     return i;
 #else
     return tsan_add(&new_nid, num);
@@ -245,14 +253,7 @@ int OBJ_new_nid(int num)
 #ifdef TSAN_REQUIRES_LOCKING
     int i;
 
-    if (!ossl_obj_write_lock(1)) {
-        ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
-        return NID_undef;
-    }
-
     i = obj_new_nid_unlocked(num);
-
-    ossl_obj_unlock(1);
 
     return i;
 #else
@@ -281,13 +282,6 @@ static int ossl_obj_add_object(const ASN1_OBJECT *obj, int lock)
     if (!ossl_obj_write_lock(lock)) {
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
         goto err2;
-    }
-    if (added == NULL) {
-        added = lh_ADDED_OBJ_new(added_obj_hash, added_obj_cmp);
-        if (added == NULL) {
-            ERR_raise(ERR_LIB_OBJ, ERR_R_CRYPTO_LIB);
-            goto err;
-        }
     }
 
     for (i = ADDED_DATA; i <= ADDED_NID; i++) {
@@ -808,15 +802,9 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
         }
     }
 
-    if (!ossl_obj_write_lock(1)) {
-        ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
-        ASN1_OBJECT_free(tmpoid);
-        return 0;
-    }
-
     /* If NID is not NID_undef then object already exists */
     if (oid != NULL
-        && ossl_obj_obj2nid(tmpoid, 0) != NID_undef) {
+        && ossl_obj_obj2nid(tmpoid, 1) != NID_undef) {
         ERR_raise(ERR_LIB_OBJ, OBJ_R_OID_EXISTS);
         goto err;
     }
@@ -829,13 +817,12 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
     tmpoid->sn = (char *)sn;
     tmpoid->ln = (char *)ln;
 
-    ok = ossl_obj_add_object(tmpoid, 0);
+    ok = ossl_obj_add_object(tmpoid, 1);
 
     tmpoid->sn = NULL;
     tmpoid->ln = NULL;
 
  err:
-    ossl_obj_unlock(1);
     ASN1_OBJECT_free(tmpoid);
     return ok;
 }

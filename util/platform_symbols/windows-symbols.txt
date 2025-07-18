@@ -233,3 +233,4 @@ _stat64i32
 atoi
 __stdio_common_vsprintf
 _dclass
+abort
