@@ -45,12 +45,9 @@
  */
 # define _UC(c) ((unsigned char)(c))
 
-# define IS_IP_ADDR(host) ((host) != NULL && ((*(host) >= '0' && *(host) <= '9') || *(host) == '['))
-
 void app_RAND_load_conf(CONF *c, const char *section);
 int app_RAND_write(void);
 int app_RAND_load(void);
-
 extern char *default_config_file; /* may be "" */
 extern BIO *bio_in;
 extern BIO *bio_out;
@@ -285,6 +282,10 @@ int check_cert_attributes(BIO *bio, X509 *x,
                           const char *checkip, int print);
 
 void store_setup_crl_download(X509_STORE *st);
+
+# ifndef OPENSSL_NO_SOCK
+int APP_is_IP_address(const char *host);
+# endif
 
 typedef struct app_http_tls_info_st {
     const char *sni_hostname;

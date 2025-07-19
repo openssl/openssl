@@ -2308,7 +2308,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, info);
         hostaddr = opt_tls_host != NULL ? opt_tls_host : host;
         info->ssl_ctx = setup_ssl_ctx(ctx, hostaddr, engine);
-        if (!IS_IP_ADDR(hostaddr)) {
+        if (!APP_is_IP_address(hostaddr)) {
             if (hostaddr == NULL)
                 info->sni_hostname = NULL;
             else if ((info->sni_hostname = OPENSSL_strdup(hostaddr)) == NULL)
