@@ -295,8 +295,17 @@
      ((value) <= TLSEXT_max_fragment_length_4096))
 # define USE_MAX_FRAGMENT_LENGTH_EXT(session) \
     IS_MAX_FRAGMENT_LENGTH_EXT_VALID(session->ext.max_fragment_len_mode)
-# define GET_MAX_FRAGMENT_LENGTH(session) \
-    (512U << (session->ext.max_fragment_len_mode - 1))
+# define GET_MAX_FRAGMENT_LENGTH_VALUE(max_fragment_len_mode) \
+    (512U << (max_fragment_len_mode - 1))
+
+# define GET_MAX_FRAGMENT_LENGTH(session) GET_MAX_FRAGMENT_LENGTH_VALUE(session->ext.max_fragment_len_mode)
+
+# define IS_RECORD_SIZE_LIMIT_VALID(value) \
+    (value >= TLSEXT_record_size_limit_min)
+
+# define USE_RECORD_SIZE_LIMIT_EXT(session) \
+    (IS_RECORD_SIZE_LIMIT_VALID(session->ext.record_size_limit) && \
+     IS_RECORD_SIZE_LIMIT_VALID(session->ext.peer_record_size_limit))
 
 # define SSL_READ_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_READ)
 # define SSL_WRITE_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)
@@ -547,6 +556,8 @@ struct ssl_session_st {
          * performed at all.
          */
         uint8_t max_fragment_len_mode;
+        uint16_t record_size_limit;
+        uint16_t peer_record_size_limit;
     } ext;
 # ifndef OPENSSL_NO_SRP
     char *srp_username;
@@ -657,13 +668,14 @@ typedef struct {
 } CLIENTHELLO_MSG;
 
 /*
- * Extension index values NOTE: Any updates to these defines should be mirrored
- * with equivalent updates to ext_defs in extensions.c
+ * Extension index values NOTE: Any updates to these definitions should be
+ * mirrored with equivalent updates to ext_defs in extensions.c
  */
 typedef enum tlsext_index_en {
     TLSEXT_IDX_renegotiate,
     TLSEXT_IDX_server_name,
     TLSEXT_IDX_max_fragment_length,
+    TLSEXT_IDX_record_size_limit,
     TLSEXT_IDX_srp,
     TLSEXT_IDX_ec_point_formats,
     TLSEXT_IDX_supported_groups,
@@ -1015,8 +1027,12 @@ struct ssl_ctx_st {
         void *status_arg;
         /* ext status type used for CSR extension (OCSP Stapling) */
         int status_type;
+
         /* RFC 4366 Maximum Fragment Length Negotiation */
         uint8_t max_fragment_len_mode;
+
+        /* RFC 8449 Record Size Limit Extension */
+        uint16_t record_size_limit;
 
         /* EC extension values inherited by SSL structure */
         size_t ecpointformats_len;
@@ -1718,6 +1734,12 @@ struct ssl_connection_st {
          * as this extension is optional on server side.
          */
         uint8_t max_fragment_len_mode;
+
+        /*
+         * Record Size Limit as per RFC 8449.
+         */
+        uint16_t record_size_limit;
+        uint16_t peer_record_size_limit;
 
         /*
          * On the client side the number of ticket identities we sent in the
@@ -2644,8 +2666,12 @@ __owur int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
                                    uint16_t **ksext, size_t *ksextlen,
                                    size_t **tplext, size_t *tplextlen,
                                    void *key);
-__owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc);
-__owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc);
+
+__owur unsigned int ssl_get_proto_record_hard_limit(const SSL_CONNECTION *sc);
+__owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc,
+                                              uint8_t type);
+__owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc,
+                                                uint8_t type);
 
 __owur const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname);

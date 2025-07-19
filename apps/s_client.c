@@ -44,6 +44,7 @@ typedef unsigned int u_int;
 #include <openssl/async.h>
 #ifndef OPENSSL_NO_CT
 # include <openssl/ct.h>
+#include <stdbool.h>
 #endif
 #include "s_apps.h"
 #include "timeouts.h"
@@ -501,8 +502,8 @@ typedef enum OPTION_choice {
     OPT_CASTORE, OPT_NOCASTORE, OPT_CHAINCASTORE, OPT_VERIFYCASTORE,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_NOSERVERNAME, OPT_ASYNC,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_PROTOHOST,
-    OPT_MAXFRAGLEN, OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES,
-    OPT_READ_BUF, OPT_KEYLOG_FILE, OPT_EARLY_DATA, OPT_REQCAFILE,
+    OPT_MAXFRAGLEN, OPT_REC_SIZE_LIMIT, OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG,
+    OPT_MAX_PIPELINES, OPT_READ_BUF, OPT_KEYLOG_FILE, OPT_EARLY_DATA, OPT_REQCAFILE,
     OPT_TFO,
     OPT_V_ENUM,
     OPT_X_ENUM,
@@ -557,6 +558,8 @@ const OPTIONS s_client_options[] = {
 #endif
     {"maxfraglen", OPT_MAXFRAGLEN, 'p',
      "Enable Maximum Fragment Length Negotiation (len values: 512, 1024, 2048 and 4096)"},
+    {"record_size_limit", OPT_REC_SIZE_LIMIT, 'p',
+    "Enable Record Size Limit extension (min. value : 64)"},
     {"max_send_frag", OPT_MAX_SEND_FRAG, 'p', "Maximum Size of send frames "},
     {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'p',
      "Size used to split data for encrypt pipelines"},
@@ -917,6 +920,7 @@ int s_client_main(int argc, char **argv)
 #define MAX_SI_TYPES 100
     unsigned short serverinfo_types[MAX_SI_TYPES];
     int serverinfo_count = 0, start = 0, len;
+    uint16_t limit = 0;
 #ifndef OPENSSL_NO_NEXTPROTONEG
     const char *next_proto_neg_in = NULL;
 #endif
@@ -939,6 +943,8 @@ int s_client_main(int argc, char **argv)
     enum { use_inet, use_unix, use_unknown } connect_type = use_unknown;
     int count4or6 = 0;
     uint8_t maxfraglen = 0;
+    bool record_size_limit_set = false;
+    uint16_t record_size_limit = 0;
     int c_nbio = 0, c_msg = 0, c_ign_eof = 0, c_brief = 0;
     int c_tlsextdebug = 0;
 #ifndef OPENSSL_NO_OCSP
@@ -1542,6 +1548,11 @@ int s_client_main(int argc, char **argv)
                 goto opthelp;
             }
             break;
+        case OPT_REC_SIZE_LIMIT:
+            limit = (uint16_t)atoi(opt_arg());
+            record_size_limit = limit;
+            record_size_limit_set = true;
+            break;
         case OPT_MAX_SEND_FRAG:
             max_send_fragment = atoi(opt_arg());
             break;
@@ -1886,6 +1897,16 @@ int s_client_main(int argc, char **argv)
                    "%s: Max Fragment Length code %u is out of permitted values"
                    "\n", prog, maxfraglen);
         goto end;
+    }
+
+    if (record_size_limit_set
+             && !SSL_CTX_set_tlsext_record_size_limit(ctx,
+                                                 record_size_limit)) {
+      goto end;
+    }
+
+    if (record_size_limit_set && maxfraglen > 0) {
+      BIO_printf(bio_err, "Warning: Max Fragment Length extension and Record Size Limit activated. Both extension will be sent.\n");
     }
 
     if (!ssl_load_stores(ctx,
