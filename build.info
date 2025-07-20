@@ -79,6 +79,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/macs/kmac_prov.c \
          providers/implementations/macs/poly1305_prov.c \
          providers/implementations/macs/siphash_prov.c \
+         providers/implementations/rands/seed_src.c \
          providers/implementations/rands/seed_src_jitter.c \
          providers/implementations/rands/test_rng.c
 
@@ -146,6 +147,7 @@ DEPEND[providers/implementations/kdfs/argon2.c \
        providers/implementations/macs/kmac_prov.c \
        providers/implementations/macs/poly1305_prov.c \
        providers/implementations/macs/siphash_prov.c \
+       providers/implementations/rands/seed_src.c \
        providers/implementations/rands/seed_src_jitter.c \
        providers/implementations/rands/test_rng.c \
        include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
@@ -211,6 +213,8 @@ GENERATE[providers/implementations/macs/poly1305_prov.c]=\
     providers/implementations/macs/poly1305_prov.c.in
 GENERATE[providers/implementations/macs/siphash_prov.c]=\
     providers/implementations/macs/siphash_prov.c.in
+GENERATE[providers/implementations/rands/seed_src.c]=\
+    providers/implementations/rands/seed_src.c.in
 GENERATE[providers/implementations/rands/seed_src_jitter.c]=\
     providers/implementations/rands/seed_src_jitter.c.in
 GENERATE[providers/implementations/rands/test_rng.c]=\
