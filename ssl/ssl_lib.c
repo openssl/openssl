@@ -5078,6 +5078,9 @@ const char *ssl_protocol_to_string(int version)
     case TLS1_VERSION:
         return "TLSv1";
 
+    case SSL3_VERSION:
+        return "SSLv3";
+
     case DTLS1_BAD_VER:
         return "DTLSv0.9";
 
