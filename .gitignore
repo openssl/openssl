@@ -116,6 +116,7 @@ providers/implementations/macs/hmac_prov.c
 providers/implementations/macs/kmac_prov.c
 providers/implementations/macs/poly1305_prov.c
 providers/implementations/macs/siphash_prov.c
+providers/implementations/rands/fips_crng_test.c
 providers/implementations/rands/seed_src.c
 providers/implementations/rands/seed_src_jitter.c
 providers/implementations/rands/test_rng.c
