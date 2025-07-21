@@ -79,6 +79,9 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/macs/kmac_prov.c \
          providers/implementations/macs/poly1305_prov.c \
          providers/implementations/macs/siphash_prov.c \
+         providers/implementations/rands/drbg_ctr.c \
+         providers/implementations/rands/drbg_hash.c \
+         providers/implementations/rands/drbg_hmac.c \
          providers/implementations/rands/fips_crng_test.c \
          providers/implementations/rands/seed_src.c \
          providers/implementations/rands/seed_src_jitter.c \
@@ -148,6 +151,9 @@ DEPEND[providers/implementations/kdfs/argon2.c \
        providers/implementations/macs/kmac_prov.c \
        providers/implementations/macs/poly1305_prov.c \
        providers/implementations/macs/siphash_prov.c \
+       providers/implementations/rands/drbg_ctr.c \
+       providers/implementations/rands/drbg_hash.c \
+       providers/implementations/rands/drbg_hmac.c \
        providers/implementations/rands/fips_crng_test.c \
        providers/implementations/rands/seed_src.c \
        providers/implementations/rands/seed_src_jitter.c \
@@ -215,6 +221,12 @@ GENERATE[providers/implementations/macs/poly1305_prov.c]=\
     providers/implementations/macs/poly1305_prov.c.in
 GENERATE[providers/implementations/macs/siphash_prov.c]=\
     providers/implementations/macs/siphash_prov.c.in
+GENERATE[providers/implementations/rands/drbg_ctr.c]=\
+    providers/implementations/rands/drbg_ctr.c.in
+GENERATE[providers/implementations/rands/drbg_hash.c]=\
+    providers/implementations/rands/drbg_hash.c.in
+GENERATE[providers/implementations/rands/drbg_hmac.c]=\
+    providers/implementations/rands/drbg_hmac.c.in
 GENERATE[providers/implementations/rands/fips_crng_test.c]=\
     providers/implementations/rands/fips_crng_test.c.in
 GENERATE[providers/implementations/rands/seed_src.c]=\
