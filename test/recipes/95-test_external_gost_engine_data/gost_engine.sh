@@ -48,7 +48,6 @@ echo "------------------------------------------------------------------"
 cmake $SRCTOP/gost-engine -DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR" -DOPENSSL_ENGINES_DIR="$OPENSSL_ROOT_DIR/engines"
 make
 export CTEST_OUTPUT_ON_FAILURE=1
-export HARNESS_OSSL_PREFIX=''
 export OPENSSL_ENGINES="$PWD/bin"
 export OPENSSL_APP="$O_EXE/openssl"
 make test

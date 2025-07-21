@@ -465,29 +465,27 @@ sub run {
 
     $ENV{HARNESS_OSSL_LEVEL} = $level + 1;
 
+    # We prefix the output with "# " in non-capture mode by default to avoid
+    # its interpretation by the TAP consumer.
+    my $default_prefix = $opts{capture} ? "" : "# ";
+    my $pipe;
+    local $_;
+
+    open($pipe, '-|', "$prefix$cmd") or die "Can't start command: $!";
+    while(<$pipe>) {
+        my $l = ($opts{prefix} // $default_prefix) . $_;
+        if ($opts{capture}) {
+            push @r, $l;
+        } else {
+            print STDOUT $l;
+        }
+    }
+    close $pipe;
+
     # The dance we do with $? is the same dance the Unix shells appear to
     # do.  For example, a program that gets aborted (and therefore signals
     # SIGABRT = 6) will appear to exit with the code 134.  We mimic this
     # to make it easier to compare with a manual run of the command.
-    if ($opts{capture} || defined($opts{prefix})) {
-	my $pipe;
-	local $_;
-
-	open($pipe, '-|', "$prefix$cmd") or die "Can't start command: $!";
-	while(<$pipe>) {
-	    my $l = ($opts{prefix} // "") . $_;
-	    if ($opts{capture}) {
-		push @r, $l;
-	    } else {
-		print STDOUT $l;
-	    }
-	}
-	close $pipe;
-    } else {
-	$ENV{HARNESS_OSSL_PREFIX} = "# ";
-	system("$prefix$cmd");
-	delete $ENV{HARNESS_OSSL_PREFIX};
-    }
     $e = ($? & 0x7f) ? ($? & 0x7f)|0x80 : ($? >> 8);
     $r = $hooks{exit_checker}->($e);
     if ($opts{statusvar}) {
