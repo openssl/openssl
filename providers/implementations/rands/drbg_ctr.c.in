@@ -350,7 +350,6 @@ static int drbg_ctr_instantiate_wrapper(void *vdrbg, unsigned int strength,
     if (drbg == NULL || !drbg_ctr_set_ctx_params_decoder(params, &p))
         return 0;
 
-
     if (drbg->lock != NULL && !CRYPTO_THREAD_write_lock(drbg->lock))
         return 0;
 
@@ -672,35 +671,59 @@ static void drbg_ctr_free(void *vdrbg)
     ossl_rand_drbg_free(drbg);
 }
 
+#define drbg_ctr_get_ctx_params_st  drbg_get_ctx_params_st
+
+{- produce_param_decoder('drbg_ctr_get_ctx_params',
+                         (['DRBG_PARAM_CIPHER',                 'cipher',      'utf8_string'],
+                          ['DRBG_PARAM_USE_DF',                 'df',          'int'],
+                          ['RAND_PARAM_STATE',                  'state',       'int'],
+                          ['RAND_PARAM_STRENGTH',               'str',         'uint'],
+                          ['RAND_PARAM_MAX_REQUEST',            'maxreq',      'size_t'],
+                          ['DRBG_PARAM_MIN_ENTROPYLEN',         'minentlen',   'size_t'],
+                          ['DRBG_PARAM_MAX_ENTROPYLEN',         'maxentlen',   'size_t'],
+                          ['DRBG_PARAM_MIN_NONCELEN',           'minnonlen',   'size_t'],
+                          ['DRBG_PARAM_MAX_NONCELEN',           'maxnonlen',   'size_t'],
+                          ['DRBG_PARAM_MAX_PERSLEN',            'maxperlen',   'size_t'],
+                          ['DRBG_PARAM_MAX_ADINLEN',            'maxadlen',    'size_t'],
+                          ['DRBG_PARAM_RESEED_COUNTER',         'reseed_cnt',  'uint'],
+                          ['DRBG_PARAM_RESEED_TIME',            'reseed_time', 'time_t'],
+                          ['DRBG_PARAM_RESEED_REQUESTS',        'reseed_req',  'uint'],
+                          ['DRBG_PARAM_RESEED_TIME_INTERVAL',   'reseed_int',  'uint64'],
+                          ['KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',         'int'],
+                         )); -}
+
 static int drbg_ctr_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
-    PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)drbg->data;
-    OSSL_PARAM *p;
+    PROV_DRBG_CTR *ctr;
+    struct drbg_ctr_get_ctx_params_st p;
     int ret = 0, complete = 0;
 
-    if (!ossl_drbg_get_ctx_params_no_lock(drbg, params, &complete))
+    if (drbg == NULL || !drbg_ctr_get_ctx_params_decoder(params, &p))
+        return 0;
+
+    if (!ossl_drbg_get_ctx_params_no_lock(drbg, &p, params, &complete))
         return 0;
 
     if (complete)
         return 1;
 
+    ctr = (PROV_DRBG_CTR *)drbg->data;
+
     if (drbg->lock != NULL && !CRYPTO_THREAD_read_lock(drbg->lock))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_USE_DF);
-    if (p != NULL && !OSSL_PARAM_set_int(p, ctr->use_df))
+    if (p.df != NULL && !OSSL_PARAM_set_int(p.df, ctr->use_df))
         goto err;
 
-    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_CIPHER);
-    if (p != NULL) {
+    if (p.cipher != NULL) {
         if (ctr->cipher_ctr == NULL
-            || !OSSL_PARAM_set_utf8_string(p,
+            || !OSSL_PARAM_set_utf8_string(p.cipher,
                                            EVP_CIPHER_get0_name(ctr->cipher_ctr)))
             goto err;
     }
 
-    ret = ossl_drbg_get_ctx_params(drbg, params);
+    ret = ossl_drbg_get_ctx_params(drbg, &p);
  err:
     if (drbg->lock != NULL)
         CRYPTO_THREAD_unlock(drbg->lock);
@@ -711,14 +734,7 @@ static int drbg_ctr_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 static const OSSL_PARAM *drbg_ctr_gettable_ctx_params(ossl_unused void *vctx,
                                                       ossl_unused void *provctx)
 {
-    static const OSSL_PARAM known_gettable_ctx_params[] = {
-        OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_CIPHER, NULL, 0),
-        OSSL_PARAM_int(OSSL_DRBG_PARAM_USE_DF, NULL),
-        OSSL_PARAM_DRBG_GETTABLE_CTX_COMMON,
-        OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
-        OSSL_PARAM_END
-    };
-    return known_gettable_ctx_params;
+    return drbg_ctr_get_ctx_params_list;
 }
 
 static int drbg_ctr_set_ctx_params_locked(PROV_DRBG *ctx,

@@ -213,8 +213,32 @@ OSSL_FUNC_rand_lock_fn ossl_drbg_lock;
 OSSL_FUNC_rand_unlock_fn ossl_drbg_unlock;
 
 /* Common parameters for all of our DRBGs */
-int ossl_drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[]);
-int ossl_drbg_get_ctx_params_no_lock(PROV_DRBG *drbg, OSSL_PARAM params[],
+struct drbg_get_ctx_params_st {
+    OSSL_PARAM *state;
+    OSSL_PARAM *str;
+    OSSL_PARAM *maxreq;
+    OSSL_PARAM *minentlen;
+    OSSL_PARAM *maxentlen;
+    OSSL_PARAM *minnonlen;
+    OSSL_PARAM *maxnonlen;
+    OSSL_PARAM *maxperlen;
+    OSSL_PARAM *maxadlen;
+    OSSL_PARAM *reseed_cnt;
+    OSSL_PARAM *reseed_time;
+    OSSL_PARAM *reseed_req;
+    OSSL_PARAM *reseed_int;
+    OSSL_PARAM *ind;
+    OSSL_PARAM *cipher;         /* CTR DRBG */
+    OSSL_PARAM *df;             /* CTR DRBG */
+    OSSL_PARAM *digest;         /* HASH & HMAC DRBG */
+    OSSL_PARAM *mac;            /* HMAC DRBG */
+};
+
+int ossl_drbg_get_ctx_params(PROV_DRBG *drbg,
+                                     const struct drbg_get_ctx_params_st *p);
+int ossl_drbg_get_ctx_params_no_lock(PROV_DRBG *drbg,
+                                     const struct drbg_get_ctx_params_st *p,
+                                     const OSSL_PARAM params[],
                                      int *complete);
 
 struct drbg_set_ctx_params_st {
