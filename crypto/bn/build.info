@@ -73,6 +73,9 @@ IF[{- !$disabled{asm} -}]
   $BNASM_aarch64=bn_asm.c armv8-mont.S
   $BNDEF_aarch64=OPENSSL_BN_ASM_MONT
 
+  $BNASM_riscv64=bn_asm.c riscv64-mont.S
+  $BNDEF_riscv64=OPENSSL_BN_ASM_MONT
+
   $BNASM_parisc11=bn_asm.c parisc-mont.s
   $BNDEF_parisc11=OPENSSL_BN_ASM_MONT
   $BNASM_parisc20_64=$BNASM_parisc11
@@ -182,3 +185,5 @@ GENERATE[armv4-gf2m.S]=asm/armv4-gf2m.pl
 INCLUDE[armv4-gf2m.o]=..
 GENERATE[armv8-mont.S]=asm/armv8-mont.pl
 INCLUDE[armv8-mont.o]=..
+GENERATE[riscv64-mont.S]=asm/riscv64-mont.pl
+INCLUDE[riscv64-mont.o]=..
