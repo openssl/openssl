@@ -859,7 +859,7 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
 
     for (i = QUIC_PN_SPACE_INITIAL; i < QUIC_PN_SPACE_NUM; ++i) {
         /*
-         * RFC 9002 section 5.2.2.1 keep probe timeout armed until
+         * RFC 9002 section 6.2.2.1 keep probe timeout armed until
          * handshake is confirmed (client sees HANDSHAKE_DONE message
          * from server).
          */
@@ -886,16 +886,16 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
 
         /*
          * Only re-arm timer if stack has sent at least one ACK eliciting frame.
-         * If stack has sent no ACK eliciting at given encryption level then
-         * particular timer is zero and we must not attempt to set it. Timer time
-         * runs since epoch (Jan 1 1970) and we must not set timer to past.
+         * If stack has sent no ACK eliciting frame at given encryption level then
+         * particular timer is zero and we must not attempt to set it. Timer keeps
+         * time since epoch (Jan 1 1970) and we must not set timer to past.
          */
         if (!ossl_time_is_zero(ackm->time_of_last_ack_eliciting_pkt[i])) {
-	    t = ossl_time_add(ackm->time_of_last_ack_eliciting_pkt[i], duration);
-	    if (ossl_time_compare(t, pto_timeout) < 0) {
-		pto_timeout = t;
-		pto_space   = i;
-	    }
+            t = ossl_time_add(ackm->time_of_last_ack_eliciting_pkt[i], duration);
+            if (ossl_time_compare(t, pto_timeout) < 0) {
+                pto_timeout = t;
+                pto_space   = i;
+            }
         }
     }
 
