@@ -888,7 +888,7 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
          * Only re-arm timer if stack has sent at least one ACK eliciting frame.
          * If stack has sent no ACK eliciting at given encryption level then
          * particular timer is zero and we must not attempt to set it. Timer time
-         * runs since epoch (Jan 1 1970 and we must not set timer to past.
+         * runs since epoch (Jan 1 1970) and we must not set timer to past.
          */
         if (!ossl_time_is_zero(ackm->time_of_last_ack_eliciting_pkt[i])) {
 	    t = ossl_time_add(ackm->time_of_last_ack_eliciting_pkt[i], duration);
