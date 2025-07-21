@@ -19,7 +19,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
-#include "drbg_local.h"
+#include "prov/drbg.h"
 #include "crypto/evp.h"
 #include "crypto/evp/evp_local.h"
 #include "internal/provider.h"

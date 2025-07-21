@@ -14,7 +14,7 @@
 #include <openssl/evp.h>
 #include "crypto/rand.h"
 #include <openssl/proverr.h>
-#include "drbg_local.h"
+#include "prov/drbg.h"
 #include "internal/thread_once.h"
 #include "crypto/cryptlib.h"
 #include "prov/seeding.h"
