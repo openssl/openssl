@@ -351,8 +351,10 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
              * If we have finished the fake idling duration, the connection
              * should still be healthy in TA mode.
              */
-            if (!TEST_true(ossl_quic_tserver_is_connected(tserver)))
-                goto err;
+            if (use_thread_assist) {
+                if (!TEST_true(ossl_quic_tserver_is_connected(tserver)))
+                    goto err;
+            }
 
             /* DONE */
             break;
