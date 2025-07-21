@@ -216,11 +216,22 @@ OSSL_FUNC_rand_unlock_fn ossl_drbg_unlock;
 int ossl_drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[]);
 int ossl_drbg_get_ctx_params_no_lock(PROV_DRBG *drbg, OSSL_PARAM params[],
                                      int *complete);
-int ossl_drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[]);
 
-#define OSSL_PARAM_DRBG_SETTABLE_CTX_COMMON                             \
-    OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS, NULL),             \
-    OSSL_PARAM_uint64(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL, NULL)
+struct drbg_set_ctx_params_st {
+    OSSL_PARAM *propq;
+    OSSL_PARAM *engine;
+    OSSL_PARAM *cipher;     /* CTR DRBG */
+    OSSL_PARAM *df;         /* CTR DRBG */
+    OSSL_PARAM *digest;     /* HASH and HMAC DRBG */
+    OSSL_PARAM *mac;        /* HMAC DRBG */
+    OSSL_PARAM *ind_d;      /* HASH and HMAC DRBG */
+    OSSL_PARAM *prov;
+    OSSL_PARAM *reseed_req;
+    OSSL_PARAM *reseed_time;
+};
+
+int ossl_drbg_set_ctx_params(PROV_DRBG *drbg,
+                             const struct drbg_set_ctx_params_st *p);
 
 #define OSSL_PARAM_DRBG_GETTABLE_CTX_COMMON                             \
     OSSL_PARAM_int(OSSL_RAND_PARAM_STATE, NULL),                        \

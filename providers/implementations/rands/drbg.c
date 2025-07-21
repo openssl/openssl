@@ -972,19 +972,15 @@ int ossl_drbg_get_ctx_params_no_lock(PROV_DRBG *drbg, OSSL_PARAM params[],
     return 1;
 }
 
-int ossl_drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[])
+int ossl_drbg_set_ctx_params(PROV_DRBG *drbg,
+                             const struct drbg_set_ctx_params_st *p)
 {
-    const OSSL_PARAM *p;
-
-    if (ossl_param_is_empty(params))
-        return 1;
-
-    p = OSSL_PARAM_locate_const(params, OSSL_DRBG_PARAM_RESEED_REQUESTS);
-    if (p != NULL && !OSSL_PARAM_get_uint(p, &drbg->reseed_interval))
+    if (p->reseed_req != NULL
+            && !OSSL_PARAM_get_uint(p->reseed_req, &drbg->reseed_interval))
         return 0;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL);
-    if (p != NULL && !OSSL_PARAM_get_time_t(p, &drbg->reseed_time_interval))
+    if (p->reseed_time != NULL
+            && !OSSL_PARAM_get_time_t(p->reseed_time, &drbg->reseed_time_interval))
         return 0;
 
     return 1;
