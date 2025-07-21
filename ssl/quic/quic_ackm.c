@@ -861,7 +861,7 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
         /*
          * RFC 9002 section 5.2.2.1 keep probe timeout armed until
          * handshake is confirmed (client sees HANDSHAKE_DONE message
-         * from server(.
+         * from server).
          */
         if (ackm->ack_eliciting_bytes_in_flight[i] == 0 &&
             (ackm->handshake_confirmed == 1 || ackm->is_server == 1))
