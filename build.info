@@ -48,6 +48,8 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/x509_acert.h \
          include/openssl/x509_vfy.h \
          include/crypto/bn_conf.h include/crypto/dso_conf.h \
+         providers/implementations/asymciphers/rsa_enc.c \
+         providers/implementations/asymciphers/sm2_enc.c \
          providers/implementations/kdfs/argon2.c \
          providers/implementations/kdfs/hkdf.c \
          providers/implementations/kdfs/hmacdrbg_kdf.c \
@@ -121,7 +123,9 @@ GENERATE[include/openssl/x509_vfy.h]=include/openssl/x509_vfy.h.in
 GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 
-DEPEND[providers/implementations/kdfs/argon2.c \
+DEPEND[providers/implementations/asymciphers/rsa_enc.c \
+       providers/implementations/asymciphers/sm2_enc.c \
+       providers/implementations/kdfs/argon2.c \
        providers/implementations/kdfs/hkdf.c \
        providers/implementations/kdfs/hmacdrbg_kdf.c \
        providers/implementations/kdfs/kbkdf.c \
@@ -161,6 +165,10 @@ DEPEND[providers/implementations/kdfs/argon2.c \
        providers/implementations/rands/seed_src_jitter.c \
        providers/implementations/rands/test_rng.c \
        include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
+GENERATE[providers/implementations/asymciphers/rsa_enc.c]=\
+    providers/implementations/asymciphers/rsa_enc.c.in
+GENERATE[providers/implementations/asymciphers/sm2_enc.c]=\
+    providers/implementations/asymciphers/sm2_enc.c.in
 GENERATE[providers/implementations/kdfs/argon2.c]=\
     providers/implementations/kdfs/argon2.c.in
 GENERATE[providers/implementations/kdfs/hkdf.c]=\
