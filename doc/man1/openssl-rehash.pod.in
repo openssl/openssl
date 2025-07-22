@@ -133,6 +133,13 @@ By default, this command only lists each directory as it is processed.
 The path to an executable to use to generate hashes and
 fingerprints (see above).
 
+=item B<PATH>
+
+List of paths, separated by colons (or semicolons, on Windows platforms),
+where the B<openssl> executable is searched in case the path to the hash
+generating executable is not provided in the B<OPENSSL> environment variable
+or it is not usable (that is, does not exist or is not executable).
+
 =item B<SSL_CERT_DIR>
 
 Colon separated list of directories to operate on.
