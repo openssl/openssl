@@ -3683,7 +3683,8 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             if (resp_len > 0) {
                 OPENSSL_free(sc->ext.ocsp.resp);
                 *(unsigned char **)parg = sc->ext.ocsp.resp = p;
-                ret = sc->ext.ocsp.resp_len = resp_len;
+                sc->ext.ocsp.resp_len = (size_t)resp_len;
+                ret = resp_len;
             }
         }
 #endif
