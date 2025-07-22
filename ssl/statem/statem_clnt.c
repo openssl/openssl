@@ -2954,14 +2954,14 @@ int tls_process_cert_status_body(SSL_CONNECTION *s, size_t chainidx, PACKET *pkt
                 return 0;
             }
             p = respder;
-            resp = d2i_OCSP_RESPONSE(NULL, &p, resplen);
+            resp = d2i_OCSP_RESPONSE(NULL, &p, (long)resplen);
             OPENSSL_free(respder);
             if (resp == NULL) {
                 SSLfatal(s, TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE,
                          SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE);
                 return 0;
             }
-            sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp_ex, resp, chainidx);
+            sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp_ex, resp, (int)chainidx);
         }
     }
 
