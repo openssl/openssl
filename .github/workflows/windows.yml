@@ -139,7 +139,7 @@ jobs:
         nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
 
   minimal:
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -150,14 +150,14 @@ jobs:
       working-directory: _build
       shell: cmd
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         perl ..\Configure --banner=Configured --strict-warnings enable-demos no-makedepend no-bulk no-deprecated no-fips no-asm no-threads -DOPENSSL_SMALL_FOOTPRINT -DOSSL_WINCTX=openssl
         perl configdata.pm --dump
     - name: build
       working-directory: _build
       shell: cmd
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         nmake
     - name: download coreinfo
       run: |
@@ -174,7 +174,7 @@ jobs:
       working-directory: _build
       shell: cmd
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
 
   cygwin:
