@@ -154,6 +154,10 @@ provider):
  core_new_error                 OSSL_FUNC_CORE_NEW_ERROR
  core_set_error_debug           OSSL_FUNC_CORE_SET_ERROR_DEBUG
  core_vset_error                OSSL_FUNC_CORE_VSET_ERROR
+ core_set_error_mark            OSSL_FUNC_CORE_SET_ERROR_MARK
+ core_clear_last_error_mark     OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK
+ core_pop_error_to_mark         OSSL_FUNC_CORE_POP_ERROR_TO_MARK
+ core_count_to_mark             OSSL_FUNC_CORE_COUNT_TO_MARK
  core_obj_add_sigid             OSSL_FUNC_CORE_OBJ_ADD_SIGID
  core_obj_create                OSSL_FUNC_CORE_OBJ_CREATE
  CRYPTO_malloc                  OSSL_FUNC_CRYPTO_MALLOC
@@ -269,6 +273,33 @@ I<file> and I<line> may also be passed to indicate exactly where the
 error occurred or was reported.
 
 This corresponds to the OpenSSL function L<ERR_vset_error(3)>.
+
+=item core_set_error_mark()
+
+sets a mark on the current topmost error record if there is one.
+
+This corresponds to the OpenSSL function L<ERR_set_mark(3)>.
+
+=item core_clear_last_error_mark()
+
+removes the last mark added if there is one.
+
+This corresponds to the OpenSSL function L<ERR_clear_last_mark(3)>.
+
+=item core_pop_error_to_mark()
+
+pops the top of the error stack until a mark is found. The mark is then removed.
+If there is no mark, the whole stack is removed.
+
+This corresponds to the OpenSSL function L<ERR_pop_to_mark(3)>.
+
+=item core_count_to_mark()
+
+returns the number of entries on the error stack above the most recently
+marked entry, not including that entry. If there is no mark in the error stack,
+the number of entries in the error stack is returned.
+
+This corresponds to the OpenSSL function L<ERR_count_to_mark(3)>.
 
 =back
 
