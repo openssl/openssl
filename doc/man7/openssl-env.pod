@@ -192,7 +192,10 @@ Traces encoder operations.
 
 =item B<REF_COUNT>
 
-Traces decrementing certain ASN.1 structure references.
+Traces reference count changes in various structures,
+including C<BIO>, C<DH>, C<DSA>, C<EC_KEY>, C<ECX_KEY>,
+C<EVP_PKEY>, C<EVP_SKEY>, C<RSA>, C<SSL>, C<SSL_CTX>, C<SSL_SESSION>,
+C<X509_CRL>, C<X509_STORE>, C<X509>, and some others.
 
 =item B<HTTP>
 
