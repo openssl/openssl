@@ -1039,7 +1039,7 @@ OSSL_ACKM *ossl_ackm_new(OSSL_TIME (*now)(void *arg),
                          OSSL_STATM *statm,
                          const OSSL_CC_METHOD *cc_method,
                          OSSL_CC_DATA *cc_data,
-                         char is_server)
+                         int is_server)
 {
     OSSL_ACKM *ackm;
     int i;
@@ -1063,7 +1063,7 @@ OSSL_ACKM *ossl_ackm_new(OSSL_TIME (*now)(void *arg),
     ackm->statm     = statm;
     ackm->cc_method = cc_method;
     ackm->cc_data   = cc_data;
-    ackm->is_server = is_server;
+    ackm->is_server = (char)is_server;
 
     ackm->rx_max_ack_delay = ossl_ms2time(QUIC_DEFAULT_MAX_ACK_DELAY);
     ackm->tx_max_ack_delay = DEFAULT_TX_MAX_ACK_DELAY;
