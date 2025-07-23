@@ -56,7 +56,7 @@ char **copy_argv(int *argc, char *argv[])
      * get them when linking with all of libapps.a.
      * See comment in test/build.info.
      */
-    newargv = OPENSSL_malloc(sizeof(*newargv) * (count + 1));
+    newargv = OPENSSL_malloc_array(count + 1, sizeof(*newargv));
     if (newargv == NULL)
         return NULL;
 

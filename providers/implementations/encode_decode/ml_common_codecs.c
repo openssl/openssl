@@ -42,7 +42,7 @@ ossl_ml_common_pkcs8_fmt_order(const char *algorithm_name,
     const char *sep = "\t ,";
 
     /* Reserve an extra terminal slot with fmt == NULL */
-    if ((ret = OPENSSL_zalloc((NUM_PKCS8_FORMATS + 1) * sizeof(*ret))) == NULL)
+    if ((ret = OPENSSL_calloc(NUM_PKCS8_FORMATS + 1, sizeof(*ret))) == NULL)
         return NULL;
 
     /* Entries that match a format will get a non-zero preference. */
