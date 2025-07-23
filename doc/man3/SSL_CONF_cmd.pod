@@ -176,16 +176,14 @@ respectively:
     $ openssl list -tls1_2 -tls-groups
     $ openssl list -tls1_3 -tls-groups
 
-The recommended groups (in order of decreasing performance) for TLS 1.3 are presently:
+The recommended groups for TLS 1.3 are presently documented in the default
+TLS group list in the OpenSSL code base. Starting with OpenSSL 3.5, the
+hybrid algorithm B<X25519MLKEM768> is first in this default list.
+It mitigates against threats from future quantum computers while
+still providing state-of-the-art classical key exchange protection.
 
-B<x25519>,
-B<secp256r1>,
-B<x448>,
-and
-B<secp384r1>.
-
-The stronger security margins of the last two, come at a significant
-performance penalty.
+Further details regarding post-quantum algorithm considerations are documented
+in the HISTORY section below.
 
 An enriched alternative syntax, that enables clients to send multiple keyshares
 and allows servers to prioritise some groups over others, is described in
