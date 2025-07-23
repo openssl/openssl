@@ -177,7 +177,27 @@ respectively:
     $ openssl list -tls1_2 -tls-groups
     $ openssl list -tls1_3 -tls-groups
 
-The recommended groups (in order of decreasing performance) for TLS 1.3 are presently:
+The recommended groups for TLS 1.3 are presently in a decreasing
+performance/risk-mitigation mix:
+
+B<X25519MLKEM768>,
+B<SecP256r1MLKEM768>,
+B<ML-KEM-512>,
+B<ML-KEM-768>,
+B<x25519>,
+B<ML-KEM-1024>,
+B<X448MLKEM1024>,
+B<secp256r1>,
+B<x448>, 
+B<SecP384r1MLKEM1024>,
+and 
+B<secp384r1>.
+
+This recommendation takes into consideration also the risk posed by future
+quantum computers by harnessing PQC algorithms available since OpenSSL 3.5.
+
+For users not concerned about these risks, the following list documents
+classic group algorithms in the order of decreasing performance:
 
 B<x25519>,
 B<secp256r1>,
