@@ -103,7 +103,7 @@ int FuzzerInitialize(int *argc, char ***argv)
 
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();
-    prediction_table = OPENSSL_zalloc(sizeof(FUZZER_VALUE) * 65537);
+    prediction_table = OPENSSL_calloc(65537, sizeof(FUZZER_VALUE));
     if (prediction_table == NULL)
         return -1;
     fuzzer_table = ossl_ht_new(&fuzz_conf);

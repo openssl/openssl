@@ -569,8 +569,8 @@ static int fill_mem_blocks_mt(KDF_ARGON2 *ctx)
     void **t;
     ARGON2_THREAD_DATA *t_data;
 
-    t = OPENSSL_zalloc(sizeof(void *)*ctx->lanes);
-    t_data = OPENSSL_zalloc(ctx->lanes * sizeof(ARGON2_THREAD_DATA));
+    t = OPENSSL_calloc(ctx->lanes, sizeof(void *));
+    t_data = OPENSSL_calloc(ctx->lanes, sizeof(ARGON2_THREAD_DATA));
 
     if (t == NULL || t_data == NULL)
         goto fail;
@@ -738,11 +738,9 @@ static int initialize(KDF_ARGON2 *ctx)
         return 0;
 
     if (ctx->type != ARGON2_D)
-        ctx->memory = OPENSSL_secure_zalloc(ctx->memory_blocks *
-                                            sizeof(BLOCK));
+        ctx->memory = OPENSSL_secure_calloc(ctx->memory_blocks, sizeof(BLOCK));
     else
-        ctx->memory = OPENSSL_zalloc(ctx->memory_blocks *
-                                     sizeof(BLOCK));
+        ctx->memory = OPENSSL_calloc(ctx->memory_blocks, sizeof(BLOCK));
 
     if (ctx->memory == NULL) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_MEMORY_SIZE,
