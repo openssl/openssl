@@ -258,6 +258,28 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
+  malloc_failure_testing:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout openssl
+      uses: actions/checkout@v4
+    - name: Adjust ASLR for sanitizer
+      run: |
+        sudo cat /proc/sys/vm/mmap_rnd_bits
+        sudo sysctl -w vm.mmap_rnd_bits=28
+    - name: config
+      run: ./config --strict-warnings --banner=Configured --debug enable-asan enable-crypto-mdebug enable-allocfail-tests && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: make test
+      continue-on-error: true
+      run: |
+        make TESTS=test_handshake-memfail test
+
   enable_brotli_and_asan_ubsan:
     runs-on: ubuntu-latest
     steps:
