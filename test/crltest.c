@@ -9,6 +9,7 @@
 
 #include "internal/nelem.h"
 #include <string.h>
+#include <time.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
@@ -17,7 +18,16 @@
 
 #include "testutil.h"
 
+/*
+ * We cannot use old certificates for new tests because the private key
+ * associated with them is no longer available. Therefore, we add kCRLTestLeaf,
+ * kCRLTestLeaf2 and PARAM_TIME2, as well as pass the verification time to the
+ * verify function as a parameter. Certificates and CRL from
+ * https://github.com/openssl/openssl/issues/27506 are used.
+ */
+
 #define PARAM_TIME 1474934400 /* Sep 27th, 2016 */
+#define PARAM_TIME2 1753284700 /* July 23th, 2025 */
 
 static const char *kCRLTestRoot[] = {
     "-----BEGIN CERTIFICATE-----\n",
@@ -66,6 +76,61 @@ static const char *kCRLTestLeaf[] = {
     "ICkJVKpi2ahDBqX4MOH4SLfzVk8pqSpviS6yaA1RXqjpkxiN45WWaXDldVHMSkhC\n",
     "5CNXsXi4b1nAntu89crwSLA3rEwzCWeYj+BX7e1T9rr3oJdwOU/2KQtW1js1yQUG\n",
     "tjJMFw==\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static const char *kCRLTestRoot2[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIID4zCCAsugAwIBAgIUGTcyNat9hTOo8nnGdzF7MTzL9WAwDQYJKoZIhvcNAQEL\n",
+    "BQAweTELMAkGA1UEBhMCVVMxEzARBgNVBAgMCkNhbGlmb3JuaWExFjAUBgNVBAcM\n",
+    "DVNhbiBGcmFuY2lzY28xEzARBgNVBAoMCk15IENvbXBhbnkxEzARBgNVBAMMCk15\n",
+    "IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJvb3QgQ0EwHhcNMjUwMzAzMDcxNDA0WhcN\n",
+    "MzUwMzAxMDcxNDA0WjB5MQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZvcm5p\n",
+    "YTEWMBQGA1UEBwwNU2FuIEZyYW5jaXNjbzETMBEGA1UECgwKTXkgQ29tcGFueTET\n",
+    "MBEGA1UEAwwKTXkgUm9vdCBDQTETMBEGA1UECwwKTXkgUm9vdCBDQTCCASIwDQYJ\n",
+    "KoZIhvcNAQEBBQADggEPADCCAQoCggEBAN6jjwkmV+pse430MQfyaWv+JtAd2r6K\n",
+    "qzEquBcoofzuf/yvdEhQPjK3bcotgfEcFq3QMo1MJ7vqRHEIu0hJ+5ZnEQtIRcrg\n",
+    "Vm7/EoVCBpDc9BDtW40TDp69z9kaKyyKYy6rxmSKgJydGBeGGMwBxgTK/o0xAriC\n",
+    "C3lLXHT8G8YMamKUpToPL5iCRX+GJPnnizB2ODvpQGMWkbp9+1xEc4dD7Db2wfUb\n",
+    "gatDYUoGndQKWD49UhURavQZeLpDxlz93YutRRkZTWc4IB7WebiEb39BDjSP3QYm\n",
+    "2h+rZYyjp3Gxy8pBNTPzE9Dk4yjiqS7o3WGvi/S6zKTLDvWl9t6pMOMCAwEAAaNj\n",
+    "MGEwHQYDVR0OBBYEFNdhiR+Tlot2VBbp5XfcfLdlG4AkMA4GA1UdDwEB/wQEAwIB\n",
+    "hjAfBgNVHSMEGDAWgBTXYYkfk5aLdlQW6eV33Hy3ZRuAJDAPBgNVHRMBAf8EBTAD\n",
+    "AQH/MA0GCSqGSIb3DQEBCwUAA4IBAQCvwutY0WMcKoqulifnYfhxGLtXSSvD2GET\n",
+    "uNRv+S1KI5JKcAdfvnbNDpUwlujMDIpe3ewmv9i6kcitpHwZXdVAw6KWagJ0kDSt\n",
+    "jbArJxuuuFmSFDS7kj8x7FZok5quAWDSSg+ubV2tCVxmDuTs1WXJXD3l9g+3J9GU\n",
+    "kyeFMKqwRp8w22vm9ilgXrzeesAmmAg/pEb56ljTPeaONQxVe7KJhv2q8J17sML8\n",
+    "BE7TdVx7UFQbO/t9XqdT5O9eF8JUx4Vn4QSr+jdjJ/ns4T3/IC9dJq9k7tjD48iA\n",
+    "TNc+7x+uj8P39VA96HpjujVakj8/qn5SQMPJgDds+MSXrX+6JBWm\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static const char *kCRLTestLeaf2[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIECjCCAvKgAwIBAgIUPxuMqMtuN1j3XZVRVrNmaTCIP04wDQYJKoZIhvcNAQEL\n",
+    "BQAweTELMAkGA1UEBhMCVVMxEzARBgNVBAgMCkNhbGlmb3JuaWExFjAUBgNVBAcM\n",
+    "DVNhbiBGcmFuY2lzY28xEzARBgNVBAoMCk15IENvbXBhbnkxEzARBgNVBAMMCk15\n",
+    "IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJvb3QgQ0EwHhcNMjUwNDE3MTAxNjQ5WhcN\n",
+    "MjYwNDE3MTAxNjQ5WjBoMQswCQYDVQQGEwJDTjEQMA4GA1UECAwHQmVpamluZzEQ\n",
+    "MA4GA1UEBwwHQmVpamluZzEYMBYGA1UECgwPTXkgT3JnYW5pemF0aW9uMRswGQYD\n",
+    "VQQDDBJNeSBJbnRlcm1lZGlhdGUgQ0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw\n",
+    "ggEKAoIBAQDIxRxZQokflDaLYoD21HT2U4EshqtKpSf9zPS5unBMCfnQkU4IJjBF\n",
+    "3qQmfgz5ZOpZv3x0w48fDjiysk0eOVCFAo+uixEjMeuln6Wj3taetch2Sk0YNm5J\n",
+    "SJCNF2olHZXn5R8ngEmho2j1wbwNnpcccZyRNzUSjR9oAgObkP3O7fyQKJRxwNU0\n",
+    "sN7mfoyEOczKtUaYbqi2gPx6OOqNLjXlLmfZ8PJagKCN/oYkGU5PoRNXp65Znhu6\n",
+    "s8FuSmvTodu8Qhs9Uizo+SycaBXn5Fbqt32S+9vPfhH9FfELDfQIaBp+iQAxcKPX\n",
+    "tUglXEjiEVrbNf722PuWIWN9EIBolULVAgMBAAGjgZowgZcwEgYDVR0TAQH/BAgw\n",
+    "BgEB/wIBATAxBgNVHR8EKjAoMCagJKAihiBodHRwOi8vbG9jYWxob3N0OjgwMDAv\n",
+    "Y2FfY3JsLmRlcjAdBgNVHQ4EFgQUh40vFgoopz5GUggPEEk2+bKgbwQwHwYDVR0j\n",
+    "BBgwFoAU12GJH5OWi3ZUFunld9x8t2UbgCQwDgYDVR0PAQH/BAQDAgGGMA0GCSqG\n",
+    "SIb3DQEBCwUAA4IBAQDANfJuTgo0vRaMPYqOeW8R4jLHdVazdGLeQQ/85vXr/Gl1\n",
+    "aL40tLp4yZbThxuxTzPzfY1OGkG69YQ/8Vo0gCEi5KjBMYPKmZISKy1MwROQ1Jfp\n",
+    "HkmyZk1TfuzG/4fN/bun2gjpDYcihf4xA4NhSVzQyvqm1N6VkTgK+bEWTOGzqw66\n",
+    "6IYPN6oVDmLbwU1EvV3rggB7HUJCJP4qW9DbAQRAijUurPUGoU2vEbrSyYkfQXCf\n",
+    "p4ouOTMl6O7bJ110SKzxbCfWqom+iAwHlU2tOPVmOp1CLDCClMRNHIFMDGAoBomH\n",
+    "s01wD+IcIi9OkQEbqVb/XDKes8fqzQgTtSM9C9Ot\n",
     "-----END CERTIFICATE-----\n",
     NULL
 };
@@ -120,6 +185,24 @@ static const char *kBadIssuerCRL[] = {
     "TybvuTmkryGBqREwmSbHFFjg5ixG/ztwzON/Ly78aJ8Bql6ktCl9+/gh6VJcoZ0q\n",
     "L8V8aT8+Ghfi+zrXM8S9BmLQ9n0fQe0wzKrDZh14EK4sb7zmOzFHSxm3eEXyS98g\n",
     "Od4cjsc3ymNk88S4jpnLRtIVxZB+SQ==\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+static const char *kEmptyIdpCRL[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICOTCCASECAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
+    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
+    "Ck15IENvbXBhbnkxEzARBgNVBAMMCk15IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJv\n",
+    "b3QgQ0EXDTI1MDEwMTAwMDAwMFoXDTI1MTIwMTAwMDAwMFowJzAlAhQcgAIu+B8k\n",
+    "Be6WphLcth/grHAeXhcNMjUwNDE3MTAxNjUxWqBLMEkwGAYDVR0UBBECDxnP/97a\n",
+    "dO3y9qRGDM7hQDAfBgNVHSMEGDAWgBTXYYkfk5aLdlQW6eV33Hy3ZRuAJDAMBgNV\n",
+    "HRwBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQAf+mtlDi9IftsYwTcxYYKxE203\n",
+    "+prttFB00om29jjtkGYRxcs3vZQRTvera21YFn3mrS/lxvhBq6GMx0I61AQ48Pr4\n",
+    "63bDvZgf+/P6T2+MLgLds23o3TOfy2SBSdnFEcN0bFUgF5U0bFpQqlQWx+FYhrAf\n",
+    "ZX3RAhURiKKfGKGeVOVKS0u+x666FoDQ7pbhbHM3+jnuzdtv8RQMkj1AZMw0FMl8\n",
+    "m2dFQhZqT9WdJqZAc8ldc6V3a0rUeOV8BUPACf1k4B0CKhn4draIqltZkWgl3cmU\n",
+    "SX2V/a51lS12orfNYSEx+vtJ9gpx4LDxyOnai18vueVyljrXuQSrcYuxS2Cd\n",
     "-----END X509 CRL-----\n",
     NULL
 };
@@ -189,6 +272,8 @@ static const char **unknown_critical_crls[] = {
 
 static X509 *test_root = NULL;
 static X509 *test_leaf = NULL;
+static X509 *test_root2 = NULL;
+static X509 *test_leaf2 = NULL;
 
 /*
  * Glue an array of strings together.  Return a BIO and put the string
@@ -251,7 +336,7 @@ static X509 *X509_from_strings(const char **pem)
  * Returns a value from X509_V_ERR_xxx or X509_V_OK.
  */
 static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
-                  unsigned long flags)
+                  unsigned long flags, time_t verification_time)
 {
     X509_STORE_CTX *ctx = X509_STORE_CTX_new();
     X509_STORE *store = X509_STORE_new();
@@ -276,8 +361,8 @@ static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
         goto err;
     X509_STORE_CTX_set0_trusted_stack(ctx, roots);
     X509_STORE_CTX_set0_crls(ctx, crls);
-    X509_VERIFY_PARAM_set_time(param, PARAM_TIME);
-    if (!TEST_long_eq((long)X509_VERIFY_PARAM_get_time(param), PARAM_TIME))
+    X509_VERIFY_PARAM_set_time(param, verification_time);
+    if (!TEST_long_eq((long)X509_VERIFY_PARAM_get_time(param), (long)verification_time))
         goto err;
     X509_VERIFY_PARAM_set_depth(param, 16);
     if (flags)
@@ -341,10 +426,11 @@ static int test_basic_crl(void)
         && TEST_ptr(revoked_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
                               make_CRL_stack(basic_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK), X509_V_OK)
+                              X509_V_FLAG_CRL_CHECK, PARAM_TIME), X509_V_OK)
         && TEST_int_eq(verify(test_leaf, test_root,
                               make_CRL_stack(basic_crl, revoked_crl),
-                              X509_V_FLAG_CRL_CHECK), X509_V_ERR_CERT_REVOKED);
+                              X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+                       X509_V_ERR_CERT_REVOKED);
     X509_CRL_free(basic_crl);
     X509_CRL_free(revoked_crl);
     return r;
@@ -353,7 +439,7 @@ static int test_basic_crl(void)
 static int test_no_crl(void)
 {
     return TEST_int_eq(verify(test_leaf, test_root, NULL,
-                              X509_V_FLAG_CRL_CHECK),
+                              X509_V_FLAG_CRL_CHECK, PARAM_TIME),
                        X509_V_ERR_UNABLE_TO_GET_CRL);
 }
 
@@ -365,9 +451,23 @@ static int test_bad_issuer_crl(void)
     r = TEST_ptr(bad_issuer_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
                               make_CRL_stack(bad_issuer_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK),
+                              X509_V_FLAG_CRL_CHECK, PARAM_TIME),
                        X509_V_ERR_UNABLE_TO_GET_CRL);
     X509_CRL_free(bad_issuer_crl);
+    return r;
+}
+
+static int test_crl_empty_idp(void)
+{
+    X509_CRL *empty_idp_crl = CRL_from_strings(kEmptyIdpCRL);
+    int r;
+
+    r = TEST_ptr(empty_idp_crl)
+        && TEST_int_eq(verify(test_leaf2, test_root2,
+                              make_CRL_stack(empty_idp_crl, NULL),
+                              X509_V_FLAG_CRL_CHECK, PARAM_TIME2),
+                       X509_V_ERR_UNABLE_TO_GET_CRL);
+    X509_CRL_free(empty_idp_crl);
     return r;
 }
 
@@ -379,7 +479,7 @@ static int test_known_critical_crl(void)
     r = TEST_ptr(known_critical_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
                               make_CRL_stack(known_critical_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK), X509_V_OK);
+                              X509_V_FLAG_CRL_CHECK, PARAM_TIME), X509_V_OK);
     X509_CRL_free(known_critical_crl);
     return r;
 }
@@ -392,7 +492,7 @@ static int test_unknown_critical_crl(int n)
     r = TEST_ptr(unknown_critical_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
                               make_CRL_stack(unknown_critical_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK),
+                              X509_V_FLAG_CRL_CHECK, PARAM_TIME),
                        X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION);
     X509_CRL_free(unknown_critical_crl);
     return r;
@@ -412,7 +512,7 @@ static int test_reuse_crl(int idx)
     if (idx & 1) {
         if (!TEST_true(X509_CRL_up_ref(reused_crl)))
             goto err;
-	addref_crl = reused_crl;
+        addref_crl = reused_crl;
     }
 
     idx >>= 1;
@@ -455,12 +555,15 @@ static int test_reuse_crl(int idx)
 int setup_tests(void)
 {
     if (!TEST_ptr(test_root = X509_from_strings(kCRLTestRoot))
-        || !TEST_ptr(test_leaf = X509_from_strings(kCRLTestLeaf)))
+        || !TEST_ptr(test_leaf = X509_from_strings(kCRLTestLeaf))
+        || !TEST_ptr(test_root2 = X509_from_strings(kCRLTestRoot2))
+        || !TEST_ptr(test_leaf2 = X509_from_strings(kCRLTestLeaf2)))
         return 0;
 
     ADD_TEST(test_no_crl);
     ADD_TEST(test_basic_crl);
     ADD_TEST(test_bad_issuer_crl);
+    ADD_TEST(test_crl_empty_idp);
     ADD_TEST(test_known_critical_crl);
     ADD_ALL_TESTS(test_unknown_critical_crl, OSSL_NELEM(unknown_critical_crls));
     ADD_ALL_TESTS(test_reuse_crl, 6);
@@ -471,4 +574,6 @@ void cleanup_tests(void)
 {
     X509_free(test_root);
     X509_free(test_leaf);
+    X509_free(test_root2);
+    X509_free(test_leaf2);
 }
