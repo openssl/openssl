@@ -75,6 +75,10 @@ IF[{- !$disabled{tests} -}]
     PROGRAMS{noinst}=rpktest
   ENDIF
 
+  IF[{- !$disabled{'allocfail-tests'} -}]
+    PROGRAMS{noninst}=handshake-memfail
+  ENDIF
+
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
   ENDIF
@@ -581,6 +585,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[sslapitest]=sslapitest.c helpers/ssltestlib.c filterprov.c tls-provider.c
   INCLUDE[sslapitest]=../include ../apps/include ../providers/common/include ..
   DEPEND[sslapitest]=../libcrypto.a ../libssl.a libtestutil.a
+
+  SOURCE[handshake-memfail]=handshake-memfail.c helpers/ssltestlib.c
+  INCLUDE[handshake-memfail]=../include ../apps/include
+  DEPEND[handshake-memfail]=../libcrypto.a ../libssl.a libtestutil.a
 
   SOURCE[ssl_handshake_rtt_test]=ssl_handshake_rtt_test.c helpers/ssltestlib.c
   INCLUDE[ssl_handshake_rtt_test]=../include ../apps/include ..
