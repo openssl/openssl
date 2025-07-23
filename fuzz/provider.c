@@ -270,7 +270,7 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
     for (p = param; p != NULL && p->key != NULL; p++)
         p_num++;
 
-    fuzzed_parameters = OPENSSL_zalloc(sizeof(OSSL_PARAM) *(p_num + 1));
+    fuzzed_parameters = OPENSSL_calloc(p_num + 1, sizeof(OSSL_PARAM));
     p = fuzzed_parameters;
 
     for (; param != NULL && param->key != NULL; param++) {

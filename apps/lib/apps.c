@@ -106,7 +106,8 @@ int chopup_args(ARGS *arg, char *buf)
             char **tmp;
 
             arg->size += 20;
-            tmp = OPENSSL_realloc(arg->argv, sizeof(*arg->argv) * arg->size);
+            tmp = OPENSSL_realloc_array(arg->argv,
+                                        arg->size, sizeof(*arg->argv));
             if (tmp == NULL)
                 return 0;
             arg->argv = tmp;
@@ -3461,7 +3462,7 @@ OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
     if (opts == NULL)
         return NULL;
 
-    params = OPENSSL_zalloc(sizeof(OSSL_PARAM) * (sz + 1));
+    params = OPENSSL_calloc(sz + 1, sizeof(OSSL_PARAM));
     if (params == NULL)
         return NULL;
 
