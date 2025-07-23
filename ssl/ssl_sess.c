@@ -355,7 +355,6 @@ int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     switch (s->version) {
-    case SSL3_VERSION:
     case TLS1_VERSION:
     case TLS1_1_VERSION:
     case TLS1_2_VERSION:

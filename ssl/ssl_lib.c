@@ -502,7 +502,7 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
     } else {
         /* Regular TLS version checks. */
         if (min_version == 0)
-            min_version = SSL3_VERSION;
+            min_version = TLS1_VERSION;
         if (max_version == 0)
             max_version = TLS1_3_VERSION;
 #ifdef OPENSSL_NO_TLS1_3
@@ -521,10 +521,6 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
         if (max_version == TLS1_VERSION)
             max_version = SSL3_VERSION;
 #endif
-#ifdef OPENSSL_NO_SSL3
-        if (min_version == SSL3_VERSION)
-            min_version = TLS1_VERSION;
-#endif
 #ifdef OPENSSL_NO_TLS1
         if (min_version == TLS1_VERSION)
             min_version = TLS1_1_VERSION;
@@ -539,9 +535,6 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
 #endif
         /* Done massaging versions; do the check. */
         if (0
-#ifdef OPENSSL_NO_SSL3
-            || (min_version <= SSL3_VERSION && SSL3_VERSION <= max_version)
-#endif
 #ifdef OPENSSL_NO_TLS1
             || (min_version <= TLS1_VERSION && TLS1_VERSION <= max_version)
 #endif
