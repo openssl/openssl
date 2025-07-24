@@ -228,11 +228,7 @@ void ossl_obj_cleanup_int(void)
     objs_free_locks();
 }
 
-/*
- * Requires that the ossl_obj_lock be held
- * if TSAN_REQUIRES_LOCKING defined
- */
-static int obj_new_nid_unlocked(int num)
+int OBJ_new_nid(int num)
 {
     static TSAN_QUALIFIER int new_nid = NUM_NID;
 #ifdef TSAN_REQUIRES_LOCKING
@@ -245,19 +241,6 @@ static int obj_new_nid_unlocked(int num)
     return i;
 #else
     return tsan_add(&new_nid, num);
-#endif
-}
-
-int OBJ_new_nid(int num)
-{
-#ifdef TSAN_REQUIRES_LOCKING
-    int i;
-
-    i = obj_new_nid_unlocked(num);
-
-    return i;
-#else
-    return obj_new_nid_unlocked(num);
 #endif
 }
 
@@ -802,7 +785,7 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
         goto err;
     }
 
-    tmpoid->nid = obj_new_nid_unlocked(1);
+    tmpoid->nid = OBJ_new_nid(1);
 
     if (tmpoid->nid == NID_undef)
         goto err;
