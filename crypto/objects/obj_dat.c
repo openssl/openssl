@@ -46,7 +46,7 @@ static CRYPTO_RWLOCK *ossl_obj_lock = NULL;
 static CRYPTO_RWLOCK *ossl_obj_nid_lock = NULL;
 #endif
 
-static CRYPTO_ONCE ossl_obj_lock_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_ONCE ossl_obj_api_init = CRYPTO_ONCE_STATIC_INIT;
 
 static ossl_inline void objs_free_locks(void)
 {
@@ -58,7 +58,7 @@ static ossl_inline void objs_free_locks(void)
 #endif
 }
 
-DEFINE_RUN_ONCE_STATIC(obj_lock_initialise)
+DEFINE_RUN_ONCE_STATIC(obj_api_initialise)
 {
     ossl_obj_lock = CRYPTO_THREAD_lock_new();
     if (ossl_obj_lock == NULL)
@@ -78,18 +78,18 @@ DEFINE_RUN_ONCE_STATIC(obj_lock_initialise)
     return 1;
 }
 
-static ossl_inline int ossl_init_added_lock(void)
+static ossl_inline int ossl_init_added_api(void)
 {
 #ifndef OPENSSL_NO_AUTOLOAD_CONFIG
     /* Make sure we've loaded config before checking for any "added" objects */
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
 #endif
-    return RUN_ONCE(&ossl_obj_lock_init, obj_lock_initialise);
+    return RUN_ONCE(&ossl_obj_api_init, obj_api_initialise);
 }
 
 static ossl_inline int ossl_obj_write_lock(int lock)
 {
-    if (!ossl_init_added_lock())
+    if (!ossl_init_added_api())
         return 0;
     if (!lock)
         return 1;
@@ -98,7 +98,7 @@ static ossl_inline int ossl_obj_write_lock(int lock)
 
 static ossl_inline int ossl_obj_read_lock(int lock)
 {
-    if (!ossl_init_added_lock())
+    if (!ossl_init_added_api())
         return 0;
     if (!lock)
         return 1;
