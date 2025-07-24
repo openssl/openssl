@@ -35,7 +35,7 @@
 #include "internal/sizes.h"
 #include "crypto/pem.h"          /* For internal PVK and "blob" headers */
 #include "prov/bio.h"
-#include "file_store_local.h"
+#include "prov/file_store_local.h"
 
 /*
  * newctx and freectx are not strictly necessary.  However, the method creator,
