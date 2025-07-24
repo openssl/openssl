@@ -244,66 +244,6 @@ int OBJ_new_nid(int num)
 #endif
 }
 
-static int ossl_obj_add_object(const ASN1_OBJECT *obj, int lock)
-{
-    ASN1_OBJECT *o = NULL;
-    ADDED_OBJ *ao[4] = { NULL, NULL, NULL, NULL }, *aop[4];
-    int i;
-
-    if ((o = OBJ_dup(obj)) == NULL)
-        return NID_undef;
-    if ((ao[ADDED_NID] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL
-            || (o->length != 0
-                && obj->data != NULL
-                && (ao[ADDED_DATA] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
-            || (o->sn != NULL
-                && (ao[ADDED_SNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
-            || (o->ln != NULL
-                && (ao[ADDED_LNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL))
-        goto err2;
-
-    if (!ossl_obj_write_lock(lock)) {
-        ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
-        goto err2;
-    }
-
-    for (i = ADDED_DATA; i <= ADDED_NID; i++) {
-        if (ao[i] != NULL) {
-            ao[i]->type = i;
-            ao[i]->obj = o;
-            aop[i] = lh_ADDED_OBJ_retrieve(added, ao[i]);
-            if (aop[i] != NULL)
-                aop[i]->type = -1;
-            (void)lh_ADDED_OBJ_insert(added, ao[i]);
-            if (lh_ADDED_OBJ_error(added)) {
-                if (aop[i] != NULL)
-                    aop[i]->type = i;
-                while (i-- > ADDED_DATA) {
-                    lh_ADDED_OBJ_delete(added, ao[i]);
-                    if (aop[i] != NULL)
-                        aop[i]->type = i;
-                }
-                ERR_raise(ERR_LIB_OBJ, ERR_R_CRYPTO_LIB);
-                goto err;
-            }
-        }
-    }
-    o->flags &=
-        ~(ASN1_OBJECT_FLAG_DYNAMIC | ASN1_OBJECT_FLAG_DYNAMIC_STRINGS |
-          ASN1_OBJECT_FLAG_DYNAMIC_DATA);
-
-    ossl_obj_unlock(lock);
-    return o->nid;
-
- err:
-    ossl_obj_unlock(lock);
- err2:
-    for (i = ADDED_DATA; i <= ADDED_NID; i++)
-        OPENSSL_free(ao[i]);
-    ASN1_OBJECT_free(o);
-    return NID_undef;
-}
-
 ASN1_OBJECT *OBJ_nid2obj(int n)
 {
     ADDED_OBJ ad, *adp = NULL;
@@ -793,7 +733,7 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
     tmpoid->sn = (char *)sn;
     tmpoid->ln = (char *)ln;
 
-    ok = ossl_obj_add_object(tmpoid, 1);
+    ok = OBJ_add_object(tmpoid);
 
     tmpoid->sn = NULL;
     tmpoid->ln = NULL;
@@ -819,7 +759,62 @@ const unsigned char *OBJ_get0_data(const ASN1_OBJECT *obj)
 
 int OBJ_add_object(const ASN1_OBJECT *obj)
 {
-    return ossl_obj_add_object(obj, 1);
+    ASN1_OBJECT *o = NULL;
+    ADDED_OBJ *ao[4] = { NULL, NULL, NULL, NULL }, *aop[4];
+    int i;
+
+    if ((o = OBJ_dup(obj)) == NULL)
+        return NID_undef;
+    if ((ao[ADDED_NID] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL
+            || (o->length != 0
+                && obj->data != NULL
+                && (ao[ADDED_DATA] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
+            || (o->sn != NULL
+                && (ao[ADDED_SNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
+            || (o->ln != NULL
+                && (ao[ADDED_LNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL))
+        goto err2;
+
+    if (!ossl_obj_write_lock(1)) {
+        ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
+        goto err2;
+    }
+
+    for (i = ADDED_DATA; i <= ADDED_NID; i++) {
+        if (ao[i] != NULL) {
+            ao[i]->type = i;
+            ao[i]->obj = o;
+            aop[i] = lh_ADDED_OBJ_retrieve(added, ao[i]);
+            if (aop[i] != NULL)
+                aop[i]->type = -1;
+            (void)lh_ADDED_OBJ_insert(added, ao[i]);
+            if (lh_ADDED_OBJ_error(added)) {
+                if (aop[i] != NULL)
+                    aop[i]->type = i;
+                while (i-- > ADDED_DATA) {
+                    lh_ADDED_OBJ_delete(added, ao[i]);
+                    if (aop[i] != NULL)
+                        aop[i]->type = i;
+                }
+                ERR_raise(ERR_LIB_OBJ, ERR_R_CRYPTO_LIB);
+                goto err;
+            }
+        }
+    }
+    o->flags &=
+        ~(ASN1_OBJECT_FLAG_DYNAMIC | ASN1_OBJECT_FLAG_DYNAMIC_STRINGS |
+          ASN1_OBJECT_FLAG_DYNAMIC_DATA);
+
+    ossl_obj_unlock(1);
+    return o->nid;
+
+ err:
+    ossl_obj_unlock(1);
+ err2:
+    for (i = ADDED_DATA; i <= ADDED_NID; i++)
+        OPENSSL_free(ao[i]);
+    ASN1_OBJECT_free(o);
+    return NID_undef;
 }
 
 int OBJ_obj2nid(const ASN1_OBJECT *a)
