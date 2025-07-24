@@ -299,7 +299,7 @@ static int obj_cmp(const ASN1_OBJECT *const *ap, const unsigned int *bp)
 
 IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, obj);
 
-static int ossl_obj_obj2nid(const ASN1_OBJECT *a, const int lock)
+static int ossl_obj_obj2nid(const ASN1_OBJECT *a)
 {
     int nid = NID_undef;
     const unsigned int *op;
@@ -315,7 +315,7 @@ static int ossl_obj_obj2nid(const ASN1_OBJECT *a, const int lock)
     op = OBJ_bsearch_obj(&a, obj_objs, NUM_OBJ);
     if (op != NULL)
         return nid_objs[*op].nid;
-    if (!ossl_obj_read_lock(lock)) {
+    if (!ossl_obj_read_lock(1)) {
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_READ_LOCK);
         return NID_undef;
     }
@@ -324,7 +324,7 @@ static int ossl_obj_obj2nid(const ASN1_OBJECT *a, const int lock)
     adp = lh_ADDED_OBJ_retrieve(added, &ad);
     if (adp != NULL)
         nid = adp->obj->nid;
-    ossl_obj_unlock(lock);
+    ossl_obj_unlock(1);
     return nid;
 }
 
@@ -720,7 +720,7 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
 
     /* If NID is not NID_undef then object already exists */
     if (oid != NULL
-        && ossl_obj_obj2nid(tmpoid, 1) != NID_undef) {
+        && ossl_obj_obj2nid(tmpoid) != NID_undef) {
         ERR_raise(ERR_LIB_OBJ, OBJ_R_OID_EXISTS);
         goto err;
     }
@@ -819,5 +819,5 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
 
 int OBJ_obj2nid(const ASN1_OBJECT *a)
 {
-    return ossl_obj_obj2nid(a, 1);
+    return ossl_obj_obj2nid(a);
 }
