@@ -23,7 +23,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/bio.h"
-#include "file_store_local.h"
+#include "prov/file_store_local.h"
 #ifdef __CYGWIN__
 # include <windows.h>
 #endif
