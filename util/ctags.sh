@@ -26,7 +26,7 @@ if ! type "${CTAGS}" > /dev/null; then
 fi
 
 if [ $# -eq 0 ]; then
-    set - -R
+    set -- -R
 fi
 
 if ! "${CTAGS}" --version | grep -q "Universal Ctags"; then
