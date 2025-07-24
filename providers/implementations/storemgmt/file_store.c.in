@@ -6,6 +6,9 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+{-
+use OpenSSL::paramnames qw(produce_param_decoder);
+-}
 
 /* This file has quite some overlap with engines/e_loader_attic.c */
 
@@ -290,55 +293,53 @@ void *file_attach(void *provctx, OSSL_CORE_BIO *cin)
  *  ------------------
  */
 
+{- produce_param_decoder('file_set_ctx_params',
+                         (['STORE_PARAM_PROPERTIES', 'propq',  'utf8_string'],
+                          ['STORE_PARAM_EXPECT',     'expect', 'int'],
+                          ['STORE_PARAM_SUBJECT',    'sub',    'octet_string'],
+                          ['STORE_PARAM_INPUT_TYPE', 'type',   'utf8_string'],
+                         )); -}
+
 static const OSSL_PARAM *file_settable_ctx_params(void *provctx)
 {
-    static const OSSL_PARAM known_settable_ctx_params[] = {
-        OSSL_PARAM_utf8_string(OSSL_STORE_PARAM_PROPERTIES, NULL, 0),
-        OSSL_PARAM_int(OSSL_STORE_PARAM_EXPECT, NULL),
-        OSSL_PARAM_octet_string(OSSL_STORE_PARAM_SUBJECT, NULL, 0),
-        OSSL_PARAM_utf8_string(OSSL_STORE_PARAM_INPUT_TYPE, NULL, 0),
-        OSSL_PARAM_END
-    };
-    return known_settable_ctx_params;
+    return file_set_ctx_params_list;
 }
 
 static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
 {
     struct file_ctx_st *ctx = loaderctx;
-    const OSSL_PARAM *p;
+    struct file_set_ctx_params_st p;
 
-    if (ossl_param_is_empty(params))
-        return 1;
+    if (ctx == NULL || !file_set_ctx_params_decoder(params, &p))
+        return 0;
 
     if (ctx->type != IS_DIR) {
         /* these parameters are ignored for directories */
-        p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_PROPERTIES);
-        if (p != NULL) {
+        if (p.propq != NULL) {
             OPENSSL_free(ctx->_.file.propq);
             ctx->_.file.propq = NULL;
-            if (!OSSL_PARAM_get_utf8_string(p, &ctx->_.file.propq, 0))
+            if (!OSSL_PARAM_get_utf8_string(p.propq, &ctx->_.file.propq, 0))
                 return 0;
         }
-        p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_INPUT_TYPE);
-        if (p != NULL) {
+        if (p.type != NULL) {
             OPENSSL_free(ctx->_.file.input_type);
             ctx->_.file.input_type = NULL;
-            if (!OSSL_PARAM_get_utf8_string(p, &ctx->_.file.input_type, 0))
+            if (!OSSL_PARAM_get_utf8_string(p.type, &ctx->_.file.input_type, 0))
                 return 0;
         }
     }
-    p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_EXPECT);
-    if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->expected_type))
+
+    if (p.expect != NULL && !OSSL_PARAM_get_int(p.expect, &ctx->expected_type))
         return 0;
-    p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_SUBJECT);
-    if (p != NULL) {
+
+    if (p.sub != NULL) {
         const unsigned char *der = NULL;
         size_t der_len = 0;
         X509_NAME *x509_name;
         unsigned long hash;
         int ok = 0;
 
-        if (!OSSL_PARAM_get_octet_string_ptr(p, (const void **)&der, &der_len)
+        if (!OSSL_PARAM_get_octet_string_ptr(p.sub, (const void **)&der, &der_len)
             || der_len > LONG_MAX
             || (x509_name = d2i_X509_NAME(NULL, &der, (long)der_len)) == NULL)
             return 0;
