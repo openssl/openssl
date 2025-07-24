@@ -30,7 +30,7 @@
 #include "prov/implementations.h"
 #include "prov/bio.h"
 #include "prov/providercommon.h"
-#include "file_store_local.h"
+#include "prov/file_store_local.h"
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)
 

@@ -68,6 +68,9 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/signature/eddsa_sig.c \
          providers/implementations/signature/ml_dsa_sig.c \
          providers/implementations/skeymgmt/generic.c \
+         providers/implementations/storemgmt/file_store_any2obj.c \
+         providers/implementations/storemgmt/file_store.c \
+         providers/implementations/storemgmt/winstore_store.c \
          providers/implementations/ciphers/ciphercommon.c \
          providers/implementations/ciphers/ciphercommon_ccm.c \
          providers/implementations/ciphers/ciphercommon_gcm.c \
@@ -129,6 +132,9 @@ DEPEND[providers/implementations/kdfs/argon2.c \
        providers/implementations/signature/eddsa_sig.c \
        providers/implementations/signature/ml_dsa_sig.c \
        providers/implementations/skeymgmt/generic.c \
+       providers/implementations/storemgmt/file_store_any2obj.c \
+       providers/implementations/storemgmt/file_store.c \
+       providers/implementations/storemgmt/winstore_store.c \
        providers/implementations/ciphers/ciphercommon.c \
        providers/implementations/ciphers/ciphercommon_ccm.c \
        providers/implementations/ciphers/ciphercommon_gcm.c \
@@ -177,6 +183,12 @@ GENERATE[providers/implementations/signature/ml_dsa_sig.c]=\
     providers/implementations/signature/ml_dsa_sig.c.in
 GENERATE[providers/implementations/skeymgmt/generic.c]=\
     providers/implementations/skeymgmt/generic.c.in
+GENERATE[providers/implementations/storemgmt/file_store_any2obj.c]=\
+    providers/implementations/storemgmt/file_store_any2obj.c.in
+GENERATE[providers/implementations/storemgmt/file_store.c]=\
+    providers/implementations/storemgmt/file_store.c.in
+GENERATE[providers/implementations/storemgmt/winstore_store.c]=\
+    providers/implementations/storemgmt/winstore_store.c.in
 GENERATE[providers/implementations/ciphers/ciphercommon.c]=\
     providers/implementations/ciphers/ciphercommon.c.in
 GENERATE[providers/implementations/ciphers/ciphercommon_ccm.c]=\
