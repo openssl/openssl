@@ -50,6 +50,9 @@ DEPEND[]=include/openssl/asn1.h \
          include/crypto/bn_conf.h include/crypto/dso_conf.h \
          providers/implementations/asymciphers/rsa_enc.c \
          providers/implementations/asymciphers/sm2_enc.c \
+         providers/implementations/exchange/dh_exch.c \
+         providers/implementations/exchange/ecdh_exch.c \
+         providers/implementations/exchange/ecx_exch.c \
          providers/implementations/kdfs/argon2.c \
          providers/implementations/kdfs/hkdf.c \
          providers/implementations/kdfs/hmacdrbg_kdf.c \
@@ -130,6 +133,9 @@ GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 
 DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/asymciphers/sm2_enc.c \
+       providers/implementations/exchange/dh_exch.c \
+       providers/implementations/exchange/ecdh_exch.c \
+       providers/implementations/exchange/ecx_exch.c \
        providers/implementations/kdfs/argon2.c \
        providers/implementations/kdfs/hkdf.c \
        providers/implementations/kdfs/hmacdrbg_kdf.c \
@@ -179,6 +185,12 @@ GENERATE[providers/implementations/asymciphers/rsa_enc.c]=\
     providers/implementations/asymciphers/rsa_enc.c.in
 GENERATE[providers/implementations/asymciphers/sm2_enc.c]=\
     providers/implementations/asymciphers/sm2_enc.c.in
+GENERATE[providers/implementations/exchange/dh_exch.c]=\
+    providers/implementations/exchange/dh_exch.c.in
+GENERATE[providers/implementations/exchange/ecdh_exch.c]=\
+    providers/implementations/exchange/ecdh_exch.c.in
+GENERATE[providers/implementations/exchange/ecx_exch.c]=\
+    providers/implementations/exchange/ecx_exch.c.in
 GENERATE[providers/implementations/kdfs/argon2.c]=\
     providers/implementations/kdfs/argon2.c.in
 GENERATE[providers/implementations/kdfs/hkdf.c]=\

@@ -88,6 +88,9 @@ providers/common/include/prov/der_ml_dsa.h
 providers/common/include/prov/der_hkdf.h
 providers/implementations/asymciphers/rsa_enc.c
 providers/implementations/asymciphers/sm2_enc.c
+providers/implementations/exchange/dh_exch.c
+providers/implementations/exchange/ecdh_exch.c
+providers/implementations/exchange/ecx_exch.c
 providers/implementations/kdfs/argon2.c
 providers/implementations/kdfs/hkdf.c
 providers/implementations/kdfs/hmacdrbg_kdf.c
