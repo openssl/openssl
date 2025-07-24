@@ -337,8 +337,7 @@ ASN1_OBJECT *OBJ_nid2obj(int n)
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_READ_LOCK);
         return NULL;
     }
-    if (added != NULL)
-        adp = lh_ADDED_OBJ_retrieve(added, &ad);
+    adp = lh_ADDED_OBJ_retrieve(added, &ad);
     ossl_obj_unlock(1);
     if (adp != NULL)
         return adp->obj;
@@ -397,13 +396,11 @@ static int ossl_obj_obj2nid(const ASN1_OBJECT *a, const int lock)
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_READ_LOCK);
         return NID_undef;
     }
-    if (added != NULL) {
-        ad.type = ADDED_DATA;
-        ad.obj = (ASN1_OBJECT *)a; /* casting away const is harmless here */
-        adp = lh_ADDED_OBJ_retrieve(added, &ad);
-        if (adp != NULL)
-            nid = adp->obj->nid;
-    }
+    ad.type = ADDED_DATA;
+    ad.obj = (ASN1_OBJECT *)a; /* casting away const is harmless here */
+    adp = lh_ADDED_OBJ_retrieve(added, &ad);
+    if (adp != NULL)
+        nid = adp->obj->nid;
     ossl_obj_unlock(lock);
     return nid;
 }
@@ -643,13 +640,11 @@ int OBJ_ln2nid(const char *s)
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_READ_LOCK);
         return NID_undef;
     }
-    if (added != NULL) {
-        ad.type = ADDED_LNAME;
-        ad.obj = &o;
-        adp = lh_ADDED_OBJ_retrieve(added, &ad);
-        if (adp != NULL)
-            nid = adp->obj->nid;
-    }
+    ad.type = ADDED_LNAME;
+    ad.obj = &o;
+    adp = lh_ADDED_OBJ_retrieve(added, &ad);
+    if (adp != NULL)
+        nid = adp->obj->nid;
     ossl_obj_unlock(1);
     return nid;
 }
@@ -670,13 +665,11 @@ int OBJ_sn2nid(const char *s)
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_READ_LOCK);
         return NID_undef;
     }
-    if (added != NULL) {
-        ad.type = ADDED_SNAME;
-        ad.obj = &o;
-        adp = lh_ADDED_OBJ_retrieve(added, &ad);
-        if (adp != NULL)
-            nid = adp->obj->nid;
-    }
+    ad.type = ADDED_SNAME;
+    ad.obj = &o;
+    adp = lh_ADDED_OBJ_retrieve(added, &ad);
+    if (adp != NULL)
+        nid = adp->obj->nid;
     ossl_obj_unlock(1);
     return nid;
 }
