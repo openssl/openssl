@@ -4380,7 +4380,7 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
      * if chainidx > 0 an intermediate certificate is requested
      */
     if (chain_certs != NULL && (int)chainidx <= sk_X509_num(chain_certs) && chainidx > 0)
-        x = sk_X509_value(chain_certs, chainidx - 1);
+        x = sk_X509_value(chain_certs, (int)chainidx - 1);
     else
         x = SSL_get_certificate(ssl);
     if (x == NULL)
@@ -4390,7 +4390,7 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
     if (X509_self_signed(x, 0))
         return 1;
 
-    if ((resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp_ex, chainidx)) != NULL) {
+    if ((resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp_ex, (int)chainidx)) != NULL) {
         /*
          * check if its the right response in the case it is a successful response
          * as not every time the issuer certificate is available the check just
