@@ -370,6 +370,11 @@ static int ml_dsa_verify_internal(const ML_DSA_KEY *pub,
     vector_init(&az_ntt, p, k);
     vector_init(&ct1_ntt, p + k, k);
 
+    /* FIPS 204 compliance: Validate signature length before decoding */
+    if (sig_enc_len != params->sig_len) {
+        goto err;
+    }
+
     if (!ossl_ml_dsa_sig_decode(&sig, sig_enc, sig_enc_len, pub->params)
             || !matrix_expand_A(md_ctx, pub->shake128_md, pub->rho, &a_ntt))
         goto err;
