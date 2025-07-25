@@ -427,9 +427,8 @@ static int test_decap_validation_failure(void)
 
     /* Corrupt the stored hash in the key to break hash validation */
     /* This bypasses parsing and directly tests the validation */
-    if (key->pkhash != NULL) {
+    if (key->pkhash != NULL)
         key->pkhash[0] ^= 0xFF; /* Corrupt the first byte of the hash */
-    }
 
     /* Decap should fail due to FIPS 203 hash validation */
     if (!TEST_false(ossl_ml_kem_decap(shared_secret, sizeof(shared_secret),
