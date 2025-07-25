@@ -236,7 +236,7 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
     *freeptr = NULL;
 
 #if defined(OPENSSL_SMALL_FOOTPRINT)
-    ret = freeptr = NULL;
+    ret = *freeptr = NULL;
     return ret;
 #endif
 
