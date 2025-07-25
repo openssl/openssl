@@ -156,7 +156,6 @@ const OPTIONS x509_options[] = {
     {"extensions", OPT_EXTENSIONS, 's',
      "Section of extfile to use - default: unnamed section"},
     {"add_related_cert", OPT_ADD_RELATED_CERT, '<', "PEM file of related certificate"},
-    {"related_uri", OPT_RELATED_URI, 's', "URI pointing to related certificate"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter, in n:v form"},
     {"badsig", OPT_BADSIG, '-',
      "Corrupt last byte of certificate signature (for test)"},
@@ -287,7 +286,7 @@ int x509_main(int argc, char **argv)
     char *ext_names = NULL;
     char *extsect = NULL, *extfile = NULL, *passin = NULL, *passinarg = NULL;
     char *infile = NULL, *outfile = NULL, *privkeyfile = NULL, *CAfile = NULL;
-    char *related_cert_path = NULL, *related_uri = NULL;
+    char *related_cert_path = NULL;
     char *prog;
     int days = UNSET_DAYS; /* not explicitly set */
     int x509toreq = 0, modulus = 0, print_pubkey = 0, pprint = 0;
@@ -606,9 +605,6 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_ADD_RELATED_CERT:
             related_cert_path = opt_arg();
-            break;
-        case OPT_RELATED_URI:
-            related_uri = opt_arg();
             break;
         case OPT_MD:
             digest = opt_unknown();

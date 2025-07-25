@@ -2145,17 +2145,13 @@ int tls_parse_stoc_dual_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
     size_t classical_sig_algs_len, pq_sig_algs_len;
     
     /* Parse the classical signature algorithms */
-    printf("[DUAL_EXT_PARSE_SERVER] Parsing classical signature algorithms\n");
     if (!PACKET_get_length_prefixed_2(pkt, &classical_sig_algs)) {
-        printf("[DUAL_EXT_PARSE_SERVER] ERROR: Failed to parse classical signature algorithms\n");
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
     
     /* Parse the post-quantum signature algorithms */
-    printf("[DUAL_EXT_PARSE_SERVER] Parsing post-quantum signature algorithms\n");
     if (!PACKET_get_length_prefixed_2(pkt, &pq_sig_algs)) {
-        printf("[DUAL_EXT_PARSE_SERVER] ERROR: Failed to parse post-quantum signature algorithms\n");
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
@@ -2199,12 +2195,6 @@ int tls_parse_stoc_dual_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
     }
     s->s3.tmp.peer_dual_sigalgslen = num_classical_algs * sizeof(uint16_t);
     
-    printf("[DUAL_EXT_PARSE_SERVER] Classical sig algs: ");
-    for (size_t i = 0; i < num_classical_algs; i++) {
-        printf("0x%04x ", s->s3.tmp.peer_dual_sigalgs[i]);
-    }
-    printf("\n");
-    
     /* Store the post-quantum signature algorithms */
     pq_sig_algs_len = PACKET_remaining(&pq_sig_algs);
     if (pq_sig_algs_len == 0) {
@@ -2237,16 +2227,6 @@ int tls_parse_stoc_dual_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
         s->s3.tmp.peer_dual_pq_sigalgs[i] = (uint16_t)alg;
     }
     s->s3.tmp.peer_dual_pq_sigalgslen = num_pq_algs * sizeof(uint16_t);
-    
-    printf("[DUAL_EXT_PARSE_SERVER] PQ sig algs: ");
-    for (size_t i = 0; i < num_pq_algs; i++) {
-        printf("0x%04x ", s->s3.tmp.peer_dual_pq_sigalgs[i]);
-    }
-    printf("\n");
-    
-    printf("[DUAL_EXT_PARSE_SERVER] Received dual signature algorithms from client:\n");
-    printf("[DUAL_EXT_PARSE_SERVER]    Classical algorithms: %zu\n", num_classical_algs);
-    printf("[DUAL_EXT_PARSE_SERVER]    PQ algorithms: %zu\n", num_pq_algs);
     
     return 1;
 }

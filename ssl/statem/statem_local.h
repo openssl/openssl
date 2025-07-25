@@ -614,9 +614,10 @@ int tls_parse_stoc_dual_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
                                  unsigned int context, X509 *x, size_t chainidx);
 
 /* Dual signature algorithms validation functions */
-int validate_dual_algorithm_compatibility(SSL_CONNECTION *s);
 int is_valid_classic_signature_algorithm(uint16_t sigalg);
 int is_valid_pq_signature_algorithm(uint16_t sigalg);
 int check_dual_security_compatibility(uint16_t classic_alg, uint16_t pq_alg);
 int get_dual_classical_sigalgs(SSL_CONNECTION *s, const uint16_t **psigs, size_t *psigslen);
 int get_dual_pq_sigalgs(SSL_CONNECTION *s, const uint16_t **psigs, size_t *psigslen);
+
+int ssl_add_pqc_cert_chain_ietf_format(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, int depth);

@@ -52,7 +52,7 @@ IMPLEMENT_OBJ_BSEARCH_CMP_FN(const X509V3_EXT_METHOD *,
 const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
 {
     X509V3_EXT_METHOD tmp;
-    const X509V3_EXT_METHOD *t = &tmp, *const **ret;
+    const X509V3_EXT_METHOD *t = &tmp, **ret;
     int idx;
 
     if (nid < 0)

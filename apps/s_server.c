@@ -2385,7 +2385,7 @@ int s_server_main(int argc, char *argv[])
                 goto end;
             }
             
-            BIO_printf(bio_s_out, "PQC CA certificates loaded for verification (CA list temporarily disabled)\n");
+            BIO_printf(bio_s_out, "PQC CA certificates loaded for verification \n");
         }
         
         /* Set the PQC certificate and key */

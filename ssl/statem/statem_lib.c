@@ -512,6 +512,17 @@ CON_FUNC_RETURN tls_construct_pq_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
         } else if (strstr(key_type_name, "dilithium5") != NULL) {
             pq_key_type = EVP_PKEY_DILITHIUM5;
             printf("[PQ_CERT_VERIFY_CONSTRUCT] Detected DILITHIUM-5 by name\n");
+        } else if (strstr(key_type_name, "mldsa") != NULL || strstr(key_type_name, "MLDSA") != NULL) {
+            if (strstr(key_type_name, "44") != NULL) {
+                pq_key_type = EVP_PKEY_MLDSA_44;
+                printf("[PQ_CERT_VERIFY_CONSTRUCT] Detected MLDSA-44 by name\n");
+            } else if (strstr(key_type_name, "65") != NULL) {
+                pq_key_type = EVP_PKEY_MLDSA_65;
+                printf("[PQ_CERT_VERIFY_CONSTRUCT] Detected MLDSA-65 by name\n");
+            } else {
+                pq_key_type = EVP_PKEY_MLDSA_44; // Par défaut MLDSA-44 si non précisé
+                printf("[PQ_CERT_VERIFY_CONSTRUCT] Detected MLDSA by name (default 44)\n");
+            }
         }
     }
     
@@ -587,6 +598,30 @@ CON_FUNC_RETURN tls_construct_pq_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
             pq_sigalg = &dilithium5_sigalg;
             break;
             
+        case EVP_PKEY_MLDSA_44:
+            printf("[PQ_CERT_VERIFY_CONSTRUCT] Selecting MLDSA-44 signature algorithm\n");
+            static const SIGALG_LOOKUP mldsa44_sigalg = {
+                .name = "MLDSA-44-SHA256",
+                .sig = EVP_PKEY_MLDSA_44,
+                .hash = NID_sha256,
+                .sigalg = TLSEXT_SIGALG_mldsa_44,
+                .hash_idx = SSL_MD_SHA256_IDX,
+                .sig_idx = SSL_PKEY_PQ_MLDSA_44
+            };
+            pq_sigalg = &mldsa44_sigalg;
+            break;
+        case EVP_PKEY_MLDSA_65:
+            printf("[PQ_CERT_VERIFY_CONSTRUCT] Selecting MLDSA-65 signature algorithm\n");
+            static const SIGALG_LOOKUP mldsa65_sigalg = {
+                .name = "MLDSA-65-SHA256",
+                .sig = EVP_PKEY_MLDSA_65,
+                .hash = NID_sha256,
+                .sigalg = TLSEXT_SIGALG_mldsa_65,
+                .hash_idx = SSL_MD_SHA256_IDX,
+                .sig_idx = SSL_PKEY_PQ_MLDSA_65
+            };
+            pq_sigalg = &mldsa65_sigalg;
+            break;
         default:
             printf("[PQ_CERT_VERIFY_CONSTRUCT] ERROR: Unsupported PQC key type: %d\n", pq_key_type);
             SSLfatal(s, SSL_AD_INSUFFICIENT_SECURITY, SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
@@ -968,6 +1003,17 @@ MSG_PROCESS_RETURN tls_process_pq_certificate_verify(SSL_CONNECTION *s, PACKET *
             } else if (strstr(key_type_name, "dilithium5") != NULL) {
                 pq_key_type = EVP_PKEY_DILITHIUM5;
                 printf("[PQ_CERT_VERIFY_PROCESS] Detected DILITHIUM-5 by name\n");
+            } else if (strstr(key_type_name, "mldsa") != NULL || strstr(key_type_name, "MLDSA") != NULL) {
+                if (strstr(key_type_name, "44") != NULL) {
+                    pq_key_type = EVP_PKEY_MLDSA_44;
+                    printf("[PQ_CERT_VERIFY_PROCESS] Detected MLDSA-44 by name\n");
+                } else if (strstr(key_type_name, "65") != NULL) {
+                    pq_key_type = EVP_PKEY_MLDSA_65;
+                    printf("[PQ_CERT_VERIFY_PROCESS] Detected MLDSA-65 by name\n");
+                } else {
+                    pq_key_type = EVP_PKEY_MLDSA_44; // Par défaut MLDSA-44 si non précisé
+                    printf("[PQ_CERT_VERIFY_PROCESS] Detected MLDSA by name (default 44)\n");
+                }
             }
         }
         
@@ -1043,6 +1089,30 @@ MSG_PROCESS_RETURN tls_process_pq_certificate_verify(SSL_CONNECTION *s, PACKET *
                 pq_sigalg_to_use = &dilithium5_sigalg;
                 break;
                 
+            case EVP_PKEY_MLDSA_44:
+                printf("[PQ_CERT_VERIFY_PROCESS] Selecting MLDSA-44 signature algorithm\n");
+                static const SIGALG_LOOKUP mldsa44_sigalg = {
+                    .name = "MLDSA-44-SHA256",
+                    .sig = EVP_PKEY_MLDSA_44,
+                    .hash = NID_sha256,
+                    .sigalg = TLSEXT_SIGALG_mldsa_44,
+                    .hash_idx = SSL_MD_SHA256_IDX,
+                    .sig_idx = SSL_PKEY_PQ_MLDSA_44
+                };
+                pq_sigalg_to_use = &mldsa44_sigalg;
+                break;
+            case EVP_PKEY_MLDSA_65:
+                printf("[PQ_CERT_VERIFY_PROCESS] Selecting MLDSA-65 signature algorithm\n");
+                static const SIGALG_LOOKUP mldsa65_sigalg = {
+                    .name = "MLDSA-65-SHA256",
+                    .sig = EVP_PKEY_MLDSA_65,
+                    .hash = NID_sha256,
+                    .sigalg = TLSEXT_SIGALG_mldsa_65,
+                    .hash_idx = SSL_MD_SHA256_IDX,
+                    .sig_idx = SSL_PKEY_PQ_MLDSA_65
+                };
+                pq_sigalg_to_use = &mldsa65_sigalg;
+                break;
             default:
                 printf("[PQ_CERT_VERIFY_PROCESS] ERROR: Unsupported PQC key type: %d\n", pq_key_type);
                 SSLfatal(s, SSL_AD_INSUFFICIENT_SECURITY, SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
@@ -1502,28 +1572,37 @@ static int ssl_add_cert_to_wpacket(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned char *outbytes;
     int context = SSL_EXT_TLS1_3_CERTIFICATE;
 
+    printf("[CLASSIC_CERT_ENCODE] Encoding individual certificate (chain=%d): %s\n", 
+           chain, X509_NAME_oneline(X509_get_subject_name(x), NULL, 0));
+
     if (for_comp)
         context |= SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION;
 
     len = i2d_X509(x, NULL);
+    printf("[CLASSIC_CERT_ENCODE] Certificate DER length: %d bytes\n", len);
     if (len < 0) {
+        printf("[CLASSIC_CERT_ENCODE] ERROR: Failed to get certificate DER length\n");
         if (!for_comp)
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_BUF_LIB);
         return 0;
     }
     if (!WPACKET_sub_allocate_bytes_u24(pkt, len, &outbytes)
             || i2d_X509(x, &outbytes) != len) {
+        printf("[CLASSIC_CERT_ENCODE] ERROR: Failed to write certificate to packet\n");
         if (!for_comp)
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+    printf("[CLASSIC_CERT_ENCODE] Successfully wrote certificate (%d bytes) to packet\n", len);
 
     if ((SSL_CONNECTION_IS_TLS13(s) || for_comp)
             && !tls_construct_extensions(s, pkt, context, x, chain)) {
+        printf("[CLASSIC_CERT_ENCODE] ERROR: Failed to construct certificate extensions\n");
         /* SSLfatal() already called */
         return 0;
     }
 
+    printf("[CLASSIC_CERT_ENCODE] Individual certificate encoding completed successfully\n");
     return 1;
 }
 
@@ -1573,18 +1652,30 @@ int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, int for_
     X509_STORE *chain_store;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    if (cpk == NULL || cpk->x509 == NULL)
+    printf("[CLASSIC_CERT_ENCODE] Starting classic certificate chain encoding\n");
+
+    if (cpk == NULL || cpk->x509 == NULL) {
+        printf("[CLASSIC_CERT_ENCODE] No certificate to encode (cpk=%p, x509=%p)\n", 
+               (void*)cpk, cpk ? (void*)cpk->x509 : NULL);
         return 1;
+    }
 
     x = cpk->x509;
+    printf("[CLASSIC_CERT_ENCODE] Main certificate found, subject: %s\n", 
+           X509_NAME_oneline(X509_get_subject_name(x), NULL, 0));
 
     /*
      * If we have a certificate specific chain use it, else use parent ctx.
      */
-    if (cpk->chain != NULL)
+    if (cpk->chain != NULL) {
         extra_certs = cpk->chain;
-    else
+        printf("[CLASSIC_CERT_ENCODE] Using certificate-specific chain (%d certs)\n", 
+               sk_X509_num(extra_certs));
+    } else {
         extra_certs = sctx->extra_certs;
+        printf("[CLASSIC_CERT_ENCODE] Using parent context extra certs (%d certs)\n", 
+               extra_certs ? sk_X509_num(extra_certs) : 0);
+    }
 
     if ((s->mode & SSL_MODE_NO_AUTO_CHAIN) || extra_certs)
         chain_store = NULL;
@@ -1594,10 +1685,12 @@ int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, int for_
         chain_store = sctx->cert_store;
 
     if (chain_store != NULL) {
+        printf("[CLASSIC_CERT_ENCODE] Using chain store to build certificate chain\n");
         X509_STORE_CTX *xs_ctx = X509_STORE_CTX_new_ex(sctx->libctx,
                                                        sctx->propq);
 
         if (xs_ctx == NULL) {
+            printf("[CLASSIC_CERT_ENCODE] ERROR: Failed to create X509_STORE_CTX\n");
             if (!for_comp)
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_X509_LIB);
             return 0;
@@ -1632,10 +1725,14 @@ int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, int for_
             return 0;
         }
         chain_count = sk_X509_num(chain);
+        printf("[CLASSIC_CERT_ENCODE] Built chain with %d certificates from store\n", chain_count);
         for (i = 0; i < chain_count; i++) {
             x = sk_X509_value(chain, i);
+            printf("[CLASSIC_CERT_ENCODE] Adding certificate %d/%d to packet: %s\n", 
+                   i+1, chain_count, X509_NAME_oneline(X509_get_subject_name(x), NULL, 0));
 
             if (!ssl_add_cert_to_wpacket(s, pkt, x, i, for_comp)) {
+                printf("[CLASSIC_CERT_ENCODE] ERROR: Failed to add certificate %d to packet\n", i);
                 /* SSLfatal() already called */
                 X509_STORE_CTX_free(xs_ctx);
                 return 0;
@@ -1643,24 +1740,35 @@ int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, int for_
         }
         X509_STORE_CTX_free(xs_ctx);
     } else {
+        printf("[CLASSIC_CERT_ENCODE] No chain store, using extra certs directly\n");
         i = ssl_security_cert_chain(s, extra_certs, x, 0);
         if (i != 1) {
+            printf("[CLASSIC_CERT_ENCODE] ERROR: Security check failed for certificate chain\n");
             if (!for_comp)
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, i);
             return 0;
         }
+        printf("[CLASSIC_CERT_ENCODE] Adding main certificate to packet\n");
         if (!ssl_add_cert_to_wpacket(s, pkt, x, 0, for_comp)) {
+            printf("[CLASSIC_CERT_ENCODE] ERROR: Failed to add main certificate to packet\n");
             /* SSLfatal() already called */
             return 0;
         }
+        printf("[CLASSIC_CERT_ENCODE] Adding %d extra certificates to packet\n", 
+               sk_X509_num(extra_certs));
         for (i = 0; i < sk_X509_num(extra_certs); i++) {
             x = sk_X509_value(extra_certs, i);
+            printf("[CLASSIC_CERT_ENCODE] Adding extra certificate %d/%d: %s\n", 
+                   i+1, sk_X509_num(extra_certs), 
+                   X509_NAME_oneline(X509_get_subject_name(x), NULL, 0));
             if (!ssl_add_cert_to_wpacket(s, pkt, x, i + 1, for_comp)) {
+                printf("[CLASSIC_CERT_ENCODE] ERROR: Failed to add extra certificate %d to packet\n", i);
                 /* SSLfatal() already called */
                 return 0;
             }
         }
     }
+    printf("[CLASSIC_CERT_ENCODE] Classic certificate chain encoding completed successfully\n");
     return 1;
 }
 

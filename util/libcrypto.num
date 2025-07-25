@@ -5550,3 +5550,6 @@ OPENSSL_LH_doall_arg_thunk              5677	3_3_0	EXIST::FUNCTION:
 OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines 5678	3_3_0	EXIST::FUNCTION:HTTP
 get_related_certificate_extension       5679    3_3_0   EXIST::FUNCTION:
 RELATED_CERTIFICATE_free                5680    3_3_0   EXIST::FUNCTION:
+RELATED_CERTIFICATE_new                 5681    3_3_0   EXIST::FUNCTION:
+d2i_RELATED_CERTIFICATE                 5682    3_3_0   EXIST::FUNCTION:
+i2d_RELATED_CERTIFICATE                 5683    3_3_0   EXIST::FUNCTION:

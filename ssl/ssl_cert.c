@@ -1831,20 +1831,57 @@ int add_related_certificate_cb(SSL *s, unsigned int ext_type,
                                void *add_arg)
 {
     /* This callback is called when constructing TLS messages that contain certificates */
-    /* For now, we return 0 to indicate we don't want to add the extension */
-    /* In a full implementation, you would extract the RelatedCertificate extension */
-    /* from the certificate and return it in *out and *outlen */
+    /* Extract the RelatedCertificate extension from the certificate and return it */
     
     (void)s;
     (void)ext_type;
     (void)context;
-    (void)x;
     (void)chainidx;
     (void)add_arg;
     
-    *out = NULL;
-    *outlen = 0;
-    return 0; /* Don't add extension for now */
+    /* If the certificate doesn't have the RelatedCertificate extension, don't add it */
+    RELATED_CERTIFICATE *rc = get_related_certificate_extension(x);
+    if (!rc) {
+        *out = NULL;
+        *outlen = 0;
+        return 1; /* Extension not present - this is acceptable */
+    }
+    
+    printf("[RELATED_CERT_ADD] Adding RelatedCertificate extension for certificate at index %zu\n", chainidx);
+    
+    /* Serialize the RelatedCertificate extension */
+    int len = i2d_RELATED_CERTIFICATE(rc, NULL);
+    if (len <= 0) {
+        printf("[RELATED_CERT_ADD] ERROR: Failed to serialize RelatedCertificate extension\n");
+        RELATED_CERTIFICATE_free(rc);
+        *al = SSL_AD_INTERNAL_ERROR;
+        return 0;
+    }
+    
+    unsigned char *ext_data = OPENSSL_malloc(len);
+    if (!ext_data) {
+        printf("[RELATED_CERT_ADD] ERROR: Failed to allocate memory for extension data\n");
+        RELATED_CERTIFICATE_free(rc);
+        *al = SSL_AD_INTERNAL_ERROR;
+        return 0;
+    }
+    
+    unsigned char *tmp = ext_data;
+    if (i2d_RELATED_CERTIFICATE(rc, &tmp) <= 0) {
+        printf("[RELATED_CERT_ADD] ERROR: Failed to encode RelatedCertificate extension\n");
+        OPENSSL_free(ext_data);
+        RELATED_CERTIFICATE_free(rc);
+        *al = SSL_AD_INTERNAL_ERROR;
+        return 0;
+    }
+    
+    *out = ext_data;
+    *outlen = len;
+    
+    printf("[RELATED_CERT_ADD] Successfully added RelatedCertificate extension (%d bytes)\n", len);
+    
+    RELATED_CERTIFICATE_free(rc);
+    return 1; /* Extension added successfully */
 }
 
 int parse_related_certificate_cb(SSL *s, unsigned int ext_type,
@@ -1868,11 +1905,13 @@ int parse_related_certificate_cb(SSL *s, unsigned int ext_type,
     RELATED_CERTIFICATE *rc = get_related_certificate_extension(x);
     if (!rc) {
         /* Extension not present - this is acceptable, continue */
+        printf("[RELATED_CERT_DEBUG] No RelatedCertificate extension found (certificate index %zu) - this is normal\n", chainidx);
         return 1;
     }
     
     /* Extension is present - we need to validate it */
-    printf("[RELATED_CERT_DEBUG] Validating RelatedCertificate extension for certificate at index %zu\n", chainidx);
+    printf("[RELATED_CERT_DEBUG] Starting RelatedCertificate extension validation\n");
+    printf("[RELATED_CERT_DEBUG] Certificate index: %zu\n", chainidx);
     
     /* Get the peer certificate chain to find the classical certificate */
     STACK_OF(X509) *chain = SSL_get_peer_cert_chain(s);
@@ -1891,7 +1930,7 @@ int parse_related_certificate_cb(SSL *s, unsigned int ext_type,
     
     if (chainidx == 0) {
         /* This is the classical certificate - no RelatedCertificate extension expected */
-        printf("[RELATED_CERT_DEBUG] Classical certificate (index 0) - no validation needed\n");
+        printf("[RELATED_CERT_DEBUG] Classical certificate (index 0) - RelatedCertificate extension not expected\n");
         RELATED_CERTIFICATE_free(rc);
         return 1;
     } else if (chainidx == 1) {
@@ -1975,6 +2014,10 @@ int parse_related_certificate_cb(SSL *s, unsigned int ext_type,
     }
     
     printf("[RELATED_CERT_DEBUG] RelatedCertificate extension validation SUCCESS\n");
+    printf("[RELATED_CERT_DEBUG] Hash algorithm: %s\n", EVP_MD_get0_name(md));
+    printf("[RELATED_CERT_DEBUG] Hash length: %u bytes\n", hashlen);
+    printf("[RELATED_CERT_DEBUG] Hash values match perfectly\n");
+    printf("[RELATED_CERT_DEBUG] Classical certificate successfully bound to PQC certificate\n");
     
     /* Print URI if present */
     if (rc->uri && rc->uri->length > 0) {

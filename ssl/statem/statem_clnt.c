@@ -26,6 +26,7 @@
 #include <openssl/trace.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
+#include <openssl/v3_certbind.h>
 #include "internal/cryptlib.h"
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
@@ -2310,6 +2311,100 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
     s->session->peer_rpk = NULL;
 
     printf("[DUAL_CERT_CLIENT_DEBUG] Classic certificate verification completed successfully\n");
+    
+    /* Check for RelatedCertificate extension in PQC certificates if dual certs are enabled */
+    if (s->session->dual_certs_enabled && s->session->peer_pqc_chain) {
+        printf("[DUAL_CERT_CLIENT_DEBUG] === Checking RelatedCertificate extensions in PQC chain ===\n");
+        
+        int pqc_chain_len = sk_X509_num(s->session->peer_pqc_chain);
+        printf("[DUAL_CERT_CLIENT_DEBUG] PQC chain length: %d\n", pqc_chain_len);
+        
+        for (int i = 0; i < pqc_chain_len; i++) {
+            X509 *pqc_cert = sk_X509_value(s->session->peer_pqc_chain, i);
+            printf("[DUAL_CERT_CLIENT_DEBUG] Checking PQC certificate %d for RelatedCertificate extension\n", i);
+            
+            RELATED_CERTIFICATE *rc = get_related_certificate_extension(pqc_cert);
+            if (!rc) {
+                continue;
+            }
+            
+            printf("[DUAL_CERT_CLIENT_DEBUG] RelatedCertificate extension found in PQC certificate %d\n", i);
+            printf("[DUAL_CERT_CLIENT_DEBUG] Starting RelatedCertificate extension validation\n");
+            
+            /* Get the hash algorithm from the extension */
+            const EVP_MD *md = EVP_get_digestbyobj(rc->hashAlgorithm->algorithm);
+            if (!md) {
+                printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Unsupported hash algorithm in RelatedCertificate extension\n");
+                RELATED_CERTIFICATE_free(rc);
+                continue;
+            }
+            
+            printf("[DUAL_CERT_CLIENT_DEBUG] Hash algorithm: %s\n", EVP_MD_get0_name(md));
+            
+            /* Serialize the classical certificate */
+            unsigned char *der = NULL;
+            int derlen = i2d_X509(x, &der);
+            if (derlen <= 0) {
+                printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to serialize classical certificate\n");
+                RELATED_CERTIFICATE_free(rc);
+                continue;
+            }
+            
+            /* Calculate hash of the classical certificate */
+            unsigned char hash[EVP_MAX_MD_SIZE];
+            unsigned int hashlen = 0;
+            if (!EVP_Digest(der, derlen, hash, &hashlen, md, NULL)) {
+                printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Failed to calculate hash of classical certificate\n");
+                OPENSSL_free(der);
+                RELATED_CERTIFICATE_free(rc);
+                continue;
+            }
+            
+            OPENSSL_free(der);
+            
+            /* Compare the calculated hash with the hash in the extension */
+            if (hashlen != (unsigned int)rc->hashValue->length) {
+                printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Hash length mismatch: calculated=%u, extension=%d\n", 
+                       hashlen, rc->hashValue->length);
+                RELATED_CERTIFICATE_free(rc);
+                continue;
+            }
+            
+            if (memcmp(hash, rc->hashValue->data, hashlen) != 0) {
+                printf("[DUAL_CERT_CLIENT_DEBUG] ERROR: Hash value mismatch\n");
+                printf("[DUAL_CERT_CLIENT_DEBUG] Calculated hash: ");
+                for (unsigned int j = 0; j < hashlen; j++) {
+                    printf("%02X", hash[j]);
+                }
+                printf("\n");
+                printf("[DUAL_CERT_CLIENT_DEBUG] Extension hash: ");
+                for (int j = 0; j < rc->hashValue->length; j++) {
+                    printf("%02X", rc->hashValue->data[j]);
+                }
+                printf("\n");
+                RELATED_CERTIFICATE_free(rc);
+                continue;
+            }
+            
+            printf("[DUAL_CERT_CLIENT_DEBUG] RelatedCertificate extension validation SUCCESS\n");
+            printf("[DUAL_CERT_CLIENT_DEBUG] Hash algorithm: %s\n", EVP_MD_get0_name(md));
+            printf("[DUAL_CERT_CLIENT_DEBUG] Hash length: %u bytes\n", hashlen);
+            printf("[DUAL_CERT_CLIENT_DEBUG] Hash values match perfectly\n");
+            printf("[DUAL_CERT_CLIENT_DEBUG] Classical certificate successfully bound to PQC certificate %d\n", i);
+            
+            /* Print URI if present */
+            if (rc->uri && rc->uri->length > 0) {
+                printf("[DUAL_CERT_CLIENT_DEBUG] Related certificate URI: ");
+                fwrite(rc->uri->data, 1, rc->uri->length, stdout);
+                printf("\n");
+            }
+            
+            RELATED_CERTIFICATE_free(rc);
+        }
+        
+        printf("[DUAL_CERT_CLIENT_DEBUG] === RelatedCertificate extension validation completed ===\n");
+    }
+    
     printf("[DUAL_CERT_CLIENT_DEBUG] === Certificate post-processing completed ===\n");
 
     /* Save the current hash state for when we receive the CertificateVerify */
