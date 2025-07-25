@@ -68,11 +68,12 @@ static int _dopr(char **sbuffer, char **buffer,
 #define DP_F_UNSIGNED   (1 << 6)
 
 /* conversion flags */
-#define DP_C_SHORT      1
-#define DP_C_LONG       2
-#define DP_C_LDOUBLE    3
-#define DP_C_LLONG      4
-#define DP_C_SIZE       5
+#define DP_C_CHAR       1
+#define DP_C_SHORT      2
+#define DP_C_LONG       3
+#define DP_C_LDOUBLE    4
+#define DP_C_LLONG      5
+#define DP_C_SIZE       6
 
 /* Floating point formats */
 #define F_FORMAT        0
@@ -182,7 +183,12 @@ _dopr(char **sbuffer,
         case DP_S_MOD:
             switch (ch) {
             case 'h':
-                cflags = DP_C_SHORT;
+                if (*format == 'h') {
+                    cflags = DP_C_CHAR;
+                    format++;
+                } else {
+                    cflags = DP_C_SHORT;
+                }
                 ch = *format++;
                 break;
             case 'l':
@@ -216,6 +222,9 @@ _dopr(char **sbuffer,
             case 'd':
             case 'i':
                 switch (cflags) {
+                case DP_C_CHAR:
+                    value = (signed char)va_arg(args, int);
+                    break;
                 case DP_C_SHORT:
                     value = (short int)va_arg(args, int);
                     break;
@@ -244,6 +253,9 @@ _dopr(char **sbuffer,
             case 'u':
                 flags |= DP_F_UNSIGNED;
                 switch (cflags) {
+                case DP_C_CHAR:
+                    value = (unsigned char)va_arg(args, unsigned int);
+                    break;
                 case DP_C_SHORT:
                     value = (unsigned short int)va_arg(args, unsigned int);
                     break;
