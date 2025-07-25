@@ -2073,7 +2073,7 @@ static int test_kdf_hmac_drbg_settables(void)
     params[1] = OSSL_PARAM_construct_end();
     for (i = 0; settableparams[i].key != NULL; ++i) {
         /*
-         * Skip "properties" and "engine" keys since they returns 1 unless
+         * Skip "properties" and "engine" keys since they return 1 unless
          * the digest is also set
          */
         if (OPENSSL_strcasecmp(settableparams[i].key,
