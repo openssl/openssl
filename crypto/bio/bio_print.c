@@ -473,7 +473,7 @@ fmtint(char **sbuffer,
         if (base == 8)
             prefix = "0";
         if (base == 16)
-            prefix = "0x";
+            prefix = flags & DP_F_UP ? "0X" : "0x";
     }
     if (flags & DP_F_UP)
         caps = 1;
