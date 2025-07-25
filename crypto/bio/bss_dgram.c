@@ -480,6 +480,7 @@ static long dgram_get_mtu_overhead(BIO_ADDR *addr)
         {
 #  ifdef IN6_IS_ADDR_V4MAPPED
             struct in6_addr tmp_addr;
+
             if (BIO_ADDR_rawaddress(addr, &tmp_addr, NULL)
                 && IN6_IS_ADDR_V4MAPPED(&tmp_addr))
                 /*
