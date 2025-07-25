@@ -72,8 +72,10 @@ DEFINE_RUN_ONCE_STATIC(obj_api_initialise)
     }
 #endif
     added = lh_ADDED_OBJ_new(added_obj_hash, added_obj_cmp);
-    if (added == NULL)
+    if (added == NULL) {
+        objs_free_locks();
         return 0;
+    }
 
     return 1;
 }
