@@ -1238,6 +1238,16 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[bio_prefix_text]=.. ../include ../apps/include
   DEPEND[bio_prefix_text]=../libcrypto libtestutil.a
 
+  PROGRAMS{noinst}=mem_alloc_test
+  SOURCE[mem_alloc_test]=mem_alloc_test.c
+  INCLUDE[mem_alloc_test]=../include ../apps/include
+  DEPEND[mem_alloc_test]=../libcrypto libtestutil.a
+
+  PROGRAMS{noinst}=mem_alloc_custom_fns_test
+  SOURCE[mem_alloc_custom_fns_test]=mem_alloc_custom_fns_test.c
+  INCLUDE[mem_alloc_custom_fns_test]=../include ../apps/include
+  DEPEND[mem_alloc_custom_fns_test]=../libcrypto libtestutil.a
+
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=pem_read_depr_test
     SOURCE[pem_read_depr_test]=pem_read_depr_test.c
