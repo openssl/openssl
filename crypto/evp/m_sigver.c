@@ -434,6 +434,10 @@ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
 
  legacy:
     if (pctx != NULL) {
+        if (pctx->pmeth == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
         /* do_sigver_init() checked that |digest_custom| is non-NULL */
         if (pctx->flag_call_digest_custom
             && !ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx))
