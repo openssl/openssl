@@ -735,7 +735,9 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
     tmpoid->sn = (char *)sn;
     tmpoid->ln = (char *)ln;
 
-    ok = OBJ_add_object(tmpoid);
+    if (OBJ_add_object(tmpoid) != NID_undef)
+        ok = 1;
+
 
     tmpoid->sn = NULL;
     tmpoid->ln = NULL;
