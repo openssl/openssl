@@ -786,7 +786,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
 
     *sk_resp = sk_OCSP_RESPONSE_new_reserve(NULL, num);
 
-    if (sk_resp == NULL)
+    if (*sk_resp == NULL)
         return SSL_TLSEXT_ERR_ALERT_FATAL;
 
     /* for each certificate in chain (except root) get the OCSP response */
