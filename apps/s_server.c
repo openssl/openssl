@@ -755,8 +755,10 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     STACK_OF(X509) *server_certs = NULL;
     OCSP_RESPONSE *resp = NULL;
 
-    if (*sk_resp != NULL)
+    if (*sk_resp != NULL) {
         sk_OCSP_RESPONSE_pop_free(*sk_resp, OCSP_RESPONSE_free);
+        *sk_resp = NULL;
+    }
 
     SSL_get0_chain_certs(s, &server_certs);
     /*
