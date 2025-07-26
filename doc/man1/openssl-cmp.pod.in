@@ -719,12 +719,12 @@ with a signature key."
 
 This is a quirk option added to support 3GPP TS 33.310,
 available only if OpenSSL has been built with B<OPENSSL_CMP_APP_ALLOW_UNSAFE>.
-B<WARNING:> This leads to behavior violating RFC 9810.
+B<WARNING:> This leads to behavior violating RFCs 4210 and 9810.
 
 It allows using self-issued certificates from the extraCerts in an IP message
 as trust anchors when validating the CMP message protection certificate
 in this and any subsequent responses from the server in the same transaction,
-but only if these trust anchors can also be used for validating
+but only if these extraCerts can also be used as trust anchors for validating
 the newly enrolled certificate received in the IP message.
 
 Note that using this option is dangerous as the to-be-trusted certificates
