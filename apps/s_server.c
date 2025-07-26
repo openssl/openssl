@@ -635,7 +635,7 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
     /* reserve enough space so the pushes to the stack would not fail */
     *sk_resp = sk_OCSP_RESPONSE_new_reserve(NULL, num);
 
-    if (sk_resp == NULL)
+    if (*sk_resp == NULL)
         return SSL_TLSEXT_ERR_ALERT_FATAL;
 
     for (i = 0; i < num; i++) {
