@@ -344,10 +344,11 @@ Else, 'digitalSignature' must be allowed by CMP signer certificates.
 =item B<OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR>
 
 This is a quirk option added to support 3GPP TS 33.310.
+It leads to behavior violating RFCs 4210 and 9810.
 It allows using self-issued certificates from the extraCerts in an IP message
 as trust anchors when validating the CMP message protection certificate
 in this and any subsequent responses from the server in the same transaction,
-but only if these trust anchors can also be used for validating
+but only if these extraCerts can also be used as trust anchors for validating
 the newly enrolled certificate received in the IP message.
 
 Note that using this option is dangerous as the to-be-trusted certificates

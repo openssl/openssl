@@ -322,7 +322,7 @@ static int check_cert_path(const OSSL_CMP_CTX *ctx, X509_STORE *store,
  * and if the ctx option is explicitly set: use self-issued certificates from
  * extraCerts as trust anchors when validating the CMP message protection cert
  * in this and any subsequent responses from the server in the same transaction,
- * but only if these trust anchors can also be used for validating
+ * but only if these extraCerts can also be used as trust anchors for validating
  * the newly enrolled certificate received in the IP message.
  */
 static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
@@ -330,12 +330,20 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
 {
     int valid = 0;
     X509_STORE *store;
+    STACK_OF(X509) *extraCerts;
 
     if (!ctx->permitTAInExtraCertsForIR)
         return 0;
 
+    /*
+     * Initially, use extraCerts from the IP message.
+     * For subsequent msgs (pollRep or PKIConf) in the same transaction,
+     * use extraCertsIn remembered from earlier message (typically, the IP message).
+     * The extraCertsIn field will be cleared by OSSL_CMP_CTX_reinit().
+     */
+    extraCerts = ctx->extraCertsIn == NULL ? msg->extraCerts : ctx->extraCertsIn;
     if ((store = X509_STORE_new()) == NULL
-            || !ossl_cmp_X509_STORE_add1_certs(store, msg->extraCerts,
+            || !ossl_cmp_X509_STORE_add1_certs(store, extraCerts,
                                                1 /* self-issued only */))
         goto err;
 
@@ -344,7 +352,7 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
     if (!valid) {
         ossl_cmp_warn(ctx,
                       "also exceptional 3GPP mode cert path validation failed");
-    } else {
+    } else if (OSSL_CMP_MSG_get_bodytype(msg) == OSSL_CMP_PKIBODY_IP) {
         /*
          * verify that the newly enrolled certificate (which assumed rid ==
          * OSSL_CMP_CERTREQID) can also be validated with the same trusted store
@@ -360,14 +368,6 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
          */
         valid = OSSL_CMP_validate_cert_path(ctx, store, newcrt);
         X509_free(newcrt);
-
-        /*
-         * on success, add self-issued extraCerts to trust store,
-         * for use with validating any subsequent responses, such as pkiconf
-         */
-        if (valid && (!ossl_cmp_X509_STORE_add1_certs(ctx->trusted, msg->extraCerts,
-                                                      1 /* self-issued only */)))
-            return 0;
     }
 
  err:
@@ -434,8 +434,7 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 {
     int ret = 0;
 
-    if (ctx->permitTAInExtraCertsForIR
-            && OSSL_CMP_MSG_get_bodytype(msg) == OSSL_CMP_PKIBODY_IP)
+    if (ctx->permitTAInExtraCertsForIR)
         ossl_cmp_info(ctx, mode_3gpp ?
                       "normal mode failed; trying now 3GPP mode trusting extraCerts"
                       : "trying first normal mode using trust store");
