@@ -31,6 +31,14 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * Remove support for an SSLv2 Client Hello. When a client wanted to support
+   both SSLv2 and higher versions like SSLv3 or even TLSv1, it needed to
+   send an SSLv2 Client Hello. SSLv2 support itself was removed in version
+   1.1.0, but there was still compatibility code for clients sending an SSLv2
+   Client Hello.
+
+   *Kurt Roeckx*
+
  * Introduce SSL_OP_SERVER_PREFERENCE superceding misleadingly
    named SSL_OP_CIPHER_SERVER_PREFERENCE.
 
