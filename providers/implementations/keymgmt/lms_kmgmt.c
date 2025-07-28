@@ -116,7 +116,11 @@ static int lms_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         goto err;
 
     ret = param_cb(params, cbarg);
+#ifdef OPENSSL_PEDANTIC_ZEROIZATION
+    OSSL_PARAM_clear_free(params);
+#else
     OSSL_PARAM_free(params);
+#endif
 err:
     OSSL_PARAM_BLD_free(tmpl);
     return ret;

@@ -513,7 +513,11 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     }
 
     ok = param_cb(params, cbarg);
+#ifdef OPENSSL_PEDANTIC_ZEROIZATION
+    OSSL_PARAM_clear_free(params);
+#else
     OSSL_PARAM_free(params);
+#endif
 end:
     OSSL_PARAM_BLD_free(tmpl);
     OPENSSL_free(pub_key);
