@@ -126,6 +126,7 @@ providers/implementations/storemgmt/winstore_store.c
 providers/implementations/ciphers/ciphercommon_ccm.c
 providers/implementations/ciphers/ciphercommon_gcm.c
 providers/implementations/ciphers/cipher_chacha20_poly1305.c
+providers/implementations/digest/blake2_prov.c
 providers/implementations/digest/digestcommon.c
 providers/implementations/digest/sha3_prov.c
 providers/implementations/include/prov/blake2_params.inc
