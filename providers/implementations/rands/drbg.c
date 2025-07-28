@@ -627,28 +627,17 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
                             const unsigned char *adin, size_t adinlen)
 {
     int fork_id;
-    int reseed_required = 0;
+    int reseed_required = 1;
     int ret = 0;
 
     if (!ossl_prov_is_running())
         return 0;
 
-    if (drbg->lock != NULL && !CRYPTO_THREAD_write_lock(drbg->lock))
+    fork_id = openssl_get_fork_id();
+
+    if (drbg->lock != NULL && !CRYPTO_THREAD_read_lock(drbg->lock))
         return 0;
 
-    if (drbg->state != EVP_RAND_STATE_READY) {
-        /* try to recover from previous errors */
-        rand_drbg_restart(drbg);
-
-        if (drbg->state == EVP_RAND_STATE_ERROR) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_IN_ERROR_STATE);
-            goto err;
-        }
-        if (drbg->state == EVP_RAND_STATE_UNINITIALISED) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_NOT_INSTANTIATED);
-            goto err;
-        }
-    }
     if (strength > drbg->strength) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INSUFFICIENT_DRBG_STRENGTH);
         goto err;
@@ -663,28 +652,49 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
         goto err;
     }
 
-    fork_id = openssl_get_fork_id();
+    if (drbg->state != EVP_RAND_STATE_READY)
+        goto reseed;
 
-    if (drbg->fork_id != fork_id) {
-        drbg->fork_id = fork_id;
-        reseed_required = 1;
-    }
+    if (prediction_resistance)
+        goto reseed;
 
-    if (drbg->reseed_interval > 0) {
-        if (drbg->generate_counter >= drbg->reseed_interval)
-            reseed_required = 1;
-    }
+    if (drbg->fork_id != fork_id)
+        goto reseed;
+
+    if (drbg->reseed_interval > 0
+        && drbg->generate_counter >= drbg->reseed_interval)
+        goto reseed;
+
     if (drbg->reseed_time_interval > 0) {
         time_t now = time(NULL);
         if (now < drbg->reseed_time
             || now - drbg->reseed_time >= drbg->reseed_time_interval)
-            reseed_required = 1;
+            goto reseed;
     }
+
     if (drbg->parent != NULL
             && get_parent_reseed_count(drbg) != drbg->parent_reseed_counter)
-        reseed_required = 1;
+        goto reseed;
 
-    if (reseed_required || prediction_resistance) {
+    reseed_required = 0;
+    /*
+     * From here to the end of the function, if we are doing locking, we do so
+     * under the write lock
+     */
+reseed:
+    if (drbg->lock != NULL) {
+        /* switch to write lock */
+        CRYPTO_THREAD_unlock(drbg->lock);
+        if (!CRYPTO_THREAD_write_lock(drbg->lock))
+            return 0;
+    }
+
+    if (reseed_required) {
+        drbg->fork_id = fork_id;
+        /*
+         * Note that ossl_prov_drbg_reseed_unlocked also handles
+         * the need for restart for us
+         */
         if (!ossl_prov_drbg_reseed_unlocked(drbg, prediction_resistance, NULL,
                                             0, adin, adinlen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_RESEED_ERROR);
