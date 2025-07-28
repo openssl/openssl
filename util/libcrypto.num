@@ -5936,3 +5936,4 @@ CMS_RecipientInfo_kemri_set0_pkey       ?	3_6_0	EXIST::FUNCTION:CMS
 CMS_RecipientInfo_kemri_get0_ctx        ?	3_6_0	EXIST::FUNCTION:CMS
 CMS_RecipientInfo_kemri_get0_kdf_alg    ?	3_6_0	EXIST::FUNCTION:CMS
 CMS_RecipientInfo_kemri_set_ukm         ?	3_6_0	EXIST::FUNCTION:CMS
+OSSL_PARAM_clear_free                   ?	3_6_0	EXIST::FUNCTION:
