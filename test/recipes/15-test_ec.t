@@ -33,10 +33,16 @@ subtest 'EC conversions -- private key' => sub {
     tconversion( -type => 'ec', -prefix => 'ec-priv',
                  -in => srctop_file("test","testec-p256.pem") );
 };
-subtest 'EC conversions -- private key' => sub {
-    tconversion( -type => 'ec', -prefix => 'sm2-priv',
-                 -in => srctop_file("test","testec-sm2.pem") );
-};
+
+SKIP: {
+    skip "SM2 is not supported by this OpenSSL build", 1
+        if disabled("sm2");
+    subtest 'EC conversions -- private key' => sub {
+        tconversion( -type => 'ec', -prefix => 'sm2-priv',
+                     -in => srctop_file("test","testec-sm2.pem") );
+    };
+}
+
 subtest 'EC conversions -- private key PKCS#8' => sub {
     tconversion( -type => 'ec', -prefix => 'ec-pkcs8',
                  -in => srctop_file("test","testec-p256.pem"),
