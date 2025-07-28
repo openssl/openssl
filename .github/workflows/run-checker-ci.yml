@@ -32,7 +32,7 @@ jobs:
           no-http,
           no-legacy,
           no-sock,
-          no-ssl-trace,
+          no-sm2,
           no-stdio,
           no-threads,
           no-thread-pool,
