@@ -89,28 +89,23 @@ static ossl_inline int ossl_init_added_api(void)
     return RUN_ONCE(&ossl_obj_api_init, obj_api_initialise);
 }
 
-static ossl_inline int ossl_obj_write_lock(int lock)
+static ossl_inline int ossl_obj_write_lock(void)
 {
     if (!ossl_init_added_api())
         return 0;
-    if (!lock)
-        return 1;
     return CRYPTO_THREAD_write_lock(ossl_obj_lock);
 }
 
-static ossl_inline int ossl_obj_read_lock(int lock)
+static ossl_inline int ossl_obj_read_lock(void)
 {
     if (!ossl_init_added_api())
         return 0;
-    if (!lock)
-        return 1;
     return CRYPTO_THREAD_read_lock(ossl_obj_lock);
 }
 
-static ossl_inline void ossl_obj_unlock(int lock)
+static ossl_inline void ossl_obj_unlock(void)
 {
-    if (lock)
-        CRYPTO_THREAD_unlock(ossl_obj_lock);
+    CRYPTO_THREAD_unlock(ossl_obj_lock);
 }
 
 static int sn_cmp(const ASN1_OBJECT *const *a, const unsigned int *b)
@@ -236,10 +231,10 @@ int OBJ_new_nid(int num)
 #ifdef TSAN_REQUIRES_LOCKING
     int i;
 
-    ossl_obj_write_lock(1);
+    ossl_obj_write_lock();
     i = new_nid;
     new_nid += num;
-    ossl_obj_unlock(1);
+    ossl_obj_unlock();
     return i;
 #else
     return tsan_add(&new_nid, num);
@@ -258,12 +253,12 @@ ASN1_OBJECT *OBJ_nid2obj(int n)
     ad.type = ADDED_NID;
     ad.obj = &ob;
     ob.nid = n;
-    if (!ossl_obj_read_lock(1)) {
+    if (!ossl_obj_read_lock()) {
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_READ_LOCK);
         return NULL;
     }
     adp = lh_ADDED_OBJ_retrieve(added, &ad);
-    ossl_obj_unlock(1);
+    ossl_obj_unlock();
     if (adp != NULL)
         return adp->obj;
 
@@ -317,7 +312,7 @@ static int ossl_obj_obj2nid(const ASN1_OBJECT *a)
     op = OBJ_bsearch_obj(&a, obj_objs, NUM_OBJ);
     if (op != NULL)
         return nid_objs[*op].nid;
-    if (!ossl_obj_read_lock(1)) {
+    if (!ossl_obj_read_lock()) {
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_READ_LOCK);
         return NID_undef;
     }
@@ -326,7 +321,7 @@ static int ossl_obj_obj2nid(const ASN1_OBJECT *a)
     adp = lh_ADDED_OBJ_retrieve(added, &ad);
     if (adp != NULL)
         nid = adp->obj->nid;
-    ossl_obj_unlock(1);
+    ossl_obj_unlock();
     return nid;
 }
 
@@ -561,7 +556,7 @@ int OBJ_ln2nid(const char *s)
     op = OBJ_bsearch_ln(&oo, ln_objs, NUM_LN);
     if (op != NULL)
         return nid_objs[*op].nid;
-    if (!ossl_obj_read_lock(1)) {
+    if (!ossl_obj_read_lock()) {
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_READ_LOCK);
         return NID_undef;
     }
@@ -570,7 +565,7 @@ int OBJ_ln2nid(const char *s)
     adp = lh_ADDED_OBJ_retrieve(added, &ad);
     if (adp != NULL)
         nid = adp->obj->nid;
-    ossl_obj_unlock(1);
+    ossl_obj_unlock();
     return nid;
 }
 
@@ -586,7 +581,7 @@ int OBJ_sn2nid(const char *s)
     op = OBJ_bsearch_sn(&oo, sn_objs, NUM_SN);
     if (op != NULL)
         return nid_objs[*op].nid;
-    if (!ossl_obj_read_lock(1)) {
+    if (!ossl_obj_read_lock()) {
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_READ_LOCK);
         return NID_undef;
     }
@@ -595,7 +590,7 @@ int OBJ_sn2nid(const char *s)
     adp = lh_ADDED_OBJ_retrieve(added, &ad);
     if (adp != NULL)
         nid = adp->obj->nid;
-    ossl_obj_unlock(1);
+    ossl_obj_unlock();
     return nid;
 }
 
@@ -779,7 +774,7 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
                 && (ao[ADDED_LNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL))
         goto err2;
 
-    if (!ossl_obj_write_lock(1)) {
+    if (!ossl_obj_write_lock()) {
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
         goto err2;
     }
@@ -809,11 +804,11 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
         ~(ASN1_OBJECT_FLAG_DYNAMIC | ASN1_OBJECT_FLAG_DYNAMIC_STRINGS |
           ASN1_OBJECT_FLAG_DYNAMIC_DATA);
 
-    ossl_obj_unlock(1);
+    ossl_obj_unlock();
     return o->nid;
 
  err:
-    ossl_obj_unlock(1);
+    ossl_obj_unlock();
  err2:
     for (i = ADDED_DATA; i <= ADDED_NID; i++)
         OPENSSL_free(ao[i]);
