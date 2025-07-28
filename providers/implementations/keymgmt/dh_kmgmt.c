@@ -249,7 +249,7 @@ static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     }
 
     ok = param_cb(params, cbarg);
-    OSSL_PARAM_free(params);
+    OSSL_PARAM_clear_free(params);
 err:
     OSSL_PARAM_BLD_free(tmpl);
     return ok;
