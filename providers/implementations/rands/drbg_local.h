@@ -82,15 +82,6 @@ struct prov_drbg_st {
     OSSL_FUNC_rand_clear_seed_fn *parent_clear_seed;
 
     /*
-     * Stores the return value of openssl_get_fork_id() as of when we last
-     * reseeded.  The DRBG reseeds automatically whenever drbg->fork_id !=
-     * openssl_get_fork_id().  Used to provide fork-safety and reseed this
-     * DRBG in the child process.
-     */
-    int fork_id;
-    unsigned short flags; /* various external flags */
-
-    /*
      * The following parameters are setup by the per-type "init" function.
      *
      * The supported types and their init functions are:
@@ -110,11 +101,11 @@ struct prov_drbg_st {
      * clarification.
      */
 
-    unsigned int strength;
     size_t max_request;
     size_t min_entropylen, max_entropylen;
     size_t min_noncelen, max_noncelen;
     size_t max_perslen, max_adinlen;
+    unsigned int strength;
 
     /*
      * Counts the number of generate requests since the last reseed
@@ -127,6 +118,15 @@ struct prov_drbg_st {
      * This value is ignored if it is zero.
      */
     unsigned int reseed_interval;
+
+    /*
+     * Stores the return value of openssl_get_fork_id() as of when we last
+     * reseeded.  The DRBG reseeds automatically whenever drbg->fork_id !=
+     * openssl_get_fork_id().  Used to provide fork-safety and reseed this
+     * DRBG in the child process.
+     */
+    int fork_id;
+
     /* Stores the time when the last reseeding occurred */
     time_t reseed_time;
     /*
@@ -148,8 +148,8 @@ struct prov_drbg_st {
     unsigned int reseed_next_counter;
     unsigned int parent_reseed_counter;
 
-    size_t seedlen;
     DRBG_STATUS state;
+    size_t seedlen;
 
     /* DRBG specific data */
     void *data;
@@ -160,6 +160,8 @@ struct prov_drbg_st {
     OSSL_CALLBACK *cleanup_entropy_fn;
     OSSL_INOUT_CALLBACK *get_nonce_fn;
     OSSL_CALLBACK *cleanup_nonce_fn;
+
+    unsigned short flags; /* various external flags */
 
     OSSL_FIPS_IND_DECLARE
 };
