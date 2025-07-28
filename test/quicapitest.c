@@ -2863,6 +2863,62 @@ static int test_ssl_set_verify(void)
     return testresult;
 }
 
+/*
+ * When the server has a different primary group than the client, the server
+ * should not fail on the client hello retry.
+ */
+static int test_client_hello_retry(void)
+{
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX)
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    int testresult = 0, i = 0, ret = 0;
+
+    if (!TEST_ptr(sctx = create_server_ctx())
+        || !TEST_ptr(cctx = create_client_ctx()))
+        goto err;
+    /*
+     * set the specific groups for the test
+     */
+    if (!TEST_true(SSL_CTX_set1_groups_list(cctx, "secp384r1:secp256r1")))
+        goto err;
+    if (!TEST_true(SSL_CTX_set1_groups_list(sctx, "secp256r1")))
+        goto err;
+
+    if (!create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl))
+        goto err;
+
+    /* Send ClientHello and server retry */
+    for (i = 0; i < 2; i++) {
+        ret = SSL_connect(clientssl);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+            goto err;
+        SSL_handle_events(qlistener);
+    }
+
+    /* We expect a server SSL object which has not yet completed its handshake */
+    serverssl = SSL_accept_connection(qlistener, 0);
+
+    /* Call SSL_accept() and SSL_connect() until we are connected */
+    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+                                              SSL_ERROR_NONE, 0, 0)))
+        goto err;
+
+    testresult = 1;
+
+err:
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_free(qlistener);
+
+    return testresult;
+#else
+    return TEST_skip("EC(X) keys are not supported in this build");
+#endif
+}
 /***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
@@ -2964,6 +3020,7 @@ int setup_tests(void)
     ADD_TEST(test_server_method_with_ssl_new);
     ADD_TEST(test_ssl_accept_connection);
     ADD_TEST(test_ssl_set_verify);
+    ADD_TEST(test_client_hello_retry);
     return 1;
  err:
     cleanup_tests();
