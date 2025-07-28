@@ -35,7 +35,8 @@ OpenSSL 3.6
    both SSLv2 and higher versions like SSLv3 or even TLSv1, it needed to
    send an SSLv2 Client Hello. SSLv2 support itself was removed in version
    1.1.0, but there was still compatibility code for clients sending an SSLv2
-   Client Hello.
+   Client Hello. Since we no longer support SSLv2 Client Hello,
+   SSL_client_hello_isv2() now always returns 0.
 
    *Kurt Roeckx*
 

@@ -1530,8 +1530,8 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
     if (!PACKET_copy_bytes(pkt, clienthello->random, SSL3_RANDOM_SIZE)
         || !PACKET_get_length_prefixed_1(pkt, &session_id)
         || !PACKET_copy_all(&session_id, clienthello->session_id,
-                SSL_MAX_SSL_SESSION_ID_LENGTH,
-                &clienthello->session_id_len)) {
+                            SSL_MAX_SSL_SESSION_ID_LENGTH,
+                            &clienthello->session_id_len)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         goto err;
     }

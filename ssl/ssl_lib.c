@@ -7122,7 +7122,7 @@ int ssl_cache_cipherlist(SSL_CONNECTION *s, PACKET *cipher_suites)
     s->s3.tmp.ciphers_rawlen = 0;
 
     if (!PACKET_memdup(cipher_suites, &s->s3.tmp.ciphers_raw,
-                           &s->s3.tmp.ciphers_rawlen)) {
+                       &s->s3.tmp.ciphers_rawlen)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
