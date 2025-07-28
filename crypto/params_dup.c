@@ -139,6 +139,7 @@ OSSL_PARAM *OSSL_PARAM_dup(const OSSL_PARAM *src)
     /* Store the allocated secure memory buffer in the last param block */
     ossl_param_set_secure_block(last, buf[OSSL_PARAM_BUF_SECURE].alloc,
                                 buf[OSSL_PARAM_BUF_SECURE].alloc_sz);
+    last->return_size = buf[OSSL_PARAM_BUF_PUBLIC].alloc_sz;
     return dst;
 }
 
@@ -238,6 +239,21 @@ void OSSL_PARAM_free(OSSL_PARAM *params)
             ;
         if (p->data_type == OSSL_PARAM_ALLOCATED_END)
             OPENSSL_secure_clear_free(p->data, p->data_size);
+        OPENSSL_free(params);
+    }
+}
+
+void OSSL_PARAM_clear_free(OSSL_PARAM *params)
+{
+    if (params != NULL) {
+        OSSL_PARAM *p;
+
+        for (p = params; p->key != NULL; p++)
+            ;
+        if (p->data_type == OSSL_PARAM_ALLOCATED_END)
+            OPENSSL_secure_clear_free(p->data, p->data_size);
+        if (p->return_size > 0 && p->return_size != OSSL_PARAM_UNMODIFIED)
+            OPENSSL_cleanse(params, p->return_size);
         OPENSSL_free(params);
     }
 }
