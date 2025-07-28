@@ -1984,7 +1984,7 @@ static int test_tlsext_status_type(void)
     if (!create_ssl_ctx_pair(libctx, TLS_server_method(), TLS_client_method(),
                              TLS1_VERSION, 0,
                              &sctx, &cctx, leaf, skey))
-        return 0;
+        goto end;
     if (SSL_CTX_use_certificate_chain_file(sctx, leaf_chain) <= 0)
         goto end;
     if (SSL_CTX_get_tlsext_status_type(cctx) != -1)
