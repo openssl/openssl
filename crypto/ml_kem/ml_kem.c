@@ -1652,7 +1652,13 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
     key->libctx = libctx;
     key->prov_flags = ML_KEM_KEY_PROV_FLAGS_DEFAULT;
     key->shake128_md = EVP_MD_fetch(libctx, "SHAKE128", properties);
-    key->shake256_md = EVP_MD_fetch(libctx, "SHAKE256", properties);
+    if (key->shake128_md != NULL && key->shake128_md->dsqueeze == NULL) {
+        EVP_MD_free(key->shake128_md);
+        key->shake128_md = EVP_MD_fetch(libctx, "SHAKE128", "fips=no");
+        key->shake256_md = EVP_MD_fetch(libctx, "SHAKE256", "fips=no");
+    } else {
+        key->shake256_md = EVP_MD_fetch(libctx, "SHAKE256", properties);
+    }
     key->sha3_256_md = EVP_MD_fetch(libctx, "SHA3-256", properties);
     key->sha3_512_md = EVP_MD_fetch(libctx, "SHA3-512", properties);
     key->d = key->z = key->rho = key->pkhash = key->encoded_dk = key->seedbuf = NULL;
