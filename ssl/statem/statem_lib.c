@@ -1688,7 +1688,7 @@ int tls_get_message_body(SSL_CONNECTION *s, size_t *len)
     /* KeyUpdate and NewSessionTicket do not need to be added */
     if (!SSL_CONNECTION_IS_TLS13(s)
         || (s->s3.tmp.message_type != SSL3_MT_NEWSESSION_TICKET
-                     && s->s3.tmp.message_type != SSL3_MT_KEY_UPDATE)) {
+            && s->s3.tmp.message_type != SSL3_MT_KEY_UPDATE)) {
         if (s->s3.tmp.message_type != SSL3_MT_SERVER_HELLO
                 || s->init_num < SERVER_HELLO_RANDOM_OFFSET + SSL3_RANDOM_SIZE
                 || memcmp(hrrrandom,
