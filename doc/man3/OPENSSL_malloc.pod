@@ -122,19 +122,19 @@ OPENSSL_malloc(), OPENSSL_realloc(), and OPENSSL_free() are like the
 C malloc(), realloc(), and free() functions.
 OPENSSL_zalloc() calls memset() to zero the memory before returning.
 
-OPENSSL_aligned_alloc() operates just as OPENSSL_malloc does, but it
+OPENSSL_aligned_alloc() operates just as OPENSSL_malloc() does, but it
 allows for the caller to specify an alignment value, for instances in
-which the default alignment of malloc is insufficient for the callers
+which the default alignment of malloc is insufficient for the caller's
 needs.  Note, the alignment value must be a power of 2, and the size
 specified must be a multiple of the alignment.
 NOTE: The call to OPENSSL_aligned_alloc() accepts a 3rd argument, I<freeptr>
 which must point to a void pointer.  On some platforms, there is no available
-library call to obtain memory allocations greater than what malloc provides.  In
-this case, OPENSSL_aligned_alloc implements its own alignment routine,
-allocating additional memory and offsetting the returned pointer to be on the
-requested alignment boundary.  In order to safely free allocations made by this
-method, the caller must return the value in the I<freeptr> variable, rather than
-the returned pointer.
+library call to obtain memory allocations with alignment greater than what
+malloc provides.  In this case, OPENSSL_aligned_alloc() implements its own
+alignment routine, allocating additional memory and offsetting the returned
+pointer to be on the requested alignment boundary.  In order to safely free
+allocations made by this method, the caller must return the value
+in the I<freeptr> variable, rather than the returned pointer.
 
 OPENSSL_clear_realloc() and OPENSSL_clear_free() should be used
 when the buffer at B<addr> holds sensitive information.
