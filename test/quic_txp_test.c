@@ -123,6 +123,7 @@ static int helper_init(struct helper *h)
 {
     int rc = 0;
     size_t i;
+    static char fake_channel[4096] = { 0 };
 
     memset(h, 0, sizeof(*h));
 
@@ -186,10 +187,15 @@ static int helper_init(struct helper *h)
                                                /* is_server */0)))
         goto err;
 
+    /*
+     * fake_channel is ugly hack which is good enough for testing.
+     * we enable qsm to safely dereference a memory when it
+     * calls ossl_quic_channel_is_serve().
+     */
     if (!TEST_true(ossl_quic_stream_map_init(&h->qsm, NULL, NULL,
                                              &h->max_streams_bidi_rxfc,
                                              &h->max_streams_uni_rxfc,
-                                             /*is_server=*/0)))
+                                             (QUIC_CHANNEL *)fake_channel)))
         goto err;
 
     h->have_qsm = 1;

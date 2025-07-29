@@ -554,6 +554,7 @@ static ossl_inline ossl_unused size_t ossl_quic_stream_recv_pending(const QUIC_S
  */
 struct quic_stream_map_st {
     LHASH_OF(QUIC_STREAM)   *map;
+    QUIC_CHANNEL            *ch;
     QUIC_STREAM_LIST_NODE   active_list;
     QUIC_STREAM_LIST_NODE   accept_list;
     QUIC_STREAM_LIST_NODE   ready_for_gc_list;
@@ -564,7 +565,6 @@ struct quic_stream_map_st {
     void                    *get_stream_limit_cb_arg;
     QUIC_RXFC               *max_streams_bidi_rxfc;
     QUIC_RXFC               *max_streams_uni_rxfc;
-    int                     is_server;
 };
 
 /*
@@ -585,7 +585,7 @@ int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
                               void *get_stream_limit_cb_arg,
                               QUIC_RXFC *max_streams_bidi_rxfc,
                               QUIC_RXFC *max_streams_uni_rxfc,
-                              int is_server);
+                              QUIC_CHANNEL *ch);
 
 /*
  * Any streams still in the map will be released as though
