@@ -23,9 +23,19 @@ print <<"_____";
 #ifndef OPENSSL_NO_STDIO
 # include <stdio.h>
 #endif
+_____
+
+if (${name_uc} eq "RSA") {
+    print("#include <openssl/rsa.h>");
+}
+else {
+    print <<"_____";
 #ifndef OPENSSL_NO_${name_uc}
 # include <openssl/$name.h>
 #endif
+_____
+}
+print <<"_____";
 
 int main(void)
 {

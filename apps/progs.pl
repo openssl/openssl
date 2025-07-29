@@ -93,7 +93,6 @@ EOF
 
     my %cmd_disabler = (
         ciphers  => "sock",
-        genrsa   => "rsa",
         gendsa   => "dsa",
         dsaparam => "dsa",
         gendh    => "dh",
@@ -107,7 +106,7 @@ EOF
 #   [2] = preprocessor conditional for excluding irrespective of deprecation
 #        rsa      => [ "pkey",      "3_0", "rsa" ],
 #        genrsa   => [ "genpkey",   "3_0", "rsa" ],
-        rsautl   => [ "pkeyutl",   "3_0", "rsa" ],
+        rsautl   => [ "pkeyutl",   "3_0", "" ],
 #        dhparam  => [ "pkeyparam", "3_0", "dh"  ],
 #        dsaparam => [ "pkeyparam", "3_0", "dsa" ],
 #        dsa      => [ "pkey",      "3_0", "dsa" ],
