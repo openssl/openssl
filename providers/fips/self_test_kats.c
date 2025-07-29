@@ -548,12 +548,6 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
 
     OSSL_SELF_TEST_onbegin(st, typ, t->desc);
 
-    if (t->entropy != NULL) {
-        if (!set_kat_drbg(libctx, t->entropy, t->entropy_len,
-                          t->nonce, t->nonce_len, t->persstr, t->persstr_len))
-            goto err;
-    }
-
     paramskey = kat_params_to_ossl_params(libctx, t->key, NULL);
     paramsinit = kat_params_to_ossl_params(libctx, t->init, NULL);
     paramsverify = kat_params_to_ossl_params(libctx, t->verify, NULL);
@@ -576,6 +570,12 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
         goto err;
 
     digested = ((t->mode & SIGNATURE_MODE_DIGESTED) != 0);
+
+    if (t->entropy != NULL) {
+        if (!set_kat_drbg(libctx, t->entropy, t->entropy_len,
+                          t->nonce, t->nonce_len, t->persstr, t->persstr_len))
+            goto err;
+    }
 
     if ((t->mode & SIGNATURE_MODE_VERIFY_ONLY) != 0) {
         siglen = t->sig_expected_len;

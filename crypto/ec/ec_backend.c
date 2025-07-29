@@ -486,6 +486,12 @@ int ossl_ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_priv
         && !EC_KEY_set_public_key(ec, pub_point))
         goto err;
 
+#ifdef FIPS_MODULE
+    if (priv_key != NULL && pub_key != NULL)
+        if (ossl_ec_key_pairwise_check(ec, ctx) == 0)
+            goto err;
+#endif
+
     ok = 1;
 
  err:
