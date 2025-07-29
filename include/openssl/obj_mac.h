@@ -1066,6 +1066,11 @@
 #define NID_id_alg_PWRI_KEK             893
 #define OBJ_id_alg_PWRI_KEK             OBJ_id_smime_alg,9L
 
+#define SN_HSS          "id-alg-hss-lms-hashsig"
+#define LN_HSS          "HSS"
+#define NID_HSS         1499
+#define OBJ_HSS         OBJ_id_smime_alg,17L
+
 #define SN_HKDF_SHA256          "id-alg-hkdf-with-sha256"
 #define LN_HKDF_SHA256          "HKDF-SHA256"
 #define NID_HKDF_SHA256         1496

@@ -1,0 +1,10 @@
+HSS Public-Key:
+Levels: 3
+LMS Type: SHAKE_N24_H5
+LMOTS Type: SHAKE_N24_W8
+I:
+    9b:24:eb:04:37:5f:77:b3:35:5c:c7:fb:b7:78:88:
+    c9
+K:
+    0a:16:08:6c:51:f4:b4:57:9d:c4:1d:68:57:ac:36:
+    31:23:08:5d:06:9b:bb:15:b0

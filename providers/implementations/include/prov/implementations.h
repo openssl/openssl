@@ -338,6 +338,9 @@ extern const OSSL_DISPATCH ossl_sm2_keymgmt_functions[];
 #ifndef OPENSSL_NO_LMS
 extern const OSSL_DISPATCH ossl_lms_keymgmt_functions[];
 #endif
+#ifndef OPENSSL_NO_HSS
+extern const OSSL_DISPATCH ossl_hss_keymgmt_functions[];
+#endif
 extern const OSSL_DISPATCH ossl_ml_dsa_44_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_65_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_87_keymgmt_functions[];
@@ -438,6 +441,7 @@ extern const OSSL_DISPATCH ossl_mac_legacy_poly1305_signature_functions[];
 extern const OSSL_DISPATCH ossl_mac_legacy_cmac_signature_functions[];
 extern const OSSL_DISPATCH ossl_sm2_signature_functions[];
 extern const OSSL_DISPATCH ossl_lms_signature_functions[];
+extern const OSSL_DISPATCH ossl_hss_signature_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_44_signature_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_65_signature_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_87_signature_functions[];
@@ -806,6 +810,10 @@ extern const OSSL_DISPATCH ossl_ml_kem_1024_to_SubjectPublicKeyInfo_der_encoder_
 extern const OSSL_DISPATCH ossl_ml_kem_1024_to_SubjectPublicKeyInfo_pem_encoder_functions[];
 extern const OSSL_DISPATCH ossl_ml_kem_1024_to_text_encoder_functions[];
 #endif
+extern const OSSL_DISPATCH ossl_hss_to_text_encoder_functions[];
+extern const OSSL_DISPATCH ossl_hss_to_SubjectPublicKeyInfo_der_encoder_functions[];
+extern const OSSL_DISPATCH ossl_hss_to_SubjectPublicKeyInfo_pem_encoder_functions[];
+extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_hss_decoder_functions[];
 
 #ifndef OPENSSL_NO_SM2
 extern const OSSL_DISPATCH ossl_PrivateKeyInfo_der_to_sm2_decoder_functions[];
@@ -856,6 +864,8 @@ extern const OSSL_DISPATCH ossl_file_store_functions[];
 extern const OSSL_DISPATCH ossl_winstore_store_functions[];
 
 extern const OSSL_DISPATCH ossl_xdr_to_lms_decoder_functions[];
+extern const OSSL_DISPATCH ossl_xdr_to_hss_decoder_functions[];
+extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_hss_decoder_functions[];
 
 extern const OSSL_DISPATCH ossl_PrivateKeyInfo_der_to_ml_dsa_44_decoder_functions[];
 extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_ml_dsa_44_decoder_functions[];

@@ -480,7 +480,7 @@ static int digest_signature(const uint8_t *sig, size_t sig_len,
     return ret;
 }
 
-#ifndef OPENSSL_NO_LMS
+#if !defined(OPENSSL_NO_HSS) || !defined(OPENSSL_NO_LMS)
 static int self_test_LMS(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
     int ret = 0;
@@ -489,16 +489,22 @@ static int self_test_LMS(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_SIGNATURE *sig = NULL;
+# if !defined(OPENSSL_NO_HSS)
+    const char *alg = "HSS";
+    const char *desc = OSSL_SELF_TEST_DESC_SIGN_HSS;
+# else
+    const char *alg = "LMS";
+    const char *desc = OSSL_SELF_TEST_DESC_SIGN_LMS;
+# endif
 
-    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_SIGNATURE,
-                           OSSL_SELF_TEST_DESC_SIGN_LMS);
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_SIGNATURE, desc);
 
     pm[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
                                               (unsigned char *)t->pub,
                                               t->publen);
     pm[1] = OSSL_PARAM_construct_end();
 
-    ctx = EVP_PKEY_CTX_new_from_name(libctx, "LMS", "");
+    ctx = EVP_PKEY_CTX_new_from_name(libctx, alg, "");
     if (ctx == NULL
             || EVP_PKEY_fromdata_init(ctx) <= 0
             || EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY, pm) <= 0)
@@ -508,7 +514,7 @@ static int self_test_LMS(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     if (ctx == NULL)
         goto err;
 
-    sig = EVP_SIGNATURE_fetch(libctx, "LMS", NULL);
+    sig = EVP_SIGNATURE_fetch(libctx, alg, NULL);
     if (sig == NULL
             || EVP_PKEY_verify_message_init(ctx, sig, NULL) <= 0
             || EVP_PKEY_verify(ctx, t->sig, t->siglen,
@@ -524,7 +530,7 @@ static int self_test_LMS(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
-#endif  /* OPENSSL_NO_LMS */
+#endif  /* !defined(OPENSSL_NO_HSS) || !defined(OPENSSL_NO_LMS) */
 
 static int self_test_digest_sign(const ST_KAT_SIGN *t,
                                  OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
@@ -1126,19 +1132,11 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
         ret = 0;
     if (!self_test_ciphers(st, libctx))
         ret = 0;
-#ifndef OPENSSL_NO_LMS
-    /*
-     * FIPS 140-3 IG 10.3.A Note 5 mandates a CAST for LMS.
-     *
-     * It permits this to be omitted if HSS is also implemented and has
-     * the relevant self tests.  Once HSS is implemented, this test can be
-     * removed.  This IG permits the digest's CAST to be subsumed into this
-     * test, however, because this will be removed, the underlying digest
-     * test has been retained elsewhere lest it is accidentally omitted.
-     */
+#if !defined(OPENSSL_NO_HSS) || !defined(OPENSSL_NO_LMS)
+    /* FIPS 140-3 IG 10.3.A Note 5 mandates a CAST for either LMS OR HSS */
     if (!self_test_LMS(st, libctx))
         ret = 0;
-#endif  /* OPENSSL_NO_LMS */
+#endif  /* !defined(OPENSSL_NO_HSS) || !defined(OPENSSL_NO_LMS) */
     if (!self_test_signatures(st, libctx))
         ret = 0;
     if (!self_test_kdfs(st, libctx))

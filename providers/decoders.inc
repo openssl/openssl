@@ -149,3 +149,7 @@ DECODER_w_structure("DER", der, EncryptedPrivateKeyInfo, der, yes),
 #ifndef OPENSSL_NO_LMS
 DECODER("LMS", xdr, lms, yes),
 #endif
+#ifndef OPENSSL_NO_HSS
+DECODER("HSS", xdr, hss, yes),
+DECODER_w_structure("HSS", der, SubjectPublicKeyInfo, hss, yes),
+#endif
