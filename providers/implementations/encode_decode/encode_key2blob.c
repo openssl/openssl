@@ -24,7 +24,7 @@
 #include "prov/implementations.h"
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
-#include "endecoder_local.h"
+#include "prov/endecoder_local.h"
 
 static int write_blob(void *provctx, OSSL_CORE_BIO *cout,
                       void *data, int len)

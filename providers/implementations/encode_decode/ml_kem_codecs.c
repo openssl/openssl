@@ -14,7 +14,7 @@
 #include <openssl/core_names.h>
 #include "internal/encoder.h"
 #include "prov/ml_kem.h"
-#include "ml_kem_codecs.h"
+#include "prov/ml_kem_codecs.h"
 
 /* Tables describing supported ASN.1 input/output formats. */
 

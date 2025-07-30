@@ -19,7 +19,7 @@
 #include "prov/bio.h"
 #include "prov/decoders.h"
 #include "prov/implementations.h"
-#include "endecoder_local.h"
+#include "prov/endecoder_local.h"
 
 static OSSL_FUNC_decoder_newctx_fn spki2typespki_newctx;
 static OSSL_FUNC_decoder_freectx_fn spki2typespki_freectx;
