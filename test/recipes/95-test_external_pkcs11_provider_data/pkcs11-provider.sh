@@ -63,8 +63,9 @@ echo "------------------------------------------------------------------"
 echo "Running tests"
 echo "------------------------------------------------------------------"
 
+# The OpenSSL app uses ${HARNESS_OSSL_PREFIX} as a prefix for its standard output
 # For maintenance reasons and simplicity we only run test with kryoptic token
-meson test -C $PKCS11_PROVIDER_BUILDDIR --suite=kryoptic
+HARNESS_OSSL_PREFIX= meson test -C $PKCS11_PROVIDER_BUILDDIR --suite=kryoptic
 
 if [ $? -ne 0 ]; then
     cat $PKCS11_PROVIDER_BUILDDIR/meson-logs/testlog.txt
