@@ -50,6 +50,13 @@ DEPEND[]=include/openssl/asn1.h \
          include/crypto/bn_conf.h include/crypto/dso_conf.h \
          providers/implementations/asymciphers/rsa_enc.c \
          providers/implementations/asymciphers/sm2_enc.c \
+         providers/implementations/encode_decode/decode_der2key.c \
+         providers/implementations/encode_decode/decode_epki2pki.c \
+         providers/implementations/encode_decode/decode_pem2der.c \
+         providers/implementations/encode_decode/decode_pvk2key.c \
+         providers/implementations/encode_decode/decode_spki2typespki.c \
+         providers/implementations/encode_decode/encode_key2any.c \
+         providers/implementations/encode_decode/encode_key2ms.c \
          providers/implementations/exchange/dh_exch.c \
          providers/implementations/exchange/ecdh_exch.c \
          providers/implementations/exchange/ecx_exch.c \
@@ -142,6 +149,13 @@ GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 
 DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/asymciphers/sm2_enc.c \
+       providers/implementations/encode_decode/decode_der2key.c \
+       providers/implementations/encode_decode/decode_epki2pki.c \
+       providers/implementations/encode_decode/decode_pem2der.c \
+       providers/implementations/encode_decode/decode_pvk2key.c \
+       providers/implementations/encode_decode/decode_spki2typespki.c \
+       providers/implementations/encode_decode/encode_key2any.c \
+       providers/implementations/encode_decode/encode_key2ms.c \
        providers/implementations/exchange/dh_exch.c \
        providers/implementations/exchange/ecdh_exch.c \
        providers/implementations/exchange/ecx_exch.c \
@@ -203,6 +217,20 @@ GENERATE[providers/implementations/asymciphers/rsa_enc.c]=\
     providers/implementations/asymciphers/rsa_enc.c.in
 GENERATE[providers/implementations/asymciphers/sm2_enc.c]=\
     providers/implementations/asymciphers/sm2_enc.c.in
+GENERATE[providers/implementations/encode_decode/decode_der2key.c]=\
+    providers/implementations/encode_decode/decode_der2key.c.in
+GENERATE[providers/implementations/encode_decode/decode_epki2pki.c]=\
+    providers/implementations/encode_decode/decode_epki2pki.c.in
+GENERATE[providers/implementations/encode_decode/decode_pem2der.c]=\
+    providers/implementations/encode_decode/decode_pem2der.c.in
+GENERATE[providers/implementations/encode_decode/decode_pvk2key.c]=\
+    providers/implementations/encode_decode/decode_pvk2key.c.in
+GENERATE[providers/implementations/encode_decode/decode_spki2typespki.c]=\
+    providers/implementations/encode_decode/decode_spki2typespki.c.in
+GENERATE[providers/implementations/encode_decode/encode_key2any.c]=\
+    providers/implementations/encode_decode/encode_key2any.c.in
+GENERATE[providers/implementations/encode_decode/encode_key2ms.c]=\
+    providers/implementations/encode_decode/encode_key2ms.c.in
 GENERATE[providers/implementations/exchange/dh_exch.c]=\
     providers/implementations/exchange/dh_exch.c.in
 GENERATE[providers/implementations/exchange/ecdh_exch.c]=\

@@ -88,6 +88,13 @@ providers/common/include/prov/der_ml_dsa.h
 providers/common/include/prov/der_hkdf.h
 providers/implementations/asymciphers/rsa_enc.c
 providers/implementations/asymciphers/sm2_enc.c
+providers/implementations/encode_decode/decode_der2key.c
+providers/implementations/encode_decode/decode_epki2pki.c
+providers/implementations/encode_decode/decode_pem2der.c
+providers/implementations/encode_decode/decode_pvk2key.c
+providers/implementations/encode_decode/decode_spki2typespki.c
+providers/implementations/encode_decode/encode_key2any.c
+providers/implementations/encode_decode/encode_key2ms.c
 providers/implementations/exchange/dh_exch.c
 providers/implementations/exchange/ecdh_exch.c
 providers/implementations/exchange/ecx_exch.c

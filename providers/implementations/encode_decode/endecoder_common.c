@@ -11,7 +11,7 @@
 #include <openssl/buffer.h>
 #include "internal/asn1.h"
 #include "prov/bio.h"
-#include "endecoder_local.h"
+#include "prov/endecoder_local.h"
 
 OSSL_FUNC_keymgmt_new_fn *
 ossl_prov_get_keymgmt_new(const OSSL_DISPATCH *fns)
