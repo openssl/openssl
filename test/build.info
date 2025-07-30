@@ -578,7 +578,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[param_build_test]=../include ../apps/include
   DEPEND[param_build_test]=../libcrypto libtestutil.a
 
-  SOURCE[sslapitest]=sslapitest.c helpers/ssltestlib.c filterprov.c tls-provider.c
+  SOURCE[sslapitest]=sslapitest.c helpers/ssltestlib.c filterprov.c tls-provider.c hybridprov.c
   INCLUDE[sslapitest]=../include ../apps/include ../providers/common/include ..
   DEPEND[sslapitest]=../libcrypto.a ../libssl.a libtestutil.a
 

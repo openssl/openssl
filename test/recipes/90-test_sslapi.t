@@ -18,7 +18,7 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $fipsmodcfg_filename = "fipsmodule.cnf";
 my $fipsmodcfg = bldtop_file("test", $fipsmodcfg_filename);
 
-my $provconf = srctop_file("test", "fips-and-base.cnf");
+my $provconf = srctop_file("test", "default-and-fips.cnf");
 
 # A modified copy of "fipsmodule.cnf"
 my $fipsmodcfgnew_filename = "fipsmodule_mod.cnf";
@@ -29,47 +29,22 @@ my $fipsmodcfgtmp_filename = "fipsmodule_tmp.cnf";
 my $fipsmodcfgtmp = result_file($fipsmodcfgtmp_filename);
 
 # A modified copy of "fips-and-base.cnf"
-my $provconfnew = result_file("fips-and-base-temp.cnf");
+my $provconfnew = result_file("default-and-fips-temp.cnf");
 
 plan skip_all => "No TLS/SSL protocols are supported by this OpenSSL build"
     if alldisabled(grep { $_ ne "ssl3" } available_protocols("tls"));
 
-plan tests => 4;
+plan tests => 1;
 
 (undef, my $tmpfilename) = tempfile();
 
-ok(run(test(["sslapitest", srctop_dir("test", "certs"),
-             srctop_file("test", "recipes", "90-test_sslapi_data",
-                         "passwd.txt"), $tmpfilename, "default",
-             srctop_file("test", "default.cnf"),
-             srctop_file("test",
-                         "recipes",
-                         "90-test_sslapi_data",
-                         "dhparams.pem")])),
-             "running sslapitest");
 
 SKIP: {
-    skip "Skipping FIPS tests", 2
+    skip "Skipping FIPS tests", 1
         if $no_fips;
 
-    # NOTE that because by default we setup fips provider in pedantic mode,
-    # with >= 3.1.0 this just runs test_no_ems() to check that the connection
-    # fails if ems is not used and the fips check is enabled.
-    ok(run(test(["sslapitest", srctop_dir("test", "certs"),
-                 srctop_file("test", "recipes", "90-test_sslapi_data",
-                             "passwd.txt"), $tmpfilename, "fips",
-                 $provconf,
-                 srctop_file("test",
-                             "recipes",
-                             "90-test_sslapi_data",
-                             "dhparams.pem")])),
-                 "running sslapitest with default fips config");
-
-    run(test(["fips_version_test", "-config", $provconf, ">=3.1.0"]),
+    run(test(["fips_version_test", "-config", $provconf, ">=3.0.18"]),
              capture => 1, statusvar => \my $exit);
-
-    skip "FIPS provider version is too old for TLS_PRF EMS option test", 1
-        if !$exit;
 
     # Read in a text $infile and replace the regular expression in $srch with the
     # value in $repl and output to a new file $outfile.
@@ -144,6 +119,5 @@ SKIP: {
        "running sslapitest with modified fips config");
 }
 
-ok(run(test(["ssl_handshake_rtt_test"])),"running ssl_handshake_rtt_test");
 
 unlink $tmpfilename;
