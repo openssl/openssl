@@ -15,7 +15,7 @@
 #  include <openssl/e_os2.h>
 #  include "crypto/ml_dsa.h"
 #  include "prov/provider_ctx.h"
-#  include "ml_common_codecs.h"
+#  include "prov/ml_common_codecs.h"
 
 __owur
 ML_DSA_KEY *ossl_ml_dsa_d2i_PUBKEY(const uint8_t *pubenc, int publen,
