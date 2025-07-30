@@ -16,10 +16,13 @@ int main(int argc, char *argv[])
 {
     int ret = EXIT_FAILURE;
     int setup_res;
+    int gi_ret;
+
+    gi_ret = global_init();
 
     test_open_streams();
 
-    if (!global_init()) {
+    if (!gi_ret) {
         test_printf_stderr("Global init failed - aborting\n");
         return ret;
     }
