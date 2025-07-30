@@ -6,6 +6,9 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+{-
+use OpenSSL::paramnames qw(produce_param_decoder);
+-}
 
 /*
  * Low level APIs are deprecated for public use, but still ok for internal use.
@@ -39,8 +42,8 @@
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"
 #include "prov/endecoder_local.h"
-#include "ml_dsa_codecs.h"
-#include "ml_kem_codecs.h"
+#include "prov/ml_dsa_codecs.h"
+#include "prov/ml_kem_codecs.h"
 
 #if defined(OPENSSL_NO_DH) && defined(OPENSSL_NO_DSA) && defined(OPENSSL_NO_EC)
 # define OPENSSL_NO_KEYPARAMS
@@ -1134,37 +1137,36 @@ static void key2any_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
+{- produce_param_decoder('key2any_set_ctx_params',
+                         (['ENCODER_PARAM_CIPHER',          'cipher', 'utf8_string'],
+                          ['ENCODER_PARAM_PROPERTIES',      'propq',  'utf8_string'],
+                          ['ENCODER_PARAM_SAVE_PARAMETERS', 'svprm',  'int'],
+                         )); -}
+
 static const OSSL_PARAM *key2any_settable_ctx_params(ossl_unused void *provctx)
 {
-    static const OSSL_PARAM settables[] = {
-        OSSL_PARAM_utf8_string(OSSL_ENCODER_PARAM_CIPHER, NULL, 0),
-        OSSL_PARAM_utf8_string(OSSL_ENCODER_PARAM_PROPERTIES, NULL, 0),
-        OSSL_PARAM_END,
-    };
-
-    return settables;
+    return key2any_set_ctx_params_list;
 }
 
 static int key2any_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     KEY2ANY_CTX *ctx = vctx;
-    OSSL_LIB_CTX *libctx = ossl_prov_ctx_get0_libctx(ctx->provctx);
-    const OSSL_PARAM *cipherp =
-        OSSL_PARAM_locate_const(params, OSSL_ENCODER_PARAM_CIPHER);
-    const OSSL_PARAM *propsp =
-        OSSL_PARAM_locate_const(params, OSSL_ENCODER_PARAM_PROPERTIES);
-    const OSSL_PARAM *save_paramsp =
-        OSSL_PARAM_locate_const(params, OSSL_ENCODER_PARAM_SAVE_PARAMETERS);
+    struct key2any_set_ctx_params_st p;
 
-    if (cipherp != NULL) {
+    if (ctx == NULL || !key2any_set_ctx_params_decoder(params, &p))
+        return 0;
+
+    if (p.cipher != NULL) {
         const char *ciphername = NULL;
         const char *props = NULL;
+        OSSL_LIB_CTX *libctx;
 
-        if (!OSSL_PARAM_get_utf8_string_ptr(cipherp, &ciphername))
+        if (!OSSL_PARAM_get_utf8_string_ptr(p.cipher, &ciphername))
             return 0;
-        if (propsp != NULL && !OSSL_PARAM_get_utf8_string_ptr(propsp, &props))
+        if (p.propq != NULL && !OSSL_PARAM_get_utf8_string_ptr(p.propq, &props))
             return 0;
 
+        libctx = ossl_prov_ctx_get0_libctx(ctx->provctx);
         EVP_CIPHER_free(ctx->cipher);
         ctx->cipher = NULL;
         ctx->cipher_intent = ciphername != NULL;
@@ -1174,10 +1176,9 @@ static int key2any_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
     }
 
-    if (save_paramsp != NULL) {
-        if (!OSSL_PARAM_get_int(save_paramsp, &ctx->save_parameters))
-            return 0;
-    }
+    if (p.svprm != NULL && !OSSL_PARAM_get_int(p.svprm, &ctx->save_parameters))
+        return 0;
+
     return 1;
 }
 
