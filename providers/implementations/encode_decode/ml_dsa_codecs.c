@@ -15,7 +15,7 @@
 #include <openssl/core_names.h>
 #include "internal/encoder.h"
 #include "prov/ml_dsa.h"
-#include "ml_dsa_codecs.h"
+#include "prov/ml_dsa_codecs.h"
 
 /*-
  * Tables describing supported ASN.1 input/output formats.

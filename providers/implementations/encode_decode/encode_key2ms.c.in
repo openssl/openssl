@@ -25,7 +25,7 @@
 #include "prov/implementations.h"
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
-#include "endecoder_local.h"
+#include "prov/endecoder_local.h"
 
 struct key2ms_ctx_st {
     PROV_CTX *provctx;

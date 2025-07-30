@@ -40,7 +40,7 @@
 #include "openssl/obj_mac.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
-#include "endecoder_local.h"
+#include "prov/endecoder_local.h"
 #include "internal/nelem.h"
 #include "ml_dsa_codecs.h"
 #include "ml_kem_codecs.h"

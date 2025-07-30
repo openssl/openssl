@@ -11,7 +11,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
-#include "ml_common_codecs.h"
+#include "prov/ml_common_codecs.h"
 
 static int pref_cmp(const void *va, const void *vb)
 {
