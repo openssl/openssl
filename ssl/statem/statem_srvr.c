@@ -2076,30 +2076,24 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         goto err;
     }
 
-#ifndef OPENSSL_NO_ECH
     /*
      * Unless ECH has worked or not been configured we won't call
      * the session_secret_cb now because we'll need to calculate the
      * server random later to include the ECH accept value.
      * We can't do it now as we don't yet have the SH encoding.
      */
-    if (((s->ext.ech.es != NULL && s->ext.ech.success == 1)
-         || s->ext.ech.es == NULL)
-        && (!s->hit
-            && s->version >= TLS1_VERSION
-            && !SSL_CONNECTION_IS_TLS13(s)
-            && !SSL_CONNECTION_IS_DTLS(s)
-            && s->ext.session_secret_cb != NULL)) {
-        const SSL_CIPHER *pref_cipher = NULL;
-#else
-
-    if (!s->hit
-            && s->version >= TLS1_VERSION
-            && !SSL_CONNECTION_IS_TLS13(s)
-            && !SSL_CONNECTION_IS_DTLS(s)
-            && s->ext.session_secret_cb != NULL) {
-        const SSL_CIPHER *pref_cipher = NULL;
+    if (
+#ifndef OPENSSL_NO_ECH
+        ((s->ext.ech.es != NULL && s->ext.ech.success == 1)
+         || s->ext.ech.es == NULL) && 
 #endif
+        !s->hit
+        && s->version >= TLS1_VERSION
+        && !SSL_CONNECTION_IS_TLS13(s)
+        && !SSL_CONNECTION_IS_DTLS(s)
+        && s->ext.session_secret_cb != NULL) {
+        const SSL_CIPHER *pref_cipher = NULL;
+
         /*
          * s->session->master_key_length is a size_t, but this is an int for
          * backwards compat reasons

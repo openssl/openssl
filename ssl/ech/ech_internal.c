@@ -1779,13 +1779,10 @@ static unsigned char *hpke_decrypt_encch(SSL_CONNECTION *s,
      * We may generate externally visible OpenSSL errors
      * if decryption fails (which is normal) but we'll
      * ignore those as we might be dealing with a GREASEd
-     * ECH. To do that we need to now ingore some errors
+     * ECH. To do that we need to now ignore some errors
      * so we use ERR_set_mark() then later ERR_pop_to_mark().
      */
-    if (ERR_set_mark() != 0) {
-        OPENSSL_free(clear);
-        return NULL;
-    }
+    ERR_set_mark();
     /* Use OSSL_HPKE_* APIs */
     hctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite, OSSL_HPKE_ROLE_RECEIVER,
                              NULL, NULL);
@@ -1835,8 +1832,7 @@ end:
 
         if (PACKET_buf_init(&innerchpkt, clear, clearlen) != 1) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-            OPENSSL_free(clear);
-            return NULL;
+            goto paderr;
         }
         /* reset the offsets, as we move from outer to inner CH */
         s->ext.ech.ch_offsets_done = 0;
@@ -1845,14 +1841,12 @@ end:
                                      &innerflag, &outersnioffset);
         if (rv != 1) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-            OPENSSL_free(clear);
-            return NULL;
+            goto paderr;
         }
         /* odd form of check below just for emphasis */
         if ((extsoffset + 1) > clearlen) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-            OPENSSL_free(clear);
-            return NULL;
+            goto paderr;
         }
         extslen = (unsigned char)(clear[extsoffset]) * 256
             + (unsigned char)(clear[extsoffset + 1]);
@@ -1860,8 +1854,7 @@ end:
         /* the check below protects us from bogus data */
         if (ch_len > clearlen) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-            OPENSSL_free(clear);
-            return NULL;
+            goto paderr;
         }
         /*
          * The RFC calls for that padding to be all zeros. I'm not so
@@ -1873,15 +1866,11 @@ end:
         {
             size_t zind = 0;
 
-            if (*innerlen < ch_len) {
-                OPENSSL_free(clear);
-                return NULL;
-            }
+            if (*innerlen < ch_len)
+                goto paderr;
             for (zind = ch_len; zind != *innerlen; zind++) {
-                if (clear[zind] != 0x00) {
-                    OPENSSL_free(clear);
-                    return NULL;
-                }
+                if (clear[zind] != 0x00)
+                    goto paderr;
             }
         }
 # endif
@@ -1891,6 +1880,7 @@ end:
 # endif
         return clear;
     }
+paderr:
     OPENSSL_free(clear);
     return NULL;
 }
