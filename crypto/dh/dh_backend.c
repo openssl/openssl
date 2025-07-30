@@ -82,7 +82,7 @@ int ossl_dh_key_fromdata(DH *dh, const OSSL_PARAM params[], int include_private)
 
 #ifdef FIPS_MODULE
     if (pub_key != NULL && priv_key != NULL)
-        if (ossl_dh_check_pairwise(dh) == 0)
+        if (ossl_dh_check_pairwise(dh, 0) == 0)
             return 0;
 #endif
 
