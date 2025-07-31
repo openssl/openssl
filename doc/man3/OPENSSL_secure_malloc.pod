@@ -137,8 +137,9 @@ but CRYPTO_secure_malloc_done() has not been called or failed) or 0 if not.
 OPENSSL_secure_malloc(), CRYPTO_secure_malloc(), OPENSSL_secure_zalloc(),
 CRYPTO_secure_zalloc(), OPENSSL_secure_malloc_array(),
 CRYPTO_secure_malloc_array(), OPENSSL_secure_calloc(), and CRYPTO_secure_calloc()
-return a pointer into the secure heap of the requested size,
-or C<NULL> if memory could not be allocated.
+return a pointer into the secure heap of the requested size, if it is
+initialised, a pointer returned by the underlying OPENSSL_malloc() call,
+if it is not, or C<NULL> on error.
 
 CRYPTO_secure_allocated() returns 1 if the pointer is in the secure heap, or 0 if not.
 
