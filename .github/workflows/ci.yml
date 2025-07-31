@@ -89,6 +89,8 @@ jobs:
       run: CC=gcc ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-sslkeylog enable-fips enable-quic enable-lms && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: check ec list
+      run: LD_LIBRARY_PATH=. apps/openssl ecparam -list_curves && LD_LIBRARY_PATH=. apps/openssl genpkey -algorithm X25519
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
