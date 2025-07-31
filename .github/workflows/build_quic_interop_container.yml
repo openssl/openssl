@@ -12,7 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-         fetch-depth: 0
       - name: "log in to quay.io"
         run: |
           docker login -u openssl-ci+machine -p ${{ secrets.QUAY_IO_PASSWORD }} quay.io
