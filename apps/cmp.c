@@ -528,7 +528,7 @@ const OPTIONS cmp_options[] = {
      "Trusted certificates to use for verifying the TLS server certificate;"},
     {OPT_MORE_STR, 0, 0, "this implies hostname validation"},
     {"tls_host", OPT_TLS_HOST, 's',
-     "Address to be used for SNI and to be checked during TLS hostname validation"},
+     "Name (or address) to use in SNI and verify in the TLS server certificate"},
 #endif
 
     OPT_SECTION("Client-side debugging"),
