@@ -224,6 +224,8 @@ static const OSSL_PARAM *kdf_argon2_settable_ctx_params(ossl_unused void *ctx,
                                                         ossl_unused void *p_ctx);
 static const OSSL_PARAM *kdf_argon2_gettable_ctx_params(ossl_unused void *ctx,
                                                         ossl_unused void *p_ctx);
+static int argon2_set_ctx_params(KDF_ARGON2 *ctx, const OSSL_PARAM params[],
+                                 OSSL_PARAM **size_param_ptr);
 
 static ossl_inline uint64_t load64(const uint8_t *src);
 static ossl_inline void store32(uint8_t *dst, uint32_t w);
@@ -1019,10 +1021,12 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
 {
     KDF_ARGON2 *ctx;
     uint32_t memory_blocks, segment_length;
+    OSSL_PARAM *size_param;
 
     ctx = (KDF_ARGON2 *)vctx;
 
-    if (!ossl_prov_is_running() || !kdf_argon2_set_ctx_params(vctx, params))
+    if (!ossl_prov_is_running()
+            || !argon2_set_ctx_params(vctx, params, &size_param))
         return 0;
 
     if (ctx->mac == NULL)
@@ -1047,7 +1051,8 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
     }
 
     if (outlen != ctx->outlen) {
-        if (OSSL_PARAM_locate((OSSL_PARAM *)params, "size") != NULL) {
+        /* User set a size that was too short so raise an error */
+        if (size_param != NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
             return 0;
         }
@@ -1406,10 +1411,10 @@ static int set_property_query(KDF_ARGON2 *ctx, const char *propq)
                           ['KDF_PARAM_PROPERTIES',     'propq',  'utf8_string'],
                          )); -}
 
-static int kdf_argon2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int argon2_set_ctx_params(KDF_ARGON2 *ctx, const OSSL_PARAM params[],
+                                 OSSL_PARAM **size_param_ptr)
 {
     struct argon2_set_ctx_params_st p;
-    KDF_ARGON2 *ctx = (KDF_ARGON2 *) vctx;
     uint32_t u32_value;
 
     if (ctx == NULL || !argon2_set_ctx_params_decoder(params, &p))
@@ -1427,7 +1432,7 @@ static int kdf_argon2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p.ad != NULL && !kdf_argon2_ctx_set_ad(ctx, p.ad))
         return 0;
 
-    if (p.size != NULL) {
+    if ((*size_param_ptr = p.size) != NULL) {
         if (!OSSL_PARAM_get_uint32(p.size, &u32_value))
             return 0;
         if (!kdf_argon2_ctx_set_out_length(ctx, u32_value))
@@ -1482,6 +1487,14 @@ static int kdf_argon2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
 
     return 1;
+}
+
+static int kdf_argon2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    KDF_ARGON2 *ctx = (KDF_ARGON2 *) vctx;
+    OSSL_PARAM *size_param;
+
+    return argon2_set_ctx_params(ctx, params, &size_param);
 }
 
 static const OSSL_PARAM *kdf_argon2_settable_ctx_params(ossl_unused void *ctx,
