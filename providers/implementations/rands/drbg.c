@@ -629,9 +629,16 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
     int fork_id;
     int reseed_required = 0;
     int ret = 0;
+    time_t reseed_time_interval = drbg->reseed_time_interval;
+    time_t now = 0;
 
     if (!ossl_prov_is_running())
         return 0;
+
+    fork_id = openssl_get_fork_id();
+
+    if (reseed_time_interval > 0)
+        now = time(NULL);
 
     if (drbg->lock != NULL && !CRYPTO_THREAD_write_lock(drbg->lock))
         return 0;
@@ -663,8 +670,6 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
         goto err;
     }
 
-    fork_id = openssl_get_fork_id();
-
     if (drbg->fork_id != fork_id) {
         drbg->fork_id = fork_id;
         reseed_required = 1;
@@ -674,10 +679,9 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
         if (drbg->generate_counter >= drbg->reseed_interval)
             reseed_required = 1;
     }
-    if (drbg->reseed_time_interval > 0) {
-        time_t now = time(NULL);
+    if (reseed_time_interval > 0) {
         if (now < drbg->reseed_time
-            || now - drbg->reseed_time >= drbg->reseed_time_interval)
+            || now - drbg->reseed_time >= reseed_time_interval)
             reseed_required = 1;
     }
     if (drbg->parent != NULL
