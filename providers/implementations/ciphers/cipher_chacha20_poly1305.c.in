@@ -97,7 +97,8 @@ static int chacha20_poly1305_get_params(OSSL_PARAM params[])
     return ossl_cipher_generic_get_params(params, 0, CHACHA20_POLY1305_FLAGS,
                                           CHACHA20_POLY1305_KEYLEN * 8,
                                           CHACHA20_POLY1305_BLKLEN * 8,
-                                          CHACHA20_POLY1305_IVLEN * 8);
+                                          CHACHA20_POLY1305_IVLEN * 8,
+                                          5);
 }
 
 {- produce_param_decoder('chacha20_poly1305_get_ctx_params',

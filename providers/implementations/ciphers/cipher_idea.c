@@ -48,10 +48,10 @@ static void *idea_dupctx(void *ctx)
 }
 
 /* ossl_idea128ecb_functions */
-IMPLEMENT_generic_cipher(idea, IDEA, ecb, ECB, 0, 128, 64, 0, block)
+IMPLEMENT_generic_cipher(idea, IDEA, ecb, ECB, 0, 128, 64, 0, 1, block)
 /* ossl_idea128cbc_functions */
-IMPLEMENT_generic_cipher(idea, IDEA, cbc, CBC, 0, 128, 64, 64, block)
+IMPLEMENT_generic_cipher(idea, IDEA, cbc, CBC, 0, 128, 64, 64, 1, block)
 /* ossl_idea128ofb64_functions */
-IMPLEMENT_generic_cipher(idea, IDEA, ofb64, OFB, 0, 128, 8, 64, stream)
+IMPLEMENT_generic_cipher(idea, IDEA, ofb64, OFB, 0, 128, 8, 64, 1, stream)
 /* ossl_idea128cfb64_functions */
-IMPLEMENT_generic_cipher(idea, IDEA, cfb64,  CFB, 0, 128, 8, 64, stream)
+IMPLEMENT_generic_cipher(idea, IDEA, cfb64,  CFB, 0, 128, 8, 64, 1, stream)

@@ -197,6 +197,24 @@ The length of the "blocksize" parameter should not exceed that of a B<size_t>.
 The digest output size.
 The length of the "size" parameter should not exceed that of a B<size_t>.
 
+=item "collision-security-category" (B<OSSL_DIGEST_PARAM_SECURITY_CATEGORY_COLLISION>) <integer>
+
+The value is the NIST
+L<post-quantum collision security category|https://nvlpubs.nist.gov/nistpubs/ir/2024/NIST.IR.8547.ipd.pdf>
+for the algorithm.
+The digest collision security category represents the difficulty of producing two
+different inputs that result in an identical digested output.
+It is an integer value in the range [0, 5] inclusive.
+
+=item "preimage-security-category" (B<OSSL_DIGEST_PARAM_SECURITY_CATEGORY_PREIMAGE>) <integer>
+
+The value is the NIST
+L<post-quantum collision security category|https://nvlpubs.nist.gov/nistpubs/ir/2024/NIST.IR.8547.ipd.pdf>
+for the algorithm.
+The digest collision security category represents the difficulty of producing an
+inputs that results in a specific digested output.
+It is an integer value in the range [0, 5] inclusive.
+
 =item "flags" (B<OSSL_DIGEST_PARAM_FLAGS>) <unsigned integer>
 
 Diverse flags that describe exceptional behaviour for the digest:

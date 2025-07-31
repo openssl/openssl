@@ -113,6 +113,7 @@ my %params = (
     'CIPHER_PARAM_TLS_MAC_SIZE' =>         "tls-mac-size",# size_t
     'CIPHER_PARAM_MODE' =>                 "mode",        # uint
     'CIPHER_PARAM_BLOCK_SIZE' =>           "blocksize",   # size_t
+    'CIPHER_PARAM_SECURITY_CATEGORY' =>    '*ALG_PARAM_SECURITY_CATEGORY',
     'CIPHER_PARAM_AEAD' =>                 "aead",        # int, 0 or 1
     'CIPHER_PARAM_CUSTOM_IV' =>            "custom-iv",   # int, 0 or 1
     'CIPHER_PARAM_CTS' =>                  "cts",         # int, 0 or 1
@@ -171,6 +172,8 @@ my %params = (
     'DIGEST_PARAM_SIZE' =>         "size",         # size_t
     'DIGEST_PARAM_XOF' =>          "xof",          # int, 0 or 1
     'DIGEST_PARAM_ALGID_ABSENT' => "algid-absent", # int, 0 or 1
+    'DIGEST_PARAM_SECURITY_CATEGORY_COLLISION' =>   "collision-security-category",  # Security Category
+    'DIGEST_PARAM_SECURITY_CATEGORY_PREIMAGE' =>    "preimage-security-category",   # Security Category
 
 # MAC parameters
     'MAC_PARAM_KEY' =>            "key",           # octet string
