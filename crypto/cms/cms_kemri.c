@@ -151,6 +151,7 @@ int CMS_RecipientInfo_kemri_set_ukm(CMS_RecipientInfo *ri,
                                     int ukmLength)
 {
     CMS_KEMRecipientInfo *kemri;
+    ASN1_OCTET_STRING *ukm_str;
 
     if (ri->type != CMS_RECIPINFO_KEM) {
         ERR_raise(ERR_LIB_CMS, CMS_R_NOT_KEM);
@@ -164,11 +165,16 @@ int CMS_RecipientInfo_kemri_set_ukm(CMS_RecipientInfo *ri,
 
     kemri = ri->d.ori->d.kemri;
 
-    ASN1_OCTET_STRING_free(kemri->ukm);
-    kemri->ukm = ASN1_OCTET_STRING_new();
-    if (kemri->ukm == NULL)
+    ukm_str = ASN1_OCTET_STRING_new();
+    if (ukm_str == NULL)
         return 0;
-    return ASN1_OCTET_STRING_set(kemri->ukm, ukm, ukmLength);
+    if (!ASN1_OCTET_STRING_set(ukm_str, ukm, ukmLength)) {
+        ASN1_OCTET_STRING_free(ukm_str);
+        return 0;
+    }
+    ASN1_OCTET_STRING_free(kemri->ukm);
+    kemri->ukm = ukm_str;
+    return 1;
 }
 
 static EVP_KDF_CTX *create_kdf_ctx(CMS_KEMRecipientInfo *kemri)
@@ -259,7 +265,7 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
 
     if (keklen > sizeof(kek)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_LENGTH);
-        goto err;
+        return 0;
     }
 
     if (!kdf_derive(kek, keklen, ss, sslen, kemri))
