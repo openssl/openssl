@@ -295,8 +295,14 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
     void *ret;
 
     INCREMENT(realloc_count);
-    if (realloc_impl != CRYPTO_realloc)
-        return realloc_impl(str, num, file, line);
+    if (realloc_impl != CRYPTO_realloc) {
+        ret = realloc_impl(str, num, file, line);
+
+        if (num == 0 || ret != NULL)
+            return ret;
+
+        goto err;
+    }
 
     if (str == NULL)
         return CRYPTO_malloc(num, file, line);
@@ -309,6 +315,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
     FAILTEST();
     ret = realloc(str, num);
 
+err:
     if (num != 0 && ret == NULL)
         ossl_report_alloc_err(file, line);
 
