@@ -561,16 +561,6 @@ See L<EVP_RAND-TEST-RAND(7)/Supported parameters>
 The indicator callback is NOT triggered for this algorithm since it is used
 internally for non security purposes.
 
-=item X25519 and X448 Key Generation and Key Exchange
-
-=back
-
-The unapproved (non FIPS validated) algorithms have a property query value of
-"fips=no".
-
-The following algorithms use a unique indicator and do not trigger the
-indicator callback.
-
 =over 4
 
 =item AES-GCM ciphers support the indicator "iv-generated"
