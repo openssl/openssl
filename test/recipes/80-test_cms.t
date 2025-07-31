@@ -43,6 +43,7 @@ my @config = ( );
 my $provname = 'default';
 my $dsaallow = '1';
 my $no_pqc = 0;
+my $no_hkdf_fixed = 0;
 
 my $datadir = srctop_dir("test", "recipes", "80-test_cms_data");
 my $smdir    = srctop_dir("test", "smime-certs");
@@ -68,6 +69,8 @@ unless ($no_fips) {
     $old_fips = 1 if $dsaallow != '0';
     run(test(["fips_version_test", "-config", $provconf, "<3.5.0"]),
         capture => 1, statusvar => \$no_pqc);
+    run(test(["fips_version_test", "-config", $provconf, "<3.6.0"]),
+        capture => 1, statusvar => \$no_hkdf_fixed);
 }
 
 $ENV{OPENSSL_TEST_LIBCTX} = "1";
@@ -1534,7 +1537,7 @@ subtest "ML-KEM KEMRecipientInfo tests for CMS" => sub {
 
     SKIP: {
         skip "ML-KEM is not supported in this build", 5
-            if disabled("ml-kem") || $no_pqc;
+            if disabled("ml-kem") || $no_hkdf_fixed;
 
         ok(run(app(["openssl", "cms", @prov, "-encrypt", "-in", $smcont,
                     "-out", "mlkem512.cms",
