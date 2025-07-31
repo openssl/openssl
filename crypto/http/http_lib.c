@@ -78,16 +78,21 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
         return 0;
     }
 
-    /* check for optional prefix "<scheme>://" */
-    scheme = scheme_end = url;
-    p = strstr(url, "://");
-    if (p == NULL) {
-        p = url;
-    } else {
-        scheme_end = p;
-        if (scheme_end == scheme)
-            goto parse_err;
-        p += strlen("://");
+    /* check for optional prefix "<scheme>://" as per RFC 3986: */
+#define OSSL_SCHEME_POSTFIX "://"
+    scheme = scheme_end = p = url;
+    if (ossl_isalpha(*p)) {
+        while (*p != '\0'
+            && (ossl_isalpha(*p)
+                || ossl_isdigit(*p)
+                || strchr("+-.", *p) != NULL))
+            p++;
+        if (HAS_PREFIX(p, OSSL_SCHEME_POSTFIX)) {
+            scheme_end = p;
+            p += sizeof(OSSL_SCHEME_POSTFIX) - 1;
+        } else {
+            p = url;
+        }
     }
 
     /* parse optional "userinfo@" */
