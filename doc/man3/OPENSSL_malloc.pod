@@ -259,6 +259,9 @@ CRYPTO_clear_realloc(), CRYPTO_clear_realloc_array(),
 OPENSSL_strdup(), and OPENSSL_strndup()
 return a pointer to allocated memory or NULL on error.
 
+OPENSSL_aligned_alloc() and OPENSSL_aligned_alloc_array() set B<freeptr>
+to NULL on error.
+
 CRYPTO_set_mem_functions() returns 1 on success or 0 on failure (almost
 always because allocations have already happened).
 
