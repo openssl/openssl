@@ -127,7 +127,13 @@ allows for the caller to specify an alignment value, for instances in
 which the default alignment of malloc is insufficient for the caller's
 needs.  Note, the alignment value must be a power of 2, and the size
 specified must be a multiple of the alignment.
-NOTE: The call to OPENSSL_aligned_alloc() accepts a 3rd argument, I<freeptr>
+NOTES:
+
+=over 4
+
+=item *
+
+The call to OPENSSL_aligned_alloc() accepts a 3rd argument, I<freeptr>
 which must point to a void pointer.  On some platforms, there is no available
 library call to obtain memory allocations with alignment greater than what
 malloc provides.  In this case, OPENSSL_aligned_alloc() implements its own
@@ -135,6 +141,18 @@ alignment routine, allocating additional memory and offsetting the returned
 pointer to be on the requested alignment boundary.  In order to safely free
 allocations made by this method, the caller must return the value
 in the I<freeptr> variable, rather than the returned pointer.
+
+=item *
+
+The call to OPENSSL_aligned_alloc() may fail for reasons other than memory
+exhaustion, depending on the underlying implementation, and, most notably,
+OpenSSL library's build configuration:  for example, it always returns C<NULL>
+without setting any error if OpenSSL is built with C<OPENSSL_SMALL_FOOTPRINT>
+macro defined.  Consequently, caller may need to fall back to a non-aligned
+memory allocation (and open-code the alignment routine if the alignment
+is a requirement).
+
+=back
 
 OPENSSL_clear_realloc() and OPENSSL_clear_free() should be used
 when the buffer at B<addr> holds sensitive information.
