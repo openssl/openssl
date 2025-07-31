@@ -194,6 +194,8 @@ const char *X509_verify_cert_error_string(long n)
         return "invalid CA certificate";
     case X509_V_ERR_PATHLEN_INVALID_FOR_NON_CA:
         return "Path length invalid for non-CA cert";
+    case X509_V_ERR_DUPLICATE_EXTENSION:
+        return "duplicate extension found";
     case X509_V_ERR_PATHLEN_WITHOUT_KU_KEY_CERT_SIGN:
         return "Path length given without key usage keyCertSign";
     case X509_V_ERR_KU_KEY_CERT_SIGN_INVALID_FOR_NON_CA:
