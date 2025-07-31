@@ -21,9 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        path: openssl
     - name: check style for each commit 
       working-directory: openssl
       shell: bash
