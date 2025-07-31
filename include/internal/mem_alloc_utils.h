@@ -61,6 +61,13 @@ ossl_report_alloc_err_of(const char * const file, const int line)
     ossl_report_alloc_err_ex(file, line, CRYPTO_R_INTEGER_OVERFLOW);
 }
 
+/* Report invalid memory allocation call arguments. */
+static ossl_inline ossl_unused void
+ossl_report_alloc_err_inv(const char * const file, const int line)
+{
+    ossl_report_alloc_err_ex(file, line, ERR_R_PASSED_INVALID_ARGUMENT);
+}
+
 /*
  * Check the result of num and size multiplication for overflow
  * and set error if it is the case;  return true if there was no overflow,
