@@ -7,6 +7,7 @@ release. For more details please read the CHANGES file.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 3.6](#openssl-36)
  - [OpenSSL 3.5](#openssl-35)
  - [OpenSSL 3.4](#openssl-34)
  - [OpenSSL 3.3](#openssl-33)
@@ -20,7 +21,7 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 3.5
+OpenSSL 3.6
 -----------
 
 ### Major changes between OpenSSL 3.5 and OpenSSL 3.6 [under development]
@@ -35,6 +36,11 @@ changes:
 
   * Added an `openssl configutl` utility for processing the openssl
     configuration file and dumping the equal configuration file.
+
+  * Support for the SSLv2 Client Hello was removed
+
+OpenSSL 3.5
+-----------
 
 ### Major changes between OpenSSL 3.5.0 and OpenSSL 3.5.1 [under development]
 
