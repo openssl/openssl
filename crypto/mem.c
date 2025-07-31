@@ -231,6 +231,7 @@ void *CRYPTO_zalloc(size_t num, const char *file, int line)
 void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
                            const char *file, int line)
 {
+    size_t alloc_bytes;
     void *ret;
 
     *freeptr = NULL;
@@ -280,11 +281,14 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
      * via _aligned_malloc, just avoid its use entirely
      */
 
+    if (ossl_unlikely(!ossl_size_add(num, alignment, &alloc_bytes, file, line)))
+        return NULL;
+
     /*
      * Step 1: Allocate an amount of memory that is <alignment>
      * bytes bigger than requested
      */
-    *freeptr = CRYPTO_malloc(num + alignment, file, line);
+    *freeptr = CRYPTO_malloc(alloc_bytes, file, line);
     if (*freeptr == NULL)
         return NULL;
 
