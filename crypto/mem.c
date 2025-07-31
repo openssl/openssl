@@ -239,6 +239,12 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
     return NULL;
 #endif
 
+    /* Ensure that alignment is a power of two */
+    if (!alignment || (alignment & (alignment - 1))) {
+        ossl_report_alloc_err_inv(file, line);
+        return NULL;
+    }
+
     /* Allow non-malloc() allocations as long as no malloc_impl is provided. */
     if (malloc_impl == CRYPTO_malloc) {
 #if defined(_BSD_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)

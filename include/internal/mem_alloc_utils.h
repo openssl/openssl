@@ -58,6 +58,13 @@ ossl_report_alloc_err_of(const char * const file, const int line)
     ossl_report_alloc_err_ex(file, line, CRYPTO_R_INTEGER_OVERFLOW);
 }
 
+/* Report invalid memory allocation call arguments. */
+static inline void
+ossl_report_alloc_err_inv(const char * const file, const int line)
+{
+    ossl_report_alloc_err_ex(file, line, ERR_R_PASSED_INVALID_ARGUMENT);
+}
+
 /*
  * A small (premature) optimisation:  do not check for multiplication overflow
  * if neither of the operands is at least half the type size.
