@@ -236,8 +236,7 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
     *freeptr = NULL;
 
 #if defined(OPENSSL_SMALL_FOOTPRINT)
-    ret = *freeptr = NULL;
-    return ret;
+    return NULL;
 #endif
 
     /* Allow non-malloc() allocations as long as no malloc_impl is provided. */
