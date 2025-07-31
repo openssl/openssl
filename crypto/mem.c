@@ -246,9 +246,6 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
             return NULL;
         *freeptr = ret;
         return ret;
-#elif defined(_ISOC11_SOURCE)
-        ret = *freeptr = aligned_alloc(alignment, num);
-        return ret;
 #endif
     }
 
