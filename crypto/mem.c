@@ -250,6 +250,10 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
 #if defined(_BSD_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
         int memalign_ret;
 
+        /* posix_memalign() requires alignment to be at least sizeof(void *) */
+        if (alignment < sizeof(void *))
+            alignment = sizeof(void *);
+
         if ((memalign_ret = posix_memalign(&ret, alignment, num))) {
             ret = NULL;
             switch (memalign_ret) {
