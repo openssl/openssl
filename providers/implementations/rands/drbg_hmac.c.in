@@ -455,7 +455,7 @@ static int drbg_fetch_algs_from_prov(const struct drbg_set_ctx_params_st *p,
     if ((prov = ossl_provider_find(libctx, (const char *)p->prov->data, 1)) == NULL)
         return 0;
 
-    if (p->digest) {
+    if (p->digest != NULL) {
         if (p->digest->data_type != OSSL_PARAM_UTF8_STRING)
             goto done;
 
