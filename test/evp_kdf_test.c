@@ -38,7 +38,7 @@ static EVP_KDF_CTX *get_kdfbyname(const char *name)
 static OSSL_PARAM *construct_tls1_prf_params(const char *digest, const char *secret,
     const char *seed)
 {
-    OSSL_PARAM *params = OPENSSL_malloc(sizeof(OSSL_PARAM) * 4);
+    OSSL_PARAM *params = OPENSSL_malloc_array(4, sizeof(OSSL_PARAM));
     OSSL_PARAM *p = params;
 
     if (params == NULL)
@@ -194,7 +194,7 @@ static int test_kdf_tls1_prf_1byte_seed(void)
 static OSSL_PARAM *construct_hkdf_params(char *digest, char *key,
     size_t keylen, char *salt, char *info)
 {
-    OSSL_PARAM *params = OPENSSL_malloc(sizeof(OSSL_PARAM) * 5);
+    OSSL_PARAM *params = OPENSSL_malloc_array(5, sizeof(OSSL_PARAM));
     OSSL_PARAM *p = params;
 
     if (params == NULL)
@@ -661,7 +661,7 @@ static int test_kdf_hkdf_empty_salt(void)
 static OSSL_PARAM *construct_pbkdf1_params(char *pass, char *digest, char *salt,
     unsigned int *iter)
 {
-    OSSL_PARAM *params = OPENSSL_malloc(sizeof(OSSL_PARAM) * 5);
+    OSSL_PARAM *params = OPENSSL_malloc_array(5, sizeof(OSSL_PARAM));
     OSSL_PARAM *p = params;
 
     if (params == NULL)
@@ -781,7 +781,7 @@ err:
 static OSSL_PARAM *construct_pbkdf2_params(char *pass, char *digest, char *salt,
     unsigned int *iter, int *mode)
 {
-    OSSL_PARAM *params = OPENSSL_malloc(sizeof(OSSL_PARAM) * 6);
+    OSSL_PARAM *params = OPENSSL_malloc_array(6, sizeof(OSSL_PARAM));
     OSSL_PARAM *p = params;
 
     if (params == NULL)
@@ -1310,7 +1310,7 @@ static int test_kdf_kbkdf_6803_256(void)
 static OSSL_PARAM *construct_kbkdf_params(char *digest, char *mac, unsigned char *key,
     size_t keylen, char *salt, char *info, int *r)
 {
-    OSSL_PARAM *params = OPENSSL_malloc(sizeof(OSSL_PARAM) * 8);
+    OSSL_PARAM *params = OPENSSL_malloc_array(8, sizeof(OSSL_PARAM));
     OSSL_PARAM *p = params;
 
     if (params == NULL)

@@ -948,7 +948,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
         curr = curr->next;
     }
 
-    number_uses = OPENSSL_zalloc(sizeof(int) * (max_strength_bits + 1));
+    number_uses = OPENSSL_calloc(max_strength_bits + 1, sizeof(int));
     if (number_uses == NULL)
         return 0;
 
@@ -1475,7 +1475,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
     num_of_ciphers = ssl_method->num_ciphers();
 
     if (num_of_ciphers > 0) {
-        co_list = OPENSSL_malloc(sizeof(*co_list) * num_of_ciphers);
+        co_list = OPENSSL_malloc_array(num_of_ciphers, sizeof(*co_list));
         if (co_list == NULL)
             return NULL;          /* Failure */
     }
@@ -1586,7 +1586,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
      */
     num_of_group_aliases = OSSL_NELEM(cipher_aliases);
     num_of_alias_max = num_of_ciphers + num_of_group_aliases + 1;
-    ca_list = OPENSSL_malloc(sizeof(*ca_list) * num_of_alias_max);
+    ca_list = OPENSSL_malloc_array(num_of_alias_max, sizeof(*ca_list));
     if (ca_list == NULL) {
         OPENSSL_free(co_list);
         return NULL;          /* Failure */

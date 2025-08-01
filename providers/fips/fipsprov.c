@@ -1161,6 +1161,11 @@ void *CRYPTO_aligned_alloc(size_t num, size_t align, void **freeptr,
     return NULL;
 }
 
+/*
+ * Include implementations of array allocation wrapper routines
+ */
+#include "internal/array_alloc.inc"
+
 int BIO_snprintf(char *buf, size_t n, const char *format, ...)
 {
     va_list args;

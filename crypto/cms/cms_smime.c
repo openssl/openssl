@@ -357,7 +357,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     if ((flags & CMS_NO_SIGNER_CERT_VERIFY) == 0 || cadesVerify) {
         if (cadesVerify) {
             /* Certificate trust chain is required to check CAdES signature */
-            si_chains = OPENSSL_zalloc(scount * sizeof(si_chains[0]));
+            si_chains = OPENSSL_calloc(scount, sizeof(si_chains[0]));
             if (si_chains == NULL)
                 goto err;
         }
