@@ -2085,7 +2085,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     if (
 #ifndef OPENSSL_NO_ECH
         ((s->ext.ech.es != NULL && s->ext.ech.success == 1)
-         || s->ext.ech.es == NULL) && 
+         || s->ext.ech.es == NULL) &&
 #endif
         !s->hit
         && s->version >= TLS1_VERSION

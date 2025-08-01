@@ -14,7 +14,7 @@
 #include "statem_local.h"
 #ifndef OPENSSL_NO_ECH
 # include <openssl/rand.h>
-#include "internal/ech_helpers.h"
+# include "internal/ech_helpers.h"
 #endif
 
 EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,

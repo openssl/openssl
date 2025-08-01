@@ -1136,7 +1136,7 @@ int ossl_ech_get_ch_offsets(SSL_CONNECTION *s, PACKET *pkt, size_t *sessid_off,
         *ech_off = s->ext.ech.ech_off;
         *echtype = s->ext.ech.echtype;
         *inner = s->ext.ech.inner;
-        *sni_off = s->ext.ech.sni_off;;
+        *sni_off = s->ext.ech.sni_off;
         return 1;
     }
     *sessid_off = 0;
