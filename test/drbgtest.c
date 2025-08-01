@@ -21,7 +21,7 @@
 #include "../crypto/rand/rand_local.h"
 #include "../include/crypto/rand.h"
 #include "../include/crypto/evp.h"
-#include "../providers/implementations/rands/drbg_local.h"
+#include "../providers/implementations/include/prov/drbg.h"
 #include "../crypto/evp/evp_local.h"
 
 #if defined(_WIN32)
