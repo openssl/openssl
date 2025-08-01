@@ -10,7 +10,7 @@
 #include <string.h> /* for memcpy() */
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
-#include "eckem.h"
+#include "prov/eckem.h"
 
 typedef struct {
     unsigned int id;
