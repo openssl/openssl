@@ -1,0 +1,222 @@
+# Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Cross Compile for RISC-V Extensions
+
+on: [pull_request, push]
+
+permissions:
+  contents: read
+
+jobs:
+  cross-compilation:
+    if: contains(github.event.head_commit.message, '[riscv ci]')
+    strategy:
+      fail-fast: false
+      matrix:
+        # The platform matrix specifies:
+        #   arch: the architecture to build for, this defines the tool-chain
+        #         prefix {arch}- and the Debian compiler package gcc-{arch}
+        #         name.
+        #   libs: the Debian package for the necessary link/runtime libraries.
+        #   target: the OpenSSL configuration target to use, this is passed
+        #           directly to the config command line.
+        #   fips:   set to "no" to disable building FIPS, leave unset to
+        #           build the FIPS provider.
+        #   tests: omit this to run all the tests using QEMU, set it to "none"
+        #          to never run the tests, otherwise its value is passed to
+        #          the "make test" command to allow selective disabling of
+        #          tests.
+        #   qemucpu: optional; string that describes CPU properties.
+        #            The string will be used to set the QEMU_CPU variable.
+        #   opensslcapsname: optional; string that describes the postfix of the
+        #                    OpenSSL environment variable that defines CPU
+        #                    capabilities. E.g. "foo" will result in an
+        #                    environment variable with the name OPENSSL_foo.
+        #   opensslcaps: optional; if opensslcapsname (see above) is set, then
+        #                this string will be used as content for the OpenSSL
+        #                capabilities variable.
+        #   ppa:   Launchpad PPA repository to download packages from.
+        platform: [
+          {
+            # RV64GC with bitmanip and scalar crypto extensions
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,zba=true,zbb=true,zbc=true,zbs=true,zbkb=true,zbkc=true,zbkx=true,zknd=true,zkne=true,zknh=true,zksed=true,zksh=true,zkr=true",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_zba_zbb_zbc_zbs_zbkb_zbkc_zbkx_zbknd_zkne_zknh_zksed_zksh_zkr"
+          }, {
+            # RV64GCV ZBB, but without ZVKB
+            # For chacha20 vector-only path from #24069
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,v=true,vlen=128,zbb=true,zvbb=false,zvkb=false",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_v_zbb"
+          }, {
+            # RV64GCV ZVKG, but without ZVKB
+            # For crypto/modes/gcm128.c
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,v=true,vlen=128,zvkg=true,zvbb=false,zvkb=false",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_v_zvkg"
+          }, {
+            # RV64GCV ZVKB ZVBC, but without ZVKG
+            # For crypto/modes/gcm128.c
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,v=true,vlen=128,zvkb=true,zvbc=true,zvkg=false",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_v_zvkb_zvbc"
+          }, {
+            # RV64GC ZBC ZBB, but without ZBKB
+            # For crypto/modes/gcm128.c
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,zbc=true,zbb=true,zbkb=false",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_zbc_zbb"
+          }, {
+            # RV64GC ZBC, but without ZBB/ZBKB
+            # For crypto/modes/gcm128.c
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,zbc=true,zbb=false,zbkb=false",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_zbc"
+          }, {
+            # RV64GCV ZVKNED, but without ZVBB/ZVKB/ZVKG
+            # For providers/implementations/ciphers/cipher_aes_xts_hw.c
+            # For providers/implementations/ciphers/cipher_aes_hw_rv64i.inc
+            # For providers/implementations/ciphers/cipher_aes_gcm_hw_rv64i.inc
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,v=true,vlen=128,zvkned=true,zvbb=false,zvkb=false,zvkg=false",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_v_zvkned"
+          }, {
+            # RV64GC with all currently OpenSSL-supported extensions
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,zba=true,zbb=true,zbc=true,zbs=true,zbkb=true,zbkc=true,zbkx=true,zknd=true,zkne=true,zknh=true,zksed=true,zksh=true,zkr=true,zkt=true,v=true,vlen=128,zvbb=true,zvbc=true,zvkb=true,zvkg=true,zvkned=true,zvknha=true,zvknhb=true,zvksed=true,zvksh=true",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_zba_zbb_zbc_zbs_zbkb_zbkc_zbkx_zbknd_zkne_zknh_zksed_zksh_zkr_zkt_v_zvbb_zvbc_zvkb_zvkg_zvkned_zvknha_zvknhb_zvksed_zvksh"
+          }, {
+            # Inline asm
+            # zbb/zbkb:
+            #   include/crypto/md32_common.h
+            #   include/crypto/modes.h
+            #   crypto/chacha/chacha_enc.c
+            #   crypto/des/des_local.h
+            # zknh (zbt/zpn not available in QEMU):
+            #   crypto/sha/sha512.c
+            #   crypto/sha/sha256.c
+            # zksh:
+            #   crypto/sm3/sm3_local.h
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: -march=rv64gc_zbb_zbkb_zknh_zksh linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,zbb=true,zbkb=true,zknh=true,zksh=true"
+          }
+        ]
+    runs-on: ubuntu-latest
+    steps:
+    - name: install package repository
+      if: matrix.platform.ppa != ''
+      run: |
+        sudo add-apt-repository ppa:${{ matrix.platform.ppa }}
+    - name: install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq --force-yes install \
+            gcc-${{ matrix.platform.arch }} \
+            ${{ matrix.platform.libs }}
+    - uses: actions/checkout@v4
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+
+    - name: config with FIPS
+      if: matrix.platform.fips != 'no'
+      run: |
+        ./config --banner=Configured --strict-warnings enable-fips enable-lms \
+                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
+                 ${{ matrix.platform.target }}
+    - name: config without FIPS
+      if: matrix.platform.fips == 'no'
+      run: |
+        ./config --banner=Configured --strict-warnings enable-lms \
+                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
+                 ${{ matrix.platform.target }}
+    - name: config dump
+      run: ./configdata.pm --dump
+
+    - name: make
+      run: make -s -j4
+
+    - name: install qemu
+      if: matrix.platform.tests != 'none'
+      run: sudo apt-get -yq --force-yes install qemu-user
+
+    - name: Set QEMU environment
+      if: matrix.platform.qemucpu != ''
+      run: echo "QEMU_CPU=${{ matrix.platform.qemucpu }}" >> $GITHUB_ENV
+
+    - name: Set OpenSSL caps environment
+      if: matrix.platform.opensslcapsname != ''
+      run: echo "OPENSSL_${{ matrix.platform.opensslcapsname }}=\
+                 ${{ matrix.platform.opensslcaps }}" >> $GITHUB_ENV
+
+    - name: get cpu info
+      run: cat /proc/cpuinfo
+
+    - name: get openssl cpu info
+      if: matrix.platform.tests != 'none'
+      run: QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} ./util/opensslwrap.sh info -cpusettings
+
+    - name: make all tests
+      if: github.event_name == 'push' && matrix.platform.tests == ''
+      run: |
+        .github/workflows/make-test \
+                  TESTS="-test_afalg" \
+                  QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
+    - name: make some tests
+      if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
+      run: |
+        .github/workflows/make-test \
+                  TESTS="${{ matrix.platform.tests }} -test_afalg" \
+                  QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
+    - name: make evp tests
+      if: github.event_name == 'pull_request' && matrix.platform.tests != 'none'
+      run: |
+        .github/workflows/make-test \
+                  TESTS="test_evp*" \
+                  QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
+    - name: save artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: "cross-compiles-riscv@${{ matrix.platform.arch }}"
+        path: artifacts.tar.gz
+        if-no-files-found: ignore
