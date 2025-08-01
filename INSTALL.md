@@ -745,6 +745,11 @@ This now only enables the `failed-malloc` feature.
 
 This is a no-op; the project uses the compiler's address/leak sanitizer instead.
 
+### enable-allocfail-tests
+
+This option enables testing that leverages the use of the crypto-mdebug feature
+to test error paths resulting from failed memory allocations.
+
 ### no-ct
 
 Don't build support for Certificate Transparency (CT).

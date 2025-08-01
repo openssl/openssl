@@ -450,6 +450,7 @@ my @disablables = (
     "cms",
     "comp",
     "crypto-mdebug",
+    "allocfail-tests",
     "ct",
     "default-thread-pool",
     "demos",
@@ -593,6 +594,7 @@ our %disabled = ( # "what"         => "comment"
                   "brotli-dynamic"      => "default",
                   "buildtest-c++"       => "default",
                   "crypto-mdebug"       => "default",
+                  "allocfail-tests"     => "default",
                   "crypto-mdebug-backtrace" => "default",
                   "demos"               => "default",
                   "h3demo"              => "default",
@@ -667,7 +669,7 @@ my @disable_cascades = (
     "tls1_3"            => [ "quic" ],
     "quic"              => [ "unstable-qlog" ],
 
-    "crypto-mdebug"     => [ "crypto-mdebug-backtrace" ],
+    "crypto-mdebug"     => [ "crypto-mdebug-backtrace", "allocfail-tests" ],
 
     "module"            => [ "dynamic-engine", "fips" ],
 
