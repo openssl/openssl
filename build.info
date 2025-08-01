@@ -48,6 +48,9 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/x509_acert.h \
          include/openssl/x509_vfy.h \
          include/crypto/bn_conf.h include/crypto/dso_conf.h \
+         providers/implementations/exchange/dh_exch.c \
+         providers/implementations/exchange/ecdh_exch.c \
+         providers/implementations/exchange/ecx_exch.c \
          providers/implementations/kdfs/argon2.c \
          providers/implementations/kdfs/hkdf.c \
          providers/implementations/kdfs/hmacdrbg_kdf.c \
@@ -106,7 +109,10 @@ GENERATE[include/openssl/x509_vfy.h]=include/openssl/x509_vfy.h.in
 GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 
-DEPEND[providers/implementations/kdfs/argon2.c \
+DEPEND[providers/implementations/exchange/dh_exch.c \
+       providers/implementations/exchange/ecdh_exch.c \
+       providers/implementations/exchange/ecx_exch.c \
+       providers/implementations/kdfs/argon2.c \
        providers/implementations/kdfs/hkdf.c \
        providers/implementations/kdfs/hmacdrbg_kdf.c \
        providers/implementations/kdfs/kbkdf.c \
@@ -131,6 +137,12 @@ DEPEND[providers/implementations/kdfs/argon2.c \
        providers/implementations/ciphers/cipher_chacha20_poly1305.c \
        providers/implementations/digests/digestcommon.c \
        include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
+GENERATE[providers/implementations/exchange/dh_exch.c]=\
+    providers/implementations/exchange/dh_exch.c.in
+GENERATE[providers/implementations/exchange/ecdh_exch.c]=\
+    providers/implementations/exchange/ecdh_exch.c.in
+GENERATE[providers/implementations/exchange/ecx_exch.c]=\
+    providers/implementations/exchange/ecx_exch.c.in
 GENERATE[providers/implementations/kdfs/argon2.c]=\
     providers/implementations/kdfs/argon2.c.in
 GENERATE[providers/implementations/kdfs/hkdf.c]=\
