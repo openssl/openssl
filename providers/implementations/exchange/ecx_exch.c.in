@@ -192,7 +192,9 @@ static const OSSL_PARAM *ecx_gettable_ctx_params(ossl_unused void *vctx,
 #ifdef FIPS_MODULE
     return ecx_get_ctx_params_list;
 #else
-    return NULL;
+    static OSSL_PARAM params[] = { OSSL_PARAM_END };
+
+    return params;
 #endif
 }
 
