@@ -3552,3 +3552,109 @@ int opt_legacy_okay(void)
         return 0;
     return 1;
 }
+
+
+#define MAX_KEY_SIZE 2048 /* Hope nobody needs mac key longer than 2048 bytes */
+
+/*
+ * Implementations of mac algorithms only support getting a key via the
+ * key and hexkey parameters. This function processes additional parameters
+ * for reading a key from an environment variable or from a file
+ * and forms a key or hexkey parameter with the read key.
+ * Leaves other parameters unchanged.
+ * Allocates a string with a new parameter and returns a pointer to this
+ * string, the calling code must free this string by calling OPENSSL_clear_free.
+ * Returns NULL in case of an error.
+ */
+char *process_additional_mac_key_arguments(const char *arg)
+{
+    static BIO *keybio = NULL;
+    char *val=NULL, *outbuf=NULL;
+    unsigned char *inbuf=NULL;
+    size_t total_read = 0;
+    int n;
+    char dummy;
+
+    if (CHECK_AND_SKIP_PREFIX(arg, "keyenv:")) {
+        val = getenv(arg);
+        if (val == NULL) {
+            BIO_printf(bio_err, "No environment variable %s\n", arg);
+            return NULL;
+        }
+        outbuf=app_malloc(strlen("key:")+strlen(val)+1, "MACOPT KEYENV");
+        strcpy(outbuf,"key:");
+        strcat(outbuf,val);
+        return outbuf;
+    }
+    if (CHECK_AND_SKIP_PREFIX(arg, "keyenvhex:")) {
+        val = getenv(arg);
+        if (val == NULL) {
+            BIO_printf(bio_err, "No environment variable %s\n", arg);
+            return NULL;
+        }
+        outbuf=app_malloc(strlen("hexkey:")+strlen(val)+1, "MACOPT KEYENVHEX");
+        strcpy(outbuf,"hexkey:");
+        strcat(outbuf,val);
+        return outbuf;
+    }
+    if (CHECK_AND_SKIP_PREFIX(arg, "keyfile:")) {
+        if (strlen(arg) == 0) {
+            BIO_printf(bio_err, "Empty key file name\n");
+            return NULL;
+        }
+        keybio = BIO_new_file(arg, "rb");
+        if (keybio == NULL) {
+            BIO_printf(bio_err, "Can't open file %s\n", arg);
+            return NULL;
+        }
+        inbuf=app_malloc(MAX_KEY_SIZE, "MACOPT KEYFILE");
+        while (total_read < MAX_KEY_SIZE) {
+            n = BIO_read(keybio, inbuf + total_read, MAX_KEY_SIZE - total_read);
+            if (n < 0) {
+                BIO_printf(bio_err, "Can't read file %s\n", arg);
+                OPENSSL_clear_free(inbuf, total_read);
+                BIO_free(keybio);
+                return NULL;
+            }
+            if (n == 0) /* EOF */
+                break;
+            total_read += n;
+        }
+        if (total_read ==MAX_KEY_SIZE && BIO_read(keybio, &dummy, 1) > 0) {
+            /*File is longer than MAX_KEY_SIZE */
+            BIO_printf(bio_err, "File %s is too long\n", arg);
+            OPENSSL_clear_free(inbuf,total_read);
+            BIO_free(keybio);
+            return NULL;
+        }
+        BIO_free(keybio);
+        outbuf=app_malloc(strlen("hexkey:")+total_read*2+1, "MACOPT KEYFILE");
+        strcpy(outbuf,"hexkey:");
+        OPENSSL_buf2hexstr_ex(outbuf+strlen("hexkey:"), total_read*2+1, NULL,  inbuf, total_read, CH_ZERO);
+        OPENSSL_clear_free(inbuf,total_read);
+        return outbuf;
+    }
+/*    } else if (strcmp(arg, "stdin") == 0) {
+        unbuffer(stdin);
+        pwdbio = dup_bio_in(FORMAT_TEXT);
+        if (pwdbio == NULL) {
+            BIO_printf(bio_err, "Can't open BIO for stdin\n");
+            return NULL;
+        }
+    }
+    i = BIO_gets(pwdbio, tpass, APP_PASS_LEN);
+    if (keepbio != 1) {
+        BIO_free_all(pwdbio);
+        pwdbio = NULL;
+    }
+    if (i <= 0) {
+        BIO_printf(bio_err, "Error reading password from BIO\n");
+        return NULL;
+    }
+    tmp = strchr(tpass, '\n');
+    if (tmp != NULL)
+        *tmp = 0;
+    return OPENSSL_strdup(tpass);
+*/
+    return OPENSSL_strdup(arg);
+}

@@ -67,8 +67,13 @@ static char *alloc_mac_algorithm_name(STACK_OF(OPENSSL_STRING) **optp,
     BIO_snprintf(res, len, "%s:%s", name, arg);
     if (sk_OPENSSL_STRING_push(*optp, res))
         return res;
-    OPENSSL_free(res);
     return NULL;
+}
+
+
+static void OPENSSL_STRING_clear_free(char *str)
+{
+    if (str) OPENSSL_clear_free(str, strlen(str));
 }
 
 int mac_main(int argc, char **argv)
@@ -89,13 +94,14 @@ int mac_main(int argc, char **argv)
     int inform = FORMAT_BINARY;
     char *digest = NULL, *cipher = NULL;
     OSSL_PARAM *params = NULL;
+    char *new_opt = NULL;
 
     prog = opt_init(argc, argv, mac_options);
     buf = app_malloc(BUFSIZE, "I/O buffer");
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
         default:
-opthelp:
+        opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto err;
         case OPT_HELP:
@@ -112,10 +118,17 @@ opthelp:
             outfile = opt_arg();
             break;
         case OPT_MACOPT:
+            new_opt = process_additional_mac_key_arguments(opt_arg());
+            if (new_opt == NULL) {
+                ret=1;
+                goto err;
+            }
             if (opts == NULL)
                 opts = sk_OPENSSL_STRING_new_null();
-            if (opts == NULL || !sk_OPENSSL_STRING_push(opts, opt_arg()))
+            if (opts == NULL || !sk_OPENSSL_STRING_push(opts, new_opt)) {
+                OPENSSL_clear_free(new_opt, sizeof(new_opt));
                 goto opthelp;
+            }
             break;
         case OPT_CIPHER:
             OPENSSL_free(cipher);
@@ -225,9 +238,7 @@ err:
     if (ret != 0)
         ERR_print_errors(bio_err);
     OPENSSL_clear_free(buf, BUFSIZE);
-    OPENSSL_free(cipher);
-    OPENSSL_free(digest);
-    sk_OPENSSL_STRING_free(opts);
+    sk_OPENSSL_STRING_pop_free(opts, OPENSSL_STRING_clear_free);
     BIO_free(in);
     BIO_free(out);
     EVP_MAC_CTX_free(ctx);
