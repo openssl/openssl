@@ -3513,3 +3513,157 @@ int opt_legacy_okay(void)
         return 0;
     return 1;
 }
+
+#define MAX_KEY_SIZE 2048 /* Hope nobody needs mac key longer than 2048 bytes */
+
+/*
+ * Implementations of mac algorithms only support getting a key via the
+ * key and hexkey parameters. This function processes additional parameters
+ * for reading a key from an environment variable or from a file or stdin
+ * and forms a key or hexkey parameter with the read key.
+ * Leaves other parameters unchanged.
+ * Allocates a string with a new parameter and returns a pointer to this
+ * string, the calling code must free this string by calling OPENSSL_clear_free.
+ * Returns NULL in case of an error.
+ */
+char *process_additional_mac_key_arguments(const char *arg)
+{
+    static BIO *keybio = NULL;
+    char *val = NULL, *inbuf = NULL, *outbuf = NULL;
+    int total_read = 0;
+    int n;
+    char dummy;
+    int too_long;
+
+    if (CHECK_AND_SKIP_PREFIX(arg, "keyenv:")) {
+        if (strlen(arg) == 0) {
+            BIO_printf(bio_err, "Empty environment variable name\n");
+            return NULL;
+        }
+        val = getenv(arg);
+        if (val == NULL) {
+            BIO_printf(bio_err, "No environment variable %s\n", arg);
+            return NULL;
+        }
+        outbuf = app_malloc(strlen("key:") + strlen(val) + 1, "MACOPT KEYENV");
+        strcpy(outbuf, "key:");
+        strcat(outbuf, val);
+        return outbuf;
+    }
+
+    if (CHECK_AND_SKIP_PREFIX(arg, "keyenvhex:")) {
+        if (strlen(arg) == 0) {
+            BIO_printf(bio_err, "Empty environment variable name\n");
+            return NULL;
+        }
+        val = getenv(arg);
+        if (val == NULL) {
+            BIO_printf(bio_err, "No environment variable %s\n", arg);
+            return NULL;
+        }
+        outbuf = app_malloc(strlen("hexkey:") + strlen(val) + 1, "MACOPT KEYENVHEX");
+        strcpy(outbuf, "hexkey:");
+        strcat(outbuf, val);
+        return outbuf;
+    }
+
+    if (CHECK_AND_SKIP_PREFIX(arg, "keyfile:")) {
+        if (strlen(arg) == 0) {
+            BIO_printf(bio_err, "Empty key file name\n");
+            return NULL;
+        }
+        keybio = BIO_new_file(arg, "rb");
+        if (keybio == NULL) {
+            BIO_printf(bio_err, "Can't open file %s\n", arg);
+            return NULL;
+        }
+        inbuf = app_malloc(MAX_KEY_SIZE, "MACOPT KEYFILE");
+        while (total_read < MAX_KEY_SIZE) {
+            n = BIO_read(keybio, inbuf + total_read, MAX_KEY_SIZE - total_read);
+            if (n < 0) {
+                BIO_printf(bio_err, "Can't read file %s\n", arg);
+                OPENSSL_clear_free(inbuf, MAX_KEY_SIZE);
+                BIO_free(keybio);
+                return NULL;
+            }
+            if (n == 0) /* EOF */
+                break;
+            total_read += n;
+        }
+        too_long = (total_read == MAX_KEY_SIZE && BIO_read(keybio, &dummy, 1) > 0);
+        BIO_free(keybio);
+        if (total_read == 0 || too_long) {
+            /* File is empty or longer than MAX_KEY_SIZE */
+            BIO_printf(bio_err, (too_long) ? "File %s is too long\n" : "File %s is empty\n", arg);
+            OPENSSL_clear_free(inbuf, MAX_KEY_SIZE);
+            return NULL;
+        }
+        outbuf = app_malloc(strlen("hexkey:") + total_read * 2 + 1, "MACOPT KEYFILE");
+        strcpy(outbuf, "hexkey:");
+        OPENSSL_buf2hexstr_ex(outbuf + strlen("hexkey:"), total_read * 2 + 1,
+                              NULL, (unsigned char *)inbuf, total_read, '\0');
+        OPENSSL_clear_free(inbuf, MAX_KEY_SIZE);
+        return outbuf;
+    }
+
+    if (strcmp(arg, "keystdin") == 0) {
+        inbuf = get_str_from_file(NULL);
+        if (inbuf == NULL)
+            return NULL;
+        if (strlen(inbuf) == 0) {
+            BIO_printf(bio_err, "Empty key\n");
+            clear_free(inbuf);
+            return NULL;
+        }
+        outbuf = app_malloc(strlen("key:") + strlen(inbuf) + 1, "MACOPT KEYSTDIN");
+        strcpy(outbuf, "key:");
+        strcat(outbuf, inbuf);
+        clear_free(inbuf);
+        return outbuf;
+    }
+
+    return OPENSSL_strdup(arg);
+}
+
+/*
+ * Read one line from file.
+ * Allocates a string with the data read and returns a pointer to this
+ * string, the calling code must free this string.
+ * If filename == NULL, read from standard input.
+ * Returns NULL in case of any error.
+ */
+char *get_str_from_file(const char *filename)
+{
+    static BIO *bio = NULL;
+    int n;
+    char *buf = NULL;
+    char *tmp;
+
+    if (filename == NULL) {
+        unbuffer(stdin);
+        bio = dup_bio_in(FORMAT_TEXT);
+        if (bio == NULL) {
+            BIO_printf(bio_err, "Can't open BIO for stdin\n");
+            return NULL;
+        }
+    } else {
+        bio = BIO_new_file(filename, "r");
+        if (bio == NULL) {
+            BIO_printf(bio_err, "Can't open file %s\n", filename);
+            return NULL;
+        }
+    }
+    buf = app_malloc(MAX_KEY_SIZE, "get_str_from_file");
+    memset(buf, 0, MAX_KEY_SIZE);
+    n = BIO_gets(bio, buf, MAX_KEY_SIZE - 1);
+    BIO_free_all(bio);
+    bio = NULL;
+    if (n <= 0) {
+        BIO_printf(bio_err, "Error reading from %s\n", filename);
+        return NULL;
+    }
+    tmp = strchr(buf, '\n');
+    if (tmp != NULL)
+        *tmp = 0;
+    return buf;
+}
