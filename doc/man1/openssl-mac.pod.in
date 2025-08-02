@@ -109,6 +109,41 @@ This option is identical to the B<-cipher> option.
 
 =back
 
+Some additional options can be used only as command-line parameters.
+They are not passed to the MAC algorithm, but translated into
+key and hexkey parameters instead:
+
+=over 4
+
+=item B<keyenv:>I<var>
+
+Read the MAC key as an alphanumeric string from the environment variable
+(use if the key contains printable characters only).
+The the key length must conform to any restrictions of the MAC algorithm.
+A key must be specified for every MAC algorithm.
+
+=item B<keyenvhex:>I<var>
+
+Read the MAC key in hexadecimal form (two hex digits per byte)
+from the environment variable.
+The key length must conform to any restrictions of the MAC algorithm.
+A key must be specified for every MAC algorithm.
+
+=item B<keyfile:>I<filename>
+
+Read the MAC key from the specified file. The key is read as binary data.
+The key length must conform to any restrictions of the MAC algorithm.
+A key must be specified for every MAC algorithm.
+
+=item B<keystdin>
+
+Read the MAC key from the standard input. Only the first line from stdin
+is read, and the \0 character also terminates the key.
+The key length must conform to any restrictions of the MAC algorithm.
+A key must be specified for every MAC algorithm.
+
+=back
+
 {- $OpenSSL::safe::opt_provider_item -}
 
 =item I<mac_name>
