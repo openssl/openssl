@@ -24,7 +24,7 @@
 #include "internal/packet.h"
 #include "internal/tsan_assist.h"
 
-#define GROWTH_ALLOWANCE 1024
+#define GROWTH_ALLOWANCE 2048
 
 struct noise_args_data_st {
     BIO *cbio;
@@ -811,7 +811,7 @@ static int packet_plain_mutate(const QUIC_PKT_HDR *hdrin,
      * 14 long header (we assume token length is 0,
      * which is fine for server not so fine for client)
      */
-    grow_allowance = 1200 - (int)bufsz - 16 - 14;
+    grow_allowance = 2048 - (int)bufsz - 16 - 14;
     grow_allowance -= hdrin->dst_conn_id.id_len;
     grow_allowance -= hdrin->src_conn_id.id_len;
     assert(grow_allowance >= 0);
