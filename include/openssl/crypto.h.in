@@ -131,6 +131,7 @@ int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock);
 # define OPENSSL_secure_actual_size(ptr) \
         CRYPTO_secure_actual_size(ptr)
 
+#define CH_ZERO '\0'
 size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strnlen(const char *str, size_t maxlen);
