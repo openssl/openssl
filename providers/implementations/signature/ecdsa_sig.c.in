@@ -692,9 +692,10 @@ static int ecdsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
     if (ctx == NULL || !ecdsa_get_ctx_params_decoder(params, &p))
         return 0;
 
-    if (p.algid != NULL && !OSSL_PARAM_set_octet_string(p.algid,
-                                                  ctx->aid_len == 0 ? NULL : ctx->aid_buf,
-                                                  ctx->aid_len))
+    if (p.algid != NULL
+            && !OSSL_PARAM_set_octet_string(p.algid,
+                                            ctx->aid_len == 0 ? NULL : ctx->aid_buf,
+                                            ctx->aid_len))
         return 0;
 
     if (p.size != NULL && !OSSL_PARAM_set_size_t(p.size, ctx->mdsize))
