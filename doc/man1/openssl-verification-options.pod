@@ -661,7 +661,8 @@ This is used as a workaround if the basicConstraints extension is absent.
 =item B<S/MIME Signing> (C<smimesign>)
 
 In addition to the common S/MIME checks, for target certificates
-the key usage must allow for C<digitalSignature> and/or B<nonRepudiation>.
+the key usage must allow for C<digitalSignature> and/or B<nonRepudiation> (or
+its alias name B<contentCommitment>).
 
 =item B<S/MIME Encryption> (C<smimeencrypt>)
 
@@ -685,7 +686,8 @@ For all other certificates the normal CA checks apply.
 =item B<Timestamp Signing> (C<timestampsign>)
 
 For target certificates, if the key usage extension is present, it must include
-C<digitalSignature> and/or C<nonRepudiation> and must not include other bits.
+C<digitalSignature> and/or C<nonRepudiation> (or its alias name
+C<contentCommitment>) and must not include other bits.
 The EKU extension must be present and contain C<timeStamping> only.
 Moreover, it must be marked as critical.
 
