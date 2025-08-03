@@ -82,8 +82,8 @@ struct helper {
 #if defined(OPENSSL_THREADS)
     struct child_thread_args    *threads;
     size_t                      num_threads;
-    CRYPTO_MUTEX		*misc_m;
-    CRYPTO_CONDVAR		*misc_cv;
+    CRYPTO_MUTEX                *misc_m;
+    CRYPTO_CONDVAR              *misc_cv;
 #endif
 
     OSSL_TIME       start_time;
