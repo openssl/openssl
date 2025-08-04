@@ -140,29 +140,13 @@ ___
 
 sub SHA256ROUND {
     my ($index, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
+    my $ms = $index < 16 ? \&MSGSCHEDULE0 : \&MSGSCHEDULE1;
     my $code=<<___;
+    @{[$ms->($index)]}
     @{[sha256_T1 $index, $e, $f, $g, $h]}
     @{[sha256_T2 $a, $b, $c]}
     add.w $d, $d, $T1
     add.w $h, $T2, $T1
-___
-    return strip($code);
-}
-
-sub SHA256ROUND0 {
-    my ($index, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
-    my $code=<<___;
-    @{[MSGSCHEDULE0 $index]}
-    @{[SHA256ROUND $index, $a, $b, $c, $d, $e, $f, $g, $h]}
-___
-    return strip($code);
-}
-
-sub SHA256ROUND1 {
-    my ($index, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
-    my $code=<<___;
-    @{[MSGSCHEDULE1 $index]}
-    @{[SHA256ROUND $index, $a, $b, $c, $d, $e, $f, $g, $h]}
 ___
     return strip($code);
 }
@@ -205,87 +189,22 @@ sha256_block_data_order:
 L_round_loop:
     # Decrement length by 1
     addi.d $LEN, $LEN, -1
+___
 
-    @{[SHA256ROUND0 0, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND0 1, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND0 2, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND0 3, $F, $G, $H, $A, $B, $C, $D, $E]}
+for (my $i = 0; $i < 64; $i += 8) {
+    $code .= <<___;
+    @{[SHA256ROUND $i, $A, $B, $C, $D, $E, $F, $G, $H]}
+    @{[SHA256ROUND $i+1, $H, $A, $B, $C, $D, $E, $F, $G]}
+    @{[SHA256ROUND $i+2, $G, $H, $A, $B, $C, $D, $E, $F]}
+    @{[SHA256ROUND $i+3, $F, $G, $H, $A, $B, $C, $D, $E]}
+    @{[SHA256ROUND $i+4, $E, $F, $G, $H, $A, $B, $C, $D]}
+    @{[SHA256ROUND $i+5, $D, $E, $F, $G, $H, $A, $B, $C]}
+    @{[SHA256ROUND $i+6, $C, $D, $E, $F, $G, $H, $A, $B]}
+    @{[SHA256ROUND $i+7, $B, $C, $D, $E, $F, $G, $H, $A]}
+___
+}
 
-    @{[SHA256ROUND0 4, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND0 5, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND0 6, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND0 7, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA256ROUND0 8, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND0 9, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND0 10, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND0 11, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA256ROUND0 12, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND0 13, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND0 14, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND0 15, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA256ROUND1 16, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND1 17, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND1 18, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND1 19, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA256ROUND1 20, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND1 21, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND1 22, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND1 23, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA256ROUND1 24, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND1 25, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND1 26, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND1 27, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA256ROUND1 28, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND1 29, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND1 30, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND1 31, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA256ROUND1 32, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND1 33, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND1 34, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND1 35, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA256ROUND1 36, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND1 37, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND1 38, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND1 39, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA256ROUND1 40, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND1 41, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND1 42, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND1 43, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA256ROUND1 44, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND1 45, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND1 46, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND1 47, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA256ROUND1 48, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND1 49, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND1 50, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND1 51, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA256ROUND1 52, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND1 53, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND1 54, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND1 55, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA256ROUND1 56, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND1 57, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND1 58, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND1 59, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA256ROUND1 60, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND1 61, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND1 62, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND1 63, $B, $C, $D, $E, $F, $G, $H, $A]}
-
+$code .= <<___;
     ld.w $T1, $a0, 0
     ld.w $T2, $a0, 4
     ld.w $T3, $a0, 8
