@@ -4,6 +4,13 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <stdio.h>
+#include "apps.h"
+#include "opt.h"
+
+// Define dummy/empty options for now, expand as needed
+const OPTIONS cert_fingerprint_options[] = {
+    {NULL}
+};
 
 int cert_fingerprint_main(int argc, char **argv)
 {
