@@ -1270,7 +1270,7 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
      * Add the array of supported versions to the end of the packet
      */
     for (i = 0; i < OSSL_NELEM(supported_versions); i++) {
-        if (!WPACKET_put_bytes_u32(&wpkt, htonl(supported_versions[i])))
+        if (!WPACKET_put_bytes_u32(&wpkt, supported_versions[i]))
             return;
     }
 
