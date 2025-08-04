@@ -678,8 +678,12 @@ sub trie_matched {
     printf "%s}\n", $indent1;
     printf "%sr->%s[r->num_%s++] = (OSSL_PARAM *)p;\n", $indent1, $field, $field;
   } else {
-    printf "%sif (ossl_likely(r->%s == NULL))\n", $indent1, $field;
-    printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent2, $field;
+    printf "%sif (ossl_unlikely(r->%s != NULL)) {\n", $indent1, $field;
+    printf "%sERR_raise_data(ERR_LIB_PROV, PROV_R_REPEATED_PARAMETER,\n", $indent2;
+    printf "%s               \"param %%s is repeated\", s);\n", $indent2;
+    printf "%sreturn 0;\n", $indent2;
+    printf "%s}\n", $indent1;
+    printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent1, $field;
   }
 }
 
@@ -727,7 +731,7 @@ sub generate_decoder_from_trie {
             printf "%scase '\\0':\n", $indent0;
             trie_matched($field, $num, $indent1, $indent2);
             output_endifdef($ifdefs->{$field});
-       } else {
+        } else {
             printf "%sbreak;\n", $indent1;
             printf "%scase '%s':", $indent0, $l;
             if (not $case_sensitive) {
