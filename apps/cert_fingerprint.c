@@ -5,11 +5,21 @@
 #include <openssl/err.h>
 #include <stdio.h>
 #include "apps.h"
+#include "progs.h"
 #include "opt.h"
 
-// Define dummy/empty options for now, expand as needed
+#define OPT_IN         1
+#define OPT_SHA256     2
+#define OPT_SHA1       3
+#define OPT_NO_COLONS  4
+
 const OPTIONS cert_fingerprint_options[] = {
-    {NULL}
+    { "help", OPT_HELP, '-', "Display this summary" },
+    { "in",   OPT_IN, '<', "Input PEM certificate file" },
+    { "sha256", OPT_SHA256, '-', "Use SHA-256 fingerprint (default)" },
+    { "sha1",   OPT_SHA1, '-', "Use SHA-1 fingerprint" },
+    { "no-colons", OPT_NO_COLONS, '-', "Omit colons from output (lowercase)" },
+    { NULL }
 };
 
 int cert_fingerprint_main(int argc, char **argv)
