@@ -170,7 +170,7 @@ EOF
         des3  => "des",
         desx  => "des",
         cast5 => "cast",
-        cert-fingerprint => "cert_fingerprint",
+        "cert-fingerprint" => "cert_fingerprint",
     );
     foreach my $cmd (
         "aes-128-cbc", "aes-128-ecb",
