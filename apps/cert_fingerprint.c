@@ -43,8 +43,10 @@ int cert_fingerprint_main(int argc, char **argv)
     int i, o;
 
     /* Parse command-line options */
-    opt_init(argc, argv, cert_fingerprint_options);
-    while ((o = opt_next()) != OPT_EOF) {
+    if (!opt_init(argc, argv, cert_fingerprint_options))
+    return 1;
+
+while ((o = opt_next()) != -1) {  // use -1 instead of OPT_EOF if not defined
         switch (o) {
         case OPT_HELP:
             opt_help(cert_fingerprint_options);
