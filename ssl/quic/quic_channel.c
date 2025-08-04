@@ -2423,7 +2423,6 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
             if (!PACKET_get_net_4(&vpkt, &supported_ver))
                 return;
 
-            supported_ver = ntohl(supported_ver);
             if (supported_ver == QUIC_VERSION_1) {
                 /*
                  * If the server supports version 1, set it as
