@@ -18,7 +18,7 @@
  *
  * L_ENDIAN and B_ENDIAN can be used at preprocessor time. They can be set
  * in the configarion using the lib_cppflags variable. If neither is
- * set, it will fall back to code works with either endianness.
+ * set, it will fall back to code that works with either endianness.
  */
 
 # if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__)
