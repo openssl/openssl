@@ -167,6 +167,8 @@ int ossl_qrx_provide_secret(OSSL_QRX              *qrx,
                             const unsigned char   *secret,
                             size_t                 secret_len);
 
+void ossl_qrx_update_pn_space(OSSL_QRX *src, OSSL_QRX *dst);
+
 /*
  * Informs the QRX that it can now discard key material for a given EL. The QRX
  * will no longer be able to process incoming packets received at that

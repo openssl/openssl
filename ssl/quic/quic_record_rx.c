@@ -237,6 +237,16 @@ static void qrx_cleanup_urxl(OSSL_QRX *qrx, QUIC_URXE_LIST *l)
     }
 }
 
+void ossl_qrx_update_pn_space(OSSL_QRX *src, OSSL_QRX *dst)
+{
+    size_t i;
+
+    for (i = 0; i < QUIC_PN_SPACE_NUM; i++)
+        dst->largest_pn[i] = src->largest_pn[i];
+
+    return;
+}
+
 void ossl_qrx_free(OSSL_QRX *qrx)
 {
     uint32_t i;
@@ -931,6 +941,7 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
         return 0;
 
     memcpy(nonce, el->iv[cctx_idx], nonce_len);
+
     for (i = 0; i < sizeof(QUIC_PN); ++i)
         nonce[nonce_len - i - 1] ^= (unsigned char)(pn >> (i * 8));
 
@@ -1011,6 +1022,7 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
     uint32_t pn_space, enc_level;
     OSSL_QRL_ENC_LEVEL *el = NULL;
     uint64_t rx_key_epoch = UINT64_MAX;
+
 
     /*
      * Get a free RXE. If we need to allocate a new one, use the packet length

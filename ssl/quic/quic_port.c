@@ -1694,6 +1694,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
          */
         while (ossl_qrx_read_pkt(qrx_src, &qrx_pkt) == 1)
             ossl_quic_channel_inject_pkt(new_ch, qrx_pkt);
+        ossl_qrx_update_pn_space(qrx_src, new_ch->qrx);
     }
 
     /*
