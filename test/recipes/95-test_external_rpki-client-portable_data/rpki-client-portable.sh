@@ -11,7 +11,8 @@
 LDFLAGS="-L`pwd`/$BLDTOP -Wl,-rpath,`pwd`/$BLDTOP"
 CFLAGS="-I`pwd`/$BLDTOP/include -I`pwd`/$SRCTOP/include"
 
-wget -O $RPKI_TARBALL $RPKI_DOWNLOAD_URL && tar xzf $RPKI_TARBALL
+WGET_OPTS='--no-check-certificate'
+wget $WGET_OPTS -O $RPKI_TARBALL $RPKI_DOWNLOAD_URL && tar xzf $RPKI_TARBALL
 cd $RPKI_SRC
 
 ./configure --with-openssl-cflags="$CFLAGS" --with-openssl-ldflags="$LDFLAGS" \
