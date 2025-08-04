@@ -51,15 +51,14 @@ ___
 my $K512 = "K512";
 
 # Function arguments
-
-my ($zero,$ra,$tp,$sp,$fp)=map("\$r$_",(0..3,22));
-my ($a0,$a1,$a2,$a3,$a4,$a5,$a6,$a7)=map("\$r$_",(4..11));
-my ($t0,$t1,$t2,$t3,$t4,$t5,$t6,$t7,$t8,$x)=map("\$r$_",(12..21));
-my ($s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7,$s8)=map("\$r$_",(23..31));
+my ($zero,$ra,$tp,$sp,$fp)=("\$zero", "\$ra", "\$tp", "\$sp", "\$fp");
+my ($a0,$a1,$a2,$a3,$a4,$a5,$a6,$a7)=map("\$a$_",(0..7));
+my ($t0,$t1,$t2,$t3,$t4,$t5,$t6,$t7,$t8)=map("\$t$_",(0..8));
+my ($s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7,$s8)=map("\$s$_",(0..8));
 
 my ($INP, $LEN, $ADDR) = ($a1, $a2, $sp);
 my ($KT, $T1, $T2, $T3, $T4, $T5, $T6) = ($t0, $t1, $t2, $t3, $t4, $t5, $t6);
-my ($A, $B, $C, $D ,$E ,$F ,$G ,$H) = ($s0, $s1, $s2, $s3, $s4, $s5, $s6, $s7);
+my ($A, $B, $C, $D, $E, $F, $G, $H) = ($s0, $s1, $s2, $s3, $s4, $s5, $s6, $s7);
 
 sub strip {
     my ($str) = @_;
