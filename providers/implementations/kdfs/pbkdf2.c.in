@@ -356,7 +356,7 @@ static const OSSL_PARAM *kdf_pbkdf2_settable_ctx_params(ossl_unused void *ctx,
 
 {- produce_param_decoder('pbkdf2_get_ctx_params',
                          (['KDF_PARAM_SIZE',                    'size', 'size_t'],
-                          ['KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',  'int'],
+                          ['KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',  'int', 'fips'],
                          )); -}
 
 static int kdf_pbkdf2_get_ctx_params(void *vctx, OSSL_PARAM params[])
