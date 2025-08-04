@@ -19,8 +19,6 @@ setup("test_handshake_memfail");
 plan skip_all => "$test_name requires allocfail-tests to be enabled"
     if disabled("allocfail-tests");
 
-#plan tests => 1;
-
 #
 # We need to know how many mallocs we plan to fail, so run the test in count mode
 # To tell us how many mallocs it executes
