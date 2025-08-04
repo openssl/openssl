@@ -44,30 +44,30 @@ int cert_fingerprint_main(int argc, char **argv)
             opt_help(cert_fingerprint_options);
             return 0;
         default:
-            BIO_printf(bio_err, "✗ Unknown option\n");
+            BIO_printf(bio_err, "Unknown option\n");
             return 1;
         }
     }
 
     if (infile == NULL) {
-        BIO_printf(bio_err, "✗ No input file provided with -in\n");
+        BIO_printf(bio_err, "No input file provided with -in\n");
         return 1;
     }
 
     in = BIO_new_file(infile, "r");
     if (!in) {
-        BIO_printf(bio_err, "✗ Error opening file: %s\n", infile);
+        BIO_printf(bio_err, "Error opening file: %s\n", infile);
         goto end;
     }
 
     cert = PEM_read_bio_X509(in, NULL, NULL, NULL);
     if (!cert) {
-        BIO_printf(bio_err, "✗ Error reading certificate from: %s\n", infile);
+        BIO_printf(bio_err, "Error reading certificate from: %s\n", infile);
         goto end;
     }
 
     if (!X509_digest(cert, digest, md, &n)) {
-        BIO_printf(bio_err, "✗ Error computing fingerprint\n");
+        BIO_printf(bio_err, "Error computing fingerprint\n");
         goto end;
     }
 
