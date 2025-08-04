@@ -1,18 +1,27 @@
+#include <stdio.h>
+#include <string.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#include <stdio.h>
+
 #include "apps.h"
 #include "progs.h"
 #include "opt.h"
 
-#define OPT_IN         1
-#define OPT_SHA256     2
-#define OPT_SHA1       3
-#define OPT_NO_COLONS  4
+#define DEFAULT_DIGEST EVP_sha256()
 
+/* Command-line options enum */
+enum {
+    OPT_HELP = 1,
+    OPT_IN,
+    OPT_SHA256,
+    OPT_SHA1,
+    OPT_NO_COLONS
+};
+
+/* Define options array */
 const OPTIONS cert_fingerprint_options[] = {
     { "help", OPT_HELP, '-', "Display this summary" },
     { "in",   OPT_IN, '<', "Input PEM certificate file" },
@@ -24,59 +33,69 @@ const OPTIONS cert_fingerprint_options[] = {
 
 int cert_fingerprint_main(int argc, char **argv)
 {
-    const char *infile = NULL;
+    BIO *in = NULL;
+    X509 *cert = NULL;
+    const EVP_MD *md = DEFAULT_DIGEST;
+    unsigned char digest[EVP_MAX_MD_SIZE];
+    unsigned int digest_len = 0;
+    char *infile = NULL;
     int no_colons = 0;
-    const EVP_MD *md = EVP_sha256(); // default
+    int i, o;
 
-    // Basic arg parsing
-    for (int i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "-in") && i + 1 < argc) {
-            infile = argv[++i];
-        } else if (!strcmp(argv[i], "-sha256")) {
-            md = EVP_sha256();
-        } else if (!strcmp(argv[i], "-sha1")) {
+    /* Parse command-line options */
+    opt_init(argc, argv, cert_fingerprint_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_HELP:
+            opt_help(cert_fingerprint_options);
+            return 0;
+        case OPT_IN:
+            infile = opt_arg();
+            break;
+        case OPT_SHA1:
             md = EVP_sha1();
-        } else if (!strcmp(argv[i], "-no-colons")) {
+            break;
+        case OPT_SHA256:
+            md = EVP_sha256();
+            break;
+        case OPT_NO_COLONS:
             no_colons = 1;
-        } else {
-            fprintf(stderr, "Unknown argument: %s\n", argv[i]);
+            break;
+        default:
             return 1;
         }
     }
 
-    if (!infile) {
-        fprintf(stderr, "Usage: openssl cert-fingerprint -in file.pem [-sha256] [-no-colons]\n");
+    /* Open input file */
+    in = bio_open_default(infile, 'r', FORMAT_PEM);
+    if (in == NULL)
+        return 1;
+
+    /* Read certificate */
+    cert = PEM_read_bio_X509(in, NULL, 0, NULL);
+    if (cert == NULL) {
+        BIO_printf(bio_err, "Error reading certificate from %s\n", infile);
+        BIO_free(in);
         return 1;
     }
 
-    FILE *fp = fopen(infile, "r");
-    if (!fp) {
-        perror("fopen");
-        return 1;
-    }
-
-    X509 *cert = PEM_read_X509(fp, NULL, NULL, NULL);
-    fclose(fp);
-
-    if (!cert) {
-        fprintf(stderr, "Failed to parse certificate\n");
-        return 1;
-    }
-
-    unsigned char mdout[EVP_MAX_MD_SIZE];
-    unsigned int mdlen;
-
-    if (!X509_digest(cert, md, mdout, &mdlen)) {
-        fprintf(stderr, "Failed to compute digest\n");
+    /* Compute fingerprint */
+    if (!X509_digest(cert, md, digest, &digest_len)) {
+        BIO_printf(bio_err, "Error computing certificate fingerprint\n");
         X509_free(cert);
+        BIO_free(in);
         return 1;
     }
 
-    for (unsigned int i = 0; i < mdlen; i++) {
-        printf(no_colons ? "%02x" : "%02X%c", mdout[i], no_colons ? '\0' : (i < mdlen - 1 ? ':' : '\n'));
+    /* Print fingerprint */
+    for (i = 0; i < (int)digest_len; i++) {
+        if (no_colons)
+            BIO_printf(bio_out, "%02x", digest[i]);
+        else
+            BIO_printf(bio_out, "%02X%c", digest[i], (i + 1 == digest_len) ? '\n' : ':');
     }
-    if (no_colons) printf("\n");
 
     X509_free(cert);
+    BIO_free(in);
     return 0;
 }
