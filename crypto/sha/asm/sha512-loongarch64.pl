@@ -140,29 +140,13 @@ ___
 
 sub SHA512ROUND {
     my ($index, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
+    my $ms = $index < 16 ? \&MSGSCHEDULE0 : \&MSGSCHEDULE1;
     my $code=<<___;
+    @{[$ms->($index)]}
     @{[sha512_T1 $index, $e, $f, $g, $h]}
     @{[sha512_T2 $a, $b, $c]}
     add.d $d, $d, $T1
     add.d $h, $T2, $T1
-___
-    return strip($code);
-}
-
-sub SHA512ROUND0 {
-    my ($index, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
-    my $code=<<___;
-    @{[MSGSCHEDULE0 $index]}
-    @{[SHA512ROUND $index, $a, $b, $c, $d, $e, $f, $g, $h]}
-___
-    return strip($code);
-}
-
-sub SHA512ROUND1 {
-    my ($index, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
-    my $code=<<___;
-    @{[MSGSCHEDULE1 $index]}
-    @{[SHA512ROUND $index, $a, $b, $c, $d, $e, $f, $g, $h]}
 ___
     return strip($code);
 }
@@ -205,107 +189,23 @@ sha512_block_data_order:
 L_round_loop:
     # Decrement length by 1
     addi.d $LEN, $LEN, -1
+___
 
-    @{[SHA512ROUND0 0, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND0 1, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND0 2, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND0 3, $F, $G, $H, $A, $B, $C, $D, $E]}
+for (my $i = 0; $i < 80; $i += 8) {
 
-    @{[SHA512ROUND0 4, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND0 5, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND0 6, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND0 7, $B, $C, $D, $E, $F, $G, $H, $A]}
+    $code .= <<___;
+    @{[SHA512ROUND $i, $A, $B, $C, $D, $E, $F, $G, $H]}
+    @{[SHA512ROUND $i+1, $H, $A, $B, $C, $D, $E, $F, $G]}
+    @{[SHA512ROUND $i+2, $G, $H, $A, $B, $C, $D, $E, $F]}
+    @{[SHA512ROUND $i+3, $F, $G, $H, $A, $B, $C, $D, $E]}
+    @{[SHA512ROUND $i+4, $E, $F, $G, $H, $A, $B, $C, $D]}
+    @{[SHA512ROUND $i+5, $D, $E, $F, $G, $H, $A, $B, $C]}
+    @{[SHA512ROUND $i+6, $C, $D, $E, $F, $G, $H, $A, $B]}
+    @{[SHA512ROUND $i+7, $B, $C, $D, $E, $F, $G, $H, $A]}
+___
+}
 
-    @{[SHA512ROUND0 8, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND0 9, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND0 10, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND0 11, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND0 12, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND0 13, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND0 14, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND0 15, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA512ROUND1 16, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 17, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 18, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 19, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND1 20, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 21, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 22, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 23, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA512ROUND1 24, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 25, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 26, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 27, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND1 28, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 29, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 30, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 31, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA512ROUND1 32, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 33, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 34, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 35, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND1 36, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 37, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 38, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 39, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA512ROUND1 40, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 41, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 42, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 43, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND1 44, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 45, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 46, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 47, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA512ROUND1 48, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 49, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 50, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 51, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND1 52, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 53, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 54, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 55, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA512ROUND1 56, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 57, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 58, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 59, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND1 60, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 61, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 62, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 63, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA512ROUND1 64, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 65, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 66, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 67, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND1 68, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 69, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 70, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 71, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA512ROUND1 72, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 73, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 74, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 75, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND1 76, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 77, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 78, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 79, $B, $C, $D, $E, $F, $G, $H, $A]}
-
+$code .= <<___;
     ld.d $T1, $a0, 0
     ld.d $T2, $a0, 8
     ld.d $T3, $a0, 16
