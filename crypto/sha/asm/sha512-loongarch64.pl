@@ -61,6 +61,12 @@ my ($INP, $LEN, $ADDR) = ($a1, $a2, $sp);
 my ($KT, $T1, $T2, $T3, $T4, $T5, $T6) = ($t0, $t1, $t2, $t3, $t4, $t5, $t6);
 my ($A, $B, $C, $D ,$E ,$F ,$G ,$H) = ($s0, $s1, $s2, $s3, $s4, $s5, $s6, $s7);
 
+sub strip {
+    my ($str) = @_;
+    $str =~ s/^\s+|\s+$//g;
+    return $str;
+}
+
 sub MSGSCHEDULE0 {
     my ($index) = @_;
     my $code=<<___;
@@ -68,7 +74,7 @@ sub MSGSCHEDULE0 {
     revb.d $T1, $T1
     st.d $T1, $ADDR, 8*$index
 ___
-    return $code;
+    return strip($code);
 }
 
 sub MSGSCHEDULE1 {
@@ -93,7 +99,7 @@ sub MSGSCHEDULE1 {
     add.d $T1, $T1, $T4
     st.d $T1, $ADDR, 8*($index&0x0f)
 ___
-    return $code;
+    return strip($code);
 }
 
 sub sha512_T1 {
@@ -113,7 +119,7 @@ sub sha512_T1 {
     xor $T1, $T1, $g
     add.d $T1, $T1, $h
 ___
-    return $code;
+    return strip($code);
 }
 
 sub sha512_T2 {
@@ -130,7 +136,7 @@ sub sha512_T2 {
     xor $T3, $T3, $T5
     add.d $T2, $T2, $T3
 ___
-    return $code;
+    return strip($code);
 }
 
 sub SHA512ROUND {
@@ -141,7 +147,7 @@ sub SHA512ROUND {
     add.d $d, $d, $T1
     add.d $h, $T2, $T1
 ___
-    return $code;
+    return strip($code);
 }
 
 sub SHA512ROUND0 {
@@ -150,7 +156,7 @@ sub SHA512ROUND0 {
     @{[MSGSCHEDULE0 $index]}
     @{[SHA512ROUND $index, $a, $b, $c, $d, $e, $f, $g, $h]}
 ___
-    return $code;
+    return strip($code);
 }
 
 sub SHA512ROUND1 {
@@ -159,7 +165,7 @@ sub SHA512ROUND1 {
     @{[MSGSCHEDULE1 $index]}
     @{[SHA512ROUND $index, $a, $b, $c, $d, $e, $f, $g, $h]}
 ___
-    return $code;
+    return strip($code);
 }
 
 ################################################################################
