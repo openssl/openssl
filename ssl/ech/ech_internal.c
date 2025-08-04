@@ -60,15 +60,11 @@ static void ossl_ech_ptranscript(SSL_CONNECTION *s, const char *msg)
     ossl_ech_pbuf(msg, hdata, hdatalen);
     if (s->s3.handshake_dgst != NULL) {
         if (ssl_handshake_hash(s, ddata, sizeof(ddata), &ddatalen) == 0) {
-            OSSL_TRACE_BEGIN(TLS) {
-                BIO_printf(trc_out, "ssl_handshake_hash failed\n");
-            } OSSL_TRACE_END(TLS);
+            OSSL_TRACE(TLS, "ssl_handshake_hash failed\n");
             ossl_ech_pbuf(msg, ddata, ddatalen);
         }
     }
-    OSSL_TRACE_BEGIN(TLS) {
-        BIO_printf(trc_out, "new transbuf:\n");
-    } OSSL_TRACE_END(TLS);
+    OSSL_TRACE(TLS, "new transbuf:\n");
     ossl_ech_pbuf(msg, s->ext.ech.transbuf, s->ext.ech.transbuf_len);
     return;
 }
@@ -1018,7 +1014,7 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
     size_t fixedshbuf_len = 0, tlen = 0, chend = 0;
     /* shoffset is: 4 + 2 + 32 - 8 */
     size_t shoffset = SSL3_HM_HEADER_LENGTH + sizeof(uint16_t)
-                      + SSL3_RANDOM_SIZE - OSSL_ECH_SIGNAL_LEN;
+        + SSL3_RANDOM_SIZE - OSSL_ECH_SIGNAL_LEN;
     unsigned int hashlen = 0;
     unsigned char hashval[EVP_MAX_MD_SIZE];
 
@@ -1911,7 +1907,7 @@ paderr:
  */
 int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
 {
-    int rv = 0, num = 0, cfgind = -1, foundcfg = 0, forhrr = 0, innerflag = -1;
+    int num = 0, cfgind = -1, foundcfg = 0, forhrr = 0, innerflag = -1;
     OSSL_ECH_ENCCH *extval = NULL;
     PACKET echpkt;
     const unsigned char *startofech = NULL, *opd = NULL;
@@ -1932,10 +1928,9 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
         return 0;
     }
     /* find offsets - on success, outputs are safe to use */
-    rv = ossl_ech_get_ch_offsets(s, outerpkt, &startofsessid, &startofexts,
-                                 &echoffset, &echtype, &innerflag,
-                                 &outersnioffset);
-    if (rv != 1) {
+    if (ossl_ech_get_ch_offsets(s, outerpkt, &startofsessid, &startofexts,
+                                &echoffset, &echtype, &innerflag,
+                                &outersnioffset) != 1) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
@@ -2093,15 +2088,11 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    /*
-     * tls_process_client_hello doesn't want to be given the message header,
-     * so we skip over it
-     */
+    /* tls_process_client_hello doesn't want the message header, so skip it */
     if (!PACKET_forward(newpkt, SSL3_HM_HEADER_LENGTH)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-
     if (ossl_ech_intbuf_add(s, s->ext.ech.innerch,
                             s->ext.ech.innerch_len, 0) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -2113,7 +2104,6 @@ err:
     if (extval != NULL) {
         ossl_ech_encch_free(extval);
         OPENSSL_free(extval);
-        extval = NULL;
     }
     OPENSSL_free(clear);
     return 0;
@@ -2156,7 +2146,7 @@ int ossl_ech_intbuf_add(SSL_CONNECTION *s, const unsigned char *buf,
     } else {
         /* just add new octets */
         if ((t1 = OPENSSL_realloc(s->ext.ech.transbuf,
-                                   s->ext.ech.transbuf_len + blen)) == NULL)
+                                  s->ext.ech.transbuf_len + blen)) == NULL)
             goto err;
         s->ext.ech.transbuf = t1;
         memcpy(s->ext.ech.transbuf + s->ext.ech.transbuf_len, buf, blen);

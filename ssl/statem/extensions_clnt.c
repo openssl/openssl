@@ -2525,7 +2525,6 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned char *encoded = NULL, *mypub = NULL;
     size_t cipherlen = 0, aad_len = 0, lenclen = 0, mypub_len = 0;
     size_t info_len = OSSL_ECH_MAX_INFO_LEN, clear_len = 0, encoded_len = 0;
-
     /* whether or not we've been asked to GREASE, one way or another */
     int grease_opt_set = (s->ext.ech.grease == OSSL_ECH_IS_GREASE
                           || ((s->options & SSL_OP_ECH_GREASE) != 0));
