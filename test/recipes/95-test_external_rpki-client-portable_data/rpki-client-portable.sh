@@ -62,7 +62,7 @@ zyzSqbo//+SSFHZG
 =O6H8
 -----END PGP PUBLIC KEY BLOCK-----
 EOF
-gpg --veirfy $RPKI_TARBALL.asc $RPKI_TARBALL || exit 1
+gpg --verify $RPKI_TARBALL.asc $RPKI_TARBALL || exit 1
 
 cd $RPKI_SRC
 
