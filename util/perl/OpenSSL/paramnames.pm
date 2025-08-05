@@ -731,7 +731,7 @@ sub generate_decoder_from_trie {
             printf "%scase '\\0':\n", $indent0;
             trie_matched($field, $num, $indent1, $indent2);
             output_endifdef($ifdefs->{$field});
-       } else {
+        } else {
             printf "%sbreak;\n", $indent1;
             printf "%scase '%s':", $indent0, $l;
             if (not $case_sensitive) {
