@@ -9,6 +9,8 @@
 
 #define TESTUTIL_NO_size_t_COMPARISON
 
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <openssl/bio.h>
@@ -113,6 +115,537 @@ static const char * const fpexpected[][11][5] = {
     },
 };
 
+enum arg_type {
+    AT_NONE = 0,
+    AT_CHAR, AT_SHORT, AT_INT, AT_LONG, AT_LLONG,
+    /* The ones below are used in n_data only so far */
+    AT_SIZE, AT_PTRDIFF, AT_STR,
+};
+
+static const struct int_data {
+    union {
+        unsigned char hh;
+        unsigned short h;
+        unsigned int i;
+        unsigned long l;
+        unsigned long long ll;
+    } value;
+    enum arg_type type;
+    const char *format;
+    const char *expected;
+    bool skip_libc_check;
+    /* Since OpenSSL's snprintf is non-standard on buffer overflow */
+    bool skip_libc_ret_check;
+    int exp_ret;
+} int_data[] = {
+    { { .hh = 0x42 }, AT_CHAR, "%+hhu", "66" },
+    { { .hh = 0x88 }, AT_CHAR, "%hhd", "-120" },
+    { { .hh = 0x0 }, AT_CHAR, "%hho", "0" },
+    { { .hh = 0x0 }, AT_CHAR, "%#hho", "0" },
+    { { .hh = 0x1 }, AT_CHAR, "%hho", "1" },
+    { { .hh = 0x1 }, AT_CHAR, "%#hho", "01" },
+    { { .hh = 0x0 }, AT_CHAR, "%+hhx", "0" },
+    { { .hh = 0x0 }, AT_CHAR, "%#hhx", "0" },
+    { { .hh = 0xf }, AT_CHAR, "%hhx", "f" },
+    { { .hh = 0xe }, AT_CHAR, "%hhX", "E" },
+    { { .hh = 0xd }, AT_CHAR, "%#hhx", "0xd" },
+    { { .hh = 0xc }, AT_CHAR, "%#hhX", "0XC" },
+    { { .hh = 0xb }, AT_CHAR, "%#04hhX", "0X0B" },
+    { { .hh = 0xa }, AT_CHAR, "%#-015hhx", "0xa            " },
+    { { .hh = 0x9 }, AT_CHAR, "%#+01hho", "011" },
+    { { .hh = 0x8 }, AT_CHAR, "%#09hho", "000000010" },
+    { { .hh = 0x7 }, AT_CHAR, "%#+ 9hhi", "       +7" },
+    { { .hh = 0x6 }, AT_CHAR, "%# 9hhd", "        6" },
+    { { .hh = 0x95 }, AT_CHAR, "%#06hhi", "-00107" },
+    { { .hh = 0x4 }, AT_CHAR, "%# hhd", " 4" },
+    { { .hh = 0x3 }, AT_CHAR, "%# hhu", "3" },
+    { { .hh = 0x0 }, AT_CHAR, "%02x", "00" },
+    { { .h = 0 }, AT_SHORT, "|%.0hd|", "||" },
+    { { .h = 0 }, AT_SHORT, "|%.hu|", "||" },
+    { { .h = 0 }, AT_SHORT, "|%#.ho|", "|0|" },
+    { { .h = 1 }, AT_SHORT, "%4.2hi", "  01" },
+    { { .h = 2 }, AT_SHORT, "%-4.3hu", "002 " },
+    { { .h = 3 }, AT_SHORT, "%+.3hu", "003" },
+    { { .h = 9 }, AT_SHORT, "%#5.2ho", "  011" },
+    { { .h = 0xf }, AT_SHORT, "%#-6.2hx", "0x0f  " },
+    { { .h = 0xaa }, AT_SHORT, "%#8.0hX", "    0XAA" },
+    { { .h = 0xdead }, AT_SHORT, "%#hi", "-8531" },
+    { { .h = 0xcafe }, AT_SHORT, "%#0.1hX", "0XCAFE" },
+    { { .h = 0xbeef }, AT_SHORT, "%#012.8ho", "    00137357" },
+    { { .h = 0xbeef }, AT_SHORT, "%#000000000000000000012.ho", "     0137357" },
+    { { .h = 0xbeef }, AT_SHORT, "%012.ho", "      137357" },
+    { { .h = 0xfade }, AT_SHORT, "%#012ho", "000000175336" },
+    { { .h = 0xfaff }, AT_SHORT, "%#-012ho", "0175377     " },
+    { { .h = 0xbea7 }, AT_SHORT, "%#-012.8ho", "00137247    " },
+    { { .i = 0 }, AT_INT, "-%#+.0u-", "--" },
+    { { .i = 0 }, AT_INT, "-%-8.u-", "-        -" },
+    { { .i = 0xdeadc0de }, AT_INT, "%#+67.65i",
+      " -0000000000000000000000000000000000000000000000000000000055903",
+      .skip_libc_ret_check = true, .exp_ret = -1 },
+    { { .i = 0xfeedface }, AT_INT, "%#+70.10X",
+      "                                                          0X00F",
+      .skip_libc_ret_check = true, .exp_ret = -1 },
+    { { .i = 0xdecaffee }, AT_INT, "%76.15o",
+      "                                                             00",
+      .skip_libc_ret_check = true, .exp_ret = -1 },
+    { { .i = 0x5ad }, AT_INT, "%#67.x",
+      "                                                              0",
+      .skip_libc_ret_check = true, .exp_ret = -1 },
+    { { .i = 0x1337 }, AT_INT, "|%2147483639.x|",
+      "|                                                              ",
+      .skip_libc_ret_check = true, .exp_ret = -1 },
+    { { .i = 0x1337 }, AT_INT, "|%.2147483639x|",
+      "|00000000000000000000000000000000000000000000000000000000000000",
+#if defined(OPENSSL_SYS_WINDOWS)
+      /* MS CRT can't handle this one, snprintf() causes access violation. */
+      .skip_libc_check = true,
+#endif
+      .skip_libc_ret_check = true, .exp_ret = -1 },
+    /*
+     * We treat the following three format strings as errneous and bail out
+     * mid-string.
+     */
+    { { .i = 0x1337 }, AT_INT, "|%2147483647.x|", "|",
+      .skip_libc_check = true, .exp_ret = -1 },
+    { { .i = 0x1337 }, AT_INT,
+      "abcdefghijklmnopqrstuvwxyz0123456789ZYXWVUTSRQPONMLKJIHGFEDCBA"
+      "|%4294967295.x|",
+      "abcdefghijklmnopqrstuvwxyz0123456789ZYXWVUTSRQPONMLKJIHGFEDCBA|",
+      .skip_libc_check = true, .exp_ret = -1 },
+    { { .i = 0x1337 }, AT_INT, "%4294967302.x", "",
+      .skip_libc_check = true, .exp_ret = -1 },
+    { { .i = 0xbeeface }, AT_INT, "%#+-12.1d", "+200211150  " },
+    { { .l = 0 }, AT_LONG, "%%%#.0o%%", "%0%" },
+    { { .l = 0 }, AT_LONG, "%%%.0o%%", "%%" },
+    { { .l = 0 }, AT_LONG, "%%%-.0o%%", "%%" },
+    { { .l = 0xfacefed }, AT_LONG, "%#-1.14d", "00000262991853" },
+    { { .l = 0xdefaced }, AT_LONG, "%#+-014.11i", "+00233811181  " },
+    { { .l = 0xfacade }, AT_LONG, "%#0.14o", "00000076545336" },
+    { { .l = 0 }, AT_LONG, "%#0.14o", "00000000000000" },
+    { { .l = 0xfacade }, AT_LONG, "%#0.14x", "0x00000000facade" },
+    { { .ll = 0 }, AT_LLONG, "#%#.0x#", "##" },
+    { { .ll = 0 }, AT_LLONG, "#%.0x#", "##" },
+    { { .ll = 0xffffFFFFffffFFFFULL }, AT_LLONG, "%#-032llo",
+      "01777777777777777777777         " },
+    { { .ll = 0xbadc0deddeadfaceULL }, AT_LLONG, "%022lld",
+      "-004982091772484257074" },
+};
+
+static int test_int(int i)
+{
+    char bio_buf[64];
+    char std_buf[64];
+    int bio_ret;
+    int std_ret = 0;
+    const struct int_data *data = int_data + i;
+    const int exp_ret = data->exp_ret ? data->exp_ret
+                                      : (int) strlen(data->expected);
+
+    memset(bio_buf, '@', sizeof(bio_buf));
+    memset(std_buf, '#', sizeof(std_buf));
+
+    switch (data->type) {
+#define DO_PRINT(field_)                                                \
+    do {                                                                \
+        bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,  \
+                               data->value.field_);                     \
+        if (!data->skip_libc_check)                                     \
+            std_ret = snprintf(std_buf, sizeof(std_buf), data->format,  \
+                               data->value.field_);                     \
+    } while (0)
+    case AT_CHAR:
+        DO_PRINT(hh);
+        break;
+    case AT_SHORT:
+        DO_PRINT(h);
+        break;
+    case AT_INT:
+        DO_PRINT(i);
+        break;
+    case AT_LONG:
+        DO_PRINT(l);
+        break;
+    case AT_LLONG:
+        DO_PRINT(ll);
+        break;
+    default:
+        TEST_error("Unexpected arg type: %d", data->type);
+        return 0;
+#undef DO_PRINT
+    }
+
+    if (!TEST_str_eq(bio_buf, data->expected)
+        + !TEST_int_eq(bio_ret, exp_ret)) {
+        TEST_note("Format: \"%s\"", data->format);
+        return 0;
+    }
+
+    /*
+     * We treat the unexpected discrepancies with libc results as notable,
+     * but not fatal.
+     */
+    if (!data->skip_libc_check) {
+        if (!TEST_str_eq(bio_buf, std_buf)
+            + !(data->skip_libc_ret_check || TEST_int_eq(bio_ret, std_ret))) {
+            TEST_note("Format: \"%s\"", data->format);
+#if defined(OPENSSL_STRICT_LIBC_PRINTF_CHECK)
+            return 0;
+#endif
+        }
+    }
+
+    return 1;
+}
+
+union ptrint {
+    uintptr_t i;
+    const char *s;
+};
+
+static const struct wp_data {
+    union ptrint value;
+    const char *format;
+    const char *expected;
+    int num_args;
+    int arg1;
+    int arg2;
+    bool skip_libc_check;
+    /* Since OpenSSL's snprintf is non-standard on buffer overflow */
+    bool skip_libc_ret_check;
+    int exp_ret;
+} wp_data[] = {
+    /* Integer checks with width/precision provided via arguments */
+    { { .i = 01234 }, "%#*" PRIoPTR, "       01234", 1, 12 },
+    { { .i = 01234 }, "%#.*" PRIxPTR, "0x00000000029c", 1, 12 },
+
+    { { .i = 0 }, "|%#*" PRIoPTR "|", "| 0|", 1, 2 },
+    { { .i = 0 }, "|%#.*" PRIoPTR "|", "|00|", 1, 2 },
+    { { .i = 0 }, "|%#.*" PRIoPTR "|", "|0|", 1, 1 },
+    { { .i = 0 }, "|%#.*" PRIoPTR "|", "|0|", 1, 0 },
+    { { .i = 0 }, "|%.*" PRIoPTR "|", "||", 1, 0 },
+    { { .i = 0 }, "|%#.*" PRIoPTR "|", "|0|", 1, -12 },
+
+    { { .i = 0 }, "|%#.*" PRIxPTR "|", "||", 1, 0 },
+    { { .i = 0 }, "|%#.*" PRIxPTR "|", "|0|", 1, -12 },
+    { { .i = 1 }, "|%#.*" PRIxPTR "|", "|0x1|", 1, -12 },
+
+    { { .i = 0 }, "|%#*.*" PRIxPTR "|", "|            |", 2, 12, 0 },
+    { { .i = 1234 }, "|%*.*" PRIuPTR "|", "|      001234|", 2, 12, 6 },
+
+    /* FreeBSD's libc bails out on the following three */
+    { { .i = 1337 }, "|%*" PRIuPTR "|",
+      "|                                                              ",
+      1, 2147483647, .skip_libc_check = true, .exp_ret = -1 },
+    { { .i = 1337 }, "|%.*" PRIuPTR "|",
+      "|00000000000000000000000000000000000000000000000000000000000000",
+      1, 2147483647, .skip_libc_check = true, .exp_ret = -1 },
+    { { .i = 1337 }, "|%#*.*" PRIoPTR "|",
+      "|                                                             0",
+      2, 2147483647, 2147483586, .skip_libc_check = true, .exp_ret = -1 },
+
+    /* String width/precision checks */
+    { { .s = "01234" }, "%12s", "       01234" },
+    { { .s = "01234" }, "%-12s", "01234       " },
+    { { .s = "01234" }, "%.12s", "01234" },
+    { { .s = "01234" }, "%.2s", "01" },
+
+    { { .s = "abc" }, "%*s", "         abc", 1, 12 },
+    { { .s = "abc" }, "%*s", "abc         ", 1, -12 },
+    { { .s = "abc" }, "%-*s", "abc         ", 1, 12 },
+    { { .s = "abc" }, "%-*s", "abc         ", 1, -12 },
+
+    { { .s = "ABC" }, "%*.*s", "         ABC", 2, 12, 5 },
+    { { .s = "ABC" }, "%*.*s", "AB          ", 2, -12, 2 },
+    { { .s = "ABC" }, "%-*.*s", "ABC         ", 2, 12, -5 },
+    { { .s = "ABC" }, "%-*.*s", "ABC         ", 2, -12, -2 },
+
+    { { .s = "def" }, "%.*s", "def", 1, 12 },
+    { { .s = "%%s0123456789" }, "%.*s", "%%s01", 1, 5 },
+    { { .s = "9876543210" }, "|%-61s|",
+      "|9876543210                                                   |" },
+    { { .s = "0123456789" }, "|%62s|",
+      "|                                                    0123456789",
+      .skip_libc_ret_check = true, .exp_ret = -1 },
+
+    { { .s = "DEF" }, "%-2147483639s",
+      "DEF                                                            ",
+      .skip_libc_check = true, .exp_ret = -1 },
+    { { .s = "DEF" }, "%-2147483640s", "",
+      .skip_libc_check = true, .exp_ret = -1 },
+    { { .s = "DEF" }, "%*s",
+      "                                                               ",
+      1, 2147483647, .skip_libc_check = true, .exp_ret = -1 },
+};
+
+static int test_width_precision(int i)
+{
+    char bio_buf[64];
+    char std_buf[64];
+    int bio_ret;
+    int std_ret = 0;
+    const struct wp_data *data = wp_data + i;
+    const int exp_ret = data->exp_ret ? data->exp_ret
+                                      : (int) strlen(data->expected);
+
+    memset(bio_buf, '@', sizeof(bio_buf));
+    memset(std_buf, '#', sizeof(std_buf));
+
+    switch (data->num_args) {
+    case 2:
+        bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,
+                               data->arg1, data->arg2, data->value.i);
+        if (!data->skip_libc_check)
+            std_ret = snprintf(std_buf, sizeof(std_buf), data->format,
+                               data->arg1, data->arg2, data->value.i);
+        break;
+
+    case 1:
+        bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,
+                               data->arg1, data->value.i);
+        if (!data->skip_libc_check)
+            std_ret = snprintf(std_buf, sizeof(std_buf), data->format,
+                               data->arg1, data->value.i);
+        break;
+
+    case 0:
+    default:
+        bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,
+                               data->value.i);
+        if (!data->skip_libc_check)
+            std_ret = snprintf(std_buf, sizeof(std_buf), data->format,
+                               data->value.i);
+    }
+
+    if (!TEST_str_eq(bio_buf, data->expected)
+        + !TEST_int_eq(bio_ret, exp_ret)) {
+        TEST_note("Format: \"%s\"", data->format);
+        return 0;
+    }
+
+    /*
+     * We treat the unexpected discrepancies with libc results as notable,
+     * but not fatal, unless OPENSSL_STRICT_PRINTF_COMPLIANCE_CHECK is defined.
+     */
+    if (!data->skip_libc_check) {
+        if (!TEST_str_eq(bio_buf, std_buf)
+            + !(data->skip_libc_ret_check || TEST_int_eq(bio_ret, std_ret))) {
+            TEST_note("Format: \"%s\"", data->format);
+#if defined(OPENSSL_STRICT_LIBC_PRINTF_CHECK)
+            return 0;
+#endif
+        }
+    }
+
+    return 1;
+}
+
+static const struct n_data {
+    const char *format;
+    const char *expected;
+    enum arg_type n_type;
+    const uint64_t exp_n;
+    enum arg_type arg1_type;
+    union ptrint arg1;
+    enum arg_type arg2_type;
+    union ptrint arg2;
+    bool skip_libc_check;
+    /* Since OpenSSL's snprintf is non-standard on buffer overflow */
+    bool skip_libc_ret_check;
+    int exp_ret;
+} n_data[] = {
+    { "%n", "", AT_INT, 0, AT_NONE },
+    { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz%n",
+      "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+      AT_INT, 62, AT_NONE },
+    { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+=%n",
+      "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+",
+      AT_INT, 64, AT_NONE, .skip_libc_ret_check = true, .exp_ret = -1 },
+    { "%" PRIdPTR "%hhn", "1234567890",
+      AT_CHAR, 10, AT_INT, { .i = 1234567890 } },
+    { "%#.200" PRIXPTR "%hhn",
+      "0X0000000000000000000000000000000000000000000000000000000000000",
+      AT_CHAR, 202, AT_INT, { .i = 1234567890 },
+      .skip_libc_ret_check = true, .exp_ret = -1 },
+    { "%#10000" PRIoPTR "%hhn1234567890",
+      "                                                               ",
+      /* XXX Should we overflow or saturate?  glibc does the former. */
+      AT_CHAR, 16, AT_INT, { .i = 1234567890 },
+      .skip_libc_ret_check = true, .exp_ret = -1 },
+    { "%.0s%hn0987654321", "0987654321",
+      AT_SHORT, 0, AT_INT, { .s = "1234567890" } },
+    { "%-123456s%hn0987654321",
+      "1234567890                                                     ",
+      AT_SHORT, 57920, AT_INT, { .s = "1234567890" },
+      .skip_libc_ret_check = true, .exp_ret = -1 },
+    { "%1234567898.1234567890" PRIxPTR "%n",
+      "        0000000000000000000000000000000000000000000000000000000",
+      AT_INT, 1234567898, AT_INT, { .i = 0xbadc0ded },
+#if defined(OPENSSL_SYS_WINDOWS)
+      /* MS CRT can't handle this one, snprintf() causes access violation. */
+      .skip_libc_check = true,
+#endif
+      .skip_libc_ret_check = true, .exp_ret = -1 },
+    { "%s|%n",
+      "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ|",
+      AT_INT, 63, AT_STR, { .s =
+      "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" } },
+    { "|%#2147483639x|%2147483639s|0123456789abcdef|%ln",
+      "|                                                              ",
+      AT_LONG, sizeof(long) == 8 ? 4294967298ULL : 2,
+      AT_INT, { .i = 0x1337 }, AT_STR, { .s = "1EE7" },
+      /* glibc caps %n value (1 << 32) - 1 */
+      .skip_libc_check = true, .exp_ret = -1 },
+    { "|%-2147483638s|0123456789abcdef|%02147483637o|0123456789ABCDEF|%lln",
+      "|echo test test test                                           ",
+      AT_LLONG, 4294967312ULL,
+      AT_STR, { .s = "echo test test test" }, AT_INT, { .i = 0xbad },
+      /* glibc caps %n value (1 << 32) - 1 */
+      .skip_libc_check = true, .exp_ret = -1 },
+    { "|%+2147483639s|2147483639|%.2147483639u|2147483639|%zn",
+      "|                                                              ",
+      AT_SIZE, sizeof(size_t) == 8 ? 4294967303ULL : 7,
+      AT_STR, { .s = "according to all known laws of aviation" },
+      AT_INT, { .i = 0xbee },
+      /* glibc caps %n value (1 << 32) - 1 */
+      .skip_libc_check = true, .exp_ret = -1 },
+    { "==%2147483639.2147483639s==2147483639.2147483639==%+2147483639d==%tn==",
+      "==                                                             ",
+      AT_PTRDIFF, sizeof(ptrdiff_t) == 8 ? 4294967307ULL : 11,
+      AT_STR, { .s = "oh hi there hello" }, AT_INT, { .i = 0x1234 },
+      /* glibc caps %n value (1 << 32) - 1 */
+      .skip_libc_check = true, .exp_ret = -1 },
+    { "=%2147483639s=%888888888X=%tn=",
+      "=                                                              ",
+      AT_PTRDIFF, 3036372530U, AT_STR, { .s = NULL }, AT_INT, { .i = 0xdead },
+      .skip_libc_check = true, .exp_ret = -1 },
+};
+
+static int test_n(int i)
+{
+    const struct n_data *data = n_data + i;
+    const int exp_ret = data->exp_ret ? data->exp_ret
+                                      : (int) strlen(data->expected);
+    char bio_buf[64];
+    char std_buf[64];
+    int bio_ret;
+    int std_ret = 0;
+    bool skip_libc_check = data->skip_libc_check;
+    union {
+        uint64_t val;
+        signed char hh;
+        short h;
+        int i;
+        long int l;
+        long long int ll;
+        ossl_ssize_t z;
+        ptrdiff_t t;
+    } n = { 0 }, std_n = { 0 };
+
+#if defined(OPENSSL_SYS_WINDOWS)
+    /*
+     * MS CRT is special and throws an exception when %n is used even
+     * in non-*_s versions of printf routines, and there is a special function
+     * to enable %n handling.
+     */
+    _set_printf_count_output(1);
+    if (_get_printf_count_output() == 0) {
+        TEST_note("Can't enable %%n handling for snprintf"
+                  ", skipping the checks against libc");
+        skip_libc_check = true;
+    }
+#elif defined(__OpenBSD__)
+    {
+        static bool note_printed;
+
+        if (!note_printed) {
+            TEST_note("OpenBSD libc unconditionally terminates a program "
+                      "if %%n is used in a *printf routine"
+                      ", skipping the checks against libc");
+            note_printed = true;
+        }
+
+        skip_libc_check = true;
+    }
+#endif /* defined(OPENSSL_SYS_WINDOWS) || defined(__OpenBSD__) */
+
+    memset(bio_buf, '@', sizeof(bio_buf));
+    memset(std_buf, '#', sizeof(std_buf));
+
+    switch (data->n_type) {
+#define DO_PRINT(field_)                                                       \
+    do {                                                                       \
+        if (data->arg1_type == AT_NONE) {                                      \
+            bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,     \
+                                   &n.field_);                                 \
+            if (!skip_libc_check)                                              \
+                std_ret = snprintf(std_buf, sizeof(std_buf), data->format,     \
+                                   &std_n.field_);                             \
+        } else if (data->arg2_type == AT_NONE) {                               \
+            bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,     \
+                                   data->arg1.i, &n.field_);                   \
+            if (!skip_libc_check)                                              \
+                std_ret = snprintf(std_buf, sizeof(std_buf), data->format,     \
+                                   data->arg1.i, &std_n.field_);               \
+        } else {                                                               \
+            bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,     \
+                                   data->arg1.i, data->arg2.i, &n.field_);     \
+            if (!skip_libc_check)                                              \
+                std_ret = snprintf(std_buf, sizeof(std_buf), data->format,     \
+                                   data->arg1.i, data->arg2.i, &std_n.field_); \
+        }                                                                      \
+    } while (0)
+    case AT_CHAR:
+        DO_PRINT(hh);
+        break;
+    case AT_SHORT:
+        DO_PRINT(h);
+        break;
+    case AT_INT:
+        DO_PRINT(i);
+        break;
+    case AT_LONG:
+        DO_PRINT(l);
+        break;
+    case AT_LLONG:
+        DO_PRINT(ll);
+        break;
+    case AT_SIZE:
+        DO_PRINT(z);
+        break;
+    case AT_PTRDIFF:
+        DO_PRINT(t);
+        break;
+    default:
+        TEST_error("Unexpected arg type: %d", data->n_type);
+        return 0;
+#undef DO_PRINT
+    }
+
+    if (!TEST_str_eq(bio_buf, data->expected)
+        + !TEST_uint64_t_eq(n.val, data->exp_n)
+        + !TEST_int_eq(bio_ret, exp_ret)) {
+        TEST_note("Format: \"%s\"", data->format);
+        return 0;
+    }
+
+    /*
+     * We treat the unexpected discrepancies with libc results as notable,
+     * but not fatal.
+     */
+    if (!data->skip_libc_check) {
+        if (!TEST_str_eq(bio_buf, std_buf)
+            + !TEST_uint64_t_eq(n.val, std_n.val)
+            + !(data->skip_libc_ret_check || TEST_int_eq(bio_ret, std_ret))) {
+            TEST_note("Format: \"%s\"", data->format);
+#if defined(OPENSSL_STRICT_LIBC_PRINTF_CHECK)
+            return 0;
+#endif
+        }
+    }
+
+    return 1;
+}
+
 typedef struct z_data_st {
     size_t value;
     const char *format;
@@ -139,6 +672,52 @@ static int test_zu(int i)
     char bio_buf[80];
     char std_buf[80];
     const z_data *data = &zu_data[i];
+    const int exp_ret = (int) strlen(data->expected);
+    int bio_ret;
+    int std_ret;
+
+    memset(bio_buf, '@', sizeof(bio_buf));
+    memset(std_buf, '#', sizeof(std_buf));
+
+    bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value);
+    std_ret = snprintf(std_buf, sizeof(std_buf), data->format, data->value);
+    if (!TEST_str_eq(bio_buf, data->expected)
+        + !TEST_int_eq(bio_ret, exp_ret))
+        return 0;
+
+    /*
+     * We treat the unexpected discrepancies with libc results as notable,
+     * but not fatal.
+     */
+    if (!TEST_str_eq(bio_buf, std_buf)
+        + !TEST_int_eq(bio_ret, std_ret)) {
+        TEST_note("Format: \"%s\"", data->format);
+#if defined(OPENSSL_STRICT_LIBC_PRINTF_CHECK)
+        return 0;
+#endif
+    }
+
+    return 1;
+}
+
+static const struct t_data {
+    size_t value;
+    const char *format;
+    const char *expected;
+} t_data[] = {
+    { PTRDIFF_MAX, "%+td",
+      sizeof(ptrdiff_t) == 4 ? "+2147483647" : "+9223372036854775807" },
+    { PTRDIFF_MIN, "%+ti",
+      sizeof(ptrdiff_t) == 4 ? "-2147483648" : "-9223372036854775808" },
+    { 0, "%tu", "0" },
+    { 0, "%+09ti", "+00000000" },
+};
+
+static int test_t(int i)
+{
+    char bio_buf[64];
+    char std_buf[64];
+    const struct t_data *data = &t_data[i];
     const int exp_ret = (int) strlen(data->expected);
     int bio_ret;
     int std_ret;
@@ -368,7 +947,11 @@ int setup_tests(void)
 
     ADD_TEST(test_big);
     ADD_ALL_TESTS(test_fp, OSSL_NELEM(pw_params));
+    ADD_ALL_TESTS(test_int, OSSL_NELEM(int_data));
+    ADD_ALL_TESTS(test_width_precision, OSSL_NELEM(wp_data));
+    ADD_ALL_TESTS(test_n, OSSL_NELEM(n_data));
     ADD_ALL_TESTS(test_zu, OSSL_NELEM(zu_data));
+    ADD_ALL_TESTS(test_t, OSSL_NELEM(t_data));
     ADD_ALL_TESTS(test_j, OSSL_NELEM(jf_data));
     return 1;
 }
