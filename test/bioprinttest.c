@@ -19,7 +19,7 @@
 
 static int justprint = 0;
 
-static char *fpexpected[][11][5] = {
+static const char * const fpexpected[][11][5] = {
     {
         /*  0.00 */ { "0.0000e+00", "0.0000", "0", "0.0000E+00", "0" },
         /*  0.01 */ { "6.7000e-01", "0.6700", "0.67", "6.7000E-01", "0.67" },
@@ -119,7 +119,7 @@ typedef struct z_data_st {
     const char *expected;
 } z_data;
 
-static z_data zu_data[] = {
+static const z_data zu_data[] = {
     { SIZE_MAX, "%zu", (sizeof(size_t) == 4 ? "4294967295"
                         : sizeof(size_t) == 8 ? "18446744073709551615"
                         : "") },
@@ -153,7 +153,7 @@ typedef struct j_data_st {
     const char *expected;
 } j_data;
 
-static j_data jf_data[] = {
+static const j_data jf_data[] = {
     { 0xffffffffffffffffULL, "%ju", "18446744073709551615" },
     { 0xffffffffffffffffULL, "%jx", "ffffffffffffffff" },
     { 0x8000000000000000ULL, "%ju", "9223372036854775808" },
@@ -184,7 +184,7 @@ typedef struct pw_st {
     const char *w;
 } pw;
 
-static pw pw_params[] = {
+static const pw pw_params[] = {
     { 4, "" },
     { 5, "" },
     { 4, "12" },
