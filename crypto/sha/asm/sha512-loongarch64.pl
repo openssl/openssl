@@ -69,9 +69,9 @@ sub strip {
 sub MSGSCHEDULE0 {
     my ($index) = @_;
     my $code=<<___;
-    ld.d $T1, $INP, 8*$index
+    ld.d $T1, $INP, @{[8*$index]}
     revb.d $T1, $T1
-    st.d $T1, $ADDR, 8*$index
+    st.d $T1, $ADDR, @{[8*$index]}
 ___
     return strip($code);
 }
@@ -79,10 +79,10 @@ ___
 sub MSGSCHEDULE1 {
     my ($index) = @_;
     my $code=<<___;
-    ld.d $T1, $ADDR, (($index-2)&0x0f)*8
-    ld.d $T2, $ADDR, (($index-15)&0x0f)*8
-    ld.d $T3, $ADDR, (($index-7)&0x0f)*8
-    ld.d $T4, $ADDR, ($index&0x0f)*8
+    ld.d $T1, $ADDR, @{[(($index-2)&0x0f)*8]}
+    ld.d $T2, $ADDR, @{[(($index-15)&0x0f)*8]}
+    ld.d $T3, $ADDR, @{[(($index-7)&0x0f)*8]}
+    ld.d $T4, $ADDR, @{[($index&0x0f)*8]}
     rotri.d $T5, $T1, 19
     rotri.d $T6, $T1, 61
     srli.d $T1, $T1, 6
@@ -96,7 +96,7 @@ sub MSGSCHEDULE1 {
     xor $T2, $T2, $T6
     add.d $T1, $T1, $T2
     add.d $T1, $T1, $T4
-    st.d $T1, $ADDR, 8*($index&0x0f)
+    st.d $T1, $ADDR, @{[8*($index&0x0f)]}
 ___
     return strip($code);
 }
@@ -104,7 +104,7 @@ ___
 sub sha512_T1 {
     my ($index, $e, $f, $g, $h) = @_;
     my $code=<<___;
-    ld.d $T4, $KT, 8*$index
+    ld.d $T4, $KT, @{[8*$index]}
     add.d $h, $h, $T1
     add.d $h, $h, $T4
     rotri.d $T2, $e, 14
@@ -192,7 +192,6 @@ L_round_loop:
 ___
 
 for (my $i = 0; $i < 80; $i += 8) {
-
     $code .= <<___;
     @{[SHA512ROUND $i, $A, $B, $C, $D, $E, $F, $G, $H]}
     @{[SHA512ROUND $i+1, $H, $A, $B, $C, $D, $E, $F, $G]}

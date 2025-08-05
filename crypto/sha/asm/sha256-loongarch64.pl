@@ -69,9 +69,9 @@ sub strip {
 sub MSGSCHEDULE0 {
     my ($index) = @_;
     my $code=<<___;
-    ld.w $T1, $INP, 4*$index
+    ld.w $T1, $INP, @{[4*$index]}
     revb.2w $T1, $T1
-    st.w $T1, $ADDR, 4*$index
+    st.w $T1, $ADDR, @{[4*$index]}
 ___
     return strip($code);
 }
@@ -79,10 +79,10 @@ ___
 sub MSGSCHEDULE1 {
     my ($index) = @_;
     my $code=<<___;
-    ld.w $T1, $ADDR, (($index-2)&0x0f)*4
-    ld.w $T2, $ADDR, (($index-15)&0x0f)*4
-    ld.w $T3, $ADDR, (($index-7)&0x0f)*4
-    ld.w $T4, $ADDR, ($index&0x0f)*4
+    ld.w $T1, $ADDR, @{[(($index-2)&0x0f)*4]}
+    ld.w $T2, $ADDR, @{[(($index-15)&0x0f)*4]}
+    ld.w $T3, $ADDR, @{[(($index-7)&0x0f)*4]}
+    ld.w $T4, $ADDR, @{[($index&0x0f)*4]}
     rotri.w $T5, $T1, 17
     rotri.w $T6, $T1, 19
     srli.w $T1, $T1, 10
@@ -96,7 +96,7 @@ sub MSGSCHEDULE1 {
     xor $T2, $T2, $T6
     add.w $T1, $T1, $T2
     add.w $T1, $T1, $T4
-    st.w $T1, $ADDR, ($index&0x0f)*4
+    st.w $T1, $ADDR, @{[($index&0x0f)*4]}
 ___
     return strip($code);
 }
@@ -104,7 +104,7 @@ ___
 sub sha256_T1 {
     my ($index, $e, $f, $g, $h) = @_;
     my $code=<<___;
-    ld.w $T4, $KT, 4*$index
+    ld.w $T4, $KT, @{[4*$index]}
     add.w $h, $h, $T1
     add.w $h, $h, $T4
     rotri.w $T2, $e, 6
