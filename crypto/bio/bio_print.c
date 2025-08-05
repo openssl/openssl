@@ -235,7 +235,7 @@ _dopr(char **sbuffer,
             case 'i':
                 switch (cflags) {
                 case DP_C_CHAR:
-                    value = (char)va_arg(args, int);
+                    value = (signed char)va_arg(args, int);
                     break;
                 case DP_C_SHORT:
                     value = (short int)va_arg(args, int);
