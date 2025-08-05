@@ -506,12 +506,12 @@ fmtint(char **sbuffer,
         zpadlen = 0;
     if (spadlen < 0)
         spadlen = 0;
-    if (flags & DP_F_ZERO) {
+    if (flags & DP_F_MINUS) {
+        spadlen = -spadlen;
+    } else if (flags & DP_F_ZERO) {
         zpadlen = OSSL_MAX(zpadlen, spadlen);
         spadlen = 0;
     }
-    if (flags & DP_F_MINUS)
-        spadlen = -spadlen;
 
     /* spaces */
     while (spadlen > 0) {
