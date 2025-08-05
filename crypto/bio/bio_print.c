@@ -158,9 +158,17 @@ _dopr(char **sbuffer,
                 break;
             }
             break;
-        case DP_S_MIN:
+        case DP_S_MIN: /* width */
             if (ossl_isdigit(ch)) {
-                min = 10 * min + char_to_int(ch);
+                /*
+                 * Most implementations cap the possible explicitly specified
+                 * width by (INT_MAX / 10) * 10 - 1 or so (the standard gives
+                 * no clear limit on this), we can do the same.
+                 */
+                if (min < INT_MAX / 10)
+                    min = 10 * min + char_to_int(ch);
+                else
+                    goto out;
                 ch = *format++;
             } else if (ch == '*') {
                 min = va_arg(args, int);
@@ -180,11 +188,19 @@ _dopr(char **sbuffer,
             } else
                 state = DP_S_MOD;
             break;
-        case DP_S_MAX:
+        case DP_S_MAX: /* precision */
             if (ossl_isdigit(ch)) {
                 if (max < 0)
                     max = 0;
-                max = 10 * max + char_to_int(ch);
+                /*
+                 * Most implementations cap the possible explicitly specified
+                 * width by (INT_MAX / 10) * 10 - 1 or so (the standard gives
+                 * no clear limit on this), we can do the same.
+                 */
+                if (max < INT_MAX / 10)
+                    max = 10 * max + char_to_int(ch);
+                else
+                    goto out;
                 ch = *format++;
             } else if (ch == '*') {
                 max = va_arg(args, int);
