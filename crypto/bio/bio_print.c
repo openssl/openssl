@@ -452,6 +452,8 @@ fmtint(char **sbuffer,
        size_t *currlen,
        size_t *maxlen, int64_t value, int base, int min, int max, int flags)
 {
+    static const char oct_prefix[] = "0";
+
     int signvalue = 0;
     const char *prefix = "";
     uint64_t uvalue;
@@ -476,7 +478,7 @@ fmtint(char **sbuffer,
     if (flags & DP_F_NUM) {
         if (value != 0) {
             if (base == 8)
-                prefix = "0";
+                prefix = oct_prefix;
             if (base == 16)
                 prefix = flags & DP_F_UP ? "0X" : "0x";
         }
@@ -492,7 +494,12 @@ fmtint(char **sbuffer,
         place--;
     convert[place] = 0;
 
-    zpadlen = max - place;
+    /*
+     * "#" (alternative form):
+     *   - For o conversion, it shall increase the precision, if and only
+     *     if necessary, to force the first digit of the result to be a zero
+     */
+    zpadlen = max - place - (prefix == oct_prefix);
     spadlen =
         min - OSSL_MAX(max, place) - (signvalue ? 1 : 0) - (int)strlen(prefix);
     if (zpadlen < 0)
