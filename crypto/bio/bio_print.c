@@ -474,10 +474,12 @@ fmtint(char **sbuffer,
             signvalue = ' ';
     }
     if (flags & DP_F_NUM) {
-        if (base == 8)
-            prefix = "0";
-        if (base == 16)
-            prefix = flags & DP_F_UP ? "0X" : "0x";
+        if (value != 0) {
+            if (base == 8)
+                prefix = "0";
+            if (base == 16)
+                prefix = flags & DP_F_UP ? "0X" : "0x";
+        }
     }
     if (flags & DP_F_UP)
         caps = 1;
