@@ -500,16 +500,16 @@ fmtint(char **sbuffer,
      *     if necessary, to force the first digit of the result to be a zero
      */
     zpadlen = max - place - (prefix == oct_prefix);
-    spadlen =
-        min - OSSL_MAX(max, place) - (signvalue ? 1 : 0) - (int)strlen(prefix);
     if (zpadlen < 0)
         zpadlen = 0;
+    spadlen =
+        min - OSSL_MAX(max, place + zpadlen + (signvalue ? 1 : 0) + (int)strlen(prefix));
     if (spadlen < 0)
         spadlen = 0;
     if (flags & DP_F_MINUS) {
         spadlen = -spadlen;
     } else if (flags & DP_F_ZERO) {
-        zpadlen = OSSL_MAX(zpadlen, spadlen);
+        zpadlen = zpadlen + spadlen;
         spadlen = 0;
     }
 
