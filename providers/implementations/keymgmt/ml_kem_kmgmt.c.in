@@ -580,7 +580,7 @@ static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
     const ML_KEM_VINFO *v = ossl_ml_kem_key_vinfo(key);
     struct ml_kem_get_params_st p;
 
-    if (key == NULL || !ml_kem_get_params_decoder(params, &p))
+    if (!ml_kem_get_params_decoder(params, &p))
         return 0;
 
     if (p.bits != NULL && !OSSL_PARAM_set_size_t(p.bits, v->bits))

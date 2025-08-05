@@ -205,7 +205,7 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
     size_t pk_len = 0, sk_len = 0, seed_len = 0;
     struct ml_dsa_key_type_params_st p;
 
-    if (key == NULL || !ml_dsa_key_type_params_decoder(params, &p))
+    if (!ml_dsa_key_type_params_decoder(params, &p))
         return 0;
 
     if (p.pubkey != NULL) {

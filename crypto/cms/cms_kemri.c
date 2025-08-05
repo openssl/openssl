@@ -168,8 +168,7 @@ int CMS_RecipientInfo_kemri_set_ukm(CMS_RecipientInfo *ri,
     kemri->ukm = ASN1_OCTET_STRING_new();
     if (kemri->ukm == NULL)
         return 0;
-    ASN1_OCTET_STRING_set(kemri->ukm, ukm, ukmLength);
-    return 1;
+    return ASN1_OCTET_STRING_set(kemri->ukm, ukm, ukmLength);
 }
 
 static EVP_KDF_CTX *create_kdf_ctx(CMS_KEMRecipientInfo *kemri)
@@ -284,7 +283,7 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     rv = 1;
 err:
     OPENSSL_free(out);
-    OPENSSL_cleanse(kek, keklen);
+    OPENSSL_cleanse(kek, sizeof(kek));
     EVP_CIPHER_CTX_reset(kemri->ctx);
     EVP_PKEY_CTX_free(kemri->pctx);
     kemri->pctx = NULL;
