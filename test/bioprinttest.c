@@ -137,10 +137,18 @@ static const z_data zu_data[] = {
 static int test_zu(int i)
 {
     char bio_buf[80];
+    char std_buf[80];
     const z_data *data = &zu_data[i];
+    const int exp_ret = (int) strlen(data->expected);
+    int bio_ret;
+    int std_ret;
 
-    BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value);
-    if (!TEST_str_eq(bio_buf, data->expected))
+    bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value);
+    std_ret = snprintf(std_buf, sizeof(std_buf), data->format, data->value);
+    if (!TEST_str_eq(bio_buf, data->expected)
+        + !TEST_str_eq(bio_buf, std_buf)
+        + !TEST_int_eq(bio_ret, exp_ret)
+        + !TEST_int_eq(bio_ret, std_ret))
         return 0;
     return 1;
 }
@@ -166,9 +174,17 @@ static int test_j(int i)
 {
     const j_data *data = &jf_data[i];
     char bio_buf[80];
+    char std_buf[80];
+    const int exp_ret = (int) strlen(data->expected);
+    int bio_ret;
+    int std_ret;
 
-    BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value);
-    if (!TEST_str_eq(bio_buf, data->expected))
+    bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value);
+    std_ret = snprintf(std_buf, sizeof(std_buf), data->format, data->value);
+    if (!TEST_str_eq(bio_buf, data->expected)
+        + !TEST_str_eq(bio_buf, std_buf)
+        + !TEST_int_eq(bio_ret, exp_ret)
+        + !TEST_int_eq(bio_ret, std_ret))
         return 0;
     return 1;
 }
@@ -195,8 +211,11 @@ static int dofptest(int test, int sub, double val, const char *width, int prec)
     static const char *fspecs[] = {
         "e", "f", "g", "E", "G"
     };
-    char format[80], result[80];
+    char format[80], result[80], std_result[80];
     int ret = 1, i;
+    int exp_ret;
+    int bio_ret;
+    int std_ret;
 
     for (i = 0; i < (int)OSSL_NELEM(fspecs); i++) {
         const char *fspec = fspecs[i];
@@ -206,16 +225,22 @@ static int dofptest(int test, int sub, double val, const char *width, int prec)
                          fspec);
         else
             BIO_snprintf(format, sizeof(format), "%%%s%s", width, fspec);
-        BIO_snprintf(result, sizeof(result), format, val);
+
+        exp_ret = (int) strlen(fpexpected[test][sub][i]);
+        bio_ret = BIO_snprintf(result, sizeof(result), format, val);
+        std_ret = snprintf(std_result, sizeof(std_result), format, val);
 
         if (justprint) {
             if (i == 0)
                 printf("    /*  %d.%02d */ { \"%s\"", test, sub, result);
             else
                 printf(", \"%s\"", result);
-        } else if (!TEST_str_eq(fpexpected[test][sub][i], result)) {
-            TEST_info("test %d format=|%s| exp=|%s|, ret=|%s|",
-                    test, format, fpexpected[test][sub][i], result);
+        } else if (!TEST_str_eq(fpexpected[test][sub][i], result)
+                   + !TEST_str_eq(result, std_result)
+                   + !TEST_int_eq(bio_ret, exp_ret)
+                   + !TEST_int_eq(bio_ret, std_ret)) {
+            TEST_info("test %d format=|%s| exp=|%s|, ret=|%s|, stdlib_ret=|%s|",
+                    test, format, fpexpected[test][sub][i], result, std_result);
             ret = 0;
         }
     }
