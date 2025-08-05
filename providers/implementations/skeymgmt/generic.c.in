@@ -13,6 +13,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include <string.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/proverr.h>
 #include "crypto/types.h"
 #include "internal/cryptlib.h"
 #include "internal/skey.h"
