@@ -502,7 +502,7 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     size_t publen = key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes;
     size_t prvlen = key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes;
 
-    if (key == NULL || !mlx_get_params_decoder(params, &p))
+    if (!mlx_get_params_decoder(params, &p))
         return 0;
 
     /* The reported "bit" count is those of the ML-KEM key */

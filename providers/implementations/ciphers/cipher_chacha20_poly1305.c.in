@@ -188,7 +188,7 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
         (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->base.hw;
     struct chacha20_poly1305_set_ctx_params_st p;
 
-    if (ctx == NULL || !chacha20_poly1305_set_ctx_params_decoder(params, &p))
+    if (!chacha20_poly1305_set_ctx_params_decoder(params, &p))
         return 0;
 
 

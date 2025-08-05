@@ -199,7 +199,7 @@ static int hmac_drbg_kdf_set_ctx_params(void *vctx,
     size_t size = 0;
     int md_size;
 
-    if (hmac == NULL || !hmac_drbg_kdf_set_ctx_params_decoder(params, &p))
+    if (!hmac_drbg_kdf_set_ctx_params_decoder(params, &p))
         return 0;
 
     if (p.ent != NULL) {
