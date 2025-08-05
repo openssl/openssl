@@ -155,6 +155,10 @@ _dopr(char **sbuffer,
                 ch = *format++;
             } else if (ch == '*') {
                 min = va_arg(args, int);
+                if (min < 0) {
+                    flags |= DP_F_MINUS;
+                    min = -min;
+                }
                 ch = *format++;
                 state = DP_S_DOT;
             } else
