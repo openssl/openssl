@@ -26,3 +26,16 @@ void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
         sha256_block_data_order_la64v100(ctx, in, num);
     }
 }
+
+void sha512_block_data_order_la64v100(void *ctx, const void *in, size_t num);
+void sha512_block_data_order_lsx(void *ctx, const void *in, size_t num);
+void sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num);
+
+void sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num)
+{
+    if (OPENSSL_loongarch_hwcap_P & LOONGARCH_HWCAP_LSX) {
+        sha512_block_data_order_lsx(ctx, in, num);
+    } else {
+        sha512_block_data_order_la64v100(ctx, in, num);
+    }
+}
