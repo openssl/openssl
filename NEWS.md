@@ -23,6 +23,10 @@ OpenSSL Releases
 OpenSSL 3.5
 -----------
 
+### Major changes between OpenSSL 3.5.2 and OpenSSL 3.5.3 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.5.1 and OpenSSL 3.5.2 [5 Aug 2025]
 
   * none

@@ -28,6 +28,10 @@ OpenSSL Releases
 OpenSSL 3.5
 -----------
 
+### Changes between 3.5.2 and 3.5.3 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.5.1 and 3.5.2 [5 Aug 2025]
 
  * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
