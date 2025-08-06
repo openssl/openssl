@@ -121,15 +121,12 @@ err:
  * @param lmskey The LMS_KEY to load the public key data into.
  * @returns 1 on success, or 0 otherwise.
  */
-int ossl_lms_pubkey_from_params(const OSSL_PARAM params[], LMS_KEY *lmskey)
+int ossl_lms_pubkey_from_params(const OSSL_PARAM *pub, LMS_KEY *lmskey)
 {
-    const OSSL_PARAM *p = NULL;
-
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
-    if (p != NULL) {
-        if (p->data == NULL
-                || p->data_type != OSSL_PARAM_OCTET_STRING
-                || !ossl_lms_pubkey_decode(p->data, p->data_size, lmskey))
+    if (pub != NULL) {
+        if (pub->data == NULL
+                || pub->data_type != OSSL_PARAM_OCTET_STRING
+                || !ossl_lms_pubkey_decode(pub->data, pub->data_size, lmskey))
             return 0;
     }
     return 1;
