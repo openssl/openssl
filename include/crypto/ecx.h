@@ -150,7 +150,8 @@ ECX_KEY *ossl_ecx_key_op(const X509_ALGOR *palg,
                          OSSL_LIB_CTX *libctx, const char *propq);
 
 int ossl_ecx_public_from_private(ECX_KEY *key);
-int ossl_ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
+int ossl_ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM *param_pub_key,
+                          const OSSL_PARAM *param_priv_key,
                           int include_private);
 ECX_KEY *ossl_ecx_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
                                  OSSL_LIB_CTX *libctx, const char *propq);
