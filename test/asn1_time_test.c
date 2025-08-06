@@ -470,6 +470,25 @@ static int convert_tm_to_asn1_time(void)
     return 1;
 }
 
+/*
+ * this test checks for integer overflow by setting the
+ * time and offset values to their maximum values.
+ * links: https://github.com/openssl/openssl/pull/28184
+ */
+static int asn1_utctime_adjust(void)
+{
+    ASN1_UTCTIME *s;
+    time_t t = LONG_MAX;
+    int offset_day = INT_MAX;
+    long offset_sec = LONG_MAX;
+
+    s = ASN1_UTCTIME_adj(NULL, t, offset_day, offset_sec);
+
+    ASN1_UTCTIME_free(s);
+
+    return 1;
+}
+
 int setup_tests(void)
 {
     /*
@@ -507,5 +526,6 @@ int setup_tests(void)
     ADD_TEST(test_time_dup);
     ADD_ALL_TESTS(convert_asn1_to_time_t, OSSL_NELEM(asn1_to_utc));
     ADD_TEST(convert_tm_to_asn1_time);
+    ADD_TEST(asn1_utctime_adjust);
     return 1;
 }
