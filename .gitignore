@@ -121,6 +121,12 @@ providers/implementations/keymgmt/ml_kem_kmgmt.c
 providers/implementations/keymgmt/mlx_kmgmt.c
 providers/implementations/signature/dsa_sig.c
 providers/implementations/signature/ecdsa_sig.c
+providers/implementations/keymgmt/ecx_kmgmt.c
+providers/implementations/keymgmt/lms_kmgmt.c
+providers/implementations/keymgmt/ml_dsa_kmgmt.c
+providers/implementations/keymgmt/ml_kem_kmgmt.c
+providers/implementations/keymgmt/mlx_kmgmt.c
+providers/implementations/keymgmt/slh_dsa_kmgmt.c
 providers/implementations/signature/eddsa_sig.c
 providers/implementations/signature/ml_dsa_sig.c
 providers/implementations/signature/rsa_sig.c

@@ -78,9 +78,12 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/kem/ecx_kem.c \
          providers/implementations/kem/ml_kem_kem.c \
          providers/implementations/kem/rsa_kem.c \
+         providers/implementations/keymgmt/ecx_kmgmt.c \
+         providers/implementations/keymgmt/lms_kmgmt.c \
          providers/implementations/keymgmt/ml_dsa_kmgmt.c \
          providers/implementations/keymgmt/ml_kem_kmgmt.c \
          providers/implementations/keymgmt/mlx_kmgmt.c \
+         providers/implementations/keymgmt/slh_dsa_kmgmt.c \
          providers/implementations/signature/dsa_sig.c \
          providers/implementations/signature/ecdsa_sig.c \
          providers/implementations/signature/eddsa_sig.c \
@@ -177,9 +180,12 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/kem/ecx_kem.c \
        providers/implementations/kem/ml_kem_kem.c \
        providers/implementations/kem/rsa_kem.c \
+       providers/implementations/keymgmt/ecx_kmgmt.c \
+       providers/implementations/keymgmt/lms_kmgmt.c \
        providers/implementations/keymgmt/ml_dsa_kmgmt.c \
        providers/implementations/keymgmt/ml_kem_kmgmt.c \
        providers/implementations/keymgmt/mlx_kmgmt.c \
+       providers/implementations/keymgmt/slh_dsa_kmgmt.c \
        providers/implementations/signature/dsa_sig.c \
        providers/implementations/signature/ecdsa_sig.c \
        providers/implementations/signature/eddsa_sig.c \
@@ -273,12 +279,18 @@ GENERATE[providers/implementations/kem/ml_kem_kem.c]=\
     providers/implementations/kem/ml_kem_kem.c.in
 GENERATE[providers/implementations/kem/rsa_kem.c]=\
     providers/implementations/kem/rsa_kem.c.in
+GENERATE[providers/implementations/keymgmt/ecx_kmgmt.c]=\
+    providers/implementations/keymgmt/ecx_kmgmt.c.in
+GENERATE[providers/implementations/keymgmt/lms_kmgmt.c]=\
+    providers/implementations/keymgmt/lms_kmgmt.c.in
 GENERATE[providers/implementations/keymgmt/ml_dsa_kmgmt.c]=\
     providers/implementations/keymgmt/ml_dsa_kmgmt.c.in
 GENERATE[providers/implementations/keymgmt/ml_kem_kmgmt.c]=\
     providers/implementations/keymgmt/ml_kem_kmgmt.c.in
 GENERATE[providers/implementations/keymgmt/mlx_kmgmt.c]=\
     providers/implementations/keymgmt/mlx_kmgmt.c.in
+GENERATE[providers/implementations/keymgmt/slh_dsa_kmgmt.c]=\
+    providers/implementations/keymgmt/slh_dsa_kmgmt.c.in
 GENERATE[providers/implementations/signature/dsa_sig.c]=\
     providers/implementations/signature/dsa_sig.c.in
 GENERATE[providers/implementations/signature/ecdsa_sig.c]=\
