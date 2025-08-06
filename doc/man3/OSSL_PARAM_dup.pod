@@ -38,8 +38,8 @@ If the argument to OSSL_PARAM_free() is NULL, nothing is done.
 OSSL_PARAM_clear_free() performs the same function as OSSL_PARAM_free() but
 additionally calls OPENSSL_cleanse() on the contents copied in. Note: only
 params built via the OSSL_PARAM_dup() or OSSL_PARAM_BLD_to_param() functions
-will be effectively cleared, parameters built any other way wil still be freed
-but no cleanse operation will be perfomred.
+will be effectively cleared, parameters built any other way will still be
+freed but no cleanse operation will be performed.
 
 =head1 RETURN VALUES
 
