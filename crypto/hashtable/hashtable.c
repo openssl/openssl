@@ -233,9 +233,9 @@ err:
     return NULL;
 }
 
-void ossl_ht_read_lock(HT *htable)
+int ossl_ht_read_lock(HT *htable)
 {
-    ossl_rcu_read_lock(htable->lock);
+    return ossl_rcu_read_lock(htable->lock);
 }
 
 void ossl_ht_read_unlock(HT *htable)

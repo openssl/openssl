@@ -280,7 +280,7 @@ void ossl_ht_free(HT *htable);
 /*
  * Lock the table for reading
  */
-void ossl_ht_read_lock(HT *htable);
+int ossl_ht_read_lock(HT *htable);
 
 /*
  * Lock the table for writing
