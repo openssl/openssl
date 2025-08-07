@@ -374,7 +374,13 @@ static void reader_fn(int *iterations)
         CRYPTO_atomic_add(&writer1_done, 0, &lw1, atomiclock);
         CRYPTO_atomic_add(&writer2_done, 0, &lw2, atomiclock);
         count++;
-        ossl_rcu_read_lock(rcu_lock);
+        if (!ossl_rcu_read_lock(rcu_lock)) {
+            TEST_info("rcu torture read lock failed");
+            rcu_torture_result = 0;
+            *iterations = count;
+            return;
+        }
+
         valp = ossl_rcu_deref(&writer_ptr);
         val = (valp == NULL) ? 0 : *valp;
 

@@ -573,7 +573,8 @@ static void do_mt_hash_work(void)
         }
         switch(behavior) {
         case DO_LOOKUP:
-            ossl_ht_read_lock(m_ht);
+            if (!ossl_ht_read_lock(m_ht))
+                break;
             m = ossl_ht_mt_TEST_MT_ENTRY_get(m_ht, TO_HT_KEY(&key), &v);
             if (m != NULL && m != expected_m) {
                 worker_exits[num] = "Read unexpected value from hashtable";

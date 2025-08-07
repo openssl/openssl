@@ -411,7 +411,9 @@ static CONF_MODULE *module_find(const char *name)
     if (!RUN_ONCE(&init_module_list_lock, do_init_module_list_lock))
         return NULL;
 
-    ossl_rcu_read_lock(module_list_lock);
+    if (!ossl_rcu_read_lock(module_list_lock))
+        return NULL;
+
     mods = ossl_rcu_deref(&supported_modules);
 
     for (i = 0; i < sk_CONF_MODULE_num(mods); i++) {

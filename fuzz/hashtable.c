@@ -276,7 +276,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         HT_SET_KEY_FIELD(&key, fuzzkey, keyval);
 
         /* lock the table for reading */
-        ossl_ht_read_lock(fuzzer_table);
+        if (!ossl_ht_read_lock(fuzzer_table))
+            return 0;
 
         /*
          * If the value to find is not already allocated
