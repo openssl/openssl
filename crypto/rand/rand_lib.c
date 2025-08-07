@@ -842,7 +842,10 @@ static EVP_RAND_CTX *rand_get0_public(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
             return NULL;
         rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
                              SECONDARY_RESEED_TIME_INTERVAL);
-        CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_DRBG_PUB_KEY, ctx, rand);
+        if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_DRBG_PUB_KEY, ctx, rand)) {
+            EVP_RAND_CTX_free(rand);
+            rand = NULL;
+        }
     }
     return rand;
 }
@@ -882,7 +885,10 @@ static EVP_RAND_CTX *rand_get0_private(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
             return NULL;
         rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
                              SECONDARY_RESEED_TIME_INTERVAL);
-        CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_DRBG_PRIV_KEY, ctx, rand);
+        if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_DRBG_PRIV_KEY, ctx, rand)) {
+            EVP_RAND_CTX_free(rand);
+            rand = NULL;
+        }
     }
     return rand;
 }
