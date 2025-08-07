@@ -100,11 +100,12 @@ static int pvk2key_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct pvk2key_ctx_st *ctx = vctx;
     struct pvk2key_set_ctx_params_st p;
-    char *str = ctx->propq;
+    char *str;
 
     if (ctx == NULL || !pvk2key_set_ctx_params_decoder(params, &p))
         return 0;
 
+    str = ctx->propq;
     if (p.propq != NULL
             && !OSSL_PARAM_get_utf8_string(p.propq, &str, sizeof(ctx->propq)))
         return 0;
