@@ -497,7 +497,7 @@ static void drbg_hash_free(void *vdrbg)
 static int drbg_hash_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
-    PROV_DRBG_HASH *hash = (PROV_DRBG_HASH *)drbg->data;
+    PROV_DRBG_HASH *hash;
     const EVP_MD *md;
     struct drbg_get_ctx_params_st p;
     int ret = 0, complete = 0;
@@ -510,6 +510,8 @@ static int drbg_hash_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 
     if (complete)
         return 1;
+
+    hash = (PROV_DRBG_HASH *)drbg->data;
 
     if (drbg->lock != NULL && !CRYPTO_THREAD_read_lock(drbg->lock))
         return 0;

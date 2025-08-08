@@ -390,7 +390,7 @@ static void drbg_hmac_free(void *vdrbg)
 static int drbg_hmac_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
-    PROV_DRBG_HMAC *hmac = (PROV_DRBG_HMAC *)drbg->data;
+    PROV_DRBG_HMAC *hmac;
     const char *name;
     const EVP_MD *md;
     struct drbg_get_ctx_params_st p;
@@ -404,6 +404,8 @@ static int drbg_hmac_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 
     if (complete)
         return 1;
+
+    hmac = (PROV_DRBG_HMAC *)drbg->data;
 
     if (drbg->lock != NULL && !CRYPTO_THREAD_read_lock(drbg->lock))
         return 0;
