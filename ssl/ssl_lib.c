@@ -13,25 +13,26 @@
 #include "internal/e_winsock.h"
 #include "ssl_local.h"
 
-#include <openssl/objects.h>
-#include <openssl/x509v3.h>
-#include <openssl/rand.h>
-#include <openssl/ocsp.h>
-#include <openssl/dh.h>
-#include <openssl/engine.h>
-#include <openssl/async.h>
-#include <openssl/ct.h>
-#include <openssl/trace.h>
-#include <openssl/core_names.h>
-#include <openssl/provider.h>
 #include "internal/cryptlib.h"
+#include "internal/ktls.h"
 #include "internal/nelem.h"
 #include "internal/refcount.h"
-#include "internal/thread_once.h"
-#include "internal/ktls.h"
-#include "internal/to_hex.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/thread_once.h"
+#include "internal/to_hex.h"
 #include "quic/quic_local.h"
+#include "record/methods/recmethod_local.h"
+#include <openssl/async.h>
+#include <openssl/core_names.h>
+#include <openssl/ct.h>
+#include <openssl/dh.h>
+#include <openssl/engine.h>
+#include <openssl/objects.h>
+#include <openssl/ocsp.h>
+#include <openssl/provider.h>
+#include <openssl/rand.h>
+#include <openssl/trace.h>
+#include <openssl/x509v3.h>
 
 #ifndef OPENSSL_NO_SSLKEYLOG
 # include <sys/stat.h>
@@ -814,8 +815,12 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
     X509_VERIFY_PARAM_inherit(s->param, ctx->param);
     s->quiet_shutdown = IS_QUIC_CTX(ctx) ? 0 : ctx->quiet_shutdown;
 
-    if (!IS_QUIC_CTX(ctx))
+    if (!IS_QUIC_CTX(ctx)) {
         s->ext.max_fragment_len_mode = ctx->ext.max_fragment_len_mode;
+
+        s->ext.record_size_limit = ctx->ext.record_size_limit;
+        s->ext.peer_record_size_limit = TLSEXT_record_size_limit_UNSPECIFIED;
+    }
 
     s->max_send_fragment = ctx->max_send_fragment;
     s->split_send_fragment = ctx->split_send_fragment;
@@ -7346,8 +7351,39 @@ uint32_t SSL_get_recv_max_early_data(const SSL *s)
     return sc->recv_max_early_data;
 }
 
-__owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc)
+static unsigned int get_proto_record_hard_limit(int version) {
+    if (version <= TLS1_2_VERSION
+        || version == DTLS1_2_VERSION
+        || version == DTLS1_VERSION) {
+        return SSL3_RT_MAX_PLAIN_LENGTH;
+    }
+    if (version == TLS1_3_VERSION) {
+        return SSL3_RT_MAX_PLAIN_LENGTH + 1;
+    }
+
+    return 0;
+}
+
+__owur unsigned int ssl_get_proto_record_hard_limit(const SSL_CONNECTION *sc) {
+    if (sc->session)
+        return get_proto_record_hard_limit(sc->session->ssl_version);
+
+    return get_proto_record_hard_limit(sc->version);
+}
+
+__owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc,
+                                              uint8_t type)
 {
+    if (sc->rlayer.wrl != NULL && sc->rlayer.wrl->funcs != NULL
+        && sc->rlayer.wrl->funcs->get_record_type != NULL) {
+        type = sc->rlayer.wrl->funcs->get_record_type(sc->rlayer.wrl, type);
+    }
+
+    /* Return any active Record Size Limit extension */
+    if (sc->session != NULL && USE_RECORD_SIZE_LIMIT_EXT(sc->session)
+        && type == SSL3_RT_APPLICATION_DATA)
+        return sc->session->ext.peer_record_size_limit;
+
     /* Return any active Max Fragment Len extension */
     if (sc->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(sc->session))
         return GET_MAX_FRAGMENT_LENGTH(sc->session);
@@ -7356,8 +7392,19 @@ __owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc)
     return (unsigned int)sc->max_send_fragment;
 }
 
-__owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc)
+__owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc,
+                                                uint8_t type)
 {
+    if (sc->rlayer.wrl != NULL && sc->rlayer.wrl->funcs != NULL
+        && sc->rlayer.wrl->funcs->get_record_type != NULL) {
+        type = sc->rlayer.wrl->funcs->get_record_type(sc->rlayer.wrl, type);
+    }
+
+    if (sc->session != NULL && USE_RECORD_SIZE_LIMIT_EXT(sc->session)
+        && sc->split_send_fragment > sc->session->ext.peer_record_size_limit
+        && type == SSL3_RT_APPLICATION_DATA)
+        return sc->session->ext.peer_record_size_limit;
+
     /* Return a value regarding an active Max Fragment Len extension */
     if (sc->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(sc->session)
         && sc->split_send_fragment > GET_MAX_FRAGMENT_LENGTH(sc->session))
