@@ -88,6 +88,7 @@ wcsstr
 __current_exception_context
 strstr
 strchr
+strlen
 memmove
 strrchr
 memcmp
