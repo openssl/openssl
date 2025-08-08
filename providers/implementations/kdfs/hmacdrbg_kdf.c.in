@@ -191,16 +191,19 @@ static int hmac_drbg_kdf_set_ctx_params(void *vctx,
                                         const OSSL_PARAM params[])
 {
     KDF_HMAC_DRBG *hmac = (KDF_HMAC_DRBG *)vctx;
-    PROV_DRBG_HMAC *drbg = &hmac->base;
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(hmac->provctx);
+    PROV_DRBG_HMAC *drbg;
+    OSSL_LIB_CTX *libctx;
     const EVP_MD *md;
     struct hmac_drbg_kdf_set_ctx_params_st p;
     void *ptr = NULL;
     size_t size = 0;
     int md_size;
 
-    if (!hmac_drbg_kdf_set_ctx_params_decoder(params, &p))
+    if (hmac == NULL || !hmac_drbg_kdf_set_ctx_params_decoder(params, &p))
         return 0;
+
+    drbg = &hmac->base;
+    libctx = PROV_LIBCTX_OF(hmac->provctx);
 
     if (p.ent != NULL) {
         if (!OSSL_PARAM_get_octet_string(p.ent, &ptr, 0, &size))
