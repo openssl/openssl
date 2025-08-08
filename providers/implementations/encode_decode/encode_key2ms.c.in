@@ -21,6 +21,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include <openssl/pem.h>         /* Functions for writing MSBLOB and PVK */
 #include <openssl/dsa.h>
 #include "internal/cryptlib.h"
