@@ -212,12 +212,16 @@ static const OSSL_PARAM *gmac_settable_ctx_params(ossl_unused void *ctx,
 static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 {
     struct gmac_data_st *macctx = vmacctx;
-    EVP_CIPHER_CTX *ctx = macctx->ctx;
-    OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(macctx->provctx);
+    EVP_CIPHER_CTX *ctx;
+    OSSL_LIB_CTX *provctx;
     struct gmac_set_ctx_params_st p;
 
-    if (ctx == NULL || !gmac_set_ctx_params_decoder(params, &p))
+    if (macctx == NULL || !gmac_set_ctx_params_decoder(params, &p))
         return 0;
+
+    if ((ctx = macctx->ctx) == NULL)
+        return 0;
+    provctx = PROV_LIBCTX_OF(macctx->provctx);
 
     if (p.cipher != NULL) {
         if (!ossl_prov_cipher_load(&macctx->cipher, p.cipher, p.propq,
