@@ -24,6 +24,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include <openssl/crypto.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include <openssl/pem.h>         /* For public PVK functions */
 #include <openssl/x509.h>
 #include "internal/cryptlib.h"
