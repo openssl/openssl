@@ -136,6 +136,8 @@ static int kem_cms_encrypt(CMS_RecipientInfo *ri)
     if (wrap->parameter == NULL)
         goto err;
     if (EVP_CIPHER_param_to_asn1(kekctx, wrap->parameter) <= 0)
+        ASN1_TYPE_free(wrap->parameter);
+        wrap->parameter = NULL;
         goto err;
     if (ASN1_TYPE_get(wrap->parameter) == NID_undef) {
         ASN1_TYPE_free(wrap->parameter);
