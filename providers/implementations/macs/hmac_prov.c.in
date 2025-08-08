@@ -330,11 +330,13 @@ static const OSSL_PARAM *hmac_settable_ctx_params(ossl_unused void *ctx,
 static int hmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 {
     struct hmac_data_st *macctx = vmacctx;
-    OSSL_LIB_CTX *ctx = PROV_LIBCTX_OF(macctx->provctx);
+    OSSL_LIB_CTX *ctx;
     struct hmac_set_ctx_params_st p;
 
     if (macctx == NULL || !hmac_set_ctx_params_decoder(params, &p))
         return 0;
+
+    ctx = PROV_LIBCTX_OF(macctx->provctx);
 
     if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(macctx, OSSL_FIPS_IND_SETTABLE0, p.ind_k))
         return 0;
