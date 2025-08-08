@@ -33,6 +33,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 #include <openssl/asn1err.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include <openssl/params.h>
 #include "internal/asn1.h"
