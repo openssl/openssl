@@ -577,11 +577,13 @@ static int ml_kem_get_key_param(const ML_KEM_KEY *key, OSSL_PARAM *p,
 static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
 {
     ML_KEM_KEY *key = vkey;
-    const ML_KEM_VINFO *v = ossl_ml_kem_key_vinfo(key);
+    const ML_KEM_VINFO *v;
     struct ml_kem_get_params_st p;
 
-    if (!ml_kem_get_params_decoder(params, &p))
+    if (key == NULL || !ml_kem_get_params_decoder(params, &p))
         return 0;
+
+    v = ossl_ml_kem_key_vinfo(key);
 
     if (p.bits != NULL && !OSSL_PARAM_set_size_t(p.bits, v->bits))
         return 0;

@@ -499,10 +499,8 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     EXPORT_CB_ARG sub_arg;
     int selection;
     struct mlx_get_params_st p;
-    size_t publen = key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes;
-    size_t prvlen = key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes;
 
-    if (!mlx_get_params_decoder(params, &p))
+    if (key == NULL || !mlx_get_params_decoder(params, &p))
         return 0;
 
     /* The reported "bit" count is those of the ML-KEM key */
@@ -530,6 +528,8 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
 
     memset(&sub_arg, 0, sizeof(sub_arg));
     if ((pub = p.pub) != NULL) {
+        size_t publen = key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes;
+
         if (pub->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
         pub->return_size = publen;
@@ -547,6 +547,8 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     }
     if (mlx_kem_have_prvkey(key)) {
         if ((prv = p.priv) != NULL) {
+            size_t prvlen = key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes;
+
             if (prv->data_type != OSSL_PARAM_OCTET_STRING)
                 return 0;
             prv->return_size = prvlen;
