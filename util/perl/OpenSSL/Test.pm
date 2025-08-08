@@ -13,6 +13,9 @@ use warnings;
 use Carp;
 use Test::More 0.96;
 
+use File::Basename;
+use File::Spec::Functions 'catfile';
+
 use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "1.0";
@@ -1292,6 +1295,36 @@ sub __decorate_cmd {
             unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
     }
 
+    if ($ENV{DO_MPROFILE}) {
+        my $file_name;
+        my $index = 0;
+        my $glob_pattern = catfile(result_dir(), "$test_name"."*.json");
+
+        #
+        # some tests execute more than one command, we need to capture
+        # data for each command invocation. The output names for memory
+        # profile record read as follow: sometest_1.json, sometest_2.json, ...
+        #
+        # loop here finds the next index to continue.
+        #
+        foreach $file_name ( glob($glob_pattern) ) {
+            $file_name = basename($file_name);
+            if ($file_name =~ m/.*_(\d+).json/) {
+                if ($index < $1) {
+                    $index = $1;
+                }
+            }
+        }
+        $index = $index + 1;
+        $file_name = "$test_name"."_"."$index".".json";
+
+        $ENV{MPROFILE_ANNOTATION} = "$cmdstr";
+        #
+	# Note the tests which are linked with libtestutil directory will
+        # override MPROFILE_OUTF
+        #
+        $ENV{MPROFILE_OUTF} = catfile(result_dir(), $file_name);
+    }
     $cmdstr .= "$stdin$stdout$stderr";
 
     if ($debug) {
