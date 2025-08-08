@@ -13,7 +13,7 @@ $SSKDF_GOAL=../../libdefault.a ../../libfips.a
 $SCRYPT_GOAL=../../libdefault.a
 $SSHKDF_GOAL=../../libdefault.a ../../libfips.a
 $X942KDF_GOAL=../../libdefault.a ../../libfips.a
-$HMAC_DRBG_KDF_GOAL=../../libdefault.a
+$HMAC_DRBG_KDF_GOAL=../../libdefault.a ../../libfips.a
 $ARGON2_GOAL=../../libdefault.a
 
 SOURCE[$TLS1_PRF_GOAL]=tls1_prf.c
