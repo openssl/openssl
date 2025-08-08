@@ -1333,6 +1333,11 @@ static int ch_on_transport_params(const unsigned char *params,
     QUIC_PREFERRED_ADDR pfa;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ch->tls);
 
+    if (sc == NULL) {
+        ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_INTERNAL_ERROR, 0,
+                                               "could not get ssl connection");
+        return 0;
+    }
     /*
      * When HRR happens the client sends the transport params in the new client
      * hello again. Reset the transport params here and load them again.
