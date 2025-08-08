@@ -6,6 +6,9 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+{-
+use OpenSSL::paramnames qw(produce_param_decoder);
+-}
 
 /*
  * RSA low level APIs are deprecated for public use, but still ok for
@@ -22,6 +25,7 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include "crypto/rsa.h"
+#include "internal/cryptlib.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
@@ -172,48 +176,52 @@ static int rsakem_decapsulate_init(void *vprsactx, void *vrsa,
                        "RSA Decapsulate Init");
 }
 
+
+{- produce_param_decoder('rsakem_get_ctx_params',
+                         (['KEM_PARAM_FIPS_APPROVED_INDICATOR', 'ind', 'int'],
+                         )); -}
+
 static int rsakem_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
 {
     PROV_RSA_CTX *ctx = (PROV_RSA_CTX *)vprsactx;
+    struct rsakem_get_ctx_params_st p;
 
-    if (ctx == NULL)
+    if (ctx == NULL || !rsakem_get_ctx_params_decoder(params, &p))
         return 0;
 
-    if (!OSSL_FIPS_IND_GET_CTX_PARAM(ctx, params))
+    if (!OSSL_FIPS_IND_GET_CTX_FROM_PARAM(ctx, p.ind))
         return 0;
     return 1;
 }
 
-static const OSSL_PARAM known_gettable_rsakem_ctx_params[] = {
-    OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
-    OSSL_PARAM_END
-};
-
 static const OSSL_PARAM *rsakem_gettable_ctx_params(ossl_unused void *vprsactx,
                                                     ossl_unused void *provctx)
 {
-    return known_gettable_rsakem_ctx_params;
+    return rsakem_get_ctx_params_list;
 }
+
+{- produce_param_decoder('rsakem_set_ctx_params',
+                         (['KEM_PARAM_OPERATION',       'op',    'utf8_string'],
+                          ['KEM_PARAM_FIPS_KEY_CHECK',  'ind_k', 'int'],
+                         )); -}
 
 static int rsakem_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
-    const OSSL_PARAM *p;
+    struct rsakem_set_ctx_params_st p;
     int op;
 
-    if (prsactx == NULL)
+    if (prsactx == NULL || !rsakem_set_ctx_params_decoder(params, &p))
         return 0;
-    if (ossl_param_is_empty(params))
-        return 1;
 
-    if (!OSSL_FIPS_IND_SET_CTX_PARAM(prsactx, OSSL_FIPS_IND_SETTABLE0, params,
-                                     OSSL_KEM_PARAM_FIPS_KEY_CHECK))
-        return  0;
-    p = OSSL_PARAM_locate_const(params, OSSL_KEM_PARAM_OPERATION);
-    if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+    if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(prsactx, OSSL_FIPS_IND_SETTABLE0,
+                                          p.ind_k))
+        return 0;
+
+    if (p.op != NULL) {
+        if (p.op->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        op = rsakem_opname2id(p->data);
+        op = rsakem_opname2id(p.op->data);
         if (op < 0)
             return 0;
         prsactx->op = op;
@@ -221,16 +229,10 @@ static int rsakem_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM known_settable_rsakem_ctx_params[] = {
-    OSSL_PARAM_utf8_string(OSSL_KEM_PARAM_OPERATION, NULL, 0),
-    OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KEM_PARAM_FIPS_KEY_CHECK)
-    OSSL_PARAM_END
-};
-
 static const OSSL_PARAM *rsakem_settable_ctx_params(ossl_unused void *vprsactx,
                                                     ossl_unused void *provctx)
 {
-    return known_settable_rsakem_ctx_params;
+    return rsakem_set_ctx_params_list;
 }
 
 /*
