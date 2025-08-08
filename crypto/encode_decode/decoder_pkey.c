@@ -57,11 +57,20 @@ int OSSL_DECODER_CTX_set_passphrase_cb(OSSL_DECODER_CTX *ctx,
 
 DEFINE_STACK_OF(EVP_KEYMGMT)
 
+/*
+ * Structure to hold data for decoder construction of EVP_PKEY objects.
+ * - libctx: OpenSSL library context
+ * - propq: property query string
+ * - selection: key selection flags
+ * - keymgmts: stack of key management objects
+ * - object_type: type of object being decoded
+ * - object: pointer to where the result should be stored
+ * - ctx: parent decoder context
+ */
 struct decoder_pkey_data_st {
     OSSL_LIB_CTX *libctx;
     char *propq;
     int selection;
-
     STACK_OF(EVP_KEYMGMT) *keymgmts;
     char *object_type;           /* recorded object data type, may be NULL */
     void **object;               /* Where the result should end up */
@@ -80,60 +89,60 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
     const OSSL_PROVIDER *keymgmt_prov = NULL;
     int i, end;
     /*
-     * |object_ref| points to a provider reference to an object, its exact
-     * contents entirely opaque to us, but may be passed to any provider
-     * function that expects this (such as OSSL_FUNC_keymgmt_load().
-     *
-     * This pointer is considered volatile, i.e. whatever it points at
-     * is assumed to be freed as soon as this function returns.
+     * object_ref points to a provider reference to an object, its contents are opaque.
+     * It may be passed to provider functions like OSSL_FUNC_keymgmt_load().
+     * This pointer is considered volatile and is assumed to be freed after this function returns.
      */
     void *object_ref = NULL;
     size_t object_ref_sz = 0;
     const OSSL_PARAM *p;
 
+    /* Extract object type from parameters, if present */
     p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA_TYPE);
     if (p != NULL) {
         char *object_type = NULL;
-
-        if (!OSSL_PARAM_get_utf8_string(p, &object_type, 0))
+        if (!OSSL_PARAM_get_utf8_string(p, &object_type, 0)) {
+            /* Failed to get object type string */
             return 0;
+        }
         OPENSSL_free(data->object_type);
         data->object_type = object_type;
     }
 
     /*
-     * For stuff that should end up in an EVP_PKEY, we only accept an object
-     * reference for the moment.  This enforces that the key data itself
-     * remains with the provider.
+     * Only accept an object reference for EVP_PKEY construction.
+     * This enforces that the key data itself remains with the provider.
      */
     p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_REFERENCE);
-    if (p == NULL || p->data_type != OSSL_PARAM_OCTET_STRING)
+    if (p == NULL || p->data_type != OSSL_PARAM_OCTET_STRING) {
+        /* Missing or invalid object reference */
         return 0;
+    }
     object_ref = p->data;
     object_ref_sz = p->data_size;
 
     /*
-     * First, we try to find a keymgmt that comes from the same provider as
-     * the decoder that passed the params.
+     * Try to find a keymgmt from the same provider as the decoder.
+     * If not found, fetch a new one.
      */
     end = sk_EVP_KEYMGMT_num(data->keymgmts);
     for (i = 0; i < end; i++) {
         keymgmt = sk_EVP_KEYMGMT_value(data->keymgmts, i);
         keymgmt_prov = EVP_KEYMGMT_get0_provider(keymgmt);
-
         if (keymgmt_prov == decoder_prov
             && evp_keymgmt_has_load(keymgmt)
-            && EVP_KEYMGMT_is_a(keymgmt, data->object_type))
+            && EVP_KEYMGMT_is_a(keymgmt, data->object_type)) {
             break;
+        }
     }
     if (i < end) {
-        /* To allow it to be freed further down */
+        /* Increment ref count for later free */
         if (!EVP_KEYMGMT_up_ref(keymgmt))
             return 0;
-    } else if ((keymgmt = EVP_KEYMGMT_fetch(data->libctx,
-                                            data->object_type,
-                                            data->propq)) != NULL) {
-        keymgmt_prov = EVP_KEYMGMT_get0_provider(keymgmt);
+    } else {
+        keymgmt = EVP_KEYMGMT_fetch(data->libctx, data->object_type, data->propq);
+        if (keymgmt != NULL)
+            keymgmt_prov = EVP_KEYMGMT_get0_provider(keymgmt);
     }
 
     if (keymgmt != NULL) {
@@ -141,30 +150,16 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
         void *keydata = NULL;
 
         /*
-         * If the EVP_KEYMGMT and the OSSL_DECODER are from the
-         * same provider, we assume that the KEYMGMT has a key loading
-         * function that can handle the provider reference we hold.
-         *
-         * Otherwise, we export from the decoder and import the
-         * result in the keymgmt.
+         * If the EVP_KEYMGMT and the OSSL_DECODER are from the same provider,
+         * use the key loading function. Otherwise, export and import.
          */
         if (keymgmt_prov == decoder_prov) {
             keydata = evp_keymgmt_load(keymgmt, object_ref, object_ref_sz);
         } else {
             struct evp_keymgmt_util_try_import_data_st import_data;
-
             import_data.keymgmt = keymgmt;
             import_data.keydata = NULL;
-            if (data->selection == 0)
-                /* import/export functions do not tolerate 0 selection */
-                import_data.selection = OSSL_KEYMGMT_SELECT_ALL;
-            else
-                import_data.selection = data->selection;
-
-            /*
-             * No need to check for errors here, the value of
-             * |import_data.keydata| is as much an indicator.
-             */
+            import_data.selection = (data->selection == 0) ? OSSL_KEYMGMT_SELECT_ALL : data->selection;
             (void)decoder->export_object(decoderctx,
                                          object_ref, object_ref_sz,
                                          &evp_keymgmt_util_try_import,
@@ -172,31 +167,19 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
             keydata = import_data.keydata;
             import_data.keydata = NULL;
         }
-        /*
-         * When load or import fails, because this is not an acceptable key
-         * (despite the provided key material being syntactically valid), the
-         * reason why the key is rejected would be lost, unless we signal a
-         * hard error, and suppress resetting for another try.
-         */
+        /* Signal hard error if key loading/import fails */
         if (keydata == NULL)
             ossl_decoder_ctx_set_harderr(data->ctx);
 
-        if (keydata != NULL
-            && (pkey = evp_keymgmt_util_make_pkey(keymgmt, keydata)) == NULL)
+        if (keydata != NULL && (pkey = evp_keymgmt_util_make_pkey(keymgmt, keydata)) == NULL)
             evp_keymgmt_freedata(keymgmt, keydata);
 
         *data->object = pkey;
 
-        /*
-         * evp_keymgmt_util_make_pkey() increments the reference count when
-         * assigning the EVP_PKEY, so we can free the keymgmt here.
-         */
+        /* Free keymgmt (ref count incremented above) */
         EVP_KEYMGMT_free(keymgmt);
     }
-    /*
-     * We successfully looked through, |*ctx->object| determines if we
-     * actually found something.
-     */
+    /* Return success if an object was constructed */
     return (*data->object != NULL);
 }
 
