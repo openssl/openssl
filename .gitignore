@@ -112,6 +112,13 @@ providers/implementations/ciphers/cipher_chacha20_poly1305.c
 providers/implementations/digests/blake2_prov.c
 providers/implementations/digests/digestcommon.c
 providers/implementations/digests/sha3_prov.c
+providers/implementations/rands/drbg_ctr.c
+providers/implementations/rands/drbg_hash.c
+providers/implementations/rands/drbg_hmac.c
+providers/implementations/rands/fips_crng_test.c
+providers/implementations/rands/seed_src.c
+providers/implementations/rands/seed_src_jitter.c
+providers/implementations/rands/test_rng.c
 
 # error code files
 /crypto/err/openssl.txt.old
