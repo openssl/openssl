@@ -18,6 +18,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include <openssl/randerr.h>
 #include "internal/common.h"
 #include "prov/securitycheck.h"
