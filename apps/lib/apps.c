@@ -1688,11 +1688,18 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
         goto err;
 
 #ifndef OPENSSL_NO_POSIX_IO
-    BIO_get_fp(in, &dbfp);
-    if (fstat(fileno(dbfp), &dbst) == -1) {
-        ERR_raise_data(ERR_LIB_SYS, errno,
-            "calling fstat(%s)", dbfile);
-        goto err;
+    if (BIO_get_fp(in, &dbfp) > 0 && dbfp != NULL) {
+        if (fstat(fileno(dbfp), &dbst) == -1) {
+            ERR_raise_data(ERR_LIB_SYS, errno,
+                "calling fstat(%s)", dbfile);
+            goto err;
+        }
+    } else {
+        if (stat(dbfile, &dbst) == -1) {
+            ERR_raise_data(ERR_LIB_SYS, errno,
+                "calling stat(%s)", dbfile);
+            goto err;
+        }
     }
 #endif
 
