@@ -25,6 +25,8 @@ static const ERR_STRING_DATA CMS_str_reasons[] = {
      "certificate has no keyid"},
     {ERR_PACK(ERR_LIB_CMS, 0, CMS_R_CERTIFICATE_VERIFY_ERROR),
      "certificate verify error"},
+    {ERR_PACK(ERR_LIB_CMS, 0, CMS_R_CIPHER_AEAD_IN_ENVELOPED_DATA),
+     "cipher aead in enveloped data"},
     {ERR_PACK(ERR_LIB_CMS, 0, CMS_R_CIPHER_AEAD_SET_TAG_ERROR),
      "cipher aead set tag error"},
     {ERR_PACK(ERR_LIB_CMS, 0, CMS_R_CIPHER_GET_TAG), "cipher get tag"},
