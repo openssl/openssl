@@ -426,6 +426,7 @@ static const OSSL_ALGORITHM fips_kdfs[] = {
     { PROV_NAMES_TLS1_PRF, FIPS_DEFAULT_PROPERTIES,
       ossl_kdf_tls1_prf_functions },
     { PROV_NAMES_KBKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_kbkdf_functions },
+    { PROV_NAMES_HMAC_DRBG_KDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hmac_drbg_functions },
     { NULL, NULL, NULL }
 };
 
