@@ -18,6 +18,11 @@
 #include "provider_local.h"
 #include "crypto/context.h"
 
+#if defined(__aarch64__)
+# include <stdlib.h>
+# include "crypto/arm_arch.h"
+#endif
+
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
 /* PROVIDER config module */
@@ -211,6 +216,21 @@ static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         return -1;
     }
+
+    /*
+     * Attempt to clear ARMV8_UNROLL12_EOR3 to possibly prevent
+     * potential unaligned access without
+     * https://github.com/openssl/openssl/pull/27203
+     */
+#if defined(__aarch64__)
+    if ((OPENSSL_armcap_P & ARMV8_UNROLL12_EOR3) && strncmp("fips", name, 4) == 0) {
+        OPENSSL_armcap_P -= ARMV8_UNROLL12_EOR3;
+        char new_armcap[10];
+        sprintf(new_armcap, "0x%x", OPENSSL_armcap_P);
+        setenv("OPENSSL_armcap", new_armcap, 1);
+    }
+#endif
+
     if (!prov_already_activated(name, pcgbl->activated_providers)) {
         /*
         * There is an attempt to activate a provider, so we should disable
