@@ -606,3 +606,7 @@ SSL_CTX_set_domain_flags                ?	3_5_0	EXIST::FUNCTION:
 SSL_CTX_get_domain_flags                ?	3_5_0	EXIST::FUNCTION:
 SSL_get_domain_flags                    ?	3_5_0	EXIST::FUNCTION:
 SSL_CTX_set_new_pending_conn_cb         ?	3_5_0	EXIST::FUNCTION:
+SSL_CTX_add_grease_to_extension         ?	3_5_0	EXIST::FUNCTION:
+SSL_CTX_add_grease_to_ciphers           ?	3_5_0	EXIST::FUNCTION:
+SSL_CTX_add_grease_extension            ?	3_5_0	EXIST::FUNCTION:
+SSL_CTX_clean_grease                    ?	3_5_0	EXIST::FUNCTION:
