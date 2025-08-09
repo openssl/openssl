@@ -119,6 +119,20 @@ static void demux_default_handler(QUIC_URXE *e, void *arg,
     ossl_qrx_inject_urxe(h->qrx, e);
 }
 
+/*
+ * we don't need fully initialized channel for TX-packetizer test.
+ * We just need a mockup channel instance which makes function
+ * ossl_quic_channel_is_serve() to return zero, Zero buffer
+ * which size is greater than sizeof (struct quic_channel_st) is
+ * is sufficient.
+ */
+static QUIC_CHANNEL *get_client_test_channel(void)
+{
+    static char test_client_channel[4096] = { 0 };
+
+    return (QUIC_CHANNEL *)test_client_channel;
+}
+
 static int helper_init(struct helper *h)
 {
     int rc = 0;
@@ -189,7 +203,7 @@ static int helper_init(struct helper *h)
     if (!TEST_true(ossl_quic_stream_map_init(&h->qsm, NULL, NULL,
                                              &h->max_streams_bidi_rxfc,
                                              &h->max_streams_uni_rxfc,
-                                             /*is_server=*/0)))
+                                             get_client_test_channel())))
         goto err;
 
     h->have_qsm = 1;
