@@ -528,7 +528,7 @@ const OPTIONS cmp_options[] = {
      "Trusted certificates to use for verifying the TLS server certificate;"},
     {OPT_MORE_STR, 0, 0, "this implies hostname validation"},
     {"tls_host", OPT_TLS_HOST, 's',
-     "Address to be checked (rather than -server) during TLS hostname validation"},
+     "Name (or address) to use in SNI and verify in the TLS server certificate"},
 #endif
 
     OPT_SECTION("Client-side debugging"),
@@ -787,7 +787,11 @@ static X509 *load_cert_pwd(const char *uri, const char *pass, const char *desc)
     return cert;
 }
 
-/* set expected hostname/IP addr and clears the email addr in the given ts */
+/*
+ * Set expected hostname/IP address and clears any email address in the given ts.
+ * If the host is NULL, host name/address verification is disabled.
+ * Otherwise, it is interpreted as an IP address if possible, otherwise as a domain name.
+ */
 static int truststore_set_host_etc(X509_STORE *ts, const char *host)
 {
     X509_VERIFY_PARAM *ts_vpm = X509_STORE_get0_param(ts);
@@ -797,10 +801,13 @@ static int truststore_set_host_etc(X509_STORE *ts, const char *host)
             || !X509_VERIFY_PARAM_set1_ip(ts_vpm, NULL, 0)
             || !X509_VERIFY_PARAM_set1_email(ts_vpm, NULL, 0))
         return 0;
+    if (host == NULL)
+        return 1;
+
     X509_VERIFY_PARAM_set_hostflags(ts_vpm,
                                     X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT |
                                     X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
-    return (host != NULL && X509_VERIFY_PARAM_set1_ip_asc(ts_vpm, host))
+    return X509_VERIFY_PARAM_set1_ip_asc(ts_vpm, host)
         || X509_VERIFY_PARAM_set1_host(ts_vpm, host, 0);
 }
 
@@ -1510,8 +1517,7 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host,
          * If we did this before checking our own TLS cert
          * the expected hostname would mislead the check.
          */
-        if (!truststore_set_host_etc(trust_store,
-                                     opt_tls_host != NULL ? opt_tls_host : host))
+        if (!truststore_set_host_etc(trust_store, host))
             goto err;
     }
     return ssl_ctx;
@@ -2283,6 +2289,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
     if (opt_tls_used) {
         APP_HTTP_TLS_INFO *info;
+        const char *hostaddr;
 
         if (opt_tls_cert != NULL
             || opt_tls_key != NULL || opt_tls_keypass != NULL) {
@@ -2299,9 +2306,16 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             goto err;
         APP_HTTP_TLS_INFO_free(OSSL_CMP_CTX_get_http_cb_arg(ctx));
         (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, info);
-        info->ssl_ctx = setup_ssl_ctx(ctx, host, engine);
+        hostaddr = opt_tls_host != NULL ? opt_tls_host : host;
+        info->ssl_ctx = setup_ssl_ctx(ctx, hostaddr, engine);
+        if (!APP_is_IP_address(hostaddr)) {
+            if (hostaddr == NULL)
+                info->sni_hostname = NULL;
+            else if ((info->sni_hostname = OPENSSL_strdup(hostaddr)) == NULL)
+                goto err;
+        }
         info->server = host;
-        host = NULL; /* prevent deallocation */
+        host = NULL; /* ownership has been transferred to info structure */
         if ((info->port = OPENSSL_strdup(server_port)) == NULL)
             goto err;
         /* workaround for callback design flaw, see #17088: */
@@ -3919,11 +3933,7 @@ int cmp_main(int argc, char **argv)
         /* cannot free info already here, as it may be used indirectly by: */
         OSSL_CMP_CTX_free(cmp_ctx);
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
-        if (info != NULL) {
-            OPENSSL_free((char *)info->server);
-            OPENSSL_free((char *)info->port);
-            APP_HTTP_TLS_INFO_free(info);
-        }
+        APP_HTTP_TLS_INFO_free(info);
 #endif
     }
     X509_VERIFY_PARAM_free(vpm);
