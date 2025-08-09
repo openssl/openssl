@@ -22,7 +22,7 @@ const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *ossl_prov_cipher_hw_aes_cbc_hmac_sha256_e
 #else
 void sha256_block_data_order(void *c, const void *p, size_t len);
 
-# if defined(__aarch64__)
+# if defined(__aarch64__) || defined(_M_ARM64)
 int asm_aescbc_sha256_hmac(const uint8_t *csrc, uint8_t *cdst, uint64_t clen,
                            uint8_t *dsrc, uint8_t *ddst, uint64_t dlen,
                            CIPH_DIGEST *arg);
