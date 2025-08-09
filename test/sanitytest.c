@@ -13,6 +13,10 @@
 #include "internal/numbers.h"
 #include "internal/time.h"
 
+#if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L
+# include <signal.h>
+#endif
+
 static int test_sanity_null_zero(void)
 {
     char *p;
@@ -130,22 +134,72 @@ static int test_sanity_memcmp(void)
     return CRYPTO_memcmp("ab", "cd", 2);
 }
 
-static int test_sanity_sleep(void)
+static const struct sleep_test_vector {
+    uint64_t val;
+} sleep_test_vectors[] = { { 0 }, { 1 }, { 999 }, { 1000 } };
+
+#if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L
+static void
+alrm_handler(int sig)
 {
+}
+#endif /* defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L */
+
+static int test_sanity_sleep(int i)
+{
+    const struct sleep_test_vector * const td = sleep_test_vectors + i;
     OSSL_TIME start = ossl_time_now();
-    uint64_t seconds;
+    uint64_t ms;
+
+#if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L
+    /*
+     * Set up an interrupt timer to check that OSSL_sleep doesn't return early
+     * due to interrupts.
+     */
+    do {
+        static const struct sigaction sa = { .sa_handler = alrm_handler };
+        static const struct itimerval it = { .it_value.tv_usec = 111111 };
+        sigset_t mask;
+
+        if (sigaction(SIGALRM, &sa, NULL)) {
+            TEST_perror("test_sanity_sleep: sigaction");
+            break;
+        }
+
+        sigemptyset(&mask);
+        sigaddset(&mask, SIGALRM);
+        if (sigprocmask(SIG_UNBLOCK, &mask, NULL)) {
+            TEST_perror("test_sanity_sleep: sigprocmask");
+            break;
+        }
+
+        if (setitimer(ITIMER_REAL, &it, NULL)) {
+            TEST_perror("test_sanity_sleep: arm setitimer");
+            break;
+        }
+    } while (0);
+#endif /* defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L */
 
     /*
-     * On any reasonable system this must sleep at least one second
-     * but not more than 20.
-     * Assuming there is no interruption.
+     * On any reasonable system this must sleep at least the specified time
+     * but not more than 20 seconds more than that.
      */
-    OSSL_sleep(1000);
+    OSSL_sleep(td->val);
 
-    seconds = ossl_time2seconds(ossl_time_subtract(ossl_time_now(), start));
+#if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L
+    /* disarm the timer */
+    do {
+        if (setitimer(ITIMER_REAL, NULL, NULL)) {
+            TEST_perror("test_sanity_sleep: disarm setitimer");
+            break;
+        }
+    } while (0);
+#endif /* defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L */
 
-    if (!TEST_uint64_t_ge(seconds, 1) || !TEST_uint64_t_le(seconds, 20))
-       return 0;
+    ms = ossl_time2ms(ossl_time_subtract(ossl_time_now(), start));
+
+    if (!TEST_uint64_t_ge(ms, td->val) + !TEST_uint64_t_le(ms, td->val + 20000))
+        return 0;
     return 1;
 }
 
@@ -158,6 +212,6 @@ int setup_tests(void)
     ADD_TEST(test_sanity_unsigned_conversion);
     ADD_TEST(test_sanity_range);
     ADD_TEST(test_sanity_memcmp);
-    ADD_TEST(test_sanity_sleep);
+    ADD_ALL_TESTS(test_sanity_sleep, OSSL_NELEM(sleep_test_vectors));
     return 1;
 }
