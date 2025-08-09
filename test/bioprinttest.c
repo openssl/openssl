@@ -9,6 +9,7 @@
 
 #define TESTUTIL_NO_size_t_COMPARISON
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <openssl/bio.h>
@@ -19,7 +20,7 @@
 
 static int justprint = 0;
 
-static char *fpexpected[][11][5] = {
+static const char * const fpexpected[][11][5] = {
     {
         /*  0.00 */ { "0.0000e+00", "0.0000", "0", "0.0000E+00", "0" },
         /*  0.01 */ { "6.7000e-01", "0.6700", "0.67", "6.7000E-01", "0.67" },
@@ -113,13 +114,204 @@ static char *fpexpected[][11][5] = {
     },
 };
 
+enum int_size {
+    ISZ_CHAR, ISZ_SHORT, ISZ_INT, ISZ_LONG, ISZ_LLONG
+};
+
+static const struct int_data {
+    union {
+        unsigned char hh;
+        unsigned short h;
+        unsigned int i;
+        unsigned long l;
+        unsigned long long ll;
+    } value;
+    enum int_size size;
+    const char *format;
+    const char *expected;
+    bool skip_libc_check;
+} int_data[] = {
+    { { .hh = 0x42 }, ISZ_CHAR, "%+hhu", "66" },
+    { { .hh = 0x88 }, ISZ_CHAR, "%hhd", "-120" },
+    { { .hh = 0x0 }, ISZ_CHAR, "%hho", "0" },
+    { { .hh = 0x0 }, ISZ_CHAR, "%#hho", "0" },
+    { { .hh = 0x1 }, ISZ_CHAR, "%hho", "1" },
+    { { .hh = 0x1 }, ISZ_CHAR, "%#hho", "01" },
+    { { .hh = 0x0 }, ISZ_CHAR, "%+hhx", "0" },
+    { { .hh = 0x0 }, ISZ_CHAR, "%#hhx", "0" },
+    { { .hh = 0xf }, ISZ_CHAR, "%hhx", "f" },
+    { { .hh = 0xe }, ISZ_CHAR, "%hhX", "E" },
+    { { .hh = 0xd }, ISZ_CHAR, "%#hhx", "0xd" },
+    { { .hh = 0xc }, ISZ_CHAR, "%#hhX", "0XC" },
+    { { .hh = 0xb }, ISZ_CHAR, "%#04hhX", "0X0B" },
+    { { .hh = 0xa }, ISZ_CHAR, "%#-015hhx", "0xa            " },
+    { { .hh = 0x9 }, ISZ_CHAR, "%#+01hho", "011" },
+    { { .hh = 0x8 }, ISZ_CHAR, "%#09hho", "000000010" },
+    { { .hh = 0x7 }, ISZ_CHAR, "%#+ 9hhd", "       +7" },
+    { { .hh = 0x6 }, ISZ_CHAR, "%# 9hhd", "        6" },
+    { { .hh = 0x95 }, ISZ_CHAR, "%#06hhi", "-00107" },
+    { { .hh = 0x4 }, ISZ_CHAR, "%# hhd", " 4" },
+    { { .hh = 0x3 }, ISZ_CHAR, "%# hhu", "3" },
+    { { .h = 1 }, ISZ_SHORT, "%4.2hd", "  01" },
+    { { .h = 2 }, ISZ_SHORT, "%-4.3hu", "002 " },
+    { { .h = 3 }, ISZ_SHORT, "%+.3hu", "003" },
+    { { .h = 9 }, ISZ_SHORT, "%#5.2ho", "  011" },
+    { { .h = 0xf }, ISZ_SHORT, "%#-6.2hx", "0x0f  " },
+    { { .h = 0xaa }, ISZ_SHORT, "%#8.0hX", "    0XAA" },
+    { { .h = 0xdead }, ISZ_SHORT, "%#hi", "-8531" },
+    { { .h = 0xcafe }, ISZ_SHORT, "%#0.1hX", "0XCAFE" },
+    { { .i = 0xdeadc0de }, ISZ_INT, "%#+67.65d",
+      " -0000000000000000000000000000000000000000000000000000000055903" },
+    { { .i = 0xfeedface }, ISZ_INT, "%#+70.10X",
+      "                                                          0X00F" },
+    { { .i = 0xdecaffee }, ISZ_INT, "%76.15o",
+      "                                                             00" },
+    { { .i = 0x5ad }, ISZ_INT, "%#67.x",
+      "                                                              0" },
+    { { .i = 0x1337 }, ISZ_INT, "|%2147483639.x|",
+      "|                                                              " },
+    /* Seems like MS CRT can't handle this one. */
+    { { .i = 0x1337 }, ISZ_INT, "|%.2147483639x|",
+      "|00000000000000000000000000000000000000000000000000000000000000", true },
+    /*
+     * glibc just bails out on the following three, treating everything greater
+     * than 1 << 31 - 8 as an error worth stopping parsing the format string.
+     */
+    { { .i = 0x1337 }, ISZ_INT, "|%2147483647.x|",
+      "|                                                              ", true },
+    { { .i = 0x1337 }, ISZ_INT, "|%4294967295.x|",
+      "|                                                              ", true },
+    { { .i = 0x1337 }, ISZ_INT, "|%4294967302.x|",
+      "|                                                              ", true },
+    { { .i = 0xbeeface }, ISZ_INT, "%#+-12.1d", "+200211150  " },
+    { { .l = 0xfacefed }, ISZ_LONG, "%#-1.14d", "00000262991853" },
+    { { .l = 0xdefaced }, ISZ_LONG, "%#+12.11i", "+00233811181" },
+    { { .l = 0xfacade }, ISZ_LONG, "%#0.14o", "00000076545336" },
+    { { .l = 0 }, ISZ_LONG, "%#0.14o", "00000000000000" },
+    { { .l = 0xfacade }, ISZ_LONG, "%#0.14x", "0x00000000facade" },
+    { { .ll = 0xffffFFFFffffFFFFULL }, ISZ_LLONG, "%#-032llo",
+      "01777777777777777777777         " },
+    { { .ll = 0xbadc0deddeadfaceULL }, ISZ_LLONG, "%022lld",
+      "-004982091772484257074" },
+};
+
+static int test_int(int i)
+{
+    char bio_buf[64];
+    char std_buf[64];
+    const struct int_data *data = int_data + i;
+
+    switch (data->size) {
+    case ISZ_CHAR:
+        BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value.hh);
+        if (!data->skip_libc_check)
+            snprintf(std_buf, sizeof(std_buf), data->format, data->value.hh);
+        break;
+    case ISZ_SHORT:
+        BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value.h);
+        if (!data->skip_libc_check)
+            snprintf(std_buf, sizeof(std_buf), data->format, data->value.h);
+        break;
+    case ISZ_INT:
+        BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value.i);
+        if (!data->skip_libc_check)
+            snprintf(std_buf, sizeof(std_buf), data->format, data->value.i);
+        break;
+    case ISZ_LONG:
+        BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value.l);
+        if (!data->skip_libc_check)
+            snprintf(std_buf, sizeof(std_buf), data->format, data->value.l);
+        break;
+    case ISZ_LLONG:
+        BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value.ll);
+        if (!data->skip_libc_check)
+            snprintf(std_buf, sizeof(std_buf), data->format, data->value.ll);
+        break;
+    }
+
+    if (!TEST_str_eq(bio_buf, data->expected)
+        + !(data->skip_libc_check || TEST_str_eq(bio_buf, std_buf)))
+        return 0;
+
+    return 1;
+}
+
+static const struct str_wp_data {
+    const char *value;
+    const char *format;
+    const char *expected;
+    int num_args;
+    int arg1;
+    int arg2;
+    bool skip_libc_check;
+} str_wp_data[] = {
+    { "01234", "%12s", "       01234" },
+    { "01234", "%-12s", "01234       " },
+    { "01234", "%.12s", "01234" },
+    { "01234", "%.2s", "01" },
+
+    { "abc", "%*s", "         abc", 1, 12 },
+    { "abc", "%*s", "abc         ", 1, -12 },
+    { "abc", "%-*s", "abc         ", 1, 12 },
+    { "abc", "%-*s", "abc         ", 1, -12 },
+
+    { "ABC", "%*.*s", "         ABC", 2, 12, 5 },
+    { "ABC", "%*.*s", "AB          ", 2, -12, 2 },
+    { "ABC", "%-*.*s", "ABC         ", 2, 12, -5 },
+    { "ABC", "%-*.*s", "ABC         ", 2, -12, -2 },
+
+    { "def", "%.*s", "def", 1, 12 },
+    { "%%s0123456789", "%.*s", "%%s01", 1, 5 },
+
+    { "DEF", "%-2147483648s",
+      "DEF                                                            ",
+      .skip_libc_check = true },
+    { "DEF", "%*s",
+      "                                                               ",
+      1, 2147483647, .skip_libc_check = true },
+};
+
+static int test_str_wp(int i)
+{
+    char bio_buf[64];
+    char std_buf[64];
+    const struct str_wp_data *data = str_wp_data + i;
+
+    switch (data->num_args) {
+    case 2:
+        BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,
+                     data->arg1, data->arg2, data->value);
+        snprintf(std_buf, sizeof(std_buf), data->format,
+                 data->arg1, data->arg2, data->value);
+        break;
+
+    case 1:
+        BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,
+                     data->arg1, data->value);
+        snprintf(std_buf, sizeof(std_buf), data->format,
+                 data->arg1, data->value);
+        break;
+
+    case 0:
+    default:
+        BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value);
+        snprintf(std_buf, sizeof(std_buf), data->format, data->value);
+    }
+
+    if (!TEST_str_eq(bio_buf, data->expected)
+        + (!data->skip_libc_check && !TEST_str_eq(bio_buf, std_buf)))
+        return 0;
+
+    return 1;
+}
+
 typedef struct z_data_st {
     size_t value;
     const char *format;
     const char *expected;
 } z_data;
 
-static z_data zu_data[] = {
+static const z_data zu_data[] = {
     { SIZE_MAX, "%zu", (sizeof(size_t) == 4 ? "4294967295"
                         : sizeof(size_t) == 8 ? "18446744073709551615"
                         : "") },
@@ -137,10 +329,13 @@ static z_data zu_data[] = {
 static int test_zu(int i)
 {
     char bio_buf[80];
+    char std_buf[80];
     const z_data *data = &zu_data[i];
 
     BIO_snprintf(bio_buf, sizeof(bio_buf) - 1, data->format, data->value);
-    if (!TEST_str_eq(bio_buf, data->expected))
+    snprintf(std_buf, sizeof(std_buf) - 1, data->format, data->value);
+    if (!TEST_str_eq(bio_buf, data->expected)
+        + !TEST_str_eq(bio_buf, std_buf))
         return 0;
     return 1;
 }
@@ -151,7 +346,7 @@ typedef struct j_data_st {
     const char *expected;
 } j_data;
 
-static j_data jf_data[] = {
+static const j_data jf_data[] = {
     { 0xffffffffffffffffULL, "%ju", "18446744073709551615" },
     { 0xffffffffffffffffULL, "%jx", "ffffffffffffffff" },
     { 0x8000000000000000ULL, "%ju", "9223372036854775808" },
@@ -166,9 +361,12 @@ static int test_j(int i)
 {
     const j_data *data = &jf_data[i];
     char bio_buf[80];
+    char std_buf[80];
 
     BIO_snprintf(bio_buf, sizeof(bio_buf) - 1, data->format, data->value);
-    if (!TEST_str_eq(bio_buf, data->expected))
+    snprintf(std_buf, sizeof(std_buf) - 1, data->format, data->value);
+    if (!TEST_str_eq(bio_buf, data->expected)
+        + !TEST_str_eq(bio_buf, std_buf))
         return 0;
     return 1;
 }
@@ -180,7 +378,7 @@ typedef struct pw_st {
     const char *w;
 } pw;
 
-static pw pw_params[] = {
+static const pw pw_params[] = {
     { 4, "" },
     { 5, "" },
     { 4, "12" },
@@ -195,7 +393,7 @@ static int dofptest(int test, int sub, double val, const char *width, int prec)
     static const char *fspecs[] = {
         "e", "f", "g", "E", "G"
     };
-    char format[80], result[80];
+    char format[80], result[80], std_result[80];
     int ret = 1, i;
 
     for (i = 0; i < (int)OSSL_NELEM(fspecs); i++) {
@@ -207,15 +405,17 @@ static int dofptest(int test, int sub, double val, const char *width, int prec)
         else
             BIO_snprintf(format, sizeof(format), "%%%s%s", width, fspec);
         BIO_snprintf(result, sizeof(result), format, val);
+        snprintf(std_result, sizeof(std_result), format, val);
 
         if (justprint) {
             if (i == 0)
                 printf("    /*  %d.%02d */ { \"%s\"", test, sub, result);
             else
                 printf(", \"%s\"", result);
-        } else if (!TEST_str_eq(fpexpected[test][sub][i], result)) {
-            TEST_info("test %d format=|%s| exp=|%s|, ret=|%s|",
-                    test, format, fpexpected[test][sub][i], result);
+        } else if (!TEST_str_eq(fpexpected[test][sub][i], result)
+                   + !TEST_str_eq(result, std_result)) {
+            TEST_info("test %d format=|%s| exp=|%s|, ret=|%s|, stdlib_ret=|%s|",
+                    test, format, fpexpected[test][sub][i], result, std_result);
             ret = 0;
         }
     }
@@ -295,6 +495,8 @@ int setup_tests(void)
 
     ADD_TEST(test_big);
     ADD_ALL_TESTS(test_fp, OSSL_NELEM(pw_params));
+    ADD_ALL_TESTS(test_int, OSSL_NELEM(int_data));
+    ADD_ALL_TESTS(test_str_wp, OSSL_NELEM(str_wp_data));
     ADD_ALL_TESTS(test_zu, OSSL_NELEM(zu_data));
     ADD_ALL_TESTS(test_j, OSSL_NELEM(jf_data));
     return 1;

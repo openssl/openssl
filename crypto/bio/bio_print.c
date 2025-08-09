@@ -68,11 +68,12 @@ static int _dopr(char **sbuffer, char **buffer,
 #define DP_F_UNSIGNED   (1 << 6)
 
 /* conversion flags */
-#define DP_C_SHORT      1
-#define DP_C_LONG       2
-#define DP_C_LDOUBLE    3
-#define DP_C_LLONG      4
-#define DP_C_SIZE       5
+#define DP_C_CHAR       1
+#define DP_C_SHORT      2
+#define DP_C_LONG       3
+#define DP_C_LDOUBLE    4
+#define DP_C_LLONG      5
+#define DP_C_SIZE       6
 
 /* Floating point formats */
 #define F_FORMAT        0
@@ -148,12 +149,20 @@ _dopr(char **sbuffer,
                 break;
             }
             break;
-        case DP_S_MIN:
+        case DP_S_MIN: /* width */
             if (ossl_isdigit(ch)) {
-                min = 10 * min + char_to_int(ch);
+                /* Just treat numbers bigger than 1<<31-8 as INT_MAX */
+                if (min < INT_MAX / 10)
+                    min = 10 * min + char_to_int(ch);
+                else
+                    min = INT_MAX;
                 ch = *format++;
             } else if (ch == '*') {
                 min = va_arg(args, int);
+                if (min < 0) {
+                    flags |= DP_F_MINUS;
+                    min = -min;
+                }
                 ch = *format++;
                 state = DP_S_DOT;
             } else
@@ -166,11 +175,15 @@ _dopr(char **sbuffer,
             } else
                 state = DP_S_MOD;
             break;
-        case DP_S_MAX:
+        case DP_S_MAX: /* precision */
             if (ossl_isdigit(ch)) {
                 if (max < 0)
                     max = 0;
-                max = 10 * max + char_to_int(ch);
+                /* Just treat numbers bigger than 1<<31-8 as INT_MAX */
+                if (max < INT_MAX / 10)
+                    max = 10 * max + char_to_int(ch);
+                else
+                    max = INT_MAX;
                 ch = *format++;
             } else if (ch == '*') {
                 max = va_arg(args, int);
@@ -182,7 +195,12 @@ _dopr(char **sbuffer,
         case DP_S_MOD:
             switch (ch) {
             case 'h':
-                cflags = DP_C_SHORT;
+                if (*format == 'h') {
+                    cflags = DP_C_CHAR;
+                    format++;
+                } else {
+                    cflags = DP_C_SHORT;
+                }
                 ch = *format++;
                 break;
             case 'l':
@@ -216,6 +234,9 @@ _dopr(char **sbuffer,
             case 'd':
             case 'i':
                 switch (cflags) {
+                case DP_C_CHAR:
+                    value = (signed char)va_arg(args, int);
+                    break;
                 case DP_C_SHORT:
                     value = (short int)va_arg(args, int);
                     break;
@@ -244,6 +265,9 @@ _dopr(char **sbuffer,
             case 'u':
                 flags |= DP_F_UNSIGNED;
                 switch (cflags) {
+                case DP_C_CHAR:
+                    value = (unsigned char)va_arg(args, unsigned int);
+                    break;
                 case DP_C_SHORT:
                     value = (unsigned short int)va_arg(args, unsigned int);
                     break;
@@ -436,6 +460,8 @@ fmtint(char **sbuffer,
        size_t *currlen,
        size_t *maxlen, int64_t value, int base, int min, int max, int flags)
 {
+    static const char oct_prefix[] = "0";
+
     int signvalue = 0;
     const char *prefix = "";
     uint64_t uvalue;
@@ -458,10 +484,12 @@ fmtint(char **sbuffer,
             signvalue = ' ';
     }
     if (flags & DP_F_NUM) {
-        if (base == 8)
-            prefix = "0";
-        if (base == 16)
-            prefix = "0x";
+        if (value != 0) {
+            if (base == 8)
+                prefix = oct_prefix;
+            if (base == 16)
+                prefix = flags & DP_F_UP ? "0X" : "0x";
+        }
     }
     if (flags & DP_F_UP)
         caps = 1;
@@ -474,19 +502,24 @@ fmtint(char **sbuffer,
         place--;
     convert[place] = 0;
 
-    zpadlen = max - place;
-    spadlen =
-        min - OSSL_MAX(max, place) - (signvalue ? 1 : 0) - (int)strlen(prefix);
+    /*
+     * "#" (alternative form):
+     *   - For o conversion, it shall increase the precision, if and only
+     *     if necessary, to force the first digit of the result to be a zero
+     */
+    zpadlen = max - place - (prefix == oct_prefix);
     if (zpadlen < 0)
         zpadlen = 0;
+    spadlen =
+        min - OSSL_MAX(max, place + zpadlen + (signvalue ? 1 : 0) + (int)strlen(prefix));
     if (spadlen < 0)
         spadlen = 0;
-    if (flags & DP_F_ZERO) {
+    if (flags & DP_F_MINUS) {
+        spadlen = -spadlen;
+    } else if (flags & DP_F_ZERO) {
         zpadlen = OSSL_MAX(zpadlen, spadlen);
         spadlen = 0;
     }
-    if (flags & DP_F_MINUS)
-        spadlen = -spadlen;
 
     /* spaces */
     while (spadlen > 0) {
