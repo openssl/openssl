@@ -928,6 +928,7 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
             (void)lh_DECODER_CACHE_ENTRY_insert(cache->hashtable, newcache);
             if (lh_DECODER_CACHE_ENTRY_error(cache->hashtable)) {
                 ctx = NULL;
+                CRYPTO_THREAD_unlock(cache->lock);
                 ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
                 goto err;
             }
