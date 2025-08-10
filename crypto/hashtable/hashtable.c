@@ -636,6 +636,7 @@ int ossl_ht_insert(HT *h, HT_KEY *key, HT_VALUE *data, HT_VALUE **olddata)
     if (data->value == NULL)
         goto out;
 
+    rc = -1;
     newval = alloc_new_value(h, key, data->value, data->type_id);
     if (newval == NULL)
         goto out;
