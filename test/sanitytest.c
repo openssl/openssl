@@ -189,7 +189,9 @@ static int test_sanity_sleep(int i)
 #if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L
     /* disarm the timer */
     do {
-        if (setitimer(ITIMER_REAL, NULL, NULL)) {
+        static const struct itimerval it;
+
+        if (setitimer(ITIMER_REAL, &it, NULL)) {
             TEST_perror("test_sanity_sleep: disarm setitimer");
             break;
         }
