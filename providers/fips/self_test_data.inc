@@ -1521,10 +1521,26 @@ static const unsigned char ecdsa_prime_expected_sig[] = {
     0x45, 0xc3, 0x6f, 0x9e, 0x2e, 0xc1, 0x44, 0x9f,
     0xfd, 0x79, 0xdb, 0x90, 0x3e, 0xb9, 0xb2
 };
+static const unsigned char ecdsa_prime_expected_detsig[] = {
+    0x30, 0x3c, 0x02, 0x1c, 0x6a, 0x6d, 0x2c, 0x88,
+    0x2b, 0xe5, 0x6b, 0xe6, 0xb1, 0x28, 0xe7, 0xa8,
+    0xbd, 0xca, 0x2e, 0xad, 0x22, 0x22, 0x8d, 0xe0,
+    0xd6, 0x83, 0x5b, 0xc9, 0x5b, 0x5f, 0x06, 0x2e,
+    0x02, 0x1c, 0x71, 0xec, 0x10, 0x8e, 0x31, 0x5d,
+    0xfc, 0x16, 0xed, 0x9d, 0x7d, 0x9b, 0x42, 0x5e,
+    0xf9, 0x16, 0xe6, 0x06, 0xa5, 0xf0, 0x94, 0x2f,
+    0x57, 0xf1, 0x7e, 0xf2, 0x16, 0x76
+};
 static const ST_KAT_PARAM ecdsa_prime_key[] = {
     ST_KAT_PARAM_UTF8STRING(OSSL_PKEY_PARAM_GROUP_NAME, ecd_prime_curve_name),
     ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_PUB_KEY, ecd_prime_pub),
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_PRIV_KEY, ecd_prime_priv),
+    ST_KAT_PARAM_END()
+};
+
+static int ecdsa_nonce_type = 1;
+static const ST_KAT_PARAM ecdsa_sig_params[] = {
+    ST_KAT_PARAM_INT(OSSL_SIGNATURE_PARAM_NONCE_TYPE, ecdsa_nonce_type),
     ST_KAT_PARAM_END()
 };
 
@@ -3102,6 +3118,15 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
         ITM(sig_kat_nonce),
         ITM(sig_kat_persstr),
         ITM(ecdsa_prime_expected_sig)
+    },
+    {
+        OSSL_SELF_TEST_DESC_SIGN_DetECDSA,
+        "EC", "ECDSA-SHA256", 0,
+        ecdsa_prime_key,
+        ITM_STR(rsa_sig_msg),
+        NULL, 0, NULL, 0, NULL, 0,
+        ITM(ecdsa_prime_expected_detsig),
+        ecdsa_sig_params
     },
 # ifndef OPENSSL_NO_EC2M
     {
