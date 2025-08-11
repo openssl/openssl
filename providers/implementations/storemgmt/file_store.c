@@ -464,6 +464,8 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
                 goto err;
             }
             break;
+        case OSSL_STORE_INFO_SKEY: /* No input structure */
+            break;
         default:
             break;
         }
@@ -498,6 +500,16 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
                 && OPENSSL_strcasecmp(input_type, ctx->_.file.input_type) != 0
                 && (OPENSSL_strcasecmp(ctx->_.file.input_type, "PEM") != 0
                     || OPENSSL_strcasecmp(input_type, "der") != 0)) {
+                ossl_decoder_instance_free(to_obj_inst);
+                continue;
+            }
+
+            /*
+             * As any sequence of bytes can be a secret key, we allow
+             * reading raw key from a file only when it is explicitly requested.
+             */
+            if ((ctx->expected_type != OSSL_STORE_INFO_SKEY)
+                && OPENSSL_strcasecmp(input_type, "raw") == 0) {
                 ossl_decoder_instance_free(to_obj_inst);
                 continue;
             }

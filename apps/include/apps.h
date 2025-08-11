@@ -156,7 +156,10 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
     EVP_PKEY **pparams,
     X509 **pcert, STACK_OF(X509) **pcerts,
-    X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls);
+    X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls.
+    EVP_SKEY **pskey);
+EVP_SKEY *load_skey(const char *uri, int format, int maybe_stdin,
+    const char *pass, int quiet);
 X509_STORE *setup_verify(const char *CAfile, int noCAfile,
     const char *CApath, int noCApath,
     const char *CAstore, int noCAstore);

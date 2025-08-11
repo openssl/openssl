@@ -33,6 +33,7 @@ typedef enum OPTION_choice {
     OPT_SEARCHFOR_CERTS,
     OPT_SEARCHFOR_KEYS,
     OPT_SEARCHFOR_CRLS,
+    OPT_SEARCHFOR_SKEYS,
     OPT_CRITERION_SUBJECT,
     OPT_CRITERION_ISSUER,
     OPT_CRITERION_SERIAL,
@@ -53,6 +54,7 @@ const OPTIONS storeutl_options[] = {
     { "certs", OPT_SEARCHFOR_CERTS, '-', "Search for certificates only" },
     { "keys", OPT_SEARCHFOR_KEYS, '-', "Search for keys only" },
     { "crls", OPT_SEARCHFOR_CRLS, '-', "Search for CRLs only" },
+    { "skeys", OPT_SEARCHFOR_SKEYS, '-', "Search for symmetric keys only" },
     { "subject", OPT_CRITERION_SUBJECT, 's', "Search by subject" },
     { "issuer", OPT_CRITERION_ISSUER, 's', "Search by issuer and serial, issuer name" },
     { "serial", OPT_CRITERION_SERIAL, 's', "Search by issuer and serial, serial number" },
@@ -124,6 +126,7 @@ int storeutl_main(int argc, char *argv[])
         case OPT_SEARCHFOR_CERTS:
         case OPT_SEARCHFOR_KEYS:
         case OPT_SEARCHFOR_CRLS:
+        case OPT_SEARCHFOR_SKEYS:
             if (expected != 0) {
                 BIO_printf(bio_err, "%s: only one search type can be given.\n",
                     prog);
@@ -137,6 +140,7 @@ int storeutl_main(int argc, char *argv[])
                     { OPT_SEARCHFOR_CERTS, OSSL_STORE_INFO_CERT },
                     { OPT_SEARCHFOR_KEYS, OSSL_STORE_INFO_PKEY },
                     { OPT_SEARCHFOR_CRLS, OSSL_STORE_INFO_CRL },
+                    { OPT_SEARCHFOR_SKEYS, OSSL_STORE_INFO_SKEY },
                 };
                 size_t i;
 
@@ -475,6 +479,9 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                 X509_CRL_print(out, OSSL_STORE_INFO_get0_CRL(info));
             if (!noout)
                 PEM_write_bio_X509_CRL(out, OSSL_STORE_INFO_get0_CRL(info));
+            break;
+        case OSSL_STORE_INFO_SKEY:
+            /* Currently there is no universal API allowing to print smth, so no output */
             break;
         default:
             BIO_printf(bio_err, "!!! Unknown code\n");
