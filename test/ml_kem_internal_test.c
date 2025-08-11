@@ -107,8 +107,10 @@ static int sanity_test(void)
         return 0;
 
     if (!TEST_ptr(privctx = RAND_get0_private(NULL))
-        || !TEST_ptr(pubctx = RAND_get0_public(NULL)))
-        return 0;
+        || !TEST_ptr(pubctx = RAND_get0_public(NULL))) {
+        ret = -1;
+        goto err;
+    }
 
     decap_entropy = ml_kem_public_entropy + ML_KEM_RANDOM_BYTES;
 
@@ -134,8 +136,10 @@ static int sanity_test(void)
         params[1] =
             OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
         params[2] = OSSL_PARAM_construct_end();
-        if (!TEST_true(EVP_RAND_CTX_set_params(privctx, params)))
-            return 0;
+        if (!TEST_true(EVP_RAND_CTX_set_params(privctx, params))) {
+            ret = -1;
+            goto err;
+        }
 
         public_key = ossl_ml_kem_key_new(NULL, NULL, alg[i]);
         private_key = ossl_ml_kem_key_new(NULL, NULL, alg[i]);
@@ -254,6 +258,8 @@ static int sanity_test(void)
         OPENSSL_free(encoded_public_key);
         OPENSSL_free(ciphertext);
     }
+
+err:
     EVP_MD_free(sha256);
     return ret == 0;
 }
