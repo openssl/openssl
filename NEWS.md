@@ -36,6 +36,9 @@ changes:
   * Added an `openssl configutl` utility for processing the openssl
     configuration file and dumping the equal configuration file.
 
+  * Added support for FIPS 186-5 deterministic ECDSA signature
+    generation to the FIPS provider.
+
 ### Major changes between OpenSSL 3.5.0 and OpenSSL 3.5.1 [under development]
 
 OpenSSL 3.5.1 is a security patch release. The most severe CVE fixed in this
