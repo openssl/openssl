@@ -501,7 +501,11 @@ Section 4 "Security Considerations".  The default value for
 nonce B<k> as defined in FIPS 186-4 Section 6.3 "Secret Number
 Generation".
 
-The FIPS provider does not support deterministic digital signature generation.
+The FIPS provider does not support deterministic digital signature generation
+for DSA.
+
+The FIPS provider support for determinisitic digital signature generation for
+ECDSA was added in OpenSSL 3.6.
 
 =item "kat" (B<OSSL_SIGNATURE_PARAM_KAT>) <unsigned integer>
 
