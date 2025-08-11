@@ -501,7 +501,11 @@ Section 4 "Security Considerations".  The default value for
 nonce B<k> as defined in FIPS 186-4 Section 6.3 "Secret Number
 Generation".
 
-The FIPS provider does not support deterministic digital signature generation.
+The FIPS provider does not support deterministic digital signature generation
+for DSA.
+
+The FIPS provider supports determinisitic digital signature generation for
+ECDSA.
 
 =item "kat" (B<OSSL_SIGNATURE_PARAM_KAT>) <unsigned integer>
 
@@ -633,8 +637,12 @@ L<EVP_SIGNATURE_is_a(3)>, L<ASN1_item_sign_ctx(3)>
 =head1 HISTORY
 
 The provider SIGNATURE interface was introduced in OpenSSL 3.0.
-The Signature Parameters "fips-indicator", "key-check" and "digest-check"
-were added in OpenSSL 3.4.
+
+The Signature Parameters "fips-indicator", "key-check" and "digest-check" were added in
+OpenSSL 3.4.
+
+Deterministic digital signature generation for ECDSA was added to the FIPS provider in OpenSSL
+3.6.
 
 =head1 COPYRIGHT
 
