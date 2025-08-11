@@ -447,6 +447,8 @@ Digest tests used with the "KAT_Digest" type.
 
 =item "ECDSA" (B<OSSL_SELF_TEST_DESC_SIGN_ECDSA>)
 
+=item "DetECDSA" (B<OSSL_SELF_TEST_DESC_SIGN_DetECDSA>)
+
 =item "EDDSA" (B<OSSL_SELF_TEST_DESC_SIGN_EDDSA>)
 
 =item "LMS" (B<OSSL_SELF_TEST_DESC_SIGN_LMS>)
