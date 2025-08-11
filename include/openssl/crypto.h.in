@@ -358,9 +358,9 @@ OSSL_CRYPTO_ALLOC void *CRYPTO_aligned_alloc(size_t num, size_t align,
 OSSL_CRYPTO_ALLOC void *CRYPTO_aligned_alloc_array(size_t num, size_t size,
                                                    size_t align, void **freeptr,
                                                    const char *file, int line);
-OSSL_CRYPTO_ALLOC void *CRYPTO_memdup(const void *str, size_t siz, const char *file, int line);
-OSSL_CRYPTO_ALLOC char *CRYPTO_strdup(const char *str, const char *file, int line);
-OSSL_CRYPTO_ALLOC char *CRYPTO_strndup(const char *str, size_t s, const char *file, int line);
+void *CRYPTO_memdup(const void *str, size_t siz, const char *file, int line);
+char *CRYPTO_strdup(const char *str, const char *file, int line);
+char *CRYPTO_strndup(const char *str, size_t s, const char *file, int line);
 void CRYPTO_free(void *ptr, const char *file, int line);
 void CRYPTO_clear_free(void *ptr, size_t num, const char *file, int line);
 void *CRYPTO_realloc(void *addr, size_t num, const char *file, int line);
