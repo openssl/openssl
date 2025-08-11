@@ -5943,3 +5943,6 @@ OPENSSL_posix_to_tm                     ?	4_0_0	EXIST::FUNCTION:
 OPENSSL_tm_to_posix                     ?	4_0_0	EXIST::FUNCTION:
 OPENSSL_timegm                          ?	4_0_0	EXIST::FUNCTION:
 OSSL_PARAM_clear_free                   ?	4_0_0	EXIST::FUNCTION:
+OSSL_STORE_INFO_new_SKEY                ?	4_0_0	EXIST::FUNCTION:
+OSSL_STORE_INFO_get0_SKEY               ?	4_0_0	EXIST::FUNCTION:
+OSSL_STORE_INFO_get1_SKEY               ?	4_0_0	EXIST::FUNCTION:

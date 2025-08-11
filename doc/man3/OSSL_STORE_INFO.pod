@@ -6,14 +6,16 @@ OSSL_STORE_INFO, OSSL_STORE_INFO_get_type, OSSL_STORE_INFO_get0_NAME,
 OSSL_STORE_INFO_get0_NAME_description,
 OSSL_STORE_INFO_get0_PARAMS, OSSL_STORE_INFO_get0_PUBKEY,
 OSSL_STORE_INFO_get0_PKEY, OSSL_STORE_INFO_get0_CERT, OSSL_STORE_INFO_get0_CRL,
+OSSL_STORE_INFO_get0_SKEY,
 OSSL_STORE_INFO_get1_NAME, OSSL_STORE_INFO_get1_NAME_description,
 OSSL_STORE_INFO_get1_PARAMS, OSSL_STORE_INFO_get1_PUBKEY,
 OSSL_STORE_INFO_get1_PKEY, OSSL_STORE_INFO_get1_CERT, OSSL_STORE_INFO_get1_CRL,
+OSSL_STORE_INFO_get1_SKEY,
 OSSL_STORE_INFO_type_string, OSSL_STORE_INFO_free,
 OSSL_STORE_INFO_new_NAME, OSSL_STORE_INFO_set0_NAME_description,
 OSSL_STORE_INFO_new_PARAMS, OSSL_STORE_INFO_new_PUBKEY,
 OSSL_STORE_INFO_new_PKEY, OSSL_STORE_INFO_new_CERT, OSSL_STORE_INFO_new_CRL,
-OSSL_STORE_INFO_new, OSSL_STORE_INFO_get0_data
+OSSL_STORE_INFO_new, OSSL_STORE_INFO_new_SKEY, OSSL_STORE_INFO_get0_data
 - Functions to manipulate OSSL_STORE_INFO objects
 
 =head1 SYNOPSIS
@@ -38,6 +40,8 @@ OSSL_STORE_INFO_new, OSSL_STORE_INFO_get0_data
  X509 *OSSL_STORE_INFO_get1_CERT(const OSSL_STORE_INFO *store_info);
  X509_CRL *OSSL_STORE_INFO_get0_CRL(const OSSL_STORE_INFO *store_info);
  X509_CRL *OSSL_STORE_INFO_get1_CRL(const OSSL_STORE_INFO *store_info);
+ EVP_SKEY *OSSL_STORE_INFO_get0_SKEY(const OSSL_STORE_INFO *store_info);
+ EVP_SKEY *OSSL_STORE_INFO_get1_SKEY(const OSSL_STORE_INFO *store_info);
 
  const char *OSSL_STORE_INFO_type_string(int type);
 
@@ -50,6 +54,7 @@ OSSL_STORE_INFO_new, OSSL_STORE_INFO_get0_data
  OSSL_STORE_INFO *OSSL_STORE_INFO_new_PKEY(EVP_PKEY *pkey);
  OSSL_STORE_INFO *OSSL_STORE_INFO_new_CERT(X509 *x509);
  OSSL_STORE_INFO *OSSL_STORE_INFO_new_CRL(X509_CRL *crl);
+ OSSL_STORE_INFO *OSSL_STORE_INFO_new_SKEY(EVP_SKEY *skey);
 
  OSSL_STORE_INFO *OSSL_STORE_INFO_new(int type, void *data);
  void *OSSL_STORE_INFO_get0_data(int type, const OSSL_STORE_INFO *info);
@@ -87,7 +92,7 @@ short string describing it.
 OSSL_STORE_INFO_get0_NAME(), OSSL_STORE_INFO_get0_NAME_description(),
 OSSL_STORE_INFO_get0_PARAMS(), OSSL_STORE_INFO_get0_PUBKEY(),
 OSSL_STORE_INFO_get0_PKEY(), OSSL_STORE_INFO_get0_CERT(),
-OSSL_STORE_INFO_get0_CRL()
+OSSL_STORE_INFO_get0_CRL(), OSSL_STORE_INFO_get0_SKEY()
 all take a B<OSSL_STORE_INFO> and return the object it holds if the
 B<OSSL_STORE_INFO> type (as returned by OSSL_STORE_INFO_get_type())
 matches the function, otherwise NULL.
@@ -95,7 +100,7 @@ matches the function, otherwise NULL.
 OSSL_STORE_INFO_get1_NAME(), OSSL_STORE_INFO_get1_NAME_description(),
 OSSL_STORE_INFO_get1_PARAMS(), OSSL_STORE_INFO_get1_PUBKEY(),
 OSSL_STORE_INFO_get1_PKEY(), OSSL_STORE_INFO_get1_CERT() and
-OSSL_STORE_INFO_get1_CRL()
+OSSL_STORE_INFO_get1_CRL(), OSSL_STORE_INFO_get1_SKEY()
 all take a B<OSSL_STORE_INFO> and return a duplicate the object it
 holds if the B<OSSL_STORE_INFO> type (as returned by
 OSSL_STORE_INFO_get_type()) matches the function, otherwise NULL.
@@ -105,7 +110,8 @@ If the argument is NULL, nothing is done.
 
 OSSL_STORE_INFO_new_NAME() , OSSL_STORE_INFO_new_PARAMS(),
 , OSSL_STORE_INFO_new_PUBKEY(), OSSL_STORE_INFO_new_PKEY(),
-OSSL_STORE_INFO_new_CERT() and OSSL_STORE_INFO_new_CRL()
+OSSL_STORE_INFO_new_CERT(), OSSL_STORE_INFO_new_CRL() and
+OSSL_STORE_INFO_new_SKEY()
 create a B<OSSL_STORE_INFO> object to hold the given input object.
 On success the input object is consumed.
 
@@ -181,6 +187,10 @@ An X.509 certificate.
 
 A X.509 certificate revocation list.
 
+=item OSSL_STORE_INFO_SKEY
+
+A symmetric key object.
+
 =back
 
 =head1 RETURN VALUES
@@ -191,21 +201,23 @@ There is no error value.
 
 OSSL_STORE_INFO_get0_NAME(), OSSL_STORE_INFO_get0_NAME_description(),
 OSSL_STORE_INFO_get0_PARAMS(), OSSL_STORE_INFO_get0_PKEY(),
-OSSL_STORE_INFO_get0_CERT() and OSSL_STORE_INFO_get0_CRL() all return
-a pointer to the OpenSSL object on success, NULL otherwise.
+OSSL_STORE_INFO_get0_CERT(), OSSL_STORE_INFO_get0_CRL() and
+OSSL_STORE_INFO_get0_SKEY() all return a pointer to the OpenSSL object on
+success, NULL otherwise.
 
 OSSL_STORE_INFO_get1_NAME(), OSSL_STORE_INFO_get1_NAME_description(),
 OSSL_STORE_INFO_get1_PARAMS(), OSSL_STORE_INFO_get1_PKEY(),
-OSSL_STORE_INFO_get1_CERT() and OSSL_STORE_INFO_get1_CRL() all return
-a pointer to a duplicate of the OpenSSL object on success, NULL otherwise.
+OSSL_STORE_INFO_get1_CERT(), OSSL_STORE_INFO_get1_CRL() and
+OSSL_STORE_INFO_get1_SKEY() all return a pointer to a duplicate of the OpenSSL
+object on success, NULL otherwise.
 
 OSSL_STORE_INFO_type_string() returns a string on success, or NULL on
 failure.
 
 OSSL_STORE_INFO_new_NAME(), OSSL_STORE_INFO_new_PARAMS(),
-OSSL_STORE_INFO_new_PKEY(), OSSL_STORE_INFO_new_CERT() and
-OSSL_STORE_INFO_new_CRL() return a B<OSSL_STORE_INFO>
-pointer on success, or NULL on failure.
+OSSL_STORE_INFO_new_PKEY(), OSSL_STORE_INFO_new_CERT(),
+OSSL_STORE_INFO_new_CRL() and OSSL_STORE_INFO_new_SKEY() return a
+B<OSSL_STORE_INFO> pointer on success, or NULL on failure.
 
 OSSL_STORE_INFO_set0_NAME_description() returns 1 on success, or 0 on
 failure.
@@ -219,6 +231,9 @@ L<ossl_store(7)>, L<OSSL_STORE_open(3)>, L<OSSL_STORE_register_loader(3)>
 The OSSL_STORE API was added in OpenSSL 1.1.1.
 
 The OSSL_STORE_INFO_PUBKEY object type was added in OpenSSL 3.0.
+
+OSSL_STORE_INFO_get0_SKEY(), OSSL_STORE_INFO_get1_SKEY() and
+OSSL_STORE_INFO_new_SKEY() were added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
