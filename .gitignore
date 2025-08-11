@@ -99,6 +99,7 @@ providers/implementations/kdfs/scrypt.c
 providers/implementations/kdfs/sshkdf.c
 providers/implementations/kdfs/sskdf.c
 providers/implementations/kdfs/tls1_prf.c
+providers/implementations/kdfs/x942kdf.c
 providers/implementations/keymgmt/ml_dsa_kmgmt.c
 providers/implementations/keymgmt/ml_kem_kmgmt.c
 providers/implementations/keymgmt/mlx_kmgmt.c
