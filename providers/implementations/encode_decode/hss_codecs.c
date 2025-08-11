@@ -187,7 +187,8 @@ const OSSL_DISPATCH ossl_xdr_to_hss_decoder_functions[] = {
  * -  2 byte bit string tag and length
  * -    1 bitstring lead byte of 00
  */
-#define HSS_SPKI_OVERHEAD   20
+#define HSS_SPKI_OVERHEAD 20
+
 typedef struct {
     const uint8_t asn1_prefix[HSS_SPKI_OVERHEAD];
 } HSS_SPKI_FMT;
