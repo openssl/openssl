@@ -155,6 +155,11 @@ OpenSSL 3.6
 
    *Daniel Van Geest (CryptoNext Security)*
 
+ * The FIPS provider added support for deterministic ECDSA signature
+   generation.
+
+   *Dimitri John Ledkov*
+
 OpenSSL 3.5
 -----------
 
