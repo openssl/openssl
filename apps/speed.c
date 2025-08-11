@@ -2281,9 +2281,11 @@ int speed_main(int argc, char **argv)
         }
 #endif /* OPENSSL_NO_DSA */
         /* skipping these algs as tested elsewhere - and b/o setup is a pain */
-        else if (strcmp(sig_name, "ED25519") &&
-                 strcmp(sig_name, "ED448") &&
-                 strcmp(sig_name, "ECDSA") &&
+        else if (strncmp(sig_name, "RSA", 3) &&
+                 strncmp(sig_name, "DSA", 3) &&
+                 strncmp(sig_name, "ED25519", 7) &&
+                 strncmp(sig_name, "ED448", 5) &&
+                 strncmp(sig_name, "ECDSA", 5) &&
                  strcmp(sig_name, "HMAC") &&
                  strcmp(sig_name, "SIPHASH") &&
                  strcmp(sig_name, "POLY1305") &&
