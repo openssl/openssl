@@ -83,6 +83,8 @@ static int try_crl(struct extracted_param_data_st *, OSSL_STORE_INFO **,
                    OSSL_LIB_CTX *, const char *);
 static int try_pkcs12(struct extracted_param_data_st *, OSSL_STORE_INFO **,
                       OSSL_STORE_CTX *, OSSL_LIB_CTX *, const char *);
+static int try_skey(struct extracted_param_data_st *, OSSL_STORE_INFO **,
+                    OSSL_LIB_CTX *, const char *);
 
 int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
 {
@@ -150,6 +152,10 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
     ERR_pop_to_mark();
     ERR_set_mark();
     if (*v == NULL && !try_pkcs12(&helper_data, v, ctx, libctx, propq))
+        goto err;
+    ERR_pop_to_mark();
+    ERR_set_mark();
+    if (*v == NULL && !try_skey(&helper_data, v, libctx, propq))
         goto err;
     ERR_pop_to_mark();
 
@@ -668,4 +674,24 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
     }
 
     return ok;
+}
+
+static int try_skey(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
+                    OSSL_LIB_CTX *libctx, const char *propq)
+{
+    EVP_SKEY *skey = NULL;
+
+    if (data->object_type != OSSL_OBJECT_SKEY)
+        return 0;
+
+    skey = EVP_SKEY_import_raw_key(libctx, OSSL_SKEY_TYPE_GENERIC,
+                                   (unsigned char *)data->octet_data,
+                                   data->octet_data_size, propq);
+
+    if (skey != NULL)
+        *v = OSSL_STORE_INFO_new_SKEY(skey);
+    if (*v == NULL)
+        EVP_SKEY_free(skey);
+
+    return 1;
 }
