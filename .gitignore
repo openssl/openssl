@@ -111,6 +111,7 @@ providers/implementations/kdfs/scrypt.c
 providers/implementations/kdfs/sshkdf.c
 providers/implementations/kdfs/sskdf.c
 providers/implementations/kdfs/tls1_prf.c
+providers/implementations/kdfs/x942kdf.c
 providers/implementations/kem/ec_kem.c
 providers/implementations/kem/ecx_kem.c
 providers/implementations/kem/ml_kem_kem.c
