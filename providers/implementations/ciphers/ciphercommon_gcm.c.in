@@ -194,7 +194,7 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p.iv != NULL) {
         if (ctx->iv_state == IV_STATE_UNINITIALISED)
             return 0;
-        if (ctx->ivlen > p.iv->data_size) {
+        if (p.iv->data != NULL && ctx->ivlen > p.iv->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
@@ -207,7 +207,7 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p.updiv != NULL) {
         if (ctx->iv_state == IV_STATE_UNINITIALISED)
             return 0;
-        if (ctx->ivlen > p.updiv->data_size) {
+        if (p.updiv->data != NULL && ctx->ivlen > p.updiv->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
