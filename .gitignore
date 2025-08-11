@@ -116,6 +116,7 @@ providers/implementations/kem/ec_kem.c
 providers/implementations/kem/ecx_kem.c
 providers/implementations/kem/ml_kem_kem.c
 providers/implementations/kem/rsa_kem.c
+providers/implementations/keymgmt/hss_kmgmt.c
 providers/implementations/keymgmt/ml_dsa_kmgmt.c
 providers/implementations/keymgmt/ml_kem_kmgmt.c
 providers/implementations/keymgmt/mlx_kmgmt.c
