@@ -14,6 +14,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "internal/param_build_set.h"
 
 static OSSL_FUNC_keymgmt_new_fn hss_new_key;
 static OSSL_FUNC_keymgmt_free_fn hss_free_key;
@@ -22,7 +23,9 @@ static OSSL_FUNC_keymgmt_has_fn hss_has;
 static OSSL_FUNC_keymgmt_match_fn hss_match;
 static OSSL_FUNC_keymgmt_validate_fn hss_validate;
 static OSSL_FUNC_keymgmt_import_fn hss_import;
+static OSSL_FUNC_keymgmt_export_fn hss_export;
 static OSSL_FUNC_keymgmt_import_types_fn hss_imexport_types;
+static OSSL_FUNC_keymgmt_export_types_fn hss_imexport_types;
 static OSSL_FUNC_keymgmt_load_fn hss_load;
 
 #define HSS_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
@@ -100,7 +103,6 @@ static void *hss_dup_key(const void *keydata_from, int selection)
 static const OSSL_PARAM hss_key_types[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_HSS_L, NULL),
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
-    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, NULL, 0),
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *hss_imexport_types(int selection)
@@ -121,6 +123,46 @@ static int hss_validate(const void *keydata, int selection, int checktype)
         return 1; /* nothing to validate */
 
     return ossl_hss_key_valid(hsskey, selection);
+}
+
+static int hss_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
+                      void *cbarg)
+{
+    LMS_KEY *lmskey;
+    HSS_KEY *hsskey = keydata;
+    OSSL_PARAM_BLD *tmpl;
+    OSSL_PARAM *params = NULL;
+    int ret = 0;
+
+    if (!ossl_prov_is_running() || hsskey == NULL)
+        return 0;
+
+    lmskey = hsskey->public;
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0
+            || lmskey == NULL || lmskey->pub.encoded == NULL)
+        return 0;
+
+    tmpl = OSSL_PARAM_BLD_new();
+    if (tmpl == NULL)
+        return 0;
+
+    if (!ossl_param_build_set_int(tmpl, params, OSSL_PKEY_PARAM_HSS_L, hsskey->L))
+        goto err;
+    if (!ossl_param_build_set_octet_string(tmpl, params,
+                                           OSSL_PKEY_PARAM_PUB_KEY,
+                                           lmskey->pub.encoded,
+                                           lmskey->pub.encodedlen))
+        goto err;
+
+    params = OSSL_PARAM_BLD_to_param(tmpl);
+    if (params == NULL)
+        goto err;
+
+    ret = param_cb(params, cbarg);
+    OSSL_PARAM_free(params);
+err:
+    OSSL_PARAM_BLD_free(tmpl);
+    return ret;
 }
 
 static const OSSL_PARAM hss_params[] = {
@@ -173,6 +215,8 @@ const OSSL_DISPATCH ossl_hss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))hss_validate },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))hss_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))hss_imexport_types },
+    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))hss_export },
+    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))hss_imexport_types },
     { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))hss_load },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))hss_dup_key },
     OSSL_DISPATCH_END
