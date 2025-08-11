@@ -50,7 +50,7 @@ typedef enum OPTION_choice {
     OPT_A, OPT_Z, OPT_BUFSIZE, OPT_K, OPT_KFILE, OPT_UPPER_K, OPT_NONE,
     OPT_UPPER_S, OPT_IV, OPT_MD, OPT_ITER, OPT_PBKDF2, OPT_CIPHER,
     OPT_SALTLEN, OPT_R_ENUM, OPT_PROV_ENUM,
-    OPT_SKEYOPT, OPT_SKEYMGMT
+    OPT_SKEYOPT, OPT_SKEYMGMT, OPT_SKEYURI, OPT_PASSIN
 } OPTION_CHOICE;
 
 const OPTIONS enc_options[] = {
@@ -108,12 +108,49 @@ const OPTIONS enc_options[] = {
 #endif
     {"skeyopt", OPT_SKEYOPT, 's', "Key options as opt:value for opaque symmetric key handling"},
     {"skeymgmt", OPT_SKEYMGMT, 's', "Symmetric key management name for opaque symmetric key handling"},
+    {"skeyuri", OPT_SKEYURI, 's', "Symmetric key object URI"},
+    {"storepass", OPT_PASSIN, 's', "Store pass phrase source when skeyuri is used (optional)"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
     {NULL}
 };
+
+static EVP_SKEY *enc_skey_from_params(const EVP_CIPHER *cipher, const char *skeymgmt,
+                                      STACK_OF(OPENSSL_STRING) *opts, const char *uri,
+                                      const char *storepass)
+{
+    EVP_SKEY *skey = NULL;
+    EVP_SKEYMGMT *mgmt = NULL;
+    OSSL_PARAM *params = NULL;
+
+    if (uri == NULL) {
+        mgmt = EVP_SKEYMGMT_fetch(app_get0_libctx(),
+                                  skeymgmt != NULL ? skeymgmt : EVP_CIPHER_name(cipher),
+                                  app_get0_propq());
+        if (mgmt == NULL)
+            return NULL;
+
+        params = app_params_new_from_opts(opts, EVP_SKEYMGMT_get0_imp_settable_params(mgmt));
+        if (params == NULL) {
+            EVP_SKEYMGMT_free(mgmt);
+            return NULL;
+        }
+
+        skey = EVP_SKEY_import(app_get0_libctx(), EVP_SKEYMGMT_get0_name(mgmt),
+                               app_get0_propq(), OSSL_SKEYMGMT_SELECT_ALL, params);
+        OSSL_PARAM_free(params);
+        EVP_SKEYMGMT_free(mgmt);
+    } else {
+        if (skeymgmt != NULL)
+            BIO_printf(bio_err, "Skeymgmt is ignored when loading SKEY from URI\n");
+
+        skey = load_skey(uri, FORMAT_UNDEF, 0, storepass, 0);
+    }
+
+    return skey;
+}
 
 int enc_main(int argc, char **argv)
 {
@@ -129,6 +166,7 @@ int enc_main(int argc, char **argv)
     char *hkey = NULL, *hiv = NULL, *hsalt = NULL, *p;
     char *infile = NULL, *outfile = NULL, *prog;
     char *str = NULL, *passarg = NULL, *pass = NULL, *strbuf = NULL;
+    char *storepassarg = NULL;
     const char *ciphername = NULL;
     char mbuf[sizeof(magic) - 1];
     OPTION_CHOICE o;
@@ -156,8 +194,8 @@ int enc_main(int argc, char **argv)
     BIO *bzstd = NULL;
     STACK_OF(OPENSSL_STRING) *skeyopts = NULL;
     const char *skeymgmt = NULL;
+    const char *skeyuri = NULL;
     EVP_SKEY *skey = NULL;
-    EVP_SKEYMGMT *mgmt = NULL;
 
     /* first check the command name */
     if (strcmp(argv[0], "base64") == 0)
@@ -210,6 +248,9 @@ int enc_main(int argc, char **argv)
             break;
         case OPT_PASS:
             passarg = opt_arg();
+            break;
+        case OPT_PASSIN:
+            storepassarg = opt_arg();
             break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
@@ -331,6 +372,9 @@ int enc_main(int argc, char **argv)
         case OPT_SKEYMGMT:
             skeymgmt = opt_arg();
             break;
+        case OPT_SKEYURI:
+            skeyuri = opt_arg();
+            break;
         case OPT_R_CASES:
             if (!opt_rand(o))
                 goto end;
@@ -412,7 +456,8 @@ int enc_main(int argc, char **argv)
         str = pass;
     }
 
-    if ((str == NULL) && (cipher != NULL) && (hkey == NULL) && (skeyopts == NULL)) {
+    if ((str == NULL) && (cipher != NULL) && (hkey == NULL)
+        && (skeyopts == NULL) && (skeyuri == NULL)) {
         if (1) {
 #ifndef OPENSSL_NO_UI_CONSOLE
             for (;;) {
@@ -648,8 +693,8 @@ int enc_main(int argc, char **argv)
          * At this moment we know whether we trying to use raw bytes as the key
          * or an opaque symmetric key. We do not allow both options simultaneously.
          */
-        if (rawkey_set > 0 && skeyopts != NULL) {
-            BIO_printf(bio_err, "Either a raw key or the 'skeyopt' args must be used.\n");
+        if (rawkey_set > 0 && (skeyopts != NULL || skeyuri != NULL)) {
+            BIO_printf(bio_err, "Either a raw key or the skeyopt/skeyuri args must be used.\n");
             goto end;
         }
 
@@ -675,22 +720,16 @@ int enc_main(int argc, char **argv)
                 goto end;
             }
         } else {
-            OSSL_PARAM *params = NULL;
+            char *storepass = NULL;
 
-            mgmt = EVP_SKEYMGMT_fetch(app_get0_libctx(),
-                                      skeymgmt != NULL ? skeymgmt : EVP_CIPHER_name(cipher),
-                                      app_get0_propq());
-            if (mgmt == NULL)
+            if (!app_passwd(storepassarg, NULL, &storepass, NULL)) {
+                BIO_printf(bio_err,
+                           "Error getting store password from 'storepass' argument\n");
                 goto end;
+            }
+            skey = enc_skey_from_params(cipher, skeymgmt, skeyopts, skeyuri, storepass);
+            OPENSSL_free(storepass);
 
-            params = app_params_new_from_opts(skeyopts,
-                                              EVP_SKEYMGMT_get0_imp_settable_params(mgmt));
-            if (params == NULL)
-                goto end;
-
-            skey = EVP_SKEY_import(app_get0_libctx(), EVP_SKEYMGMT_get0_name(mgmt),
-                                   app_get0_propq(), OSSL_SKEYMGMT_SELECT_ALL, params);
-            OSSL_PARAM_free(params);
             if (skey == NULL) {
                 BIO_printf(bio_err, "Error creating opaque key object for skeymgmt %s\n",
                            skeymgmt ? skeymgmt : EVP_CIPHER_name(cipher));
@@ -777,7 +816,6 @@ int enc_main(int argc, char **argv)
  end:
     ERR_print_errors(bio_err);
     sk_OPENSSL_STRING_free(skeyopts);
-    EVP_SKEYMGMT_free(mgmt);
     EVP_SKEY_free(skey);
     OPENSSL_free(strbuf);
     OPENSSL_free(buff);
