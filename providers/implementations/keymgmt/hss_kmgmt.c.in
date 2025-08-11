@@ -6,6 +6,9 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+{-
+use OpenSSL::paramnames qw(produce_param_decoder);
+-}
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -66,17 +69,25 @@ static int hss_match(const void *keydata1, const void *keydata2, int selection)
     return ossl_hss_key_equal(key1, key2, selection);
 }
 
+{- produce_param_decoder('hss_import',
+                         (['PKEY_PARAM_PUB_KEY', 'pub', 'octet_string'],
+                          ['PKEY_PARAM_HSS_L',   'l',   'uint32'],
+                          )); -}
+
 static int hss_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     HSS_KEY *key = keydata;
+    struct hss_import_st p;
 
-    if (!ossl_prov_is_running() || key == NULL)
+    if (!ossl_prov_is_running()
+            || key == NULL
+            || !hss_import_decoder(params, &p))
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
         return 0;
 
-    return ossl_hss_pubkey_from_params(params, key);
+    return ossl_hss_pubkey_from_params(p.pub, p.l, key);
 }
 
 static void *hss_load(const void *reference, size_t reference_sz)
@@ -100,15 +111,10 @@ static void *hss_dup_key(const void *keydata_from, int selection)
     return NULL;
 }
 
-static const OSSL_PARAM hss_key_types[] = {
-    OSSL_PARAM_int(OSSL_PKEY_PARAM_HSS_L, NULL),
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
-    OSSL_PARAM_END
-};
 static const OSSL_PARAM *hss_imexport_types(int selection)
 {
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        return hss_key_types;
+        return hss_import_list;
     return NULL;
 }
 
@@ -165,42 +171,40 @@ err:
     return ret;
 }
 
-static const OSSL_PARAM hss_params[] = {
-    OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
-    OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
-    OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
-    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_MANDATORY_DIGEST, NULL, 0),
-    OSSL_PARAM_END
-};
+{- produce_param_decoder('hss_get_params',
+                         (['PKEY_PARAM_BITS',             'bits',    'int'],
+                          ['PKEY_PARAM_SECURITY_BITS',    'secbits', 'int'],
+                          ['PKEY_PARAM_MAX_SIZE',         'maxsize', 'int'],
+                          ['PKEY_PARAM_MANDATORY_DIGEST', 'digest',  'utf8_string'],
+                          )); -}
 
 static const OSSL_PARAM *hss_gettable_params(void *provctx)
 {
-    return hss_params;
+    return hss_get_params_list;
 }
 
 static int hss_get_params(void *keydata, OSSL_PARAM params[])
 {
     HSS_KEY *key = keydata;
-    OSSL_PARAM *p;
+    struct hss_get_params_st p;
     LMS_KEY *lms = key->public;
     size_t n = lms->lms_params->n;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
-            && !OSSL_PARAM_set_size_t(p, 8 * n))
+    if (key == NULL || !hss_get_params_decoder(params, &p))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS)) != NULL
-            && !OSSL_PARAM_set_size_t(p, 8 * n))
+
+    if (p.bits != NULL && !OSSL_PARAM_set_size_t(p.bits, 8 * n))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
-            && !OSSL_PARAM_set_size_t(p, 80 * 1024))
+    if (p.secbits != NULL && !OSSL_PARAM_set_size_t(p.secbits, 8 * n))
+        return 0;
+    if (p.maxsize != NULL && !OSSL_PARAM_set_size_t(p.maxsize, 80 * 1024))
         return 0;
 
     /*
      * This allows apps to use an empty digest, so that the old API
      * for digest signing can be used.
      */
-    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MANDATORY_DIGEST);
-    if (p != NULL && !OSSL_PARAM_set_utf8_string(p, ""))
+    if (p.digest != NULL && !OSSL_PARAM_set_utf8_string(p.digest, ""))
         return 0;
     return 1;
 }

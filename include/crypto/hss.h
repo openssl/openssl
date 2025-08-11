@@ -13,6 +13,7 @@
 # define OSSL_CRYPTO_HSS_H
 # pragma once
 # ifndef OPENSSL_NO_HSS
+#  include <openssl/proverr.h>
 #  include "lms.h"
 
 /*
@@ -47,7 +48,8 @@ int ossl_hss_key_equal(const HSS_KEY *hsskey1, const HSS_KEY *hsskey2,
 int ossl_hss_key_valid(const HSS_KEY *hsskey, int selection);
 int ossl_hss_key_has(const HSS_KEY *hsskey, int selection);
 
-int ossl_hss_pubkey_from_params(const OSSL_PARAM params[], HSS_KEY *hsskey);
+int ossl_hss_pubkey_from_params(const OSSL_PARAM *pub,
+                                const OSSL_PARAM *hss_l, HSS_KEY *hsskey);
 int ossl_hss_pubkey_decode(const unsigned char *pub, size_t publen,
                            HSS_KEY *hsskey, int lms_only);
 int ossl_hss_pubkey_encode(const HSS_KEY *hsskey, uint8_t **out);

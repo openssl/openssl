@@ -104,24 +104,23 @@ int ossl_hss_pubkey_decode(const unsigned char *pub, size_t publen,
  * @param hsskey The HSS_KEY to load the public key data into.
  * @returns 1 on success, or 0 otherwise.
  */
-int ossl_hss_pubkey_from_params(const OSSL_PARAM params[], HSS_KEY *hsskey)
+int ossl_hss_pubkey_from_params(const OSSL_PARAM *pub,
+                                const OSSL_PARAM *hss_l, HSS_KEY *hsskey)
 {
-    const OSSL_PARAM *p = NULL, *pl = NULL;
     uint32_t L = 0;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
-    pl = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_HSS_L);
-    if (p != NULL) {
-        if (p->data == NULL || p->data_type != OSSL_PARAM_OCTET_STRING)
+    if (pub != NULL) {
+        if (pub->data == NULL || pub->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
-        if (pl != NULL) {
-            if (!OSSL_PARAM_get_uint32(pl, &L))
+        if (hss_l != NULL) {
+            if (!OSSL_PARAM_get_uint32(hss_l, &L))
                 return 0;
             if (hsskey->L > 0 && L != hsskey->L)
                 return 0;
             hsskey->L = L;
         }
-        if (!ossl_hss_pubkey_decode(p->data, p->data_size, hsskey, pl != NULL))
+        if (!ossl_hss_pubkey_decode(pub->data, pub->data_size, hsskey,
+                                    hss_l != NULL))
             return 0;
     }
     return 1;
