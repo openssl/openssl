@@ -627,7 +627,7 @@ int setup_tests(void)
     ADD_TEST(lms_key_decode_test);
     ADD_TEST(lms_pubkey_decoder_test);
     ADD_TEST(lms_pubkey_decoder_fail_test);
-    ADD_ALL_TESTS(lms_verify_test, testdata_len);
+    ADD_ALL_TESTS(lms_verify_test, (int)testdata_len);
     ADD_TEST(lms_verify_fail_test);
     ADD_TEST(lms_digest_verify_fail_test);
     ADD_TEST(lms_digest_signing_fail_test);

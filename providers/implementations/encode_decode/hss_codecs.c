@@ -294,7 +294,7 @@ int ossl_hss_key_to_text(BIO *out, const HSS_KEY *key, int selection)
         }
         if (BIO_printf(out, "HSS Public-Key:\n") <= 0)
             return 0;
-        if (!BIO_printf(out, "Levels: %u\n", key->L))
+        if (!BIO_printf(out, "Levels: %lu\n", (unsigned long)key->L))
             return 0;
         if (!lms_key_to_text(out, lms, selection))
             return 0;

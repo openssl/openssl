@@ -51,7 +51,7 @@ int ossl_hss_pubkey_encode(const HSS_KEY *hsskey, uint8_t **out)
     }
     *out = buf;
     WPACKET_close(&pkt);
-    return len;
+    return (int)len;
 }
 
 /**
