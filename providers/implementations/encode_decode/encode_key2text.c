@@ -747,4 +747,3 @@ MAKE_TEXT_ENCODER(slh_dsa_shake_256f, slh_dsa);
 #ifndef OPENSSL_NO_HSS
 MAKE_TEXT_ENCODER(hss, hss);
 #endif
-

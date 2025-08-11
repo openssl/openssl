@@ -86,7 +86,6 @@ LMS_KEY *ossl_lms_key_dup(const LMS_KEY *src)
     return NULL;
 }
 
-
 /**
  * @brief Are 2 LMS public keys equal?
  *

@@ -140,7 +140,6 @@ static int hss_get_params(void *keydata, OSSL_PARAM params[])
 {
     HSS_KEY *key = keydata;
     OSSL_PARAM *p;
-
     LMS_KEY *lms = key->public;
     size_t n = lms->lms_params->n;
 
@@ -167,8 +166,8 @@ static int hss_get_params(void *keydata, OSSL_PARAM params[])
 const OSSL_DISPATCH ossl_hss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))hss_new_key },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))hss_free_key },
-    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))hss_get_params }, \
-    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))hss_gettable_params },\
+    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))hss_get_params },
+    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))hss_gettable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))hss_has },
     { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))hss_match },
     { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))hss_validate },

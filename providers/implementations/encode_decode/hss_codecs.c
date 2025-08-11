@@ -92,7 +92,7 @@ static int hssxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     if (length == 0)
         goto next;
     ERR_set_mark();
-    readlen = BIO_read(in, buf + HSS_HEADER_SIZE, length - HSS_HEADER_SIZE);
+    readlen = BIO_read(in, buf + HSS_HEADER_SIZE, (int)length - HSS_HEADER_SIZE);
     ERR_pop_to_mark();
     if (readlen != (int)(length - HSS_HEADER_SIZE))
         goto next;
@@ -187,9 +187,9 @@ const OSSL_DISPATCH ossl_xdr_to_hss_decoder_functions[] = {
  * -  2 byte bit string tag and length
  * -    1 bitstring lead byte of 00
  */
-#  define HSS_SPKI_OVERHEAD   20
+#define HSS_SPKI_OVERHEAD   20
 typedef struct {
-   const uint8_t asn1_prefix[HSS_SPKI_OVERHEAD];
+    const uint8_t asn1_prefix[HSS_SPKI_OVERHEAD];
 } HSS_SPKI_FMT;
 
 typedef struct {
@@ -255,7 +255,7 @@ int ossl_hss_i2d_pubkey(const HSS_KEY *key, unsigned char **out)
         return 0;
     }
     len = ossl_hss_pubkey_encode(key, out);
-    return len;
+    return (int)len;
 }
 
 static int lms_key_to_text(BIO *out, const LMS_KEY *key, int selection)
@@ -283,7 +283,7 @@ int ossl_hss_key_to_text(BIO *out, const HSS_KEY *key, int selection)
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_KEY,
                        "no %s key material available", "HSS");
-            return 0;
+        return 0;
     } else if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         LMS_KEY *lms = ossl_hss_key_get_public(key);
 

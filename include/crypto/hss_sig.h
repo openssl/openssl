@@ -11,7 +11,7 @@
 # define OSSL_CRYPTO_HSS_SIG_H
 # pragma once
 # ifndef OPENSSL_NO_HSS
-# include <openssl/e_os2.h> /* ossl_inline */
+#  include <openssl/e_os2.h> /* ossl_inline */
 #  include "lms_sig.h"
 #  include "hss.h"
 

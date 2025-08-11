@@ -145,7 +145,6 @@ static int hss_digest_verify(void *vctx, const uint8_t *sig, size_t siglen,
     return hss_verify(vctx, sig, siglen, tbs, tbslen);
 }
 
-
 const OSSL_DISPATCH ossl_hss_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))hss_newctx },
     { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))hss_freectx },
@@ -155,6 +154,6 @@ const OSSL_DISPATCH ossl_hss_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,
       (void (*)(void))hss_digest_verify_init },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,
-      (void (*)(void))hss_digest_verify }, 
+      (void (*)(void))hss_digest_verify },
     OSSL_DISPATCH_END
 };
