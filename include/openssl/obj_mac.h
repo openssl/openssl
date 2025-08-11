@@ -1068,7 +1068,7 @@
 
 #define SN_HSS          "id-alg-hss-lms-hashsig"
 #define LN_HSS          "HSS"
-#define NID_HSS         1499
+#define NID_HSS         1501
 #define OBJ_HSS         OBJ_id_smime_alg,17L
 
 #define SN_HKDF_SHA256          "id-alg-hkdf-with-sha256"
