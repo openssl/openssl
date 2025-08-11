@@ -4254,6 +4254,7 @@ int speed_main(int argc, char **argv)
             EVP_PKEY_CTX *sig_gen_ctx = NULL;
             EVP_PKEY_CTX *sig_sign_ctx = NULL;
             EVP_PKEY_CTX *sig_verify_ctx = NULL;
+            EVP_SIGNATURE *alg = NULL;
             unsigned char md[SHA256_DIGEST_LENGTH];
             unsigned char *sig;
             char sfx[MAX_ALGNAME_SUFFIX];
@@ -4314,21 +4315,48 @@ int speed_main(int argc, char **argv)
                            sig_name);
                 goto sig_err_break;
             }
+
+            /*
+             * Try explicitly fetching the signature algoritm implementation to
+             * use in case the algorithm does not support EVP_PKEY_sign_init
+             */
+            ERR_set_mark();
+            alg = EVP_SIGNATURE_fetch(app_get0_libctx(), sig_name, app_get0_propq());
+            ERR_pop_to_mark();
+
             /* Now prepare signature data structs */
             sig_sign_ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
                                                       pkey,
                                                       app_get0_propq());
-            if (sig_sign_ctx == NULL
-                || EVP_PKEY_sign_init(sig_sign_ctx) <= 0
-                || (use_params == 1
-                    && (EVP_PKEY_CTX_set_rsa_padding(sig_sign_ctx,
-                                                     RSA_PKCS1_PADDING) <= 0))
-                || EVP_PKEY_sign(sig_sign_ctx, NULL, &max_sig_len,
-                                 md, md_len) <= 0) {
-                    BIO_printf(bio_err,
-                               "Error while initializing signing data structs for %s.\n",
-                               sig_name);
-                    goto sig_err_break;
+            if (sig_sign_ctx == NULL) {
+                BIO_printf(bio_err,
+                           "Error while initializing signing ctx for %s.\n",
+                           sig_name);
+                goto sig_err_break;
+            }
+            ERR_set_mark();
+            if (EVP_PKEY_sign_init(sig_sign_ctx) <= 0
+                && (alg == NULL
+                    || EVP_PKEY_sign_message_init(sig_sign_ctx, alg, NULL) <= 0)) {
+                ERR_clear_last_mark();
+                BIO_printf(bio_err,
+                           "Error while initializing signing data structs for %s.\n",
+                           sig_name);
+                goto sig_err_break;
+            }
+            ERR_pop_to_mark();
+            if (use_params == 1 &&
+                EVP_PKEY_CTX_set_rsa_padding(sig_sign_ctx, RSA_PKCS1_PADDING) <= 0) {
+                BIO_printf(bio_err,
+                           "Error while initializing padding for %s.\n",
+                           sig_name);
+                goto sig_err_break;
+            }
+            if (EVP_PKEY_sign(sig_sign_ctx, NULL, &max_sig_len, md, md_len) <= 0) {
+                BIO_printf(bio_err,
+                           "Error while obtaining signature bufffer length for %s.\n",
+                           sig_name);
+                goto sig_err_break;
             }
             sig = app_malloc(sig_len = max_sig_len, "signature buffer");
             if (sig == NULL) {
@@ -4344,16 +4372,23 @@ int speed_main(int argc, char **argv)
             sig_verify_ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
                                                         pkey,
                                                         app_get0_propq());
-            if (sig_verify_ctx == NULL
-                || EVP_PKEY_verify_init(sig_verify_ctx) <= 0
-                || (use_params == 1
-                  && (EVP_PKEY_CTX_set_rsa_padding(sig_verify_ctx,
-                                                   RSA_PKCS1_PADDING) <= 0))) {
+            if (sig_verify_ctx == NULL) {
+                BIO_printf(bio_err,
+                           "Error while initializing verify ctx for %s.\n",
+                           sig_name);
+                goto sig_err_break;
+            }
+            ERR_set_mark();
+            if (EVP_PKEY_verify_init(sig_verify_ctx) <= 0
+                && (alg == NULL
+                    || EVP_PKEY_verify_message_init(sig_verify_ctx, alg, NULL) <= 0)) {
+                ERR_clear_last_mark();
                 BIO_printf(bio_err,
                            "Error while initializing verify data structs for %s.\n",
                            sig_name);
                 goto sig_err_break;
             }
+            ERR_pop_to_mark();
             if (EVP_PKEY_verify(sig_verify_ctx, sig, sig_len, md, md_len) <= 0) {
                 BIO_printf(bio_err, "Verify error for %s.\n", sig_name);
                 goto sig_err_break;
@@ -4369,12 +4404,14 @@ int speed_main(int argc, char **argv)
             loopargs[i].sig_act_sig_len[testnum] = sig_len;
             loopargs[i].sig_sig[testnum] = sig;
             EVP_PKEY_free(pkey);
+            EVP_SIGNATURE_free(alg);
             pkey = NULL;
             continue;
 
         sig_err_break:
             dofail();
             EVP_PKEY_free(pkey);
+            EVP_SIGNATURE_free(alg);
             op_count = 1;
             sig_checks = 0;
             break;
