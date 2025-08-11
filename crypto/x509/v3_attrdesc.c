@@ -67,6 +67,8 @@ static int i2r_HASH(X509V3_EXT_METHOD *method,
     }
     if (BIO_printf(out, "%*sHash Value: ", indent, "") <= 0)
         return 0;
+    if (hash->hashValue == NULL)
+        return 0;
     return ossl_bio_print_hex(out, hash->hashValue->data, hash->hashValue->length);
 }
 
