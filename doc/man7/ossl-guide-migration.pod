@@ -2366,7 +2366,7 @@ This implies some of the performance numbers might not be comparable with the
 previous releases due to higher overhead. This applies particularly to
 measuring performance on smaller data chunks.
 
-b<openssl dhparam>, B<openssl dsa>, B<openssl gendsa>, B<openssl dsaparam>,
+B<openssl dhparam>, B<openssl dsa>, B<openssl gendsa>, B<openssl dsaparam>,
 B<openssl genrsa> and B<openssl rsa> have been modified to use PKEY APIs.
 B<openssl genrsa> and B<openssl rsa> now write PKCS #8 keys by default.
 

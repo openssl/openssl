@@ -459,7 +459,7 @@ instead of the key contained in the input
 or given with the B<-key> (or B<-signkey>) option.
 If the input contains no public key but a private key, its public part is used.
 
-This option can be used in conjunction with b<-new> and B<-set_subject>
+This option can be used in conjunction with B<-new> and B<-set_subject>
 to directly generate a certificate containing any desired public key.
 
 This option is also useful for creating self-issued certificates that are not
