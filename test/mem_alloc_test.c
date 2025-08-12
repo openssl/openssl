@@ -698,7 +698,7 @@ static int test_xaligned_alloc(const bool array, const bool macro,
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
     if (IS_FAIL(exp) && !TEST_ptr_null(freeptr))
         res = 0;
-    if ((exp = EXP_NONNULL) && !TEST_ptr(freeptr))
+    if ((exp == EXP_NONNULL) && !TEST_ptr(freeptr))
         res = 0;
 #else /* OPENSSL_SMALL_FOOTPRINT */
     if (!TEST_ptr_null(ret) || !TEST_ptr_null(freeptr))
