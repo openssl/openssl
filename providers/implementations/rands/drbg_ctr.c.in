@@ -350,7 +350,6 @@ static int drbg_ctr_instantiate_wrapper(void *vdrbg, unsigned int strength,
     if (drbg == NULL || !drbg_ctr_set_ctx_params_decoder(params, &p))
         return 0;
 
-
     if (drbg->lock != NULL && !CRYPTO_THREAD_write_lock(drbg->lock))
         return 0;
 
