@@ -620,7 +620,7 @@ int x509_main(int argc, char **argv)
         case OPT_FINGERPRINT_FORMAT: {
             unsigned char md[EVP_MAX_MD_SIZE];
             unsigned int n;
-            if (!X509_digest(certs, EVP_sha256(), md, &n)) {
+            if (!X509_digest(x, EVP_sha256(), md, &n)) {
               BIO_printf(bio_err, "Error calculating SHA-256 fingerprint\n");
               goto end;
             }
