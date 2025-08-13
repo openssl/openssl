@@ -93,7 +93,7 @@ const OPTIONS x509_options[] = {
      "Datetime format used for printing. (rfc_822/iso_8601). Default is rfc_822."},
     {"certopt", OPT_CERTOPT, 's', "Various certificate text printing options"},
     {"fingerprint", OPT_FINGERPRINT, '-', "Print the certificate fingerprint"},
-    {"fingerprintformat",  OPT_FINGERPRINT_FORMAT, '-', "Print SHA-256 fingerprint in lowercase hex without colons"},
+    {"fingerprint256format",  OPT_FINGERPRINT_FORMAT, '-', "Print SHA-256 fingerprint in lowercase hex without colons"},
     {"alias", OPT_ALIAS, '-', "Print certificate alias"},
     {"serial", OPT_SERIAL, '-', "Print serial number value"},
     {"startdate", OPT_STARTDATE, '-', "Print the notBefore field"},
@@ -262,6 +262,7 @@ static int self_signed(X509_STORE *ctx, X509 *cert)
 }
 
 int x509_main(int argc, char **argv)
+    int fingerprint256format = 0;
 {
     ASN1_INTEGER *sno = NULL;
     ASN1_OBJECT *objtmp = NULL;
@@ -618,6 +619,8 @@ int x509_main(int argc, char **argv)
             digest = opt_unknown();
             break;
         case OPT_FINGERPRINT_FORMAT: {
+    fingerprint256format = 1;
+    break;
             unsigned char md[EVP_MAX_MD_SIZE];
             unsigned int n;
             X509 *cert = NULL;
@@ -638,7 +641,6 @@ int x509_main(int argc, char **argv)
                 BIO_printf(out, "%02x", md[i]);
             BIO_printf(out, "\n");
             break;   /* <-- VERY IMPORTANT */
-        }
         }
     }
     /* No extra arguments. */
