@@ -5873,6 +5873,7 @@ ossl_unused static int script_88_poll(struct helper *h, struct helper_local *hl)
     if (!TEST_int_eq(ret, expected_ret))
         ok = 0;
 
+    processed = 0;
     for (i = 0; i < OSSL_NELEM(items); ++i) {
         if (items[i].revents == 0)
             continue;
