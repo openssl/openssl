@@ -689,7 +689,7 @@ static void drbg_ctr_free(void *vdrbg)
                           ['DRBG_PARAM_RESEED_TIME',            'reseed_time', 'time_t'],
                           ['DRBG_PARAM_RESEED_REQUESTS',        'reseed_req',  'uint'],
                           ['DRBG_PARAM_RESEED_TIME_INTERVAL',   'reseed_int',  'uint64'],
-                          ['KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',         'int'],
+                          ['KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',         'int', 'fips'],
                          )); -}
 
 static int drbg_ctr_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
