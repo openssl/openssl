@@ -456,7 +456,7 @@ static int hkdf_common_get_ctx_params(void *vctx, OSSL_PARAM params[])
             default:
                 return 0;
             }
-        } else if (p.mode->data_type == OSSL_PARAM_INTEGER) {
+        } else {
             if (!OSSL_PARAM_set_int(p.mode, ctx->mode))
                 return 0;
         }
