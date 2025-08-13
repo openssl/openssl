@@ -676,7 +676,7 @@ static void *dsa_dupctx(void *vpdsactx)
                          (['SIGNATURE_PARAM_ALGORITHM_ID',            'algid',  'octet_string'],
                           ['SIGNATURE_PARAM_DIGEST',                  'digest', 'utf8_string'],
                           ['SIGNATURE_PARAM_NONCE_TYPE',              'nonce',  'uint'],
-                          ['SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int'],
+                          ['SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
                          )); -}
 
 static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
@@ -714,9 +714,11 @@ static const OSSL_PARAM *dsa_gettable_ctx_params(ossl_unused void *ctx,
 struct dsa_all_set_ctx_params_st {
     OSSL_PARAM *digest;     /* dsa_set_ctx_params */
     OSSL_PARAM *propq;      /* dsa_set_ctx_params */
+#ifdef FIPS_MODULE
     OSSL_PARAM *ind_d;
     OSSL_PARAM *ind_k;
     OSSL_PARAM *ind_sign;
+#endif
     OSSL_PARAM *nonce;
     OSSL_PARAM *sig;        /* dsa_sigalg_set_ctx_params */
 };
@@ -751,9 +753,9 @@ static int dsa_common_set_ctx_params(PROV_DSA_CTX *pdsactx,
                          (['SIGNATURE_PARAM_DIGEST',            'digest',   'utf8_string'],
                           ['SIGNATURE_PARAM_PROPERTIES',        'propq',    'utf8_string'],
                           ['SIGNATURE_PARAM_NONCE_TYPE',        'nonce',    'uint'],
-                          ['SIGNATURE_PARAM_FIPS_KEY_CHECK',    'ind_k',    'int'],
-                          ['SIGNATURE_PARAM_FIPS_DIGEST_CHECK', 'ind_d',    'int'],
-                          ['SIGNATURE_PARAM_FIPS_SIGN_CHECK',   'ind_sign', 'int'],
+                          ['SIGNATURE_PARAM_FIPS_KEY_CHECK',    'ind_k',    'int', 'fips'],
+                          ['SIGNATURE_PARAM_FIPS_DIGEST_CHECK', 'ind_d',    'int', 'fips'],
+                          ['SIGNATURE_PARAM_FIPS_SIGN_CHECK',   'ind_sign', 'int', 'fips'],
                          )); -}
 
 static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
@@ -939,9 +941,9 @@ static const char **dsa_sigalg_query_key_types(void)
 {- produce_param_decoder('dsa_sigalg_set_ctx_params',
                          (['SIGNATURE_PARAM_SIGNATURE',         'sig',      'octet_string'],
                           ['SIGNATURE_PARAM_NONCE_TYPE',        'nonce',    'uint'],
-                          ['SIGNATURE_PARAM_FIPS_KEY_CHECK',    'ind_k',    'int'],
-                          ['SIGNATURE_PARAM_FIPS_DIGEST_CHECK', 'ind_d',    'int'],
-                          ['SIGNATURE_PARAM_FIPS_SIGN_CHECK',   'ind_sign', 'int'],
+                          ['SIGNATURE_PARAM_FIPS_KEY_CHECK',    'ind_k',    'int', 'fips'],
+                          ['SIGNATURE_PARAM_FIPS_DIGEST_CHECK', 'ind_d',    'int', 'fips'],
+                          ['SIGNATURE_PARAM_FIPS_SIGN_CHECK',   'ind_sign', 'int', 'fips'],
                          )); -}
 
 static const OSSL_PARAM *dsa_sigalg_settable_ctx_params(void *vpdsactx,
