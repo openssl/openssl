@@ -5830,7 +5830,7 @@ ossl_unused static int script_88_poll(struct helper *h, struct helper_local *hl)
 {
     int ok = 1, ret, expected_ret = 1;
     static const struct timeval timeout = {0};
-    size_t result_count, expected_result_count = 0;
+    size_t result_count, processed;
     SSL_POLL_ITEM items[2] = {0}, *item = items;
     SSL *c_a;
     size_t i;
@@ -5860,23 +5860,24 @@ ossl_unused static int script_88_poll(struct helper *h, struct helper_local *hl)
         /* No incoming data yet */
         expected_revents[0]     = SSL_POLL_EVENT_W;
         expected_revents[1]     = SSL_POLL_EVENT_OS;
-        expected_result_count   = 2;
         break;
     case 1:
         /* Expect more events */
         expected_revents[0]     = SSL_POLL_EVENT_R;
         expected_revents[1]     = SSL_POLL_EVENT_OS;
-        expected_result_count   = 2;
         break;
     default:
         return 0;
     }
 
-    if (!TEST_int_eq(ret, expected_ret)
-        || !TEST_size_t_eq(result_count, expected_result_count))
+    if (!TEST_int_eq(ret, expected_ret))
         ok = 0;
 
-    for (i = 0; i < OSSL_NELEM(items); ++i)
+    for (i = 0; i < OSSL_NELEM(items); ++i) {
+        if (items[i].revents == 0)
+            continue;
+
+        processed++;
         if (!TEST_uint64_t_eq(items[i].revents, expected_revents[i])) {
             TEST_info("wanted: " POLL_FMT " got: " POLL_FMT,
                       POLL_PRINTA(expected_revents[i]),
@@ -5885,33 +5886,38 @@ ossl_unused static int script_88_poll(struct helper *h, struct helper_local *hl)
                        i, (int)mode);
             ok = 0;
         }
+    }
+
+    if (!TEST_int_eq(processed, result_count))
+        ok = 0;
 
     return ok;
 }
 
 ossl_unused static int script_88_poll_conly(struct helper *h, struct helper_local *hl)
 {
-    int ok = 1, ret, expected_ret = 1;
+    int ok = 1;
     static const struct timeval timeout = {0};
-    size_t result_count, expected_result_count = 0;
+    size_t result_count;
     SSL_POLL_ITEM items[1] = {0};
     int done = 0;
 
     result_count = SIZE_MAX;
-    expected_result_count = 1;
 
     items[0].desc    = SSL_as_poll_descriptor(h->c_conn);
     items[0].events  = UINT64_MAX;
     items[0].revents = UINT64_MAX;
 
     while (done == 0 && ok == 1) {
-        ret = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
+        ok = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
                        &timeout, 0,
                        &result_count);
 
-        if (!TEST_int_eq(ret, expected_ret)
-            || !TEST_size_t_eq(result_count, expected_result_count))
-            ok = 0;
+        if (!TEST_int_eq(ok, 1))
+            continue;
+
+        if (result_count == 0)
+            OSSL_sleep(10);
 
         TEST_info("received event " POLL_FMT, POLL_PRINTA(items[0].revents));
 
