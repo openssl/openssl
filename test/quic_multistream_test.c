@@ -5917,7 +5917,7 @@ ossl_unused static int script_88_poll_conly(struct helper *h, struct helper_loca
 
         if ((items[0].revents & SSL_POLL_EVENT_EC) == SSL_POLL_EVENT_EC)
             SSL_shutdown(h->c_conn);
-        done = 
+        done =
             ((items[0].revents & SSL_POLL_EVENT_ECD) == SSL_POLL_EVENT_ECD);
     }
 
