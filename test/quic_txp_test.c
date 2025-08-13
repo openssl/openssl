@@ -124,7 +124,7 @@ static int helper_init(struct helper *h)
 {
     int rc = 0;
     size_t i;
-    QUIC_CHANNEL *client_ch;
+    QUIC_CHANNEL *client_ch = NULL;
     static QUIC_CHANNEL_ARGS client_ch_args;
 
     memset(h, 0, sizeof(*h));
@@ -192,14 +192,11 @@ static int helper_init(struct helper *h)
     client_ch = ossl_quic_channel_alloc(&client_ch_args);
     if (!TEST_ptr(client_ch))
         goto err;
-    rc = TEST_true(ossl_quic_stream_map_init(&h->qsm, NULL, NULL,
+    if (!TEST_true(ossl_quic_stream_map_init(&h->qsm, NULL, NULL,
                                              &h->max_streams_bidi_rxfc,
                                              &h->max_streams_uni_rxfc,
-                                             client_ch));
-    ossl_quic_channel_free(client_ch);
-    if (!rc)
+                                             /*is_server=*/0)))
         goto err;
-    rc = 0;
 
     h->have_qsm = 1;
 
@@ -247,6 +244,8 @@ static int helper_init(struct helper *h)
 err:
     if (!rc)
         helper_cleanup(h);
+
+    ossl_quic_channel_free(client_ch);
 
     return rc;
 }
