@@ -5889,7 +5889,7 @@ ossl_unused static int script_88_poll(struct helper *h, struct helper_local *hl)
         }
     }
 
-    if (!TEST_int_eq(processed, result_count))
+    if (!TEST_size_t_eq(processed, result_count))
         ok = 0;
 
     return ok;
