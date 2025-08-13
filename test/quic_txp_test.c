@@ -11,6 +11,7 @@
 #include "internal/quic_statm.h"
 #include "internal/quic_demux.h"
 #include "internal/quic_record_rx.h"
+#include "internal/quic_channel.h"
 #include "testutil.h"
 #include "quic_record_test_util.h"
 
@@ -119,24 +120,12 @@ static void demux_default_handler(QUIC_URXE *e, void *arg,
     ossl_qrx_inject_urxe(h->qrx, e);
 }
 
-/*
- * we don't need fully initialized channel for TX-packetizer test.
- * We just need a mockup channel instance which makes function
- * ossl_quic_channel_is_serve() to return zero, Zero buffer
- * which size is greater than sizeof (struct quic_channel_st) is
- * is sufficient.
- */
-static QUIC_CHANNEL *get_client_test_channel(void)
-{
-    static char test_client_channel[4096] = { 0 };
-
-    return (QUIC_CHANNEL *)test_client_channel;
-}
-
 static int helper_init(struct helper *h)
 {
     int rc = 0;
     size_t i;
+    QUIC_CHANNEL *client_ch;
+    static QUIC_CHANNEL_ARGS client_ch_args;
 
     memset(h, 0, sizeof(*h));
 
@@ -200,11 +189,17 @@ static int helper_init(struct helper *h)
                                                /* is_server */0)))
         goto err;
 
-    if (!TEST_true(ossl_quic_stream_map_init(&h->qsm, NULL, NULL,
+    client_ch = ossl_quic_channel_alloc(&client_ch_args);
+    if (!TEST_ptr(client_ch))
+        goto err;
+    rc = TEST_true(ossl_quic_stream_map_init(&h->qsm, NULL, NULL,
                                              &h->max_streams_bidi_rxfc,
                                              &h->max_streams_uni_rxfc,
-                                             get_client_test_channel())))
+                                             client_ch));
+    ossl_quic_channel_free(client_ch);
+    if (!rc)
         goto err;
+    rc = 0;
 
     h->have_qsm = 1;
 
