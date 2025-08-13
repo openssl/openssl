@@ -398,8 +398,12 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
              ++pn_space)
             ossl_ackm_on_pkt_space_discarded(ch->ackm, pn_space);
 
-    ossl_quic_lcidm_cull(ch->lcidm, ch);
-    ossl_quic_srtm_cull(ch->srtm, ch);
+    if (ch->lcidm != NULL)
+        ossl_quic_lcidm_cull(ch->lcidm, ch);
+
+    if (ch->srtm != NULL)
+        ossl_quic_srtm_cull(ch->srtm, ch);
+
     ossl_quic_tx_packetiser_free(ch->txp);
     ossl_quic_txpim_free(ch->txpim);
     ossl_quic_cfq_free(ch->cfq);

@@ -196,12 +196,7 @@ static int helper_init(struct helper *h)
                                              &h->max_streams_bidi_rxfc,
                                              &h->max_streams_uni_rxfc,
                                              client_ch));
-    /*
-     * OSSL_free() is fine here, because ossl_quic_channel_alloc()
-     * does not allocate any additional channel members for
-     * args being zero.
-     */
-    OPENSSL_free(client_ch);
+    ossl_quic_channel_free(client_ch);
     if (!rc)
         goto err;
     rc = 0;
