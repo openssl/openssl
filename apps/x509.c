@@ -93,7 +93,7 @@ const OPTIONS x509_options[] = {
      "Datetime format used for printing. (rfc_822/iso_8601). Default is rfc_822."},
     {"certopt", OPT_CERTOPT, 's', "Various certificate text printing options"},
     {"fingerprint", OPT_FINGERPRINT, '-', "Print the certificate fingerprint"},
-    {"fingerprint256format",  OPT_FINGERPRINT_FORMAT, '-', "Print SHA-256 fingerprint in lowercase hex without colons"},
+    {"fingerprintformat",  OPT_FINGERPRINT_FORMAT, '-', "Print SHA-256 fingerprint in lowercase hex without colons"},
     {"alias", OPT_ALIAS, '-', "Print certificate alias"},
     {"serial", OPT_SERIAL, '-', "Print serial number value"},
     {"startdate", OPT_STARTDATE, '-', "Print the notBefore field"},
