@@ -369,7 +369,7 @@ static void crng_test_unlock(ossl_unused void *vcrngt)
                          (['RAND_PARAM_STATE',                   'state',  'int'],
                           ['RAND_PARAM_STRENGTH',                'str',    'uint'],
                           ['RAND_PARAM_MAX_REQUEST',             'maxreq', 'size_t'],
-                          ['RAND_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int'],
+                          ['RAND_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
                          )); -}
 
 static int crng_test_get_ctx_params(void *vcrngt, OSSL_PARAM params[])
