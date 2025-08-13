@@ -212,7 +212,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/rands/seed_src.c \
        providers/implementations/rands/seed_src_jitter.c \
        providers/implementations/rands/test_rng.c \
-       include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
+       include/openssl/core_names.h]=util/perl/OpenSSL/paramnames.pm
 GENERATE[providers/implementations/asymciphers/rsa_enc.c]=\
     providers/implementations/asymciphers/rsa_enc.c.in
 GENERATE[providers/implementations/asymciphers/sm2_enc.c]=\
