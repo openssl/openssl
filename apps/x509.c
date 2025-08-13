@@ -262,8 +262,8 @@ static int self_signed(X509_STORE *ctx, X509 *cert)
 }
 
 int x509_main(int argc, char **argv)
-{
     int fingerprint256format = 0;
+{
     ASN1_INTEGER *sno = NULL;
     ASN1_OBJECT *objtmp = NULL;
     BIO *out = NULL;
