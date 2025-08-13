@@ -55,7 +55,8 @@ typedef enum OPTION_choice {
     OPT_SUBJECT_HASH_OLD, OPT_ISSUER_HASH_OLD, OPT_COPY_EXTENSIONS,
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
     OPT_NOT_BEFORE, OPT_NOT_AFTER,
-    OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT
+    OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT,
+    OPT_FINGERPRINT_FORMAT = OPT_X509_BASE + 1
 } OPTION_CHOICE;
 
 const OPTIONS x509_options[] = {
@@ -93,6 +94,7 @@ const OPTIONS x509_options[] = {
      "Datetime format used for printing. (rfc_822/iso_8601). Default is rfc_822."},
     {"certopt", OPT_CERTOPT, 's', "Various certificate text printing options"},
     {"fingerprint", OPT_FINGERPRINT, '-', "Print the certificate fingerprint"},
+    {"fingerprint256format",  OPT_FINGERPRINT_FORMAT, '-', "Print SHA-256 fingerprint in lowercase hex without colons"},
     {"alias", OPT_ALIAS, '-', "Print certificate alias"},
     {"serial", OPT_SERIAL, '-', "Print serial number value"},
     {"startdate", OPT_STARTDATE, '-', "Print the notBefore field"},
