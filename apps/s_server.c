@@ -928,7 +928,7 @@ static int not_resumable_sess_cb(SSL *s, int is_forward_secure)
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_ENGINE,
-    OPT_4, OPT_6, OPT_ACCEPT, OPT_PORT, OPT_UNIX, OPT_UNLINK, OPT_NACCEPT,
+    OPT_4, OPT_6, OPT_ACCEPT, OPT_PORT, OPT_ACCEPT_FD, OPT_UNIX, OPT_UNLINK, OPT_NACCEPT,
     OPT_VERIFY, OPT_NAMEOPT, OPT_UPPER_V_VERIFY, OPT_CONTEXT, OPT_CERT, OPT_CRL,
     OPT_CRL_DOWNLOAD, OPT_SERVERINFO, OPT_CERTFORM, OPT_KEY, OPT_KEYFORM,
     OPT_PASS, OPT_CERT_CHAIN, OPT_DHPARAM, OPT_DCERTFORM, OPT_DCERT,
@@ -984,6 +984,8 @@ const OPTIONS s_server_options[] = {
      "TCP/IP port to listen on for connections (default is " PORT ")"},
     {"accept", OPT_ACCEPT, 's',
      "TCP/IP optional host and port to listen on for connections (default is *:" PORT ")"},
+    {"accept_fd", OPT_ACCEPT_FD, 'n',
+     "File descriptor to accept connections on (already listening)"},
 #ifdef AF_UNIX
     {"unix", OPT_UNIX, 's', "Unix domain socket to accept on"},
     {"unlink", OPT_UNLINK, '-', "For -unix, unlink existing socket first"},
@@ -1262,6 +1264,8 @@ int s_server_main(int argc, char *argv[])
     int state = 0, crl_format = FORMAT_UNDEF, crl_download = 0;
     char *host = NULL;
     char *port = NULL;
+    int accept_fd = -1;
+    int port_explicitly_set = 0;
     unsigned char *context = NULL;
     OPTION_CHOICE o;
     EVP_PKEY *s_key2 = NULL;
@@ -1402,6 +1406,7 @@ int s_server_main(int argc, char *argv[])
                            port);
                 goto end;
             }
+            port_explicitly_set = 1;
             break;
         case OPT_ACCEPT:
 #ifdef AF_UNIX
@@ -1415,6 +1420,14 @@ int s_server_main(int argc, char *argv[])
                 BIO_printf(bio_err,
                            "%s: -accept argument malformed or ambiguous\n",
                            port);
+                goto end;
+            }
+            port_explicitly_set = 1;
+            break;
+        case OPT_ACCEPT_FD:
+            accept_fd = atoi(opt_arg());
+            if (accept_fd < 0) {
+                BIO_printf(bio_err, "Invalid -accept_fd argument: %s\n", opt_arg());
                 goto end;
             }
             break;
@@ -1972,6 +1985,27 @@ int s_server_main(int argc, char *argv[])
     if (tfo && socket_type != SOCK_STREAM) {
         BIO_printf(bio_err, "Can only use -tfo with TLS\n");
         goto end;
+    }
+
+    if (accept_fd >= 0) {
+        if (socket_type != SOCK_STREAM) {
+            BIO_printf(bio_err, "Can only use -accept_fd with TLS\n");
+            goto end;
+        }
+        if (port_explicitly_set) {
+            BIO_printf(bio_err, "Cannot use -accept_fd with -accept or -port\n");
+            goto end;
+        }
+#ifdef AF_UNIX
+        if (socket_family == AF_UNIX) {
+            BIO_printf(bio_err, "Cannot use -accept_fd with -unix\n");
+            goto end;
+        }
+#endif
+        if (tfo) {
+            BIO_printf(bio_err, "Cannot use -accept_fd with -tfo\n");
+            goto end;
+        }
     }
 
     if (stateless && socket_type != SOCK_STREAM) {
@@ -2564,8 +2598,15 @@ int s_server_main(int argc, char *argv[])
 #endif
     if (tfo)
         BIO_printf(bio_s_out, "Listening for TFO\n");
-    do_server(&accept_socket, host, port, socket_family, socket_type, protocol,
-              server_cb, context, naccept, bio_s_out, tfo);
+    if (accept_fd >= 0) {
+        BIO_printf(bio_s_out, "Using provided file descriptor %d for accepting connections\n", accept_fd);
+        accept_socket = accept_fd;
+        do_server_unix_fd(accept_fd, socket_type, protocol,
+                          server_cb, context, naccept, bio_s_out);
+    } else {
+        do_server(&accept_socket, host, port, socket_family, socket_type, protocol,
+                  server_cb, context, naccept, bio_s_out, tfo);
+    }
     print_stats(bio_s_out, ctx);
     ret = 0;
  end:

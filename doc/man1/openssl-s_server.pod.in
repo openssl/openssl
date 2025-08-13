@@ -13,6 +13,7 @@ B<openssl> B<s_server>
 [B<-help>]
 [B<-port> I<+int>]
 [B<-accept> I<val>]
+[B<-accept_fd> I<+int>]
 [B<-unix> I<val>]
 [B<-4>]
 [B<-6>]
@@ -160,6 +161,14 @@ The TCP port to listen on for connections. If not specified 4433 is used.
 =item B<-accept> I<val>
 
 The optional TCP host and port to listen on for connections. If not specified, *:4433 is used.
+
+=item B<-accept_fd> I<+int>
+
+The file descriptor number to accept connections on. This option allows
+the SSL server to use a pre-existing file descriptor that is already listening
+for connections. When this option is used, the server will directly call accept()
+on the descriptor. This option is mutually exclusive with B<-port>, B<-accept>,
+B<-unix>, and B<-tfo>.
 
 =item B<-unix> I<val>
 
