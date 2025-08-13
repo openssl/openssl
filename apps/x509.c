@@ -639,6 +639,7 @@ int x509_main(int argc, char **argv)
             BIO_printf(out, "\n");
             break;   /* <-- VERY IMPORTANT */
         }
+        }
     }
     /* No extra arguments. */
     if (!opt_check_rest_arg(NULL))
