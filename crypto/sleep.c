@@ -9,12 +9,14 @@
 
 #include <openssl/crypto.h>
 #include "internal/e_os.h"
+#include "internal/time.h"
 
 /* system-specific variants defining OSSL_sleep() */
-#if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
-#include <unistd.h>
+#if (defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)) \
+    && !defined(OPENSSL_USE_SLEEP_BUSYLOOP)
+# include <unistd.h>
 
-void OSSL_sleep(uint64_t millis)
+static void ossl_sleep_millis(uint64_t millis)
 {
 # ifdef OPENSSL_SYS_VXWORKS
     struct timespec ts;
@@ -39,7 +41,7 @@ void OSSL_sleep(uint64_t millis)
 #elif defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
 # include <windows.h>
 
-void OSSL_sleep(uint64_t millis)
+static void ossl_sleep_millis(uint64_t millis)
 {
     /*
      * Windows' Sleep() takes a DWORD argument, which is smaller than
@@ -54,7 +56,7 @@ void OSSL_sleep(uint64_t millis)
 
 #else
 /* Fallback to a busy wait */
-# include "internal/time.h"
+# define USE_SLEEP_SECS
 
 static void ossl_sleep_secs(uint64_t secs)
 {
@@ -78,10 +80,28 @@ static void ossl_sleep_millis(uint64_t millis)
     while (ossl_time_compare(ossl_time_now(), finish) < 0)
         /* busy wait */ ;
 }
+#endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
 
 void OSSL_sleep(uint64_t millis)
 {
-    ossl_sleep_secs(millis / 1000);
-    ossl_sleep_millis(millis % 1000);
+    OSSL_TIME now = ossl_time_now();
+    OSSL_TIME finish = ossl_time_add(now, ossl_ms2time(millis));
+    uint64_t left = millis;
+
+#if defined(USE_SLEEP_SECS)
+    do {
+        ossl_sleep_secs(left / 1000);
+        now = ossl_time_now();
+        left = ossl_time2ms(ossl_time_subtract(finish, now));
+    } while (ossl_time_compare(now, finish) < 0 && left > 1000);
+
+    if (ossl_time_compare(now, finish) >= 0)
+        return;
+#endif
+
+    do {
+        ossl_sleep_millis(left);
+        now = ossl_time_now();
+        left = ossl_time2ms(ossl_time_subtract(finish, now));
+    } while (ossl_time_compare(now, finish) < 0);
 }
-#endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
