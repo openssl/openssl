@@ -74,6 +74,7 @@ static int _dopr(char **sbuffer, char **buffer,
 #define DP_C_LDOUBLE    4
 #define DP_C_LLONG      5
 #define DP_C_SIZE       6
+#define DP_C_PTRDIFF    7
 
 /* Floating point formats */
 #define F_FORMAT        0
@@ -216,6 +217,10 @@ _dopr(char **sbuffer,
                 cflags = DP_C_SIZE;
                 ch = *format++;
                 break;
+            case 't':
+                cflags = DP_C_PTRDIFF;
+                ch = *format++;
+                break;
             default:
                 break;
             }
@@ -240,6 +245,9 @@ _dopr(char **sbuffer,
                     break;
                 case DP_C_SIZE:
                     value = va_arg(args, ossl_ssize_t);
+                    break;
+                case DP_C_PTRDIFF:
+                    value = va_arg(args, ptrdiff_t);
                     break;
                 default:
                     value = va_arg(args, int);
@@ -271,6 +279,17 @@ _dopr(char **sbuffer,
                     break;
                 case DP_C_SIZE:
                     value = va_arg(args, size_t);
+                    break;
+                case DP_C_PTRDIFF:
+                    /*
+                     * There is no unsigned variant of ptrdiff_t, and POSIX
+                     * requires using a "corresponding unsigned type argument".
+                     * Assuming it is power of two in size, at least.
+                     */
+                    if (sizeof(ptrdiff_t) == sizeof(uint64_t))
+                        value = va_arg(args, uint64_t);
+                    else
+                        value = va_arg(args, unsigned int);
                     break;
                 default:
                     value = va_arg(args, unsigned int);
