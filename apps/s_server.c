@@ -18,6 +18,11 @@
 #if defined(_WIN32)
 /* Included before async.h to avoid some warnings */
 # include <windows.h>
+# ifndef OPENSSL_NO_ECH
+#  ifndef PATH_MAX
+#   define PATH_MAX 1024
+#  endif
+# endif
 #endif
 
 #include <openssl/e_os2.h>
@@ -31,18 +36,19 @@
 # ifndef OPENSSL_NO_SSL_TRACE
 #  include <openssl/trace.h>
 # endif
-/* might need some of the below to keep CI happy */
-# ifdef NOTNEEDED
-#  if !defined(_WIN32)
-/* for what's otherwise sockaddr stuff  */
-#   include <netinet/in.h>
-#   include <sys/socket.h>
-#   include <arpa/inet.h>
-#   include <netdb.h>
-#  endif
-/* for timing in some TRACE statements */
-#  include <time.h>
+/* sockaddr stuff  */
+# if defined(_WIN32)
+#  include <winsock.h>
+#  include <ws2ipdef.h>
+#  include <ws2tcpip.h>
+# else
+#  include <netinet/in.h>
+#  include <sys/socket.h>
+#  include <arpa/inet.h>
+#  include <netdb.h>
 # endif
+/* for timing in some TRACE statements */
+# include <time.h>
 # include "internal/o_dir.h" /* for OPENSSL_DIR_read */
 #endif
 
@@ -78,6 +84,11 @@ typedef unsigned int u_int;
 #endif
 #include "internal/sockets.h"
 #include "internal/statem.h"
+
+#ifndef OPENSSL_NO_ECH
+/* needed for X509_check_host in some CI builds "no-http" */
+# include <openssl/x509v3.h>
+#endif
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(int s, int stype, int prot, unsigned char *context);
@@ -505,7 +516,7 @@ static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
         strcpy(lstr, "sometime");
 # endif
     else {
-        srv = strftime(lstr, ECH_TIME_STR_LEN, "%c", &local);
+        srv = (int)strftime(lstr, ECH_TIME_STR_LEN, "%c", &local);
         if (srv == 0)
             strcpy(lstr, "sometime");
     }
@@ -515,7 +526,11 @@ static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
     sa = (struct sockaddr *)&ss;
     res = BIO_get_fd(SSL_get_wbio(s), &sockfd);
     if (res != -1) {
+# if !defined(_WIN32)
         res = getpeername(sockfd, sa, &salen);
+# else
+        res = getpeername(sockfd, sa, (int *)&salen);
+# endif
         if (res == 0)
             res = getnameinfo(sa, salen, clientip, INET6_ADDRSTRLEN,
                               0, 0, NI_NUMERICHOST);
@@ -1443,7 +1458,7 @@ const OPTIONS s_server_options[] = {
 };
 
 #ifndef OPENSSL_NO_ECH
-static int ech_load_dir(SSL_CTX *ctx, const char *thedir,
+static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
                         int for_retry, int *nloaded)
 {
     size_t elen = strlen(thedir);
@@ -1461,7 +1476,7 @@ static int ech_load_dir(SSL_CTX *ctx, const char *thedir,
         BIO_printf(bio_err, "'%s' not a directory - exiting\n", thedir);
         return 0;
     }
-    if ((es = SSL_CTX_get1_echstore(ctx)) == NULL
+    if ((es = SSL_CTX_get1_echstore(lctx)) == NULL
         && (es = OSSL_ECHSTORE_new(app_get0_libctx(),
                                    app_get0_propq())) == NULL) {
         BIO_printf(bio_err, "internal error\n");
@@ -1488,7 +1503,7 @@ static int ech_load_dir(SSL_CTX *ctx, const char *thedir,
             BIO_printf(bio_s_out,"Added ECH key pair from: %s\n",thisfile);
         loaded++;
     }
-    if (SSL_CTX_set1_echstore(ctx, es) != 1) {
+    if (SSL_CTX_set1_echstore(lctx, es) != 1) {
         BIO_printf(bio_err, "internal error\n");
         return 0;
     }
