@@ -125,9 +125,10 @@ static int helper_init(struct helper *h)
     int rc = 0;
     size_t i;
     QUIC_CHANNEL *client_ch = NULL;
-    static QUIC_CHANNEL_ARGS client_ch_args;
+    QUIC_CHANNEL_ARGS client_ch_args;
 
     memset(h, 0, sizeof(*h));
+    memset(&client_ch_args, 0, sizeof(client_ch_args));
 
     /* Initialisation */
     if (!TEST_true(BIO_new_bio_dgram_pair(&h->bio1, 0, &h->bio2, 0)))
