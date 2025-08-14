@@ -18,6 +18,12 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 
+#ifdef FIPS_MODULE
+static int slh_dsa_fips140_pairwise_test(SLH_DSA_HASH_CTX *ctx,
+                                         const SLH_DSA_KEY *key,
+                                         OSSL_LIB_CTX *lib_ctx);
+#endif  /* FIPS_MODULE */
+
 static OSSL_FUNC_keymgmt_free_fn slh_dsa_free_key;
 static OSSL_FUNC_keymgmt_has_fn slh_dsa_has;
 static OSSL_FUNC_keymgmt_match_fn slh_dsa_match;
@@ -104,7 +110,7 @@ static int slh_dsa_validate(const void *key_data, int selection, int check_type)
 static int slh_dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     SLH_DSA_KEY *key = keydata;
-    int include_priv;
+    int include_priv, res;
 
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
@@ -113,7 +119,20 @@ static int slh_dsa_import(void *keydata, int selection, const OSSL_PARAM params[
         return 0;
 
     include_priv = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
-    return ossl_slh_dsa_key_fromdata(key, params, include_priv);
+    res = ossl_slh_dsa_key_fromdata(key, params, include_priv);
+#ifdef FIPS_MODULE
+    /*
+     * FIPS 140-3 IG 10.3.A additional comment 1 mandates that a pairwise
+     * consistency check be undertaken on key import.  The required test
+     * is described in SP 800-56Ar3 5.6.2.1.4.
+     */
+    if (res > 0 && !ossl_fips_self_testing()) {
+        res = slh_dsa_fips140_pairwise_test(ctx, key, ctx->libctx);
+        if (res <= 0)
+            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+    }
+#endif  /* FIPS_MODULE */
+    return res;
 }
 
 #define SLH_DSA_IMEXPORTABLE_PARAMETERS \
