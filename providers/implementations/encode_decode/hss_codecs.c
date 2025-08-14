@@ -13,11 +13,11 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <openssl/params.h>
-#include "endecoder_local.h"
 #include "crypto/hss.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
-#include "hss_codecs.h"
+#include "prov/endecoder_local.h"
+#include "prov/hss_codecs.h"
 #include "internal/encoder.h"
 #include "internal/nelem.h"
 
