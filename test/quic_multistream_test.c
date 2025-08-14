@@ -6098,7 +6098,6 @@ static const struct script_op script_87[] = {
 };
 
 static const struct script_op *const scripts[] = {
-#if 0
     script_1,
     script_2,
     script_3,
@@ -6186,7 +6185,6 @@ static const struct script_op *const scripts[] = {
     script_85,
     script_86,
     script_87,
-#endif
     script_88,
 };
 
