@@ -77,6 +77,17 @@ static void slh_dsa_key_hash_dup(SLH_DSA_KEY *dst, const SLH_DSA_KEY *src)
 }
 
 /**
+ * @brief Return the libctx associated with a SLH_DSA_KEY object
+ *
+ * @param key A SLH_DSA_KEY to extract the libctx from.
+ * @returns The new OSSL_LIB_CTX object on success, or NULL failure
+ */
+OSSL_LIB_CTX *ossl_slh_dsa_key_get0_libctx(const SLH_DSA_KEY *key)
+{
+    return key != NULL ? key->libctx : NULL;
+}
+
+/**
  * @brief Create a new SLH_DSA_KEY object
  *
  * @param libctx A OSSL_LIB_CTX object used for fetching algorithms.

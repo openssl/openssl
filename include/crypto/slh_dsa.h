@@ -23,6 +23,7 @@
 typedef struct slh_dsa_hash_ctx_st SLH_DSA_HASH_CTX;
 typedef struct slh_dsa_key_st SLH_DSA_KEY;
 
+__owur OSSL_LIB_CTX *ossl_slh_dsa_key_get0_libctx(const SLH_DSA_KEY *key);
 __owur SLH_DSA_KEY *ossl_slh_dsa_key_new(OSSL_LIB_CTX *libctx, const char *propq,
                                          const char *alg);
 void ossl_slh_dsa_key_free(SLH_DSA_KEY *key);
