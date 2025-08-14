@@ -182,8 +182,11 @@ _dopr(char **sbuffer,
                 max = va_arg(args, int);
                 ch = *format++;
                 state = DP_S_MOD;
-            } else
+            } else {
+                if (max < 0)
+                    max = 0;
                 state = DP_S_MOD;
+            }
             break;
         case DP_S_MOD:
             switch (ch) {
