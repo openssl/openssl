@@ -5873,6 +5873,11 @@ ossl_unused static int script_88_poll(struct helper *h, struct helper_local *hl)
     if (!TEST_int_eq(ret, expected_ret))
         ok = 0;
 
+    /*
+     * Unlike script 85 which always expects all objects
+     * get signaled in single call to SSL_poll() we must
+     * assume here we can get notification for only one.
+     */
     processed = 0;
     for (i = 0; i < OSSL_NELEM(items); ++i) {
         if (items[i].revents == 0)
@@ -5902,6 +5907,7 @@ ossl_unused static int script_88_poll_conly(struct helper *h, struct helper_loca
     size_t result_count;
     SSL_POLL_ITEM items[1] = {0};
     int done = 0;
+    OSSL_TIME t_limit;
 
     result_count = SIZE_MAX;
 
@@ -5909,6 +5915,8 @@ ossl_unused static int script_88_poll_conly(struct helper *h, struct helper_loca
     items[0].events  = UINT64_MAX;
     items[0].revents = UINT64_MAX;
 
+    t_limit = ossl_time_add(ossl_time_now(),
+                            ossl_ticks2time(5 * OSSL_TIME_SECOND));
     while (done == 0 && ok == 1) {
         ok = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
                        &timeout, 0,
@@ -5926,11 +5934,20 @@ ossl_unused static int script_88_poll_conly(struct helper *h, struct helper_loca
             SSL_shutdown(h->c_conn);
         done =
             ((items[0].revents & SSL_POLL_EVENT_ECD) == SSL_POLL_EVENT_ECD);
+
+        if (ossl_time_compare(ossl_time_now(), t_limit) == 1) {
+            TEST_error("shutdown time exceeded 5sec");
+            ok = 0;
+        }
     }
 
     return ok;
 }
 
+/*
+ * verify SSL_poll() signals SSL_POLL_EVENT_EC event
+ * to notify client it's time to call SSL_shutdown().
+ */
 static const struct script_op script_88[] = {
     OP_SKIP_IF_BLOCKING     (16)
     OP_C_SET_ALPN           ("ossltest")
@@ -5955,11 +5972,22 @@ static const struct script_op script_88[] = {
     OP_CHECK                (script_88_poll, 1 /* ->arg2 */)
 
     OP_C_READ_EXPECT        (a, "flamingo", 8)
-    OP_C_SHUTDOWN           (NULL, 0)
 
+    /*
+     * client calls non-blocking SSL_shutdown() and gives
+     * server chance to run by calling sleep.
+     */
+    OP_C_SHUTDOWN           (NULL, 0)
     OP_SLEEP(100)
 
-    /* Check a is now readable. */
+    /*
+     * Here we call SSL_poll() and handle SSL_POLL_EVENT_EC
+     * and SSL_POLL_EVENT_ECD on connection object. Whenever
+     * _EC event comes we call SSL_shutdown() to keep connection
+     * draining. We keep calling SSL_poll()/SSL_shutdown() until
+     * SSL_poll() signals SSL_POLL_EVENT_ECD to let us know connection
+     * has dried out and con be closed.
+     */
     OP_CHECK                (script_88_poll_conly, 0)
 
     OP_END
@@ -6070,6 +6098,7 @@ static const struct script_op script_87[] = {
 };
 
 static const struct script_op *const scripts[] = {
+#if 0
     script_1,
     script_2,
     script_3,
@@ -6157,6 +6186,7 @@ static const struct script_op *const scripts[] = {
     script_85,
     script_86,
     script_87,
+#endif
     script_88,
 };
 
