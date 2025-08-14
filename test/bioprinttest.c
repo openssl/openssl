@@ -139,7 +139,7 @@ static int test_zu(int i)
     char bio_buf[80];
     const z_data *data = &zu_data[i];
 
-    BIO_snprintf(bio_buf, sizeof(bio_buf) - 1, data->format, data->value);
+    BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value);
     if (!TEST_str_eq(bio_buf, data->expected))
         return 0;
     return 1;
@@ -167,7 +167,7 @@ static int test_j(int i)
     const j_data *data = &jf_data[i];
     char bio_buf[80];
 
-    BIO_snprintf(bio_buf, sizeof(bio_buf) - 1, data->format, data->value);
+    BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value);
     if (!TEST_str_eq(bio_buf, data->expected))
         return 0;
     return 1;
