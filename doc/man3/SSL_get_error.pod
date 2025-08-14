@@ -23,7 +23,8 @@ current thread's OpenSSL error queue.  Thus, SSL_get_error() must be
 used in the same thread that performed the TLS/SSL I/O operation, and no
 other OpenSSL function calls should appear in between.  The current
 thread's error queue must be empty before the TLS/SSL I/O operation is
-attempted, or SSL_get_error() will not work reliably.
+attempted, or SSL_get_error() will not work reliably.  Emptying the
+current thread's error queue is done with L<ERR_clear_error(3)>.
 
 =head1 NOTES
 
@@ -181,9 +182,13 @@ connection and SSL_shutdown() must not be called.
 
 =back
 
+The OpenSSL error queue can be inspected with the B<ERR> family of functions,
+such as L<ERR_print_errors(3)> and L<ERR_peek_last_error_all(3)>.
+
 =head1 SEE ALSO
 
-L<ssl(7)>
+L<ssl(7)>,
+L<ERR_clear_error(3)>, ERR_print_errors(3), ERR_peek_last_error_all(3)
 
 =head1 HISTORY
 

@@ -592,6 +592,10 @@ B<i2d_I<TYPE>_bio>() and B<i2d_I<TYPE>_fp>(),
 as well as i2d_ASN1_bio_stream(),
 return 1 for success and 0 if an error occurs.
 
+On error, these functions may record the error in the OpenSSL error queue.
+That error queue can be inspected with the B<ERR> family of functions, such as
+L<ERR_print_errors(3)> and L<ERR_peek_last_error_all(3)>.
+
 =head1 EXAMPLES
 
 Allocate and encode the DER encoding of an X509 structure:
@@ -703,6 +707,10 @@ B<i2d_I<TYPE>_bio>() or B<i2d_I<TYPE>_fp>()) may return a stale encoding if the
 structure has been modified after deserialization or previous
 serialization. This is because some objects cache the encoding for
 efficiency reasons.
+
+=head1 SEE ALSO
+
+ERR_print_errors(3), ERR_peek_last_error_all(3)
 
 =head1 HISTORY
 
