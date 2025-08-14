@@ -260,6 +260,7 @@ int SSL_ech_set1_grease_suite(SSL *ssl, const char *suite)
     if (s->ext.ech.grease_suite == NULL)
         return 0;
     s->ext.ech.attempted = 1;
+    s->ext.ech.grease = OSSL_ECH_IS_GREASE;
     return 1;
 }
 
@@ -272,6 +273,7 @@ int SSL_ech_set_grease_type(SSL *ssl, uint16_t type)
         return 0;
     s->ext.ech.attempted_type = type;
     s->ext.ech.attempted = 1;
+    s->ext.ech.grease = OSSL_ECH_IS_GREASE;
     return 1;
 }
 

@@ -11,6 +11,7 @@
 #include <openssl/hpke.h>
 #include "testutil.h"
 #include "helpers/ssltestlib.h"
+#include "internal/packet.h"
 
 #ifndef OPENSSL_NO_ECH
 
@@ -23,13 +24,56 @@ static char *certsdir = NULL;
 static char *cert = NULL;
 static char *privkey = NULL;
 static char *rootcert = NULL;
+static int ch_test_cb_ok = 0;
 
 /* TODO(ECH): add some testing of SSL_OP_ECH_IGNORE_CID */
 
-/* callback */
-static unsigned int test_cb(SSL *s, const char *str)
+/* ECH callback */
+static unsigned int ech_test_cb(SSL *s, const char *str)
 {
+    if (verbose)
+        TEST_info("ech_test_cb called");
     return 1;
+}
+
+/* ClientHello callback */
+static int ch_test_cb(SSL *ssl, int *al, void *arg)
+{
+    char *servername = NULL;
+    const unsigned char *pos;
+    size_t remaining;
+    unsigned int servname_type;
+    PACKET pkt, sni, hostname;
+
+    if (verbose) {
+        TEST_info("ch_test_cb called");
+        if (SSL_client_hello_get0_ext(ssl, TLSEXT_TYPE_ech, &pos, &remaining)) {
+            TEST_info("there is an ECH extension");
+        } else {
+            TEST_info("there is NO ECH extension");
+        }
+    }
+    if (!SSL_client_hello_get0_ext(ssl, TLSEXT_TYPE_server_name, &pos,
+                                   &remaining)
+            || remaining <= 2)
+        goto give_up;
+    if (!PACKET_buf_init(&pkt, pos, remaining)
+        || !PACKET_as_length_prefixed_2(&pkt, &sni)
+        || !PACKET_get_1(&sni, &servname_type)
+        || servname_type != TLSEXT_NAMETYPE_host_name
+        || !PACKET_as_length_prefixed_2(&sni, &hostname)
+        || (PACKET_remaining(&hostname) > TLSEXT_MAXLEN_host_name)
+        || PACKET_contains_zero_byte(&hostname)
+        || !PACKET_strndup(&hostname, &servername))
+        goto give_up;
+    if (verbose)
+        TEST_info("servername: %s", servername);
+    OPENSSL_free(servername);
+    /* signal to caller all is good */
+    ch_test_cb_ok = 1;
+    return 1;
+give_up:
+    return 0;
 }
 
 /*
@@ -1095,8 +1139,8 @@ static int ech_api_basic_calls(void)
         || !TEST_false(rclen)
         || !TEST_ptr_eq(rc, NULL))
         goto end;
-    SSL_CTX_ech_set_callback(ctx, test_cb);
-    SSL_ech_set_callback(s, test_cb);
+    SSL_CTX_ech_set_callback(ctx, ech_test_cb);
+    SSL_ech_set_callback(s, ech_test_cb);
 
     /* all good */
     rv = 1;
@@ -1145,6 +1189,7 @@ end:
 # define OSSL_ECH_TEST_EARLY    2
 # define OSSL_ECH_TEST_CUSTOM   3
 # define OSSL_ECH_TEST_ENOE     4 /* early + no-ech */
+# define OSSL_ECH_TEST_CBS      5 /* test callbacks */
 /* note: early-data is prohibited after HRR so no tests for that */
 
 /*
@@ -1224,6 +1269,10 @@ static int test_ech_roundtrip_helper(int idx, int combo)
                                                  &server, NULL, &server)))
             goto end;
     }
+    if (combo == OSSL_ECH_TEST_CBS) {
+        SSL_CTX_ech_set_callback(sctx, ech_test_cb);
+        SSL_CTX_set_client_hello_cb(sctx, ch_test_cb, NULL);
+    }
     if (combo != OSSL_ECH_TEST_ENOE
         && !TEST_true(SSL_CTX_set1_echstore(cctx, es)))
         goto end;
@@ -1259,9 +1308,11 @@ static int test_ech_roundtrip_helper(int idx, int combo)
     if (combo == OSSL_ECH_TEST_ENOE
         && !TEST_int_eq(clientstatus, SSL_ECH_STATUS_NOT_CONFIGURED))
         goto end;
+    if (combo == OSSL_ECH_TEST_CBS && !TEST_int_eq(ch_test_cb_ok, 1))
+        goto end;
     /* all good */
     if (combo == OSSL_ECH_TEST_BASIC || combo == OSSL_ECH_TEST_HRR
-        || combo == OSSL_ECH_TEST_CUSTOM) {
+        || combo == OSSL_ECH_TEST_CUSTOM || combo == OSSL_ECH_TEST_CBS) {
         res = 1;
         goto end;
     }
@@ -1334,6 +1385,7 @@ end:
     SSL_free(serverssl);
     SSL_CTX_free(cctx);
     SSL_CTX_free(sctx);
+    ch_test_cb_ok = 0;
     return res;
 }
 
@@ -1375,6 +1427,14 @@ static int ech_enoe_test(int idx)
     if (verbose)
         TEST_info("Doing: ech_no ech + early test ");
     return test_ech_roundtrip_helper(idx, OSSL_ECH_TEST_ENOE);
+}
+
+/* Test a roundtrip with ECH, and callbacks */
+static int ech_cb_test(int idx)
+{
+    if (verbose)
+        TEST_info("Doing: ech + callbacks test ");
+    return test_ech_roundtrip_helper(idx, OSSL_ECH_TEST_CBS);
 }
 
 #endif
@@ -1420,6 +1480,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ech_early, suite_combos);
     ADD_ALL_TESTS(ech_custom_test, suite_combos);
     ADD_ALL_TESTS(ech_enoe_test, suite_combos);
+    ADD_ALL_TESTS(ech_cb_test, suite_combos);
     /* TODO(ECH): add more test code as other PRs done */
     return 1;
 err:
