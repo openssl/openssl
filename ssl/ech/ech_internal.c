@@ -388,7 +388,7 @@ int ossl_ech_pick_matching_cfg(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY **ee,
     num = sk_OSSL_ECHSTORE_ENTRY_num(es->entries);
     /* allow API-set pref to override */
     hn = s->ext.ech.outer_hostname;
-    hnlen = (hn == NULL ? 0 : strlen(hn));
+    hnlen = (hn == NULL ? 0 : (unsigned int)strlen(hn));
     if (hnlen != 0)
         nameoverride = 1;
     if (s->ext.ech.no_outer == 1) {
@@ -513,7 +513,7 @@ int ossl_ech_encode_inner(SSL_CONNECTION *s, unsigned char **encoded,
     }
     /* now copy the rest, as "proper" exts, into encoded inner */
     for (ind = 0; ind < TLSEXT_IDX_num_builtins; ind++) {
-        if (raws[ind].present == 0 || ossl_ech_2bcompressed(ind) == 1)
+        if (raws[ind].present == 0 || ossl_ech_2bcompressed((int)ind) == 1)
             continue;
         if (!WPACKET_put_bytes_u16(&inner, raws[ind].type)
             || !WPACKET_sub_memcpy_u16(&inner, PACKET_data(&raws[ind].data),
@@ -632,15 +632,16 @@ size_t ossl_ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
         /* do weirder padding if SNI present in inner */
         if (s->ext.hostname != NULL) {
             isnilen = strlen(s->ext.hostname) + 9;
-            innersnipadding = (mnl > isnilen) ? mnl - isnilen : 0;
+            innersnipadding = (mnl > isnilen) ? (int)(mnl - isnilen) : 0;
         } else {
-            innersnipadding = mnl + 9;
+            innersnipadding = (int)mnl + 9;
         }
     }
     /* padding is after the inner client hello has been encoded */
-    length_with_snipadding = innersnipadding + encoded_len;
+    length_with_snipadding = innersnipadding + (int)encoded_len;
     length_of_padding = 31 - ((length_with_snipadding - 1) % 32);
-    length_with_padding = encoded_len + length_of_padding + innersnipadding;
+    length_with_padding = (int)encoded_len + length_of_padding
+        + innersnipadding;
     /*
      * Finally - make sure final result is longer than padding target
      * and a multiple of our padding increment.
