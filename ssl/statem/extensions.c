@@ -1090,7 +1090,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
 
 #ifndef OPENSSL_NO_ECH
             /* do compressed in pass 0, non-compressed in pass 1 */
-            if (ossl_ech_2bcompressed(i) == pass)
+            if (ossl_ech_2bcompressed((int)i) == pass)
                 continue;
             /* stash index - needed for COMPRESS ECH handling */
             s->ext.ech.ext_ind = (int)i;

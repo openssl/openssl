@@ -2576,14 +2576,14 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
     size_t cipherlen = 0, aad_len = 0, lenclen = 0, mypub_len = 0;
     size_t info_len = OSSL_ECH_MAX_INFO_LEN, clear_len = 0, encoded_len = 0;
     /* whether or not we've been asked to GREASE, one way or another */
-    int grease_opt_set = (s->ext.ech.grease == OSSL_ECH_IS_GREASE
+    int grease_opt_set = ((s->ext.ech.grease == OSSL_ECH_IS_GREASE)
                           || ((s->options & SSL_OP_ECH_GREASE) != 0));
 
     /* if we're not doing real ECH and not GREASEing then exit */
     if (s->ext.ech.attempted_type != TLSEXT_TYPE_ech && grease_opt_set == 0)
         return EXT_RETURN_NOT_SENT;
     /* send grease if not really attempting ECH */
-    if (s->ext.ech.attempted == 0 && grease_opt_set == 1) {
+    if (grease_opt_set == 1) {
         if (s->hello_retry_request == SSL_HRR_PENDING
             && s->ext.ech.sent != NULL) {
             /* re-tx already sent GREASEy ECH */
@@ -2782,7 +2782,7 @@ int tls_parse_stoc_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         return 0;
     }
     rval = PACKET_data(&rcfgs_pkt);
-    rlen = PACKET_remaining(&rcfgs_pkt);
+    rlen = (unsigned int)PACKET_remaining(&rcfgs_pkt);
     OPENSSL_free(s->ext.ech.returned);
     s->ext.ech.returned = NULL;
     srval = OPENSSL_malloc(rlen + 2);

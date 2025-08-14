@@ -135,6 +135,11 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [B<-enable_server_rpk>]
 [B<-enable_client_rpk>]
+[B<-ech_key> I<filename>]
+[B<-ech_dir> I<dirname>]
+[B<-ech_noretry_dir> I<dirname>]
+[B<-ech_trialdecrypt>]
+[B<-ech_greaseretries>]
 
 =head1 DESCRIPTION
 
@@ -817,6 +822,32 @@ certificates can still elect to send X.509 certificates as usual.
 
 Raw public keys are extracted from the configured certificate/private key.
 
+=item B<-ech_key> I<filename>
+
+Load one Encrypted Client Hello (ECH) key pair.
+
+=item B<-ech_dir> I<dirname>
+
+Attempt to load an ECH key pair from every file in the named directory.
+Any keys successfully loaded will be returned in 'retry_configs'.
+
+=item B<-ech_noretry_dir> I<dirname>
+
+Attempt to load an ECH key pair from every file in the named directory.
+Keys loaded will not be returned in 'retry_configs'.
+
+=item B<-ech_trialdecrypt>
+
+When an Encrypted Client Hello (ECH) extension is seen in a ClientHello,
+attempt to decrypt with all known ECH private keys if necessary. Without
+this, the ECH "config_id" is used to match against the loaded ECH private
+keys and decryption is only attempted when there's a match.
+
+=item B<-ech_greaseretries>
+
+If set, servers will add GREASEy ECHConfig values to those sent
+in retry_configs.
+
 =back
 
 =head1 CONNECTED COMMANDS
@@ -932,6 +963,8 @@ options were added in OpenSSL 3.2.
 The B<-status_all> option was added in OpenSSL 3.6.
 
 The B<engine> option was removed in OpenSSL 4.0.
+
+The B<ech> options were added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

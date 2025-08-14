@@ -271,7 +271,7 @@ static int ech_final_config_checks(OSSL_ECHSTORE_ENTRY *ee)
     /* check no mandatory exts (with high bit set in type) */
     num = (ee->exts == NULL ? 0 : sk_OSSL_ECHEXT_num(ee->exts));
     for (ind = 0; ind != num; ind++) {
-        OSSL_ECHEXT *oe = sk_OSSL_ECHEXT_value(ee->exts, ind);
+        OSSL_ECHEXT *oe = sk_OSSL_ECHEXT_value(ee->exts, (int)ind);
 
         if (oe->type & 0x8000) {
             ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -331,7 +331,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
         ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
     }
-    ech_content_length = PACKET_remaining(&ver_pkt);
+    ech_content_length = (unsigned int)PACKET_remaining(&ver_pkt);
     switch (ee->version) {
     case OSSL_ECH_RFCXXXX_VERSION:
         break;

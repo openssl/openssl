@@ -108,7 +108,12 @@ static BIO *bio_c_out = NULL;
 static int c_quiet = 0;
 static char *sess_out = NULL;
 # ifndef OPENSSL_NO_ECH
-static char *ech_config_list = NULL;
+static char *ech_config_list = NULL, *ech_grease_suite = NULL;
+static const char *sni_outer_name = NULL;
+static int ech_grease = 0, ech_ignore_cid = 0;
+static int ech_select = OSSL_ECHSTORE_ALL;
+static int ech_grease_type = OSSL_ECH_CURRENT_VERSION;
+static int ech_no_outer_sni = 0;
 # endif
 static SSL_SESSION *psksess = NULL;
 
@@ -615,7 +620,15 @@ typedef enum OPTION_choice {
     OPT_PROV_ENUM,
 #ifndef OPENSSL_NO_ECH
     OPT_ECHCONFIGLIST,
-#endif
+    OPT_SNIOUTER,
+    OPT_ALPN_OUTER,
+    OPT_ECH_SELECT,
+    OPT_ECH_IGNORE_CONFIG_ID,
+    OPT_ECH_GREASE,
+    OPT_ECH_GREASE_SUITE,
+    OPT_ECH_GREASE_TYPE,
+    OPT_ECH_NO_OUTER_SNI,
+# endif
 } OPTION_CHOICE;
 
 const OPTIONS s_client_options[] = {
@@ -807,13 +820,29 @@ const OPTIONS s_client_options[] = {
     { "enable_pha", OPT_ENABLE_PHA, '-', "Enable post-handshake-authentication" },
     { "enable_server_rpk", OPT_ENABLE_SERVER_RPK, '-', "Enable raw public keys (RFC7250) from the server" },
     { "enable_client_rpk", OPT_ENABLE_CLIENT_RPK, '-', "Enable raw public keys (RFC7250) from the client" },
-#ifndef OPENSSL_NO_ECH
-    {"ech_config_list", OPT_ECHCONFIGLIST, 's',
-     "Set ECHConfigList, value is base 64 encoded ECHConfigList"},
-#endif
 #ifndef OPENSSL_NO_SRTP
     { "use_srtp", OPT_USE_SRTP, 's',
         "Offer SRTP key management with a colon-separated profile list" },
+#endif
+#ifndef OPENSSL_NO_ECH
+    { "ech_config_list", OPT_ECHCONFIGLIST, 's',
+        "Set ECHConfigList, value is base64-encoded ECHConfigList"},
+    { "ech_outer_alpn", OPT_ALPN_OUTER, 's',
+        "Specify outer ALPN value, when using ECH (comma-separated list)"},
+    { "ech_outer_sni", OPT_SNIOUTER, 's',
+        "The name to put in the outer CH when overriding the server's choice"},
+    { "ech_no_outer_sni", OPT_ECH_NO_OUTER_SNI, '-',
+        "Do not send the server name (SNI) extension in the outer ClientHello"},
+    { "ech_select", OPT_ECH_SELECT, 'n',
+        "Select one ECHConfig from the set provided via -ech_config_list"},
+    { "ech_grease", OPT_ECH_GREASE, '-',
+        "Send GREASE values when not really using ECH"},
+    { "ech_grease_suite", OPT_ECH_GREASE_SUITE, 's',
+        "Use this HPKE suite for GREASE values when not really using ECH"},
+    { "ech_grease_type", OPT_ECH_GREASE_TYPE, 'n',
+        "Use this TLS extension type for GREASE values when not really using ECH"},
+    { "ech_ignore_cid", OPT_ECH_IGNORE_CONFIG_ID, '-',
+        "Ignore the server-chosen ECH config ID and send a random value"},
 #endif
 #ifndef OPENSSL_NO_SRP
     { "srpuser", OPT_SRPUSER, 's', "(deprecated) SRP authentication for 'user'" },
@@ -1009,6 +1038,11 @@ int s_client_main(int argc, char **argv)
     char *sname_alloc = NULL;
     int noservername = 0;
     const char *alpn_in = NULL;
+# ifndef OPENSSL_NO_ECH
+    const char *alpn_outer_in = NULL;
+    int rv = 0;
+    OSSL_ECHSTORE *es = NULL;
+# endif
     tlsextctx tlsextcbp = { NULL, 0 };
     const char *ssl_config = NULL;
 #define MAX_SI_TYPES 100
@@ -1596,6 +1630,30 @@ int s_client_main(int argc, char **argv)
         case OPT_ECHCONFIGLIST:
             ech_config_list = opt_arg();
             break;
+        case OPT_ALPN_OUTER:
+            alpn_outer_in = opt_arg();
+            break;
+        case OPT_SNIOUTER:
+            sni_outer_name = opt_arg();
+            break;
+        case OPT_ECH_SELECT:
+            ech_select = atoi(opt_arg());
+            break;
+        case OPT_ECH_GREASE:
+            ech_grease = 1;
+            break;
+        case OPT_ECH_GREASE_SUITE:
+            ech_grease_suite = opt_arg();
+            break;
+        case OPT_ECH_GREASE_TYPE:
+            ech_grease_type = atoi(opt_arg());
+            break;
+        case OPT_ECH_IGNORE_CONFIG_ID:
+            ech_ignore_cid = 1;
+            break;
+        case OPT_ECH_NO_OUTER_SNI:
+            ech_no_outer_sni = 1;
+            break;
 # endif
         case OPT_NOSERVERNAME:
             noservername = 1;
@@ -1709,7 +1767,16 @@ int s_client_main(int argc, char **argv)
             goto opthelp;
         }
     }
-
+# ifndef OPENSSL_NO_ECH
+    if ((alpn_outer_in != NULL || sni_outer_name != NULL
+         || ech_no_outer_sni == 1)
+        && ech_config_list == NULL) {
+        BIO_printf(bio_err, "%s: Can't use -ech_outer_sni nor "
+                   "-ech_outer_alpn nor -no_ech_outer_sni without "
+                   "-ech_config_list\n", prog);
+        goto opthelp;
+    }
+# endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     if (min_version == TLS1_3_VERSION && next_proto_neg_in != NULL) {
         BIO_puts(bio_err, "Cannot supply -nextprotoneg with TLSv1.3\n");
@@ -1938,6 +2005,13 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_options(ctx, SSL_OP_ENABLE_KTLS);
 #endif
 
+# ifndef OPENSSL_NO_ECH
+    if (ech_grease != 0)
+        SSL_CTX_set_options(ctx, SSL_OP_ECH_GREASE);
+    if (ech_ignore_cid != 0)
+        SSL_CTX_set_options(ctx, SSL_OP_ECH_IGNORE_CID);
+# endif
+
     if (vpmtouched && !SSL_CTX_set1_param(ctx, vpm)) {
         BIO_puts(bio_err, "Error setting verify params\n");
         goto end;
@@ -2132,6 +2206,26 @@ int s_client_main(int argc, char **argv)
     if (set_keylog_file(ctx, keylog_file))
         goto end;
 
+# ifndef OPENSSL_NO_ECH
+    if (alpn_outer_in != NULL) {
+        size_t alpn_outer_len;
+        unsigned char *alpn_outer = NULL;
+
+        alpn_outer = next_protos_parse(&alpn_outer_len, alpn_outer_in);
+        if (alpn_outer == NULL) {
+            BIO_printf(bio_err, "Error parsing -ech_outer_alpn argument\n");
+            goto end;
+        }
+        if (SSL_CTX_ech_set1_outer_alpn_protos(ctx, alpn_outer,
+                                               alpn_outer_len) != 1) {
+            BIO_printf(bio_err, "Error setting ALPN-OUTER\n");
+            OPENSSL_free(alpn_outer);
+            goto end;
+        }
+        OPENSSL_free(alpn_outer);
+    }
+# endif
+
     con = SSL_new(ctx);
     if (con == NULL)
         goto end;
@@ -2151,6 +2245,25 @@ int s_client_main(int argc, char **argv)
         }
     }
 
+# ifndef OPENSSL_NO_ECH
+    if (ech_grease_suite != NULL) {
+        if (SSL_ech_set1_grease_suite(con, ech_grease_suite) != 1) {
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    }
+    /* no point in setting to our default */
+    if (ech_grease_type != OSSL_ECH_CURRENT_VERSION) {
+        BIO_printf(bio_err, "Setting GREASE ECH type 0x%4x\n", ech_grease_type);
+        if (SSL_ech_set_grease_type(con, ech_grease_type) != 1) {
+            BIO_printf(bio_err, "Can't set GREASE ECH type 0x%4x\n",
+                       ech_grease_type);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    }
+# endif
+
     if (sess_in != NULL) {
         SSL_SESSION *sess;
         BIO *stmp = BIO_new_file(sess_in, "r");
@@ -2165,6 +2278,7 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
         if (!SSL_set_session(con, sess)) {
+            SSL_SESSION_free(sess);
             BIO_puts(bio_err, "Can't set session\n");
             goto end;
         }
@@ -2187,10 +2301,47 @@ int s_client_main(int argc, char **argv)
     }
 
 # ifndef OPENSSL_NO_ECH
-    if (ech_config_list != NULL
-        && SSL_set1_ech_config_list(con, (unsigned char *)ech_config_list,
-                                    strlen(ech_config_list)) != 1)
-        goto end;
+    if (ech_config_list != NULL) {
+        if (SSL_set1_ech_config_list(con, (unsigned char *)ech_config_list,
+                                     strlen(ech_config_list)) != 1) {
+            BIO_printf(bio_err, "%s: error setting ECHConfigList.\n", prog);
+            goto end;
+        }
+        if (ech_no_outer_sni == 1) {
+            if (sni_outer_name != NULL) {
+                BIO_printf(bio_err, "%s: can't set -ech_no_outer_sni and "
+                           "-ech_outer_sni together.\n", prog);
+                goto end;
+            }
+            if (SSL_ech_set1_outer_server_name(con, NULL, 1) != 1) {
+                BIO_printf(bio_err, "%s: setting no ECH outer name failed.\n",
+                           prog);
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+        }
+        if (sni_outer_name != NULL) {
+            rv = SSL_ech_set1_outer_server_name(con, sni_outer_name, 0);
+            if (rv != 1) {
+                BIO_printf(bio_err, "%s: setting ECH outer name to %s failed.\n",
+                           prog, sni_outer_name);
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+        }
+    }
+    if (ech_select != OSSL_ECHSTORE_ALL) {
+        if ((es = SSL_get1_echstore(con)) == NULL
+            || OSSL_ECHSTORE_downselect(es, ech_select) != 1
+            || SSL_set1_echstore(con, es) != 1) {
+            BIO_printf(bio_err, "%s: ECH downselect to (%d) failed.\n",
+                       prog, ech_select);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        OSSL_ECHSTORE_free(es);
+        es = NULL;
+    }
 # endif
 
     if (dane_tlsa_domain != NULL) {
@@ -3389,6 +3540,9 @@ end:
     bio_c_out = NULL;
     BIO_free(bio_c_msg);
     bio_c_msg = NULL;
+# ifndef OPENSSL_NO_ECH
+    OSSL_ECHSTORE_free(es);
+# endif
     return ret;
 }
 
@@ -3464,11 +3618,12 @@ static void print_ech_retry_configs(BIO *bio, SSL *s)
     for (ind = 0; ind != cnt; ind++) {
         if (OSSL_ECHSTORE_get1_info(es, ind, &secs, &pn, &ec,
                                     &has_priv, &for_retry) != 1) {
-            BIO_printf(bio, "ECH: Error getting retry-config %d\n", ind);
+            BIO_printf(bio, "ECH: Error getting retry-config %d.\n", ind);
             goto end;
         }
-        BIO_printf(bio, "ECH: entry: %d public_name: %s age: %d%s\n",
-                   ind, pn, (int)secs, has_priv ? " (has private key)" : "");
+        BIO_printf(bio, "ECH: entry: %d public_name: %s age: %lld%s\n",
+                   ind, pn, (long long)secs,
+                   has_priv ? " (has private key)" : "");
         BIO_printf(bio, "ECH: \t%s\n", ec);
         OPENSSL_free(pn);
         pn = NULL;
@@ -3484,6 +3639,7 @@ end:
     return;
 }
 
+/* outcomes marked as "odd" shouldn't happen in s_client */
 static void print_ech_status(BIO *bio, SSL *s, int estat)
 {
     switch (estat) {
@@ -3500,7 +3656,7 @@ static void print_ech_status(BIO *bio, SSL *s, int estat)
         BIO_printf(bio, "ECH: success: %d\n", estat);
         break;
     case SSL_ECH_STATUS_GREASE_ECH:
-        BIO_printf(bio, "ECH: GREASE+retry-configs%d\n", estat);
+        BIO_printf(bio, "ECH: GREASE+retry-configs: %d\n", estat);
         break;
     case SSL_ECH_STATUS_BACKEND:
         BIO_printf(bio, "ECH: BACKEND: %d\n", estat);
@@ -3541,6 +3697,10 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #ifndef OPENSSL_NO_CT
     const SSL_CTX *ctx = SSL_get_SSL_CTX(s);
 #endif
+# ifndef OPENSSL_NO_ECH
+    char *inner = NULL, *outer = NULL;
+    int estat = 0;
+# endif
 
     if (full) {
         int got_a_chain = 0;
