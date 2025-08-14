@@ -18,6 +18,9 @@
 #if defined(_WIN32)
 /* Included before async.h to avoid some warnings */
 #include <windows.h>
+#if !defined(OPENSSL_NO_ECH) && !defined(PATH_MAX)
+#define PATH_MAX 4096
+#endif
 #endif
 
 #include <openssl/e_os2.h>
@@ -25,6 +28,27 @@
 #include <openssl/ssl.h>
 #include <openssl/decoder.h>
 #include "internal/sockets.h" /* for openssl_fdset() */
+
+#ifndef OPENSSL_NO_ECH
+/* to use tracing, if configured and requested */
+#ifndef OPENSSL_NO_SSL_TRACE
+#include <openssl/trace.h>
+#endif
+/* sockaddr stuff  */
+#if defined(_WIN32)
+#include <winsock.h>
+#include <ws2ipdef.h>
+#include <ws2tcpip.h>
+#else
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#endif
+/* for timing in some TRACE statements */
+#include <time.h>
+#include "internal/o_dir.h" /* for OPENSSL_DIR_read */
+#endif
 
 #ifndef OPENSSL_NO_SOCK
 
@@ -59,6 +83,11 @@ typedef unsigned int u_int;
 #include "internal/sockets.h"
 #include "internal/statem.h"
 
+#ifndef OPENSSL_NO_ECH
+/* needed for X509_check_host in some CI builds "no-http" */
+#include <openssl/x509v3.h>
+#endif
+
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(int s, int stype, int prot, unsigned char *context);
 static int www_body(int s, int stype, int prot, unsigned char *context);
@@ -71,6 +100,10 @@ static int generate_session_id(SSL *ssl, unsigned char *id,
 static void init_session_cache_ctx(SSL_CTX *sctx);
 static void free_sessions(void);
 static void print_connection_info(SSL *con);
+
+#ifndef OPENSSL_NO_ECH
+static unsigned int ech_print_cb(SSL *s, const char *str);
+#endif
 
 static const int bufsize = 16 * 1024;
 static int accept_socket = -1;
@@ -421,7 +454,194 @@ typedef struct tlsextctx_st {
     char *servername;
     BIO *biodebug;
     int extension_error;
+    X509 *scert; /* ECH needs 2nd cert for testing */
 } tlsextctx;
+
+#ifndef OPENSSL_NO_ECH
+static unsigned int ech_print_cb(SSL *s, const char *str)
+{
+    if (str != NULL)
+        BIO_printf(bio_s_out, "ECH Server callback printing: \n%s\n", str);
+    return 1;
+}
+
+/*
+ * The server has possibly 2 TLS server names basically in ctx and ctx2.  So we
+ * need to check if any client-supplied SNI in the inner/outer matches either
+ * and serve whichever is appropriate.  X509_check_host is the way to do that,
+ * given an X509* pointer.
+ *
+ * We default to the "main" ctx if the client-supplied SNI does not match the
+ * ctx2 certificate.  We don't fail if the client-supplied SNI matches neither,
+ * but just continue with the "main" ctx.  If the client-supplied SNI matches
+ * both ctx and ctx2, then we'll switch to ctx2 anyway - we don't try for a
+ * "best" match in that case.
+ *
+ * Note that since we attempt ECH decryption whenever configured to do that,
+ * the only way to get the "outer" SNI is via SSL_ech_get1_status.
+ */
+
+/* apparently 26 is all we need, but round it up to 32 to be on the safe side */
+#define ECH_TIME_STR_LEN 32
+
+static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
+{
+    tlsextctx *p = (tlsextctx *)arg;
+    time_t now = time(0); /* For a bit of basic logging */
+    int sockfd = 0, res = 0, echrv = 0;
+    size_t srv = 0;
+    struct sockaddr_storage ss;
+    socklen_t salen = sizeof(ss);
+    struct sockaddr *sa;
+    char clientip[INET6_ADDRSTRLEN], lstr[ECH_TIME_STR_LEN];
+    const char *servername = NULL;
+    char *inner_sni = NULL, *outer_sni = NULL;
+    struct tm local;
+#if !defined(OPENSSL_SYS_WINDOWS)
+    struct tm *local_p = NULL;
+#else
+    errno_t grv;
+#endif
+
+#if !defined(OPENSSL_SYS_WINDOWS)
+    local_p = gmtime_r(&now, &local);
+    if (local_p != &local) {
+        strcpy(lstr, "sometime");
+    } else {
+        srv = strftime(lstr, ECH_TIME_STR_LEN, "%c", &local);
+        if (srv == 0)
+            strcpy(lstr, "sometime");
+    }
+#else
+    grv = gmtime_s(&local, &now);
+    if (grv != 0) {
+        strcpy(lstr, "sometime");
+    } else {
+        srv = strftime(lstr, ECH_TIME_STR_LEN, "%c", &local);
+        if (srv == 0)
+            strcpy(lstr, "sometime");
+    }
+#endif
+    memset(clientip, 0, INET6_ADDRSTRLEN);
+    strncpy(clientip, "unknown", INET6_ADDRSTRLEN);
+    memset(&ss, 0, salen);
+    sa = (struct sockaddr *)&ss;
+    res = BIO_get_fd(SSL_get_wbio(s), &sockfd);
+    if (res != -1) {
+#if !defined(_WIN32)
+        res = getpeername(sockfd, sa, &salen);
+#else
+        res = getpeername(sockfd, sa, (int *)&salen);
+#endif
+        if (res == 0)
+            res = getnameinfo(sa, salen, clientip, INET6_ADDRSTRLEN,
+                0, 0, NI_NUMERICHOST);
+    }
+    /* Name that matches "main" ctx */
+    servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+    echrv = SSL_ech_get1_status(s, &inner_sni, &outer_sni);
+    if (p->biodebug != NULL) {
+        /* spit out basic logging */
+        BIO_printf(p->biodebug,
+            "ssl_ech_servername_cb: connection from %s at %s\n",
+            clientip, lstr);
+        /* Client supplied SNI from inner and outer */
+        switch (echrv) {
+        case SSL_ECH_STATUS_BACKEND:
+            BIO_printf(p->biodebug,
+                "ssl_ech_servername_cb: ECH backend got inner ECH\n");
+            break;
+        case SSL_ECH_STATUS_NOT_CONFIGURED:
+            BIO_printf(p->biodebug,
+                "ssl_ech_servername_cb: ECH not configured\n");
+            break;
+        case SSL_ECH_STATUS_GREASE:
+            BIO_printf(p->biodebug,
+                "ssl_ech_servername_cb: attempt we think is GREASE\n");
+            break;
+        case SSL_ECH_STATUS_NOT_TRIED:
+            BIO_printf(p->biodebug,
+                "ssl_ech_servername_cb: not attempted\n");
+            break;
+        case SSL_ECH_STATUS_FAILED:
+            BIO_printf(p->biodebug,
+                "ssl_ech_servername_cb: tried but failed\n");
+            break;
+        case SSL_ECH_STATUS_BAD_CALL:
+            BIO_printf(p->biodebug,
+                "ssl_ech_servername_cb: bad input to API\n");
+            break;
+        case SSL_ECH_STATUS_BAD_NAME:
+            BIO_printf(p->biodebug,
+                "ssl_ech_servername_cb: worked but bad name\n");
+            break;
+        case SSL_ECH_STATUS_SUCCESS:
+            BIO_printf(p->biodebug,
+                "ssl_ech_servername_cb: success: outer %s, inner: %s\n",
+                (outer_sni == NULL ? "none" : outer_sni),
+                (inner_sni == NULL ? "none" : inner_sni));
+            break;
+        default:
+            BIO_printf(p->biodebug,
+                "ssl_ech_servername_cb: Error getting ECH status\n");
+            break;
+        }
+    }
+    OPENSSL_free(inner_sni);
+    OPENSSL_free(outer_sni);
+    if (servername != NULL && p->biodebug != NULL) {
+        const char *cp = servername;
+        unsigned char uc;
+
+        BIO_printf(p->biodebug,
+            "ssl_ech_servername_cb: Hostname in TLS extension: \"");
+        while ((uc = *cp++) != 0)
+            BIO_printf(p->biodebug,
+                isascii(uc) && isprint(uc) ? "%c" : "\\x%02x", uc);
+        BIO_printf(p->biodebug, "\"\n");
+        if (p->servername != NULL)
+            BIO_printf(p->biodebug,
+                "ssl_ech_servername_cb: ctx servername: %s\n",
+                p->servername);
+        else
+            BIO_printf(p->biodebug,
+                "ssl_ech_servername_cb: ctx servername is NULL\n");
+        if (p->scert == NULL)
+            BIO_printf(p->biodebug,
+                "ssl_ech_servername_cb: No 2nd cert! That's bad.\n");
+    }
+    if (p->servername == NULL)
+        return SSL_TLSEXT_ERR_NOACK;
+    if (p->scert == NULL)
+        return SSL_TLSEXT_ERR_NOACK;
+    if (echrv == SSL_ECH_STATUS_SUCCESS && servername != NULL) {
+        if (ctx2 != NULL) {
+            int check_host = X509_check_host(p->scert, servername, 0, 0, NULL);
+
+            if (check_host == 1) {
+                if (p->biodebug != NULL)
+                    BIO_printf(p->biodebug,
+                        "ssl_ech_servername_cb: Switching context.\n");
+                SSL_set_SSL_CTX(s, ctx2);
+            } else {
+                if (p->biodebug != NULL)
+                    BIO_printf(p->biodebug,
+                        "ssl_ech_servername_cb: Not switching context "
+                        "- no name match (%d).\n",
+                        check_host);
+            }
+        }
+    } else {
+        if (p->biodebug != NULL)
+            BIO_printf(p->biodebug,
+                "ssl_ech_servername_cb: Not switching context "
+                "- no ECH SUCCESS\n");
+    }
+    return SSL_TLSEXT_ERR_OK;
+}
+/* Below is the "original" ssl_servername_cb, before ECH */
+
+#else
 
 static int ssl_servername_cb(SSL *s, int *ad, void *arg)
 {
@@ -452,6 +672,8 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
     }
     return SSL_TLSEXT_ERR_OK;
 }
+
+#endif
 
 /* Structure passed to cert status callback */
 typedef struct tlsextstatusctx_st {
@@ -1065,6 +1287,13 @@ typedef enum OPTION_choice {
     OPT_CERT_COMP,
     OPT_ENABLE_SERVER_RPK,
     OPT_ENABLE_CLIENT_RPK,
+#ifndef OPENSSL_NO_ECH
+    OPT_ECH_PEM,
+    OPT_ECH_DIR,
+    OPT_ECH_NORETRY,
+    OPT_ECH_TRIALDECRYPT,
+    OPT_ECH_GREASE_RT,
+#endif
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -1307,6 +1536,19 @@ const OPTIONS s_server_options[] = {
 #endif
     { "alpn", OPT_ALPN, 's',
         "Set the advertised protocols for the ALPN extension (comma-separated list)" },
+
+#ifndef OPENSSL_NO_ECH
+    { "ech_key", OPT_ECH_PEM, 's', "Load ECH PEM-formatted key pair" },
+    { "ech_dir", OPT_ECH_DIR, 's', "Load ECH key pairs (for retries) "
+                                   "from the specified directory" },
+    { "ech_noretry_dir", OPT_ECH_NORETRY, 's', "Load ECH key pairs (not "
+                                               "for retry) from the specified directory" },
+    { "ech_trialdecrypt", OPT_ECH_TRIALDECRYPT, '-',
+        "Do trial decryption even if ECH record_digest matching fails" },
+    { "ech_greaseretries", OPT_ECH_GREASE_RT, '-',
+        "Set server to GREASE retry_config values" },
+#endif
+
 #ifndef OPENSSL_NO_KTLS
     { "ktls", OPT_KTLS, '-', "Enable Kernel TLS for sending and receiving" },
     { "sendfile", OPT_SENDFILE, '-', "Use sendfile to response file with -WWW" },
@@ -1321,6 +1563,65 @@ const OPTIONS s_server_options[] = {
     OPT_PROV_OPTIONS,
     { NULL }
 };
+
+#ifndef OPENSSL_NO_ECH
+static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
+    int for_retry, int *nloaded)
+{
+    size_t elen = strlen(thedir);
+    OPENSSL_DIR_CTX *d = NULL;
+    const char *thisfile = NULL;
+    OSSL_ECHSTORE *es = NULL;
+    BIO *in = NULL;
+    int loaded = 0;
+
+    if ((elen + 7) >= PATH_MAX) { /* too long, go away */
+        BIO_printf(bio_err, "'%s' too long - exiting\n", thedir);
+        return 0;
+    }
+    if (app_isdir(thedir) <= 0) { /* if not a directory, ignore it */
+        BIO_printf(bio_err, "'%s' not a directory - exiting\n", thedir);
+        return 0;
+    }
+    if ((es = SSL_CTX_get1_echstore(lctx)) == NULL
+        && (es = OSSL_ECHSTORE_new(app_get0_libctx(),
+                app_get0_propq()))
+            == NULL) {
+        BIO_printf(bio_err, "internal error\n");
+        return 0;
+    }
+    while ((thisfile = OPENSSL_DIR_read(&d, thedir))) {
+        char filepath[PATH_MAX];
+        int r;
+
+#ifdef OPENSSL_SYS_VMS
+        r = BIO_snprintf(filepath, sizeof(filepath), "%s%s", thedir, thisfile);
+#else
+        r = BIO_snprintf(filepath, sizeof(filepath), "%s/%s", thedir, thisfile);
+#endif
+        if (r < 0
+            || app_isdir(filepath) > 0
+            || (in = BIO_new_file(filepath, "r")) == NULL
+            || OSSL_ECHSTORE_read_pem(es, in, for_retry) != 1) {
+            BIO_printf(bio_err, "Failed reading from: %s\n", thisfile);
+            continue;
+        }
+        BIO_free_all(in);
+        if (bio_s_out != NULL)
+            BIO_printf(bio_s_out, "Added ECH key pair from: %s\n", thisfile);
+        loaded++;
+    }
+    if (SSL_CTX_set1_echstore(lctx, es) != 1) {
+        BIO_printf(bio_err, "internal error\n");
+        return 0;
+    }
+    if (bio_s_out != NULL)
+        BIO_printf(bio_s_out, "Added %d ECH key pairs from: %s\n",
+            loaded, thedir);
+    *nloaded = loaded;
+    return 1;
+}
+#endif
 
 #define IS_PROT_FLAG(o)                                  \
     (o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
@@ -1363,7 +1664,7 @@ int s_server_main(int argc, char *argv[])
     OPTION_CHOICE o;
     EVP_PKEY *s_key2 = NULL;
     X509 *s_cert2 = NULL;
-    tlsextctx tlsextcbp = { NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING };
+    tlsextctx tlsextcbp = { NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING, NULL };
     const char *ssl_config = NULL;
     int read_buf_len = 0;
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1401,6 +1702,14 @@ int s_server_main(int argc, char *argv[])
     int max_early_data = -1, recv_max_early_data = -1;
     char *psksessf = NULL;
     int no_ca_names = 0;
+#ifndef OPENSSL_NO_ECH
+    char *echkeyfile = NULL;
+    char *echkeydir = NULL;
+    char *echnoretrydir = NULL;
+    int ech_files_loaded = 0;
+    int echtrialdecrypt = 0; /* trial decryption off by default */
+    int echgrease_rc = 0; /* retry_config GREASEing off by default */
+#endif
 #ifndef OPENSSL_NO_SCTP
     int sctp_label_bug = 0;
 #endif
@@ -2000,6 +2309,23 @@ int s_server_main(int argc, char *argv[])
         case OPT_HTTP_SERVER_BINMODE:
             http_server_binmode = 1;
             break;
+#ifndef OPENSSL_NO_ECH
+        case OPT_ECH_PEM:
+            echkeyfile = opt_arg();
+            break;
+        case OPT_ECH_DIR:
+            echkeydir = opt_arg();
+            break;
+        case OPT_ECH_NORETRY:
+            echnoretrydir = opt_arg();
+            break;
+        case OPT_ECH_TRIALDECRYPT:
+            echtrialdecrypt = 1;
+            break;
+        case OPT_ECH_GREASE_RT:
+            echgrease_rc = 1;
+            break;
+#endif
         case OPT_NOCANAMES:
             no_ca_names = 1;
             break;
@@ -2159,6 +2485,9 @@ int s_server_main(int argc, char *argv[])
 
             if (s_cert2 == NULL)
                 goto end;
+#ifndef OPENSSL_NO_ECH
+            tlsextcbp.scert = s_cert2;
+#endif
         }
     }
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
@@ -2370,12 +2699,71 @@ int s_server_main(int argc, char *argv[])
         goto end;
     }
 
+#ifndef OPENSSL_NO_ECH
+    if (echtrialdecrypt != 0)
+        SSL_CTX_set_options(ctx, SSL_OP_ECH_TRIALDECRYPT);
+    if (echgrease_rc != 0)
+        SSL_CTX_set_options(ctx, SSL_OP_ECH_GREASE_RETRY_CONFIG);
+    if (echkeyfile != NULL) {
+        OSSL_ECHSTORE *es = NULL;
+        BIO *in = NULL;
+
+        if ((in = BIO_new_file(echkeyfile, "r")) == NULL
+            || (es = OSSL_ECHSTORE_new(app_get0_libctx(),
+                    app_get0_propq()))
+                == 0
+            || OSSL_ECHSTORE_read_pem(es, in, OSSL_ECH_FOR_RETRY) != 1
+            || SSL_CTX_set1_echstore(ctx, es) != 1) {
+            BIO_printf(bio_err, "Failed reading: %s\n", echkeyfile);
+            OSSL_ECHSTORE_free(es);
+            BIO_free_all(in);
+            goto end;
+        }
+        OSSL_ECHSTORE_free(es);
+        BIO_free_all(in);
+        if (bio_s_out != NULL)
+            BIO_printf(bio_s_out, "Added ECH key pair from: %s\n", echkeyfile);
+        ech_files_loaded++;
+    }
+    if (echkeydir != NULL) {
+        int nloaded = 0;
+
+        if (ech_load_dir(ctx, echkeydir, OSSL_ECH_FOR_RETRY, &nloaded) != 1) {
+            BIO_printf(bio_err, "error loading from %s\n", echkeydir);
+            goto end;
+        }
+        ech_files_loaded += nloaded;
+    }
+    if (echnoretrydir != NULL) {
+        int nloaded = 0;
+
+        if (ech_load_dir(ctx, echnoretrydir, OSSL_ECH_NO_RETRY,
+                &nloaded)
+            != 1) {
+            BIO_printf(bio_err, "error loading from %s\n", echnoretrydir);
+            goto end;
+        }
+        ech_files_loaded += nloaded;
+    }
+    if ((echkeyfile != NULL || echkeydir != NULL || echnoretrydir != NULL)
+        && bio_s_out != NULL) {
+        BIO_printf(bio_s_out, "Loaded %d ECH key pairs in total\n",
+            ech_files_loaded);
+    }
+#endif
+
     if (s_cert2) {
         ctx2 = SSL_CTX_new_ex(app_get0_libctx(), app_get0_propq(), meth);
         if (ctx2 == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
+#ifndef OPENSSL_NO_ECH
+        if (echtrialdecrypt != 0)
+            SSL_CTX_set_options(ctx2, SSL_OP_ECH_TRIALDECRYPT);
+        if (echgrease_rc != 0)
+            SSL_CTX_set_options(ctx, SSL_OP_ECH_GREASE_RETRY_CONFIG);
+#endif
     }
 
     if (ctx2 != NULL) {
@@ -2433,6 +2821,13 @@ int s_server_main(int argc, char *argv[])
 #endif
     if (alpn_ctx.data)
         SSL_CTX_set_alpn_select_cb(ctx, alpn_cb, &alpn_ctx);
+
+    /*
+     * If we have a 2nd context to which we might switch, then set
+     * the same alpn callback for that too.
+     */
+    if (s_cert2 != NULL && alpn_ctx.data != NULL)
+        SSL_CTX_set_alpn_select_cb(ctx2, alpn_cb, &alpn_ctx);
 
     if (!no_dhe) {
         EVP_PKEY *dhpkey = NULL;
@@ -2508,9 +2903,21 @@ int s_server_main(int argc, char *argv[])
         goto end;
     }
 
+#ifndef OPENSSL_NO_ECH
+    /*
+     * Giving the same chain to the 2nd key pair works for our tests.
+     * It would be better to supply s_chain_file2 as a new CLA in case
+     * the paths are very different but as that's not needed for tests,
+     * I didn't do it.
+     */
+    if (ctx2 != NULL
+        && !set_cert_key_stuff(ctx2, s_cert2, s_key2, s_chain, build_chain))
+        goto end;
+#else
     if (ctx2 != NULL
         && !set_cert_key_stuff(ctx2, s_cert2, s_key2, NULL, build_chain))
         goto end;
+#endif
 
     if (s_dcert != NULL) {
         if (!set_cert_key_stuff(ctx, s_dcert, s_dkey, s_dchain, build_chain))
@@ -2591,10 +2998,19 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
         tlsextcbp.biodebug = bio_s_out;
+#ifndef OPENSSL_NO_ECH
+        SSL_CTX_set_tlsext_servername_callback(ctx2, ssl_ech_servername_cb);
+        SSL_CTX_set_tlsext_servername_arg(ctx2, &tlsextcbp);
+        SSL_CTX_set_tlsext_servername_callback(ctx, ssl_ech_servername_cb);
+        SSL_CTX_set_tlsext_servername_arg(ctx, &tlsextcbp);
+        SSL_CTX_ech_set_callback(ctx2, ech_print_cb);
+        SSL_CTX_ech_set_callback(ctx, ech_print_cb);
+#else
         SSL_CTX_set_tlsext_servername_callback(ctx2, ssl_servername_cb);
         SSL_CTX_set_tlsext_servername_arg(ctx2, &tlsextcbp);
         SSL_CTX_set_tlsext_servername_callback(ctx, ssl_servername_cb);
         SSL_CTX_set_tlsext_servername_arg(ctx, &tlsextcbp);
+#endif
     }
 
 #ifndef OPENSSL_NO_SRP
@@ -2622,6 +3038,11 @@ int s_server_main(int argc, char *argv[])
 #endif
     if (set_keylog_file(ctx, keylog_file))
         goto end;
+#ifndef OPENSSL_NO_ECH
+    /* not really an ECH issue but needed */
+    if (ctx2 != NULL && set_keylog_file(ctx2, keylog_file))
+        goto end;
+#endif
 
     if (max_early_data >= 0)
         SSL_CTX_set_max_early_data(ctx, max_early_data);
@@ -3637,6 +4058,10 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
             X509 *peer = NULL;
             STACK_OF(SSL_CIPHER) *sk;
             static const char *space = "                          ";
+#ifndef OPENSSL_NO_ECH
+            char *ech_inner = NULL, *ech_outer = NULL;
+            int echrv = 0;
+#endif
 
             if (www == 1 && HAS_PREFIX(buf, "GET /reneg")) {
                 if (HAS_PREFIX(buf, "GET /renegcert"))
@@ -3699,6 +4124,80 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                 BIO_write(io, " ", 1);
             }
             BIO_puts(io, "\n");
+
+#ifndef OPENSSL_NO_ECH
+            /* Customise output a bit to show ECH info at top */
+            BIO_puts(io, "<h1>OpenSSL with ECH</h1>\n");
+            BIO_puts(io, "<h2>\n");
+            echrv = SSL_ech_get1_status(con, &ech_inner, &ech_outer);
+            switch (echrv) {
+            case SSL_ECH_STATUS_NOT_TRIED:
+                BIO_puts(io, "ECH not attempted\n");
+                break;
+            case SSL_ECH_STATUS_FAILED:
+                BIO_puts(io, "ECH tried but failed\n");
+                break;
+            case SSL_ECH_STATUS_FAILED_ECH:
+                BIO_puts(io, "ECH tried but we got ECH which is weird\n");
+                break;
+            case SSL_ECH_STATUS_BAD_NAME:
+                BIO_puts(io, "ECH worked but bad name\n");
+                break;
+            case SSL_ECH_STATUS_BACKEND:
+                BIO_printf(io, "ECH acting as backend\n");
+                break;
+            case SSL_ECH_STATUS_NOT_CONFIGURED:
+                BIO_printf(io, "ECH not configured\n");
+                break;
+            case SSL_ECH_STATUS_GREASE:
+                BIO_printf(io, "ECH attempt we interpret as GREASE\n");
+                break;
+            case SSL_ECH_STATUS_GREASE_ECH:
+                BIO_printf(io, "ECH attempt we interpret as GREASE, + ECH\n");
+                break;
+            case SSL_ECH_STATUS_BAD_CALL:
+                BIO_printf(io, "ECH bad input to API\n");
+                break;
+            case SSL_ECH_STATUS_SUCCESS:
+                BIO_printf(io, "ECH success: outer sni: %s, inner sni: %s\n",
+                    (ech_outer == NULL ? "none" : ech_outer),
+                    (ech_inner == NULL ? "none" : ech_inner));
+                break;
+            default:
+                BIO_printf(io, " Error getting ECH status\n");
+                break;
+            }
+            BIO_puts(io, "</h2>\n");
+            BIO_puts(io, "<h2>TLS Session details</h2>\n");
+            BIO_puts(io, "<pre>\n");
+            /*
+             * also dump session info to server stdout for debugging
+             */
+            SSL_SESSION_print(bio_s_out, SSL_get_session(con));
+            BIO_puts(io, "<pre>\n");
+            BIO_puts(io, "\n");
+            for (i = 0; i < local_argc; i++) {
+                const char *myp;
+
+                for (myp = local_argv[i]; *myp; myp++)
+                    switch (*myp) {
+                    case '<':
+                        BIO_puts(io, "&lt;");
+                        break;
+                    case '>':
+                        BIO_puts(io, "&gt;");
+                        break;
+                    case '&':
+                        BIO_puts(io, "&amp;");
+                        break;
+                    default:
+                        BIO_write(io, myp, 1);
+                        break;
+                    }
+                BIO_write(io, " ", 1);
+            }
+            BIO_puts(io, "\n");
+#endif
 
             ssl_print_secure_renegotiation_notes(io, con);
 
