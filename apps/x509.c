@@ -1102,8 +1102,7 @@ case OPT_HASH:
             unsigned int n;
             unsigned char md[EVP_MAX_MD_SIZE];
             if (!X509_digest(x, EVP_sha256(), md, &n)) {
-                BIO_printf(bio_err, "Error calculating SHA-256 fingerprint
-");
+                BIO_printf(bio_err, "Error calculating SHA-256 fingerprint");
                 goto err;
             }
             for (j = 0; j < (int)n; j++)
