@@ -499,8 +499,8 @@ static int test_groupnegotiation(const struct tls13groupselection_test_st *curre
     } else {
         TEST_false_or_end(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE));
         if (test_type == TEST_NEGOTIATION_FAILURE &&
-              !TEST_int_eq((int)current_test_vector->expected_server_response,
-                           (int)server_response))
+                !TEST_int_eq((int)current_test_vector->expected_server_response,
+                             (int)server_response))
             goto end;
         ok = 1;
     }
