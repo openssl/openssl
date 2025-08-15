@@ -549,20 +549,21 @@ fmtint(struct pr_desc *desc,
             signvalue = ' ';
     }
     if (flags & DP_F_NUM) {
+        if (base == 8)
+            prefix = oct_prefix;
         if (value != 0) {
-            if (base == 8)
-                prefix = oct_prefix;
             if (base == 16)
                 prefix = flags & DP_F_UP ? "0X" : "0x";
         }
     }
     if (flags & DP_F_UP)
         caps = 1;
-    do {
+    /* When 0 is printed with an explicit precision 0, the output is empty. */
+    while (uvalue && (place < (int)sizeof(convert))) {
         convert[place++] = (caps ? "0123456789ABCDEF" : "0123456789abcdef")
             [uvalue % (unsigned)base];
         uvalue = (uvalue / (unsigned)base);
-    } while (uvalue && (place < (int)sizeof(convert)));
+    }
     if (place == sizeof(convert))
         place--;
     convert[place] = 0;
