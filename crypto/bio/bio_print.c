@@ -375,12 +375,8 @@ _dopr(char **sbuffer,
                 break;
             case 's':
                 strvalue = va_arg(args, char *);
-                if (max < 0) {
-                    if (buffer || *maxlen > INT_MAX)
-                        max = INT_MAX;
-                    else
-                        max = (int)*maxlen;
-                }
+                if (max < 0)
+                    max = INT_MAX;
                 if (!fmtstr(&desc, strvalue, flags, min, max))
                     goto out;
                 break;
@@ -390,7 +386,36 @@ _dopr(char **sbuffer,
                     goto out;
                 break;
             case 'n':
-                    *num = (int)desc.pos;
+                switch (cflags) {
+#define HANDLE_N(type)              \
+    do {                            \
+        type *num;                  \
+                                    \
+        num = va_arg(args, type *); \
+        *num = (type) desc.pos;     \
+    } while (0)
+                case DP_C_CHAR:
+                    HANDLE_N(signed char);
+                    break;
+                case DP_C_SHORT:
+                    HANDLE_N(short);
+                    break;
+                case DP_C_LONG:
+                    HANDLE_N(long);
+                    break;
+                case DP_C_LLONG:
+                    HANDLE_N(long long);
+                    break;
+                case DP_C_SIZE:
+                    HANDLE_N(ossl_ssize_t);
+                    break;
+                case DP_C_PTRDIFF:
+                    HANDLE_N(ptrdiff_t);
+                    break;
+                default:
+                    HANDLE_N(int);
+                    break;
+#undef HANDLE_N
                 }
                 break;
             case '%':
