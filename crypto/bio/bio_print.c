@@ -37,6 +37,8 @@ struct pr_desc {
     size_t currlen;
     /** Buffer size */
     size_t maxlen;
+    /** "Write position", for proper %n support */
+    long long pos;
 };
 
 static int fmtstr(struct pr_desc *, const char *, int, int, int);
@@ -110,7 +112,7 @@ _dopr(char **sbuffer,
     int state;
     int flags;
     int cflags;
-    struct pr_desc desc = { *sbuffer, buffer, 0, *maxlen };
+    struct pr_desc desc = { *sbuffer, buffer, 0, *maxlen, 0 };
     int ret = 0;
 
     state = DP_S_DEFAULT;
@@ -119,7 +121,7 @@ _dopr(char **sbuffer,
     ch = *format++;
 
     while (state != DP_S_DONE) {
-        if (ch == '\0' || (buffer == NULL && currlen >= *maxlen))
+        if (ch == '\0')
             state = DP_S_DONE;
 
         switch (state) {
@@ -388,11 +390,7 @@ _dopr(char **sbuffer,
                     goto out;
                 break;
             case 'n':
-                {
-                    int *num;
-
-                    num = va_arg(args, int *);
-                    *num = (int)desc.currlen;
+                    *num = (int)desc.pos;
                 }
                 break;
             case '%':
@@ -940,6 +938,8 @@ doapr_outch(struct pr_desc *desc, int c)
         else
             (*(desc->buffer))[(desc->currlen)++] = (char)c;
     }
+
+    desc->pos++;
 
     return 1;
 }
