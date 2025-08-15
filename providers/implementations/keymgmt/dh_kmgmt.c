@@ -814,6 +814,16 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
     DH_set_flags(dh, gctx->dh_type);
 
+#ifdef FIPS_MODULE
+    if (!ossl_fips_self_testing()) {
+        ret = ossl_dh_check_pairwise(dh, 1);
+        if (ret <= 0) {
+            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+            goto end;
+        }
+    }
+#endif /* FIPS_MODULE */
+
     ret = 1;
 end:
     if (ret <= 0) {
