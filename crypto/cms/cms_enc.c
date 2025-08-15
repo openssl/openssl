@@ -173,12 +173,17 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
             memcpy(aparams.iv, piv, ivlen);
             aparams.iv_len = ivlen;
             aparams.tag_len = EVP_CIPHER_CTX_get_tag_length(ctx);
-            if (aparams.tag_len <= 0)
+            if (aparams.tag_len <= 0) {
+                ASN1_TYPE_free(calg->parameter);
+                calg->parameter = NULL;
                 goto err;
+            }
         }
 
         if (evp_cipher_param_to_asn1_ex(ctx, calg->parameter, &aparams) <= 0) {
             ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
+            ASN1_TYPE_free(calg->parameter);
+            calg->parameter = NULL;
             goto err;
         }
         /* If parameter type not set omit parameter */
