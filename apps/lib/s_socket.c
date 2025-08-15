@@ -272,6 +272,91 @@ int report_server_accept(BIO *out, int asock, int with_address, int with_pid)
     return success;
 }
 
+/* Common server accept loop - used by both do_server and do_server_unix_fd */
+static int server_accept_loop(int asock, int type, int protocol,
+                              do_server_cb cb, unsigned char *context,
+                              int naccept)
+{
+    int sock;
+    int i;
+    int ret = 0;
+
+    for (;;) {
+        char sink[64];
+        struct timeval timeout;
+        fd_set readfds;
+
+        if (type == SOCK_STREAM) {
+            BIO_ADDR_free(ourpeer);
+            ourpeer = BIO_ADDR_new();
+            if (ourpeer == NULL) {
+                BIO_closesocket(asock);
+                ERR_print_errors(bio_err);
+                ret = -1;
+                break;
+            }
+            do {
+                sock = BIO_accept_ex(asock, ourpeer, 0);
+            } while (sock < 0 && BIO_sock_should_retry(sock));
+            if (sock < 0) {
+                ERR_print_errors(bio_err);
+                BIO_closesocket(asock);
+                break;
+            }
+
+            if (naccept != -1)
+                naccept--;
+            if (naccept == 0)
+                BIO_closesocket(asock);
+
+            BIO_set_tcp_ndelay(sock, 1);
+            i = (*cb)(sock, type, protocol, context);
+
+            /*
+             * If we ended with an alert being sent, but still with data in the
+             * network buffer to be read, then calling BIO_closesocket() will
+             * result in a TCP-RST being sent. On some platforms (notably
+             * Windows) then this will result in the peer immediately abandoning
+             * the connection including any buffered alert data before it has
+             * had a chance to be read. Shutting down the sending side first,
+             * and then closing the socket sends TCP-FIN first followed by
+             * TCP-RST. This seems to allow the peer to read the alert data.
+             */
+            shutdown(sock, 1); /* SHUT_WR */
+            /*
+             * We just said we have nothing else to say, but it doesn't mean
+             * that the other side has nothing. It's even recommended to
+             * consume incoming data. [In testing context this ensures that
+             * alerts are passed on...]
+             */
+            timeout.tv_sec = 0;
+            timeout.tv_usec = 500000;  /* some extreme round-trip */
+            do {
+                FD_ZERO(&readfds);
+                openssl_fdset(sock, &readfds);
+            } while (select(sock + 1, &readfds, NULL, NULL, &timeout) > 0
+                     && readsocket(sock, sink, sizeof(sink)) > 0);
+
+            BIO_closesocket(sock);
+        } else {
+            if (naccept != -1)
+                naccept--;
+
+            i = (*cb)(asock, type, protocol, context);
+        }
+
+        if (i < 0 || naccept == 0) {
+            BIO_closesocket(asock);
+            ret = i;
+            break;
+        }
+    }
+
+    BIO_ADDR_free(ourpeer);
+    ourpeer = NULL;
+    return ret;
+}
+
 /*
  * do_server - helper routine to perform a server operation
  * @accept_sock: pointer to storage of resulting socket.
@@ -298,8 +383,6 @@ int do_server(int *accept_sock, const char *host, const char *port,
               int tfo)
 {
     int asock = 0;
-    int sock;
-    int i;
     BIO_ADDRINFO *res = NULL;
     const BIO_ADDRINFO *next;
     int sock_family, sock_type, sock_protocol, sock_port;
@@ -398,83 +481,33 @@ int do_server(int *accept_sock, const char *host, const char *port,
 
     if (accept_sock != NULL)
         *accept_sock = asock;
-    for (;;) {
-        char sink[64];
-        struct timeval timeout;
-        fd_set readfds;
 
-        if (type == SOCK_STREAM) {
-            BIO_ADDR_free(ourpeer);
-            ourpeer = BIO_ADDR_new();
-            if (ourpeer == NULL) {
-                BIO_closesocket(asock);
-                ERR_print_errors(bio_err);
-                goto end;
-            }
-            do {
-                sock = BIO_accept_ex(asock, ourpeer, 0);
-            } while (sock < 0 && BIO_sock_should_retry(sock));
-            if (sock < 0) {
-                ERR_print_errors(bio_err);
-                BIO_closesocket(asock);
-                break;
-            }
+    ret = server_accept_loop(asock, type, protocol, cb, context, naccept);
 
-            if (naccept != -1)
-                naccept--;
-            if (naccept == 0)
-                BIO_closesocket(asock);
-
-            BIO_set_tcp_ndelay(sock, 1);
-            i = (*cb)(sock, type, protocol, context);
-
-            /*
-             * If we ended with an alert being sent, but still with data in the
-             * network buffer to be read, then calling BIO_closesocket() will
-             * result in a TCP-RST being sent. On some platforms (notably
-             * Windows) then this will result in the peer immediately abandoning
-             * the connection including any buffered alert data before it has
-             * had a chance to be read. Shutting down the sending side first,
-             * and then closing the socket sends TCP-FIN first followed by
-             * TCP-RST. This seems to allow the peer to read the alert data.
-             */
-            shutdown(sock, 1); /* SHUT_WR */
-            /*
-             * We just said we have nothing else to say, but it doesn't mean
-             * that the other side has nothing. It's even recommended to
-             * consume incoming data. [In testing context this ensures that
-             * alerts are passed on...]
-             */
-            timeout.tv_sec = 0;
-            timeout.tv_usec = 500000;  /* some extreme round-trip */
-            do {
-                FD_ZERO(&readfds);
-                openssl_fdset(sock, &readfds);
-            } while (select(sock + 1, &readfds, NULL, NULL, &timeout) > 0
-                     && readsocket(sock, sink, sizeof(sink)) > 0);
-
-            BIO_closesocket(sock);
-        } else {
-            if (naccept != -1)
-                naccept--;
-
-            i = (*cb)(asock, type, protocol, context);
-        }
-
-        if (i < 0 || naccept == 0) {
-            BIO_closesocket(asock);
-            ret = i;
-            break;
-        }
-    }
  end:
 # ifdef AF_UNIX
     if (family == AF_UNIX)
         unlink(host);
 # endif
-    BIO_ADDR_free(ourpeer);
-    ourpeer = NULL;
     return ret;
+}
+
+int do_server_unix_fd(int fd, int type, int protocol,
+                      do_server_cb cb, unsigned char *context, int naccept,
+                      BIO *bio_s_out)
+{
+    if (fd < 0) {
+        BIO_printf(bio_err, "Invalid file descriptor\n");
+        return 0;
+    }
+
+    if (!report_server_accept(bio_s_out, fd, 0, 0)) {
+        ERR_print_errors(bio_err);
+        return 0;
+    }
+
+    /* Use common accept loop */
+    return server_accept_loop(fd, type, protocol, cb, context, naccept);
 }
 
 void do_ssl_shutdown(SSL *ssl)
