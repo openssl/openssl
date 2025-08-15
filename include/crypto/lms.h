@@ -151,7 +151,7 @@ int ossl_lms_key_equal(const LMS_KEY *key1, const LMS_KEY *key2, int selection);
 int ossl_lms_key_valid(const LMS_KEY *key, int selection);
 int ossl_lms_key_has(const LMS_KEY *key, int selection);
 
-int ossl_lms_pubkey_from_params(const OSSL_PARAM params[], LMS_KEY *lmskey);
+int ossl_lms_pubkey_from_params(const OSSL_PARAM *pub, LMS_KEY *lmskey);
 int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
                            LMS_KEY *lmskey);
 size_t ossl_lms_pubkey_length(const unsigned char *data, size_t datalen);
