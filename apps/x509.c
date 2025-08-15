@@ -55,6 +55,7 @@ typedef enum OPTION_choice {
     OPT_SUBJECT_HASH_OLD, OPT_ISSUER_HASH_OLD, OPT_COPY_EXTENSIONS,
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
     OPT_NOT_BEFORE, OPT_NOT_AFTER,
+    OPT_FINGERPRINT_FORMAT,
     OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT
 } OPTION_CHOICE;
 
@@ -93,6 +94,7 @@ const OPTIONS x509_options[] = {
      "Datetime format used for printing. (rfc_822/iso_8601). Default is rfc_822."},
     {"certopt", OPT_CERTOPT, 's', "Various certificate text printing options"},
     {"fingerprint", OPT_FINGERPRINT, '-', "Print the certificate fingerprint"},
+    {"fingerprint256format", OPT_FINGERPRINT_FORMAT, '-', "Print SHA-256 fingerprint as lowercase hex without separators"},
     {"alias", OPT_ALIAS, '-', "Print certificate alias"},
     {"serial", OPT_SERIAL, '-', "Print serial number value"},
     {"startdate", OPT_STARTDATE, '-', "Print the notBefore field"},
@@ -262,6 +264,8 @@ static int self_signed(X509_STORE *ctx, X509 *cert)
 
 int x509_main(int argc, char **argv)
 {
+    int fingerprint256format = 0;
+
     ASN1_INTEGER *sno = NULL;
     ASN1_OBJECT *objtmp = NULL;
     BIO *out = NULL;
@@ -522,7 +526,11 @@ int x509_main(int argc, char **argv)
         case OPT_FINGERPRINT:
             fingerprint = ++num;
             break;
-        case OPT_HASH:
+        
+        case OPT_FINGERPRINT_FORMAT:
+            fingerprint256format = ++num;
+            break;
+case OPT_HASH:
             subject_hash = ++num;
             break;
         case OPT_ISSUER_HASH:
@@ -1089,7 +1097,20 @@ int x509_main(int argc, char **argv)
             BIO_printf(out, "%s Fingerprint=", fdigname);
             for (j = 0; j < (int)n; j++)
                 BIO_printf(out, "%02X%c", md[j], (j + 1 == (int)n) ? '\n' : ':');
-        } else if (i == ocspid) {
+        } 
+        else if (i == fingerprint256format) {
+            unsigned int n;
+            unsigned char md[EVP_MAX_MD_SIZE];
+            if (!X509_digest(x, EVP_sha256(), md, &n)) {
+                BIO_printf(bio_err, "Error calculating SHA-256 fingerprint");
+                goto err;
+            }
+            for (j = 0; j < (int)n; j++)
+                BIO_printf(out, "%02x", md[j]);
+            BIO_printf(out, "\n");
+            goto end;
+        }
+        else if (i == ocspid) {
             X509_ocspid_print(out, x);
         } else if (i == ext) {
             print_x509v3_exts(out, x, ext_names);

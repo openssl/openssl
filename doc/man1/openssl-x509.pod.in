@@ -28,6 +28,7 @@ B<openssl> B<x509>
 [B<-text>]
 [B<-certopt> I<option>]
 [B<-fingerprint>]
+[B<-fingerprint256format>]
 [B<-alias>]
 [B<-serial>]
 [B<-startdate>]
@@ -249,6 +250,16 @@ certificate (see digest options).
 This is commonly called a "fingerprint". Because of the nature of message
 digests, the fingerprint of a certificate is unique to that certificate and
 two certificates with the same fingerprint can be considered to be the same.
+
+=item B<-fingerprint256format>
+
+Print the SHA-256 fingerprint of the certificate as a continuous
+lowercase hexadecimal string with no separators or labels.
+
+This is similar to B<-fingerprint>, but:
+ - Uses SHA-256 digest only.
+ - Prints lowercase hexadecimal output without colons.
+ - Outputs only the fingerprint, suitable for scripting.
 
 =item B<-alias>
 
