@@ -312,13 +312,20 @@ int run_tests(const char *test_prog_name)
 
     for (i = 0; i < num_tests; i++)
         permute[i] = i;
-    if (rand_order != 0)
+    if (rand_order != 0) {
         for (i = num_tests - 1; i >= 1; i--) {
             j = test_random() % (1 + i);
             ii = permute[j];
             permute[j] = permute[i];
             permute[i] = ii;
         }
+
+        test_printf_tapout("# ");
+        for (ii = 0; ii != num_tests; ++ii)
+            test_printf_tapout(" %d", permute[ii]);
+        test_printf_tapout("\n");
+        test_flush_tapout();
+    }
 
     for (ii = 0; ii != num_tests; ++ii) {
         i = permute[ii];
