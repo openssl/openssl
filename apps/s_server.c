@@ -507,18 +507,23 @@ static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
 
 #  if !defined(OPENSSL_SYS_WINDOWS)
     local_p = gmtime_r(&now, &local);
-    if (local_p != &local)
+    if (local_p != &local) {
         strcpy(lstr, "sometime");
-#  else
-    grv = gmtime_s(&local, &now);
-    if (grv != 0)
-        strcpy(lstr, "sometime");
-#  endif
-    else {
+    } else {
         srv = (int)strftime(lstr, ECH_TIME_STR_LEN, "%c", &local);
         if (srv == 0)
             strcpy(lstr, "sometime");
     }
+#  else
+    grv = gmtime_s(&local, &now);
+    if (grv != 0) {
+        strcpy(lstr, "sometime");
+    } else {
+        srv = (int)strftime(lstr, ECH_TIME_STR_LEN, "%c", &local);
+        if (srv == 0)
+            strcpy(lstr, "sometime");
+    }
+#  endif
     memset(clientip, 0, INET6_ADDRSTRLEN);
     strncpy(clientip, "dunno", INET6_ADDRSTRLEN);
     memset(&ss, 0, salen);
