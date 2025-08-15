@@ -625,14 +625,14 @@ static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
             } else {
                 if (p->biodebug != NULL)
                     BIO_printf(p->biodebug,
-                                "ssl_ech_servername_cb: Not switching context "\
-                                "- no name match (%d).\n", check_host);
+                               "ssl_ech_servername_cb: Not switching context "
+                               "- no name match (%d).\n", check_host);
             }
         }
     } else {
         if (p->biodebug != NULL)
             BIO_printf(p->biodebug,
-                       "ssl_ech_servername_cb: Not switching context "\
+                       "ssl_ech_servername_cb: Not switching context "
                        "- no ECH SUCCESS\n");
     }
     return SSL_TLSEXT_ERR_OK;
@@ -1603,14 +1603,14 @@ int s_server_main(int argc, char *argv[])
     int max_early_data = -1, recv_max_early_data = -1;
     char *psksessf = NULL;
     int no_ca_names = 0;
-#ifndef OPENSSL_NO_ECH
+# ifndef OPENSSL_NO_ECH
     char *echkeyfile = NULL;
     char *echkeydir = NULL;
     char *echnoretrydir = NULL;
     int ech_files_loaded = 0;
     int echtrialdecrypt = 0; /* trial decryption off by default */
     int echgrease_rc = 0; /* retry_config GREASEing off by default */
-#endif
+# endif
 #ifndef OPENSSL_NO_SCTP
     int sctp_label_bug = 0;
 #endif
@@ -2622,9 +2622,8 @@ int s_server_main(int argc, char *argv[])
         }
         OSSL_ECHSTORE_free(es);
         BIO_free_all(in);
-        if (bio_s_out != NULL) {
+        if (bio_s_out != NULL)
             BIO_printf(bio_s_out, "Added ECH key pair from: %s\n", echkeyfile);
-        }
         ech_files_loaded++;
     }
     if (echkeydir != NULL) {

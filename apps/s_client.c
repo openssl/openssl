@@ -744,7 +744,6 @@ const OPTIONS s_client_options[] = {
     {"use_srtp", OPT_USE_SRTP, 's',
      "Offer SRTP key management with a colon-separated profile list"},
 #endif
-
 # ifndef OPENSSL_NO_ECH
     {"ech_config_list", OPT_ECHCONFIGLIST, 's',
      "Set ECHConfigList, value is base 64 encoded ECHConfigList"},
@@ -765,7 +764,6 @@ const OPTIONS s_client_options[] = {
     {"ech_ignore_cid", OPT_ECH_IGNORE_CONFIG_ID, '-',
      "Ignore the server-chosen ECH config ID and send a random value"},
 # endif
-
 #ifndef OPENSSL_NO_SRP
     {"srpuser", OPT_SRPUSER, 's', "(deprecated) SRP authentication for 'user'"},
     {"srppass", OPT_SRPPASS, 's', "(deprecated) Password for 'user'"},
@@ -1713,7 +1711,6 @@ int s_client_main(int argc, char **argv)
             goto opthelp;
         }
     }
-
 # ifndef OPENSSL_NO_ECH
     if ((alpn_outer_in != NULL || sni_outer_name != NULL)
         && ech_config_list == NULL) {
@@ -1722,7 +1719,6 @@ int s_client_main(int argc, char **argv)
         goto opthelp;
     }
 # endif
-
 #ifndef OPENSSL_NO_NEXTPROTONEG
     if (min_version == TLS1_3_VERSION && next_proto_neg_in != NULL) {
         BIO_printf(bio_err, "Cannot supply -nextprotoneg with TLSv1.3\n");
