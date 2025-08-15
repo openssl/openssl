@@ -528,8 +528,16 @@ fmtint(struct pr_desc *desc,
     int zpadlen = 0;
     int caps = 0;
 
-    if (max < 0)
-        max = 0;
+    if (max < 0) {
+        /* A negative precision is taken as if the precision were omitted. */
+        max = 1;
+    } else {
+        /*
+         * If a precision is given with an integer conversion,
+         * the 0 flag is ignored.
+         */
+        flags &= ~DP_F_ZERO;
+    }
     uvalue = value;
     if (!(flags & DP_F_UNSIGNED)) {
         if (value < 0) {
