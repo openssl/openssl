@@ -723,6 +723,7 @@ sub generate_decoder_from_trie {
                 if ($suf ne $trieref->{'suffix'});
         }
         print ")) {\n";
+        printf "%s/* %s */\n", $indent1, $trieref->{'name'};
         trie_matched($field, $num, $indent1, $indent2);
         printf "%s}\n", $indent0;
 
@@ -858,14 +859,15 @@ sub output_param_decoder {
             } elsif (substr($pnum, 0, 3) eq '#if') {
                 # Trim the `#if' from the front
                 $ifdefs{$pident} = substr($pnum, 3);
-            } else {
+            } elsif (not defined $concat_num{$pident}) {
                 $concat_num{$pident} = $pnum;
             }
         }
         output_ifdef($ifdefs{$pident});
         print "    OSSL_PARAM_$ptype(OSSL_$pname, NULL";
         print ", 0" if $ptype eq "octet_string" || $ptype eq "octet_ptr"
-                       || $ptype eq "utf8_string" || $ptype eq "utf8_ptr";
+                       || $ptype eq "utf8_string" || $ptype eq "utf8_ptr"
+                       || $ptype eq "BN";
         printf "),\n";
         output_endifdef($ifdefs{$pident});
     }
