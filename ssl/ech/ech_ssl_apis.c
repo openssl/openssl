@@ -316,7 +316,7 @@ int SSL_ech_get1_retry_config(SSL *ssl, unsigned char **ec, size_t *eclen)
         propq = s->ext.ech.es->propq;
     }
     if ((in = BIO_new(BIO_s_mem())) == NULL
-        || BIO_write(in, s->ext.ech.returned, s->ext.ech.returned_len) <= 0
+        || BIO_write(in, s->ext.ech.returned, (int)s->ext.ech.returned_len) <= 0
         || (ve = OSSL_ECHSTORE_new(libctx, propq)) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -417,7 +417,7 @@ int SSL_set1_ech_config_list(SSL *ssl, const uint8_t *ecl, size_t ecl_len)
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if ((es_in = BIO_new_mem_buf(ecl, ecl_len)) == NULL
+    if ((es_in = BIO_new_mem_buf(ecl, (int)ecl_len)) == NULL
         || (es = OSSL_ECHSTORE_new(NULL, NULL)) == NULL
         || OSSL_ECHSTORE_read_echconfiglist(es, es_in) != 1
         || SSL_set1_echstore(ssl, es) != 1) {
