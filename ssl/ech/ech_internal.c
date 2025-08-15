@@ -641,7 +641,7 @@ size_t ossl_ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
     length_with_snipadding = innersnipadding + (int)encoded_len;
     length_of_padding = 31 - ((length_with_snipadding - 1) % 32);
     length_with_padding = (int)encoded_len + length_of_padding
-                          + innersnipadding;
+        + innersnipadding;
     /*
      * Finally - make sure final result is longer than padding target
      * and a multiple of our padding increment.

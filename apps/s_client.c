@@ -744,6 +744,7 @@ const OPTIONS s_client_options[] = {
     {"use_srtp", OPT_USE_SRTP, 's',
      "Offer SRTP key management with a colon-separated profile list"},
 #endif
+
 # ifndef OPENSSL_NO_ECH
     {"ech_config_list", OPT_ECHCONFIGLIST, 's',
      "Set ECHConfigList, value is base 64 encoded ECHConfigList"},
@@ -764,6 +765,7 @@ const OPTIONS s_client_options[] = {
     {"ech_ignore_cid", OPT_ECH_IGNORE_CONFIG_ID, '-',
      "Ignore the server-chosen ECH config ID and send a random value"},
 # endif
+
 #ifndef OPENSSL_NO_SRP
     {"srpuser", OPT_SRPUSER, 's', "(deprecated) SRP authentication for 'user'"},
     {"srppass", OPT_SRPPASS, 's', "(deprecated) Password for 'user'"},
@@ -1716,7 +1718,7 @@ int s_client_main(int argc, char **argv)
     if ((alpn_outer_in != NULL || sni_outer_name != NULL)
         && ech_config_list == NULL) {
         BIO_printf(bio_err, "%s: Can't use -ech_sni_outer_name nor "
-                  "-ech_alpn_outer without -ech_config_list\n", prog);
+                   "-ech_alpn_outer without -ech_config_list\n", prog);
         goto opthelp;
     }
 # endif
@@ -2304,7 +2306,7 @@ int s_client_main(int argc, char **argv)
         OSSL_ECHSTORE_free(es);
         es = NULL;
     }
-#endif
+# endif
 
     if (dane_tlsa_domain != NULL) {
         if (SSL_dane_enable(con, dane_tlsa_domain) <= 0) {
