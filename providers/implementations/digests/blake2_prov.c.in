@@ -43,7 +43,8 @@ static const OSSL_PARAM *blake_settable_ctx_params(ossl_unused void *ctx,
     return blake_set_ctx_params_list;
 }
 
-#define IMPLEMENT_BLAKE_functions(variant, VARIANT, variantsize) \
+#define IMPLEMENT_BLAKE_functions(variant, VARIANT, variantsize, \
+                                  seccat_collision, seccat_preimage) \
 int ossl_blake##variant##_get_ctx_params(void *vctx, OSSL_PARAM params[]) \
 { \
     struct blake##variant##_md_data_st *mdctx = vctx; \
@@ -174,7 +175,11 @@ static int blake##variantsize##_internal_final(void *ctx, unsigned char *out, \
  \
 static int blake##variantsize##_get_params(OSSL_PARAM params[]) \
 { \
-    return ossl_digest_default_get_params(params, BLAKE##VARIANT##_BLOCKBYTES, BLAKE##VARIANT##_OUTBYTES, 0); \
+    return ossl_digest_default_get_params(params, \
+                                          BLAKE##VARIANT##_BLOCKBYTES, \
+                                          BLAKE##VARIANT##_OUTBYTES, \
+                                          seccat_collision,  seccat_preimage, \
+                                          0); \
 } \
  \
 const OSSL_DISPATCH ossl_blake##variantsize##_functions[] = { \
@@ -199,5 +204,5 @@ const OSSL_DISPATCH ossl_blake##variantsize##_functions[] = { \
     {0, NULL} \
 };
 
-IMPLEMENT_BLAKE_functions(2s, 2S, 2s256)
-IMPLEMENT_BLAKE_functions(2b, 2B, 2b512)
+IMPLEMENT_BLAKE_functions(2s, 2S, 2s256, 2, 5)
+IMPLEMENT_BLAKE_functions(2b, 2B, 2b512, 5, 5)

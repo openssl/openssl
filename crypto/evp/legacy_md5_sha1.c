@@ -28,6 +28,7 @@ static const EVP_MD md5_sha1_md = {
     NID_md5_sha1,
     NID_md5_sha1,
     MD5_SHA1_DIGEST_LENGTH,
+    SHA1_COLLISION_CATEGORY, SHA1_PREIMAGE_CATEGORY,
     0,
     EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(md5_sha1_int_init, md5_sha1_int_update,
