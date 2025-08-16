@@ -1071,6 +1071,9 @@ static int test_selection(EVP_PKEY *pkey, int selection)
     int ret;
     BIO *bio = BIO_new(BIO_s_mem());
 
+    if (!TEST_ptr(bio))
+        goto err;
+
     ret = PEM_write_bio_PUBKEY(bio, pkey);
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         if (!TEST_true(ret))
