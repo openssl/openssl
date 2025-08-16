@@ -46,10 +46,11 @@ static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
                                CMS_TEXT)))
         goto end;
 
-    if (!TEST_ptr(contentbio =
-                  CMS_EnvelopedData_decrypt(content->d.envelopedData,
-                                            NULL, privkey, cert, NULL,
-                                            CMS_TEXT, NULL, NULL)))
+    if (!(EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
+            && !TEST_ptr(contentbio =
+                         CMS_EnvelopedData_decrypt(content->d.envelopedData,
+                                                   NULL, privkey, cert, NULL,
+                                                   CMS_TEXT, NULL, NULL)))
         goto end;
 
     /* Check we got the message we first started with */
