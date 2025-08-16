@@ -91,6 +91,9 @@ ENCODER_TEXT("SLH-DSA-SHAKE-192f", slh_dsa_shake_192f, yes),
 ENCODER_TEXT("SLH-DSA-SHAKE-256s", slh_dsa_shake_256s, yes),
 ENCODER_TEXT("SLH-DSA-SHAKE-256f", slh_dsa_shake_256f, yes),
 #endif
+#ifndef OPENSSL_NO_HSS
+ENCODER_TEXT("HSS", hss, yes),
+#endif
 
 /*
  * Entries for key type specific output formats.  The structure name on these
@@ -371,6 +374,11 @@ ENCODER_w_structure("ML-DSA-87", ml_dsa_87, yes, pem, PrivateKeyInfo),
 ENCODER_w_structure("ML-DSA-87", ml_dsa_87, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("ML-DSA-87", ml_dsa_87, yes, pem, SubjectPublicKeyInfo),
 # endif /* OPENSSL_NO_ML_DSA */
+
+#ifndef OPENSSL_NO_HSS
+ENCODER_w_structure("HSS", hss, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("HSS", hss, yes, pem, SubjectPublicKeyInfo),
+#endif
 
 /*
  * Entries for key type specific output formats.  These are exactly the

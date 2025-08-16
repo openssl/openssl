@@ -490,6 +490,7 @@ my @disablables = (
     "jitter",
     "ktls",
     "legacy",
+    "hss",
     "lms",
     "loadereng",
     "makedepend",
@@ -598,6 +599,7 @@ our %disabled = ( # "what"         => "comment"
                   "crypto-mdebug-backtrace" => "default",
                   "demos"               => "default",
                   "h3demo"              => "default",
+                  "hss"                 => "default",
                   "hqinterop"           => "default",
                   "devcryptoeng"        => "default",
                   "ec_nistp_64_gcc_128" => "default",
@@ -637,7 +639,7 @@ my @disable_cascades = (
                              "des", "dgram", "dh", "dsa",
                              "ec", "engine",
                              "filenames",
-                             "idea", "ktls", "lms",
+                             "hss", "idea", "ktls", "lms",
                              "md4", "ml-dsa", "ml-kem", "multiblock",
                              "nextprotoneg", "ocsp", "ocb", "poly1305", "psk",
                              "rc2", "rc4", "rmd160",
@@ -1962,7 +1964,7 @@ foreach my $what (sort keys %disabled) {
 
         $skipdir{engines} = $what if $what eq 'engine';
         $skipdir{"crypto/$skipdir"} = $what
-            unless $what eq 'async' || $what eq 'err' || $what eq 'dso' || $what eq 'http';
+            unless $what eq 'async' || $what eq 'err' || $what eq 'dso' || $what eq 'http' || $what eq 'lms';
     }
 }
 

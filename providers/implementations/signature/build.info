@@ -7,6 +7,7 @@ $MAC_GOAL=../../libdefault.a ../../libfips.a
 $RSA_GOAL=../../libdefault.a ../../libfips.a
 $SM2_GOAL=../../libdefault.a
 $LMS_GOAL=../../libdefault.a ../../libfips.a
+$HSS_GOAL=../../libdefault.a ../../libfips.a
 $ML_DSA_GOAL=../../libdefault.a ../../libfips.a
 $SLH_DSA_GOAL=../../libdefault.a ../../libfips.a
 
@@ -39,6 +40,9 @@ SOURCE[$MAC_GOAL]=mac_legacy_sig.c
 
 IF[{- !$disabled{lms} -}]
   SOURCE[$LMS_GOAL]=lms_signature.c
+ENDIF
+IF[{- !$disabled{hss} -}]
+  SOURCE[$HSS_GOAL]=hss_signature.c
 ENDIF
 
 IF[{- !$disabled{'ml-dsa'} -}]

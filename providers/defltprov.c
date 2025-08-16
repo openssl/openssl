@@ -486,6 +486,9 @@ static const OSSL_ALGORITHM deflt_signature[] = {
 #ifndef OPENSSL_NO_LMS
     { PROV_NAMES_LMS, "provider=default", ossl_lms_signature_functions },
 #endif
+#ifndef OPENSSL_NO_HSS
+    { PROV_NAMES_HSS, "provider=default", ossl_hss_signature_functions },
+#endif
 #ifndef OPENSSL_NO_SLH_DSA
     { PROV_NAMES_SLH_DSA_SHA2_128S, "provider=default",
       ossl_slh_dsa_sha2_128s_signature_functions, PROV_DESCS_SLH_DSA_SHA2_128S },
@@ -611,6 +614,11 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { PROV_NAMES_LMS, "provider=default", ossl_lms_keymgmt_functions,
       PROV_DESCS_LMS },
 #endif
+#ifndef OPENSSL_NO_HSS
+    { PROV_NAMES_HSS, "provider=default", ossl_hss_keymgmt_functions,
+      PROV_DESCS_HSS },
+#endif
+
 #ifndef OPENSSL_NO_ML_KEM
     { PROV_NAMES_ML_KEM_512, "provider=default", ossl_ml_kem_512_keymgmt_functions,
       PROV_DESCS_ML_KEM_512 },

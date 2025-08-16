@@ -41,7 +41,7 @@ OpenSSL 3.6
 
    *Michael Baentsch*
 
- * Added LMS signature verification support as per [SP 800-208].  This
+ * Added HSS and LMS signature verification support as per [SP 800-208].  This
    support is present in both the FIPS and default providers.
 
    *Shane Lontis and Paul Dale*

@@ -78,6 +78,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/kem/ecx_kem.c \
          providers/implementations/kem/ml_kem_kem.c \
          providers/implementations/kem/rsa_kem.c \
+         providers/implementations/keymgmt/hss_kmgmt.c \
          providers/implementations/keymgmt/ml_dsa_kmgmt.c \
          providers/implementations/keymgmt/ml_kem_kmgmt.c \
          providers/implementations/keymgmt/mlx_kmgmt.c \
@@ -177,6 +178,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/kem/ecx_kem.c \
        providers/implementations/kem/ml_kem_kem.c \
        providers/implementations/kem/rsa_kem.c \
+       providers/implementations/keymgmt/hss_kmgmt.c \
        providers/implementations/keymgmt/ml_dsa_kmgmt.c \
        providers/implementations/keymgmt/ml_kem_kmgmt.c \
        providers/implementations/keymgmt/mlx_kmgmt.c \
@@ -273,6 +275,8 @@ GENERATE[providers/implementations/kem/ml_kem_kem.c]=\
     providers/implementations/kem/ml_kem_kem.c.in
 GENERATE[providers/implementations/kem/rsa_kem.c]=\
     providers/implementations/kem/rsa_kem.c.in
+GENERATE[providers/implementations/keymgmt/hss_kmgmt.c]=\
+    providers/implementations/keymgmt/hss_kmgmt.c.in
 GENERATE[providers/implementations/keymgmt/ml_dsa_kmgmt.c]=\
     providers/implementations/keymgmt/ml_dsa_kmgmt.c.in
 GENERATE[providers/implementations/keymgmt/ml_kem_kmgmt.c]=\

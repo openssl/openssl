@@ -23,6 +23,10 @@ IF[{- !$disabled{lms} -}]
   SOURCE[$DECODER_GOAL]=decode_lmsxdr2key.c
 ENDIF
 
+IF[{- !$disabled{hss} -}]
+  SOURCE[$DECODER_GOAL]=hss_codecs.c
+ENDIF
+
 IF[{- !$disabled{'ml-dsa'} -}]
   SOURCE[$DECODER_GOAL]=ml_dsa_codecs.c
 ENDIF

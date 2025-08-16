@@ -1,0 +1,11 @@
+HSS Public-Key:
+Levels: 2
+LMS Type: SHA256_N32_H10
+LMOTS Type: SHA256_N32_W8
+I:
+    49:41:d1:76:18:59:9b:7e:f5:30:d1:f2:26:f9:0c:
+    3d
+K:
+    38:f8:b7:8c:a0:fd:3b:e8:bb:57:7b:db:d2:60:84:
+    00:4f:72:c4:b9:85:01:8d:c8:86:b2:54:30:e7:b7:
+    09:b2

@@ -424,6 +424,9 @@ my %params = (
 # EC, X25519 and X448 Key generation parameters
     'PKEY_PARAM_DHKEM_IKM' =>        "dhkem-ikm",
 
+# HSS Key parameter
+    'PKEY_PARAM_HSS_L' =>           "l",
+
 # ML-KEM parameters
     'PKEY_PARAM_ML_KEM_SEED' => "seed",
     'PKEY_PARAM_ML_KEM_PREFER_SEED' => "ml-kem.prefer_seed",

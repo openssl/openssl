@@ -55,8 +55,7 @@ LMS_SIG *ossl_lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub)
             || HASH_NOT_MATCHED(lparams, sig_params)
             || lsig->q >= (uint32_t)(1 << lparams->h)
             || !PACKET_get_bytes(pkt, (const unsigned char **)&lsig->paths,
-                                 lparams->h * lparams->n)
-            || PACKET_remaining(pkt) > 0)
+                                 lparams->h * lparams->n))
         goto err;
     return lsig;
 err:

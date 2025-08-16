@@ -18,6 +18,7 @@
 
 /* Macros to build Self test data */
 #define ITM(x) ((void *)&x), sizeof(x)
+#define ITM_OFF(x, off) ((void *)(x + off)), sizeof(x) - off
 #define ITM_STR(x) ((void *)&x), (sizeof(x) - 1)
 
 #define ST_KAT_PARAM_END() { "", 0, NULL, 0 }
@@ -307,7 +308,7 @@ static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
 #endif
 };
 
-#ifndef OPENSSL_NO_LMS
+#if !defined(OPENSSL_NO_HSS) || !defined(OPENSSL_NO_LMS)
 typedef struct st_kat_lms_s {
     const unsigned char *pub;
     size_t publen;
@@ -321,8 +322,8 @@ typedef struct st_kat_lms_s {
  * Test vector from
  * https://datatracker.ietf.org/doc/html/draft-fluhrer-lms-more-parm-sets-15#name-test-cases
  */
-
 static const unsigned char sha256_192_pub[] = {
+    0x00, 0x00, 0x00, 0x01,
     0x00, 0x00, 0x00, 0x0A,
     0x00, 0x00, 0x00, 0x08,
     0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
@@ -341,8 +342,8 @@ static const unsigned char sha256_192_msg[] = {
 
 static const unsigned char sha256_192_sig[] = {
     /* L = 1,  q = 5 */
-    0x00, 0x00, 0x00, 0x05,
-    0x00, 0x00, 0x00, 0x08,
+    0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x08,
     0x0b, 0x50, 0x40, 0xa1, 0x8c, 0x1b, 0x5c, 0xab,
     0xcb, 0xc8, 0x5b, 0x04, 0x74, 0x02, 0xec, 0x62,
     0x94, 0xa3, 0x0d, 0xd8, 0xda, 0x8f, 0xc3, 0xda,
@@ -442,12 +443,20 @@ static const unsigned char sha256_192_sig[] = {
     0xd3, 0x4b, 0x40, 0xb6, 0x9d, 0xd9, 0xf3, 0xc1
 };
 
+# ifndef OPENSSL_NO_HSS
 static const ST_KAT_LMS st_kat_lms_test = {
     ITM(sha256_192_pub),
     ITM(sha256_192_msg),
     ITM(sha256_192_sig)
 };
-#endif  /* OPENSSL_NO_LMS */
+# else
+static const ST_KAT_LMS st_kat_lms_test = {
+    ITM_OFF(sha256_192_pub, 4),
+    ITM(sha256_192_msg),
+    ITM_OFF(sha256_192_sig, 4)
+};
+# endif
+#endif  /* !defined(OPENSSL_NO_LMS) || !defined(OPENSSL_NO_LMS) */
 
 static const char hkdf_digest[] = "SHA256";
 /*

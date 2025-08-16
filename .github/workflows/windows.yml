@@ -20,15 +20,15 @@ jobs:
         platform:
           - arch: amd64
             os: windows-2022
-            config: enable-lms enable-fips
+            config: enable-lms enable-hss enable-fips
             vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
           - arch: amd64
             os: windows-2025
-            config: enable-lms enable-fips no-thread-pool no-quic
+            config: enable-lms enable-hss enable-fips no-thread-pool no-quic
             vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
           - arch: x86
             os: windows-2022
-            config: --strict-warnings no-fips enable-lms
+            config: --strict-warnings no-fips enable-lms enable-hss
             vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat
     runs-on: ${{ matrix.platform.os }}
     steps:
