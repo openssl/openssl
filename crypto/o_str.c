@@ -17,7 +17,6 @@
 #include "internal/to_hex.h"
 
 #define DEFAULT_SEPARATOR ':'
-#define CH_ZERO '\0'
 
 char *CRYPTO_strdup(const char *str, const char* file, int line)
 {
