@@ -246,6 +246,15 @@ int ossl_slh_dsa_key_pairwise_check(const SLH_DSA_KEY *key)
     return ret;
 }
 
+void ossl_slh_dsa_key_reset(SLH_DSA_KEY *key)
+{
+    key->pub = NULL;
+    if (key->has_priv) {
+       key->has_priv = 0;
+       OPENSSL_cleanse(key->priv, sizeof(key->priv));
+    }
+}
+
 /**
  * @brief Load a SLH_DSA key from raw data.
  *
@@ -304,9 +313,7 @@ int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM params[],
     key->pub = p;
     return 1;
  err:
-    key->pub = NULL;
-    key->has_priv = 0;
-    OPENSSL_cleanse(key->priv, priv_len);
+    ossl_slh_dsa_key_reset(key);
     return 0;
 }
 

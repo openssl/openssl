@@ -11,6 +11,7 @@
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include <openssl/self_test.h>
+#include <openssl/proverr.h>
 #include "crypto/slh_dsa.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
@@ -126,8 +127,12 @@ static int slh_dsa_import(void *keydata, int selection, const OSSL_PARAM params[
      */
     if (res > 0 && ossl_slh_dsa_key_has(key, OSSL_KEYMGMT_SELECT_KEYPAIR) > 0)
         if (!slh_dsa_fips140_pairwise_test(key)) {
+
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                           "explicit %s public key does not match private",
+                           ossl_slh_dsa_key_get_name(key));
+            ossl_slh_dsa_key_reset(key);
             res = 0;
-            ossl_slh_dsa_key_free(key);
         }
 #endif  /* FIPS_MODULE */
     return res;
