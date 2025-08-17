@@ -44,14 +44,6 @@ jobs:
     - name: git diff
       run: git diff --exit-code
 
-  check_docs:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: config
-      run: ./config --strict-warnings --banner=Configured enable-fips && perl configdata.pm --dump
-    - name: make build_generated
-      run: make -s build_generated
   check_docs:  
     runs-on: ubuntu-latest  
     steps:  
