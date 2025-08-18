@@ -183,7 +183,7 @@ static const struct array_aligned_alloc_vector {
     { 1, SIZE_MAX / 2 + 2, SIZE_MAX / 2 + 1,
 #if (defined(_BSD_SOURCE) \
       || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)) \
-    && !USE_CUSTOM_ALLOC_FNS || defined(OPENSSL_SMALL_FOOTPRINT)
+    && !USE_CUSTOM_ALLOC_FNS
       EXP_OOM, EXP_OOM
 #else
       EXP_INT_OF, EXP_INT_OF
@@ -667,19 +667,15 @@ static int test_xaligned_alloc(const bool array, const bool macro,
                                        test_fn, test_line);
     }
 
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
     /*
      * aligned_alloc doesn't increment the call counts by itself, and
      * OPENSSL_malloc is only called when the open-coded implementation
      * is used.
      */
-# if USE_CUSTOM_ALLOC_FNS \
+#if USE_CUSTOM_ALLOC_FNS \
     || !(defined(_BSD_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L))
     exp_cnt += !!(exp != EXP_INT_OF && exp != EXP_INVAL);
-# endif
-#else /* OPENSSL_SMALL_FOOTPRINT */
-    exp = exp == EXP_INT_OF ? EXP_INT_OF : EXP_ZERO_SIZE;
-#endif /* !OPENSSL_SMALL_FOOTPRINT */
+#endif
 
     /*
      * There is an OPENSSL_calloc in ERR_set_debug, triggered
@@ -695,15 +691,10 @@ static int test_xaligned_alloc(const bool array, const bool macro,
             res = 0;
     }
 
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
     if (IS_FAIL(exp) && !TEST_ptr_null(freeptr))
         res = 0;
     if ((exp == EXP_NONNULL) && !TEST_ptr(freeptr))
         res = 0;
-#else /* OPENSSL_SMALL_FOOTPRINT */
-    if (!TEST_ptr_null(ret) || !TEST_ptr_null(freeptr))
-        res = 0;
-#endif /* !OPENSSL_SMALL_FOOTPRINT */
 
     OPENSSL_free(freeptr);
 

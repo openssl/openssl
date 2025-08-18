@@ -154,11 +154,14 @@ static struct ht_neighborhood_st *alloc_new_neighborhood_list(size_t len,
 {
     struct ht_neighborhood_st *ret;
 
+#if !defined(OPENSSL_SMALL_FOOTPRINT)
     ret = OPENSSL_aligned_alloc_array(len, sizeof(struct ht_neighborhood_st),
                                       CACHE_LINE_BYTES, freeptr);
 
     /* fall back to regular malloc */
-    if (ret == NULL) {
+    if (ret == NULL)
+#endif
+    {
         ret = *freeptr =
             OPENSSL_malloc_array(len, sizeof(struct ht_neighborhood_st));
         if (ret == NULL)
