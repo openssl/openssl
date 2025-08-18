@@ -231,9 +231,6 @@ void *CRYPTO_zalloc(size_t num, const char *file, int line)
 void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
                            const char *file, int line)
 {
-    size_t alloc_bytes;
-    void *ret;
-
     *freeptr = NULL;
 
     /* Ensure that alignment is a power of two */
@@ -246,6 +243,7 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
     if (malloc_impl == CRYPTO_malloc) {
 #if defined(_BSD_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
         int memalign_ret;
+        void *ret;
 
         /* posix_memalign() requires alignment to be at least sizeof(void *) */
         if (alignment < sizeof(void *))
@@ -267,44 +265,7 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
 #endif
     }
 
-    /* we have to do this the hard way */
-
-    /*
-     * Note: Windows supports an _aligned_malloc call, but we choose
-     * not to use it here, because allocations from that function
-     * require that they be freed via _aligned_free.  Given that
-     * we can't differentiate plain malloc blocks from blocks obtained
-     * via _aligned_malloc, just avoid its use entirely
-     */
-
-    if (ossl_unlikely(!ossl_size_add(num, alignment, &alloc_bytes, file, line)))
-        return NULL;
-
-    /*
-     * Step 1: Allocate an amount of memory that is <alignment>
-     * bytes bigger than requested
-     */
-    *freeptr = CRYPTO_malloc(alloc_bytes, file, line);
-    if (*freeptr == NULL)
-        return NULL;
-
-    /*
-     * Step 2: Add <alignment - 1> bytes to the pointer
-     * This will cross the alignment boundary that is
-     * requested
-     */
-    ret = (void *)((char *)*freeptr + (alignment - 1));
-
-    /*
-     * Step 3: Use the alignment as a mask to translate the
-     * least significant bits of the allocation at the alignment
-     * boundary to 0.  ret now holds a pointer to the memory
-     * buffer at the requested alignment
-     * NOTE: It is a documented requirement that alignment be a
-     * power of 2, which is what allows this to work
-     */
-    ret = (void *)((uintptr_t)ret & (uintptr_t)(~(alignment - 1)));
-    return ret;
+    return ossl_malloc_align(num, alignment, freeptr, file, line);
 }
 
 void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
