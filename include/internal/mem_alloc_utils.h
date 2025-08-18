@@ -27,6 +27,15 @@
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
 
 /*
+ * A helper open-coded aligned alloc implementation around CRYPTO_malloc(),
+ * for use in cases where non-standard malloc implementation is (or may be,
+ * as it is the case of the FIPS module) used, or posix_memalign
+ * is not available.
+ */
+void *ossl_malloc_align(size_t num, size_t alignment, void **freeptr,
+                        const char *file, int line);
+
+/*
  * A helper routine to report memory allocation errors.
  * Similar to the ERR_raise() macro, but accepts explicit file/line arguments,
  * pre-defines the library to ERR_LIB_CRYPTO, and avoids emitting an error
