@@ -887,8 +887,10 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     }
 #endif  /* OPENSSL_NO_PSK */
 
-    SSL_SESSION_free(s->psksession);
-    s->psksession = psksess;
+    if (s->psksession != psksess) {
+        SSL_SESSION_free(s->psksession);
+        s->psksession = psksess;
+    }
     if (psksess != NULL) {
         OPENSSL_free(s->psksession_id);
         s->psksession_id = OPENSSL_memdup(id, idlen);
