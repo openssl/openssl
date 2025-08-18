@@ -144,13 +144,13 @@ in the I<freeptr> variable, rather than the returned pointer.
 
 =item *
 
-The call to OPENSSL_aligned_alloc() may fail for reasons other than memory
-exhaustion, depending on the underlying implementation, and, most notably,
-OpenSSL library's build configuration:  for example, it always returns C<NULL>
-without setting any error if OpenSSL is built with C<OPENSSL_SMALL_FOOTPRINT>
-macro defined.  Consequently, caller may need to fall back to a non-aligned
-memory allocation (and open-code the alignment routine if the alignment
-is a requirement).
+Before OpenSSL 3.6, the call to OPENSSL_aligned_alloc() may failed for reasons
+other than memory exhaustion or incorrect arguments, depending on the underlying
+implementation, and, most notably, OpenSSL library's build configuration:
+for example, it always returned C<NULL> without setting any error if OpenSSL
+was built with C<OPENSSL_SMALL_FOOTPRINT> macro defined.  Consequently, caller
+may need to fall back to a non-aligned memory allocation (and open-code
+the alignment routine if the alignment is a requirement).
 
 =back
 
