@@ -37,6 +37,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "crypto/rsa.h"
 #include "crypto/ml_dsa.h"
 #include "crypto/slh_dsa.h"
+#include "crypto/hss.h"
 #include "prov/implementations.h"
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
@@ -44,6 +45,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/endecoder_local.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
+#include "prov/hss_codecs.h"
 
 #if defined(OPENSSL_NO_DH) && defined(OPENSSL_NO_DSA) && defined(OPENSSL_NO_EC)
 # define OPENSSL_NO_KEYPARAMS
@@ -1027,6 +1029,27 @@ static int rsa_check_key_type(const void *rsa, int expected_type)
 
 /* ---------------------------------------------------------------------- */
 
+#ifndef OPENSSL_NO_HSS
+# define prepare_hss_params NULL
+# define hss_evp_type       EVP_PKEY_HSS
+# define hss_pem_type       "HSS"
+# define hss_check_key_type NULL
+
+static int hss_spki_pub_to_der(const void *vkey, unsigned char **pder,
+                               ossl_unused void *ctx)
+{
+    const HSS_KEY *key = vkey;
+
+    if (key == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    return ossl_hss_i2d_pubkey(key, pder);
+}
+#endif /* OPENSSL_NO_HSS */
+
+/* ---------------------------------------------------------------------- */
+
 #ifndef OPENSSL_NO_SLH_DSA
 # define prepare_slh_dsa_params NULL
 
@@ -1764,3 +1787,8 @@ MAKE_ENCODER(ml_dsa_87, ml_dsa, PrivateKeyInfo, pem);
 MAKE_ENCODER(ml_dsa_87, ml_dsa, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(ml_dsa_87, ml_dsa, SubjectPublicKeyInfo, pem);
 #endif /* OPENSSL_NO_ML_DSA */
+
+#ifndef OPENSSL_NO_HSS
+MAKE_ENCODER(hss, hss, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(hss, hss, SubjectPublicKeyInfo, pem);
+#endif

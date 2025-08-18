@@ -45,23 +45,18 @@ size_t ossl_lms_pubkey_length(const unsigned char *data, size_t datalen)
  * @param lmskey The object to store the public key into
  * @return 1 on success or 0 otherwise.
  */
-static
-int lms_pubkey_from_pkt(LMS_KEY *lmskey, const unsigned char *pubkeydata,
-                        size_t publen)
+int ossl_lms_pubkey_from_pkt(PACKET *pkt, LMS_KEY *lmskey, int allocated)
 {
     uint32_t lms_type;
     uint32_t ots_type;
     LMS_PUB_KEY *key = &lmskey->pub;
-    PACKET pkt;
 
-    if (!PACKET_buf_init(&pkt, pubkeydata, publen))
-        goto err;
-    key->encoded = (unsigned char *)PACKET_data(&pkt);
-    if (!PACKET_get_net_4_len_u32(&pkt, &lms_type))
+    key->encoded = (unsigned char *)PACKET_data(pkt);
+    if (!PACKET_get_net_4_len_u32(pkt, &lms_type))
         goto err;
     lmskey->lms_params = ossl_lms_params_get(lms_type);
     if (lmskey->lms_params == NULL
-            || !PACKET_get_net_4_len_u32(&pkt, &ots_type))
+            || !PACKET_get_net_4_len_u32(pkt, &ots_type))
         goto err;
     lmskey->ots_params = ossl_lm_ots_params_get(ots_type);
     if (lmskey->ots_params == NULL)
@@ -69,13 +64,14 @@ int lms_pubkey_from_pkt(LMS_KEY *lmskey, const unsigned char *pubkeydata,
 
     /* The digest used must be the same */
     if (HASH_NOT_MATCHED(lmskey->ots_params, lmskey->lms_params)
-            || !PACKET_get_bytes(&pkt, (const unsigned char **)&lmskey->Id,
+            || !PACKET_get_bytes(pkt, (const unsigned char **)&lmskey->Id,
                                  LMS_SIZE_I)
-            || !PACKET_get_bytes(&pkt, (const unsigned char **)&key->K,
+            || !PACKET_get_bytes(pkt, (const unsigned char **)&key->K,
                                  lmskey->lms_params->n))
         goto err;
-    key->encodedlen = (unsigned char *)PACKET_data(&pkt) - key->encoded;
-    return PACKET_remaining(&pkt) == 0;
+    key->encodedlen = (unsigned char *)PACKET_data(pkt) - key->encoded;
+    key->allocated = allocated;
+    return 1;
 err:
     return 0;
 }
@@ -94,6 +90,7 @@ err:
 int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
                            LMS_KEY *lmskey)
 {
+    PACKET pkt;
     LMS_PUB_KEY *pkey = &lmskey->pub;
 
     if (pkey->encoded != NULL && pkey->encodedlen != publen) {
@@ -104,13 +101,16 @@ int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
     if (pkey->encoded == NULL)
         return 0;
 
-    if (!lms_pubkey_from_pkt(lmskey, pkey->encoded, publen))
+    if (!PACKET_buf_init(&pkt, pkey->encoded, publen)
+            || !ossl_lms_pubkey_from_pkt(&pkt, lmskey, 1)
+            || (PACKET_remaining(&pkt) > 0))
         goto err;
     pkey->encodedlen = publen;
     return 1;
 err:
     OPENSSL_free(pkey->encoded);
     pkey->encoded = NULL;
+    pkey->K = NULL;
     return 0;
 }
 

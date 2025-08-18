@@ -16,22 +16,31 @@ BEGIN {
     setup("test_lms");
 }
 
-plan skip_all => 'LMS is not supported in this build' if disabled('lms');
-
 my $provconf = srctop_file("test", "fips-and-base.cnf");
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $no_lms = disabled('lms');
+my $no_hss = disabled('hss');
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
-plan skip_all => 'LMS is not supported in this build' if disabled('lms');
-plan tests => 2;
-
-ok(run(test(["lms_test"])), "running lms_test");
+plan tests => 4;
 
 SKIP: {
-    skip "Skipping FIPS tests", 1
-        if $no_fips;
+    skip "Skipping LMS tests", 1
+        if $no_lms;
+    ok(run(test(["lms_test"])), "running lms_test");
+}
+
+SKIP: {
+    skip "Skipping HSS tests", 1
+        if $no_hss;
+    ok(run(test(["lms_test", "-keytype", "HSS"])), "running HSS test");
+}
+
+SKIP: {
+    skip "Skipping LMS FIPS tests", 1
+        if $no_fips || $no_lms;
 
     # LMS is only present after OpenSSL 3.6
     run(test(["fips_version_test", "-config", $provconf, ">=3.6.0"]),
@@ -41,4 +50,18 @@ SKIP: {
 
     ok(run(test(["lms_test", "-config",  $provconf])),
        "running lms_test with fips");
+}
+
+SKIP: {
+    skip "Skipping HSS FIPS tests", 1
+        if $no_fips || $no_hss;
+
+    # HSS is only present after OpenSSL 3.6
+    run(test(["fips_version_test", "-config", $provconf, ">=3.6.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version is too old for LMS test", 1
+        if !$exit;
+
+    ok(run(test(["lms_test", "-keytype", "HSS", "-config",  $provconf])),
+       "running hss_test with fips");
 }

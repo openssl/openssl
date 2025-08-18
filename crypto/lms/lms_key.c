@@ -37,8 +37,53 @@ void ossl_lms_key_free(LMS_KEY *lmskey)
         return;
 
     pub = &lmskey->pub;
-    OPENSSL_free(pub->encoded);
+    if (pub->allocated)
+        OPENSSL_free(pub->encoded);
     OPENSSL_free(lmskey);
+}
+
+static int lms_pubkey_dup(LMS_PUB_KEY *dst, const LMS_PUB_KEY *src)
+{
+    if (src->encoded != NULL) {
+        dst->encoded = OPENSSL_memdup(src->encoded, src->encodedlen);
+        if (dst->encoded == NULL) {
+            dst->encodedlen = 0;
+            return 0;
+        } else {
+            dst->allocated = 1;
+            dst->encodedlen = src->encodedlen;
+            dst->K = dst->encoded + LMS_SIZE_LMS_TYPE + LMS_SIZE_OTS_TYPE;
+        }
+    }
+    return 1;
+}
+
+/**
+ * @brief Duplicate a key
+ *
+ * @param src A LMS_KEY object to copy
+ * @returns The duplicated key, or NULL on failure.
+ */
+LMS_KEY *ossl_lms_key_dup(const LMS_KEY *src)
+{
+    LMS_KEY *ret = NULL;
+
+    if (src == NULL)
+        return NULL;
+
+    ret = OPENSSL_zalloc(sizeof(*ret));
+    if (ret != NULL) {
+        *ret = *src;
+        ret->Id = NULL;
+        ret->pub.encoded = ret->pub.K = NULL;
+        if (!lms_pubkey_dup(&ret->pub, &src->pub))
+            goto err;
+        ret->Id = ret->pub.K + ret->lms_params->n;
+    }
+    return ret;
+ err:
+    OPENSSL_free(ret);
+    return NULL;
 }
 
 /**
@@ -98,10 +143,12 @@ int ossl_lms_key_valid(const LMS_KEY *key, int selection)
  */
 int ossl_lms_key_has(const LMS_KEY *key, int selection)
 {
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        return (key != NULL) && (key->pub.K != NULL);
-    /* There is no private key currently */
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-        return 0;
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        if (key == NULL || key->pub.K == NULL) /* No public key */
+            return 0;
+        /* There is no private key currently */
+        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+            return 0;
+    }
     return 1;
 }

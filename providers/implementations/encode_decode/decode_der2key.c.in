@@ -29,7 +29,9 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include <openssl/x509.h>
 #include <openssl/proverr.h>
 #include <openssl/asn1t.h>
+#include <openssl/obj_mac.h>
 #include "internal/cryptlib.h"   /* ossl_assert() */
+#include "internal/nelem.h"
 #include "crypto/dh.h"
 #include "crypto/dsa.h"
 #include "crypto/ec.h"
@@ -40,13 +42,12 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "crypto/slh_dsa.h"
 #include "crypto/x509.h"
 #include "crypto/ml_kem.h"
-#include "openssl/obj_mac.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/endecoder_local.h"
-#include "internal/nelem.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
+#include "prov/hss_codecs.h"
 
 #ifndef OPENSSL_NO_SLH_DSA
 typedef struct {
@@ -1008,6 +1009,29 @@ static ossl_inline void * ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
 
 #endif
 
+#ifndef OPENSSL_NO_HSS
+static ossl_inline void * hss_d2i_PUBKEY(const uint8_t **der, long der_len,
+                                         struct der2key_ctx_st *ctx)
+{
+    HSS_KEY *key;
+
+    key = ossl_hss_d2i_PUBKEY(*der, der_len, ctx->desc->evp_type,
+                              ctx->provctx, ctx->propq);
+    if (key != NULL)
+        *der += der_len;
+    return key;
+}
+
+# define hss_evp_type                EVP_PKEY_HSS
+# define hss_d2i_private_key         NULL
+# define hss_d2i_public_key          NULL
+# define hss_d2i_key_params          NULL
+# define hss_d2i_PKCS8               NULL
+# define hss_free                    (free_key_fn *)ossl_hss_key_free
+# define hss_check                   NULL
+# define hss_adjust                  NULL
+#endif /* OPENSSL_NO_HSS */
+
 /* ---------------------------------------------------------------------- */
 
 /*
@@ -1311,4 +1335,8 @@ MAKE_DECODER("ML-DSA-65", ml_dsa_65, ml_dsa_65, PrivateKeyInfo);
 MAKE_DECODER("ML-DSA-65", ml_dsa_65, ml_dsa_65, SubjectPublicKeyInfo);
 MAKE_DECODER("ML-DSA-87", ml_dsa_87, ml_dsa_87, PrivateKeyInfo);
 MAKE_DECODER("ML-DSA-87", ml_dsa_87, ml_dsa_87, SubjectPublicKeyInfo);
+#endif
+
+#ifndef OPENSSL_NO_HSS
+MAKE_DECODER("HSS", hss, hss, SubjectPublicKeyInfo);
 #endif

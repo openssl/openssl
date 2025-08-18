@@ -29,10 +29,11 @@
 #include "crypto/slh_dsa.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
-#include "internal/encoder.h"
 #include "prov/endecoder_local.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
+#include "prov/hss_codecs.h"
+#include "internal/encoder.h"
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
@@ -613,6 +614,13 @@ static int ml_dsa_to_text(BIO *out, const void *key, int selection)
     return ossl_ml_dsa_key_to_text(out, (ML_DSA_KEY *)key, selection);
 }
 #endif /* OPENSSL_NO_ML_DSA */
+
+#ifndef OPENSSL_NO_HSS
+static int hss_to_text(BIO *out, const void *key, int selection)
+{
+    return ossl_hss_key_to_text(out, (HSS_KEY *)key, selection);
+}
+#endif /* OPENSSL_NO_HSS */
 /* ---------------------------------------------------------------------- */
 
 static void *key2text_newctx(void *provctx)
@@ -734,4 +742,8 @@ MAKE_TEXT_ENCODER(slh_dsa_shake_192s, slh_dsa);
 MAKE_TEXT_ENCODER(slh_dsa_shake_192f, slh_dsa);
 MAKE_TEXT_ENCODER(slh_dsa_shake_256s, slh_dsa);
 MAKE_TEXT_ENCODER(slh_dsa_shake_256f, slh_dsa);
+#endif
+
+#ifndef OPENSSL_NO_HSS
+MAKE_TEXT_ENCODER(hss, hss);
 #endif

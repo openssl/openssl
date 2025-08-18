@@ -15,9 +15,10 @@
 #ifndef OSSL_CRYPTO_LMS_H
 # define OSSL_CRYPTO_LMS_H
 # pragma once
-# ifndef OPENSSL_NO_LMS
+# if !defined(OPENSSL_NO_LMS) || !defined(OPENSSL_NO_HSS)
 #  include "types.h"
 #  include <openssl/params.h>
+#  include "internal/packet.h"
 
 /*
  * Numeric identifiers associated with Leighton-Micali Signatures (LMS)
@@ -104,6 +105,7 @@ typedef struct lm_ots_params_st {
      */
     uint32_t ls;
     const char *digestname; /* Hash Name */
+    const char *desc;
 } LM_OTS_PARAMS;
 
 /* See lms_params[] */
@@ -117,6 +119,7 @@ typedef struct lms_params_st {
     const char *digestname; /* One of SHA256, SHA256-192, or SHAKE256 */
     uint32_t n; /* The Digest size (either 24 or 32), Useful for setting up SHAKE */
     uint32_t h; /* The height of a LMS tree which is one of 5, 10, 15, 20, 25) */
+    const char *desc;
 } LMS_PARAMS;
 
 typedef struct lms_pub_key_st {
@@ -132,6 +135,7 @@ typedef struct lms_pub_key_st {
      * It is a pointer into the encoded buffer
      */
     unsigned char *K;
+    int allocated;
 } LMS_PUB_KEY;
 
 typedef struct lms_key_st {
@@ -147,11 +151,13 @@ const LM_OTS_PARAMS *ossl_lm_ots_params_get(uint32_t ots_type);
 
 LMS_KEY *ossl_lms_key_new(OSSL_LIB_CTX *libctx);
 void ossl_lms_key_free(LMS_KEY *lmskey);
+LMS_KEY *ossl_lms_key_dup(const LMS_KEY *src);
 int ossl_lms_key_equal(const LMS_KEY *key1, const LMS_KEY *key2, int selection);
 int ossl_lms_key_valid(const LMS_KEY *key, int selection);
 int ossl_lms_key_has(const LMS_KEY *key, int selection);
 
 int ossl_lms_pubkey_from_params(const OSSL_PARAM params[], LMS_KEY *lmskey);
+int ossl_lms_pubkey_from_pkt(PACKET *pkt, LMS_KEY *lmskey, int allocated);
 int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
                            LMS_KEY *lmskey);
 size_t ossl_lms_pubkey_length(const unsigned char *data, size_t datalen);

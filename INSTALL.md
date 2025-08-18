@@ -906,6 +906,14 @@ Enable Leighton-Micali Signatures (LMS) support.
 Support is currently limited to verification only as per
 [SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final).
 
+### enable-hss
+
+Enable Hierarchical Signature System (HSS) support.
+Support is currently limited to verification only as per
+[SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final).
+Note that this options also includes the dependent lms code regardless of if the
+'enable-lms' option is set.
+
 ### no-makedepend
 
 Don't generate dependencies.
