@@ -236,10 +236,6 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
 
     *freeptr = NULL;
 
-#if defined(OPENSSL_SMALL_FOOTPRINT)
-    return NULL;
-#endif
-
     /* Ensure that alignment is a power of two */
     if (alignment == 0 || (alignment & (alignment - 1)) != 0) {
         ossl_report_alloc_err_inv(file, line);
