@@ -265,7 +265,6 @@ static int self_signed(X509_STORE *ctx, X509 *cert)
 int x509_main(int argc, char **argv)
 {
     int fingerprint256format = 0;
-
     ASN1_INTEGER *sno = NULL;
     ASN1_OBJECT *objtmp = NULL;
     BIO *out = NULL;
@@ -526,11 +525,10 @@ int x509_main(int argc, char **argv)
         case OPT_FINGERPRINT:
             fingerprint = ++num;
             break;
-        
         case OPT_FINGERPRINT_FORMAT:
             fingerprint256format = ++num;
             break;
-case OPT_HASH:
+        case OPT_HASH:
             subject_hash = ++num;
             break;
         case OPT_ISSUER_HASH:
@@ -1097,8 +1095,8 @@ case OPT_HASH:
             BIO_printf(out, "%s Fingerprint=", fdigname);
             for (j = 0; j < (int)n; j++)
                 BIO_printf(out, "%02X%c", md[j], (j + 1 == (int)n) ? '\n' : ':');
-        } 
-        else if (i == fingerprint256format) {
+        }
+            else if (i == fingerprint256format) {
             unsigned int n;
             unsigned char md[EVP_MAX_MD_SIZE];
             if (!X509_digest(x, EVP_sha256(), md, &n)) {
@@ -1110,7 +1108,7 @@ case OPT_HASH:
             BIO_printf(out, "\n");
             goto end;
         }
-        else if (i == ocspid) {
+            else if (i == ocspid) {
             X509_ocspid_print(out, x);
         } else if (i == ext) {
             print_x509v3_exts(out, x, ext_names);
