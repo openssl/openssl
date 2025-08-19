@@ -31,6 +31,15 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * Refactored OSSL_PARAM name parsing so that automatically generated
+   parsers are used instead of OSSL_PARAM_locate calls.  This should
+   also ensure that the list of acceptable parameters better matches
+   those which are actually processed.  It should also provide a small
+   performance improvement because repeated iteration over passed
+   parameter arrays is avoided.
+
+   *Dr Paul Dale*
+
  * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
    This is mandated by FIPS 140-3 IG 10.3.A additional comment 1.
 
