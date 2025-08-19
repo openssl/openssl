@@ -40,6 +40,7 @@
 
 static int do_fips = 0;
 static char *privkey;
+static char *storedir;
 static char *config_file = NULL;
 static int multidefault_run = 0;
 
@@ -681,7 +682,7 @@ static int test_multi_default(void)
     multidefault_run = 1;
 
     return thread_run_test(&thread_multi_simple_fetch,
-                           2, &thread_multi_simple_fetch, 0, default_provider);
+                           2, &thread_multi_simple_fetch, 0, NULL);
 }
 
 static int test_multi_load(void)
@@ -854,6 +855,62 @@ static int test_pem_read(void)
                            &test_pem_read_one, 1, default_provider);
 }
 
+static X509_STORE *store = NULL;
+
+static void test_x509_store_by_subject(void)
+{
+    X509_STORE_CTX *ctx;
+    X509_OBJECT *obj = NULL;
+    X509_NAME *name = NULL;
+    int success = 0;
+
+    ctx = X509_STORE_CTX_new();
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, NULL, NULL)))
+        goto err;
+
+    name = X509_NAME_new();
+    if (!TEST_ptr(name))
+        goto err;
+    if (!TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+                                              (unsigned char *)"Root CA",
+                                              -1, -1, 0)))
+        goto err;
+    obj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509, name);
+    if (!TEST_ptr(obj))
+        goto err;
+
+    success = 1;
+ err:
+    X509_OBJECT_free(obj);
+    X509_STORE_CTX_free(ctx);
+    X509_NAME_free(name);
+    if (!success)
+        multi_set_success(0);
+}
+
+/* Test accessing an X509_STORE from multiple threads */
+static int test_x509_store(void)
+{
+    int ret = 0;
+
+    store = X509_STORE_new();
+    if (!TEST_ptr(store))
+        return 0;
+    if (!TEST_true(X509_STORE_load_store(store, storedir)))
+        goto err;
+
+    ret = thread_run_test(&test_x509_store_by_subject, MAXIMUM_THREADS,
+                          &test_x509_store_by_subject, 0, NULL);
+
+ err:
+    X509_STORE_free(store);
+    store = NULL;
+    return ret;
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -900,6 +957,10 @@ int setup_tests(void)
     if (!TEST_ptr(privkey))
         return 0;
 
+    storedir = test_mk_file_path(datadir, "store");
+    if (!TEST_ptr(storedir))
+        return 0;
+
     if (!TEST_ptr(global_lock = CRYPTO_THREAD_lock_new()))
         return 0;
 
@@ -932,12 +993,14 @@ int setup_tests(void)
     ADD_TEST(test_bio_dgram_pair);
 #endif
     ADD_TEST(test_pem_read);
+    ADD_TEST(test_x509_store);
     return 1;
 }
 
 void cleanup_tests(void)
 {
     OPENSSL_free(privkey);
+    OPENSSL_free(storedir);
 #ifdef TSAN_REQUIRES_LOCKING
     CRYPTO_THREAD_lock_free(tsan_lock);
 #endif
