@@ -46,6 +46,17 @@ typedef struct {
     ASN1_OCTET_STRING *ticket_appdata;
     uint32_t kex_group;
     ASN1_OCTET_STRING *peer_rpk;
+#ifndef OPENSSL_NO_QUIC
+    uint64_t init_max_data;
+    uint64_t init_max_stream_data_bidi_local;
+    uint64_t init_max_stream_data_bidi_remote;
+    uint64_t init_max_stream_data_uni;
+    uint64_t max_local_streams_bidi;
+    uint64_t max_local_streams_uni;
+    uint64_t max_idle_timeout;
+    uint64_t max_udp_payload_size;
+    uint64_t active_conn_id_limit;
+#endif
 } SSL_SESSION_ASN1;
 
 ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
@@ -78,7 +89,18 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, tlsext_max_fragment_len_mode, ZUINT32, 17),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, ticket_appdata, ASN1_OCTET_STRING, 18),
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, kex_group, UINT32, 19),
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, peer_rpk, ASN1_OCTET_STRING, 20)
+    ASN1_EXP_OPT(SSL_SESSION_ASN1, peer_rpk, ASN1_OCTET_STRING, 20),
+#ifndef OPENSSL_NO_QUIC
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, init_max_data, ZUINT64, 21),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, init_max_stream_data_bidi_local, ZUINT64, 22),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, init_max_stream_data_bidi_remote, ZUINT64, 23),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, init_max_stream_data_uni, ZUINT64, 24),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, max_local_streams_bidi, ZUINT64, 25),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, max_local_streams_uni, ZUINT64, 26),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, max_idle_timeout, ZUINT64, 27),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, max_udp_payload_size, ZUINT64, 28),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, active_conn_id_limit, ZUINT64, 29),
+#endif
 } static_ASN1_SEQUENCE_END(SSL_SESSION_ASN1)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(SSL_SESSION_ASN1)
@@ -216,6 +238,18 @@ int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
     else
         ssl_session_oinit(&as.ticket_appdata, &ticket_appdata,
                           in->ticket_appdata, in->ticket_appdata_len);
+
+#ifndef OPENSSL_NO_QUIC
+    as.init_max_data = in->quic_params.init_max_data;
+    as.init_max_stream_data_bidi_local = in->quic_params.init_max_stream_data_bidi_local;
+    as.init_max_stream_data_bidi_remote = in->quic_params.init_max_stream_data_bidi_remote;
+    as.init_max_stream_data_uni = in->quic_params.init_max_stream_data_uni;
+    as.max_local_streams_bidi = in->quic_params.max_local_streams_bidi;
+    as.max_local_streams_uni = in->quic_params.max_local_streams_uni;
+    as.max_idle_timeout = in->quic_params.max_idle_timeout;
+    as.max_udp_payload_size = in->quic_params.max_udp_payload_size;
+    as.active_conn_id_limit = in->quic_params.active_conn_id_limit;
+#endif
 
     ret = i2d_SSL_SESSION_ASN1(&as, pp);
     OPENSSL_free(peer_rpk.data);
@@ -417,6 +451,18 @@ SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
         ret->ticket_appdata = NULL;
         ret->ticket_appdata_len = 0;
     }
+
+#ifndef OPENSSL_NO_QUIC
+    ret->quic_params.init_max_data = as->init_max_data;
+    ret->quic_params.init_max_stream_data_bidi_local = as->init_max_stream_data_bidi_local;
+    ret->quic_params.init_max_stream_data_bidi_remote = as->init_max_stream_data_bidi_remote;
+    ret->quic_params.init_max_stream_data_uni = as->init_max_stream_data_uni;
+    ret->quic_params.max_local_streams_bidi = as->max_local_streams_bidi;
+    ret->quic_params.max_local_streams_uni = as->max_local_streams_uni;
+    ret->quic_params.max_idle_timeout = as->max_idle_timeout;
+    ret->quic_params.max_udp_payload_size = as->max_udp_payload_size;
+    ret->quic_params.active_conn_id_limit = as->active_conn_id_limit;
+#endif
 
     M_ASN1_free_of(as, SSL_SESSION_ASN1);
 
