@@ -46,6 +46,17 @@ typedef struct {
     ASN1_OCTET_STRING *ticket_appdata;
     uint32_t kex_group;
     ASN1_OCTET_STRING *peer_rpk;
+#ifndef OPENSSL_NO_QUIC
+    uint64_t init_max_data;
+    uint64_t init_max_stream_data_bidi_local;
+    uint64_t init_max_stream_data_bidi_remote;
+    uint64_t init_max_stream_data_uni;
+    uint64_t max_local_streams_bidi;
+    uint64_t max_local_streams_uni;
+    uint64_t max_idle_timeout;
+    uint64_t max_udp_payload_size;
+    uint64_t active_conn_id_limit;
+#endif
 } SSL_SESSION_ASN1;
 
 ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
@@ -210,6 +221,18 @@ int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
                           in->ext.alpn_selected, in->ext.alpn_selected_len);
 
     as.tlsext_max_fragment_len_mode = in->ext.max_fragment_len_mode;
+
+#ifndef OPENSSL_NO_QUIC
+    as.init_max_data = in->quic_params.init_max_data;
+    as.init_max_stream_data_bidi_local = in->quic_params.init_max_stream_data_bidi_local;
+    as.init_max_stream_data_bidi_remote = in->quic_params.init_max_stream_data_bidi_remote;
+    as.init_max_stream_data_uni = in->quic_params.init_max_stream_data_uni;
+    as.max_local_streams_bidi = in->quic_params.max_local_streams_bidi;
+    as.max_local_streams_uni = in->quic_params.max_local_streams_uni;
+    as.max_idle_timeout = in->quic_params.max_idle_timeout;
+    as.max_udp_payload_size = in->quic_params.max_udp_payload_size;
+    as.active_conn_id_limit = in->quic_params.active_conn_id_limit;
+#endif
 
     if (in->ticket_appdata == NULL)
         as.ticket_appdata = NULL;
@@ -405,6 +428,18 @@ SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
         ret->ext.alpn_selected = NULL;
         ret->ext.alpn_selected_len = 0;
     }
+
+#ifndef OPENSSL_NO_QUIC
+    ret->quic_params.init_max_data = as->init_max_data;
+    ret->quic_params.init_max_stream_data_bidi_local = as->init_max_stream_data_bidi_local;
+    ret->quic_params.init_max_stream_data_bidi_remote = as->init_max_stream_data_bidi_remote;
+    ret->quic_params.init_max_stream_data_uni = as->init_max_stream_data_uni;
+    ret->quic_params.max_local_streams_bidi = as->max_local_streams_bidi;
+    ret->quic_params.max_local_streams_uni = as->max_local_streams_uni;
+    ret->quic_params.max_idle_timeout = as->max_idle_timeout;
+    ret->quic_params.max_udp_payload_size = as->max_udp_payload_size;
+    ret->quic_params.active_conn_id_limit = as->active_conn_id_limit;
+#endif
 
     ret->ext.max_fragment_len_mode = as->tlsext_max_fragment_len_mode;
 
