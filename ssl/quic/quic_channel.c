@@ -1815,6 +1815,53 @@ static int ch_on_transport_params(const unsigned char *params,
             reason = TP_REASON_REQUIRED("RETRY_SCID");
             goto malformed;
         }
+
+        /* Store params in SSL_SESSION struct */
+        if (got_initial_max_data)
+            sc->session->quic_params.init_max_data = ch->conn_txfc.cwm;
+
+        if (got_initial_max_stream_data_bidi_local)
+            /*
+             * This is correct; the BIDI_LOCAL TP governs streams created by
+             * the endpoint which sends the TP, i.e., our peer.
+             */
+            sc->session->quic_params.init_max_stream_data_bidi_local =
+                ch->rx_init_max_stream_data_bidi_remote;
+
+        if (got_initial_max_stream_data_bidi_remote)
+            /*
+             * This is correct; the BIDI_REMOTE TP governs streams created
+             * by the endpoint which receives the TP, i.e., us.
+             */
+            sc->session->quic_params.init_max_stream_data_bidi_remote =
+                ch->rx_init_max_stream_data_bidi_local;
+
+        if (got_initial_max_stream_data_uni)
+            sc->session->quic_params.init_max_stream_data_uni = ch->rx_init_max_stream_data_uni;
+
+        if (got_initial_max_streams_bidi)
+            sc->session->quic_params.max_local_streams_bidi = ch->max_local_streams_bidi;
+
+        if (got_initial_max_streams_uni)
+            sc->session->quic_params.max_local_streams_uni = ch->max_local_streams_uni;
+
+        if (got_max_idle_timeout)
+            /* Use value for max idle timeout that server requested */
+            sc->session->quic_params.max_idle_timeout = ch->max_idle_timeout_remote_req;
+
+        if (got_max_udp_payload_size)
+            sc->session->quic_params.max_udp_payload_size = ch->rx_max_udp_payload_size;
+
+        if (got_active_conn_id_limit)
+            sc->session->quic_params.active_conn_id_limit = ch->rx_active_conn_id_limit;
+
+        /*
+         * RFC 9000 7.4.1: A client MUST NOT use remembered values for the
+         * following parameters: ack_delay_exponent, max_ack_delay,
+         * initial_source_connection_id, original_destination_connection_id,
+         * preferred_address, retry_source_connection_id, and
+         * stateless_reset_token.
+         */
     }
 
     ch->got_remote_transport_params = 1;
