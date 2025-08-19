@@ -157,3 +157,4 @@ DEFINE_STACK_OF(STACK_OF_X509_NAME_ENTRY)
 
 int ossl_x509_likely_issued(X509 *issuer, X509 *subject);
 int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject);
+int ossl_x509_store_read_lock(X509_STORE *xs);

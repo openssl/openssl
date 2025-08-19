@@ -44,7 +44,7 @@ int X509_STORE_lock(X509_STORE *xs)
     return CRYPTO_THREAD_write_lock(xs->lock);
 }
 
-static int x509_store_read_lock(X509_STORE *xs)
+int ossl_x509_store_read_lock(X509_STORE *xs)
 {
     return CRYPTO_THREAD_read_lock(xs->lock);
 }
@@ -333,7 +333,7 @@ static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx,
     stmp.type = X509_LU_NONE;
     stmp.data.ptr = NULL;
 
-    if (!x509_store_read_lock(store))
+    if (!ossl_x509_store_read_lock(store))
         return 0;
     /* Should already be sorted...but just in case */
     if (!sk_X509_OBJECT_is_sorted(store->objs)) {
