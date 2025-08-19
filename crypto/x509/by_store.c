@@ -218,8 +218,14 @@ static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
 
     OSSL_STORE_SEARCH_free(criterion);
 
-    if (ok)
+    if (ok) {
+        X509_STORE *store = X509_LOOKUP_get_store(ctx);
+
+        if (!ossl_x509_store_read_lock(store))
+            return 0;
         tmp = X509_OBJECT_retrieve_by_subject(store_objects, type, name);
+        X509_STORE_unlock(store);
+    }
 
     ok = 0;
     if (tmp != NULL) {
