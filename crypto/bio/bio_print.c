@@ -125,7 +125,7 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
      */
     ret = vsnprintf(buf, sizeof (buf), format, args);
     if (ret >= 0) {
-        if ((size_t)ret < sizeof (buf)) {
+        if ((size_t)ret > sizeof (buf)) {
             ret += 1;
             abuf = (char *) OPENSSL_malloc(ret);
             if (abuf == NULL) {
@@ -136,7 +136,7 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
                 OPENSSL_free(abuf);
             }
         } else {
-             /* snprintf returns length including nul-terminator */
+             /* vsnprintf returns length not including nul-terminator */
              ret = BIO_write(bio, buf, ret);
         }
     }
