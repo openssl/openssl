@@ -14,12 +14,34 @@ use OpenSSL::Test::Utils;
 
 setup("test_cli_list");
 
-plan tests => 2;
+plan tests => 3;
 
-ok(run(app(["openssl", "list", "-skey-managers"],
-        stdout => "listout.txt")),
-"List skey managers - default configuration");
-open DATA, "listout.txt";
-my @match = grep /secret key/, <DATA>;
-close DATA;
-ok(scalar @match > 1 ? 1 : 0, "Several skey managers are listed - default configuration");
+sub check_skey_manager_list {
+    my $provider = $_[0];
+    ok(run(app(["openssl", "list", "-skey-managers"],
+               stdout => "listout.txt")),
+       "List skey managers - $provider provider");
+    open DATA, "listout.txt";
+    my @match = grep /secret key/, <DATA>;
+    close DATA;
+    ok(scalar @match > 1 ? 1 : 0,
+       "Several skey managers are listed - $provider provider");
+}
+
+check_skey_manager_list("default");
+
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+
+subtest fips => sub {
+    plan skip_all => "FIPS is disabled"
+        if $no_fips;
+    plan tests => 2;
+
+    my $fipsconf = srctop_file("test", "fips-and-base.cnf");
+    $ENV{OPENSSL_CONF} = $fipsconf;
+
+    check_skey_manager_list("fips");
+
+    my $defaultconf = srctop_file("test", "default.cnf");
+    $ENV{OPENSSL_CONF} = $defaultconf;
+};
