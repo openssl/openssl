@@ -22,3 +22,4 @@ if (!defined $fingerprint) {
     fail("Fingerprint not found in output");
 } else {
     ok($fingerprint eq $expected, "Fingerprint matches expected value");
+}
