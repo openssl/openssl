@@ -2960,8 +2960,10 @@ int tls1_set_server_sigalgs(SSL_CONNECTION *s)
         memset(s->s3.tmp.valid_flags, 0, s->ssl_pkey_num * sizeof(uint32_t));
     else
         s->s3.tmp.valid_flags = OPENSSL_calloc(s->ssl_pkey_num, sizeof(uint32_t));
-    if (s->s3.tmp.valid_flags == NULL)
+    if (s->s3.tmp.valid_flags == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
     /*
      * If peer sent no signature algorithms check to see if we support
      * the default algorithm for each certificate type

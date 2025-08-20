@@ -593,11 +593,9 @@ static int test_xrealloc(const bool clear, const bool array, const bool macro,
         res = check_exp(macro ? OPENSSL_FILE : test_fn, ln, sz, false, false,
                         ret, exp, exp_malloc_cnt, exp_realloc_cnt);
         if (res == 0)
-            TEST_error("realloc return code check fail with i = %zu"
-                       ", old_ret = %p, ret = %p, old_nmemb = %#zx"
-                       ", nmemb = %#zx, size = %#zx",
-                       i, (void *) old_ret, (void *) ret, old_nmemb, nmemb,
-                       td->size);
+            TEST_error("realloc return code check fail with i = %zu, ret = %p"
+                       ", old_nmemb = %#zx, nmemb = %#zx, size = %#zx",
+                       i, (void *) ret, old_nmemb, nmemb, td->size);
 
         /* Write data on the first pass and check it on the second */
         if (res != 0 && exp == EXP_NONNULL && exp2 == EXP_NONNULL) {
@@ -630,7 +628,7 @@ static int test_xrealloc(const bool clear, const bool array, const bool macro,
         }
 
         /* Freeing the old allocation if realloc has failed */
-        if (old_ret != 0 && ret == 0 && exp != EXP_ZERO_SIZE)
+        if (ret == NULL && exp != EXP_ZERO_SIZE)
             OPENSSL_free(old_ret);
 
         old_ret = ret;
@@ -700,7 +698,7 @@ static int test_xaligned_alloc(const bool array, const bool macro,
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
     if (IS_FAIL(exp) && !TEST_ptr_null(freeptr))
         res = 0;
-    if ((exp = EXP_NONNULL) && !TEST_ptr(freeptr))
+    if ((exp == EXP_NONNULL) && !TEST_ptr(freeptr))
         res = 0;
 #else /* OPENSSL_SMALL_FOOTPRINT */
     if (!TEST_ptr_null(ret) || !TEST_ptr_null(freeptr))

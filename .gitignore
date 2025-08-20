@@ -220,11 +220,14 @@ providers/implementations/rands/test_rng.c
 /demos/guide/quic-client-non-block
 /demos/guide/quic-hq-interop
 /demos/guide/quic-multi-stream
+/demos/guide/quic-server-block
+/demos/guide/quic-server-non-block
 /demos/guide/tls-client-block
 /demos/guide/tls-client-non-block
 /demos/http3/libnghttp3.pc
 /demos/http3/nghttp3/
 /demos/http3/ossl-nghttp3-demo
+/demos/http3/ossl-nghttp3-demo-server
 /demos/kdf/argon2
 /demos/kdf/hkdf
 /demos/kdf/pbkdf2
@@ -240,6 +243,8 @@ providers/implementations/rands/test_rng.c
 /demos/pkey/EVP_PKEY_DSA_paramvalidate
 /demos/pkey/EVP_PKEY_EC_keygen
 /demos/pkey/EVP_PKEY_RSA_keygen
+/demos/quic/server/server
+/demos/quic/poll-server/quic-server-ssl-poll-http
 /demos/signature/EVP_DSA_Signature_demo
 /demos/signature/EVP_EC_Signature_demo
 /demos/signature/EVP_ED_Signature_demo

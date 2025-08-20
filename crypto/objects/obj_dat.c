@@ -686,32 +686,32 @@ int OBJ_create_objects(BIO *in)
 int OBJ_create(const char *oid, const char *sn, const char *ln)
 {
     ASN1_OBJECT *tmpoid = NULL;
-    int ok = 0;
+    int ok = NID_undef;
 
     /* With no arguments at all, nothing can be done */
     if (oid == NULL && sn == NULL && ln == NULL) {
         ERR_raise(ERR_LIB_OBJ, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
+        return NID_undef;
     }
 
     /* Check to see if short or long name already present */
     if ((sn != NULL && OBJ_sn2nid(sn) != NID_undef)
             || (ln != NULL && OBJ_ln2nid(ln) != NID_undef)) {
         ERR_raise(ERR_LIB_OBJ, OBJ_R_OID_EXISTS);
-        return 0;
+        return NID_undef;
     }
 
     if (oid != NULL) {
         /* Convert numerical OID string to an ASN1_OBJECT structure */
         tmpoid = OBJ_txt2obj(oid, 1);
         if (tmpoid == NULL)
-            return 0;
+            return NID_undef;
     } else {
         /* Create a no-OID ASN1_OBJECT */
         tmpoid = ASN1_OBJECT_new();
         if (tmpoid == NULL) {
             ERR_raise(ERR_LIB_OBJ, ERR_R_ASN1_LIB);
-            return 0;
+            return NID_undef;
         }
     }
 
@@ -730,9 +730,7 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
     tmpoid->sn = (char *)sn;
     tmpoid->ln = (char *)ln;
 
-    if (OBJ_add_object(tmpoid) != NID_undef)
-        ok = 1;
-
+    ok = OBJ_add_object(tmpoid);
 
     tmpoid->sn = NULL;
     tmpoid->ln = NULL;

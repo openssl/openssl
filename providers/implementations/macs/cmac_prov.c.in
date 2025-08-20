@@ -206,7 +206,7 @@ static int cmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 {- produce_param_decoder('cmac_get_ctx_params',
                          (['MAC_PARAM_SIZE',                    'size',   'size_t'],
                           ['MAC_PARAM_BLOCK_SIZE',              'bsize',  'size_t'],
-                          ['ALG_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int'],
+                          ['ALG_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
                          )); -}
 
 static const OSSL_PARAM *cmac_gettable_ctx_params(ossl_unused void *ctx,
@@ -240,7 +240,7 @@ static int cmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
                           ['ALG_PARAM_ENGINE',                'engine', 'utf8_string', 'hidden'],
                           ['MAC_PARAM_PROPERTIES',            'propq',  'utf8_string'],
                           ['MAC_PARAM_KEY',                   'key',    'octet_string'],
-                          ['CIPHER_PARAM_FIPS_ENCRYPT_CHECK', 'ind_ec', 'int'],
+                          ['CIPHER_PARAM_FIPS_ENCRYPT_CHECK', 'ind_ec', 'int', 'fips'],
                          )); -}
 
 static const OSSL_PARAM *cmac_settable_ctx_params(ossl_unused void *ctx,
