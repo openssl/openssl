@@ -694,6 +694,14 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM fips_skeymgmt[] = {
+    { PROV_NAMES_AES, FIPS_DEFAULT_PROPERTIES, ossl_aes_skeymgmt_functions,
+      PROV_DESCS_AES },
+    { PROV_NAMES_GENERIC, FIPS_DEFAULT_PROPERTIES, ossl_generic_skeymgmt_functions,
+      PROV_DESCS_GENERIC },
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
                                         int *no_cache)
 {
@@ -723,6 +731,8 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
         return fips_asym_cipher;
     case OSSL_OP_KEM:
         return fips_asym_kem;
+    case OSSL_OP_SKEYMGMT:
+        return fips_skeymgmt;
     }
     return NULL;
 }
