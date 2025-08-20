@@ -1099,10 +1099,12 @@ int x509_main(int argc, char **argv)
             else if (i == fingerprint256format) {
             unsigned int n;
             unsigned char md[EVP_MAX_MD_SIZE];
+
             if (!X509_digest(x, EVP_sha256(), md, &n)) {
                 BIO_printf(bio_err, "Error calculating SHA-256 fingerprint");
                 goto err;
             }
+
             for (j = 0; j < (int)n; j++)
                 BIO_printf(out, "%02x", md[j]);
             BIO_printf(out, "\n");
