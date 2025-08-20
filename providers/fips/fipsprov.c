@@ -47,6 +47,9 @@ static OSSL_FUNC_provider_random_bytes_fn fips_random_bytes;
 #define ALGC(NAMES, FUNC, CHECK)                \
     { { NAMES, FIPS_DEFAULT_PROPERTIES, FUNC }, CHECK }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
+#define ALGCU(NAMES, FUNC, CHECK)                        \
+    { { NAMES, FIPS_UNAPPROVED_PROPERTIES, FUNC }, CHECK }
+#define ALGU(NAMES, FUNC) ALGCU(NAMES, FUNC, NULL)
 
 extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
 
@@ -310,9 +313,9 @@ static const OSSL_ALGORITHM fips_digests_internal[] = {
 
 static const OSSL_ALGORITHM_CAPABLE fips_ciphers[] = {
     /* Our primary name[:ASN.1 OID name][:our older names] */
-    ALG(PROV_NAMES_AES_256_ECB, ossl_aes256ecb_functions),
-    ALG(PROV_NAMES_AES_192_ECB, ossl_aes192ecb_functions),
-    ALG(PROV_NAMES_AES_128_ECB, ossl_aes128ecb_functions),
+    ALGU(PROV_NAMES_AES_256_ECB, ossl_aes256ecb_functions),
+    ALGU(PROV_NAMES_AES_192_ECB, ossl_aes192ecb_functions),
+    ALGU(PROV_NAMES_AES_128_ECB, ossl_aes128ecb_functions),
     ALG(PROV_NAMES_AES_256_CBC, ossl_aes256cbc_functions),
     ALG(PROV_NAMES_AES_192_CBC, ossl_aes192cbc_functions),
     ALG(PROV_NAMES_AES_128_CBC, ossl_aes128cbc_functions),
