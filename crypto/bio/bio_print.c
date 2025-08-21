@@ -52,21 +52,21 @@ static int msvc_bio_vprintf(BIO *bio, const char *format, va_list args)
 {
     char buf[512];
     char *abuf;
-    int ret;
+    int ret, sz;
 
-    ret = _vsnprintf_s(buf, sizeof (buf), _TRUNCATE, format, args);
-    if (ret == -1) {
-        ret = _vscprintf(format, args) + 1;
-        abuf = (char *) OPENSSL_malloc(ret);
+    sz = _vsnprintf_s(buf, sizeof (buf), _TRUNCATE, format, args);
+    if (sz == -1) {
+        sz = _vscprintf(format, args) + 1;
+        abuf = (char *) OPENSSL_malloc(sz);
         if (abuf == NULL) {
             ret = -1;
         } else {
-            ret = _vsnprintf(abuf, ret, format, args);
-            ret = BIO_write(bio, abuf, ret);
+            sz = _vsnprintf(abuf, sz, format, args);
+            ret = BIO_write(bio, abuf, sz);
             OPENSSL_free(abuf);
         }
     } else {
-        ret = BIO_write(bio, buf, ret);
+        ret = BIO_write(bio, buf, sz);
     }
 
     return ret;
@@ -109,6 +109,9 @@ int BIO_vsnprintf_msvc(char *buf, size_t n, const char *format, va_list args)
 int BIO_vprintf(BIO *bio, const char *format, va_list args)
 {
     va_list cp_args;
+#if !defined(_MSC_VER) || _MSC_VER > 1900
+    int sz;
+#endif
     int ret = -1;
 
     va_copy(cp_args, args);
@@ -123,21 +126,21 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
      * call to vsnprintf() here uses args we got in function argument.
      * The second call is going to use cp_args we made earlier.
      */
-    ret = vsnprintf(buf, sizeof (buf), format, args);
-    if (ret >= 0) {
-        if ((size_t)ret > sizeof (buf)) {
-            ret += 1;
-            abuf = (char *) OPENSSL_malloc(ret);
+    sz = vsnprintf(buf, sizeof (buf), format, args);
+    if (sz >= 0) {
+        if ((size_t)sz > sizeof (buf)) {
+            sz += 1;
+            abuf = (char *) OPENSSL_malloc(sz);
             if (abuf == NULL) {
                 ret = -1;
             } else {
-                ret = vsnprintf(abuf, ret, format, cp_args);
-                ret = BIO_write(bio, abuf, ret);
+                sz = vsnprintf(abuf, sz, format, cp_args);
+                ret = BIO_write(bio, abuf, sz);
                 OPENSSL_free(abuf);
             }
         } else {
              /* vsnprintf returns length not including nul-terminator */
-             ret = BIO_write(bio, buf, ret);
+             ret = BIO_write(bio, buf, sz);
         }
     }
 #endif
@@ -146,10 +149,11 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
 }
 
 /*
- * As snprintf is not available everywhere, we provide our own
- * implementation. This function has nothing to do with BIOs, but it's
- * closely related to BIO_printf, and we need *some* name prefix ... (XXX the
- * function should be renamed, but to what?)
+ * For historical reasons BIO_snprintf and friends return a failure for string
+ * truncation (-1) instead of the POSIX requirement of a success with the
+ * number of characters that would have been written. Upon seeing -1 on
+ * return, the caller must treat output buf as unsafe (as a buf with missing
+ * nul terminator).
  */
 int BIO_snprintf(char *buf, size_t n, const char *format, ...)
 {
