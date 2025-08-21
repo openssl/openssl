@@ -337,6 +337,9 @@ static void *sskdf_dup(void *vctx)
     const KDF_SSKDF *src = (const KDF_SSKDF *)vctx;
     KDF_SSKDF *dest;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     dest = sskdf_new(src->provctx);
     if (dest != NULL) {
         if (src->macctx != NULL) {
