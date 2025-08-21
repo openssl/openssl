@@ -638,8 +638,4 @@ my $fingerprint_output = `$openssl x509 -in $ca_cert -noout -fingerprint256forma
 my ($fingerprint) = $fingerprint_output =~ /^([a-f0-9]{64})$/m;
 my $expected = "087a6a0577bbb6eef93b0901b5a6521ce8d0e10bbc91b1575b601d91be296625";
 
-if (!defined $fingerprint) {
-    fail("Fingerprint not found in output");
-} else {
-    ok($fingerprint eq $expected, "Fingerprint matches expected value");
-}
+ok($fingerprint eq $expected, "Fingerprint matches expected value");
