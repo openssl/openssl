@@ -5946,3 +5946,4 @@ CRYPTO_secure_calloc                    ?	3_6_0	EXIST::FUNCTION:
 OSSL_STORE_INFO_new_SKEY                ?	3_6_0	EXIST::FUNCTION:
 OSSL_STORE_INFO_get0_SKEY               ?	3_6_0	EXIST::FUNCTION:
 OSSL_STORE_INFO_get1_SKEY               ?	3_6_0	EXIST::FUNCTION:
+EVP_SKEY_import_SKEYMGMT                ?	3_6_0	EXIST::FUNCTION:
