@@ -1095,8 +1095,7 @@ int x509_main(int argc, char **argv)
             BIO_printf(out, "%s Fingerprint=", fdigname);
             for (j = 0; j < (int)n; j++)
                 BIO_printf(out, "%02X%c", md[j], (j + 1 == (int)n) ? '\n' : ':');
-        }
-            else if (i == fingerprint256format) {
+        }   else if (i == fingerprint256format) {
             unsigned int n;
             unsigned char md[EVP_MAX_MD_SIZE];
 
@@ -1109,8 +1108,7 @@ int x509_main(int argc, char **argv)
                 BIO_printf(out, "%02x", md[j]);
             BIO_printf(out, "\n");
             goto end;
-        }
-            else if (i == ocspid) {
+        } else if (i == ocspid) {
             X509_ocspid_print(out, x);
         } else if (i == ext) {
             print_x509v3_exts(out, x, ext_names);
