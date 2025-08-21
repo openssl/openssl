@@ -341,7 +341,7 @@ providers/implementations/rands/test_rng.c
 # Auto generated assembly language source files
 *.s
 !/crypto/*/asm/*.s
-/crypto/arm*.S
+/crypto/*.S
 /crypto/*/*.S
 *.asm
 !/crypto/*/asm/*.asm
