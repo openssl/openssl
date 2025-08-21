@@ -1107,8 +1107,7 @@ int x509_main(int argc, char **argv)
             for (j = 0; j < (int)n; j++)
                 BIO_printf(out, "%02x", md[j]);
             BIO_printf(out, "\n");
-            ret = 0;
-            goto end;
+            goto end_cert_loop;
         } else if (i == ocspid) {
             X509_ocspid_print(out, x);
         } else if (i == ext) {
