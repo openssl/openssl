@@ -3,6 +3,8 @@
 ##
 ## {- join("\n## ", @autowarntext) -}
 {-
+     use Time::Piece;
+
      use OpenSSL::Util;
 
      our $makedep_scheme = $config{makedep_scheme};
@@ -74,6 +76,7 @@ FIPSKEY={- $config{FIPSKEY} -}
 
 VERSION={- "$config{full_version}" -}
 VERSION_NUMBER={- "$config{version}" -}
+RELEASE_DATE={- Time::Piece->strptime($config{"release_date"}, "%d %b %Y")->strftime("%Y-%m-%d") -}
 MAJOR={- $config{major} -}
 MINOR={- $config{minor} -}
 SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
@@ -1572,7 +1575,8 @@ EOF
           return <<"EOF";
 $args{src}: $pod
 	pod2man --name=$name --section=$section\$(MANSUFFIX) --center=OpenSSL \\
-		--release=\$(VERSION) $pod >\$\@
+		    --date=\$(RELEASE_DATE) --release=\$(VERSION) \\
+            $pod >\$\@
 EOF
       } elsif (platform->isdef($args{src})) {
           #
