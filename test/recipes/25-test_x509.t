@@ -634,6 +634,7 @@ SKIP: {
 
 $ca_cert = srctop_file("test", "certs", "servercert.pem");
 my $openssl  = bldtop_file("apps", "openssl");
+my $fingerprint_output;
 ok(run(app(["openssl", "x509", "-in", $ca_cert, "-noout", "-fingerprint256format"],
            stdout => \$fingerprint_output)),
    "run x509 fingerprint test");
