@@ -18,7 +18,7 @@ use OpenSSL::Test qw(:DEFAULT srctop_file bldtop_file);
 
 setup("test_x509");
 
-plan tests => 141;
+plan tests => 142;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
