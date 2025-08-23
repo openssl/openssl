@@ -1431,6 +1431,9 @@ $code.=<<___ if (!$softonly);
 	st${g}	$s3,0($sp)			# backchain
 	la	%r1,$stdframe($sp)
 
+	xc	$stdframe+0(64,$sp),$stdframe+0($sp)	# clear reserved/unused
+							# in parameter block
+
 	lmg	$s2,$s3,0($key)			# copy key
 	stg	$s2,$stdframe+80($sp)
 	stg	$s3,$stdframe+88($sp)
