@@ -397,6 +397,8 @@ static int do_evp_cipher(const EVP_CIPHER *evp_cipher, const OSSL_PARAM param[])
     EVP_CIPHER_CTX *ctx;
 
     ctx = EVP_CIPHER_CTX_new();
+    if (ctx == NULL)
+        return 0;
 
     if (!EVP_CIPHER_CTX_set_params(ctx, param)) {
         EVP_CIPHER_CTX_free(ctx);
