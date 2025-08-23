@@ -160,6 +160,9 @@ extern "C" {
 # define TLSEXT_TYPE_key_share                   51
 # define TLSEXT_TYPE_quic_transport_parameters   57
 
+/* ExtensionType value from RFC8449 */
+# define TLSEXT_TYPE_record_size_limit           28
+
 /* Temporary extension type */
 # define TLSEXT_TYPE_renegotiate                 0xff01
 
@@ -243,10 +246,19 @@ extern "C" {
 # define TLSEXT_cert_type_rpk          2
 # define TLSEXT_cert_type_1609dot2     3 /* recognized, but not supported */
 
+# define TLSEXT_record_size_limit_UNSPECIFIED 0
+# define TLSEXT_record_size_limit_DISABLED 1
+/* As defined in RFC 8449. */
+# define TLSEXT_record_size_limit_min 64
+
 int SSL_CTX_set_tlsext_max_fragment_length(SSL_CTX *ctx, uint8_t mode);
 int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode);
 
+int SSL_CTX_set_tlsext_record_size_limit(SSL_CTX *ctx, uint16_t limit);
+int SSL_set_tlsext_record_size_limit(SSL *ssl, uint16_t limit);
+
 # define TLSEXT_MAXLEN_host_name 255
+
 
 __owur const char *SSL_get_servername(const SSL *s, const int type);
 __owur int SSL_get_servername_type(const SSL *s);

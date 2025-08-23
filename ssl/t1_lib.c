@@ -4792,6 +4792,7 @@ int SSL_CTX_set_tlsext_max_fragment_length(SSL_CTX *ctx, uint8_t mode)
     }
 
     ctx->ext.max_fragment_len_mode = mode;
+
     return 1;
 }
 
@@ -4813,11 +4814,68 @@ int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode)
     return 1;
 }
 
+int SSL_CTX_set_tlsext_record_size_limit(SSL_CTX *ctx, uint16_t limit) {
+    if (limit == 0) {
+        ctx->ext.record_size_limit = TLSEXT_record_size_limit_DISABLED;
+        return 1;
+    }
+
+    if (!IS_RECORD_SIZE_LIMIT_VALID(limit)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_EXT_INVALID_RECORD_SIZE_LIMIT);
+        return 0;
+    }
+
+    ctx->ext.record_size_limit = limit;
+
+    return 1;
+}
+
+int SSL_set_tlsext_record_size_limit(SSL *ssl, uint16_t limit) {
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (sc == NULL) {
+        return 0;
+    }
+
+    if (limit == 0) {
+        sc->ext.record_size_limit = TLSEXT_record_size_limit_DISABLED;
+        return 1;
+    }
+
+    if (IS_QUIC(ssl)) {
+        return 0;
+    }
+
+    if (!IS_RECORD_SIZE_LIMIT_VALID(limit)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_EXT_INVALID_RECORD_SIZE_LIMIT);
+        return 0;
+    }
+
+    sc->ext.record_size_limit = limit;
+
+    return 1;
+}
+
 uint8_t SSL_SESSION_get_max_fragment_length(const SSL_SESSION *session)
 {
     if (session->ext.max_fragment_len_mode == TLSEXT_max_fragment_length_UNSPECIFIED)
         return TLSEXT_max_fragment_length_DISABLED;
     return session->ext.max_fragment_len_mode;
+}
+
+uint16_t SSL_SESSION_get_record_size_limit(const SSL_SESSION *session)
+{
+    if (session->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED)
+      return TLSEXT_record_size_limit_DISABLED;
+    return session->ext.record_size_limit;
+}
+
+uint16_t SSL_SESSION_get_peer_record_size_limit(const SSL_SESSION *session)
+{
+    if (session->ext.peer_record_size_limit ==
+        TLSEXT_record_size_limit_UNSPECIFIED)
+      return TLSEXT_record_size_limit_DISABLED;
+    return session->ext.peer_record_size_limit;
 }
 
 /*
