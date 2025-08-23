@@ -5,12 +5,14 @@
 SSL_poll,
 SSL_POLL_EVENT_NONE,
 SSL_POLL_EVENT_F,
+SSL_POLL_EVENT_EL,
 SSL_POLL_EVENT_EC,
 SSL_POLL_EVENT_ECD,
 SSL_POLL_EVENT_ER,
 SSL_POLL_EVENT_EW,
 SSL_POLL_EVENT_R,
 SSL_POLL_EVENT_W,
+SSL_POLL_EVENT_IC,
 SSL_POLL_EVENT_ISB,
 SSL_POLL_EVENT_ISU,
 SSL_POLL_EVENT_OSB,
@@ -35,27 +37,29 @@ SSL_POLL_FLAG_NO_HANDLE_EVENTS
  #define SSL_POLL_EVENT_NONE        0
 
  #define SSL_POLL_EVENT_F           /* F   (Failure) */
+ #define SSL_POLL_EVENT_EL          /* EL  (Exception on Listener) */
  #define SSL_POLL_EVENT_EC          /* EC  (Exception on Conn) */
  #define SSL_POLL_EVENT_ECD         /* ECD (Exception on Conn Drained) */
  #define SSL_POLL_EVENT_ER          /* ER  (Exception on Read) */
  #define SSL_POLL_EVENT_EW          /* EW  (Exception on Write) */
  #define SSL_POLL_EVENT_R           /* R   (Readable) */
  #define SSL_POLL_EVENT_W           /* W   (Writable) */
+ #define SSL_POLL_EVENT_IC          /* IC  (Incoming Connection) */
  #define SSL_POLL_EVENT_ISB         /* ISB (Incoming Stream: Bidi) */
  #define SSL_POLL_EVENT_ISU         /* ISU (Incoming Stream: Uni) */
  #define SSL_POLL_EVENT_OSB         /* OSB (Outgoing Stream: Bidi) */
  #define SSL_POLL_EVENT_OSU         /* OSU (Outgoing Stream: Uni) */
 
- #define SSL_POLL_EVENT_RW          /* R   | W         */
- #define SSL_POLL_EVENT_RE          /* R   | ER        */
- #define SSL_POLL_EVENT_WE          /* W   | EW        */
- #define SSL_POLL_EVENT_RWE         /* RE  | WE        */
- #define SSL_POLL_EVENT_E           /* EC  | ER  | EW  */
- #define SSL_POLL_EVENT_IS          /* ISB | ISU       */
- #define SSL_POLL_EVENT_ISE         /* IS  | EC        */
- #define SSL_POLL_EVENT_I           /* IS              */
- #define SSL_POLL_EVENT_OS          /* OSB | OSU       */
- #define SSL_POLL_EVENT_OSE         /* OS  | EC        */
+ #define SSL_POLL_EVENT_RW          /* R   | W               */
+ #define SSL_POLL_EVENT_RE          /* R   | ER              */
+ #define SSL_POLL_EVENT_WE          /* W   | EW              */
+ #define SSL_POLL_EVENT_RWE         /* RE  | WE              */
+ #define SSL_POLL_EVENT_E           /* EL  | EC  | ER  | EW  */
+ #define SSL_POLL_EVENT_IS          /* ISB | ISU             */
+ #define SSL_POLL_EVENT_ISE         /* IS  | EC              */
+ #define SSL_POLL_EVENT_I           /* IS                    */
+ #define SSL_POLL_EVENT_OS          /* OSB | OSU             */
+ #define SSL_POLL_EVENT_OSE         /* OS  | EC              */
 
  typedef struct ssl_poll_item_st {
      BIO_POLL_DESCRIPTOR desc;
