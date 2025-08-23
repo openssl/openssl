@@ -82,7 +82,7 @@ IF[{- !$disabled{'ecx'} -}]
 ENDIF
 
 IF[{- !$disabled{'ec_nistp_64_gcc_128'} -}]
-  $COMMON=$COMMON ecp_nistp224.c ecp_nistp256.c ecp_nistp384.c ecp_nistp521.c ecp_nistputil.c
+  $COMMON=$COMMON ecp_nistp224.c ecp_nistp256.c ecp_nistp384.c ecp_nistp521.c ecp_nistputil.c ecp_secp256k1.c
 ENDIF
 
 SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c \
