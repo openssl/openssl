@@ -680,7 +680,7 @@ static int try_skey(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                     const OSSL_PROVIDER *provider, OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_SKEY *skey = NULL;
-    const char *skeymgmt_name = data->data_type == NULL 
+    const char *skeymgmt_name = data->data_type == NULL
                                 ? OSSL_SKEY_TYPE_GENERIC : data->data_type;
     size_t keysize = 0;
     unsigned char *keybytes = NULL;
@@ -694,11 +694,11 @@ static int try_skey(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
         skey = EVP_SKEY_import_raw_key(libctx, skeymgmt_name,
                                        keybytes, keysize, propq);
     } else if (data->ref != NULL) {
-        EVP_SKEYMGMT *skeymgmt = evp_skeymgmt_fetch_from_prov((OSSL_PROVIDER *)provider, 
+        EVP_SKEYMGMT *skeymgmt = evp_skeymgmt_fetch_from_prov((OSSL_PROVIDER *)provider,
                                                               skeymgmt_name, propq);
         OSSL_PARAM params[2];
 
-        /* 
+        /*
          * We got an internal reference from a particular provider so we need the SKEYMGMT
          * exactly from this provider
          */
