@@ -636,7 +636,7 @@ EVP_SKEY *EVP_PKEY_derive_SKEY(EVP_PKEY_CTX *ctx, const char *key_type,
     ret->skeymgmt = skeymgmt;
 
     ret->keydata = ctx->op.kex.exchange->derive_skey(ctx->op.kex.algctx);
-    if (ret->keydata != NULL) {
+    if (ret->keydata == NULL) {
         EVP_SKEY_free(ret);
         return NULL;
     }
