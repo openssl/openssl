@@ -113,7 +113,7 @@ To sign a message using an ML-DSA EVP_PKEY structure:
         EVP_PKEY_sign(sctx, sig, &sig_len, msg, msg_len);
         ...
         OPENSSL_free(sig);
-        EVP_SIGNATURE(sig_alg);
+        EVP_SIGNATURE_free(sig_alg);
         EVP_PKEY_CTX_free(sctx);
     }
 
