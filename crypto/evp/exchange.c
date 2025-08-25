@@ -573,7 +573,7 @@ EVP_SKEY *EVP_PKEY_derive_SKEY(EVP_PKEY_CTX *ctx, const char *key_type,
 
     if (ctx->op.kex.algctx == NULL) {
         ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
-        return 0;
+        return NULL;
     }
 
     skeymgmt = evp_skeymgmt_fetch_from_prov(ctx->op.kex.exchange->prov,
