@@ -281,6 +281,7 @@ EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, const char *key_type,
     ret->keydata = ctx->meth->derive_skey(ctx->algctx, keylen, params);
     if (ret->keydata == NULL) {
         EVP_SKEY_free(ret);
+        EVP_SKEYMGMT_free(skeymgmt);
         return NULL;
     }
 
