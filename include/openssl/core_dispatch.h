@@ -512,6 +512,8 @@ OSSL_CORE_MAKE_FUNC(int, mac_init_skey, (void *mctx, void *key, const OSSL_PARAM
 # define OSSL_FUNC_KDF_GET_PARAMS                    9
 # define OSSL_FUNC_KDF_GET_CTX_PARAMS               10
 # define OSSL_FUNC_KDF_SET_CTX_PARAMS               11
+# define OSSL_FUNC_KDF_SET_SKEY                     12
+# define OSSL_FUNC_KDF_DERIVE_SKEY                  13
 
 OSSL_CORE_MAKE_FUNC(void *, kdf_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, kdf_dupctx, (void *src))
@@ -529,6 +531,10 @@ OSSL_CORE_MAKE_FUNC(int, kdf_get_ctx_params,
                     (void *kctx, OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, kdf_set_ctx_params,
                     (void *kctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, kdf_set_skey,
+                    (void *kctx, void *skeydata, const char *paramname))
+OSSL_CORE_MAKE_FUNC(void *, kdf_derive_skey,
+                    (void *kctx, size_t keylen, const OSSL_PARAM params[]))
 
 /* RAND */
 
@@ -769,6 +775,7 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_export_types_ex,
 # define OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS         8
 # define OSSL_FUNC_KEYEXCH_GET_CTX_PARAMS              9
 # define OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS        10
+# define OSSL_FUNC_KEYEXCH_DERIVE_SKEY                11
 
 OSSL_CORE_MAKE_FUNC(void *, keyexch_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, keyexch_init, (void *ctx, void *provkey,
@@ -786,6 +793,7 @@ OSSL_CORE_MAKE_FUNC(int, keyexch_get_ctx_params, (void *ctx,
                                                      OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keyexch_gettable_ctx_params,
                     (void *ctx, void *provctx))
+OSSL_CORE_MAKE_FUNC(void *, keyexch_derive_skey, (void *ctx))
 
 /* Signature */
 
