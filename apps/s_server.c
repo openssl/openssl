@@ -19,7 +19,7 @@
 /* Included before async.h to avoid some warnings */
 # include <windows.h>
 # if !defined(OPENSSL_NO_ECH) && !defined(PATH_MAX)
-#   define PATH_MAX 1024
+#  define PATH_MAX 1024
 # endif
 #endif
 
