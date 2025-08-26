@@ -20,6 +20,7 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/self_test.h>
+#include <openssl/proverr.h>
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
@@ -218,7 +219,8 @@ static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
         if (ok > 0 && !ossl_fips_self_testing()) {
             ok = ossl_dh_check_pairwise(dh, 1);
             if (ok <= 0)
-                ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                               "public key does not match private");
         }
 #endif  /* FIPS_MODULE */
     }
