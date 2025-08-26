@@ -482,7 +482,12 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
     if (res > 0 && include_private
         && !ml_kem_pairwise_test(key, key->prov_flags)) {
 #ifdef FIPS_MODULE
-        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+        if (ossl_fips_self_testing())
+            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+        else
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                           "explicit %s public key does not match private",
+                           ossl_ml_kem_key_vinfo(key)->algorithm_name);
 #endif
         ossl_ml_kem_key_reset(key);
         res = 0;
