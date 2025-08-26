@@ -442,7 +442,8 @@ int common_import(void *keydata, int selection, const OSSL_PARAM params[],
         ok = bnctx != NULL && ossl_ec_key_pairwise_check(ec, bnctx);
         BN_CTX_free(bnctx);
         if (ok <= 0)
-            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                           "public key does not match private");
     }
 #endif  /* FIPS_MODULE */
 
