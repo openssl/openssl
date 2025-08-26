@@ -40,8 +40,7 @@ symmetric keys don't have any structure and encapsulation, the interpretation
 of a file as a symmetric key should be requested explicitly via
 L<OSSL_STORE_expect(3)>.
 
-When a symmetric key is loaded from file, not more than first 2048 bytes are
-considered.
+When loading from a file, symmetric keys are limited to 2048 bytes in length.
 
 Each file handler is expected to handle PEM and non-PEM content as
 appropriate.  Some may refuse non-PEM content for the sake of
@@ -69,7 +68,7 @@ L<ossl_store(7)>, L<passphrase-encoding(7)>, L<OSSL_STORE_expect(3)>
 
 =head1 HISTORY
 
-Support for reading symmetric keys from files was added in OpenSSL 4.0
+Support for reading symmetric keys from files was added in OpenSSL 3.6
 
 =head1 COPYRIGHT
 

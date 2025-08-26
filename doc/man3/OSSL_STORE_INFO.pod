@@ -233,7 +233,7 @@ The OSSL_STORE API was added in OpenSSL 1.1.1.
 The OSSL_STORE_INFO_PUBKEY object type was added in OpenSSL 3.0.
 
 OSSL_STORE_INFO_get0_SKEY(), OSSL_STORE_INFO_get1_SKEY() and
-OSSL_STORE_INFO_new_SKEY() were added in OpenSSL 4.0.
+OSSL_STORE_INFO_new_SKEY() were added in OpenSSL 3.6.
 
 =head1 COPYRIGHT
 
