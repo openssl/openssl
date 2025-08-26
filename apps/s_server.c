@@ -18,10 +18,8 @@
 #if defined(_WIN32)
 /* Included before async.h to avoid some warnings */
 # include <windows.h>
-# ifndef OPENSSL_NO_ECH
-#  ifndef PATH_MAX
+# if !defined(OPENSSL_NO_ECH) && !defined(PATH_MAX)
 #   define PATH_MAX 1024
-#  endif
 # endif
 #endif
 
@@ -491,7 +489,8 @@ static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
 {
     tlsextctx *p = (tlsextctx *) arg;
     time_t now = time(0); /* For a bit of basic logging */
-    int sockfd = 0, res = 0, echrv = 0, srv = 0;
+    int sockfd = 0, res = 0, echrv = 0;
+    size_t srv = 0;
     struct sockaddr_storage ss;
     socklen_t salen = sizeof(ss);
     struct sockaddr *sa;
@@ -510,7 +509,7 @@ static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
     if (local_p != &local) {
         strcpy(lstr, "sometime");
     } else {
-        srv = (int)strftime(lstr, ECH_TIME_STR_LEN, "%c", &local);
+        srv = strftime(lstr, ECH_TIME_STR_LEN, "%c", &local);
         if (srv == 0)
             strcpy(lstr, "sometime");
     }
@@ -519,7 +518,7 @@ static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
     if (grv != 0) {
         strcpy(lstr, "sometime");
     } else {
-        srv = (int)strftime(lstr, ECH_TIME_STR_LEN, "%c", &local);
+        srv = strftime(lstr, ECH_TIME_STR_LEN, "%c", &local);
         if (srv == 0)
             strcpy(lstr, "sometime");
     }
