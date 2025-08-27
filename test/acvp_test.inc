@@ -1193,6 +1193,8 @@ struct rsa_keygen_st {
     size_t n_len;
     const unsigned char *d;
     size_t d_len;
+    uint32_t a;
+    uint32_t b;
 };
 
 static const unsigned char rsa_keygen0_e[] = {
