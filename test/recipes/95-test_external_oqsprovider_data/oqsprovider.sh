@@ -70,6 +70,8 @@ export OPENSSL_APP="$O_EXE/openssl"
 export OPENSSL_MODULES=$PWD/_build/lib
 export OQS_PROVIDER_TESTSCRIPTS=$SRCTOP/oqs-provider/scripts
 export OPENSSL_CONF=$OQS_PROVIDER_TESTSCRIPTS/openssl-ca.cnf
+# hotfix for wrong cert validity period
+cp $SRCTOP/test/recipes/95-test_external_oqsprovider_data/oqsprovider-ca.sh $SRCTOP/oqs-provider/scripts/
 # Be verbose if harness is verbose:
 # Fixup for oqsprovider release snafu:
 cp $SRCTOP/test/recipes/95-test_external_oqsprovider_data/oqsprovider-pkcs12gen.sh $SRCTOP/oqs-provider/scripts/
