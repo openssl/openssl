@@ -271,7 +271,7 @@ static int ech_final_config_checks(OSSL_ECHSTORE_ENTRY *ee)
     /* check no mandatory exts (with high bit set in type) */
     num = (ee->exts == NULL ? 0 : sk_OSSL_ECHEXT_num(ee->exts));
     for (ind = 0; ind != num; ind++) {
-        OSSL_ECHEXT *oe = sk_OSSL_ECHEXT_value(ee->exts, ind);
+        OSSL_ECHEXT *oe = sk_OSSL_ECHEXT_value(ee->exts, (int)ind);
 
         if (oe->type & 0x8000) {
             ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -329,7 +329,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
         ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
     }
-    ech_content_length = PACKET_remaining(&ver_pkt);
+    ech_content_length = (unsigned int)PACKET_remaining(&ver_pkt);
     switch (ee->version) {
     case OSSL_ECH_RFCXXXX_VERSION:
         break;
@@ -349,7 +349,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
         || !PACKET_get_length_prefixed_2(&ver_pkt, &pub_pkt)
         || !PACKET_memdup(&pub_pkt, &ee->pub, &ee->pub_len)
         || !PACKET_get_length_prefixed_2(&ver_pkt, &cipher_suites)
-        || (suiteoctets = PACKET_remaining(&cipher_suites)) <= 0
+        || (suiteoctets = (unsigned int)PACKET_remaining(&cipher_suites)) <= 0
         || (suiteoctets % 2) == 1) {
         ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
@@ -574,7 +574,7 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        tdeclen = BIO_read(btmp, binbuf, encodedlen);
+        tdeclen = BIO_read(btmp, binbuf, (int)encodedlen);
         if (tdeclen <= 0) { /* need int for -1 return in failure case */
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
@@ -838,7 +838,7 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
             goto err;
         }
         if (PEM_write_bio(out, PEM_STRING_ECHCONFIG, NULL,
-                          ee->encoded, ee->encoded_len) <= 0) {
+                          ee->encoded, (int)ee->encoded_len) <= 0) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -869,7 +869,7 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
         WPACKET_get_total_written(&epkt, &allencoded_len);
         if (PEM_write_bio(out, PEM_STRING_ECHCONFIG, NULL,
                           (unsigned char *)epkt_mem->data,
-                          allencoded_len) <= 0) {
+                          (int)allencoded_len) <= 0) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -954,7 +954,7 @@ int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, int index, time_t *loaded_secs,
     *echconfig = OPENSSL_malloc(ehlen + 1);
     if (*echconfig == NULL)
         goto err;
-    if (BIO_read(out, *echconfig, ehlen) <= 0) {
+    if (BIO_read(out, *echconfig, (int)ehlen) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }

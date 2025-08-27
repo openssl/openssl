@@ -2726,7 +2726,7 @@ int tls_parse_stoc_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         return 0;
     }
     rval = PACKET_data(&rcfgs_pkt);
-    rlen = PACKET_remaining(&rcfgs_pkt);
+    rlen = (unsigned int)PACKET_remaining(&rcfgs_pkt);
     OPENSSL_free(s->ext.ech.returned);
     s->ext.ech.returned = NULL;
     srval = OPENSSL_malloc(rlen + 2);
