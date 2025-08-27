@@ -261,8 +261,11 @@ static void *keymgmt_from_algorithm(int name_id,
         return NULL;
     }
     keymgmt->prov = prov;
-    if (prov != NULL)
-        ossl_provider_up_ref(prov);
+    if (prov != NULL && !ossl_provider_up_ref(prov)) {
+        EVP_KEYMGMT_free(keymgmt);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return NULL;
+    }
 
 #ifndef FIPS_MODULE
     keymgmt->legacy_alg = get_legacy_alg_type_from_keymgmt(keymgmt);
