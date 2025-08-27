@@ -491,7 +491,7 @@ static int test_sp80056b_keygen(int id)
     int sz = keygen_size[id];
 
     ret = TEST_ptr(key = RSA_new())
-          && TEST_true(ossl_rsa_sp800_56b_generate_key(key, sz, NULL, NULL))
+          && TEST_true(ossl_rsa_sp800_56b_generate_key(key, sz, NULL, NULL, 0, 0))
           && TEST_true(ossl_rsa_sp800_56b_check_public(key))
           && TEST_true(ossl_rsa_sp800_56b_check_private(key))
           && TEST_true(ossl_rsa_sp800_56b_check_keypair(key, NULL, -1, sz));

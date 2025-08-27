@@ -102,24 +102,29 @@ static int bn_rsa_fips186_5_aux_prime_min_size(int nbits)
  * (FIPS 186-5 has an entry for >= 4096 bits).
  * Params:
  *     nbits The key size in bits.
+ *     c If this is non zero then the probable prime is congruent to c mod 8
+ *       and is 3 bits smaller
  * Returns:
  *     The maximum length or 0 if nbits is invalid.
  */
-static int bn_rsa_fips186_5_aux_prime_max_sum_size_for_prob_primes(int nbits)
+static int bn_rsa_fips186_5_aux_prime_max_sum_size_for_prob_primes(int nbits,
+                                                                   uint32_t c)
 {
+    int reduce_bits = (c == 0) ? 0 : 3;
+
     if (nbits >= 4096)
-        return 2030;
+        return 2030 - reduce_bits;
     if (nbits >= 3072)
-        return 1518;
+        return 1518 - reduce_bits;
     if (nbits >= 2048)
-        return 1007;
+        return 1007 - reduce_bits;
     return 0;
 }
 
 /*
  * Find the first odd integer that is a probable prime.
  *
- * See section FIPS 186-4 B.3.6 (Steps 4.2/5.2).
+ * See section FIPS 186-5 A.1.6 (Steps 4.2/5.2).
  *
  * Params:
  *     Xp1 The passed in starting point to find a probably prime.
@@ -129,7 +134,7 @@ static int bn_rsa_fips186_5_aux_prime_max_sum_size_for_prob_primes(int nbits)
  *     cb An optional BIGNUM callback.
  * Returns: 1 on success otherwise it returns 0.
  */
-static int bn_rsa_fips186_4_find_aux_prob_prime(const BIGNUM *Xp1,
+static int bn_rsa_fips186_5_find_aux_prob_prime(const BIGNUM *Xp1,
                                                 BIGNUM *p1, BN_CTX *ctx,
                                                 int rounds,
                                                 BN_GENCB *cb)
@@ -165,7 +170,7 @@ err:
 /*
  * Generate a probable prime (p or q).
  *
- * See FIPS 186-4 B.3.6 (Steps 4 & 5)
+ * See FIPS 186-5 A.1.6 (Steps 4 & 5)
  *
  * Params:
  *     p The returned probable prime.
@@ -179,14 +184,17 @@ err:
  *     e The public exponent.
  *     ctx A BN_CTX object.
  *     cb An optional BIGNUM callback.
+ *     c An optional number with a value of 0, 1, 3, 5 or 7 that may be used
+ *       to add the requirement p is congruent to c mod 8. The value is ignored
+ *       if it is zero.
  * Returns: 1 on success otherwise it returns 0.
  */
-int ossl_bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
+int ossl_bn_rsa_fips186_5_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
                                           BIGNUM *p1, BIGNUM *p2,
                                           const BIGNUM *Xp, const BIGNUM *Xp1,
                                           const BIGNUM *Xp2, int nlen,
                                           const BIGNUM *e, BN_CTX *ctx,
-                                          BN_GENCB *cb)
+                                          BN_GENCB *cb, uint32_t c)
 {
     int ret = 0;
     BIGNUM *p1i = NULL, *p2i = NULL, *Xp1i = NULL, *Xp2i = NULL;
@@ -225,16 +233,16 @@ int ossl_bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
     }
 
     /* (Steps 4.2/5.2) - find first auxiliary probable primes */
-    if (!bn_rsa_fips186_4_find_aux_prob_prime(Xp1i, p1i, ctx, rounds, cb)
-            || !bn_rsa_fips186_4_find_aux_prob_prime(Xp2i, p2i, ctx, rounds, cb))
+    if (!bn_rsa_fips186_5_find_aux_prob_prime(Xp1i, p1i, ctx, rounds, cb)
+            || !bn_rsa_fips186_5_find_aux_prob_prime(Xp2i, p2i, ctx, rounds, cb))
         goto err;
     /* (FIPS 186-5 Table A.1) auxiliary prime Max length check */
-    if ((BN_num_bits(p1i) + BN_num_bits(p2i)) >
-            bn_rsa_fips186_5_aux_prime_max_sum_size_for_prob_primes(nlen))
+    if ((BN_num_bits(p1i) + BN_num_bits(p2i)) >=
+            bn_rsa_fips186_5_aux_prime_max_sum_size_for_prob_primes(nlen, c))
         goto err;
     /* (Steps 4.3/5.3) - generate prime */
-    if (!ossl_bn_rsa_fips186_4_derive_prime(p, Xpout, Xp, p1i, p2i, nlen, e,
-                                            ctx, cb))
+    if (!ossl_bn_rsa_fips186_5_derive_prime(p, Xpout, Xp, p1i, p2i, nlen, e,
+                                            ctx, cb, c))
         goto err;
     ret = 1;
 err:
@@ -251,12 +259,29 @@ err:
     return ret;
 }
 
+static ossl_inline
+int get_multiple_of_y_congruent_to_cmod8(BIGNUM *y, const BIGNUM *r1r2x2, int c)
+{
+    int i = 0;
+
+    for (i = 0; i < 3; ++i) {
+        /* Check for Y = c mod 8 */
+        if ((int)(*bn_get_words(y) & 7) == c)
+            return 1;
+        /* Y = Y + 2r1r2 */
+        if (!BN_add(y, y, r1r2x2))
+            return 0;
+    }
+    /* Fall through for y = y + 6 * r1r2 */
+    return 1;
+}
+
 /*
  * Constructs a probable prime (a candidate for p or q) using 2 auxiliary
  * prime numbers and the Chinese Remainder Theorem.
  *
- * See FIPS 186-4 C.9 "Compute a Probable Prime Factor Based on Auxiliary
- * Primes". Used by FIPS 186-4 B.3.6 Section (4.3) for p and Section (5.3) for q.
+ * See FIPS 186-5 B.9 "Compute a Probable Prime Factor Based on Auxiliary
+ * Primes". Used by FIPS 186-5 A.1.6 Section (4.3) for p and Section (5.3) for q.
  *
  * Params:
  *     Y The returned prime factor (private_prime_factor) of the modulus n.
@@ -268,20 +293,24 @@ err:
  *     e The public exponent.
  *     ctx A BN_CTX object.
  *     cb An optional BIGNUM callback object.
+ *     c An optional parameter from the set {0, 1, 3, 5, 7} that
+ *       may be used to add the further requirement that the computed
+ *       prime is congruent to c mod 8. A value of 0 indicates that the option
+ *       is ignored.
  * Returns: 1 on success otherwise it returns 0.
  * Assumptions:
  *     Y, X, r1, r2, e are not NULL.
  */
-int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
+int ossl_bn_rsa_fips186_5_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
                                        const BIGNUM *r1, const BIGNUM *r2,
                                        int nlen, const BIGNUM *e,
-                                       BN_CTX *ctx, BN_GENCB *cb)
+                                       BN_CTX *ctx, BN_GENCB *cb, uint32_t c)
 {
     int ret = 0;
     int i, imax, rounds;
     int bits = nlen >> 1;
-    BIGNUM *tmp, *R, *r1r2x2, *y1, *r1x2;
-    BIGNUM *base, *range;
+    BIGNUM *tmp, *R, *r1r2x2, *r1r2x8, *y1, *r1x2;
+    BIGNUM *base, *range, *r1r2x2_step;
 
     BN_CTX_start(ctx);
 
@@ -290,6 +319,7 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
     R = BN_CTX_get(ctx);
     tmp = BN_CTX_get(ctx);
     r1r2x2 = BN_CTX_get(ctx);
+    r1r2x8 = BN_CTX_get(ctx);
     y1 = BN_CTX_get(ctx);
     r1x2 = BN_CTX_get(ctx);
     if (r1x2 == NULL)
@@ -340,6 +370,14 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
     if (BN_is_negative(R) && !BN_add(R, R, r1r2x2))
         goto err;
 
+    if (c == 0) {
+        r1r2x2_step = r1r2x2;
+    } else {
+        if (!BN_lshift(r1r2x8, r1r2x2, 2))
+            goto err;
+        r1r2x2_step = r1r2x8;
+    }
+
     /*
      * In FIPS 186-4 imax was set to 5 * nlen/2.
      * Analysis by Allen Roginsky
@@ -362,6 +400,15 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
         /* (Step 4) Y = X + ((R - X) mod 2r1r2) */
         if (!BN_mod_sub(Y, R, X, r1r2x2, ctx) || !BN_add(Y, Y, X))
             goto err;
+        /*
+         * (Step 4.1) If there is an optional requirement that the
+         * computed prime is equal to c mod 8, then chose the value
+         * Y, Y + 2r1r2, Y + 4r1r2 OR Y + 6r1r2 that satisfies the requirement.
+         */
+        if (c != 0) {
+            if (!get_multiple_of_y_congruent_to_cmod8(Y, r1r2x2, c))
+                goto err;
+        }
         /* (Step 5) */
         i = 0;
         for (;;) {
@@ -392,7 +439,7 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
                 ERR_raise(ERR_LIB_BN, BN_R_NO_PRIME_CANDIDATE);
                 goto err;
             }
-            if (!BN_add(Y, Y, r1r2x2))
+            if (!BN_add(Y, Y, r1r2x2_step))
                 goto err;
         }
     }

@@ -184,13 +184,13 @@ int ossl_rsa_sp800_56b_check_private(const RSA *rsa);
 int ossl_rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
                                      int strength, int nbits);
 int ossl_rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
-                                    BN_GENCB *cb);
+                                    BN_GENCB *cb, uint32_t a, uint32_t b);
 
 int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
                                              const BIGNUM *e, BN_CTX *ctx);
-int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
+int ossl_rsa_fips186_5_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
                                        int nbits, const BIGNUM *e, BN_CTX *ctx,
-                                       BN_GENCB *cb);
+                                       BN_GENCB *cb, uint32_t a, uint32_t b);
 
 int ossl_rsa_padding_add_PKCS1_type_2_ex(OSSL_LIB_CTX *libctx, unsigned char *to,
                                          int tlen, const unsigned char *from,
