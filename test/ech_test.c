@@ -53,7 +53,7 @@ static int ch_test_cb(SSL *ssl, int *al, void *arg)
     /* this is based on a CH callback used in the apache httpd server */
     if (!SSL_client_hello_get0_ext(ssl, TLSEXT_TYPE_server_name, &pos,
                                    &remaining)
-            || remaining <= 2) 
+            || remaining <= 2)
         goto give_up;
     /* Extract the length of the supplied list of names. */
     len = (*(pos++) << 8);
