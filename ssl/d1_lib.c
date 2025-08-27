@@ -110,10 +110,10 @@ int dtls1_new(SSL *ssl)
     return 1;
 }
 
-static void dtls1_clear_queues(SSL_CONNECTION *s, int keep_unacked_msgs)
+static void dtls1_clear_queues(SSL_CONNECTION *s)
 {
     dtls1_clear_received_buffer(s);
-    dtls1_clear_sent_buffer(s, keep_unacked_msgs);
+    dtls1_clear_sent_buffer(s, 0);
     ossl_list_record_number_elem_free(&s->d1->ack_rec_num);
 }
 
@@ -244,7 +244,7 @@ void dtls1_free(SSL *ssl)
         return;
 
     if (s->d1 != NULL)
-        dtls1_clear_queues(s, 0);
+        dtls1_clear_queues(s);
 
     DTLS_RECORD_LAYER_free(&s->rlayer);
     ssl3_free(ssl);
@@ -270,7 +270,7 @@ int dtls1_clear(SSL *ssl)
         mtu = s->d1->mtu;
         link_mtu = s->d1->link_mtu;
 
-        dtls1_clear_queues(s, 1);
+        dtls1_clear_queues(s);
 
         memset(s->d1, 0, sizeof(*s->d1));
 
