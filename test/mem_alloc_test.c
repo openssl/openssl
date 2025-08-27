@@ -315,9 +315,23 @@ static bool check_counts(int exp_mallocs, int exp_reallocs, int exp_frees)
 	return test_result;
 }
 
-static int check_exp(const char *const fn, const int ln, const size_t sz,
-		     const bool secure, const bool zero, char *const ret,
-		     const enum exp_ret exp, int exp_mallocs, int exp_reallocs)
+/*
+ * check_exp checks many things, but includes line numbers from
+ * __LINE__ when we invoke a macro, possibly with the macro invocation
+ * being split over multiple lines. gcc and clang differ in __LINE__
+ * in a macro invoked over multiple source file lines as being the
+ * first or the last line of the macro invocation, and so in check_exp
+ * we allow for the reported line to be either the first or last line
+ * of the invocation, so that our tests are not sensitive to line
+ * wrapping in the invocation of macros.
+ *
+ * XXX beck - Maybe reconsider if this is testing too much or things
+ * not actually in control of the functions under test.
+ */
+static int check_exp(const char *const fn, const int start_ln, const int end_ln,
+		     const size_t sz, const bool secure, const bool zero,
+		     char *const ret, const enum exp_ret exp, int exp_mallocs,
+		     int exp_reallocs)
 {
 	int num_errs;
 	unsigned long err_code = 0;
@@ -342,7 +356,9 @@ static int check_exp(const char *const fn, const int ln, const size_t sz,
 		if (!TEST_ptr_null(ret) || !TEST_int_eq(num_errs, 1) ||
 		    !TEST_ulong_eq(err_code,
 				   ERR_PACK(ERR_LIB_CRYPTO, 0, oom_err)) ||
-		    !TEST_str_eq(err_file, fn) || !TEST_int_eq(err_line, ln) ||
+		    !TEST_str_eq(err_file, fn) ||
+		    !(TEST_int_eq(err_line, start_ln) ||
+		      TEST_int_eq(err_line, end_ln)) ||
 		    !TEST_str_eq(err_func, "") || !TEST_str_eq(err_data, "") ||
 		    !TEST_int_eq(err_flags, 0))
 			test_result = 0;
@@ -354,7 +370,9 @@ static int check_exp(const char *const fn, const int ln, const size_t sz,
 		    !TEST_ulong_eq(err_code,
 				   ERR_PACK(ERR_LIB_CRYPTO, 0,
 					    ERR_R_PASSED_INVALID_ARGUMENT)) ||
-		    !TEST_str_eq(err_file, fn) || !TEST_int_eq(err_line, ln) ||
+		    !TEST_str_eq(err_file, fn) ||
+		    !(TEST_int_eq(err_line, start_ln) ||
+		      TEST_int_eq(err_line, end_ln)) ||
 		    !TEST_str_eq(err_func, "") || !TEST_str_eq(err_data, "") ||
 		    !TEST_int_eq(err_flags, 0))
 			test_result = 0;
@@ -366,7 +384,9 @@ static int check_exp(const char *const fn, const int ln, const size_t sz,
 		    !TEST_ulong_eq(err_code,
 				   ERR_PACK(ERR_LIB_CRYPTO, 0,
 					    CRYPTO_R_INTEGER_OVERFLOW)) ||
-		    !TEST_str_eq(err_file, fn) || !TEST_int_eq(err_line, ln) ||
+		    !TEST_str_eq(err_file, fn) ||
+		    !(TEST_int_eq(err_line, start_ln) ||
+		      TEST_int_eq(err_line, end_ln)) ||
 		    !TEST_str_eq(err_func, "") || !TEST_str_eq(err_data, "") ||
 		    !TEST_int_eq(err_flags, 0))
 			test_result = 0;
@@ -413,7 +433,8 @@ static int test_xalloc(const bool secure, const bool array, const bool zero,
 		       const bool macro, const struct array_alloc_vector *td)
 {
 	char *ret;
-	int ln = test_line;
+	int start_ln = test_line;
+	int end_ln = test_line;
 	size_t sz = td->nmemb * td->size;
 	enum exp_ret exp = array ? td->exp_calloc : td->exp_malloc;
 	bool really_secure = secure && secure_memory_is_secure;
@@ -425,39 +446,51 @@ static int test_xalloc(const bool secure, const bool array, const bool zero,
 	if (macro) {
 		if (secure) {
 			if (array) {
-				if (zero)
-					ln = OPENSSL_LINE,
+				if (zero) {
+					start_ln = OPENSSL_LINE + 1;
 					ret = OPENSSL_secure_calloc(td->nmemb,
 								    td->size);
-				else
-					ln = OPENSSL_LINE,
+					end_ln = OPENSSL_LINE - 1;
+				} else {
+					start_ln = OPENSSL_LINE + 1;
 					ret = OPENSSL_secure_malloc_array(
 						td->nmemb, td->size);
+					end_ln = OPENSSL_LINE - 1;
+				}
 			} else {
-				if (zero)
-					ln = OPENSSL_LINE,
+				if (zero) {
+					start_ln = OPENSSL_LINE + 1;
 					ret = OPENSSL_secure_zalloc(sz);
-				else
-					ln = OPENSSL_LINE,
+					end_ln = OPENSSL_LINE - 1;
+				} else {
+					start_ln = OPENSSL_LINE + 1;
 					ret = OPENSSL_secure_malloc(sz);
+					end_ln = OPENSSL_LINE - 1;
+				}
 			}
 		} else {
 			if (array) {
-				if (zero)
-					ln = OPENSSL_LINE,
+				if (zero) {
+					start_ln = OPENSSL_LINE + 1;
 					ret = OPENSSL_calloc(td->nmemb,
 							     td->size);
-				else
-					ln = OPENSSL_LINE,
+					end_ln = OPENSSL_LINE - 1;
+				} else {
+					start_ln = OPENSSL_LINE + 1;
 					ret = OPENSSL_malloc_array(td->nmemb,
 								   td->size);
+					end_ln = OPENSSL_LINE - 1;
+				}
 			} else {
-				if (zero)
-					ln = OPENSSL_LINE,
+				if (zero) {
+					start_ln = OPENSSL_LINE + 1;
 					ret = OPENSSL_zalloc(sz);
-				else
-					ln = OPENSSL_LINE,
+					end_ln = OPENSSL_LINE - 1;
+				} else {
+					start_ln = OPENSSL_LINE + 1;
 					ret = OPENSSL_malloc(sz);
+					end_ln = OPENSSL_LINE - 1;
+				}
 			}
 		}
 	} else {
@@ -487,8 +520,8 @@ static int test_xalloc(const bool secure, const bool array, const bool zero,
      */
 	if (!really_secure)
 		exp_cnt += !!(exp == EXP_OOM || !IS_FAIL(exp));
-	res = check_exp(macro ? OPENSSL_FILE : test_fn, ln, sz, really_secure,
-			zero, ret, exp, exp_cnt, 0);
+	res = check_exp(macro ? OPENSSL_FILE : test_fn, start_ln, end_ln, sz,
+			really_secure, zero, ret, exp, exp_cnt, 0);
 
 	if (really_secure)
 		OPENSSL_secure_free(ret);
@@ -516,7 +549,8 @@ static int test_xrealloc(const bool clear, const bool array, const bool macro,
 		size_t old_nmemb = i ? td->orig_nmemb : 0;
 		size_t sz = nmemb * td->size;
 		size_t old_sz = old_nmemb * td->size;
-		int ln = test_line;
+		int start_ln = test_line;
+		int end_ln = test_line;
 		enum exp_ret exp =
 			i ? (array ? td->exp_new_array : td->exp_new) :
 			    (array ? td->exp_orig_array : td->exp_orig);
@@ -555,23 +589,29 @@ static int test_xrealloc(const bool clear, const bool array, const bool macro,
 
 		if (macro) {
 			if (array) {
-				if (clear)
-					ln = OPENSSL_LINE,
+				if (clear) {
+					start_ln = OPENSSL_LINE + 1;
 					ret = OPENSSL_clear_realloc_array(
 						ret, old_nmemb, nmemb,
 						td->size);
-				else
-					ln = OPENSSL_LINE,
+					end_ln = OPENSSL_LINE - 1;
+				} else {
+					start_ln = OPENSSL_LINE + 1;
 					ret = OPENSSL_realloc_array(ret, nmemb,
 								    td->size);
+					end_ln = OPENSSL_LINE - 1;
+				}
 			} else {
-				if (clear)
-					ln = OPENSSL_LINE,
+				if (clear) {
+					start_ln = OPENSSL_LINE + 1;
 					ret = OPENSSL_clear_realloc(ret, old_sz,
 								    sz);
-				else
-					ln = OPENSSL_LINE,
+					end_ln = OPENSSL_LINE - 1;
+				} else {
+					start_ln = OPENSSL_LINE + 1;
 					ret = OPENSSL_realloc(ret, sz);
+					end_ln = OPENSSL_LINE - 1;
+				}
 			}
 		} else {
 			if (array) {
@@ -602,9 +642,9 @@ static int test_xrealloc(const bool clear, const bool array, const bool macro,
 		exp_malloc_cnt +=
 			!!(exp == EXP_OOM && (!macro || (bool)OPENSSL_FILE[0]));
 
-		res = check_exp(macro ? OPENSSL_FILE : test_fn, ln, sz, false,
-				false, ret, exp, exp_malloc_cnt,
-				exp_realloc_cnt);
+		res = check_exp(macro ? OPENSSL_FILE : test_fn, start_ln,
+				end_ln, sz, false, false, ret, exp,
+				exp_malloc_cnt, exp_realloc_cnt);
 		if (res == 0)
 			TEST_error(
 				"realloc return code check fail with i = %zu, ret = %p"
@@ -664,7 +704,8 @@ static int test_xaligned_alloc(const bool array, const bool macro,
 			       const struct array_aligned_alloc_vector *td)
 {
 	char *ret;
-	int ln = test_line;
+	int start_ln = test_line;
+	int end_ln = test_line;
 	size_t sz = td->nmemb * td->size;
 	enum exp_ret exp = array ? td->exp_array : td->exp;
 	int exp_cnt = 0;
@@ -675,12 +716,14 @@ static int test_xaligned_alloc(const bool array, const bool macro,
 
 	if (macro) {
 		if (array) {
-			ln = OPENSSL_LINE,
+			start_ln = OPENSSL_LINE + 1;
 			ret = OPENSSL_aligned_alloc_array(td->nmemb, td->size,
 							  td->align, &freeptr);
+			end_ln = OPENSSL_LINE - 1;
 		} else {
-			ln = OPENSSL_LINE,
+			start_ln = OPENSSL_LINE + 1;
 			ret = OPENSSL_aligned_alloc(sz, td->align, &freeptr);
+			end_ln = OPENSSL_LINE - 1;
 		}
 	} else {
 		if (array)
@@ -712,8 +755,8 @@ static int test_xaligned_alloc(const bool array, const bool macro,
      * from ossl_report_alloc_err_ex.
      */
 	exp_cnt += IS_FAIL(exp) && (!macro || (bool)OPENSSL_FILE[0]);
-	res &= check_exp(macro ? OPENSSL_FILE : test_fn, ln, sz, false, false,
-			 ret, exp, exp_cnt, 0);
+	res &= check_exp(macro ? OPENSSL_FILE : test_fn, start_ln, end_ln, sz,
+			 false, false, ret, exp, exp_cnt, 0);
 
 	/* Check the pointer's alignment */
 	if (exp == EXP_NONNULL) {
