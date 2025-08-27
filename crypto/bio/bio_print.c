@@ -402,6 +402,9 @@ _dopr(char **sbuffer,
             break;
         }
     }
+    ret = 1;
+
+out:
     /*
      * We have to truncate if there is no dynamic buffer and we have filled the
      * static buffer.
@@ -411,12 +414,11 @@ _dopr(char **sbuffer,
         if (*truncated)
             desc.currlen = desc.maxlen - 1;
     }
-    if (!doapr_outch(&desc, '\0'))
-        goto out;
-    *retlen = desc.currlen - 1;
-    ret = 1;
 
-out:
+    if (!doapr_outch(&desc, '\0'))
+        ret = 0;
+
+    *retlen = desc.currlen - 1;
     *sbuffer = desc.sbuffer;
     *maxlen = desc.maxlen;
 

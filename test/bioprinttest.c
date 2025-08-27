@@ -139,6 +139,8 @@ static int test_zu(int i)
     char bio_buf[80];
     const z_data *data = &zu_data[i];
 
+    memset(bio_buf, '@', sizeof(bio_buf));
+
     BIO_snprintf(bio_buf, sizeof(bio_buf) - 1, data->format, data->value);
     if (!TEST_str_eq(bio_buf, data->expected))
         return 0;
@@ -166,6 +168,8 @@ static int test_j(int i)
 {
     const j_data *data = &jf_data[i];
     char bio_buf[80];
+
+    memset(bio_buf, '@', sizeof(bio_buf));
 
     BIO_snprintf(bio_buf, sizeof(bio_buf) - 1, data->format, data->value);
     if (!TEST_str_eq(bio_buf, data->expected))
@@ -200,6 +204,8 @@ static int dofptest(int test, int sub, double val, const char *width, int prec)
 
     for (i = 0; i < (int)OSSL_NELEM(fspecs); i++) {
         const char *fspec = fspecs[i];
+
+        memset(result, '@', sizeof(result));
 
         if (prec >= 0)
             BIO_snprintf(format, sizeof(format), "%%%s.%d%s", width, prec,
