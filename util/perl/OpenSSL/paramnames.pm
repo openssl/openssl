@@ -421,6 +421,8 @@ my %params = (
     'OSSL_PKEY_PARAM_RSA_MGF1_DIGEST' =>      '*OSSL_PKEY_PARAM_MGF1_DIGEST',
     'OSSL_PKEY_PARAM_RSA_PSS_SALTLEN' =>      "saltlen",
     'OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ'    =>     "rsa-derive-from-pq",
+    'OSSL_PKEY_PARAM_RSA_A' =>                "rsa-a",
+    'OSSL_PKEY_PARAM_RSA_B' =>                "rsa-b",
 
 # EC, X25519 and X448 Key generation parameters
     'OSSL_PKEY_PARAM_DHKEM_IKM' =>        "dhkem-ikm",
