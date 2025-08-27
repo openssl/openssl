@@ -26,10 +26,64 @@ static char *rootcert = NULL;
 
 /* TODO(ECH): add some testing of SSL_OP_ECH_IGNORE_CID */
 
-/* callback */
-static unsigned int test_cb(SSL *s, const char *str)
+/* ECH callback */
+static unsigned int ech_test_cb(SSL *s, const char *str)
 {
+    if (verbose)
+        TEST_info("ech_test_cb called");
     return 1;
+}
+
+/* ClientHello callback */
+static int ch_test_cb(SSL *ssl, int *al, void *arg)
+{
+    char *servername = NULL;
+    const unsigned char *pos;
+    size_t len, remaining;
+
+    if (verbose) {
+        TEST_info("ch_test_cb called");
+        if (SSL_client_hello_get0_ext(ssl, TLSEXT_TYPE_ech, &pos, &remaining)) {
+            TEST_info("there is an ECH extension");
+        } else {
+            TEST_info("there is NO ECH extension");
+        }
+    }
+
+    /* this is based on a CH callback used in the apache httpd server */
+    if (!SSL_client_hello_get0_ext(ssl, TLSEXT_TYPE_server_name, &pos,
+                                   &remaining)
+            || remaining <= 2) 
+        goto give_up;
+    /* Extract the length of the supplied list of names. */
+    len = (*(pos++) << 8);
+    len += *(pos++);
+    if (len + 2 != remaining)
+        goto give_up;
+    remaining = len;
+    /*
+     * The list in practice only has a single element, so we only consider
+     * the first one.
+     */
+    if (remaining <= 3 || *pos++ != TLSEXT_NAMETYPE_host_name)
+        goto give_up;
+    remaining--;
+
+    /* Now we can finally pull out the byte array with the actual hostname. */
+    len = (*(pos++) << 8);
+    len += *(pos++);
+    if (len + 2 != remaining)
+        goto give_up;
+
+    servername = OPENSSL_malloc(len + 1);
+    memcpy(servername, pos, len);
+    servername[len] = '\0';
+    if (verbose)
+        TEST_info("servername: %s", servername);
+    OPENSSL_free(servername);
+    return 1;
+give_up:
+    return 0;
 }
 
 /*
@@ -1095,8 +1149,8 @@ static int ech_api_basic_calls(void)
         || !TEST_false(rclen)
         || !TEST_ptr_eq(rc, NULL))
         goto end;
-    SSL_CTX_ech_set_callback(ctx, test_cb);
-    SSL_ech_set_callback(s, test_cb);
+    SSL_CTX_ech_set_callback(ctx, ech_test_cb);
+    SSL_ech_set_callback(s, ech_test_cb);
 
     /* all good */
     rv = 1;
@@ -1145,6 +1199,7 @@ end:
 # define OSSL_ECH_TEST_EARLY    2
 # define OSSL_ECH_TEST_CUSTOM   3
 # define OSSL_ECH_TEST_ENOE     4 /* early + no-ech */
+# define OSSL_ECH_TEST_CBS      5 /* test callbacks */
 /* note: early-data is prohibited after HRR so no tests for that */
 
 /*
@@ -1224,6 +1279,10 @@ static int test_ech_roundtrip_helper(int idx, int combo)
                                                  &server, NULL, &server)))
             goto end;
     }
+    if (combo == OSSL_ECH_TEST_CBS) {
+        SSL_CTX_ech_set_callback(sctx, ech_test_cb);
+        SSL_CTX_set_client_hello_cb(sctx, ch_test_cb, NULL);
+    }
     if (combo != OSSL_ECH_TEST_ENOE
         && !TEST_true(SSL_CTX_set1_echstore(cctx, es)))
         goto end;
@@ -1261,7 +1320,7 @@ static int test_ech_roundtrip_helper(int idx, int combo)
         goto end;
     /* all good */
     if (combo == OSSL_ECH_TEST_BASIC || combo == OSSL_ECH_TEST_HRR
-        || combo == OSSL_ECH_TEST_CUSTOM) {
+        || combo == OSSL_ECH_TEST_CUSTOM || combo == OSSL_ECH_TEST_CBS) {
         res = 1;
         goto end;
     }
@@ -1377,6 +1436,14 @@ static int ech_enoe_test(int idx)
     return test_ech_roundtrip_helper(idx, OSSL_ECH_TEST_ENOE);
 }
 
+/* Test a roundtrip with ECH, and callbacks */
+static int ech_cb_test(int idx)
+{
+    if (verbose)
+        TEST_info("Doing: ech + callbacks test ");
+    return test_ech_roundtrip_helper(idx, OSSL_ECH_TEST_CBS);
+}
+
 #endif
 
 int setup_tests(void)
@@ -1420,6 +1487,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ech_early, suite_combos);
     ADD_ALL_TESTS(ech_custom_test, suite_combos);
     ADD_ALL_TESTS(ech_enoe_test, suite_combos);
+    ADD_ALL_TESTS(ech_cb_test, suite_combos);
     /* TODO(ECH): add more test code as other PRs done */
     return 1;
 err:
