@@ -424,6 +424,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
      "srtp unknown protection profile"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH),
      "ssl3 ext invalid max fragment length"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SSL3_EXT_INVALID_RECORD_SIZE_LIMIT),
+     "ssl3 ext invalid record size limit"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SSL3_EXT_INVALID_SERVERNAME),
      "ssl3 ext invalid servername"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE),
