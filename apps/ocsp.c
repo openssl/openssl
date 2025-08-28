@@ -598,7 +598,7 @@ int ocsp_main(int argc, char **argv)
             BIO_printf(bio_err, "Error getting password\n");
             goto end;
         }
-        rkey = load_key(rkeyfile, FORMAT_UNDEF, 0, passin, NULL,
+        rkey = load_key(rkeyfile, FORMAT_UNDEF, 0, passin,
                         "responder private key");
         if (rkey == NULL)
             goto end;
@@ -693,7 +693,7 @@ redo_accept:
                             "signer certificates"))
                 goto end;
         }
-        key = load_key(keyfile, FORMAT_UNDEF, 0, NULL, NULL,
+        key = load_key(keyfile, FORMAT_UNDEF, 0, NULL,
                        "signer private key");
         if (key == NULL)
             goto end;

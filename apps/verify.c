@@ -27,7 +27,7 @@ static int v_verbose = 0, vflags = 0;
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_ENGINE, OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
+    OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
     OPT_UNTRUSTED, OPT_TRUSTED, OPT_CRLFILE, OPT_CRL_DOWNLOAD, OPT_SHOW_CHAIN,
     OPT_V_ENUM, OPT_NAMEOPT, OPT_VFYOPT,
@@ -40,9 +40,6 @@ const OPTIONS verify_options[] = {
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
     {"verbose", OPT_VERBOSE, '-',
         "Print extra information about the operations being performed."},
     {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
@@ -78,7 +75,6 @@ const OPTIONS verify_options[] = {
 
 int verify_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
     STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
     STACK_OF(OPENSSL_STRING) *vfyopts = NULL;
@@ -165,12 +161,6 @@ int verify_main(int argc, char **argv)
         case OPT_CRL_DOWNLOAD:
             crl_download = 1;
             break;
-        case OPT_ENGINE:
-            if ((e = setup_engine(opt_arg(), 0)) == NULL) {
-                /* Failure message already displayed */
-                goto end;
-            }
-            break;
         case OPT_SHOW_CHAIN:
             show_chain = 1;
             break;
@@ -238,7 +228,6 @@ int verify_main(int argc, char **argv)
     OSSL_STACK_OF_X509_free(trusted);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
     sk_OPENSSL_STRING_free(vfyopts);
-    release_engine(e);
     return (ret < 0 ? 2 : ret);
 }
 

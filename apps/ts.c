@@ -46,13 +46,13 @@ static int create_digest(BIO *input, const char *digest,
 static ASN1_INTEGER *create_nonce(int bits);
 
 /* Reply related functions. */
-static int reply_command(CONF *conf, const char *section, const char *engine,
+static int reply_command(CONF *conf, const char *section,
                          const char *queryfile, const char *passin, const char *inkey,
                          const EVP_MD *md, const char *signer, const char *chain,
                          const char *policy, const char *in, int token_in,
                          const char *out, int token_out, int text);
 static TS_RESP *read_PKCS7(BIO *in_bio);
-static TS_RESP *create_response(CONF *conf, const char *section, const char *engine,
+static TS_RESP *create_response(CONF *conf, const char *section,
                                 const char *queryfile, const char *passin,
                                 const char *inkey, const EVP_MD *md, const char *signer,
                                 const char *chain, const char *policy);
@@ -78,7 +78,7 @@ static int verify_cb(int ok, X509_STORE_CTX *ctx);
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_ENGINE, OPT_CONFIG, OPT_SECTION, OPT_QUERY, OPT_DATA,
+    OPT_CONFIG, OPT_SECTION, OPT_QUERY, OPT_DATA,
     OPT_DIGEST, OPT_TSPOLICY, OPT_NO_NONCE, OPT_CERT,
     OPT_IN, OPT_TOKEN_IN, OPT_OUT, OPT_TOKEN_OUT, OPT_TEXT,
     OPT_REPLY, OPT_QUERYFILE, OPT_PASSIN, OPT_INKEY, OPT_SIGNER,
@@ -91,9 +91,6 @@ const OPTIONS ts_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"config", OPT_CONFIG, '<', "Configuration file"},
     {"section", OPT_SECTION, 's', "Section to use within config file"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
     {"inkey", OPT_INKEY, 's', "File with private key for reply"},
     {"signer", OPT_SIGNER, 's', "Signer certificate file"},
     {"chain", OPT_CHAIN, '<', "File with signer CA chain"},
@@ -143,11 +140,7 @@ static char* opt_helplist[] = {
     "    [-signer tsa_cert.pem] [-inkey private_key.pem]",
     "    [-chain certs_file.pem] [-tspolicy oid]",
     "    [-in file] [-token_in] [-out file] [-token_out]",
-#ifndef OPENSSL_NO_ENGINE
-    "    [-text] [-engine id]",
-#else
     "    [-text]",
-#endif
     "",
     " openssl ts -verify -CApath dir -CAfile root-cert.pem -CAstore uri",
     "   -untrusted extra-certs.pem [-data file] [-digest hexstring]",
@@ -160,7 +153,7 @@ int ts_main(int argc, char **argv)
     CONF *conf = NULL;
     const char *CAfile = NULL, *prog;
     char *untrusted = NULL;
-    const char *configfile = default_config_file, *engine = NULL;
+    const char *configfile = default_config_file;
     const char *section = NULL, *digestname = NULL;
     char **helpp;
     char *password = NULL;
@@ -276,9 +269,6 @@ int ts_main(int argc, char **argv)
         case OPT_UNTRUSTED:
             untrusted = opt_arg();
             break;
-        case OPT_ENGINE:
-            engine = opt_arg();
-            break;
         case OPT_MD:
             digestname = opt_unknown();
             break;
@@ -331,7 +321,7 @@ int ts_main(int argc, char **argv)
             if ((conf == NULL) || (token_in != 0))
                 goto opthelp;
         }
-        ret = !reply_command(conf, section, engine, queryfile,
+        ret = !reply_command(conf, section, queryfile,
                              password, inkey, md, signer, chain, policy,
                              in, token_in, out, token_out, text);
 
@@ -587,7 +577,7 @@ static ASN1_INTEGER *create_nonce(int bits)
  * Reply-related method definitions.
  */
 
-static int reply_command(CONF *conf, const char *section, const char *engine,
+static int reply_command(CONF *conf, const char *section,
                          const char *queryfile, const char *passin, const char *inkey,
                          const EVP_MD *md, const char *signer, const char *chain,
                          const char *policy, const char *in, int token_in,
@@ -610,7 +600,7 @@ static int reply_command(CONF *conf, const char *section, const char *engine,
             response = d2i_TS_RESP_bio(in_bio, NULL);
         }
     } else {
-        response = create_response(conf, section, engine, queryfile,
+        response = create_response(conf, section, queryfile,
                                    passin, inkey, md, signer, chain, policy);
         if (response != NULL)
             BIO_printf(bio_err, "Response has been generated.\n");
@@ -695,7 +685,7 @@ static TS_RESP *read_PKCS7(BIO *in_bio)
     return resp;
 }
 
-static TS_RESP *create_response(CONF *conf, const char *section, const char *engine,
+static TS_RESP *create_response(CONF *conf, const char *section,
                                 const char *queryfile, const char *passin,
                                 const char *inkey, const EVP_MD *md, const char *signer,
                                 const char *chain, const char *policy)
@@ -713,10 +703,6 @@ static TS_RESP *create_response(CONF *conf, const char *section, const char *eng
         goto end;
     if (!TS_CONF_set_serial(conf, section, serial_cb, resp_ctx))
         goto end;
-#ifndef OPENSSL_NO_ENGINE
-    if (!TS_CONF_set_crypto_device(conf, section, engine))
-        goto end;
-#endif
     if (!TS_CONF_set_signer_cert(conf, section, signer, resp_ctx))
         goto end;
     if (!TS_CONF_set_certs(conf, section, chain, resp_ctx))
