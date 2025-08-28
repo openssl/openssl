@@ -71,8 +71,7 @@ static int check_end(const char *str, const char *end);
 static int join(char buf[], size_t buf_size, const char *name,
                 const char *tail, const char *desc);
 static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
-                                    char **pkeytype, long *pkeylen,
-                                    ENGINE *keygen_engine);
+                                    char **pkeytype, long *pkeylen);
 
 static const char *section = "req";
 static CONF *req_conf = NULL;
@@ -82,7 +81,7 @@ static int batch = 0;
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_CIPHER,
-    OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_KEYGEN_ENGINE, OPT_KEY,
+    OPT_INFORM, OPT_OUTFORM, OPT_KEY,
     OPT_PUBKEY, OPT_NEW, OPT_CONFIG, OPT_KEYFORM, OPT_IN, OPT_OUT,
     OPT_KEYOUT, OPT_PASSIN, OPT_PASSOUT, OPT_NEWKEY,
     OPT_PKEYOPT, OPT_SIGOPT, OPT_VFYOPT, OPT_BATCH, OPT_NEWHDR, OPT_MODULUS,
@@ -100,11 +99,6 @@ const OPTIONS req_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"cipher", OPT_CIPHER, 's', "Specify the cipher for private key encryption"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-    {"keygen_engine", OPT_KEYGEN_ENGINE, 's',
-     "Specify engine to be used for key generation operations"},
-#endif
     {"in", OPT_IN, '<', "X.509 request input file (default stdin)"},
     {"inform", OPT_INFORM, 'F',
      "CSR input format to use (PEM or DER; by default try PEM first)"},
@@ -245,7 +239,6 @@ int req_main(int argc, char **argv)
 {
     ASN1_INTEGER *serial = NULL;
     BIO *out = NULL;
-    ENGINE *e = NULL, *gen_eng = NULL;
     EVP_PKEY *pkey = NULL, *CAkey = NULL;
     EVP_PKEY_CTX *genctx = NULL;
     STACK_OF(OPENSSL_STRING) *pkeyopts = NULL, *sigopts = NULL, *vfyopts = NULL;
@@ -297,18 +290,6 @@ int req_main(int argc, char **argv)
         case OPT_OUTFORM:
             if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
                 goto opthelp;
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
-            break;
-        case OPT_KEYGEN_ENGINE:
-#ifndef OPENSSL_NO_ENGINE
-            gen_eng = setup_engine(opt_arg(), 0);
-            if (gen_eng == NULL) {
-                BIO_printf(bio_err, "Can't find keygen engine %s\n", *argv);
-                goto opthelp;
-            }
-#endif
             break;
         case OPT_KEY:
             keyfile = opt_arg();
@@ -624,7 +605,7 @@ int req_main(int argc, char **argv)
     }
 
     if (keyfile != NULL) {
-        pkey = load_key(keyfile, keyform, 0, passin, e, "private key");
+        pkey = load_key(keyfile, keyform, 0, passin, "private key");
         if (pkey == NULL)
             goto end;
         app_RAND_load_conf(req_conf, section);
@@ -640,7 +621,7 @@ int req_main(int argc, char **argv)
         if (!app_conf_try_number(req_conf, section, BITS, &newkey_len))
             newkey_len = DEFAULT_KEY_LENGTH;
 
-        genctx = set_keygen_ctx(keyalg, &keyalgstr, &newkey_len, gen_eng);
+        genctx = set_keygen_ctx(keyalg, &keyalgstr, &newkey_len);
         if (genctx == NULL)
             goto end;
 
@@ -762,7 +743,7 @@ int req_main(int argc, char **argv)
                        "Warning: Ignoring -CAkey option since no -CA option is given\n");
         } else {
             if ((CAkey = load_key(CAkeyfile, FORMAT_UNDEF,
-                                  0, passin, e,
+                                  0, passin,
                                   CAkeyfile != CAfile
                                   ? "issuer private key from -CAkey arg"
                                   : "issuer private key from -CA arg")) == NULL)
@@ -1056,9 +1037,6 @@ int req_main(int argc, char **argv)
     sk_OPENSSL_STRING_free(vfyopts);
     lh_OPENSSL_STRING_doall(addexts, exts_cleanup);
     lh_OPENSSL_STRING_free(addexts);
-#ifndef OPENSSL_NO_ENGINE
-    release_engine(gen_eng);
-#endif
     OPENSSL_free(keyalgstr);
     X509_REQ_free(req);
     X509_NAME_free(fsubj);
@@ -1066,7 +1044,6 @@ int req_main(int argc, char **argv)
     X509_free(CAcert);
     EVP_PKEY_free(CAkey);
     ASN1_INTEGER_free(serial);
-    release_engine(e);
     if (passin != nofree_passin)
         OPENSSL_free(passin);
     if (passout != nofree_passout)
@@ -1484,8 +1461,7 @@ static int join(char buf[], size_t buf_size, const char *name,
 }
 
 static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
-                                    char **pkeytype, long *pkeylen,
-                                    ENGINE *keygen_engine)
+                                    char **pkeytype, long *pkeylen)
 {
     EVP_PKEY_CTX *gctx = NULL;
     EVP_PKEY *param = NULL;
@@ -1601,28 +1577,13 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
             return NULL;
         }
 
-        if (keygen_engine != NULL)
-            gctx = EVP_PKEY_CTX_new(param, keygen_engine);
-        else
-            gctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
-                                              param, app_get0_propq());
+        gctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
+                                          param, app_get0_propq());
         *pkeylen = EVP_PKEY_get_bits(param);
         EVP_PKEY_free(param);
     } else {
-#ifndef OPENSSL_NO_DEPRECATED_3_6
-        if (keygen_engine != NULL) {
-            int pkey_id = get_legacy_pkey_id(app_get0_libctx(), *pkeytype,
-                                             keygen_engine);
-
-            if (pkey_id != NID_undef)
-                gctx = EVP_PKEY_CTX_new_id(pkey_id, keygen_engine);
-        } else {
-#endif
-            gctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(),
-                                              *pkeytype, app_get0_propq());
-#ifndef OPENSSL_NO_DEPRECATED_3_6
-        }
-#endif
+        gctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(),
+                                          *pkeytype, app_get0_propq());
     }
 
     if (gctx == NULL) {

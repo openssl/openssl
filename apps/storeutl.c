@@ -25,7 +25,7 @@ static BIO *out = NULL;
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_ENGINE, OPT_OUT, OPT_PASSIN,
+    OPT_OUT, OPT_PASSIN,
     OPT_NOOUT, OPT_TEXT, OPT_RECURSIVE,
     OPT_SEARCHFOR_CERTS, OPT_SEARCHFOR_KEYS, OPT_SEARCHFOR_CRLS,
     OPT_CRITERION_SUBJECT, OPT_CRITERION_ISSUER, OPT_CRITERION_SERIAL,
@@ -39,9 +39,6 @@ const OPTIONS storeutl_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"", OPT_MD, '-', "Any supported digest"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
 
     OPT_SECTION("Search"),
     {"certs", OPT_SEARCHFOR_CERTS, '-', "Search for certificates only"},
@@ -73,7 +70,6 @@ int storeutl_main(int argc, char *argv[])
 {
     int ret = 1, noout = 0, text = 0, recursive = 0;
     char *outfile = NULL, *passin = NULL, *passinarg = NULL;
-    ENGINE *e = NULL;
     OPTION_CHOICE o;
     char *prog;
     PW_CB_DATA pw_cb_data;
@@ -243,9 +239,6 @@ int storeutl_main(int argc, char *argv[])
                 goto end;
             }
             break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
-            break;
         case OPT_MD:
             digestname = opt_unknown();
             break;
@@ -324,7 +317,6 @@ int storeutl_main(int argc, char *argv[])
     OSSL_STORE_SEARCH_free(search);
     BIO_free_all(out);
     OPENSSL_free(passin);
-    release_engine(e);
     return ret;
 }
 
