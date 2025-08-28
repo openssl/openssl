@@ -212,17 +212,6 @@ int ossl_prov_digest_load(PROV_DIGEST *pd, const OSSL_PARAM *digest,
     return pd->md != NULL;
 }
 
-int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
-                                      const OSSL_PARAM params[],
-                                      OSSL_LIB_CTX *ctx)
-{
-    return ossl_prov_digest_load(pd,
-                                 OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST),
-                                 OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_PROPERTIES),
-                                 OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_ENGINE),
-                                 ctx);
-}
-
 void ossl_prov_digest_set_md(PROV_DIGEST *pd, EVP_MD *md)
 {
     ossl_prov_digest_reset(pd);
