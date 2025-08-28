@@ -470,6 +470,49 @@ static int convert_tm_to_asn1_time(void)
     return 1;
 }
 
+/*
+ * this test checks for integer overflow by setting the
+ * time and offset values to their maximum values.
+ * This test needs to build with sanitizers (like UBSAN or other tools)
+ * that can catch errors like integer overflow.
+ * links: https://github.com/openssl/openssl/pull/28184
+ */
+static int asn1_utctime_adjust(void)
+{
+    int ret = 0;
+    ASN1_UTCTIME *s;
+    /*
+    * (time_t)227598906949632 is not a magic number, it corresponds
+    * to the date 7212392/03/31. If too large a value (such as LONG_MAX)
+    * is passed to ASN1_UTCTIME_adj(), gmtime_r() will return an error
+    * when calling OPENSSL_gmtime() without calling OPENSSL_gmtime_adj()
+    * in ASN1_UTCTIME_adj().
+    */
+    time_t t = (time_t)227598906949632;
+    int offset_day = INT_MAX;
+    long offset_sec = LONG_MAX;
+
+    /*
+    * When passing an abnormal time_t value of 227598906949632,
+    * if the year after calculation in OPENSSL_gmtime_adj()
+    * does not fall in the interval (1900, 9999), the OPENSSL_gmtime_adj()
+    * function will return 0, and the ASN1_UTCTIME_adj() function will
+    * return a null pointer. This is considered a correct result.
+    * Otherwise, if ASN1_UTCTIME_adj() returns a valid pointer,
+    * an error has occurred, possibly an integer overflow.
+    */
+    s = ASN1_UTCTIME_adj(NULL, t, offset_day, offset_sec);
+    if (!TEST_ptr_null(s)) {
+        TEST_info("ASN1_UTCTIME_adj() failed.");
+        goto err;
+    }
+
+    ret = 1;
+err:
+    ASN1_UTCTIME_free(s);
+    return ret;
+}
+
 int setup_tests(void)
 {
     /*
@@ -507,5 +550,6 @@ int setup_tests(void)
     ADD_TEST(test_time_dup);
     ADD_ALL_TESTS(convert_asn1_to_time_t, OSSL_NELEM(asn1_to_utc));
     ADD_TEST(convert_tm_to_asn1_time);
+    ADD_TEST(asn1_utctime_adjust);
     return 1;
 }
