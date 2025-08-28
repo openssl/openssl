@@ -564,8 +564,7 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
 
     if (p.digest != NULL) {
-        if (!ossl_prov_digest_load(&ctx->digest, p.digest,
-                                   p.propq, p.engine, provctx))
+        if (!ossl_prov_digest_load(&ctx->digest, p.digest, p.propq, provctx))
             return 0;
         md = ossl_prov_digest_md(&ctx->digest);
         if (EVP_MD_xof(md)) {

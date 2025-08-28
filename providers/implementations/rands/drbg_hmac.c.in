@@ -511,13 +511,11 @@ static int drbg_hmac_set_ctx_params_locked
     if (!drbg_fetch_algs_from_prov(p, libctx, &hmac->ctx, &prov_md)) {
         (void)ERR_pop_to_mark();
         /* fall back to full implementation search */
-        if (!ossl_prov_digest_load(&hmac->digest, p->digest, p->propq,
-                                   p->engine, libctx))
+        if (!ossl_prov_digest_load(&hmac->digest, p->digest, p->propq, libctx))
             return 0;
 
         if (!ossl_prov_macctx_load(&hmac->ctx, p->mac, NULL, p->digest,
-                                   p->propq, p->engine,
-                                   NULL, NULL, NULL, libctx))
+                                   p->propq, NULL, NULL, NULL, libctx))
             return 0;
     } else {
         (void)ERR_clear_last_mark();

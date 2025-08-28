@@ -222,8 +222,7 @@ static int kdf_pbkdf1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     libctx = PROV_LIBCTX_OF(ctx->provctx);
 
-    if (!ossl_prov_digest_load(&ctx->digest, p.digest,
-                               p.propq, p.engine, libctx))
+    if (!ossl_prov_digest_load(&ctx->digest, p.digest, p.propq, libctx))
         return 0;
 
     if (p.pw != NULL && !kdf_pbkdf1_set_membuf(&ctx->pass, &ctx->pass_len, p.pw))

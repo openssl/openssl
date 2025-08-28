@@ -590,8 +590,7 @@ static int drbg_hash_set_ctx_params_locked
     if (!drbg_fetch_digest_from_prov(p, libctx, &prov_md)) {
         (void)ERR_pop_to_mark();
         /* fall back to full implementation search */
-        if (!ossl_prov_digest_load(&hash->digest, p->digest, p->propq,
-                                   p->engine, libctx))
+        if (!ossl_prov_digest_load(&hash->digest, p->digest, p->propq, libctx))
             return 0;
     } else {
         (void)ERR_clear_last_mark();
