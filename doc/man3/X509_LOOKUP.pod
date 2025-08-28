@@ -123,9 +123,9 @@ I<type> indicates what type of object is expected.
 This can only be used with a lookup using the implementation
 L<X509_LOOKUP_hash_dir(3)>.
 
-X509_LOOKUP_add_store_ex() passes a URI for a directory-like structure
-from which containers with certificates and CRLs are loaded on demand
-into the associated B<X509_STORE>. The library context I<libctx> and property
+X509_LOOKUP_add_store_ex() passes a filename or URI I<uri> for a directory-like
+structure from which containers with certificates and CRLs are loaded on demand
+into the trust store I<ctx>. The library context I<libctx> and property
 query I<propq> are used when fetching algorithms from providers.
 
 X509_LOOKUP_add_store() is similar to X509_LOOKUP_add_store_ex() but

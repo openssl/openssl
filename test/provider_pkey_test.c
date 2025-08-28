@@ -258,13 +258,13 @@ static int test_pkey_store(int idx)
     if (!TEST_ptr(fake_rsa = fake_rsa_start(libctx)))
         goto end;
 
-    if (!TEST_ptr(loader = OSSL_STORE_LOADER_fetch(libctx, "fake_rsa",
+    if (!TEST_ptr(loader = OSSL_STORE_LOADER_fetch(libctx, "fake-rsa",
                                                    propq)))
         goto end;
 
     OSSL_STORE_LOADER_free(loader);
 
-    if (!TEST_ptr(ctx = OSSL_STORE_open_ex("fake_rsa:test", libctx, propq,
+    if (!TEST_ptr(ctx = OSSL_STORE_open_ex("fake-rsa:test", libctx, propq,
                                            NULL, NULL, NULL, NULL, NULL)))
         goto end;
 
@@ -308,14 +308,14 @@ static int test_pkey_delete(void)
     if (!TEST_ptr(fake_rsa = fake_rsa_start(libctx)))
         goto end;
 
-    if (!TEST_ptr(loader = OSSL_STORE_LOADER_fetch(libctx, "fake_rsa",
+    if (!TEST_ptr(loader = OSSL_STORE_LOADER_fetch(libctx, "fake-rsa",
                                                    propq)))
         goto end;
 
     OSSL_STORE_LOADER_free(loader);
 
     /* First iteration: load key, check it, delete it */
-    if (!TEST_ptr(ctx = OSSL_STORE_open_ex("fake_rsa:test", libctx, propq,
+    if (!TEST_ptr(ctx = OSSL_STORE_open_ex("fake-rsa:test", libctx, propq,
                                            NULL, NULL, NULL, NULL, NULL)))
         goto end;
 
@@ -333,14 +333,14 @@ static int test_pkey_delete(void)
     EVP_PKEY_free(pkey);
     pkey = NULL;
 
-    if (!TEST_int_eq(OSSL_STORE_delete("fake_rsa:test", libctx, propq,
+    if (!TEST_int_eq(OSSL_STORE_delete("fake-rsa:test", libctx, propq,
                                        NULL, NULL, NULL), 1))
         goto end;
     if (!TEST_int_eq(OSSL_STORE_close(ctx), 1))
         goto end;
 
     /* Second iteration: load key should fail */
-    if (!TEST_ptr(ctx = OSSL_STORE_open_ex("fake_rsa:test", libctx, propq,
+    if (!TEST_ptr(ctx = OSSL_STORE_open_ex("fake-rsa:test", libctx, propq,
                                            NULL, NULL, NULL, NULL, NULL)))
         goto end;
 
@@ -390,7 +390,7 @@ static int test_pkey_store_open_ex(void)
     if (!TEST_ptr(fake_rsa = fake_rsa_start(libctx)))
         goto end;
 
-    if (!TEST_ptr(loader = OSSL_STORE_LOADER_fetch(libctx, "fake_rsa",
+    if (!TEST_ptr(loader = OSSL_STORE_LOADER_fetch(libctx, "fake-rsa",
                                                    propq)))
         goto end;
 
@@ -402,13 +402,13 @@ static int test_pkey_store_open_ex(void)
     if (UI_method_set_reader(ui_method, fake_pw_read_string))
         goto end;
 
-    if (!TEST_ptr(ctx = OSSL_STORE_open_ex("fake_rsa:openpwtest", libctx, propq,
+    if (!TEST_ptr(ctx = OSSL_STORE_open_ex("fake-rsa:openpwtest", libctx, propq,
                                            ui_method, NULL, NULL, NULL, NULL)))
         goto end;
 
     /* retry w/o ui_method to ensure we actually enter pw checks and fail */
     OSSL_STORE_close(ctx);
-    if (!TEST_ptr_null(ctx = OSSL_STORE_open_ex("fake_rsa:openpwtest", libctx,
+    if (!TEST_ptr_null(ctx = OSSL_STORE_open_ex("fake-rsa:openpwtest", libctx,
                                                 propq, NULL, NULL, NULL, NULL,
                                                 NULL)))
         goto end;
