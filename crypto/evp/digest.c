@@ -445,7 +445,7 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
     size_t size = 0;
     size_t mdsize = 0;
 
-    if (ossl_unlikely(ctx->digest == NULL))
+    if (ctx && ossl_unlikely(ctx->digest == NULL))
         return 0;
 
     sz = EVP_MD_CTX_get_size(ctx);
