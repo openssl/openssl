@@ -35,7 +35,6 @@
 # include "opt.h"
 # include "fmt.h"
 # include "platform.h"
-# include "engine_loader.h"
 # include "app_libctx.h"
 
 /*
@@ -129,10 +128,10 @@ X509_CRL *load_crl(const char *uri, int format, int maybe_stdin,
 void cleanse(char *str);
 void clear_free(char *str);
 EVP_PKEY *load_key(const char *uri, int format, int maybe_stdin,
-                   const char *pass, ENGINE *e, const char *desc);
+                   const char *pass, const char *desc);
 /* first try reading public key, on failure resort to loading private key */
 EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
-                      const char *pass, ENGINE *e, const char *desc);
+                      const char *pass, const char *desc);
 EVP_PKEY *load_keyparams(const char *uri, int format, int maybe_stdin,
                          const char *keytype, const char *desc);
 EVP_PKEY *load_keyparams_suppress(const char *uri, int format, int maybe_stdin,
@@ -178,18 +177,9 @@ __owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
 
 # endif
 
-ENGINE *setup_engine_methods(const char *id, unsigned int methods, int debug);
-# define setup_engine(e, debug) setup_engine_methods(e, (unsigned int)-1, debug)
-void release_engine(ENGINE *e);
-int init_engine(ENGINE *e);
-int finish_engine(ENGINE *e);
-char *make_engine_uri(ENGINE *e, const char *key_id, const char *desc);
-
 # ifndef OPENSSL_NO_DEPRECATED_3_6
 int get_legacy_pkey_id(OSSL_LIB_CTX *libctx, const char *algname, ENGINE *e);
 # endif
-const EVP_MD *get_digest_from_engine(const char *name);
-const EVP_CIPHER *get_cipher_from_engine(const char *name);
 
 # ifndef OPENSSL_NO_OCSP
 OCSP_RESPONSE *process_responder(OCSP_REQUEST *req, const char *host,
@@ -281,7 +271,7 @@ int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value);
 int x509_ctrl_string(X509 *x, const char *value);
 int x509_req_ctrl_string(X509_REQ *x, const char *value);
 int init_gen_str(EVP_PKEY_CTX **pctx,
-                 const char *algname, ENGINE *e, int do_param,
+                 const char *algname, int do_param,
                  OSSL_LIB_CTX *libctx, const char *propq);
 int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey);
 int do_X509_sign(X509 *x, int force_v1, EVP_PKEY *pkey, const char *md,
