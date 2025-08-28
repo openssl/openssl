@@ -174,7 +174,6 @@ const EVP_MD *ossl_prov_digest_md(const PROV_DIGEST *pd)
 int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
                          const char *ciphername,
                          const char *mdname,
-                         const char *engine,
                          const char *properties)
 {
     OSSL_PARAM mac_params[5], *mp = mac_params;
@@ -203,7 +202,6 @@ int ossl_prov_macctx_load(EVP_MAC_CTX **macctx,
                           const char *mdname, OSSL_LIB_CTX *libctx)
 {
     const char *properties = NULL;
-    const char *engine = NULL;
 
     if (macname == NULL && pmac != NULL)
         if (!OSSL_PARAM_get_utf8_string_ptr(pmac, &macname))
@@ -236,10 +234,8 @@ int ossl_prov_macctx_load(EVP_MAC_CTX **macctx,
     if (mdname == NULL && pdigest != NULL)
         if (!OSSL_PARAM_get_utf8_string_ptr(pdigest, &mdname))
             return 0;
-    if (pengine != NULL && !OSSL_PARAM_get_utf8_string_ptr(pengine, &engine))
-        return 0;
 
-    if (ossl_prov_set_macctx(*macctx, ciphername, mdname, engine, properties))
+    if (ossl_prov_set_macctx(*macctx, ciphername, mdname, properties))
         return 1;
 
     EVP_MAC_CTX_free(*macctx);

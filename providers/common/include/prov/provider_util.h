@@ -106,7 +106,6 @@ int ossl_prov_macctx_load(EVP_MAC_CTX **macctx,
 int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
                          const char *ciphername,
                          const char *mdname,
-                         const char *engine,
                          const char *properties);
 
 /* MAC functions */
