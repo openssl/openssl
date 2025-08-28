@@ -18,6 +18,7 @@ our @EXPORT_OK = qw(generate_public_macros
 
 my $case_sensitive = 1;
 my $need_break = 0;
+my $invalid_param = "invalid param";
 
 my %params = (
 # Well known parameter names that core passes to providers
@@ -680,7 +681,11 @@ sub trie_matched {
   my $indent1 = shift;
   my $indent2 = shift;
 
-  if (defined($num)) {
+  if ($field eq $invalid_param) {
+    printf "%sERR_raise_data(ERR_LIB_PROV, ERR_R_UNSUPPORTED,\n", $indent1;
+    printf "%s               \"param %%s is unsupported\", s);\n", $indent1;
+    printf "%sreturn 0;\n", $indent1;
+  } elsif (defined($num)) {
     printf "%sif (ossl_unlikely(r->num_%s >= %s)) {\n", $indent1, $field, $num;
     printf "%sERR_raise_data(ERR_LIB_PROV, PROV_R_TOO_MANY_RECORDS,\n", $indent2;
     printf "%s               \"param %%s present >%%d times\", s, $num);\n", $indent2;
@@ -848,6 +853,10 @@ sub output_param_decoder {
 
         $prms{$pname} = $pident;
 
+        if ($pident eq $invalid_param) {
+            # Skip error cases in parameter list
+            next;
+        }
         if (defined $pnum) {
             if ($pnum eq 'hidden') {
                 next;
@@ -878,6 +887,10 @@ sub output_param_decoder {
     printf "struct %s_st {\n", $decoder_name_base;
     my %done_prms = ();
     foreach my $pident (sort values %prms) {
+        if ($pident eq $invalid_param) {
+            # Skip error cases in structure
+            next;
+        }
         if (not defined $done_prms{$pident}) {
             $done_prms{$pident} = 1;
             output_ifdef($ifdefs{$pident});
