@@ -312,10 +312,27 @@ static int self_signed(X509_STORE *ctx, X509 *cert)
     return ret;
 }
 
+static int add_object(STACK_OF(ASN1_OBJECT) **sk, const char *name,
+    const char *desc, const char *prog)
+{
+    ASN1_OBJECT *obj = NULL;
+
+    if (*sk == NULL && (*sk = sk_ASN1_OBJECT_new_null()) == NULL)
+        return 0;
+    if ((obj = OBJ_txt2obj(name, 0)) == NULL) {
+        BIO_printf(bio_err, "%s: Unknown %s object value: %s\n", prog, desc, name);
+        return 0;
+    }
+    if (sk_ASN1_OBJECT_push(*sk, obj) != 0)
+        return 1;
+
+    ASN1_OBJECT_free(obj);
+    return 0;
+}
+
 int x509_main(int argc, char **argv)
 {
     ASN1_INTEGER *sno = NULL;
-    ASN1_OBJECT *objtmp = NULL;
     BIO *out = NULL;
     CONF *extconf = NULL;
     int ext_copy = EXT_COPY_UNSET;
@@ -499,27 +516,13 @@ int x509_main(int argc, char **argv)
             subj = opt_arg();
             break;
         case OPT_ADDTRUST:
-            if (trust == NULL && (trust = sk_ASN1_OBJECT_new_null()) == NULL)
-                goto err;
-            if ((objtmp = OBJ_txt2obj(opt_arg(), 0)) == NULL) {
-                BIO_printf(bio_err, "%s: Invalid trust object value %s\n",
-                    prog, opt_arg());
-                goto opthelp;
-            }
-            if (!sk_ASN1_OBJECT_push(trust, objtmp))
-                goto err;
+            if (!add_object(&trust, opt_arg(), "trust", prog))
+                goto end;
             trustout = 1;
             break;
         case OPT_ADDREJECT:
-            if (reject == NULL && (reject = sk_ASN1_OBJECT_new_null()) == NULL)
-                goto err;
-            if ((objtmp = OBJ_txt2obj(opt_arg(), 0)) == NULL) {
-                BIO_printf(bio_err, "%s: Invalid reject object value %s\n",
-                    prog, opt_arg());
-                goto opthelp;
-            }
-            if (!sk_ASN1_OBJECT_push(reject, objtmp))
-                goto err;
+            if (!add_object(&reject, opt_arg(), "reject", prog))
+                goto end;
             trustout = 1;
             break;
         case OPT_SETALIAS:
