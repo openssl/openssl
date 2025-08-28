@@ -176,19 +176,10 @@ static const struct array_aligned_alloc_vector {
     { SIZE_MAX / 8 + 9, 8, 64, EXP_NONNULL, EXP_INT_OF },
 
     /*
-     * posix_memalign expected to fail with ENOMEM, while the open-coded
-     * implementation tries to alloc size + alignment, which should fail
-     * on integer overflow.
+     * the open-coded implementation tries to alloc size + alignment,
+     * which should fail on integer overflow.
      */
-    { 1, SIZE_MAX / 2 + 2, SIZE_MAX / 2 + 1,
-#if (defined(_BSD_SOURCE) \
-      || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)) \
-    && !USE_CUSTOM_ALLOC_FNS
-      EXP_OOM, EXP_OOM
-#else
-      EXP_INT_OF, EXP_INT_OF
-#endif
-    },
+    { 1, SIZE_MAX - 32767, 65536, EXP_INT_OF, EXP_INT_OF },
 };
 
 static int secure_memory_is_secure;
