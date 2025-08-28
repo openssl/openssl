@@ -22,7 +22,7 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
+    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
     OPT_TOPK8, OPT_NOITER, OPT_NOCRYPT,
 #ifndef OPENSSL_NO_SCRYPT
     OPT_SCRYPT, OPT_SCRYPT_N, OPT_SCRYPT_R, OPT_SCRYPT_P,
@@ -36,9 +36,6 @@ typedef enum OPTION_choice {
 const OPTIONS pkcs8_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
     {"v1", OPT_V1, 's', "Use PKCS#5 v1.5 and cipher"},
     {"v2", OPT_V2, 's', "Use PKCS#5 v2.0 and cipher"},
     {"v2prf", OPT_V2PRF, 's', "Set the PRF algorithm to use with PKCS#5 v2.0"},
@@ -75,7 +72,6 @@ const OPTIONS pkcs8_options[] = {
 int pkcs8_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
-    ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
     X509_SIG *p8 = NULL;
@@ -171,9 +167,6 @@ int pkcs8_main(int argc, char **argv)
         case OPT_PASSOUT:
             passoutarg = opt_arg();
             break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
-            break;
 #ifndef OPENSSL_NO_SCRYPT
         case OPT_SCRYPT:
             scrypt_N = 16384;
@@ -229,7 +222,7 @@ int pkcs8_main(int argc, char **argv)
         goto end;
 
     if (topk8) {
-        pkey = load_key(infile, informat, 1, passin, e, "key");
+        pkey = load_key(infile, informat, 1, passin, NULL, "key");
         if (pkey == NULL)
             goto end;
         if ((p8inf = EVP_PKEY2PKCS8(pkey)) == NULL) {
@@ -382,7 +375,6 @@ int pkcs8_main(int argc, char **argv)
     PKCS8_PRIV_KEY_INFO_free(p8inf);
     EVP_PKEY_free(pkey);
     EVP_CIPHER_free(cipher);
-    release_engine(e);
     BIO_free_all(out);
     BIO_free(in);
     OPENSSL_free(passin);
