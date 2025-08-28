@@ -23,7 +23,7 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
+    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
     OPT_NOOUT, OPT_TEXT, OPT_PARAM_OUT, OPT_PUBIN, OPT_PUBOUT,
     OPT_PASSIN, OPT_PASSOUT, OPT_PARAM_ENC, OPT_CONV_FORM, OPT_CIPHER,
     OPT_NO_PUBLIC, OPT_CHECK, OPT_PROV_ENUM
@@ -32,13 +32,10 @@ typedef enum OPTION_choice {
 const OPTIONS ec_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, 's', "Input file"},
-    {"inform", OPT_INFORM, 'f', "Input format (DER/PEM/P12/ENGINE)"},
+    {"inform", OPT_INFORM, 'f', "Input format (DER/PEM/P12)"},
     {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"check", OPT_CHECK, '-', "check key consistency"},
@@ -68,7 +65,6 @@ int ec_main(int argc, char **argv)
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *eckey = NULL;
     BIO *out = NULL;
-    ENGINE *e = NULL;
     EVP_CIPHER *enc = NULL;
     char *infile = NULL, *outfile = NULL, *ciphername = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
@@ -128,9 +124,6 @@ int ec_main(int argc, char **argv)
         case OPT_PASSOUT:
             passoutarg = opt_arg();
             break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
-            break;
         case OPT_CIPHER:
             ciphername = opt_unknown();
             break;
@@ -171,9 +164,9 @@ int ec_main(int argc, char **argv)
     }
 
     if (pubin)
-        eckey = load_pubkey(infile, informat, 1, passin, e, "public key");
+        eckey = load_pubkey(infile, informat, 1, passin, NULL, "public key");
     else
-        eckey = load_key(infile, informat, 1, passin, e, "private key");
+        eckey = load_key(infile, informat, 1, passin, NULL, "private key");
 
     if (eckey == NULL) {
         BIO_printf(bio_err, "unable to load Key\n");
@@ -278,7 +271,6 @@ end:
     OSSL_ENCODER_CTX_free(ectx);
     OSSL_DECODER_CTX_free(dctx);
     EVP_PKEY_CTX_free(pctx);
-    release_engine(e);
     if (passin != NULL)
         OPENSSL_clear_free(passin, strlen(passin));
     if (passout != NULL)
