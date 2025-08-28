@@ -121,17 +121,6 @@ int ossl_prov_cipher_load(PROV_CIPHER *pc, const OSSL_PARAM *cipher,
         ERR_clear_last_mark();
     return pc->cipher != NULL;
 }
-                            
-int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
-                                      const OSSL_PARAM params[],
-                                      OSSL_LIB_CTX *ctx)
-{
-     return ossl_prov_cipher_load(pc,
-                                  OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_CIPHER),
-                                  OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_PROPERTIES),
-                                  OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_ENGINE),
-                                  ctx);
-}
 
 const EVP_CIPHER *ossl_prov_cipher_cipher(const PROV_CIPHER *pc)
 {
