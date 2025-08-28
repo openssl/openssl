@@ -1443,24 +1443,6 @@ static void list_provider_info(void)
     sk_OSSL_PROVIDER_free(providers);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-static void list_engines(void)
-{
-# ifndef OPENSSL_NO_ENGINE
-    ENGINE *e;
-
-    BIO_puts(bio_out, "Engines:\n");
-    e = ENGINE_get_first();
-    while (e) {
-        BIO_printf(bio_out, "%s\n", ENGINE_get_id(e));
-        e = ENGINE_get_next(e);
-    }
-# else
-    BIO_puts(bio_out, "Engine support is disabled.\n");
-# endif
-}
-#endif
-
 static void list_disabled(void)
 {
     BIO_puts(bio_out, "Disabled algorithms:\n");
@@ -1520,9 +1502,6 @@ static void list_disabled(void)
 #endif
 #ifdef OPENSSL_NO_EC2M
     BIO_puts(bio_out, "EC2M\n");
-#endif
-#if defined(OPENSSL_NO_ENGINE) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-    BIO_puts(bio_out, "ENGINE\n");
 #endif
 #ifdef OPENSSL_NO_GOST
     BIO_puts(bio_out, "GOST\n");
@@ -1714,10 +1693,6 @@ const OPTIONS list_options[] = {
 #endif
     {"providers", OPT_PROVIDER_INFO, '-',
      "List of provider information"},
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    {"engines", OPT_ENGINES, '-',
-     "List of loaded engines"},
-#endif
     {"disabled", OPT_DISABLED, '-', "List of disabled features"},
     {"options", OPT_OPTIONS, 's',
      "List options for specified command"},
@@ -1767,9 +1742,6 @@ int list_main(int argc, char **argv)
         unsigned int pk_method:1;
         unsigned int store_loaders:1;
         unsigned int provider_info:1;
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-        unsigned int engines:1;
-#endif
         unsigned int disabled:1;
         unsigned int objects:1;
         unsigned int options:1;
@@ -1879,11 +1851,6 @@ opthelp:
         case OPT_PROVIDER_INFO:
             todo.provider_info = 1;
             break;
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-        case OPT_ENGINES:
-            todo.engines = 1;
-            break;
-#endif
         case OPT_DISABLED:
             todo.disabled = 1;
             break;
@@ -1997,10 +1964,6 @@ opthelp:
         MAYBE_ADD_NL(list_store_loaders());
     if (todo.provider_info)
         MAYBE_ADD_NL(list_provider_info());
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    if (todo.engines)
-        MAYBE_ADD_NL(list_engines());
-#endif
     if (todo.disabled)
         MAYBE_ADD_NL(list_disabled());
     if (todo.objects)
