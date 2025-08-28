@@ -160,7 +160,6 @@ static int opt_crlform = FORMAT_ASN1;
 static char *opt_keyform_s = NULL;
 static int opt_keyform = FORMAT_UNDEF;
 static char *opt_otherpass = NULL;
-static char *opt_engine = NULL;
 
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
 /* TLS connection */
@@ -264,9 +263,6 @@ typedef enum OPTION_choice {
 
     OPT_CERTFORM, OPT_CRLFORM, OPT_KEYFORM,
     OPT_OTHERPASS,
-#ifndef OPENSSL_NO_ENGINE
-    OPT_ENGINE,
-#endif
     OPT_PROV_ENUM,
     OPT_R_ENUM,
 
@@ -500,12 +496,6 @@ const OPTIONS cmp_options[] = {
      "Format of the key input (ENGINE, other values ignored)"},
     {"otherpass", OPT_OTHERPASS, 's',
      "Pass phrase source potentially needed for loading certificates of others"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's',
-     "Use crypto engine with given identifier, possibly a hardware device."},
-    {OPT_MORE_STR, 0, 0,
-     "Engines may also be defined in OpenSSL config file engine section."},
-#endif
     OPT_PROV_OPTIONS,
     OPT_R_OPTIONS,
 
@@ -678,9 +668,6 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
 
     {&opt_certform_s}, {&opt_crlform_s}, {&opt_keyform_s},
     {&opt_otherpass},
-#ifndef OPENSSL_NO_ENGINE
-    {&opt_engine},
-#endif
 
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
     {(char **)&opt_tls_used}, {&opt_tls_cert}, {&opt_tls_key},
@@ -768,10 +755,10 @@ static int set_verbosity(int level)
 }
 
 static EVP_PKEY *load_key_pwd(const char *uri, int format,
-                              const char *pass, ENGINE *eng, const char *desc)
+                              const char *pass, const char *desc)
 {
     char *pass_string = get_passwd(pass, desc);
-    EVP_PKEY *pkey = load_key(uri, format, 0, pass_string, eng, desc);
+    EVP_PKEY *pkey = load_key(uri, format, 0, pass_string, desc);
 
     clear_free(pass_string);
     return pkey;
@@ -1099,11 +1086,7 @@ static int transform_opts(void)
         return 0;
     }
 
-#ifndef OPENSSL_NO_ENGINE
-# define FORMAT_OPTIONS (OPT_FMT_PEMDER | OPT_FMT_PKCS12 | OPT_FMT_ENGINE)
-#else
-# define FORMAT_OPTIONS (OPT_FMT_PEMDER | OPT_FMT_PKCS12)
-#endif
+#define FORMAT_OPTIONS (OPT_FMT_PEMDER | OPT_FMT_PKCS12)
 
     if (opt_keyform_s != NULL
             && !opt_format(opt_keyform_s, FORMAT_OPTIONS, &opt_keyform)) {
@@ -1127,7 +1110,7 @@ static int transform_opts(void)
     return 1;
 }
 
-static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
+static OSSL_CMP_SRV_CTX *setup_srv_ctx(void)
 {
     OSSL_CMP_CTX *ctx; /* extra CMP (client) ctx partly used by server */
     OSSL_CMP_SRV_CTX *srv_ctx = ossl_cmp_mock_srv_new(app_get0_libctx(),
@@ -1180,7 +1163,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
     if (opt_srv_key != NULL) {
         EVP_PKEY *pkey = load_key_pwd(opt_srv_key, opt_keyform,
                                       opt_srv_keypass,
-                                      engine, "private key for mock server cert");
+                                      "private key for mock server cert");
 
         if (pkey == NULL || !OSSL_CMP_CTX_set1_pkey(ctx, pkey)) {
             EVP_PKEY_free(pkey);
@@ -1220,7 +1203,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
     }
     if (opt_rsp_key != NULL) {
         EVP_PKEY *pkey = load_key_pwd(opt_rsp_key, opt_keyform,
-                                      opt_rsp_keypass, engine,
+                                      opt_rsp_keypass,
                                       "private key for enrollment cert");
 
         if (pkey == NULL
@@ -1370,8 +1353,7 @@ static int setup_verification_ctx(OSSL_CMP_CTX *ctx)
  * set up ssl_ctx for the OSSL_CMP_CTX based on options from config file/CLI.
  * Returns pointer on success, NULL on error
  */
-static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host,
-                              ENGINE *engine)
+static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host)
 {
     STACK_OF(X509) *untrusted = OSSL_CMP_CTX_get0_untrusted(ctx);
     EVP_PKEY *pkey = NULL;
@@ -1477,7 +1459,7 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host,
         }
 
         pkey = load_key_pwd(opt_tls_key, opt_keyform, opt_tls_keypass,
-                            engine, "TLS client private key");
+                            "TLS client private key");
         cleanse(opt_tls_keypass);
         if (pkey == NULL)
             goto err;
@@ -1526,7 +1508,7 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host,
  * file/CLI while parsing options and checking their consistency.
  * Returns 1 on success, 0 on error
  */
-static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
+static int setup_protection_ctx(OSSL_CMP_CTX *ctx)
 {
     if (!opt_unprotected_requests && opt_secret == NULL && opt_key == NULL) {
         CMP_err("must give -key or -secret unless -unprotected_requests is used");
@@ -1564,7 +1546,7 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         return 0;
 
     if (opt_key != NULL) {
-        EVP_PKEY *pkey = load_key_pwd(opt_key, opt_keyform, opt_keypass, engine,
+        EVP_PKEY *pkey = load_key_pwd(opt_key, opt_keyform, opt_keypass,
                                       "private key for CMP client certificate");
 
         if (pkey == NULL || !OSSL_CMP_CTX_set1_pkey(ctx, pkey)) {
@@ -1688,7 +1670,7 @@ static int set_fallback_pubkey(OSSL_CMP_CTX *ctx)
  * based on options from CLI and/or config file.
  * Returns 1 on success, 0 on error
  */
-static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
+static int setup_request_ctx(OSSL_CMP_CTX *ctx)
 {
     X509_REQ *csr = NULL;
     X509_EXTENSIONS *exts = NULL;
@@ -1870,14 +1852,14 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         BIO *bio_bak = bio_err;
 
         bio_err = NULL; /* suppress diagnostics on first try loading key */
-        pkey = load_key_pwd(file, format, pass, engine, desc);
+        pkey = load_key_pwd(file, format, pass, desc);
         bio_err = bio_bak;
         if (pkey == NULL) {
             ERR_clear_error();
             desc = opt_csr == NULL
                 ? "fallback public key for cert to be enrolled"
                 : "public key for checking cert resulting from p10cr";
-            pkey = load_pubkey(file, format, 0, pass, engine, desc);
+            pkey = load_pubkey(file, format, 0, pass, desc);
             priv = 0;
         }
 
@@ -2140,7 +2122,7 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
  * Prints reason for error to bio_err.
  * Returns 1 on success, 0 on error
  */
-static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
+static int setup_client_ctx(OSSL_CMP_CTX *ctx)
 {
     int ret = 0;
     char *host = NULL, *port = NULL, *path = NULL, *used_path = opt_path;
@@ -2299,7 +2281,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             goto err;
         APP_HTTP_TLS_INFO_free(OSSL_CMP_CTX_get_http_cb_arg(ctx));
         (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, info);
-        info->ssl_ctx = setup_ssl_ctx(ctx, host, engine);
+        info->ssl_ctx = setup_ssl_ctx(ctx, host);
         info->server = host;
         host = NULL; /* prevent deallocation */
         if ((info->port = OPENSSL_strdup(server_port)) == NULL)
@@ -2314,10 +2296,10 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     }
 #endif
 
-    if (!setup_protection_ctx(ctx, engine))
+    if (!setup_protection_ctx(ctx))
         goto err;
 
-    if (!setup_request_ctx(ctx, engine))
+    if (!setup_request_ctx(ctx))
         goto err;
 
     if (!set_name(opt_recipient, OSSL_CMP_CTX_set1_recipient, ctx, "recipient")
@@ -3069,11 +3051,6 @@ static int get_opts(int argc, char **argv)
         case OPT_OTHERPASS:
             opt_otherpass = opt_str();
             break;
-#ifndef OPENSSL_NO_ENGINE
-        case OPT_ENGINE:
-            opt_engine = opt_str();
-            break;
-#endif
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto opthelp;
@@ -3606,7 +3583,6 @@ int cmp_main(int argc, char **argv)
     char *configfile = NULL;
     int i;
     X509 *newcert = NULL;
-    ENGINE *engine = NULL;
     OSSL_CMP_CTX *srv_cmp_ctx = NULL;
     int ret = 0; /* default: failure */
 
@@ -3673,15 +3649,6 @@ int cmp_main(int argc, char **argv)
     if (opt_batch)
         set_base_ui_method(UI_null());
 
-    if (opt_engine != NULL) {
-        engine = setup_engine_methods(opt_engine,
-                                      0 /* not: ENGINE_METHOD_ALL */, 0);
-        if (engine == NULL) {
-            CMP_err1("cannot load engine %s", opt_engine);
-            goto err;
-        }
-    }
-
     OSSL_CMP_CTX_set_log_verbosity(cmp_ctx, opt_verbosity);
     if (!OSSL_CMP_CTX_set_log_cb(cmp_ctx, print_to_bio_out)) {
         CMP_err1("cannot set up error reporting and logging for %s", prog);
@@ -3734,7 +3701,7 @@ int cmp_main(int argc, char **argv)
                                     )) {
         OSSL_CMP_SRV_CTX *srv_ctx;
 
-        if ((srv_ctx = setup_srv_ctx(engine)) == NULL)
+        if ((srv_ctx = setup_srv_ctx()) == NULL)
             goto err;
         srv_cmp_ctx = OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx);
         OSSL_CMP_CTX_set_transfer_cb_arg(cmp_ctx, srv_ctx);
@@ -3783,7 +3750,7 @@ int cmp_main(int argc, char **argv)
     }
 #endif
 
-    if (!setup_client_ctx(cmp_ctx, engine)) {
+    if (!setup_client_ctx(cmp_ctx)) {
         CMP_err("cannot set up CMP context");
         goto err;
     }
@@ -3927,7 +3894,6 @@ int cmp_main(int argc, char **argv)
 #endif
     }
     X509_VERIFY_PARAM_free(vpm);
-    release_engine(engine);
 
     NCONF_free(conf); /* must not do as long as opt_... variables are used */
     OSSL_CMP_log_close();

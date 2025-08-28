@@ -193,7 +193,7 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_VERBOSE, OPT_CONFIG, OPT_NAME, OPT_SRPVFILE, OPT_ADD,
     OPT_DELETE, OPT_MODIFY, OPT_LIST, OPT_GN, OPT_USERINFO,
-    OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE, OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_PASSIN, OPT_PASSOUT, OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS srp_options[] = {
@@ -204,9 +204,6 @@ const OPTIONS srp_options[] = {
     {"verbose", OPT_VERBOSE, '-', "Talk a lot while doing things"},
     {"config", OPT_CONFIG, '<', "A config file"},
     {"name", OPT_NAME, 's', "The particular srp definition to use"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
 
     OPT_SECTION("Action"),
     {"add", OPT_ADD, '-', "Add a user and SRP verifier"},
@@ -231,7 +228,6 @@ const OPTIONS srp_options[] = {
 
 int srp_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
     CA_DB *db = NULL;
     CONF *conf = NULL;
     int gNindex = -1, maxgN = -1, ret = 1, errors = 0, verbose = 0, i;
@@ -290,9 +286,6 @@ int srp_main(int argc, char **argv)
             break;
         case OPT_PASSOUT:
             passoutarg = opt_arg();
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
@@ -626,6 +619,5 @@ int srp_main(int argc, char **argv)
         ERR_print_errors(bio_err);
     NCONF_free(conf);
     free_index(db);
-    release_engine(e);
     return ret;
 }
