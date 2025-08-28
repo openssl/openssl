@@ -41,7 +41,7 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
+    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
     OPT_PUBIN, OPT_PUBOUT, OPT_PASSOUT, OPT_PASSIN,
     OPT_RSAPUBKEY_IN, OPT_RSAPUBKEY_OUT,
     /* Do not change the order here; see case statements below */
@@ -55,13 +55,10 @@ const OPTIONS rsa_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"check", OPT_CHECK, '-', "Verify key consistency"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, 's', "Input file"},
-    {"inform", OPT_INFORM, 'f', "Input format (DER/PEM/P12/ENGINE)"},
+    {"inform", OPT_INFORM, 'f', "Input format (DER/PEM/P12)"},
     {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
     {"RSAPublicKey_in", OPT_RSAPUBKEY_IN, '-', "Input is an RSAPublicKey"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
@@ -121,7 +118,6 @@ static int try_legacy_encoding(EVP_PKEY *pkey, int outformat, int pubout,
 
 int rsa_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
     BIO *out = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *pctx;
@@ -171,9 +167,6 @@ int rsa_main(int argc, char **argv)
             break;
         case OPT_PASSOUT:
             passoutarg = opt_arg();
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_PUBIN:
             pubin = 1;
@@ -246,9 +239,9 @@ int rsa_main(int argc, char **argv)
             tmpformat = informat;
         }
 
-        pkey = load_pubkey(infile, tmpformat, 1, passin, e, "public key");
+        pkey = load_pubkey(infile, tmpformat, 1, passin, NULL, "public key");
     } else {
-        pkey = load_key(infile, informat, 1, passin, e, "private key");
+        pkey = load_key(infile, informat, 1, passin, NULL, "private key");
     }
 
     if (pkey == NULL) {
@@ -403,7 +396,6 @@ int rsa_main(int argc, char **argv)
     ret = 0;
  end:
     OSSL_ENCODER_CTX_free(ectx);
-    release_engine(e);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
     EVP_CIPHER_free(enc);
