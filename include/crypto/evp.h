@@ -870,6 +870,7 @@ EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
 /*
  * SKEYMGMT provider interface functions
  */
+EVP_SKEY *evp_skey_alloc(EVP_SKEYMGMT *skeymgmt);
 void evp_skeymgmt_freedata(const EVP_SKEYMGMT *keymgmt, void *keyddata);
 void *evp_skeymgmt_import(const EVP_SKEYMGMT *skeymgmt, int selection, const OSSL_PARAM params[]);
 int evp_skeymgmt_export(const EVP_SKEYMGMT *skeymgmt, void *keydata,

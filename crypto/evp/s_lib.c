@@ -29,7 +29,7 @@ int EVP_SKEY_export(const EVP_SKEY *skey, int selection,
     return evp_skeymgmt_export(skey->skeymgmt, skey->keydata, selection, export_cb, export_cbarg);
 }
 
-static EVP_SKEY *evp_skey_alloc(EVP_SKEYMGMT *skeymgmt)
+EVP_SKEY *evp_skey_alloc(EVP_SKEYMGMT *skeymgmt)
 {
     EVP_SKEY *skey;
 
