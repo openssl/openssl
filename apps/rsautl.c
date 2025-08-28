@@ -27,7 +27,7 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_ENGINE, OPT_IN, OPT_OUT, OPT_ASN1PARSE, OPT_HEXDUMP,
+    OPT_IN, OPT_OUT, OPT_ASN1PARSE, OPT_HEXDUMP,
     OPT_RSA_RAW, OPT_OAEP, OPT_PKCS, OPT_X931,
     OPT_SIGN, OPT_VERIFY, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
     OPT_PUBIN, OPT_CERTIN, OPT_INKEY, OPT_PASSIN, OPT_KEYFORM,
@@ -41,9 +41,6 @@ const OPTIONS rsautl_options[] = {
     {"verify", OPT_VERIFY, '-', "Verify with public key"},
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt with public key"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt with private key"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
@@ -72,7 +69,6 @@ const OPTIONS rsautl_options[] = {
 int rsautl_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
-    ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     X509 *x;
@@ -106,9 +102,6 @@ int rsautl_main(int argc, char **argv)
             break;
         case OPT_OUT:
             outfile = opt_arg();
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_ASN1PARSE:
             asn1parse = 1;
@@ -187,11 +180,11 @@ int rsautl_main(int argc, char **argv)
 
     switch (key_type) {
     case KEY_PRIVKEY:
-        pkey = load_key(keyfile, keyformat, 0, passin, e, "private key");
+        pkey = load_key(keyfile, keyformat, 0, passin, NULL, "private key");
         break;
 
     case KEY_PUBKEY:
-        pkey = load_pubkey(keyfile, keyformat, 0, NULL, e, "public key");
+        pkey = load_pubkey(keyfile, keyformat, 0, NULL, NULL, "public key");
         break;
 
     case KEY_CERT:
@@ -282,7 +275,6 @@ int rsautl_main(int argc, char **argv)
  end:
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
-    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
     OPENSSL_free(rsa_in);
