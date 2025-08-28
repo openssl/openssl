@@ -185,7 +185,7 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
     pqueue *sent_messages = &s->d1->sent_messages;
 
     while ((item = pqueue_pop(sent_messages)) != NULL) {
-        dtls_sent_msg *sent_msg = (dtls_sent_msg *) item->data;
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
         unsigned char msg_type = sent_msg->msg_info.msg_type;
         unsigned char record_type = sent_msg->msg_info.record_type;
 

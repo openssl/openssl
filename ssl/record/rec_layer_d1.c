@@ -730,7 +730,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
         if (item == NULL)
             return ret;
 
-        sent_msg = (dtls_sent_msg *) item->data;
+        sent_msg = (dtls_sent_msg *)item->data;
         rec_num = dtls1_record_number_new(tmpl.epoch, tmpl.sequence_number);
 
         if (rec_num == NULL)
