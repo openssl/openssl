@@ -12,7 +12,7 @@ some of the following resources:
 - The [OpenSSL Guide] incorporates various code samples. The complete source
   for these can be [found in the source tree under `demos/guide`](./demos/guide/).
 - The [openssl-quic(7) manual page], which provides a basic reference overview
-  of QUIC functionality and how the use of QUIC differs from use of TLS with regard
+  of QUIC functionality and how the use of QUIC differs from the use of TLS with regard
   to our API.
 - The [Demo-Driven Design (DDD)][DDD] demos, which demonstrate the use of QUIC
   using simple examples. These can be [found in the source tree under
