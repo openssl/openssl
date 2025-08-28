@@ -21,8 +21,9 @@ void *ossl_malloc_align(size_t num, size_t alignment, void **freeptr,
 
     *freeptr = NULL;
 
-    /* Ensure that alignment is a power of two */
-    if (alignment == 0 || (alignment & (alignment - 1)) != 0) {
+    /* Ensure that alignment is a power of two no larger than 65536 */
+    if (alignment == 0 || (alignment & (alignment - 1)) != 0
+        || alignment > 65536) {
         ossl_report_alloc_err_inv(file, line);
         return NULL;
     }

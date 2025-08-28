@@ -125,7 +125,7 @@ OPENSSL_zalloc() calls memset() to zero the memory before returning.
 OPENSSL_aligned_alloc() operates just as OPENSSL_malloc() does, but it
 allows for the caller to specify an alignment value, for instances in
 which the default alignment of malloc is insufficient for the caller's
-needs.  Note, the alignment value must be a power of 2.
+needs.  Note, the alignment value must be a power of 2 no larger than 65536.
 NOTE: the call to OPENSSL_aligned_alloc() accepts a 3rd argument, I<freeptr>
 which must point to a void pointer.  On some platforms, there is no available
 library call to obtain memory allocations with alignment greater than what
@@ -310,6 +310,9 @@ for example, it always returned C<NULL> without setting any error if OpenSSL
 was built with C<OPENSSL_SMALL_FOOTPRINT> macro defined.  Consequently,
 the caller may need to fall back to a non-aligned memory allocation
 (and open-code the alignment routine if the alignment is a requirement).
+
+Before OpenSSL 4.0, the call to OPENSSL_aligned_alloc() did not have
+an explicit upper limit on the value of I<alignment>.
 
 =head1 COPYRIGHT
 
