@@ -9,7 +9,9 @@
 
 #include "../bn_local.h"
 #if !(defined(__GNUC__) && __GNUC__>=2)
+/* clang-format off */
 # include "../bn_asm.c"         /* kind of dirty hack for Sun Studio */
+/* clang-format on */
 #else
 /*-
  * x86_64 BIGNUM accelerator version 0.1, December 2002.
