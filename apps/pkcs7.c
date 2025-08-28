@@ -24,15 +24,12 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_NOOUT,
     OPT_TEXT, OPT_PRINT, OPT_PRINT_CERTS, OPT_QUIET,
-    OPT_ENGINE, OPT_PROV_ENUM
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkcs7_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
@@ -55,7 +52,6 @@ const OPTIONS pkcs7_options[] = {
 
 int pkcs7_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
     PKCS7 *p7 = NULL, *p7i;
     BIO *in = NULL, *out = NULL;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM;
@@ -104,9 +100,6 @@ int pkcs7_main(int argc, char **argv)
             break;
         case OPT_QUIET:
             quiet = 1;
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
@@ -217,7 +210,6 @@ int pkcs7_main(int argc, char **argv)
     ret = 0;
  end:
     PKCS7_free(p7);
-    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
     return ret;
