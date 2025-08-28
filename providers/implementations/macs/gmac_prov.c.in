@@ -232,8 +232,7 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
             return 0;
         }
         if (!EVP_EncryptInit_ex(ctx, ossl_prov_cipher_cipher(&macctx->cipher),
-                                ossl_prov_cipher_engine(&macctx->cipher), NULL,
-                                NULL))
+                                NULL, NULL, NULL))
             return 0;
     }
 

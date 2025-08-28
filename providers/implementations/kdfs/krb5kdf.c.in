@@ -130,7 +130,7 @@ static int krb5kdf_derive(void *vctx, unsigned char *key, size_t keylen,
 {
     KRB5KDF_CTX *ctx = (KRB5KDF_CTX *)vctx;
     const EVP_CIPHER *cipher;
-    ENGINE *engine;
+    ENGINE *engine = NULL;
 
     if (!ossl_prov_is_running() || !krb5kdf_set_ctx_params(ctx, params))
         return 0;
@@ -148,7 +148,7 @@ static int krb5kdf_derive(void *vctx, unsigned char *key, size_t keylen,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CONSTANT);
         return 0;
     }
-    engine = ossl_prov_cipher_engine(&ctx->cipher);
+    // TODO?
     return KRB5KDF(cipher, engine, ctx->key, ctx->key_len,
                    ctx->constant, ctx->constant_len,
                    key, keylen);

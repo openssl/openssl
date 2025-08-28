@@ -55,9 +55,8 @@ void ossl_prov_cipher_reset(PROV_CIPHER *pc);
 /* Clone a PROV_CIPHER structure into a second */
 int ossl_prov_cipher_copy(PROV_CIPHER *dst, const PROV_CIPHER *src);
 
-/* Query the cipher and associated engine (if any) */
+/* Query the cipher (if any) */
 const EVP_CIPHER *ossl_prov_cipher_cipher(const PROV_CIPHER *pc);
-ENGINE *ossl_prov_cipher_engine(const PROV_CIPHER *pc);
 
 /* Digest functions */
 

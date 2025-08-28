@@ -93,11 +93,6 @@ const EVP_CIPHER *ossl_prov_cipher_cipher(const PROV_CIPHER *pc)
     return pc->cipher;
 }
 
-ENGINE *ossl_prov_cipher_engine(const PROV_CIPHER *pc)
-{
-    return pc->engine;
-}
-
 void ossl_prov_digest_reset(PROV_DIGEST *pd)
 {
     EVP_MD_free(pd->alloc_md);
