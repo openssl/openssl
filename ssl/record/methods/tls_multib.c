@@ -157,6 +157,11 @@ static int tls_write_records_multiblock_int(OSSL_RECORD_LAYER *rl,
         return -1;
     }
 
+    if (rl->sequence > UINT64_MAX - mb_param.interleave) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+
     rl->sequence += mb_param.interleave;
 
     wb->offset = 0;
