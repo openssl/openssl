@@ -111,7 +111,7 @@ static void kdf_pvk_init(KDF_PVK *ctx)
 
     param = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                              SN_sha1, 0);
-    if (!ossl_prov_digest_load(&ctx->digest, &param, NULL, NULL, provctx))
+    if (!ossl_prov_digest_load(&ctx->digest, &param, NULL, provctx))
         /* This is an error, but there is no way to indicate such directly */
         ossl_prov_digest_reset(&ctx->digest);
 }
@@ -190,8 +190,7 @@ static int kdf_pvk_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     provctx = PROV_LIBCTX_OF(ctx->provctx);
 
-    if (!ossl_prov_digest_load(&ctx->digest, p.digest, p.propq, p.engine,
-                               provctx))
+    if (!ossl_prov_digest_load(&ctx->digest, p.digest, p.propq, provctx))
         return 0;
 
     if (p.pass != NULL && !pvk_set_membuf(&ctx->pass, &ctx->pass_len, p.pass))
