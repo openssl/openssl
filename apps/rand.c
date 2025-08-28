@@ -20,7 +20,7 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_OUT, OPT_ENGINE, OPT_BASE64, OPT_HEX,
+    OPT_OUT, OPT_BASE64, OPT_HEX,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -29,9 +29,6 @@ const OPTIONS rand_options[] = {
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file"},
@@ -48,7 +45,6 @@ const OPTIONS rand_options[] = {
 
 int rand_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
     BIO *out = NULL;
     char *outfile = NULL, *prog;
     OPTION_CHOICE o;
@@ -72,9 +68,6 @@ int rand_main(int argc, char **argv)
             goto end;
         case OPT_OUT:
             outfile = opt_arg();
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
@@ -223,7 +216,6 @@ int rand_main(int argc, char **argv)
     if (ret != 0)
         ERR_print_errors(bio_err);
     OPENSSL_free(buf);
-    release_engine(e);
     BIO_free_all(out);
     return ret;
 }
