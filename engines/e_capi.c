@@ -99,8 +99,10 @@
 # include <openssl/pem.h>
 # include <openssl/x509v3.h>
 
+/* clang-format off */
 # include "e_capi_err.h"
 # include "e_capi_err.c"
+/* clang-format on */
 
 static const char *engine_capi_id = "capi";
 static const char *engine_capi_name = "CryptoAPI ENGINE";
