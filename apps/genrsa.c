@@ -34,7 +34,7 @@ typedef enum OPTION_choice {
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     OPT_3,
 #endif
-    OPT_F4, OPT_ENGINE,
+    OPT_F4,
     OPT_OUT, OPT_PASSOUT, OPT_CIPHER, OPT_PRIMES, OPT_VERBOSE, OPT_QUIET,
     OPT_R_ENUM, OPT_PROV_ENUM, OPT_TRADITIONAL
 } OPTION_CHOICE;
@@ -44,9 +44,6 @@ const OPTIONS genrsa_options[] = {
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
 
     OPT_SECTION("Input"),
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -76,7 +73,6 @@ const OPTIONS genrsa_options[] = {
 int genrsa_main(int argc, char **argv)
 {
     BN_GENCB *cb = BN_GENCB_new();
-    ENGINE *eng = NULL;
     BIGNUM *bn = BN_new();
     BIO *out = NULL;
     EVP_PKEY *pkey = NULL;
@@ -115,9 +111,6 @@ opthelp:
             break;
         case OPT_OUT:
             outfile = opt_arg();
-            break;
-        case OPT_ENGINE:
-            eng = setup_engine(opt_arg(), 0);
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
@@ -242,7 +235,6 @@ opthelp:
     EVP_PKEY_free(pkey);
     EVP_CIPHER_free(enc);
     BIO_free_all(out);
-    release_engine(eng);
     OPENSSL_free(passout);
     if (ret != 0)
         ERR_print_errors(bio_err);
