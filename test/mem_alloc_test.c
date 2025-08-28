@@ -173,6 +173,8 @@ static const struct array_aligned_alloc_vector {
 
     { 8, 8, 63, EXP_INVAL, EXP_INVAL },
     { 8, 8, 64, EXP_NONNULL, EXP_NONNULL },
+    { 3, 4, 65536, EXP_NONNULL, EXP_NONNULL },
+    { 8, 8, 131072, EXP_INVAL, EXP_INVAL },
     { SIZE_MAX / 8 + 9, 8, 64, EXP_NONNULL, EXP_INT_OF },
 
     /*
