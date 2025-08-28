@@ -45,7 +45,7 @@ struct doall_enc_ciphers {
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_LIST,
-    OPT_E, OPT_IN, OPT_OUT, OPT_PASS, OPT_ENGINE, OPT_D, OPT_P, OPT_V,
+    OPT_E, OPT_IN, OPT_OUT, OPT_PASS, OPT_D, OPT_P, OPT_V,
     OPT_NOPAD, OPT_SALT, OPT_NOSALT, OPT_DEBUG, OPT_UPPER_P, OPT_UPPER_A,
     OPT_A, OPT_Z, OPT_BUFSIZE, OPT_K, OPT_KFILE, OPT_UPPER_K, OPT_NONE,
     OPT_UPPER_S, OPT_IV, OPT_MD, OPT_ITER, OPT_PBKDF2, OPT_CIPHER,
@@ -64,9 +64,6 @@ const OPTIONS enc_options[] = {
     {"d", OPT_D, '-', "Decrypt"},
     {"p", OPT_P, '-', "Print the iv/key"},
     {"P", OPT_UPPER_P, '-', "Print the iv/key and exit"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
@@ -119,7 +116,6 @@ int enc_main(int argc, char **argv)
 {
     static char buf[128];
     static const char magic[] = "Salted__";
-    ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL, *b64 = NULL, *benc = NULL, *rbio =
         NULL, *wbio = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
@@ -210,9 +206,6 @@ int enc_main(int argc, char **argv)
             break;
         case OPT_PASS:
             passarg = opt_arg();
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_D:
             enc = 0;
@@ -665,7 +658,7 @@ int enc_main(int argc, char **argv)
             EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
 
         if (rawkey_set) {
-            if (!EVP_CipherInit_ex(ctx, cipher, e, key,
+            if (!EVP_CipherInit_ex(ctx, cipher, NULL, key,
                                    (hiv == NULL && wrap == 1 ? NULL : iv), enc)) {
                 BIO_printf(bio_err, "Error setting cipher %s\n",
                            EVP_CIPHER_get0_name(cipher));
@@ -790,7 +783,6 @@ int enc_main(int argc, char **argv)
 #endif
     BIO_free(bbrot);
     BIO_free(bzstd);
-    release_engine(e);
     OPENSSL_free(pass);
     return ret;
 }
