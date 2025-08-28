@@ -18,9 +18,6 @@ it may be affected by system activity, by the time spent processing the call,
 limitation on the underlying system call parameter size or by system timer
 granularity.
 
-In particular on Windows the maximum amount of time it will sleep is
-49 days and on systems where the regular sleep(3) is used as the underlying
-system call the maximum sleep time is about 136 years.
 
 =head1 RETURN VALUES
 
@@ -29,6 +26,11 @@ OSSL_sleep() does not return any value.
 =head1 HISTORY
 
 OSSL_sleep() was added in OpenSSL 3.2.
+
+Before OpenSSL 3.6, there were system-specific limitations on the maximum
+duration of the sleep:  on Windows, the maximum amount of time it will sleep
+was 49 days, and on systems where the regular sleep(3) is used as the underlying
+system call the maximum sleep time was about 136 years.
 
 =head1 COPYRIGHT
 
