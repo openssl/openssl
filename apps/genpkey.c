@@ -202,7 +202,7 @@ int genpkey_main(int argc, char **argv)
             goto end;
     }
     if (algname != NULL) {
-        if (!init_gen_str(&ctx, algname, NULL, do_param, libctx, app_get0_propq()))
+        if (!init_gen_str(&ctx, algname, do_param, libctx, app_get0_propq()))
             goto end;
     }
     if (ctx == NULL)
@@ -359,7 +359,7 @@ static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file,
 }
 
 int init_gen_str(EVP_PKEY_CTX **pctx,
-                 const char *algname, ENGINE *e, int do_param,
+                 const char *algname, int do_param,
                  OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY_CTX *ctx = NULL;

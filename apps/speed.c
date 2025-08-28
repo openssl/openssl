@@ -3231,7 +3231,7 @@ int speed_main(int argc, char **argv)
             bn = BN_new();
             st = bn != NULL
                 && BN_set_word(bn, RSA_F4)
-                && init_gen_str(&genctx, "RSA", NULL, 0, NULL, NULL)
+                && init_gen_str(&genctx, "RSA", 0, NULL, NULL)
                 && EVP_PKEY_CTX_set_rsa_keygen_bits(genctx, rsa_keys[testnum].bits) > 0
                 && EVP_PKEY_CTX_set1_rsa_keygen_pubexp(genctx, bn) > 0
                 && EVP_PKEY_CTX_set_rsa_keygen_primes(genctx, primes) > 0

@@ -261,7 +261,7 @@ int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value);
 int x509_ctrl_string(X509 *x, const char *value);
 int x509_req_ctrl_string(X509_REQ *x, const char *value);
 int init_gen_str(EVP_PKEY_CTX **pctx,
-                 const char *algname, ENGINE *e, int do_param,
+                 const char *algname, int do_param,
                  OSSL_LIB_CTX *libctx, const char *propq);
 int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey);
 int do_X509_sign(X509 *x, int force_v1, EVP_PKEY *pkey, const char *md,

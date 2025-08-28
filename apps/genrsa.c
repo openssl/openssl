@@ -179,7 +179,7 @@ opthelp:
     if (out == NULL)
         goto end;
 
-    if (!init_gen_str(&ctx, "RSA", eng, 0, app_get0_libctx(),
+    if (!init_gen_str(&ctx, "RSA", 0, app_get0_libctx(),
                       app_get0_propq()))
         goto end;
 

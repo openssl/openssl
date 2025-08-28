@@ -309,7 +309,7 @@ int dgst_main(int argc, char **argv)
     if (mac_name != NULL) {
         EVP_PKEY_CTX *mac_ctx = NULL;
 
-        if (!init_gen_str(&mac_ctx, mac_name, impl, 0, NULL, NULL))
+        if (!init_gen_str(&mac_ctx, mac_name, 0, NULL, NULL))
             goto end;
         if (macopts != NULL) {
             for (i = 0; i < sk_OPENSSL_STRING_num(macopts); i++) {
