@@ -38,7 +38,7 @@ typedef enum OPTION_choice {
     OPT_PK7OUT, OPT_TEXT, OPT_NOINTERN, OPT_NOVERIFY, OPT_NOCHAIN,
     OPT_NOCERTS, OPT_NOATTR, OPT_NODETACH, OPT_NOSMIMECAP,
     OPT_BINARY, OPT_NOSIGS, OPT_STREAM, OPT_INDEF, OPT_NOINDEF,
-    OPT_CRLFEOL, OPT_ENGINE, OPT_PASSIN,
+    OPT_CRLFEOL, OPT_PASSIN,
     OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP, OPT_MD,
     OPT_CIPHER, OPT_INKEY, OPT_KEYFORM, OPT_CERTFILE, OPT_CAFILE,
     OPT_CAPATH, OPT_CASTORE, OPT_NOCAFILE, OPT_NOCAPATH, OPT_NOCASTORE,
@@ -61,9 +61,6 @@ const OPTIONS smime_options[] = {
     {"inkey", OPT_INKEY, 's',
      "Input private key (if not signer or recipient)"},
     {"keyform", OPT_KEYFORM, 'f', "Input private key format (ENGINE, other values ignored)"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
     {"stream", OPT_STREAM, '-', "Enable CMS streaming" },
     {"indef", OPT_INDEF, '-', "Same as -stream" },
     {"noindef", OPT_NOINDEF, '-', "Disable CMS streaming"},
@@ -182,7 +179,6 @@ int smime_main(int argc, char **argv)
     int informat = FORMAT_SMIME, outformat = FORMAT_SMIME, keyform =
         FORMAT_UNDEF;
     int vpmtouched = 0, rv = 0;
-    ENGINE *e = NULL;
     const char *mime_eol = "\n";
     OSSL_LIB_CTX *libctx = app_get0_libctx();
 
@@ -293,9 +289,6 @@ int smime_main(int argc, char **argv)
             conf = app_load_config_modules(opt_arg());
             if (conf == NULL)
                 goto end;
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_PASSIN:
             passinarg = opt_arg();
@@ -520,7 +513,7 @@ int smime_main(int argc, char **argv)
     }
 
     if (keyfile != NULL) {
-        key = load_key(keyfile, keyform, 0, passin, e, "signing key");
+        key = load_key(keyfile, keyform, 0, passin, NULL, "signing key");
         if (key == NULL)
             goto end;
     }
@@ -612,7 +605,7 @@ int smime_main(int argc, char **argv)
             signer = load_cert(signerfile, FORMAT_UNDEF, "signer certificate");
             if (signer == NULL)
                 goto end;
-            key = load_key(keyfile, keyform, 0, passin, e, "signing key");
+            key = load_key(keyfile, keyform, 0, passin, NULL, "signing key");
             if (key == NULL)
                 goto end;
 
@@ -701,7 +694,6 @@ int smime_main(int argc, char **argv)
     EVP_MD_free(sign_md);
     EVP_CIPHER_free(cipher);
     PKCS7_free(p7);
-    release_engine(e);
     BIO_free(in);
     BIO_free(indata);
     BIO_free_all(out);
