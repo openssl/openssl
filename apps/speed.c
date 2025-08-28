@@ -233,7 +233,7 @@ static int opt_found(const char *name, unsigned int *result,
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_ELAPSED, OPT_EVP, OPT_HMAC, OPT_DECRYPT, OPT_ENGINE, OPT_MULTI,
+    OPT_ELAPSED, OPT_EVP, OPT_HMAC, OPT_DECRYPT, OPT_MULTI,
     OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS, OPT_R_ENUM, OPT_PROV_ENUM,
     OPT_CONFIG, OPT_PRIMES, OPT_SECONDS, OPT_BYTES, OPT_AEAD, OPT_CMAC,
     OPT_MLOCK, OPT_TESTMODE, OPT_KEM, OPT_SIG
@@ -257,9 +257,6 @@ const OPTIONS speed_options[] = {
 #ifndef OPENSSL_NO_ASYNC
     {"async_jobs", OPT_ASYNCJOBS, 'p',
      "Enable async mode and start specified number of jobs"},
-#endif
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"primes", OPT_PRIMES, 'p', "Specify number of primes (for RSA only)"},
     {"mlock", OPT_MLOCK, '-', "Lock memory for better result determinism"},
@@ -1879,10 +1876,8 @@ static int get_max(const uint8_t doit[], size_t algs_len) {
 int speed_main(int argc, char **argv)
 {
     CONF *conf = NULL;
-    ENGINE *e = NULL;
     loopargs_t *loopargs = NULL;
     const char *prog;
-    const char *engine_id = NULL;
     EVP_CIPHER *evp_cipher = NULL;
     EVP_MAC *mac = NULL;
     double d = 0.0;
@@ -2095,14 +2090,6 @@ int speed_main(int argc, char **argv)
             break;
         case OPT_DECRYPT:
             decrypt = 1;
-            break;
-        case OPT_ENGINE:
-            /*
-             * In a forked execution, an engine might need to be
-             * initialised by each child process, not by the parent.
-             * So store the name here and run setup_engine() later on.
-             */
-            engine_id = opt_arg();
             break;
         case OPT_MULTI:
 #ifndef NO_FORK
@@ -2553,9 +2540,6 @@ int speed_main(int argc, char **argv)
         memset(loopargs[i].buf_malloc, 0, buflen);
         memset(loopargs[i].buf2_malloc, 0, buflen);
     }
-
-    /* Initialize the engine after the fork */
-    e = setup_engine(engine_id, 0);
 
     /* No parameters; turn on everything. */
     if (argc == 0 && !doit[D_EVP] && !doit[D_HMAC]
@@ -4784,7 +4768,6 @@ int speed_main(int argc, char **argv)
         ASYNC_cleanup_thread();
     }
     OPENSSL_free(loopargs);
-    release_engine(e);
     EVP_CIPHER_free(evp_cipher);
     EVP_MAC_free(mac);
     NCONF_free(conf);
