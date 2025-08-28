@@ -85,9 +85,8 @@ void ossl_prov_digest_reset(PROV_DIGEST *pd);
 /* Clone a PROV_DIGEST structure into a second */
 int ossl_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src);
 
-/* Query the digest and associated engine (if any) */
+/* Query the digest (if any) */
 const EVP_MD *ossl_prov_digest_md(const PROV_DIGEST *pd);
-ENGINE *ossl_prov_digest_engine(const PROV_DIGEST *pd);
 
 /* Set a specific md, resets current digests first */
 void ossl_prov_digest_set_md(PROV_DIGEST *pd, EVP_MD *md);

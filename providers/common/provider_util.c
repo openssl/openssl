@@ -171,11 +171,6 @@ const EVP_MD *ossl_prov_digest_md(const PROV_DIGEST *pd)
     return pd->md;
 }
 
-ENGINE *ossl_prov_digest_engine(const PROV_DIGEST *pd)
-{
-    return pd->engine;
-}
-
 int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
                          const char *ciphername,
                          const char *mdname,
