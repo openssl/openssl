@@ -1568,6 +1568,7 @@ int s_server_main(int argc, char *argv[])
                 goto end;
             break;
         case OPT_VERIFY_RET_ERROR:
+            s_server_verify = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
             verify_args.return_error = 1;
             break;
         case OPT_VERIFY_QUIET:

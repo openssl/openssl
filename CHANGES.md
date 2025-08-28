@@ -41,6 +41,11 @@ OpenSSL 4.0
 
    *Igor Ustinov*
 
+ * Enabled Server verification by default in `s_server` when option
+   verify_return_error is enabled.
+
+   *Ryan Hooper*
+
 OpenSSL 3.6
 -----------
 
