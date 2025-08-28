@@ -25,6 +25,7 @@
 #define LPDIR_H
 #if defined OPENSSL_SYS_UNIX || defined DJGPP || \
 	(defined __VMS_VER && __VMS_VER >= 70000000)
+/* clang_format off */
 #include "LPdir_unix.c"
 #elif defined OPENSSL_SYS_VMS
 #include "LPdir_vms.c"
@@ -34,4 +35,5 @@
 #include "LPdir_wince.c"
 #else
 #include "LPdir_nyi.c"
+/* clang_format on */
 #endif
