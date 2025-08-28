@@ -39,16 +39,15 @@ typedef struct {
 /* Cipher functions */
 /*
  * Load a cipher from the specified parameters with the specified context.
- * The params "properties", "engine" and "cipher" are used to determine the
- * implementation used.  If a provider cannot be found, it falls back to trying
+ * The params "properties" and "cipher" are used to determine the
+ * implementation used. TODO(does this still holds without engines?)If a provider cannot be found, it falls back to trying
  * non-provider based implementations.
  */
 int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
                                       const OSSL_PARAM params[],
                                       OSSL_LIB_CTX *ctx);
 int ossl_prov_cipher_load(PROV_CIPHER *pc, const OSSL_PARAM *cipher,
-                          const OSSL_PARAM *propq, const OSSL_PARAM *engine,
-                          OSSL_LIB_CTX *ctx);
+                          const OSSL_PARAM *propq, OSSL_LIB_CTX *ctx);
 
 /* Reset the PROV_CIPHER fields and free any allocated cipher reference */
 void ossl_prov_cipher_reset(PROV_CIPHER *pc);

@@ -267,8 +267,7 @@ static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
         return 0;
 
     if (p.cipher != NULL) {
-        if (!ossl_prov_cipher_load(&macctx->cipher, p.cipher, p.propq,
-                                   p.engine, ctx))
+        if (!ossl_prov_cipher_load(&macctx->cipher, p.cipher, p.propq, ctx))
             return 0;
 
         if (EVP_CIPHER_get_mode(ossl_prov_cipher_cipher(&macctx->cipher))

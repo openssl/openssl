@@ -45,8 +45,7 @@ static int set_propq(const OSSL_PARAM *propq, const char **propquery)
 }
 
 int ossl_prov_cipher_load(PROV_CIPHER *pc, const OSSL_PARAM *cipher,
-                          const OSSL_PARAM *propq, const OSSL_PARAM *engine,
-                          OSSL_LIB_CTX *ctx)
+                          const OSSL_PARAM *propq, OSSL_LIB_CTX *ctx)
 {
     const char *propquery;
 
@@ -86,7 +85,6 @@ int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
      return ossl_prov_cipher_load(pc,
                                   OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_CIPHER),
                                   OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_PROPERTIES),
-                                  OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_ENGINE),
                                   ctx);
 }
 
