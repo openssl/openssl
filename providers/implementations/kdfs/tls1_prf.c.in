@@ -325,19 +325,19 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
         if (OPENSSL_strcasecmp(dgst, OSSL_DIGEST_NAME_MD5_SHA1) == 0) {
             if (!ossl_prov_macctx_load(&ctx->P_hash, NULL, NULL, NULL,
-                                       p.propq, p.engine,
+                                       p.propq,
                                        OSSL_MAC_NAME_HMAC, NULL,
                                        OSSL_DIGEST_NAME_MD5, libctx))
                 return 0;
             if (!ossl_prov_macctx_load(&ctx->P_sha1, NULL, NULL, NULL,
-                                       p.propq, p.engine,
+                                       p.propq,
                                        OSSL_MAC_NAME_HMAC, NULL,
                                        OSSL_DIGEST_NAME_SHA1, libctx))
                 return 0;
         } else {
             EVP_MAC_CTX_free(ctx->P_sha1);
             if (!ossl_prov_macctx_load(&ctx->P_hash, NULL, NULL, p.digest,
-                                       p.propq, p.engine,
+                                       p.propq,
                                        OSSL_MAC_NAME_HMAC, NULL, NULL, libctx))
                 return 0;
         }

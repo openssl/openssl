@@ -563,7 +563,7 @@ static int sskdf_common_set_ctx_params
     int r;
 
     if (!ossl_prov_macctx_load(&ctx->macctx,
-                               p->mac, NULL, p->digest, p->propq, p->engine,
+                               p->mac, NULL, p->digest, p->propq,
                                NULL, NULL, NULL, libctx))
         return 0;
     if (ctx->macctx != NULL) {

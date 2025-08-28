@@ -241,7 +241,7 @@ static int hmac_drbg_kdf_set_ctx_params(void *vctx,
             drbg->blocklen = (size_t)md_size;
         }
         if (!ossl_prov_macctx_load(&drbg->ctx, NULL, NULL, p.digest, p.propq,
-                                   p.engine, "HMAC", NULL, NULL, libctx))
+                                   "HMAC", NULL, NULL, libctx))
             return 0;
     }
     return 1;

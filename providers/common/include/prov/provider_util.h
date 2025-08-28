@@ -99,7 +99,6 @@ void ossl_prov_digest_set_md(PROV_DIGEST *pd, EVP_MD *md);
 int ossl_prov_macctx_load(EVP_MAC_CTX **macctx,
                           const OSSL_PARAM *pmac, const OSSL_PARAM *pcipher,
                           const OSSL_PARAM *pdigest, const OSSL_PARAM *propq,
-                          const OSSL_PARAM *pengine,
                           const char *macname, const char *ciphername,
                           const char *mdname, OSSL_LIB_CTX *libctx);
 
