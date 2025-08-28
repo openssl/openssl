@@ -464,12 +464,11 @@ static int drbg_hmac_set_ctx_params_locked
         if (p->digest != NULL) {
             /* fall back to full implementation search */
             if (!ossl_prov_digest_load(&hmac->digest, p->digest, p->propq,
-                                       p->engine, libctx))
+                                       libctx))
                 return 0;
 
             if (!ossl_prov_macctx_load(&hmac->ctx, NULL, NULL, p->digest,
-                                       p->propq, p->engine,
-                                       "HMAC", NULL, NULL, libctx))
+                                       p->propq, "HMAC", NULL, NULL, libctx))
                 return 0;
         }
     } else {
