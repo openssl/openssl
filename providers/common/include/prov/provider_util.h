@@ -71,13 +71,10 @@ const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OSSL_LIB_CTX *libctx,
 
 /*
  * Load a digest from the specified parameters with the specified context.
- * The params "properties", "engine" and "digest" are used to determine the
+ * The params "propq", "engine" and "digest" are used to determine the
  * implementation used.  If a provider cannot be found, it falls back to trying
  * non-provider based implementations.
  */
-int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
-                                      const OSSL_PARAM params[],
-                                      OSSL_LIB_CTX *ctx);
 int ossl_prov_digest_load(PROV_DIGEST *pd,const OSSL_PARAM *digest,
                           const OSSL_PARAM *propq, const OSSL_PARAM *engine,
                           OSSL_LIB_CTX *ctx);
