@@ -69,7 +69,7 @@ typedef enum OPTION_choice {
     OPT_INKEY, OPT_CERTFILE, OPT_UNTRUSTED, OPT_PASSCERTS,
     OPT_NAME, OPT_CSP, OPT_CANAME,
     OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
-    OPT_CAFILE, OPT_CASTORE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_ENGINE,
+    OPT_CAFILE, OPT_CASTORE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
     OPT_R_ENUM, OPT_PROV_ENUM, OPT_JDKTRUST, OPT_PBMAC1_PBKDF2, OPT_PBMAC1_PBKDF2_MD,
 #ifndef OPENSSL_NO_DES
     OPT_LEGACY_ALG
@@ -96,9 +96,6 @@ const OPTIONS pkcs12_options[] = {
      "Use legacy encryption: 3DES_CBC for keys, RC2_CBC for certs"
 # endif
     },
-#endif
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     OPT_PROV_OPTIONS,
     OPT_R_OPTIONS,
@@ -183,7 +180,6 @@ int pkcs12_main(int argc, char **argv)
     char *cpass = NULL, *mpass = NULL, *badpass = NULL;
     const char *CApath = NULL, *CAfile = NULL, *CAstore = NULL, *prog;
     int noCApath = 0, noCAfile = 0, noCAstore = 0;
-    ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL;
     PKCS12 *p12 = NULL;
     STACK_OF(OPENSSL_STRING) *canames = NULL;
@@ -363,9 +359,6 @@ int pkcs12_main(int argc, char **argv)
             break;
         case OPT_NOCAFILE:
             noCAfile = 1;
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
 #ifndef OPENSSL_NO_DES
         case OPT_LEGACY_ALG:
@@ -557,7 +550,7 @@ int pkcs12_main(int argc, char **argv)
 
         if (!(options & NOKEYS)) {
             key = load_key(keyname ? keyname : infile,
-                           FORMAT_PEM, 1, passin, e,
+                           FORMAT_PEM, 1, passin, NULL,
                            keyname ?
                            "private key from -inkey file" :
                            "private key from -in file");
@@ -904,7 +897,6 @@ int pkcs12_main(int argc, char **argv)
     ret = 0;
  end:
     PKCS12_free(p12);
-    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
     sk_OPENSSL_STRING_free(canames);
