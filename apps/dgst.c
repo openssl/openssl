@@ -42,7 +42,7 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_LIST,
     OPT_C, OPT_R, OPT_OUT, OPT_SIGN, OPT_PASSIN, OPT_VERIFY,
-    OPT_PRVERIFY, OPT_SIGNATURE, OPT_KEYFORM, OPT_ENGINE, OPT_ENGINE_IMPL,
+    OPT_PRVERIFY, OPT_SIGNATURE, OPT_KEYFORM,
     OPT_HEX, OPT_BINARY, OPT_DEBUG, OPT_FIPS_FINGERPRINT,
     OPT_HMAC, OPT_MAC, OPT_SIGOPT, OPT_MACOPT, OPT_XOFLEN,
     OPT_DIGEST,
@@ -55,11 +55,6 @@ const OPTIONS dgst_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"list", OPT_LIST, '-', "List digests"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
-    {"engine_impl", OPT_ENGINE_IMPL, '-',
-     "Also use engine given by -engine for digest operations"},
-#endif
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
 
     OPT_SECTION("Output"),
@@ -97,7 +92,6 @@ const OPTIONS dgst_options[] = {
 int dgst_main(int argc, char **argv)
 {
     BIO *in = NULL, *inp = NULL, *bmd = NULL, *out = NULL;
-    ENGINE *e = NULL, *impl = NULL;
     EVP_PKEY *sigkey = NULL;
     STACK_OF(OPENSSL_STRING) *sigopts = NULL, *macopts = NULL;
     char *hmac_key = NULL;
@@ -112,7 +106,6 @@ int dgst_main(int argc, char **argv)
     int i, ret = EXIT_FAILURE, out_bin = -1, want_pub = 0, do_verify = 0;
     int xoflen = 0;
     unsigned char *buf = NULL, *sigbuf = NULL;
-    int engine_impl = 0;
     struct doall_dgst_digests dec;
     EVP_MD_CTX *signctx = NULL;
     int oneshot_sign = 0;
@@ -178,12 +171,6 @@ int dgst_main(int argc, char **argv)
             if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyform))
                 goto opthelp;
             break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
-            break;
-        case OPT_ENGINE_IMPL:
-            engine_impl = 1;
-            break;
         case OPT_HEX:
             out_bin = 0;
             break;
@@ -247,8 +234,6 @@ int dgst_main(int argc, char **argv)
                    "No signature to verify: use the -signature option\n");
         goto end;
     }
-    if (engine_impl)
-        impl = e;
 
     in = BIO_new(BIO_s_file());
     bmd = BIO_new(BIO_f_md());
@@ -284,9 +269,9 @@ int dgst_main(int argc, char **argv)
 
     if (keyfile != NULL) {
         if (want_pub)
-            sigkey = load_pubkey(keyfile, keyform, 0, NULL, e, "public key");
+            sigkey = load_pubkey(keyfile, keyform, 0, NULL, NULL, "public key");
         else
-            sigkey = load_key(keyfile, keyform, 0, passin, e, "private key");
+            sigkey = load_key(keyfile, keyform, 0, passin, NULL, "private key");
         if (sigkey == NULL) {
             /*
              * load_[pub]key() has already printed an appropriate message
@@ -324,7 +309,6 @@ int dgst_main(int argc, char **argv)
         }
 
         sigkey = app_keygen(mac_ctx, mac_name, 0, 0 /* not verbose */);
-        /* Verbose output would make external-tests gost-engine fail */
         EVP_PKEY_CTX_free(mac_ctx);
         if (sigkey == NULL)
             goto end;
@@ -335,7 +319,7 @@ int dgst_main(int argc, char **argv)
             md = (EVP_MD *)EVP_sha256();
             digestname = SN_sha256;
         }
-        sigkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, impl,
+        sigkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL,
                                               (unsigned char *)hmac_key,
                                               strlen(hmac_key));
         if (sigkey == NULL)
@@ -354,19 +338,13 @@ int dgst_main(int argc, char **argv)
             goto end;
         }
         if (do_verify)
-            if (impl == NULL)
-                res = EVP_DigestVerifyInit_ex(mctx, &pctx, digestname,
-                                              app_get0_libctx(),
-                                              app_get0_propq(), sigkey, NULL);
-            else
-                res = EVP_DigestVerifyInit(mctx, &pctx, md, impl, sigkey);
+            res = EVP_DigestVerifyInit_ex(mctx, &pctx, digestname,
+                                          app_get0_libctx(),
+                                          app_get0_propq(), sigkey, NULL);
         else
-            if (impl == NULL)
-                res = EVP_DigestSignInit_ex(mctx, &pctx, digestname,
-                                            app_get0_libctx(),
-                                            app_get0_propq(), sigkey, NULL);
-            else
-                res = EVP_DigestSignInit(mctx, &pctx, md, impl, sigkey);
+            res = EVP_DigestSignInit_ex(mctx, &pctx, digestname,
+                                        app_get0_libctx(),
+                                        app_get0_propq(), sigkey, NULL);
         if (res == 0) {
             BIO_printf(bio_err, "Error setting context\n");
             goto end;
@@ -397,7 +375,7 @@ int dgst_main(int argc, char **argv)
         }
         if (md == NULL)
             md = (EVP_MD *)EVP_sha256();
-        if (!EVP_DigestInit_ex(mctx, md, impl)) {
+        if (!EVP_DigestInit_ex(mctx, md, NULL)) {
             BIO_printf(bio_err, "Error setting digest\n");
             goto end;
         }
@@ -497,7 +475,6 @@ int dgst_main(int argc, char **argv)
     sk_OPENSSL_STRING_free(macopts);
     OPENSSL_free(sigbuf);
     BIO_free(bmd);
-    release_engine(e);
     return ret;
 }
 
