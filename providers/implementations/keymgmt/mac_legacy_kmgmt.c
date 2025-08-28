@@ -253,14 +253,6 @@ static int key_to_params(MAC_KEY *key, OSSL_PARAM_BLD *tmpl,
                                              EVP_CIPHER_get0_name(key->cipher.cipher)))
         return 0;
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    if (key->cipher.engine != NULL
-        && !ossl_param_build_set_utf8_string(tmpl, params,
-                                             OSSL_PKEY_PARAM_ENGINE,
-                                             ENGINE_get_id(key->cipher.engine)))
-        return 0;
-#endif
-
     return 1;
 }
 
