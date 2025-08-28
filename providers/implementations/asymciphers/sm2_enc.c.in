@@ -201,7 +201,7 @@ static int sm2_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
     if (psm2ctx == NULL || !sm2_set_ctx_params_decoder(params, &p))
         return 0;
 
-    if (!ossl_prov_digest_load(&psm2ctx->md, p.digest, p.propq, p.engine,
+    if (!ossl_prov_digest_load(&psm2ctx->md, p.digest, p.propq,
                                psm2ctx->libctx))
         return 0;
 

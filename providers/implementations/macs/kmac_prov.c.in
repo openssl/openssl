@@ -207,7 +207,7 @@ static void *kmac_fetch_new(void *provctx, const OSSL_PARAM *params)
         return 0;
     if (!kmac_new_decoder(params, &p))
         goto err;
-    if (!ossl_prov_digest_load(&kctx->digest, p.digest, p.propq, p.engine,
+    if (!ossl_prov_digest_load(&kctx->digest, p.digest, p.propq,
                                PROV_LIBCTX_OF(provctx)))
         goto err;
 
