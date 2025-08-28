@@ -483,12 +483,11 @@ typedef enum OPTION_choice {
     OPT_CERT, OPT_CRL, OPT_CRL_DOWNLOAD, OPT_SESS_OUT, OPT_SESS_IN,
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BRIEF, OPT_PREXIT, OPT_NO_INTERACTIVE, OPT_CRLF, OPT_QUIET, OPT_NBIO,
-    OPT_SSL_CLIENT_ENGINE, OPT_IGN_EOF, OPT_NO_IGN_EOF,
-    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_WDEBUG,
+    OPT_IGN_EOF, OPT_NO_IGN_EOF, OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_WDEBUG,
 # ifndef OPENSSL_NO_OCSP
     OPT_STATUS, OPT_STATUS_OCSP_CHECK_LEAF, OPT_STATUS_OCSP_CHECK_ALL,
 # endif
-    OPT_MSG, OPT_MSGFILE, OPT_ENGINE, OPT_TRACE, OPT_SECURITY_DEBUG,
+    OPT_MSG, OPT_MSGFILE, OPT_TRACE, OPT_SECURITY_DEBUG,
     OPT_SECURITY_DEBUG_VERBOSE, OPT_SHOWCERTS, OPT_NBIO_TEST, OPT_STATE,
     OPT_PSK_IDENTITY, OPT_PSK, OPT_PSK_SESS,
 #ifndef OPENSSL_NO_SRP
@@ -530,11 +529,6 @@ const OPTIONS s_client_options[] = {
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-    {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's',
-     "Specify engine to be used for client certificate operations"},
-#endif
     {"ssl_config", OPT_SSL_CONFIG, 's', "Use specified section for SSL_CTX configuration"},
 #ifndef OPENSSL_NO_CT
     {"ct", OPT_CT, '-', "Request and parse SCTs (also enables OCSP stapling)"},
@@ -913,10 +907,6 @@ int s_client_main(int argc, char **argv)
     int enable_timeouts = 0;
     long socket_mtu = 0;
 #endif
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE *ssl_client_engine = NULL;
-#endif
-    ENGINE *e = NULL;
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
     struct timeval tv;
 #endif
@@ -1174,18 +1164,6 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_ADV:
             cmdmode = USER_DATA_MODE_ADVANCED;
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 1);
-            break;
-        case OPT_SSL_CLIENT_ENGINE:
-#ifndef OPENSSL_NO_ENGINE
-            ssl_client_engine = setup_engine(opt_arg(), 0);
-            if (ssl_client_engine == NULL) {
-                BIO_printf(bio_err, "Error getting client auth engine\n");
-                goto opthelp;
-            }
-#endif
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
@@ -1771,7 +1749,7 @@ int s_client_main(int argc, char **argv)
         key_file = cert_file;
 
     if (key_file != NULL) {
-        key = load_key(key_file, key_format, 0, pass, e,
+        key = load_key(key_file, key_format, 0, pass, NULL,
                        "client certificate private key");
         if (key == NULL)
             goto end;
@@ -1929,16 +1907,6 @@ int s_client_main(int argc, char **argv)
         }
         SSL_CTX_set0_CA_list(ctx, nm);
     }
-#ifndef OPENSSL_NO_ENGINE
-    if (ssl_client_engine) {
-        if (!SSL_CTX_set_client_cert_engine(ctx, ssl_client_engine)) {
-            BIO_puts(bio_err, "Error setting client auth engine\n");
-            release_engine(ssl_client_engine);
-            goto end;
-        }
-        release_engine(ssl_client_engine);
-    }
-#endif
 
 #ifndef OPENSSL_NO_PSK
     if (psk_key != NULL) {
@@ -3353,7 +3321,6 @@ int s_client_main(int argc, char **argv)
     OPENSSL_clear_free(sbuf, BUFSIZZ);
     OPENSSL_clear_free(mbuf, BUFSIZZ);
     clear_free(proxypass);
-    release_engine(e);
     BIO_free(bio_c_out);
     bio_c_out = NULL;
     BIO_free(bio_c_msg);
