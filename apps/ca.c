@@ -145,7 +145,7 @@ static int msie_hack = 0;
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_ENGINE, OPT_VERBOSE, OPT_CONFIG, OPT_NAME, OPT_SUBJ, OPT_UTF8,
+    OPT_VERBOSE, OPT_CONFIG, OPT_NAME, OPT_SUBJ, OPT_UTF8,
     OPT_CREATE_SERIAL, OPT_MULTIVALUE_RDN, OPT_STARTDATE, OPT_ENDDATE,
     OPT_DAYS, OPT_MD, OPT_POLICY, OPT_KEYFILE, OPT_KEYFORM, OPT_PASSIN,
     OPT_KEY, OPT_CERT, OPT_CERTFORM, OPT_SELFSIGN,
@@ -182,9 +182,6 @@ const OPTIONS ca_options[] = {
     {"ss_cert", OPT_SS_CERT, '<', "File contains a self signed cert to sign"},
     {"spkac", OPT_SPKAC, '<',
      "File contains DN and signed public key and challenge"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
 
     OPT_SECTION("Configuration"),
     {"config", OPT_CONFIG, 's', "A config file"},
@@ -266,7 +263,6 @@ const OPTIONS ca_options[] = {
 int ca_main(int argc, char **argv)
 {
     CONF *conf = NULL;
-    ENGINE *e = NULL;
     BIGNUM *crlnumber = NULL, *serial = NULL;
     EVP_PKEY *pkey = NULL;
     BIO *in = NULL, *out = NULL, *Sout = NULL;
@@ -500,9 +496,6 @@ opthelp:
             rev_arg = opt_arg();
             rev_type = (o - OPT_CRL_REASON) + REV_CRL_REASON;
             break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
-            break;
         }
     }
 
@@ -591,7 +584,7 @@ end_of_options:
             goto end;
         }
     }
-    pkey = load_key(keyfile, keyformat, 0, passin, e, "CA private key");
+    pkey = load_key(keyfile, keyformat, 0, passin, NULL, "CA private key");
     cleanse(passin);
     if (pkey == NULL)
         /* load_key() has already printed an appropriate message */
@@ -1319,7 +1312,6 @@ end_of_options:
     X509_CRL_free(crl);
     NCONF_free(conf);
     NCONF_free(extfile_conf);
-    release_engine(e);
     return ret;
 }
 
