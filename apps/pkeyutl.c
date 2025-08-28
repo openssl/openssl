@@ -22,16 +22,14 @@
 
 static EVP_PKEY *get_pkey(const char *kdfalg,
                           const char *keyfile, int keyform, int key_type,
-                          char *passinarg, int pkey_op, ENGINE *e);
+                          char *passinarg, int pkey_op);
 static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
-                              int pkey_op, ENGINE *e,
-                              const int engine_impl, int rawin,
+                              int pkey_op, int rawin,
                               EVP_PKEY *pkey /* ownership is passed to ctx */,
                               EVP_MD_CTX *mctx, const char *digestname,
                               const char *kemop, OSSL_LIB_CTX *libctx, const char *propq);
 
-static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
-                      ENGINE *e);
+static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file);
 
 static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
@@ -56,7 +54,7 @@ static int only_nomd(EVP_PKEY *pkey)
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_ENGINE, OPT_ENGINE_IMPL, OPT_IN, OPT_OUT,
+    OPT_IN, OPT_OUT,
     OPT_PUBIN, OPT_CERTIN, OPT_ASN1PARSE, OPT_HEXDUMP, OPT_SIGN,
     OPT_VERIFY, OPT_VERIFYRECOVER, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
     OPT_DERIVE, OPT_SIGFILE, OPT_INKEY, OPT_PEERKEY, OPT_PASSIN,
@@ -70,11 +68,6 @@ typedef enum OPTION_choice {
 const OPTIONS pkeyutl_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-    {"engine_impl", OPT_ENGINE_IMPL, '-',
-     "Also use engine given by -engine for crypto operations"},
-#endif
     {"sign", OPT_SIGN, '-', "Sign input data with private key"},
     {"verify", OPT_VERIFY, '-', "Verify with public key"},
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt input data with public key"},
@@ -90,7 +83,7 @@ const OPTIONS pkeyutl_options[] = {
     {"pubin", OPT_PUBIN, '-', "Input key is a public key"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"peerkey", OPT_PEERKEY, 's', "Peer key file used in key derivation"},
-    {"peerform", OPT_PEERFORM, 'E', "Peer key format (DER/PEM/P12/ENGINE)"},
+    {"peerform", OPT_PEERFORM, 'E', "Peer key format (DER/PEM/P12)"},
     {"certin", OPT_CERTIN, '-', "Input is a cert with a public key"},
     {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
     {"sigfile", OPT_SIGFILE, '<', "Signature file (verify operation only)"},
@@ -126,7 +119,6 @@ int pkeyutl_main(int argc, char **argv)
 {
     CONF *conf = NULL;
     BIO *in = NULL, *out = NULL, *secout = NULL;
-    ENGINE *e = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey = NULL;
     char *infile = NULL, *outfile = NULL, *secoutfile = NULL, *sigfile = NULL, *passinarg = NULL;
@@ -136,7 +128,6 @@ int pkeyutl_main(int argc, char **argv)
     int buf_inlen = 0, siglen = -1;
     int keyform = FORMAT_UNDEF, peerform = FORMAT_UNDEF;
     int keysize = -1, pkey_op = EVP_PKEY_OP_SIGN, key_type = KEY_PRIVKEY;
-    int engine_impl = 0;
     int ret = 1, rv = -1;
     size_t buf_outlen = 0, secretlen = 0;
     const char *inkey = NULL;
@@ -175,9 +166,6 @@ int pkeyutl_main(int argc, char **argv)
         case OPT_SIGFILE:
             sigfile = opt_arg();
             break;
-        case OPT_ENGINE_IMPL:
-            engine_impl = 1;
-            break;
         case OPT_INKEY:
             inkey = opt_arg();
             break;
@@ -207,9 +195,6 @@ int pkeyutl_main(int argc, char **argv)
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto end;
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_PUBIN:
             key_type = KEY_PUBKEY;
@@ -317,7 +302,7 @@ int pkeyutl_main(int argc, char **argv)
         goto opthelp;
     }
 
-    pkey = get_pkey(kdfalg, inkey, keyform, key_type, passinarg, pkey_op, e);
+    pkey = get_pkey(kdfalg, inkey, keyform, key_type, passinarg, pkey_op);
     if (key_type != KEY_NONE && pkey == NULL) {
         BIO_printf(bio_err, "%s: Error loading key\n", prog);
         goto end;
@@ -357,13 +342,13 @@ int pkeyutl_main(int argc, char **argv)
             goto end;
         }
     }
-    ctx = init_ctx(kdfalg, &keysize, pkey_op, e, engine_impl, rawin, pkey,
+    ctx = init_ctx(kdfalg, &keysize, pkey_op, rawin, pkey,
                    mctx, digestname, kemop, libctx, app_get0_propq());
     if (ctx == NULL) {
         BIO_printf(bio_err, "%s: Error initializing context\n", prog);
         goto end;
     }
-    if (peerkey != NULL && !setup_peer(ctx, peerform, peerkey, e)) {
+    if (peerkey != NULL && !setup_peer(ctx, peerform, peerkey)) {
         BIO_printf(bio_err, "%s: Error setting up peer key\n", prog);
         goto end;
     }
@@ -601,7 +586,6 @@ int pkeyutl_main(int argc, char **argv)
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     EVP_MD_free(md);
-    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
     BIO_free_all(secout);
@@ -617,7 +601,7 @@ int pkeyutl_main(int argc, char **argv)
 
 static EVP_PKEY *get_pkey(const char *kdfalg,
                           const char *keyfile, int keyform, int key_type,
-                          char *passinarg, int pkey_op, ENGINE *e)
+                          char *passinarg, int pkey_op)
 {
     EVP_PKEY *pkey = NULL;
     char *passin = NULL;
@@ -635,11 +619,11 @@ static EVP_PKEY *get_pkey(const char *kdfalg,
     }
     switch (key_type) {
     case KEY_PRIVKEY:
-        pkey = load_key(keyfile, keyform, 0, passin, e, "private key");
+        pkey = load_key(keyfile, keyform, 0, passin, NULL, "private key");
         break;
 
     case KEY_PUBKEY:
-        pkey = load_pubkey(keyfile, keyform, 0, NULL, e, "public key");
+        pkey = load_pubkey(keyfile, keyform, 0, NULL, NULL, "public key");
         break;
 
     case KEY_CERT:
@@ -659,20 +643,13 @@ static EVP_PKEY *get_pkey(const char *kdfalg,
 }
 
 static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
-                              int pkey_op, ENGINE *e,
-                              const int engine_impl, int rawin,
+                              int pkey_op, int rawin,
                               EVP_PKEY *pkey /* ownership is passed to ctx */,
                               EVP_MD_CTX *mctx, const char *digestname,
                               const char *kemop, OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY_CTX *ctx = NULL;
-    ENGINE *impl = NULL;
     int rv = -1;
-
-#ifndef OPENSSL_NO_ENGINE
-    if (engine_impl)
-        impl = e;
-#endif
 
     if (kdfalg != NULL) {
         int kdfnid = OBJ_sn2nid(kdfalg);
@@ -685,19 +662,13 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                 return NULL;
             }
         }
-        if (impl != NULL)
-            ctx = EVP_PKEY_CTX_new_id(kdfnid, impl);
-        else
-            ctx = EVP_PKEY_CTX_new_from_name(libctx, kdfalg, propq);
+        ctx = EVP_PKEY_CTX_new_from_name(libctx, kdfalg, propq);
     } else {
         if (pkey == NULL)
             return NULL;
 
         *pkeysize = EVP_PKEY_get_size(pkey);
-        if (impl != NULL)
-            ctx = EVP_PKEY_CTX_new(pkey, impl);
-        else
-            ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
+        ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
     }
 
     if (ctx == NULL)
@@ -766,17 +737,13 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     return ctx;
 }
 
-static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
-                      ENGINE *e)
+static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file)
 {
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(ctx);
     EVP_PKEY *peer = NULL;
-    ENGINE *engine = NULL;
     int ret = 1;
 
-    if (peerform == FORMAT_ENGINE)
-        engine = e;
-    peer = load_pubkey(file, peerform, 0, NULL, engine, "peer key");
+    peer = load_pubkey(file, peerform, 0, NULL, NULL, "peer key");
     if (peer == NULL) {
         BIO_printf(bio_err, "Error reading peer key %s\n", file);
         return 0;
