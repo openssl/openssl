@@ -61,7 +61,7 @@ $ openssl s_client -quic -alpn myalpn -connect host:port
 
 In the above example replace `host` with the hostname of the server (e.g.
 `www.example.com`) and `port` with the port for the server (e.g. `443`). Replace
-`myalpn` with the Application Layer Protocol to use (e.g.`h3` represents
+`myalpn` with the Application Layer Protocol to use (e.g. `h3` represents
 HTTP/3). IANA maintains a standard list of [ALPN ids] that can be used.
 
 This example connects to a QUIC server and opens a single bidirectional stream.
