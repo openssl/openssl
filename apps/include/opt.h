@@ -383,11 +383,10 @@ typedef struct string_int_pair_st {
 # define OPT_FMT_ASN1    (OPT_FMT_PEM | OPT_FMT_DER | OPT_FMT_B64)
 # define OPT_FMT_PDE     (OPT_FMT_PEMDER | OPT_FMT_ENGINE)
 # define OPT_FMT_PDS     (OPT_FMT_PEMDER | OPT_FMT_SMIME)
-# define OPT_FMT_ANY     ( \
-        OPT_FMT_PEM | OPT_FMT_DER | OPT_FMT_B64 | \
-        OPT_FMT_PKCS12 | OPT_FMT_SMIME |                     \
-        OPT_FMT_ENGINE | OPT_FMT_MSBLOB | OPT_FMT_NSS | \
-        OPT_FMT_TEXT | OPT_FMT_HTTP | OPT_FMT_PVK)
+# define OPT_FMT_ANY     (OPT_FMT_PEM | OPT_FMT_DER | OPT_FMT_B64 | \
+                         OPT_FMT_PKCS12 | OPT_FMT_SMIME | \
+                         OPT_FMT_MSBLOB | OPT_FMT_NSS | \
+                         OPT_FMT_TEXT | OPT_FMT_HTTP | OPT_FMT_PVK)
 
 /* Divide options into sections when displaying usage */
 #define OPT_SECTION(sec) { OPT_SECTION_STR, 1, '-', sec " options:\n" }

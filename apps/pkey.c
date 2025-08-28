@@ -19,7 +19,7 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_INFORM, OPT_OUTFORM, OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE,
+    OPT_INFORM, OPT_OUTFORM, OPT_PASSIN, OPT_PASSOUT,
     OPT_IN, OPT_OUT, OPT_PUBIN, OPT_PUBOUT, OPT_TEXT_PUB,
     OPT_TEXT, OPT_NOOUT, OPT_CIPHER, OPT_TRADITIONAL, OPT_CHECK, OPT_PUB_CHECK,
     OPT_EC_PARAM_ENC, OPT_EC_CONV_FORM,
@@ -29,9 +29,6 @@ typedef enum OPTION_choice {
 const OPTIONS pkey_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
     OPT_PROV_OPTIONS,
 
     {"check", OPT_CHECK, '-', "Check key consistency"},
@@ -68,7 +65,6 @@ const OPTIONS pkey_options[] = {
 int pkey_main(int argc, char **argv)
 {
     BIO *out = NULL;
-    ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_CIPHER *cipher = NULL;
@@ -109,9 +105,6 @@ int pkey_main(int argc, char **argv)
             break;
         case OPT_PASSOUT:
             passoutarg = opt_arg();
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_IN:
             infile = opt_arg();
@@ -209,9 +202,9 @@ int pkey_main(int argc, char **argv)
     }
 
     if (pubin)
-        pkey = load_pubkey(infile, informat, 1, passin, e, "Public Key");
+        pkey = load_pubkey(infile, informat, 1, passin, "Public Key");
     else
-        pkey = load_key(infile, informat, 1, passin, e, "key");
+        pkey = load_key(infile, informat, 1, passin, "key");
     if (pkey == NULL)
         goto end;
 
@@ -242,7 +235,7 @@ int pkey_main(int argc, char **argv)
     if (check || pub_check) {
         int r;
 
-        ctx = EVP_PKEY_CTX_new(pkey, e);
+        ctx = EVP_PKEY_CTX_new(pkey, NULL);
         if (ctx == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -327,7 +320,6 @@ int pkey_main(int argc, char **argv)
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     EVP_CIPHER_free(cipher);
-    release_engine(e);
     BIO_free_all(out);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
