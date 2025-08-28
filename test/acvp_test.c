@@ -1368,7 +1368,7 @@ static int rsa_keygen_test(int id)
         || !TEST_mem_eq(tst->p, tst->p_len, p, p_len)
         || !TEST_mem_eq(tst->q, tst->q_len, q, q_len)
         || !TEST_mem_eq(tst->n, tst->n_len, n, n_len)
-        || (tst->d != NULL && !TEST_mem_eq(tst->d, tst->d_len, d, d_len)))
+        || !TEST_mem_eq(tst->d, tst->d_len, d, d_len))
         goto err;
 
     test_output_memory("p1", p1, p1_len);
