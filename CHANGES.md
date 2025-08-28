@@ -265,6 +265,11 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
+ * Enabled Server verification by default in `s_server` when option
+   verify_return_error is enabled.
+
+   *Ryan Hooper*
+
 OpenSSL 3.5
 -----------
 
