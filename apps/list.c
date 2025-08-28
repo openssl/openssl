@@ -1619,9 +1619,6 @@ typedef enum HELPLIST_CHOICE {
     OPT_TLS1_3,
 # endif
 #endif
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    OPT_ENGINES,
-#endif
     OPT_PROV_ENUM
 } HELPLIST_CHOICE;
 
