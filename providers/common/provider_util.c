@@ -119,8 +119,7 @@ const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OSSL_LIB_CTX *libctx,
 }
 
 int ossl_prov_digest_load(PROV_DIGEST *pd, const OSSL_PARAM *digest,
-                          const OSSL_PARAM *propq, const OSSL_PARAM *engine,
-                          OSSL_LIB_CTX *ctx)
+                          const OSSL_PARAM *propq, OSSL_LIB_CTX *ctx)
 {
     const char *propquery;
 
@@ -158,7 +157,6 @@ int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
     return ossl_prov_digest_load(pd,
                                  OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST),
                                  OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_PROPERTIES),
-                                 OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_ENGINE),
                                  ctx);
 }
 

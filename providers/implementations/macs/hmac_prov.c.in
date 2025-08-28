@@ -342,8 +342,7 @@ static int hmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
         return 0;
 
     if (p.digest != NULL
-            && !ossl_prov_digest_load(&macctx->digest, p.digest, p.propq,
-                                      p.engine, ctx))
+            && !ossl_prov_digest_load(&macctx->digest, p.digest, p.propq, ctx))
         return 0;
 
     if (p.key != NULL) {

@@ -225,8 +225,7 @@ static int hmac_drbg_kdf_set_ctx_params(void *vctx,
     }
 
     if (p.digest != NULL) {
-        if (!ossl_prov_digest_load(&drbg->digest, p.digest,
-                                   p.propq, p.engine, libctx))
+        if (!ossl_prov_digest_load(&drbg->digest, p.digest, p.propq, libctx))
             return 0;
 
         /* Confirm digest is allowed. Allow all digests that are not XOF */
