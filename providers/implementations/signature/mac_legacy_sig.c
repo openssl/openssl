@@ -7,9 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use some engine deprecated APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/core_dispatch.h>
@@ -17,9 +14,6 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
-#ifndef FIPS_MODULE
-# include <openssl/engine.h>
-#endif
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/macsignature.h"
@@ -97,7 +91,7 @@ static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey,
                                 const OSSL_PARAM params[])
 {
     PROV_MAC_CTX *pmacctx = (PROV_MAC_CTX *)vpmacctx;
-    const char *ciphername = NULL, *engine = NULL;
+    const char *ciphername = NULL;
 
     if (!ossl_prov_is_running()
         || pmacctx == NULL)
@@ -117,15 +111,10 @@ static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey,
 
     if (pmacctx->key->cipher.cipher != NULL)
         ciphername = (char *)EVP_CIPHER_get0_name(pmacctx->key->cipher.cipher);
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    if (pmacctx->key->cipher.engine != NULL)
-        engine = (char *)ENGINE_get_id(pmacctx->key->cipher.engine);
-#endif
 
     if (!ossl_prov_set_macctx(pmacctx->macctx,
                               (char *)ciphername,
                               (char *)mdname,
-                              (char *)engine,
                               pmacctx->key->properties, params))
         return 0;
 
