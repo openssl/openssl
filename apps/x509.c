@@ -53,7 +53,7 @@ typedef enum OPTION_choice {
     OPT_CHECKEMAIL, OPT_CHECKIP, OPT_NOOUT, OPT_TRUSTOUT, OPT_CLRTRUST,
     OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
     OPT_SUBJECT_HASH_OLD, OPT_ISSUER_HASH_OLD, OPT_COPY_EXTENSIONS,
-    OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
+    OPT_BADSIG, OPT_MD, OPT_NOCERT, OPT_PRESERVE_DATES,
     OPT_NOT_BEFORE, OPT_NOT_AFTER,
     OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT
 } OPTION_CHOICE;
@@ -183,9 +183,6 @@ const OPTIONS x509_options[] = {
      "Reject certificate for a given purpose"},
 
     OPT_R_OPTIONS,
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
     OPT_PROV_OPTIONS,
     {NULL}
 };
@@ -303,7 +300,6 @@ int x509_main(int argc, char **argv)
     unsigned long certflag = 0;
     int preserve_dates = 0;
     OPTION_CHOICE o;
-    ENGINE *e = NULL;
 #ifndef OPENSSL_NO_MD5
     int subject_hash_old = 0, issuer_hash_old = 0;
 #endif
@@ -483,9 +479,6 @@ int x509_main(int argc, char **argv)
             if (!set_nameopt(opt_arg()))
                 goto opthelp;
             break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
-            break;
         case OPT_EMAIL:
             email = ++num;
             break;
@@ -663,12 +656,12 @@ int x509_main(int argc, char **argv)
         goto err;
     }
     if (privkeyfile != NULL) {
-        privkey = load_key(privkeyfile, keyformat, 0, passin, e, "private key");
+        privkey = load_key(privkeyfile, keyformat, 0, passin, NULL, "private key");
         if (privkey == NULL)
             goto err;
     }
     if (pubkeyfile != NULL) {
-        if ((pubkey = load_pubkey(pubkeyfile, keyformat, 0, NULL, e,
+        if ((pubkey = load_pubkey(pubkeyfile, keyformat, 0, NULL, NULL,
                                   "explicitly set public key")) == NULL)
             goto err;
     }
@@ -956,7 +949,7 @@ int x509_main(int argc, char **argv)
         noout = 1;
     } else if (CAfile != NULL) {
         if ((CAkey = load_key(CAkeyfile, CAkeyformat,
-                              0, passin, e, "CA private key")) == NULL)
+                              0, passin, NULL, "CA private key")) == NULL)
             goto err;
         if (!X509_check_private_key(xca, CAkey)) {
             BIO_printf(bio_err,
@@ -1163,7 +1156,6 @@ int x509_main(int argc, char **argv)
     ASN1_INTEGER_free(sno);
     sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
     sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
-    release_engine(e);
     clear_free(passin);
     return ret;
 }
