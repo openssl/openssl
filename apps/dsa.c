@@ -34,7 +34,7 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_ENGINE,
+    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
     /* Do not change the order here; see case statements below */
     OPT_PVK_NONE, OPT_PVK_WEAK, OPT_PVK_STRONG,
     OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_PUBIN,
@@ -50,9 +50,6 @@ const OPTIONS dsa_options[] = {
     {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
     {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
     {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
-#endif
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 #endif
 
     OPT_SECTION("Input"),
@@ -77,7 +74,6 @@ const OPTIONS dsa_options[] = {
 int dsa_main(int argc, char **argv)
 {
     BIO *out = NULL;
-    ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_CIPHER *enc = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
@@ -119,9 +115,6 @@ int dsa_main(int argc, char **argv)
             break;
         case OPT_OUT:
             outfile = opt_arg();
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_PASSIN:
             passinarg = opt_arg();
@@ -176,9 +169,9 @@ int dsa_main(int argc, char **argv)
 
     BIO_printf(bio_err, "read DSA key\n");
     if (pubin)
-        pkey = load_pubkey(infile, informat, 1, passin, e, "public key");
+        pkey = load_pubkey(infile, informat, 1, passin, NULL, "public key");
     else
-        pkey = load_key(infile, informat, 1, passin, e, "private key");
+        pkey = load_key(infile, informat, 1, passin, NULL, "private key");
 
     if (pkey == NULL) {
         BIO_printf(bio_err, "unable to load Key\n");
@@ -300,7 +293,6 @@ int dsa_main(int argc, char **argv)
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
     EVP_CIPHER_free(enc);
-    release_engine(e);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
     return ret;
