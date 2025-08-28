@@ -125,8 +125,7 @@ OPENSSL_zalloc() calls memset() to zero the memory before returning.
 OPENSSL_aligned_alloc() operates just as OPENSSL_malloc() does, but it
 allows for the caller to specify an alignment value, for instances in
 which the default alignment of malloc is insufficient for the caller's
-needs.  Note, the alignment value must be a power of 2, and the size
-specified must be a multiple of the alignment.
+needs.  Note, the alignment value must be a power of 2.
 NOTES:
 
 =over 4
@@ -316,6 +315,11 @@ OPENSSL_malloc_array(), OPENSSL_calloc(), OPENSSL_aligned_alloc_array(),
 OPENSSL_realloc_array(), OPENSSL_clear_realloc_array(), CRYPTO_malloc_array(),
 CRYPTO_calloc(), CRYPTO_aligned_alloc_array(), CRYPTO_realloc_array(),
 CRYPTO_clear_realloc_array() were added in OpenSSL 3.6.
+
+Before OpenSSL 3.6, there was an OPENSSL_aligned_malloc() requirement
+that the size must be a multiple of the alignment, that was enforced
+only on platforms that do not provide posix_memalign(3), but do provide
+aligned_alloc(3).
 
 =head1 COPYRIGHT
 
