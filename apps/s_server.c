@@ -927,7 +927,6 @@ static int not_resumable_sess_cb(SSL *s, int is_forward_secure)
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_ENGINE,
     OPT_4, OPT_6, OPT_ACCEPT, OPT_PORT, OPT_UNIX, OPT_UNLINK, OPT_NACCEPT,
     OPT_VERIFY, OPT_NAMEOPT, OPT_UPPER_V_VERIFY, OPT_CONTEXT, OPT_CERT, OPT_CRL,
     OPT_CRL_DOWNLOAD, OPT_SERVERINFO, OPT_CERTFORM, OPT_KEY, OPT_KEYFORM,
@@ -974,9 +973,6 @@ const OPTIONS s_server_options[] = {
      "Configure SSL_CTX using the given configuration value"},
 #ifndef OPENSSL_NO_SSL_TRACE
     {"trace", OPT_TRACE, '-', "trace protocol messages"},
-#endif
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
 
     OPT_SECTION("Network"),
@@ -1230,7 +1226,6 @@ const OPTIONS s_server_options[] = {
 
 int s_server_main(int argc, char *argv[])
 {
-    ENGINE *engine = NULL;
     EVP_PKEY *s_key = NULL, *s_dkey = NULL;
     SSL_CONF_CTX *cctx = NULL;
     const SSL_METHOD *meth = TLS_server_method();
@@ -1819,11 +1814,6 @@ int s_server_main(int argc, char *argv[])
         case OPT_ID_PREFIX:
             session_id_prefix = opt_arg();
             break;
-        case OPT_ENGINE:
-#ifndef OPENSSL_NO_ENGINE
-            engine = setup_engine(opt_arg(), s_debug);
-#endif
-            break;
         case OPT_R_CASES:
             if (!opt_rand(o))
                 goto end;
@@ -2035,7 +2025,7 @@ int s_server_main(int argc, char *argv[])
         goto end;
 
     if (nocert == 0) {
-        s_key = load_key(s_key_file, s_key_format, 0, pass, engine,
+        s_key = load_key(s_key_file, s_key_format, 0, pass, NULL,
                          "server certificate private key");
         if (s_key == NULL)
             goto end;
@@ -2052,7 +2042,7 @@ int s_server_main(int argc, char *argv[])
         }
 
         if (tlsextcbp.servername != NULL) {
-            s_key2 = load_key(s_key_file2, s_key_format, 0, pass, engine,
+            s_key2 = load_key(s_key_file2, s_key_format, 0, pass, NULL,
                               "second server certificate private key");
             if (s_key2 == NULL)
                 goto end;
@@ -2098,7 +2088,7 @@ int s_server_main(int argc, char *argv[])
             s_dkey_file = s_dcert_file;
 
         s_dkey = load_key(s_dkey_file, s_dkey_format,
-                          0, dpass, engine, "second certificate private key");
+                          0, dpass, NULL, "second certificate private key");
         if (s_dkey == NULL)
             goto end;
 
@@ -2599,7 +2589,6 @@ int s_server_main(int argc, char *argv[])
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
     SSL_CONF_CTX_free(cctx);
-    release_engine(engine);
     BIO_free(bio_s_out);
     bio_s_out = NULL;
     BIO_free(bio_s_msg);
