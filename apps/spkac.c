@@ -23,7 +23,7 @@
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_NOOUT, OPT_PUBKEY, OPT_VERIFY, OPT_IN, OPT_OUT,
-    OPT_ENGINE, OPT_KEY, OPT_CHALLENGE, OPT_PASSIN, OPT_SPKAC,
+    OPT_KEY, OPT_CHALLENGE, OPT_PASSIN, OPT_SPKAC,
     OPT_SPKSECT, OPT_KEYFORM, OPT_DIGEST,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
@@ -33,9 +33,6 @@ const OPTIONS spkac_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"spksect", OPT_SPKSECT, 's',
      "Specify the name of an SPKAC-dedicated section of configuration"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
@@ -60,7 +57,6 @@ int spkac_main(int argc, char **argv)
 {
     BIO *out = NULL;
     CONF *conf = NULL;
-    ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     NETSCAPE_SPKI *spki = NULL;
     char *challenge = NULL, *keyfile = NULL;
@@ -122,9 +118,6 @@ int spkac_main(int argc, char **argv)
         case OPT_DIGEST:
             digest = opt_arg();
             break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
-            break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto end;
@@ -146,7 +139,7 @@ int spkac_main(int argc, char **argv)
             goto end;
 
         pkey = load_key(strcmp(keyfile, "-") ? keyfile : NULL,
-                        keyformat, 1, passin, e, "private key");
+                        keyformat, 1, passin, NULL, "private key");
         if (pkey == NULL)
             goto end;
         spki = NETSCAPE_SPKI_new();
@@ -227,7 +220,6 @@ int spkac_main(int argc, char **argv)
     NETSCAPE_SPKI_free(spki);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
-    release_engine(e);
     OPENSSL_free(passin);
     return ret;
 }
