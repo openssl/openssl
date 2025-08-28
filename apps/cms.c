@@ -89,7 +89,7 @@ typedef enum OPTION_choice {
     OPT_PASSIN, OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP,
     OPT_CERTSOUT, OPT_MD, OPT_INKEY, OPT_KEYFORM, OPT_KEYOPT, OPT_RR_FROM,
     OPT_RR_TO, OPT_AES128_WRAP, OPT_AES192_WRAP, OPT_AES256_WRAP,
-    OPT_3DES_WRAP, OPT_WRAP, OPT_ENGINE,
+    OPT_3DES_WRAP, OPT_WRAP,
     OPT_R_ENUM,
     OPT_PROV_ENUM, OPT_CONFIG,
     OPT_V_ENUM,
@@ -161,9 +161,6 @@ const OPTIONS cms_options[] = {
     {"keyopt", OPT_KEYOPT, 's', "Set public key parameters as n:v pairs"},
     {"keyform", OPT_KEYFORM, 'f',
      "Input private key format (ENGINE, other values ignored)"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
-#endif
     OPT_PROV_OPTIONS,
     OPT_R_OPTIONS,
 
@@ -313,7 +310,6 @@ int cms_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL, *indata = NULL, *rctin = NULL;
     CMS_ContentInfo *cms = NULL, *rcms = NULL;
     CMS_ReceiptRequest *rr = NULL;
-    ENGINE *e = NULL;
     EVP_PKEY *key = NULL;
     EVP_CIPHER *cipher = NULL, *wrap_cipher = NULL, *kekcipher = NULL;
     EVP_MD *sign_md = NULL;
@@ -598,9 +594,6 @@ int cms_main(int argc, char **argv)
                 BIO_printf(bio_err, "Invalid OID %s\n", opt_arg());
                 goto opthelp;
             }
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_PASSIN:
             passinarg = opt_arg();
@@ -962,7 +955,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (keyfile != NULL) {
-        key = load_key(keyfile, keyform, 0, passin, e, "signing key");
+        key = load_key(keyfile, keyform, 0, passin, NULL, "signing key");
         if (key == NULL)
             goto end;
     }
@@ -1220,7 +1213,7 @@ int cms_main(int argc, char **argv)
                 ret = 2;
                 goto end;
             }
-            key = load_key(keyfile, keyform, 0, passin, e, "signing key");
+            key = load_key(keyfile, keyform, 0, passin, NULL, "signing key");
             if (key == NULL) {
                 ret = 2;
                 goto end;
@@ -1439,7 +1432,6 @@ int cms_main(int argc, char **argv)
     EVP_MD_free(sign_md);
     CMS_ContentInfo_free(cms);
     CMS_ContentInfo_free(rcms);
-    release_engine(e);
     BIO_free(rctin);
     BIO_free(in);
     BIO_free(indata);
