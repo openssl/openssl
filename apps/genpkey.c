@@ -17,11 +17,11 @@
 
 static int verbose = 1;
 
-static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e,
+static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file,
                             OSSL_LIB_CTX *libctx, const char *propq);
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_ENGINE, OPT_OUTFORM, OPT_OUT, OPT_PASS, OPT_PARAMFILE,
+    OPT_OUTFORM, OPT_OUT, OPT_PASS, OPT_PARAMFILE,
     OPT_ALGORITHM, OPT_PKEYOPT, OPT_GENPARAM, OPT_TEXT, OPT_CIPHER,
     OPT_VERBOSE, OPT_QUIET, OPT_CONFIG, OPT_OUTPUBKEY,
     OPT_PROV_ENUM, OPT_R_ENUM
@@ -30,9 +30,6 @@ typedef enum OPTION_choice {
 const OPTIONS genpkey_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
     {"paramfile", OPT_PARAMFILE, '<', "Parameters file"},
     {"algorithm", OPT_ALGORITHM, 's', "The public key algorithm"},
     {"verbose", OPT_VERBOSE, '-', "Output status while generating keys"},
@@ -107,7 +104,6 @@ int genpkey_main(int argc, char **argv)
 {
     CONF *conf = NULL;
     BIO *mem_out = NULL, *mem_outpubkey = NULL;
-    ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     char *outfile = NULL, *passarg = NULL, *pass = NULL, *prog, *p;
@@ -149,9 +145,6 @@ int genpkey_main(int argc, char **argv)
             break;
         case OPT_PASS:
             passarg = opt_arg();
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_PARAMFILE:
             if (do_param == 1)
@@ -205,11 +198,11 @@ int genpkey_main(int argc, char **argv)
 
     /* Fetch cipher, etc. */
     if (paramfile != NULL) {
-        if (!init_keygen_file(&ctx, paramfile, e, libctx, app_get0_propq()))
+        if (!init_keygen_file(&ctx, paramfile, libctx, app_get0_propq()))
             goto end;
     }
     if (algname != NULL) {
-        if (!init_gen_str(&ctx, algname, e, do_param, libctx, app_get0_propq()))
+        if (!init_gen_str(&ctx, algname, NULL, do_param, libctx, app_get0_propq()))
             goto end;
     }
     if (ctx == NULL)
@@ -317,13 +310,12 @@ int genpkey_main(int argc, char **argv)
     EVP_CIPHER_free(cipher);
     BIO_free_all(mem_out);
     BIO_free_all(mem_outpubkey);
-    release_engine(e);
     OPENSSL_free(pass);
     NCONF_free(conf);
     return ret;
 }
 
-static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e,
+static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file,
                             OSSL_LIB_CTX *libctx, const char *propq)
 {
     BIO *pbio;
@@ -348,10 +340,7 @@ static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e,
         return 0;
     }
 
-    if (e != NULL)
-        ctx = EVP_PKEY_CTX_new(pkey, e);
-    else
-        ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
+    ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
     if (ctx == NULL)
         goto err;
     if (EVP_PKEY_keygen_init(ctx) <= 0)
@@ -374,22 +363,13 @@ int init_gen_str(EVP_PKEY_CTX **pctx,
                  OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY_CTX *ctx = NULL;
-#ifndef OPENSSL_NO_DEPRECATED_3_6
-    int pkey_id;
-#endif
 
     if (*pctx) {
         BIO_puts(bio_err, "Algorithm already set!\n");
         return 0;
     }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_6
-    pkey_id = get_legacy_pkey_id(libctx, algname, e);
-    if (pkey_id != NID_undef)
-        ctx = EVP_PKEY_CTX_new_id(pkey_id, e);
-    else
-#endif
-        ctx = EVP_PKEY_CTX_new_from_name(libctx, algname, propq);
+    ctx = EVP_PKEY_CTX_new_from_name(libctx, algname, propq);
 
     if (ctx == NULL)
         goto err;
