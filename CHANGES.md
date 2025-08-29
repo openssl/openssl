@@ -93,6 +93,21 @@ OpenSSL 3.6
 
    *Dmitry Belyavskiy based on Clemens Lang's code*
 
+ * Add `CMS_VERIFY_PARTIAL` flag to `CMS_verify()` and `-verify_partial` option
+   to `openssl cms -verify`.
+
+   If this flag is set, the call is successful even if some of the individual
+   signatures cannot be verified (perhaps due to CAs missing from the local
+   store or expired certificates). The application would then call
+   `CMS_get0_signers()` and check if the set of valid signatures satisfies its
+   policy.
+
+   To access detailed verification results, the new functions
+   `CMS_SignerInfo_get_verification_result()` and
+   `CMS_SignerInfo_get0_signer_cert()` can be used.
+
+   *Jan Lübbe*
+
  * Support setting a free function thunk to OPENSSL_sk stack types. Using a thunk
    allows the type specific free function to be called with the correct type
    information from generic functions like OPENSSL_sk_pop_free().

@@ -303,6 +303,20 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
 
 }
 
+static int cms_signerinfos_remainig(STACK_OF(CMS_SignerInfo) *sinfos)
+{
+    int i, remaining = 0;
+
+    for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+        CMS_SignerInfo *si = sk_CMS_SignerInfo_value(sinfos, i);
+
+        if (si->verify_failure == 0)
+            remaining++;
+    }
+
+    return remaining;
+}
+
 /* This strongly overlaps with PKCS7_verify() */
 int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
                X509_STORE *store, BIO *dcont, BIO *out, unsigned int flags)
@@ -341,6 +355,12 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
         CMS_SignerInfo_get0_algs(si, NULL, &signer, NULL, NULL);
         if (signer != NULL)
             scount++;
+        /* Reset verification results */
+        si->verify_result = 0;
+        si->verify_failure = 0;
+        si->cert_verified = 0;
+        si->attr_verified = 0;
+        si->content_verified = 0;
     }
 
     if (scount != sk_CMS_SignerInfo_num(sinfos))
@@ -377,28 +397,46 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
 
             if (!cms_signerinfo_verify_cert(si, store, untrusted, crls,
                                             si_chains ? &si_chains[i] : NULL,
-                                            ctx))
-                goto err;
+                                            ctx)) {
+                si->verify_failure = 1;
+                continue;
+            }
+            si->cert_verified = 1;
         }
     }
+
+    if (cms_signerinfos_remainig(sinfos) == 0)
+        goto err;
 
     /* Attempt to verify all SignerInfo signed attribute signatures */
 
     if ((flags & CMS_NO_ATTR_VERIFY) == 0 || cadesVerify) {
         for (i = 0; i < scount; i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
-            if (CMS_signed_get_attr_count(si) < 0)
+            if (si->verify_failure)
                 continue;
-            if (CMS_SignerInfo_verify(si) <= 0)
-                goto err;
+            if (CMS_signed_get_attr_count(si) < 0) {
+                si->attr_verified = 1;
+                continue;
+            }
+            if (CMS_SignerInfo_verify(si) <= 0) {
+                si->verify_failure = 1;
+                continue;
+            }
             if (cadesVerify) {
                 STACK_OF(X509) *si_chain = si_chains ? si_chains[i] : NULL;
 
-                if (ossl_cms_check_signing_certs(si, si_chain) <= 0)
-                    goto err;
+                if (ossl_cms_check_signing_certs(si, si_chain) <= 0) {
+                    si->verify_failure = 1;
+                    continue;
+                }
             }
+            si->attr_verified = 1;
         }
     }
+
+    if (cms_signerinfos_remainig(sinfos) == 0)
+        goto err;
 
     /*
      * Performance optimization: if the content is a memory BIO then store
@@ -462,14 +500,57 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     if (!(flags & CMS_NO_CONTENT_VERIFY)) {
         for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
+            if (si->verify_failure)
+                continue;
             if (CMS_SignerInfo_verify_content(si, cmsbio) <= 0) {
                 ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_VERIFY_ERROR);
-                goto err;
+                si->verify_failure = 1;
+                continue;
             }
+            si->content_verified = 1;
         }
     }
 
-    ret = 1;
+    if (cms_signerinfos_remainig(sinfos) == 0)
+        goto err;
+
+    /* Aggregate results per signer */
+    for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+        si = sk_CMS_SignerInfo_value(sinfos, i);
+
+        if (si->verify_failure)
+            continue;
+        if (!(flags & CMS_NO_SIGNER_CERT_VERIFY) && !si->cert_verified)
+            continue;
+        if (!(flags & CMS_NO_ATTR_VERIFY) && !si->attr_verified)
+            continue;
+        if (!(flags & CMS_NO_CONTENT_VERIFY) && !si->content_verified)
+            continue;
+
+        si->verify_result = 1;
+    }
+
+    /* Determine overall result */
+    if (flags & CMS_VERIFY_PARTIAL) {
+        /* One success is enough */
+        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+            si = sk_CMS_SignerInfo_value(sinfos, i);
+            if (si->verify_result == 1) {
+                ret = 1;
+                break;
+            }
+        }
+    } else {
+        /* All must be successful */
+        ret = 1;
+        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+            si = sk_CMS_SignerInfo_value(sinfos, i);
+            if (si->verify_result == 0) {
+                ret = 0;
+                break;
+            }
+        }
+    }
  err:
     if (!(flags & SMIME_BINARY) && dcont) {
         do_free_upto(cmsbio, tmpout);
