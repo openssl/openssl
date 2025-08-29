@@ -169,9 +169,9 @@ int dsa_main(int argc, char **argv)
 
     BIO_printf(bio_err, "read DSA key\n");
     if (pubin)
-        pkey = load_pubkey(infile, informat, 1, passin, NULL, "public key");
+        pkey = load_pubkey(infile, informat, 1, passin, "public key");
     else
-        pkey = load_key(infile, informat, 1, passin, NULL, "private key");
+        pkey = load_key(infile, informat, 1, passin, "private key");
 
     if (pkey == NULL) {
         BIO_printf(bio_err, "unable to load Key\n");

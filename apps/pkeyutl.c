@@ -619,11 +619,11 @@ static EVP_PKEY *get_pkey(const char *kdfalg,
     }
     switch (key_type) {
     case KEY_PRIVKEY:
-        pkey = load_key(keyfile, keyform, 0, passin, NULL, "private key");
+        pkey = load_key(keyfile, keyform, 0, passin, "private key");
         break;
 
     case KEY_PUBKEY:
-        pkey = load_pubkey(keyfile, keyform, 0, NULL, NULL, "public key");
+        pkey = load_pubkey(keyfile, keyform, 0, NULL, "public key");
         break;
 
     case KEY_CERT:
@@ -743,7 +743,7 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file)
     EVP_PKEY *peer = NULL;
     int ret = 1;
 
-    peer = load_pubkey(file, peerform, 0, NULL, NULL, "peer key");
+    peer = load_pubkey(file, peerform, 0, NULL, "peer key");
     if (peer == NULL) {
         BIO_printf(bio_err, "Error reading peer key %s\n", file);
         return 0;

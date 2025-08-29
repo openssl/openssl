@@ -584,7 +584,7 @@ end_of_options:
             goto end;
         }
     }
-    pkey = load_key(keyfile, keyformat, 0, passin, NULL, "CA private key");
+    pkey = load_key(keyfile, keyformat, 0, passin, "CA private key");
     cleanse(passin);
     if (pkey == NULL)
         /* load_key() has already printed an appropriate message */

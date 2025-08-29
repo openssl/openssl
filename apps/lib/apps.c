@@ -15,12 +15,6 @@
 # define _POSIX_C_SOURCE 2
 #endif
 
-#ifndef OPENSSL_NO_ENGINE
-/* We need to use some deprecated APIs */
-# define OPENSSL_SUPPRESS_DEPRECATED
-# include <openssl/engine.h>
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -608,7 +602,7 @@ void clear_free(char *str)
 }
 
 EVP_PKEY *load_key(const char *uri, int format, int may_stdin,
-                   const char *pass, ENGINE *e, const char *desc)
+                   const char *pass, const char *desc)
 {
     EVP_PKEY *pkey = NULL;
     char *allocated_uri = NULL;
@@ -616,8 +610,9 @@ EVP_PKEY *load_key(const char *uri, int format, int may_stdin,
     if (desc == NULL)
         desc = "private key";
 
+    //TODO?
     if (format == FORMAT_ENGINE)
-        uri = allocated_uri = make_engine_uri(e, uri, desc);
+        uri = allocated_uri = make_engine_uri(NULL, uri, desc);
     (void)load_key_certs_crls(uri, format, may_stdin, pass, desc, 0,
                               &pkey, NULL, NULL, NULL, NULL, NULL, NULL);
 
@@ -627,7 +622,7 @@ EVP_PKEY *load_key(const char *uri, int format, int may_stdin,
 
 /* first try reading public key, on failure resort to loading private key */
 EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
-                      const char *pass, ENGINE *e, const char *desc)
+                      const char *pass, const char *desc)
 {
     EVP_PKEY *pkey = NULL;
     char *allocated_uri = NULL;
@@ -635,8 +630,9 @@ EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
     if (desc == NULL)
         desc = "public key";
 
+    //TODO?
     if (format == FORMAT_ENGINE)
-        uri = allocated_uri = make_engine_uri(e, uri, desc);
+        uri = allocated_uri = make_engine_uri(NULL, uri, desc);
     (void)load_key_certs_crls(uri, format, maybe_stdin, pass, desc, 1,
                               NULL, &pkey, NULL, NULL, NULL, NULL, NULL);
     if (pkey == NULL)

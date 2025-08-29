@@ -656,12 +656,12 @@ int x509_main(int argc, char **argv)
         goto err;
     }
     if (privkeyfile != NULL) {
-        privkey = load_key(privkeyfile, keyformat, 0, passin, NULL, "private key");
+        privkey = load_key(privkeyfile, keyformat, 0, passin, "private key");
         if (privkey == NULL)
             goto err;
     }
     if (pubkeyfile != NULL) {
-        if ((pubkey = load_pubkey(pubkeyfile, keyformat, 0, NULL, NULL,
+        if ((pubkey = load_pubkey(pubkeyfile, keyformat, 0, NULL,
                                   "explicitly set public key")) == NULL)
             goto err;
     }
@@ -949,7 +949,7 @@ int x509_main(int argc, char **argv)
         noout = 1;
     } else if (CAfile != NULL) {
         if ((CAkey = load_key(CAkeyfile, CAkeyformat,
-                              0, passin, NULL, "CA private key")) == NULL)
+                              0, passin, "CA private key")) == NULL)
             goto err;
         if (!X509_check_private_key(xca, CAkey)) {
             BIO_printf(bio_err,

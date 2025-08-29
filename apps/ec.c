@@ -164,9 +164,9 @@ int ec_main(int argc, char **argv)
     }
 
     if (pubin)
-        eckey = load_pubkey(infile, informat, 1, passin, NULL, "public key");
+        eckey = load_pubkey(infile, informat, 1, passin, "public key");
     else
-        eckey = load_key(infile, informat, 1, passin, NULL, "private key");
+        eckey = load_key(infile, informat, 1, passin, "private key");
 
     if (eckey == NULL) {
         BIO_printf(bio_err, "unable to load Key\n");

@@ -203,9 +203,9 @@ int pkey_main(int argc, char **argv)
     }
 
     if (pubin)
-        pkey = load_pubkey(infile, informat, 1, passin, NULL, "Public Key");
+        pkey = load_pubkey(infile, informat, 1, passin, "Public Key");
     else
-        pkey = load_key(infile, informat, 1, passin, NULL, "key");
+        pkey = load_key(infile, informat, 1, passin, "key");
     if (pkey == NULL)
         goto end;
 

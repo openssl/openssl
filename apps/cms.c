@@ -955,7 +955,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (keyfile != NULL) {
-        key = load_key(keyfile, keyform, 0, passin, NULL, "signing key");
+        key = load_key(keyfile, keyform, 0, passin, "signing key");
         if (key == NULL)
             goto end;
     }
@@ -1213,7 +1213,7 @@ int cms_main(int argc, char **argv)
                 ret = 2;
                 goto end;
             }
-            key = load_key(keyfile, keyform, 0, passin, NULL, "signing key");
+            key = load_key(keyfile, keyform, 0, passin, "signing key");
             if (key == NULL) {
                 ret = 2;
                 goto end;

@@ -550,7 +550,7 @@ int pkcs12_main(int argc, char **argv)
 
         if (!(options & NOKEYS)) {
             key = load_key(keyname ? keyname : infile,
-                           FORMAT_PEM, 1, passin, NULL,
+                           FORMAT_PEM, 1, passin,
                            keyname ?
                            "private key from -inkey file" :
                            "private key from -in file");

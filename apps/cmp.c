@@ -758,7 +758,7 @@ static EVP_PKEY *load_key_pwd(const char *uri, int format,
                               const char *pass, const char *desc)
 {
     char *pass_string = get_passwd(pass, desc);
-    EVP_PKEY *pkey = load_key(uri, format, 0, pass_string, NULL, desc);
+    EVP_PKEY *pkey = load_key(uri, format, 0, pass_string, desc);
 
     clear_free(pass_string);
     return pkey;
@@ -1859,7 +1859,7 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx)
             desc = opt_csr == NULL
                 ? "fallback public key for cert to be enrolled"
                 : "public key for checking cert resulting from p10cr";
-            pkey = load_pubkey(file, format, 0, pass, NULL, desc);
+            pkey = load_pubkey(file, format, 0, pass, desc);
             priv = 0;
         }
 

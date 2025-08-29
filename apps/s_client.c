@@ -1749,7 +1749,7 @@ int s_client_main(int argc, char **argv)
         key_file = cert_file;
 
     if (key_file != NULL) {
-        key = load_key(key_file, key_format, 0, pass, NULL,
+        key = load_key(key_file, key_format, 0, pass,
                        "client certificate private key");
         if (key == NULL)
             goto end;

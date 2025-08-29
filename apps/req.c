@@ -606,7 +606,7 @@ int req_main(int argc, char **argv)
     }
 
     if (keyfile != NULL) {
-        pkey = load_key(keyfile, keyform, 0, passin, NULL, "private key");
+        pkey = load_key(keyfile, keyform, 0, passin, "private key");
         if (pkey == NULL)
             goto end;
         app_RAND_load_conf(req_conf, section);
@@ -744,7 +744,7 @@ int req_main(int argc, char **argv)
                        "Warning: Ignoring -CAkey option since no -CA option is given\n");
         } else {
             if ((CAkey = load_key(CAkeyfile, FORMAT_UNDEF,
-                                  0, passin, NULL,
+                                  0, passin,
                                   CAkeyfile != CAfile
                                   ? "issuer private key from -CAkey arg"
                                   : "issuer private key from -CA arg")) == NULL)

@@ -513,7 +513,7 @@ int smime_main(int argc, char **argv)
     }
 
     if (keyfile != NULL) {
-        key = load_key(keyfile, keyform, 0, passin, NULL, "signing key");
+        key = load_key(keyfile, keyform, 0, passin, "signing key");
         if (key == NULL)
             goto end;
     }
@@ -605,7 +605,7 @@ int smime_main(int argc, char **argv)
             signer = load_cert(signerfile, FORMAT_UNDEF, "signer certificate");
             if (signer == NULL)
                 goto end;
-            key = load_key(keyfile, keyform, 0, passin, NULL, "signing key");
+            key = load_key(keyfile, keyform, 0, passin, "signing key");
             if (key == NULL)
                 goto end;
 

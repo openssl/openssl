@@ -2025,7 +2025,7 @@ int s_server_main(int argc, char *argv[])
         goto end;
 
     if (nocert == 0) {
-        s_key = load_key(s_key_file, s_key_format, 0, pass, NULL,
+        s_key = load_key(s_key_file, s_key_format, 0, pass,
                          "server certificate private key");
         if (s_key == NULL)
             goto end;
@@ -2042,7 +2042,7 @@ int s_server_main(int argc, char *argv[])
         }
 
         if (tlsextcbp.servername != NULL) {
-            s_key2 = load_key(s_key_file2, s_key_format, 0, pass, NULL,
+            s_key2 = load_key(s_key_file2, s_key_format, 0, pass,
                               "second server certificate private key");
             if (s_key2 == NULL)
                 goto end;
@@ -2088,7 +2088,7 @@ int s_server_main(int argc, char *argv[])
             s_dkey_file = s_dcert_file;
 
         s_dkey = load_key(s_dkey_file, s_dkey_format,
-                          0, dpass, NULL, "second certificate private key");
+                          0, dpass, "second certificate private key");
         if (s_dkey == NULL)
             goto end;
 

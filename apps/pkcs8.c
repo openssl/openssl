@@ -222,7 +222,7 @@ int pkcs8_main(int argc, char **argv)
         goto end;
 
     if (topk8) {
-        pkey = load_key(infile, informat, 1, passin, NULL, "key");
+        pkey = load_key(infile, informat, 1, passin, "key");
         if (pkey == NULL)
             goto end;
         if ((p8inf = EVP_PKEY2PKCS8(pkey)) == NULL) {

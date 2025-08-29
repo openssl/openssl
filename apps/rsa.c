@@ -239,9 +239,9 @@ int rsa_main(int argc, char **argv)
             tmpformat = informat;
         }
 
-        pkey = load_pubkey(infile, tmpformat, 1, passin, NULL, "public key");
+        pkey = load_pubkey(infile, tmpformat, 1, passin, "public key");
     } else {
-        pkey = load_key(infile, informat, 1, passin, NULL, "private key");
+        pkey = load_key(infile, informat, 1, passin, "private key");
     }
 
     if (pkey == NULL) {

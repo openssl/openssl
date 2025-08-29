@@ -269,9 +269,9 @@ int dgst_main(int argc, char **argv)
 
     if (keyfile != NULL) {
         if (want_pub)
-            sigkey = load_pubkey(keyfile, keyform, 0, NULL, NULL, "public key");
+            sigkey = load_pubkey(keyfile, keyform, 0, NULL, "public key");
         else
-            sigkey = load_key(keyfile, keyform, 0, passin, NULL, "private key");
+            sigkey = load_key(keyfile, keyform, 0, passin, "private key");
         if (sigkey == NULL) {
             /*
              * load_[pub]key() has already printed an appropriate message

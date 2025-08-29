@@ -139,7 +139,7 @@ int spkac_main(int argc, char **argv)
             goto end;
 
         pkey = load_key(strcmp(keyfile, "-") ? keyfile : NULL,
-                        keyformat, 1, passin, NULL, "private key");
+                        keyformat, 1, passin, "private key");
         if (pkey == NULL)
             goto end;
         spki = NETSCAPE_SPKI_new();

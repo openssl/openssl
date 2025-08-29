@@ -130,10 +130,10 @@ X509_CRL *load_crl(const char *uri, int format, int maybe_stdin,
 void cleanse(char *str);
 void clear_free(char *str);
 EVP_PKEY *load_key(const char *uri, int format, int maybe_stdin,
-                   const char *pass, ENGINE *e, const char *desc);
+                   const char *pass, const char *desc);
 /* first try reading public key, on failure resort to loading private key */
 EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
-                      const char *pass, ENGINE *e, const char *desc);
+                      const char *pass, const char *desc);
 EVP_PKEY *load_keyparams(const char *uri, int format, int maybe_stdin,
                          const char *keytype, const char *desc);
 EVP_PKEY *load_keyparams_suppress(const char *uri, int format, int maybe_stdin,

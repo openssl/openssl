@@ -180,11 +180,11 @@ int rsautl_main(int argc, char **argv)
 
     switch (key_type) {
     case KEY_PRIVKEY:
-        pkey = load_key(keyfile, keyformat, 0, passin, NULL, "private key");
+        pkey = load_key(keyfile, keyformat, 0, passin, "private key");
         break;
 
     case KEY_PUBKEY:
-        pkey = load_pubkey(keyfile, keyformat, 0, NULL, NULL, "public key");
+        pkey = load_pubkey(keyfile, keyformat, 0, NULL, "public key");
         break;
 
     case KEY_CERT:
