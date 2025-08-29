@@ -487,11 +487,6 @@ EVP_PKEY *TS_CONF_load_key(const char *file, const char *pass);
 const char *TS_CONF_get_tsa_section(CONF *conf, const char *section);
 int TS_CONF_set_serial(CONF *conf, const char *section, TS_serial_cb cb,
                        TS_RESP_CTX *ctx);
-#ifndef OPENSSL_NO_ENGINE
-int TS_CONF_set_crypto_device(CONF *conf, const char *section,
-                              const char *device);
-int TS_CONF_set_default_engine(const char *name);
-#endif
 int TS_CONF_set_signer_cert(CONF *conf, const char *section,
                             const char *cert, TS_RESP_CTX *ctx);
 int TS_CONF_set_certs(CONF *conf, const char *section, const char *certs,
