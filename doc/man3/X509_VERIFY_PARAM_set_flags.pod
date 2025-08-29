@@ -93,7 +93,7 @@ I<dest>, depending on the inheritance flags of I<src> and I<dest> ORed together.
 See the L</INHERITANCE FLAGS> section for a description of these bits.
 Yet if in the resulting flags <X509_VP_FLAG_LOCKED> is set, it just
 returns success (after resetting the inheritance flags of I<dest>
-if the B<X509_VP_FLAG_ONCE> flag is set).<br>
+if the B<X509_VP_FLAG_ONCE> flag is set).
 The flags in I<dest> get ORed by those in I<src>.
 
 X509_VERIFY_PARAM_set1() acts like X509_VERIFY_PARAM_inherit() while in addition

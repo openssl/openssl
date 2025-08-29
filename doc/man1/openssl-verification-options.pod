@@ -100,12 +100,12 @@ CMS/PKCS7 (including S/MIME), and code signing.
 
 =head2 Trust Anchors
 
-In general, according to [RFC 4158 section 1.3](
-https://datatracker.ietf.org/doc/html/rfc4158#section-1.3), a I<trust anchor>
+In general, according to
+L<RFC 4158 section 1.3|https://datatracker.ietf.org/doc/html/rfc4158#section-1.3>,
+a I<trust anchor>
 is a public key that for some reason is considered trusted for some purpose,
-plus the name of the entity to which the corresponding private key belongs.<br>
-[RFC 5280 section 6.1.1](
-https://datatracker.ietf.org/doc/html/rfc5280#section-6.1.1)
+plus the name of the entity to which the corresponding private key belongs.
+L<RFC 5280 section 6.1.1|https://datatracker.ietf.org/doc/html/rfc5280#section-6.1.1>
 introduces the term I<trust anchor information>, which is a trust anchor
 plus some more detail, namely the algorithm of the public key and,
 optionally, any parameters of the public key.
