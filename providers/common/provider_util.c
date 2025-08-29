@@ -7,15 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use some engine deprecated APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #ifndef FIPS_MODULE
-# include <openssl/engine.h>
 # include "crypto/evp.h"
 #endif
 #include "prov/providercommon.h"
@@ -26,23 +22,12 @@ void ossl_prov_cipher_reset(PROV_CIPHER *pc)
     EVP_CIPHER_free(pc->alloc_cipher);
     pc->alloc_cipher = NULL;
     pc->cipher = NULL;
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
-    ENGINE_finish(pc->engine);
-#endif
-    pc->engine = NULL;
 }
 
 int ossl_prov_cipher_copy(PROV_CIPHER *dst, const PROV_CIPHER *src)
 {
     if (src->alloc_cipher != NULL && !EVP_CIPHER_up_ref(src->alloc_cipher))
         return 0;
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
-    if (src->engine != NULL && !ENGINE_init(src->engine)) {
-        EVP_CIPHER_free(src->alloc_cipher);
-        return 0;
-    }
-#endif
-    dst->engine = src->engine;
     dst->cipher = src->cipher;
     dst->alloc_cipher = src->alloc_cipher;
     return 1;
@@ -59,41 +44,13 @@ static int set_propq(const OSSL_PARAM *propq, const char **propquery)
     return 1;
 }
 
-static int set_engine(const OSSL_PARAM *e, ENGINE **engine)
-{
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
-    ENGINE_finish(*engine);
-#endif
-    *engine = NULL;
-    /* Inside the FIPS module, we don't support legacy ciphers */
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
-    if (e != NULL) {
-        if (e->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        /* Get a structural reference */
-        *engine = ENGINE_by_id(e->data);
-        if (*engine == NULL)
-            return 0;
-        /* Get a functional reference */
-        if (!ENGINE_init(*engine)) {
-            ENGINE_free(*engine);
-            *engine = NULL;
-            return 0;
-        }
-        /* Free the structural reference */
-        ENGINE_free(*engine);
-    }
-#endif
-    return 1;
-}
-
 int ossl_prov_cipher_load(PROV_CIPHER *pc, const OSSL_PARAM *cipher,
                           const OSSL_PARAM *propq, const OSSL_PARAM *engine,
                           OSSL_LIB_CTX *ctx)
 {
     const char *propquery;
 
-   if (!set_propq(propq, &propquery) || !set_engine(engine, &pc->engine))
+   if (!set_propq(propq, &propquery))
         return 0;
 
     if (cipher == NULL)
@@ -148,23 +105,12 @@ void ossl_prov_digest_reset(PROV_DIGEST *pd)
     EVP_MD_free(pd->alloc_md);
     pd->alloc_md = NULL;
     pd->md = NULL;
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
-    ENGINE_finish(pd->engine);
-#endif
-    pd->engine = NULL;
 }
 
 int ossl_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src)
 {
     if (src->alloc_md != NULL && !EVP_MD_up_ref(src->alloc_md))
         return 0;
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
-    if (src->engine != NULL && !ENGINE_init(src->engine)) {
-        EVP_MD_free(src->alloc_md);
-        return 0;
-    }
-#endif
-    dst->engine = src->engine;
     dst->md = src->md;
     dst->alloc_md = src->alloc_md;
     return 1;
@@ -185,7 +131,7 @@ int ossl_prov_digest_load(PROV_DIGEST *pd, const OSSL_PARAM *digest,
 {
     const char *propquery;
 
-    if (!set_propq(propq, &propquery) || !set_engine(engine, &pd->engine))
+    if (!set_propq(propq, &propquery))
         return 0;
 
     if (digest == NULL)
@@ -256,12 +202,6 @@ int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
     if (properties != NULL)
         *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
                                                  (char *)properties, 0);
-
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    if (engine != NULL)
-        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_ENGINE,
-                                                 (char *) engine, 0);
-#endif
 
     *mp = OSSL_PARAM_construct_end();
 
