@@ -113,10 +113,6 @@ int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
     mtmp = dsa->meth;
     if (mtmp->finish)
         mtmp->finish(dsa);
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_finish(dsa->engine);
-    dsa->engine = NULL;
-#endif
     dsa->meth = meth;
     if (meth->init)
         meth->init(dsa);
@@ -152,24 +148,6 @@ static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 
     ret->libctx = libctx;
     ret->meth = DSA_get_default_method();
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
-    ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW; /* early default init */
-    if (engine) {
-        if (!ENGINE_init(engine)) {
-            ERR_raise(ERR_LIB_DSA, ERR_R_ENGINE_LIB);
-            goto err;
-        }
-        ret->engine = engine;
-    } else
-        ret->engine = ENGINE_get_default_DSA();
-    if (ret->engine) {
-        ret->meth = ENGINE_get_DSA(ret->engine);
-        if (ret->meth == NULL) {
-            ERR_raise(ERR_LIB_DSA, ERR_R_ENGINE_LIB);
-            goto err;
-        }
-    }
-#endif
 
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
 
@@ -225,9 +203,6 @@ void DSA_free(DSA *r)
 
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
-    ENGINE_finish(r->engine);
-#endif
 
 #ifndef FIPS_MODULE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);

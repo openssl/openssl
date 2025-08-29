@@ -91,15 +91,6 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type)
         type = t->pkey_base_id;
     }
     if (pe) {
-#ifndef OPENSSL_NO_ENGINE
-        ENGINE *e;
-        /* type will contain the final unaliased type */
-        e = ENGINE_get_pkey_asn1_meth_engine(type);
-        if (e) {
-            *pe = e;
-            return ENGINE_get_pkey_asn1_meth(e, type);
-        }
-#endif
         *pe = NULL;
     }
     return t;
@@ -114,20 +105,6 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
     if (len == -1)
         len = (int)strlen(str);
     if (pe) {
-#ifndef OPENSSL_NO_ENGINE
-        ENGINE *e;
-        ameth = ENGINE_pkey_asn1_find_str(&e, str, len);
-        if (ameth) {
-            /*
-             * Convert structural into functional reference
-             */
-            if (!ENGINE_init(e))
-                ameth = NULL;
-            ENGINE_free(e);
-            *pe = e;
-            return ameth;
-        }
-#endif
         *pe = NULL;
     }
     for (i = EVP_PKEY_asn1_get_count(); i-- > 0; ) {

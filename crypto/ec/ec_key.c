@@ -84,10 +84,6 @@ void EC_KEY_free(EC_KEY *r)
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    ENGINE_finish(r->engine);
-#endif
-
     if (r->group && r->group->meth->keyfinish)
         r->group->meth->keyfinish(r);
 
@@ -114,11 +110,6 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
             dest->meth->finish(dest);
         if (dest->group && dest->group->meth->keyfinish)
             dest->group->meth->keyfinish(dest);
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-        if (ENGINE_finish(dest->engine) == 0)
-            return 0;
-        dest->engine = NULL;
-#endif
     }
     dest->libctx = src->libctx;
     /* copy the parameters */
@@ -169,11 +160,6 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 #endif
 
     if (src->meth != dest->meth) {
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-        if (src->engine != NULL && ENGINE_init(src->engine) == 0)
-            return NULL;
-        dest->engine = src->engine;
-#endif
         dest->meth = src->meth;
     }
 
