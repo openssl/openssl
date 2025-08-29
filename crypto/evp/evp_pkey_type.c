@@ -72,9 +72,6 @@ int EVP_PKEY_type(int type)
         ret = ameth->pkey_id;
     else
         ret = NID_undef;
-# ifndef OPENSSL_NO_ENGINE
-    ENGINE_finish(e);
-# endif
     return ret;
 #else
     size_t i;
