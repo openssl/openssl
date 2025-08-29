@@ -1181,7 +1181,7 @@ static int is_md_available(const char *name)
         return 1;
     }
 
-    return propq != NULL || get_digest_from_engine(name) == NULL ? 0 : 1;
+    return 0;
 }
 
 static int is_cipher_available(const char *name)
@@ -1198,7 +1198,7 @@ static int is_cipher_available(const char *name)
         return 1;
     }
 
-    return propq != NULL || get_cipher_from_engine(name) == NULL ? 0 : 1;
+    return 0;
 }
 
 static void list_type(FUNC_TYPE ft, int one)

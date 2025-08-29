@@ -605,18 +605,13 @@ EVP_PKEY *load_key(const char *uri, int format, int may_stdin,
                    const char *pass, const char *desc)
 {
     EVP_PKEY *pkey = NULL;
-    char *allocated_uri = NULL;
 
     if (desc == NULL)
         desc = "private key";
 
-    //TODO?
-    if (format == FORMAT_ENGINE)
-        uri = allocated_uri = make_engine_uri(NULL, uri, desc);
     (void)load_key_certs_crls(uri, format, may_stdin, pass, desc, 0,
                               &pkey, NULL, NULL, NULL, NULL, NULL, NULL);
 
-    OPENSSL_free(allocated_uri);
     return pkey;
 }
 
@@ -625,20 +620,15 @@ EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
                       const char *pass, const char *desc)
 {
     EVP_PKEY *pkey = NULL;
-    char *allocated_uri = NULL;
 
     if (desc == NULL)
         desc = "public key";
 
-    //TODO?
-    if (format == FORMAT_ENGINE)
-        uri = allocated_uri = make_engine_uri(NULL, uri, desc);
     (void)load_key_certs_crls(uri, format, maybe_stdin, pass, desc, 1,
                               NULL, &pkey, NULL, NULL, NULL, NULL, NULL);
     if (pkey == NULL)
         (void)load_key_certs_crls(uri, format, maybe_stdin, pass, desc, 0,
                                   &pkey, NULL, NULL, NULL, NULL, NULL, NULL);
-    OPENSSL_free(allocated_uri);
     return pkey;
 }
 
