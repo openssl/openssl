@@ -113,6 +113,12 @@ static char *fpexpected[][11][5] = {
     },
 };
 
+static int(*test_BIO_snprintf)(char *, size_t, const char *, ...) = BIO_snprintf;
+
+#ifdef _WIN32
+extern int BIO_snprintf_msvc(char *, size_t, const char *, ...);
+#endif
+
 typedef struct z_data_st {
     size_t value;
     const char *format;
@@ -139,11 +145,24 @@ static int test_zu(int i)
     char bio_buf[80];
     const z_data *data = &zu_data[i];
 
-    BIO_snprintf(bio_buf, sizeof(bio_buf) - 1, data->format, data->value);
+    test_BIO_snprintf(bio_buf, sizeof(bio_buf) - 1, data->format, data->value);
     if (!TEST_str_eq(bio_buf, data->expected))
         return 0;
     return 1;
 }
+
+#ifdef _WIN32
+static int test_zu_win32(int i)
+{
+    int ret;
+
+    test_BIO_snprintf = BIO_snprintf_msvc;
+    ret = test_zu(i);
+    test_BIO_snprintf = BIO_snprintf;
+
+    return ret;
+}
+#endif
 
 typedef struct j_data_st {
     uint64_t value;
@@ -167,12 +186,24 @@ static int test_j(int i)
     const j_data *data = &jf_data[i];
     char bio_buf[80];
 
-    BIO_snprintf(bio_buf, sizeof(bio_buf) - 1, data->format, data->value);
+    test_BIO_snprintf(bio_buf, sizeof(bio_buf) - 1, data->format, data->value);
     if (!TEST_str_eq(bio_buf, data->expected))
         return 0;
     return 1;
 }
 
+#ifdef _WIN32
+static int test_j_win32(int i)
+{
+    int ret;
+
+    test_BIO_snprintf = BIO_snprintf_msvc;
+    ret = test_j(i);
+    test_BIO_snprintf = BIO_snprintf;
+
+    return ret;
+}
+#endif
 
 /* Precision and width. */
 typedef struct pw_st {
@@ -202,11 +233,11 @@ static int dofptest(int test, int sub, double val, const char *width, int prec)
         const char *fspec = fspecs[i];
 
         if (prec >= 0)
-            BIO_snprintf(format, sizeof(format), "%%%s.%d%s", width, prec,
+            test_BIO_snprintf(format, sizeof(format), "%%%s.%d%s", width, prec,
                          fspec);
         else
-            BIO_snprintf(format, sizeof(format), "%%%s%s", width, fspec);
-        BIO_snprintf(result, sizeof(result), format, val);
+            test_BIO_snprintf(format, sizeof(format), "%%%s%s", width, fspec);
+        test_BIO_snprintf(result, sizeof(result), format, val);
 
         if (justprint) {
             if (i == 0)
@@ -248,17 +279,48 @@ static int test_fp(int i)
     return r;
 }
 
+#ifdef _WIN32
+static int test_fp_win32(int i)
+{
+    int ret;
+
+    test_BIO_snprintf = BIO_snprintf_msvc;
+    ret = test_fp(i);
+    test_BIO_snprintf = BIO_snprintf;
+
+    return ret;
+}
+#endif
+
 static int test_big(void)
 {
     char buf[80];
 
+#ifdef _WIN32
+#define EXPECTED 18
+#else
+#define EXPECTED 28
+#endif
     /* Test excessively big number. Should fail */
-    if (!TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
-                                  "%f\n", 2 * (double)ULONG_MAX), -1))
+    if (!TEST_int_eq(test_BIO_snprintf(buf, sizeof(buf),
+                                       "%f\n", 2 * (double)ULONG_MAX), EXPECTED))
         return 0;
 
     return 1;
 }
+
+#ifdef _WIN32
+static int test_big_win32(void)
+{
+    int ret;
+
+    test_BIO_snprintf = BIO_snprintf_msvc;
+    ret = test_big();
+    test_BIO_snprintf = BIO_snprintf;
+
+    return ret;
+}
+#endif
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -297,6 +359,14 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_fp, OSSL_NELEM(pw_params));
     ADD_ALL_TESTS(test_zu, OSSL_NELEM(zu_data));
     ADD_ALL_TESTS(test_j, OSSL_NELEM(jf_data));
+
+#ifdef _WIN32
+    ADD_TEST(test_big_win32);
+    ADD_ALL_TESTS(test_fp_win32, OSSL_NELEM(pw_params));
+    ADD_ALL_TESTS(test_zu_win32, OSSL_NELEM(zu_data));
+    ADD_ALL_TESTS(test_j_win32, OSSL_NELEM(jf_data));
+#endif
+
     return 1;
 }
 
