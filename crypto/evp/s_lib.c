@@ -103,6 +103,25 @@ EVP_SKEY *EVP_SKEY_import(OSSL_LIB_CTX *libctx, const char *skeymgmtname, const 
     return NULL;
 }
 
+EVP_SKEY *EVP_SKEY_import_SKEYMGMT(OSSL_LIB_CTX *libctx, EVP_SKEYMGMT *skeymgmt,
+                                   int selection, const OSSL_PARAM *params)
+{
+    EVP_SKEY *skey = evp_skey_alloc(skeymgmt);
+
+    if (skey == NULL)
+        return NULL;
+
+    skey->keydata = evp_skeymgmt_import(skey->skeymgmt, selection, params);
+    if (skey->keydata == NULL)
+        goto err;
+
+    return skey;
+
+ err:
+    EVP_SKEY_free(skey);
+    return NULL;
+}
+
 EVP_SKEY *EVP_SKEY_generate(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
                             const char *propquery, const OSSL_PARAM *params)
 {
