@@ -44,10 +44,10 @@
 #include <dirent.h>
 #include <errno.h>
 #ifndef LPDIR_H
-# include "LPdir.h"
+#include "LPdir.h"
 #endif
 #ifdef __VMS
-# include <ctype.h>
+#include <ctype.h>
 #endif
 
 /*
@@ -57,9 +57,9 @@
  * if it doesn't exist, use NAME_MAX.
  */
 #if defined(PATH_MAX)
-# define LP_ENTRY_SIZE PATH_MAX
+#define LP_ENTRY_SIZE PATH_MAX
 #elif defined(NAME_MAX)
-# define LP_ENTRY_SIZE NAME_MAX
+#define LP_ENTRY_SIZE NAME_MAX
 #endif
 
 /*
@@ -68,102 +68,103 @@
  * small value (HP-UX offers 14), so we need to check if we got a result, and
  * if it meets a minimum standard, and create or change it if not.
  */
-#if !defined(LP_ENTRY_SIZE) || LP_ENTRY_SIZE<255
-# undef LP_ENTRY_SIZE
-# define LP_ENTRY_SIZE 255
+#if !defined(LP_ENTRY_SIZE) || LP_ENTRY_SIZE < 255
+#undef LP_ENTRY_SIZE
+#define LP_ENTRY_SIZE 255
 #endif
 
 struct LP_dir_context_st {
-    DIR *dir;
-    char entry_name[LP_ENTRY_SIZE + 1];
+	DIR *dir;
+	char entry_name[LP_ENTRY_SIZE + 1];
 #ifdef __VMS
-    int expect_file_generations;
-    char previous_entry_name[LP_ENTRY_SIZE + 1];
+	int expect_file_generations;
+	char previous_entry_name[LP_ENTRY_SIZE + 1];
 #endif
 };
 
 const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
 {
-    struct dirent *direntry = NULL;
+	struct dirent *direntry = NULL;
 
-    if (ctx == NULL || directory == NULL) {
-        errno = EINVAL;
-        return 0;
-    }
+	if (ctx == NULL || directory == NULL) {
+		errno = EINVAL;
+		return 0;
+	}
 
-    errno = 0;
-    if (*ctx == NULL) {
-        *ctx = malloc(sizeof(**ctx));
-        if (*ctx == NULL) {
-            errno = ENOMEM;
-            return 0;
-        }
-        memset(*ctx, 0, sizeof(**ctx));
-
-#ifdef __VMS
-        {
-            char c = directory[strlen(directory) - 1];
-
-            if (c == ']' || c == '>' || c == ':')
-                (*ctx)->expect_file_generations = 1;
-        }
-#endif
-
-        (*ctx)->dir = opendir(directory);
-        if ((*ctx)->dir == NULL) {
-            int save_errno = errno; /* Probably not needed, but I'm paranoid */
-            free(*ctx);
-            *ctx = NULL;
-            errno = save_errno;
-            return 0;
-        }
-    }
+	errno = 0;
+	if (*ctx == NULL) {
+		*ctx = malloc(sizeof(**ctx));
+		if (*ctx == NULL) {
+			errno = ENOMEM;
+			return 0;
+		}
+		memset(*ctx, 0, sizeof(**ctx));
 
 #ifdef __VMS
-    strncpy((*ctx)->previous_entry_name, (*ctx)->entry_name,
-            sizeof((*ctx)->previous_entry_name));
+		{
+			char c = directory[strlen(directory) - 1];
 
- again:
+			if (c == ']' || c == '>' || c == ':')
+				(*ctx)->expect_file_generations = 1;
+		}
 #endif
 
-    direntry = readdir((*ctx)->dir);
-    if (direntry == NULL) {
-        return 0;
-    }
+		(*ctx)->dir = opendir(directory);
+		if ((*ctx)->dir == NULL) {
+			int save_errno =
+				errno; /* Probably not needed, but I'm paranoid */
+			free(*ctx);
+			*ctx = NULL;
+			errno = save_errno;
+			return 0;
+		}
+	}
 
-    OPENSSL_strlcpy((*ctx)->entry_name, direntry->d_name,
-                    sizeof((*ctx)->entry_name));
 #ifdef __VMS
-    if ((*ctx)->expect_file_generations) {
-        char *p = (*ctx)->entry_name + strlen((*ctx)->entry_name);
+	strncpy((*ctx)->previous_entry_name, (*ctx)->entry_name,
+		sizeof((*ctx)->previous_entry_name));
 
-        while (p > (*ctx)->entry_name && isdigit((unsigned char)p[-1]))
-            p--;
-        if (p > (*ctx)->entry_name && p[-1] == ';')
-            p[-1] = '\0';
-        if (OPENSSL_strcasecmp((*ctx)->entry_name,
-                               (*ctx)->previous_entry_name) == 0)
-            goto again;
-    }
+again:
 #endif
-    return (*ctx)->entry_name;
+
+	direntry = readdir((*ctx)->dir);
+	if (direntry == NULL) {
+		return 0;
+	}
+
+	OPENSSL_strlcpy((*ctx)->entry_name, direntry->d_name,
+			sizeof((*ctx)->entry_name));
+#ifdef __VMS
+	if ((*ctx)->expect_file_generations) {
+		char *p = (*ctx)->entry_name + strlen((*ctx)->entry_name);
+
+		while (p > (*ctx)->entry_name && isdigit((unsigned char)p[-1]))
+			p--;
+		if (p > (*ctx)->entry_name && p[-1] == ';')
+			p[-1] = '\0';
+		if (OPENSSL_strcasecmp((*ctx)->entry_name,
+				       (*ctx)->previous_entry_name) == 0)
+			goto again;
+	}
+#endif
+	return (*ctx)->entry_name;
 }
 
 int LP_find_file_end(LP_DIR_CTX **ctx)
 {
-    if (ctx != NULL && *ctx != NULL) {
-        int ret = closedir((*ctx)->dir);
+	if (ctx != NULL && *ctx != NULL) {
+		int ret = closedir((*ctx)->dir);
 
-        free(*ctx);
-        switch (ret) {
-        case 0:
-            return 1;
-        case -1:
-            return 0;
-        default:
-            break;
-        }
-    }
-    errno = EINVAL;
-    return 0;
+		free(*ctx);
+		switch (ret) {
+		case 0:
+			return 1;
+		case -1:
+			return 0;
+		default:
+			break;
+		}
+	}
+	errno = EINVAL;
+	return 0;
 }

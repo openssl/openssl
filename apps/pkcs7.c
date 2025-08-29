@@ -21,204 +21,215 @@
 #include <openssl/pem.h>
 
 typedef enum OPTION_choice {
-    OPT_COMMON,
-    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_NOOUT,
-    OPT_TEXT, OPT_PRINT, OPT_PRINT_CERTS, OPT_QUIET,
-    OPT_ENGINE, OPT_PROV_ENUM
+	OPT_COMMON,
+	OPT_INFORM,
+	OPT_OUTFORM,
+	OPT_IN,
+	OPT_OUT,
+	OPT_NOOUT,
+	OPT_TEXT,
+	OPT_PRINT,
+	OPT_PRINT_CERTS,
+	OPT_QUIET,
+	OPT_ENGINE,
+	OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkcs7_options[] = {
-    OPT_SECTION("General"),
-    {"help", OPT_HELP, '-', "Display this summary"},
+	OPT_SECTION("General"),
+	{ "help", OPT_HELP, '-', "Display this summary" },
 #ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+	{ "engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device" },
 #endif
 
-    OPT_SECTION("Input"),
-    {"in", OPT_IN, '<', "Input file"},
-    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
+	OPT_SECTION("Input"),
+	{ "in", OPT_IN, '<', "Input file" },
+	{ "inform", OPT_INFORM, 'F', "Input format - DER or PEM" },
 
-    OPT_SECTION("Output"),
-    {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
-    {"out", OPT_OUT, '>', "Output file"},
-    {"noout", OPT_NOOUT, '-', "Don't output encoded data"},
-    {"text", OPT_TEXT, '-', "Print full details of certificates"},
-    {"print", OPT_PRINT, '-', "Print out all fields of the PKCS7 structure"},
-    {"print_certs", OPT_PRINT_CERTS, '-',
-     "Print_certs  print any certs or crl in the input"},
-    {"quiet", OPT_QUIET, '-',
-     "When used with -print_certs, it produces a cleaner output"},
+	OPT_SECTION("Output"),
+	{ "outform", OPT_OUTFORM, 'F', "Output format - DER or PEM" },
+	{ "out", OPT_OUT, '>', "Output file" },
+	{ "noout", OPT_NOOUT, '-', "Don't output encoded data" },
+	{ "text", OPT_TEXT, '-', "Print full details of certificates" },
+	{ "print", OPT_PRINT, '-',
+	  "Print out all fields of the PKCS7 structure" },
+	{ "print_certs", OPT_PRINT_CERTS, '-',
+	  "Print_certs  print any certs or crl in the input" },
+	{ "quiet", OPT_QUIET, '-',
+	  "When used with -print_certs, it produces a cleaner output" },
 
-    OPT_PROV_OPTIONS,
-    {NULL}
+	OPT_PROV_OPTIONS,
+	{ NULL }
 };
 
 int pkcs7_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
-    PKCS7 *p7 = NULL, *p7i;
-    BIO *in = NULL, *out = NULL;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM;
-    char *infile = NULL, *outfile = NULL, *prog;
-    int i, print_certs = 0, text = 0, noout = 0, p7_print = 0, quiet = 0, ret = 1;
-    OPTION_CHOICE o;
-    OSSL_LIB_CTX *libctx = app_get0_libctx();
+	ENGINE *e = NULL;
+	PKCS7 *p7 = NULL, *p7i;
+	BIO *in = NULL, *out = NULL;
+	int informat = FORMAT_PEM, outformat = FORMAT_PEM;
+	char *infile = NULL, *outfile = NULL, *prog;
+	int i, print_certs = 0, text = 0, noout = 0, p7_print = 0, quiet = 0,
+	       ret = 1;
+	OPTION_CHOICE o;
+	OSSL_LIB_CTX *libctx = app_get0_libctx();
 
-    prog = opt_init(argc, argv, pkcs7_options);
-    while ((o = opt_next()) != OPT_EOF) {
-        switch (o) {
-        case OPT_EOF:
-        case OPT_ERR:
- opthelp:
-            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
-            goto end;
-        case OPT_HELP:
-            opt_help(pkcs7_options);
-            ret = 0;
-            goto end;
-        case OPT_INFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
-                goto opthelp;
-            break;
-        case OPT_OUTFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
-                goto opthelp;
-            break;
-        case OPT_IN:
-            infile = opt_arg();
-            break;
-        case OPT_OUT:
-            outfile = opt_arg();
-            break;
-        case OPT_NOOUT:
-            noout = 1;
-            break;
-        case OPT_TEXT:
-            text = 1;
-            break;
-        case OPT_PRINT:
-            p7_print = 1;
-            break;
-        case OPT_PRINT_CERTS:
-            print_certs = 1;
-            break;
-        case OPT_QUIET:
-            quiet = 1;
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
-            break;
-        case OPT_PROV_CASES:
-            if (!opt_provider(o))
-                goto end;
-            break;
-        }
-    }
+	prog = opt_init(argc, argv, pkcs7_options);
+	while ((o = opt_next()) != OPT_EOF) {
+		switch (o) {
+		case OPT_EOF:
+		case OPT_ERR:
+opthelp:
+			BIO_printf(bio_err, "%s: Use -help for summary.\n",
+				   prog);
+			goto end;
+		case OPT_HELP:
+			opt_help(pkcs7_options);
+			ret = 0;
+			goto end;
+		case OPT_INFORM:
+			if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
+				goto opthelp;
+			break;
+		case OPT_OUTFORM:
+			if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
+				goto opthelp;
+			break;
+		case OPT_IN:
+			infile = opt_arg();
+			break;
+		case OPT_OUT:
+			outfile = opt_arg();
+			break;
+		case OPT_NOOUT:
+			noout = 1;
+			break;
+		case OPT_TEXT:
+			text = 1;
+			break;
+		case OPT_PRINT:
+			p7_print = 1;
+			break;
+		case OPT_PRINT_CERTS:
+			print_certs = 1;
+			break;
+		case OPT_QUIET:
+			quiet = 1;
+			break;
+		case OPT_ENGINE:
+			e = setup_engine(opt_arg(), 0);
+			break;
+		case OPT_PROV_CASES:
+			if (!opt_provider(o))
+				goto end;
+			break;
+		}
+	}
 
-    /* No extra arguments. */
-    if (!opt_check_rest_arg(NULL))
-        goto opthelp;
+	/* No extra arguments. */
+	if (!opt_check_rest_arg(NULL))
+		goto opthelp;
 
-    in = bio_open_default(infile, 'r', informat);
-    if (in == NULL)
-        goto end;
+	in = bio_open_default(infile, 'r', informat);
+	if (in == NULL)
+		goto end;
 
-    p7 = PKCS7_new_ex(libctx, app_get0_propq());
-    if (p7 == NULL) {
-        BIO_printf(bio_err, "unable to allocate PKCS7 object\n");
-        ERR_print_errors(bio_err);
-        goto end;
-    }
+	p7 = PKCS7_new_ex(libctx, app_get0_propq());
+	if (p7 == NULL) {
+		BIO_printf(bio_err, "unable to allocate PKCS7 object\n");
+		ERR_print_errors(bio_err);
+		goto end;
+	}
 
-    if (informat == FORMAT_ASN1)
-        p7i = d2i_PKCS7_bio(in, &p7);
-    else
-        p7i = PEM_read_bio_PKCS7(in, &p7, NULL, NULL);
-    if (p7i == NULL) {
-        BIO_printf(bio_err, "unable to load PKCS7 object\n");
-        ERR_print_errors(bio_err);
-        goto end;
-    }
+	if (informat == FORMAT_ASN1)
+		p7i = d2i_PKCS7_bio(in, &p7);
+	else
+		p7i = PEM_read_bio_PKCS7(in, &p7, NULL, NULL);
+	if (p7i == NULL) {
+		BIO_printf(bio_err, "unable to load PKCS7 object\n");
+		ERR_print_errors(bio_err);
+		goto end;
+	}
 
-    out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
+	out = bio_open_default(outfile, 'w', outformat);
+	if (out == NULL)
+		goto end;
 
-    if (p7_print)
-        PKCS7_print_ctx(out, p7, 0, NULL);
+	if (p7_print)
+		PKCS7_print_ctx(out, p7, 0, NULL);
 
-    if (print_certs) {
-        STACK_OF(X509) *certs = NULL;
-        STACK_OF(X509_CRL) *crls = NULL;
+	if (print_certs) {
+		STACK_OF(X509) *certs = NULL;
+		STACK_OF(X509_CRL) *crls = NULL;
 
-        i = OBJ_obj2nid(p7->type);
-        switch (i) {
-        case NID_pkcs7_signed:
-            if (p7->d.sign != NULL) {
-                certs = p7->d.sign->cert;
-                crls = p7->d.sign->crl;
-            }
-            break;
-        case NID_pkcs7_signedAndEnveloped:
-            if (p7->d.signed_and_enveloped != NULL) {
-                certs = p7->d.signed_and_enveloped->cert;
-                crls = p7->d.signed_and_enveloped->crl;
-            }
-            break;
-        default:
-            break;
-        }
+		i = OBJ_obj2nid(p7->type);
+		switch (i) {
+		case NID_pkcs7_signed:
+			if (p7->d.sign != NULL) {
+				certs = p7->d.sign->cert;
+				crls = p7->d.sign->crl;
+			}
+			break;
+		case NID_pkcs7_signedAndEnveloped:
+			if (p7->d.signed_and_enveloped != NULL) {
+				certs = p7->d.signed_and_enveloped->cert;
+				crls = p7->d.signed_and_enveloped->crl;
+			}
+			break;
+		default:
+			break;
+		}
 
-        if (certs != NULL) {
-            X509 *x;
+		if (certs != NULL) {
+			X509 *x;
 
-            for (i = 0; i < sk_X509_num(certs); i++) {
-                x = sk_X509_value(certs, i);
-                if (text)
-                    X509_print(out, x);
-                else if (!quiet)
-                    dump_cert_text(out, x);
+			for (i = 0; i < sk_X509_num(certs); i++) {
+				x = sk_X509_value(certs, i);
+				if (text)
+					X509_print(out, x);
+				else if (!quiet)
+					dump_cert_text(out, x);
 
-                if (!noout)
-                    PEM_write_bio_X509(out, x);
-                BIO_puts(out, "\n");
-            }
-        }
-        if (crls != NULL) {
-            X509_CRL *crl;
+				if (!noout)
+					PEM_write_bio_X509(out, x);
+				BIO_puts(out, "\n");
+			}
+		}
+		if (crls != NULL) {
+			X509_CRL *crl;
 
-            for (i = 0; i < sk_X509_CRL_num(crls); i++) {
-                crl = sk_X509_CRL_value(crls, i);
+			for (i = 0; i < sk_X509_CRL_num(crls); i++) {
+				crl = sk_X509_CRL_value(crls, i);
 
-                X509_CRL_print_ex(out, crl, get_nameopt());
+				X509_CRL_print_ex(out, crl, get_nameopt());
 
-                if (!noout)
-                    PEM_write_bio_X509_CRL(out, crl);
-                BIO_puts(out, "\n");
-            }
-        }
+				if (!noout)
+					PEM_write_bio_X509_CRL(out, crl);
+				BIO_puts(out, "\n");
+			}
+		}
 
-        ret = 0;
-        goto end;
-    }
+		ret = 0;
+		goto end;
+	}
 
-    if (!noout) {
-        if (outformat == FORMAT_ASN1)
-            i = i2d_PKCS7_bio(out, p7);
-        else
-            i = PEM_write_bio_PKCS7(out, p7);
+	if (!noout) {
+		if (outformat == FORMAT_ASN1)
+			i = i2d_PKCS7_bio(out, p7);
+		else
+			i = PEM_write_bio_PKCS7(out, p7);
 
-        if (!i) {
-            BIO_printf(bio_err, "unable to write pkcs7 object\n");
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-    }
-    ret = 0;
- end:
-    PKCS7_free(p7);
-    release_engine(e);
-    BIO_free(in);
-    BIO_free_all(out);
-    return ret;
+		if (!i) {
+			BIO_printf(bio_err, "unable to write pkcs7 object\n");
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
+	ret = 0;
+end:
+	PKCS7_free(p7);
+	release_engine(e);
+	BIO_free(in);
+	BIO_free_all(out);
+	return ret;
 }

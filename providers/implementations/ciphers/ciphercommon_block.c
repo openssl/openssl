@@ -37,84 +37,85 @@
  * which is a multiple of the blocksize.
  */
 size_t ossl_cipher_fillblock(unsigned char *buf, size_t *buflen,
-                             size_t blocksize,
-                             const unsigned char **in, size_t *inlen)
+			     size_t blocksize, const unsigned char **in,
+			     size_t *inlen)
 {
-    size_t blockmask = ~(blocksize - 1);
-    size_t bufremain = blocksize - *buflen;
+	size_t blockmask = ~(blocksize - 1);
+	size_t bufremain = blocksize - *buflen;
 
-    assert(*buflen <= blocksize);
-    assert(blocksize > 0 && (blocksize & (blocksize - 1)) == 0);
+	assert(*buflen <= blocksize);
+	assert(blocksize > 0 && (blocksize & (blocksize - 1)) == 0);
 
-    if (*inlen < bufremain)
-        bufremain = *inlen;
-    memcpy(buf + *buflen, *in, bufremain);
-    *in += bufremain;
-    *inlen -= bufremain;
-    *buflen += bufremain;
+	if (*inlen < bufremain)
+		bufremain = *inlen;
+	memcpy(buf + *buflen, *in, bufremain);
+	*in += bufremain;
+	*inlen -= bufremain;
+	*buflen += bufremain;
 
-    return *inlen & blockmask;
+	return *inlen & blockmask;
 }
 
 /*
  * Fills the buffer with trailing data from an encryption/decryption that didn't
  * fit into a full block.
  */
-int ossl_cipher_trailingdata(unsigned char *buf, size_t *buflen, size_t blocksize,
-                             const unsigned char **in, size_t *inlen)
+int ossl_cipher_trailingdata(unsigned char *buf, size_t *buflen,
+			     size_t blocksize, const unsigned char **in,
+			     size_t *inlen)
 {
-    if (*inlen == 0)
-        return 1;
+	if (*inlen == 0)
+		return 1;
 
-    if (*buflen + *inlen > blocksize) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
+	if (*buflen + *inlen > blocksize) {
+		ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+		return 0;
+	}
 
-    memcpy(buf + *buflen, *in, *inlen);
-    *buflen += *inlen;
-    *inlen = 0;
+	memcpy(buf + *buflen, *in, *inlen);
+	*buflen += *inlen;
+	*inlen = 0;
 
-    return 1;
+	return 1;
 }
 
 /* Pad the final block for encryption */
 void ossl_cipher_padblock(unsigned char *buf, size_t *buflen, size_t blocksize)
 {
-    size_t i;
-    unsigned char pad = (unsigned char)(blocksize - *buflen);
+	size_t i;
+	unsigned char pad = (unsigned char)(blocksize - *buflen);
 
-    for (i = *buflen; i < blocksize; i++)
-        buf[i] = pad;
+	for (i = *buflen; i < blocksize; i++)
+		buf[i] = pad;
 }
 
 int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
 {
-    size_t pad, i;
-    size_t len = *buflen;
+	size_t pad, i;
+	size_t len = *buflen;
 
-    if (len != blocksize) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
+	if (len != blocksize) {
+		ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+		return 0;
+	}
 
-    /*
+	/*
      * The following assumes that the ciphertext has been authenticated.
      * Otherwise it provides a padding oracle.
      */
-    pad = buf[blocksize - 1];
-    if (pad == 0 || pad > blocksize) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
-        return 0;
-    }
-    for (i = 0; i < pad; i++) {
-        if (buf[--len] != pad) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
-            return 0;
-        }
-    }
-    *buflen = len;
-    return 1;
+	pad = buf[blocksize - 1];
+	if (pad == 0 || pad > blocksize) {
+		ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
+		return 0;
+	}
+	for (i = 0; i < pad; i++) {
+		if (buf[--len] != pad) {
+			ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
+			return 0;
+		}
+	}
+	*buflen = len;
+	return 1;
 }
 
 /*-
@@ -139,35 +140,34 @@ int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
  *      the mac is random
  */
 int ossl_cipher_tlsunpadblock(OSSL_LIB_CTX *libctx, unsigned int tlsversion,
-                              unsigned char *buf, size_t *buflen,
-                              size_t blocksize,
-                              unsigned char **mac, int *alloced, size_t macsize,
-                              int aead)
+			      unsigned char *buf, size_t *buflen,
+			      size_t blocksize, unsigned char **mac,
+			      int *alloced, size_t macsize, int aead)
 {
-    int ret;
+	int ret;
 
-    switch (tlsversion) {
-    case SSL3_VERSION:
-        return ssl3_cbc_remove_padding_and_mac(buflen, *buflen, buf, mac,
-                                               alloced, blocksize, macsize,
-                                               libctx);
+	switch (tlsversion) {
+	case SSL3_VERSION:
+		return ssl3_cbc_remove_padding_and_mac(buflen, *buflen, buf,
+						       mac, alloced, blocksize,
+						       macsize, libctx);
 
-    case TLS1_2_VERSION:
-    case DTLS1_2_VERSION:
-    case TLS1_1_VERSION:
-    case DTLS1_VERSION:
-    case DTLS1_BAD_VER:
-        /* Remove the explicit IV */
-        buf += blocksize;
-        *buflen -= blocksize;
-        /* Fall through */
-    case TLS1_VERSION:
-        ret = tls1_cbc_remove_padding_and_mac(buflen, *buflen, buf, mac,
-                                              alloced, blocksize, macsize,
-                                              aead, libctx);
-        return ret;
+	case TLS1_2_VERSION:
+	case DTLS1_2_VERSION:
+	case TLS1_1_VERSION:
+	case DTLS1_VERSION:
+	case DTLS1_BAD_VER:
+		/* Remove the explicit IV */
+		buf += blocksize;
+		*buflen -= blocksize;
+		/* Fall through */
+	case TLS1_VERSION:
+		ret = tls1_cbc_remove_padding_and_mac(buflen, *buflen, buf, mac,
+						      alloced, blocksize,
+						      macsize, aead, libctx);
+		return ret;
 
-    default:
-        return 0;
-    }
+	default:
+		return 0;
+	}
 }

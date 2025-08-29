@@ -8,7 +8,7 @@
  */
 
 #if defined(_WIN32)
-# include <windows.h>
+#include <windows.h>
 #endif
 
 #include "testutil.h"
@@ -18,32 +18,32 @@ static int success;
 
 static void thread_fips_rand_fetch(void)
 {
-    EVP_MD *md;
+	EVP_MD *md;
 
-    if (!TEST_true(md = EVP_MD_fetch(NULL, "SHA2-256", NULL)))
-        success = 0;
-    EVP_MD_free(md);
+	if (!TEST_true(md = EVP_MD_fetch(NULL, "SHA2-256", NULL)))
+		success = 0;
+	EVP_MD_free(md);
 }
 
 static int test_fips_rand_leak(void)
 {
-    thread_t thread;
+	thread_t thread;
 
-    success = 1;
+	success = 1;
 
-    if (!TEST_true(run_thread(&thread, thread_fips_rand_fetch)))
-        return 0;
-    if (!TEST_true(wait_for_thread(thread)))
-        return 0;
-    return TEST_true(success);
+	if (!TEST_true(run_thread(&thread, thread_fips_rand_fetch)))
+		return 0;
+	if (!TEST_true(wait_for_thread(thread)))
+		return 0;
+	return TEST_true(success);
 }
 
 int setup_tests(void)
 {
-    /*
+	/*
      * This test MUST be run first.  Once the default library context is set
      * up, this test will always pass.
      */
-    ADD_TEST(test_fips_rand_leak);
-    return 1;
+	ADD_TEST(test_fips_rand_leak);
+	return 1;
 }

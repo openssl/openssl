@@ -12,8 +12,8 @@
 #include "internal/refcount.h"
 
 struct kdf_data_st {
-    OSSL_LIB_CTX *libctx;
-    CRYPTO_REF_COUNT refcnt;
+	OSSL_LIB_CTX *libctx;
+	CRYPTO_REF_COUNT refcnt;
 };
 
 typedef struct kdf_data_st KDF_DATA;

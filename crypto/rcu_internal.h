@@ -8,15 +8,15 @@
  */
 
 #ifndef OPENSSL_RCU_INTERNAL_H
-# define OPENSSL_RCU_INTERNAL_H
-# pragma once
+#define OPENSSL_RCU_INTERNAL_H
+#pragma once
 
 struct rcu_qp;
 
 struct rcu_cb_item {
-    rcu_cb_fn fn;
-    void *data;
-    struct rcu_cb_item *next;
+	rcu_cb_fn fn;
+	void *data;
+	struct rcu_cb_item *next;
 };
 
 #endif

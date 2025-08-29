@@ -19,16 +19,16 @@
 
 IMPLEMENT_LEGACY_EVP_MD_METH(md2, MD2)
 
-static const EVP_MD md2_md = {
-    NID_md2,
-    NID_md2WithRSAEncryption,
-    MD2_DIGEST_LENGTH,
-    0,
-    EVP_ORIG_GLOBAL,
-    LEGACY_EVP_MD_METH_TABLE(md2_init, md2_update, md2_final, NULL, MD2_BLOCK)
-};
+static const EVP_MD md2_md = { NID_md2,
+			       NID_md2WithRSAEncryption,
+			       MD2_DIGEST_LENGTH,
+			       0,
+			       EVP_ORIG_GLOBAL,
+			       LEGACY_EVP_MD_METH_TABLE(md2_init, md2_update,
+							md2_final, NULL,
+							MD2_BLOCK) };
 
 const EVP_MD *EVP_md2(void)
 {
-    return &md2_md;
+	return &md2_md;
 }

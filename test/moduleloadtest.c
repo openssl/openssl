@@ -21,33 +21,34 @@
 static int test_load(const char *path, const char *symbol)
 {
 #ifdef SD_INIT
-    SD sd = SD_INIT;
-    SD_SYM sym;
-    int ret;
+	SD sd = SD_INIT;
+	SD_SYM sym;
+	int ret;
 
-    if (!sd_load(path, &sd, SD_MODULE))
-        return 0;
-    ret = symbol == NULL || sd_sym(sd, symbol, &sym);
-    if (!sd_close(sd))
-        ret = 0;
-    return ret;
+	if (!sd_load(path, &sd, SD_MODULE))
+		return 0;
+	ret = symbol == NULL || sd_sym(sd, symbol, &sym);
+	if (!sd_close(sd))
+		ret = 0;
+	return ret;
 #else
-    fprintf(stderr, "No dynamic loader\n");
-    return 0;
+	fprintf(stderr, "No dynamic loader\n");
+	return 0;
 #endif
 }
 
 int main(int argc, char *argv[])
 {
-    const char *m, *s;
+	const char *m, *s;
 
-    if (argc != 2 && argc != 3) {
-        fprintf(stderr, "Usage: %s sharedobject [ entrypoint ]\n", argv[0]);
-        return 1;
-    }
+	if (argc != 2 && argc != 3) {
+		fprintf(stderr, "Usage: %s sharedobject [ entrypoint ]\n",
+			argv[0]);
+		return 1;
+	}
 
-    m = argv[1];
-    s = argc == 3 ? argv[2] : NULL;
+	m = argv[1];
+	s = argc == 3 ? argv[2] : NULL;
 
-    return test_load(m, s) ? 0 : 1;
+	return test_load(m, s) ? 0 : 1;
 }

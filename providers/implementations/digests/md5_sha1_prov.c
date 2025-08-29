@@ -26,36 +26,36 @@ static OSSL_FUNC_digest_set_ctx_params_fn md5_sha1_set_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn md5_sha1_settable_ctx_params;
 
 static const OSSL_PARAM known_md5_sha1_settable_ctx_params[] = {
-    {OSSL_DIGEST_PARAM_SSL3_MS, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
-    OSSL_PARAM_END
+	{ OSSL_DIGEST_PARAM_SSL3_MS, OSSL_PARAM_OCTET_STRING, NULL, 0, 0 },
+	OSSL_PARAM_END
 };
 
 static const OSSL_PARAM *md5_sha1_settable_ctx_params(ossl_unused void *ctx,
-                                                      ossl_unused void *provctx)
+						      ossl_unused void *provctx)
 {
-    return known_md5_sha1_settable_ctx_params;
+	return known_md5_sha1_settable_ctx_params;
 }
 
 /* Special set_params method for SSL3 */
 static int md5_sha1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
-    const OSSL_PARAM *p;
-    MD5_SHA1_CTX *ctx = (MD5_SHA1_CTX *)vctx;
+	const OSSL_PARAM *p;
+	MD5_SHA1_CTX *ctx = (MD5_SHA1_CTX *)vctx;
 
-    if (ctx == NULL)
-        return 0;
-    if (ossl_param_is_empty(params))
-        return 1;
+	if (ctx == NULL)
+		return 0;
+	if (ossl_param_is_empty(params))
+		return 1;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_SSL3_MS);
-    if (p != NULL && p->data_type == OSSL_PARAM_OCTET_STRING)
-        return ossl_md5_sha1_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                                  (int)p->data_size, p->data);
-    return 1;
+	p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_SSL3_MS);
+	if (p != NULL && p->data_type == OSSL_PARAM_OCTET_STRING)
+		return ossl_md5_sha1_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
+					  (int)p->data_size, p->data);
+	return 1;
 }
 
 /* ossl_md5_sha1_functions */
 IMPLEMENT_digest_functions_with_settable_ctx(
-    md5_sha1, MD5_SHA1_CTX, MD5_SHA1_CBLOCK, MD5_SHA1_DIGEST_LENGTH, 0,
-    ossl_md5_sha1_init, ossl_md5_sha1_update, ossl_md5_sha1_final,
-    md5_sha1_settable_ctx_params, md5_sha1_set_ctx_params)
+	md5_sha1, MD5_SHA1_CTX, MD5_SHA1_CBLOCK, MD5_SHA1_DIGEST_LENGTH, 0,
+	ossl_md5_sha1_init, ossl_md5_sha1_update, ossl_md5_sha1_final,
+	md5_sha1_settable_ctx_params, md5_sha1_set_ctx_params)

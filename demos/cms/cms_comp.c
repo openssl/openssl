@@ -14,51 +14,51 @@
 
 int main(int argc, char **argv)
 {
-    BIO *in = NULL, *out = NULL;
-    CMS_ContentInfo *cms = NULL;
-    int ret = EXIT_FAILURE;
+	BIO *in = NULL, *out = NULL;
+	CMS_ContentInfo *cms = NULL;
+	int ret = EXIT_FAILURE;
 
-    /*
+	/*
      * On OpenSSL 1.0.0+ only:
      * for streaming set CMS_STREAM
      */
-    int flags = CMS_STREAM;
+	int flags = CMS_STREAM;
 
-    OpenSSL_add_all_algorithms();
-    ERR_load_crypto_strings();
+	OpenSSL_add_all_algorithms();
+	ERR_load_crypto_strings();
 
-    /* Open content being compressed */
+	/* Open content being compressed */
 
-    in = BIO_new_file("comp.txt", "r");
+	in = BIO_new_file("comp.txt", "r");
 
-    if (!in)
-        goto err;
+	if (!in)
+		goto err;
 
-    /* compress content */
-    cms = CMS_compress(in, NID_zlib_compression, flags);
+	/* compress content */
+	cms = CMS_compress(in, NID_zlib_compression, flags);
 
-    if (!cms)
-        goto err;
+	if (!cms)
+		goto err;
 
-    out = BIO_new_file("smcomp.txt", "w");
-    if (!out)
-        goto err;
+	out = BIO_new_file("smcomp.txt", "w");
+	if (!out)
+		goto err;
 
-    /* Write out S/MIME message */
-    if (!SMIME_write_CMS(out, cms, in, flags))
-        goto err;
+	/* Write out S/MIME message */
+	if (!SMIME_write_CMS(out, cms, in, flags))
+		goto err;
 
-    ret = EXIT_SUCCESS;
+	ret = EXIT_SUCCESS;
 
- err:
+err:
 
-    if (ret != EXIT_SUCCESS) {
-        fprintf(stderr, "Error Compressing Data\n");
-        ERR_print_errors_fp(stderr);
-    }
+	if (ret != EXIT_SUCCESS) {
+		fprintf(stderr, "Error Compressing Data\n");
+		ERR_print_errors_fp(stderr);
+	}
 
-    CMS_ContentInfo_free(cms);
-    BIO_free(in);
-    BIO_free(out);
-    return ret;
+	CMS_ContentInfo_free(cms);
+	BIO_free(in);
+	BIO_free(out);
+	return ret;
 }

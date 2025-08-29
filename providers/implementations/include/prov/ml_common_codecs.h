@@ -8,14 +8,14 @@
  */
 
 #ifndef PROV_ML_COMMON_CODECS_H
-# define PROV_ML_COMMON_CODECS_H
-# pragma once
+#define PROV_ML_COMMON_CODECS_H
+#pragma once
 
-#  include <openssl/e_os2.h>
-#  include "crypto/ml_dsa.h"
-#  include "prov/provider_ctx.h"
+#include <openssl/e_os2.h>
+#include "crypto/ml_dsa.h"
+#include "prov/provider_ctx.h"
 
- /*-
+/*-
   * The DER ASN.1 encoding of ML-DSA and ML-KEM public keys prepends 22 bytes
   * to the encoded public key:
   *
@@ -26,9 +26,9 @@
   * -  4 byte bit string tag and length
   * -    1 bitstring lead byte
   */
-#  define ML_COMMON_SPKI_OVERHEAD   22
+#define ML_COMMON_SPKI_OVERHEAD 22
 typedef struct {
-    const uint8_t asn1_prefix[ML_COMMON_SPKI_OVERHEAD];
+	const uint8_t asn1_prefix[ML_COMMON_SPKI_OVERHEAD];
 } ML_COMMON_SPKI_FMT;
 
 /*-
@@ -64,35 +64,35 @@ typedef struct {
  * The p8_shift is 0 when the top-level tag+length occupy four bytes, 2 when
  * they occupy two by†es, and 4 when no tag is used at all.
  */
-#define NUM_PKCS8_FORMATS   6
+#define NUM_PKCS8_FORMATS 6
 
 typedef struct {
-    const char *p8_name;    /* Format name */
-    size_t p8_bytes;        /* Total P8 encoding length */
-    int    p8_shift;        /* 4 - (top-level tag + len) */
-    uint32_t p8_magic;      /* The tag + len value */
-    uint16_t seed_magic;    /* Interior tag + len for the seed */
-    size_t seed_offset;     /* Seed offset from start */
-    size_t seed_length;     /* Seed bytes */
-    uint32_t priv_magic;    /* Interior tag + len for the key */
-    size_t priv_offset;     /* Key offset from start */
-    size_t priv_length;     /* Key bytes */
-    size_t pub_offset;      /* Pubkey offset */
-    size_t pub_length;      /* Pubkey bytes */
+	const char *p8_name; /* Format name */
+	size_t p8_bytes; /* Total P8 encoding length */
+	int p8_shift; /* 4 - (top-level tag + len) */
+	uint32_t p8_magic; /* The tag + len value */
+	uint16_t seed_magic; /* Interior tag + len for the seed */
+	size_t seed_offset; /* Seed offset from start */
+	size_t seed_length; /* Seed bytes */
+	uint32_t priv_magic; /* Interior tag + len for the key */
+	size_t priv_offset; /* Key offset from start */
+	size_t priv_length; /* Key bytes */
+	size_t pub_offset; /* Pubkey offset */
+	size_t pub_length; /* Pubkey bytes */
 } ML_COMMON_PKCS8_FMT;
 
 typedef struct {
-    const ML_COMMON_SPKI_FMT *spkifmt;
-    const ML_COMMON_PKCS8_FMT *p8fmt;
+	const ML_COMMON_SPKI_FMT *spkifmt;
+	const ML_COMMON_PKCS8_FMT *p8fmt;
 } ML_COMMON_CODEC;
 
 typedef struct {
-    const ML_COMMON_PKCS8_FMT *fmt;
-    int pref;
+	const ML_COMMON_PKCS8_FMT *fmt;
+	int pref;
 } ML_COMMON_PKCS8_FMT_PREF;
 
 ML_COMMON_PKCS8_FMT_PREF *
 ossl_ml_common_pkcs8_fmt_order(const char *algorithm_name,
-                               const ML_COMMON_PKCS8_FMT *p8fmt,
-                               const char *direction, const char *formats);
+			       const ML_COMMON_PKCS8_FMT *p8fmt,
+			       const char *direction, const char *formats);
 #endif

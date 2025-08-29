@@ -22,46 +22,47 @@
 
 static void *aes_ccm_newctx(void *provctx, size_t keybits)
 {
-    PROV_AES_CCM_CTX *ctx;
+	PROV_AES_CCM_CTX *ctx;
 
-    if (!ossl_prov_is_running())
-        return NULL;
+	if (!ossl_prov_is_running())
+		return NULL;
 
-    ctx = OPENSSL_zalloc(sizeof(*ctx));
-    if (ctx != NULL)
-        ossl_ccm_initctx(&ctx->base, keybits, ossl_prov_aes_hw_ccm(keybits));
-    return ctx;
+	ctx = OPENSSL_zalloc(sizeof(*ctx));
+	if (ctx != NULL)
+		ossl_ccm_initctx(&ctx->base, keybits,
+				 ossl_prov_aes_hw_ccm(keybits));
+	return ctx;
 }
 
 static void *aes_ccm_dupctx(void *provctx)
 {
-    PROV_AES_CCM_CTX *ctx = provctx;
-    PROV_AES_CCM_CTX *dupctx = NULL;
+	PROV_AES_CCM_CTX *ctx = provctx;
+	PROV_AES_CCM_CTX *dupctx = NULL;
 
-    if (!ossl_prov_is_running())
-        return NULL;
+	if (!ossl_prov_is_running())
+		return NULL;
 
-    if (ctx == NULL)
-        return NULL;
-    dupctx = OPENSSL_memdup(provctx, sizeof(*ctx));
-    if (dupctx == NULL)
-        return NULL;
-    /*
+	if (ctx == NULL)
+		return NULL;
+	dupctx = OPENSSL_memdup(provctx, sizeof(*ctx));
+	if (dupctx == NULL)
+		return NULL;
+	/*
      * ossl_cm_initctx, via the ossl_prov_aes_hw_ccm functions assign a
      * provctx->ccm.ks.ks to the ccm context key so we need to point it to
      * the memduped copy
      */
-    dupctx->base.ccm_ctx.key = &dupctx->ccm.ks.ks;
+	dupctx->base.ccm_ctx.key = &dupctx->ccm.ks.ks;
 
-    return dupctx;
+	return dupctx;
 }
 
 static OSSL_FUNC_cipher_freectx_fn aes_ccm_freectx;
 static void aes_ccm_freectx(void *vctx)
 {
-    PROV_AES_CCM_CTX *ctx = (PROV_AES_CCM_CTX *)vctx;
+	PROV_AES_CCM_CTX *ctx = (PROV_AES_CCM_CTX *)vctx;
 
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+	OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
 /* ossl_aes128ccm_functions */

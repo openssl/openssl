@@ -28,27 +28,26 @@
  * @param sig_wpkt A WPACKET object to write the Hypertree Signature to.
  * @returns 1 on success, or 0 on error.
  */
-int ossl_slh_ht_sign(SLH_DSA_HASH_CTX *ctx,
-                     const uint8_t *msg, const uint8_t *sk_seed,
-                     const uint8_t *pk_seed,
-                     uint64_t tree_id, uint32_t leaf_id, WPACKET *sig_wpkt)
+int ossl_slh_ht_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
+		     const uint8_t *sk_seed, const uint8_t *pk_seed,
+		     uint64_t tree_id, uint32_t leaf_id, WPACKET *sig_wpkt)
 {
-    const SLH_DSA_KEY *key = ctx->key;
-    SLH_ADRS_FUNC_DECLARE(key, adrsf);
-    SLH_ADRS_DECLARE(adrs);
-    uint8_t root[SLH_MAX_N];
-    uint32_t layer, mask;
-    const SLH_DSA_PARAMS *params = key->params;
-    uint32_t n = params->n;
-    uint32_t d = params->d;
-    uint32_t hm = params->hm;
-    uint8_t *psig;
-    PACKET rpkt, *xmss_sig_rpkt = &rpkt;
+	const SLH_DSA_KEY *key = ctx->key;
+	SLH_ADRS_FUNC_DECLARE(key, adrsf);
+	SLH_ADRS_DECLARE(adrs);
+	uint8_t root[SLH_MAX_N];
+	uint32_t layer, mask;
+	const SLH_DSA_PARAMS *params = key->params;
+	uint32_t n = params->n;
+	uint32_t d = params->d;
+	uint32_t hm = params->hm;
+	uint8_t *psig;
+	PACKET rpkt, *xmss_sig_rpkt = &rpkt;
 
-    mask = (1 << hm) - 1; /* A mod 2^h = A & ((2^h - 1))) */
+	mask = (1 << hm) - 1; /* A mod 2^h = A & ((2^h - 1))) */
 
-    adrsf->zero(adrs);
-    /*
+	adrsf->zero(adrs);
+	/*
      * For each XMSS tree there is a current leaf node that is used for signing.
      * The first iteration of the loop signs the input message using the bottom
      * tree. Subsequent passes use the parent trees leaf node to sign the current
@@ -61,33 +60,34 @@ int ossl_slh_ht_sign(SLH_DSA_HASH_CTX *ctx,
      * path hashes to work all the way up to the root node to calculate the
      * public key.
      */
-    memcpy(root, msg, n);
+	memcpy(root, msg, n);
 
-    for (layer = 0; layer < d; ++layer) {
-        /* type = SLH_ADRS_TYPE_WOTS_HASH */
-        adrsf->set_layer_address(adrs, layer);
-        adrsf->set_tree_address(adrs, tree_id);
-        psig = WPACKET_get_curr(sig_wpkt);
-        if (!ossl_slh_xmss_sign(ctx, root, sk_seed, leaf_id, pk_seed, adrs,
-                                sig_wpkt))
-            return 0;
-        /*
+	for (layer = 0; layer < d; ++layer) {
+		/* type = SLH_ADRS_TYPE_WOTS_HASH */
+		adrsf->set_layer_address(adrs, layer);
+		adrsf->set_tree_address(adrs, tree_id);
+		psig = WPACKET_get_curr(sig_wpkt);
+		if (!ossl_slh_xmss_sign(ctx, root, sk_seed, leaf_id, pk_seed,
+					adrs, sig_wpkt))
+			return 0;
+		/*
          * On the last loop it skips getting the public key since it is not needed
          * to calculate another signature. If this was called it should equal
          * the PK_ROOT (i.e. the public key of the top level tree).
          */
-        if (layer < d - 1) {
-            if (!PACKET_buf_init(xmss_sig_rpkt, psig,
-                                 WPACKET_get_curr(sig_wpkt) - psig))
-                return 0;
-            if (!ossl_slh_xmss_pk_from_sig(ctx, leaf_id, xmss_sig_rpkt, root,
-                                           pk_seed, adrs, root, sizeof(root)))
-                return 0;
-            leaf_id = tree_id & mask;
-            tree_id >>= hm;
-        }
-    }
-    return 1;
+		if (layer < d - 1) {
+			if (!PACKET_buf_init(xmss_sig_rpkt, psig,
+					     WPACKET_get_curr(sig_wpkt) - psig))
+				return 0;
+			if (!ossl_slh_xmss_pk_from_sig(
+				    ctx, leaf_id, xmss_sig_rpkt, root, pk_seed,
+				    adrs, root, sizeof(root)))
+				return 0;
+			leaf_id = tree_id & mask;
+			tree_id >>= hm;
+		}
+	}
+	return 1;
 }
 
 /**
@@ -104,32 +104,34 @@ int ossl_slh_ht_sign(SLH_DSA_HASH_CTX *ctx,
  *
  * @returns 1 if the computed XMSS public key matches pk_root, or 0 otherwise.
  */
-int ossl_slh_ht_verify(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg, PACKET *sig_pkt,
-                       const uint8_t *pk_seed, uint64_t tree_id, uint32_t leaf_id,
-                       const uint8_t *pk_root)
+int ossl_slh_ht_verify(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
+		       PACKET *sig_pkt, const uint8_t *pk_seed,
+		       uint64_t tree_id, uint32_t leaf_id,
+		       const uint8_t *pk_root)
 {
-    const SLH_DSA_KEY *key = ctx->key;
-    SLH_ADRS_FUNC_DECLARE(key, adrsf);
-    SLH_ADRS_DECLARE(adrs);
-    uint8_t node[SLH_MAX_N];
-    const SLH_DSA_PARAMS *params = key->params;
-    uint32_t tree_height = params->hm;
-    uint32_t n = params->n;
-    uint32_t d = params->d;
-    uint32_t mask = (1 << tree_height) - 1;
-    uint32_t layer;
+	const SLH_DSA_KEY *key = ctx->key;
+	SLH_ADRS_FUNC_DECLARE(key, adrsf);
+	SLH_ADRS_DECLARE(adrs);
+	uint8_t node[SLH_MAX_N];
+	const SLH_DSA_PARAMS *params = key->params;
+	uint32_t tree_height = params->hm;
+	uint32_t n = params->n;
+	uint32_t d = params->d;
+	uint32_t mask = (1 << tree_height) - 1;
+	uint32_t layer;
 
-    adrsf->zero(adrs);
-    memcpy(node, msg, n);
+	adrsf->zero(adrs);
+	memcpy(node, msg, n);
 
-    for (layer = 0; layer < d; ++layer) {
-        adrsf->set_layer_address(adrs, layer);
-        adrsf->set_tree_address(adrs, tree_id);
-        if (!ossl_slh_xmss_pk_from_sig(ctx, leaf_id, sig_pkt, node,
-                                       pk_seed, adrs, node, sizeof(node)))
-            return 0;
-        leaf_id = tree_id & mask;
-        tree_id >>= tree_height;
-    }
-    return (memcmp(node, pk_root, n) == 0);
+	for (layer = 0; layer < d; ++layer) {
+		adrsf->set_layer_address(adrs, layer);
+		adrsf->set_tree_address(adrs, tree_id);
+		if (!ossl_slh_xmss_pk_from_sig(ctx, leaf_id, sig_pkt, node,
+					       pk_seed, adrs, node,
+					       sizeof(node)))
+			return 0;
+		leaf_id = tree_id & mask;
+		tree_id >>= tree_height;
+	}
+	return (memcmp(node, pk_root, n) == 0);
 }

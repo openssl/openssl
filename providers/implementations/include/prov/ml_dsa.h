@@ -10,5 +10,5 @@
 #include "crypto/ml_dsa.h"
 #include "prov/provider_ctx.h"
 
-ML_DSA_KEY *
-ossl_prov_ml_dsa_new(PROV_CTX *provctx, const char *propq, int evp_type);
+ML_DSA_KEY *ossl_prov_ml_dsa_new(PROV_CTX *provctx, const char *propq,
+				 int evp_type);

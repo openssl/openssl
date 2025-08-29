@@ -9,19 +9,19 @@
 
 #include <stdlib.h>
 #include <openssl/crypto.h>
-#include "platform.h"            /* for copy_argv() */
+#include "platform.h" /* for copy_argv() */
 
 char **newargv = NULL;
 
 static void cleanup_argv(void)
 {
-    OPENSSL_free(newargv);
-    newargv = NULL;
+	OPENSSL_free(newargv);
+	newargv = NULL;
 }
 
 char **copy_argv(int *argc, char *argv[])
 {
-    /*-
+	/*-
      * The note below is for historical purpose.  On VMS now we always
      * copy argv "safely."
      *
@@ -45,28 +45,28 @@ char **copy_argv(int *argc, char *argv[])
      * deciding at compile- or run-time is tiny.
      */
 
-    int i, count = *argc;
-    char **p = newargv;
+	int i, count = *argc;
+	char **p = newargv;
 
-    cleanup_argv();
+	cleanup_argv();
 
-    /*
+	/*
      * We purposefully use OPENSSL_malloc() rather than app_malloc() here,
      * to avoid symbol name clashes in test programs that would otherwise
      * get them when linking with all of libapps.a.
      * See comment in test/build.info.
      */
-    newargv = OPENSSL_malloc_array(count + 1, sizeof(*newargv));
-    if (newargv == NULL)
-        return NULL;
+	newargv = OPENSSL_malloc_array(count + 1, sizeof(*newargv));
+	if (newargv == NULL)
+		return NULL;
 
-    /* Register automatic cleanup on first use */
-    if (p == NULL)
-        OPENSSL_atexit(cleanup_argv);
+	/* Register automatic cleanup on first use */
+	if (p == NULL)
+		OPENSSL_atexit(cleanup_argv);
 
-    for (i = 0; i < count; i++)
-        newargv[i] = argv[i];
-    newargv[i] = NULL;
-    *argc = i;
-    return newargv;
+	for (i = 0; i < count; i++)
+		newargv[i] = argv[i];
+	newargv[i] = NULL;
+	*argc = i;
+	return newargv;
 }

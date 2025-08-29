@@ -8,20 +8,20 @@
  */
 
 #ifndef OSSL_INTERNAL_TO_HEX_H
-# define OSSL_INTERNAL_TO_HEX_H
-# pragma once
+#define OSSL_INTERNAL_TO_HEX_H
+#pragma once
 
 static ossl_inline size_t to_hex(char *buf, uint8_t n, const char hexdig[17])
 {
-    *buf++ = hexdig[(n >> 4) & 0xf];
-    *buf = hexdig[n & 0xf];
-    return 2;
+	*buf++ = hexdig[(n >> 4) & 0xf];
+	*buf = hexdig[n & 0xf];
+	return 2;
 }
 
 static ossl_inline size_t ossl_to_lowerhex(char *buf, uint8_t n)
 {
-    static const char hexdig[] = "0123456789abcdef";
+	static const char hexdig[] = "0123456789abcdef";
 
-    return to_hex(buf, n, hexdig);
+	return to_hex(buf, n, hexdig);
 }
 #endif

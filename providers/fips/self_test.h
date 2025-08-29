@@ -12,21 +12,21 @@
 #include <openssl/self_test.h>
 
 typedef struct self_test_post_params_st {
-    /* FIPS module integrity check parameters */
-    const char *module_filename;            /* Module file to perform MAC on */
-    const char *module_checksum_data;       /* Expected module MAC integrity */
+	/* FIPS module integrity check parameters */
+	const char *module_filename; /* Module file to perform MAC on */
+	const char *module_checksum_data; /* Expected module MAC integrity */
 
-    /* Used for continuous tests */
-    const char *conditional_error_check;
+	/* Used for continuous tests */
+	const char *conditional_error_check;
 
-    /* BIO callbacks supplied to the FIPS provider */
-    OSSL_FUNC_BIO_new_file_fn *bio_new_file_cb;
-    OSSL_FUNC_BIO_new_membuf_fn *bio_new_buffer_cb;
-    OSSL_FUNC_BIO_read_ex_fn *bio_read_ex_cb;
-    OSSL_FUNC_BIO_free_fn *bio_free_cb;
-    OSSL_CALLBACK *cb;
-    void *cb_arg;
-    OSSL_LIB_CTX *libctx;
+	/* BIO callbacks supplied to the FIPS provider */
+	OSSL_FUNC_BIO_new_file_fn *bio_new_file_cb;
+	OSSL_FUNC_BIO_new_membuf_fn *bio_new_buffer_cb;
+	OSSL_FUNC_BIO_read_ex_fn *bio_read_ex_cb;
+	OSSL_FUNC_BIO_free_fn *bio_free_cb;
+	OSSL_CALLBACK *cb;
+	void *cb_arg;
+	OSSL_LIB_CTX *libctx;
 
 } SELF_TEST_POST_PARAMS;
 

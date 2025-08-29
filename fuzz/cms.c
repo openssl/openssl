@@ -19,35 +19,35 @@
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-    ERR_clear_error();
-    CRYPTO_free_ex_index(0, -1);
-    return 1;
+	OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+	ERR_clear_error();
+	CRYPTO_free_ex_index(0, -1);
+	return 1;
 }
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    CMS_ContentInfo *cms;
-    BIO *in;
+	CMS_ContentInfo *cms;
+	BIO *in;
 
-    if (len == 0 || len > INT_MAX)
-        return 0;
+	if (len == 0 || len > INT_MAX)
+		return 0;
 
-    in = BIO_new(BIO_s_mem());
-    OPENSSL_assert((size_t)BIO_write(in, buf, (int)len) == len);
-    cms = d2i_CMS_bio(in, NULL);
-    if (cms != NULL) {
-        BIO *out = BIO_new(BIO_s_null());
+	in = BIO_new(BIO_s_mem());
+	OPENSSL_assert((size_t)BIO_write(in, buf, (int)len) == len);
+	cms = d2i_CMS_bio(in, NULL);
+	if (cms != NULL) {
+		BIO *out = BIO_new(BIO_s_null());
 
-        i2d_CMS_bio(out, cms);
-        BIO_free(out);
-        CMS_ContentInfo_free(cms);
-    }
+		i2d_CMS_bio(out, cms);
+		BIO_free(out);
+		CMS_ContentInfo_free(cms);
+	}
 
-    BIO_free(in);
-    ERR_clear_error();
+	BIO_free(in);
+	ERR_clear_error();
 
-    return 0;
+	return 0;
 }
 
 void FuzzerCleanup(void)

@@ -13,23 +13,22 @@
 static char *config_file = NULL;
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1,
-    OPT_EOF = 0,
-    OPT_CONFIG_FILE,
-    OPT_TEST_ENUM
+	OPT_ERR = -1,
+	OPT_EOF = 0,
+	OPT_CONFIG_FILE,
+	OPT_TEST_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS *test_get_options(void)
 {
-    static const OPTIONS options[] = {
-        OPT_TEST_OPTIONS_DEFAULT_USAGE,
-        { "config", OPT_CONFIG_FILE, '<',
-          "The configuration file to use for the libctx" },
-        { NULL }
-    };
-    return options;
+	static const OPTIONS options[] = {
+		OPT_TEST_OPTIONS_DEFAULT_USAGE,
+		{ "config", OPT_CONFIG_FILE, '<',
+		  "The configuration file to use for the libctx" },
+		{ NULL }
+	};
+	return options;
 }
-
 
 /*
  * Test that parsing a config file with incorrect stable settings aren't parsed
@@ -37,45 +36,45 @@ const OPTIONS *test_get_options(void)
  */
 static int test_asn1_stable_parse(void)
 {
-    int testret = 0;
-    unsigned long errcode;
-    OSSL_LIB_CTX *newctx = OSSL_LIB_CTX_new();
+	int testret = 0;
+	unsigned long errcode;
+	OSSL_LIB_CTX *newctx = OSSL_LIB_CTX_new();
 
-    if (!TEST_ptr(newctx))
-        goto out;
+	if (!TEST_ptr(newctx))
+		goto out;
 
-    if (!TEST_int_eq(OSSL_LIB_CTX_load_config(newctx, config_file), 0))
-        goto err;
+	if (!TEST_int_eq(OSSL_LIB_CTX_load_config(newctx, config_file), 0))
+		goto err;
 
-    errcode = ERR_peek_error();
-    if (ERR_GET_LIB(errcode) != ERR_LIB_ASN1)
-        goto err;
-    if (ERR_GET_REASON(errcode) != ASN1_R_INVALID_STRING_TABLE_VALUE)
-        goto err;
+	errcode = ERR_peek_error();
+	if (ERR_GET_LIB(errcode) != ERR_LIB_ASN1)
+		goto err;
+	if (ERR_GET_REASON(errcode) != ASN1_R_INVALID_STRING_TABLE_VALUE)
+		goto err;
 
-    ERR_clear_error();
+	ERR_clear_error();
 
-    testret = 1;
+	testret = 1;
 err:
-    OSSL_LIB_CTX_free(newctx);
+	OSSL_LIB_CTX_free(newctx);
 out:
-    return testret;
+	return testret;
 }
 
 int setup_tests(void)
 {
-    OPTION_CHOICE o;
+	OPTION_CHOICE o;
 
-    while ((o = opt_next()) != OPT_EOF) {
-        switch (o) {
-        case OPT_CONFIG_FILE:
-            config_file = opt_arg();
-            break;
-        default:
-            return 0;
-        }
-    }
+	while ((o = opt_next()) != OPT_EOF) {
+		switch (o) {
+		case OPT_CONFIG_FILE:
+			config_file = opt_arg();
+			break;
+		default:
+			return 0;
+		}
+	}
 
-    ADD_TEST(test_asn1_stable_parse);
-    return 1;
+	ADD_TEST(test_asn1_stable_parse);
+	return 1;
 }

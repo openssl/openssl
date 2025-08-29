@@ -21,5 +21,5 @@ static volatile memset_t memset_func = memset;
 
 void OPENSSL_cleanse(void *ptr, size_t len)
 {
-    memset_func(ptr, 0, len);
+	memset_func(ptr, 0, len);
 }

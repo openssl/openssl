@@ -19,42 +19,42 @@
  * s is the security strength.
  * priv_key is the returned private key,
  */
-int ossl_ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params,
-                                  int N, int s, BIGNUM *priv)
+int ossl_ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params, int N,
+				  int s, BIGNUM *priv)
 {
-    int ret = 0, qbits = BN_num_bits(params->q);
-    BIGNUM *m, *two_powN = NULL;
+	int ret = 0, qbits = BN_num_bits(params->q);
+	BIGNUM *m, *two_powN = NULL;
 
-    /* Deal with the edge cases where the value of N and/or s is not set */
-    if (s == 0)
-        goto err;
-    if (N == 0)
-        N = params->keylength ? params->keylength : 2 * s;
+	/* Deal with the edge cases where the value of N and/or s is not set */
+	if (s == 0)
+		goto err;
+	if (N == 0)
+		N = params->keylength ? params->keylength : 2 * s;
 
-    /* Step (2) : check range of N */
-    if (N < 2 * s || N > qbits)
-        return 0;
+	/* Step (2) : check range of N */
+	if (N < 2 * s || N > qbits)
+		return 0;
 
-    two_powN = BN_new();
-    /* 2^N */
-    if (two_powN == NULL || !BN_lshift(two_powN, BN_value_one(), N))
-        goto err;
+	two_powN = BN_new();
+	/* 2^N */
+	if (two_powN == NULL || !BN_lshift(two_powN, BN_value_one(), N))
+		goto err;
 
-    /* Step (5) : M = min(2 ^ N, q) */
-    m = (BN_cmp(two_powN, params->q) > 0) ? params->q : two_powN;
+	/* Step (5) : M = min(2 ^ N, q) */
+	m = (BN_cmp(two_powN, params->q) > 0) ? params->q : two_powN;
 
-    do {
-        /* Steps (3, 4 & 7) :  c + 1 = 1 + random[0..2^N - 1] */
-        if (!BN_priv_rand_range_ex(priv, two_powN, 0, ctx)
-            || !BN_add_word(priv, 1))
-            goto err;
-        /* Step (6) : loop if c > M - 2 (i.e. c + 1 >= M) */
-        if (BN_cmp(priv, m) < 0)
-            break;
-    } while (1);
+	do {
+		/* Steps (3, 4 & 7) :  c + 1 = 1 + random[0..2^N - 1] */
+		if (!BN_priv_rand_range_ex(priv, two_powN, 0, ctx) ||
+		    !BN_add_word(priv, 1))
+			goto err;
+		/* Step (6) : loop if c > M - 2 (i.e. c + 1 >= M) */
+		if (BN_cmp(priv, m) < 0)
+			break;
+	} while (1);
 
-    ret = 1;
+	ret = 1;
 err:
-    BN_free(two_powN);
-    return ret;
+	BN_free(two_powN);
+	return ret;
 }

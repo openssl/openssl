@@ -13,33 +13,33 @@
 #include "crypto/aes_platform.h"
 
 typedef struct prov_aes_gcm_ctx_st {
-    PROV_GCM_CTX base;          /* must be first entry in struct */
-    union {
-        OSSL_UNION_ALIGN;
-        AES_KEY ks;
-    } ks;                       /* AES key schedule to use */
+	PROV_GCM_CTX base; /* must be first entry in struct */
+	union {
+		OSSL_UNION_ALIGN;
+		AES_KEY ks;
+	} ks; /* AES key schedule to use */
 
-    /* Platform specific data */
-    union {
-        int dummy;
+	/* Platform specific data */
+	union {
+		int dummy;
 #if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
-        struct {
-            union {
-                OSSL_UNION_ALIGN;
-                S390X_KMA_PARAMS kma;
-            } param;
-            unsigned int fc;
-            unsigned int hsflag;    /* hash subkey set flag */
-            unsigned char ares[16];
-            unsigned char mres[16];
-            unsigned char kres[16];
-            int areslen;
-            int mreslen;
-            int kreslen;
-            int res;
-        } s390x;
+		struct {
+			union {
+				OSSL_UNION_ALIGN;
+				S390X_KMA_PARAMS kma;
+			} param;
+			unsigned int fc;
+			unsigned int hsflag; /* hash subkey set flag */
+			unsigned char ares[16];
+			unsigned char mres[16];
+			unsigned char kres[16];
+			int areslen;
+			int mreslen;
+			int kreslen;
+			int res;
+		} s390x;
 #endif /* defined(OPENSSL_CPUID_OBJ) && defined(__s390__) */
-    } plat;
+	} plat;
 } PROV_AES_GCM_CTX;
 
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits);

@@ -17,11 +17,12 @@
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
-    FuzzerSetRand();
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ASYNC, NULL);
-    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
-    ERR_clear_error();
-    return 1;
+	FuzzerSetRand();
+	OPENSSL_init_crypto(
+		OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ASYNC, NULL);
+	OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
+	ERR_clear_error();
+	return 1;
 }
 
 /*
@@ -45,154 +46,156 @@ int FuzzerInitialize(int *argc, char ***argv)
  */
 
 enum {
-    CMD_RESET_WITH_ODCID,
-    CMD_RESET_WITHOUT_ODCID,
-    CMD_ADD_FROM_INITIAL,
-    CMD_ADD_FROM_SERVER_RETRY,
-    CMD_ADD_FROM_NCID,
-    CMD_ON_HANDSHAKE_COMPLETE,
-    CMD_ON_PACKET_SENT,
-    CMD_REQUEST_ROLL,
-    CMD_POP_RETIRE_SEQ_NUM,
-    CMD_PEEK_RETIRE_SEQ_NUM,
-    CMD_GET_PREFERRED_TX_DCID,
-    CMD_GET_PREFERRED_TX_DCID_CHANGED
+	CMD_RESET_WITH_ODCID,
+	CMD_RESET_WITHOUT_ODCID,
+	CMD_ADD_FROM_INITIAL,
+	CMD_ADD_FROM_SERVER_RETRY,
+	CMD_ADD_FROM_NCID,
+	CMD_ON_HANDSHAKE_COMPLETE,
+	CMD_ON_PACKET_SENT,
+	CMD_REQUEST_ROLL,
+	CMD_POP_RETIRE_SEQ_NUM,
+	CMD_PEEK_RETIRE_SEQ_NUM,
+	CMD_GET_PREFERRED_TX_DCID,
+	CMD_GET_PREFERRED_TX_DCID_CHANGED
 };
 
 static int get_cid(PACKET *pkt, QUIC_CONN_ID *cid)
 {
-    unsigned int cidl;
+	unsigned int cidl;
 
-    if (!PACKET_get_1(pkt, &cidl)
-        || cidl > QUIC_MAX_CONN_ID_LEN
-        || !PACKET_copy_bytes(pkt, cid->id, cidl))
-        return 0;
+	if (!PACKET_get_1(pkt, &cidl) || cidl > QUIC_MAX_CONN_ID_LEN ||
+	    !PACKET_copy_bytes(pkt, cid->id, cidl))
+		return 0;
 
-    cid->id_len = (unsigned char)cidl;
-    return 1;
+	cid->id_len = (unsigned char)cidl;
+	return 1;
 }
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    int rc = 0;
-    QUIC_RCIDM *rcidm = NULL;
-    PACKET pkt;
-    uint64_t seq_num_out, arg_num_pkt;
-    unsigned int cmd, arg_clear;
-    QUIC_CONN_ID arg_cid, cid_out;
-    OSSL_QUIC_FRAME_NEW_CONN_ID ncid_frame;
+	int rc = 0;
+	QUIC_RCIDM *rcidm = NULL;
+	PACKET pkt;
+	uint64_t seq_num_out, arg_num_pkt;
+	unsigned int cmd, arg_clear;
+	QUIC_CONN_ID arg_cid, cid_out;
+	OSSL_QUIC_FRAME_NEW_CONN_ID ncid_frame;
 
-    if (!PACKET_buf_init(&pkt, buf, len))
-        goto err;
+	if (!PACKET_buf_init(&pkt, buf, len))
+		goto err;
 
-    if ((rcidm = ossl_quic_rcidm_new(NULL)) == NULL)
-        goto err;
+	if ((rcidm = ossl_quic_rcidm_new(NULL)) == NULL)
+		goto err;
 
-    while (PACKET_remaining(&pkt) > 0) {
-        if (!PACKET_get_1(&pkt, &cmd))
-            goto err;
+	while (PACKET_remaining(&pkt) > 0) {
+		if (!PACKET_get_1(&pkt, &cmd))
+			goto err;
 
-        switch (cmd) {
-        case CMD_RESET_WITH_ODCID:
-            if (!get_cid(&pkt, &arg_cid)) {
-                rc = -1;
-                goto err;
-            }
+		switch (cmd) {
+		case CMD_RESET_WITH_ODCID:
+			if (!get_cid(&pkt, &arg_cid)) {
+				rc = -1;
+				goto err;
+			}
 
-            ossl_quic_rcidm_free(rcidm);
+			ossl_quic_rcidm_free(rcidm);
 
-            if ((rcidm = ossl_quic_rcidm_new(&arg_cid)) == NULL)
-                goto err;
+			if ((rcidm = ossl_quic_rcidm_new(&arg_cid)) == NULL)
+				goto err;
 
-            break;
+			break;
 
-        case CMD_RESET_WITHOUT_ODCID:
-            ossl_quic_rcidm_free(rcidm);
+		case CMD_RESET_WITHOUT_ODCID:
+			ossl_quic_rcidm_free(rcidm);
 
-            if ((rcidm = ossl_quic_rcidm_new(NULL)) == NULL)
-                goto err;
+			if ((rcidm = ossl_quic_rcidm_new(NULL)) == NULL)
+				goto err;
 
-            break;
+			break;
 
-        case CMD_ADD_FROM_INITIAL:
-            if (!get_cid(&pkt, &arg_cid)) {
-                rc = -1;
-                goto err;
-            }
+		case CMD_ADD_FROM_INITIAL:
+			if (!get_cid(&pkt, &arg_cid)) {
+				rc = -1;
+				goto err;
+			}
 
-            ossl_quic_rcidm_add_from_initial(rcidm, &arg_cid);
-            break;
+			ossl_quic_rcidm_add_from_initial(rcidm, &arg_cid);
+			break;
 
-        case CMD_ADD_FROM_SERVER_RETRY:
-            if (!get_cid(&pkt, &arg_cid)) {
-                rc = -1;
-                goto err;
-            }
+		case CMD_ADD_FROM_SERVER_RETRY:
+			if (!get_cid(&pkt, &arg_cid)) {
+				rc = -1;
+				goto err;
+			}
 
-            ossl_quic_rcidm_add_from_server_retry(rcidm, &arg_cid);
-            break;
+			ossl_quic_rcidm_add_from_server_retry(rcidm, &arg_cid);
+			break;
 
-        case CMD_ADD_FROM_NCID:
-            if (!PACKET_get_net_8(&pkt, &ncid_frame.seq_num)
-                || !PACKET_get_net_8(&pkt, &ncid_frame.retire_prior_to)
-                || !get_cid(&pkt, &ncid_frame.conn_id)) {
-                rc = -1;
-                goto err;
-            }
+		case CMD_ADD_FROM_NCID:
+			if (!PACKET_get_net_8(&pkt, &ncid_frame.seq_num) ||
+			    !PACKET_get_net_8(&pkt,
+					      &ncid_frame.retire_prior_to) ||
+			    !get_cid(&pkt, &ncid_frame.conn_id)) {
+				rc = -1;
+				goto err;
+			}
 
-            ossl_quic_rcidm_add_from_ncid(rcidm, &ncid_frame);
-            break;
+			ossl_quic_rcidm_add_from_ncid(rcidm, &ncid_frame);
+			break;
 
-        case CMD_ON_HANDSHAKE_COMPLETE:
-            ossl_quic_rcidm_on_handshake_complete(rcidm);
-            break;
+		case CMD_ON_HANDSHAKE_COMPLETE:
+			ossl_quic_rcidm_on_handshake_complete(rcidm);
+			break;
 
-        case CMD_ON_PACKET_SENT:
-            if (!PACKET_get_net_8(&pkt, &arg_num_pkt)) {
-                rc = -1;
-                goto err;
-            }
+		case CMD_ON_PACKET_SENT:
+			if (!PACKET_get_net_8(&pkt, &arg_num_pkt)) {
+				rc = -1;
+				goto err;
+			}
 
-            ossl_quic_rcidm_on_packet_sent(rcidm, arg_num_pkt);
-            break;
+			ossl_quic_rcidm_on_packet_sent(rcidm, arg_num_pkt);
+			break;
 
-        case CMD_REQUEST_ROLL:
-            ossl_quic_rcidm_request_roll(rcidm);
-            break;
+		case CMD_REQUEST_ROLL:
+			ossl_quic_rcidm_request_roll(rcidm);
+			break;
 
-        case CMD_POP_RETIRE_SEQ_NUM:
-            ossl_quic_rcidm_pop_retire_seq_num(rcidm, &seq_num_out);
-            break;
+		case CMD_POP_RETIRE_SEQ_NUM:
+			ossl_quic_rcidm_pop_retire_seq_num(rcidm, &seq_num_out);
+			break;
 
-        case CMD_PEEK_RETIRE_SEQ_NUM:
-            ossl_quic_rcidm_peek_retire_seq_num(rcidm, &seq_num_out);
-            break;
+		case CMD_PEEK_RETIRE_SEQ_NUM:
+			ossl_quic_rcidm_peek_retire_seq_num(rcidm,
+							    &seq_num_out);
+			break;
 
-        case CMD_GET_PREFERRED_TX_DCID:
-            ossl_quic_rcidm_get_preferred_tx_dcid(rcidm, &cid_out);
-            break;
+		case CMD_GET_PREFERRED_TX_DCID:
+			ossl_quic_rcidm_get_preferred_tx_dcid(rcidm, &cid_out);
+			break;
 
-        case CMD_GET_PREFERRED_TX_DCID_CHANGED:
-            if (!PACKET_get_1(&pkt, &arg_clear)) {
-                rc = -1;
-                goto err;
-            }
+		case CMD_GET_PREFERRED_TX_DCID_CHANGED:
+			if (!PACKET_get_1(&pkt, &arg_clear)) {
+				rc = -1;
+				goto err;
+			}
 
-            ossl_quic_rcidm_get_preferred_tx_dcid_changed(rcidm, arg_clear);
-            break;
+			ossl_quic_rcidm_get_preferred_tx_dcid_changed(
+				rcidm, arg_clear);
+			break;
 
-        default:
-            rc = -1;
-            goto err;
-        }
-    }
+		default:
+			rc = -1;
+			goto err;
+		}
+	}
 
 err:
-    ossl_quic_rcidm_free(rcidm);
-    return rc;
+	ossl_quic_rcidm_free(rcidm);
+	return rc;
 }
 
 void FuzzerCleanup(void)
 {
-    FuzzerClearRand();
+	FuzzerClearRand();
 }

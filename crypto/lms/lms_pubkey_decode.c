@@ -21,15 +21,15 @@
  */
 size_t ossl_lms_pubkey_length(const unsigned char *data, size_t datalen)
 {
-    PACKET pkt;
-    uint32_t lms_type;
-    const LMS_PARAMS *params;
+	PACKET pkt;
+	uint32_t lms_type;
+	const LMS_PARAMS *params;
 
-    if (!PACKET_buf_init(&pkt, data, datalen)
-            || !PACKET_get_net_4_len_u32(&pkt, &lms_type)
-            || (params = ossl_lms_params_get(lms_type)) == NULL)
-        return 0;
-    return LMS_SIZE_LMS_TYPE + LMS_SIZE_OTS_TYPE + LMS_SIZE_I + params->n;
+	if (!PACKET_buf_init(&pkt, data, datalen) ||
+	    !PACKET_get_net_4_len_u32(&pkt, &lms_type) ||
+	    (params = ossl_lms_params_get(lms_type)) == NULL)
+		return 0;
+	return LMS_SIZE_LMS_TYPE + LMS_SIZE_OTS_TYPE + LMS_SIZE_I + params->n;
 }
 
 /*
@@ -45,39 +45,38 @@ size_t ossl_lms_pubkey_length(const unsigned char *data, size_t datalen)
  * @param lmskey The object to store the public key into
  * @return 1 on success or 0 otherwise.
  */
-static
-int lms_pubkey_from_pkt(LMS_KEY *lmskey, const unsigned char *pubkeydata,
-                        size_t publen)
+static int lms_pubkey_from_pkt(LMS_KEY *lmskey, const unsigned char *pubkeydata,
+			       size_t publen)
 {
-    uint32_t lms_type;
-    uint32_t ots_type;
-    LMS_PUB_KEY *key = &lmskey->pub;
-    PACKET pkt;
+	uint32_t lms_type;
+	uint32_t ots_type;
+	LMS_PUB_KEY *key = &lmskey->pub;
+	PACKET pkt;
 
-    if (!PACKET_buf_init(&pkt, pubkeydata, publen))
-        goto err;
-    key->encoded = (unsigned char *)PACKET_data(&pkt);
-    if (!PACKET_get_net_4_len_u32(&pkt, &lms_type))
-        goto err;
-    lmskey->lms_params = ossl_lms_params_get(lms_type);
-    if (lmskey->lms_params == NULL
-            || !PACKET_get_net_4_len_u32(&pkt, &ots_type))
-        goto err;
-    lmskey->ots_params = ossl_lm_ots_params_get(ots_type);
-    if (lmskey->ots_params == NULL)
-        goto err;
+	if (!PACKET_buf_init(&pkt, pubkeydata, publen))
+		goto err;
+	key->encoded = (unsigned char *)PACKET_data(&pkt);
+	if (!PACKET_get_net_4_len_u32(&pkt, &lms_type))
+		goto err;
+	lmskey->lms_params = ossl_lms_params_get(lms_type);
+	if (lmskey->lms_params == NULL ||
+	    !PACKET_get_net_4_len_u32(&pkt, &ots_type))
+		goto err;
+	lmskey->ots_params = ossl_lm_ots_params_get(ots_type);
+	if (lmskey->ots_params == NULL)
+		goto err;
 
-    /* The digest used must be the same */
-    if (HASH_NOT_MATCHED(lmskey->ots_params, lmskey->lms_params)
-            || !PACKET_get_bytes(&pkt, (const unsigned char **)&lmskey->Id,
-                                 LMS_SIZE_I)
-            || !PACKET_get_bytes(&pkt, (const unsigned char **)&key->K,
-                                 lmskey->lms_params->n))
-        goto err;
-    key->encodedlen = (unsigned char *)PACKET_data(&pkt) - key->encoded;
-    return PACKET_remaining(&pkt) == 0;
+	/* The digest used must be the same */
+	if (HASH_NOT_MATCHED(lmskey->ots_params, lmskey->lms_params) ||
+	    !PACKET_get_bytes(&pkt, (const unsigned char **)&lmskey->Id,
+			      LMS_SIZE_I) ||
+	    !PACKET_get_bytes(&pkt, (const unsigned char **)&key->K,
+			      lmskey->lms_params->n))
+		goto err;
+	key->encodedlen = (unsigned char *)PACKET_data(&pkt) - key->encoded;
+	return PACKET_remaining(&pkt) == 0;
 err:
-    return 0;
+	return 0;
 }
 
 /*
@@ -92,26 +91,26 @@ err:
  * invalid or |publen| is not the correct size (i.e. trailing data is not allowed)
  */
 int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
-                           LMS_KEY *lmskey)
+			   LMS_KEY *lmskey)
 {
-    LMS_PUB_KEY *pkey = &lmskey->pub;
+	LMS_PUB_KEY *pkey = &lmskey->pub;
 
-    if (pkey->encoded != NULL && pkey->encodedlen != publen) {
-        OPENSSL_free(pkey->encoded);
-        pkey->encodedlen = 0;
-    }
-    pkey->encoded = OPENSSL_memdup(pub, publen);
-    if (pkey->encoded == NULL)
-        return 0;
+	if (pkey->encoded != NULL && pkey->encodedlen != publen) {
+		OPENSSL_free(pkey->encoded);
+		pkey->encodedlen = 0;
+	}
+	pkey->encoded = OPENSSL_memdup(pub, publen);
+	if (pkey->encoded == NULL)
+		return 0;
 
-    if (!lms_pubkey_from_pkt(lmskey, pkey->encoded, publen))
-        goto err;
-    pkey->encodedlen = publen;
-    return 1;
+	if (!lms_pubkey_from_pkt(lmskey, pkey->encoded, publen))
+		goto err;
+	pkey->encodedlen = publen;
+	return 1;
 err:
-    OPENSSL_free(pkey->encoded);
-    pkey->encoded = NULL;
-    return 0;
+	OPENSSL_free(pkey->encoded);
+	pkey->encoded = NULL;
+	return 0;
 }
 
 /**
@@ -123,11 +122,11 @@ err:
  */
 int ossl_lms_pubkey_from_params(const OSSL_PARAM *pub, LMS_KEY *lmskey)
 {
-    if (pub != NULL) {
-        if (pub->data == NULL
-                || pub->data_type != OSSL_PARAM_OCTET_STRING
-                || !ossl_lms_pubkey_decode(pub->data, pub->data_size, lmskey))
-            return 0;
-    }
-    return 1;
+	if (pub != NULL) {
+		if (pub->data == NULL ||
+		    pub->data_type != OSSL_PARAM_OCTET_STRING ||
+		    !ossl_lms_pubkey_decode(pub->data, pub->data_size, lmskey))
+			return 0;
+	}
+	return 1;
 }

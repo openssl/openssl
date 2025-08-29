@@ -16,27 +16,28 @@
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
-    return 1;
+	return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t* data, size_t size){
-    GENERAL_NAME *namesa;
-    GENERAL_NAME *namesb;
+int FuzzerTestOneInput(const uint8_t *data, size_t size)
+{
+	GENERAL_NAME *namesa;
+	GENERAL_NAME *namesb;
 
-    const unsigned char *derp = data;
-    /*
+	const unsigned char *derp = data;
+	/*
      * We create two versions of each GENERAL_NAME so that we ensure when
      * we compare them they are always different pointers.
      */
-    namesa = d2i_GENERAL_NAME(NULL, &derp, (long)size);
-    derp = data;
-    namesb = d2i_GENERAL_NAME(NULL, &derp, (long)size);
-    GENERAL_NAME_cmp(namesa, namesb);
-    if (namesa != NULL)
-        GENERAL_NAME_free(namesa);
-    if (namesb != NULL)
-        GENERAL_NAME_free(namesb);
-    return 0;
+	namesa = d2i_GENERAL_NAME(NULL, &derp, (long)size);
+	derp = data;
+	namesb = d2i_GENERAL_NAME(NULL, &derp, (long)size);
+	GENERAL_NAME_cmp(namesa, namesb);
+	if (namesa != NULL)
+		GENERAL_NAME_free(namesa);
+	if (namesb != NULL)
+		GENERAL_NAME_free(namesb);
+	return 0;
 }
 
 void FuzzerCleanup(void)

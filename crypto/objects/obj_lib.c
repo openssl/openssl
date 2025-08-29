@@ -15,50 +15,51 @@
 
 ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
 {
-    ASN1_OBJECT *r;
+	ASN1_OBJECT *r;
 
-    if (o == NULL)
-        return NULL;
-    /* If object isn't dynamic it's an internal OID which is never freed */
-    if (!(o->flags & ASN1_OBJECT_FLAG_DYNAMIC))
-        return (ASN1_OBJECT *)o;
+	if (o == NULL)
+		return NULL;
+	/* If object isn't dynamic it's an internal OID which is never freed */
+	if (!(o->flags & ASN1_OBJECT_FLAG_DYNAMIC))
+		return (ASN1_OBJECT *)o;
 
-    r = ASN1_OBJECT_new();
-    if (r == NULL) {
-        ERR_raise(ERR_LIB_OBJ, ERR_R_ASN1_LIB);
-        return NULL;
-    }
+	r = ASN1_OBJECT_new();
+	if (r == NULL) {
+		ERR_raise(ERR_LIB_OBJ, ERR_R_ASN1_LIB);
+		return NULL;
+	}
 
-    /* Set dynamic flags so everything gets freed up on error */
+	/* Set dynamic flags so everything gets freed up on error */
 
-    r->flags = o->flags | (ASN1_OBJECT_FLAG_DYNAMIC |
-                           ASN1_OBJECT_FLAG_DYNAMIC_STRINGS |
-                           ASN1_OBJECT_FLAG_DYNAMIC_DATA);
+	r->flags = o->flags | (ASN1_OBJECT_FLAG_DYNAMIC |
+			       ASN1_OBJECT_FLAG_DYNAMIC_STRINGS |
+			       ASN1_OBJECT_FLAG_DYNAMIC_DATA);
 
-    if (o->length > 0 && (r->data = OPENSSL_memdup(o->data, o->length)) == NULL)
-        goto err;
+	if (o->length > 0 &&
+	    (r->data = OPENSSL_memdup(o->data, o->length)) == NULL)
+		goto err;
 
-    r->length = o->length;
-    r->nid = o->nid;
+	r->length = o->length;
+	r->nid = o->nid;
 
-    if (o->ln != NULL && (r->ln = OPENSSL_strdup(o->ln)) == NULL)
-        goto err;
+	if (o->ln != NULL && (r->ln = OPENSSL_strdup(o->ln)) == NULL)
+		goto err;
 
-    if (o->sn != NULL && (r->sn = OPENSSL_strdup(o->sn)) == NULL)
-        goto err;
+	if (o->sn != NULL && (r->sn = OPENSSL_strdup(o->sn)) == NULL)
+		goto err;
 
-    return r;
- err:
-    ASN1_OBJECT_free(r);
-    return NULL;
+	return r;
+err:
+	ASN1_OBJECT_free(r);
+	return NULL;
 }
 
 int OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b)
 {
-    int ret;
+	int ret;
 
-    ret = (a->length - b->length);
-    if (ret)
-        return ret;
-    return memcmp(a->data, b->data, a->length);
+	ret = (a->length - b->length);
+	if (ret)
+		return ret;
+	return memcmp(a->data, b->data, a->length);
 }

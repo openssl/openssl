@@ -15,13 +15,14 @@
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA OSSL_DECODER_str_reasons[] = {
-    {ERR_PACK(ERR_LIB_OSSL_DECODER, 0, OSSL_DECODER_R_COULD_NOT_DECODE_OBJECT),
-    "could not decode object"},
-    {ERR_PACK(ERR_LIB_OSSL_DECODER, 0, OSSL_DECODER_R_DECODER_NOT_FOUND),
-    "decoder not found"},
-    {ERR_PACK(ERR_LIB_OSSL_DECODER, 0, OSSL_DECODER_R_MISSING_GET_PARAMS),
-    "missing get params"},
-    {0, NULL}
+	{ ERR_PACK(ERR_LIB_OSSL_DECODER, 0,
+		   OSSL_DECODER_R_COULD_NOT_DECODE_OBJECT),
+	  "could not decode object" },
+	{ ERR_PACK(ERR_LIB_OSSL_DECODER, 0, OSSL_DECODER_R_DECODER_NOT_FOUND),
+	  "decoder not found" },
+	{ ERR_PACK(ERR_LIB_OSSL_DECODER, 0, OSSL_DECODER_R_MISSING_GET_PARAMS),
+	  "missing get params" },
+	{ 0, NULL }
 };
 
 #endif
@@ -29,8 +30,8 @@ static const ERR_STRING_DATA OSSL_DECODER_str_reasons[] = {
 int ossl_err_load_OSSL_DECODER_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (ERR_reason_error_string(OSSL_DECODER_str_reasons[0].error) == NULL)
-        ERR_load_strings_const(OSSL_DECODER_str_reasons);
+	if (ERR_reason_error_string(OSSL_DECODER_str_reasons[0].error) == NULL)
+		ERR_load_strings_const(OSSL_DECODER_str_reasons);
 #endif
-    return 1;
+	return 1;
 }

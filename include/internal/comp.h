@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 #ifndef _INTERNAL_COMP_H
-#define	_INTERNAL_COMP_H
+#define _INTERNAL_COMP_H
 
 #include <openssl/comp.h>
 
@@ -16,9 +16,9 @@ void ossl_comp_brotli_cleanup(void);
 void ossl_comp_zstd_cleanup(void);
 
 struct ssl_comp_st {
-    int id;
-    const char *name;
-    COMP_METHOD *method;
+	int id;
+	const char *name;
+	COMP_METHOD *method;
 };
 
 #endif

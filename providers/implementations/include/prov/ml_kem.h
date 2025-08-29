@@ -10,5 +10,5 @@
 #include "crypto/ml_kem.h"
 #include "prov/provider_ctx.h"
 
-ML_KEM_KEY *
-ossl_prov_ml_kem_new(PROV_CTX *provctx, const char *propq, int evp_type);
+ML_KEM_KEY *ossl_prov_ml_kem_new(PROV_CTX *provctx, const char *propq,
+				 int evp_type);

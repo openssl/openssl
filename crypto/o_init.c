@@ -17,5 +17,5 @@
 
 void OPENSSL_init(void)
 {
-    return;
+	return;
 }

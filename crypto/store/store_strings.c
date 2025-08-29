@@ -12,20 +12,20 @@
 #include "internal/nelem.h"
 
 static char *type_strings[] = {
-    "Name",                      /* OSSL_STORE_INFO_NAME */
-    "Parameters",                /* OSSL_STORE_INFO_PARAMS */
-    "Public key",                /* OSSL_STORE_INFO_PUBKEY */
-    "Pkey",                      /* OSSL_STORE_INFO_PKEY */
-    "Certificate",               /* OSSL_STORE_INFO_CERT */
-    "CRL"                        /* OSSL_STORE_INFO_CRL */
+	"Name", /* OSSL_STORE_INFO_NAME */
+	"Parameters", /* OSSL_STORE_INFO_PARAMS */
+	"Public key", /* OSSL_STORE_INFO_PUBKEY */
+	"Pkey", /* OSSL_STORE_INFO_PKEY */
+	"Certificate", /* OSSL_STORE_INFO_CERT */
+	"CRL" /* OSSL_STORE_INFO_CRL */
 };
 
 const char *OSSL_STORE_INFO_type_string(int type)
 {
-    int types = OSSL_NELEM(type_strings);
+	int types = OSSL_NELEM(type_strings);
 
-    if (type < 1 || type > types)
-        return NULL;
+	if (type < 1 || type > types)
+		return NULL;
 
-    return type_strings[type - 1];
+	return type_strings[type - 1];
 }

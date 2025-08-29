@@ -8,25 +8,30 @@
  */
 
 #ifndef OSSL_APPS_FUNCTION_H
-# define OSSL_APPS_FUNCTION_H
+#define OSSL_APPS_FUNCTION_H
 
-# include <openssl/lhash.h>
-# include "opt.h"
+#include <openssl/lhash.h>
+#include "opt.h"
 
-#define DEPRECATED_NO_ALTERNATIVE   "unknown"
+#define DEPRECATED_NO_ALTERNATIVE "unknown"
 
 typedef enum FUNC_TYPE {
-    FT_none, FT_general, FT_md, FT_cipher, FT_pkey,
-    FT_md_alg, FT_cipher_alg
+	FT_none,
+	FT_general,
+	FT_md,
+	FT_cipher,
+	FT_pkey,
+	FT_md_alg,
+	FT_cipher_alg
 } FUNC_TYPE;
 
 typedef struct function_st {
-    FUNC_TYPE type;
-    const char *name;
-    int (*func)(int argc, char *argv[]);
-    const OPTIONS *help;
-    const char *deprecated_alternative;
-    const char *deprecated_version;
+	FUNC_TYPE type;
+	const char *name;
+	int (*func)(int argc, char *argv[]);
+	const OPTIONS *help;
+	const char *deprecated_alternative;
+	const char *deprecated_version;
 } FUNCTION;
 
 DEFINE_LHASH_OF_EX(FUNCTION);
@@ -35,8 +40,8 @@ DEFINE_LHASH_OF_EX(FUNCTION);
  * field width used to display them.
  */
 typedef struct {
-    int columns;
-    int width;
+	int columns;
+	int width;
 } DISPLAY_COLUMNS;
 
 void calculate_columns(FUNCTION *functions, DISPLAY_COLUMNS *dc);

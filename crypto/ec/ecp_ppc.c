@@ -12,23 +12,23 @@
 #include "ec_local.h"
 
 void ecp_nistz256_mul_mont(unsigned long res[4], const unsigned long a[4],
-                           const unsigned long b[4]);
+			   const unsigned long b[4]);
 
 void ecp_nistz256_to_mont(unsigned long res[4], const unsigned long in[4]);
 void ecp_nistz256_to_mont(unsigned long res[4], const unsigned long in[4])
 {
-    static const unsigned long RR[] = { 0x0000000000000003U,
-                                        0xfffffffbffffffffU,
-                                        0xfffffffffffffffeU,
-                                        0x00000004fffffffdU };
+	static const unsigned long RR[] = { 0x0000000000000003U,
+					    0xfffffffbffffffffU,
+					    0xfffffffffffffffeU,
+					    0x00000004fffffffdU };
 
-    ecp_nistz256_mul_mont(res, in, RR);
+	ecp_nistz256_mul_mont(res, in, RR);
 }
 
 void ecp_nistz256_from_mont(unsigned long res[4], const unsigned long in[4]);
 void ecp_nistz256_from_mont(unsigned long res[4], const unsigned long in[4])
 {
-    static const unsigned long one[] = { 1, 0, 0, 0 };
+	static const unsigned long one[] = { 1, 0, 0, 0 };
 
-    ecp_nistz256_mul_mont(res, in, one);
+	ecp_nistz256_mul_mont(res, in, one);
 }

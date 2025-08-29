@@ -15,45 +15,45 @@ static int verbosity = LOG_INFO;
 
 int log_set_verbosity(const char *prog, int level)
 {
-    if (level < LOG_EMERG || level > LOG_TRACE) {
-        trace_log_message(-1, prog, LOG_ERR,
-                          "Invalid verbosity level %d", level);
-        return 0;
-    }
-    verbosity = level;
-    return 1;
+	if (level < LOG_EMERG || level > LOG_TRACE) {
+		trace_log_message(-1, prog, LOG_ERR,
+				  "Invalid verbosity level %d", level);
+		return 0;
+	}
+	verbosity = level;
+	return 1;
 }
 
 int log_get_verbosity(void)
 {
-    return verbosity;
+	return verbosity;
 }
 
 #ifdef HTTP_DAEMON
 static int print_syslog(const char *str, size_t len, void *levPtr)
 {
-    int level = *(int *)levPtr;
-    int ilen = len > MAXERRLEN ? MAXERRLEN : len;
+	int level = *(int *)levPtr;
+	int ilen = len > MAXERRLEN ? MAXERRLEN : len;
 
-    syslog(level, "%.*s", ilen, str);
+	syslog(level, "%.*s", ilen, str);
 
-    return ilen;
+	return ilen;
 }
 #endif
 
 static void log_with_prefix(const char *prog, const char *fmt, va_list ap)
 {
-    char prefix[80];
-    BIO *bio, *pre = BIO_new(BIO_f_prefix());
+	char prefix[80];
+	BIO *bio, *pre = BIO_new(BIO_f_prefix());
 
-    (void)BIO_snprintf(prefix, sizeof(prefix), "%s: ", prog);
-    (void)BIO_set_prefix(pre, prefix);
-    bio = BIO_push(pre, bio_err);
-    (void)BIO_vprintf(bio, fmt, ap);
-    (void)BIO_printf(bio, "\n");
-    (void)BIO_flush(bio);
-    (void)BIO_pop(pre);
-    BIO_free(pre);
+	(void)BIO_snprintf(prefix, sizeof(prefix), "%s: ", prog);
+	(void)BIO_set_prefix(pre, prefix);
+	bio = BIO_push(pre, bio_err);
+	(void)BIO_vprintf(bio, fmt, ap);
+	(void)BIO_printf(bio, "\n");
+	(void)BIO_flush(bio);
+	(void)BIO_pop(pre);
+	BIO_free(pre);
 }
 
 /*
@@ -65,44 +65,45 @@ static void log_with_prefix(const char *prog, const char *fmt, va_list ap)
  */
 #undef OSSL_NO_C99
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ + 0 < 199900L
-# define OSSL_NO_C99
+#define OSSL_NO_C99
 #endif
 
-void trace_log_message(int category,
-                       const char *prog, int level, const char *fmt, ...)
+void trace_log_message(int category, const char *prog, int level,
+		       const char *fmt, ...)
 {
-    va_list ap;
-    va_start(ap, fmt);
+	va_list ap;
+	va_start(ap, fmt);
 
 #ifdef OSSL_NO_C99
-    if (verbosity >= level)
-        category = -1; /* disabling trace output in addition to logging */
+	if (verbosity >= level)
+		category =
+			-1; /* disabling trace output in addition to logging */
 #endif
-    if (category >= 0 && OSSL_trace_enabled(category)) {
-        BIO *out = OSSL_trace_begin(category);
+	if (category >= 0 && OSSL_trace_enabled(category)) {
+		BIO *out = OSSL_trace_begin(category);
 #ifndef OSSL_NO_C99
-        va_list ap_copy;
+		va_list ap_copy;
 
-        va_copy(ap_copy, ap);
-        (void)BIO_vprintf(out, fmt, ap_copy);
-        va_end(ap_copy);
+		va_copy(ap_copy, ap);
+		(void)BIO_vprintf(out, fmt, ap_copy);
+		va_end(ap_copy);
 #else
-        (void)BIO_vprintf(out, fmt, ap);
+		(void)BIO_vprintf(out, fmt, ap);
 #endif
-        (void)BIO_printf(out, "\n");
-        OSSL_trace_end(category, out);
-    }
-    if (verbosity < level) {
-        va_end(ap);
-        return;
-    }
+		(void)BIO_printf(out, "\n");
+		OSSL_trace_end(category, out);
+	}
+	if (verbosity < level) {
+		va_end(ap);
+		return;
+	}
 #ifdef HTTP_DAEMON
-    if (n_responders != 0) {
-        vsyslog(level, fmt, ap);
-        if (level <= LOG_ERR)
-            ERR_print_errors_cb(print_syslog, &level);
-    } else
+	if (n_responders != 0) {
+		vsyslog(level, fmt, ap);
+		if (level <= LOG_ERR)
+			ERR_print_errors_cb(print_syslog, &level);
+	} else
 #endif
-    log_with_prefix(prog, fmt, ap);
-    va_end(ap);
+		log_with_prefix(prog, fmt, ap);
+	va_end(ap);
 }

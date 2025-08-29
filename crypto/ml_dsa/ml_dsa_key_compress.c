@@ -31,23 +31,24 @@
  * @param r0 The remainder in the range (0..4096 or q-4095..q-1)
  *           So r0 has an effective range of 8192 (i.e. 13 bits).
  */
-void ossl_ml_dsa_key_compress_power2_round(uint32_t r, uint32_t *r1, uint32_t *r0)
+void ossl_ml_dsa_key_compress_power2_round(uint32_t r, uint32_t *r1,
+					   uint32_t *r0)
 {
-    unsigned int mask;
-    uint32_t r0_adjusted, r1_adjusted;
+	unsigned int mask;
+	uint32_t r0_adjusted, r1_adjusted;
 
-    *r1 = r >> ML_DSA_D_BITS;         /* top 13 bits */
-    *r0 = r - (*r1 << ML_DSA_D_BITS); /* The remainder mod q */
+	*r1 = r >> ML_DSA_D_BITS; /* top 13 bits */
+	*r0 = r - (*r1 << ML_DSA_D_BITS); /* The remainder mod q */
 
-    r0_adjusted = mod_sub(*r0, 1 << ML_DSA_D_BITS);
-    r1_adjusted = *r1 + 1;
+	r0_adjusted = mod_sub(*r0, 1 << ML_DSA_D_BITS);
+	r1_adjusted = *r1 + 1;
 
-    /* Mask is set iff r0 > (2^(dropped_bits))/2. */
-    mask = constant_time_lt((uint32_t)(1 << (ML_DSA_D_BITS - 1)), *r0);
-    /* r0 = mask ? r0_adjusted : r0 */
-    *r0 = constant_time_select_int(mask, r0_adjusted, *r0);
-    /* r1 = mask ? r1_adjusted : r1 */
-    *r1 = constant_time_select_int(mask, r1_adjusted, *r1);
+	/* Mask is set iff r0 > (2^(dropped_bits))/2. */
+	mask = constant_time_lt((uint32_t)(1 << (ML_DSA_D_BITS - 1)), *r0);
+	/* r0 = mask ? r0_adjusted : r0 */
+	*r0 = constant_time_select_int(mask, r0_adjusted, *r0);
+	/* r1 = mask ? r1_adjusted : r1 */
+	*r1 = constant_time_select_int(mask, r1_adjusted, *r1);
 }
 
 /*
@@ -61,17 +62,17 @@ void ossl_ml_dsa_key_compress_power2_round(uint32_t r, uint32_t *r1, uint32_t *r
  */
 uint32_t ossl_ml_dsa_key_compress_high_bits(uint32_t r, uint32_t gamma2)
 {
-    int32_t r1 = (r + 127) >> 7;
+	int32_t r1 = (r + 127) >> 7;
 
-    if (gamma2 == ML_DSA_GAMMA2_Q_MINUS1_DIV32) {
-        r1 = (r1 * 1025 + (1 << 21)) >> 22;
-        r1 &= 15; /* mod 16 */
-        return r1;
-    } else {
-        r1 = (r1 * 11275 + (1 << 23)) >> 24;
-        r1 ^= ((43 - r1) >> 31) & r1;
-        return r1;
-    }
+	if (gamma2 == ML_DSA_GAMMA2_Q_MINUS1_DIV32) {
+		r1 = (r1 * 1025 + (1 << 21)) >> 22;
+		r1 &= 15; /* mod 16 */
+		return r1;
+	} else {
+		r1 = (r1 * 11275 + (1 << 23)) >> 24;
+		r1 ^= ((43 - r1) >> 31) & r1;
+		return r1;
+	}
 }
 
 /**
@@ -84,12 +85,13 @@ uint32_t ossl_ml_dsa_key_compress_high_bits(uint32_t r, uint32_t gamma2)
  * @param r0 The returned low order bits
  */
 void ossl_ml_dsa_key_compress_decompose(uint32_t r, uint32_t gamma2,
-                                        uint32_t *r1, int32_t *r0)
+					uint32_t *r1, int32_t *r0)
 {
-    *r1 = ossl_ml_dsa_key_compress_high_bits(r, gamma2);
+	*r1 = ossl_ml_dsa_key_compress_high_bits(r, gamma2);
 
-    *r0 = r - *r1 * 2 * (int32_t)gamma2;
-    *r0 -= (((int32_t)ML_DSA_Q_MINUS1_DIV2 - *r0) >> 31) & (int32_t)ML_DSA_Q;
+	*r0 = r - *r1 * 2 * (int32_t)gamma2;
+	*r0 -= (((int32_t)ML_DSA_Q_MINUS1_DIV2 - *r0) >> 31) &
+	       (int32_t)ML_DSA_Q;
 }
 
 /**
@@ -103,11 +105,11 @@ void ossl_ml_dsa_key_compress_decompose(uint32_t r, uint32_t gamma2,
  */
 int32_t ossl_ml_dsa_key_compress_low_bits(uint32_t r, uint32_t gamma2)
 {
-    uint32_t r1;
-    int32_t r0;
+	uint32_t r1;
+	int32_t r0;
 
-    ossl_ml_dsa_key_compress_decompose(r, gamma2, &r1, &r0);
-    return r0;
+	ossl_ml_dsa_key_compress_decompose(r, gamma2, &r1, &r0);
+	return r0;
 }
 
 /*
@@ -131,13 +133,13 @@ int32_t ossl_ml_dsa_key_compress_low_bits(uint32_t r, uint32_t gamma2)
  * @returns The hint bit.
  */
 int32_t ossl_ml_dsa_key_compress_make_hint(uint32_t ct0, uint32_t cs2,
-                                           uint32_t gamma2, uint32_t w)
+					   uint32_t gamma2, uint32_t w)
 {
-    uint32_t r_plus_z = mod_sub(w, cs2);
-    uint32_t r = reduce_once(r_plus_z + ct0);
+	uint32_t r_plus_z = mod_sub(w, cs2);
+	uint32_t r = reduce_once(r_plus_z + ct0);
 
-    return  ossl_ml_dsa_key_compress_high_bits(r, gamma2)
-        !=  ossl_ml_dsa_key_compress_high_bits(r_plus_z, gamma2);
+	return ossl_ml_dsa_key_compress_high_bits(r, gamma2) !=
+	       ossl_ml_dsa_key_compress_high_bits(r_plus_z, gamma2);
 }
 
 /*
@@ -152,24 +154,24 @@ int32_t ossl_ml_dsa_key_compress_make_hint(uint32_t ct0, uint32_t cs2,
  * @returns The adjusted high bits or r.
  */
 uint32_t ossl_ml_dsa_key_compress_use_hint(uint32_t hint, uint32_t r,
-                                           uint32_t gamma2)
+					   uint32_t gamma2)
 {
-    uint32_t r1;
-    int32_t r0;
+	uint32_t r1;
+	int32_t r0;
 
-    ossl_ml_dsa_key_compress_decompose(r, gamma2, &r1, &r0);
+	ossl_ml_dsa_key_compress_decompose(r, gamma2, &r1, &r0);
 
-    if (hint == 0)
-        return r1;
+	if (hint == 0)
+		return r1;
 
-    if (gamma2 == ((ML_DSA_Q - 1) / 32)) {
-        /* m = 16, thus |mod m| in the spec turns into |& 15| */
-        return r0 > 0 ? (r1 + 1) & 15 : (r1 - 1) & 15;
-    } else {
-        /* m = 44 if gamma2 = ((q - 1) / 88) */
-        if (r0 > 0)
-            return (r1 == 43) ? 0 : r1 + 1;
-        else
-            return (r1 == 0) ? 43 : r1 - 1;
-    }
+	if (gamma2 == ((ML_DSA_Q - 1) / 32)) {
+		/* m = 16, thus |mod m| in the spec turns into |& 15| */
+		return r0 > 0 ? (r1 + 1) & 15 : (r1 - 1) & 15;
+	} else {
+		/* m = 44 if gamma2 = ((q - 1) / 88) */
+		if (r0 > 0)
+			return (r1 == 43) ? 0 : r1 + 1;
+		else
+			return (r1 == 0) ? 43 : r1 - 1;
+	}
 }

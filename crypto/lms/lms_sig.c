@@ -14,7 +14,7 @@
  */
 LMS_SIG *ossl_lms_sig_new(void)
 {
-    return OPENSSL_zalloc(sizeof(LMS_SIG));
+	return OPENSSL_zalloc(sizeof(LMS_SIG));
 }
 
 /**
@@ -22,5 +22,5 @@ LMS_SIG *ossl_lms_sig_new(void)
  */
 void ossl_lms_sig_free(LMS_SIG *sig)
 {
-    OPENSSL_free(sig);
+	OPENSSL_free(sig);
 }

@@ -42,24 +42,24 @@ static const char delimiter = '-';
  */
 
 static int adapt(unsigned int delta, unsigned int numpoints,
-                 unsigned int firsttime)
+		 unsigned int firsttime)
 {
-    unsigned int k = 0;
+	unsigned int k = 0;
 
-    delta = (firsttime) ? delta / damp : delta / 2;
-    delta = delta + delta / numpoints;
+	delta = (firsttime) ? delta / damp : delta / 2;
+	delta = delta + delta / numpoints;
 
-    while (delta > ((base - tmin) * tmax) / 2) {
-        delta = delta / (base - tmin);
-        k = k + base;
-    }
+	while (delta > ((base - tmin) * tmax) / 2) {
+		delta = delta / (base - tmin);
+		k = k + base;
+	}
 
-    return k + (((base - tmin + 1) * delta) / (delta + skew));
+	return k + (((base - tmin + 1) * delta) / (delta + skew));
 }
 
 static ossl_inline int is_basic(unsigned int a)
 {
-    return (a < 0x80) ? 1 : 0;
+	return (a < 0x80) ? 1 : 0;
 }
 
 /*-
@@ -71,16 +71,16 @@ static ossl_inline int is_basic(unsigned int a)
  */
 static ossl_inline int digit_decoded(const unsigned char a)
 {
-    if (a >= 0x41 && a <= 0x5A)
-        return a - 0x41;
+	if (a >= 0x41 && a <= 0x5A)
+		return a - 0x41;
 
-    if (a >= 0x61 && a <= 0x7A)
-        return a - 0x61;
+	if (a >= 0x61 && a <= 0x7A)
+		return a - 0x61;
 
-    if (a >= 0x30 && a <= 0x39)
-        return a - 0x30 + 26;
+	if (a >= 0x30 && a <= 0x39)
+		return a - 0x30 + 26;
 
-    return -1;
+	return -1;
 }
 
 /*-
@@ -117,85 +117,87 @@ static ossl_inline int digit_decoded(const unsigned char a)
  */
 
 int ossl_punycode_decode(const char *pEncoded, const size_t enc_len,
-                         unsigned int *pDecoded, unsigned int *pout_length)
+			 unsigned int *pDecoded, unsigned int *pout_length)
 {
-    unsigned int n = initial_n;
-    unsigned int i = 0;
-    unsigned int bias = initial_bias;
-    unsigned int processed_in = 0;
-    unsigned int written_out = 0;
-    unsigned int max_out = *pout_length;
-    unsigned int basic_count = 0;
-    unsigned int loop;
+	unsigned int n = initial_n;
+	unsigned int i = 0;
+	unsigned int bias = initial_bias;
+	unsigned int processed_in = 0;
+	unsigned int written_out = 0;
+	unsigned int max_out = *pout_length;
+	unsigned int basic_count = 0;
+	unsigned int loop;
 
-    if (enc_len >= UINT_MAX)
-        return 0;
-    for (loop = 0; loop < (unsigned int)enc_len; loop++) {
-        if (pEncoded[loop] == delimiter)
-            basic_count = loop;
-    }
+	if (enc_len >= UINT_MAX)
+		return 0;
+	for (loop = 0; loop < (unsigned int)enc_len; loop++) {
+		if (pEncoded[loop] == delimiter)
+			basic_count = loop;
+	}
 
-    if (basic_count > 0) {
-        if (basic_count > max_out)
-            return 0;
+	if (basic_count > 0) {
+		if (basic_count > max_out)
+			return 0;
 
-        for (loop = 0; loop < basic_count; loop++) {
-            if (is_basic(pEncoded[loop]) == 0)
-                return 0;
+		for (loop = 0; loop < basic_count; loop++) {
+			if (is_basic(pEncoded[loop]) == 0)
+				return 0;
 
-            pDecoded[loop] = pEncoded[loop];
-            written_out++;
-        }
-        processed_in = basic_count + 1;
-    }
+			pDecoded[loop] = pEncoded[loop];
+			written_out++;
+		}
+		processed_in = basic_count + 1;
+	}
 
-    for (loop = processed_in; loop < (unsigned int)enc_len;) {
-        unsigned int oldi = i;
-        unsigned int w = 1;
-        unsigned int k, t;
-        int digit;
+	for (loop = processed_in; loop < (unsigned int)enc_len;) {
+		unsigned int oldi = i;
+		unsigned int w = 1;
+		unsigned int k, t;
+		int digit;
 
-        for (k = base;; k += base) {
-            if (loop >= enc_len)
-                return 0;
+		for (k = base;; k += base) {
+			if (loop >= enc_len)
+				return 0;
 
-            digit = digit_decoded(pEncoded[loop]);
-            loop++;
+			digit = digit_decoded(pEncoded[loop]);
+			loop++;
 
-            if (digit < 0)
-                return 0;
-            if ((unsigned int)digit > (maxint - i) / w)
-                return 0;
+			if (digit < 0)
+				return 0;
+			if ((unsigned int)digit > (maxint - i) / w)
+				return 0;
 
-            i = i + digit * w;
-            t = (k <= bias) ? tmin : (k >= bias + tmax) ? tmax : k - bias;
+			i = i + digit * w;
+			t = (k <= bias)	       ? tmin :
+			    (k >= bias + tmax) ? tmax :
+						 k - bias;
 
-            if ((unsigned int)digit < t)
-                break;
+			if ((unsigned int)digit < t)
+				break;
 
-            if (w > maxint / (base - t))
-                return 0;
-            w = w * (base - t);
-        }
+			if (w > maxint / (base - t))
+				return 0;
+			w = w * (base - t);
+		}
 
-        bias = adapt(i - oldi, written_out + 1, (oldi == 0));
-        if (i / (written_out + 1) > maxint - n)
-            return 0;
-        n = n + i / (written_out + 1);
-        i %= (written_out + 1);
+		bias = adapt(i - oldi, written_out + 1, (oldi == 0));
+		if (i / (written_out + 1) > maxint - n)
+			return 0;
+		n = n + i / (written_out + 1);
+		i %= (written_out + 1);
 
-        if (written_out >= max_out)
-            return 0;
+		if (written_out >= max_out)
+			return 0;
 
-        memmove(pDecoded + i + 1, pDecoded + i,
-                (written_out - i) * sizeof(*pDecoded));
-        pDecoded[i] = n;
-        i++;
-        written_out++;
-    }
+		memmove(pDecoded + i + 1, pDecoded + i,
+			(written_out - i) * sizeof(*pDecoded));
+		pDecoded[i] = n;
+		i++;
+		written_out++;
+	}
 
-    *pout_length = written_out;
-    return 1;
+	*pout_length = written_out;
+	return 1;
 }
 
 /*
@@ -205,40 +207,40 @@ int ossl_punycode_decode(const char *pEncoded, const size_t enc_len,
  */
 static int codepoint2utf8(unsigned char *out, unsigned long utf)
 {
-    if (utf <= 0x7F) {
-        /* Plain ASCII */
-        out[0] = (unsigned char)utf;
-        out[1] = 0;
-        return 1;
-    } else if (utf <= 0x07FF) {
-        /* 2-byte unicode */
-        out[0] = (unsigned char)(((utf >> 6) & 0x1F) | 0xC0);
-        out[1] = (unsigned char)(((utf >> 0) & 0x3F) | 0x80);
-        out[2] = 0;
-        return 2;
-    } else if (utf <= 0xFFFF) {
-        /* 3-byte unicode */
-        out[0] = (unsigned char)(((utf >> 12) & 0x0F) | 0xE0);
-        out[1] = (unsigned char)(((utf >> 6) & 0x3F) | 0x80);
-        out[2] = (unsigned char)(((utf >> 0) & 0x3F) | 0x80);
-        out[3] = 0;
-        return 3;
-    } else if (utf <= 0x10FFFF) {
-        /* 4-byte unicode */
-        out[0] = (unsigned char)(((utf >> 18) & 0x07) | 0xF0);
-        out[1] = (unsigned char)(((utf >> 12) & 0x3F) | 0x80);
-        out[2] = (unsigned char)(((utf >> 6) & 0x3F) | 0x80);
-        out[3] = (unsigned char)(((utf >> 0) & 0x3F) | 0x80);
-        out[4] = 0;
-        return 4;
-    } else {
-        /* error - use replacement character */
-        out[0] = (unsigned char)0xEF;
-        out[1] = (unsigned char)0xBF;
-        out[2] = (unsigned char)0xBD;
-        out[3] = 0;
-        return 0;
-    }
+	if (utf <= 0x7F) {
+		/* Plain ASCII */
+		out[0] = (unsigned char)utf;
+		out[1] = 0;
+		return 1;
+	} else if (utf <= 0x07FF) {
+		/* 2-byte unicode */
+		out[0] = (unsigned char)(((utf >> 6) & 0x1F) | 0xC0);
+		out[1] = (unsigned char)(((utf >> 0) & 0x3F) | 0x80);
+		out[2] = 0;
+		return 2;
+	} else if (utf <= 0xFFFF) {
+		/* 3-byte unicode */
+		out[0] = (unsigned char)(((utf >> 12) & 0x0F) | 0xE0);
+		out[1] = (unsigned char)(((utf >> 6) & 0x3F) | 0x80);
+		out[2] = (unsigned char)(((utf >> 0) & 0x3F) | 0x80);
+		out[3] = 0;
+		return 3;
+	} else if (utf <= 0x10FFFF) {
+		/* 4-byte unicode */
+		out[0] = (unsigned char)(((utf >> 18) & 0x07) | 0xF0);
+		out[1] = (unsigned char)(((utf >> 12) & 0x3F) | 0x80);
+		out[2] = (unsigned char)(((utf >> 6) & 0x3F) | 0x80);
+		out[3] = (unsigned char)(((utf >> 0) & 0x3F) | 0x80);
+		out[4] = 0;
+		return 4;
+	} else {
+		/* error - use replacement character */
+		out[0] = (unsigned char)0xEF;
+		out[1] = (unsigned char)0xBF;
+		out[2] = (unsigned char)0xBD;
+		out[3] = 0;
+		return 0;
+	}
 }
 
 /*-
@@ -250,66 +252,68 @@ static int codepoint2utf8(unsigned char *out, unsigned long utf)
 
 int ossl_a2ulabel(const char *in, char *out, size_t outlen)
 {
-    /*-
+	/*-
      * Domain name has some parts consisting of ASCII chars joined with dot.
      * If a part is shorter than 5 chars, it becomes U-label as is.
      * If it does not start with xn--,    it becomes U-label as is.
      * Otherwise we try to decode it.
      */
-    const char *inptr = in;
-    int result = 1;
-    unsigned int i;
-    unsigned int buf[LABEL_BUF_SIZE];      /* It's a hostname */
-    WPACKET pkt;
+	const char *inptr = in;
+	int result = 1;
+	unsigned int i;
+	unsigned int buf[LABEL_BUF_SIZE]; /* It's a hostname */
+	WPACKET pkt;
 
-    /* Internal API, so should not fail */
-    if (!ossl_assert(out != NULL))
-        return -1;
+	/* Internal API, so should not fail */
+	if (!ossl_assert(out != NULL))
+		return -1;
 
-    if (!WPACKET_init_static_len(&pkt, (unsigned char *)out, outlen, 0))
-        return -1;
+	if (!WPACKET_init_static_len(&pkt, (unsigned char *)out, outlen, 0))
+		return -1;
 
-    while (1) {
-        char *tmpptr = strchr(inptr, '.');
-        size_t delta = tmpptr != NULL ? (size_t)(tmpptr - inptr) : strlen(inptr);
+	while (1) {
+		char *tmpptr = strchr(inptr, '.');
+		size_t delta = tmpptr != NULL ? (size_t)(tmpptr - inptr) :
+						strlen(inptr);
 
-        if (!HAS_PREFIX(inptr, "xn--")) {
-            if (!WPACKET_memcpy(&pkt, inptr, delta))
-                result = 0;
-        } else {
-            unsigned int bufsize = LABEL_BUF_SIZE;
+		if (!HAS_PREFIX(inptr, "xn--")) {
+			if (!WPACKET_memcpy(&pkt, inptr, delta))
+				result = 0;
+		} else {
+			unsigned int bufsize = LABEL_BUF_SIZE;
 
-            if (ossl_punycode_decode(inptr + 4, delta - 4, buf, &bufsize) <= 0) {
-                result = -1;
-                goto end;
-            }
+			if (ossl_punycode_decode(inptr + 4, delta - 4, buf,
+						 &bufsize) <= 0) {
+				result = -1;
+				goto end;
+			}
 
-            for (i = 0; i < bufsize; i++) {
-                unsigned char seed[6];
-                size_t utfsize = codepoint2utf8(seed, buf[i]);
+			for (i = 0; i < bufsize; i++) {
+				unsigned char seed[6];
+				size_t utfsize = codepoint2utf8(seed, buf[i]);
 
-                if (utfsize == 0) {
-                    result = -1;
-                    goto end;
-                }
+				if (utfsize == 0) {
+					result = -1;
+					goto end;
+				}
 
-                if (!WPACKET_memcpy(&pkt, seed, utfsize))
-                    result = 0;
-            }
-        }
+				if (!WPACKET_memcpy(&pkt, seed, utfsize))
+					result = 0;
+			}
+		}
 
-        if (tmpptr == NULL)
-            break;
+		if (tmpptr == NULL)
+			break;
 
-        if (!WPACKET_put_bytes_u8(&pkt, '.'))
-            result = 0;
+		if (!WPACKET_put_bytes_u8(&pkt, '.'))
+			result = 0;
 
-        inptr = tmpptr + 1;
-    }
+		inptr = tmpptr + 1;
+	}
 
-    if (!WPACKET_put_bytes_u8(&pkt, '\0'))
-        result = 0;
- end:
-    WPACKET_cleanup(&pkt);
-    return result;
+	if (!WPACKET_put_bytes_u8(&pkt, '\0'))
+		result = 0;
+end:
+	WPACKET_cleanup(&pkt);
+	return result;
 }

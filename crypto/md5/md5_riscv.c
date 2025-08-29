@@ -13,12 +13,13 @@
 
 void ossl_md5_block_asm_data_order(MD5_CTX *c, const void *p, size_t num);
 void ossl_md5_block_asm_data_order_zbb(MD5_CTX *c, const void *p, size_t num);
-void ossl_md5_block_asm_data_order_riscv64(MD5_CTX *c, const void *p, size_t num);
+void ossl_md5_block_asm_data_order_riscv64(MD5_CTX *c, const void *p,
+					   size_t num);
 void ossl_md5_block_asm_data_order(MD5_CTX *c, const void *p, size_t num)
 {
-    if (RISCV_HAS_ZBB()) {
-        ossl_md5_block_asm_data_order_zbb(c, p, num);
-    } else {
-        ossl_md5_block_asm_data_order_riscv64(c, p, num);
-    }
+	if (RISCV_HAS_ZBB()) {
+		ossl_md5_block_asm_data_order_zbb(c, p, num);
+	} else {
+		ossl_md5_block_asm_data_order_riscv64(c, p, num);
+	}
 }

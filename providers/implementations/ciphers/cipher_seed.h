@@ -11,11 +11,11 @@
 #include "prov/ciphercommon.h"
 
 typedef struct prov_seed_ctx_st {
-    PROV_CIPHER_CTX base;      /* Must be first */
-    union {
-        OSSL_UNION_ALIGN;
-        SEED_KEY_SCHEDULE ks;
-    } ks;
+	PROV_CIPHER_CTX base; /* Must be first */
+	union {
+		OSSL_UNION_ALIGN;
+		SEED_KEY_SCHEDULE ks;
+	} ks;
 } PROV_SEED_CTX;
 
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_seed_cbc(size_t keybits);

@@ -13,13 +13,13 @@
 #include "prov/provider_util.h"
 
 struct mac_key_st {
-    OSSL_LIB_CTX *libctx;
-    CRYPTO_REF_COUNT refcnt;
-    unsigned char *priv_key;
-    size_t priv_key_len;
-    PROV_CIPHER cipher;
-    char *properties;
-    int cmac;
+	OSSL_LIB_CTX *libctx;
+	CRYPTO_REF_COUNT refcnt;
+	unsigned char *priv_key;
+	size_t priv_key_len;
+	PROV_CIPHER cipher;
+	char *properties;
+	int cmac;
 };
 
 typedef struct mac_key_st MAC_KEY;

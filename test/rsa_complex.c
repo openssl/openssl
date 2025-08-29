@@ -16,17 +16,17 @@
  */
 
 #if !defined(__DJGPP__)
-# if defined(__STDC_VERSION__)
-#  if __STDC_VERSION__ >= 199901L
-#   include <complex.h>
-#  endif
-# endif
-# include <openssl/rsa.h>
+#if defined(__STDC_VERSION__)
+#if __STDC_VERSION__ >= 199901L
+#include <complex.h>
+#endif
+#endif
+#include <openssl/rsa.h>
 #endif
 #include <stdlib.h>
 
 int main(int argc, char *argv[])
 {
-    /* There are explicitly no run time checks for this one */
-    return EXIT_SUCCESS;
+	/* There are explicitly no run time checks for this one */
+	return EXIT_SUCCESS;
 }

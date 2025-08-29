@@ -18,29 +18,29 @@
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-    ERR_clear_error();
-    return 1;
+	OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+	ERR_clear_error();
+	return 1;
 }
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    CONF *conf;
-    BIO *in;
-    long eline;
+	CONF *conf;
+	BIO *in;
+	long eline;
 
-    if (len == 0 || len > INT_MAX)
-        return 0;
+	if (len == 0 || len > INT_MAX)
+		return 0;
 
-    conf = NCONF_new(NULL);
-    in = BIO_new(BIO_s_mem());
-    OPENSSL_assert((size_t)BIO_write(in, buf, (int)len) == len);
-    NCONF_load_bio(conf, in, &eline);
-    NCONF_free(conf);
-    BIO_free(in);
-    ERR_clear_error();
+	conf = NCONF_new(NULL);
+	in = BIO_new(BIO_s_mem());
+	OPENSSL_assert((size_t)BIO_write(in, buf, (int)len) == len);
+	NCONF_load_bio(conf, in, &eline);
+	NCONF_free(conf);
+	BIO_free(in);
+	ERR_clear_error();
 
-    return 0;
+	return 0;
 }
 
 void FuzzerCleanup(void)

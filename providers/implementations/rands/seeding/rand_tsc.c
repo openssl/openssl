@@ -19,7 +19,7 @@
  * Some SP800-90B tests have been run, but there is internal skepticism.
  * So for now this code is not used.
  */
-# error "RDTSC enabled?  Should not be possible!"
+#error "RDTSC enabled?  Should not be possible!"
 
 /*
  * Acquire entropy from high-speed clock
@@ -32,16 +32,16 @@
  */
 size_t ossl_prov_acquire_entropy_from_tsc(RAND_POOL *pool)
 {
-    unsigned char c;
-    int i;
+	unsigned char c;
+	int i;
 
-    if ((OPENSSL_ia32cap_P[0] & (1 << 4)) != 0) {
-        for (i = 0; i < TSC_READ_COUNT; i++) {
-            c = (unsigned char)(OPENSSL_rdtsc() & 0xFF);
-            ossl_rand_pool_add(pool, &c, 1, 4);
-        }
-    }
-    return ossl_rand_pool_entropy_available(pool);
+	if ((OPENSSL_ia32cap_P[0] & (1 << 4)) != 0) {
+		for (i = 0; i < TSC_READ_COUNT; i++) {
+			c = (unsigned char)(OPENSSL_rdtsc() & 0xFF);
+			ossl_rand_pool_add(pool, &c, 1, 4);
+		}
+	}
+	return ossl_rand_pool_entropy_available(pool);
 }
 #else
 NON_EMPTY_TRANSLATION_UNIT
