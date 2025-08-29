@@ -12,7 +12,12 @@
 # pragma once
 
 # include <openssl/bio.h>
+# include <openssl/asn1.h>
 
 int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb);
+int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
+                        long len, const ASN1_ITEM *it, int tag, int aclass,
+                        char opt, ASN1_TLC *ctx, int depth,
+                        OSSL_LIB_CTX *libctx, const char *propq);
 
 #endif
