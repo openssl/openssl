@@ -167,6 +167,10 @@ int RAND_load_file(const char *file, long bytes)
         /* If given a bytecount, and we did it, break. */
         if (bytes > 0 && (bytes -= i) <= 0)
             break;
+
+        /* We can hit a signed integer overflow on the next iteration */
+        if (ret > INT_MAX - RAND_LOAD_BUF_SIZE)
+            break;
     }
 
     OPENSSL_cleanse(buf, sizeof(buf));
