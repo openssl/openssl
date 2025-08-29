@@ -210,27 +210,6 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     if (e == NULL && (pkey == NULL || pkey->foreign == 0))
         keytype = OBJ_nid2sn(id);
 
-# ifndef OPENSSL_NO_ENGINE
-    if (e == NULL && pkey != NULL)
-        e = pkey->pmeth_engine != NULL ? pkey->pmeth_engine : pkey->engine;
-    /* Try to find an ENGINE which implements this method */
-    if (e != NULL) {
-        if (!ENGINE_init(e)) {
-            ERR_raise(ERR_LIB_EVP, ERR_R_ENGINE_LIB);
-            return NULL;
-        }
-    } else {
-        e = ENGINE_get_pkey_meth_engine(id);
-    }
-
-    /*
-     * If an ENGINE handled this method look it up. Otherwise use internal
-     * tables.
-     */
-    if (e != NULL)
-        pmeth = ENGINE_get_pkey_meth(e, id);
-    else
-# endif /* OPENSSL_NO_ENGINE */
     if (pkey != NULL && pkey->foreign)
         pmeth = EVP_PKEY_meth_find(id);
     else
@@ -296,11 +275,6 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     } else {
         ret = OPENSSL_zalloc(sizeof(*ret));
     }
-
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    if ((ret == NULL || pmeth == NULL) && e != NULL)
-        ENGINE_finish(e);
-#endif
 
     if (ret == NULL) {
         EVP_KEYMGMT_free(keymgmt);
@@ -404,9 +378,6 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
     OPENSSL_free(ctx->propquery);
     EVP_PKEY_free(ctx->pkey);
     EVP_PKEY_free(ctx->peerkey);
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    ENGINE_finish(ctx->engine);
-#endif
     BN_free(ctx->rsa_pubexp);
     OPENSSL_free(ctx);
 }
@@ -454,13 +425,6 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
 {
     EVP_PKEY_CTX *rctx;
 
-# ifndef OPENSSL_NO_ENGINE
-    /* Make sure it's safe to copy a pkey context using an ENGINE */
-    if (pctx->engine && !ENGINE_init(pctx->engine)) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-# endif
     rctx = OPENSSL_zalloc(sizeof(*rctx));
     if (rctx == NULL)
         return NULL;
@@ -576,9 +540,6 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
     }
 
     rctx->pmeth = pctx->pmeth;
-# ifndef OPENSSL_NO_ENGINE
-    rctx->engine = pctx->engine;
-# endif
 
     if (pctx->peerkey != NULL && !EVP_PKEY_up_ref(pctx->peerkey))
         goto err;
