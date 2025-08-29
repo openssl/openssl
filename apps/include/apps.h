@@ -35,7 +35,6 @@
 # include "opt.h"
 # include "fmt.h"
 # include "platform.h"
-# include "engine_loader.h"
 # include "app_libctx.h"
 
 /*
