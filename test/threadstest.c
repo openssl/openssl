@@ -763,10 +763,8 @@ int setup_tests(void)
 
     storedir = test_mk_file_path(datadir, "store");
 
-
     /* Keep first to validate auto creation of default library context */
     ADD_TEST(test_multi_default);
-    if (0) {
     ADD_TEST(test_lock);
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
@@ -775,7 +773,6 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_multi, 6);
     ADD_TEST(test_lib_ctx_load_config);
-    }
     ADD_TEST(test_x509_store);
     return 1;
 }
