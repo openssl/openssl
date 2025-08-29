@@ -7,92 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use some engine and HMAC deprecated APIs */
+/* We need to use some HMAC deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include <openssl/engine.h>
 #include "ssl_local.h"
 #include "internal/ssl_unwrap.h"
-
-/*
- * Engine APIs are only used to support applications that still use ENGINEs.
- * Once ENGINE is removed completely, all of this code can also be removed.
- */
-
-#ifndef OPENSSL_NO_ENGINE
-void tls_engine_finish(ENGINE *e)
-{
-    ENGINE_finish(e);
-}
-#endif
-
-const EVP_CIPHER *tls_get_cipher_from_engine(int nid)
-{
-    const EVP_CIPHER *ret = NULL;
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE *eng;
-
-    /*
-     * If there is an Engine available for this cipher we use the "implicit"
-     * form to ensure we use that engine later.
-     */
-    eng = ENGINE_get_cipher_engine(nid);
-    if (eng != NULL) {
-        ret = ENGINE_get_cipher(eng, nid);
-        ENGINE_finish(eng);
-    }
-#endif
-    return ret;
-}
-
-const EVP_MD *tls_get_digest_from_engine(int nid)
-{
-    const EVP_MD *ret = NULL;
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE *eng;
-
-    /*
-     * If there is an Engine available for this digest we use the "implicit"
-     * form to ensure we use that engine later.
-     */
-    eng = ENGINE_get_digest_engine(nid);
-    if (eng != NULL) {
-        ret = ENGINE_get_digest(eng, nid);
-        ENGINE_finish(eng);
-    }
-#endif
-    return ret;
-}
-
-#ifndef OPENSSL_NO_ENGINE
-int tls_engine_load_ssl_client_cert(SSL_CONNECTION *s, X509 **px509,
-                                    EVP_PKEY **ppkey)
-{
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
-
-    return ENGINE_load_ssl_client_cert(SSL_CONNECTION_GET_CTX(s)->client_cert_engine,
-                                       ssl,
-                                       SSL_get_client_CA_list(ssl),
-                                       px509, ppkey, NULL, NULL, NULL);
-}
-#endif
-
-#ifndef OPENSSL_NO_ENGINE
-int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e)
-{
-    if (!ENGINE_init(e)) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-    if (!ENGINE_get_ssl_client_cert_function(e)) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_NO_CLIENT_CERT_METHOD);
-        ENGINE_finish(e);
-        return 0;
-    }
-    ctx->client_cert_engine = e;
-    return 1;
-}
-#endif
 
 /*
  * The HMAC APIs below are only used to support the deprecated public API

@@ -975,13 +975,6 @@ struct ssl_ctx_st {
     /* The default read buffer length to use (0 means not set) */
     size_t default_read_buf_len;
 
-# ifndef OPENSSL_NO_ENGINE
-    /*
-     * Engine to pass requests for client certs to
-     */
-    ENGINE *client_cert_engine;
-# endif
-
     /* ClientHello callback.  Mostly for extensions, but not entirely. */
     SSL_client_hello_cb_fn client_hello_cb;
     void *client_hello_cb_arg;
@@ -3025,11 +3018,6 @@ const EVP_MD *ssl_evp_md_fetch(OSSL_LIB_CTX *libctx,
 int ssl_evp_md_up_ref(const EVP_MD *md);
 void ssl_evp_md_free(const EVP_MD *md);
 
-void tls_engine_finish(ENGINE *e);
-const EVP_CIPHER *tls_get_cipher_from_engine(int nid);
-const EVP_MD *tls_get_digest_from_engine(int nid);
-int tls_engine_load_ssl_client_cert(SSL_CONNECTION *s, X509 **px509,
-                                    EVP_PKEY **ppkey);
 int ssl_hmac_old_new(SSL_HMAC *ret);
 void ssl_hmac_old_free(SSL_HMAC *ctx);
 int ssl_hmac_old_init(SSL_HMAC *ctx, void *key, size_t len, char *md);
