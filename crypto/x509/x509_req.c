@@ -74,7 +74,7 @@ EVP_PKEY *X509_REQ_get0_pubkey(const X509_REQ *req)
     return X509_PUBKEY_get0(req->req_info.pubkey);
 }
 
-X509_PUBKEY *X509_REQ_get_X509_PUBKEY(X509_REQ *req)
+X509_PUBKEY *X509_REQ_get_X509_PUBKEY(OSSL_FUTURE_CONST X509_REQ *req)
 {
     return req->req_info.pubkey;
 }
