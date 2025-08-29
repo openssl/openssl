@@ -310,70 +310,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_async)
     return 1;
 }
 
-#ifndef OPENSSL_NO_ENGINE
-static CRYPTO_ONCE engine_openssl = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_init_engine_openssl)
-{
-    OSSL_TRACE(INIT, "engine_load_openssl_int()\n");
-    engine_load_openssl_int();
-    return 1;
-}
-# ifndef OPENSSL_NO_RDRAND
-static CRYPTO_ONCE engine_rdrand = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_init_engine_rdrand)
-{
-    OSSL_TRACE(INIT, "engine_load_rdrand_int()\n");
-    engine_load_rdrand_int();
-    return 1;
-}
-# endif
-static CRYPTO_ONCE engine_dynamic = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_init_engine_dynamic)
-{
-    OSSL_TRACE(INIT, "engine_load_dynamic_int()\n");
-    engine_load_dynamic_int();
-    return 1;
-}
-# ifndef OPENSSL_NO_STATIC_ENGINE
-#  ifndef OPENSSL_NO_DEVCRYPTOENG
-static CRYPTO_ONCE engine_devcrypto = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_init_engine_devcrypto)
-{
-    OSSL_TRACE(INIT, "engine_load_devcrypto_int()\n");
-    engine_load_devcrypto_int();
-    return 1;
-}
-#  endif
-#  if !defined(OPENSSL_NO_PADLOCKENG)
-static CRYPTO_ONCE engine_padlock = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_init_engine_padlock)
-{
-    OSSL_TRACE(INIT, "engine_load_padlock_int()\n");
-    engine_load_padlock_int();
-    return 1;
-}
-#  endif
-#  if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
-static CRYPTO_ONCE engine_capi = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_init_engine_capi)
-{
-    OSSL_TRACE(INIT, "engine_load_capi_int()\n");
-    engine_load_capi_int();
-    return 1;
-}
-#  endif
-#  if !defined(OPENSSL_NO_AFALGENG)
-static CRYPTO_ONCE engine_afalg = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_init_engine_afalg)
-{
-    OSSL_TRACE(INIT, "engine_load_afalg_int()\n");
-    engine_load_afalg_int();
-    return 1;
-}
-#  endif
-# endif
-#endif
-
 void OPENSSL_cleanup(void)
 {
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
@@ -449,11 +385,6 @@ void OPENSSL_cleanup(void)
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_config_modules_free()\n");
     ossl_config_modules_free();
-
-#ifndef OPENSSL_NO_ENGINE
-    OSSL_TRACE(INIT, "OPENSSL_cleanup: engine_cleanup_int()\n");
-    engine_cleanup_int();
-#endif
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_store_cleanup_int()\n");
@@ -650,47 +581,6 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     if ((opts & OPENSSL_INIT_ASYNC)
             && !RUN_ONCE(&async, ossl_init_async))
         return 0;
-
-#ifndef OPENSSL_NO_ENGINE
-    if ((opts & OPENSSL_INIT_ENGINE_OPENSSL)
-            && !RUN_ONCE(&engine_openssl, ossl_init_engine_openssl))
-        return 0;
-# ifndef OPENSSL_NO_RDRAND
-    if ((opts & OPENSSL_INIT_ENGINE_RDRAND)
-            && !RUN_ONCE(&engine_rdrand, ossl_init_engine_rdrand))
-        return 0;
-# endif
-    if ((opts & OPENSSL_INIT_ENGINE_DYNAMIC)
-            && !RUN_ONCE(&engine_dynamic, ossl_init_engine_dynamic))
-        return 0;
-# ifndef OPENSSL_NO_STATIC_ENGINE
-#  ifndef OPENSSL_NO_DEVCRYPTOENG
-    if ((opts & OPENSSL_INIT_ENGINE_CRYPTODEV)
-            && !RUN_ONCE(&engine_devcrypto, ossl_init_engine_devcrypto))
-        return 0;
-#  endif
-#  if !defined(OPENSSL_NO_PADLOCKENG)
-    if ((opts & OPENSSL_INIT_ENGINE_PADLOCK)
-            && !RUN_ONCE(&engine_padlock, ossl_init_engine_padlock))
-        return 0;
-#  endif
-#  if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
-    if ((opts & OPENSSL_INIT_ENGINE_CAPI)
-            && !RUN_ONCE(&engine_capi, ossl_init_engine_capi))
-        return 0;
-#  endif
-#  if !defined(OPENSSL_NO_AFALGENG)
-    if ((opts & OPENSSL_INIT_ENGINE_AFALG)
-            && !RUN_ONCE(&engine_afalg, ossl_init_engine_afalg))
-        return 0;
-#  endif
-# endif
-    if (opts & (OPENSSL_INIT_ENGINE_ALL_BUILTIN
-                | OPENSSL_INIT_ENGINE_OPENSSL
-                | OPENSSL_INIT_ENGINE_AFALG)) {
-        ENGINE_register_all_complete();
-    }
-#endif
 
     if (!CRYPTO_atomic_or(&optsdone, opts, &tmp, optsdone_lock))
         return 0;

@@ -112,11 +112,6 @@ static int set_random_provider_name(RAND_GLOBAL *dgbl, const char *name)
     return dgbl->random_provider_name != NULL;
 }
 
-# ifndef OPENSSL_NO_ENGINE
-/* non-NULL if default_RAND_meth is ENGINE-provided */
-static ENGINE *funct_ref;
-static CRYPTO_RWLOCK *rand_engine_lock;
-# endif     /* !OPENSSL_NO_ENGINE */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 static CRYPTO_RWLOCK *rand_meth_lock;
 static const RAND_METHOD *default_RAND_meth;
@@ -127,12 +122,6 @@ static int rand_inited = 0;
 
 DEFINE_RUN_ONCE_STATIC(do_rand_init)
 {
-# ifndef OPENSSL_NO_ENGINE
-    rand_engine_lock = CRYPTO_THREAD_lock_new();
-    if (rand_engine_lock == NULL)
-        return 0;
-# endif     /* !OPENSSL_NO_ENGINE */
-
 # ifndef OPENSSL_NO_DEPRECATED_3_0
     rand_meth_lock = CRYPTO_THREAD_lock_new();
     if (rand_meth_lock == NULL)
@@ -150,10 +139,6 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     CRYPTO_THREAD_lock_free(rand_meth_lock);
     rand_meth_lock = NULL;
 # endif     /* !OPENSSL_NO_DEPRECATED_3_0 */
-# ifndef OPENSSL_NO_ENGINE
-    CRYPTO_THREAD_lock_free(rand_engine_lock);
-    rand_engine_lock = NULL;
-# endif     /* !OPENSSL_NO_ENGINE */
     return 0;
 }
 
@@ -170,10 +155,6 @@ void ossl_rand_cleanup_int(void)
     RAND_set_rand_method(NULL);
 # endif     /* !OPENSSL_NO_DEPRECATED_3_0 */
     ossl_rand_pool_cleanup();
-# ifndef OPENSSL_NO_ENGINE
-    CRYPTO_THREAD_lock_free(rand_engine_lock);
-    rand_engine_lock = NULL;
-# endif     /* !OPENSSL_NO_ENGINE */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
     CRYPTO_THREAD_lock_free(rand_meth_lock);
     rand_meth_lock = NULL;
@@ -249,10 +230,6 @@ static int rand_set_rand_method_internal(const RAND_METHOD *meth,
 
     if (!CRYPTO_THREAD_write_lock(rand_meth_lock))
         return 0;
-#  ifndef OPENSSL_NO_ENGINE
-    ENGINE_finish(funct_ref);
-    funct_ref = e;
-#  endif
     default_RAND_meth = meth;
     CRYPTO_THREAD_unlock(rand_meth_lock);
     return 1;
@@ -282,56 +259,12 @@ const RAND_METHOD *RAND_get_rand_method(void)
 
     if (!CRYPTO_THREAD_write_lock(rand_meth_lock))
         return NULL;
-    if (default_RAND_meth == NULL) {
-#  ifndef OPENSSL_NO_ENGINE
-        ENGINE *e;
-
-        /* If we have an engine that can do RAND, use it. */
-        if ((e = ENGINE_get_default_RAND()) != NULL
-                && (tmp_meth = ENGINE_get_RAND(e)) != NULL) {
-            funct_ref = e;
-            default_RAND_meth = tmp_meth;
-        } else {
-            ENGINE_finish(e);
-            default_RAND_meth = &ossl_rand_meth;
-        }
-#  else
+    if (default_RAND_meth == NULL)
         default_RAND_meth = &ossl_rand_meth;
-#  endif
-    }
     tmp_meth = default_RAND_meth;
     CRYPTO_THREAD_unlock(rand_meth_lock);
     return tmp_meth;
 }
-
-#  if !defined(OPENSSL_NO_ENGINE)
-int RAND_set_rand_engine(ENGINE *engine)
-{
-    const RAND_METHOD *tmp_meth = NULL;
-
-    if (!RUN_ONCE(&rand_init, do_rand_init))
-        return 0;
-
-    if (engine != NULL) {
-        if (!ENGINE_init(engine))
-            return 0;
-        tmp_meth = ENGINE_get_RAND(engine);
-        if (tmp_meth == NULL) {
-            ENGINE_finish(engine);
-            return 0;
-        }
-    }
-    if (!CRYPTO_THREAD_write_lock(rand_engine_lock)) {
-        ENGINE_finish(engine);
-        return 0;
-    }
-
-    /* This function releases any prior ENGINE so call it first */
-    rand_set_rand_method_internal(tmp_meth, engine);
-    CRYPTO_THREAD_unlock(rand_engine_lock);
-    return 1;
-}
-#  endif
 # endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
 void RAND_seed(const void *buf, int num)
