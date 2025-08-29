@@ -67,11 +67,6 @@ int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth)
     if (finish != NULL)
         finish(key);
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    ENGINE_finish(key->engine);
-    key->engine = NULL;
-#endif
-
     key->meth = meth;
     if (meth->init != NULL)
         return meth->init(key);
@@ -99,24 +94,6 @@ EC_KEY *ossl_ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
     }
 
     ret->meth = EC_KEY_get_default_method();
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    if (engine != NULL) {
-        if (!ENGINE_init(engine)) {
-            ERR_raise(ERR_LIB_EC, ERR_R_ENGINE_LIB);
-            goto err;
-        }
-        ret->engine = engine;
-    } else
-        ret->engine = ENGINE_get_default_EC();
-    if (ret->engine != NULL) {
-        ret->meth = ENGINE_get_EC(ret->engine);
-        if (ret->meth == NULL) {
-            ERR_raise(ERR_LIB_EC, ERR_R_ENGINE_LIB);
-            goto err;
-        }
-    }
-#endif
-
     ret->version = 1;
     ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
 
