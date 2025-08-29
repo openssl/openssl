@@ -50,7 +50,7 @@ IF[{- !$disabled{tests} -}]
           conf_include_test params_api_test params_conversion_test \
           constant_time_test safe_math_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest stack_test \
-          dtlsv1listentest ct_test threadstest afalgtest d2i_test \
+          dtlsv1listentest ct_test threadstest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bio_callback_test bio_memleak_test bio_core_test bio_dgram_test param_build_test \
           bioprinttest sslapitest ssl_handshake_rtt_test dtlstest sslcorrupttest \
@@ -77,10 +77,6 @@ IF[{- !$disabled{tests} -}]
 
   IF[{- !$disabled{'allocfail-tests'} -}]
     PROGRAMS{noninst}=handshake-memfail
-  ENDIF
-
-  IF[{- !$disabled{'deprecated-3.0'} -}]
-    PROGRAMS{noinst}=enginetest
   ENDIF
 
   IF[{- !$disabled{quic} -}]
@@ -158,10 +154,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[sha_test]=sha_test.c
   INCLUDE[sha_test]=../include ../apps/include
   DEPEND[sha_test]=../libcrypto libtestutil.a
-
-  SOURCE[enginetest]=enginetest.c
-  INCLUDE[enginetest]=../include ../apps/include
-  DEPEND[enginetest]=../libcrypto libtestutil.a
 
   SOURCE[exptest]=exptest.c
   INCLUDE[exptest]=../include ../apps/include
@@ -492,10 +484,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[threadstest_fips]=threadstest_fips.c
   INCLUDE[threadstest_fips]=../include ../apps/include
   DEPEND[threadstest_fips]=../libcrypto libtestutil.a
-
-  SOURCE[afalgtest]=afalgtest.c
-  INCLUDE[afalgtest]=../include ../apps/include
-  DEPEND[afalgtest]=../libcrypto libtestutil.a
 
   SOURCE[d2i_test]=d2i_test.c
   INCLUDE[d2i_test]=../include ../apps/include
