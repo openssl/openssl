@@ -19,9 +19,6 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
 #include "testutil.h"
 
 #include "internal/nelem.h"
