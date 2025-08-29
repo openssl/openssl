@@ -1289,8 +1289,8 @@ sub check_env_vars {
     my @env_headers;
     my @env_macro;
 
-    # look for source files
-    find(sub { push @env_files, $File::Find::name if /\.c$|\.in$/; },
+    # look for source files (now including Perl files)
+    find(sub { push @env_files, $File::Find::name if /\.c$|\.in$|\.pl$/; },
          $config{sourcedir});
 
     foreach my $filename (@env_files) {
@@ -1311,6 +1311,10 @@ sub check_env_vars {
                 } elsif ($env1 =~ /([A-Z0-9_])/) {
                     push(@env_macro, $env1);
                 }
+            }
+            # Perl-style environment variable access: $ENV{...}
+            if ($line =~ /\$ENV\{['"]?([^}'"]+)['"]?\}/) {
+                $env_list{$1} = 1;
             }
             # match ternary operators; $1 - true, $2 - false
             if ($line =~ /env\(\s*[^?]+\?\s*([^:( ]+)\s*:\s*([^(]+)\s*\)/) {
