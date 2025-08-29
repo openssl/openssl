@@ -47,8 +47,12 @@ static EVP_SKEY *evp_skey_alloc(EVP_SKEYMGMT *skeymgmt)
         ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         goto err;
     }
-    skey->skeymgmt = skeymgmt;
-    return skey;
+    if (EVP_SKEYMGMT_up_ref(skeymgmt)) {
+        skey->skeymgmt = skeymgmt;
+        return skey;
+    } else {
+        goto err;
+    }
 
  err:
     CRYPTO_FREE_REF(&skey->references);
@@ -78,8 +82,7 @@ static EVP_SKEY *evp_skey_alloc_fetch(OSSL_LIB_CTX *libctx,
     }
 
     skey = evp_skey_alloc(skeymgmt);
-    if (skey == NULL)
-        EVP_SKEYMGMT_free(skeymgmt);
+    EVP_SKEYMGMT_free(skeymgmt);
 
     return skey;
 }
