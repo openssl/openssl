@@ -15,9 +15,6 @@
 #include "openssl/obj_mac.h"
 #include "openssl/evp.h"
 #include "openssl/err.h"
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-# include <openssl/engine.h>
-#endif
 
 #ifdef OPENSSL_HMAC_S390X
 
@@ -72,26 +69,6 @@ static void s390x_call_kmac(HMAC_CTX *ctx, const unsigned char *in, size_t len)
 
 static int s390x_check_engine_used(const EVP_MD *md, ENGINE *impl)
 {
-# if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    const EVP_MD *d;
-
-    if (impl != NULL) {
-        if (!ENGINE_init(impl))
-            return 0;
-    } else {
-        impl = ENGINE_get_digest_engine(EVP_MD_get_type(md));
-    }
-
-    if (impl == NULL)
-        return 0;
-
-    d = ENGINE_get_digest(impl, EVP_MD_get_type(md));
-    ENGINE_finish(impl);
-
-    if (d != NULL)
-        return 1;
-# endif
-
     return 0;
 }
 
