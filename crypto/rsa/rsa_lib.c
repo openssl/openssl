@@ -52,10 +52,6 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth)
     mtmp = rsa->meth;
     if (mtmp->finish)
         mtmp->finish(rsa);
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_finish(rsa->engine);
-    rsa->engine = NULL;
-#endif
     rsa->meth = meth;
     if (meth->init)
         meth->init(rsa);
@@ -99,26 +95,6 @@ static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 
     ret->libctx = libctx;
     ret->meth = RSA_get_default_method();
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;
-    if (engine) {
-        if (!ENGINE_init(engine)) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_ENGINE_LIB);
-            goto err;
-        }
-        ret->engine = engine;
-    } else {
-        ret->engine = ENGINE_get_default_RSA();
-    }
-    if (ret->engine) {
-        ret->meth = ENGINE_get_RSA(ret->engine);
-        if (ret->meth == NULL) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_ENGINE_LIB);
-            goto err;
-        }
-    }
-#endif
-
     ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;
 #ifndef FIPS_MODULE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data)) {
@@ -153,9 +129,6 @@ void RSA_free(RSA *r)
 
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    ENGINE_finish(r->engine);
-#endif
 
 #ifndef FIPS_MODULE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, r, &r->ex_data);
