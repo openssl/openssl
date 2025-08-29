@@ -18,7 +18,6 @@
 #include <openssl/rand.h>
 #include <openssl/ocsp.h>
 #include <openssl/dh.h>
-#include <openssl/engine.h>
 #include <openssl/async.h>
 #include <openssl/ct.h>
 #include <openssl/trace.h>
@@ -4208,24 +4207,6 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     }
 #endif
-#ifndef OPENSSL_NO_ENGINE
-# ifdef OPENSSL_SSL_CLIENT_ENGINE_AUTO
-#  define eng_strx(x)     #x
-#  define eng_str(x)      eng_strx(x)
-    /* Use specific client engine automatically... ignore errors */
-    {
-        ENGINE *eng;
-        eng = ENGINE_by_id(eng_str(OPENSSL_SSL_CLIENT_ENGINE_AUTO));
-        if (!eng) {
-            ERR_clear_error();
-            ENGINE_load_builtin_engines();
-            eng = ENGINE_by_id(eng_str(OPENSSL_SSL_CLIENT_ENGINE_AUTO));
-        }
-        if (!eng || !SSL_CTX_set_client_cert_engine(ret, eng))
-            ERR_clear_error();
-    }
-# endif
-#endif
 
 #ifndef OPENSSL_NO_COMP_ALG
     /*
@@ -4436,9 +4417,6 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
 #ifndef OPENSSL_NO_SRP
     ssl_ctx_srp_ctx_free_intern(a);
-#endif
-#ifndef OPENSSL_NO_ENGINE
-    tls_engine_finish(a->client_cert_engine);
 #endif
 
     OPENSSL_free(a->ext.ecpointformats);
@@ -7507,14 +7485,6 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
 {
     const EVP_CIPHER *ciph;
 
-    ciph = tls_get_cipher_from_engine(nid);
-    if (ciph != NULL)
-        return ciph;
-
-    /*
-     * If there is no engine cipher then we do an explicit fetch. This may fail
-     * and that could be ok
-     */
     ERR_set_mark();
     ciph = EVP_CIPHER_fetch(libctx, OBJ_nid2sn(nid), properties);
     if (ciph != NULL) {
@@ -7569,11 +7539,6 @@ const EVP_MD *ssl_evp_md_fetch(OSSL_LIB_CTX *libctx,
 {
     const EVP_MD *md;
 
-    md = tls_get_digest_from_engine(nid);
-    if (md != NULL)
-        return md;
-
-    /* Otherwise we do an explicit fetch */
     ERR_set_mark();
     md = EVP_MD_fetch(libctx, OBJ_nid2sn(nid), properties);
     ERR_pop_to_mark();

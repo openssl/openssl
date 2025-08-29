@@ -22,7 +22,6 @@
 #include <openssl/dh.h>
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
-#include <openssl/engine.h>
 #include <openssl/trace.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
@@ -3531,7 +3530,7 @@ static int tls_construct_cke_gost18(SSL_CONNECTION *s, WPACKET *pkt)
         goto err;
     };
 
-    /* Reuse EVP_PKEY_CTRL_SET_IV, make choice in engine code */
+    /* Reuse EVP_PKEY_CTRL_SET_IV */
     if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,
                           EVP_PKEY_CTRL_SET_IV, 32, rnd_dgst) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
@@ -4124,13 +4123,6 @@ int ssl_do_client_cert_cb(SSL_CONNECTION *s, X509 **px509, EVP_PKEY **ppkey)
     int i = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-#ifndef OPENSSL_NO_ENGINE
-    if (sctx->client_cert_engine) {
-        i = tls_engine_load_ssl_client_cert(s, px509, ppkey);
-        if (i != 0)
-            return i;
-    }
-#endif
     if (sctx->client_cert_cb)
         i = sctx->client_cert_cb(SSL_CONNECTION_GET_USER_SSL(s), px509, ppkey);
     return i;
