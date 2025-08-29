@@ -218,7 +218,7 @@ static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
         if (ok > 0 && !ossl_fips_self_testing()) {
             ok = ossl_dh_check_pairwise(dh, 1);
             if (ok <= 0)
-                ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+                ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT_IMPORT);
         }
 #endif  /* FIPS_MODULE */
     }
