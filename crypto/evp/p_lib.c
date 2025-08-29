@@ -429,24 +429,6 @@ static EVP_PKEY *new_raw_key_int(OSSL_LIB_CTX *libctx,
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
     int result = 0;
 
-# ifndef OPENSSL_NO_ENGINE
-    /* Check if there is an Engine for this type */
-    if (e == NULL) {
-        ENGINE *tmpe = NULL;
-
-        if (strtype != NULL)
-            ameth = EVP_PKEY_asn1_find_str(&tmpe, strtype, -1);
-        else if (nidtype != EVP_PKEY_NONE)
-            ameth = EVP_PKEY_asn1_find(&tmpe, nidtype);
-
-        /* If tmpe is NULL then no engine is claiming to support this type */
-        if (tmpe == NULL)
-            ameth = NULL;
-
-        ENGINE_finish(tmpe);
-    }
-# endif
-
     if (e == NULL && ameth == NULL) {
         /*
          * No engine is claiming to support this type, so lets see if we have
@@ -661,9 +643,6 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
                                   const char *propq, ENGINE *e)
 {
 # ifndef OPENSSL_NO_CMAC
-#  ifndef OPENSSL_NO_ENGINE
-    const char *engine_id = e != NULL ? ENGINE_get_id(e) : NULL;
-#  endif
     OSSL_PARAM params[5], *p = params;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx;
@@ -692,11 +671,6 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
     if (propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_PROPERTIES,
                                                 (char *)propq, 0);
-#  ifndef OPENSSL_NO_ENGINE
-    if (engine_id != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_ENGINE,
-                                                (char *)engine_id, 0);
-#  endif
     *p = OSSL_PARAM_construct_end();
 
     if (EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params) <= 0) {
@@ -729,31 +703,6 @@ int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
 {
     return pkey_set_type(pkey, NULL, EVP_PKEY_NONE, str, len, NULL);
 }
-
-# ifndef OPENSSL_NO_ENGINE
-int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e)
-{
-    if (e != NULL) {
-        if (!ENGINE_init(e)) {
-            ERR_raise(ERR_LIB_EVP, ERR_R_ENGINE_LIB);
-            return 0;
-        }
-        if (ENGINE_get_pkey_meth(e, pkey->type) == NULL) {
-            ENGINE_finish(e);
-            ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_ALGORITHM);
-            return 0;
-        }
-    }
-    ENGINE_finish(pkey->pmeth_engine);
-    pkey->pmeth_engine = e;
-    return 1;
-}
-
-ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey)
-{
-    return pkey->engine;
-}
-# endif
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 static void detect_foreign_key(EVP_PKEY *pkey)
@@ -1573,13 +1522,6 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
             && type == pkey->save_type
             && pkey->ameth != NULL)
             return 1;
-# ifndef OPENSSL_NO_ENGINE
-        /* If we have ENGINEs release them */
-        ENGINE_finish(pkey->engine);
-        pkey->engine = NULL;
-        ENGINE_finish(pkey->pmeth_engine);
-        pkey->pmeth_engine = NULL;
-# endif
 #endif
     }
 #ifndef FIPS_MODULE
@@ -1587,10 +1529,6 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
         ameth = EVP_PKEY_asn1_find_str(eptr, str, len);
     else if (type != EVP_PKEY_NONE)
         ameth = EVP_PKEY_asn1_find(eptr, type);
-# ifndef OPENSSL_NO_ENGINE
-    if (pkey == NULL && eptr != NULL)
-        ENGINE_finish(e);
-# endif
 #endif
 
 
@@ -1640,12 +1578,6 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
         } else {
             pkey->type = EVP_PKEY_KEYMGMT;
         }
-# ifndef OPENSSL_NO_ENGINE
-        if (eptr == NULL && e != NULL && !ENGINE_init(e)) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-            return 0;
-        }
-# endif
         pkey->engine = e;
 #endif
     }
@@ -1804,13 +1736,6 @@ void evp_pkey_free_legacy(EVP_PKEY *x)
             ameth->pkey_free(x);
         x->pkey.ptr = NULL;
     }
-# ifndef OPENSSL_NO_ENGINE
-    ENGINE_finish(tmpe);
-    ENGINE_finish(x->engine);
-    x->engine = NULL;
-    ENGINE_finish(x->pmeth_engine);
-    x->pmeth_engine = NULL;
-# endif
 }
 #endif  /* FIPS_MODULE */
 
