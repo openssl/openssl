@@ -401,8 +401,7 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
 
     if (!ossl_prov_macctx_load(&ctx->ctx_init, p.mac, p.cipher,
-                               p.digest, p.propq, p.engine,
-                               NULL, NULL, NULL, libctx))
+                               p.digest, p.propq, NULL, NULL, NULL, libctx))
         return 0;
 
     if (ctx->ctx_init != NULL) {

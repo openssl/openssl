@@ -51,9 +51,6 @@ OSSL_DEPRECATEDIN_3_0 int ERR_load_DSA_strings(void);
 #  ifndef OPENSSL_NO_EC
 OSSL_DEPRECATEDIN_3_0 int ERR_load_EC_strings(void);
 #  endif
-#  ifndef OPENSSL_NO_ENGINE
-OSSL_DEPRECATEDIN_3_0 int ERR_load_ENGINE_strings(void);
-#  endif
 OSSL_DEPRECATEDIN_3_0 int ERR_load_ERR_strings(void);
 OSSL_DEPRECATEDIN_3_0 int ERR_load_EVP_strings(void);
 OSSL_DEPRECATEDIN_3_0 int ERR_load_KDF_strings(void);
@@ -751,52 +748,6 @@ OSSL_DEPRECATEDIN_3_0 int ERR_load_X509V3_strings(void);
 #   define EC_F_VALIDATE_ECX_DERIVE                         0
 #  endif
 
-#  ifndef OPENSSL_NO_ENGINE
-/*
- * ENGINE function codes.
- */
-#   define ENGINE_F_DIGEST_UPDATE                           0
-#   define ENGINE_F_DYNAMIC_CTRL                            0
-#   define ENGINE_F_DYNAMIC_GET_DATA_CTX                    0
-#   define ENGINE_F_DYNAMIC_LOAD                            0
-#   define ENGINE_F_DYNAMIC_SET_DATA_CTX                    0
-#   define ENGINE_F_ENGINE_ADD                              0
-#   define ENGINE_F_ENGINE_BY_ID                            0
-#   define ENGINE_F_ENGINE_CMD_IS_EXECUTABLE                0
-#   define ENGINE_F_ENGINE_CTRL                             0
-#   define ENGINE_F_ENGINE_CTRL_CMD                         0
-#   define ENGINE_F_ENGINE_CTRL_CMD_STRING                  0
-#   define ENGINE_F_ENGINE_FINISH                           0
-#   define ENGINE_F_ENGINE_GET_CIPHER                       0
-#   define ENGINE_F_ENGINE_GET_DIGEST                       0
-#   define ENGINE_F_ENGINE_GET_FIRST                        0
-#   define ENGINE_F_ENGINE_GET_LAST                         0
-#   define ENGINE_F_ENGINE_GET_NEXT                         0
-#   define ENGINE_F_ENGINE_GET_PKEY_ASN1_METH               0
-#   define ENGINE_F_ENGINE_GET_PKEY_METH                    0
-#   define ENGINE_F_ENGINE_GET_PREV                         0
-#   define ENGINE_F_ENGINE_INIT                             0
-#   define ENGINE_F_ENGINE_LIST_ADD                         0
-#   define ENGINE_F_ENGINE_LIST_REMOVE                      0
-#   define ENGINE_F_ENGINE_LOAD_PRIVATE_KEY                 0
-#   define ENGINE_F_ENGINE_LOAD_PUBLIC_KEY                  0
-#   define ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT             0
-#   define ENGINE_F_ENGINE_NEW                              0
-#   define ENGINE_F_ENGINE_PKEY_ASN1_FIND_STR               0
-#   define ENGINE_F_ENGINE_REMOVE                           0
-#   define ENGINE_F_ENGINE_SET_DEFAULT_STRING               0
-#   define ENGINE_F_ENGINE_SET_ID                           0
-#   define ENGINE_F_ENGINE_SET_NAME                         0
-#   define ENGINE_F_ENGINE_TABLE_REGISTER                   0
-#   define ENGINE_F_ENGINE_UNLOCKED_FINISH                  0
-#   define ENGINE_F_ENGINE_UP_REF                           0
-#   define ENGINE_F_INT_CLEANUP_ITEM                        0
-#   define ENGINE_F_INT_CTRL_HELPER                         0
-#   define ENGINE_F_INT_ENGINE_CONFIGURE                    0
-#   define ENGINE_F_INT_ENGINE_MODULE_INIT                  0
-#   define ENGINE_F_OSSL_HMAC_INIT                          0
-#  endif
-
 /*
  * EVP function codes.
  */
@@ -880,7 +831,6 @@ OSSL_DEPRECATEDIN_3_0 int ERR_load_X509V3_strings(void);
 #  define EVP_F_EVP_PKEY_PARAMGEN_INIT                     0
 #  define EVP_F_EVP_PKEY_PARAM_CHECK                       0
 #  define EVP_F_EVP_PKEY_PUBLIC_CHECK                      0
-#  define EVP_F_EVP_PKEY_SET1_ENGINE                       0
 #  define EVP_F_EVP_PKEY_SET_ALIAS_TYPE                    0
 #  define EVP_F_EVP_PKEY_SIGN                              0
 #  define EVP_F_EVP_PKEY_SIGN_INIT                         0
@@ -1257,7 +1207,6 @@ OSSL_DEPRECATEDIN_3_0 int ERR_load_X509V3_strings(void);
 #   define TS_F_TS_CONF_LOAD_CERTS                          0
 #   define TS_F_TS_CONF_LOAD_KEY                            0
 #   define TS_F_TS_CONF_LOOKUP_FAIL                         0
-#   define TS_F_TS_CONF_SET_DEFAULT_ENGINE                  0
 #   define TS_F_TS_GET_STATUS_TEXT                          0
 #   define TS_F_TS_MSG_IMPRINT_SET_ALGO                     0
 #   define TS_F_TS_REQ_SET_MSG_IMPRINT                      0

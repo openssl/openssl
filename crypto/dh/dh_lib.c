@@ -39,10 +39,6 @@ int DH_set_method(DH *dh, const DH_METHOD *meth)
     mtmp = dh->meth;
     if (mtmp->finish)
         mtmp->finish(dh);
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_finish(dh->engine);
-    dh->engine = NULL;
-#endif
     dh->meth = meth;
     if (meth->init)
         meth->init(dh);
@@ -93,25 +89,6 @@ static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 
     ret->libctx = libctx;
     ret->meth = DH_get_default_method();
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
-    ret->flags = ret->meth->flags;  /* early default init */
-    if (engine) {
-        if (!ENGINE_init(engine)) {
-            ERR_raise(ERR_LIB_DH, ERR_R_ENGINE_LIB);
-            goto err;
-        }
-        ret->engine = engine;
-    } else
-        ret->engine = ENGINE_get_default_DH();
-    if (ret->engine) {
-        ret->meth = ENGINE_get_DH(ret->engine);
-        if (ret->meth == NULL) {
-            ERR_raise(ERR_LIB_DH, ERR_R_ENGINE_LIB);
-            goto err;
-        }
-    }
-#endif
-
     ret->flags = ret->meth->flags;
 
 #ifndef FIPS_MODULE
@@ -149,9 +126,6 @@ void DH_free(DH *r)
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
 #if !defined(FIPS_MODULE)
-# if !defined(OPENSSL_NO_ENGINE)
-    ENGINE_finish(r->engine);
-# endif
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
 #endif
 

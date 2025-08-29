@@ -307,8 +307,7 @@ static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     provctx = PROV_LIBCTX_OF(ctx->provctx);
 
     if (p.digest != NULL) {
-        if (!ossl_prov_digest_load(&ctx->digest, p.digest,
-                                   p.propq, p.engine, provctx))
+        if (!ossl_prov_digest_load(&ctx->digest, p.digest, p.propq, provctx))
             return 0;
         md = ossl_prov_digest_md(&ctx->digest);
         if (EVP_MD_xof(md)) {

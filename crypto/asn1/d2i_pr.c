@@ -112,10 +112,6 @@ ossl_d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a, const unsigned char **pp,
         }
     } else {
         ret = *a;
-#ifndef OPENSSL_NO_ENGINE
-        ENGINE_finish(ret->engine);
-        ret->engine = NULL;
-#endif
     }
 
     if (!EVP_PKEY_set_type(ret, keytype)) {

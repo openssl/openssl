@@ -265,7 +265,7 @@ int crl_main(int argc, char **argv)
         newcrl = load_crl(crldiff, informat, 0, "other CRL");
         if (!newcrl)
             goto end;
-        pkey = load_key(keyfile, keyformat, 0, NULL, NULL, "CRL signing key");
+        pkey = load_key(keyfile, keyformat, 0, NULL, "CRL signing key");
         if (pkey == NULL) {
             X509_CRL_free(newcrl);
             goto end;

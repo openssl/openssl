@@ -60,11 +60,6 @@ void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force, int keep_fetched)
     if (force)
         ctx->digest = NULL;
 
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
-    ENGINE_finish(ctx->engine);
-    ctx->engine = NULL;
-#endif
-
     /* Non legacy code, this has to be later than the ctx->digest cleaning */
     if (!keep_fetched) {
         EVP_MD_free(ctx->fetched_digest);
@@ -157,10 +152,6 @@ int evp_md_ctx_free_algctx(EVP_MD_CTX *ctx)
 static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
                                 const OSSL_PARAM params[], ENGINE *impl)
 {
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    ENGINE *tmpimpl = NULL;
-#endif
-
 #if !defined(FIPS_MODULE)
     if (ctx->pctx != NULL
             && EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx->pctx)
@@ -194,41 +185,11 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
     }
 
     /* Code below to be removed when legacy support is dropped. */
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    /*
-     * Whether it's nice or not, "Inits" can be used on "Final"'d contexts so
-     * this context may already have an ENGINE! Try to avoid releasing the
-     * previous handle, re-querying for an ENGINE, and having a
-     * reinitialisation, when it may all be unnecessary.
-     */
-    if (ossl_unlikely(ctx->engine != NULL)
-            && ctx->digest != NULL
-            && type->type == ctx->digest->type)
-        goto skip_to_init;
-
-    /*
-     * Ensure an ENGINE left lying around from last time is cleared (the
-     * previous check attempted to avoid this if the same ENGINE and
-     * EVP_MD could be used).
-     */
-    ENGINE_finish(ctx->engine);
-    ctx->engine = NULL;
-
-    if (impl == NULL)
-        tmpimpl = ENGINE_get_digest_engine(type->type);
-#endif
-
     /*
      * If there are engines involved or EVP_MD_CTX_FLAG_NO_INIT is set then we
      * should use legacy handling for now.
      */
     if (impl != NULL
-#if !defined(OPENSSL_NO_ENGINE)
-            || ctx->engine != NULL
-# if !defined(FIPS_MODULE)
-            || tmpimpl != NULL
-# endif
-#endif
             || (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) != 0
             || (type != NULL && type->origin == EVP_ORIG_METH)
             || (type == NULL && ctx->digest != NULL
@@ -304,37 +265,6 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
     /* Code below to be removed when legacy support is dropped. */
  legacy:
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    if (type) {
-        if (impl != NULL) {
-            if (!ENGINE_init(impl)) {
-                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-                return 0;
-            }
-        } else {
-            /* Ask if an ENGINE is reserved for this job */
-            impl = tmpimpl;
-        }
-        if (impl != NULL) {
-            /* There's an ENGINE for this job ... (apparently) */
-            const EVP_MD *d = ENGINE_get_digest(impl, type->type);
-
-            if (d == NULL) {
-                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-                ENGINE_finish(impl);
-                return 0;
-            }
-            /* We'll use the ENGINE's private digest definition */
-            type = d;
-            /*
-             * Store the ENGINE functional reference so we know 'type' came
-             * from an ENGINE and we need to release it when done.
-             */
-            ctx->engine = impl;
-        } else
-            ctx->engine = NULL;
-    }
-#endif
     if (ctx->digest != type) {
         cleanup_old_md_data(ctx, 1);
 
@@ -346,9 +276,6 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
                 return 0;
         }
     }
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
- skip_to_init:
-#endif
 #ifndef FIPS_MODULE
     if (ctx->pctx != NULL
             && (!EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx->pctx)
@@ -668,13 +595,6 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
     /* Code below to be removed when legacy support is dropped. */
  legacy:
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    /* Make sure it's safe to copy a digest context using an ENGINE */
-    if (in->engine && !ENGINE_init(in->engine)) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-#endif
 
     if (out->digest == in->digest) {
         tmp_buf = out->md_data;
