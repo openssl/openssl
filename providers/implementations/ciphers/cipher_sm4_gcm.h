@@ -12,11 +12,11 @@
 #include "prov/ciphercommon_gcm.h"
 
 typedef struct prov_sm4_gcm_ctx_st {
-    PROV_GCM_CTX base;              /* must be first entry in struct */
-    union {
-        OSSL_UNION_ALIGN;
-        SM4_KEY ks;
-    } ks;
+	PROV_GCM_CTX base; /* must be first entry in struct */
+	union {
+		OSSL_UNION_ALIGN;
+		SM4_KEY ks;
+	} ks;
 } PROV_SM4_GCM_CTX;
 
 const PROV_GCM_HW *ossl_prov_sm4_hw_gcm(size_t keybits);

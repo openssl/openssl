@@ -19,26 +19,26 @@
  */
 SSL_CTX *create_ssl_ctx(void)
 {
-    SSL_CTX *ctx;
+	SSL_CTX *ctx;
 
 #ifdef USE_QUIC
-    ctx = SSL_CTX_new(OSSL_QUIC_client_method());
+	ctx = SSL_CTX_new(OSSL_QUIC_client_method());
 #else
-    ctx = SSL_CTX_new(TLS_client_method());
+	ctx = SSL_CTX_new(TLS_client_method());
 #endif
-    if (ctx == NULL)
-        return NULL;
+	if (ctx == NULL)
+		return NULL;
 
-    /* Enable trust chain verification. */
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+	/* Enable trust chain verification. */
+	SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 
-    /* Load default root CA store. */
-    if (SSL_CTX_set_default_verify_paths(ctx) == 0) {
-        SSL_CTX_free(ctx);
-        return NULL;
-    }
+	/* Load default root CA store. */
+	if (SSL_CTX_set_default_verify_paths(ctx) == 0) {
+		SSL_CTX_free(ctx);
+		return NULL;
+	}
 
-    return ctx;
+	return ctx;
 }
 
 /*
@@ -49,42 +49,42 @@ SSL_CTX *create_ssl_ctx(void)
  */
 SSL *new_conn(SSL_CTX *ctx, int fd, const char *bare_hostname)
 {
-    SSL *ssl;
+	SSL *ssl;
 #ifdef USE_QUIC
-    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+	static const unsigned char alpn[] = { 5, 'd', 'u', 'm', 'm', 'y' };
 #endif
 
-    ssl = SSL_new(ctx);
-    if (ssl == NULL)
-        return NULL;
+	ssl = SSL_new(ctx);
+	if (ssl == NULL)
+		return NULL;
 
-    SSL_set_connect_state(ssl); /* cannot fail */
+	SSL_set_connect_state(ssl); /* cannot fail */
 
-    if (SSL_set_fd(ssl, fd) <= 0) {
-        SSL_free(ssl);
-        return NULL;
-    }
+	if (SSL_set_fd(ssl, fd) <= 0) {
+		SSL_free(ssl);
+		return NULL;
+	}
 
-    if (SSL_set1_host(ssl, bare_hostname) <= 0) {
-        SSL_free(ssl);
-        return NULL;
-    }
+	if (SSL_set1_host(ssl, bare_hostname) <= 0) {
+		SSL_free(ssl);
+		return NULL;
+	}
 
-    if (SSL_set_tlsext_host_name(ssl, bare_hostname) <= 0) {
-        SSL_free(ssl);
-        return NULL;
-    }
+	if (SSL_set_tlsext_host_name(ssl, bare_hostname) <= 0) {
+		SSL_free(ssl);
+		return NULL;
+	}
 
 #ifdef USE_QUIC
-    /* Configure ALPN, which is required for QUIC. */
-    if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn))) {
-        /* Note: SSL_set_alpn_protos returns 1 for failure. */
-        SSL_free(ssl);
-        return NULL;
-    }
+	/* Configure ALPN, which is required for QUIC. */
+	if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn))) {
+		/* Note: SSL_set_alpn_protos returns 1 for failure. */
+		SSL_free(ssl);
+		return NULL;
+	}
 #endif
 
-    return ssl;
+	return ssl;
 }
 
 /*
@@ -93,7 +93,7 @@ SSL *new_conn(SSL_CTX *ctx, int fd, const char *bare_hostname)
  */
 int tx(SSL *ssl, const void *buf, int buf_len)
 {
-    return SSL_write(ssl, buf, buf_len);
+	return SSL_write(ssl, buf, buf_len);
 }
 
 /*
@@ -102,7 +102,7 @@ int tx(SSL *ssl, const void *buf, int buf_len)
  */
 int rx(SSL *ssl, void *buf, int buf_len)
 {
-    return SSL_read(ssl, buf, buf_len);
+	return SSL_read(ssl, buf, buf_len);
 }
 
 /*
@@ -111,7 +111,7 @@ int rx(SSL *ssl, void *buf, int buf_len)
  */
 void teardown(SSL *ssl)
 {
-    SSL_free(ssl);
+	SSL_free(ssl);
 }
 
 /*
@@ -120,7 +120,7 @@ void teardown(SSL *ssl)
  */
 void teardown_ctx(SSL_CTX *ctx)
 {
-    SSL_CTX_free(ctx);
+	SSL_CTX_free(ctx);
 }
 
 /*
@@ -136,82 +136,82 @@ void teardown_ctx(SSL_CTX *ctx)
 
 int main(int argc, char **argv)
 {
-    int rc, fd = -1, l, mlen, res = 1;
-    static char msg[300];
-    struct addrinfo hints = {0}, *result = NULL;
-    SSL *ssl = NULL;
-    SSL_CTX *ctx = NULL;
-    char buf[2048];
+	int rc, fd = -1, l, mlen, res = 1;
+	static char msg[300];
+	struct addrinfo hints = { 0 }, *result = NULL;
+	SSL *ssl = NULL;
+	SSL_CTX *ctx = NULL;
+	char buf[2048];
 
-    if (argc < 3) {
-        fprintf(stderr, "usage: %s host port\n", argv[0]);
-        goto fail;
-    }
+	if (argc < 3) {
+		fprintf(stderr, "usage: %s host port\n", argv[0]);
+		goto fail;
+	}
 
-    mlen = snprintf(msg, sizeof(msg),
-                    "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
+	mlen = snprintf(msg, sizeof(msg), "GET / HTTP/1.0\r\nHost: %s\r\n\r\n",
+			argv[1]);
 
-    ctx = create_ssl_ctx();
-    if (ctx == NULL) {
-        fprintf(stderr, "cannot create context\n");
-        goto fail;
-    }
+	ctx = create_ssl_ctx();
+	if (ctx == NULL) {
+		fprintf(stderr, "cannot create context\n");
+		goto fail;
+	}
 
-    hints.ai_family     = AF_INET;
-    hints.ai_socktype   = SOCK_STREAM;
-    hints.ai_flags      = AI_PASSIVE;
-    rc = getaddrinfo(argv[1], argv[2], &hints, &result);
-    if (rc < 0) {
-        fprintf(stderr, "cannot resolve\n");
-        goto fail;
-    }
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+	rc = getaddrinfo(argv[1], argv[2], &hints, &result);
+	if (rc < 0) {
+		fprintf(stderr, "cannot resolve\n");
+		goto fail;
+	}
 
-    signal(SIGPIPE, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
 
 #ifdef USE_QUIC
-    fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 #else
-    fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 #endif
-    if (fd < 0) {
-        fprintf(stderr, "cannot create socket\n");
-        goto fail;
-    }
+	if (fd < 0) {
+		fprintf(stderr, "cannot create socket\n");
+		goto fail;
+	}
 
-    rc = connect(fd, result->ai_addr, result->ai_addrlen);
-    if (rc < 0) {
-        fprintf(stderr, "cannot connect\n");
-        goto fail;
-    }
+	rc = connect(fd, result->ai_addr, result->ai_addrlen);
+	if (rc < 0) {
+		fprintf(stderr, "cannot connect\n");
+		goto fail;
+	}
 
-    ssl = new_conn(ctx, fd, argv[1]);
-    if (ssl == NULL) {
-        fprintf(stderr, "cannot create connection\n");
-        goto fail;
-    }
+	ssl = new_conn(ctx, fd, argv[1]);
+	if (ssl == NULL) {
+		fprintf(stderr, "cannot create connection\n");
+		goto fail;
+	}
 
-    l = tx(ssl, msg, mlen);
-    if (l < mlen) {
-        fprintf(stderr, "tx error\n");
-        goto fail;
-    }
+	l = tx(ssl, msg, mlen);
+	if (l < mlen) {
+		fprintf(stderr, "tx error\n");
+		goto fail;
+	}
 
-    for (;;) {
-        l = rx(ssl, buf, sizeof(buf));
-        if (l <= 0)
-            break;
-        fwrite(buf, 1, l, stdout);
-    }
+	for (;;) {
+		l = rx(ssl, buf, sizeof(buf));
+		if (l <= 0)
+			break;
+		fwrite(buf, 1, l, stdout);
+	}
 
-    res = 0;
+	res = 0;
 fail:
-    if (ssl != NULL)
-        teardown(ssl);
-    if (ctx != NULL)
-        teardown_ctx(ctx);
-    if (fd >= 0)
-        close(fd);
-    if (result != NULL)
-        freeaddrinfo(result);
-    return res;
+	if (ssl != NULL)
+		teardown(ssl);
+	if (ctx != NULL)
+		teardown_ctx(ctx);
+	if (fd >= 0)
+		close(fd);
+	if (result != NULL)
+		freeaddrinfo(result);
+	return res;
 }

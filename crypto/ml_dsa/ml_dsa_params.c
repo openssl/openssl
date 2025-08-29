@@ -42,55 +42,22 @@
 #define ML_DSA_87_SECURITY_CATEGORY 5
 
 static const ML_DSA_PARAMS ml_dsa_params[] = {
-    { "ML-DSA-44",
-      EVP_PKEY_ML_DSA_44,
-      ML_DSA_44_TAU,
-      ML_DSA_44_LAMBDA,
-      ML_DSA_GAMMA1_TWO_POWER_17,
-      ML_DSA_GAMMA2_Q_MINUS1_DIV88,
-      ML_DSA_44_K,
-      ML_DSA_44_L,
-      ML_DSA_44_ETA,
-      ML_DSA_44_BETA,
-      ML_DSA_44_OMEGA,
-      ML_DSA_44_SECURITY_CATEGORY,
-      ML_DSA_44_PRIV_LEN,
-      ML_DSA_44_PUB_LEN,
-      ML_DSA_44_SIG_LEN
-    },
-    { "ML-DSA-65",
-      EVP_PKEY_ML_DSA_65,
-      ML_DSA_65_TAU,
-      ML_DSA_65_LAMBDA,
-      ML_DSA_GAMMA1_TWO_POWER_19,
-      ML_DSA_GAMMA2_Q_MINUS1_DIV32,
-      ML_DSA_65_K,
-      ML_DSA_65_L,
-      ML_DSA_65_ETA,
-      ML_DSA_65_BETA,
-      ML_DSA_65_OMEGA,
-      ML_DSA_65_SECURITY_CATEGORY,
-      ML_DSA_65_PRIV_LEN,
-      ML_DSA_65_PUB_LEN,
-      ML_DSA_65_SIG_LEN
-    },
-    { "ML-DSA-87",
-      EVP_PKEY_ML_DSA_87,
-      ML_DSA_87_TAU,
-      ML_DSA_87_LAMBDA,
-      ML_DSA_GAMMA1_TWO_POWER_19,
-      ML_DSA_GAMMA2_Q_MINUS1_DIV32,
-      ML_DSA_87_K,
-      ML_DSA_87_L,
-      ML_DSA_87_ETA,
-      ML_DSA_87_BETA,
-      ML_DSA_87_OMEGA,
-      ML_DSA_87_SECURITY_CATEGORY,
-      ML_DSA_87_PRIV_LEN,
-      ML_DSA_87_PUB_LEN,
-      ML_DSA_87_SIG_LEN
-    },
-    {NULL},
+	{ "ML-DSA-44", EVP_PKEY_ML_DSA_44, ML_DSA_44_TAU, ML_DSA_44_LAMBDA,
+	  ML_DSA_GAMMA1_TWO_POWER_17, ML_DSA_GAMMA2_Q_MINUS1_DIV88, ML_DSA_44_K,
+	  ML_DSA_44_L, ML_DSA_44_ETA, ML_DSA_44_BETA, ML_DSA_44_OMEGA,
+	  ML_DSA_44_SECURITY_CATEGORY, ML_DSA_44_PRIV_LEN, ML_DSA_44_PUB_LEN,
+	  ML_DSA_44_SIG_LEN },
+	{ "ML-DSA-65", EVP_PKEY_ML_DSA_65, ML_DSA_65_TAU, ML_DSA_65_LAMBDA,
+	  ML_DSA_GAMMA1_TWO_POWER_19, ML_DSA_GAMMA2_Q_MINUS1_DIV32, ML_DSA_65_K,
+	  ML_DSA_65_L, ML_DSA_65_ETA, ML_DSA_65_BETA, ML_DSA_65_OMEGA,
+	  ML_DSA_65_SECURITY_CATEGORY, ML_DSA_65_PRIV_LEN, ML_DSA_65_PUB_LEN,
+	  ML_DSA_65_SIG_LEN },
+	{ "ML-DSA-87", EVP_PKEY_ML_DSA_87, ML_DSA_87_TAU, ML_DSA_87_LAMBDA,
+	  ML_DSA_GAMMA1_TWO_POWER_19, ML_DSA_GAMMA2_Q_MINUS1_DIV32, ML_DSA_87_K,
+	  ML_DSA_87_L, ML_DSA_87_ETA, ML_DSA_87_BETA, ML_DSA_87_OMEGA,
+	  ML_DSA_87_SECURITY_CATEGORY, ML_DSA_87_PRIV_LEN, ML_DSA_87_PUB_LEN,
+	  ML_DSA_87_SIG_LEN },
+	{ NULL },
 };
 
 /**
@@ -98,11 +65,11 @@ static const ML_DSA_PARAMS ml_dsa_params[] = {
  */
 const ML_DSA_PARAMS *ossl_ml_dsa_params_get(int evp_type)
 {
-    const ML_DSA_PARAMS *p;
+	const ML_DSA_PARAMS *p;
 
-    for (p = ml_dsa_params; p->alg != NULL; ++p) {
-        if (p->evp_type == evp_type)
-            return p;
-    }
-    return NULL;
+	for (p = ml_dsa_params; p->alg != NULL; ++p) {
+		if (p->evp_type == evp_type)
+			return p;
+	}
+	return NULL;
 }

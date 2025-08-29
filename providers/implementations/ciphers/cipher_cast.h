@@ -11,11 +11,11 @@
 #include "prov/ciphercommon.h"
 
 typedef struct prov_cast_ctx_st {
-    PROV_CIPHER_CTX base;      /* Must be first */
-    union {
-        OSSL_UNION_ALIGN;
-        CAST_KEY ks;
-    } ks;
+	PROV_CIPHER_CTX base; /* Must be first */
+	union {
+		OSSL_UNION_ALIGN;
+		CAST_KEY ks;
+	} ks;
 } PROV_CAST_CTX;
 
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_cast5_cbc(size_t keybits);

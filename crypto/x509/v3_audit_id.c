@@ -11,10 +11,18 @@
 #include "ext_dat.h"
 
 const X509V3_EXT_METHOD ossl_v3_audit_identity = {
-    NID_ac_auditIdentity, 0, ASN1_ITEM_ref(ASN1_OCTET_STRING),
-    0, 0, 0, 0,
-    (X509V3_EXT_I2S)i2s_ASN1_OCTET_STRING,
-    (X509V3_EXT_S2I)s2i_ASN1_OCTET_STRING,
-    0, 0, 0, 0,
-    NULL
+	NID_ac_auditIdentity,
+	0,
+	ASN1_ITEM_ref(ASN1_OCTET_STRING),
+	0,
+	0,
+	0,
+	0,
+	(X509V3_EXT_I2S)i2s_ASN1_OCTET_STRING,
+	(X509V3_EXT_S2I)s2i_ASN1_OCTET_STRING,
+	0,
+	0,
+	0,
+	0,
+	NULL
 };

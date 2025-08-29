@@ -20,15 +20,16 @@
 IMPLEMENT_LEGACY_EVP_MD_METH(md4, MD4)
 
 static const EVP_MD md4_md = {
-    NID_md4,
-    NID_md4WithRSAEncryption,
-    MD4_DIGEST_LENGTH,
-    0,
-    EVP_ORIG_GLOBAL,
-    LEGACY_EVP_MD_METH_TABLE(md4_init, md4_update, md4_final, NULL, MD4_CBLOCK),
+	NID_md4,
+	NID_md4WithRSAEncryption,
+	MD4_DIGEST_LENGTH,
+	0,
+	EVP_ORIG_GLOBAL,
+	LEGACY_EVP_MD_METH_TABLE(md4_init, md4_update, md4_final, NULL,
+				 MD4_CBLOCK),
 };
 
 const EVP_MD *EVP_md4(void)
 {
-    return &md4_md;
+	return &md4_md;
 }

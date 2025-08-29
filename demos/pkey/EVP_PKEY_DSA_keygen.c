@@ -23,61 +23,61 @@
  */
 static EVP_PKEY *dsa_genparams(OSSL_LIB_CTX *libctx, const char *propq)
 {
-    EVP_PKEY *dsaparamkey = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
+	EVP_PKEY *dsaparamkey = NULL;
+	EVP_PKEY_CTX *ctx = NULL;
 
-    /* Use the dsa params in a EVP_PKEY ctx */
-    ctx = EVP_PKEY_CTX_new_from_name(libctx, "DSA", propq);
-    if (ctx == NULL) {
-        fprintf(stderr, "EVP_PKEY_CTX_new_from_name() failed\n");
-        return NULL;
-    }
+	/* Use the dsa params in a EVP_PKEY ctx */
+	ctx = EVP_PKEY_CTX_new_from_name(libctx, "DSA", propq);
+	if (ctx == NULL) {
+		fprintf(stderr, "EVP_PKEY_CTX_new_from_name() failed\n");
+		return NULL;
+	}
 
-    if (EVP_PKEY_paramgen_init(ctx) <= 0
-            || EVP_PKEY_paramgen(ctx, &dsaparamkey) <= 0) {
-        fprintf(stderr, "DSA paramgen failed\n");
-        goto cleanup;
-    }
+	if (EVP_PKEY_paramgen_init(ctx) <= 0 ||
+	    EVP_PKEY_paramgen(ctx, &dsaparamkey) <= 0) {
+		fprintf(stderr, "DSA paramgen failed\n");
+		goto cleanup;
+	}
 cleanup:
-    EVP_PKEY_CTX_free(ctx);
-    return dsaparamkey;
+	EVP_PKEY_CTX_free(ctx);
+	return dsaparamkey;
 }
 
 int main(int argc, char **argv)
 {
-    int ret = EXIT_FAILURE;
-    OSSL_LIB_CTX *libctx = NULL;
-    const char *propq = NULL;
-    EVP_PKEY *dsaparamskey = NULL;
-    EVP_PKEY *dsakey = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
+	int ret = EXIT_FAILURE;
+	OSSL_LIB_CTX *libctx = NULL;
+	const char *propq = NULL;
+	EVP_PKEY *dsaparamskey = NULL;
+	EVP_PKEY *dsakey = NULL;
+	EVP_PKEY_CTX *ctx = NULL;
 
-    /* Generate random dsa params */
-    dsaparamskey = dsa_genparams(libctx, propq);
-    if (dsaparamskey == NULL)
-        goto cleanup;
+	/* Generate random dsa params */
+	dsaparamskey = dsa_genparams(libctx, propq);
+	if (dsaparamskey == NULL)
+		goto cleanup;
 
-    /* Use the dsa params in a EVP_PKEY ctx */
-    ctx = EVP_PKEY_CTX_new_from_pkey(libctx, dsaparamskey, propq);
-    if (ctx == NULL) {
-        fprintf(stderr, "EVP_PKEY_CTX_new_from_pkey() failed\n");
-        goto cleanup;
-    }
+	/* Use the dsa params in a EVP_PKEY ctx */
+	ctx = EVP_PKEY_CTX_new_from_pkey(libctx, dsaparamskey, propq);
+	if (ctx == NULL) {
+		fprintf(stderr, "EVP_PKEY_CTX_new_from_pkey() failed\n");
+		goto cleanup;
+	}
 
-    /* Generate a key using the dsa params */
-    if (EVP_PKEY_keygen_init(ctx) <= 0
-            || EVP_PKEY_keygen(ctx, &dsakey) <= 0) {
-        fprintf(stderr, "DSA keygen failed\n");
-        goto cleanup;
-    }
+	/* Generate a key using the dsa params */
+	if (EVP_PKEY_keygen_init(ctx) <= 0 ||
+	    EVP_PKEY_keygen(ctx, &dsakey) <= 0) {
+		fprintf(stderr, "DSA keygen failed\n");
+		goto cleanup;
+	}
 
-    if (!dsa_print_key(dsakey, 1, libctx, propq))
-        goto cleanup;
+	if (!dsa_print_key(dsakey, 1, libctx, propq))
+		goto cleanup;
 
-    ret = EXIT_SUCCESS;
+	ret = EXIT_SUCCESS;
 cleanup:
-    EVP_PKEY_free(dsakey);
-    EVP_PKEY_free(dsaparamskey);
-    EVP_PKEY_CTX_free(ctx);
-    return ret;
+	EVP_PKEY_free(dsakey);
+	EVP_PKEY_free(dsaparamskey);
+	EVP_PKEY_CTX_free(ctx);
+	return ret;
 }

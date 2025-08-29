@@ -19,6 +19,5 @@
 #include "prov/implementations.h"
 
 /* ossl_md4_functions */
-IMPLEMENT_digest_functions(md4, MD4_CTX,
-                           MD4_CBLOCK, MD4_DIGEST_LENGTH, 0,
-                           MD4_Init, MD4_Update, MD4_Final)
+IMPLEMENT_digest_functions(md4, MD4_CTX, MD4_CBLOCK, MD4_DIGEST_LENGTH, 0,
+			   MD4_Init, MD4_Update, MD4_Final)

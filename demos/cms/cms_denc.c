@@ -17,79 +17,79 @@
 
 int main(int argc, char **argv)
 {
-    BIO *in = NULL, *out = NULL, *tbio = NULL, *dout = NULL;
-    X509 *rcert = NULL;
-    STACK_OF(X509) *recips = NULL;
-    CMS_ContentInfo *cms = NULL;
-    int ret = EXIT_FAILURE;
+	BIO *in = NULL, *out = NULL, *tbio = NULL, *dout = NULL;
+	X509 *rcert = NULL;
+	STACK_OF(X509) *recips = NULL;
+	CMS_ContentInfo *cms = NULL;
+	int ret = EXIT_FAILURE;
 
-    int flags = CMS_STREAM | CMS_DETACHED;
+	int flags = CMS_STREAM | CMS_DETACHED;
 
-    OpenSSL_add_all_algorithms();
-    ERR_load_crypto_strings();
+	OpenSSL_add_all_algorithms();
+	ERR_load_crypto_strings();
 
-    /* Read in recipient certificate */
-    tbio = BIO_new_file("signer.pem", "r");
+	/* Read in recipient certificate */
+	tbio = BIO_new_file("signer.pem", "r");
 
-    if (!tbio)
-        goto err;
+	if (!tbio)
+		goto err;
 
-    rcert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
+	rcert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
 
-    if (!rcert)
-        goto err;
+	if (!rcert)
+		goto err;
 
-    /* Create recipient STACK and add recipient cert to it */
-    recips = sk_X509_new_null();
+	/* Create recipient STACK and add recipient cert to it */
+	recips = sk_X509_new_null();
 
-    if (!recips || !sk_X509_push(recips, rcert))
-        goto err;
+	if (!recips || !sk_X509_push(recips, rcert))
+		goto err;
 
-    /*
+	/*
      * OSSL_STACK_OF_X509_free() free up recipient STACK and its contents
      * so set rcert to NULL so it isn't freed up twice.
      */
-    rcert = NULL;
+	rcert = NULL;
 
-    /* Open content being encrypted */
+	/* Open content being encrypted */
 
-    in = BIO_new_file("encr.txt", "r");
+	in = BIO_new_file("encr.txt", "r");
 
-    dout = BIO_new_file("smencr.out", "wb");
+	dout = BIO_new_file("smencr.out", "wb");
 
-    if (in == NULL || dout == NULL)
-        goto err;
+	if (in == NULL || dout == NULL)
+		goto err;
 
-    /* encrypt content */
-    cms = CMS_encrypt(recips, in, EVP_des_ede3_cbc(), flags);
+	/* encrypt content */
+	cms = CMS_encrypt(recips, in, EVP_des_ede3_cbc(), flags);
 
-    if (!cms)
-        goto err;
+	if (!cms)
+		goto err;
 
-    out = BIO_new_file("smencr.pem", "w");
-    if (!out)
-        goto err;
+	out = BIO_new_file("smencr.pem", "w");
+	if (!out)
+		goto err;
 
-    if (!CMS_final(cms, in, dout, flags))
-        goto err;
+	if (!CMS_final(cms, in, dout, flags))
+		goto err;
 
-    /* Write out CMS structure without content */
-    if (!PEM_write_bio_CMS(out, cms))
-        goto err;
+	/* Write out CMS structure without content */
+	if (!PEM_write_bio_CMS(out, cms))
+		goto err;
 
-    ret = EXIT_SUCCESS;
- err:
-    if (ret != EXIT_SUCCESS) {
-        fprintf(stderr, "Error Encrypting Data\n");
-        ERR_print_errors_fp(stderr);
-    }
+	ret = EXIT_SUCCESS;
+err:
+	if (ret != EXIT_SUCCESS) {
+		fprintf(stderr, "Error Encrypting Data\n");
+		ERR_print_errors_fp(stderr);
+	}
 
-    CMS_ContentInfo_free(cms);
-    X509_free(rcert);
-    OSSL_STACK_OF_X509_free(recips);
-    BIO_free(in);
-    BIO_free(out);
-    BIO_free(dout);
-    BIO_free(tbio);
-    return ret;
+	CMS_ContentInfo_free(cms);
+	X509_free(rcert);
+	OSSL_STACK_OF_X509_free(recips);
+	BIO_free(in);
+	BIO_free(out);
+	BIO_free(dout);
+	BIO_free(tbio);
+	return ret;
 }

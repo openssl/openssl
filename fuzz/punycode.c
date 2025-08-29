@@ -17,24 +17,24 @@
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
-    return 1;
+	return 1;
 }
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    char *b;
-    unsigned int out[16], outlen = OSSL_NELEM(out);
-    char outc[16];
+	char *b;
+	unsigned int out[16], outlen = OSSL_NELEM(out);
+	char outc[16];
 
-    b = OPENSSL_malloc(len + 1);
-    if (b != NULL) {
-        ossl_punycode_decode((const char *)buf, len, out, &outlen);
-        memcpy(b, buf, len);
-        b[len] = '\0';
-        ossl_a2ulabel(b, outc, sizeof(outc));
-        OPENSSL_free(b);
-    }
-    return 0;
+	b = OPENSSL_malloc(len + 1);
+	if (b != NULL) {
+		ossl_punycode_decode((const char *)buf, len, out, &outlen);
+		memcpy(b, buf, len);
+		b[len] = '\0';
+		ossl_a2ulabel(b, outc, sizeof(outc));
+		OPENSSL_free(b);
+	}
+	return 0;
 }
 
 void FuzzerCleanup(void)

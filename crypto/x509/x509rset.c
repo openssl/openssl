@@ -17,26 +17,26 @@
 
 int X509_REQ_set_version(X509_REQ *x, long version)
 {
-    if (x == NULL || version != X509_REQ_VERSION_1) {
-        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
-    }
-    x->req_info.enc.modified = 1;
-    return ASN1_INTEGER_set(x->req_info.version, version);
+	if (x == NULL || version != X509_REQ_VERSION_1) {
+		ERR_raise(ERR_LIB_X509, ERR_R_PASSED_INVALID_ARGUMENT);
+		return 0;
+	}
+	x->req_info.enc.modified = 1;
+	return ASN1_INTEGER_set(x->req_info.version, version);
 }
 
 int X509_REQ_set_subject_name(X509_REQ *x, const X509_NAME *name)
 {
-    if (x == NULL)
-        return 0;
-    x->req_info.enc.modified = 1;
-    return X509_NAME_set(&x->req_info.subject, name);
+	if (x == NULL)
+		return 0;
+	x->req_info.enc.modified = 1;
+	return X509_NAME_set(&x->req_info.subject, name);
 }
 
 int X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey)
 {
-    if (x == NULL)
-        return 0;
-    x->req_info.enc.modified = 1;
-    return X509_PUBKEY_set(&x->req_info.pubkey, pkey);
+	if (x == NULL)
+		return 0;
+	x->req_info.enc.modified = 1;
+	return X509_PUBKEY_set(&x->req_info.pubkey, pkey);
 }

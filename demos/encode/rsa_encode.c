@@ -28,12 +28,12 @@ static const char *propq = NULL;
  */
 static EVP_PKEY *load_key(OSSL_LIB_CTX *libctx, FILE *f, const char *passphrase)
 {
-    int ret = 0;
-    EVP_PKEY *pkey = NULL;
-    OSSL_DECODER_CTX *dctx = NULL;
-    int selection = 0;
+	int ret = 0;
+	EVP_PKEY *pkey = NULL;
+	OSSL_DECODER_CTX *dctx = NULL;
+	int selection = 0;
 
-    /*
+	/*
      * Create PEM decoder context expecting an RSA key.
      *
      * For raw (non-PEM-encoded) keys, change "PEM" to "DER".
@@ -43,15 +43,14 @@ static EVP_PKEY *load_key(OSSL_LIB_CTX *libctx, FILE *f, const char *passphrase)
      * accepted. If set to EVP_PKEY_KEYPAIR, a private key will be required, and
      * if set to EVP_PKEY_PUBLIC_KEY, a public key will be required.
      */
-    dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "PEM", NULL, "RSA",
-                                         selection,
-                                         libctx, propq);
-    if (dctx == NULL) {
-        fprintf(stderr, "OSSL_DECODER_CTX_new_for_pkey() failed\n");
-        goto cleanup;
-    }
+	dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "PEM", NULL, "RSA",
+					     selection, libctx, propq);
+	if (dctx == NULL) {
+		fprintf(stderr, "OSSL_DECODER_CTX_new_for_pkey() failed\n");
+		goto cleanup;
+	}
 
-    /*
+	/*
      * Set passphrase if provided; needed to decrypt encrypted PEM files.
      * If the input is not encrypted, any passphrase provided is ignored.
      *
@@ -60,36 +59,37 @@ static EVP_PKEY *load_key(OSSL_LIB_CTX *libctx, FILE *f, const char *passphrase)
      * interactive applications which do not know if a passphrase should be
      * prompted for in advance, or for GUI applications.
      */
-    if (passphrase != NULL) {
-        if (OSSL_DECODER_CTX_set_passphrase(dctx,
-                                            (const unsigned char *)passphrase,
-                                            strlen(passphrase)) == 0) {
-            fprintf(stderr, "OSSL_DECODER_CTX_set_passphrase() failed\n");
-            goto cleanup;
-        }
-    }
+	if (passphrase != NULL) {
+		if (OSSL_DECODER_CTX_set_passphrase(
+			    dctx, (const unsigned char *)passphrase,
+			    strlen(passphrase)) == 0) {
+			fprintf(stderr,
+				"OSSL_DECODER_CTX_set_passphrase() failed\n");
+			goto cleanup;
+		}
+	}
 
-    /* Do the decode, reading from file. */
-    if (OSSL_DECODER_from_fp(dctx, f) == 0) {
-        fprintf(stderr, "OSSL_DECODER_from_fp() failed\n");
-        goto cleanup;
-    }
+	/* Do the decode, reading from file. */
+	if (OSSL_DECODER_from_fp(dctx, f) == 0) {
+		fprintf(stderr, "OSSL_DECODER_from_fp() failed\n");
+		goto cleanup;
+	}
 
-    ret = 1;
+	ret = 1;
 cleanup:
-    OSSL_DECODER_CTX_free(dctx);
+	OSSL_DECODER_CTX_free(dctx);
 
-    /*
+	/*
      * pkey is created by OSSL_DECODER_CTX_new_for_pkey, but we
      * might fail subsequently, so ensure it's properly freed
      * in this case.
      */
-    if (ret == 0) {
-        EVP_PKEY_free(pkey);
-        pkey = NULL;
-    }
+	if (ret == 0) {
+		EVP_PKEY_free(pkey);
+		pkey = NULL;
+	}
 
-    return pkey;
+	return pkey;
 }
 
 /*
@@ -100,11 +100,11 @@ cleanup:
  */
 static int store_key(EVP_PKEY *pkey, FILE *f, const char *passphrase)
 {
-    int ret = 0;
-    int selection;
-    OSSL_ENCODER_CTX *ectx = NULL;
+	int ret = 0;
+	int selection;
+	OSSL_ENCODER_CTX *ectx = NULL;
 
-    /*
+	/*
      * Create a PEM encoder context.
      *
      * For raw (non-PEM-encoded) output, change "PEM" to "DER".
@@ -118,17 +118,17 @@ static int store_key(EVP_PKEY *pkey, FILE *f, const char *passphrase)
      * Purely for the sake of demonstration, here we choose to export the whole
      * key if a passphrase is provided and the public key otherwise.
      */
-    selection = (passphrase != NULL)
-        ? EVP_PKEY_KEYPAIR
-        : EVP_PKEY_PUBLIC_KEY;
+	selection = (passphrase != NULL) ? EVP_PKEY_KEYPAIR :
+					   EVP_PKEY_PUBLIC_KEY;
 
-    ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, selection, "PEM", NULL, propq);
-    if (ectx == NULL) {
-        fprintf(stderr, "OSSL_ENCODER_CTX_new_for_pkey() failed\n");
-        goto cleanup;
-    }
+	ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, selection, "PEM", NULL,
+					     propq);
+	if (ectx == NULL) {
+		fprintf(stderr, "OSSL_ENCODER_CTX_new_for_pkey() failed\n");
+		goto cleanup;
+	}
 
-    /*
+	/*
      * Set passphrase if provided; the encoded output will then be encrypted
      * using the passphrase.
      *
@@ -140,63 +140,66 @@ static int store_key(EVP_PKEY *pkey, FILE *f, const char *passphrase)
      * Note that specifying a passphrase alone is not enough to cause the
      * key to be encrypted. You must set both a cipher and a passphrase.
      */
-    if (passphrase != NULL) {
-        /* Set cipher. AES-128-CBC is a reasonable default. */
-        if (OSSL_ENCODER_CTX_set_cipher(ectx, "AES-128-CBC", propq) == 0) {
-            fprintf(stderr, "OSSL_ENCODER_CTX_set_cipher() failed\n");
-            goto cleanup;
-        }
+	if (passphrase != NULL) {
+		/* Set cipher. AES-128-CBC is a reasonable default. */
+		if (OSSL_ENCODER_CTX_set_cipher(ectx, "AES-128-CBC", propq) ==
+		    0) {
+			fprintf(stderr,
+				"OSSL_ENCODER_CTX_set_cipher() failed\n");
+			goto cleanup;
+		}
 
-        /* Set passphrase. */
-        if (OSSL_ENCODER_CTX_set_passphrase(ectx,
-                                            (const unsigned char *)passphrase,
-                                            strlen(passphrase)) == 0) {
-            fprintf(stderr, "OSSL_ENCODER_CTX_set_passphrase() failed\n");
-            goto cleanup;
-        }
-    }
+		/* Set passphrase. */
+		if (OSSL_ENCODER_CTX_set_passphrase(
+			    ectx, (const unsigned char *)passphrase,
+			    strlen(passphrase)) == 0) {
+			fprintf(stderr,
+				"OSSL_ENCODER_CTX_set_passphrase() failed\n");
+			goto cleanup;
+		}
+	}
 
-    /* Do the encode, writing to the given file. */
-    if (OSSL_ENCODER_to_fp(ectx, f) == 0) {
-        fprintf(stderr, "OSSL_ENCODER_to_fp() failed\n");
-        goto cleanup;
-    }
+	/* Do the encode, writing to the given file. */
+	if (OSSL_ENCODER_to_fp(ectx, f) == 0) {
+		fprintf(stderr, "OSSL_ENCODER_to_fp() failed\n");
+		goto cleanup;
+	}
 
-    ret = 1;
+	ret = 1;
 cleanup:
-    OSSL_ENCODER_CTX_free(ectx);
-    return ret;
+	OSSL_ENCODER_CTX_free(ectx);
+	return ret;
 }
 
 int main(int argc, char **argv)
 {
-    int ret = EXIT_FAILURE;
-    OSSL_LIB_CTX *libctx = NULL;
-    EVP_PKEY *pkey = NULL;
-    const char *passphrase_in = NULL, *passphrase_out = NULL;
+	int ret = EXIT_FAILURE;
+	OSSL_LIB_CTX *libctx = NULL;
+	EVP_PKEY *pkey = NULL;
+	const char *passphrase_in = NULL, *passphrase_out = NULL;
 
-    /* usage: rsa_encode <passphrase-in> <passphrase-out> */
-    if (argc > 1 && argv[1][0])
-        passphrase_in = argv[1];
+	/* usage: rsa_encode <passphrase-in> <passphrase-out> */
+	if (argc > 1 && argv[1][0])
+		passphrase_in = argv[1];
 
-    if (argc > 2 && argv[2][0])
-        passphrase_out = argv[2];
+	if (argc > 2 && argv[2][0])
+		passphrase_out = argv[2];
 
-    /* Decode PEM key from stdin and then PEM encode it to stdout. */
-    pkey = load_key(libctx, stdin, passphrase_in);
-    if (pkey == NULL) {
-        fprintf(stderr, "Failed to decode key\n");
-        goto cleanup;
-    }
+	/* Decode PEM key from stdin and then PEM encode it to stdout. */
+	pkey = load_key(libctx, stdin, passphrase_in);
+	if (pkey == NULL) {
+		fprintf(stderr, "Failed to decode key\n");
+		goto cleanup;
+	}
 
-    if (store_key(pkey, stdout, passphrase_out) == 0) {
-        fprintf(stderr, "Failed to encode key\n");
-        goto cleanup;
-    }
+	if (store_key(pkey, stdout, passphrase_out) == 0) {
+		fprintf(stderr, "Failed to encode key\n");
+		goto cleanup;
+	}
 
-    ret = EXIT_SUCCESS;
+	ret = EXIT_SUCCESS;
 cleanup:
-    EVP_PKEY_free(pkey);
-    OSSL_LIB_CTX_free(libctx);
-    return ret;
+	EVP_PKEY_free(pkey);
+	OSSL_LIB_CTX_free(libctx);
+	return ret;
 }

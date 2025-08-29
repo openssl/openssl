@@ -8,8 +8,8 @@
  */
 
 #ifndef OPENSSL_HASHTABLE_H
-# define OPENSSL_HASHTABLE_H
-# pragma once
+#define OPENSSL_HASHTABLE_H
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
@@ -23,37 +23,37 @@ typedef struct ht_internal_st HT;
  * Represents a key to a hashtable
  */
 typedef struct ht_key_header_st {
-    size_t keysize;
-    uint8_t *keybuf;
+	size_t keysize;
+	uint8_t *keybuf;
 } HT_KEY;
 
 /*
  * Represents a value in the hash table
  */
 typedef struct ht_value_st {
-    void *value;
-    uintptr_t *type_id;
-    HT_KEY key;
+	void *value;
+	uintptr_t *type_id;
+	HT_KEY key;
 } HT_VALUE;
 
 /*
  * Represents a list of values filtered from a hash table
  */
 typedef struct ht_value_list_st {
-    size_t list_len;
-    HT_VALUE **list;
+	size_t list_len;
+	HT_VALUE **list;
 } HT_VALUE_LIST;
 
 /*
  * Hashtable configuration
  */
 typedef struct ht_config_st {
-    OSSL_LIB_CTX *ctx;
-    void (*ht_free_fn)(HT_VALUE *obj);
-    uint64_t (*ht_hash_fn)(uint8_t *key, size_t keylen);
-    size_t init_neighborhoods;
-    uint32_t collision_check;
-    uint32_t lockless_reads;
+	OSSL_LIB_CTX *ctx;
+	void (*ht_free_fn)(HT_VALUE *obj);
+	uint64_t (*ht_hash_fn)(uint8_t *key, size_t keylen);
+	size_t init_neighborhoods;
+	uint32_t collision_check;
+	uint32_t lockless_reads;
 } HT_CONFIG;
 
 /*
@@ -71,17 +71,18 @@ typedef struct ht_config_st {
 /*
  * Starts the definition of a hash table key
  */
-#define HT_START_KEY_DEFN(keyname) \
-typedef struct keyname##_st { \
-    HT_KEY key_header; \
-    struct {
-
+#define HT_START_KEY_DEFN(keyname)    \
+	typedef struct keyname##_st { \
+		HT_KEY key_header;    \
+		struct {
 /*
  * Ends a hash table key definitions
  */
 #define HT_END_KEY_DEFN(keyname) \
-    } keyfields; \
-} keyname;
+	}                        \
+	keyfields;               \
+	}                        \
+	keyname;
 
 /*
  * Defines a field in a hash table key
@@ -93,27 +94,30 @@ typedef struct keyname##_st { \
  * array field in a hash table key
  */
 #define HT_DEF_KEY_FIELD_CHAR_ARRAY(name, size) \
-     HT_DEF_KEY_FIELD(name[size], char)
+	HT_DEF_KEY_FIELD(name[size], char)
 
 /*
  * Defines a uint8_t (blob) field in a hash table key
  */
 #define HT_DEF_KEY_FIELD_UINT8T_ARRAY(name, size) \
-    HT_DEF_KEY_FIELD(name[size], uint8_t)
+	HT_DEF_KEY_FIELD(name[size], uint8_t)
 
 /*
  * Initializes a key
  */
-#define HT_INIT_KEY(key) do { \
-memset((key), 0, sizeof(*(key))); \
-(key)->key_header.keysize = (sizeof(*(key)) - sizeof(HT_KEY)); \
-(key)->key_header.keybuf = (((uint8_t *)key) + sizeof(HT_KEY)); \
-} while(0)
+#define HT_INIT_KEY(key)                                                       \
+	do {                                                                   \
+		memset((key), 0, sizeof(*(key)));                              \
+		(key)->key_header.keysize = (sizeof(*(key)) - sizeof(HT_KEY)); \
+		(key)->key_header.keybuf =                                     \
+			(((uint8_t *)key) + sizeof(HT_KEY));                   \
+	} while (0)
 
 /*
  * Resets a hash table key to a known state
  */
-#define HT_KEY_RESET(key) memset((key)->key_header.keybuf, 0, (key)->key_header.keysize)
+#define HT_KEY_RESET(key) \
+	memset((key)->key_header.keybuf, 0, (key)->key_header.keysize)
 
 /*
  * Sets a scalar field in a hash table key
@@ -124,10 +128,12 @@ memset((key), 0, sizeof(*(key))); \
  * Sets a string field in a hash table key, preserving
  * null terminator
  */
-#define HT_SET_KEY_STRING(key, member, value) do { \
-    if ((value) != NULL) \
-        strncpy((key)->keyfields.member, value, sizeof((key)->keyfields.member) - 1); \
-} while(0)
+#define HT_SET_KEY_STRING(key, member, value)                         \
+	do {                                                          \
+		if ((value) != NULL)                                  \
+			strncpy((key)->keyfields.member, value,       \
+				sizeof((key)->keyfields.member) - 1); \
+	} while (0)
 
 /*
  * This is the same as HT_SET_KEY_STRING, except that it uses
@@ -135,37 +141,44 @@ memset((key), 0, sizeof(*(key))); \
  * This is useful for instances in which we want upper and lower case
  * key value to hash to the same entry
  */
-#define HT_SET_KEY_STRING_CASE(key, member, value) do { \
-   ossl_ht_strcase((key)->keyfields.member, value, sizeof((key)->keyfields.member) -1); \
-} while(0)
+#define HT_SET_KEY_STRING_CASE(key, member, value)                    \
+	do {                                                          \
+		ossl_ht_strcase((key)->keyfields.member, value,       \
+				sizeof((key)->keyfields.member) - 1); \
+	} while (0)
 
 /*
  * Same as HT_SET_KEY_STRING but also takes length of the string.
  */
-#define HT_SET_KEY_STRING_N(key, member, value, len) do { \
-    if ((value) != NULL) { \
-        if (len < sizeof((key)->keyfields.member)) \
-            strncpy((key)->keyfields.member, value, len); \
-        else \
-            strncpy((key)->keyfields.member, value, sizeof((key)->keyfields.member) - 1); \
-    } \
-} while(0)
+#define HT_SET_KEY_STRING_N(key, member, value, len)                          \
+	do {                                                                  \
+		if ((value) != NULL) {                                        \
+			if (len < sizeof((key)->keyfields.member))            \
+				strncpy((key)->keyfields.member, value, len); \
+			else                                                  \
+				strncpy((key)->keyfields.member, value,       \
+					sizeof((key)->keyfields.member) - 1); \
+		}                                                             \
+	} while (0)
 
 /* Same as HT_SET_KEY_STRING_CASE but also takes length of the string. */
-#define HT_SET_KEY_STRING_CASE_N(key, member, value, len) do { \
-    if ((size_t)len < sizeof((key)->keyfields.member)) \
-        ossl_ht_strcase((key)->keyfields.member, value, len); \
-    else \
-        ossl_ht_strcase((key)->keyfields.member, value, sizeof((key)->keyfields.member) - 1); \
-} while(0)
+#define HT_SET_KEY_STRING_CASE_N(key, member, value, len)                     \
+	do {                                                                  \
+		if ((size_t)len < sizeof((key)->keyfields.member))            \
+			ossl_ht_strcase((key)->keyfields.member, value, len); \
+		else                                                          \
+			ossl_ht_strcase((key)->keyfields.member, value,       \
+					sizeof((key)->keyfields.member) - 1); \
+	} while (0)
 
 /*
  * Sets a uint8_t (blob) field in a hash table key
  */
-#define HT_SET_KEY_BLOB(key, member, value, len) do { \
-    if (value != NULL) \
-        memcpy((key)->keyfields.member, value, len); \
-} while(0)
+#define HT_SET_KEY_BLOB(key, member, value, len)                     \
+	do {                                                         \
+		if (value != NULL)                                   \
+			memcpy((key)->keyfields.member, value, len); \
+	} while (0)
 
 /*
  * Converts a defined key type to an HT_KEY
@@ -186,85 +199,86 @@ memset((key), 0, sizeof(*(key))); \
  * ossl_ht_NAME_TYPE_to_value - converts a TYPE to an HT_VALUE
  * ossl_ht_NAME_TYPE_type - boolean to detect if a value is of TYPE
  */
-#define IMPLEMENT_HT_VALUE_TYPE_FNS(vtype, name, pfx) \
-static uintptr_t name##_##vtype##_id = 0; \
-pfx ossl_unused int ossl_ht_##name##_##vtype##_insert(HT *h, HT_KEY *key,      \
-                                                      vtype *data,             \
-                                                      vtype **olddata) {       \
-    HT_VALUE inval;                                                            \
-    HT_VALUE *oval = NULL;                                                     \
-    int rc;                                                                    \
-                                                                               \
-    inval.value = data;                                                        \
-    inval.type_id = &name##_##vtype##_id;                                      \
-    rc = ossl_ht_insert(h, key, &inval, olddata == NULL ? NULL : &oval);       \
-    if (oval != NULL)                                                          \
-        *olddata = (vtype *)oval->value;                                       \
-    return rc;                                                                 \
-}                                                                              \
-                                                                               \
-pfx ossl_unused vtype *ossl_ht_##name##_##vtype##_from_value(HT_VALUE *v)      \
-{                                                                              \
-    uintptr_t *expect_type = &name##_##vtype##_id;                             \
-    if (v == NULL)                                                             \
-        return NULL;                                                           \
-    if (v->type_id != expect_type)                                             \
-        return NULL;                                                           \
-    return (vtype *)v->value;                                                  \
-}                                                                              \
-                                                                               \
-pfx ossl_unused vtype *ossl_unused ossl_ht_##name##_##vtype##_get(HT *h,       \
-                                                                  HT_KEY *key, \
-                                                                  HT_VALUE **v)\
-{                                                                              \
-    HT_VALUE *vv;                                                              \
-    vv = ossl_ht_get(h, key);                                                  \
-    if (vv == NULL)                                                            \
-        return NULL;                                                           \
-    *v = ossl_rcu_deref(&vv);                                                  \
-    return ossl_ht_##name##_##vtype##_from_value(*v);                          \
-}                                                                              \
-                                                                               \
-pfx ossl_unused HT_VALUE *ossl_ht_##name##_##vtype##_to_value(vtype *data,     \
-                                                              HT_VALUE *v)     \
-{                                                                              \
-    v->type_id = &name##_##vtype##_id;                                         \
-    v->value = data;                                                           \
-    return v;                                                                  \
-}                                                                              \
-                                                                               \
-pfx ossl_unused int ossl_ht_##name##_##vtype##_type(HT_VALUE *h)               \
-{                                                                              \
-    return h->type_id == &name##_##vtype##_id;                                 \
-}
+#define IMPLEMENT_HT_VALUE_TYPE_FNS(vtype, name, pfx)                      \
+	static uintptr_t name##_##vtype##_id = 0;                          \
+	pfx ossl_unused int ossl_ht_##name##_##vtype##_insert(             \
+		HT *h, HT_KEY *key, vtype *data, vtype **olddata)          \
+	{                                                                  \
+		HT_VALUE inval;                                            \
+		HT_VALUE *oval = NULL;                                     \
+		int rc;                                                    \
+                                                                           \
+		inval.value = data;                                        \
+		inval.type_id = &name##_##vtype##_id;                      \
+		rc = ossl_ht_insert(h, key, &inval,                        \
+				    olddata == NULL ? NULL : &oval);       \
+		if (oval != NULL)                                          \
+			*olddata = (vtype *)oval->value;                   \
+		return rc;                                                 \
+	}                                                                  \
+                                                                           \
+	pfx ossl_unused vtype *ossl_ht_##name##_##vtype##_from_value(      \
+		HT_VALUE *v)                                               \
+	{                                                                  \
+		uintptr_t *expect_type = &name##_##vtype##_id;             \
+		if (v == NULL)                                             \
+			return NULL;                                       \
+		if (v->type_id != expect_type)                             \
+			return NULL;                                       \
+		return (vtype *)v->value;                                  \
+	}                                                                  \
+                                                                           \
+	pfx ossl_unused vtype *ossl_unused ossl_ht_##name##_##vtype##_get( \
+		HT *h, HT_KEY *key, HT_VALUE **v)                          \
+	{                                                                  \
+		HT_VALUE *vv;                                              \
+		vv = ossl_ht_get(h, key);                                  \
+		if (vv == NULL)                                            \
+			return NULL;                                       \
+		*v = ossl_rcu_deref(&vv);                                  \
+		return ossl_ht_##name##_##vtype##_from_value(*v);          \
+	}                                                                  \
+                                                                           \
+	pfx ossl_unused HT_VALUE *ossl_ht_##name##_##vtype##_to_value(     \
+		vtype *data, HT_VALUE *v)                                  \
+	{                                                                  \
+		v->type_id = &name##_##vtype##_id;                         \
+		v->value = data;                                           \
+		return v;                                                  \
+	}                                                                  \
+                                                                           \
+	pfx ossl_unused int ossl_ht_##name##_##vtype##_type(HT_VALUE *h)   \
+	{                                                                  \
+		return h->type_id == &name##_##vtype##_id;                 \
+	}
 
 #define DECLARE_HT_VALUE_TYPE_FNS(vtype, name)                                 \
-int ossl_ht_##name##_##vtype##_insert(HT *h, HT_KEY *key, vtype *data,         \
-                                      vtype **olddata);                        \
-vtype *ossl_ht_##name##_##vtype##_from_value(HT_VALUE *v);                     \
-vtype *ossl_unused ossl_ht_##name##_##vtype##_get(HT *h,                       \
-                                                  HT_KEY *key,                 \
-                                                  HT_VALUE **v);               \
-HT_VALUE *ossl_ht_##name##_##vtype##_to_value(vtype *data, HT_VALUE *v);       \
-int ossl_ht_##name##_##vtype##_type(HT_VALUE *h);                              \
+	int ossl_ht_##name##_##vtype##_insert(HT *h, HT_KEY *key, vtype *data, \
+					      vtype **olddata);                \
+	vtype *ossl_ht_##name##_##vtype##_from_value(HT_VALUE *v);             \
+	vtype *ossl_unused ossl_ht_##name##_##vtype##_get(HT *h, HT_KEY *key,  \
+							  HT_VALUE **v);       \
+	HT_VALUE *ossl_ht_##name##_##vtype##_to_value(vtype *data,             \
+						      HT_VALUE *v);            \
+	int ossl_ht_##name##_##vtype##_type(HT_VALUE *h);
 
 /*
  * Helper function to construct case insensitive keys
  */
 static void ossl_unused ossl_ht_strcase(char *tgt, const char *src, int len)
 {
-    int i;
+	int i;
 #if defined(CHARSET_EBCDIC) && !defined(CHARSET_EBCDIC_TEST)
-    const long int case_adjust = ~0x40;
+	const long int case_adjust = ~0x40;
 #else
-    const long int case_adjust = ~0x20;
+	const long int case_adjust = ~0x20;
 #endif
 
-    if (src == NULL)
-        return;
+	if (src == NULL)
+		return;
 
-    for (i = 0; src[i] != '\0' && i < len; i++)
-        tgt[i] = case_adjust & src[i];
+	for (i = 0; src[i] != '\0' && i < len; i++)
+		tgt[i] = case_adjust & src[i];
 }
 
 /*
@@ -295,20 +309,19 @@ void ossl_ht_read_unlock(HT *htable);
 /*
  * Write unlock
  */
-void ossl_ht_write_unlock (HT *htable);
+void ossl_ht_write_unlock(HT *htable);
 
 /*
  * Empties a hash table, potentially freeing all elements
  */
-int  ossl_ht_flush(HT *htable);
+int ossl_ht_flush(HT *htable);
 
 /*
  * Inserts an element to a hash table, optionally returning
  * replaced data to caller
  * Returns 1 if the insert was successful, 0 on error
  */
-int ossl_ht_insert(HT *htable, HT_KEY *key, HT_VALUE *data,
-                   HT_VALUE **olddata);
+int ossl_ht_insert(HT *htable, HT_KEY *key, HT_VALUE *data, HT_VALUE **olddata);
 
 /*
  * Deletes a value from a hash table, based on key
@@ -330,7 +343,7 @@ size_t ossl_ht_count(HT *htable);
  * table may not be inserted or removed while iterating.
  */
 void ossl_ht_foreach_until(HT *htable, int (*cb)(HT_VALUE *obj, void *arg),
-                           void *arg);
+			   void *arg);
 /*
  * Returns a list of elements in a hash table based on
  * filter function return value.  Returns NULL on error,
@@ -339,8 +352,8 @@ void ossl_ht_foreach_until(HT *htable, int (*cb)(HT_VALUE *obj, void *arg),
  * The zero length list must still be freed via ossl_ht_value_list_free 
  */
 HT_VALUE_LIST *ossl_ht_filter(HT *htable, size_t max_len,
-                              int (*filter)(HT_VALUE *obj, void *arg),
-                              void *arg);
+			      int (*filter)(HT_VALUE *obj, void *arg),
+			      void *arg);
 /*
  * Frees the list returned from ossl_ht_filter
  */

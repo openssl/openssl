@@ -14,8 +14,8 @@
 /* A simple helper for the perl function OpenSSL::Test::openssl_versions */
 int main(void)
 {
-    printf("Build version: %s\n", OPENSSL_FULL_VERSION_STR);
-    printf("Library version: %s\n",
-           OpenSSL_version(OPENSSL_FULL_VERSION_STRING));
-    return 0;
+	printf("Build version: %s\n", OPENSSL_FULL_VERSION_STR);
+	printf("Library version: %s\n",
+	       OpenSSL_version(OPENSSL_FULL_VERSION_STRING));
+	return 0;
 }

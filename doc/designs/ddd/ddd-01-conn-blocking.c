@@ -18,26 +18,26 @@
  */
 SSL_CTX *create_ssl_ctx(void)
 {
-    SSL_CTX *ctx;
+	SSL_CTX *ctx;
 
 #ifdef USE_QUIC
-    ctx = SSL_CTX_new(OSSL_QUIC_client_method());
+	ctx = SSL_CTX_new(OSSL_QUIC_client_method());
 #else
-    ctx = SSL_CTX_new(TLS_client_method());
+	ctx = SSL_CTX_new(TLS_client_method());
 #endif
-    if (ctx == NULL)
-        return NULL;
+	if (ctx == NULL)
+		return NULL;
 
-    /* Enable trust chain verification. */
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+	/* Enable trust chain verification. */
+	SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 
-    /* Load default root CA store. */
-    if (SSL_CTX_set_default_verify_paths(ctx) == 0) {
-        SSL_CTX_free(ctx);
-        return NULL;
-    }
+	/* Load default root CA store. */
+	if (SSL_CTX_set_default_verify_paths(ctx) == 0) {
+		SSL_CTX_free(ctx);
+		return NULL;
+	}
 
-    return ctx;
+	return ctx;
 }
 
 /*
@@ -48,50 +48,50 @@ SSL_CTX *create_ssl_ctx(void)
  */
 BIO *new_conn(SSL_CTX *ctx, const char *hostname)
 {
-    BIO *out;
-    SSL *ssl = NULL;
-    const char *bare_hostname;
+	BIO *out;
+	SSL *ssl = NULL;
+	const char *bare_hostname;
 #ifdef USE_QUIC
-    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+	static const unsigned char alpn[] = { 5, 'd', 'u', 'm', 'm', 'y' };
 #endif
 
-    out = BIO_new_ssl_connect(ctx);
-    if (out == NULL)
-        return NULL;
+	out = BIO_new_ssl_connect(ctx);
+	if (out == NULL)
+		return NULL;
 
-    if (BIO_get_ssl(out, &ssl) == 0) {
-        BIO_free_all(out);
-        return NULL;
-    }
+	if (BIO_get_ssl(out, &ssl) == 0) {
+		BIO_free_all(out);
+		return NULL;
+	}
 
-    if (BIO_set_conn_hostname(out, hostname) == 0) {
-        BIO_free_all(out);
-        return NULL;
-    }
+	if (BIO_set_conn_hostname(out, hostname) == 0) {
+		BIO_free_all(out);
+		return NULL;
+	}
 
-    /* Returns the parsed hostname extracted from the hostname:port string. */
-    bare_hostname = BIO_get_conn_hostname(out);
-    if (bare_hostname == NULL) {
-        BIO_free_all(out);
-        return NULL;
-    }
+	/* Returns the parsed hostname extracted from the hostname:port string. */
+	bare_hostname = BIO_get_conn_hostname(out);
+	if (bare_hostname == NULL) {
+		BIO_free_all(out);
+		return NULL;
+	}
 
-    /* Tell the SSL object the hostname to check certificates against. */
-    if (SSL_set1_host(ssl, bare_hostname) <= 0) {
-        BIO_free_all(out);
-        return NULL;
-    }
+	/* Tell the SSL object the hostname to check certificates against. */
+	if (SSL_set1_host(ssl, bare_hostname) <= 0) {
+		BIO_free_all(out);
+		return NULL;
+	}
 
 #ifdef USE_QUIC
-    /* Configure ALPN, which is required for QUIC. */
-    if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn))) {
-        /* Note: SSL_set_alpn_protos returns 1 for failure. */
-        BIO_free_all(out);
-        return NULL;
-    }
+	/* Configure ALPN, which is required for QUIC. */
+	if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn))) {
+		/* Note: SSL_set_alpn_protos returns 1 for failure. */
+		BIO_free_all(out);
+		return NULL;
+	}
 #endif
 
-    return out;
+	return out;
 }
 
 /*
@@ -100,7 +100,7 @@ BIO *new_conn(SSL_CTX *ctx, const char *hostname)
  */
 int tx(BIO *bio, const void *buf, int buf_len)
 {
-    return BIO_write(bio, buf, buf_len);
+	return BIO_write(bio, buf, buf_len);
 }
 
 /*
@@ -109,7 +109,7 @@ int tx(BIO *bio, const void *buf, int buf_len)
  */
 int rx(BIO *bio, void *buf, int buf_len)
 {
-    return BIO_read(bio, buf, buf_len);
+	return BIO_read(bio, buf, buf_len);
 }
 
 /*
@@ -118,7 +118,7 @@ int rx(BIO *bio, void *buf, int buf_len)
  */
 void teardown(BIO *bio)
 {
-    BIO_free_all(bio);
+	BIO_free_all(bio);
 }
 
 /*
@@ -127,7 +127,7 @@ void teardown(BIO *bio)
  */
 void teardown_ctx(SSL_CTX *ctx)
 {
-    SSL_CTX_free(ctx);
+	SSL_CTX_free(ctx);
 }
 
 /*
@@ -137,51 +137,51 @@ void teardown_ctx(SSL_CTX *ctx)
  */
 int main(int argc, char **argv)
 {
-    static char msg[384], host_port[300];
-    SSL_CTX *ctx = NULL;
-    BIO *b = NULL;
-    char buf[2048];
-    int l, mlen, res = 1;
+	static char msg[384], host_port[300];
+	SSL_CTX *ctx = NULL;
+	BIO *b = NULL;
+	char buf[2048];
+	int l, mlen, res = 1;
 
-    if (argc < 3) {
-        fprintf(stderr, "usage: %s host port\n", argv[0]);
-        goto fail;
-    }
+	if (argc < 3) {
+		fprintf(stderr, "usage: %s host port\n", argv[0]);
+		goto fail;
+	}
 
-    snprintf(host_port, sizeof(host_port), "%s:%s", argv[1], argv[2]);
-    mlen = snprintf(msg, sizeof(msg),
-                    "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
+	snprintf(host_port, sizeof(host_port), "%s:%s", argv[1], argv[2]);
+	mlen = snprintf(msg, sizeof(msg), "GET / HTTP/1.0\r\nHost: %s\r\n\r\n",
+			argv[1]);
 
-    ctx = create_ssl_ctx();
-    if (ctx == NULL) {
-        fprintf(stderr, "could not create context\n");
-        goto fail;
-    }
+	ctx = create_ssl_ctx();
+	if (ctx == NULL) {
+		fprintf(stderr, "could not create context\n");
+		goto fail;
+	}
 
-    b = new_conn(ctx, host_port);
-    if (b == NULL) {
-        fprintf(stderr, "could not create connection\n");
-        goto fail;
-    }
+	b = new_conn(ctx, host_port);
+	if (b == NULL) {
+		fprintf(stderr, "could not create connection\n");
+		goto fail;
+	}
 
-    l = tx(b, msg, mlen);
-    if (l < mlen) {
-        fprintf(stderr, "tx error\n");
-        goto fail;
-    }
+	l = tx(b, msg, mlen);
+	if (l < mlen) {
+		fprintf(stderr, "tx error\n");
+		goto fail;
+	}
 
-    for (;;) {
-        l = rx(b, buf, sizeof(buf));
-        if (l <= 0)
-            break;
-        fwrite(buf, 1, l, stdout);
-    }
+	for (;;) {
+		l = rx(b, buf, sizeof(buf));
+		if (l <= 0)
+			break;
+		fwrite(buf, 1, l, stdout);
+	}
 
-    res = 0;
+	res = 0;
 fail:
-    if (b != NULL)
-        teardown(b);
-    if (ctx != NULL)
-        teardown_ctx(ctx);
-    return res;
+	if (b != NULL)
+		teardown(b);
+	if (ctx != NULL)
+		teardown_ctx(ctx);
+	return res;
 }

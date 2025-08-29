@@ -17,39 +17,41 @@
 #include "x509_local.h"
 
 static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
-                                             TLS_FEATURE *tls_feature,
-                                             STACK_OF(CONF_VALUE) *ext_list);
+					     TLS_FEATURE *tls_feature,
+					     STACK_OF(CONF_VALUE) *ext_list);
 static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
-                                    X509V3_CTX *ctx,
-                                    STACK_OF(CONF_VALUE) *nval);
+				    X509V3_CTX *ctx,
+				    STACK_OF(CONF_VALUE) *nval);
 
-ASN1_ITEM_TEMPLATE(TLS_FEATURE) =
-        ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, TLS_FEATURE, ASN1_INTEGER)
+ASN1_ITEM_TEMPLATE(TLS_FEATURE) = ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF,
+							0, TLS_FEATURE,
+							ASN1_INTEGER)
 static_ASN1_ITEM_TEMPLATE_END(TLS_FEATURE)
 
-IMPLEMENT_ASN1_ALLOC_FUNCTIONS(TLS_FEATURE)
+	IMPLEMENT_ASN1_ALLOC_FUNCTIONS(TLS_FEATURE)
 
-const X509V3_EXT_METHOD ossl_v3_tls_feature = {
-    NID_tlsfeature, 0,
-    ASN1_ITEM_ref(TLS_FEATURE),
-    0, 0, 0, 0,
-    0, 0,
-    (X509V3_EXT_I2V)i2v_TLS_FEATURE,
-    (X509V3_EXT_V2I)v2i_TLS_FEATURE,
-    0, 0,
-    NULL
-};
-
+const X509V3_EXT_METHOD ossl_v3_tls_feature = { NID_tlsfeature,
+						0,
+						ASN1_ITEM_ref(TLS_FEATURE),
+						0,
+						0,
+						0,
+						0,
+						0,
+						0,
+						(X509V3_EXT_I2V)i2v_TLS_FEATURE,
+						(X509V3_EXT_V2I)v2i_TLS_FEATURE,
+						0,
+						0,
+						NULL };
 
 typedef struct {
-    long num;
-    const char *name;
+	long num;
+	const char *name;
 } TLS_FEATURE_NAME;
 
-static TLS_FEATURE_NAME tls_feature_tbl[] = {
-    { 5, "status_request" },
-    { 17, "status_request_v2" }
-};
+static TLS_FEATURE_NAME tls_feature_tbl[] = { { 5, "status_request" },
+					      { 17, "status_request_v2" } };
 
 /*
  * i2v_TLS_FEATURE converts the TLS_FEATURE structure tls_feature into the
@@ -58,25 +60,26 @@ static TLS_FEATURE_NAME tls_feature_tbl[] = {
  * returned.
  */
 static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
-                                             TLS_FEATURE *tls_feature,
-                                             STACK_OF(CONF_VALUE) *ext_list)
+					     TLS_FEATURE *tls_feature,
+					     STACK_OF(CONF_VALUE) *ext_list)
 {
-    int i;
-    size_t j;
-    ASN1_INTEGER *ai;
-    long tlsextid;
-    for (i = 0; i < sk_ASN1_INTEGER_num(tls_feature); i++) {
-        ai = sk_ASN1_INTEGER_value(tls_feature, i);
-        tlsextid = ASN1_INTEGER_get(ai);
-        for (j = 0; j < OSSL_NELEM(tls_feature_tbl); j++)
-            if (tlsextid == tls_feature_tbl[j].num)
-                break;
-        if (j < OSSL_NELEM(tls_feature_tbl))
-            X509V3_add_value(NULL, tls_feature_tbl[j].name, &ext_list);
-        else
-            X509V3_add_value_int(NULL, ai, &ext_list);
-    }
-    return ext_list;
+	int i;
+	size_t j;
+	ASN1_INTEGER *ai;
+	long tlsextid;
+	for (i = 0; i < sk_ASN1_INTEGER_num(tls_feature); i++) {
+		ai = sk_ASN1_INTEGER_value(tls_feature, i);
+		tlsextid = ASN1_INTEGER_get(ai);
+		for (j = 0; j < OSSL_NELEM(tls_feature_tbl); j++)
+			if (tlsextid == tls_feature_tbl[j].num)
+				break;
+		if (j < OSSL_NELEM(tls_feature_tbl))
+			X509V3_add_value(NULL, tls_feature_tbl[j].name,
+					 &ext_list);
+		else
+			X509V3_add_value_int(NULL, ai, &ext_list);
+	}
+	return ext_list;
 }
 
 /*
@@ -85,56 +88,58 @@ static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
  * error, NULL is returned.
  */
 static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
-                                    X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
+				    X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
 {
-    TLS_FEATURE *tlsf;
-    char *extval, *endptr;
-    ASN1_INTEGER *ai = NULL;
-    CONF_VALUE *val;
-    int i;
-    size_t j;
-    long tlsextid;
+	TLS_FEATURE *tlsf;
+	char *extval, *endptr;
+	ASN1_INTEGER *ai = NULL;
+	CONF_VALUE *val;
+	int i;
+	size_t j;
+	long tlsextid;
 
-    if ((tlsf = sk_ASN1_INTEGER_new_null()) == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
-        return NULL;
-    }
+	if ((tlsf = sk_ASN1_INTEGER_new_null()) == NULL) {
+		ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
+		return NULL;
+	}
 
-    for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
-        val = sk_CONF_VALUE_value(nval, i);
-        if (val->value)
-            extval = val->value;
-        else
-            extval = val->name;
+	for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
+		val = sk_CONF_VALUE_value(nval, i);
+		if (val->value)
+			extval = val->value;
+		else
+			extval = val->name;
 
-        for (j = 0; j < OSSL_NELEM(tls_feature_tbl); j++)
-            if (OPENSSL_strcasecmp(extval, tls_feature_tbl[j].name) == 0)
-                break;
-        if (j < OSSL_NELEM(tls_feature_tbl))
-            tlsextid = tls_feature_tbl[j].num;
-        else {
-            tlsextid = strtol(extval, &endptr, 10);
-            if (((*endptr) != '\0') || (extval == endptr) || (tlsextid < 0) ||
-                (tlsextid > 65535)) {
-                ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_SYNTAX);
-                X509V3_conf_add_error_name_value(val);
-                goto err;
-            }
-        }
+		for (j = 0; j < OSSL_NELEM(tls_feature_tbl); j++)
+			if (OPENSSL_strcasecmp(extval,
+					       tls_feature_tbl[j].name) == 0)
+				break;
+		if (j < OSSL_NELEM(tls_feature_tbl))
+			tlsextid = tls_feature_tbl[j].num;
+		else {
+			tlsextid = strtol(extval, &endptr, 10);
+			if (((*endptr) != '\0') || (extval == endptr) ||
+			    (tlsextid < 0) || (tlsextid > 65535)) {
+				ERR_raise(ERR_LIB_X509V3,
+					  X509V3_R_INVALID_SYNTAX);
+				X509V3_conf_add_error_name_value(val);
+				goto err;
+			}
+		}
 
-        if ((ai = ASN1_INTEGER_new()) == NULL
-                || !ASN1_INTEGER_set(ai, tlsextid)
-                || sk_ASN1_INTEGER_push(tlsf, ai) <= 0) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
-            goto err;
-        }
-        /* So it doesn't get purged if an error occurs next time around */
-        ai = NULL;
-    }
-    return tlsf;
+		if ((ai = ASN1_INTEGER_new()) == NULL ||
+		    !ASN1_INTEGER_set(ai, tlsextid) ||
+		    sk_ASN1_INTEGER_push(tlsf, ai) <= 0) {
+			ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+			goto err;
+		}
+		/* So it doesn't get purged if an error occurs next time around */
+		ai = NULL;
+	}
+	return tlsf;
 
- err:
-    sk_ASN1_INTEGER_pop_free(tlsf, ASN1_INTEGER_free);
-    ASN1_INTEGER_free(ai);
-    return NULL;
+err:
+	sk_ASN1_INTEGER_pop_free(tlsf, ASN1_INTEGER_free);
+	ASN1_INTEGER_free(ai);
+	return NULL;
 }

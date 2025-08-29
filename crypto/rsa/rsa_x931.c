@@ -40,85 +40,85 @@
  *     from The input hash followed by the 1st byte of the trailer.
  *     flen The size of the input hash + 1 (trailer byte)
  */
-int RSA_padding_add_X931(unsigned char *to, int tlen,
-                         const unsigned char *from, int flen)
+int RSA_padding_add_X931(unsigned char *to, int tlen, const unsigned char *from,
+			 int flen)
 {
-    int j;
-    unsigned char *p;
+	int j;
+	unsigned char *p;
 
-    /*
+	/*
      * We need at least 1 byte for header + padding (0x6A)
      * And 2 trailer bytes (but we subtract 1 since flen includes 1 trailer byte)
      */
-    j = tlen - flen - 2;
+	j = tlen - flen - 2;
 
-    if (j < 0) {
-        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
-        return -1;
-    }
+	if (j < 0) {
+		ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+		return -1;
+	}
 
-    p = (unsigned char *)to;
+	p = (unsigned char *)to;
 
-    /* If no padding start and end nibbles are in one byte */
-    if (j == 0) {
-        *p++ = 0x6A;
-    } else {
-        *p++ = 0x6B;
-        if (j > 1) {
-            memset(p, 0xBB, j - 1);
-            p += j - 1;
-        }
-        *p++ = 0xBA;
-    }
-    memcpy(p, from, (unsigned int)flen);
-    p += flen;
-    *p = 0xCC;
-    return 1;
+	/* If no padding start and end nibbles are in one byte */
+	if (j == 0) {
+		*p++ = 0x6A;
+	} else {
+		*p++ = 0x6B;
+		if (j > 1) {
+			memset(p, 0xBB, j - 1);
+			p += j - 1;
+		}
+		*p++ = 0xBA;
+	}
+	memcpy(p, from, (unsigned int)flen);
+	p += flen;
+	*p = 0xCC;
+	return 1;
 }
 
 int RSA_padding_check_X931(unsigned char *to, int tlen,
-                           const unsigned char *from, int flen, int num)
+			   const unsigned char *from, int flen, int num)
 {
-    int i = 0, j;
-    const unsigned char *p;
+	int i = 0, j;
+	const unsigned char *p;
 
-    p = from;
-    if ((num != flen) || ((*p != 0x6A) && (*p != 0x6B))) {
-        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_HEADER);
-        return -1;
-    }
+	p = from;
+	if ((num != flen) || ((*p != 0x6A) && (*p != 0x6B))) {
+		ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_HEADER);
+		return -1;
+	}
 
-    if (*p++ == 0x6B) {
-        j = flen - 3;
-        for (i = 0; i < j; i++) {
-            unsigned char c = *p++;
-            if (c == 0xBA)
-                break;
-            if (c != 0xBB) {
-                ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PADDING);
-                return -1;
-            }
-        }
+	if (*p++ == 0x6B) {
+		j = flen - 3;
+		for (i = 0; i < j; i++) {
+			unsigned char c = *p++;
+			if (c == 0xBA)
+				break;
+			if (c != 0xBB) {
+				ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PADDING);
+				return -1;
+			}
+		}
 
-        j -= i;
+		j -= i;
 
-        if (i == 0) {
-            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PADDING);
-            return -1;
-        }
+		if (i == 0) {
+			ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PADDING);
+			return -1;
+		}
 
-    } else {
-        j = flen - 2;
-    }
+	} else {
+		j = flen - 2;
+	}
 
-    if (p[j] != 0xCC) {
-        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_TRAILER);
-        return -1;
-    }
+	if (p[j] != 0xCC) {
+		ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_TRAILER);
+		return -1;
+	}
 
-    memcpy(to, p, (unsigned int)j);
+	memcpy(to, p, (unsigned int)j);
 
-    return j;
+	return j;
 }
 
 /*
@@ -130,19 +130,18 @@ int RSA_padding_check_X931(unsigned char *to, int tlen,
 
 int RSA_X931_hash_id(int nid)
 {
-    switch (nid) {
-    case NID_sha1:
-        return 0x33;
+	switch (nid) {
+	case NID_sha1:
+		return 0x33;
 
-    case NID_sha256:
-        return 0x34;
+	case NID_sha256:
+		return 0x34;
 
-    case NID_sha384:
-        return 0x36;
+	case NID_sha384:
+		return 0x36;
 
-    case NID_sha512:
-        return 0x35;
-
-    }
-    return -1;
+	case NID_sha512:
+		return 0x35;
+	}
+	return -1;
 }

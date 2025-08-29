@@ -15,16 +15,16 @@
 
 /* __has_feature is a clang-ism, while __SANITIZE_ADDRESS__ is a gcc-ism */
 #if defined(__has_feature)
-# if __has_feature(address_sanitizer)
-#  define __SANITIZE_ADDRESS__ 1
-# endif
+#if __has_feature(address_sanitizer)
+#define __SANITIZE_ADDRESS__ 1
+#endif
 #endif
 /* If __SANITIZE_ADDRESS__ isn't defined, define it to be false */
 /* Leak detection is not yet supported with MSVC on Windows, so */
 /* set __SANITIZE_ADDRESS__ to false in this case as well.      */
 #if !defined(__SANITIZE_ADDRESS__) || defined(_MSC_VER)
-# undef __SANITIZE_ADDRESS__
-# define __SANITIZE_ADDRESS__ 0
+#undef __SANITIZE_ADDRESS__
+#define __SANITIZE_ADDRESS__ 0
 #endif
 
 /*
@@ -35,28 +35,28 @@
 int main(int argc, char *argv[])
 {
 #if __SANITIZE_ADDRESS__
-    int exitcode = EXIT_SUCCESS;
+	int exitcode = EXIT_SUCCESS;
 #else
-    /*
+	/*
      * When we don't sanitize, we set the exit code to what we would expect
      * to get when we are sanitizing.  This makes it easy for wrapper scripts
      * to detect that we get the result we expect.
      */
-    int exitcode = EXIT_FAILURE;
+	int exitcode = EXIT_FAILURE;
 #endif
-    char *volatile lost;
+	char *volatile lost;
 
-    lost = OPENSSL_malloc(3);
-    if (!TEST_ptr(lost))
-        return EXIT_FAILURE;
+	lost = OPENSSL_malloc(3);
+	if (!TEST_ptr(lost))
+		return EXIT_FAILURE;
 
-    strcpy(lost, "ab");
+	strcpy(lost, "ab");
 
-    if (argv[1] && strcmp(argv[1], "freeit") == 0) {
-        OPENSSL_free(lost);
-        exitcode = EXIT_SUCCESS;
-    }
+	if (argv[1] && strcmp(argv[1], "freeit") == 0) {
+		OPENSSL_free(lost);
+		exitcode = EXIT_SUCCESS;
+	}
 
-    lost = NULL;
-    return exitcode;
+	lost = NULL;
+	return exitcode;
 }

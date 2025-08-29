@@ -17,80 +17,78 @@
  * ret contains 0 on success, or error flags (see FFC_ERROR_PUBKEY_TOO_SMALL)
  */
 int ossl_ffc_validate_public_key_partial(const FFC_PARAMS *params,
-                                         const BIGNUM *pub_key, int *ret)
+					 const BIGNUM *pub_key, int *ret)
 {
-    int ok = 0;
-    BIGNUM *tmp = NULL;
-    BN_CTX *ctx = NULL;
+	int ok = 0;
+	BIGNUM *tmp = NULL;
+	BN_CTX *ctx = NULL;
 
-    *ret = 0;
-    if (params == NULL || pub_key == NULL || params->p == NULL) {
-        *ret = FFC_ERROR_PASSED_NULL_PARAM;
-        return 1;
-    }
+	*ret = 0;
+	if (params == NULL || pub_key == NULL || params->p == NULL) {
+		*ret = FFC_ERROR_PASSED_NULL_PARAM;
+		return 1;
+	}
 
-    ctx = BN_CTX_new_ex(NULL);
-    if (ctx == NULL)
-        goto err;
+	ctx = BN_CTX_new_ex(NULL);
+	if (ctx == NULL)
+		goto err;
 
-    BN_CTX_start(ctx);
-    tmp = BN_CTX_get(ctx);
-    /* Step(1): Verify pub_key >= 2 */
-    if (tmp == NULL
-        || !BN_set_word(tmp, 1))
-        goto err;
-    if (BN_cmp(pub_key, tmp) <= 0)
-        *ret |= FFC_ERROR_PUBKEY_TOO_SMALL;
-    /* Step(1): Verify pub_key <=  p-2 */
-    if (BN_copy(tmp, params->p) == NULL
-        || !BN_sub_word(tmp, 1))
-        goto err;
-    if (BN_cmp(pub_key, tmp) >= 0)
-        *ret |= FFC_ERROR_PUBKEY_TOO_LARGE;
-    ok = 1;
- err:
-    if (ctx != NULL) {
-        BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
-    return ok;
+	BN_CTX_start(ctx);
+	tmp = BN_CTX_get(ctx);
+	/* Step(1): Verify pub_key >= 2 */
+	if (tmp == NULL || !BN_set_word(tmp, 1))
+		goto err;
+	if (BN_cmp(pub_key, tmp) <= 0)
+		*ret |= FFC_ERROR_PUBKEY_TOO_SMALL;
+	/* Step(1): Verify pub_key <=  p-2 */
+	if (BN_copy(tmp, params->p) == NULL || !BN_sub_word(tmp, 1))
+		goto err;
+	if (BN_cmp(pub_key, tmp) >= 0)
+		*ret |= FFC_ERROR_PUBKEY_TOO_LARGE;
+	ok = 1;
+err:
+	if (ctx != NULL) {
+		BN_CTX_end(ctx);
+		BN_CTX_free(ctx);
+	}
+	return ok;
 }
 
 /*
  * See SP800-56Ar3 Section 5.6.2.3.1 : FFC Full public key validation.
  */
 int ossl_ffc_validate_public_key(const FFC_PARAMS *params,
-                                 const BIGNUM *pub_key, int *ret)
+				 const BIGNUM *pub_key, int *ret)
 {
-    int ok = 0;
-    BIGNUM *tmp = NULL;
-    BN_CTX *ctx = NULL;
+	int ok = 0;
+	BIGNUM *tmp = NULL;
+	BN_CTX *ctx = NULL;
 
-    if (!ossl_ffc_validate_public_key_partial(params, pub_key, ret))
-        return 0;
+	if (!ossl_ffc_validate_public_key_partial(params, pub_key, ret))
+		return 0;
 
-    if (*ret == 0 && params->q != NULL) {
-        ctx = BN_CTX_new_ex(NULL);
-        if (ctx == NULL)
-            goto err;
-        BN_CTX_start(ctx);
-        tmp = BN_CTX_get(ctx);
+	if (*ret == 0 && params->q != NULL) {
+		ctx = BN_CTX_new_ex(NULL);
+		if (ctx == NULL)
+			goto err;
+		BN_CTX_start(ctx);
+		tmp = BN_CTX_get(ctx);
 
-        /* Check pub_key^q == 1 mod p */
-        if (tmp == NULL
-            || !BN_mod_exp(tmp, pub_key, params->q, params->p, ctx))
-            goto err;
-        if (!BN_is_one(tmp))
-            *ret |= FFC_ERROR_PUBKEY_INVALID;
-    }
+		/* Check pub_key^q == 1 mod p */
+		if (tmp == NULL ||
+		    !BN_mod_exp(tmp, pub_key, params->q, params->p, ctx))
+			goto err;
+		if (!BN_is_one(tmp))
+			*ret |= FFC_ERROR_PUBKEY_INVALID;
+	}
 
-    ok = 1;
- err:
-    if (ctx != NULL) {
-        BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
-    return ok;
+	ok = 1;
+err:
+	if (ctx != NULL) {
+		BN_CTX_end(ctx);
+		BN_CTX_free(ctx);
+	}
+	return ok;
 }
 
 /*
@@ -100,25 +98,25 @@ int ossl_ffc_validate_public_key(const FFC_PARAMS *params,
  * Note: This assumes that the domain parameters are valid.
  */
 int ossl_ffc_validate_private_key(const BIGNUM *upper, const BIGNUM *priv,
-                                  int *ret)
+				  int *ret)
 {
-    int ok = 0;
+	int ok = 0;
 
-    *ret = 0;
+	*ret = 0;
 
-    if (priv == NULL || upper == NULL) {
-        *ret = FFC_ERROR_PASSED_NULL_PARAM;
-        goto err;
-    }
-    if (BN_cmp(priv, BN_value_one()) < 0) {
-        *ret |= FFC_ERROR_PRIVKEY_TOO_SMALL;
-        goto err;
-    }
-    if (BN_cmp(priv, upper) >= 0) {
-        *ret |= FFC_ERROR_PRIVKEY_TOO_LARGE;
-        goto err;
-    }
-    ok = 1;
+	if (priv == NULL || upper == NULL) {
+		*ret = FFC_ERROR_PASSED_NULL_PARAM;
+		goto err;
+	}
+	if (BN_cmp(priv, BN_value_one()) < 0) {
+		*ret |= FFC_ERROR_PRIVKEY_TOO_SMALL;
+		goto err;
+	}
+	if (BN_cmp(priv, upper) >= 0) {
+		*ret |= FFC_ERROR_PRIVKEY_TOO_LARGE;
+		goto err;
+	}
+	ok = 1;
 err:
-    return ok;
+	return ok;
 }

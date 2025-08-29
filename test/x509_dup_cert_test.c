@@ -16,36 +16,37 @@
 
 static int test_509_dup_cert(int n)
 {
-    int ret = 0;
-    X509_STORE *store = NULL;
-    X509_LOOKUP *lookup = NULL;
-    const char *cert_f = test_get_argument(n);
+	int ret = 0;
+	X509_STORE *store = NULL;
+	X509_LOOKUP *lookup = NULL;
+	const char *cert_f = test_get_argument(n);
 
-    if (TEST_ptr(store = X509_STORE_new())
-        && TEST_ptr(lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file()))
-        && TEST_true(X509_load_cert_file(lookup, cert_f, X509_FILETYPE_PEM))
-        && TEST_true(X509_load_cert_file(lookup, cert_f, X509_FILETYPE_PEM)))
-        ret = 1;
+	if (TEST_ptr(store = X509_STORE_new()) &&
+	    TEST_ptr(lookup = X509_STORE_add_lookup(store,
+						    X509_LOOKUP_file())) &&
+	    TEST_true(X509_load_cert_file(lookup, cert_f, X509_FILETYPE_PEM)) &&
+	    TEST_true(X509_load_cert_file(lookup, cert_f, X509_FILETYPE_PEM)))
+		ret = 1;
 
-    X509_STORE_free(store);
-    return ret;
+	X509_STORE_free(store);
+	return ret;
 }
 
 OPT_TEST_DECLARE_USAGE("cert.pem...\n")
 
 int setup_tests(void)
 {
-    size_t n;
+	size_t n;
 
-    if (!test_skip_common_options()) {
-        TEST_error("Error parsing test options\n");
-        return 0;
-    }
+	if (!test_skip_common_options()) {
+		TEST_error("Error parsing test options\n");
+		return 0;
+	}
 
-    n = test_get_argument_count();
-    if (!TEST_size_t_gt(n, 0))
-        return 0;
+	n = test_get_argument_count();
+	if (!TEST_size_t_gt(n, 0))
+		return 0;
 
-    ADD_ALL_TESTS(test_509_dup_cert, (int)n);
-    return 1;
+	ADD_ALL_TESTS(test_509_dup_cert, (int)n);
+	return 1;
 }

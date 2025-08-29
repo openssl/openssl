@@ -16,25 +16,27 @@
  */
 static uint32_t test_random_state[31];
 
-uint32_t test_random(void) {
-    static unsigned int pos = 3;
+uint32_t test_random(void)
+{
+	static unsigned int pos = 3;
 
-    if (pos == 31)
-        pos = 0;
-    test_random_state[pos] += test_random_state[(pos + 28) % 31];
-    return test_random_state[pos++] / 2;
+	if (pos == 31)
+		pos = 0;
+	test_random_state[pos] += test_random_state[(pos + 28) % 31];
+	return test_random_state[pos++] / 2;
 }
 
-void test_random_seed(uint32_t sd) {
-    int i;
-    int32_t s;
-    const unsigned int mod = (1u << 31) - 1;
+void test_random_seed(uint32_t sd)
+{
+	int i;
+	int32_t s;
+	const unsigned int mod = (1u << 31) - 1;
 
-    test_random_state[0] = sd;
-    for (i = 1; i < 31; i++) {
-        s = (int32_t)test_random_state[i - 1];
-        test_random_state[i] = (uint32_t)((16807 * (int64_t)s) % mod);
-    }
-    for (i = 34; i < 344; i++)
-        test_random();
+	test_random_state[0] = sd;
+	for (i = 1; i < 31; i++) {
+		s = (int32_t)test_random_state[i - 1];
+		test_random_state[i] = (uint32_t)((16807 * (int64_t)s) % mod);
+	}
+	for (i = 34; i < 344; i++)
+		test_random();
 }

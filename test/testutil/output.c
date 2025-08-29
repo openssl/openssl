@@ -11,48 +11,48 @@
 
 int test_printf_stdout(const char *fmt, ...)
 {
-    va_list ap;
-    int ret;
+	va_list ap;
+	int ret;
 
-    va_start(ap, fmt);
-    ret = test_vprintf_stdout(fmt, ap);
-    va_end(ap);
+	va_start(ap, fmt);
+	ret = test_vprintf_stdout(fmt, ap);
+	va_end(ap);
 
-    return ret;
+	return ret;
 }
 
 int test_printf_stderr(const char *fmt, ...)
 {
-    va_list ap;
-    int ret;
+	va_list ap;
+	int ret;
 
-    va_start(ap, fmt);
-    ret = test_vprintf_stderr(fmt, ap);
-    va_end(ap);
+	va_start(ap, fmt);
+	ret = test_vprintf_stderr(fmt, ap);
+	va_end(ap);
 
-    return ret;
+	return ret;
 }
 
 int test_printf_tapout(const char *fmt, ...)
 {
-    va_list ap;
-    int ret;
+	va_list ap;
+	int ret;
 
-    va_start(ap, fmt);
-    ret = test_vprintf_tapout(fmt, ap);
-    va_end(ap);
+	va_start(ap, fmt);
+	ret = test_vprintf_tapout(fmt, ap);
+	va_end(ap);
 
-    return ret;
+	return ret;
 }
 
 int test_printf_taperr(const char *fmt, ...)
 {
-    va_list ap;
-    int ret;
+	va_list ap;
+	int ret;
 
-    va_start(ap, fmt);
-    ret = test_vprintf_taperr(fmt, ap);
-    va_end(ap);
+	va_start(ap, fmt);
+	ret = test_vprintf_taperr(fmt, ap);
+	va_end(ap);
 
-    return ret;
+	return ret;
 }

@@ -28,5 +28,5 @@ int ossl_prov_is_running(void);
 
 static ossl_inline int ossl_param_is_empty(const OSSL_PARAM params[])
 {
-    return params == NULL || params->key == NULL;
+	return params == NULL || params->key == NULL;
 }

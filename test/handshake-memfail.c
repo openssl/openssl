@@ -49,32 +49,31 @@ static int mcount, rcount, fcount, scount;
  */
 static int do_handshake(OSSL_LIB_CTX *libctx)
 {
-    SSL_CTX *cctx = NULL, *sctx = NULL;
-    SSL *clientssl = NULL, *serverssl = NULL;
-    int testresult = 0;
+	SSL_CTX *cctx = NULL, *sctx = NULL;
+	SSL *clientssl = NULL, *serverssl = NULL;
+	int testresult = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(),
-                                       TLS1_VERSION, 0,
-                                       &sctx, &cctx, cert, privkey)))
-        return 0;
+	if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+					   TLS_client_method(), TLS1_VERSION, 0,
+					   &sctx, &cctx, cert, privkey)))
+		return 0;
 
-    /* Now do a handshake */
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
-                                      &clientssl, NULL, NULL))
-            || !TEST_true(create_ssl_connection(serverssl, clientssl,
-                                                SSL_ERROR_NONE)))
-        goto end;
+	/* Now do a handshake */
+	if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+					  NULL, NULL)) ||
+	    !TEST_true(create_ssl_connection(serverssl, clientssl,
+					     SSL_ERROR_NONE)))
+		goto end;
 
-    testresult = 1;
+	testresult = 1;
 
 end:
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
+	SSL_free(serverssl);
+	SSL_free(clientssl);
+	SSL_CTX_free(sctx);
+	SSL_CTX_free(cctx);
 
-    return testresult;
+	return testresult;
 }
 
 /**
@@ -88,19 +87,19 @@ end:
  */
 static int test_record_alloc_counts(void)
 {
-    int ret;
-    OSSL_LIB_CTX *libctx;
+	int ret;
+	OSSL_LIB_CTX *libctx;
 
-    libctx = OSSL_LIB_CTX_new();
-    if (!TEST_ptr(libctx))
-        return 0;
+	libctx = OSSL_LIB_CTX_new();
+	if (!TEST_ptr(libctx))
+		return 0;
 
-    ret = do_handshake(libctx);
+	ret = do_handshake(libctx);
 
-    OSSL_LIB_CTX_free(libctx);
-    libctx = NULL;
+	OSSL_LIB_CTX_free(libctx);
+	libctx = NULL;
 
-    return ret;
+	return ret;
 }
 
 /**
@@ -116,24 +115,24 @@ static int test_record_alloc_counts(void)
  */
 static int test_alloc_failures(void)
 {
-    OSSL_LIB_CTX *libctx;
+	OSSL_LIB_CTX *libctx;
 
-    libctx = OSSL_LIB_CTX_new();
-    if (!TEST_ptr(libctx))
-        return 1;
+	libctx = OSSL_LIB_CTX_new();
+	if (!TEST_ptr(libctx))
+		return 1;
 
-    do_handshake(libctx);
+	do_handshake(libctx);
 
-    OSSL_LIB_CTX_free(libctx);
-    libctx = NULL;
+	OSSL_LIB_CTX_free(libctx);
+	libctx = NULL;
 
-    return 1;
+	return 1;
 }
 
 static int test_report_alloc_counts(void)
 {
-    CRYPTO_get_alloc_counts(&mcount, &rcount, &fcount);
-    /*
+	CRYPTO_get_alloc_counts(&mcount, &rcount, &fcount);
+	/*
      * Report our memory allocations from the count run
      * NOTE: We report a number of allocations to skip here
      * (the scount value).  These are the allocations that took
@@ -143,46 +142,46 @@ static int test_report_alloc_counts(void)
      * we have even run the workload.  So report them so we can
      * allow them to function before we start doing any real testing
      */
-    TEST_info("skip: %d count %d\n", scount, mcount - scount);
-    return 1;
+	TEST_info("skip: %d count %d\n", scount, mcount - scount);
+	return 1;
 }
 
 int setup_tests(void)
 {
-    char *opmode = NULL;
-    char *certsdir = NULL;
+	char *opmode = NULL;
+	char *certsdir = NULL;
 
-    if (!TEST_ptr(opmode = test_get_argument(0)))
-        goto err;
+	if (!TEST_ptr(opmode = test_get_argument(0)))
+		goto err;
 
-    if (!TEST_ptr(certsdir = test_get_argument(1)))
-        goto err;
+	if (!TEST_ptr(certsdir = test_get_argument(1)))
+		goto err;
 
-    cert = test_mk_file_path(certsdir, "servercert.pem");
-    if (cert == NULL)
-        goto err;
+	cert = test_mk_file_path(certsdir, "servercert.pem");
+	if (cert == NULL)
+		goto err;
 
-    privkey = test_mk_file_path(certsdir, "serverkey.pem");
-    if (privkey == NULL)
-        goto err;
+	privkey = test_mk_file_path(certsdir, "serverkey.pem");
+	if (privkey == NULL)
+		goto err;
 
-    if (strcmp(opmode, "count") == 0) {
-        CRYPTO_get_alloc_counts(&scount, &rcount, &fcount);
-        ADD_TEST(test_record_alloc_counts);
-        ADD_TEST(test_report_alloc_counts);
-    } else {
-        ADD_TEST(test_alloc_failures);
-    }
-    return 1;
+	if (strcmp(opmode, "count") == 0) {
+		CRYPTO_get_alloc_counts(&scount, &rcount, &fcount);
+		ADD_TEST(test_record_alloc_counts);
+		ADD_TEST(test_report_alloc_counts);
+	} else {
+		ADD_TEST(test_alloc_failures);
+	}
+	return 1;
 
- err:
-    OPENSSL_free(cert);
-    OPENSSL_free(privkey);
-    return 0;
+err:
+	OPENSSL_free(cert);
+	OPENSSL_free(privkey);
+	return 0;
 }
 
 void cleanup_tests(void)
 {
-    OPENSSL_free(cert);
-    OPENSSL_free(privkey);
+	OPENSSL_free(cert);
+	OPENSSL_free(privkey);
 }

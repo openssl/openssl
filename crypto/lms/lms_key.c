@@ -19,11 +19,11 @@
  */
 LMS_KEY *ossl_lms_key_new(OSSL_LIB_CTX *libctx)
 {
-    LMS_KEY *ret = OPENSSL_zalloc(sizeof(LMS_KEY));
+	LMS_KEY *ret = OPENSSL_zalloc(sizeof(LMS_KEY));
 
-    if (ret != NULL)
-        ret->libctx = libctx;
-    return ret;
+	if (ret != NULL)
+		ret->libctx = libctx;
+	return ret;
 }
 
 /**
@@ -31,14 +31,14 @@ LMS_KEY *ossl_lms_key_new(OSSL_LIB_CTX *libctx)
  */
 void ossl_lms_key_free(LMS_KEY *lmskey)
 {
-    LMS_PUB_KEY *pub;
+	LMS_PUB_KEY *pub;
 
-    if (lmskey == NULL)
-        return;
+	if (lmskey == NULL)
+		return;
 
-    pub = &lmskey->pub;
-    OPENSSL_free(pub->encoded);
-    OPENSSL_free(lmskey);
+	pub = &lmskey->pub;
+	OPENSSL_free(pub->encoded);
+	OPENSSL_free(lmskey);
 }
 
 /**
@@ -54,20 +54,20 @@ void ossl_lms_key_free(LMS_KEY *lmskey)
  */
 int ossl_lms_key_equal(const LMS_KEY *key1, const LMS_KEY *key2, int selection)
 {
-    int ok = 1;
+	int ok = 1;
 
-    if (key1->lms_params != key2->lms_params
-            || key1->ots_params != key2->ots_params)
-        return 0;
+	if (key1->lms_params != key2->lms_params ||
+	    key1->ots_params != key2->ots_params)
+		return 0;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
-        if (key1->pub.encodedlen != key2->pub.encodedlen)
-            return 0;
-        ok = (key1->pub.encodedlen == 0)
-            || (memcmp(key1->pub.encoded, key2->pub.encoded,
-                       key1->pub.encodedlen) == 0);
-    }
-    return ok;
+	if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+		if (key1->pub.encodedlen != key2->pub.encodedlen)
+			return 0;
+		ok = (key1->pub.encodedlen == 0) ||
+		     (memcmp(key1->pub.encoded, key2->pub.encoded,
+			     key1->pub.encodedlen) == 0);
+	}
+	return ok;
 }
 
 /**
@@ -79,14 +79,14 @@ int ossl_lms_key_equal(const LMS_KEY *key1, const LMS_KEY *key2, int selection)
  */
 int ossl_lms_key_valid(const LMS_KEY *key, int selection)
 {
-    if (key == NULL)
-        return 0;
+	if (key == NULL)
+		return 0;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        return key->pub.encoded != NULL && key->pub.encodedlen != 0;
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-        return 0; /* a private key that doesn't exist can't be valid */
-    return 1;
+	if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+		return key->pub.encoded != NULL && key->pub.encodedlen != 0;
+	if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+		return 0; /* a private key that doesn't exist can't be valid */
+	return 1;
 }
 
 /**
@@ -98,10 +98,10 @@ int ossl_lms_key_valid(const LMS_KEY *key, int selection)
  */
 int ossl_lms_key_has(const LMS_KEY *key, int selection)
 {
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        return (key != NULL) && (key->pub.K != NULL);
-    /* There is no private key currently */
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-        return 0;
-    return 1;
+	if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+		return (key != NULL) && (key->pub.K != NULL);
+	/* There is no private key currently */
+	if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+		return 0;
+	return 1;
 }

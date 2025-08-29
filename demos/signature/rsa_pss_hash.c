@@ -18,8 +18,7 @@
 #include "rsa_pss.h"
 
 /* The data to be signed. This will be hashed. */
-static const char test_message[] =
-    "This is an example message to be signed.";
+static const char test_message[] = "This is an example message to be signed.";
 
 /* A property query used for selecting algorithm implementations. */
 static const char *propq = NULL;
@@ -32,78 +31,80 @@ static const char *propq = NULL;
  */
 static int sign(OSSL_LIB_CTX *libctx, unsigned char **sig, size_t *sig_len)
 {
-    int ret = 0;
-    EVP_PKEY *pkey = NULL;
-    EVP_MD_CTX *mctx = NULL;
-    OSSL_PARAM params[2], *p = params;
-    const unsigned char *ppriv_key = NULL;
+	int ret = 0;
+	EVP_PKEY *pkey = NULL;
+	EVP_MD_CTX *mctx = NULL;
+	OSSL_PARAM params[2], *p = params;
+	const unsigned char *ppriv_key = NULL;
 
-    *sig = NULL;
+	*sig = NULL;
 
-    /* Load DER-encoded RSA private key. */
-    ppriv_key = rsa_priv_key;
-    pkey = d2i_PrivateKey_ex(EVP_PKEY_RSA, NULL, &ppriv_key,
-                             sizeof(rsa_priv_key), libctx, propq);
-    if (pkey == NULL) {
-        fprintf(stderr, "Failed to load private key\n");
-        goto end;
-    }
+	/* Load DER-encoded RSA private key. */
+	ppriv_key = rsa_priv_key;
+	pkey = d2i_PrivateKey_ex(EVP_PKEY_RSA, NULL, &ppriv_key,
+				 sizeof(rsa_priv_key), libctx, propq);
+	if (pkey == NULL) {
+		fprintf(stderr, "Failed to load private key\n");
+		goto end;
+	}
 
-    /* Create MD context used for signing. */
-    mctx = EVP_MD_CTX_new();
-    if (mctx == NULL) {
-        fprintf(stderr, "Failed to create MD context\n");
-        goto end;
-    }
+	/* Create MD context used for signing. */
+	mctx = EVP_MD_CTX_new();
+	if (mctx == NULL) {
+		fprintf(stderr, "Failed to create MD context\n");
+		goto end;
+	}
 
-    /* Initialize MD context for signing. */
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_PAD_MODE,
-                                            OSSL_PKEY_RSA_PAD_MODE_PSS, 0);
-    *p = OSSL_PARAM_construct_end();
+	/* Initialize MD context for signing. */
+	*p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_PAD_MODE,
+						OSSL_PKEY_RSA_PAD_MODE_PSS, 0);
+	*p = OSSL_PARAM_construct_end();
 
-    if (EVP_DigestSignInit_ex(mctx, NULL, "SHA256", libctx, propq,
-                              pkey, params) == 0) {
-        fprintf(stderr, "Failed to initialize signing context\n");
-        goto end;
-    }
+	if (EVP_DigestSignInit_ex(mctx, NULL, "SHA256", libctx, propq, pkey,
+				  params) == 0) {
+		fprintf(stderr, "Failed to initialize signing context\n");
+		goto end;
+	}
 
-    /*
+	/*
      * Feed data to be signed into the algorithm. This may
      * be called multiple times.
      */
-    if (EVP_DigestSignUpdate(mctx, test_message, sizeof(test_message)) == 0) {
-        fprintf(stderr, "Failed to hash message into signing context\n");
-        goto end;
-    }
+	if (EVP_DigestSignUpdate(mctx, test_message, sizeof(test_message)) ==
+	    0) {
+		fprintf(stderr,
+			"Failed to hash message into signing context\n");
+		goto end;
+	}
 
-    /* Determine signature length. */
-    if (EVP_DigestSignFinal(mctx, NULL, sig_len) == 0) {
-        fprintf(stderr, "Failed to get signature length\n");
-        goto end;
-    }
+	/* Determine signature length. */
+	if (EVP_DigestSignFinal(mctx, NULL, sig_len) == 0) {
+		fprintf(stderr, "Failed to get signature length\n");
+		goto end;
+	}
 
-    /* Allocate memory for signature. */
-    *sig = OPENSSL_malloc(*sig_len);
-    if (*sig == NULL) {
-        fprintf(stderr, "Failed to allocate memory for signature\n");
-        goto end;
-    }
+	/* Allocate memory for signature. */
+	*sig = OPENSSL_malloc(*sig_len);
+	if (*sig == NULL) {
+		fprintf(stderr, "Failed to allocate memory for signature\n");
+		goto end;
+	}
 
-    /* Generate signature. */
-    if (EVP_DigestSignFinal(mctx, *sig, sig_len) == 0) {
-        fprintf(stderr, "Failed to sign\n");
-        goto end;
-    }
+	/* Generate signature. */
+	if (EVP_DigestSignFinal(mctx, *sig, sig_len) == 0) {
+		fprintf(stderr, "Failed to sign\n");
+		goto end;
+	}
 
-    ret = 1;
+	ret = 1;
 end:
-    EVP_MD_CTX_free(mctx);
-    EVP_PKEY_free(pkey);
+	EVP_MD_CTX_free(mctx);
+	EVP_PKEY_free(pkey);
 
-    if (ret == 0)
-        OPENSSL_free(*sig);
+	if (ret == 0)
+		OPENSSL_free(*sig);
 
-    return ret;
+	return ret;
 }
 
 /*
@@ -111,81 +112,85 @@ end:
  * arbitrary-length message using the PSS signature scheme. Hashing is performed
  * automatically.
  */
-static int verify(OSSL_LIB_CTX *libctx, const unsigned char *sig, size_t sig_len)
+static int verify(OSSL_LIB_CTX *libctx, const unsigned char *sig,
+		  size_t sig_len)
 {
-    int ret = 0;
-    EVP_PKEY *pkey = NULL;
-    EVP_MD_CTX *mctx = NULL;
-    OSSL_PARAM params[2], *p = params;
-    const unsigned char *ppub_key = NULL;
+	int ret = 0;
+	EVP_PKEY *pkey = NULL;
+	EVP_MD_CTX *mctx = NULL;
+	OSSL_PARAM params[2], *p = params;
+	const unsigned char *ppub_key = NULL;
 
-    /* Load DER-encoded RSA public key. */
-    ppub_key = rsa_pub_key;
-    pkey = d2i_PublicKey(EVP_PKEY_RSA, NULL, &ppub_key, sizeof(rsa_pub_key));
-    if (pkey == NULL) {
-        fprintf(stderr, "Failed to load public key\n");
-        goto end;
-    }
+	/* Load DER-encoded RSA public key. */
+	ppub_key = rsa_pub_key;
+	pkey = d2i_PublicKey(EVP_PKEY_RSA, NULL, &ppub_key,
+			     sizeof(rsa_pub_key));
+	if (pkey == NULL) {
+		fprintf(stderr, "Failed to load public key\n");
+		goto end;
+	}
 
-    /* Create MD context used for verification. */
-    mctx = EVP_MD_CTX_new();
-    if (mctx == NULL) {
-        fprintf(stderr, "Failed to create MD context\n");
-        goto end;
-    }
+	/* Create MD context used for verification. */
+	mctx = EVP_MD_CTX_new();
+	if (mctx == NULL) {
+		fprintf(stderr, "Failed to create MD context\n");
+		goto end;
+	}
 
-    /* Initialize MD context for verification. */
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_PAD_MODE,
-                                            OSSL_PKEY_RSA_PAD_MODE_PSS, 0);
-    *p = OSSL_PARAM_construct_end();
+	/* Initialize MD context for verification. */
+	*p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_PAD_MODE,
+						OSSL_PKEY_RSA_PAD_MODE_PSS, 0);
+	*p = OSSL_PARAM_construct_end();
 
-    if (EVP_DigestVerifyInit_ex(mctx, NULL, "SHA256", libctx, propq,
-                                pkey, params) == 0) {
-        fprintf(stderr, "Failed to initialize signing context\n");
-        goto end;
-    }
+	if (EVP_DigestVerifyInit_ex(mctx, NULL, "SHA256", libctx, propq, pkey,
+				    params) == 0) {
+		fprintf(stderr, "Failed to initialize signing context\n");
+		goto end;
+	}
 
-    /*
+	/*
      * Feed data to be signed into the algorithm. This may
      * be called multiple times.
      */
-    if (EVP_DigestVerifyUpdate(mctx, test_message, sizeof(test_message)) == 0) {
-        fprintf(stderr, "Failed to hash message into signing context\n");
-        goto end;
-    }
+	if (EVP_DigestVerifyUpdate(mctx, test_message, sizeof(test_message)) ==
+	    0) {
+		fprintf(stderr,
+			"Failed to hash message into signing context\n");
+		goto end;
+	}
 
-    /* Verify signature. */
-    if (EVP_DigestVerifyFinal(mctx, sig, sig_len) == 0) {
-        fprintf(stderr, "Failed to verify signature; "
-                "signature may be invalid\n");
-        goto end;
-    }
+	/* Verify signature. */
+	if (EVP_DigestVerifyFinal(mctx, sig, sig_len) == 0) {
+		fprintf(stderr, "Failed to verify signature; "
+				"signature may be invalid\n");
+		goto end;
+	}
 
-    ret = 1;
+	ret = 1;
 end:
-    EVP_MD_CTX_free(mctx);
-    EVP_PKEY_free(pkey);
-    return ret;
+	EVP_MD_CTX_free(mctx);
+	EVP_PKEY_free(pkey);
+	return ret;
 }
 
 int main(int argc, char **argv)
 {
-    int ret = EXIT_FAILURE;
-    OSSL_LIB_CTX *libctx = NULL;
-    unsigned char *sig = NULL;
-    size_t sig_len = 0;
+	int ret = EXIT_FAILURE;
+	OSSL_LIB_CTX *libctx = NULL;
+	unsigned char *sig = NULL;
+	size_t sig_len = 0;
 
-    if (sign(libctx, &sig, &sig_len) == 0)
-        goto end;
+	if (sign(libctx, &sig, &sig_len) == 0)
+		goto end;
 
-    if (verify(libctx, sig, sig_len) == 0)
-        goto end;
+	if (verify(libctx, sig, sig_len) == 0)
+		goto end;
 
-    printf("Success\n");
+	printf("Success\n");
 
-    ret = EXIT_SUCCESS;
+	ret = EXIT_SUCCESS;
 end:
-    OPENSSL_free(sig);
-    OSSL_LIB_CTX_free(libctx);
-    return ret;
+	OPENSSL_free(sig);
+	OSSL_LIB_CTX_free(libctx);
+	return ret;
 }

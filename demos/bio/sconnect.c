@@ -24,7 +24,7 @@
 #include <unistd.h>
 #else
 #include <windows.h>
-# define sleep(x) Sleep(x*1000)
+#define sleep(x) Sleep(x * 1000)
 #endif
 
 #define HOSTPORT "localhost:4433"
@@ -32,104 +32,103 @@
 
 int main(int argc, char *argv[])
 {
-    const char *hostport = HOSTPORT;
-    const char *CAfile = CAFILE;
-    const char *hostname;
-    BIO *out = NULL;
-    char buf[1024 * 10], *p;
-    SSL_CTX *ssl_ctx = NULL;
-    SSL *ssl;
-    BIO *ssl_bio;
-    int i, len, off, ret = EXIT_FAILURE;
+	const char *hostport = HOSTPORT;
+	const char *CAfile = CAFILE;
+	const char *hostname;
+	BIO *out = NULL;
+	char buf[1024 * 10], *p;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl;
+	BIO *ssl_bio;
+	int i, len, off, ret = EXIT_FAILURE;
 
-    if (argc > 1)
-        hostport = argv[1];
-    if (argc > 2)
-        CAfile = argv[2];
+	if (argc > 1)
+		hostport = argv[1];
+	if (argc > 2)
+		CAfile = argv[2];
 
 #ifdef WATT32
-    dbug_init();
-    sock_init();
+	dbug_init();
+	sock_init();
 #endif
 
-    ssl_ctx = SSL_CTX_new(TLS_client_method());
+	ssl_ctx = SSL_CTX_new(TLS_client_method());
 
-    /* Enable trust chain verification */
-    SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
-    if (!SSL_CTX_load_verify_locations(ssl_ctx, CAfile, NULL))
-        goto err;
+	/* Enable trust chain verification */
+	SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
+	if (!SSL_CTX_load_verify_locations(ssl_ctx, CAfile, NULL))
+		goto err;
 
-    /* Let's make an SSL structure */
-    ssl = SSL_new(ssl_ctx);
-    SSL_set_connect_state(ssl);
+	/* Let's make an SSL structure */
+	ssl = SSL_new(ssl_ctx);
+	SSL_set_connect_state(ssl);
 
+	/* Use it inside an SSL BIO */
+	ssl_bio = BIO_new(BIO_f_ssl());
+	BIO_set_ssl(ssl_bio, ssl, BIO_CLOSE);
 
-    /* Use it inside an SSL BIO */
-    ssl_bio = BIO_new(BIO_f_ssl());
-    BIO_set_ssl(ssl_bio, ssl, BIO_CLOSE);
+	/* Lets use a connect BIO under the SSL BIO */
+	out = BIO_new(BIO_s_connect());
+	BIO_set_conn_hostname(out, hostport);
 
-    /* Lets use a connect BIO under the SSL BIO */
-    out = BIO_new(BIO_s_connect());
-    BIO_set_conn_hostname(out, hostport);
+	/* The BIO has parsed the host:port and even IPv6 literals in [] */
+	hostname = BIO_get_conn_hostname(out);
+	if (!hostname || SSL_set1_host(ssl, hostname) <= 0) {
+		BIO_free(ssl_bio);
+		goto err;
+	}
 
-    /* The BIO has parsed the host:port and even IPv6 literals in [] */
-    hostname = BIO_get_conn_hostname(out);
-    if (!hostname || SSL_set1_host(ssl, hostname) <= 0) {
-        BIO_free(ssl_bio);
-        goto err;
-    }
+	BIO_set_nbio(out, 1);
+	out = BIO_push(ssl_bio, out);
 
-    BIO_set_nbio(out, 1);
-    out = BIO_push(ssl_bio, out);
+	p = "GET / HTTP/1.0\r\n\r\n";
+	len = (int)strlen(p);
 
-    p = "GET / HTTP/1.0\r\n\r\n";
-    len = (int)strlen(p);
+	off = 0;
+	for (;;) {
+		i = BIO_write(out, &(p[off]), len);
+		if (i <= 0) {
+			if (BIO_should_retry(out)) {
+				fprintf(stderr, "write DELAY\n");
+				sleep(1);
+				continue;
+			} else {
+				goto err;
+			}
+		}
+		off += i;
+		len -= i;
+		if (len <= 0)
+			break;
+	}
 
-    off = 0;
-    for (;;) {
-        i = BIO_write(out, &(p[off]), len);
-        if (i <= 0) {
-            if (BIO_should_retry(out)) {
-                fprintf(stderr, "write DELAY\n");
-                sleep(1);
-                continue;
-            } else {
-                goto err;
-            }
-        }
-        off += i;
-        len -= i;
-        if (len <= 0)
-            break;
-    }
+	for (;;) {
+		i = BIO_read(out, buf, sizeof(buf));
+		if (i == 0)
+			break;
+		if (i < 0) {
+			if (BIO_should_retry(out)) {
+				fprintf(stderr, "read DELAY\n");
+				sleep(1);
+				continue;
+			}
+			goto err;
+		}
+		fwrite(buf, 1, i, stdout);
+	}
 
-    for (;;) {
-        i = BIO_read(out, buf, sizeof(buf));
-        if (i == 0)
-            break;
-        if (i < 0) {
-            if (BIO_should_retry(out)) {
-                fprintf(stderr, "read DELAY\n");
-                sleep(1);
-                continue;
-            }
-            goto err;
-        }
-        fwrite(buf, 1, i, stdout);
-    }
+	ret = EXIT_SUCCESS;
+	goto done;
 
-    ret = EXIT_SUCCESS;
-    goto done;
-
- err:
-    if (ERR_peek_error() == 0) { /* system call error */
-        fprintf(stderr, "errno=%d ", errno);
-        perror("error");
-    } else {
-        ERR_print_errors_fp(stderr);
-    }
- done:
-    BIO_free_all(out);
-    SSL_CTX_free(ssl_ctx);
-    return ret;
+err:
+	if (ERR_peek_error() == 0) { /* system call error */
+		fprintf(stderr, "errno=%d ", errno);
+		perror("error");
+	} else {
+		ERR_print_errors_fp(stderr);
+	}
+done:
+	BIO_free_all(out);
+	SSL_CTX_free(ssl_ctx);
+	return ret;
 }

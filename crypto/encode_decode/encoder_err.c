@@ -15,13 +15,14 @@
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA OSSL_ENCODER_str_reasons[] = {
-    {ERR_PACK(ERR_LIB_OSSL_ENCODER, 0, OSSL_ENCODER_R_ENCODER_NOT_FOUND),
-    "encoder not found"},
-    {ERR_PACK(ERR_LIB_OSSL_ENCODER, 0, OSSL_ENCODER_R_INCORRECT_PROPERTY_QUERY),
-    "incorrect property query"},
-    {ERR_PACK(ERR_LIB_OSSL_ENCODER, 0, OSSL_ENCODER_R_MISSING_GET_PARAMS),
-    "missing get params"},
-    {0, NULL}
+	{ ERR_PACK(ERR_LIB_OSSL_ENCODER, 0, OSSL_ENCODER_R_ENCODER_NOT_FOUND),
+	  "encoder not found" },
+	{ ERR_PACK(ERR_LIB_OSSL_ENCODER, 0,
+		   OSSL_ENCODER_R_INCORRECT_PROPERTY_QUERY),
+	  "incorrect property query" },
+	{ ERR_PACK(ERR_LIB_OSSL_ENCODER, 0, OSSL_ENCODER_R_MISSING_GET_PARAMS),
+	  "missing get params" },
+	{ 0, NULL }
 };
 
 #endif
@@ -29,8 +30,8 @@ static const ERR_STRING_DATA OSSL_ENCODER_str_reasons[] = {
 int ossl_err_load_OSSL_ENCODER_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (ERR_reason_error_string(OSSL_ENCODER_str_reasons[0].error) == NULL)
-        ERR_load_strings_const(OSSL_ENCODER_str_reasons);
+	if (ERR_reason_error_string(OSSL_ENCODER_str_reasons[0].error) == NULL)
+		ERR_load_strings_const(OSSL_ENCODER_str_reasons);
 #endif
-    return 1;
+	return 1;
 }

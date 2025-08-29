@@ -21,43 +21,43 @@
 
 static int dsa_precheck_params(const DSA *dsa, int *ret)
 {
-    if (dsa->params.p == NULL || dsa->params.q == NULL) {
-        ERR_raise(ERR_LIB_DSA, DSA_R_BAD_FFC_PARAMETERS);
-        *ret = FFC_CHECK_INVALID_PQ;
-        return 0;
-    }
+	if (dsa->params.p == NULL || dsa->params.q == NULL) {
+		ERR_raise(ERR_LIB_DSA, DSA_R_BAD_FFC_PARAMETERS);
+		*ret = FFC_CHECK_INVALID_PQ;
+		return 0;
+	}
 
-    if (BN_num_bits(dsa->params.p) > OPENSSL_DSA_MAX_MODULUS_BITS) {
-        ERR_raise(ERR_LIB_DSA, DSA_R_MODULUS_TOO_LARGE);
-        *ret = FFC_CHECK_INVALID_PQ;
-        return 0;
-    }
+	if (BN_num_bits(dsa->params.p) > OPENSSL_DSA_MAX_MODULUS_BITS) {
+		ERR_raise(ERR_LIB_DSA, DSA_R_MODULUS_TOO_LARGE);
+		*ret = FFC_CHECK_INVALID_PQ;
+		return 0;
+	}
 
-    if (BN_num_bits(dsa->params.q) >= BN_num_bits(dsa->params.p)) {
-        ERR_raise(ERR_LIB_DSA, DSA_R_BAD_Q_VALUE);
-        *ret = FFC_CHECK_INVALID_PQ;
-        return 0;
-    }
+	if (BN_num_bits(dsa->params.q) >= BN_num_bits(dsa->params.p)) {
+		ERR_raise(ERR_LIB_DSA, DSA_R_BAD_Q_VALUE);
+		*ret = FFC_CHECK_INVALID_PQ;
+		return 0;
+	}
 
-    return 1;
+	return 1;
 }
 
 int ossl_dsa_check_params(const DSA *dsa, int checktype, int *ret)
 {
-    if (!dsa_precheck_params(dsa, ret))
-        return 0;
+	if (!dsa_precheck_params(dsa, ret))
+		return 0;
 
-    if (checktype == OSSL_KEYMGMT_VALIDATE_QUICK_CHECK)
-        return ossl_ffc_params_simple_validate(dsa->libctx, &dsa->params,
-                                               FFC_PARAM_TYPE_DSA, ret);
-    else
-        /*
+	if (checktype == OSSL_KEYMGMT_VALIDATE_QUICK_CHECK)
+		return ossl_ffc_params_simple_validate(
+			dsa->libctx, &dsa->params, FFC_PARAM_TYPE_DSA, ret);
+	else
+		/*
          * Do full FFC domain params validation according to FIPS-186-4
          *  - always in FIPS_MODULE
          *  - only if possible (i.e., seed is set) in default provider
          */
-        return ossl_ffc_params_full_validate(dsa->libctx, &dsa->params,
-                                             FFC_PARAM_TYPE_DSA, ret);
+		return ossl_ffc_params_full_validate(dsa->libctx, &dsa->params,
+						     FFC_PARAM_TYPE_DSA, ret);
 }
 
 /*
@@ -65,11 +65,11 @@ int ossl_dsa_check_params(const DSA *dsa, int checktype, int *ret)
  */
 int ossl_dsa_check_pub_key(const DSA *dsa, const BIGNUM *pub_key, int *ret)
 {
-    if (!dsa_precheck_params(dsa, ret))
-        return 0;
+	if (!dsa_precheck_params(dsa, ret))
+		return 0;
 
-    return ossl_ffc_validate_public_key(&dsa->params, pub_key, ret)
-           && *ret == 0;
+	return ossl_ffc_validate_public_key(&dsa->params, pub_key, ret) &&
+	       *ret == 0;
 }
 
 /*
@@ -77,23 +77,25 @@ int ossl_dsa_check_pub_key(const DSA *dsa, const BIGNUM *pub_key, int *ret)
  * To only be used with ephemeral FFC public keys generated using the approved
  * safe-prime groups.
  */
-int ossl_dsa_check_pub_key_partial(const DSA *dsa, const BIGNUM *pub_key, int *ret)
+int ossl_dsa_check_pub_key_partial(const DSA *dsa, const BIGNUM *pub_key,
+				   int *ret)
 {
-    if (!dsa_precheck_params(dsa, ret))
-        return 0;
+	if (!dsa_precheck_params(dsa, ret))
+		return 0;
 
-    return ossl_ffc_validate_public_key_partial(&dsa->params, pub_key, ret)
-           && *ret == 0;
+	return ossl_ffc_validate_public_key_partial(&dsa->params, pub_key,
+						    ret) &&
+	       *ret == 0;
 }
 
 int ossl_dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret)
 {
-    *ret = 0;
+	*ret = 0;
 
-    if (!dsa_precheck_params(dsa, ret))
-        return 0;
+	if (!dsa_precheck_params(dsa, ret))
+		return 0;
 
-    return ossl_ffc_validate_private_key(dsa->params.q, priv_key, ret);
+	return ossl_ffc_validate_private_key(dsa->params.q, priv_key, ret);
 }
 
 /*
@@ -102,32 +104,31 @@ int ossl_dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret)
  */
 int ossl_dsa_check_pairwise(const DSA *dsa)
 {
-    int ret = 0;
-    BN_CTX *ctx = NULL;
-    BIGNUM *pub_key = NULL;
+	int ret = 0;
+	BN_CTX *ctx = NULL;
+	BIGNUM *pub_key = NULL;
 
-    if (!dsa_precheck_params(dsa, &ret))
-        return 0;
+	if (!dsa_precheck_params(dsa, &ret))
+		return 0;
 
-    if (dsa->params.g == NULL
-        || dsa->priv_key == NULL
-        || dsa->pub_key == NULL)
-        return 0;
+	if (dsa->params.g == NULL || dsa->priv_key == NULL ||
+	    dsa->pub_key == NULL)
+		return 0;
 
-    ctx = BN_CTX_new_ex(dsa->libctx);
-    if (ctx == NULL)
-        goto err;
-    pub_key = BN_new();
-    if (pub_key == NULL)
-        goto err;
+	ctx = BN_CTX_new_ex(dsa->libctx);
+	if (ctx == NULL)
+		goto err;
+	pub_key = BN_new();
+	if (pub_key == NULL)
+		goto err;
 
-    /* recalculate the public key = (g ^ priv) mod p */
-    if (!ossl_dsa_generate_public_key(ctx, dsa, dsa->priv_key, pub_key))
-        goto err;
-    /* check it matches the existing public_key */
-    ret = BN_cmp(pub_key, dsa->pub_key) == 0;
+	/* recalculate the public key = (g ^ priv) mod p */
+	if (!ossl_dsa_generate_public_key(ctx, dsa, dsa->priv_key, pub_key))
+		goto err;
+	/* check it matches the existing public_key */
+	ret = BN_cmp(pub_key, dsa->pub_key) == 0;
 err:
-    BN_free(pub_key);
-    BN_CTX_free(ctx);
-    return ret;
+	BN_free(pub_key);
+	BN_CTX_free(ctx);
+	return ret;
 }

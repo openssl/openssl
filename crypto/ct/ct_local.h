@@ -18,103 +18,106 @@
  * From RFC6962: opaque SerializedSCT<1..2^16-1>; struct { SerializedSCT
  * sct_list <1..2^16-1>; } SignedCertificateTimestampList;
  */
-# define MAX_SCT_SIZE            65535
-# define MAX_SCT_LIST_SIZE       MAX_SCT_SIZE
+#define MAX_SCT_SIZE 65535
+#define MAX_SCT_LIST_SIZE MAX_SCT_SIZE
 
 /*
  * Macros to read and write integers in network-byte order.
  */
 
-#define n2s(c,s)        ((s=(((unsigned int)((c)[0]))<< 8)| \
-                            (((unsigned int)((c)[1]))    )),c+=2)
+#define n2s(c, s)                                                            \
+	((s = (((unsigned int)((c)[0])) << 8) | (((unsigned int)((c)[1])))), \
+	 c += 2)
 
-#define s2n(s,c)        ((c[0]=(unsigned char)(((s)>> 8)&0xff), \
-                          c[1]=(unsigned char)(((s)    )&0xff)),c+=2)
+#define s2n(s, c)                                    \
+	((c[0] = (unsigned char)(((s) >> 8) & 0xff), \
+	  c[1] = (unsigned char)(((s)) & 0xff)),     \
+	 c += 2)
 
-#define l2n3(l,c)       ((c[0]=(unsigned char)(((l)>>16)&0xff), \
-                          c[1]=(unsigned char)(((l)>> 8)&0xff), \
-                          c[2]=(unsigned char)(((l)    )&0xff)),c+=3)
+#define l2n3(l, c)                                    \
+	((c[0] = (unsigned char)(((l) >> 16) & 0xff), \
+	  c[1] = (unsigned char)(((l) >> 8) & 0xff),  \
+	  c[2] = (unsigned char)(((l)) & 0xff)),      \
+	 c += 3)
 
-#define n2l8(c,l)       (l =((uint64_t)(*((c)++)))<<56, \
-                         l|=((uint64_t)(*((c)++)))<<48, \
-                         l|=((uint64_t)(*((c)++)))<<40, \
-                         l|=((uint64_t)(*((c)++)))<<32, \
-                         l|=((uint64_t)(*((c)++)))<<24, \
-                         l|=((uint64_t)(*((c)++)))<<16, \
-                         l|=((uint64_t)(*((c)++)))<< 8, \
-                         l|=((uint64_t)(*((c)++))))
+#define n2l8(c, l)                                                             \
+	(l = ((uint64_t)(*((c)++))) << 56, l |= ((uint64_t)(*((c)++))) << 48,  \
+	 l |= ((uint64_t)(*((c)++))) << 40, l |= ((uint64_t)(*((c)++))) << 32, \
+	 l |= ((uint64_t)(*((c)++))) << 24, l |= ((uint64_t)(*((c)++))) << 16, \
+	 l |= ((uint64_t)(*((c)++))) << 8, l |= ((uint64_t)(*((c)++))))
 
-#define l2n8(l,c)       (*((c)++)=(unsigned char)(((l)>>56)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>48)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>40)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>32)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>24)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-                         *((c)++)=(unsigned char)(((l)    )&0xff))
+#define l2n8(l, c)                                       \
+	(*((c)++) = (unsigned char)(((l) >> 56) & 0xff), \
+	 *((c)++) = (unsigned char)(((l) >> 48) & 0xff), \
+	 *((c)++) = (unsigned char)(((l) >> 40) & 0xff), \
+	 *((c)++) = (unsigned char)(((l) >> 32) & 0xff), \
+	 *((c)++) = (unsigned char)(((l) >> 24) & 0xff), \
+	 *((c)++) = (unsigned char)(((l) >> 16) & 0xff), \
+	 *((c)++) = (unsigned char)(((l) >> 8) & 0xff),  \
+	 *((c)++) = (unsigned char)(((l)) & 0xff))
 
 /* Signed Certificate Timestamp */
 struct sct_st {
-    sct_version_t version;
-    /* If version is not SCT_VERSION_V1, this contains the encoded SCT */
-    unsigned char *sct;
-    size_t sct_len;
-    /* If version is SCT_VERSION_V1, fields below contain components of the SCT */
-    unsigned char *log_id;
-    size_t log_id_len;
-    /*
+	sct_version_t version;
+	/* If version is not SCT_VERSION_V1, this contains the encoded SCT */
+	unsigned char *sct;
+	size_t sct_len;
+	/* If version is SCT_VERSION_V1, fields below contain components of the SCT */
+	unsigned char *log_id;
+	size_t log_id_len;
+	/*
     * Note, we cannot distinguish between an unset timestamp, and one
     * that is set to 0.  However since CT didn't exist in 1970, no real
     * SCT should ever be set as such.
     */
-    uint64_t timestamp;
-    unsigned char *ext;
-    size_t ext_len;
-    unsigned char hash_alg;
-    unsigned char sig_alg;
-    unsigned char *sig;
-    size_t sig_len;
-    /* Log entry type */
-    ct_log_entry_type_t entry_type;
-    /* Where this SCT was found, e.g. certificate, OCSP response, etc. */
-    sct_source_t source;
-    /* The result of the last attempt to validate this SCT. */
-    sct_validation_status_t validation_status;
+	uint64_t timestamp;
+	unsigned char *ext;
+	size_t ext_len;
+	unsigned char hash_alg;
+	unsigned char sig_alg;
+	unsigned char *sig;
+	size_t sig_len;
+	/* Log entry type */
+	ct_log_entry_type_t entry_type;
+	/* Where this SCT was found, e.g. certificate, OCSP response, etc. */
+	sct_source_t source;
+	/* The result of the last attempt to validate this SCT. */
+	sct_validation_status_t validation_status;
 };
 
 /* Miscellaneous data that is useful when verifying an SCT  */
 struct sct_ctx_st {
-    /* Public key */
-    EVP_PKEY *pkey;
-    /* Hash of public key */
-    unsigned char *pkeyhash;
-    size_t pkeyhashlen;
-    /* For pre-certificate: issuer public key hash */
-    unsigned char *ihash;
-    size_t ihashlen;
-    /* certificate encoding */
-    unsigned char *certder;
-    size_t certderlen;
-    /* pre-certificate encoding */
-    unsigned char *preder;
-    size_t prederlen;
-    /* milliseconds since epoch (to check that the SCT isn't from the future) */
-    uint64_t epoch_time_in_ms;
+	/* Public key */
+	EVP_PKEY *pkey;
+	/* Hash of public key */
+	unsigned char *pkeyhash;
+	size_t pkeyhashlen;
+	/* For pre-certificate: issuer public key hash */
+	unsigned char *ihash;
+	size_t ihashlen;
+	/* certificate encoding */
+	unsigned char *certder;
+	size_t certderlen;
+	/* pre-certificate encoding */
+	unsigned char *preder;
+	size_t prederlen;
+	/* milliseconds since epoch (to check that the SCT isn't from the future) */
+	uint64_t epoch_time_in_ms;
 
-    OSSL_LIB_CTX *libctx;
-    char *propq;
+	OSSL_LIB_CTX *libctx;
+	char *propq;
 };
 
 /* Context when evaluating whether a Certificate Transparency policy is met */
 struct ct_policy_eval_ctx_st {
-    X509 *cert;
-    X509 *issuer;
-    CTLOG_STORE *log_store;
-    /* milliseconds since epoch (to check that SCTs aren't from the future) */
-    uint64_t epoch_time_in_ms;
+	X509 *cert;
+	X509 *issuer;
+	CTLOG_STORE *log_store;
+	/* milliseconds since epoch (to check that SCTs aren't from the future) */
+	uint64_t epoch_time_in_ms;
 
-    OSSL_LIB_CTX *libctx;
-    char *propq;
+	OSSL_LIB_CTX *libctx;
+	char *propq;
 };
 
 /*

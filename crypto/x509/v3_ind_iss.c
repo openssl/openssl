@@ -14,27 +14,27 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-static int i2r_INDIRECT_ISSUER(X509V3_EXT_METHOD *method,
-                        void *su, BIO *out,
-                        int indent)
+static int i2r_INDIRECT_ISSUER(X509V3_EXT_METHOD *method, void *su, BIO *out,
+			       int indent)
 {
-    return 1;
+	return 1;
 }
 
-static void *r2i_INDIRECT_ISSUER(X509V3_EXT_METHOD *method,
-                          X509V3_CTX *ctx, const char *value)
+static void *r2i_INDIRECT_ISSUER(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+				 const char *value)
 {
-    return ASN1_NULL_new();
+	return ASN1_NULL_new();
 }
 
 static char *i2s_INDIRECT_ISSUER(const X509V3_EXT_METHOD *method, void *val)
 {
-    return OPENSSL_strdup("NULL");
+	return OPENSSL_strdup("NULL");
 }
 
-static void *s2i_INDIRECT_ISSUER(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx, const char *str)
+static void *s2i_INDIRECT_ISSUER(const X509V3_EXT_METHOD *method,
+				 X509V3_CTX *ctx, const char *str)
 {
-    return ASN1_NULL_new();
+	return ASN1_NULL_new();
 }
 
 /*
@@ -42,12 +42,18 @@ static void *s2i_INDIRECT_ISSUER(const X509V3_EXT_METHOD *method, X509V3_CTX *ct
  * (2019), Section 17.5.2.5. See: https://www.itu.int/rec/T-REC-X.509-201910-I/en.
  */
 const X509V3_EXT_METHOD ossl_v3_indirect_issuer = {
-    NID_indirect_issuer, 0, ASN1_ITEM_ref(ASN1_NULL),
-    0, 0, 0, 0,
-    (X509V3_EXT_I2S)i2s_INDIRECT_ISSUER,
-    (X509V3_EXT_S2I)s2i_INDIRECT_ISSUER,
-    0, 0,
-    (X509V3_EXT_I2R)i2r_INDIRECT_ISSUER,
-    (X509V3_EXT_R2I)r2i_INDIRECT_ISSUER,
-    NULL
+	NID_indirect_issuer,
+	0,
+	ASN1_ITEM_ref(ASN1_NULL),
+	0,
+	0,
+	0,
+	0,
+	(X509V3_EXT_I2S)i2s_INDIRECT_ISSUER,
+	(X509V3_EXT_S2I)s2i_INDIRECT_ISSUER,
+	0,
+	0,
+	(X509V3_EXT_I2R)i2r_INDIRECT_ISSUER,
+	(X509V3_EXT_R2I)r2i_INDIRECT_ISSUER,
+	NULL
 };

@@ -13,61 +13,61 @@
 
 uint32_t OSSL_get_thread_support_flags(void)
 {
-    int support = 0;
+	int support = 0;
 
 #if !defined(OPENSSL_NO_THREAD_POOL)
-    support |= OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL;
+	support |= OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL;
 #endif
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
-    support |= OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN;
+	support |= OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN;
 #endif
 
-    return support;
+	return support;
 }
 
 #if defined(OPENSSL_NO_THREAD_POOL) || defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
 
 int OSSL_set_max_threads(OSSL_LIB_CTX *ctx, uint64_t max_threads)
 {
-    return 0;
+	return 0;
 }
 
 uint64_t OSSL_get_max_threads(OSSL_LIB_CTX *ctx)
 {
-    return 0;
+	return 0;
 }
 
 #else
 
 uint64_t OSSL_get_max_threads(OSSL_LIB_CTX *ctx)
 {
-    uint64_t ret = 0;
-    OSSL_LIB_CTX_THREADS *tdata = OSSL_LIB_CTX_GET_THREADS(ctx);
+	uint64_t ret = 0;
+	OSSL_LIB_CTX_THREADS *tdata = OSSL_LIB_CTX_GET_THREADS(ctx);
 
-    if (tdata == NULL)
-        goto fail;
+	if (tdata == NULL)
+		goto fail;
 
-    ossl_crypto_mutex_lock(tdata->lock);
-    ret = tdata->max_threads;
-    ossl_crypto_mutex_unlock(tdata->lock);
+	ossl_crypto_mutex_lock(tdata->lock);
+	ret = tdata->max_threads;
+	ossl_crypto_mutex_unlock(tdata->lock);
 
 fail:
-    return ret;
+	return ret;
 }
 
 int OSSL_set_max_threads(OSSL_LIB_CTX *ctx, uint64_t max_threads)
 {
-    OSSL_LIB_CTX_THREADS *tdata;
+	OSSL_LIB_CTX_THREADS *tdata;
 
-    tdata = OSSL_LIB_CTX_GET_THREADS(ctx);
-    if (tdata == NULL)
-        return 0;
+	tdata = OSSL_LIB_CTX_GET_THREADS(ctx);
+	if (tdata == NULL)
+		return 0;
 
-    ossl_crypto_mutex_lock(tdata->lock);
-    tdata->max_threads = max_threads;
-    ossl_crypto_mutex_unlock(tdata->lock);
+	ossl_crypto_mutex_lock(tdata->lock);
+	tdata->max_threads = max_threads;
+	ossl_crypto_mutex_unlock(tdata->lock);
 
-    return 1;
+	return 1;
 }
 
 #endif

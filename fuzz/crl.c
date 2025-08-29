@@ -15,31 +15,31 @@
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-    ERR_clear_error();
-    CRYPTO_free_ex_index(0, -1);
-    return 1;
+	OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+	ERR_clear_error();
+	CRYPTO_free_ex_index(0, -1);
+	return 1;
 }
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    const unsigned char *p = buf;
-    unsigned char *der = NULL;
+	const unsigned char *p = buf;
+	unsigned char *der = NULL;
 
-    X509_CRL *crl = d2i_X509_CRL(NULL, &p, (long)len);
-    if (crl != NULL) {
-        BIO *bio = BIO_new(BIO_s_null());
-        X509_CRL_print(bio, crl);
-        BIO_free(bio);
+	X509_CRL *crl = d2i_X509_CRL(NULL, &p, (long)len);
+	if (crl != NULL) {
+		BIO *bio = BIO_new(BIO_s_null());
+		X509_CRL_print(bio, crl);
+		BIO_free(bio);
 
-        i2d_X509_CRL(crl, &der);
-        OPENSSL_free(der);
+		i2d_X509_CRL(crl, &der);
+		OPENSSL_free(der);
 
-        X509_CRL_free(crl);
-    }
-    ERR_clear_error();
+		X509_CRL_free(crl);
+	}
+	ERR_clear_error();
 
-    return 0;
+	return 0;
 }
 
 void FuzzerCleanup(void)

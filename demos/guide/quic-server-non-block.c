@@ -16,14 +16,14 @@
 
 /* Include the appropriate header file for SOCK_STREAM */
 #ifdef _WIN32 /* Windows */
-# include <stdarg.h>
-# include <winsock2.h>
+#include <stdarg.h>
+#include <winsock2.h>
 #else /* Linux/Unix */
-# include <err.h>
-# include <sys/socket.h>
-# include <sys/select.h>
-# include <netinet/in.h>
-# include <unistd.h>
+#include <err.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <netinet/in.h>
+#include <unistd.h>
 #endif
 
 #include <openssl/bio.h>
@@ -36,29 +36,29 @@ static const char *progname;
 
 static void vwarnx(const char *fmt, va_list ap)
 {
-    if (progname != NULL)
-        fprintf(stderr, "%s: ", progname);
-    vfprintf(stderr, fmt, ap);
-    putc('\n', stderr);
+	if (progname != NULL)
+		fprintf(stderr, "%s: ", progname);
+	vfprintf(stderr, fmt, ap);
+	putc('\n', stderr);
 }
 
 static void errx(int status, const char *fmt, ...)
 {
-    va_list ap;
+	va_list ap;
 
-    va_start(ap, fmt);
-    vwarnx(fmt, ap);
-    va_end(ap);
-    exit(status);
+	va_start(ap, fmt);
+	vwarnx(fmt, ap);
+	va_end(ap);
+	exit(status);
 }
 
 static void warnx(const char *fmt, ...)
 {
-    va_list ap;
+	va_list ap;
 
-    va_start(ap, fmt);
-    vwarnx(fmt, ap);
-    va_end(ap);
+	va_start(ap, fmt);
+	vwarnx(fmt, ap);
+	va_end(ap);
 }
 #endif
 
@@ -67,39 +67,39 @@ static void warnx(const char *fmt, ...)
  * are accepted.
  */
 static const unsigned char alpn_ossltest[] = {
-    8,  'h', 't', 't', 'p', '/', '1', '.', '0',
-    10, 'h', 'q', '-', 'i', 'n', 't', 'e', 'r', 'o', 'p',
+	8,   'h', 't', 't', 'p', '/', '1', '.', '0', 10,
+	'h', 'q', '-', 'i', 'n', 't', 'e', 'r', 'o', 'p',
 };
 
 /*
  * This callback validates and negotiates the desired ALPN on the server side.
  */
 static int select_alpn(SSL *ssl, const unsigned char **out,
-                       unsigned char *out_len, const unsigned char *in,
-                       unsigned int in_len, void *arg)
+		       unsigned char *out_len, const unsigned char *in,
+		       unsigned int in_len, void *arg)
 {
-    if (SSL_select_next_proto((unsigned char **)out, out_len, alpn_ossltest,
-                              sizeof(alpn_ossltest), in,
-                              in_len) == OPENSSL_NPN_NEGOTIATED)
-        return SSL_TLSEXT_ERR_OK;
-    return SSL_TLSEXT_ERR_ALERT_FATAL;
+	if (SSL_select_next_proto((unsigned char **)out, out_len, alpn_ossltest,
+				  sizeof(alpn_ossltest), in,
+				  in_len) == OPENSSL_NPN_NEGOTIATED)
+		return SSL_TLSEXT_ERR_OK;
+	return SSL_TLSEXT_ERR_ALERT_FATAL;
 }
 
 /* Create SSL_CTX. */
 static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
 {
-    SSL_CTX *ctx;
+	SSL_CTX *ctx;
 
-    /*
+	/*
      * An SSL_CTX holds shared configuration information for multiple
      * subsequent per-client connections. We specifically load a QUIC
      * server method here.
      */
-    ctx = SSL_CTX_new(OSSL_QUIC_server_method());
-    if (ctx == NULL)
-        goto err;
+	ctx = SSL_CTX_new(OSSL_QUIC_server_method());
+	if (ctx == NULL)
+		goto err;
 
-    /*
+	/*
      * Load the server's certificate *chain* file (PEM format), which includes
      * not only the leaf (end-entity) server certificate, but also any
      * intermediate issuer-CA certificates.  The leaf certificate must be the
@@ -114,23 +114,24 @@ static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
      * "make chain" in this directory.  If the server will be executed from some
      * other directory, move or copy the files there.
      */
-    if (SSL_CTX_use_certificate_chain_file(ctx, cert_path) <= 0) {
-        fprintf(stderr, "couldn't load certificate file: %s\n", cert_path);
-        goto err;
-    }
+	if (SSL_CTX_use_certificate_chain_file(ctx, cert_path) <= 0) {
+		fprintf(stderr, "couldn't load certificate file: %s\n",
+			cert_path);
+		goto err;
+	}
 
-    /*
+	/*
      * Load the corresponding private key, this also checks that the private
      * key matches the just loaded end-entity certificate.  It does not check
      * whether the certificate chain is valid, the certificates could be
      * expired, or may otherwise fail to form a chain that a client can validate.
      */
-    if (SSL_CTX_use_PrivateKey_file(ctx, key_path, SSL_FILETYPE_PEM) <= 0) {
-        fprintf(stderr, "couldn't load key file: %s\n", key_path);
-        goto err;
-    }
+	if (SSL_CTX_use_PrivateKey_file(ctx, key_path, SSL_FILETYPE_PEM) <= 0) {
+		fprintf(stderr, "couldn't load key file: %s\n", key_path);
+		goto err;
+	}
 
-    /*
+	/*
      * Clients rarely employ certificate-based authentication, and so we don't
      * require "mutual" TLS authentication (indeed there's no way to know
      * whether or how the client authenticated the server, so the term "mutual"
@@ -141,48 +142,48 @@ static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
      * SSL_CTX_set_default_verify_paths() is needed.  The server's own
      * certificate chain is assumed valid.
      */
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
+	SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
 
-    /* Setup ALPN negotiation callback to decide which ALPN is accepted. */
-    SSL_CTX_set_alpn_select_cb(ctx, select_alpn, NULL);
+	/* Setup ALPN negotiation callback to decide which ALPN is accepted. */
+	SSL_CTX_set_alpn_select_cb(ctx, select_alpn, NULL);
 
-    return ctx;
+	return ctx;
 
 err:
-    SSL_CTX_free(ctx);
-    return NULL;
+	SSL_CTX_free(ctx);
+	return NULL;
 }
 
 /* Create UDP socket on the given port. */
 static int create_socket(uint16_t port)
 {
-    int fd;
-    struct sockaddr_in sa = {0};
+	int fd;
+	struct sockaddr_in sa = { 0 };
 
-    /* Retrieve the file descriptor for a new UDP socket */
-    if ((fd = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-        fprintf(stderr, "cannot create socket");
-        return -1;
-    }
+	/* Retrieve the file descriptor for a new UDP socket */
+	if ((fd = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+		fprintf(stderr, "cannot create socket");
+		return -1;
+	}
 
-    sa.sin_family = AF_INET;
-    sa.sin_port = htons(port);
+	sa.sin_family = AF_INET;
+	sa.sin_port = htons(port);
 
-    /* Bind to the new UDP socket on localhost */
-    if (bind(fd, (const struct sockaddr *)&sa, sizeof(sa)) < 0) {
-        fprintf(stderr, "cannot bind to %u\n", port);
-        BIO_closesocket(fd);
-        return -1;
-    }
+	/* Bind to the new UDP socket on localhost */
+	if (bind(fd, (const struct sockaddr *)&sa, sizeof(sa)) < 0) {
+		fprintf(stderr, "cannot bind to %u\n", port);
+		BIO_closesocket(fd);
+		return -1;
+	}
 
-    /* Set port to nonblocking mode */
-    if (BIO_socket_nbio(fd, 1) <= 0) {
-        fprintf(stderr, "Unable to set port to nonblocking mode");
-        BIO_closesocket(fd);
-        return -1;
-    }
+	/* Set port to nonblocking mode */
+	if (BIO_socket_nbio(fd, 1) <= 0) {
+		fprintf(stderr, "Unable to set port to nonblocking mode");
+		BIO_closesocket(fd);
+		return -1;
+	}
 
-    return fd;
+	return fd;
 }
 
 /**
@@ -205,37 +206,37 @@ static int create_socket(uint16_t port)
  */
 static void wait_for_activity(SSL *ssl)
 {
-    int sock, isinfinite;
-    fd_set read_fd, write_fd;
-    struct timeval tv;
-    struct timeval *tvp = NULL;
+	int sock, isinfinite;
+	fd_set read_fd, write_fd;
+	struct timeval tv;
+	struct timeval *tvp = NULL;
 
-    /* Get hold of the underlying file descriptor for the socket */
-    if ((sock = SSL_get_fd(ssl)) == -1) {
-        fprintf(stderr, "Unable to get file descriptor");
-        return;
-    }
+	/* Get hold of the underlying file descriptor for the socket */
+	if ((sock = SSL_get_fd(ssl)) == -1) {
+		fprintf(stderr, "Unable to get file descriptor");
+		return;
+	}
 
-    /* Initialize the fd_set structure */
-    FD_ZERO(&read_fd);
-    FD_ZERO(&write_fd);
+	/* Initialize the fd_set structure */
+	FD_ZERO(&read_fd);
+	FD_ZERO(&write_fd);
 
-    /*
+	/*
      * Determine if we would like to write to the socket, read from it, or both.
      */
-    if (SSL_net_write_desired(ssl))
-        FD_SET(sock, &write_fd);
-    if (SSL_net_read_desired(ssl))
-        FD_SET(sock, &read_fd);
+	if (SSL_net_write_desired(ssl))
+		FD_SET(sock, &write_fd);
+	if (SSL_net_read_desired(ssl))
+		FD_SET(sock, &read_fd);
 
-    /*
+	/*
      * Find out when OpenSSL would next like to be called, regardless of
      * whether the state of the underlying socket has changed or not.
      */
-    if (SSL_get_event_timeout(ssl, &tv, &isinfinite) && !isinfinite)
-        tvp = &tv;
+	if (SSL_get_event_timeout(ssl, &tv, &isinfinite) && !isinfinite)
+		tvp = &tv;
 
-    /*
+	/*
      * Wait until the socket is writeable or readable. We use select here
      * for the sake of simplicity and portability, but you could equally use
      * poll/epoll or similar functions
@@ -255,7 +256,7 @@ static void wait_for_activity(SSL *ssl)
      * "select" (with updated timeouts).
      */
 
-    select(sock + 1, &read_fd, &write_fd, NULL, tvp);
+	select(sock + 1, &read_fd, &write_fd, NULL, tvp);
 }
 
 /**
@@ -281,57 +282,58 @@ static void wait_for_activity(SSL *ssl)
  */
 static int handle_io_failure(SSL *ssl, int res)
 {
-    switch (SSL_get_error(ssl, res)) {
-    case SSL_ERROR_WANT_READ:
-    case SSL_ERROR_WANT_WRITE:
-        /* Temporary failure. Wait until we can read/write and try again */
-        wait_for_activity(ssl);
-        return 1;
+	switch (SSL_get_error(ssl, res)) {
+	case SSL_ERROR_WANT_READ:
+	case SSL_ERROR_WANT_WRITE:
+		/* Temporary failure. Wait until we can read/write and try again */
+		wait_for_activity(ssl);
+		return 1;
 
-    case SSL_ERROR_ZERO_RETURN:
-    case SSL_ERROR_NONE:
-        /* EOF */
-        return 0;
+	case SSL_ERROR_ZERO_RETURN:
+	case SSL_ERROR_NONE:
+		/* EOF */
+		return 0;
 
-    case SSL_ERROR_SYSCALL:
-        return -1;
+	case SSL_ERROR_SYSCALL:
+		return -1;
 
-    case SSL_ERROR_SSL:
-        /*
+	case SSL_ERROR_SSL:
+		/*
          * Some stream fatal error occurred. This could be because of a
          * stream reset - or some failure occurred on the underlying
          * connection.
          */
-        switch (SSL_get_stream_read_state(ssl)) {
-        case SSL_STREAM_STATE_RESET_REMOTE:
-            printf("Stream reset occurred\n");
-            /*
+		switch (SSL_get_stream_read_state(ssl)) {
+		case SSL_STREAM_STATE_RESET_REMOTE:
+			printf("Stream reset occurred\n");
+			/*
              * The stream has been reset but the connection is still
              * healthy.
              */
-            break;
+			break;
 
-        case SSL_STREAM_STATE_CONN_CLOSED:
-            printf("Connection closed\n");
-            /* Connection is already closed. */
-            break;
+		case SSL_STREAM_STATE_CONN_CLOSED:
+			printf("Connection closed\n");
+			/* Connection is already closed. */
+			break;
 
-        default:
-            printf("Unknown stream failure\n");
-            break;
-        }
-        /*
+		default:
+			printf("Unknown stream failure\n");
+			break;
+		}
+		/*
          * If the failure is due to a verification error we can get more
          * information about it from SSL_get_verify_result().
          */
-        if (SSL_get_verify_result(ssl) != X509_V_OK)
-            printf("Verify error: %s\n",
-                   X509_verify_cert_error_string(SSL_get_verify_result(ssl)));
-        return -1;
+		if (SSL_get_verify_result(ssl) != X509_V_OK)
+			printf("Verify error: %s\n",
+			       X509_verify_cert_error_string(
+				       SSL_get_verify_result(ssl)));
+		return -1;
 
-    default:
-        return -1;
-    }
+	default:
+		return -1;
+	}
 }
 
 /*
@@ -340,156 +342,160 @@ static int handle_io_failure(SSL *ssl, int res)
  */
 static int run_quic_server(SSL_CTX *ctx, int fd)
 {
-    int ok = -1;
-    int ret, eof;
-    SSL *listener, *conn = NULL;
-    unsigned char buf[8192];
-    size_t nread, total_read, total_written;
+	int ok = -1;
+	int ret, eof;
+	SSL *listener, *conn = NULL;
+	unsigned char buf[8192];
+	size_t nread, total_read, total_written;
 
-    /* Create a new QUIC listener */
-    if ((listener = SSL_new_listener(ctx, 0)) == NULL)
-        goto err;
+	/* Create a new QUIC listener */
+	if ((listener = SSL_new_listener(ctx, 0)) == NULL)
+		goto err;
 
-    /* Provide the listener with our UDP socket. */
-    if (!SSL_set_fd(listener, fd))
-        goto err;
+	/* Provide the listener with our UDP socket. */
+	if (!SSL_set_fd(listener, fd))
+		goto err;
 
-    /*
+	/*
      * Set the listener mode to non-blocking, which is inherited by
      * child objects.
      */
-    if (!SSL_set_blocking_mode(listener, 0))
-        goto err;
+	if (!SSL_set_blocking_mode(listener, 0))
+		goto err;
 
-    /*
+	/*
      * Begin listening. Note that is not usually needed as SSL_accept_connection
      * will implicitly start listening. It is only needed if a server wishes to
      * ensure it has started to accept incoming connections but does not wish to
      * actually call SSL_accept_connection yet.
      */
-    if (!SSL_listen(listener))
-        goto err;
+	if (!SSL_listen(listener))
+		goto err;
 
-    /*
+	/*
      * Begin an infinite loop of listening for connections. We will only
      * exit this loop if we encounter an error.
      */
-    for (;;) {
-        eof = 0;
-        total_read = 0;
-        total_written = 0;
+	for (;;) {
+		eof = 0;
+		total_read = 0;
+		total_written = 0;
 
-        /* Pristine error stack for each new connection */
-        ERR_clear_error();
+		/* Pristine error stack for each new connection */
+		ERR_clear_error();
 
-        /* Block while waiting for a client connection */
-        printf("Waiting for connection\n");
-        while ((conn = SSL_accept_connection(listener, 0)) == NULL)
-            wait_for_activity(listener);
-        printf("Accepted new connection\n");
+		/* Block while waiting for a client connection */
+		printf("Waiting for connection\n");
+		while ((conn = SSL_accept_connection(listener, 0)) == NULL)
+			wait_for_activity(listener);
+		printf("Accepted new connection\n");
 
-        /* Read from client until the client sends a end of stream packet */
-        while (!eof) {
-            ret = SSL_read_ex(conn, buf + total_read, sizeof(buf) - total_read,
-                              &nread);
-            total_read += nread;
-            if (total_read >= 8192) {
-                fprintf(stderr, "Could not fit all data into buffer\n");
-                goto err;
-            }
+		/* Read from client until the client sends a end of stream packet */
+		while (!eof) {
+			ret = SSL_read_ex(conn, buf + total_read,
+					  sizeof(buf) - total_read, &nread);
+			total_read += nread;
+			if (total_read >= 8192) {
+				fprintf(stderr,
+					"Could not fit all data into buffer\n");
+				goto err;
+			}
 
-            switch (handle_io_failure(conn, ret)) {
-            case 1:
-                continue; /* Retry */
-            case 0:
-                /* Reached end of stream */
-                if (!SSL_has_pending(conn))
-                    eof = 1;
-                break;
-            default:
-                fprintf(stderr, "Failed reading remaining data\n");
-                goto err;
-            }
-        }
+			switch (handle_io_failure(conn, ret)) {
+			case 1:
+				continue; /* Retry */
+			case 0:
+				/* Reached end of stream */
+				if (!SSL_has_pending(conn))
+					eof = 1;
+				break;
+			default:
+				fprintf(stderr,
+					"Failed reading remaining data\n");
+				goto err;
+			}
+		}
 
-        /* Echo client input */
-        while (!SSL_write_ex2(conn, buf,
-                              total_read,
-                              SSL_WRITE_FLAG_CONCLUDE, &total_written)) {
-            if (handle_io_failure(conn, 0) == 1)
-                continue;
-            fprintf(stderr, "Failed to write data\n");
-            goto err;
-        }
+		/* Echo client input */
+		while (!SSL_write_ex2(conn, buf, total_read,
+				      SSL_WRITE_FLAG_CONCLUDE,
+				      &total_written)) {
+			if (handle_io_failure(conn, 0) == 1)
+				continue;
+			fprintf(stderr, "Failed to write data\n");
+			goto err;
+		}
 
-        if (total_read != total_written)
-            fprintf(stderr, "Failed to echo data [read: %zu, written: %zu]\n",
-                    total_read, total_written);
+		if (total_read != total_written)
+			fprintf(stderr,
+				"Failed to echo data [read: %zu, written: %zu]\n",
+				total_read, total_written);
 
-        /*
+		/*
          * Shut down the connection. We may need to call this multiple times
          * to ensure the connection is shutdown completely.
          */
-        while ((ret = SSL_shutdown(conn)) != 1) {
-            if (ret < 0 && handle_io_failure(conn, ret) == 1)
-                continue; /* Retry */
-        }
+		while ((ret = SSL_shutdown(conn)) != 1) {
+			if (ret < 0 && handle_io_failure(conn, ret) == 1)
+				continue; /* Retry */
+		}
 
-        SSL_free(conn);
-    }
+		SSL_free(conn);
+	}
 
-    ok = EXIT_SUCCESS;
+	ok = EXIT_SUCCESS;
 err:
-    SSL_free(listener);
-    return ok;
+	SSL_free(listener);
+	return ok;
 }
 
 /* Minimal QUIC HTTP/1.0 server. */
 int main(int argc, char *argv[])
 {
-    int res = EXIT_FAILURE;
-    SSL_CTX *ctx = NULL;
-    int fd;
-    unsigned long port;
+	int res = EXIT_FAILURE;
+	SSL_CTX *ctx = NULL;
+	int fd;
+	unsigned long port;
 
 #ifdef _WIN32
-    progname = argv[0];
+	progname = argv[0];
 #endif
 
-    if (argc != 4)
-        errx(res, "usage: %s <port> <server.crt> <server.key>", argv[0]);
+	if (argc != 4)
+		errx(res, "usage: %s <port> <server.crt> <server.key>",
+		     argv[0]);
 
-    /* Create SSL_CTX that supports QUIC. */
-    if ((ctx = create_ctx(argv[2], argv[3])) == NULL) {
-        ERR_print_errors_fp(stderr);
-        errx(res, "Failed to create context");
-    }
+	/* Create SSL_CTX that supports QUIC. */
+	if ((ctx = create_ctx(argv[2], argv[3])) == NULL) {
+		ERR_print_errors_fp(stderr);
+		errx(res, "Failed to create context");
+	}
 
-    /* Parse port number from command line arguments. */
-    port = strtoul(argv[1], NULL, 0);
-    if (port == 0 || port > UINT16_MAX) {
-        SSL_CTX_free(ctx);
-        errx(res, "Failed to parse port number");
-    }
+	/* Parse port number from command line arguments. */
+	port = strtoul(argv[1], NULL, 0);
+	if (port == 0 || port > UINT16_MAX) {
+		SSL_CTX_free(ctx);
+		errx(res, "Failed to parse port number");
+	}
 
-    /* Create and bind a UDP socket. */
-    if ((fd = create_socket((uint16_t)port)) < 0) {
-        SSL_CTX_free(ctx);
-        ERR_print_errors_fp(stderr);
-        errx(res, "Failed to create socket");
-    }
+	/* Create and bind a UDP socket. */
+	if ((fd = create_socket((uint16_t)port)) < 0) {
+		SSL_CTX_free(ctx);
+		ERR_print_errors_fp(stderr);
+		errx(res, "Failed to create socket");
+	}
 
-    /* QUIC server connection acceptance loop. */
-    if (run_quic_server(ctx, fd) < 0) {
-        SSL_CTX_free(ctx);
-        BIO_closesocket(fd);
-        ERR_print_errors_fp(stderr);
-        errx(res, "Error in QUIC server loop");
-    }
+	/* QUIC server connection acceptance loop. */
+	if (run_quic_server(ctx, fd) < 0) {
+		SSL_CTX_free(ctx);
+		BIO_closesocket(fd);
+		ERR_print_errors_fp(stderr);
+		errx(res, "Error in QUIC server loop");
+	}
 
-    /* Free resources. */
-    SSL_CTX_free(ctx);
-    BIO_closesocket(fd);
-    res = EXIT_SUCCESS;
-    return res;
+	/* Free resources. */
+	SSL_CTX_free(ctx);
+	BIO_closesocket(fd);
+	res = EXIT_SUCCESS;
+	return res;
 }

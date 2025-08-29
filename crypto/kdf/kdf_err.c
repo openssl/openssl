@@ -14,6 +14,6 @@
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 int ERR_load_KDF_strings(void)
 {
-    return 1;
+	return 1;
 }
 #endif

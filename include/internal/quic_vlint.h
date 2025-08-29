@@ -8,12 +8,12 @@
 */
 
 #ifndef OSSL_INTERNAL_QUIC_VLINT_H
-# define OSSL_INTERNAL_QUIC_VLINT_H
-# pragma once
+#define OSSL_INTERNAL_QUIC_VLINT_H
+#pragma once
 
-# include "internal/e_os.h"
+#include "internal/e_os.h"
 
-# ifndef OPENSSL_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
 
 /* The smallest value requiring a 1, 2, 4, or 8-byte representation. */
 #define OSSL_QUIC_VLINT_1B_MIN 0
@@ -28,7 +28,7 @@
 #define OSSL_QUIC_VLINT_8B_MAX (((uint64_t)1 << 62) - 1)
 
 /* The largest value representable as a variable-length integer. */
-#define OSSL_QUIC_VLINT_MAX    OSSL_QUIC_VLINT_8B_MAX
+#define OSSL_QUIC_VLINT_MAX OSSL_QUIC_VLINT_8B_MAX
 
 /*
  * Returns the number of bytes needed to encode v in the QUIC variable-length
@@ -38,19 +38,19 @@
  */
 static ossl_unused ossl_inline size_t ossl_quic_vlint_encode_len(uint64_t v)
 {
-    if (v < OSSL_QUIC_VLINT_2B_MIN)
-        return 1;
+	if (v < OSSL_QUIC_VLINT_2B_MIN)
+		return 1;
 
-    if (v < OSSL_QUIC_VLINT_4B_MIN)
-        return 2;
+	if (v < OSSL_QUIC_VLINT_4B_MIN)
+		return 2;
 
-    if (v < OSSL_QUIC_VLINT_8B_MIN)
-        return 4;
+	if (v < OSSL_QUIC_VLINT_8B_MIN)
+		return 4;
 
-    if (v <= OSSL_QUIC_VLINT_MAX)
-        return 8;
+	if (v <= OSSL_QUIC_VLINT_MAX)
+		return 8;
 
-    return 0;
+	return 0;
 }
 
 /*
@@ -94,9 +94,10 @@ void ossl_quic_vlint_encode_n(unsigned char *buf, uint64_t v, int n);
  * the number of bytes comprising the encoded integer, including the first
  * byte.
  */
-static ossl_unused ossl_inline size_t ossl_quic_vlint_decode_len(uint8_t first_byte)
+static ossl_unused ossl_inline size_t
+ossl_quic_vlint_decode_len(uint8_t first_byte)
 {
-    return (size_t)(1U << ((first_byte & 0xC0) >> 6));
+	return (size_t)(1U << ((first_byte & 0xC0) >> 6));
 }
 
 /*
@@ -120,8 +121,9 @@ uint64_t ossl_quic_vlint_decode_unchecked(const unsigned char *buf);
  * Precondition: buf is at least buf_len bytes in size
  * Precondition: v (unchecked)
  */
-int ossl_quic_vlint_decode(const unsigned char *buf, size_t buf_len, uint64_t *v);
+int ossl_quic_vlint_decode(const unsigned char *buf, size_t buf_len,
+			   uint64_t *v);
 
-# endif
+#endif
 
 #endif

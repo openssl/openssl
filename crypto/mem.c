@@ -25,19 +25,19 @@ static CRYPTO_realloc_fn realloc_impl = CRYPTO_realloc;
 static CRYPTO_free_fn free_impl = CRYPTO_free;
 
 #if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODULE)
-# include "internal/tsan_assist.h"
+#include "internal/tsan_assist.h"
 
-# ifdef TSAN_REQUIRES_LOCKING
-#  define INCREMENT(x) /* empty */
-#  define LOAD(x) 0
-# else  /* TSAN_REQUIRES_LOCKING */
+#ifdef TSAN_REQUIRES_LOCKING
+#define INCREMENT(x) /* empty */
+#define LOAD(x) 0
+#else /* TSAN_REQUIRES_LOCKING */
 static TSAN_QUALIFIER int malloc_count;
 static TSAN_QUALIFIER int realloc_count;
 static TSAN_QUALIFIER int free_count;
 
-#  define INCREMENT(x) tsan_counter(&(x))
-#  define LOAD(x)      tsan_load(&x)
-# endif /* TSAN_REQUIRES_LOCKING */
+#define INCREMENT(x) tsan_counter(&(x))
+#define LOAD(x) tsan_load(&x)
+#endif /* TSAN_REQUIRES_LOCKING */
 
 static char md_failbuf[CRYPTO_MEM_CHECK_MAX_FS + 1];
 static char *md_failstring = NULL;
@@ -48,50 +48,52 @@ static int md_tracefd = -1;
 static void parseit(void);
 static int shouldfail(void);
 
-# define FAILTEST() if (shouldfail()) return NULL
+#define FAILTEST()        \
+	if (shouldfail()) \
+	return NULL
 
 #else
 
-# define INCREMENT(x) /* empty */
-# define FAILTEST() /* empty */
+#define INCREMENT(x) /* empty */
+#define FAILTEST() /* empty */
 #endif
 
 int CRYPTO_set_mem_functions(CRYPTO_malloc_fn malloc_fn,
-                             CRYPTO_realloc_fn realloc_fn,
-                             CRYPTO_free_fn free_fn)
+			     CRYPTO_realloc_fn realloc_fn,
+			     CRYPTO_free_fn free_fn)
 {
-    if (!allow_customize)
-        return 0;
-    if (malloc_fn != NULL)
-        malloc_impl = malloc_fn;
-    if (realloc_fn != NULL)
-        realloc_impl = realloc_fn;
-    if (free_fn != NULL)
-        free_impl = free_fn;
-    return 1;
+	if (!allow_customize)
+		return 0;
+	if (malloc_fn != NULL)
+		malloc_impl = malloc_fn;
+	if (realloc_fn != NULL)
+		realloc_impl = realloc_fn;
+	if (free_fn != NULL)
+		free_impl = free_fn;
+	return 1;
 }
 
 void CRYPTO_get_mem_functions(CRYPTO_malloc_fn *malloc_fn,
-                              CRYPTO_realloc_fn *realloc_fn,
-                              CRYPTO_free_fn *free_fn)
+			      CRYPTO_realloc_fn *realloc_fn,
+			      CRYPTO_free_fn *free_fn)
 {
-    if (malloc_fn != NULL)
-        *malloc_fn = malloc_impl;
-    if (realloc_fn != NULL)
-        *realloc_fn = realloc_impl;
-    if (free_fn != NULL)
-        *free_fn = free_impl;
+	if (malloc_fn != NULL)
+		*malloc_fn = malloc_impl;
+	if (realloc_fn != NULL)
+		*realloc_fn = realloc_impl;
+	if (free_fn != NULL)
+		*free_fn = free_impl;
 }
 
 #if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODULE)
 void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount)
 {
-    if (mcount != NULL)
-        *mcount = LOAD(malloc_count);
-    if (rcount != NULL)
-        *rcount = LOAD(realloc_count);
-    if (fcount != NULL)
-        *fcount = LOAD(free_count);
+	if (mcount != NULL)
+		*mcount = LOAD(malloc_count);
+	if (rcount != NULL)
+		*rcount = LOAD(realloc_count);
+	if (fcount != NULL)
+		*fcount = LOAD(free_count);
 }
 
 /*
@@ -108,19 +110,20 @@ void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount)
  */
 static void parseit(void)
 {
-    char *semi = strchr(md_failstring, ';');
-    char *atsign;
+	char *semi = strchr(md_failstring, ';');
+	char *atsign;
 
-    if (semi != NULL)
-        *semi++ = '\0';
+	if (semi != NULL)
+		*semi++ = '\0';
 
-    /* Get the count (atol will stop at the @ if there), and percentage */
-    md_count = atol(md_failstring);
-    atsign = strchr(md_failstring, '@');
-    md_fail_percent = atsign == NULL ? 0 : (int)(atof(atsign + 1) * 100 + 0.5);
+	/* Get the count (atol will stop at the @ if there), and percentage */
+	md_count = atol(md_failstring);
+	atsign = strchr(md_failstring, '@');
+	md_fail_percent = atsign == NULL ? 0 :
+					   (int)(atof(atsign + 1) * 100 + 0.5);
 
-    if (semi != NULL)
-        md_failstring = semi;
+	if (semi != NULL)
+		md_failstring = semi;
 }
 
 /*
@@ -128,152 +131,153 @@ static void parseit(void)
  * Some rand() implementations aren't good, but we're not
  * dealing with secure randomness here.
  */
-# ifdef _WIN32
-#  define random() rand()
-#  define srandom(seed) srand(seed)
-# endif
+#ifdef _WIN32
+#define random() rand()
+#define srandom(seed) srand(seed)
+#endif
 /*
  * See if the current malloc should fail.
  */
 static int shouldfail(void)
 {
-    int roll = (int)(random() % 10000);
-    int shoulditfail = roll < md_fail_percent;
-# ifndef _WIN32
-/* suppressed on Windows as POSIX-like file descriptors are non-inheritable */
-    int len;
-    char buff[80];
+	int roll = (int)(random() % 10000);
+	int shoulditfail = roll < md_fail_percent;
+#ifndef _WIN32
+	/* suppressed on Windows as POSIX-like file descriptors are non-inheritable */
+	int len;
+	char buff[80];
 
-    if (md_tracefd > 0) {
-        BIO_snprintf(buff, sizeof(buff),
-                     "%c C%ld %%%d R%d\n",
-                     shoulditfail ? '-' : '+', md_count, md_fail_percent, roll);
-        len = strlen(buff);
-        if (write(md_tracefd, buff, len) != len)
-            perror("shouldfail write failed");
-    }
-# endif
+	if (md_tracefd > 0) {
+		BIO_snprintf(buff, sizeof(buff), "%c C%ld %%%d R%d\n",
+			     shoulditfail ? '-' : '+', md_count,
+			     md_fail_percent, roll);
+		len = strlen(buff);
+		if (write(md_tracefd, buff, len) != len)
+			perror("shouldfail write failed");
+	}
+#endif
 
-    if (md_count) {
-        /* If we used up this one, go to the next. */
-        if (--md_count == 0)
-            parseit();
-    }
+	if (md_count) {
+		/* If we used up this one, go to the next. */
+		if (--md_count == 0)
+			parseit();
+	}
 
-    return shoulditfail;
+	return shoulditfail;
 }
 
 void ossl_malloc_setup_failures(void)
 {
-    const char *cp = getenv("OPENSSL_MALLOC_FAILURES");
-    size_t cplen = 0;
+	const char *cp = getenv("OPENSSL_MALLOC_FAILURES");
+	size_t cplen = 0;
 
-    if (cp != NULL) {
-        /* if the value is too long we'll just ignore it */
-        cplen = strlen(cp);
-        if (cplen <= CRYPTO_MEM_CHECK_MAX_FS) {
-            strncpy(md_failbuf, cp, CRYPTO_MEM_CHECK_MAX_FS);
-            md_failstring = md_failbuf;
-            parseit();
-        }
-    }
-    if ((cp = getenv("OPENSSL_MALLOC_FD")) != NULL)
-        md_tracefd = atoi(cp);
-    if ((cp = getenv("OPENSSL_MALLOC_SEED")) != NULL)
-        srandom(atoi(cp));
+	if (cp != NULL) {
+		/* if the value is too long we'll just ignore it */
+		cplen = strlen(cp);
+		if (cplen <= CRYPTO_MEM_CHECK_MAX_FS) {
+			strncpy(md_failbuf, cp, CRYPTO_MEM_CHECK_MAX_FS);
+			md_failstring = md_failbuf;
+			parseit();
+		}
+	}
+	if ((cp = getenv("OPENSSL_MALLOC_FD")) != NULL)
+		md_tracefd = atoi(cp);
+	if ((cp = getenv("OPENSSL_MALLOC_SEED")) != NULL)
+		srandom(atoi(cp));
 }
 #endif
 
 void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
-    void *ptr;
+	void *ptr;
 
-    INCREMENT(malloc_count);
-    if (malloc_impl != CRYPTO_malloc) {
-        ptr = malloc_impl(num, file, line);
-        if (ptr != NULL || num == 0)
-            return ptr;
-        goto err;
-    }
+	INCREMENT(malloc_count);
+	if (malloc_impl != CRYPTO_malloc) {
+		ptr = malloc_impl(num, file, line);
+		if (ptr != NULL || num == 0)
+			return ptr;
+		goto err;
+	}
 
-    if (ossl_unlikely(num == 0))
-        return NULL;
+	if (ossl_unlikely(num == 0))
+		return NULL;
 
-    FAILTEST();
-    if (allow_customize) {
-        /*
+	FAILTEST();
+	if (allow_customize) {
+		/*
          * Disallow customization after the first allocation. We only set this
          * if necessary to avoid a store to the same cache line on every
          * allocation.
          */
-        allow_customize = 0;
-    }
+		allow_customize = 0;
+	}
 
-    ptr = malloc(num);
-    if (ossl_likely(ptr != NULL))
-        return ptr;
- err:
-    ossl_report_alloc_err(file, line);
-    return NULL;
+	ptr = malloc(num);
+	if (ossl_likely(ptr != NULL))
+		return ptr;
+err:
+	ossl_report_alloc_err(file, line);
+	return NULL;
 }
 
 void *CRYPTO_zalloc(size_t num, const char *file, int line)
 {
-    void *ret;
+	void *ret;
 
-    ret = CRYPTO_malloc(num, file, line);
-    if (ret != NULL)
-        memset(ret, 0, num);
+	ret = CRYPTO_malloc(num, file, line);
+	if (ret != NULL)
+		memset(ret, 0, num);
 
-    return ret;
+	return ret;
 }
 
 void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
-                           const char *file, int line)
+			   const char *file, int line)
 {
-    size_t alloc_bytes;
-    void *ret;
+	size_t alloc_bytes;
+	void *ret;
 
-    *freeptr = NULL;
+	*freeptr = NULL;
 
 #if defined(OPENSSL_SMALL_FOOTPRINT)
-    return NULL;
+	return NULL;
 #endif
 
-    /* Ensure that alignment is a power of two */
-    if (alignment == 0 || (alignment & (alignment - 1)) != 0) {
-        ossl_report_alloc_err_inv(file, line);
-        return NULL;
-    }
+	/* Ensure that alignment is a power of two */
+	if (alignment == 0 || (alignment & (alignment - 1)) != 0) {
+		ossl_report_alloc_err_inv(file, line);
+		return NULL;
+	}
 
-    /* Allow non-malloc() allocations as long as no malloc_impl is provided. */
-    if (malloc_impl == CRYPTO_malloc) {
-#if defined(_BSD_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
-        int memalign_ret;
+	/* Allow non-malloc() allocations as long as no malloc_impl is provided. */
+	if (malloc_impl == CRYPTO_malloc) {
+#if defined(_BSD_SOURCE) || \
+	(defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+		int memalign_ret;
 
-        /* posix_memalign() requires alignment to be at least sizeof(void *) */
-        if (alignment < sizeof(void *))
-            alignment = sizeof(void *);
+		/* posix_memalign() requires alignment to be at least sizeof(void *) */
+		if (alignment < sizeof(void *))
+			alignment = sizeof(void *);
 
-        if ((memalign_ret = posix_memalign(&ret, alignment, num))) {
-            ret = NULL;
-            switch (memalign_ret) {
-            case EINVAL:
-                ossl_report_alloc_err_inv(file, line);
-                break;
-            case ENOMEM:
-                ossl_report_alloc_err(file, line);
-                break;
-            }
-        }
-        *freeptr = ret;
-        return ret;
+		if ((memalign_ret = posix_memalign(&ret, alignment, num))) {
+			ret = NULL;
+			switch (memalign_ret) {
+			case EINVAL:
+				ossl_report_alloc_err_inv(file, line);
+				break;
+			case ENOMEM:
+				ossl_report_alloc_err(file, line);
+				break;
+			}
+		}
+		*freeptr = ret;
+		return ret;
 #endif
-    }
+	}
 
-    /* we have to do this the hard way */
+	/* we have to do this the hard way */
 
-    /*
+	/*
      * Note: Windows supports an _aligned_malloc call, but we choose
      * not to use it here, because allocations from that function
      * require that they be freed via _aligned_free.  Given that
@@ -281,25 +285,26 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
      * via _aligned_malloc, just avoid its use entirely
      */
 
-    if (ossl_unlikely(!ossl_size_add(num, alignment, &alloc_bytes, file, line)))
-        return NULL;
+	if (ossl_unlikely(
+		    !ossl_size_add(num, alignment, &alloc_bytes, file, line)))
+		return NULL;
 
-    /*
+	/*
      * Step 1: Allocate an amount of memory that is <alignment>
      * bytes bigger than requested
      */
-    *freeptr = CRYPTO_malloc(alloc_bytes, file, line);
-    if (*freeptr == NULL)
-        return NULL;
+	*freeptr = CRYPTO_malloc(alloc_bytes, file, line);
+	if (*freeptr == NULL)
+		return NULL;
 
-    /*
+	/*
      * Step 2: Add <alignment - 1> bytes to the pointer
      * This will cross the alignment boundary that is
      * requested
      */
-    ret = (void *)((char *)*freeptr + (alignment - 1));
+	ret = (void *)((char *)*freeptr + (alignment - 1));
 
-    /*
+	/*
      * Step 3: Use the alignment as a mask to translate the
      * least significant bits of the allocation at the alignment
      * boundary to 0.  ret now holds a pointer to the memory
@@ -307,154 +312,168 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
      * NOTE: It is a documented requirement that alignment be a
      * power of 2, which is what allows this to work
      */
-    ret = (void *)((uintptr_t)ret & (uintptr_t)(~(alignment - 1)));
-    return ret;
+	ret = (void *)((uintptr_t)ret & (uintptr_t)(~(alignment - 1)));
+	return ret;
 }
 
 void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
 {
-    void *ret;
+	void *ret;
 
-    INCREMENT(realloc_count);
-    if (realloc_impl != CRYPTO_realloc) {
-        ret = realloc_impl(str, num, file, line);
+	INCREMENT(realloc_count);
+	if (realloc_impl != CRYPTO_realloc) {
+		ret = realloc_impl(str, num, file, line);
 
-        if (num == 0 || ret != NULL)
-            return ret;
+		if (num == 0 || ret != NULL)
+			return ret;
 
-        goto err;
-    }
+		goto err;
+	}
 
-    if (str == NULL)
-        return CRYPTO_malloc(num, file, line);
+	if (str == NULL)
+		return CRYPTO_malloc(num, file, line);
 
-    if (num == 0) {
-        CRYPTO_free(str, file, line);
-        return NULL;
-    }
+	if (num == 0) {
+		CRYPTO_free(str, file, line);
+		return NULL;
+	}
 
-    FAILTEST();
-    ret = realloc(str, num);
+	FAILTEST();
+	ret = realloc(str, num);
 
 err:
-    if (num != 0 && ret == NULL)
-        ossl_report_alloc_err(file, line);
+	if (num != 0 && ret == NULL)
+		ossl_report_alloc_err(file, line);
 
-    return ret;
+	return ret;
 }
 
 void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
-                           const char *file, int line)
+			   const char *file, int line)
 {
-    void *ret = NULL;
+	void *ret = NULL;
 
-    if (str == NULL)
-        return CRYPTO_malloc(num, file, line);
+	if (str == NULL)
+		return CRYPTO_malloc(num, file, line);
 
-    if (num == 0) {
-        CRYPTO_clear_free(str, old_len, file, line);
-        return NULL;
-    }
+	if (num == 0) {
+		CRYPTO_clear_free(str, old_len, file, line);
+		return NULL;
+	}
 
-    /* Can't shrink the buffer since memcpy below copies |old_len| bytes. */
-    if (num < old_len) {
-        OPENSSL_cleanse((char*)str + num, old_len - num);
-        return str;
-    }
+	/* Can't shrink the buffer since memcpy below copies |old_len| bytes. */
+	if (num < old_len) {
+		OPENSSL_cleanse((char *)str + num, old_len - num);
+		return str;
+	}
 
-    ret = CRYPTO_malloc(num, file, line);
-    if (ret != NULL) {
-        memcpy(ret, str, old_len);
-        CRYPTO_clear_free(str, old_len, file, line);
-    }
-    return ret;
+	ret = CRYPTO_malloc(num, file, line);
+	if (ret != NULL) {
+		memcpy(ret, str, old_len);
+		CRYPTO_clear_free(str, old_len, file, line);
+	}
+	return ret;
 }
 
 void CRYPTO_free(void *str, const char *file, int line)
 {
-    INCREMENT(free_count);
-    if (free_impl != CRYPTO_free) {
-        free_impl(str, file, line);
-        return;
-    }
+	INCREMENT(free_count);
+	if (free_impl != CRYPTO_free) {
+		free_impl(str, file, line);
+		return;
+	}
 
-    free(str);
+	free(str);
 }
 
 void CRYPTO_clear_free(void *str, size_t num, const char *file, int line)
 {
-    if (str == NULL)
-        return;
-    if (num)
-        OPENSSL_cleanse(str, num);
-    CRYPTO_free(str, file, line);
+	if (str == NULL)
+		return;
+	if (num)
+		OPENSSL_cleanse(str, num);
+	CRYPTO_free(str, file, line);
 }
 
 #if !defined(OPENSSL_NO_CRYPTO_MDEBUG)
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int CRYPTO_mem_ctrl(int mode)
 {
-    (void)mode;
-    return -1;
+	(void)mode;
+	return -1;
 }
 
 int CRYPTO_set_mem_debug(int flag)
 {
-    (void)flag;
-    return -1;
+	(void)flag;
+	return -1;
 }
 
 int CRYPTO_mem_debug_push(const char *info, const char *file, int line)
 {
-    (void)info; (void)file; (void)line;
-    return 0;
+	(void)info;
+	(void)file;
+	(void)line;
+	return 0;
 }
 
 int CRYPTO_mem_debug_pop(void)
 {
-    return 0;
+	return 0;
 }
 
-void CRYPTO_mem_debug_malloc(void *addr, size_t num, int flag,
-                             const char *file, int line)
+void CRYPTO_mem_debug_malloc(void *addr, size_t num, int flag, const char *file,
+			     int line)
 {
-    (void)addr; (void)num; (void)flag; (void)file; (void)line;
+	(void)addr;
+	(void)num;
+	(void)flag;
+	(void)file;
+	(void)line;
 }
 
 void CRYPTO_mem_debug_realloc(void *addr1, void *addr2, size_t num, int flag,
-                              const char *file, int line)
+			      const char *file, int line)
 {
-    (void)addr1; (void)addr2; (void)num; (void)flag; (void)file; (void)line;
+	(void)addr1;
+	(void)addr2;
+	(void)num;
+	(void)flag;
+	(void)file;
+	(void)line;
 }
 
-void CRYPTO_mem_debug_free(void *addr, int flag,
-                           const char *file, int line)
+void CRYPTO_mem_debug_free(void *addr, int flag, const char *file, int line)
 {
-    (void)addr; (void)flag; (void)file; (void)line;
+	(void)addr;
+	(void)flag;
+	(void)file;
+	(void)line;
 }
 
 int CRYPTO_mem_leaks(BIO *b)
 {
-    (void)b;
-    return -1;
+	(void)b;
+	return -1;
 }
 
-#  ifndef OPENSSL_NO_STDIO
+#ifndef OPENSSL_NO_STDIO
 int CRYPTO_mem_leaks_fp(FILE *fp)
 {
-    (void)fp;
-    return -1;
+	(void)fp;
+	return -1;
 }
-#  endif
+#endif
 
 int CRYPTO_mem_leaks_cb(int (*cb)(const char *str, size_t len, void *u),
-                        void *u)
+			void *u)
 {
-    (void)cb; (void)u;
-    return -1;
+	(void)cb;
+	(void)u;
+	return -1;
 }
 
-# endif
+#endif
 
 #endif

@@ -13,6 +13,5 @@
 #include "prov/implementations.h"
 
 /* ossl_sm3_functions */
-IMPLEMENT_digest_functions(sm3, SM3_CTX,
-                           SM3_CBLOCK, SM3_DIGEST_LENGTH, 0,
-                           ossl_sm3_init, ossl_sm3_update, ossl_sm3_final)
+IMPLEMENT_digest_functions(sm3, SM3_CTX, SM3_CBLOCK, SM3_DIGEST_LENGTH, 0,
+			   ossl_sm3_init, ossl_sm3_update, ossl_sm3_final)

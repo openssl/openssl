@@ -19,13 +19,13 @@
 #include "ec_local.h"
 
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
-                                 const BIGNUM *b, BN_CTX *ctx)
+				 const BIGNUM *b, BN_CTX *ctx)
 {
-    const EC_METHOD *meth;
-    EC_GROUP *ret;
+	const EC_METHOD *meth;
+	EC_GROUP *ret;
 
 #if defined(OPENSSL_BN_ASM_MONT)
-    /*
+	/*
      * This might appear controversial, but the fact is that generic
      * prime method was observed to deliver better performance even
      * for NIST primes on a range of platforms, e.g.: 60%-15%
@@ -46,44 +46,44 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
      * prime method...
      *                                              <@dot-asm>
      */
-    meth = EC_GFp_mont_method();
+	meth = EC_GFp_mont_method();
 #else
-    if (BN_nist_mod_func(p))
-        meth = EC_GFp_nist_method();
-    else
-        meth = EC_GFp_mont_method();
+	if (BN_nist_mod_func(p))
+		meth = EC_GFp_nist_method();
+	else
+		meth = EC_GFp_mont_method();
 #endif
 
-    ret = ossl_ec_group_new_ex(ossl_bn_get_libctx(ctx), NULL, meth);
-    if (ret == NULL)
-        return NULL;
+	ret = ossl_ec_group_new_ex(ossl_bn_get_libctx(ctx), NULL, meth);
+	if (ret == NULL)
+		return NULL;
 
-    if (!EC_GROUP_set_curve(ret, p, a, b, ctx)) {
-        EC_GROUP_free(ret);
-        return NULL;
-    }
+	if (!EC_GROUP_set_curve(ret, p, a, b, ctx)) {
+		EC_GROUP_free(ret);
+		return NULL;
+	}
 
-    return ret;
+	return ret;
 }
 
 #ifndef OPENSSL_NO_EC2M
 EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
-                                  const BIGNUM *b, BN_CTX *ctx)
+				  const BIGNUM *b, BN_CTX *ctx)
 {
-    const EC_METHOD *meth;
-    EC_GROUP *ret;
+	const EC_METHOD *meth;
+	EC_GROUP *ret;
 
-    meth = EC_GF2m_simple_method();
+	meth = EC_GF2m_simple_method();
 
-    ret = ossl_ec_group_new_ex(ossl_bn_get_libctx(ctx), NULL, meth);
-    if (ret == NULL)
-        return NULL;
+	ret = ossl_ec_group_new_ex(ossl_bn_get_libctx(ctx), NULL, meth);
+	if (ret == NULL)
+		return NULL;
 
-    if (!EC_GROUP_set_curve(ret, p, a, b, ctx)) {
-        EC_GROUP_free(ret);
-        return NULL;
-    }
+	if (!EC_GROUP_set_curve(ret, p, a, b, ctx)) {
+		EC_GROUP_free(ret);
+		return NULL;
+	}
 
-    return ret;
+	return ret;
 }
 #endif

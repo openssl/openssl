@@ -17,73 +17,73 @@
 
 int main(int argc, char **argv)
 {
-    BIO *in = NULL, *out = NULL, *tbio = NULL, *dcont = NULL;
-    X509 *rcert = NULL;
-    EVP_PKEY *rkey = NULL;
-    CMS_ContentInfo *cms = NULL;
-    int ret = EXIT_FAILURE;
+	BIO *in = NULL, *out = NULL, *tbio = NULL, *dcont = NULL;
+	X509 *rcert = NULL;
+	EVP_PKEY *rkey = NULL;
+	CMS_ContentInfo *cms = NULL;
+	int ret = EXIT_FAILURE;
 
-    OpenSSL_add_all_algorithms();
-    ERR_load_crypto_strings();
+	OpenSSL_add_all_algorithms();
+	ERR_load_crypto_strings();
 
-    /* Read in recipient certificate and private key */
-    tbio = BIO_new_file("signer.pem", "r");
+	/* Read in recipient certificate and private key */
+	tbio = BIO_new_file("signer.pem", "r");
 
-    if (!tbio)
-        goto err;
+	if (!tbio)
+		goto err;
 
-    rcert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
+	rcert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
 
-    if (BIO_reset(tbio) < 0)
-        goto err;
+	if (BIO_reset(tbio) < 0)
+		goto err;
 
-    rkey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
+	rkey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
 
-    if (!rcert || !rkey)
-        goto err;
+	if (!rcert || !rkey)
+		goto err;
 
-    /* Open PEM file containing enveloped data */
+	/* Open PEM file containing enveloped data */
 
-    in = BIO_new_file("smencr.pem", "r");
+	in = BIO_new_file("smencr.pem", "r");
 
-    if (!in)
-        goto err;
+	if (!in)
+		goto err;
 
-    /* Parse PEM content */
-    cms = PEM_read_bio_CMS(in, NULL, 0, NULL);
+	/* Parse PEM content */
+	cms = PEM_read_bio_CMS(in, NULL, 0, NULL);
 
-    if (!cms)
-        goto err;
+	if (!cms)
+		goto err;
 
-    /* Open file containing detached content */
-    dcont = BIO_new_file("smencr.out", "rb");
+	/* Open file containing detached content */
+	dcont = BIO_new_file("smencr.out", "rb");
 
-    if (dcont == NULL)
-        goto err;
+	if (dcont == NULL)
+		goto err;
 
-    out = BIO_new_file("encrout.txt", "w");
-    if (!out)
-        goto err;
+	out = BIO_new_file("encrout.txt", "w");
+	if (!out)
+		goto err;
 
-    /* Decrypt S/MIME message */
-    if (!CMS_decrypt(cms, rkey, rcert, dcont, out, 0))
-        goto err;
+	/* Decrypt S/MIME message */
+	if (!CMS_decrypt(cms, rkey, rcert, dcont, out, 0))
+		goto err;
 
-    ret = EXIT_SUCCESS;
+	ret = EXIT_SUCCESS;
 
- err:
+err:
 
-    if (ret != EXIT_SUCCESS) {
-        fprintf(stderr, "Error Decrypting Data\n");
-        ERR_print_errors_fp(stderr);
-    }
+	if (ret != EXIT_SUCCESS) {
+		fprintf(stderr, "Error Decrypting Data\n");
+		ERR_print_errors_fp(stderr);
+	}
 
-    CMS_ContentInfo_free(cms);
-    X509_free(rcert);
-    EVP_PKEY_free(rkey);
-    BIO_free(in);
-    BIO_free(out);
-    BIO_free(tbio);
-    BIO_free(dcont);
-    return ret;
+	CMS_ContentInfo_free(cms);
+	X509_free(rcert);
+	EVP_PKEY_free(rkey);
+	BIO_free(in);
+	BIO_free(out);
+	BIO_free(tbio);
+	BIO_free(dcont);
+	return ret;
 }

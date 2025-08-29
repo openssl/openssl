@@ -13,9 +13,8 @@
 /* An overridable list of command line options */
 const OPTIONS *test_get_options(void)
 {
-    static const OPTIONS default_options[] = {
-        OPT_TEST_OPTIONS_DEFAULT_USAGE,
-        { NULL }
-    };
-    return default_options;
+	static const OPTIONS default_options[] = {
+		OPT_TEST_OPTIONS_DEFAULT_USAGE, { NULL }
+	};
+	return default_options;
 }
