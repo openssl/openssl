@@ -1281,6 +1281,10 @@ sub check_env_vars {
     # initialized with the list of "untracable" variables
     my %env_list = ("SSL_CERT_FILE" => 1);
     my @env_files;
+    my @except_dirs = (
+        "$config{sourcedir}/demos",
+        "$config{sourcedir}/test",
+    );
     my @except_env_files = (
         "$config{sourcedir}/providers/implementations/keymgmt/template_kmgmt.c",
         "$config{sourcedir}/providers/implementations/kem/template_kem.c",
@@ -1289,12 +1293,42 @@ sub check_env_vars {
     my @env_headers;
     my @env_macro;
 
+    # Add submodules to the except_dirs
+    my $git_ok = 0;
+    open my $gs_pipe, '-|', "git config get --all "
+                            . "--file \"$config{sourcedir}/.gitmodules\" "
+                            . "--regexp '.*.path\$'";
+    while (<$gs_pipe>) {
+        $git_ok = 1;
+        s/\R$//; # better chomp
+        print STDERR "DEBUG[check_env_vars]: adding \"$config{sourcedir}/$_\""
+                     . " to except_dirs\n"
+            if $debug;
+        push @except_dirs, "$config{sourcedir}/$_";
+    }
+    # git call has failed, trying to parse .gitmodules manually
+    if (!$git_ok) {
+        print STDERR "DEBUG[check_env_vars]: .gitmodules parsing fallback\n"
+            if $debug;
+        if (open my $gs_file, '<', "$config{sourcedir}/.gitmodules") {
+            while (<$gs_file>) {
+                s/\R$//; # better chomp
+                if ($_ =~ /\s*path\s*=\s*(.*)$/) {
+                    print STDERR "DEBUG[check_env_vars]: adding "
+                                 . "\"$config{sourcedir}/$1\" to except_dirs\n"
+                        if $debug;
+                    push @except_dirs, "$config{sourcedir}/$1";
+                }
+            }
+        }
+    }
+
     # look for source files
     find(sub { push @env_files, $File::Find::name if /\.c$|\.in$/; },
          $config{sourcedir});
 
     foreach my $filename (@env_files) {
-        next if $filename =~ /test\/|demos\//
+        next if (grep { $filename =~ /^$_\// } @except_dirs)
                 || grep { $_ eq $filename } @except_env_files;
 
         open my $fh, '<', $filename or die "Can't open $filename: $!";
