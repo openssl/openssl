@@ -158,51 +158,6 @@ int TS_CONF_set_serial(CONF *conf, const char *section, TS_serial_cb cb,
     return ret;
 }
 
-#ifndef OPENSSL_NO_ENGINE
-
-int TS_CONF_set_crypto_device(CONF *conf, const char *section,
-                              const char *device)
-{
-    int ret = 0;
-
-    if (device == NULL)
-        device = NCONF_get_string(conf, section, ENV_CRYPTO_DEVICE);
-
-    if (device && !TS_CONF_set_default_engine(device)) {
-        ts_CONF_invalid(section, ENV_CRYPTO_DEVICE);
-        goto err;
-    }
-    ret = 1;
- err:
-    return ret;
-}
-
-int TS_CONF_set_default_engine(const char *name)
-{
-    ENGINE *e = NULL;
-    int ret = 0;
-
-    if (strcmp(name, "builtin") == 0)
-        return 1;
-
-    if ((e = ENGINE_by_id(name)) == NULL)
-        goto err;
-    if (strcmp(name, "chil") == 0)
-        ENGINE_ctrl(e, ENGINE_CTRL_CHIL_SET_FORKCHECK, 1, 0, 0);
-    if (!ENGINE_set_default(e, ENGINE_METHOD_ALL))
-        goto err;
-    ret = 1;
-
- err:
-    if (!ret)
-        ERR_raise_data(ERR_LIB_TS, TS_R_COULD_NOT_SET_ENGINE,
-                       "engine:%s", name);
-    ENGINE_free(e);
-    return ret;
-}
-
-#endif
-
 int TS_CONF_set_signer_cert(CONF *conf, const char *section,
                             const char *cert, TS_RESP_CTX *ctx)
 {
