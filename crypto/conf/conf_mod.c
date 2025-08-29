@@ -251,10 +251,6 @@ int CONF_modules_load_file(const char *filename,
 DEFINE_RUN_ONCE_STATIC(do_load_builtin_modules)
 {
     OPENSSL_load_builtin_modules();
-#ifndef OPENSSL_NO_ENGINE
-    /* Need to load ENGINEs */
-    ENGINE_load_builtin_engines();
-#endif
     return 1;
 }
 

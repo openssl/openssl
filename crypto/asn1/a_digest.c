@@ -63,16 +63,8 @@ int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *md, void *asn,
     if (i < 0 || str == NULL)
         return 0;
 
-    if (EVP_MD_get0_provider(md) == NULL) {
-#if !defined(OPENSSL_NO_ENGINE)
-        ENGINE *tmpeng = ENGINE_get_digest_engine(EVP_MD_get_type(md));
-
-        if (tmpeng != NULL)
-            ENGINE_finish(tmpeng);
-        else
-#endif
-            fetched_md = EVP_MD_fetch(libctx, EVP_MD_get0_name(md), propq);
-    }
+    if (EVP_MD_get0_provider(md) == NULL)
+        fetched_md = EVP_MD_fetch(libctx, EVP_MD_get0_name(md), propq);
     if (fetched_md == NULL)
         goto err;
 
