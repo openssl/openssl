@@ -464,7 +464,7 @@ static const struct n_data {
       AT_CHAR, 10, AT_INT, { .i = 1234567890 } },
     { "%#.200" PRIXPTR "%hhn",
       "0X0000000000000000000000000000000000000000000000000000000000000",
-      AT_CHAR, 202, AT_INT, { .i = 1234567890 },
+      AT_CHAR, -54, AT_INT, { .i = 1234567890 },
       .skip_libc_ret_check = true, .exp_ret = -1 },
     { "%#10000" PRIoPTR "%hhn1234567890",
       "                                                               ",
@@ -475,7 +475,7 @@ static const struct n_data {
       AT_SHORT, 0, AT_INT, { .s = "1234567890" } },
     { "%-123456s%hn0987654321",
       "1234567890                                                     ",
-      AT_SHORT, 57920, AT_INT, { .s = "1234567890" },
+      AT_SHORT, -7616, AT_INT, { .s = "1234567890" },
       .skip_libc_ret_check = true, .exp_ret = -1 },
     { "%1234567898.1234567890" PRIxPTR "%n",
       "        0000000000000000000000000000000000000000000000000000000",
@@ -516,7 +516,8 @@ static const struct n_data {
       .skip_libc_check = true, .exp_ret = -1 },
     { "=%2147483639s=%888888888X=%tn=",
       "=                                                              ",
-      AT_PTRDIFF, 3036372530U, AT_STR, { .s = NULL }, AT_INT, { .i = 0xdead },
+      AT_PTRDIFF, sizeof(ptrdiff_t) == 8 ? 3036372530LL : -1258594766LL,
+      AT_STR, { .s = NULL }, AT_INT, { .i = 0xdead },
       .skip_libc_check = true, .exp_ret = -1 },
 };
 
@@ -593,6 +594,8 @@ static int test_n(int i)
                 std_ret = snprintf(std_buf, sizeof(std_buf), data->format,     \
                                    data->arg1.i, data->arg2.i, &std_n.field_); \
         }                                                                      \
+        n.val = n.field_;                                                      \
+        std_n.val = std_n.field_;                                              \
     } while (0)
     case AT_CHAR:
         DO_PRINT(hh);
