@@ -546,47 +546,6 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
         }
     } else {
         int i;
-#ifndef OPENSSL_NO_ENGINE
-        ENGINE *curengine = ENGINE_get_first();
-
-        while (curengine != NULL) {
-            ENGINE_PKEY_ASN1_METHS_PTR asn1meths =
-                ENGINE_get_pkey_asn1_meths(curengine);
-
-            if (asn1meths != NULL) {
-                const int *nids = NULL;
-                int nids_n = asn1meths(curengine, NULL, &nids, 0);
-
-                for (i = 0; i < nids_n; i++) {
-                    EVP_PKEY_ASN1_METHOD *ameth2 = NULL;
-                    EVP_PKEY *tmp_pkey = NULL;
-                    const unsigned char *tmp_blob = blob;
-                    int pkey_id, pkey_flags;
-
-                    if (!asn1meths(curengine, &ameth2, NULL, nids[i])
-                        || !EVP_PKEY_asn1_get0_info(&pkey_id, NULL,
-                                                    &pkey_flags, NULL, NULL,
-                                                    ameth2)
-                        || (pkey_flags & ASN1_PKEY_ALIAS) != 0)
-                        continue;
-
-                    ERR_set_mark(); /* prevent flooding error queue */
-                    tmp_pkey = d2i_PrivateKey_ex(pkey_id, NULL,
-                                                 &tmp_blob, (long)len,
-                                                 libctx, propq);
-                    if (tmp_pkey != NULL) {
-                        if (pkey != NULL)
-                            EVP_PKEY_free(tmp_pkey);
-                        else
-                            pkey = tmp_pkey;
-                        (*matchcount)++;
-                    }
-                    ERR_pop_to_mark();
-                }
-            }
-            curengine = ENGINE_get_next(curengine);
-        }
-#endif
 
         for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
             EVP_PKEY *tmp_pkey = NULL;
