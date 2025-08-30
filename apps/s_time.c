@@ -47,7 +47,7 @@ typedef enum OPTION_choice {
     OPT_CONNECT, OPT_CIPHER, OPT_CIPHERSUITES, OPT_CERT, OPT_NAMEOPT, OPT_KEY,
     OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
-    OPT_NEW, OPT_REUSE, OPT_BUGS, OPT_VERIFY, OPT_TIME, OPT_SSL3,
+    OPT_NEW, OPT_REUSE, OPT_BUGS, OPT_VERIFY, OPT_TIME,
     OPT_WWW, OPT_TLS1, OPT_TLS1_1, OPT_TLS1_2, OPT_TLS1_3,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
@@ -65,9 +65,6 @@ const OPTIONS s_time_options[] = {
     {"cipher", OPT_CIPHER, 's', "TLSv1.2 and below cipher list to be used"},
     {"ciphersuites", OPT_CIPHERSUITES, 's',
      "Specify TLSv1.3 ciphersuites to be used"},
-#ifndef OPENSSL_NO_SSL3
-    {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
-#endif
 #ifndef OPENSSL_NO_TLS1
     {"tls1", OPT_TLS1, '-', "Just use TLSv1.0"},
 #endif
@@ -206,10 +203,6 @@ int s_time_main(int argc, char **argv)
                 goto end;
             }
             break;
-        case OPT_SSL3:
-            min_version = SSL3_VERSION;
-            max_version = SSL3_VERSION;
-            break;
         case OPT_TLS1:
             min_version = TLS1_VERSION;
             max_version = TLS1_VERSION;
@@ -297,8 +290,6 @@ int s_time_main(int argc, char **argv)
             ver = SSL_version(scon);
             if (ver == TLS1_VERSION)
                 ver = 't';
-            else if (ver == SSL3_VERSION)
-                ver = '3';
             else
                 ver = '*';
         }
@@ -381,8 +372,6 @@ int s_time_main(int argc, char **argv)
             ver = SSL_version(scon);
             if (ver == TLS1_VERSION)
                 ver = 't';
-            else if (ver == SSL3_VERSION)
-                ver = '3';
             else
                 ver = '*';
         }

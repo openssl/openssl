@@ -28,7 +28,7 @@ jobs:
              --post-data "token=${{ secrets.COVERITY_TOKEN }}&project=openssl%2Fopenssl" \
              --progress=dot:giga -O coverity_tool.tgz
     - name: config
-      run: CC=gcc ./config --strict-warnings --banner=Configured --debug enable-lms enable-fips enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests -DPEDANTIC
+      run: CC=gcc ./config --strict-warnings --banner=Configured --debug enable-lms enable-fips enable-rc5 enable-md2 enable-nextprotoneg enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests -DPEDANTIC
     - name: config dump
       run: ./configdata.pm --dump
     - name: tool install

@@ -179,7 +179,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: config
-      run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -195,7 +195,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: config
-      run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -213,7 +213,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: config
-      run: ./config --strict-warnings enable-fips enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config --strict-warnings enable-fips enable-md2 enable-rc5 enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -231,7 +231,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: config
-      run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -255,7 +255,7 @@ jobs:
         shutdown_vm: false
         run: |
           sudo pkg install -y gcc perl5
-          ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+          ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:

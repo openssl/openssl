@@ -31,6 +31,11 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * Support for SSLv3 was removed. SSLv3 has been deprecated since
+   2015, and OpenSSL had it disabled by default since 1.1.0 (2016).
+
+   *Kurt Roeckx*
+
  * Refactored OSSL_PARAM name parsing so that automatically generated
    parsers are used instead of OSSL_PARAM_locate calls.  This should
    also ensure that the list of acceptable parameters better matches
