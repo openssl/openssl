@@ -144,6 +144,7 @@ int ossl_fips_ind_digest_exch_check(OSSL_FIPS_IND *ind, int id, OSSL_LIB_CTX *li
 int ossl_fips_ind_digest_sign_check(OSSL_FIPS_IND *ind, int id,
                                     OSSL_LIB_CTX *libctx,
                                     int nid, int sha1_allowed,
+                                    int sha512_trunc_allowed,
                                     const char *desc,
                                     OSSL_FIPS_IND_CHECK_CB *config_check_f);
 
