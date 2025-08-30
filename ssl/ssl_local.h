@@ -556,6 +556,21 @@ struct ssl_session_st {
     uint32_t flags;
     SSL_CTX *owner;
 
+# ifndef OPENSSL_NO_QUIC
+    /* Remote QUIC transport parameters for 0-RTT, for client only */
+    struct {
+        uint64_t init_max_data;
+        uint64_t init_max_stream_data_bidi_local;
+        uint64_t init_max_stream_data_bidi_remote;
+        uint64_t init_max_stream_data_uni;
+        uint64_t max_local_streams_bidi;
+        uint64_t max_local_streams_uni;
+        uint64_t max_idle_timeout;
+        uint64_t max_udp_payload_size;
+        uint64_t active_conn_id_limit;
+    } quic_params;
+# endif
+
     /*
      * These are used to make removal of session-ids more efficient and to
      * implement a maximum cache size. Access requires protection of ctx->lock.

@@ -20,6 +20,9 @@
 #include "internal/ssl_unwrap.h"
 #include "ssl_local.h"
 #include "statem/statem_local.h"
+#ifndef OPENSSL_NO_QUIC
+# include "internal/quic_types.h"
+#endif
 
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s);
@@ -120,6 +123,19 @@ SSL_SESSION *SSL_SESSION_new(void)
         OPENSSL_free(ss);
         return NULL;
     }
+
+#ifndef OPENSSL_NO_QUIC
+    /* Set QUIC params to default values */
+    ss->quic_params.init_max_data = 0;
+    ss->quic_params.init_max_stream_data_bidi_local = QUIC_DEFAULT_MAX_STREAM_DATA;
+    ss->quic_params.init_max_stream_data_bidi_remote = QUIC_DEFAULT_MAX_STREAM_DATA;
+    ss->quic_params.init_max_stream_data_uni = QUIC_DEFAULT_MAX_STREAM_DATA;
+    ss->quic_params.max_local_streams_bidi = 0;
+    ss->quic_params.max_local_streams_uni = 0;
+    ss->quic_params.max_idle_timeout = QUIC_DEFAULT_IDLE_TIMEOUT;
+    ss->quic_params.max_udp_payload_size = QUIC_MIN_INITIAL_DGRAM_LEN;
+    ss->quic_params.active_conn_id_limit = QUIC_MIN_ACTIVE_CONN_ID_LIMIT;
+#endif
 
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data)) {
         CRYPTO_FREE_REF(&ss->references);
@@ -260,6 +276,20 @@ static SSL_SESSION *ssl_session_dup_intern(const SSL_SESSION *src, int ticket)
         if (dest->ticket_appdata == NULL)
             goto err;
     }
+
+#ifndef OPENSSL_NO_QUIC
+    dest->quic_params.init_max_data = src->quic_params.init_max_data;
+    dest->quic_params.init_max_stream_data_bidi_local =
+        src->quic_params.init_max_stream_data_bidi_local;
+    dest->quic_params.init_max_stream_data_bidi_remote =
+        src->quic_params.init_max_stream_data_bidi_remote;
+    dest->quic_params.init_max_stream_data_uni = src->quic_params.init_max_stream_data_uni;
+    dest->quic_params.max_local_streams_bidi = src->quic_params.max_local_streams_bidi;
+    dest->quic_params.max_local_streams_uni = src->quic_params.max_local_streams_uni;
+    dest->quic_params.max_idle_timeout = src->quic_params.max_idle_timeout;
+    dest->quic_params.max_udp_payload_size = src->quic_params.max_udp_payload_size;
+    dest->quic_params.active_conn_id_limit = src->quic_params.active_conn_id_limit;
+#endif
 
     return dest;
  err:
