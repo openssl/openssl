@@ -80,6 +80,67 @@ static int test_kdf_tls1_prf(void)
     return ret;
 }
 
+static int test_kdf_tls1_prf_set_skey(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx = NULL;
+    unsigned char out[16];
+    OSSL_PARAM params[3] = {OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END};
+    OSSL_PARAM *p = params;
+    static const unsigned char expected[sizeof(out)] = {
+        0x8e, 0x4d, 0x93, 0x25, 0x30, 0xd7, 0x65, 0xa0,
+        0xaa, 0xe9, 0x74, 0xc3, 0x04, 0x73, 0x5e, 0xcc
+    };
+    EVP_SKEY *skey = NULL;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                            "sha256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+                                             "secret", 6);
+    skey = EVP_SKEY_import_raw_key(NULL, OSSL_SKEY_TYPE_GENERIC,
+                                   (unsigned char *)"seed", 4, NULL);
+    if (skey == NULL)
+        return 0;
+
+    ret = TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF))
+        && TEST_int_gt(EVP_KDF_CTX_set_SKEY(kctx, skey, OSSL_KDF_PARAM_SEED), 0)
+        && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out), params), 0)
+        && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
+
+    EVP_KDF_CTX_free(kctx);
+    EVP_SKEY_free(skey);
+    return ret;
+}
+
+static int test_kdf_tls1_prf_derive_skey(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx = NULL;
+    unsigned char out[16];
+    OSSL_PARAM *params;
+    static const unsigned char expected[sizeof(out)] = {
+        0x8e, 0x4d, 0x93, 0x25, 0x30, 0xd7, 0x65, 0xa0,
+        0xaa, 0xe9, 0x74, 0xc3, 0x04, 0x73, 0x5e, 0xcc
+    };
+    const unsigned char *export = NULL;
+    size_t export_size = 0;
+    EVP_SKEY *skey = NULL;
+
+    params = construct_tls1_prf_params("sha256", "secret", "seed");
+
+    ret = TEST_ptr(params)
+        && TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF))
+        && TEST_ptr(skey = EVP_KDF_derive_SKEY(kctx, NULL, OSSL_SKEY_TYPE_GENERIC,
+                                               NULL, sizeof(expected), params))
+        && TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &export, &export_size), 1)
+        && TEST_mem_eq(export, export_size, expected, sizeof(expected));
+
+    EVP_SKEY_free(skey);
+    EVP_KDF_CTX_free(kctx);
+    OPENSSL_free(params);
+    return ret;
+}
+
 static int test_kdf_tls1_prf_invalid_digest(void)
 {
     int ret;
@@ -721,6 +782,67 @@ static int test_kdf_pbkdf1(void)
 
     ret = 1;
 err:
+    EVP_KDF_CTX_free(kctx);
+    OPENSSL_free(params);
+    OSSL_PROVIDER_unload(defprov);
+    OSSL_PROVIDER_unload(legacyprov);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
+
+static int test_kdf_pbkdf1_skey(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    unsigned char out[25];
+    unsigned int iterations = 4096;
+    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PARAM *params = NULL;
+    OSSL_PROVIDER *legacyprov = NULL;
+    OSSL_PROVIDER *defprov = NULL;
+    EVP_SKEY *skey_in = NULL, *skey_out = NULL;
+    unsigned char salt[] = "saltSALTsaltSALTsaltSALTsaltSALTsalt";
+    const unsigned char expected[sizeof(out)] = {
+        0xfb, 0x83, 0x4d, 0x36, 0x6d, 0xbc, 0x53, 0x87, 0x35, 0x1b, 0x34, 0x75,
+        0x95, 0x88, 0x32, 0x4f, 0x3e, 0x82, 0x81, 0x01, 0x21, 0x93, 0x64, 0x00,
+        0xcc
+    };
+    const unsigned char *export = NULL;
+    size_t export_size = 0;
+
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new()))
+        goto err;
+
+    /* PBKDF1 only available in the legacy provider */
+    legacyprov = OSSL_PROVIDER_load(libctx, "legacy");
+    if (legacyprov == NULL) {
+        OSSL_LIB_CTX_free(libctx);
+        return TEST_skip("PBKDF1 only available in legacy provider");
+    }
+
+    if (!TEST_ptr(defprov = OSSL_PROVIDER_load(libctx, "default")))
+        goto err;
+
+    params = construct_pbkdf1_params("passwordPASSWORDpassword", "sha256",
+                                     "saltSALT",
+                                     &iterations);
+
+    if (!TEST_ptr(params)
+        || !TEST_ptr(skey_in = EVP_SKEY_import_raw_key(libctx, OSSL_SKEY_TYPE_GENERIC,
+                                                       salt, strlen((char *)salt), NULL))
+        || !TEST_ptr(kctx = get_kdfbyname_libctx(libctx, OSSL_KDF_NAME_PBKDF1))
+        || !TEST_true(EVP_KDF_CTX_set_params(kctx, params))
+        || !TEST_true(EVP_KDF_CTX_set_SKEY(kctx, skey_in, OSSL_KDF_PARAM_SALT))
+        || !TEST_ptr(skey_out = EVP_KDF_derive_SKEY(kctx, NULL, OSSL_SKEY_TYPE_GENERIC,
+                                                    NULL, sizeof(out), NULL))
+        || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey_out, &export, &export_size), 1)
+        || !TEST_mem_eq(export, export_size, expected, sizeof(expected)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey_in);
+    EVP_SKEY_free(skey_out);
     EVP_KDF_CTX_free(kctx);
     OPENSSL_free(params);
     OSSL_PROVIDER_unload(defprov);
@@ -2221,6 +2343,7 @@ err:
 int setup_tests(void)
 {
     ADD_TEST(test_kdf_pbkdf1);
+    ADD_TEST(test_kdf_pbkdf1_skey);
     ADD_TEST(test_kdf_pbkdf1_key_too_long);
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_CAMELLIA)
     ADD_TEST(test_kdf_kbkdf_6803_128);
@@ -2241,6 +2364,8 @@ int setup_tests(void)
         ADD_TEST(test_kdf_kbkdf_kmac);
     ADD_TEST(test_kdf_get_kdf);
     ADD_TEST(test_kdf_tls1_prf);
+    ADD_TEST(test_kdf_tls1_prf_set_skey);
+    ADD_TEST(test_kdf_tls1_prf_derive_skey);
     ADD_TEST(test_kdf_tls1_prf_invalid_digest);
     ADD_TEST(test_kdf_tls1_prf_zero_output_size);
     ADD_TEST(test_kdf_tls1_prf_empty_secret);
