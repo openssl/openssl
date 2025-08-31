@@ -140,9 +140,7 @@ static int slh_dsa_import(void *keydata, int selection, const OSSL_PARAM params[
      */
     if (res > 0 && ossl_slh_dsa_key_has(key, OSSL_KEYMGMT_SELECT_KEYPAIR) > 0)
         if (!slh_dsa_fips140_pairwise_test(key, NULL)) {
-            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
-                           "explicit %s public key does not match private",
-                           ossl_slh_dsa_key_get_name(key));
+            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT_IMPORT);
             ossl_slh_dsa_key_reset(key);
             res = 0;
         }
