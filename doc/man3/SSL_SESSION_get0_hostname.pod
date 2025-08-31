@@ -51,12 +51,22 @@ SSL_SESSION_set1_hostname() returns 1 on success or 0 on error.
 
 SSL_SESSION_set1_alpn_selected() returns 1 on success or 0 on error.
 
+=head1 NOTES
+
+This function is not restricted by the negotiated TLS version. In both
+TLSv1.2 and TLSv1.3, it returns the Server Name Indication (SNI) value
+stored in the session if one was accepted by the server; otherwise it
+returns NULL. For the SNI value of the current handshake (rather than
+a stored session), see L<SSL_get_servername(3)>.
+
 =head1 SEE ALSO
 
 L<ssl(7)>,
 L<d2i_SSL_SESSION(3)>,
 L<SSL_SESSION_get_time(3)>,
-L<SSL_SESSION_free(3)>
+L<SSL_SESSION_free(3)>,
+L<SSL_get_servername(3)>,
+L<SSL_SESSION_set1_hostname(3)>
 
 =head1 HISTORY
 
