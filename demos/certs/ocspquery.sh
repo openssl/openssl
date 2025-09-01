@@ -4,7 +4,7 @@
 # called.
 
 opensslcmd() {
-    LD_LIBRARY_PATH=../.. ../../apps/openssl $@
+    LD_LIBRARY_PATH=../.. ../../apps/openssl "$@"
 }
 
 OPENSSL_CONF=../../apps/openssl.cnf
