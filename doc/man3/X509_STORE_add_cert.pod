@@ -104,7 +104,7 @@ uses NULL for the library context I<libctx> and property query I<propq>.
 
 X509_STORE_load_path() sets in B<X509_STORE> the given directory with
 certificate files in PEM format as source of trusted certificate(s).
-The certificate files in B<dir> are only looked up when required, e.g., when
+The certificate files in I<dir> are only looked up when required, e.g., when
 building the certificate chain or when verifying a peer certificate.
 The certificates in the directory must be in hashed form, as
 documented in L<X509_LOOKUP_hash_dir(3)>.
