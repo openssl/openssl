@@ -266,7 +266,7 @@ int get_multiple_of_y_congruent_to_cmod8(BIGNUM *y, const BIGNUM *r1r2x2, int c)
 
     for (i = 0; i < 3; ++i) {
         /* Check for Y = c mod 8 */
-        if ((int)BN_mod_word(y, 8) == c)
+        if ((int)(*bn_get_words(y) & 7) == c)
             return 1;
         /* Y = Y + 2r1r2 */
         if (!BN_add(y, y, r1r2x2))

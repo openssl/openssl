@@ -1361,14 +1361,14 @@ static int rsa_keygen_test(int id)
                                         &d, &d_len)))
         goto err;
 
-    if ((!TEST_mem_eq(tst->p1, tst->p1_len, p1, p1_len))
-        || !TEST_mem_eq(tst->p2, tst->p2_len, p2, p2_len)
-        || !TEST_mem_eq(tst->q1, tst->q1_len, q1, q1_len)
-        || !TEST_mem_eq(tst->q2, tst->q2_len, q2, q2_len)
+    if ((tst->p1 != NULL && !TEST_mem_eq(tst->p1, tst->p1_len, p1, p1_len))
+        || (tst->p2 != NULL && !TEST_mem_eq(tst->p2, tst->p2_len, p2, p2_len))
+        || (tst->q1 != NULL && !TEST_mem_eq(tst->q1, tst->q1_len, q1, q1_len))
+        || (tst->q2 != NULL && !TEST_mem_eq(tst->q2, tst->q2_len, q2, q2_len))
         || !TEST_mem_eq(tst->p, tst->p_len, p, p_len)
         || !TEST_mem_eq(tst->q, tst->q_len, q, q_len)
         || !TEST_mem_eq(tst->n, tst->n_len, n, n_len)
-        || !TEST_mem_eq(tst->d, tst->d_len, d, d_len))
+        || (tst->d != NULL && !TEST_mem_eq(tst->d, tst->d_len, d, d_len)))
         goto err;
 
     test_output_memory("p1", p1, p1_len);
