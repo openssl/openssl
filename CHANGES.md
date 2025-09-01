@@ -31,6 +31,80 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * Added PCT for key import for SLH-DSA when in FIPS mode
+
+   *Dr Paul Dale*
+
+ * Added FIPS 140-3 PCT on DH key generation
+
+   *Nikola Pajkovsky*
+
+ * Added i2d_PKCS8PrivateKey(3) API to complement i2d_PrivateKey(3), the former
+   always outputs PKCS#8.
+
+   *Viktor Dukhovni*
+
+ * Implemented interleaved AES-CBC+HMAC-SHA algorithm on aarch64.
+
+   *Fangming Fang*
+
+ * Added NIST security categories for PKEY objects.
+
+   *Dr Paul Dale*
+
+ * Added notification when all stream FINs are acknowledged in QUIC. Introduced
+   `ossl_quic_channel_notify_flush_done()` so that once final FINs are ACKed,
+   the channel transitions to terminating and SSL_poll() signals completion.
+   This allows applications to progress shutdown reliably.
+
+   *Alexandr Nedvedicky*
+
+ * Fixed the synthesised `OPENSSL_VERSION_NUMBER`
+
+   *Richard Levitte*
+
+ * Added array memory allocation routines.
+
+   *Eugene Syromiatnikov*
+
+ * Fixed behavior change of EC keygen by adding the generic error entry if the
+   provider did not itself add an error entry onto the queue. That way, there
+   always is an error on the error queue in case of a failure, but no behavior
+   change in case the provider emitted the error entry itself.
+
+   *Ingo Franzki*
+
+ * Documented all the environment variables used across the project in
+   `openssl-env(7)` and in specific man pages.
+
+   *Eugene Syromiatnikov*
+
+ * Added SHA-2 assembly implementation enhancing performance for LoongArch.
+   Added optimized SM3, MD5, SHA-256, SHA-512 implementation using Zbb extension
+   for RISC-V.
+
+   *Julian Zhu*
+
+ * Added options `CRYPTO_MEM_SEC` and `CRYPTO_MEM_SEC_MINSIZE` to openssl app to
+   initialize secure memory at the beginning of openssl app.
+
+   *Norbert Pocs*
+
+ * Resolved compiler warnings on Win64 builds.
+
+   *Tomas Mraz*
+
+ * Extended new `CRYPTO_THREAD_[get|set]_local` api to reduce our reliance
+   on OS thread-local variables.
+
+   *Neil Horman*
+
+ * Added make targets `build_inst_sw` and `build_inst_programs` which have the
+   functionality to split the build into two parts, e.g.: when tests should be
+   built with different compiler flags than installed software.
+
+   *Pavol Zacik*
+
  * Refactored OSSL_PARAM name parsing so that automatically generated
    parsers are used instead of OSSL_PARAM_locate calls.  This should
    also ensure that the list of acceptable parameters better matches
