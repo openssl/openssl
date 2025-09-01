@@ -30,7 +30,17 @@ OpenSSL 3.5
 
 ### Changes between 3.5.2 and 3.5.3 [xx XXX xxxx]
 
- * none yet
+ * Added PCT for key import for SLH-DSA when in FIPS mode.
+
+   *Dr Paul Dale*
+
+ * Added FIPS 140-3 PCT on DH key generation.
+
+   *Nikola Pajkovsky*
+
+ * Fixed the synthesised `OPENSSL_VERSION_NUMBER`.
+
+   *Richard Levitte*
 
 ### Changes between 3.5.1 and 3.5.2 [5 Aug 2025]
 
