@@ -799,9 +799,9 @@ DEF_FUNC(hf_spawn_thread)
     if (!TEST_ptr(child_rt->debug_bio = BIO_new(BIO_s_mem())))
         goto err;
 
-    ossl_crypto_mutex_lock(child_rt->m);
-
     child_rt->child_script_info = script_info;
+
+    ossl_crypto_mutex_lock(child_rt->m);
     if (!TEST_ptr(child_rt->t = ossl_crypto_thread_native_start(RADIX_THREAD_worker_main,
                                                                 child_rt, 1))) {
         ossl_crypto_mutex_unlock(child_rt->m);
