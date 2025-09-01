@@ -183,6 +183,7 @@ or decryption.
 =item B<-bufsize> I<number>
 
 Set the buffer size for I/O.
+The maximum size that can be specified is B<2^31-1> (2147483647) bytes.
 
 =item B<-nopad>
 
