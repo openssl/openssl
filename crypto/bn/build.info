@@ -90,6 +90,11 @@ IF[{- !$disabled{asm} -}]
   $BNASM_c64xplus_ec2m=c64xplus-gf2m.s
   $BNDEF_c64xplus_ec2m=OPENSSL_BN_ASM_GF2m
 
+  $BNASM_e2kv6=asm/e2kv6-gf2m.c
+  $BNDEF_e2kv6=OPENSSL_BN_ASM_GF2m
+  $BNASM_e2kv7=asm/e2kv6-gf2m.c
+  $BNDEF_e2kv7=OPENSSL_BN_ASM_GF2m
+
   # Now that we have defined all the arch specific variables, use the
   # appropriate ones, and define the appropriate macros
   IF[$BNASM_{- $target{asm_arch} -}]
