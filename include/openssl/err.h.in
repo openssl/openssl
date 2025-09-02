@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_lhash_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_ERR_H
 # define OPENSSL_ERR_H
@@ -373,9 +375,11 @@ typedef struct ERR_string_data_st {
     const char *string;
 } ERR_STRING_DATA;
 
+/* clang-format off */
 {-
     generate_lhash_macros("ERR_STRING_DATA");
 -}
+/* clang-format on */
 
 /* 12 lines and some on an 80 column terminal */
 #define ERR_MAX_DATA_SIZE       1024
