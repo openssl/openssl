@@ -29,7 +29,7 @@ OpenSSL Releases
 OpenSSL 3.6
 -----------
 
-### Changes between 3.6 and 3.7 [xx XXX xxxx]
+### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * none yet
 
