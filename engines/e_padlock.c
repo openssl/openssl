@@ -35,12 +35,9 @@
 # undef COMPILE_PADLOCKENG
 # if defined(PADLOCK_ASM)
 #  define COMPILE_PADLOCKENG
-#  ifdef OPENSSL_NO_DYNAMIC_ENGINE
 static ENGINE *ENGINE_padlock(void);
-#  endif
 # endif
 
-# ifdef OPENSSL_NO_DYNAMIC_ENGINE
 void engine_load_padlock_int(void);
 void engine_load_padlock_int(void)
 {
@@ -64,8 +61,6 @@ void engine_load_padlock_int(void)
     ERR_pop_to_mark();
 #  endif
 }
-
-# endif
 
 # ifdef COMPILE_PADLOCKENG
 
@@ -121,7 +116,6 @@ static int padlock_bind_helper(ENGINE *e)
     return 1;
 }
 
-#  ifdef OPENSSL_NO_DYNAMIC_ENGINE
 /* Constructor */
 static ENGINE *ENGINE_padlock(void)
 {
@@ -138,7 +132,6 @@ static ENGINE *ENGINE_padlock(void)
 
     return eng;
 }
-#  endif
 
 /* Check availability of the engine */
 static int padlock_init(ENGINE *e)
@@ -163,23 +156,6 @@ static int padlock_aes_set_decrypt_key(const unsigned char *userKey,
  * This stuff is needed if this ENGINE is being compiled into a
  * self-contained shared-library.
  */
-#  ifndef OPENSSL_NO_DYNAMIC_ENGINE
-static int padlock_bind_fn(ENGINE *e, const char *id)
-{
-    if (id && (strcmp(id, padlock_id) != 0)) {
-        return 0;
-    }
-
-    if (!padlock_bind_helper(e)) {
-        return 0;
-    }
-
-    return 1;
-}
-
-IMPLEMENT_DYNAMIC_CHECK_FN()
-IMPLEMENT_DYNAMIC_BIND_FN(padlock_bind_fn)
-#  endif                       /* !OPENSSL_NO_DYNAMIC_ENGINE */
 /* ===== Here comes the "real" engine ===== */
 
 /* Some AES-related constants */
@@ -747,17 +723,3 @@ static RAND_METHOD padlock_rand = {
 
 # endif                        /* COMPILE_PADLOCKENG */
 #endif                         /* !OPENSSL_NO_PADLOCKENG */
-
-#if defined(OPENSSL_NO_PADLOCKENG) || !defined(COMPILE_PADLOCKENG)
-# ifndef OPENSSL_NO_DYNAMIC_ENGINE
-OPENSSL_EXPORT
-    int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns);
-OPENSSL_EXPORT
-    int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns)
-{
-    return 0;
-}
-
-IMPLEMENT_DYNAMIC_CHECK_FN()
-# endif
-#endif

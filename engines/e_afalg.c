@@ -66,9 +66,7 @@ void engine_load_afalg_int(void)
 # define ALG_OP_TYPE     unsigned int
 # define ALG_OP_LEN      (sizeof(ALG_OP_TYPE))
 
-# ifdef OPENSSL_NO_DYNAMIC_ENGINE
 void engine_load_afalg_int(void);
-# endif
 
 /* Local Linkage Functions */
 static int afalg_init_aio(afalg_aio *aio);
@@ -824,26 +822,6 @@ static int bind_afalg(ENGINE *e)
     return 1;
 }
 
-# ifndef OPENSSL_NO_DYNAMIC_ENGINE
-static int bind_helper(ENGINE *e, const char *id)
-{
-    if (id && (strcmp(id, engine_afalg_id) != 0))
-        return 0;
-
-    if (!afalg_chk_platform())
-        return 0;
-
-    if (!bind_afalg(e)) {
-        afalg_destroy(e);
-        return 0;
-    }
-    return 1;
-}
-
-IMPLEMENT_DYNAMIC_CHECK_FN()
-    IMPLEMENT_DYNAMIC_BIND_FN(bind_helper)
-# endif
-
 static int afalg_chk_platform(void)
 {
     int ret;
@@ -888,7 +866,6 @@ static int afalg_chk_platform(void)
     return 1;
 }
 
-# ifdef OPENSSL_NO_DYNAMIC_ENGINE
 static ENGINE *engine_afalg(void)
 {
     ENGINE *ret = ENGINE_new();
@@ -925,7 +902,6 @@ void engine_load_afalg_int(void)
      */
     ERR_pop_to_mark();
 }
-# endif
 
 static int afalg_init(ENGINE *e)
 {
