@@ -24,6 +24,10 @@ OpenSSL Releases
 OpenSSL 3.6
 -----------
 
+### Major changes between OpenSSL 3.6 and OpenSSL 3.7 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.5 and OpenSSL 3.6 [under development]
 
 This release incorporates the following potentially significant or incompatible
