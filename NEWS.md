@@ -24,7 +24,7 @@ OpenSSL Releases
 OpenSSL 3.6
 -----------
 
-### Major changes between OpenSSL 3.5 and OpenSSL 3.6 [under development]
+### Major changes between OpenSSL 3.5 and OpenSSL 3.6 alpha 1 [in pre-release]
 
 This release incorporates the following potentially significant or incompatible
 changes:
