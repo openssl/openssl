@@ -21,4 +21,5 @@
 -}
 /* clang-format on */
 
-int ossl_DER_w_algorithmIdentifier_ML_DSA(WPACKET *pkt, int tag, ML_DSA_KEY *key);
+int ossl_DER_w_algorithmIdentifier_ML_DSA(WPACKET *pkt, int tag,
+					  ML_DSA_KEY *key);
