@@ -24,7 +24,7 @@ OpenSSL Releases
 OpenSSL 3.6
 -----------
 
-### Major changes between OpenSSL 3.5 and OpenSSL 3.6 [02 Sep 2025]
+### Major changes between OpenSSL 3.5 and OpenSSL 3.6 [under development]
 
 This release incorporates the following potentially significant or incompatible
 changes:
@@ -35,9 +35,9 @@ changes:
 
   * Added NIST security categories for PKEY objects.
 
-  * Added EVP_SKEY implementation for key derivation using functions:
-    `EVP_KDF_CTX_set_SKEY`, `EVP_KDF_derive_SKEY`, and `EVP_PKEY_derive_SKEY` to
-    the legacy provider suitable for use with KEYEXCH and KDFs.
+  * Added support for EVP_SKEY opaque symmetric key objects to the key 
+    derivation and key exchange provider methods. Added `EVP_KDF_CTX_set_SKEY()`, 
+    `EVP_KDF_derive_SKEY()`, and `EVP_PKEY_derive_SKEY()` functions.
 
   * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
     This is mandated by FIPS 140-3 IG 10.3.A additional comment 1.

@@ -31,11 +31,17 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
- * Added PCT for key import for SLH-DSA when in FIPS mode
+ * Added support for EVP_SKEY opaque symmetric key objects to the key 
+   derivation and key exchange provider methods. Added `EVP_KDF_CTX_set_SKEY()`, 
+   `EVP_KDF_derive_SKEY()`, and `EVP_PKEY_derive_SKEY()` functions.
+
+   *Dmitry Belyavskiy and Simo Sorce*
+
+ * Added PCT for key import for SLH-DSA when in FIPS mode.
 
    *Dr Paul Dale*
 
- * Added FIPS 140-3 PCT on DH key generation
+ * Added FIPS 140-3 PCT on DH key generation.
 
    *Nikola Pajkovsky*
 
@@ -59,11 +65,12 @@ OpenSSL 3.6
 
    *Alexandr Nedvedicky*
 
- * Fixed the synthesised `OPENSSL_VERSION_NUMBER`
+ * Fixed the synthesised `OPENSSL_VERSION_NUMBER`.
 
    *Richard Levitte*
 
- * Added array memory allocation routines.
+ * Added array memory allocation routines and converted suitable memory
+   allocation calls in the library to them.
 
    *Eugene Syromiatnikov*
 
