@@ -339,7 +339,7 @@ static int test_free_buffers(int test)
  end:
     SSL_free(clientssl);
     SSL_free(serverssl);
-#ifndef OPENSSL_NO_DYNAMIC_ENGINE
+#ifdef TODO_REWRITE_ME_DASYNC_PROVIDER
     if (e != NULL) {
         ENGINE_unregister_ciphers(e);
         ENGINE_finish(e);
@@ -372,7 +372,7 @@ int setup_tests(void)
     }
 
     ADD_ALL_TESTS(test_func, 9);
-#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
+#if !defined(OPENSSL_NO_TLS1_2) && defined(TODO_REWRITE_ME_DASYNC_PROVIDER)
     ADD_ALL_TESTS(test_free_buffers, 8);
 #else
     ADD_ALL_TESTS(test_free_buffers, 4);
