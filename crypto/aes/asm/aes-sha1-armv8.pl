@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 
-# Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (C) Cavium networks Ltd. 2016.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
