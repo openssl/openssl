@@ -1529,7 +1529,7 @@ int ssl_ctx_add_large_cert_chain(OSSL_LIB_CTX *libctx, SSL_CTX *sctx,
 
 ENGINE *load_dasync(void)
 {
-#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
+#if !defined(OPENSSL_NO_TLS1_2) && defined(TODO_REWRITE_ME_DASYNC_PROVIDER)
     ENGINE *e;
 
     if (!TEST_ptr(e = ENGINE_by_id("dasync")))

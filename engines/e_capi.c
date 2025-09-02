@@ -570,19 +570,6 @@ static int bind_capi(ENGINE *e)
     return 0;
 }
 
-# ifndef OPENSSL_NO_DYNAMIC_ENGINE
-static int bind_helper(ENGINE *e, const char *id)
-{
-    if (id && (strcmp(id, engine_capi_id) != 0))
-        return 0;
-    if (!bind_capi(e))
-        return 0;
-    return 1;
-}
-
-IMPLEMENT_DYNAMIC_CHECK_FN()
-IMPLEMENT_DYNAMIC_BIND_FN(bind_helper)
-# else
 static ENGINE *engine_capi(void)
 {
     ENGINE *ret = ENGINE_new();
@@ -615,7 +602,6 @@ void engine_load_capi_int(void)
      */
     ERR_pop_to_mark();
 }
-# endif
 
 static int lend_tobn(BIGNUM *bn, unsigned char *bin, int binlen)
 {
@@ -1915,20 +1901,8 @@ static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 
 #else                           /* !__COMPILE_CAPIENG */
 # include <openssl/engine.h>
-# ifndef OPENSSL_NO_DYNAMIC_ENGINE
-OPENSSL_EXPORT
-    int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns);
-OPENSSL_EXPORT
-    int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns)
-{
-    return 0;
-}
-
-IMPLEMENT_DYNAMIC_CHECK_FN()
-# else
 void engine_load_capi_int(void);
 void engine_load_capi_int(void)
 {
 }
-# endif
 #endif

@@ -104,7 +104,7 @@ EOF
 #               [don't] allow default thread pool functionality
 # [no-]shared   [don't] try to create shared libraries when supported.
 # [no-]pic      [don't] try to build position independent code when supported.
-#               If disabled, it also disables shared and dynamic-engine.
+#               If disabled, it also disables shared.
 # no-asm        do not use assembler
 # no-egd        do not compile support for the entropy-gathering daemon APIs
 # [no-]zlib     [don't] compile support for zlib compression.
@@ -473,7 +473,6 @@ my @disablables = (
     "dsa",
     "dso",
     "dtls",
-    "dynamic-engine",
     "ec",
     "ec2m",
     "ec_nistp_64_gcc_128",
@@ -679,17 +678,10 @@ my @disable_cascades = (
 
     "crypto-mdebug"     => [ "crypto-mdebug-backtrace", "allocfail-tests" ],
 
-    "module"            => [ "dynamic-engine", "fips" ],
+    "module"            => [ "fips" ],
 
-    # Without shared libraries, dynamic engines aren't possible.
-    # This is due to them having to link with libcrypto and register features
-    # using the ENGINE functionality, and since that relies on global tables,
-    # those *have* to be exactly the same as the ones accessed from the app,
-    # which cannot be guaranteed if shared libraries aren't present.
-    # (note that even with shared libraries, both the app and dynamic engines
-    # must be linked with the same library)
-    "shared"            => [ "dynamic-engine", "uplink" ],
-    "dso"               => [ "dynamic-engine", "module" ],
+    "shared"            => [ "uplink" ],
+    "dso"               => [ "module" ],
     # Other modules don't necessarily have to link with libcrypto, so shared
     # libraries do not have to be a condition to produce those.
 
@@ -697,8 +689,7 @@ my @disable_cascades = (
     # or modules.
     "pic"               => [ "shared", "module" ],
 
-    "engine"            => [ "dynamic-engine", grep(/eng$/, @disablables) ],
-    "dynamic-engine"    => [ "loadereng" ],
+    "engine"            => [ grep(/eng$/, @disablables) ],
     "hw"                => [ "padlockeng" ],
 
     # no-autoalginit is only useful when building non-shared
@@ -938,10 +929,6 @@ while (@argvcopy)
                         {
                         delete $disabled{"dynamic-engine"};
                         }
-                elsif ($1 eq "dynamic-engine")
-                        {
-                        $disabled{"dynamic-engine"} = "option";
-                        }
                 elsif (exists $deprecated_disablables{$1})
                         {
                         $deprecated_options{$_} = 1;
@@ -966,10 +953,6 @@ while (@argvcopy)
                 if ($1 eq "static-engine")
                         {
                         $disabled{"dynamic-engine"} = "option";
-                        }
-                elsif ($1 eq "dynamic-engine")
-                        {
-                        delete $disabled{"dynamic-engine"};
                         }
                 elsif ($1 eq "zlib-dynamic")
                         {
@@ -1650,15 +1633,9 @@ my $no_shared_warn=0;
 if (($target{shared_target} // '') eq "")
         {
         $no_shared_warn = 1
-            if (!$disabled{shared} || !$disabled{"dynamic-engine"});
+            if (!$disabled{shared});
         disable('no-shared-target', 'pic');
         }
-
-if ($disabled{"dynamic-engine"}) {
-        $config{dynamic_engines} = 0;
-} else {
-        $config{dynamic_engines} = 1;
-}
 
 unless ($disabled{asan} || defined $detected_sanitizers{asan}) {
     push @{$config{cflags}}, "-fsanitize=address";
@@ -1964,7 +1941,7 @@ foreach my $what (sort keys %disabled) {
     $config{options} .= " no-$what";
 
     if (!grep { $what eq $_ } ( 'buildtest-c++', 'fips', 'threads', 'shared',
-                                'module', 'pic', 'dynamic-engine', 'makedepend',
+                                'module', 'pic', 'makedepend',
                                 'sse2', 'legacy' )) {
         (my $WHAT = uc $what) =~ s|-|_|g;
         my $skipdir = $what;
@@ -1982,9 +1959,7 @@ foreach my $what (sort keys %disabled) {
     }
 }
 
-if ($disabled{"dynamic-engine"}) {
-    push @{$config{openssl_feature_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
-} else {
+if (!$disabled{"dynamic-engine"}) {
     push @{$config{openssl_feature_defines}}, "OPENSSL_NO_STATIC_ENGINE";
 }
 
@@ -2388,14 +2363,6 @@ if ($builder eq "unified") {
             },
             );
         die "runaway IF?" if (@skip);
-
-        if (grep { defined $attributes{modules}->{$_}->{engine} } keys %attributes
-                and !$config{dynamic_engines}) {
-            die <<"EOF"
-ENGINES can only be used if configured with 'dynamic-engine'.
-This is usually a fault in a build.info file.
-EOF
-        }
 
         {
             my %infos = ( programs  => [ @programs  ],
@@ -3063,9 +3030,9 @@ EOF
 
 print <<"EOF" if ($no_shared_warn);
 
-The options 'shared', 'pic' and 'dynamic-engine' aren't supported on this
+The options 'shared' and 'pic' aren't supported on this
 platform, so we will pretend you gave the option 'no-pic', which also disables
-'shared' and 'dynamic-engine'.  If you know how to implement shared libraries
+'shared'.  If you know how to implement shared libraries
 or position independent code, please let us know (but please first make sure
 you have tried with a current version of OpenSSL).
 EOF
