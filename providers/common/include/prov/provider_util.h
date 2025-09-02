@@ -18,9 +18,6 @@ typedef struct {
      */
     const EVP_CIPHER *cipher;   /* cipher */
     EVP_CIPHER *alloc_cipher;   /* fetched cipher */
-
-    /* Conditions for legacy EVP_CIPHER uses */
-    ENGINE *engine;             /* cipher engine */
 } PROV_CIPHER;
 
 typedef struct {
@@ -31,9 +28,6 @@ typedef struct {
      */
     const EVP_MD *md;           /* digest */
     EVP_MD *alloc_md;           /* fetched digest */
-
-    /* Conditions for legacy EVP_MD uses */
-    ENGINE *engine;             /* digest engine */
 } PROV_DIGEST;
 
 /* Cipher functions */
