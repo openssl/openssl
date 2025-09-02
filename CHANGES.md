@@ -29,7 +29,7 @@ OpenSSL Releases
 OpenSSL 3.6
 -----------
 
-### Changes between 3.5 and 3.6 alpha 1 [2 Sep 2025]
+### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
  * Added support for EVP_SKEY opaque symmetric key objects to the key
    derivation and key exchange provider methods. Added `EVP_KDF_CTX_set_SKEY()`,
