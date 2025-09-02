@@ -44,7 +44,6 @@ SSL_CTX_set_info_callback               ?	4_0_0	EXIST::FUNCTION:
 SSL_CTX_get_info_callback               ?	4_0_0	EXIST::FUNCTION:
 SSL_CTX_set_client_cert_cb              ?	4_0_0	EXIST::FUNCTION:
 SSL_CTX_get_client_cert_cb              ?	4_0_0	EXIST::FUNCTION:
-SSL_CTX_set_client_cert_engine          ?	4_0_0	EXIST::FUNCTION:ENGINE
 SSL_CTX_set_cookie_generate_cb          ?	4_0_0	EXIST::FUNCTION:
 SSL_CTX_set_cookie_verify_cb            ?	4_0_0	EXIST::FUNCTION:
 SSL_CTX_set_stateless_cookie_generate_cb ?	4_0_0	EXIST::FUNCTION:
