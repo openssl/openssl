@@ -25,7 +25,7 @@ DEFINE_STACK_OF(CACHED_STORE)
 static int cache_objects(X509_LOOKUP *lctx, CACHED_STORE *store,
                          const OSSL_STORE_SEARCH *criterion, int depth)
 {
-    int ok = 0;
+    int ok = 1;
     OSSL_STORE_CTX *ctx;
     X509_STORE *xstore = X509_LOOKUP_get_store(lctx);
 
@@ -63,12 +63,16 @@ static int cache_objects(X509_LOOKUP *lctx, CACHED_STORE *store,
 
         /* NULL means error or "end of file".  Either way, we break. */
         if (info == NULL)
+            /*
+             * Cannot rely on OSSL_STORE_error() here:
+             * file_load() incorrectly reports an error at EOF
+             */
             break;
 
         infotype = OSSL_STORE_INFO_get_type(info);
-        ok = 0;
 
-        if (infotype == OSSL_STORE_INFO_NAME) {
+        switch (infotype) {
+        case OSSL_STORE_INFO_NAME:
             /*
              * This is an entry in the "directory" represented by the current
              * uri.  if |depth| allows, dive into it.
@@ -81,27 +85,26 @@ static int cache_objects(X509_LOOKUP *lctx, CACHED_STORE *store,
                 substore.propq = store->propq;
                 ok = cache_objects(lctx, &substore, criterion, depth - 1);
             }
-        } else {
-            /*
-             * We know that X509_STORE_add_{cert|crl} increments the object's
-             * refcount, so we can safely use OSSL_STORE_INFO_get0_{cert,crl}
-             * to get them.
-             */
-            switch (infotype) {
-            case OSSL_STORE_INFO_CERT:
-                ok = X509_STORE_add_cert(xstore,
-                                         OSSL_STORE_INFO_get0_CERT(info));
-                break;
-            case OSSL_STORE_INFO_CRL:
-                ok = X509_STORE_add_crl(xstore,
-                                        OSSL_STORE_INFO_get0_CRL(info));
-                break;
-            }
+            break;
+        /*
+         * We know that X509_STORE_add_{cert|crl} increments the object's
+         * refcount, so we can safely use OSSL_STORE_INFO_get0_{cert,crl}
+         * to get them.
+         */
+        case OSSL_STORE_INFO_CERT:
+            ok = X509_STORE_add_cert(xstore, OSSL_STORE_INFO_get0_CERT(info));
+            break;
+        case OSSL_STORE_INFO_CRL:
+            ok = X509_STORE_add_crl(xstore, OSSL_STORE_INFO_get0_CRL(info));
+            break;
+        default:
+            /* Ignore all other types (PKEY, PUBKEY, PARAMS) */
+            break;
         }
 
         OSSL_STORE_INFO_free(info);
         if (!ok)
-            break;
+            break; /* stop on first failure */
     }
     OSSL_STORE_close(ctx);
 
@@ -275,7 +278,7 @@ static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
  */
 
 static X509_LOOKUP_METHOD x509_store_lookup = {
-    "Load certs from STORE URIs",
+    "Load certificates and CRLs from OSSL_STORE URIs",
     NULL,                        /* new_item */
     by_store_free,               /* free */
     NULL,                        /* init */
