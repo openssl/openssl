@@ -10,12 +10,12 @@
  */
 
 #ifndef OPENSSL_OPENSSLV_H
-# define OPENSSL_OPENSSLV_H
-# pragma once
+#define OPENSSL_OPENSSLV_H
+#pragma once
 
-# ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
-# endif
+#endif
 
 /*
  * SECTION 1: VERSION DATA.  These will change for each release
@@ -75,8 +75,9 @@ extern "C" {
  */
 
 /* For checking general API compatibility when preprocessing */
-# define OPENSSL_VERSION_PREREQ(maj,min)                                \
-    ((OPENSSL_VERSION_MAJOR << 16) + OPENSSL_VERSION_MINOR >= ((maj) << 16) + (min))
+#define OPENSSL_VERSION_PREREQ(maj, min)                          \
+	((OPENSSL_VERSION_MAJOR << 16) + OPENSSL_VERSION_MINOR >= \
+	 ((maj) << 16) + (min))
 
 /*
  * Macros to get the version in easily digested string form, both the short
@@ -118,13 +119,13 @@ extern "C" {
       |{- @config{prerelease} ? "0x0L" : "0xfL" -} )
 /* clang-format on */
 
-# ifdef  __cplusplus
+#ifdef __cplusplus
 }
-# endif
+#endif
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define HEADER_OPENSSLV_H
-# endif
+#include <openssl/macros.h>
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+#define HEADER_OPENSSLV_H
+#endif
 
-#endif                          /* OPENSSL_OPENSSLV_H */
+#endif /* OPENSSL_OPENSSLV_H */

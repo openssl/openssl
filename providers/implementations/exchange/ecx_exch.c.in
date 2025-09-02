@@ -42,144 +42,140 @@ static OSSL_FUNC_keyexch_get_ctx_params_fn ecx_get_ctx_params;
  */
 
 typedef struct {
-    size_t keylen;
-    ECX_KEY *key;
-    ECX_KEY *peerkey;
+	size_t keylen;
+	ECX_KEY *key;
+	ECX_KEY *peerkey;
 } PROV_ECX_CTX;
 
 static void *ecx_newctx(void *provctx, size_t keylen)
 {
-    PROV_ECX_CTX *ctx;
+	PROV_ECX_CTX *ctx;
 
-    if (!ossl_prov_is_running())
-        return NULL;
+	if (!ossl_prov_is_running())
+		return NULL;
 
-    ctx = OPENSSL_zalloc(sizeof(PROV_ECX_CTX));
-    if (ctx == NULL)
-        return NULL;
+	ctx = OPENSSL_zalloc(sizeof(PROV_ECX_CTX));
+	if (ctx == NULL)
+		return NULL;
 
-    ctx->keylen = keylen;
+	ctx->keylen = keylen;
 
-    return ctx;
+	return ctx;
 }
 
 static void *x25519_newctx(void *provctx)
 {
-    return ecx_newctx(provctx, X25519_KEYLEN);
+	return ecx_newctx(provctx, X25519_KEYLEN);
 }
 
 static void *x448_newctx(void *provctx)
 {
-    return ecx_newctx(provctx, X448_KEYLEN);
+	return ecx_newctx(provctx, X448_KEYLEN);
 }
 
 static int ecx_init(void *vecxctx, void *vkey, const char *algname)
 {
-    PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
-    ECX_KEY *key = vkey;
+	PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
+	ECX_KEY *key = vkey;
 
-    if (!ossl_prov_is_running())
-        return 0;
+	if (!ossl_prov_is_running())
+		return 0;
 
-    if (ecxctx == NULL
-            || key == NULL
-            || key->keylen != ecxctx->keylen
-            || !ossl_ecx_key_up_ref(key)) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
+	if (ecxctx == NULL || key == NULL || key->keylen != ecxctx->keylen ||
+	    !ossl_ecx_key_up_ref(key)) {
+		ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+		return 0;
+	}
 
-    ossl_ecx_key_free(ecxctx->key);
-    ecxctx->key = key;
+	ossl_ecx_key_free(ecxctx->key);
+	ecxctx->key = key;
 
 #ifdef FIPS_MODULE
-    if (!ossl_FIPS_IND_callback(key->libctx, algname, "Init"))
-        return 0;
+	if (!ossl_FIPS_IND_callback(key->libctx, algname, "Init"))
+		return 0;
 #endif
-    return 1;
+	return 1;
 }
 
 static int x25519_init(void *vecxctx, void *vkey,
-                       ossl_unused const OSSL_PARAM params[])
+		       ossl_unused const OSSL_PARAM params[])
 {
-    return ecx_init(vecxctx, vkey, "X25519");
+	return ecx_init(vecxctx, vkey, "X25519");
 }
 
 static int x448_init(void *vecxctx, void *vkey,
-                     ossl_unused const OSSL_PARAM params[])
+		     ossl_unused const OSSL_PARAM params[])
 {
-    return ecx_init(vecxctx, vkey, "X448");
+	return ecx_init(vecxctx, vkey, "X448");
 }
 
 static int ecx_set_peer(void *vecxctx, void *vkey)
 {
-    PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
-    ECX_KEY *key = vkey;
+	PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
+	ECX_KEY *key = vkey;
 
-    if (!ossl_prov_is_running())
-        return 0;
+	if (!ossl_prov_is_running())
+		return 0;
 
-    if (ecxctx == NULL
-            || key == NULL
-            || key->keylen != ecxctx->keylen
-            || !ossl_ecx_key_up_ref(key)) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-    ossl_ecx_key_free(ecxctx->peerkey);
-    ecxctx->peerkey = key;
+	if (ecxctx == NULL || key == NULL || key->keylen != ecxctx->keylen ||
+	    !ossl_ecx_key_up_ref(key)) {
+		ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+		return 0;
+	}
+	ossl_ecx_key_free(ecxctx->peerkey);
+	ecxctx->peerkey = key;
 
-    return 1;
+	return 1;
 }
 
 static int ecx_derive(void *vecxctx, unsigned char *secret, size_t *secretlen,
-                      size_t outlen)
+		      size_t outlen)
 {
-    PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
+	PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
 
-    if (!ossl_prov_is_running())
-        return 0;
-    return ossl_ecx_compute_key(ecxctx->peerkey, ecxctx->key, ecxctx->keylen,
-                                secret, secretlen, outlen);
+	if (!ossl_prov_is_running())
+		return 0;
+	return ossl_ecx_compute_key(ecxctx->peerkey, ecxctx->key,
+				    ecxctx->keylen, secret, secretlen, outlen);
 }
 
 static void ecx_freectx(void *vecxctx)
 {
-    PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
+	PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
 
-    ossl_ecx_key_free(ecxctx->key);
-    ossl_ecx_key_free(ecxctx->peerkey);
+	ossl_ecx_key_free(ecxctx->key);
+	ossl_ecx_key_free(ecxctx->peerkey);
 
-    OPENSSL_free(ecxctx);
+	OPENSSL_free(ecxctx);
 }
 
 static void *ecx_dupctx(void *vecxctx)
 {
-    PROV_ECX_CTX *srcctx = (PROV_ECX_CTX *)vecxctx;
-    PROV_ECX_CTX *dstctx;
+	PROV_ECX_CTX *srcctx = (PROV_ECX_CTX *)vecxctx;
+	PROV_ECX_CTX *dstctx;
 
-    if (!ossl_prov_is_running())
-        return NULL;
+	if (!ossl_prov_is_running())
+		return NULL;
 
-    dstctx = OPENSSL_zalloc(sizeof(*srcctx));
-    if (dstctx == NULL)
-        return NULL;
+	dstctx = OPENSSL_zalloc(sizeof(*srcctx));
+	if (dstctx == NULL)
+		return NULL;
 
-    *dstctx = *srcctx;
-    if (dstctx->key != NULL && !ossl_ecx_key_up_ref(dstctx->key)) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
-        OPENSSL_free(dstctx);
-        return NULL;
-    }
+	*dstctx = *srcctx;
+	if (dstctx->key != NULL && !ossl_ecx_key_up_ref(dstctx->key)) {
+		ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+		OPENSSL_free(dstctx);
+		return NULL;
+	}
 
-    if (dstctx->peerkey != NULL && !ossl_ecx_key_up_ref(dstctx->peerkey)) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
-        ossl_ecx_key_free(dstctx->key);
-        OPENSSL_free(dstctx);
-        return NULL;
-    }
+	if (dstctx->peerkey != NULL && !ossl_ecx_key_up_ref(dstctx->peerkey)) {
+		ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+		ossl_ecx_key_free(dstctx->key);
+		OPENSSL_free(dstctx);
+		return NULL;
+	}
 
-    return dstctx;
+	return dstctx;
 }
 
 #ifdef FIPS_MODULE
@@ -191,54 +187,56 @@ static void *ecx_dupctx(void *vecxctx)
 #endif
 
 static const OSSL_PARAM *ecx_gettable_ctx_params(ossl_unused void *vctx,
-                                                 ossl_unused void *provctx)
+						 ossl_unused void *provctx)
 {
 #ifdef FIPS_MODULE
-    return ecx_get_ctx_params_list;
+	return ecx_get_ctx_params_list;
 #else
-    static OSSL_PARAM params[] = { OSSL_PARAM_END };
+	static OSSL_PARAM params[] = { OSSL_PARAM_END };
 
-    return params;
+	return params;
 #endif
 }
 
 static int ecx_get_ctx_params(ossl_unused void *vctx, OSSL_PARAM params[])
 {
 #ifdef FIPS_MODULE
-    int approved = 0;
-    struct ecx_get_ctx_params_st p;
+	int approved = 0;
+	struct ecx_get_ctx_params_st p;
 
-    if (vctx == NULL || !ecx_get_ctx_params_decoder(params, &p))
-        return 0;
+	if (vctx == NULL || !ecx_get_ctx_params_decoder(params, &p))
+		return 0;
 
-    if (p.ind != NULL && !OSSL_PARAM_set_int(p.ind, approved))
-        return 0;
+	if (p.ind != NULL && !OSSL_PARAM_set_int(p.ind, approved))
+		return 0;
 #endif
-    return 1;
+	return 1;
 }
 
 const OSSL_DISPATCH ossl_x25519_keyexch_functions[] = {
-    { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))x25519_newctx },
-    { OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))x25519_init },
-    { OSSL_FUNC_KEYEXCH_DERIVE, (void (*)(void))ecx_derive },
-    { OSSL_FUNC_KEYEXCH_SET_PEER, (void (*)(void))ecx_set_peer },
-    { OSSL_FUNC_KEYEXCH_FREECTX, (void (*)(void))ecx_freectx },
-    { OSSL_FUNC_KEYEXCH_DUPCTX, (void (*)(void))ecx_dupctx },
-    { OSSL_FUNC_KEYEXCH_GET_CTX_PARAMS, (void (*)(void))ecx_get_ctx_params },
-    { OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS,
-      (void (*)(void))ecx_gettable_ctx_params },
-    OSSL_DISPATCH_END
+	{ OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))x25519_newctx },
+	{ OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))x25519_init },
+	{ OSSL_FUNC_KEYEXCH_DERIVE, (void (*)(void))ecx_derive },
+	{ OSSL_FUNC_KEYEXCH_SET_PEER, (void (*)(void))ecx_set_peer },
+	{ OSSL_FUNC_KEYEXCH_FREECTX, (void (*)(void))ecx_freectx },
+	{ OSSL_FUNC_KEYEXCH_DUPCTX, (void (*)(void))ecx_dupctx },
+	{ OSSL_FUNC_KEYEXCH_GET_CTX_PARAMS,
+	  (void (*)(void))ecx_get_ctx_params },
+	{ OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS,
+	  (void (*)(void))ecx_gettable_ctx_params },
+	OSSL_DISPATCH_END
 };
 
 const OSSL_DISPATCH ossl_x448_keyexch_functions[] = {
-    { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))x448_newctx },
-    { OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))x448_init },
-    { OSSL_FUNC_KEYEXCH_DERIVE, (void (*)(void))ecx_derive },
-    { OSSL_FUNC_KEYEXCH_SET_PEER, (void (*)(void))ecx_set_peer },
-    { OSSL_FUNC_KEYEXCH_FREECTX, (void (*)(void))ecx_freectx },
-    { OSSL_FUNC_KEYEXCH_DUPCTX, (void (*)(void))ecx_dupctx },
-    { OSSL_FUNC_KEYEXCH_GET_CTX_PARAMS, (void (*)(void))ecx_get_ctx_params },
-    { OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS,
-      (void (*)(void))ecx_gettable_ctx_params },
-    OSSL_DISPATCH_END
+	{ OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))x448_newctx },
+	{ OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))x448_init },
+	{ OSSL_FUNC_KEYEXCH_DERIVE, (void (*)(void))ecx_derive },
+	{ OSSL_FUNC_KEYEXCH_SET_PEER, (void (*)(void))ecx_set_peer },
+	{ OSSL_FUNC_KEYEXCH_FREECTX, (void (*)(void))ecx_freectx },
+	{ OSSL_FUNC_KEYEXCH_DUPCTX, (void (*)(void))ecx_dupctx },
+	{ OSSL_FUNC_KEYEXCH_GET_CTX_PARAMS,
+	  (void (*)(void))ecx_get_ctx_params },
+	{ OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS,
+	  (void (*)(void))ecx_gettable_ctx_params },
+	OSSL_DISPATCH_END
 };
