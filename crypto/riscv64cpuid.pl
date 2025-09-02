@@ -94,7 +94,8 @@ $code .= <<___;
 .globl riscv_vlen_asm
 .type riscv_vlen_asm,\@function
 riscv_vlen_asm:
-    csrr $ret, vlenb
+    # 0xc22 is CSR vlenb
+    csrr $ret, 0xc22
     slli $ret, $ret, 3
     ret
 .size riscv_vlen_asm,.-riscv_vlen_asm
