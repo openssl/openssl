@@ -544,7 +544,6 @@ my @disablables = (
     "sse2",
     "ssl",
     "ssl-trace",
-    "static-engine",
     "stdio",
     "sslkeylog",
     "tests",
@@ -925,10 +924,6 @@ while (@argvcopy)
                                 $disabled{$proto} = "option(tls)";
                                 }
                         }
-                elsif ($1 eq "static-engine")
-                        {
-                        delete $disabled{"dynamic-engine"};
-                        }
                 elsif (exists $deprecated_disablables{$1})
                         {
                         $deprecated_options{$_} = 1;
@@ -950,11 +945,7 @@ while (@argvcopy)
                 }
         elsif (/^enable-(.+)$/)
                 {
-                if ($1 eq "static-engine")
-                        {
-                        $disabled{"dynamic-engine"} = "option";
-                        }
-                elsif ($1 eq "zlib-dynamic")
+                if ($1 eq "zlib-dynamic")
                         {
                         delete $disabled{"zlib"};
                         }
@@ -1957,10 +1948,6 @@ foreach my $what (sort keys %disabled) {
         $skipdir{"crypto/$skipdir"} = $what
             unless $what eq 'async' || $what eq 'err' || $what eq 'dso' || $what eq 'http';
     }
-}
-
-if (!$disabled{"dynamic-engine"}) {
-    push @{$config{openssl_feature_defines}}, "OPENSSL_NO_STATIC_ENGINE";
 }
 
 # If we use the unified build, collect information from build.info files
