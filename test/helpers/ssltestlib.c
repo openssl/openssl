@@ -440,8 +440,8 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
             offset = 0;
 
             if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec)) {
-                //rec[DTLS13_UNI_HDR_RECORD_SEQ_HI] = (seq >> 8) & 0xFF;
-                //rec[DTLS13_UNI_HDR_RECORD_SEQ_LO] = seq & 0xFF;
+                /* rec[DTLS13_UNI_HDR_RECORD_SEQ_HI] = (seq >> 8) & 0xFF; */
+                /* rec[DTLS13_UNI_HDR_RECORD_SEQ_LO] = seq & 0xFF; */
             } else {
                 do {
                     rec[RECORD_SEQUENCE_END - offset] = seq & 0xFF;
@@ -520,7 +520,7 @@ int mempacket_swap_epoch(BIO *bio)
                 epoch = 4;
 
             len = ((rec[DTLS13_UNI_HDR_RECORD_LEN_HI] << 8) | rec[DTLS13_UNI_HDR_RECORD_LEN_LO])
-                  + rechdrlen;
+            len += rechdrlen;
         } else {
             epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
             len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO]) + rechdrlen;

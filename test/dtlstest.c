@@ -184,8 +184,12 @@ static int test_dtls_unprocessed(int testidx)
              SRV_TO_CLI_RESUME_EPOCH_0_RECS + SRV_TO_CLI_RESUME_EPOCH_1_RECS)
 
 #define TOTAL_RECORDS (TOTAL_FULL_HAND_RECORDS + TOTAL_RESUME_HAND_RECORDS)
-static int test_dtls_drop_records(int serverwbio, int minversion, int maxversion, int doresumption, int epoch, int idx);
-static int test_dtls_drop_records_dtls1(int idx) {
+
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+static int test_dtls_drop_records(int serverwbio, int minversion, int maxversion,
+                                  int doresumption, int epoch, int idx);
+static int test_dtls_drop_records_dtls1(int idx)
+{
     int doresumption;
     int cli_to_srv_cookie, cli_to_srv_epoch0, cli_to_srv_epoch1;
     int srv_to_cli_epoch0;
@@ -222,7 +226,8 @@ static int test_dtls_drop_records_dtls1(int idx) {
         }
     }
 
-    return test_dtls_drop_records(serverwbio, DTLS1_VERSION, DTLS1_2_VERSION, doresumption, epoch, idx);
+    return test_dtls_drop_records(serverwbio, DTLS1_VERSION, DTLS1_2_VERSION,
+                                  doresumption, epoch, idx);
 }
 
 /* ClientHello */
@@ -277,7 +282,8 @@ static int test_dtls_drop_records_dtls1(int idx) {
  * @return 1 on success, 0 on failure
  */
 
-static int test_dtls_drop_records_dtls13(int idx) {
+static int test_dtls_drop_records_dtls13(int idx)
+{
     int doresumption;
     int srv_to_cli_epoch0, cli_to_srv_epoch0, cli_to_srv_epoch2;
     int serverwbio;
@@ -318,7 +324,6 @@ static int test_dtls_drop_records_dtls13(int idx) {
  * We are assuming a ServerKeyExchange message is sent in this test. If we don't
  * have either DH or EC, then it won't be
  */
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static int test_dtls_drop_records(int serverwbio, int minversion, int maxversion,
                                   int doresumption, int epoch, int idx)
 {
