@@ -31,8 +31,8 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
- * Added support for EVP_SKEY opaque symmetric key objects to the key 
-   derivation and key exchange provider methods. Added `EVP_KDF_CTX_set_SKEY()`, 
+ * Added support for EVP_SKEY opaque symmetric key objects to the key
+   derivation and key exchange provider methods. Added `EVP_KDF_CTX_set_SKEY()`,
    `EVP_KDF_derive_SKEY()`, and `EVP_PKEY_derive_SKEY()` functions.
 
    *Dmitry Belyavskiy and Simo Sorce*
