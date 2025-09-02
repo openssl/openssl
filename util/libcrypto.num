@@ -316,7 +316,6 @@ ERR_load_CT_strings                     ?	4_0_0	EXIST::FUNCTION:CT,DEPRECATEDIN_
 ERR_load_DH_strings                     ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 ERR_load_DSA_strings                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 ERR_load_EC_strings                     ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
-ERR_load_ENGINE_strings                 ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 ERR_load_ERR_strings                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ERR_load_EVP_strings                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ERR_load_KDF_strings                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
@@ -1425,8 +1424,6 @@ EVP_PKEY_can_sign                       ?	4_0_0	EXIST::FUNCTION:
 EVP_PKEY_set_type                       ?	4_0_0	EXIST::FUNCTION:
 EVP_PKEY_set_type_str                   ?	4_0_0	EXIST::FUNCTION:
 EVP_PKEY_set_type_by_keymgmt            ?	4_0_0	EXIST::FUNCTION:
-EVP_PKEY_set1_engine                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
-EVP_PKEY_get0_engine                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 EVP_PKEY_assign                         ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_PKEY_get0                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_PKEY_get0_hmac                      ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
@@ -2242,7 +2239,6 @@ OSSL_PROVIDER_add_builtin               ?	4_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_get0_name                 ?	4_0_0	EXIST::FUNCTION:
 RAND_set_rand_method                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 RAND_get_rand_method                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-RAND_set_rand_engine                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 RAND_OpenSSL                            ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 RAND_bytes                              ?	4_0_0	EXIST::FUNCTION:
 RAND_priv_bytes                         ?	4_0_0	EXIST::FUNCTION:
@@ -2767,8 +2763,6 @@ TS_CONF_load_certs                      ?	4_0_0	EXIST::FUNCTION:TS
 TS_CONF_load_key                        ?	4_0_0	EXIST::FUNCTION:TS
 TS_CONF_get_tsa_section                 ?	4_0_0	EXIST::FUNCTION:TS
 TS_CONF_set_serial                      ?	4_0_0	EXIST::FUNCTION:TS
-TS_CONF_set_crypto_device               ?	4_0_0	EXIST::FUNCTION:ENGINE,TS
-TS_CONF_set_default_engine              ?	4_0_0	EXIST::FUNCTION:ENGINE,TS
 TS_CONF_set_signer_cert                 ?	4_0_0	EXIST::FUNCTION:TS
 TS_CONF_set_certs                       ?	4_0_0	EXIST::FUNCTION:TS
 TS_CONF_set_signer_key                  ?	4_0_0	EXIST::FUNCTION:TS
