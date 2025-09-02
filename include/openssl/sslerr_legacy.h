@@ -171,7 +171,6 @@ OSSL_DEPRECATEDIN_3_0 int ERR_load_SSL_strings(void);
 #  define SSL_F_SSL_CTX_NEW                                0
 #  define SSL_F_SSL_CTX_SET_ALPN_PROTOS                    0
 #  define SSL_F_SSL_CTX_SET_CIPHER_LIST                    0
-#  define SSL_F_SSL_CTX_SET_CLIENT_CERT_ENGINE             0
 #  define SSL_F_SSL_CTX_SET_CT_VALIDATION_CALLBACK         0
 #  define SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT             0
 #  define SSL_F_SSL_CTX_SET_SSL_VERSION                    0
