@@ -4446,7 +4446,7 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.keyshares);
     OPENSSL_free(a->ext.tuples);
     OPENSSL_free(a->ext.alpn);
-    OPENSSL_secure_free(a->ext.secure);
+    OPENSSL_secure_clear_free(a->ext.secure, sizeof(*a->ext.secure));
 
     ssl_evp_md_free(a->md5);
     ssl_evp_md_free(a->sha1);
