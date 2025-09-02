@@ -129,7 +129,7 @@ static const unsigned char digestinfo_ripemd160_der[] = {
 # ifndef OPENSSL_NO_SM3
 /* SM3 (1 2 156 10197 1 401) */
 static const unsigned char digestinfo_sm3_der[] = {
-    ASN1_SEQUENCE, 0x0f + SM3_DIGEST_LENGTH,
+    ASN1_SEQUENCE, 0x10 + SM3_DIGEST_LENGTH,
       ASN1_SEQUENCE, 0x0c,
         ASN1_OID, 0x08, 1 * 40 + 2, 0x81, 0x1c, 0xcf, 0x55, 1, 0x83, 0x78,
         ASN1_NULL, 0x00,
