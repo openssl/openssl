@@ -61,7 +61,14 @@ changes:
 OpenSSL 3.5
 -----------
 
-### Major changes between OpenSSL 3.5.0 and OpenSSL 3.5.1 [under development]
+### Changes between 3.5.1 and 3.5.2 [5 Aug 2025]
+
+ * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
+   This is mandated by FIPS 140-3 IG 10.3.A additional comment 1.
+
+   *Dr Paul Dale*
+
+### Major changes between OpenSSL 3.5.0 and OpenSSL 3.5.1 [1 Jul 2025]
 
 OpenSSL 3.5.1 is a security patch release. The most severe CVE fixed in this
 release is Low.
@@ -71,7 +78,7 @@ This release incorporates the following bug fixes and mitigations:
   * Fix x509 application adds trusted use instead of rejected use.
    ([CVE-2025-4575])
 
-### Major changes between OpenSSL 3.4 and OpenSSL 3.5 [under development]
+### Major changes between OpenSSL 3.4 and OpenSSL 3.5 [8 Apr 2025]
 
 OpenSSL 3.5.0 is a feature release adding significant new functionality to
 OpenSSL.
