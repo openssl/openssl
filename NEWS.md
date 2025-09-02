@@ -7,6 +7,7 @@ release. For more details please read the CHANGES file.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 4.0](#openssl-40)
  - [OpenSSL 3.6](#openssl-36)
  - [OpenSSL 3.5](#openssl-35)
  - [OpenSSL 3.4](#openssl-34)
@@ -21,12 +22,15 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 3.6
+OpenSSL 4.0
 -----------
 
-### Major changes between OpenSSL 3.6 and OpenSSL 3.7 [under development]
+### Major changes between OpenSSL 3.6 and OpenSSL 4.0 [under development]
 
   * none
+
+OpenSSL 3.6
+-----------
 
 ### Major changes between OpenSSL 3.5 and OpenSSL 3.6 [under development]
 

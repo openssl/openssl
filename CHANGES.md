@@ -12,6 +12,7 @@ appropriate release branch.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 4.0](#openssl-40)
  - [OpenSSL 3.6](#openssl-36)
  - [OpenSSL 3.5](#openssl-35)
  - [OpenSSL 3.4](#openssl-34)
@@ -26,12 +27,15 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 3.6
+OpenSSL 4.0
 -----------
 
-### Changes between 3.6 and 3.7 [xx XXX xxxx]
+### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * none yet
+
+OpenSSL 3.6
+-----------
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
