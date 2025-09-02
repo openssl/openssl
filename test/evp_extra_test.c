@@ -5929,7 +5929,7 @@ static int test_custom_ciph_meth(void)
     return testresult;
 }
 
-# ifndef OPENSSL_NO_DYNAMIC_ENGINE
+# ifdef TODO_REWRITE_ME_DASYNC_PROVIDER
 /* Test we can create a signature keys with an associated ENGINE */
 static int test_signatures_with_engine(int tst)
 {
@@ -6073,7 +6073,7 @@ static int test_cipher_with_engine(void)
 
     return testresult;
 }
-# endif /* OPENSSL_NO_DYNAMIC_ENGINE */
+# endif /* TODO_REWRITE_ME_DASYNC_PROVIDER */
 #endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
 #ifndef OPENSSL_NO_ECX
@@ -6890,7 +6890,7 @@ int setup_tests(void)
     ADD_TEST(test_custom_md_meth);
     ADD_TEST(test_custom_ciph_meth);
 
-# ifndef OPENSSL_NO_DYNAMIC_ENGINE
+# ifdef TODO_REWRITE_ME_DASYNC_PROVIDER
     /* Tests only support the default libctx */
     if (testctx == NULL) {
 #  ifndef OPENSSL_NO_EC
