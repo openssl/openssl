@@ -163,6 +163,7 @@ providers/implementations/digests/mdc2_prov.inc
 providers/implementations/digests/sha2_prov.inc
 providers/implementations/digests/sha3_prov.inc
 providers/implementations/digests/ml_dsa_mu_prov.inc
+providers/implementations/digests/cshake_prov.inc
 providers/implementations/include/prov/blake2_params.inc
 providers/implementations/kdfs/snmpkdf.inc
 providers/implementations/kdfs/srtpkdf.inc

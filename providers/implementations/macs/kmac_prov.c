@@ -62,6 +62,7 @@
 #include "prov/providercommon.h"
 #include "internal/cryptlib.h" /* ossl_assert */
 #include "providers/implementations/macs/kmac_prov.inc"
+#include "crypto/sha.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -139,18 +140,8 @@ struct kmac_data_st {
     OSSL_FIPS_IND_DECLARE
 };
 
-static int encode_string(unsigned char *out, size_t out_max_len, size_t *out_len,
-    const unsigned char *in, size_t in_len);
-static int right_encode(unsigned char *out, size_t out_max_len, size_t *out_len,
-    size_t bits);
-static int bytepad(unsigned char *out, size_t *out_len,
-    const unsigned char *in1, size_t in1_len,
-    const unsigned char *in2, size_t in2_len,
-    size_t w);
 static int kmac_bytepad_encode_key(unsigned char *out, size_t out_max_len,
-    size_t *out_len,
-    const unsigned char *in, size_t in_len,
-    size_t w);
+    size_t *out_len, const unsigned char *in, size_t in_len, size_t w);
 
 static void kmac_free(void *vmacctx)
 {
@@ -349,7 +340,7 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
         (void)kmac_set_ctx_params(kctx, cparams);
     }
 
-    if (!bytepad(NULL, &out_len, kmac_string, sizeof(kmac_string),
+    if (!ossl_sp800_185_bytepad(NULL, 0, &out_len, kmac_string, sizeof(kmac_string),
             kctx->custom, kctx->custom_len, block_len)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -357,7 +348,7 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
     out = OPENSSL_malloc(out_len);
     if (out == NULL)
         return 0;
-    res = bytepad(out, NULL, kmac_string, sizeof(kmac_string),
+    res = ossl_sp800_185_bytepad(out, out_len, NULL, kmac_string, sizeof(kmac_string),
               kctx->custom, kctx->custom_len, block_len)
         && EVP_DigestUpdate(ctx, out, out_len)
         && EVP_DigestUpdate(ctx, kctx->key, kctx->key_len);
@@ -388,7 +379,7 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     /* KMAC XOF mode sets the encoded length to 0 */
     lbits = (kctx->xof_mode ? 0 : (kctx->out_len * 8));
 
-    ok = right_encode(encoded_outlen, sizeof(encoded_outlen), &len, lbits)
+    ok = ossl_sp800_185_right_encode(encoded_outlen, sizeof(encoded_outlen), &len, lbits)
         && EVP_DigestUpdate(ctx, encoded_outlen, len)
         && EVP_DigestFinalXOF(ctx, out, kctx->out_len);
     *outl = kctx->out_len;
@@ -493,7 +484,8 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CUSTOM_LENGTH);
             return 0;
         }
-        if (!encode_string(kctx->custom, sizeof(kctx->custom), &kctx->custom_len,
+        if (!ossl_sp800_185_encode_string(kctx->custom,
+                sizeof(kctx->custom), &kctx->custom_len,
                 p.custom->data, p.custom->data_size))
             return 0;
     }
@@ -501,156 +493,18 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
     return 1;
 }
 
-/* Encoding/Padding Methods. */
-
-/* Returns the number of bytes required to store 'bits' into a byte array */
-static unsigned int get_encode_size(size_t bits)
-{
-    unsigned int cnt = 0, sz = sizeof(size_t);
-
-    while (bits && (cnt < sz)) {
-        ++cnt;
-        bits >>= 8;
-    }
-    /* If bits is zero 1 byte is required */
-    if (cnt == 0)
-        cnt = 1;
-    return cnt;
-}
-
-/*
- * Convert an integer into bytes . The number of bytes is appended
- * to the end of the buffer. Returns an array of bytes 'out' of size
- * *out_len.
- *
- * e.g if bits = 32, out[2] = { 0x20, 0x01 }
- */
-static int right_encode(unsigned char *out, size_t out_max_len, size_t *out_len,
-    size_t bits)
-{
-    unsigned int len = get_encode_size(bits);
-    int i;
-
-    if (len >= out_max_len) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_LENGTH_TOO_LARGE);
-        return 0;
-    }
-
-    /* MSB's are at the start of the bytes array */
-    for (i = len - 1; i >= 0; --i) {
-        out[i] = (unsigned char)(bits & 0xFF);
-        bits >>= 8;
-    }
-    /* Tack the length onto the end */
-    out[len] = (unsigned char)len;
-
-    /* The Returned length includes the tacked on byte */
-    *out_len = len + 1;
-    return 1;
-}
-
-/*
- * Encodes a string with a left encoded length added. Note that the
- * in_len is converted to bits (*8).
- *
- * e.g- in="KMAC" gives out[6] = { 0x01, 0x20, 0x4B, 0x4D, 0x41, 0x43 }
- *                                 len   bits    K     M     A     C
- */
-static int encode_string(unsigned char *out, size_t out_max_len, size_t *out_len,
-    const unsigned char *in, size_t in_len)
-{
-    if (in == NULL) {
-        *out_len = 0;
-    } else {
-        size_t i, bits, len, sz;
-
-        bits = 8 * in_len;
-        len = get_encode_size(bits);
-        sz = 1 + len + in_len;
-
-        if (sz > out_max_len) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_LENGTH_TOO_LARGE);
-            return 0;
-        }
-
-        out[0] = (unsigned char)len;
-        for (i = len; i > 0; --i) {
-            out[i] = (bits & 0xFF);
-            bits >>= 8;
-        }
-        memcpy(out + len + 1, in, in_len);
-        *out_len = sz;
-    }
-    return 1;
-}
-
-/*
- * Returns a zero padded encoding of the inputs in1 and an optional
- * in2 (can be NULL). The padded output must be a multiple of the blocksize 'w'.
- * The value of w is in bytes (< 256).
- *
- * The returned output is:
- *    zero_padded(multiple of w, (left_encode(w) || in1 [|| in2])
- */
-static int bytepad(unsigned char *out, size_t *out_len,
-    const unsigned char *in1, size_t in1_len,
-    const unsigned char *in2, size_t in2_len, size_t w)
-{
-    size_t len;
-    unsigned char *p = out;
-    size_t sz = w;
-
-    if (out == NULL) {
-        if (out_len == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
-            return 0;
-        }
-        sz = 2 + in1_len + (in2 != NULL ? in2_len : 0);
-        *out_len = (sz + w - 1) / w * w;
-        return 1;
-    }
-
-    if (!ossl_assert(w <= 255))
-        return 0;
-
-    /* Left encoded w */
-    *p++ = 1;
-    *p++ = (unsigned char)w;
-    /* || in1 */
-    memcpy(p, in1, in1_len);
-    p += in1_len;
-    /* [ || in2 ] */
-    if (in2 != NULL && in2_len > 0) {
-        memcpy(p, in2, in2_len);
-        p += in2_len;
-    }
-    /* Figure out the pad size (divisible by w) */
-    len = p - out;
-    sz = (len + w - 1) / w * w;
-    /* zero pad the end of the buffer */
-    if (sz != len)
-        memset(p, 0, sz - len);
-    if (out_len != NULL)
-        *out_len = sz;
-    return 1;
-}
-
 /* Returns out = bytepad(encode_string(in), w) */
 static int kmac_bytepad_encode_key(unsigned char *out, size_t out_max_len,
-    size_t *out_len,
-    const unsigned char *in, size_t in_len,
-    size_t w)
+    size_t *out_len, const unsigned char *in, size_t in_len, size_t w)
 {
     unsigned char tmp[KMAC_MAX_KEY + KMAC_MAX_ENCODED_HEADER_LEN];
     size_t tmp_len;
 
-    if (!encode_string(tmp, sizeof(tmp), &tmp_len, in, in_len))
+    if (!ossl_sp800_185_encode_string(tmp, sizeof(tmp), &tmp_len, in, in_len))
         return 0;
-    if (!bytepad(NULL, out_len, tmp, tmp_len, NULL, 0, w))
+    if (!ossl_sp800_185_bytepad(NULL, out_max_len, out_len, tmp, tmp_len, NULL, 0, w))
         return 0;
-    if (!ossl_assert(*out_len <= out_max_len))
-        return 0;
-    return bytepad(out, NULL, tmp, tmp_len, NULL, 0, w);
+    return ossl_sp800_185_bytepad(out, out_max_len, NULL, tmp, tmp_len, NULL, 0, w);
 }
 
 #define IMPLEMENT_KMAC_TABLE(size, funcname, newname)                          \

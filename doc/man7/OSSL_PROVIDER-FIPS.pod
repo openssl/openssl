@@ -69,9 +69,11 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item SHAKE, see L<EVP_MD-SHAKE(7)>
 
-=item KECCAK-KMAC, see L<EVP_MD-KECCAK-KMAC(7)>
+=item CSHAKE, see L<EVP_MD-CSHAKE(7)>
 
-KECCAK-KMAC is only used internally as a sub algorithm of KMAC.
+=item CSHAKE-KECCAK, see L<EVP_MD-CSHAKE-KECCAK(7)>
+
+It is used internally as a sub algorithm of CSHAKE.
 
 =item ML-DSA-MU, see L<EVP_MD-ML-DSA-MU(7)>
 
@@ -611,6 +613,8 @@ L<https://www.openssl.org/source/>
 =head1 HISTORY
 
 The HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 algorithms were added in OpenSSL 3.6.
+
+The CSHAKE-128 and CSHAKE-256 algorithms were added in OpenSSL 4.0.
 
 All other functionality was added in OpenSSL 3.0.
 

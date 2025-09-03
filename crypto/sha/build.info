@@ -80,7 +80,7 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 ENDIF
 
-$COMMON=sha1dgst.c sha256.c sha512.c sha3.c $SHA1ASM $KECCAK1600ASM
+$COMMON=sha1dgst.c sha256.c sha512.c sha3.c sha3_encode.c $SHA1ASM $KECCAK1600ASM
 SOURCE[../../libcrypto]=$COMMON sha1_one.c
 SOURCE[../../providers/libfips.a]= $COMMON
 

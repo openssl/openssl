@@ -2,17 +2,20 @@
 
 =head1 NAME
 
-EVP_MD-SHAKE, EVP_MD-KECCAK-KMAC
+EVP_MD-SHAKE, EVP_MD-CSHAKE, EVP_MD-CSHAKE-KECCAK,
 - The SHAKE / KECCAK family EVP_MD implementations
 
 =head1 DESCRIPTION
 
-Support for computing SHAKE or KECCAK-KMAC digests through the
+Support for computing SHAKE, CSHAKE or CSHAKE-KECCAK digests through the
 B<EVP_MD> API.
 
-KECCAK-KMAC is an Extendable Output Function (XOF), with a definition
-similar to SHAKE, used by the KMAC EVP_MAC implementation (see
-L<EVP_MAC-KMAC(7)>).
+CSHAKE is an Extendable Output Function (XOF), that allows custom strings
+"n" and "s". If these strings are both empty then it is identical to SHAKE,
+otherwise it uses CSHAKE-KECCAK.
+
+CSHAKE-KECCAK is an Extendable Output Function (XOF), with a definition
+similar to SHAKE but appends 2 extra zero bits. It is used internally by CSHAKE.
 
 =head2 Identities
 
@@ -21,20 +24,6 @@ provider, and includes the following varieties:
 
 =over 4
 
-=item KECCAK-KMAC-128
-
-Known names are "KECCAK-KMAC-128" and "KECCAK-KMAC128".  This is used
-by L<EVP_MAC-KMAC128(7)>.  Using the notation from NIST FIPS 202
-(Section 6.2), we have S<KECCAK-KMAC-128(M, d)> = S<KECCAK[256](M || 00, d)>
-(see the description of KMAC128 in Appendix A of NIST SP 800-185).
-
-=item KECCAK-KMAC-256
-
-Known names are "KECCAK-KMAC-256" and "KECCAK-KMAC256".  This is used
-by L<EVP_MAC-KMAC256(7)>.  Using the notation from NIST FIPS 202
-(Section 6.2), we have S<KECCAK-KMAC-256(M, d)> = S<KECCAK[512](M || 00, d)>
-(see the description of KMAC256 in Appendix A of NIST SP 800-185).
-
 =item SHAKE-128
 
 Known names are "SHAKE-128" and "SHAKE128".
@@ -42,6 +31,28 @@ Known names are "SHAKE-128" and "SHAKE128".
 =item SHAKE-256
 
 Known names are "SHAKE-256" and "SHAKE256".
+
+=item CSHAKE-128
+
+Known names are "CSHAKE-128" and "CSHAKE128".
+
+=item CSHAKE-256
+
+Known names are "CSHAKE-256" and "CSHAKE256".
+
+=item CSHAKE-KECCAK-128
+
+Other known names are "KECCAK-KMAC-128" and "KECCAK-KMAC128".  This is used
+by L<EVP_MAC-KMAC128(7)>.  Using the notation from NIST FIPS 202
+(Section 6.2), we have S<KECCAK-KMAC-128(M, d)> = S<KECCAK[256](M || 00, d)>
+(see the description of KMAC128 in Appendix A of NIST SP 800-185).
+
+=item CSHAKE-KECCAK-256
+
+Other known names are "KECCAK-KMAC-256" and "KECCAK-KMAC256".  This is used
+by L<EVP_MAC-KMAC256(7)>.  Using the notation from NIST FIPS 202
+(Section 6.2), we have S<KECCAK-KMAC-256(M, d)> = S<KECCAK[512](M || 00, d)>
+(see the description of KMAC256 in Appendix A of NIST SP 800-185).
 
 =back
 
@@ -59,14 +70,35 @@ The length of the "xoflen" parameter should not exceed that of a B<size_t>.
 The SHAKE-128 and SHAKE-256 implementations do not have any default digest
 length.
 
-This parameter must be set before calling either EVP_DigestFinal_ex() or
-EVP_DigestFinal(), since these functions were not designed to handle variable
-length output. It is recommended to either use EVP_DigestSqueeze() or
+The CSHAKE-128 and CSHAKE-256 implementations have default digest lengths of
+32 and 64 bytes respectively (which correspond to security strengths of 128 and
+256 bits respectively).
+
+For SHAKE this parameter must be set before calling either EVP_DigestFinal_ex()
+or EVP_DigestFinal(), since these functions were not designed to handle
+variable length output. If it is not set CSHAKE will use the default value.
+It is recommended to either use EVP_DigestSqueeze() or
 EVP_DigestFinalXOF() instead.
 
 =item "size" (B<OSSL_DIGEST_PARAM_SIZE>) <unsigned integer>
 
 An alias of "xoflen".
+
+=item "function-name" (B<OSSL_DIGEST_PARAM_FUNCTION_NAME>)<UTF8 string>
+
+Sets the function name string used by CSHAKE that can be set to one of
+"", "TupleHash", "ParallelHash" or "KMAC". The default value is "".
+
+=item "customization" (B<OSSL_DIGEST_PARAM_CUSTOMIZATION>)<UTF8 string>
+
+Sets a customisation string used by CSHAKE.
+It is an optional value with a length of at most 512 bytes, and is
+empty by default.
+
+=item "properties" (B<OSSL_DIGEST_PARAM_PROPERTIES>) <UTF8 string>
+
+An optional property used internally by CSHAKE when fetching either
+SHAKE or KECCAK algorithms.
 
 =back
 
@@ -74,11 +106,26 @@ See L<EVP_DigestInit(3)/PARAMETERS> for further information related to parameter
 
 =head1 NOTES
 
-For SHAKE-128, to ensure the maximum security strength of 128 bits, the output
-length passed to EVP_DigestFinalXOF() should be at least 32.
+For SHAKE-128 and CSHAKE-128, to ensure the maximum security strength of
+128 bits, the output length passed to EVP_DigestFinalXOF() should be at least 32.
 
-For SHAKE-256, to ensure the maximum security strength of 256 bits, the output
-length passed to EVP_DigestFinalXOF() should be at least 64.
+For SHAKE-256 and CSHAKE-256, to ensure the maximum security strength of
+256 bits, the output length passed to EVP_DigestFinalXOF() should be at least 64.
+
+The SHA3 specification allows bit strings to be used, but OpenSSL only allows
+byte strings for inputs, and outputs.
+
+=head1 CONFORMING TO
+
+=over 4
+
+=item FIPS 202 (SHA3 and SHAKE)
+
+=item SP800-185 Section 3 cSHAKE
+
+=item SP800-185 Section 4 KMAC
+
+=back
 
 =head1 SEE ALSO
 
@@ -88,6 +135,8 @@ L<EVP_MD_CTX_set_params(3)>, L<provider-digest(7)>, L<OSSL_PROVIDER-default(7)>
 
 Since OpenSSL 3.4 the SHAKE-128 and SHAKE-256 implementations have no default
 digest length.
+
+CSHAKE-128 and CSHAKE-256 were added in OpenSSL 4.0
 
 =head1 COPYRIGHT
 
