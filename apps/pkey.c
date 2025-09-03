@@ -36,8 +36,7 @@ const OPTIONS pkey_options[] = {
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, 's', "Input key"},
-    {"inform", OPT_INFORM, 'f',
-     "Key input format (ENGINE, other values ignored)"},
+    {"inform", OPT_INFORM, 'f', "Key input format (DER/PEM)"},
     {"passin", OPT_PASSIN, 's', "Key input pass phrase source"},
     {"pubin", OPT_PUBIN, '-',
      "Read only public components from key input"},

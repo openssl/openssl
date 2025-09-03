@@ -159,8 +159,7 @@ const OPTIONS cms_options[] = {
      "Input private key (if not signer or recipient)"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"keyopt", OPT_KEYOPT, 's', "Set public key parameters as n:v pairs"},
-    {"keyform", OPT_KEYFORM, 'f',
-     "Input private key format (ENGINE, other values ignored)"},
+    {"keyform", OPT_KEYFORM, 'f', "Input private key format (DER/PEM)"},
     OPT_PROV_OPTIONS,
     OPT_R_OPTIONS,
 
