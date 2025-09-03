@@ -45,7 +45,7 @@ const OPTIONS rsautl_options[] = {
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
     {"inkey", OPT_INKEY, 's', "Input key, by default an RSA private key"},
-    {"keyform", OPT_KEYFORM, 'E', "Private key format (ENGINE, other values ignored)"},
+    {"keyform", OPT_KEYFORM, 'f', "Private key format (DER/PEM)"},
     {"pubin", OPT_PUBIN, '-', "Input key is an RSA public pkey"},
     {"certin", OPT_CERTIN, '-', "Input is a cert carrying an RSA public key"},
     {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},

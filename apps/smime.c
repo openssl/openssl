@@ -60,7 +60,7 @@ const OPTIONS smime_options[] = {
      "Output format SMIME (default), PEM or DER"},
     {"inkey", OPT_INKEY, 's',
      "Input private key (if not signer or recipient)"},
-    {"keyform", OPT_KEYFORM, 'f', "Input private key format (ENGINE, other values ignored)"},
+    {"keyform", OPT_KEYFORM, 'f', "Input private key format (DER/PEM)"},
     {"stream", OPT_STREAM, '-', "Enable CMS streaming" },
     {"indef", OPT_INDEF, '-', "Same as -stream" },
     {"noindef", OPT_NOINDEF, '-', "Disable CMS streaming"},

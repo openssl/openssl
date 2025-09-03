@@ -37,7 +37,7 @@ const OPTIONS spkac_options[] = {
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
     {"key", OPT_KEY, '<', "Create SPKAC using private key"},
-    {"keyform", OPT_KEYFORM, 'f', "Private key file format (ENGINE, other values ignored)"},
+    {"keyform", OPT_KEYFORM, 'f', "Private key file format (DER/PEM)"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"challenge", OPT_CHALLENGE, 's', "Challenge string"},
     {"spkac", OPT_SPKAC, 's', "Alternative SPKAC name"},
