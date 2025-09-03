@@ -141,7 +141,7 @@ const OPTIONS req_options[] = {
 
     OPT_SECTION("Keys and Signing"),
     {"key", OPT_KEY, 's', "Key for signing, and to include unless -in given"},
-    {"keyform", OPT_KEYFORM, 'f', "Key file format (ENGINE, other values ignored)"},
+    {"keyform", OPT_KEYFORM, 'f', "Key file format (DER/PEM)"},
     {"pubkey", OPT_PUBKEY, '-', "Output public key"},
     {"keyout", OPT_KEYOUT, '>', "File to write private key to"},
     {"passin", OPT_PASSIN, 's', "Private key and certificate password source"},
