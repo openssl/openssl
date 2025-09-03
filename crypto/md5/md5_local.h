@@ -46,7 +46,9 @@ void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
     } while (0)
 #define HASH_BLOCK_DATA_ORDER md5_block_data_order
 
-#include "crypto/md32_common.h"
+/* clang-format off */
+#include "crypto/md32_common.inc"
+/* clang-format on */
 
 /*-
 #define F(x,y,z)        (((x) & (y))  |  ((~(x)) & (z)))
