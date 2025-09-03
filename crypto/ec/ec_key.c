@@ -190,7 +190,7 @@ int EC_KEY_up_ref(EC_KEY *r)
 
 ENGINE *EC_KEY_get0_engine(const EC_KEY *eckey)
 {
-    return eckey->engine;
+    return NULL;
 }
 
 int EC_KEY_generate_key(EC_KEY *eckey)

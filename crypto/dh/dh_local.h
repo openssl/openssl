@@ -30,7 +30,6 @@ struct dh_st {
     CRYPTO_REF_COUNT references;
 #ifndef FIPS_MODULE
     CRYPTO_EX_DATA ex_data;
-    ENGINE *engine;
 #endif
     OSSL_LIB_CTX *libctx;
     const DH_METHOD *meth;

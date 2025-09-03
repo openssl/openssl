@@ -1578,7 +1578,6 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
         } else {
             pkey->type = EVP_PKEY_KEYMGMT;
         }
-        pkey->engine = e;
 #endif
     }
     return 1;

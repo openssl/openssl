@@ -123,7 +123,7 @@ int ossl_dh_key_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM params[],
 int ossl_dh_is_foreign(const DH *dh)
 {
 #ifndef FIPS_MODULE
-    if (dh->engine != NULL || ossl_dh_get_method(dh) != DH_OpenSSL())
+    if (ossl_dh_get_method(dh) != DH_OpenSSL())
         return 1;
 #endif
     return 0;

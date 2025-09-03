@@ -120,8 +120,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
     /*
      * If there are engines involved then we should use legacy handling for now.
      */
-    if (ctx->engine != NULL
-            || impl != NULL
+    if (impl != NULL
             || (cipher != NULL && cipher->origin == EVP_ORIG_METH)
             || (cipher == NULL && ctx->cipher != NULL
                                && ctx->cipher->origin == EVP_ORIG_METH)) {
@@ -442,8 +441,7 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
     /*
      * If there are engines involved then we throw an error
      */
-    if (ctx->engine != NULL
-            || (cipher != NULL && cipher->origin == EVP_ORIG_METH)
+    if ((cipher != NULL && cipher->origin == EVP_ORIG_METH)
             || (cipher == NULL && ctx->cipher != NULL
                 && ctx->cipher->origin == EVP_ORIG_METH)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);

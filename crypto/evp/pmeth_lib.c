@@ -292,7 +292,6 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     ret->keytype = keytype;
     ret->keymgmt = keymgmt;
     ret->legacy_keytype = id;
-    ret->engine = e;
     ret->pmeth = pmeth;
     ret->operation = EVP_PKEY_OP_UNDEFINED;
 

@@ -100,7 +100,7 @@ void DSA_set_flags(DSA *d, int flags)
 
 ENGINE *DSA_get0_engine(DSA *d)
 {
-    return d->engine;
+    return NULL;
 }
 
 int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
