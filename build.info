@@ -106,6 +106,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/digests/blake2_prov.c \
          providers/implementations/digests/digestcommon.c \
          providers/implementations/digests/sha3_prov.c \
+         providers/implementations/digests/cshake_prov.c \
          providers/implementations/include/prov/blake2_params.inc \
          providers/implementations/macs/cmac_prov.c \
          providers/implementations/macs/gmac_prov.c \
@@ -212,6 +213,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/digests/blake2_prov.c \
        providers/implementations/digests/digestcommon.c \
        providers/implementations/digests/sha3_prov.c \
+       providers/implementations/digests/cshake_prov.c \
        providers/implementations/include/prov/blake2_params.inc \
        providers/implementations/macs/cmac_prov.c \
        providers/implementations/macs/gmac_prov.c \
@@ -343,6 +345,8 @@ GENERATE[providers/implementations/digests/digestcommon.c]=\
     providers/implementations/digests/digestcommon.c.in
 GENERATE[providers/implementations/digests/sha3_prov.c]=\
     providers/implementations/digests/sha3_prov.c.in
+GENERATE[providers/implementations/digests/cshake_prov.c]=\
+    providers/implementations/digests/cshake_prov.c.in
 GENERATE[providers/implementations/include/prov/blake2_params.inc]=\
     providers/implementations/include/prov/blake2_params.inc.in
 GENERATE[providers/implementations/macs/cmac_prov.c]=\
