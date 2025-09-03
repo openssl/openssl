@@ -66,7 +66,7 @@ int ossl_dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[],
 int ossl_dsa_is_foreign(const DSA *dsa)
 {
 #ifndef FIPS_MODULE
-    if (dsa->engine != NULL || DSA_get_method((DSA *)dsa) != DSA_OpenSSL())
+    if (DSA_get_method((DSA *)dsa) != DSA_OpenSSL())
         return 1;
 #endif
     return 0;
