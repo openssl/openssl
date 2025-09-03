@@ -453,7 +453,7 @@ include/crypto/ec.h
 include/crypto/ecx.h
 include/crypto/evp.h
 include/crypto/lhash.h
-include/crypto/md32_common.h
+include/crypto/md32_common.inc
 include/crypto/ml_dsa.h
 include/crypto/ml_kem.h
 include/crypto/modes.h

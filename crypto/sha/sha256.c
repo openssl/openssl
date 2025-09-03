@@ -133,7 +133,9 @@ void sha256_block_data_order_c(SHA256_CTX *ctx, const void *in, size_t num);
 #endif /* SHA256_ASM */
     void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num);
 
-#include "crypto/md32_common.h"
+/* clang-format off */
+#include "crypto/md32_common.inc"
+/* clang-format on */
 #undef HASH_UPDATE_THUNK
 
 int SHA256_Update(SHA256_CTX *ctx, const void *data, size_t sz)
