@@ -6,6 +6,10 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#if !defined(OPENSSL_CRYPTO_BN_DH_H)
+#define OPENSSL_CRYPTO_BN_DH_H
+
+#include <openssl/bn.h>
 
 #define declare_dh_bn(x)                       \
     extern const BIGNUM ossl_bignum_dh##x##_p; \
@@ -41,3 +45,5 @@ extern const BIGNUM ossl_bignum_modp_3072_q;
 extern const BIGNUM ossl_bignum_modp_4096_q;
 extern const BIGNUM ossl_bignum_modp_6144_q;
 extern const BIGNUM ossl_bignum_modp_8192_q;
+
+#endif /* !defined(OPENSSL_CRYPTO_BN_DH_H) */

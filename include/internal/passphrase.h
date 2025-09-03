@@ -11,6 +11,8 @@
 #define OSSL_INTERNAL_PASSPHRASE_H
 #pragma once
 
+#include <openssl/ui.h>
+
 /*
  * This is a passphrase reader bridge with bells and whistles.
  *

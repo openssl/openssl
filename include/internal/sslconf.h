@@ -11,6 +11,10 @@
 #define OSSL_INTERNAL_SSLCONF_H
 #pragma once
 
+#include <stddef.h>
+
+#include <openssl/conf.h>
+
 typedef struct ssl_conf_cmd_st SSL_CONF_CMD;
 
 /*

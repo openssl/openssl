@@ -11,6 +11,7 @@
 #define OSSL_INTERNAL_DANE_H
 #pragma once
 
+#include <openssl/evp.h>
 #include <openssl/safestack.h>
 
 /*-

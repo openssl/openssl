@@ -11,6 +11,8 @@
 #define OSSL_INTERNAL_UNICODE_H
 #pragma once
 
+#include <openssl/e_os2.h>
+
 typedef enum {
     SURROGATE_MIN = 0xd800UL,
     SURROGATE_MAX = 0xdfffUL,
