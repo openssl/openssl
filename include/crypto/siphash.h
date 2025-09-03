@@ -12,6 +12,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 
 #define SIPHASH_BLOCK_SIZE 8
 #define SIPHASH_KEY_SIZE 16

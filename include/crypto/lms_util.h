@@ -17,6 +17,8 @@
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 
+#include "crypto/lms.h"
+
 /*
  * This LMS implementation assumes that the hash algorithm must be the same for
  * LMS params and OTS params. Since OpenSSL does not have a "SHAKE256-192"

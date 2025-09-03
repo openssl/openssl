@@ -11,6 +11,8 @@
 #define OSSL_QUIC_THREAD_ASSIST_H
 
 #include <openssl/ssl.h>
+
+#include "internal/quic_channel.h"
 #include "internal/thread.h"
 #include "internal/time.h"
 
