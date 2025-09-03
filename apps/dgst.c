@@ -61,7 +61,7 @@ const OPTIONS dgst_options[] = {
     {"c", OPT_C, '-', "Print the digest with separating colons"},
     {"r", OPT_R, '-', "Print the digest in coreutils format"},
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
-    {"keyform", OPT_KEYFORM, 'f', "Key file format (ENGINE, other values ignored)"},
+    {"keyform", OPT_KEYFORM, 'f', "Key file format (DER/PEM)"},
     {"hex", OPT_HEX, '-', "Print as hex dump"},
     {"binary", OPT_BINARY, '-', "Print in binary form"},
     {"xoflen", OPT_XOFLEN, 'p', "Output length for XOF algorithms. To obtain the maximum security strength set this to 32 (or greater) for SHAKE128, and 64 (or greater) for SHAKE256"},

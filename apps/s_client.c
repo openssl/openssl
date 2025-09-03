@@ -572,7 +572,7 @@ const OPTIONS s_client_options[] = {
      "Client certificate chain file (in PEM format)"},
     {"build_chain", OPT_BUILD_CHAIN, '-', "Build client certificate chain"},
     {"key", OPT_KEY, 's', "Private key file to use; default: -cert file"},
-    {"keyform", OPT_KEYFORM, 'E', "Key format (ENGINE, other values ignored)"},
+    {"keyform", OPT_KEYFORM, 'f', "Key format (DER/PEM)"},
     {"pass", OPT_PASS, 's', "Private key and cert file pass phrase source"},
     {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
     {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
