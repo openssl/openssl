@@ -455,7 +455,7 @@ int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
 int ossl_rsa_is_foreign(const RSA *rsa)
 {
 #ifndef FIPS_MODULE
-    if (rsa->engine != NULL || RSA_get_method(rsa) != RSA_PKCS1_OpenSSL())
+    if (RSA_get_method(rsa) != RSA_PKCS1_OpenSSL())
         return 1;
 #endif
     return 0;

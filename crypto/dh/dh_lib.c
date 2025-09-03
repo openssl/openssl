@@ -296,7 +296,7 @@ void DH_set_flags(DH *dh, int flags)
 #ifndef FIPS_MODULE
 ENGINE *DH_get0_engine(DH *dh)
 {
-    return dh->engine;
+    return NULL;
 }
 #endif /*FIPS_MODULE */
 
