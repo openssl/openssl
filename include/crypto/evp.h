@@ -121,8 +121,6 @@ struct evp_pkey_ctx_st {
     int legacy_keytype;
     /* Method associated with this operation */
     const EVP_PKEY_METHOD *pmeth;
-    /* Engine that implements this method or NULL if builtin */
-    ENGINE *engine;
     /* Key: may be NULL */
     EVP_PKEY *pkey;
     /* Peer key for key agreement, may be NULL */
@@ -676,8 +674,6 @@ struct evp_pkey_st {
      * a pointer to a low level key and possibly a pointer to an engine.
      */
     const EVP_PKEY_ASN1_METHOD *ameth;
-    ENGINE *engine;
-    ENGINE *pmeth_engine; /* If not NULL public key ENGINE to use */
 
     /* Union to store the reference to an origin legacy key */
     union legacy_pkey_st pkey;

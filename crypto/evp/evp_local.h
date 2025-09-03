@@ -16,8 +16,6 @@
 struct evp_md_ctx_st {
     const EVP_MD *reqdigest;    /* The original requested digest */
     const EVP_MD *digest;
-    ENGINE *engine;             /* functional reference if 'digest' is
-                                 * ENGINE-provided */
     unsigned long flags;
     void *md_data;
     /* Public key context for sign/verify */
@@ -35,8 +33,6 @@ struct evp_md_ctx_st {
 
 struct evp_cipher_ctx_st {
     const EVP_CIPHER *cipher;
-    ENGINE *engine;             /* functional reference if 'cipher' is
-                                 * ENGINE-provided */
     int encrypt;                /* encrypt or decrypt */
     int buf_len;                /* number we have left */
     unsigned char oiv[EVP_MAX_IV_LENGTH]; /* original iv */
