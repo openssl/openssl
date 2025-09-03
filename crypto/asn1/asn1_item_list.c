@@ -23,7 +23,9 @@
 #include <openssl/x509v3.h>
 #include <openssl/x509_acert.h>
 
-#include "asn1_item_list.h"
+/* clang-format off */
+#include "asn1_item_list.inc"
+/* clang-format on */
 
 const ASN1_ITEM *ASN1_ITEM_lookup(const char *name)
 {
