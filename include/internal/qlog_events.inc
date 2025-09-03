@@ -6,6 +6,7 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
 QLOG_EVENT(connectivity, connection_started)
 QLOG_EVENT(connectivity, connection_state_updated)
 QLOG_EVENT(connectivity, connection_closed)
