@@ -26,9 +26,11 @@
 typedef struct async_ctx_st async_ctx;
 typedef struct async_pool_st async_pool;
 
-#include "arch/async_win.h"
-#include "arch/async_posix.h"
-#include "arch/async_null.h"
+/* clang-format off */
+#include "arch/async_win.inc"
+#include "arch/async_posix.inc"
+#include "arch/async_null.inc"
+/* clang-format on */
 
 struct async_ctx_st {
     async_fibre dispatcher;
