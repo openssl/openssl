@@ -10,6 +10,8 @@
 #ifndef _CRYPTO_THREADS_COMMON_H_
 #define _CRYPTO_THREADS_COMMON_H_
 
+#include <openssl/types.h>
+
 #if defined(__clang__) && defined(__has_feature)
 #if __has_feature(thread_sanitizer)
 #define __SANITIZE_THREAD__

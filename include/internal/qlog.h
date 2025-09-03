@@ -21,10 +21,11 @@ typedef struct qlog_st QLOG;
 
 enum {
     QLOG_EVENT_TYPE_NONE,
-
+/* clang-format off */
 #define QLOG_EVENT(cat, name) QLOG_EVENT_TYPE_##cat##_##name,
-#include "internal/qlog_events.h"
+#include "internal/qlog_events.inc"
 #undef QLOG_EVENT
+    /* clang-format on */
 
     QLOG_EVENT_TYPE_NUM
 };

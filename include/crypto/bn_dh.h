@@ -10,6 +10,8 @@
 #if !defined(OSSL_CRYPTO_BN_DH_H)
 #define OSSL_CRYPTO_BN_DH_H
 
+#include <openssl/bn.h>
+
 #define declare_dh_bn(x)                       \
     extern const BIGNUM ossl_bignum_dh##x##_p; \
     extern const BIGNUM ossl_bignum_dh##x##_q; \
