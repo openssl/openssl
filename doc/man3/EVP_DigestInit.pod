@@ -150,8 +150,9 @@ Each Message digest algorithm (such as SHA256) produces a fixed size output
 length which is returned when EVP_DigestFinal_ex() is called.
 Extendable Output Functions (XOF) such as SHAKE256 have a variable sized output
 length I<outlen> which can be used with either EVP_DigestFinalXOF() or
-EVP_DigestSqueeze(). EVP_DigestFinal_ex() may also be used for an XOF, but the
-"xoflen" must be set beforehand (See L</PARAMETERS>).
+EVP_DigestSqueeze(). EVP_DigestFinal_ex() may also be used for XOF algorithms, but
+for XOF algorithms that do not have a default size the "xoflen" must be set
+beforehand (See L</PARAMETERS>).
 Note that EVP_MD_get_size() and EVP_MD_CTX_get_size_ex() behave differently for
 an XOF.
 
@@ -386,7 +387,7 @@ L<OSSL_LIB_CTX(3)>) will be considered.
 =item EVP_MD_xof()
 
 Returns 1 if I<md> is an Extendable-output Function (XOF) otherwise it returns
-0. SHAKE128 and SHAKE256 are XOF functions.
+0. SHAKE128, SHAKE256, CSHAKE128 and CSHAKE256 are XOF functions.
 It returns 0 for BLAKE2B algorithms.
 
 =item EVP_MD_get0_name(),
@@ -531,7 +532,7 @@ following OSSL_PARAM keys:
 
 Sets or gets the digest length for extendable output functions.
 The value should not exceed what can be given using a B<size_t>.
-It may be used by SHAKE-128 and SHAKE-256 to set the
+It may be used by SHAKE-128, CSHAKE-128, SHAKE-256 and CSHAKE-256, to set the
 output length used by EVP_DigestFinal_ex() and EVP_DigestFinal().
 
 =item "size" (B<OSSL_DIGEST_PARAM_SIZE>) <unsigned integer>
@@ -551,6 +552,20 @@ EVP_MD_CTX_set_params() can be used with the following OSSL_PARAM keys:
 
 Sets the padding type.
 It is used by the MDC2 algorithm.
+
+=item "function-name" (B<OSSL_DIGEST_PARAM_FUNCTION_NAME>)<UTF8 string>
+
+Sets the function name string. By default this is an empty string.
+It is used by L<EVP_MD-CSHAKE(7)>.
+
+=item "customization" (B<OSSL_DIGEST_PARAM_CUSTOMIZATION>)<UTF8 string>
+
+Sets a customisation string. By default this is an empty string.
+It is used by L<EVP_MD-CSHAKE(7)>.
+
+=item "properties" (B<OSSL_DIGEST_PARAM_PROPERTIES>)<UTF8 string>
+
+Sets properties to be used when fetching algorithm implementations.
 
 =back
 

@@ -59,9 +59,11 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item KECCAK, see L<EVP_MD-KECCAK(7)>
 
-=item KECCAK-KMAC, see L<EVP_MD-KECCAK-KMAC(7)>
-
 =item SHAKE, see L<EVP_MD-SHAKE(7)>
+
+=item CSHAKE, see L<EVP_MD-CSHAKE(7)>
+
+=item CSHAKE-KECCAK, see L<EVP_MD-CSHAKE-KECCAK(7)>
 
 =item BLAKE2, see L<EVP_MD-BLAKE2(7)>
 
@@ -537,6 +539,8 @@ L<OSSL_PROVIDER-base(7)>
 The RIPEMD160 digest was added to the default provider in OpenSSL 3.0.7.
 
 The HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 algorithms were added in OpenSSL 3.6.
+
+The CSHAKE-128 and CSHAKE-256 algorithms were added in OpenSSL 4.0.
 
 All other functionality was added in OpenSSL 3.0.
 

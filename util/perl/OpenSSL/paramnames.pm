@@ -172,6 +172,10 @@ my %params = (
     'OSSL_DIGEST_PARAM_SIZE' =>         "size",         # size_t
     'OSSL_DIGEST_PARAM_XOF' =>          "xof",          # int, 0 or 1
     'OSSL_DIGEST_PARAM_ALGID_ABSENT' => "algid-absent", # int, 0 or 1
+    'OSSL_DIGEST_PARAM_FUNCTION_NAME' =>    "function-name", # utf8 string
+    'OSSL_DIGEST_PARAM_CUSTOMIZATION' =>    "customization", # utf8 string
+    'OSSL_DIGEST_PARAM_PROPERTIES' => '*OSSL_ALG_PARAM_PROPERTIES',# utf8 string
+
 # external mu digest parameters
     'OSSL_DIGEST_PARAM_MU_PUB_KEY' =>        "pub",                        # octet string
     'OSSL_DIGEST_PARAM_MU_CONTEXT_STRING' => "context-string",             # octet string

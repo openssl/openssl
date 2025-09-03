@@ -712,6 +712,7 @@ typedef struct digest_data_st {
     int xof;
     /* Size for variable output length but non-XOF */
     size_t digest_size;
+    STACK_OF(OPENSSL_STRING) *controls; /* collection of controls */
 } DIGEST_DATA;
 
 static int digest_test_init(EVP_TEST *t, const char *alg)
@@ -738,6 +739,7 @@ static int digest_test_init(EVP_TEST *t, const char *alg)
     mdat->fetched_digest = fetched_digest;
     mdat->pad_type = 0;
     mdat->xof = 0;
+    mdat->controls = sk_OPENSSL_STRING_new_null();
     if (fetched_digest != NULL)
         TEST_info("%s is fetched", alg);
     return 1;
@@ -750,6 +752,7 @@ static void digest_test_cleanup(EVP_TEST *t)
     sk_EVP_TEST_BUFFER_pop_free(mdat->input, evp_test_buffer_free);
     OPENSSL_free(mdat->output);
     EVP_MD_free(mdat->fetched_digest);
+    ctrlfree(mdat->controls);
 }
 
 static int digest_test_parse(EVP_TEST *t,
@@ -778,6 +781,8 @@ static int digest_test_parse(EVP_TEST *t,
         mdata->digest_size = sz;
         return 1;
     }
+    if (strcmp(keyword, "Ctrl") == 0)
+        return ctrladd(mdata->controls, value);
     return 0;
 }
 
@@ -815,7 +820,9 @@ static int digest_test_run(EVP_TEST *t)
     unsigned int got_len;
     size_t size = 0;
     int xof = 0;
-    OSSL_PARAM params[4], *p = &params[0];
+    OSSL_PARAM params[6], *p = &params[0];
+    size_t params_n = 0, params_allocated_n = 0;
+    const OSSL_PARAM *defined_params = EVP_MD_settable_ctx_params(expected->digest);
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
@@ -824,6 +831,13 @@ static int digest_test_run(EVP_TEST *t)
     got = OPENSSL_malloc(expected->output_len > EVP_MAX_MD_SIZE ? expected->output_len : EVP_MAX_MD_SIZE);
     if (!TEST_ptr(got))
         goto err;
+
+    if (sk_OPENSSL_STRING_num(expected->controls) > 0) {
+        if (!ctrl2params(t, expected->controls, defined_params,
+                params, OSSL_NELEM(params), &params_n))
+            return 0;
+        p = params + params_n;
+    }
 
     if (expected->xof > 0) {
         xof |= 1;
@@ -907,6 +921,7 @@ static int digest_test_run(EVP_TEST *t)
     }
 
 err:
+    ctrl2params_free(params, params_n, params_allocated_n);
     OPENSSL_free(got);
     EVP_MD_CTX_free(mctx);
     return 1;
