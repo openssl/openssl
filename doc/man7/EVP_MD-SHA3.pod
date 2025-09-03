@@ -30,9 +30,18 @@ default provider, and includes the following varieties:
 This implementation supports the common gettable parameters described
 in L<EVP_MD-common(7)>.
 
+=head1 CONFORMING TO
+
+=over 4
+
+=item FIPS 202
+
+=back
+
 =head1 SEE ALSO
 
-L<provider-digest(7)>, L<OSSL_PROVIDER-FIPS(7)>, L<OSSL_PROVIDER-default(7)>
+L<provider-digest(7)>, L<OSSL_PROVIDER-FIPS(7)>, L<OSSL_PROVIDER-default(7)>,
+L<EVP_MD-SHAKE(7)>
 
 =head1 COPYRIGHT
 
