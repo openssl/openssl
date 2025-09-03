@@ -289,7 +289,6 @@ struct ec_group_st {
 
 struct ec_key_st {
     const EC_KEY_METHOD *meth;
-    ENGINE *engine;
     int version;
     EC_GROUP *group;
     EC_POINT *pub_key;
