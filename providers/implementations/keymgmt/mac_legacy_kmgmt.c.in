@@ -378,9 +378,9 @@ static const OSSL_PARAM *mac_gettable_params(void *provctx)
 #define cmac_get_params_st mac_common_params_st
 
 {- produce_param_decoder('cmac_get_params',
-                         (['PKEY_PARAM_PRIV_KEY', 'key', 'octet_string'],
-                          ['PKEY_PARAM_CIPHER',     'cipher', 'utf8_string'],
-                          ['PKEY_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
+                         (['PKEY_PARAM_PRIV_KEY', 'key',    'octet_string'],
+                          ['PKEY_PARAM_CIPHER',   'cipher', 'utf8_string'],
+                          ['PKEY_PARAM_ENGINE',   'engine', 'utf8_string', 'hidden'],
                         )); -}
 
 static int cmac_get_params(void *keydata, OSSL_PARAM params[])
