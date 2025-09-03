@@ -657,8 +657,8 @@ jobs:
     - name: test ability to produce debuginfo files
       run: |
         make debuginfo
-        gdb < <(echo -e "file ./libcrypto.so.3\nquit") > ./results
-        grep -q "Reading symbols from.*libcrypto\.so\.3\.debug" results
+        gdb < <(echo -e "file ./libcrypto.so.4\nquit") > ./results
+        grep -q "Reading symbols from.*libcrypto\.so\.4\.debug" results
 
   external-tests-oqs-provider:
     runs-on: ubuntu-latest
