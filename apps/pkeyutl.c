@@ -83,11 +83,11 @@ const OPTIONS pkeyutl_options[] = {
     {"pubin", OPT_PUBIN, '-', "Input key is a public key"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"peerkey", OPT_PEERKEY, 's', "Peer key file used in key derivation"},
-    {"peerform", OPT_PEERFORM, 'E', "Peer key format (DER/PEM/P12)"},
+    {"peerform", OPT_PEERFORM, 'f', "Peer key format (DER/PEM/P12)"},
     {"certin", OPT_CERTIN, '-', "Input is a cert with a public key"},
     {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
     {"sigfile", OPT_SIGFILE, '<', "Signature file (verify operation only)"},
-    {"keyform", OPT_KEYFORM, 'E', "Private key format (ENGINE, other values ignored)"},
+    {"keyform", OPT_KEYFORM, 'f', "Private key format (DER/PEM)"},
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file - default stdout"},
