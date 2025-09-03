@@ -310,7 +310,7 @@
 
 /* Check if an SSL_CTX structure is using DTLS */
 # define SSL_CTX_IS_DTLS(ctx) \
-    (ctx->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
+     ((ctx->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS) != 0)
 
 /* Check if we are using TLSv1.3 */
 # define SSL_CONNECTION_IS_TLS13(s) (!SSL_CONNECTION_IS_DTLS(s) \
@@ -1274,9 +1274,6 @@ typedef struct ossl_quic_tls_callbacks_st {
                                    void *arg);
     int (*alert_cb)(SSL *s, unsigned char alert_code, void *arg);
 } OSSL_QUIC_TLS_CALLBACKS;
-
-# define SSL_CTX_IS_DTLS(ctx) \
-    (((ctx)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS) != 0)
 
 typedef struct cert_pkey_st CERT_PKEY;
 
