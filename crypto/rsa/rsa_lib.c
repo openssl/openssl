@@ -710,7 +710,7 @@ int RSA_get_version(RSA *r)
 #ifndef FIPS_MODULE
 ENGINE *RSA_get0_engine(const RSA *r)
 {
-    return r->engine;
+    return NULL;
 }
 
 int RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2)
