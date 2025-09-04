@@ -695,6 +695,16 @@ void *app_malloc(size_t sz, const char *what)
     return vp;
 }
 
+void *app_malloc_array(size_t n, size_t sz, const char *what)
+{
+    void *vp = OPENSSL_malloc_array(n, sz);
+
+    if (vp == NULL)
+        app_bail_out("%s: Could not allocate %zu*%zu bytes for %s\n",
+                     opt_getprog(), n, sz, what);
+    return vp;
+}
+
 char *next_item(char *opt) /* in list separated by comma and/or space */
 {
     /* advance to separator (comma or whitespace), if any */
