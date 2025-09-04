@@ -55,8 +55,8 @@ static ossl_inline int received_server_cert(SSL_CONNECTION *sc)
 static ossl_inline int cert_req_allowed(SSL_CONNECTION *s)
 {
     /* TLS does not like anon-DH with client cert */
-    if ((s->s3.tmp.new_cipher->algorithm_auth & SSL_aNULL)
-        || (s->s3.tmp.new_cipher->algorithm_auth & (SSL_aSRP | SSL_aPSK)))
+    if ((s->s3.tmp.new_cipher->algorithm_auth & SSL_aNULL) != 0
+        || (s->s3.tmp.new_cipher->algorithm_auth & (SSL_aSRP | SSL_aPSK)) != 0)
         return 0;
 
     return 1;

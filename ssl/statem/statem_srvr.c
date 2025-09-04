@@ -2651,7 +2651,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
 
 CON_FUNC_RETURN tls_construct_server_done(SSL_CONNECTION *s, WPACKET *pkt)
 {
-    if (!s->s3.tmp.cert_request) {
+    if (s->s3.tmp.cert_request == 0) {
         if (!ssl3_digest_cached_records(s, 0)) {
             /* SSLfatal() already called */
             return CON_FUNC_ERROR;
