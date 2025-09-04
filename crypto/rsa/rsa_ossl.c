@@ -264,8 +264,8 @@ static BN_BLINDING *rsa_get_blinding(RSA *rsa, BN_CTX *ctx)
                 BN_BLINDING_free(ret);
                 ret = NULL;
             }
+            CRYPTO_THREAD_unlock(rsa->lock);
         }
-        CRYPTO_THREAD_unlock(rsa->lock);
     }
 
     return ret;
