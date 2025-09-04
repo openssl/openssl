@@ -242,6 +242,14 @@ static int test_bio_base64_run(test_case *t, int llen, int wscnt)
         BIO_write(bio, encoded, n1);
 
     b64 = BIO_new(BIO_f_base64());
+    if (b64 == NULL) {
+        BIO_free(bio);
+        OPENSSL_free(raw);
+        OPENSSL_free(out);
+        OPENSSL_free(encoded);
+        TEST_error("out of memory");
+        return -1;
+    }
     if (t->no_nl)
         BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     BIO_push(b64, bio);
