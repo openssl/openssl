@@ -64,7 +64,7 @@ jobs:
           no-engine,
 #          enable-external-tests,  # Requires extra setup
           enable-fips,
-          enable-fips enable-acvp-tests,
+          enable-fips enable-acvp-tests enable-import-pct,
           enable-fips no-tls1_3,
           enable-fips no-des no-dsa no-ec2m,
 #          enable-fuzz-afl,        # Requires extra setup
