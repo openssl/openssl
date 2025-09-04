@@ -183,6 +183,22 @@ our @tests = (
             MaxFragmentSize => 1024,
         }
     },
+    {
+        name   => "Record Size Limit extension negotiated",
+        server => {
+            extra => {
+                RecordSizeLimit => 64,
+            },
+        },
+        client => {
+            extra => {
+                RecordSizeLimit => 64,
+            },
+        },
+        test   => {
+            ApplicationData => 32768,
+        }
+    }
 );
 
 # Tests using RSA key exchange

@@ -485,6 +485,11 @@ IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, app_data_size)
 
 IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, max_fragment_size)
 
+/* RecordSizeLimit */
+
+IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CLIENT_CONF, client, record_size_limit)
+IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_SERVER_CONF, server, record_size_limit)
+
 /* Maximum-Fragment-Length TLS extension mode */
 static const test_enum ssl_max_fragment_len_mode[] = {
     {"None", TLSEXT_max_fragment_length_DISABLED},
@@ -714,6 +719,7 @@ static const ssl_test_client_option ssl_test_client_options[] = {
     { "SRPUser", &parse_client_srp_user },
     { "SRPPassword", &parse_client_srp_password },
     { "MaxFragmentLenExt", &parse_max_fragment_len_mode },
+    { "RecordSizeLimit", &parse_client_record_size_limit},
     { "EnablePHA", &parse_client_enable_pha },
     { "RenegotiateNoExtms", &parse_client_no_extms_on_reneg },
 };
@@ -734,6 +740,7 @@ static const ssl_test_server_option ssl_test_server_options[] = {
     { "SRPPassword", &parse_server_srp_password },
     { "ForcePHA", &parse_server_force_pha },
     { "SessionTicketAppData", &parse_server_session_ticket_app_data },
+    { "RecordSizeLimit", &parse_server_record_size_limit},
 };
 
 SSL_TEST_CTX *SSL_TEST_CTX_new(OSSL_LIB_CTX *libctx)

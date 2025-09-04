@@ -942,7 +942,6 @@ int s_client_main(int argc, char **argv)
     enum { use_inet, use_unix, use_unknown } connect_type = use_unknown;
     int count4or6 = 0;
     uint8_t maxfraglen = 0;
-    bool record_size_limit_set = false;
     uint16_t record_size_limit = 0;
     int c_nbio = 0, c_msg = 0, c_ign_eof = 0, c_brief = 0;
     int c_tlsextdebug = 0;
@@ -1550,7 +1549,6 @@ int s_client_main(int argc, char **argv)
         case OPT_REC_SIZE_LIMIT:
             limit = (uint16_t)atoi(opt_arg());
             record_size_limit = limit;
-            record_size_limit_set = true;
             break;
         case OPT_MAX_SEND_FRAG:
             max_send_fragment = atoi(opt_arg());
@@ -1898,13 +1896,11 @@ int s_client_main(int argc, char **argv)
         goto end;
     }
 
-    if (record_size_limit_set
-             && !SSL_CTX_set_tlsext_record_size_limit(ctx,
-                                                 record_size_limit)) {
+    if (record_size_limit > 0
+            && !SSL_CTX_set_record_size_limit(ctx, record_size_limit))
       goto end;
-    }
 
-    if (record_size_limit_set && maxfraglen > 0) {
+    if (record_size_limit > 0 && maxfraglen > 0) {
       BIO_printf(bio_err, "Warning: Max Fragment Length extension and Record Size Limit activated. Both extension will be sent.\n");
     }
 

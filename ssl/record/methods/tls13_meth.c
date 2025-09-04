@@ -338,9 +338,9 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
 
     /* Add TLS1.3 padding */
     rlen = TLS_RL_RECORD_get_length(thiswr);
-    if (rlen < rl->max_frag_len) {
+    if (rlen < rl->record_size_limit) {
         size_t padding = 0;
-        size_t max_padding = rl->max_frag_len - rlen;
+        size_t max_padding = rl->record_size_limit - rlen;
 
         /*
          * We might want to change the "else if" below so that

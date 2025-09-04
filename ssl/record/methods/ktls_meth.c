@@ -308,7 +308,7 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     /* ktls supports only the maximum fragment size */
-    if (rl->max_frag_len != SSL3_RT_MAX_PLAIN_LENGTH)
+    if (rl->record_size_limit != SSL3_RT_MAX_PLAIN_LENGTH)
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     /* check that cipher is supported */
@@ -602,7 +602,7 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_get_state,
     tls_set_options,
     tls_get_compression,
-    tls_set_max_frag_len,
+    tls_set_record_size_limit,
     NULL,
     tls_increment_sequence_ctr,
     ktls_alloc_buffers,

@@ -102,6 +102,8 @@ typedef struct {
     ssl_servername_t servername;
     /* Maximum Fragment Length extension mode */
     int max_fragment_len_mode;
+    /* Record Size Limit */
+    uint16_t record_size_limit;
     /* Supported NPN and ALPN protocols. A comma-separated list. */
     char *npn_protocols;
     char *alpn_protocols;
@@ -119,6 +121,8 @@ typedef struct {
 typedef struct {
     /* SNI callback (server-side). */
     ssl_servername_callback_t servername_callback;
+    /* Record Size Limit */
+    uint16_t record_size_limit;
     /* Supported NPN and ALPN protocols. A comma-separated list. */
     char *npn_protocols;
     char *alpn_protocols;
@@ -155,6 +159,8 @@ typedef struct {
     int app_data_size;
     /* Maximum send fragment size. */
     int max_fragment_size;
+    /* Record Size Limit */
+    uint16_t record_size_limit;
     /* KeyUpdate type */
     int key_update_type;
 

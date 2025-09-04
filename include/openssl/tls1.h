@@ -254,8 +254,8 @@ extern "C" {
 int SSL_CTX_set_tlsext_max_fragment_length(SSL_CTX *ctx, uint8_t mode);
 int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode);
 
-int SSL_CTX_set_tlsext_record_size_limit(SSL_CTX *ctx, uint16_t limit);
-int SSL_set_tlsext_record_size_limit(SSL *ssl, uint16_t limit);
+int SSL_CTX_set_record_size_limit(SSL_CTX *ctx, uint16_t limit);
+int SSL_set_record_size_limit(SSL *ssl, uint16_t limit);
 
 # define TLSEXT_MAXLEN_host_name 255
 

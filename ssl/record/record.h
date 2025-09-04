@@ -172,7 +172,7 @@ int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
                                   char *file, int line);
 
 
-void ssl_set_ext_record_size_limit(const SSL_CONNECTION *s);
+void ssl_set_record_size_limit(const SSL_CONNECTION *s, int which);
 
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                              int direction, int level,

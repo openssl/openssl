@@ -754,7 +754,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
-    ssl_set_ext_record_size_limit(s);
+    ssl_set_record_size_limit(s, which);
 
     ret = 1;
  err:

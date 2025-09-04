@@ -4808,7 +4808,7 @@ int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode)
     return 1;
 }
 
-int SSL_CTX_set_tlsext_record_size_limit(SSL_CTX *ctx, uint16_t limit) {
+int SSL_CTX_set_record_size_limit(SSL_CTX *ctx, uint16_t limit) {
     if (limit == 0) {
         ctx->ext.record_size_limit = TLSEXT_record_size_limit_DISABLED;
         return 1;
@@ -4824,7 +4824,7 @@ int SSL_CTX_set_tlsext_record_size_limit(SSL_CTX *ctx, uint16_t limit) {
     return 1;
 }
 
-int SSL_set_tlsext_record_size_limit(SSL *ssl, uint16_t limit) {
+int SSL_set_record_size_limit(SSL *ssl, uint16_t limit) {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
     if (sc == NULL) {

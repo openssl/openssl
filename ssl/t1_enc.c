@@ -113,8 +113,7 @@ static int tls_iv_length_within_key_block(const EVP_CIPHER *c)
         return EVP_CIPHER_get_iv_length(c);
 }
 
-int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
-{
+int tls1_change_cipher_state(SSL_CONNECTION *s, int which) {
     unsigned char *p, *mac_secret;
     unsigned char *key, *iv;
     const EVP_CIPHER *c;
@@ -157,15 +156,15 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         n += j + j;
         iv = &(p[n]);
         n += k + k;
-    } else {
-        n = i;
-        mac_secret = &(p[n]);
-        n += i + j;
-        key = &(p[n]);
-        n += j + k;
-        iv = &(p[n]);
-        n += k;
-    }
+        } else {
+            n = i;
+            mac_secret = &(p[n]);
+            n += i + j;
+            key = &(p[n]);
+            n += j + k;
+            iv = &(p[n]);
+            n += k;
+        }
 
     if (n > s->s3.tmp.key_block_length) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -239,11 +238,11 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
                                     m, comp, NULL)) {
         /* SSLfatal already called */
         goto err;
-    }
+                                    }
 
-    /* Record Size Limit does not apply to unprotected messages. */
-    if (c != NULL)
-      ssl_set_ext_record_size_limit(s);
+    if (c != NULL) {
+        ssl_set_record_size_limit(s, which);
+    }
 
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "which = %04X, key:\n", which);

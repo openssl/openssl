@@ -1759,10 +1759,10 @@ static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
         s->session->ext.max_fragment_len_mode = TLSEXT_max_fragment_length_DISABLED;
 
     if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
-        s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
+        s->rlayer.rrlmethod->set_record_size_limit(s->rlayer.rrl,
                                               GET_MAX_FRAGMENT_LENGTH(s->session));
 
-        s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
+        s->rlayer.wrlmethod->set_record_size_limit(s->rlayer.wrl,
                                               ssl_get_max_send_fragment(s, 0));
     }
 
