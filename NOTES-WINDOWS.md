@@ -39,7 +39,7 @@ these are required as well:
 ### Perl
 
 We recommend Strawberry Perl, available from <http://strawberryperl.com/>
-Please read NOTES.PERL for more information, including the use of CPAN.
+Please read [NOTES-PERL.md](NOTES-PERL.md) for more information, including the use of CPAN.
 An alternative is ActiveState Perl, <https://www.activestate.com/ActivePerl>
 for which you may need to explicitly build the Perl module Win32/Console.pm
 via <https://platform.activestate.com/ActiveState> and then download it.
