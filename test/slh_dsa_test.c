@@ -186,12 +186,15 @@ static int slh_dsa_key_validate_failure_test(void)
     key = slh_dsa_key_from_data("SLH-DSA-SHA2-128f",
                                 slh_dsa_sha2_128s_0_keygen_priv,
                                 sizeof(slh_dsa_sha2_128s_0_keygen_priv), 0);
+#ifndef OPENSSL_NO_IMPORT_PCT
     if (OSSL_PROVIDER_available(lib_ctx, "fips")
             && fips_provider_version_match(lib_ctx, ">3.5.2")) {
         /* The new pairwise test should fail in fips mode */
         if (!TEST_ptr_null(key))
             goto end;
-    } else {
+    } else
+#endif /* !OPENSSL_NO_IMPORT_PCT */
+    {
         if (!TEST_ptr(key))
             goto end;
         if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL)))
