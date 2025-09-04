@@ -12,15 +12,13 @@ use OpenSSL::Test::Utils;
 use File::Temp qw(tempfile);
 use TLSProxy::Proxy;
 use checkhandshake qw(checkhandshake @handmessages @extensions);
+use Cwd qw(abs_path);
 
 my $test_name = "test_tls13kexmodes";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
     if $^O =~ /^(VMS)$/;
-
-plan skip_all => "$test_name needs the dynamic engine feature enabled"
-    if disabled("engine") || disabled("dynamic-engine");
 
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
@@ -183,6 +181,8 @@ use constant {
     UNKNOWN_KEX_MODES => 4,
     BOTH_KEX_MODES => 5
 };
+
+$ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
 
 my $proxy = TLSProxy::Proxy->new(
     undef,

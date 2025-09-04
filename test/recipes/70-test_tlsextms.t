@@ -11,15 +11,13 @@ use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 use File::Temp qw(tempfile);
+use Cwd qw(abs_path);
 
 my $test_name = "test_tlsextms";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
     if $^O =~ /^(VMS)$/;
-
-plan skip_all => "$test_name needs the dynamic engine feature enabled"
-    if disabled("engine") || disabled("dynamic-engine");
 
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
@@ -36,6 +34,8 @@ my $srmextms = 0;
 my $cextms = 0;
 my $sextms = 0;
 my $fullhand = 0;
+
+$ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
 
 my $proxy = TLSProxy::Proxy->new(
     \&extms_filter,
