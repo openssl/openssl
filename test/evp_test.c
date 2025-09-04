@@ -709,9 +709,7 @@ typedef struct digest_data_st {
     int xof;
     /* Size for variable output length but non-XOF */
     size_t digest_size;
-
     STACK_OF(OPENSSL_STRING) *controls; /* collection of controls */
-
 } DIGEST_DATA;
 
 static int digest_test_init(EVP_TEST *t, const char *alg)

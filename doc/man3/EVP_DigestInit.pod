@@ -546,6 +546,10 @@ It is used by L<EVP_MD-CSHAKE(7)>.
 Sets a customisation string. By default this is an empty string.
 It is used by L<EVP_MD-CSHAKE(7)>.
 
+=item "properties" (B<OSSL_DIGEST_PARAM_PROPERTIES>)<UTF8 string>
+
+Sets properties to be used when fetching algorithm implementations.
+
 =back
 
 EVP_MD_CTX_get_params() can be used with the following OSSL_PARAM keys:

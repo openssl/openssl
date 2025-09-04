@@ -174,6 +174,7 @@ my %params = (
     'DIGEST_PARAM_ALGID_ABSENT' => "algid-absent", # int, 0 or 1
     'DIGEST_PARAM_N' =>            "n",            # utf8 string
     'DIGEST_PARAM_S' =>            "s",            # utf8 string
+    'DIGEST_PARAM_PROPERTIES' =>   '*ALG_PARAM_PROPERTIES',    # utf8 string
 
 # MAC parameters
     'MAC_PARAM_KEY' =>            "key",           # octet string

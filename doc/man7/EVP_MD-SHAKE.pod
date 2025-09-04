@@ -86,17 +86,22 @@ EVP_DigestFinalXOF() instead.
 
 An alias of "xoflen".
 
-=item "n" (B<OSSL_DIGEST_PARAM_N>)<UTF8 string>
+=item "n" (B<OSSL_DIGEST_PARAM_N>) <UTF8 string>
 
 Sets the function name string used by CSHAKE.
 It is an optional value with a length of at most 512 bytes, and is
 empty by default.
 
-=item "s" (B<OSSL_DIGEST_PARAM_S>)<UTF8 string>
+=item "s" (B<OSSL_DIGEST_PARAM_S>) <UTF8 string>
 
 Sets a customisation string used by CSHAKE.
 It is an optional value with a length of at most 512 bytes, and is
 empty by default.
+
+=item "properties" (B<OSSL_DIGEST_PARAM_PROPERTIES>) <UTF8 string>
+
+An optional property used internally by CSHAKE when fetching either
+SHAKE or KECCAK algorithms.
 
 =back
 

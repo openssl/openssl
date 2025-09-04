@@ -651,13 +651,6 @@ static int shake_get_ctx_params(void *vctx, OSSL_PARAM params[])
                           ['DIGEST_PARAM_SIZE',     'xoflen',   'size_t'],
                          )); -}
 
-{- produce_param_decoder('cshake_set_ctx_params',
-                         (['DIGEST_PARAM_XOFLEN',   'xoflen',   'size_t'],
-                          ['DIGEST_PARAM_SIZE',     'xoflen',   'size_t'],
-                          ['DIGEST_PARAM_N',        'N',        'utf8_string'],
-                          ['DIGEST_PARAM_S',        'S',        'utf8_string'],
-                         )); -}
-
 static const OSSL_PARAM *shake_settable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *provctx)
 {
@@ -704,8 +697,6 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_FUNC_SHAKE_DIGEST(keccak_kmac_##bitlen, bitlen,                       \
                            SHA3_BLOCKSIZE(bitlen), KMAC_MDSIZE(bitlen),        \
                            KMAC_FLAGS)
-
-#include "cshake.inc"
 
 /* ossl_sha3_224_functions */
 IMPLEMENT_SHA3_functions(224)
