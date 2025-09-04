@@ -110,7 +110,7 @@ static int slh_dsa_validate(const void *key_data, int selection, int check_type)
 static int slh_dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     SLH_DSA_KEY *key = keydata;
-    int include_priv, res;
+    int include_priv;
 
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
@@ -119,21 +119,7 @@ static int slh_dsa_import(void *keydata, int selection, const OSSL_PARAM params[
         return 0;
 
     include_priv = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
-    res = ossl_slh_dsa_key_fromdata(key, params, include_priv);
-#ifdef FIPS_MODULE
-    /*
-     * FIPS 140-3 IG 10.3.A additional comment 1 mandates that a pairwise
-     * consistency check be undertaken on key import.  The required test
-     * is described in SP 800-56Ar3 5.6.2.1.4.
-     */
-    if (res > 0 && ossl_slh_dsa_key_has(key, OSSL_KEYMGMT_SELECT_KEYPAIR) > 0)
-        if (!slh_dsa_fips140_pairwise_test(key, NULL)) {
-            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT_IMPORT);
-            ossl_slh_dsa_key_reset(key);
-            res = 0;
-        }
-#endif  /* FIPS_MODULE */
-    return res;
+    return ossl_slh_dsa_key_fromdata(key, params, include_priv);
 }
 
 #define SLH_DSA_IMEXPORTABLE_PARAMETERS \
