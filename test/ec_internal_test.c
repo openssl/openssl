@@ -160,11 +160,14 @@ static int field_tests_ecp_mont(void)
 static int ec2m_field_sanity(void)
 {
     int ret = 0;
-    BN_CTX *ctx = BN_CTX_new();
+    BN_CTX *ctx = NULL;
     BIGNUM *p, *a, *b;
     EC_GROUP *group1 = NULL, *group2 = NULL, *group3 = NULL;
 
     TEST_info("Testing GF2m hardening\n");
+
+    if (!TEST_ptr(ctx = BN_CTX_new()))
+        goto out;
 
     BN_CTX_start(ctx);
     p = BN_CTX_get(ctx);
