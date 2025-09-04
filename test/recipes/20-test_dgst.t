@@ -14,6 +14,7 @@ use File::Spec;
 use File::Basename;
 use OpenSSL::Test qw/:DEFAULT with srctop_file data_file bldtop_dir/;
 use OpenSSL::Test::Utils;
+use Cwd qw(abs_path);
 
 setup("test_dgst");
 
@@ -166,17 +167,18 @@ SKIP: {
 }
 
 SKIP: {
-    skip "dgst with engine is not supported by this OpenSSL build", 1
-        if disabled("engine") || disabled("dynamic-engine");
+    skip "dgst with provider is not supported by this OpenSSL build", 1
+        if disabled("module");
 
-    subtest "SHA1 generation by engine with `dgst` CLI" => sub {
+    subtest "SHA1 generation by provider with `dgst` CLI" => sub {
         plan tests => 1;
 
+        $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
         my $testdata = srctop_file('test', 'data.bin');
-        # intentionally using -engine twice, please do not remove the duplicate line
         my @macdata = run(app(['openssl', 'dgst', '-sha1',
-                               '-engine', "ossltest",
-                               '-engine', "ossltest",
+                               '-provider', "p_ossltest",
+                               '-provider', "default",
+                               '-propquery', '?provider=p_ossltest',
                                $testdata]), capture => 1);
         chomp(@macdata);
         my $expected = qr/SHA1\(\Q$testdata\E\)= 000102030405060708090a0b0c0d0e0f10111213/;
