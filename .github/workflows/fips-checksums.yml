@@ -18,7 +18,7 @@ jobs:
       - name: install unifdef
         run: |
             sudo apt-get update
-            sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install unifdef
+            sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install unifdef
       - name: create build dirs
         run: |
           mkdir ./build-pristine
