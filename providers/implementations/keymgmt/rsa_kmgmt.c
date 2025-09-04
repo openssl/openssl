@@ -197,7 +197,7 @@ static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
         ok = ok && ossl_rsa_fromdata(rsa, params, include_private);
     }
 
-#ifdef FIPS_MODULE
+#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_IMPORT_PCT)
     if (ok > 0 && !ossl_fips_self_testing()) {
         const BIGNUM *n, *e, *d, *dp, *dq, *iq, *p, *q;
 

@@ -431,7 +431,7 @@ int common_import(void *keydata, int selection, const OSSL_PARAM params[],
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
         ok = ok && ossl_ec_key_otherparams_fromdata(ec, params);
 
-#ifdef FIPS_MODULE
+#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_IMPORT_PCT)
     if (ok > 0
             && !ossl_fips_self_testing()
             && EC_KEY_get0_public_key(ec) != NULL

@@ -209,11 +209,10 @@ static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
             selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
 
         ok = ok && ossl_dh_key_fromdata(dh, params, include_private);
-#ifdef FIPS_MODULE
+#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_IMPORT_PCT)
         /*
-         * FIPS 140-3 IG 10.3.A additional comment 1 mandates that a pairwise
-         * consistency check be undertaken on key import.  The required test
-         * is described in SP 800-56Ar3 5.6.2.1.4.
+         * Perform a PCT on import this was mandated for a while but isn't
+         * anymore.  The required tes is described in SP 800-56Ar3 5.6.2.1.4.
          */
         if (ok > 0 && !ossl_fips_self_testing()) {
             ok = ossl_dh_check_pairwise(dh, 1);

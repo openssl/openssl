@@ -132,11 +132,10 @@ static int slh_dsa_import(void *keydata, int selection, const OSSL_PARAM params[
 
     include_priv = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
     res = ossl_slh_dsa_key_fromdata(key, p.pub, p.priv, include_priv);
-#ifdef FIPS_MODULE
+#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_IMPORT_PCT)
     /*
-     * FIPS 140-3 IG 10.3.A additional comment 1 mandates that a pairwise
-     * consistency check be undertaken on key import.  The required test
-     * is described in SP 800-56Ar3 5.6.2.1.4.
+     * Perform a PCT on import this was mandated for a while but isn't
+     * anymore.  The required test is described in SP 800-56Ar3 5.6.2.1.4.
      */
     if (res > 0 && ossl_slh_dsa_key_has(key, OSSL_KEYMGMT_SELECT_KEYPAIR) > 0)
         if (!slh_dsa_fips140_pairwise_test(key, NULL)) {
