@@ -1916,7 +1916,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         goto end;
     }
 
-    irow = app_malloc(sizeof(*irow) * (DB_NUMBER + 1), "row space");
+    irow = app_malloc_array(DB_NUMBER + 1, sizeof(*irow), "row space");
     for (i = 0; i < DB_NUMBER; i++)
         irow[i] = row[i];
     irow[DB_NUMBER] = NULL;
@@ -2145,7 +2145,7 @@ static int do_revoke(X509 *x509, CA_DB *db, REVINFO_TYPE rev_type,
             goto end;
         }
 
-        irow = app_malloc(sizeof(*irow) * (DB_NUMBER + 1), "row ptr");
+        irow = app_malloc_array(DB_NUMBER + 1, sizeof(*irow), "row ptr");
         for (i = 0; i < DB_NUMBER; i++)
             irow[i] = row[i];
         irow[DB_NUMBER] = NULL;
