@@ -318,7 +318,7 @@ sub start
     }
 
     my $execcmd = $self->execute
-        ." s_server -no_comp -engine ossltest -state"
+        ." s_server -no_comp -provider=p_ossltest -provider=default -propquery ?provider=p_ossltest -state"
         #In TLSv1.3 we issue two session tickets. The default session id
         #callback gets confused because the ossltest engine causes the same
         #session id to be created twice due to the changed random number
@@ -423,7 +423,7 @@ sub clientstart
     if ($self->execute) {
         my $pid;
         my $execcmd = $self->execute
-             ." s_client -engine ossltest"
+             ." s_client -provider=p_ossltest -provider=default -propquery ?provider=p_ossltest"
              ." -connect $self->{proxy_addr}:$self->{proxy_port}";
         if ($self->{isdtls}) {
             $execcmd .= " -dtls -max_protocol DTLSv1.2"
