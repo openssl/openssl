@@ -66,6 +66,9 @@ static int final_supported_versions(SSL_CONNECTION *s, unsigned int context,
 static int final_early_data(SSL_CONNECTION *s, unsigned int context, int sent);
 static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
                                 int sent);
+static int init_record_size_limit(SSL_CONNECTION *s, unsigned int context);
+static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
+                                int sent);
 static int init_post_handshake_auth(SSL_CONNECTION *s, unsigned int context);
 static int final_psk(SSL_CONNECTION *s, unsigned int context, int sent);
 static int tls_init_compress_certificate(SSL_CONNECTION *sc, unsigned int context);
@@ -119,16 +122,16 @@ typedef struct extensions_definition_st {
  * Extensions should be added to test/ext_internal_test.c as well, as that
  * tests the ordering of the extensions.
  *
- * Each extension has an initialiser, a client and
- * server side parser and a finaliser. The initialiser is called (if the
+ * Each extension has an initializer, a client and
+ * server side parser and a finalizer. The initializer is called (if the
  * extension is relevant to the given context) even if we did not see the
  * extension in the message that we received. The parser functions are only
- * called if we see the extension in the message. The finalisers are always
- * called if the initialiser was called.
- * There are also server and client side constructor functions which are always
+ * called if we see the extension in the message. The finalizers are always
+ * called if the initializer was called.
+ * There are also server and client side constructor functions that are always
  * called during message construction if the extension is relevant for the
  * given context.
- * The initialisation, parsing, finalisation and construction functions are
+ * The initialization, parsing, finalization and construction functions are
  * always called in the order defined in this list. Some extensions may depend
  * on others having been processed first, so the order of this list is
  * significant.
@@ -165,6 +168,14 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL, tls_parse_ctos_maxfragmentlen, tls_parse_stoc_maxfragmentlen,
         tls_construct_stoc_maxfragmentlen, tls_construct_ctos_maxfragmentlen,
         final_maxfragmentlen
+    },
+    {
+        TLSEXT_TYPE_record_size_limit,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
+        | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
+        init_record_size_limit, tls_parse_ctos_record_size_limit,
+        tls_parse_stoc_record_size_limit, tls_construct_stoc_record_size_limit,
+        tls_construct_ctos_record_size_limit, final_record_size_limit
     },
 #ifndef OPENSSL_NO_SRP
     {
@@ -988,6 +999,10 @@ static int init_server_name(SSL_CONNECTION *s, unsigned int context)
     return 1;
 }
 
+static int init_record_size_limit(SSL_CONNECTION *s, unsigned int context) {
+    return 1;
+}
+
 static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
 {
     int ret = SSL_TLSEXT_ERR_NOACK;
@@ -1750,9 +1765,53 @@ static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
     if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
         s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
                                               GET_MAX_FRAGMENT_LENGTH(s->session));
+
         s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
-                                              ssl_get_max_send_fragment(s));
+                                              ssl_get_max_send_fragment(s, 0));
     }
+
+    return 1;
+}
+
+static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
+                                   int sent) {
+    unsigned int proto_record_hard_limit;
+
+    if (s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT)
+        return 1;
+
+    if (s->session == NULL)
+        return 1;
+
+    proto_record_hard_limit = ssl_get_proto_record_hard_limit(s);
+    if (proto_record_hard_limit == 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /*
+     * Only happens server-side. The final() function is called before the
+     * construct() one. Default value should be set here.
+     * This is not ideal, but I have not come up with a better solution with
+     * my current knowledge of the codebase.
+     */
+    if (s->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED
+        && IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.peer_record_size_limit))
+        s->session->ext.record_size_limit = proto_record_hard_limit;
+
+    /*
+     * According to RFC 8449:
+     *
+     * Even if a larger record size limit is provided by a peer, an endpoint
+     * MUST NOT send records larger than the protocol-defined limit, unless
+     * explicitly allowed by a future TLS version or extension.
+     */
+    if (s->session->ext.peer_record_size_limit > proto_record_hard_limit)
+        s->session->ext.peer_record_size_limit = proto_record_hard_limit;
+
+    /*
+     * Unlike Maximum Fragment Length, wait until the cipher spec changes.
+     */
 
     return 1;
 }
