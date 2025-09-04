@@ -127,8 +127,6 @@ static const ERR_STRING_DATA RSA_str_reasons[] = {
     "salt length check failed"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_SLEN_RECOVERY_FAILED),
     "salt length recovery failed"},
-    {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_SSLV3_ROLLBACK_ATTACK),
-    "sslv3 rollback attack"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD),
     "the asn1 object identifier is not known for this md"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_UNKNOWN_ALGORITHM_TYPE),
