@@ -464,7 +464,7 @@ int ossl_cms_set1_ias(CMS_IssuerAndSerialNumber **pias, X509 *cert);
 int ossl_cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert);
 
 BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
-                                        const CMS_CTX *ctx);
+                                        const CMS_CTX *ctx, int auth);
 BIO *ossl_cms_EncryptedData_init_bio(const CMS_ContentInfo *cms);
 int ossl_cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
                                    const EVP_CIPHER *cipher,
