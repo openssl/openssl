@@ -80,7 +80,6 @@ This variable is not considered security-sensitive.
 =item B<OPENSSL_ENGINES>
 
 Specifies the directory from which dynamic engines are loaded.
-See L<openssl-engine(1)>.
 
 This variable is considered a security-sensitive environment variable.
 
