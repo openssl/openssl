@@ -131,10 +131,6 @@ EC parameter manipulation and generation.
 
 Encryption, decryption, and encoding.
 
-=item B<engine>
-
-Engine (loadable module) information and manipulation.
-
 =item B<errstr>
 
 Error Number to Error String Conversion.
@@ -718,8 +714,8 @@ see L<openssl-env(7)>.
 For information about the use of environment variables in configuration,
 see L<config(5)/ENVIRONMENT>.
 
-For information about specific commands, see L<openssl-engine(1)>,
-L<openssl-rehash(1)>, and L<tsget(1)>.
+For information about specific commands, see L<openssl-rehash(1)>
+and L<tsget(1)>.
 
 For information about querying or specifying CPU architecture flags, see
 L<OPENSSL_ia32cap(3)>, L<OPENSSL_s390xcap(3)> and L<OPENSSL_riscvcap(3)>.
@@ -739,7 +735,6 @@ L<openssl-dsaparam(1)>,
 L<openssl-ec(1)>,
 L<openssl-ecparam(1)>,
 L<openssl-enc(1)>,
-L<openssl-engine(1)>,
 L<openssl-errstr(1)>,
 L<openssl-gendsa(1)>,
 L<openssl-genpkey(1)>,
@@ -797,6 +792,9 @@ are obsolete since OpenSSL 3.0 and have no effect.
 The interactive mode, which could be invoked by running C<openssl>
 with no further arguments, was removed in OpenSSL 3.0, and running
 that program with no arguments is now equivalent to C<openssl help>.
+
+The B<engine> command was removed in OpenSSL 4.0 altogether with
+the engine support, use providers as a replacement.
 
 =head1 COPYRIGHT
 
