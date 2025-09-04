@@ -860,6 +860,12 @@ Don't perform FIPS module Power On Self Tests.
 This option MUST be used for debugging only as it makes the FIPS provider
 non-compliant. It is useful when setting breakpoints in FIPS algorithms.
 
+### enable-import-pct
+
+Enable pairwise consistency checks when importing key pairs into the
+FIPS provider.  ML-DSA and ML-KEM always perform consistency checks on
+import irrespective of this setting.
+
 ### enable-fips-jitter
 
 Use the CPU Jitter library as a FIPS validated entropy source.
