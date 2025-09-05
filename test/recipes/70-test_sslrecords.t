@@ -194,7 +194,7 @@ sub run_tests
         $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
         $proxy->start();
         ok(TLSProxy::Message->fail(), "Alert before SSLv2 ClientHello test");
-   }
+    }
     #Unrecognised record type tests
 
     #Test 10: Sending an unrecognised record type in TLS1.2 should fail
