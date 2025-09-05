@@ -1542,12 +1542,24 @@ EOF
           my $section = $1;
           my $name = uc basename($args{src}, ".$section");
           my $pod = $gen0;
-          return <<"EOF";
+
+          if ($config{manpage_format} eq "mdoc") {
+              return <<"EOF";
+$args{src}: $pod
+	pod2mdoc -n $name -s $section\$(MANSUFFIX) \\
+		 -d \$(RELEASE_DATE) \\
+		 $pod >\$\@
+EOF
+          } elsif ($config{manpage_format} eq "roff") {
+              return <<"EOF";
 $args{src}: $pod
 	pod2man --name=$name --section=$section\$(MANSUFFIX) --center=OpenSSL \\
 		--date=\$(RELEASE_DATE) --release=\$(VERSION) \\
 		$pod >\$\@
 EOF
+          } else {
+              die "Unhandled manpage format: $config{manpage_format}";
+          }
       } elsif (platform->isdef($args{src})) {
           #
           # Linker script-ish generator
