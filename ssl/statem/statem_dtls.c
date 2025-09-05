@@ -253,7 +253,6 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
                  * so fail
                  */
                 return -1;
-            }
         }
 
         ret = dtls1_write_bytes(s, recordtype, msgstart, len,
