@@ -51,7 +51,7 @@ plan tests => $testcount;
 
 #Test 1: Check that records are acked during an uninterrupted handshake
 $proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
-$proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
+$proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256");
 TLSProxy::Message->successondata(1);
 skip "TLSProxy could not start", $testcount if !$proxy->start();
 
@@ -68,7 +68,7 @@ ok($missing_count == 0 && $expected_count == 1,
 $proxy->clear();
 my $found_first_client_finish_msg = 0;
 $proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
-$proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
+$proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256");
 $proxy->filter(\&drop_first_client_finish_filter);
 TLSProxy::Message->successondata(1);
 $proxy->start();
@@ -92,7 +92,7 @@ SKIP: {
     $proxy->filter(undef);
     $found_first_client_finish_msg = 0;
     $proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -Verify 1");
-    $proxy->clientflags("-mtu 2000 -min_protocol DTLSv1.3 -max_protocol DTLSv1.3"
+    $proxy->clientflags("-mtu 2000 -min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256"
                         ." -cert ".srctop_file("apps", "server.pem"));
     TLSProxy::Message->successondata(1);
     $proxy->start();
