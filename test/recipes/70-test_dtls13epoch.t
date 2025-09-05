@@ -30,6 +30,9 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs DTLSv1.3 enabled"
     if disabled("dtls1_3");
 
+plan skip_all => "DTLSProxy does not support partial messages"
+    if disabled("ec");
+
 $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
 
 my $proxy = TLSProxy::Proxy->new_dtls(
@@ -48,7 +51,7 @@ my $latest_epoch;
 $epoch_check_failed = 0;
 $latest_epoch = 0;
 $proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
-$proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
+$proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256");
 $proxy->filter(\&current_record_epoch_filter);
 TLSProxy::Message->successondata(1);
 skip "TLS Proxy did not start", 1 if !$proxy->start();
