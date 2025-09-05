@@ -43,7 +43,7 @@ jobs:
           mkdir -p /build/SOURCES
           tar --transform "s/^__w\/openssl\/openssl/openssl-$MAJOR.$MINOR.$PATCH/" -czf /build/SOURCES/openssl-$MAJOR.$MINOR.$PATCH.tar.gz /__w/openssl/openssl/
           rpmbuild -bb /build/SPECS/openssl.spec
-          dnf install -y /build/RPMS/x86_64/openssl-*
+          rpm -i --force /build/RPMS/x86_64/openssl-*
           cp ${GITHUB_WORKSPACE}/interop/openssl/openssl.cnf /etc/pki/tls/openssl.cnf
       - name: Run interop tests
         run: |
