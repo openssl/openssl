@@ -10,8 +10,8 @@
 #include <openssl/core_dispatch.h>
 
 /* Fake cipher provider implementation */
-OSSL_PROVIDER *fake_cipher_start(OSSL_LIB_CTX *libctx);
-void fake_cipher_finish(OSSL_PROVIDER *p);
+OSSL_PROVIDER* fake_cipher_start(OSSL_LIB_CTX* libctx);
+void fake_cipher_finish(OSSL_PROVIDER* p);
 
 #define FAKE_PROV_NAME "fake-cipher"
 #define FAKE_CIPHER_FETCH_PROPS "provider=fake-cipher"

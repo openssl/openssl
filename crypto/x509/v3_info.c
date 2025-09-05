@@ -15,62 +15,54 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
-                                                       *method, AUTHORITY_INFO_ACCESS
-                                                       *ainfo, STACK_OF(CONF_VALUE)
-                                                       *ret);
-static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
-                                                        *method,
-                                                        X509V3_CTX *ctx,
-                                                        STACK_OF(CONF_VALUE)
-                                                        *nval);
+static STACK_OF(CONF_VALUE)* i2v_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD* method, AUTHORITY_INFO_ACCESS* ainfo, STACK_OF(CONF_VALUE)* ret);
+static AUTHORITY_INFO_ACCESS* v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD* method,
+    X509V3_CTX* ctx,
+    STACK_OF(CONF_VALUE)* nval);
 
 const X509V3_EXT_METHOD ossl_v3_info = { NID_info_access, X509V3_EXT_MULTILINE,
     ASN1_ITEM_ref(AUTHORITY_INFO_ACCESS),
     0, 0, 0, 0,
     0, 0,
-    (X509V3_EXT_I2V) i2v_AUTHORITY_INFO_ACCESS,
+    (X509V3_EXT_I2V)i2v_AUTHORITY_INFO_ACCESS,
     (X509V3_EXT_V2I)v2i_AUTHORITY_INFO_ACCESS,
     0, 0,
-    NULL
-};
+    NULL };
 
 const X509V3_EXT_METHOD ossl_v3_sinfo = { NID_sinfo_access, X509V3_EXT_MULTILINE,
     ASN1_ITEM_ref(AUTHORITY_INFO_ACCESS),
     0, 0, 0, 0,
     0, 0,
-    (X509V3_EXT_I2V) i2v_AUTHORITY_INFO_ACCESS,
+    (X509V3_EXT_I2V)i2v_AUTHORITY_INFO_ACCESS,
     (X509V3_EXT_V2I)v2i_AUTHORITY_INFO_ACCESS,
     0, 0,
-    NULL
-};
+    NULL };
 
 ASN1_SEQUENCE(ACCESS_DESCRIPTION) = {
-        ASN1_SIMPLE(ACCESS_DESCRIPTION, method, ASN1_OBJECT),
-        ASN1_SIMPLE(ACCESS_DESCRIPTION, location, GENERAL_NAME)
+    ASN1_SIMPLE(ACCESS_DESCRIPTION, method, ASN1_OBJECT),
+    ASN1_SIMPLE(ACCESS_DESCRIPTION, location, GENERAL_NAME)
 } ASN1_SEQUENCE_END(ACCESS_DESCRIPTION)
 
 IMPLEMENT_ASN1_FUNCTIONS(ACCESS_DESCRIPTION)
 
-ASN1_ITEM_TEMPLATE(AUTHORITY_INFO_ACCESS) =
-        ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, GeneralNames, ACCESS_DESCRIPTION)
+ASN1_ITEM_TEMPLATE(AUTHORITY_INFO_ACCESS) = ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, GeneralNames, ACCESS_DESCRIPTION)
 ASN1_ITEM_TEMPLATE_END(AUTHORITY_INFO_ACCESS)
 
 IMPLEMENT_ASN1_FUNCTIONS(AUTHORITY_INFO_ACCESS)
 
-static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
-    X509V3_EXT_METHOD *method, AUTHORITY_INFO_ACCESS *ainfo,
-    STACK_OF(CONF_VALUE) *ret)
+static STACK_OF(CONF_VALUE)* i2v_AUTHORITY_INFO_ACCESS(
+    X509V3_EXT_METHOD* method, AUTHORITY_INFO_ACCESS* ainfo,
+    STACK_OF(CONF_VALUE)* ret)
 {
-    ACCESS_DESCRIPTION *desc;
+    ACCESS_DESCRIPTION* desc;
     int i;
     size_t nlen;
     char objtmp[80], *ntmp;
-    CONF_VALUE *vtmp;
-    STACK_OF(CONF_VALUE) *tret = ret;
+    CONF_VALUE* vtmp;
+    STACK_OF(CONF_VALUE)* tret = ret;
 
     for (i = 0; i < sk_ACCESS_DESCRIPTION_num(ainfo); i++) {
-        STACK_OF(CONF_VALUE) *tmp;
+        STACK_OF(CONF_VALUE)* tmp;
 
         desc = sk_ACCESS_DESCRIPTION_value(ainfo, i);
         tmp = i2v_GENERAL_NAME(method, desc->location, tret);
@@ -93,21 +85,19 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
         return sk_CONF_VALUE_new_null();
 
     return tret;
- err:
+err:
     if (ret == NULL && tret != NULL)
         sk_CONF_VALUE_pop_free(tret, X509V3_conf_free);
     return NULL;
 }
 
-static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
-                                                        *method,
-                                                        X509V3_CTX *ctx,
-                                                        STACK_OF(CONF_VALUE)
-                                                        *nval)
+static AUTHORITY_INFO_ACCESS* v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD* method,
+    X509V3_CTX* ctx,
+    STACK_OF(CONF_VALUE)* nval)
 {
-    AUTHORITY_INFO_ACCESS *ainfo = NULL;
+    AUTHORITY_INFO_ACCESS* ainfo = NULL;
     CONF_VALUE *cnf, ctmp;
-    ACCESS_DESCRIPTION *acc;
+    ACCESS_DESCRIPTION* acc;
     int i;
     const int num = sk_CONF_VALUE_num(nval);
     char *objtmp, *ptmp;
@@ -137,19 +127,19 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
         acc->method = OBJ_txt2obj(objtmp, 0);
         if (!acc->method) {
             ERR_raise_data(ERR_LIB_X509V3, X509V3_R_BAD_OBJECT,
-                           "value=%s", objtmp);
+                "value=%s", objtmp);
             OPENSSL_free(objtmp);
             goto err;
         }
         OPENSSL_free(objtmp);
     }
     return ainfo;
- err:
+err:
     sk_ACCESS_DESCRIPTION_pop_free(ainfo, ACCESS_DESCRIPTION_free);
     return NULL;
 }
 
-int i2a_ACCESS_DESCRIPTION(BIO *bp, const ACCESS_DESCRIPTION *a)
+int i2a_ACCESS_DESCRIPTION(BIO* bp, const ACCESS_DESCRIPTION* a)
 {
     i2a_ASN1_OBJECT(bp, a->method);
     return 2;

@@ -14,17 +14,17 @@
 
 #define binname "ca_internals_test"
 
-char *default_config_file = NULL;
+char* default_config_file = NULL;
 
 static int test_do_updatedb(void)
 {
-    CA_DB *db = NULL;
+    CA_DB* db = NULL;
     time_t testdateutc;
     int rv;
     size_t argc = test_get_argument_count();
-    BIO *bio_tmp;
-    char *testdate;
-    char *indexfile;
+    BIO* bio_tmp;
+    char* testdate;
+    char* indexfile;
     int need64bit;
     int have64bit;
 
@@ -77,7 +77,7 @@ end:
 
 int setup_tests(void)
 {
-    char *command = test_get_argument(0);
+    char* command = test_get_argument(0);
 
     if (test_get_argument_count() < 1) {
         TEST_error("%s: no command specified for testing\n", binname);
@@ -90,4 +90,3 @@ int setup_tests(void)
     TEST_error("%s: command '%s' is not supported for testing\n", binname, command);
     return 0;
 }
-

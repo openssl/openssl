@@ -12,10 +12,10 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
-                               BIT_STRING_BITNAME *tbl, int indent)
+int ASN1_BIT_STRING_name_print(BIO* out, ASN1_BIT_STRING* bs,
+    BIT_STRING_BITNAME* tbl, int indent)
 {
-    BIT_STRING_BITNAME *bnam;
+    BIT_STRING_BITNAME* bnam;
     char first = 1;
     int last_seen_bit = -1;
 
@@ -41,8 +41,8 @@ int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
     return 1;
 }
 
-int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
-                            BIT_STRING_BITNAME *tbl)
+int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING* bs, const char* name, int value,
+    BIT_STRING_BITNAME* tbl)
 {
     int bitnum;
     bitnum = ASN1_BIT_STRING_num_asc(name, tbl);
@@ -55,9 +55,9 @@ int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
     return 1;
 }
 
-int ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl)
+int ASN1_BIT_STRING_num_asc(const char* name, BIT_STRING_BITNAME* tbl)
 {
-    BIT_STRING_BITNAME *bnam;
+    BIT_STRING_BITNAME* bnam;
     for (bnam = tbl; bnam->lname; bnam++) {
         if ((strcmp(bnam->sname, name) == 0)
             || (strcmp(bnam->lname, name) == 0))

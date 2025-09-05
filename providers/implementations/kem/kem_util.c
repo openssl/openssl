@@ -14,7 +14,7 @@
 
 typedef struct {
     unsigned int id;
-    const char *mode;
+    const char* mode;
 } KEM_MODE;
 
 static const KEM_MODE eckem_modename_id_map[] = {
@@ -22,7 +22,7 @@ static const KEM_MODE eckem_modename_id_map[] = {
     { 0, NULL }
 };
 
-int ossl_eckem_modename2id(const char *name)
+int ossl_eckem_modename2id(const char* name)
 {
     size_t i;
 

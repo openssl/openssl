@@ -17,8 +17,8 @@
 #include "err_local.h"
 
 #define ERR_PRINT_BUF_SIZE 4096
-void ERR_print_errors_cb(int (*cb) (const char *str, size_t len, void *u),
-                         void *u)
+void ERR_print_errors_cb(int (*cb)(const char* str, size_t len, void* u),
+    void* u)
 {
     CRYPTO_THREAD_ID tid = CRYPTO_THREAD_get_current_id();
     unsigned long l;
@@ -27,28 +27,28 @@ void ERR_print_errors_cb(int (*cb) (const char *str, size_t len, void *u),
 
     while ((l = ERR_get_error_all(&file, &line, &func, &data, &flags)) != 0) {
         char buf[ERR_PRINT_BUF_SIZE] = "";
-        char *hex = NULL;
+        char* hex = NULL;
         int offset;
 
         if ((flags & ERR_TXT_STRING) == 0)
             data = "";
 
-        hex = ossl_buf2hexstr_sep((const unsigned char *)&tid, sizeof(tid), '\0');
+        hex = ossl_buf2hexstr_sep((const unsigned char*)&tid, sizeof(tid), '\0');
         BIO_snprintf(buf, sizeof(buf), "%s:", hex == NULL ? "<null>" : hex);
         offset = (int)strlen(buf);
         ossl_err_string_int(l, func, buf + offset, sizeof(buf) - offset);
         offset += (int)strlen(buf + offset);
         BIO_snprintf(buf + offset, sizeof(buf) - offset, ":%s:%d:%s\n",
-                     file, line, data);
+            file, line, data);
         OPENSSL_free(hex);
         if (cb(buf, strlen(buf), u) <= 0)
-            break;              /* abort outputting the error report */
+            break; /* abort outputting the error report */
     }
 }
 
 /* auxiliary function for incrementally reporting texts via the error queue */
-static void put_error(int lib, const char *func, int reason,
-                      const char *file, int line)
+static void put_error(int lib, const char* func, int reason,
+    const char* file, int line)
 {
     ERR_new();
     ERR_set_debug(file, line, func);
@@ -57,12 +57,12 @@ static void put_error(int lib, const char *func, int reason,
 
 #define TYPICAL_MAX_OUTPUT_BEFORE_DATA 100
 #define MAX_DATA_LEN (ERR_PRINT_BUF_SIZE - TYPICAL_MAX_OUTPUT_BEFORE_DATA)
-void ERR_add_error_txt(const char *separator, const char *txt)
+void ERR_add_error_txt(const char* separator, const char* txt)
 {
-    const char *file = NULL;
+    const char* file = NULL;
     int line;
-    const char *func = NULL;
-    const char *data = NULL;
+    const char* func = NULL;
+    const char* data = NULL;
     int flags;
     unsigned long err = ERR_peek_last_error();
 
@@ -74,9 +74,9 @@ void ERR_add_error_txt(const char *separator, const char *txt)
     do {
         size_t available_len, data_len;
         const char *curr = txt, *next = txt;
-        const char *leading_separator = separator;
+        const char* leading_separator = separator;
         int trailing_separator = 0;
-        char *tmp;
+        char* tmp;
 
         ERR_peek_last_error_all(&file, &line, &func, &data, &flags);
         if ((flags & ERR_TXT_STRING) == 0) {
@@ -87,7 +87,7 @@ void ERR_add_error_txt(const char *separator, const char *txt)
 
         /* workaround for limit of ERR_print_errors_cb() */
         if (data_len >= MAX_DATA_LEN
-                || strlen(separator) >= (size_t)(MAX_DATA_LEN - data_len))
+            || strlen(separator) >= (size_t)(MAX_DATA_LEN - data_len))
             available_len = 0;
         else
             available_len = MAX_DATA_LEN - data_len - strlen(separator) - 1;
@@ -144,10 +144,10 @@ void ERR_add_error_txt(const char *separator, const char *txt)
     } while (*txt != '\0');
 }
 
-void ERR_add_error_mem_bio(const char *separator, BIO *bio)
+void ERR_add_error_mem_bio(const char* separator, BIO* bio)
 {
     if (bio != NULL) {
-        char *str;
+        char* str;
         long len = BIO_get_mem_data(bio, &str);
 
         if (len > 0) {
@@ -163,20 +163,20 @@ void ERR_add_error_mem_bio(const char *separator, BIO *bio)
     }
 }
 
-static int print_bio(const char *str, size_t len, void *bp)
+static int print_bio(const char* str, size_t len, void* bp)
 {
-    return BIO_write((BIO *)bp, str, (int)len);
+    return BIO_write((BIO*)bp, str, (int)len);
 }
 
-void ERR_print_errors(BIO *bp)
+void ERR_print_errors(BIO* bp)
 {
     ERR_print_errors_cb(print_bio, bp);
 }
 
 #ifndef OPENSSL_NO_STDIO
-void ERR_print_errors_fp(FILE *fp)
+void ERR_print_errors_fp(FILE* fp)
 {
-    BIO *bio = BIO_new_fp(fp, BIO_NOCLOSE);
+    BIO* bio = BIO_new_fp(fp, BIO_NOCLOSE);
     if (bio == NULL)
         return;
 

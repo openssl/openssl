@@ -16,19 +16,19 @@
 #include "des_local.h"
 
 #ifdef CBC_ENC_C__DONT_UPDATE_IV
-void DES_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
-                     DES_key_schedule *_schedule, DES_cblock *ivec, int enc)
+void DES_cbc_encrypt(const unsigned char* in, unsigned char* out, long length,
+    DES_key_schedule* _schedule, DES_cblock* ivec, int enc)
 #else
-void DES_ncbc_encrypt(const unsigned char *in, unsigned char *out,
-                      long length, DES_key_schedule *_schedule,
-                      DES_cblock *ivec, int enc)
+void DES_ncbc_encrypt(const unsigned char* in, unsigned char* out,
+    long length, DES_key_schedule* _schedule,
+    DES_cblock* ivec, int enc)
 #endif
 {
     register DES_LONG tin0, tin1;
     register DES_LONG tout0, tout1, xor0, xor1;
     register long l = length;
     DES_LONG tin[2];
-    unsigned char *iv;
+    unsigned char* iv;
 
     iv = &(*ivec)[0];
 
@@ -42,7 +42,7 @@ void DES_ncbc_encrypt(const unsigned char *in, unsigned char *out,
             tin[0] = tin0;
             tin1 ^= tout1;
             tin[1] = tin1;
-            DES_encrypt1((DES_LONG *)tin, _schedule, DES_ENCRYPT);
+            DES_encrypt1((DES_LONG*)tin, _schedule, DES_ENCRYPT);
             tout0 = tin[0];
             l2c(tout0, out);
             tout1 = tin[1];
@@ -54,7 +54,7 @@ void DES_ncbc_encrypt(const unsigned char *in, unsigned char *out,
             tin[0] = tin0;
             tin1 ^= tout1;
             tin[1] = tin1;
-            DES_encrypt1((DES_LONG *)tin, _schedule, DES_ENCRYPT);
+            DES_encrypt1((DES_LONG*)tin, _schedule, DES_ENCRYPT);
             tout0 = tin[0];
             l2c(tout0, out);
             tout1 = tin[1];
@@ -73,7 +73,7 @@ void DES_ncbc_encrypt(const unsigned char *in, unsigned char *out,
             tin[0] = tin0;
             c2l(in, tin1);
             tin[1] = tin1;
-            DES_encrypt1((DES_LONG *)tin, _schedule, DES_DECRYPT);
+            DES_encrypt1((DES_LONG*)tin, _schedule, DES_DECRYPT);
             tout0 = tin[0] ^ xor0;
             tout1 = tin[1] ^ xor1;
             l2c(tout0, out);
@@ -86,7 +86,7 @@ void DES_ncbc_encrypt(const unsigned char *in, unsigned char *out,
             tin[0] = tin0;
             c2l(in, tin1);
             tin[1] = tin1;
-            DES_encrypt1((DES_LONG *)tin, _schedule, DES_DECRYPT);
+            DES_encrypt1((DES_LONG*)tin, _schedule, DES_DECRYPT);
             tout0 = tin[0] ^ xor0;
             tout1 = tin[1] ^ xor1;
             l2cn(tout0, tout1, out, l + 8);

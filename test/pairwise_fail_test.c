@@ -23,53 +23,53 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 struct self_test_arg {
-    const char *type;
+    const char* type;
 };
 
-static OSSL_LIB_CTX *libctx = NULL;
-static char *pairwise_name = NULL;
-static char *dsaparam_file = NULL;
+static OSSL_LIB_CTX* libctx = NULL;
+static char* pairwise_name = NULL;
+static char* dsaparam_file = NULL;
 static struct self_test_arg self_test_args = { 0 };
 
-const OPTIONS *test_get_options(void)
+const OPTIONS* test_get_options(void)
 {
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "config", OPT_CONFIG_FILE, '<',
-          "The configuration file to use for the libctx" },
+            "The configuration file to use for the libctx" },
         { "pairwise", OPT_PAIRWISETEST, 's',
-          "Test keygen pairwise test failures" },
+            "Test keygen pairwise test failures" },
         { "dsaparam", OPT_DSAPARAM, 's', "DSA param file" },
         { NULL }
     };
     return test_options;
 }
 
-static int self_test_on_pairwise_fail(const OSSL_PARAM params[], void *arg)
+static int self_test_on_pairwise_fail(const OSSL_PARAM params[], void* arg)
 {
-    struct self_test_arg *args = arg;
-    const OSSL_PARAM *p = NULL;
+    struct self_test_arg* args = arg;
+    const OSSL_PARAM* p = NULL;
     const char *type = NULL, *phase = NULL;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_PHASE);
     if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
         return 0;
-    phase = (const char *)p->data;
+    phase = (const char*)p->data;
     if (strcmp(phase, OSSL_SELF_TEST_PHASE_CORRUPT) == 0) {
         p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_TYPE);
         if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        type = (const char *)p->data;
+        type = (const char*)p->data;
         if (strcmp(type, args->type) == 0)
             return 0;
     }
     return 1;
 }
 
-static int setup_selftest_pairwise_failure(const char *type)
+static int setup_selftest_pairwise_failure(const char* type)
 {
     int ret = 0;
-    OSSL_PROVIDER *prov = NULL;
+    OSSL_PROVIDER* prov = NULL;
 
     if (!TEST_ptr(prov = OSSL_PROVIDER_load(libctx, "fips")))
         goto err;
@@ -86,11 +86,11 @@ err:
 
 static int test_keygen_pairwise_failure(void)
 {
-    BIO *bio = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
-    EVP_PKEY *pParams = NULL;
-    EVP_PKEY *pkey = NULL;
-    const char *type = OSSL_SELF_TEST_TYPE_PCT;
+    BIO* bio = NULL;
+    EVP_PKEY_CTX* ctx = NULL;
+    EVP_PKEY* pParams = NULL;
+    EVP_PKEY* pkey = NULL;
+    const char* type = OSSL_SELF_TEST_TYPE_PCT;
     int ret = 0;
 
     if (strcmp(pairwise_name, "rsa") == 0) {
@@ -179,7 +179,7 @@ err:
 int setup_tests(void)
 {
     OPTION_CHOICE o;
-    char *config_file = NULL;
+    char* config_file = NULL;
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -193,7 +193,7 @@ int setup_tests(void)
             dsaparam_file = opt_arg();
             break;
         case OPT_TEST_CASES:
-           break;
+            break;
         default:
         case OPT_ERR:
             return 0;

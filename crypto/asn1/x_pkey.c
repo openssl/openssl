@@ -13,9 +13,9 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-X509_PKEY *X509_PKEY_new(void)
+X509_PKEY* X509_PKEY_new(void)
 {
-    X509_PKEY *ret = NULL;
+    X509_PKEY* ret = NULL;
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL)
@@ -32,7 +32,7 @@ X509_PKEY *X509_PKEY_new(void)
     return ret;
 }
 
-void X509_PKEY_free(X509_PKEY *x)
+void X509_PKEY_free(X509_PKEY* x)
 {
     if (x == NULL)
         return;

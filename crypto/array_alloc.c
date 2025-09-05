@@ -15,7 +15,7 @@
 #include "internal/mem_alloc_utils.h"
 #include <openssl/crypto.h>
 
-void *CRYPTO_malloc_array(size_t num, size_t size, const char *file, int line)
+void* CRYPTO_malloc_array(size_t num, size_t size, const char* file, int line)
 {
     size_t bytes;
 
@@ -25,7 +25,7 @@ void *CRYPTO_malloc_array(size_t num, size_t size, const char *file, int line)
     return CRYPTO_malloc(bytes, file, line);
 }
 
-void *CRYPTO_calloc(size_t num, size_t size, const char *file, int line)
+void* CRYPTO_calloc(size_t num, size_t size, const char* file, int line)
 {
     size_t bytes;
 
@@ -35,8 +35,8 @@ void *CRYPTO_calloc(size_t num, size_t size, const char *file, int line)
     return CRYPTO_zalloc(bytes, file, line);
 }
 
-void *CRYPTO_aligned_alloc_array(size_t num, size_t size, size_t align,
-                                 void **freeptr, const char *file, int line)
+void* CRYPTO_aligned_alloc_array(size_t num, size_t size, size_t align,
+    void** freeptr, const char* file, int line)
 {
     size_t bytes;
 
@@ -49,8 +49,8 @@ void *CRYPTO_aligned_alloc_array(size_t num, size_t size, size_t align,
     return CRYPTO_aligned_alloc(bytes, align, freeptr, file, line);
 }
 
-void *CRYPTO_realloc_array(void *addr, size_t num, size_t size,
-                           const char *file, int line)
+void* CRYPTO_realloc_array(void* addr, size_t num, size_t size,
+    const char* file, int line)
 {
     size_t bytes;
 
@@ -60,20 +60,20 @@ void *CRYPTO_realloc_array(void *addr, size_t num, size_t size,
     return CRYPTO_realloc(addr, bytes, file, line);
 }
 
-void *CRYPTO_clear_realloc_array(void *addr, size_t old_num, size_t num,
-                                 size_t size, const char *file, int line)
+void* CRYPTO_clear_realloc_array(void* addr, size_t old_num, size_t num,
+    size_t size, const char* file, int line)
 {
     size_t old_bytes, bytes = 0;
 
     if (ossl_unlikely(!ossl_size_mul(old_num, size, &old_bytes, file, line)
-                      || !ossl_size_mul(num, size, &bytes, file, line)))
+            || !ossl_size_mul(num, size, &bytes, file, line)))
         return NULL;
 
     return CRYPTO_clear_realloc(addr, old_bytes, bytes, file, line);
 }
 
-void *CRYPTO_secure_malloc_array(size_t num, size_t size,
-                                 const char *file, int line)
+void* CRYPTO_secure_malloc_array(size_t num, size_t size,
+    const char* file, int line)
 {
     size_t bytes;
 
@@ -83,7 +83,7 @@ void *CRYPTO_secure_malloc_array(size_t num, size_t size,
     return CRYPTO_secure_malloc(bytes, file, line);
 }
 
-void *CRYPTO_secure_calloc(size_t num, size_t size, const char *file, int line)
+void* CRYPTO_secure_calloc(size_t num, size_t size, const char* file, int line)
 {
     size_t bytes;
 

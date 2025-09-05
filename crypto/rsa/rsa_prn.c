@@ -19,9 +19,9 @@
 #include <openssl/evp.h>
 
 #ifndef OPENSSL_NO_STDIO
-int RSA_print_fp(FILE *fp, const RSA *x, int off)
+int RSA_print_fp(FILE* fp, const RSA* x, int off)
 {
-    BIO *b;
+    BIO* b;
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
@@ -35,14 +35,14 @@ int RSA_print_fp(FILE *fp, const RSA *x, int off)
 }
 #endif
 
-int RSA_print(BIO *bp, const RSA *x, int off)
+int RSA_print(BIO* bp, const RSA* x, int off)
 {
-    EVP_PKEY *pk;
+    EVP_PKEY* pk;
     int ret;
     pk = EVP_PKEY_new();
     if (pk == NULL)
         return 0;
-    ret = EVP_PKEY_set1_RSA(pk, (RSA *)x);
+    ret = EVP_PKEY_set1_RSA(pk, (RSA*)x);
     if (ret)
         ret = EVP_PKEY_print_private(bp, pk, off, NULL);
     EVP_PKEY_free(pk);

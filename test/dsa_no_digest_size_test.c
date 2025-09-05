@@ -25,13 +25,13 @@
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 
-static DSA *dsakey;
+static DSA* dsakey;
 
 /*
  * These parameters are from test/recipes/04-test_pem_data/dsaparam.pem,
  * converted using dsaparam -C
  */
-static DSA *load_dsa_params(void)
+static DSA* load_dsa_params(void)
 {
     static unsigned char dsap_2048[] = {
         0xAE, 0x35, 0x7D, 0x4E, 0x1D, 0x96, 0xE2, 0x9F, 0x00, 0x96,
@@ -95,14 +95,14 @@ static DSA *load_dsa_params(void)
         0x7D, 0xDA, 0x66, 0xC9, 0xC0, 0x72, 0x72, 0x22, 0x0F, 0x1A,
         0xCC, 0x23, 0xD9, 0xB7, 0x5F, 0x1B
     };
-    DSA *dsa = DSA_new();
+    DSA* dsa = DSA_new();
     BIGNUM *p, *q, *g;
 
     if (dsa == NULL)
         return NULL;
     if (!DSA_set0_pqg(dsa, p = BN_bin2bn(dsap_2048, sizeof(dsap_2048), NULL),
-                           q = BN_bin2bn(dsaq_2048, sizeof(dsaq_2048), NULL),
-                           g = BN_bin2bn(dsag_2048, sizeof(dsag_2048), NULL))) {
+            q = BN_bin2bn(dsaq_2048, sizeof(dsaq_2048), NULL),
+            g = BN_bin2bn(dsag_2048, sizeof(dsag_2048), NULL))) {
         DSA_free(dsa);
         BN_free(p);
         BN_free(q);
@@ -134,15 +134,13 @@ static int sign_and_verify(int len)
     int digestlen = BN_num_bytes(DSA_get0_q(dsakey));
     int ok = 0;
 
-    unsigned char *dataToSign = OPENSSL_malloc(len);
-    unsigned char *paddedData = OPENSSL_malloc(digestlen);
-    unsigned char *signature = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
-    EVP_PKEY *pkey = NULL;
+    unsigned char* dataToSign = OPENSSL_malloc(len);
+    unsigned char* paddedData = OPENSSL_malloc(digestlen);
+    unsigned char* signature = NULL;
+    EVP_PKEY_CTX* ctx = NULL;
+    EVP_PKEY* pkey = NULL;
 
-    if (!TEST_ptr(dataToSign) ||
-        !TEST_ptr(paddedData) ||
-        !TEST_int_eq(RAND_bytes(dataToSign, len), 1))
+    if (!TEST_ptr(dataToSign) || !TEST_ptr(paddedData) || !TEST_int_eq(RAND_bytes(dataToSign, len), 1))
         goto end;
 
     memset(paddedData, 0, digestlen);
@@ -212,7 +210,8 @@ end:
     return ok;
 }
 
-static int dsa_exact_size_test(void) {
+static int dsa_exact_size_test(void)
+{
     /*
      * For a 2048-bit p, q should be either 224 or 256 bits per the table in
      * FIPS 186-4 4.2.
@@ -221,11 +220,13 @@ static int dsa_exact_size_test(void) {
     return sign_and_verify(224 / 8) && sign_and_verify(256 / 8);
 }
 
-static int dsa_small_digest_test(void) {
+static int dsa_small_digest_test(void)
+{
     return sign_and_verify(16) && sign_and_verify(1);
 }
 
-static int dsa_large_digest_test(void) {
+static int dsa_large_digest_test(void)
+{
     return sign_and_verify(33) && sign_and_verify(64);
 }
 
@@ -248,4 +249,3 @@ int setup_tests(void)
 #endif
     return 1;
 }
-

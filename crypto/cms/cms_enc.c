@@ -22,24 +22,24 @@
 
 /* Return BIO based on EncryptedContentInfo and key */
 
-BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
-                                        const CMS_CTX *cms_ctx)
+BIO* ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo* ec,
+    const CMS_CTX* cms_ctx)
 {
-    BIO *b;
-    EVP_CIPHER_CTX *ctx;
-    EVP_CIPHER *fetched_ciph = NULL;
-    const EVP_CIPHER *cipher = NULL;
-    X509_ALGOR *calg = ec->contentEncryptionAlgorithm;
+    BIO* b;
+    EVP_CIPHER_CTX* ctx;
+    EVP_CIPHER* fetched_ciph = NULL;
+    const EVP_CIPHER* cipher = NULL;
+    X509_ALGOR* calg = ec->contentEncryptionAlgorithm;
     evp_cipher_aead_asn1_params aparams;
     unsigned char iv[EVP_MAX_IV_LENGTH], *piv = NULL;
-    unsigned char *tkey = NULL;
+    unsigned char* tkey = NULL;
     int len;
     int ivlen = 0;
     size_t tkeylen = 0;
     int ok = 0;
     int enc, keep_key = 0;
-    OSSL_LIB_CTX *libctx = ossl_cms_ctx_get0_libctx(cms_ctx);
-    const char *propq = ossl_cms_ctx_get0_propq(cms_ctx);
+    OSSL_LIB_CTX* libctx = ossl_cms_ctx_get0_libctx(cms_ctx);
+    const char* propq = ossl_cms_ctx_get0_propq(cms_ctx);
 
     enc = ec->cipher ? 1 : 0;
 
@@ -64,7 +64,7 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     }
     if (cipher != NULL) {
         fetched_ciph = EVP_CIPHER_fetch(libctx, EVP_CIPHER_get0_name(cipher),
-                                        propq);
+            propq);
         if (fetched_ciph != NULL)
             cipher = fetched_ciph;
     }
@@ -106,8 +106,9 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
         if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
             piv = aparams.iv;
             if (ec->taglen > 0
-                    && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                           (int)ec->taglen, ec->tag) <= 0) {
+                && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                       (int)ec->taglen, ec->tag)
+                    <= 0) {
                 ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_AEAD_SET_TAG_ERROR);
                 goto err;
             }
@@ -135,7 +136,6 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
             keep_key = 1;
         else
             ERR_clear_error();
-
     }
 
     if (ec->keylen != tkeylen) {
@@ -189,7 +189,7 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     }
     ok = 1;
 
- err:
+err:
     EVP_CIPHER_free(fetched_ciph);
     if (!keep_key || !ok) {
         OPENSSL_clear_free(ec->key, ec->keylen);
@@ -202,10 +202,10 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     return NULL;
 }
 
-int ossl_cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
-                                   const EVP_CIPHER *cipher,
-                                   const unsigned char *key, size_t keylen,
-                                   const CMS_CTX *cms_ctx)
+int ossl_cms_EncryptedContent_init(CMS_EncryptedContentInfo* ec,
+    const EVP_CIPHER* cipher,
+    const unsigned char* key, size_t keylen,
+    const CMS_CTX* cms_ctx)
 {
     ec->cipher = cipher;
     if (key) {
@@ -219,10 +219,10 @@ int ossl_cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
     return 1;
 }
 
-int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
-                               const unsigned char *key, size_t keylen)
+int CMS_EncryptedData_set1_key(CMS_ContentInfo* cms, const EVP_CIPHER* ciph,
+    const unsigned char* key, size_t keylen)
 {
-    CMS_EncryptedContentInfo *ec;
+    CMS_EncryptedContentInfo* ec;
 
     if (!key || !keylen) {
         ERR_raise(ERR_LIB_CMS, CMS_R_NO_KEY);
@@ -242,14 +242,14 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
     }
     ec = cms->d.encryptedData->encryptedContentInfo;
     return ossl_cms_EncryptedContent_init(ec, ciph, key, keylen,
-                                          ossl_cms_get0_cmsctx(cms));
+        ossl_cms_get0_cmsctx(cms));
 }
 
-BIO *ossl_cms_EncryptedData_init_bio(const CMS_ContentInfo *cms)
+BIO* ossl_cms_EncryptedData_init_bio(const CMS_ContentInfo* cms)
 {
-    CMS_EncryptedData *enc = cms->d.encryptedData;
+    CMS_EncryptedData* enc = cms->d.encryptedData;
     if (enc->encryptedContentInfo->cipher && enc->unprotectedAttrs)
         enc->version = 2;
     return ossl_cms_EncryptedContent_init_bio(enc->encryptedContentInfo,
-                                              ossl_cms_get0_cmsctx(cms));
+        ossl_cms_get0_cmsctx(cms));
 }

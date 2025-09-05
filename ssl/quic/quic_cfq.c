@@ -13,55 +13,55 @@
 typedef struct quic_cfq_item_ex_st QUIC_CFQ_ITEM_EX;
 
 struct quic_cfq_item_ex_st {
-    QUIC_CFQ_ITEM           public;
-    QUIC_CFQ_ITEM_EX       *prev, *next;
-    unsigned char          *encoded;
-    cfq_free_cb            *free_cb;
-    void                   *free_cb_arg;
-    uint64_t                frame_type;
-    size_t                  encoded_len;
-    uint32_t                priority, pn_space, flags;
-    int                     state;
+    QUIC_CFQ_ITEM public;
+    QUIC_CFQ_ITEM_EX *prev, *next;
+    unsigned char* encoded;
+    cfq_free_cb* free_cb;
+    void* free_cb_arg;
+    uint64_t frame_type;
+    size_t encoded_len;
+    uint32_t priority, pn_space, flags;
+    int state;
 };
 
-uint64_t ossl_quic_cfq_item_get_frame_type(const QUIC_CFQ_ITEM *item)
+uint64_t ossl_quic_cfq_item_get_frame_type(const QUIC_CFQ_ITEM* item)
 {
-    QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
+    QUIC_CFQ_ITEM_EX* ex = (QUIC_CFQ_ITEM_EX*)item;
 
     return ex->frame_type;
 }
 
-const unsigned char *ossl_quic_cfq_item_get_encoded(const QUIC_CFQ_ITEM *item)
+const unsigned char* ossl_quic_cfq_item_get_encoded(const QUIC_CFQ_ITEM* item)
 {
-    QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
+    QUIC_CFQ_ITEM_EX* ex = (QUIC_CFQ_ITEM_EX*)item;
 
     return ex->encoded;
 }
 
-size_t ossl_quic_cfq_item_get_encoded_len(const QUIC_CFQ_ITEM *item)
+size_t ossl_quic_cfq_item_get_encoded_len(const QUIC_CFQ_ITEM* item)
 {
-    QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
+    QUIC_CFQ_ITEM_EX* ex = (QUIC_CFQ_ITEM_EX*)item;
 
     return ex->encoded_len;
 }
 
-int ossl_quic_cfq_item_get_state(const QUIC_CFQ_ITEM *item)
+int ossl_quic_cfq_item_get_state(const QUIC_CFQ_ITEM* item)
 {
-    QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
+    QUIC_CFQ_ITEM_EX* ex = (QUIC_CFQ_ITEM_EX*)item;
 
     return ex->state;
 }
 
-uint32_t ossl_quic_cfq_item_get_pn_space(const QUIC_CFQ_ITEM *item)
+uint32_t ossl_quic_cfq_item_get_pn_space(const QUIC_CFQ_ITEM* item)
 {
-    QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
+    QUIC_CFQ_ITEM_EX* ex = (QUIC_CFQ_ITEM_EX*)item;
 
     return ex->pn_space;
 }
 
-int ossl_quic_cfq_item_is_unreliable(const QUIC_CFQ_ITEM *item)
+int ossl_quic_cfq_item_is_unreliable(const QUIC_CFQ_ITEM* item)
 {
-    QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
+    QUIC_CFQ_ITEM_EX* ex = (QUIC_CFQ_ITEM_EX*)item;
 
     return (ex->flags & QUIC_CFQ_ITEM_FLAG_UNRELIABLE) != 0;
 }
@@ -78,10 +78,10 @@ struct quic_cfq_st {
      * Invariant: The list the CFQ item is determined exactly by the state field
      * of the item.
      */
-    QUIC_CFQ_ITEM_LIST                      new_list, tx_list, free_list;
+    QUIC_CFQ_ITEM_LIST new_list, tx_list, free_list;
 };
 
-static int compare(const QUIC_CFQ_ITEM_EX *a, const QUIC_CFQ_ITEM_EX *b)
+static int compare(const QUIC_CFQ_ITEM_EX* a, const QUIC_CFQ_ITEM_EX* b)
 {
     if (a->pn_space < b->pn_space)
         return -1;
@@ -96,7 +96,7 @@ static int compare(const QUIC_CFQ_ITEM_EX *a, const QUIC_CFQ_ITEM_EX *b)
     return 0;
 }
 
-static void list_remove(QUIC_CFQ_ITEM_LIST *l, QUIC_CFQ_ITEM_EX *n)
+static void list_remove(QUIC_CFQ_ITEM_LIST* l, QUIC_CFQ_ITEM_EX* n)
 {
     if (l->head == n)
         l->head = n->next;
@@ -109,7 +109,7 @@ static void list_remove(QUIC_CFQ_ITEM_LIST *l, QUIC_CFQ_ITEM_EX *n)
     n->prev = n->next = NULL;
 }
 
-static void list_insert_head(QUIC_CFQ_ITEM_LIST *l, QUIC_CFQ_ITEM_EX *n)
+static void list_insert_head(QUIC_CFQ_ITEM_LIST* l, QUIC_CFQ_ITEM_EX* n)
 {
     n->next = l->head;
     n->prev = NULL;
@@ -120,7 +120,7 @@ static void list_insert_head(QUIC_CFQ_ITEM_LIST *l, QUIC_CFQ_ITEM_EX *n)
         l->tail = n;
 }
 
-static void list_insert_tail(QUIC_CFQ_ITEM_LIST *l, QUIC_CFQ_ITEM_EX *n)
+static void list_insert_tail(QUIC_CFQ_ITEM_LIST* l, QUIC_CFQ_ITEM_EX* n)
 {
     n->prev = l->tail;
     n->next = NULL;
@@ -131,9 +131,9 @@ static void list_insert_tail(QUIC_CFQ_ITEM_LIST *l, QUIC_CFQ_ITEM_EX *n)
         l->head = n;
 }
 
-static void list_insert_after(QUIC_CFQ_ITEM_LIST *l,
-                              QUIC_CFQ_ITEM_EX *ref,
-                              QUIC_CFQ_ITEM_EX *n)
+static void list_insert_after(QUIC_CFQ_ITEM_LIST* l,
+    QUIC_CFQ_ITEM_EX* ref,
+    QUIC_CFQ_ITEM_EX* n)
 {
     n->prev = ref;
     n->next = ref->next;
@@ -144,9 +144,9 @@ static void list_insert_after(QUIC_CFQ_ITEM_LIST *l,
         l->tail = n;
 }
 
-static void list_insert_sorted(QUIC_CFQ_ITEM_LIST *l, QUIC_CFQ_ITEM_EX *n,
-                               int (*cmp)(const QUIC_CFQ_ITEM_EX *a,
-                                          const QUIC_CFQ_ITEM_EX *b))
+static void list_insert_sorted(QUIC_CFQ_ITEM_LIST* l, QUIC_CFQ_ITEM_EX* n,
+    int (*cmp)(const QUIC_CFQ_ITEM_EX* a,
+        const QUIC_CFQ_ITEM_EX* b))
 {
     QUIC_CFQ_ITEM_EX *p = l->head, *pprev = NULL;
 
@@ -156,7 +156,8 @@ static void list_insert_sorted(QUIC_CFQ_ITEM_LIST *l, QUIC_CFQ_ITEM_EX *n,
         return;
     }
 
-    for (; p != NULL && cmp(p, n) < 0; pprev = p, p = p->next);
+    for (; p != NULL && cmp(p, n) < 0; pprev = p, p = p->next)
+        ;
 
     if (p == NULL)
         list_insert_tail(l, n);
@@ -166,9 +167,9 @@ static void list_insert_sorted(QUIC_CFQ_ITEM_LIST *l, QUIC_CFQ_ITEM_EX *n,
         list_insert_after(l, pprev, n);
 }
 
-QUIC_CFQ *ossl_quic_cfq_new(void)
+QUIC_CFQ* ossl_quic_cfq_new(void)
 {
-    QUIC_CFQ *cfq = OPENSSL_zalloc(sizeof(*cfq));
+    QUIC_CFQ* cfq = OPENSSL_zalloc(sizeof(*cfq));
 
     if (cfq == NULL)
         return NULL;
@@ -176,20 +177,20 @@ QUIC_CFQ *ossl_quic_cfq_new(void)
     return cfq;
 }
 
-static void clear_item(QUIC_CFQ_ITEM_EX *item)
+static void clear_item(QUIC_CFQ_ITEM_EX* item)
 {
     if (item->free_cb != NULL) {
         item->free_cb(item->encoded, item->encoded_len, item->free_cb_arg);
 
-        item->free_cb       = NULL;
-        item->encoded       = NULL;
-        item->encoded_len   = 0;
+        item->free_cb = NULL;
+        item->encoded = NULL;
+        item->encoded_len = 0;
     }
 
     item->state = -1;
 }
 
-static void free_list_items(QUIC_CFQ_ITEM_LIST *l)
+static void free_list_items(QUIC_CFQ_ITEM_LIST* l)
 {
     QUIC_CFQ_ITEM_EX *p, *pnext;
 
@@ -200,7 +201,7 @@ static void free_list_items(QUIC_CFQ_ITEM_LIST *l)
     }
 }
 
-void ossl_quic_cfq_free(QUIC_CFQ *cfq)
+void ossl_quic_cfq_free(QUIC_CFQ* cfq)
 {
     if (cfq == NULL)
         return;
@@ -211,9 +212,9 @@ void ossl_quic_cfq_free(QUIC_CFQ *cfq)
     OPENSSL_free(cfq);
 }
 
-static QUIC_CFQ_ITEM_EX *cfq_get_free(QUIC_CFQ *cfq)
+static QUIC_CFQ_ITEM_EX* cfq_get_free(QUIC_CFQ* cfq)
 {
-    QUIC_CFQ_ITEM_EX *item = cfq->free_list.head;
+    QUIC_CFQ_ITEM_EX* item = cfq->free_list.head;
 
     if (item != NULL)
         return item;
@@ -227,28 +228,28 @@ static QUIC_CFQ_ITEM_EX *cfq_get_free(QUIC_CFQ *cfq)
     return item;
 }
 
-QUIC_CFQ_ITEM *ossl_quic_cfq_add_frame(QUIC_CFQ            *cfq,
-                                       uint32_t             priority,
-                                       uint32_t             pn_space,
-                                       uint64_t             frame_type,
-                                       uint32_t             flags,
-                                       const unsigned char *encoded,
-                                       size_t               encoded_len,
-                                       cfq_free_cb         *free_cb,
-                                       void                *free_cb_arg)
+QUIC_CFQ_ITEM* ossl_quic_cfq_add_frame(QUIC_CFQ* cfq,
+    uint32_t priority,
+    uint32_t pn_space,
+    uint64_t frame_type,
+    uint32_t flags,
+    const unsigned char* encoded,
+    size_t encoded_len,
+    cfq_free_cb* free_cb,
+    void* free_cb_arg)
 {
-    QUIC_CFQ_ITEM_EX *item = cfq_get_free(cfq);
+    QUIC_CFQ_ITEM_EX* item = cfq_get_free(cfq);
 
     if (item == NULL)
         return NULL;
 
-    item->priority      = priority;
-    item->frame_type    = frame_type;
-    item->pn_space      = pn_space;
-    item->encoded       = (unsigned char *)encoded;
-    item->encoded_len   = encoded_len;
-    item->free_cb       = free_cb;
-    item->free_cb_arg   = free_cb_arg;
+    item->priority = priority;
+    item->frame_type = frame_type;
+    item->pn_space = pn_space;
+    item->encoded = (unsigned char*)encoded;
+    item->encoded_len = encoded_len;
+    item->free_cb = free_cb;
+    item->free_cb_arg = free_cb_arg;
 
     item->state = QUIC_CFQ_STATE_NEW;
     item->flags = flags;
@@ -257,9 +258,9 @@ QUIC_CFQ_ITEM *ossl_quic_cfq_add_frame(QUIC_CFQ            *cfq,
     return &item->public;
 }
 
-void ossl_quic_cfq_mark_tx(QUIC_CFQ *cfq, QUIC_CFQ_ITEM *item)
+void ossl_quic_cfq_mark_tx(QUIC_CFQ* cfq, QUIC_CFQ_ITEM* item)
 {
-    QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
+    QUIC_CFQ_ITEM_EX* ex = (QUIC_CFQ_ITEM_EX*)item;
 
     switch (ex->state) {
     case QUIC_CFQ_STATE_NEW:
@@ -275,10 +276,10 @@ void ossl_quic_cfq_mark_tx(QUIC_CFQ *cfq, QUIC_CFQ_ITEM *item)
     }
 }
 
-void ossl_quic_cfq_mark_lost(QUIC_CFQ *cfq, QUIC_CFQ_ITEM *item,
-                             uint32_t priority)
+void ossl_quic_cfq_mark_lost(QUIC_CFQ* cfq, QUIC_CFQ_ITEM* item,
+    uint32_t priority)
 {
-    QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
+    QUIC_CFQ_ITEM_EX* ex = (QUIC_CFQ_ITEM_EX*)item;
 
     if (ossl_quic_cfq_item_is_unreliable(item)) {
         ossl_quic_cfq_release(cfq, item);
@@ -310,9 +311,9 @@ void ossl_quic_cfq_mark_lost(QUIC_CFQ *cfq, QUIC_CFQ_ITEM *item,
  * Releases a CFQ item. The item may be in either state (NEW or TX) prior to the
  * call. The QUIC_CFQ_ITEM pointer must not be used following this call.
  */
-void ossl_quic_cfq_release(QUIC_CFQ *cfq, QUIC_CFQ_ITEM *item)
+void ossl_quic_cfq_release(QUIC_CFQ* cfq, QUIC_CFQ_ITEM* item)
 {
-    QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
+    QUIC_CFQ_ITEM_EX* ex = (QUIC_CFQ_ITEM_EX*)item;
 
     switch (ex->state) {
     case QUIC_CFQ_STATE_NEW:
@@ -331,12 +332,13 @@ void ossl_quic_cfq_release(QUIC_CFQ *cfq, QUIC_CFQ_ITEM *item)
     }
 }
 
-QUIC_CFQ_ITEM *ossl_quic_cfq_get_priority_head(const QUIC_CFQ *cfq,
-                                               uint32_t pn_space)
+QUIC_CFQ_ITEM* ossl_quic_cfq_get_priority_head(const QUIC_CFQ* cfq,
+    uint32_t pn_space)
 {
-    QUIC_CFQ_ITEM_EX *item = cfq->new_list.head;
+    QUIC_CFQ_ITEM_EX* item = cfq->new_list.head;
 
-    for (; item != NULL && item->pn_space != pn_space; item = item->next);
+    for (; item != NULL && item->pn_space != pn_space; item = item->next)
+        ;
 
     if (item == NULL)
         return NULL;
@@ -344,20 +346,21 @@ QUIC_CFQ_ITEM *ossl_quic_cfq_get_priority_head(const QUIC_CFQ *cfq,
     return &item->public;
 }
 
-QUIC_CFQ_ITEM *ossl_quic_cfq_item_get_priority_next(const QUIC_CFQ_ITEM *item,
-                                                    uint32_t pn_space)
+QUIC_CFQ_ITEM* ossl_quic_cfq_item_get_priority_next(const QUIC_CFQ_ITEM* item,
+    uint32_t pn_space)
 {
-    QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
+    QUIC_CFQ_ITEM_EX* ex = (QUIC_CFQ_ITEM_EX*)item;
 
     if (ex == NULL)
         return NULL;
 
-     ex = ex->next;
+    ex = ex->next;
 
-     for (; ex != NULL && ex->pn_space != pn_space; ex = ex->next);
+    for (; ex != NULL && ex->pn_space != pn_space; ex = ex->next)
+        ;
 
-     if (ex == NULL)
-         return NULL; /* ubsan */
+    if (ex == NULL)
+        return NULL; /* ubsan */
 
-     return &ex->public;
+    return &ex->public;
 }

@@ -16,10 +16,10 @@
 #include <openssl/cast.h>
 #include "cast_local.h"
 
-void CAST_encrypt(CAST_LONG *data, const CAST_KEY *key)
+void CAST_encrypt(CAST_LONG* data, const CAST_KEY* key)
 {
     CAST_LONG l, r, t;
-    const CAST_LONG *k;
+    const CAST_LONG* k;
 
     k = &(key->data[0]);
     l = data[0];
@@ -48,10 +48,10 @@ void CAST_encrypt(CAST_LONG *data, const CAST_KEY *key)
     data[0] = r & 0xffffffffL;
 }
 
-void CAST_decrypt(CAST_LONG *data, const CAST_KEY *key)
+void CAST_decrypt(CAST_LONG* data, const CAST_KEY* key)
 {
     CAST_LONG l, r, t;
-    const CAST_LONG *k;
+    const CAST_LONG* k;
 
     k = &(key->data[0]);
     l = data[0];
@@ -80,9 +80,9 @@ void CAST_decrypt(CAST_LONG *data, const CAST_KEY *key)
     data[0] = r & 0xffffffffL;
 }
 
-void CAST_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                      long length, const CAST_KEY *ks, unsigned char *iv,
-                      int enc)
+void CAST_cbc_encrypt(const unsigned char* in, unsigned char* out,
+    long length, const CAST_KEY* ks, unsigned char* iv,
+    int enc)
 {
     register CAST_LONG tin0, tin1;
     register CAST_LONG tout0, tout1, xor0, xor1;

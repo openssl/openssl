@@ -17,12 +17,12 @@
  */
 struct ossl_core_bio_st {
     CRYPTO_REF_COUNT ref_cnt;
-    BIO *bio;
+    BIO* bio;
 };
 
-static OSSL_CORE_BIO *core_bio_new(void)
+static OSSL_CORE_BIO* core_bio_new(void)
 {
-    OSSL_CORE_BIO *cb = OPENSSL_malloc(sizeof(*cb));
+    OSSL_CORE_BIO* cb = OPENSSL_malloc(sizeof(*cb));
 
     if (cb == NULL || !CRYPTO_NEW_REF(&cb->ref_cnt, 1)) {
         OPENSSL_free(cb);
@@ -31,14 +31,14 @@ static OSSL_CORE_BIO *core_bio_new(void)
     return cb;
 }
 
-int ossl_core_bio_up_ref(OSSL_CORE_BIO *cb)
+int ossl_core_bio_up_ref(OSSL_CORE_BIO* cb)
 {
     int ref = 0;
 
     return CRYPTO_UP_REF(&cb->ref_cnt, &ref);
 }
 
-int ossl_core_bio_free(OSSL_CORE_BIO *cb)
+int ossl_core_bio_free(OSSL_CORE_BIO* cb)
 {
     int ref = 0, res = 1;
 
@@ -53,9 +53,9 @@ int ossl_core_bio_free(OSSL_CORE_BIO *cb)
     return res;
 }
 
-OSSL_CORE_BIO *ossl_core_bio_new_from_bio(BIO *bio)
+OSSL_CORE_BIO* ossl_core_bio_new_from_bio(BIO* bio)
 {
-    OSSL_CORE_BIO *cb = core_bio_new();
+    OSSL_CORE_BIO* cb = core_bio_new();
 
     if (cb == NULL || !BIO_up_ref(bio)) {
         ossl_core_bio_free(cb);
@@ -65,9 +65,9 @@ OSSL_CORE_BIO *ossl_core_bio_new_from_bio(BIO *bio)
     return cb;
 }
 
-static OSSL_CORE_BIO *core_bio_new_from_new_bio(BIO *bio)
+static OSSL_CORE_BIO* core_bio_new_from_new_bio(BIO* bio)
 {
-    OSSL_CORE_BIO *cb = NULL;
+    OSSL_CORE_BIO* cb = NULL;
 
     if (bio == NULL)
         return NULL;
@@ -79,44 +79,44 @@ static OSSL_CORE_BIO *core_bio_new_from_new_bio(BIO *bio)
     return cb;
 }
 
-OSSL_CORE_BIO *ossl_core_bio_new_file(const char *filename, const char *mode)
+OSSL_CORE_BIO* ossl_core_bio_new_file(const char* filename, const char* mode)
 {
     return core_bio_new_from_new_bio(BIO_new_file(filename, mode));
 }
 
-OSSL_CORE_BIO *ossl_core_bio_new_mem_buf(const void *buf, int len)
+OSSL_CORE_BIO* ossl_core_bio_new_mem_buf(const void* buf, int len)
 {
     return core_bio_new_from_new_bio(BIO_new_mem_buf(buf, len));
 }
 
-int ossl_core_bio_read_ex(OSSL_CORE_BIO *cb, void *data, size_t dlen,
-                          size_t *readbytes)
+int ossl_core_bio_read_ex(OSSL_CORE_BIO* cb, void* data, size_t dlen,
+    size_t* readbytes)
 {
     return BIO_read_ex(cb->bio, data, dlen, readbytes);
 }
 
-int ossl_core_bio_write_ex(OSSL_CORE_BIO *cb, const void *data, size_t dlen,
-                           size_t *written)
+int ossl_core_bio_write_ex(OSSL_CORE_BIO* cb, const void* data, size_t dlen,
+    size_t* written)
 {
     return BIO_write_ex(cb->bio, data, dlen, written);
 }
 
-int ossl_core_bio_gets(OSSL_CORE_BIO *cb, char *buf, int size)
+int ossl_core_bio_gets(OSSL_CORE_BIO* cb, char* buf, int size)
 {
     return BIO_gets(cb->bio, buf, size);
 }
 
-int ossl_core_bio_puts(OSSL_CORE_BIO *cb, const char *buf)
+int ossl_core_bio_puts(OSSL_CORE_BIO* cb, const char* buf)
 {
     return BIO_puts(cb->bio, buf);
 }
 
-long ossl_core_bio_ctrl(OSSL_CORE_BIO *cb, int cmd, long larg, void *parg)
+long ossl_core_bio_ctrl(OSSL_CORE_BIO* cb, int cmd, long larg, void* parg)
 {
     return BIO_ctrl(cb->bio, cmd, larg, parg);
 }
 
-int ossl_core_bio_vprintf(OSSL_CORE_BIO *cb, const char *format, va_list args)
+int ossl_core_bio_vprintf(OSSL_CORE_BIO* cb, const char* format, va_list args)
 {
     return BIO_vprintf(cb->bio, format, args);
 }

@@ -17,7 +17,7 @@
 #include "rc4_local.h"
 #include <openssl/opensslv.h>
 
-const char *RC4_options(void)
+const char* RC4_options(void)
 {
     if (sizeof(RC4_INT) == 1)
         return "rc4(char)";
@@ -33,11 +33,11 @@ const char *RC4_options(void)
  * Date: Wed, 14 Sep 1994 06:35:31 GMT
  */
 
-void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
+void RC4_set_key(RC4_KEY* key, int len, const unsigned char* data)
 {
     register RC4_INT tmp;
     register int id1, id2;
-    register RC4_INT *d;
+    register RC4_INT* d;
     unsigned int i;
 
     d = &(key->data[0]);
@@ -45,12 +45,15 @@ void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
     key->y = 0;
     id1 = id2 = 0;
 
-#define SK_LOOP(d,n) { \
-                tmp=d[(n)]; \
-                id2 = (data[id1] + tmp + id2) & 0xff; \
-                if (++id1 == len) id1=0; \
-                d[(n)]=d[id2]; \
-                d[id2]=tmp; }
+#define SK_LOOP(d, n)                         \
+    {                                         \
+        tmp = d[(n)];                         \
+        id2 = (data[id1] + tmp + id2) & 0xff; \
+        if (++id1 == len)                     \
+            id1 = 0;                          \
+        d[(n)] = d[id2];                      \
+        d[id2] = tmp;                         \
+    }
 
     for (i = 0; i < 256; i++)
         d[i] = i;

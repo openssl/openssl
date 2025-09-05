@@ -17,46 +17,46 @@
  * wbuf
  * ====
  */
-static int wbuf_flush(struct json_write_buf *wbuf, int full);
+static int wbuf_flush(struct json_write_buf* wbuf, int full);
 
-static int wbuf_init(struct json_write_buf *wbuf, BIO *bio, size_t alloc)
+static int wbuf_init(struct json_write_buf* wbuf, BIO* bio, size_t alloc)
 {
     wbuf->buf = OPENSSL_malloc(alloc);
     if (wbuf->buf == NULL)
         return 0;
 
-    wbuf->cur   = 0;
+    wbuf->cur = 0;
     wbuf->alloc = alloc;
-    wbuf->bio   = bio;
+    wbuf->bio = bio;
     return 1;
 }
 
-static void wbuf_cleanup(struct json_write_buf *wbuf)
+static void wbuf_cleanup(struct json_write_buf* wbuf)
 {
     OPENSSL_free(wbuf->buf);
-    wbuf->buf   = NULL;
+    wbuf->buf = NULL;
     wbuf->alloc = 0;
 }
 
-static void wbuf_set0_bio(struct json_write_buf *wbuf, BIO *bio)
+static void wbuf_set0_bio(struct json_write_buf* wbuf, BIO* bio)
 {
     wbuf->bio = bio;
 }
 
 /* Empty write buffer. */
-static ossl_inline void wbuf_clean(struct json_write_buf *wbuf)
+static ossl_inline void wbuf_clean(struct json_write_buf* wbuf)
 {
     wbuf->cur = 0;
 }
 
 /* Available data remaining in buffer. */
-static ossl_inline size_t wbuf_avail(struct json_write_buf *wbuf)
+static ossl_inline size_t wbuf_avail(struct json_write_buf* wbuf)
 {
     return wbuf->alloc - wbuf->cur;
 }
 
 /* Add character to write buffer, returning 0 on flush failure. */
-static ossl_inline int wbuf_write_char(struct json_write_buf *wbuf, char c)
+static ossl_inline int wbuf_write_char(struct json_write_buf* wbuf, char c)
 {
     if (wbuf_avail(wbuf) == 0) {
         if (!wbuf_flush(wbuf, /*full=*/0))
@@ -70,7 +70,7 @@ static ossl_inline int wbuf_write_char(struct json_write_buf *wbuf, char c)
 /*
  * Write zero-terminated string to write buffer, returning 0 on flush failure.
  */
-static int wbuf_write_str(struct json_write_buf *wbuf, const char *s)
+static int wbuf_write_str(struct json_write_buf* wbuf, const char* s)
 {
     char c;
 
@@ -82,18 +82,18 @@ static int wbuf_write_str(struct json_write_buf *wbuf, const char *s)
 }
 
 /* Flush write buffer, returning 0 on I/O failure. */
-static int wbuf_flush(struct json_write_buf *wbuf, int full)
+static int wbuf_flush(struct json_write_buf* wbuf, int full)
 {
     size_t written = 0, total_written = 0;
 
     while (total_written < wbuf->cur) {
         if (!BIO_write_ex(wbuf->bio,
-                          wbuf->buf + total_written,
-                          wbuf->cur - total_written,
-                          &written)) {
+                wbuf->buf + total_written,
+                wbuf->cur - total_written,
+                &written)) {
             memmove(wbuf->buf,
-                    wbuf->buf + total_written,
-                    wbuf->cur - total_written);
+                wbuf->buf + total_written,
+                wbuf->cur - total_written);
             wbuf->cur = 0;
             return 0;
         }
@@ -114,9 +114,9 @@ static int wbuf_flush(struct json_write_buf *wbuf, int full)
  * ===============================
  */
 
-static int json_ensure_stack_size(OSSL_JSON_ENC *json, size_t num_bytes)
+static int json_ensure_stack_size(OSSL_JSON_ENC* json, size_t num_bytes)
 {
-    unsigned char *stack;
+    unsigned char* stack;
 
     if (json->stack_bytes >= num_bytes)
         return 1;
@@ -132,13 +132,13 @@ static int json_ensure_stack_size(OSSL_JSON_ENC *json, size_t num_bytes)
             return 0;
     }
 
-    json->stack         = stack;
-    json->stack_bytes   = num_bytes;
+    json->stack = stack;
+    json->stack_bytes = num_bytes;
     return 1;
 }
 
 /* Push one bit onto the stack. Returns 0 on allocation failure. */
-static int json_push(OSSL_JSON_ENC *json, unsigned int v)
+static int json_push(OSSL_JSON_ENC* json, unsigned int v)
 {
     if (v > 1)
         return 0;
@@ -171,7 +171,7 @@ static int json_push(OSSL_JSON_ENC *json, unsigned int v)
  * Pop a bit from the stack. Returns 0 if stack is empty. Use json_peek() to get
  * the value before calling this.
  */
-static int json_pop(OSSL_JSON_ENC *json)
+static int json_pop(OSSL_JSON_ENC* json)
 {
     if (json->stack_end_byte == 0 && json->stack_end_bit == 0)
         return 0;
@@ -189,15 +189,15 @@ static int json_pop(OSSL_JSON_ENC *json)
 /*
  * Returns the bit on the top of the stack, or -1 if the stack is empty.
  */
-static int json_peek(OSSL_JSON_ENC *json)
+static int json_peek(OSSL_JSON_ENC* json)
 {
     size_t obyte, obit;
 
     obyte = json->stack_end_byte;
-    obit  = json->stack_end_bit;
+    obit = json->stack_end_bit;
     if (obit == 0) {
-       if (obyte == 0)
-           return -1;
+        if (obyte == 0)
+            return -1;
 
         --obyte;
         obit = CHAR_BIT - 1;
@@ -219,26 +219,26 @@ enum {
     STATE_PRE_COMMA
 };
 
-static ossl_inline int in_ijson(const OSSL_JSON_ENC *json)
+static ossl_inline int in_ijson(const OSSL_JSON_ENC* json)
 {
     return (json->flags & OSSL_JSON_FLAG_IJSON) != 0;
 }
 
-static ossl_inline int in_seq(const OSSL_JSON_ENC *json)
+static ossl_inline int in_seq(const OSSL_JSON_ENC* json)
 {
     return (json->flags & OSSL_JSON_FLAG_SEQ) != 0;
 }
 
-static ossl_inline int in_pretty(const OSSL_JSON_ENC *json)
+static ossl_inline int in_pretty(const OSSL_JSON_ENC* json)
 {
     return (json->flags & OSSL_JSON_FLAG_PRETTY) != 0;
 }
 
-int ossl_json_init(OSSL_JSON_ENC *json, BIO *bio, uint32_t flags)
+int ossl_json_init(OSSL_JSON_ENC* json, BIO* bio, uint32_t flags)
 {
     memset(json, 0, sizeof(*json));
-    json->flags     = flags;
-    json->error     = 0;
+    json->flags = flags;
+    json->error = 0;
     if (!wbuf_init(&json->wbuf, bio, 4096))
         return 0;
 
@@ -246,7 +246,7 @@ int ossl_json_init(OSSL_JSON_ENC *json, BIO *bio, uint32_t flags)
     return 1;
 }
 
-void ossl_json_cleanup(OSSL_JSON_ENC *json)
+void ossl_json_cleanup(OSSL_JSON_ENC* json)
 {
     wbuf_cleanup(&json->wbuf);
 
@@ -256,7 +256,7 @@ void ossl_json_cleanup(OSSL_JSON_ENC *json)
     json->stack = NULL;
 }
 
-int ossl_json_flush_cleanup(OSSL_JSON_ENC *json)
+int ossl_json_flush_cleanup(OSSL_JSON_ENC* json)
 {
     int ok = ossl_json_flush(json);
 
@@ -264,27 +264,27 @@ int ossl_json_flush_cleanup(OSSL_JSON_ENC *json)
     return ok;
 }
 
-int ossl_json_reset(OSSL_JSON_ENC *json)
+int ossl_json_reset(OSSL_JSON_ENC* json)
 {
     wbuf_clean(&json->wbuf);
-    json->stack_end_byte    = 0;
-    json->stack_end_bit     = 0;
-    json->error             = 0;
+    json->stack_end_byte = 0;
+    json->stack_end_bit = 0;
+    json->error = 0;
     return 1;
 }
 
-int ossl_json_flush(OSSL_JSON_ENC *json)
+int ossl_json_flush(OSSL_JSON_ENC* json)
 {
     return wbuf_flush(&json->wbuf, /*full=*/1);
 }
 
-int ossl_json_set0_sink(OSSL_JSON_ENC *json, BIO *bio)
+int ossl_json_set0_sink(OSSL_JSON_ENC* json, BIO* bio)
 {
     wbuf_set0_bio(&json->wbuf, bio);
     return 1;
 }
 
-int ossl_json_in_error(OSSL_JSON_ENC *json)
+int ossl_json_in_error(OSSL_JSON_ENC* json)
 {
     return json->error;
 }
@@ -294,15 +294,15 @@ int ossl_json_in_error(OSSL_JSON_ENC *json)
  * ==================
  */
 
-static void json_write_qstring(OSSL_JSON_ENC *json, const char *str);
-static void json_indent(OSSL_JSON_ENC *json);
+static void json_write_qstring(OSSL_JSON_ENC* json, const char* str);
+static void json_indent(OSSL_JSON_ENC* json);
 
-static void json_raise_error(OSSL_JSON_ENC *json)
+static void json_raise_error(OSSL_JSON_ENC* json)
 {
     json->error = 1;
 }
 
-static void json_undefer(OSSL_JSON_ENC *json)
+static void json_undefer(OSSL_JSON_ENC* json)
 {
     if (!json->defer_indent)
         return;
@@ -310,7 +310,7 @@ static void json_undefer(OSSL_JSON_ENC *json)
     json_indent(json);
 }
 
-static void json_write_char(OSSL_JSON_ENC *json, char ch)
+static void json_write_char(OSSL_JSON_ENC* json, char ch)
 {
     if (ossl_json_in_error(json))
         return;
@@ -320,7 +320,7 @@ static void json_write_char(OSSL_JSON_ENC *json, char ch)
         json_raise_error(json);
 }
 
-static void json_write_str(OSSL_JSON_ENC *json, const char *s)
+static void json_write_str(OSSL_JSON_ENC* json, const char* s)
 {
     if (ossl_json_in_error(json))
         return;
@@ -330,7 +330,7 @@ static void json_write_str(OSSL_JSON_ENC *json, const char *s)
         json_raise_error(json);
 }
 
-static void json_indent(OSSL_JSON_ENC *json)
+static void json_indent(OSSL_JSON_ENC* json)
 {
     size_t i, depth;
 
@@ -346,7 +346,7 @@ static void json_indent(OSSL_JSON_ENC *json)
         json_write_str(json, "    ");
 }
 
-static int json_pre_item(OSSL_JSON_ENC *json)
+static int json_pre_item(OSSL_JSON_ENC* json)
 {
     int s;
 
@@ -388,7 +388,7 @@ static int json_pre_item(OSSL_JSON_ENC *json)
     return 1;
 }
 
-static void json_post_item(OSSL_JSON_ENC *json)
+static void json_post_item(OSSL_JSON_ENC* json)
 {
     int s = json_peek(json);
 
@@ -403,7 +403,7 @@ static void json_post_item(OSSL_JSON_ENC *json)
  *
  * type: 0=object, 1=array.
  */
-static void composite_begin(OSSL_JSON_ENC *json, int type, char ch)
+static void composite_begin(OSSL_JSON_ENC* json, int type, char ch)
 {
     if (!json_pre_item(json)
         || !json_push(json, type))
@@ -418,7 +418,7 @@ static void composite_begin(OSSL_JSON_ENC *json, int type, char ch)
  *
  * type: 0=object, 1=array. Errors on mismatch.
  */
-static void composite_end(OSSL_JSON_ENC *json, int type, char ch)
+static void composite_end(OSSL_JSON_ENC* json, int type, char ch)
 {
     int was_defer = json->defer_indent;
 
@@ -450,27 +450,27 @@ static void composite_end(OSSL_JSON_ENC *json, int type, char ch)
 }
 
 /* Begin a new JSON object. */
-void ossl_json_object_begin(OSSL_JSON_ENC *json)
+void ossl_json_object_begin(OSSL_JSON_ENC* json)
 {
     composite_begin(json, 0, '{');
     json->state = STATE_PRE_KEY;
 }
 
 /* End a JSON object. Must be matched with a call to ossl_json_object_begin(). */
-void ossl_json_object_end(OSSL_JSON_ENC *json)
+void ossl_json_object_end(OSSL_JSON_ENC* json)
 {
     composite_end(json, 0, '}');
 }
 
 /* Begin a new JSON array. */
-void ossl_json_array_begin(OSSL_JSON_ENC *json)
+void ossl_json_array_begin(OSSL_JSON_ENC* json)
 {
     composite_begin(json, 1, '[');
     json->state = STATE_PRE_ITEM;
 }
 
 /* End a JSON array. Must be matched with a call to ossl_json_array_begin(). */
-void ossl_json_array_end(OSSL_JSON_ENC *json)
+void ossl_json_array_end(OSSL_JSON_ENC* json)
 {
     composite_end(json, 1, ']');
 }
@@ -479,7 +479,7 @@ void ossl_json_array_end(OSSL_JSON_ENC *json)
  * Encode a JSON key within an object. Pass a zero-terminated string, which can
  * be freed immediately following the call to this function.
  */
-void ossl_json_key(OSSL_JSON_ENC *json, const char *key)
+void ossl_json_key(OSSL_JSON_ENC* json, const char* key)
 {
     if (ossl_json_in_error(json))
         return;
@@ -513,7 +513,7 @@ void ossl_json_key(OSSL_JSON_ENC *json, const char *key)
 }
 
 /* Encode a JSON 'null' value. */
-void ossl_json_null(OSSL_JSON_ENC *json)
+void ossl_json_null(OSSL_JSON_ENC* json)
 {
     if (!json_pre_item(json))
         return;
@@ -522,7 +522,7 @@ void ossl_json_null(OSSL_JSON_ENC *json)
     json_post_item(json);
 }
 
-void ossl_json_bool(OSSL_JSON_ENC *json, bool v)
+void ossl_json_bool(OSSL_JSON_ENC* json, bool v)
 {
     if (!json_pre_item(json))
         return;
@@ -534,7 +534,7 @@ void ossl_json_bool(OSSL_JSON_ENC *json, bool v)
 #define POW_53 (((int64_t)1) << 53)
 
 /* Encode a JSON integer from a uint64_t. */
-static void json_u64(OSSL_JSON_ENC *json, uint64_t v, int noquote)
+static void json_u64(OSSL_JSON_ENC* json, uint64_t v, int noquote)
 {
     char buf[22], *p = buf + sizeof(buf) - 1;
     int quote = !noquote && in_ijson(json) && v > (uint64_t)(POW_53 - 1);
@@ -559,13 +559,13 @@ static void json_u64(OSSL_JSON_ENC *json, uint64_t v, int noquote)
     json_post_item(json);
 }
 
-void ossl_json_u64(OSSL_JSON_ENC *json, uint64_t v)
+void ossl_json_u64(OSSL_JSON_ENC* json, uint64_t v)
 {
     json_u64(json, v, 0);
 }
 
 /* Encode a JSON integer from an int64_t. */
-void ossl_json_i64(OSSL_JSON_ENC *json, int64_t value)
+void ossl_json_i64(OSSL_JSON_ENC* json, int64_t value)
 {
     uint64_t uv;
     int quote;
@@ -605,11 +605,11 @@ static ossl_inline int hex_digit(int v)
 }
 
 static ossl_inline void
-json_write_qstring_inner(OSSL_JSON_ENC *json, const char *str, size_t str_len,
-                         int nul_term)
+json_write_qstring_inner(OSSL_JSON_ENC* json, const char* str, size_t str_len,
+    int nul_term)
 {
     char c, *o, obuf[7];
-    unsigned char *u_str;
+    unsigned char* u_str;
     int i;
     size_t j;
 
@@ -622,17 +622,31 @@ json_write_qstring_inner(OSSL_JSON_ENC *json, const char *str, size_t str_len,
         c = *str;
         u_str = (unsigned char*)str;
         switch (c) {
-        case '\n': o = "\\n"; break;
-        case '\r': o = "\\r"; break;
-        case '\t': o = "\\t"; break;
-        case '\b': o = "\\b"; break;
-        case '\f': o = "\\f"; break;
-        case '"': o = "\\\""; break;
-        case '\\': o = "\\\\"; break;
+        case '\n':
+            o = "\\n";
+            break;
+        case '\r':
+            o = "\\r";
+            break;
+        case '\t':
+            o = "\\t";
+            break;
+        case '\b':
+            o = "\\b";
+            break;
+        case '\f':
+            o = "\\f";
+            break;
+        case '"':
+            o = "\\\"";
+            break;
+        case '\\':
+            o = "\\\\";
+            break;
         default:
             /* valid UTF-8 sequences according to RFC-3629 */
             if (u_str[0] >= 0xc2 && u_str[0] <= 0xdf && j >= 2
-                    && u_str[1] >= 0x80 && u_str[1] <= 0xbf) {
+                && u_str[1] >= 0x80 && u_str[1] <= 0xbf) {
                 memcpy(obuf, str, 2);
                 obuf[2] = '\0';
                 str++, j--;
@@ -640,10 +654,10 @@ json_write_qstring_inner(OSSL_JSON_ENC *json, const char *str, size_t str_len,
                 break;
             }
             if (u_str[0] >= 0xe0 && u_str[0] <= 0xef && j >= 3
-                    && u_str[1] >= 0x80 && u_str[1] <= 0xbf
-                    && u_str[2] >= 0x80 && u_str[2] <= 0xbf
-                    && !(u_str[0] == 0xe0 && u_str[1] <= 0x9f)
-                    && !(u_str[0] == 0xed && u_str[1] >= 0xa0)) {
+                && u_str[1] >= 0x80 && u_str[1] <= 0xbf
+                && u_str[2] >= 0x80 && u_str[2] <= 0xbf
+                && !(u_str[0] == 0xe0 && u_str[1] <= 0x9f)
+                && !(u_str[0] == 0xed && u_str[1] >= 0xa0)) {
                 memcpy(obuf, str, 3);
                 obuf[3] = '\0';
                 str += 2;
@@ -652,11 +666,11 @@ json_write_qstring_inner(OSSL_JSON_ENC *json, const char *str, size_t str_len,
                 break;
             }
             if (u_str[0] >= 0xf0 && u_str[0] <= 0xf4 && j >= 4
-                    && u_str[1] >= 0x80 && u_str[1] <= 0xbf
-                    && u_str[2] >= 0x80 && u_str[2] <= 0xbf
-                    && u_str[3] >= 0x80 && u_str[3] <= 0xbf
-                    && !(u_str[0] == 0xf0 && u_str[1] <= 0x8f)
-                    && !(u_str[0] == 0xf4 && u_str[1] >= 0x90)) {
+                && u_str[1] >= 0x80 && u_str[1] <= 0xbf
+                && u_str[2] >= 0x80 && u_str[2] <= 0xbf
+                && u_str[3] >= 0x80 && u_str[3] <= 0xbf
+                && !(u_str[0] == 0xf0 && u_str[1] <= 0x8f)
+                && !(u_str[0] == 0xf4 && u_str[1] >= 0x90)) {
                 memcpy(obuf, str, 4);
                 obuf[4] = '\0';
                 str += 3;
@@ -685,18 +699,18 @@ json_write_qstring_inner(OSSL_JSON_ENC *json, const char *str, size_t str_len,
 }
 
 static void
-json_write_qstring(OSSL_JSON_ENC *json, const char *str)
+json_write_qstring(OSSL_JSON_ENC* json, const char* str)
 {
     json_write_qstring_inner(json, str, 0, 1);
 }
 
 static void
-json_write_qstring_len(OSSL_JSON_ENC *json, const char *str, size_t str_len)
+json_write_qstring_len(OSSL_JSON_ENC* json, const char* str, size_t str_len)
 {
     json_write_qstring_inner(json, str, str_len, 0);
 }
 
-void ossl_json_str(OSSL_JSON_ENC *json, const char *str)
+void ossl_json_str(OSSL_JSON_ENC* json, const char* str)
 {
     if (!json_pre_item(json))
         return;
@@ -705,7 +719,7 @@ void ossl_json_str(OSSL_JSON_ENC *json, const char *str)
     json_post_item(json);
 }
 
-void ossl_json_str_len(OSSL_JSON_ENC *json, const char *str, size_t str_len)
+void ossl_json_str_len(OSSL_JSON_ENC* json, const char* str, size_t str_len)
 {
     if (!json_pre_item(json))
         return;
@@ -718,7 +732,7 @@ void ossl_json_str_len(OSSL_JSON_ENC *json, const char *str, size_t str_len)
  * Encode binary data as a lowercase hex string. data_len is the data length in
  * bytes.
  */
-void ossl_json_str_hex(OSSL_JSON_ENC *json, const void *data, size_t data_len)
+void ossl_json_str_hex(OSSL_JSON_ENC* json, const void* data, size_t data_len)
 {
     const unsigned char *b = data, *end = b + data_len;
     unsigned char c;

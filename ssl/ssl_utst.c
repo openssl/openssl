@@ -15,7 +15,7 @@ static const struct openssl_ssl_test_functions ssl_test_functions = {
     ssl_init_wbio_buffer,
 };
 
-const struct openssl_ssl_test_functions *SSL_test_functions(void)
+const struct openssl_ssl_test_functions* SSL_test_functions(void)
 {
     return &ssl_test_functions;
 }

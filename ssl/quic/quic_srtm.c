@@ -19,7 +19,7 @@
  */
 typedef struct srtm_item_st SRTM_ITEM;
 
-#define BLINDED_SRT_LEN     16
+#define BLINDED_SRT_LEN 16
 
 DEFINE_LHASH_OF_EX(SRTM_ITEM);
 
@@ -40,43 +40,43 @@ DEFINE_LHASH_OF_EX(SRTM_ITEM);
  * all connections for that QUIC_PORT.
  */
 struct srtm_item_st {
-    SRTM_ITEM                   *next_by_srt_blinded; /* SORT BY opaque  DESC */
-    SRTM_ITEM                   *next_by_seq_num;     /* SORT BY seq_num DESC */
-    void                        *opaque; /* \__ unique identity for item */
-    uint64_t                    seq_num; /* /                            */
-    QUIC_STATELESS_RESET_TOKEN  srt;
-    unsigned char               srt_blinded[BLINDED_SRT_LEN]; /* H(srt) */
+    SRTM_ITEM* next_by_srt_blinded; /* SORT BY opaque  DESC */
+    SRTM_ITEM* next_by_seq_num; /* SORT BY seq_num DESC */
+    void* opaque; /* \__ unique identity for item */
+    uint64_t seq_num; /* /                            */
+    QUIC_STATELESS_RESET_TOKEN srt;
+    unsigned char srt_blinded[BLINDED_SRT_LEN]; /* H(srt) */
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    uint32_t                    debug_token;
+    uint32_t debug_token;
 #endif
 };
 
 struct quic_srtm_st {
     /* Crypto context used to calculate blinded SRTs H(srt). */
-    EVP_CIPHER_CTX              *blind_ctx; /* kept with key */
+    EVP_CIPHER_CTX* blind_ctx; /* kept with key */
 
-    LHASH_OF(SRTM_ITEM)         *items_fwd; /* (opaque)  -> SRTM_ITEM */
-    LHASH_OF(SRTM_ITEM)         *items_rev; /* (H(srt))  -> SRTM_ITEM */
+    LHASH_OF(SRTM_ITEM)* items_fwd; /* (opaque)  -> SRTM_ITEM */
+    LHASH_OF(SRTM_ITEM)* items_rev; /* (H(srt))  -> SRTM_ITEM */
 
     /*
      * Monotonically transitions to 1 in event of allocation failure. The only
      * valid operation on such an object is to free it.
      */
-    unsigned int                alloc_failed : 1;
+    unsigned int alloc_failed : 1;
 };
 
-static unsigned long items_fwd_hash(const SRTM_ITEM *item)
+static unsigned long items_fwd_hash(const SRTM_ITEM* item)
 {
     return (unsigned long)(uintptr_t)item->opaque;
 }
 
-static int items_fwd_cmp(const SRTM_ITEM *a, const SRTM_ITEM *b)
+static int items_fwd_cmp(const SRTM_ITEM* a, const SRTM_ITEM* b)
 {
     return a->opaque != b->opaque;
 }
 
-static unsigned long items_rev_hash(const SRTM_ITEM *item)
+static unsigned long items_rev_hash(const SRTM_ITEM* item)
 {
     /*
      * srt_blinded has already been through a crypto-grade hash function, so we
@@ -88,7 +88,7 @@ static unsigned long items_rev_hash(const SRTM_ITEM *item)
     return l;
 }
 
-static int items_rev_cmp(const SRTM_ITEM *a, const SRTM_ITEM *b)
+static int items_rev_cmp(const SRTM_ITEM* a, const SRTM_ITEM* b)
 {
     /*
      * We don't need to use CRYPTO_memcmp here as the relationship of
@@ -97,7 +97,7 @@ static int items_rev_cmp(const SRTM_ITEM *a, const SRTM_ITEM *b)
     return memcmp(a->srt_blinded, b->srt_blinded, sizeof(a->srt_blinded));
 }
 
-static int srtm_check_lh(QUIC_SRTM *srtm, LHASH_OF(SRTM_ITEM) *lh)
+static int srtm_check_lh(QUIC_SRTM* srtm, LHASH_OF(SRTM_ITEM)* lh)
 {
     if (lh_SRTM_ITEM_error(lh)) {
         srtm->alloc_failed = 1;
@@ -107,11 +107,11 @@ static int srtm_check_lh(QUIC_SRTM *srtm, LHASH_OF(SRTM_ITEM) *lh)
     return 1;
 }
 
-QUIC_SRTM *ossl_quic_srtm_new(OSSL_LIB_CTX *libctx, const char *propq)
+QUIC_SRTM* ossl_quic_srtm_new(OSSL_LIB_CTX* libctx, const char* propq)
 {
-    QUIC_SRTM *srtm = NULL;
+    QUIC_SRTM* srtm = NULL;
     unsigned char key[16];
-    EVP_CIPHER *ecb = NULL;
+    EVP_CIPHER* ecb = NULL;
 
     if (RAND_priv_bytes_ex(libctx, key, sizeof(key), sizeof(key) * 8) != 1)
         goto err;
@@ -149,7 +149,7 @@ err:
     return NULL;
 }
 
-static void srtm_free_each(SRTM_ITEM *ihead)
+static void srtm_free_each(SRTM_ITEM* ihead)
 {
     SRTM_ITEM *inext, *item = ihead;
 
@@ -161,7 +161,7 @@ static void srtm_free_each(SRTM_ITEM *ihead)
     OPENSSL_free(ihead);
 }
 
-void ossl_quic_srtm_free(QUIC_SRTM *srtm)
+void ossl_quic_srtm_free(QUIC_SRTM* srtm)
 {
     if (srtm == NULL)
         return;
@@ -183,12 +183,12 @@ void ossl_quic_srtm_free(QUIC_SRTM *srtm)
  * If prev is non-NULL, writes the previous node to *prev or NULL if it is
  * the first item.
  */
-static SRTM_ITEM *srtm_find(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
-                            SRTM_ITEM **head_p, SRTM_ITEM **prev_p)
+static SRTM_ITEM* srtm_find(QUIC_SRTM* srtm, void* opaque, uint64_t seq_num,
+    SRTM_ITEM** head_p, SRTM_ITEM** prev_p)
 {
     SRTM_ITEM key, *item = NULL, *prev = NULL;
 
-    key.opaque  = opaque;
+    key.opaque = opaque;
 
     item = lh_SRTM_ITEM_retrieve(srtm->items_fwd, &key);
     if (head_p != NULL)
@@ -217,7 +217,7 @@ static SRTM_ITEM *srtm_find(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
  * The new head pointer is written to *new_head (which may or may not be
  * unchanged).
  */
-static void sorted_insert_seq_num(SRTM_ITEM *head, SRTM_ITEM *item, SRTM_ITEM **new_head)
+static void sorted_insert_seq_num(SRTM_ITEM* head, SRTM_ITEM* item, SRTM_ITEM** new_head)
 {
     uint64_t seq_num = item->seq_num;
     SRTM_ITEM *cur = head, **fixup = new_head;
@@ -238,7 +238,7 @@ static void sorted_insert_seq_num(SRTM_ITEM *head, SRTM_ITEM *item, SRTM_ITEM **
  * The new head pointer is written to *new_head (which may or may not be
  * unchanged).
  */
-static void sorted_insert_srt(SRTM_ITEM *head, SRTM_ITEM *item, SRTM_ITEM **new_head)
+static void sorted_insert_srt(SRTM_ITEM* head, SRTM_ITEM* item, SRTM_ITEM** new_head)
 {
     uintptr_t opaque = (uintptr_t)item->opaque;
     SRTM_ITEM *cur = head, **fixup = new_head;
@@ -259,8 +259,8 @@ static void sorted_insert_srt(SRTM_ITEM *head, SRTM_ITEM *item, SRTM_ITEM **new_
  * mitigation purposes. We compute this once as a cached value when an SRTM_ITEM
  * is formed.
  */
-static int srtm_compute_blinded(QUIC_SRTM *srtm, SRTM_ITEM *item,
-                                const QUIC_STATELESS_RESET_TOKEN *token)
+static int srtm_compute_blinded(QUIC_SRTM* srtm, SRTM_ITEM* item,
+    const QUIC_STATELESS_RESET_TOKEN* token)
 {
     int outl = 0;
 
@@ -270,7 +270,7 @@ static int srtm_compute_blinded(QUIC_SRTM *srtm, SRTM_ITEM *item,
      * block.
      */
     if (!EVP_EncryptUpdate(srtm->blind_ctx, item->srt_blinded, &outl,
-                           (const unsigned char *)token, sizeof(*token)))
+            (const unsigned char*)token, sizeof(*token)))
         return 0;
 
     if (!ossl_assert(outl == sizeof(*token)))
@@ -279,8 +279,8 @@ static int srtm_compute_blinded(QUIC_SRTM *srtm, SRTM_ITEM *item,
     return 1;
 }
 
-int ossl_quic_srtm_add(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
-                       const QUIC_STATELESS_RESET_TOKEN *token)
+int ossl_quic_srtm_add(QUIC_SRTM* srtm, void* opaque, uint64_t seq_num,
+    const QUIC_STATELESS_RESET_TOKEN* token)
 {
     SRTM_ITEM *item = NULL, *head = NULL, *new_head, *r_item;
 
@@ -294,9 +294,9 @@ int ossl_quic_srtm_add(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
     if ((item = OPENSSL_zalloc(sizeof(*item))) == NULL)
         return 0;
 
-    item->opaque    = opaque;
-    item->seq_num   = seq_num;
-    item->srt       = *token;
+    item->opaque = opaque;
+    item->seq_num = seq_num;
+    item->srt = *token;
     if (!srtm_compute_blinded(srtm, item, &item->srt)) {
         OPENSSL_free(item);
         return 0;
@@ -348,9 +348,9 @@ int ossl_quic_srtm_add(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
 }
 
 /* Remove item from reverse mapping. */
-static int srtm_remove_from_rev(QUIC_SRTM *srtm, SRTM_ITEM *item)
+static int srtm_remove_from_rev(QUIC_SRTM* srtm, SRTM_ITEM* item)
 {
-    SRTM_ITEM *rh_item;
+    SRTM_ITEM* rh_item;
 
     rh_item = lh_SRTM_ITEM_retrieve(srtm->items_rev, item);
     assert(rh_item != NULL);
@@ -369,14 +369,15 @@ static int srtm_remove_from_rev(QUIC_SRTM *srtm, SRTM_ITEM *item)
     } else {
         /* Find our entry in the SRT list */
         for (; rh_item->next_by_srt_blinded != item;
-               rh_item = rh_item->next_by_srt_blinded);
+            rh_item = rh_item->next_by_srt_blinded)
+            ;
         rh_item->next_by_srt_blinded = item->next_by_srt_blinded;
     }
 
     return 1;
 }
 
-int ossl_quic_srtm_remove(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num)
+int ossl_quic_srtm_remove(QUIC_SRTM* srtm, void* opaque, uint64_t seq_num)
 {
     SRTM_ITEM *item, *prev = NULL;
 
@@ -412,7 +413,7 @@ int ossl_quic_srtm_remove(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num)
     return 1;
 }
 
-int ossl_quic_srtm_cull(QUIC_SRTM *srtm, void *opaque)
+int ossl_quic_srtm_cull(QUIC_SRTM* srtm, void* opaque)
 {
     SRTM_ITEM key, *item = NULL, *inext, *ihead;
 
@@ -438,10 +439,10 @@ int ossl_quic_srtm_cull(QUIC_SRTM *srtm, void *opaque)
     return 1;
 }
 
-int ossl_quic_srtm_lookup(QUIC_SRTM *srtm,
-                          const QUIC_STATELESS_RESET_TOKEN *token,
-                          size_t idx,
-                          void **opaque, uint64_t *seq_num)
+int ossl_quic_srtm_lookup(QUIC_SRTM* srtm,
+    const QUIC_STATELESS_RESET_TOKEN* token,
+    size_t idx,
+    void** opaque, uint64_t* seq_num)
 {
     SRTM_ITEM key, *item;
 
@@ -452,14 +453,15 @@ int ossl_quic_srtm_lookup(QUIC_SRTM *srtm,
         return 0;
 
     item = lh_SRTM_ITEM_retrieve(srtm->items_rev, &key);
-    for (; idx > 0 && item != NULL; --idx, item = item->next_by_srt_blinded);
+    for (; idx > 0 && item != NULL; --idx, item = item->next_by_srt_blinded)
+        ;
     if (item == NULL)
         return 0;
 
     if (opaque != NULL)
-        *opaque     = item->opaque;
+        *opaque = item->opaque;
     if (seq_num != NULL)
-        *seq_num    = item->seq_num;
+        *seq_num = item->seq_num;
 
     return 1;
 }
@@ -471,15 +473,15 @@ static size_t tokens_seen;
 
 struct check_args {
     uint32_t token;
-    int      mode;
+    int mode;
 };
 
-static void check_mark(SRTM_ITEM *item, void *arg)
+static void check_mark(SRTM_ITEM* item, void* arg)
 {
-    struct check_args *arg_ = arg;
+    struct check_args* arg_ = arg;
     uint32_t token = arg_->token;
     uint64_t prev_seq_num = 0;
-    void *prev_opaque = NULL;
+    void* prev_opaque = NULL;
     int have_prev = 0;
 
     assert(item != NULL);
@@ -493,7 +495,7 @@ static void check_mark(SRTM_ITEM *item, void *arg)
 
         ++tokens_seen;
         item->debug_token = token;
-        prev_opaque  = item->opaque;
+        prev_opaque = item->opaque;
         prev_seq_num = item->seq_num;
         have_prev = 1;
 
@@ -504,9 +506,9 @@ static void check_mark(SRTM_ITEM *item, void *arg)
     }
 }
 
-static void check_count(SRTM_ITEM *item, void *arg)
+static void check_count(SRTM_ITEM* item, void* arg)
 {
-    struct check_args *arg_ = arg;
+    struct check_args* arg_ = arg;
     uint32_t token = arg_->token;
 
     assert(item != NULL);
@@ -524,10 +526,10 @@ static void check_count(SRTM_ITEM *item, void *arg)
 
 #endif
 
-void ossl_quic_srtm_check(const QUIC_SRTM *srtm)
+void ossl_quic_srtm_check(const QUIC_SRTM* srtm)
 {
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    struct check_args args = {0};
+    struct check_args args = { 0 };
     size_t tokens_expected, tokens_expected_old;
 
     args.token = token_next;

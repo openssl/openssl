@@ -13,13 +13,13 @@
 #include "ec_local.h"
 
 /* the return value must be freed (using OPENSSL_free()) */
-char *EC_POINT_point2hex(const EC_GROUP *group,
-                         const EC_POINT *point,
-                         point_conversion_form_t form, BN_CTX *ctx)
+char* EC_POINT_point2hex(const EC_GROUP* group,
+    const EC_POINT* point,
+    point_conversion_form_t form, BN_CTX* ctx)
 {
     char *ret, *p;
     size_t buf_len, i;
-    unsigned char *buf = NULL;
+    unsigned char* buf = NULL;
 
     buf_len = EC_POINT_point2buf(group, point, form, &buf, ctx);
 
@@ -35,18 +35,18 @@ char *EC_POINT_point2hex(const EC_GROUP *group,
         p += ossl_to_hex(p, buf[i]);
     *p = '\0';
 
- err:
+err:
     OPENSSL_free(buf);
     return ret;
 }
 
-EC_POINT *EC_POINT_hex2point(const EC_GROUP *group,
-                             const char *hex, EC_POINT *point, BN_CTX *ctx)
+EC_POINT* EC_POINT_hex2point(const EC_GROUP* group,
+    const char* hex, EC_POINT* point, BN_CTX* ctx)
 {
     int ok = 0;
-    unsigned char *oct_buf = NULL;
+    unsigned char* oct_buf = NULL;
     size_t len, oct_buf_len = 0;
-    EC_POINT *pt = NULL;
+    EC_POINT* pt = NULL;
 
     if (group == NULL || hex == NULL)
         return NULL;

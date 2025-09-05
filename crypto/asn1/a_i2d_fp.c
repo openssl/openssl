@@ -14,10 +14,10 @@
 
 #ifndef NO_OLD_ASN1
 
-# ifndef OPENSSL_NO_STDIO
-int ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, const void *x)
+#ifndef OPENSSL_NO_STDIO
+int ASN1_i2d_fp(i2d_of_void* i2d, FILE* out, const void* x)
 {
-    BIO *b;
+    BIO* b;
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
@@ -29,12 +29,12 @@ int ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, const void *x)
     BIO_free(b);
     return ret;
 }
-# endif
+#endif
 
-int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, const void *x)
+int ASN1_i2d_bio(i2d_of_void* i2d, BIO* out, const void* x)
 {
-    char *b;
-    unsigned char *p;
+    char* b;
+    unsigned char* p;
     int i, j = 0, n, ret = 1;
 
     n = i2d(x, NULL);
@@ -45,7 +45,7 @@ int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, const void *x)
     if (b == NULL)
         return 0;
 
-    p = (unsigned char *)b;
+    p = (unsigned char*)b;
     i2d(x, &p);
 
     for (;;) {
@@ -66,9 +66,9 @@ int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, const void *x)
 #endif
 
 #ifndef OPENSSL_NO_STDIO
-int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, const void *x)
+int ASN1_item_i2d_fp(const ASN1_ITEM* it, FILE* out, const void* x)
 {
-    BIO *b;
+    BIO* b;
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
@@ -82,9 +82,9 @@ int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, const void *x)
 }
 #endif
 
-int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, const void *x)
+int ASN1_item_i2d_bio(const ASN1_ITEM* it, BIO* out, const void* x)
 {
-    unsigned char *b = NULL;
+    unsigned char* b = NULL;
     int i, j = 0, n, ret = 1;
 
     n = ASN1_item_i2d(x, &b, it);
@@ -108,9 +108,9 @@ int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, const void *x)
     return ret;
 }
 
-BIO *ASN1_item_i2d_mem_bio(const ASN1_ITEM *it, const ASN1_VALUE *val)
+BIO* ASN1_item_i2d_mem_bio(const ASN1_ITEM* it, const ASN1_VALUE* val)
 {
-    BIO *res;
+    BIO* res;
 
     if (it == NULL || val == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);

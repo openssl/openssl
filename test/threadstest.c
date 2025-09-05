@@ -12,11 +12,11 @@
  * deprecated function.
  */
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-# define OPENSSL_SUPPRESS_DEPRECATED
+#define OPENSSL_SUPPRESS_DEPRECATED
 #endif
 
 #if defined(_WIN32)
-# include <windows.h>
+#include <windows.h>
 #endif
 
 #include <string.h>
@@ -42,25 +42,25 @@
 #endif
 
 /* Limit the maximum number of threads */
-#define MAXIMUM_THREADS     10
+#define MAXIMUM_THREADS 10
 
 /* Limit the maximum number of providers loaded into a library context */
-#define MAXIMUM_PROVIDERS   4
+#define MAXIMUM_PROVIDERS 4
 
 static int do_fips = 0;
-static char *privkey;
-static char *storedir;
-static char *config_file = NULL;
+static char* privkey;
+static char* storedir;
+static char* config_file = NULL;
 static int multidefault_run = 0;
 
-static const char *default_provider[] = { "default", NULL };
-static const char *fips_provider[] = { "fips", NULL };
-static const char *fips_and_default_providers[] = { "default", "fips", NULL };
+static const char* default_provider[] = { "default", NULL };
+static const char* fips_provider[] = { "fips", NULL };
+static const char* fips_and_default_providers[] = { "default", "fips", NULL };
 
-static CRYPTO_RWLOCK *global_lock;
+static CRYPTO_RWLOCK* global_lock;
 
 #ifdef TSAN_REQUIRES_LOCKING
-static CRYPTO_RWLOCK *tsan_lock;
+static CRYPTO_RWLOCK* tsan_lock;
 #endif
 
 /* Grab a globally unique integer value, return 0 on failure */
@@ -88,16 +88,16 @@ static int get_new_uid(void)
 
 static int test_lock(void)
 {
-    CRYPTO_RWLOCK *lock = CRYPTO_THREAD_lock_new();
+    CRYPTO_RWLOCK* lock = CRYPTO_THREAD_lock_new();
     int res;
 
     if (!TEST_ptr(lock))
         return 0;
 
     res = TEST_true(CRYPTO_THREAD_read_lock(lock))
-          && TEST_true(CRYPTO_THREAD_unlock(lock))
-          && TEST_true(CRYPTO_THREAD_write_lock(lock))
-          && TEST_true(CRYPTO_THREAD_unlock(lock));
+        && TEST_true(CRYPTO_THREAD_unlock(lock))
+        && TEST_true(CRYPTO_THREAD_write_lock(lock))
+        && TEST_true(CRYPTO_THREAD_unlock(lock));
 
     CRYPTO_THREAD_lock_free(lock);
 
@@ -112,20 +112,20 @@ static int rwreader1_iterations = 0;
 static int rwreader2_iterations = 0;
 static int rwwriter1_iterations = 0;
 static int rwwriter2_iterations = 0;
-static int *rwwriter_ptr = NULL;
+static int* rwwriter_ptr = NULL;
 static int rw_torture_result = 1;
-static CRYPTO_RWLOCK *rwtorturelock = NULL;
-static CRYPTO_RWLOCK *atomiclock = NULL;
+static CRYPTO_RWLOCK* rwtorturelock = NULL;
+static CRYPTO_RWLOCK* atomiclock = NULL;
 
-static void rwwriter_fn(int id, int *iterations)
+static void rwwriter_fn(int id, int* iterations)
 {
     int count;
     int *old, *new;
     OSSL_TIME t1, t2;
     t1 = ossl_time_now();
 
-    for (count = 0; ; count++) {
-        new = CRYPTO_zalloc(sizeof (int), NULL, 0);
+    for (count = 0;; count++) {
+        new = CRYPTO_zalloc(sizeof(int), NULL, 0);
         if (contention == 0)
             OSSL_sleep(1000);
         if (!CRYPTO_THREAD_write_lock(rwtorturelock))
@@ -167,7 +167,7 @@ static void rwwriter2_fn(void)
     CRYPTO_atomic_add(&rwwriter2_done, 1, &local, atomiclock);
 }
 
-static void rwreader_fn(int *iterations)
+static void rwreader_fn(int* iterations)
 {
     unsigned int count = 0;
 
@@ -176,7 +176,7 @@ static void rwreader_fn(int *iterations)
     int lw2 = 0;
 
     if (CRYPTO_THREAD_read_lock(rwtorturelock) == 0)
-            abort();
+        abort();
 
     while (lw1 != 1 || lw2 != 1) {
         CRYPTO_atomic_add(&rwwriter1_done, 0, &lw1, atomiclock);
@@ -199,7 +199,7 @@ static void rwreader_fn(int *iterations)
     }
     *iterations = count;
     if (CRYPTO_THREAD_unlock(rwtorturelock) == 0)
-            abort();
+        abort();
 }
 
 static void rwreader1_fn(void)
@@ -262,8 +262,8 @@ static int _torture_rw(void)
     tottime = dtime.tv_sec + (dtime.tv_usec / 1e6);
     TEST_info("rw_torture_result is %d\n", rw_torture_result);
     TEST_info("performed %d reads and %d writes over 2 read and 2 write threads in %e seconds",
-              rwreader1_iterations + rwreader2_iterations,
-              rwwriter1_iterations + rwwriter2_iterations, tottime);
+        rwreader1_iterations + rwreader2_iterations,
+        rwwriter1_iterations + rwwriter2_iterations, tottime);
     if ((rwreader1_iterations + rwreader2_iterations == 0)
         || (rwwriter1_iterations + rwwriter2_iterations == 0)) {
         TEST_info("Threads did not iterate\n");
@@ -295,8 +295,7 @@ static int torture_rw_high(void)
     return _torture_rw();
 }
 
-
-static CRYPTO_RCU_LOCK *rcu_lock = NULL;
+static CRYPTO_RCU_LOCK* rcu_lock = NULL;
 
 static int writer1_done = 0;
 static int writer2_done = 0;
@@ -304,15 +303,15 @@ static int reader1_iterations = 0;
 static int reader2_iterations = 0;
 static int writer1_iterations = 0;
 static int writer2_iterations = 0;
-static uint64_t *writer_ptr = NULL;
+static uint64_t* writer_ptr = NULL;
 static uint64_t global_ctr = 0;
 static int rcu_torture_result = 1;
-static void free_old_rcu_data(void *data)
+static void free_old_rcu_data(void* data)
 {
     CRYPTO_free(data, NULL, 0);
 }
 
-static void writer_fn(int id, int *iterations)
+static void writer_fn(int id, int* iterations)
 {
     int count;
     OSSL_TIME t1, t2;
@@ -320,7 +319,7 @@ static void writer_fn(int id, int *iterations)
 
     t1 = ossl_time_now();
 
-    for (count = 0; ; count++) {
+    for (count = 0;; count++) {
         new = CRYPTO_zalloc(sizeof(uint64_t), NULL, 0);
         if (contention == 0)
             OSSL_sleep(1000);
@@ -362,10 +361,10 @@ static void writer2_fn(void)
     CRYPTO_atomic_add(&writer2_done, 1, &local, atomiclock);
 }
 
-static void reader_fn(int *iterations)
+static void reader_fn(int* iterations)
 {
     unsigned int count = 0;
-    uint64_t *valp;
+    uint64_t* valp;
     uint64_t val;
     uint64_t oldval = 0;
     int lw1 = 0;
@@ -462,8 +461,8 @@ static int _torture_rcu(void)
     tottime = dtime.tv_sec + (dtime.tv_usec / 1e6);
     TEST_info("rcu_torture_result is %d\n", rcu_torture_result);
     TEST_info("performed %d reads and %d writes over 2 read and 2 write threads in %e seconds",
-              reader1_iterations + reader2_iterations,
-              writer1_iterations + writer2_iterations, tottime);
+        reader1_iterations + reader2_iterations,
+        writer1_iterations + writer2_iterations, tottime);
     if ((reader1_iterations + reader2_iterations == 0)
         || (writer1_iterations + writer2_iterations == 0)) {
         TEST_info("Threads did not iterate\n");
@@ -535,9 +534,9 @@ static CRYPTO_THREAD_LOCAL thread_local_key;
 static unsigned destructor_run_count = 0;
 static int thread_local_thread_cb_ok = 0;
 
-static void thread_local_destructor(void *arg)
+static void thread_local_destructor(void* arg)
 {
-    unsigned *count;
+    unsigned* count;
 
     if (arg == NULL)
         return;
@@ -549,12 +548,12 @@ static void thread_local_destructor(void *arg)
 
 static void thread_local_thread_cb(void)
 {
-    void *ptr;
+    void* ptr;
 
     ptr = CRYPTO_THREAD_get_local(&thread_local_key);
     if (!TEST_ptr_null(ptr)
         || !TEST_true(CRYPTO_THREAD_set_local(&thread_local_key,
-                                              &destructor_run_count)))
+            &destructor_run_count)))
         return;
 
     ptr = CRYPTO_THREAD_get_local(&thread_local_key);
@@ -567,10 +566,10 @@ static void thread_local_thread_cb(void)
 static int test_thread_local(void)
 {
     thread_t thread;
-    void *ptr = NULL;
+    void* ptr = NULL;
 
     if (!TEST_true(CRYPTO_THREAD_init_local(&thread_local_key,
-                                            thread_local_destructor)))
+            thread_local_destructor)))
         return 0;
 
     ptr = CRYPTO_THREAD_get_local(&thread_local_key);
@@ -586,10 +585,10 @@ static int test_thread_local(void)
     if (!TEST_ptr_null(ptr))
         return 0;
 
-# if !defined(OPENSSL_SYS_WINDOWS)
+#if !defined(OPENSSL_SYS_WINDOWS)
     if (!TEST_int_eq(destructor_run_count, 1))
         return 0;
-# endif
+#endif
 #endif
 
     if (!TEST_true(CRYPTO_THREAD_cleanup_local(&thread_local_key)))
@@ -608,7 +607,7 @@ static int test_thread_local_multi_key(void)
 
     for (i = 0; i < 1000; i++) {
         if (!TEST_true(CRYPTO_THREAD_init_local(&thread_local_key,
-                                                thread_local_destructor)))
+                thread_local_destructor)))
             return 0;
 
         if (!TEST_true(CRYPTO_THREAD_set_local(&thread_local_key, &dummy)))
@@ -624,7 +623,7 @@ static int test_atomic(void)
 {
     int val = 0, ret = 0, testresult = 0;
     uint64_t val64 = 1, ret64 = 0;
-    CRYPTO_RWLOCK *lock = CRYPTO_THREAD_lock_new();
+    CRYPTO_RWLOCK* lock = CRYPTO_THREAD_lock_new();
 
     if (!TEST_ptr(lock))
         return 0;
@@ -649,12 +648,12 @@ static int test_atomic(void)
     if (CRYPTO_atomic_or(&val64, 2, &ret64, NULL)) {
         /* This succeeds therefore we're on a platform with lockless atomics */
         if (!TEST_uint_eq((unsigned int)val64, 3)
-                || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
             goto err;
     } else {
         /* This failed therefore we're on a platform without lockless atomics */
         if (!TEST_uint_eq((unsigned int)val64, 1)
-                || !TEST_int_eq((unsigned int)ret64, 0))
+            || !TEST_int_eq((unsigned int)ret64, 0))
             goto err;
     }
     val64 = 1;
@@ -664,19 +663,19 @@ static int test_atomic(void)
         goto err;
 
     if (!TEST_uint_eq((unsigned int)val64, 3)
-            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+        || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
         goto err;
 
     ret64 = 0;
     if (CRYPTO_atomic_load(&val64, &ret64, NULL)) {
         /* This succeeds therefore we're on a platform with lockless atomics */
         if (!TEST_uint_eq((unsigned int)val64, 3)
-                || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
             goto err;
     } else {
         /* This failed therefore we're on a platform without lockless atomics */
         if (!TEST_uint_eq((unsigned int)val64, 3)
-                || !TEST_int_eq((unsigned int)ret64, 0))
+            || !TEST_int_eq((unsigned int)ret64, 0))
             goto err;
     }
 
@@ -685,7 +684,7 @@ static int test_atomic(void)
         goto err;
 
     if (!TEST_uint_eq((unsigned int)val64, 3)
-            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+        || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
         goto err;
 
     ret64 = 0;
@@ -693,12 +692,12 @@ static int test_atomic(void)
     if (CRYPTO_atomic_and(&val64, 5, &ret64, NULL)) {
         /* This succeeds therefore we're on a platform with lockless atomics */
         if (!TEST_uint_eq((unsigned int)val64, 1)
-                || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
             goto err;
     } else {
         /* This failed therefore we're on a platform without lockless atomics */
         if (!TEST_uint_eq((unsigned int)val64, 3)
-                || !TEST_int_eq((unsigned int)ret64, 0))
+            || !TEST_int_eq((unsigned int)ret64, 0))
             goto err;
     }
     val64 = 3;
@@ -708,7 +707,7 @@ static int test_atomic(void)
         goto err;
 
     if (!TEST_uint_eq((unsigned int)val64, 1)
-            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+        || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
         goto err;
 
     ret64 = 0;
@@ -716,12 +715,12 @@ static int test_atomic(void)
     if (CRYPTO_atomic_add64(&val64, 2, &ret64, NULL)) {
         /* This succeeds therefore we're on a platform with lockless atomics */
         if (!TEST_uint_eq((unsigned int)val64, 3)
-                || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
             goto err;
     } else {
         /* This failed therefore we're on a platform without lockless atomics */
         if (!TEST_uint_eq((unsigned int)val64, 1)
-                || !TEST_int_eq((unsigned int)ret64, 0))
+            || !TEST_int_eq((unsigned int)ret64, 0))
             goto err;
     }
     val64 = 1;
@@ -731,18 +730,18 @@ static int test_atomic(void)
         goto err;
 
     if (!TEST_uint_eq((unsigned int)val64, 3)
-            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+        || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
         goto err;
 
     testresult = 1;
- err:
+err:
     CRYPTO_THREAD_lock_free(lock);
     return testresult;
 }
 
-static OSSL_LIB_CTX *multi_libctx = NULL;
+static OSSL_LIB_CTX* multi_libctx = NULL;
 static int multi_success;
-static OSSL_PROVIDER *multi_provider[MAXIMUM_PROVIDERS + 1];
+static OSSL_PROVIDER* multi_provider[MAXIMUM_PROVIDERS + 1];
 static size_t multi_num_threads;
 static thread_t multi_threads[MAXIMUM_THREADS];
 
@@ -770,7 +769,7 @@ static void multi_set_success(int ok)
 
 static void thead_teardown_libctx(void)
 {
-    OSSL_PROVIDER **p;
+    OSSL_PROVIDER** p;
 
     for (p = multi_provider; *p != NULL; p++)
         OSSL_PROVIDER_unload(*p);
@@ -778,19 +777,18 @@ static void thead_teardown_libctx(void)
     multi_intialise();
 }
 
-static int thread_setup_libctx(int libctx, const char *providers[])
+static int thread_setup_libctx(int libctx, const char* providers[])
 {
     size_t n;
 
-    if (libctx && !TEST_true(test_get_libctx(&multi_libctx, NULL, config_file,
-                                             NULL, NULL)))
+    if (libctx && !TEST_true(test_get_libctx(&multi_libctx, NULL, config_file, NULL, NULL)))
         return 0;
 
     if (providers != NULL)
         for (n = 0; providers[n] != NULL; n++)
             if (!TEST_size_t_lt(n, MAXIMUM_PROVIDERS)
                 || !TEST_ptr(multi_provider[n] = OSSL_PROVIDER_load(multi_libctx,
-                                                                    providers[n]))) {
+                                 providers[n]))) {
                 thead_teardown_libctx();
                 return 0;
             }
@@ -814,7 +812,7 @@ static int start_threads(size_t n, void (*thread_func)(void))
     if (!TEST_size_t_le(multi_num_threads + n, MAXIMUM_THREADS))
         return 0;
 
-    for (i = 0 ; i < n; i++)
+    for (i = 0; i < n; i++)
         if (!TEST_true(run_thread(multi_threads + multi_num_threads++, thread_func)))
             return 0;
     return 1;
@@ -822,35 +820,35 @@ static int start_threads(size_t n, void (*thread_func)(void))
 
 /* Template multi-threaded test function */
 static int thread_run_test(void (*main_func)(void),
-                           size_t num_threads, void (*thread_func)(void),
-                           int libctx, const char *providers[])
+    size_t num_threads, void (*thread_func)(void),
+    int libctx, const char* providers[])
 {
     int testresult = 0;
 
     multi_intialise();
     if (!thread_setup_libctx(libctx, providers)
-            || !start_threads(num_threads, thread_func))
+        || !start_threads(num_threads, thread_func))
         goto err;
 
     if (main_func != NULL)
         main_func();
 
     if (!teardown_threads()
-            || !TEST_true(multi_success))
+        || !TEST_true(multi_success))
         goto err;
     testresult = 1;
- err:
+err:
     thead_teardown_libctx();
     return testresult;
 }
 
 static void thread_general_worker(void)
 {
-    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
-    EVP_MD *md = EVP_MD_fetch(multi_libctx, "SHA2-256", NULL);
-    EVP_CIPHER_CTX *cipherctx = EVP_CIPHER_CTX_new();
-    EVP_CIPHER *ciph = EVP_CIPHER_fetch(multi_libctx, "AES-128-CBC", NULL);
-    const char *message = "Hello World";
+    EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
+    EVP_MD* md = EVP_MD_fetch(multi_libctx, "SHA2-256", NULL);
+    EVP_CIPHER_CTX* cipherctx = EVP_CIPHER_CTX_new();
+    EVP_CIPHER* ciph = EVP_CIPHER_fetch(multi_libctx, "AES-128-CBC", NULL);
+    const char* message = "Hello World";
     size_t messlen = strlen(message);
     /* Should be big enough for encryption output too */
     unsigned char out[EVP_MAX_MD_SIZE];
@@ -864,31 +862,31 @@ static void thread_general_worker(void)
     };
     unsigned int mdoutl;
     int ciphoutl;
-    EVP_PKEY *pkey = NULL;
+    EVP_PKEY* pkey = NULL;
     int testresult = 0;
     int i, isfips;
 
     isfips = OSSL_PROVIDER_available(multi_libctx, "fips");
 
     if (!TEST_ptr(mdctx)
-            || !TEST_ptr(md)
-            || !TEST_ptr(cipherctx)
-            || !TEST_ptr(ciph))
+        || !TEST_ptr(md)
+        || !TEST_ptr(cipherctx)
+        || !TEST_ptr(ciph))
         goto err;
 
     /* Do some work */
     for (i = 0; i < 5; i++) {
         if (!TEST_true(EVP_DigestInit_ex(mdctx, md, NULL))
-                || !TEST_true(EVP_DigestUpdate(mdctx, message, messlen))
-                || !TEST_true(EVP_DigestFinal(mdctx, out, &mdoutl)))
+            || !TEST_true(EVP_DigestUpdate(mdctx, message, messlen))
+            || !TEST_true(EVP_DigestFinal(mdctx, out, &mdoutl)))
             goto err;
     }
     for (i = 0; i < 5; i++) {
         if (!TEST_true(EVP_EncryptInit_ex(cipherctx, ciph, NULL, key, iv))
-                || !TEST_true(EVP_EncryptUpdate(cipherctx, out, &ciphoutl,
-                                                (unsigned char *)message,
-                                                (int)messlen))
-                || !TEST_true(EVP_EncryptFinal(cipherctx, out, &ciphoutl)))
+            || !TEST_true(EVP_EncryptUpdate(cipherctx, out, &ciphoutl,
+                (unsigned char*)message,
+                (int)messlen))
+            || !TEST_true(EVP_EncryptFinal(cipherctx, out, &ciphoutl)))
             goto err;
     }
 
@@ -902,7 +900,7 @@ static void thread_general_worker(void)
         goto err;
 
     testresult = 1;
- err:
+err:
     EVP_MD_CTX_free(mdctx);
     EVP_MD_free(md);
     EVP_CIPHER_CTX_free(cipherctx);
@@ -914,7 +912,7 @@ static void thread_general_worker(void)
 
 static void thread_multi_simple_fetch(void)
 {
-    EVP_MD *md = EVP_MD_fetch(multi_libctx, "SHA2-256", NULL);
+    EVP_MD* md = EVP_MD_fetch(multi_libctx, "SHA2-256", NULL);
 
     if (md != NULL)
         EVP_MD_free(md);
@@ -922,15 +920,15 @@ static void thread_multi_simple_fetch(void)
         multi_set_success(0);
 }
 
-static EVP_PKEY *shared_evp_pkey = NULL;
+static EVP_PKEY* shared_evp_pkey = NULL;
 
 static void thread_shared_evp_pkey(void)
 {
-    char *msg = "Hello World";
+    char* msg = "Hello World";
     unsigned char ctbuf[256];
     unsigned char ptbuf[256];
     size_t ptlen, ctlen = sizeof(ctbuf);
-    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY_CTX* ctx = NULL;
     int success = 0;
     int i;
 
@@ -938,15 +936,15 @@ static void thread_shared_evp_pkey(void)
         if (i > 0)
             EVP_PKEY_CTX_free(ctx);
         ctx = EVP_PKEY_CTX_new_from_pkey(multi_libctx, shared_evp_pkey,
-                                         i == 0 ? "provider=default"
-                                                : "provider=fips");
+            i == 0 ? "provider=default"
+                   : "provider=fips");
         if (!TEST_ptr(ctx))
             goto err;
 
         if (!TEST_int_ge(EVP_PKEY_encrypt_init(ctx), 0)
-                || !TEST_int_ge(EVP_PKEY_encrypt(ctx, ctbuf, &ctlen,
-                                                (unsigned char *)msg, strlen(msg)),
-                                                0))
+            || !TEST_int_ge(EVP_PKEY_encrypt(ctx, ctbuf, &ctlen,
+                                (unsigned char*)msg, strlen(msg)),
+                0))
             goto err;
 
         EVP_PKEY_CTX_free(ctx);
@@ -957,15 +955,15 @@ static void thread_shared_evp_pkey(void)
 
         ptlen = sizeof(ptbuf);
         if (!TEST_int_ge(EVP_PKEY_decrypt_init(ctx), 0)
-                || !TEST_int_gt(EVP_PKEY_decrypt(ctx, ptbuf, &ptlen, ctbuf, ctlen),
-                                                0)
-                || !TEST_mem_eq(msg, strlen(msg), ptbuf, ptlen))
+            || !TEST_int_gt(EVP_PKEY_decrypt(ctx, ptbuf, &ptlen, ctbuf, ctlen),
+                0)
+            || !TEST_mem_eq(msg, strlen(msg), ptbuf, ptlen))
             goto err;
     }
 
     success = 1;
 
- err:
+err:
     EVP_PKEY_CTX_free(ctx);
     if (!success)
         multi_set_success(0);
@@ -973,10 +971,10 @@ static void thread_shared_evp_pkey(void)
 
 static void thread_provider_load_unload(void)
 {
-    OSSL_PROVIDER *deflt = OSSL_PROVIDER_load(multi_libctx, "default");
+    OSSL_PROVIDER* deflt = OSSL_PROVIDER_load(multi_libctx, "default");
 
     if (!TEST_ptr(deflt)
-            || !TEST_true(OSSL_PROVIDER_available(multi_libctx, "default")))
+        || !TEST_true(OSSL_PROVIDER_available(multi_libctx, "default")))
         multi_set_success(0);
 
     OSSL_PROVIDER_unload(deflt);
@@ -985,7 +983,7 @@ static void thread_provider_load_unload(void)
 static int test_multi_general_worker_default_provider(void)
 {
     return thread_run_test(&thread_general_worker, 2, &thread_general_worker,
-                           1, default_provider);
+        1, default_provider);
 }
 
 static int test_multi_general_worker_fips_provider(void)
@@ -993,13 +991,13 @@ static int test_multi_general_worker_fips_provider(void)
     if (!do_fips)
         return TEST_skip("FIPS not supported");
     return thread_run_test(&thread_general_worker, 2, &thread_general_worker,
-                           1, fips_provider);
+        1, fips_provider);
 }
 
 static int test_multi_fetch_worker(void)
 {
     return thread_run_test(&thread_multi_simple_fetch,
-                           2, &thread_multi_simple_fetch, 1, default_provider);
+        2, &thread_multi_simple_fetch, 1, default_provider);
 }
 
 static int test_multi_shared_pkey_common(void (*worker)(void))
@@ -1007,20 +1005,19 @@ static int test_multi_shared_pkey_common(void (*worker)(void))
     int testresult = 0;
 
     multi_intialise();
-    if (!thread_setup_libctx(1, do_fips ? fips_and_default_providers
-                                        : default_provider)
-            || !TEST_ptr(shared_evp_pkey = load_pkey_pem(privkey, multi_libctx))
-            || !start_threads(1, &thread_shared_evp_pkey)
-            || !start_threads(1, worker))
+    if (!thread_setup_libctx(1, do_fips ? fips_and_default_providers : default_provider)
+        || !TEST_ptr(shared_evp_pkey = load_pkey_pem(privkey, multi_libctx))
+        || !start_threads(1, &thread_shared_evp_pkey)
+        || !start_threads(1, worker))
         goto err;
 
     thread_shared_evp_pkey();
 
     if (!teardown_threads()
-            || !TEST_true(multi_success))
+        || !TEST_true(multi_success))
         goto err;
     testresult = 1;
- err:
+err:
     EVP_PKEY_free(shared_evp_pkey);
     thead_teardown_libctx();
     return testresult;
@@ -1061,9 +1058,8 @@ static int test_multi_shared_pkey_release(void)
 
     multi_intialise();
     shared_evp_pkey = NULL;
-    if (!thread_setup_libctx(1, do_fips ? fips_and_default_providers
-                                        : default_provider)
-            || !TEST_ptr(shared_evp_pkey = load_pkey_pem(privkey, multi_libctx)))
+    if (!thread_setup_libctx(1, do_fips ? fips_and_default_providers : default_provider)
+        || !TEST_ptr(shared_evp_pkey = load_pkey_pem(privkey, multi_libctx)))
         goto err;
     for (; i < 10; ++i) {
         if (!TEST_true(EVP_PKEY_up_ref(shared_evp_pkey)))
@@ -1075,10 +1071,10 @@ static int test_multi_shared_pkey_release(void)
     i = 0;
 
     if (!teardown_threads()
-            || !TEST_true(multi_success))
+        || !TEST_true(multi_success))
         goto err;
     testresult = 1;
- err:
+err:
     while (i > 0) {
         EVP_PKEY_free(shared_evp_pkey);
         --i;
@@ -1089,15 +1085,15 @@ static int test_multi_shared_pkey_release(void)
 
 static int test_multi_load_unload_provider(void)
 {
-    EVP_MD *sha256 = NULL;
-    OSSL_PROVIDER *prov = NULL;
+    EVP_MD* sha256 = NULL;
+    OSSL_PROVIDER* prov = NULL;
     int testresult = 0;
 
     multi_intialise();
     if (!thread_setup_libctx(1, NULL)
-            || !TEST_ptr(prov = OSSL_PROVIDER_load(multi_libctx, "default"))
-            || !TEST_ptr(sha256 = EVP_MD_fetch(multi_libctx, "SHA2-256", NULL))
-            || !TEST_true(OSSL_PROVIDER_unload(prov)))
+        || !TEST_ptr(prov = OSSL_PROVIDER_load(multi_libctx, "default"))
+        || !TEST_ptr(sha256 = EVP_MD_fetch(multi_libctx, "SHA2-256", NULL))
+        || !TEST_true(OSSL_PROVIDER_unload(prov)))
         goto err;
     prov = NULL;
 
@@ -1107,17 +1103,17 @@ static int test_multi_load_unload_provider(void)
     thread_provider_load_unload();
 
     if (!teardown_threads()
-            || !TEST_true(multi_success))
+        || !TEST_true(multi_success))
         goto err;
     testresult = 1;
- err:
+err:
     OSSL_PROVIDER_unload(prov);
     EVP_MD_free(sha256);
     thead_teardown_libctx();
     return testresult;
 }
 
-static char *multi_load_provider = "legacy";
+static char* multi_load_provider = "legacy";
 /*
  * This test attempts to load several providers at the same time, and if
  * run with a thread sanitizer, should crash if the core provider code
@@ -1125,10 +1121,10 @@ static char *multi_load_provider = "legacy";
  */
 static void test_multi_load_worker(void)
 {
-    OSSL_PROVIDER *prov;
+    OSSL_PROVIDER* prov;
 
     if (!TEST_ptr(prov = OSSL_PROVIDER_load(multi_libctx, multi_load_provider))
-            || !TEST_true(OSSL_PROVIDER_unload(prov)))
+        || !TEST_true(OSSL_PROVIDER_unload(prov)))
         multi_set_success(0);
 }
 
@@ -1142,13 +1138,13 @@ static int test_multi_default(void)
     multidefault_run = 1;
 
     return thread_run_test(&thread_multi_simple_fetch,
-                           2, &thread_multi_simple_fetch, 0, NULL);
+        2, &thread_multi_simple_fetch, 0, NULL);
 }
 
 static int test_multi_load(void)
 {
     int res = 1;
-    OSSL_PROVIDER *prov;
+    OSSL_PROVIDER* prov;
 
     /* The multidefault test must run prior to this test */
     if (!multidefault_run) {
@@ -1170,7 +1166,8 @@ static int test_multi_load(void)
     OSSL_PROVIDER_unload(prov);
 
     return thread_run_test(NULL, MAXIMUM_THREADS, &test_multi_load_worker, 0,
-                          NULL) && res;
+               NULL)
+        && res;
 }
 
 static void test_obj_create_one(void)
@@ -1183,16 +1180,16 @@ static void test_obj_create_one(void)
     BIO_snprintf(sn, sizeof(sn), "short-name-%s", tids);
     BIO_snprintf(ln, sizeof(ln), "long-name-%s", tids);
     if (!TEST_int_ne(id, 0)
-            || !TEST_true(id = OBJ_create(oid, sn, ln))
-            || !TEST_true(OBJ_add_sigid(id, NID_sha3_256, NID_rsa)))
+        || !TEST_true(id = OBJ_create(oid, sn, ln))
+        || !TEST_true(OBJ_add_sigid(id, NID_sha3_256, NID_rsa)))
         multi_set_success(0);
 }
 
 static int test_obj_add(void)
 {
     return thread_run_test(&test_obj_create_one,
-                           MAXIMUM_THREADS, &test_obj_create_one,
-                           1, default_provider);
+        MAXIMUM_THREADS, &test_obj_create_one,
+        1, default_provider);
 }
 
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
@@ -1204,13 +1201,13 @@ static void test_bio_dgram_pair_worker(void)
     int ok = 0;
     uint8_t ch = 0;
     uint8_t scratch[64];
-    BIO_MSG msg = {0};
+    BIO_MSG msg = { 0 };
     size_t num_processed = 0;
 
     if (!TEST_int_eq(RAND_bytes_ex(multi_libctx, &ch, 1, 64), 1))
         goto err;
 
-    msg.data     = scratch;
+    msg.data = scratch;
     msg.data_len = sizeof(scratch);
 
     /*
@@ -1219,10 +1216,10 @@ static void test_bio_dgram_pair_worker(void)
      */
     if (ch & 2)
         r = BIO_sendmmsg(ch & 1 ? multi_bio2 : multi_bio1, &msg,
-                         sizeof(BIO_MSG), 1, 0, &num_processed);
+            sizeof(BIO_MSG), 1, 0, &num_processed);
     else
         r = BIO_recvmmsg(ch & 1 ? multi_bio2 : multi_bio1, &msg,
-                         sizeof(BIO_MSG), 1, 0, &num_processed);
+            sizeof(BIO_MSG), 1, 0, &num_processed);
 
     ok = 1;
 err:
@@ -1242,9 +1239,9 @@ static int test_bio_dgram_pair(void)
     multi_bio1 = bio1;
     multi_bio2 = bio2;
 
-    r  = thread_run_test(&test_bio_dgram_pair_worker,
-                         MAXIMUM_THREADS, &test_bio_dgram_pair_worker,
-                         1, default_provider);
+    r = thread_run_test(&test_bio_dgram_pair_worker,
+        MAXIMUM_THREADS, &test_bio_dgram_pair_worker,
+        1, default_provider);
 
 err:
     BIO_free(bio1);
@@ -1253,7 +1250,7 @@ err:
 }
 #endif
 
-static const char *pemdataraw[] = {
+static const char* pemdataraw[] = {
     "-----BEGIN RSA PRIVATE KEY-----\n",
     "MIIBOgIBAAJBAMFcGsaxxdgiuuGmCkVImy4h99CqT7jwY3pexPGcnUFtR2Fh36Bp\n",
     "oncwtkZ4cAgtvd4Qs8PkxUdp6p/DlUmObdkCAwEAAQJAUR44xX6zB3eaeyvTRzms\n",
@@ -1268,9 +1265,9 @@ static const char *pemdataraw[] = {
 
 static void test_pem_read_one(void)
 {
-    EVP_PKEY *key = NULL;
-    BIO *pem = NULL;
-    char *pemdata;
+    EVP_PKEY* key = NULL;
+    BIO* pem = NULL;
+    char* pemdata;
     size_t len;
 
     pemdata = glue_strings(pemdataraw, &len);
@@ -1289,7 +1286,7 @@ static void test_pem_read_one(void)
     if (key == NULL)
         multi_set_success(0);
 
- err:
+err:
     EVP_PKEY_free(key);
     BIO_free(pem);
     OPENSSL_free(pemdata);
@@ -1299,16 +1296,16 @@ static void test_pem_read_one(void)
 static int test_pem_read(void)
 {
     return thread_run_test(&test_pem_read_one, MAXIMUM_THREADS,
-                           &test_pem_read_one, 1, default_provider);
+        &test_pem_read_one, 1, default_provider);
 }
 
-static X509_STORE *store = NULL;
+static X509_STORE* store = NULL;
 
 static void test_x509_store_by_subject(void)
 {
-    X509_STORE_CTX *ctx;
-    X509_OBJECT *obj = NULL;
-    X509_NAME *name = NULL;
+    X509_STORE_CTX* ctx;
+    X509_OBJECT* obj = NULL;
+    X509_NAME* name = NULL;
     int success = 0;
 
     ctx = X509_STORE_CTX_new();
@@ -1322,15 +1319,15 @@ static void test_x509_store_by_subject(void)
     if (!TEST_ptr(name))
         goto err;
     if (!TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
-                                              (unsigned char *)"Root CA",
-                                              -1, -1, 0)))
+            (unsigned char*)"Root CA",
+            -1, -1, 0)))
         goto err;
     obj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509, name);
     if (!TEST_ptr(obj))
         goto err;
 
     success = 1;
- err:
+err:
     X509_OBJECT_free(obj);
     X509_STORE_CTX_free(ctx);
     X509_NAME_free(name);
@@ -1350,9 +1347,9 @@ static int test_x509_store(void)
         goto err;
 
     ret = thread_run_test(&test_x509_store_by_subject, MAXIMUM_THREADS,
-                          &test_x509_store_by_subject, 0, NULL);
+        &test_x509_store_by_subject, 0, NULL);
 
- err:
+err:
     X509_STORE_free(store);
     store = NULL;
     return ret;
@@ -1361,17 +1358,18 @@ static int test_x509_store(void)
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
-    OPT_FIPS, OPT_CONFIG_FILE,
+    OPT_FIPS,
+    OPT_CONFIG_FILE,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
-const OPTIONS *test_get_options(void)
+const OPTIONS* test_get_options(void)
 {
     static const OPTIONS options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "fips", OPT_FIPS, '-', "Test the FIPS provider" },
         { "config", OPT_CONFIG_FILE, '<',
-          "The configuration file to use for the libctx" },
+            "The configuration file to use for the libctx" },
         { NULL }
     };
     return options;
@@ -1380,7 +1378,7 @@ const OPTIONS *test_get_options(void)
 int setup_tests(void)
 {
     OPTION_CHOICE o;
-    char *datadir;
+    char* datadir;
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

@@ -15,12 +15,12 @@
 #include <openssl/bio.h>
 
 /* These are available for any test program */
-BIO *bio_out = NULL;
-BIO *bio_err = NULL;
+BIO* bio_out = NULL;
+BIO* bio_err = NULL;
 
 /* These are available for TAP output only (internally) */
-static BIO *tap_out = NULL;
-static BIO *tap_err = NULL;
+static BIO* tap_out = NULL;
+static BIO* tap_err = NULL;
 
 typedef struct local_test_data_st {
     BIO *override_bio_out, *override_bio_err;
@@ -29,11 +29,11 @@ typedef struct local_test_data_st {
 #if defined(OPENSSL_THREADS)
 static CRYPTO_THREAD_LOCAL local_test_data; /* (LOCAL_TEST_DATA *) */
 
-static CRYPTO_RWLOCK *io_lock = NULL;
+static CRYPTO_RWLOCK* io_lock = NULL;
 #endif
 
 #if defined(OPENSSL_THREADS)
-static void cleanup_test_data(void *p)
+static void cleanup_test_data(void* p)
 {
     OPENSSL_free(p);
 }
@@ -49,10 +49,10 @@ static int init_local_test_data(void)
     return 1;
 }
 
-static LOCAL_TEST_DATA *get_local_test_data(void)
+static LOCAL_TEST_DATA* get_local_test_data(void)
 {
 #if defined(OPENSSL_THREADS)
-    LOCAL_TEST_DATA *p;
+    LOCAL_TEST_DATA* p;
 
     p = CRYPTO_THREAD_get_local(&local_test_data);
     if (p != NULL)
@@ -75,7 +75,7 @@ static LOCAL_TEST_DATA *get_local_test_data(void)
 static void cleanup_local_test_data(void)
 {
 #if defined(OPENSSL_THREADS)
-    LOCAL_TEST_DATA *p;
+    LOCAL_TEST_DATA* p;
 
     p = CRYPTO_THREAD_get_local(&local_test_data);
     if (p == NULL)
@@ -86,9 +86,9 @@ static void cleanup_local_test_data(void)
 #endif
 }
 
-int set_override_bio_out(BIO *bio)
+int set_override_bio_out(BIO* bio)
 {
-    LOCAL_TEST_DATA *data = get_local_test_data();
+    LOCAL_TEST_DATA* data = get_local_test_data();
 
     if (data == NULL)
         return 0;
@@ -97,9 +97,9 @@ int set_override_bio_out(BIO *bio)
     return 1;
 }
 
-int set_override_bio_err(BIO *bio)
+int set_override_bio_err(BIO* bio)
 {
-    LOCAL_TEST_DATA *data = get_local_test_data();
+    LOCAL_TEST_DATA* data = get_local_test_data();
 
     if (data == NULL)
         return 0;
@@ -108,9 +108,9 @@ int set_override_bio_err(BIO *bio)
     return 1;
 }
 
-static BIO *get_bio_out(void)
+static BIO* get_bio_out(void)
 {
-    LOCAL_TEST_DATA *data = get_local_test_data();
+    LOCAL_TEST_DATA* data = get_local_test_data();
 
     if (data != NULL && data->override_bio_out != NULL)
         return data->override_bio_out;
@@ -118,9 +118,9 @@ static BIO *get_bio_out(void)
     return bio_out;
 }
 
-static BIO *get_bio_err(void)
+static BIO* get_bio_err(void)
 {
-    LOCAL_TEST_DATA *data = get_local_test_data();
+    LOCAL_TEST_DATA* data = get_local_test_data();
 
     if (data != NULL && data->override_bio_err != NULL)
         return data->override_bio_err;
@@ -199,7 +199,7 @@ static ossl_inline void test_io_unlock(void)
 #endif
 }
 
-int test_vprintf_stdout(const char *fmt, va_list ap)
+int test_vprintf_stdout(const char* fmt, va_list ap)
 {
     int r;
 
@@ -210,7 +210,7 @@ int test_vprintf_stdout(const char *fmt, va_list ap)
     return r;
 }
 
-int test_vprintf_stderr(const char *fmt, va_list ap)
+int test_vprintf_stderr(const char* fmt, va_list ap)
 {
     int r;
 
@@ -243,7 +243,7 @@ int test_flush_stderr(void)
     return r;
 }
 
-int test_vprintf_tapout(const char *fmt, va_list ap)
+int test_vprintf_tapout(const char* fmt, va_list ap)
 {
     int r;
 
@@ -254,7 +254,7 @@ int test_vprintf_tapout(const char *fmt, va_list ap)
     return r;
 }
 
-int test_vprintf_taperr(const char *fmt, va_list ap)
+int test_vprintf_taperr(const char* fmt, va_list ap)
 {
     int r;
 

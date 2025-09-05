@@ -10,21 +10,20 @@
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_gcm.h"
 
-
-int ossl_gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv, size_t ivlen)
+int ossl_gcm_setiv(PROV_GCM_CTX* ctx, const unsigned char* iv, size_t ivlen)
 {
     CRYPTO_gcm128_setiv(&ctx->gcm, iv, ivlen);
     return 1;
 }
 
-int ossl_gcm_aad_update(PROV_GCM_CTX *ctx, const unsigned char *aad,
-                        size_t aad_len)
+int ossl_gcm_aad_update(PROV_GCM_CTX* ctx, const unsigned char* aad,
+    size_t aad_len)
 {
     return CRYPTO_gcm128_aad(&ctx->gcm, aad, aad_len) == 0;
 }
 
-int ossl_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
-                           size_t len, unsigned char *out)
+int ossl_gcm_cipher_update(PROV_GCM_CTX* ctx, const unsigned char* in,
+    size_t len, unsigned char* out)
 {
     if (ctx->enc) {
         if (CRYPTO_gcm128_encrypt(&ctx->gcm, in, out, len))
@@ -36,7 +35,7 @@ int ossl_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
     return 1;
 }
 
-int ossl_gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag)
+int ossl_gcm_cipher_final(PROV_GCM_CTX* ctx, unsigned char* tag)
 {
     if (ctx->enc) {
         CRYPTO_gcm128_tag(&ctx->gcm, tag, GCM_TAG_MAX_SIZE);
@@ -48,9 +47,9 @@ int ossl_gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag)
     return 1;
 }
 
-int ossl_gcm_one_shot(PROV_GCM_CTX *ctx, unsigned char *aad, size_t aad_len,
-                      const unsigned char *in, size_t in_len,
-                      unsigned char *out, unsigned char *tag, size_t tag_len)
+int ossl_gcm_one_shot(PROV_GCM_CTX* ctx, unsigned char* aad, size_t aad_len,
+    const unsigned char* in, size_t in_len,
+    unsigned char* out, unsigned char* tag, size_t tag_len)
 {
     int ret = 0;
 

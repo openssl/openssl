@@ -10,10 +10,10 @@
 #include <openssl/configuration.h>
 #include <internal/thread_arch.h>
 
-CRYPTO_THREAD *ossl_crypto_thread_native_start(CRYPTO_THREAD_ROUTINE routine,
-                                               void *data, int joinable)
+CRYPTO_THREAD* ossl_crypto_thread_native_start(CRYPTO_THREAD_ROUTINE routine,
+    void* data, int joinable)
 {
-    CRYPTO_THREAD *handle;
+    CRYPTO_THREAD* handle;
 
     if (routine == NULL)
         return NULL;
@@ -44,7 +44,7 @@ fail:
     return NULL;
 }
 
-int ossl_crypto_thread_native_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_RETVAL *retval)
+int ossl_crypto_thread_native_join(CRYPTO_THREAD* thread, CRYPTO_THREAD_RETVAL* retval)
 {
     uint64_t req_state_mask;
 
@@ -103,7 +103,7 @@ fail:
     return 0;
 }
 
-int ossl_crypto_thread_native_clean(CRYPTO_THREAD *handle)
+int ossl_crypto_thread_native_clean(CRYPTO_THREAD* handle)
 {
     uint64_t req_state_mask;
 

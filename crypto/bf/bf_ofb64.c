@@ -21,31 +21,31 @@
  * The extra state information to record how much of the 64bit block we have
  * used is contained in *num;
  */
-void BF_ofb64_encrypt(const unsigned char *in, unsigned char *out,
-                      long length, const BF_KEY *schedule,
-                      unsigned char *ivec, int *num)
+void BF_ofb64_encrypt(const unsigned char* in, unsigned char* out,
+    long length, const BF_KEY* schedule,
+    unsigned char* ivec, int* num)
 {
     register BF_LONG v0, v1, t;
     register int n = *num;
     register long l = length;
     unsigned char d[8];
-    register char *dp;
+    register char* dp;
     BF_LONG ti[2];
-    unsigned char *iv;
+    unsigned char* iv;
     int save = 0;
 
-    iv = (unsigned char *)ivec;
+    iv = (unsigned char*)ivec;
     n2l(iv, v0);
     n2l(iv, v1);
     ti[0] = v0;
     ti[1] = v1;
-    dp = (char *)d;
+    dp = (char*)d;
     l2n(v0, dp);
     l2n(v1, dp);
     while (l--) {
         if (n == 0) {
-            BF_encrypt((BF_LONG *)ti, schedule);
-            dp = (char *)d;
+            BF_encrypt((BF_LONG*)ti, schedule);
+            dp = (char*)d;
             t = ti[0];
             l2n(t, dp);
             t = ti[1];
@@ -58,7 +58,7 @@ void BF_ofb64_encrypt(const unsigned char *in, unsigned char *out,
     if (save) {
         v0 = ti[0];
         v1 = ti[1];
-        iv = (unsigned char *)ivec;
+        iv = (unsigned char*)ivec;
         l2n(v0, iv);
         l2n(v1, iv);
     }

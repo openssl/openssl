@@ -9,26 +9,26 @@
 #include "app_libctx.h"
 #include "apps.h"
 
-static OSSL_LIB_CTX *app_libctx = NULL;
-static const char *app_propq = NULL;
+static OSSL_LIB_CTX* app_libctx = NULL;
+static const char* app_propq = NULL;
 
-int app_set_propq(const char *arg)
+int app_set_propq(const char* arg)
 {
     app_propq = arg;
     return 1;
 }
 
-const char *app_get0_propq(void)
+const char* app_get0_propq(void)
 {
     return app_propq;
 }
 
-OSSL_LIB_CTX *app_get0_libctx(void)
+OSSL_LIB_CTX* app_get0_libctx(void)
 {
     return app_libctx;
 }
 
-OSSL_LIB_CTX *app_create_libctx(void)
+OSSL_LIB_CTX* app_create_libctx(void)
 {
     /*
      * Load the NULL provider into the default library context and create a
@@ -45,4 +45,3 @@ OSSL_LIB_CTX *app_create_libctx(void)
         opt_printf_stderr("Failed to create library context\n");
     return app_libctx;
 }
-

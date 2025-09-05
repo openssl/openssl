@@ -13,21 +13,21 @@
 #define TDES_FLAGS 0
 
 typedef struct prov_des_ctx_st {
-    PROV_CIPHER_CTX base;      /* Must be first */
+    PROV_CIPHER_CTX base; /* Must be first */
     union {
         OSSL_UNION_ALIGN;
         DES_key_schedule ks;
     } dks;
     union {
-        void (*cbc) (const void *, void *, size_t,
-                     const DES_key_schedule *, unsigned char *);
+        void (*cbc)(const void*, void*, size_t,
+            const DES_key_schedule*, unsigned char*);
     } dstream;
 
 } PROV_DES_CTX;
 
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_des_cbc(void);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_des_ecb(void);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_des_ofb64(void);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_des_cfb64(void);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_des_cfb1(void);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_des_cfb8(void);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_des_cbc(void);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_des_ecb(void);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_des_ofb64(void);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_des_cfb64(void);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_des_cfb1(void);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_des_cfb8(void);

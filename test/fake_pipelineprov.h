@@ -10,5 +10,5 @@
 #include <openssl/core_dispatch.h>
 
 /* Fake pipeline provider implementation */
-OSSL_PROVIDER *fake_pipeline_start(OSSL_LIB_CTX *libctx);
-void fake_pipeline_finish(OSSL_PROVIDER *p);
+OSSL_PROVIDER* fake_pipeline_start(OSSL_LIB_CTX* libctx);
+void fake_pipeline_finish(OSSL_PROVIDER* p);

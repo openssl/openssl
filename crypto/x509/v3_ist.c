@@ -23,19 +23,18 @@
  */
 
 ASN1_SEQUENCE(ISSUER_SIGN_TOOL) = {
-        ASN1_SIMPLE(ISSUER_SIGN_TOOL, signTool, ASN1_UTF8STRING),
-        ASN1_SIMPLE(ISSUER_SIGN_TOOL, cATool, ASN1_UTF8STRING),
-        ASN1_SIMPLE(ISSUER_SIGN_TOOL, signToolCert, ASN1_UTF8STRING),
-        ASN1_SIMPLE(ISSUER_SIGN_TOOL, cAToolCert, ASN1_UTF8STRING)
+    ASN1_SIMPLE(ISSUER_SIGN_TOOL, signTool, ASN1_UTF8STRING),
+    ASN1_SIMPLE(ISSUER_SIGN_TOOL, cATool, ASN1_UTF8STRING),
+    ASN1_SIMPLE(ISSUER_SIGN_TOOL, signToolCert, ASN1_UTF8STRING),
+    ASN1_SIMPLE(ISSUER_SIGN_TOOL, cAToolCert, ASN1_UTF8STRING)
 } ASN1_SEQUENCE_END(ISSUER_SIGN_TOOL)
 
 IMPLEMENT_ASN1_FUNCTIONS(ISSUER_SIGN_TOOL)
 
-
-static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
-                        STACK_OF(CONF_VALUE) *nval)
+static ISSUER_SIGN_TOOL* v2i_issuer_sign_tool(X509V3_EXT_METHOD* method, X509V3_CTX* ctx,
+    STACK_OF(CONF_VALUE)* nval)
 {
-    ISSUER_SIGN_TOOL *ist = ISSUER_SIGN_TOOL_new();
+    ISSUER_SIGN_TOOL* ist = ISSUER_SIGN_TOOL_new();
     int i;
 
     if (ist == NULL) {
@@ -43,7 +42,7 @@ static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(X509V3_EXT_METHOD *method, X509V3_
         return NULL;
     }
     for (i = 0; i < sk_CONF_VALUE_num(nval); ++i) {
-        CONF_VALUE *cnf = sk_CONF_VALUE_value(nval, i);
+        CONF_VALUE* cnf = sk_CONF_VALUE_value(nval, i);
 
         if (cnf == NULL) {
             continue;
@@ -92,9 +91,9 @@ err:
     return NULL;
 }
 
-static int i2r_issuer_sign_tool(X509V3_EXT_METHOD *method,
-                                 ISSUER_SIGN_TOOL *ist, BIO *out,
-                                 int indent)
+static int i2r_issuer_sign_tool(X509V3_EXT_METHOD* method,
+    ISSUER_SIGN_TOOL* ist, BIO* out,
+    int indent)
 {
     int new_line = 0;
 
@@ -135,15 +134,15 @@ static int i2r_issuer_sign_tool(X509V3_EXT_METHOD *method,
 }
 
 const X509V3_EXT_METHOD ossl_v3_issuer_sign_tool = {
-    NID_issuerSignTool,                   /* nid */
-    X509V3_EXT_MULTILINE,                 /* flags */
-    ASN1_ITEM_ref(ISSUER_SIGN_TOOL),      /* template */
-    0, 0, 0, 0,                           /* old functions, ignored */
-    0,                                    /* i2s */
-    0,                                    /* s2i */
-    0,                                    /* i2v */
+    NID_issuerSignTool, /* nid */
+    X509V3_EXT_MULTILINE, /* flags */
+    ASN1_ITEM_ref(ISSUER_SIGN_TOOL), /* template */
+    0, 0, 0, 0, /* old functions, ignored */
+    0, /* i2s */
+    0, /* s2i */
+    0, /* i2v */
     (X509V3_EXT_V2I)v2i_issuer_sign_tool, /* v2i */
     (X509V3_EXT_I2R)i2r_issuer_sign_tool, /* i2r */
-    0,                                    /* r2i */
-    NULL                                  /* extension-specific data */
+    0, /* r2i */
+    NULL /* extension-specific data */
 };

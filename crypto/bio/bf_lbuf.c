@@ -13,17 +13,17 @@
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 
-static int linebuffer_write(BIO *h, const char *buf, int num);
-static int linebuffer_read(BIO *h, char *buf, int size);
-static int linebuffer_puts(BIO *h, const char *str);
-static int linebuffer_gets(BIO *h, char *str, int size);
-static long linebuffer_ctrl(BIO *h, int cmd, long arg1, void *arg2);
-static int linebuffer_new(BIO *h);
-static int linebuffer_free(BIO *data);
-static long linebuffer_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
+static int linebuffer_write(BIO* h, const char* buf, int num);
+static int linebuffer_read(BIO* h, char* buf, int size);
+static int linebuffer_puts(BIO* h, const char* str);
+static int linebuffer_gets(BIO* h, char* str, int size);
+static long linebuffer_ctrl(BIO* h, int cmd, long arg1, void* arg2);
+static int linebuffer_new(BIO* h);
+static int linebuffer_free(BIO* data);
+static long linebuffer_callback_ctrl(BIO* h, int cmd, BIO_info_cb* fp);
 
 /* A 10k maximum should be enough for most purposes */
-#define DEFAULT_LINEBUFFER_SIZE 1024*10
+#define DEFAULT_LINEBUFFER_SIZE 1024 * 10
 
 /* #define DEBUG */
 
@@ -42,20 +42,20 @@ static const BIO_METHOD methods_linebuffer = {
     linebuffer_callback_ctrl,
 };
 
-const BIO_METHOD *BIO_f_linebuffer(void)
+const BIO_METHOD* BIO_f_linebuffer(void)
 {
     return &methods_linebuffer;
 }
 
 typedef struct bio_linebuffer_ctx_struct {
-    char *obuf;                 /* the output char array */
-    int obuf_size;              /* how big is the output buffer */
-    int obuf_len;               /* how many bytes are in it */
+    char* obuf; /* the output char array */
+    int obuf_size; /* how big is the output buffer */
+    int obuf_len; /* how many bytes are in it */
 } BIO_LINEBUFFER_CTX;
 
-static int linebuffer_new(BIO *bi)
+static int linebuffer_new(BIO* bi)
 {
-    BIO_LINEBUFFER_CTX *ctx;
+    BIO_LINEBUFFER_CTX* ctx;
 
     if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL)
         return 0;
@@ -68,18 +68,18 @@ static int linebuffer_new(BIO *bi)
     ctx->obuf_len = 0;
 
     bi->init = 1;
-    bi->ptr = (char *)ctx;
+    bi->ptr = (char*)ctx;
     bi->flags = 0;
     return 1;
 }
 
-static int linebuffer_free(BIO *a)
+static int linebuffer_free(BIO* a)
 {
-    BIO_LINEBUFFER_CTX *b;
+    BIO_LINEBUFFER_CTX* b;
 
     if (a == NULL)
         return 0;
-    b = (BIO_LINEBUFFER_CTX *)a->ptr;
+    b = (BIO_LINEBUFFER_CTX*)a->ptr;
     OPENSSL_free(b->obuf);
     OPENSSL_free(a->ptr);
     a->ptr = NULL;
@@ -88,7 +88,7 @@ static int linebuffer_free(BIO *a)
     return 1;
 }
 
-static int linebuffer_read(BIO *b, char *out, int outl)
+static int linebuffer_read(BIO* b, char* out, int outl)
 {
     int ret = 0;
 
@@ -102,24 +102,25 @@ static int linebuffer_read(BIO *b, char *out, int outl)
     return ret;
 }
 
-static int linebuffer_write(BIO *b, const char *in, int inl)
+static int linebuffer_write(BIO* b, const char* in, int inl)
 {
     int i, num = 0, foundnl;
-    BIO_LINEBUFFER_CTX *ctx;
+    BIO_LINEBUFFER_CTX* ctx;
 
     if ((in == NULL) || (inl <= 0))
         return 0;
-    ctx = (BIO_LINEBUFFER_CTX *)b->ptr;
+    ctx = (BIO_LINEBUFFER_CTX*)b->ptr;
     if ((ctx == NULL) || (b->next_bio == NULL))
         return 0;
 
     BIO_clear_retry_flags(b);
 
     do {
-        const char *p;
+        const char* p;
         char c;
 
-        for (p = in, c = '\0'; p < in + inl && (c = *p) != '\n'; p++) ;
+        for (p = in, c = '\0'; p < in + inl && (c = *p) != '\n'; p++)
+            ;
         if (c == '\n') {
             p++;
             foundnl = 1;
@@ -131,7 +132,7 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
          * concatenate them and write
          */
         while ((foundnl || p - in > ctx->obuf_size - ctx->obuf_len)
-               && ctx->obuf_len > 0) {
+            && ctx->obuf_len > 0) {
             int orig_olen = ctx->obuf_len;
             int llen = (int)(p - in);
 
@@ -183,8 +184,7 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
             in += i;
             inl -= i;
         }
-    }
-    while (foundnl && inl > 0);
+    } while (foundnl && inl > 0);
     /*
      * We've written as much as we can.  The rest of the input buffer, if
      * any, is text that doesn't and with a NL and therefore needs to be
@@ -198,16 +198,16 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
     return num;
 }
 
-static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
+static long linebuffer_ctrl(BIO* b, int cmd, long num, void* ptr)
 {
-    BIO *dbio;
-    BIO_LINEBUFFER_CTX *ctx;
+    BIO* dbio;
+    BIO_LINEBUFFER_CTX* ctx;
     long ret = 1;
-    char *p;
+    char* p;
     int r;
     int obs;
 
-    ctx = (BIO_LINEBUFFER_CTX *)b->ptr;
+    ctx = (BIO_LINEBUFFER_CTX*)b->ptr;
 
     switch (cmd) {
     case BIO_CTRL_RESET:
@@ -283,7 +283,7 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         BIO_copy_next_retry(b);
         break;
     case BIO_CTRL_DUP:
-        dbio = (BIO *)ptr;
+        dbio = (BIO*)ptr;
         if (BIO_set_write_buffer_size(dbio, ctx->obuf_size) <= 0)
             ret = 0;
         break;
@@ -296,21 +296,21 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
     return ret;
 }
 
-static long linebuffer_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
+static long linebuffer_callback_ctrl(BIO* b, int cmd, BIO_info_cb* fp)
 {
     if (b->next_bio == NULL)
         return 0;
     return BIO_callback_ctrl(b->next_bio, cmd, fp);
 }
 
-static int linebuffer_gets(BIO *b, char *buf, int size)
+static int linebuffer_gets(BIO* b, char* buf, int size)
 {
     if (b->next_bio == NULL)
         return 0;
     return BIO_gets(b->next_bio, buf, size);
 }
 
-static int linebuffer_puts(BIO *b, const char *str)
+static int linebuffer_puts(BIO* b, const char* str)
 {
     size_t len = strlen(str);
 

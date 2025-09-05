@@ -21,14 +21,14 @@
 /* 256 kB */
 #define MAX_LEN (256 * 1000)
 
-static BN_CTX *ctx;
-static BIGNUM *b1;
-static BIGNUM *b2;
-static BIGNUM *b3;
-static BIGNUM *b4;
-static BIGNUM *b5;
+static BN_CTX* ctx;
+static BIGNUM* b1;
+static BIGNUM* b2;
+static BIGNUM* b3;
+static BIGNUM* b4;
+static BIGNUM* b5;
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(int* argc, char*** argv)
 {
     b1 = BN_new();
     b2 = BN_new();
@@ -43,7 +43,7 @@ int FuzzerInitialize(int *argc, char ***argv)
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+int FuzzerTestOneInput(const uint8_t* buf, size_t len)
 {
     int success = 0;
     size_t l1 = 0, l2 = 0;
@@ -87,7 +87,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         success = (BN_is_negative(b3) != BN_is_negative(b2) || BN_is_zero(b3))
             && (BN_is_negative(b4) || BN_is_zero(b4));
     else
-        success = (BN_is_negative(b3) == BN_is_negative(b2)  || BN_is_zero(b3))
+        success = (BN_is_negative(b3) == BN_is_negative(b2) || BN_is_zero(b3))
             && (!BN_is_negative(b4) || BN_is_zero(b4));
     OPENSSL_assert(BN_mul(b5, b3, b2, ctx));
     OPENSSL_assert(BN_add(b5, b5, b4));
@@ -105,15 +105,15 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         BN_print_fp(stdout, b5);
         putchar('\n');
         printf("%d %d %d %d %d %d %d\n", BN_is_negative(b1),
-               BN_is_negative(b2),
-               BN_is_negative(b3), BN_is_negative(b4), BN_is_zero(b4),
-               BN_is_negative(b3) != BN_is_negative(b2)
-               && (BN_is_negative(b4) || BN_is_zero(b4)),
-               BN_cmp(b5, b1));
+            BN_is_negative(b2),
+            BN_is_negative(b3), BN_is_negative(b4), BN_is_zero(b4),
+            BN_is_negative(b3) != BN_is_negative(b2)
+                && (BN_is_negative(b4) || BN_is_zero(b4)),
+            BN_cmp(b5, b1));
         puts("----\n");
     }
 
- done:
+done:
     OPENSSL_assert(success);
     ERR_clear_error();
 

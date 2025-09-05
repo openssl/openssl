@@ -17,15 +17,14 @@
 
 struct status_map_st {
     int bit;
-    const char *text;
+    const char* text;
 };
 
-static int ts_status_map_print(BIO *bio, const struct status_map_st *a,
-                               const ASN1_BIT_STRING *v);
-static int ts_ACCURACY_print_bio(BIO *bio, const TS_ACCURACY *accuracy);
+static int ts_status_map_print(BIO* bio, const struct status_map_st* a,
+    const ASN1_BIT_STRING* v);
+static int ts_ACCURACY_print_bio(BIO* bio, const TS_ACCURACY* accuracy);
 
-
-int TS_RESP_print_bio(BIO *bio, TS_RESP *a)
+int TS_RESP_print_bio(BIO* bio, TS_RESP* a)
 {
     BIO_printf(bio, "Status info:\n");
     TS_STATUS_INFO_print_bio(bio, a->status_info);
@@ -39,9 +38,9 @@ int TS_RESP_print_bio(BIO *bio, TS_RESP *a)
     return 1;
 }
 
-int TS_STATUS_INFO_print_bio(BIO *bio, TS_STATUS_INFO *a)
+int TS_STATUS_INFO_print_bio(BIO* bio, TS_STATUS_INFO* a)
 {
-    static const char *status_map[] = {
+    static const char* status_map[] = {
         "Granted.",
         "Granted with modifications.",
         "Rejected.",
@@ -50,24 +49,24 @@ int TS_STATUS_INFO_print_bio(BIO *bio, TS_STATUS_INFO *a)
         "Revoked."
     };
     static const struct status_map_st failure_map[] = {
-        {TS_INFO_BAD_ALG,
-         "unrecognized or unsupported algorithm identifier"},
-        {TS_INFO_BAD_REQUEST,
-         "transaction not permitted or supported"},
-        {TS_INFO_BAD_DATA_FORMAT,
-         "the data submitted has the wrong format"},
-        {TS_INFO_TIME_NOT_AVAILABLE,
-         "the TSA's time source is not available"},
-        {TS_INFO_UNACCEPTED_POLICY,
-         "the requested TSA policy is not supported by the TSA"},
-        {TS_INFO_UNACCEPTED_EXTENSION,
-         "the requested extension is not supported by the TSA"},
-        {TS_INFO_ADD_INFO_NOT_AVAILABLE,
-         "the additional information requested could not be understood "
-         "or is not available"},
-        {TS_INFO_SYSTEM_FAILURE,
-         "the request cannot be handled due to system failure"},
-        {-1, NULL}
+        { TS_INFO_BAD_ALG,
+            "unrecognized or unsupported algorithm identifier" },
+        { TS_INFO_BAD_REQUEST,
+            "transaction not permitted or supported" },
+        { TS_INFO_BAD_DATA_FORMAT,
+            "the data submitted has the wrong format" },
+        { TS_INFO_TIME_NOT_AVAILABLE,
+            "the TSA's time source is not available" },
+        { TS_INFO_UNACCEPTED_POLICY,
+            "the requested TSA policy is not supported by the TSA" },
+        { TS_INFO_UNACCEPTED_EXTENSION,
+            "the requested extension is not supported by the TSA" },
+        { TS_INFO_ADD_INFO_NOT_AVAILABLE,
+            "the additional information requested could not be understood "
+            "or is not available" },
+        { TS_INFO_SYSTEM_FAILURE,
+            "the request cannot be handled due to system failure" },
+        { -1, NULL }
     };
     long status;
     int i, lines = 0;
@@ -99,8 +98,8 @@ int TS_STATUS_INFO_print_bio(BIO *bio, TS_STATUS_INFO *a)
     return 1;
 }
 
-static int ts_status_map_print(BIO *bio, const struct status_map_st *a,
-                               const ASN1_BIT_STRING *v)
+static int ts_status_map_print(BIO* bio, const struct status_map_st* a,
+    const ASN1_BIT_STRING* v)
 {
     int lines = 0;
 
@@ -115,7 +114,7 @@ static int ts_status_map_print(BIO *bio, const struct status_map_st *a,
     return lines;
 }
 
-int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
+int TS_TST_INFO_print_bio(BIO* bio, TS_TST_INFO* a)
 {
     int v;
 
@@ -161,7 +160,7 @@ int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
     if (a->tsa == NULL)
         BIO_printf(bio, "unspecified");
     else {
-        STACK_OF(CONF_VALUE) *nval;
+        STACK_OF(CONF_VALUE)* nval;
         if ((nval = i2v_GENERAL_NAME(NULL, a->tsa, NULL)))
             X509V3_EXT_val_prn(bio, nval, 0, 0);
         sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
@@ -173,7 +172,7 @@ int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
     return 1;
 }
 
-static int ts_ACCURACY_print_bio(BIO *bio, const TS_ACCURACY *a)
+static int ts_ACCURACY_print_bio(BIO* bio, const TS_ACCURACY* a)
 {
     if (a->seconds != NULL)
         TS_ASN1_INTEGER_print_bio(bio, a->seconds);

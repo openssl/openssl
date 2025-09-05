@@ -12,17 +12,17 @@
 #include "../record_local.h"
 #include "recmethod_local.h"
 
-#define MIN_SSL2_RECORD_LEN     9
+#define MIN_SSL2_RECORD_LEN 9
 
-static int tls_any_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
-                                    unsigned char *key, size_t keylen,
-                                    unsigned char *iv, size_t ivlen,
-                                    unsigned char *mackey, size_t mackeylen,
-                                    const EVP_CIPHER *ciph,
-                                    size_t taglen,
-                                    int mactype,
-                                    const EVP_MD *md,
-                                    COMP_METHOD *comp)
+static int tls_any_set_crypto_state(OSSL_RECORD_LAYER* rl, int level,
+    unsigned char* key, size_t keylen,
+    unsigned char* iv, size_t ivlen,
+    unsigned char* mackey, size_t mackeylen,
+    const EVP_CIPHER* ciph,
+    size_t taglen,
+    int mactype,
+    const EVP_MD* md,
+    COMP_METHOD* comp)
 {
     if (level != OSSL_RECORD_PROTECTION_LEVEL_NONE) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -34,14 +34,14 @@ static int tls_any_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     return OSSL_RECORD_RETURN_SUCCESS;
 }
 
-static int tls_any_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
-                          size_t n_recs, int sending, SSL_MAC_BUF *macs,
-                          size_t macsize)
+static int tls_any_cipher(OSSL_RECORD_LAYER* rl, TLS_RL_RECORD* recs,
+    size_t n_recs, int sending, SSL_MAC_BUF* macs,
+    size_t macsize)
 {
     return 1;
 }
 
-static int tls_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
+static int tls_validate_record_header(OSSL_RECORD_LAYER* rl, TLS_RL_RECORD* rec)
 {
     if (rec->rec_version == SSL2_VERSION) {
         /* SSLv2 format ClientHello */
@@ -57,36 +57,29 @@ static int tls_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
         if (rl->version == TLS_ANY_VERSION) {
             if ((rec->rec_version >> 8) != SSL3_VERSION_MAJOR) {
                 if (rl->is_first_record) {
-                    unsigned char *p;
+                    unsigned char* p;
 
                     /*
                      * Go back to start of packet, look at the five bytes that
                      * we have.
                      */
                     p = rl->packet;
-                    if (HAS_PREFIX((char *)p, "GET ") ||
-                        HAS_PREFIX((char *)p, "POST ") ||
-                        HAS_PREFIX((char *)p, "HEAD ") ||
-                        HAS_PREFIX((char *)p, "PATCH") ||
-                        HAS_PREFIX((char *)p, "OPTIO") ||
-                        HAS_PREFIX((char *)p, "DELET") ||
-                        HAS_PREFIX((char *)p, "TRACE") ||
-                        HAS_PREFIX((char *)p, "PUT ")) {
+                    if (HAS_PREFIX((char*)p, "GET ") || HAS_PREFIX((char*)p, "POST ") || HAS_PREFIX((char*)p, "HEAD ") || HAS_PREFIX((char*)p, "PATCH") || HAS_PREFIX((char*)p, "OPTIO") || HAS_PREFIX((char*)p, "DELET") || HAS_PREFIX((char*)p, "TRACE") || HAS_PREFIX((char*)p, "PUT ")) {
                         RLAYERfatal(rl, SSL_AD_NO_ALERT, SSL_R_HTTP_REQUEST);
                         return 0;
-                    } else if (HAS_PREFIX((char *)p, "CONNE")) {
+                    } else if (HAS_PREFIX((char*)p, "CONNE")) {
                         RLAYERfatal(rl, SSL_AD_NO_ALERT,
-                                    SSL_R_HTTPS_PROXY_REQUEST);
+                            SSL_R_HTTPS_PROXY_REQUEST);
                         return 0;
                     }
 
                     /* Doesn't look like TLS - don't send an alert */
                     RLAYERfatal(rl, SSL_AD_NO_ALERT,
-                                SSL_R_WRONG_VERSION_NUMBER);
+                        SSL_R_WRONG_VERSION_NUMBER);
                     return 0;
                 } else {
                     RLAYERfatal(rl, SSL_AD_PROTOCOL_VERSION,
-                                SSL_R_WRONG_VERSION_NUMBER);
+                        SSL_R_WRONG_VERSION_NUMBER);
                     return 0;
                 }
             }
@@ -108,14 +101,14 @@ static int tls_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
                      * end.
                      */
                     RLAYERfatal(rl, SSL_AD_NO_ALERT,
-                                SSL_R_WRONG_VERSION_NUMBER);
+                        SSL_R_WRONG_VERSION_NUMBER);
                     return 0;
                 }
                 /* Send back error using their minor version number */
                 rl->version = (unsigned short)rec->rec_version;
             }
             RLAYERfatal(rl, SSL_AD_PROTOCOL_VERSION,
-                        SSL_R_WRONG_VERSION_NUMBER);
+                SSL_R_WRONG_VERSION_NUMBER);
             return 0;
         }
     }
@@ -131,7 +124,7 @@ static int tls_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
     return 1;
 }
 
-static int tls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
+static int tls_any_set_protocol_version(OSSL_RECORD_LAYER* rl, int vers)
 {
     if (rl->version != TLS_ANY_VERSION && rl->version != vers)
         return 0;
@@ -140,10 +133,10 @@ static int tls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
     return 1;
 }
 
-static int tls_any_prepare_for_encryption(OSSL_RECORD_LAYER *rl,
-                                          size_t mac_size,
-                                          WPACKET *thispkt,
-                                          TLS_RL_RECORD *thiswr)
+static int tls_any_prepare_for_encryption(OSSL_RECORD_LAYER* rl,
+    size_t mac_size,
+    WPACKET* thispkt,
+    TLS_RL_RECORD* thiswr)
 {
     /* No encryption, so nothing to do */
     return 1;
@@ -170,7 +163,7 @@ const struct record_functions_st tls_any_funcs = {
     NULL
 };
 
-static int dtls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
+static int dtls_any_set_protocol_version(OSSL_RECORD_LAYER* rl, int vers)
 {
     if (rl->version != DTLS_ANY_VERSION && rl->version != vers)
         return 0;

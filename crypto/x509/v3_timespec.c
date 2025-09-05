@@ -13,7 +13,7 @@
 #include <crypto/asn1.h>
 #include "ext_dat.h"
 
-static const char *WEEKDAY_NAMES[7] = {
+static const char* WEEKDAY_NAMES[7] = {
     "SUN",
     "MON",
     "TUE",
@@ -23,7 +23,7 @@ static const char *WEEKDAY_NAMES[7] = {
     "SAT"
 };
 
-static const char *WEEK_NAMES[5] = {
+static const char* WEEK_NAMES[5] = {
     "first",
     "second",
     "third",
@@ -31,7 +31,7 @@ static const char *WEEK_NAMES[5] = {
     "final"
 };
 
-static const char *MONTH_NAMES[12] = {
+static const char* MONTH_NAMES[12] = {
     "JAN",
     "FEB",
     "MAR",
@@ -124,9 +124,9 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_TIME_SPEC_TIME)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_TIME_SPEC)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_TIME_PERIOD)
 
-static int i2r_OSSL_TIME_SPEC_ABSOLUTE(X509V3_EXT_METHOD *method,
-                                       OSSL_TIME_SPEC_ABSOLUTE *time,
-                                       BIO *out, int indent)
+static int i2r_OSSL_TIME_SPEC_ABSOLUTE(X509V3_EXT_METHOD* method,
+    OSSL_TIME_SPEC_ABSOLUTE* time,
+    BIO* out, int indent)
 {
     if (time->startTime != NULL && time->endTime != NULL) {
         if (!BIO_puts(out, "Any time between "))
@@ -155,9 +155,9 @@ static int i2r_OSSL_TIME_SPEC_ABSOLUTE(X509V3_EXT_METHOD *method,
     return 1;
 }
 
-static int i2r_OSSL_DAY_TIME(X509V3_EXT_METHOD *method,
-                             OSSL_DAY_TIME *dt,
-                             BIO *out, int indent)
+static int i2r_OSSL_DAY_TIME(X509V3_EXT_METHOD* method,
+    OSSL_DAY_TIME* dt,
+    BIO* out, int indent)
 {
     int64_t h = 0;
     int64_t m = 0;
@@ -170,12 +170,13 @@ static int i2r_OSSL_DAY_TIME(X509V3_EXT_METHOD *method,
     if (dt->minute && !ASN1_INTEGER_get_int64(&s, dt->second))
         return 0;
     return BIO_printf(out, "%02lld:%02lld:%02lld",
-                      (long long int)h, (long long int)m, (long long int)s) > 0;
+               (long long int)h, (long long int)m, (long long int)s)
+        > 0;
 }
 
-static int i2r_OSSL_DAY_TIME_BAND(X509V3_EXT_METHOD *method,
-                                  OSSL_DAY_TIME_BAND *band,
-                                  BIO *out, int indent)
+static int i2r_OSSL_DAY_TIME_BAND(X509V3_EXT_METHOD* method,
+    OSSL_DAY_TIME_BAND* band,
+    BIO* out, int indent)
 {
     if (band->startDayTime) {
         if (!i2r_OSSL_DAY_TIME(method, band->startDayTime, out, indent))
@@ -194,7 +195,7 @@ static int i2r_OSSL_DAY_TIME_BAND(X509V3_EXT_METHOD *method,
     return 1;
 }
 
-static int print_int_month(BIO *out, int64_t month)
+static int print_int_month(BIO* out, int64_t month)
 {
     switch (month) {
     case (OSSL_TIME_SPEC_INT_MONTH_JAN):
@@ -227,7 +228,7 @@ static int print_int_month(BIO *out, int64_t month)
     return 0;
 }
 
-static int print_bit_month(BIO *out, ASN1_BIT_STRING *bs)
+static int print_bit_month(BIO* out, ASN1_BIT_STRING* bs)
 {
     int i = OSSL_TIME_SPEC_BIT_MONTH_JAN;
     int j = 0;
@@ -249,7 +250,7 @@ static int print_bit_month(BIO *out, ASN1_BIT_STRING *bs)
  * but the fifth bit has the special meaning of "the final week" imputed to it
  * by the text of ITU-T Recommendation X.520.
  */
-static int print_bit_week(BIO *out, ASN1_BIT_STRING *bs)
+static int print_bit_week(BIO* out, ASN1_BIT_STRING* bs)
 {
     int i = OSSL_TIME_SPEC_BIT_WEEKS_1;
     int j = 0;
@@ -266,7 +267,7 @@ static int print_bit_week(BIO *out, ASN1_BIT_STRING *bs)
     return 1;
 }
 
-static int print_day_of_week(BIO *out, ASN1_BIT_STRING *bs)
+static int print_day_of_week(BIO* out, ASN1_BIT_STRING* bs)
 {
     int i = OSSL_TIME_SPEC_DAY_BIT_SUN;
     int j = 0;
@@ -283,7 +284,7 @@ static int print_day_of_week(BIO *out, ASN1_BIT_STRING *bs)
     return 1;
 }
 
-static int print_int_day_of_week(BIO *out, int64_t dow)
+static int print_int_day_of_week(BIO* out, int64_t dow)
 {
     switch (dow) {
     case (OSSL_TIME_SPEC_DAY_INT_SUN):
@@ -306,7 +307,7 @@ static int print_int_day_of_week(BIO *out, int64_t dow)
     return 0;
 }
 
-static int print_int_named_day(BIO *out, int64_t nd)
+static int print_int_named_day(BIO* out, int64_t nd)
 {
     switch (nd) {
     case (OSSL_NAMED_DAY_INT_SUN):
@@ -329,20 +330,20 @@ static int print_int_named_day(BIO *out, int64_t nd)
     return 0;
 }
 
-static int print_bit_named_day(BIO *out, ASN1_BIT_STRING *bs)
+static int print_bit_named_day(BIO* out, ASN1_BIT_STRING* bs)
 {
     return print_day_of_week(out, bs);
 }
 
-static int i2r_OSSL_PERIOD(X509V3_EXT_METHOD *method,
-                           OSSL_TIME_PERIOD *p,
-                           BIO *out, int indent)
+static int i2r_OSSL_PERIOD(X509V3_EXT_METHOD* method,
+    OSSL_TIME_PERIOD* p,
+    BIO* out, int indent)
 {
     int i;
-    OSSL_DAY_TIME_BAND *band;
-    ASN1_INTEGER *big_val;
+    OSSL_DAY_TIME_BAND* band;
+    ASN1_INTEGER* big_val;
     int64_t small_val;
-    OSSL_NAMED_DAY *nd;
+    OSSL_NAMED_DAY* nd;
 
     if (BIO_printf(out, "%*sPeriod:\n", indent, "") <= 0)
         return 0;
@@ -533,11 +534,11 @@ static int i2r_OSSL_PERIOD(X509V3_EXT_METHOD *method,
     return 1;
 }
 
-static int i2r_OSSL_TIME_SPEC_TIME(X509V3_EXT_METHOD *method,
-                                   OSSL_TIME_SPEC_TIME *time,
-                                   BIO *out, int indent)
+static int i2r_OSSL_TIME_SPEC_TIME(X509V3_EXT_METHOD* method,
+    OSSL_TIME_SPEC_TIME* time,
+    BIO* out, int indent)
 {
-    OSSL_TIME_PERIOD *tp;
+    OSSL_TIME_PERIOD* tp;
     int i;
 
     switch (time->type) {
@@ -564,9 +565,9 @@ static int i2r_OSSL_TIME_SPEC_TIME(X509V3_EXT_METHOD *method,
     return 0;
 }
 
-static int i2r_OSSL_TIME_SPEC(X509V3_EXT_METHOD *method,
-                              OSSL_TIME_SPEC *time,
-                              BIO *out, int indent)
+static int i2r_OSSL_TIME_SPEC(X509V3_EXT_METHOD* method,
+    OSSL_TIME_SPEC* time,
+    BIO* out, int indent)
 {
     int64_t tz;
 

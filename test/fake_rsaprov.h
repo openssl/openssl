@@ -12,7 +12,7 @@
 #define FAKE_PASSPHRASE "Passphrase Testing"
 
 /* Fake RSA provider implementation */
-OSSL_PROVIDER *fake_rsa_start(OSSL_LIB_CTX *libctx);
-void fake_rsa_finish(OSSL_PROVIDER *p);
-OSSL_PARAM *fake_rsa_key_params(int priv);
+OSSL_PROVIDER* fake_rsa_start(OSSL_LIB_CTX* libctx);
+void fake_rsa_finish(OSSL_PROVIDER* p);
+OSSL_PARAM* fake_rsa_key_params(int priv);
 void fake_rsa_restore_store_state(void);

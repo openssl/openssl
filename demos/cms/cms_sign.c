@@ -12,12 +12,12 @@
 #include <openssl/cms.h>
 #include <openssl/err.h>
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     BIO *in = NULL, *out = NULL, *tbio = NULL;
-    X509 *scert = NULL;
-    EVP_PKEY *skey = NULL;
-    CMS_ContentInfo *cms = NULL;
+    X509* scert = NULL;
+    EVP_PKEY* skey = NULL;
+    CMS_ContentInfo* cms = NULL;
     int ret = EXIT_FAILURE;
 
     /*
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
         goto err;
 
     ret = EXIT_SUCCESS;
- err:
+err:
     if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Signing Data\n");
         ERR_print_errors_fp(stderr);

@@ -11,14 +11,14 @@
 #include "prov/ciphercommon.h"
 
 typedef struct prov_idea_ctx_st {
-    PROV_CIPHER_CTX base;      /* Must be first */
+    PROV_CIPHER_CTX base; /* Must be first */
     union {
         OSSL_UNION_ALIGN;
         IDEA_KEY_SCHEDULE ks;
     } ks;
 } PROV_IDEA_CTX;
 
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_idea_cbc(size_t keybits);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_idea_ecb(size_t keybits);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_idea_ofb64(size_t keybits);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_idea_cfb64(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_idea_cbc(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_idea_ecb(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_idea_ofb64(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_idea_cfb64(size_t keybits);

@@ -17,9 +17,9 @@
 /**
  * Print the given value escaped for the OpenSSL configuration file format.
  */
-static void print_escaped_value(BIO *out, const char *value)
+static void print_escaped_value(BIO* out, const char* value)
 {
-    const char *p;
+    const char* p;
 
     for (p = value; *p != '\0'; p++) {
         switch (*p) {
@@ -70,13 +70,13 @@ static void print_escaped_value(BIO *out, const char *value)
 /**
  * Print all values in the configuration section identified by section_name
  */
-static void print_section(BIO *out, const CONF *cnf, OPENSSL_CSTRING section_name)
+static void print_section(BIO* out, const CONF* cnf, OPENSSL_CSTRING section_name)
 {
-    STACK_OF(CONF_VALUE) *values = NCONF_get_section(cnf, section_name);
+    STACK_OF(CONF_VALUE)* values = NCONF_get_section(cnf, section_name);
     int idx;
 
     for (idx = 0; idx < sk_CONF_VALUE_num(values); idx++) {
-        CONF_VALUE *value = sk_CONF_VALUE_value(values, idx);
+        CONF_VALUE* value = sk_CONF_VALUE_value(values, idx);
 
         BIO_printf(out, "%s = ", value->name);
         print_escaped_value(out, value->value);
@@ -93,12 +93,12 @@ typedef enum OPTION_choice {
 
 const OPTIONS configutl_options[] = {
     OPT_SECTION("General"),
-    {"help", OPT_HELP, '-', "Display this summary"},
-    {"config", OPT_CONFIG, 's', "Config file to deal with (the default one if omitted)"},
+    { "help", OPT_HELP, '-', "Display this summary" },
+    { "config", OPT_CONFIG, 's', "Config file to deal with (the default one if omitted)" },
     OPT_SECTION("Output"),
-    {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
-    {"noheader", OPT_NOHEADER, '-', "Don't print the information about original config"},
-    {NULL}
+    { "out", OPT_OUT, '>', "Output to filename rather than stdout" },
+    { "noheader", OPT_NOHEADER, '-', "Don't print the information about original config" },
+    { NULL }
 };
 
 /**
@@ -106,18 +106,18 @@ const OPTIONS configutl_options[] = {
  * OPENSSL_CONF environment variable) and write it back in
  * a canonical format with all includes and variables expanded.
  */
-int configutl_main(int argc, char *argv[])
+int configutl_main(int argc, char* argv[])
 {
     int ret = 1;
     char *prog, *configfile = NULL;
     OPTION_CHOICE o;
-    CONF *cnf = NULL;
+    CONF* cnf = NULL;
     long eline = 0;
     int default_section_idx, idx;
     int no_header = 0;
-    STACK_OF(OPENSSL_CSTRING) *sections = NULL;
-    BIO *out = NULL;
-    const char *outfile = NULL;
+    STACK_OF(OPENSSL_CSTRING)* sections = NULL;
+    BIO* out = NULL;
+    const char* outfile = NULL;
 
     prog = opt_init(argc, argv, configutl_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -174,7 +174,7 @@ int configutl_main(int argc, char *argv[])
 
     if (no_header == 0)
         BIO_printf(out, "# This configuration file was linearized and expanded from %s\n",
-                   configfile);
+            configfile);
 
     default_section_idx = sk_OPENSSL_CSTRING_find(sections, "default");
     if (default_section_idx != -1)

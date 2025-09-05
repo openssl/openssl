@@ -18,20 +18,20 @@
 static char gunk[2048];
 
 typedef struct {
-    char *prefix;
-    char *encoded;
+    char* prefix;
+    char* encoded;
     unsigned bytes;
     int trunc;
-    char *suffix;
+    char* suffix;
     int retry;
     int no_nl;
 } test_case;
 
-#define BUFMAX 0xa0000          /* Encode at most 640kB. */
-#define sEOF "-EOF"             /* '-' as in PEM and MIME boundaries */
-#define junk "#foo"             /* Skipped initial content */
+#define BUFMAX 0xa0000 /* Encode at most 640kB. */
+#define sEOF "-EOF" /* '-' as in PEM and MIME boundaries */
+#define junk "#foo" /* Skipped initial content */
 
-#define EOF_RETURN (-1729)      /* Distinct from -1, etc., internal results */
+#define EOF_RETURN (-1729) /* Distinct from -1, etc., internal results */
 #define NLEN 6
 #define NVAR 5
 /*
@@ -42,8 +42,8 @@ typedef struct {
 #define NPAD 6
 #define NVARPAD (NVAR * NPAD - NPAD + 1)
 
-static char *prefixes[NVAR] = { "", junk, gunk, "", "" };
-static char *suffixes[NVAR] = { "", "", "", sEOF, junk };
+static char* prefixes[NVAR] = { "", junk, gunk, "", "" };
+static char* suffixes[NVAR] = { "", "", "", sEOF, junk };
 static unsigned lengths[6] = { 0, 3, 48, 192, 768, 1536 };
 static unsigned linelengths[] = {
     4, 8, 16, 28, 40, 64, 80, 128, 256, 512, 1023, 0
@@ -51,9 +51,9 @@ static unsigned linelengths[] = {
 static unsigned wscnts[] = { 0, 1, 2, 4, 8, 16, 0xFFFF };
 
 /* Generate `len` random octets */
-static unsigned char *genbytes(unsigned len)
+static unsigned char* genbytes(unsigned len)
 {
-    unsigned char *buf = NULL;
+    unsigned char* buf = NULL;
 
     if (len > 0 && len <= BUFMAX && (buf = OPENSSL_malloc(len)) != NULL)
         RAND_bytes(buf, len);
@@ -62,7 +62,7 @@ static unsigned char *genbytes(unsigned len)
 }
 
 /* Append one base64 codepoint, adding newlines after every `llen` bytes */
-static int memout(BIO *mem, char c, int llen, int *pos)
+static int memout(BIO* mem, char c, int llen, int* pos)
 {
     if (BIO_write(mem, &c, 1) != 1)
         return 0;
@@ -76,7 +76,7 @@ static int memout(BIO *mem, char c, int llen, int *pos)
 }
 
 /* Encode and append one 6-bit slice, randomly prepending some whitespace */
-static int memoutws(BIO *mem, char c, unsigned wscnt, unsigned llen, int *pos)
+static int memoutws(BIO* mem, char c, unsigned wscnt, unsigned llen, int* pos)
 {
     if (wscnt > 0
         && (test_random() % llen) < wscnt
@@ -90,11 +90,10 @@ static int memoutws(BIO *mem, char c, unsigned wscnt, unsigned llen, int *pos)
  * with up to roughly `wscnt` additional space characters inserted at random
  * before some of the base64 code points.
  */
-static int encode(unsigned const char *buf, unsigned buflen, char *encoded,
-                  int trunc, unsigned llen, unsigned wscnt, BIO *mem)
+static int encode(unsigned const char* buf, unsigned buflen, char* encoded,
+    int trunc, unsigned llen, unsigned wscnt, BIO* mem)
 {
-    static const unsigned char b64[65] =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    static const unsigned char b64[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     int pos = 0;
     char nl = '\n';
 
@@ -148,25 +147,23 @@ static int encode(unsigned const char *buf, unsigned buflen, char *encoded,
     return 1;
 }
 
-static int genb64(char *prefix, char *suffix, unsigned const char *buf,
-                  unsigned buflen, int trunc, char *encoded, unsigned llen,
-                  unsigned wscnt, char **out)
+static int genb64(char* prefix, char* suffix, unsigned const char* buf,
+    unsigned buflen, int trunc, char* encoded, unsigned llen,
+    unsigned wscnt, char** out)
 {
     int preflen = (int)strlen(prefix);
     int sufflen = (int)strlen(suffix);
     int outlen;
     char newline = '\n';
-    BUF_MEM *bptr;
-    BIO *mem = BIO_new(BIO_s_mem());
+    BUF_MEM* bptr;
+    BIO* mem = BIO_new(BIO_s_mem());
 
     if (mem == NULL)
         return -1;
 
-    if ((*prefix && (BIO_write(mem, prefix, preflen) != preflen
-                     || BIO_write(mem, &newline, 1) != 1))
+    if ((*prefix && (BIO_write(mem, prefix, preflen) != preflen || BIO_write(mem, &newline, 1) != 1))
         || encode(buf, buflen, encoded, trunc, llen, wscnt, mem) <= 0
-        || (*suffix && (BIO_write(mem, suffix, sufflen) != sufflen
-                        || BIO_write(mem, &newline, 1) != 1))) {
+        || (*suffix && (BIO_write(mem, suffix, sufflen) != sufflen || BIO_write(mem, &newline, 1) != 1))) {
         BIO_free(mem);
         return -1;
     }
@@ -176,19 +173,19 @@ static int genb64(char *prefix, char *suffix, unsigned const char *buf,
     *out = bptr->data;
     outlen = (int)bptr->length;
     bptr->data = NULL;
-    (void) BIO_set_close(mem, BIO_NOCLOSE);
+    (void)BIO_set_close(mem, BIO_NOCLOSE);
     BIO_free(mem);
     BUF_MEM_free(bptr);
 
     return outlen;
 }
 
-static int test_bio_base64_run(test_case *t, int llen, int wscnt)
+static int test_bio_base64_run(test_case* t, int llen, int wscnt)
 {
-    unsigned char *raw;
-    unsigned char *out;
+    unsigned char* raw;
+    unsigned char* out;
     unsigned out_len;
-    char *encoded = NULL;
+    char* encoded = NULL;
     int elen;
     BIO *bio, *b64;
     int n, n1, n2;
@@ -217,7 +214,7 @@ static int test_bio_base64_run(test_case *t, int llen, int wscnt)
     }
 
     elen = genb64(t->prefix, t->suffix, raw, t->bytes, t->trunc, t->encoded,
-                  llen, wscnt, &encoded);
+        llen, wscnt, &encoded);
     if (elen < 0 || (bio = BIO_new(BIO_s_mem())) == NULL) {
         OPENSSL_free(raw);
         OPENSSL_free(out);
@@ -268,7 +265,7 @@ static int test_bio_base64_run(test_case *t, int llen, int wscnt)
     if (t->retry)
         BIO_set_mem_eof_return(bio, 0);
 
-    if (n < (int) out_len)
+    if (n < (int)out_len)
         /* Perform the last read, checking its result */
         ret = BIO_read(b64, out + n, out_len - n);
     else {
@@ -293,8 +290,8 @@ static int test_bio_base64_run(test_case *t, int llen, int wscnt)
         if ((ret = ret < 0 ? 0 : -1) != 0)
             TEST_error("Final read result was non-negative");
     } else if (ret != 0
-             || n != (int) t->bytes
-             || (n > 0 && memcmp(raw, out, n) != 0)) {
+        || n != (int)t->bytes
+        || (n > 0 && memcmp(raw, out, n) != 0)) {
         TEST_error("Failed to decode expected data");
         ret = -1;
     }
@@ -307,10 +304,10 @@ static int test_bio_base64_run(test_case *t, int llen, int wscnt)
     return ret;
 }
 
-static int generic_case(test_case *t, int verbose)
+static int generic_case(test_case* t, int verbose)
 {
-    unsigned *llen;
-    unsigned *wscnt;
+    unsigned* llen;
+    unsigned* wscnt;
     int ok = 1;
 
     for (llen = linelengths; *llen > 0; ++llen) {
@@ -359,7 +356,7 @@ static int generic_case(test_case *t, int verbose)
     return ok;
 }
 
-static int quotrem(int i, unsigned int m, int *q)
+static int quotrem(int i, unsigned int m, int* q)
 {
     *q = i / m;
     return i - *q * m;
@@ -386,10 +383,10 @@ static int test_bio_base64_generated(int idx)
 
     t.prefix = prefixes[variant];
     t.encoded = NULL;
-    t.bytes  = lengths[lencase];
+    t.bytes = lengths[lencase];
     t.trunc = 0;
     if (padcase && padcase < 3)
-        t.bytes  += padcase;
+        t.bytes += padcase;
     else if (padcase >= 3)
         t.trunc = padcase - 2;
     t.suffix = suffixes[variant];
@@ -424,7 +421,7 @@ static int test_bio_base64_corner_case_bug(int idx)
 
     /* Expected decode length */
     t.bytes = 6;
-    t.trunc = 0;    /* ignored */
+    t.trunc = 0; /* ignored */
 
     return generic_case(&t, 0);
 }

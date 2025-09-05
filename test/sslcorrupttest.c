@@ -13,20 +13,20 @@
 
 static int docorrupt = 0;
 
-static void copy_flags(BIO *bio)
+static void copy_flags(BIO* bio)
 {
     int flags;
-    BIO *next = BIO_next(bio);
+    BIO* next = BIO_next(bio);
 
     flags = BIO_test_flags(next, BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_RWS);
     BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_RWS);
     BIO_set_flags(bio, flags);
 }
 
-static int tls_corrupt_read(BIO *bio, char *out, int outl)
+static int tls_corrupt_read(BIO* bio, char* out, int outl)
 {
     int ret;
-    BIO *next = BIO_next(bio);
+    BIO* next = BIO_next(bio);
 
     ret = BIO_read(next, out, outl);
     copy_flags(bio);
@@ -34,17 +34,17 @@ static int tls_corrupt_read(BIO *bio, char *out, int outl)
     return ret;
 }
 
-static int tls_corrupt_write(BIO *bio, const char *in, int inl)
+static int tls_corrupt_write(BIO* bio, const char* in, int inl)
 {
     int ret;
-    BIO *next = BIO_next(bio);
-    char *copy;
+    BIO* next = BIO_next(bio);
+    char* copy;
 
     if (docorrupt) {
         if (!TEST_ptr(copy = OPENSSL_memdup(in, inl)))
             return 0;
         /* corrupt last bit of application data */
-        copy[inl-1] ^= 1;
+        copy[inl - 1] ^= 1;
         ret = BIO_write(next, copy, inl);
         OPENSSL_free(copy);
     } else {
@@ -55,10 +55,10 @@ static int tls_corrupt_write(BIO *bio, const char *in, int inl)
     return ret;
 }
 
-static long tls_corrupt_ctrl(BIO *bio, int cmd, long num, void *ptr)
+static long tls_corrupt_ctrl(BIO* bio, int cmd, long num, void* ptr)
 {
     long ret;
-    BIO *next = BIO_next(bio);
+    BIO* next = BIO_next(bio);
 
     if (next == NULL)
         return 0;
@@ -74,42 +74,42 @@ static long tls_corrupt_ctrl(BIO *bio, int cmd, long num, void *ptr)
     return ret;
 }
 
-static int tls_corrupt_gets(BIO *bio, char *buf, int size)
+static int tls_corrupt_gets(BIO* bio, char* buf, int size)
 {
     /* We don't support this - not needed anyway */
     return -1;
 }
 
-static int tls_corrupt_puts(BIO *bio, const char *str)
+static int tls_corrupt_puts(BIO* bio, const char* str)
 {
     /* We don't support this - not needed anyway */
     return -1;
 }
 
-static int tls_corrupt_new(BIO *bio)
+static int tls_corrupt_new(BIO* bio)
 {
     BIO_set_init(bio, 1);
 
     return 1;
 }
 
-static int tls_corrupt_free(BIO *bio)
+static int tls_corrupt_free(BIO* bio)
 {
     BIO_set_init(bio, 0);
 
     return 1;
 }
 
-#define BIO_TYPE_CUSTOM_FILTER  (0x80 | BIO_TYPE_FILTER)
+#define BIO_TYPE_CUSTOM_FILTER (0x80 | BIO_TYPE_FILTER)
 
-static BIO_METHOD *method_tls_corrupt = NULL;
+static BIO_METHOD* method_tls_corrupt = NULL;
 
 /* Note: Not thread safe! */
-static const BIO_METHOD *bio_f_tls_corrupt_filter(void)
+static const BIO_METHOD* bio_f_tls_corrupt_filter(void)
 {
     if (method_tls_corrupt == NULL) {
         method_tls_corrupt = BIO_meth_new(BIO_TYPE_CUSTOM_FILTER,
-                                          "TLS corrupt filter");
+            "TLS corrupt filter");
         if (method_tls_corrupt == NULL
             || !BIO_meth_set_write(method_tls_corrupt, tls_corrupt_write)
             || !BIO_meth_set_read(method_tls_corrupt, tls_corrupt_read)
@@ -135,18 +135,18 @@ static void bio_f_tls_corrupt_filter_free(void)
  * naturally means that if test is to be re-purposed for other
  * type of key, then NID_auth_* filter below would need adjustment.
  */
-static const char **cipher_list = NULL;
+static const char** cipher_list = NULL;
 
 static int setup_cipher_list(void)
 {
-    SSL_CTX *ctx = NULL;
-    SSL *ssl = NULL;
-    STACK_OF(SSL_CIPHER) *sk_ciphers = NULL;
+    SSL_CTX* ctx = NULL;
+    SSL* ssl = NULL;
+    STACK_OF(SSL_CIPHER)* sk_ciphers = NULL;
     int i, j, numciphers = 0;
 
     if (!TEST_ptr(ctx = SSL_CTX_new(TLS_server_method()))
-            || !TEST_ptr(ssl = SSL_new(ctx))
-            || !TEST_ptr(sk_ciphers = SSL_get1_supported_ciphers(ssl)))
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(sk_ciphers = SSL_get1_supported_ciphers(ssl)))
         goto err;
 
     /*
@@ -155,12 +155,12 @@ static int setup_cipher_list(void)
      * is deemed acceptable...
      */
     cipher_list = OPENSSL_malloc_array(sk_SSL_CIPHER_num(sk_ciphers),
-                                       sizeof(cipher_list[0]));
+        sizeof(cipher_list[0]));
     if (!TEST_ptr(cipher_list))
         goto err;
 
     for (j = 0, i = 0; i < sk_SSL_CIPHER_num(sk_ciphers); i++) {
-        const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(sk_ciphers, i);
+        const SSL_CIPHER* cipher = sk_SSL_CIPHER_value(sk_ciphers, i);
 
         if (SSL_CIPHER_get_auth_nid(cipher) == NID_auth_rsa)
             cipher_list[j++] = SSL_CIPHER_get_name(cipher);
@@ -176,18 +176,18 @@ err:
     return numciphers;
 }
 
-static char *cert = NULL;
-static char *privkey = NULL;
+static char* cert = NULL;
+static char* privkey = NULL;
 
 static int test_ssl_corrupt(int testidx)
 {
     static unsigned char junk[16000] = { 0 };
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *server = NULL, *client = NULL;
-    BIO *c_to_s_fbio;
+    BIO* c_to_s_fbio;
     int testresult = 0;
-    STACK_OF(SSL_CIPHER) *ciphers;
-    const SSL_CIPHER *currcipher;
+    STACK_OF(SSL_CIPHER)* ciphers;
+    const SSL_CIPHER* currcipher;
     int err;
 
     docorrupt = 0;
@@ -195,17 +195,17 @@ static int test_ssl_corrupt(int testidx)
     TEST_info("Starting #%d, %s", testidx, cipher_list[testidx]);
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(),
-                                       TLS_client_method(),
-                                       TLS1_VERSION, 0,
-                                       &sctx, &cctx, cert, privkey)))
+            TLS_client_method(),
+            TLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
         return 0;
 
     if (!TEST_true(SSL_CTX_set_dh_auto(sctx, 1))
-            || !TEST_true(SSL_CTX_set_cipher_list(cctx, cipher_list[testidx]))
-            || !TEST_true(SSL_CTX_set_ciphersuites(cctx, ""))
-            || !TEST_ptr(ciphers = SSL_CTX_get_ciphers(cctx))
-            || !TEST_int_eq(sk_SSL_CIPHER_num(ciphers), 1)
-            || !TEST_ptr(currcipher = sk_SSL_CIPHER_value(ciphers, 0)))
+        || !TEST_true(SSL_CTX_set_cipher_list(cctx, cipher_list[testidx]))
+        || !TEST_true(SSL_CTX_set_ciphersuites(cctx, ""))
+        || !TEST_ptr(ciphers = SSL_CTX_get_ciphers(cctx))
+        || !TEST_int_eq(sk_SSL_CIPHER_num(ciphers), 1)
+        || !TEST_ptr(currcipher = sk_SSL_CIPHER_value(ciphers, 0)))
         goto end;
 
     /*
@@ -220,7 +220,7 @@ static int test_ssl_corrupt(int testidx)
 
     /* BIO is freed by create_ssl_connection on error */
     if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL,
-                                      c_to_s_fbio)))
+            c_to_s_fbio)))
         goto end;
 
     if (!TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
@@ -244,7 +244,7 @@ static int test_ssl_corrupt(int testidx)
     } while (ERR_GET_REASON(err) != SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
 
     testresult = 1;
- end:
+end:
     SSL_free(server);
     SSL_free(client);
     SSL_CTX_free(sctx);
@@ -264,7 +264,7 @@ int setup_tests(void)
     }
 
     if (!TEST_ptr(cert = test_get_argument(0))
-            || !TEST_ptr(privkey = test_get_argument(1)))
+        || !TEST_ptr(privkey = test_get_argument(1)))
         return 0;
 
     n = setup_cipher_list();

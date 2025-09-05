@@ -8,17 +8,17 @@
  */
 
 #ifndef OSSL_CRYPTO_X509_V3_ADMIS_H
-# define OSSL_CRYPTO_X509_V3_ADMIS_H
+#define OSSL_CRYPTO_X509_V3_ADMIS_H
 
 struct NamingAuthority_st {
     ASN1_OBJECT* namingAuthorityId;
     ASN1_IA5STRING* namingAuthorityUrl;
-    ASN1_STRING* namingAuthorityText;          /* i.e. DIRECTORYSTRING */
+    ASN1_STRING* namingAuthorityText; /* i.e. DIRECTORYSTRING */
 };
 
 struct ProfessionInfo_st {
     NAMING_AUTHORITY* namingAuthority;
-    STACK_OF(ASN1_STRING)* professionItems;    /* i.e. DIRECTORYSTRING */
+    STACK_OF(ASN1_STRING)* professionItems; /* i.e. DIRECTORYSTRING */
     STACK_OF(ASN1_OBJECT)* professionOIDs;
     ASN1_PRINTABLESTRING* registrationNumber;
     ASN1_OCTET_STRING* addProfessionInfo;

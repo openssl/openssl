@@ -25,8 +25,8 @@
 #include <openssl/ec.h>
 #include "ec_local.h"
 
-int ossl_ecdh_compute_key(unsigned char **psec, size_t *pseclen,
-                          const EC_POINT *pub_key, const EC_KEY *ecdh)
+int ossl_ecdh_compute_key(unsigned char** psec, size_t* pseclen,
+    const EC_POINT* pub_key, const EC_KEY* ecdh)
 {
     if (ecdh->group->meth->ecdh_compute_key == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_CURVE_DOES_NOT_SUPPORT_ECDH);
@@ -46,17 +46,17 @@ int ossl_ecdh_compute_key(unsigned char **psec, size_t *pseclen,
  * See Section 5.7.1.2 "Elliptic Curve Cryptography Cofactor Diffie-Hellman
  * (ECC CDH) Primitive:". The steps listed below refer to SP800-56A.
  */
-int ossl_ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
-                                 const EC_POINT *pub_key, const EC_KEY *ecdh)
+int ossl_ecdh_simple_compute_key(unsigned char** pout, size_t* poutlen,
+    const EC_POINT* pub_key, const EC_KEY* ecdh)
 {
-    BN_CTX *ctx;
-    EC_POINT *tmp = NULL;
-    BIGNUM *x = NULL;
-    const BIGNUM *priv_key;
-    const EC_GROUP *group;
+    BN_CTX* ctx;
+    EC_POINT* tmp = NULL;
+    BIGNUM* x = NULL;
+    const BIGNUM* priv_key;
+    const EC_GROUP* group;
     int ret = 0;
     size_t buflen, len;
-    unsigned char *buf = NULL;
+    unsigned char* buf = NULL;
 
     if ((ctx = BN_CTX_new_ex(ecdh->libctx)) == NULL)
         goto err;
@@ -136,7 +136,7 @@ int ossl_ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
 
     ret = 1;
 
- err:
+err:
     /* Step(4) : Destroy all intermediate calculations */
     BN_clear(x);
     EC_POINT_clear_free(tmp);

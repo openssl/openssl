@@ -19,15 +19,15 @@
 #include "rsa_local.h"
 
 #ifndef FIPS_MODULE
-static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
+static int rsa_validate_keypair_multiprime(const RSA* key, BN_GENCB* cb)
 {
     BIGNUM *i, *j, *k, *l, *m;
-    BN_CTX *ctx;
+    BN_CTX* ctx;
     int ret = 1, ex_primes = 0, idx;
-    RSA_PRIME_INFO *pinfo;
+    RSA_PRIME_INFO* pinfo;
 
     if (key->p == NULL || key->q == NULL || key->n == NULL
-            || key->e == NULL || key->d == NULL) {
+        || key->e == NULL || key->d == NULL) {
         ERR_raise(ERR_LIB_RSA, RSA_R_VALUE_MISSING);
         return 0;
     }
@@ -36,7 +36,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
     if (key->version == RSA_ASN1_VERSION_MULTI) {
         ex_primes = sk_RSA_PRIME_INFO_num(key->prime_infos);
         if (ex_primes <= 0
-                || (ex_primes + 2) > ossl_rsa_multip_cap(BN_num_bits(key->n))) {
+            || (ex_primes + 2) > ossl_rsa_multip_cap(BN_num_bits(key->n))) {
             ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MULTI_PRIME_KEY);
             return 0;
         }
@@ -49,7 +49,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
     m = BN_new();
     ctx = BN_CTX_new_ex(key->libctx);
     if (i == NULL || j == NULL || k == NULL || l == NULL
-            || m == NULL || ctx == NULL) {
+        || m == NULL || ctx == NULL) {
         ret = -1;
         ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
         goto err;
@@ -223,7 +223,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
         }
     }
 
- err:
+err:
     BN_free(i);
     BN_free(j);
     BN_free(k);
@@ -234,17 +234,17 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
 }
 #endif /* FIPS_MODULE */
 
-int ossl_rsa_validate_public(const RSA *key)
+int ossl_rsa_validate_public(const RSA* key)
 {
     return ossl_rsa_sp800_56b_check_public(key);
 }
 
-int ossl_rsa_validate_private(const RSA *key)
+int ossl_rsa_validate_private(const RSA* key)
 {
     return ossl_rsa_sp800_56b_check_private(key);
 }
 
-int ossl_rsa_validate_pairwise(const RSA *key)
+int ossl_rsa_validate_pairwise(const RSA* key)
 {
 #ifdef FIPS_MODULE
     return ossl_rsa_sp800_56b_check_keypair(key, NULL, -1, RSA_bits(key));
@@ -253,17 +253,17 @@ int ossl_rsa_validate_pairwise(const RSA *key)
 #endif
 }
 
-int RSA_check_key(const RSA *key)
+int RSA_check_key(const RSA* key)
 {
     return RSA_check_key_ex(key, NULL);
 }
 
-int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
+int RSA_check_key_ex(const RSA* key, BN_GENCB* cb)
 {
 #ifdef FIPS_MODULE
     return ossl_rsa_validate_public(key)
-           && ossl_rsa_validate_private(key)
-           && ossl_rsa_validate_pairwise(key);
+        && ossl_rsa_validate_private(key)
+        && ossl_rsa_validate_pairwise(key);
 #else
     return rsa_validate_keypair_multiprime(key, cb);
 #endif /* FIPS_MODULE */

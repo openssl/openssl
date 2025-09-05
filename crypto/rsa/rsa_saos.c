@@ -21,9 +21,9 @@
 #include <openssl/x509.h>
 
 int RSA_sign_ASN1_OCTET_STRING(int type,
-                               const unsigned char *m, unsigned int m_len,
-                               unsigned char *sigret, unsigned int *siglen,
-                               RSA *rsa)
+    const unsigned char* m, unsigned int m_len,
+    unsigned char* sigret, unsigned int* siglen,
+    RSA* rsa)
 {
     ASN1_OCTET_STRING sig;
     int i, j, ret = 1;
@@ -31,7 +31,7 @@ int RSA_sign_ASN1_OCTET_STRING(int type,
 
     sig.type = V_ASN1_OCTET_STRING;
     sig.length = m_len;
-    sig.data = (unsigned char *)m;
+    sig.data = (unsigned char*)m;
 
     i = i2d_ASN1_OCTET_STRING(&sig, NULL);
     j = RSA_size(rsa);
@@ -55,14 +55,14 @@ int RSA_sign_ASN1_OCTET_STRING(int type,
 }
 
 int RSA_verify_ASN1_OCTET_STRING(int dtype,
-                                 const unsigned char *m,
-                                 unsigned int m_len, unsigned char *sigbuf,
-                                 unsigned int siglen, RSA *rsa)
+    const unsigned char* m,
+    unsigned int m_len, unsigned char* sigbuf,
+    unsigned int siglen, RSA* rsa)
 {
     int i, ret = 0;
-    unsigned char *s;
-    const unsigned char *p;
-    ASN1_OCTET_STRING *sig = NULL;
+    unsigned char* s;
+    const unsigned char* p;
+    ASN1_OCTET_STRING* sig = NULL;
 
     if (siglen != (unsigned int)RSA_size(rsa)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_WRONG_SIGNATURE_LENGTH);
@@ -82,13 +82,12 @@ int RSA_verify_ASN1_OCTET_STRING(int dtype,
     if (sig == NULL)
         goto err;
 
-    if (((unsigned int)sig->length != m_len) ||
-        (memcmp(m, sig->data, m_len) != 0)) {
+    if (((unsigned int)sig->length != m_len) || (memcmp(m, sig->data, m_len) != 0)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_BAD_SIGNATURE);
     } else {
         ret = 1;
     }
- err:
+err:
     ASN1_OCTET_STRING_free(sig);
     OPENSSL_clear_free(s, (unsigned int)siglen);
     return ret;

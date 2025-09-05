@@ -11,24 +11,24 @@
 #include "prov/ciphercommon.h"
 
 typedef struct {
-    PROV_CIPHER_CTX base;     /* must be first */
+    PROV_CIPHER_CTX base; /* must be first */
     union {
         OSSL_UNION_ALIGN;
         unsigned int d[CHACHA_KEY_SIZE / 4];
     } key;
-    unsigned int  counter[CHACHA_CTR_SIZE / 4];
+    unsigned int counter[CHACHA_CTR_SIZE / 4];
     unsigned char buf[CHACHA_BLK_SIZE];
-    unsigned int  partial_len;
+    unsigned int partial_len;
 } PROV_CHACHA20_CTX;
 
 typedef struct prov_cipher_hw_chacha20_st {
     PROV_CIPHER_HW base; /* must be first */
-    int (*initiv)(PROV_CIPHER_CTX *ctx);
+    int (*initiv)(PROV_CIPHER_CTX* ctx);
 
 } PROV_CIPHER_HW_CHACHA20;
 
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_chacha20(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_chacha20(size_t keybits);
 
 OSSL_FUNC_cipher_encrypt_init_fn ossl_chacha20_einit;
 OSSL_FUNC_cipher_decrypt_init_fn ossl_chacha20_dinit;
-void ossl_chacha20_initctx(PROV_CHACHA20_CTX *ctx);
+void ossl_chacha20_initctx(PROV_CHACHA20_CTX* ctx);

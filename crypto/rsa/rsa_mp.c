@@ -12,14 +12,14 @@
 #include <openssl/err.h>
 #include "rsa_local.h"
 
-void ossl_rsa_multip_info_free_ex(RSA_PRIME_INFO *pinfo)
+void ossl_rsa_multip_info_free_ex(RSA_PRIME_INFO* pinfo)
 {
     /* free pp and pinfo only */
     BN_clear_free(pinfo->pp);
     OPENSSL_free(pinfo);
 }
 
-void ossl_rsa_multip_info_free(RSA_PRIME_INFO *pinfo)
+void ossl_rsa_multip_info_free(RSA_PRIME_INFO* pinfo)
 {
     /* free an RSA_PRIME_INFO structure */
     BN_clear_free(pinfo->r);
@@ -28,9 +28,9 @@ void ossl_rsa_multip_info_free(RSA_PRIME_INFO *pinfo)
     ossl_rsa_multip_info_free_ex(pinfo);
 }
 
-RSA_PRIME_INFO *ossl_rsa_multip_info_new(void)
+RSA_PRIME_INFO* ossl_rsa_multip_info_new(void)
 {
-    RSA_PRIME_INFO *pinfo;
+    RSA_PRIME_INFO* pinfo;
 
     /* create an RSA_PRIME_INFO structure */
     if ((pinfo = OPENSSL_zalloc(sizeof(RSA_PRIME_INFO))) == NULL)
@@ -46,7 +46,7 @@ RSA_PRIME_INFO *ossl_rsa_multip_info_new(void)
 
     return pinfo;
 
- err:
+err:
     BN_free(pinfo->r);
     BN_free(pinfo->d);
     BN_free(pinfo->t);
@@ -56,11 +56,11 @@ RSA_PRIME_INFO *ossl_rsa_multip_info_new(void)
 }
 
 /* Refill products of primes */
-int ossl_rsa_multip_calc_product(RSA *rsa)
+int ossl_rsa_multip_calc_product(RSA* rsa)
 {
-    RSA_PRIME_INFO *pinfo;
+    RSA_PRIME_INFO* pinfo;
     BIGNUM *p1 = NULL, *p2 = NULL;
-    BN_CTX *ctx = NULL;
+    BN_CTX* ctx = NULL;
     int i, rv = 0, ex_primes;
 
     if ((ex_primes = sk_RSA_PRIME_INFO_num(rsa->prime_infos)) <= 0) {
@@ -90,7 +90,7 @@ int ossl_rsa_multip_calc_product(RSA *rsa)
     }
 
     rv = 1;
- err:
+err:
     BN_CTX_free(ctx);
     return rv;
 }

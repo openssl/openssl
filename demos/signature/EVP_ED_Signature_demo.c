@@ -19,22 +19,21 @@
 #include <openssl/core_names.h>
 
 /* A test message to be signed (TBS) */
-static const unsigned char hamlet[] =
-    "To be, or not to be, that is the question,\n"
-    "Whether tis nobler in the minde to suffer\n"
-    "The slings and arrowes of outragious fortune,\n"
-    "Or to take Armes again in a sea of troubles,\n";
+static const unsigned char hamlet[] = "To be, or not to be, that is the question,\n"
+                                      "Whether tis nobler in the minde to suffer\n"
+                                      "The slings and arrowes of outragious fortune,\n"
+                                      "Or to take Armes again in a sea of troubles,\n";
 
-static int demo_sign(EVP_PKEY *priv,
-                     const unsigned char *tbs, size_t tbs_len,
-                     OSSL_LIB_CTX *libctx,
-                     unsigned char **sig_out_value,
-                     size_t *sig_out_len)
+static int demo_sign(EVP_PKEY* priv,
+    const unsigned char* tbs, size_t tbs_len,
+    OSSL_LIB_CTX* libctx,
+    unsigned char** sig_out_value,
+    size_t* sig_out_len)
 {
     int ret = 0;
     size_t sig_len;
-    unsigned char *sig_value = NULL;
-    EVP_MD_CTX *sign_context = NULL;
+    unsigned char* sig_value = NULL;
+    EVP_MD_CTX* sign_context = NULL;
 
     /* Create a signature context */
     sign_context = EVP_MD_CTX_new();
@@ -84,13 +83,13 @@ cleanup:
     return ret;
 }
 
-static int demo_verify(EVP_PKEY *pub,
-                       const unsigned char *tbs, size_t tbs_len,
-                       const unsigned char *sig_value, size_t sig_len,
-                       OSSL_LIB_CTX *libctx)
+static int demo_verify(EVP_PKEY* pub,
+    const unsigned char* tbs, size_t tbs_len,
+    const unsigned char* sig_value, size_t sig_len,
+    OSSL_LIB_CTX* libctx)
 {
     int ret = 0;
-    EVP_MD_CTX *verify_context = NULL;
+    EVP_MD_CTX* verify_context = NULL;
 
     /*
      * Make a verify signature context to hold temporary state
@@ -103,7 +102,7 @@ static int demo_verify(EVP_PKEY *pub,
     }
     /* Initialize the verify context with a ED25519 public key */
     if (!EVP_DigestVerifyInit_ex(verify_context, NULL, NULL,
-                                 libctx, NULL, pub, NULL)) {
+            libctx, NULL, pub, NULL)) {
         fprintf(stderr, "EVP_DigestVerifyInit_ex failed.\n");
         goto cleanup;
     }
@@ -112,7 +111,7 @@ static int demo_verify(EVP_PKEY *pub,
      * The streaming EVP_DigestVerifyUpdate() API is not supported.
      */
     if (!EVP_DigestVerify(verify_context, sig_value, sig_len,
-                          tbs, tbs_len)) {
+            tbs, tbs_len)) {
         fprintf(stderr, "EVP_DigestVerify() failed.\n");
         goto cleanup;
     }
@@ -124,8 +123,8 @@ cleanup:
     return ret;
 }
 
-static int create_key(OSSL_LIB_CTX *libctx,
-                      EVP_PKEY **privout, EVP_PKEY **pubout)
+static int create_key(OSSL_LIB_CTX* libctx,
+    EVP_PKEY** privout, EVP_PKEY** pubout)
 {
     int ret = 0;
     EVP_PKEY *priv = NULL, *pub = NULL;
@@ -144,10 +143,10 @@ static int create_key(OSSL_LIB_CTX *libctx,
     }
 
     if (!EVP_PKEY_get_octet_string_param(priv,
-                                         OSSL_PKEY_PARAM_PUB_KEY,
-                                         pubdata,
-                                         sizeof(pubdata),
-                                         &pubdata_len)) {
+            OSSL_PKEY_PARAM_PUB_KEY,
+            pubdata,
+            sizeof(pubdata),
+            &pubdata_len)) {
         fprintf(stderr, "EVP_PKEY_get_octet_string_param() failed\n");
         goto end;
     }
@@ -169,9 +168,9 @@ end:
 
 int main(void)
 {
-    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_LIB_CTX* libctx = NULL;
     size_t sig_len = 0;
-    unsigned char *sig_value = NULL;
+    unsigned char* sig_value = NULL;
     int ret = EXIT_FAILURE;
     EVP_PKEY *priv = NULL, *pub = NULL;
 
@@ -186,12 +185,12 @@ int main(void)
     }
 
     if (!demo_sign(priv, hamlet, sizeof(hamlet), libctx,
-                   &sig_value, &sig_len)) {
+            &sig_value, &sig_len)) {
         fprintf(stderr, "demo_sign failed.\n");
         goto cleanup;
     }
     if (!demo_verify(pub, hamlet, sizeof(hamlet),
-                     sig_value, sig_len, libctx)) {
+            sig_value, sig_len, libctx)) {
         fprintf(stderr, "demo_verify failed.\n");
         goto cleanup;
     }

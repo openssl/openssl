@@ -131,10 +131,10 @@ static int pkcs7_verify_test(void)
     int ret = 0;
     size_t i;
     BIO *msg_bio = NULL, *x509_bio = NULL, *bio = NULL;
-    X509 *cert = NULL;
-    X509_STORE *store = NULL;
-    PKCS7 *p7 = NULL;
-    const char *sig[] = {
+    X509* cert = NULL;
+    X509_STORE* store = NULL;
+    PKCS7* p7 = NULL;
+    const char* sig[] = {
         "MIME-Version: 1.0\nContent-Type: multipart/signed; protocol=\"application/x-pkcs7-signature\"; micalg=\"sha-256\"; boundary=\"----9B5319FF2E4428B17CD26B69294E7F31\"\n\n",
         "This is an S/MIME signed message\n\n------9B5319FF2E4428B17CD26B69294E7F31\n",
         "Content-Type: text/plain\r\n\r\nhello world\n------9B5319FF2E4428B17CD26B69294E7F31\n",
@@ -144,23 +144,23 @@ static int pkcs7_verify_test(void)
         "177F+QWjEzARMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhANES\n742XWm64tkGnz8DnpG6u2lHkZFQr3oaVvPcemvlbAiEA0WGGzmYx5C9UvfXIK7NE\nziT4pQtyESE0uRVKXw4nMqkxggGBMIIBfQIBATAtMCcxCzAJBgNVBAYTAlVTMRgw\nFgYDVQQDDA9jcnlwdG9ncmFwaHkgQ0ECAgMJMA0GCWCGSAFlAwQCAQUAoIHkMBgG\nCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTIxMDUyMDE4\nNTA0OVowLwYJKoZIhvcNAQkEMSIEIOdwMRgQrqcnmMYvag+BVvErcc6bwUXI94Ds\n",
         "QkiyIU9pMHkGCSqGSIb3DQEJDzFsMGowCwYJYIZIAWUDBAEqMAsGCWCGSAFlAwQB\nFjALBglghkgBZQMEAQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwICAgCAMA0GCCqG\nSIb3DQMCAgFAMAcGBSsOAwIHMA0GCCqGSIb3DQMCAgEoMAoGCCqGSM49BAMCBEcw\nRQIhANYMJku1fW9T1MIEcAyREArz9kXCY4tWck5Pt0xzrYhaAiBDSP6e43zj4YtI\nuvQW+Lzv+dNF8EPuhgoPNe17RuUSLw==\n\n------9B5319FF2E4428B17CD26B69294E7F31--\n\n"
     };
-    const char *signed_data = "Content-Type: text/plain\r\n\r\nhello world";
+    const char* signed_data = "Content-Type: text/plain\r\n\r\nhello world";
 
     if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
         goto end;
-    for  (i = 0; i < OSSL_NELEM(sig); ++i)
+    for (i = 0; i < OSSL_NELEM(sig); ++i)
         BIO_puts(bio, sig[i]);
 
     ret = TEST_ptr(msg_bio = BIO_new_mem_buf(signed_data, (int)strlen(signed_data)))
-          && TEST_ptr(x509_bio = BIO_new_mem_buf(cert_der, sizeof(cert_der)))
-          && TEST_ptr(cert = d2i_X509_bio(x509_bio, NULL))
-          && TEST_int_eq(ERR_peek_error(), 0)
-          && TEST_ptr(store = X509_STORE_new())
-          && TEST_true(X509_STORE_add_cert(store, cert))
-          && TEST_ptr(p7 = SMIME_read_PKCS7(bio, NULL))
-          && TEST_int_eq(ERR_peek_error(), 0)
-          && TEST_true(PKCS7_verify(p7, NULL, store, msg_bio, NULL, PKCS7_TEXT))
-          && TEST_int_eq(ERR_peek_error(), 0);
+        && TEST_ptr(x509_bio = BIO_new_mem_buf(cert_der, sizeof(cert_der)))
+        && TEST_ptr(cert = d2i_X509_bio(x509_bio, NULL))
+        && TEST_int_eq(ERR_peek_error(), 0)
+        && TEST_ptr(store = X509_STORE_new())
+        && TEST_true(X509_STORE_add_cert(store, cert))
+        && TEST_ptr(p7 = SMIME_read_PKCS7(bio, NULL))
+        && TEST_int_eq(ERR_peek_error(), 0)
+        && TEST_true(PKCS7_verify(p7, NULL, store, msg_bio, NULL, PKCS7_TEXT))
+        && TEST_int_eq(ERR_peek_error(), 0);
 end:
     X509_STORE_free(store);
     X509_free(cert);
@@ -222,10 +222,10 @@ static int pkcs7_inner_content_verify_test(void)
 {
     int ret = 0;
     BIO *x509_bio = NULL, *bio = NULL;
-    X509 *cert = NULL;
-    X509_STORE *store = NULL;
-    PKCS7 *p7 = NULL;
-    X509_VERIFY_PARAM *param;
+    X509* cert = NULL;
+    X509_STORE* store = NULL;
+    PKCS7* p7 = NULL;
+    X509_VERIFY_PARAM* param;
     const unsigned char sig_der[] = {
         0x30, 0x82, 0x06, 0x23, 0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D,
         0x01, 0x07, 0x02, 0xA0, 0x82, 0x06, 0x14, 0x30, 0x82, 0x06, 0x10, 0x02,
@@ -365,18 +365,18 @@ static int pkcs7_inner_content_verify_test(void)
         goto end;
 
     ret = TEST_ptr(x509_bio = BIO_new_mem_buf(smroot_der, sizeof smroot_der))
-            && TEST_ptr(cert = d2i_X509_bio(x509_bio, NULL))
-            && TEST_int_eq(ERR_peek_error(), 0)
-            && TEST_ptr(store = X509_STORE_new())
-            && TEST_true(X509_STORE_add_cert(store, cert))
-            && TEST_ptr(param = X509_STORE_get0_param(store))
-            && TEST_true(X509_VERIFY_PARAM_set_purpose(param,
-                                                       X509_PURPOSE_CODE_SIGN))
-            && TEST_true(X509_STORE_set1_param(store, param))
-            && TEST_ptr(p7 = d2i_PKCS7_bio(bio, NULL))
-            && TEST_int_eq(ERR_peek_error(), 0)
-            && TEST_true(PKCS7_verify(p7, NULL, store, NULL, NULL, 0))
-            && TEST_int_eq(ERR_peek_error(), 0);
+        && TEST_ptr(cert = d2i_X509_bio(x509_bio, NULL))
+        && TEST_int_eq(ERR_peek_error(), 0)
+        && TEST_ptr(store = X509_STORE_new())
+        && TEST_true(X509_STORE_add_cert(store, cert))
+        && TEST_ptr(param = X509_STORE_get0_param(store))
+        && TEST_true(X509_VERIFY_PARAM_set_purpose(param,
+            X509_PURPOSE_CODE_SIGN))
+        && TEST_true(X509_STORE_set1_param(store, param))
+        && TEST_ptr(p7 = d2i_PKCS7_bio(bio, NULL))
+        && TEST_int_eq(ERR_peek_error(), 0)
+        && TEST_true(PKCS7_verify(p7, NULL, store, NULL, NULL, 0))
+        && TEST_int_eq(ERR_peek_error(), 0);
 end:
     X509_STORE_free(store);
     X509_free(cert);

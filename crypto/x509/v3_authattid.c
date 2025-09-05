@@ -16,15 +16,14 @@
 
 DECLARE_ASN1_ITEM(OSSL_ISSUER_SERIAL)
 
-ASN1_ITEM_TEMPLATE(OSSL_AUTHORITY_ATTRIBUTE_ID_SYNTAX) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, OSSL_AUTHORITY_ATTRIBUTE_ID_SYNTAX, OSSL_ISSUER_SERIAL)
+ASN1_ITEM_TEMPLATE(OSSL_AUTHORITY_ATTRIBUTE_ID_SYNTAX) = ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, OSSL_AUTHORITY_ATTRIBUTE_ID_SYNTAX, OSSL_ISSUER_SERIAL)
 ASN1_ITEM_TEMPLATE_END(OSSL_AUTHORITY_ATTRIBUTE_ID_SYNTAX)
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_AUTHORITY_ATTRIBUTE_ID_SYNTAX)
 
-static int i2r_ISSUER_SERIAL(X509V3_EXT_METHOD *method,
-                             OSSL_ISSUER_SERIAL *iss,
-                             BIO *out, int indent)
+static int i2r_ISSUER_SERIAL(X509V3_EXT_METHOD* method,
+    OSSL_ISSUER_SERIAL* iss,
+    BIO* out, int indent)
 {
     if (iss->issuer != NULL) {
         BIO_printf(out, "%*sIssuer Names:\n", indent, "");
@@ -48,12 +47,12 @@ static int i2r_ISSUER_SERIAL(X509V3_EXT_METHOD *method,
     return 1;
 }
 
-static int i2r_auth_attr_id(X509V3_EXT_METHOD *method,
-                            OSSL_AUTHORITY_ATTRIBUTE_ID_SYNTAX *aids,
-                            BIO *out, int indent)
+static int i2r_auth_attr_id(X509V3_EXT_METHOD* method,
+    OSSL_AUTHORITY_ATTRIBUTE_ID_SYNTAX* aids,
+    BIO* out, int indent)
 {
     int i;
-    OSSL_ISSUER_SERIAL *aid;
+    OSSL_ISSUER_SERIAL* aid;
 
     for (i = 0; i < sk_OSSL_ISSUER_SERIAL_num(aids); i++) {
         if (BIO_printf(out, "%*sIssuer-Serials:\n", indent, "") <= 0)

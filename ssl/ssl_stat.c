@@ -12,9 +12,9 @@
 #include "ssl_local.h"
 #include "internal/ssl_unwrap.h"
 
-const char *SSL_state_string_long(const SSL *s)
+const char* SSL_state_string_long(const SSL* s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION* sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     if (sc == NULL || ossl_statem_in_error(sc))
         return "error";
@@ -129,9 +129,9 @@ const char *SSL_state_string_long(const SSL *s)
     }
 }
 
-const char *SSL_state_string(const SSL *s)
+const char* SSL_state_string(const SSL* s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION* sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     if (sc == NULL || ossl_statem_in_error(sc))
         return "SSLERR";
@@ -246,7 +246,7 @@ const char *SSL_state_string(const SSL *s)
     }
 }
 
-const char *SSL_alert_type_string_long(int value)
+const char* SSL_alert_type_string_long(int value)
 {
     switch (value >> 8) {
     case SSL3_AL_WARNING:
@@ -258,7 +258,7 @@ const char *SSL_alert_type_string_long(int value)
     }
 }
 
-const char *SSL_alert_type_string(int value)
+const char* SSL_alert_type_string(int value)
 {
     switch (value >> 8) {
     case SSL3_AL_WARNING:
@@ -270,7 +270,7 @@ const char *SSL_alert_type_string(int value)
     }
 }
 
-const char *SSL_alert_desc_string(int value)
+const char* SSL_alert_desc_string(int value)
 {
     switch (value & 0xff) {
     case SSL3_AD_CLOSE_NOTIFY:
@@ -338,7 +338,7 @@ const char *SSL_alert_desc_string(int value)
     }
 }
 
-const char *SSL_alert_desc_string_long(int value)
+const char* SSL_alert_desc_string_long(int value)
 {
     switch (value & 0xff) {
     case SSL3_AD_CLOSE_NOTIFY:

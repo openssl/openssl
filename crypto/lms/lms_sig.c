@@ -12,7 +12,7 @@
 /**
  * @brief Create a new LMS_SIG object
  */
-LMS_SIG *ossl_lms_sig_new(void)
+LMS_SIG* ossl_lms_sig_new(void)
 {
     return OPENSSL_zalloc(sizeof(LMS_SIG));
 }
@@ -20,7 +20,7 @@ LMS_SIG *ossl_lms_sig_new(void)
 /**
  * @brief Destroy an existing LMS_SIG object
  */
-void ossl_lms_sig_free(LMS_SIG *sig)
+void ossl_lms_sig_free(LMS_SIG* sig)
 {
     OPENSSL_free(sig);
 }

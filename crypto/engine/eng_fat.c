@@ -14,7 +14,7 @@
 #include "eng_local.h"
 #include <openssl/conf.h>
 
-int ENGINE_set_default(ENGINE *e, unsigned int flags)
+int ENGINE_set_default(ENGINE* e, unsigned int flags)
 {
     if ((flags & ENGINE_METHOD_CIPHERS) && !ENGINE_set_default_ciphers(e))
         return 0;
@@ -47,9 +47,9 @@ int ENGINE_set_default(ENGINE *e, unsigned int flags)
 
 /* Set default algorithms using a string */
 
-static int int_def_cb(const char *alg, int len, void *arg)
+static int int_def_cb(const char* alg, int len, void* arg)
 {
-    unsigned int *pflags = arg;
+    unsigned int* pflags = arg;
     if (alg == NULL)
         return 0;
     if (strncmp(alg, "ALL", len) == 0)
@@ -79,18 +79,18 @@ static int int_def_cb(const char *alg, int len, void *arg)
     return 1;
 }
 
-int ENGINE_set_default_string(ENGINE *e, const char *def_list)
+int ENGINE_set_default_string(ENGINE* e, const char* def_list)
 {
     unsigned int flags = 0;
     if (!CONF_parse_list(def_list, ',', 1, int_def_cb, &flags)) {
         ERR_raise_data(ERR_LIB_ENGINE, ENGINE_R_INVALID_STRING,
-                       "str=%s", def_list);
+            "str=%s", def_list);
         return 0;
     }
     return ENGINE_set_default(e, flags);
 }
 
-int ENGINE_register_complete(ENGINE *e)
+int ENGINE_register_complete(ENGINE* e)
 {
     ENGINE_register_ciphers(e);
     ENGINE_register_digests(e);
@@ -112,7 +112,7 @@ int ENGINE_register_complete(ENGINE *e)
 
 int ENGINE_register_all_complete(void)
 {
-    ENGINE *e;
+    ENGINE* e;
 
     for (e = ENGINE_get_first(); e; e = ENGINE_get_next(e))
         if (!(e->flags & ENGINE_FLAGS_NO_REGISTER_ALL))

@@ -12,9 +12,9 @@
 #include "cmp_testlib.h"
 #include <openssl/rsa.h> /* needed in case config no-deprecated */
 
-OSSL_CMP_MSG *load_pkimsg(const char *file, OSSL_LIB_CTX *libctx)
+OSSL_CMP_MSG* load_pkimsg(const char* file, OSSL_LIB_CTX* libctx)
 {
-    OSSL_CMP_MSG *msg;
+    OSSL_CMP_MSG* msg;
 
     (void)TEST_ptr((msg = OSSL_CMP_MSG_read(file, libctx, NULL)));
     return msg;
@@ -23,7 +23,7 @@ OSSL_CMP_MSG *load_pkimsg(const char *file, OSSL_LIB_CTX *libctx)
 /*
  * Checks whether the syntax of msg conforms to ASN.1
  */
-int valid_asn1_encoding(const OSSL_CMP_MSG *msg)
+int valid_asn1_encoding(const OSSL_CMP_MSG* msg)
 {
     return msg != NULL ? i2d_OSSL_CMP_MSG(msg, NULL) > 0 : 0;
 }
@@ -32,7 +32,7 @@ int valid_asn1_encoding(const OSSL_CMP_MSG *msg)
  * Compares two stacks of certificates in the order of their elements.
  * Returns 0 if sk1 and sk2 are equal and another value otherwise
  */
-int STACK_OF_X509_cmp(const STACK_OF(X509) *sk1, const STACK_OF(X509) *sk2)
+int STACK_OF_X509_cmp(const STACK_OF(X509)* sk1, const STACK_OF(X509)* sk2)
 {
     int i, res;
     X509 *a, *b;
@@ -60,7 +60,7 @@ int STACK_OF_X509_cmp(const STACK_OF(X509) *sk1, const STACK_OF(X509) *sk2)
  * Returns the number of certificates on the stack on success
  * Returns -1 or 0 on error
  */
-int STACK_OF_X509_push1(STACK_OF(X509) *sk, X509 *cert)
+int STACK_OF_X509_push1(STACK_OF(X509)* sk, X509* cert)
 {
     int res;
 
@@ -74,8 +74,8 @@ int STACK_OF_X509_push1(STACK_OF(X509) *sk, X509 *cert)
     return res;
 }
 
-int print_to_bio_out(const char *func, const char *file, int line,
-                     OSSL_CMP_severity level, const char *msg)
+int print_to_bio_out(const char* func, const char* file, int line,
+    OSSL_CMP_severity level, const char* msg)
 {
     return OSSL_CMP_print_to_bio(bio_out, func, file, line, level, msg);
 }

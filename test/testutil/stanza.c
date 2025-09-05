@@ -16,7 +16,7 @@
 #include "../testutil.h"
 #include "tu_local.h"
 
-int test_start_file(STANZA *s, const char *testfile)
+int test_start_file(STANZA* s, const char* testfile)
 {
     TEST_info("Reading %s", testfile);
     set_test_title(testfile);
@@ -27,10 +27,10 @@ int test_start_file(STANZA *s, const char *testfile)
     return 1;
 }
 
-int test_end_file(STANZA *s)
+int test_end_file(STANZA* s)
 {
     TEST_info("Completed %d tests with %d errors and %d skipped",
-              s->numtests, s->errors, s->numskip);
+        s->numtests, s->errors, s->numskip);
     BIO_free(s->fp);
     return 1;
 }
@@ -38,7 +38,7 @@ int test_end_file(STANZA *s)
 /*
  * Read a PEM block.  Return 1 if okay, 0 on error.
  */
-static int read_key(STANZA *s)
+static int read_key(STANZA* s)
 {
     char tmpbuf[128];
 
@@ -61,13 +61,12 @@ static int read_key(STANZA *s)
     return 0;
 }
 
-
 /*
  * Delete leading and trailing spaces from a string
  */
-static char *strip_spaces(char *p)
+static char* strip_spaces(char* p)
 {
-    char *q;
+    char* q;
 
     /* Skip over leading spaces */
     while (*p && isspace((unsigned char)*p))
@@ -75,7 +74,7 @@ static char *strip_spaces(char *p)
     if (*p == '\0')
         return NULL;
 
-    for (q = p + strlen(p) - 1; q != p && isspace((unsigned char)*q); )
+    for (q = p + strlen(p) - 1; q != p && isspace((unsigned char)*q);)
         *q-- = '\0';
     return *p ? p : NULL;
 }
@@ -83,14 +82,14 @@ static char *strip_spaces(char *p)
 /*
  * Read next test stanza; return 1 if found, 0 on EOF or error.
  */
-int test_readstanza(STANZA *s)
+int test_readstanza(STANZA* s)
 {
-    PAIR *pp = s->pairs;
+    PAIR* pp = s->pairs;
     char *p, *equals, *key;
-    const char *value;
+    const char* value;
     static char buff[131072];
 
-    for (s->numpairs = 0; BIO_gets(s->fp, buff, sizeof(buff)); ) {
+    for (s->numpairs = 0; BIO_gets(s->fp, buff, sizeof(buff));) {
         s->curr++;
         if (!TEST_ptr(p = strchr(buff, '\n'))) {
             TEST_info("Line %d too long", s->curr);
@@ -128,15 +127,15 @@ int test_readstanza(STANZA *s)
             s->start = s->curr;
 
         if (strcmp(key, "PrivateKey") == 0
-                || strcmp(key, "PublicKey") == 0
-                || strcmp(key, "ParamKey") == 0) {
+            || strcmp(key, "PublicKey") == 0
+            || strcmp(key, "ParamKey") == 0) {
             if (!read_key(s))
                 return 0;
         }
 
         if (!TEST_int_lt(s->numpairs++, TESTMAXPAIRS)
-                || !TEST_ptr(pp->key = OPENSSL_strdup(key))
-                || !TEST_ptr(pp->value = OPENSSL_strdup(value)))
+            || !TEST_ptr(pp->key = OPENSSL_strdup(key))
+            || !TEST_ptr(pp->value = OPENSSL_strdup(value)))
             return 0;
         pp++;
     }
@@ -145,12 +144,12 @@ int test_readstanza(STANZA *s)
     return 1;
 }
 
-void test_clearstanza(STANZA *s)
+void test_clearstanza(STANZA* s)
 {
-    PAIR *pp = s->pairs;
+    PAIR* pp = s->pairs;
     int i = s->numpairs;
 
-    for ( ; --i >= 0; pp++) {
+    for (; --i >= 0; pp++) {
         OPENSSL_free(pp->key);
         OPENSSL_free(pp->value);
     }

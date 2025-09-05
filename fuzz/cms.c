@@ -17,7 +17,7 @@
 #include <openssl/err.h>
 #include "fuzzer.h"
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(int* argc, char*** argv)
 {
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();
@@ -25,10 +25,10 @@ int FuzzerInitialize(int *argc, char ***argv)
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+int FuzzerTestOneInput(const uint8_t* buf, size_t len)
 {
-    CMS_ContentInfo *cms;
-    BIO *in;
+    CMS_ContentInfo* cms;
+    BIO* in;
 
     if (len == 0 || len > INT_MAX)
         return 0;
@@ -37,7 +37,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     OPENSSL_assert((size_t)BIO_write(in, buf, (int)len) == len);
     cms = d2i_CMS_bio(in, NULL);
     if (cms != NULL) {
-        BIO *out = BIO_new(BIO_s_null());
+        BIO* out = BIO_new(BIO_s_null());
 
         i2d_CMS_bio(out, cms);
         BIO_free(out);

@@ -16,12 +16,12 @@
 
 /* Include the appropriate header file for SOCK_STREAM */
 #ifdef _WIN32 /* Windows */
-# include <stdarg.h>
-# include <winsock2.h>
+#include <stdarg.h>
+#include <winsock2.h>
 #else /* Linux/Unix */
-# include <err.h>
-# include <sys/socket.h>
-# include <sys/select.h>
+#include <err.h>
+#include <sys/socket.h>
+#include <sys/select.h>
 #endif
 
 #include <openssl/bio.h>
@@ -31,9 +31,9 @@
 static const char cache_id[] = "OpenSSL Demo Server";
 
 #ifdef _WIN32
-static const char *progname;
+static const char* progname;
 
-static void vwarnx(const char *fmt, va_list ap)
+static void vwarnx(const char* fmt, va_list ap)
 {
     if (progname != NULL)
         fprintf(stderr, "%s: ", progname);
@@ -41,7 +41,7 @@ static void vwarnx(const char *fmt, va_list ap)
     putc('\n', stderr);
 }
 
-static void errx(int status, const char *fmt, ...)
+static void errx(int status, const char* fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -50,7 +50,7 @@ static void errx(int status, const char *fmt, ...)
     exit(status);
 }
 
-static void warnx(const char *fmt, ...)
+static void warnx(const char* fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -60,13 +60,13 @@ static void warnx(const char *fmt, ...)
 #endif
 
 /* Minimal TLS echo server. */
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     int res = EXIT_FAILURE;
     long opts;
-    const char *hostport;
-    SSL_CTX *ctx = NULL;
-    BIO *acceptor_bio;
+    const char* hostport;
+    SSL_CTX* ctx = NULL;
+    BIO* acceptor_bio;
 
 #ifdef _WIN32
     progname = argv[0];
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
      * byte array, that identifies the server application, and reduces the
      * chance of inappropriate cache sharing.
      */
-    SSL_CTX_set_session_id_context(ctx, (void *)cache_id, sizeof(cache_id));
+    SSL_CTX_set_session_id_context(ctx, (void*)cache_id, sizeof(cache_id));
     SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_SERVER);
 
     /*
@@ -226,8 +226,8 @@ int main(int argc, char *argv[])
 
     /* Wait for incoming connection */
     for (;;) {
-        BIO *client_bio;
-        SSL *ssl;
+        BIO* client_bio;
+        SSL* ssl;
         unsigned char buf[8192];
         size_t nread;
         size_t nwritten;
@@ -264,8 +264,7 @@ int main(int argc, char *argv[])
         }
 
         while (SSL_read_ex(ssl, buf, sizeof(buf), &nread) > 0) {
-            if (SSL_write_ex(ssl, buf, nread, &nwritten) > 0 &&
-                nwritten == nread) {
+            if (SSL_write_ex(ssl, buf, nread, &nwritten) > 0 && nwritten == nread) {
                 total += nwritten;
                 continue;
             }

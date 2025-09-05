@@ -14,17 +14,17 @@
 #include "internal/provider.h"
 
 struct algorithm_data_st {
-    OSSL_LIB_CTX *libctx;
-    int operation_id;            /* May be zero for finding them all */
-    int (*pre)(OSSL_PROVIDER *, int operation_id, int no_store, void *data,
-               int *result);
-    int (*reserve_store)(int no_store, void *data);
-    void (*fn)(OSSL_PROVIDER *, const OSSL_ALGORITHM *, int no_store,
-               void *data);
-    int (*unreserve_store)(void *data);
-    int (*post)(OSSL_PROVIDER *, int operation_id, int no_store, void *data,
-                int *result);
-    void *data;
+    OSSL_LIB_CTX* libctx;
+    int operation_id; /* May be zero for finding them all */
+    int (*pre)(OSSL_PROVIDER*, int operation_id, int no_store, void* data,
+        int* result);
+    int (*reserve_store)(int no_store, void* data);
+    void (*fn)(OSSL_PROVIDER*, const OSSL_ALGORITHM*, int no_store,
+        void* data);
+    int (*unreserve_store)(void* data);
+    int (*post)(OSSL_PROVIDER*, int operation_id, int no_store, void* data,
+        int* result);
+    void* data;
 };
 
 /*
@@ -39,10 +39,10 @@ struct algorithm_data_st {
  * 0 if not successful, but adding should continue
  * 1 if successful so far, and adding should continue
  */
-static int algorithm_do_map(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *map,
-                            int cur_operation, int no_store, void *cbdata)
+static int algorithm_do_map(OSSL_PROVIDER* provider, const OSSL_ALGORITHM* map,
+    int cur_operation, int no_store, void* cbdata)
 {
-    struct algorithm_data_st *data = cbdata;
+    struct algorithm_data_st* data = cbdata;
     int ret = 0;
 
     if (!data->reserve_store(no_store, data->data))
@@ -54,7 +54,7 @@ static int algorithm_do_map(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *map,
         /* If there is no pre-condition function, assume "yes" */
         ret = 1;
     } else if (!data->pre(provider, cur_operation, no_store, data->data,
-                          &ret)) {
+                   &ret)) {
         /* Error, bail out! */
         ret = -1;
         goto end;
@@ -71,7 +71,7 @@ static int algorithm_do_map(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *map,
     }
 
     if (map != NULL) {
-        const OSSL_ALGORITHM *thismap;
+        const OSSL_ALGORITHM* thismap;
 
         for (thismap = map; thismap->algorithm_names != NULL; thismap++)
             data->fn(provider, thismap, no_store, data->data);
@@ -82,12 +82,12 @@ static int algorithm_do_map(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *map,
         /* If there is no post-condition function, assume "yes" */
         ret = 1;
     } else if (!data->post(provider, cur_operation, no_store, data->data,
-                           &ret)) {
+                   &ret)) {
         /* Error, bail out! */
         ret = -1;
     }
 
- end:
+end:
     data->unreserve_store(data->data);
 
     return ret;
@@ -99,9 +99,9 @@ static int algorithm_do_map(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *map,
  * For each such operation, query the associated OSSL_ALGORITHM array from
  * the provider, then process that array with |algorithm_do_map()|.
  */
-static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
+static int algorithm_do_this(OSSL_PROVIDER* provider, void* cbdata)
 {
-    struct algorithm_data_st *data = cbdata;
+    struct algorithm_data_st* data = cbdata;
     int first_operation = 1;
     int last_operation = OSSL_OP__HIGHEST;
     int cur_operation;
@@ -111,14 +111,14 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
         first_operation = last_operation = data->operation_id;
 
     for (cur_operation = first_operation;
-         cur_operation <= last_operation;
-         cur_operation++) {
-        int no_store = 0;        /* Assume caching is ok */
-        const OSSL_ALGORITHM *map = NULL;
+        cur_operation <= last_operation;
+        cur_operation++) {
+        int no_store = 0; /* Assume caching is ok */
+        const OSSL_ALGORITHM* map = NULL;
         int ret = 0;
 
         map = ossl_provider_query_operation(provider, cur_operation,
-                                            &no_store);
+            &no_store);
         ret = algorithm_do_map(provider, map, cur_operation, no_store, data);
         ossl_provider_unquery_operation(provider, cur_operation, map);
 
@@ -134,20 +134,22 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
     return ok;
 }
 
-void ossl_algorithm_do_all(OSSL_LIB_CTX *libctx, int operation_id,
-                           OSSL_PROVIDER *provider,
-                           int (*pre)(OSSL_PROVIDER *, int operation_id,
-                                      int no_store, void *data, int *result),
-                           int (*reserve_store)(int no_store, void *data),
-                           void (*fn)(OSSL_PROVIDER *provider,
-                                      const OSSL_ALGORITHM *algo,
-                                      int no_store, void *data),
-                           int (*unreserve_store)(void *data),
-                           int (*post)(OSSL_PROVIDER *, int operation_id,
-                                       int no_store, void *data, int *result),
-                           void *data)
+void ossl_algorithm_do_all(OSSL_LIB_CTX* libctx, int operation_id,
+    OSSL_PROVIDER* provider,
+    int (*pre)(OSSL_PROVIDER*, int operation_id,
+        int no_store, void* data, int* result),
+    int (*reserve_store)(int no_store, void* data),
+    void (*fn)(OSSL_PROVIDER* provider,
+        const OSSL_ALGORITHM* algo,
+        int no_store, void* data),
+    int (*unreserve_store)(void* data),
+    int (*post)(OSSL_PROVIDER*, int operation_id,
+        int no_store, void* data, int* result),
+    void* data)
 {
-    struct algorithm_data_st cbdata = { 0, };
+    struct algorithm_data_st cbdata = {
+        0,
+    };
 
     cbdata.libctx = libctx;
     cbdata.operation_id = operation_id;
@@ -161,7 +163,7 @@ void ossl_algorithm_do_all(OSSL_LIB_CTX *libctx, int operation_id,
     if (provider == NULL) {
         ossl_provider_doall_activated(libctx, algorithm_do_this, &cbdata);
     } else {
-        OSSL_LIB_CTX *libctx2 = ossl_provider_libctx(provider);
+        OSSL_LIB_CTX* libctx2 = ossl_provider_libctx(provider);
 
         /*
          * If a provider is given, its library context MUST match the library
@@ -169,7 +171,7 @@ void ossl_algorithm_do_all(OSSL_LIB_CTX *libctx, int operation_id,
          * a programming error in the functions up the call stack.
          */
         if (!ossl_assert(ossl_lib_ctx_get_concrete(libctx)
-                         == ossl_lib_ctx_get_concrete(libctx2)))
+                == ossl_lib_ctx_get_concrete(libctx2)))
             return;
 
         cbdata.libctx = libctx2;
@@ -177,11 +179,11 @@ void ossl_algorithm_do_all(OSSL_LIB_CTX *libctx, int operation_id,
     }
 }
 
-char *ossl_algorithm_get1_first_name(const OSSL_ALGORITHM *algo)
+char* ossl_algorithm_get1_first_name(const OSSL_ALGORITHM* algo)
 {
-    const char *first_name_end = NULL;
+    const char* first_name_end = NULL;
     size_t first_name_len = 0;
-    char *ret;
+    char* ret;
 
     if (algo->algorithm_names == NULL)
         return NULL;

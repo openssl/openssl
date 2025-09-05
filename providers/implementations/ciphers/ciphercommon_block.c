@@ -36,9 +36,9 @@
  * the remaining amount of data in *in. Returns the largest value <= *inlen
  * which is a multiple of the blocksize.
  */
-size_t ossl_cipher_fillblock(unsigned char *buf, size_t *buflen,
-                             size_t blocksize,
-                             const unsigned char **in, size_t *inlen)
+size_t ossl_cipher_fillblock(unsigned char* buf, size_t* buflen,
+    size_t blocksize,
+    const unsigned char** in, size_t* inlen)
 {
     size_t blockmask = ~(blocksize - 1);
     size_t bufremain = blocksize - *buflen;
@@ -60,8 +60,8 @@ size_t ossl_cipher_fillblock(unsigned char *buf, size_t *buflen,
  * Fills the buffer with trailing data from an encryption/decryption that didn't
  * fit into a full block.
  */
-int ossl_cipher_trailingdata(unsigned char *buf, size_t *buflen, size_t blocksize,
-                             const unsigned char **in, size_t *inlen)
+int ossl_cipher_trailingdata(unsigned char* buf, size_t* buflen, size_t blocksize,
+    const unsigned char** in, size_t* inlen)
 {
     if (*inlen == 0)
         return 1;
@@ -79,7 +79,7 @@ int ossl_cipher_trailingdata(unsigned char *buf, size_t *buflen, size_t blocksiz
 }
 
 /* Pad the final block for encryption */
-void ossl_cipher_padblock(unsigned char *buf, size_t *buflen, size_t blocksize)
+void ossl_cipher_padblock(unsigned char* buf, size_t* buflen, size_t blocksize)
 {
     size_t i;
     unsigned char pad = (unsigned char)(blocksize - *buflen);
@@ -88,7 +88,7 @@ void ossl_cipher_padblock(unsigned char *buf, size_t *buflen, size_t blocksize)
         buf[i] = pad;
 }
 
-int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
+int ossl_cipher_unpadblock(unsigned char* buf, size_t* buflen, size_t blocksize)
 {
     size_t pad, i;
     size_t len = *buflen;
@@ -138,19 +138,19 @@ int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
  *   1: (in constant time) Record is publicly valid. If padding is invalid then
  *      the mac is random
  */
-int ossl_cipher_tlsunpadblock(OSSL_LIB_CTX *libctx, unsigned int tlsversion,
-                              unsigned char *buf, size_t *buflen,
-                              size_t blocksize,
-                              unsigned char **mac, int *alloced, size_t macsize,
-                              int aead)
+int ossl_cipher_tlsunpadblock(OSSL_LIB_CTX* libctx, unsigned int tlsversion,
+    unsigned char* buf, size_t* buflen,
+    size_t blocksize,
+    unsigned char** mac, int* alloced, size_t macsize,
+    int aead)
 {
     int ret;
 
     switch (tlsversion) {
     case SSL3_VERSION:
         return ssl3_cbc_remove_padding_and_mac(buflen, *buflen, buf, mac,
-                                               alloced, blocksize, macsize,
-                                               libctx);
+            alloced, blocksize, macsize,
+            libctx);
 
     case TLS1_2_VERSION:
     case DTLS1_2_VERSION:
@@ -163,8 +163,8 @@ int ossl_cipher_tlsunpadblock(OSSL_LIB_CTX *libctx, unsigned int tlsversion,
         /* Fall through */
     case TLS1_VERSION:
         ret = tls1_cbc_remove_padding_and_mac(buflen, *buflen, buf, mac,
-                                              alloced, blocksize, macsize,
-                                              aead, libctx);
+            alloced, blocksize, macsize,
+            aead, libctx);
         return ret;
 
     default:

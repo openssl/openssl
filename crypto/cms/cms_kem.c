@@ -18,15 +18,15 @@
 #include "crypto/evp.h"
 #include "cms_local.h"
 
-static int kem_cms_decrypt(CMS_RecipientInfo *ri)
+static int kem_cms_decrypt(CMS_RecipientInfo* ri)
 {
-    uint32_t *kekLength;
-    X509_ALGOR *wrap;
-    EVP_PKEY_CTX *pctx;
-    EVP_CIPHER_CTX *kekctx;
+    uint32_t* kekLength;
+    X509_ALGOR* wrap;
+    EVP_PKEY_CTX* pctx;
+    EVP_CIPHER_CTX* kekctx;
     uint32_t cipher_length;
     char name[OSSL_MAX_NAME_SIZE];
-    EVP_CIPHER *kekcipher = NULL;
+    EVP_CIPHER* kekcipher = NULL;
     int rv = 0;
 
     if (!ossl_cms_RecipientInfo_kemri_get0_alg(ri, &kekLength, &wrap))
@@ -61,19 +61,19 @@ err:
     return rv;
 }
 
-static int kem_cms_encrypt(CMS_RecipientInfo *ri)
+static int kem_cms_encrypt(CMS_RecipientInfo* ri)
 {
-    uint32_t *kekLength;
-    X509_ALGOR *wrap;
-    X509_ALGOR *kdf;
-    EVP_PKEY_CTX *pctx;
-    EVP_PKEY *pkey;
+    uint32_t* kekLength;
+    X509_ALGOR* wrap;
+    X509_ALGOR* kdf;
+    EVP_PKEY_CTX* pctx;
+    EVP_PKEY* pkey;
     int security_bits;
-    const ASN1_OBJECT *kdf_obj = NULL;
+    const ASN1_OBJECT* kdf_obj = NULL;
     unsigned char kemri_x509_algor[OSSL_MAX_ALGORITHM_ID_SIZE];
     OSSL_PARAM params[2];
-    X509_ALGOR *x509_algor = NULL;
-    EVP_CIPHER_CTX *kekctx;
+    X509_ALGOR* x509_algor = NULL;
+    EVP_CIPHER_CTX* kekctx;
     int wrap_nid;
     int rv = 0;
 
@@ -103,12 +103,12 @@ static int kem_cms_encrypt(CMS_RecipientInfo *ri)
          * for a default KDF.
          */
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM,
-                                                      kemri_x509_algor, sizeof(kemri_x509_algor));
+            kemri_x509_algor, sizeof(kemri_x509_algor));
         params[1] = OSSL_PARAM_construct_end();
         if (!EVP_PKEY_get_params(pkey, params))
             goto err;
         if (OSSL_PARAM_modified(&params[0])) {
-            const unsigned char *p = kemri_x509_algor;
+            const unsigned char* p = kemri_x509_algor;
 
             x509_algor = d2i_X509_ALGOR(NULL, &p, (long)params[0].return_size);
             if (x509_algor == NULL)
@@ -151,7 +151,7 @@ err:
     return rv;
 }
 
-int ossl_cms_kem_envelope(CMS_RecipientInfo *ri, int decrypt)
+int ossl_cms_kem_envelope(CMS_RecipientInfo* ri, int decrypt)
 {
     assert(decrypt == 0 || decrypt == 1);
 

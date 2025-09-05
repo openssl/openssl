@@ -12,7 +12,6 @@
 #include "tu_local.h"
 #include "output.h"
 
-
 static int used[100] = { 0 };
 
 int test_skip_common_options(void)
@@ -22,7 +21,7 @@ int test_skip_common_options(void)
     while ((o = (OPTION_CHOICE_DEFAULT)opt_next()) != OPT_EOF) {
         switch (o) {
         case OPT_TEST_CASES:
-           break;
+            break;
         default:
         case OPT_ERR:
             return 0;
@@ -36,9 +35,9 @@ size_t test_get_argument_count(void)
     return opt_num_rest();
 }
 
-char *test_get_argument(size_t n)
+char* test_get_argument(size_t n)
 {
-    char **argv = opt_rest();
+    char** argv = opt_rest();
 
     OPENSSL_assert(n < sizeof(used));
     if ((int)n >= opt_num_rest() || argv == NULL)
@@ -50,7 +49,7 @@ char *test_get_argument(size_t n)
 void opt_check_usage(void)
 {
     int i;
-    char **argv = opt_rest();
+    char** argv = opt_rest();
     int n, arg_count = opt_num_rest();
 
     if (arg_count > (int)OSSL_NELEM(used))
@@ -60,13 +59,13 @@ void opt_check_usage(void)
     for (i = 0; i < n; i++) {
         if (used[i] == 0)
             test_printf_stderr("Warning ignored command-line argument %d: %s\n",
-                               i, argv[i]);
+                i, argv[i]);
     }
     if (i < arg_count)
         test_printf_stderr("Warning arguments %d and later unchecked\n", i);
 }
 
-int opt_printf_stderr(const char *fmt, ...)
+int opt_printf_stderr(const char* fmt, ...)
 {
     va_list ap;
     int ret;
@@ -76,4 +75,3 @@ int opt_printf_stderr(const char *fmt, ...)
     va_end(ap);
     return ret;
 }
-

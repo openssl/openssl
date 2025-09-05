@@ -10,16 +10,16 @@
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
-void BN_RECP_CTX_init(BN_RECP_CTX *recp)
+void BN_RECP_CTX_init(BN_RECP_CTX* recp)
 {
     memset(recp, 0, sizeof(*recp));
     bn_init(&(recp->N));
     bn_init(&(recp->Nr));
 }
 
-BN_RECP_CTX *BN_RECP_CTX_new(void)
+BN_RECP_CTX* BN_RECP_CTX_new(void)
 {
-    BN_RECP_CTX *ret;
+    BN_RECP_CTX* ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return NULL;
@@ -30,7 +30,7 @@ BN_RECP_CTX *BN_RECP_CTX_new(void)
     return ret;
 }
 
-void BN_RECP_CTX_free(BN_RECP_CTX *recp)
+void BN_RECP_CTX_free(BN_RECP_CTX* recp)
 {
     if (recp == NULL)
         return;
@@ -40,7 +40,7 @@ void BN_RECP_CTX_free(BN_RECP_CTX *recp)
         OPENSSL_free(recp);
 }
 
-int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)
+int BN_RECP_CTX_set(BN_RECP_CTX* recp, const BIGNUM* d, BN_CTX* ctx)
 {
     if (BN_is_zero(d) || !BN_copy(&(recp->N), d))
         return 0;
@@ -50,12 +50,12 @@ int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)
     return 1;
 }
 
-int BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
-                          BN_RECP_CTX *recp, BN_CTX *ctx)
+int BN_mod_mul_reciprocal(BIGNUM* r, const BIGNUM* x, const BIGNUM* y,
+    BN_RECP_CTX* recp, BN_CTX* ctx)
 {
     int ret = 0;
-    BIGNUM *a;
-    const BIGNUM *ca;
+    BIGNUM* a;
+    const BIGNUM* ca;
 
     BN_CTX_start(ctx);
     if ((a = BN_CTX_get(ctx)) == NULL)
@@ -70,17 +70,17 @@ int BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
         }
         ca = a;
     } else
-        ca = x;                 /* Just do the mod */
+        ca = x; /* Just do the mod */
 
     ret = BN_div_recp(NULL, r, ca, recp, ctx);
- err:
+err:
     BN_CTX_end(ctx);
     bn_check_top(r);
     return ret;
 }
 
-int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
-                BN_RECP_CTX *recp, BN_CTX *ctx)
+int BN_div_recp(BIGNUM* dv, BIGNUM* rem, const BIGNUM* m,
+    BN_RECP_CTX* recp, BN_CTX* ctx)
 {
     int i, j, ret = 0;
     BIGNUM *a, *b, *d, *r;
@@ -156,7 +156,7 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
     r->neg = BN_is_zero(r) ? 0 : m->neg;
     d->neg = m->neg ^ recp->N.neg;
     ret = 1;
- err:
+err:
     BN_CTX_end(ctx);
     bn_check_top(dv);
     bn_check_top(rem);
@@ -169,10 +169,10 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
  * required.
  */
 /* r := 2^len / m */
-int BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx)
+int BN_reciprocal(BIGNUM* r, const BIGNUM* m, int len, BN_CTX* ctx)
 {
     int ret = -1;
-    BIGNUM *t;
+    BIGNUM* t;
 
     BN_CTX_start(ctx);
     if ((t = BN_CTX_get(ctx)) == NULL)
@@ -185,7 +185,7 @@ int BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx)
         goto err;
 
     ret = len;
- err:
+err:
     bn_check_top(r);
     BN_CTX_end(ctx);
     return ret;

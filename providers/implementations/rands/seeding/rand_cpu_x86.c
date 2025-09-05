@@ -13,15 +13,15 @@
 #include "prov/seeding.h"
 
 #ifdef OPENSSL_RAND_SEED_RDCPU
-# if defined(OPENSSL_SYS_TANDEM) && defined(_TNS_X_TARGET)
-#  include <builtin.h> /* _rdrand64 */
-#  include <string.h> /* memcpy */
-# else
-size_t OPENSSL_ia32_rdseed_bytes(unsigned char *buf, size_t len);
-size_t OPENSSL_ia32_rdrand_bytes(unsigned char *buf, size_t len);
-# endif
+#if defined(OPENSSL_SYS_TANDEM) && defined(_TNS_X_TARGET)
+#include <builtin.h> /* _rdrand64 */
+#include <string.h> /* memcpy */
+#else
+size_t OPENSSL_ia32_rdseed_bytes(unsigned char* buf, size_t len);
+size_t OPENSSL_ia32_rdrand_bytes(unsigned char* buf, size_t len);
+#endif
 
-static size_t get_hardware_random_value(unsigned char *buf, size_t len);
+static size_t get_hardware_random_value(unsigned char* buf, size_t len);
 
 /*
  * Acquire entropy using Intel-specific cpu instructions
@@ -35,10 +35,10 @@ static size_t get_hardware_random_value(unsigned char *buf, size_t len);
  * Returns the total entropy count, if it exceeds the requested
  * entropy count. Otherwise, returns an entropy count of 0.
  */
-size_t ossl_prov_acquire_entropy_from_cpu(RAND_POOL *pool)
+size_t ossl_prov_acquire_entropy_from_cpu(RAND_POOL* pool)
 {
     size_t bytes_needed;
-    unsigned char *buffer;
+    unsigned char* buffer;
 
     bytes_needed = ossl_rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     if (bytes_needed > 0) {
@@ -58,7 +58,7 @@ size_t ossl_prov_acquire_entropy_from_cpu(RAND_POOL *pool)
 
 #if defined(OPENSSL_SYS_TANDEM) && defined(_TNS_X_TARGET)
 /* Obtain random bytes from the x86 hardware random function in 64 bit chunks */
-static size_t get_hardware_random_value(unsigned char *buf, size_t len)
+static size_t get_hardware_random_value(unsigned char* buf, size_t len)
 {
     size_t bytes_remaining = len;
 
@@ -68,7 +68,7 @@ static size_t get_hardware_random_value(unsigned char *buf, size_t len)
         uint64_t random_value = 0;
 
         if (_rdrand64(&random_value) != 0) {
-            unsigned char *random_buffer = (unsigned char *)&random_value;
+            unsigned char* random_buffer = (unsigned char*)&random_value;
 
             if (bytes_remaining >= sizeof(random_value)) {
                 memcpy(buf, random_buffer, sizeof(random_value));
@@ -88,16 +88,17 @@ static size_t get_hardware_random_value(unsigned char *buf, size_t len)
     return 0;
 }
 #else
-static size_t get_hardware_random_value(unsigned char *buf, size_t len) {
+static size_t get_hardware_random_value(unsigned char* buf, size_t len)
+{
     /* Whichever comes first, use RDSEED, RDRAND or nothing */
     if ((OPENSSL_ia32cap_P[2] & (1 << 18)) != 0) {
-	if (OPENSSL_ia32_rdseed_bytes(buf, len) != len)
-	    return 0;
+        if (OPENSSL_ia32_rdseed_bytes(buf, len) != len)
+            return 0;
     } else if ((OPENSSL_ia32cap_P[1] & (1 << (62 - 32))) != 0) {
-	if (OPENSSL_ia32_rdrand_bytes(buf, len) != len)
-	    return 0;
+        if (OPENSSL_ia32_rdrand_bytes(buf, len) != len)
+            return 0;
     } else
-	return 0;
+        return 0;
     return len;
 }
 #endif

@@ -19,12 +19,12 @@
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
-# include "../field.h"
+#include "../field.h"
 
-void ossl_gf_mul(gf_s * RESTRICT cs, const gf as, const gf bs)
+void ossl_gf_mul(gf_s* RESTRICT cs, const gf as, const gf bs)
 {
     const uint32_t *a = as->limb, *b = bs->limb;
-    uint32_t *c = cs->limb;
+    uint32_t* c = cs->limb;
     uint64_t accum0 = 0, accum1 = 0, accum2 = 0;
     uint32_t mask = (1 << 28) - 1;
     uint32_t aa[8], bb[8];
@@ -70,10 +70,10 @@ void ossl_gf_mul(gf_s * RESTRICT cs, const gf as, const gf bs)
     c[1] += ((uint32_t)(accum1));
 }
 
-void ossl_gf_mulw_unsigned(gf_s * RESTRICT cs, const gf as, uint32_t b)
+void ossl_gf_mulw_unsigned(gf_s* RESTRICT cs, const gf as, uint32_t b)
 {
-    const uint32_t *a = as->limb;
-    uint32_t *c = cs->limb;
+    const uint32_t* a = as->limb;
+    uint32_t* c = cs->limb;
     uint64_t accum0 = 0, accum8 = 0;
     uint32_t mask = (1 << 28) - 1;
     int i;
@@ -98,8 +98,8 @@ void ossl_gf_mulw_unsigned(gf_s * RESTRICT cs, const gf as, uint32_t b)
     c[1] += (uint32_t)(accum8 >> 28);
 }
 
-void ossl_gf_sqr(gf_s * RESTRICT cs, const gf as)
+void ossl_gf_sqr(gf_s* RESTRICT cs, const gf as)
 {
-    ossl_gf_mul(cs, as, as);         /* Performs better with a dedicated square */
+    ossl_gf_mul(cs, as, as); /* Performs better with a dedicated square */
 }
 #endif

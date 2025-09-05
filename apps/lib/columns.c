@@ -11,9 +11,9 @@
 #include "apps.h"
 #include "function.h"
 
-void calculate_columns(FUNCTION *functions, DISPLAY_COLUMNS *dc)
+void calculate_columns(FUNCTION* functions, DISPLAY_COLUMNS* dc)
 {
-    FUNCTION *f;
+    FUNCTION* f;
     int len, maxlen = 0;
 
     for (f = functions; f->name != NULL; ++f)
@@ -24,4 +24,3 @@ void calculate_columns(FUNCTION *functions, DISPLAY_COLUMNS *dc)
     dc->width = maxlen + 2;
     dc->columns = (80 - 1) / dc->width;
 }
-

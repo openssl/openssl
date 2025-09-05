@@ -22,7 +22,7 @@
  * functions to different names
  */
 
-unsigned char *MD2(const unsigned char *d, size_t n, unsigned char *md)
+unsigned char* MD2(const unsigned char* d, size_t n, unsigned char* md)
 {
     MD2_CTX c;
     static unsigned char m[MD2_DIGEST_LENGTH];

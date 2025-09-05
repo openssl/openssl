@@ -24,8 +24,8 @@
 /* ASCII: "sk", in hex for EBCDIC compatibility */
 #define OSSL_DHKEM_LABEL_SK "\x73\x6B"
 
-int ossl_ecx_dhkem_derive_private(ECX_KEY *ecx, unsigned char *privout,
-                                  const unsigned char *ikm, size_t ikmlen);
-int ossl_ec_dhkem_derive_private(EC_KEY *ec, BIGNUM *privout,
-                                 const unsigned char *ikm, size_t ikmlen);
+int ossl_ecx_dhkem_derive_private(ECX_KEY* ecx, unsigned char* privout,
+    const unsigned char* ikm, size_t ikmlen);
+int ossl_ec_dhkem_derive_private(EC_KEY* ec, BIGNUM* privout,
+    const unsigned char* ikm, size_t ikmlen);
 #endif

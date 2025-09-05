@@ -23,18 +23,18 @@
 static OSSL_FUNC_cipher_freectx_fn idea_freectx;
 static OSSL_FUNC_cipher_dupctx_fn idea_dupctx;
 
-static void idea_freectx(void *vctx)
+static void idea_freectx(void* vctx)
 {
-    PROV_IDEA_CTX *ctx = (PROV_IDEA_CTX *)vctx;
+    PROV_IDEA_CTX* ctx = (PROV_IDEA_CTX*)vctx;
 
-    ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX*)vctx);
+    OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
-static void *idea_dupctx(void *ctx)
+static void* idea_dupctx(void* ctx)
 {
-    PROV_IDEA_CTX *in = (PROV_IDEA_CTX *)ctx;
-    PROV_IDEA_CTX *ret;
+    PROV_IDEA_CTX* in = (PROV_IDEA_CTX*)ctx;
+    PROV_IDEA_CTX* ret;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -54,4 +54,4 @@ IMPLEMENT_generic_cipher(idea, IDEA, cbc, CBC, 0, 128, 64, 64, block)
 /* ossl_idea128ofb64_functions */
 IMPLEMENT_generic_cipher(idea, IDEA, ofb64, OFB, 0, 128, 8, 64, stream)
 /* ossl_idea128cfb64_functions */
-IMPLEMENT_generic_cipher(idea, IDEA, cfb64,  CFB, 0, 128, 8, 64, stream)
+IMPLEMENT_generic_cipher(idea, IDEA, cfb64, CFB, 0, 128, 8, 64, stream)

@@ -1,22 +1,22 @@
 /*
-* Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
-*
-* Licensed under the Apache License 2.0 (the "License").  You may not use
-* this file except in compliance with the License.  You can obtain a copy
-* in the file LICENSE in the source distribution or at
-* https://www.openssl.org/source/license.html
-*/
+ * Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
 
 #ifndef OSSL_INTERNAL_QUIC_RCIDM_H
-# define OSSL_INTERNAL_QUIC_RCIDM_H
-# pragma once
+#define OSSL_INTERNAL_QUIC_RCIDM_H
+#pragma once
 
-# include "internal/e_os.h"
-# include "internal/time.h"
-# include "internal/quic_types.h"
-# include "internal/quic_wire.h"
+#include "internal/e_os.h"
+#include "internal/time.h"
+#include "internal/quic_types.h"
+#include "internal/quic_wire.h"
 
-# ifndef OPENSSL_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
 
 /*
  * QUIC Remote Connection ID Manager
@@ -45,10 +45,10 @@ typedef struct quic_rcidm_st QUIC_RCIDM;
  * For a client, initial_odcid is the client's Initial ODCID.
  * For a server, initial_odcid is NULL.
  */
-QUIC_RCIDM *ossl_quic_rcidm_new(const QUIC_CONN_ID *initial_odcid);
+QUIC_RCIDM* ossl_quic_rcidm_new(const QUIC_CONN_ID* initial_odcid);
 
 /* Frees a RCIDM. */
-void ossl_quic_rcidm_free(QUIC_RCIDM *rcidm);
+void ossl_quic_rcidm_free(QUIC_RCIDM* rcidm);
 
 /*
  * CID Events
@@ -64,8 +64,8 @@ void ossl_quic_rcidm_free(QUIC_RCIDM *rcidm);
  * We immediately switch to using this SCID as our preferred RCID. This SCID
  * must be enrolled using this function. May only be called once.
  */
-int ossl_quic_rcidm_add_from_initial(QUIC_RCIDM *rcidm,
-                                     const QUIC_CONN_ID *rcid);
+int ossl_quic_rcidm_add_from_initial(QUIC_RCIDM* rcidm,
+    const QUIC_CONN_ID* rcid);
 
 /*
  * To be called by a client when a server responds to the first Initial packet
@@ -77,8 +77,8 @@ int ossl_quic_rcidm_add_from_initial(QUIC_RCIDM *rcidm,
  *
  * Not for server use.
  */
-int ossl_quic_rcidm_add_from_server_retry(QUIC_RCIDM *rcidm,
-                                          const QUIC_CONN_ID *retry_odcid);
+int ossl_quic_rcidm_add_from_server_retry(QUIC_RCIDM* rcidm,
+    const QUIC_CONN_ID* retry_odcid);
 
 /*
  * Processes an incoming NEW_CONN_ID frame, recording the new CID as a potential
@@ -86,8 +86,8 @@ int ossl_quic_rcidm_add_from_server_retry(QUIC_RCIDM *rcidm,
  * ncid->retire_prior_to field. The stateless_reset field is ignored; the caller
  * is responsible for handling it separately.
  */
-int ossl_quic_rcidm_add_from_ncid(QUIC_RCIDM *rcidm,
-                                  const OSSL_QUIC_FRAME_NEW_CONN_ID *ncid);
+int ossl_quic_rcidm_add_from_ncid(QUIC_RCIDM* rcidm,
+    const OSSL_QUIC_FRAME_NEW_CONN_ID* ncid);
 
 /*
  * Other Events
@@ -100,19 +100,19 @@ int ossl_quic_rcidm_add_from_ncid(QUIC_RCIDM *rcidm,
  *
  * This may influence the RCIDM's RCID change policy.
  */
-void ossl_quic_rcidm_on_handshake_complete(QUIC_RCIDM *rcidm);
+void ossl_quic_rcidm_on_handshake_complete(QUIC_RCIDM* rcidm);
 
 /*
  * Notifies the RCIDM that one or more packets have been sent.
  *
  * This may influence the RCIDM's RCID change policy.
  */
-void ossl_quic_rcidm_on_packet_sent(QUIC_RCIDM *rcidm, uint64_t num_packets);
+void ossl_quic_rcidm_on_packet_sent(QUIC_RCIDM* rcidm, uint64_t num_packets);
 
 /*
  * Manually request switching to a new RCID as soon as possible.
  */
-void ossl_quic_rcidm_request_roll(QUIC_RCIDM *rcidm);
+void ossl_quic_rcidm_request_roll(QUIC_RCIDM* rcidm);
 
 /*
  * Queries
@@ -138,7 +138,7 @@ void ossl_quic_rcidm_request_roll(QUIC_RCIDM *rcidm);
  * this delay based on the last time a packet was transmitted using the RCID
  * being retired.
  */
-int ossl_quic_rcidm_pop_retire_seq_num(QUIC_RCIDM *rcid, uint64_t *seq_num);
+int ossl_quic_rcidm_pop_retire_seq_num(QUIC_RCIDM* rcid, uint64_t* seq_num);
 
 /*
  * Like ossl_quic_rcidm_pop_retire_seq_num, but does not pop the item from the
@@ -146,7 +146,7 @@ int ossl_quic_rcidm_pop_retire_seq_num(QUIC_RCIDM *rcid, uint64_t *seq_num);
  * ossl_quic_rcidm_pop_retire_seq_num is guaranteed to output the same sequence
  * number.
  */
-int ossl_quic_rcidm_peek_retire_seq_num(QUIC_RCIDM *rcid, uint64_t *seq_num);
+int ossl_quic_rcidm_peek_retire_seq_num(QUIC_RCIDM* rcid, uint64_t* seq_num);
 
 /*
  * Writes the DCID preferred for a newly transmitted packet at this time to
@@ -156,16 +156,16 @@ int ossl_quic_rcidm_peek_retire_seq_num(QUIC_RCIDM *rcid, uint64_t *seq_num);
  *
  * Returns 1 on success and 0 on failure.
  */
-int ossl_quic_rcidm_get_preferred_tx_dcid(QUIC_RCIDM *rcidm,
-                                          QUIC_CONN_ID *tx_dcid);
+int ossl_quic_rcidm_get_preferred_tx_dcid(QUIC_RCIDM* rcidm,
+    QUIC_CONN_ID* tx_dcid);
 
 /*
  * Returns 1 if the value output by ossl_quic_rcidm_get_preferred_tx_dcid() has
  * changed since the last call to this function with clear set. If clear is set,
  * clears the changed flag. Returns the old value of the changed flag.
  */
-int ossl_quic_rcidm_get_preferred_tx_dcid_changed(QUIC_RCIDM *rcidm,
-                                                  int clear);
+int ossl_quic_rcidm_get_preferred_tx_dcid_changed(QUIC_RCIDM* rcidm,
+    int clear);
 
 /*
  * Returns the number of active numbered RCIDs we have. Note that this includes
@@ -173,13 +173,13 @@ int ossl_quic_rcidm_get_preferred_tx_dcid_changed(QUIC_RCIDM *rcidm,
  * ossl_quic_rcidm_pop_retire_seq_num() as these are still active until actually
  * retired.
  */
-size_t ossl_quic_rcidm_get_num_active(const QUIC_RCIDM *rcidm);
+size_t ossl_quic_rcidm_get_num_active(const QUIC_RCIDM* rcidm);
 
 /*
  * Returns the number of retir*ing* numbered RCIDs we have.
  */
-size_t ossl_quic_rcidm_get_num_retiring(const QUIC_RCIDM *rcidm);
+size_t ossl_quic_rcidm_get_num_retiring(const QUIC_RCIDM* rcidm);
 
-# endif
+#endif
 
 #endif

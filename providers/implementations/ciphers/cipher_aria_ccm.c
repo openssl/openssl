@@ -15,9 +15,9 @@
 
 static OSSL_FUNC_cipher_freectx_fn aria_ccm_freectx;
 
-static void *aria_ccm_newctx(void *provctx, size_t keybits)
+static void* aria_ccm_newctx(void* provctx, size_t keybits)
 {
-    PROV_ARIA_CCM_CTX *ctx;
+    PROV_ARIA_CCM_CTX* ctx;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -28,10 +28,10 @@ static void *aria_ccm_newctx(void *provctx, size_t keybits)
     return ctx;
 }
 
-static void *aria_ccm_dupctx(void *provctx)
+static void* aria_ccm_dupctx(void* provctx)
 {
-    PROV_ARIA_CCM_CTX *ctx = provctx;
-    PROV_ARIA_CCM_CTX *dctx = NULL;
+    PROV_ARIA_CCM_CTX* ctx = provctx;
+    PROV_ARIA_CCM_CTX* dctx = NULL;
 
     if (ctx == NULL)
         return NULL;
@@ -43,11 +43,11 @@ static void *aria_ccm_dupctx(void *provctx)
     return dctx;
 }
 
-static void aria_ccm_freectx(void *vctx)
+static void aria_ccm_freectx(void* vctx)
 {
-    PROV_ARIA_CCM_CTX *ctx = (PROV_ARIA_CCM_CTX *)vctx;
+    PROV_ARIA_CCM_CTX* ctx = (PROV_ARIA_CCM_CTX*)vctx;
 
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
 /* aria128ccm functions */
@@ -56,4 +56,3 @@ IMPLEMENT_aead_cipher(aria, ccm, CCM, AEAD_FLAGS, 128, 8, 96);
 IMPLEMENT_aead_cipher(aria, ccm, CCM, AEAD_FLAGS, 192, 8, 96);
 /* aria256ccm functions */
 IMPLEMENT_aead_cipher(aria, ccm, CCM, AEAD_FLAGS, 256, 8, 96);
-

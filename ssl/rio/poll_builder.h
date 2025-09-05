@@ -7,10 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 #ifndef OSSL_POLL_BUILDER_H
-# define OSSL_POLL_BUILDER_H
+#define OSSL_POLL_BUILDER_H
 
-# include "poll_method.h"
-# include "internal/time.h"
+#include "poll_method.h"
+#include "internal/time.h"
 
 /*
  * RIO_POLL_BUILDER
@@ -23,19 +23,19 @@
  * FDs.
  */
 typedef struct rio_poll_builder_st {
-# if RIO_POLL_METHOD == RIO_POLL_METHOD_NONE
-    int             unused_dummy; /* make microsoft compiler happy */
-# elif RIO_POLL_METHOD == RIO_POLL_METHOD_SELECT
-    fd_set          rfd, wfd, efd;
-    int             hwm_fd;
-# elif RIO_POLL_METHOD == RIO_POLL_METHOD_POLL
-#  define RIO_NUM_STACK_PFDS  32
-    struct pollfd   *pfd_heap;
-    struct pollfd   pfds[RIO_NUM_STACK_PFDS];
-    size_t          pfd_num, pfd_alloc;
-# else
-#  error Unknown RIO poll method
-# endif
+#if RIO_POLL_METHOD == RIO_POLL_METHOD_NONE
+    int unused_dummy; /* make microsoft compiler happy */
+#elif RIO_POLL_METHOD == RIO_POLL_METHOD_SELECT
+    fd_set rfd, wfd, efd;
+    int hwm_fd;
+#elif RIO_POLL_METHOD == RIO_POLL_METHOD_POLL
+#define RIO_NUM_STACK_PFDS 32
+    struct pollfd* pfd_heap;
+    struct pollfd pfds[RIO_NUM_STACK_PFDS];
+    size_t pfd_num, pfd_alloc;
+#else
+#error Unknown RIO poll method
+#endif
 } RIO_POLL_BUILDER;
 
 /*
@@ -43,13 +43,13 @@ typedef struct rio_poll_builder_st {
  *
  * Returns 1 on success and 0 on failure.
  */
-int ossl_rio_poll_builder_init(RIO_POLL_BUILDER *rpb);
+int ossl_rio_poll_builder_init(RIO_POLL_BUILDER* rpb);
 
 /*
  * Tears down a poll builder, freeing any heap allocations (if any) which may
  * have been made internally.
  */
-void ossl_rio_poll_builder_cleanup(RIO_POLL_BUILDER *rpb);
+void ossl_rio_poll_builder_cleanup(RIO_POLL_BUILDER* rpb);
 
 /*
  * Adds a file descriptor to a poll builder. If want_read is 1, listens for
@@ -61,15 +61,15 @@ void ossl_rio_poll_builder_cleanup(RIO_POLL_BUILDER *rpb);
  *
  * Returns 1 on success and 0 on failure.
  */
-int ossl_rio_poll_builder_add_fd(RIO_POLL_BUILDER *rpb, int fd,
-                                 int want_read, int want_write);
+int ossl_rio_poll_builder_add_fd(RIO_POLL_BUILDER* rpb, int fd,
+    int want_read, int want_write);
 
 /*
  * Polls the set of file descriptors added to a poll builder. deadline is a
  * deadline time based on the ossl_time_now() clock or ossl_time_infinite() for
  * no timeout. Returns 1 on success or 0 on failure.
  */
-int ossl_rio_poll_builder_poll(RIO_POLL_BUILDER *rpb, OSSL_TIME deadline);
+int ossl_rio_poll_builder_poll(RIO_POLL_BUILDER* rpb, OSSL_TIME deadline);
 
 /*
  * TODO(RIO): No support currently for readout of what was readable/writeable as

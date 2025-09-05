@@ -13,7 +13,7 @@
 #include "internal/common.h" /* for ossl_assert() */
 #include "fips/fipsindicator.h"
 
-void ossl_FIPS_IND_init(OSSL_FIPS_IND *ind)
+void ossl_FIPS_IND_init(OSSL_FIPS_IND* ind)
 {
     int i;
 
@@ -22,27 +22,27 @@ void ossl_FIPS_IND_init(OSSL_FIPS_IND *ind)
         ind->settable[i] = OSSL_FIPS_IND_STATE_UNKNOWN;
 }
 
-void ossl_FIPS_IND_set_approved(OSSL_FIPS_IND *ind)
+void ossl_FIPS_IND_set_approved(OSSL_FIPS_IND* ind)
 {
     ind->approved = 1;
 }
 
-void ossl_FIPS_IND_copy(OSSL_FIPS_IND *dst, const OSSL_FIPS_IND *src)
+void ossl_FIPS_IND_copy(OSSL_FIPS_IND* dst, const OSSL_FIPS_IND* src)
 {
     *dst = *src;
 }
 
-void ossl_FIPS_IND_set_settable(OSSL_FIPS_IND *ind, int id, int state)
+void ossl_FIPS_IND_set_settable(OSSL_FIPS_IND* ind, int id, int state)
 {
     if (!ossl_assert(id < OSSL_FIPS_IND_SETTABLE_MAX))
         return;
     if (!ossl_assert(state == OSSL_FIPS_IND_STATE_STRICT
-                     || state == OSSL_FIPS_IND_STATE_TOLERANT))
+            || state == OSSL_FIPS_IND_STATE_TOLERANT))
         return;
     ind->settable[id] = state;
 }
 
-int ossl_FIPS_IND_get_settable(const OSSL_FIPS_IND *ind, int id)
+int ossl_FIPS_IND_get_settable(const OSSL_FIPS_IND* ind, int id)
 {
     if (!ossl_assert(id < OSSL_FIPS_IND_SETTABLE_MAX))
         return OSSL_FIPS_IND_STATE_UNKNOWN;
@@ -55,10 +55,10 @@ int ossl_FIPS_IND_get_settable(const OSSL_FIPS_IND *ind, int id)
  * If the logic here is not sufficient for all cases, then additional
  * ossl_FIPS_IND_on_unapproved() functions may be required.
  */
-int ossl_FIPS_IND_on_unapproved(OSSL_FIPS_IND *ind, int id,
-                                OSSL_LIB_CTX *libctx,
-                                const char *algname, const char *opname,
-                                OSSL_FIPS_IND_CHECK_CB *config_check_fn)
+int ossl_FIPS_IND_on_unapproved(OSSL_FIPS_IND* ind, int id,
+    OSSL_LIB_CTX* libctx,
+    const char* algname, const char* opname,
+    OSSL_FIPS_IND_CHECK_CB* config_check_fn)
 {
     /* Set to unapproved. Once unapproved mode is set this will not be reset */
     ind->approved = 0;
@@ -77,7 +77,7 @@ int ossl_FIPS_IND_on_unapproved(OSSL_FIPS_IND *ind, int id,
     return 0;
 }
 
-int ossl_FIPS_IND_set_ctx_param(OSSL_FIPS_IND *ind, int id, const OSSL_PARAM *p)
+int ossl_FIPS_IND_set_ctx_param(OSSL_FIPS_IND* ind, int id, const OSSL_PARAM* p)
 {
     int in = 0;
 
@@ -89,24 +89,24 @@ int ossl_FIPS_IND_set_ctx_param(OSSL_FIPS_IND *ind, int id, const OSSL_PARAM *p)
     return 1;
 }
 
-int ossl_FIPS_IND_set_ctx_param_locate(OSSL_FIPS_IND *ind, int id,
-                                       const OSSL_PARAM params[],
-                                       const char *name)
+int ossl_FIPS_IND_set_ctx_param_locate(OSSL_FIPS_IND* ind, int id,
+    const OSSL_PARAM params[],
+    const char* name)
 {
-    const OSSL_PARAM *p = OSSL_PARAM_locate_const(params, name);
+    const OSSL_PARAM* p = OSSL_PARAM_locate_const(params, name);
 
     return ossl_FIPS_IND_set_ctx_param(ind, id, p);
 }
 
-int ossl_FIPS_IND_get_ctx_param(const OSSL_FIPS_IND *ind, OSSL_PARAM *p)
+int ossl_FIPS_IND_get_ctx_param(const OSSL_FIPS_IND* ind, OSSL_PARAM* p)
 {
     return p == NULL || OSSL_PARAM_set_int(p, ind->approved);
 }
 
-int ossl_FIPS_IND_get_ctx_param_locate(const OSSL_FIPS_IND *ind,
-                                       OSSL_PARAM params[])
+int ossl_FIPS_IND_get_ctx_param_locate(const OSSL_FIPS_IND* ind,
+    OSSL_PARAM params[])
 {
-    OSSL_PARAM *p = OSSL_PARAM_locate(params, OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR);
+    OSSL_PARAM* p = OSSL_PARAM_locate(params, OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR);
 
     return p == NULL || ossl_FIPS_IND_get_ctx_param(ind, p);
 }
@@ -116,10 +116,10 @@ int ossl_FIPS_IND_get_ctx_param_locate(const OSSL_FIPS_IND *ind,
  * triggered. The callback will return 1 if the application wants an error
  * to occur based on the indicator type and description.
  */
-int ossl_FIPS_IND_callback(OSSL_LIB_CTX *libctx, const char *type,
-                           const char *desc)
+int ossl_FIPS_IND_callback(OSSL_LIB_CTX* libctx, const char* type,
+    const char* desc)
 {
-    OSSL_INDICATOR_CALLBACK *cb = NULL;
+    OSSL_INDICATOR_CALLBACK* cb = NULL;
 
     OSSL_INDICATOR_get_callback(libctx, &cb);
     if (cb == NULL)

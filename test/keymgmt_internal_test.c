@@ -24,20 +24,20 @@
 #include <openssl/core_names.h>
 #include "internal/core.h"
 #include "internal/nelem.h"
-#include "crypto/evp.h"          /* For the internal API */
+#include "crypto/evp.h" /* For the internal API */
 #include "testutil.h"
 
 typedef struct {
-    OSSL_LIB_CTX *ctx1;
-    OSSL_PROVIDER *prov1;
-    OSSL_LIB_CTX *ctx2;
-    OSSL_PROVIDER *prov2;
+    OSSL_LIB_CTX* ctx1;
+    OSSL_PROVIDER* prov1;
+    OSSL_LIB_CTX* ctx2;
+    OSSL_PROVIDER* prov2;
 } FIXTURE;
 
 /* Collected arguments */
-static const char *cert_filename = NULL;
+static const char* cert_filename = NULL;
 
-static void tear_down(FIXTURE *fixture)
+static void tear_down(FIXTURE* fixture)
 {
     if (fixture != NULL) {
         OSSL_PROVIDER_unload(fixture->prov1);
@@ -48,17 +48,17 @@ static void tear_down(FIXTURE *fixture)
     }
 }
 
-static FIXTURE *set_up(const char *testcase_name)
+static FIXTURE* set_up(const char* testcase_name)
 {
-    FIXTURE *fixture;
+    FIXTURE* fixture;
 
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture)))
         || !TEST_ptr(fixture->ctx1 = OSSL_LIB_CTX_new())
         || !TEST_ptr(fixture->prov1 = OSSL_PROVIDER_load(fixture->ctx1,
-                                                         "default"))
+                         "default"))
         || !TEST_ptr(fixture->ctx2 = OSSL_LIB_CTX_new())
         || !TEST_ptr(fixture->prov2 = OSSL_PROVIDER_load(fixture->ctx2,
-                                                         "default"))) {
+                         "default"))) {
         tear_down(fixture);
         return NULL;
     }
@@ -66,17 +66,17 @@ static FIXTURE *set_up(const char *testcase_name)
 }
 
 /* Array indexes */
-#define N       0
-#define E       1
-#define D       2
-#define P       3
-#define Q       4
-#define F3      5                /* Extra factor */
-#define DP      6
-#define DQ      7
-#define E3      8                /* Extra exponent */
-#define QINV    9
-#define C2      10               /* Extra coefficient */
+#define N 0
+#define E 1
+#define D 2
+#define P 3
+#define Q 4
+#define F3 5 /* Extra factor */
+#define DP 6
+#define DQ 7
+#define E3 8 /* Extra exponent */
+#define QINV 9
+#define C2 10 /* Extra coefficient */
 
 /*
  * We have to do this because OSSL_PARAM_get_ulong() can't handle params
@@ -86,22 +86,22 @@ static FIXTURE *set_up(const char *testcase_name)
  * fits within an unsigned long, and we want to get the data in that form
  * to make testing of values easier.
  */
-static int get_ulong_via_BN(const OSSL_PARAM *p, unsigned long *goal)
+static int get_ulong_via_BN(const OSSL_PARAM* p, unsigned long* goal)
 {
-    BIGNUM *n = NULL;
-    int ret = 1;                 /* Ever so hopeful */
+    BIGNUM* n = NULL;
+    int ret = 1; /* Ever so hopeful */
 
     if (!TEST_true(OSSL_PARAM_get_BN(p, &n))
-        || !TEST_int_ge(BN_bn2nativepad(n, (unsigned char *)goal, sizeof(*goal)), 0))
+        || !TEST_int_ge(BN_bn2nativepad(n, (unsigned char*)goal, sizeof(*goal)), 0))
         ret = 0;
     BN_free(n);
     return ret;
 }
 
-static int export_cb(const OSSL_PARAM *params, void *arg)
+static int export_cb(const OSSL_PARAM* params, void* arg)
 {
-    unsigned long *keydata = arg;
-    const OSSL_PARAM *p = NULL;
+    unsigned long* keydata = arg;
+    const OSSL_PARAM* p = NULL;
 
     if (keydata == NULL)
         return 0;
@@ -139,18 +139,18 @@ static int export_cb(const OSSL_PARAM *params, void *arg)
     return 1;
 }
 
-static int test_pass_rsa(FIXTURE *fixture)
+static int test_pass_rsa(FIXTURE* fixture)
 {
     size_t i;
     int ret = 0;
-    RSA *rsa = NULL;
+    RSA* rsa = NULL;
     BIGNUM *bn1 = NULL, *bn2 = NULL, *bn3 = NULL;
     EVP_PKEY *pk = NULL, *dup_pk = NULL;
     EVP_KEYMGMT *km = NULL, *km1 = NULL, *km2 = NULL, *km3 = NULL;
     void *provkey = NULL, *provkey2 = NULL;
-    BIGNUM *bn_primes[1] = { NULL };
-    BIGNUM *bn_exps[1] = { NULL };
-    BIGNUM *bn_coeffs[1] = { NULL };
+    BIGNUM* bn_primes[1] = { NULL };
+    BIGNUM* bn_exps[1] = { NULL };
+    BIGNUM* bn_coeffs[1] = { NULL };
     /*
      * 32-bit RSA key, extracted from this command,
      * executed with OpenSSL 1.0.2:
@@ -159,20 +159,22 @@ static int test_pass_rsa(FIXTURE *fixture)
      * openssl genrsa 32 | openssl rsa -text
      */
     static BN_ULONG expected[] = {
-        0xbc747fc5,              /* N */
-        0x10001,                 /* E */
-        0x7b133399,              /* D */
-        0xe963,                  /* P */
-        0xceb7,                  /* Q */
-        1,                       /* F3 */
-        0x8599,                  /* DP */
-        0xbd87,                  /* DQ */
-        2,                       /* E3 */
-        0xcc3b,                  /* QINV */
-        3,                       /* C3 */
-        0                        /* Extra, should remain zero */
+        0xbc747fc5, /* N */
+        0x10001, /* E */
+        0x7b133399, /* D */
+        0xe963, /* P */
+        0xceb7, /* Q */
+        1, /* F3 */
+        0x8599, /* DP */
+        0xbd87, /* DQ */
+        2, /* E3 */
+        0xcc3b, /* QINV */
+        3, /* C3 */
+        0 /* Extra, should remain zero */
     };
-    static unsigned long keydata[OSSL_NELEM(expected)] = { 0, };
+    static unsigned long keydata[OSSL_NELEM(expected)] = {
+        0,
+    };
 
     if (!TEST_ptr(rsa = RSA_new()))
         goto err;
@@ -210,7 +212,7 @@ static int test_pass_rsa(FIXTURE *fixture)
         || !TEST_ptr(bn_coeffs[0] = BN_new())
         || !TEST_true(BN_set_word(bn_coeffs[0], expected[C2]))
         || !TEST_true(RSA_set0_multi_prime_params(rsa, bn_primes, bn_exps,
-                                                  bn_coeffs, 1)))
+            bn_coeffs, 1)))
         goto err;
 
     if (!TEST_ptr(pk = EVP_PKEY_new())
@@ -229,15 +231,15 @@ static int test_pass_rsa(FIXTURE *fixture)
         km = km3;
         /* Check that we can't export an RSA key into an RSA-PSS keymanager */
         if (!TEST_ptr_null(provkey2 = evp_pkey_export_to_provider(pk, NULL,
-                                                                  &km,
-                                                                  NULL)))
+                               &km,
+                               NULL)))
             goto err;
 
         if (!TEST_ptr(provkey = evp_pkey_export_to_provider(pk, NULL, &km1,
-                                                            NULL))
+                          NULL))
             || !TEST_true(evp_keymgmt_export(km2, provkey,
-                                             OSSL_KEYMGMT_SELECT_KEYPAIR,
-                                             &export_cb, keydata)))
+                OSSL_KEYMGMT_SELECT_KEYPAIR,
+                &export_cb, keydata)))
             goto err;
 
         /*
@@ -269,7 +271,7 @@ static int test_pass_rsa(FIXTURE *fixture)
             goto err;
     }
 
- err:
+err:
     RSA_free(rsa);
     BN_free(bn1);
     BN_free(bn2);
@@ -282,7 +284,7 @@ static int test_pass_rsa(FIXTURE *fixture)
     return ret;
 }
 
-static int (*tests[])(FIXTURE *) = {
+static int (*tests[])(FIXTURE*) = {
     test_pass_rsa
 };
 
@@ -295,18 +297,18 @@ static int test_pass_key(int n)
 
 static int test_evp_pkey_export_to_provider(int n)
 {
-    OSSL_LIB_CTX *libctx = NULL;
-    OSSL_PROVIDER *prov = NULL;
-    X509 *cert = NULL;
-    BIO *bio = NULL;
-    X509_PUBKEY *pubkey = NULL;
-    EVP_KEYMGMT *keymgmt = NULL;
-    EVP_PKEY *pkey = NULL;
-    void *keydata = NULL;
+    OSSL_LIB_CTX* libctx = NULL;
+    OSSL_PROVIDER* prov = NULL;
+    X509* cert = NULL;
+    BIO* bio = NULL;
+    X509_PUBKEY* pubkey = NULL;
+    EVP_KEYMGMT* keymgmt = NULL;
+    EVP_PKEY* pkey = NULL;
+    void* keydata = NULL;
     int ret = 0;
 
     if (!TEST_ptr(libctx = OSSL_LIB_CTX_new())
-         || !TEST_ptr(prov = OSSL_PROVIDER_load(libctx, "default")))
+        || !TEST_ptr(prov = OSSL_PROVIDER_load(libctx, "default")))
         goto end;
 
     if ((bio = BIO_new_file(cert_filename, "r")) == NULL) {
@@ -317,7 +319,7 @@ static int test_evp_pkey_export_to_provider(int n)
 
     if ((cert = PEM_read_bio_X509(bio, NULL, NULL, NULL)) == NULL) {
         TEST_error("'%s' doesn't appear to be a X.509 certificate in PEM format\n",
-                   cert_filename);
+            cert_filename);
         TEST_openssl_errors();
         goto end;
     }
@@ -327,22 +329,22 @@ static int test_evp_pkey_export_to_provider(int n)
 
     if (n == 0) {
         if (!TEST_ptr(keydata = evp_pkey_export_to_provider(pkey, NULL,
-                                                            NULL, NULL)))
+                          NULL, NULL)))
             goto end;
     } else if (n == 1) {
         if (!TEST_ptr(keydata = evp_pkey_export_to_provider(pkey, NULL,
-                                                            &keymgmt, NULL)))
+                          &keymgmt, NULL)))
             goto end;
     } else {
         keymgmt = EVP_KEYMGMT_fetch(libctx, "RSA", NULL);
 
         if (!TEST_ptr(keydata = evp_pkey_export_to_provider(pkey, NULL,
-                                                            &keymgmt, NULL)))
+                          &keymgmt, NULL)))
             goto end;
     }
 
     ret = 1;
- end:
+end:
     BIO_free(bio);
     X509_free(cert);
     EVP_KEYMGMT_free(keymgmt);

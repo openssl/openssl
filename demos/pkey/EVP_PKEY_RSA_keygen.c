@@ -24,7 +24,7 @@
 #include <openssl/pem.h>
 
 /* A property query used for selecting algorithm implementations. */
-static const char *propq = NULL;
+static const char* propq = NULL;
 
 /*
  * Generates an RSA public-private key pair and returns it.
@@ -32,10 +32,10 @@ static const char *propq = NULL;
  *
  * This uses the long way of generating an RSA key.
  */
-static EVP_PKEY *generate_rsa_key_long(OSSL_LIB_CTX *libctx, unsigned int bits)
+static EVP_PKEY* generate_rsa_key_long(OSSL_LIB_CTX* libctx, unsigned int bits)
 {
-    EVP_PKEY_CTX *genctx = NULL;
-    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX* genctx = NULL;
+    EVP_PKEY* pkey = NULL;
     unsigned int primes = 2;
 
     /* Create context using RSA algorithm. "RSA-PSS" could also be used here. */
@@ -105,9 +105,9 @@ cleanup:
  * long method above is used. The ability to choose between these two methods is
  * shown here only for demonstration; the results are equivalent.
  */
-static EVP_PKEY *generate_rsa_key_short(OSSL_LIB_CTX *libctx, unsigned int bits)
+static EVP_PKEY* generate_rsa_key_short(OSSL_LIB_CTX* libctx, unsigned int bits)
 {
-    EVP_PKEY *pkey = NULL;
+    EVP_PKEY* pkey = NULL;
 
     fprintf(stdout, "Generating RSA key, this may take some time...\n");
     pkey = EVP_PKEY_Q_keygen(libctx, propq, "RSA", (size_t)bits);
@@ -121,7 +121,7 @@ static EVP_PKEY *generate_rsa_key_short(OSSL_LIB_CTX *libctx, unsigned int bits)
 /*
  * Prints information on an EVP_PKEY object representing an RSA key pair.
  */
-static int dump_key(const EVP_PKEY *pkey)
+static int dump_key(const EVP_PKEY* pkey)
 {
     int ret = 0;
     int bits = 0;
@@ -237,11 +237,11 @@ cleanup:
     return ret;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     int ret = EXIT_FAILURE;
-    OSSL_LIB_CTX *libctx = NULL;
-    EVP_PKEY *pkey = NULL;
+    OSSL_LIB_CTX* libctx = NULL;
+    EVP_PKEY* pkey = NULL;
     unsigned int bits = 4096;
     int bits_i, use_short = 0;
 

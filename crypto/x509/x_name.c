@@ -23,29 +23,29 @@
 
 #define X509_NAME_MAX (1024 * 1024)
 
-static int x509_name_ex_d2i(ASN1_VALUE **val,
-                            const unsigned char **in, long len,
-                            const ASN1_ITEM *it,
-                            int tag, int aclass, char opt, ASN1_TLC *ctx);
+static int x509_name_ex_d2i(ASN1_VALUE** val,
+    const unsigned char** in, long len,
+    const ASN1_ITEM* it,
+    int tag, int aclass, char opt, ASN1_TLC* ctx);
 
-static int x509_name_ex_i2d(const ASN1_VALUE **val, unsigned char **out,
-                            const ASN1_ITEM *it, int tag, int aclass);
-static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it);
-static void x509_name_ex_free(ASN1_VALUE **val, const ASN1_ITEM *it);
+static int x509_name_ex_i2d(const ASN1_VALUE** val, unsigned char** out,
+    const ASN1_ITEM* it, int tag, int aclass);
+static int x509_name_ex_new(ASN1_VALUE** val, const ASN1_ITEM* it);
+static void x509_name_ex_free(ASN1_VALUE** val, const ASN1_ITEM* it);
 
-static int x509_name_encode(X509_NAME *a);
-static int x509_name_canon(X509_NAME *a);
-static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in);
-static int i2d_name_canon(const STACK_OF(STACK_OF_X509_NAME_ENTRY) * intname,
-                          unsigned char **in);
+static int x509_name_encode(X509_NAME* a);
+static int x509_name_canon(X509_NAME* a);
+static int asn1_string_canon(ASN1_STRING* out, const ASN1_STRING* in);
+static int i2d_name_canon(const STACK_OF(STACK_OF_X509_NAME_ENTRY)* intname,
+    unsigned char** in);
 
-static int x509_name_ex_print(BIO *out, const ASN1_VALUE **pval,
-                              int indent,
-                              const char *fname, const ASN1_PCTX *pctx);
+static int x509_name_ex_print(BIO* out, const ASN1_VALUE** pval,
+    int indent,
+    const char* fname, const ASN1_PCTX* pctx);
 
 ASN1_SEQUENCE(X509_NAME_ENTRY) = {
-        ASN1_SIMPLE(X509_NAME_ENTRY, object, ASN1_OBJECT),
-        ASN1_SIMPLE(X509_NAME_ENTRY, value, ASN1_PRINTABLE)
+    ASN1_SIMPLE(X509_NAME_ENTRY, object, ASN1_OBJECT),
+    ASN1_SIMPLE(X509_NAME_ENTRY, value, ASN1_PRINTABLE)
 } ASN1_SEQUENCE_END(X509_NAME_ENTRY)
 
 IMPLEMENT_ASN1_FUNCTIONS(X509_NAME_ENTRY)
@@ -56,30 +56,30 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509_NAME_ENTRY)
  * declare two template wrappers for this
  */
 
-ASN1_ITEM_TEMPLATE(X509_NAME_ENTRIES) =
-        ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SET_OF, 0, RDNS, X509_NAME_ENTRY)
+ASN1_ITEM_TEMPLATE(X509_NAME_ENTRIES) = ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SET_OF, 0, RDNS, X509_NAME_ENTRY)
 static_ASN1_ITEM_TEMPLATE_END(X509_NAME_ENTRIES)
 
-ASN1_ITEM_TEMPLATE(X509_NAME_INTERNAL) =
-        ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, Name, X509_NAME_ENTRIES)
+    ASN1_ITEM_TEMPLATE(X509_NAME_INTERNAL)
+    = ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, Name, X509_NAME_ENTRIES)
 static_ASN1_ITEM_TEMPLATE_END(X509_NAME_INTERNAL)
 
-/*
- * Normally that's where it would end: we'd have two nested STACK structures
- * representing the ASN1. Unfortunately X509_NAME uses a completely different
- * form and caches encodings so we have to process the internal form and
- * convert to the external form.
- */
+    /*
+     * Normally that's where it would end: we'd have two nested STACK structures
+     * representing the ASN1. Unfortunately X509_NAME uses a completely different
+     * form and caches encodings so we have to process the internal form and
+     * convert to the external form.
+     */
 
-static const ASN1_EXTERN_FUNCS x509_name_ff = {
-    NULL,
-    x509_name_ex_new,
-    x509_name_ex_free,
-    0,                          /* Default clear behaviour is OK */
-    x509_name_ex_d2i,
-    x509_name_ex_i2d,
-    x509_name_ex_print
-};
+    static const ASN1_EXTERN_FUNCS x509_name_ff
+    = {
+          NULL,
+          x509_name_ex_new,
+          x509_name_ex_free,
+          0, /* Default clear behaviour is OK */
+          x509_name_ex_d2i,
+          x509_name_ex_i2d,
+          x509_name_ex_print
+      };
 
 IMPLEMENT_EXTERN_ASN1(X509_NAME, V_ASN1_SEQUENCE, x509_name_ff)
 
@@ -87,9 +87,9 @@ IMPLEMENT_ASN1_FUNCTIONS(X509_NAME)
 
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_NAME)
 
-static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
+static int x509_name_ex_new(ASN1_VALUE** val, const ASN1_ITEM* it)
 {
-    X509_NAME *ret = OPENSSL_zalloc(sizeof(*ret));
+    X509_NAME* ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL)
         return 0;
@@ -102,10 +102,10 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
         goto err;
     }
     ret->modified = 1;
-    *val = (ASN1_VALUE *)ret;
+    *val = (ASN1_VALUE*)ret;
     return 1;
 
- err:
+err:
     if (ret) {
         sk_X509_NAME_ENTRY_free(ret->entries);
         OPENSSL_free(ret);
@@ -113,13 +113,13 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
     return 0;
 }
 
-static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static void x509_name_ex_free(ASN1_VALUE** pval, const ASN1_ITEM* it)
 {
-    X509_NAME *a;
+    X509_NAME* a;
 
     if (pval == NULL || *pval == NULL)
         return;
-    a = (X509_NAME *)*pval;
+    a = (X509_NAME*)*pval;
 
     BUF_MEM_free(a->bytes);
     sk_X509_NAME_ENTRY_pop_free(a->entries, X509_NAME_ENTRY_free);
@@ -128,37 +128,37 @@ static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
     *pval = NULL;
 }
 
-static void local_sk_X509_NAME_ENTRY_free(STACK_OF(X509_NAME_ENTRY) *ne)
+static void local_sk_X509_NAME_ENTRY_free(STACK_OF(X509_NAME_ENTRY)* ne)
 {
     sk_X509_NAME_ENTRY_free(ne);
 }
 
-static void local_sk_X509_NAME_ENTRY_pop_free(STACK_OF(X509_NAME_ENTRY) *ne)
+static void local_sk_X509_NAME_ENTRY_pop_free(STACK_OF(X509_NAME_ENTRY)* ne)
 {
     sk_X509_NAME_ENTRY_pop_free(ne, X509_NAME_ENTRY_free);
 }
 
-static int x509_name_ex_d2i(ASN1_VALUE **val,
-                            const unsigned char **in, long len,
-                            const ASN1_ITEM *it, int tag, int aclass,
-                            char opt, ASN1_TLC *ctx)
+static int x509_name_ex_d2i(ASN1_VALUE** val,
+    const unsigned char** in, long len,
+    const ASN1_ITEM* it, int tag, int aclass,
+    char opt, ASN1_TLC* ctx)
 {
     const unsigned char *p = *in, *q;
     union {
-        STACK_OF(STACK_OF_X509_NAME_ENTRY) *s;
-        ASN1_VALUE *a;
+        STACK_OF(STACK_OF_X509_NAME_ENTRY)* s;
+        ASN1_VALUE* a;
     } intname = {
         NULL
     };
     union {
-        X509_NAME *x;
-        ASN1_VALUE *a;
+        X509_NAME* x;
+        ASN1_VALUE* a;
     } nm = {
         NULL
     };
     int i, j, ret;
-    STACK_OF(X509_NAME_ENTRY) *entries;
-    X509_NAME_ENTRY *entry;
+    STACK_OF(X509_NAME_ENTRY)* entries;
+    X509_NAME_ENTRY* entry;
 
     if (len > X509_NAME_MAX)
         len = X509_NAME_MAX;
@@ -166,8 +166,8 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
 
     /* Get internal representation of Name */
     ret = ASN1_item_ex_d2i(&intname.a,
-                           &p, len, ASN1_ITEM_rptr(X509_NAME_INTERNAL),
-                           tag, aclass, opt, ctx);
+        &p, len, ASN1_ITEM_rptr(X509_NAME_INTERNAL),
+        tag, aclass, opt, ctx);
 
     if (ret <= 0)
         return ret;
@@ -196,26 +196,26 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
     if (!ret)
         goto err;
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s,
-                                         local_sk_X509_NAME_ENTRY_free);
+        local_sk_X509_NAME_ENTRY_free);
     nm.x->modified = 0;
     *val = nm.a;
     *in = p;
     return ret;
 
- err:
+err:
     if (nm.x != NULL)
         X509_NAME_free(nm.x);
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s,
-                                         local_sk_X509_NAME_ENTRY_pop_free);
+        local_sk_X509_NAME_ENTRY_pop_free);
     ERR_raise(ERR_LIB_ASN1, ERR_R_NESTED_ASN1_ERROR);
     return 0;
 }
 
-static int x509_name_ex_i2d(const ASN1_VALUE **val, unsigned char **out,
-                            const ASN1_ITEM *it, int tag, int aclass)
+static int x509_name_ex_i2d(const ASN1_VALUE** val, unsigned char** out,
+    const ASN1_ITEM* it, int tag, int aclass)
 {
     int ret;
-    X509_NAME *a = (X509_NAME *)*val;
+    X509_NAME* a = (X509_NAME*)*val;
 
     if (a->modified) {
         ret = x509_name_encode(a);
@@ -233,18 +233,18 @@ static int x509_name_ex_i2d(const ASN1_VALUE **val, unsigned char **out,
     return ret;
 }
 
-static int x509_name_encode(X509_NAME *a)
+static int x509_name_encode(X509_NAME* a)
 {
     union {
-        STACK_OF(STACK_OF_X509_NAME_ENTRY) *s;
-        const ASN1_VALUE *a;
+        STACK_OF(STACK_OF_X509_NAME_ENTRY)* s;
+        const ASN1_VALUE* a;
     } intname = {
         NULL
     };
     int len;
-    unsigned char *p;
-    STACK_OF(X509_NAME_ENTRY) *entries = NULL;
-    X509_NAME_ENTRY *entry;
+    unsigned char* p;
+    STACK_OF(X509_NAME_ENTRY)* entries = NULL;
+    X509_NAME_ENTRY* entry;
     int i, set = -1;
 
     intname.s = sk_STACK_OF_X509_NAME_ENTRY_new_null();
@@ -266,32 +266,33 @@ static int x509_name_encode(X509_NAME *a)
             goto cerr;
     }
     len = ASN1_item_ex_i2d(&intname.a, NULL,
-                           ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
+        ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
     if (!BUF_MEM_grow(a->bytes, len)) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_BUF_LIB);
         goto err;
     }
-    p = (unsigned char *)a->bytes->data;
+    p = (unsigned char*)a->bytes->data;
     ASN1_item_ex_i2d(&intname.a,
-                     &p, ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
+        &p, ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s,
-                                         local_sk_X509_NAME_ENTRY_free);
+        local_sk_X509_NAME_ENTRY_free);
     a->modified = 0;
     return len;
- cerr:
+cerr:
     ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
- err:
+err:
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s,
-                                         local_sk_X509_NAME_ENTRY_free);
+        local_sk_X509_NAME_ENTRY_free);
     return -1;
 }
 
-static int x509_name_ex_print(BIO *out, const ASN1_VALUE **pval,
-                              int indent,
-                              const char *fname, const ASN1_PCTX *pctx)
+static int x509_name_ex_print(BIO* out, const ASN1_VALUE** pval,
+    int indent,
+    const char* fname, const ASN1_PCTX* pctx)
 {
-    if (X509_NAME_print_ex(out, (const X509_NAME *)*pval,
-                           indent, pctx->nm_flags) <= 0)
+    if (X509_NAME_print_ex(out, (const X509_NAME*)*pval,
+            indent, pctx->nm_flags)
+        <= 0)
         return 0;
     return 2;
 }
@@ -307,11 +308,11 @@ static int x509_name_ex_print(BIO *out, const ASN1_VALUE **pval,
  * NOTE: For empty X509_NAME (NULL-DN), canon_enclen == 0 && canon_enc == NULL
  */
 
-static int x509_name_canon(X509_NAME *a)
+static int x509_name_canon(X509_NAME* a)
 {
-    unsigned char *p;
-    STACK_OF(STACK_OF_X509_NAME_ENTRY) *intname;
-    STACK_OF(X509_NAME_ENTRY) *entries = NULL;
+    unsigned char* p;
+    STACK_OF(STACK_OF_X509_NAME_ENTRY)* intname;
+    STACK_OF(X509_NAME_ENTRY)* entries = NULL;
     X509_NAME_ENTRY *entry, *tmpentry = NULL;
     int i, set = -1, ret = 0, len;
 
@@ -375,21 +376,21 @@ static int x509_name_canon(X509_NAME *a)
 
     ret = 1;
 
- err:
+err:
     X509_NAME_ENTRY_free(tmpentry);
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname,
-                                         local_sk_X509_NAME_ENTRY_pop_free);
+        local_sk_X509_NAME_ENTRY_pop_free);
     return ret;
 }
 
 /* Bitmap of all the types of string that will be canonicalized. */
 
-#define ASN1_MASK_CANON \
-        (B_ASN1_UTF8STRING | B_ASN1_BMPSTRING | B_ASN1_UNIVERSALSTRING \
+#define ASN1_MASK_CANON                                                \
+    (B_ASN1_UTF8STRING | B_ASN1_BMPSTRING | B_ASN1_UNIVERSALSTRING     \
         | B_ASN1_PRINTABLESTRING | B_ASN1_T61STRING | B_ASN1_IA5STRING \
         | B_ASN1_VISIBLESTRING)
 
-static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in)
+static int asn1_string_canon(ASN1_STRING* out, const ASN1_STRING* in)
 {
     unsigned char *to, *from;
     int len, i;
@@ -453,8 +454,7 @@ static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in)
             do {
                 from++;
                 i++;
-            }
-            while (ossl_isspace(*from));
+            } while (ossl_isspace(*from));
         } else {
             *to++ = ossl_tolower(*from);
             from++;
@@ -465,21 +465,20 @@ static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in)
     out->length = (int)(to - out->data);
 
     return 1;
-
 }
 
-static int i2d_name_canon(const STACK_OF(STACK_OF_X509_NAME_ENTRY) * _intname,
-                          unsigned char **in)
+static int i2d_name_canon(const STACK_OF(STACK_OF_X509_NAME_ENTRY)* _intname,
+    unsigned char** in)
 {
     int i, len, ltmp;
-    const ASN1_VALUE *v;
-    STACK_OF(ASN1_VALUE) *intname = (STACK_OF(ASN1_VALUE) *)_intname;
+    const ASN1_VALUE* v;
+    STACK_OF(ASN1_VALUE)* intname = (STACK_OF(ASN1_VALUE)*)_intname;
 
     len = 0;
     for (i = 0; i < sk_ASN1_VALUE_num(intname); i++) {
         v = sk_ASN1_VALUE_value(intname, i);
         ltmp = ASN1_item_ex_i2d(&v, in,
-                                ASN1_ITEM_rptr(X509_NAME_ENTRIES), -1, -1);
+            ASN1_ITEM_rptr(X509_NAME_ENTRIES), -1, -1);
         if (ltmp < 0 || len > INT_MAX - ltmp)
             return -1;
         len += ltmp;
@@ -487,9 +486,9 @@ static int i2d_name_canon(const STACK_OF(STACK_OF_X509_NAME_ENTRY) * _intname,
     return len;
 }
 
-int X509_NAME_set(X509_NAME **xn, const X509_NAME *name)
+int X509_NAME_set(X509_NAME** xn, const X509_NAME* name)
 {
-    X509_NAME *name_copy;
+    X509_NAME* name_copy;
 
     if (*xn == name)
         return *xn != NULL;
@@ -500,7 +499,7 @@ int X509_NAME_set(X509_NAME **xn, const X509_NAME *name)
     return 1;
 }
 
-int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
+int X509_NAME_print(BIO* bp, const X509_NAME* name, int obase)
 {
     char *s, *c, *b;
     int i;
@@ -512,19 +511,15 @@ int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
         OPENSSL_free(b);
         return 1;
     }
-    s = b + 1;                  /* skip the first slash */
+    s = b + 1; /* skip the first slash */
 
     c = s;
     for (;;) {
-        if (((*s == '/') &&
-             (ossl_isupper(s[1]) && ((s[2] == '=') ||
-                                (ossl_isupper(s[2]) && (s[3] == '='))
-              ))) || (*s == '\0'))
-        {
+        if (((*s == '/') && (ossl_isupper(s[1]) && ((s[2] == '=') || (ossl_isupper(s[2]) && (s[3] == '='))))) || (*s == '\0')) {
             i = (int)(s - c);
             if (BIO_write(bp, c, i) != i)
                 goto err;
-            c = s + 1;          /* skip following slash */
+            c = s + 1; /* skip following slash */
             if (*s != '\0') {
                 if (BIO_write(bp, ", ", 2) != 2)
                     goto err;
@@ -537,20 +532,20 @@ int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
 
     OPENSSL_free(b);
     return 1;
- err:
+err:
     ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
     OPENSSL_free(b);
     return 0;
 }
 
-int X509_NAME_get0_der(const X509_NAME *nm, const unsigned char **pder,
-                       size_t *pderlen)
+int X509_NAME_get0_der(const X509_NAME* nm, const unsigned char** pder,
+    size_t* pderlen)
 {
     /* Make sure encoding is valid */
     if (i2d_X509_NAME(nm, NULL) <= 0)
         return 0;
     if (pder != NULL)
-        *pder = (unsigned char *)nm->bytes->data;
+        *pder = (unsigned char*)nm->bytes->data;
     if (pderlen != NULL)
         *pderlen = nm->bytes->length;
     return 1;

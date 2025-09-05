@@ -20,11 +20,11 @@
  * @param s A 1 * l vector of polynomials in NTT form
  * @param t 1 * k vector of polynomial results in NTT form
  */
-void ossl_ml_dsa_matrix_mult_vector(const MATRIX *a, const VECTOR *s,
-                                    VECTOR *t)
+void ossl_ml_dsa_matrix_mult_vector(const MATRIX* a, const VECTOR* s,
+    VECTOR* t)
 {
     size_t i, j;
-    POLY *poly = a->m_poly;
+    POLY* poly = a->m_poly;
 
     vector_zero(t);
 

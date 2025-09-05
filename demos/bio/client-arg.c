@@ -11,16 +11,16 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     BIO *sbio = NULL, *out = NULL;
     int len;
     char tmpbuf[1024];
-    SSL_CTX *ctx;
-    SSL_CONF_CTX *cctx;
-    SSL *ssl;
-    char **args = argv + 1;
-    const char *connect_str = "localhost:4433";
+    SSL_CTX* ctx;
+    SSL_CONF_CTX* cctx;
+    SSL* ssl;
+    char** args = argv + 1;
+    const char* connect_str = "localhost:4433";
     int nargs = argc - 1;
     int ret = EXIT_FAILURE;
 
@@ -102,7 +102,7 @@ int main(int argc, char **argv)
         BIO_write(out, tmpbuf, len);
     }
     ret = EXIT_SUCCESS;
- end:
+end:
     SSL_CONF_CTX_free(cctx);
     BIO_free_all(sbio);
     BIO_free(out);

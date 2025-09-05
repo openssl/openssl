@@ -25,17 +25,17 @@
  * I use the ex_data stuff to manage the identifiers for the obj_name_types
  * that applications may define.  I only really use the free function field.
  */
-static LHASH_OF(OBJ_NAME) *names_lh = NULL;
+static LHASH_OF(OBJ_NAME)* names_lh = NULL;
 static int names_type_num = OBJ_NAME_TYPE_NUM;
-static CRYPTO_RWLOCK *obj_lock = NULL;
+static CRYPTO_RWLOCK* obj_lock = NULL;
 
 struct name_funcs_st {
-    unsigned long (*hash_func) (const char *name);
-    int (*cmp_func) (const char *a, const char *b);
-    void (*free_func) (const char *, int, const char *);
+    unsigned long (*hash_func)(const char* name);
+    int (*cmp_func)(const char* a, const char* b);
+    void (*free_func)(const char*, int, const char*);
 };
 
-static STACK_OF(NAME_FUNCS) *name_funcs_stack;
+static STACK_OF(NAME_FUNCS)* name_funcs_stack;
 
 /*
  * The LHASH callbacks now use the raw "void *" prototypes and do
@@ -43,8 +43,8 @@ static STACK_OF(NAME_FUNCS) *name_funcs_stack;
  * casting without the need for macro-generated wrapper functions.
  */
 
-static unsigned long obj_name_hash(const OBJ_NAME *a);
-static int obj_name_cmp(const OBJ_NAME *a, const OBJ_NAME *b);
+static unsigned long obj_name_hash(const OBJ_NAME* a);
+static int obj_name_cmp(const OBJ_NAME* a, const OBJ_NAME* b);
 
 static CRYPTO_ONCE init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(o_names_init)
@@ -65,12 +65,12 @@ int OBJ_NAME_init(void)
     return RUN_ONCE(&init, o_names_init);
 }
 
-int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
-                       int (*cmp_func) (const char *, const char *),
-                       void (*free_func) (const char *, int, const char *))
+int OBJ_NAME_new_index(unsigned long (*hash_func)(const char*),
+    int (*cmp_func)(const char*, const char*),
+    void (*free_func)(const char*, int, const char*))
 {
     int ret = 0, i, push;
-    NAME_FUNCS *name_funcs;
+    NAME_FUNCS* name_funcs;
 
     if (!OBJ_NAME_init())
         return 0;
@@ -116,7 +116,7 @@ out:
     return ret;
 }
 
-static int obj_name_cmp(const OBJ_NAME *a, const OBJ_NAME *b)
+static int obj_name_cmp(const OBJ_NAME* a, const OBJ_NAME* b)
 {
     int ret;
 
@@ -125,22 +125,23 @@ static int obj_name_cmp(const OBJ_NAME *a, const OBJ_NAME *b)
         if ((name_funcs_stack != NULL)
             && (sk_NAME_FUNCS_num(name_funcs_stack) > a->type)) {
             ret = sk_NAME_FUNCS_value(name_funcs_stack,
-                                      a->type)->cmp_func(a->name, b->name);
+                a->type)
+                      ->cmp_func(a->name, b->name);
         } else
             ret = OPENSSL_strcasecmp(a->name, b->name);
     }
     return ret;
 }
 
-static unsigned long obj_name_hash(const OBJ_NAME *a)
+static unsigned long obj_name_hash(const OBJ_NAME* a)
 {
     unsigned long ret;
 
     if ((name_funcs_stack != NULL)
         && (sk_NAME_FUNCS_num(name_funcs_stack) > a->type)) {
-        ret =
-            sk_NAME_FUNCS_value(name_funcs_stack,
-                                a->type)->hash_func(a->name);
+        ret = sk_NAME_FUNCS_value(name_funcs_stack,
+            a->type)
+                  ->hash_func(a->name);
     } else {
         ret = ossl_lh_strcasehash(a->name);
     }
@@ -148,11 +149,11 @@ static unsigned long obj_name_hash(const OBJ_NAME *a)
     return ret;
 }
 
-const char *OBJ_NAME_get(const char *name, int type)
+const char* OBJ_NAME_get(const char* name, int type)
 {
     OBJ_NAME on, *ret;
     int num = 0, alias;
-    const char *value = NULL;
+    const char* value = NULL;
 
     if (name == NULL)
         return NULL;
@@ -185,7 +186,7 @@ const char *OBJ_NAME_get(const char *name, int type)
     return value;
 }
 
-int OBJ_NAME_add(const char *name, int type, const char *data)
+int OBJ_NAME_add(const char* name, int type, const char* data)
 {
     OBJ_NAME *onp, *ret;
     int alias, ok = 0;
@@ -220,8 +221,9 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
              * get three arguments... -- Richard Levitte
              */
             sk_NAME_FUNCS_value(name_funcs_stack,
-                                ret->type)->free_func(ret->name, ret->type,
-                                                      ret->data);
+                ret->type)
+                ->free_func(ret->name, ret->type,
+                    ret->data);
         }
         OPENSSL_free(ret);
     } else {
@@ -239,7 +241,7 @@ unlock:
     return ok;
 }
 
-int OBJ_NAME_remove(const char *name, int type)
+int OBJ_NAME_remove(const char* name, int type)
 {
     OBJ_NAME on, *ret;
     int ok = 0;
@@ -263,8 +265,9 @@ int OBJ_NAME_remove(const char *name, int type)
              * get three arguments... -- Richard Levitte
              */
             sk_NAME_FUNCS_value(name_funcs_stack,
-                                ret->type)->free_func(ret->name, ret->type,
-                                                      ret->data);
+                ret->type)
+                ->free_func(ret->name, ret->type,
+                    ret->data);
         }
         OPENSSL_free(ret);
         ok = 1;
@@ -276,11 +279,11 @@ int OBJ_NAME_remove(const char *name, int type)
 
 typedef struct {
     int type;
-    void (*fn) (const OBJ_NAME *, void *arg);
-    void *arg;
+    void (*fn)(const OBJ_NAME*, void* arg);
+    void* arg;
 } OBJ_DOALL;
 
-static void do_all_fn(const OBJ_NAME *name, OBJ_DOALL *d)
+static void do_all_fn(const OBJ_NAME* name, OBJ_DOALL* d)
 {
     if (name->type == d->type)
         d->fn(name, d->arg);
@@ -288,8 +291,8 @@ static void do_all_fn(const OBJ_NAME *name, OBJ_DOALL *d)
 
 IMPLEMENT_LHASH_DOALL_ARG_CONST(OBJ_NAME, OBJ_DOALL);
 
-void OBJ_NAME_do_all(int type, void (*fn) (const OBJ_NAME *, void *arg),
-                     void *arg)
+void OBJ_NAME_do_all(int type, void (*fn)(const OBJ_NAME*, void* arg),
+    void* arg)
 {
     OBJ_DOALL d;
 
@@ -303,12 +306,12 @@ void OBJ_NAME_do_all(int type, void (*fn) (const OBJ_NAME *, void *arg),
 struct doall_sorted {
     int type;
     int n;
-    const OBJ_NAME **names;
+    const OBJ_NAME** names;
 };
 
-static void do_all_sorted_fn(const OBJ_NAME *name, void *d_)
+static void do_all_sorted_fn(const OBJ_NAME* name, void* d_)
 {
-    struct doall_sorted *d = d_;
+    struct doall_sorted* d = d_;
 
     if (name->type != d->type)
         return;
@@ -316,41 +319,40 @@ static void do_all_sorted_fn(const OBJ_NAME *name, void *d_)
     d->names[d->n++] = name;
 }
 
-static int do_all_sorted_cmp(const void *n1_, const void *n2_)
+static int do_all_sorted_cmp(const void* n1_, const void* n2_)
 {
-    const OBJ_NAME *const *n1 = n1_;
-    const OBJ_NAME *const *n2 = n2_;
+    const OBJ_NAME* const* n1 = n1_;
+    const OBJ_NAME* const* n2 = n2_;
 
     return strcmp((*n1)->name, (*n2)->name);
 }
 
 void OBJ_NAME_do_all_sorted(int type,
-                            void (*fn) (const OBJ_NAME *, void *arg),
-                            void *arg)
+    void (*fn)(const OBJ_NAME*, void* arg),
+    void* arg)
 {
     struct doall_sorted d;
     int n;
 
     d.type = type;
-    d.names =
-        OPENSSL_malloc_array(lh_OBJ_NAME_num_items(names_lh), sizeof(*d.names));
+    d.names = OPENSSL_malloc_array(lh_OBJ_NAME_num_items(names_lh), sizeof(*d.names));
     /* Really should return an error if !d.names...but its a void function! */
     if (d.names != NULL) {
         d.n = 0;
         OBJ_NAME_do_all(type, do_all_sorted_fn, &d);
 
-        qsort((void *)d.names, d.n, sizeof(*d.names), do_all_sorted_cmp);
+        qsort((void*)d.names, d.n, sizeof(*d.names), do_all_sorted_cmp);
 
         for (n = 0; n < d.n; ++n)
             fn(d.names[n], arg);
 
-        OPENSSL_free((void *)d.names);
+        OPENSSL_free((void*)d.names);
     }
 }
 
 static int free_type;
 
-static void names_lh_free_doall(OBJ_NAME *onp)
+static void names_lh_free_doall(OBJ_NAME* onp)
 {
     if (onp == NULL)
         return;
@@ -359,7 +361,7 @@ static void names_lh_free_doall(OBJ_NAME *onp)
         OBJ_NAME_remove(onp->name, onp->type);
 }
 
-static void name_funcs_free(NAME_FUNCS *ptr)
+static void name_funcs_free(NAME_FUNCS* ptr)
 {
     OPENSSL_free(ptr);
 }

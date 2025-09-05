@@ -13,10 +13,10 @@
 #include "internal/thread_once.h"
 #include <openssl/err.h>
 
-static STACK_OF(nid_triple) *sig_app, *sigx_app;
-static CRYPTO_RWLOCK *sig_lock;
+static STACK_OF(nid_triple)*sig_app, *sigx_app;
+static CRYPTO_RWLOCK* sig_lock;
 
-static int sig_cmp(const nid_triple *a, const nid_triple *b)
+static int sig_cmp(const nid_triple* a, const nid_triple* b)
 {
     return a->sign_id - b->sign_id;
 }
@@ -24,14 +24,14 @@ static int sig_cmp(const nid_triple *a, const nid_triple *b)
 DECLARE_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, sig);
 IMPLEMENT_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, sig);
 
-static int sig_sk_cmp(const nid_triple *const *a, const nid_triple *const *b)
+static int sig_sk_cmp(const nid_triple* const* a, const nid_triple* const* b)
 {
     return (*a)->sign_id - (*b)->sign_id;
 }
 
-DECLARE_OBJ_BSEARCH_CMP_FN(const nid_triple *, const nid_triple *, sigx);
+DECLARE_OBJ_BSEARCH_CMP_FN(const nid_triple*, const nid_triple*, sigx);
 
-static int sigx_cmp(const nid_triple *const *a, const nid_triple *const *b)
+static int sigx_cmp(const nid_triple* const* a, const nid_triple* const* b)
 {
     int ret;
 
@@ -48,7 +48,7 @@ static int sigx_cmp(const nid_triple *const *a, const nid_triple *const *b)
     return (*a)->pkey_id - (*b)->pkey_id;
 }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const nid_triple *, const nid_triple *, sigx);
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(const nid_triple*, const nid_triple*, sigx);
 
 static CRYPTO_ONCE sig_init = CRYPTO_ONCE_STATIC_INIT;
 
@@ -63,11 +63,11 @@ static ossl_inline int obj_sig_init(void)
     return RUN_ONCE(&sig_init, o_sig_init);
 }
 
-static int ossl_obj_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid,
-                                    int lock)
+static int ossl_obj_find_sigid_algs(int signid, int* pdig_nid, int* ppkey_nid,
+    int lock)
 {
     nid_triple tmp;
-    const nid_triple *rv;
+    const nid_triple* rv;
     int idx;
 
     if (signid == NID_undef)
@@ -100,16 +100,16 @@ static int ossl_obj_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid,
     return 1;
 }
 
-int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)
+int OBJ_find_sigid_algs(int signid, int* pdig_nid, int* ppkey_nid)
 {
     return ossl_obj_find_sigid_algs(signid, pdig_nid, ppkey_nid, 1);
 }
 
-int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
+int OBJ_find_sigid_by_algs(int* psignid, int dig_nid, int pkey_nid)
 {
     nid_triple tmp;
-    const nid_triple *t = &tmp;
-    const nid_triple **rv;
+    const nid_triple* t = &tmp;
+    const nid_triple** rv;
     int idx;
 
     /* permitting searches for sig algs without digest: */
@@ -146,7 +146,7 @@ int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
 
 int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
 {
-    nid_triple *ntr;
+    nid_triple* ntr;
     int dnid = NID_undef, pnid = NID_undef, ret = 0;
 
     if (signid == NID_undef || pkey_id == NID_undef)
@@ -191,7 +191,7 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
     if (!sk_nid_triple_push(sig_app, ntr))
         goto err;
     if (!sk_nid_triple_push(sigx_app, ntr)) {
-        ntr = NULL;             /* This is referenced by sig_app still */
+        ntr = NULL; /* This is referenced by sig_app still */
         goto err;
     }
 
@@ -200,13 +200,13 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
 
     ntr = NULL;
     ret = 1;
- err:
+err:
     OPENSSL_free(ntr);
     CRYPTO_THREAD_unlock(sig_lock);
     return ret;
 }
 
-static void sid_free(nid_triple *tt)
+static void sid_free(nid_triple* tt)
 {
     OPENSSL_free(tt);
 }

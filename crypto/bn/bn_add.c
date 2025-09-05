@@ -11,7 +11,7 @@
 #include "bn_local.h"
 
 /* signed add of b to a. */
-int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
+int BN_add(BIGNUM* r, const BIGNUM* a, const BIGNUM* b)
 {
     int ret, r_neg, cmp_res;
 
@@ -42,7 +42,7 @@ int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 }
 
 /* signed sub of b from a. */
-int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
+int BN_sub(BIGNUM* r, const BIGNUM* a, const BIGNUM* b)
 {
     int ret, r_neg, cmp_res;
 
@@ -73,7 +73,7 @@ int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 }
 
 /* unsigned add of b to a, r can be equal to a or b. */
-int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
+int BN_uadd(BIGNUM* r, const BIGNUM* a, const BIGNUM* b)
 {
     int max, min, dif;
     const BN_ULONG *ap, *bp;
@@ -83,7 +83,7 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     bn_check_top(b);
 
     if (a->top < b->top) {
-        const BIGNUM *tmp;
+        const BIGNUM* tmp;
 
         tmp = a;
         a = b;
@@ -122,7 +122,7 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 }
 
 /* unsigned subtraction of b from a, a must be larger than b. */
-int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
+int BN_usub(BIGNUM* r, const BIGNUM* a, const BIGNUM* b)
 {
     int max, min, dif;
     BN_ULONG t1, t2, borrow, *rp;
@@ -135,7 +135,7 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     min = b->top;
     dif = max - min;
 
-    if (dif < 0) {              /* hmm... should not be happening */
+    if (dif < 0) { /* hmm... should not be happening */
         ERR_raise(ERR_LIB_BN, BN_R_ARG2_LT_ARG3);
         return 0;
     }
@@ -168,4 +168,3 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 
     return 1;
 }
-

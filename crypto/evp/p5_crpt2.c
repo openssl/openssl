@@ -19,16 +19,16 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
-                              const unsigned char *salt, int saltlen, int iter,
-                              const EVP_MD *digest, int keylen, unsigned char *out,
-                              OSSL_LIB_CTX *libctx, const char *propq)
+int ossl_pkcs5_pbkdf2_hmac_ex(const char* pass, int passlen,
+    const unsigned char* salt, int saltlen, int iter,
+    const EVP_MD* digest, int keylen, unsigned char* out,
+    OSSL_LIB_CTX* libctx, const char* propq)
 {
-    const char *empty = "";
+    const char* empty = "";
     int rv = 1, mode = 1;
-    EVP_KDF *kdf;
-    EVP_KDF_CTX *kctx;
-    const char *mdname = EVP_MD_get0_name(digest);
+    EVP_KDF* kdf;
+    EVP_KDF_CTX* kctx;
+    const char* mdname = EVP_MD_get0_name(digest);
     OSSL_PARAM params[6], *p = params;
 
     /* Keep documented behaviour. */
@@ -39,66 +39,67 @@ int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
         passlen = (int)strlen(pass);
     }
     if (salt == NULL && saltlen == 0)
-        salt = (unsigned char *)empty;
+        salt = (unsigned char*)empty;
 
     kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_PBKDF2, propq);
     if (kdf == NULL)
-         return 0;
+        return 0;
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL)
         return 0;
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
-                                             (char *)pass, (size_t)passlen);
+        (char*)pass, (size_t)passlen);
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_PKCS5, &mode);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-                                             (unsigned char *)salt, saltlen);
+        (unsigned char*)salt, saltlen);
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_ITER, &iter);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)mdname, 0);
+        (char*)mdname, 0);
     *p = OSSL_PARAM_construct_end();
     if (EVP_KDF_derive(kctx, out, keylen, params) != 1)
         rv = 0;
 
     EVP_KDF_CTX_free(kctx);
 
-    OSSL_TRACE_BEGIN(PKCS5V2) {
+    OSSL_TRACE_BEGIN(PKCS5V2)
+    {
         BIO_printf(trc_out, "Password:\n");
         BIO_hex_string(trc_out,
-                       0, passlen, pass, passlen);
+            0, passlen, pass, passlen);
         BIO_printf(trc_out, "\n");
         BIO_printf(trc_out, "Salt:\n");
         BIO_hex_string(trc_out,
-                       0, saltlen, salt, saltlen);
+            0, saltlen, salt, saltlen);
         BIO_printf(trc_out, "\n");
         BIO_printf(trc_out, "Iteration count %d\n", iter);
         BIO_printf(trc_out, "Key:\n");
         BIO_hex_string(trc_out,
-                       0, keylen, out, keylen);
+            0, keylen, out, keylen);
         BIO_printf(trc_out, "\n");
-    } OSSL_TRACE_END(PKCS5V2);
+    }
+    OSSL_TRACE_END(PKCS5V2);
     return rv;
 }
 
-int PKCS5_PBKDF2_HMAC(const char *pass, int passlen, const unsigned char *salt,
-                      int saltlen, int iter, const EVP_MD *digest, int keylen,
-                      unsigned char *out)
+int PKCS5_PBKDF2_HMAC(const char* pass, int passlen, const unsigned char* salt,
+    int saltlen, int iter, const EVP_MD* digest, int keylen,
+    unsigned char* out)
 {
     return ossl_pkcs5_pbkdf2_hmac_ex(pass, passlen, salt, saltlen, iter, digest,
-                                     keylen, out, NULL, NULL);
+        keylen, out, NULL, NULL);
 }
 
-
-int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
-                           const unsigned char *salt, int saltlen, int iter,
-                           int keylen, unsigned char *out)
+int PKCS5_PBKDF2_HMAC_SHA1(const char* pass, int passlen,
+    const unsigned char* salt, int saltlen, int iter,
+    int keylen, unsigned char* out)
 {
-    EVP_MD *digest;
+    EVP_MD* digest;
     int r = 0;
 
     if ((digest = EVP_MD_fetch(NULL, SN_sha1, NULL)) != NULL)
         r = ossl_pkcs5_pbkdf2_hmac_ex(pass, passlen, salt, saltlen, iter,
-                                      digest, keylen, out, NULL, NULL);
+            digest, keylen, out, NULL, NULL);
     EVP_MD_free(digest);
     return r;
 }
@@ -109,16 +110,16 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
  * them...
  */
 
-int PKCS5_v2_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
-                             ASN1_TYPE *param, const EVP_CIPHER *c,
-                             const EVP_MD *md, int en_de,
-                             OSSL_LIB_CTX *libctx, const char *propq)
+int PKCS5_v2_PBE_keyivgen_ex(EVP_CIPHER_CTX* ctx, const char* pass, int passlen,
+    ASN1_TYPE* param, const EVP_CIPHER* c,
+    const EVP_MD* md, int en_de,
+    OSSL_LIB_CTX* libctx, const char* propq)
 {
-    PBE2PARAM *pbe2 = NULL;
+    PBE2PARAM* pbe2 = NULL;
     char ciph_name[80];
-    const EVP_CIPHER *cipher = NULL;
-    EVP_CIPHER *cipher_fetch = NULL;
-    EVP_PBE_KEYGEN_EX *kdf;
+    const EVP_CIPHER* cipher = NULL;
+    EVP_CIPHER* cipher_fetch = NULL;
+    EVP_PBE_KEYGEN_EX* kdf;
 
     int rv = 0;
 
@@ -130,7 +131,7 @@ int PKCS5_v2_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 
     /* See if we recognise the key derivation function */
     if (!EVP_PBE_find_ex(EVP_PBE_TYPE_KDF, OBJ_obj2nid(pbe2->keyfunc->algorithm),
-                         NULL, NULL, NULL, &kdf)) {
+            NULL, NULL, NULL, &kdf)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION);
         goto err;
     }
@@ -164,32 +165,32 @@ int PKCS5_v2_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
         goto err;
     }
     rv = kdf(ctx, pass, passlen, pbe2->keyfunc->parameter, NULL, NULL, en_de, libctx, propq);
- err:
+err:
     EVP_CIPHER_free(cipher_fetch);
     PBE2PARAM_free(pbe2);
     return rv;
 }
 
-int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
-                          ASN1_TYPE *param, const EVP_CIPHER *c,
-                          const EVP_MD *md, int en_de)
+int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX* ctx, const char* pass, int passlen,
+    ASN1_TYPE* param, const EVP_CIPHER* c,
+    const EVP_MD* md, int en_de)
 {
     return PKCS5_v2_PBE_keyivgen_ex(ctx, pass, passlen, param, c, md, en_de, NULL, NULL);
 }
 
-int PKCS5_v2_PBKDF2_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
-                                int passlen, ASN1_TYPE *param,
-                                const EVP_CIPHER *c, const EVP_MD *md, int en_de,
-                                OSSL_LIB_CTX *libctx, const char *propq)
+int PKCS5_v2_PBKDF2_keyivgen_ex(EVP_CIPHER_CTX* ctx, const char* pass,
+    int passlen, ASN1_TYPE* param,
+    const EVP_CIPHER* c, const EVP_MD* md, int en_de,
+    OSSL_LIB_CTX* libctx, const char* propq)
 {
     unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
     int saltlen, iter, t;
     int rv = 0;
     unsigned int keylen = 0;
     int prf_nid, hmac_md_nid;
-    PBKDF2PARAM *kdf = NULL;
-    const EVP_MD *prfmd = NULL;
-    EVP_MD *prfmd_fetch = NULL;
+    PBKDF2PARAM* kdf = NULL;
+    const EVP_MD* prfmd = NULL;
+    EVP_MD* prfmd_fetch = NULL;
 
     if (EVP_CIPHER_CTX_get0_cipher(ctx) == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
@@ -252,20 +253,20 @@ int PKCS5_v2_PBKDF2_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
     saltlen = kdf->salt->value.octet_string->length;
     iter = ASN1_INTEGER_get(kdf->iter);
     if (!ossl_pkcs5_pbkdf2_hmac_ex(pass, passlen, salt, saltlen, iter, prfmd,
-                                   keylen, key, libctx, propq))
+            keylen, key, libctx, propq))
         goto err;
     rv = EVP_CipherInit_ex(ctx, NULL, NULL, key, NULL, en_de);
- err:
+err:
     OPENSSL_cleanse(key, keylen);
     PBKDF2PARAM_free(kdf);
     EVP_MD_free(prfmd_fetch);
     return rv;
 }
 
-int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
-                             int passlen, ASN1_TYPE *param,
-                             const EVP_CIPHER *c, const EVP_MD *md, int en_de)
+int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX* ctx, const char* pass,
+    int passlen, ASN1_TYPE* param,
+    const EVP_CIPHER* c, const EVP_MD* md, int en_de)
 {
     return PKCS5_v2_PBKDF2_keyivgen_ex(ctx, pass, passlen, param, c, md, en_de,
-                                       NULL, NULL);
+        NULL, NULL);
 }

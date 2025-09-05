@@ -14,15 +14,15 @@
 #include <openssl/x509.h>
 #include "crypto/evp.h"
 
-int EVP_SignFinal_ex(EVP_MD_CTX *ctx, unsigned char *sigret,
-                     unsigned int *siglen, EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
-                     const char *propq)
+int EVP_SignFinal_ex(EVP_MD_CTX* ctx, unsigned char* sigret,
+    unsigned int* siglen, EVP_PKEY* pkey, OSSL_LIB_CTX* libctx,
+    const char* propq)
 {
     unsigned char m[EVP_MAX_MD_SIZE];
     unsigned int m_len = 0;
     int i = 0;
     size_t sltmp;
-    EVP_PKEY_CTX *pkctx = NULL;
+    EVP_PKEY_CTX* pkctx = NULL;
 
     *siglen = 0;
     if (EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_FINALISE)) {
@@ -30,7 +30,7 @@ int EVP_SignFinal_ex(EVP_MD_CTX *ctx, unsigned char *sigret,
             goto err;
     } else {
         int rv = 0;
-        EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
+        EVP_MD_CTX* tmp_ctx = EVP_MD_CTX_new();
 
         if (tmp_ctx == NULL) {
             ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
@@ -59,13 +59,13 @@ int EVP_SignFinal_ex(EVP_MD_CTX *ctx, unsigned char *sigret,
         goto err;
     *siglen = (unsigned int)sltmp;
     i = 1;
- err:
+err:
     EVP_PKEY_CTX_free(pkctx);
     return i;
 }
 
-int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
-                  unsigned int *siglen, EVP_PKEY *pkey)
+int EVP_SignFinal(EVP_MD_CTX* ctx, unsigned char* sigret,
+    unsigned int* siglen, EVP_PKEY* pkey)
 {
     return EVP_SignFinal_ex(ctx, sigret, siglen, pkey, NULL, NULL);
 }

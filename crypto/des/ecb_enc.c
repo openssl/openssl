@@ -17,8 +17,7 @@
 #include <openssl/opensslv.h>
 #include <openssl/bio.h>
 
-
-const char *DES_options(void)
+const char* DES_options(void)
 {
     static int init = 1;
     static char buf[12];
@@ -33,13 +32,13 @@ const char *DES_options(void)
     return buf;
 }
 
-void DES_ecb_encrypt(const_DES_cblock *input, DES_cblock *output,
-                     DES_key_schedule *ks, int enc)
+void DES_ecb_encrypt(const_DES_cblock* input, DES_cblock* output,
+    DES_key_schedule* ks, int enc)
 {
     register DES_LONG l;
     DES_LONG ll[2];
-    const unsigned char *in = &(*input)[0];
-    unsigned char *out = &(*output)[0];
+    const unsigned char* in = &(*input)[0];
+    unsigned char* out = &(*output)[0];
 
     c2l(in, l);
     ll[0] = l;

@@ -16,7 +16,7 @@
 static int test_bio_memleak(void)
 {
     int ok = 0;
-    BIO *bio;
+    BIO* bio;
     BUF_MEM bufmem;
     static const char str[] = "BIO test\n";
     char buf[100];
@@ -25,7 +25,7 @@ static int test_bio_memleak(void)
     if (!TEST_ptr(bio))
         goto finish;
     bufmem.length = sizeof(str);
-    bufmem.data = (char *) str;
+    bufmem.data = (char*)str;
     bufmem.max = bufmem.length;
     BIO_set_mem_buf(bio, &bufmem, BIO_NOCLOSE);
     BIO_set_flags(bio, BIO_FLAGS_MEM_RDONLY);
@@ -35,7 +35,7 @@ static int test_bio_memleak(void)
         goto finish;
     ok = 1;
 
- finish:
+finish:
     BIO_free(bio);
     return ok;
 }
@@ -43,8 +43,8 @@ static int test_bio_memleak(void)
 static int test_bio_get_mem(void)
 {
     int ok = 0;
-    BIO *bio = NULL;
-    BUF_MEM *bufmem = NULL;
+    BIO* bio = NULL;
+    BUF_MEM* bufmem = NULL;
 
     bio = BIO_new(BIO_s_mem());
     if (!TEST_ptr(bio))
@@ -62,7 +62,7 @@ static int test_bio_get_mem(void)
         goto finish;
     ok = 1;
 
- finish:
+finish:
     BIO_free(bio);
     BUF_MEM_free(bufmem);
     return ok;
@@ -71,8 +71,8 @@ static int test_bio_get_mem(void)
 static int test_bio_new_mem_buf(void)
 {
     int ok = 0;
-    BIO *bio;
-    BUF_MEM *bufmem;
+    BIO* bio;
+    BUF_MEM* bufmem;
     char data[16];
 
     bio = BIO_new_mem_buf("Hello World\n", 12);
@@ -98,7 +98,7 @@ static int test_bio_new_mem_buf(void)
         goto finish;
     ok = 1;
 
- finish:
+finish:
     BIO_free(bio);
     return ok;
 }
@@ -107,7 +107,7 @@ static int test_bio_rdonly_mem_buf(void)
 {
     int ok = 0;
     BIO *bio, *bio2 = NULL;
-    BUF_MEM *bufmem;
+    BUF_MEM* bufmem;
     char data[16];
 
     bio = BIO_new_mem_buf("Hello World\n", 12);
@@ -139,7 +139,7 @@ static int test_bio_rdonly_mem_buf(void)
         goto finish;
     ok = 1;
 
- finish:
+finish:
     BIO_free(bio);
     BIO_free(bio2);
     return ok;
@@ -148,7 +148,7 @@ static int test_bio_rdonly_mem_buf(void)
 static int test_bio_rdwr_rdonly(void)
 {
     int ok = 0;
-    BIO *bio = NULL;
+    BIO* bio = NULL;
     char data[16];
 
     bio = BIO_new(BIO_s_mem());
@@ -176,7 +176,7 @@ static int test_bio_rdwr_rdonly(void)
 
     ok = 1;
 
- finish:
+finish:
     BIO_free(bio);
     return ok;
 }
@@ -184,7 +184,7 @@ static int test_bio_rdwr_rdonly(void)
 static int test_bio_nonclear_rst(void)
 {
     int ok = 0;
-    BIO *bio = NULL;
+    BIO* bio = NULL;
     char data[16];
 
     bio = BIO_new(BIO_s_mem());
@@ -216,19 +216,19 @@ static int test_bio_nonclear_rst(void)
 
     ok = 1;
 
- finish:
+finish:
     BIO_free(bio);
     return ok;
 }
 
 static int error_callback_fired;
-static long BIO_error_callback(BIO *bio, int cmd, const char *argp,
-                               size_t len, int argi,
-                               long argl, int ret, size_t *processed)
+static long BIO_error_callback(BIO* bio, int cmd, const char* argp,
+    size_t len, int argi,
+    long argl, int ret, size_t* processed)
 {
     if ((cmd & (BIO_CB_READ | BIO_CB_RETURN)) != 0) {
         error_callback_fired = 1;
-        ret = 0;  /* fail for read operations to simulate error in input BIO */
+        ret = 0; /* fail for read operations to simulate error in input BIO */
     }
     return ret;
 }
@@ -240,13 +240,13 @@ static int test_bio_i2d_ASN1_mime(void)
     BIO *bio = NULL, *out = NULL;
     BUF_MEM bufmem;
     static const char str[] = "BIO mime test\n";
-    PKCS7 *p7 = NULL;
+    PKCS7* p7 = NULL;
 
     if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
         goto finish;
 
     bufmem.length = sizeof(str);
-    bufmem.data = (char *) str;
+    bufmem.data = (char*)str;
     bufmem.max = bufmem.length;
     BIO_set_mem_buf(bio, &bufmem, BIO_NOCLOSE);
     BIO_set_flags(bio, BIO_FLAGS_MEM_RDONLY);
@@ -261,9 +261,9 @@ static int test_bio_i2d_ASN1_mime(void)
 
     error_callback_fired = 0;
 
-    if (!TEST_false(i2d_ASN1_bio_stream(out, (ASN1_VALUE*) p7, bio,
-                                        SMIME_STREAM | SMIME_BINARY,
-                                        ASN1_ITEM_rptr(PKCS7))))
+    if (!TEST_false(i2d_ASN1_bio_stream(out, (ASN1_VALUE*)p7, bio,
+            SMIME_STREAM | SMIME_BINARY,
+            ASN1_ITEM_rptr(PKCS7))))
         goto finish;
 
     if (!TEST_int_eq(error_callback_fired, 1))
@@ -271,7 +271,7 @@ static int test_bio_i2d_ASN1_mime(void)
 
     ok = 1;
 
- finish:
+finish:
     BIO_free(bio);
     BIO_free(out);
     PKCS7_free(p7);

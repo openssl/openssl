@@ -12,8 +12,8 @@
 
 #ifdef ASYNC_WIN
 
-# include <windows.h>
-# include "internal/cryptlib.h"
+#include <windows.h>
+#include "internal/cryptlib.h"
 
 int ASYNC_is_capable(void)
 {
@@ -21,13 +21,13 @@ int ASYNC_is_capable(void)
 }
 
 int ASYNC_set_mem_functions(ASYNC_stack_alloc_fn alloc_fn,
-                            ASYNC_stack_free_fn free_fn)
+    ASYNC_stack_free_fn free_fn)
 {
     return 0;
 }
 
-void ASYNC_get_mem_functions(ASYNC_stack_alloc_fn *alloc_fn,
-                             ASYNC_stack_free_fn *free_fn)
+void ASYNC_get_mem_functions(ASYNC_stack_alloc_fn* alloc_fn,
+    ASYNC_stack_free_fn* free_fn)
 {
     if (alloc_fn != NULL)
         *alloc_fn = NULL;
@@ -37,9 +37,9 @@ void ASYNC_get_mem_functions(ASYNC_stack_alloc_fn *alloc_fn,
 
 void async_local_cleanup(void)
 {
-    async_ctx *ctx = async_get_ctx();
+    async_ctx* ctx = async_get_ctx();
     if (ctx != NULL) {
-        async_fibre *fibre = &ctx->dispatcher;
+        async_fibre* fibre = &ctx->dispatcher;
         if (fibre != NULL && fibre->fibre != NULL && fibre->converted) {
             ConvertFiberToThread();
             fibre->fibre = NULL;
@@ -47,13 +47,13 @@ void async_local_cleanup(void)
     }
 }
 
-int async_fibre_init_dispatcher(async_fibre *fibre)
+int async_fibre_init_dispatcher(async_fibre* fibre)
 {
-# if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x600
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x600
     fibre->fibre = ConvertThreadToFiberEx(NULL, FIBER_FLAG_FLOAT_SWITCH);
-# else
+#else
     fibre->fibre = ConvertThreadToFiber(NULL);
-# endif
+#endif
     if (fibre->fibre == NULL) {
         fibre->converted = 0;
         fibre->fibre = GetCurrentFiber();

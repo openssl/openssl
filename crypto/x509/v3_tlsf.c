@@ -16,18 +16,17 @@
 #include "ext_dat.h"
 #include "x509_local.h"
 
-static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
-                                             TLS_FEATURE *tls_feature,
-                                             STACK_OF(CONF_VALUE) *ext_list);
-static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
-                                    X509V3_CTX *ctx,
-                                    STACK_OF(CONF_VALUE) *nval);
+static STACK_OF(CONF_VALUE)* i2v_TLS_FEATURE(const X509V3_EXT_METHOD* method,
+    TLS_FEATURE* tls_feature,
+    STACK_OF(CONF_VALUE)* ext_list);
+static TLS_FEATURE* v2i_TLS_FEATURE(const X509V3_EXT_METHOD* method,
+    X509V3_CTX* ctx,
+    STACK_OF(CONF_VALUE)* nval);
 
-ASN1_ITEM_TEMPLATE(TLS_FEATURE) =
-        ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, TLS_FEATURE, ASN1_INTEGER)
+ASN1_ITEM_TEMPLATE(TLS_FEATURE) = ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, TLS_FEATURE, ASN1_INTEGER)
 static_ASN1_ITEM_TEMPLATE_END(TLS_FEATURE)
 
-IMPLEMENT_ASN1_ALLOC_FUNCTIONS(TLS_FEATURE)
+    IMPLEMENT_ASN1_ALLOC_FUNCTIONS(TLS_FEATURE)
 
 const X509V3_EXT_METHOD ossl_v3_tls_feature = {
     NID_tlsfeature, 0,
@@ -40,10 +39,9 @@ const X509V3_EXT_METHOD ossl_v3_tls_feature = {
     NULL
 };
 
-
 typedef struct {
     long num;
-    const char *name;
+    const char* name;
 } TLS_FEATURE_NAME;
 
 static TLS_FEATURE_NAME tls_feature_tbl[] = {
@@ -57,13 +55,13 @@ static TLS_FEATURE_NAME tls_feature_tbl[] = {
  * used by the CONF library to represent a multi-valued extension.  ext_list is
  * returned.
  */
-static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
-                                             TLS_FEATURE *tls_feature,
-                                             STACK_OF(CONF_VALUE) *ext_list)
+static STACK_OF(CONF_VALUE)* i2v_TLS_FEATURE(const X509V3_EXT_METHOD* method,
+    TLS_FEATURE* tls_feature,
+    STACK_OF(CONF_VALUE)* ext_list)
 {
     int i;
     size_t j;
-    ASN1_INTEGER *ai;
+    ASN1_INTEGER* ai;
     long tlsextid;
     for (i = 0; i < sk_ASN1_INTEGER_num(tls_feature); i++) {
         ai = sk_ASN1_INTEGER_value(tls_feature, i);
@@ -84,13 +82,13 @@ static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
  * structure, which is returned if the conversion is successful.  In case of
  * error, NULL is returned.
  */
-static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
-                                    X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
+static TLS_FEATURE* v2i_TLS_FEATURE(const X509V3_EXT_METHOD* method,
+    X509V3_CTX* ctx, STACK_OF(CONF_VALUE)* nval)
 {
-    TLS_FEATURE *tlsf;
+    TLS_FEATURE* tlsf;
     char *extval, *endptr;
-    ASN1_INTEGER *ai = NULL;
-    CONF_VALUE *val;
+    ASN1_INTEGER* ai = NULL;
+    CONF_VALUE* val;
     int i;
     size_t j;
     long tlsextid;
@@ -114,8 +112,7 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
             tlsextid = tls_feature_tbl[j].num;
         else {
             tlsextid = strtol(extval, &endptr, 10);
-            if (((*endptr) != '\0') || (extval == endptr) || (tlsextid < 0) ||
-                (tlsextid > 65535)) {
+            if (((*endptr) != '\0') || (extval == endptr) || (tlsextid < 0) || (tlsextid > 65535)) {
                 ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_SYNTAX);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
@@ -123,8 +120,8 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
         }
 
         if ((ai = ASN1_INTEGER_new()) == NULL
-                || !ASN1_INTEGER_set(ai, tlsextid)
-                || sk_ASN1_INTEGER_push(tlsf, ai) <= 0) {
+            || !ASN1_INTEGER_set(ai, tlsextid)
+            || sk_ASN1_INTEGER_push(tlsf, ai) <= 0) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
             goto err;
         }
@@ -133,7 +130,7 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
     }
     return tlsf;
 
- err:
+err:
     sk_ASN1_INTEGER_pop_free(tlsf, ASN1_INTEGER_free);
     ASN1_INTEGER_free(ai);
     return NULL;

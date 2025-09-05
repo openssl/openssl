@@ -12,12 +12,12 @@
 #include <openssl/pkcs7.h>
 #include <openssl/err.h>
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     BIO *in = NULL, *out = NULL, *tbio = NULL;
-    X509 *rcert = NULL;
-    EVP_PKEY *rkey = NULL;
-    PKCS7 *p7 = NULL;
+    X509* rcert = NULL;
+    EVP_PKEY* rkey = NULL;
+    PKCS7* p7 = NULL;
     int ret = EXIT_FAILURE;
 
     OpenSSL_add_all_algorithms();
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     printf("Success\n");
 
     ret = EXIT_SUCCESS;
- err:
+err:
     if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Signing Data\n");
         ERR_print_errors_fp(stderr);

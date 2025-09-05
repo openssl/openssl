@@ -20,7 +20,7 @@
 #include <openssl/evp.h>
 #include "crypto/sha.h"
 
-unsigned char *ossl_sha1(const unsigned char *d, size_t n, unsigned char *md)
+unsigned char* ossl_sha1(const unsigned char* d, size_t n, unsigned char* md)
 {
     SHA_CTX c;
     static unsigned char m[SHA_DIGEST_LENGTH];
@@ -35,7 +35,7 @@ unsigned char *ossl_sha1(const unsigned char *d, size_t n, unsigned char *md)
     return md;
 }
 
-unsigned char *SHA1(const unsigned char *d, size_t n, unsigned char *md)
+unsigned char* SHA1(const unsigned char* d, size_t n, unsigned char* md)
 {
     static unsigned char m[SHA_DIGEST_LENGTH];
 
@@ -44,7 +44,7 @@ unsigned char *SHA1(const unsigned char *d, size_t n, unsigned char *md)
     return EVP_Q_digest(NULL, "SHA1", NULL, d, n, md, NULL) ? md : NULL;
 }
 
-unsigned char *SHA224(const unsigned char *d, size_t n, unsigned char *md)
+unsigned char* SHA224(const unsigned char* d, size_t n, unsigned char* md)
 {
     static unsigned char m[SHA224_DIGEST_LENGTH];
 
@@ -53,7 +53,7 @@ unsigned char *SHA224(const unsigned char *d, size_t n, unsigned char *md)
     return EVP_Q_digest(NULL, "SHA224", NULL, d, n, md, NULL) ? md : NULL;
 }
 
-unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md)
+unsigned char* SHA256(const unsigned char* d, size_t n, unsigned char* md)
 {
     static unsigned char m[SHA256_DIGEST_LENGTH];
 
@@ -62,7 +62,7 @@ unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md)
     return EVP_Q_digest(NULL, "SHA256", NULL, d, n, md, NULL) ? md : NULL;
 }
 
-unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md)
+unsigned char* SHA384(const unsigned char* d, size_t n, unsigned char* md)
 {
     static unsigned char m[SHA384_DIGEST_LENGTH];
 
@@ -71,7 +71,7 @@ unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md)
     return EVP_Q_digest(NULL, "SHA384", NULL, d, n, md, NULL) ? md : NULL;
 }
 
-unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md)
+unsigned char* SHA512(const unsigned char* d, size_t n, unsigned char* md)
 {
     static unsigned char m[SHA512_DIGEST_LENGTH];
 

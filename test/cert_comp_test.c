@@ -12,7 +12,7 @@
  * when the deprecated calls are not hidden
  */
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-# define OPENSSL_SUPPRESS_DEPRECATED
+#define OPENSSL_SUPPRESS_DEPRECATED
 #endif
 
 #include <openssl/ssl.h>
@@ -29,21 +29,21 @@
  * If we don't have ec or dh then there are no built-in groups that are usable
  * with TLSv1.3
  */
-# define OSSL_NO_USABLE_TLS1_3
+#define OSSL_NO_USABLE_TLS1_3
 #endif
 
 #if !defined(OSSL_NO_USEABLE_TLS1_3)
 
-static char *certsdir = NULL;
-static char *cert = NULL;
-static char *privkey = NULL;
+static char* certsdir = NULL;
+static char* cert = NULL;
+static char* privkey = NULL;
 
-static int client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
+static int client_cert_cb(SSL* ssl, X509** x509, EVP_PKEY** pkey)
 {
-    X509 *xcert;
-    EVP_PKEY *privpkey;
-    BIO *in = NULL;
-    BIO *priv_in = NULL;
+    X509* xcert;
+    EVP_PKEY* privpkey;
+    BIO* in = NULL;
+    BIO* priv_in = NULL;
 
     /* Check that SSL_get0_peer_certificate() returns something sensible */
     if (!TEST_ptr(SSL_get0_peer_certificate(ssl)))
@@ -54,11 +54,11 @@ static int client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
         return 0;
 
     if (!TEST_ptr(xcert = X509_new_ex(NULL, NULL))
-            || !TEST_ptr(PEM_read_bio_X509(in, &xcert, NULL, NULL))
-            || !TEST_ptr(priv_in = BIO_new_file(privkey, "r"))
-            || !TEST_ptr(privpkey = PEM_read_bio_PrivateKey_ex(priv_in, NULL,
-                                                               NULL, NULL,
-                                                               NULL, NULL)))
+        || !TEST_ptr(PEM_read_bio_X509(in, &xcert, NULL, NULL))
+        || !TEST_ptr(priv_in = BIO_new_file(privkey, "r"))
+        || !TEST_ptr(privpkey = PEM_read_bio_PrivateKey_ex(priv_in, NULL,
+                         NULL, NULL,
+                         NULL, NULL)))
         goto err;
 
     *x509 = xcert;
@@ -74,7 +74,7 @@ err:
     return 0;
 }
 
-static int verify_cb(int preverify_ok, X509_STORE_CTX *x509_ctx)
+static int verify_cb(int preverify_ok, X509_STORE_CTX* x509_ctx)
 {
     return 1;
 }
@@ -86,9 +86,9 @@ static int verify_cb(int preverify_ok, X509_STORE_CTX *x509_ctx)
  * Test 3 = app pre-compresses certificate in SSL_CTX, but it's unused due to prefs
  */
 /* Compression helper */
-static int ssl_comp_cert(SSL *ssl, int alg)
+static int ssl_comp_cert(SSL* ssl, int alg)
 {
-    unsigned char *comp_data = NULL;
+    unsigned char* comp_data = NULL;
     size_t comp_len = 0;
     size_t orig_len = 0;
     int retval = 0;
@@ -100,14 +100,14 @@ static int ssl_comp_cert(SSL *ssl, int alg)
         goto err;
     retval = alg;
 
- err:
+err:
     OPENSSL_free(comp_data);
     return retval;
 }
 
-static void cert_comp_info_cb(const SSL *s, int where, int ret)
+static void cert_comp_info_cb(const SSL* s, int where, int ret)
 {
-    int *seen = (int*)SSL_get_app_data(s);
+    int* seen = (int*)SSL_get_app_data(s);
 
     if (SSL_is_server(s)) {
         /* TLS_ST_SR_COMP_CERT */
@@ -160,9 +160,9 @@ static int test_ssl_cert_comp(int test)
     }
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(),
-                                       TLS_client_method(),
-                                       TLS1_3_VERSION, 0,
-                                       &sctx, &cctx, cert, privkey)))
+            TLS_client_method(),
+            TLS1_3_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
         goto end;
     if (test == 3) {
         /* coverity[deadcode] */
@@ -185,13 +185,13 @@ static int test_ssl_cert_comp(int test)
         SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_cb);
     }
 
-    if (test == 1 || test== 2 || test == 3) {
+    if (test == 1 || test == 2 || test == 3) {
         if (!TEST_true(SSL_CTX_compress_certs(sctx, expected_server)))
             goto end;
     }
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                      NULL, NULL)))
+            NULL, NULL)))
         goto end;
 
     if (!TEST_true(SSL_set_app_data(clientssl, &client_seen)))
@@ -210,7 +210,7 @@ static int test_ssl_cert_comp(int test)
         goto end;
     if (test == 3) {
         /* coverity[deadcode] */
-        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(serverssl);
+        SSL_CONNECTION* sc = SSL_CONNECTION_FROM_SSL(serverssl);
 
         /* expect that the pre-compressed cert won't be used */
         if (!TEST_int_eq(sc->cert->key->cert_comp_used, 0))
@@ -219,7 +219,7 @@ static int test_ssl_cert_comp(int test)
         if (!TEST_false(*(int*)SSL_get_app_data(clientssl)))
             goto end;
     } else {
-        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(serverssl);
+        SSL_CONNECTION* sc = SSL_CONNECTION_FROM_SSL(serverssl);
 
         if (!TEST_int_gt(sc->cert->key->cert_comp_used, 0))
             goto end;
@@ -236,7 +236,7 @@ static int test_ssl_cert_comp(int test)
 
     testresult = 1;
 
- end:
+end:
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -270,7 +270,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ssl_cert_comp, 4);
     return 1;
 
- err:
+err:
     OPENSSL_free(cert);
     OPENSSL_free(privkey);
     return 0;

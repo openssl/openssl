@@ -15,15 +15,15 @@
 
 #ifndef OPENSSL_NO_FUZZ_LIBFUZZER
 
-int LLVMFuzzerInitialize(int *argc, char ***argv);
-int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
+int LLVMFuzzerInitialize(int* argc, char*** argv);
+int LLVMFuzzerTestOneInput(const uint8_t* buf, size_t len);
 
-int LLVMFuzzerInitialize(int *argc, char ***argv)
+int LLVMFuzzerInitialize(int* argc, char*** argv)
 {
     return FuzzerInitialize(argc, argv);
 }
 
-int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
+int LLVMFuzzerTestOneInput(const uint8_t* buf, size_t len)
 {
     return FuzzerTestOneInput(buf, len);
 }
@@ -37,7 +37,7 @@ int main(int argc, char** argv)
     FuzzerInitialize(&argc, &argv);
 
     while (__AFL_LOOP(10000)) {
-        uint8_t *buf = malloc(BUF_SIZE);
+        uint8_t* buf = malloc(BUF_SIZE);
         size_t size = read(0, buf, BUF_SIZE);
 
         FuzzerTestOneInput(buf, size);

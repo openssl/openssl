@@ -10,17 +10,17 @@
 #include <internal/thread_arch.h>
 
 #if defined(OPENSSL_THREADS_POSIX)
-# define _GNU_SOURCE
-# include <errno.h>
-# include <sys/types.h>
-# include <unistd.h>
+#define _GNU_SOURCE
+#include <errno.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-static void *thread_start_thunk(void *vthread)
+static void* thread_start_thunk(void* vthread)
 {
-    CRYPTO_THREAD *thread;
+    CRYPTO_THREAD* thread;
     CRYPTO_THREAD_RETVAL ret;
 
-    thread = (CRYPTO_THREAD *)vthread;
+    thread = (CRYPTO_THREAD*)vthread;
 
     ret = thread->routine(thread->data);
     ossl_crypto_mutex_lock(thread->statelock);
@@ -32,11 +32,11 @@ static void *thread_start_thunk(void *vthread)
     return NULL;
 }
 
-int ossl_crypto_thread_native_spawn(CRYPTO_THREAD *thread)
+int ossl_crypto_thread_native_spawn(CRYPTO_THREAD* thread)
 {
     int ret;
     pthread_attr_t attr;
-    pthread_t *handle;
+    pthread_t* handle;
 
     handle = OPENSSL_zalloc(sizeof(*handle));
     if (handle == NULL)
@@ -60,15 +60,15 @@ fail:
     return 0;
 }
 
-int ossl_crypto_thread_native_perform_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_RETVAL *retval)
+int ossl_crypto_thread_native_perform_join(CRYPTO_THREAD* thread, CRYPTO_THREAD_RETVAL* retval)
 {
-    void *thread_retval;
-    pthread_t *handle;
+    void* thread_retval;
+    pthread_t* handle;
 
     if (thread == NULL || thread->handle == NULL)
         return 0;
 
-    handle = (pthread_t *) thread->handle;
+    handle = (pthread_t*)thread->handle;
     if (pthread_join(*handle, &thread_retval) != 0)
         return 0;
 
@@ -88,14 +88,14 @@ int ossl_crypto_thread_native_exit(void)
     return 1;
 }
 
-int ossl_crypto_thread_native_is_self(CRYPTO_THREAD *thread)
+int ossl_crypto_thread_native_is_self(CRYPTO_THREAD* thread)
 {
-    return pthread_equal(*(pthread_t *)thread->handle, pthread_self());
+    return pthread_equal(*(pthread_t*)thread->handle, pthread_self());
 }
 
-CRYPTO_MUTEX *ossl_crypto_mutex_new(void)
+CRYPTO_MUTEX* ossl_crypto_mutex_new(void)
 {
-    pthread_mutex_t *mutex;
+    pthread_mutex_t* mutex;
 
     if ((mutex = OPENSSL_zalloc(sizeof(*mutex))) == NULL)
         return NULL;
@@ -103,14 +103,14 @@ CRYPTO_MUTEX *ossl_crypto_mutex_new(void)
         OPENSSL_free(mutex);
         return NULL;
     }
-    return (CRYPTO_MUTEX *)mutex;
+    return (CRYPTO_MUTEX*)mutex;
 }
 
-int ossl_crypto_mutex_try_lock(CRYPTO_MUTEX *mutex)
+int ossl_crypto_mutex_try_lock(CRYPTO_MUTEX* mutex)
 {
-    pthread_mutex_t *mutex_p;
+    pthread_mutex_t* mutex_p;
 
-    mutex_p = (pthread_mutex_t *)mutex;
+    mutex_p = (pthread_mutex_t*)mutex;
 
     if (pthread_mutex_trylock(mutex_p) == EBUSY)
         return 0;
@@ -118,43 +118,43 @@ int ossl_crypto_mutex_try_lock(CRYPTO_MUTEX *mutex)
     return 1;
 }
 
-void ossl_crypto_mutex_lock(CRYPTO_MUTEX *mutex)
+void ossl_crypto_mutex_lock(CRYPTO_MUTEX* mutex)
 {
     int rc;
-    pthread_mutex_t *mutex_p;
+    pthread_mutex_t* mutex_p;
 
-    mutex_p = (pthread_mutex_t *)mutex;
+    mutex_p = (pthread_mutex_t*)mutex;
     rc = pthread_mutex_lock(mutex_p);
     OPENSSL_assert(rc == 0);
 }
 
-void ossl_crypto_mutex_unlock(CRYPTO_MUTEX *mutex)
+void ossl_crypto_mutex_unlock(CRYPTO_MUTEX* mutex)
 {
     int rc;
-    pthread_mutex_t *mutex_p;
+    pthread_mutex_t* mutex_p;
 
-    mutex_p = (pthread_mutex_t *)mutex;
+    mutex_p = (pthread_mutex_t*)mutex;
     rc = pthread_mutex_unlock(mutex_p);
     OPENSSL_assert(rc == 0);
 }
 
-void ossl_crypto_mutex_free(CRYPTO_MUTEX **mutex)
+void ossl_crypto_mutex_free(CRYPTO_MUTEX** mutex)
 {
-    pthread_mutex_t **mutex_p;
+    pthread_mutex_t** mutex_p;
 
     if (mutex == NULL)
         return;
 
-    mutex_p = (pthread_mutex_t **)mutex;
+    mutex_p = (pthread_mutex_t**)mutex;
     if (*mutex_p != NULL)
         pthread_mutex_destroy(*mutex_p);
     OPENSSL_free(*mutex_p);
     *mutex = NULL;
 }
 
-CRYPTO_CONDVAR *ossl_crypto_condvar_new(void)
+CRYPTO_CONDVAR* ossl_crypto_condvar_new(void)
 {
-    pthread_cond_t *cv_p;
+    pthread_cond_t* cv_p;
 
     if ((cv_p = OPENSSL_zalloc(sizeof(*cv_p))) == NULL)
         return NULL;
@@ -162,24 +162,24 @@ CRYPTO_CONDVAR *ossl_crypto_condvar_new(void)
         OPENSSL_free(cv_p);
         return NULL;
     }
-    return (CRYPTO_CONDVAR *) cv_p;
+    return (CRYPTO_CONDVAR*)cv_p;
 }
 
-void ossl_crypto_condvar_wait(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex)
+void ossl_crypto_condvar_wait(CRYPTO_CONDVAR* cv, CRYPTO_MUTEX* mutex)
 {
-    pthread_cond_t *cv_p;
-    pthread_mutex_t *mutex_p;
+    pthread_cond_t* cv_p;
+    pthread_mutex_t* mutex_p;
 
-    cv_p = (pthread_cond_t *)cv;
-    mutex_p = (pthread_mutex_t *)mutex;
+    cv_p = (pthread_cond_t*)cv;
+    mutex_p = (pthread_mutex_t*)mutex;
     pthread_cond_wait(cv_p, mutex_p);
 }
 
-void ossl_crypto_condvar_wait_timeout(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex,
-                                      OSSL_TIME deadline)
+void ossl_crypto_condvar_wait_timeout(CRYPTO_CONDVAR* cv, CRYPTO_MUTEX* mutex,
+    OSSL_TIME deadline)
 {
-    pthread_cond_t *cv_p = (pthread_cond_t *)cv;
-    pthread_mutex_t *mutex_p = (pthread_mutex_t *)mutex;
+    pthread_cond_t* cv_p = (pthread_cond_t*)cv;
+    pthread_mutex_t* mutex_p = (pthread_mutex_t*)mutex;
 
     if (ossl_time_is_infinite(deadline)) {
         /*
@@ -200,30 +200,30 @@ void ossl_crypto_condvar_wait_timeout(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex,
     }
 }
 
-void ossl_crypto_condvar_broadcast(CRYPTO_CONDVAR *cv)
+void ossl_crypto_condvar_broadcast(CRYPTO_CONDVAR* cv)
 {
-    pthread_cond_t *cv_p;
+    pthread_cond_t* cv_p;
 
-    cv_p = (pthread_cond_t *)cv;
+    cv_p = (pthread_cond_t*)cv;
     pthread_cond_broadcast(cv_p);
 }
 
-void ossl_crypto_condvar_signal(CRYPTO_CONDVAR *cv)
+void ossl_crypto_condvar_signal(CRYPTO_CONDVAR* cv)
 {
-    pthread_cond_t *cv_p;
+    pthread_cond_t* cv_p;
 
-    cv_p = (pthread_cond_t *)cv;
+    cv_p = (pthread_cond_t*)cv;
     pthread_cond_signal(cv_p);
 }
 
-void ossl_crypto_condvar_free(CRYPTO_CONDVAR **cv)
+void ossl_crypto_condvar_free(CRYPTO_CONDVAR** cv)
 {
-    pthread_cond_t **cv_p;
+    pthread_cond_t** cv_p;
 
     if (cv == NULL)
         return;
 
-    cv_p = (pthread_cond_t **)cv;
+    cv_p = (pthread_cond_t**)cv;
     if (*cv_p != NULL)
         pthread_cond_destroy(*cv_p);
     OPENSSL_free(*cv_p);

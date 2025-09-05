@@ -7,35 +7,35 @@
  * https://www.openssl.org/source/license.html
  */
 #ifndef OSSL_QUIC_ACKM_H
-# define OSSL_QUIC_ACKM_H
+#define OSSL_QUIC_ACKM_H
 
-# include "internal/quic_statm.h"
-# include "internal/quic_cc.h"
-# include "internal/quic_types.h"
-# include "internal/quic_wire.h"
-# include "internal/quic_predef.h"
-# include "internal/time.h"
-# include "internal/list.h"
+#include "internal/quic_statm.h"
+#include "internal/quic_cc.h"
+#include "internal/quic_types.h"
+#include "internal/quic_wire.h"
+#include "internal/quic_predef.h"
+#include "internal/time.h"
+#include "internal/list.h"
 
-# ifndef OPENSSL_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
 
-OSSL_ACKM *ossl_ackm_new(OSSL_TIME (*now)(void *arg),
-                         void *now_arg,
-                         OSSL_STATM *statm,
-                         const OSSL_CC_METHOD *cc_method,
-                         OSSL_CC_DATA *cc_data, int is_server);
-void ossl_ackm_free(OSSL_ACKM *ackm);
+OSSL_ACKM* ossl_ackm_new(OSSL_TIME (*now)(void* arg),
+    void* now_arg,
+    OSSL_STATM* statm,
+    const OSSL_CC_METHOD* cc_method,
+    OSSL_CC_DATA* cc_data, int is_server);
+void ossl_ackm_free(OSSL_ACKM* ackm);
 
-void ossl_ackm_set_loss_detection_deadline_callback(OSSL_ACKM *ackm,
-                                                    void (*fn)(OSSL_TIME deadline,
-                                                               void *arg),
-                                                    void *arg);
+void ossl_ackm_set_loss_detection_deadline_callback(OSSL_ACKM* ackm,
+    void (*fn)(OSSL_TIME deadline,
+        void* arg),
+    void* arg);
 
-void ossl_ackm_set_ack_deadline_callback(OSSL_ACKM *ackm,
-                                         void (*fn)(OSSL_TIME deadline,
-                                                    int pkt_space,
-                                                    void *arg),
-                                         void *arg);
+void ossl_ackm_set_ack_deadline_callback(OSSL_ACKM* ackm,
+    void (*fn)(OSSL_TIME deadline,
+        int pkt_space,
+        void* arg),
+    void* arg);
 
 /*
  * Configures the RX-side maximum ACK delay. This is the maximum amount of time
@@ -43,7 +43,7 @@ void ossl_ackm_set_ack_deadline_callback(OSSL_ACKM *ackm,
  * ACK-eliciting packet. The peer communicates this value via a transport
  * parameter and it must be provided to the ACKM.
  */
-void ossl_ackm_set_rx_max_ack_delay(OSSL_ACKM *ackm, OSSL_TIME rx_max_ack_delay);
+void ossl_ackm_set_rx_max_ack_delay(OSSL_ACKM* ackm, OSSL_TIME rx_max_ack_delay);
 
 /*
  * Configures the TX-side maximum ACK delay. This is the maximum amount of time
@@ -52,7 +52,7 @@ void ossl_ackm_set_rx_max_ack_delay(OSSL_ACKM *ackm, OSSL_TIME rx_max_ack_delay)
  * it must be accurately reported in the transport parameters we send to our
  * peer.
  */
-void ossl_ackm_set_tx_max_ack_delay(OSSL_ACKM *ackm, OSSL_TIME tx_max_ack_delay);
+void ossl_ackm_set_tx_max_ack_delay(OSSL_ACKM* ackm, OSSL_TIME tx_max_ack_delay);
 
 typedef struct ossl_ackm_tx_pkt_st OSSL_ACKM_TX_PKT;
 struct ossl_ackm_tx_pkt_st {
@@ -81,7 +81,7 @@ struct ossl_ackm_tx_pkt_st {
      * One of the QUIC_PN_SPACE_* values. This qualifies the pkt_num field
      * into a packet number space.
      */
-    unsigned int pkt_space :2;
+    unsigned int pkt_space : 2;
 
     /*
      * 1 if the packet is in flight. A packet is considered 'in flight' if it is
@@ -90,30 +90,30 @@ struct ossl_ackm_tx_pkt_st {
      * numbered packet is not considered in flight is if it contains only ACK
      * frames (not even PADDING frames), as these frames can bypass CC.
      */
-    unsigned int is_inflight :1;
+    unsigned int is_inflight : 1;
 
     /*
      * 1 if the packet has one or more ACK-eliciting frames.
      * Note that if this is set, is_inflight must be set.
      */
-    unsigned int is_ack_eliciting :1;
+    unsigned int is_ack_eliciting : 1;
 
     /* 1 if the packet is a PTO probe. */
-    unsigned int is_pto_probe :1;
+    unsigned int is_pto_probe : 1;
 
     /* 1 if the packet is an MTU probe. */
-    unsigned int is_mtu_probe :1;
+    unsigned int is_mtu_probe : 1;
 
     /* Callback called if frames in this packet are lost. arg is cb_arg. */
-    void (*on_lost)(void *arg);
+    void (*on_lost)(void* arg);
     /* Callback called if frames in this packet are acked. arg is cb_arg. */
-    void (*on_acked)(void *arg);
+    void (*on_acked)(void* arg);
     /*
      * Callback called if frames in this packet are neither acked nor lost. arg
      * is cb_arg.
      */
-    void (*on_discarded)(void *arg);
-    void  *cb_arg;
+    void (*on_discarded)(void* arg);
+    void* cb_arg;
 
     /*
      * (Internal use fields; must be zero-initialized.)
@@ -124,17 +124,17 @@ struct ossl_ackm_tx_pkt_st {
      */
     OSSL_LIST_MEMBER(tx_history, OSSL_ACKM_TX_PKT);
 
-    struct ossl_ackm_tx_pkt_st *anext;
-    struct ossl_ackm_tx_pkt_st *lnext;
+    struct ossl_ackm_tx_pkt_st* anext;
+    struct ossl_ackm_tx_pkt_st* lnext;
 };
 
-int ossl_ackm_on_tx_packet(OSSL_ACKM *ackm, OSSL_ACKM_TX_PKT *pkt);
-int ossl_ackm_on_rx_datagram(OSSL_ACKM *ackm, size_t num_bytes);
+int ossl_ackm_on_tx_packet(OSSL_ACKM* ackm, OSSL_ACKM_TX_PKT* pkt);
+int ossl_ackm_on_rx_datagram(OSSL_ACKM* ackm, size_t num_bytes);
 
-#  define OSSL_ACKM_ECN_NONE      0
-#  define OSSL_ACKM_ECN_ECT1      1
-#  define OSSL_ACKM_ECN_ECT0      2
-#  define OSSL_ACKM_ECN_ECNCE     3
+#define OSSL_ACKM_ECN_NONE 0
+#define OSSL_ACKM_ECN_ECT1 1
+#define OSSL_ACKM_ECN_ECT0 2
+#define OSSL_ACKM_ECN_ECNCE 3
 
 typedef struct ossl_ackm_rx_pkt_st {
     /* The packet number of the received packet. */
@@ -147,22 +147,22 @@ typedef struct ossl_ackm_rx_pkt_st {
      * One of the QUIC_PN_SPACE_* values. This qualifies the pkt_num field
      * into a packet number space.
      */
-    unsigned int pkt_space :2;
+    unsigned int pkt_space : 2;
 
     /* 1 if the packet has one or more ACK-eliciting frames. */
-    unsigned int is_ack_eliciting :1;
+    unsigned int is_ack_eliciting : 1;
 
     /*
      * One of the OSSL_ACKM_ECN_* values. This is the ECN labelling applied to
      * the received packet. If unknown, use OSSL_ACKM_ECN_NONE.
      */
-    unsigned int ecn :2;
+    unsigned int ecn : 2;
 } OSSL_ACKM_RX_PKT;
 
-int ossl_ackm_on_rx_packet(OSSL_ACKM *ackm, const OSSL_ACKM_RX_PKT *pkt);
+int ossl_ackm_on_rx_packet(OSSL_ACKM* ackm, const OSSL_ACKM_RX_PKT* pkt);
 
-int ossl_ackm_on_rx_ack_frame(OSSL_ACKM *ackm, const OSSL_QUIC_FRAME_ACK *ack,
-                              int pkt_space, OSSL_TIME rx_time);
+int ossl_ackm_on_rx_ack_frame(OSSL_ACKM* ackm, const OSSL_QUIC_FRAME_ACK* ack,
+    int pkt_space, OSSL_TIME rx_time);
 
 /*
  * Discards a PN space. This must be called for a PN space before freeing the
@@ -171,12 +171,12 @@ int ossl_ackm_on_rx_ack_frame(OSSL_ACKM *ackm, const OSSL_QUIC_FRAME_ACK *ack,
  * PN space, but it may be called for the Application Data PN space prior to
  * freeing the ACKM to simplify teardown implementations.
  */
-int ossl_ackm_on_pkt_space_discarded(OSSL_ACKM *ackm, int pkt_space);
+int ossl_ackm_on_pkt_space_discarded(OSSL_ACKM* ackm, int pkt_space);
 
-int ossl_ackm_on_handshake_confirmed(OSSL_ACKM *ackm);
-int ossl_ackm_on_timeout(OSSL_ACKM *ackm);
+int ossl_ackm_on_handshake_confirmed(OSSL_ACKM* ackm);
+int ossl_ackm_on_timeout(OSSL_ACKM* ackm);
 
-OSSL_TIME ossl_ackm_get_loss_detection_deadline(OSSL_ACKM *ackm);
+OSSL_TIME ossl_ackm_get_loss_detection_deadline(OSSL_ACKM* ackm);
 
 /*
  * Generates an ACK frame, regardless of whether the ACK manager thinks
@@ -185,8 +185,8 @@ OSSL_TIME ossl_ackm_get_loss_detection_deadline(OSSL_ACKM *ackm);
  * This clears the flag returned by ossl_ackm_is_ack_desired and the deadline
  * returned by ossl_ackm_get_ack_deadline.
  */
-const OSSL_QUIC_FRAME_ACK *ossl_ackm_get_ack_frame(OSSL_ACKM *ackm,
-                                                   int pkt_space);
+const OSSL_QUIC_FRAME_ACK* ossl_ackm_get_ack_frame(OSSL_ACKM* ackm,
+    int pkt_space);
 
 /*
  * Returns the deadline after which an ACK frame should be generated by calling
@@ -194,7 +194,7 @@ const OSSL_QUIC_FRAME_ACK *ossl_ackm_get_ack_frame(OSSL_ACKM *ackm,
  * applicable. If the deadline has already passed, this function may return that
  * deadline, or may return OSSL_TIME_ZERO.
  */
-OSSL_TIME ossl_ackm_get_ack_deadline(OSSL_ACKM *ackm, int pkt_space);
+OSSL_TIME ossl_ackm_get_ack_deadline(OSSL_ACKM* ackm, int pkt_space);
 
 /*
  * Returns 1 if the ACK manager thinks an ACK frame ought to be generated and
@@ -206,7 +206,7 @@ OSSL_TIME ossl_ackm_get_ack_deadline(OSSL_ACKM *ackm, int pkt_space);
  * ossl_ackm_on_rx_packet and based on the passage of time (see
  * ossl_ackm_get_ack_deadline).
  */
-int ossl_ackm_is_ack_desired(OSSL_ACKM *ackm, int pkt_space);
+int ossl_ackm_is_ack_desired(OSSL_ACKM* ackm, int pkt_space);
 
 /*
  * Returns 1 if the given RX PN is 'processable'. A processable PN is one that
@@ -227,7 +227,7 @@ int ossl_ackm_is_ack_desired(OSSL_ACKM *ackm, int pkt_space);
  * that PN is passed to ossl_ackm_on_rx_packet, thus this function must be used
  * before calling ossl_ackm_on_rx_packet.
  */
-int ossl_ackm_is_rx_pn_processable(OSSL_ACKM *ackm, QUIC_PN pn, int pkt_space);
+int ossl_ackm_is_rx_pn_processable(OSSL_ACKM* ackm, QUIC_PN pn, int pkt_space);
 
 typedef struct ossl_ackm_probe_info_st {
     /*
@@ -266,9 +266,9 @@ typedef struct ossl_ackm_probe_info_st {
  * This function should be called after calling e.g. ossl_ackm_on_timeout
  * to determine if any probe requests have been generated.
  */
-OSSL_ACKM_PROBE_INFO *ossl_ackm_get0_probe_request(OSSL_ACKM *ackm);
+OSSL_ACKM_PROBE_INFO* ossl_ackm_get0_probe_request(OSSL_ACKM* ackm);
 
-int ossl_ackm_get_largest_unacked(OSSL_ACKM *ackm, int pkt_space, QUIC_PN *pn);
+int ossl_ackm_get_largest_unacked(OSSL_ACKM* ackm, int pkt_space, QUIC_PN* pn);
 
 /*
  * Forces the ACKM to consider a packet with the given PN in the given PN space
@@ -279,18 +279,18 @@ int ossl_ackm_get_largest_unacked(OSSL_ACKM *ackm, int pkt_space, QUIC_PN *pn);
  * lost for congestion control purposes. Thus this is not exactly the same as a
  * true loss situation.
  */
-int ossl_ackm_mark_packet_pseudo_lost(OSSL_ACKM *ackm,
-                                      int pkt_space, QUIC_PN pn);
+int ossl_ackm_mark_packet_pseudo_lost(OSSL_ACKM* ackm,
+    int pkt_space, QUIC_PN pn);
 
 /*
  * Returns the PTO duration as currently calculated. This is a quantity of time.
  * This duration is used in various parts of QUIC besides the ACKM.
  */
-OSSL_TIME ossl_ackm_get_pto_duration(OSSL_ACKM *ackm);
+OSSL_TIME ossl_ackm_get_pto_duration(OSSL_ACKM* ackm);
 
 /* Returns the largest acked PN in the given PN space. */
-QUIC_PN ossl_ackm_get_largest_acked(OSSL_ACKM *ackm, int pkt_space);
+QUIC_PN ossl_ackm_get_largest_acked(OSSL_ACKM* ackm, int pkt_space);
 
-# endif
+#endif
 
 #endif

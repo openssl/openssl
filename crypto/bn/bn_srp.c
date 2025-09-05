@@ -15,19 +15,19 @@
 #include <openssl/srp.h>
 #include "crypto/bn_srp.h"
 
-# if (BN_BYTES == 8)
-#  if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
-#   define bn_pack4(a1,a2,a3,a4) ((a1##UI64<<48)|(a2##UI64<<32)|(a3##UI64<<16)|a4##UI64)
-#  elif defined(__arch64__)
-#   define bn_pack4(a1,a2,a3,a4) ((a1##UL<<48)|(a2##UL<<32)|(a3##UL<<16)|a4##UL)
-#  else
-#   define bn_pack4(a1,a2,a3,a4) ((a1##ULL<<48)|(a2##ULL<<32)|(a3##ULL<<16)|a4##ULL)
-#  endif
-# elif (BN_BYTES == 4)
-#  define bn_pack4(a1,a2,a3,a4)  ((a3##UL<<16)|a4##UL), ((a1##UL<<16)|a2##UL)
-# else
-#  error "unsupported BN_BYTES"
-# endif
+#if (BN_BYTES == 8)
+#if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
+#define bn_pack4(a1, a2, a3, a4) ((a1##UI64 << 48) | (a2##UI64 << 32) | (a3##UI64 << 16) | a4##UI64)
+#elif defined(__arch64__)
+#define bn_pack4(a1, a2, a3, a4) ((a1##UL << 48) | (a2##UL << 32) | (a3##UL << 16) | a4##UL)
+#else
+#define bn_pack4(a1, a2, a3, a4) ((a1##ULL << 48) | (a2##ULL << 32) | (a3##ULL << 16) | a4##ULL)
+#endif
+#elif (BN_BYTES == 4)
+#define bn_pack4(a1, a2, a3, a4) ((a3##UL << 16) | a4##UL), ((a1##UL << 16) | a2##UL)
+#else
+#error "unsupported BN_BYTES"
+#endif
 
 static const BN_ULONG bn_group_1024_value[] = {
     bn_pack4(0x9FC6, 0x1D2F, 0xC0EB, 0x06E3),
@@ -49,7 +49,7 @@ static const BN_ULONG bn_group_1024_value[] = {
 };
 
 const BIGNUM ossl_bn_group_1024 = {
-    (BN_ULONG *)bn_group_1024_value,
+    (BN_ULONG*)bn_group_1024_value,
     OSSL_NELEM(bn_group_1024_value),
     OSSL_NELEM(bn_group_1024_value),
     0,
@@ -84,7 +84,7 @@ static const BN_ULONG bn_group_1536_value[] = {
 };
 
 const BIGNUM ossl_bn_group_1536 = {
-    (BN_ULONG *)bn_group_1536_value,
+    (BN_ULONG*)bn_group_1536_value,
     OSSL_NELEM(bn_group_1536_value),
     OSSL_NELEM(bn_group_1536_value),
     0,
@@ -127,7 +127,7 @@ static const BN_ULONG bn_group_2048_value[] = {
 };
 
 const BIGNUM ossl_bn_group_2048 = {
-    (BN_ULONG *)bn_group_2048_value,
+    (BN_ULONG*)bn_group_2048_value,
     OSSL_NELEM(bn_group_2048_value),
     OSSL_NELEM(bn_group_2048_value),
     0,
@@ -186,7 +186,7 @@ static const BN_ULONG bn_group_3072_value[] = {
 };
 
 const BIGNUM ossl_bn_group_3072 = {
-    (BN_ULONG *)bn_group_3072_value,
+    (BN_ULONG*)bn_group_3072_value,
     OSSL_NELEM(bn_group_3072_value),
     OSSL_NELEM(bn_group_3072_value),
     0,
@@ -261,7 +261,7 @@ static const BN_ULONG bn_group_4096_value[] = {
 };
 
 const BIGNUM ossl_bn_group_4096 = {
-    (BN_ULONG *)bn_group_4096_value,
+    (BN_ULONG*)bn_group_4096_value,
     OSSL_NELEM(bn_group_4096_value),
     OSSL_NELEM(bn_group_4096_value),
     0,
@@ -368,7 +368,7 @@ static const BN_ULONG bn_group_6144_value[] = {
 };
 
 const BIGNUM ossl_bn_group_6144 = {
-    (BN_ULONG *)bn_group_6144_value,
+    (BN_ULONG*)bn_group_6144_value,
     OSSL_NELEM(bn_group_6144_value),
     OSSL_NELEM(bn_group_6144_value),
     0,
@@ -507,7 +507,7 @@ static const BN_ULONG bn_group_8192_value[] = {
 };
 
 const BIGNUM ossl_bn_group_8192 = {
-    (BN_ULONG *)bn_group_8192_value,
+    (BN_ULONG*)bn_group_8192_value,
     OSSL_NELEM(bn_group_8192_value),
     OSSL_NELEM(bn_group_8192_value),
     0,
@@ -517,7 +517,7 @@ const BIGNUM ossl_bn_group_8192 = {
 static const BN_ULONG bn_generator_19_value[] = { 19 };
 
 const BIGNUM ossl_bn_generator_19 = {
-    (BN_ULONG *)bn_generator_19_value,
+    (BN_ULONG*)bn_generator_19_value,
     1,
     1,
     0,
@@ -526,7 +526,7 @@ const BIGNUM ossl_bn_generator_19 = {
 static const BN_ULONG bn_generator_5_value[] = { 5 };
 
 const BIGNUM ossl_bn_generator_5 = {
-    (BN_ULONG *)bn_generator_5_value,
+    (BN_ULONG*)bn_generator_5_value,
     1,
     1,
     0,
@@ -535,7 +535,7 @@ const BIGNUM ossl_bn_generator_5 = {
 static const BN_ULONG bn_generator_2_value[] = { 2 };
 
 const BIGNUM ossl_bn_generator_2 = {
-    (BN_ULONG *)bn_generator_2_value,
+    (BN_ULONG*)bn_generator_2_value,
     1,
     1,
     0,

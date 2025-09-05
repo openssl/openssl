@@ -24,7 +24,7 @@
 #define LOCAL_BUF_SIZE 2048
 struct CMAC_CTX_st {
     /* Cipher context to use */
-    EVP_CIPHER_CTX *cctx;
+    EVP_CIPHER_CTX* cctx;
     /* Keys k1 and k2 */
     unsigned char k1[EVP_MAX_BLOCK_LENGTH];
     unsigned char k2[EVP_MAX_BLOCK_LENGTH];
@@ -38,7 +38,7 @@ struct CMAC_CTX_st {
 
 /* Make temporary keys K1 and K2 */
 
-static void make_kn(unsigned char *k1, const unsigned char *l, int bl)
+static void make_kn(unsigned char* k1, const unsigned char* l, int bl)
 {
     int i;
     unsigned char c = l[0], carry = c >> 7, cnext;
@@ -51,9 +51,9 @@ static void make_kn(unsigned char *k1, const unsigned char *l, int bl)
     k1[i] = (c << 1) ^ ((0 - carry) & (bl == 16 ? 0x87 : 0x1b));
 }
 
-CMAC_CTX *CMAC_CTX_new(void)
+CMAC_CTX* CMAC_CTX_new(void)
 {
-    CMAC_CTX *ctx;
+    CMAC_CTX* ctx;
 
     if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL)
         return NULL;
@@ -66,7 +66,7 @@ CMAC_CTX *CMAC_CTX_new(void)
     return ctx;
 }
 
-void CMAC_CTX_cleanup(CMAC_CTX *ctx)
+void CMAC_CTX_cleanup(CMAC_CTX* ctx)
 {
     EVP_CIPHER_CTX_reset(ctx->cctx);
     OPENSSL_cleanse(ctx->tbl, EVP_MAX_BLOCK_LENGTH);
@@ -76,12 +76,12 @@ void CMAC_CTX_cleanup(CMAC_CTX *ctx)
     ctx->nlast_block = -1;
 }
 
-EVP_CIPHER_CTX *CMAC_CTX_get0_cipher_ctx(CMAC_CTX *ctx)
+EVP_CIPHER_CTX* CMAC_CTX_get0_cipher_ctx(CMAC_CTX* ctx)
 {
     return ctx->cctx;
 }
 
-void CMAC_CTX_free(CMAC_CTX *ctx)
+void CMAC_CTX_free(CMAC_CTX* ctx)
 {
     if (!ctx)
         return;
@@ -90,7 +90,7 @@ void CMAC_CTX_free(CMAC_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
-int CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
+int CMAC_CTX_copy(CMAC_CTX* out, const CMAC_CTX* in)
 {
     int bl;
 
@@ -108,9 +108,9 @@ int CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
     return 1;
 }
 
-int ossl_cmac_init(CMAC_CTX *ctx, const void *key, size_t keylen,
-                   const EVP_CIPHER *cipher, ENGINE *impl,
-                   const OSSL_PARAM param[])
+int ossl_cmac_init(CMAC_CTX* ctx, const void* key, size_t keylen,
+    const EVP_CIPHER* cipher, ENGINE* impl,
+    const OSSL_PARAM param[])
 {
     static const unsigned char zero_iv[EVP_MAX_BLOCK_LENGTH] = { 0 };
     int block_len;
@@ -171,15 +171,15 @@ int ossl_cmac_init(CMAC_CTX *ctx, const void *key, size_t keylen,
     return 1;
 }
 
-int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
-              const EVP_CIPHER *cipher, ENGINE *impl)
+int CMAC_Init(CMAC_CTX* ctx, const void* key, size_t keylen,
+    const EVP_CIPHER* cipher, ENGINE* impl)
 {
     return ossl_cmac_init(ctx, key, keylen, cipher, impl, NULL);
 }
 
-int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
+int CMAC_Update(CMAC_CTX* ctx, const void* in, size_t dlen)
 {
-    const unsigned char *data = in;
+    const unsigned char* data = in;
     int bl;
     size_t max_burst_blocks, cipher_blocks;
     unsigned char buf[LOCAL_BUF_SIZE];
@@ -243,10 +243,9 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
     memcpy(ctx->last_block, data, dlen);
     ctx->nlast_block = (int)dlen;
     return 1;
-
 }
 
-int CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
+int CMAC_Final(CMAC_CTX* ctx, unsigned char* out, size_t* poutlen)
 {
     int i, bl, lb;
 
@@ -277,7 +276,7 @@ int CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
     return 1;
 }
 
-int CMAC_resume(CMAC_CTX *ctx)
+int CMAC_resume(CMAC_CTX* ctx)
 {
     if (ctx->nlast_block == -1)
         return 0;

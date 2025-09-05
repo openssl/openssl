@@ -12,10 +12,10 @@
 #include <openssl/cms.h>
 #include <openssl/err.h>
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     BIO *in = NULL, *out = NULL;
-    CMS_ContentInfo *cms = NULL;
+    CMS_ContentInfo* cms = NULL;
     int ret = EXIT_FAILURE;
 
     OpenSSL_add_all_algorithms();
@@ -43,7 +43,7 @@ int main(int argc, char **argv)
         goto err;
 
     ret = EXIT_SUCCESS;
- err:
+err:
     if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Uncompressing Data\n");
         ERR_print_errors_fp(stderr);

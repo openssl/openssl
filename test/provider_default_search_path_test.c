@@ -13,9 +13,9 @@
 
 static int test_default_libctx(void)
 {
-    OSSL_LIB_CTX *ctx = NULL;
-    char *path = "./some/path";
-    const char *retrieved_path = NULL;
+    OSSL_LIB_CTX* ctx = NULL;
+    char* path = "./some/path";
+    const char* retrieved_path = NULL;
     int ok;
 
     ok = TEST_true(OSSL_PROVIDER_set_default_search_path(ctx, path))
@@ -27,16 +27,16 @@ static int test_default_libctx(void)
 
 static int test_explicit_libctx(void)
 {
-    OSSL_LIB_CTX *ctx = NULL;
-    char *def_libctx_path = "./some/path";
-    char *path = "./another/location";
-    const char *retrieved_defctx_path = NULL;
-    const char *retrieved_path = NULL;
+    OSSL_LIB_CTX* ctx = NULL;
+    char* def_libctx_path = "./some/path";
+    char* path = "./another/location";
+    const char* retrieved_defctx_path = NULL;
+    const char* retrieved_path = NULL;
     int ok;
 
-         /* Set search path for default context, then create a new context and set
-            another path for it. Finally, get both paths and make sure they are
-            still what we set and are separate. */
+    /* Set search path for default context, then create a new context and set
+       another path for it. Finally, get both paths and make sure they are
+       still what we set and are separate. */
     ok = TEST_true(OSSL_PROVIDER_set_default_search_path(NULL, def_libctx_path))
         && TEST_ptr(ctx = OSSL_LIB_CTX_new())
         && TEST_true(OSSL_PROVIDER_set_default_search_path(ctx, path))
@@ -56,4 +56,3 @@ int setup_tests(void)
     ADD_TEST(test_explicit_libctx);
     return 1;
 }
-

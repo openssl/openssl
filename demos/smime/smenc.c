@@ -12,12 +12,12 @@
 #include <openssl/pkcs7.h>
 #include <openssl/err.h>
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     BIO *in = NULL, *out = NULL, *tbio = NULL;
-    X509 *rcert = NULL;
-    STACK_OF(X509) *recips = NULL;
-    PKCS7 *p7 = NULL;
+    X509* rcert = NULL;
+    STACK_OF(X509)* recips = NULL;
+    PKCS7* p7 = NULL;
     int ret = EXIT_FAILURE;
 
     /*
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     printf("Success\n");
 
     ret = EXIT_SUCCESS;
- err:
+err:
     if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Encrypting Data\n");
         ERR_print_errors_fp(stderr);

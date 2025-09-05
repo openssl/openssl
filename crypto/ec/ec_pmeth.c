@@ -26,27 +26,27 @@
 
 typedef struct {
     /* Key and paramgen group */
-    EC_GROUP *gen_group;
+    EC_GROUP* gen_group;
     /* message digest */
-    const EVP_MD *md;
+    const EVP_MD* md;
     /* Duplicate key if custom cofactor needed */
-    EC_KEY *co_key;
+    EC_KEY* co_key;
     /* Cofactor mode */
     signed char cofactor_mode;
     /* KDF (if any) to use for ECDH */
     char kdf_type;
     /* Message digest to use for key derivation */
-    const EVP_MD *kdf_md;
+    const EVP_MD* kdf_md;
     /* User key material */
-    unsigned char *kdf_ukm;
+    unsigned char* kdf_ukm;
     size_t kdf_ukmlen;
     /* KDF output length */
     size_t kdf_outlen;
 } EC_PKEY_CTX;
 
-static int pkey_ec_init(EVP_PKEY_CTX *ctx)
+static int pkey_ec_init(EVP_PKEY_CTX* ctx)
 {
-    EC_PKEY_CTX *dctx;
+    EC_PKEY_CTX* dctx;
 
     if ((dctx = OPENSSL_zalloc(sizeof(*dctx))) == NULL)
         return 0;
@@ -57,7 +57,7 @@ static int pkey_ec_init(EVP_PKEY_CTX *ctx)
     return 1;
 }
 
-static int pkey_ec_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
+static int pkey_ec_copy(EVP_PKEY_CTX* dst, const EVP_PKEY_CTX* src)
 {
     EC_PKEY_CTX *dctx, *sctx;
     if (!pkey_ec_init(dst))
@@ -89,9 +89,9 @@ static int pkey_ec_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
     return 1;
 }
 
-static void pkey_ec_cleanup(EVP_PKEY_CTX *ctx)
+static void pkey_ec_cleanup(EVP_PKEY_CTX* ctx)
 {
-    EC_PKEY_CTX *dctx = ctx->data;
+    EC_PKEY_CTX* dctx = ctx->data;
     if (dctx != NULL) {
         EC_GROUP_free(dctx->gen_group);
         EC_KEY_free(dctx->co_key);
@@ -101,18 +101,18 @@ static void pkey_ec_cleanup(EVP_PKEY_CTX *ctx)
     }
 }
 
-static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
-                        const unsigned char *tbs, size_t tbslen)
+static int pkey_ec_sign(EVP_PKEY_CTX* ctx, unsigned char* sig, size_t* siglen,
+    const unsigned char* tbs, size_t tbslen)
 {
     int ret, type;
     unsigned int sltmp;
-    EC_PKEY_CTX *dctx = ctx->data;
+    EC_PKEY_CTX* dctx = ctx->data;
     /*
      * Discard const. Its marked as const because this may be a cached copy of
      * the "real" key. These calls don't make any modifications that need to
      * be reflected back in the "original" key.
      */
-    EC_KEY *ec = (EC_KEY *)EVP_PKEY_get0_EC_KEY(ctx->pkey);
+    EC_KEY* ec = (EC_KEY*)EVP_PKEY_get0_EC_KEY(ctx->pkey);
     const int sig_sz = ECDSA_size(ec);
 
     /* ensure cast to size_t is safe */
@@ -139,18 +139,18 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     return 1;
 }
 
-static int pkey_ec_verify(EVP_PKEY_CTX *ctx,
-                          const unsigned char *sig, size_t siglen,
-                          const unsigned char *tbs, size_t tbslen)
+static int pkey_ec_verify(EVP_PKEY_CTX* ctx,
+    const unsigned char* sig, size_t siglen,
+    const unsigned char* tbs, size_t tbslen)
 {
     int ret, type;
-    EC_PKEY_CTX *dctx = ctx->data;
+    EC_PKEY_CTX* dctx = ctx->data;
     /*
      * Discard const. Its marked as const because this may be a cached copy of
      * the "real" key. These calls don't make any modifications that need to
      * be reflected back in the "original" key.
      */
-    EC_KEY *ec = (EC_KEY *)EVP_PKEY_get0_EC_KEY(ctx->pkey);
+    EC_KEY* ec = (EC_KEY*)EVP_PKEY_get0_EC_KEY(ctx->pkey);
 
     if (dctx->md)
         type = EVP_MD_get_type(dctx->md);
@@ -163,14 +163,14 @@ static int pkey_ec_verify(EVP_PKEY_CTX *ctx,
 }
 
 #ifndef OPENSSL_NO_EC
-static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
+static int pkey_ec_derive(EVP_PKEY_CTX* ctx, unsigned char* key, size_t* keylen)
 {
     int ret;
     size_t outlen;
-    const EC_POINT *pubkey = NULL;
-    EC_KEY *eckey;
-    const EC_KEY *eckeypub;
-    EC_PKEY_CTX *dctx = ctx->data;
+    const EC_POINT* pubkey = NULL;
+    EC_KEY* eckey;
+    const EC_KEY* eckeypub;
+    EC_PKEY_CTX* dctx = ctx->data;
 
     if (ctx->pkey == NULL || ctx->peerkey == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_KEYS_NOT_SET);
@@ -183,10 +183,10 @@ static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
     }
 
     eckey = dctx->co_key ? dctx->co_key
-                         : (EC_KEY *)EVP_PKEY_get0_EC_KEY(ctx->pkey);
+                         : (EC_KEY*)EVP_PKEY_get0_EC_KEY(ctx->pkey);
 
     if (!key) {
-        const EC_GROUP *group;
+        const EC_GROUP* group;
         group = EC_KEY_get0_group(eckey);
 
         if (group == NULL)
@@ -210,11 +210,11 @@ static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
     return 1;
 }
 
-static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
-                              unsigned char *key, size_t *keylen)
+static int pkey_ec_kdf_derive(EVP_PKEY_CTX* ctx,
+    unsigned char* key, size_t* keylen)
 {
-    EC_PKEY_CTX *dctx = ctx->data;
-    unsigned char *ktmp = NULL;
+    EC_PKEY_CTX* dctx = ctx->data;
+    unsigned char* ktmp = NULL;
     size_t ktmplen;
     int rv = 0;
     if (dctx->kdf_type == EVP_PKEY_ECDH_KDF_NONE)
@@ -233,21 +233,21 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
         goto err;
     /* Do KDF stuff */
     if (!ossl_ecdh_kdf_X9_63(key, *keylen, ktmp, ktmplen,
-                             dctx->kdf_ukm, dctx->kdf_ukmlen, dctx->kdf_md,
-                             ctx->libctx, ctx->propquery))
+            dctx->kdf_ukm, dctx->kdf_ukmlen, dctx->kdf_md,
+            ctx->libctx, ctx->propquery))
         goto err;
     rv = 1;
 
- err:
+err:
     OPENSSL_clear_free(ktmp, ktmplen);
     return rv;
 }
 #endif
 
-static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
+static int pkey_ec_ctrl(EVP_PKEY_CTX* ctx, int type, int p1, void* p2)
 {
-    EC_PKEY_CTX *dctx = ctx->data;
-    EC_GROUP *group;
+    EC_PKEY_CTX* dctx = ctx->data;
+    EC_GROUP* group;
     switch (type) {
     case EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID:
         group = EC_GROUP_new_by_curve_name(p1);
@@ -273,14 +273,14 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             if (dctx->cofactor_mode != -1)
                 return dctx->cofactor_mode;
             else {
-                const EC_KEY *ec_key = EVP_PKEY_get0_EC_KEY(ctx->pkey);
+                const EC_KEY* ec_key = EVP_PKEY_get0_EC_KEY(ctx->pkey);
                 return EC_KEY_get_flags(ec_key) & EC_FLAG_COFACTOR_ECDH ? 1 : 0;
             }
         } else if (p1 < -1 || p1 > 1)
             return -2;
         dctx->cofactor_mode = p1;
         if (p1 != -1) {
-            EC_KEY *ec_key = (EC_KEY *)EVP_PKEY_get0_EC_KEY(ctx->pkey);
+            EC_KEY* ec_key = (EC_KEY*)EVP_PKEY_get0_EC_KEY(ctx->pkey);
 
             /*
              * We discarded the "const" above. This will only work if the key is
@@ -324,7 +324,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_GET_EC_KDF_MD:
-        *(const EVP_MD **)p2 = dctx->kdf_md;
+        *(const EVP_MD**)p2 = dctx->kdf_md;
         return 1;
 
     case EVP_PKEY_CTRL_EC_KDF_OUTLEN:
@@ -334,7 +334,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN:
-        *(int *)p2 = (int)dctx->kdf_outlen;
+        *(int*)p2 = (int)dctx->kdf_outlen;
         return 1;
 
     case EVP_PKEY_CTRL_EC_KDF_UKM:
@@ -347,21 +347,11 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_GET_EC_KDF_UKM:
-        *(unsigned char **)p2 = dctx->kdf_ukm;
+        *(unsigned char**)p2 = dctx->kdf_ukm;
         return (int)dctx->kdf_ukmlen;
 
     case EVP_PKEY_CTRL_MD:
-        if (EVP_MD_get_type((const EVP_MD *)p2) != NID_sha1 &&
-            EVP_MD_get_type((const EVP_MD *)p2) != NID_ecdsa_with_SHA1 &&
-            EVP_MD_get_type((const EVP_MD *)p2) != NID_sha224 &&
-            EVP_MD_get_type((const EVP_MD *)p2) != NID_sha256 &&
-            EVP_MD_get_type((const EVP_MD *)p2) != NID_sha384 &&
-            EVP_MD_get_type((const EVP_MD *)p2) != NID_sha512 &&
-            EVP_MD_get_type((const EVP_MD *)p2) != NID_sha3_224 &&
-            EVP_MD_get_type((const EVP_MD *)p2) != NID_sha3_256 &&
-            EVP_MD_get_type((const EVP_MD *)p2) != NID_sha3_384 &&
-            EVP_MD_get_type((const EVP_MD *)p2) != NID_sha3_512 &&
-            EVP_MD_get_type((const EVP_MD *)p2) != NID_sm3) {
+        if (EVP_MD_get_type((const EVP_MD*)p2) != NID_sha1 && EVP_MD_get_type((const EVP_MD*)p2) != NID_ecdsa_with_SHA1 && EVP_MD_get_type((const EVP_MD*)p2) != NID_sha224 && EVP_MD_get_type((const EVP_MD*)p2) != NID_sha256 && EVP_MD_get_type((const EVP_MD*)p2) != NID_sha384 && EVP_MD_get_type((const EVP_MD*)p2) != NID_sha512 && EVP_MD_get_type((const EVP_MD*)p2) != NID_sha3_224 && EVP_MD_get_type((const EVP_MD*)p2) != NID_sha3_256 && EVP_MD_get_type((const EVP_MD*)p2) != NID_sha3_384 && EVP_MD_get_type((const EVP_MD*)p2) != NID_sha3_512 && EVP_MD_get_type((const EVP_MD*)p2) != NID_sm3) {
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_DIGEST_TYPE);
             return 0;
         }
@@ -369,7 +359,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_GET_MD:
-        *(const EVP_MD **)p2 = dctx->md;
+        *(const EVP_MD**)p2 = dctx->md;
         return 1;
 
     case EVP_PKEY_CTRL_PEER_KEY:
@@ -381,12 +371,11 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     default:
         return -2;
-
     }
 }
 
-static int pkey_ec_ctrl_str(EVP_PKEY_CTX *ctx,
-                            const char *type, const char *value)
+static int pkey_ec_ctrl_str(EVP_PKEY_CTX* ctx,
+    const char* type, const char* value)
 {
     if (strcmp(type, "ec_paramgen_curve") == 0) {
         int nid;
@@ -410,7 +399,7 @@ static int pkey_ec_ctrl_str(EVP_PKEY_CTX *ctx,
             return -2;
         return EVP_PKEY_CTX_set_ec_param_enc(ctx, param_enc);
     } else if (strcmp(type, "ecdh_kdf_md") == 0) {
-        const EVP_MD *md;
+        const EVP_MD* md;
         if ((md = EVP_get_digestbyname(value)) == NULL) {
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_DIGEST);
             return 0;
@@ -425,10 +414,10 @@ static int pkey_ec_ctrl_str(EVP_PKEY_CTX *ctx,
     return -2;
 }
 
-static int pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+static int pkey_ec_paramgen(EVP_PKEY_CTX* ctx, EVP_PKEY* pkey)
 {
-    EC_KEY *ec = NULL;
-    EC_PKEY_CTX *dctx = ctx->data;
+    EC_KEY* ec = NULL;
+    EC_PKEY_CTX* dctx = ctx->data;
     int ret;
 
     if (dctx->gen_group == NULL) {
@@ -444,10 +433,10 @@ static int pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     return ret;
 }
 
-static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+static int pkey_ec_keygen(EVP_PKEY_CTX* ctx, EVP_PKEY* pkey)
 {
-    EC_KEY *ec = NULL;
-    EC_PKEY_CTX *dctx = ctx->data;
+    EC_KEY* ec = NULL;
+    EC_PKEY_CTX* dctx = ctx->data;
     int ret;
 
     if (ctx->pkey == NULL && dctx->gen_group == NULL) {
@@ -509,7 +498,7 @@ static const EVP_PKEY_METHOD ec_pkey_meth = {
     pkey_ec_ctrl_str
 };
 
-const EVP_PKEY_METHOD *ossl_ec_pkey_method(void)
+const EVP_PKEY_METHOD* ossl_ec_pkey_method(void)
 {
     return &ec_pkey_meth;
 }

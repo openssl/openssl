@@ -21,14 +21,14 @@
 static int test_certs(int num)
 {
     int c;
-    char *name = 0;
-    char *header = 0;
-    unsigned char *data = 0;
+    char* name = 0;
+    char* header = 0;
+    unsigned char* data = 0;
     long len;
-    typedef X509 *(*d2i_X509_t)(X509 **, const unsigned char **, long);
-    typedef int (*i2d_X509_t)(const X509 *, unsigned char **);
+    typedef X509* (*d2i_X509_t)(X509**, const unsigned char**, long);
+    typedef int (*i2d_X509_t)(const X509*, unsigned char**);
     int err = 0;
-    BIO *fp = BIO_new_file(test_get_argument(num), "r");
+    BIO* fp = BIO_new_file(test_get_argument(num), "r");
 
     if (!TEST_ptr(fp))
         return 0;
@@ -37,11 +37,11 @@ static int test_certs(int num)
         const int trusted = (strcmp(name, PEM_STRING_X509_TRUSTED) == 0);
         d2i_X509_t d2i = trusted ? d2i_X509_AUX : d2i_X509;
         i2d_X509_t i2d = trusted ? i2d_X509_AUX : i2d_X509;
-        X509 *cert = NULL;
-        X509 *reuse = NULL;
-        const unsigned char *p = data;
-        unsigned char *buf = NULL;
-        unsigned char *bufp;
+        X509* cert = NULL;
+        X509* reuse = NULL;
+        const unsigned char* p = data;
+        unsigned char* buf = NULL;
+        unsigned char* bufp;
         long enclen;
 
         if (!trusted
@@ -63,7 +63,7 @@ static int test_certs(int num)
         enclen = i2d(cert, NULL);
         if (len != enclen) {
             TEST_error("encoded length %ld of %s != input length %ld",
-                       enclen, name, len);
+                enclen, name, len);
             err = 1;
             goto next;
         }
@@ -75,11 +75,11 @@ static int test_certs(int num)
         enclen = i2d(cert, &bufp);
         if (len != enclen) {
             TEST_error("encoded length %ld of %s != input length %ld",
-                       enclen, name, len);
+                enclen, name, len);
             err = 1;
             goto next;
         }
-        enclen = (long) (bufp - buf);
+        enclen = (long)(bufp - buf);
         if (enclen != len) {
             TEST_error("unexpected buffer position after encoding %s", name);
             err = 1;
@@ -110,7 +110,7 @@ static int test_certs(int num)
         enclen = i2d(cert, &buf);
         if (len != enclen) {
             TEST_error("encoded length %ld of %s != input length %ld",
-                       enclen, name, len);
+                enclen, name, len);
             err = 1;
             goto next;
         }
@@ -129,7 +129,7 @@ static int test_certs(int num)
             enclen = i2d(cert, &buf);
             if (enclen > len) {
                 TEST_error("encoded length %ld of %s > input length %ld",
-                           enclen, name, len);
+                    enclen, name, len);
                 err = 1;
                 goto next;
             }

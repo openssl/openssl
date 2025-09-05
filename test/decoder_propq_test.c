@@ -11,10 +11,10 @@
 #include <openssl/evp.h>
 #include "testutil.h"
 
-static OSSL_LIB_CTX *libctx = NULL;
-static OSSL_PROVIDER *nullprov = NULL;
-static OSSL_PROVIDER *libprov = NULL;
-static const char *filename = NULL;
+static OSSL_LIB_CTX* libctx = NULL;
+static OSSL_PROVIDER* nullprov = NULL;
+static OSSL_PROVIDER* libprov = NULL;
+static const char* filename = NULL;
 static pem_password_cb passcb;
 
 typedef enum OPTION_choice {
@@ -25,21 +25,21 @@ typedef enum OPTION_choice {
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
-const OPTIONS *test_get_options(void)
+const OPTIONS* test_get_options(void)
 {
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("file\n"),
         { "config", OPT_CONFIG_FILE, '<',
-          "The configuration file to use for the libctx" },
+            "The configuration file to use for the libctx" },
         { "provider", OPT_PROVIDER_NAME, 's',
-          "The provider to load (The default value is 'default')" },
+            "The provider to load (The default value is 'default')" },
         { OPT_HELP_STR, 1, '-', "file\tFile to decode.\n" },
         { NULL }
     };
     return test_options;
 }
 
-static int passcb(char *buf, int size, int rwflag, void *userdata)
+static int passcb(char* buf, int size, int rwflag, void* userdata)
 {
     strcpy(buf, "pass");
     return (int)strlen(buf);
@@ -48,8 +48,8 @@ static int passcb(char *buf, int size, int rwflag, void *userdata)
 static int test_decode_nonfipsalg(void)
 {
     int ret = 0;
-    EVP_PKEY *privkey = NULL;
-    BIO *bio = NULL;
+    EVP_PKEY* privkey = NULL;
+    BIO* bio = NULL;
 
     /*
      * Apply the "fips=true" property to all fetches for the libctx.
@@ -83,8 +83,8 @@ err:
 
 int setup_tests(void)
 {
-    const char *prov_name = "default";
-    char *config_file = NULL;
+    const char* prov_name = "default";
+    char* config_file = NULL;
     OPTION_CHOICE o;
 
     while ((o = opt_next()) != OPT_EOF) {
@@ -96,7 +96,7 @@ int setup_tests(void)
             config_file = opt_arg();
             break;
         case OPT_TEST_CASES:
-           break;
+            break;
         default:
         case OPT_ERR:
             return 0;

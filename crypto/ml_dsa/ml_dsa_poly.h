@@ -16,7 +16,7 @@ struct poly_st {
 };
 
 static ossl_inline ossl_unused void
-poly_zero(POLY *p)
+poly_zero(POLY* p)
 {
     memset(p->coeff, 0, sizeof(*p));
 }
@@ -31,7 +31,7 @@ poly_zero(POLY *p)
  *            range 0..q-1
  */
 static ossl_inline ossl_unused void
-poly_add(const POLY *lhs, const POLY *rhs, POLY *out)
+poly_add(const POLY* lhs, const POLY* rhs, POLY* out)
 {
     int i;
 
@@ -49,7 +49,7 @@ poly_add(const POLY *lhs, const POLY *rhs, POLY *out)
  *            range 0..q-1
  */
 static ossl_inline ossl_unused void
-poly_sub(const POLY *lhs, const POLY *rhs, POLY *out)
+poly_sub(const POLY* lhs, const POLY* rhs, POLY* out)
 {
     int i;
 
@@ -59,20 +59,20 @@ poly_sub(const POLY *lhs, const POLY *rhs, POLY *out)
 
 /* @returns 1 if the polynomials are equal, or 0 otherwise */
 static ossl_inline ossl_unused int
-poly_equal(const POLY *a, const POLY *b)
+poly_equal(const POLY* a, const POLY* b)
 {
     return CRYPTO_memcmp(a, b, sizeof(*a)) == 0;
 }
 
 static ossl_inline ossl_unused void
-poly_ntt(POLY *p)
+poly_ntt(POLY* p)
 {
     ossl_ml_dsa_poly_ntt(p);
 }
 
 static ossl_inline ossl_unused int
-poly_sample_in_ball_ntt(POLY *out, const uint8_t *seed, int seed_len,
-                        EVP_MD_CTX *h_ctx, const EVP_MD *md, uint32_t tau)
+poly_sample_in_ball_ntt(POLY* out, const uint8_t* seed, int seed_len,
+    EVP_MD_CTX* h_ctx, const EVP_MD* md, uint32_t tau)
 {
     if (!ossl_ml_dsa_poly_sample_in_ball(out, seed, seed_len, h_ctx, md, tau))
         return 0;
@@ -81,8 +81,8 @@ poly_sample_in_ball_ntt(POLY *out, const uint8_t *seed, int seed_len,
 }
 
 static ossl_inline ossl_unused int
-poly_expand_mask(POLY *out, const uint8_t *seed, size_t seed_len,
-                 uint32_t gamma1, EVP_MD_CTX *h_ctx, const EVP_MD *md)
+poly_expand_mask(POLY* out, const uint8_t* seed, size_t seed_len,
+    uint32_t gamma1, EVP_MD_CTX* h_ctx, const EVP_MD* md)
 {
     return ossl_ml_dsa_poly_expand_mask(out, seed, seed_len, gamma1, h_ctx, md);
 }
@@ -99,17 +99,17 @@ poly_expand_mask(POLY *out, const uint8_t *seed, size_t seed_len,
  *           Each t0 coefficient has an effective range of 8192 (i.e. 13 bits).
  */
 static ossl_inline ossl_unused void
-poly_power2_round(const POLY *t, POLY *t1, POLY *t0)
+poly_power2_round(const POLY* t, POLY* t1, POLY* t0)
 {
     int i;
 
     for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++)
         ossl_ml_dsa_key_compress_power2_round(t->coeff[i],
-                                              t1->coeff + i, t0->coeff + i);
+            t1->coeff + i, t0->coeff + i);
 }
 
 static ossl_inline ossl_unused void
-poly_scale_power2_round(POLY *in, POLY *out)
+poly_scale_power2_round(POLY* in, POLY* out)
 {
     int i;
 
@@ -118,7 +118,7 @@ poly_scale_power2_round(POLY *in, POLY *out)
 }
 
 static ossl_inline ossl_unused void
-poly_high_bits(const POLY *in, uint32_t gamma2, POLY *out)
+poly_high_bits(const POLY* in, uint32_t gamma2, POLY* out)
 {
     int i;
 
@@ -127,7 +127,7 @@ poly_high_bits(const POLY *in, uint32_t gamma2, POLY *out)
 }
 
 static ossl_inline ossl_unused void
-poly_low_bits(const POLY *in, uint32_t gamma2, POLY *out)
+poly_low_bits(const POLY* in, uint32_t gamma2, POLY* out)
 {
     int i;
 
@@ -136,29 +136,29 @@ poly_low_bits(const POLY *in, uint32_t gamma2, POLY *out)
 }
 
 static ossl_inline ossl_unused void
-poly_make_hint(const POLY *ct0, const POLY *cs2, const POLY *w, uint32_t gamma2,
-               POLY *out)
+poly_make_hint(const POLY* ct0, const POLY* cs2, const POLY* w, uint32_t gamma2,
+    POLY* out)
 {
     int i;
 
     for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++)
         out->coeff[i] = ossl_ml_dsa_key_compress_make_hint(ct0->coeff[i],
-                                                           cs2->coeff[i],
-                                                           gamma2, w->coeff[i]);
+            cs2->coeff[i],
+            gamma2, w->coeff[i]);
 }
 
 static ossl_inline ossl_unused void
-poly_use_hint(const POLY *h, const POLY *r, uint32_t gamma2, POLY *out)
+poly_use_hint(const POLY* h, const POLY* r, uint32_t gamma2, POLY* out)
 {
     int i;
 
     for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++)
         out->coeff[i] = ossl_ml_dsa_key_compress_use_hint(h->coeff[i],
-                                                          r->coeff[i], gamma2);
+            r->coeff[i], gamma2);
 }
 
 static ossl_inline ossl_unused void
-poly_max(const POLY *p, uint32_t *mx)
+poly_max(const POLY* p, uint32_t* mx)
 {
     int i;
 
@@ -171,7 +171,7 @@ poly_max(const POLY *p, uint32_t *mx)
 }
 
 static ossl_inline ossl_unused void
-poly_max_signed(const POLY *p, uint32_t *mx)
+poly_max_signed(const POLY* p, uint32_t* mx)
 {
     int i;
 

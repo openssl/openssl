@@ -27,14 +27,14 @@ static const OSSL_PARAM null_param_types[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *null_gettable_params(const OSSL_PROVIDER *prov)
+static const OSSL_PARAM* null_gettable_params(const OSSL_PROVIDER* prov)
 {
     return null_param_types;
 }
 
-static int null_get_params(const OSSL_PROVIDER *provctx, OSSL_PARAM params[])
+static int null_get_params(const OSSL_PROVIDER* provctx, OSSL_PARAM params[])
 {
-    OSSL_PARAM *p;
+    OSSL_PARAM* p;
 
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_NAME);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "OpenSSL Null Provider"))
@@ -51,9 +51,9 @@ static int null_get_params(const OSSL_PROVIDER *provctx, OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_ALGORITHM *null_query(OSSL_PROVIDER *prov,
-                                          int operation_id,
-                                          int *no_cache)
+static const OSSL_ALGORITHM* null_query(OSSL_PROVIDER* prov,
+    int operation_id,
+    int* no_cache)
 {
     *no_cache = 0;
     return NULL;
@@ -67,14 +67,14 @@ static const OSSL_DISPATCH null_dispatch_table[] = {
     OSSL_DISPATCH_END
 };
 
-int ossl_null_provider_init(const OSSL_CORE_HANDLE *handle,
-                            const OSSL_DISPATCH *in,
-                            const OSSL_DISPATCH **out,
-                            void **provctx)
+int ossl_null_provider_init(const OSSL_CORE_HANDLE* handle,
+    const OSSL_DISPATCH* in,
+    const OSSL_DISPATCH** out,
+    void** provctx)
 {
     *out = null_dispatch_table;
 
     /* Could be anything - we don't use it */
-    *provctx = (void *)handle;
+    *provctx = (void*)handle;
     return 1;
 }

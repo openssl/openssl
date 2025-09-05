@@ -8,10 +8,10 @@
  */
 
 #ifndef OSSL_JSON_ENC_H
-# define OSSL_JSON_ENC_H
+#define OSSL_JSON_ENC_H
 
-# include <stdbool.h>
-# include <openssl/bio.h>
+#include <stdbool.h>
+#include <openssl/bio.h>
 
 /*
  * JSON Encoder
@@ -22,22 +22,22 @@
  */
 
 struct json_write_buf {
-    BIO     *bio;
-    char    *buf;
-    size_t  alloc, cur;
+    BIO* bio;
+    char* buf;
+    size_t alloc, cur;
 };
 
 typedef struct ossl_json_enc_st {
-    uint32_t                flags;
+    uint32_t flags;
     /* error: 1 if an error has occurred. */
     /* state: current state. */
     /* stack stores a bitmap. 0=object, 1=array. */
     /* stack cur   size: stack_end_byte bytes, stack_end_bit bits. */
     /* stack alloc size: stack_bytes bytes. */
-    unsigned char           error, stack_end_bit, state, *stack, defer_indent;
-    unsigned char           stack_small[16];
-    struct json_write_buf   wbuf;
-    size_t                  stack_end_byte, stack_bytes;
+    unsigned char error, stack_end_bit, state, *stack, defer_indent;
+    unsigned char stack_small[16];
+    struct json_write_buf wbuf;
+    size_t stack_end_byte, stack_bytes;
 } OSSL_JSON_ENC;
 
 /*
@@ -63,12 +63,12 @@ typedef struct ossl_json_enc_st {
  * 2**53 - 1]` are automatically converted to decimal strings before
  * serialization.
  */
-#define OSSL_JSON_FLAG_NONE    0
-#define OSSL_JSON_FLAG_SEQ     (1U << 0)
-#define OSSL_JSON_FLAG_PRETTY  (1U << 1)
-#define OSSL_JSON_FLAG_IJSON   (1U << 2)
+#define OSSL_JSON_FLAG_NONE 0
+#define OSSL_JSON_FLAG_SEQ (1U << 0)
+#define OSSL_JSON_FLAG_PRETTY (1U << 1)
+#define OSSL_JSON_FLAG_IJSON (1U << 2)
 
-int ossl_json_init(OSSL_JSON_ENC *json, BIO *bio, uint32_t flags);
+int ossl_json_init(OSSL_JSON_ENC* json, BIO* bio, uint32_t flags);
 
 /*
  * ossl_json_cleanup
@@ -76,7 +76,7 @@ int ossl_json_init(OSSL_JSON_ENC *json, BIO *bio, uint32_t flags);
  *
  * Destroys a JSON encoder.
  */
-void ossl_json_cleanup(OSSL_JSON_ENC *json);
+void ossl_json_cleanup(OSSL_JSON_ENC* json);
 
 /*
  * ossl_json_reset
@@ -94,7 +94,7 @@ void ossl_json_cleanup(OSSL_JSON_ENC *json);
  *
  * Automatically calls ossl_json_flush().
  */
-int ossl_json_reset(OSSL_JSON_ENC *json);
+int ossl_json_reset(OSSL_JSON_ENC* json);
 
 /*
  * ossl_json_flush
@@ -105,7 +105,7 @@ int ossl_json_reset(OSSL_JSON_ENC *json);
  * autonomously as buffers are filled, but the caller must use this function
  * to guarantee all data has been flushed.
  */
-int ossl_json_flush(OSSL_JSON_ENC *json);
+int ossl_json_flush(OSSL_JSON_ENC* json);
 
 /*
  * ossl_json_flush_cleanup
@@ -115,7 +115,7 @@ int ossl_json_flush(OSSL_JSON_ENC *json);
  * ossl_json_cleanup regardless of the result. The result of the flush call is
  * returned.
  */
-int ossl_json_flush_cleanup(OSSL_JSON_ENC *json);
+int ossl_json_flush_cleanup(OSSL_JSON_ENC* json);
 
 /*
  * ossl_json_set0_sink
@@ -123,7 +123,7 @@ int ossl_json_flush_cleanup(OSSL_JSON_ENC *json);
  *
  * Changes the sink used by the JSON encoder.
  */
-int ossl_json_set0_sink(OSSL_JSON_ENC *json, BIO *bio);
+int ossl_json_set0_sink(OSSL_JSON_ENC* json, BIO* bio);
 
 /*
  * ossl_json_in_error
@@ -145,7 +145,7 @@ int ossl_json_set0_sink(OSSL_JSON_ENC *json, BIO *bio);
  * flushing. It is expected that errors will ordinarily be either caller errors
  * (programming errors) or BIO errors.
  */
-int ossl_json_in_error(OSSL_JSON_ENC *json);
+int ossl_json_in_error(OSSL_JSON_ENC* json);
 
 /*
  * JSON Builder Calls
@@ -174,51 +174,51 @@ int ossl_json_in_error(OSSL_JSON_ENC *json);
  */
 
 /* Begin a new JSON object. */
-void ossl_json_object_begin(OSSL_JSON_ENC *json);
+void ossl_json_object_begin(OSSL_JSON_ENC* json);
 
 /* End a JSON object. Must be matched with a call to ossl_json_object_begin(). */
-void ossl_json_object_end(OSSL_JSON_ENC *json);
+void ossl_json_object_end(OSSL_JSON_ENC* json);
 
 /* Begin a new JSON array. */
-void ossl_json_array_begin(OSSL_JSON_ENC *json);
+void ossl_json_array_begin(OSSL_JSON_ENC* json);
 
 /* End a JSON array. Must be matched with a call to ossl_json_array_end(). */
-void ossl_json_array_end(OSSL_JSON_ENC *json);
+void ossl_json_array_end(OSSL_JSON_ENC* json);
 
 /*
  * Encode a JSON key within an object. Pass a zero-terminated string, which can
  * be freed immediately following the call to this function.
  */
-void ossl_json_key(OSSL_JSON_ENC *json, const char *key);
+void ossl_json_key(OSSL_JSON_ENC* json, const char* key);
 
 /* Encode a JSON 'null' value. */
-void ossl_json_null(OSSL_JSON_ENC *json);
+void ossl_json_null(OSSL_JSON_ENC* json);
 
 /* Encode a JSON boolean value. */
-void ossl_json_bool(OSSL_JSON_ENC *json, bool value);
+void ossl_json_bool(OSSL_JSON_ENC* json, bool value);
 
 /* Encode a JSON integer from a uint64_t. */
-void ossl_json_u64(OSSL_JSON_ENC *json, uint64_t value);
+void ossl_json_u64(OSSL_JSON_ENC* json, uint64_t value);
 
 /* Encode a JSON integer from an int64_t. */
-void ossl_json_i64(OSSL_JSON_ENC *json, int64_t value);
+void ossl_json_i64(OSSL_JSON_ENC* json, int64_t value);
 
 /*
  * Encode a JSON UTF-8 string from a zero-terminated string. The string passed
  * can be freed immediately following the call to this function.
  */
-void ossl_json_str(OSSL_JSON_ENC *json, const char *str);
+void ossl_json_str(OSSL_JSON_ENC* json, const char* str);
 
 /*
  * Encode a JSON UTF-8 string from a string with the given length. The string
  * passed can be freed immediately following the call to this function.
  */
-void ossl_json_str_len(OSSL_JSON_ENC *json, const char *str, size_t str_len);
+void ossl_json_str_len(OSSL_JSON_ENC* json, const char* str, size_t str_len);
 
 /*
  * Encode binary data as a lowercase hex string. data_len is the data length in
  * bytes.
  */
-void ossl_json_str_hex(OSSL_JSON_ENC *json, const void *data, size_t data_len);
+void ossl_json_str_hex(OSSL_JSON_ENC* json, const void* data, size_t data_len);
 
 #endif

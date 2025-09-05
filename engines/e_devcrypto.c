@@ -30,7 +30,7 @@
 /* #define ENGINE_DEVCRYPTO_DEBUG */
 
 #if CRYPTO_ALGORITHM_MIN < CRYPTO_ALGORITHM_MAX
-# define CHECK_BSD_STYLE_MACROS
+#define CHECK_BSD_STYLE_MACROS
 #endif
 
 #define engine_devcrypto_id "devcrypto"
@@ -52,8 +52,8 @@ typedef struct session_op session_op_t;
  */
 static int cfd = -1;
 #define DEVCRYPTO_REQUIRE_ACCELERATED 0 /* require confirmation of acceleration */
-#define DEVCRYPTO_USE_SOFTWARE        1 /* allow software drivers */
-#define DEVCRYPTO_REJECT_SOFTWARE     2 /* only disallow confirmed software drivers */
+#define DEVCRYPTO_USE_SOFTWARE 1 /* allow software drivers */
+#define DEVCRYPTO_REJECT_SOFTWARE 2 /* only disallow confirmed software drivers */
 
 #define DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS DEVCRYPTO_REJECT_SOFTWARE
 static int use_softdrivers = DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS;
@@ -64,27 +64,28 @@ static int use_softdrivers = DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS;
  */
 struct driver_info_st {
     enum devcrypto_status_t {
-        DEVCRYPTO_STATUS_FAILURE         = -3, /* unusable for other reason */
-        DEVCRYPTO_STATUS_NO_CIOCCPHASH   = -2, /* hash state copy not supported */
+        DEVCRYPTO_STATUS_FAILURE = -3, /* unusable for other reason */
+        DEVCRYPTO_STATUS_NO_CIOCCPHASH = -2, /* hash state copy not supported */
         DEVCRYPTO_STATUS_NO_CIOCGSESSION = -1, /* session open failed */
-        DEVCRYPTO_STATUS_UNKNOWN         =  0, /* not tested yet */
-        DEVCRYPTO_STATUS_USABLE          =  1  /* algo can be used */
+        DEVCRYPTO_STATUS_UNKNOWN = 0, /* not tested yet */
+        DEVCRYPTO_STATUS_USABLE = 1 /* algo can be used */
     } status;
 
     enum devcrypto_accelerated_t {
-        DEVCRYPTO_NOT_ACCELERATED        = -1, /* software implemented */
-        DEVCRYPTO_ACCELERATION_UNKNOWN   =  0, /* acceleration support unknown */
-        DEVCRYPTO_ACCELERATED            =  1  /* hardware accelerated */
+        DEVCRYPTO_NOT_ACCELERATED = -1, /* software implemented */
+        DEVCRYPTO_ACCELERATION_UNKNOWN = 0, /* acceleration support unknown */
+        DEVCRYPTO_ACCELERATED = 1 /* hardware accelerated */
     } accelerated;
 
-    char *driver_name;
+    char* driver_name;
 };
 
 #ifdef OPENSSL_NO_DYNAMIC_ENGINE
 void engine_load_devcrypto_int(void);
 #endif
 
-static int clean_devcrypto_session(session_op_t *sess) {
+static int clean_devcrypto_session(session_op_t* sess)
+{
     if (ioctl(cfd, CIOCFSESSION, &sess->ses) < 0) {
         ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
         return 0;
@@ -105,8 +106,8 @@ static int clean_devcrypto_session(session_op_t *sess) {
 
 struct cipher_ctx {
     session_op_t sess;
-    int op;                      /* COP_ENCRYPT or COP_DECRYPT */
-    unsigned long mode;          /* EVP_CIPH_*_MODE */
+    int op; /* COP_ENCRYPT or COP_DECRYPT */
+    unsigned long mode; /* EVP_CIPH_*_MODE */
 
     /* to handle ctr mode being a stream cipher */
     unsigned char partial[EVP_MAX_BLOCK_LENGTH];
@@ -142,7 +143,7 @@ static const struct cipher_data_st {
     { NID_aes_192_ctr, 16, 192 / 8, 16, EVP_CIPH_CTR_MODE, CRYPTO_AES_CTR },
     { NID_aes_256_ctr, 16, 256 / 8, 16, EVP_CIPH_CTR_MODE, CRYPTO_AES_CTR },
 #endif
-#if 0                            /* Not yet supported */
+#if 0 /* Not yet supported */
     { NID_aes_128_xts, 16, 128 / 8 * 2, 16, EVP_CIPH_XTS_MODE, CRYPTO_AES_XTS },
     { NID_aes_256_xts, 16, 256 / 8 * 2, 16, EVP_CIPH_XTS_MODE, CRYPTO_AES_XTS },
 #endif
@@ -151,18 +152,18 @@ static const struct cipher_data_st {
     { NID_aes_192_ecb, 16, 192 / 8, 0, EVP_CIPH_ECB_MODE, CRYPTO_AES_ECB },
     { NID_aes_256_ecb, 16, 256 / 8, 0, EVP_CIPH_ECB_MODE, CRYPTO_AES_ECB },
 #endif
-#if 0                            /* Not yet supported */
+#if 0 /* Not yet supported */
     { NID_aes_128_gcm, 16, 128 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM },
     { NID_aes_192_gcm, 16, 192 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM },
     { NID_aes_256_gcm, 16, 256 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM },
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
     { NID_camellia_128_cbc, 16, 128 / 8, 16, EVP_CIPH_CBC_MODE,
-      CRYPTO_CAMELLIA_CBC },
+        CRYPTO_CAMELLIA_CBC },
     { NID_camellia_192_cbc, 16, 192 / 8, 16, EVP_CIPH_CBC_MODE,
-      CRYPTO_CAMELLIA_CBC },
+        CRYPTO_CAMELLIA_CBC },
     { NID_camellia_256_cbc, 16, 256 / 8, 16, EVP_CIPH_CBC_MODE,
-      CRYPTO_CAMELLIA_CBC },
+        CRYPTO_CAMELLIA_CBC },
 #endif
 };
 
@@ -192,7 +193,7 @@ static size_t get_cipher_data_index(int nid)
     return -1;
 }
 
-static const struct cipher_data_st *get_cipher_data(int nid)
+static const struct cipher_data_st* get_cipher_data(int nid)
 {
     return &cipher_data[get_cipher_data_index(nid)];
 }
@@ -202,30 +203,25 @@ static const struct cipher_data_st *get_cipher_data(int nid)
  * with cryptodev.
  */
 
-static int cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                       const unsigned char *iv, int enc)
+static int cipher_init(EVP_CIPHER_CTX* ctx, const unsigned char* key,
+    const unsigned char* iv, int enc)
 {
-    struct cipher_ctx *cipher_ctx =
-        (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
-    const struct cipher_data_st *cipher_d =
-        get_cipher_data(EVP_CIPHER_CTX_get_nid(ctx));
+    struct cipher_ctx* cipher_ctx = (struct cipher_ctx*)EVP_CIPHER_CTX_get_cipher_data(ctx);
+    const struct cipher_data_st* cipher_d = get_cipher_data(EVP_CIPHER_CTX_get_nid(ctx));
     int ret;
 
     /* cleanup a previous session */
-    if (cipher_ctx->sess.ses != 0 &&
-        clean_devcrypto_session(&cipher_ctx->sess) == 0)
+    if (cipher_ctx->sess.ses != 0 && clean_devcrypto_session(&cipher_ctx->sess) == 0)
         return 0;
 
     cipher_ctx->sess.cipher = cipher_d->devcryptoid;
     cipher_ctx->sess.keylen = cipher_d->keylen;
-    cipher_ctx->sess.key = (void *)key;
+    cipher_ctx->sess.key = (void*)key;
     cipher_ctx->op = enc ? COP_ENCRYPT : COP_DECRYPT;
     cipher_ctx->mode = cipher_d->flags & EVP_CIPH_MODE;
     cipher_ctx->blocksize = cipher_d->blocksize;
 #ifdef CIOCGSESSION2
-    cipher_ctx->sess.crid = (use_softdrivers == DEVCRYPTO_USE_SOFTWARE) ?
-        CRYPTO_FLAG_SOFTWARE | CRYPTO_FLAG_HARDWARE :
-        CRYPTO_FLAG_HARDWARE;
+    cipher_ctx->sess.crid = (use_softdrivers == DEVCRYPTO_USE_SOFTWARE) ? CRYPTO_FLAG_SOFTWARE | CRYPTO_FLAG_HARDWARE : CRYPTO_FLAG_HARDWARE;
     ret = ioctl(cfd, CIOCGSESSION2, &cipher_ctx->sess);
 #else
     ret = ioctl(cfd, CIOCGSESSION, &cipher_ctx->sess);
@@ -238,25 +234,24 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
-static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-                            const unsigned char *in, size_t inl)
+static int cipher_do_cipher(EVP_CIPHER_CTX* ctx, unsigned char* out,
+    const unsigned char* in, size_t inl)
 {
-    struct cipher_ctx *cipher_ctx =
-        (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
+    struct cipher_ctx* cipher_ctx = (struct cipher_ctx*)EVP_CIPHER_CTX_get_cipher_data(ctx);
     struct crypt_op cryp;
-    unsigned char *iv = EVP_CIPHER_CTX_iv_noconst(ctx);
+    unsigned char* iv = EVP_CIPHER_CTX_iv_noconst(ctx);
 #if !defined(COP_FLAG_WRITE_IV)
     unsigned char saved_iv[EVP_MAX_IV_LENGTH];
-    const unsigned char *ivptr;
+    const unsigned char* ivptr;
     size_t nblocks, ivlen;
 #endif
 
     memset(&cryp, 0, sizeof(cryp));
     cryp.ses = cipher_ctx->sess.ses;
     cryp.len = inl;
-    cryp.src = (void *)in;
-    cryp.dst = (void *)out;
-    cryp.iv = (void *)iv;
+    cryp.src = (void*)in;
+    cryp.dst = (void*)out;
+    cryp.iv = (void*)iv;
     cryp.op = cipher_ctx->op;
 #if !defined(COP_FLAG_WRITE_IV)
     cryp.flags = 0;
@@ -302,11 +297,11 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
         case EVP_CIPH_CTR_MODE:
             nblocks = (inl + cipher_ctx->blocksize - 1)
-                      / cipher_ctx->blocksize;
+                / cipher_ctx->blocksize;
             do {
                 ivlen--;
                 nblocks += iv[ivlen];
-                iv[ivlen] = (uint8_t) nblocks;
+                iv[ivlen] = (uint8_t)nblocks;
                 nblocks >>= 8;
             } while (ivlen);
             break;
@@ -319,11 +314,10 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
-static int ctr_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-                         const unsigned char *in, size_t inl)
+static int ctr_do_cipher(EVP_CIPHER_CTX* ctx, unsigned char* out,
+    const unsigned char* in, size_t inl)
 {
-    struct cipher_ctx *cipher_ctx =
-        (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
+    struct cipher_ctx* cipher_ctx = (struct cipher_ctx*)EVP_CIPHER_CTX_get_cipher_data(ctx);
     size_t nblocks, len;
 
     /* initial partial block */
@@ -335,7 +329,7 @@ static int ctr_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
     /* full blocks */
     if (inl > cipher_ctx->blocksize) {
-        nblocks = inl/cipher_ctx->blocksize;
+        nblocks = inl / cipher_ctx->blocksize;
         len = nblocks * cipher_ctx->blocksize;
         if (cipher_do_cipher(ctx, out, in, len) < 1)
             return 0;
@@ -348,11 +342,12 @@ static int ctr_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (inl) {
         memset(cipher_ctx->partial, 0, cipher_ctx->blocksize);
         if (cipher_do_cipher(ctx, cipher_ctx->partial, cipher_ctx->partial,
-            cipher_ctx->blocksize) < 1)
+                cipher_ctx->blocksize)
+            < 1)
             return 0;
         while (inl--) {
             out[cipher_ctx->num] = in[cipher_ctx->num]
-                                   ^ cipher_ctx->partial[cipher_ctx->num];
+                ^ cipher_ctx->partial[cipher_ctx->num];
             cipher_ctx->num++;
         }
     }
@@ -360,12 +355,11 @@ static int ctr_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
-static int cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int p1, void* p2)
+static int cipher_ctrl(EVP_CIPHER_CTX* ctx, int type, int p1, void* p2)
 {
-    struct cipher_ctx *cipher_ctx =
-        (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
-    EVP_CIPHER_CTX *to_ctx = (EVP_CIPHER_CTX *)p2;
-    struct cipher_ctx *to_cipher_ctx;
+    struct cipher_ctx* cipher_ctx = (struct cipher_ctx*)EVP_CIPHER_CTX_get_cipher_data(ctx);
+    EVP_CIPHER_CTX* to_ctx = (EVP_CIPHER_CTX*)p2;
+    struct cipher_ctx* to_cipher_ctx;
 
     switch (type) {
 
@@ -373,11 +367,10 @@ static int cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int p1, void* p2)
         if (cipher_ctx == NULL)
             return 1;
         /* when copying the context, a new session needs to be initialized */
-        to_cipher_ctx =
-            (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(to_ctx);
+        to_cipher_ctx = (struct cipher_ctx*)EVP_CIPHER_CTX_get_cipher_data(to_ctx);
         memset(&to_cipher_ctx->sess, 0, sizeof(to_cipher_ctx->sess));
-        return cipher_init(to_ctx, (void *)cipher_ctx->sess.key, EVP_CIPHER_CTX_iv(ctx),
-                           (cipher_ctx->op == COP_ENCRYPT));
+        return cipher_init(to_ctx, (void*)cipher_ctx->sess.key, EVP_CIPHER_CTX_iv(ctx),
+            (cipher_ctx->op == COP_ENCRYPT));
 
     case EVP_CTRL_INIT:
         memset(&cipher_ctx->sess, 0, sizeof(cipher_ctx->sess));
@@ -390,10 +383,9 @@ static int cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int p1, void* p2)
     return -1;
 }
 
-static int cipher_cleanup(EVP_CIPHER_CTX *ctx)
+static int cipher_cleanup(EVP_CIPHER_CTX* ctx)
 {
-    struct cipher_ctx *cipher_ctx =
-        (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
+    struct cipher_ctx* cipher_ctx = (struct cipher_ctx*)EVP_CIPHER_CTX_get_cipher_data(ctx);
 
     return clean_devcrypto_session(&cipher_ctx->sess);
 }
@@ -406,21 +398,22 @@ static int cipher_cleanup(EVP_CIPHER_CTX *ctx)
  */
 static int known_cipher_nids[OSSL_NELEM(cipher_data)];
 static int known_cipher_nids_amount = -1; /* -1 indicates not yet initialised */
-static EVP_CIPHER *known_cipher_methods[OSSL_NELEM(cipher_data)] = { NULL, };
+static EVP_CIPHER* known_cipher_methods[OSSL_NELEM(cipher_data)] = {
+    NULL,
+};
 static int selected_ciphers[OSSL_NELEM(cipher_data)];
 static struct driver_info_st cipher_driver_info[OSSL_NELEM(cipher_data)];
-
 
 static int devcrypto_test_cipher(size_t cipher_data_index)
 {
     return (cipher_driver_info[cipher_data_index].status == DEVCRYPTO_STATUS_USABLE
-            && selected_ciphers[cipher_data_index] == 1
-            && (cipher_driver_info[cipher_data_index].accelerated
-                    == DEVCRYPTO_ACCELERATED
-                || use_softdrivers == DEVCRYPTO_USE_SOFTWARE
-                || (cipher_driver_info[cipher_data_index].accelerated
-                        != DEVCRYPTO_NOT_ACCELERATED
-                    && use_softdrivers == DEVCRYPTO_REJECT_SOFTWARE)));
+        && selected_ciphers[cipher_data_index] == 1
+        && (cipher_driver_info[cipher_data_index].accelerated
+                == DEVCRYPTO_ACCELERATED
+            || use_softdrivers == DEVCRYPTO_USE_SOFTWARE
+            || (cipher_driver_info[cipher_data_index].accelerated
+                    != DEVCRYPTO_NOT_ACCELERATED
+                && use_softdrivers == DEVCRYPTO_REJECT_SOFTWARE)));
 }
 
 static void prepare_cipher_methods(void)
@@ -438,10 +431,10 @@ static void prepare_cipher_methods(void)
     memset(&cipher_driver_info, 0, sizeof(cipher_driver_info));
 
     memset(&sess, 0, sizeof(sess));
-    sess.key = (void *)"01234567890123456789012345678901234567890123456789";
+    sess.key = (void*)"01234567890123456789012345678901234567890123456789";
 
     for (i = 0, known_cipher_nids_amount = 0;
-         i < OSSL_NELEM(cipher_data); i++) {
+        i < OSSL_NELEM(cipher_data); i++) {
 
         selected_ciphers[i] = 1;
         /*
@@ -475,28 +468,25 @@ static void prepare_cipher_methods(void)
 
         cipher_mode = cipher_data[i].flags & EVP_CIPH_MODE;
 
-        if ((known_cipher_methods[i] =
-                 EVP_CIPHER_meth_new(cipher_data[i].nid,
-                                     cipher_mode == EVP_CIPH_CTR_MODE ? 1 :
-                                                    cipher_data[i].blocksize,
-                                     cipher_data[i].keylen)) == NULL
+        if ((known_cipher_methods[i] = EVP_CIPHER_meth_new(cipher_data[i].nid,
+                 cipher_mode == EVP_CIPH_CTR_MODE ? 1 : cipher_data[i].blocksize,
+                 cipher_data[i].keylen))
+                == NULL
             || !EVP_CIPHER_meth_set_iv_length(known_cipher_methods[i],
-                                              cipher_data[i].ivlen)
+                cipher_data[i].ivlen)
             || !EVP_CIPHER_meth_set_flags(known_cipher_methods[i],
-                                          cipher_data[i].flags
-                                          | EVP_CIPH_CUSTOM_COPY
-                                          | EVP_CIPH_CTRL_INIT
-                                          | EVP_CIPH_FLAG_DEFAULT_ASN1)
+                cipher_data[i].flags
+                    | EVP_CIPH_CUSTOM_COPY
+                    | EVP_CIPH_CTRL_INIT
+                    | EVP_CIPH_FLAG_DEFAULT_ASN1)
             || !EVP_CIPHER_meth_set_init(known_cipher_methods[i], cipher_init)
             || !EVP_CIPHER_meth_set_do_cipher(known_cipher_methods[i],
-                                     cipher_mode == EVP_CIPH_CTR_MODE ?
-                                              ctr_do_cipher :
-                                              cipher_do_cipher)
+                cipher_mode == EVP_CIPH_CTR_MODE ? ctr_do_cipher : cipher_do_cipher)
             || !EVP_CIPHER_meth_set_ctrl(known_cipher_methods[i], cipher_ctrl)
             || !EVP_CIPHER_meth_set_cleanup(known_cipher_methods[i],
-                                            cipher_cleanup)
+                cipher_cleanup)
             || !EVP_CIPHER_meth_set_impl_ctx_size(known_cipher_methods[i],
-                                                  sizeof(struct cipher_ctx))) {
+                sizeof(struct cipher_ctx))) {
             cipher_driver_info[i].status = DEVCRYPTO_STATUS_FAILURE;
             EVP_CIPHER_meth_free(known_cipher_methods[i]);
             known_cipher_methods[i] = NULL;
@@ -506,17 +496,15 @@ static void prepare_cipher_methods(void)
             cipher_driver_info[i].accelerated = accelerated;
             fop.crid = sess.crid;
             if (ioctl(cfd, CIOCFINDDEV, &fop) == 0) {
-                cipher_driver_info[i].driver_name =
-                    OPENSSL_strndup(fop.name, sizeof(fop.name));
+                cipher_driver_info[i].driver_name = OPENSSL_strndup(fop.name, sizeof(fop.name));
             }
 #elif defined(CIOCGSESSINFO)
             siop.ses = sess.ses;
             if (ioctl(cfd, CIOCGSESSINFO, &siop) < 0) {
                 cipher_driver_info[i].accelerated = DEVCRYPTO_ACCELERATION_UNKNOWN;
             } else {
-                cipher_driver_info[i].driver_name =
-                    OPENSSL_strndup(siop.cipher_info.cra_driver_name,
-                                    CRYPTODEV_MAX_ALG_NAME);
+                cipher_driver_info[i].driver_name = OPENSSL_strndup(siop.cipher_info.cra_driver_name,
+                    CRYPTODEV_MAX_ALG_NAME);
                 if (!(siop.flags & SIOP_FLAG_KERNEL_DRIVER_ONLY))
                     cipher_driver_info[i].accelerated = DEVCRYPTO_NOT_ACCELERATED;
                 else
@@ -526,13 +514,12 @@ static void prepare_cipher_methods(void)
         }
         ioctl(cfd, CIOCFSESSION, &sess.ses);
         if (devcrypto_test_cipher(i)) {
-            known_cipher_nids[known_cipher_nids_amount++] =
-                cipher_data[i].nid;
+            known_cipher_nids[known_cipher_nids_amount++] = cipher_data[i].nid;
         }
     }
 }
 
-static void rebuild_known_cipher_nids(ENGINE *e)
+static void rebuild_known_cipher_nids(ENGINE* e)
 {
     size_t i;
 
@@ -544,7 +531,7 @@ static void rebuild_known_cipher_nids(ENGINE *e)
     ENGINE_register_ciphers(e);
 }
 
-static const EVP_CIPHER *get_cipher_method(int nid)
+static const EVP_CIPHER* get_cipher_method(int nid)
 {
     size_t i = get_cipher_data_index(nid);
 
@@ -553,7 +540,7 @@ static const EVP_CIPHER *get_cipher_method(int nid)
     return known_cipher_methods[i];
 }
 
-static int get_cipher_nids(const int **nids)
+static int get_cipher_nids(const int** nids)
 {
     *nids = known_cipher_nids;
     return known_cipher_nids_amount;
@@ -578,8 +565,8 @@ static void destroy_all_cipher_methods(void)
     }
 }
 
-static int devcrypto_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
-                             const int **nids, int nid)
+static int devcrypto_ciphers(ENGINE* e, const EVP_CIPHER** cipher,
+    const int** nids, int nid)
 {
     if (cipher == NULL)
         return get_cipher_nids(nids);
@@ -589,7 +576,7 @@ static int devcrypto_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
     return *cipher != NULL;
 }
 
-static void devcrypto_select_all_ciphers(int *cipher_list)
+static void devcrypto_select_all_ciphers(int* cipher_list)
 {
     size_t i;
 
@@ -597,11 +584,11 @@ static void devcrypto_select_all_ciphers(int *cipher_list)
         cipher_list[i] = 1;
 }
 
-static int cryptodev_select_cipher_cb(const char *str, int len, void *usr)
+static int cryptodev_select_cipher_cb(const char* str, int len, void* usr)
 {
-    int *cipher_list = (int *)usr;
-    char *name;
-    const EVP_CIPHER *EVP;
+    int* cipher_list = (int*)usr;
+    char* name;
+    const EVP_CIPHER* EVP;
     size_t i;
 
     if (len == 0)
@@ -622,24 +609,23 @@ static int cryptodev_select_cipher_cb(const char *str, int len, void *usr)
 static void dump_cipher_info(void)
 {
     size_t i;
-    const char *name;
+    const char* name;
 
-    fprintf (stderr, "Information about ciphers supported by the /dev/crypto"
-             " engine:\n");
+    fprintf(stderr, "Information about ciphers supported by the /dev/crypto"
+                    " engine:\n");
 #ifndef CIOCGSESSINFO
     fprintf(stderr, "CIOCGSESSINFO (session info call) unavailable\n");
 #endif
     for (i = 0; i < OSSL_NELEM(cipher_data); i++) {
         name = OBJ_nid2sn(cipher_data[i].nid);
-        fprintf (stderr, "Cipher %s, NID=%d, /dev/crypto info: id=%d, ",
-                 name ? name : "unknown", cipher_data[i].nid,
-                 cipher_data[i].devcryptoid);
+        fprintf(stderr, "Cipher %s, NID=%d, /dev/crypto info: id=%d, ",
+            name ? name : "unknown", cipher_data[i].nid,
+            cipher_data[i].devcryptoid);
         if (cipher_driver_info[i].status == DEVCRYPTO_STATUS_NO_CIOCGSESSION) {
-            fprintf (stderr, "CIOCGSESSION (session open call) failed\n");
+            fprintf(stderr, "CIOCGSESSION (session open call) failed\n");
             continue;
         }
-        fprintf (stderr, "driver=%s ", cipher_driver_info[i].driver_name ?
-                 cipher_driver_info[i].driver_name : "unknown");
+        fprintf(stderr, "driver=%s ", cipher_driver_info[i].driver_name ? cipher_driver_info[i].driver_name : "unknown");
         if (cipher_driver_info[i].accelerated == DEVCRYPTO_ACCELERATED)
             fprintf(stderr, "(hw accelerated)");
         else if (cipher_driver_info[i].accelerated == DEVCRYPTO_NOT_ACCELERATED)
@@ -647,7 +633,7 @@ static void dump_cipher_info(void)
         else
             fprintf(stderr, "(acceleration status unknown)");
         if (cipher_driver_info[i].status == DEVCRYPTO_STATUS_FAILURE)
-            fprintf (stderr, ". Cipher setup failed");
+            fprintf(stderr, ". Cipher setup failed");
         fprintf(stderr, "\n");
     }
     fprintf(stderr, "\n");
@@ -690,9 +676,9 @@ static const struct digest_data_st {
 #endif
     { NID_sha1, SHA_CBLOCK, 20, CRYPTO_SHA1 },
 #ifndef OPENSSL_NO_RMD160
-# if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_RIPEMD160)
+#if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_RIPEMD160)
     { NID_ripemd160, /* RIPEMD160_CBLOCK */ 64, 20, CRYPTO_RIPEMD160 },
-# endif
+#endif
 #endif
 #if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_SHA2_224)
     { NID_sha224, SHA256_CBLOCK, 224 / 8, CRYPTO_SHA2_224 },
@@ -734,7 +720,7 @@ static size_t get_digest_data_index(int nid)
     return -1;
 }
 
-static const struct digest_data_st *get_digest_data(int nid)
+static const struct digest_data_st* get_digest_data(int nid)
 {
     return &digest_data[get_digest_data_index(nid)];
 }
@@ -744,12 +730,10 @@ static const struct digest_data_st *get_digest_data(int nid)
  * with cryptodev: init, update, final, cleanup, and copy.
  */
 
-static int digest_init(EVP_MD_CTX *ctx)
+static int digest_init(EVP_MD_CTX* ctx)
 {
-    struct digest_ctx *digest_ctx =
-        (struct digest_ctx *)EVP_MD_CTX_get0_md_data(ctx);
-    const struct digest_data_st *digest_d =
-        get_digest_data(EVP_MD_CTX_get_type(ctx));
+    struct digest_ctx* digest_ctx = (struct digest_ctx*)EVP_MD_CTX_get0_md_data(ctx);
+    const struct digest_data_st* digest_d = get_digest_data(EVP_MD_CTX_get_type(ctx));
 
     digest_ctx->init_called = 1;
 
@@ -762,25 +746,24 @@ static int digest_init(EVP_MD_CTX *ctx)
     return 1;
 }
 
-static int digest_op(struct digest_ctx *ctx, const void *src, size_t srclen,
-                     void *res, unsigned int flags)
+static int digest_op(struct digest_ctx* ctx, const void* src, size_t srclen,
+    void* res, unsigned int flags)
 {
     struct crypt_op cryp;
 
     memset(&cryp, 0, sizeof(cryp));
     cryp.ses = ctx->sess.ses;
     cryp.len = srclen;
-    cryp.src = (void *)src;
+    cryp.src = (void*)src;
     cryp.dst = NULL;
     cryp.mac = res;
     cryp.flags = flags;
     return ioctl(cfd, CIOCCRYPT, &cryp);
 }
 
-static int digest_update(EVP_MD_CTX *ctx, const void *data, size_t count)
+static int digest_update(EVP_MD_CTX* ctx, const void* data, size_t count)
 {
-    struct digest_ctx *digest_ctx =
-        (struct digest_ctx *)EVP_MD_CTX_get0_md_data(ctx);
+    struct digest_ctx* digest_ctx = (struct digest_ctx*)EVP_MD_CTX_get0_md_data(ctx);
 
     if (count == 0)
         return 1;
@@ -799,10 +782,9 @@ static int digest_update(EVP_MD_CTX *ctx, const void *data, size_t count)
     return 0;
 }
 
-static int digest_final(EVP_MD_CTX *ctx, unsigned char *md)
+static int digest_final(EVP_MD_CTX* ctx, unsigned char* md)
 {
-    struct digest_ctx *digest_ctx =
-        (struct digest_ctx *)EVP_MD_CTX_get0_md_data(ctx);
+    struct digest_ctx* digest_ctx = (struct digest_ctx*)EVP_MD_CTX_get0_md_data(ctx);
 
     if (md == NULL || digest_ctx == NULL)
         return 0;
@@ -817,12 +799,10 @@ static int digest_final(EVP_MD_CTX *ctx, unsigned char *md)
     return 1;
 }
 
-static int digest_copy(EVP_MD_CTX *to, const EVP_MD_CTX *from)
+static int digest_copy(EVP_MD_CTX* to, const EVP_MD_CTX* from)
 {
-    struct digest_ctx *digest_from =
-        (struct digest_ctx *)EVP_MD_CTX_get0_md_data(from);
-    struct digest_ctx *digest_to =
-        (struct digest_ctx *)EVP_MD_CTX_get0_md_data(to);
+    struct digest_ctx* digest_from = (struct digest_ctx*)EVP_MD_CTX_get0_md_data(from);
+    struct digest_ctx* digest_to = (struct digest_ctx*)EVP_MD_CTX_get0_md_data(to);
     struct cphash_op cphash;
 
     if (digest_from == NULL || digest_from->init_called != 1)
@@ -842,10 +822,9 @@ static int digest_copy(EVP_MD_CTX *to, const EVP_MD_CTX *from)
     return 1;
 }
 
-static int digest_cleanup(EVP_MD_CTX *ctx)
+static int digest_cleanup(EVP_MD_CTX* ctx)
 {
-    struct digest_ctx *digest_ctx =
-        (struct digest_ctx *)EVP_MD_CTX_get0_md_data(ctx);
+    struct digest_ctx* digest_ctx = (struct digest_ctx*)EVP_MD_CTX_get0_md_data(ctx);
 
     if (digest_ctx == NULL)
         return 1;
@@ -861,23 +840,25 @@ static int digest_cleanup(EVP_MD_CTX *ctx)
  */
 static int known_digest_nids[OSSL_NELEM(digest_data)];
 static int known_digest_nids_amount = -1; /* -1 indicates not yet initialised */
-static EVP_MD *known_digest_methods[OSSL_NELEM(digest_data)] = { NULL, };
+static EVP_MD* known_digest_methods[OSSL_NELEM(digest_data)] = {
+    NULL,
+};
 static int selected_digests[OSSL_NELEM(digest_data)];
 static struct driver_info_st digest_driver_info[OSSL_NELEM(digest_data)];
 
 static int devcrypto_test_digest(size_t digest_data_index)
 {
     return (digest_driver_info[digest_data_index].status == DEVCRYPTO_STATUS_USABLE
-            && selected_digests[digest_data_index] == 1
-            && (digest_driver_info[digest_data_index].accelerated
-                    == DEVCRYPTO_ACCELERATED
-                || use_softdrivers == DEVCRYPTO_USE_SOFTWARE
-                || (digest_driver_info[digest_data_index].accelerated
-                        != DEVCRYPTO_NOT_ACCELERATED
-                    && use_softdrivers == DEVCRYPTO_REJECT_SOFTWARE)));
+        && selected_digests[digest_data_index] == 1
+        && (digest_driver_info[digest_data_index].accelerated
+                == DEVCRYPTO_ACCELERATED
+            || use_softdrivers == DEVCRYPTO_USE_SOFTWARE
+            || (digest_driver_info[digest_data_index].accelerated
+                    != DEVCRYPTO_NOT_ACCELERATED
+                && use_softdrivers == DEVCRYPTO_REJECT_SOFTWARE)));
 }
 
-static void rebuild_known_digest_nids(ENGINE *e)
+static void rebuild_known_digest_nids(ENGINE* e)
 {
     size_t i;
 
@@ -904,7 +885,7 @@ static void prepare_digest_methods(void)
     memset(&sess2, 0, sizeof(sess2));
 
     for (i = 0, known_digest_nids_amount = 0; i < OSSL_NELEM(digest_data);
-         i++) {
+        i++) {
 
         selected_digests[i] = 1;
 
@@ -924,9 +905,8 @@ static void prepare_digest_methods(void)
         if (ioctl(cfd, CIOCGSESSINFO, &siop) < 0) {
             digest_driver_info[i].accelerated = DEVCRYPTO_ACCELERATION_UNKNOWN;
         } else {
-            digest_driver_info[i].driver_name =
-                OPENSSL_strndup(siop.hash_info.cra_driver_name,
-                                CRYPTODEV_MAX_ALG_NAME);
+            digest_driver_info[i].driver_name = OPENSSL_strndup(siop.hash_info.cra_driver_name,
+                CRYPTODEV_MAX_ALG_NAME);
             if (siop.flags & SIOP_FLAG_KERNEL_DRIVER_ONLY)
                 digest_driver_info[i].accelerated = DEVCRYPTO_ACCELERATED;
             else
@@ -947,25 +927,26 @@ static void prepare_digest_methods(void)
             goto finish;
         }
         if ((known_digest_methods[i] = EVP_MD_meth_new(digest_data[i].nid,
-                                                       NID_undef)) == NULL
+                 NID_undef))
+                == NULL
             || !EVP_MD_meth_set_input_blocksize(known_digest_methods[i],
-                                                digest_data[i].blocksize)
+                digest_data[i].blocksize)
             || !EVP_MD_meth_set_result_size(known_digest_methods[i],
-                                            digest_data[i].digestlen)
+                digest_data[i].digestlen)
             || !EVP_MD_meth_set_init(known_digest_methods[i], digest_init)
             || !EVP_MD_meth_set_update(known_digest_methods[i], digest_update)
             || !EVP_MD_meth_set_final(known_digest_methods[i], digest_final)
             || !EVP_MD_meth_set_copy(known_digest_methods[i], digest_copy)
             || !EVP_MD_meth_set_cleanup(known_digest_methods[i], digest_cleanup)
             || !EVP_MD_meth_set_app_datasize(known_digest_methods[i],
-                                             sizeof(struct digest_ctx))) {
+                sizeof(struct digest_ctx))) {
             digest_driver_info[i].status = DEVCRYPTO_STATUS_FAILURE;
             EVP_MD_meth_free(known_digest_methods[i]);
             known_digest_methods[i] = NULL;
             goto finish;
         }
         digest_driver_info[i].status = DEVCRYPTO_STATUS_USABLE;
-finish:
+    finish:
         ioctl(cfd, CIOCFSESSION, &sess1.ses);
         if (sess2.ses != 0)
             ioctl(cfd, CIOCFSESSION, &sess2.ses);
@@ -974,7 +955,7 @@ finish:
     }
 }
 
-static const EVP_MD *get_digest_method(int nid)
+static const EVP_MD* get_digest_method(int nid)
 {
     size_t i = get_digest_data_index(nid);
 
@@ -983,7 +964,7 @@ static const EVP_MD *get_digest_method(int nid)
     return known_digest_methods[i];
 }
 
-static int get_digest_nids(const int **nids)
+static int get_digest_nids(const int** nids)
 {
     *nids = known_digest_nids;
     return known_digest_nids_amount;
@@ -1008,8 +989,8 @@ static void destroy_all_digest_methods(void)
     }
 }
 
-static int devcrypto_digests(ENGINE *e, const EVP_MD **digest,
-                             const int **nids, int nid)
+static int devcrypto_digests(ENGINE* e, const EVP_MD** digest,
+    const int** nids, int nid)
 {
     if (digest == NULL)
         return get_digest_nids(nids);
@@ -1019,7 +1000,7 @@ static int devcrypto_digests(ENGINE *e, const EVP_MD **digest,
     return *digest != NULL;
 }
 
-static void devcrypto_select_all_digests(int *digest_list)
+static void devcrypto_select_all_digests(int* digest_list)
 {
     size_t i;
 
@@ -1027,11 +1008,11 @@ static void devcrypto_select_all_digests(int *digest_list)
         digest_list[i] = 1;
 }
 
-static int cryptodev_select_digest_cb(const char *str, int len, void *usr)
+static int cryptodev_select_digest_cb(const char* str, int len, void* usr)
 {
-    int *digest_list = (int *)usr;
-    char *name;
-    const EVP_MD *EVP;
+    int* digest_list = (int*)usr;
+    char* name;
+    const EVP_MD* EVP;
     size_t i;
 
     if (len == 0)
@@ -1052,22 +1033,22 @@ static int cryptodev_select_digest_cb(const char *str, int len, void *usr)
 static void dump_digest_info(void)
 {
     size_t i;
-    const char *name;
+    const char* name;
 
-    fprintf (stderr, "Information about digests supported by the /dev/crypto"
-             " engine:\n");
+    fprintf(stderr, "Information about digests supported by the /dev/crypto"
+                    " engine:\n");
 #ifndef CIOCGSESSINFO
     fprintf(stderr, "CIOCGSESSINFO (session info call) unavailable\n");
 #endif
 
     for (i = 0; i < OSSL_NELEM(digest_data); i++) {
         name = OBJ_nid2sn(digest_data[i].nid);
-        fprintf (stderr, "Digest %s, NID=%d, /dev/crypto info: id=%d, driver=%s",
-                 name ? name : "unknown", digest_data[i].nid,
-                 digest_data[i].devcryptoid,
-                 digest_driver_info[i].driver_name ? digest_driver_info[i].driver_name : "unknown");
+        fprintf(stderr, "Digest %s, NID=%d, /dev/crypto info: id=%d, driver=%s",
+            name ? name : "unknown", digest_data[i].nid,
+            digest_data[i].devcryptoid,
+            digest_driver_info[i].driver_name ? digest_driver_info[i].driver_name : "unknown");
         if (digest_driver_info[i].status == DEVCRYPTO_STATUS_NO_CIOCGSESSION) {
-            fprintf (stderr, ". CIOCGSESSION (session open) failed\n");
+            fprintf(stderr, ". CIOCGSESSION (session open) failed\n");
             continue;
         }
         if (digest_driver_info[i].accelerated == DEVCRYPTO_ACCELERATED)
@@ -1077,7 +1058,7 @@ static void dump_digest_info(void)
         else
             fprintf(stderr, " (acceleration status unknown)");
         if (cipher_driver_info[i].status == DEVCRYPTO_STATUS_FAILURE)
-            fprintf (stderr, ". Cipher setup failed\n");
+            fprintf(stderr, ". Cipher setup failed\n");
         else if (digest_driver_info[i].status == DEVCRYPTO_STATUS_NO_CIOCCPHASH)
             fprintf(stderr, ", CIOCCPHASH failed\n");
         else
@@ -1101,40 +1082,35 @@ static void dump_digest_info(void)
 
 static const ENGINE_CMD_DEFN devcrypto_cmds[] = {
 #if defined(CIOCGSESSINFO) || defined(CIOCGSESSION2)
-   {DEVCRYPTO_CMD_USE_SOFTDRIVERS,
-    "USE_SOFTDRIVERS",
-    "specifies whether to use software (not accelerated) drivers ("
-        OPENSSL_MSTR(DEVCRYPTO_REQUIRE_ACCELERATED) "=use only accelerated drivers, "
-        OPENSSL_MSTR(DEVCRYPTO_USE_SOFTWARE) "=allow all drivers, "
-        OPENSSL_MSTR(DEVCRYPTO_REJECT_SOFTWARE)
-        "=use if acceleration can't be determined) [default="
-        OPENSSL_MSTR(DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS) "]",
-    ENGINE_CMD_FLAG_NUMERIC},
+    { DEVCRYPTO_CMD_USE_SOFTDRIVERS,
+        "USE_SOFTDRIVERS",
+        "specifies whether to use software (not accelerated) drivers (" OPENSSL_MSTR(DEVCRYPTO_REQUIRE_ACCELERATED) "=use only accelerated drivers, " OPENSSL_MSTR(DEVCRYPTO_USE_SOFTWARE) "=allow all drivers, " OPENSSL_MSTR(DEVCRYPTO_REJECT_SOFTWARE) "=use if acceleration can't be determined) [default=" OPENSSL_MSTR(DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS) "]",
+        ENGINE_CMD_FLAG_NUMERIC },
 #endif
 
-   {DEVCRYPTO_CMD_CIPHERS,
-    "CIPHERS",
-    "either ALL, NONE, or a comma-separated list of ciphers to enable [default=ALL]",
-    ENGINE_CMD_FLAG_STRING},
+    { DEVCRYPTO_CMD_CIPHERS,
+        "CIPHERS",
+        "either ALL, NONE, or a comma-separated list of ciphers to enable [default=ALL]",
+        ENGINE_CMD_FLAG_STRING },
 
 #ifdef IMPLEMENT_DIGEST
-   {DEVCRYPTO_CMD_DIGESTS,
-    "DIGESTS",
-    "either ALL, NONE, or a comma-separated list of digests to enable [default=ALL]",
-    ENGINE_CMD_FLAG_STRING},
+    { DEVCRYPTO_CMD_DIGESTS,
+        "DIGESTS",
+        "either ALL, NONE, or a comma-separated list of digests to enable [default=ALL]",
+        ENGINE_CMD_FLAG_STRING },
 #endif
 
-   {DEVCRYPTO_CMD_DUMP_INFO,
-    "DUMP_INFO",
-    "dump info about each algorithm to stderr; use 'openssl engine -pre DUMP_INFO devcrypto'",
-    ENGINE_CMD_FLAG_NO_INPUT},
+    { DEVCRYPTO_CMD_DUMP_INFO,
+        "DUMP_INFO",
+        "dump info about each algorithm to stderr; use 'openssl engine -pre DUMP_INFO devcrypto'",
+        ENGINE_CMD_FLAG_NO_INPUT },
 
-   {0, NULL, NULL, 0}
+    { 0, NULL, NULL, 0 }
 };
 
-static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
+static int devcrypto_ctrl(ENGINE* e, int cmd, long i, void* p, void (*f)(void))
 {
-    int *new_list;
+    int* new_list;
     switch (cmd) {
 #if defined(CIOCGSESSINFO) || defined(CIOCGSESSION2)
     case DEVCRYPTO_CMD_USE_SOFTDRIVERS:
@@ -1160,12 +1136,12 @@ static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
     case DEVCRYPTO_CMD_CIPHERS:
         if (p == NULL)
             return 1;
-        if (OPENSSL_strcasecmp((const char *)p, "ALL") == 0) {
+        if (OPENSSL_strcasecmp((const char*)p, "ALL") == 0) {
             devcrypto_select_all_ciphers(selected_ciphers);
         } else if (OPENSSL_strcasecmp((const char*)p, "NONE") == 0) {
             memset(selected_ciphers, 0, sizeof(selected_ciphers));
         } else {
-            new_list=OPENSSL_zalloc(sizeof(selected_ciphers));
+            new_list = OPENSSL_zalloc(sizeof(selected_ciphers));
             if (!CONF_parse_list(p, ',', 1, cryptodev_select_cipher_cb, new_list)) {
                 OPENSSL_free(new_list);
                 return 0;
@@ -1180,12 +1156,12 @@ static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
     case DEVCRYPTO_CMD_DIGESTS:
         if (p == NULL)
             return 1;
-        if (OPENSSL_strcasecmp((const char *)p, "ALL") == 0) {
+        if (OPENSSL_strcasecmp((const char*)p, "ALL") == 0) {
             devcrypto_select_all_digests(selected_digests);
         } else if (OPENSSL_strcasecmp((const char*)p, "NONE") == 0) {
             memset(selected_digests, 0, sizeof(selected_digests));
         } else {
-            new_list=OPENSSL_zalloc(sizeof(selected_digests));
+            new_list = OPENSSL_zalloc(sizeof(selected_digests));
             if (!CONF_parse_list(p, ',', 1, cryptodev_select_digest_cb, new_list)) {
                 OPENSSL_free(new_list);
                 return 0;
@@ -1264,7 +1240,7 @@ static int close_devcrypto(void)
     return 1;
 }
 
-static int devcrypto_unload(ENGINE *e)
+static int devcrypto_unload(ENGINE* e)
 {
     destroy_all_cipher_methods();
 #ifdef IMPLEMENT_DIGEST
@@ -1276,7 +1252,8 @@ static int devcrypto_unload(ENGINE *e)
     return 1;
 }
 
-static int bind_devcrypto(ENGINE *e) {
+static int bind_devcrypto(ENGINE* e)
+{
 
     if (!ENGINE_set_id(e, engine_devcrypto_id)
         || !ENGINE_set_name(e, "/dev/crypto engine")
@@ -1316,17 +1293,17 @@ static int bind_devcrypto(ENGINE *e) {
  */
 #if 0
         && ENGINE_set_RSA(e, devcrypto_rsa)
-# ifndef OPENSSL_NO_DSA
+#ifndef OPENSSL_NO_DSA
         && ENGINE_set_DSA(e, devcrypto_dsa)
-# endif
-# ifndef OPENSSL_NO_DH
-        && ENGINE_set_DH(e, devcrypto_dh)
-# endif
-# ifndef OPENSSL_NO_EC
-        && ENGINE_set_EC(e, devcrypto_ec)
-# endif
 #endif
-        );
+#ifndef OPENSSL_NO_DH
+        && ENGINE_set_DH(e, devcrypto_dh)
+#endif
+#ifndef OPENSSL_NO_EC
+        && ENGINE_set_EC(e, devcrypto_ec)
+#endif
+#endif
+    );
 }
 
 #ifdef OPENSSL_NO_DYNAMIC_ENGINE
@@ -1336,7 +1313,7 @@ static int bind_devcrypto(ENGINE *e) {
  */
 void engine_load_devcrypto_int(void)
 {
-    ENGINE *e = NULL;
+    ENGINE* e = NULL;
 
     if (!open_devcrypto())
         return;
@@ -1354,7 +1331,7 @@ void engine_load_devcrypto_int(void)
      * If the "add" worked, it gets a structural reference. So either way, we
      * release our just-created reference.
      */
-    ENGINE_free(e);          /* Loose our local reference */
+    ENGINE_free(e); /* Loose our local reference */
     /*
      * If the "add" didn't work, it was probably a conflict because it was
      * already added (eg. someone calling ENGINE_load_blah then calling
@@ -1365,7 +1342,7 @@ void engine_load_devcrypto_int(void)
 
 #else
 
-static int bind_helper(ENGINE *e, const char *id)
+static int bind_helper(ENGINE* e, const char* id)
 {
     if ((id && (strcmp(id, engine_devcrypto_id) != 0))
         || !open_devcrypto())

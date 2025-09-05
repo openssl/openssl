@@ -14,23 +14,23 @@
 #include "internal/cryptlib.h"
 #include "internal/comp.h"
 
-#define SSL_COMP_NULL_IDX       0
-#define SSL_COMP_ZLIB_IDX       1
-#define SSL_COMP_NUM_IDX        2
+#define SSL_COMP_NULL_IDX 0
+#define SSL_COMP_ZLIB_IDX 1
+#define SSL_COMP_NUM_IDX 2
 
 #ifndef OPENSSL_NO_COMP
-static int sk_comp_cmp(const SSL_COMP *const *a, const SSL_COMP *const *b)
+static int sk_comp_cmp(const SSL_COMP* const* a, const SSL_COMP* const* b)
 {
     return ((*a)->id - (*b)->id);
 }
 #endif
 
-STACK_OF(SSL_COMP) *ossl_load_builtin_compressions(void)
+STACK_OF(SSL_COMP)* ossl_load_builtin_compressions(void)
 {
-    STACK_OF(SSL_COMP) *comp_methods = NULL;
+    STACK_OF(SSL_COMP)* comp_methods = NULL;
 #ifndef OPENSSL_NO_COMP
-    SSL_COMP *comp = NULL;
-    COMP_METHOD *method = COMP_zlib();
+    SSL_COMP* comp = NULL;
+    COMP_METHOD* method = COMP_zlib();
 
     comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
 
@@ -48,12 +48,12 @@ STACK_OF(SSL_COMP) *ossl_load_builtin_compressions(void)
     return comp_methods;
 }
 
-static void cmeth_free(SSL_COMP *cm)
+static void cmeth_free(SSL_COMP* cm)
 {
     OPENSSL_free(cm);
 }
 
-void ossl_free_compression_methods_int(STACK_OF(SSL_COMP) *methods)
+void ossl_free_compression_methods_int(STACK_OF(SSL_COMP)* methods)
 {
     sk_SSL_COMP_pop_free(methods, cmeth_free);
 }

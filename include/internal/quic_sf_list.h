@@ -8,7 +8,7 @@
  */
 
 #ifndef OSSL_QUIC_SF_LIST_H
-# define OSSL_QUIC_SF_LIST_H
+#define OSSL_QUIC_SF_LIST_H
 
 #include "internal/common.h"
 #include "internal/uint_set.h"
@@ -35,12 +35,12 @@
  *            able to mark an empty frame.
  * Invariant: The offset never points further than into the first frame.
  */
-# ifndef OPENSSL_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
 
 typedef struct stream_frame_st STREAM_FRAME;
 
 typedef struct sframe_list_st {
-    STREAM_FRAME  *head, *tail;
+    STREAM_FRAME *head, *tail;
     /* Is the tail frame final. */
     unsigned int fin;
     /* Number of stream frames in the list. */
@@ -56,13 +56,13 @@ typedef struct sframe_list_st {
 /*
  * Initializes the stream frame list fl.
  */
-void ossl_sframe_list_init(SFRAME_LIST *fl);
+void ossl_sframe_list_init(SFRAME_LIST* fl);
 
 /*
  * Destroys the stream frame list fl releasing any data
  * still present inside it.
  */
-void ossl_sframe_list_destroy(SFRAME_LIST *fl);
+void ossl_sframe_list_destroy(SFRAME_LIST* fl);
 
 /*
  * Insert a stream frame data into the list.
@@ -74,9 +74,9 @@ void ossl_sframe_list_destroy(SFRAME_LIST *fl);
  * fin flag (this is an ossl_assert() check so a caller must
  * check it on its own too).
  */
-int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
-                            OSSL_QRX_PKT *pkt,
-                            const unsigned char *data, int fin);
+int ossl_sframe_list_insert(SFRAME_LIST* fl, UINT_RANGE* range,
+    OSSL_QRX_PKT* pkt,
+    const unsigned char* data, int fin);
 
 /*
  * Iterator to peek at the contiguous frames at the beginning
@@ -90,9 +90,9 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
  * Returns 0 if there is no further contiguous frame. In that
  * case *fin is set, if the end of the stream is reached.
  */
-int ossl_sframe_list_peek(const SFRAME_LIST *fl, void **iter,
-                          UINT_RANGE *range, const unsigned char **data,
-                          int *fin);
+int ossl_sframe_list_peek(const SFRAME_LIST* fl, void** iter,
+    UINT_RANGE* range, const unsigned char** data,
+    int* fin);
 
 /*
  * Drop all frames up to the offset limit.
@@ -101,7 +101,7 @@ int ossl_sframe_list_peek(const SFRAME_LIST *fl, void **iter,
  * Returns 0 when trying to drop frames at offsets that were not
  * received yet. (ossl_assert() is used to check, so this is an invalid call.)
  */
-int ossl_sframe_list_drop_frames(SFRAME_LIST *fl, uint64_t limit);
+int ossl_sframe_list_drop_frames(SFRAME_LIST* fl, uint64_t limit);
 
 /*
  * Locks and returns the head frame of fl if it is readable - read offset is
@@ -113,15 +113,15 @@ int ossl_sframe_list_drop_frames(SFRAME_LIST *fl, uint64_t limit);
  * Returns 1 on success, 0 if there is no readable data or the head
  * frame is already locked.
  */
-int ossl_sframe_list_lock_head(SFRAME_LIST *fl, UINT_RANGE *range,
-                               const unsigned char **data,
-                               int *fin);
+int ossl_sframe_list_lock_head(SFRAME_LIST* fl, UINT_RANGE* range,
+    const unsigned char** data,
+    int* fin);
 
 /*
  * Just returns whether the head frame is locked by previous
  * ossl_sframe_list_lock_head() call.
  */
-int ossl_sframe_list_is_head_locked(SFRAME_LIST *fl);
+int ossl_sframe_list_is_head_locked(SFRAME_LIST* fl);
 
 /*
  * Callback function type to write stream frame data to some
@@ -130,10 +130,10 @@ int ossl_sframe_list_is_head_locked(SFRAME_LIST *fl);
  * It should return 1 on success or 0 if there is not enough
  * space available in the side storage.
  */
-typedef int (sframe_list_write_at_cb)(uint64_t logical_offset,
-                                      const unsigned char *buf,
-                                      size_t buf_len,
-                                      void *cb_arg);
+typedef int(sframe_list_write_at_cb)(uint64_t logical_offset,
+    const unsigned char* buf,
+    size_t buf_len,
+    void* cb_arg);
 
 /*
  * Move the frame data in all the stream frames in the list fl
@@ -143,9 +143,9 @@ typedef int (sframe_list_write_at_cb)(uint64_t logical_offset,
  * If the callback returns 0, the function stops processing further
  * frames and returns 0.
  */
-int ossl_sframe_list_move_data(SFRAME_LIST *fl,
-                               sframe_list_write_at_cb *write_at_cb,
-                               void *cb_arg);
-# endif
+int ossl_sframe_list_move_data(SFRAME_LIST* fl,
+    sframe_list_write_at_cb* write_at_cb,
+    void* cb_arg);
+#endif
 
 #endif

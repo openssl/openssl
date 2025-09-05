@@ -18,15 +18,15 @@
 
 /* Algorithm configuration module. */
 
-static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
+static int alg_module_init(CONF_IMODULE* md, const CONF* cnf)
 {
     int i;
-    const char *oid_section;
-    STACK_OF(CONF_VALUE) *sktmp;
-    CONF_VALUE *oval;
+    const char* oid_section;
+    STACK_OF(CONF_VALUE)* sktmp;
+    CONF_VALUE* oval;
 
     OSSL_TRACE2(CONF, "Loading EVP module: name %s, value %s\n",
-                CONF_imodule_get_name(md), CONF_imodule_get_value(md));
+        CONF_imodule_get_name(md), CONF_imodule_get_value(md));
 
     oid_section = CONF_imodule_get_value(md);
     if ((sktmp = NCONF_get_section(cnf, oid_section)) == NULL) {
@@ -47,22 +47,21 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
              * configurations.
              */
             if (!evp_default_properties_enable_fips_int(
-                    NCONF_get0_libctx((CONF *)cnf), m > 0, 0)) {
+                    NCONF_get0_libctx((CONF*)cnf), m > 0, 0)) {
                 ERR_raise(ERR_LIB_EVP, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
                 return 0;
             }
         } else if (strcmp(oval->name, "default_properties") == 0) {
-            if (!evp_set_default_properties_int(NCONF_get0_libctx((CONF *)cnf),
-                        oval->value, 0, 0)) {
+            if (!evp_set_default_properties_int(NCONF_get0_libctx((CONF*)cnf),
+                    oval->value, 0, 0)) {
                 ERR_raise(ERR_LIB_EVP, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
                 return 0;
             }
         } else {
             ERR_raise_data(ERR_LIB_EVP, EVP_R_UNKNOWN_OPTION,
-                           "name=%s, value=%s", oval->name, oval->value);
+                "name=%s, value=%s", oval->name, oval->value);
             return 0;
         }
-
     }
     return 1;
 }

@@ -11,7 +11,7 @@
 #include "testutil.h"
 #include "../ssl/ssl_local.h"
 
-static int cipher_enabled(const SSL_CIPHER *ciph)
+static int cipher_enabled(const SSL_CIPHER* ciph)
 {
     /*
      * ssl_cipher_get_overhead() actually works with AEAD ciphers even if the
@@ -21,7 +21,7 @@ static int cipher_enabled(const SSL_CIPHER *ciph)
         return 1;
 
     if (ciph->algorithm_enc != SSL_eNULL
-            && EVP_get_cipherbynid(SSL_CIPHER_get_cipher_nid(ciph)) == NULL)
+        && EVP_get_cipherbynid(SSL_CIPHER_get_cipher_nid(ciph)) == NULL)
         return 0;
 
     if (EVP_get_digestbynid(SSL_CIPHER_get_digest_nid(ciph)) == NULL)
@@ -33,7 +33,7 @@ static int cipher_enabled(const SSL_CIPHER *ciph)
 static int cipher_overhead(void)
 {
     int ret = 1, i, n = ssl3_num_ciphers();
-    const SSL_CIPHER *ciph;
+    const SSL_CIPHER* ciph;
     size_t mac, in, blk, ex;
 
     for (i = 0; i < n; i++) {
@@ -49,7 +49,7 @@ static int cipher_overhead(void)
             ret = 0;
         } else {
             TEST_info("Cipher %s: %zu %zu %zu %zu",
-                      ciph->name, mac, in, blk, ex);
+                ciph->name, mac, in, blk, ex);
         }
     }
     return ret;

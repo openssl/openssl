@@ -18,7 +18,7 @@
 #include <openssl/ripemd.h>
 #include <openssl/crypto.h>
 
-unsigned char *RIPEMD160(const unsigned char *d, size_t n, unsigned char *md)
+unsigned char* RIPEMD160(const unsigned char* d, size_t n, unsigned char* md)
 {
     RIPEMD160_CTX c;
     static unsigned char m[RIPEMD160_DIGEST_LENGTH];

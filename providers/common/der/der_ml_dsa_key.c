@@ -16,11 +16,11 @@
 #include "internal/packet.h"
 #include "prov/der_ml_dsa.h"
 
-int ossl_DER_w_algorithmIdentifier_ML_DSA(WPACKET *pkt, int tag, ML_DSA_KEY *key)
+int ossl_DER_w_algorithmIdentifier_ML_DSA(WPACKET* pkt, int tag, ML_DSA_KEY* key)
 {
-    const uint8_t *alg;
+    const uint8_t* alg;
     size_t len;
-    const char *name = ossl_ml_dsa_key_get_name(key);
+    const char* name = ossl_ml_dsa_key_get_name(key);
 
     if (OPENSSL_strcasecmp(name, "ML-DSA-44") == 0) {
         alg = ossl_der_oid_id_ml_dsa_44;

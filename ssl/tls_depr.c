@@ -20,17 +20,17 @@
  */
 
 #ifndef OPENSSL_NO_ENGINE
-void tls_engine_finish(ENGINE *e)
+void tls_engine_finish(ENGINE* e)
 {
     ENGINE_finish(e);
 }
 #endif
 
-const EVP_CIPHER *tls_get_cipher_from_engine(int nid)
+const EVP_CIPHER* tls_get_cipher_from_engine(int nid)
 {
-    const EVP_CIPHER *ret = NULL;
+    const EVP_CIPHER* ret = NULL;
 #ifndef OPENSSL_NO_ENGINE
-    ENGINE *eng;
+    ENGINE* eng;
 
     /*
      * If there is an Engine available for this cipher we use the "implicit"
@@ -45,11 +45,11 @@ const EVP_CIPHER *tls_get_cipher_from_engine(int nid)
     return ret;
 }
 
-const EVP_MD *tls_get_digest_from_engine(int nid)
+const EVP_MD* tls_get_digest_from_engine(int nid)
 {
-    const EVP_MD *ret = NULL;
+    const EVP_MD* ret = NULL;
 #ifndef OPENSSL_NO_ENGINE
-    ENGINE *eng;
+    ENGINE* eng;
 
     /*
      * If there is an Engine available for this digest we use the "implicit"
@@ -65,20 +65,20 @@ const EVP_MD *tls_get_digest_from_engine(int nid)
 }
 
 #ifndef OPENSSL_NO_ENGINE
-int tls_engine_load_ssl_client_cert(SSL_CONNECTION *s, X509 **px509,
-                                    EVP_PKEY **ppkey)
+int tls_engine_load_ssl_client_cert(SSL_CONNECTION* s, X509** px509,
+    EVP_PKEY** ppkey)
 {
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL* ssl = SSL_CONNECTION_GET_SSL(s);
 
     return ENGINE_load_ssl_client_cert(SSL_CONNECTION_GET_CTX(s)->client_cert_engine,
-                                       ssl,
-                                       SSL_get_client_CA_list(ssl),
-                                       px509, ppkey, NULL, NULL, NULL);
+        ssl,
+        SSL_get_client_CA_list(ssl),
+        px509, ppkey, NULL, NULL, NULL);
 }
 #endif
 
 #ifndef OPENSSL_NO_ENGINE
-int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e)
+int SSL_CTX_set_client_cert_engine(SSL_CTX* ctx, ENGINE* e)
 {
     if (!ENGINE_init(e)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_ENGINE_LIB);
@@ -103,7 +103,7 @@ int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e)
  * be removed.
  */
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-int ssl_hmac_old_new(SSL_HMAC *ret)
+int ssl_hmac_old_new(SSL_HMAC* ret)
 {
     ret->old_ctx = HMAC_CTX_new();
     if (ret->old_ctx == NULL)
@@ -112,22 +112,22 @@ int ssl_hmac_old_new(SSL_HMAC *ret)
     return 1;
 }
 
-void ssl_hmac_old_free(SSL_HMAC *ctx)
+void ssl_hmac_old_free(SSL_HMAC* ctx)
 {
     HMAC_CTX_free(ctx->old_ctx);
 }
 
-int ssl_hmac_old_init(SSL_HMAC *ctx, void *key, size_t len, char *md)
+int ssl_hmac_old_init(SSL_HMAC* ctx, void* key, size_t len, char* md)
 {
     return HMAC_Init_ex(ctx->old_ctx, key, (int)len, EVP_get_digestbyname(md), NULL);
 }
 
-int ssl_hmac_old_update(SSL_HMAC *ctx, const unsigned char *data, size_t len)
+int ssl_hmac_old_update(SSL_HMAC* ctx, const unsigned char* data, size_t len)
 {
     return HMAC_Update(ctx->old_ctx, data, len);
 }
 
-int ssl_hmac_old_final(SSL_HMAC *ctx, unsigned char *md, size_t *len)
+int ssl_hmac_old_final(SSL_HMAC* ctx, unsigned char* md, size_t* len)
 {
     unsigned int l;
 
@@ -140,21 +140,21 @@ int ssl_hmac_old_final(SSL_HMAC *ctx, unsigned char *md, size_t *len)
     return 0;
 }
 
-size_t ssl_hmac_old_size(const SSL_HMAC *ctx)
+size_t ssl_hmac_old_size(const SSL_HMAC* ctx)
 {
     return HMAC_size(ctx->old_ctx);
 }
 
-HMAC_CTX *ssl_hmac_get0_HMAC_CTX(SSL_HMAC *ctx)
+HMAC_CTX* ssl_hmac_get0_HMAC_CTX(SSL_HMAC* ctx)
 {
     return ctx->old_ctx;
 }
 
 /* Some deprecated public APIs pass DH objects */
-EVP_PKEY *ssl_dh_to_pkey(DH *dh)
+EVP_PKEY* ssl_dh_to_pkey(DH* dh)
 {
-# ifndef OPENSSL_NO_DH
-    EVP_PKEY *ret;
+#ifndef OPENSSL_NO_DH
+    EVP_PKEY* ret;
 
     if (dh == NULL)
         return NULL;
@@ -164,19 +164,19 @@ EVP_PKEY *ssl_dh_to_pkey(DH *dh)
         return NULL;
     }
     return ret;
-# else
+#else
     return NULL;
-# endif
+#endif
 }
 
 /* Some deprecated public APIs pass EC_KEY objects */
-int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
-                            uint16_t **ksext, size_t *ksextlen,
-                            size_t **tplext, size_t *tplextlen,
-                            void *key)
+int ssl_set_tmp_ecdh_groups(uint16_t** pext, size_t* pextlen,
+    uint16_t** ksext, size_t* ksextlen,
+    size_t** tplext, size_t* tplextlen,
+    void* key)
 {
-# ifndef OPENSSL_NO_EC
-    const EC_GROUP *group = EC_KEY_get0_group((const EC_KEY *)key);
+#ifndef OPENSSL_NO_EC
+    const EC_GROUP* group = EC_KEY_get0_group((const EC_KEY*)key);
     int nid;
 
     if (group == NULL) {
@@ -187,12 +187,12 @@ int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
     if (nid == NID_undef)
         return 0;
     return tls1_set_groups(pext, pextlen,
-                           ksext, ksextlen,
-                           tplext, tplextlen,
-                           &nid, 1);
-# else
+        ksext, ksextlen,
+        tplext, tplextlen,
+        &nid, 1);
+#else
     return 0;
-# endif
+#endif
 }
 
 /*
@@ -200,18 +200,17 @@ int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
  * ctx: the SSL context.
  * dh: the callback
  */
-# if !defined(OPENSSL_NO_DH)
-void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
-                                 DH *(*dh) (SSL *ssl, int is_export,
-                                            int keylength))
+#if !defined(OPENSSL_NO_DH)
+void SSL_CTX_set_tmp_dh_callback(SSL_CTX* ctx,
+    DH* (*dh)(SSL* ssl, int is_export,
+        int keylength))
 {
     SSL_CTX_callback_ctrl(ctx, SSL_CTRL_SET_TMP_DH_CB, (void (*)(void))dh);
 }
 
-void SSL_set_tmp_dh_callback(SSL *ssl, DH *(*dh) (SSL *ssl, int is_export,
-                                                  int keylength))
+void SSL_set_tmp_dh_callback(SSL* ssl, DH* (*dh)(SSL* ssl, int is_export, int keylength))
 {
     SSL_callback_ctrl(ssl, SSL_CTRL_SET_TMP_DH_CB, (void (*)(void))dh);
 }
-# endif
+#endif
 #endif /* OPENSSL_NO_DEPRECATED */

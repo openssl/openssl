@@ -21,17 +21,17 @@
 #include <openssl/ssl.h>
 #include <openssl/conf.h>
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    char *port = "*:4433";
-    BIO *in = NULL;
-    BIO *ssl_bio = NULL;
-    BIO *tmp;
-    SSL_CTX *ctx;
-    SSL_CONF_CTX *cctx = NULL;
-    CONF *conf = NULL;
-    STACK_OF(CONF_VALUE) *sect = NULL;
-    CONF_VALUE *cnf;
+    char* port = "*:4433";
+    BIO* in = NULL;
+    BIO* ssl_bio = NULL;
+    BIO* tmp;
+    SSL_CTX* ctx;
+    SSL_CONF_CTX* cctx = NULL;
+    CONF* conf = NULL;
+    STACK_OF(CONF_VALUE)* sect = NULL;
+    CONF_VALUE* cnf;
     long errline = -1;
     char buf[512];
     int ret = EXIT_FAILURE, i;
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
             continue;
         if (rv != -2) {
             fprintf(stderr, "Error processing %s = %s\n",
-                    cnf->name, cnf->value);
+                cnf->name, cnf->value);
             ERR_print_errors_fp(stderr);
             goto err;
         }
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     BIO_set_accept_bios(in, ssl_bio);
     ssl_bio = NULL;
 
- again:
+again:
     /*
      * The first call will setup the accept socket, and the second will get a
      * socket.  In this loop, the first actual accept will occur in the
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
     }
 
     ret = EXIT_SUCCESS;
- err:
+err:
     if (ret != EXIT_SUCCESS)
         ERR_print_errors_fp(stderr);
     BIO_free(in);

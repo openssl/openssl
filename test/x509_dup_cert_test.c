@@ -17,9 +17,9 @@
 static int test_509_dup_cert(int n)
 {
     int ret = 0;
-    X509_STORE *store = NULL;
-    X509_LOOKUP *lookup = NULL;
-    const char *cert_f = test_get_argument(n);
+    X509_STORE* store = NULL;
+    X509_LOOKUP* lookup = NULL;
+    const char* cert_f = test_get_argument(n);
 
     if (TEST_ptr(store = X509_STORE_new())
         && TEST_ptr(lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file()))

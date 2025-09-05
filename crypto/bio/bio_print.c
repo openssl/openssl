@@ -23,16 +23,16 @@
  */
 
 #ifdef HAVE_LONG_DOUBLE
-# define LDOUBLE long double
+#define LDOUBLE long double
 #else
-# define LDOUBLE double
+#define LDOUBLE double
 #endif
 
 struct pr_desc {
     /** Static buffer */
-    char *sbuffer;
+    char* sbuffer;
     /** Dynamic buffer */
-    char **buffer;
+    char** buffer;
     /** Current writing position */
     size_t currlen;
     /** Buffer size */
@@ -41,72 +41,72 @@ struct pr_desc {
     long long pos;
 };
 
-static int fmtstr(struct pr_desc *, const char *, int, int, int);
-static int fmtint(struct pr_desc *, int64_t, int, int, int, int);
+static int fmtstr(struct pr_desc*, const char*, int, int, int);
+static int fmtint(struct pr_desc*, int64_t, int, int, int, int);
 #ifndef OPENSSL_SYS_UEFI
-static int fmtfp(struct pr_desc *, LDOUBLE, int, int, int, int);
+static int fmtfp(struct pr_desc*, LDOUBLE, int, int, int, int);
 #endif
-static int doapr_outch(struct pr_desc *, int);
-static int _dopr(char **sbuffer, char **buffer,
-                 size_t *maxlen, size_t *retlen, int *truncated,
-                 const char *format, va_list args);
+static int doapr_outch(struct pr_desc*, int);
+static int _dopr(char** sbuffer, char** buffer,
+    size_t* maxlen, size_t* retlen, int* truncated,
+    const char* format, va_list args);
 
 /* format read states */
-#define DP_S_DEFAULT    0
-#define DP_S_FLAGS      1
-#define DP_S_MIN        2
-#define DP_S_DOT        3
-#define DP_S_MAX        4
-#define DP_S_MOD        5
-#define DP_S_CONV       6
-#define DP_S_DONE       7
+#define DP_S_DEFAULT 0
+#define DP_S_FLAGS 1
+#define DP_S_MIN 2
+#define DP_S_DOT 3
+#define DP_S_MAX 4
+#define DP_S_MOD 5
+#define DP_S_CONV 6
+#define DP_S_DONE 7
 
 /* format flags - Bits */
 /* left-aligned padding */
-#define DP_F_MINUS      (1 << 0)
+#define DP_F_MINUS (1 << 0)
 /* print an explicit '+' for a value with positive sign */
-#define DP_F_PLUS       (1 << 1)
+#define DP_F_PLUS (1 << 1)
 /* print an explicit ' ' for a value with positive sign */
-#define DP_F_SPACE      (1 << 2)
+#define DP_F_SPACE (1 << 2)
 /* print 0/0x prefix for octal/hex and decimal point for floating point */
-#define DP_F_NUM        (1 << 3)
+#define DP_F_NUM (1 << 3)
 /* print leading zeroes */
-#define DP_F_ZERO       (1 << 4)
+#define DP_F_ZERO (1 << 4)
 /* print HEX in UPPERcase */
-#define DP_F_UP         (1 << 5)
+#define DP_F_UP (1 << 5)
 /* treat value as unsigned */
-#define DP_F_UNSIGNED   (1 << 6)
+#define DP_F_UNSIGNED (1 << 6)
 
 /* conversion flags */
-#define DP_C_CHAR       1
-#define DP_C_SHORT      2
-#define DP_C_LONG       3
-#define DP_C_LDOUBLE    4
-#define DP_C_LLONG      5
-#define DP_C_SIZE       6
-#define DP_C_PTRDIFF    7
+#define DP_C_CHAR 1
+#define DP_C_SHORT 2
+#define DP_C_LONG 3
+#define DP_C_LDOUBLE 4
+#define DP_C_LLONG 5
+#define DP_C_SIZE 6
+#define DP_C_PTRDIFF 7
 
 /* Floating point formats */
-#define F_FORMAT        0
-#define E_FORMAT        1
-#define G_FORMAT        2
+#define F_FORMAT 0
+#define E_FORMAT 1
+#define G_FORMAT 2
 
 /* some handy macros */
 #define char_to_int(p) (p - '0')
-#define OSSL_MAX(p,q) ((p >= q) ? p : q)
+#define OSSL_MAX(p, q) ((p >= q) ? p : q)
 
 static int
-_dopr(char **sbuffer,
-      char **buffer,
-      size_t *maxlen,
-      size_t *retlen, int *truncated, const char *format, va_list args)
+_dopr(char** sbuffer,
+    char** buffer,
+    size_t* maxlen,
+    size_t* retlen, int* truncated, const char* format, va_list args)
 {
     char ch;
     int64_t value;
 #ifndef OPENSSL_SYS_UEFI
     LDOUBLE fvalue;
 #endif
-    char *strvalue;
+    char* strvalue;
     int min;
     int max;
     int state;
@@ -128,9 +128,8 @@ _dopr(char **sbuffer,
         case DP_S_DEFAULT:
             if (ch == '%')
                 state = DP_S_FLAGS;
-            else
-                if (!doapr_outch(&desc, ch))
-                    goto out;
+            else if (!doapr_outch(&desc, ch))
+                goto out;
             ch = *format++;
             break;
         case DP_S_FLAGS:
@@ -324,8 +323,8 @@ _dopr(char **sbuffer,
                     break;
                 }
                 if (!fmtint(&desc, value,
-                            ch == 'o' ? 8 : (ch == 'u' ? 10 : 16),
-                            min, max, flags))
+                        ch == 'o' ? 8 : (ch == 'u' ? 10 : 16),
+                        min, max, flags))
                     goto out;
                 break;
 #ifndef OPENSSL_SYS_UEFI
@@ -374,25 +373,25 @@ _dopr(char **sbuffer,
                     goto out;
                 break;
             case 's':
-                strvalue = va_arg(args, char *);
+                strvalue = va_arg(args, char*);
                 if (max < 0)
                     max = INT_MAX;
                 if (!fmtstr(&desc, strvalue, flags, min, max))
                     goto out;
                 break;
             case 'p':
-                value = (size_t)va_arg(args, void *);
+                value = (size_t)va_arg(args, void*);
                 if (!fmtint(&desc, value, 16, min, max, flags | DP_F_NUM))
                     goto out;
                 break;
             case 'n':
                 switch (cflags) {
-#define HANDLE_N(type)              \
-    do {                            \
-        type *num;                  \
-                                    \
-        num = va_arg(args, type *); \
-        *num = (type) desc.pos;     \
+#define HANDLE_N(type)             \
+    do {                           \
+        type* num;                 \
+                                   \
+        num = va_arg(args, type*); \
+        *num = (type)desc.pos;     \
     } while (0)
                 case DP_C_CHAR:
                     HANDLE_N(signed char);
@@ -465,7 +464,7 @@ out:
 }
 
 static int
-fmtstr(struct pr_desc *desc, const char *value, int flags, int min, int max)
+fmtstr(struct pr_desc* desc, const char* value, int flags, int min, int max)
 {
     int padlen;
     size_t strln;
@@ -514,13 +513,13 @@ fmtstr(struct pr_desc *desc, const char *value, int flags, int min, int max)
 }
 
 static int
-fmtint(struct pr_desc *desc,
-       int64_t value, int base, int min, int max, int flags)
+fmtint(struct pr_desc* desc,
+    int64_t value, int base, int min, int max, int flags)
 {
     static const char oct_prefix[] = "0";
 
     int signvalue = 0;
-    const char *prefix = "";
+    const char* prefix = "";
     uint64_t uvalue;
     char convert[DECIMAL_SIZE(value) + 3];
     int place = 0;
@@ -576,8 +575,7 @@ fmtint(struct pr_desc *desc,
     zpadlen = max - place - (prefix == oct_prefix);
     if (zpadlen < 0)
         zpadlen = 0;
-    spadlen =
-        min - OSSL_MAX(max, place + zpadlen + (signvalue ? 1 : 0) + (int)strlen(prefix));
+    spadlen = min - OSSL_MAX(max, place + zpadlen + (signvalue ? 1 : 0) + (int)strlen(prefix));
     if (spadlen < 0)
         spadlen = 0;
     if (flags & DP_F_MINUS) {
@@ -664,8 +662,8 @@ static long roundv(LDOUBLE value)
 }
 
 static int
-fmtfp(struct pr_desc *desc,
-      LDOUBLE fvalue, int min, int max, int flags, int style)
+fmtfp(struct pr_desc* desc,
+    LDOUBLE fvalue, int min, int max, int flags, int style)
 {
     int signvalue = 0;
     LDOUBLE ufvalue;
@@ -708,7 +706,7 @@ fmtfp(struct pr_desc *desc,
         } else if (ufvalue < 0.0001) {
             realstyle = E_FORMAT;
         } else if ((max == 0 && ufvalue >= 10)
-                   || (max > 0 && ufvalue >= pow_10(max))) {
+            || (max > 0 && ufvalue >= pow_10(max))) {
             realstyle = E_FORMAT;
         } else {
             realstyle = F_FORMAT;
@@ -929,10 +927,10 @@ fmtfp(struct pr_desc *desc,
 
 #endif /* OPENSSL_SYS_UEFI */
 
-#define BUFFER_INC  1024
+#define BUFFER_INC 1024
 
 static int
-doapr_outch(struct pr_desc *desc, int c)
+doapr_outch(struct pr_desc* desc, int c)
 {
     /* If we haven't at least one buffer, someone has done a big booboo */
     if (!ossl_assert(desc->sbuffer != NULL || desc->buffer != NULL))
@@ -957,7 +955,7 @@ doapr_outch(struct pr_desc *desc, int c)
             }
             desc->sbuffer = NULL;
         } else {
-            char *tmpbuf;
+            char* tmpbuf;
 
             tmpbuf = OPENSSL_realloc(*(desc->buffer), desc->maxlen);
             if (tmpbuf == NULL)
@@ -980,7 +978,7 @@ doapr_outch(struct pr_desc *desc, int c)
 
 /***************************************************************************/
 
-int BIO_printf(BIO *bio, const char *format, ...)
+int BIO_printf(BIO* bio, const char* format, ...)
 {
     va_list args;
     int ret;
@@ -993,21 +991,21 @@ int BIO_printf(BIO *bio, const char *format, ...)
     return ret;
 }
 
-int BIO_vprintf(BIO *bio, const char *format, va_list args)
+int BIO_vprintf(BIO* bio, const char* format, va_list args)
 {
     int ret;
     size_t retlen;
-    char hugebuf[1024 * 2];     /* Was previously 10k, which is unreasonable
-                                 * in small-stack environments, like threads
-                                 * or DOS programs. */
-    char *hugebufp = hugebuf;
+    char hugebuf[1024 * 2]; /* Was previously 10k, which is unreasonable
+                             * in small-stack environments, like threads
+                             * or DOS programs. */
+    char* hugebufp = hugebuf;
     size_t hugebufsize = sizeof(hugebuf);
-    char *dynbuf = NULL;
+    char* dynbuf = NULL;
     int ignored;
 
     dynbuf = NULL;
     if (!_dopr(&hugebufp, &dynbuf, &hugebufsize, &retlen, &ignored, format,
-                args)) {
+            args)) {
         OPENSSL_free(dynbuf);
         return -1;
     }
@@ -1026,7 +1024,7 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
  * closely related to BIO_printf, and we need *some* name prefix ... (XXX the
  * function should be renamed, but to what?)
  */
-int BIO_snprintf(char *buf, size_t n, const char *format, ...)
+int BIO_snprintf(char* buf, size_t n, const char* format, ...)
 {
     va_list args;
     int ret;
@@ -1039,7 +1037,7 @@ int BIO_snprintf(char *buf, size_t n, const char *format, ...)
     return ret;
 }
 
-int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
+int BIO_vsnprintf(char* buf, size_t n, const char* format, va_list args)
 {
     size_t retlen;
     int truncated;

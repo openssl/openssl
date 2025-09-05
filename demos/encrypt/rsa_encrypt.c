@@ -23,22 +23,21 @@
 #include "rsa_encrypt.h"
 
 /* Input data to encrypt */
-static const unsigned char msg[] =
-    "To be, or not to be, that is the question,\n"
-    "Whether tis nobler in the minde to suffer\n"
-    "The slings and arrowes of outragious fortune,\n"
-    "Or to take Armes again in a sea of troubles";
+static const unsigned char msg[] = "To be, or not to be, that is the question,\n"
+                                   "Whether tis nobler in the minde to suffer\n"
+                                   "The slings and arrowes of outragious fortune,\n"
+                                   "Or to take Armes again in a sea of troubles";
 
 /*
  * For do_encrypt(), load an RSA public key from pub_key_der[].
  * For do_decrypt(), load an RSA private key from priv_key_der[].
  */
-static EVP_PKEY *get_key(OSSL_LIB_CTX *libctx, const char *propq, int public)
+static EVP_PKEY* get_key(OSSL_LIB_CTX* libctx, const char* propq, int public)
 {
-    OSSL_DECODER_CTX *dctx = NULL;
-    EVP_PKEY *pkey = NULL;
+    OSSL_DECODER_CTX* dctx = NULL;
+    EVP_PKEY* pkey = NULL;
     int selection;
-    const unsigned char *data;
+    const unsigned char* data;
     size_t data_len;
 
     if (public) {
@@ -51,33 +50,33 @@ static EVP_PKEY *get_key(OSSL_LIB_CTX *libctx, const char *propq, int public)
         data_len = sizeof(priv_key_der);
     }
     dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", NULL, "RSA",
-                                         selection, libctx, propq);
+        selection, libctx, propq);
     (void)OSSL_DECODER_from_data(dctx, &data, &data_len);
     OSSL_DECODER_CTX_free(dctx);
     return pkey;
 }
 
 /* Set optional parameters for RSA OAEP Padding */
-static void set_optional_params(OSSL_PARAM *p, const char *propq)
+static void set_optional_params(OSSL_PARAM* p, const char* propq)
 {
     static unsigned char label[] = "label";
 
     /* "pkcs1" is used by default if the padding mode is not set */
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_PAD_MODE,
-                                            OSSL_PKEY_RSA_PAD_MODE_OAEP, 0);
+        OSSL_PKEY_RSA_PAD_MODE_OAEP, 0);
     /* No oaep_label is used if this is not set */
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL,
-                                             label, sizeof(label));
+        label, sizeof(label));
     /* "SHA1" is used if this is not set */
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST,
-                                            "SHA256", 0);
+        "SHA256", 0);
     /*
      * If a non default property query needs to be specified when fetching the
      * OAEP digest then it needs to be specified here.
      */
     if (propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS,
-                                                (char *)propq, 0);
+            (char*)propq, 0);
 
     /*
      * OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST and
@@ -93,16 +92,16 @@ static void set_optional_params(OSSL_PARAM *p, const char *propq)
  * RSA key length minus some additional bytes that depends on the padding mode.
  *
  */
-static int do_encrypt(OSSL_LIB_CTX *libctx,
-                      const unsigned char *in, size_t in_len,
-                      unsigned char **out, size_t *out_len)
+static int do_encrypt(OSSL_LIB_CTX* libctx,
+    const unsigned char* in, size_t in_len,
+    unsigned char** out, size_t* out_len)
 {
     int ret = 0, public = 1;
     size_t buf_len = 0;
-    unsigned char *buf = NULL;
-    const char *propq = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
-    EVP_PKEY *pub_key = NULL;
+    unsigned char* buf = NULL;
+    const char* propq = NULL;
+    EVP_PKEY_CTX* ctx = NULL;
+    EVP_PKEY* pub_key = NULL;
     OSSL_PARAM params[5];
 
     /* Get public key */
@@ -128,7 +127,7 @@ static int do_encrypt(OSSL_LIB_CTX *libctx,
         goto cleanup;
     }
     buf = OPENSSL_zalloc(buf_len);
-    if (buf  == NULL) {
+    if (buf == NULL) {
         fprintf(stderr, "Malloc failed.\n");
         goto cleanup;
     }
@@ -151,15 +150,15 @@ cleanup:
     return ret;
 }
 
-static int do_decrypt(OSSL_LIB_CTX *libctx, const unsigned char *in, size_t in_len,
-                      unsigned char **out, size_t *out_len)
+static int do_decrypt(OSSL_LIB_CTX* libctx, const unsigned char* in, size_t in_len,
+    unsigned char** out, size_t* out_len)
 {
     int ret = 0, public = 0;
     size_t buf_len = 0;
-    unsigned char *buf = NULL;
-    const char *propq = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
-    EVP_PKEY *priv_key = NULL;
+    unsigned char* buf = NULL;
+    const char* propq = NULL;
+    EVP_PKEY_CTX* ctx = NULL;
+    EVP_PKEY* priv_key = NULL;
     OSSL_PARAM params[5];
 
     /* Get private key */
@@ -216,14 +215,14 @@ int main(void)
     size_t msg_len = sizeof(msg) - 1;
     size_t encrypted_len = 0, decrypted_len = 0;
     unsigned char *encrypted = NULL, *decrypted = NULL;
-    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_LIB_CTX* libctx = NULL;
 
     if (!do_encrypt(libctx, msg, msg_len, &encrypted, &encrypted_len)) {
         fprintf(stderr, "encryption failed.\n");
         goto cleanup;
     }
     if (!do_decrypt(libctx, encrypted, encrypted_len,
-                    &decrypted, &decrypted_len)) {
+            &decrypted, &decrypted_len)) {
         fprintf(stderr, "decryption failed.\n");
         goto cleanup;
     }

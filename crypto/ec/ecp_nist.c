@@ -20,7 +20,7 @@
 #include <openssl/obj_mac.h>
 #include "ec_local.h"
 
-const EC_METHOD *EC_GFp_nist_method(void)
+const EC_METHOD* EC_GFp_nist_method(void)
 {
     static const EC_METHOD ret = {
         EC_FLAGS_DEFAULT_OCT,
@@ -50,16 +50,16 @@ const EC_METHOD *EC_GFp_nist_method(void)
         ossl_ec_GFp_simple_cmp,
         ossl_ec_GFp_simple_make_affine,
         ossl_ec_GFp_simple_points_make_affine,
-        0 /* mul */ ,
-        0 /* precompute_mult */ ,
-        0 /* have_precompute_mult */ ,
+        0 /* mul */,
+        0 /* precompute_mult */,
+        0 /* have_precompute_mult */,
         ossl_ec_GFp_nist_field_mul,
         ossl_ec_GFp_nist_field_sqr,
-        0 /* field_div */ ,
+        0 /* field_div */,
         ossl_ec_GFp_simple_field_inv,
-        0 /* field_encode */ ,
-        0 /* field_decode */ ,
-        0,                      /* field_set_to_one */
+        0 /* field_encode */,
+        0 /* field_decode */,
+        0, /* field_set_to_one */
         ossl_ec_key_simple_priv2oct,
         ossl_ec_key_simple_oct2priv,
         0, /* set private */
@@ -82,19 +82,19 @@ const EC_METHOD *EC_GFp_nist_method(void)
     return &ret;
 }
 
-int ossl_ec_GFp_nist_group_copy(EC_GROUP *dest, const EC_GROUP *src)
+int ossl_ec_GFp_nist_group_copy(EC_GROUP* dest, const EC_GROUP* src)
 {
     dest->field_mod_func = src->field_mod_func;
 
     return ossl_ec_GFp_simple_group_copy(dest, src);
 }
 
-int ossl_ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
-                                     const BIGNUM *a, const BIGNUM *b,
-                                     BN_CTX *ctx)
+int ossl_ec_GFp_nist_group_set_curve(EC_GROUP* group, const BIGNUM* p,
+    const BIGNUM* a, const BIGNUM* b,
+    BN_CTX* ctx)
 {
     int ret = 0;
-    BN_CTX *new_ctx = NULL;
+    BN_CTX* new_ctx = NULL;
 
     if (ctx == NULL)
         if ((ctx = new_ctx = BN_CTX_new_ex(group->libctx)) == NULL)
@@ -119,17 +119,17 @@ int ossl_ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 
     ret = ossl_ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
 
- err:
+err:
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     return ret;
 }
 
-int ossl_ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
-                               const BIGNUM *b, BN_CTX *ctx)
+int ossl_ec_GFp_nist_field_mul(const EC_GROUP* group, BIGNUM* r, const BIGNUM* a,
+    const BIGNUM* b, BN_CTX* ctx)
 {
     int ret = 0;
-    BN_CTX *ctx_new = NULL;
+    BN_CTX* ctx_new = NULL;
 
     if (!group || !r || !a || !b) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
@@ -145,16 +145,16 @@ int ossl_ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a
         goto err;
 
     ret = 1;
- err:
+err:
     BN_CTX_free(ctx_new);
     return ret;
 }
 
-int ossl_ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
-                               BN_CTX *ctx)
+int ossl_ec_GFp_nist_field_sqr(const EC_GROUP* group, BIGNUM* r, const BIGNUM* a,
+    BN_CTX* ctx)
 {
     int ret = 0;
-    BN_CTX *ctx_new = NULL;
+    BN_CTX* ctx_new = NULL;
 
     if (!group || !r || !a) {
         ERR_raise(ERR_LIB_EC, EC_R_PASSED_NULL_PARAMETER);
@@ -170,7 +170,7 @@ int ossl_ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a
         goto err;
 
     ret = 1;
- err:
+err:
     BN_CTX_free(ctx_new);
     return ret;
 }

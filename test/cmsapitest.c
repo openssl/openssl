@@ -17,19 +17,19 @@
 
 #include "testutil.h"
 
-static X509 *cert = NULL;
-static EVP_PKEY *privkey = NULL;
-static char *derin = NULL;
+static X509* cert = NULL;
+static EVP_PKEY* privkey = NULL;
+static char* derin = NULL;
 
-static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
+static int test_encrypt_decrypt(const EVP_CIPHER* cipher)
 {
     int testresult = 0;
-    STACK_OF(X509) *certstack = sk_X509_new_null();
-    const char *msg = "Hello world";
-    BIO *msgbio = BIO_new_mem_buf(msg, (int)strlen(msg));
-    BIO *outmsgbio = BIO_new(BIO_s_mem());
+    STACK_OF(X509)* certstack = sk_X509_new_null();
+    const char* msg = "Hello world";
+    BIO* msgbio = BIO_new_mem_buf(msg, (int)strlen(msg));
+    BIO* outmsgbio = BIO_new(BIO_s_mem());
     CMS_ContentInfo* content = NULL;
-    BIO *contentbio = NULL;
+    BIO* contentbio = NULL;
     char buf[80];
 
     if (!TEST_ptr(certstack) || !TEST_ptr(msgbio) || !TEST_ptr(outmsgbio))
@@ -43,22 +43,21 @@ static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
         goto end;
 
     if (!TEST_true(CMS_decrypt(content, privkey, cert, NULL, outmsgbio,
-                               CMS_TEXT)))
+            CMS_TEXT)))
         goto end;
 
-    if (!TEST_ptr(contentbio =
-                  CMS_EnvelopedData_decrypt(content->d.envelopedData,
-                                            NULL, privkey, cert, NULL,
-                                            CMS_TEXT, NULL, NULL)))
+    if (!TEST_ptr(contentbio = CMS_EnvelopedData_decrypt(content->d.envelopedData,
+                      NULL, privkey, cert, NULL,
+                      CMS_TEXT, NULL, NULL)))
         goto end;
 
     /* Check we got the message we first started with */
     if (!TEST_int_eq(BIO_gets(outmsgbio, buf, sizeof(buf)), (int)strlen(msg))
-            || !TEST_int_eq(strcmp(buf, msg), 0))
+        || !TEST_int_eq(strcmp(buf, msg), 0))
         goto end;
 
     testresult = 1;
- end:
+end:
     BIO_free(contentbio);
     sk_X509_free(certstack);
     BIO_free(msgbio);
@@ -90,7 +89,7 @@ static int test_encrypt_decrypt_aes_256_gcm(void)
 
 static int test_CMS_add1_cert(void)
 {
-    CMS_ContentInfo *cms = NULL;
+    CMS_ContentInfo* cms = NULL;
     int ret = 0;
 
     ret = TEST_ptr(cms = CMS_ContentInfo_new())
@@ -104,7 +103,7 @@ static int test_CMS_add1_cert(void)
 static int test_d2i_CMS_bio_NULL(void)
 {
     BIO *bio, *content = NULL;
-    CMS_ContentInfo *cms = NULL;
+    CMS_ContentInfo* cms = NULL;
     unsigned int flags = CMS_NO_SIGNER_CERT_VERIFY;
     int ret = 0;
 
@@ -306,20 +305,19 @@ static int test_d2i_CMS_bio_NULL(void)
     ret = TEST_ptr(bio = BIO_new_mem_buf(cms_data, sizeof(cms_data)))
         && TEST_ptr(cms = d2i_CMS_bio(bio, NULL))
         && TEST_true(CMS_verify(cms, NULL, NULL, NULL, NULL, flags))
-        && TEST_ptr(content =
-                    CMS_SignedData_verify(cms->d.signedData, NULL, NULL, NULL,
-                                          NULL, NULL, flags, NULL, NULL));
+        && TEST_ptr(content = CMS_SignedData_verify(cms->d.signedData, NULL, NULL, NULL,
+                        NULL, NULL, flags, NULL, NULL));
     BIO_free(content);
     CMS_ContentInfo_free(cms);
     BIO_free(bio);
     return ret && TEST_int_eq(ERR_peek_error(), 0);
 }
 
-static unsigned char *read_all(BIO *bio, long *p_len)
+static unsigned char* read_all(BIO* bio, long* p_len)
 {
     const int step = 256;
-    unsigned char *buf = NULL;
-    unsigned char *tmp = NULL;
+    unsigned char* buf = NULL;
+    unsigned char* tmp = NULL;
     int ret;
 
     *p_len = 0;
@@ -349,15 +347,15 @@ static unsigned char *read_all(BIO *bio, long *p_len)
 
 static int test_d2i_CMS_decode(const int idx)
 {
-    BIO *bio = NULL;
-    CMS_ContentInfo *cms = NULL;
-    unsigned char *buf = NULL;
-    const unsigned char *tmp = NULL;
+    BIO* bio = NULL;
+    CMS_ContentInfo* cms = NULL;
+    unsigned char* buf = NULL;
+    const unsigned char* tmp = NULL;
     long buf_len = 0;
     int ret = 0;
 
     if (!TEST_ptr(bio = BIO_new_file(derin, "r")))
-      goto end;
+        goto end;
 
     switch (idx) {
     case 0:
@@ -398,8 +396,8 @@ int setup_tests(void)
     }
 
     if (!TEST_ptr(certin = test_get_argument(0))
-            || !TEST_ptr(privkeyin = test_get_argument(1))
-            || !TEST_ptr(derin = test_get_argument(2)))
+        || !TEST_ptr(privkeyin = test_get_argument(1))
+        || !TEST_ptr(derin = test_get_argument(2)))
         return 0;
 
     certbio = BIO_new_file(certin, "r");

@@ -12,7 +12,7 @@
 
 #include "testutil.h"
 
-static char *certsDir = NULL;
+static char* certsDir = NULL;
 
 /*
  * Test for the missing X509 version check discussed in issue #5738 and
@@ -23,10 +23,10 @@ static char *certsDir = NULL;
  */
 static int test_x509_req_detect_invalid_version(void)
 {
-    char *certFilePath;
-    BIO *bio = NULL;
-    EVP_PKEY *pkey = NULL;
-    X509_REQ *req = NULL;
+    char* certFilePath;
+    BIO* bio = NULL;
+    EVP_PKEY* pkey = NULL;
+    X509_REQ* req = NULL;
     int ret = 0;
 
     certFilePath = test_mk_file_path(certsDir, "x509-req-detect-invalid-version.pem");

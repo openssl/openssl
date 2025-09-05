@@ -16,7 +16,7 @@
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #ifndef FIPS_MODULE
-# include <openssl/x509.h>
+#include <openssl/x509.h>
 #endif
 #include "crypto/dsa.h"
 #include "dsa_local.h"
@@ -27,8 +27,8 @@
  * implementations alike.
  */
 
-int ossl_dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[],
-                          int include_private)
+int ossl_dsa_key_fromdata(DSA* dsa, const OSSL_PARAM params[],
+    int include_private)
 {
     const OSSL_PARAM *param_priv_key = NULL, *param_pub_key;
     BIGNUM *priv_key = NULL, *pub_key = NULL;
@@ -37,11 +37,9 @@ int ossl_dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[],
         return 0;
 
     if (include_private) {
-        param_priv_key =
-            OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
+        param_priv_key = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
     }
-    param_pub_key =
-        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
+    param_pub_key = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
 
     /* It's ok if neither half is present */
     if (param_priv_key == NULL && param_pub_key == NULL)
@@ -57,31 +55,31 @@ int ossl_dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[],
 
     return 1;
 
- err:
+err:
     BN_clear_free(priv_key);
     BN_free(pub_key);
     return 0;
 }
 
-int ossl_dsa_is_foreign(const DSA *dsa)
+int ossl_dsa_is_foreign(const DSA* dsa)
 {
 #ifndef FIPS_MODULE
-    if (dsa->engine != NULL || DSA_get_method((DSA *)dsa) != DSA_OpenSSL())
+    if (dsa->engine != NULL || DSA_get_method((DSA*)dsa) != DSA_OpenSSL())
         return 1;
 #endif
     return 0;
 }
 
-static ossl_inline int dsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
+static ossl_inline int dsa_bn_dup_check(BIGNUM** out, const BIGNUM* f)
 {
     if (f != NULL && (*out = BN_dup(f)) == NULL)
         return 0;
     return 1;
 }
 
-DSA *ossl_dsa_dup(const DSA *dsa, int selection)
+DSA* ossl_dsa_dup(const DSA* dsa, int selection)
 {
-    DSA *dupkey = NULL;
+    DSA* dupkey = NULL;
 
     /* Do not try to duplicate foreign DSA keys */
     if (ossl_dsa_is_foreign(dsa))
@@ -108,33 +106,33 @@ DSA *ossl_dsa_dup(const DSA *dsa, int selection)
 
 #ifndef FIPS_MODULE
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_DSA,
-                            &dupkey->ex_data, &dsa->ex_data))
+            &dupkey->ex_data, &dsa->ex_data))
         goto err;
 #endif
 
     return dupkey;
 
- err:
+err:
     DSA_free(dupkey);
     return NULL;
 }
 
 #ifndef FIPS_MODULE
-DSA *ossl_dsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
-                             OSSL_LIB_CTX *libctx, const char *propq)
+DSA* ossl_dsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO* p8inf,
+    OSSL_LIB_CTX* libctx, const char* propq)
 {
     const unsigned char *p, *pm;
     int pklen, pmlen;
     int ptype;
-    const void *pval;
-    const ASN1_STRING *pstr;
-    const X509_ALGOR *palg;
-    ASN1_INTEGER *privkey = NULL;
+    const void* pval;
+    const ASN1_STRING* pstr;
+    const X509_ALGOR* palg;
+    ASN1_INTEGER* privkey = NULL;
     const BIGNUM *dsa_p, *dsa_g;
     BIGNUM *dsa_pubkey = NULL, *dsa_privkey = NULL;
-    BN_CTX *ctx = NULL;
+    BN_CTX* ctx = NULL;
 
-    DSA *dsa = NULL;
+    DSA* dsa = NULL;
 
     if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8inf))
         return 0;
@@ -180,14 +178,14 @@ DSA *ossl_dsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
 
     goto done;
 
- decerr:
+decerr:
     ERR_raise(ERR_LIB_DSA, DSA_R_DECODE_ERROR);
- dsaerr:
+dsaerr:
     BN_free(dsa_privkey);
     BN_free(dsa_pubkey);
     DSA_free(dsa);
     dsa = NULL;
- done:
+done:
     BN_CTX_free(ctx);
     ASN1_STRING_clear_free(privkey);
     return dsa;

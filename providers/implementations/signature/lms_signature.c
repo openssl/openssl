@@ -25,15 +25,15 @@ static OSSL_FUNC_signature_verify_message_init_fn lms_verify_msg_init;
 static OSSL_FUNC_signature_verify_fn lms_verify;
 
 typedef struct {
-    OSSL_LIB_CTX *libctx;
-    char *propq;
-    LMS_KEY *key;
-    EVP_MD *md;
+    OSSL_LIB_CTX* libctx;
+    char* propq;
+    LMS_KEY* key;
+    EVP_MD* md;
 } PROV_LMS_CTX;
 
-static void *lms_newctx(void *provctx, const char *propq)
+static void* lms_newctx(void* provctx, const char* propq)
 {
-    PROV_LMS_CTX *ctx;
+    PROV_LMS_CTX* ctx;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -51,9 +51,9 @@ err:
     return NULL;
 }
 
-static void lms_freectx(void *vctx)
+static void lms_freectx(void* vctx)
 {
-    PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
+    PROV_LMS_CTX* ctx = (PROV_LMS_CTX*)vctx;
 
     if (ctx == NULL)
         return;
@@ -62,7 +62,7 @@ static void lms_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static int setdigest(PROV_LMS_CTX *ctx, const char *digestname)
+static int setdigest(PROV_LMS_CTX* ctx, const char* digestname)
 {
     /*
      * Assume that only one digest can be used by LMS.
@@ -70,8 +70,8 @@ static int setdigest(PROV_LMS_CTX *ctx, const char *digestname)
      * If the optional digestname passed in by the user is different
      * then return an error.
      */
-    LMS_KEY *key = ctx->key;
-    const char *pub_digestname = key->ots_params->digestname;
+    LMS_KEY* key = ctx->key;
+    const char* pub_digestname = key->ots_params->digestname;
 
     if (ctx->md != NULL) {
         if (EVP_MD_is_a(ctx->md, pub_digestname))
@@ -85,10 +85,10 @@ end:
     return digestname == NULL || EVP_MD_is_a(ctx->md, digestname);
 }
 
-static int lms_verify_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
+static int lms_verify_msg_init(void* vctx, void* vkey, const OSSL_PARAM params[])
 {
-    PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
-    LMS_KEY *key = (LMS_KEY *)vkey;
+    PROV_LMS_CTX* ctx = (PROV_LMS_CTX*)vctx;
+    LMS_KEY* key = (LMS_KEY*)vkey;
 
     if (!ossl_prov_is_running() || ctx == NULL)
         return 0;
@@ -102,13 +102,13 @@ static int lms_verify_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[]
     return setdigest(ctx, NULL);
 }
 
-static int lms_verify(void *vctx, const unsigned char *sigbuf, size_t sigbuf_len,
-                      const unsigned char *msg, size_t msglen)
+static int lms_verify(void* vctx, const unsigned char* sigbuf, size_t sigbuf_len,
+    const unsigned char* msg, size_t msglen)
 {
     int ret = 0;
-    PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
-    LMS_KEY *pub = ctx->key;
-    LMS_SIG *sig = NULL;
+    PROV_LMS_CTX* ctx = (PROV_LMS_CTX*)vctx;
+    LMS_KEY* pub = ctx->key;
+    LMS_SIG* sig = NULL;
 
     /* A root public key is required to perform a verify operation */
     if (pub == NULL)
@@ -127,7 +127,7 @@ const OSSL_DISPATCH ossl_lms_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))lms_newctx },
     { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))lms_freectx },
     { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_INIT,
-      (void (*)(void))lms_verify_msg_init },
+        (void (*)(void))lms_verify_msg_init },
     { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))lms_verify },
     OSSL_DISPATCH_END
 };

@@ -17,9 +17,9 @@
 #include "crypto/x509.h" /* x509_st definition */
 #include "testutil.h"
 
-static EVP_PKEY *pubkey = NULL;
-static EVP_PKEY *privkey = NULL;
-static EVP_MD *signmd = NULL;
+static EVP_PKEY* pubkey = NULL;
+static EVP_PKEY* privkey = NULL;
+static EVP_MD* signmd = NULL;
 
 /* EC key pair used for signing */
 static const unsigned char privkeydata[] = {
@@ -92,12 +92,12 @@ static const unsigned char crldata[] = {
 static int test_x509_tbs_cache(void)
 {
     int ret;
-    X509 *x = NULL;
-    const unsigned char *p = certdata;
+    X509* x = NULL;
+    const unsigned char* p = certdata;
 
     ret = TEST_ptr(x = d2i_X509(NULL, &p, sizeof(certdata)))
-          && TEST_int_gt(X509_sign(x, privkey, signmd), 0)
-          && TEST_int_eq(X509_verify(x, pubkey), 1);
+        && TEST_int_gt(X509_sign(x, privkey, signmd), 0)
+        && TEST_int_eq(X509_verify(x, pubkey), 1);
     X509_free(x);
     return ret;
 }
@@ -110,12 +110,12 @@ static int test_x509_tbs_cache(void)
 static int test_x509_crl_tbs_cache(void)
 {
     int ret;
-    X509_CRL *crl = NULL;
-    const unsigned char *p = crldata;
+    X509_CRL* crl = NULL;
+    const unsigned char* p = crldata;
 
     ret = TEST_ptr(crl = d2i_X509_CRL(NULL, &p, sizeof(crldata)))
-          && TEST_int_gt(X509_CRL_sign(crl, privkey, signmd), 0)
-          && TEST_int_eq(X509_CRL_verify(crl, pubkey), 1);
+        && TEST_int_gt(X509_CRL_sign(crl, privkey, signmd), 0)
+        && TEST_int_eq(X509_CRL_verify(crl, pubkey), 1);
 
     X509_CRL_free(crl);
     return ret;
@@ -124,14 +124,14 @@ static int test_x509_crl_tbs_cache(void)
 static int test_asn1_item_verify(void)
 {
     int ret = 0;
-    BIO *bio = NULL;
-    X509 *x509 = NULL;
-    const char *certfile;
-    const ASN1_BIT_STRING *sig = NULL;
-    const X509_ALGOR *alg = NULL;
-    EVP_PKEY *pkey;
+    BIO* bio = NULL;
+    X509* x509 = NULL;
+    const char* certfile;
+    const ASN1_BIT_STRING* sig = NULL;
+    const X509_ALGOR* alg = NULL;
+    EVP_PKEY* pkey;
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-    RSA *rsa = NULL;
+    RSA* rsa = NULL;
 #endif
 
     if (!TEST_ptr(certfile = test_get_argument(0))
@@ -152,14 +152,16 @@ static int test_asn1_item_verify(void)
     X509_get0_signature(&sig, &alg, x509);
 
     if (!TEST_int_gt(ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF),
-                                      (X509_ALGOR *)alg, (ASN1_BIT_STRING *)sig,
-                                      &x509->cert_info, pkey), 0))
+                         (X509_ALGOR*)alg, (ASN1_BIT_STRING*)sig,
+                         &x509->cert_info, pkey),
+            0))
         goto err;
 
     ERR_set_mark();
     if (!TEST_int_lt(ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF),
-                                     (X509_ALGOR *)alg, (ASN1_BIT_STRING *)sig,
-                                     NULL, pkey), 0)) {
+                         (X509_ALGOR*)alg, (ASN1_BIT_STRING*)sig,
+                         NULL, pkey),
+            0)) {
         ERR_clear_last_mark();
         goto err;
     }
@@ -167,7 +169,7 @@ static int test_asn1_item_verify(void)
 
     ret = 1;
 
- err:
+err:
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     RSA_free(rsa);
 #endif
@@ -180,7 +182,7 @@ OPT_TEST_DECLARE_USAGE("<pss-self-signed-cert.pem>\n")
 
 int setup_tests(void)
 {
-    const unsigned char *p;
+    const unsigned char* p;
     size_t cnt;
 
     cnt = test_get_argument_count();

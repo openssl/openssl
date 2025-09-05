@@ -31,13 +31,13 @@
  * @return Pointer to the updated buffer position after reading the value,
  *         or NULL if the buffer does not contain enough data.
  */
-static uint8_t *consume_uint8_t(const uint8_t *buf, size_t *len, uint8_t *val)
+static uint8_t* consume_uint8_t(const uint8_t* buf, size_t* len, uint8_t* val)
 {
     if (*len < sizeof(uint8_t))
         return NULL;
     *val = *buf;
     *len -= sizeof(uint8_t);
-    return (uint8_t *)buf + 1;
+    return (uint8_t*)buf + 1;
 }
 
 /**
@@ -53,13 +53,13 @@ static uint8_t *consume_uint8_t(const uint8_t *buf, size_t *len, uint8_t *val)
  * @return Pointer to the updated buffer position after reading the value,
  *         or NULL if the buffer does not contain enough data.
  */
-static uint8_t *consume_size_t(const uint8_t *buf, size_t *len, size_t *val)
+static uint8_t* consume_size_t(const uint8_t* buf, size_t* len, size_t* val)
 {
     if (*len < sizeof(size_t))
         return NULL;
     *val = *buf;
     *len -= sizeof(size_t);
-    return (uint8_t *)buf + sizeof(size_t);
+    return (uint8_t*)buf + sizeof(size_t);
 }
 
 /**
@@ -78,9 +78,9 @@ static uint8_t *consume_size_t(const uint8_t *buf, size_t *len, size_t *val)
  *
  * @return 1 if a key type is successfully selected, 0 on failure.
  */
-static int select_keytype_and_size(uint8_t **buf, size_t *len,
-                                   char **keytype, size_t *keylen,
-                                   int only_valid)
+static int select_keytype_and_size(uint8_t** buf, size_t* len,
+    char** keytype, size_t* keylen,
+    int only_valid)
 {
     uint16_t keysize;
     uint16_t modulus = 6;
@@ -89,7 +89,7 @@ static int select_keytype_and_size(uint8_t **buf, size_t *len,
      * Note: We don't really care about endianness here, we just want a random
      * 16 bit value
      */
-    *buf = (uint8_t *)OPENSSL_load_u16_le(&keysize, *buf);
+    *buf = (uint8_t*)OPENSSL_load_u16_le(&keysize, *buf);
     *len -= sizeof(uint16_t);
 
     if (*buf == NULL)
@@ -128,7 +128,7 @@ static int select_keytype_and_size(uint8_t **buf, size_t *len,
     case 4:
         /* Select valid alg, but bogus size */
         *keytype = "ML-DSA-87";
-        *buf = (uint8_t *)OPENSSL_load_u16_le(&keysize, *buf);
+        *buf = (uint8_t*)OPENSSL_load_u16_le(&keysize, *buf);
         *len -= sizeof(uint16_t);
         *keylen = (size_t)keysize;
         *keylen %= ML_DSA_87_PUB_LEN; /* size to our key buffer */
@@ -156,11 +156,11 @@ static int select_keytype_and_size(uint8_t **buf, size_t *len,
  * @note The generated key is allocated using OpenSSL's EVP_PKEY functions
  *       and should be freed appropriately using `EVP_PKEY_free()`.
  */
-static void create_ml_dsa_raw_key(uint8_t **buf, size_t *len,
-                                  void **key1, void **key2)
+static void create_ml_dsa_raw_key(uint8_t** buf, size_t* len,
+    void** key1, void** key2)
 {
-    EVP_PKEY *pubkey;
-    char *keytype = NULL;
+    EVP_PKEY* pubkey;
+    char* keytype = NULL;
     size_t keylen = 0;
     /* MAX_ML_DSA_PRIV_LEN is longer of that and ML_DSA_87_PUB_LEN */
     uint8_t key[MAX_ML_DSA_PRIV_LEN];
@@ -216,12 +216,12 @@ static void create_ml_dsa_raw_key(uint8_t **buf, size_t *len,
     return;
 }
 
-static int keygen_ml_dsa_real_key_helper(uint8_t **buf, size_t *len,
-                                         EVP_PKEY **key)
+static int keygen_ml_dsa_real_key_helper(uint8_t** buf, size_t* len,
+    EVP_PKEY** key)
 {
-    char *keytype = NULL;
+    char* keytype = NULL;
     size_t keylen = 0;
-    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY_CTX* ctx = NULL;
     int ret = 0;
 
     /*
@@ -273,11 +273,11 @@ err:
  * @note The generated key is allocated using OpenSSL's EVP_PKEY functions
  *       and should be freed using `EVP_PKEY_free()`.
  */
-static void keygen_ml_dsa_real_key(uint8_t **buf, size_t *len,
-                                   void **key1, void **key2)
+static void keygen_ml_dsa_real_key(uint8_t** buf, size_t* len,
+    void** key1, void** key2)
 {
-    if (!keygen_ml_dsa_real_key_helper(buf, len, (EVP_PKEY **)key1)
-        || !keygen_ml_dsa_real_key_helper(buf, len, (EVP_PKEY **)key2))
+    if (!keygen_ml_dsa_real_key_helper(buf, len, (EVP_PKEY**)key1)
+        || !keygen_ml_dsa_real_key_helper(buf, len, (EVP_PKEY**)key2))
         fprintf(stderr, "Unable to generate valid keys");
 }
 
@@ -295,20 +295,20 @@ static void keygen_ml_dsa_real_key(uint8_t **buf, size_t *len,
  * @param[out] out1  Unused output parameter (reserved for future use).
  * @param[out] out2  Unused output parameter (reserved for future use).
  */
-static void ml_dsa_sign_verify(uint8_t **buf, size_t *len, void *key1,
-                               void *in2, void **out1, void **out2)
+static void ml_dsa_sign_verify(uint8_t** buf, size_t* len, void* key1,
+    void* in2, void** out1, void** out2)
 {
-    EVP_PKEY *key = (EVP_PKEY *)key1;
-    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(NULL, key, NULL);
-    EVP_SIGNATURE *sig_alg = NULL;
-    unsigned char *sig = NULL;
+    EVP_PKEY* key = (EVP_PKEY*)key1;
+    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_from_pkey(NULL, key, NULL);
+    EVP_SIGNATURE* sig_alg = NULL;
+    unsigned char* sig = NULL;
     size_t sig_len = 0, tbslen;
-    unsigned char *tbs = NULL;
+    unsigned char* tbs = NULL;
     /* Ownership of alg is retained by the pkey object */
-    const char *alg = EVP_PKEY_get0_type_name(key);
+    const char* alg = EVP_PKEY_get0_type_name(key);
     const OSSL_PARAM params[] = {
         OSSL_PARAM_octet_string("context-string",
-                                (unsigned char *)"A context string", 16),
+            (unsigned char*)"A context string", 16),
         OSSL_PARAM_END
     };
 
@@ -374,18 +374,18 @@ err:
  * @param[out] out1  Unused output parameter (reserved for future use).
  * @param[out] out2  Unused output parameter (reserved for future use).
  */
-static void ml_dsa_digest_sign_verify(uint8_t **buf, size_t *len, void *key1,
-                                      void *in2, void **out1, void **out2)
+static void ml_dsa_digest_sign_verify(uint8_t** buf, size_t* len, void* key1,
+    void* in2, void** out1, void** out2)
 {
-    EVP_PKEY *key = (EVP_PKEY *)key1;
-    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
-    EVP_SIGNATURE *sig_alg = NULL;
-    unsigned char *sig = NULL;
+    EVP_PKEY* key = (EVP_PKEY*)key1;
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    EVP_SIGNATURE* sig_alg = NULL;
+    unsigned char* sig = NULL;
     size_t sig_len, tbslen;
-    unsigned char *tbs = NULL;
+    unsigned char* tbs = NULL;
     const OSSL_PARAM params[] = {
         OSSL_PARAM_octet_string("context-string",
-                                (unsigned char *)"A context string", 16),
+            (unsigned char*)"A context string", 16),
         OSSL_PARAM_END
     };
 
@@ -423,7 +423,8 @@ static void ml_dsa_digest_sign_verify(uint8_t **buf, size_t *len, void *key1,
 
     if ((ctx = EVP_MD_CTX_new()) == NULL
         || EVP_DigestVerifyInit_ex(ctx, NULL, NULL, NULL, "?fips=true", key,
-                                   params) <= 0
+               params)
+            <= 0
         || EVP_DigestVerify(ctx, sig, sig_len, tbs, tbslen) <= 0) {
         fprintf(stderr, "Failed to verify digest with EVP_DigestVerify\n");
         goto err;
@@ -455,13 +456,13 @@ err:
  * @note If any step in the export-import process fails, the function
  *       logs an error and cleans up allocated resources.
  */
-static void ml_dsa_export_import(uint8_t **buf, size_t *len, void *key1,
-                                 void *key2, void **out1, void **out2)
+static void ml_dsa_export_import(uint8_t** buf, size_t* len, void* key1,
+    void* key2, void** out1, void** out2)
 {
-    EVP_PKEY *alice = (EVP_PKEY *)key1;
-    EVP_PKEY *new_key = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
-    OSSL_PARAM *params = NULL;
+    EVP_PKEY* alice = (EVP_PKEY*)key1;
+    EVP_PKEY* new_key = NULL;
+    EVP_PKEY_CTX* ctx = NULL;
+    OSSL_PARAM* params = NULL;
 
     if (!EVP_PKEY_todata(alice, EVP_PKEY_KEYPAIR, &params)) {
         fprintf(stderr, "Failed todata\n");
@@ -500,11 +501,11 @@ err:
  * @param out1  Unused parameter (purpose unclear).
  * @param out2  Unused parameter (purpose unclear).
  */
-static void ml_dsa_compare(uint8_t **buf, size_t *len, void *key1,
-                           void *key2, void **out1, void **out2)
+static void ml_dsa_compare(uint8_t** buf, size_t* len, void* key1,
+    void* key2, void** out1, void** out2)
 {
-    EVP_PKEY *alice = (EVP_PKEY *)key1;
-    EVP_PKEY *bob = (EVP_PKEY *)key2;
+    EVP_PKEY* alice = (EVP_PKEY*)key1;
+    EVP_PKEY* bob = (EVP_PKEY*)key2;
 
     EVP_PKEY_eq(alice, alice);
     EVP_PKEY_eq(alice, bob);
@@ -524,13 +525,13 @@ static void ml_dsa_compare(uint8_t **buf, size_t *len, void *key1,
  * @note This function assumes that each key is either a valid EVP_PKEY
  *       object or NULL. Passing NULL is safe and has no effect.
  */
-static void cleanup_ml_dsa_keys(void *key1, void *key2,
-                                void *key3, void *key4)
+static void cleanup_ml_dsa_keys(void* key1, void* key2,
+    void* key3, void* key4)
 {
-    EVP_PKEY_free((EVP_PKEY *)key1);
-    EVP_PKEY_free((EVP_PKEY *)key2);
-    EVP_PKEY_free((EVP_PKEY *)key3);
-    EVP_PKEY_free((EVP_PKEY *)key4);
+    EVP_PKEY_free((EVP_PKEY*)key1);
+    EVP_PKEY_free((EVP_PKEY*)key2);
+    EVP_PKEY_free((EVP_PKEY*)key3);
+    EVP_PKEY_free((EVP_PKEY*)key4);
 }
 
 /**
@@ -544,10 +545,10 @@ static void cleanup_ml_dsa_keys(void *key1, void *key2,
  */
 struct op_table_entry {
     /** Name of the operation. */
-    char *name;
+    char* name;
 
     /** Description of the operation. */
-    char *desc;
+    char* desc;
 
     /**
      * @brief Function pointer for setting up the operation.
@@ -557,7 +558,7 @@ struct op_table_entry {
      * @param out1  Pointer to store the first output of the setup function.
      * @param out2  Pointer to store the second output of the setup function.
      */
-    void (*setup)(uint8_t **buf, size_t *len, void **out1, void **out2);
+    void (*setup)(uint8_t** buf, size_t* len, void** out1, void** out2);
 
     /**
      * @brief Function pointer for executing the operation.
@@ -569,8 +570,8 @@ struct op_table_entry {
      * @param out1  Pointer to store the first output of the operation.
      * @param out2  Pointer to store the second output of the operation.
      */
-    void (*doit)(uint8_t **buf, size_t *len, void *in1, void *in2,
-                 void **out1, void **out2);
+    void (*doit)(uint8_t** buf, size_t* len, void* in1, void* in2,
+        void** out1, void** out2);
 
     /**
      * @brief Function pointer for cleaning up after the operation.
@@ -580,50 +581,43 @@ struct op_table_entry {
      * @param out1  First output parameter to be cleaned up.
      * @param out2  Second output parameter to be cleaned up.
      */
-    void (*cleanup)(void *in1, void *in2, void *out1, void *out2);
+    void (*cleanup)(void* in1, void* in2, void* out1, void* out2);
 };
 
 static struct op_table_entry ops[] = {
-    {
-        "Generate ML-DSA raw key",
+    { "Generate ML-DSA raw key",
         "Try generate a raw keypair using random data. Usually fails",
         create_ml_dsa_raw_key,
         NULL,
-        cleanup_ml_dsa_keys
-    }, {
-        "Generate ML-DSA keypair, using EVP_PKEY_keygen",
+        cleanup_ml_dsa_keys },
+    { "Generate ML-DSA keypair, using EVP_PKEY_keygen",
         "Generates a real ML-DSA keypair, should always work",
         keygen_ml_dsa_real_key,
         NULL,
-        cleanup_ml_dsa_keys
-    }, {
-        "Do a sign/verify operation on a key",
+        cleanup_ml_dsa_keys },
+    { "Do a sign/verify operation on a key",
         "Generate key, sign random data, verify it, should work",
         keygen_ml_dsa_real_key,
         ml_dsa_sign_verify,
-        cleanup_ml_dsa_keys
-    }, {
-        "Do a digest sign/verify operation on a key",
+        cleanup_ml_dsa_keys },
+    { "Do a digest sign/verify operation on a key",
         "Generate key, digest sign random data, verify it, should work",
         keygen_ml_dsa_real_key,
         ml_dsa_digest_sign_verify,
-        cleanup_ml_dsa_keys
-    }, {
-        "Do an export/import of key data",
+        cleanup_ml_dsa_keys },
+    { "Do an export/import of key data",
         "Exercise EVP_PKEY_todata/fromdata",
         keygen_ml_dsa_real_key,
         ml_dsa_export_import,
-        cleanup_ml_dsa_keys
-    }, {
-        "Compare keys for equality",
+        cleanup_ml_dsa_keys },
+    { "Compare keys for equality",
         "Compare key1/key1 and key1/key2 for equality",
         keygen_ml_dsa_real_key,
         ml_dsa_compare,
-        cleanup_ml_dsa_keys
-    }
+        cleanup_ml_dsa_keys }
 };
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(int* argc, char*** argv)
 {
     return 0;
 }
@@ -644,10 +638,10 @@ int FuzzerInitialize(int *argc, char ***argv)
  *       It utilizes the `ops` operation table to dynamically determine and
  *       execute the selected operation.
  */
-int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+int FuzzerTestOneInput(const uint8_t* buf, size_t len)
 {
     uint8_t operation;
-    uint8_t *buffer_cursor;
+    uint8_t* buffer_cursor;
     void *in1 = NULL, *in2 = NULL;
     void *out1 = NULL, *out2 = NULL;
 

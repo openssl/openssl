@@ -22,20 +22,20 @@
 #include "crypto/dh.h"
 
 /* Override the default free and new methods */
-static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                 void *exarg)
+static int dh_cb(int operation, ASN1_VALUE** pval, const ASN1_ITEM* it,
+    void* exarg)
 {
     if (operation == ASN1_OP_NEW_PRE) {
-        *pval = (ASN1_VALUE *)DH_new();
+        *pval = (ASN1_VALUE*)DH_new();
         if (*pval != NULL)
             return 2;
         return 0;
     } else if (operation == ASN1_OP_FREE_PRE) {
-        DH_free((DH *)*pval);
+        DH_free((DH*)*pval);
         *pval = NULL;
         return 2;
     } else if (operation == ASN1_OP_D2I_POST) {
-        DH *dh = (DH *)*pval;
+        DH* dh = (DH*)*pval;
 
         DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
         DH_set_flags(dh, DH_FLAG_TYPE_DH);
@@ -46,9 +46,9 @@ static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 }
 
 ASN1_SEQUENCE_cb(DHparams, dh_cb) = {
-        ASN1_SIMPLE(DH, params.p, BIGNUM),
-        ASN1_SIMPLE(DH, params.g, BIGNUM),
-        ASN1_OPT_EMBED(DH, length, ZINT32),
+    ASN1_SIMPLE(DH, params.p, BIGNUM),
+    ASN1_SIMPLE(DH, params.g, BIGNUM),
+    ASN1_OPT_EMBED(DH, length, ZINT32),
 } ASN1_SEQUENCE_END_cb(DH, DHparams)
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(DH, DHparams, DHparams)
@@ -59,42 +59,43 @@ IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(DH, DHparams, DHparams)
  */
 
 typedef struct {
-    ASN1_BIT_STRING *seed;
-    BIGNUM *counter;
+    ASN1_BIT_STRING* seed;
+    BIGNUM* counter;
 } int_dhvparams;
 
 typedef struct {
-    BIGNUM *p;
-    BIGNUM *q;
-    BIGNUM *g;
-    BIGNUM *j;
-    int_dhvparams *vparams;
+    BIGNUM* p;
+    BIGNUM* q;
+    BIGNUM* g;
+    BIGNUM* j;
+    int_dhvparams* vparams;
 } int_dhx942_dh;
 
 ASN1_SEQUENCE(DHvparams) = {
-        ASN1_SIMPLE(int_dhvparams, seed, ASN1_BIT_STRING),
-        ASN1_SIMPLE(int_dhvparams, counter, BIGNUM)
+    ASN1_SIMPLE(int_dhvparams, seed, ASN1_BIT_STRING),
+    ASN1_SIMPLE(int_dhvparams, counter, BIGNUM)
 } static_ASN1_SEQUENCE_END_name(int_dhvparams, DHvparams)
 
-ASN1_SEQUENCE(DHxparams) = {
-        ASN1_SIMPLE(int_dhx942_dh, p, BIGNUM),
-        ASN1_SIMPLE(int_dhx942_dh, g, BIGNUM),
-        ASN1_SIMPLE(int_dhx942_dh, q, BIGNUM),
-        ASN1_OPT(int_dhx942_dh, j, BIGNUM),
-        ASN1_OPT(int_dhx942_dh, vparams, DHvparams),
-} static_ASN1_SEQUENCE_END_name(int_dhx942_dh, DHxparams)
+    ASN1_SEQUENCE(DHxparams)
+    = {
+          ASN1_SIMPLE(int_dhx942_dh, p, BIGNUM),
+          ASN1_SIMPLE(int_dhx942_dh, g, BIGNUM),
+          ASN1_SIMPLE(int_dhx942_dh, q, BIGNUM),
+          ASN1_OPT(int_dhx942_dh, j, BIGNUM),
+          ASN1_OPT(int_dhx942_dh, vparams, DHvparams),
+      } static_ASN1_SEQUENCE_END_name(int_dhx942_dh, DHxparams)
 
-int_dhx942_dh *d2i_int_dhx(int_dhx942_dh **a,
-                           const unsigned char **pp, long length);
-int i2d_int_dhx(const int_dhx942_dh *a, unsigned char **pp);
+          int_dhx942_dh
+    * d2i_int_dhx(int_dhx942_dh * *a, const unsigned char** pp, long length);
+int i2d_int_dhx(const int_dhx942_dh* a, unsigned char** pp);
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(int_dhx942_dh, DHxparams, int_dhx)
 
-DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
+DH* d2i_DHxparams(DH** a, const unsigned char** pp, long length)
 {
-    FFC_PARAMS *params;
-    int_dhx942_dh *dhx = NULL;
-    DH *dh = NULL;
+    FFC_PARAMS* params;
+    int_dhx942_dh* dhx = NULL;
+    DH* dh = NULL;
 
     dh = DH_new();
     if (dh == NULL)
@@ -118,8 +119,8 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
         /* The counter has a maximum value of 4 * numbits(p) - 1 */
         int counter = (int)BN_get_word(dhx->vparams->counter);
         ossl_ffc_params_set_validate_params(params, dhx->vparams->seed->data,
-                                            dhx->vparams->seed->length,
-                                            counter);
+            dhx->vparams->seed->length,
+            counter);
         ASN1_BIT_STRING_free(dhx->vparams->seed);
         BN_free(dhx->vparams->counter);
         OPENSSL_free(dhx->vparams);
@@ -132,18 +133,18 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
     return dh;
 }
 
-int i2d_DHxparams(const DH *dh, unsigned char **pp)
+int i2d_DHxparams(const DH* dh, unsigned char** pp)
 {
     int ret = 0;
     int_dhx942_dh dhx;
     int_dhvparams dhv = { NULL, NULL };
     ASN1_BIT_STRING seed;
     size_t seedlen = 0;
-    const FFC_PARAMS *params = &dh->params;
+    const FFC_PARAMS* params = &dh->params;
     int counter;
 
-    ossl_ffc_params_get0_pqg(params, (const BIGNUM **)&dhx.p,
-                             (const BIGNUM **)&dhx.q, (const BIGNUM **)&dhx.g);
+    ossl_ffc_params_get0_pqg(params, (const BIGNUM**)&dhx.p,
+        (const BIGNUM**)&dhx.q, (const BIGNUM**)&dhx.g);
     dhx.j = params->j;
     ossl_ffc_params_get_validate_params(params, &seed.data, &seedlen, &counter);
     seed.length = (int)seedlen;

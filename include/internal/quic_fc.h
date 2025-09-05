@@ -8,12 +8,12 @@
  */
 
 #ifndef OSSL_QUIC_FC_H
-# define OSSL_QUIC_FC_H
+#define OSSL_QUIC_FC_H
 
-# include <openssl/ssl.h>
-# include "internal/time.h"
+#include <openssl/ssl.h>
+#include "internal/time.h"
 
-# ifndef OPENSSL_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
 
 /*
  * TX Flow Controller (TXFC)
@@ -24,9 +24,9 @@
 typedef struct quic_txfc_st QUIC_TXFC;
 
 struct quic_txfc_st {
-    QUIC_TXFC   *parent; /* stream-level iff non-NULL */
-    uint64_t    swm, cwm;
-    char        has_become_blocked;
+    QUIC_TXFC* parent; /* stream-level iff non-NULL */
+    uint64_t swm, cwm;
+    char has_become_blocked;
 };
 
 /*
@@ -34,13 +34,13 @@ struct quic_txfc_st {
  * the connection-level flow controller if the TXFC is for stream-level flow
  * control, and NULL otherwise.
  */
-int ossl_quic_txfc_init(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc);
+int ossl_quic_txfc_init(QUIC_TXFC* txfc, QUIC_TXFC* conn_txfc);
 
 /*
  * Gets the parent (i.e., connection-level) TX flow controller. Returns NULL if
  * called on a connection-level TX flow controller.
  */
-QUIC_TXFC *ossl_quic_txfc_get_parent(QUIC_TXFC *txfc);
+QUIC_TXFC* ossl_quic_txfc_get_parent(QUIC_TXFC* txfc);
 
 /*
  * Bump the credit watermark (CWM) value. This is the 'On TX Window Updated'
@@ -52,7 +52,7 @@ QUIC_TXFC *ossl_quic_txfc_get_parent(QUIC_TXFC *txfc);
  * value. This is not an error per se but may indicate a local programming error
  * or a protocol error in a remote peer.
  */
-int ossl_quic_txfc_bump_cwm(QUIC_TXFC *txfc, uint64_t cwm);
+int ossl_quic_txfc_bump_cwm(QUIC_TXFC* txfc, uint64_t cwm);
 
 /*
  * Get the number of bytes by which we are in credit. This is the number of
@@ -64,7 +64,7 @@ int ossl_quic_txfc_bump_cwm(QUIC_TXFC *txfc, uint64_t cwm);
  * returned. The consumed value is the amount already consumed on the connection
  * level TXFC.
  */
-uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc, uint64_t consumed);
+uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC* txfc, uint64_t consumed);
 
 /*
  * Like ossl_quic_txfc_get_credit(), but when called on a stream-level TXFC,
@@ -72,7 +72,7 @@ uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc, uint64_t consumed);
  * connection-level flow control. Any credit value is reduced by the consumed
  * amount.
  */
-uint64_t ossl_quic_txfc_get_credit_local(QUIC_TXFC *txfc, uint64_t consumed);
+uint64_t ossl_quic_txfc_get_credit_local(QUIC_TXFC* txfc, uint64_t consumed);
 
 /*
  * Consume num_bytes of credit. This is the 'On TX' operation. This should be
@@ -89,14 +89,14 @@ uint64_t ossl_quic_txfc_get_credit_local(QUIC_TXFC *txfc, uint64_t consumed);
  * on the connection-level TXFC also. If the call to that function on the
  * connection-level TXFC returns zero, this function will also return zero.
  */
-int ossl_quic_txfc_consume_credit(QUIC_TXFC *txfc, uint64_t num_bytes);
+int ossl_quic_txfc_consume_credit(QUIC_TXFC* txfc, uint64_t num_bytes);
 
 /*
  * Like ossl_quic_txfc_consume_credit(), but when called on a stream-level TXFC,
  * consumes only from the stream-level credit and does not inform the
  * connection-level TXFC.
  */
-int ossl_quic_txfc_consume_credit_local(QUIC_TXFC *txfc, uint64_t num_bytes);
+int ossl_quic_txfc_consume_credit_local(QUIC_TXFC* txfc, uint64_t num_bytes);
 
 /*
  * This flag is provided for convenience. A caller is not required to use it. It
@@ -105,19 +105,19 @@ int ossl_quic_txfc_consume_credit_local(QUIC_TXFC *txfc, uint64_t num_bytes);
  * to determine if they need to send a DATA_BLOCKED or STREAM_DATA_BLOCKED
  * frame, which should contain the value returned by ossl_quic_txfc_get_cwm().
  */
-int ossl_quic_txfc_has_become_blocked(QUIC_TXFC *txfc, int clear);
+int ossl_quic_txfc_has_become_blocked(QUIC_TXFC* txfc, int clear);
 
 /*
  * Get the current CWM value. This is mainly only needed when generating a
  * DATA_BLOCKED or STREAM_DATA_BLOCKED frame, or for diagnostic purposes.
  */
-uint64_t ossl_quic_txfc_get_cwm(QUIC_TXFC *txfc);
+uint64_t ossl_quic_txfc_get_cwm(QUIC_TXFC* txfc);
 
 /*
  * Get the current spent watermark (SWM) value. This is purely for diagnostic
  * use and should not be needed in normal circumstances.
  */
-uint64_t ossl_quic_txfc_get_swm(QUIC_TXFC *txfc);
+uint64_t ossl_quic_txfc_get_swm(QUIC_TXFC* txfc);
 
 /*
  * RX Flow Controller (RXFC)
@@ -134,12 +134,12 @@ struct quic_rxfc_st {
      * (STREAM frame offset + payload length) we have seen from a STREAM frame
      * yet.
      */
-    uint64_t        cwm, swm, rwm, esrwm, hwm, cur_window_size, max_window_size;
-    OSSL_TIME       epoch_start;
-    OSSL_TIME       (*now)(void *arg);
-    void            *now_arg;
-    QUIC_RXFC       *parent;
-    unsigned char   error_code, has_cwm_changed, is_fin, standalone;
+    uint64_t cwm, swm, rwm, esrwm, hwm, cur_window_size, max_window_size;
+    OSSL_TIME epoch_start;
+    OSSL_TIME (*now)(void* arg);
+    void* now_arg;
+    QUIC_RXFC* parent;
+    unsigned char error_code, has_cwm_changed, is_fin, standalone;
 };
 
 /*
@@ -150,33 +150,33 @@ struct quic_rxfc_st {
  * expressed in bytes and determine how much credit the RXFC extends to the peer
  * to transmit more data at a time.
  */
-int ossl_quic_rxfc_init(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
-                        uint64_t initial_window_size,
-                        uint64_t max_window_size,
-                        OSSL_TIME (*now)(void *arg),
-                        void *now_arg);
+int ossl_quic_rxfc_init(QUIC_RXFC* rxfc, QUIC_RXFC* conn_rxfc,
+    uint64_t initial_window_size,
+    uint64_t max_window_size,
+    OSSL_TIME (*now)(void* arg),
+    void* now_arg);
 
 /*
  * Initialises an RX flow controller which is used by itself and not under a
  * connection-level RX flow controller. This can be used for stream count
  * enforcement as well as CRYPTO buffer enforcement.
  */
-int ossl_quic_rxfc_init_standalone(QUIC_RXFC *rxfc,
-                                   uint64_t initial_window_size,
-                                   OSSL_TIME (*now)(void *arg),
-                                   void *now_arg);
+int ossl_quic_rxfc_init_standalone(QUIC_RXFC* rxfc,
+    uint64_t initial_window_size,
+    OSSL_TIME (*now)(void* arg),
+    void* now_arg);
 
 /*
  * Gets the parent (i.e., connection-level) RXFC. Returns NULL if called on a
  * connection-level RXFC.
  */
-QUIC_RXFC *ossl_quic_rxfc_get_parent(QUIC_RXFC *rxfc);
+QUIC_RXFC* ossl_quic_rxfc_get_parent(QUIC_RXFC* rxfc);
 
 /*
  * Changes the current maximum window size value.
  */
-void ossl_quic_rxfc_set_max_window_size(QUIC_RXFC *rxfc,
-                                        size_t max_window_size);
+void ossl_quic_rxfc_set_max_window_size(QUIC_RXFC* rxfc,
+    size_t max_window_size);
 
 /*
  * To be called whenever a STREAM frame is received.
@@ -196,8 +196,8 @@ void ossl_quic_rxfc_set_max_window_size(QUIC_RXFC *rxfc,
  *
  * Returns 1 on success or 0 on failure.
  */
-int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC *rxfc,
-                                      uint64_t end, int is_fin);
+int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC* rxfc,
+    uint64_t end, int is_fin);
 
 /*
  * To be called whenever controlled bytes are retired, i.e. when bytes are
@@ -216,9 +216,9 @@ int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC *rxfc,
  *
  * Returns 1 on success and 0 on failure.
  */
-int ossl_quic_rxfc_on_retire(QUIC_RXFC *rxfc,
-                             uint64_t num_bytes,
-                             OSSL_TIME rtt);
+int ossl_quic_rxfc_on_retire(QUIC_RXFC* rxfc,
+    uint64_t num_bytes,
+    OSSL_TIME rtt);
 
 /*
  * Returns the current CWM which the RXFC thinks the peer should have.
@@ -229,32 +229,32 @@ int ossl_quic_rxfc_on_retire(QUIC_RXFC *rxfc,
  *
  * This value increases monotonically.
  */
-uint64_t ossl_quic_rxfc_get_cwm(const QUIC_RXFC *rxfc);
+uint64_t ossl_quic_rxfc_get_cwm(const QUIC_RXFC* rxfc);
 
 /*
  * Returns the current SWM. This is the total number of bytes the peer has
  * transmitted to us. This is intended for diagnostic use only; you should
  * not need it.
  */
-uint64_t ossl_quic_rxfc_get_swm(const QUIC_RXFC *rxfc);
+uint64_t ossl_quic_rxfc_get_swm(const QUIC_RXFC* rxfc);
 
 /*
  * Returns the current RWM. This is the total number of bytes that has been
  * retired. This is intended for diagnostic use only; you should not need it.
  */
-uint64_t ossl_quic_rxfc_get_rwm(const QUIC_RXFC *rxfc);
+uint64_t ossl_quic_rxfc_get_rwm(const QUIC_RXFC* rxfc);
 
 /*
  * Returns the current credit. This is the CWM minus the SWM. This is intended
  * for diagnostic use only; you should not need it.
  */
-uint64_t ossl_quic_rxfc_get_credit(const QUIC_RXFC *rxfc);
+uint64_t ossl_quic_rxfc_get_credit(const QUIC_RXFC* rxfc);
 
 /*
  * Returns the CWM changed flag. If clear is 1, the flag is cleared and the old
  * value is returned.
  */
-int ossl_quic_rxfc_has_cwm_changed(QUIC_RXFC *rxfc, int clear);
+int ossl_quic_rxfc_has_cwm_changed(QUIC_RXFC* rxfc, int clear);
 
 /*
  * Returns a QUIC_ERR_* error code if a flow control error has been detected.
@@ -269,15 +269,15 @@ int ossl_quic_rxfc_has_cwm_changed(QUIC_RXFC *rxfc, int clear);
  * QUIC_ERR_FINAL_SIZE:
  *   The peer attempted to change the stream length after ending the stream.
  */
-int ossl_quic_rxfc_get_error(QUIC_RXFC *rxfc, int clear);
+int ossl_quic_rxfc_get_error(QUIC_RXFC* rxfc, int clear);
 
 /*
  * Returns 1 if the RXFC is a stream-level RXFC and the RXFC knows the final
  * size for the stream in bytes. If this is the case and final_size is non-NULL,
  * writes the final size to *final_size. Otherwise, returns 0.
  */
-int ossl_quic_rxfc_get_final_size(const QUIC_RXFC *rxfc, uint64_t *final_size);
+int ossl_quic_rxfc_get_final_size(const QUIC_RXFC* rxfc, uint64_t* final_size);
 
-# endif
+#endif
 
 #endif

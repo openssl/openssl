@@ -13,9 +13,9 @@
 
 /* shim that avoids sucking in too much from apps/apps.c */
 
-void *app_malloc(size_t sz, const char *what)
+void* app_malloc(size_t sz, const char* what)
 {
-    void *vp;
+    void* vp;
 
     /*
      * This isn't ideal but it is what the app's app_malloc() does on failure.
@@ -45,12 +45,12 @@ int opt_provider_option_given(void)
     return 0;
 }
 
-const char *app_get0_propq(void)
+const char* app_get0_propq(void)
 {
     return NULL;
 }
 
-OSSL_LIB_CTX *app_get0_libctx(void)
+OSSL_LIB_CTX* app_get0_libctx(void)
 {
     return NULL;
 }

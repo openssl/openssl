@@ -17,28 +17,28 @@
 #include "prov/md5_sha1.h"
 #include <openssl/evp.h>
 
-int ossl_md5_sha1_init(MD5_SHA1_CTX *mctx)
+int ossl_md5_sha1_init(MD5_SHA1_CTX* mctx)
 {
     if (!MD5_Init(&mctx->md5))
         return 0;
     return SHA1_Init(&mctx->sha1);
 }
 
-int ossl_md5_sha1_update(MD5_SHA1_CTX *mctx, const void *data, size_t count)
+int ossl_md5_sha1_update(MD5_SHA1_CTX* mctx, const void* data, size_t count)
 {
     if (!MD5_Update(&mctx->md5, data, count))
         return 0;
     return SHA1_Update(&mctx->sha1, data, count);
 }
 
-int ossl_md5_sha1_final(unsigned char *md, MD5_SHA1_CTX *mctx)
+int ossl_md5_sha1_final(unsigned char* md, MD5_SHA1_CTX* mctx)
 {
     if (!MD5_Final(md, &mctx->md5))
         return 0;
     return SHA1_Final(md + MD5_DIGEST_LENGTH, &mctx->sha1);
 }
 
-int ossl_md5_sha1_ctrl(MD5_SHA1_CTX *mctx, int cmd, int mslen, void *ms)
+int ossl_md5_sha1_ctrl(MD5_SHA1_CTX* mctx, int cmd, int mslen, void* ms)
 {
     unsigned char padtmp[48];
     unsigned char md5tmp[MD5_DIGEST_LENGTH];

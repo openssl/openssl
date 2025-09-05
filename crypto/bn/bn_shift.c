@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
-int BN_lshift1(BIGNUM *r, const BIGNUM *a)
+int BN_lshift1(BIGNUM* r, const BIGNUM* a)
 {
     register BN_ULONG *ap, *rp, t, c;
     int i;
@@ -42,7 +42,7 @@ int BN_lshift1(BIGNUM *r, const BIGNUM *a)
     return 1;
 }
 
-int BN_rshift1(BIGNUM *r, const BIGNUM *a)
+int BN_rshift1(BIGNUM* r, const BIGNUM* a)
 {
     BN_ULONG *ap, *rp, t, c;
     int i;
@@ -78,7 +78,7 @@ int BN_rshift1(BIGNUM *r, const BIGNUM *a)
     return 1;
 }
 
-int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
+int BN_lshift(BIGNUM* r, const BIGNUM* a, int n)
 {
     int ret;
 
@@ -101,7 +101,7 @@ int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
  * for constant-time-ness is |n < BN_BITS2| or |n / BN_BITS2| being
  * non-secret.
  */
-int bn_lshift_fixed_top(BIGNUM *r, const BIGNUM *a, int n)
+int bn_lshift_fixed_top(BIGNUM* r, const BIGNUM* a, int n)
 {
     int i, nw;
     unsigned int lb, rb;
@@ -120,8 +120,8 @@ int bn_lshift_fixed_top(BIGNUM *r, const BIGNUM *a, int n)
     if (a->top != 0) {
         lb = (unsigned int)n % BN_BITS2;
         rb = BN_BITS2 - lb;
-        rb %= BN_BITS2;            /* say no to undefined behaviour */
-        rmask = (BN_ULONG)0 - rb;  /* rmask = 0 - (rb != 0) */
+        rb %= BN_BITS2; /* say no to undefined behaviour */
+        rmask = (BN_ULONG)0 - rb; /* rmask = 0 - (rb != 0) */
         rmask |= rmask >> 8;
         f = &(a->d[0]);
         t = &(r->d[nw]);
@@ -147,7 +147,7 @@ int bn_lshift_fixed_top(BIGNUM *r, const BIGNUM *a, int n)
     return 1;
 }
 
-int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
+int BN_rshift(BIGNUM* r, const BIGNUM* a, int n)
 {
     int ret = 0;
 
@@ -173,7 +173,7 @@ int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
  * for constant-time-ness for sufficiently[!] zero-padded inputs is
  * |n < BN_BITS2| or |n / BN_BITS2| being non-secret.
  */
-int bn_rshift_fixed_top(BIGNUM *r, const BIGNUM *a, int n)
+int bn_rshift_fixed_top(BIGNUM* r, const BIGNUM* a, int n)
 {
     int i, top, nw;
     unsigned int lb, rb;
@@ -191,8 +191,8 @@ int bn_rshift_fixed_top(BIGNUM *r, const BIGNUM *a, int n)
 
     rb = (unsigned int)n % BN_BITS2;
     lb = BN_BITS2 - rb;
-    lb %= BN_BITS2;            /* say no to undefined behaviour */
-    mask = (BN_ULONG)0 - lb;   /* mask = 0 - (lb != 0) */
+    lb %= BN_BITS2; /* say no to undefined behaviour */
+    mask = (BN_ULONG)0 - lb; /* mask = 0 - (lb != 0) */
     mask |= mask >> 8;
     top = a->top - nw;
     if (r != a && bn_wexpand(r, top) == NULL)

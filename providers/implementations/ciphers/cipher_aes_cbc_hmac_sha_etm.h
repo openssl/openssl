@@ -17,23 +17,23 @@ int ossl_cipher_capable_aes_cbc_hmac_sha512_etm(void);
 
 typedef struct prov_cipher_hw_aes_hmac_sha_ctx_etm_st {
     PROV_CIPHER_HW base; /* must be first */
-    void (*init_mac_key)(void *ctx, const unsigned char *inkey, size_t inlen);
+    void (*init_mac_key)(void* ctx, const unsigned char* inkey, size_t inlen);
 } PROV_CIPHER_HW_AES_HMAC_SHA_ETM;
 
-const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *ossl_prov_cipher_hw_aes_cbc_hmac_sha1_etm(void);
-const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *ossl_prov_cipher_hw_aes_cbc_hmac_sha256_etm(void);
-const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *ossl_prov_cipher_hw_aes_cbc_hmac_sha512_etm(void);
+const PROV_CIPHER_HW_AES_HMAC_SHA_ETM* ossl_prov_cipher_hw_aes_cbc_hmac_sha1_etm(void);
+const PROV_CIPHER_HW_AES_HMAC_SHA_ETM* ossl_prov_cipher_hw_aes_cbc_hmac_sha256_etm(void);
+const PROV_CIPHER_HW_AES_HMAC_SHA_ETM* ossl_prov_cipher_hw_aes_cbc_hmac_sha512_etm(void);
 
 #ifdef AES_CBC_HMAC_SHA_ETM_CAPABLE
-# include <openssl/aes.h>
-# include <openssl/sha.h>
+#include <openssl/aes.h>
+#include <openssl/sha.h>
 
-# define AES_CBC_MAX_HMAC_SIZE 64
+#define AES_CBC_MAX_HMAC_SIZE 64
 
 typedef struct prov_aes_hmac_sha_etm_ctx_st {
     PROV_CIPHER_CTX base;
     AES_KEY ks;
-    const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *hw;
+    const PROV_CIPHER_HW_AES_HMAC_SHA_ETM* hw;
     unsigned char tag[AES_CBC_MAX_HMAC_SIZE];
     unsigned char exp_tag[AES_CBC_MAX_HMAC_SIZE];
     size_t taglen;
@@ -56,14 +56,14 @@ typedef struct prov_aes_hmac_sha512_etm_ctx_st {
 
 typedef struct {
     struct {
-        uint8_t *key;
+        uint8_t* key;
         uint8_t key_rounds;
-        uint8_t *iv;
+        uint8_t* iv;
     } cipher;
     struct {
         struct {
-            uint8_t *i_key_pad;
-            uint8_t *o_key_pad;
+            uint8_t* i_key_pad;
+            uint8_t* o_key_pad;
         } hmac;
     } digest;
 } CIPH_DIGEST;

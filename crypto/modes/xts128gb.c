@@ -13,17 +13,17 @@
 #include "crypto/modes.h"
 
 #ifndef STRICT_ALIGNMENT
-# ifdef __GNUC__
+#ifdef __GNUC__
 typedef u64 u64_a1 __attribute((__aligned__(1)));
-# else
+#else
 typedef u64 u64_a1;
-# endif
+#endif
 #endif
 
-int ossl_crypto_xts128gb_encrypt(const XTS128_CONTEXT *ctx,
-                                 const unsigned char iv[16],
-                                 const unsigned char *inp, unsigned char *out,
-                                 size_t len, int enc)
+int ossl_crypto_xts128gb_encrypt(const XTS128_CONTEXT* ctx,
+    const unsigned char iv[16],
+    const unsigned char* inp, unsigned char* out,
+    size_t len, int enc)
 {
     DECLARE_IS_ENDIAN;
     union {
@@ -38,7 +38,7 @@ int ossl_crypto_xts128gb_encrypt(const XTS128_CONTEXT *ctx,
 
     memcpy(tweak.c, iv, 16);
 
-    (*ctx->block2) (tweak.c, tweak.c, ctx->key2);
+    (*ctx->block2)(tweak.c, tweak.c, ctx->key2);
 
     if (!enc && (len % 16))
         len -= 16;
@@ -49,17 +49,17 @@ int ossl_crypto_xts128gb_encrypt(const XTS128_CONTEXT *ctx,
         scratch.u[0] ^= tweak.u[0];
         scratch.u[1] ^= tweak.u[1];
 #else
-        scratch.u[0] = ((u64_a1 *)inp)[0] ^ tweak.u[0];
-        scratch.u[1] = ((u64_a1 *)inp)[1] ^ tweak.u[1];
+        scratch.u[0] = ((u64_a1*)inp)[0] ^ tweak.u[0];
+        scratch.u[1] = ((u64_a1*)inp)[1] ^ tweak.u[1];
 #endif
-        (*ctx->block1) (scratch.c, scratch.c, ctx->key1);
+        (*ctx->block1)(scratch.c, scratch.c, ctx->key1);
 #if defined(STRICT_ALIGNMENT)
         scratch.u[0] ^= tweak.u[0];
         scratch.u[1] ^= tweak.u[1];
         memcpy(out, scratch.c, 16);
 #else
-        ((u64_a1 *)out)[0] = scratch.u[0] ^= tweak.u[0];
-        ((u64_a1 *)out)[1] = scratch.u[1] ^= tweak.u[1];
+        ((u64_a1*)out)[0] = scratch.u[0] ^= tweak.u[0];
+        ((u64_a1*)out)[1] = scratch.u[1] ^= tweak.u[1];
 #endif
         inp += 16;
         out += 16;
@@ -75,7 +75,7 @@ int ossl_crypto_xts128gb_encrypt(const XTS128_CONTEXT *ctx,
             hi = BSWAP8(tweak.u[0]);
             lo = BSWAP8(tweak.u[1]);
 #else
-            u8 *p = tweak.c;
+            u8* p = tweak.c;
 
             hi = (u64)GETU32(p) << 32 | GETU32(p + 4);
             lo = (u64)GETU32(p + 8) << 32 | GETU32(p + 12);
@@ -116,7 +116,7 @@ int ossl_crypto_xts128gb_encrypt(const XTS128_CONTEXT *ctx,
         }
         scratch.u[0] ^= tweak.u[0];
         scratch.u[1] ^= tweak.u[1];
-        (*ctx->block1) (scratch.c, scratch.c, ctx->key1);
+        (*ctx->block1)(scratch.c, scratch.c, ctx->key1);
         scratch.u[0] ^= tweak.u[0];
         scratch.u[1] ^= tweak.u[1];
         memcpy(out - 16, scratch.c, 16);
@@ -133,7 +133,7 @@ int ossl_crypto_xts128gb_encrypt(const XTS128_CONTEXT *ctx,
             hi = BSWAP8(tweak.u[0]);
             lo = BSWAP8(tweak.u[1]);
 #else
-            u8 *p = tweak.c;
+            u8* p = tweak.c;
 
             hi = (u64)GETU32(p) << 32 | GETU32(p + 4);
             lo = (u64)GETU32(p + 8) << 32 | GETU32(p + 12);
@@ -170,10 +170,10 @@ int ossl_crypto_xts128gb_encrypt(const XTS128_CONTEXT *ctx,
         scratch.u[0] ^= tweak1.u[0];
         scratch.u[1] ^= tweak1.u[1];
 #else
-        scratch.u[0] = ((u64_a1 *)inp)[0] ^ tweak1.u[0];
-        scratch.u[1] = ((u64_a1 *)inp)[1] ^ tweak1.u[1];
+        scratch.u[0] = ((u64_a1*)inp)[0] ^ tweak1.u[0];
+        scratch.u[1] = ((u64_a1*)inp)[1] ^ tweak1.u[1];
 #endif
-        (*ctx->block1) (scratch.c, scratch.c, ctx->key1);
+        (*ctx->block1)(scratch.c, scratch.c, ctx->key1);
         scratch.u[0] ^= tweak1.u[0];
         scratch.u[1] ^= tweak1.u[1];
 
@@ -184,14 +184,14 @@ int ossl_crypto_xts128gb_encrypt(const XTS128_CONTEXT *ctx,
         }
         scratch.u[0] ^= tweak.u[0];
         scratch.u[1] ^= tweak.u[1];
-        (*ctx->block1) (scratch.c, scratch.c, ctx->key1);
+        (*ctx->block1)(scratch.c, scratch.c, ctx->key1);
 #if defined(STRICT_ALIGNMENT)
         scratch.u[0] ^= tweak.u[0];
         scratch.u[1] ^= tweak.u[1];
         memcpy(out, scratch.c, 16);
 #else
-        ((u64_a1 *)out)[0] = scratch.u[0] ^ tweak.u[0];
-        ((u64_a1 *)out)[1] = scratch.u[1] ^ tweak.u[1];
+        ((u64_a1*)out)[0] = scratch.u[0] ^ tweak.u[0];
+        ((u64_a1*)out)[1] = scratch.u[1] ^ tweak.u[1];
 #endif
     }
 

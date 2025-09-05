@@ -21,12 +21,12 @@
 #include "filterprov.h"
 #include "prov/bio.h"
 
-#define MAX_FILTERS     10
+#define MAX_FILTERS 10
 #define MAX_ALG_FILTERS 5
 
 struct filter_prov_globals_st {
-    OSSL_LIB_CTX *libctx;
-    OSSL_PROVIDER *deflt;
+    OSSL_LIB_CTX* libctx;
+    OSSL_PROVIDER* deflt;
     struct {
         int operation;
         OSSL_ALGORITHM alg[MAX_ALG_FILTERS + 1];
@@ -39,7 +39,7 @@ struct filter_prov_globals_st {
 
 static struct filter_prov_globals_st ourglobals;
 
-static struct filter_prov_globals_st *get_globals(void)
+static struct filter_prov_globals_st* get_globals(void)
 {
     /*
      * Ideally we'd like to store this in the OSSL_LIB_CTX so that we can have
@@ -55,33 +55,33 @@ static OSSL_FUNC_provider_query_operation_fn filter_query;
 static OSSL_FUNC_provider_unquery_operation_fn filter_unquery;
 static OSSL_FUNC_provider_teardown_fn filter_teardown;
 
-static const OSSL_PARAM *filter_gettable_params(void *provctx)
+static const OSSL_PARAM* filter_gettable_params(void* provctx)
 {
-    struct filter_prov_globals_st *globs = get_globals();
+    struct filter_prov_globals_st* globs = get_globals();
 
     return OSSL_PROVIDER_gettable_params(globs->deflt);
 }
 
-static int filter_get_params(void *provctx, OSSL_PARAM params[])
+static int filter_get_params(void* provctx, OSSL_PARAM params[])
 {
-    struct filter_prov_globals_st *globs = get_globals();
+    struct filter_prov_globals_st* globs = get_globals();
 
     return OSSL_PROVIDER_get_params(globs->deflt, params);
 }
 
-static int filter_get_capabilities(void *provctx, const char *capability,
-                                   OSSL_CALLBACK *cb, void *arg)
+static int filter_get_capabilities(void* provctx, const char* capability,
+    OSSL_CALLBACK* cb, void* arg)
 {
-    struct filter_prov_globals_st *globs = get_globals();
+    struct filter_prov_globals_st* globs = get_globals();
 
     return OSSL_PROVIDER_get_capabilities(globs->deflt, capability, cb, arg);
 }
 
-static const OSSL_ALGORITHM *filter_query(void *provctx,
-                                          int operation_id,
-                                          int *no_cache)
+static const OSSL_ALGORITHM* filter_query(void* provctx,
+    int operation_id,
+    int* no_cache)
 {
-    struct filter_prov_globals_st *globs = get_globals();
+    struct filter_prov_globals_st* globs = get_globals();
     int i;
 
     globs->query_count++;
@@ -96,10 +96,10 @@ static const OSSL_ALGORITHM *filter_query(void *provctx,
     return OSSL_PROVIDER_query_operation(globs->deflt, operation_id, no_cache);
 }
 
-static void filter_unquery(void *provctx, int operation_id,
-                           const OSSL_ALGORITHM *algs)
+static void filter_unquery(void* provctx, int operation_id,
+    const OSSL_ALGORITHM* algs)
 {
-    struct filter_prov_globals_st *globs = get_globals();
+    struct filter_prov_globals_st* globs = get_globals();
     int i;
 
     if (!TEST_ulong_gt(globs->query_count, 0))
@@ -113,9 +113,9 @@ static void filter_unquery(void *provctx, int operation_id,
     OSSL_PROVIDER_unquery_operation(globs->deflt, operation_id, algs);
 }
 
-static void filter_teardown(void *provctx)
+static void filter_teardown(void* provctx)
 {
-    struct filter_prov_globals_st *globs = get_globals();
+    struct filter_prov_globals_st* globs = get_globals();
 
     OSSL_PROVIDER_unload(globs->deflt);
     OSSL_LIB_CTX_free(globs->libctx);
@@ -135,13 +135,13 @@ static const OSSL_DISPATCH filter_dispatch_table[] = {
     OSSL_DISPATCH_END
 };
 
-int filter_provider_init(const OSSL_CORE_HANDLE *handle,
-                         const OSSL_DISPATCH *in,
-                         const OSSL_DISPATCH **out,
-                         void **provctx)
+int filter_provider_init(const OSSL_CORE_HANDLE* handle,
+    const OSSL_DISPATCH* in,
+    const OSSL_DISPATCH** out,
+    void** provctx)
 {
-    OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
-    BIO_METHOD *corebiometh;
+    OSSL_FUNC_core_get_libctx_fn* c_get_libctx = NULL;
+    BIO_METHOD* corebiometh;
 
     if (!ossl_prov_bio_from_dispatch(in))
         return 0;
@@ -177,18 +177,18 @@ int filter_provider_init(const OSSL_CORE_HANDLE *handle,
      * create their own library context.
      */
     if ((*provctx = ossl_prov_ctx_new()) == NULL
-            || (corebiometh = ossl_bio_prov_init_bio_method()) == NULL) {
+        || (corebiometh = ossl_bio_prov_init_bio_method()) == NULL) {
         ossl_prov_ctx_free(*provctx);
         *provctx = NULL;
         goto err;
     }
-    ossl_prov_ctx_set0_libctx(*provctx, (OSSL_LIB_CTX *)c_get_libctx(handle));
+    ossl_prov_ctx_set0_libctx(*provctx, (OSSL_LIB_CTX*)c_get_libctx(handle));
     ossl_prov_ctx_set0_handle(*provctx, handle);
     ossl_prov_ctx_set0_core_bio_method(*provctx, corebiometh);
     *out = filter_dispatch_table;
     return 1;
 
- err:
+err:
     OSSL_PROVIDER_unload(ourglobals.deflt);
     OSSL_LIB_CTX_free(ourglobals.libctx);
     return 0;
@@ -200,18 +200,18 @@ int filter_provider_init(const OSSL_CORE_HANDLE *handle,
  * Anything not in the filter will be suppressed. If a filter is not set for
  * a given operation id then all algorithms are made available.
  */
-int filter_provider_set_filter(int operation, const char *filterstr)
+int filter_provider_set_filter(int operation, const char* filterstr)
 {
     int no_cache = 0;
     int algnum = 0, last = 0, ret = 0;
-    struct filter_prov_globals_st *globs = get_globals();
+    struct filter_prov_globals_st* globs = get_globals();
     size_t namelen;
-    char *filterstrtmp = OPENSSL_strdup(filterstr);
+    char* filterstrtmp = OPENSSL_strdup(filterstr);
     char *name, *sep;
-    const OSSL_ALGORITHM *provalgs = OSSL_PROVIDER_query_operation(globs->deflt,
-                                                                   operation,
-                                                                   &no_cache);
-    const OSSL_ALGORITHM *algs;
+    const OSSL_ALGORITHM* provalgs = OSSL_PROVIDER_query_operation(globs->deflt,
+        operation,
+        &no_cache);
+    const OSSL_ALGORITHM* algs;
 
     if (filterstrtmp == NULL)
         goto err;
@@ -232,7 +232,7 @@ int filter_provider_set_filter(int operation, const char *filterstr)
         namelen = strlen(name);
 
         for (algs = provalgs; algs->algorithm_names != NULL; algs++) {
-            const char *found = strstr(algs->algorithm_names, name);
+            const char* found = strstr(algs->algorithm_names, name);
 
             if (found == NULL)
                 continue;
@@ -259,7 +259,7 @@ int filter_provider_set_filter(int operation, const char *filterstr)
     globs->num_dispatch++;
 
     ret = 1;
- err:
+err:
     OSSL_PROVIDER_unquery_operation(globs->deflt, operation, provalgs);
     OPENSSL_free(filterstrtmp);
     return ret;
@@ -271,7 +271,7 @@ int filter_provider_set_filter(int operation, const char *filterstr)
  */
 int filter_provider_check_clean_finish(void)
 {
-    struct filter_prov_globals_st *globs = get_globals();
+    struct filter_prov_globals_st* globs = get_globals();
 
     return TEST_ulong_eq(globs->query_count, 0) && !globs->error;
 }

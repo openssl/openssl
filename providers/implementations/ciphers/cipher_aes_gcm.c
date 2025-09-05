@@ -20,9 +20,9 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
-static void *aes_gcm_newctx(void *provctx, size_t keybits)
+static void* aes_gcm_newctx(void* provctx, size_t keybits)
 {
-    PROV_AES_GCM_CTX *ctx;
+    PROV_AES_GCM_CTX* ctx;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -30,14 +30,14 @@ static void *aes_gcm_newctx(void *provctx, size_t keybits)
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         ossl_gcm_initctx(provctx, &ctx->base, keybits,
-                         ossl_prov_aes_hw_gcm(keybits));
+            ossl_prov_aes_hw_gcm(keybits));
     return ctx;
 }
 
-static void *aes_gcm_dupctx(void *provctx)
+static void* aes_gcm_dupctx(void* provctx)
 {
-    PROV_AES_GCM_CTX *ctx = provctx;
-    PROV_AES_GCM_CTX *dctx = NULL;
+    PROV_AES_GCM_CTX* ctx = provctx;
+    PROV_AES_GCM_CTX* dctx = NULL;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -53,11 +53,11 @@ static void *aes_gcm_dupctx(void *provctx)
 }
 
 static OSSL_FUNC_cipher_freectx_fn aes_gcm_freectx;
-static void aes_gcm_freectx(void *vctx)
+static void aes_gcm_freectx(void* vctx)
 {
-    PROV_AES_GCM_CTX *ctx = (PROV_AES_GCM_CTX *)vctx;
+    PROV_AES_GCM_CTX* ctx = (PROV_AES_GCM_CTX*)vctx;
 
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
 /* ossl_aes128gcm_functions */

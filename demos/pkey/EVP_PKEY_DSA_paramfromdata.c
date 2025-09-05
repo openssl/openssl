@@ -17,15 +17,15 @@
 #include <openssl/core_names.h>
 #include "dsa.inc"
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     int ret = EXIT_FAILURE;
-    OSSL_LIB_CTX *libctx = NULL;
-    const char *propq = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
-    EVP_PKEY *dsaparamkey = NULL;
-    OSSL_PARAM_BLD *bld = NULL;
-    OSSL_PARAM *params = NULL;
+    OSSL_LIB_CTX* libctx = NULL;
+    const char* propq = NULL;
+    EVP_PKEY_CTX* ctx = NULL;
+    EVP_PKEY* dsaparamkey = NULL;
+    OSSL_PARAM_BLD* bld = NULL;
+    OSSL_PARAM* params = NULL;
     BIGNUM *p = NULL, *q = NULL, *g = NULL;
 
     p = BN_bin2bn(dsa_p, sizeof(dsa_p), NULL);
@@ -39,8 +39,8 @@ int main(int argc, char **argv)
     if (bld == NULL)
         goto cleanup;
     if (!OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p)
-            || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q)
-            || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
         goto cleanup;
     params = OSSL_PARAM_BLD_to_param(bld);
     if (params == NULL)
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     }
 
     if (EVP_PKEY_fromdata_init(ctx) <= 0
-            || EVP_PKEY_fromdata(ctx, &dsaparamkey, EVP_PKEY_KEY_PARAMETERS, params) <= 0) {
+        || EVP_PKEY_fromdata(ctx, &dsaparamkey, EVP_PKEY_KEY_PARAMETERS, params) <= 0) {
         fprintf(stderr, "EVP_PKEY_fromdata() failed\n");
         goto cleanup;
     }

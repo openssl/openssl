@@ -20,8 +20,7 @@
  * keys.
  */
 
-static ossl_inline
-int evp_pkey_ctx_getset_ecdh_param_checks(const EVP_PKEY_CTX *ctx)
+static ossl_inline int evp_pkey_ctx_getset_ecdh_param_checks(const EVP_PKEY_CTX* ctx)
 {
     if (ctx == NULL || !EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
@@ -37,7 +36,7 @@ int evp_pkey_ctx_getset_ecdh_param_checks(const EVP_PKEY_CTX *ctx)
     return 1;
 }
 
-int EVP_PKEY_CTX_set_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx, int cofactor_mode)
+int EVP_PKEY_CTX_set_ecdh_cofactor_mode(EVP_PKEY_CTX* ctx, int cofactor_mode)
 {
     int ret;
     OSSL_PARAM params[2], *p = params;
@@ -58,7 +57,7 @@ int EVP_PKEY_CTX_set_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx, int cofactor_mode)
     }
 
     *p++ = OSSL_PARAM_construct_int(OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE,
-                                    &cofactor_mode);
+        &cofactor_mode);
     *p++ = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_set_params_strict(ctx, params);
@@ -67,7 +66,7 @@ int EVP_PKEY_CTX_set_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx, int cofactor_mode)
     return ret;
 }
 
-int EVP_PKEY_CTX_get_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx)
+int EVP_PKEY_CTX_get_ecdh_cofactor_mode(EVP_PKEY_CTX* ctx)
 {
     int ret, mode;
     OSSL_PARAM params[2], *p = params;
@@ -77,7 +76,7 @@ int EVP_PKEY_CTX_get_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx)
         return ret;
 
     *p++ = OSSL_PARAM_construct_int(OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE,
-                                    &mode);
+        &mode);
     *p++ = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_get_params_strict(ctx, params);
@@ -108,43 +107,43 @@ int EVP_PKEY_CTX_get_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx)
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
  */
-int EVP_PKEY_CTX_set_ecdh_kdf_type(EVP_PKEY_CTX *ctx, int kdf)
+int EVP_PKEY_CTX_set_ecdh_kdf_type(EVP_PKEY_CTX* ctx, int kdf)
 {
     return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, EVP_PKEY_OP_DERIVE,
-                             EVP_PKEY_CTRL_EC_KDF_TYPE, kdf, NULL);
+        EVP_PKEY_CTRL_EC_KDF_TYPE, kdf, NULL);
 }
 
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
  */
-int EVP_PKEY_CTX_get_ecdh_kdf_type(EVP_PKEY_CTX *ctx)
+int EVP_PKEY_CTX_get_ecdh_kdf_type(EVP_PKEY_CTX* ctx)
 {
     return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, EVP_PKEY_OP_DERIVE,
-                             EVP_PKEY_CTRL_EC_KDF_TYPE, -2, NULL);
+        EVP_PKEY_CTRL_EC_KDF_TYPE, -2, NULL);
 }
 
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
  */
-int EVP_PKEY_CTX_set_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
+int EVP_PKEY_CTX_set_ecdh_kdf_md(EVP_PKEY_CTX* ctx, const EVP_MD* md)
 {
     return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, EVP_PKEY_OP_DERIVE,
-                             EVP_PKEY_CTRL_EC_KDF_MD, 0, (void *)(md));
+        EVP_PKEY_CTRL_EC_KDF_MD, 0, (void*)(md));
 }
 
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
  */
-int EVP_PKEY_CTX_get_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD **pmd)
+int EVP_PKEY_CTX_get_ecdh_kdf_md(EVP_PKEY_CTX* ctx, const EVP_MD** pmd)
 {
     return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, EVP_PKEY_OP_DERIVE,
-                             EVP_PKEY_CTRL_GET_EC_KDF_MD, 0, (void *)(pmd));
+        EVP_PKEY_CTRL_GET_EC_KDF_MD, 0, (void*)(pmd));
 }
 
-int EVP_PKEY_CTX_set_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int outlen)
+int EVP_PKEY_CTX_set_ecdh_kdf_outlen(EVP_PKEY_CTX* ctx, int outlen)
 {
     int ret;
     size_t len = outlen;
@@ -164,7 +163,7 @@ int EVP_PKEY_CTX_set_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int outlen)
     }
 
     *p++ = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN,
-                                       &len);
+        &len);
     *p++ = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_set_params_strict(ctx, params);
@@ -173,7 +172,7 @@ int EVP_PKEY_CTX_set_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int outlen)
     return ret;
 }
 
-int EVP_PKEY_CTX_get_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int *plen)
+int EVP_PKEY_CTX_get_ecdh_kdf_outlen(EVP_PKEY_CTX* ctx, int* plen)
 {
     size_t len = UINT_MAX;
     int ret;
@@ -184,7 +183,7 @@ int EVP_PKEY_CTX_get_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int *plen)
         return ret;
 
     *p++ = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN,
-                                       &len);
+        &len);
     *p++ = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_get_params_strict(ctx, params);
@@ -207,7 +206,7 @@ int EVP_PKEY_CTX_get_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int *plen)
     return ret;
 }
 
-int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int len)
+int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX* ctx, unsigned char* ukm, int len)
 {
     int ret;
     OSSL_PARAM params[2], *p = params;
@@ -217,12 +216,12 @@ int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int le
         return ret;
 
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_EXCHANGE_PARAM_KDF_UKM,
-                                            /*
-                                             * Cast away the const. This is read
-                                             * only so should be safe
-                                             */
-                                            (void *)ukm,
-                                            (size_t)len);
+        /*
+         * Cast away the const. This is read
+         * only so should be safe
+         */
+        (void*)ukm,
+        (size_t)len);
     *p++ = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_set_params_strict(ctx, params);
@@ -240,7 +239,7 @@ int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int le
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
+int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX* ctx, unsigned char** pukm)
 {
     size_t ukmlen;
     int ret;
@@ -251,7 +250,7 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
         return ret;
 
     *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_EXCHANGE_PARAM_KDF_UKM,
-                                          (void **)pukm, 0);
+        (void**)pukm, 0);
     *p++ = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_get_params_strict(ctx, params);
@@ -281,22 +280,22 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
  * simply because that's easier.
  * ASN1_OBJECT (which would be converted to text internally)?
  */
-int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid)
+int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX* ctx, int nid)
 {
     int keytype = nid == EVP_PKEY_SM2 ? EVP_PKEY_SM2 : EVP_PKEY_EC;
 
     return EVP_PKEY_CTX_ctrl(ctx, keytype, EVP_PKEY_OP_TYPE_GEN,
-                             EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID,
-                             nid, NULL);
+        EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID,
+        nid, NULL);
 }
 
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
  */
-int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc)
+int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX* ctx, int param_enc)
 {
     return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, EVP_PKEY_OP_TYPE_GEN,
-                             EVP_PKEY_CTRL_EC_PARAM_ENC, param_enc, NULL);
+        EVP_PKEY_CTRL_EC_PARAM_ENC, param_enc, NULL);
 }
 #endif

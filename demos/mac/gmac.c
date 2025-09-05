@@ -53,16 +53,16 @@ static const unsigned char expected_output[] = {
  * A property query used for selecting the GMAC implementation and the
  * underlying GCM mode cipher.
  */
-static char *propq = NULL;
+static char* propq = NULL;
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     int ret = EXIT_FAILURE;
-    EVP_MAC *mac = NULL;
-    EVP_MAC_CTX *mctx = NULL;
+    EVP_MAC* mac = NULL;
+    EVP_MAC_CTX* mctx = NULL;
     unsigned char out[16];
     OSSL_PARAM params[4], *p = params;
-    OSSL_LIB_CTX *library_context = NULL;
+    OSSL_LIB_CTX* library_context = NULL;
     size_t out_len = 0;
 
     library_context = OSSL_LIB_CTX_new();
@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 
     /* GMAC requires a GCM mode cipher to be specified */
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
-                                            "AES-128-GCM", 0);
+        "AES-128-GCM", 0);
 
     /*
      * If a non-default property query is required when fetching the GCM mode
@@ -95,11 +95,11 @@ int main(int argc, char **argv)
      */
     if (propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
-                                                propq, 0);
+            propq, 0);
 
     /* Set the initialisation vector (IV) */
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV,
-                                             iv, sizeof(iv));
+        iv, sizeof(iv));
     *p = OSSL_PARAM_construct_end();
 
     /* Initialise the GMAC operation */

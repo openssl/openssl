@@ -14,7 +14,7 @@
 #include <openssl/ssl.h>
 
 typedef enum {
-    SSL_TEST_SUCCESS = 0,  /* Default */
+    SSL_TEST_SUCCESS = 0, /* Default */
     SSL_TEST_SERVER_FAIL,
     SSL_TEST_CLIENT_FAIL,
     SSL_TEST_INTERNAL_ERROR,
@@ -37,7 +37,7 @@ typedef enum {
 } ssl_servername_t;
 
 typedef enum {
-    SSL_TEST_SERVERNAME_CB_NONE = 0,  /* Default */
+    SSL_TEST_SERVERNAME_CB_NONE = 0, /* Default */
     SSL_TEST_SERVERNAME_IGNORE_MISMATCH,
     SSL_TEST_SERVERNAME_REJECT_MISMATCH,
     SSL_TEST_SERVERNAME_CLIENT_HELLO_IGNORE_MISMATCH,
@@ -105,13 +105,13 @@ typedef struct {
     /* Maximum Fragment Length extension mode */
     int max_fragment_len_mode;
     /* Supported NPN and ALPN protocols. A comma-separated list. */
-    char *npn_protocols;
-    char *alpn_protocols;
+    char* npn_protocols;
+    char* alpn_protocols;
     ssl_ct_validation_t ct_validation;
     /* Ciphersuites to set on a renegotiation */
-    char *reneg_ciphers;
-    char *srp_user;
-    char *srp_password;
+    char* reneg_ciphers;
+    char* srp_user;
+    char* srp_password;
     /* PHA enabled */
     int enable_pha;
     /* Do not send extms on renegotiation */
@@ -122,18 +122,18 @@ typedef struct {
     /* SNI callback (server-side). */
     ssl_servername_callback_t servername_callback;
     /* Supported NPN and ALPN protocols. A comma-separated list. */
-    char *npn_protocols;
-    char *alpn_protocols;
+    char* npn_protocols;
+    char* alpn_protocols;
     /* Whether to set a broken session ticket callback. */
     int broken_session_ticket;
     /* Should we send a CertStatus message? */
     ssl_cert_status_t cert_status;
     /* An SRP user known to the server. */
-    char *srp_user;
-    char *srp_password;
+    char* srp_user;
+    char* srp_password;
     /* Forced PHA */
     int force_pha;
-    char *session_ticket_app_data;
+    char* session_ticket_app_data;
 } SSL_TEST_SERVER_CONF;
 
 typedef struct {
@@ -196,8 +196,8 @@ typedef struct {
     ssl_session_ticket_t session_ticket_expected;
     int compression_expected;
     /* The expected NPN/ALPN protocol to negotiate. */
-    char *expected_npn_protocol;
-    char *expected_alpn_protocol;
+    char* expected_npn_protocol;
+    char* expected_alpn_protocol;
     /* Whether the second handshake is resumed or a full handshake (boolean). */
     int resumption_expected;
     /* Expected temporary key type */
@@ -209,7 +209,7 @@ typedef struct {
     /* Expected server signature type */
     int expected_server_sign_type;
     /* Expected server CA names */
-    STACK_OF(X509_NAME) *expected_server_ca_names;
+    STACK_OF(X509_NAME)* expected_server_ca_names;
     /* Expected client certificate key type */
     int expected_client_cert_type;
     /* Expected client signing hash */
@@ -217,7 +217,7 @@ typedef struct {
     /* Expected client signature type */
     int expected_client_sign_type;
     /* Expected CA names for client auth */
-    STACK_OF(X509_NAME) *expected_client_ca_names;
+    STACK_OF(X509_NAME)* expected_client_ca_names;
     /* Whether to use SCTP for the transport */
     int use_sctp;
     /* Whether to pre-compress server certificates */
@@ -228,40 +228,40 @@ typedef struct {
     int enable_server_sctp_label_bug;
     /* Whether to expect a session id from the server */
     ssl_session_id_t session_id_expected;
-    char *expected_cipher;
+    char* expected_cipher;
     /* Expected Session Ticket Application Data */
-    char *expected_session_ticket_app_data;
+    char* expected_session_ticket_app_data;
 
-    OSSL_LIB_CTX *libctx;
+    OSSL_LIB_CTX* libctx;
 
     /* FIPS version string to check for compatibility */
-    char *fips_version;
+    char* fips_version;
 } SSL_TEST_CTX;
 
-const char *ssl_test_result_name(ssl_test_result_t result);
-const char *ssl_alert_name(int alert);
-const char *ssl_protocol_name(int protocol);
-const char *ssl_verify_callback_name(ssl_verify_callback_t verify_callback);
-const char *ssl_servername_name(ssl_servername_t server);
-const char *ssl_servername_callback_name(ssl_servername_callback_t
-                                         servername_callback);
-const char *ssl_session_ticket_name(ssl_session_ticket_t server);
-const char *ssl_session_id_name(ssl_session_id_t server);
-const char *ssl_test_method_name(ssl_test_method_t method);
-const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode);
-const char *ssl_ct_validation_name(ssl_ct_validation_t mode);
-const char *ssl_certstatus_name(ssl_cert_status_t cert_status);
-const char *ssl_max_fragment_len_name(int MFL_mode);
+const char* ssl_test_result_name(ssl_test_result_t result);
+const char* ssl_alert_name(int alert);
+const char* ssl_protocol_name(int protocol);
+const char* ssl_verify_callback_name(ssl_verify_callback_t verify_callback);
+const char* ssl_servername_name(ssl_servername_t server);
+const char* ssl_servername_callback_name(ssl_servername_callback_t
+        servername_callback);
+const char* ssl_session_ticket_name(ssl_session_ticket_t server);
+const char* ssl_session_id_name(ssl_session_id_t server);
+const char* ssl_test_method_name(ssl_test_method_t method);
+const char* ssl_handshake_mode_name(ssl_handshake_mode_t mode);
+const char* ssl_ct_validation_name(ssl_ct_validation_t mode);
+const char* ssl_certstatus_name(ssl_cert_status_t cert_status);
+const char* ssl_max_fragment_len_name(int MFL_mode);
 
 /*
  * Load the test case context from |conf|.
  * See test/README.ssltest.md for details on the conf file format.
  */
-SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section,
-                                  OSSL_LIB_CTX *libctx);
+SSL_TEST_CTX* SSL_TEST_CTX_create(const CONF* conf, const char* test_section,
+    OSSL_LIB_CTX* libctx);
 
-SSL_TEST_CTX *SSL_TEST_CTX_new(OSSL_LIB_CTX *libctx);
+SSL_TEST_CTX* SSL_TEST_CTX_new(OSSL_LIB_CTX* libctx);
 
-void SSL_TEST_CTX_free(SSL_TEST_CTX *ctx);
+void SSL_TEST_CTX_free(SSL_TEST_CTX* ctx);
 
-#endif  /* OSSL_TEST_SSL_TEST_CTX_H */
+#endif /* OSSL_TEST_SSL_TEST_CTX_H */

@@ -32,25 +32,25 @@
 #include "dh_local.h"
 
 #ifndef FIPS_MODULE
-static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
-                                BN_GENCB *cb);
+static int dh_builtin_genparams(DH* ret, int prime_len, int generator,
+    BN_GENCB* cb);
 #endif /* FIPS_MODULE */
 
-int ossl_dh_generate_ffc_parameters(DH *dh, int type, int pbits, int qbits,
-                                    BN_GENCB *cb)
+int ossl_dh_generate_ffc_parameters(DH* dh, int type, int pbits, int qbits,
+    BN_GENCB* cb)
 {
     int ret, res;
 
 #ifndef FIPS_MODULE
     if (type == DH_PARAMGEN_TYPE_FIPS_186_2)
         ret = ossl_ffc_params_FIPS186_2_generate(dh->libctx, &dh->params,
-                                                 FFC_PARAM_TYPE_DH,
-                                                 pbits, qbits, &res, cb);
+            FFC_PARAM_TYPE_DH,
+            pbits, qbits, &res, cb);
     else
 #endif
         ret = ossl_ffc_params_FIPS186_4_generate(dh->libctx, &dh->params,
-                                                 FFC_PARAM_TYPE_DH,
-                                                 pbits, qbits, &res, cb);
+            FFC_PARAM_TYPE_DH,
+            pbits, qbits, &res, cb);
     if (ret > 0)
         dh->dirty_cnt++;
     return ret;
@@ -92,9 +92,9 @@ int ossl_dh_get_named_group_uid_from_size(int pbits)
 
 #ifdef FIPS_MODULE
 
-static int dh_gen_named_group(OSSL_LIB_CTX *libctx, DH *ret, int prime_len)
+static int dh_gen_named_group(OSSL_LIB_CTX* libctx, DH* ret, int prime_len)
 {
-    DH *dh;
+    DH* dh;
     int ok = 0;
     int nid = ossl_dh_get_named_group_uid_from_size(prime_len);
 
@@ -112,8 +112,8 @@ static int dh_gen_named_group(OSSL_LIB_CTX *libctx, DH *ret, int prime_len)
 }
 #endif /* FIPS_MODULE */
 
-int DH_generate_parameters_ex(DH *ret, int prime_len, int generator,
-                              BN_GENCB *cb)
+int DH_generate_parameters_ex(DH* ret, int prime_len, int generator,
+    BN_GENCB* cb)
 {
 #ifdef FIPS_MODULE
     if (generator != 2)
@@ -153,12 +153,12 @@ int DH_generate_parameters_ex(DH *ret, int prime_len, int generator,
  * for 3, p mod 12 == 11
  * for 5, p mod 60 == 59
  */
-static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
-                                BN_GENCB *cb)
+static int dh_builtin_genparams(DH* ret, int prime_len, int generator,
+    BN_GENCB* cb)
 {
     BIGNUM *t1, *t2;
     int g, ok = -1;
-    BN_CTX *ctx = NULL;
+    BN_CTX* ctx = NULL;
 
     if (prime_len > OPENSSL_DH_MAX_MODULUS_BITS) {
         ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
@@ -222,10 +222,11 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
         goto err;
     /* We are using safe prime p, set key length equivalent to RFC 7919 */
     ret->length = (2 * ossl_ifc_ffc_compute_security_bits(prime_len)
-                   + 24) / 25 * 25;
+                      + 24)
+        / 25 * 25;
     ret->dirty_cnt++;
     ok = 1;
- err:
+err:
     if (ok == -1) {
         ERR_raise(ERR_LIB_DH, ERR_R_BN_LIB);
         ok = 0;

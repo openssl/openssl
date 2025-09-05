@@ -8,7 +8,7 @@
  */
 
 #include <string.h>
-#include <openssl/pem.h>         /* PEM_def_callback() */
+#include <openssl/pem.h> /* PEM_def_callback() */
 #include "internal/thread_once.h"
 #include "ui_local.h"
 
@@ -16,24 +16,23 @@
 #define BUFSIZ 256
 #endif
 
-int UI_UTIL_read_pw_string(char *buf, int length, const char *prompt,
-                           int verify)
+int UI_UTIL_read_pw_string(char* buf, int length, const char* prompt,
+    int verify)
 {
     char buff[BUFSIZ];
     int ret;
 
-    ret =
-        UI_UTIL_read_pw(buf, buff, (length > BUFSIZ) ? BUFSIZ : length,
-                        prompt, verify);
+    ret = UI_UTIL_read_pw(buf, buff, (length > BUFSIZ) ? BUFSIZ : length,
+        prompt, verify);
     OPENSSL_cleanse(buff, BUFSIZ);
     return ret;
 }
 
-int UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt,
-                    int verify)
+int UI_UTIL_read_pw(char* buf, char* buff, int size, const char* prompt,
+    int verify)
 {
     int ok = -2;
-    UI *ui;
+    UI* ui;
 
     if (size < 1)
         return -1;
@@ -55,12 +54,12 @@ int UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt,
  * ones.
  */
 struct pem_password_cb_data {
-    pem_password_cb *cb;
+    pem_password_cb* cb;
     int rwflag;
 };
 
-static void ui_new_method_data(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-                               int idx, long argl, void *argp)
+static void ui_new_method_data(void* parent, void* ptr, CRYPTO_EX_DATA* ad,
+    int idx, long argl, void* argp)
 {
     /*
      * Do nothing, the data is allocated externally and assigned later with
@@ -68,8 +67,8 @@ static void ui_new_method_data(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
      */
 }
 
-static int ui_dup_method_data(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
-                              void **pptr, int idx, long argl, void *argp)
+static int ui_dup_method_data(CRYPTO_EX_DATA* to, const CRYPTO_EX_DATA* from,
+    void** pptr, int idx, long argl, void* argp)
 {
     if (*pptr != NULL) {
         *pptr = OPENSSL_memdup(*pptr, sizeof(struct pem_password_cb_data));
@@ -79,8 +78,8 @@ static int ui_dup_method_data(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
     return 0;
 }
 
-static void ui_free_method_data(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-                                int idx, long argl, void *argp)
+static void ui_free_method_data(void* parent, void* ptr, CRYPTO_EX_DATA* ad,
+    int idx, long argl, void* argp)
 {
     OPENSSL_free(ptr);
 }
@@ -90,41 +89,39 @@ static int ui_method_data_index = -1;
 DEFINE_RUN_ONCE_STATIC(ui_method_data_index_init)
 {
     ui_method_data_index = CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_UI_METHOD,
-                                                   0, NULL, ui_new_method_data,
-                                                   ui_dup_method_data,
-                                                   ui_free_method_data);
+        0, NULL, ui_new_method_data,
+        ui_dup_method_data,
+        ui_free_method_data);
     return 1;
 }
 
-static int ui_open(UI *ui)
+static int ui_open(UI* ui)
 {
     return 1;
 }
-static int ui_read(UI *ui, UI_STRING *uis)
+static int ui_read(UI* ui, UI_STRING* uis)
 {
     switch (UI_get_string_type(uis)) {
-    case UIT_PROMPT:
-        {
-            int len;
-            char result[PEM_BUFSIZE + 1]; /* reserve one byte at the end */
-            const struct pem_password_cb_data *data =
-                UI_method_get_ex_data(UI_get_method(ui), ui_method_data_index);
-            int maxsize = UI_get_result_maxsize(uis);
+    case UIT_PROMPT: {
+        int len;
+        char result[PEM_BUFSIZE + 1]; /* reserve one byte at the end */
+        const struct pem_password_cb_data* data = UI_method_get_ex_data(UI_get_method(ui), ui_method_data_index);
+        int maxsize = UI_get_result_maxsize(uis);
 
-            if (maxsize > PEM_BUFSIZE)
-                maxsize = PEM_BUFSIZE;
-            len = data->cb(result, maxsize, data->rwflag,
-                           UI_get0_user_data(ui));
-            if (len > maxsize)
-                return -1;
-            if (len >= 0)
-                result[len] = '\0';
-            if (len < 0)
-                return len;
-            if (UI_set_result_ex(ui, uis, result, len) >= 0)
-                return 1;
-            return 0;
-        }
+        if (maxsize > PEM_BUFSIZE)
+            maxsize = PEM_BUFSIZE;
+        len = data->cb(result, maxsize, data->rwflag,
+            UI_get0_user_data(ui));
+        if (len > maxsize)
+            return -1;
+        if (len >= 0)
+            result[len] = '\0';
+        if (len < 0)
+            return len;
+        if (UI_set_result_ex(ui, uis, result, len) >= 0)
+            return 1;
+        return 0;
+    }
     case UIT_VERIFY:
     case UIT_NONE:
     case UIT_BOOLEAN:
@@ -134,19 +131,19 @@ static int ui_read(UI *ui, UI_STRING *uis)
     }
     return 1;
 }
-static int ui_write(UI *ui, UI_STRING *uis)
+static int ui_write(UI* ui, UI_STRING* uis)
 {
     return 1;
 }
-static int ui_close(UI *ui)
+static int ui_close(UI* ui)
 {
     return 1;
 }
 
-UI_METHOD *UI_UTIL_wrap_read_pem_callback(pem_password_cb *cb, int rwflag)
+UI_METHOD* UI_UTIL_wrap_read_pem_callback(pem_password_cb* cb, int rwflag)
 {
-    struct pem_password_cb_data *data = NULL;
-    UI_METHOD *ui_method = NULL;
+    struct pem_password_cb_data* data = NULL;
+    UI_METHOD* ui_method = NULL;
 
     if ((data = OPENSSL_zalloc(sizeof(*data))) == NULL
         || (ui_method = UI_create_method("PEM password callback wrapper")) == NULL

@@ -13,15 +13,15 @@
 
 /* NOTE - any changes to this struct may require updates to ossl_ml_dsa_dup() */
 struct ml_dsa_key_st {
-    OSSL_LIB_CTX *libctx;
-    const ML_DSA_PARAMS *params;
+    OSSL_LIB_CTX* libctx;
+    const ML_DSA_PARAMS* params;
 
-    EVP_MD *shake128_md;
-    EVP_MD *shake256_md;
+    EVP_MD* shake128_md;
+    EVP_MD* shake256_md;
 
     uint8_t rho[ML_DSA_RHO_BYTES]; /* public random seed */
-    uint8_t tr[ML_DSA_TR_BYTES];   /* Pre-cached public key Hash */
-    uint8_t K[ML_DSA_K_BYTES];     /* Private random seed for signing */
+    uint8_t tr[ML_DSA_TR_BYTES]; /* Pre-cached public key Hash */
+    uint8_t K[ML_DSA_K_BYTES]; /* Private random seed for signing */
 
     /*
      * The encoded public and private keys, these are non NULL if the key
@@ -31,9 +31,9 @@ struct ml_dsa_key_st {
      * provider, the pub_encoding is NULL, while the seed or priv_encoding
      * is not NULL.
      */
-    uint8_t *pub_encoding;
-    uint8_t *priv_encoding;
-    uint8_t *seed;
+    uint8_t* pub_encoding;
+    uint8_t* priv_encoding;
+    uint8_t* seed;
     int prov_flags;
 
     /*
@@ -52,5 +52,5 @@ struct ml_dsa_key_st {
     VECTOR t0;
     VECTOR s2; /* private secret of size K with short coefficients (-4..4) or (-2..2) */
     VECTOR s1; /* private secret of size L with short coefficients (-4..4) or (-2..2) */
-               /* The s1->poly block is allocated and has space for s2 and t0 also */
+    /* The s1->poly block is allocated and has space for s2 and t0 also */
 };

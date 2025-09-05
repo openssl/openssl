@@ -14,14 +14,14 @@
 #include "cmp_local.h"
 #include <openssl/rand.h> /* for RAND_bytes_ex() */
 
-int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER *hdr, int pvno)
+int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER* hdr, int pvno)
 {
     if (!ossl_assert(hdr != NULL))
         return 0;
     return ASN1_INTEGER_set(hdr->pvno, pvno);
 }
 
-int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER *hdr)
+int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER* hdr)
 {
     int64_t pvno;
 
@@ -32,16 +32,15 @@ int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER *hdr)
     return (int)pvno;
 }
 
-int ossl_cmp_hdr_get_protection_nid(const OSSL_CMP_PKIHEADER *hdr)
+int ossl_cmp_hdr_get_protection_nid(const OSSL_CMP_PKIHEADER* hdr)
 {
     if (!ossl_assert(hdr != NULL)
-            || hdr->protectionAlg == NULL)
+        || hdr->protectionAlg == NULL)
         return NID_undef;
     return OBJ_obj2nid(hdr->protectionAlg->algorithm);
 }
 
-ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_transactionID(const
-                                                   OSSL_CMP_PKIHEADER *hdr)
+ASN1_OCTET_STRING* OSSL_CMP_HDR_get0_transactionID(const OSSL_CMP_PKIHEADER* hdr)
 {
     if (hdr == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
@@ -50,14 +49,14 @@ ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_transactionID(const
     return hdr->transactionID;
 }
 
-ASN1_OCTET_STRING *ossl_cmp_hdr_get0_senderNonce(const OSSL_CMP_PKIHEADER *hdr)
+ASN1_OCTET_STRING* ossl_cmp_hdr_get0_senderNonce(const OSSL_CMP_PKIHEADER* hdr)
 {
     if (!ossl_assert(hdr != NULL))
         return NULL;
     return hdr->senderNonce;
 }
 
-ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER *hdr)
+ASN1_OCTET_STRING* OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER* hdr)
 {
     if (hdr == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
@@ -67,7 +66,7 @@ ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER *hdr)
 }
 
 STACK_OF(OSSL_CMP_ITAV)
-    *OSSL_CMP_HDR_get0_geninfo_ITAVs(const OSSL_CMP_PKIHEADER *hdr)
+*OSSL_CMP_HDR_get0_geninfo_ITAVs(const OSSL_CMP_PKIHEADER* hdr)
 {
     if (hdr == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
@@ -77,7 +76,7 @@ STACK_OF(OSSL_CMP_ITAV)
 }
 
 /* a NULL-DN as an empty sequence of RDNs */
-int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name)
+int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME* name)
 {
     return name == NULL
         || (name->type == GEN_DIRNAME && IS_NULL_DN(name->d.directoryName));
@@ -88,34 +87,34 @@ int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name)
  * when nm is NULL, sender is set to an empty string
  * returns 1 on success, 0 on error
  */
-int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm)
+int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER* hdr, const X509_NAME* nm)
 {
     if (!ossl_assert(hdr != NULL))
         return 0;
     return GENERAL_NAME_set1_X509_NAME(&hdr->sender, nm);
 }
 
-int ossl_cmp_hdr_set1_recipient(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm)
+int ossl_cmp_hdr_set1_recipient(OSSL_CMP_PKIHEADER* hdr, const X509_NAME* nm)
 {
     if (!ossl_assert(hdr != NULL))
         return 0;
     return GENERAL_NAME_set1_X509_NAME(&hdr->recipient, nm);
 }
 
-int ossl_cmp_hdr_update_messageTime(OSSL_CMP_PKIHEADER *hdr)
+int ossl_cmp_hdr_update_messageTime(OSSL_CMP_PKIHEADER* hdr)
 {
     if (!ossl_assert(hdr != NULL))
         return 0;
     if (hdr->messageTime == NULL
-            && (hdr->messageTime = ASN1_GENERALIZEDTIME_new()) == NULL)
+        && (hdr->messageTime = ASN1_GENERALIZEDTIME_new()) == NULL)
         return 0;
     return ASN1_GENERALIZEDTIME_set(hdr->messageTime, time(NULL)) != NULL;
 }
 
 /* assign to *tgt a random byte array of given length */
-static int set_random(ASN1_OCTET_STRING **tgt, OSSL_CMP_CTX *ctx, int len)
+static int set_random(ASN1_OCTET_STRING** tgt, OSSL_CMP_CTX* ctx, int len)
 {
-    unsigned char *bytes = OPENSSL_malloc(len);
+    unsigned char* bytes = OPENSSL_malloc(len);
     int res = 0;
 
     if (bytes == NULL || RAND_bytes_ex(ctx->libctx, bytes, len, 0) <= 0)
@@ -126,8 +125,8 @@ static int set_random(ASN1_OCTET_STRING **tgt, OSSL_CMP_CTX *ctx, int len)
     return res;
 }
 
-int ossl_cmp_hdr_set1_senderKID(OSSL_CMP_PKIHEADER *hdr,
-                                const ASN1_OCTET_STRING *senderKID)
+int ossl_cmp_hdr_set1_senderKID(OSSL_CMP_PKIHEADER* hdr,
+    const ASN1_OCTET_STRING* senderKID)
 {
     if (!ossl_assert(hdr != NULL))
         return 0;
@@ -135,45 +134,44 @@ int ossl_cmp_hdr_set1_senderKID(OSSL_CMP_PKIHEADER *hdr,
 }
 
 /* push the given text string to the given PKIFREETEXT ft */
-int ossl_cmp_hdr_push0_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text)
+int ossl_cmp_hdr_push0_freeText(OSSL_CMP_PKIHEADER* hdr, ASN1_UTF8STRING* text)
 {
     if (!ossl_assert(hdr != NULL && text != NULL))
         return 0;
 
     if (hdr->freeText == NULL
-            && (hdr->freeText = sk_ASN1_UTF8STRING_new_null()) == NULL)
+        && (hdr->freeText = sk_ASN1_UTF8STRING_new_null()) == NULL)
         return 0;
 
     return sk_ASN1_UTF8STRING_push(hdr->freeText, text);
 }
 
-int ossl_cmp_hdr_push1_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text)
+int ossl_cmp_hdr_push1_freeText(OSSL_CMP_PKIHEADER* hdr, ASN1_UTF8STRING* text)
 {
     if (!ossl_assert(hdr != NULL && text != NULL))
         return 0;
 
     if (hdr->freeText == NULL
-            && (hdr->freeText = sk_ASN1_UTF8STRING_new_null()) == NULL)
+        && (hdr->freeText = sk_ASN1_UTF8STRING_new_null()) == NULL)
         return 0;
 
-    return
-        ossl_cmp_sk_ASN1_UTF8STRING_push_str(hdr->freeText, (char *)text->data,
-                                             text->length);
+    return ossl_cmp_sk_ASN1_UTF8STRING_push_str(hdr->freeText, (char*)text->data,
+        text->length);
 }
 
-int ossl_cmp_hdr_generalInfo_push0_item(OSSL_CMP_PKIHEADER *hdr,
-                                        OSSL_CMP_ITAV *itav)
+int ossl_cmp_hdr_generalInfo_push0_item(OSSL_CMP_PKIHEADER* hdr,
+    OSSL_CMP_ITAV* itav)
 {
     if (!ossl_assert(hdr != NULL && itav != NULL))
         return 0;
     return OSSL_CMP_ITAV_push0_stack_item(&hdr->generalInfo, itav);
 }
 
-int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
-                                         const STACK_OF(OSSL_CMP_ITAV) *itavs)
+int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER* hdr,
+    const STACK_OF(OSSL_CMP_ITAV)* itavs)
 {
     int i;
-    OSSL_CMP_ITAV *itav;
+    OSSL_CMP_ITAV* itav;
 
     if (!ossl_assert(hdr != NULL))
         return 0;
@@ -191,35 +189,36 @@ int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
     return 1;
 }
 
-int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr)
+int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER* hdr)
 {
-    OSSL_CMP_ITAV *itav;
-    ASN1_TYPE *asn1null;
+    OSSL_CMP_ITAV* itav;
+    ASN1_TYPE* asn1null;
 
     if (!ossl_assert(hdr != NULL))
         return 0;
-    asn1null = (ASN1_TYPE *)ASN1_NULL_new();
+    asn1null = (ASN1_TYPE*)ASN1_NULL_new();
     if (asn1null == NULL)
         return 0;
     if ((itav = OSSL_CMP_ITAV_create(OBJ_nid2obj(NID_id_it_implicitConfirm),
-                                     asn1null)) == NULL)
+             asn1null))
+        == NULL)
         goto err;
     if (!ossl_cmp_hdr_generalInfo_push0_item(hdr, itav))
         goto err;
     return 1;
 
- err:
+err:
     ASN1_TYPE_free(asn1null);
     OSSL_CMP_ITAV_free(itav);
     return 0;
 }
 
 /* return 1 if implicitConfirm in the generalInfo field of the header is set */
-int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr)
+int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER* hdr)
 {
     int itavCount;
     int i;
-    OSSL_CMP_ITAV *itav;
+    OSSL_CMP_ITAV* itav;
 
     if (!ossl_assert(hdr != NULL))
         return 0;
@@ -228,7 +227,7 @@ int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr)
     for (i = 0; i < itavCount; i++) {
         itav = sk_OSSL_CMP_ITAV_value(hdr->generalInfo, i);
         if (itav != NULL
-                && OBJ_obj2nid(itav->infoType) == NID_id_it_implicitConfirm)
+            && OBJ_obj2nid(itav->infoType) == NID_id_it_implicitConfirm)
             return 1;
     }
 
@@ -244,30 +243,30 @@ int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr)
  * 128 bits of (pseudo-) random data for the start of a transaction to
  * reduce the probability of having the transactionID in use at the server.
  */
-int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
+int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX* ctx, OSSL_CMP_PKIHEADER* hdr)
 {
     if (ctx->transactionID == NULL) {
-        char *tid;
+        char* tid;
 
         if (!set_random(&ctx->transactionID, ctx,
-                        OSSL_CMP_TRANSACTIONID_LENGTH))
+                OSSL_CMP_TRANSACTIONID_LENGTH))
             return 0;
         tid = i2s_ASN1_OCTET_STRING(NULL, ctx->transactionID);
         if (tid != NULL)
             ossl_cmp_log1(DEBUG, ctx,
-                          "Starting new transaction with ID=%s", tid);
+                "Starting new transaction with ID=%s", tid);
         OPENSSL_free(tid);
     }
 
     return ossl_cmp_asn1_octet_string_set1(&hdr->transactionID,
-                                           ctx->transactionID);
+        ctx->transactionID);
 }
 
 /* fill in all fields of the hdr according to the info given in ctx */
-int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
+int ossl_cmp_hdr_init(OSSL_CMP_CTX* ctx, OSSL_CMP_PKIHEADER* hdr)
 {
-    const X509_NAME *sender;
-    const X509_NAME *rcp = NULL;
+    const X509_NAME* sender;
+    const X509_NAME* rcp = NULL;
 
     if (!ossl_assert(ctx != NULL && hdr != NULL))
         return 0;
@@ -280,10 +279,9 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
      * If no protection cert nor oldCert nor CSR nor subject is given,
      * sender name is not known to the client and thus set to NULL-DN
      */
-    sender = ctx->cert != NULL ? X509_get_subject_name(ctx->cert) :
-        ctx->oldCert != NULL ? X509_get_subject_name(ctx->oldCert) :
-        ctx->p10CSR != NULL ? X509_REQ_get_subject_name(ctx->p10CSR) :
-        ctx->subjectName;
+    sender = ctx->cert != NULL ? X509_get_subject_name(ctx->cert) : ctx->oldCert != NULL ? X509_get_subject_name(ctx->oldCert)
+        : ctx->p10CSR != NULL                                                            ? X509_REQ_get_subject_name(ctx->p10CSR)
+                                                                                         : ctx->subjectName;
     if (!ossl_cmp_hdr_set1_sender(hdr, sender))
         return 0;
 
@@ -306,8 +304,8 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         return 0;
 
     if (ctx->recipNonce != NULL
-            && !ossl_cmp_asn1_octet_string_set1(&hdr->recipNonce,
-                                                ctx->recipNonce))
+        && !ossl_cmp_asn1_octet_string_set1(&hdr->recipNonce,
+            ctx->recipNonce))
         return 0;
 
     if (!ossl_cmp_hdr_set_transactionID(ctx, hdr))
@@ -338,7 +336,7 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
      * -- (this field is intended for human consumption)
      */
     if (ctx->freeText != NULL
-            && !ossl_cmp_hdr_push1_freeText(hdr, ctx->freeText))
+        && !ossl_cmp_hdr_push1_freeText(hdr, ctx->freeText))
         return 0;
 
     return 1;

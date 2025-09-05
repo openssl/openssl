@@ -15,7 +15,7 @@
 
 void ERR_new(void)
 {
-    ERR_STATE *es;
+    ERR_STATE* es;
 
     es = ossl_err_get_state_int();
     if (es == NULL)
@@ -26,9 +26,9 @@ void ERR_new(void)
     err_clear(es, es->top, 0);
 }
 
-void ERR_set_debug(const char *file, int line, const char *func)
+void ERR_set_debug(const char* file, int line, const char* func)
 {
-    ERR_STATE *es;
+    ERR_STATE* es;
 
     es = ossl_err_get_state_int();
     if (es == NULL)
@@ -37,7 +37,7 @@ void ERR_set_debug(const char *file, int line, const char *func)
     err_set_debug(es, es->top, file, line, func);
 }
 
-void ERR_set_error(int lib, int reason, const char *fmt, ...)
+void ERR_set_error(int lib, int reason, const char* fmt, ...)
 {
     va_list args;
 
@@ -46,10 +46,10 @@ void ERR_set_error(int lib, int reason, const char *fmt, ...)
     va_end(args);
 }
 
-void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
+void ERR_vset_error(int lib, int reason, const char* fmt, va_list args)
 {
-    ERR_STATE *es;
-    char *buf = NULL;
+    ERR_STATE* es;
+    char* buf = NULL;
     size_t buf_size = 0;
     unsigned long flags = 0;
     size_t i;
@@ -61,7 +61,7 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
 
     if (fmt != NULL) {
         int printed_len = 0;
-        char *rbuf = NULL;
+        char* rbuf = NULL;
 
         buf = es->err_data[i];
         buf_size = es->err_data_size[i];

@@ -12,18 +12,18 @@
 #include <openssl/ssl.h>
 #include <openssl/conf.h>
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     BIO *sbio = NULL, *out = NULL;
     int i, len, rv;
     char tmpbuf[1024];
-    SSL_CTX *ctx = NULL;
-    SSL_CONF_CTX *cctx = NULL;
-    SSL *ssl = NULL;
-    CONF *conf = NULL;
-    STACK_OF(CONF_VALUE) *sect = NULL;
-    CONF_VALUE *cnf;
-    const char *connect_str = "localhost:4433";
+    SSL_CTX* ctx = NULL;
+    SSL_CONF_CTX* cctx = NULL;
+    SSL* ssl = NULL;
+    CONF* conf = NULL;
+    STACK_OF(CONF_VALUE)* sect = NULL;
+    CONF_VALUE* cnf;
+    const char* connect_str = "localhost:4433";
     long errline = -1;
     int ret = EXIT_FAILURE;
 
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
             continue;
         if (rv != -2) {
             fprintf(stderr, "Error processing %s = %s\n",
-                    cnf->name, cnf->value);
+                cnf->name, cnf->value);
             ERR_print_errors_fp(stderr);
             goto end;
         }
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
     }
     ret = EXIT_SUCCESS;
 
- end:
+end:
     SSL_CONF_CTX_free(cctx);
     BIO_free_all(sbio);
     BIO_free(out);

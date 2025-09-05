@@ -8,7 +8,7 @@
  */
 
 #ifdef OPENSSL_NO_CT
-# error "CT is disabled"
+#error "CT is disabled"
 #endif
 
 #include <stddef.h>
@@ -20,9 +20,9 @@
 
 #include "ct_local.h"
 
-SCT_CTX *SCT_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
+SCT_CTX* SCT_CTX_new(OSSL_LIB_CTX* libctx, const char* propq)
 {
-    SCT_CTX *sctx = OPENSSL_zalloc(sizeof(*sctx));
+    SCT_CTX* sctx = OPENSSL_zalloc(sizeof(*sctx));
 
     if (sctx == NULL)
         return NULL;
@@ -39,7 +39,7 @@ SCT_CTX *SCT_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
     return sctx;
 }
 
-void SCT_CTX_free(SCT_CTX *sctx)
+void SCT_CTX_free(SCT_CTX* sctx)
 {
     if (sctx == NULL)
         return;
@@ -57,7 +57,7 @@ void SCT_CTX_free(SCT_CTX *sctx)
  * If there is more than one extension with that NID, *is_duplicated is set to
  * 1, otherwise 0 (unless it is NULL).
  */
-static int ct_x509_get_ext(X509 *cert, int nid, int *is_duplicated)
+static int ct_x509_get_ext(X509* cert, int nid, int* is_duplicated)
 {
     int ret = X509_get_ext_by_NID(cert, nid, -1);
 
@@ -72,7 +72,7 @@ static int ct_x509_get_ext(X509 *cert, int nid, int *is_duplicated)
  * AKID from the presigner certificate, if necessary.
  * Returns 1 on success, 0 otherwise.
  */
-__owur static int ct_x509_cert_fixup(X509 *cert, X509 *presigner)
+__owur static int ct_x509_cert_fixup(X509* cert, X509* presigner)
 {
     int preidx, certidx;
     int pre_akid_ext_is_dup, cert_akid_ext_is_dup;
@@ -81,9 +81,9 @@ __owur static int ct_x509_cert_fixup(X509 *cert, X509 *presigner)
         return 1;
 
     preidx = ct_x509_get_ext(presigner, NID_authority_key_identifier,
-                             &pre_akid_ext_is_dup);
+        &pre_akid_ext_is_dup);
     certidx = ct_x509_get_ext(cert, NID_authority_key_identifier,
-                              &cert_akid_ext_is_dup);
+        &cert_akid_ext_is_dup);
 
     /* An error occurred whilst searching for the extension */
     if (preidx < -1 || certidx < -1)
@@ -101,25 +101,24 @@ __owur static int ct_x509_cert_fixup(X509 *cert, X509 *presigner)
         return 0;
     if (preidx != -1) {
         /* Retrieve and copy AKID encoding */
-        X509_EXTENSION *preext = X509_get_ext(presigner, preidx);
-        X509_EXTENSION *certext = X509_get_ext(cert, certidx);
-        ASN1_OCTET_STRING *preextdata;
+        X509_EXTENSION* preext = X509_get_ext(presigner, preidx);
+        X509_EXTENSION* certext = X509_get_ext(cert, certidx);
+        ASN1_OCTET_STRING* preextdata;
 
         /* Should never happen */
         if (preext == NULL || certext == NULL)
             return 0;
         preextdata = X509_EXTENSION_get_data(preext);
-        if (preextdata == NULL ||
-            !X509_EXTENSION_set_data(certext, preextdata))
+        if (preextdata == NULL || !X509_EXTENSION_set_data(certext, preextdata))
             return 0;
     }
     return 1;
 }
 
-int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner)
+int SCT_CTX_set1_cert(SCT_CTX* sctx, X509* cert, X509* presigner)
 {
     unsigned char *certder = NULL, *preder = NULL;
-    X509 *pretmp = NULL;
+    X509* pretmp = NULL;
     int certderlen = 0, prederlen = 0;
     int idx = -1;
     int poison_ext_is_dup, sct_ext_is_dup;
@@ -198,14 +197,14 @@ err:
     return 0;
 }
 
-__owur static int ct_public_key_hash(SCT_CTX *sctx, X509_PUBKEY *pkey,
-                                     unsigned char **hash, size_t *hash_len)
+__owur static int ct_public_key_hash(SCT_CTX* sctx, X509_PUBKEY* pkey,
+    unsigned char** hash, size_t* hash_len)
 {
     int ret = 0;
     unsigned char *md = NULL, *der = NULL;
     int der_len;
     unsigned int md_len;
-    EVP_MD *sha256 = EVP_MD_fetch(sctx->libctx, "SHA2-256", sctx->propq);
+    EVP_MD* sha256 = EVP_MD_fetch(sctx->libctx, "SHA2-256", sctx->propq);
 
     if (sha256 == NULL)
         goto err;
@@ -235,26 +234,26 @@ __owur static int ct_public_key_hash(SCT_CTX *sctx, X509_PUBKEY *pkey,
 
     md = NULL;
     ret = 1;
- err:
+err:
     EVP_MD_free(sha256);
     OPENSSL_free(md);
     OPENSSL_free(der);
     return ret;
 }
 
-int SCT_CTX_set1_issuer(SCT_CTX *sctx, const X509 *issuer)
+int SCT_CTX_set1_issuer(SCT_CTX* sctx, const X509* issuer)
 {
     return SCT_CTX_set1_issuer_pubkey(sctx, X509_get_X509_PUBKEY(issuer));
 }
 
-int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey)
+int SCT_CTX_set1_issuer_pubkey(SCT_CTX* sctx, X509_PUBKEY* pubkey)
 {
     return ct_public_key_hash(sctx, pubkey, &sctx->ihash, &sctx->ihashlen);
 }
 
-int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey)
+int SCT_CTX_set1_pubkey(SCT_CTX* sctx, X509_PUBKEY* pubkey)
 {
-    EVP_PKEY *pkey = X509_PUBKEY_get(pubkey);
+    EVP_PKEY* pkey = X509_PUBKEY_get(pubkey);
 
     if (pkey == NULL)
         return 0;
@@ -269,7 +268,7 @@ int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey)
     return 1;
 }
 
-void SCT_CTX_set_time(SCT_CTX *sctx, uint64_t time_in_ms)
+void SCT_CTX_set_time(SCT_CTX* sctx, uint64_t time_in_ms)
 {
     sctx->epoch_time_in_ms = time_in_ms;
 }

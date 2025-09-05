@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
-int BN_bn2mpi(const BIGNUM *a, unsigned char *d)
+int BN_bn2mpi(const BIGNUM* a, unsigned char* d)
 {
     int bits;
     int num = 0;
@@ -39,18 +39,17 @@ int BN_bn2mpi(const BIGNUM *a, unsigned char *d)
     return (num + 4 + ext);
 }
 
-BIGNUM *BN_mpi2bn(const unsigned char *d, int n, BIGNUM *ain)
+BIGNUM* BN_mpi2bn(const unsigned char* d, int n, BIGNUM* ain)
 {
     long len;
     int neg = 0;
-    BIGNUM *a = NULL;
+    BIGNUM* a = NULL;
 
     if (n < 4 || (d[0] & 0x80) != 0) {
         ERR_raise(ERR_LIB_BN, BN_R_INVALID_LENGTH);
         return NULL;
     }
-    len = ((long)d[0] << 24) | ((long)d[1] << 16) | ((int)d[2] << 8) | (int)
-        d[3];
+    len = ((long)d[0] << 24) | ((long)d[1] << 16) | ((int)d[2] << 8) | (int)d[3];
     if ((len + 4) != n) {
         ERR_raise(ERR_LIB_BN, BN_R_ENCODING_ERROR);
         return NULL;

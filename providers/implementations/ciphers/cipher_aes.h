@@ -12,7 +12,7 @@
 #include "crypto/aes_platform.h"
 
 typedef struct prov_aes_ctx_st {
-    PROV_CIPHER_CTX base;      /* Must be first */
+    PROV_CIPHER_CTX base; /* Must be first */
     union {
         OSSL_UNION_ALIGN;
         AES_KEY ks;
@@ -51,7 +51,7 @@ typedef struct prov_aes_ctx_st {
 } PROV_AES_CTX;
 
 #define ossl_prov_cipher_hw_aes_ofb ossl_prov_cipher_hw_aes_ofb128
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ecb(size_t keybits);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_cbc(size_t keybits);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ofb128(size_t keybits);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ctr(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_aes_ecb(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_aes_cbc(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_aes_ofb128(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_aes_ctr(size_t keybits);

@@ -28,7 +28,7 @@ static const EVP_MD md4_md = {
     LEGACY_EVP_MD_METH_TABLE(md4_init, md4_update, md4_final, NULL, MD4_CBLOCK),
 };
 
-const EVP_MD *EVP_md4(void)
+const EVP_MD* EVP_md4(void)
 {
     return &md4_md;
 }

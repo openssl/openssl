@@ -10,13 +10,13 @@
 #include "internal/cryptlib.h"
 #include "internal/packet.h"
 #if !defined OPENSSL_NO_QUIC && !defined FIPS_MODULE
-# include "internal/packet_quic.h"
+#include "internal/packet_quic.h"
 #endif
 #include <openssl/err.h>
 
-#define DEFAULT_BUF_SIZE    256
+#define DEFAULT_BUF_SIZE 256
 
-int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
+int WPACKET_allocate_bytes(WPACKET* pkt, size_t len, unsigned char** allocbytes)
 {
     if (!WPACKET_reserve_bytes(pkt, len, allocbytes))
         return 0;
@@ -26,24 +26,24 @@ int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
     return 1;
 }
 
-int WPACKET_sub_allocate_bytes__(WPACKET *pkt, size_t len,
-                                 unsigned char **allocbytes, size_t lenbytes)
+int WPACKET_sub_allocate_bytes__(WPACKET* pkt, size_t len,
+    unsigned char** allocbytes, size_t lenbytes)
 {
     if (!WPACKET_start_sub_packet_len__(pkt, lenbytes)
-            || !WPACKET_allocate_bytes(pkt, len, allocbytes)
-            || !WPACKET_close(pkt))
+        || !WPACKET_allocate_bytes(pkt, len, allocbytes)
+        || !WPACKET_close(pkt))
         return 0;
 
     return 1;
 }
 
-#define GETBUF(p)   (((p)->staticbuf != NULL) \
-                     ? (p)->staticbuf \
-                     : ((p)->buf != NULL \
-                        ? (unsigned char *)(p)->buf->data \
-                        : NULL))
+#define GETBUF(p) (((p)->staticbuf != NULL)        \
+        ? (p)->staticbuf                           \
+        : ((p)->buf != NULL                        \
+                  ? (unsigned char*)(p)->buf->data \
+                  : NULL))
 
-int WPACKET_reserve_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
+int WPACKET_reserve_bytes(WPACKET* pkt, size_t len, unsigned char** allocbytes)
 {
     /* Internal API, so should not fail */
     if (!ossl_assert(pkt->subs != NULL && len != 0))
@@ -77,8 +77,8 @@ int WPACKET_reserve_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
     return 1;
 }
 
-int WPACKET_sub_reserve_bytes__(WPACKET *pkt, size_t len,
-                                unsigned char **allocbytes, size_t lenbytes)
+int WPACKET_sub_reserve_bytes__(WPACKET* pkt, size_t len,
+    unsigned char** allocbytes, size_t lenbytes)
 {
     if (pkt->endfirst && lenbytes > 0)
         return 0;
@@ -100,9 +100,9 @@ static size_t maxmaxsize(size_t lenbytes)
     return ((size_t)1 << (lenbytes * 8)) - 1 + lenbytes;
 }
 
-static int wpacket_intern_init_len(WPACKET *pkt, size_t lenbytes)
+static int wpacket_intern_init_len(WPACKET* pkt, size_t lenbytes)
 {
-    unsigned char *lenchars;
+    unsigned char* lenchars;
 
     pkt->curr = 0;
     pkt->written = 0;
@@ -126,8 +126,8 @@ static int wpacket_intern_init_len(WPACKET *pkt, size_t lenbytes)
     return 1;
 }
 
-int WPACKET_init_static_len(WPACKET *pkt, unsigned char *buf, size_t len,
-                            size_t lenbytes)
+int WPACKET_init_static_len(WPACKET* pkt, unsigned char* buf, size_t len,
+    size_t lenbytes)
 {
     size_t max = maxmaxsize(lenbytes);
 
@@ -143,7 +143,7 @@ int WPACKET_init_static_len(WPACKET *pkt, unsigned char *buf, size_t len,
     return wpacket_intern_init_len(pkt, lenbytes);
 }
 
-int WPACKET_init_der(WPACKET *pkt, unsigned char *buf, size_t len)
+int WPACKET_init_der(WPACKET* pkt, unsigned char* buf, size_t len)
 {
     /* Internal API, so should not fail */
     if (!ossl_assert(buf != NULL && len > 0))
@@ -157,7 +157,7 @@ int WPACKET_init_der(WPACKET *pkt, unsigned char *buf, size_t len)
     return wpacket_intern_init_len(pkt, 0);
 }
 
-int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
+int WPACKET_init_len(WPACKET* pkt, BUF_MEM* buf, size_t lenbytes)
 {
     /* Internal API, so should not fail */
     if (!ossl_assert(buf != NULL))
@@ -171,12 +171,12 @@ int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
     return wpacket_intern_init_len(pkt, lenbytes);
 }
 
-int WPACKET_init(WPACKET *pkt, BUF_MEM *buf)
+int WPACKET_init(WPACKET* pkt, BUF_MEM* buf)
 {
     return WPACKET_init_len(pkt, buf, 0);
 }
 
-int WPACKET_init_null(WPACKET *pkt, size_t lenbytes)
+int WPACKET_init_null(WPACKET* pkt, size_t lenbytes)
 {
     pkt->staticbuf = NULL;
     pkt->buf = NULL;
@@ -186,7 +186,7 @@ int WPACKET_init_null(WPACKET *pkt, size_t lenbytes)
     return wpacket_intern_init_len(pkt, 0);
 }
 
-int WPACKET_init_null_der(WPACKET *pkt)
+int WPACKET_init_null_der(WPACKET* pkt)
 {
     pkt->staticbuf = NULL;
     pkt->buf = NULL;
@@ -196,7 +196,7 @@ int WPACKET_init_null_der(WPACKET *pkt)
     return wpacket_intern_init_len(pkt, 0);
 }
 
-int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
+int WPACKET_set_flags(WPACKET* pkt, unsigned int flags)
 {
     /* Internal API, so should not fail */
     if (!ossl_assert(pkt->subs != NULL))
@@ -208,7 +208,7 @@ int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
 }
 
 /* Store the |value| of length |len| at location |data| */
-static int put_value(unsigned char *data, uint64_t value, size_t len)
+static int put_value(unsigned char* data, uint64_t value, size_t len)
 {
     if (data == NULL)
         return 1;
@@ -227,7 +227,7 @@ static int put_value(unsigned char *data, uint64_t value, size_t len)
 }
 
 #if !defined OPENSSL_NO_QUIC && !defined FIPS_MODULE
-static int put_quic_value(unsigned char *data, size_t value, size_t len)
+static int put_quic_value(unsigned char* data, size_t value, size_t len)
 {
     if (data == NULL)
         return 1;
@@ -247,16 +247,16 @@ static int put_quic_value(unsigned char *data, size_t value, size_t len)
  * necessary. If |doclose| is 0 then it goes through the motions of closing
  * (i.e. it fills in all the lengths), but doesn't actually close anything.
  */
-static int wpacket_intern_close(WPACKET *pkt, WPACKET_SUB *sub, int doclose)
+static int wpacket_intern_close(WPACKET* pkt, WPACKET_SUB* sub, int doclose)
 {
     size_t packlen = pkt->written - sub->pwritten;
 
     if (packlen == 0
-            && (sub->flags & WPACKET_FLAGS_NON_ZERO_LENGTH) != 0)
+        && (sub->flags & WPACKET_FLAGS_NON_ZERO_LENGTH) != 0)
         return 0;
 
     if (packlen == 0
-            && sub->flags & WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH) {
+        && sub->flags & WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH) {
         /* We can't handle this case. Return an error */
         if (!doclose)
             return 0;
@@ -274,7 +274,7 @@ static int wpacket_intern_close(WPACKET *pkt, WPACKET_SUB *sub, int doclose)
 
     /* Write out the WPACKET length if needed */
     if (sub->lenbytes > 0) {
-        unsigned char *buf = GETBUF(pkt);
+        unsigned char* buf = GETBUF(pkt);
 
         if (buf != NULL) {
 #if !defined OPENSSL_NO_QUIC && !defined FIPS_MODULE
@@ -291,9 +291,10 @@ static int wpacket_intern_close(WPACKET *pkt, WPACKET_SUB *sub, int doclose)
 #endif
         }
     } else if (pkt->endfirst && sub->parent != NULL
-               && (packlen != 0
-                   || (sub->flags
-                       & WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH) == 0)) {
+        && (packlen != 0
+            || (sub->flags
+                   & WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
+                == 0)) {
         size_t tmplen = packlen;
         size_t numlenbytes = 1;
 
@@ -316,9 +317,9 @@ static int wpacket_intern_close(WPACKET *pkt, WPACKET_SUB *sub, int doclose)
     return 1;
 }
 
-int WPACKET_fill_lengths(WPACKET *pkt)
+int WPACKET_fill_lengths(WPACKET* pkt)
 {
-    WPACKET_SUB *sub;
+    WPACKET_SUB* sub;
 
     if (!ossl_assert(pkt->subs != NULL))
         return 0;
@@ -331,7 +332,7 @@ int WPACKET_fill_lengths(WPACKET *pkt)
     return 1;
 }
 
-int WPACKET_close(WPACKET *pkt)
+int WPACKET_close(WPACKET* pkt)
 {
     /*
      * Internal API, so should not fail - but we do negative testing of this
@@ -343,7 +344,7 @@ int WPACKET_close(WPACKET *pkt)
     return wpacket_intern_close(pkt, pkt->subs, 1);
 }
 
-int WPACKET_finish(WPACKET *pkt)
+int WPACKET_finish(WPACKET* pkt)
 {
     int ret;
 
@@ -363,10 +364,10 @@ int WPACKET_finish(WPACKET *pkt)
     return ret;
 }
 
-int WPACKET_start_sub_packet_len__(WPACKET *pkt, size_t lenbytes)
+int WPACKET_start_sub_packet_len__(WPACKET* pkt, size_t lenbytes)
 {
-    WPACKET_SUB *sub;
-    unsigned char *lenchars;
+    WPACKET_SUB* sub;
+    unsigned char* lenchars;
 
     /* Internal API, so should not fail */
     if (!ossl_assert(pkt->subs != NULL))
@@ -397,27 +398,27 @@ int WPACKET_start_sub_packet_len__(WPACKET *pkt, size_t lenbytes)
     return 1;
 }
 
-int WPACKET_start_sub_packet(WPACKET *pkt)
+int WPACKET_start_sub_packet(WPACKET* pkt)
 {
     return WPACKET_start_sub_packet_len__(pkt, 0);
 }
 
-int WPACKET_put_bytes__(WPACKET *pkt, uint64_t val, size_t size)
+int WPACKET_put_bytes__(WPACKET* pkt, uint64_t val, size_t size)
 {
-    unsigned char *data;
+    unsigned char* data;
 
     /* Internal API, so should not fail */
     if (!ossl_assert(size <= sizeof(uint64_t))
-            || !WPACKET_allocate_bytes(pkt, size, &data)
-            || !put_value(data, val, size))
+        || !WPACKET_allocate_bytes(pkt, size, &data)
+        || !put_value(data, val, size))
         return 0;
 
     return 1;
 }
 
-int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize)
+int WPACKET_set_max_size(WPACKET* pkt, size_t maxsize)
 {
-    WPACKET_SUB *sub;
+    WPACKET_SUB* sub;
     size_t lenbytes;
 
     /* Internal API, so should not fail */
@@ -440,9 +441,9 @@ int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize)
     return 1;
 }
 
-int WPACKET_memset(WPACKET *pkt, int ch, size_t len)
+int WPACKET_memset(WPACKET* pkt, int ch, size_t len)
 {
-    unsigned char *dest;
+    unsigned char* dest;
 
     if (len == 0)
         return 1;
@@ -456,9 +457,9 @@ int WPACKET_memset(WPACKET *pkt, int ch, size_t len)
     return 1;
 }
 
-int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len)
+int WPACKET_memcpy(WPACKET* pkt, const void* src, size_t len)
 {
-    unsigned char *dest;
+    unsigned char* dest;
 
     if (len == 0)
         return 1;
@@ -472,18 +473,18 @@ int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len)
     return 1;
 }
 
-int WPACKET_sub_memcpy__(WPACKET *pkt, const void *src, size_t len,
-                         size_t lenbytes)
+int WPACKET_sub_memcpy__(WPACKET* pkt, const void* src, size_t len,
+    size_t lenbytes)
 {
     if (!WPACKET_start_sub_packet_len__(pkt, lenbytes)
-            || !WPACKET_memcpy(pkt, src, len)
-            || !WPACKET_close(pkt))
+        || !WPACKET_memcpy(pkt, src, len)
+        || !WPACKET_close(pkt))
         return 0;
 
     return 1;
 }
 
-int WPACKET_get_total_written(WPACKET *pkt, size_t *written)
+int WPACKET_get_total_written(WPACKET* pkt, size_t* written)
 {
     /* Internal API, so should not fail */
     if (!ossl_assert(written != NULL))
@@ -494,7 +495,7 @@ int WPACKET_get_total_written(WPACKET *pkt, size_t *written)
     return 1;
 }
 
-int WPACKET_get_length(WPACKET *pkt, size_t *len)
+int WPACKET_get_length(WPACKET* pkt, size_t* len)
 {
     /* Internal API, so should not fail */
     if (!ossl_assert(pkt->subs != NULL && len != NULL))
@@ -505,9 +506,9 @@ int WPACKET_get_length(WPACKET *pkt, size_t *len)
     return 1;
 }
 
-unsigned char *WPACKET_get_curr(WPACKET *pkt)
+unsigned char* WPACKET_get_curr(WPACKET* pkt)
 {
-    unsigned char *buf = GETBUF(pkt);
+    unsigned char* buf = GETBUF(pkt);
 
     if (buf == NULL)
         return NULL;
@@ -518,12 +519,12 @@ unsigned char *WPACKET_get_curr(WPACKET *pkt)
     return buf + pkt->curr;
 }
 
-int WPACKET_is_null_buf(WPACKET *pkt)
+int WPACKET_is_null_buf(WPACKET* pkt)
 {
     return pkt->buf == NULL && pkt->staticbuf == NULL;
 }
 
-void WPACKET_cleanup(WPACKET *pkt)
+void WPACKET_cleanup(WPACKET* pkt)
 {
     WPACKET_SUB *sub, *parent;
 
@@ -536,7 +537,7 @@ void WPACKET_cleanup(WPACKET *pkt)
 
 #if !defined OPENSSL_NO_QUIC && !defined FIPS_MODULE
 
-int WPACKET_start_quic_sub_packet_bound(WPACKET *pkt, size_t max_len)
+int WPACKET_start_quic_sub_packet_bound(WPACKET* pkt, size_t max_len)
 {
     size_t enclen = ossl_quic_vlint_encode_len(max_len);
 
@@ -550,7 +551,7 @@ int WPACKET_start_quic_sub_packet_bound(WPACKET *pkt, size_t max_len)
     return 1;
 }
 
-int WPACKET_start_quic_sub_packet(WPACKET *pkt)
+int WPACKET_start_quic_sub_packet(WPACKET* pkt)
 {
     /*
      * Assume no (sub)packet will exceed 4GiB, thus the 8-byte encoding need not
@@ -559,11 +560,11 @@ int WPACKET_start_quic_sub_packet(WPACKET *pkt)
     return WPACKET_start_quic_sub_packet_bound(pkt, OSSL_QUIC_VLINT_4B_MIN);
 }
 
-int WPACKET_quic_sub_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
+int WPACKET_quic_sub_allocate_bytes(WPACKET* pkt, size_t len, unsigned char** allocbytes)
 {
     if (!WPACKET_start_quic_sub_packet_bound(pkt, len)
-            || !WPACKET_allocate_bytes(pkt, len, allocbytes)
-            || !WPACKET_close(pkt))
+        || !WPACKET_allocate_bytes(pkt, len, allocbytes)
+        || !WPACKET_close(pkt))
         return 0;
 
     return 1;
@@ -572,9 +573,9 @@ int WPACKET_quic_sub_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **al
 /*
  * Write a QUIC variable-length integer to the packet.
  */
-int WPACKET_quic_write_vlint(WPACKET *pkt, uint64_t v)
+int WPACKET_quic_write_vlint(WPACKET* pkt, uint64_t v)
 {
-    unsigned char *b = NULL;
+    unsigned char* b = NULL;
     size_t enclen = ossl_quic_vlint_encode_len(v);
 
     if (enclen == 0)

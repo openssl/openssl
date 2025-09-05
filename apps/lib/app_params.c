@@ -13,10 +13,10 @@
 /* Maximum number of bytes that will be output for an octet string body */
 #define MAX_OCTET_STRING_OUTPUT_BYTES 24
 
-static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
+static int describe_param_type(char* buf, size_t bufsz, const OSSL_PARAM* param)
 {
-    const char *type_mod = "";
-    const char *type = NULL;
+    const char* type_mod = "";
+    const char* type = NULL;
     int show_type_number = 0;
     int printed_len;
 
@@ -66,7 +66,7 @@ static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
         printed_len = BIO_snprintf(buf, bufsz, " (arbitrary size)");
     else
         printed_len = BIO_snprintf(buf, bufsz, " (max %zu bytes large)",
-                                   param->data_size);
+            param->data_size);
     if (printed_len > 0) {
         buf += printed_len;
         bufsz -= printed_len;
@@ -75,7 +75,7 @@ static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
     return 1;
 }
 
-int print_param_types(const char *thing, const OSSL_PARAM *pdefs, int indent)
+int print_param_types(const char* thing, const OSSL_PARAM* pdefs, int indent)
 {
     if (pdefs == NULL) {
         return 1;
@@ -88,7 +88,7 @@ int print_param_types(const char *thing, const OSSL_PARAM *pdefs, int indent)
     } else {
         BIO_printf(bio_out, "%*s%s:\n", indent, "", thing);
         for (; pdefs->key != NULL; pdefs++) {
-            char buf[200];       /* This should be ample space */
+            char buf[200]; /* This should be ample space */
 
             describe_param_type(buf, sizeof(buf), pdefs);
             BIO_printf(bio_out, "%*s  %s\n", indent, "", buf);
@@ -98,9 +98,9 @@ int print_param_types(const char *thing, const OSSL_PARAM *pdefs, int indent)
 }
 
 /* Output the body of a UTF8 string which might not be zero terminated */
-static void print_param_utf8(const char **s_ptr, size_t len)
+static void print_param_utf8(const char** s_ptr, size_t len)
 {
-    const char *s;
+    const char* s;
 
     if (s_ptr == NULL) {
         BIO_puts(bio_out, " ptr null\n");
@@ -117,11 +117,11 @@ static void print_param_utf8(const char **s_ptr, size_t len)
 }
 
 /* Output the body of an OCTET string */
-static void print_param_octet(const unsigned char **bytes_ptr, size_t len)
+static void print_param_octet(const unsigned char** bytes_ptr, size_t len)
 {
     size_t i;
-    const char *tail = "\n";
-    const unsigned char *bytes;
+    const char* tail = "\n";
+    const unsigned char* bytes;
 
     BIO_printf(bio_out, "<%zu bytes>", len);
     if (bytes_ptr == NULL) {
@@ -147,7 +147,7 @@ static void print_param_octet(const unsigned char **bytes_ptr, size_t len)
     BIO_puts(bio_out, tail);
 }
 
-void print_param_value(const OSSL_PARAM *p, int indent)
+void print_param_value(const OSSL_PARAM* p, int indent)
 {
     int64_t i;
     uint64_t u;
@@ -167,21 +167,20 @@ void print_param_value(const OSSL_PARAM *p, int indent)
             BIO_printf(bio_out, "error getting value\n");
         break;
     case OSSL_PARAM_UTF8_PTR:
-        print_param_utf8((const char **)p->data, p->return_size);
+        print_param_utf8((const char**)p->data, p->return_size);
         break;
     case OSSL_PARAM_UTF8_STRING:
-        print_param_utf8((const char **)&p->data, p->return_size);
+        print_param_utf8((const char**)&p->data, p->return_size);
         break;
     case OSSL_PARAM_OCTET_PTR:
-        print_param_octet((const unsigned char **)p->data, p->return_size);
+        print_param_octet((const unsigned char**)p->data, p->return_size);
         break;
     case OSSL_PARAM_OCTET_STRING:
-        print_param_octet((const unsigned char **)&p->data, p->return_size);
+        print_param_octet((const unsigned char**)&p->data, p->return_size);
         break;
     default:
         BIO_printf(bio_out, "unknown type (%u) of %zu bytes\n",
-                   p->data_type, p->return_size);
+            p->data_type, p->return_size);
         break;
     }
 }
-

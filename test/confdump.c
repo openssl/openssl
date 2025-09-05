@@ -14,25 +14,25 @@
 #include <openssl/safestack.h>
 #include <openssl/err.h>
 
-static void dump_section(const char *name, const CONF *cnf)
+static void dump_section(const char* name, const CONF* cnf)
 {
-    STACK_OF(CONF_VALUE) *sect = NCONF_get_section(cnf, name);
+    STACK_OF(CONF_VALUE)* sect = NCONF_get_section(cnf, name);
     int i;
 
     printf("[ %s ]\n", name);
     for (i = 0; i < sk_CONF_VALUE_num(sect); i++) {
-        CONF_VALUE *cv = sk_CONF_VALUE_value(sect, i);
+        CONF_VALUE* cv = sk_CONF_VALUE_value(sect, i);
 
         printf("%s = %s\n", cv->name, cv->value);
     }
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     long eline;
-    CONF *conf = NCONF_new(NCONF_default());
+    CONF* conf = NCONF_new(NCONF_default());
     int ret = 1;
-    STACK_OF(OPENSSL_CSTRING) *section_names = NULL;
+    STACK_OF(OPENSSL_CSTRING)* section_names = NULL;
 
     if (conf != NULL && NCONF_load(conf, argv[1], &eline)) {
         int i;

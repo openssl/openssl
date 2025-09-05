@@ -26,7 +26,7 @@
  * p is odd
  * 1 < g < p - 1
  */
-int DH_check_params_ex(const DH *dh)
+int DH_check_params_ex(const DH* dh)
 {
     int errflags = 0;
 
@@ -46,7 +46,7 @@ int DH_check_params_ex(const DH *dh)
 }
 
 #ifdef FIPS_MODULE
-int DH_check_params(const DH *dh, int *ret)
+int DH_check_params(const DH* dh, int* ret)
 {
     int nid;
 
@@ -55,7 +55,7 @@ int DH_check_params(const DH *dh, int *ret)
      * SP800-56A R3 Section 5.5.2 Assurances of Domain Parameter Validity
      * (1a) The domain parameters correspond to any approved safe prime group.
      */
-    nid = DH_get_nid((DH *)dh);
+    nid = DH_get_nid((DH*)dh);
     if (nid != NID_undef)
         return 1;
     /*
@@ -64,14 +64,14 @@ int DH_check_params(const DH *dh, int *ret)
      * validity tests.
      */
     return ossl_ffc_params_FIPS186_4_validate(dh->libctx, &dh->params,
-                                              FFC_PARAM_TYPE_DH, ret, NULL);
+        FFC_PARAM_TYPE_DH, ret, NULL);
 }
 #else
-int DH_check_params(const DH *dh, int *ret)
+int DH_check_params(const DH* dh, int* ret)
 {
     int ok = 0;
-    BIGNUM *tmp = NULL;
-    BN_CTX *ctx = NULL;
+    BIGNUM* tmp = NULL;
+    BN_CTX* ctx = NULL;
 
     *ret = 0;
     ctx = BN_CTX_new_ex(dh->libctx);
@@ -98,7 +98,7 @@ int DH_check_params(const DH *dh, int *ret)
         *ret |= DH_MODULUS_TOO_LARGE;
 
     ok = 1;
- err:
+err:
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     return ok;
@@ -109,7 +109,7 @@ int DH_check_params(const DH *dh, int *ret)
  * Check that p is a safe prime and
  * g is a suitable generator.
  */
-int DH_check_ex(const DH *dh)
+int DH_check_ex(const DH* dh)
 {
     int errflags = 0;
 
@@ -139,15 +139,15 @@ int DH_check_ex(const DH *dh)
 }
 
 /* Note: according to documentation - this only checks the params */
-int DH_check(const DH *dh, int *ret)
+int DH_check(const DH* dh, int* ret)
 {
 #ifdef FIPS_MODULE
     return DH_check_params(dh, ret);
 #else
     int ok = 0, r, q_good = 0;
-    BN_CTX *ctx = NULL;
+    BN_CTX* ctx = NULL;
     BIGNUM *t1 = NULL, *t2 = NULL;
-    int nid = DH_get_nid((DH *)dh);
+    int nid = DH_get_nid((DH*)dh);
 
     *ret = 0;
     if (nid != NID_undef)
@@ -221,14 +221,14 @@ int DH_check(const DH *dh, int *ret)
             *ret |= DH_CHECK_P_NOT_SAFE_PRIME;
     }
     ok = 1;
- err:
+err:
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     return ok;
 #endif /* FIPS_MODULE */
 }
 
-int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
+int DH_check_pub_key_ex(const DH* dh, const BIGNUM* pub_key)
 {
     int errflags = 0;
 
@@ -248,7 +248,7 @@ int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
 /*
  * See SP800-56Ar3 Section 5.6.2.3.1 : FFC Full public key validation.
  */
-int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
+int DH_check_pub_key(const DH* dh, const BIGNUM* pub_key, int* ret)
 {
     /* Don't do any checks at all with an excessively large modulus */
     if (BN_num_bits(dh->params.p) > OPENSSL_DH_CHECK_MAX_MODULUS_BITS) {
@@ -270,13 +270,13 @@ int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
  * To only be used with ephemeral FFC public keys generated using the approved
  * safe-prime groups.
  */
-int ossl_dh_check_pub_key_partial(const DH *dh, const BIGNUM *pub_key, int *ret)
+int ossl_dh_check_pub_key_partial(const DH* dh, const BIGNUM* pub_key, int* ret)
 {
     return ossl_ffc_validate_public_key_partial(&dh->params, pub_key, ret)
-           && *ret == 0;
+        && *ret == 0;
 }
 
-int ossl_dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret)
+int ossl_dh_check_priv_key(const DH* dh, const BIGNUM* priv_key, int* ret)
 {
     int ok = 0;
     BIGNUM *two_powN = NULL, *upper;
@@ -311,7 +311,7 @@ int ossl_dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret)
     }
 
     /* Is it from an approved Safe prime group ?*/
-    if (DH_get_nid((DH *)dh) != NID_undef && dh->length != 0) {
+    if (DH_get_nid((DH*)dh) != NID_undef && dh->length != 0) {
         if (!BN_lshift(two_powN, BN_value_one(), dh->length))
             goto end;
         if (BN_cmp(two_powN, dh->params.q) < 0)
@@ -330,14 +330,14 @@ end:
  * FFC pairwise check from SP800-56A R3.
  *    Section 5.6.2.1.4 Owner Assurance of Pair-wise Consistency
  */
-int ossl_dh_check_pairwise(const DH *dh, int return_on_null_numbers)
+int ossl_dh_check_pairwise(const DH* dh, int return_on_null_numbers)
 {
     int ret = 0;
-    BN_CTX *ctx = NULL;
-    BIGNUM *pub_key = NULL;
-    OSSL_SELF_TEST *st = NULL;
-    OSSL_CALLBACK *stcb = NULL;
-    void *stcbarg = NULL;
+    BN_CTX* ctx = NULL;
+    BIGNUM* pub_key = NULL;
+    OSSL_SELF_TEST* st = NULL;
+    OSSL_CALLBACK* stcb = NULL;
+    void* stcbarg = NULL;
 
     if (dh->params.p == NULL
         || dh->params.g == NULL
@@ -350,7 +350,7 @@ int ossl_dh_check_pairwise(const DH *dh, int return_on_null_numbers)
     if (st == NULL)
         goto err;
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
-                           OSSL_SELF_TEST_DESC_PCT_DH);
+        OSSL_SELF_TEST_DESC_PCT_DH);
 
     ctx = BN_CTX_new_ex(dh->libctx);
     if (ctx == NULL)
@@ -366,7 +366,7 @@ int ossl_dh_check_pairwise(const DH *dh, int return_on_null_numbers)
 #ifdef FIPS_MODULE
     {
         int len;
-        unsigned char bytes[1024] = {0};    /* Max key size of 8192 bits */
+        unsigned char bytes[1024] = { 0 }; /* Max key size of 8192 bits */
 
         if (BN_num_bytes(pub_key) > (int)sizeof(bytes))
             goto err;
@@ -378,7 +378,7 @@ int ossl_dh_check_pairwise(const DH *dh, int return_on_null_numbers)
 #endif
     /* check it matches the existing public_key */
     ret = BN_cmp(pub_key, dh->pub_key) == 0;
- err:
+err:
     BN_free(pub_key);
     BN_CTX_free(ctx);
 

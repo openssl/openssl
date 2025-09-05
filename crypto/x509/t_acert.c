@@ -14,9 +14,9 @@
 #include <openssl/objects.h>
 #include <openssl/x509_acert.h>
 
-static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
+static int print_attribute(BIO* bp, X509_ATTRIBUTE* a)
 {
-    ASN1_OBJECT *aobj;
+    ASN1_OBJECT* aobj;
     int i, j, count;
     int ret = 0;
 
@@ -40,9 +40,9 @@ static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
         goto err;
 
     for (i = 0; i < count; i++) {
-        ASN1_TYPE *at;
+        ASN1_TYPE* at;
         int type;
-        ASN1_BIT_STRING *bs;
+        ASN1_BIT_STRING* bs;
 
         at = X509_ATTRIBUTE_get0_type(a, i);
         type = at->type;
@@ -54,7 +54,7 @@ static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
         case V_ASN1_UTF8STRING:
         case V_ASN1_IA5STRING:
             bs = at->value.asn1_string;
-            if (BIO_write(bp, (char *)bs->data, bs->length) != bs->length)
+            if (BIO_write(bp, (char*)bs->data, bs->length) != bs->length)
                 goto err;
             if (BIO_puts(bp, "\n") <= 0)
                 goto err;
@@ -63,11 +63,12 @@ static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
             if (BIO_puts(bp, "\n") <= 0)
                 goto err;
             ASN1_parse_dump(bp, at->value.sequence->data,
-                            at->value.sequence->length, i, 1);
+                at->value.sequence->length, i, 1);
             break;
         default:
             if (BIO_printf(bp, "unable to print attribute of type 0x%X\n",
-                           type) < 0)
+                    type)
+                < 0)
                 goto err;
             break;
         }
@@ -77,8 +78,8 @@ err:
     return ret;
 }
 
-int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
-                        unsigned long cflag)
+int X509_ACERT_print_ex(BIO* bp, X509_ACERT* x, unsigned long nmflags,
+    unsigned long cflag)
 {
     int i;
     char mlch = ' ';
@@ -100,7 +101,8 @@ int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
         l = X509_ACERT_get_version(x);
         if (l == X509_ACERT_VERSION_2) {
             if (BIO_printf(bp, "%8sVersion: %ld (0x%lx)\n", "", l + 1,
-                           (unsigned long)l) <= 0)
+                    (unsigned long)l)
+                <= 0)
                 goto err;
         } else {
             if (BIO_printf(bp, "%8sVersion: Unknown (%ld)\n", "", l) <= 0)
@@ -109,7 +111,7 @@ int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
     }
 
     if ((cflag & X509_FLAG_NO_SERIAL) == 0) {
-        const ASN1_INTEGER *serial;
+        const ASN1_INTEGER* serial;
 
         serial = X509_ACERT_get0_serialNumber(x);
 
@@ -124,9 +126,9 @@ int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
     }
 
     if ((cflag & X509_FLAG_NO_SUBJECT) == 0) {
-        const GENERAL_NAMES *holderEntities;
-        const OSSL_ISSUER_SERIAL *holder_bcid;
-        const X509_NAME *holderIssuer = NULL;
+        const GENERAL_NAMES* holderEntities;
+        const OSSL_ISSUER_SERIAL* holder_bcid;
+        const X509_NAME* holderIssuer = NULL;
 
         if (BIO_printf(bp, "%8sHolder:\n", "") <= 0)
             goto err;
@@ -134,7 +136,7 @@ int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
         holderEntities = X509_ACERT_get0_holder_entityName(x);
         if (holderEntities != NULL) {
             for (i = 0; i < sk_GENERAL_NAME_num(holderEntities); i++) {
-                GENERAL_NAME *entity;
+                GENERAL_NAME* entity;
 
                 entity = sk_GENERAL_NAME_value(holderEntities, i);
 
@@ -151,8 +153,8 @@ int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
             holderIssuer = OSSL_ISSUER_SERIAL_get0_issuer(holder_bcid);
 
         if (holderIssuer != NULL) {
-            const ASN1_INTEGER *holder_serial;
-            const ASN1_BIT_STRING *iuid;
+            const ASN1_INTEGER* holder_serial;
+            const ASN1_BIT_STRING* iuid;
 
             if (BIO_printf(bp, "%12sIssuer:%c", "", mlch) <= 0)
                 goto err;
@@ -184,7 +186,7 @@ int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
     }
 
     if ((cflag & X509_FLAG_NO_ISSUER) == 0) {
-        const X509_NAME *issuer;
+        const X509_NAME* issuer;
 
         if (BIO_printf(bp, "%8sIssuer:%c", "", mlch) <= 0)
             goto err;
@@ -231,15 +233,15 @@ int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
     }
 
     if ((cflag & X509_FLAG_NO_EXTENSIONS) == 0) {
-        const STACK_OF(X509_EXTENSION) *exts;
+        const STACK_OF(X509_EXTENSION)* exts;
 
         exts = X509_ACERT_get0_extensions(x);
         if (exts != NULL) {
             if (BIO_printf(bp, "%8sExtensions:\n", "") <= 0)
                 goto err;
             for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-                ASN1_OBJECT *obj;
-                X509_EXTENSION *ex;
+                ASN1_OBJECT* obj;
+                X509_EXTENSION* ex;
                 int critical;
 
                 ex = sk_X509_EXTENSION_value(exts, i);
@@ -264,8 +266,8 @@ int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
     }
 
     if ((cflag & X509_FLAG_NO_SIGDUMP) == 0) {
-        const X509_ALGOR *sig_alg;
-        const ASN1_BIT_STRING *sig;
+        const X509_ALGOR* sig_alg;
+        const ASN1_BIT_STRING* sig;
 
         X509_ACERT_get0_signature(x, &sig, &sig_alg);
         if (X509_signature_print(bp, sig_alg, sig) <= 0)
@@ -279,7 +281,7 @@ err:
     return 0;
 }
 
-int X509_ACERT_print(BIO *bp, X509_ACERT *x)
+int X509_ACERT_print(BIO* bp, X509_ACERT* x)
 {
     return X509_ACERT_print_ex(bp, x, XN_FLAG_COMPAT, X509_FLAG_COMPAT);
 }

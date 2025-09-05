@@ -16,15 +16,15 @@
  * print any signingTime attributes.
  * signingTime is when each party purportedly signed the message.
  */
-static void print_signingTime(CMS_ContentInfo *cms)
+static void print_signingTime(CMS_ContentInfo* cms)
 {
-    STACK_OF(CMS_SignerInfo) *sis;
-    CMS_SignerInfo *si;
-    X509_ATTRIBUTE *attr;
-    ASN1_TYPE *t;
-    ASN1_UTCTIME *utctime;
-    ASN1_GENERALIZEDTIME *gtime;
-    BIO *b;
+    STACK_OF(CMS_SignerInfo)* sis;
+    CMS_SignerInfo* si;
+    X509_ATTRIBUTE* attr;
+    ASN1_TYPE* t;
+    ASN1_UTCTIME* utctime;
+    ASN1_GENERALIZEDTIME* gtime;
+    BIO* b;
     int i, loc;
 
     b = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
@@ -55,12 +55,12 @@ static void print_signingTime(CMS_ContentInfo *cms)
     return;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     BIO *in = NULL, *out = NULL, *tbio = NULL, *cont = NULL;
-    X509_STORE *st = NULL;
-    X509 *cacert = NULL;
-    CMS_ContentInfo *cms = NULL;
+    X509_STORE* st = NULL;
+    X509* cacert = NULL;
+    CMS_ContentInfo* cms = NULL;
     int ret = EXIT_FAILURE;
 
     OpenSSL_add_all_algorithms();
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 
     ret = EXIT_SUCCESS;
 
- err:
+err:
     if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Verifying Data\n");
         ERR_print_errors_fp(stderr);

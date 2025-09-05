@@ -23,22 +23,22 @@
 #include "internal/o_dir.h"
 
 #if defined(_WIN32) && defined(_MAX_PATH) && !defined(PATH_MAX)
-# define PATH_MAX _MAX_PATH
+#define PATH_MAX _MAX_PATH
 #endif
 
 #ifndef PATH_MAX
-# define PATH_MAX 4096
+#define PATH_MAX 4096
 #endif
 
-# if !defined(S_ISREG)
-#   define S_ISREG(m) ((m) & S_IFREG)
-# endif
+#if !defined(S_ISREG)
+#define S_ISREG(m) ((m) & S_IFREG)
+#endif
 
-static void testfile(const char *pathname)
+static void testfile(const char* pathname)
 {
     struct stat st;
-    FILE *f;
-    unsigned char *buf;
+    FILE* f;
+    unsigned char* buf;
     size_t s;
 
     if (stat(pathname, &st) < 0 || !S_ISREG(st.st_mode))
@@ -58,16 +58,17 @@ static void testfile(const char *pathname)
     fclose(f);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
     int n;
 
     FuzzerInitialize(&argc, &argv);
 
     for (n = 1; n < argc; ++n) {
         size_t dirname_len = strlen(argv[n]);
-        const char *filename = NULL;
-        char *pathname = NULL;
-        OPENSSL_DIR_CTX *ctx = NULL;
+        const char* filename = NULL;
+        char* pathname = NULL;
+        OPENSSL_DIR_CTX* ctx = NULL;
         int wasdir = 0;
 
         /*

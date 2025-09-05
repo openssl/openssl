@@ -8,14 +8,14 @@
  */
 
 #ifndef OPENSSL_NO_EC
-static const char *point_format_options[] = {
+static const char* point_format_options[] = {
     "uncompressed",
     "compressed",
     "hybrid",
     NULL
 };
 
-static const char *asn1_encoding_options[] = {
+static const char* asn1_encoding_options[] = {
     "named_curve",
     "explicit",
     NULL

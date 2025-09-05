@@ -24,12 +24,12 @@ extern const OSSL_DISPATCH ossl_template_asym_kem_functions[];
 
 #define BUFSIZE 1000
 #if defined(NDEBUG) || defined(OPENSSL_NO_STDIO)
-static void debug_print(char *fmt, ...)
+static void debug_print(char* fmt, ...)
 {
 }
 
 #else
-static void debug_print(char *fmt, ...)
+static void debug_print(char* fmt, ...)
 {
     char out[BUFSIZE];
     va_list argptr;
@@ -43,7 +43,7 @@ static void debug_print(char *fmt, ...)
 #endif
 
 typedef struct {
-    OSSL_LIB_CTX *libctx;
+    OSSL_LIB_CTX* libctx;
     /* some algorithm-specific key struct */
     int op;
 } PROV_TEMPLATE_CTX;
@@ -57,9 +57,9 @@ static OSSL_FUNC_kem_freectx_fn template_freectx;
 static OSSL_FUNC_kem_set_ctx_params_fn template_set_ctx_params;
 static OSSL_FUNC_kem_settable_ctx_params_fn template_settable_ctx_params;
 
-static void *template_newctx(void *provctx)
+static void* template_newctx(void* provctx)
 {
-    PROV_TEMPLATE_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_TEMPLATE_CTX* ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     debug_print("newctx called\n");
     if (ctx == NULL)
@@ -70,18 +70,18 @@ static void *template_newctx(void *provctx)
     return ctx;
 }
 
-static void template_freectx(void *vctx)
+static void template_freectx(void* vctx)
 {
-    PROV_TEMPLATE_CTX *ctx = (PROV_TEMPLATE_CTX *)vctx;
+    PROV_TEMPLATE_CTX* ctx = (PROV_TEMPLATE_CTX*)vctx;
 
     debug_print("freectx %p\n", ctx);
     OPENSSL_free(ctx);
 }
 
-static int template_init(void *vctx, int operation, void *vkey, void *vauth,
-                         ossl_unused const OSSL_PARAM params[])
+static int template_init(void* vctx, int operation, void* vkey, void* vauth,
+    ossl_unused const OSSL_PARAM params[])
 {
-    PROV_TEMPLATE_CTX *ctx = (PROV_TEMPLATE_CTX *)vctx;
+    PROV_TEMPLATE_CTX* ctx = (PROV_TEMPLATE_CTX*)vctx;
 
     debug_print("init %p / %p\n", ctx, vkey);
     if (!ossl_prov_is_running())
@@ -93,21 +93,21 @@ static int template_init(void *vctx, int operation, void *vkey, void *vauth,
     return 1;
 }
 
-static int template_encapsulate_init(void *vctx, void *vkey,
-                                     const OSSL_PARAM params[])
+static int template_encapsulate_init(void* vctx, void* vkey,
+    const OSSL_PARAM params[])
 {
     return template_init(vctx, EVP_PKEY_OP_ENCAPSULATE, vkey, NULL, params);
 }
 
-static int template_decapsulate_init(void *vctx, void *vkey,
-                                     const OSSL_PARAM params[])
+static int template_decapsulate_init(void* vctx, void* vkey,
+    const OSSL_PARAM params[])
 {
     return template_init(vctx, EVP_PKEY_OP_DECAPSULATE, vkey, NULL, params);
 }
 
-static int template_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int template_set_ctx_params(void* vctx, const OSSL_PARAM params[])
 {
-    PROV_TEMPLATE_CTX *ctx = (PROV_TEMPLATE_CTX *)vctx;
+    PROV_TEMPLATE_CTX* ctx = (PROV_TEMPLATE_CTX*)vctx;
 
     debug_print("set ctx params %p\n", ctx);
     if (ctx == NULL)
@@ -124,14 +124,14 @@ static const OSSL_PARAM known_settable_template_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *template_settable_ctx_params(ossl_unused void *vctx,
-                                                      ossl_unused void *provctx)
+static const OSSL_PARAM* template_settable_ctx_params(ossl_unused void* vctx,
+    ossl_unused void* provctx)
 {
     return known_settable_template_ctx_params;
 }
 
-static int template_encapsulate(void *vctx, unsigned char *out, size_t *outlen,
-                                unsigned char *secret, size_t *secretlen)
+static int template_encapsulate(void* vctx, unsigned char* out, size_t* outlen,
+    unsigned char* secret, size_t* secretlen)
 {
     debug_print("encaps %p to %p\n", vctx, out);
 
@@ -154,8 +154,8 @@ static int template_encapsulate(void *vctx, unsigned char *out, size_t *outlen,
     return 1;
 }
 
-static int template_decapsulate(void *vctx, unsigned char *out, size_t *outlen,
-                                const unsigned char *in, size_t inlen)
+static int template_decapsulate(void* vctx, unsigned char* out, size_t* outlen,
+    const unsigned char* in, size_t inlen)
 {
     debug_print("decaps %p to %p inlen at %zu\n", vctx, out, inlen);
 
@@ -179,15 +179,15 @@ static int template_decapsulate(void *vctx, unsigned char *out, size_t *outlen,
 const OSSL_DISPATCH ossl_template_asym_kem_functions[] = {
     { OSSL_FUNC_KEM_NEWCTX, (void (*)(void))template_newctx },
     { OSSL_FUNC_KEM_ENCAPSULATE_INIT,
-      (void (*)(void))template_encapsulate_init },
+        (void (*)(void))template_encapsulate_init },
     { OSSL_FUNC_KEM_ENCAPSULATE, (void (*)(void))template_encapsulate },
     { OSSL_FUNC_KEM_DECAPSULATE_INIT,
-      (void (*)(void))template_decapsulate_init },
+        (void (*)(void))template_decapsulate_init },
     { OSSL_FUNC_KEM_DECAPSULATE, (void (*)(void))template_decapsulate },
     { OSSL_FUNC_KEM_FREECTX, (void (*)(void))template_freectx },
     { OSSL_FUNC_KEM_SET_CTX_PARAMS,
-      (void (*)(void))template_set_ctx_params },
+        (void (*)(void))template_set_ctx_params },
     { OSSL_FUNC_KEM_SETTABLE_CTX_PARAMS,
-      (void (*)(void))template_settable_ctx_params },
+        (void (*)(void))template_settable_ctx_params },
     OSSL_DISPATCH_END
 };

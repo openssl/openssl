@@ -14,21 +14,21 @@
 #include <stdio.h>
 #include "bio_local.h"
 
-#define DUMP_WIDTH      16
+#define DUMP_WIDTH 16
 #define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH - ((i - (i > 6 ? 6 : i) + 3) / 4))
 
-#define SPACE(buf, pos, n)   (sizeof(buf) - (pos) > (n))
+#define SPACE(buf, pos, n) (sizeof(buf) - (pos) > (n))
 
-int BIO_dump_cb(int (*cb) (const void *data, size_t len, void *u),
-                void *u, const void *s, int len)
+int BIO_dump_cb(int (*cb)(const void* data, size_t len, void* u),
+    void* u, const void* s, int len)
 {
     return BIO_dump_indent_cb(cb, u, s, len, 0);
 }
 
-int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
-                       void *u, const void *v, int len, int indent)
+int BIO_dump_indent_cb(int (*cb)(const void* data, size_t len, void* u),
+    void* u, const void* v, int len, int indent)
 {
-    const unsigned char *s = v;
+    const unsigned char* s = v;
     int res, ret = 0;
     char buf[288 + 1];
     int i, j, rows, n;
@@ -46,7 +46,7 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
         rows++;
     for (i = 0; i < rows; i++) {
         n = BIO_snprintf(buf, sizeof(buf), "%*s%04x - ", indent, "",
-                         i * dump_width);
+            i * dump_width);
         if (n < 0)
             return -1;
         for (j = 0; j < dump_width; j++) {
@@ -56,7 +56,7 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
                 } else {
                     ch = *(s + i * dump_width + j) & 0xff;
                     BIO_snprintf(buf + n, 4, "%02x%c", ch,
-                                 j == 7 ? '-' : ' ');
+                        j == 7 ? '-' : ' ');
                 }
                 n += 3;
             }
@@ -74,8 +74,8 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
                 buf[n++] = ((ch >= ' ') && (ch <= '~')) ? ch : '.';
 #else
                 buf[n++] = ((ch >= os_toascii[' ']) && (ch <= os_toascii['~']))
-                           ? os_toebcdic[ch]
-                           : '.';
+                    ? os_toebcdic[ch]
+                    : '.';
 #endif
                 buf[n] = '\0';
             }
@@ -88,7 +88,7 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
          * if this is the last call then update the ddt_dump thing so that we
          * will move the selection point in the debug window
          */
-        res = cb((void *)buf, n, u);
+        res = cb((void*)buf, n, u);
         if (res < 0)
             return res;
         ret += res;
@@ -97,43 +97,43 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
 }
 
 #ifndef OPENSSL_NO_STDIO
-static int write_fp(const void *data, size_t len, void *fp)
+static int write_fp(const void* data, size_t len, void* fp)
 {
     return (int)UP_fwrite(data, len, 1, fp);
 }
 
-int BIO_dump_fp(FILE *fp, const void *s, int len)
+int BIO_dump_fp(FILE* fp, const void* s, int len)
 {
     return BIO_dump_cb(write_fp, fp, s, len);
 }
 
-int BIO_dump_indent_fp(FILE *fp, const void *s, int len, int indent)
+int BIO_dump_indent_fp(FILE* fp, const void* s, int len, int indent)
 {
     return BIO_dump_indent_cb(write_fp, fp, s, len, indent);
 }
 #endif
 
-static int write_bio(const void *data, size_t len, void *bp)
+static int write_bio(const void* data, size_t len, void* bp)
 {
     if (len > INT_MAX)
         return -1;
-    return BIO_write((BIO *)bp, (const char *)data, (int)len);
+    return BIO_write((BIO*)bp, (const char*)data, (int)len);
 }
 
-int BIO_dump(BIO *bp, const void *s, int len)
+int BIO_dump(BIO* bp, const void* s, int len)
 {
     return BIO_dump_cb(write_bio, bp, s, len);
 }
 
-int BIO_dump_indent(BIO *bp, const void *s, int len, int indent)
+int BIO_dump_indent(BIO* bp, const void* s, int len, int indent)
 {
     return BIO_dump_indent_cb(write_bio, bp, s, len, indent);
 }
 
-int BIO_hex_string(BIO *out, int indent, int width, const void *data,
-                   int datalen)
+int BIO_hex_string(BIO* out, int indent, int width, const void* data,
+    int datalen)
 {
-    const unsigned char *d = data;
+    const unsigned char* d = data;
     int i, j = 0;
 
     if (datalen < 1)

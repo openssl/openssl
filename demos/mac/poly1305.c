@@ -79,18 +79,18 @@ static const unsigned char expected_output[] = {
 /*
  * A property query used for selecting the POLY1305 implementation.
  */
-static char *propq = NULL;
+static char* propq = NULL;
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     int ret = EXIT_FAILURE;
-    EVP_CIPHER *aes = NULL;
-    EVP_CIPHER_CTX *aesctx = NULL;
-    EVP_MAC *mac = NULL;
-    EVP_MAC_CTX *mctx = NULL;
+    EVP_CIPHER* aes = NULL;
+    EVP_CIPHER_CTX* aesctx = NULL;
+    EVP_MAC* mac = NULL;
+    EVP_MAC_CTX* mctx = NULL;
     unsigned char composite_key[32];
     unsigned char out[16];
-    OSSL_LIB_CTX *library_context = NULL;
+    OSSL_LIB_CTX* library_context = NULL;
     size_t out_len = 0;
     int aes_len = 0;
 
@@ -151,7 +151,7 @@ int main(int argc, char **argv)
      * computation below.
      */
     if (!EVP_EncryptUpdate(aesctx, composite_key + 16, &aes_len,
-                           test_n, sizeof(test_n))) {
+            test_n, sizeof(test_n))) {
         fprintf(stderr, "EVP_EncryptUpdate() failed\n");
         goto end;
     }

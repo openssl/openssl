@@ -15,7 +15,7 @@
 #include "ssltestlib.h"
 #include "../testutil.h"
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
-# include "../threadstest.h"
+#include "../threadstest.h"
 #endif
 #include "internal/quic_ssl.h"
 #include "internal/quic_wire_pkt.h"
@@ -27,14 +27,14 @@
 #define GROWTH_ALLOWANCE 1024
 
 struct noise_args_data_st {
-    BIO *cbio;
-    BIO *sbio;
-    BIO *tracebio;
+    BIO* cbio;
+    BIO* sbio;
+    BIO* tracebio;
     int flags;
 };
 
 struct qtest_fault {
-    QUIC_TSERVER *qtserv;
+    QUIC_TSERVER* qtserv;
 
     /* Plain packet mutations */
     /* Header for the plaintext packet */
@@ -44,27 +44,27 @@ struct qtest_fault {
     /* Allocated size of the plaintext packet data buffer */
     size_t pplainbuf_alloc;
     qtest_fault_on_packet_plain_cb pplaincb;
-    void *pplaincbarg;
+    void* pplaincbarg;
 
     /* Handshake message mutations */
     /* Handshake message buffer */
-    unsigned char *handbuf;
+    unsigned char* handbuf;
     /* Allocated size of the handshake message buffer */
     size_t handbufalloc;
     /* Actual length of the handshake message */
     size_t handbuflen;
     qtest_fault_on_handshake_cb handshakecb;
-    void *handshakecbarg;
+    void* handshakecbarg;
     qtest_fault_on_enc_ext_cb encextcb;
-    void *encextcbarg;
+    void* encextcbarg;
 
     /* Cipher packet mutations */
     qtest_fault_on_packet_cipher_cb pciphercb;
-    void *pciphercbarg;
+    void* pciphercbarg;
 
     /* Datagram mutations */
     qtest_fault_on_datagram_cb datagramcb;
-    void *datagramcbarg;
+    void* datagramcbarg;
     /* The currently processed message */
     BIO_MSG msg;
     /* Allocated size of msg data buffer */
@@ -74,30 +74,30 @@ struct qtest_fault {
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
 static int client_ready = 0;
-static CRYPTO_CONDVAR *client_ready_cond = NULL;
-static CRYPTO_MUTEX *client_ready_mutex = NULL;
+static CRYPTO_CONDVAR* client_ready_cond = NULL;
+static CRYPTO_MUTEX* client_ready_mutex = NULL;
 #endif
 
-static void packet_plain_finish(void *arg);
-static void handshake_finish(void *arg);
+static void packet_plain_finish(void* arg);
+static void handshake_finish(void* arg);
 static OSSL_TIME qtest_get_time(void);
 static void qtest_reset_time(void);
 
 static int using_fake_time = 0;
 static OSSL_TIME fake_now;
-static CRYPTO_RWLOCK *fake_now_lock = NULL;
+static CRYPTO_RWLOCK* fake_now_lock = NULL;
 static OSSL_TIME start_time;
 
-static OSSL_TIME fake_now_cb(void *arg)
+static OSSL_TIME fake_now_cb(void* arg)
 {
     return qtest_get_time();
 }
 
 static void noise_msg_callback(int write_p, int version, int content_type,
-                               const void *buf, size_t len, SSL *ssl,
-                               void *arg)
+    const void* buf, size_t len, SSL* ssl,
+    void* arg)
 {
-    struct noise_args_data_st *noiseargs = (struct noise_args_data_st *)arg;
+    struct noise_args_data_st* noiseargs = (struct noise_args_data_st*)arg;
 
     if (content_type == SSL3_RT_QUIC_FRAME_FULL) {
         PACKET pkt;
@@ -122,25 +122,25 @@ static void noise_msg_callback(int write_p, int version, int content_type,
 
 #ifndef OPENSSL_NO_SSL_TRACE
     if ((noiseargs->flags & QTEST_FLAG_CLIENT_TRACE) != 0
-            && !SSL_is_server(ssl))
+        && !SSL_is_server(ssl))
         SSL_trace(write_p, version, content_type, buf, len, ssl,
-                  noiseargs->tracebio);
+            noiseargs->tracebio);
 #endif
 }
 
-int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
-                              SSL_CTX *serverctx, char *certfile, char *keyfile,
-                              int flags, QUIC_TSERVER **qtserv, SSL **cssl,
-                              QTEST_FAULT **fault, BIO **tracebio)
+int qtest_create_quic_objects(OSSL_LIB_CTX* libctx, SSL_CTX* clientctx,
+    SSL_CTX* serverctx, char* certfile, char* keyfile,
+    int flags, QUIC_TSERVER** qtserv, SSL** cssl,
+    QTEST_FAULT** fault, BIO** tracebio)
 {
     /* ALPN value as recognised by QUIC_TSERVER */
     unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
-    QUIC_TSERVER_ARGS tserver_args = {0};
+    QUIC_TSERVER_ARGS tserver_args = { 0 };
     BIO *cbio = NULL, *sbio = NULL, *fisbio = NULL;
-    BIO_ADDR *peeraddr = NULL;
-    struct in_addr ina = {0};
-    BIO *tmpbio = NULL;
-    QTEST_DATA *bdata = NULL;
+    BIO_ADDR* peeraddr = NULL;
+    struct in_addr ina = { 0 };
+    BIO* tmpbio = NULL;
+    QTEST_DATA* bdata = NULL;
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
     if (client_ready_cond == NULL) {
@@ -223,20 +223,20 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         goto err;
 #endif
     } else {
-        BIO_ADDR *localaddr = NULL;
+        BIO_ADDR* localaddr = NULL;
 
         if (!TEST_true(BIO_new_bio_dgram_pair(&cbio, 0, &sbio, 0)))
             goto err;
 
         if (!TEST_true(BIO_dgram_set_caps(cbio, BIO_DGRAM_CAP_HANDLES_DST_ADDR))
-                || !TEST_true(BIO_dgram_set_caps(sbio, BIO_DGRAM_CAP_HANDLES_DST_ADDR)))
+            || !TEST_true(BIO_dgram_set_caps(sbio, BIO_DGRAM_CAP_HANDLES_DST_ADDR)))
             goto err;
 
         if (!TEST_ptr(localaddr = BIO_ADDR_new()))
             goto err;
         /* Dummy client local addresses */
         if (!TEST_true(BIO_ADDR_rawmake(localaddr, AF_INET, &ina, sizeof(ina),
-                                        htons(0)))) {
+                htons(0)))) {
             BIO_ADDR_free(localaddr);
             goto err;
         }
@@ -246,12 +246,12 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         }
         /* Dummy server address */
         if (!TEST_true(BIO_ADDR_rawmake(peeraddr, AF_INET, &ina, sizeof(ina),
-                                        htons(0))))
+                htons(0))))
             goto err;
     }
 
     if ((flags & QTEST_FLAG_PACKET_SPLIT) != 0) {
-        BIO *pktsplitbio = BIO_new(bio_f_pkt_split_dgram_filter());
+        BIO* pktsplitbio = BIO_new(bio_f_pkt_split_dgram_filter());
 
         if (!TEST_ptr(pktsplitbio))
             goto err;
@@ -266,7 +266,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     }
 
     if ((flags & QTEST_FLAG_NOISE) != 0) {
-        BIO *noisebio;
+        BIO* noisebio;
         struct bio_noise_now_cb_st now_cb = { fake_now_cb, NULL };
 
         /*
@@ -282,7 +282,8 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         cbio = BIO_push(noisebio, cbio);
         if ((flags & QTEST_FLAG_FAKE_TIME) != 0) {
             if (!TEST_int_eq(BIO_ctrl(cbio, BIO_CTRL_NOISE_SET_NOW_CB,
-                                      0, &now_cb), 1))
+                                 0, &now_cb),
+                    1))
                 goto err;
         }
 
@@ -293,7 +294,8 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         sbio = BIO_push(noisebio, sbio);
         if ((flags & QTEST_FLAG_FAKE_TIME) != 0) {
             if (!TEST_int_eq(BIO_ctrl(sbio, BIO_CTRL_NOISE_SET_NOW_CB,
-                                      0, &now_cb), 1))
+                                 0, &now_cb),
+                    1))
                 goto err;
         }
 
@@ -311,7 +313,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     SSL_set_bio(*cssl, cbio, cbio);
 
     if (!TEST_true(SSL_set_blocking_mode(*cssl,
-                                         (flags & QTEST_FLAG_BLOCK) != 0 ? 1 : 0)))
+            (flags & QTEST_FLAG_BLOCK) != 0 ? 1 : 0)))
         goto err;
 
     if (!TEST_true(SSL_set1_initial_peer_addr(*cssl, peeraddr)))
@@ -352,7 +354,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     }
 
     if (!TEST_ptr(*qtserv = ossl_quic_tserver_new(&tserver_args, certfile,
-                                                  keyfile)))
+                      keyfile)))
         goto err;
 
     bdata->short_conn_id_len = ossl_quic_tserver_get_short_header_conn_id_len(*qtserv);
@@ -362,7 +364,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
 
     if ((flags & QTEST_FLAG_NOISE) != 0)
         ossl_quic_tserver_set_msg_callback(*qtserv, noise_msg_callback,
-                                           &(*fault)->noiseargs);
+            &(*fault)->noiseargs);
 
     if (fault != NULL)
         (*fault)->qtserv = *qtserv;
@@ -370,7 +372,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     BIO_ADDR_free(peeraddr);
 
     return 1;
- err:
+err:
     SSL_CTX_free(tserver_args.ctx);
     BIO_ADDR_free(peeraddr);
     BIO_free_all(cbio);
@@ -428,9 +430,9 @@ uint64_t qtest_get_stopwatch_time(void)
     return ossl_time2ms(ossl_time_subtract(qtest_get_time(), start_time));
 }
 
-QTEST_FAULT *qtest_create_injector(QUIC_TSERVER *ts)
+QTEST_FAULT* qtest_create_injector(QUIC_TSERVER* ts)
 {
-    QTEST_FAULT *f;
+    QTEST_FAULT* f;
 
     f = OPENSSL_zalloc(sizeof(*f));
     if (f == NULL)
@@ -438,7 +440,6 @@ QTEST_FAULT *qtest_create_injector(QUIC_TSERVER *ts)
 
     f->qtserv = ts;
     return f;
-
 }
 
 int qtest_supports_blocking(void)
@@ -450,12 +451,12 @@ int qtest_supports_blocking(void)
 #endif
 }
 
-#define MAXLOOPS    1000
+#define MAXLOOPS 1000
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
 static int globserverret = 0;
 static TSAN_QUALIFIER int abortserverthread = 0;
-static QUIC_TSERVER *globtserv;
+static QUIC_TSERVER* globtserv;
 static const thread_t thread_zero;
 static void run_server_thread(void)
 {
@@ -468,7 +469,7 @@ static void run_server_thread(void)
 }
 #endif
 
-int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
+int qtest_wait_for_timeout(SSL* s, QUIC_TSERVER* qtserv)
 {
     struct timeval tv;
     OSSL_TIME ctimeout, stimeout, mintimeout, now;
@@ -480,7 +481,7 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
 
     /* Don't wait if either BIO has data waiting */
     if (BIO_pending(SSL_get_rbio(s)) > 0
-            || BIO_pending(ossl_quic_tserver_get0_rbio(qtserv)) > 0)
+        || BIO_pending(ossl_quic_tserver_get0_rbio(qtserv)) > 0)
         return 1;
 
     /*
@@ -512,8 +513,8 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
     return 1;
 }
 
-int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
-                                    int wanterr)
+int qtest_create_quic_connection_ex(QUIC_TSERVER* qtserv, SSL* clientssl,
+    int wanterr)
 {
     int retc = -1, rets = 0, abortctr = 0, ret = 0;
     int clienterr = 0, servererr = 0;
@@ -584,7 +585,7 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
                         rets = 1;
                 } else {
                     if (err != SSL_ERROR_WANT_READ
-                            && err != SSL_ERROR_WANT_WRITE) {
+                        && err != SSL_ERROR_WANT_WRITE) {
                         TEST_info("SSL_connect() failed %d, %d", retc, err);
                         TEST_openssl_errors();
                         clienterr = 1;
@@ -628,9 +629,9 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
                 goto err;
         }
     } while ((retc <= 0 && !clienterr)
-             || (rets <= 0 && !servererr
+        || (rets <= 0 && !servererr
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
-                 && !tsan_load(&abortserverthread)
+            && !tsan_load(&abortserverthread)
 #endif
                 ));
 
@@ -654,11 +655,11 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
 
     if (!clienterr && !servererr)
         ret = 1;
- err:
+err:
     return ret;
 }
 
-int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
+int qtest_create_quic_connection(QUIC_TSERVER* qtserv, SSL* clientssl)
 {
     return qtest_create_quic_connection_ex(qtserv, clientssl, SSL_ERROR_NONE);
 }
@@ -675,11 +676,11 @@ static void run_server_shutdown_thread(void)
      */
     do {
         ossl_quic_tserver_tick(globtserv);
-    } while(!tsan_load(&shutdowndone));
+    } while (!tsan_load(&shutdowndone));
 }
 #endif
 
-int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
+int qtest_shutdown(QUIC_TSERVER* qtserv, SSL* clientssl)
 {
     int tickserver = 1;
     int ret = 0;
@@ -741,9 +742,9 @@ int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
     return ret;
 }
 
-int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code)
+int qtest_check_server_transport_err(QUIC_TSERVER* qtserv, uint64_t code)
 {
-    const QUIC_TERMINATE_CAUSE *cause;
+    const QUIC_TERMINATE_CAUSE* cause;
 
     ossl_quic_tserver_tick(qtserv);
 
@@ -754,26 +755,26 @@ int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code)
         return 0;
 
     cause = ossl_quic_tserver_get_terminate_cause(qtserv);
-    if  (!TEST_ptr(cause)
-            || !TEST_true(cause->remote)
-            || !TEST_false(cause->app)
-            || !TEST_uint64_t_eq(cause->error_code, code))
+    if (!TEST_ptr(cause)
+        || !TEST_true(cause->remote)
+        || !TEST_false(cause->app)
+        || !TEST_uint64_t_eq(cause->error_code, code))
         return 0;
 
     return 1;
 }
 
-int qtest_check_server_protocol_err(QUIC_TSERVER *qtserv)
+int qtest_check_server_protocol_err(QUIC_TSERVER* qtserv)
 {
     return qtest_check_server_transport_err(qtserv, OSSL_QUIC_ERR_PROTOCOL_VIOLATION);
 }
 
-int qtest_check_server_frame_encoding_err(QUIC_TSERVER *qtserv)
+int qtest_check_server_frame_encoding_err(QUIC_TSERVER* qtserv)
 {
     return qtest_check_server_transport_err(qtserv, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR);
 }
 
-void qtest_fault_free(QTEST_FAULT *fault)
+void qtest_fault_free(QTEST_FAULT* fault)
 {
     if (fault == NULL)
         return;
@@ -784,16 +785,16 @@ void qtest_fault_free(QTEST_FAULT *fault)
     OPENSSL_free(fault);
 }
 
-static int packet_plain_mutate(const QUIC_PKT_HDR *hdrin,
-                               const OSSL_QTX_IOVEC *iovecin, size_t numin,
-                               QUIC_PKT_HDR **hdrout,
-                               const OSSL_QTX_IOVEC **iovecout,
-                               size_t *numout,
-                               void *arg)
+static int packet_plain_mutate(const QUIC_PKT_HDR* hdrin,
+    const OSSL_QTX_IOVEC* iovecin, size_t numin,
+    QUIC_PKT_HDR** hdrout,
+    const OSSL_QTX_IOVEC** iovecout,
+    size_t* numout,
+    void* arg)
 {
-    QTEST_FAULT *fault = arg;
+    QTEST_FAULT* fault = arg;
     size_t i, bufsz = 0;
-    unsigned char *cur;
+    unsigned char* cur;
     int grow_allowance;
 
     /* Coalesce our data into a single buffer */
@@ -841,8 +842,8 @@ static int packet_plain_mutate(const QUIC_PKT_HDR *hdrin,
      */
     if (fault->pplaincb != NULL)
         fault->pplaincb(fault, &fault->pplainhdr,
-                        (unsigned char *)fault->pplainio.buf,
-                        fault->pplainio.buf_len, fault->pplaincbarg);
+            (unsigned char*)fault->pplainio.buf,
+            fault->pplainio.buf_len, fault->pplaincbarg);
 
     *hdrout = &fault->pplainhdr;
     *iovecout = &fault->pplainio;
@@ -851,34 +852,34 @@ static int packet_plain_mutate(const QUIC_PKT_HDR *hdrin,
     return 1;
 }
 
-static void packet_plain_finish(void *arg)
+static void packet_plain_finish(void* arg)
 {
-    QTEST_FAULT *fault = arg;
+    QTEST_FAULT* fault = arg;
 
     /* Cast below is safe because we allocated the buffer */
-    OPENSSL_free((unsigned char *)fault->pplainio.buf);
+    OPENSSL_free((unsigned char*)fault->pplainio.buf);
     fault->pplainio.buf_len = 0;
     fault->pplainbuf_alloc = 0;
     fault->pplainio.buf = NULL;
 }
 
-int qtest_fault_set_packet_plain_listener(QTEST_FAULT *fault,
-                                          qtest_fault_on_packet_plain_cb pplaincb,
-                                          void *pplaincbarg)
+int qtest_fault_set_packet_plain_listener(QTEST_FAULT* fault,
+    qtest_fault_on_packet_plain_cb pplaincb,
+    void* pplaincbarg)
 {
     fault->pplaincb = pplaincb;
     fault->pplaincbarg = pplaincbarg;
 
     return ossl_quic_tserver_set_plain_packet_mutator(fault->qtserv,
-                                                      packet_plain_mutate,
-                                                      packet_plain_finish,
-                                                      fault);
+        packet_plain_mutate,
+        packet_plain_finish,
+        fault);
 }
 
 /* To be called from a packet_plain_listener callback */
-int qtest_fault_resize_plain_packet(QTEST_FAULT *fault, size_t newlen)
+int qtest_fault_resize_plain_packet(QTEST_FAULT* fault, size_t newlen)
 {
-    unsigned char *buf;
+    unsigned char* buf;
     size_t oldlen = fault->pplainio.buf_len;
 
     /*
@@ -894,7 +895,7 @@ int qtest_fault_resize_plain_packet(QTEST_FAULT *fault, size_t newlen)
     }
 
     /* Cast below is safe because we allocated the buffer */
-    buf = (unsigned char *)fault->pplainio.buf;
+    buf = (unsigned char*)fault->pplainio.buf;
 
     if (newlen > oldlen) {
         /* Extend packet with 0 bytes */
@@ -911,10 +912,10 @@ int qtest_fault_resize_plain_packet(QTEST_FAULT *fault, size_t newlen)
  * Prepend frame data into a packet. To be called from a packet_plain_listener
  * callback
  */
-int qtest_fault_prepend_frame(QTEST_FAULT *fault, const unsigned char *frame,
-                              size_t frame_len)
+int qtest_fault_prepend_frame(QTEST_FAULT* fault, const unsigned char* frame,
+    size_t frame_len)
 {
-    unsigned char *buf;
+    unsigned char* buf;
     size_t old_len;
 
     /*
@@ -925,12 +926,12 @@ int qtest_fault_prepend_frame(QTEST_FAULT *fault, const unsigned char *frame,
         return 0;
 
     /* Cast below is safe because we allocated the buffer */
-    buf = (unsigned char *)fault->pplainio.buf;
+    buf = (unsigned char*)fault->pplainio.buf;
     old_len = fault->pplainio.buf_len;
 
     /* Extend the size of the packet by the size of the new frame */
     if (!TEST_true(qtest_fault_resize_plain_packet(fault,
-                                                   old_len + frame_len)))
+            old_len + frame_len)))
         return 0;
 
     memmove(buf + frame_len, buf, old_len);
@@ -939,12 +940,12 @@ int qtest_fault_prepend_frame(QTEST_FAULT *fault, const unsigned char *frame,
     return 1;
 }
 
-static int handshake_mutate(const unsigned char *msgin, size_t msginlen,
-                            unsigned char **msgout, size_t *msgoutlen,
-                            void *arg)
+static int handshake_mutate(const unsigned char* msgin, size_t msginlen,
+    unsigned char** msgout, size_t* msgoutlen,
+    void* arg)
 {
-    QTEST_FAULT *fault = arg;
-    unsigned char *buf;
+    QTEST_FAULT* fault = arg;
+    unsigned char* buf;
     unsigned long payloadlen;
     unsigned int msgtype;
     PACKET pkt;
@@ -959,15 +960,14 @@ static int handshake_mutate(const unsigned char *msgin, size_t msginlen,
     memcpy(buf, msgin, msginlen);
 
     if (!PACKET_buf_init(&pkt, buf, msginlen)
-            || !PACKET_get_1(&pkt, &msgtype)
-            || !PACKET_get_net_3(&pkt, &payloadlen)
-            || PACKET_remaining(&pkt) != payloadlen)
+        || !PACKET_get_1(&pkt, &msgtype)
+        || !PACKET_get_net_3(&pkt, &payloadlen)
+        || PACKET_remaining(&pkt) != payloadlen)
         return 0;
 
     /* Parse specific message types */
     switch (msgtype) {
-    case SSL3_MT_ENCRYPTED_EXTENSIONS:
-    {
+    case SSL3_MT_ENCRYPTED_EXTENSIONS: {
         QTEST_ENCRYPTED_EXTENSIONS ee;
 
         if (fault->encextcb == NULL)
@@ -977,7 +977,7 @@ static int handshake_mutate(const unsigned char *msgin, size_t msginlen,
          * The EncryptedExtensions message is very simple. It just has an
          * extensions block in it and nothing else.
          */
-        ee.extensions = (unsigned char *)PACKET_data(&pkt);
+        ee.extensions = (unsigned char*)PACKET_data(&pkt);
         ee.extensionslen = payloadlen;
         if (!fault->encextcb(fault, &ee, payloadlen, fault->encextcbarg))
             return 0;
@@ -989,8 +989,8 @@ static int handshake_mutate(const unsigned char *msgin, size_t msginlen,
     }
 
     if (fault->handshakecb != NULL
-            && !fault->handshakecb(fault, buf, fault->handbuflen,
-                                   fault->handshakecbarg))
+        && !fault->handshakecb(fault, buf, fault->handbuflen,
+            fault->handshakecbarg))
         return 0;
 
     *msgout = buf;
@@ -999,44 +999,44 @@ static int handshake_mutate(const unsigned char *msgin, size_t msginlen,
     return 1;
 }
 
-static void handshake_finish(void *arg)
+static void handshake_finish(void* arg)
 {
-    QTEST_FAULT *fault = arg;
+    QTEST_FAULT* fault = arg;
 
     OPENSSL_free(fault->handbuf);
     fault->handbuf = NULL;
 }
 
-int qtest_fault_set_handshake_listener(QTEST_FAULT *fault,
-                                       qtest_fault_on_handshake_cb handshakecb,
-                                       void *handshakecbarg)
+int qtest_fault_set_handshake_listener(QTEST_FAULT* fault,
+    qtest_fault_on_handshake_cb handshakecb,
+    void* handshakecbarg)
 {
     fault->handshakecb = handshakecb;
     fault->handshakecbarg = handshakecbarg;
 
     return ossl_quic_tserver_set_handshake_mutator(fault->qtserv,
-                                                   handshake_mutate,
-                                                   handshake_finish,
-                                                   fault);
+        handshake_mutate,
+        handshake_finish,
+        fault);
 }
 
-int qtest_fault_set_hand_enc_ext_listener(QTEST_FAULT *fault,
-                                          qtest_fault_on_enc_ext_cb encextcb,
-                                          void *encextcbarg)
+int qtest_fault_set_hand_enc_ext_listener(QTEST_FAULT* fault,
+    qtest_fault_on_enc_ext_cb encextcb,
+    void* encextcbarg)
 {
     fault->encextcb = encextcb;
     fault->encextcbarg = encextcbarg;
 
     return ossl_quic_tserver_set_handshake_mutator(fault->qtserv,
-                                                   handshake_mutate,
-                                                   handshake_finish,
-                                                   fault);
+        handshake_mutate,
+        handshake_finish,
+        fault);
 }
 
 /* To be called from a handshake_listener callback */
-int qtest_fault_resize_handshake(QTEST_FAULT *fault, size_t newlen)
+int qtest_fault_resize_handshake(QTEST_FAULT* fault, size_t newlen)
 {
-    unsigned char *buf;
+    unsigned char* buf;
     size_t oldlen = fault->handbuflen;
 
     /*
@@ -1051,7 +1051,7 @@ int qtest_fault_resize_handshake(QTEST_FAULT *fault, size_t newlen)
         return 0;
     }
 
-    buf = (unsigned char *)fault->handbuf;
+    buf = (unsigned char*)fault->handbuf;
 
     if (newlen > oldlen) {
         /* Extend packet with 0 bytes */
@@ -1063,7 +1063,7 @@ int qtest_fault_resize_handshake(QTEST_FAULT *fault, size_t newlen)
 }
 
 /* To be called from message specific listener callbacks */
-int qtest_fault_resize_message(QTEST_FAULT *fault, size_t newlen)
+int qtest_fault_resize_message(QTEST_FAULT* fault, size_t newlen)
 {
     /* First resize the underlying message */
     if (!qtest_fault_resize_handshake(fault, newlen + SSL3_HM_HEADER_LENGTH))
@@ -1071,16 +1071,16 @@ int qtest_fault_resize_message(QTEST_FAULT *fault, size_t newlen)
 
     /* Fixup the handshake message header */
     fault->handbuf[1] = (unsigned char)((newlen >> 16) & 0xff);
-    fault->handbuf[2] = (unsigned char)((newlen >>  8) & 0xff);
-    fault->handbuf[3] = (unsigned char)((newlen      ) & 0xff);
+    fault->handbuf[2] = (unsigned char)((newlen >> 8) & 0xff);
+    fault->handbuf[3] = (unsigned char)((newlen) & 0xff);
 
     return 1;
 }
 
-int qtest_fault_delete_extension(QTEST_FAULT *fault,
-                                 unsigned int exttype, unsigned char *ext,
-                                 size_t *extlen,
-                                 BUF_MEM *old_ext)
+int qtest_fault_delete_extension(QTEST_FAULT* fault,
+    unsigned int exttype, unsigned char* ext,
+    size_t* extlen,
+    BUF_MEM* old_ext)
 {
     PACKET pkt, sub, subext;
     WPACKET old_ext_wpkt;
@@ -1099,7 +1099,7 @@ int qtest_fault_delete_extension(QTEST_FAULT *fault,
     do {
         start = PACKET_data(&sub);
         if (!PACKET_get_net_2(&sub, &type)
-                || !PACKET_get_length_prefixed_2(&sub, &subext))
+            || !PACKET_get_length_prefixed_2(&sub, &subext))
             return 0;
     } while (type != exttype);
 
@@ -1111,7 +1111,7 @@ int qtest_fault_delete_extension(QTEST_FAULT *fault,
             return 0;
 
         if (!WPACKET_memcpy(&old_ext_wpkt, PACKET_data(&subext),
-                            PACKET_remaining(&subext))
+                PACKET_remaining(&subext))
             || !WPACKET_get_total_written(&old_ext_wpkt, &w)) {
             WPACKET_cleanup(&old_ext_wpkt);
             return 0;
@@ -1127,7 +1127,7 @@ int qtest_fault_delete_extension(QTEST_FAULT *fault,
      * longer making PACKET calls.
      */
     if (end < ext + *extlen)
-        memmove((unsigned char *)start, end, end - start);
+        memmove((unsigned char*)start, end, end - start);
 
     /*
      * Calculate new extensions payload length =
@@ -1139,7 +1139,7 @@ int qtest_fault_delete_extension(QTEST_FAULT *fault,
 
     /* Fixup the length bytes for the extension block */
     ext[0] = (unsigned char)((newlen >> 8) & 0xff);
-    ext[1] = (unsigned char)((newlen     ) & 0xff);
+    ext[1] = (unsigned char)((newlen) & 0xff);
 
     /*
      * Length of the whole extension block is the new payload length plus the
@@ -1157,30 +1157,30 @@ int qtest_fault_delete_extension(QTEST_FAULT *fault,
     return 1;
 }
 
-#define BIO_TYPE_CIPHER_PACKET_FILTER  (0x80 | BIO_TYPE_FILTER)
+#define BIO_TYPE_CIPHER_PACKET_FILTER (0x80 | BIO_TYPE_FILTER)
 
-static BIO_METHOD *pcipherbiometh = NULL;
+static BIO_METHOD* pcipherbiometh = NULL;
 
-# define BIO_MSG_N(array, stride, n) (*(BIO_MSG *)((char *)(array) + (n)*(stride)))
+#define BIO_MSG_N(array, stride, n) (*(BIO_MSG*)((char*)(array) + (n) * (stride)))
 
-static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
-                            size_t num_msg, uint64_t flags,
-                            size_t *num_processed)
+static int pcipher_sendmmsg(BIO* b, BIO_MSG* msg, size_t stride,
+    size_t num_msg, uint64_t flags,
+    size_t* num_processed)
 {
-    BIO *next = BIO_next(b);
+    BIO* next = BIO_next(b);
     int ret = 0;
     size_t i = 0, tmpnump;
     QUIC_PKT_HDR hdr;
     PACKET pkt;
-    unsigned char *tmpdata;
-    QTEST_DATA *bdata = NULL;
+    unsigned char* tmpdata;
+    QTEST_DATA* bdata = NULL;
 
     if (next == NULL)
         return 0;
 
     bdata = BIO_get_data(b);
     if (bdata == NULL || bdata->fault == NULL
-            || (bdata->fault->pciphercb == NULL && bdata->fault->datagramcb == NULL))
+        || (bdata->fault->pciphercb == NULL && bdata->fault->datagramcb == NULL))
         return BIO_sendmmsg(next, msg, stride, num_msg, flags, num_processed);
 
     if (num_msg == 0) {
@@ -1205,8 +1205,8 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
 
             do {
                 if (!ossl_quic_wire_decode_pkt_hdr(&pkt,
-                                                   bdata->short_conn_id_len,
-                                                   1, 0, &hdr, NULL, NULL))
+                        bdata->short_conn_id_len,
+                        1, 0, &hdr, NULL, NULL))
                     goto out;
 
                 /*
@@ -1214,8 +1214,8 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
                  * const is safe
                  */
                 if (!bdata->fault->pciphercb(bdata->fault, &hdr,
-                                             (unsigned char *)hdr.data, hdr.len,
-                                             bdata->fault->pciphercbarg))
+                        (unsigned char*)hdr.data, hdr.len,
+                        bdata->fault->pciphercbarg))
                     goto out;
 
                 /*
@@ -1229,8 +1229,8 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
         }
 
         if (bdata->fault->datagramcb != NULL
-                && !bdata->fault->datagramcb(bdata->fault, &bdata->fault->msg, stride,
-                                             bdata->fault->datagramcbarg))
+            && !bdata->fault->datagramcb(bdata->fault, &bdata->fault->msg, stride,
+                bdata->fault->datagramcbarg))
             goto out;
 
         if (!BIO_sendmmsg(next, &bdata->fault->msg, stride, 1, flags, &tmpnump)) {
@@ -1251,9 +1251,9 @@ out:
     return ret;
 }
 
-static long pcipher_ctrl(BIO *b, int cmd, long larg, void *parg)
+static long pcipher_ctrl(BIO* b, int cmd, long larg, void* parg)
 {
-    BIO *next = BIO_next(b);
+    BIO* next = BIO_next(b);
 
     if (next == NULL)
         return -1;
@@ -1261,15 +1261,15 @@ static long pcipher_ctrl(BIO *b, int cmd, long larg, void *parg)
     return BIO_ctrl(next, cmd, larg, parg);
 }
 
-static int pcipher_destroy(BIO *b)
+static int pcipher_destroy(BIO* b)
 {
     OPENSSL_free(BIO_get_data(b));
     return 1;
 }
 
-BIO_METHOD *qtest_get_bio_method(void)
+BIO_METHOD* qtest_get_bio_method(void)
 {
-    BIO_METHOD *tmp;
+    BIO_METHOD* tmp;
 
     if (pcipherbiometh != NULL)
         return pcipherbiometh;
@@ -1280,20 +1280,20 @@ BIO_METHOD *qtest_get_bio_method(void)
         return NULL;
 
     if (!TEST_true(BIO_meth_set_sendmmsg(tmp, pcipher_sendmmsg))
-            || !TEST_true(BIO_meth_set_ctrl(tmp, pcipher_ctrl))
-            || !TEST_true(BIO_meth_set_destroy(tmp, pcipher_destroy)))
+        || !TEST_true(BIO_meth_set_ctrl(tmp, pcipher_ctrl))
+        || !TEST_true(BIO_meth_set_destroy(tmp, pcipher_destroy)))
         goto err;
 
     pcipherbiometh = tmp;
     tmp = NULL;
- err:
+err:
     BIO_meth_free(tmp);
     return pcipherbiometh;
 }
 
-int qtest_fault_set_packet_cipher_listener(QTEST_FAULT *fault,
-                                           qtest_fault_on_packet_cipher_cb pciphercb,
-                                           void *pciphercbarg)
+int qtest_fault_set_packet_cipher_listener(QTEST_FAULT* fault,
+    qtest_fault_on_packet_cipher_cb pciphercb,
+    void* pciphercbarg)
 {
     fault->pciphercb = pciphercb;
     fault->pciphercbarg = pciphercbarg;
@@ -1301,9 +1301,9 @@ int qtest_fault_set_packet_cipher_listener(QTEST_FAULT *fault,
     return 1;
 }
 
-int qtest_fault_set_datagram_listener(QTEST_FAULT *fault,
-                                      qtest_fault_on_datagram_cb datagramcb,
-                                      void *datagramcbarg)
+int qtest_fault_set_datagram_listener(QTEST_FAULT* fault,
+    qtest_fault_on_datagram_cb datagramcb,
+    void* datagramcbarg)
 {
     fault->datagramcb = datagramcb;
     fault->datagramcbarg = datagramcbarg;
@@ -1312,26 +1312,26 @@ int qtest_fault_set_datagram_listener(QTEST_FAULT *fault,
 }
 
 /* To be called from a datagram_listener callback */
-int qtest_fault_resize_datagram(QTEST_FAULT *fault, size_t newlen)
+int qtest_fault_resize_datagram(QTEST_FAULT* fault, size_t newlen)
 {
     if (newlen > fault->msgalloc)
-            return 0;
+        return 0;
 
     if (newlen > fault->msg.data_len)
-        memset((unsigned char *)fault->msg.data + fault->msg.data_len, 0,
-                newlen - fault->msg.data_len);
+        memset((unsigned char*)fault->msg.data + fault->msg.data_len, 0,
+            newlen - fault->msg.data_len);
 
     fault->msg.data_len = newlen;
 
     return 1;
 }
 
-int qtest_fault_set_bw_limit(QTEST_FAULT *fault,
-                             size_t ctos_bw, size_t stoc_bw,
-                             int noise_rate)
+int qtest_fault_set_bw_limit(QTEST_FAULT* fault,
+    size_t ctos_bw, size_t stoc_bw,
+    int noise_rate)
 {
-    BIO *sbio = fault->noiseargs.sbio;
-    BIO *cbio = fault->noiseargs.cbio;
+    BIO* sbio = fault->noiseargs.sbio;
+    BIO* cbio = fault->noiseargs.cbio;
 
     if (!TEST_ptr(sbio) || !TEST_ptr(cbio))
         return 0;
@@ -1341,16 +1341,17 @@ int qtest_fault_set_bw_limit(QTEST_FAULT *fault,
         return 0;
     /* We set the bandwidth limit on the sending side */
     if (!TEST_int_eq(BIO_ctrl(cbio, BIO_CTRL_NOISE_SEND_BANDWIDTH,
-                              (long)ctos_bw, NULL), 1))
+                         (long)ctos_bw, NULL),
+            1))
         return 0;
     if (!TEST_int_eq(BIO_ctrl(sbio, BIO_CTRL_NOISE_SEND_BANDWIDTH,
-                              (long)stoc_bw, NULL), 1))
+                         (long)stoc_bw, NULL),
+            1))
         return 0;
     return 1;
 }
 
-
-int bio_msg_copy(BIO_MSG *dst, BIO_MSG *src)
+int bio_msg_copy(BIO_MSG* dst, BIO_MSG* src)
 {
     /*
      * Note it is assumed that the originally allocated data sizes for dst and

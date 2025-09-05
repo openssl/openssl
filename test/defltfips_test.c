@@ -18,7 +18,7 @@ static int bad_fips;
 static int test_is_fips_enabled(void)
 {
     int is_fips_enabled, is_fips_loaded;
-    EVP_MD *sha256 = NULL;
+    EVP_MD* sha256 = NULL;
 
     /*
      * Check we're in FIPS mode when we're supposed to be. We do this early to
@@ -35,7 +35,7 @@ static int test_is_fips_enabled(void)
      * loading the FIPS provider.
      */
     if (!TEST_int_eq(is_fips || bad_fips, is_fips_enabled)
-            || !TEST_int_eq(is_fips && !bad_fips, is_fips_loaded))
+        || !TEST_int_eq(is_fips && !bad_fips, is_fips_loaded))
         return 0;
 
     /*
@@ -53,7 +53,7 @@ static int test_is_fips_enabled(void)
             return 0;
         if (is_fips
             && !TEST_str_eq(OSSL_PROVIDER_get0_name(EVP_MD_get0_provider(sha256)),
-                            "fips")) {
+                "fips")) {
             EVP_MD_free(sha256);
             return 0;
         }
@@ -71,7 +71,7 @@ static int test_is_fips_enabled(void)
 int setup_tests(void)
 {
     size_t argc;
-    char *arg1;
+    char* arg1;
 
     if (!test_skip_common_options()) {
         TEST_error("Error parsing test options\n");

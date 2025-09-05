@@ -28,7 +28,7 @@
 #include <openssl/evp.h>
 
 #ifdef OPENSSL_SYS_WINDOWS
-# define fileno _fileno
+#define fileno _fileno
 #endif
 
 /*-
@@ -38,16 +38,16 @@
  * The default digest is SHA3-512
  */
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     int ret = EXIT_FAILURE;
-    OSSL_LIB_CTX *library_context = NULL;
-    BIO *input = NULL;
+    OSSL_LIB_CTX* library_context = NULL;
+    BIO* input = NULL;
     BIO *bio_digest = NULL, *reading = NULL;
-    EVP_MD *md = NULL;
+    EVP_MD* md = NULL;
     unsigned char buffer[512];
     int digest_size;
-    char *digest_value = NULL;
+    char* digest_value = NULL;
     int j;
 
     input = BIO_new_fd(fileno(stdin), 1);
@@ -90,8 +90,8 @@ int main(int argc, char *argv[])
     }
     /* set our bio_digest BIO to digest data */
     if (BIO_set_md(bio_digest, md) != 1) {
-           fprintf(stderr, "BIO_set_md failed.\n");
-           goto cleanup;
+        fprintf(stderr, "BIO_set_md failed.\n");
+        goto cleanup;
     }
     /*-
      * We will use BIO chaining so that as we read, the digest gets updated

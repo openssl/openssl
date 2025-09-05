@@ -24,22 +24,22 @@
 #include <unistd.h>
 #else
 #include <windows.h>
-# define sleep(x) Sleep(x*1000)
+#define sleep(x) Sleep(x * 1000)
 #endif
 
 #define HOSTPORT "localhost:4433"
 #define CAFILE "root.pem"
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    const char *hostport = HOSTPORT;
-    const char *CAfile = CAFILE;
-    const char *hostname;
-    BIO *out = NULL;
+    const char* hostport = HOSTPORT;
+    const char* CAfile = CAFILE;
+    const char* hostname;
+    BIO* out = NULL;
     char buf[1024 * 10], *p;
-    SSL_CTX *ssl_ctx = NULL;
-    SSL *ssl;
-    BIO *ssl_bio;
+    SSL_CTX* ssl_ctx = NULL;
+    SSL* ssl;
+    BIO* ssl_bio;
     int i, len, off, ret = EXIT_FAILURE;
 
     if (argc > 1)
@@ -62,7 +62,6 @@ int main(int argc, char *argv[])
     /* Let's make an SSL structure */
     ssl = SSL_new(ssl_ctx);
     SSL_set_connect_state(ssl);
-
 
     /* Use it inside an SSL BIO */
     ssl_bio = BIO_new(BIO_f_ssl());
@@ -121,14 +120,14 @@ int main(int argc, char *argv[])
     ret = EXIT_SUCCESS;
     goto done;
 
- err:
+err:
     if (ERR_peek_error() == 0) { /* system call error */
         fprintf(stderr, "errno=%d ", errno);
         perror("error");
     } else {
         ERR_print_errors_fp(stderr);
     }
- done:
+done:
     BIO_free_all(out);
     SSL_CTX_free(ssl_ctx);
     return ret;

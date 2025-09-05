@@ -9,9 +9,9 @@
 
 #include <stdlib.h>
 #include <openssl/crypto.h>
-#include "platform.h"            /* for copy_argv() */
+#include "platform.h" /* for copy_argv() */
 
-char **newargv = NULL;
+char** newargv = NULL;
 
 static void cleanup_argv(void)
 {
@@ -19,7 +19,7 @@ static void cleanup_argv(void)
     newargv = NULL;
 }
 
-char **copy_argv(int *argc, char *argv[])
+char** copy_argv(int* argc, char* argv[])
 {
     /*-
      * The note below is for historical purpose.  On VMS now we always
@@ -46,7 +46,7 @@ char **copy_argv(int *argc, char *argv[])
      */
 
     int i, count = *argc;
-    char **p = newargv;
+    char** p = newargv;
 
     cleanup_argv();
 

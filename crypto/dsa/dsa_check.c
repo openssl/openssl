@@ -19,7 +19,7 @@
 #include "dsa_local.h"
 #include "crypto/dsa.h"
 
-static int dsa_precheck_params(const DSA *dsa, int *ret)
+static int dsa_precheck_params(const DSA* dsa, int* ret)
 {
     if (dsa->params.p == NULL || dsa->params.q == NULL) {
         ERR_raise(ERR_LIB_DSA, DSA_R_BAD_FFC_PARAMETERS);
@@ -42,14 +42,14 @@ static int dsa_precheck_params(const DSA *dsa, int *ret)
     return 1;
 }
 
-int ossl_dsa_check_params(const DSA *dsa, int checktype, int *ret)
+int ossl_dsa_check_params(const DSA* dsa, int checktype, int* ret)
 {
     if (!dsa_precheck_params(dsa, ret))
         return 0;
 
     if (checktype == OSSL_KEYMGMT_VALIDATE_QUICK_CHECK)
         return ossl_ffc_params_simple_validate(dsa->libctx, &dsa->params,
-                                               FFC_PARAM_TYPE_DSA, ret);
+            FFC_PARAM_TYPE_DSA, ret);
     else
         /*
          * Do full FFC domain params validation according to FIPS-186-4
@@ -57,19 +57,19 @@ int ossl_dsa_check_params(const DSA *dsa, int checktype, int *ret)
          *  - only if possible (i.e., seed is set) in default provider
          */
         return ossl_ffc_params_full_validate(dsa->libctx, &dsa->params,
-                                             FFC_PARAM_TYPE_DSA, ret);
+            FFC_PARAM_TYPE_DSA, ret);
 }
 
 /*
  * See SP800-56Ar3 Section 5.6.2.3.1 : FFC Full public key validation.
  */
-int ossl_dsa_check_pub_key(const DSA *dsa, const BIGNUM *pub_key, int *ret)
+int ossl_dsa_check_pub_key(const DSA* dsa, const BIGNUM* pub_key, int* ret)
 {
     if (!dsa_precheck_params(dsa, ret))
         return 0;
 
     return ossl_ffc_validate_public_key(&dsa->params, pub_key, ret)
-           && *ret == 0;
+        && *ret == 0;
 }
 
 /*
@@ -77,16 +77,16 @@ int ossl_dsa_check_pub_key(const DSA *dsa, const BIGNUM *pub_key, int *ret)
  * To only be used with ephemeral FFC public keys generated using the approved
  * safe-prime groups.
  */
-int ossl_dsa_check_pub_key_partial(const DSA *dsa, const BIGNUM *pub_key, int *ret)
+int ossl_dsa_check_pub_key_partial(const DSA* dsa, const BIGNUM* pub_key, int* ret)
 {
     if (!dsa_precheck_params(dsa, ret))
         return 0;
 
     return ossl_ffc_validate_public_key_partial(&dsa->params, pub_key, ret)
-           && *ret == 0;
+        && *ret == 0;
 }
 
-int ossl_dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret)
+int ossl_dsa_check_priv_key(const DSA* dsa, const BIGNUM* priv_key, int* ret)
 {
     *ret = 0;
 
@@ -100,11 +100,11 @@ int ossl_dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret)
  * FFC pairwise check from SP800-56A R3.
  *    Section 5.6.2.1.4 Owner Assurance of Pair-wise Consistency
  */
-int ossl_dsa_check_pairwise(const DSA *dsa)
+int ossl_dsa_check_pairwise(const DSA* dsa)
 {
     int ret = 0;
-    BN_CTX *ctx = NULL;
-    BIGNUM *pub_key = NULL;
+    BN_CTX* ctx = NULL;
+    BIGNUM* pub_key = NULL;
 
     if (!dsa_precheck_params(dsa, &ret))
         return 0;

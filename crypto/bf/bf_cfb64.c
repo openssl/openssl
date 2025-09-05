@@ -22,9 +22,9 @@
  * used is contained in *num;
  */
 
-void BF_cfb64_encrypt(const unsigned char *in, unsigned char *out,
-                      long length, const BF_KEY *schedule,
-                      unsigned char *ivec, int *num, int encrypt)
+void BF_cfb64_encrypt(const unsigned char* in, unsigned char* out,
+    long length, const BF_KEY* schedule,
+    unsigned char* ivec, int* num, int encrypt)
 {
     register BF_LONG v0, v1, t;
     register int n = *num;
@@ -32,7 +32,7 @@ void BF_cfb64_encrypt(const unsigned char *in, unsigned char *out,
     BF_LONG ti[2];
     unsigned char *iv, c, cc;
 
-    iv = (unsigned char *)ivec;
+    iv = (unsigned char*)ivec;
     if (encrypt) {
         while (l--) {
             if (n == 0) {
@@ -40,13 +40,13 @@ void BF_cfb64_encrypt(const unsigned char *in, unsigned char *out,
                 ti[0] = v0;
                 n2l(iv, v1);
                 ti[1] = v1;
-                BF_encrypt((BF_LONG *)ti, schedule);
-                iv = (unsigned char *)ivec;
+                BF_encrypt((BF_LONG*)ti, schedule);
+                iv = (unsigned char*)ivec;
                 t = ti[0];
                 l2n(t, iv);
                 t = ti[1];
                 l2n(t, iv);
-                iv = (unsigned char *)ivec;
+                iv = (unsigned char*)ivec;
             }
             c = *(in++) ^ iv[n];
             *(out++) = c;
@@ -60,13 +60,13 @@ void BF_cfb64_encrypt(const unsigned char *in, unsigned char *out,
                 ti[0] = v0;
                 n2l(iv, v1);
                 ti[1] = v1;
-                BF_encrypt((BF_LONG *)ti, schedule);
-                iv = (unsigned char *)ivec;
+                BF_encrypt((BF_LONG*)ti, schedule);
+                iv = (unsigned char*)ivec;
                 t = ti[0];
                 l2n(t, iv);
                 t = ti[1];
                 l2n(t, iv);
-                iv = (unsigned char *)ivec;
+                iv = (unsigned char*)ivec;
             }
             cc = *(in++);
             c = iv[n];

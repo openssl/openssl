@@ -8,7 +8,7 @@
  */
 
 #ifndef _GNU_SOURCE
-# define _GNU_SOURCE
+#define _GNU_SOURCE
 #endif
 
 /*
@@ -32,7 +32,7 @@
 #include <openssl/buffer.h>
 #include "internal/thread_once.h"
 
-CRYPTO_RWLOCK *bio_lookup_lock;
+CRYPTO_RWLOCK* bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 
 /*
@@ -49,9 +49,9 @@ static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
  *
  */
 
-BIO_ADDR *BIO_ADDR_new(void)
+BIO_ADDR* BIO_ADDR_new(void)
 {
-    BIO_ADDR *ret = OPENSSL_zalloc(sizeof(*ret));
+    BIO_ADDR* ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL)
         return NULL;
@@ -60,12 +60,12 @@ BIO_ADDR *BIO_ADDR_new(void)
     return ret;
 }
 
-void BIO_ADDR_free(BIO_ADDR *ap)
+void BIO_ADDR_free(BIO_ADDR* ap)
 {
     OPENSSL_free(ap);
 }
 
-int BIO_ADDR_copy(BIO_ADDR *dst, const BIO_ADDR *src)
+int BIO_ADDR_copy(BIO_ADDR* dst, const BIO_ADDR* src)
 {
     if (dst == NULL || src == NULL)
         return 0;
@@ -78,9 +78,9 @@ int BIO_ADDR_copy(BIO_ADDR *dst, const BIO_ADDR *src)
     return BIO_ADDR_make(dst, &src->sa);
 }
 
-BIO_ADDR *BIO_ADDR_dup(const BIO_ADDR *ap)
+BIO_ADDR* BIO_ADDR_dup(const BIO_ADDR* ap)
 {
-    BIO_ADDR *ret = NULL;
+    BIO_ADDR* ret = NULL;
 
     if (ap != NULL) {
         ret = BIO_ADDR_new();
@@ -92,7 +92,7 @@ BIO_ADDR *BIO_ADDR_dup(const BIO_ADDR *ap)
     return ret;
 }
 
-void BIO_ADDR_clear(BIO_ADDR *ap)
+void BIO_ADDR_clear(BIO_ADDR* ap)
 {
     memset(ap, 0, sizeof(*ap));
     ap->sa.sa_family = AF_UNSPEC;
@@ -102,7 +102,7 @@ void BIO_ADDR_clear(BIO_ADDR *ap)
  * BIO_ADDR_make - non-public routine to fill a BIO_ADDR with the contents
  * of a struct sockaddr.
  */
-int BIO_ADDR_make(BIO_ADDR *ap, const struct sockaddr *sa)
+int BIO_ADDR_make(BIO_ADDR* ap, const struct sockaddr* sa)
 {
     memset(ap, 0, sizeof(BIO_ADDR));
     if (sa->sa_family == AF_INET) {
@@ -125,9 +125,9 @@ int BIO_ADDR_make(BIO_ADDR *ap, const struct sockaddr *sa)
     return 0;
 }
 
-int BIO_ADDR_rawmake(BIO_ADDR *ap, int family,
-                     const void *where, size_t wherelen,
-                     unsigned short port)
+int BIO_ADDR_rawmake(BIO_ADDR* ap, int family,
+    const void* where, size_t wherelen,
+    unsigned short port)
 {
 #ifndef OPENSSL_NO_UNIX_SOCK
     if (family == AF_UNIX) {
@@ -145,7 +145,7 @@ int BIO_ADDR_rawmake(BIO_ADDR *ap, int family,
         memset(&ap->s_in, 0, sizeof(ap->s_in));
         ap->s_in.sin_family = family;
         ap->s_in.sin_port = port;
-        ap->s_in.sin_addr = *(struct in_addr *)where;
+        ap->s_in.sin_addr = *(struct in_addr*)where;
         return 1;
     }
 #if OPENSSL_USE_IPV6
@@ -155,7 +155,7 @@ int BIO_ADDR_rawmake(BIO_ADDR *ap, int family,
         memset(&ap->s_in6, 0, sizeof(ap->s_in6));
         ap->s_in6.sin6_family = family;
         ap->s_in6.sin6_port = port;
-        ap->s_in6.sin6_addr = *(struct in6_addr *)where;
+        ap->s_in6.sin6_addr = *(struct in6_addr*)where;
         return 1;
     }
 #endif
@@ -163,15 +163,15 @@ int BIO_ADDR_rawmake(BIO_ADDR *ap, int family,
     return 0;
 }
 
-int BIO_ADDR_family(const BIO_ADDR *ap)
+int BIO_ADDR_family(const BIO_ADDR* ap)
 {
     return ap->sa.sa_family;
 }
 
-int BIO_ADDR_rawaddress(const BIO_ADDR *ap, void *p, size_t *l)
+int BIO_ADDR_rawaddress(const BIO_ADDR* ap, void* p, size_t* l)
 {
     size_t len = 0;
-    const void *addrptr = NULL;
+    const void* addrptr = NULL;
 
     if (ap->sa.sa_family == AF_INET) {
         len = sizeof(ap->s_in.sin_addr);
@@ -202,7 +202,7 @@ int BIO_ADDR_rawaddress(const BIO_ADDR *ap, void *p, size_t *l)
     return 1;
 }
 
-unsigned short BIO_ADDR_rawport(const BIO_ADDR *ap)
+unsigned short BIO_ADDR_rawport(const BIO_ADDR* ap)
 {
     if (ap->sa.sa_family == AF_INET)
         return ap->s_in.sin_port;
@@ -226,8 +226,8 @@ unsigned short BIO_ADDR_rawport(const BIO_ADDR *ap)
  * The return value is 0 on failure, with the error code in the error
  * stack, and 1 on success.
  */
-static int addr_strings(const BIO_ADDR *ap, int numeric,
-                        char **hostname, char **service)
+static int addr_strings(const BIO_ADDR* ap, int numeric,
+    char** hostname, char** service)
 {
     if (BIO_sock_init() != 1)
         return 0;
@@ -242,15 +242,16 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
             flags |= NI_NUMERICHOST | NI_NUMERICSERV;
 
         if ((ret = getnameinfo(BIO_ADDR_sockaddr(ap),
-                               BIO_ADDR_sockaddr_size(ap),
-                               host, sizeof(host), serv, sizeof(serv),
-                               flags)) != 0) {
-# ifdef EAI_SYSTEM
+                 BIO_ADDR_sockaddr_size(ap),
+                 host, sizeof(host), serv, sizeof(serv),
+                 flags))
+            != 0) {
+#ifdef EAI_SYSTEM
             if (ret == EAI_SYSTEM) {
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                               "calling getnameinfo()");
+                    "calling getnameinfo()");
             } else
-# endif
+#endif
             {
                 ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB, gai_strerror(ret));
             }
@@ -265,7 +266,7 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
          */
         if (serv[0] == '\0') {
             BIO_snprintf(serv, sizeof(serv), "%d",
-                         ntohs(BIO_ADDR_rawport(ap)));
+                ntohs(BIO_ADDR_rawport(ap)));
         }
 
         if (hostname != NULL)
@@ -277,14 +278,14 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
         if (hostname != NULL)
             *hostname = OPENSSL_strdup(inet_ntoa(ap->s_in.sin_addr));
         if (service != NULL) {
-            char serv[6];        /* port is 16 bits => max 5 decimal digits */
+            char serv[6]; /* port is 16 bits => max 5 decimal digits */
             BIO_snprintf(serv, sizeof(serv), "%d", ntohs(ap->s_in.sin_port));
             *service = OPENSSL_strdup(serv);
         }
     }
 
     if ((hostname != NULL && *hostname == NULL)
-            || (service != NULL && *service == NULL)) {
+        || (service != NULL && *service == NULL)) {
         if (hostname != NULL) {
             OPENSSL_free(*hostname);
             *hostname = NULL;
@@ -299,9 +300,9 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
     return 1;
 }
 
-char *BIO_ADDR_hostname_string(const BIO_ADDR *ap, int numeric)
+char* BIO_ADDR_hostname_string(const BIO_ADDR* ap, int numeric)
 {
-    char *hostname = NULL;
+    char* hostname = NULL;
 
     if (addr_strings(ap, numeric, &hostname, NULL))
         return hostname;
@@ -309,9 +310,9 @@ char *BIO_ADDR_hostname_string(const BIO_ADDR *ap, int numeric)
     return NULL;
 }
 
-char *BIO_ADDR_service_string(const BIO_ADDR *ap, int numeric)
+char* BIO_ADDR_service_string(const BIO_ADDR* ap, int numeric)
 {
-    char *service = NULL;
+    char* service = NULL;
 
     if (addr_strings(ap, numeric, NULL, &service))
         return service;
@@ -319,7 +320,7 @@ char *BIO_ADDR_service_string(const BIO_ADDR *ap, int numeric)
     return NULL;
 }
 
-char *BIO_ADDR_path_string(const BIO_ADDR *ap)
+char* BIO_ADDR_path_string(const BIO_ADDR* ap)
 {
 #ifndef OPENSSL_NO_UNIX_SOCK
     if (ap->sa.sa_family == AF_UNIX)
@@ -333,7 +334,7 @@ char *BIO_ADDR_path_string(const BIO_ADDR *ap)
  * for a given BIO_ADDR.  In reality, this is simply a type safe cast.
  * The returned struct sockaddr is const, so it can't be tampered with.
  */
-const struct sockaddr *BIO_ADDR_sockaddr(const BIO_ADDR *ap)
+const struct sockaddr* BIO_ADDR_sockaddr(const BIO_ADDR* ap)
 {
     return &(ap->sa);
 }
@@ -344,7 +345,7 @@ const struct sockaddr *BIO_ADDR_sockaddr(const BIO_ADDR *ap)
  * it allows you to tamper with the data (and thereby the contents
  * of the input BIO_ADDR).
  */
-struct sockaddr *BIO_ADDR_sockaddr_noconst(BIO_ADDR *ap)
+struct sockaddr* BIO_ADDR_sockaddr_noconst(BIO_ADDR* ap)
 {
     return &(ap->sa);
 }
@@ -355,7 +356,7 @@ struct sockaddr *BIO_ADDR_sockaddr_noconst(BIO_ADDR *ap)
  * isn't set or is something other than AF_INET, AF_INET6 or AF_UNIX,
  * the size of the BIO_ADDR type is returned.
  */
-socklen_t BIO_ADDR_sockaddr_size(const BIO_ADDR *ap)
+socklen_t BIO_ADDR_sockaddr_size(const BIO_ADDR* ap)
 {
     if (ap->sa.sa_family == AF_INET)
         return sizeof(ap->s_in);
@@ -376,28 +377,28 @@ socklen_t BIO_ADDR_sockaddr_size(const BIO_ADDR *ap)
  *
  */
 
-const BIO_ADDRINFO *BIO_ADDRINFO_next(const BIO_ADDRINFO *bai)
+const BIO_ADDRINFO* BIO_ADDRINFO_next(const BIO_ADDRINFO* bai)
 {
     if (bai != NULL)
         return bai->bai_next;
     return NULL;
 }
 
-int BIO_ADDRINFO_family(const BIO_ADDRINFO *bai)
+int BIO_ADDRINFO_family(const BIO_ADDRINFO* bai)
 {
     if (bai != NULL)
         return bai->bai_family;
     return 0;
 }
 
-int BIO_ADDRINFO_socktype(const BIO_ADDRINFO *bai)
+int BIO_ADDRINFO_socktype(const BIO_ADDRINFO* bai)
 {
     if (bai != NULL)
         return bai->bai_socktype;
     return 0;
 }
 
-int BIO_ADDRINFO_protocol(const BIO_ADDRINFO *bai)
+int BIO_ADDRINFO_protocol(const BIO_ADDRINFO* bai)
 {
     if (bai != NULL) {
         if (bai->bai_protocol != 0)
@@ -424,7 +425,7 @@ int BIO_ADDRINFO_protocol(const BIO_ADDRINFO *bai)
  * BIO_ADDRINFO_sockaddr_size - non-public function that returns the size
  * of the struct sockaddr inside the BIO_ADDRINFO.
  */
-socklen_t BIO_ADDRINFO_sockaddr_size(const BIO_ADDRINFO *bai)
+socklen_t BIO_ADDRINFO_sockaddr_size(const BIO_ADDRINFO* bai)
 {
     if (bai != NULL)
         return (socklen_t)bai->bai_addrlen;
@@ -435,31 +436,31 @@ socklen_t BIO_ADDRINFO_sockaddr_size(const BIO_ADDRINFO *bai)
  * BIO_ADDRINFO_sockaddr - non-public function that returns bai_addr
  * as the struct sockaddr it is.
  */
-const struct sockaddr *BIO_ADDRINFO_sockaddr(const BIO_ADDRINFO *bai)
+const struct sockaddr* BIO_ADDRINFO_sockaddr(const BIO_ADDRINFO* bai)
 {
     if (bai != NULL)
         return bai->bai_addr;
     return NULL;
 }
 
-const BIO_ADDR *BIO_ADDRINFO_address(const BIO_ADDRINFO *bai)
+const BIO_ADDR* BIO_ADDRINFO_address(const BIO_ADDRINFO* bai)
 {
     if (bai != NULL)
-        return (BIO_ADDR *)bai->bai_addr;
+        return (BIO_ADDR*)bai->bai_addr;
     return NULL;
 }
 
-void BIO_ADDRINFO_free(BIO_ADDRINFO *bai)
+void BIO_ADDRINFO_free(BIO_ADDRINFO* bai)
 {
     if (bai == NULL)
         return;
 
 #ifdef AI_PASSIVE
-# ifndef OPENSSL_NO_UNIX_SOCK
-#  define _cond bai->bai_family != AF_UNIX
-# else
-#  define _cond 1
-# endif
+#ifndef OPENSSL_NO_UNIX_SOCK
+#define _cond bai->bai_family != AF_UNIX
+#else
+#define _cond 1
+#endif
     if (_cond) {
         freeaddrinfo(bai);
         return;
@@ -470,7 +471,7 @@ void BIO_ADDRINFO_free(BIO_ADDRINFO *bai)
      * See further comment above addrinfo_wrap()
      */
     while (bai != NULL) {
-        BIO_ADDRINFO *next = bai->bai_next;
+        BIO_ADDRINFO* next = bai->bai_next;
         OPENSSL_free(bai->bai_addr);
         OPENSSL_free(bai);
         bai = next;
@@ -502,11 +503,13 @@ void BIO_ADDRINFO_free(BIO_ADDRINFO *bai)
  * service              => *host untouched, *service = "service"
  *
  */
-int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
-                       enum BIO_hostserv_priorities hostserv_prio)
+int BIO_parse_hostserv(const char* hostserv, char** host, char** service,
+    enum BIO_hostserv_priorities hostserv_prio)
 {
-    const char *h = NULL; size_t hl = 0;
-    const char *p = NULL; size_t pl = 0;
+    const char* h = NULL;
+    size_t hl = 0;
+    const char* p = NULL;
+    size_t pl = 0;
 
     if (*hostserv == '[') {
         if ((p = strchr(hostserv, ']')) == NULL)
@@ -523,7 +526,7 @@ int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
             pl = strlen(p);
         }
     } else {
-        const char *p2 = strrchr(hostserv, ':');
+        const char* p2 = strrchr(hostserv, ':');
         p = strchr(hostserv, ':');
 
         /*-
@@ -583,10 +586,10 @@ int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
     }
 
     return 1;
- amb_err:
+amb_err:
     ERR_raise(ERR_LIB_BIO, BIO_R_AMBIGUOUS_HOST_OR_SERVICE);
     return 0;
- spec_err:
+spec_err:
     ERR_raise(ERR_LIB_BIO, BIO_R_MALFORMED_HOST_OR_SERVICE);
     return 0;
 }
@@ -601,9 +604,9 @@ int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
  * only happens if a memory allocation error occurred.
  */
 static int addrinfo_wrap(int family, int socktype,
-                         const void *where, size_t wherelen,
-                         unsigned short port,
-                         BIO_ADDRINFO **bai)
+    const void* where, size_t wherelen,
+    unsigned short port,
+    BIO_ADDRINFO** bai)
 {
     if ((*bai = OPENSSL_zalloc(sizeof(**bai))) == NULL)
         return 0;
@@ -624,7 +627,7 @@ static int addrinfo_wrap(int family, int socktype,
            by the power of union, so while it may seem that we're
            creating a memory leak here, we are not.  It will be
            all right. */
-        BIO_ADDR *addr = BIO_ADDR_new();
+        BIO_ADDR* addr = BIO_ADDR_new();
         if (addr != NULL) {
             BIO_ADDR_rawmake(addr, family, where, wherelen, port);
             (*bai)->bai_addr = BIO_ADDR_sockaddr_noconst(addr);
@@ -645,9 +648,9 @@ DEFINE_RUN_ONCE_STATIC(do_bio_lookup_init)
     return bio_lookup_lock != NULL;
 }
 
-int BIO_lookup(const char *host, const char *service,
-               enum BIO_lookup_type lookup_type,
-               int family, int socktype, BIO_ADDRINFO **res)
+int BIO_lookup(const char* host, const char* service,
+    enum BIO_lookup_type lookup_type,
+    int family, int socktype, BIO_ADDRINFO** res)
 {
     return BIO_lookup_ex(host, service, lookup_type, family, socktype, 0, res);
 }
@@ -674,10 +677,10 @@ int BIO_lookup(const char *host, const char *service,
  *
  * The return value is 1 on success or 0 in case of error.
  */
-int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
-                  int family, int socktype, int protocol, BIO_ADDRINFO **res)
+int BIO_lookup_ex(const char* host, const char* service, int lookup_type,
+    int family, int socktype, int protocol, BIO_ADDRINFO** res)
 {
-    int ret = 0;                 /* Assume failure */
+    int ret = 0; /* Assume failure */
 
     switch (family) {
     case AF_INET:
@@ -719,12 +722,12 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         hints.ai_family = family;
         hints.ai_socktype = socktype;
         hints.ai_protocol = protocol;
-# ifdef AI_ADDRCONFIG
-#  ifdef AF_UNSPEC
+#ifdef AI_ADDRCONFIG
+#ifdef AF_UNSPEC
         if (host != NULL && family == AF_UNSPEC)
-#  endif
+#endif
             hints.ai_flags |= AI_ADDRCONFIG;
-# endif
+#endif
 
         if (lookup_type == BIO_LOOKUP_SERVER)
             hints.ai_flags |= AI_PASSIVE;
@@ -732,72 +735,72 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         /* Note that |res| SHOULD be a 'struct addrinfo **' thanks to
          * macro magic in bio_local.h
          */
-# if defined(AI_ADDRCONFIG) && defined(AI_NUMERICHOST)
-      retry:
-# endif
+#if defined(AI_ADDRCONFIG) && defined(AI_NUMERICHOST)
+    retry:
+#endif
         switch ((gai_ret = getaddrinfo(host, service, &hints, res))) {
-# ifdef EAI_SYSTEM
+#ifdef EAI_SYSTEM
         case EAI_SYSTEM:
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                           "calling getaddrinfo()");
+                "calling getaddrinfo()");
             ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
             break;
-# endif
-# ifdef EAI_MEMORY
+#endif
+#ifdef EAI_MEMORY
         case EAI_MEMORY:
             ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB,
-                           gai_strerror(old_ret ? old_ret : gai_ret));
+                gai_strerror(old_ret ? old_ret : gai_ret));
             break;
-# endif
+#endif
         case 0:
-            ret = 1;             /* Success */
+            ret = 1; /* Success */
             break;
         default:
-# if defined(AI_ADDRCONFIG) && defined(AI_NUMERICHOST)
+#if defined(AI_ADDRCONFIG) && defined(AI_NUMERICHOST)
             if (hints.ai_flags & AI_ADDRCONFIG) {
                 hints.ai_flags &= ~AI_ADDRCONFIG;
                 hints.ai_flags |= AI_NUMERICHOST;
                 old_ret = gai_ret;
                 goto retry;
             }
-# endif
+#endif
             ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB,
-                           gai_strerror(old_ret ? old_ret : gai_ret));
+                gai_strerror(old_ret ? old_ret : gai_ret));
             break;
         }
     } else {
 #endif
-        const struct hostent *he;
+        const struct hostent* he;
 /*
  * Because struct hostent is defined for 32-bit pointers only with
  * VMS C, we need to make sure that '&he_fallback_address' and
  * '&he_fallback_addresses' are 32-bit pointers
  */
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
-# pragma pointer_size save
-# pragma pointer_size 32
+#pragma pointer_size save
+#pragma pointer_size 32
 #endif
         /* Windows doesn't seem to have in_addr_t */
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
         static uint32_t he_fallback_address;
-        static const char *he_fallback_addresses[] = {
-            (char *)&he_fallback_address, NULL
+        static const char* he_fallback_addresses[] = {
+            (char*)&he_fallback_address, NULL
         };
 #else
         static in_addr_t he_fallback_address;
-        static const char *he_fallback_addresses[] = {
-            (char *)&he_fallback_address, NULL
+        static const char* he_fallback_addresses[] = {
+            (char*)&he_fallback_address, NULL
         };
 #endif
         static const struct hostent he_fallback = {
             NULL, NULL, AF_INET, sizeof(he_fallback_address),
-            (char **)&he_fallback_addresses
+            (char**)&he_fallback_addresses
         };
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
-# pragma pointer_size restore
+#pragma pointer_size restore
 #endif
 
-        struct servent *se;
+        struct servent* se;
         /* Apparently, on WIN64, s_proto and s_port have traded places... */
 #ifdef _WIN64
         struct servent se_fallback = { NULL, NULL, NULL, 0 };
@@ -813,7 +816,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 
         if (!CRYPTO_THREAD_write_lock(bio_lookup_lock))
             return 0;
-        
+
         he_fallback_address = INADDR_ANY;
         if (host == NULL) {
             he = &he_fallback;
@@ -847,17 +850,17 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                  * anyway [above getaddrinfo/gai_strerror is]. We just let
                  * system administrator figure this out...
                  */
-# if defined(OPENSSL_SYS_VXWORKS)
+#if defined(OPENSSL_SYS_VXWORKS)
                 /* h_errno doesn't exist on VxWorks */
                 ERR_raise_data(ERR_LIB_SYS, 1000,
-                               "calling gethostbyname()");
-# else
+                    "calling gethostbyname()");
+#else
                 ERR_raise_data(ERR_LIB_SYS, 1000 + h_errno,
-                               "calling gethostbyname()");
-# endif
+                    "calling gethostbyname()");
+#endif
 #else
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                               "calling gethostbyname()");
+                    "calling gethostbyname()");
 #endif
                 ret = 0;
                 goto err;
@@ -869,7 +872,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
             se_fallback.s_proto = NULL;
             se = &se_fallback;
         } else {
-            char *endp = NULL;
+            char* endp = NULL;
             long portnum = strtol(service, &endp, 10);
 
 /*
@@ -877,12 +880,12 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
  * VMS C, we need to make sure that 'proto' is a 32-bit pointer.
  */
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
-# pragma pointer_size save
-# pragma pointer_size 32
+#pragma pointer_size save
+#pragma pointer_size 32
 #endif
-            char *proto = NULL;
+            char* proto = NULL;
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
-# pragma pointer_size restore
+#pragma pointer_size restore
 #endif
 
             switch (socktype) {
@@ -895,7 +898,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
             }
 
             if (endp != service && *endp == '\0'
-                    && portnum > 0 && portnum < 65536) {
+                && portnum > 0 && portnum < 65536) {
                 se_fallback.s_port = htons((unsigned short)portnum);
                 se_fallback.s_proto = proto;
                 se = &se_fallback;
@@ -904,7 +907,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 
                 if (se == NULL) {
                     ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                                   "calling getservbyname()");
+                        "calling getservbyname()");
                     goto err;
                 }
             } else {
@@ -922,32 +925,32 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
  * the pointer size dance.
  */
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
-# pragma pointer_size save
-# pragma pointer_size 32
+#pragma pointer_size save
+#pragma pointer_size 32
 #endif
-            char **addrlistp;
+            char** addrlistp;
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
-# pragma pointer_size restore
+#pragma pointer_size restore
 #endif
             size_t addresses;
-            BIO_ADDRINFO *tmp_bai = NULL;
+            BIO_ADDRINFO* tmp_bai = NULL;
 
             /* The easiest way to create a linked list from an
                array is to start from the back */
             for (addrlistp = he->h_addr_list; *addrlistp != NULL;
-                 addrlistp++)
+                addrlistp++)
                 ;
 
             for (addresses = addrlistp - he->h_addr_list;
-                 addrlistp--, addresses-- > 0; ) {
+                addrlistp--, addresses-- > 0;) {
                 if (!addrinfo_wrap(he->h_addrtype, socktype,
-                                   *addrlistp, he->h_length,
-                                   se->s_port, &tmp_bai))
+                        *addrlistp, he->h_length,
+                        se->s_port, &tmp_bai))
                     goto addrinfo_wrap_err;
                 tmp_bai->bai_next = *res;
                 *res = tmp_bai;
                 continue;
-             addrinfo_wrap_err:
+            addrinfo_wrap_err:
                 BIO_ADDRINFO_free(*res);
                 *res = NULL;
                 ERR_raise(ERR_LIB_BIO, ERR_R_BIO_LIB);
@@ -957,7 +960,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 
             ret = 1;
         }
-     err:
+    err:
         CRYPTO_THREAD_unlock(bio_lookup_lock);
     }
 

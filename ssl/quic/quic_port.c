@@ -24,14 +24,14 @@
  * QUIC Port Structure
  * ===================
  */
-#define INIT_DCID_LEN                   8
+#define INIT_DCID_LEN 8
 
-static int port_init(QUIC_PORT *port);
-static void port_cleanup(QUIC_PORT *port);
-static OSSL_TIME get_time(void *arg);
-static void port_default_packet_handler(QUIC_URXE *e, void *arg,
-                                        const QUIC_CONN_ID *dcid);
-static void port_rx_pre(QUIC_PORT *port);
+static int port_init(QUIC_PORT* port);
+static void port_cleanup(QUIC_PORT* port);
+static OSSL_TIME get_time(void* arg);
+static void port_default_packet_handler(QUIC_URXE* e, void* arg,
+    const QUIC_CONN_ID* dcid);
+static void port_rx_pre(QUIC_PORT* port);
 
 /**
  * @struct validation_token
@@ -69,7 +69,7 @@ typedef struct validation_token {
     QUIC_CONN_ID odcid;
     QUIC_CONN_ID rscid;
     size_t remote_addr_len;
-    unsigned char *remote_addr;
+    unsigned char* remote_addr;
     unsigned char is_retry;
 } QUIC_VALIDATION_TOKEN;
 
@@ -97,15 +97,15 @@ DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
 DEFINE_LIST_OF_IMPL(incoming_ch, QUIC_CHANNEL);
 DEFINE_LIST_OF_IMPL(port, QUIC_PORT);
 
-QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args)
+QUIC_PORT* ossl_quic_port_new(const QUIC_PORT_ARGS* args)
 {
-    QUIC_PORT *port;
+    QUIC_PORT* port;
 
     if ((port = OPENSSL_zalloc(sizeof(QUIC_PORT))) == NULL)
         return NULL;
 
-    port->engine        = args->engine;
-    port->channel_ctx   = args->channel_ctx;
+    port->engine = args->engine;
+    port->channel_ctx = args->channel_ctx;
     port->is_multi_conn = args->is_multi_conn;
     port->validate_addr = args->do_addr_validation;
     port->get_conn_user_ssl = args->get_conn_user_ssl;
@@ -119,7 +119,7 @@ QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args)
     return port;
 }
 
-void ossl_quic_port_free(QUIC_PORT *port)
+void ossl_quic_port_free(QUIC_PORT* port)
 {
     if (port == NULL)
         return;
@@ -128,12 +128,12 @@ void ossl_quic_port_free(QUIC_PORT *port)
     OPENSSL_free(port);
 }
 
-static int port_init(QUIC_PORT *port)
+static int port_init(QUIC_PORT* port)
 {
     size_t rx_short_dcid_len = (port->is_multi_conn ? INIT_DCID_LEN : 0);
     int key_len = -1;
-    EVP_CIPHER *cipher = NULL;
-    unsigned char *token_key = NULL;
+    EVP_CIPHER* cipher = NULL;
+    unsigned char* token_key = NULL;
     int ret = 0;
 
     if (port->engine == NULL || port->channel_ctx == NULL)
@@ -143,34 +143,38 @@ static int port_init(QUIC_PORT *port)
         goto err;
 
     if ((port->demux = ossl_quic_demux_new(/*BIO=*/NULL,
-                                           /*Short CID Len=*/rx_short_dcid_len,
-                                           get_time, port)) == NULL)
+             /*Short CID Len=*/rx_short_dcid_len,
+             get_time, port))
+        == NULL)
         goto err;
 
     ossl_quic_demux_set_default_handler(port->demux,
-                                        port_default_packet_handler,
-                                        port);
+        port_default_packet_handler,
+        port);
 
     if ((port->srtm = ossl_quic_srtm_new(port->engine->libctx,
-                                         port->engine->propq)) == NULL)
+             port->engine->propq))
+        == NULL)
         goto err;
 
     if ((port->lcidm = ossl_quic_lcidm_new(port->engine->libctx,
-                                           rx_short_dcid_len)) == NULL)
+             rx_short_dcid_len))
+        == NULL)
         goto err;
 
     port->rx_short_dcid_len = (unsigned char)rx_short_dcid_len;
-    port->tx_init_dcid_len  = INIT_DCID_LEN;
-    port->state             = QUIC_PORT_STATE_RUNNING;
+    port->tx_init_dcid_len = INIT_DCID_LEN;
+    port->state = QUIC_PORT_STATE_RUNNING;
 
     ossl_list_port_insert_tail(&port->engine->port_list, port);
-    port->on_engine_list    = 1;
-    port->bio_changed       = 1;
+    port->on_engine_list = 1;
+    port->bio_changed = 1;
 
     /* Generate random key for token encryption */
     if ((port->token_ctx = EVP_CIPHER_CTX_new()) == NULL
         || (cipher = EVP_CIPHER_fetch(port->engine->libctx,
-                                      "AES-256-GCM", NULL)) == NULL
+                "AES-256-GCM", NULL))
+            == NULL
         || !EVP_EncryptInit_ex(port->token_ctx, cipher, NULL, NULL, NULL)
         || (key_len = EVP_CIPHER_CTX_get_key_length(port->token_ctx)) <= 0
         || (token_key = OPENSSL_malloc(key_len)) == NULL
@@ -190,7 +194,7 @@ err:
     return ret;
 }
 
-static void port_cleanup(QUIC_PORT *port)
+static void port_cleanup(QUIC_PORT* port)
 {
     assert(ossl_list_ch_num(&port->channel_list) == 0);
 
@@ -215,7 +219,7 @@ static void port_cleanup(QUIC_PORT *port)
     port->token_ctx = NULL;
 }
 
-static void port_transition_failed(QUIC_PORT *port)
+static void port_transition_failed(QUIC_PORT* port)
 {
     if (port->state == QUIC_PORT_STATE_FAILED)
         return;
@@ -223,52 +227,52 @@ static void port_transition_failed(QUIC_PORT *port)
     port->state = QUIC_PORT_STATE_FAILED;
 }
 
-int ossl_quic_port_is_running(const QUIC_PORT *port)
+int ossl_quic_port_is_running(const QUIC_PORT* port)
 {
     return port->state == QUIC_PORT_STATE_RUNNING;
 }
 
-QUIC_ENGINE *ossl_quic_port_get0_engine(QUIC_PORT *port)
+QUIC_ENGINE* ossl_quic_port_get0_engine(QUIC_PORT* port)
 {
     return port->engine;
 }
 
-QUIC_REACTOR *ossl_quic_port_get0_reactor(QUIC_PORT *port)
+QUIC_REACTOR* ossl_quic_port_get0_reactor(QUIC_PORT* port)
 {
     return ossl_quic_engine_get0_reactor(port->engine);
 }
 
-QUIC_DEMUX *ossl_quic_port_get0_demux(QUIC_PORT *port)
+QUIC_DEMUX* ossl_quic_port_get0_demux(QUIC_PORT* port)
 {
     return port->demux;
 }
 
-CRYPTO_MUTEX *ossl_quic_port_get0_mutex(QUIC_PORT *port)
+CRYPTO_MUTEX* ossl_quic_port_get0_mutex(QUIC_PORT* port)
 {
     return ossl_quic_engine_get0_mutex(port->engine);
 }
 
-OSSL_TIME ossl_quic_port_get_time(QUIC_PORT *port)
+OSSL_TIME ossl_quic_port_get_time(QUIC_PORT* port)
 {
     return ossl_quic_engine_get_time(port->engine);
 }
 
-static OSSL_TIME get_time(void *port)
+static OSSL_TIME get_time(void* port)
 {
-    return ossl_quic_port_get_time((QUIC_PORT *)port);
+    return ossl_quic_port_get_time((QUIC_PORT*)port);
 }
 
-int ossl_quic_port_get_rx_short_dcid_len(const QUIC_PORT *port)
+int ossl_quic_port_get_rx_short_dcid_len(const QUIC_PORT* port)
 {
     return port->rx_short_dcid_len;
 }
 
-int ossl_quic_port_get_tx_init_dcid_len(const QUIC_PORT *port)
+int ossl_quic_port_get_tx_init_dcid_len(const QUIC_PORT* port)
 {
     return port->tx_init_dcid_len;
 }
 
-size_t ossl_quic_port_get_num_incoming_channels(const QUIC_PORT *port)
+size_t ossl_quic_port_get_num_incoming_channels(const QUIC_PORT* port)
 {
     return ossl_list_incoming_ch_num(&port->incoming_channel_list);
 }
@@ -279,7 +283,7 @@ size_t ossl_quic_port_get_num_incoming_channels(const QUIC_PORT *port)
  */
 
 /* Determines whether we can support a given poll descriptor. */
-static int validate_poll_descriptor(const BIO_POLL_DESCRIPTOR *d)
+static int validate_poll_descriptor(const BIO_POLL_DESCRIPTOR* d)
 {
     if (d->type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD && d->value.fd < 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -289,19 +293,19 @@ static int validate_poll_descriptor(const BIO_POLL_DESCRIPTOR *d)
     return 1;
 }
 
-BIO *ossl_quic_port_get_net_rbio(QUIC_PORT *port)
+BIO* ossl_quic_port_get_net_rbio(QUIC_PORT* port)
 {
     return port->net_rbio;
 }
 
-BIO *ossl_quic_port_get_net_wbio(QUIC_PORT *port)
+BIO* ossl_quic_port_get_net_wbio(QUIC_PORT* port)
 {
     return port->net_wbio;
 }
 
-static int port_update_poll_desc(QUIC_PORT *port, BIO *net_bio, int for_write)
+static int port_update_poll_desc(QUIC_PORT* port, BIO* net_bio, int for_write)
 {
-    BIO_POLL_DESCRIPTOR d = {0};
+    BIO_POLL_DESCRIPTOR d = { 0 };
 
     if (net_bio == NULL
         || (!for_write && !BIO_get_rpoll_descriptor(net_bio, &d))
@@ -329,7 +333,7 @@ static int port_update_poll_desc(QUIC_PORT *port, BIO *net_bio, int for_write)
     return 1;
 }
 
-int ossl_quic_port_update_poll_descriptors(QUIC_PORT *port, int force)
+int ossl_quic_port_update_poll_descriptors(QUIC_PORT* port, int force)
 {
     int ok = 1;
 
@@ -375,7 +379,7 @@ int ossl_quic_port_update_poll_descriptors(QUIC_PORT *port, int force)
  * this is not set, we fail. If unaddressed mode is used, we do not require
  * this, as such an address is superfluous, though it can be set if desired.
  */
-static void port_update_addressing_mode(QUIC_PORT *port)
+static void port_update_addressing_mode(QUIC_PORT* port)
 {
     long rcaps = 0, wcaps = 0;
 
@@ -390,17 +394,17 @@ static void port_update_addressing_mode(QUIC_PORT *port)
     port->bio_changed = 1;
 }
 
-int ossl_quic_port_is_addressed_r(const QUIC_PORT *port)
+int ossl_quic_port_is_addressed_r(const QUIC_PORT* port)
 {
     return port->addressed_mode_r;
 }
 
-int ossl_quic_port_is_addressed_w(const QUIC_PORT *port)
+int ossl_quic_port_is_addressed_w(const QUIC_PORT* port)
 {
     return port->addressed_mode_w;
 }
 
-int ossl_quic_port_is_addressed(const QUIC_PORT *port)
+int ossl_quic_port_is_addressed(const QUIC_PORT* port)
 {
     return ossl_quic_port_is_addressed_r(port) && ossl_quic_port_is_addressed_w(port);
 }
@@ -411,7 +415,7 @@ int ossl_quic_port_is_addressed(const QUIC_PORT *port)
  * ensuring the BIO lasts until the channel is freed or the BIO is switched out
  * for another BIO by a subsequent successful call to this function.
  */
-int ossl_quic_port_set_net_rbio(QUIC_PORT *port, BIO *net_rbio)
+int ossl_quic_port_set_net_rbio(QUIC_PORT* port, BIO* net_rbio)
 {
     if (port->net_rbio == net_rbio)
         return 1;
@@ -425,9 +429,9 @@ int ossl_quic_port_set_net_rbio(QUIC_PORT *port, BIO *net_rbio)
     return 1;
 }
 
-int ossl_quic_port_set_net_wbio(QUIC_PORT *port, BIO *net_wbio)
+int ossl_quic_port_set_net_wbio(QUIC_PORT* port, BIO* net_wbio)
 {
-    QUIC_CHANNEL *ch;
+    QUIC_CHANNEL* ch;
 
     if (port->net_wbio == net_wbio)
         return 1;
@@ -436,14 +440,14 @@ int ossl_quic_port_set_net_wbio(QUIC_PORT *port, BIO *net_wbio)
         return 0;
 
     OSSL_LIST_FOREACH(ch, ch, &port->channel_list)
-        ossl_qtx_set_bio(ch->qtx, net_wbio);
+    ossl_qtx_set_bio(ch->qtx, net_wbio);
 
     port->net_wbio = net_wbio;
     port_update_addressing_mode(port);
     return 1;
 }
 
-SSL_CTX *ossl_quic_port_get_channel_ctx(QUIC_PORT *port)
+SSL_CTX* ossl_quic_port_get_channel_ctx(QUIC_PORT* port)
 {
     return port->channel_ctx;
 }
@@ -453,13 +457,13 @@ SSL_CTX *ossl_quic_port_get_channel_ctx(QUIC_PORT *port)
  * ============================
  */
 
-static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
+static SSL* port_new_handshake_layer(QUIC_PORT* port, QUIC_CHANNEL* ch)
 {
-    SSL *tls = NULL;
-    SSL_CONNECTION *tls_conn = NULL;
-    SSL *user_ssl = NULL;
-    QUIC_CONNECTION *qc = NULL;
-    QUIC_LISTENER *ql = NULL;
+    SSL* tls = NULL;
+    SSL_CONNECTION* tls_conn = NULL;
+    SSL* user_ssl = NULL;
+    QUIC_CONNECTION* qc = NULL;
+    QUIC_LISTENER* ql = NULL;
 
     /*
      * It only makes sense to call this function if we know how to associate
@@ -470,8 +474,8 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
     user_ssl = port->get_conn_user_ssl(ch, port->user_ssl_arg);
     if (user_ssl == NULL)
         return NULL;
-    qc = (QUIC_CONNECTION *)user_ssl;
-    ql = (QUIC_LISTENER *)port->user_ssl_arg;
+    qc = (QUIC_CONNECTION*)user_ssl;
+    ql = (QUIC_LISTENER*)port->user_ssl_arg;
 
     /*
      * We expect the user_ssl to be newly created so it must not have an
@@ -491,31 +495,31 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
 
     if (ql != NULL && ql->obj.ssl.ctx->new_pending_conn_cb != NULL)
         if (!ql->obj.ssl.ctx->new_pending_conn_cb(ql->obj.ssl.ctx, user_ssl,
-                                                  ql->obj.ssl.ctx->new_pending_conn_arg)) {
+                ql->obj.ssl.ctx->new_pending_conn_arg)) {
             SSL_free(user_ssl);
             return NULL;
         }
 
     /* Override the user_ssl of the inner connection. */
-    tls_conn->s3.flags      |= TLS1_FLAGS_QUIC | TLS1_FLAGS_QUIC_INTERNAL;
+    tls_conn->s3.flags |= TLS1_FLAGS_QUIC | TLS1_FLAGS_QUIC_INTERNAL;
 
     /* Restrict options derived from the SSL_CTX. */
-    tls_conn->options       &= OSSL_QUIC_PERMITTED_OPTIONS_CONN;
-    tls_conn->pha_enabled   = 0;
+    tls_conn->options &= OSSL_QUIC_PERMITTED_OPTIONS_CONN;
+    tls_conn->pha_enabled = 0;
     return tls;
 }
 
-static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
-                                       int is_server, int is_tserver)
+static QUIC_CHANNEL* port_make_channel(QUIC_PORT* port, SSL* tls, OSSL_QRX* qrx,
+    int is_server, int is_tserver)
 {
-    QUIC_CHANNEL_ARGS args = {0};
-    QUIC_CHANNEL *ch;
+    QUIC_CHANNEL_ARGS args = { 0 };
+    QUIC_CHANNEL* ch;
 
-    args.port          = port;
-    args.is_server     = is_server;
-    args.lcidm         = port->lcidm;
-    args.srtm          = port->srtm;
-    args.qrx           = qrx;
+    args.port = port;
+    args.is_server = is_server;
+    args.lcidm = port->lcidm;
+    args.srtm = port->srtm;
+    args.qrx = qrx;
     args.is_tserver_ch = is_tserver;
 
     /*
@@ -568,15 +572,15 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
     return ch;
 }
 
-QUIC_CHANNEL *ossl_quic_port_create_outgoing(QUIC_PORT *port, SSL *tls)
+QUIC_CHANNEL* ossl_quic_port_create_outgoing(QUIC_PORT* port, SSL* tls)
 {
     return port_make_channel(port, tls, NULL, /* is_server= */ 0,
-                             /* is_tserver= */ 0);
+        /* is_tserver= */ 0);
 }
 
-QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
+QUIC_CHANNEL* ossl_quic_port_create_incoming(QUIC_PORT* port, SSL* tls)
 {
-    QUIC_CHANNEL *ch;
+    QUIC_CHANNEL* ch;
 
     assert(port->tserver_ch == NULL);
 
@@ -585,15 +589,15 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
      * later in port_default_packet_handler() when calling port_bind_channel().
      */
     ch = port_make_channel(port, tls, NULL, /* is_server= */ 1,
-                           /* is_tserver_ch */ 1);
+        /* is_tserver_ch */ 1);
     port->tserver_ch = ch;
     port->allow_incoming = 1;
     return ch;
 }
 
-QUIC_CHANNEL *ossl_quic_port_pop_incoming(QUIC_PORT *port)
+QUIC_CHANNEL* ossl_quic_port_pop_incoming(QUIC_PORT* port)
 {
-    QUIC_CHANNEL *ch;
+    QUIC_CHANNEL* ch;
 
     ch = ossl_list_incoming_ch_head(&port->incoming_channel_list);
     if (ch == NULL)
@@ -603,17 +607,17 @@ QUIC_CHANNEL *ossl_quic_port_pop_incoming(QUIC_PORT *port)
     return ch;
 }
 
-int ossl_quic_port_have_incoming(QUIC_PORT *port)
+int ossl_quic_port_have_incoming(QUIC_PORT* port)
 {
     return ossl_list_incoming_ch_head(&port->incoming_channel_list) != NULL;
 }
 
-void ossl_quic_port_drop_incoming(QUIC_PORT *port)
+void ossl_quic_port_drop_incoming(QUIC_PORT* port)
 {
-    QUIC_CHANNEL *ch;
-    SSL *tls;
-    SSL *user_ssl;
-    SSL_CONNECTION *sc;
+    QUIC_CHANNEL* ch;
+    SSL* tls;
+    SSL* user_ssl;
+    SSL_CONNECTION* sc;
 
     for (;;) {
         ch = ossl_quic_port_pop_incoming(port);
@@ -643,7 +647,7 @@ void ossl_quic_port_drop_incoming(QUIC_PORT *port)
     }
 }
 
-void ossl_quic_port_set_allow_incoming(QUIC_PORT *port, int allow_incoming)
+void ossl_quic_port_set_allow_incoming(QUIC_PORT* port, int allow_incoming)
 {
     port->allow_incoming = allow_incoming;
 }
@@ -657,15 +661,15 @@ void ossl_quic_port_set_allow_incoming(QUIC_PORT *port, int allow_incoming)
  * Tick function for this port. This does everything related to network I/O for
  * this port's network BIOs, and services child channels.
  */
-void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *res,
-                            uint32_t flags)
+void ossl_quic_port_subtick(QUIC_PORT* port, QUIC_TICK_RESULT* res,
+    uint32_t flags)
 {
-    QUIC_CHANNEL *ch;
+    QUIC_CHANNEL* ch;
 
-    res->net_read_desired       = ossl_quic_port_is_running(port);
-    res->net_write_desired      = 0;
-    res->notify_other_threads   = 0;
-    res->tick_deadline          = ossl_time_infinite();
+    res->net_read_desired = ossl_quic_port_is_running(port);
+    res->net_write_desired = 0;
+    res->notify_other_threads = 0;
+    res->tick_deadline = ossl_time_infinite();
 
     if (!port->engine->inhibit_tick) {
         /* Handle any incoming data from network. */
@@ -673,8 +677,9 @@ void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *res,
             port_rx_pre(port);
 
         /* Iterate through all channels and service them. */
-        OSSL_LIST_FOREACH(ch, ch, &port->channel_list) {
-            QUIC_TICK_RESULT subr = {0};
+        OSSL_LIST_FOREACH(ch, ch, &port->channel_list)
+        {
+            QUIC_TICK_RESULT subr = { 0 };
 
             ossl_quic_channel_subtick(ch, &subr, flags);
             ossl_quic_tick_result_merge_into(res, &subr);
@@ -683,7 +688,7 @@ void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *res,
 }
 
 /* Process incoming datagrams, if any. */
-static void port_rx_pre(QUIC_PORT *port)
+static void port_rx_pre(QUIC_PORT* port)
 {
     int ret;
 
@@ -726,12 +731,12 @@ static void port_rx_pre(QUIC_PORT *port)
  * connection from it. If a new connection is made, the new channel is written
  * to *new_ch.
  */
-static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
-                              const QUIC_CONN_ID *scid, const QUIC_CONN_ID *dcid,
-                              const QUIC_CONN_ID *odcid, OSSL_QRX *qrx,
-                              QUIC_CHANNEL **new_ch)
+static void port_bind_channel(QUIC_PORT* port, const BIO_ADDR* peer,
+    const QUIC_CONN_ID* scid, const QUIC_CONN_ID* dcid,
+    const QUIC_CONN_ID* odcid, OSSL_QRX* qrx,
+    QUIC_CHANNEL** new_ch)
 {
-    QUIC_CHANNEL *ch;
+    QUIC_CHANNEL* ch;
 
     /*
      * If we're running with a simulated tserver, it will already have
@@ -742,11 +747,11 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
         port->tserver_ch = NULL;
         ossl_quic_channel_bind_qrx(ch, qrx);
         ossl_qrx_set_msg_callback(ch->qrx, ch->msg_callback,
-                                  ch->msg_callback_ssl);
+            ch->msg_callback_ssl);
         ossl_qrx_set_msg_callback_arg(ch->qrx, ch->msg_callback_arg);
     } else {
         ch = port_make_channel(port, NULL, qrx, /* is_server= */ 1,
-                               /* is_tserver */ 0);
+            /* is_tserver */ 0);
     }
 
     if (ch == NULL)
@@ -762,9 +767,9 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
      */
     if (qrx == NULL)
         if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
-                                              ch->port->engine->propq,
-                                              dcid, /* is_server */ 1,
-                                              ch->qrx, NULL))
+                ch->port->engine->propq,
+                dcid, /* is_server */ 1,
+                ch->qrx, NULL))
             return;
 
     if (odcid->id_len != 0) {
@@ -793,11 +798,11 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
     *new_ch = ch;
 }
 
-static int port_try_handle_stateless_reset(QUIC_PORT *port, const QUIC_URXE *e)
+static int port_try_handle_stateless_reset(QUIC_PORT* port, const QUIC_URXE* e)
 {
     size_t i;
-    const unsigned char *data = ossl_quic_urxe_data(e);
-    void *opaque = NULL;
+    const unsigned char* data = ossl_quic_urxe_data(e);
+    void* opaque = NULL;
 
     /*
      * Perform some fast and cheap checks for a packet not being a stateless
@@ -827,19 +832,19 @@ static int port_try_handle_stateless_reset(QUIC_PORT *port, const QUIC_URXE *e)
 
     for (i = 0;; ++i) {
         if (!ossl_quic_srtm_lookup(port->srtm,
-                                   (QUIC_STATELESS_RESET_TOKEN *)(data + e->data_len
-                                   - sizeof(QUIC_STATELESS_RESET_TOKEN)),
-                                   i, &opaque, NULL))
+                (QUIC_STATELESS_RESET_TOKEN*)(data + e->data_len
+                    - sizeof(QUIC_STATELESS_RESET_TOKEN)),
+                i, &opaque, NULL))
             break;
 
         assert(opaque != NULL);
-        ossl_quic_channel_on_stateless_reset((QUIC_CHANNEL *)opaque);
+        ossl_quic_channel_on_stateless_reset((QUIC_CHANNEL*)opaque);
     }
 
     return i > 0;
 }
 
-static void cleanup_validation_token(QUIC_VALIDATION_TOKEN *token)
+static void cleanup_validation_token(QUIC_VALIDATION_TOKEN* token)
 {
     OPENSSL_free(token->remote_addr);
 }
@@ -855,9 +860,9 @@ static void cleanup_validation_token(QUIC_VALIDATION_TOKEN *token)
  *
  * @return 1 if validation token is filled successfully, 0 otherwise.
  */
-static int generate_token(BIO_ADDR *peer, QUIC_CONN_ID odcid,
-                          QUIC_CONN_ID rscid, QUIC_VALIDATION_TOKEN *token,
-                          int is_retry)
+static int generate_token(BIO_ADDR* peer, QUIC_CONN_ID odcid,
+    QUIC_CONN_ID rscid, QUIC_VALIDATION_TOKEN* token,
+    int is_retry)
 {
     token->is_retry = is_retry;
     token->timestamp = ossl_time_now();
@@ -869,7 +874,7 @@ static int generate_token(BIO_ADDR *peer, QUIC_CONN_ID odcid,
         || token->remote_addr_len == 0
         || (token->remote_addr = OPENSSL_malloc(token->remote_addr_len)) == NULL
         || !BIO_ADDR_rawaddress(peer, token->remote_addr,
-                                &token->remote_addr_len)) {
+            &token->remote_addr_len)) {
         cleanup_validation_token(token);
         return 0;
     }
@@ -887,11 +892,11 @@ static int generate_token(BIO_ADDR *peer, QUIC_CONN_ID odcid,
  * @param buffer     Address to store the marshalled token.
  * @param buffer_len Size of data stored in |buffer|.
  */
-static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
-                                    unsigned char *buffer, size_t *buffer_len)
+static int marshal_validation_token(QUIC_VALIDATION_TOKEN* token,
+    unsigned char* buffer, size_t* buffer_len)
 {
-    WPACKET wpkt = {0};
-    BUF_MEM *buf_mem = BUF_MEM_new();
+    WPACKET wpkt = { 0 };
+    BUF_MEM* buf_mem = BUF_MEM_new();
 
     if (buffer == NULL || buf_mem == NULL
         || (token->is_retry != 0 && token->is_retry != 1)) {
@@ -902,12 +907,12 @@ static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
     if (!WPACKET_init(&wpkt, buf_mem)
         || !WPACKET_memset(&wpkt, token->is_retry, 1)
         || !WPACKET_memcpy(&wpkt, &token->timestamp,
-                           sizeof(token->timestamp))
+            sizeof(token->timestamp))
         || (token->is_retry
             && (!WPACKET_sub_memcpy_u8(&wpkt, &token->odcid.id,
-                                       token->odcid.id_len)
+                    token->odcid.id_len)
                 || !WPACKET_sub_memcpy_u8(&wpkt, &token->rscid.id,
-                                          token->rscid.id_len)))
+                    token->rscid.id_len)))
         || !WPACKET_sub_memcpy_u8(&wpkt, token->remote_addr, token->remote_addr_len)
         || !WPACKET_get_total_written(&wpkt, buffer_len)
         || *buffer_len > MARSHALLED_TOKEN_MAX_LEN
@@ -939,11 +944,11 @@ static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
  * The ciphertext format is:
  * [EVP_GCM_IV_LEN bytes IV][encrypted data][EVP_GCM_TAG_LEN bytes tag]
  */
-static int encrypt_validation_token(const QUIC_PORT *port,
-                                    const unsigned char *plaintext,
-                                    size_t pt_len,
-                                    unsigned char *ciphertext,
-                                    size_t *ct_len)
+static int encrypt_validation_token(const QUIC_PORT* port,
+    const unsigned char* plaintext,
+    size_t pt_len,
+    unsigned char* ciphertext,
+    size_t* ct_len)
 {
     int iv_len, len, ret = 0;
     int tag_len;
@@ -989,11 +994,11 @@ err:
  * Expected ciphertext format:
  * [EVP_GCM_IV_LEN bytes IV][encrypted data][EVP_GCM_TAG_LEN bytes tag]
  */
-static int decrypt_validation_token(const QUIC_PORT *port,
-                                    const unsigned char *ciphertext,
-                                    size_t ct_len,
-                                    unsigned char *plaintext,
-                                    size_t *pt_len)
+static int decrypt_validation_token(const QUIC_PORT* port,
+    const unsigned char* ciphertext,
+    size_t ct_len,
+    unsigned char* plaintext,
+    size_t* pt_len)
 {
     int iv_len, len = 0, ret = 0;
     int tag_len;
@@ -1018,9 +1023,9 @@ static int decrypt_validation_token(const QUIC_PORT *port,
 
     if (!EVP_DecryptInit_ex(port->token_ctx, NULL, NULL, NULL, iv)
         || !EVP_DecryptUpdate(port->token_ctx, plaintext, &len, data,
-                              (int)(ct_len - iv_len - tag_len))
+            (int)(ct_len - iv_len - tag_len))
         || !EVP_CIPHER_CTX_ctrl(port->token_ctx, EVP_CTRL_GCM_SET_TAG, tag_len,
-                                (void *)tag)
+            (void*)tag)
         || !EVP_DecryptFinal_ex(port->token_ctx, plaintext + len, &len))
         goto err;
 
@@ -1039,8 +1044,8 @@ err:
  * @param buf     Buffer of previously marshaled validation token.
  * @param buf_len Length of |buf|.
  */
-static int parse_validation_token(QUIC_VALIDATION_TOKEN *token,
-                                  const unsigned char *buf, size_t buf_len)
+static int parse_validation_token(QUIC_VALIDATION_TOKEN* token,
+    const unsigned char* buf, size_t buf_len)
 {
     PACKET pkt, subpkt;
 
@@ -1052,20 +1057,20 @@ static int parse_validation_token(QUIC_VALIDATION_TOKEN *token,
     if (!PACKET_buf_init(&pkt, buf, buf_len)
         || !PACKET_copy_bytes(&pkt, &token->is_retry, sizeof(token->is_retry))
         || !(token->is_retry == 0 || token->is_retry == 1)
-        || !PACKET_copy_bytes(&pkt, (unsigned char *)&token->timestamp,
-                              sizeof(token->timestamp))
+        || !PACKET_copy_bytes(&pkt, (unsigned char*)&token->timestamp,
+            sizeof(token->timestamp))
         || (token->is_retry
             && (!PACKET_get_length_prefixed_1(&pkt, &subpkt)
                 || (token->odcid.id_len = (unsigned char)PACKET_remaining(&subpkt))
                     > QUIC_MAX_CONN_ID_LEN
                 || !PACKET_copy_bytes(&subpkt,
-                                      (unsigned char *)&token->odcid.id,
-                                      token->odcid.id_len)
+                    (unsigned char*)&token->odcid.id,
+                    token->odcid.id_len)
                 || !PACKET_get_length_prefixed_1(&pkt, &subpkt)
                 || (token->rscid.id_len = (unsigned char)PACKET_remaining(&subpkt))
                     > QUIC_MAX_CONN_ID_LEN
-                || !PACKET_copy_bytes(&subpkt, (unsigned char *)&token->rscid.id,
-                                      token->rscid.id_len)))
+                || !PACKET_copy_bytes(&subpkt, (unsigned char*)&token->rscid.id,
+                    token->rscid.id_len)))
         || !PACKET_get_length_prefixed_1(&pkt, &subpkt)
         || (token->remote_addr_len = PACKET_remaining(&subpkt)) == 0
         || (token->remote_addr = OPENSSL_malloc(token->remote_addr_len)) == NULL
@@ -1100,9 +1105,9 @@ static int parse_validation_token(QUIC_VALIDATION_TOKEN *token,
  * Error handling is included for failures in CID generation, encoding, and
  * network transmiss
  */
-static void port_send_retry(QUIC_PORT *port,
-                            BIO_ADDR *peer,
-                            QUIC_PKT_HDR *client_hdr)
+static void port_send_retry(QUIC_PORT* port,
+    BIO_ADDR* peer,
+    QUIC_PKT_HDR* client_hdr)
 {
     BIO_MSG msg[1];
     /*
@@ -1114,8 +1119,8 @@ static void port_send_retry(QUIC_PORT *port,
     unsigned char ct_buf[ENCRYPTED_TOKEN_MAX_LEN];
     WPACKET wpkt;
     size_t written, token_buf_len, ct_len;
-    QUIC_PKT_HDR hdr = {0};
-    QUIC_VALIDATION_TOKEN token = {0};
+    QUIC_PKT_HDR hdr = { 0 };
+    QUIC_VALIDATION_TOKEN token = { 0 };
     int ok;
 
     if (!ossl_assert(sizeof(buffer) >= MARSHALLED_TOKEN_MAX_LEN))
@@ -1140,13 +1145,13 @@ static void port_send_retry(QUIC_PORT *port,
 
     /* Generate retry validation token */
     if (!generate_token(peer, client_hdr->dst_conn_id,
-                        hdr.src_conn_id, &token, 1)
+            hdr.src_conn_id, &token, 1)
         || !marshal_validation_token(&token, buffer, &token_buf_len)
         || !encrypt_validation_token(port, buffer, token_buf_len, NULL,
-                                     &ct_len)
+            &ct_len)
         || ct_len > ENCRYPTED_TOKEN_MAX_LEN
         || !encrypt_validation_token(port, buffer, token_buf_len, ct_buf,
-                                     &ct_len)
+            &ct_len)
         || !ossl_assert(ct_len >= QUIC_RETRY_INTEGRITY_TAG_LEN))
         goto err;
 
@@ -1157,10 +1162,10 @@ static void port_send_retry(QUIC_PORT *port,
     hdr.len = ct_len;
     hdr.data = ct_buf;
     ok = ossl_quic_calculate_retry_integrity_tag(port->engine->libctx,
-                                                 port->engine->propq, &hdr,
-                                                 &client_hdr->dst_conn_id,
-                                                 ct_buf + ct_len
-                                                 - QUIC_RETRY_INTEGRITY_TAG_LEN);
+        port->engine->propq, &hdr,
+        &client_hdr->dst_conn_id,
+        ct_buf + ct_len
+            - QUIC_RETRY_INTEGRITY_TAG_LEN);
     if (ok == 0)
         goto err;
 
@@ -1177,7 +1182,7 @@ static void port_send_retry(QUIC_PORT *port,
         goto err;
 
     ok = ossl_quic_wire_encode_pkt_hdr(&wpkt, client_hdr->dst_conn_id.id_len,
-                                       &hdr, NULL);
+        &hdr, NULL);
     if (ok == 0)
         goto err;
 
@@ -1195,7 +1200,7 @@ static void port_send_retry(QUIC_PORT *port,
      */
     if (!BIO_sendmmsg(port->net_wbio, msg, sizeof(BIO_MSG), 1, 0, &written))
         ERR_raise_data(ERR_LIB_SSL, SSL_R_QUIC_NETWORK_ERROR,
-                       "port retry send failed due to network BIO I/O error");
+            "port retry send failed due to network BIO I/O error");
 
 err:
     cleanup_validation_token(&token);
@@ -1218,8 +1223,8 @@ err:
  *
  * @note The function will raise an error if sending the message fails.
  */
-static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
-                                          QUIC_PKT_HDR *client_hdr)
+static void port_send_version_negotiation(QUIC_PORT* port, BIO_ADDR* peer,
+    QUIC_PKT_HDR* client_hdr)
 {
     BIO_MSG msg[1];
     unsigned char buffer[1024];
@@ -1252,7 +1257,7 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
     hdr.token = 0;
     hdr.token_len = 0;
     hdr.len = sizeof(supported_versions);
-    hdr.data = (unsigned char *)supported_versions;
+    hdr.data = (unsigned char*)supported_versions;
 
     msg[0].data = buffer;
     msg[0].peer = peer;
@@ -1263,7 +1268,7 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
         return;
 
     if (!ossl_quic_wire_encode_pkt_hdr(&wpkt, client_hdr->dst_conn_id.id_len,
-                                       &hdr, NULL))
+            &hdr, NULL))
         return;
 
     /*
@@ -1287,7 +1292,7 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
      */
     if (!BIO_sendmmsg(port->net_wbio, msg, sizeof(BIO_MSG), 1, 0, &written))
         ERR_raise_data(ERR_LIB_SSL, SSL_R_QUIC_NETWORK_ERROR,
-                       "port version negotiation send failed");
+            "port version negotiation send failed");
 }
 
 /**
@@ -1329,9 +1334,9 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
  *   packets and 60 minutes for tokens from NEW_TOKEN packets. This may be
  *   configurable in the future.
  */
-static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
-                               BIO_ADDR *peer, QUIC_CONN_ID *odcid,
-                               QUIC_CONN_ID *scid, uint8_t *gen_new_token)
+static int port_validate_token(QUIC_PKT_HDR* hdr, QUIC_PORT* port,
+    BIO_ADDR* peer, QUIC_CONN_ID* odcid,
+    QUIC_CONN_ID* scid, uint8_t* gen_new_token)
 {
     int ret = 0;
     QUIC_VALIDATION_TOKEN token = { 0 };
@@ -1343,10 +1348,10 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
     *gen_new_token = 0;
 
     if (!decrypt_validation_token(port, hdr->token, hdr->token_len, NULL,
-                                  &dec_token_len)
+            &dec_token_len)
         || dec_token_len > MARSHALLED_TOKEN_MAX_LEN
         || !decrypt_validation_token(port, hdr->token, hdr->token_len,
-                                     dec_token, &dec_token_len)
+            dec_token, &dec_token_len)
         || !parse_validation_token(&token, dec_token, dec_token_len))
         goto err;
 
@@ -1357,7 +1362,7 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
     if (ossl_time_compare(now, token.timestamp) < 0)
         goto err;
     time_diff = ossl_time2seconds(ossl_time_abs_difference(token.timestamp,
-                                                           now));
+        now));
     if ((token.is_retry && time_diff > RETRY_LIFETIME)
         || (!token.is_retry && time_diff > NEW_TOKEN_LIFETIME))
         goto err;
@@ -1387,7 +1392,8 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
          */
         if (token.rscid.id_len != hdr->dst_conn_id.id_len
             || memcmp(&token.rscid.id, &hdr->dst_conn_id.id,
-                      token.rscid.id_len) != 0)
+                   token.rscid.id_len)
+                != 0)
             goto err;
         *odcid = token.odcid;
         *scid = token.rscid;
@@ -1422,12 +1428,12 @@ err:
     return ret;
 }
 
-static void generate_new_token(QUIC_CHANNEL *ch, BIO_ADDR *peer)
+static void generate_new_token(QUIC_CHANNEL* ch, BIO_ADDR* peer)
 {
     QUIC_CONN_ID rscid = { 0 };
     QUIC_VALIDATION_TOKEN token;
     unsigned char buffer[ENCRYPTED_TOKEN_MAX_LEN];
-    unsigned char *ct_buf;
+    unsigned char* ct_buf;
     size_t ct_len;
     size_t token_buf_len = 0;
 
@@ -1456,10 +1462,10 @@ static void generate_new_token(QUIC_CHANNEL *ch, BIO_ADDR *peer)
     if (!generate_token(peer, ch->init_dcid, rscid, &token, 0)
         || !marshal_validation_token(&token, buffer, &token_buf_len)
         || !encrypt_validation_token(ch->port, buffer, token_buf_len, NULL,
-                                     &ct_len)
+            &ct_len)
         || ct_len > ENCRYPTED_TOKEN_MAX_LEN
         || !encrypt_validation_token(ch->port, buffer, token_buf_len, ct_buf,
-                                     &ct_len)
+            &ct_len)
         || !ossl_assert(ct_len >= QUIC_RETRY_INTEGRITY_TAG_LEN)) {
         OPENSSL_free(ct_buf);
         cleanup_validation_token(&token);
@@ -1476,20 +1482,20 @@ static void generate_new_token(QUIC_CHANNEL *ch, BIO_ADDR *peer)
  * This is called by the demux when we get a packet not destined for any known
  * DCID.
  */
-static void port_default_packet_handler(QUIC_URXE *e, void *arg,
-                                        const QUIC_CONN_ID *dcid)
+static void port_default_packet_handler(QUIC_URXE* e, void* arg,
+    const QUIC_CONN_ID* dcid)
 {
-    QUIC_PORT *port = arg;
+    QUIC_PORT* port = arg;
     PACKET pkt;
     QUIC_PKT_HDR hdr;
     QUIC_CHANNEL *ch = NULL, *new_ch = NULL;
     QUIC_CONN_ID odcid, scid;
     uint8_t gen_new_token = 0;
-    OSSL_QRX *qrx = NULL;
-    OSSL_QRX *qrx_src = NULL;
-    OSSL_QRX_ARGS qrx_args = {0};
+    OSSL_QRX* qrx = NULL;
+    OSSL_QRX* qrx_src = NULL;
+    OSSL_QRX_ARGS qrx_args = { 0 };
     uint64_t cause_flags = 0;
-    OSSL_QRX_PKT *qrx_pkt = NULL;
+    OSSL_QRX_PKT* qrx_pkt = NULL;
 
     /* Don't handle anything if we are no longer running. */
     if (!ossl_quic_port_is_running(port))
@@ -1500,7 +1506,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
 
     if (dcid != NULL
         && ossl_quic_lcidm_lookup(port->lcidm, dcid, NULL,
-                                  (void **)&ch)) {
+            (void**)&ch)) {
         assert(ch != NULL);
         ossl_quic_channel_inject(ch, e);
         return;
@@ -1529,7 +1535,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      * care about Initial packets.
      */
     if (!ossl_quic_wire_decode_pkt_hdr(&pkt, SIZE_MAX, 1, 0, &hdr, NULL,
-                                       &cause_flags)) {
+            &cause_flags)) {
         /*
          * If we fail due to a bad version, we know the packet up to the version
          * number was decoded, and we use it below to send a version
@@ -1577,10 +1583,10 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      * Create qrx now so we can check integrity of packet
      * which does not belong to any channel.
      */
-    qrx_args.libctx             = port->engine->libctx;
-    qrx_args.demux              = port->demux;
-    qrx_args.short_conn_id_len  = dcid->id_len;
-    qrx_args.max_deferred       = 32;
+    qrx_args.libctx = port->engine->libctx;
+    qrx_args.demux = port->demux;
+    qrx_args.short_conn_id_len = dcid->id_len;
+    qrx_args.max_deferred = 32;
     qrx = ossl_qrx_new(&qrx_args);
     if (qrx == NULL)
         goto undesirable;
@@ -1589,13 +1595,13 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      * Derive secrets for qrx only.
      */
     if (!ossl_quic_provide_initial_secret(port->engine->libctx,
-                                          port->engine->propq,
-                                          &hdr.dst_conn_id,
-                                          /* is_server */ 1,
-                                          qrx, NULL))
+            port->engine->propq,
+            &hdr.dst_conn_id,
+            /* is_server */ 1,
+            qrx, NULL))
         goto undesirable;
 
-    if (ossl_qrx_validate_initial_packet(qrx, e, (const QUIC_CONN_ID *)dcid) == 0)
+    if (ossl_qrx_validate_initial_packet(qrx, e, (const QUIC_CONN_ID*)dcid) == 0)
         goto undesirable;
 
     if (port->validate_addr == 0) {
@@ -1612,8 +1618,8 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
          * going to create. We use qrx_src alias so we can read packets from
          * qrx and inject them to channel.
          */
-         qrx_src = qrx;
-         qrx = NULL;
+        qrx_src = qrx;
+        qrx = NULL;
     }
     /*
      * TODO(QUIC FUTURE): there should be some logic similar to accounting half-open
@@ -1633,8 +1639,9 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      */
     if (hdr.token != NULL
         && port_validate_token(&hdr, port, &e->peer,
-                               &odcid, &scid,
-                               &gen_new_token) == 0) {
+               &odcid, &scid,
+               &gen_new_token)
+            == 0) {
         /*
          * RFC 9000 s 8.1.3
          * When a server receives an Initial packet with an address
@@ -1667,7 +1674,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     }
 
     port_bind_channel(port, &e->peer, &scid, &hdr.dst_conn_id,
-                      &odcid, qrx, &new_ch);
+        &odcid, qrx, &new_ch);
 
     /*
      * if packet validates it gets moved to channel, we've just bound
@@ -1716,10 +1723,10 @@ undesirable:
     ossl_quic_demux_release_urxe(port->demux, e);
 }
 
-void ossl_quic_port_raise_net_error(QUIC_PORT *port,
-                                    QUIC_CHANNEL *triggering_ch)
+void ossl_quic_port_raise_net_error(QUIC_PORT* port,
+    QUIC_CHANNEL* triggering_ch)
 {
-    QUIC_CHANNEL *ch;
+    QUIC_CHANNEL* ch;
 
     if (!ossl_quic_port_is_running(port))
         return;
@@ -1729,7 +1736,7 @@ void ossl_quic_port_raise_net_error(QUIC_PORT *port,
      * cover error.
      */
     ERR_raise_data(ERR_LIB_SSL, SSL_R_QUIC_NETWORK_ERROR,
-                   "port failed due to network BIO I/O error");
+        "port failed due to network BIO I/O error");
     OSSL_ERR_STATE_save(port->err_state);
 
     port_transition_failed(port);
@@ -1739,11 +1746,11 @@ void ossl_quic_port_raise_net_error(QUIC_PORT *port,
         ossl_quic_channel_raise_net_error(triggering_ch);
 
     OSSL_LIST_FOREACH(ch, ch, &port->channel_list)
-        if (ch != triggering_ch)
-            ossl_quic_channel_raise_net_error(ch);
+    if (ch != triggering_ch)
+        ossl_quic_channel_raise_net_error(ch);
 }
 
-void ossl_quic_port_restore_err_state(const QUIC_PORT *port)
+void ossl_quic_port_restore_err_state(const QUIC_PORT* port)
 {
     ERR_clear_error();
     OSSL_ERR_STATE_restore(port->err_state);

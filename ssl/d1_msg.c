@@ -10,11 +10,11 @@
 #include "ssl_local.h"
 #include "internal/ssl_unwrap.h"
 
-int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
-                               size_t len, size_t *written)
+int dtls1_write_app_data_bytes(SSL* s, uint8_t type, const void* buf_,
+    size_t len, size_t* written)
 {
     int i;
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    SSL_CONNECTION* sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
     if (sc == NULL)
         return -1;
@@ -37,14 +37,14 @@ int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
     return dtls1_write_bytes(sc, type, buf_, len, written);
 }
 
-int dtls1_dispatch_alert(SSL *ssl)
+int dtls1_dispatch_alert(SSL* ssl)
 {
     int i, j;
-    void (*cb) (const SSL *ssl, int type, int val) = NULL;
+    void (*cb)(const SSL* ssl, int type, int val) = NULL;
     unsigned char buf[DTLS1_AL_HEADER_LENGTH];
-    unsigned char *ptr = &buf[0];
+    unsigned char* ptr = &buf[0];
     size_t written;
-    SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    SSL_CONNECTION* s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
     if (s == NULL)
         return 0;
@@ -64,7 +64,7 @@ int dtls1_dispatch_alert(SSL *ssl)
 
         if (s->msg_callback)
             s->msg_callback(1, s->version, SSL3_RT_ALERT, s->s3.send_alert,
-                            2, ssl, s->msg_callback_arg);
+                2, ssl, s->msg_callback_arg);
 
         if (s->info_callback != NULL)
             cb = s->info_callback;

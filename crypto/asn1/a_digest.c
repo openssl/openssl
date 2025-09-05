@@ -25,8 +25,8 @@
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 
-int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,
-                unsigned char *md, unsigned int *len)
+int ASN1_digest(i2d_of_void* i2d, const EVP_MD* type, char* data,
+    unsigned char* md, unsigned int* len)
 {
     int inl;
     unsigned char *str, *p;
@@ -51,13 +51,13 @@ int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,
 
 #endif
 
-int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *md, void *asn,
-                             unsigned char *data, unsigned int *len,
-                             OSSL_LIB_CTX *libctx, const char *propq)
+int ossl_asn1_item_digest_ex(const ASN1_ITEM* it, const EVP_MD* md, void* asn,
+    unsigned char* data, unsigned int* len,
+    OSSL_LIB_CTX* libctx, const char* propq)
 {
     int i, ret = 0;
-    unsigned char *str = NULL;
-    EVP_MD *fetched_md = (EVP_MD *)md;
+    unsigned char* str = NULL;
+    EVP_MD* fetched_md = (EVP_MD*)md;
 
     i = ASN1_item_i2d(asn, &str, it);
     if (i < 0 || str == NULL)
@@ -65,7 +65,7 @@ int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *md, void *asn,
 
     if (EVP_MD_get0_provider(md) == NULL) {
 #if !defined(OPENSSL_NO_ENGINE)
-        ENGINE *tmpeng = ENGINE_get_digest_engine(EVP_MD_get_type(md));
+        ENGINE* tmpeng = ENGINE_get_digest_engine(EVP_MD_get_type(md));
 
         if (tmpeng != NULL)
             ENGINE_finish(tmpeng);
@@ -84,9 +84,8 @@ err:
     return ret;
 }
 
-int ASN1_item_digest(const ASN1_ITEM *it, const EVP_MD *md, void *asn,
-                     unsigned char *data, unsigned int *len)
+int ASN1_item_digest(const ASN1_ITEM* it, const EVP_MD* md, void* asn,
+    unsigned char* data, unsigned int* len)
 {
     return ossl_asn1_item_digest_ex(it, md, asn, data, len, NULL, NULL);
 }
-

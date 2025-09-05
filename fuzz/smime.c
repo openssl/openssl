@@ -14,25 +14,25 @@
 #include <openssl/x509.h>
 #include <stdio.h>
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(int* argc, char*** argv)
 {
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+int FuzzerTestOneInput(const uint8_t* buf, size_t len)
 {
-    BIO *b = BIO_new_mem_buf(buf, (int)len);
-    PKCS7 *p7 = SMIME_read_PKCS7(b, NULL);
+    BIO* b = BIO_new_mem_buf(buf, (int)len);
+    PKCS7* p7 = SMIME_read_PKCS7(b, NULL);
 
     if (p7 != NULL) {
-        STACK_OF(PKCS7_SIGNER_INFO) *p7si = PKCS7_get_signer_info(p7);
+        STACK_OF(PKCS7_SIGNER_INFO)* p7si = PKCS7_get_signer_info(p7);
         int i;
 
         for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(p7si); i++) {
-            STACK_OF(X509_ALGOR) *algs;
+            STACK_OF(X509_ALGOR)* algs;
 
             PKCS7_cert_from_signer_info(p7,
-                                        sk_PKCS7_SIGNER_INFO_value(p7si, i));
+                sk_PKCS7_SIGNER_INFO_value(p7si, i));
             algs = PKCS7_get_smimecap(sk_PKCS7_SIGNER_INFO_value(p7si, i));
             sk_X509_ALGOR_pop_free(algs, X509_ALGOR_free);
         }

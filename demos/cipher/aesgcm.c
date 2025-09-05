@@ -64,14 +64,14 @@ static const unsigned char gcm_tag[] = {
  * algorithm implementations. If they are NULL then the default library
  * context and properties are used.
  */
-static OSSL_LIB_CTX *libctx = NULL;
-static const char *propq = NULL;
+static OSSL_LIB_CTX* libctx = NULL;
+static const char* propq = NULL;
 
 static int aes_gcm_encrypt(void)
 {
     int ret = 0;
-    EVP_CIPHER_CTX *ctx;
-    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX* ctx;
+    EVP_CIPHER* cipher = NULL;
     int outlen, tmplen;
     size_t gcm_ivlen = sizeof(gcm_iv);
     unsigned char outbuf[1024];
@@ -94,7 +94,7 @@ static int aes_gcm_encrypt(void)
 
     /* Set IV length if default 96 bits is not appropriate */
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN,
-                                            &gcm_ivlen);
+        &gcm_ivlen);
 
     /*
      * Initialise an encrypt operation with the cipher/mode, key, IV and
@@ -124,7 +124,7 @@ static int aes_gcm_encrypt(void)
 
     /* Get tag */
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-                                                  outtag, 16);
+        outtag, 16);
 
     if (!EVP_CIPHER_CTX_get_params(ctx, params))
         goto err;
@@ -147,8 +147,8 @@ err:
 static int aes_gcm_decrypt(void)
 {
     int ret = 0;
-    EVP_CIPHER_CTX *ctx;
-    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX* ctx;
+    EVP_CIPHER* cipher = NULL;
     int outlen, rv;
     size_t gcm_ivlen = sizeof(gcm_iv);
     unsigned char outbuf[1024];
@@ -169,7 +169,7 @@ static int aes_gcm_decrypt(void)
 
     /* Set IV length if default 96 bits is not appropriate */
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN,
-                                            &gcm_ivlen);
+        &gcm_ivlen);
 
     /*
      * Initialise an encrypt operation with the cipher/mode, key, IV and
@@ -192,7 +192,7 @@ static int aes_gcm_decrypt(void)
 
     /* Set expected tag value. */
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-                                                  (void*)gcm_tag, sizeof(gcm_tag));
+        (void*)gcm_tag, sizeof(gcm_tag));
 
     if (!EVP_CIPHER_CTX_set_params(ctx, params))
         goto err;
@@ -216,7 +216,7 @@ err:
     return ret;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     if (!aes_gcm_encrypt())
         return EXIT_FAILURE;

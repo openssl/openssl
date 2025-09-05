@@ -16,15 +16,15 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-                 unsigned char **ek, int *ekl, unsigned char *iv,
-                 EVP_PKEY **pubk, int npubk)
+int EVP_SealInit(EVP_CIPHER_CTX* ctx, const EVP_CIPHER* type,
+    unsigned char** ek, int* ekl, unsigned char* iv,
+    EVP_PKEY** pubk, int npubk)
 {
     unsigned char key[EVP_MAX_KEY_LENGTH];
-    const OSSL_PROVIDER *prov;
-    OSSL_LIB_CTX *libctx = NULL;
-    EVP_PKEY_CTX *pctx = NULL;
-    const EVP_CIPHER *cipher;
+    const OSSL_PROVIDER* prov;
+    OSSL_LIB_CTX* libctx = NULL;
+    EVP_PKEY_CTX* pctx = NULL;
+    const EVP_CIPHER* cipher;
     int i, len;
     int rv = 0;
 
@@ -34,7 +34,7 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
             return 0;
     }
     if ((cipher = EVP_CIPHER_CTX_get0_cipher(ctx)) != NULL
-            && (prov = EVP_CIPHER_get0_provider(cipher)) != NULL)
+        && (prov = EVP_CIPHER_get0_provider(cipher)) != NULL)
         libctx = ossl_provider_libctx(prov);
     if ((npubk <= 0) || !pubk)
         return 1;
@@ -76,7 +76,7 @@ err:
     return rv;
 }
 
-int EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+int EVP_SealFinal(EVP_CIPHER_CTX* ctx, unsigned char* out, int* outl)
 {
     int i;
     i = EVP_EncryptFinal_ex(ctx, out, outl);

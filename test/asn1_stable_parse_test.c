@@ -10,7 +10,7 @@
 #include <openssl/evp.h>
 #include "testutil.h"
 
-static char *config_file = NULL;
+static char* config_file = NULL;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -19,17 +19,16 @@ typedef enum OPTION_choice {
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
-const OPTIONS *test_get_options(void)
+const OPTIONS* test_get_options(void)
 {
     static const OPTIONS options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "config", OPT_CONFIG_FILE, '<',
-          "The configuration file to use for the libctx" },
+            "The configuration file to use for the libctx" },
         { NULL }
     };
     return options;
 }
-
 
 /*
  * Test that parsing a config file with incorrect stable settings aren't parsed
@@ -39,7 +38,7 @@ static int test_asn1_stable_parse(void)
 {
     int testret = 0;
     unsigned long errcode;
-    OSSL_LIB_CTX *newctx = OSSL_LIB_CTX_new();
+    OSSL_LIB_CTX* newctx = OSSL_LIB_CTX_new();
 
     if (!TEST_ptr(newctx))
         goto out;

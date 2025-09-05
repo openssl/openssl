@@ -40,16 +40,16 @@ static const unsigned char expected_output[] = {
 /*
  * A property query used for selecting the SIPHASH implementation.
  */
-static char *propq = NULL;
+static char* propq = NULL;
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     int ret = EXIT_FAILURE;
-    EVP_MAC *mac = NULL;
-    EVP_MAC_CTX *mctx = NULL;
+    EVP_MAC* mac = NULL;
+    EVP_MAC_CTX* mctx = NULL;
     unsigned char out[8];
     OSSL_PARAM params[4], *p = params;
-    OSSL_LIB_CTX *library_context = NULL;
+    OSSL_LIB_CTX* library_context = NULL;
     unsigned int digest_len = 8, c_rounds = 2, d_rounds = 4;
     size_t out_len = 0;
 

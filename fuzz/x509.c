@@ -15,37 +15,38 @@
 #include <openssl/rand.h>
 #include "fuzzer.h"
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(int* argc, char*** argv)
 {
     FuzzerSetRand();
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS
-       | OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
+            | OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS,
+        NULL);
     ERR_clear_error();
     CRYPTO_free_ex_index(0, -1);
     return 1;
 }
 
-static int cb(int ok, X509_STORE_CTX *ctx)
+static int cb(int ok, X509_STORE_CTX* ctx)
 {
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+int FuzzerTestOneInput(const uint8_t* buf, size_t len)
 {
-    const unsigned char *p = buf;
+    const unsigned char* p = buf;
     size_t orig_len = len;
-    unsigned char *der = NULL;
-    BIO *bio = NULL;
+    unsigned char* der = NULL;
+    BIO* bio = NULL;
     X509 *x509_1 = NULL, *x509_2 = NULL;
-    X509_STORE *store = NULL;
-    X509_VERIFY_PARAM *param = NULL;
-    X509_STORE_CTX *ctx = NULL;
-    X509_CRL *crl = NULL;
-    STACK_OF(X509_CRL) *crls = NULL;
-    STACK_OF(X509) *certs = NULL;
-    OCSP_RESPONSE *resp = NULL;
-    OCSP_BASICRESP *bs = NULL;
-    OCSP_CERTID *id = NULL;
+    X509_STORE* store = NULL;
+    X509_VERIFY_PARAM* param = NULL;
+    X509_STORE_CTX* ctx = NULL;
+    X509_CRL* crl = NULL;
+    STACK_OF(X509_CRL)* crls = NULL;
+    STACK_OF(X509)* certs = NULL;
+    OCSP_RESPONSE* resp = NULL;
+    OCSP_BASICRESP* bs = NULL;
+    OCSP_CERTID* id = NULL;
 
     x509_1 = d2i_X509(NULL, &p, (long)len);
     if (x509_1 == NULL)
@@ -130,7 +131,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         if (id == NULL)
             goto err;
         OCSP_resp_find_status(bs, id, &status, &reason, &revtime, &thisupd,
-                              &nextupd);
+            &nextupd);
     }
 
 err:

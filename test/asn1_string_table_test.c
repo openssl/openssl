@@ -17,7 +17,7 @@
 
 static int test_string_tbl(void)
 {
-    const ASN1_STRING_TABLE *tmp = NULL;
+    const ASN1_STRING_TABLE* tmp = NULL;
     int nid = 12345678, nid2 = 87654321, rv = 0, ret = 0;
 
     tmp = ASN1_STRING_TABLE_get(nid);
@@ -66,7 +66,7 @@ static int test_string_tbl(void)
     }
 
     rv = 1;
- out:
+out:
     return rv;
 }
 

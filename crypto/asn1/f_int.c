@@ -13,7 +13,7 @@
 #include <openssl/buffer.h>
 #include <openssl/asn1.h>
 
-int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
+int i2a_ASN1_INTEGER(BIO* bp, const ASN1_INTEGER* a)
 {
     int i, n = 0;
     char buf[2];
@@ -45,15 +45,15 @@ int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
         }
     }
     return n;
- err:
+err:
     return -1;
 }
 
-int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
+int a2i_ASN1_INTEGER(BIO* bp, ASN1_INTEGER* bs, char* buf, int size)
 {
     int i, j, k, m, n, again, bufsize;
     unsigned char *s = NULL, *sp;
-    unsigned char *bufp;
+    unsigned char* bufp;
     int num = 0, slen = 0, first = 1;
 
     bs->type = V_ASN1_INTEGER;
@@ -86,7 +86,7 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
         if (i < 2)
             goto err;
 
-        bufp = (unsigned char *)buf;
+        bufp = (unsigned char*)buf;
         if (first) {
             first = 0;
             if ((bufp[0] == '0') && (bufp[1] == '0')) {
@@ -131,18 +131,18 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
     bs->length = num;
     bs->data = s;
     return 1;
- err:
+err:
     ERR_raise(ERR_LIB_ASN1, ASN1_R_SHORT_LINE);
     OPENSSL_free(s);
     return 0;
 }
 
-int i2a_ASN1_ENUMERATED(BIO *bp, const ASN1_ENUMERATED *a)
+int i2a_ASN1_ENUMERATED(BIO* bp, const ASN1_ENUMERATED* a)
 {
     return i2a_ASN1_INTEGER(bp, a);
 }
 
-int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
+int a2i_ASN1_ENUMERATED(BIO* bp, ASN1_ENUMERATED* bs, char* buf, int size)
 {
     int rv = a2i_ASN1_INTEGER(bp, bs, buf, size);
     if (rv == 1)

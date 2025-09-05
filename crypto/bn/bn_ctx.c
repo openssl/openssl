@@ -12,9 +12,9 @@
 #include "bn_local.h"
 
 /* How many bignums are in each "pool item"; */
-#define BN_CTX_POOL_SIZE        16
+#define BN_CTX_POOL_SIZE 16
 /* The stack frame info is resizing, set a first-time expansion size; */
-#define BN_CTX_START_FRAMES     32
+#define BN_CTX_START_FRAMES 32
 
 /***********/
 /* BN_POOL */
@@ -34,10 +34,10 @@ typedef struct bignum_pool {
     /* Stack depth and allocation size */
     unsigned used, size;
 } BN_POOL;
-static void BN_POOL_init(BN_POOL *);
-static void BN_POOL_finish(BN_POOL *);
-static BIGNUM *BN_POOL_get(BN_POOL *, int);
-static void BN_POOL_release(BN_POOL *, unsigned int);
+static void BN_POOL_init(BN_POOL*);
+static void BN_POOL_finish(BN_POOL*);
+static BIGNUM* BN_POOL_get(BN_POOL*, int);
+static void BN_POOL_release(BN_POOL*, unsigned int);
 
 /************/
 /* BN_STACK */
@@ -46,14 +46,14 @@ static void BN_POOL_release(BN_POOL *, unsigned int);
 /* A wrapper to manage the "stack frames" */
 typedef struct bignum_ctx_stack {
     /* Array of indexes into the bignum stack */
-    unsigned int *indexes;
+    unsigned int* indexes;
     /* Number of stack frames, and the size of the allocated array */
     unsigned int depth, size;
 } BN_STACK;
-static void BN_STACK_init(BN_STACK *);
-static void BN_STACK_finish(BN_STACK *);
-static int BN_STACK_push(BN_STACK *, unsigned int);
-static unsigned int BN_STACK_pop(BN_STACK *);
+static void BN_STACK_init(BN_STACK*);
+static void BN_STACK_finish(BN_STACK*);
+static int BN_STACK_push(BN_STACK*, unsigned int);
+static unsigned int BN_STACK_pop(BN_STACK*);
 
 /**********/
 /* BN_CTX */
@@ -74,22 +74,22 @@ struct bignum_ctx {
     /* Flags. */
     int flags;
     /* The library context */
-    OSSL_LIB_CTX *libctx;
+    OSSL_LIB_CTX* libctx;
 };
 
 #ifndef FIPS_MODULE
 /* Debugging functionality */
-static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
+static void ctxdbg(BIO* channel, const char* text, BN_CTX* ctx)
 {
     unsigned int bnidx = 0, fpidx = 0;
-    BN_POOL_ITEM *item = ctx->pool.head;
-    BN_STACK *stack = &ctx->stack;
+    BN_POOL_ITEM* item = ctx->pool.head;
+    BN_STACK* stack = &ctx->stack;
 
     BIO_printf(channel, "%s\n", text);
     BIO_printf(channel, "  (%16p): ", (void*)ctx);
     while (bnidx < ctx->used) {
         BIO_printf(channel, "%03x ",
-                   item->vals[bnidx++ % BN_CTX_POOL_SIZE].dmax);
+            item->vals[bnidx++ % BN_CTX_POOL_SIZE].dmax);
         if (!(bnidx % BN_CTX_POOL_SIZE))
             item = item->next;
     }
@@ -106,18 +106,22 @@ static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
     BIO_printf(channel, "\n");
 }
 
-# define CTXDBG(str, ctx)           \
-    OSSL_TRACE_BEGIN(BN_CTX) {      \
-        ctxdbg(trc_out, str, ctx);  \
-    } OSSL_TRACE_END(BN_CTX)
+#define CTXDBG(str, ctx)           \
+    OSSL_TRACE_BEGIN(BN_CTX)       \
+    {                              \
+        ctxdbg(trc_out, str, ctx); \
+    }                              \
+    OSSL_TRACE_END(BN_CTX)
 #else
 /* We do not want tracing in FIPS module */
-# define CTXDBG(str, ctx) do {} while(0)
+#define CTXDBG(str, ctx) \
+    do {                 \
+    } while (0)
 #endif /* FIPS_MODULE */
 
-BN_CTX *BN_CTX_new_ex(OSSL_LIB_CTX *ctx)
+BN_CTX* BN_CTX_new_ex(OSSL_LIB_CTX* ctx)
 {
-    BN_CTX *ret;
+    BN_CTX* ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return NULL;
@@ -129,15 +133,15 @@ BN_CTX *BN_CTX_new_ex(OSSL_LIB_CTX *ctx)
 }
 
 #ifndef FIPS_MODULE
-BN_CTX *BN_CTX_new(void)
+BN_CTX* BN_CTX_new(void)
 {
     return BN_CTX_new_ex(NULL);
 }
 #endif
 
-BN_CTX *BN_CTX_secure_new_ex(OSSL_LIB_CTX *ctx)
+BN_CTX* BN_CTX_secure_new_ex(OSSL_LIB_CTX* ctx)
 {
-    BN_CTX *ret = BN_CTX_new_ex(ctx);
+    BN_CTX* ret = BN_CTX_new_ex(ctx);
 
     if (ret != NULL)
         ret->flags = BN_FLG_SECURE;
@@ -145,22 +149,23 @@ BN_CTX *BN_CTX_secure_new_ex(OSSL_LIB_CTX *ctx)
 }
 
 #ifndef FIPS_MODULE
-BN_CTX *BN_CTX_secure_new(void)
+BN_CTX* BN_CTX_secure_new(void)
 {
     return BN_CTX_secure_new_ex(NULL);
 }
 #endif
 
-void BN_CTX_free(BN_CTX *ctx)
+void BN_CTX_free(BN_CTX* ctx)
 {
     if (ctx == NULL)
         return;
 #ifndef FIPS_MODULE
-    OSSL_TRACE_BEGIN(BN_CTX) {
-        BN_POOL_ITEM *pool = ctx->pool.head;
+    OSSL_TRACE_BEGIN(BN_CTX)
+    {
+        BN_POOL_ITEM* pool = ctx->pool.head;
         BIO_printf(trc_out,
-                   "BN_CTX_free(): stack-size=%d, pool-bignums=%d\n",
-                   ctx->stack.size, ctx->pool.size);
+            "BN_CTX_free(): stack-size=%d, pool-bignums=%d\n",
+            ctx->stack.size, ctx->pool.size);
         BIO_printf(trc_out, "  dmaxs: ");
         while (pool) {
             unsigned loop = 0;
@@ -169,14 +174,15 @@ void BN_CTX_free(BN_CTX *ctx)
             pool = pool->next;
         }
         BIO_printf(trc_out, "\n");
-    } OSSL_TRACE_END(BN_CTX);
+    }
+    OSSL_TRACE_END(BN_CTX);
 #endif
     BN_STACK_finish(&ctx->stack);
     BN_POOL_finish(&ctx->pool);
     OPENSSL_free(ctx);
 }
 
-void BN_CTX_start(BN_CTX *ctx)
+void BN_CTX_start(BN_CTX* ctx)
 {
     CTXDBG("ENTER BN_CTX_start()", ctx);
     /* If we're already overflowing ... */
@@ -190,7 +196,7 @@ void BN_CTX_start(BN_CTX *ctx)
     CTXDBG("LEAVE BN_CTX_start()", ctx);
 }
 
-void BN_CTX_end(BN_CTX *ctx)
+void BN_CTX_end(BN_CTX* ctx)
 {
     if (ctx == NULL)
         return;
@@ -209,9 +215,9 @@ void BN_CTX_end(BN_CTX *ctx)
     CTXDBG("LEAVE BN_CTX_end()", ctx);
 }
 
-BIGNUM *BN_CTX_get(BN_CTX *ctx)
+BIGNUM* BN_CTX_get(BN_CTX* ctx)
 {
-    BIGNUM *ret;
+    BIGNUM* ret;
 
     CTXDBG("ENTER BN_CTX_get()", ctx);
     if (ctx->err_stack || ctx->too_many)
@@ -234,7 +240,7 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
     return ret;
 }
 
-OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx)
+OSSL_LIB_CTX* ossl_bn_get_libctx(BN_CTX* ctx)
 {
     if (ctx == NULL)
         return NULL;
@@ -245,26 +251,24 @@ OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx)
 /* BN_STACK */
 /************/
 
-static void BN_STACK_init(BN_STACK *st)
+static void BN_STACK_init(BN_STACK* st)
 {
     st->indexes = NULL;
     st->depth = st->size = 0;
 }
 
-static void BN_STACK_finish(BN_STACK *st)
+static void BN_STACK_finish(BN_STACK* st)
 {
     OPENSSL_free(st->indexes);
     st->indexes = NULL;
 }
 
-
-static int BN_STACK_push(BN_STACK *st, unsigned int idx)
+static int BN_STACK_push(BN_STACK* st, unsigned int idx)
 {
     if (st->depth == st->size) {
         /* Need to expand */
-        unsigned int newsize =
-            st->size ? (st->size * 3 / 2) : BN_CTX_START_FRAMES;
-        unsigned int *newitems;
+        unsigned int newsize = st->size ? (st->size * 3 / 2) : BN_CTX_START_FRAMES;
+        unsigned int* newitems;
 
         if ((newitems = OPENSSL_malloc_array(newsize, sizeof(*newitems))) == NULL)
             return 0;
@@ -278,7 +282,7 @@ static int BN_STACK_push(BN_STACK *st, unsigned int idx)
     return 1;
 }
 
-static unsigned int BN_STACK_pop(BN_STACK *st)
+static unsigned int BN_STACK_pop(BN_STACK* st)
 {
     return st->indexes[--(st->depth)];
 }
@@ -287,16 +291,16 @@ static unsigned int BN_STACK_pop(BN_STACK *st)
 /* BN_POOL */
 /***********/
 
-static void BN_POOL_init(BN_POOL *p)
+static void BN_POOL_init(BN_POOL* p)
 {
     p->head = p->current = p->tail = NULL;
     p->used = p->size = 0;
 }
 
-static void BN_POOL_finish(BN_POOL *p)
+static void BN_POOL_finish(BN_POOL* p)
 {
     unsigned int loop;
-    BIGNUM *bn;
+    BIGNUM* bn;
 
     while (p->head) {
         for (loop = 0, bn = p->head->vals; loop++ < BN_CTX_POOL_SIZE; bn++)
@@ -308,15 +312,14 @@ static void BN_POOL_finish(BN_POOL *p)
     }
 }
 
-
-static BIGNUM *BN_POOL_get(BN_POOL *p, int flag)
+static BIGNUM* BN_POOL_get(BN_POOL* p, int flag)
 {
-    BIGNUM *bn;
+    BIGNUM* bn;
     unsigned int loop;
 
     /* Full; allocate a new pool item and link it in. */
     if (p->used == p->size) {
-        BN_POOL_ITEM *item;
+        BN_POOL_ITEM* item;
 
         if ((item = OPENSSL_malloc(sizeof(*item))) == NULL)
             return NULL;
@@ -348,7 +351,7 @@ static BIGNUM *BN_POOL_get(BN_POOL *p, int flag)
     return p->current->vals + ((p->used++) % BN_CTX_POOL_SIZE);
 }
 
-static void BN_POOL_release(BN_POOL *p, unsigned int num)
+static void BN_POOL_release(BN_POOL* p, unsigned int num)
 {
     unsigned int offset = (p->used - 1) % BN_CTX_POOL_SIZE;
 

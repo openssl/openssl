@@ -11,14 +11,14 @@
 #include "internal/cryptlib.h"
 #include <openssl/x509.h>
 
-int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey)
+int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI* x, EVP_PKEY* pkey)
 {
     if ((x == NULL) || (x->spkac == NULL))
         return 0;
     return X509_PUBKEY_set(&(x->spkac->pubkey), pkey);
 }
 
-EVP_PKEY *NETSCAPE_SPKI_get_pubkey(NETSCAPE_SPKI *x)
+EVP_PKEY* NETSCAPE_SPKI_get_pubkey(NETSCAPE_SPKI* x)
 {
     if ((x == NULL) || (x->spkac == NULL))
         return NULL;
@@ -27,17 +27,17 @@ EVP_PKEY *NETSCAPE_SPKI_get_pubkey(NETSCAPE_SPKI *x)
 
 /* Load a Netscape SPKI from a base64 encoded string */
 
-NETSCAPE_SPKI *NETSCAPE_SPKI_b64_decode(const char *str, int len)
+NETSCAPE_SPKI* NETSCAPE_SPKI_b64_decode(const char* str, int len)
 {
-    unsigned char *spki_der;
-    const unsigned char *p;
+    unsigned char* spki_der;
+    const unsigned char* p;
     int spki_len;
-    NETSCAPE_SPKI *spki;
+    NETSCAPE_SPKI* spki;
     if (len <= 0)
         len = (int)strlen(str);
     if ((spki_der = OPENSSL_malloc(len + 1)) == NULL)
         return NULL;
-    spki_len = EVP_DecodeBlock(spki_der, (const unsigned char *)str, len);
+    spki_len = EVP_DecodeBlock(spki_der, (const unsigned char*)str, len);
     if (spki_len < 0) {
         ERR_raise(ERR_LIB_X509, X509_R_BASE64_DECODE_ERROR);
         OPENSSL_free(spki_der);
@@ -51,10 +51,10 @@ NETSCAPE_SPKI *NETSCAPE_SPKI_b64_decode(const char *str, int len)
 
 /* Generate a base64 encoded string from an SPKI */
 
-char *NETSCAPE_SPKI_b64_encode(NETSCAPE_SPKI *spki)
+char* NETSCAPE_SPKI_b64_encode(NETSCAPE_SPKI* spki)
 {
     unsigned char *der_spki, *p;
-    char *b64_str;
+    char* b64_str;
     int der_len;
 
     der_len = i2d_NETSCAPE_SPKI(spki, NULL);
@@ -69,7 +69,7 @@ char *NETSCAPE_SPKI_b64_encode(NETSCAPE_SPKI *spki)
     }
     p = der_spki;
     i2d_NETSCAPE_SPKI(spki, &p);
-    EVP_EncodeBlock((unsigned char *)b64_str, der_spki, der_len);
+    EVP_EncodeBlock((unsigned char*)b64_str, der_spki, der_len);
     OPENSSL_free(der_spki);
     return b64_str;
 }

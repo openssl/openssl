@@ -10,9 +10,9 @@
 #include "dso_local.h"
 #include "internal/refcount.h"
 
-static DSO *DSO_new_method(DSO_METHOD *meth)
+static DSO* DSO_new_method(DSO_METHOD* meth)
 {
-    DSO *ret;
+    DSO* ret;
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL)
@@ -39,12 +39,12 @@ static DSO *DSO_new_method(DSO_METHOD *meth)
     return ret;
 }
 
-DSO *DSO_new(void)
+DSO* DSO_new(void)
 {
     return DSO_new_method(NULL);
 }
 
-int DSO_free(DSO *dso)
+int DSO_free(DSO* dso)
 {
     int i;
 
@@ -79,12 +79,12 @@ int DSO_free(DSO *dso)
     return 1;
 }
 
-int DSO_flags(DSO *dso)
+int DSO_flags(DSO* dso)
 {
     return ((dso == NULL) ? 0 : dso->flags);
 }
 
-int DSO_up_ref(DSO *dso)
+int DSO_up_ref(DSO* dso)
 {
     int i;
 
@@ -101,9 +101,9 @@ int DSO_up_ref(DSO *dso)
     return ((i > 1) ? 1 : 0);
 }
 
-DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags)
+DSO* DSO_load(DSO* dso, const char* filename, DSO_METHOD* meth, int flags)
 {
-    DSO *ret;
+    DSO* ret;
     int allocated = 0;
 
     if (dso == NULL) {
@@ -149,13 +149,13 @@ DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags)
     }
     /* Load succeeded */
     return ret;
- err:
+err:
     if (allocated)
         DSO_free(ret);
     return NULL;
 }
 
-DSO_FUNC_TYPE DSO_bind_func(DSO *dso, const char *symname)
+DSO_FUNC_TYPE DSO_bind_func(DSO* dso, const char* symname)
 {
     DSO_FUNC_TYPE ret = NULL;
 
@@ -184,7 +184,7 @@ DSO_FUNC_TYPE DSO_bind_func(DSO *dso, const char *symname)
  * times. I'd prefer "output" values to be passed by reference and the return
  * value as success/failure like usual ... but we conform when we must... :-)
  */
-long DSO_ctrl(DSO *dso, int cmd, long larg, void *parg)
+long DSO_ctrl(DSO* dso, int cmd, long larg, void* parg)
 {
     if (dso == NULL) {
         ERR_raise(ERR_LIB_DSO, ERR_R_PASSED_NULL_PARAMETER);
@@ -213,7 +213,7 @@ long DSO_ctrl(DSO *dso, int cmd, long larg, void *parg)
     return dso->meth->dso_ctrl(dso, cmd, larg, parg);
 }
 
-const char *DSO_get_filename(DSO *dso)
+const char* DSO_get_filename(DSO* dso)
 {
     if (dso == NULL) {
         ERR_raise(ERR_LIB_DSO, ERR_R_PASSED_NULL_PARAMETER);
@@ -222,9 +222,9 @@ const char *DSO_get_filename(DSO *dso)
     return dso->filename;
 }
 
-int DSO_set_filename(DSO *dso, const char *filename)
+int DSO_set_filename(DSO* dso, const char* filename)
 {
-    char *copied;
+    char* copied;
 
     if ((dso == NULL) || (filename == NULL)) {
         ERR_raise(ERR_LIB_DSO, ERR_R_PASSED_NULL_PARAMETER);
@@ -243,9 +243,9 @@ int DSO_set_filename(DSO *dso, const char *filename)
     return 1;
 }
 
-char *DSO_merge(DSO *dso, const char *filespec1, const char *filespec2)
+char* DSO_merge(DSO* dso, const char* filespec1, const char* filespec2)
 {
-    char *result = NULL;
+    char* result = NULL;
 
     if (dso == NULL || filespec1 == NULL) {
         ERR_raise(ERR_LIB_DSO, ERR_R_PASSED_NULL_PARAMETER);
@@ -260,9 +260,9 @@ char *DSO_merge(DSO *dso, const char *filespec1, const char *filespec2)
     return result;
 }
 
-char *DSO_convert_filename(DSO *dso, const char *filename)
+char* DSO_convert_filename(DSO* dso, const char* filename)
 {
-    char *result = NULL;
+    char* result = NULL;
 
     if (dso == NULL) {
         ERR_raise(ERR_LIB_DSO, ERR_R_PASSED_NULL_PARAMETER);
@@ -288,21 +288,21 @@ char *DSO_convert_filename(DSO *dso, const char *filename)
     return result;
 }
 
-int DSO_pathbyaddr(void *addr, char *path, int sz)
+int DSO_pathbyaddr(void* addr, char* path, int sz)
 {
-    DSO_METHOD *meth = DSO_METHOD_openssl();
+    DSO_METHOD* meth = DSO_METHOD_openssl();
 
     if (meth->pathbyaddr == NULL) {
         ERR_raise(ERR_LIB_DSO, DSO_R_UNSUPPORTED);
         return -1;
     }
-    return (*meth->pathbyaddr) (addr, path, sz);
+    return (*meth->pathbyaddr)(addr, path, sz);
 }
 
-DSO *DSO_dsobyaddr(void *addr, int flags)
+DSO* DSO_dsobyaddr(void* addr, int flags)
 {
-    DSO *ret = NULL;
-    char *filename = NULL;
+    DSO* ret = NULL;
+    char* filename = NULL;
     int len = DSO_pathbyaddr(addr, NULL, 0);
 
     if (len < 0)
@@ -310,20 +310,20 @@ DSO *DSO_dsobyaddr(void *addr, int flags)
 
     filename = OPENSSL_malloc(len);
     if (filename != NULL
-            && DSO_pathbyaddr(addr, filename, len) == len)
+        && DSO_pathbyaddr(addr, filename, len) == len)
         ret = DSO_load(NULL, filename, NULL, flags);
 
     OPENSSL_free(filename);
     return ret;
 }
 
-void *DSO_global_lookup(const char *name)
+void* DSO_global_lookup(const char* name)
 {
-    DSO_METHOD *meth = DSO_METHOD_openssl();
+    DSO_METHOD* meth = DSO_METHOD_openssl();
 
     if (meth->globallookup == NULL) {
         ERR_raise(ERR_LIB_DSO, DSO_R_UNSUPPORTED);
         return NULL;
     }
-    return (*meth->globallookup) (name);
+    return (*meth->globallookup)(name);
 }

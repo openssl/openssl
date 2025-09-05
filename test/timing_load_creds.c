@@ -13,35 +13,35 @@
 #include <openssl/e_os2.h>
 
 #ifdef OPENSSL_SYS_UNIX
-# include <sys/stat.h>
-# include <sys/resource.h>
-# include <openssl/pem.h>
-# include <openssl/x509.h>
-# include <openssl/err.h>
-# include <openssl/bio.h>
-# include "internal/e_os.h"
-# if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
+#include <sys/stat.h>
+#include <sys/resource.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
+#include <openssl/err.h>
+#include <openssl/bio.h>
+#include "internal/e_os.h"
+#if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
 
-# ifndef timersub
+#ifndef timersub
 /* struct timeval * subtraction; a must be greater than or equal to b */
-#  define timersub(a, b, res)                                         \
-     do {                                                             \
-         (res)->tv_sec = (a)->tv_sec - (b)->tv_sec;                   \
-         if ((a)->tv_usec < (b)->tv_usec) {                           \
-             (res)->tv_usec = (a)->tv_usec + 1000000 - (b)->tv_usec;  \
-             --(res)->tv_sec;                                         \
-         } else {                                                     \
-             (res)->tv_usec = (a)->tv_usec - (b)->tv_usec;            \
-         }                                                            \
-     } while(0)
-# endif
+#define timersub(a, b, res)                                         \
+    do {                                                            \
+        (res)->tv_sec = (a)->tv_sec - (b)->tv_sec;                  \
+        if ((a)->tv_usec < (b)->tv_usec) {                          \
+            (res)->tv_usec = (a)->tv_usec + 1000000 - (b)->tv_usec; \
+            --(res)->tv_sec;                                        \
+        } else {                                                    \
+            (res)->tv_usec = (a)->tv_usec - (b)->tv_usec;           \
+        }                                                           \
+    } while (0)
+#endif
 
-static char *prog;
+static char* prog;
 
-static void readx509(const char *contents, int size)
+static void readx509(const char* contents, int size)
 {
-    X509 *x = NULL;
-    BIO *b = BIO_new_mem_buf(contents, size);
+    X509* x = NULL;
+    BIO* b = BIO_new_mem_buf(contents, size);
 
     if (b == NULL) {
         ERR_print_errors_fp(stderr);
@@ -56,10 +56,10 @@ static void readx509(const char *contents, int size)
     BIO_free(b);
 }
 
-static void readpkey(const char *contents, int size)
+static void readpkey(const char* contents, int size)
 {
-    BIO *b = BIO_new_mem_buf(contents, size);
-    EVP_PKEY *pkey;
+    BIO* b = BIO_new_mem_buf(contents, size);
+    EVP_PKEY* pkey;
 
     if (b == NULL) {
         ERR_print_errors_fp(stderr);
@@ -75,7 +75,7 @@ static void readpkey(const char *contents, int size)
     BIO_free(b);
 }
 
-static void print_timeval(const char *what, struct timeval *tp)
+static void print_timeval(const char* what, struct timeval* tp)
 {
     printf("%s %d sec %d microsec\n", what, (int)tp->tv_sec, (int)tp->tv_usec);
 }
@@ -91,16 +91,16 @@ static void usage(void)
     fprintf(stderr, "          p for private key\n");
     exit(EXIT_FAILURE);
 }
-# endif
+#endif
 #endif
 
-int main(int ac, char **av)
+int main(int ac, char** av)
 {
 #if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
     int i, debug = 0, count = 100, what = 'c';
     struct stat sb;
-    FILE *fp;
-    char *contents;
+    FILE* fp;
+    char* contents;
     struct rusage start, end, elapsed;
     struct timeval e_start, e_end, e_elapsed;
 
@@ -215,7 +215,7 @@ int main(int ac, char **av)
     return EXIT_SUCCESS;
 #else
     fprintf(stderr,
-            "This tool is not supported on this platform for lack of POSIX1.2001 support\n");
+        "This tool is not supported on this platform for lack of POSIX1.2001 support\n");
     exit(EXIT_FAILURE);
 #endif
 }

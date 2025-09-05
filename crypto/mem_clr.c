@@ -15,11 +15,11 @@
  * the pointer and can't assume that it points to any function in
  * particular (such as memset, which it then might further "optimize")
  */
-typedef void *(*memset_t)(void *, int, size_t);
+typedef void* (*memset_t)(void*, int, size_t);
 
 static volatile memset_t memset_func = memset;
 
-void OPENSSL_cleanse(void *ptr, size_t len)
+void OPENSSL_cleanse(void* ptr, size_t len)
 {
     memset_func(ptr, 0, len);
 }

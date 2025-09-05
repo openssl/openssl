@@ -17,8 +17,8 @@
  * simply calls back into this code when poll()/etc. indicates it is ready.
  */
 typedef struct app_conn_st {
-    SSL *ssl;
-    BIO *ssl_bio;
+    SSL* ssl;
+    BIO* ssl_bio;
     int rx_need_tx, tx_need_rx;
 } APP_CONN;
 
@@ -28,9 +28,9 @@ typedef struct app_conn_st {
  * new_conn. The application may also call this function multiple times to
  * create multiple SSL_CTX.
  */
-SSL_CTX *create_ssl_ctx(void)
+SSL_CTX* create_ssl_ctx(void)
 {
-    SSL_CTX *ctx;
+    SSL_CTX* ctx;
 
 #ifdef USE_QUIC
     ctx = SSL_CTX_new(OSSL_QUIC_client_thread_method());
@@ -58,14 +58,14 @@ SSL_CTX *create_ssl_ctx(void)
  *
  * hostname is a string like "openssl.org:443" or "[::1]:443".
  */
-APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
+APP_CONN* new_conn(SSL_CTX* ctx, const char* hostname)
 {
-    APP_CONN *conn;
+    APP_CONN* conn;
     BIO *out, *buf;
-    SSL *ssl = NULL;
-    const char *bare_hostname;
+    SSL* ssl = NULL;
+    const char* bare_hostname;
 #ifdef USE_QUIC
-    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+    static const unsigned char alpn[] = { 5, 'd', 'u', 'm', 'm', 'y' };
 #endif
 
     conn = calloc(1, sizeof(APP_CONN));
@@ -137,7 +137,7 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
  * Returns -1 on error. Returns -2 if the function would block (corresponds to
  * EWOULDBLOCK).
  */
-int tx(APP_CONN *conn, const void *buf, int buf_len)
+int tx(APP_CONN* conn, const void* buf, int buf_len)
 {
     int l;
 
@@ -162,7 +162,7 @@ int tx(APP_CONN *conn, const void *buf, int buf_len)
  * Returns -1 on error. Returns -2 if the function would block (corresponds to
  * EWOULDBLOCK).
  */
-int rx(APP_CONN *conn, void *buf, int buf_len)
+int rx(APP_CONN* conn, void* buf, int buf_len)
 {
     int l;
 
@@ -185,7 +185,7 @@ int rx(APP_CONN *conn, void *buf, int buf_len)
  * The application wants to know a fd it can poll on to determine when the
  * SSL state machine needs to be pumped.
  */
-int get_conn_fd(APP_CONN *conn)
+int get_conn_fd(APP_CONN* conn)
 {
 #ifdef USE_QUIC
     BIO_POLL_DESCRIPTOR d;
@@ -212,18 +212,18 @@ int get_conn_fd(APP_CONN *conn)
  * progress and get_conn_pending_rx returns events which may cause SSL_read
  * to make progress.
  */
-int get_conn_pending_tx(APP_CONN *conn)
+int get_conn_pending_tx(APP_CONN* conn)
 {
 #ifdef USE_QUIC
     return (SSL_net_read_desired(conn->ssl) ? POLLIN : 0)
-           | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
-           | POLLERR;
+        | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
+        | POLLERR;
 #else
     return (conn->tx_need_rx ? POLLIN : 0) | POLLOUT | POLLERR;
 #endif
 }
 
-int get_conn_pending_rx(APP_CONN *conn)
+int get_conn_pending_rx(APP_CONN* conn)
 {
 #ifdef USE_QUIC
     return get_conn_pending_tx(conn);
@@ -236,7 +236,7 @@ int get_conn_pending_rx(APP_CONN *conn)
  * The application wants to close the connection and free bookkeeping
  * structures.
  */
-void teardown(APP_CONN *conn)
+void teardown(APP_CONN* conn)
 {
     BIO_free_all(conn->ssl_bio);
     free(conn);
@@ -246,7 +246,7 @@ void teardown(APP_CONN *conn)
  * The application is shutting down and wants to free a previously
  * created SSL_CTX.
  */
-void teardown_ctx(SSL_CTX *ctx)
+void teardown_ctx(SSL_CTX* ctx)
 {
     SSL_CTX_free(ctx);
 }
@@ -256,15 +256,15 @@ void teardown_ctx(SSL_CTX *ctx)
  * Example driver for the above code. This is just to demonstrate that the code
  * works and is not intended to be representative of a real application.
  */
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     static char tx_msg[384], host_port[300];
-    const char *tx_p = tx_msg;
+    const char* tx_p = tx_msg;
     char rx_buf[2048];
     int res = 1, l, tx_len;
     int timeout = 2000 /* ms */;
-    APP_CONN *conn = NULL;
-    SSL_CTX *ctx = NULL;
+    APP_CONN* conn = NULL;
+    SSL_CTX* ctx = NULL;
 
     if (argc < 3) {
         fprintf(stderr, "usage: %s host port\n", argv[0]);
@@ -273,7 +273,7 @@ int main(int argc, char **argv)
 
     snprintf(host_port, sizeof(host_port), "%s:%s", argv[1], argv[2]);
     tx_len = snprintf(tx_msg, sizeof(tx_msg),
-                      "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
+        "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {
@@ -296,7 +296,7 @@ int main(int argc, char **argv)
         } else if (l == -1) {
             fprintf(stderr, "tx error\n");
         } else if (l == -2) {
-            struct pollfd pfd = {0};
+            struct pollfd pfd = { 0 };
             pfd.fd = get_conn_fd(conn);
             pfd.events = get_conn_pending_tx(conn);
             if (poll(&pfd, 1, timeout) == 0) {
@@ -314,7 +314,7 @@ int main(int argc, char **argv)
         } else if (l == -1) {
             break;
         } else if (l == -2) {
-            struct pollfd pfd = {0};
+            struct pollfd pfd = { 0 };
             pfd.fd = get_conn_fd(conn);
             pfd.events = get_conn_pending_rx(conn);
             if (poll(&pfd, 1, timeout) == 0) {

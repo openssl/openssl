@@ -14,12 +14,12 @@
 #include <openssl/rand.h>
 #include <openssl/conf.h>
 
-static char *save_rand_file;
-static STACK_OF(OPENSSL_STRING) *randfiles;
+static char* save_rand_file;
+static STACK_OF(OPENSSL_STRING)* randfiles;
 
-void app_RAND_load_conf(CONF *c, const char *section)
+void app_RAND_load_conf(CONF* c, const char* section)
 {
-    const char *randfile = app_conf_try_string(c, section, "RANDFILE");
+    const char* randfile = app_conf_try_string(c, section, "RANDFILE");
 
     if (randfile == NULL)
         return;
@@ -37,9 +37,9 @@ void app_RAND_load_conf(CONF *c, const char *section)
     }
 }
 
-static int loadfiles(char *name)
+static int loadfiles(char* name)
 {
-    char *p;
+    char* p;
     int last, ret = 1;
 
     for (;;) {
@@ -65,7 +65,7 @@ static int loadfiles(char *name)
 
 int app_RAND_load(void)
 {
-    char *p;
+    char* p;
     int i, ret = 1;
 
     for (i = 0; i < sk_OPENSSL_STRING_num(randfiles); i++) {
@@ -89,10 +89,9 @@ int app_RAND_write(void)
         ret = 0;
     }
     OPENSSL_free(save_rand_file);
-    save_rand_file =  NULL;
+    save_rand_file = NULL;
     return ret;
 }
-
 
 /*
  * See comments in opt_verify for explanation of this.
@@ -107,7 +106,7 @@ int opt_rand(int opt)
         break;
     case OPT_R_RAND:
         if (randfiles == NULL
-                && (randfiles = sk_OPENSSL_STRING_new_null()) == NULL)
+            && (randfiles = sk_OPENSSL_STRING_new_null()) == NULL)
             return 0;
         if (!sk_OPENSSL_STRING_push(randfiles, opt_arg()))
             return 0;

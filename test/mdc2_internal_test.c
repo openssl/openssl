@@ -23,10 +23,9 @@
 #include "internal/nelem.h"
 
 typedef struct {
-    const char *input;
+    const char* input;
     const unsigned char expected[MDC2_DIGEST_LENGTH];
 } TESTDATA;
-
 
 /**********************************************************************
  *
@@ -35,13 +34,9 @@ typedef struct {
  ***/
 
 static TESTDATA tests[] = {
-    {
-        "Now is the time for all ",
-        {
-            0x42, 0xE5, 0x0C, 0xD2, 0x24, 0xBA, 0xCE, 0xBA,
-            0x76, 0x0B, 0xDD, 0x2B, 0xD4, 0x09, 0x28, 0x1A
-        }
-    }
+    { "Now is the time for all ",
+        { 0x42, 0xE5, 0x0C, 0xD2, 0x24, 0xBA, 0xCE, 0xBA,
+            0x76, 0x0B, 0xDD, 0x2B, 0xD4, 0x09, 0x28, 0x1A } }
 };
 
 /**********************************************************************
@@ -57,12 +52,12 @@ static int test_mdc2(int idx)
     const TESTDATA testdata = tests[idx];
 
     MDC2_Init(&c);
-    MDC2_Update(&c, (const unsigned char *)testdata.input,
-                strlen(testdata.input));
+    MDC2_Update(&c, (const unsigned char*)testdata.input,
+        strlen(testdata.input));
     MDC2_Final(&(md[0]), &c);
 
     if (!TEST_mem_eq(testdata.expected, MDC2_DIGEST_LENGTH,
-                     md, MDC2_DIGEST_LENGTH)) {
+            md, MDC2_DIGEST_LENGTH)) {
         TEST_info("mdc2 test %d: unexpected output", idx);
         return 0;
     }

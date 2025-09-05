@@ -23,9 +23,9 @@
  */
 /* #define ENGINE_PKEY_ASN1_METH_DEBUG */
 
-static ENGINE_TABLE *pkey_asn1_meth_table = NULL;
+static ENGINE_TABLE* pkey_asn1_meth_table = NULL;
 
-void ENGINE_unregister_pkey_asn1_meths(ENGINE *e)
+void ENGINE_unregister_pkey_asn1_meths(ENGINE* e)
 {
     engine_table_unregister(&pkey_asn1_meth_table, e);
 }
@@ -35,36 +35,36 @@ static void engine_unregister_all_pkey_asn1_meths(void)
     engine_table_cleanup(&pkey_asn1_meth_table);
 }
 
-int ENGINE_register_pkey_asn1_meths(ENGINE *e)
+int ENGINE_register_pkey_asn1_meths(ENGINE* e)
 {
     if (e->pkey_asn1_meths) {
-        const int *nids;
+        const int* nids;
         int num_nids = e->pkey_asn1_meths(e, NULL, &nids, 0);
         if (num_nids > 0)
             return engine_table_register(&pkey_asn1_meth_table,
-                                         engine_unregister_all_pkey_asn1_meths,
-                                         e, nids, num_nids, 0);
+                engine_unregister_all_pkey_asn1_meths,
+                e, nids, num_nids, 0);
     }
     return 1;
 }
 
 void ENGINE_register_all_pkey_asn1_meths(void)
 {
-    ENGINE *e;
+    ENGINE* e;
 
     for (e = ENGINE_get_first(); e; e = ENGINE_get_next(e))
         ENGINE_register_pkey_asn1_meths(e);
 }
 
-int ENGINE_set_default_pkey_asn1_meths(ENGINE *e)
+int ENGINE_set_default_pkey_asn1_meths(ENGINE* e)
 {
     if (e->pkey_asn1_meths) {
-        const int *nids;
+        const int* nids;
         int num_nids = e->pkey_asn1_meths(e, NULL, &nids, 0);
         if (num_nids > 0)
             return engine_table_register(&pkey_asn1_meth_table,
-                                         engine_unregister_all_pkey_asn1_meths,
-                                         e, nids, num_nids, 1);
+                engine_unregister_all_pkey_asn1_meths,
+                e, nids, num_nids, 1);
     }
     return 1;
 }
@@ -74,19 +74,19 @@ int ENGINE_set_default_pkey_asn1_meths(ENGINE *e)
  * table (ie. try to get a functional reference from the tabled structural
  * references) for a given pkey_asn1_meth 'nid'
  */
-ENGINE *ENGINE_get_pkey_asn1_meth_engine(int nid)
+ENGINE* ENGINE_get_pkey_asn1_meth_engine(int nid)
 {
     return ossl_engine_table_select(&pkey_asn1_meth_table, nid,
-                                    OPENSSL_FILE, OPENSSL_LINE);
+        OPENSSL_FILE, OPENSSL_LINE);
 }
 
 /*
  * Obtains a pkey_asn1_meth implementation from an ENGINE functional
  * reference
  */
-const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth(ENGINE *e, int nid)
+const EVP_PKEY_ASN1_METHOD* ENGINE_get_pkey_asn1_meth(ENGINE* e, int nid)
 {
-    EVP_PKEY_ASN1_METHOD *ret;
+    EVP_PKEY_ASN1_METHOD* ret;
     ENGINE_PKEY_ASN1_METHS_PTR fn = ENGINE_get_pkey_asn1_meths(e);
     if (!fn || !fn(e, &ret, NULL, nid)) {
         ERR_raise(ERR_LIB_ENGINE, ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD);
@@ -96,13 +96,13 @@ const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth(ENGINE *e, int nid)
 }
 
 /* Gets the pkey_asn1_meth callback from an ENGINE structure */
-ENGINE_PKEY_ASN1_METHS_PTR ENGINE_get_pkey_asn1_meths(const ENGINE *e)
+ENGINE_PKEY_ASN1_METHS_PTR ENGINE_get_pkey_asn1_meths(const ENGINE* e)
 {
     return e->pkey_asn1_meths;
 }
 
 /* Sets the pkey_asn1_meth callback in an ENGINE structure */
-int ENGINE_set_pkey_asn1_meths(ENGINE *e, ENGINE_PKEY_ASN1_METHS_PTR f)
+int ENGINE_set_pkey_asn1_meths(ENGINE* e, ENGINE_PKEY_ASN1_METHS_PTR f)
 {
     e->pkey_asn1_meths = f;
     return 1;
@@ -113,12 +113,12 @@ int ENGINE_set_pkey_asn1_meths(ENGINE *e, ENGINE_PKEY_ASN1_METHS_PTR f)
  * ENGINE is destroyed
  */
 
-void engine_pkey_asn1_meths_free(ENGINE *e)
+void engine_pkey_asn1_meths_free(ENGINE* e)
 {
     int i;
-    EVP_PKEY_ASN1_METHOD *pkm;
+    EVP_PKEY_ASN1_METHOD* pkm;
     if (e->pkey_asn1_meths) {
-        const int *pknids;
+        const int* pknids;
         int npknids;
         npknids = e->pkey_asn1_meths(e, NULL, &pknids, 0);
         for (i = 0; i < npknids; i++) {
@@ -136,13 +136,13 @@ void engine_pkey_asn1_meths_free(ENGINE *e)
  * for speed critical operations.
  */
 
-const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth_str(ENGINE *e,
-                                                          const char *str,
-                                                          int len)
+const EVP_PKEY_ASN1_METHOD* ENGINE_get_pkey_asn1_meth_str(ENGINE* e,
+    const char* str,
+    int len)
 {
     int i, nidcount;
-    const int *nids;
-    EVP_PKEY_ASN1_METHOD *ameth;
+    const int* nids;
+    EVP_PKEY_ASN1_METHOD* ameth;
     if (!e->pkey_asn1_meths)
         return NULL;
     if (len == -1)
@@ -159,25 +159,25 @@ const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth_str(ENGINE *e,
 }
 
 typedef struct {
-    ENGINE *e;
-    const EVP_PKEY_ASN1_METHOD *ameth;
-    const char *str;
+    ENGINE* e;
+    const EVP_PKEY_ASN1_METHOD* ameth;
+    const char* str;
     int len;
 } ENGINE_FIND_STR;
 
-static void look_str_cb(int nid, STACK_OF(ENGINE) *sk, ENGINE *def, void *arg)
+static void look_str_cb(int nid, STACK_OF(ENGINE)* sk, ENGINE* def, void* arg)
 {
-    ENGINE_FIND_STR *lk = arg;
+    ENGINE_FIND_STR* lk = arg;
     int i;
     if (lk->ameth)
         return;
     for (i = 0; i < sk_ENGINE_num(sk); i++) {
-        ENGINE *e = sk_ENGINE_value(sk, i);
-        EVP_PKEY_ASN1_METHOD *ameth;
+        ENGINE* e = sk_ENGINE_value(sk, i);
+        EVP_PKEY_ASN1_METHOD* ameth;
         e->pkey_asn1_meths(e, &ameth, NULL, nid);
         if (ameth != NULL
-                && ((int)strlen(ameth->pem_str) == lk->len)
-                && OPENSSL_strncasecmp(ameth->pem_str, lk->str, lk->len) == 0) {
+            && ((int)strlen(ameth->pem_str) == lk->len)
+            && OPENSSL_strncasecmp(ameth->pem_str, lk->str, lk->len) == 0) {
             lk->e = e;
             lk->ameth = ameth;
             return;
@@ -185,9 +185,9 @@ static void look_str_cb(int nid, STACK_OF(ENGINE) *sk, ENGINE *def, void *arg)
     }
 }
 
-const EVP_PKEY_ASN1_METHOD *ENGINE_pkey_asn1_find_str(ENGINE **pe,
-                                                      const char *str,
-                                                      int len)
+const EVP_PKEY_ASN1_METHOD* ENGINE_pkey_asn1_find_str(ENGINE** pe,
+    const char* str,
+    int len)
 {
     ENGINE_FIND_STR fstr;
     fstr.e = NULL;

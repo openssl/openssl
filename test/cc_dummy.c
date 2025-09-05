@@ -12,37 +12,36 @@
 
 typedef struct ossl_cc_dummy_st {
     size_t max_dgram_len;
-    size_t *p_diag_max_dgram_len;
+    size_t* p_diag_max_dgram_len;
 } OSSL_CC_DUMMY;
 
-static void dummy_update_diag(OSSL_CC_DUMMY *d);
+static void dummy_update_diag(OSSL_CC_DUMMY* d);
 
-static OSSL_CC_DATA *dummy_new(OSSL_TIME (*now_cb)(void *arg),
-                               void *now_cb_arg)
+static OSSL_CC_DATA* dummy_new(OSSL_TIME (*now_cb)(void* arg),
+    void* now_cb_arg)
 {
-    OSSL_CC_DUMMY *d = OPENSSL_zalloc(sizeof(*d));
+    OSSL_CC_DUMMY* d = OPENSSL_zalloc(sizeof(*d));
 
     if (d == NULL)
         return NULL;
 
     d->max_dgram_len = QUIC_MIN_INITIAL_DGRAM_LEN;
-    return (OSSL_CC_DATA *)d;
+    return (OSSL_CC_DATA*)d;
 }
 
-static void dummy_free(OSSL_CC_DATA *cc)
+static void dummy_free(OSSL_CC_DATA* cc)
 {
     OPENSSL_free(cc);
 }
 
-static void dummy_reset(OSSL_CC_DATA *cc)
+static void dummy_reset(OSSL_CC_DATA* cc)
 {
-
 }
 
-static int dummy_set_input_params(OSSL_CC_DATA *cc, const OSSL_PARAM *params)
+static int dummy_set_input_params(OSSL_CC_DATA* cc, const OSSL_PARAM* params)
 {
-    OSSL_CC_DUMMY *d = (OSSL_CC_DUMMY *)cc;
-    const OSSL_PARAM *p;
+    OSSL_CC_DUMMY* d = (OSSL_CC_DUMMY*)cc;
+    const OSSL_PARAM* p;
     size_t value;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN);
@@ -59,10 +58,10 @@ static int dummy_set_input_params(OSSL_CC_DATA *cc, const OSSL_PARAM *params)
     return 1;
 }
 
-static int dummy_bind_diagnostic(OSSL_CC_DATA *cc, OSSL_PARAM *params)
+static int dummy_bind_diagnostic(OSSL_CC_DATA* cc, OSSL_PARAM* params)
 {
-    OSSL_CC_DUMMY *d = (OSSL_CC_DUMMY *)cc;
-    const OSSL_PARAM *p;
+    OSSL_CC_DUMMY* d = (OSSL_CC_DUMMY*)cc;
+    const OSSL_PARAM* p;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN);
     if (p != NULL) {
@@ -77,9 +76,9 @@ static int dummy_bind_diagnostic(OSSL_CC_DATA *cc, OSSL_PARAM *params)
     return 1;
 }
 
-static int dummy_unbind_diagnostic(OSSL_CC_DATA *cc, OSSL_PARAM *params)
+static int dummy_unbind_diagnostic(OSSL_CC_DATA* cc, OSSL_PARAM* params)
 {
-    OSSL_CC_DUMMY *d = (OSSL_CC_DUMMY *)cc;
+    OSSL_CC_DUMMY* d = (OSSL_CC_DUMMY*)cc;
 
     if (OSSL_PARAM_locate_const(params, OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN)
         != NULL)
@@ -88,48 +87,48 @@ static int dummy_unbind_diagnostic(OSSL_CC_DATA *cc, OSSL_PARAM *params)
     return 1;
 }
 
-static void dummy_update_diag(OSSL_CC_DUMMY *d)
+static void dummy_update_diag(OSSL_CC_DUMMY* d)
 {
     if (d->p_diag_max_dgram_len != NULL)
         *d->p_diag_max_dgram_len = d->max_dgram_len;
 }
 
-static uint64_t dummy_get_tx_allowance(OSSL_CC_DATA *cc)
+static uint64_t dummy_get_tx_allowance(OSSL_CC_DATA* cc)
 {
     return SIZE_MAX;
 }
 
-static OSSL_TIME dummy_get_wakeup_deadline(OSSL_CC_DATA *cc)
+static OSSL_TIME dummy_get_wakeup_deadline(OSSL_CC_DATA* cc)
 {
     return ossl_time_infinite();
 }
 
-static int dummy_on_data_sent(OSSL_CC_DATA *cc,
-                              uint64_t num_bytes)
+static int dummy_on_data_sent(OSSL_CC_DATA* cc,
+    uint64_t num_bytes)
 {
     return 1;
 }
 
-static int dummy_on_data_acked(OSSL_CC_DATA *cc,
-                               const OSSL_CC_ACK_INFO *info)
+static int dummy_on_data_acked(OSSL_CC_DATA* cc,
+    const OSSL_CC_ACK_INFO* info)
 {
     return 1;
 }
 
-static int dummy_on_data_lost(OSSL_CC_DATA *cc,
-                              const OSSL_CC_LOSS_INFO *info)
+static int dummy_on_data_lost(OSSL_CC_DATA* cc,
+    const OSSL_CC_LOSS_INFO* info)
 {
     return 1;
 }
 
-static int dummy_on_data_lost_finished(OSSL_CC_DATA *cc,
-                                       uint32_t flags)
+static int dummy_on_data_lost_finished(OSSL_CC_DATA* cc,
+    uint32_t flags)
 {
     return 1;
 }
 
-static int dummy_on_data_invalidated(OSSL_CC_DATA *cc,
-                                     uint64_t num_bytes)
+static int dummy_on_data_invalidated(OSSL_CC_DATA* cc,
+    uint64_t num_bytes)
 {
     return 1;
 }

@@ -31,15 +31,15 @@
  * a BIO created to read from stdin
  */
 
-static int demonstrate_digest(BIO *input)
+static int demonstrate_digest(BIO* input)
 {
-    OSSL_LIB_CTX *library_context = NULL;
+    OSSL_LIB_CTX* library_context = NULL;
     int ret = 0;
-    const char *option_properties = NULL;
-    EVP_MD *message_digest = NULL;
-    EVP_MD_CTX *digest_context = NULL;
+    const char* option_properties = NULL;
+    EVP_MD* message_digest = NULL;
+    EVP_MD_CTX* digest_context = NULL;
     unsigned int digest_length;
-    unsigned char *digest_value = NULL;
+    unsigned char* digest_value = NULL;
     unsigned char buffer[512];
     unsigned int ii;
 
@@ -55,7 +55,7 @@ static int demonstrate_digest(BIO *input)
      * See providers(7) for details about algorithm fetching
      */
     message_digest = EVP_MD_fetch(library_context,
-                                  "SHA3-512", option_properties);
+        "SHA3-512", option_properties);
     if (message_digest == NULL) {
         fprintf(stderr, "EVP_MD_fetch could not find SHA3-512.");
         ERR_print_errors_fp(stderr);
@@ -104,7 +104,7 @@ static int demonstrate_digest(BIO *input)
         goto cleanup;
     }
     ret = 1;
-    for (ii=0; ii<digest_length; ii++) {
+    for (ii = 0; ii < digest_length; ii++) {
         fprintf(stdout, "%02x", digest_value[ii]);
     }
     fprintf(stdout, "\n");
@@ -124,7 +124,7 @@ cleanup:
 int main(void)
 {
     int ret = EXIT_FAILURE;
-    BIO *input = BIO_new_fd(fileno(stdin), 1);
+    BIO* input = BIO_new_fd(fileno(stdin), 1);
 
     if (input != NULL) {
         ret = (demonstrate_digest(input) ? EXIT_SUCCESS : EXIT_FAILURE);

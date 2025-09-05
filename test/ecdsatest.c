@@ -18,26 +18,26 @@
 
 #ifndef OPENSSL_NO_EC
 
-# include <openssl/evp.h>
-# include <openssl/bn.h>
-# include <openssl/ec.h>
-# include <openssl/rand.h>
-# include "internal/nelem.h"
-# include "ecdsatest.h"
+#include <openssl/evp.h>
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/rand.h>
+#include "internal/nelem.h"
+#include "ecdsatest.h"
 
 static fake_random_generate_cb fbytes;
 
-static const char *numbers[2];
+static const char* numbers[2];
 static size_t crv_len = 0;
-static EC_builtin_curve *curves = NULL;
-static OSSL_PROVIDER *fake_rand = NULL;
+static EC_builtin_curve* curves = NULL;
+static OSSL_PROVIDER* fake_rand = NULL;
 
-static int fbytes(unsigned char *buf, size_t num, ossl_unused const char *name,
-                  EVP_RAND_CTX *ctx)
+static int fbytes(unsigned char* buf, size_t num, ossl_unused const char* name,
+    EVP_RAND_CTX* ctx)
 {
     int ret = 0;
     static int fbytes_counter = 0;
-    BIGNUM *tmp = NULL;
+    BIGNUM* tmp = NULL;
 
     fake_rand_set_callback(ctx, NULL);
 
@@ -51,7 +51,7 @@ static int fbytes(unsigned char *buf, size_t num, ossl_unused const char *name,
 
     fbytes_counter = (fbytes_counter + 1) % OSSL_NELEM(numbers);
     ret = 1;
- err:
+err:
     BN_free(tmp);
     return ret;
 }
@@ -79,9 +79,9 @@ static int x9_62_tests(int n)
     unsigned int dgst_len = 0;
     long q_len, msg_len = 0;
     size_t p_len;
-    EVP_MD_CTX *mctx = NULL;
-    EC_KEY *key = NULL;
-    ECDSA_SIG *signature = NULL;
+    EVP_MD_CTX* mctx = NULL;
+    EC_KEY* key = NULL;
+    ECDSA_SIG* signature = NULL;
     BIGNUM *r = NULL, *s = NULL;
     BIGNUM *kinv = NULL, *rp = NULL;
     const BIGNUM *sig_r = NULL, *sig_s = NULL;
@@ -120,7 +120,7 @@ static int x9_62_tests(int n)
     fake_rand_set_callback(RAND_get0_private(NULL), &fbytes);
     if (!TEST_true(EC_KEY_generate_key(key))
         || !TEST_true(p_len = EC_KEY_key2buf(key, POINT_CONVERSION_UNCOMPRESSED,
-                                             &pbuf, NULL))
+                          &pbuf, NULL))
         || !TEST_ptr(qbuf = OPENSSL_hexstr2buf(ecdsa_cavs_kats[n].Q, &q_len))
         || !TEST_size_t_eq((size_t)q_len, p_len)
         || !TEST_mem_eq(qbuf, q_len, pbuf, p_len))
@@ -130,7 +130,7 @@ static int x9_62_tests(int n)
     fake_rand_set_callback(RAND_get0_private(NULL), &fbytes);
     if (!TEST_true(ECDSA_sign_setup(key, NULL, &kinv, &rp))
         || !TEST_ptr(signature = ECDSA_do_sign_ex(digest, dgst_len,
-                                                  kinv, rp, key))
+                         kinv, rp, key))
         /* verify the signature */
         || !TEST_int_eq(ECDSA_do_verify(digest, dgst_len, signature, key), 1))
         goto err;
@@ -143,7 +143,7 @@ static int x9_62_tests(int n)
 
     ret = 1;
 
- err:
+err:
     OPENSSL_free(message);
     OPENSSL_free(pbuf);
     OPENSSL_free(qbuf);
@@ -173,11 +173,11 @@ static int x9_62_tests(int n)
  * - reject that signature after modifying the signature
  * - accept that signature after un-modifying the signature
  */
-static int set_sm2_id(EVP_MD_CTX *mctx, EVP_PKEY *pkey)
+static int set_sm2_id(EVP_MD_CTX* mctx, EVP_PKEY* pkey)
 {
     /* With the SM2 key type, the SM2 ID is mandatory */
     static const char sm2_id[] = { 1, 2, 3, 4, 'l', 'e', 't', 't', 'e', 'r' };
-    EVP_PKEY_CTX *pctx;
+    EVP_PKEY_CTX* pctx;
 
     if (!TEST_ptr(pctx = EVP_MD_CTX_get_pkey_ctx(mctx))
         || !TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, sm2_id, sizeof(sm2_id)), 0))
@@ -189,9 +189,9 @@ static int test_builtin(int n, int as)
 {
     EC_KEY *eckey_neg = NULL, *eckey = NULL;
     unsigned char dirt, offset, tbs[128];
-    unsigned char *sig = NULL;
+    unsigned char* sig = NULL;
     EVP_PKEY *pkey_neg = NULL, *pkey = NULL, *dup_pk = NULL;
-    EVP_MD_CTX *mctx = NULL;
+    EVP_MD_CTX* mctx = NULL;
     size_t sig_len;
     int nid, ret = 0;
     int temp;
@@ -210,16 +210,16 @@ static int test_builtin(int n, int as)
      */
     if (nid == NID_sm2 && as == EVP_PKEY_EC) {
         TEST_info("skipped: EC key type unsupported for curve %s",
-                  OBJ_nid2sn(nid));
+            OBJ_nid2sn(nid));
         return 1;
     } else if (nid != NID_sm2 && as == EVP_PKEY_SM2) {
         TEST_info("skipped: SM2 key type unsupported for curve %s",
-                  OBJ_nid2sn(nid));
+            OBJ_nid2sn(nid));
         return 1;
     }
 
     TEST_info("testing ECDSA for curve %s as %s key type", OBJ_nid2sn(nid),
-              as == EVP_PKEY_EC ? "EC" : "SM2");
+        as == EVP_PKEY_EC ? "EC" : "SM2");
 
     if (!TEST_ptr(mctx = EVP_MD_CTX_new())
         /* get some random message data */
@@ -326,7 +326,7 @@ static int test_builtin(int n, int as)
         goto err;
 
     ret = 1;
- err:
+err:
     EVP_PKEY_free(pkey);
     EVP_PKEY_free(pkey_neg);
     EVP_PKEY_free(dup_pk);
@@ -340,12 +340,12 @@ static int test_builtin_as_ec(int n)
     return test_builtin(n, EVP_PKEY_EC);
 }
 
-# ifndef OPENSSL_NO_SM2
+#ifndef OPENSSL_NO_SM2
 static int test_builtin_as_sm2(int n)
 {
     return test_builtin(n, EVP_PKEY_SM2);
 }
-# endif
+#endif
 
 static int test_ecdsa_sig_NULL(void)
 {
@@ -353,32 +353,38 @@ static int test_ecdsa_sig_NULL(void)
     unsigned int siglen0;
     unsigned int siglen;
     unsigned char dgst[128] = { 0 };
-    EC_KEY *eckey = NULL;
-    unsigned char *sig = NULL;
+    EC_KEY* eckey = NULL;
+    unsigned char* sig = NULL;
     BIGNUM *kinv = NULL, *rp = NULL;
 
     ret = TEST_ptr(eckey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1))
-          && TEST_int_eq(EC_KEY_generate_key(eckey), 1)
-          && TEST_int_eq(ECDSA_sign(0, dgst, sizeof(dgst), NULL, &siglen0,
-                                    eckey), 1)
-          && TEST_int_gt(siglen0, 0)
-          && TEST_ptr(sig = OPENSSL_malloc(siglen0))
-          && TEST_int_eq(ECDSA_sign(0, dgst, sizeof(dgst), sig, &siglen,
-                                    eckey), 1)
-          && TEST_int_gt(siglen, 0)
-          && TEST_int_le(siglen, siglen0)
-          && TEST_int_eq(ECDSA_verify(0, dgst, sizeof(dgst), sig, siglen,
-                                      eckey), 1)
-          && TEST_int_eq(ECDSA_sign_setup(eckey, NULL, &kinv, &rp), 1)
-          && TEST_int_eq(ECDSA_sign_ex(0, dgst, sizeof(dgst), NULL, &siglen,
-                                       kinv, rp, eckey), 1)
-          && TEST_int_gt(siglen, 0)
-          && TEST_int_le(siglen, siglen0)
-          && TEST_int_eq(ECDSA_sign_ex(0, dgst, sizeof(dgst), sig, &siglen0,
-                                       kinv, rp, eckey), 1)
-          && TEST_int_eq(siglen, siglen0)
-          && TEST_int_eq(ECDSA_verify(0, dgst, sizeof(dgst), sig, siglen,
-                                      eckey), 1);
+        && TEST_int_eq(EC_KEY_generate_key(eckey), 1)
+        && TEST_int_eq(ECDSA_sign(0, dgst, sizeof(dgst), NULL, &siglen0,
+                           eckey),
+            1)
+        && TEST_int_gt(siglen0, 0)
+        && TEST_ptr(sig = OPENSSL_malloc(siglen0))
+        && TEST_int_eq(ECDSA_sign(0, dgst, sizeof(dgst), sig, &siglen,
+                           eckey),
+            1)
+        && TEST_int_gt(siglen, 0)
+        && TEST_int_le(siglen, siglen0)
+        && TEST_int_eq(ECDSA_verify(0, dgst, sizeof(dgst), sig, siglen,
+                           eckey),
+            1)
+        && TEST_int_eq(ECDSA_sign_setup(eckey, NULL, &kinv, &rp), 1)
+        && TEST_int_eq(ECDSA_sign_ex(0, dgst, sizeof(dgst), NULL, &siglen,
+                           kinv, rp, eckey),
+            1)
+        && TEST_int_gt(siglen, 0)
+        && TEST_int_le(siglen, siglen0)
+        && TEST_int_eq(ECDSA_sign_ex(0, dgst, sizeof(dgst), sig, &siglen0,
+                           kinv, rp, eckey),
+            1)
+        && TEST_int_eq(siglen, siglen0)
+        && TEST_int_eq(ECDSA_verify(0, dgst, sizeof(dgst), sig, siglen,
+                           eckey),
+            1);
     EC_KEY_free(eckey);
     OPENSSL_free(sig);
     BN_free(kinv);
@@ -406,9 +412,9 @@ int setup_tests(void)
     }
     ADD_ALL_TESTS(test_builtin_as_ec, (int)crv_len);
     ADD_TEST(test_ecdsa_sig_NULL);
-# ifndef OPENSSL_NO_SM2
+#ifndef OPENSSL_NO_SM2
     ADD_ALL_TESTS(test_builtin_as_sm2, (int)crv_len);
-# endif
+#endif
     ADD_ALL_TESTS(x9_62_tests, OSSL_NELEM(ecdsa_cavs_kats));
 #endif
     return 1;

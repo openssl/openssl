@@ -17,15 +17,15 @@
 #include <openssl/err.h>
 #include "testutil.h"
 
-static const char *certs_dir;
-static char *root_f = NULL;
-static char *roots_f = NULL;
-static char *untrusted_f = NULL;
-static char *bad_f = NULL;
-static char *req_f = NULL;
-static char *sroot_cert = NULL;
-static char *ca_cert = NULL;
-static char *ee_cert = NULL;
+static const char* certs_dir;
+static char* root_f = NULL;
+static char* roots_f = NULL;
+static char* untrusted_f = NULL;
+static char* bad_f = NULL;
+static char* req_f = NULL;
+static char* sroot_cert = NULL;
+static char* ca_cert = NULL;
+static char* ee_cert = NULL;
 
 #define load_cert_from_file(file) load_cert_pem(file, NULL)
 
@@ -62,11 +62,11 @@ static int test_alt_chains_cert_forgery(void)
 {
     int ret = 0;
     int i;
-    X509 *x = NULL;
-    STACK_OF(X509) *untrusted = NULL;
-    X509_STORE_CTX *sctx = NULL;
-    X509_STORE *store = NULL;
-    X509_LOOKUP *lookup = NULL;
+    X509* x = NULL;
+    STACK_OF(X509)* untrusted = NULL;
+    X509_STORE_CTX* sctx = NULL;
+    X509_STORE* store = NULL;
+    X509_LOOKUP* lookup = NULL;
 
     store = X509_STORE_new();
     if (store == NULL)
@@ -96,7 +96,7 @@ static int test_alt_chains_cert_forgery(void)
         /* This is the result we were expecting: Test passed */
         ret = 1;
     }
- err:
+err:
     X509_STORE_CTX_free(sctx);
     X509_free(x);
     OSSL_STACK_OF_X509_free(untrusted);
@@ -106,10 +106,10 @@ static int test_alt_chains_cert_forgery(void)
 
 static int test_distinguishing_id(void)
 {
-    X509 *x = NULL;
+    X509* x = NULL;
     int ret = 0;
     ASN1_OCTET_STRING *v = NULL, *v2 = NULL;
-    char *distid = "this is an ID";
+    char* distid = "this is an ID";
 
     x = load_cert_from_file(bad_f);
     if (x == NULL)
@@ -119,8 +119,8 @@ static int test_distinguishing_id(void)
     if (v == NULL)
         goto err;
 
-    if (!ASN1_OCTET_STRING_set(v, (unsigned char *)distid,
-                               (int)strlen(distid))) {
+    if (!ASN1_OCTET_STRING_set(v, (unsigned char*)distid,
+            (int)strlen(distid))) {
         ASN1_OCTET_STRING_free(v);
         goto err;
     }
@@ -129,22 +129,22 @@ static int test_distinguishing_id(void)
 
     v2 = X509_get0_distinguishing_id(x);
     if (!TEST_ptr(v2)
-            || !TEST_int_eq(ASN1_OCTET_STRING_cmp(v, v2), 0))
+        || !TEST_int_eq(ASN1_OCTET_STRING_cmp(v, v2), 0))
         goto err;
 
     ret = 1;
- err:
+err:
     X509_free(x);
     return ret;
 }
 
 static int test_req_distinguishing_id(void)
 {
-    X509_REQ *x = NULL;
-    BIO *bio = NULL;
+    X509_REQ* x = NULL;
+    BIO* bio = NULL;
     int ret = 0;
     ASN1_OCTET_STRING *v = NULL, *v2 = NULL;
-    char *distid = "this is an ID";
+    char* distid = "this is an ID";
 
     bio = BIO_new_file(req_f, "r");
     if (bio == NULL)
@@ -158,8 +158,8 @@ static int test_req_distinguishing_id(void)
     if (v == NULL)
         goto err;
 
-    if (!ASN1_OCTET_STRING_set(v, (unsigned char *)distid,
-                               (int)strlen(distid))) {
+    if (!ASN1_OCTET_STRING_set(v, (unsigned char*)distid,
+            (int)strlen(distid))) {
         ASN1_OCTET_STRING_free(v);
         goto err;
     }
@@ -168,21 +168,21 @@ static int test_req_distinguishing_id(void)
 
     v2 = X509_REQ_get0_distinguishing_id(x);
     if (!TEST_ptr(v2)
-            || !TEST_int_eq(ASN1_OCTET_STRING_cmp(v, v2), 0))
+        || !TEST_int_eq(ASN1_OCTET_STRING_cmp(v, v2), 0))
         goto err;
 
     ret = 1;
- err:
+err:
     X509_REQ_free(x);
     BIO_free(bio);
     return ret;
 }
 
-static int test_self_signed(const char *filename, int use_trusted, int expected)
+static int test_self_signed(const char* filename, int use_trusted, int expected)
 {
-    X509 *cert = load_cert_from_file(filename); /* may result in NULL */
-    STACK_OF(X509) *trusted = sk_X509_new_null();
-    X509_STORE_CTX *ctx = X509_STORE_CTX_new();
+    X509* cert = load_cert_from_file(filename); /* may result in NULL */
+    STACK_OF(X509)* trusted = sk_X509_new_null();
+    X509_STORE_CTX* ctx = X509_STORE_CTX_new();
     int ret;
 
     ret = TEST_int_eq(X509_self_signed(cert, 1), expected);
@@ -224,22 +224,21 @@ static int test_store_ctx(void)
 
 static int do_test_purpose(int purpose, int expected)
 {
-    X509 *eecert = load_cert_from_file(ee_cert); /* may result in NULL */
-    X509 *untrcert = load_cert_from_file(ca_cert);
-    X509 *trcert = load_cert_from_file(sroot_cert);
-    STACK_OF(X509) *trusted = sk_X509_new_null();
-    STACK_OF(X509) *untrusted = sk_X509_new_null();
-    X509_STORE_CTX *ctx = X509_STORE_CTX_new();
+    X509* eecert = load_cert_from_file(ee_cert); /* may result in NULL */
+    X509* untrcert = load_cert_from_file(ca_cert);
+    X509* trcert = load_cert_from_file(sroot_cert);
+    STACK_OF(X509)* trusted = sk_X509_new_null();
+    STACK_OF(X509)* untrusted = sk_X509_new_null();
+    X509_STORE_CTX* ctx = X509_STORE_CTX_new();
     int testresult = 0;
 
     if (!TEST_ptr(eecert)
-            || !TEST_ptr(untrcert)
-            || !TEST_ptr(trcert)
-            || !TEST_ptr(trusted)
-            || !TEST_ptr(untrusted)
-            || !TEST_ptr(ctx))
+        || !TEST_ptr(untrcert)
+        || !TEST_ptr(trcert)
+        || !TEST_ptr(trusted)
+        || !TEST_ptr(untrusted)
+        || !TEST_ptr(ctx))
         goto err;
-
 
     if (!TEST_true(sk_X509_push(trusted, trcert)))
         goto err;
@@ -265,7 +264,7 @@ static int do_test_purpose(int purpose, int expected)
         goto err;
 
     testresult = 1;
- err:
+err:
     OSSL_STACK_OF_X509_free(trusted);
     OSSL_STACK_OF_X509_free(untrusted);
     X509_STORE_CTX_free(ctx);
@@ -303,13 +302,13 @@ int setup_tests(void)
         return 0;
 
     if (!TEST_ptr(root_f = test_mk_file_path(certs_dir, "rootCA.pem"))
-            || !TEST_ptr(roots_f = test_mk_file_path(certs_dir, "roots.pem"))
-            || !TEST_ptr(untrusted_f = test_mk_file_path(certs_dir, "untrusted.pem"))
-            || !TEST_ptr(bad_f = test_mk_file_path(certs_dir, "bad.pem"))
-            || !TEST_ptr(req_f = test_mk_file_path(certs_dir, "sm2-csr.pem"))
-            || !TEST_ptr(sroot_cert = test_mk_file_path(certs_dir, "sroot-cert.pem"))
-            || !TEST_ptr(ca_cert = test_mk_file_path(certs_dir, "ca-cert.pem"))
-            || !TEST_ptr(ee_cert = test_mk_file_path(certs_dir, "ee-cert.pem")))
+        || !TEST_ptr(roots_f = test_mk_file_path(certs_dir, "roots.pem"))
+        || !TEST_ptr(untrusted_f = test_mk_file_path(certs_dir, "untrusted.pem"))
+        || !TEST_ptr(bad_f = test_mk_file_path(certs_dir, "bad.pem"))
+        || !TEST_ptr(req_f = test_mk_file_path(certs_dir, "sm2-csr.pem"))
+        || !TEST_ptr(sroot_cert = test_mk_file_path(certs_dir, "sroot-cert.pem"))
+        || !TEST_ptr(ca_cert = test_mk_file_path(certs_dir, "ca-cert.pem"))
+        || !TEST_ptr(ee_cert = test_mk_file_path(certs_dir, "ee-cert.pem")))
         goto err;
 
     ADD_TEST(test_alt_chains_cert_forgery);
@@ -323,7 +322,7 @@ int setup_tests(void)
     ADD_TEST(test_purpose_ssl_server);
     ADD_TEST(test_purpose_any);
     return 1;
- err:
+err:
     cleanup_tests();
     return 0;
 }

@@ -27,21 +27,20 @@
  * Until Aug 1 2003 this function did not correctly implement CFB-r, so it
  * will not be compatible with any encryption prior to that date. Ben.
  */
-void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
-                     long length, DES_key_schedule *schedule,
-                     DES_cblock *ivec, int enc)
+void DES_cfb_encrypt(const unsigned char* in, unsigned char* out, int numbits,
+    long length, DES_key_schedule* schedule,
+    DES_cblock* ivec, int enc)
 {
     register DES_LONG d0, d1, v0, v1;
     register unsigned long l = length;
-    register int num = numbits / 8, n = (numbits + 7) / 8, i, rem =
-        numbits % 8;
+    register int num = numbits / 8, n = (numbits + 7) / 8, i, rem = numbits % 8;
     DES_LONG ti[2];
-    unsigned char *iv;
+    unsigned char* iv;
 #ifndef L_ENDIAN
     unsigned char ovec[16];
 #else
     unsigned int sh[4];
-    unsigned char *ovec = (unsigned char *)sh;
+    unsigned char* ovec = (unsigned char*)sh;
 
     /* I kind of count that compiler optimizes away this assertion, */
     assert(sizeof(sh[0]) == 4); /* as this holds true for all, */
@@ -59,7 +58,7 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
             l -= n;
             ti[0] = v0;
             ti[1] = v1;
-            DES_encrypt1((DES_LONG *)ti, schedule, DES_ENCRYPT);
+            DES_encrypt1((DES_LONG*)ti, schedule, DES_ENCRYPT);
             c2ln(in, d0, d1, n);
             in += n;
             d0 ^= ti[0];
@@ -90,8 +89,7 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
                     memmove(ovec, ovec + num, 8);
                 else
                     for (i = 0; i < 8; ++i)
-                        ovec[i] = ovec[i + num] << rem |
-                            ovec[i + num + 1] >> (8 - rem);
+                        ovec[i] = ovec[i + num] << rem | ovec[i + num + 1] >> (8 - rem);
 #ifdef L_ENDIAN
                 v0 = sh[0], v1 = sh[1];
 #else
@@ -106,7 +104,7 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
             l -= n;
             ti[0] = v0;
             ti[1] = v1;
-            DES_encrypt1((DES_LONG *)ti, schedule, DES_ENCRYPT);
+            DES_encrypt1((DES_LONG*)ti, schedule, DES_ENCRYPT);
             c2ln(in, d0, d1, n);
             in += n;
             /*
@@ -133,8 +131,7 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
                     memmove(ovec, ovec + num, 8);
                 else
                     for (i = 0; i < 8; ++i)
-                        ovec[i] = ovec[i + num] << rem |
-                            ovec[i + num + 1] >> (8 - rem);
+                        ovec[i] = ovec[i + num] << rem | ovec[i + num + 1] >> (8 - rem);
 #ifdef L_ENDIAN
                 v0 = sh[0], v1 = sh[1];
 #else

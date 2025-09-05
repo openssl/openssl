@@ -10,7 +10,7 @@
 #include <openssl/bio.h>
 #include "testutil.h"
 
-static const char *filename = NULL;
+static const char* filename = NULL;
 
 /*
  * Test that a BIO_f_readbuffer() with a BIO_new_file() behaves nicely if
@@ -34,7 +34,8 @@ static int test_readbuffer_file_bio(int tstid)
     /* Open a file BIO and read all the data */
     if (!TEST_ptr(in = BIO_new_file(filename, "r"))
         || !TEST_int_eq(BIO_read_ex(in, expected, sizeof(expected),
-                                    &readbytes), 1)
+                            &readbytes),
+            1)
         || !TEST_size_t_lt(readbytes, sizeof(expected)))
         goto err;
     BIO_free(in);
@@ -102,7 +103,7 @@ typedef enum OPTION_choice {
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
-const OPTIONS *test_get_options(void)
+const OPTIONS* test_get_options(void)
 {
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("file\n"),

@@ -11,20 +11,19 @@
 #include "prov/ciphercommon.h"
 
 typedef struct prov_aria_ctx_st {
-    PROV_CIPHER_CTX base;      /* Must be first */
+    PROV_CIPHER_CTX base; /* Must be first */
     union {
         OSSL_UNION_ALIGN;
         ARIA_KEY ks;
     } ks;
 } PROV_ARIA_CTX;
 
-
 #define ossl_prov_cipher_hw_aria_ofb ossl_prov_cipher_hw_aria_ofb128
 #define ossl_prov_cipher_hw_aria_cfb ossl_prov_cipher_hw_aria_cfb128
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_aria_ecb(size_t keybits);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_aria_cbc(size_t keybits);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_aria_ofb128(size_t keybits);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_aria_cfb128(size_t keybits);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_aria_cfb1(size_t keybits);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_aria_cfb8(size_t keybits);
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_aria_ctr(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_aria_ecb(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_aria_cbc(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_aria_ofb128(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_aria_cfb128(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_aria_cfb1(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_aria_cfb8(size_t keybits);
+const PROV_CIPHER_HW* ossl_prov_cipher_hw_aria_ctr(size_t keybits);

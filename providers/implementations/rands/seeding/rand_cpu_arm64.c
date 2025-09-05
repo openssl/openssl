@@ -12,13 +12,12 @@
 #include "crypto/rand_pool.h"
 #include "prov/seeding.h"
 
-
 #ifdef OPENSSL_RAND_SEED_RDCPU
 #include "crypto/arm_arch.h"
 
-size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len);
+size_t OPENSSL_rndrrs_bytes(unsigned char* buf, size_t len);
 
-static size_t get_hardware_random_value(unsigned char *buf, size_t len);
+static size_t get_hardware_random_value(unsigned char* buf, size_t len);
 
 /*
  * Acquire entropy using Arm-specific cpu instructions
@@ -30,10 +29,10 @@ static size_t get_hardware_random_value(unsigned char *buf, size_t len);
  * Returns the total entropy count, if it exceeds the requested
  * entropy count. Otherwise, returns an entropy count of 0.
  */
-size_t ossl_prov_acquire_entropy_from_cpu(RAND_POOL *pool)
+size_t ossl_prov_acquire_entropy_from_cpu(RAND_POOL* pool)
 {
     size_t bytes_needed;
-    unsigned char *buffer;
+    unsigned char* buffer;
 
     bytes_needed = ossl_rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     if (bytes_needed > 0) {
@@ -50,10 +49,10 @@ size_t ossl_prov_acquire_entropy_from_cpu(RAND_POOL *pool)
     return ossl_rand_pool_entropy_available(pool);
 }
 
-static size_t get_hardware_random_value(unsigned char *buf, size_t len)
+static size_t get_hardware_random_value(unsigned char* buf, size_t len)
 {
     /* Always use RNDRRS or nothing */
-    if (OPENSSL_armcap_P & ARMV8_RNG)  {
+    if (OPENSSL_armcap_P & ARMV8_RNG) {
         if (OPENSSL_rndrrs_bytes(buf, len) != len)
             return 0;
     } else {

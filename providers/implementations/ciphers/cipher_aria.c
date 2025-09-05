@@ -16,18 +16,18 @@
 static OSSL_FUNC_cipher_freectx_fn aria_freectx;
 static OSSL_FUNC_cipher_dupctx_fn aria_dupctx;
 
-static void aria_freectx(void *vctx)
+static void aria_freectx(void* vctx)
 {
-    PROV_ARIA_CTX *ctx = (PROV_ARIA_CTX *)vctx;
+    PROV_ARIA_CTX* ctx = (PROV_ARIA_CTX*)vctx;
 
-    ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX*)vctx);
+    OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
-static void *aria_dupctx(void *ctx)
+static void* aria_dupctx(void* ctx)
 {
-    PROV_ARIA_CTX *in = (PROV_ARIA_CTX *)ctx;
-    PROV_ARIA_CTX *ret;
+    PROV_ARIA_CTX* in = (PROV_ARIA_CTX*)ctx;
+    PROV_ARIA_CTX* ret;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -59,11 +59,11 @@ IMPLEMENT_generic_cipher(aria, ARIA, ofb, OFB, 0, 192, 8, 128, stream)
 /* ossl_aria128ofb_functions */
 IMPLEMENT_generic_cipher(aria, ARIA, ofb, OFB, 0, 128, 8, 128, stream)
 /* ossl_aria256cfb_functions */
-IMPLEMENT_generic_cipher(aria, ARIA, cfb,  CFB, 0, 256, 8, 128, stream)
+IMPLEMENT_generic_cipher(aria, ARIA, cfb, CFB, 0, 256, 8, 128, stream)
 /* ossl_aria192cfb_functions */
-IMPLEMENT_generic_cipher(aria, ARIA, cfb,  CFB, 0, 192, 8, 128, stream)
+IMPLEMENT_generic_cipher(aria, ARIA, cfb, CFB, 0, 192, 8, 128, stream)
 /* ossl_aria128cfb_functions */
-IMPLEMENT_generic_cipher(aria, ARIA, cfb,  CFB, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(aria, ARIA, cfb, CFB, 0, 128, 8, 128, stream)
 /* ossl_aria256cfb1_functions */
 IMPLEMENT_generic_cipher(aria, ARIA, cfb1, CFB, 0, 256, 8, 128, stream)
 /* ossl_aria192cfb1_functions */

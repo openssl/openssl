@@ -13,12 +13,12 @@
 
 #ifndef NO_OLD_ASN1
 
-void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, const void *x)
+void* ASN1_dup(i2d_of_void* i2d, d2i_of_void* d2i, const void* x)
 {
     unsigned char *b, *p;
-    const unsigned char *p2;
+    const unsigned char* p2;
     int i;
-    char *ret;
+    char* ret;
 
     if (x == NULL)
         return NULL;
@@ -47,30 +47,30 @@ void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, const void *x)
  * decode.
  */
 
-void *ASN1_item_dup(const ASN1_ITEM *it, const void *x)
+void* ASN1_item_dup(const ASN1_ITEM* it, const void* x)
 {
-    ASN1_aux_cb *asn1_cb = NULL;
-    unsigned char *b = NULL;
-    const unsigned char *p;
+    ASN1_aux_cb* asn1_cb = NULL;
+    unsigned char* b = NULL;
+    const unsigned char* p;
     long i;
-    ASN1_VALUE *ret;
-    OSSL_LIB_CTX *libctx = NULL;
-    const char *propq = NULL;
+    ASN1_VALUE* ret;
+    OSSL_LIB_CTX* libctx = NULL;
+    const char* propq = NULL;
 
     if (x == NULL)
         return NULL;
 
     if (it->itype == ASN1_ITYPE_SEQUENCE || it->itype == ASN1_ITYPE_CHOICE
         || it->itype == ASN1_ITYPE_NDEF_SEQUENCE) {
-        const ASN1_AUX *aux = it->funcs;
+        const ASN1_AUX* aux = it->funcs;
 
         asn1_cb = aux != NULL ? aux->asn1_cb : NULL;
     }
 
     if (asn1_cb != NULL) {
-        if (!asn1_cb(ASN1_OP_DUP_PRE, (ASN1_VALUE **)&x, it, NULL)
-                || !asn1_cb(ASN1_OP_GET0_LIBCTX, (ASN1_VALUE **)&x, it, &libctx)
-                || !asn1_cb(ASN1_OP_GET0_PROPQ, (ASN1_VALUE **)&x, it, &propq))
+        if (!asn1_cb(ASN1_OP_DUP_PRE, (ASN1_VALUE**)&x, it, NULL)
+            || !asn1_cb(ASN1_OP_GET0_LIBCTX, (ASN1_VALUE**)&x, it, &libctx)
+            || !asn1_cb(ASN1_OP_GET0_PROPQ, (ASN1_VALUE**)&x, it, &propq))
             goto auxerr;
     }
 
@@ -84,12 +84,12 @@ void *ASN1_item_dup(const ASN1_ITEM *it, const void *x)
     OPENSSL_free(b);
 
     if (asn1_cb != NULL
-        && !asn1_cb(ASN1_OP_DUP_POST, &ret, it, (void *)x))
+        && !asn1_cb(ASN1_OP_DUP_POST, &ret, it, (void*)x))
         goto auxerr;
 
     return ret;
 
- auxerr:
+auxerr:
     ERR_raise_data(ERR_LIB_ASN1, ASN1_R_AUX_ERROR, "Type=%s", it->sname);
     return NULL;
 }

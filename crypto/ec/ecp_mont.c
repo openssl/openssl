@@ -18,7 +18,7 @@
 
 #include "ec_local.h"
 
-const EC_METHOD *EC_GFp_mont_method(void)
+const EC_METHOD* EC_GFp_mont_method(void)
 {
     static const EC_METHOD ret = {
         EC_FLAGS_DEFAULT_OCT,
@@ -48,12 +48,12 @@ const EC_METHOD *EC_GFp_mont_method(void)
         ossl_ec_GFp_simple_cmp,
         ossl_ec_GFp_simple_make_affine,
         ossl_ec_GFp_simple_points_make_affine,
-        0 /* mul */ ,
-        0 /* precompute_mult */ ,
-        0 /* have_precompute_mult */ ,
+        0 /* mul */,
+        0 /* precompute_mult */,
+        0 /* have_precompute_mult */,
         ossl_ec_GFp_mont_field_mul,
         ossl_ec_GFp_mont_field_sqr,
-        0 /* field_div */ ,
+        0 /* field_div */,
         ossl_ec_GFp_mont_field_inv,
         ossl_ec_GFp_mont_field_encode,
         ossl_ec_GFp_mont_field_decode,
@@ -80,7 +80,7 @@ const EC_METHOD *EC_GFp_mont_method(void)
     return &ret;
 }
 
-int ossl_ec_GFp_mont_group_init(EC_GROUP *group)
+int ossl_ec_GFp_mont_group_init(EC_GROUP* group)
 {
     int ok;
 
@@ -90,7 +90,7 @@ int ossl_ec_GFp_mont_group_init(EC_GROUP *group)
     return ok;
 }
 
-void ossl_ec_GFp_mont_group_finish(EC_GROUP *group)
+void ossl_ec_GFp_mont_group_finish(EC_GROUP* group)
 {
     BN_MONT_CTX_free(group->field_data1);
     group->field_data1 = NULL;
@@ -99,7 +99,7 @@ void ossl_ec_GFp_mont_group_finish(EC_GROUP *group)
     ossl_ec_GFp_simple_group_finish(group);
 }
 
-void ossl_ec_GFp_mont_group_clear_finish(EC_GROUP *group)
+void ossl_ec_GFp_mont_group_clear_finish(EC_GROUP* group)
 {
     BN_MONT_CTX_free(group->field_data1);
     group->field_data1 = NULL;
@@ -108,7 +108,7 @@ void ossl_ec_GFp_mont_group_clear_finish(EC_GROUP *group)
     ossl_ec_GFp_simple_group_clear_finish(group);
 }
 
-int ossl_ec_GFp_mont_group_copy(EC_GROUP *dest, const EC_GROUP *src)
+int ossl_ec_GFp_mont_group_copy(EC_GROUP* dest, const EC_GROUP* src)
 {
     BN_MONT_CTX_free(dest->field_data1);
     dest->field_data1 = NULL;
@@ -133,19 +133,19 @@ int ossl_ec_GFp_mont_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 
     return 1;
 
- err:
+err:
     BN_MONT_CTX_free(dest->field_data1);
     dest->field_data1 = NULL;
     return 0;
 }
 
-int ossl_ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p,
-                                     const BIGNUM *a, const BIGNUM *b,
-                                     BN_CTX *ctx)
+int ossl_ec_GFp_mont_group_set_curve(EC_GROUP* group, const BIGNUM* p,
+    const BIGNUM* a, const BIGNUM* b,
+    BN_CTX* ctx)
 {
-    BN_CTX *new_ctx = NULL;
-    BN_MONT_CTX *mont = NULL;
-    BIGNUM *one = NULL;
+    BN_CTX* new_ctx = NULL;
+    BN_MONT_CTX* mont = NULL;
+    BIGNUM* one = NULL;
     int ret = 0;
 
     BN_MONT_CTX_free(group->field_data1);
@@ -186,15 +186,15 @@ int ossl_ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p,
         group->field_data2 = NULL;
     }
 
- err:
+err:
     BN_free(one);
     BN_CTX_free(new_ctx);
     BN_MONT_CTX_free(mont);
     return ret;
 }
 
-int ossl_ec_GFp_mont_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
-                               const BIGNUM *b, BN_CTX *ctx)
+int ossl_ec_GFp_mont_field_mul(const EC_GROUP* group, BIGNUM* r, const BIGNUM* a,
+    const BIGNUM* b, BN_CTX* ctx)
 {
     if (group->field_data1 == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
@@ -204,8 +204,8 @@ int ossl_ec_GFp_mont_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a
     return BN_mod_mul_montgomery(r, a, b, group->field_data1, ctx);
 }
 
-int ossl_ec_GFp_mont_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
-                               BN_CTX *ctx)
+int ossl_ec_GFp_mont_field_sqr(const EC_GROUP* group, BIGNUM* r, const BIGNUM* a,
+    BN_CTX* ctx)
 {
     if (group->field_data1 == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
@@ -220,18 +220,18 @@ int ossl_ec_GFp_mont_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a
  * If a is zero (or equivalent), you'll get an EC_R_CANNOT_INVERT error.
  * We have a Mont structure, so SCA hardening is FLT inversion.
  */
-int ossl_ec_GFp_mont_field_inv(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
-                               BN_CTX *ctx)
+int ossl_ec_GFp_mont_field_inv(const EC_GROUP* group, BIGNUM* r, const BIGNUM* a,
+    BN_CTX* ctx)
 {
-    BIGNUM *e = NULL;
-    BN_CTX *new_ctx = NULL;
+    BIGNUM* e = NULL;
+    BN_CTX* new_ctx = NULL;
     int ret = 0;
 
     if (group->field_data1 == NULL)
         return 0;
 
     if (ctx == NULL
-            && (ctx = new_ctx = BN_CTX_secure_new_ex(group->libctx)) == NULL)
+        && (ctx = new_ctx = BN_CTX_secure_new_ex(group->libctx)) == NULL)
         return 0;
 
     BN_CTX_start(ctx);
@@ -258,25 +258,25 @@ int ossl_ec_GFp_mont_field_inv(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a
 
     ret = 1;
 
- err:
+err:
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     return ret;
 }
 
-int ossl_ec_GFp_mont_field_encode(const EC_GROUP *group, BIGNUM *r,
-                                  const BIGNUM *a, BN_CTX *ctx)
+int ossl_ec_GFp_mont_field_encode(const EC_GROUP* group, BIGNUM* r,
+    const BIGNUM* a, BN_CTX* ctx)
 {
     if (group->field_data1 == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
         return 0;
     }
 
-    return BN_to_montgomery(r, a, (BN_MONT_CTX *)group->field_data1, ctx);
+    return BN_to_montgomery(r, a, (BN_MONT_CTX*)group->field_data1, ctx);
 }
 
-int ossl_ec_GFp_mont_field_decode(const EC_GROUP *group, BIGNUM *r,
-                                  const BIGNUM *a, BN_CTX *ctx)
+int ossl_ec_GFp_mont_field_decode(const EC_GROUP* group, BIGNUM* r,
+    const BIGNUM* a, BN_CTX* ctx)
 {
     if (group->field_data1 == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
@@ -286,8 +286,8 @@ int ossl_ec_GFp_mont_field_decode(const EC_GROUP *group, BIGNUM *r,
     return BN_from_montgomery(r, a, group->field_data1, ctx);
 }
 
-int ossl_ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r,
-                                      BN_CTX *ctx)
+int ossl_ec_GFp_mont_field_set_to_one(const EC_GROUP* group, BIGNUM* r,
+    BN_CTX* ctx)
 {
     if (group->field_data2 == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);

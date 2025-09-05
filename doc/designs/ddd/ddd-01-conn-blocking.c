@@ -16,9 +16,9 @@
  * new_conn. The application may also call this function multiple times to
  * create multiple SSL_CTX.
  */
-SSL_CTX *create_ssl_ctx(void)
+SSL_CTX* create_ssl_ctx(void)
 {
-    SSL_CTX *ctx;
+    SSL_CTX* ctx;
 
 #ifdef USE_QUIC
     ctx = SSL_CTX_new(OSSL_QUIC_client_method());
@@ -46,13 +46,13 @@ SSL_CTX *create_ssl_ctx(void)
  *
  * hostname is a string like "openssl.org:443" or "[::1]:443".
  */
-BIO *new_conn(SSL_CTX *ctx, const char *hostname)
+BIO* new_conn(SSL_CTX* ctx, const char* hostname)
 {
-    BIO *out;
-    SSL *ssl = NULL;
-    const char *bare_hostname;
+    BIO* out;
+    SSL* ssl = NULL;
+    const char* bare_hostname;
 #ifdef USE_QUIC
-    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+    static const unsigned char alpn[] = { 5, 'd', 'u', 'm', 'm', 'y' };
 #endif
 
     out = BIO_new_ssl_connect(ctx);
@@ -98,7 +98,7 @@ BIO *new_conn(SSL_CTX *ctx, const char *hostname)
  * The application wants to send some block of data to the peer.
  * This is a blocking call.
  */
-int tx(BIO *bio, const void *buf, int buf_len)
+int tx(BIO* bio, const void* buf, int buf_len)
 {
     return BIO_write(bio, buf, buf_len);
 }
@@ -107,7 +107,7 @@ int tx(BIO *bio, const void *buf, int buf_len)
  * The application wants to receive some block of data from
  * the peer. This is a blocking call.
  */
-int rx(BIO *bio, void *buf, int buf_len)
+int rx(BIO* bio, void* buf, int buf_len)
 {
     return BIO_read(bio, buf, buf_len);
 }
@@ -116,7 +116,7 @@ int rx(BIO *bio, void *buf, int buf_len)
  * The application wants to close the connection and free bookkeeping
  * structures.
  */
-void teardown(BIO *bio)
+void teardown(BIO* bio)
 {
     BIO_free_all(bio);
 }
@@ -125,7 +125,7 @@ void teardown(BIO *bio)
  * The application is shutting down and wants to free a previously
  * created SSL_CTX.
  */
-void teardown_ctx(SSL_CTX *ctx)
+void teardown_ctx(SSL_CTX* ctx)
 {
     SSL_CTX_free(ctx);
 }
@@ -135,11 +135,11 @@ void teardown_ctx(SSL_CTX *ctx)
  * Example driver for the above code. This is just to demonstrate that the code
  * works and is not intended to be representative of a real application.
  */
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     static char msg[384], host_port[300];
-    SSL_CTX *ctx = NULL;
-    BIO *b = NULL;
+    SSL_CTX* ctx = NULL;
+    BIO* b = NULL;
     char buf[2048];
     int l, mlen, res = 1;
 
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
 
     snprintf(host_port, sizeof(host_port), "%s:%s", argv[1], argv[2]);
     mlen = snprintf(msg, sizeof(msg),
-                    "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
+        "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {

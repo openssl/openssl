@@ -15,13 +15,13 @@
 #include <openssl/ui.h>
 
 #ifndef BUFSIZ
-# define BUFSIZ 256
+#define BUFSIZ 256
 #endif
 
 /* should be init to zeros. */
 static char prompt_string[80];
 
-void EVP_set_pw_prompt(const char *prompt)
+void EVP_set_pw_prompt(const char* prompt)
 {
     if (prompt == NULL)
         prompt_string[0] = '\0';
@@ -31,7 +31,7 @@ void EVP_set_pw_prompt(const char *prompt)
     }
 }
 
-char *EVP_get_pw_prompt(void)
+char* EVP_get_pw_prompt(void)
 {
     if (prompt_string[0] == '\0')
         return NULL;
@@ -44,17 +44,17 @@ char *EVP_get_pw_prompt(void)
  * the DES library -- if someone ever wants to disable DES, this function
  * will fail
  */
-int EVP_read_pw_string(char *buf, int len, const char *prompt, int verify)
+int EVP_read_pw_string(char* buf, int len, const char* prompt, int verify)
 {
     return EVP_read_pw_string_min(buf, 0, len, prompt, verify);
 }
 
-int EVP_read_pw_string_min(char *buf, int min, int len, const char *prompt,
-                           int verify)
+int EVP_read_pw_string_min(char* buf, int min, int len, const char* prompt,
+    int verify)
 {
     int ret = -1;
     char buff[BUFSIZ];
-    UI *ui;
+    UI* ui;
 
     if ((prompt == NULL) && (prompt_string[0] != '\0'))
         prompt = prompt_string;
@@ -62,25 +62,27 @@ int EVP_read_pw_string_min(char *buf, int min, int len, const char *prompt,
     if (ui == NULL)
         return ret;
     if (UI_add_input_string(ui, prompt, 0, buf, min,
-                            (len >= BUFSIZ) ? BUFSIZ - 1 : len) < 0
+            (len >= BUFSIZ) ? BUFSIZ - 1 : len)
+            < 0
         || (verify
             && UI_add_verify_string(ui, prompt, 0, buff, min,
-                                    (len >= BUFSIZ) ? BUFSIZ - 1 : len,
-                                    buf) < 0))
+                   (len >= BUFSIZ) ? BUFSIZ - 1 : len,
+                   buf)
+                < 0))
         goto end;
     ret = UI_process(ui);
     OPENSSL_cleanse(buff, BUFSIZ);
- end:
+end:
     UI_free(ui);
     return ret;
 }
 
-int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
-                   const unsigned char *salt, const unsigned char *data,
-                   int datal, int count, unsigned char *key,
-                   unsigned char *iv)
+int EVP_BytesToKey(const EVP_CIPHER* type, const EVP_MD* md,
+    const unsigned char* salt, const unsigned char* data,
+    int datal, int count, unsigned char* key,
+    unsigned char* iv)
 {
-    EVP_MD_CTX *c;
+    EVP_MD_CTX* c;
     unsigned char md_buf[EVP_MAX_MD_SIZE];
     int niv, nkey, addmd = 0;
     unsigned int mds = 0, i;
@@ -147,7 +149,7 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
             break;
     }
     rv = EVP_CIPHER_get_key_length(type);
- err:
+err:
     EVP_MD_CTX_free(c);
     OPENSSL_cleanse(md_buf, sizeof(md_buf));
     return rv;

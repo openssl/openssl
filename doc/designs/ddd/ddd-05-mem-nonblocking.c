@@ -16,7 +16,7 @@
  * linked into a larger application.
  */
 typedef struct app_conn_st {
-    SSL *ssl;
+    SSL* ssl;
     BIO *ssl_bio, *net_bio;
     int rx_need_tx, tx_need_rx;
 } APP_CONN;
@@ -27,9 +27,9 @@ typedef struct app_conn_st {
  * new_conn. The application may also call this function multiple times to
  * create multiple SSL_CTX.
  */
-SSL_CTX *create_ssl_ctx(void)
+SSL_CTX* create_ssl_ctx(void)
 {
-    SSL_CTX *ctx;
+    SSL_CTX* ctx;
 
 #ifdef USE_QUIC
     ctx = SSL_CTX_new(OSSL_QUIC_client_method());
@@ -57,13 +57,13 @@ SSL_CTX *create_ssl_ctx(void)
  *
  * hostname is a string like "openssl.org" used for certificate validation.
  */
-APP_CONN *new_conn(SSL_CTX *ctx, const char *bare_hostname)
+APP_CONN* new_conn(SSL_CTX* ctx, const char* bare_hostname)
 {
     BIO *ssl_bio, *internal_bio, *net_bio;
-    APP_CONN *conn;
-    SSL *ssl;
+    APP_CONN* conn;
+    SSL* ssl;
 #ifdef USE_QUIC
-    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+    static const unsigned char alpn[] = { 5, 'd', 'u', 'm', 'm', 'y' };
 #endif
 
     conn = calloc(1, sizeof(APP_CONN));
@@ -125,8 +125,8 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *bare_hostname)
     }
 #endif
 
-    conn->ssl_bio   = ssl_bio;
-    conn->net_bio   = net_bio;
+    conn->ssl_bio = ssl_bio;
+    conn->net_bio = net_bio;
     return conn;
 }
 
@@ -136,7 +136,7 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *bare_hostname)
  * Returns -1 on error. Returns -2 if the function would block (corresponds to
  * EWOULDBLOCK).
  */
-int tx(APP_CONN *conn, const void *buf, int buf_len)
+int tx(APP_CONN* conn, const void* buf, int buf_len)
 {
     int rc, l;
 
@@ -144,13 +144,13 @@ int tx(APP_CONN *conn, const void *buf, int buf_len)
     if (l <= 0) {
         rc = SSL_get_error(conn->ssl, l);
         switch (rc) {
-            case SSL_ERROR_WANT_READ:
-                conn->tx_need_rx = 1;
-            case SSL_ERROR_WANT_CONNECT:
-            case SSL_ERROR_WANT_WRITE:
-                return -2;
-            default:
-                return -1;
+        case SSL_ERROR_WANT_READ:
+            conn->tx_need_rx = 1;
+        case SSL_ERROR_WANT_CONNECT:
+        case SSL_ERROR_WANT_WRITE:
+            return -2;
+        default:
+            return -1;
         }
     } else {
         conn->tx_need_rx = 0;
@@ -165,7 +165,7 @@ int tx(APP_CONN *conn, const void *buf, int buf_len)
  * Returns -1 on error. Returns -2 if the function would block (corresponds to
  * EWOULDBLOCK).
  */
-int rx(APP_CONN *conn, void *buf, int buf_len)
+int rx(APP_CONN* conn, void* buf, int buf_len)
 {
     int rc, l;
 
@@ -173,12 +173,12 @@ int rx(APP_CONN *conn, void *buf, int buf_len)
     if (l <= 0) {
         rc = SSL_get_error(conn->ssl, l);
         switch (rc) {
-            case SSL_ERROR_WANT_WRITE:
-                conn->rx_need_tx = 1;
-            case SSL_ERROR_WANT_READ:
-                return -2;
-            default:
-                return -1;
+        case SSL_ERROR_WANT_WRITE:
+            conn->rx_need_tx = 1;
+        case SSL_ERROR_WANT_READ:
+            return -2;
+        default:
+            return -1;
         }
     } else {
         conn->rx_need_tx = 0;
@@ -195,7 +195,7 @@ int rx(APP_CONN *conn, void *buf, int buf_len)
  * (similar to read(2)). A buffer size of at least 1472 must be used by default
  * to guarantee this does not occur.
  */
-int read_net_tx(APP_CONN *conn, void *buf, int buf_len)
+int read_net_tx(APP_CONN* conn, void* buf, int buf_len)
 {
     return BIO_read(conn->net_bio, buf, buf_len);
 }
@@ -206,7 +206,7 @@ int read_net_tx(APP_CONN *conn, void *buf, int buf_len)
  * QUIC: buf must contain the entirety of a single datagram. It will be consumed
  * entirely (return value == buf_len) or not at all.
  */
-int write_net_rx(APP_CONN *conn, const void *buf, int buf_len)
+int write_net_rx(APP_CONN* conn, const void* buf, int buf_len)
 {
     return BIO_write(conn->net_bio, buf, buf_len);
 }
@@ -214,7 +214,7 @@ int write_net_rx(APP_CONN *conn, const void *buf, int buf_len)
 /*
  * Determine how much data can be written to the network RX BIO.
  */
-size_t net_rx_space(APP_CONN *conn)
+size_t net_rx_space(APP_CONN* conn)
 {
     return BIO_ctrl_get_write_guarantee(conn->net_bio);
 }
@@ -223,7 +223,7 @@ size_t net_rx_space(APP_CONN *conn)
  * Determine how much data is currently queued for transmission in the network
  * TX BIO.
  */
-size_t net_tx_avail(APP_CONN *conn)
+size_t net_tx_avail(APP_CONN* conn)
 {
     return BIO_ctrl_pending(conn->net_bio);
 }
@@ -241,18 +241,18 @@ size_t net_tx_avail(APP_CONN *conn)
  * progress and get_conn_pending_rx returns events which may cause SSL_read
  * to make progress.
  */
-int get_conn_pending_tx(APP_CONN *conn)
+int get_conn_pending_tx(APP_CONN* conn)
 {
 #ifdef USE_QUIC
     return (SSL_net_read_desired(conn->ssl) ? POLLIN : 0)
-           | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
-           | POLLERR;
+        | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
+        | POLLERR;
 #else
     return (conn->tx_need_rx ? POLLIN : 0) | POLLOUT | POLLERR;
 #endif
 }
 
-int get_conn_pending_rx(APP_CONN *conn)
+int get_conn_pending_rx(APP_CONN* conn)
 {
 #ifdef USE_QUIC
     return get_conn_pending_tx(conn);
@@ -265,7 +265,7 @@ int get_conn_pending_rx(APP_CONN *conn)
  * The application wants to close the connection and free bookkeeping
  * structures.
  */
-void teardown(APP_CONN *conn)
+void teardown(APP_CONN* conn)
 {
     BIO_free_all(conn->ssl_bio);
     BIO_free_all(conn->net_bio);
@@ -276,7 +276,7 @@ void teardown(APP_CONN *conn)
  * The application is shutting down and wants to free a previously
  * created SSL_CTX.
  */
-void teardown_ctx(SSL_CTX *ctx)
+void teardown_ctx(SSL_CTX* ctx)
 {
     SSL_CTX_free(ctx);
 }
@@ -294,12 +294,12 @@ void teardown_ctx(SSL_CTX *ctx)
 #include <fcntl.h>
 #include <errno.h>
 
-static int pump(APP_CONN *conn, int fd, int events, int timeout)
+static int pump(APP_CONN* conn, int fd, int events, int timeout)
 {
     int l, l2;
     char buf[2048]; /* QUIC: would need to be changed if < 1472 */
     size_t wspace;
-    struct pollfd pfd = {0};
+    struct pollfd pfd = { 0 };
 
     pfd.fd = fd;
     pfd.events = (events & (POLLIN | POLLERR));
@@ -308,7 +308,7 @@ static int pump(APP_CONN *conn, int fd, int events, int timeout)
     if (net_tx_avail(conn) > 0)
         pfd.events |= POLLOUT;
 
-    if ((pfd.events & (POLLIN|POLLOUT)) == 0)
+    if ((pfd.events & (POLLIN | POLLOUT)) == 0)
         return 1;
 
     if (poll(&pfd, 1, timeout) == 0)
@@ -319,21 +319,22 @@ static int pump(APP_CONN *conn, int fd, int events, int timeout)
             l = read(fd, buf, wspace > sizeof(buf) ? sizeof(buf) : wspace);
             if (l <= 0) {
                 switch (errno) {
-                    case EAGAIN:
+                case EAGAIN:
+                    goto stop;
+                default:
+                    if (l == 0) /* EOF */
                         goto stop;
-                    default:
-                        if (l == 0) /* EOF */
-                            goto stop;
 
-                        fprintf(stderr, "error on read: %d\n", errno);
-                        return -1;
+                    fprintf(stderr, "error on read: %d\n", errno);
+                    return -1;
                 }
                 break;
             }
             l2 = write_net_rx(conn, buf, l);
             if (l2 < l)
                 fprintf(stderr, "short write %d %d\n", l2, l);
-        } stop:;
+        }
+    stop:;
     }
 
     if (pfd.revents & POLLOUT) {
@@ -350,17 +351,17 @@ static int pump(APP_CONN *conn, int fd, int events, int timeout)
     return 1;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     int rc, fd = -1, res = 1;
     static char tx_msg[300];
-    const char *tx_p = tx_msg;
+    const char* tx_p = tx_msg;
     char rx_buf[2048];
     int l, tx_len;
     int timeout = 2000 /* ms */;
-    APP_CONN *conn = NULL;
-    struct addrinfo hints = {0}, *result = NULL;
-    SSL_CTX *ctx = NULL;
+    APP_CONN* conn = NULL;
+    struct addrinfo hints = { 0 }, *result = NULL;
+    SSL_CTX* ctx = NULL;
 
     if (argc < 3) {
         fprintf(stderr, "usage: %s host port\n", argv[0]);
@@ -368,8 +369,8 @@ int main(int argc, char **argv)
     }
 
     tx_len = snprintf(tx_msg, sizeof(tx_msg),
-                      "GET / HTTP/1.0\r\nHost: %s\r\n\r\n",
-                      argv[1]);
+        "GET / HTTP/1.0\r\nHost: %s\r\n\r\n",
+        argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {
@@ -377,9 +378,9 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    hints.ai_family     = AF_INET;
-    hints.ai_socktype   = SOCK_STREAM;
-    hints.ai_flags      = AI_PASSIVE;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
     rc = getaddrinfo(argv[1], argv[2], &hints, &result);
     if (rc < 0) {
         fprintf(stderr, "cannot resolve\n");

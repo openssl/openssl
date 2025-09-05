@@ -8,7 +8,7 @@
  */
 
 #if defined(_WIN32)
-# include <windows.h>
+#include <windows.h>
 #endif
 
 #include "testutil.h"
@@ -18,7 +18,7 @@ static int success;
 
 static void thread_fips_rand_fetch(void)
 {
-    EVP_MD *md;
+    EVP_MD* md;
 
     if (!TEST_true(md = EVP_MD_fetch(NULL, "SHA2-256", NULL)))
         success = 0;

@@ -14,9 +14,9 @@
 static const char Hex[] = "0123456789ABCDEF";
 
 #ifndef OPENSSL_NO_STDIO
-int BN_print_fp(FILE *fp, const BIGNUM *a)
+int BN_print_fp(FILE* fp, const BIGNUM* a)
 {
-    BIO *b;
+    BIO* b;
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL)
@@ -28,7 +28,7 @@ int BN_print_fp(FILE *fp, const BIGNUM *a)
 }
 #endif
 
-int BN_print(BIO *bp, const BIGNUM *a)
+int BN_print(BIO* bp, const BIGNUM* a)
 {
     int i, j, v, z = 0;
     int ret = 0;
@@ -49,11 +49,11 @@ int BN_print(BIO *bp, const BIGNUM *a)
         }
     }
     ret = 1;
- end:
+end:
     return ret;
 }
 
-char *BN_options(void)
+char* BN_options(void)
 {
     static int init = 0;
     static char data[16];
@@ -62,10 +62,10 @@ char *BN_options(void)
         init++;
 #ifdef BN_LLONG
         BIO_snprintf(data, sizeof(data), "bn(%zu,%zu)",
-                     sizeof(BN_ULLONG) * 8, sizeof(BN_ULONG) * 8);
+            sizeof(BN_ULLONG) * 8, sizeof(BN_ULONG) * 8);
 #else
         BIO_snprintf(data, sizeof(data), "bn(%zu,%zu)",
-                     sizeof(BN_ULONG) * 8, sizeof(BN_ULONG) * 8);
+            sizeof(BN_ULONG) * 8, sizeof(BN_ULONG) * 8);
 #endif
     }
     return data;

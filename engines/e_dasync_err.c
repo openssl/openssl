@@ -14,8 +14,8 @@
 #ifndef OPENSSL_NO_ERR
 
 static ERR_STRING_DATA DASYNC_str_reasons[] = {
-    {ERR_PACK(0, 0, DASYNC_R_INIT_FAILED), "init failed"},
-    {0, NULL}
+    { ERR_PACK(0, 0, DASYNC_R_INIT_FAILED), "init failed" },
+    { 0, NULL }
 };
 
 #endif
@@ -47,7 +47,7 @@ static void ERR_unload_DASYNC_strings(void)
     }
 }
 
-static void ERR_DASYNC_error(int function, int reason, const char *file, int line)
+static void ERR_DASYNC_error(int function, int reason, const char* file, int line)
 {
     if (lib_code == 0)
         lib_code = ERR_get_next_error_library();

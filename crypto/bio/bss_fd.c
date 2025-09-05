@@ -16,7 +16,7 @@
 /*
  * Dummy placeholder for BIO_s_fd...
  */
-BIO *BIO_new_fd(int fd, int close_flag)
+BIO* BIO_new_fd(int fd, int close_flag)
 {
     return NULL;
 }
@@ -31,7 +31,7 @@ int BIO_fd_should_retry(int i)
     return 0;
 }
 
-const BIO_METHOD *BIO_s_fd(void)
+const BIO_METHOD* BIO_s_fd(void)
 {
     return NULL;
 }
@@ -48,13 +48,13 @@ const BIO_METHOD *BIO_s_fd(void)
  * file descriptors can only be provided by application. Therefore
  * "UPLINK" calls are due...
  */
-static int fd_write(BIO *h, const char *buf, int num);
-static int fd_read(BIO *h, char *buf, int size);
-static int fd_puts(BIO *h, const char *str);
-static int fd_gets(BIO *h, char *buf, int size);
-static long fd_ctrl(BIO *h, int cmd, long arg1, void *arg2);
-static int fd_new(BIO *h);
-static int fd_free(BIO *data);
+static int fd_write(BIO* h, const char* buf, int num);
+static int fd_read(BIO* h, char* buf, int size);
+static int fd_puts(BIO* h, const char* str);
+static int fd_gets(BIO* h, char* buf, int size);
+static long fd_ctrl(BIO* h, int cmd, long arg1, void* arg2);
+static int fd_new(BIO* h);
+static int fd_free(BIO* data);
 int BIO_fd_should_retry(int s);
 
 static const BIO_METHOD methods_fdp = {
@@ -69,17 +69,17 @@ static const BIO_METHOD methods_fdp = {
     fd_ctrl,
     fd_new,
     fd_free,
-    NULL,                       /* fd_callback_ctrl */
+    NULL, /* fd_callback_ctrl */
 };
 
-const BIO_METHOD *BIO_s_fd(void)
+const BIO_METHOD* BIO_s_fd(void)
 {
     return &methods_fdp;
 }
 
-BIO *BIO_new_fd(int fd, int close_flag)
+BIO* BIO_new_fd(int fd, int close_flag)
 {
-    BIO *ret;
+    BIO* ret;
     ret = BIO_new(BIO_s_fd());
     if (ret == NULL)
         return NULL;
@@ -87,7 +87,7 @@ BIO *BIO_new_fd(int fd, int close_flag)
     return ret;
 }
 
-static int fd_new(BIO *bi)
+static int fd_new(BIO* bi)
 {
     bi->init = 0;
     bi->num = -1;
@@ -96,7 +96,7 @@ static int fd_new(BIO *bi)
     return 1;
 }
 
-static int fd_free(BIO *a)
+static int fd_free(BIO* a)
 {
     if (a == NULL)
         return 0;
@@ -110,7 +110,7 @@ static int fd_free(BIO *a)
     return 1;
 }
 
-static int fd_read(BIO *b, char *out, int outl)
+static int fd_read(BIO* b, char* out, int outl)
 {
     int ret = 0;
 
@@ -128,7 +128,7 @@ static int fd_read(BIO *b, char *out, int outl)
     return ret;
 }
 
-static int fd_write(BIO *b, const char *in, int inl)
+static int fd_write(BIO* b, const char* in, int inl)
 {
     int ret;
     clear_sys_error();
@@ -141,10 +141,10 @@ static int fd_write(BIO *b, const char *in, int inl)
     return ret;
 }
 
-static long fd_ctrl(BIO *b, int cmd, long num, void *ptr)
+static long fd_ctrl(BIO* b, int cmd, long num, void* ptr)
 {
     long ret = 1;
-    int *ip;
+    int* ip;
 
     switch (cmd) {
     case BIO_CTRL_RESET:
@@ -159,13 +159,13 @@ static long fd_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_C_SET_FD:
         fd_free(b);
-        b->num = *((int *)ptr);
+        b->num = *((int*)ptr);
         b->shutdown = (int)num;
         b->init = 1;
         break;
     case BIO_C_GET_FD:
         if (b->init) {
-            ip = (int *)ptr;
+            ip = (int*)ptr;
             if (ip != NULL)
                 *ip = b->num;
             ret = b->num;
@@ -196,7 +196,7 @@ static long fd_ctrl(BIO *b, int cmd, long num, void *ptr)
     return ret;
 }
 
-static int fd_puts(BIO *bp, const char *str)
+static int fd_puts(BIO* bp, const char* str)
 {
     int ret;
     size_t n = strlen(str);
@@ -207,15 +207,15 @@ static int fd_puts(BIO *bp, const char *str)
     return ret;
 }
 
-static int fd_gets(BIO *bp, char *buf, int size)
+static int fd_gets(BIO* bp, char* buf, int size)
 {
     int ret = 0;
-    char *ptr = buf;
-    char *end = buf + size - 1;
+    char* ptr = buf;
+    char* end = buf + size - 1;
 
     while (ptr < end && fd_read(bp, ptr, 1) > 0) {
         if (*ptr++ == '\n')
-           break;
+            break;
     }
 
     ptr[0] = '\0';
@@ -241,41 +241,41 @@ int BIO_fd_non_fatal_error(int err)
 {
     switch (err) {
 
-# ifdef EWOULDBLOCK
-#  ifdef WSAEWOULDBLOCK
-#   if WSAEWOULDBLOCK != EWOULDBLOCK
+#ifdef EWOULDBLOCK
+#ifdef WSAEWOULDBLOCK
+#if WSAEWOULDBLOCK != EWOULDBLOCK
     case EWOULDBLOCK:
-#   endif
-#  else
+#endif
+#else
     case EWOULDBLOCK:
-#  endif
-# endif
+#endif
+#endif
 
-# if defined(ENOTCONN)
+#if defined(ENOTCONN)
     case ENOTCONN:
-# endif
+#endif
 
-# ifdef EINTR
+#ifdef EINTR
     case EINTR:
-# endif
+#endif
 
-# ifdef EAGAIN
-#  if EWOULDBLOCK != EAGAIN
+#ifdef EAGAIN
+#if EWOULDBLOCK != EAGAIN
     case EAGAIN:
-#  endif
-# endif
+#endif
+#endif
 
-# ifdef EPROTO
+#ifdef EPROTO
     case EPROTO:
-# endif
+#endif
 
-# ifdef EINPROGRESS
+#ifdef EINPROGRESS
     case EINPROGRESS:
-# endif
+#endif
 
-# ifdef EALREADY
+#ifdef EALREADY
     case EALREADY:
-# endif
+#endif
         return 1;
     default:
         break;

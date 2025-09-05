@@ -29,28 +29,28 @@ struct self_test_arg {
     int count;
 };
 
-static OSSL_LIB_CTX *libctx = NULL;
-static char *provider_name = NULL;
+static OSSL_LIB_CTX* libctx = NULL;
+static char* provider_name = NULL;
 static struct self_test_arg self_test_args = { 0 };
 
-const OPTIONS *test_get_options(void)
+const OPTIONS* test_get_options(void)
 {
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "provider_name", OPT_PROVIDER_NAME, 's',
-          "The name of the provider to load" },
+            "The name of the provider to load" },
         { "config", OPT_CONFIG_FILE, '<',
-          "The configuration file to use for the libctx" },
+            "The configuration file to use for the libctx" },
         { NULL }
     };
     return test_options;
 }
 
-static int self_test_events(const OSSL_PARAM params[], void *arg,
-                            const char *title, int corrupt)
+static int self_test_events(const OSSL_PARAM params[], void* arg,
+    const char* title, int corrupt)
 {
-    struct self_test_arg *args = arg;
-    const OSSL_PARAM *p = NULL;
+    struct self_test_arg* args = arg;
+    const OSSL_PARAM* p = NULL;
     const char *phase = NULL, *type = NULL, *desc = NULL;
     int ret = 0;
 
@@ -61,22 +61,22 @@ static int self_test_events(const OSSL_PARAM params[], void *arg,
     p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_PHASE);
     if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
         goto err;
-    phase = (const char *)p->data;
+    phase = (const char*)p->data;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_DESC);
     if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
         goto err;
-    desc = (const char *)p->data;
+    desc = (const char*)p->data;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_TYPE);
     if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
         goto err;
-    type = (const char *)p->data;
+    type = (const char*)p->data;
 
     if (strcmp(phase, OSSL_SELF_TEST_PHASE_START) == 0)
         BIO_printf(bio_out, "%s : (%s) : ", desc, type);
     else if (strcmp(phase, OSSL_SELF_TEST_PHASE_PASS) == 0
-             || strcmp(phase, OSSL_SELF_TEST_PHASE_FAIL) == 0)
+        || strcmp(phase, OSSL_SELF_TEST_PHASE_FAIL) == 0)
         BIO_printf(bio_out, "%s\n", phase);
     /*
      * The self test code will internally corrupt the KAT test result if an
@@ -89,22 +89,22 @@ err:
     return ret;
 }
 
-static int self_test_on_demand_fail(const OSSL_PARAM params[], void *arg)
+static int self_test_on_demand_fail(const OSSL_PARAM params[], void* arg)
 {
     return self_test_events(params, arg, "On Demand Failure", 1);
 }
 
-static int self_test_on_demand(const OSSL_PARAM params[], void *arg)
+static int self_test_on_demand(const OSSL_PARAM params[], void* arg)
 {
     return self_test_events(params, arg, "On Demand", 0);
 }
 
-static int self_test_on_load(const OSSL_PARAM params[], void *arg)
+static int self_test_on_load(const OSSL_PARAM params[], void* arg)
 {
     return self_test_events(params, arg, "On Loading", 0);
 }
 
-static int get_provider_params(const OSSL_PROVIDER *prov)
+static int get_provider_params(const OSSL_PROVIDER* prov)
 {
     int ret = 0;
     OSSL_PARAM params[5];
@@ -121,10 +121,10 @@ static int get_provider_params(const OSSL_PROVIDER *prov)
 
     params[0] = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_NAME, &name, 0);
     params[1] = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_VERSION,
-                                              &version, 0);
+        &version, 0);
     params[2] = OSSL_PARAM_construct_int(OSSL_PROV_PARAM_STATUS, &status);
     params[3] = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_BUILDINFO,
-                                              &buildinfo, 0);
+        &buildinfo, 0);
     params[4] = OSSL_PARAM_construct_end();
     OSSL_PARAM_set_all_unmodified(params);
     if (!TEST_true(OSSL_PROVIDER_get_params(prov, params)))
@@ -145,11 +145,11 @@ static int test_provider_status(void)
 {
     int ret = 0;
     unsigned int status = 0;
-    OSSL_PROVIDER *prov = NULL;
+    OSSL_PROVIDER* prov = NULL;
     OSSL_PARAM params[2];
-    EVP_MD *fetch = NULL;
-    EVP_PKEY_CTX *pctx = NULL;
-    EVP_PKEY *pkey = NULL;
+    EVP_MD* fetch = NULL;
+    EVP_PKEY_CTX* pctx = NULL;
+    EVP_PKEY* pkey = NULL;
 
     if (!TEST_ptr(prov = OSSL_PROVIDER_load(libctx, provider_name)))
         goto err;
@@ -203,7 +203,7 @@ err:
 
 static int test_provider_gettable_params(void)
 {
-    OSSL_PROVIDER *prov;
+    OSSL_PROVIDER* prov;
     int ret;
 
     if (!TEST_ptr(prov = OSSL_PROVIDER_load(libctx, provider_name)))
@@ -216,7 +216,7 @@ static int test_provider_gettable_params(void)
 int setup_tests(void)
 {
     OPTION_CHOICE o;
-    char *config_file = NULL;
+    char* config_file = NULL;
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -227,7 +227,7 @@ int setup_tests(void)
             provider_name = opt_arg();
             break;
         case OPT_TEST_CASES:
-           break;
+            break;
         default:
         case OPT_ERR:
             return 0;

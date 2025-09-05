@@ -24,22 +24,22 @@ DEFINE_STACK_OF(OSSL_PROVIDER)
  */
 enum prov_range { OPT_PROV_ENUM };
 
-static STACK_OF(OSSL_PROVIDER) *app_providers = NULL;
+static STACK_OF(OSSL_PROVIDER)* app_providers = NULL;
 
-static void provider_free(OSSL_PROVIDER *prov)
+static void provider_free(OSSL_PROVIDER* prov)
 {
     OSSL_PROVIDER_unload(prov);
 }
 
-int app_provider_load(OSSL_LIB_CTX *libctx, const char *provider_name)
+int app_provider_load(OSSL_LIB_CTX* libctx, const char* provider_name)
 {
-    OSSL_PROVIDER *prov;
+    OSSL_PROVIDER* prov;
 
     prov = OSSL_PROVIDER_load(libctx, provider_name);
     if (prov == NULL) {
         opt_printf_stderr("%s: unable to load provider %s\n"
                           "Hint: use -provider-path option or OPENSSL_MODULES environment variable.\n",
-                          opt_getprog(), provider_name);
+            opt_getprog(), provider_name);
         ERR_print_errors(bio_err);
         return 0;
     }
@@ -59,7 +59,7 @@ void app_providers_cleanup(void)
     app_providers = NULL;
 }
 
-static int opt_provider_path(const char *path)
+static int opt_provider_path(const char* path)
 {
     if (path != NULL && *path == '\0')
         path = NULL;
@@ -67,15 +67,15 @@ static int opt_provider_path(const char *path)
 }
 
 struct prov_param_st {
-    char *name;
-    char *key;
-    char *val;
+    char* name;
+    char* key;
+    char* val;
     int found;
 };
 
-static int set_prov_param(OSSL_PROVIDER *prov, void *vp)
+static int set_prov_param(OSSL_PROVIDER* prov, void* vp)
 {
-    struct prov_param_st *p = (struct prov_param_st *)vp;
+    struct prov_param_st* p = (struct prov_param_st*)vp;
 
     if (p->name != NULL && strcmp(OSSL_PROVIDER_get0_name(prov), p->name) != 0)
         return 1;
@@ -83,7 +83,7 @@ static int set_prov_param(OSSL_PROVIDER *prov, void *vp)
     return OSSL_PROVIDER_add_conf_parameter(prov, p->key, p->val);
 }
 
-static int opt_provider_param(const char *arg)
+static int opt_provider_param(const char* arg)
 {
     struct prov_param_st p;
     char *copy, *tmp;
@@ -92,7 +92,7 @@ static int opt_provider_param(const char *arg)
     if ((copy = OPENSSL_strdup(arg)) == NULL
         || (p.val = strchr(copy, '=')) == NULL) {
         opt_printf_stderr("%s: malformed '-provparam' option value: '%s'\n",
-                          opt_getprog(), arg);
+            opt_getprog(), arg);
         goto end;
     }
 
@@ -118,22 +118,22 @@ static int opt_provider_param(const char *arg)
     /* The key must not be empty */
     if (*p.key == '\0') {
         opt_printf_stderr("%s: malformed '-provparam' option value: '%s'\n",
-                          opt_getprog(), arg);
+            opt_getprog(), arg);
         goto end;
     }
 
     p.found = 0;
-    ret = OSSL_PROVIDER_do_all(app_get0_libctx(), set_prov_param, (void *)&p);
+    ret = OSSL_PROVIDER_do_all(app_get0_libctx(), set_prov_param, (void*)&p);
     if (ret == 0) {
         opt_printf_stderr("%s: Error setting provider '%s' parameter '%s'\n",
-                          opt_getprog(), p.name, p.key);
+            opt_getprog(), p.name, p.key);
     } else if (p.found == 0) {
         opt_printf_stderr("%s: No provider named '%s' is loaded\n",
-                          opt_getprog(), p.name);
+            opt_getprog(), p.name);
         ret = 0;
     }
 
- end:
+end:
     OPENSSL_free(copy);
     return ret;
 }

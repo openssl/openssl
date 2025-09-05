@@ -11,16 +11,16 @@
 
 #include "testutil.h"
 
-static const char *chain;
-static const char *crl;
+static const char* chain;
+static const char* crl;
 
 static int test_load_cert_file(void)
 {
     int ret = 0, i;
-    X509_STORE *store = NULL;
-    X509_LOOKUP *lookup = NULL;
-    STACK_OF(X509) *certs = NULL;
-    STACK_OF(X509_OBJECT) *objs = NULL;
+    X509_STORE* store = NULL;
+    X509_LOOKUP* lookup = NULL;
+    STACK_OF(X509)* certs = NULL;
+    STACK_OF(X509_OBJECT)* objs = NULL;
 
     if (!TEST_ptr(store = X509_STORE_new())
         || !TEST_ptr(lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file()))
@@ -32,7 +32,7 @@ static int test_load_cert_file(void)
         goto err;
 
     for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
-        const X509_OBJECT *obj = sk_X509_OBJECT_value(objs, i);
+        const X509_OBJECT* obj = sk_X509_OBJECT_value(objs, i);
         if (!TEST_int_eq(X509_OBJECT_get_type(obj), X509_LU_X509))
             goto err;
     }

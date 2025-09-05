@@ -18,7 +18,7 @@
 #include <openssl/core.h>
 #include "simpledynamic.h"
 
-static int test_load(const char *path, const char *symbol)
+static int test_load(const char* path, const char* symbol)
 {
 #ifdef SD_INIT
     SD sd = SD_INIT;
@@ -37,7 +37,7 @@ static int test_load(const char *path, const char *symbol)
 #endif
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     const char *m, *s;
 

@@ -41,14 +41,14 @@ static unsigned char hkdf_okm[] = {
     0xd5, 0xb8, 0x87, 0x18, 0x58, 0x65
 };
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     int ret = EXIT_FAILURE;
-    EVP_KDF *kdf = NULL;
-    EVP_KDF_CTX *kctx = NULL;
+    EVP_KDF* kdf = NULL;
+    EVP_KDF_CTX* kctx = NULL;
     unsigned char out[42];
     OSSL_PARAM params[5], *p = params;
-    OSSL_LIB_CTX *library_context = NULL;
+    OSSL_LIB_CTX* library_context = NULL;
 
     library_context = OSSL_LIB_CTX_new();
     if (library_context == NULL) {
@@ -72,16 +72,16 @@ int main(int argc, char **argv)
 
     /* Set the underlying hash function used to derive the key */
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            "SHA256", 0);
+        "SHA256", 0);
     /* Set input keying material */
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, hkdf_ikm,
-                                             sizeof(hkdf_ikm));
+        sizeof(hkdf_ikm));
     /* Set application specific information */
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, hkdf_info,
-                                             sizeof(hkdf_info));
+        sizeof(hkdf_info));
     /* Set salt */
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, hkdf_salt,
-                                             sizeof(hkdf_salt));
+        sizeof(hkdf_salt));
     *p = OSSL_PARAM_construct_end();
 
     /* Derive the key */

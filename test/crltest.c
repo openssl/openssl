@@ -29,7 +29,7 @@
 #define PARAM_TIME 1474934400 /* Sep 27th, 2016 */
 #define PARAM_TIME2 1753284700 /* July 23th, 2025 */
 
-static const char *kCRLTestRoot[] = {
+static const char* kCRLTestRoot[] = {
     "-----BEGIN CERTIFICATE-----\n",
     "MIIDbzCCAlegAwIBAgIJAODri7v0dDUFMA0GCSqGSIb3DQEBCwUAME4xCzAJBgNV\n",
     "BAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1Nb3VudGFpbiBW\n",
@@ -54,7 +54,7 @@ static const char *kCRLTestRoot[] = {
     NULL
 };
 
-static const char *kCRLTestLeaf[] = {
+static const char* kCRLTestLeaf[] = {
     "-----BEGIN CERTIFICATE-----\n",
     "MIIDkDCCAnigAwIBAgICEAAwDQYJKoZIhvcNAQELBQAwTjELMAkGA1UEBhMCVVMx\n",
     "EzARBgNVBAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDU1vdW50YWluIFZpZXcxEjAQ\n",
@@ -80,7 +80,7 @@ static const char *kCRLTestLeaf[] = {
     NULL
 };
 
-static const char *kCRLTestRoot2[] = {
+static const char* kCRLTestRoot2[] = {
     "-----BEGIN CERTIFICATE-----\n",
     "MIID4zCCAsugAwIBAgIUGTcyNat9hTOo8nnGdzF7MTzL9WAwDQYJKoZIhvcNAQEL\n",
     "BQAweTELMAkGA1UEBhMCVVMxEzARBgNVBAgMCkNhbGlmb3JuaWExFjAUBgNVBAcM\n",
@@ -107,7 +107,7 @@ static const char *kCRLTestRoot2[] = {
     NULL
 };
 
-static const char *kCRLTestLeaf2[] = {
+static const char* kCRLTestLeaf2[] = {
     "-----BEGIN CERTIFICATE-----\n",
     "MIIECjCCAvKgAwIBAgIUPxuMqMtuN1j3XZVRVrNmaTCIP04wDQYJKoZIhvcNAQEL\n",
     "BQAweTELMAkGA1UEBhMCVVMxEzARBgNVBAgMCkNhbGlmb3JuaWExFjAUBgNVBAcM\n",
@@ -135,7 +135,7 @@ static const char *kCRLTestLeaf2[] = {
     NULL
 };
 
-static const char *kBasicCRL[] = {
+static const char* kBasicCRL[] = {
     "-----BEGIN X509 CRL-----\n",
     "MIIBpzCBkAIBATANBgkqhkiG9w0BAQsFADBOMQswCQYDVQQGEwJVUzETMBEGA1UE\n",
     "CAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNTW91bnRhaW4gVmlldzESMBAGA1UECgwJ\n",
@@ -150,7 +150,7 @@ static const char *kBasicCRL[] = {
     NULL
 };
 
-static const char *kRevokedCRL[] = {
+static const char* kRevokedCRL[] = {
     "-----BEGIN X509 CRL-----\n",
     "MIIBvjCBpwIBATANBgkqhkiG9w0BAQsFADBOMQswCQYDVQQGEwJVUzETMBEGA1UE\n",
     "CAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNTW91bnRhaW4gVmlldzESMBAGA1UECgwJ\n",
@@ -166,14 +166,14 @@ static const char *kRevokedCRL[] = {
     NULL
 };
 
-static const char *kInvalidCRL[] = {
+static const char* kInvalidCRL[] = {
     "-----BEGIN X509 CRL-----\n",
     "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n",
     "-----END X509 CRL-----\n",
     NULL
 };
 
-static const char *kBadIssuerCRL[] = {
+static const char* kBadIssuerCRL[] = {
     "-----BEGIN X509 CRL-----\n",
     "MIIBwjCBqwIBATANBgkqhkiG9w0BAQsFADBSMQswCQYDVQQGEwJVUzETMBEGA1UE\n",
     "CAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNTW91bnRhaW4gVmlldzEWMBQGA1UECgwN\n",
@@ -189,7 +189,7 @@ static const char *kBadIssuerCRL[] = {
     NULL
 };
 
-static const char *kEmptyIdpCRL[] = {
+static const char* kEmptyIdpCRL[] = {
     "-----BEGIN X509 CRL-----\n",
     "MIICOTCCASECAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
     "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
@@ -211,7 +211,7 @@ static const char *kEmptyIdpCRL[] = {
  * This is kBasicCRL but with a critical issuing distribution point
  * extension.
  */
-static const char *kKnownCriticalCRL[] = {
+static const char* kKnownCriticalCRL[] = {
     "-----BEGIN X509 CRL-----\n",
     "MIIBujCBowIBATANBgkqhkiG9w0BAQsFADBOMQswCQYDVQQGEwJVUzETMBEGA1UE\n",
     "CAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNTW91bnRhaW4gVmlldzESMBAGA1UECgwJ\n",
@@ -230,7 +230,7 @@ static const char *kKnownCriticalCRL[] = {
 /*
  * kUnknownCriticalCRL is kBasicCRL but with an unknown critical extension.
  */
-static const char *kUnknownCriticalCRL[] = {
+static const char* kUnknownCriticalCRL[] = {
     "-----BEGIN X509 CRL-----\n",
     "MIIBvDCBpQIBATANBgkqhkiG9w0BAQsFADBOMQswCQYDVQQGEwJVUzETMBEGA1UE\n",
     "CAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNTW91bnRhaW4gVmlldzESMBAGA1UECgwJ\n",
@@ -250,7 +250,7 @@ static const char *kUnknownCriticalCRL[] = {
  * kUnknownCriticalCRL2 is kBasicCRL but with a critical issuing distribution
  * point extension followed by an unknown critical extension
  */
-static const char *kUnknownCriticalCRL2[] = {
+static const char* kUnknownCriticalCRL2[] = {
     "-----BEGIN X509 CRL-----\n",
     "MIIBzzCBuAIBATANBgkqhkiG9w0BAQsFADBOMQswCQYDVQQGEwJVUzETMBEGA1UE\n",
     "CAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNTW91bnRhaW4gVmlldzESMBAGA1UECgwJ\n",
@@ -266,20 +266,20 @@ static const char *kUnknownCriticalCRL2[] = {
     NULL
 };
 
-static const char **unknown_critical_crls[] = {
+static const char** unknown_critical_crls[] = {
     kUnknownCriticalCRL, kUnknownCriticalCRL2
 };
 
-static X509 *test_root = NULL;
-static X509 *test_leaf = NULL;
-static X509 *test_root2 = NULL;
-static X509 *test_leaf2 = NULL;
+static X509* test_root = NULL;
+static X509* test_leaf = NULL;
+static X509* test_root2 = NULL;
+static X509* test_leaf2 = NULL;
 
 /*
  * Glue an array of strings together.  Return a BIO and put the string
  * into |*out| so we can free it.
  */
-static BIO *glue2bio(const char **pem, char **out)
+static BIO* glue2bio(const char** pem, char** out)
 {
     size_t s = 0;
 
@@ -290,11 +290,11 @@ static BIO *glue2bio(const char **pem, char **out)
 /*
  * Create a CRL from an array of strings.
  */
-static X509_CRL *CRL_from_strings(const char **pem)
+static X509_CRL* CRL_from_strings(const char** pem)
 {
-    X509_CRL *crl;
-    char *p;
-    BIO *b = glue2bio(pem, &p);
+    X509_CRL* crl;
+    char* p;
+    BIO* b = glue2bio(pem, &p);
 
     if (b == NULL) {
         OPENSSL_free(p);
@@ -311,11 +311,11 @@ static X509_CRL *CRL_from_strings(const char **pem)
 /*
  * Create an X509 from an array of strings.
  */
-static X509 *X509_from_strings(const char **pem)
+static X509* X509_from_strings(const char** pem)
 {
-    X509 *x;
-    char *p;
-    BIO *b = glue2bio(pem, &p);
+    X509* x;
+    char* p;
+    BIO* b = glue2bio(pem, &p);
 
     if (b == NULL) {
         OPENSSL_free(p);
@@ -335,13 +335,13 @@ static X509 *X509_from_strings(const char **pem)
  * also free'd before returning, which is kinda yucky but convenient.
  * Returns a value from X509_V_ERR_xxx or X509_V_OK.
  */
-static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
-                  unsigned long flags, time_t verification_time)
+static int verify(X509* leaf, X509* root, STACK_OF(X509_CRL)* crls,
+    unsigned long flags, time_t verification_time)
 {
-    X509_STORE_CTX *ctx = X509_STORE_CTX_new();
-    X509_STORE *store = X509_STORE_new();
-    X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_new();
-    STACK_OF(X509) *roots = sk_X509_new_null();
+    X509_STORE_CTX* ctx = X509_STORE_CTX_new();
+    X509_STORE* store = X509_STORE_new();
+    X509_VERIFY_PARAM* param = X509_VERIFY_PARAM_new();
+    STACK_OF(X509)* roots = sk_X509_new_null();
     int status = X509_V_ERR_UNSPECIFIED;
 
     if (!TEST_ptr(ctx)
@@ -387,9 +387,9 @@ err:
  * the stack and need to keep the CRL's around until the test exits.
  * Yes this crashes on malloc failure; it forces us to debug.
  */
-static STACK_OF(X509_CRL) *make_CRL_stack(X509_CRL *x1, X509_CRL *x2)
+static STACK_OF(X509_CRL)* make_CRL_stack(X509_CRL* x1, X509_CRL* x2)
 {
-    STACK_OF(X509_CRL) *sk = sk_X509_CRL_new_null();
+    STACK_OF(X509_CRL)* sk = sk_X509_CRL_new_null();
 
     if (x1 != NULL) {
         if (!X509_CRL_up_ref(x1))
@@ -418,19 +418,21 @@ err:
 
 static int test_basic_crl(void)
 {
-    X509_CRL *basic_crl = CRL_from_strings(kBasicCRL);
-    X509_CRL *revoked_crl = CRL_from_strings(kRevokedCRL);
+    X509_CRL* basic_crl = CRL_from_strings(kBasicCRL);
+    X509_CRL* revoked_crl = CRL_from_strings(kRevokedCRL);
     const X509_ALGOR *alg = NULL, *tbsalg;
     int r;
 
     r = TEST_ptr(basic_crl)
         && TEST_ptr(revoked_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(basic_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME), X509_V_OK)
+                           make_CRL_stack(basic_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_OK)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(basic_crl, revoked_crl),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME), X509_V_ERR_CERT_REVOKED);
+                           make_CRL_stack(basic_crl, revoked_crl),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_ERR_CERT_REVOKED);
     if (r) {
         X509_CRL_get0_signature(basic_crl, NULL, &alg);
         tbsalg = X509_CRL_get0_tbs_sigalg(basic_crl);
@@ -447,61 +449,62 @@ static int test_basic_crl(void)
 static int test_no_crl(void)
 {
     return TEST_int_eq(verify(test_leaf, test_root, NULL,
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME),
-                       X509_V_ERR_UNABLE_TO_GET_CRL);
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+        X509_V_ERR_UNABLE_TO_GET_CRL);
 }
 
 static int test_bad_issuer_crl(void)
 {
-    X509_CRL *bad_issuer_crl = CRL_from_strings(kBadIssuerCRL);
+    X509_CRL* bad_issuer_crl = CRL_from_strings(kBadIssuerCRL);
     int r;
 
     r = TEST_ptr(bad_issuer_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(bad_issuer_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME),
-                       X509_V_ERR_UNABLE_TO_GET_CRL);
+                           make_CRL_stack(bad_issuer_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_ERR_UNABLE_TO_GET_CRL);
     X509_CRL_free(bad_issuer_crl);
     return r;
 }
 
 static int test_crl_empty_idp(void)
 {
-    X509_CRL *empty_idp_crl = CRL_from_strings(kEmptyIdpCRL);
+    X509_CRL* empty_idp_crl = CRL_from_strings(kEmptyIdpCRL);
     int r;
 
     r = TEST_ptr(empty_idp_crl)
         && TEST_int_eq(verify(test_leaf2, test_root2,
-                              make_CRL_stack(empty_idp_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME2),
-                       X509_V_ERR_UNABLE_TO_GET_CRL);
+                           make_CRL_stack(empty_idp_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME2),
+            X509_V_ERR_UNABLE_TO_GET_CRL);
     X509_CRL_free(empty_idp_crl);
     return r;
 }
 
 static int test_known_critical_crl(void)
 {
-    X509_CRL *known_critical_crl = CRL_from_strings(kKnownCriticalCRL);
+    X509_CRL* known_critical_crl = CRL_from_strings(kKnownCriticalCRL);
     int r;
 
     r = TEST_ptr(known_critical_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(known_critical_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME), X509_V_OK);
+                           make_CRL_stack(known_critical_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_OK);
     X509_CRL_free(known_critical_crl);
     return r;
 }
 
 static int test_unknown_critical_crl(int n)
 {
-    X509_CRL *unknown_critical_crl = CRL_from_strings(unknown_critical_crls[n]);
+    X509_CRL* unknown_critical_crl = CRL_from_strings(unknown_critical_crls[n]);
     int r;
 
     r = TEST_ptr(unknown_critical_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(unknown_critical_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME),
-                       X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION);
+                           make_CRL_stack(unknown_critical_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION);
     X509_CRL_free(unknown_critical_crl);
     return r;
 }
@@ -509,9 +512,9 @@ static int test_unknown_critical_crl(int n)
 static int test_reuse_crl(int idx)
 {
     X509_CRL *result, *reused_crl = CRL_from_strings(kBasicCRL);
-    X509_CRL *addref_crl = NULL;
-    char *p = NULL;
-    BIO *b = NULL;
+    X509_CRL* addref_crl = NULL;
+    char* p = NULL;
+    BIO* b = NULL;
     int r = 0;
 
     if (!TEST_ptr(reused_crl))
@@ -534,25 +537,25 @@ static int test_reuse_crl(int idx)
     switch (idx) {
     case 0: /* valid PEM + invalid DER */
         if (!TEST_ptr_null(result)
-                || !TEST_ptr_null(reused_crl))
+            || !TEST_ptr_null(reused_crl))
             goto err;
         break;
     case 1: /* invalid PEM */
         if (!TEST_ptr_null(result)
-                || !TEST_ptr(reused_crl))
+            || !TEST_ptr(reused_crl))
             goto err;
         break;
     case 2:
         if (!TEST_ptr(result)
-                || !TEST_ptr(reused_crl)
-                || !TEST_ptr_eq(result, reused_crl))
+            || !TEST_ptr(reused_crl)
+            || !TEST_ptr_eq(result, reused_crl))
             goto err;
         break;
     }
 
     r = 1;
 
- err:
+err:
     OPENSSL_free(p);
     BIO_free(b);
     X509_CRL_free(reused_crl);

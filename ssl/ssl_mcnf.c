@@ -20,17 +20,17 @@ void SSL_add_ssl_module(void)
     /* Do nothing. This will be added automatically by libcrypto */
 }
 
-static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
+static int ssl_do_config(SSL* s, SSL_CTX* ctx, const char* name, int system)
 {
-    SSL_CONF_CTX *cctx = NULL;
+    SSL_CONF_CTX* cctx = NULL;
     size_t i, idx, cmd_count;
     int err = 1;
     unsigned int flags;
     unsigned int conf_diagnostics = 0;
-    const SSL_METHOD *meth;
-    const SSL_CONF_CMD *cmds;
-    OSSL_LIB_CTX *prev_libctx = NULL;
-    OSSL_LIB_CTX *libctx = NULL;
+    const SSL_METHOD* meth;
+    const SSL_CONF_CMD* cmds;
+    OSSL_LIB_CTX* prev_libctx = NULL;
+    OSSL_LIB_CTX* libctx = NULL;
 
     if (s == NULL && ctx == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
@@ -42,7 +42,7 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
     if (!conf_ssl_name_find(name, &idx)) {
         if (!system)
             ERR_raise_data(ERR_LIB_SSL, SSL_R_INVALID_CONFIGURATION_NAME,
-                           "name=%s", name);
+                "name=%s", name);
         goto err;
     }
     cmds = conf_ssl_get(idx, &name, &cmd_count);
@@ -85,23 +85,23 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
     }
     if (!SSL_CONF_CTX_finish(cctx))
         ++err;
- err:
+err:
     OSSL_LIB_CTX_set0_default(prev_libctx);
     SSL_CONF_CTX_free(cctx);
     return err == 0 || (system && !conf_diagnostics);
 }
 
-int SSL_config(SSL *s, const char *name)
+int SSL_config(SSL* s, const char* name)
 {
     return ssl_do_config(s, NULL, name, 0);
 }
 
-int SSL_CTX_config(SSL_CTX *ctx, const char *name)
+int SSL_CTX_config(SSL_CTX* ctx, const char* name)
 {
     return ssl_do_config(NULL, ctx, name, 0);
 }
 
-int ssl_ctx_system_config(SSL_CTX *ctx)
+int ssl_ctx_system_config(SSL_CTX* ctx)
 {
     return ssl_do_config(NULL, ctx, NULL, 1);
 }

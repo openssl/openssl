@@ -19,10 +19,10 @@
  * with the exception that the most significant digit may be only
  * w-1 zeros away from that next non-zero digit.
  */
-signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
+signed char* bn_compute_wNAF(const BIGNUM* scalar, int w, size_t* ret_len)
 {
     int window_val;
-    signed char *r = NULL;
+    signed char* r = NULL;
     int sign = 1;
     int bit, next_bit, mask;
     size_t len = 0, j;
@@ -36,14 +36,14 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
         return r;
     }
 
-    if (w <= 0 || w > 7) {      /* 'signed char' can represent integers with
-                                 * absolute values less than 2^7 */
+    if (w <= 0 || w > 7) { /* 'signed char' can represent integers with
+                            * absolute values less than 2^7 */
         ERR_raise(ERR_LIB_BN, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    bit = 1 << w;               /* at most 128 */
-    next_bit = bit << 1;        /* at most 256 */
-    mask = next_bit - 1;        /* at most 255 */
+    bit = 1 << w; /* at most 128 */
+    next_bit = bit << 1; /* at most 256 */
+    mask = next_bit - 1; /* at most 255 */
 
     if (BN_is_negative(scalar)) {
         sign = -1;
@@ -77,7 +77,7 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
             if (window_val & bit) {
                 digit = window_val - next_bit; /* -2^w < digit < 0 */
 
-#if 1                           /* modified wNAF */
+#if 1 /* modified wNAF */
                 if (j + w + 1 >= len) {
                     /*
                      * Special case for generating modified wNAFs:
@@ -129,22 +129,22 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
     *ret_len = j;
     return r;
 
- err:
+err:
     OPENSSL_free(r);
     return NULL;
 }
 
-int bn_get_top(const BIGNUM *a)
+int bn_get_top(const BIGNUM* a)
 {
     return a->top;
 }
 
-int bn_get_dmax(const BIGNUM *a)
+int bn_get_dmax(const BIGNUM* a)
 {
     return a->dmax;
 }
 
-void bn_set_all_zero(BIGNUM *a)
+void bn_set_all_zero(BIGNUM* a)
 {
     int i;
 
@@ -152,7 +152,7 @@ void bn_set_all_zero(BIGNUM *a)
         a->d[i] = 0;
 }
 
-int bn_copy_words(BN_ULONG *out, const BIGNUM *in, int size)
+int bn_copy_words(BN_ULONG* out, const BIGNUM* in, int size)
 {
     if (in->top > size)
         return 0;
@@ -163,25 +163,25 @@ int bn_copy_words(BN_ULONG *out, const BIGNUM *in, int size)
     return 1;
 }
 
-BN_ULONG *bn_get_words(const BIGNUM *a)
+BN_ULONG* bn_get_words(const BIGNUM* a)
 {
     return a->d;
 }
 
-void bn_set_static_words(BIGNUM *a, const BN_ULONG *words, int size)
+void bn_set_static_words(BIGNUM* a, const BN_ULONG* words, int size)
 {
     /*
      * |const| qualifier omission is compensated by BN_FLG_STATIC_DATA
      * flag, which effectively means "read-only data".
      */
-    a->d = (BN_ULONG *)words;
+    a->d = (BN_ULONG*)words;
     a->dmax = a->top = size;
     a->neg = 0;
     a->flags |= BN_FLG_STATIC_DATA;
     bn_correct_top(a);
 }
 
-int bn_set_words(BIGNUM *a, const BN_ULONG *words, int num_words)
+int bn_set_words(BIGNUM* a, const BN_ULONG* words, int num_words)
 {
     if (bn_wexpand(a, num_words) == NULL) {
         ERR_raise(ERR_LIB_BN, ERR_R_BN_LIB);

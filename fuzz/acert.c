@@ -14,7 +14,7 @@
 #include <openssl/rand.h>
 #include "fuzzer.h"
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(int* argc, char*** argv)
 {
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();
@@ -22,14 +22,14 @@ int FuzzerInitialize(int *argc, char ***argv)
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+int FuzzerTestOneInput(const uint8_t* buf, size_t len)
 {
-    const unsigned char *p = buf;
-    unsigned char *der = NULL;
+    const unsigned char* p = buf;
+    unsigned char* der = NULL;
 
-    X509_ACERT *acert = d2i_X509_ACERT(NULL, &p, (long)len);
+    X509_ACERT* acert = d2i_X509_ACERT(NULL, &p, (long)len);
     if (acert != NULL) {
-        BIO *bio = BIO_new(BIO_s_null());
+        BIO* bio = BIO_new(BIO_s_null());
 
         X509_ACERT_print(bio, acert);
         BIO_free(bio);

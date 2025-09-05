@@ -31,25 +31,25 @@ static const char message[] = "This is a test message.";
 
 /* Expected output when an output length of 20 bytes is used. */
 static const unsigned char known_answer[] = {
-  0x52, 0x97, 0x93, 0x78, 0x27, 0x58, 0x7d, 0x62,
-  0x8b, 0x00, 0x25, 0xb5, 0xec, 0x39, 0x5e, 0x2d,
-  0x7f, 0x3e, 0xd4, 0x19
+    0x52, 0x97, 0x93, 0x78, 0x27, 0x58, 0x7d, 0x62,
+    0x8b, 0x00, 0x25, 0xb5, 0xec, 0x39, 0x5e, 0x2d,
+    0x7f, 0x3e, 0xd4, 0x19
 };
 
 /*
  * A property query used for selecting the SHAKE256 implementation.
  */
-static const char *propq = NULL;
+static const char* propq = NULL;
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     int ret = EXIT_FAILURE;
-    OSSL_LIB_CTX *libctx = NULL;
-    EVP_MD *md = NULL;
-    EVP_MD_CTX *ctx = NULL;
+    OSSL_LIB_CTX* libctx = NULL;
+    EVP_MD* md = NULL;
+    EVP_MD_CTX* ctx = NULL;
     unsigned int digest_len = 20;
     int digest_len_i;
-    unsigned char *digest = NULL;
+    unsigned char* digest = NULL;
 
     /* Allow digest length to be changed for demonstration purposes. */
     if (argc > 1) {

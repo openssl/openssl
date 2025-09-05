@@ -40,25 +40,24 @@ ASN1_SEQUENCE(IPAddressRange) = {
 
 ASN1_CHOICE(IPAddressOrRange) = {
     ASN1_SIMPLE(IPAddressOrRange, u.addressPrefix, ASN1_BIT_STRING),
-    ASN1_SIMPLE(IPAddressOrRange, u.addressRange,  IPAddressRange)
+    ASN1_SIMPLE(IPAddressOrRange, u.addressRange, IPAddressRange)
 } ASN1_CHOICE_END(IPAddressOrRange)
 
 ASN1_CHOICE(IPAddressChoice) = {
-    ASN1_SIMPLE(IPAddressChoice,      u.inherit,           ASN1_NULL),
+    ASN1_SIMPLE(IPAddressChoice, u.inherit, ASN1_NULL),
     ASN1_SEQUENCE_OF(IPAddressChoice, u.addressesOrRanges, IPAddressOrRange)
 } ASN1_CHOICE_END(IPAddressChoice)
 
 ASN1_SEQUENCE(IPAddressFamily) = {
-    ASN1_SIMPLE(IPAddressFamily, addressFamily,   ASN1_OCTET_STRING),
+    ASN1_SIMPLE(IPAddressFamily, addressFamily, ASN1_OCTET_STRING),
     ASN1_SIMPLE(IPAddressFamily, ipAddressChoice, IPAddressChoice)
 } ASN1_SEQUENCE_END(IPAddressFamily)
 
-ASN1_ITEM_TEMPLATE(IPAddrBlocks) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0,
-                          IPAddrBlocks, IPAddressFamily)
+ASN1_ITEM_TEMPLATE(IPAddrBlocks) = ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0,
+    IPAddrBlocks, IPAddressFamily)
 static_ASN1_ITEM_TEMPLATE_END(IPAddrBlocks)
 
-IMPLEMENT_ASN1_FUNCTIONS(IPAddressRange)
+    IMPLEMENT_ASN1_FUNCTIONS(IPAddressRange)
 IMPLEMENT_ASN1_FUNCTIONS(IPAddressOrRange)
 IMPLEMENT_ASN1_FUNCTIONS(IPAddressChoice)
 IMPLEMENT_ASN1_FUNCTIONS(IPAddressFamily)
@@ -66,7 +65,7 @@ IMPLEMENT_ASN1_FUNCTIONS(IPAddressFamily)
 /*
  * How much buffer space do we need for a raw address?
  */
-# define ADDR_RAW_BUF_LEN 16
+#define ADDR_RAW_BUF_LEN 16
 
 /*
  * What's the address length associated with this AFI?
@@ -86,12 +85,12 @@ static int length_from_afi(const unsigned afi)
 /*
  * Extract the AFI from an IPAddressFamily.
  */
-unsigned int X509v3_addr_get_afi(const IPAddressFamily *f)
+unsigned int X509v3_addr_get_afi(const IPAddressFamily* f)
 {
     if (f == NULL
-            || f->addressFamily == NULL
-            || f->addressFamily->data == NULL
-            || f->addressFamily->length < 2)
+        || f->addressFamily == NULL
+        || f->addressFamily->data == NULL
+        || f->addressFamily->length < 2)
         return 0;
     return (f->addressFamily->data[0] << 8) | f->addressFamily->data[1];
 }
@@ -100,9 +99,9 @@ unsigned int X509v3_addr_get_afi(const IPAddressFamily *f)
  * Expand the bitstring form of an address into a raw byte array.
  * At the moment this is coded for simplicity, not speed.
  */
-static int addr_expand(unsigned char *addr,
-                       const ASN1_BIT_STRING *bs,
-                       const int length, const unsigned char fill)
+static int addr_expand(unsigned char* addr,
+    const ASN1_BIT_STRING* bs,
+    const int length, const unsigned char fill)
 {
     if (bs->length < 0 || bs->length > length)
         return 0;
@@ -124,14 +123,14 @@ static int addr_expand(unsigned char *addr,
 /*
  * Extract the prefix length from a bitstring.
  */
-# define addr_prefixlen(bs) ((int)((bs)->length * 8 - ((bs)->flags & 7)))
+#define addr_prefixlen(bs) ((int)((bs)->length * 8 - ((bs)->flags & 7)))
 
 /*
  * i2r handler for one address bitstring.
  */
-static int i2r_address(BIO *out,
-                       const unsigned afi,
-                       const unsigned char fill, const ASN1_BIT_STRING *bs)
+static int i2r_address(BIO* out,
+    const unsigned afi,
+    const unsigned char fill, const ASN1_BIT_STRING* bs)
 {
     unsigned char addr[ADDR_RAW_BUF_LEN];
     int i, n;
@@ -148,10 +147,11 @@ static int i2r_address(BIO *out,
         if (!addr_expand(addr, bs, 16, fill))
             return 0;
         for (n = 16; n > 1 && addr[n - 1] == 0x00 && addr[n - 2] == 0x00;
-             n -= 2) ;
+            n -= 2)
+            ;
         for (i = 0; i < n; i += 2)
             BIO_printf(out, "%x%s", (addr[i] << 8) | addr[i + 1],
-                       (i < 14 ? ":" : ""));
+                (i < 14 ? ":" : ""));
         if (i < 16)
             BIO_puts(out, ":");
         if (i == 0)
@@ -169,15 +169,15 @@ static int i2r_address(BIO *out,
 /*
  * i2r handler for a sequence of addresses and ranges.
  */
-static int i2r_IPAddressOrRanges(BIO *out,
-                                 const int indent,
-                                 const IPAddressOrRanges *aors,
-                                 const unsigned afi)
+static int i2r_IPAddressOrRanges(BIO* out,
+    const int indent,
+    const IPAddressOrRanges* aors,
+    const unsigned afi)
 {
     int i;
 
     for (i = 0; i < sk_IPAddressOrRange_num(aors); i++) {
-        const IPAddressOrRange *aor = sk_IPAddressOrRange_value(aors, i);
+        const IPAddressOrRange* aor = sk_IPAddressOrRange_value(aors, i);
 
         BIO_printf(out, "%*s", indent, "");
         switch (aor->type) {
@@ -202,14 +202,14 @@ static int i2r_IPAddressOrRanges(BIO *out,
 /*
  * i2r handler for an IPAddrBlocks extension.
  */
-static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
-                            void *ext, BIO *out, int indent)
+static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD* method,
+    void* ext, BIO* out, int indent)
 {
-    const IPAddrBlocks *addr = ext;
+    const IPAddrBlocks* addr = ext;
     int i;
 
     for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
-        IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
+        IPAddressFamily* f = sk_IPAddressFamily_value(addr, i);
         const unsigned int afi = X509v3_addr_get_afi(f);
 
         switch (afi) {
@@ -251,7 +251,7 @@ static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
                 break;
             default:
                 BIO_printf(out, " (Unknown SAFI %u)",
-                           (unsigned)f->addressFamily->data[2]);
+                    (unsigned)f->addressFamily->data[2]);
                 break;
             }
         }
@@ -262,9 +262,8 @@ static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
         case IPAddressChoice_addressesOrRanges:
             BIO_puts(out, ":\n");
             if (!i2r_IPAddressOrRanges(out,
-                                       indent + 2,
-                                       f->ipAddressChoice->
-                                       u.addressesOrRanges, afi))
+                    indent + 2,
+                    f->ipAddressChoice->u.addressesOrRanges, afi))
                 return 0;
             break;
         }
@@ -282,8 +281,8 @@ static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
  * function returns -1.  If this messes up your preferred sort order
  * for garbage input, tough noogies.
  */
-static int IPAddressOrRange_cmp(const IPAddressOrRange *a,
-                                const IPAddressOrRange *b, const int length)
+static int IPAddressOrRange_cmp(const IPAddressOrRange* a,
+    const IPAddressOrRange* b, const int length)
 {
     unsigned char addr_a[ADDR_RAW_BUF_LEN], addr_b[ADDR_RAW_BUF_LEN];
     int prefixlen_a = 0, prefixlen_b = 0;
@@ -329,8 +328,8 @@ static int IPAddressOrRange_cmp(const IPAddressOrRange *a,
  * IPv4-specific closure over IPAddressOrRange_cmp, since sk_sort()
  * comparison routines are only allowed two arguments.
  */
-static int v4IPAddressOrRange_cmp(const IPAddressOrRange *const *a,
-                                  const IPAddressOrRange *const *b)
+static int v4IPAddressOrRange_cmp(const IPAddressOrRange* const* a,
+    const IPAddressOrRange* const* b)
 {
     return IPAddressOrRange_cmp(*a, *b, 4);
 }
@@ -339,8 +338,8 @@ static int v4IPAddressOrRange_cmp(const IPAddressOrRange *const *a,
  * IPv6-specific closure over IPAddressOrRange_cmp, since sk_sort()
  * comparison routines are only allowed two arguments.
  */
-static int v6IPAddressOrRange_cmp(const IPAddressOrRange *const *a,
-                                  const IPAddressOrRange *const *b)
+static int v6IPAddressOrRange_cmp(const IPAddressOrRange* const* a,
+    const IPAddressOrRange* const* b)
 {
     return IPAddressOrRange_cmp(*a, *b, 16);
 }
@@ -349,8 +348,8 @@ static int v6IPAddressOrRange_cmp(const IPAddressOrRange *const *a,
  * Calculate whether a range collapses to a prefix.
  * See last paragraph of RFC 3779 2.2.3.7.
  */
-static int range_should_be_prefix(const unsigned char *min,
-                                  const unsigned char *max, const int length)
+static int range_should_be_prefix(const unsigned char* min,
+    const unsigned char* max, const int length)
 {
     unsigned char mask;
     int i, j;
@@ -362,8 +361,10 @@ static int range_should_be_prefix(const unsigned char *min,
      */
     assert(memcmp(min, max, length) <= 0);
 
-    for (i = 0; i < length && min[i] == max[i]; i++) ;
-    for (j = length - 1; j >= 0 && min[j] == 0x00 && max[j] == 0xFF; j--) ;
+    for (i = 0; i < length && min[i] == max[i]; i++)
+        ;
+    for (j = length - 1; j >= 0 && min[j] == 0x00 && max[j] == 0xFF; j--)
+        ;
     if (i < j)
         return -1;
     if (i > j)
@@ -403,19 +404,18 @@ static int range_should_be_prefix(const unsigned char *min,
 /*
  * Construct a prefix.
  */
-static int make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
-                              const int prefixlen, const int afilen)
+static int make_addressPrefix(IPAddressOrRange** result, unsigned char* addr,
+    const int prefixlen, const int afilen)
 {
     int bytelen = (prefixlen + 7) / 8, bitlen = prefixlen % 8;
-    IPAddressOrRange *aor;
+    IPAddressOrRange* aor;
 
     if (prefixlen < 0 || prefixlen > (afilen * 8))
         return 0;
     if ((aor = IPAddressOrRange_new()) == NULL)
         return 0;
     aor->type = IPAddressOrRange_addressPrefix;
-    if (aor->u.addressPrefix == NULL &&
-        (aor->u.addressPrefix = ASN1_BIT_STRING_new()) == NULL)
+    if (aor->u.addressPrefix == NULL && (aor->u.addressPrefix = ASN1_BIT_STRING_new()) == NULL)
         goto err;
     if (!ASN1_BIT_STRING_set(aor->u.addressPrefix, addr, bytelen))
         goto err;
@@ -426,7 +426,7 @@ static int make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
     *result = aor;
     return 1;
 
- err:
+err:
     IPAddressOrRange_free(aor);
     return 0;
 }
@@ -436,11 +436,11 @@ static int make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
  * return a prefix instead.  Doing this here simplifies
  * the rest of the code considerably.
  */
-static int make_addressRange(IPAddressOrRange **result,
-                             unsigned char *min,
-                             unsigned char *max, const int length)
+static int make_addressRange(IPAddressOrRange** result,
+    unsigned char* min,
+    unsigned char* max, const int length)
 {
-    IPAddressOrRange *aor;
+    IPAddressOrRange* aor;
     int i, prefixlen;
 
     if (memcmp(min, max, length) > 0)
@@ -454,14 +454,13 @@ static int make_addressRange(IPAddressOrRange **result,
     aor->type = IPAddressOrRange_addressRange;
     if ((aor->u.addressRange = IPAddressRange_new()) == NULL)
         goto err;
-    if (aor->u.addressRange->min == NULL &&
-        (aor->u.addressRange->min = ASN1_BIT_STRING_new()) == NULL)
+    if (aor->u.addressRange->min == NULL && (aor->u.addressRange->min = ASN1_BIT_STRING_new()) == NULL)
         goto err;
-    if (aor->u.addressRange->max == NULL &&
-        (aor->u.addressRange->max = ASN1_BIT_STRING_new()) == NULL)
+    if (aor->u.addressRange->max == NULL && (aor->u.addressRange->max = ASN1_BIT_STRING_new()) == NULL)
         goto err;
 
-    for (i = length; i > 0 && min[i - 1] == 0x00; --i) ;
+    for (i = length; i > 0 && min[i - 1] == 0x00; --i)
+        ;
     if (!ASN1_BIT_STRING_set(aor->u.addressRange->min, min, i))
         goto err;
     ossl_asn1_string_set_bits_left(aor->u.addressRange->min, 0);
@@ -474,7 +473,8 @@ static int make_addressRange(IPAddressOrRange **result,
         aor->u.addressRange->min->flags |= 8 - j;
     }
 
-    for (i = length; i > 0 && max[i - 1] == 0xFF; --i) ;
+    for (i = length; i > 0 && max[i - 1] == 0xFF; --i)
+        ;
     if (!ASN1_BIT_STRING_set(aor->u.addressRange->max, max, i))
         goto err;
     ossl_asn1_string_set_bits_left(aor->u.addressRange->max, 0);
@@ -490,7 +490,7 @@ static int make_addressRange(IPAddressOrRange **result,
     *result = aor;
     return 1;
 
- err:
+err:
     IPAddressOrRange_free(aor);
     return 0;
 }
@@ -498,11 +498,11 @@ static int make_addressRange(IPAddressOrRange **result,
 /*
  * Construct a new address family or find an existing one.
  */
-static IPAddressFamily *make_IPAddressFamily(IPAddrBlocks *addr,
-                                             const unsigned afi,
-                                             const unsigned *safi)
+static IPAddressFamily* make_IPAddressFamily(IPAddrBlocks* addr,
+    const unsigned afi,
+    const unsigned* safi)
 {
-    IPAddressFamily *f;
+    IPAddressFamily* f;
     unsigned char key[3];
     int keylen;
     int i;
@@ -518,18 +518,15 @@ static IPAddressFamily *make_IPAddressFamily(IPAddrBlocks *addr,
 
     for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
         f = sk_IPAddressFamily_value(addr, i);
-        if (f->addressFamily->length == keylen &&
-            !memcmp(f->addressFamily->data, key, keylen))
+        if (f->addressFamily->length == keylen && !memcmp(f->addressFamily->data, key, keylen))
             return f;
     }
 
     if ((f = IPAddressFamily_new()) == NULL)
         goto err;
-    if (f->ipAddressChoice == NULL &&
-        (f->ipAddressChoice = IPAddressChoice_new()) == NULL)
+    if (f->ipAddressChoice == NULL && (f->ipAddressChoice = IPAddressChoice_new()) == NULL)
         goto err;
-    if (f->addressFamily == NULL &&
-        (f->addressFamily = ASN1_OCTET_STRING_new()) == NULL)
+    if (f->addressFamily == NULL && (f->addressFamily = ASN1_OCTET_STRING_new()) == NULL)
         goto err;
     if (!ASN1_OCTET_STRING_set(f->addressFamily, key, keylen))
         goto err;
@@ -538,7 +535,7 @@ static IPAddressFamily *make_IPAddressFamily(IPAddrBlocks *addr,
 
     return f;
 
- err:
+err:
     IPAddressFamily_free(f);
     return NULL;
 }
@@ -546,21 +543,16 @@ static IPAddressFamily *make_IPAddressFamily(IPAddrBlocks *addr,
 /*
  * Add an inheritance element.
  */
-int X509v3_addr_add_inherit(IPAddrBlocks *addr,
-                            const unsigned afi, const unsigned *safi)
+int X509v3_addr_add_inherit(IPAddrBlocks* addr,
+    const unsigned afi, const unsigned* safi)
 {
-    IPAddressFamily *f = make_IPAddressFamily(addr, afi, safi);
+    IPAddressFamily* f = make_IPAddressFamily(addr, afi, safi);
 
-    if (f == NULL ||
-        f->ipAddressChoice == NULL ||
-        (f->ipAddressChoice->type == IPAddressChoice_addressesOrRanges &&
-         f->ipAddressChoice->u.addressesOrRanges != NULL))
+    if (f == NULL || f->ipAddressChoice == NULL || (f->ipAddressChoice->type == IPAddressChoice_addressesOrRanges && f->ipAddressChoice->u.addressesOrRanges != NULL))
         return 0;
-    if (f->ipAddressChoice->type == IPAddressChoice_inherit &&
-        f->ipAddressChoice->u.inherit != NULL)
+    if (f->ipAddressChoice->type == IPAddressChoice_inherit && f->ipAddressChoice->u.inherit != NULL)
         return 1;
-    if (f->ipAddressChoice->u.inherit == NULL &&
-        (f->ipAddressChoice->u.inherit = ASN1_NULL_new()) == NULL)
+    if (f->ipAddressChoice->u.inherit == NULL && (f->ipAddressChoice->u.inherit = ASN1_NULL_new()) == NULL)
         return 0;
     f->ipAddressChoice->type = IPAddressChoice_inherit;
     return 1;
@@ -569,17 +561,14 @@ int X509v3_addr_add_inherit(IPAddrBlocks *addr,
 /*
  * Construct an IPAddressOrRange sequence, or return an existing one.
  */
-static IPAddressOrRanges *make_prefix_or_range(IPAddrBlocks *addr,
-                                               const unsigned afi,
-                                               const unsigned *safi)
+static IPAddressOrRanges* make_prefix_or_range(IPAddrBlocks* addr,
+    const unsigned afi,
+    const unsigned* safi)
 {
-    IPAddressFamily *f = make_IPAddressFamily(addr, afi, safi);
-    IPAddressOrRanges *aors = NULL;
+    IPAddressFamily* f = make_IPAddressFamily(addr, afi, safi);
+    IPAddressOrRanges* aors = NULL;
 
-    if (f == NULL ||
-        f->ipAddressChoice == NULL ||
-        (f->ipAddressChoice->type == IPAddressChoice_inherit &&
-         f->ipAddressChoice->u.inherit != NULL))
+    if (f == NULL || f->ipAddressChoice == NULL || (f->ipAddressChoice->type == IPAddressChoice_inherit && f->ipAddressChoice->u.inherit != NULL))
         return NULL;
     if (f->ipAddressChoice->type == IPAddressChoice_addressesOrRanges)
         aors = f->ipAddressChoice->u.addressesOrRanges;
@@ -603,16 +592,16 @@ static IPAddressOrRanges *make_prefix_or_range(IPAddrBlocks *addr,
 /*
  * Add a prefix.
  */
-int X509v3_addr_add_prefix(IPAddrBlocks *addr,
-                           const unsigned afi,
-                           const unsigned *safi,
-                           unsigned char *a, const int prefixlen)
+int X509v3_addr_add_prefix(IPAddrBlocks* addr,
+    const unsigned afi,
+    const unsigned* safi,
+    unsigned char* a, const int prefixlen)
 {
-    IPAddressOrRanges *aors = make_prefix_or_range(addr, afi, safi);
-    IPAddressOrRange *aor;
+    IPAddressOrRanges* aors = make_prefix_or_range(addr, afi, safi);
+    IPAddressOrRange* aor;
 
     if (aors == NULL
-            || !make_addressPrefix(&aor, a, prefixlen, length_from_afi(afi)))
+        || !make_addressPrefix(&aor, a, prefixlen, length_from_afi(afi)))
         return 0;
     if (sk_IPAddressOrRange_push(aors, aor))
         return 1;
@@ -623,13 +612,13 @@ int X509v3_addr_add_prefix(IPAddrBlocks *addr,
 /*
  * Add a range.
  */
-int X509v3_addr_add_range(IPAddrBlocks *addr,
-                          const unsigned afi,
-                          const unsigned *safi,
-                          unsigned char *min, unsigned char *max)
+int X509v3_addr_add_range(IPAddrBlocks* addr,
+    const unsigned afi,
+    const unsigned* safi,
+    unsigned char* min, unsigned char* max)
 {
-    IPAddressOrRanges *aors = make_prefix_or_range(addr, afi, safi);
-    IPAddressOrRange *aor;
+    IPAddressOrRanges* aors = make_prefix_or_range(addr, afi, safi);
+    IPAddressOrRange* aor;
     int length = length_from_afi(afi);
 
     if (aors == NULL)
@@ -645,18 +634,16 @@ int X509v3_addr_add_range(IPAddrBlocks *addr,
 /*
  * Extract min and max values from an IPAddressOrRange.
  */
-static int extract_min_max(IPAddressOrRange *aor,
-                           unsigned char *min, unsigned char *max, int length)
+static int extract_min_max(IPAddressOrRange* aor,
+    unsigned char* min, unsigned char* max, int length)
 {
     if (aor == NULL || min == NULL || max == NULL)
         return 0;
     switch (aor->type) {
     case IPAddressOrRange_addressPrefix:
-        return (addr_expand(min, aor->u.addressPrefix, length, 0x00) &&
-                addr_expand(max, aor->u.addressPrefix, length, 0xFF));
+        return (addr_expand(min, aor->u.addressPrefix, length, 0x00) && addr_expand(max, aor->u.addressPrefix, length, 0xFF));
     case IPAddressOrRange_addressRange:
-        return (addr_expand(min, aor->u.addressRange->min, length, 0x00) &&
-                addr_expand(max, aor->u.addressRange->max, length, 0xFF));
+        return (addr_expand(min, aor->u.addressRange->min, length, 0x00) && addr_expand(max, aor->u.addressRange->max, length, 0xFF));
     }
     return 0;
 }
@@ -664,18 +651,14 @@ static int extract_min_max(IPAddressOrRange *aor,
 /*
  * Public wrapper for extract_min_max().
  */
-int X509v3_addr_get_range(IPAddressOrRange *aor,
-                          const unsigned afi,
-                          unsigned char *min,
-                          unsigned char *max, const int length)
+int X509v3_addr_get_range(IPAddressOrRange* aor,
+    const unsigned afi,
+    unsigned char* min,
+    unsigned char* max, const int length)
 {
     int afi_length = length_from_afi(afi);
 
-    if (aor == NULL || min == NULL || max == NULL ||
-        afi_length == 0 || length < afi_length ||
-        (aor->type != IPAddressOrRange_addressPrefix &&
-         aor->type != IPAddressOrRange_addressRange) ||
-        !extract_min_max(aor, min, max, afi_length))
+    if (aor == NULL || min == NULL || max == NULL || afi_length == 0 || length < afi_length || (aor->type != IPAddressOrRange_addressPrefix && aor->type != IPAddressOrRange_addressRange) || !extract_min_max(aor, min, max, afi_length))
         return 0;
 
     return afi_length;
@@ -691,18 +674,18 @@ int X509v3_addr_get_range(IPAddressOrRange *aor,
  * null-SAFI rule to apply only within a single AFI, which is what I
  * would have expected and is what the following code implements.
  */
-static int IPAddressFamily_cmp(const IPAddressFamily *const *a_,
-                               const IPAddressFamily *const *b_)
+static int IPAddressFamily_cmp(const IPAddressFamily* const* a_,
+    const IPAddressFamily* const* b_)
 {
-    const ASN1_OCTET_STRING *a = (*a_)->addressFamily;
-    const ASN1_OCTET_STRING *b = (*b_)->addressFamily;
+    const ASN1_OCTET_STRING* a = (*a_)->addressFamily;
+    const ASN1_OCTET_STRING* b = (*b_)->addressFamily;
     int len = ((a->length <= b->length) ? a->length : b->length);
     int cmp = memcmp(a->data, b->data, len);
 
     return cmp ? cmp : a->length - b->length;
 }
 
-static int IPAddressFamily_check_len(const IPAddressFamily *f)
+static int IPAddressFamily_check_len(const IPAddressFamily* f)
 {
     if (f->addressFamily->length < 2 || f->addressFamily->length > 3)
         return 0;
@@ -713,11 +696,11 @@ static int IPAddressFamily_check_len(const IPAddressFamily *f)
 /*
  * Check whether an IPAddrBLocks is in canonical form.
  */
-int X509v3_addr_is_canonical(IPAddrBlocks *addr)
+int X509v3_addr_is_canonical(IPAddrBlocks* addr)
 {
     unsigned char a_min[ADDR_RAW_BUF_LEN], a_max[ADDR_RAW_BUF_LEN];
     unsigned char b_min[ADDR_RAW_BUF_LEN], b_max[ADDR_RAW_BUF_LEN];
-    IPAddressOrRanges *aors;
+    IPAddressOrRanges* aors;
     int i, j, k;
 
     /*
@@ -730,8 +713,8 @@ int X509v3_addr_is_canonical(IPAddrBlocks *addr)
      * Check whether the top-level list is in order.
      */
     for (i = 0; i < sk_IPAddressFamily_num(addr) - 1; i++) {
-        const IPAddressFamily *a = sk_IPAddressFamily_value(addr, i);
-        const IPAddressFamily *b = sk_IPAddressFamily_value(addr, i + 1);
+        const IPAddressFamily* a = sk_IPAddressFamily_value(addr, i);
+        const IPAddressFamily* b = sk_IPAddressFamily_value(addr, i + 1);
 
         if (!IPAddressFamily_check_len(a) || !IPAddressFamily_check_len(b))
             return 0;
@@ -744,7 +727,7 @@ int X509v3_addr_is_canonical(IPAddrBlocks *addr)
      * Top level's ok, now check each address family.
      */
     for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
-        IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
+        IPAddressFamily* f = sk_IPAddressFamily_value(addr, i);
         int length = length_from_afi(X509v3_addr_get_afi(f));
 
         /*
@@ -772,34 +755,31 @@ int X509v3_addr_is_canonical(IPAddrBlocks *addr)
         if (sk_IPAddressOrRange_num(aors) == 0)
             return 0;
         for (j = 0; j < sk_IPAddressOrRange_num(aors) - 1; j++) {
-            IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
-            IPAddressOrRange *b = sk_IPAddressOrRange_value(aors, j + 1);
+            IPAddressOrRange* a = sk_IPAddressOrRange_value(aors, j);
+            IPAddressOrRange* b = sk_IPAddressOrRange_value(aors, j + 1);
 
-            if (!extract_min_max(a, a_min, a_max, length) ||
-                !extract_min_max(b, b_min, b_max, length))
+            if (!extract_min_max(a, a_min, a_max, length) || !extract_min_max(b, b_min, b_max, length))
                 return 0;
 
             /*
              * Punt misordered list, overlapping start, or inverted range.
              */
-            if (memcmp(a_min, b_min, length) >= 0 ||
-                memcmp(a_min, a_max, length) > 0 ||
-                memcmp(b_min, b_max, length) > 0)
+            if (memcmp(a_min, b_min, length) >= 0 || memcmp(a_min, a_max, length) > 0 || memcmp(b_min, b_max, length) > 0)
                 return 0;
 
             /*
              * Punt if adjacent or overlapping.  Check for adjacency by
              * subtracting one from b_min first.
              */
-            for (k = length - 1; k >= 0 && b_min[k]-- == 0x00; k--) ;
+            for (k = length - 1; k >= 0 && b_min[k]-- == 0x00; k--)
+                ;
             if (memcmp(a_max, b_min, length) >= 0)
                 return 0;
 
             /*
              * Check for range that should be expressed as a prefix.
              */
-            if (a->type == IPAddressOrRange_addressRange &&
-                range_should_be_prefix(a_min, a_max, length) >= 0)
+            if (a->type == IPAddressOrRange_addressRange && range_should_be_prefix(a_min, a_max, length) >= 0)
                 return 0;
         }
 
@@ -809,13 +789,12 @@ int X509v3_addr_is_canonical(IPAddrBlocks *addr)
          */
         j = sk_IPAddressOrRange_num(aors) - 1;
         {
-            IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
+            IPAddressOrRange* a = sk_IPAddressOrRange_value(aors, j);
 
             if (a != NULL && a->type == IPAddressOrRange_addressRange) {
                 if (!extract_min_max(a, a_min, a_max, length))
                     return 0;
-                if (memcmp(a_min, a_max, length) > 0 ||
-                    range_should_be_prefix(a_min, a_max, length) >= 0)
+                if (memcmp(a_min, a_max, length) > 0 || range_should_be_prefix(a_min, a_max, length) >= 0)
                     return 0;
             }
         }
@@ -830,8 +809,8 @@ int X509v3_addr_is_canonical(IPAddrBlocks *addr)
 /*
  * Whack an IPAddressOrRanges into canonical form.
  */
-static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
-                                      const unsigned afi)
+static int IPAddressOrRanges_canonize(IPAddressOrRanges* aors,
+    const unsigned afi)
 {
     int i, j, length = length_from_afi(afi);
 
@@ -844,20 +823,18 @@ static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
      * Clean up representation issues, punt on duplicates or overlaps.
      */
     for (i = 0; i < sk_IPAddressOrRange_num(aors) - 1; i++) {
-        IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, i);
-        IPAddressOrRange *b = sk_IPAddressOrRange_value(aors, i + 1);
+        IPAddressOrRange* a = sk_IPAddressOrRange_value(aors, i);
+        IPAddressOrRange* b = sk_IPAddressOrRange_value(aors, i + 1);
         unsigned char a_min[ADDR_RAW_BUF_LEN], a_max[ADDR_RAW_BUF_LEN];
         unsigned char b_min[ADDR_RAW_BUF_LEN], b_max[ADDR_RAW_BUF_LEN];
 
-        if (!extract_min_max(a, a_min, a_max, length) ||
-            !extract_min_max(b, b_min, b_max, length))
+        if (!extract_min_max(a, a_min, a_max, length) || !extract_min_max(b, b_min, b_max, length))
             return 0;
 
         /*
          * Punt inverted ranges.
          */
-        if (memcmp(a_min, a_max, length) > 0 ||
-            memcmp(b_min, b_max, length) > 0)
+        if (memcmp(a_min, a_max, length) > 0 || memcmp(b_min, b_max, length) > 0)
             return 0;
 
         /*
@@ -870,9 +847,10 @@ static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
          * Merge if a and b are adjacent.  We check for
          * adjacency by subtracting one from b_min first.
          */
-        for (j = length - 1; j >= 0 && b_min[j]-- == 0x00; j--) ;
+        for (j = length - 1; j >= 0 && b_min[j]-- == 0x00; j--)
+            ;
         if (memcmp(a_max, b_min, length) == 0) {
-            IPAddressOrRange *merged;
+            IPAddressOrRange* merged;
 
             if (!make_addressRange(&merged, a_min, b_max, length))
                 return 0;
@@ -890,7 +868,7 @@ static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
      */
     j = sk_IPAddressOrRange_num(aors) - 1;
     {
-        IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
+        IPAddressOrRange* a = sk_IPAddressOrRange_value(aors, j);
 
         if (a != NULL && a->type == IPAddressOrRange_addressRange) {
             unsigned char a_min[ADDR_RAW_BUF_LEN], a_max[ADDR_RAW_BUF_LEN];
@@ -908,7 +886,7 @@ static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
 /*
  * Whack an IPAddrBlocks extension into canonical form.
  */
-int X509v3_addr_canonize(IPAddrBlocks *addr)
+int X509v3_addr_canonize(IPAddrBlocks* addr)
 {
     int i;
 
@@ -918,15 +896,12 @@ int X509v3_addr_canonize(IPAddrBlocks *addr)
     }
 
     for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
-        IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
+        IPAddressFamily* f = sk_IPAddressFamily_value(addr, i);
 
         if (!IPAddressFamily_check_len(f))
             return 0;
 
-        if (f->ipAddressChoice->type == IPAddressChoice_addressesOrRanges &&
-            !IPAddressOrRanges_canonize(f->ipAddressChoice->
-                                        u.addressesOrRanges,
-                                        X509v3_addr_get_afi(f)))
+        if (f->ipAddressChoice->type == IPAddressChoice_addressesOrRanges && !IPAddressOrRanges_canonize(f->ipAddressChoice->u.addressesOrRanges, X509v3_addr_get_afi(f)))
             return 0;
     }
     (void)sk_IPAddressFamily_set_cmp_func(addr, IPAddressFamily_cmp);
@@ -939,13 +914,13 @@ int X509v3_addr_canonize(IPAddrBlocks *addr)
 /*
  * v2i handler for the IPAddrBlocks extension.
  */
-static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
-                              struct v3_ext_ctx *ctx,
-                              STACK_OF(CONF_VALUE) *values)
+static void* v2i_IPAddrBlocks(const struct v3_ext_method* method,
+    struct v3_ext_ctx* ctx,
+    STACK_OF(CONF_VALUE)* values)
 {
     static const char v4addr_chars[] = "0123456789.";
     static const char v6addr_chars[] = "0123456789.:abcdefABCDEF";
-    IPAddrBlocks *addr = NULL;
+    IPAddrBlocks* addr = NULL;
     char *s = NULL, *t;
     int i;
 
@@ -955,10 +930,10 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
     }
 
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
-        CONF_VALUE *val = sk_CONF_VALUE_value(values, i);
+        CONF_VALUE* val = sk_CONF_VALUE_value(values, i);
         unsigned char min[ADDR_RAW_BUF_LEN], max[ADDR_RAW_BUF_LEN];
         unsigned afi, *safi = NULL, safi_;
-        const char *addr_chars = NULL;
+        const char* addr_chars = NULL;
         int prefixlen, i1, i2, delim, length;
 
         if (!ossl_v3_name_cmp(val->name, "IPv4")) {
@@ -973,7 +948,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
             safi = &safi_;
         } else {
             ERR_raise_data(ERR_LIB_X509V3, X509V3_R_EXTENSION_NAME_ERROR,
-                           "%s", val->name);
+                "%s", val->name);
             goto err;
         }
 
@@ -1042,9 +1017,9 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
         case '/':
             prefixlen = (int)strtoul(s + i2, &t, 10);
             if (t == s + i2
-                    || *t != '\0'
-                    || prefixlen > (length * 8)
-                    || prefixlen < 0) {
+                || *t != '\0'
+                || prefixlen > (length * 8)
+                || prefixlen < 0) {
                 ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
@@ -1100,7 +1075,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
         goto err;
     return addr;
 
- err:
+err:
     OPENSSL_free(s);
     sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
     return NULL;
@@ -1110,30 +1085,30 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
  * OpenSSL dispatch
  */
 const X509V3_EXT_METHOD ossl_v3_addr = {
-    NID_sbgp_ipAddrBlock,       /* nid */
-    0,                          /* flags */
+    NID_sbgp_ipAddrBlock, /* nid */
+    0, /* flags */
     ASN1_ITEM_ref(IPAddrBlocks), /* template */
-    0, 0, 0, 0,                 /* old functions, ignored */
-    0,                          /* i2s */
-    0,                          /* s2i */
-    0,                          /* i2v */
-    v2i_IPAddrBlocks,           /* v2i */
-    i2r_IPAddrBlocks,           /* i2r */
-    0,                          /* r2i */
-    NULL                        /* extension-specific data */
+    0, 0, 0, 0, /* old functions, ignored */
+    0, /* i2s */
+    0, /* s2i */
+    0, /* i2v */
+    v2i_IPAddrBlocks, /* v2i */
+    i2r_IPAddrBlocks, /* i2r */
+    0, /* r2i */
+    NULL /* extension-specific data */
 };
 
 /*
  * Figure out whether extension sues inheritance.
  */
-int X509v3_addr_inherits(IPAddrBlocks *addr)
+int X509v3_addr_inherits(IPAddrBlocks* addr)
 {
     int i;
 
     if (addr == NULL)
         return 0;
     for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
-        IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
+        IPAddressFamily* f = sk_IPAddressFamily_value(addr, i);
 
         if (f->ipAddressChoice->type == IPAddressChoice_inherit)
             return 1;
@@ -1144,8 +1119,8 @@ int X509v3_addr_inherits(IPAddrBlocks *addr)
 /*
  * Figure out whether parent contains child.
  */
-static int addr_contains(IPAddressOrRanges *parent,
-                         IPAddressOrRanges *child, int length)
+static int addr_contains(IPAddressOrRanges* parent,
+    IPAddressOrRanges* child, int length)
 {
     unsigned char p_min[ADDR_RAW_BUF_LEN], p_max[ADDR_RAW_BUF_LEN];
     unsigned char c_min[ADDR_RAW_BUF_LEN], c_max[ADDR_RAW_BUF_LEN];
@@ -1159,13 +1134,13 @@ static int addr_contains(IPAddressOrRanges *parent,
     p = 0;
     for (c = 0; c < sk_IPAddressOrRange_num(child); c++) {
         if (!extract_min_max(sk_IPAddressOrRange_value(child, c),
-                             c_min, c_max, length))
+                c_min, c_max, length))
             return 0;
         for (;; p++) {
             if (p >= sk_IPAddressOrRange_num(parent))
                 return 0;
             if (!extract_min_max(sk_IPAddressOrRange_value(parent, p),
-                                 p_min, p_max, length))
+                    p_min, p_max, length))
                 return 0;
             if (memcmp(p_max, c_max, length) < 0)
                 continue;
@@ -1181,7 +1156,7 @@ static int addr_contains(IPAddressOrRanges *parent,
 /*
  * Test whether a is a subset of b.
  */
-int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
+int X509v3_addr_subset(IPAddrBlocks* a, IPAddrBlocks* b)
 {
     int i;
 
@@ -1193,17 +1168,17 @@ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
     sk_IPAddressFamily_sort(b);
     /* Could sort a here too and get O(|a|) running time instead of O(|a| ln |b|) */
     for (i = 0; i < sk_IPAddressFamily_num(a); i++) {
-        IPAddressFamily *fa = sk_IPAddressFamily_value(a, i);
+        IPAddressFamily* fa = sk_IPAddressFamily_value(a, i);
         int j = sk_IPAddressFamily_find(b, fa);
-        IPAddressFamily *fb = sk_IPAddressFamily_value(b, j);
+        IPAddressFamily* fb = sk_IPAddressFamily_value(b, j);
 
         if (fb == NULL)
             return 0;
         if (!IPAddressFamily_check_len(fa) || !IPAddressFamily_check_len(fb))
             return 0;
         if (!addr_contains(fb->ipAddressChoice->u.addressesOrRanges,
-                           fa->ipAddressChoice->u.addressesOrRanges,
-                           length_from_afi(X509v3_addr_get_afi(fb))))
+                fa->ipAddressChoice->u.addressesOrRanges,
+                length_from_afi(X509v3_addr_get_afi(fb))))
             return 0;
     }
     return 1;
@@ -1212,18 +1187,18 @@ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
 /*
  * Validation error handling via callback.
  */
-# define validation_err(_err_)            \
-    do {                                  \
-        if (ctx != NULL) {                \
-            ctx->error = _err_;           \
-            ctx->error_depth = i;         \
-            ctx->current_cert = x;        \
-            rv = ctx->verify_cb(0, ctx);  \
-        } else {                          \
-            rv = 0;                       \
-        }                                 \
-        if (rv == 0)                      \
-            goto done;                    \
+#define validation_err(_err_)            \
+    do {                                 \
+        if (ctx != NULL) {               \
+            ctx->error = _err_;          \
+            ctx->error_depth = i;        \
+            ctx->current_cert = x;       \
+            rv = ctx->verify_cb(0, ctx); \
+        } else {                         \
+            rv = 0;                      \
+        }                                \
+        if (rv == 0)                     \
+            goto done;                   \
     } while (0)
 
 /*
@@ -1234,17 +1209,17 @@ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
  * When returning 0, ctx->error MUST be set to an appropriate value other than
  * X509_V_OK.
  */
-static int addr_validate_path_internal(X509_STORE_CTX *ctx,
-                                       STACK_OF(X509) *chain,
-                                       IPAddrBlocks *ext)
+static int addr_validate_path_internal(X509_STORE_CTX* ctx,
+    STACK_OF(X509)* chain,
+    IPAddrBlocks* ext)
 {
-    IPAddrBlocks *child = NULL;
+    IPAddrBlocks* child = NULL;
     int i, j, ret = 0, rv;
-    X509 *x;
+    X509* x;
 
     if (!ossl_assert(chain != NULL && sk_X509_num(chain) > 0)
-            || !ossl_assert(ctx != NULL || ext != NULL)
-            || !ossl_assert(ctx == NULL || ctx->verify_cb != NULL)) {
+        || !ossl_assert(ctx != NULL || ext != NULL)
+        || !ossl_assert(ctx == NULL || ctx->verify_cb != NULL)) {
         if (ctx != NULL)
             ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
@@ -1285,7 +1260,7 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
             validation_err(X509_V_ERR_INVALID_EXTENSION);
         if (x->rfc3779_addr == NULL) {
             for (j = 0; j < sk_IPAddressFamily_num(child); j++) {
-                IPAddressFamily *fc = sk_IPAddressFamily_value(child, j);
+                IPAddressFamily* fc = sk_IPAddressFamily_value(child, j);
 
                 if (!IPAddressFamily_check_len(fc))
                     goto done;
@@ -1298,17 +1273,15 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
             continue;
         }
         (void)sk_IPAddressFamily_set_cmp_func(x->rfc3779_addr,
-                                              IPAddressFamily_cmp);
+            IPAddressFamily_cmp);
         sk_IPAddressFamily_sort(x->rfc3779_addr);
         for (j = 0; j < sk_IPAddressFamily_num(child); j++) {
-            IPAddressFamily *fc = sk_IPAddressFamily_value(child, j);
+            IPAddressFamily* fc = sk_IPAddressFamily_value(child, j);
             int k = sk_IPAddressFamily_find(x->rfc3779_addr, fc);
-            IPAddressFamily *fp =
-                sk_IPAddressFamily_value(x->rfc3779_addr, k);
+            IPAddressFamily* fp = sk_IPAddressFamily_value(x->rfc3779_addr, k);
 
             if (fp == NULL) {
-                if (fc->ipAddressChoice->type ==
-                    IPAddressChoice_addressesOrRanges) {
+                if (fc->ipAddressChoice->type == IPAddressChoice_addressesOrRanges) {
                     validation_err(X509_V_ERR_UNNESTED_RESOURCE);
                     break;
                 }
@@ -1318,12 +1291,11 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
             if (!IPAddressFamily_check_len(fc) || !IPAddressFamily_check_len(fp))
                 goto done;
 
-            if (fp->ipAddressChoice->type ==
-                IPAddressChoice_addressesOrRanges) {
+            if (fp->ipAddressChoice->type == IPAddressChoice_addressesOrRanges) {
                 if (fc->ipAddressChoice->type == IPAddressChoice_inherit
                     || addr_contains(fp->ipAddressChoice->u.addressesOrRanges,
-                                     fc->ipAddressChoice->u.addressesOrRanges,
-                                     length_from_afi(X509v3_addr_get_afi(fc))))
+                        fc->ipAddressChoice->u.addressesOrRanges,
+                        length_from_afi(X509v3_addr_get_afi(fc))))
                     (void)sk_IPAddressFamily_set(child, j, fp);
                 else
                     validation_err(X509_V_ERR_UNNESTED_RESOURCE);
@@ -1336,7 +1308,7 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
      */
     if (x->rfc3779_addr != NULL) {
         for (j = 0; j < sk_IPAddressFamily_num(x->rfc3779_addr); j++) {
-            IPAddressFamily *fp = sk_IPAddressFamily_value(x->rfc3779_addr, j);
+            IPAddressFamily* fp = sk_IPAddressFamily_value(x->rfc3779_addr, j);
 
             if (!IPAddressFamily_check_len(fp))
                 goto done;
@@ -1347,21 +1319,21 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
         }
     }
     ret = 1;
- done:
+done:
     sk_IPAddressFamily_free(child);
     return ret;
 }
 
-# undef validation_err
+#undef validation_err
 
 /*
  * RFC 3779 2.3 path validation -- called from X509_verify_cert().
  */
-int X509v3_addr_validate_path(X509_STORE_CTX *ctx)
+int X509v3_addr_validate_path(X509_STORE_CTX* ctx)
 {
     if (ctx->chain == NULL
-            || sk_X509_num(ctx->chain) == 0
-            || ctx->verify_cb == NULL) {
+        || sk_X509_num(ctx->chain) == 0
+        || ctx->verify_cb == NULL) {
         ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
     }
@@ -1372,8 +1344,8 @@ int X509v3_addr_validate_path(X509_STORE_CTX *ctx)
  * RFC 3779 2.3 path validation of an extension.
  * Test whether chain covers extension.
  */
-int X509v3_addr_validate_resource_set(STACK_OF(X509) *chain,
-                                      IPAddrBlocks *ext, int allow_inheritance)
+int X509v3_addr_validate_resource_set(STACK_OF(X509)* chain,
+    IPAddrBlocks* ext, int allow_inheritance)
 {
     if (ext == NULL)
         return 1;

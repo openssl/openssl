@@ -12,7 +12,7 @@
 #include <openssl/err.h>
 #include "fuzzer.h"
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(int* argc, char*** argv)
 {
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();
@@ -20,11 +20,11 @@ int FuzzerInitialize(int *argc, char ***argv)
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+int FuzzerTestOneInput(const uint8_t* buf, size_t len)
 {
-    BIO *in;
+    BIO* in;
     char *name = NULL, *header = NULL;
-    unsigned char *data = NULL;
+    unsigned char* data = NULL;
     long outlen;
 
     if (len <= 1 || len > INT_MAX)

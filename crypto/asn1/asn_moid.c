@@ -18,14 +18,14 @@
 
 /* Simple ASN1 OID module: add all objects in a given section */
 
-static int do_create(const char *value, const char *name);
+static int do_create(const char* value, const char* name);
 
-static int oid_module_init(CONF_IMODULE *md, const CONF *cnf)
+static int oid_module_init(CONF_IMODULE* md, const CONF* cnf)
 {
     int i;
-    const char *oid_section;
-    STACK_OF(CONF_VALUE) *sktmp;
-    CONF_VALUE *oval;
+    const char* oid_section;
+    STACK_OF(CONF_VALUE)* sktmp;
+    CONF_VALUE* oval;
 
     oid_section = CONF_imodule_get_value(md);
     if ((sktmp = NCONF_get_section(cnf, oid_section)) == NULL) {
@@ -42,7 +42,7 @@ static int oid_module_init(CONF_IMODULE *md, const CONF *cnf)
     return 1;
 }
 
-static void oid_module_finish(CONF_IMODULE *md)
+static void oid_module_finish(CONF_IMODULE* md)
 {
 }
 
@@ -57,11 +57,11 @@ void ASN1_add_oid_module(void)
  * shortname = some long name, 1.2.3.4
  */
 
-static int do_create(const char *value, const char *name)
+static int do_create(const char* value, const char* name)
 {
     int nid;
     const char *ln, *ostr, *p;
-    char *lntmp = NULL;
+    char* lntmp = NULL;
 
     p = strrchr(value, ',');
     if (p == NULL) {

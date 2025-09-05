@@ -12,10 +12,10 @@
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
 
-static STACK_OF(ASN1_STRING_TABLE) *stable = NULL;
-static void st_free(ASN1_STRING_TABLE *tbl);
-static int sk_table_cmp(const ASN1_STRING_TABLE *const *a,
-                        const ASN1_STRING_TABLE *const *b);
+static STACK_OF(ASN1_STRING_TABLE)* stable = NULL;
+static void st_free(ASN1_STRING_TABLE* tbl);
+static int sk_table_cmp(const ASN1_STRING_TABLE* const* a,
+    const ASN1_STRING_TABLE* const* b);
 
 /*
  * This is the global mask for the mbstring functions: this is use to mask
@@ -45,10 +45,10 @@ unsigned long ASN1_STRING_get_default_mask(void)
  * utf8only  : this is the default, use UTF8Strings
  */
 
-int ASN1_STRING_set_default_mask_asc(const char *p)
+int ASN1_STRING_set_default_mask_asc(const char* p)
 {
     unsigned long mask;
-    char *end;
+    char* end;
 
     if (CHECK_AND_SKIP_PREFIX(p, "MASK:")) {
         if (*p == '\0')
@@ -76,12 +76,12 @@ int ASN1_STRING_set_default_mask_asc(const char *p)
  * a corresponding OID. For example certificates and certificate requests.
  */
 
-ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
-                                    const unsigned char *in, int inlen,
-                                    int inform, int nid)
+ASN1_STRING* ASN1_STRING_set_by_NID(ASN1_STRING** out,
+    const unsigned char* in, int inlen,
+    int inform, int nid)
 {
-    ASN1_STRING_TABLE *tbl;
-    ASN1_STRING *str = NULL;
+    ASN1_STRING_TABLE* tbl;
+    ASN1_STRING* str = NULL;
     unsigned long mask;
     int ret;
 
@@ -93,10 +93,10 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
         if (!(tbl->flags & STABLE_NO_MASK))
             mask &= global_mask;
         ret = ASN1_mbstring_ncopy(out, in, inlen, inform, mask,
-                                  tbl->minsize, tbl->maxsize);
+            tbl->minsize, tbl->maxsize);
     } else {
         ret = ASN1_mbstring_copy(out, in, inlen, inform,
-                                 DIRSTRING_TYPE & global_mask);
+            DIRSTRING_TYPE & global_mask);
     }
     if (ret <= 0)
         return NULL;
@@ -109,22 +109,22 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
 
 #include "tbl_standard.h"
 
-static int sk_table_cmp(const ASN1_STRING_TABLE *const *a,
-                        const ASN1_STRING_TABLE *const *b)
+static int sk_table_cmp(const ASN1_STRING_TABLE* const* a,
+    const ASN1_STRING_TABLE* const* b)
 {
     return (*a)->nid - (*b)->nid;
 }
 
 DECLARE_OBJ_BSEARCH_CMP_FN(ASN1_STRING_TABLE, ASN1_STRING_TABLE, table);
 
-static int table_cmp(const ASN1_STRING_TABLE *a, const ASN1_STRING_TABLE *b)
+static int table_cmp(const ASN1_STRING_TABLE* a, const ASN1_STRING_TABLE* b)
 {
     return a->nid - b->nid;
 }
 
 IMPLEMENT_OBJ_BSEARCH_CMP_FN(ASN1_STRING_TABLE, ASN1_STRING_TABLE, table);
 
-ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
+ASN1_STRING_TABLE* ASN1_STRING_TABLE_get(int nid)
 {
     int idx;
     ASN1_STRING_TABLE fnd;
@@ -155,7 +155,7 @@ ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
  * table or a copy of an internal value added to the table.
  */
 
-static ASN1_STRING_TABLE *stable_get(int nid)
+static ASN1_STRING_TABLE* stable_get(int nid)
 {
     ASN1_STRING_TABLE *tmp, *rv;
 
@@ -190,10 +190,10 @@ static ASN1_STRING_TABLE *stable_get(int nid)
 }
 
 int ASN1_STRING_TABLE_add(int nid,
-                          long minsize, long maxsize, unsigned long mask,
-                          unsigned long flags)
+    long minsize, long maxsize, unsigned long mask,
+    unsigned long flags)
 {
-    ASN1_STRING_TABLE *tmp;
+    ASN1_STRING_TABLE* tmp;
 
     if (nid <= 0 || (minsize >= 0 && maxsize >= 0 && minsize > maxsize)) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -218,7 +218,7 @@ int ASN1_STRING_TABLE_add(int nid,
 
 void ASN1_STRING_TABLE_cleanup(void)
 {
-    STACK_OF(ASN1_STRING_TABLE) *tmp;
+    STACK_OF(ASN1_STRING_TABLE)* tmp;
 
     tmp = stable;
     if (tmp == NULL)
@@ -227,7 +227,7 @@ void ASN1_STRING_TABLE_cleanup(void)
     sk_ASN1_STRING_TABLE_pop_free(tmp, st_free);
 }
 
-static void st_free(ASN1_STRING_TABLE *tbl)
+static void st_free(ASN1_STRING_TABLE* tbl)
 {
     if (tbl->flags & STABLE_FLAGS_MALLOC)
         OPENSSL_free(tbl);

@@ -21,62 +21,62 @@
 #include "crypto/context.h"
 
 struct ossl_lib_ctx_st {
-    CRYPTO_RWLOCK *lock;
+    CRYPTO_RWLOCK* lock;
     OSSL_EX_DATA_GLOBAL global;
 
-    void *property_string_data;
-    void *evp_method_store;
-    void *provider_store;
-    void *namemap;
-    void *property_defns;
-    void *global_properties;
-    void *drbg;
-    void *drbg_nonce;
+    void* property_string_data;
+    void* evp_method_store;
+    void* provider_store;
+    void* namemap;
+    void* property_defns;
+    void* global_properties;
+    void* drbg;
+    void* drbg_nonce;
 #ifndef FIPS_MODULE
-    void *provider_conf;
-    void *bio_core;
-    void *child_provider;
-    OSSL_METHOD_STORE *decoder_store;
-    void *decoder_cache;
-    OSSL_METHOD_STORE *encoder_store;
-    OSSL_METHOD_STORE *store_loader_store;
-    void *self_test_cb;
-    void *indicator_cb;
+    void* provider_conf;
+    void* bio_core;
+    void* child_provider;
+    OSSL_METHOD_STORE* decoder_store;
+    void* decoder_cache;
+    OSSL_METHOD_STORE* encoder_store;
+    OSSL_METHOD_STORE* store_loader_store;
+    void* self_test_cb;
+    void* indicator_cb;
 #endif
 #if defined(OPENSSL_THREADS)
-    void *threads;
+    void* threads;
 #endif
 #ifdef FIPS_MODULE
-    void *fips_prov;
+    void* fips_prov;
 #endif
-    STACK_OF(SSL_COMP) *comp_methods;
+    STACK_OF(SSL_COMP)* comp_methods;
 
     int ischild;
     int conf_diagnostics;
 };
 
-int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx)
+int ossl_lib_ctx_write_lock(OSSL_LIB_CTX* ctx)
 {
     if ((ctx = ossl_lib_ctx_get_concrete(ctx)) == NULL)
         return 0;
     return CRYPTO_THREAD_write_lock(ctx->lock);
 }
 
-int ossl_lib_ctx_read_lock(OSSL_LIB_CTX *ctx)
+int ossl_lib_ctx_read_lock(OSSL_LIB_CTX* ctx)
 {
     if ((ctx = ossl_lib_ctx_get_concrete(ctx)) == NULL)
         return 0;
     return CRYPTO_THREAD_read_lock(ctx->lock);
 }
 
-int ossl_lib_ctx_unlock(OSSL_LIB_CTX *ctx)
+int ossl_lib_ctx_unlock(OSSL_LIB_CTX* ctx)
 {
     if ((ctx = ossl_lib_ctx_get_concrete(ctx)) == NULL)
         return 0;
     return CRYPTO_THREAD_unlock(ctx->lock);
 }
 
-int ossl_lib_ctx_is_child(OSSL_LIB_CTX *ctx)
+int ossl_lib_ctx_is_child(OSSL_LIB_CTX* ctx)
 {
     ctx = ossl_lib_ctx_get_concrete(ctx);
 
@@ -85,9 +85,9 @@ int ossl_lib_ctx_is_child(OSSL_LIB_CTX *ctx)
     return ctx->ischild;
 }
 
-static void context_deinit_objs(OSSL_LIB_CTX *ctx);
+static void context_deinit_objs(OSSL_LIB_CTX* ctx);
 
-static int context_init(OSSL_LIB_CTX *ctx)
+static int context_init(OSSL_LIB_CTX* ctx)
 {
     int exdata_done = 0;
 
@@ -214,7 +214,7 @@ static int context_init(OSSL_LIB_CTX *ctx)
 
     return 1;
 
- err:
+err:
     context_deinit_objs(ctx);
 
     if (exdata_done)
@@ -225,7 +225,7 @@ static int context_init(OSSL_LIB_CTX *ctx)
     return 0;
 }
 
-static void context_deinit_objs(OSSL_LIB_CTX *ctx)
+static void context_deinit_objs(OSSL_LIB_CTX* ctx)
 {
     /* P2. We want evp_method_store to be cleaned up before the provider store */
     if (ctx->evp_method_store != NULL) {
@@ -258,7 +258,6 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
         ossl_decoder_cache_free(ctx->decoder_cache);
         ctx->decoder_cache = NULL;
     }
-
 
     /* P2. We want encoder_store to be cleaned up before the provider store */
     if (ctx->encoder_store != NULL) {
@@ -354,10 +353,9 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
         ctx->comp_methods = NULL;
     }
 #endif
-
 }
 
-static int context_deinit(OSSL_LIB_CTX *ctx)
+static int context_deinit(OSSL_LIB_CTX* ctx)
 {
     if (ctx == NULL)
         return 1;
@@ -407,7 +405,7 @@ void ossl_lib_ctx_default_deinit(void)
     default_context_inited = 0;
 }
 
-static OSSL_LIB_CTX *get_thread_default_context(void)
+static OSSL_LIB_CTX* get_thread_default_context(void)
 {
     if (!RUN_ONCE(&default_context_init, default_context_do_init))
         return NULL;
@@ -415,16 +413,16 @@ static OSSL_LIB_CTX *get_thread_default_context(void)
     return CRYPTO_THREAD_get_local(&default_context_thread_local);
 }
 
-static OSSL_LIB_CTX *get_default_context(void)
+static OSSL_LIB_CTX* get_default_context(void)
 {
-    OSSL_LIB_CTX *current_defctx = get_thread_default_context();
+    OSSL_LIB_CTX* current_defctx = get_thread_default_context();
 
     if (current_defctx == NULL && default_context_inited)
         current_defctx = &default_context_int;
     return current_defctx;
 }
 
-static int set_default_context(OSSL_LIB_CTX *defctx)
+static int set_default_context(OSSL_LIB_CTX* defctx)
 {
     if (defctx == &default_context_int)
         defctx = NULL;
@@ -433,9 +431,9 @@ static int set_default_context(OSSL_LIB_CTX *defctx)
 }
 #endif
 
-OSSL_LIB_CTX *OSSL_LIB_CTX_new(void)
+OSSL_LIB_CTX* OSSL_LIB_CTX_new(void)
 {
-    OSSL_LIB_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    OSSL_LIB_CTX* ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx != NULL && !context_init(ctx)) {
         OPENSSL_free(ctx);
@@ -445,10 +443,10 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_new(void)
 }
 
 #ifndef FIPS_MODULE
-OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_CORE_HANDLE *handle,
-                                             const OSSL_DISPATCH *in)
+OSSL_LIB_CTX* OSSL_LIB_CTX_new_from_dispatch(const OSSL_CORE_HANDLE* handle,
+    const OSSL_DISPATCH* in)
 {
-    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
+    OSSL_LIB_CTX* ctx = OSSL_LIB_CTX_new();
 
     if (ctx == NULL)
         return NULL;
@@ -461,10 +459,10 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_CORE_HANDLE *handle,
     return ctx;
 }
 
-OSSL_LIB_CTX *OSSL_LIB_CTX_new_child(const OSSL_CORE_HANDLE *handle,
-                                     const OSSL_DISPATCH *in)
+OSSL_LIB_CTX* OSSL_LIB_CTX_new_child(const OSSL_CORE_HANDLE* handle,
+    const OSSL_DISPATCH* in)
 {
-    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new_from_dispatch(handle, in);
+    OSSL_LIB_CTX* ctx = OSSL_LIB_CTX_new_from_dispatch(handle, in);
 
     if (ctx == NULL)
         return NULL;
@@ -478,13 +476,13 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_new_child(const OSSL_CORE_HANDLE *handle,
     return ctx;
 }
 
-int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX *ctx, const char *config_file)
+int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX* ctx, const char* config_file)
 {
     return CONF_modules_load_file_ex(ctx, config_file, NULL, 0) > 0;
 }
 #endif
 
-void OSSL_LIB_CTX_free(OSSL_LIB_CTX *ctx)
+void OSSL_LIB_CTX_free(OSSL_LIB_CTX* ctx)
 {
     if (ctx == NULL || ossl_lib_ctx_is_default(ctx))
         return;
@@ -498,7 +496,7 @@ void OSSL_LIB_CTX_free(OSSL_LIB_CTX *ctx)
 }
 
 #ifndef FIPS_MODULE
-OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void)
+OSSL_LIB_CTX* OSSL_LIB_CTX_get0_global_default(void)
 {
     if (!RUN_ONCE(&default_context_init, default_context_do_init))
         return NULL;
@@ -506,9 +504,9 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void)
     return &default_context_int;
 }
 
-OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx)
+OSSL_LIB_CTX* OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX* libctx)
 {
-    OSSL_LIB_CTX *current_defctx;
+    OSSL_LIB_CTX* current_defctx;
 
     if ((current_defctx = get_default_context()) != NULL) {
         if (libctx != NULL)
@@ -529,7 +527,7 @@ void ossl_release_default_drbg_ctx(void)
 }
 #endif
 
-OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx)
+OSSL_LIB_CTX* ossl_lib_ctx_get_concrete(OSSL_LIB_CTX* ctx)
 {
 #ifndef FIPS_MODULE
     if (ctx == NULL)
@@ -538,7 +536,7 @@ OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx)
     return ctx;
 }
 
-int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx)
+int ossl_lib_ctx_is_default(OSSL_LIB_CTX* ctx)
 {
 #ifndef FIPS_MODULE
     if (ctx == NULL || ctx == get_default_context())
@@ -547,7 +545,7 @@ int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx)
     return 0;
 }
 
-int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx)
+int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX* ctx)
 {
 #ifndef FIPS_MODULE
     if (ossl_lib_ctx_get_concrete(ctx) == &default_context_int)
@@ -556,7 +554,7 @@ int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx)
     return 0;
 }
 
-void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
+void* ossl_lib_ctx_get_data(OSSL_LIB_CTX* ctx, int index)
 {
     ctx = ossl_lib_ctx_get_concrete(ctx);
     if (ctx == NULL)
@@ -610,19 +608,19 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
 #endif
 
     case OSSL_LIB_CTX_COMP_METHODS:
-        return (void *)&ctx->comp_methods;
+        return (void*)&ctx->comp_methods;
 
     default:
         return NULL;
     }
 }
 
-void *OSSL_LIB_CTX_get_data(OSSL_LIB_CTX *ctx, int index)
+void* OSSL_LIB_CTX_get_data(OSSL_LIB_CTX* ctx, int index)
 {
     return ossl_lib_ctx_get_data(ctx, index);
 }
 
-OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx)
+OSSL_EX_DATA_GLOBAL* ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX* ctx)
 {
     ctx = ossl_lib_ctx_get_concrete(ctx);
     if (ctx == NULL)
@@ -630,7 +628,7 @@ OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx)
     return &ctx->global;
 }
 
-const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx)
+const char* ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX* libctx)
 {
 #ifdef FIPS_MODULE
     return "FIPS internal library context";
@@ -643,7 +641,7 @@ const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx)
 #endif
 }
 
-int OSSL_LIB_CTX_get_conf_diagnostics(OSSL_LIB_CTX *libctx)
+int OSSL_LIB_CTX_get_conf_diagnostics(OSSL_LIB_CTX* libctx)
 {
     libctx = ossl_lib_ctx_get_concrete(libctx);
     if (libctx == NULL)
@@ -651,7 +649,7 @@ int OSSL_LIB_CTX_get_conf_diagnostics(OSSL_LIB_CTX *libctx)
     return libctx->conf_diagnostics;
 }
 
-void OSSL_LIB_CTX_set_conf_diagnostics(OSSL_LIB_CTX *libctx, int value)
+void OSSL_LIB_CTX_set_conf_diagnostics(OSSL_LIB_CTX* libctx, int value)
 {
     libctx = ossl_lib_ctx_get_concrete(libctx);
     if (libctx == NULL)

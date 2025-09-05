@@ -12,9 +12,9 @@
 #include "rand_local.h"
 
 /* Implements the default OpenSSL RAND_add() method */
-static int drbg_add(const void *buf, int num, double randomness)
+static int drbg_add(const void* buf, int num, double randomness)
 {
-    EVP_RAND_CTX *drbg = RAND_get0_primary(NULL);
+    EVP_RAND_CTX* drbg = RAND_get0_primary(NULL);
 
     if (drbg == NULL || num <= 0)
         return 0;
@@ -23,7 +23,7 @@ static int drbg_add(const void *buf, int num, double randomness)
 }
 
 /* Implements the default OpenSSL RAND_seed() method */
-static int drbg_seed(const void *buf, int num)
+static int drbg_seed(const void* buf, int num)
 {
     return drbg_add(buf, num, num);
 }
@@ -31,18 +31,18 @@ static int drbg_seed(const void *buf, int num)
 /* Implements the default OpenSSL RAND_status() method */
 static int drbg_status(void)
 {
-    EVP_RAND_CTX *drbg = RAND_get0_primary(NULL);
+    EVP_RAND_CTX* drbg = RAND_get0_primary(NULL);
 
     if (drbg == NULL)
         return 0;
 
-    return  EVP_RAND_get_state(drbg) == EVP_RAND_STATE_READY ? 1 : 0;
+    return EVP_RAND_get_state(drbg) == EVP_RAND_STATE_READY ? 1 : 0;
 }
 
 /* Implements the default OpenSSL RAND_bytes() method */
-static int drbg_bytes(unsigned char *out, int count)
+static int drbg_bytes(unsigned char* out, int count)
 {
-    EVP_RAND_CTX *drbg = RAND_get0_public(NULL);
+    EVP_RAND_CTX* drbg = RAND_get0_public(NULL);
 
     if (drbg == NULL)
         return 0;
@@ -59,7 +59,7 @@ RAND_METHOD ossl_rand_meth = {
     drbg_status
 };
 
-RAND_METHOD *RAND_OpenSSL(void)
+RAND_METHOD* RAND_OpenSSL(void)
 {
     return &ossl_rand_meth;
 }

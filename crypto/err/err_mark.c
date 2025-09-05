@@ -14,7 +14,7 @@
 
 int ERR_set_mark(void)
 {
-    ERR_STATE *es;
+    ERR_STATE* es;
 
     es = ossl_err_get_state_int();
     if (es == NULL)
@@ -28,7 +28,7 @@ int ERR_set_mark(void)
 
 int ERR_pop(void)
 {
-    ERR_STATE *es;
+    ERR_STATE* es;
 
     es = ossl_err_get_state_int();
     if (es == NULL || es->bottom == es->top)
@@ -41,14 +41,14 @@ int ERR_pop(void)
 
 int ERR_pop_to_mark(void)
 {
-    ERR_STATE *es;
+    ERR_STATE* es;
 
     es = ossl_err_get_state_int();
     if (es == NULL)
         return 0;
 
     while (es->bottom != es->top
-           && es->err_marks[es->top] == 0) {
+        && es->err_marks[es->top] == 0) {
         err_clear(es, es->top, 0);
         es->top = es->top > 0 ? es->top - 1 : ERR_NUM_ERRORS - 1;
     }
@@ -61,7 +61,7 @@ int ERR_pop_to_mark(void)
 
 int ERR_count_to_mark(void)
 {
-    ERR_STATE *es;
+    ERR_STATE* es;
     int count = 0, top;
 
     es = ossl_err_get_state_int();
@@ -70,7 +70,7 @@ int ERR_count_to_mark(void)
 
     top = es->top;
     while (es->bottom != top
-           && es->err_marks[top] == 0) {
+        && es->err_marks[top] == 0) {
         ++count;
         top = top > 0 ? top - 1 : ERR_NUM_ERRORS - 1;
     }
@@ -80,7 +80,7 @@ int ERR_count_to_mark(void)
 
 int ERR_clear_last_mark(void)
 {
-    ERR_STATE *es;
+    ERR_STATE* es;
     int top;
 
     es = ossl_err_get_state_int();
@@ -89,7 +89,7 @@ int ERR_clear_last_mark(void)
 
     top = es->top;
     while (es->bottom != top
-           && es->err_marks[top] == 0) {
+        && es->err_marks[top] == 0) {
         top = top > 0 ? top - 1 : ERR_NUM_ERRORS - 1;
     }
 
@@ -98,4 +98,3 @@ int ERR_clear_last_mark(void)
     es->err_marks[top]--;
     return 1;
 }
-

@@ -16,11 +16,11 @@
 #include "ec_local.h"
 #include <openssl/err.h>
 
-int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only,
-                               BN_CTX *ctx)
+int EC_GROUP_check_named_curve(const EC_GROUP* group, int nist_only,
+    BN_CTX* ctx)
 {
     int nid;
-    BN_CTX *new_ctx = NULL;
+    BN_CTX* new_ctx = NULL;
 
     if (group == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
@@ -43,19 +43,19 @@ int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only,
     return nid;
 }
 
-int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
+int EC_GROUP_check(const EC_GROUP* group, BN_CTX* ctx)
 {
 #ifdef FIPS_MODULE
     /*
-    * ECC domain parameter validation.
-    * See SP800-56A R3 5.5.2 "Assurances of Domain-Parameter Validity" Part 1b.
-    */
+     * ECC domain parameter validation.
+     * See SP800-56A R3 5.5.2 "Assurances of Domain-Parameter Validity" Part 1b.
+     */
     return EC_GROUP_check_named_curve(group, 1, ctx) >= 0 ? 1 : 0;
 #else
     int ret = 0;
-    const BIGNUM *order;
-    BN_CTX *new_ctx = NULL;
-    EC_POINT *point = NULL;
+    const BIGNUM* order;
+    BN_CTX* new_ctx = NULL;
+    EC_POINT* point = NULL;
 
     if (group == NULL || group->meth == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
@@ -110,7 +110,7 @@ int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
 
     ret = 1;
 
- err:
+err:
     BN_CTX_free(new_ctx);
     EC_POINT_free(point);
     return ret;

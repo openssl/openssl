@@ -15,7 +15,7 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 
-int X509_REQ_set_version(X509_REQ *x, long version)
+int X509_REQ_set_version(X509_REQ* x, long version)
 {
     if (x == NULL || version != X509_REQ_VERSION_1) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -25,7 +25,7 @@ int X509_REQ_set_version(X509_REQ *x, long version)
     return ASN1_INTEGER_set(x->req_info.version, version);
 }
 
-int X509_REQ_set_subject_name(X509_REQ *x, const X509_NAME *name)
+int X509_REQ_set_subject_name(X509_REQ* x, const X509_NAME* name)
 {
     if (x == NULL)
         return 0;
@@ -33,7 +33,7 @@ int X509_REQ_set_subject_name(X509_REQ *x, const X509_NAME *name)
     return X509_NAME_set(&x->req_info.subject, name);
 }
 
-int X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey)
+int X509_REQ_set_pubkey(X509_REQ* x, EVP_PKEY* pkey)
 {
     if (x == NULL)
         return 0;

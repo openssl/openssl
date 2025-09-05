@@ -30,29 +30,29 @@
  * by calling "c_thread_start" which is a function pointer created during
  * provider initialisation (i.e. OSSL_provider_init).
  */
-extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
+extern OSSL_FUNC_core_thread_start_fn* c_thread_start;
 #endif
 
 typedef struct thread_event_handler_st THREAD_EVENT_HANDLER;
 struct thread_event_handler_st {
 #ifndef FIPS_MODULE
-    const void *index;
+    const void* index;
 #endif
-    void *arg;
+    void* arg;
     OSSL_thread_stop_handler_fn handfn;
-    THREAD_EVENT_HANDLER *next;
+    THREAD_EVENT_HANDLER* next;
 };
 
 #ifndef FIPS_MODULE
-DEFINE_SPECIAL_STACK_OF(THREAD_EVENT_HANDLER_PTR, THREAD_EVENT_HANDLER *)
+DEFINE_SPECIAL_STACK_OF(THREAD_EVENT_HANDLER_PTR, THREAD_EVENT_HANDLER*)
 
 typedef struct global_tevent_register_st GLOBAL_TEVENT_REGISTER;
 struct global_tevent_register_st {
-    STACK_OF(THREAD_EVENT_HANDLER_PTR) *skhands;
-    CRYPTO_RWLOCK *lock;
+    STACK_OF(THREAD_EVENT_HANDLER_PTR)* skhands;
+    CRYPTO_RWLOCK* lock;
 };
 
-static GLOBAL_TEVENT_REGISTER *glob_tevent_reg = NULL;
+static GLOBAL_TEVENT_REGISTER* glob_tevent_reg = NULL;
 
 static CRYPTO_ONCE tevent_register_runonce = CRYPTO_ONCE_STATIC_INIT;
 
@@ -75,7 +75,7 @@ DEFINE_RUN_ONCE_STATIC(create_global_tevent_register)
     return 1;
 }
 
-static GLOBAL_TEVENT_REGISTER *get_global_tevent_register(void)
+static GLOBAL_TEVENT_REGISTER* get_global_tevent_register(void)
 {
     if (!RUN_ONCE(&tevent_register_runonce, create_global_tevent_register))
         return NULL;
@@ -103,14 +103,14 @@ static union {
     CRYPTO_THREAD_LOCAL value;
 } destructor_key = { -1 };
 
-static int  init_thread_push_handlers(THREAD_EVENT_HANDLER **hands);
-static void init_thread_remove_handlers(THREAD_EVENT_HANDLER **handsin);
-static void init_thread_destructor(void *hands);
-static int  init_thread_deregister(void *arg, int all);
+static int init_thread_push_handlers(THREAD_EVENT_HANDLER** hands);
+static void init_thread_remove_handlers(THREAD_EVENT_HANDLER** handsin);
+static void init_thread_destructor(void* hands);
+static int init_thread_deregister(void* arg, int all);
 #endif
-static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands);
+static void init_thread_stop(void* arg, THREAD_EVENT_HANDLER** hands);
 
-static THREAD_EVENT_HANDLER ** get_thread_event_handler(OSSL_LIB_CTX *ctx)
+static THREAD_EVENT_HANDLER** get_thread_event_handler(OSSL_LIB_CTX* ctx)
 {
 #ifdef FIPS_MODULE
     return CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_TEVENT_KEY, ctx);
@@ -121,7 +121,7 @@ static THREAD_EVENT_HANDLER ** get_thread_event_handler(OSSL_LIB_CTX *ctx)
 #endif
 }
 
-static int set_thread_event_handler(OSSL_LIB_CTX *ctx, THREAD_EVENT_HANDLER **hands)
+static int set_thread_event_handler(OSSL_LIB_CTX* ctx, THREAD_EVENT_HANDLER** hands)
 {
 #ifdef FIPS_MODULE
     return CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_TEVENT_KEY, ctx, hands);
@@ -132,10 +132,10 @@ static int set_thread_event_handler(OSSL_LIB_CTX *ctx, THREAD_EVENT_HANDLER **ha
 #endif
 }
 
-static THREAD_EVENT_HANDLER **
-manage_thread_local(OSSL_LIB_CTX *ctx, int alloc, int keep)
+static THREAD_EVENT_HANDLER**
+manage_thread_local(OSSL_LIB_CTX* ctx, int alloc, int keep)
 {
-    THREAD_EVENT_HANDLER **hands = get_thread_event_handler(ctx);
+    THREAD_EVENT_HANDLER** hands = get_thread_event_handler(ctx);
 
     if (alloc) {
         if (hands == NULL) {
@@ -162,17 +162,17 @@ manage_thread_local(OSSL_LIB_CTX *ctx, int alloc, int keep)
     return hands;
 }
 
-static ossl_inline THREAD_EVENT_HANDLER **clear_thread_local(OSSL_LIB_CTX *ctx)
+static ossl_inline THREAD_EVENT_HANDLER** clear_thread_local(OSSL_LIB_CTX* ctx)
 {
     return manage_thread_local(ctx, 0, 0);
 }
 
-static ossl_inline ossl_unused THREAD_EVENT_HANDLER **fetch_thread_local(OSSL_LIB_CTX *ctx)
+static ossl_inline ossl_unused THREAD_EVENT_HANDLER** fetch_thread_local(OSSL_LIB_CTX* ctx)
 {
     return manage_thread_local(ctx, 0, 1);
 }
 
-static ossl_inline THREAD_EVENT_HANDLER **alloc_thread_local(OSSL_LIB_CTX *ctx)
+static ossl_inline THREAD_EVENT_HANDLER** alloc_thread_local(OSSL_LIB_CTX* ctx)
 {
     return manage_thread_local(ctx, 1, 0);
 }
@@ -188,10 +188,10 @@ static ossl_inline THREAD_EVENT_HANDLER **alloc_thread_local(OSSL_LIB_CTX *ctx)
  * can deregister handlers if necessary before all the threads are
  * stopped.
  */
-static int init_thread_push_handlers(THREAD_EVENT_HANDLER **hands)
+static int init_thread_push_handlers(THREAD_EVENT_HANDLER** hands)
 {
     int ret;
-    GLOBAL_TEVENT_REGISTER *gtr;
+    GLOBAL_TEVENT_REGISTER* gtr;
 
     gtr = get_global_tevent_register();
     if (gtr == NULL)
@@ -205,9 +205,9 @@ static int init_thread_push_handlers(THREAD_EVENT_HANDLER **hands)
     return ret;
 }
 
-static void init_thread_remove_handlers(THREAD_EVENT_HANDLER **handsin)
+static void init_thread_remove_handlers(THREAD_EVENT_HANDLER** handsin)
 {
-    GLOBAL_TEVENT_REGISTER *gtr;
+    GLOBAL_TEVENT_REGISTER* gtr;
     int i;
 
     gtr = get_global_tevent_register();
@@ -216,7 +216,7 @@ static void init_thread_remove_handlers(THREAD_EVENT_HANDLER **handsin)
     if (!CRYPTO_THREAD_write_lock(gtr->lock))
         return;
     for (i = 0; i < sk_THREAD_EVENT_HANDLER_PTR_num(gtr->skhands); i++) {
-        THREAD_EVENT_HANDLER **hands
+        THREAD_EVENT_HANDLER** hands
             = sk_THREAD_EVENT_HANDLER_PTR_value(gtr->skhands, i);
 
         if (hands == handsin) {
@@ -229,9 +229,9 @@ static void init_thread_remove_handlers(THREAD_EVENT_HANDLER **handsin)
     return;
 }
 
-static void init_thread_destructor(void *hands)
+static void init_thread_destructor(void* hands)
 {
-    init_thread_stop(NULL, (THREAD_EVENT_HANDLER **)hands);
+    init_thread_stop(NULL, (THREAD_EVENT_HANDLER**)hands);
     init_thread_remove_handlers(hands);
     OPENSSL_free(hands);
 }
@@ -239,7 +239,7 @@ static void init_thread_destructor(void *hands)
 int ossl_init_thread(void)
 {
     if (!CRYPTO_THREAD_init_local(&destructor_key.value,
-                                  init_thread_destructor))
+            init_thread_destructor))
         return 0;
 
     return 1;
@@ -252,7 +252,7 @@ void ossl_cleanup_thread(void)
     destructor_key.sane = -1;
 }
 
-void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx)
+void OPENSSL_thread_stop_ex(OSSL_LIB_CTX* ctx)
 {
     ctx = ossl_lib_ctx_get_concrete(ctx);
     /*
@@ -266,7 +266,7 @@ void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx)
 void OPENSSL_thread_stop(void)
 {
     if (destructor_key.sane != -1) {
-        THREAD_EVENT_HANDLER **hands = clear_thread_local(NULL);
+        THREAD_EVENT_HANDLER** hands = clear_thread_local(NULL);
 
         init_thread_stop(NULL, hands);
 
@@ -275,10 +275,10 @@ void OPENSSL_thread_stop(void)
     }
 }
 
-void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
+void ossl_ctx_thread_stop(OSSL_LIB_CTX* ctx)
 {
     if (destructor_key.sane != -1) {
-        THREAD_EVENT_HANDLER **hands = fetch_thread_local(ctx);
+        THREAD_EVENT_HANDLER** hands = fetch_thread_local(ctx);
 
         init_thread_stop(ctx, hands);
     }
@@ -286,18 +286,18 @@ void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
 
 #else
 
-static void ossl_arg_thread_stop(void *arg);
+static void ossl_arg_thread_stop(void* arg);
 
 /* Register the current thread so that we are informed if it gets stopped */
-int ossl_thread_register_fips(OSSL_LIB_CTX *libctx)
+int ossl_thread_register_fips(OSSL_LIB_CTX* libctx)
 {
     return c_thread_start(FIPS_get_core_handle(libctx), ossl_arg_thread_stop,
-                          libctx);
+        libctx);
 }
 
-int ossl_thread_event_ctx_new(OSSL_LIB_CTX *libctx)
+int ossl_thread_event_ctx_new(OSSL_LIB_CTX* libctx)
 {
-    THREAD_EVENT_HANDLER **hands = NULL;
+    THREAD_EVENT_HANDLER** hands = NULL;
 
     hands = OPENSSL_zalloc(sizeof(*hands));
     if (hands == NULL)
@@ -317,24 +317,24 @@ int ossl_thread_event_ctx_new(OSSL_LIB_CTX *libctx)
      */
 
     return 1;
- err:
+err:
     OPENSSL_free(hands);
     return 0;
 }
 
-void ossl_thread_event_ctx_free(OSSL_LIB_CTX *ctx)
+void ossl_thread_event_ctx_free(OSSL_LIB_CTX* ctx)
 {
     CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_TEVENT_KEY, ctx, NULL);
 }
 
-static void ossl_arg_thread_stop(void *arg)
+static void ossl_arg_thread_stop(void* arg)
 {
-    ossl_ctx_thread_stop((OSSL_LIB_CTX *)arg);
+    ossl_ctx_thread_stop((OSSL_LIB_CTX*)arg);
 }
 
-void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
+void ossl_ctx_thread_stop(OSSL_LIB_CTX* ctx)
 {
-    THREAD_EVENT_HANDLER **hands;
+    THREAD_EVENT_HANDLER** hands;
 
     hands = clear_thread_local(ctx);
     init_thread_stop(ctx, hands);
@@ -342,12 +342,11 @@ void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
 }
 #endif /* FIPS_MODULE */
 
-
-static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
+static void init_thread_stop(void* arg, THREAD_EVENT_HANDLER** hands)
 {
     THREAD_EVENT_HANDLER *curr, *prev = NULL, *tmp;
 #ifndef FIPS_MODULE
-    GLOBAL_TEVENT_REGISTER *gtr;
+    GLOBAL_TEVENT_REGISTER* gtr;
 #endif
 
     /* Can't do much about this */
@@ -386,12 +385,12 @@ static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
 #endif
 }
 
-int ossl_init_thread_start(const void *index, void *arg,
-                           OSSL_thread_stop_handler_fn handfn)
+int ossl_init_thread_start(const void* index, void* arg,
+    OSSL_thread_stop_handler_fn handfn)
 {
-    THREAD_EVENT_HANDLER **hands;
-    THREAD_EVENT_HANDLER *hand;
-    OSSL_LIB_CTX *ctx = NULL;
+    THREAD_EVENT_HANDLER** hands;
+    THREAD_EVENT_HANDLER* hand;
+    OSSL_LIB_CTX* ctx = NULL;
 #ifdef FIPS_MODULE
     /*
      * In FIPS mode the list of THREAD_EVENT_HANDLERs is unique per combination
@@ -435,9 +434,9 @@ int ossl_init_thread_start(const void *index, void *arg,
 }
 
 #ifndef FIPS_MODULE
-static int init_thread_deregister(void *index, int all)
+static int init_thread_deregister(void* index, int all)
 {
-    GLOBAL_TEVENT_REGISTER *gtr;
+    GLOBAL_TEVENT_REGISTER* gtr;
     int i;
 
     gtr = get_global_tevent_register();
@@ -450,7 +449,7 @@ static int init_thread_deregister(void *index, int all)
         glob_tevent_reg = NULL;
     }
     for (i = 0; i < sk_THREAD_EVENT_HANDLER_PTR_num(gtr->skhands); i++) {
-        THREAD_EVENT_HANDLER **hands
+        THREAD_EVENT_HANDLER** hands
             = sk_THREAD_EVENT_HANDLER_PTR_value(gtr->skhands, i);
         THREAD_EVENT_HANDLER *curr = NULL, *prev = NULL, *tmp;
 
@@ -487,7 +486,7 @@ static int init_thread_deregister(void *index, int all)
     return 1;
 }
 
-int ossl_init_thread_deregister(void *index)
+int ossl_init_thread_deregister(void* index)
 {
     return init_thread_deregister(index, 0);
 }

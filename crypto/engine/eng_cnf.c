@@ -16,18 +16,18 @@
 
 /* ENGINE config module */
 
-static const char *skip_dot(const char *name)
+static const char* skip_dot(const char* name)
 {
-    const char *p = strchr(name, '.');
+    const char* p = strchr(name, '.');
 
     if (p != NULL)
         return p + 1;
     return name;
 }
 
-static STACK_OF(ENGINE) *initialized_engines = NULL;
+static STACK_OF(ENGINE)* initialized_engines = NULL;
 
-static int int_engine_init(ENGINE *e)
+static int int_engine_init(ENGINE* e)
 {
     if (!ENGINE_init(e))
         return 0;
@@ -40,15 +40,15 @@ static int int_engine_init(ENGINE *e)
     return 1;
 }
 
-static int int_engine_configure(const char *name, const char *value, const CONF *cnf)
+static int int_engine_configure(const char* name, const char* value, const CONF* cnf)
 {
     int i;
     int ret = 0;
     long do_init = -1;
-    STACK_OF(CONF_VALUE) *ecmds;
-    CONF_VALUE *ecmd = NULL;
+    STACK_OF(CONF_VALUE)* ecmds;
+    CONF_VALUE* ecmd = NULL;
     const char *ctrlname, *ctrlvalue;
-    ENGINE *e = NULL;
+    ENGINE* e = NULL;
     int soft = 0;
 
     name = skip_dot(name);
@@ -66,7 +66,7 @@ static int int_engine_configure(const char *name, const char *value, const CONF 
         ctrlname = skip_dot(ecmd->name);
         ctrlvalue = ecmd->value;
         OSSL_TRACE2(CONF, "ENGINE: doing ctrl(%s,%s)\n",
-                    ctrlname, ctrlvalue);
+            ctrlname, ctrlvalue);
 
         /* First handle some special pseudo ctrls */
 
@@ -124,33 +124,32 @@ static int int_engine_configure(const char *name, const char *value, const CONF 
             } else if (!ENGINE_ctrl_cmd_string(e, ctrlname, ctrlvalue, 0))
                 goto err;
         }
-
     }
     if (e && (do_init == -1) && !int_engine_init(e)) {
         ecmd = NULL;
         goto err;
     }
     ret = 1;
- err:
+err:
     if (ret != 1) {
         if (ecmd == NULL)
             ERR_raise(ERR_LIB_ENGINE, ENGINE_R_ENGINE_CONFIGURATION_ERROR);
         else
             ERR_raise_data(ERR_LIB_ENGINE, ENGINE_R_ENGINE_CONFIGURATION_ERROR,
-                           "section=%s, name=%s, value=%s",
-                           ecmd->section, ecmd->name, ecmd->value);
+                "section=%s, name=%s, value=%s",
+                ecmd->section, ecmd->name, ecmd->value);
     }
     ENGINE_free(e);
     return ret;
 }
 
-static int int_engine_module_init(CONF_IMODULE *md, const CONF *cnf)
+static int int_engine_module_init(CONF_IMODULE* md, const CONF* cnf)
 {
-    STACK_OF(CONF_VALUE) *elist;
-    CONF_VALUE *cval;
+    STACK_OF(CONF_VALUE)* elist;
+    CONF_VALUE* cval;
     int i;
     OSSL_TRACE2(CONF, "Called engine module: name %s, value %s\n",
-                CONF_imodule_get_name(md), CONF_imodule_get_value(md));
+        CONF_imodule_get_name(md), CONF_imodule_get_value(md));
     /* Value is a section containing ENGINEs to configure */
     elist = NCONF_get_section(cnf, CONF_imodule_get_value(md));
 
@@ -168,9 +167,9 @@ static int int_engine_module_init(CONF_IMODULE *md, const CONF *cnf)
     return 1;
 }
 
-static void int_engine_module_finish(CONF_IMODULE *md)
+static void int_engine_module_finish(CONF_IMODULE* md)
 {
-    ENGINE *e;
+    ENGINE* e;
 
     while ((e = sk_ENGINE_pop(initialized_engines)))
         ENGINE_finish(e);
@@ -181,5 +180,5 @@ static void int_engine_module_finish(CONF_IMODULE *md)
 void ENGINE_add_conf_module(void)
 {
     CONF_module_add("engines",
-                    int_engine_module_init, int_engine_module_finish);
+        int_engine_module_init, int_engine_module_finish);
 }

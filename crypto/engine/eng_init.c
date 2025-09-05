@@ -17,7 +17,7 @@
  * Initialise an engine type for use (or up its functional reference count if
  * it's already in use). This version is only used internally.
  */
-int engine_unlocked_init(ENGINE *e)
+int engine_unlocked_init(ENGINE* e)
 {
     int to_return = 1;
 
@@ -49,7 +49,7 @@ int engine_unlocked_init(ENGINE *e)
  * Free a functional reference to an engine type. This version is only used
  * internally.
  */
-int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers)
+int engine_unlocked_finish(ENGINE* e, int unlock_for_handlers)
 {
     int to_return = 1;
 
@@ -83,7 +83,7 @@ int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers)
 }
 
 /* The API (locked) version of "init" */
-int ENGINE_init(ENGINE *e)
+int ENGINE_init(ENGINE* e)
 {
     int ret;
     if (e == NULL) {
@@ -103,7 +103,7 @@ int ENGINE_init(ENGINE *e)
 }
 
 /* The API (locked) version of "finish" */
-int ENGINE_finish(ENGINE *e)
+int ENGINE_finish(ENGINE* e)
 {
     int to_return = 1;
 

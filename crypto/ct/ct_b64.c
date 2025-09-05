@@ -21,11 +21,11 @@
  * A new string will be malloc'd and assigned to |out|. This will be owned by
  * the caller. Do not provide a pre-allocated string in |out|.
  */
-static int ct_base64_decode(const char *in, unsigned char **out)
+static int ct_base64_decode(const char* in, unsigned char** out)
 {
     size_t inlen = strlen(in);
     int outlen, i;
-    unsigned char *outbuf = NULL;
+    unsigned char* outbuf = NULL;
 
     if (inlen == 0 || inlen > INT_MAX) {
         *out = NULL;
@@ -37,7 +37,7 @@ static int ct_base64_decode(const char *in, unsigned char **out)
     if (outbuf == NULL)
         goto err;
 
-    outlen = EVP_DecodeBlock(outbuf, (unsigned char *)in, (int)inlen);
+    outlen = EVP_DecodeBlock(outbuf, (unsigned char*)in, (int)inlen);
     if (outlen < 0) {
         ERR_raise(ERR_LIB_CT, CT_R_BASE64_DECODE_ERROR);
         goto err;
@@ -58,13 +58,13 @@ err:
     return -1;
 }
 
-SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
-                         ct_log_entry_type_t entry_type, uint64_t timestamp,
-                         const char *extensions_base64,
-                         const char *signature_base64)
+SCT* SCT_new_from_base64(unsigned char version, const char* logid_base64,
+    ct_log_entry_type_t entry_type, uint64_t timestamp,
+    const char* extensions_base64,
+    const char* signature_base64)
 {
-    SCT *sct = SCT_new();
-    unsigned char *dec = NULL;
+    SCT* sct = SCT_new();
+    unsigned char* dec = NULL;
     const unsigned char* p = NULL;
     int declen;
 
@@ -118,7 +118,7 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
 
     return sct;
 
- err:
+err:
     OPENSSL_free(dec);
     SCT_free(sct);
     return NULL;
@@ -130,14 +130,14 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
  * 0 on decoding failure, or invalid parameter if any
  * -1 on internal (malloc) failure
  */
-int CTLOG_new_from_base64_ex(CTLOG **ct_log, const char *pkey_base64,
-                             const char *name, OSSL_LIB_CTX *libctx,
-                             const char *propq)
+int CTLOG_new_from_base64_ex(CTLOG** ct_log, const char* pkey_base64,
+    const char* name, OSSL_LIB_CTX* libctx,
+    const char* propq)
 {
-    unsigned char *pkey_der = NULL;
+    unsigned char* pkey_der = NULL;
     int pkey_der_len;
-    const unsigned char *p;
-    EVP_PKEY *pkey = NULL;
+    const unsigned char* p;
+    EVP_PKEY* pkey = NULL;
 
     if (ct_log == NULL) {
         ERR_raise(ERR_LIB_CT, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -167,8 +167,8 @@ int CTLOG_new_from_base64_ex(CTLOG **ct_log, const char *pkey_base64,
     return 1;
 }
 
-int CTLOG_new_from_base64(CTLOG **ct_log, const char *pkey_base64,
-                          const char *name)
+int CTLOG_new_from_base64(CTLOG** ct_log, const char* pkey_base64,
+    const char* name)
 {
     return CTLOG_new_from_base64_ex(ct_log, pkey_base64, name, NULL, NULL);
 }

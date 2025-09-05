@@ -53,18 +53,18 @@ static OSSL_FUNC_keymgmt_query_operation_name_fn rsa_query_operation_name;
 static OSSL_FUNC_keymgmt_dup_fn rsa_dup;
 
 #define RSA_DEFAULT_MD "SHA256"
-#define RSA_POSSIBLE_SELECTIONS                                        \
+#define RSA_POSSIBLE_SELECTIONS \
     (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS)
 
 DEFINE_STACK_OF(BIGNUM)
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
-static int pss_params_fromdata(RSA_PSS_PARAMS_30 *pss_params, int *defaults_set,
-                               const OSSL_PARAM params[], int rsa_type,
-                               OSSL_LIB_CTX *libctx)
+static int pss_params_fromdata(RSA_PSS_PARAMS_30* pss_params, int* defaults_set,
+    const OSSL_PARAM params[], int rsa_type,
+    OSSL_LIB_CTX* libctx)
 {
     if (!ossl_rsa_pss_params_30_fromdata(pss_params, defaults_set,
-                                         params, libctx))
+            params, libctx))
         return 0;
 
     /* If not a PSS type RSA, sending us PSS parameters is wrong */
@@ -75,10 +75,10 @@ static int pss_params_fromdata(RSA_PSS_PARAMS_30 *pss_params, int *defaults_set,
     return 1;
 }
 
-static void *rsa_newdata(void *provctx)
+static void* rsa_newdata(void* provctx)
 {
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
-    RSA *rsa;
+    OSSL_LIB_CTX* libctx = PROV_LIBCTX_OF(provctx);
+    RSA* rsa;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -91,10 +91,10 @@ static void *rsa_newdata(void *provctx)
     return rsa;
 }
 
-static void *rsapss_newdata(void *provctx)
+static void* rsapss_newdata(void* provctx)
 {
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
-    RSA *rsa;
+    OSSL_LIB_CTX* libctx = PROV_LIBCTX_OF(provctx);
+    RSA* rsa;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -107,14 +107,14 @@ static void *rsapss_newdata(void *provctx)
     return rsa;
 }
 
-static void rsa_freedata(void *keydata)
+static void rsa_freedata(void* keydata)
 {
     RSA_free(keydata);
 }
 
-static int rsa_has(const void *keydata, int selection)
+static int rsa_has(const void* keydata, int selection)
 {
-    const RSA *rsa = keydata;
+    const RSA* rsa = keydata;
     int ok = 1;
 
     if (rsa == NULL || !ossl_prov_is_running())
@@ -132,10 +132,10 @@ static int rsa_has(const void *keydata, int selection)
     return ok;
 }
 
-static int rsa_match(const void *keydata1, const void *keydata2, int selection)
+static int rsa_match(const void* keydata1, const void* keydata2, int selection)
 {
-    const RSA *rsa1 = keydata1;
-    const RSA *rsa2 = keydata2;
+    const RSA* rsa1 = keydata1;
+    const RSA* rsa2 = keydata2;
     int ok = 1;
 
     if (!ossl_prov_is_running())
@@ -147,8 +147,8 @@ static int rsa_match(const void *keydata1, const void *keydata2, int selection)
         int key_checked = 0;
 
         if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
-            const BIGNUM *pa = RSA_get0_n(rsa1);
-            const BIGNUM *pb = RSA_get0_n(rsa2);
+            const BIGNUM* pa = RSA_get0_n(rsa1);
+            const BIGNUM* pb = RSA_get0_n(rsa2);
 
             if (pa != NULL && pb != NULL) {
                 ok = ok && BN_cmp(pa, pb) == 0;
@@ -157,8 +157,8 @@ static int rsa_match(const void *keydata1, const void *keydata2, int selection)
         }
         if (!key_checked
             && (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
-            const BIGNUM *pa = RSA_get0_d(rsa1);
-            const BIGNUM *pb = RSA_get0_d(rsa2);
+            const BIGNUM* pa = RSA_get0_d(rsa1);
+            const BIGNUM* pb = RSA_get0_d(rsa2);
 
             if (pa != NULL && pb != NULL) {
                 ok = ok && BN_cmp(pa, pb) == 0;
@@ -170,9 +170,9 @@ static int rsa_match(const void *keydata1, const void *keydata2, int selection)
     return ok;
 }
 
-static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
+static int rsa_import(void* keydata, int selection, const OSSL_PARAM params[])
 {
-    RSA *rsa = keydata;
+    RSA* rsa = keydata;
     int rsa_type;
     int ok = 1;
     int pss_defaults_set = 0;
@@ -186,13 +186,9 @@ static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
     rsa_type = RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK);
 
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-        ok = ok && pss_params_fromdata(ossl_rsa_get0_pss_params_30(rsa),
-                                       &pss_defaults_set,
-                                       params, rsa_type,
-                                       ossl_rsa_get0_libctx(rsa));
+        ok = ok && pss_params_fromdata(ossl_rsa_get0_pss_params_30(rsa), &pss_defaults_set, params, rsa_type, ossl_rsa_get0_libctx(rsa));
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
-        int include_private =
-            selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
+        int include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
 
         ok = ok && ossl_rsa_fromdata(rsa, params, include_private);
     }
@@ -209,21 +205,20 @@ static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
         /* Check for the public key */
         if (n != NULL && e != NULL)
             /* Check for private key in straightforward or CRT form */
-            if (d != NULL || (p != NULL && q != NULL && dp != NULL
-                              && dq != NULL && iq != NULL))
+            if (d != NULL || (p != NULL && q != NULL && dp != NULL && dq != NULL && iq != NULL))
                 ok = ossl_rsa_key_pairwise_test(rsa);
     }
-#endif  /* FIPS_MODULE */
+#endif /* FIPS_MODULE */
     return ok;
 }
 
-static int rsa_export(void *keydata, int selection,
-                      OSSL_CALLBACK *param_callback, void *cbarg)
+static int rsa_export(void* keydata, int selection,
+    OSSL_CALLBACK* param_callback, void* cbarg)
 {
-    RSA *rsa = keydata;
-    const RSA_PSS_PARAMS_30 *pss_params = ossl_rsa_get0_pss_params_30(rsa);
-    OSSL_PARAM_BLD *tmpl;
-    OSSL_PARAM *params = NULL;
+    RSA* rsa = keydata;
+    const RSA_PSS_PARAMS_30* pss_params = ossl_rsa_get0_pss_params_30(rsa);
+    OSSL_PARAM_BLD* tmpl;
+    OSSL_PARAM* params = NULL;
     int ok = 1;
 
     if (!ossl_prov_is_running() || rsa == NULL)
@@ -237,11 +232,9 @@ static int rsa_export(void *keydata, int selection,
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-        ok = ok && (ossl_rsa_pss_params_30_is_unrestricted(pss_params)
-                    || ossl_rsa_pss_params_30_todata(pss_params, tmpl, NULL));
+        ok = ok && (ossl_rsa_pss_params_30_is_unrestricted(pss_params) || ossl_rsa_pss_params_30_todata(pss_params, tmpl, NULL));
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
-        int include_private =
-            selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
+        int include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
 
         ok = ok && ossl_rsa_todata(rsa, tmpl, NULL, include_private);
     }
@@ -260,54 +253,54 @@ err:
 
 #ifdef FIPS_MODULE
 /* In fips mode there are no multi-primes. */
-# define RSA_KEY_MP_TYPES()                                                    \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR1, NULL, 0),                           \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR2, NULL, 0),                           \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT1, NULL, 0),                         \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT2, NULL, 0),                         \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT1, NULL, 0),
+#define RSA_KEY_MP_TYPES()                                     \
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR1, NULL, 0),       \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR2, NULL, 0),   \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT1, NULL, 0), \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT2, NULL, 0), \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT1, NULL, 0),
 #else
 /*
  * We allow up to 10 prime factors (starting with p, q).
  * NOTE: there is only 9 OSSL_PKEY_PARAM_RSA_COEFFICIENT
  */
-# define RSA_KEY_MP_TYPES()                                                    \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR1, NULL, 0),                           \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR2, NULL, 0),                           \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR3, NULL, 0),                           \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR4, NULL, 0),                           \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR5, NULL, 0),                           \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR6, NULL, 0),                           \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR7, NULL, 0),                           \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR8, NULL, 0),                           \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR9, NULL, 0),                           \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR10, NULL, 0),                          \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT1, NULL, 0),                         \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT2, NULL, 0),                         \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT3, NULL, 0),                         \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT4, NULL, 0),                         \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT5, NULL, 0),                         \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT6, NULL, 0),                         \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT7, NULL, 0),                         \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT8, NULL, 0),                         \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT9, NULL, 0),                         \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT10, NULL, 0),                        \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT1, NULL, 0),                      \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT2, NULL, 0),                      \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT3, NULL, 0),                      \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT4, NULL, 0),                      \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT5, NULL, 0),                      \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT6, NULL, 0),                      \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT7, NULL, 0),                      \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT8, NULL, 0),                      \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT9, NULL, 0),
+#define RSA_KEY_MP_TYPES()                                        \
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR1, NULL, 0),          \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR2, NULL, 0),      \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR3, NULL, 0),      \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR4, NULL, 0),      \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR5, NULL, 0),      \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR6, NULL, 0),      \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR7, NULL, 0),      \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR8, NULL, 0),      \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR9, NULL, 0),      \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR10, NULL, 0),     \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT1, NULL, 0),    \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT2, NULL, 0),    \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT3, NULL, 0),    \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT4, NULL, 0),    \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT5, NULL, 0),    \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT6, NULL, 0),    \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT7, NULL, 0),    \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT8, NULL, 0),    \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT9, NULL, 0),    \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT10, NULL, 0),   \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT1, NULL, 0), \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT2, NULL, 0), \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT3, NULL, 0), \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT4, NULL, 0), \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT5, NULL, 0), \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT6, NULL, 0), \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT7, NULL, 0), \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT8, NULL, 0), \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT9, NULL, 0),
 #endif
 
-#define RSA_KEY_TYPES()                                                        \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_N, NULL, 0),                                 \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_E, NULL, 0),                                 \
-OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_D, NULL, 0),                                 \
-RSA_KEY_MP_TYPES()
+#define RSA_KEY_TYPES()                                \
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_N, NULL, 0),     \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_E, NULL, 0), \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_D, NULL, 0), \
+        RSA_KEY_MP_TYPES()
 
 /*
  * This provider can export everything in an RSA key, so we use the exact
@@ -318,7 +311,7 @@ RSA_KEY_MP_TYPES()
  */
 static const OSSL_PARAM rsa_key_types[] = {
     RSA_KEY_TYPES()
-    OSSL_PARAM_END
+        OSSL_PARAM_END
 };
 /*
  * We lied about the amount of factors, exponents and coefficients, the
@@ -327,29 +320,29 @@ static const OSSL_PARAM rsa_key_types[] = {
  * so we at least pretend to have some limits.
  */
 
-static const OSSL_PARAM *rsa_imexport_types(int selection)
+static const OSSL_PARAM* rsa_imexport_types(int selection)
 {
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         return rsa_key_types;
     return NULL;
 }
 
-static const OSSL_PARAM *rsa_import_types(int selection)
+static const OSSL_PARAM* rsa_import_types(int selection)
 {
     return rsa_imexport_types(selection);
 }
 
-static const OSSL_PARAM *rsa_export_types(int selection)
+static const OSSL_PARAM* rsa_export_types(int selection)
 {
     return rsa_imexport_types(selection);
 }
 
-static int rsa_get_params(void *key, OSSL_PARAM params[])
+static int rsa_get_params(void* key, OSSL_PARAM params[])
 {
-    RSA *rsa = key;
-    const RSA_PSS_PARAMS_30 *pss_params = ossl_rsa_get0_pss_params_30(rsa);
+    RSA* rsa = key;
+    const RSA_PSS_PARAMS_30* pss_params = ossl_rsa_get0_pss_params_30(rsa);
     int rsa_type = RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK);
-    OSSL_PARAM *p;
+    OSSL_PARAM* p;
     int empty = RSA_get0_n(rsa) == NULL;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
@@ -381,17 +374,17 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
      * With RSA-OAEP keys, this may need to be amended.
      */
     if ((p = OSSL_PARAM_locate(params,
-                               OSSL_PKEY_PARAM_MANDATORY_DIGEST)) != NULL
+             OSSL_PKEY_PARAM_MANDATORY_DIGEST))
+            != NULL
         && rsa_type == RSA_FLAG_TYPE_RSASSAPSS
         && !ossl_rsa_pss_params_30_is_unrestricted(pss_params)) {
-        const char *mdname =
-            ossl_rsa_oaeppss_nid2name(ossl_rsa_pss_params_30_hashalg(pss_params));
+        const char* mdname = ossl_rsa_oaeppss_nid2name(ossl_rsa_pss_params_30_hashalg(pss_params));
 
         if (mdname == NULL || !OSSL_PARAM_set_utf8_string(p, mdname))
             return 0;
     }
     return (rsa_type != RSA_FLAG_TYPE_RSASSAPSS
-            || ossl_rsa_pss_params_30_todata(pss_params, NULL, params))
+               || ossl_rsa_pss_params_30_todata(pss_params, NULL, params))
         && ossl_rsa_todata(rsa, NULL, params, 1);
 }
 
@@ -402,17 +395,17 @@ static const OSSL_PARAM rsa_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_CATEGORY, NULL),
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_DEFAULT_DIGEST, NULL, 0),
     RSA_KEY_TYPES()
-    OSSL_PARAM_END
+        OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *rsa_gettable_params(void *provctx)
+static const OSSL_PARAM* rsa_gettable_params(void* provctx)
 {
     return rsa_params;
 }
 
-static int rsa_validate(const void *keydata, int selection, int checktype)
+static int rsa_validate(const void* keydata, int selection, int checktype)
 {
-    const RSA *rsa = keydata;
+    const RSA* rsa = keydata;
     int ok = 1;
 
     if (!ossl_prov_is_running())
@@ -435,13 +428,13 @@ static int rsa_validate(const void *keydata, int selection, int checktype)
 }
 
 struct rsa_gen_ctx {
-    OSSL_LIB_CTX *libctx;
-    const char *propq;
+    OSSL_LIB_CTX* libctx;
+    const char* propq;
 
     int rsa_type;
 
     size_t nbits;
-    BIGNUM *pub_exp;
+    BIGNUM* pub_exp;
     size_t primes;
 
     /* For PSS */
@@ -449,18 +442,18 @@ struct rsa_gen_ctx {
     int pss_defaults_set;
 
     /* For generation callback */
-    OSSL_CALLBACK *cb;
-    void *cbarg;
+    OSSL_CALLBACK* cb;
+    void* cbarg;
 
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
     /* ACVP test parameters */
-    OSSL_PARAM *acvp_test_params;
+    OSSL_PARAM* acvp_test_params;
 #endif
 };
 
-static int rsa_gencb(int p, int n, BN_GENCB *cb)
+static int rsa_gencb(int p, int n, BN_GENCB* cb)
 {
-    struct rsa_gen_ctx *gctx = BN_GENCB_get_arg(cb);
+    struct rsa_gen_ctx* gctx = BN_GENCB_get_arg(cb);
     OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_int(OSSL_GEN_PARAM_POTENTIAL, &p);
@@ -468,11 +461,11 @@ static int rsa_gencb(int p, int n, BN_GENCB *cb)
     return gctx->cb(params, gctx->cbarg);
 }
 
-static void *gen_init(void *provctx, int selection, int rsa_type,
-                      const OSSL_PARAM params[])
+static void* gen_init(void* provctx, int selection, int rsa_type,
+    const OSSL_PARAM params[])
 {
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
-    struct rsa_gen_ctx *gctx = NULL;
+    OSSL_LIB_CTX* libctx = PROV_LIBCTX_OF(provctx);
+    struct rsa_gen_ctx* gctx = NULL;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -504,14 +497,14 @@ err:
     return NULL;
 }
 
-static void *rsa_gen_init(void *provctx, int selection,
-                          const OSSL_PARAM params[])
+static void* rsa_gen_init(void* provctx, int selection,
+    const OSSL_PARAM params[])
 {
     return gen_init(provctx, selection, RSA_FLAG_TYPE_RSA, params);
 }
 
-static void *rsapss_gen_init(void *provctx, int selection,
-                             const OSSL_PARAM params[])
+static void* rsapss_gen_init(void* provctx, int selection,
+    const OSSL_PARAM params[])
 {
     return gen_init(provctx, selection, RSA_FLAG_TYPE_RSASSAPSS, params);
 }
@@ -521,10 +514,10 @@ static void *rsapss_gen_init(void *provctx, int selection,
  * misuse, such as PSS parameters being passed when a plain RSA key
  * is generated.
  */
-static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
+static int rsa_gen_set_params(void* genctx, const OSSL_PARAM params[])
 {
-    struct rsa_gen_ctx *gctx = genctx;
-    const OSSL_PARAM *p;
+    struct rsa_gen_ctx* gctx = genctx;
+    const OSSL_PARAM* p;
 
     if (ossl_param_is_empty(params))
         return 1;
@@ -546,7 +539,7 @@ static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     /* Only attempt to get PSS parameters when generating an RSA-PSS key */
     if (gctx->rsa_type == RSA_FLAG_TYPE_RSASSAPSS
         && !pss_params_fromdata(&gctx->pss_params, &gctx->pss_defaults_set, params,
-                                gctx->rsa_type, gctx->libctx))
+            gctx->rsa_type, gctx->libctx))
         return 0;
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
     /* Any ACVP test related parameters are copied into a params[] */
@@ -556,24 +549,24 @@ static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     return 1;
 }
 
-#define rsa_gen_basic                                           \
-    OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_BITS, NULL),          \
-    OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_PRIMES, NULL),        \
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_E, NULL, 0)
+#define rsa_gen_basic                                        \
+    OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_BITS, NULL),       \
+        OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_PRIMES, NULL), \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_E, NULL, 0)
 
 /*
  * The following must be kept in sync with ossl_rsa_pss_params_30_fromdata()
  * in crypto/rsa/rsa_backend.c
  */
-#define rsa_gen_pss                                                     \
-    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_DIGEST, NULL, 0),        \
-    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_DIGEST_PROPS, NULL, 0),  \
-    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_MASKGENFUNC, NULL, 0),   \
-    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_MGF1_DIGEST, NULL, 0),   \
-    OSSL_PARAM_int(OSSL_PKEY_PARAM_RSA_PSS_SALTLEN, NULL)
+#define rsa_gen_pss                                                        \
+    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_DIGEST, NULL, 0),           \
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_DIGEST_PROPS, NULL, 0), \
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_MASKGENFUNC, NULL, 0),  \
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_MGF1_DIGEST, NULL, 0),  \
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_RSA_PSS_SALTLEN, NULL)
 
-static const OSSL_PARAM *rsa_gen_settable_params(ossl_unused void *genctx,
-                                                 ossl_unused void *provctx)
+static const OSSL_PARAM* rsa_gen_settable_params(ossl_unused void* genctx,
+    ossl_unused void* provctx)
 {
     static OSSL_PARAM settable[] = {
         rsa_gen_basic,
@@ -583,8 +576,8 @@ static const OSSL_PARAM *rsa_gen_settable_params(ossl_unused void *genctx,
     return settable;
 }
 
-static const OSSL_PARAM *rsapss_gen_settable_params(ossl_unused void *genctx,
-                                                    ossl_unused void *provctx)
+static const OSSL_PARAM* rsapss_gen_settable_params(ossl_unused void* genctx,
+    ossl_unused void* provctx)
 {
     static OSSL_PARAM settable[] = {
         rsa_gen_basic,
@@ -595,11 +588,11 @@ static const OSSL_PARAM *rsapss_gen_settable_params(ossl_unused void *genctx,
     return settable;
 }
 
-static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void* rsa_gen(void* genctx, OSSL_CALLBACK* osslcb, void* cbarg)
 {
-    struct rsa_gen_ctx *gctx = genctx;
+    struct rsa_gen_ctx* gctx = genctx;
     RSA *rsa = NULL, *rsa_tmp = NULL;
-    BN_GENCB *gencb = NULL;
+    BN_GENCB* gencb = NULL;
 
     if (!ossl_prov_is_running() || gctx == NULL)
         return NULL;
@@ -638,12 +631,12 @@ static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 #endif
 
     if (!RSA_generate_multi_prime_key(rsa_tmp,
-                                      (int)gctx->nbits, (int)gctx->primes,
-                                      gctx->pub_exp, gencb))
+            (int)gctx->nbits, (int)gctx->primes,
+            gctx->pub_exp, gencb))
         goto err;
 
     if (!ossl_rsa_pss_params_30_copy(ossl_rsa_get0_pss_params_30(rsa_tmp),
-                                     &gctx->pss_params))
+            &gctx->pss_params))
         goto err;
 
     RSA_clear_flags(rsa_tmp, RSA_FLAG_TYPE_MASK);
@@ -651,15 +644,15 @@ static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     rsa = rsa_tmp;
     rsa_tmp = NULL;
- err:
+err:
     BN_GENCB_free(gencb);
     RSA_free(rsa_tmp);
     return rsa;
 }
 
-static void rsa_gen_cleanup(void *genctx)
+static void rsa_gen_cleanup(void* genctx)
 {
-    struct rsa_gen_ctx *gctx = genctx;
+    struct rsa_gen_ctx* gctx = genctx;
 
     if (gctx == NULL)
         return;
@@ -671,36 +664,36 @@ static void rsa_gen_cleanup(void *genctx)
     OPENSSL_free(gctx);
 }
 
-static void *common_load(const void *reference, size_t reference_sz,
-                         int expected_rsa_type)
+static void* common_load(const void* reference, size_t reference_sz,
+    int expected_rsa_type)
 {
-    RSA *rsa = NULL;
+    RSA* rsa = NULL;
 
     if (ossl_prov_is_running() && reference_sz == sizeof(rsa)) {
         /* The contents of the reference is the address to our object */
-        rsa = *(RSA **)reference;
+        rsa = *(RSA**)reference;
 
         if (RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK) != expected_rsa_type)
             return NULL;
 
         /* We grabbed, so we detach it */
-        *(RSA **)reference = NULL;
+        *(RSA**)reference = NULL;
         return rsa;
     }
     return NULL;
 }
 
-static void *rsa_load(const void *reference, size_t reference_sz)
+static void* rsa_load(const void* reference, size_t reference_sz)
 {
     return common_load(reference, reference_sz, RSA_FLAG_TYPE_RSA);
 }
 
-static void *rsapss_load(const void *reference, size_t reference_sz)
+static void* rsapss_load(const void* reference, size_t reference_sz)
 {
     return common_load(reference, reference_sz, RSA_FLAG_TYPE_RSASSAPSS);
 }
 
-static void *rsa_dup(const void *keydata_from, int selection)
+static void* rsa_dup(const void* keydata_from, int selection)
 {
     if (ossl_prov_is_running()
         /* do not allow creating empty keys by duplication */
@@ -710,7 +703,7 @@ static void *rsa_dup(const void *keydata_from, int selection)
 }
 
 /* For any RSA key, we use the "RSA" algorithms regardless of sub-type. */
-static const char *rsa_query_operation_name(int operation_id)
+static const char* rsa_query_operation_name(int operation_id)
 {
     return "RSA";
 }
@@ -719,15 +712,15 @@ const OSSL_DISPATCH ossl_rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))rsa_newdata },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))rsa_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS,
-      (void (*)(void))rsa_gen_set_params },
+        (void (*)(void))rsa_gen_set_params },
     { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
-      (void (*)(void))rsa_gen_settable_params },
+        (void (*)(void))rsa_gen_settable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))rsa_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))rsa_gen_cleanup },
     { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))rsa_load },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))rsa_freedata },
-    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))rsa_get_params },
-    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))rsa_gettable_params },
+    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))rsa_get_params },
+    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))rsa_gettable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))rsa_has },
     { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))rsa_match },
     { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))rsa_validate },
@@ -744,13 +737,13 @@ const OSSL_DISPATCH ossl_rsapss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))rsapss_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))rsa_gen_set_params },
     { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
-      (void (*)(void))rsapss_gen_settable_params },
+        (void (*)(void))rsapss_gen_settable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))rsa_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))rsa_gen_cleanup },
     { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))rsapss_load },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))rsa_freedata },
-    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))rsa_get_params },
-    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))rsa_gettable_params },
+    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))rsa_get_params },
+    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))rsa_gettable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))rsa_has },
     { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))rsa_match },
     { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))rsa_validate },
@@ -759,7 +752,7 @@ const OSSL_DISPATCH ossl_rsapss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))rsa_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))rsa_export_types },
     { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
-      (void (*)(void))rsa_query_operation_name },
+        (void (*)(void))rsa_query_operation_name },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))rsa_dup },
     OSSL_DISPATCH_END
 };

@@ -17,7 +17,7 @@
 #include <openssl/engine.h>
 
 #if defined(_WIN32) && !defined(__BORLANDC__)
-# define strdup _strdup
+#define strdup _strdup
 #endif
 
 /*
@@ -29,7 +29,7 @@
 static int openssl_configured = 0;
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
-void OPENSSL_config(const char *appname)
+void OPENSSL_config(const char* appname)
 {
     OPENSSL_INIT_SETTINGS settings;
 
@@ -43,12 +43,12 @@ void OPENSSL_config(const char *appname)
 }
 #endif
 
-int ossl_config_int(const OPENSSL_INIT_SETTINGS *settings)
+int ossl_config_int(const OPENSSL_INIT_SETTINGS* settings)
 {
     int ret = 0;
 #if defined(OPENSSL_INIT_DEBUG) || !defined(OPENSSL_SYS_UEFI)
-    const char *filename;
-    const char *appname;
+    const char* filename;
+    const char* appname;
     unsigned long flags;
 #endif
 
@@ -63,12 +63,12 @@ int ossl_config_int(const OPENSSL_INIT_SETTINGS *settings)
 
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_config_int(%s, %s, %lu)\n",
-            filename, appname, flags);
+        filename, appname, flags);
 #endif
 
 #ifndef OPENSSL_SYS_UEFI
     ret = CONF_modules_load_file_ex(OSSL_LIB_CTX_get0_global_default(),
-                                    filename, appname, flags);
+        filename, appname, flags);
 #else
     ret = 1;
 #endif

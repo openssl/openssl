@@ -19,11 +19,11 @@
  * *out and *out_len are guaranteed to be untouched if this function
  * doesn't return success.
  */
-int ossl_param_get1_octet_string_from_param(const OSSL_PARAM *p,
-                                            unsigned char **out,
-                                            size_t *out_len);
-int ossl_param_get1_octet_string(const OSSL_PARAM *params, const char *name,
-                                 unsigned char **out, size_t *out_len);
+int ossl_param_get1_octet_string_from_param(const OSSL_PARAM* p,
+    unsigned char** out,
+    size_t* out_len);
+int ossl_param_get1_octet_string(const OSSL_PARAM* params, const char* name,
+    unsigned char** out, size_t* out_len);
 
 /*
  * Concatenate all of the matching params together.
@@ -37,5 +37,5 @@ int ossl_param_get1_octet_string(const OSSL_PARAM *params, const char *name,
  * *out and *out_len are guaranteed to be untouched if this function
  * doesn't return success.
  */
-int ossl_param_get1_concat_octet_string(size_t n, OSSL_PARAM *params[],
-                                        unsigned char **out, size_t *out_len);
+int ossl_param_get1_concat_octet_string(size_t n, OSSL_PARAM* params[],
+    unsigned char** out, size_t* out_len);

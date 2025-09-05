@@ -15,7 +15,7 @@
 #include "internal/quic_rcidm.h"
 #include "internal/packet.h"
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(int* argc, char*** argv)
 {
     FuzzerSetRand();
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ASYNC, NULL);
@@ -59,7 +59,7 @@ enum {
     CMD_GET_PREFERRED_TX_DCID_CHANGED
 };
 
-static int get_cid(PACKET *pkt, QUIC_CONN_ID *cid)
+static int get_cid(PACKET* pkt, QUIC_CONN_ID* cid)
 {
     unsigned int cidl;
 
@@ -72,10 +72,10 @@ static int get_cid(PACKET *pkt, QUIC_CONN_ID *cid)
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+int FuzzerTestOneInput(const uint8_t* buf, size_t len)
 {
     int rc = 0;
-    QUIC_RCIDM *rcidm = NULL;
+    QUIC_RCIDM* rcidm = NULL;
     PACKET pkt;
     uint64_t seq_num_out, arg_num_pkt;
     unsigned int cmd, arg_clear;

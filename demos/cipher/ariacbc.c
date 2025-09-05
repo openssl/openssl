@@ -27,8 +27,22 @@ static const unsigned char cbc_key[] = {
 
 /* Unique initialisation vector */
 static const unsigned char cbc_iv[] = {
-    0x99, 0xaa, 0x3e, 0x68, 0xed, 0x81, 0x73, 0xa0, 0xee, 0xd0, 0x66, 0x84,
-    0x99, 0xaa, 0x3e, 0x68,
+    0x99,
+    0xaa,
+    0x3e,
+    0x68,
+    0xed,
+    0x81,
+    0x73,
+    0xa0,
+    0xee,
+    0xd0,
+    0x66,
+    0x84,
+    0x99,
+    0xaa,
+    0x3e,
+    0x68,
 };
 
 /* Example plaintext to encrypt */
@@ -49,14 +63,14 @@ static const unsigned char cbc_ct[] = {
  * algorithm implementations. If they are NULL then the default library
  * context and properties are used.
  */
-static OSSL_LIB_CTX *libctx = NULL;
-static const char *propq = NULL;
+static OSSL_LIB_CTX* libctx = NULL;
+static const char* propq = NULL;
 
 static int aria_cbc_encrypt(void)
 {
     int ret = 0;
-    EVP_CIPHER_CTX *ctx;
-    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX* ctx;
+    EVP_CIPHER* cipher = NULL;
     int outlen, tmplen;
     unsigned char outbuf[1024];
 
@@ -111,8 +125,8 @@ err:
 static int aria_cbc_decrypt(void)
 {
     int ret = 0;
-    EVP_CIPHER_CTX *ctx;
-    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX* ctx;
+    EVP_CIPHER* cipher = NULL;
     int outlen, tmplen;
     unsigned char outbuf[1024];
 
@@ -163,7 +177,7 @@ err:
     return ret;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     if (!aria_cbc_encrypt())
         return EXIT_FAILURE;

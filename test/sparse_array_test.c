@@ -30,20 +30,20 @@ static int test_sparse_array(void)
 {
     static const struct {
         ossl_uintmax_t n;
-        char *v;
+        char* v;
     } cases[] = {
         { 22, "a" }, { 0, "z" }, { 1, "b" }, { 290, "c" },
         { INT_MAX, "m" }, { 6666666, "d" }, { (ossl_uintmax_t)-1, "H" },
         { 99, "e" }
     };
-    SPARSE_ARRAY_OF(char) *sa;
+    SPARSE_ARRAY_OF(char) * sa;
     size_t i, j;
     int res = 0;
 
     if (!TEST_ptr(sa = ossl_sa_char_new())
-            || !TEST_ptr_null(ossl_sa_char_get(sa, 3))
-            || !TEST_ptr_null(ossl_sa_char_get(sa, 0))
-            || !TEST_ptr_null(ossl_sa_char_get(sa, UINT_MAX)))
+        || !TEST_ptr_null(ossl_sa_char_get(sa, 3))
+        || !TEST_ptr_null(ossl_sa_char_get(sa, 0))
+        || !TEST_ptr_null(ossl_sa_char_get(sa, UINT_MAX)))
         goto err;
 
     for (i = 0; i < OSSL_NELEM(cases); i++) {
@@ -69,24 +69,24 @@ static int test_sparse_array_num(void)
     static const struct {
         size_t num;
         ossl_uintmax_t n;
-        char *v;
+        char* v;
     } cases[] = {
         { 1, 22, "a" }, { 2, 1021, "b" }, { 3, 3, "c" }, { 2, 22, NULL },
         { 2, 3, "d" }, { 3, 22, "e" }, { 3, 666, NULL }, { 4, 666, "f" },
         { 3, 3, NULL }, { 2, 22, NULL }, { 1, 666, NULL }, { 2, 64000, "g" },
         { 1, 1021, NULL }, { 0, 64000, NULL }, { 1, 23, "h" }, { 0, 23, NULL }
     };
-    SPARSE_ARRAY_OF(char) *sa = NULL;
+    SPARSE_ARRAY_OF(char)* sa = NULL;
     size_t i;
     int res = 0;
 
     if (!TEST_size_t_eq(ossl_sa_char_num(NULL), 0)
-            || !TEST_ptr(sa = ossl_sa_char_new())
-            || !TEST_size_t_eq(ossl_sa_char_num(sa), 0))
+        || !TEST_ptr(sa = ossl_sa_char_new())
+        || !TEST_size_t_eq(ossl_sa_char_num(sa), 0))
         goto err;
     for (i = 0; i < OSSL_NELEM(cases); i++)
         if (!TEST_true(ossl_sa_char_set(sa, cases[i].n, cases[i].v))
-                || !TEST_size_t_eq(ossl_sa_char_num(sa), cases[i].num))
+            || !TEST_size_t_eq(ossl_sa_char_num(sa), cases[i].num))
             goto err;
     res = 1;
 err:
@@ -96,22 +96,22 @@ err:
 
 struct index_cases_st {
     ossl_uintmax_t n;
-    char *v;
+    char* v;
     int del;
 };
 
 struct doall_st {
-    SPARSE_ARRAY_OF(char) *sa;
+    SPARSE_ARRAY_OF(char) * sa;
     size_t num_cases;
-    const struct index_cases_st *cases;
+    const struct index_cases_st* cases;
     int res;
     int all;
 };
 
-static void leaf_check_all(ossl_uintmax_t n, char *value, void *arg)
+static void leaf_check_all(ossl_uintmax_t n, char* value, void* arg)
 {
-    struct doall_st *doall_data = (struct doall_st *)arg;
-    const struct index_cases_st *cases = doall_data->cases;
+    struct doall_st* doall_data = (struct doall_st*)arg;
+    const struct index_cases_st* cases = doall_data->cases;
     size_t i;
 
     doall_data->res = 0;
@@ -124,10 +124,10 @@ static void leaf_check_all(ossl_uintmax_t n, char *value, void *arg)
     TEST_error("Index %ju with value %s not found", n, value);
 }
 
-static void leaf_delete(ossl_uintmax_t n, char *value, void *arg)
+static void leaf_delete(ossl_uintmax_t n, char* value, void* arg)
 {
-    struct doall_st *doall_data = (struct doall_st *)arg;
-    const struct index_cases_st *cases = doall_data->cases;
+    struct doall_st* doall_data = (struct doall_st*)arg;
+    const struct index_cases_st* cases = doall_data->cases;
     size_t i;
 
     doall_data->res = 0;
@@ -143,13 +143,18 @@ static void leaf_delete(ossl_uintmax_t n, char *value, void *arg)
 static int test_sparse_array_doall(void)
 {
     static const struct index_cases_st cases[] = {
-        { 22, "A", 1 }, { 1021, "b", 0 }, { 3, "c", 0 }, { INT_MAX, "d", 1 },
-        { (ossl_uintmax_t)-1, "H", 0 }, { (ossl_uintmax_t)-2, "i", 1 },
-        { 666666666, "s", 1 }, { 1234567890, "t", 0 },
+        { 22, "A", 1 },
+        { 1021, "b", 0 },
+        { 3, "c", 0 },
+        { INT_MAX, "d", 1 },
+        { (ossl_uintmax_t)-1, "H", 0 },
+        { (ossl_uintmax_t)-2, "i", 1 },
+        { 666666666, "s", 1 },
+        { 1234567890, "t", 0 },
     };
     struct doall_st doall_data;
     size_t i;
-    SPARSE_ARRAY_OF(char) *sa = NULL;
+    SPARSE_ARRAY_OF(char)* sa = NULL;
     int res = 0;
 
     if (!TEST_ptr(sa = ossl_sa_char_new()))
@@ -158,11 +163,11 @@ static int test_sparse_array_doall(void)
     doall_data.cases = cases;
     doall_data.all = 1;
     doall_data.sa = NULL;
-    for (i = 0; i <  OSSL_NELEM(cases); i++)
+    for (i = 0; i < OSSL_NELEM(cases); i++)
         if (!TEST_true(ossl_sa_char_set(sa, cases[i].n, cases[i].v))) {
             TEST_note("failed at iteration %zu", i + 1);
             goto err;
-    }
+        }
 
     ossl_sa_char_doall_arg(sa, &leaf_check_all, &doall_data);
     if (doall_data.res == 0) {

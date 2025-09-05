@@ -36,19 +36,19 @@
  */
 
 #undef MIN_NODES
-#define MIN_NODES       16
-#define UP_LOAD         (2*LH_LOAD_MULT) /* load times 256 (default 2) */
-#define DOWN_LOAD       (LH_LOAD_MULT) /* load times 256 (default 1) */
+#define MIN_NODES 16
+#define UP_LOAD (2 * LH_LOAD_MULT) /* load times 256 (default 2) */
+#define DOWN_LOAD (LH_LOAD_MULT) /* load times 256 (default 1) */
 
-static int expand(OPENSSL_LHASH *lh);
-static void contract(OPENSSL_LHASH *lh);
-static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh, const void *data, unsigned long *rhash);
+static int expand(OPENSSL_LHASH* lh);
+static void contract(OPENSSL_LHASH* lh);
+static OPENSSL_LH_NODE** getrn(OPENSSL_LHASH* lh, const void* data, unsigned long* rhash);
 
-OPENSSL_LHASH *OPENSSL_LH_set_thunks(OPENSSL_LHASH *lh,
-                                     OPENSSL_LH_HASHFUNCTHUNK hw,
-                                     OPENSSL_LH_COMPFUNCTHUNK cw,
-                                     OPENSSL_LH_DOALL_FUNC_THUNK daw,
-                                     OPENSSL_LH_DOALL_FUNCARG_THUNK daaw)
+OPENSSL_LHASH* OPENSSL_LH_set_thunks(OPENSSL_LHASH* lh,
+    OPENSSL_LH_HASHFUNCTHUNK hw,
+    OPENSSL_LH_COMPFUNCTHUNK cw,
+    OPENSSL_LH_DOALL_FUNC_THUNK daw,
+    OPENSSL_LH_DOALL_FUNCARG_THUNK daaw)
 {
 
     if (lh == NULL)
@@ -60,9 +60,9 @@ OPENSSL_LHASH *OPENSSL_LH_set_thunks(OPENSSL_LHASH *lh,
     return lh;
 }
 
-OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
+OPENSSL_LHASH* OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
 {
-    OPENSSL_LHASH *ret;
+    OPENSSL_LHASH* ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return NULL;
@@ -83,7 +83,7 @@ err:
     return NULL;
 }
 
-void OPENSSL_LH_free(OPENSSL_LHASH *lh)
+void OPENSSL_LH_free(OPENSSL_LHASH* lh)
 {
     if (lh == NULL)
         return;
@@ -93,7 +93,7 @@ void OPENSSL_LH_free(OPENSSL_LHASH *lh)
     OPENSSL_free(lh);
 }
 
-void OPENSSL_LH_flush(OPENSSL_LHASH *lh)
+void OPENSSL_LH_flush(OPENSSL_LHASH* lh)
 {
     unsigned int i;
     OPENSSL_LH_NODE *n, *nn;
@@ -114,15 +114,15 @@ void OPENSSL_LH_flush(OPENSSL_LHASH *lh)
     lh->num_items = 0;
 }
 
-void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data)
+void* OPENSSL_LH_insert(OPENSSL_LHASH* lh, void* data)
 {
     unsigned long hash;
     OPENSSL_LH_NODE *nn, **rn;
-    void *ret;
+    void* ret;
 
     lh->error = 0;
     if ((lh->up_load <= (lh->num_items * LH_LOAD_MULT / lh->num_nodes)) && !expand(lh))
-        return NULL;        /* 'lh->error++' already done in 'expand' */
+        return NULL; /* 'lh->error++' already done in 'expand' */
 
     rn = getrn(lh, data, &hash);
 
@@ -137,18 +137,18 @@ void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data)
         *rn = nn;
         ret = NULL;
         lh->num_items++;
-    } else {                    /* replace same key */
+    } else { /* replace same key */
         ret = (*rn)->data;
         (*rn)->data = data;
     }
     return ret;
 }
 
-void *OPENSSL_LH_delete(OPENSSL_LHASH *lh, const void *data)
+void* OPENSSL_LH_delete(OPENSSL_LHASH* lh, const void* data)
 {
     unsigned long hash;
     OPENSSL_LH_NODE *nn, **rn;
-    void *ret;
+    void* ret;
 
     lh->error = 0;
     rn = getrn(lh, data, &hash);
@@ -163,17 +163,16 @@ void *OPENSSL_LH_delete(OPENSSL_LHASH *lh, const void *data)
     }
 
     lh->num_items--;
-    if ((lh->num_nodes > MIN_NODES) &&
-        (lh->down_load >= (lh->num_items * LH_LOAD_MULT / lh->num_nodes)))
+    if ((lh->num_nodes > MIN_NODES) && (lh->down_load >= (lh->num_items * LH_LOAD_MULT / lh->num_nodes)))
         contract(lh);
 
     return ret;
 }
 
-void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data)
+void* OPENSSL_LH_retrieve(OPENSSL_LHASH* lh, const void* data)
 {
     unsigned long hash;
-    OPENSSL_LH_NODE **rn;
+    OPENSSL_LH_NODE** rn;
 
     if (lh->error != 0)
         lh->error = 0;
@@ -183,12 +182,12 @@ void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data)
     return *rn == NULL ? NULL : (*rn)->data;
 }
 
-static void doall_util_fn(OPENSSL_LHASH *lh, int use_arg,
-                          OPENSSL_LH_DOALL_FUNC_THUNK wfunc,
-                          OPENSSL_LH_DOALL_FUNC func,
-                          OPENSSL_LH_DOALL_FUNCARG func_arg,
-                          OPENSSL_LH_DOALL_FUNCARG_THUNK wfunc_arg,
-                          void *arg)
+static void doall_util_fn(OPENSSL_LHASH* lh, int use_arg,
+    OPENSSL_LH_DOALL_FUNC_THUNK wfunc,
+    OPENSSL_LH_DOALL_FUNC func,
+    OPENSSL_LH_DOALL_FUNCARG func_arg,
+    OPENSSL_LH_DOALL_FUNCARG_THUNK wfunc_arg,
+    void* arg)
 {
     int i;
     OPENSSL_LH_NODE *a, *n;
@@ -213,34 +212,34 @@ static void doall_util_fn(OPENSSL_LHASH *lh, int use_arg,
     }
 }
 
-void OPENSSL_LH_doall(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNC func)
+void OPENSSL_LH_doall(OPENSSL_LHASH* lh, OPENSSL_LH_DOALL_FUNC func)
 {
     if (lh == NULL)
         return;
 
     doall_util_fn(lh, 0, lh->daw, func, (OPENSSL_LH_DOALL_FUNCARG)NULL,
-                  (OPENSSL_LH_DOALL_FUNCARG_THUNK)NULL, NULL);
+        (OPENSSL_LH_DOALL_FUNCARG_THUNK)NULL, NULL);
 }
 
-void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh,
-                          OPENSSL_LH_DOALL_FUNCARG func, void *arg)
+void OPENSSL_LH_doall_arg(OPENSSL_LHASH* lh,
+    OPENSSL_LH_DOALL_FUNCARG func, void* arg)
 {
     if (lh == NULL)
         return;
 
     doall_util_fn(lh, 1, (OPENSSL_LH_DOALL_FUNC_THUNK)NULL,
-                  (OPENSSL_LH_DOALL_FUNC)NULL, func, lh->daaw, arg);
+        (OPENSSL_LH_DOALL_FUNC)NULL, func, lh->daaw, arg);
 }
 
-void OPENSSL_LH_doall_arg_thunk(OPENSSL_LHASH *lh,
-                                OPENSSL_LH_DOALL_FUNCARG_THUNK daaw,
-                                OPENSSL_LH_DOALL_FUNCARG fn, void *arg)
+void OPENSSL_LH_doall_arg_thunk(OPENSSL_LHASH* lh,
+    OPENSSL_LH_DOALL_FUNCARG_THUNK daaw,
+    OPENSSL_LH_DOALL_FUNCARG fn, void* arg)
 {
     doall_util_fn(lh, 1, (OPENSSL_LH_DOALL_FUNC_THUNK)NULL,
-                  (OPENSSL_LH_DOALL_FUNC)NULL, fn, daaw, arg);
+        (OPENSSL_LH_DOALL_FUNC)NULL, fn, daaw, arg);
 }
 
-static int expand(OPENSSL_LHASH *lh)
+static int expand(OPENSSL_LHASH* lh)
 {
     OPENSSL_LH_NODE **n, **n1, **n2, *np;
     unsigned int p, pmax, nni, j;
@@ -251,7 +250,7 @@ static int expand(OPENSSL_LHASH *lh)
     pmax = lh->pmax;
     if (p + 1 >= pmax) {
         j = nni * 2;
-        n = OPENSSL_realloc_array(lh->b, j, sizeof(OPENSSL_LH_NODE *));
+        n = OPENSSL_realloc_array(lh->b, j, sizeof(OPENSSL_LH_NODE*));
         if (n == NULL) {
             lh->error++;
             return 0;
@@ -284,14 +283,14 @@ static int expand(OPENSSL_LHASH *lh)
     return 1;
 }
 
-static void contract(OPENSSL_LHASH *lh)
+static void contract(OPENSSL_LHASH* lh)
 {
     OPENSSL_LH_NODE **n, *n1, *np;
 
     np = lh->b[lh->p + lh->pmax - 1];
     lh->b[lh->p + lh->pmax - 1] = NULL; /* 24/07-92 - eay - weird but :-( */
     if (lh->p == 0) {
-        n = OPENSSL_realloc_array(lh->b, lh->pmax, sizeof(OPENSSL_LH_NODE *));
+        n = OPENSSL_realloc_array(lh->b, lh->pmax, sizeof(OPENSSL_LH_NODE*));
         if (n == NULL) {
             /* fputs("realloc error in lhash", stderr); */
             lh->error++;
@@ -316,8 +315,8 @@ static void contract(OPENSSL_LHASH *lh)
     }
 }
 
-static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
-                               const void *data, unsigned long *rhash)
+static OPENSSL_LH_NODE** getrn(OPENSSL_LHASH* lh,
+    const void* data, unsigned long* rhash)
 {
     OPENSSL_LH_NODE **ret, *n1;
     unsigned long hash, nn;
@@ -357,7 +356,7 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
  * collisions on /usr/dict/words and it distributes on %2^n quite well, not
  * as good as MD5, but still good.
  */
-unsigned long OPENSSL_LH_strhash(const char *c)
+unsigned long OPENSSL_LH_strhash(const char* c)
 {
     unsigned long ret = 0;
     long n;
@@ -395,7 +394,7 @@ unsigned long OPENSSL_LH_strhash(const char *c)
  * characters.  The only duplication is '0' mapping to '^', which is better
  * than for ASCII.
  */
-unsigned long ossl_lh_strcasehash(const char *c)
+unsigned long ossl_lh_strcasehash(const char* c)
 {
     unsigned long ret = 0;
     long n;
@@ -422,22 +421,22 @@ unsigned long ossl_lh_strcasehash(const char *c)
     return (ret >> 16) ^ ret;
 }
 
-unsigned long OPENSSL_LH_num_items(const OPENSSL_LHASH *lh)
+unsigned long OPENSSL_LH_num_items(const OPENSSL_LHASH* lh)
 {
     return lh ? lh->num_items : 0;
 }
 
-unsigned long OPENSSL_LH_get_down_load(const OPENSSL_LHASH *lh)
+unsigned long OPENSSL_LH_get_down_load(const OPENSSL_LHASH* lh)
 {
     return lh->down_load;
 }
 
-void OPENSSL_LH_set_down_load(OPENSSL_LHASH *lh, unsigned long down_load)
+void OPENSSL_LH_set_down_load(OPENSSL_LHASH* lh, unsigned long down_load)
 {
     lh->down_load = down_load;
 }
 
-int OPENSSL_LH_error(OPENSSL_LHASH *lh)
+int OPENSSL_LH_error(OPENSSL_LHASH* lh)
 {
     return lh->error;
 }

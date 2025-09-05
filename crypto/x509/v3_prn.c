@@ -16,16 +16,16 @@
 
 /* Extension printing routines */
 
-static int unknown_ext_print(BIO *out, const unsigned char *ext, int extlen,
-                             unsigned long flag, int indent, int supported);
+static int unknown_ext_print(BIO* out, const unsigned char* ext, int extlen,
+    unsigned long flag, int indent, int supported);
 
 /* Print out a name+value stack */
 
-void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
-                        int ml)
+void X509V3_EXT_val_prn(BIO* out, STACK_OF(CONF_VALUE)* val, int indent,
+    int ml)
 {
     int i;
-    CONF_VALUE *nval;
+    CONF_VALUE* nval;
     if (!val)
         return;
     if (!ml || !sk_CONF_VALUE_num(val)) {
@@ -38,8 +38,7 @@ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
             if (i > 0)
                 BIO_printf(out, "\n");
             BIO_printf(out, "%*s", indent, "");
-        }
-        else if (i > 0)
+        } else if (i > 0)
             BIO_printf(out, ", ");
         nval = sk_CONF_VALUE_value(val, i);
         if (!nval->name)
@@ -52,7 +51,7 @@ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
 #else
         else {
             int len;
-            char *tmp;
+            char* tmp;
             len = strlen(nval->value) + 1;
             tmp = OPENSSL_malloc(len);
             if (tmp != NULL) {
@@ -67,16 +66,16 @@ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
 
 /* Main routine: print out a general extension */
 
-int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
-                     int indent)
+int X509V3_EXT_print(BIO* out, X509_EXTENSION* ext, unsigned long flag,
+    int indent)
 {
-    void *ext_str = NULL;
-    char *value = NULL;
-    ASN1_OCTET_STRING *extoct;
-    const unsigned char *p;
+    void* ext_str = NULL;
+    char* value = NULL;
+    ASN1_OCTET_STRING* extoct;
+    const unsigned char* p;
     int extlen;
-    const X509V3_EXT_METHOD *method;
-    STACK_OF(CONF_VALUE) *nval = NULL;
+    const X509V3_EXT_METHOD* method;
+    STACK_OF(CONF_VALUE)* nval = NULL;
     int ok = 1;
 
     extoct = X509_EXTENSION_get_data(ext);
@@ -103,7 +102,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
 #else
         {
             int len;
-            char *tmp;
+            char* tmp;
             len = strlen(value) + 1;
             tmp = OPENSSL_malloc(len);
             if (tmp != NULL) {
@@ -119,14 +118,14 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
             goto err;
         }
         X509V3_EXT_val_prn(out, nval, indent,
-                           method->ext_flags & X509V3_EXT_MULTILINE);
+            method->ext_flags & X509V3_EXT_MULTILINE);
     } else if (method->i2r) {
         if (!method->i2r(method, ext_str, out, indent))
             ok = 0;
     } else
         ok = 0;
 
- err:
+err:
     sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
     OPENSSL_free(value);
     if (method->it)
@@ -136,9 +135,9 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
     return ok;
 }
 
-int X509V3_extensions_print(BIO *bp, const char *title,
-                            const STACK_OF(X509_EXTENSION) *exts,
-                            unsigned long flag, int indent)
+int X509V3_extensions_print(BIO* bp, const char* title,
+    const STACK_OF(X509_EXTENSION)* exts,
+    unsigned long flag, int indent)
 {
     int i, j;
 
@@ -151,14 +150,14 @@ int X509V3_extensions_print(BIO *bp, const char *title,
     }
 
     for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-        ASN1_OBJECT *obj;
-        X509_EXTENSION *ex;
+        ASN1_OBJECT* obj;
+        X509_EXTENSION* ex;
 
         ex = sk_X509_EXTENSION_value(exts, i);
         obj = X509_EXTENSION_get_object(ex);
         if ((flag & X509_FLAG_EXTENSIONS_ONLY_KID) != 0
-                && OBJ_obj2nid(obj) != NID_subject_key_identifier
-                && OBJ_obj2nid(obj) != NID_authority_key_identifier)
+            && OBJ_obj2nid(obj) != NID_subject_key_identifier
+            && OBJ_obj2nid(obj) != NID_authority_key_identifier)
             continue;
         if (indent && BIO_printf(bp, "%*s", indent, "") <= 0)
             return 0;
@@ -176,8 +175,8 @@ int X509V3_extensions_print(BIO *bp, const char *title,
     return 1;
 }
 
-static int unknown_ext_print(BIO *out, const unsigned char *ext, int extlen,
-                             unsigned long flag, int indent, int supported)
+static int unknown_ext_print(BIO* out, const unsigned char* ext, int extlen,
+    unsigned long flag, int indent, int supported)
 {
     switch (flag & X509V3_EXT_UNKNOWN_MASK) {
 
@@ -194,7 +193,7 @@ static int unknown_ext_print(BIO *out, const unsigned char *ext, int extlen,
     case X509V3_EXT_PARSE_UNKNOWN:
         return ASN1_parse_dump(out, ext, extlen, indent, -1);
     case X509V3_EXT_DUMP_UNKNOWN:
-        return BIO_dump_indent(out, (const char *)ext, extlen, indent);
+        return BIO_dump_indent(out, (const char*)ext, extlen, indent);
 
     default:
         return 1;
@@ -202,9 +201,9 @@ static int unknown_ext_print(BIO *out, const unsigned char *ext, int extlen,
 }
 
 #ifndef OPENSSL_NO_STDIO
-int X509V3_EXT_print_fp(FILE *fp, X509_EXTENSION *ext, int flag, int indent)
+int X509V3_EXT_print_fp(FILE* fp, X509_EXTENSION* ext, int flag, int indent)
 {
-    BIO *bio_tmp;
+    BIO* bio_tmp;
     int ret;
 
     if ((bio_tmp = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL)

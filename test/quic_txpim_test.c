@@ -14,11 +14,11 @@
 static int test_txpim(void)
 {
     int testresult = 0;
-    QUIC_TXPIM *txpim;
+    QUIC_TXPIM* txpim;
     size_t i, j;
-    QUIC_TXPIM_PKT *pkts[10] = {NULL};
+    QUIC_TXPIM_PKT* pkts[10] = { NULL };
     QUIC_TXPIM_CHUNK chunks[3];
-    const QUIC_TXPIM_CHUNK *rchunks;
+    const QUIC_TXPIM_CHUNK* rchunks;
 
     if (!TEST_ptr(txpim = ossl_quic_txpim_new()))
         goto err;
@@ -32,15 +32,15 @@ static int test_txpim(void)
 
         for (j = 0; j < OSSL_NELEM(chunks); ++j) {
             chunks[j].stream_id = 100 - j;
-            chunks[j].start     = 1000 * i + j * 10;
-            chunks[j].end       = chunks[j].start + 5;
+            chunks[j].start = 1000 * i + j * 10;
+            chunks[j].end = chunks[j].start + 5;
 
             if (!TEST_true(ossl_quic_txpim_pkt_append_chunk(pkts[i], chunks + j)))
                 goto err;
         }
 
         if (!TEST_size_t_eq(ossl_quic_txpim_pkt_get_num_chunks(pkts[i]),
-                            OSSL_NELEM(chunks)))
+                OSSL_NELEM(chunks)))
             goto err;
 
         rchunks = ossl_quic_txpim_pkt_get_chunks(pkts[i]);

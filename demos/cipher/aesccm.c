@@ -64,15 +64,14 @@ static const unsigned char ccm_tag[] = {
  * algorithm implementations. If they are NULL then the default library
  * context and properties are used.
  */
-static OSSL_LIB_CTX *libctx = NULL;
-static const char *propq = NULL;
-
+static OSSL_LIB_CTX* libctx = NULL;
+static const char* propq = NULL;
 
 static int aes_ccm_encrypt(void)
 {
     int ret = 0;
-    EVP_CIPHER_CTX *ctx;
-    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX* ctx;
+    EVP_CIPHER* cipher = NULL;
     int outlen, tmplen;
     size_t ccm_nonce_len = sizeof(ccm_nonce);
     size_t ccm_tag_len = sizeof(ccm_tag);
@@ -96,10 +95,10 @@ static int aes_ccm_encrypt(void)
 
     /* Default nonce length for AES-CCM is 7 bytes (56 bits). */
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN,
-                                            &ccm_nonce_len);
+        &ccm_nonce_len);
     /* Set tag length */
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-                                                  NULL, ccm_tag_len);
+        NULL, ccm_tag_len);
 
     /*
      * Initialise encrypt operation with the cipher & mode,
@@ -134,7 +133,7 @@ static int aes_ccm_encrypt(void)
 
     /* Get tag */
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-                                                  outtag, ccm_tag_len);
+        outtag, ccm_tag_len);
     params[1] = OSSL_PARAM_construct_end();
 
     if (!EVP_CIPHER_CTX_get_params(ctx, params))
@@ -158,8 +157,8 @@ err:
 static int aes_ccm_decrypt(void)
 {
     int ret = 0;
-    EVP_CIPHER_CTX *ctx;
-    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX* ctx;
+    EVP_CIPHER* cipher = NULL;
     int outlen, rv;
     unsigned char outbuf[1024];
     size_t ccm_nonce_len = sizeof(ccm_nonce);
@@ -180,11 +179,11 @@ static int aes_ccm_decrypt(void)
 
     /* Set nonce length if default 96 bits is not appropriate */
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN,
-                                            &ccm_nonce_len);
+        &ccm_nonce_len);
     /* Set tag length */
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-                                                  (unsigned char *)ccm_tag,
-                                                  sizeof(ccm_tag));
+        (unsigned char*)ccm_tag,
+        sizeof(ccm_tag));
     /*
      * Initialise decrypt operation with the cipher & mode,
      * nonce length and expected tag parameters.
@@ -226,7 +225,7 @@ err:
     return ret;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     if (!aes_ccm_encrypt())
         return EXIT_FAILURE;

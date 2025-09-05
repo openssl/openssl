@@ -15,9 +15,9 @@
 
 static OSSL_FUNC_cipher_freectx_fn sm4_gcm_freectx;
 
-static void *sm4_gcm_newctx(void *provctx, size_t keybits)
+static void* sm4_gcm_newctx(void* provctx, size_t keybits)
 {
-    PROV_SM4_GCM_CTX *ctx;
+    PROV_SM4_GCM_CTX* ctx;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -25,14 +25,14 @@ static void *sm4_gcm_newctx(void *provctx, size_t keybits)
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         ossl_gcm_initctx(provctx, &ctx->base, keybits,
-                         ossl_prov_sm4_hw_gcm(keybits));
+            ossl_prov_sm4_hw_gcm(keybits));
     return ctx;
 }
 
-static void *sm4_gcm_dupctx(void *provctx)
+static void* sm4_gcm_dupctx(void* provctx)
 {
-    PROV_SM4_GCM_CTX *ctx = provctx;
-    PROV_SM4_GCM_CTX *dctx = NULL;
+    PROV_SM4_GCM_CTX* ctx = provctx;
+    PROV_SM4_GCM_CTX* dctx = NULL;
 
     if (ctx == NULL)
         return NULL;
@@ -44,11 +44,11 @@ static void *sm4_gcm_dupctx(void *provctx)
     return dctx;
 }
 
-static void sm4_gcm_freectx(void *vctx)
+static void sm4_gcm_freectx(void* vctx)
 {
-    PROV_SM4_GCM_CTX *ctx = (PROV_SM4_GCM_CTX *)vctx;
+    PROV_SM4_GCM_CTX* ctx = (PROV_SM4_GCM_CTX*)vctx;
 
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
 /* ossl_sm4128gcm_functions */

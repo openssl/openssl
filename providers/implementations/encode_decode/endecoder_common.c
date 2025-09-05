@@ -13,8 +13,8 @@
 #include "prov/bio.h"
 #include "prov/endecoder_local.h"
 
-OSSL_FUNC_keymgmt_new_fn *
-ossl_prov_get_keymgmt_new(const OSSL_DISPATCH *fns)
+OSSL_FUNC_keymgmt_new_fn*
+ossl_prov_get_keymgmt_new(const OSSL_DISPATCH* fns)
 {
     /* Pilfer the keymgmt dispatch table */
     for (; fns->function_id != 0; fns++)
@@ -24,8 +24,8 @@ ossl_prov_get_keymgmt_new(const OSSL_DISPATCH *fns)
     return NULL;
 }
 
-OSSL_FUNC_keymgmt_free_fn *
-ossl_prov_get_keymgmt_free(const OSSL_DISPATCH *fns)
+OSSL_FUNC_keymgmt_free_fn*
+ossl_prov_get_keymgmt_free(const OSSL_DISPATCH* fns)
 {
     /* Pilfer the keymgmt dispatch table */
     for (; fns->function_id != 0; fns++)
@@ -35,8 +35,8 @@ ossl_prov_get_keymgmt_free(const OSSL_DISPATCH *fns)
     return NULL;
 }
 
-OSSL_FUNC_keymgmt_import_fn *
-ossl_prov_get_keymgmt_import(const OSSL_DISPATCH *fns)
+OSSL_FUNC_keymgmt_import_fn*
+ossl_prov_get_keymgmt_import(const OSSL_DISPATCH* fns)
 {
     /* Pilfer the keymgmt dispatch table */
     for (; fns->function_id != 0; fns++)
@@ -46,8 +46,8 @@ ossl_prov_get_keymgmt_import(const OSSL_DISPATCH *fns)
     return NULL;
 }
 
-OSSL_FUNC_keymgmt_export_fn *
-ossl_prov_get_keymgmt_export(const OSSL_DISPATCH *fns)
+OSSL_FUNC_keymgmt_export_fn*
+ossl_prov_get_keymgmt_export(const OSSL_DISPATCH* fns)
 {
     /* Pilfer the keymgmt dispatch table */
     for (; fns->function_id != 0; fns++)
@@ -57,14 +57,13 @@ ossl_prov_get_keymgmt_export(const OSSL_DISPATCH *fns)
     return NULL;
 }
 
-void *ossl_prov_import_key(const OSSL_DISPATCH *fns, void *provctx,
-                           int selection, const OSSL_PARAM params[])
+void* ossl_prov_import_key(const OSSL_DISPATCH* fns, void* provctx,
+    int selection, const OSSL_PARAM params[])
 {
-    OSSL_FUNC_keymgmt_new_fn *kmgmt_new = ossl_prov_get_keymgmt_new(fns);
-    OSSL_FUNC_keymgmt_free_fn *kmgmt_free = ossl_prov_get_keymgmt_free(fns);
-    OSSL_FUNC_keymgmt_import_fn *kmgmt_import =
-        ossl_prov_get_keymgmt_import(fns);
-    void *key = NULL;
+    OSSL_FUNC_keymgmt_new_fn* kmgmt_new = ossl_prov_get_keymgmt_new(fns);
+    OSSL_FUNC_keymgmt_free_fn* kmgmt_free = ossl_prov_get_keymgmt_free(fns);
+    OSSL_FUNC_keymgmt_import_fn* kmgmt_import = ossl_prov_get_keymgmt_import(fns);
+    void* key = NULL;
 
     if (kmgmt_new != NULL && kmgmt_import != NULL && kmgmt_free != NULL) {
         if ((key = kmgmt_new(provctx)) == NULL
@@ -76,26 +75,26 @@ void *ossl_prov_import_key(const OSSL_DISPATCH *fns, void *provctx,
     return key;
 }
 
-void ossl_prov_free_key(const OSSL_DISPATCH *fns, void *key)
+void ossl_prov_free_key(const OSSL_DISPATCH* fns, void* key)
 {
-    OSSL_FUNC_keymgmt_free_fn *kmgmt_free = ossl_prov_get_keymgmt_free(fns);
+    OSSL_FUNC_keymgmt_free_fn* kmgmt_free = ossl_prov_get_keymgmt_free(fns);
 
     if (kmgmt_free != NULL)
         kmgmt_free(key);
 }
 
-int ossl_read_der(PROV_CTX *provctx, OSSL_CORE_BIO *cin,  unsigned char **data,
-                  long *len)
+int ossl_read_der(PROV_CTX* provctx, OSSL_CORE_BIO* cin, unsigned char** data,
+    long* len)
 {
-    BUF_MEM *mem = NULL;
-    BIO *in = ossl_bio_new_from_core_bio(provctx, cin);
+    BUF_MEM* mem = NULL;
+    BIO* in = ossl_bio_new_from_core_bio(provctx, cin);
     int ok;
 
     if (in == NULL)
         return 0;
     ok = (asn1_d2i_read_bio(in, &mem) >= 0);
     if (ok) {
-        *data = (unsigned char *)mem->data;
+        *data = (unsigned char*)mem->data;
         *len = (long)mem->length;
         OPENSSL_free(mem);
     }

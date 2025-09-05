@@ -18,16 +18,16 @@
 #include "crypto/riscv_arch.h"
 
 #ifdef OSSL_RISCV_HWPROBE
-# include <unistd.h>
-# include <sys/syscall.h>
-# include <asm/hwprobe.h>
-# include <sys/auxv.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <asm/hwprobe.h>
+#include <sys/auxv.h>
 #endif
 
 extern size_t riscv_vlen_asm(void);
 
-static void parse_env(const char *envstr);
-static void strtoupper(char *str);
+static void parse_env(const char* envstr);
+static void strtoupper(char* str);
 
 static size_t vlen = 0;
 
@@ -40,19 +40,19 @@ uint32_t OPENSSL_rdtsc(void)
     return 0;
 }
 
-size_t OPENSSL_instrument_bus(unsigned int *out, size_t cnt)
+size_t OPENSSL_instrument_bus(unsigned int* out, size_t cnt)
 {
     return 0;
 }
 
-size_t OPENSSL_instrument_bus2(unsigned int *out, size_t cnt, size_t max)
+size_t OPENSSL_instrument_bus2(unsigned int* out, size_t cnt, size_t max)
 {
     return 0;
 }
 
-static void strtoupper(char *str)
+static void strtoupper(char* str)
 {
-    for (char *x = str; *x; ++x)
+    for (char* x = str; *x; ++x)
         *x = toupper((unsigned char)*x);
 }
 
@@ -62,7 +62,7 @@ static void strtoupper(char *str)
  * should enable a given extension.
  */
 #define BUFLEN 256
-static void parse_env(const char *envstr)
+static void parse_env(const char* envstr)
 {
     char envstrupper[BUFLEN];
     char buf[BUFLEN];
@@ -76,16 +76,15 @@ static void parse_env(const char *envstr)
         BIO_snprintf(buf, BUFLEN, "_%s", RISCV_capabilities[i].name);
         if (strstr(envstrupper, buf) != NULL) {
             /* Match, set relevant bit in OPENSSL_riscvcap_P[] */
-            OPENSSL_riscvcap_P[RISCV_capabilities[i].index] |=
-                (1 << RISCV_capabilities[i].bit_offset);
+            OPENSSL_riscvcap_P[RISCV_capabilities[i].index] |= (1 << RISCV_capabilities[i].bit_offset);
         }
     }
 }
 
 #ifdef OSSL_RISCV_HWPROBE
-static long riscv_hwprobe(struct riscv_hwprobe *pairs, size_t pair_count,
-                          size_t cpu_count, unsigned long *cpus,
-                          unsigned int flags)
+static long riscv_hwprobe(struct riscv_hwprobe* pairs, size_t pair_count,
+    size_t cpu_count, unsigned long* cpus,
+    unsigned int flags)
 {
     return syscall(__NR_riscv_hwprobe, pairs, pair_count, cpu_count, cpus, flags);
 }
@@ -103,12 +102,11 @@ static void hwprobe_to_cap(void)
         for (size_t i = 0; i < kRISCVNumCaps; ++i) {
             for (size_t j = 0; j != OSSL_RISCV_HWPROBE_PAIR_COUNT; ++j) {
                 if (pairs[j].key == RISCV_capabilities[i].hwprobe_key
-                        && (pairs[j].value & RISCV_capabilities[i].hwprobe_value)
-                           != 0)
+                    && (pairs[j].value & RISCV_capabilities[i].hwprobe_value)
+                        != 0)
                     if (!IS_IN_DEPEND_VECTOR(RISCV_capabilities[i].bit_offset) || VECTOR_CAPABLE)
                         /* Match, set relevant bit in OPENSSL_riscvcap_P[] */
-                        OPENSSL_riscvcap_P[RISCV_capabilities[i].index] |=
-                            (1 << RISCV_capabilities[i].bit_offset);
+                        OPENSSL_riscvcap_P[RISCV_capabilities[i].index] |= (1 << RISCV_capabilities[i].bit_offset);
             }
         }
     }
@@ -122,7 +120,7 @@ size_t riscv_vlen(void)
 
 void OPENSSL_cpuid_setup(void)
 {
-    char *e;
+    char* e;
     static int trigger = 0;
 
     if (trigger != 0)

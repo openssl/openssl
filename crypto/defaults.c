@@ -15,12 +15,13 @@
 
 #if defined(_WIN32) && defined(OSSL_WINCTX)
 
-# define TOSTR(x) #x
-# define MAKESTR(x) TOSTR(x)
-# define NOQUOTE(x) x
-# if defined(OSSL_WINCTX)
-#  define REGISTRY_KEY "SOFTWARE\\WOW6432Node\\OpenSSL" "-" MAKESTR(OPENSSL_VERSION_MAJOR) "." MAKESTR(OPENSSL_VERSION_MINOR) "-" MAKESTR(OSSL_WINCTX)
-# endif
+#define TOSTR(x) #x
+#define MAKESTR(x) TOSTR(x)
+#define NOQUOTE(x) x
+#if defined(OSSL_WINCTX)
+#define REGISTRY_KEY "SOFTWARE\\WOW6432Node\\OpenSSL" \
+                     "-" MAKESTR(OPENSSL_VERSION_MAJOR) "." MAKESTR(OPENSSL_VERSION_MINOR) "-" MAKESTR(OSSL_WINCTX)
+#endif
 
 /**
  * @brief The directory where OpenSSL is installed.
@@ -30,7 +31,7 @@ static char openssldir[MAX_PATH + 1];
 /**
  * @brief The pointer to the openssldir buffer
  */
-static char *openssldirptr = NULL;
+static char* openssldirptr = NULL;
 
 /**
  * @brief The directory where OpenSSL engines are located.
@@ -41,7 +42,7 @@ static char enginesdir[MAX_PATH + 1];
 /**
  * @brief The pointer to the enginesdir buffer
  */
-static char *enginesdirptr = NULL;
+static char* enginesdirptr = NULL;
 
 /**
  * @brief The directory where OpenSSL modules are located.
@@ -51,7 +52,7 @@ static char modulesdir[MAX_PATH + 1];
 /**
  * @brief The pointer to the modulesdir buffer
  */
-static char *modulesdirptr = NULL;
+static char* modulesdirptr = NULL;
 
 /**
  * @brief Get the list of Windows registry directories.
@@ -60,10 +61,10 @@ static char *modulesdirptr = NULL;
  *
  * @return A pointer to a char array containing the registry directories.
  */
-static char *get_windows_regdirs(char *dst, DWORD dstsizebytes, LPCWSTR valuename)
+static char* get_windows_regdirs(char* dst, DWORD dstsizebytes, LPCWSTR valuename)
 {
-    char *retval = NULL;
-# ifdef REGISTRY_KEY
+    char* retval = NULL;
+#ifdef REGISTRY_KEY
     DWORD keysizebytes;
     DWORD ktype;
     HKEY hkey;
@@ -72,14 +73,14 @@ static char *get_windows_regdirs(char *dst, DWORD dstsizebytes, LPCWSTR valuenam
     LPCWSTR tempstr = NULL;
 
     ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-                       TEXT(REGISTRY_KEY), KEY_WOW64_32KEY,
-                       KEY_QUERY_VALUE, &hkey);
+        TEXT(REGISTRY_KEY), KEY_WOW64_32KEY,
+        KEY_QUERY_VALUE, &hkey);
     if (ret != ERROR_SUCCESS)
         goto out;
 
     /* Always use wide call so we can avoid extra encoding conversions on the output */
     ret = RegQueryValueExW(hkey, valuename, NULL, &ktype, NULL,
-                           &keysizebytes);
+        &keysizebytes);
     if (ret != ERROR_SUCCESS)
         goto out;
     if (ktype != REG_EXPAND_SZ && ktype != REG_SZ)
@@ -97,18 +98,19 @@ static char *get_windows_regdirs(char *dst, DWORD dstsizebytes, LPCWSTR valuenam
         goto out;
 
     if (RegQueryValueExW(hkey, valuename,
-                         NULL, &ktype, (LPBYTE)tempstr, &keysizebytes) != ERROR_SUCCESS)
+            NULL, &ktype, (LPBYTE)tempstr, &keysizebytes)
+        != ERROR_SUCCESS)
         goto out;
 
     if (!WideCharToMultiByte(CP_UTF8, 0, tempstr, -1, dst, dstsizebytes,
-                             NULL, NULL))
+            NULL, NULL))
         goto out;
 
     retval = dst;
 out:
     OPENSSL_free(tempstr);
     RegCloseKey(hkey);
-# endif /* REGISTRY_KEY */
+#endif /* REGISTRY_KEY */
     return retval;
 }
 
@@ -146,13 +148,13 @@ DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
  *
  * @return A pointer to a string containing the OpenSSL directory path.
  */
-const char *ossl_get_openssldir(void)
+const char* ossl_get_openssldir(void)
 {
-#if defined(_WIN32) && defined (OSSL_WINCTX)
+#if defined(_WIN32) && defined(OSSL_WINCTX)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
-    return (const char *)openssldirptr;
-# else
+    return (const char*)openssldirptr;
+#else
     return OPENSSLDIR;
 #endif
 }
@@ -162,12 +164,12 @@ const char *ossl_get_openssldir(void)
  *
  * @return A pointer to a string containing the engines directory path.
  */
-const char *ossl_get_enginesdir(void)
+const char* ossl_get_enginesdir(void)
 {
-#if defined(_WIN32) && defined (OSSL_WINCTX)
+#if defined(_WIN32) && defined(OSSL_WINCTX)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
-    return (const char *)enginesdirptr;
+    return (const char*)enginesdirptr;
 #else
     return ENGINESDIR;
 #endif
@@ -178,12 +180,12 @@ const char *ossl_get_enginesdir(void)
  *
  * @return A pointer to a string containing the modules directory path.
  */
-const char *ossl_get_modulesdir(void)
+const char* ossl_get_modulesdir(void)
 {
 #if defined(_WIN32) && defined(OSSL_WINCTX)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
-    return (const char *)modulesdirptr;
+    return (const char*)modulesdirptr;
 #else
     return MODULESDIR;
 #endif
@@ -194,9 +196,9 @@ const char *ossl_get_modulesdir(void)
  *
  * @return A char pointer to a string representing the windows install context
  */
-const char *ossl_get_wininstallcontext(void)
+const char* ossl_get_wininstallcontext(void)
 {
-#if defined(_WIN32) && defined (OSSL_WINCTX)
+#if defined(_WIN32) && defined(OSSL_WINCTX)
     return MAKESTR(OSSL_WINCTX);
 #else
     return "Undefined";

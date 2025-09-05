@@ -15,22 +15,22 @@
 
 /* Free up an ASN1 structure */
 
-void ASN1_item_free(ASN1_VALUE *val, const ASN1_ITEM *it)
+void ASN1_item_free(ASN1_VALUE* val, const ASN1_ITEM* it)
 {
     ossl_asn1_item_embed_free(&val, it, 0);
 }
 
-void ASN1_item_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+void ASN1_item_ex_free(ASN1_VALUE** pval, const ASN1_ITEM* it)
 {
     ossl_asn1_item_embed_free(pval, it, 0);
 }
 
-void ossl_asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
+void ossl_asn1_item_embed_free(ASN1_VALUE** pval, const ASN1_ITEM* it, int embed)
 {
     const ASN1_TEMPLATE *tt = NULL, *seqtt;
-    const ASN1_EXTERN_FUNCS *ef;
-    const ASN1_AUX *aux = it->funcs;
-    ASN1_aux_cb *asn1_cb;
+    const ASN1_EXTERN_FUNCS* ef;
+    const ASN1_AUX* aux = it->funcs;
+    ASN1_aux_cb* asn1_cb;
     int i;
 
     if (pval == NULL)
@@ -63,7 +63,7 @@ void ossl_asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed
         }
         i = ossl_asn1_get_choice_selector(pval, it);
         if ((i >= 0) && (i < it->tcount)) {
-            ASN1_VALUE **pchval;
+            ASN1_VALUE** pchval;
 
             tt = it->templates + i;
             pchval = ossl_asn1_get_field_ptr(pval, tt);
@@ -104,7 +104,7 @@ void ossl_asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed
          */
         tt = it->templates + it->tcount;
         for (i = 0; i < it->tcount; i++) {
-            ASN1_VALUE **pseqval;
+            ASN1_VALUE** pseqval;
 
             tt--;
             seqtt = ossl_asn1_do_adb(*pval, tt, 0);
@@ -123,20 +123,20 @@ void ossl_asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed
     }
 }
 
-void ossl_asn1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
+void ossl_asn1_template_free(ASN1_VALUE** pval, const ASN1_TEMPLATE* tt)
 {
     int embed = tt->flags & ASN1_TFLG_EMBED;
-    ASN1_VALUE *tval;
+    ASN1_VALUE* tval;
     if (embed) {
-        tval = (ASN1_VALUE *)pval;
+        tval = (ASN1_VALUE*)pval;
         pval = &tval;
     }
     if (tt->flags & ASN1_TFLG_SK_MASK) {
-        STACK_OF(ASN1_VALUE) *sk = (STACK_OF(ASN1_VALUE) *)*pval;
+        STACK_OF(ASN1_VALUE)* sk = (STACK_OF(ASN1_VALUE)*)*pval;
         int i;
 
         for (i = 0; i < sk_ASN1_VALUE_num(sk); i++) {
-            ASN1_VALUE *vtmp = sk_ASN1_VALUE_value(sk, i);
+            ASN1_VALUE* vtmp = sk_ASN1_VALUE_value(sk, i);
 
             ossl_asn1_item_embed_free(&vtmp, ASN1_ITEM_ptr(tt->item), embed);
         }
@@ -147,13 +147,13 @@ void ossl_asn1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
     }
 }
 
-void ossl_asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
+void ossl_asn1_primitive_free(ASN1_VALUE** pval, const ASN1_ITEM* it, int embed)
 {
     int utype;
 
     /* Special case: if 'it' is a primitive with a free_func, use that. */
     if (it) {
-        const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
+        const ASN1_PRIMITIVE_FUNCS* pf = it->funcs;
 
         if (embed) {
             if (pf && pf->prim_clear) {
@@ -168,7 +168,7 @@ void ossl_asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
 
     /* Special case: if 'it' is NULL, free contents of ASN1_TYPE */
     if (!it) {
-        ASN1_TYPE *typ = (ASN1_TYPE *)*pval;
+        ASN1_TYPE* typ = (ASN1_TYPE*)*pval;
 
         utype = typ->type;
         pval = &typ->value.asn1_value;
@@ -186,14 +186,14 @@ void ossl_asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
 
     switch (utype) {
     case V_ASN1_OBJECT:
-        ASN1_OBJECT_free((ASN1_OBJECT *)*pval);
+        ASN1_OBJECT_free((ASN1_OBJECT*)*pval);
         break;
 
     case V_ASN1_BOOLEAN:
         if (it)
-            *(ASN1_BOOLEAN *)pval = it->size;
+            *(ASN1_BOOLEAN*)pval = it->size;
         else
-            *(ASN1_BOOLEAN *)pval = -1;
+            *(ASN1_BOOLEAN*)pval = -1;
         return;
 
     case V_ASN1_NULL:
@@ -205,7 +205,7 @@ void ossl_asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         break;
 
     default:
-        ossl_asn1_string_embed_free((ASN1_STRING *)*pval, embed);
+        ossl_asn1_string_embed_free((ASN1_STRING*)*pval, embed);
         break;
     }
     *pval = NULL;

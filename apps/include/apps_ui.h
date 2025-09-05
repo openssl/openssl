@@ -8,22 +8,21 @@
  */
 
 #ifndef OSSL_APPS_UI_H
-# define OSSL_APPS_UI_H
+#define OSSL_APPS_UI_H
 
-
-# define PW_MIN_LENGTH 4
+#define PW_MIN_LENGTH 4
 typedef struct pw_cb_data {
-    const void *password;
-    const char *prompt_info;
+    const void* password;
+    const char* prompt_info;
 } PW_CB_DATA;
 
-int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_data);
+int password_callback(char* buf, int bufsiz, int verify, PW_CB_DATA* cb_data);
 
 int setup_ui_method(void);
 void destroy_ui_method(void);
-int set_base_ui_method(const UI_METHOD *ui_method);
-const UI_METHOD *get_ui_method(void);
+int set_base_ui_method(const UI_METHOD* ui_method);
+const UI_METHOD* get_ui_method(void);
 
-extern BIO *bio_err;
+extern BIO* bio_err;
 
 #endif

@@ -14,53 +14,53 @@
 
 #if !defined(OPENSSL_THREADS) || defined(CRYPTO_TDEBUG)
 
-# if defined(OPENSSL_SYS_UNIX)
-#  include <sys/types.h>
-#  include <unistd.h>
-# endif
+#if defined(OPENSSL_SYS_UNIX)
+#include <sys/types.h>
+#include <unistd.h>
+#endif
 
 struct rcu_lock_st {
-    struct rcu_cb_item *cb_items;
+    struct rcu_cb_item* cb_items;
 };
 
-CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers,
-                                   ossl_unused OSSL_LIB_CTX *ctx)
+CRYPTO_RCU_LOCK* ossl_rcu_lock_new(int num_writers,
+    ossl_unused OSSL_LIB_CTX* ctx)
 {
-    struct rcu_lock_st *lock;
+    struct rcu_lock_st* lock;
 
     lock = OPENSSL_zalloc(sizeof(*lock));
     return lock;
 }
 
-void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock)
+void ossl_rcu_lock_free(CRYPTO_RCU_LOCK* lock)
 {
     OPENSSL_free(lock);
 }
 
-int ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
+int ossl_rcu_read_lock(CRYPTO_RCU_LOCK* lock)
 {
     return 1;
 }
 
-void ossl_rcu_write_lock(CRYPTO_RCU_LOCK *lock)
+void ossl_rcu_write_lock(CRYPTO_RCU_LOCK* lock)
 {
     return;
 }
 
-void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK *lock)
+void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK* lock)
 {
     return;
 }
 
-void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
+void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK* lock)
 {
     return;
 }
 
-void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
+void ossl_synchronize_rcu(CRYPTO_RCU_LOCK* lock)
 {
-    struct rcu_cb_item *items = lock->cb_items;
-    struct rcu_cb_item *tmp;
+    struct rcu_cb_item* items = lock->cb_items;
+    struct rcu_cb_item* tmp;
 
     lock->cb_items = NULL;
 
@@ -72,9 +72,9 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     }
 }
 
-int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
+int ossl_rcu_call(CRYPTO_RCU_LOCK* lock, rcu_cb_fn cb, void* data)
 {
-    struct rcu_cb_item *new = OPENSSL_zalloc(sizeof(*new));
+    struct rcu_cb_item* new = OPENSSL_zalloc(sizeof(*new));
 
     if (new == NULL)
         return 0;
@@ -86,61 +86,62 @@ int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
     return 1;
 }
 
-void *ossl_rcu_uptr_deref(void **p)
+void* ossl_rcu_uptr_deref(void** p)
 {
-    return (void *)*p;
+    return (void*)*p;
 }
 
-void ossl_rcu_assign_uptr(void **p, void **v)
+void ossl_rcu_assign_uptr(void** p, void** v)
 {
-    *(void **)p = *(void **)v;
+    *(void**)p = *(void**)v;
 }
 
-CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
+CRYPTO_RWLOCK* CRYPTO_THREAD_lock_new(void)
 {
-    CRYPTO_RWLOCK *lock;
+    CRYPTO_RWLOCK* lock;
 
     if ((lock = CRYPTO_zalloc(sizeof(unsigned int), NULL, 0)) == NULL)
         /* Don't set error, to avoid recursion blowup. */
         return NULL;
 
-    *(unsigned int *)lock = 1;
+    *(unsigned int*)lock = 1;
 
     return lock;
 }
 
-__owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
+__owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK* lock)
 {
-    if (!ossl_assert(*(unsigned int *)lock == 1))
+    if (!ossl_assert(*(unsigned int*)lock == 1))
         return 0;
     return 1;
 }
 
-__owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
+__owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK* lock)
 {
-    if (!ossl_assert(*(unsigned int *)lock == 1))
+    if (!ossl_assert(*(unsigned int*)lock == 1))
         return 0;
     return 1;
 }
 
-int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock)
+int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK* lock)
 {
-    if (!ossl_assert(*(unsigned int *)lock == 1))
+    if (!ossl_assert(*(unsigned int*)lock == 1))
         return 0;
     return 1;
 }
 
-void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock) {
+void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK* lock)
+{
     if (lock == NULL)
         return;
 
-    *(unsigned int *)lock = 0;
+    *(unsigned int*)lock = 0;
     OPENSSL_free(lock);
 
     return;
 }
 
-int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
+int CRYPTO_THREAD_run_once(CRYPTO_ONCE* once, void (*init)(void))
 {
     if (*once != 0)
         return 1;
@@ -151,16 +152,16 @@ int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
     return 1;
 }
 
-# define OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX 256
+#define OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX 256
 
 struct thread_local_storage_entry {
-    void *data;
+    void* data;
     uint8_t used;
 };
 
 static struct thread_local_storage_entry thread_local_storage[OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX];
 
-int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))
+int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL* key, void (*cleanup)(void*))
 {
     int entry_idx = 0;
 
@@ -179,7 +180,7 @@ int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))
     return 1;
 }
 
-void *CRYPTO_THREAD_get_local(CRYPTO_THREAD_LOCAL *key)
+void* CRYPTO_THREAD_get_local(CRYPTO_THREAD_LOCAL* key)
 {
     if (*key >= OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX)
         return NULL;
@@ -187,7 +188,7 @@ void *CRYPTO_THREAD_get_local(CRYPTO_THREAD_LOCAL *key)
     return thread_local_storage[*key].data;
 }
 
-int CRYPTO_THREAD_set_local(CRYPTO_THREAD_LOCAL *key, void *val)
+int CRYPTO_THREAD_set_local(CRYPTO_THREAD_LOCAL* key, void* val)
 {
     if (*key >= OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX)
         return 0;
@@ -197,7 +198,7 @@ int CRYPTO_THREAD_set_local(CRYPTO_THREAD_LOCAL *key, void *val)
     return 1;
 }
 
-int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL *key)
+int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL* key)
 {
     if (*key >= OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX)
         return 0;
@@ -218,56 +219,56 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b)
     return (a == b);
 }
 
-int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
+int CRYPTO_atomic_add(int* val, int amount, int* ret, CRYPTO_RWLOCK* lock)
 {
     *val += amount;
-    *ret  = *val;
+    *ret = *val;
 
     return 1;
 }
 
-int CRYPTO_atomic_add64(uint64_t *val, uint64_t op, uint64_t *ret,
-                        CRYPTO_RWLOCK *lock)
+int CRYPTO_atomic_add64(uint64_t* val, uint64_t op, uint64_t* ret,
+    CRYPTO_RWLOCK* lock)
 {
     *val += op;
-    *ret  = *val;
+    *ret = *val;
 
     return 1;
 }
 
-int CRYPTO_atomic_and(uint64_t *val, uint64_t op, uint64_t *ret,
-                      CRYPTO_RWLOCK *lock)
+int CRYPTO_atomic_and(uint64_t* val, uint64_t op, uint64_t* ret,
+    CRYPTO_RWLOCK* lock)
 {
     *val &= op;
-    *ret  = *val;
+    *ret = *val;
 
     return 1;
 }
 
-int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
-                     CRYPTO_RWLOCK *lock)
+int CRYPTO_atomic_or(uint64_t* val, uint64_t op, uint64_t* ret,
+    CRYPTO_RWLOCK* lock)
 {
     *val |= op;
-    *ret  = *val;
+    *ret = *val;
 
     return 1;
 }
 
-int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
+int CRYPTO_atomic_load(uint64_t* val, uint64_t* ret, CRYPTO_RWLOCK* lock)
 {
-    *ret  = *val;
+    *ret = *val;
 
     return 1;
 }
 
-int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
+int CRYPTO_atomic_store(uint64_t* dst, uint64_t val, CRYPTO_RWLOCK* lock)
 {
     *dst = val;
 
     return 1;
 }
 
-int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
+int CRYPTO_atomic_load_int(int* val, int* ret, CRYPTO_RWLOCK* lock)
 {
     *ret = *val;
 
@@ -281,10 +282,10 @@ int openssl_init_fork_handlers(void)
 
 int openssl_get_fork_id(void)
 {
-# if defined(OPENSSL_SYS_UNIX)
+#if defined(OPENSSL_SYS_UNIX)
     return getpid();
-# else
+#else
     return 0;
-# endif
+#endif
 }
 #endif

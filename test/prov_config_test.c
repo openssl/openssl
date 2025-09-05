@@ -12,9 +12,9 @@
 #include <openssl/conf.h>
 #include "testutil.h"
 
-static char *configfile = NULL;
-static char *recurseconfigfile = NULL;
-static char *pathedconfig = NULL;
+static char* configfile = NULL;
+static char* recurseconfigfile = NULL;
+static char* pathedconfig = NULL;
 
 /*
  * Test to make sure there are no leaks or failures from loading the config
@@ -22,9 +22,9 @@ static char *pathedconfig = NULL;
  */
 static int test_double_config(void)
 {
-    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
+    OSSL_LIB_CTX* ctx = OSSL_LIB_CTX_new();
     int testresult = 0;
-    EVP_MD *sha256 = NULL;
+    EVP_MD* sha256 = NULL;
 
     if (!TEST_ptr(ctx))
         return 0;
@@ -40,7 +40,7 @@ static int test_double_config(void)
         goto err;
 
     testresult = 1;
- err:
+err:
     EVP_MD_free(sha256);
     OSSL_LIB_CTX_free(ctx);
     return testresult;
@@ -48,7 +48,7 @@ static int test_double_config(void)
 
 static int test_recursive_config(void)
 {
-    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
+    OSSL_LIB_CTX* ctx = OSSL_LIB_CTX_new();
     int testresult = 0;
     unsigned long err;
 
@@ -62,7 +62,7 @@ static int test_recursive_config(void)
     /* We expect to get a recursion error here */
     if (ERR_GET_REASON(err) == CONF_R_RECURSIVE_SECTION_REFERENCE)
         testresult = 1;
- err:
+err:
     OSSL_LIB_CTX_free(ctx);
     return testresult;
 }
@@ -70,12 +70,12 @@ static int test_recursive_config(void)
 #define P_TEST_PATH "/../test/p_test.so"
 static int test_path_config(void)
 {
-    OSSL_LIB_CTX *ctx = NULL;
-    OSSL_PROVIDER *prov;
+    OSSL_LIB_CTX* ctx = NULL;
+    OSSL_PROVIDER* prov;
     int testresult = 0;
     struct stat sbuf;
-    char *module_path = getenv("OPENSSL_MODULES");
-    char *full_path = NULL;
+    char* module_path = getenv("OPENSSL_MODULES");
+    char* full_path = NULL;
     int rc;
 
     if (!TEST_ptr(module_path))
@@ -110,7 +110,7 @@ static int test_path_config(void)
     OSSL_PROVIDER_unload(prov);
 
     testresult = 1;
- err:
+err:
     OSSL_LIB_CTX_free(ctx);
     return testresult;
 }

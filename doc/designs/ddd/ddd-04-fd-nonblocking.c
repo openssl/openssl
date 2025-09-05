@@ -12,7 +12,7 @@
  * larger application.
  */
 typedef struct app_conn_st {
-    SSL *ssl;
+    SSL* ssl;
     int fd;
     int rx_need_tx, tx_need_rx;
 } APP_CONN;
@@ -23,9 +23,9 @@ typedef struct app_conn_st {
  * new_conn. The application may also call this function multiple times to
  * create multiple SSL_CTX.
  */
-SSL_CTX *create_ssl_ctx(void)
+SSL_CTX* create_ssl_ctx(void)
 {
-    SSL_CTX *ctx;
+    SSL_CTX* ctx;
 
 #ifdef USE_QUIC
     ctx = SSL_CTX_new(OSSL_QUIC_client_method());
@@ -53,12 +53,12 @@ SSL_CTX *create_ssl_ctx(void)
  *
  * hostname is a string like "openssl.org" used for certificate validation.
  */
-APP_CONN *new_conn(SSL_CTX *ctx, int fd, const char *bare_hostname)
+APP_CONN* new_conn(SSL_CTX* ctx, int fd, const char* bare_hostname)
 {
-    APP_CONN *conn;
-    SSL *ssl;
+    APP_CONN* conn;
+    SSL* ssl;
 #ifdef USE_QUIC
-    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+    static const unsigned char alpn[] = { 5, 'd', 'u', 'm', 'm', 'y' };
 #endif
 
     conn = calloc(1, sizeof(APP_CONN));
@@ -111,7 +111,7 @@ APP_CONN *new_conn(SSL_CTX *ctx, int fd, const char *bare_hostname)
  * Returns -1 on error. Returns -2 if the function would block (corresponds to
  * EWOULDBLOCK).
  */
-int tx(APP_CONN *conn, const void *buf, int buf_len)
+int tx(APP_CONN* conn, const void* buf, int buf_len)
 {
     int rc, l;
 
@@ -121,13 +121,13 @@ int tx(APP_CONN *conn, const void *buf, int buf_len)
     if (l <= 0) {
         rc = SSL_get_error(conn->ssl, l);
         switch (rc) {
-            case SSL_ERROR_WANT_READ:
-                conn->tx_need_rx = 1;
-            case SSL_ERROR_WANT_CONNECT:
-            case SSL_ERROR_WANT_WRITE:
-                return -2;
-            default:
-                return -1;
+        case SSL_ERROR_WANT_READ:
+            conn->tx_need_rx = 1;
+        case SSL_ERROR_WANT_CONNECT:
+        case SSL_ERROR_WANT_WRITE:
+            return -2;
+        default:
+            return -1;
         }
     }
 
@@ -140,7 +140,7 @@ int tx(APP_CONN *conn, const void *buf, int buf_len)
  * Returns -1 on error. Returns -2 if the function would block (corresponds to
  * EWOULDBLOCK).
  */
-int rx(APP_CONN *conn, void *buf, int buf_len)
+int rx(APP_CONN* conn, void* buf, int buf_len)
 {
     int rc, l;
 
@@ -150,12 +150,12 @@ int rx(APP_CONN *conn, void *buf, int buf_len)
     if (l <= 0) {
         rc = SSL_get_error(conn->ssl, l);
         switch (rc) {
-            case SSL_ERROR_WANT_WRITE:
-                conn->rx_need_tx = 1;
-            case SSL_ERROR_WANT_READ:
-                return -2;
-            default:
-                return -1;
+        case SSL_ERROR_WANT_WRITE:
+            conn->rx_need_tx = 1;
+        case SSL_ERROR_WANT_READ:
+            return -2;
+        default:
+            return -1;
         }
     }
 
@@ -177,7 +177,7 @@ int rx(APP_CONN *conn, void *buf, int buf_len)
  *              SSL_read or SSL_write soon.
  *
  */
-int get_conn_fd(APP_CONN *conn)
+int get_conn_fd(APP_CONN* conn)
 {
     return conn->fd;
 }
@@ -195,18 +195,18 @@ int get_conn_fd(APP_CONN *conn)
  * progress and get_conn_pending_rx returns events which may cause SSL_read
  * to make progress.
  */
-int get_conn_pending_tx(APP_CONN *conn)
+int get_conn_pending_tx(APP_CONN* conn)
 {
 #ifdef USE_QUIC
     return (SSL_net_read_desired(conn->ssl) ? POLLIN : 0)
-           | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
-           | POLLERR;
+        | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
+        | POLLERR;
 #else
     return (conn->tx_need_rx ? POLLIN : 0) | POLLOUT | POLLERR;
 #endif
 }
 
-int get_conn_pending_rx(APP_CONN *conn)
+int get_conn_pending_rx(APP_CONN* conn)
 {
     return get_conn_pending_tx(conn);
 }
@@ -218,9 +218,9 @@ int get_conn_pending_rx(APP_CONN *conn)
  * no need for such a call. This may change after the next call
  * to libssl.
  */
-static inline int timeval_to_ms(const struct timeval *t);
+static inline int timeval_to_ms(const struct timeval* t);
 
-int get_conn_pump_timeout(APP_CONN *conn)
+int get_conn_pump_timeout(APP_CONN* conn)
 {
     struct timeval tv;
     int is_infinite;
@@ -235,7 +235,7 @@ int get_conn_pump_timeout(APP_CONN *conn)
  * Called to advance internals of libssl state machines without having to
  * perform an application-level read/write.
  */
-void pump(APP_CONN *conn)
+void pump(APP_CONN* conn)
 {
     SSL_handle_events(conn->ssl);
 }
@@ -245,7 +245,7 @@ void pump(APP_CONN *conn)
  * The application wants to close the connection and free bookkeeping
  * structures.
  */
-void teardown(APP_CONN *conn)
+void teardown(APP_CONN* conn)
 {
     SSL_shutdown(conn->ssl);
     SSL_free(conn->ssl);
@@ -256,7 +256,7 @@ void teardown(APP_CONN *conn)
  * The application is shutting down and wants to free a previously
  * created SSL_CTX.
  */
-void teardown_ctx(SSL_CTX *ctx)
+void teardown_ctx(SSL_CTX* ctx)
 {
     SSL_CTX_free(ctx);
 }
@@ -270,7 +270,7 @@ void teardown_ctx(SSL_CTX *ctx)
 #include <sys/socket.h>
 #include <sys/signal.h>
 #ifdef USE_QUIC
-# include <sys/time.h>
+#include <sys/time.h>
 #endif
 #include <netdb.h>
 #include <unistd.h>
@@ -278,24 +278,24 @@ void teardown_ctx(SSL_CTX *ctx)
 
 #ifdef USE_QUIC
 
-static inline void ms_to_timeval(struct timeval *t, int ms)
+static inline void ms_to_timeval(struct timeval* t, int ms)
 {
-    t->tv_sec   = ms < 0 ? -1 : ms/1000;
-    t->tv_usec  = ms < 0 ? 0 : (ms%1000)*1000;
+    t->tv_sec = ms < 0 ? -1 : ms / 1000;
+    t->tv_usec = ms < 0 ? 0 : (ms % 1000) * 1000;
 }
 
-static inline int timeval_to_ms(const struct timeval *t)
+static inline int timeval_to_ms(const struct timeval* t)
 {
-    return t->tv_sec*1000 + t->tv_usec/1000;
+    return t->tv_sec * 1000 + t->tv_usec / 1000;
 }
 
 #endif
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     int rc, fd = -1, res = 1;
     static char tx_msg[300];
-    const char *tx_p = tx_msg;
+    const char* tx_p = tx_msg;
     char rx_buf[2048];
     int l, tx_len;
 #ifdef USE_QUIC
@@ -303,9 +303,9 @@ int main(int argc, char **argv)
 #else
     int timeout = 2000 /* ms */;
 #endif
-    APP_CONN *conn = NULL;
-    struct addrinfo hints = {0}, *result = NULL;
-    SSL_CTX *ctx = NULL;
+    APP_CONN* conn = NULL;
+    struct addrinfo hints = { 0 }, *result = NULL;
+    SSL_CTX* ctx = NULL;
 
 #ifdef USE_QUIC
     ms_to_timeval(&timeout, 2000);
@@ -317,7 +317,7 @@ int main(int argc, char **argv)
     }
 
     tx_len = snprintf(tx_msg, sizeof(tx_msg),
-                      "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
+        "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {
@@ -325,9 +325,9 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    hints.ai_family     = AF_INET;
-    hints.ai_socktype   = SOCK_STREAM;
-    hints.ai_flags      = AI_PASSIVE;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
     rc = getaddrinfo(argv[1], argv[2], &hints, &result);
     if (rc < 0) {
         fprintf(stderr, "cannot resolve\n");
@@ -377,7 +377,7 @@ int main(int argc, char **argv)
 #ifdef USE_QUIC
             struct timeval start, now, deadline, t;
 #endif
-            struct pollfd pfd = {0};
+            struct pollfd pfd = { 0 };
 
 #ifdef USE_QUIC
             ms_to_timeval(&t, get_conn_pump_timeout(conn));
@@ -421,7 +421,7 @@ int main(int argc, char **argv)
 #ifdef USE_QUIC
             struct timeval start, now, deadline, t;
 #endif
-            struct pollfd pfd = {0};
+            struct pollfd pfd = { 0 };
 
 #ifdef USE_QUIC
             ms_to_timeval(&t, get_conn_pump_timeout(conn));

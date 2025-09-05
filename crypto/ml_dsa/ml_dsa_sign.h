@@ -10,6 +10,6 @@
 struct ml_dsa_sig_st {
     VECTOR z;
     VECTOR hint;
-    uint8_t *c_tilde;
+    uint8_t* c_tilde;
     size_t c_tilde_len;
 };

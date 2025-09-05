@@ -16,14 +16,14 @@
 
 /* Include the appropriate header file for SOCK_STREAM */
 #ifdef _WIN32 /* Windows */
-# include <stdarg.h>
-# include <winsock2.h>
+#include <stdarg.h>
+#include <winsock2.h>
 #else /* Linux/Unix */
-# include <err.h>
-# include <sys/socket.h>
-# include <sys/select.h>
-# include <netinet/in.h>
-# include <unistd.h>
+#include <err.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <netinet/in.h>
+#include <unistd.h>
 #endif
 
 #include <openssl/bio.h>
@@ -32,9 +32,9 @@
 #include <openssl/quic.h>
 
 #ifdef _WIN32
-static const char *progname;
+static const char* progname;
 
-static void vwarnx(const char *fmt, va_list ap)
+static void vwarnx(const char* fmt, va_list ap)
 {
     if (progname != NULL)
         fprintf(stderr, "%s: ", progname);
@@ -42,7 +42,7 @@ static void vwarnx(const char *fmt, va_list ap)
     putc('\n', stderr);
 }
 
-static void errx(int status, const char *fmt, ...)
+static void errx(int status, const char* fmt, ...)
 {
     va_list ap;
 
@@ -52,7 +52,7 @@ static void errx(int status, const char *fmt, ...)
     exit(status);
 }
 
-static void warnx(const char *fmt, ...)
+static void warnx(const char* fmt, ...)
 {
     va_list ap;
 
@@ -67,28 +67,47 @@ static void warnx(const char *fmt, ...)
  * are accepted.
  */
 static const unsigned char alpn_ossltest[] = {
-    8,  'h', 't', 't', 'p', '/', '1', '.', '0',
-    10, 'h', 'q', '-', 'i', 'n', 't', 'e', 'r', 'o', 'p',
+    8,
+    'h',
+    't',
+    't',
+    'p',
+    '/',
+    '1',
+    '.',
+    '0',
+    10,
+    'h',
+    'q',
+    '-',
+    'i',
+    'n',
+    't',
+    'e',
+    'r',
+    'o',
+    'p',
 };
 
 /*
  * This callback validates and negotiates the desired ALPN on the server side.
  */
-static int select_alpn(SSL *ssl, const unsigned char **out,
-                       unsigned char *out_len, const unsigned char *in,
-                       unsigned int in_len, void *arg)
+static int select_alpn(SSL* ssl, const unsigned char** out,
+    unsigned char* out_len, const unsigned char* in,
+    unsigned int in_len, void* arg)
 {
-    if (SSL_select_next_proto((unsigned char **)out, out_len, alpn_ossltest,
-                              sizeof(alpn_ossltest), in,
-                              in_len) == OPENSSL_NPN_NEGOTIATED)
+    if (SSL_select_next_proto((unsigned char**)out, out_len, alpn_ossltest,
+            sizeof(alpn_ossltest), in,
+            in_len)
+        == OPENSSL_NPN_NEGOTIATED)
         return SSL_TLSEXT_ERR_OK;
     return SSL_TLSEXT_ERR_ALERT_FATAL;
 }
 
 /* Create SSL_CTX. */
-static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
+static SSL_CTX* create_ctx(const char* cert_path, const char* key_path)
 {
-    SSL_CTX *ctx;
+    SSL_CTX* ctx;
 
     /*
      * An SSL_CTX holds shared configuration information for multiple
@@ -157,7 +176,7 @@ err:
 static int create_socket(uint16_t port)
 {
     int fd;
-    struct sockaddr_in sa = {0};
+    struct sockaddr_in sa = { 0 };
 
     /* Retrieve the file descriptor for a new UDP socket */
     if ((fd = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
@@ -169,7 +188,7 @@ static int create_socket(uint16_t port)
     sa.sin_port = htons(port);
 
     /* Bind to the new UDP socket on localhost */
-    if (bind(fd, (const struct sockaddr *)&sa, sizeof(sa)) < 0) {
+    if (bind(fd, (const struct sockaddr*)&sa, sizeof(sa)) < 0) {
         fprintf(stderr, "cannot bind to %u\n", port);
         BIO_closesocket(fd);
         goto err;
@@ -186,7 +205,7 @@ err:
  * Main loop for server to accept QUIC connections.
  * Echo every request back to the client.
  */
-static int run_quic_server(SSL_CTX *ctx, int fd)
+static int run_quic_server(SSL_CTX* ctx, int fd)
 {
     int ok = 0;
     SSL *listener, *conn;
@@ -259,14 +278,14 @@ err:
 }
 
 /* Minimal QUIC HTTP/1.0 server. */
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     int res = EXIT_FAILURE;
-    SSL_CTX *ctx = NULL;
+    SSL_CTX* ctx = NULL;
     int fd;
     unsigned long port;
 #ifdef _WIN32
-    static const char *progname;
+    static const char* progname;
 
     progname = argv[0];
 #endif

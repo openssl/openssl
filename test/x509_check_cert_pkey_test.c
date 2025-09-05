@@ -20,17 +20,17 @@
  * t: API type, "cert" for X509_ and "req" for X509_REQ_ APIs.
  * e: expected, "ok" for success, "failed" for what should fail.
  */
-static const char *c;
-static const char *k;
-static const char *t;
-static const char *e;
+static const char* c;
+static const char* k;
+static const char* t;
+static const char* e;
 
 static int test_x509_check_cert_pkey(void)
 {
-    BIO *bio = NULL;
-    X509 *x509 = NULL;
-    X509_REQ *x509_req = NULL;
-    EVP_PKEY *pkey = NULL;
+    BIO* bio = NULL;
+    X509* x509 = NULL;
+    X509_REQ* x509_req = NULL;
+    EVP_PKEY* pkey = NULL;
     int ret = 0, type = 0, expected = 0, result = 0;
 
     /*
@@ -106,14 +106,14 @@ failed:
     return ret;
 }
 
-static const char *file; /* path of a cert/CRL/key file in PEM format */
-static int expected;     /* expected number of certs/CRLs/keys included */
+static const char* file; /* path of a cert/CRL/key file in PEM format */
+static int expected; /* expected number of certs/CRLs/keys included */
 
 static int test_PEM_X509_INFO_read_bio(void)
 {
-    BIO *in;
-    STACK_OF(X509_INFO) *sk;
-    X509_INFO *it;
+    BIO* in;
+    STACK_OF(X509_INFO)* sk;
+    X509_INFO* it;
     int i, count = 0;
 
     if (!TEST_ptr((in = BIO_new_file(file, "r"))))
@@ -133,7 +133,7 @@ static int test_PEM_X509_INFO_read_bio(void)
     return TEST_int_eq(count, expected);
 }
 
-const OPTIONS *test_get_options(void)
+const OPTIONS* test_get_options(void)
 {
     enum { OPT_TEST_ENUM };
     static const OPTIONS test_options[] = {
@@ -158,10 +158,10 @@ int setup_tests(void)
     }
 
     if (test_get_argument_count() == 2) {
-        const char *num;  /* expected number of certs/CRLs/keys included */
+        const char* num; /* expected number of certs/CRLs/keys included */
 
         if (!TEST_ptr(file = test_get_argument(0))
-                || !TEST_ptr(num = test_get_argument(1)))
+            || !TEST_ptr(num = test_get_argument(1)))
             return 0;
         if (!TEST_int_eq(sscanf(num, "%d", &expected), 1))
             return 0;
@@ -170,9 +170,9 @@ int setup_tests(void)
     }
 
     if (!TEST_ptr(c = test_get_argument(0))
-            || !TEST_ptr(k = test_get_argument(1))
-            || !TEST_ptr(t = test_get_argument(2))
-            || !TEST_ptr(e = test_get_argument(3))) {
+        || !TEST_ptr(k = test_get_argument(1))
+        || !TEST_ptr(t = test_get_argument(2))
+        || !TEST_ptr(e = test_get_argument(3))) {
         return 0;
     }
 

@@ -17,13 +17,13 @@
 
 /* Handle 'other' PEMs: not private keys */
 
-void *PEM_ASN1_read_bio(d2i_of_void *d2i, const char *name, BIO *bp, void **x,
-                        pem_password_cb *cb, void *u)
+void* PEM_ASN1_read_bio(d2i_of_void* d2i, const char* name, BIO* bp, void** x,
+    pem_password_cb* cb, void* u)
 {
-    const unsigned char *p = NULL;
-    unsigned char *data = NULL;
+    const unsigned char* p = NULL;
+    unsigned char* data = NULL;
     long len;
-    char *ret = NULL;
+    char* ret = NULL;
 
     if (!PEM_bytes_read_bio(&data, &len, NULL, name, bp, cb, u))
         return NULL;

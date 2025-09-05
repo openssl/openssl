@@ -16,17 +16,17 @@
 #include <openssl/err.h>
 #include "fuzzer.h"
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(int* argc, char*** argv)
 {
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+int FuzzerTestOneInput(const uint8_t* buf, size_t len)
 {
-    CONF *conf;
-    BIO *in;
+    CONF* conf;
+    BIO* in;
     long eline;
 
     if (len == 0 || len > INT_MAX)

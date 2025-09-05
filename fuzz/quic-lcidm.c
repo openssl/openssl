@@ -15,7 +15,7 @@
 #include "internal/quic_lcidm.h"
 #include "internal/packet.h"
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(int* argc, char*** argv)
 {
     FuzzerSetRand();
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ASYNC, NULL);
@@ -48,9 +48,9 @@ enum {
     CMD_LOOKUP
 };
 
-#define MAX_CMDS    10000
+#define MAX_CMDS 10000
 
-static int get_cid(PACKET *pkt, QUIC_CONN_ID *cid)
+static int get_cid(PACKET* pkt, QUIC_CONN_ID* cid)
 {
     unsigned int cidl;
 
@@ -63,17 +63,17 @@ static int get_cid(PACKET *pkt, QUIC_CONN_ID *cid)
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+int FuzzerTestOneInput(const uint8_t* buf, size_t len)
 {
     int rc = 0;
-    QUIC_LCIDM *lcidm = NULL;
+    QUIC_LCIDM* lcidm = NULL;
     PACKET pkt;
     uint64_t arg_opaque, arg_retire_prior_to, seq_num_out;
     unsigned int cmd, lcidl;
     QUIC_CONN_ID arg_cid, cid_out;
     OSSL_QUIC_FRAME_NEW_CONN_ID ncid_frame;
     int did_retire;
-    void *opaque_out;
+    void* opaque_out;
     size_t limit = 0;
 
     if (!PACKET_buf_init(&pkt, buf, len))
@@ -105,8 +105,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                 goto err;
             }
 
-            ossl_quic_lcidm_enrol_odcid(lcidm, (void *)(uintptr_t)arg_opaque,
-                                        &arg_cid);
+            ossl_quic_lcidm_enrol_odcid(lcidm, (void*)(uintptr_t)arg_opaque,
+                &arg_cid);
             break;
 
         case CMD_RETIRE_ODCID:
@@ -115,7 +115,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                 goto err;
             }
 
-            ossl_quic_lcidm_retire_odcid(lcidm, (void *)(uintptr_t)arg_opaque);
+            ossl_quic_lcidm_retire_odcid(lcidm, (void*)(uintptr_t)arg_opaque);
             break;
 
         case CMD_GENERATE_INITIAL:
@@ -124,8 +124,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                 goto err;
             }
 
-            ossl_quic_lcidm_generate_initial(lcidm, (void *)(uintptr_t)arg_opaque,
-                                             &cid_out);
+            ossl_quic_lcidm_generate_initial(lcidm, (void*)(uintptr_t)arg_opaque,
+                &cid_out);
             break;
 
         case CMD_GENERATE:
@@ -134,8 +134,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                 goto err;
             }
 
-            ossl_quic_lcidm_generate(lcidm, (void *)(uintptr_t)arg_opaque,
-                                     &ncid_frame);
+            ossl_quic_lcidm_generate(lcidm, (void*)(uintptr_t)arg_opaque,
+                &ncid_frame);
             break;
 
         case CMD_RETIRE:
@@ -145,10 +145,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                 goto err;
             }
 
-            ossl_quic_lcidm_retire(lcidm, (void *)(uintptr_t)arg_opaque,
-                                   arg_retire_prior_to,
-                                   NULL, &cid_out,
-                                   &seq_num_out, &did_retire);
+            ossl_quic_lcidm_retire(lcidm, (void*)(uintptr_t)arg_opaque,
+                arg_retire_prior_to,
+                NULL, &cid_out,
+                &seq_num_out, &did_retire);
             break;
 
         case CMD_CULL:
@@ -157,7 +157,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                 goto err;
             }
 
-            ossl_quic_lcidm_cull(lcidm, (void *)(uintptr_t)arg_opaque);
+            ossl_quic_lcidm_cull(lcidm, (void*)(uintptr_t)arg_opaque);
             break;
 
         case CMD_LOOKUP:

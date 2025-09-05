@@ -28,7 +28,7 @@ static int test_asn1_meths(void)
     int prev = -1;
     int good = 1;
     int pkey_id;
-    const EVP_PKEY_ASN1_METHOD *ameth;
+    const EVP_PKEY_ASN1_METHOD* ameth;
 
     for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
         ameth = EVP_PKEY_asn1_get0(i);
@@ -36,12 +36,11 @@ static int test_asn1_meths(void)
         if (pkey_id < prev)
             good = 0;
         prev = pkey_id;
-
     }
     if (!good) {
         TEST_error("EVP_PKEY_ASN1_METHOD table out of order");
         for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
-            const char *info;
+            const char* info;
 
             ameth = EVP_PKEY_asn1_get0(i);
             EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, &info, NULL, ameth);
@@ -62,7 +61,7 @@ static int test_pkey_meths(void)
     int prev = -1;
     int good = 1;
     int pkey_id;
-    const EVP_PKEY_METHOD *pmeth;
+    const EVP_PKEY_METHOD* pmeth;
 
     for (i = 0; i < EVP_PKEY_meth_get_count(); i++) {
         pmeth = EVP_PKEY_meth_get0(i);
@@ -70,7 +69,6 @@ static int test_pkey_meths(void)
         if (pkey_id < prev)
             good = 0;
         prev = pkey_id;
-
     }
     if (!good) {
         TEST_error("EVP_PKEY_METHOD table out of order");

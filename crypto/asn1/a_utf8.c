@@ -25,9 +25,9 @@
  * -4 = character encoded incorrectly (not minimal length).
  */
 
-int UTF8_getc(const unsigned char *str, int len, unsigned long *val)
+int UTF8_getc(const unsigned char* str, int len, unsigned long* val)
 {
-    const unsigned char *p;
+    const unsigned char* p;
     unsigned long value;
     int ret;
     if (len <= 0)
@@ -90,10 +90,10 @@ int UTF8_getc(const unsigned char *str, int len, unsigned long *val)
  * characters. It will need at most 4 characters.
  */
 
-int UTF8_putc(unsigned char *str, int len, unsigned long value)
+int UTF8_putc(unsigned char* str, int len, unsigned long value)
 {
     if (!str)
-        len = 4;                /* Maximum we will need */
+        len = 4; /* Maximum we will need */
     else if (len <= 0)
         return -1;
     if (value < 0x80) {

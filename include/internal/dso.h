@@ -8,16 +8,16 @@
  */
 
 #ifndef OSSL_INTERNAL_DSO_H
-# define OSSL_INTERNAL_DSO_H
-# pragma once
+#define OSSL_INTERNAL_DSO_H
+#pragma once
 
-# include <openssl/crypto.h>
-# include "internal/dsoerr.h"
+#include <openssl/crypto.h>
+#include "internal/dsoerr.h"
 
 /* These values are used as commands to DSO_ctrl() */
-# define DSO_CTRL_GET_FLAGS      1
-# define DSO_CTRL_SET_FLAGS      2
-# define DSO_CTRL_OR_FLAGS       3
+#define DSO_CTRL_GET_FLAGS 1
+#define DSO_CTRL_SET_FLAGS 2
+#define DSO_CTRL_OR_FLAGS 3
 
 /*
  * By default, DSO_load() will translate the provided filename into a form
@@ -30,7 +30,7 @@
  * the caller has prompted the user for a path to a driver library so the
  * filename should be interpreted as-is.
  */
-# define DSO_FLAG_NO_NAME_TRANSLATION            0x01
+#define DSO_FLAG_NO_NAME_TRANSLATION 0x01
 /*
  * An extra flag to give if only the extension should be added as
  * translation.  This is obviously only of importance on Unix and other
@@ -38,21 +38,21 @@
  * something, like 'lib', and ignored everywhere else. This flag is also
  * ignored if DSO_FLAG_NO_NAME_TRANSLATION is used at the same time.
  */
-# define DSO_FLAG_NAME_TRANSLATION_EXT_ONLY      0x02
+#define DSO_FLAG_NAME_TRANSLATION_EXT_ONLY 0x02
 
 /*
  * Don't unload the DSO when we call DSO_free()
  */
-# define DSO_FLAG_NO_UNLOAD_ON_FREE              0x04
+#define DSO_FLAG_NO_UNLOAD_ON_FREE 0x04
 
 /*
  * This flag loads the library with public symbols. Meaning: The exported
  * symbols of this library are public to all libraries loaded after this
  * library. At the moment only implemented in unix.
  */
-# define DSO_FLAG_GLOBAL_SYMBOLS                 0x20
+#define DSO_FLAG_GLOBAL_SYMBOLS 0x20
 
-typedef void (*DSO_FUNC_TYPE) (void);
+typedef void (*DSO_FUNC_TYPE)(void);
 
 typedef struct dso_st DSO;
 typedef struct dso_meth_st DSO_METHOD;
@@ -65,7 +65,7 @@ typedef struct dso_meth_st DSO_METHOD;
  * error condition) or a newly allocated string containing the transformed
  * form that the caller will need to free with OPENSSL_free() when done.
  */
-typedef char *(*DSO_NAME_CONVERTER_FUNC)(DSO *, const char *);
+typedef char* (*DSO_NAME_CONVERTER_FUNC)(DSO*, const char*);
 /*
  * The function prototype used for method functions (or caller-provided
  * callbacks) that merge two file specifications. They are passed a DSO
@@ -81,20 +81,20 @@ typedef char *(*DSO_NAME_CONVERTER_FUNC)(DSO *, const char *);
  * it as the first specification is the one given by the user and the second
  * being a bunch of defaults to add on if they're missing in the first.
  */
-typedef char *(*DSO_MERGER_FUNC)(DSO *, const char *, const char *);
+typedef char* (*DSO_MERGER_FUNC)(DSO*, const char*, const char*);
 
-DSO *DSO_new(void);
-int DSO_free(DSO *dso);
-int DSO_flags(DSO *dso);
-int DSO_up_ref(DSO *dso);
-long DSO_ctrl(DSO *dso, int cmd, long larg, void *parg);
+DSO* DSO_new(void);
+int DSO_free(DSO* dso);
+int DSO_flags(DSO* dso);
+int DSO_up_ref(DSO* dso);
+long DSO_ctrl(DSO* dso, int cmd, long larg, void* parg);
 
 /*
  * These functions can be used to get/set the platform-independent filename
  * used for a DSO. NB: set will fail if the DSO is already loaded.
  */
-const char *DSO_get_filename(DSO *dso);
-int DSO_set_filename(DSO *dso, const char *filename);
+const char* DSO_get_filename(DSO* dso);
+int DSO_set_filename(DSO* dso, const char* filename);
 /*
  * This function will invoke the DSO's name_converter callback to translate a
  * filename, or if the callback isn't set it will instead use the DSO_METHOD's
@@ -105,14 +105,14 @@ int DSO_set_filename(DSO *dso, const char *filename);
  * that caller-created DSO_METHODs can do the same thing. A non-NULL return
  * value will need to be OPENSSL_free()'d.
  */
-char *DSO_convert_filename(DSO *dso, const char *filename);
+char* DSO_convert_filename(DSO* dso, const char* filename);
 /*
  * This function will invoke the DSO's merger callback to merge two file
  * specifications, or if the callback isn't set it will instead use the
  * DSO_METHOD's merger.  A non-NULL return value will need to be
  * OPENSSL_free()'d.
  */
-char *DSO_merge(DSO *dso, const char *filespec1, const char *filespec2);
+char* DSO_merge(DSO* dso, const char* filespec1, const char* filespec2);
 
 /*
  * The all-singing all-dancing load function, you normally pass NULL for the
@@ -121,17 +121,17 @@ char *DSO_merge(DSO *dso, const char *filespec1, const char *filespec2);
  * constructed DSO after its init() function but before the load operation.
  * If 'dso' is non-NULL, 'flags' is ignored.
  */
-DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags);
+DSO* DSO_load(DSO* dso, const char* filename, DSO_METHOD* meth, int flags);
 
 /* This function binds to a function inside a shared library. */
-DSO_FUNC_TYPE DSO_bind_func(DSO *dso, const char *symname);
+DSO_FUNC_TYPE DSO_bind_func(DSO* dso, const char* symname);
 
 /*
  * This method is the default, but will beg, borrow, or steal whatever method
  * should be the default on any particular platform (including
  * DSO_METH_null() if necessary).
  */
-DSO_METHOD *DSO_METHOD_openssl(void);
+DSO_METHOD* DSO_METHOD_openssl(void);
 
 /*
  * This function writes null-terminated pathname of DSO module containing
@@ -142,13 +142,13 @@ DSO_METHOD *DSO_METHOD_openssl(void);
  * pathname of cryptolib itself is returned. Negative or zero return value
  * denotes error.
  */
-int DSO_pathbyaddr(void *addr, char *path, int sz);
+int DSO_pathbyaddr(void* addr, char* path, int sz);
 
 /*
  * Like DSO_pathbyaddr() but instead returns a handle to the DSO for the symbol
  * or NULL on error.
  */
-DSO *DSO_dsobyaddr(void *addr, int flags);
+DSO* DSO_dsobyaddr(void* addr, int flags);
 
 /*
  * This function should be used with caution! It looks up symbols in *all*
@@ -159,6 +159,6 @@ DSO *DSO_dsobyaddr(void *addr, int flags);
  * OS-specific details such as libc.so.versioning or where does it actually
  * reside: in libc itself or libsocket.
  */
-void *DSO_global_lookup(const char *name);
+void* DSO_global_lookup(const char* name);
 
 #endif
