@@ -24,6 +24,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "crypto/sha.h"
 #include "prov/provider_ctx.h"
 #include "prov/digestcommon.h"
+#include "prov/implementations.h"
 #include "internal/common.h"
 #include "internal/sha3.h"
 
