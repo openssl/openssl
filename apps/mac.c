@@ -89,6 +89,7 @@ int mac_main(int argc, char **argv)
     int inform = FORMAT_BINARY;
     char *digest = NULL, *cipher = NULL;
     OSSL_PARAM *params = NULL;
+    char *new_opt = NULL;
 
     prog = opt_init(argc, argv, mac_options);
     buf = app_malloc(BUFSIZE, "I/O buffer");
@@ -112,10 +113,17 @@ opthelp:
             outfile = opt_arg();
             break;
         case OPT_MACOPT:
+            new_opt = process_additional_mac_key_arguments(opt_arg());
+            if (new_opt == NULL) {
+                ret = 1;
+                goto err;
+            }
             if (opts == NULL)
                 opts = sk_OPENSSL_STRING_new_null();
-            if (opts == NULL || !sk_OPENSSL_STRING_push(opts, opt_arg()))
+            if (opts == NULL || !sk_OPENSSL_STRING_push(opts, new_opt)) {
+                clear_free(new_opt);
                 goto opthelp;
+            }
             break;
         case OPT_CIPHER:
             OPENSSL_free(cipher);
@@ -225,9 +233,7 @@ err:
     if (ret != 0)
         ERR_print_errors(bio_err);
     OPENSSL_clear_free(buf, BUFSIZE);
-    OPENSSL_free(cipher);
-    OPENSSL_free(digest);
-    sk_OPENSSL_STRING_free(opts);
+    sk_OPENSSL_STRING_pop_free(opts, clear_free);
     BIO_free(in);
     BIO_free(out);
     EVP_MAC_CTX_free(ctx);
