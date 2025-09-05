@@ -604,6 +604,8 @@ L<https://www.openssl.org/source/>
 
 The HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 algorithms were added in OpenSSL 3.6.
 
+The CSHAKE-128 and CSHAKE-256 algorithms were added in OpenSSL 4.0.
+
 All other functionality was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
