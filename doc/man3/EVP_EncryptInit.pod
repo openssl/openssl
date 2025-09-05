@@ -850,7 +850,7 @@ See also EVP_CIPHER_CTX_get_key_length() and EVP_CIPHER_CTX_set_key_length().
 =item "tag" (B<OSSL_CIPHER_PARAM_AEAD_TAG>) <octet string>
 
 Gets or sets the AEAD tag for the associated cipher context I<ctx>.
-See L<EVP_EncryptInit(3)/AEAD Interface>.
+See L<EVP_EncryptInit(3)/AEAD INTERFACE>.
 
 =item "pipeline-tag" (B<OSSL_CIPHER_PARAM_PIPELINE_AEAD_TAG>) <octet ptr>
 
