@@ -13,9 +13,11 @@
  * for the EdelKey project.
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_SRP_H
 # define OPENSSL_SRP_H
@@ -45,9 +47,11 @@ typedef struct SRP_gN_cache_st {
     char *b64_bn;
     BIGNUM *bn;
 } SRP_gN_cache;
+/* clang-format off */
 {-
     generate_stack_macros("SRP_gN_cache");
 -}
+/* clang-format on */
 
 
 typedef struct SRP_user_pwd_st {
@@ -61,9 +65,11 @@ typedef struct SRP_user_pwd_st {
     /* Owned by us. */
     char *info;
 } SRP_user_pwd;
+/* clang-format off */
 {-
     generate_stack_macros("SRP_user_pwd");
 -}
+/* clang-format on */
 
 OSSL_DEPRECATEDIN_3_0
 SRP_user_pwd *SRP_user_pwd_new(void);
@@ -96,9 +102,11 @@ typedef struct SRP_gN_st {
     const BIGNUM *g;
     const BIGNUM *N;
 } SRP_gN;
+/* clang-format off */
 {-
     generate_stack_macros("SRP_gN");
 -}
+/* clang-format on */
 
 
 OSSL_DEPRECATEDIN_3_0
