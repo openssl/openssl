@@ -21,6 +21,8 @@ plan skip_all => "GOST engine tests only available in a shared build"
     if disabled("shared");
 plan skip_all => "GOST engine tests not supported in out of tree builds"
     if bldtop_dir() ne srctop_dir();
+plan skip_all => "we are removing engines"
+    if disabled("engine");
 
 plan tests => 1;
 

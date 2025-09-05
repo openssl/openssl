@@ -20,6 +20,9 @@ my @path = qw(test certs);
 plan skip_all => "engines are deprecated"
     if disabled('deprecated-3.0');
 
+plan skip_all => "we are removing engines"
+    if disabled('engine');
+
 plan tests => 1;
 ok(run(test(["enginetest", srctop_file(@path, "root-cert.pem")])),
    "running enginetest");
