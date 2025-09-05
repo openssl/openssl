@@ -17,7 +17,6 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
-#include "crypto/sha.h"
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "internal/sha3.h"
