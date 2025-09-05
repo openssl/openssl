@@ -12,6 +12,7 @@
  * e.g. It is used by KMAC and cSHAKE
  */
 
+#include "internal/deprecated.h"
 #include <string.h> /* memcpy */
 #include <openssl/err.h>
 #include <openssl/proverr.h>
