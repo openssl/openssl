@@ -358,8 +358,8 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
         return 0;
     res = ossl_sp800_185_bytepad(out, out_len, NULL, kmac_string, sizeof(kmac_string),
                                  kctx->custom, kctx->custom_len, block_len)
-          && EVP_DigestUpdate(ctx, out, out_len)
-          && EVP_DigestUpdate(ctx, kctx->key, kctx->key_len);
+        && EVP_DigestUpdate(ctx, out, out_len)
+        && EVP_DigestUpdate(ctx, kctx->key, kctx->key_len);
     OPENSSL_free(out);
     return res;
 }
