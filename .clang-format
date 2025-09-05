@@ -1,0 +1,296 @@
+---
+BasedOnStyle: WebKit
+###################################
+#
+# OpenSSL Customizations start here.
+#
+# Customizing whitespace config should be avoided, but WebKit C style
+# does specify this for C. (with C++ being the other way around) Due
+# to limitations in clang-format it's not possible for it to default
+# to C today, it defaults to C++. Therefore we force this to the
+# WebKit C style value. If we ever have C++ code we will have to
+# consider how to deal with this.
+PointerAlignment: Right
+#
+# we add matches for /** and /*- at the top
+# of a comment block to protect comments as
+# per STYLE.md
+CommentPragmas:  '(^ IWYU pragma:|^\*$|^-$)'
+# OpenSSL uses macros extensively. Tell clang-format about them.
+TypenameMacros: ['LHASH_OF', 'STACK_OF']
+StatementMacros:
+  - "DECLARE_AES_EVP"
+  - "DECLARE_ASN1_ALLOC_FUNCTIONS"
+  - "DECLARE_ASN1_ALLOC_FUNCTIONS_attr"
+  - "DECLARE_ASN1_ALLOC_FUNCTIONS_name"
+  - "DECLARE_ASN1_ALLOC_FUNCTIONS_name_attr"
+  - "DECLARE_ASN1_DUP_FUNCTION"
+  - "DECLARE_ASN1_DUP_FUNCTION_attr"
+  - "DECLARE_ASN1_DUP_FUNCTION_name"
+  - "DECLARE_ASN1_DUP_FUNCTION_name_attr"
+  - "DECLARE_ASN1_ENCODE_FUNCTIONS"
+  - "DECLARE_ASN1_ENCODE_FUNCTIONS_attr"
+  - "DECLARE_ASN1_ENCODE_FUNCTIONS_const"
+  - "DECLARE_ASN1_ENCODE_FUNCTIONS_name"
+  - "DECLARE_ASN1_ENCODE_FUNCTIONS_name_attr"
+  - "DECLARE_ASN1_ENCODE_FUNCTIONS_only"
+  - "DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr"
+  - "DECLARE_ASN1_FUNCTIONS"
+  - "DECLARE_ASN1_FUNCTIONS_attr"
+  - "DECLARE_ASN1_FUNCTIONS_const"
+  - "DECLARE_ASN1_FUNCTIONS_fname"
+  - "DECLARE_ASN1_FUNCTIONS_name"
+  - "DECLARE_ASN1_FUNCTIONS_name_attr"
+  - "DECLARE_ASN1_ITEM"
+  - "DECLARE_ASN1_ITEM_attr"
+  - "DECLARE_ASN1_NDEF_FUNCTION"
+  - "DECLARE_ASN1_NDEF_FUNCTION_attr"
+  - "DECLARE_ASN1_PRINT_FUNCTION"
+  - "DECLARE_ASN1_PRINT_FUNCTION_attr"
+  - "DECLARE_ASN1_PRINT_FUNCTION_fname"
+  - "DECLARE_ASN1_PRINT_FUNCTION_fname_attr"
+  - "DECLARE_COMPARISON"
+  - "DECLARE_COMPARISONS"
+  - "DECLARE_DISPATCH"
+  - "DECLARE_HT_VALUE_TYPE_FNS"
+  - "DECLARE_LHASH_COMP_FN"
+  - "DECLARE_LHASH_DOALL_ARG_FN"
+  - "DECLARE_LHASH_HASH_FN"
+  - "DECLARE_LIST_OF"
+  - "DECLARE_ML_KEM_PRVKEYDATA"
+  - "DECLARE_ML_KEM_PUBKEYDATA"
+  - "DECLARE_ML_KEM_VARIANT_KEYDATA"
+  - "DECLARE_OBJ_BSEARCH_CMP_FN"
+  - "DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN"
+  - "DECLARE_PEM_read"
+  - "DECLARE_PEM_read_attr"
+  - "DECLARE_PEM_read_bio"
+  - "DECLARE_PEM_read_bio_attr"
+  - "DECLARE_PEM_read_bio_ex"
+  - "DECLARE_PEM_read_bio_ex_attr"
+  - "DECLARE_PEM_read_ex"
+  - "DECLARE_PEM_read_ex_attr"
+  - "DECLARE_PEM_read_fp"
+  - "DECLARE_PEM_read_fp_attr"
+  - "DECLARE_PEM_read_fp_ex_attr"
+  - "DECLARE_PEM_rw"
+  - "DECLARE_PEM_rw_attr"
+  - "DECLARE_PEM_rw_cb"
+  - "DECLARE_PEM_rw_cb_attr"
+  - "DECLARE_PEM_rw_cb_ex"
+  - "DECLARE_PEM_rw_cb_ex_attr"
+  - "DECLARE_PEM_rw_const"
+  - "DECLARE_PEM_rw_const_attr"
+  - "DECLARE_PEM_rw_ex"
+  - "DECLARE_PEM_rw_ex_attr"
+  - "DECLARE_PEM_write"
+  - "DECLARE_PEM_write_attr"
+  - "DECLARE_PEM_write_bio"
+  - "DECLARE_PEM_write_bio_attr"
+  - "DECLARE_PEM_write_bio_const"
+  - "DECLARE_PEM_write_bio_const_attr"
+  - "DECLARE_PEM_write_bio_ex"
+  - "DECLARE_PEM_write_bio_ex_attr"
+  - "DECLARE_PEM_write_cb"
+  - "DECLARE_PEM_write_cb_attr"
+  - "DECLARE_PEM_write_cb_bio"
+  - "DECLARE_PEM_write_cb_bio_attr"
+  - "DECLARE_PEM_write_cb_bio_ex_attr"
+  - "DECLARE_PEM_write_cb_ex"
+  - "DECLARE_PEM_write_cb_ex_attr"
+  - "DECLARE_PEM_write_cb_ex_bio"
+  - "DECLARE_PEM_write_cb_fp"
+  - "DECLARE_PEM_write_cb_fp_attr"
+  - "DECLARE_PEM_write_cb_fp_ex_attr"
+  - "DECLARE_PEM_write_const"
+  - "DECLARE_PEM_write_const_attr"
+  - "DECLARE_PEM_write_ex"
+  - "DECLARE_PEM_write_ex_attr"
+  - "DECLARE_PEM_write_fp"
+  - "DECLARE_PEM_write_fp_attr"
+  - "DECLARE_PEM_write_fp_const"
+  - "DECLARE_PEM_write_fp_const_attr"
+  - "DECLARE_PEM_write_fp_ex_attr"
+  - "DECLARE_RUN_ONCE"
+  - "DECLARE_VARIANT"
+  - "IMPLEMENT_aead_cipher"
+  - "IMPLEMENT_aead_cipher_pipeline"
+  - "IMPLEMENT_ARIA_CFBR"
+  - "IMPLEMENT_ASN1_ALLOC_FUNCTIONS"
+  - "IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname"
+  - "IMPLEMENT_ASN1_ALLOC_FUNCTIONS_pfname"
+  - "IMPLEMENT_ASN1_DUP_FUNCTION"
+  - "IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname"
+  - "IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname"
+  - "IMPLEMENT_ASN1_FUNCTIONS"
+  - "IMPLEMENT_ASN1_FUNCTIONS_const"
+  - "IMPLEMENT_ASN1_FUNCTIONS_ENCODE_name"
+  - "IMPLEMENT_ASN1_FUNCTIONS_fname"
+  - "IMPLEMENT_ASN1_FUNCTIONS_name"
+  - "IMPLEMENT_ASN1_MSTRING"
+  - "IMPLEMENT_ASN1_NDEF_FUNCTION"
+  - "IMPLEMENT_ASN1_PRINT_FUNCTION"
+  - "IMPLEMENT_ASN1_PRINT_FUNCTION_fname"
+  - "IMPLEMENT_ASN1_STRING_FUNCTIONS"
+  - "IMPLEMENT_ASN1_TYPE"
+  - "IMPLEMENT_ASN1_TYPE_ex"
+  - "IMPLEMENT_BLAKE_functions"
+  - "IMPLEMENT_BLOCK_CIPHER"
+  - "IMPLEMENT_CFBR"
+  - "IMPLEMENT_cipher"
+  - "IMPLEMENT_CIPHER"
+  - "IMPLEMENT_CIPHER_HW_CBC"
+  - "IMPLEMENT_CIPHER_HW_CFB"
+  - "IMPLEMENT_CIPHER_HW_COPYCTX"
+  - "IMPLEMENT_CIPHER_HW_ECB"
+  - "IMPLEMENT_CIPHER_HW_OFB"
+  - "IMPLEMENT_CRMF_CTRL_FUNC"
+  - "IMPLEMENT_cts_cipher"
+  - "IMPLEMENT_des_cipher"
+  - "IMPLEMENT_DIGEST"
+  - "IMPLEMENT_digest_functions"
+  - "IMPLEMENT_digest_functions_with_settable_ctx"
+  - "IMPLEMENT_dtls1_meth_func"
+  - "IMPLEMENT_DYNAMIC_BIND_FN"
+  - "IMPLEMENT_DYNAMIC_CHECK_FN"
+  - "IMPLEMENT_ECX_VARIANT"
+  - "IMPLEMENT_EXTERN_ASN1"
+  - "IMPLEMENT_generic_cipher"
+  - "IMPLEMENT_generic_cipher_func"
+  - "IMPLEMENT_generic_cipher_genfn"
+  - "IMPLEMENT_HT_VALUE_TYPE_FNS"
+  - "IMPLEMENT_KECCAK_functions"
+  - "IMPLEMENT_KMAC_functions"
+  - "IMPLEMENT_KMAC_TABLE"
+  - "IMPLEMENT_LEGACY_ERR_LOAD"
+  - "IMPLEMENT_LEGACY_EVP_MD_METH"
+  - "IMPLEMENT_LEGACY_EVP_MD_METH_LC"
+  - "IMPLEMENT_LEGACY_EVP_MD_METH_SHA3"
+  - "IMPLEMENT_LEGACY_EVP_MD_METH_SHAKE"
+  - "IMPLEMENT_LHASH_COMP_FN"
+  - "IMPLEMENT_LHASH_DOALL_ARG"
+  - "IMPLEMENT_LHASH_DOALL_ARG_CONST"
+  - "IMPLEMENT_LHASH_DOALL_ARG_FN"
+  - "IMPLEMENT_LHASH_HASH_FN"
+  - "IMPLEMENT_MS"
+  - "IMPLEMENT_MSBLOB"
+  - "IMPLEMENT_OBJ_BSEARCH_CMP_FN"
+  - "IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN"
+  - "IMPLEMENT_PEM_provided_rw"
+  - "IMPLEMENT_PEM_provided_rw_cb"
+  - "IMPLEMENT_PEM_provided_write"
+  - "IMPLEMENT_PEM_provided_write_bio"
+  - "IMPLEMENT_PEM_provided_write_body_fallback"
+  - "IMPLEMENT_PEM_provided_write_body_fallback_cb"
+  - "IMPLEMENT_PEM_provided_write_body_main"
+  - "IMPLEMENT_PEM_provided_write_body_pass"
+  - "IMPLEMENT_PEM_provided_write_body_vars"
+  - "IMPLEMENT_PEM_provided_write_cb"
+  - "IMPLEMENT_PEM_provided_write_cb_bio"
+  - "IMPLEMENT_PEM_provided_write_cb_fp"
+  - "IMPLEMENT_PEM_provided_write_cb_to"
+  - "IMPLEMENT_PEM_provided_write_fp"
+  - "IMPLEMENT_PEM_provided_write_to"
+  - "IMPLEMENT_PEM_read"
+  - "IMPLEMENT_PEM_read_bio"
+  - "IMPLEMENT_PEM_read_fp"
+  - "IMPLEMENT_PEM_rw"
+  - "IMPLEMENT_PEM_rw_cb"
+  - "IMPLEMENT_PEM_rw_const"
+  - "IMPLEMENT_PEM_write"
+  - "IMPLEMENT_PEM_write_bio"
+  - "IMPLEMENT_PEM_write_bio_const"
+  - "IMPLEMENT_PEM_write_cb"
+  - "IMPLEMENT_PEM_write_cb_bio"
+  - "IMPLEMENT_PEM_write_cb_bio_const"
+  - "IMPLEMENT_PEM_write_cb_const"
+  - "IMPLEMENT_PEM_write_cb_fp"
+  - "IMPLEMENT_PEM_write_cb_fp_const"
+  - "IMPLEMENT_PEM_write_const"
+  - "IMPLEMENT_PEM_write_fp"
+  - "IMPLEMENT_PEM_write_fp_const"
+  - "IMPLEMENT_quic_meth_func"
+  - "IMPLEMENT_SHA3_functions"
+  - "IMPLEMENT_SHAKE_functions"
+  - "IMPLEMENT_SSL_TEST_BOOL_OPTION"
+  - "IMPLEMENT_SSL_TEST_INT_OPTION"
+  - "IMPLEMENT_SSL_TEST_STRING_OPTION"
+  - "IMPLEMENT_ssl3_meth_func"
+  - "IMPLEMENT_STATIC_ASN1_ALLOC_FUNCTIONS"
+  - "IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS"
+  - "IMPLEMENT_tdes_cipher"
+  - "IMPLEMENT_TEST_SUITE"
+  - "IMPLEMENT_TEST_SUITE_LEGACY"
+  - "IMPLEMENT_TEST_SUITE_MSBLOB"
+  - "IMPLEMENT_TEST_SUITE_PARAMS"
+  - "IMPLEMENT_TEST_SUITE_PROTECTED_PVK"
+  - "IMPLEMENT_TEST_SUITE_UNPROTECTED_PVK"
+  - "IMPLEMENT_tls_meth_func"
+  - "IMPLEMENT_var_keylen_cipher"
+  - "IMPLEMENT_var_keylen_cipher_func"
+  - "IMPLEMENT_WRAP_CIPHER"
+  - "ASN1_ADB_END"
+  - "ASN1_CHOICE_END"
+  - "ASN1_CHOICE_END_cb"
+  - "ASN1_CHOICE_END_name"
+  - "ASN1_CHOICE_END_selector"
+  - "ASN1_F_ASN1_FIND_END                             0"
+  - "ASN1_ITEM_TEMPLATE_END"
+  - "ASN1_NDEF_SEQUENCE_END"
+  - "ASN1_NDEF_SEQUENCE_END_cb"
+  - "ASN1_SEQUENCE_END"
+  - "ASN1_SEQUENCE_END_cb"
+  - "ASN1_SEQUENCE_END_enc"
+  - "ASN1_SEQUENCE_END_name"
+  - "ASN1_SEQUENCE_END_ref"
+  # This isn't quite right, but it causes clang-format to do a slightly better
+  # job formatting this macro.
+  - "ASN1_EX_TEMPLATE_TYPE"
+  - "LAZY"
+#
+# Include sorting should be disabled until post 4.0
+#
+#SortIncludes:
+#  Enabled:         false
+#  IgnoreCase:      false
+#  IgnoreExtension: false
+SortIncludes:    Never
+IncludeBlocks:   Preserve
+IncludeCategories:
+#  # deprecated must always be first
+#  - Regex:           '^"internal/deprecated.h"'
+#    Priority:        -10
+#    SortPriority:    0
+#    CaseSensitive:   false
+#  # bio_local is special
+#  - Regex:           '^"bio_local.h"'
+#    Priority:        -1
+#    SortPriority:    0
+#    CaseSensitive:   false
+#  - Regex:           '^"crypto/.*\.h"'
+#    Priority:        5
+#    SortPriority:    0
+#    CaseSensitive:   false
+#  - Regex:           '^"internal/.*\.h"'
+#    Priority:        4
+#    SortPriority:    0
+#    CaseSensitive:   false
+#  - Regex:           '^<openssl/.*\.h>'
+#    Priority:        3
+#    SortPriority:    0
+#    CaseSensitive:   false
+#  - Regex:           '^<.*\.h>'
+#    Priority:        1
+#    SortPriority:    0
+#    CaseSensitive:   false
+#  # we do not currently include C++ style files, in case we ever do?
+#  - Regex:           '^<.*'
+#    Priority:        2
+#    SortPriority:    0
+#    CaseSensitive:   false
+#  - Regex:           '.*'
+#    Priority:        6
+#    SortPriority:    0
+#    CaseSensitive:   false
+...
+
