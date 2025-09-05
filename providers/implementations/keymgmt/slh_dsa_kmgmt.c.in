@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -105,10 +107,12 @@ static int slh_dsa_validate(const void *key_data, int selection, int check_type)
     return 1;
 }
 
+/* clang-format off */
 {- produce_param_decoder('slh_dsa_import',
                          (['PKEY_PARAM_PUB_KEY',           'pub',     'octet_string'],
                           ['PKEY_PARAM_PRIV_KEY',          'priv',    'octet_string'],
                          )); -}
+/* clang-format on */
 
 static int slh_dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
@@ -135,6 +139,7 @@ static const OSSL_PARAM *slh_dsa_imexport_types(int selection)
     return slh_dsa_import_list;
 }
 
+/* clang-format off */
 {- produce_param_decoder('slh_dsa_get_params',
                          (['PKEY_PARAM_BITS',              'bits',    'int'],
                           ['PKEY_PARAM_SECURITY_BITS',     'secbits', 'int'],
@@ -144,6 +149,7 @@ static const OSSL_PARAM *slh_dsa_imexport_types(int selection)
                           ['PKEY_PARAM_PUB_KEY',           'pub',     'octet_string'],
                           ['PKEY_PARAM_PRIV_KEY',          'priv',    'octet_string'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *slh_dsa_gettable_params(void *provctx)
 {
@@ -369,10 +375,12 @@ static void *slh_dsa_gen(void *genctx, const char *alg)
     return NULL;
 }
 
+/* clang-format off */
 {- produce_param_decoder('slh_dsa_gen_set_params',
                          (['PKEY_PARAM_PROPERTIES',   'propq', 'utf8_string'],
                           ['PKEY_PARAM_SLH_DSA_SEED', 'seed',  'octet_string'],
                          )); -}
+/* clang-format on */
 
 static int slh_dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
