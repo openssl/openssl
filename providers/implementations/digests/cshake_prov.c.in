@@ -107,7 +107,7 @@ static int cshake_set_encode_string(const char *in,
     if (inlen >= CSHAKE_MAX_STRING)
         return 0;
     return ossl_sp800_185_encode_string(out, outmax, outlen,
-                                        (const unsigned char*)in, inlen);
+                                        (const unsigned char *)in, inlen);
 }
 
 /*
@@ -117,6 +117,7 @@ static int cshake_set_encode_string(const char *in,
 static int cshake_set_xoflen(CSHAKE_CTX *ctx, size_t xoflen)
 {
     OSSL_PARAM params[2];
+
     params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &xoflen);
     params[1] = OSSL_PARAM_construct_end();
 
@@ -128,7 +129,7 @@ static int cshake_set_xoflen(CSHAKE_CTX *ctx, size_t xoflen)
 
 /*
  * Fetch a digest for SHAKE or KECCAK, set its xof len and init it
- * into an mdctx. 
+ * into an mdctx.
  */
 static int cshake_set_shake_mode(CSHAKE_CTX *ctx, int shake)
 {
@@ -157,7 +158,7 @@ static int cshake_set_shake_mode(CSHAKE_CTX *ctx, int shake)
 
 static void *cshake_newctx(void *provctx, size_t bitlen)
 {
-     CSHAKE_CTX *ctx;
+    CSHAKE_CTX *ctx;
 
     if (ossl_unlikely(!ossl_prov_is_running()))
         return NULL;
@@ -176,7 +177,7 @@ static void cshake_freectx(void *vctx)
 
     EVP_MD_free(ctx->md);
     EVP_MD_CTX_destroy(ctx->mdctx);
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
 static void *cshake_dupctx(void *ctx)
@@ -184,6 +185,7 @@ static void *cshake_dupctx(void *ctx)
     CSHAKE_CTX *src = (CSHAKE_CTX *)ctx;
     CSHAKE_CTX *ret = ossl_prov_is_running() ? OPENSSL_malloc(sizeof(*ret))
                                              : NULL;
+
     if (ret != NULL) {
         *ret = *src;
         ret->md = NULL;
@@ -360,12 +362,12 @@ static int cshake_update(void *vctx, const unsigned char *in, size_t inlen)
 static int cshake_final(void *vctx, uint8_t *out, size_t *outl, size_t outsz)
 {
     CSHAKE_CTX *ctx = (CSHAKE_CTX *)vctx;
-    unsigned int der = (*outl);
+    unsigned int der = (unsigned int)(*outl);
     int ret = 1;
 
     if (ossl_unlikely(!ossl_prov_is_running()))
         return 0;
-   
+
     if (outsz > 0)
         ret = check_init(ctx) && EVP_DigestFinal_ex(ctx->mdctx, out, &der);
     *outl = der;
