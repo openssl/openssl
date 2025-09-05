@@ -166,9 +166,6 @@ static int check_pem(const char *nm, const char *name)
                     r = 1;
                 else
                     r = 0;
-#ifndef OPENSSL_NO_ENGINE
-                ENGINE_finish(e);
-#endif
                 return r;
             }
         }

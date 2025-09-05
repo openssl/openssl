@@ -83,7 +83,6 @@ struct ossl_store_loader_st {
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     /* Legacy stuff */
     const char *scheme;
-    ENGINE *engine;
     OSSL_STORE_open_fn open;
     OSSL_STORE_attach_fn attach;
     OSSL_STORE_ctrl_fn ctrl;

@@ -29,8 +29,6 @@ struct dsa_st {
     CRYPTO_EX_DATA ex_data;
 #endif
     const DSA_METHOD *meth;
-    /* functional reference if 'meth' is ENGINE-provided */
-    ENGINE *engine;
     CRYPTO_RWLOCK *lock;
     OSSL_LIB_CTX *libctx;
 

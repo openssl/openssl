@@ -27,7 +27,7 @@ static int verbose = 0;
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT,
-    OPT_NOOUT, OPT_GENKEY, OPT_ENGINE, OPT_VERBOSE, OPT_QUIET,
+    OPT_NOOUT, OPT_GENKEY, OPT_VERBOSE, OPT_QUIET,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -36,9 +36,6 @@ const OPTIONS dsaparam_options[] = {
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
-#endif
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
@@ -64,7 +61,6 @@ const OPTIONS dsaparam_options[] = {
 
 int dsaparam_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
     BIO *out = NULL;
     EVP_PKEY *params = NULL, *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -99,9 +95,6 @@ int dsaparam_main(int argc, char **argv)
             break;
         case OPT_OUT:
             outfile = opt_arg();
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_TEXT:
             text = 1;
@@ -248,6 +241,5 @@ int dsaparam_main(int argc, char **argv)
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     EVP_PKEY_free(params);
-    release_engine(e);
     return ret;
 }

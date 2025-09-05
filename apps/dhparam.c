@@ -37,7 +37,7 @@ static int verbose = 1;
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
-    OPT_ENGINE, OPT_CHECK, OPT_TEXT, OPT_NOOUT,
+    OPT_CHECK, OPT_TEXT, OPT_NOOUT,
     OPT_DSAPARAM, OPT_2, OPT_3, OPT_5, OPT_VERBOSE, OPT_QUIET,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
@@ -51,9 +51,6 @@ const OPTIONS dhparam_options[] = {
 #if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"dsaparam", OPT_DSAPARAM, '-',
      "Read or generate DSA parameters, convert to DH"},
-#endif
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 #endif
 
     OPT_SECTION("Input"),
@@ -85,7 +82,6 @@ int dhparam_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL, *tmppkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
-    ENGINE *e = NULL;
     int dsaparam = 0;
     int text = 0, ret = 1, num = 0, g = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, check = 0, noout = 0;
@@ -116,9 +112,6 @@ int dhparam_main(int argc, char **argv)
             break;
         case OPT_OUT:
             outfile = opt_arg();
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_CHECK:
             check = 1;
@@ -362,7 +355,6 @@ int dhparam_main(int argc, char **argv)
     EVP_PKEY_free(pkey);
     EVP_PKEY_free(tmppkey);
     EVP_PKEY_CTX_free(ctx);
-    release_engine(e);
     return ret;
 }
 

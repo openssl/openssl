@@ -228,7 +228,7 @@ SSL_get_current_compression             228	3_0_0	EXIST::FUNCTION:
 SSL_SESSION_has_ticket                  229	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_cert_verify_callback        230	3_0_0	EXIST::FUNCTION:
 SSL_set_session_secret_cb               231	3_0_0	EXIST::FUNCTION:
-SSL_CTX_set_client_cert_engine          232	3_0_0	EXIST::FUNCTION:ENGINE
+SSL_CTX_set_client_cert_engine          232	3_0_0	NOEXIST::FUNCTION:ENGINE
 SSL_CTX_get0_param                      233	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set1_param                      234	3_0_0	EXIST::FUNCTION:
 SSL_get_certificate                     235	3_0_0	EXIST::FUNCTION:

@@ -1520,7 +1520,7 @@ CMS_SignerInfo_sign                     1554	3_0_0	EXIST::FUNCTION:CMS
 ASN1_item_i2d_bio                       1555	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_get_block_size           1556	3_0_0	EXIST::FUNCTION:
 DIRECTORYSTRING_free                    1557	3_0_0	EXIST::FUNCTION:
-TS_CONF_set_default_engine              1558	3_0_0	EXIST::FUNCTION:ENGINE,TS
+TS_CONF_set_default_engine              1558	3_0_0	NOEXIST::FUNCTION:ENGINE,TS
 BN_set_bit                              1559	3_0_0	EXIST::FUNCTION:
 EVP_MD_meth_set_app_datasize            1560	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 DSO_free                                1561	3_0_0	EXIST::FUNCTION:
@@ -1745,7 +1745,7 @@ NAME_CONSTRAINTS_check                  1786	3_0_0	EXIST::FUNCTION:
 X509_CERT_AUX_it                        1787	3_0_0	EXIST::FUNCTION:
 X509_get_X509_PUBKEY                    1789	3_0_0	EXIST::FUNCTION:
 TXT_DB_create_index                     1790	3_0_0	EXIST::FUNCTION:
-RAND_set_rand_engine                    1791	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
+RAND_set_rand_engine                    1791	3_0_0	NOEXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 X509_set_serialNumber                   1792	3_0_0	EXIST::FUNCTION:
 BN_mod_exp_mont_consttime               1793	3_0_0	EXIST::FUNCTION:
 X509V3_parse_list                       1794	3_0_0	EXIST::FUNCTION:
@@ -2354,7 +2354,7 @@ i2d_ECDSA_SIG                           2404	3_0_0	EXIST::FUNCTION:EC
 BIO_dump_indent                         2405	3_0_0	EXIST::FUNCTION:
 ENGINE_set_pkey_asn1_meths              2406	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 OPENSSL_gmtime_diff                     2407	3_0_0	EXIST::FUNCTION:
-TS_CONF_set_crypto_device               2408	3_0_0	EXIST::FUNCTION:ENGINE,TS
+TS_CONF_set_crypto_device               2408	3_0_0	NOEXIST::FUNCTION:ENGINE,TS
 COMP_CTX_get_method                     2409	3_0_0	EXIST::FUNCTION:COMP
 EC_GROUP_get_cofactor                   2410	3_0_0	EXIST::FUNCTION:EC
 EVP_rc5_32_12_16_ofb                    2411	3_0_0	EXIST::FUNCTION:RC5
@@ -3729,7 +3729,7 @@ i2d_IPAddressRange                      3813	3_0_0	EXIST::FUNCTION:RFC3779
 CMS_unsigned_add1_attr_by_txt           3814	3_0_0	EXIST::FUNCTION:CMS
 d2i_RSA_PUBKEY                          3815	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 PKCS12_gen_mac                          3816	3_0_0	EXIST::FUNCTION:
-ERR_load_ENGINE_strings                 3817	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
+ERR_load_ENGINE_strings                 3817	3_0_0	NOEXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 ERR_load_CT_strings                     3818	3_0_0	EXIST::FUNCTION:CT,DEPRECATEDIN_3_0
 OCSP_ONEREQ_it                          3819	3_0_0	EXIST::FUNCTION:OCSP
 X509_PURPOSE_get_by_sname               3820	3_0_0	EXIST::FUNCTION:
@@ -4232,7 +4232,7 @@ EVP_PKEY_meth_set_check                 4341	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 EVP_PKEY_meth_get_check                 4342	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_PKEY_meth_remove                    4343	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OPENSSL_sk_reserve                      4344	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_set1_engine                    4347	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
+EVP_PKEY_set1_engine                    4347	3_0_0	NOEXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 DH_new_by_nid                           4348	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_get_nid                              4349	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 CRYPTO_get_alloc_counts                 4350	3_0_0	EXIST::FUNCTION:CRYPTO_MDEBUG
@@ -4582,7 +4582,7 @@ OSSL_PARAM_get_octet_ptr                4709	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_set_octet_ptr                4710	3_0_0	EXIST::FUNCTION:
 X509_set0_distinguishing_id             4711	3_0_0	EXIST::FUNCTION:
 X509_get0_distinguishing_id             4712	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_get0_engine                    4713	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
+EVP_PKEY_get0_engine                    4713	3_0_0	NOEXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 EVP_MD_up_ref                           4714	3_0_0	EXIST::FUNCTION:
 EVP_MD_fetch                            4715	3_0_0	EXIST::FUNCTION:
 EVP_set_default_properties              4716	3_0_0	EXIST::FUNCTION:

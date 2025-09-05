@@ -11889,7 +11889,7 @@ end:
 }
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 
-#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
+#if !defined(OPENSSL_NO_TLS1_2) && defined(TODO_REWRITE_ME_DASYNC_PROVIDER)
 /*
  * Test TLSv1.2 with a pipeline capable cipher. TLSv1.3 and DTLS do not
  * support this yet. The only pipeline capable cipher that we have is in the
@@ -12086,7 +12086,7 @@ end:
         OPENSSL_free(msg);
     return testresult;
 }
-#endif /* !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE) */
+#endif /* !defined(OPENSSL_NO_TLS1_2) && defined(TODO_REWRITE_ME_DASYNC_PROVIDER) */
 
 static int check_version_string(SSL *s, int version)
 {
@@ -14047,7 +14047,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_serverinfo_custom, 4);
 #endif
-#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
+#if !defined(OPENSSL_NO_TLS1_2) && defined(TODO_REWRITE_ME_DASYNC_PROVIDER)
     ADD_ALL_TESTS(test_pipelining, 7);
 #endif
     ADD_ALL_TESTS(test_version, 6);

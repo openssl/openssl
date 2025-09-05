@@ -131,10 +131,6 @@ EC parameter manipulation and generation.
 
 Encryption, decryption, and encoding.
 
-=item B<engine>
-
-Engine (loadable module) information and manipulation.
-
 =item B<errstr>
 
 Error Number to Error String Conversion.

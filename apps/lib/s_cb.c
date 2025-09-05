@@ -1125,10 +1125,10 @@ int load_excert(SSL_EXCERT **pexc)
             return 0;
         if (exc->keyfile != NULL) {
             exc->key = load_key(exc->keyfile, exc->keyform,
-                                0, NULL, NULL, "server key");
+                                0, NULL, "server key");
         } else {
             exc->key = load_key(exc->certfile, exc->certform,
-                                0, NULL, NULL, "server key");
+                                0, NULL, "server key");
         }
         if (exc->key == NULL)
             return 0;

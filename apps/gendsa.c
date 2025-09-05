@@ -24,7 +24,7 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_OUT, OPT_PASSOUT, OPT_ENGINE, OPT_CIPHER, OPT_VERBOSE, OPT_QUIET,
+    OPT_OUT, OPT_PASSOUT, OPT_CIPHER, OPT_VERBOSE, OPT_QUIET,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -33,9 +33,6 @@ const OPTIONS gendsa_options[] = {
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output the key to the specified file"},
@@ -53,7 +50,6 @@ const OPTIONS gendsa_options[] = {
 
 int gendsa_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
     BIO *out = NULL, *in = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -81,9 +77,6 @@ int gendsa_main(int argc, char **argv)
             break;
         case OPT_PASSOUT:
             passoutarg = opt_arg();
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
@@ -166,7 +159,6 @@ int gendsa_main(int argc, char **argv)
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
     EVP_CIPHER_free(enc);
-    release_engine(e);
     OPENSSL_free(passout);
     return ret;
 }

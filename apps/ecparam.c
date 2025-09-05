@@ -25,7 +25,7 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT,
     OPT_CHECK, OPT_LIST_CURVES, OPT_NO_SEED, OPT_NOOUT, OPT_NAME,
-    OPT_CONV_FORM, OPT_PARAM_ENC, OPT_GENKEY, OPT_ENGINE, OPT_CHECK_NAMED,
+    OPT_CONV_FORM, OPT_PARAM_ENC, OPT_GENKEY, OPT_CHECK_NAMED,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -34,9 +34,6 @@ const OPTIONS ecparam_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"list_curves", OPT_LIST_CURVES, '-',
      "Prints a list of all curve 'short names'"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
 
     {"genkey", OPT_GENKEY, '-', "Generate ec key"},
     {"in", OPT_IN, '<', "Input file  - default stdin"},
@@ -95,7 +92,6 @@ int ecparam_main(int argc, char **argv)
     EVP_PKEY *params_key = NULL, *key = NULL;
     OSSL_ENCODER_CTX *ectx_key = NULL, *ectx_params = NULL;
     OSSL_DECODER_CTX *dctx_params = NULL;
-    ENGINE *e = NULL;
     BIO *out = NULL;
     char *curve_name = NULL;
     char *asn1_encoding = NULL;
@@ -174,9 +170,6 @@ int ecparam_main(int argc, char **argv)
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto end;
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         }
     }
@@ -345,7 +338,6 @@ int ecparam_main(int argc, char **argv)
 end:
     if (ret != 0)
         ERR_print_errors(bio_err);
-    release_engine(e);
     EVP_PKEY_free(params_key);
     EVP_PKEY_free(key);
     EVP_PKEY_CTX_free(pctx);
