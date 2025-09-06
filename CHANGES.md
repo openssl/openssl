@@ -32,7 +32,9 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
- * none yet
+ * Added CSHAKE as per [SP 800-185]
+
+   *Shane Lontis*
 
 OpenSSL 3.6
 -----------
@@ -21666,3 +21668,4 @@ ndif
 [CMVP]: https://csrc.nist.gov/projects/cryptographic-module-validation-program
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
+[SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
