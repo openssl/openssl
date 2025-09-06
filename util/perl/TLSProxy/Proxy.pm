@@ -318,7 +318,7 @@ sub start
     }
 
     my $execcmd = $self->execute
-        ." s_server -no_comp -engine ossltest -state"
+        ." s_server -no_comp -provider=p_ossltest -provider=default -propquery ?provider=p_ossltest -state"
         #In TLSv1.3 we issue two session tickets. The default session id
         #callback gets confused because the ossltest engine causes the same
         #session id to be created twice due to the changed random number
@@ -423,8 +423,8 @@ sub clientstart
     if ($self->execute) {
         my $pid;
         my $execcmd = $self->execute
-             ." s_client -engine ossltest"
-             ." -connect $self->{proxy_addr}:$self->{proxy_port}";
+             ." s_client -provider=p_ossltest -provider=default -propquery ?provider=p_ossltest"
+             ." -keylogfile ./keys.log -connect $self->{proxy_addr}:$self->{proxy_port}";
         if ($self->{isdtls}) {
             $execcmd .= " -dtls -max_protocol DTLSv1.2"
                         # TLSProxy does not support message fragmentation. So
@@ -476,7 +476,7 @@ sub clientstart
 
     # Wait for incoming connection from client
     my $fdset = IO::Select->new($self->{proxy_sock});
-    if (!$fdset->can_read(60)) {
+    if (!$fdset->can_read(6000)) {
         kill(3, $self->{real_serverpid});
         die "s_client didn't try to connect\n";
     }
