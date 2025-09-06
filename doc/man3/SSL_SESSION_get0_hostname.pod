@@ -5,8 +5,7 @@
 SSL_SESSION_get0_hostname,
 SSL_SESSION_set1_hostname,
 SSL_SESSION_get0_alpn_selected,
-SSL_SESSION_set1_alpn_selected
-- get and set SNI and ALPN data associated with a session
+SSL_SESSION_set1_alpn_selected - get and set SNI and ALPN data associated with a session
 
 =head1 SYNOPSIS
 
@@ -15,37 +14,36 @@ SSL_SESSION_set1_alpn_selected
  const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s);
  int SSL_SESSION_set1_hostname(SSL_SESSION *s, const char *hostname);
 
- void SSL_SESSION_get0_alpn_selected(const SSL_SESSION *s,
-                                     const unsigned char **alpn,
-                                     size_t *len);
- int SSL_SESSION_set1_alpn_selected(SSL_SESSION *s, const unsigned char *alpn,
-                                    size_t len);
+ void SSL_SESSION_get0_alpn_selected(const SSL_SESSION *s, const unsigned char **alpn, size_t *len);
+
+ int SSL_SESSION_set1_alpn_selected(SSL_SESSION *s, const unsigned char *alpn, size_t len);
 
 =head1 DESCRIPTION
 
 SSL_SESSION_get0_hostname() retrieves the SNI value that was sent by the
-client when the session was created if it was accepted by the server. Otherwise
-NULL is returned.
+client when the session was created if it was accepted by the server.
+Otherwise NULL is returned.
 
 The value returned is a pointer to memory maintained within B<s> and
 should not be free'd.
 
-SSL_SESSION_set1_hostname() sets the SNI value for the hostname to a copy of
-the string provided in hostname.
+SSL_SESSION_set1_hostname() sets the SNI value for the hostname to a copy
+of the string provided in hostname.
 
-SSL_SESSION_get0_alpn_selected() retrieves the selected ALPN protocol for this
-session and its associated length in bytes. The returned value of B<*alpn> is a
-pointer to memory maintained within B<s> and should not be free'd.
+SSL_SESSION_get0_alpn_selected() retrieves the selected ALPN protocol for
+this session and its associated length in bytes. The returned value of
+B<*alpn> is a pointer to memory maintained within B<s> and should not
+be free'd.
 
-SSL_SESSION_set1_alpn_selected() sets the ALPN protocol for this session to the
-value in B<alpn> which should be of length B<len> bytes. A copy of the input
-value is made, and the caller retains ownership of the memory pointed to by
-B<alpn>.
+SSL_SESSION_set1_alpn_selected() sets the ALPN protocol for this session
+to the value in B<alpn> which should be of length B<len> bytes. A copy
+of the input value is made, and the caller retains ownership of the
+memory pointed to by B<alpn>.
 
 =head1 RETURN VALUES
 
-SSL_SESSION_get0_hostname() returns either a string or NULL based on if there
-is the SNI value sent by client.
+SSL_SESSION_get0_hostname() returns either a string or NULL based on if
+there is the SNI value sent by client.
 
 SSL_SESSION_set1_hostname() returns 1 on success or 0 on error.
 
@@ -56,8 +54,8 @@ SSL_SESSION_set1_alpn_selected() returns 1 on success or 0 on error.
 This function is not restricted by the negotiated TLS version. In both
 TLSv1.2 and TLSv1.3, it returns the Server Name Indication (SNI) value
 stored in the session if one was accepted by the server; otherwise it
-returns NULL. For the SNI value of the current handshake (rather than
-a stored session), see L<SSL_get_servername(3)>.
+returns NULL. For the SNI value of the current handshake (rather than a
+stored session), see L<SSL_get_servername(3)>.
 
 =head1 SEE ALSO
 
@@ -77,9 +75,9 @@ SSL_SESSION_set1_alpn_selected() functions were added in OpenSSL 1.1.1.
 
 Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the Apache License 2.0 (the "License").  You may not use
-this file except in compliance with the License.  You can obtain a copy
-in the file LICENSE in the source distribution or at
+Licensed under the Apache License 2.0 (the "License"). You may not use this
+file except in compliance with the License. You can obtain a copy in the
+file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.
 
 =cut
