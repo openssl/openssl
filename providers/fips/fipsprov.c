@@ -29,6 +29,7 @@
 #include "crypto/context.h"
 #include "fipscommon.h"
 #include "internal/core.h"
+#include "internal/mem_alloc_utils.h"
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
@@ -1183,7 +1184,7 @@ int CRYPTO_secure_allocated(const void *ptr)
 void *CRYPTO_aligned_alloc(size_t num, size_t align, void **freeptr,
                            const char *file, int line)
 {
-    return NULL;
+    return ossl_malloc_align(num, align, freeptr, file, line);
 }
 
 int BIO_snprintf(char *buf, size_t n, const char *format, ...)
