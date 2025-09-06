@@ -197,7 +197,7 @@ jobs:
     - name: install brotli
       run: |
         sudo apt-get update
-        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install brotli libbrotli1 libbrotli-dev
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install brotli libbrotli1 libbrotli-dev
     - name: checkout openssl
       uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -219,7 +219,7 @@ jobs:
     - name: install zstd
       run: |
         sudo apt-get update
-        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install zstd libzstd1 libzstd-dev
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install zstd libzstd1 libzstd-dev
     - name: checkout openssl
       uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -241,8 +241,8 @@ jobs:
     - name: install brotli and zstd
       run: |
         sudo apt-get update
-        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install brotli libbrotli1 libbrotli-dev
-        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install zstd libzstd1 libzstd-dev
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install brotli libbrotli1 libbrotli-dev
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install zstd libzstd1 libzstd-dev
     - name: checkout openssl
       uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -286,7 +286,7 @@ jobs:
     - name: install brotli
       run: |
         sudo apt-get update
-        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install brotli libbrotli1 libbrotli-dev
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install brotli libbrotli1 libbrotli-dev
     - name: checkout openssl
       uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -312,7 +312,7 @@ jobs:
     - name: install zstd
       run: |
         sudo apt-get update
-        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install zstd libzstd1 libzstd-dev
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install zstd libzstd1 libzstd-dev
     - name: checkout openssl
       uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
