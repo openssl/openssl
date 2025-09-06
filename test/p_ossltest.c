@@ -252,6 +252,23 @@ static int OSSLTEST_SHA512_final(unsigned char *md, void *ctx)
     return 1;
 }
 
+/*
+ * NOTE: These externs are just here to make the compiler happy
+ * The IMPLEMENT_digest_functions macros below define these arrays
+ * as non-static so that real providers can pick them up in other C files
+ * And they get externed in other header files.  But we only use them internally
+ * to this provider here.  To avoid having to re-implement and co-ordinate the below
+ * macros in what is already a large C file, just define them as extern to prevent some
+ * compilers from complaining about a non-static definition with no prior extern declaration
+ * mark them as such here.  They won't get exported anyway as p_ossltest only gets built as 
+ * a DSO, and the linker map we use doesn't list them as exported
+ */
+extern const OSSL_DISPATCH ossl_testmd5_functions[];
+extern const OSSL_DISPATCH ossl_testsha1_functions[];
+extern const OSSL_DISPATCH ossl_testsha256_functions[];
+extern const OSSL_DISPATCH ossl_testsha384_functions[];
+extern const OSSL_DISPATCH ossl_testsha512_functions[];
+
 IMPLEMENT_digest_functions(testmd5, MD5_CTX, MD5_CBLOCK, MD5_DIGEST_LENGTH, 0,
                            OSSLTEST_DGST_init, OSSLTEST_DGST_update, OSSLTEST_MD5_final)
 
@@ -1705,7 +1722,7 @@ static void ossl_drbg_clear_seed(ossl_unused void *vdrbg,
     return;
 }
 
-const OSSL_DISPATCH ossl_test_drbg_ctr_functions[] = {
+static const OSSL_DISPATCH ossl_test_drbg_ctr_functions[] = {
     { OSSL_FUNC_RAND_NEWCTX, (void(*)(void))drbg_ctr_new_wrapper },
     { OSSL_FUNC_RAND_FREECTX, (void(*)(void))drbg_ctr_free },
     { OSSL_FUNC_RAND_INSTANTIATE,
