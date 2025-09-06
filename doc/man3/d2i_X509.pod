@@ -473,19 +473,27 @@ network, writing to a file, and so on.
 
 B<d2i_I<TYPE>>() attempts to decode I<len> bytes at I<*ppin>. If successful a
 pointer to the B<I<TYPE>> structure is returned and I<*ppin> is incremented to
-the byte following the parsed data.  If I<a> is not NULL then a pointer
-to the returned structure is also written to I<*a>.  If an error occurred
-then NULL is returned. The caller retains ownership of the
-returned object and needs to free it when it is no longer needed, e.g.
-using X509_free() for X509 objects or DSA_SIG_free() for DSA_SIG objects.
+the byte following the parsed data.
 
-On a successful return, if I<*a> is not NULL then it is assumed that I<*a>
-contains a valid B<I<TYPE>> structure and an attempt is made to reuse it.
-For B<I<TYPE>> structures where it matters it is possible to set up a library
-context on the decoded structure this way (see the B<EXAMPLES> section).
-However using the "reuse" capability for other purposes is B<strongly
-discouraged> (see B<BUGS> below, and the discussion in the B<RETURN VALUES>
-section).
+If I<a> is not NULL, then the contents of the pointer will be examined.
+
+If I<*a> is not NULL, then it is assumed that caller has allocated a new I<TYPE>
+structure, and it will be used.  This is the B<reuse> capability.
+Please see BUGS below.
+
+If an error occurs, then the structure will not be used or modified.
+
+If I<a> is NULL, or I<*a> is NULL, then a new structure will be allocated.
+(A NULL libctx and a NULL propq will be provided)
+If I<*a> is not NULL, then it will be set to the newly allocated structure.
+
+When an existing structure is B<reused>, the reused structure is not
+completely cleared.  This may results in memory leaks, and reference
+count leaks, particularly when errors occur. (See B<BUGS>).
+From OpenSSL 3.x onwards, the only supported use for the reuse mechanism
+is to allocate the I<TYPE> structure with one of the many _ex() routines,
+such that the I<libctx> and I<propq> can be initialized.  (See B<EXAMPLES> section)
+No other reuse is supported.
 
 B<d2i_I<TYPE>_bio>() is similar to B<d2i_I<TYPE>>() except it attempts
 to parse data from BIO I<bp>.
