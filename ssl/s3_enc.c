@@ -145,11 +145,11 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
-    if (!ssl_set_new_record_layer(s, SSL3_VERSION,
-                                  direction,
+    if (!ssl_set_new_record_layer(s, SSL3_VERSION, direction,
                                   OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                                  NULL, 0, key, key_len, iv, iv_len, mac_secret,
-                                  md_len, ciph, 0, NID_undef, md, comp, NULL)) {
+                                  NULL, 0, NULL, key, key_len, iv, iv_len,
+                                  mac_secret, md_len, NULL, 0, ciph, 0, NID_undef,
+                                  md, comp, NULL)) {
         /* SSLfatal already called */
         goto err;
     }
@@ -171,8 +171,8 @@ int ssl3_setup_key_block(SSL_CONNECTION *s)
     if (s->s3.tmp.key_block_length != 0)
         return 1;
 
-    if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, &c, &hash,
-                            NULL, NULL, &comp, 0)) {
+    if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, NULL, NULL, &c,
+                            &hash, NULL, NULL, &comp, 0)) {
         /* Error is already recorded */
         SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
         return 0;
@@ -261,10 +261,71 @@ int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len)
             return 0;
         }
     } else {
-        ret = EVP_DigestUpdate(s->s3.handshake_dgst, buf, len);
-        if (!ret) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
+        /*
+         * rfc9147:
+         * In DTLS 1.3, the message transcript is computed over the
+         * original TLS 1.3-style Handshake messages without the
+         * message_seq, fragment_offset, and fragment_length values. Note
+         * that this is a change from DTLS 1.2 where those values were
+         * included in the transcript.
+         *
+         * So this means that we record the full handshake messages in
+         * s->s3.handshake_buffer while s->s3.handshake_dgst is not in use and then
+         * we calculate the digest when initiating s->s3.handshake_dgst at which
+         * point we know what the protocol version is.
+         */
+        if (s->negotiated_version == DTLS1_3_VERSION) {
+            /*
+             * In DTLS 1.3 we need to parse the messages that are buffered to
+             * be able to remove message_sequence, fragment_size and fragment_offset
+             * from the Transcript Hash calculation.
+             */
+            while (len > 0) {
+                PACKET hmhdr;
+                unsigned long hmbodylen;
+                unsigned int msgtype;
+                size_t hmhdrlen;
+
+                if (!ossl_assert(len >= SSL3_HM_HEADER_LENGTH)
+                    || !PACKET_buf_init(&hmhdr, buf, SSL3_HM_HEADER_LENGTH)
+                    || !PACKET_get_1(&hmhdr, &msgtype)
+                    || !PACKET_get_net_3(&hmhdr, &hmbodylen)) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+
+                /*
+                 * SSL3_MT_MESSAGE_HASH is a dummy message type only used when
+                 * calculating the transcript hash of the synthetic message in
+                 * (D)TLS 1.3.
+                 */
+                if (msgtype == SSL3_MT_MESSAGE_HASH)
+                    hmhdrlen = SSL3_HM_HEADER_LENGTH;
+                else
+                    hmhdrlen = DTLS1_HM_HEADER_LENGTH;
+
+                /*
+                 * In DTLS 1.3 the transcript hash is calculated excluding the
+                 * message_sequence, fragment_size and fragment_offset header
+                 * fields which are carried in the last
+                 * DTLS1_HM_HEADER_LENGTH - SSL3_HM_HEADER_LENGTH header bytes
+                 * of the DTLS handshake message header.
+                 */
+                if (!ossl_assert(hmhdrlen + hmbodylen <= len)
+                    || !EVP_DigestUpdate(s->s3.handshake_dgst, buf, SSL3_HM_HEADER_LENGTH)
+                    || !EVP_DigestUpdate(s->s3.handshake_dgst, buf + hmhdrlen, hmbodylen)) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+
+                buf += hmhdrlen + hmbodylen;
+                len -= hmhdrlen + hmbodylen;
+            }
+        } else {
+            if (!EVP_DigestUpdate(s->s3.handshake_dgst, buf, len)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
         }
     }
     return 1;
@@ -295,9 +356,12 @@ int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
                      SSL_R_NO_SUITABLE_DIGEST_ALGORITHM);
             return 0;
         }
-        if (!EVP_DigestInit_ex(s->s3.handshake_dgst, md, NULL)
-            || !EVP_DigestUpdate(s->s3.handshake_dgst, hdata, hdatalen)) {
+        if (!EVP_DigestInit_ex(s->s3.handshake_dgst, md, NULL)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        if (!ssl3_finish_mac(s, hdata, hdatalen)) {
+            /* SSLfatal() already called */
             return 0;
         }
     }

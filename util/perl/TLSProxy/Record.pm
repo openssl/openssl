@@ -20,11 +20,16 @@ use constant TLS_RECORD_HEADER_LENGTH => 5;
 
 #Record types
 use constant {
-    RT_APPLICATION_DATA => 23,
-    RT_HANDSHAKE => 22,
-    RT_ALERT => 21,
-    RT_CCS => 20,
-    RT_UNKNOWN => 100
+    RT_APPLICATION_DATA   => 23,
+    RT_HANDSHAKE          => 22,
+    RT_ALERT              => 21,
+    RT_CCS                => 20,
+    RT_ACK                => 26,
+    RT_UNKNOWN            => 100,
+    RT_DTLS_UNIHDR_EPOCH4 => 0x2c,
+    RT_DTLS_UNIHDR_EPOCH1 => 0x2d,
+    RT_DTLS_UNIHDR_EPOCH2 => 0x2e,
+    RT_DTLS_UNIHDR_EPOCH3 => 0x2f,
 };
 
 my %record_type = (
@@ -32,10 +37,16 @@ my %record_type = (
     RT_HANDSHAKE, "HANDSHAKE",
     RT_ALERT, "ALERT",
     RT_CCS, "CCS",
-    RT_UNKNOWN, "UNKNOWN"
+    RT_ACK, "ACK",
+    RT_UNKNOWN, "UNKNOWN",
+    RT_DTLS_UNIHDR_EPOCH4, "DTLS UNIFIED HEADER (EPOCH 4)",
+    RT_DTLS_UNIHDR_EPOCH1, "DTLS UNIFIED HEADER (EPOCH 1)",
+    RT_DTLS_UNIHDR_EPOCH2, "DTLS UNIFIED HEADER (EPOCH 2)",
+    RT_DTLS_UNIHDR_EPOCH3, "DTLS UNIFIED HEADER (EPOCH 3)",
 );
 
 use constant {
+    VERS_DTLS_1_3 => 0xfefc,
     VERS_DTLS_1_2 => 0xfefd,
     VERS_DTLS_1 => 0xfeff,
     VERS_TLS_1_4 => 0x0305,
@@ -48,6 +59,7 @@ use constant {
 };
 
 our %tls_version = (
+    VERS_DTLS_1_3, "DTLS1.3",
     VERS_DTLS_1_2, "DTLS1.2",
     VERS_DTLS_1, "DTLS1",
     VERS_TLS_1_3, "TLS1.3",
@@ -62,38 +74,83 @@ our %tls_version = (
 sub get_records
 {
     my $class = shift;
-    my $server = shift;
+    my $serverissender = shift;
     my $flight = shift;
     my $packet = shift;
     my $isdtls = shift;
     my $partial = "";
     my @record_list = ();
     my @message_list = ();
-    my $record_hdr_len = $isdtls ? DTLS_RECORD_HEADER_LENGTH
-                                 : TLS_RECORD_HEADER_LENGTH;
 
     my $recnum = 1;
     while (length ($packet) > 0) {
-        print " Record $recnum ", $server ? "(server -> client)\n"
-                                          : "(client -> server)\n";
-
+        print " Record $recnum ", $serverissender ? "(server -> client)\n"
+                                                  : "(client -> server)\n";
+        my $record_hdr_len;
         my $content_type;
         my $version;
         my $len;
         my $epoch;
         my $seq;
 
-        if ($isdtls) {
-            my $seqhi;
-            my $seqmi;
-            my $seqlo;
-            #Get the record header (unpack can't fail if $packet is too short)
-            ($content_type, $version, $epoch,
-                $seqhi, $seqmi, $seqlo, $len) = unpack('Cnnnnnn', $packet);
-            $seq = ($seqhi << 32) | ($seqmi << 16) | $seqlo
+        if ($isdtls == 1) {
+            my $isunifiedhdr;
+
+            $content_type = unpack('B[8]', $packet);
+            $isunifiedhdr = substr($content_type, 0, 3) == "001";
+
+            if ($isunifiedhdr == 1) {
+                my $cbit = substr($content_type, 3, 1);
+                my $sbit = substr($content_type, 4, 1);
+                my $lbit = substr($content_type, 5, 1);
+                my $eebits = substr($content_type, 6, 2);
+
+                if ($cbit == "1" || $lbit == "0") {
+                    die("TLSProxy does not support variable DTLSv1.3 unified header bits");
+                }
+
+                # This is a unified header
+                if ($sbit == "1") {
+                    ($content_type, $seq, $len) = unpack('Cnn', $packet);
+                    $record_hdr_len = 5;
+                } else {
+                    ($content_type, $seq, $len) = unpack('CCn', $packet);
+                    $record_hdr_len = 4;
+                }
+                # Encrypted DTLS 1.3 records have encrypted sequence numbers.
+                # ossltest engine overrides ecb encryption to be a no-op.
+                # This effectively means that the sequence number encryption mask
+                # is just the 16 first bytes of the record body.
+                my $recordbody = substr($packet, $record_hdr_len, $len);
+                (my $maskhi, my $maskmi, my $masklo) = unpack('nnn', $recordbody);
+                $version = VERS_DTLS_1_2; # DTLSv1.3 headers has DTLSv1.2 in its legacy_version field
+
+                if ($eebits == "00") {
+                    $epoch = 4; # must be at least 4 since 0 epoch are not sent with unified hdr
+                } elsif ($eebits == "01") {
+                    $epoch = 1;
+                } elsif ($eebits == "10") {
+                    $epoch = 2;
+                } elsif ($eebits == "11") {
+                    $epoch = 3;
+                } else {
+                    die("Epoch bits is not 0's or 1's: should not happen")
+                }
+                $seq ^= $maskhi;
+            } else {
+                my $seqhi;
+                my $seqmi;
+                my $seqlo;
+                #Get the record header (unpack can't fail if $packet is too short)
+                ($content_type, $version, $epoch,
+                    $seqhi, $seqmi, $seqlo, $len) = unpack('Cnnnnnn', $packet);
+                $seq = ($seqhi << 32) | ($seqmi << 16) | $seqlo;
+                $record_hdr_len = DTLS_RECORD_HEADER_LENGTH;
+            }
         } else {
             #Get the record header (unpack can't fail if $packet is too short)
             ($content_type, $version, $len) = unpack('Cnn', $packet);
+            $record_hdr_len = TLS_RECORD_HEADER_LENGTH;
         }
 
         if (length($packet) < $record_hdr_len + ($len // 0)) {
@@ -106,7 +163,7 @@ sub get_records
 
         print "  Content type: ".$record_type{$content_type}."\n";
         print "  Version: $tls_version{$version}\n";
-        if($isdtls) {
+        if($isdtls == 1) {
             print "  Epoch: $epoch\n";
             print "  Sequence: $seq\n";
         }
@@ -115,6 +172,7 @@ sub get_records
         my $record;
         if ($isdtls) {
             $record = TLSProxy::Record->new_dtls(
+                $serverissender,
                 $flight,
                 $content_type,
                 $version,
@@ -129,6 +187,7 @@ sub get_records
             );
         } else {
             $record = TLSProxy::Record->new(
+                $serverissender,
                 $flight,
                 $content_type,
                 $version,
@@ -144,8 +203,8 @@ sub get_records
         if ($content_type != RT_CCS
                 && (!TLSProxy::Proxy->is_tls13()
                     || $content_type != RT_ALERT)) {
-            if (($server && $server_encrypting)
-                     || (!$server && $client_encrypting)) {
+            if (($serverissender && $server_encrypting)
+                     || (!$serverissender && $client_encrypting)) {
                 if (!TLSProxy::Proxy->is_tls13() && $etm) {
                     $record->decryptETM();
                 } else {
@@ -156,6 +215,7 @@ sub get_records
                 if (TLSProxy::Proxy->is_tls13()) {
                     print "  Inner content type: "
                           .$record_type{$record->content_type()}."\n";
+                    print " Data: ".unpack("n",$record->decrypt_data)."\n";
                 }
             }
         }
@@ -163,7 +223,7 @@ sub get_records
         push @record_list, $record;
 
         #Now figure out what messages are contained within this record
-        my @messages = TLSProxy::Message->get_messages($server, $record, $isdtls);
+        my @messages = TLSProxy::Message->get_messages($record);
         push @message_list, @messages;
 
         $packet = substr($packet, $record_hdr_len + $len);
@@ -209,7 +269,8 @@ sub etm
 sub new_dtls
 {
     my $class = shift;
-    my ($flight,
+    my ($serverissender,
+        $flight,
         $content_type,
         $version,
         $epoch,
@@ -220,7 +281,8 @@ sub new_dtls
         $decrypt_len,
         $data,
         $decrypt_data) = @_;
-    return $class->init(1,
+    return $class->init($serverissender,
+        1,
         $flight,
         $content_type,
         $version,
@@ -237,7 +299,8 @@ sub new_dtls
 sub new
 {
     my $class = shift;
-    my ($flight,
+    my ($serverissender,
+        $flight,
         $content_type,
         $version,
         $len,
@@ -247,6 +310,7 @@ sub new
         $data,
         $decrypt_data) = @_;
     return $class->init(
+        $serverissender,
         0,
         $flight,
         $content_type,
@@ -264,7 +328,8 @@ sub new
 sub init
 {
     my $class = shift;
-    my ($isdtls,
+    my ($serverissender,
+        $isdtls,
         $flight,
         $content_type,
         $version,
@@ -278,6 +343,7 @@ sub init
         $decrypt_data) = @_;
 
     my $self = {
+        serverissender => $serverissender,
         isdtls => $isdtls,
         flight => $flight,
         content_type => $content_type,
@@ -293,7 +359,7 @@ sub init
         orig_decrypt_data => $decrypt_data,
         sent => 0,
         encrypted => 0,
-        outer_content_type => RT_APPLICATION_DATA
+        outer_content_type => $content_type,
     };
 
     return bless $self, $class;
@@ -306,7 +372,8 @@ sub decryptETM
 
     my $data = $self->data;
 
-    if($self->version >= VERS_TLS_1_1()) {
+    if((!$self->{isdtls} && $self->version >= VERS_TLS_1_1)
+       || ($self->{isdtls} && $self->version <= VERS_DTLS_1)) {
         #TLS1.1+ has an explicit IV. Throw it away
         $data = substr($data, 16);
     }
@@ -391,21 +458,27 @@ sub reconstruct_record
     if ($self->sslv2) {
         $data = pack('n', $self->len | 0x8000);
     } else {
+        my $content_type = (TLSProxy::Proxy->is_tls13() && $self->encrypted)
+                           ? $self->outer_content_type : $self->content_type;
         if($self->{isdtls}) {
             my $seqhi = ($self->seq >> 32) & 0xffff;
             my $seqmi = ($self->seq >> 16) & 0xffff;
             my $seqlo = ($self->seq >> 0) & 0xffff;
-            $data = pack('Cnnnnnn', $self->content_type, $self->version,
-                         $self->epoch, $seqhi, $seqmi, $seqlo, $self->len);
-        } else {
+
             if (TLSProxy::Proxy->is_tls13() && $self->encrypted) {
-                $data = pack('Cnn', $self->outer_content_type, $self->version,
-                             $self->len);
+                # Mask sequence number with record body bytes. Explanation
+                # given in get_records.
+                (my $maskhi, my $maskmi, my $masklo) = unpack("nnn", $self->data);
+                $seqlo ^= $maskhi;
+                # Prepare a unified header
+                $data = pack('Cnn', $content_type, $seqlo, $self->len);
+            } else {
+                $data = pack('Cnnnnnn', $content_type, $self->version,
+                    $self->epoch, $seqhi, $seqmi, $seqlo, $self->len);
             }
-            else {
-                $data = pack('Cnn', $self->content_type, $self->version,
-                             $self->len);
-            }
+        } else {
+            $data = pack('Cnn', $content_type, $self->version,
+                         $self->len);
         }
 
     }
@@ -415,6 +488,16 @@ sub reconstruct_record
 }
 
 #Read only accessors
+sub serverissender
+{
+    my $self = shift;
+    return $self->{serverissender};
+}
+sub isdtls
+{
+    my $self = shift;
+    return $self->{isdtls};
+}
 sub flight
 {
     my $self = shift;

@@ -24,15 +24,12 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
-plan skip_all => "$test_name needs TLS1.3 enabled"
-    if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
+plan skip_all => "$test_name needs elliptic curves or diffie-hellman enabled"
+    if disabled("ec") && disabled("dh");
 
-my $proxy = TLSProxy::Proxy->new(
-    undef,
-    cmdstr(app(["openssl"]), display => 1),
-    srctop_file("apps", "server.pem"),
-    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
-);
+my $testcount = 5;
+
+plan tests => 2 * $testcount;
 
 use constant {
     CHANGE_HRR_CIPHERSUITE => 0,
@@ -42,75 +39,129 @@ use constant {
     NO_SUPPORTED_VERSIONS => 4
 };
 
-#Test 1: A client should fail if the server changes the ciphersuite between the
-#        HRR and the SH
-$proxy->filter(\&hrr_filter);
-if (disabled("ec")) {
-    $proxy->serverflags("-curves ffdhe3072");
-} else {
-    $proxy->serverflags("-curves P-256");
-}
-my $testtype = CHANGE_HRR_CIPHERSUITE;
-$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 5;
-ok(TLSProxy::Message->fail(), "Server ciphersuite changes");
-
-#Test 2: It is an error if the client changes the offered ciphersuites so that
-#        we end up selecting a different ciphersuite between HRR and the SH
-$proxy->clear();
-if (disabled("ec")) {
-    $proxy->serverflags("-curves ffdhe3072");
-} else {
-    $proxy->serverflags("-curves P-384");
-}
-$proxy->ciphersuitess("TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
-$testtype = CHANGE_CH1_CIPHERSUITE;
-$proxy->start();
-ok(TLSProxy::Message->fail(), "Client ciphersuite changes");
-
-#Test 3: A client should fail with unexpected_message alert if the server
-#        sends more than 1 HRR
 my $fatal_alert = 0;
-$proxy->clear();
-if (disabled("ec")) {
-    $proxy->serverflags("-curves ffdhe3072");
-} else {
-    $proxy->serverflags("-curves P-384");
-}
-$testtype = DUPLICATE_HRR;
-$proxy->start();
-ok($fatal_alert, "Server duplicated HRR");
+my $testtype = -1;
 
-#Test 4: If the client sends a group that is in the supported_groups list but
-#        otherwise not valid (e.g. not suitable for TLSv1.3) we should reject it
-#        and not consider it when sending the HRR. We send brainpoolP512r1 in
-#        the ClientHello, which is acceptable to the server but is not valid in
-#        TLSv1.3. We expect the server to select P-521 in the HRR and the
-#        handshake to complete successfully
 SKIP: {
-    skip "EC/TLSv1.2 is disabled in this build", 1
-        if disabled("ec") || disabled("tls1_2");
+    skip "TLS 1.3 is disabled", $testcount if disabled("tls1_3");
+    # Run tests with TLS
+    run_tests(0);
+}
 
+SKIP: {
+    skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
+    skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
+    run_tests(1);
+}
+
+sub run_tests
+{
+    my $run_test_as_dtls = shift;
+
+    my $proxy;
+    if ($run_test_as_dtls == 1) {
+        $proxy = TLSProxy::Proxy->new_dtls(
+            \&hrr_filter,
+            cmdstr(app([ "openssl" ]), display => 1),
+            srctop_file("apps", "server.pem"),
+            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
+        );
+    }
+    else {
+        $proxy = TLSProxy::Proxy->new(
+            \&hrr_filter,
+            cmdstr(app([ "openssl" ]), display => 1),
+            srctop_file("apps", "server.pem"),
+            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
+        );
+    }
+
+    SKIP: {
+        skip "TODO(DTLSv1.3): Test stalls when server sends its ServerHello.",
+            1 if $run_test_as_dtls == 1 && disabled("ecx");
+        #Test 1: A client should fail if the server changes the ciphersuite between the
+        #        HRR and the SH
+        $proxy->clear();
+        if (disabled("ec")) {
+            $proxy->serverflags("-curves ffdhe3072");
+        }
+        else {
+            $proxy->serverflags("-curves P-256");
+        }
+        $testtype = CHANGE_HRR_CIPHERSUITE;
+        # Skip tests if TLSProxy if it fails to start. For DTLS this return is always
+        # false when the handshake fails so we skip the check.
+        skip "TLSProxy did not start correctly", $testcount if $proxy->start() == 0
+            && $run_test_as_dtls == 0;
+        ok(TLSProxy::Message->fail(), "Server ciphersuite changes");
+    }
+
+    #Test 2: It is an error if the client changes the offered ciphersuites so that
+    #        we end up selecting a different ciphersuite between HRR and the SH
     $proxy->clear();
-    $proxy->clientflags("-groups P-256:brainpoolP512r1:P-521");
-    $proxy->serverflags("-groups brainpoolP512r1:P-521");
-    $testtype = INVALID_GROUP;
+    if (disabled("ec")) {
+        $proxy->serverflags("-curves ffdhe3072");
+    }
+    else {
+        $proxy->serverflags("-curves P-384");
+    }
+    $proxy->ciphersuitess("TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
+    $testtype = CHANGE_CH1_CIPHERSUITE;
     $proxy->start();
-    ok(TLSProxy::Message->success(), "Invalid group with HRR");
-}
+    ok(TLSProxy::Message->fail(), "Client ciphersuite changes");
 
-#Test 5: A failure should occur if an HRR is sent without the supported_versions
-#        extension
-$fatal_alert = 0;
-$proxy->clear();
-if (disabled("ec")) {
-    $proxy->serverflags("-curves ffdhe3072");
-} else {
-    $proxy->serverflags("-curves P-384");
+    SKIP: {
+        skip "TODO(DTLSv1.3): Re-enable when #26465 has been merged.",
+             1 if $run_test_as_dtls == 1;
+        #Test 3: A client should fail with unexpected_message alert if the server
+        #        sends more than 1 HRR
+        $fatal_alert = 0;
+        $proxy->clear();
+        if (disabled("ec")) {
+            $proxy->serverflags("-curves ffdhe3072");
+        }
+        else {
+            $proxy->serverflags("-curves P-384");
+        }
+        $testtype = DUPLICATE_HRR;
+        $proxy->start();
+        ok($fatal_alert, "Server duplicated HRR");
+    }
+
+    #Test 4: If the client sends a group that is in the supported_groups list but
+    #        otherwise not valid (e.g. not suitable for TLSv1.3) we should reject it
+    #        and not consider it when sending the HRR. We send brainpoolP512r1 in
+    #        the ClientHello, which is acceptable to the server but is not valid in
+    #        TLSv1.3. We expect the server to select P-521 in the HRR and the
+    #        handshake to complete successfully
+    SKIP: {
+        skip "EC/(D)TLSv1.2 is disabled in this build", 1
+            if disabled("ec") || ($run_test_as_dtls == 0 && disabled("tls1_2"))
+                              || $run_test_as_dtls == 1;
+    #TODO(DTLSv1.3): Fails when running with DTLS.
+    #                         || ($run_test_as_dtls == 1 && disabled("dtls1_2"));
+
+        $proxy->clear();
+        $proxy->clientflags("-groups P-256:brainpoolP512r1:P-521");
+        $proxy->serverflags("-groups brainpoolP512r1:P-521");
+        $testtype = INVALID_GROUP;
+        $proxy->start();
+        ok(TLSProxy::Message->success(), "Invalid group with HRR");
+    }
+
+    #Test 5: A failure should occur if an HRR is sent without the supported_versions
+    #        extension
+    $fatal_alert = 0;
+    $proxy->clear();
+    if (disabled("ec")) {
+        $proxy->serverflags("-curves ffdhe3072");
+    } else {
+        $proxy->serverflags("-curves P-384");
+    }
+    $testtype = NO_SUPPORTED_VERSIONS;
+    $proxy->start();
+    ok($fatal_alert, "supported_versions missing from HRR");
 }
-$testtype = NO_SUPPORTED_VERSIONS;
-$proxy->start();
-ok($fatal_alert, "supported_versions missing from HRR");
 
 sub hrr_filter
 {
@@ -169,15 +220,36 @@ sub hrr_filter
             next;
         }
         my $hrr_record = ${$proxy->record_list}[$i];
-        my $dup_hrr = TLSProxy::Record->new(3,
-            $hrr_record->content_type(),
-            $hrr_record->version(),
-            $hrr_record->len(),
-            $hrr_record->sslv2(),
-            $hrr_record->len_real(),
-            $hrr_record->decrypt_len(),
-            $hrr_record->data(),
-            $hrr_record->decrypt_data());
+
+        my $dup_hrr;
+
+        if ($proxy->isdtls()) {
+            $dup_hrr = TLSProxy::Record->new_dtls(
+                1,
+                3,
+                $hrr_record->content_type(),
+                $hrr_record->version(),
+                $hrr_record->epoch(),
+                $hrr_record->seq(),
+                $hrr_record->len(),
+                $hrr_record->sslv2(),
+                $hrr_record->len_real(),
+                $hrr_record->decrypt_len(),
+                $hrr_record->data(),
+                $hrr_record->decrypt_data());
+        } else {
+            $dup_hrr = TLSProxy::Record->new(
+                1,
+                3,
+                $hrr_record->content_type(),
+                $hrr_record->version(),
+                $hrr_record->len(),
+                $hrr_record->sslv2(),
+                $hrr_record->len_real(),
+                $hrr_record->decrypt_len(),
+                $hrr_record->data(),
+                $hrr_record->decrypt_data());
+        }
 
         $i++;
         splice @{$proxy->record_list}, $i, 0, $dup_hrr;

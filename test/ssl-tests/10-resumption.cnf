@@ -66,7 +66,7 @@ test-60 = 60-resumption
 test-61 = 61-resumption
 test-62 = 62-resumption
 test-63 = 63-resumption
-test-64 = 64-resumption-with-hrr
+test-64 = 64-tls13-resumption-with-hrr
 # ===========================================================
 
 [0-resumption]
@@ -2405,27 +2405,27 @@ ResumptionExpected = Yes
 
 # ===========================================================
 
-[64-resumption-with-hrr]
-ssl_conf = 64-resumption-with-hrr-ssl
+[64-tls13-resumption-with-hrr]
+ssl_conf = 64-tls13-resumption-with-hrr-ssl
 
-[64-resumption-with-hrr-ssl]
-server = 64-resumption-with-hrr-server
-client = 64-resumption-with-hrr-client
-resume-server = 64-resumption-with-hrr-server
-resume-client = 64-resumption-with-hrr-resume-client
+[64-tls13-resumption-with-hrr-ssl]
+server = 64-tls13-resumption-with-hrr-server
+client = 64-tls13-resumption-with-hrr-client
+resume-server = 64-tls13-resumption-with-hrr-server
+resume-client = 64-tls13-resumption-with-hrr-resume-client
 
-[64-resumption-with-hrr-server]
+[64-tls13-resumption-with-hrr-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 Curves = P-256
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[64-resumption-with-hrr-client]
+[64-tls13-resumption-with-hrr-client]
 CipherString = DEFAULT
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[64-resumption-with-hrr-resume-client]
+[64-tls13-resumption-with-hrr-resume-client]
 CipherString = DEFAULT
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer

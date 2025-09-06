@@ -97,8 +97,10 @@ static int
 quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       int role, int direction, int level, uint16_t epoch,
                       unsigned char *secret, size_t secretlen,
-                      unsigned char *key, size_t keylen, unsigned char *iv,
-                      size_t ivlen, unsigned char *mackey, size_t mackeylen,
+                      unsigned char *snkey, unsigned char *key, size_t keylen,
+                      unsigned char *iv, size_t ivlen,
+                      unsigned char *mackey, size_t mackeylen,
+                      const EVP_CIPHER *snciph, size_t snoffs,
                       const EVP_CIPHER *ciph, size_t taglen,
                       int mactype,
                       const EVP_MD *md, COMP_METHOD *comp,
@@ -362,7 +364,7 @@ static int quic_retry_write_records(OSSL_RECORD_LAYER *rl)
 static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
                             int *rversion, uint8_t *type, const unsigned char **data,
                             size_t *datalen, uint16_t *epoch,
-                            unsigned char *seq_num)
+                            uint64_t *seq_num)
 {
     if (rl->recread != 0 || rl->recunreleased != 0)
         return OSSL_RECORD_RETURN_FATAL;
