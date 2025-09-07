@@ -249,6 +249,7 @@ static void my_free(void * const addr, const char * const file, const int line)
 static bool check_zero_mem(char *p, size_t sz)
 {
     size_t i;
+
     for (i = 0; i < sz; i++) {
         if (p[i] != 0) {
             TEST_error("Non-zero byte %zu of %zu (%#04hhx)", i, sz, p[i]);
