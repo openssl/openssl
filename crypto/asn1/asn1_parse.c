@@ -366,7 +366,7 @@ const char *ASN1_tag2str(int tag)
         "NULL", "OBJECT", "OBJECT DESCRIPTOR", "EXTERNAL", "REAL",
         /* 10-13 */
         "ENUMERATED", "<ASN1 11>", "UTF8STRING", "<ASN1 13>",
-        /* 15-17 */
+        /* 14-17 */
         "<ASN1 14>", "<ASN1 15>", "SEQUENCE", "SET",
         /* 18-20 */
         "NUMERICSTRING", "PRINTABLESTRING", "T61STRING",
