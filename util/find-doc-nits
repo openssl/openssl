@@ -57,7 +57,7 @@ Find small errors (nits) in documentation.  Options:
     -m Name(s) of manuals to focus on. Default: man1,man3,man5,man7
     -n Print nits in POD pages
     -o Causes -e/-v to count symbols added since 1.1.1 as new (implies -v)
-    -i Checks for history entries available for symbols added since 3.0.0 as new
+    -i Checks for history entries available for symbols added since 4.0.0 as new
     -u Count undocumented functions
     -v Count new undocumented functions
 EOF
@@ -943,7 +943,7 @@ my %name_map = ();
 # Any of these values except 'public' may be prefixed with 'missing_'
 # to indicate that they are known to be missing.
 my %state;
-# history contains the same as state above for entries with version info != 3_0_0
+# history contains the same as state above for entries with version info != 4_0_0
 my %history;
 # %missing is affected by loading util/missing*.txt.  Values may be one of:
 # 'crypto' : belongs in libcrypto (loaded from libcrypto.num)
@@ -974,7 +974,7 @@ sub loadnum ($;$) {
         my @fields = split();
         if ($type && ($type eq "crypto" || $type eq "ssl")) {
             # 3rd field is version
-            if (not $fields[2] eq "3_0_0") {
+            if (not $fields[2] eq "4_0_0") {
                 $history{$fields[0].'(3)'} = $type.$fields[2];
             }
         }

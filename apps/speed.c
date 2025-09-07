@@ -2499,7 +2499,7 @@ int speed_main(int argc, char **argv)
 
     loopargs_len = (async_jobs == 0 ? 1 : async_jobs);
     loopargs =
-        app_malloc(loopargs_len * sizeof(loopargs_t), "array of loopargs");
+        app_malloc_array(loopargs_len, sizeof(loopargs_t), "array of loopargs");
     memset(loopargs, 0, loopargs_len * sizeof(loopargs_t));
 
     buflen = lengths[size_num - 1];
@@ -4885,7 +4885,7 @@ static int do_multi(int multi, int size_num)
     int status;
     static char sep[] = ":";
 
-    fds = app_malloc(sizeof(*fds) * multi, "fd buffer for do_multi");
+    fds = app_malloc_array(multi, sizeof(*fds), "fd buffer for do_multi");
     for (n = 0; n < multi; ++n) {
         if (pipe(fd) == -1) {
             BIO_printf(bio_err, "pipe failure\n");

@@ -391,7 +391,7 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
     ngroups = SSL_get1_groups(s, NULL);
     if (ngroups <= 0)
         return 1;
-    groups = app_malloc(ngroups * sizeof(int), "groups to print");
+    groups = app_malloc_array(ngroups, sizeof(*groups), "groups to print");
     SSL_get1_groups(s, groups);
 
     BIO_puts(out, "Supported groups: ");

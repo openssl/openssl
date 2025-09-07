@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -501,16 +501,15 @@ static void *kdf_hkdf_fixed_digest_new(void *provctx, const char *digest)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     KDF_HKDF *ctx;
-    OSSL_PARAM params[2];
+    OSSL_PARAM param;
 
     ctx = kdf_hkdf_new(provctx);
     if (ctx == NULL)
         return NULL;
 
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_DIGEST,
-                                                 (char *)digest, 0);
-    params[1] = OSSL_PARAM_construct_end();
-    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx)) {
+    param = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_DIGEST,
+                                             (char *)digest, 0);
+    if (!ossl_prov_digest_load(&ctx->digest, &param, NULL, NULL, libctx)) {
         kdf_hkdf_free(ctx);
         return NULL;
     }

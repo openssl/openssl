@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -541,6 +541,7 @@ static int test_n(int i)
         ossl_ssize_t z;
         ptrdiff_t t;
     } n = { 0 }, std_n = { 0 };
+    uint64_t n_val, std_n_val;
 
 #if defined(OPENSSL_SYS_WINDOWS)
     /*
@@ -594,8 +595,8 @@ static int test_n(int i)
                 std_ret = snprintf(std_buf, sizeof(std_buf), data->format,     \
                                    data->arg1.i, data->arg2.i, &std_n.field_); \
         }                                                                      \
-        n.val = n.field_;                                                      \
-        std_n.val = std_n.field_;                                              \
+        n_val = n.field_;                                                      \
+        std_n_val = std_n.field_;                                              \
     } while (0)
     case AT_CHAR:
         DO_PRINT(hh);
@@ -625,7 +626,7 @@ static int test_n(int i)
     }
 
     if (!TEST_str_eq(bio_buf, data->expected)
-        + !TEST_uint64_t_eq(n.val, data->exp_n)
+        + !TEST_uint64_t_eq(n_val, data->exp_n)
         + !TEST_int_eq(bio_ret, exp_ret)) {
         TEST_note("Format: \"%s\"", data->format);
         return 0;
@@ -637,7 +638,7 @@ static int test_n(int i)
      */
     if (!data->skip_libc_check) {
         if (!TEST_str_eq(bio_buf, std_buf)
-            + !TEST_uint64_t_eq(n.val, std_n.val)
+            + !TEST_uint64_t_eq(n_val, std_n_val)
             + !(data->skip_libc_ret_check || TEST_int_eq(bio_ret, std_ret))) {
             TEST_note("Format: \"%s\"", data->format);
 #if defined(OPENSSL_STRICT_LIBC_PRINTF_CHECK)

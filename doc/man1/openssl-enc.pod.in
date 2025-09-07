@@ -193,9 +193,12 @@ Print out the key and IV used.
 Print out the key and IV used then immediately exit: don't do any encryption
 or decryption.
 
-=item B<-bufsize> I<number>
+=item B<-bufsize> I<number>[B<k>]
 
 Set the buffer size for I/O.
+The maximum size that can be specified is B<2^31-1> (2147483647) bytes.
+The B<k> suffix can be specified to indicate that I<number> is provided
+in kibibytes (multiples of 1024 bytes).
 
 =item B<-nopad>
 

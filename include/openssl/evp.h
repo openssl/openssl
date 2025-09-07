@@ -2067,6 +2067,9 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
                                 int validate_peer);
 int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer);
 int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
+EVP_SKEY *EVP_PKEY_derive_SKEY(EVP_PKEY_CTX *ctx, EVP_SKEYMGMT *mgmt,
+                               const char *key_type, const char *propquery,
+                               size_t keylen, const OSSL_PARAM params[]);
 
 int EVP_PKEY_encapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[]);
 int EVP_PKEY_auth_encapsulate_init(EVP_PKEY_CTX *ctx, EVP_PKEY *authpriv,
@@ -2322,6 +2325,8 @@ EVP_SKEY *EVP_SKEY_generate(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
 EVP_SKEY *EVP_SKEY_import_raw_key(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
                                   unsigned char *key, size_t keylen,
                                   const char *propquery);
+EVP_SKEY *EVP_SKEY_import_SKEYMGMT(OSSL_LIB_CTX *libctx, EVP_SKEYMGMT *skeymgmt,
+                                   int selection, const OSSL_PARAM *params);
 int EVP_SKEY_get0_raw_key(const EVP_SKEY *skey, const unsigned char **key,
                           size_t *len);
 const char *EVP_SKEY_get0_key_id(const EVP_SKEY *skey);

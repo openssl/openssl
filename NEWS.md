@@ -7,6 +7,8 @@ release. For more details please read the CHANGES file.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 4.0](#openssl-40)
+ - [OpenSSL 3.6](#openssl-36)
  - [OpenSSL 3.5](#openssl-35)
  - [OpenSSL 3.4](#openssl-34)
  - [OpenSSL 3.3](#openssl-33)
@@ -20,13 +22,36 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 3.5
+OpenSSL 4.0
+-----------
+
+### Major changes between OpenSSL 3.6 and OpenSSL 4.0 [under development]
+
+  * none
+
+OpenSSL 3.6
 -----------
 
 ### Major changes between OpenSSL 3.5 and OpenSSL 3.6 [under development]
 
 This release incorporates the following potentially significant or incompatible
 changes:
+
+  * Added PCT for key import for SLH-DSA when in FIPS mode
+
+  * Added FIPS 140-3 PCT on DH key generation
+
+  * Added NIST security categories for PKEY objects.
+
+  * Added support for EVP_SKEY opaque symmetric key objects to the key
+    derivation and key exchange provider methods. Added `EVP_KDF_CTX_set_SKEY()`,
+    `EVP_KDF_derive_SKEY()`, and `EVP_PKEY_derive_SKEY()` functions.
+
+  * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
+    This is mandated by FIPS 140-3 IG 10.3.A additional comment 1.
+
+  * Added LMS signature verification support as per [SP 800-208]. This
+    support is present in both the FIPS and default providers.
 
   * An ANSI-C toolchain is no longer sufficient for building OpenSSL. The code
     should build on compilers supporting C-99 features.
@@ -39,7 +64,19 @@ changes:
   * Added support for FIPS 186-5 deterministic ECDSA signature
     generation to the FIPS provider.
 
-### Major changes between OpenSSL 3.5.0 and OpenSSL 3.5.1 [under development]
+  * Deprecated `EVP_PKEY_ASN1_METHOD` related functions.
+
+OpenSSL 3.5
+-----------
+
+### Changes between 3.5.1 and 3.5.2 [5 Aug 2025]
+
+ * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
+   This is mandated by FIPS 140-3 IG 10.3.A additional comment 1.
+
+   *Dr Paul Dale*
+
+### Major changes between OpenSSL 3.5.0 and OpenSSL 3.5.1 [1 Jul 2025]
 
 OpenSSL 3.5.1 is a security patch release. The most severe CVE fixed in this
 release is Low.
@@ -49,7 +86,7 @@ This release incorporates the following bug fixes and mitigations:
   * Fix x509 application adds trusted use instead of rejected use.
    ([CVE-2025-4575])
 
-### Major changes between OpenSSL 3.4 and OpenSSL 3.5 [under development]
+### Major changes between OpenSSL 3.4 and OpenSSL 3.5 [8 Apr 2025]
 
 OpenSSL 3.5.0 is a feature release adding significant new functionality to
 OpenSSL.
