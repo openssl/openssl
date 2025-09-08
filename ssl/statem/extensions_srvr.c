@@ -221,11 +221,10 @@ int tls_parse_ctos_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
                                   X509 *x, size_t chainidx) {
     unsigned int peer_record_size_limit;
 
-    if (PACKET_remaining(pkt) != 2
-            || !PACKET_get_net_2(pkt, &peer_record_size_limit)) {
+    if (!PACKET_get_net_2(pkt, &peer_record_size_limit)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
-            }
+    }
 
     /*
      * According to RFC 8449:
@@ -1680,7 +1679,7 @@ EXT_RETURN tls_construct_stoc_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,
                                              size_t chainidx)
 {
-    if (s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT)
+    if ((s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT) != 0)
         return EXT_RETURN_NOT_SENT;
 
     /* If the peer did not send a Record Size Limit. */

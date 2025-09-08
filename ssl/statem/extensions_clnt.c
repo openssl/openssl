@@ -1462,7 +1462,7 @@ int tls_parse_stoc_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    if (PACKET_remaining(pkt) != 2 || !PACKET_get_net_2(pkt, &peer_record_size_limit)) {
+    if (!PACKET_get_net_2(pkt, &peer_record_size_limit)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
