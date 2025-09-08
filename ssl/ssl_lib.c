@@ -7351,7 +7351,8 @@ uint32_t SSL_get_recv_max_early_data(const SSL *s)
 static unsigned int get_proto_record_hard_limit(int version) {
     if (version <= TLS1_2_VERSION
         || version == DTLS1_2_VERSION
-        || version == DTLS1_VERSION)
+        || version == DTLS1_VERSION
+        || version == DTLS1_BAD_VER)
         return SSL3_RT_MAX_PLAIN_LENGTH;
 
     if (version == TLS1_3_VERSION)
