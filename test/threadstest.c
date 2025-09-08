@@ -321,7 +321,8 @@ static void writer_fn(int id, int *iterations)
     t1 = ossl_time_now();
 
     for (count = 0; ; count++) {
-        new = CRYPTO_zalloc(sizeof(uint64_t), NULL, 0);
+        new = CRYPTO_malloc(sizeof(uint64_t), NULL, 0);
+        *new = (uint64_t)0xBAD;
         if (contention == 0)
             OSSL_sleep(1000);
         ossl_rcu_write_lock(rcu_lock);
@@ -387,6 +388,8 @@ static void reader_fn(int *iterations)
 
         if (oldval > val) {
             TEST_info("rcu torture value went backwards! %llu : %llu", (unsigned long long)oldval, (unsigned long long)val);
+            if (valp == NULL)
+                TEST_info("ossl_rcu_deref did return NULL!");
             rcu_torture_result = 0;
         }
         oldval = val; /* just try to deref the pointer */
