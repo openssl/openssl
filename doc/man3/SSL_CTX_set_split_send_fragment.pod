@@ -126,15 +126,15 @@ It affects the client-side as only its side may initiate this extension use.
 SSL_SESSION_get_max_fragment_length() gets the maximum fragment length
 negotiated in B<session>.
 
-SSL_CTX_set_tlsext_record_size_limit() sets the maximum size of record in octets that the endpoint
+SSL_CTX_set_record_size_limit() sets the maximum size of a protected record that the endpoint
 is willing to receive.
-This extension is sent by default, and can be disabled by calling SSL_CTX_set_options(SSL_OP_NO_RECORD_SIZE_LIMIT_EXT).
+This extension is advertise by default, and can be disabled by calling SSL_CTX_set_options(SSL_OP_NO_RECORD_SIZE_LIMIT_EXT).
 If the max_fragment_length extension is configured via SSL_CTX_set_tlsext_max_fragment_length(),
-a value set by SSL_CTX_set_tlsext_record_size_limit() will be ignored and the limit will be the
-same as the max_fragment_length value. Both extensions are gonna be sent, and a server will choose
-record_size_limit if it supports the extension.
-It affects both the client and server side.
-See the B<Notes> to understand the differences between Maximum Fragmentation Length and the Record Size Limit.
+a value set by SSL_CTX_set_record_size_limit() will be ignored and the limit will be the
+same as the maximum fragment length value. Both extensions are gonna be sent, and a server will choose
+record size limit over maximum fragment length if it supports the extension.
+Both server and client can set this limit, but only client may initiate this extension use.
+See the B<Notes> to understand the key differences between maximum fragment length and record size limit.
 
 SSL_set_tlsext_record_size_limit() has the same semantics of the above function.
 
@@ -183,11 +183,10 @@ Sets Maximum Fragment Length to 2048.
 
 Sets Maximum Fragment Length to 4096.
 
-A valid Record Size Limit cannot be lower than 64 bytes.
-Unlike the Maximum Fragment Length extension, Record Size Limit is asymmetric : a server can advertise
-a limit that is different than the client. This is not possible with the Maximum Fragment Length extension,
-as the server was require to echo the Maximum Fragment Length sent by the client.
-More information about the limitation of the Maximum Fragment Length extension can be found in RFC 8449.
+A valid record size limit cannot be lower than 64 bytes.
+Record size limit does not apply to unprotected records. For (D)TLS 1.2 and below, initial handshake messages are not
+affected by this limit unlike maximum fragment length.
+Record size limit is asymmetric : a server can advertise a limit that is different than the client.
 
 If a Record Size Limit has been negotiated, the max_send_fragment or split_send_fragment will not be used OpenSSL.
 
