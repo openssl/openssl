@@ -290,11 +290,11 @@ struct ossl_record_method_st {
     const COMP_METHOD *(*get_compression)(OSSL_RECORD_LAYER *rl);
 
     /*
-     * Set the record size limit to be used for the record layer. This
-     * will override any previous value supplied for the "record_size_limit"
+     * Set the maximum fragmentation length to be used for the record layer.
+     * This will override any previous value supplied for the "record_size_limit"
      * setting during construction of the record layer.
      */
-    void (*set_record_size_limit)(OSSL_RECORD_LAYER *rl, size_t max_frag_len);
+    void (*set_max_frag_len)(OSSL_RECORD_LAYER *rl, size_t max_frag_len);
 
     /*
      * The maximum expansion in bytes that the record layer might add while

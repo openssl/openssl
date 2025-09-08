@@ -250,7 +250,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
      * Check if the received packet overflows the current Max Fragment
      * Length setting.
      */
-    if (rr->length > rl->record_size_limit) {
+    if (rr->length > rl->max_frag_len) {
         RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW, SSL_R_DATA_LENGTH_TOO_LONG);
         goto end;
     }
@@ -478,7 +478,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
          * If received packet overflows maximum possible fragment length then
          * silently discard it
          */
-        if (rr->length > rl->record_size_limit + SSL3_RT_MAX_ENCRYPTED_OVERHEAD) {
+        if (rr->length > rl->max_frag_len + SSL3_RT_MAX_ENCRYPTED_OVERHEAD) {
             /* record too long, silently discard it */
             rr->length = 0;
             rl->packet_length = 0;
@@ -795,7 +795,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_get_state,
     tls_set_options,
     tls_get_compression,
-    tls_set_record_size_limit,
+    tls_set_max_frag_len,
     dtls_get_max_record_overhead,
     tls_increment_sequence_ctr,
     tls_alloc_buffers,

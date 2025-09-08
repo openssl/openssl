@@ -1759,10 +1759,10 @@ static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
         s->session->ext.max_fragment_len_mode = TLSEXT_max_fragment_length_DISABLED;
 
     if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
-        s->rlayer.rrlmethod->set_record_size_limit(s->rlayer.rrl,
+        s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
                                               GET_MAX_FRAGMENT_LENGTH(s->session));
 
-        s->rlayer.wrlmethod->set_record_size_limit(s->rlayer.wrl,
+        s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
                                               ssl_get_max_send_fragment(s, 0));
     }
 
@@ -1773,7 +1773,7 @@ static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
                                    int sent) {
     unsigned int proto_record_hard_limit;
 
-    if (s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT)
+    if ((s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT) != 0)
         return 1;
 
     if (s->session == NULL)
@@ -1788,8 +1788,6 @@ static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
     /*
      * Only happens server-side. The final() function is called before the
      * construct() one. Default value should be set here.
-     * This is not ideal, but I have not come up with a better solution with
-     * my current knowledge of the codebase.
      */
     if (s->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED
         && IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.peer_record_size_limit))
@@ -1806,7 +1804,8 @@ static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
         s->session->ext.peer_record_size_limit = proto_record_hard_limit;
 
     /*
-     * Unlike Maximum Fragment Length, wait until the cipher spec changes.
+     * Unlike Maximum Fragment Length, we wait until seeing / sending CCS
+     * handshake message for limiting bytes sent by the record layer.
      */
 
     return 1;

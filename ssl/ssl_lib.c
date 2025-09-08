@@ -3037,7 +3037,7 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic)
         sc->max_send_fragment = larg;
         if (sc->max_send_fragment < sc->split_send_fragment)
             sc->split_send_fragment = sc->max_send_fragment;
-        sc->rlayer.wrlmethod->set_record_size_limit(sc->rlayer.wrl, larg);
+        sc->rlayer.wrlmethod->set_max_frag_len(sc->rlayer.wrl, larg);
         return 1;
     case SSL_CTRL_SET_SPLIT_SEND_FRAGMENT:
         if ((size_t)larg > sc->max_send_fragment || larg == 0)
@@ -7297,12 +7297,11 @@ uint32_t SSL_get_recv_max_early_data(const SSL *s)
 static unsigned int get_proto_record_hard_limit(int version) {
     if (version <= TLS1_2_VERSION
         || version == DTLS1_2_VERSION
-        || version == DTLS1_VERSION) {
+        || version == DTLS1_VERSION)
         return SSL3_RT_MAX_PLAIN_LENGTH;
-    }
-    if (version == TLS1_3_VERSION) {
+
+    if (version == TLS1_3_VERSION)
         return SSL3_RT_MAX_PLAIN_LENGTH + 1;
-    }
 
     return 0;
 }
@@ -7310,7 +7309,6 @@ static unsigned int get_proto_record_hard_limit(int version) {
 __owur unsigned int ssl_get_proto_record_hard_limit(const SSL_CONNECTION *sc) {
     if (sc->session)
         return get_proto_record_hard_limit(sc->session->ssl_version);
-
     return get_proto_record_hard_limit(sc->version);
 }
 

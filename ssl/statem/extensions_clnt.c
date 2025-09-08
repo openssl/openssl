@@ -113,6 +113,7 @@ EXT_RETURN tls_construct_ctos_maxfragmentlen(SSL_CONNECTION *s, WPACKET *pkt,
 EXT_RETURN tls_construct_ctos_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
                                                 unsigned int context, X509 *x,
                                                 size_t chainidx) {
+    uint16_t proto_hard_limit;
     /*
      * According to RFC 8449:
      *
@@ -124,7 +125,7 @@ EXT_RETURN tls_construct_ctos_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
      * same value.
      */
 
-    if (s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT) {
+    if ((s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT) != 0) {
         return EXT_RETURN_NOT_SENT;
     }
 
@@ -133,13 +134,12 @@ EXT_RETURN tls_construct_ctos_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
                 GET_MAX_FRAGMENT_LENGTH_VALUE(s->ext.max_fragment_len_mode);
     } else if (s->ext.record_size_limit ==
                TLSEXT_record_size_limit_UNSPECIFIED) {
-        s->ext.record_size_limit = ssl_get_proto_record_hard_limit(s);
-        if (s->ext.record_size_limit == 0) {
+        proto_hard_limit = ssl_get_proto_record_hard_limit(s);
+        if (proto_hard_limit == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
         }
-    } else {
-        s->ext.record_size_limit = s->ext.record_size_limit;
+        s->ext.record_size_limit = proto_hard_limit;
     }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_record_size_limit)

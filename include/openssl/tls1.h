@@ -247,7 +247,6 @@ extern "C" {
 # define TLSEXT_cert_type_1609dot2     3 /* recognized, but not supported */
 
 # define TLSEXT_record_size_limit_UNSPECIFIED 0
-# define TLSEXT_record_size_limit_DISABLED 1
 /* As defined in RFC 8449. */
 # define TLSEXT_record_size_limit_min 64
 

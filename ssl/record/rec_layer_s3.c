@@ -1241,12 +1241,12 @@ static int ssl_post_record_layer_select(SSL_CONNECTION *s, int direction)
 void ssl_set_record_size_limit(const SSL_CONNECTION *s, int which) {
     if ((which & SSL3_CHANGE_CIPHER_CLIENT_WRITE) == SSL3_CHANGE_CIPHER_CLIENT_WRITE || (which & SSL3_CHANGE_CIPHER_SERVER_WRITE) == SSL3_CHANGE_CIPHER_SERVER_WRITE) {
         if (IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.peer_record_size_limit)) {
-            s->rlayer.wrlmethod->set_record_size_limit(s->rlayer.wrl,
+            s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
                 s->session->ext.peer_record_size_limit);
         }
     } else if ((which & SSL3_CHANGE_CIPHER_CLIENT_READ) == SSL3_CHANGE_CIPHER_CLIENT_READ || (which & SSL3_CHANGE_CIPHER_SERVER_READ) == SSL3_CHANGE_CIPHER_SERVER_READ) {
         if (IS_RECORD_SIZE_LIMIT_VALID(s->session->ext.record_size_limit)) {
-            s->rlayer.rrlmethod->set_record_size_limit(s->rlayer.rrl,
+            s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
                 s->session->ext.record_size_limit);
         }
     }

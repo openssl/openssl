@@ -505,25 +505,38 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         goto err;
     if (server2_ctx != NULL) {
         if (!TEST_int_eq(SSL_CTX_set_max_send_fragment(server2_ctx,
-                                                       test->max_fragment_size),
-                         1))
+                                                    test->max_fragment_size),1))
             goto err;
     }
     if (!TEST_int_eq(SSL_CTX_set_max_send_fragment(client_ctx,
                                                    test->max_fragment_size), 1))
         goto err;
 
-    if (!TEST_int_eq(SSL_CTX_set_record_size_limit(server_ctx,
-                                                   extra->server.record_size_limit), 1))
-        goto err;
-    if (server2_ctx != NULL) {
-        if (!TEST_int_eq(SSL_CTX_set_record_size_limit(server2_ctx,
-                                                       extra->server2.record_size_limit), 1))
+    if (extra->server.record_size_limit == 0) {
+        SSL_CTX_set_options(server_ctx, SSL_OP_NO_RECORD_SIZE_LIMIT_EXT);
+    } else {
+        if (!TEST_int_eq(SSL_CTX_set_record_size_limit(server_ctx,
+                                      extra->server.record_size_limit), 1))
             goto err;
     }
-    if (!TEST_int_eq(SSL_CTX_set_record_size_limit(client_ctx,
-                                                   extra->client.record_size_limit), 1))
-        goto err;
+
+    if (server2_ctx != NULL) {
+        if (extra->server2.record_size_limit == 0) {
+            SSL_CTX_set_options(server2_ctx, SSL_OP_NO_RECORD_SIZE_LIMIT_EXT);
+        } else {
+            if (!TEST_int_eq(SSL_CTX_set_record_size_limit(server2_ctx,
+                                          extra->server2.record_size_limit), 1))
+                goto err;
+        }
+    }
+
+    if (extra->client.record_size_limit == 0) {
+        SSL_CTX_set_options(client_ctx, SSL_OP_NO_RECORD_SIZE_LIMIT_EXT);
+    } else {
+        if (!TEST_int_eq(SSL_CTX_set_record_size_limit(client_ctx,
+                                           extra->client.record_size_limit), 1))
+            goto err;
+    }
 
     switch (extra->client.verify_callback) {
     case SSL_TEST_VERIFY_ACCEPT_ALL:

@@ -163,7 +163,7 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
         maxalign = SSL3_ALIGN_PAYLOAD - 1;
 #endif
 
-        defltlen = maxalign + headerlen + rl->eivlen + rl->record_size_limit
+        defltlen = maxalign + headerlen + rl->eivlen + rl->max_frag_len
                    + contenttypelen + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
 #ifndef OPENSSL_NO_COMP
         if (tls_allow_compression(rl))
@@ -244,7 +244,7 @@ int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl)
 #endif
 
     if (b->buf == NULL) {
-        len = rl->record_size_limit
+        len = rl->max_frag_len
               + SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + maxalign;
 #ifndef OPENSSL_NO_COMP
         if (tls_allow_compression(rl))
@@ -935,8 +935,8 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
          * mutually exclusive. Also note that with KTLS thisrr->length can
          * be > SSL3_RT_MAX_PLAIN_LENGTH (and rl->record_size_limit must be ignored)
          */
-        if (rl->record_size_limit != SSL3_RT_MAX_PLAIN_LENGTH
-                && thisrr->length > rl->record_size_limit) {
+        if (rl->max_frag_len != SSL3_RT_MAX_PLAIN_LENGTH
+                && thisrr->length > rl->max_frag_len) {
             RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW, SSL_R_DATA_LENGTH_TOO_LONG);
             goto end;
         }
@@ -1265,10 +1265,10 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         return OSSL_RECORD_RETURN_FATAL;
 
     /*
-     * Default the value for max_frag_len. This may be overridden by the
+     * Default the value for record size limit. This may be overridden by the
      * settings
      */
-    rl->record_size_limit = SSL3_RT_MAX_PLAIN_LENGTH;
+    rl->max_frag_len = SSL3_RT_MAX_PLAIN_LENGTH;
 
     /* Loop through all the settings since they must all be understood */
     if (settings != NULL) {
@@ -1280,7 +1280,7 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                 }
             } else if (strcmp(p->key,
                               OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_FRAG_LEN) == 0) {
-                if (!OSSL_PARAM_get_uint(p, &rl->record_size_limit)) {
+                if (!OSSL_PARAM_get_uint(p, &rl->max_frag_len)) {
                     ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
                     goto err;
                 }
@@ -2061,9 +2061,9 @@ const COMP_METHOD *tls_get_compression(OSSL_RECORD_LAYER *rl)
 #endif
 }
 
-void tls_set_record_size_limit(OSSL_RECORD_LAYER *rl, size_t record_size_limit)
+void tls_set_max_frag_len(OSSL_RECORD_LAYER *rl, size_t record_size_limit)
 {
-    rl->record_size_limit = record_size_limit;
+    rl->max_frag_len = record_size_limit;
     /*
      * We don't need to adjust buffer sizes. Write buffer sizes are
      * automatically checked anyway. We should only be changing the read buffer
@@ -2175,7 +2175,7 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_get_state,
     tls_set_options,
     tls_get_compression,
-    tls_set_record_size_limit,
+    tls_set_max_frag_len,
     NULL,
     tls_increment_sequence_ctr,
     tls_alloc_buffers,
