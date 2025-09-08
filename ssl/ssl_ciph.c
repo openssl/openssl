@@ -28,6 +28,7 @@
 #include "internal/cryptlib.h"
 #include "internal/comp.h"
 #include "internal/ssl_unwrap.h"
+#include "crypto/ctype.h"
 
 /* NB: make sure indices in these tables match values above */
 
@@ -1031,8 +1032,8 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                    ((ch >= 'a') && (ch <= 'z')) ||
                    (ch == '-') || (ch == '_') || (ch == '.') || (ch == '='))
 #else
-            while (isalnum((unsigned char)ch) || (ch == '-') || (ch == '_') || (ch == '.')
-                   || (ch == '='))
+            while (ossl_isalnum((unsigned char)ch) || (ch == '-') || (ch == '_')
+                   || (ch == '.') || (ch == '='))
 #endif
             {
                 ch = *(++l);
