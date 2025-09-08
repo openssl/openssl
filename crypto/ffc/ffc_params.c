@@ -214,7 +214,7 @@ int ossl_ffc_params_cmp(const FFC_PARAMS *a, const FFC_PARAMS *b, int ignore_q)
 }
 
 int ossl_ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *bld,
-                           const FFC_PARAM_PTRS *pp)
+                           const FFC_OSSL_PARAMS *pp)
 {
     int test_flags;
 

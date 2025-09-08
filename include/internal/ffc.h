@@ -137,7 +137,7 @@ typedef struct {
     OSSL_PARAM *validate_legacy;    /* OSSL_PKEY_PARAM_FFC_VALIDATE_LEGACY */
     OSSL_PARAM *digest;             /* OSSL_PKEY_PARAM_FFC_DIGEST */
     OSSL_PARAM *propq;              /* OSSL_PKEY_PARAM_FFC_DIGEST_PROPS */
-} FFC_PARAM_PTRS;
+} FFC_OSSL_PARAMS;
 
 void ossl_ffc_params_init(FFC_PARAMS *params);
 void ossl_ffc_params_cleanup(FFC_PARAMS *params);
@@ -216,7 +216,7 @@ int ossl_ffc_validate_private_key(const BIGNUM *upper, const BIGNUM *priv_key,
                                  int *ret);
 
 int ossl_ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *tmpl,
-                           const FFC_PARAM_PTRS *pp);
+                           const FFC_OSSL_PARAMS *pp);
 int ossl_ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[]);
 
 typedef struct dh_named_group_st DH_NAMED_GROUP;
