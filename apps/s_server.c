@@ -617,10 +617,8 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
         sk_OCSP_RESPONSE_pop_free(*sk_resp, OCSP_RESPONSE_free);
 
     SSL_get0_chain_certs(s, &server_chain);
-    /*
-     * TODO(DTLS-1.3): in future DTLS should also be considered
-     */
-    if (server_chain != NULL && srctx->status_all && !SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) {
+
+    if (server_chain != NULL && srctx->status_all && ((!SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) || (SSL_is_dtls(s) && SSL_version(s) <= DTLS1_3_VERSION))) {
         /* certificate chain is available */
         num = sk_X509_num(server_chain) + 1;
     }
@@ -775,10 +773,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
 
     SSL_get0_chain_certs(s, &server_chain);
 
-    /*
-     * TODO(DTLS-1.3): in future DTLS should also be considered
-     */
-    if (server_chain != NULL && srctx->status_all && !SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) {
+    if (server_chain != NULL && srctx->status_all && ((!SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) || (SSL_is_dtls(s) && SSL_version(s) <= DTLS1_3_VERSION))) {
         /* certificate chain is available */
         num = sk_X509_num(server_chain) + 1;
     } else {

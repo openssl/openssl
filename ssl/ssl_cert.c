@@ -434,6 +434,7 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     SSL_CTX *sctx;
 #ifndef OPENSSL_NO_OCSP
     SSL *ssl;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 #endif
 
     /* Something must be passed in */
@@ -496,10 +497,8 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
      */
 #ifndef OPENSSL_NO_OCSP
     ssl = SSL_CONNECTION_GET_SSL(s);
-    /*
-     * TODO(DTLS-1.3): in future DTLS should also be considered
-     */
-    if (!SSL_is_dtls(ssl) && SSL_version(ssl) >= TLS1_3_VERSION) {
+
+    if (ssl_version_cmp(s, SSL_version(ssl), version1_3) >= 0) {
         /* ignore status_request_v2 if TLS version < 1.3 */
         int status = SSL_get_tlsext_status_type(ssl);
 

@@ -3695,7 +3695,8 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     OCSP_RESPONSE *rsp;
 
-    if (SSL_version(s) >= TLS1_3_VERSION) {
+    if ((!SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION)
+        || (SSL_is_dtls(s) && SSL_version(s) <= DTLS1_3_VERSION)) {
         (void)SSL_get0_tlsext_status_ocsp_resp_ex(s, &sk_resp);
 
         BIO_puts(arg, "OCSP responses: ");
