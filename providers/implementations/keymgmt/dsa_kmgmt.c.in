@@ -260,7 +260,6 @@ err:
 
 /* IMEXPORT = IMPORT + EXPORT */
 
-/* These need to be kept in sync with dsa_get_params below */
 # define DSA_IMEXPORTABLE_PARAMETERS                                           \
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_P, NULL, 0),                             \
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_Q, NULL, 0),                             \
