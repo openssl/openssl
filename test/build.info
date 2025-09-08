@@ -79,10 +79,6 @@ IF[{- !$disabled{tests} -}]
     PROGRAMS{noninst}=handshake-memfail
   ENDIF
 
-  IF[{- !$disabled{'deprecated-3.0'} -}]
-    PROGRAMS{noinst}=enginetest
-  ENDIF
-
   IF[{- !$disabled{quic} -}]
     PROGRAMS{noinst}=priority_queue_test quicfaultstest quicapitest \
                      quic_newcid_test quic_srt_gen_test
@@ -158,10 +154,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[sha_test]=sha_test.c
   INCLUDE[sha_test]=../include ../apps/include
   DEPEND[sha_test]=../libcrypto libtestutil.a
-
-  SOURCE[enginetest]=enginetest.c
-  INCLUDE[enginetest]=../include ../apps/include
-  DEPEND[enginetest]=../libcrypto libtestutil.a
 
   SOURCE[exptest]=exptest.c
   INCLUDE[exptest]=../include ../apps/include
