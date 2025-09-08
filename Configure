@@ -24,6 +24,14 @@ use OpenSSL::config;
 
 # see INSTALL.md for instructions.
 
+# Set this variable to 1 if you want to skip all the Engine related tests
+# Re-enable with 0. (and you also should add back 'afalgeng' in
+# Configurations/10-main.conf to the enable array at (possible) line 697
+# (targets/linux_generic32)
+# This is needed for engine removal process, because we can't do it in one big
+# bulk and otherwise there will be failing tests and we want the CI to be happy.
+my $disable_engine_removal = 1;
+
 my $orig_death_handler = $SIG{__DIE__};
 $SIG{__DIE__} = \&death_handler;
 
@@ -1829,6 +1837,14 @@ $config{CFLAGS} = [ map { $_ eq '--ossl-strict-warnings'
                               ? @strict_warnings_collection
                               : ( $_ ) }
                     @{$config{CFLAGS}} ];
+
+if ($disable_engine_removal == 1) {
+    disable("engine-removal", "engine");
+    disable("engine-removal", "afalgeng");
+    disable("engine-removal", "capieng");
+    disable("engine-removal", "loadereng");
+    disable("engine-removal", "padlockeng");
+}
 
 unless ($disabled{afalgeng}) {
     $config{afalgeng}="";
