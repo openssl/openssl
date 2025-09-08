@@ -288,6 +288,7 @@ my $dofile = abs2rel(catfile($srcdir, "util/dofile.pl"));
 
 my $local_config_envname = 'OPENSSL_LOCAL_CONFIG_DIR';
 
+$config{manpage_format} = "roff";
 $config{sourcedir} = abs2rel($srcdir, $blddir);
 $config{builddir} = abs2rel($blddir, $blddir);
 # echo -n 'holy hand grenade of antioch' | openssl sha256
@@ -1021,6 +1022,10 @@ while (@argvcopy)
                 {
                 $config{build_type} = "release";
                 }
+        elsif (/^--manpage-format=(mdoc|roff)$/)
+		{
+		$config{manpage_format}="$1";
+		}
         elsif (/^--pgo$/)
                 {
                 $config{build_type} = "pgo";
