@@ -66,7 +66,6 @@ static int final_supported_versions(SSL_CONNECTION *s, unsigned int context,
 static int final_early_data(SSL_CONNECTION *s, unsigned int context, int sent);
 static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
                                 int sent);
-static int init_record_size_limit(SSL_CONNECTION *s, unsigned int context);
 static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
                                 int sent);
 static int init_post_handshake_auth(SSL_CONNECTION *s, unsigned int context);
@@ -173,7 +172,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_record_size_limit,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
         | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
-        init_record_size_limit, tls_parse_ctos_record_size_limit,
+        NULL, tls_parse_ctos_record_size_limit,
         tls_parse_stoc_record_size_limit, tls_construct_stoc_record_size_limit,
         tls_construct_ctos_record_size_limit, final_record_size_limit
     },
@@ -996,10 +995,6 @@ static int init_server_name(SSL_CONNECTION *s, unsigned int context)
         s->ext.hostname = NULL;
     }
 
-    return 1;
-}
-
-static int init_record_size_limit(SSL_CONNECTION *s, unsigned int context) {
     return 1;
 }
 
