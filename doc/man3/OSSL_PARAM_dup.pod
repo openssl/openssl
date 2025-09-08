@@ -54,7 +54,7 @@ L<OSSL_PARAM(3)>, L<OSSL_PARAM_BLD(3)>
 =head1 HISTORY
 
 The OSSL_PARAM_dup, OSSL_PARAM_merge and OSSL_PARAM_free functions were added
-in OpenSSL 3.0. OSSL_PARAM_clear_free was added in OpenSSL 3.6.0.
+in OpenSSL 3.0. OSSL_PARAM_clear_free was added in OpenSSL 4.0.0.
 
 =head1 COPYRIGHT
 
