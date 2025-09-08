@@ -22,6 +22,7 @@
 #include <openssl/x509.h>
 #include <openssl/trace.h>
 #include <openssl/engine.h>
+#include "crypto/ctype.h"
 #include "conf_local.h"
 
 DEFINE_STACK_OF(CONF_MODULE)
@@ -742,7 +743,7 @@ int CONF_parse_list(const char *list_, int sep, int nospc,
     lstart = list_;
     for (;;) {
         if (nospc) {
-            while (*lstart && isspace((unsigned char)*lstart))
+            while (*lstart && ossl_isspace((unsigned char)*lstart))
                 lstart++;
         }
         p = strchr(lstart, sep);
@@ -754,7 +755,7 @@ int CONF_parse_list(const char *list_, int sep, int nospc,
             else
                 tmpend = lstart + strlen(lstart) - 1;
             if (nospc) {
-                while (isspace((unsigned char)*tmpend))
+                while (ossl_isspace((unsigned char)*tmpend))
                     tmpend--;
             }
             ret = list_cb(lstart, (int)(tmpend - lstart + 1), arg);
