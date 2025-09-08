@@ -309,7 +309,8 @@ static int kdf_pbkdf1_set_skey(void *vctx, void *skeydata, const char *paramname
 }
 
 static
-void *kdf_pbkdf1_derive_skey(void *vctx, void *provctx, OSSL_FUNC_skeymgmt_import_fn *import,
+void *kdf_pbkdf1_derive_skey(void *vctx, const char *key_type ossl_unused, void *provctx,
+                             OSSL_FUNC_skeymgmt_import_fn *import,
                              size_t keylen, const OSSL_PARAM params[])
 {
     unsigned char *key = NULL;

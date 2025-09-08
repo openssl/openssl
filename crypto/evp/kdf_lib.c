@@ -271,7 +271,7 @@ EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
         return NULL;
     }
 
-    ret->keydata = ctx->meth->derive_skey(ctx->algctx, ossl_provider_ctx(skeymgmt->prov),
+    ret->keydata = ctx->meth->derive_skey(ctx->algctx, key_type, ossl_provider_ctx(skeymgmt->prov),
                                           skeymgmt->import, keylen, params);
     if (ret->keydata == NULL) {
         EVP_SKEY_free(ret);

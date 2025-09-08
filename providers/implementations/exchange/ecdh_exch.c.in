@@ -619,7 +619,8 @@ int ecdh_derive(void *vpecdhctx, unsigned char *secret,
 }
 
 static
-void *ecdh_derive_skey(void *vpecdhctx, void *provctx, OSSL_FUNC_skeymgmt_import_fn *import,
+void *ecdh_derive_skey(void *vpecdhctx, const char *key_type ossl_unused,
+                       void *provctx, OSSL_FUNC_skeymgmt_import_fn *import,
                        size_t outlen, const OSSL_PARAM params_in[] ossl_unused)
 {
     unsigned char *secret = NULL;
