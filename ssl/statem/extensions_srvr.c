@@ -221,6 +221,9 @@ int tls_parse_ctos_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
                                   X509 *x, size_t chainidx) {
     unsigned int peer_record_size_limit;
 
+    if ((s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT) != 0)
+        return 1;
+
     if (!PACKET_get_net_2(pkt, &peer_record_size_limit)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
@@ -248,7 +251,7 @@ int tls_parse_ctos_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
         s->session->ext.max_fragment_len_mode =
             TLSEXT_max_fragment_length_DISABLED;
 
-    s->session->ext.peer_record_size_limit = (uint16_t)peer_record_size_limit;
+    s->ext.peer_record_size_limit = (uint16_t)peer_record_size_limit;
 
     return 1;
 }
@@ -1679,13 +1682,24 @@ EXT_RETURN tls_construct_stoc_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,
                                              size_t chainidx)
 {
+    unsigned int proto_record_hard_limit;
+
     if ((s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT) != 0)
         return EXT_RETURN_NOT_SENT;
 
     /* If the peer did not send a Record Size Limit. */
-    if (s->session->ext.peer_record_size_limit ==
-        TLSEXT_record_size_limit_UNSPECIFIED)
+    if (!IS_RECORD_SIZE_LIMIT_VALID(s->ext.peer_record_size_limit))
         return EXT_RETURN_NOT_SENT;
+
+    proto_record_hard_limit = ssl_get_proto_record_hard_limit(s);
+    if (!ossl_assert(proto_record_hard_limit != 0)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* Advertise a default value. */
+    if (s->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED)
+        s->ext.record_size_limit = proto_record_hard_limit;
 
     /*-
      * 4 bytes for this extension type and extension length
@@ -1693,7 +1707,7 @@ EXT_RETURN tls_construct_stoc_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
      */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_record_size_limit)
         || !WPACKET_start_sub_packet_u16(pkt)
-        || !WPACKET_put_bytes_u16(pkt, s->session->ext.record_size_limit)
+        || !WPACKET_put_bytes_u16(pkt, s->ext.record_size_limit)
         || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;

@@ -4853,16 +4853,6 @@ uint8_t SSL_SESSION_get_max_fragment_length(const SSL_SESSION *session)
     return session->ext.max_fragment_len_mode;
 }
 
-uint16_t SSL_SESSION_get_record_size_limit(const SSL_SESSION *session)
-{
-    return session->ext.record_size_limit;
-}
-
-uint16_t SSL_SESSION_get_peer_record_size_limit(const SSL_SESSION *session)
-{
-    return session->ext.peer_record_size_limit;
-}
-
 /*
  * Helper functions for HMAC access with legacy support included.
  */

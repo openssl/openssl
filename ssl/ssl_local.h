@@ -303,9 +303,9 @@
 # define IS_RECORD_SIZE_LIMIT_VALID(value) \
     (value >= TLSEXT_record_size_limit_min)
 
-# define USE_RECORD_SIZE_LIMIT_EXT(session) \
-    (IS_RECORD_SIZE_LIMIT_VALID(session->ext.record_size_limit) && \
-     IS_RECORD_SIZE_LIMIT_VALID(session->ext.peer_record_size_limit))
+# define USE_RECORD_SIZE_LIMIT(s) \
+    (IS_RECORD_SIZE_LIMIT_VALID(s->ext.record_size_limit) && \
+     IS_RECORD_SIZE_LIMIT_VALID(s->ext.peer_record_size_limit))
 
 # define SSL_READ_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_READ)
 # define SSL_WRITE_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)
@@ -556,8 +556,6 @@ struct ssl_session_st {
          * performed at all.
          */
         uint8_t max_fragment_len_mode;
-        uint16_t record_size_limit;
-        uint16_t peer_record_size_limit;
     } ext;
 # ifndef OPENSSL_NO_SRP
     char *srp_username;

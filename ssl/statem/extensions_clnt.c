@@ -151,12 +151,6 @@ EXT_RETURN tls_construct_ctos_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    /*
-     * Bind the record size limit to the current session.
-     * No need to wait to receive the server response.
-     */
-    s->session->ext.record_size_limit = s->ext.record_size_limit;
-
     return EXT_RETURN_SENT;
 }
 
@@ -1450,6 +1444,9 @@ int tls_parse_stoc_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
                                   X509 *x, size_t chainidx) {
     unsigned int peer_record_size_limit;
 
+    if ((s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT) != 0)
+        return 1;
+
     /*
      * According to RFC 8449:
      *
@@ -1478,7 +1475,7 @@ int tls_parse_stoc_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    s->session->ext.peer_record_size_limit = peer_record_size_limit;
+    s->ext.peer_record_size_limit = peer_record_size_limit;
 
     return 1;
 }

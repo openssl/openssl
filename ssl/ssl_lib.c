@@ -7362,8 +7362,6 @@ static unsigned int get_proto_record_hard_limit(int version) {
 }
 
 __owur unsigned int ssl_get_proto_record_hard_limit(const SSL_CONNECTION *sc) {
-    if (sc->session)
-        return get_proto_record_hard_limit(sc->session->ssl_version);
     return get_proto_record_hard_limit(sc->version);
 }
 
@@ -7376,9 +7374,8 @@ __owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc,
     }
 
     /* Return any active Record Size Limit extension */
-    if (sc->session != NULL && USE_RECORD_SIZE_LIMIT_EXT(sc->session)
-        && type == SSL3_RT_APPLICATION_DATA)
-        return sc->session->ext.peer_record_size_limit;
+    if (USE_RECORD_SIZE_LIMIT(sc) && type == SSL3_RT_APPLICATION_DATA)
+        return sc->ext.peer_record_size_limit;
 
     /* Return any active Max Fragment Len extension */
     if (sc->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(sc->session))
@@ -7396,10 +7393,10 @@ __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc,
         type = sc->rlayer.wrl->funcs->get_record_type(sc->rlayer.wrl, type);
     }
 
-    if (sc->session != NULL && USE_RECORD_SIZE_LIMIT_EXT(sc->session)
-        && sc->split_send_fragment > sc->session->ext.peer_record_size_limit
+    if (USE_RECORD_SIZE_LIMIT(sc)
+        && sc->split_send_fragment > sc->ext.peer_record_size_limit
         && type == SSL3_RT_APPLICATION_DATA)
-        return sc->session->ext.peer_record_size_limit;
+        return sc->ext.peer_record_size_limit;
 
     /* Return a value regarding an active Max Fragment Len extension */
     if (sc->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(sc->session)

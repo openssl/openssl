@@ -198,7 +198,38 @@ our @tests = (
         test   => {
             ApplicationData => 32768,
         }
-    }
+    },
+    {
+        # Endpoints can send records of any size permitted by the protocol or other negotiated extensions.
+
+        name   => "Record Size Limit extension not negotiated",
+        server => { },
+        client => {
+            extra => {
+                RecordSizeLimit => 64,
+            },
+        },
+        test   => {
+            ApplicationData => 32768,
+        }
+    },
+    {
+        # TODO
+        name   => "Record Size Limit and Maximum Fragment Length configured.",
+        server => {
+            extra => {
+                RecordSizeLimit => 64,
+            },
+        },
+        client => {
+            extra => {
+                RecordSizeLimit => 64,
+            },
+        },
+        test   => {
+            ApplicationData => 32768,
+        }
+    },
 );
 
 # Tests using RSA key exchange
