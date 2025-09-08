@@ -32,12 +32,12 @@ int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
 }
 #endif
 
-int X509_CRL_print(BIO *out, OSSL_FUTURE_CONST X509_CRL *x)
+int X509_CRL_print(BIO *out, const X509_CRL *x)
 {
   return X509_CRL_print_ex(out, x, XN_FLAG_COMPAT);
 }
 
-int X509_CRL_print_ex(BIO *out, OSSL_FUTURE_CONST X509_CRL *x, unsigned long nmflag)
+int X509_CRL_print_ex(BIO *out, const X509_CRL *x, unsigned long nmflag)
 {
     STACK_OF(X509_REVOKED) *rev;
     X509_REVOKED *r;
