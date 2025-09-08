@@ -56,7 +56,7 @@ my @app = qw(openssl cmp);
 # the server-dependent client configuration consists of:
 my $ca_dn;      # The CA's Distinguished Name
 my $server_dn;  # The server's Distinguished Name
-my $server_host;# The server's hostname or IP address
+my $server_host;# The server's hostname or IP address, '*' means to be determined from server output
 my $server_port;# The server's port
 my $server_tls; # The server's TLS port, if any, or 0
 my $server_path;# The server's CMP alias
@@ -328,10 +328,12 @@ sub start_server {
     print "$server_name server PID=$pid\n";
 
     if ($server_host eq '*' || $server_port == 0) {
-        # Find out the actual server host and port and possibly different PID
+        my $server_output = "";
+        # Determine the actual server host and port and possibly different PID from server output
         my ($host, $port);
         my $pid0 = $pid;
         while (<$server_fh>) {
+            $server_output .= $_;
             print "$server_name server output: $_";
             next if m/[Uu]sing section/;
             s/\R$//;                # Better chomp
@@ -349,11 +351,11 @@ sub start_server {
             kill('KILL', $pid0);
             waitpid($pid0, 0);
         }
-    }
-    if ($server_host eq '*' || $server_port == 0) {
-        stop_server($server_name, $pid) if $pid;
-        print "Cannot get expected output from the $server_name server\n";
-        return 0;
+        if ($server_host eq '*' || $server_port == 0) {
+            stop_server($server_name, $pid) if $pid;
+            print "Cannot get server host and port from the $server_name server output: $server_output\n";
+            return 0;
+        }
     }
     $kur_port = $server_port if $kur_port eq "\$server_port";
     $pbm_port = $server_port if $pbm_port eq "\$server_port";
