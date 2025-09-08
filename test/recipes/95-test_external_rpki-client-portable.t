@@ -16,14 +16,19 @@ setup("test_external_rpki-client-portable");
 
 plan skip_all => "No external tests in this configuration"
     if disabled("external-tests");
-plan skip_all => "rpki-client-portable not available"
-    if ! -f srctop_file("rpki-client-portable", "configure.ac");
 
 plan tests => 1;
 
+$RPKI_VERSION = "9.5";
+$RPKI_SRC = "rpki-client-".$RPKI_VERSION;
+$RPKI_SUFFIX = ".tar.gz";
+$RPKI_TARBALL = $RPKI_SRC.$RPKI_SUFFIX;
+$RPKI_BASE_URL = "https://cdn.openbsd.org/pub/OpenBSD/rpki-client/";
+
 $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("providers"));
 $ENV{OPENSSL_CONF} = abs_path(srctop_file("test", "default-and-legacy.cnf"));
-$ENV{ AUTOCONF_VERSION} = 2.72;
-$ENV{ AUTOMAKE_VERSION} = 1.16;
+$ENV{RPKI_DOWNLOAD_URL} = $RPKI_BASE_URL.$RPKI_TARBALL;
+$ENV{RPKI_TARBALL} = $RPKI_TARBALL;
+$ENV{RPKI_SRC} = $RPKI_SRC;
 
 ok(run(cmd([data_file("rpki-client-portable.sh")])), "running rpki-client tests");

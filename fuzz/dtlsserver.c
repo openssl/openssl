@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -590,10 +590,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     SSL *server;
     BIO *in;
     BIO *out;
-#if !defined(OPENSSL_NO_EC)                     \
-    || (!defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0))
     BIO *bio_buf;
-#endif
     SSL_CTX *ctx;
     int ret;
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -612,7 +609,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     DSA *dsakey = NULL;
 #endif
 
-    if (len < 2)
+    if (len < 2 || len > INT_MAX)
         return 0;
 
     /* This only fuzzes the initial flow from the client so far. */
@@ -702,7 +699,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     SSL_set_bio(server, in, out);
     SSL_set_accept_state(server);
 
-    OPENSSL_assert((size_t)BIO_write(in, buf, len) == len);
+    OPENSSL_assert((size_t)BIO_write(in, buf, (int)len) == len);
 
     if (SSL_do_handshake(server) == 1) {
         /* Keep reading application data until error or EOF. */

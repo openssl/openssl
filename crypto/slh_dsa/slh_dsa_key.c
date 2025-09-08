@@ -77,6 +77,17 @@ static void slh_dsa_key_hash_dup(SLH_DSA_KEY *dst, const SLH_DSA_KEY *src)
 }
 
 /**
+ * @brief Return the libctx associated with a SLH_DSA_KEY object
+ *
+ * @param key A SLH_DSA_KEY to extract the libctx from.
+ * @returns The new OSSL_LIB_CTX object on success, or NULL failure
+ */
+OSSL_LIB_CTX *ossl_slh_dsa_key_get0_libctx(const SLH_DSA_KEY *key)
+{
+    return key != NULL ? key->libctx : NULL;
+}
+
+/**
  * @brief Create a new SLH_DSA_KEY object
  *
  * @param libctx A OSSL_LIB_CTX object used for fetching algorithms.
@@ -235,6 +246,15 @@ int ossl_slh_dsa_key_pairwise_check(const SLH_DSA_KEY *key)
     return ret;
 }
 
+void ossl_slh_dsa_key_reset(SLH_DSA_KEY *key)
+{
+    key->pub = NULL;
+    if (key->has_priv) {
+        key->has_priv = 0;
+        OPENSSL_cleanse(key->priv, sizeof(key->priv));
+    }
+}
+
 /**
  * @brief Load a SLH_DSA key from raw data.
  *
@@ -244,11 +264,11 @@ int ossl_slh_dsa_key_pairwise_check(const SLH_DSA_KEY *key)
  *                        if it exists.
  * @returns 1 on success, or 0 on failure.
  */
-int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM params[],
+int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM *param_pub,
+                              const OSSL_PARAM *param_priv,
                               int include_private)
 {
     size_t priv_len, key_len, data_len = 0;
-    const OSSL_PARAM *param_priv = NULL, *param_pub = NULL;
     void *p;
 
     if (key == NULL)
@@ -261,7 +281,6 @@ int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM params[],
 
     /* Private key is optional */
     if (include_private) {
-        param_priv = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
         if (param_priv != NULL) {
             p = key->priv;
             if (!OSSL_PARAM_get_octet_string(param_priv, &p, priv_len, &data_len))
@@ -285,7 +304,6 @@ int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM params[],
      * the public key, (Keygen must be used for this case currently).
      */
     p = SLH_DSA_PUB(key);
-    param_pub = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
     if (param_pub == NULL
             || !OSSL_PARAM_get_octet_string(param_pub, &p, key_len, &data_len)
             || data_len != key_len)
@@ -293,9 +311,7 @@ int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM params[],
     key->pub = p;
     return 1;
  err:
-    key->pub = NULL;
-    key->has_priv = 0;
-    OPENSSL_cleanse(key->priv, priv_len);
+    ossl_slh_dsa_key_reset(key);
     return 0;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -99,7 +99,7 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
 #ifndef OPENSSL_NO_STDIO
 static int write_fp(const void *data, size_t len, void *fp)
 {
-    return UP_fwrite(data, len, 1, fp);
+    return (int)UP_fwrite(data, len, 1, fp);
 }
 
 int BIO_dump_fp(FILE *fp, const void *s, int len)
@@ -115,7 +115,9 @@ int BIO_dump_indent_fp(FILE *fp, const void *s, int len, int indent)
 
 static int write_bio(const void *data, size_t len, void *bp)
 {
-    return BIO_write((BIO *)bp, (const char *)data, len);
+    if (len > INT_MAX)
+        return -1;
+    return BIO_write((BIO *)bp, (const char *)data, (int)len);
 }
 
 int BIO_dump(BIO *bp, const void *s, int len)

@@ -29,7 +29,116 @@ OpenSSL Releases
 OpenSSL 3.6
 -----------
 
+### Changes between 3.6 and 3.7 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
+
+ * Added support for EVP_SKEY opaque symmetric key objects to the key
+   derivation and key exchange provider methods. Added `EVP_KDF_CTX_set_SKEY()`,
+   `EVP_KDF_derive_SKEY()`, and `EVP_PKEY_derive_SKEY()` functions.
+
+   *Dmitry Belyavskiy and Simo Sorce*
+
+ * Added PCT for key import for SLH-DSA when in FIPS mode.
+
+   *Dr Paul Dale*
+
+ * Added FIPS 140-3 PCT on DH key generation.
+
+   *Nikola Pajkovsky*
+
+ * Added i2d_PKCS8PrivateKey(3) API to complement i2d_PrivateKey(3), the former
+   always outputs PKCS#8.
+
+   *Viktor Dukhovni*
+
+ * Implemented interleaved AES-CBC+HMAC-SHA algorithm on aarch64.
+
+   *Fangming Fang*
+
+ * Added NIST security categories for PKEY objects.
+
+   *Dr Paul Dale*
+
+ * Added notification when all stream FINs are acknowledged in QUIC. Introduced
+   `ossl_quic_channel_notify_flush_done()` so that once final FINs are ACKed,
+   the channel transitions to terminating and SSL_poll() signals completion.
+   This allows applications to progress shutdown reliably.
+
+   *Alexandr Nedvedicky*
+
+ * Fixed the synthesised `OPENSSL_VERSION_NUMBER`.
+
+   *Richard Levitte*
+
+ * Added array memory allocation routines and converted suitable memory
+   allocation calls in the library to them.
+
+   *Eugene Syromiatnikov*
+
+ * Fixed behavior change of EC keygen by adding the generic error entry if the
+   provider did not itself add an error entry onto the queue. That way, there
+   always is an error on the error queue in case of a failure, but no behavior
+   change in case the provider emitted the error entry itself.
+
+   *Ingo Franzki*
+
+ * Documented all the environment variables used across the project in
+   `openssl-env(7)` and in specific man pages.
+
+   *Eugene Syromiatnikov*
+
+ * Added SHA-2 assembly implementation enhancing performance for LoongArch.
+   Added optimized SM3, MD5, SHA-256, SHA-512 implementation using Zbb extension
+   for RISC-V.
+
+   *Julian Zhu*
+
+ * Added options `CRYPTO_MEM_SEC` and `CRYPTO_MEM_SEC_MINSIZE` to openssl app to
+   initialize secure memory at the beginning of openssl app.
+
+   *Norbert Pocs*
+
+ * Resolved compiler warnings on Win64 builds.
+
+   *Tomas Mraz*
+
+ * Extended new `CRYPTO_THREAD_[get|set]_local` api to reduce our reliance
+   on OS thread-local variables.
+
+   *Neil Horman*
+
+ * Added make targets `build_inst_sw` and `build_inst_programs` which have the
+   functionality to split the build into two parts, e.g.: when tests should be
+   built with different compiler flags than installed software.
+
+   *Pavol Zacik*
+
+ * Refactored OSSL_PARAM name parsing so that automatically generated
+   parsers are used instead of OSSL_PARAM_locate calls.  This should
+   also ensure that the list of acceptable parameters better matches
+   those which are actually processed.  It should also provide a small
+   performance improvement because repeated iteration over passed
+   parameter arrays is avoided.
+
+   *Dr Paul Dale*
+
+ * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
+   This is mandated by FIPS 140-3 IG 10.3.A additional comment 1.
+
+   *Dr Paul Dale*
+
+ * Introduce SSL_OP_SERVER_PREFERENCE superceding misleadingly
+   named SSL_OP_CIPHER_SERVER_PREFERENCE.
+
+   *Michael Baentsch*
+
+ * Added LMS signature verification support as per [SP 800-208].  This
+   support is present in both the FIPS and default providers.
+
+   *Shane Lontis and Paul Dale*
 
  * Introduces use of `<stdbool.h>` when handling JSON encoding in
    the OpenSSL codebase, replacing the previous use of `int` for
@@ -107,10 +216,67 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
+ * Add X509_CRL_get0_tbs_sigalg() accessor for the signature AlgorithmIdentifier
+   inside a CRL's TBSCertList.
+
+   *Theo Buehler*
+
+ * HKDF with (SHA-256, SHA-384, SHA-512) has assigned OIDs. Added ability to load
+   HKDF configured with these explicit digests by name or OID.
+
+   *Daniel Van Geest (CryptoNext Security)*
+
+ * Added Intel AVX-512 and VAES optimizations for AES-CFB128 algorithms.
+   Encryption performance on large buffers improved by 1.5-1.7x,
+   while decryption speed increased by 20-23x.
+
+   *Adrian Stanciu*
+
+ * Added support for TLS 1.3 OCSP multi-stapling for server certs.
+     * new `s_client` options:
+       * `-ocsp_check_leaf`: Checks the status of the leaf (server) certificate.
+       * `-ocsp_check_all`: Checks the status of all certificates in the server chain.
+     * new `s_server` option:
+       * `-status_all` Provides OCSP status information for the entire server certificate chain (multi-stapling) for TLS 1.3 and later.
+
+     * Improved `-status_file` option can now be given multiple times to provide
+       multiple files containing OCSP responses.
+
+   *Michael Krueger, Martin Rauch*
+
+ * Added KEMRecipientInfo (RFC 9629) and ML-KEM (draft-ietf-lamps-cms-kyber)
+   support to CMS.
+
+   *Daniel Van Geest (CryptoNext Security)*
+
+ * Added support for FIPS 186-5 deterministic ECDSA signature
+   generation to the FIPS provider.
+
+   *Dimitri John Ledkov*
+
 OpenSSL 3.5
 -----------
 
-### Changes between 3.5.0 and 3.5.1 [xx XXX xxxx]
+### Changes between 3.5.1 and 3.5.2 [5 Aug 2025]
+
+ * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
+   This is mandated by FIPS 140-3 IG 10.3.A additional comment 1.
+
+   *Dr Paul Dale*
+
+### Changes between 3.5.0 and 3.5.1 [1 Jul 2025]
+
+ * Fix x509 application adds trusted use instead of rejected use.
+
+   Issue summary: Use of -addreject option with the openssl x509 application adds
+   a trusted use instead of a rejected use for a certificate.
+
+   Impact summary: If a user intends to make a trusted certificate rejected for
+   a particular use it will be instead marked as trusted for that use.
+
+   ([CVE-2025-4575])
+
+   *Tomas Mraz*
 
  * Aligned the behaviour of TLS and DTLS in the event of a no_renegotiation
    alert being received. Older versions of OpenSSL failed with DTLS if a
@@ -21297,6 +21463,7 @@ ndif
 
 <!-- Links -->
 
+[CVE-2025-4575]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-4575
 [CVE-2024-13176]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-13176
 [CVE-2024-9143]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-9143
 [CVE-2024-6119]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-6119
@@ -21494,3 +21661,4 @@ ndif
 [CVE-2002-0655]: https://www.openssl.org/news/vulnerabilities.html#CVE-2002-0655
 [CMVP]: https://csrc.nist.gov/projects/cryptographic-module-validation-program
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
+[SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final

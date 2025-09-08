@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2013-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -142,7 +142,7 @@ static int aes_ccm_encrypt(void)
 
     /* Output tag */
     printf("Tag:\n");
-    BIO_dump_fp(stdout, outtag, ccm_tag_len);
+    BIO_dump_fp(stdout, outtag, (int)ccm_tag_len);
 
     ret = 1;
 err:

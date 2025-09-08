@@ -61,8 +61,8 @@ signature algorithm in the client hello message.
 
 The supported signature algorithms set by a server are not sent to the
 client but are used to determine the set of shared signature algorithms
-and (if server preferences are set with SSL_OP_CIPHER_SERVER_PREFERENCE)
-their order.
+and (if server preferences are set with SSL_OP_SERVER_PREFERENCE) their
+order.
 
 The client authentication signature algorithms set by a server are sent
 in a certificate request message if client authentication is enabled,

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -467,7 +467,7 @@ BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, CRYPTO_RWLOCK *lock,
 }
 
 int ossl_bn_mont_ctx_set(BN_MONT_CTX *ctx, const BIGNUM *modulus, int ri, const unsigned char *rr,
-                         size_t rrlen, uint32_t nlo, uint32_t nhi)
+                         int rrlen, uint32_t nlo, uint32_t nhi)
 {
     if (BN_copy(&ctx->N, modulus) == NULL)
         return 0;

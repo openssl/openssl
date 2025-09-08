@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     out = BIO_push(ssl_bio, out);
 
     p = "GET / HTTP/1.0\r\n\r\n";
-    len = strlen(p);
+    len = (int)strlen(p);
 
     off = 0;
     for (;;) {

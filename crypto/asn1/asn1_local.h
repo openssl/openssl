@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -69,7 +69,7 @@ void ossl_asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it);
 void ossl_asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
 int ossl_asn1_enc_restore(int *len, unsigned char **out, const ASN1_VALUE **pval,
                           const ASN1_ITEM *it);
-int ossl_asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
+int ossl_asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, long inlen,
                        const ASN1_ITEM *it);
 
 void ossl_asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed);

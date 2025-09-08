@@ -440,6 +440,32 @@ Returned by the verify callback to indicate OCSP verification failed.
 Returned by the verify callback to indicate that the certificate is not
 recognized by the OCSP responder.
 
+=item B<X509_V_ERR_OCSP_RESP_INVALID: OCSP response(s) invalid>
+
+Returned by the verify callback to indicate that one or more OCSP
+responses are invalid.
+
+=item B<X509_V_ERR_OCSP_SIGNATURE_FAILURE: OCSP response signature failure>
+
+Returned by the verify callback to indicate OCSP response signature
+verification failed.
+
+=item B<X509_V_ERR_OCSP_NOT_YET_VALID: OCSP response not yet valid>
+OCSP response not yet valid (contains a date in the future)>
+
+Returned by the verify callback to indicate that OCSP response has a
+I<thisUpdate> date in the future.
+
+=item B<X509_V_ERR_OCSP_HAS_EXPIRED: OCSP response has expired>
+
+Returned by the verify callback to indicate that the OCSP response has expired.
+
+=item B<X509_V_ERR_OCSP_NO_RESPONSE:
+no OCSP response available for certificate>
+
+Returned by the verify callback to indicate that no OCSP response is available
+for the certificate.
+
 =item B<X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM:
 unsupported signature algorithm>
 
@@ -497,7 +523,7 @@ L<X509_free(3)>.
 
 =head1 COPYRIGHT
 
-Copyright 2009-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2009-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

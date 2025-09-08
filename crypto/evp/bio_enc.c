@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -154,7 +154,7 @@ static int enc_read(BIO *b, char *out, int outl)
             if (i > 0)
                 ctx->read_end += i;
         } else {
-            i = ctx->read_end - ctx->read_start;
+            i = (int)(ctx->read_end - ctx->read_start);
         }
 
         if (i <= 0) {

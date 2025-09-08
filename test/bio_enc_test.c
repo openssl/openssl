@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -275,7 +275,7 @@ static int test_bio_enc_eof_read_flush(void)
     EVP_CIPHER_CTX *ctx = NULL;
     BIO *mem = NULL, *b64 = NULL, *cbio = NULL;
     unsigned char tag[16];
-    size_t key_size, iv_size;
+    int key_size, iv_size;
     int n, ret = 0;
 
     memset(tag, 0, sizeof(tag));

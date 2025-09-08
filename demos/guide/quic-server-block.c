@@ -160,7 +160,7 @@ static int create_socket(uint16_t port)
     struct sockaddr_in sa = {0};
 
     /* Retrieve the file descriptor for a new UDP socket */
-    if ((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+    if ((fd = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         fprintf(stderr, "cannot create socket");
         goto err;
     }

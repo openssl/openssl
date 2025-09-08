@@ -9,7 +9,7 @@
 
 #include <openssl/core_dispatch.h>
 #include "crypto/types.h"
-#include "skeymgmt_lcl.h"
+#include "prov/skeymgmt_lcl.h"
 #include "internal/skey.h"
 #include "prov/implementations.h"
 

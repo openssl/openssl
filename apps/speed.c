@@ -507,7 +507,7 @@ static size_t kems_algs_len = 0;
 static char *kems_algname[MAX_KEM_NUM] = { NULL };
 static double kems_results[MAX_KEM_NUM][3];  /* keygen, encaps, decaps */
 
-#define MAX_SIG_NUM 111
+#define MAX_SIG_NUM 256
 static size_t sigs_algs_len = 0;
 static char *sigs_algname[MAX_SIG_NUM] = { NULL };
 static double sigs_results[MAX_SIG_NUM][3];  /* keygen, sign, verify */
@@ -573,12 +573,12 @@ typedef struct loopargs_st {
     unsigned char *kem_out[MAX_KEM_NUM];
     unsigned char *kem_send_secret[MAX_KEM_NUM];
     unsigned char *kem_rcv_secret[MAX_KEM_NUM];
-    EVP_PKEY_CTX *sig_gen_ctx[MAX_KEM_NUM];
-    EVP_PKEY_CTX *sig_sign_ctx[MAX_KEM_NUM];
-    EVP_PKEY_CTX *sig_verify_ctx[MAX_KEM_NUM];
-    size_t sig_max_sig_len[MAX_KEM_NUM];
-    size_t sig_act_sig_len[MAX_KEM_NUM];
-    unsigned char *sig_sig[MAX_KEM_NUM];
+    EVP_PKEY_CTX *sig_gen_ctx[MAX_SIG_NUM];
+    EVP_PKEY_CTX *sig_sign_ctx[MAX_SIG_NUM];
+    EVP_PKEY_CTX *sig_verify_ctx[MAX_SIG_NUM];
+    size_t sig_max_sig_len[MAX_SIG_NUM];
+    size_t sig_act_sig_len[MAX_SIG_NUM];
+    unsigned char *sig_sig[MAX_SIG_NUM];
 } loopargs_t;
 static int run_benchmark(int async_jobs, int (*loop_function) (void *),
                          loopargs_t *loopargs);
@@ -2281,9 +2281,11 @@ int speed_main(int argc, char **argv)
         }
 #endif /* OPENSSL_NO_DSA */
         /* skipping these algs as tested elsewhere - and b/o setup is a pain */
-        else if (strcmp(sig_name, "ED25519") &&
-                 strcmp(sig_name, "ED448") &&
-                 strcmp(sig_name, "ECDSA") &&
+        else if (strncmp(sig_name, "RSA", 3) &&
+                 strncmp(sig_name, "DSA", 3) &&
+                 strncmp(sig_name, "ED25519", 7) &&
+                 strncmp(sig_name, "ED448", 5) &&
+                 strncmp(sig_name, "ECDSA", 5) &&
                  strcmp(sig_name, "HMAC") &&
                  strcmp(sig_name, "SIPHASH") &&
                  strcmp(sig_name, "POLY1305") &&
@@ -2727,7 +2729,7 @@ int speed_main(int argc, char **argv)
 
     if (doit[D_HMAC]) {
         static const char hmac_key[] = "This is a key...";
-        int len = strlen(hmac_key);
+        int len = (int)strlen(hmac_key);
         size_t hmac_name_len = sizeof("hmac()") + strlen(evp_mac_mdname);
         OSSL_PARAM params[3];
 
@@ -4252,6 +4254,7 @@ int speed_main(int argc, char **argv)
             EVP_PKEY_CTX *sig_gen_ctx = NULL;
             EVP_PKEY_CTX *sig_sign_ctx = NULL;
             EVP_PKEY_CTX *sig_verify_ctx = NULL;
+            EVP_SIGNATURE *alg = NULL;
             unsigned char md[SHA256_DIGEST_LENGTH];
             unsigned char *sig;
             char sfx[MAX_ALGNAME_SUFFIX];
@@ -4312,21 +4315,48 @@ int speed_main(int argc, char **argv)
                            sig_name);
                 goto sig_err_break;
             }
+
+            /*
+             * Try explicitly fetching the signature algoritm implementation to
+             * use in case the algorithm does not support EVP_PKEY_sign_init
+             */
+            ERR_set_mark();
+            alg = EVP_SIGNATURE_fetch(app_get0_libctx(), sig_name, app_get0_propq());
+            ERR_pop_to_mark();
+
             /* Now prepare signature data structs */
             sig_sign_ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
                                                       pkey,
                                                       app_get0_propq());
-            if (sig_sign_ctx == NULL
-                || EVP_PKEY_sign_init(sig_sign_ctx) <= 0
-                || (use_params == 1
-                    && (EVP_PKEY_CTX_set_rsa_padding(sig_sign_ctx,
-                                                     RSA_PKCS1_PADDING) <= 0))
-                || EVP_PKEY_sign(sig_sign_ctx, NULL, &max_sig_len,
-                                 md, md_len) <= 0) {
-                    BIO_printf(bio_err,
-                               "Error while initializing signing data structs for %s.\n",
-                               sig_name);
-                    goto sig_err_break;
+            if (sig_sign_ctx == NULL) {
+                BIO_printf(bio_err,
+                           "Error while initializing signing ctx for %s.\n",
+                           sig_name);
+                goto sig_err_break;
+            }
+            ERR_set_mark();
+            if (EVP_PKEY_sign_init(sig_sign_ctx) <= 0
+                && (alg == NULL
+                    || EVP_PKEY_sign_message_init(sig_sign_ctx, alg, NULL) <= 0)) {
+                ERR_clear_last_mark();
+                BIO_printf(bio_err,
+                           "Error while initializing signing data structs for %s.\n",
+                           sig_name);
+                goto sig_err_break;
+            }
+            ERR_pop_to_mark();
+            if (use_params == 1 &&
+                EVP_PKEY_CTX_set_rsa_padding(sig_sign_ctx, RSA_PKCS1_PADDING) <= 0) {
+                BIO_printf(bio_err,
+                           "Error while initializing padding for %s.\n",
+                           sig_name);
+                goto sig_err_break;
+            }
+            if (EVP_PKEY_sign(sig_sign_ctx, NULL, &max_sig_len, md, md_len) <= 0) {
+                BIO_printf(bio_err,
+                           "Error while obtaining signature bufffer length for %s.\n",
+                           sig_name);
+                goto sig_err_break;
             }
             sig = app_malloc(sig_len = max_sig_len, "signature buffer");
             if (sig == NULL) {
@@ -4342,16 +4372,23 @@ int speed_main(int argc, char **argv)
             sig_verify_ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
                                                         pkey,
                                                         app_get0_propq());
-            if (sig_verify_ctx == NULL
-                || EVP_PKEY_verify_init(sig_verify_ctx) <= 0
-                || (use_params == 1
-                  && (EVP_PKEY_CTX_set_rsa_padding(sig_verify_ctx,
-                                                   RSA_PKCS1_PADDING) <= 0))) {
+            if (sig_verify_ctx == NULL) {
+                BIO_printf(bio_err,
+                           "Error while initializing verify ctx for %s.\n",
+                           sig_name);
+                goto sig_err_break;
+            }
+            ERR_set_mark();
+            if (EVP_PKEY_verify_init(sig_verify_ctx) <= 0
+                && (alg == NULL
+                    || EVP_PKEY_verify_message_init(sig_verify_ctx, alg, NULL) <= 0)) {
+                ERR_clear_last_mark();
                 BIO_printf(bio_err,
                            "Error while initializing verify data structs for %s.\n",
                            sig_name);
                 goto sig_err_break;
             }
+            ERR_pop_to_mark();
             if (EVP_PKEY_verify(sig_verify_ctx, sig, sig_len, md, md_len) <= 0) {
                 BIO_printf(bio_err, "Verify error for %s.\n", sig_name);
                 goto sig_err_break;
@@ -4367,12 +4404,14 @@ int speed_main(int argc, char **argv)
             loopargs[i].sig_act_sig_len[testnum] = sig_len;
             loopargs[i].sig_sig[testnum] = sig;
             EVP_PKEY_free(pkey);
+            EVP_SIGNATURE_free(alg);
             pkey = NULL;
             continue;
 
         sig_err_break:
             dofail();
             EVP_PKEY_free(pkey);
+            EVP_SIGNATURE_free(alg);
             op_count = 1;
             sig_checks = 0;
             break;
@@ -5128,7 +5167,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
                 aad[12] = (unsigned char)(len);
                 pad = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD,
                                           EVP_AEAD_TLS1_AAD_LEN, aad);
-                ciph_success = EVP_Cipher(ctx, out, inp, len + pad);
+                ciph_success = EVP_Cipher(ctx, out, inp, (unsigned int)(len + pad));
             }
         }
         d = Time_F(STOP);

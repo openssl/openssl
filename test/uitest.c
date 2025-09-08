@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,7 +21,7 @@
 static int test_pem_password_cb(char *buf, int size, int rwflag, void *userdata)
 {
     OPENSSL_strlcpy(buf, (char *)userdata, (size_t)size);
-    return strlen(buf);
+    return (int)strlen(buf);
 }
 
 /*

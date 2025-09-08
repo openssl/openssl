@@ -459,7 +459,7 @@ instead of the key contained in the input
 or given with the B<-key> (or B<-signkey>) option.
 If the input contains no public key but a private key, its public part is used.
 
-This option can be used in conjunction with b<-new> and B<-set_subject>
+This option can be used in conjunction with B<-new> and B<-set_subject>
 to directly generate a certificate containing any desired public key.
 
 This option is also useful for creating self-issued certificates that are not
@@ -842,7 +842,7 @@ and key identifier extensions are included by default.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

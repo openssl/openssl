@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -135,7 +135,7 @@ static struct test_st {
     },
 };
 
-static char *pt(unsigned char *md, unsigned int len);
+static char *pt(unsigned char *md, size_t len);
 
 static int test_cmac_bad(void)
 {
@@ -328,9 +328,9 @@ err:
 }
 
 #define OSSL_HEX_CHARS_PER_BYTE 2
-static char *pt(unsigned char *md, unsigned int len)
+static char *pt(unsigned char *md, size_t len)
 {
-    unsigned int i;
+    size_t i;
     static char buf[81];
 
     for (i = 0; i < len && (i + 1) * OSSL_HEX_CHARS_PER_BYTE < sizeof(buf); i++)

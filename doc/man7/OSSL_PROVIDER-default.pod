@@ -125,6 +125,12 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item HKDF, see L<EVP_KDF-HKDF(7)>
 
+=item HKDF-SHA256, see L<EVP_KDF-HKDF(7)>
+
+=item HKDF-SHA384, see L<EVP_KDF-HKDF(7)>
+
+=item HKDF-SHA512, see L<EVP_KDF-HKDF(7)>
+
 =item TLS13-KDF, see L<EVP_KDF-TLS13_KDF(7)>
 
 =item SSKDF, see L<EVP_KDF-SS(7)>
@@ -196,6 +202,8 @@ The OpenSSL default provider supports these operations and algorithms:
 =item ECDSA, see L<EVP_SIGNATURE-ECDSA(7)>
 
 =item SM2
+
+=item LMS, see L<EVP_SIGNATURE-LMS(7)>
 
 =item ML-DSA-44, see L<EVP_SIGNATURE-ML-DSA(7)>
 
@@ -523,6 +531,8 @@ L<OSSL_PROVIDER-base(7)>
 =head1 HISTORY
 
 The RIPEMD160 digest was added to the default provider in OpenSSL 3.0.7.
+
+The HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 algorithms were added in OpenSSL 3.6.
 
 All other functionality was added in OpenSSL 3.0.
 

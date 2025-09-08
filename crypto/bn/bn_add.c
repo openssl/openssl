@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -114,7 +114,7 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
         carry &= (t2 == 0);
     }
     *rp = carry;
-    r->top += carry;
+    r->top += (int)carry;
 
     r->neg = 0;
     bn_check_top(r);

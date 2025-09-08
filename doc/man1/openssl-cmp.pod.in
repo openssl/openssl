@@ -1526,7 +1526,7 @@ as well as support for delayed delivery of all types of response messages.
 The B<-template>, B<-crlcert>, B<-oldcrl>, B<-crlout>, B<-crlform>
 and B<-rsp_crl> options were added in OpenSSL 3.4.
 
-B<-centralkeygen>, b<-newkeyout>, B<-rsp_key> and
+B<-centralkeygen>, B<-newkeyout>, B<-rsp_key> and
 B<-rsp_keypass> were added in OpenSSL 3.5.
 
 =head1 COPYRIGHT

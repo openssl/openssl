@@ -371,8 +371,8 @@ int ossl_provider_info_add_to_store(OSSL_LIB_CTX *libctx,
     if (!CRYPTO_THREAD_write_lock(store->lock))
         return 0;
     if (store->provinfosz == 0) {
-        store->provinfo = OPENSSL_zalloc(sizeof(*store->provinfo)
-                                         * BUILTINS_BLOCK_SIZE);
+        store->provinfo = OPENSSL_calloc(BUILTINS_BLOCK_SIZE,
+                                         sizeof(*store->provinfo));
         if (store->provinfo == NULL)
             goto err;
         store->provinfosz = BUILTINS_BLOCK_SIZE;
@@ -380,8 +380,8 @@ int ossl_provider_info_add_to_store(OSSL_LIB_CTX *libctx,
         OSSL_PROVIDER_INFO *tmpbuiltins;
         size_t newsz = store->provinfosz + BUILTINS_BLOCK_SIZE;
 
-        tmpbuiltins = OPENSSL_realloc(store->provinfo,
-                                      sizeof(*store->provinfo) * newsz);
+        tmpbuiltins = OPENSSL_realloc_array(store->provinfo,
+                                            newsz, sizeof(*store->provinfo));
         if (tmpbuiltins == NULL)
             goto err;
         store->provinfo = tmpbuiltins;
@@ -1119,7 +1119,7 @@ static int provider_init(OSSL_PROVIDER *prov)
 
         /* Allocate one extra item for the "library" name */
         prov->error_strings =
-            OPENSSL_zalloc(sizeof(ERR_STRING_DATA) * (cnt + 1));
+            OPENSSL_calloc(cnt + 1, sizeof(ERR_STRING_DATA));
         if (prov->error_strings == NULL)
             goto end;
 
@@ -2419,6 +2419,11 @@ static int core_pop_error_to_mark(const OSSL_CORE_HANDLE *handle)
     return ERR_pop_to_mark();
 }
 
+static int core_count_to_mark(const OSSL_CORE_HANDLE *handle)
+{
+    return ERR_count_to_mark();
+}
+
 static void core_indicator_get_callback(OPENSSL_CORE_CTX *libctx,
                                         OSSL_INDICATOR_CALLBACK **cb)
 {
@@ -2600,6 +2605,7 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK,
       (void (*)(void))core_clear_last_error_mark },
     { OSSL_FUNC_CORE_POP_ERROR_TO_MARK, (void (*)(void))core_pop_error_to_mark },
+    { OSSL_FUNC_CORE_COUNT_TO_MARK, (void (*)(void))core_count_to_mark },
     { OSSL_FUNC_BIO_NEW_FILE, (void (*)(void))ossl_core_bio_new_file },
     { OSSL_FUNC_BIO_NEW_MEMBUF, (void (*)(void))ossl_core_bio_new_mem_buf },
     { OSSL_FUNC_BIO_READ_EX, (void (*)(void))ossl_core_bio_read_ex },

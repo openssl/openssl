@@ -56,19 +56,21 @@ jobs:
       fail-fast: false
       matrix:
         zoo:
-          - image: docker.io/library/debian:10
-            install: apt-get update && apt-get install -y gcc make perl
           - image: docker.io/library/debian:11
             install: apt-get update && apt-get install -y gcc make perl
           - image: docker.io/library/debian:12
+            install: apt-get update && apt-get install -y gcc make perl
+          - image: docker.io/library/debian:trixie
             install: apt-get update && apt-get install -y gcc make perl
           - image: docker.io/library/ubuntu:20.04
             install: apt-get update && apt-get install -y gcc make perl
           - image: docker.io/library/ubuntu:22.04
             install: apt-get update && apt-get install -y gcc make perl
-          - image: docker.io/library/fedora:38
+          - image: docker.io/library/ubuntu:24.04
+            install: apt-get update && apt-get install -y gcc make perl
+          - image: docker.io/library/fedora:41
             install: dnf install -y gcc make perl-core
-          - image: docker.io/library/fedora:39
+          - image: docker.io/library/fedora:42
             install: dnf install -y gcc make perl-core
           - image: docker.io/library/centos:8
             install: |
@@ -125,13 +127,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, windows-2025]
-    runs-on: ${{ matrix.os }}
+        platform:
+          - os: windows-2022
+            vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
+          - os: windows-2025
+            vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
+    runs-on: ${{ matrix.platform.os }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
-    - uses: ilammy/msvc-dev-cmd@v1
     - name: install nasm
       run: |
         choco install nasm
@@ -140,18 +145,21 @@ jobs:
       run: mkdir _build
     - name: config
       working-directory: _build
-      run: perl ..\Configure --banner=Configured no-makedepend enable-fips
-    - name: config dump
-      working-directory: _build
-      run: ./configdata.pm --dump
+      shell: cmd
+      run: |
+        call "${{ matrix.platform.vcvars }}"
+        perl ..\Configure --banner=Configured --strict-warnings no-makedepend enable-fips
+        perl configdata.pm --dump
     - name: build
       working-directory: _build
-      run: nmake /S
+      shell: cmd
+      run: |
+        call "${{ matrix.platform.vcvars }}"
+        nmake /S
     - name: download coreinfo
-      uses: suisei-cn/actions-download-file@v1.6.0
-      with:
-        url: "https://download.sysinternals.com/files/Coreinfo.zip"
-        target: _build/coreinfo/
+      run: |
+        mkdir _build\coreinfo
+        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip"
     - name: get cpu info
       working-directory: _build
       run: |
@@ -160,7 +168,10 @@ jobs:
         apps/openssl.exe version -c
     - name: test
       working-directory: _build
-      run: nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
+      shell: cmd
+      run: |
+        call "${{ matrix.platform.vcvars }}"
+        nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
 
   linux-arm64:
     runs-on: linux-arm64
@@ -237,7 +248,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: config
-      uses: cross-platform-actions/action@v0.26.0
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: freebsd
         version: "13.4"
@@ -246,21 +257,21 @@ jobs:
           sudo pkg install -y gcc perl5
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
-      uses: cross-platform-actions/action@v0.26.0
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: freebsd
         version: "13.4"
         shutdown_vm: false
         run: ./configdata.pm --dump
     - name: make
-      uses: cross-platform-actions/action@v0.26.0
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: freebsd
         version: "13.4"
         shutdown_vm: false
         run: make -j4
     - name: make test
-      uses: cross-platform-actions/action@v0.26.0
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: freebsd
         version: "13.4"

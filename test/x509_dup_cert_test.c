@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -43,9 +43,9 @@ int setup_tests(void)
     }
 
     n = test_get_argument_count();
-    if (!TEST_int_gt(n, 0))
+    if (!TEST_size_t_gt(n, 0))
         return 0;
 
-    ADD_ALL_TESTS(test_509_dup_cert, n);
+    ADD_ALL_TESTS(test_509_dup_cert, (int)n);
     return 1;
 }

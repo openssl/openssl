@@ -1,5 +1,5 @@
 /*-
- * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -120,7 +120,7 @@ int main(int argc, char **argv)
      * This example loads the PEM data from a memory buffer
      * Use BIO_new_fp() to load a PEM file instead
      */
-    in = BIO_new_mem_buf(dsapem, strlen(dsapem));
+    in = BIO_new_mem_buf(dsapem, (int)strlen(dsapem));
     if (in == NULL) {
         fprintf(stderr, "BIO_new_mem_buf() failed\n");
         goto cleanup;

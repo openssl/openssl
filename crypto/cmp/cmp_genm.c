@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Siemens AG 2022
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -124,7 +124,7 @@ static OSSL_CMP_ITAV *get_genm_itav(OSSL_CMP_CTX *ctx,
             return itav;
         }
 
-        if (OBJ_obj2txt(name + offset, sizeof(name) - offset, obj, 0) < 0)
+        if (OBJ_obj2txt(name + offset, (int)(sizeof(name) - offset), obj, 0) < 0)
             strcat(name, "<unknown>");
         ossl_cmp_log2(WARN, ctx, "%s' while expecting 'id-it-%s'", name, desc);
         OSSL_CMP_ITAV_free(itav);

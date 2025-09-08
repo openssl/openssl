@@ -357,7 +357,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     if ((flags & CMS_NO_SIGNER_CERT_VERIFY) == 0 || cadesVerify) {
         if (cadesVerify) {
             /* Certificate trust chain is required to check CAdES signature */
-            si_chains = OPENSSL_zalloc(scount * sizeof(si_chains[0]));
+            si_chains = OPENSSL_calloc(scount, sizeof(si_chains[0]));
             if (si_chains == NULL)
                 goto err;
         }
@@ -750,6 +750,14 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
                 return 1;
             if (r < 0)
                 return 0;
+        } else if (ri_type == CMS_RECIPINFO_KEM) {
+            if (cert == NULL || !CMS_RecipientInfo_kemri_cert_cmp(ri, cert)) {
+                CMS_RecipientInfo_kemri_set0_pkey(ri, pk);
+                r = CMS_RecipientInfo_decrypt(cms, ri);
+                CMS_RecipientInfo_kemri_set0_pkey(ri, NULL);
+                if (cert != NULL || r > 0)
+                    return r;
+            }
         }
         /* If we have a cert, try matching RecipientInfo, else try them all */
         else if (cert == NULL || !CMS_RecipientInfo_ktri_cert_cmp(ri, cert)) {

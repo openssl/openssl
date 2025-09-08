@@ -768,7 +768,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             BIO_ADDR_free(tmpclient);
             tmpclient = NULL;
 
-            if (BIO_write(wbio, wbuf, wreclen) < (int)wreclen) {
+            if (BIO_write(wbio, wbuf, (int)wreclen) < (int)wreclen) {
                 if (BIO_should_retry(wbio)) {
                     /*
                      * Non-blocking IO...but we're stateless, so we're just
@@ -863,7 +863,7 @@ int dtls1_shutdown(SSL *s)
     BIO *wbio;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
-    if (s == NULL)
+    if (sc == NULL)
         return -1;
 
     wbio = SSL_get_wbio(s);

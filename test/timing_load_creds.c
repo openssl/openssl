@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -150,6 +150,7 @@ int main(int ac, char **av)
     }
     fp = fopen(av[0], "r");
     if ((long)fread(contents, 1, sb.st_size, fp) != sb.st_size) {
+        fclose(fp);
         OPENSSL_free(contents);
         perror("fread");
         exit(EXIT_FAILURE);

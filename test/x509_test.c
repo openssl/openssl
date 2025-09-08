@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -181,7 +181,7 @@ OPT_TEST_DECLARE_USAGE("<pss-self-signed-cert.pem>\n")
 int setup_tests(void)
 {
     const unsigned char *p;
-    int cnt;
+    size_t cnt;
 
     cnt = test_get_argument_count();
     if (cnt != 1) {

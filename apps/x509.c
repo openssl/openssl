@@ -1258,7 +1258,7 @@ static int parse_ext_names(char *names, const char **result)
     int cnt = 0, len = 0;
 
     p = q = names;
-    len = strlen(names);
+    len = (int)strlen(names);
 
     while (q - names <= len) {
         if (*q != ',' && *q != '\0') {
@@ -1303,7 +1303,7 @@ static int print_x509v3_exts(BIO *bio, X509 *x, const char *ext_names)
         BIO_printf(bio, "Invalid extension names: %s\n", ext_names);
         goto end;
     }
-    if ((names = OPENSSL_malloc(sizeof(char *) * nn)) == NULL)
+    if ((names = OPENSSL_malloc_array(nn, sizeof(char *))) == NULL)
         goto end;
     parse_ext_names(tmp_ext_names, names);
 

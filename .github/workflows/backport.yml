@@ -1,0 +1,46 @@
+# Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Backports CI
+
+on: [pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  check_backports:
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: ['3.5', '3.4', '3.3', '3.2', '3.0']
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.branch) }}
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+    - name: cherry-pick
+      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.branch) }}
+      run: |
+           REFEND=$(git rev-parse HEAD)
+           REFSTART=$(git rev-parse $REFEND~${{ github.event.pull_request.commits }})
+           git checkout ${{ format('openssl-{0}', matrix.branch) }}
+           git config user.name "OpenSSL Machine"
+           git config user.email "openssl-machine@openssl.org"
+           echo Cherry-picking $REFSTART..$REFEND
+           git cherry-pick $REFSTART..$REFEND
+    - name: config
+      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.branch) }}
+      run: CPPFLAGS=-ansi ./config --strict-warnings --banner=Configured no-asm enable-fips --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
+    - name: make
+      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.branch) }}
+      run: make -s -j4
+    - name: make test
+      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.branch) }}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}

@@ -130,12 +130,15 @@ any sub-CA's, and can only sign end-entity certificates.
 
 Key usage is a multi-valued extension consisting of a list of names of
 the permitted key usages.  The defined values are: C<digitalSignature>,
-C<nonRepudiation>, C<keyEncipherment>, C<dataEncipherment>, C<keyAgreement>,
-C<keyCertSign>, C<cRLSign>, C<encipherOnly>, and C<decipherOnly>.
+C<nonRepudiation> (with an alternative name C<contentCommitment>),
+C<keyEncipherment>, C<dataEncipherment>, C<keyAgreement>, C<keyCertSign>,
+C<cRLSign>, C<encipherOnly>, and C<decipherOnly>.
 
 Examples:
 
  keyUsage = digitalSignature, nonRepudiation
+
+ keyUsage = digitalSignature, contentCommitment
 
  keyUsage = critical, keyCertSign
 
@@ -605,7 +608,7 @@ L<ASN1_generate_nconf(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2004-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2004-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

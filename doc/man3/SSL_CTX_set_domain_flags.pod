@@ -106,7 +106,7 @@ L<SSL_new_domain(3)>, L<openssl-quic-concurrency(7)>
 
 =head1 HISTORY
 
-These functions were added in @QUIC_SERVER_VERSION@.
+These functions were added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

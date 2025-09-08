@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -751,10 +751,12 @@ static long conn_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 
 static int conn_puts(BIO *bp, const char *str)
 {
-    int n, ret;
+    int ret;
+    size_t n = strlen(str);
 
-    n = strlen(str);
-    ret = conn_write(bp, str, n);
+    if (n > INT_MAX)
+        return -1;
+    ret = conn_write(bp, str, (int)n);
     return ret;
 }
 
@@ -810,7 +812,7 @@ int conn_gets(BIO *bio, char *buf, int size)
             break;
     }
     *ptr = '\0';
-    return ret > 0 || (bio->flags & BIO_FLAGS_IN_EOF) != 0 ? ptr - buf : ret;
+    return ret > 0 || (bio->flags & BIO_FLAGS_IN_EOF) != 0 ? (int)(ptr - buf) : ret;
 }
 
 static int conn_sendmmsg(BIO *bio, BIO_MSG *msg, size_t stride, size_t num_msgs,

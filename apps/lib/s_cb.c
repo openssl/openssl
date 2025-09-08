@@ -106,6 +106,10 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
         if (!verify_args.quiet)
             policies_print(ctx);
         break;
+    case X509_V_ERR_OCSP_NO_RESPONSE:
+        if (!verify_args.quiet)
+            BIO_printf(bio_err, "no OCSP response(s) for certificate(s) found.\n");
+        break;
     }
     if (err == X509_V_OK && ok == 2 && !verify_args.quiet)
         policies_print(ctx);
@@ -509,7 +513,8 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
                 BIO_printf(out, "read from %p [%p] (%zu bytes => %zu (0x%zX))\n",
                            (void *)bio, (void *)msg->data, msg->data_len,
                            msg->data_len, msg->data_len);
-                BIO_dump(out, msg->data, msg->data_len);
+                if (msg->data_len <= INT_MAX)
+                    BIO_dump(out, msg->data, (int)msg->data_len);
             }
         } else if (mmsgargs->num_msg > 0) {
             BIO_MSG *msg = mmsgargs->msg;
@@ -529,7 +534,8 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
                 BIO_printf(out, "write to %p [%p] (%zu bytes => %zu (0x%zX))\n",
                            (void *)bio, (void *)msg->data, msg->data_len,
                            msg->data_len, msg->data_len);
-                BIO_dump(out, msg->data, msg->data_len);
+                if (msg->data_len <= INT_MAX)
+                    BIO_dump(out, msg->data, (int)msg->data_len);
             }
         } else if (mmsgargs->num_msg > 0) {
             BIO_MSG *msg = mmsgargs->msg;
@@ -1546,12 +1552,9 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
                 if (pkey == NULL) {
                     BIO_printf(sdb->out, "Public key missing");
                 } else {
-                    const char *algname = "";
-
-                    EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL,
-                                            &algname, EVP_PKEY_get0_asn1(pkey));
                     BIO_printf(sdb->out, "%s, bits=%d",
-                            algname, EVP_PKEY_get_bits(pkey));
+                               EVP_PKEY_get0_type_name(pkey),
+                               EVP_PKEY_get_bits(pkey));
                 }
             }
             break;

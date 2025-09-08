@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -575,7 +575,7 @@ static EVP_PKEY *new_raw_private_key(const char *curvename,
                                              (char *)priv, privlen))
             goto err;
     } else {
-        privbn = BN_bin2bn(priv, privlen, NULL);
+        privbn = BN_bin2bn(priv, (int)privlen, NULL);
         if (privbn == NULL)
             goto err;
         if (!OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_GROUP_NAME,

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #include "internal/e_os.h"
 #include "internal/cryptlib.h"
+#include "internal/mem_alloc_utils.h"
 #include "crypto/cryptlib.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -195,7 +196,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         goto err;
     }
 
-    if (num == 0)
+    if (ossl_unlikely(num == 0))
         return NULL;
 
     FAILTEST();
@@ -209,18 +210,10 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
     }
 
     ptr = malloc(num);
-    if (ptr != NULL)
+    if (ossl_likely(ptr != NULL))
         return ptr;
  err:
-    /*
-     * ossl_err_get_state_int() in err.c uses CRYPTO_zalloc(num, NULL, 0) for
-     * ERR_STATE allocation. Prevent mem alloc error loop while reporting error.
-     */
-    if (file != NULL || line != 0) {
-        ERR_new();
-        ERR_set_debug(file, line, NULL);
-        ERR_set_error(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE, NULL);
-    }
+    ossl_report_alloc_err(file, line);
     return NULL;
 }
 
@@ -238,24 +231,42 @@ void *CRYPTO_zalloc(size_t num, const char *file, int line)
 void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
                            const char *file, int line)
 {
+    size_t alloc_bytes;
     void *ret;
 
     *freeptr = NULL;
 
 #if defined(OPENSSL_SMALL_FOOTPRINT)
-    ret = freeptr = NULL;
-    return ret;
+    return NULL;
 #endif
+
+    /* Ensure that alignment is a power of two */
+    if (alignment == 0 || (alignment & (alignment - 1)) != 0) {
+        ossl_report_alloc_err_inv(file, line);
+        return NULL;
+    }
 
     /* Allow non-malloc() allocations as long as no malloc_impl is provided. */
     if (malloc_impl == CRYPTO_malloc) {
 #if defined(_BSD_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
-        if (posix_memalign(&ret, alignment, num))
-            return NULL;
+        int memalign_ret;
+
+        /* posix_memalign() requires alignment to be at least sizeof(void *) */
+        if (alignment < sizeof(void *))
+            alignment = sizeof(void *);
+
+        if ((memalign_ret = posix_memalign(&ret, alignment, num))) {
+            ret = NULL;
+            switch (memalign_ret) {
+            case EINVAL:
+                ossl_report_alloc_err_inv(file, line);
+                break;
+            case ENOMEM:
+                ossl_report_alloc_err(file, line);
+                break;
+            }
+        }
         *freeptr = ret;
-        return ret;
-#elif defined(_ISOC11_SOURCE)
-        ret = *freeptr = aligned_alloc(alignment, num);
         return ret;
 #endif
     }
@@ -270,11 +281,14 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
      * via _aligned_malloc, just avoid its use entirely
      */
 
+    if (ossl_unlikely(!ossl_size_add(num, alignment, &alloc_bytes, file, line)))
+        return NULL;
+
     /*
      * Step 1: Allocate an amount of memory that is <alignment>
      * bytes bigger than requested
      */
-    *freeptr = CRYPTO_malloc(num + alignment, file, line);
+    *freeptr = CRYPTO_malloc(alloc_bytes, file, line);
     if (*freeptr == NULL)
         return NULL;
 
@@ -299,9 +313,17 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
 
 void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
 {
+    void *ret;
+
     INCREMENT(realloc_count);
-    if (realloc_impl != CRYPTO_realloc)
-        return realloc_impl(str, num, file, line);
+    if (realloc_impl != CRYPTO_realloc) {
+        ret = realloc_impl(str, num, file, line);
+
+        if (num == 0 || ret != NULL)
+            return ret;
+
+        goto err;
+    }
 
     if (str == NULL)
         return CRYPTO_malloc(num, file, line);
@@ -312,7 +334,13 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
     }
 
     FAILTEST();
-    return realloc(str, num);
+    ret = realloc(str, num);
+
+err:
+    if (num != 0 && ret == NULL)
+        ossl_report_alloc_err(file, line);
+
+    return ret;
 }
 
 void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,

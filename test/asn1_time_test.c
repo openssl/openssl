@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -167,7 +167,7 @@ static int test_table(struct testdata *tbl, int idx)
     int day, sec;
 
     atime.data = (unsigned char*)td->data;
-    atime.length = strlen((char*)atime.data);
+    atime.length = (int)strlen((char*)atime.data);
     atime.type = td->type;
     atime.flags = 0;
 

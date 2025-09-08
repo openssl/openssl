@@ -16,9 +16,6 @@
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
 #include <openssl/buffer.h>
-#include <openssl/objects.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
 
 #define RSMBLY_BITMASK_SIZE(msg_len) (((msg_len) + 7) / 8)
 
@@ -116,6 +113,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
     size_t len, frag_off, overhead, used_len;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
+    uint8_t saved_payload[DTLS1_HM_HEADER_LENGTH];
 
     if (!dtls1_query_mtu(s))
         return -1;
@@ -218,6 +216,15 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
             }
             dtls1_fix_message_header(s, frag_off, len - DTLS1_HM_HEADER_LENGTH);
 
+            /*
+             * Save the data that will be overwritten by
+             * dtls1_write_messsage_header so no corruption occurs when using
+             * a msg callback.
+             */
+            if (s->msg_callback && s->init_off != 0)
+                memcpy(saved_payload, &s->init_buf->data[s->init_off],
+                       sizeof(saved_payload));
+
             dtls1_write_message_header(s,
                                        (unsigned char *)&s->init_buf->
                                        data[s->init_off]);
@@ -225,6 +232,11 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
 
         ret = dtls1_write_bytes(s, type, &s->init_buf->data[s->init_off], len,
                                 &written);
+
+        if (type == SSL3_RT_HANDSHAKE && s->msg_callback && s->init_off != 0)
+            memcpy(&s->init_buf->data[s->init_off], saved_payload,
+                   sizeof(saved_payload));
+
         if (ret <= 0) {
             /*
              * might need to update MTU here, but we don't know which
@@ -297,7 +309,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
             if (written == s->init_num) {
                 if (s->msg_callback)
                     s->msg_callback(1, s->version, type, s->init_buf->data,
-                                    (size_t)(s->init_off + s->init_num), ussl,
+                                    s->init_off + s->init_num, ussl,
                                     s->msg_callback_arg);
 
                 s->init_off = 0; /* done writing this message */

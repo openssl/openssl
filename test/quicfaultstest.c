@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -41,7 +41,7 @@ static int test_basic(void)
     if (!TEST_true(qtest_create_quic_connection(qtserv, cssl)))
         goto err;
 
-    if (!TEST_int_eq(SSL_write(cssl, msg, msglen), msglen))
+    if (!TEST_int_eq(SSL_write(cssl, msg, (int)msglen), (int)msglen))
         goto err;
 
     ossl_quic_tserver_tick(qtserv);

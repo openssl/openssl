@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -518,7 +518,7 @@ static int ecp_sm2p256_windowed_mul(const EC_GROUP *group,
     } t, p;
 
     if (num > OPENSSL_MALLOC_MAX_NELEMS(P256_POINT)
-        || (scalars = OPENSSL_malloc(num * sizeof(BIGNUM *))) == NULL) {
+        || (scalars = OPENSSL_malloc_array(num, sizeof(BIGNUM *))) == NULL) {
         ECerr(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto err;
     }

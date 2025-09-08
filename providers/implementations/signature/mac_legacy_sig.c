@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -122,12 +122,11 @@ static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey,
         engine = (char *)ENGINE_get_id(pmacctx->key->cipher.engine);
 #endif
 
-    if (!ossl_prov_set_macctx(pmacctx->macctx, NULL,
+    if (!ossl_prov_set_macctx(pmacctx->macctx,
                               (char *)ciphername,
                               (char *)mdname,
                               (char *)engine,
-                              pmacctx->key->properties,
-                              NULL, 0))
+                              pmacctx->key->properties))
         return 0;
 
     if (!EVP_MAC_init(pmacctx->macctx, pmacctx->key->priv_key,

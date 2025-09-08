@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -619,7 +619,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
         pow2_numbits_temp = r->d[i] | g->d[i];
         pow2_condition_mask = constant_time_is_zero_bn(pow2_flag);
         pow2_flag &= constant_time_is_zero_bn(pow2_numbits_temp);
-        pow2_shifts += pow2_flag;
+        pow2_shifts += (int)pow2_flag;
         pow2_numbits = constant_time_select_bn(pow2_condition_mask,
                                                pow2_numbits, pow2_numbits_temp);
     }
@@ -628,7 +628,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     pow2_flag = 1;
     for (j = 0; j < BN_BITS2; j++) {
         pow2_flag &= pow2_numbits;
-        pow2_shifts += pow2_flag;
+        pow2_shifts += (int)pow2_flag;
         pow2_numbits >>= 1;
     }
 

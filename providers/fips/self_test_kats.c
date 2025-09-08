@@ -82,13 +82,13 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         in_tag = (unsigned char *)t->tag;
 
     return EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc)
-           && (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, t->iv_len, NULL) > 0)
+           && (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, (int)t->iv_len, NULL) > 0)
            && (in_tag == NULL
-               || EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, t->tag_len,
+               || EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)t->tag_len,
                                       in_tag) > 0)
            && EVP_CipherInit_ex(ctx, NULL, NULL, t->key, t->iv, enc)
            && EVP_CIPHER_CTX_set_padding(ctx, pad)
-           && EVP_CipherUpdate(ctx, NULL, &tmp, t->aad, t->aad_len);
+           && EVP_CipherUpdate(ctx, NULL, &tmp, t->aad, (int)t->aad_len);
 }
 
 /* Test a single KAT for encrypt/decrypt */
@@ -114,7 +114,7 @@ static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
     if ((t->mode & CIPHER_MODE_ENCRYPT) != 0) {
         if (!cipher_init(ctx, cipher, t, encrypt)
                 || !EVP_CipherUpdate(ctx, ct_buf, &len, t->base.pt,
-                                     t->base.pt_len)
+                                     (int)t->base.pt_len)
                 || !EVP_CipherFinal_ex(ctx, ct_buf + len, &ct_len))
             goto err;
 
@@ -127,7 +127,7 @@ static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
         if (t->tag != NULL) {
             unsigned char tag[16] = { 0 };
 
-            if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, t->tag_len,
+            if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)t->tag_len,
                                      tag) <= 0
                 || memcmp(tag, t->tag, t->tag_len) != 0)
                 goto err;
@@ -138,7 +138,7 @@ static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
     if ((t->mode & CIPHER_MODE_DECRYPT) != 0) {
         if (!(cipher_init(ctx, cipher, t, !encrypt)
               && EVP_CipherUpdate(ctx, pt_buf, &len,
-                                  t->base.expected, t->base.expected_len)
+                                  t->base.expected, (int)t->base.expected_len)
               && EVP_CipherFinal_ex(ctx, pt_buf + len, &pt_len)))
             goto err;
         OSSL_SELF_TEST_oncorrupt_byte(st, pt_buf);
@@ -170,7 +170,7 @@ static int add_params(OSSL_PARAM_BLD *bld, const ST_KAT_PARAM *params,
             BIGNUM *bn = BN_CTX_get(ctx);
 
             if (bn == NULL
-                || (BN_bin2bn(p->data, p->data_len, bn) == NULL)
+                || (BN_bin2bn(p->data, (int)p->data_len, bn) == NULL)
                 || !OSSL_PARAM_BLD_push_BN(bld, p->name, bn))
                 goto err;
             break;
@@ -479,6 +479,52 @@ static int digest_signature(const uint8_t *sig, size_t sig_len,
     *out_len = len;
     return ret;
 }
+
+#ifndef OPENSSL_NO_LMS
+static int self_test_LMS(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+{
+    int ret = 0;
+    OSSL_PARAM pm[2];
+    const ST_KAT_LMS *t = &st_kat_lms_test;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_SIGNATURE *sig = NULL;
+
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_SIGNATURE,
+                           OSSL_SELF_TEST_DESC_SIGN_LMS);
+
+    pm[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
+                                              (unsigned char *)t->pub,
+                                              t->publen);
+    pm[1] = OSSL_PARAM_construct_end();
+
+    ctx = EVP_PKEY_CTX_new_from_name(libctx, "LMS", "");
+    if (ctx == NULL
+            || EVP_PKEY_fromdata_init(ctx) <= 0
+            || EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY, pm) <= 0)
+        goto err;
+    EVP_PKEY_CTX_free(ctx);
+    ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, "");
+    if (ctx == NULL)
+        goto err;
+
+    sig = EVP_SIGNATURE_fetch(libctx, "LMS", NULL);
+    if (sig == NULL
+            || EVP_PKEY_verify_message_init(ctx, sig, NULL) <= 0
+            || EVP_PKEY_verify(ctx, t->sig, t->siglen,
+                               t->msg, t->msglen) <= 0)
+        goto err;
+
+    ret = 1;
+ err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_SIGNATURE_free(sig);
+
+    OSSL_SELF_TEST_onend(st, ret);
+    return ret;
+}
+#endif  /* OPENSSL_NO_LMS */
 
 static int self_test_digest_sign(const ST_KAT_SIGN *t,
                                  OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
@@ -1080,6 +1126,19 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
         ret = 0;
     if (!self_test_ciphers(st, libctx))
         ret = 0;
+#ifndef OPENSSL_NO_LMS
+    /*
+     * FIPS 140-3 IG 10.3.A Note 5 mandates a CAST for LMS.
+     *
+     * It permits this to be omitted if HSS is also implemented and has
+     * the relevant self tests.  Once HSS is implemented, this test can be
+     * removed.  This IG permits the digest's CAST to be subsumed into this
+     * test, however, because this will be removed, the underlying digest
+     * test has been retained elsewhere lest it is accidentally omitted.
+     */
+    if (!self_test_LMS(st, libctx))
+        ret = 0;
+#endif  /* OPENSSL_NO_LMS */
     if (!self_test_signatures(st, libctx))
         ret = 0;
     if (!self_test_kdfs(st, libctx))

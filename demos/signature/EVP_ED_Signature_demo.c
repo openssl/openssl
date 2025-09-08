@@ -1,5 +1,5 @@
 /*-
- * Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -73,7 +73,7 @@ static int demo_sign(EVP_PKEY *priv,
     }
     *sig_out_len = sig_len;
     *sig_out_value = sig_value;
-    BIO_dump_indent_fp(stdout, sig_value, sig_len, 2);
+    BIO_dump_indent_fp(stdout, sig_value, (int)sig_len, 2);
     fprintf(stdout, "\n");
     ret = 1;
 

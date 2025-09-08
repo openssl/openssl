@@ -237,6 +237,16 @@ static void qrx_cleanup_urxl(OSSL_QRX *qrx, QUIC_URXE_LIST *l)
     }
 }
 
+void ossl_qrx_update_pn_space(OSSL_QRX *src, OSSL_QRX *dst)
+{
+    size_t i;
+
+    for (i = 0; i < QUIC_PN_SPACE_NUM; i++)
+        dst->largest_pn[i] = src->largest_pn[i];
+
+    return;
+}
+
 void ossl_qrx_free(OSSL_QRX *qrx)
 {
     uint32_t i;
@@ -946,11 +956,11 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
         return 0;
 
     /* Feed AAD data. */
-    if (EVP_CipherUpdate(cctx, NULL, &l, aad, aad_len) != 1)
+    if (EVP_CipherUpdate(cctx, NULL, &l, aad, (int)aad_len) != 1)
         return 0;
 
     /* Feed encrypted packet body. */
-    if (EVP_CipherUpdate(cctx, dst, &l, src, src_len - el->tag_len) != 1)
+    if (EVP_CipherUpdate(cctx, dst, &l, src, (int)(src_len - el->tag_len)) != 1)
         return 0;
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION

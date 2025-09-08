@@ -1655,6 +1655,7 @@ struct ssl_connection_st {
             /* OCSP response received or to be sent */
             unsigned char *resp;
             size_t resp_len;
+            STACK_OF(OCSP_RESPONSE) *resp_ex;
         } ocsp;
 
         /* RFC4507 session ticket expected to be received or sent */
@@ -2616,6 +2617,7 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg);
 
 __owur int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk);
 __owur int ssl_verify_rpk(SSL_CONNECTION *s, EVP_PKEY *rpk);
+__owur int ssl_verify_ocsp(SSL *s, STACK_OF(X509) *sk);
 __owur int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags);
 __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain,
                                    int ref);
@@ -3165,7 +3167,7 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic);
 #define OSSL_QUIC_PERMITTED_OPTIONS_CONN        \
     (OSSL_LEGACY_SSL_OPTIONS                  | \
      OSSL_TLS1_2_OPTIONS                      | \
-     SSL_OP_CIPHER_SERVER_PREFERENCE          | \
+     SSL_OP_SERVER_PREFERENCE                 | \
      SSL_OP_DISABLE_TLSEXT_CA_NAMES           | \
      SSL_OP_NO_TX_CERTIFICATE_COMPRESSION     | \
      SSL_OP_NO_RX_CERTIFICATE_COMPRESSION     | \

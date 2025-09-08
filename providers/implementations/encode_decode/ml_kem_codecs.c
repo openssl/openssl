@@ -14,7 +14,7 @@
 #include <openssl/core_names.h>
 #include "internal/encoder.h"
 #include "prov/ml_kem.h"
-#include "ml_kem_codecs.h"
+#include "prov/ml_kem_codecs.h"
 
 /* Tables describing supported ASN.1 input/output formats. */
 
@@ -254,7 +254,7 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
         }
     }
     if (p8fmt->priv_length > 0) {
-        if ((key->encoded_dk = OPENSSL_malloc(p8fmt->priv_length)) == NULL) {
+        if ((key->encoded_dk = OPENSSL_secure_malloc(p8fmt->priv_length)) == NULL) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
                            "error parsing %s private key",
                            v->algorithm_name);
@@ -345,14 +345,14 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
                        v->algorithm_name);
         goto end;
     }
-    len = p8fmt->p8_bytes;
+    len = (int)p8fmt->p8_bytes;
 
     if (out == NULL) {
         ret = len;
         goto end;
     }
 
-    if ((pos = buf = OPENSSL_malloc((size_t) len)) == NULL)
+    if ((pos = buf = OPENSSL_malloc((size_t)len)) == NULL)
         goto end;
 
     switch (p8fmt->p8_shift) {

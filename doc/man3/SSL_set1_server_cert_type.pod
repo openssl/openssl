@@ -81,7 +81,7 @@ Which corresponds to a raw public key.
 =back
 
 If B<val> is set to a non-NULL value, then the extension is sent in the handshake.
-If b<val> is set to a NULL value (and B<len> is 0), then the extension is
+If B<val> is set to a NULL value (and B<len> is 0), then the extension is
 disabled. The default value is NULL, meaning the extension is not sent, and
 X.509 certificates are used in the handshake.
 
@@ -191,6 +191,6 @@ These functions were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 =cut

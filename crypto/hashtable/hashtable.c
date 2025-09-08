@@ -154,12 +154,13 @@ static struct ht_neighborhood_st *alloc_new_neighborhood_list(size_t len,
 {
     struct ht_neighborhood_st *ret;
 
-    ret = OPENSSL_aligned_alloc(sizeof(struct ht_neighborhood_st) * len,
-                                CACHE_LINE_BYTES, freeptr);
+    ret = OPENSSL_aligned_alloc_array(len, sizeof(struct ht_neighborhood_st),
+                                      CACHE_LINE_BYTES, freeptr);
 
     /* fall back to regular malloc */
     if (ret == NULL) {
-        ret = *freeptr = OPENSSL_malloc(sizeof(struct ht_neighborhood_st) * len);
+        ret = *freeptr =
+            OPENSSL_malloc_array(len, sizeof(struct ht_neighborhood_st));
         if (ret == NULL)
             return NULL;
     }
@@ -232,9 +233,9 @@ err:
     return NULL;
 }
 
-void ossl_ht_read_lock(HT *htable)
+int ossl_ht_read_lock(HT *htable)
 {
-    ossl_rcu_read_lock(htable->lock);
+    return ossl_rcu_read_lock(htable->lock);
 }
 
 void ossl_ht_read_unlock(HT *htable)
@@ -635,6 +636,7 @@ int ossl_ht_insert(HT *h, HT_KEY *key, HT_VALUE *data, HT_VALUE **olddata)
     if (data->value == NULL)
         goto out;
 
+    rc = -1;
     newval = alloc_new_value(h, key, data->value, data->type_id);
     if (newval == NULL)
         goto out;

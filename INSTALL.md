@@ -745,6 +745,11 @@ This now only enables the `failed-malloc` feature.
 
 This is a no-op; the project uses the compiler's address/leak sanitizer instead.
 
+### enable-allocfail-tests
+
+This option enables testing that leverages the use of the crypto-mdebug feature
+to test error paths resulting from failed memory allocations.
+
 ### no-ct
 
 Don't build support for Certificate Transparency (CT).
@@ -894,6 +899,12 @@ Disable HTTP support.
 Don't build the legacy provider.
 
 Disabling this also disables the legacy algorithms: MD2 (already disabled by default).
+
+### enable-lms
+
+Enable Leighton-Micali Signatures (LMS) support.
+Support is currently limited to verification only as per
+[SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final).
 
 ### no-makedepend
 

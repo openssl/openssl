@@ -183,14 +183,22 @@ static int slh_dsa_key_validate_failure_test(void)
      * Loading 128s private key data into a 128f algorithm will have an incorrect
      * public key.
      */
-    if (!TEST_ptr(key = slh_dsa_key_from_data("SLH-DSA-SHA2-128f",
-                                              slh_dsa_sha2_128s_0_keygen_priv,
-                                              sizeof(slh_dsa_sha2_128s_0_keygen_priv), 0)))
-        return 0;
-    if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL)))
-        goto end;
-    if (!TEST_int_eq(EVP_PKEY_pairwise_check(vctx), 0))
-        goto end;
+    key = slh_dsa_key_from_data("SLH-DSA-SHA2-128f",
+                                slh_dsa_sha2_128s_0_keygen_priv,
+                                sizeof(slh_dsa_sha2_128s_0_keygen_priv), 0);
+    if (OSSL_PROVIDER_available(lib_ctx, "fips")
+            && fips_provider_version_match(lib_ctx, ">3.5.2")) {
+        /* The new pairwise test should fail in fips mode */
+        if (!TEST_ptr_null(key))
+            goto end;
+    } else {
+        if (!TEST_ptr(key))
+            goto end;
+        if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL)))
+            goto end;
+        if (!TEST_int_eq(EVP_PKEY_pairwise_check(vctx), 0))
+            goto end;
+    }
     ret = 1;
 end:
     EVP_PKEY_CTX_free(vctx);
@@ -274,7 +282,7 @@ static int slh_dsa_sign_verify_test(int tst_id)
                                           td->msg, td->msg_len), 1)
             || !TEST_true(EVP_PKEY_get_size_t_param(pkey, OSSL_PKEY_PARAM_MAX_SIZE,
                                                     &sig_len2))
-            || !TEST_int_eq(sig_len2, psig_len)
+            || !TEST_size_t_eq(sig_len2, psig_len)
             || !TEST_ptr(psig = OPENSSL_zalloc(psig_len))
             || !TEST_int_eq(EVP_PKEY_sign(sctx, psig, &psig_len,
                                           td->msg, td->msg_len), 1))
@@ -338,10 +346,10 @@ static int slh_dsa_keygen_test(int tst_id)
                                                    pub, sizeof(pub), &pub_len)))
         goto err;
     if (!TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_BITS, &bits))
-            || !TEST_int_eq(bits, 8 * 2 * n)
+            || !TEST_size_t_eq((size_t)bits, 8 * 2 * n)
             || !TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_SECURITY_BITS,
                                                  &sec_bits))
-            || !TEST_int_eq(sec_bits, 8 * n)
+            || !TEST_size_t_eq((size_t)sec_bits, 8 * n)
             || !TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_MAX_SIZE,
                                                  &sig_len))
             || !TEST_int_ge(sig_len, 7856)
@@ -480,7 +488,7 @@ static int slh_dsa_deterministic_usage_test(void)
     if (!TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &sig_len, msg, msg_len), 1))
         goto err;
     len = sig_len;
-    if (!TEST_ptr(sig = OPENSSL_zalloc(sig_len * 2))
+    if (!TEST_ptr(sig = OPENSSL_calloc(2, sig_len))
             || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &len, msg, msg_len), 1)
             || !TEST_size_t_eq(sig_len, len)
             || !TEST_int_eq(EVP_PKEY_sign(dupctx, sig + sig_len, &len,

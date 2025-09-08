@@ -18,6 +18,9 @@ IF[{- !$disabled{asm} -}]
   $SHA1ASM_alpha=sha1-alpha.S
   $SHA1DEF_alpha=SHA1_ASM
 
+  $SHA1ASM_loongarch64=sha256-loongarch64.S sha512-loongarch64.S
+  $SHA1DEF_loongarch64=SHA256_ASM SHA512_ASM
+
   $SHA1ASM_mips32=sha1-mips.S sha256-mips.S
   $SHA1DEF_mips32=SHA1_ASM SHA256_ASM
   $SHA1ASM_mips64=$SHA1ASM_mips32 sha512-mips.S
@@ -132,6 +135,11 @@ GENERATE[keccak1600-ppc64.s]=asm/keccak1600-ppc64.pl
 GENERATE[sha1-parisc.s]=asm/sha1-parisc.pl
 GENERATE[sha256-parisc.s]=asm/sha512-parisc.pl
 GENERATE[sha512-parisc.s]=asm/sha512-parisc.pl
+
+GENERATE[sha256-loongarch64.S]=asm/sha256-loongarch64.pl
+INCLUDE[sha256-loongarch64.o]=..
+GENERATE[sha512-loongarch64.S]=asm/sha512-loongarch64.pl
+INCLUDE[sha512-loongarch64.o]=..
 
 GENERATE[sha1-mips.S]=asm/sha1-mips.pl
 INCLUDE[sha1-mips.o]=..

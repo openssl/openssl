@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -373,7 +373,7 @@ padlock_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 
         out_arg += chunk;
         in_arg += chunk;
-        EVP_CIPHER_CTX_set_num(ctx, nbytes);
+        EVP_CIPHER_CTX_set_num(ctx, (int)nbytes);
         if (cdata->cword.b.encdec) {
             cdata->cword.b.encdec = 0;
             padlock_reload_key();
@@ -441,7 +441,7 @@ padlock_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 
         out_arg += chunk;
         in_arg += chunk;
-        EVP_CIPHER_CTX_set_num(ctx, nbytes);
+        EVP_CIPHER_CTX_set_num(ctx, (int)nbytes);
         padlock_reload_key();   /* empirically found */
         padlock_aes_block(ivp, ivp, cdata);
         padlock_reload_key();   /* empirically found */

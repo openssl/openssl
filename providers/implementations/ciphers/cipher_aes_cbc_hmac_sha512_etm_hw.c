@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,7 +26,7 @@ const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *ossl_prov_cipher_hw_aes_cbc_hmac_sha512_e
     return NULL;
 }
 #else
-# if defined(__aarch64__)
+# if defined(__aarch64__) || defined(_M_ARM64)
 void asm_aescbc_sha512_hmac(const uint8_t *csrc, uint8_t *cdst, uint64_t clen,
                             uint8_t *dsrc, uint8_t *ddst, uint64_t dlen,
                             CIPH_DIGEST *arg);

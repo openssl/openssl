@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -237,7 +237,7 @@ static int watchccs_gets(BIO *bio, char *buf, int size)
 
 static int watchccs_puts(BIO *bio, const char *str)
 {
-    return watchccs_write(bio, str, strlen(str));
+    return watchccs_write(bio, str, (int)strlen(str));
 }
 
 static int test_tls13ccs(int tst)

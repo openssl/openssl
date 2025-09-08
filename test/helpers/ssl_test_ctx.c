@@ -1,11 +1,16 @@
 /*
- * Copyright 2016-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * Because of *asn1_*
+ */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <string.h>
 
@@ -455,7 +460,9 @@ IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, enable_server_sctp_label_bug)
 static const test_enum ssl_certstatus[] = {
     {"None", SSL_TEST_CERT_STATUS_NONE},
     {"GoodResponse", SSL_TEST_CERT_STATUS_GOOD_RESPONSE},
-    {"BadResponse", SSL_TEST_CERT_STATUS_BAD_RESPONSE}
+    {"BadResponse", SSL_TEST_CERT_STATUS_BAD_RESPONSE},
+    {"GoodResponseExt", SSL_TEST_CERT_STATUS_GOOD_RESPONSE_EXT},
+    {"BadResponseExt", SSL_TEST_CERT_STATUS_BAD_RESPONSE_EXT}
 };
 
 __owur static int parse_certstatus(SSL_TEST_SERVER_CONF *server_conf,
@@ -524,17 +531,40 @@ const char *ssl_max_fragment_len_name(int MFL_mode)
 __owur static int parse_expected_key_type(int *ptype, const char *value)
 {
     int nid;
+#ifndef OPENSSL_NO_DEPRECATED_3_6
     const EVP_PKEY_ASN1_METHOD *ameth;
+#endif
 
     if (value == NULL)
         return 0;
+#ifndef OPENSSL_NO_DEPRECATED_3_6
     ameth = EVP_PKEY_asn1_find_str(NULL, value, -1);
     if (ameth != NULL)
         EVP_PKEY_asn1_get0_info(&nid, NULL, NULL, NULL, NULL, ameth);
     else
         nid = OBJ_sn2nid(value);
-    if (nid == NID_undef)
+#else
+    /*
+     * These functions map the values differently than
+     * EVP_PKEY_asn1_find_str (which was used before) so use this hack
+     * to make it work
+     */
+    if (strcmp("RSA", value) == 0) {
+        nid = OBJ_ln2nid("rsaEncryption");
+    } else if (strcmp("RSA-PSS", value) == 0) {
+        nid = OBJ_ln2nid("rsassaPss");
+    } else if (strcmp("Ed448", value) == 0) {
+        nid = OBJ_sn2nid("ED448");
+    } else if (strcmp("Ed25519", value) == 0) {
+        nid = OBJ_sn2nid("ED25519");
+    } else if (strcmp("EC", value) == 0) {
+        nid = OBJ_sn2nid("id-ecPublicKey");
+    } else {
         nid = OBJ_ln2nid(value);
+    }
+#endif
+    if (nid == NID_undef)
+        nid = OBJ_sn2nid(value);
 #ifndef OPENSSL_NO_EC
     if (nid == NID_undef)
         nid = EC_curve_nist2nid(value);

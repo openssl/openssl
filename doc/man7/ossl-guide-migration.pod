@@ -17,6 +17,14 @@ L<https://github.com/openssl/openssl/blob/master/CHANGES.md>.
 For an overview of some of the key concepts introduced in OpenSSL 3.0 see
 L<crypto(7)>.
 
+=head1 OPENSSL 3.6
+
+=head2 Main Changes from OpenSSL 3.5
+
+The functions EVP_PKEY_asn1_*() and L<EVP_PKEY_get0_asn1(3)> were deprecated in
+favour of the provider API. EVP_PKEY_assign_[DSA|SIPHASH]() were also deprecated.
+Please use the new high level and provider API.
+
 =head1 OPENSSL 3.1
 
 =head2 Main Changes from OpenSSL 3.0
@@ -2358,7 +2366,7 @@ This implies some of the performance numbers might not be comparable with the
 previous releases due to higher overhead. This applies particularly to
 measuring performance on smaller data chunks.
 
-b<openssl dhparam>, B<openssl dsa>, B<openssl gendsa>, B<openssl dsaparam>,
+B<openssl dhparam>, B<openssl dsa>, B<openssl gendsa>, B<openssl dsaparam>,
 B<openssl genrsa> and B<openssl rsa> have been modified to use PKEY APIs.
 B<openssl genrsa> and B<openssl rsa> now write PKCS #8 keys by default.
 

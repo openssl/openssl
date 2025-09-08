@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -77,7 +77,7 @@ static int test_idea_cbc(void)
 {
     IDEA_KEY_SCHEDULE key, dkey;
     unsigned char iv[IDEA_BLOCK];
-    const size_t text_len = sizeof(text);
+    const long text_len = sizeof(text);
 
     IDEA_set_encrypt_key(k, &key);
     IDEA_set_decrypt_key(&key, &dkey);

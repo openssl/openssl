@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,8 @@
 
 #define SM4_HW_CCM_SET_KEY_FN(fn_set_enc_key, fn_blk, fn_ccm_enc, fn_ccm_dec)  \
     fn_set_enc_key(key, &actx->ks.ks);                                         \
-    CRYPTO_ccm128_init(&ctx->ccm_ctx, ctx->m, ctx->l, &actx->ks.ks,            \
+    CRYPTO_ccm128_init(&ctx->ccm_ctx, (unsigned int)ctx->m,                    \
+                       (unsigned int)ctx->l, &actx->ks.ks,                     \
                        (block128_f)fn_blk);                                    \
     ctx->str = ctx->enc ? (ccm128_f)fn_ccm_enc : (ccm128_f)fn_ccm_dec;         \
     ctx->key_set = 1;

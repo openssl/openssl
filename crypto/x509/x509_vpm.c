@@ -462,7 +462,7 @@ char *X509_VERIFY_PARAM_get1_ip_asc(X509_VERIFY_PARAM *param)
     size_t iplen;
     unsigned char *ip = int_X509_VERIFY_PARAM_get0_ip(param, &iplen);
 
-    return ip == NULL ? NULL : ossl_ipaddr_to_asc(ip, iplen);
+    return ip == NULL ? NULL : ossl_ipaddr_to_asc(ip, (int)iplen);
 }
 
 int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
@@ -634,6 +634,11 @@ int X509_VERIFY_PARAM_get_count(void)
 const X509_VERIFY_PARAM *X509_VERIFY_PARAM_get0(int id)
 {
     int num = OSSL_NELEM(default_table);
+
+    if (id < 0) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_INVALID_ARGUMENT);
+        return NULL;
+    }
 
     if (id < num)
         return default_table + id;

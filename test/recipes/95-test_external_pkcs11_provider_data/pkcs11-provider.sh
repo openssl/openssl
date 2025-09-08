@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -63,9 +63,8 @@ echo "------------------------------------------------------------------"
 echo "Running tests"
 echo "------------------------------------------------------------------"
 
-# The OpenSSL app uses ${HARNESS_OSSL_PREFIX} as a prefix for its standard output
 # For maintenance reasons and simplicity we only run test with kryoptic token
-HARNESS_OSSL_PREFIX= meson test -C $PKCS11_PROVIDER_BUILDDIR --suite=kryoptic
+meson test -C $PKCS11_PROVIDER_BUILDDIR --suite=kryoptic
 
 if [ $? -ne 0 ]; then
     cat $PKCS11_PROVIDER_BUILDDIR/meson-logs/testlog.txt

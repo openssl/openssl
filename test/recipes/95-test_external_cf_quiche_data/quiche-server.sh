@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,6 @@ test -d "$QUICHE_TARGET_PATH" || exit 1
 
 "$QUICHE_TARGET_PATH/debug/quiche-server" --cert "$SRCTOP/test/certs/servercert.pem" \
     --key "$SRCTOP/test/certs/serverkey.pem" --disable-gso \
-    --http-version HTTP/0.9 --root "$SRCTOP" --no-grease --disable-hystart &
+    --http-version HTTP/0.9 --root "$SRCTOP" --no-grease --disable-hystart > quiche_server_log 2>&1 &
 
 echo $! >server.pid

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,7 +19,9 @@
 # define timezone _timezone
 #endif
 
-#if defined(__FreeBSD__) || defined(__wasi__)
+#if defined(__FreeBSD__) || defined(__wasi__) || \
+    (defined(__APPLE__) && !defined(OPENSSL_NO_APPLE_CRYPTO_RANDOM) && \
+     !(defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1050))
 # define USE_TIMEGM
 #endif
 

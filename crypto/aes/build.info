@@ -10,7 +10,7 @@ IF[{- !$disabled{asm} -}]
   $AESASM_x86_64=\
         aes-x86_64.s vpaes-x86_64.s bsaes-x86_64.s aesni-x86_64.s \
         aesni-sha1-x86_64.s aesni-sha256-x86_64.s aesni-mb-x86_64.s \
-        aesni-xts-avx512.s
+        aesni-xts-avx512.s aes-cfb-avx512.s
   $AESDEF_x86_64=AES_ASM VPAES_ASM BSAES_ASM
 
   $AESASM_ia64=aes_core.c aes_cbc.c aes-ia64.s
@@ -107,6 +107,7 @@ GENERATE[aes-x86_64.s]=asm/aes-x86_64.pl
 GENERATE[vpaes-x86_64.s]=asm/vpaes-x86_64.pl
 GENERATE[bsaes-x86_64.s]=asm/bsaes-x86_64.pl
 GENERATE[aesni-x86_64.s]=asm/aesni-x86_64.pl
+GENERATE[aes-cfb-avx512.s]=asm/aes-cfb-avx512.pl
 GENERATE[aesni-sha1-x86_64.s]=asm/aesni-sha1-x86_64.pl
 GENERATE[aesni-sha256-x86_64.s]=asm/aesni-sha256-x86_64.pl
 GENERATE[aesni-mb-x86_64.s]=asm/aesni-mb-x86_64.pl

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -329,7 +329,8 @@ static int test_fifd(int idx)
         || !TEST_ptr(info.ackm = ossl_ackm_new(fake_now, NULL,
                                                &info.statm,
                                                &ossl_cc_dummy_method,
-                                               info.ccdata))
+                                               info.ccdata,
+                                               /* is_server */0))
         || !TEST_true(ossl_ackm_on_handshake_confirmed(info.ackm))
         || !TEST_ptr(info.cfq = ossl_quic_cfq_new())
         || !TEST_ptr(info.txpim = ossl_quic_txpim_new())

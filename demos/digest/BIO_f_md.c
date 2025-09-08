@@ -1,5 +1,5 @@
 /*-
- * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,6 +26,10 @@
 #include <openssl/err.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
+
+#ifdef OPENSSL_SYS_WINDOWS
+# define fileno _fileno
+#endif
 
 /*-
  * This demonstration will show how to digest data using

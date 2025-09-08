@@ -305,7 +305,7 @@ int tls_parse_ctos_session_ticket(SSL_CONNECTION *s, PACKET *pkt,
 {
     if (s->ext.session_ticket_cb &&
             !s->ext.session_ticket_cb(SSL_CONNECTION_GET_USER_SSL(s),
-                                      PACKET_data(pkt), PACKET_remaining(pkt),
+                                      PACKET_data(pkt), (int)PACKET_remaining(pkt),
                                       s->ext.session_ticket_cb_arg)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -702,12 +702,14 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
     unsigned int group_id = 0;
 
     /* Prepare memory to hold the extracted key share groups and related pubkeys */
-    *keyshares_arr = OPENSSL_malloc(*keyshares_max * sizeof(**keyshares_arr));
+    *keyshares_arr = OPENSSL_malloc_array(*keyshares_max,
+                                          sizeof(**keyshares_arr));
     if (*keyshares_arr == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto failure;
     }
-    *encoded_pubkey_arr = OPENSSL_malloc(*keyshares_max * sizeof(**encoded_pubkey_arr));
+    *encoded_pubkey_arr = OPENSSL_malloc_array(*keyshares_max,
+                                               sizeof(**encoded_pubkey_arr));
     if (*encoded_pubkey_arr == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto failure;
@@ -788,16 +790,17 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
         if (*keyshares_cnt == *keyshares_max) {
             PACKET *tmp_pkt;
             uint16_t *tmp =
-                OPENSSL_realloc(*keyshares_arr,
-                                (*keyshares_max + GROUPLIST_INCREMENT) * sizeof(**keyshares_arr));
+                OPENSSL_realloc_array(*keyshares_arr,
+                                      *keyshares_max + GROUPLIST_INCREMENT,
+                                      sizeof(**keyshares_arr));
 
             if (tmp == NULL)
                 goto failure;
             *keyshares_arr = tmp;
             tmp_pkt =
-                OPENSSL_realloc(*encoded_pubkey_arr,
-                                (*keyshares_max + GROUPLIST_INCREMENT) *
-                                sizeof(**encoded_pubkey_arr));
+                OPENSSL_realloc_array(*encoded_pubkey_arr,
+                                      *keyshares_max + GROUPLIST_INCREMENT,
+                                      sizeof(**encoded_pubkey_arr));
             if (tmp_pkt == NULL)
                 goto failure;
             *encoded_pubkey_arr = tmp_pkt;
@@ -854,7 +857,7 @@ static void check_overlap(SSL_CONNECTION *s,
         if (new_group_idx < group_idx) {
             group_idx = new_group_idx;
             *candidate_group_idx = current_group;
-            *prio_group_idx = group_idx;
+            *prio_group_idx = (int)group_idx;
             *selected_group = prio_groups[group_idx];
         }
     }
@@ -958,7 +961,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
         int prio_group_idx = 0, candidate_group_idx = 0;
 
         /* Server or client preference ? */
-        if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) {
+        if (s->options & SSL_OP_SERVER_PREFERENCE) {
             /* Server preference */
             /* Is there overlap with a key share group?  */
             check_overlap(s,
@@ -1816,9 +1819,6 @@ EXT_RETURN tls_construct_stoc_status_request(SSL_CONNECTION *s, WPACKET *pkt,
     if (!s->ext.status_expected)
         return EXT_RETURN_NOT_SENT;
 
-    if (SSL_CONNECTION_IS_TLS13(s) && chainidx != 0)
-        return EXT_RETURN_NOT_SENT;
-
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request)
             || !WPACKET_start_sub_packet_u16(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1830,9 +1830,10 @@ EXT_RETURN tls_construct_stoc_status_request(SSL_CONNECTION *s, WPACKET *pkt,
      * send back an empty extension, with the certificate status appearing as a
      * separate message
      */
-    if (SSL_CONNECTION_IS_TLS13(s) && !tls_construct_cert_status_body(s, pkt)) {
-       /* SSLfatal() already called */
-       return EXT_RETURN_FAIL;
+    if (SSL_CONNECTION_IS_TLS13(s)
+        && !tls_construct_cert_status_body(s, chainidx, pkt)) {
+        /* SSLfatal() already called */
+        return EXT_RETURN_FAIL;
     }
     if (!WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);

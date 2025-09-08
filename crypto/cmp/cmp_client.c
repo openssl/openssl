@@ -10,15 +10,6 @@
  */
 
 #include "cmp_local.h"
-#include "internal/cryptlib.h"
-
-/* explicit #includes not strictly needed since implied by the above: */
-#include <openssl/bio.h>
-#include <openssl/cmp.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/x509v3.h>
-#include <openssl/cmp_util.h>
 
 #define IS_CREP(t) ((t) == OSSL_CMP_PKIBODY_IP || (t) == OSSL_CMP_PKIBODY_CP \
                         || (t) == OSSL_CMP_PKIBODY_KUP)

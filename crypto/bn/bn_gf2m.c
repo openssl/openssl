@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -344,7 +344,7 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
         d0 = p[0] % BN_BITS2;
         d1 = BN_BITS2 - d0;
         z[j - n] ^= (zz >> d0);
-        if (d0)
+        if (ossl_likely(d0))
             z[j - n - 1] ^= (zz << d1);
     }
 
@@ -358,7 +358,7 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
         d1 = BN_BITS2 - d0;
 
         /* clear up the top d1 bits */
-        if (d0)
+        if (ossl_likely(d0))
             z[dN] = (z[dN] << d1) >> d1;
         else
             z[dN] = 0;
@@ -474,7 +474,7 @@ int BN_GF2m_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     bn_check_top(b);
     bn_check_top(p);
 
-    arr = OPENSSL_malloc(sizeof(*arr) * max);
+    arr = OPENSSL_malloc_array(max, sizeof(*arr));
     if (arr == NULL)
         return 0;
     ret = BN_GF2m_poly2arr(p, arr, max);
@@ -534,7 +534,7 @@ int BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
     bn_check_top(a);
     bn_check_top(p);
 
-    arr = OPENSSL_malloc(sizeof(*arr) * max);
+    arr = OPENSSL_malloc_array(max, sizeof(*arr));
     if (arr == NULL)
         return 0;
     ret = BN_GF2m_poly2arr(p, arr, max);
@@ -917,7 +917,7 @@ int BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     bn_check_top(b);
     bn_check_top(p);
 
-    arr = OPENSSL_malloc(sizeof(*arr) * max);
+    arr = OPENSSL_malloc_array(max, sizeof(*arr));
     if (arr == NULL)
         return 0;
     ret = BN_GF2m_poly2arr(p, arr, max);
@@ -979,7 +979,7 @@ int BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
     bn_check_top(a);
     bn_check_top(p);
 
-    arr = OPENSSL_malloc(sizeof(*arr) * max);
+    arr = OPENSSL_malloc_array(max, sizeof(*arr));
     if (arr == NULL)
         return 0;
     ret = BN_GF2m_poly2arr(p, arr, max);
@@ -1113,7 +1113,7 @@ int BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     bn_check_top(a);
     bn_check_top(p);
 
-    arr = OPENSSL_malloc(sizeof(*arr) * max);
+    arr = OPENSSL_malloc_array(max, sizeof(*arr));
     if (arr == NULL)
         goto err;
     ret = BN_GF2m_poly2arr(p, arr, max);

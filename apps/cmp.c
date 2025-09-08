@@ -1145,7 +1145,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
         }
     } else {
         if (!OSSL_CMP_CTX_set1_referenceValue(ctx, (unsigned char *)opt_srv_ref,
-                                              strlen(opt_srv_ref)))
+                                              (int)strlen(opt_srv_ref)))
             goto err;
     }
 
@@ -1156,7 +1156,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
         if (pass_str != NULL) {
             cleanse(opt_srv_secret);
             res = OSSL_CMP_CTX_set1_secretValue(ctx, (unsigned char *)pass_str,
-                                                strlen(pass_str));
+                                                (int)strlen(pass_str));
             clear_free(pass_str);
             if (res == 0)
                 goto err;
@@ -1550,7 +1550,7 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             cleanse(opt_secret);
             res = OSSL_CMP_CTX_set1_secretValue(ctx,
                                                 (unsigned char *)pass_string,
-                                                strlen(pass_string));
+                                                (int)strlen(pass_string));
             clear_free(pass_string);
             if (res == 0)
                 return 0;
@@ -1560,7 +1560,7 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     }
     if (opt_ref != NULL
             && !OSSL_CMP_CTX_set1_referenceValue(ctx, (unsigned char *)opt_ref,
-                                                 strlen(opt_ref)))
+                                                 (int)strlen(opt_ref)))
         return 0;
 
     if (opt_key != NULL) {

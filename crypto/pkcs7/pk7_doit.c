@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -175,7 +175,7 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
     if (EVP_PKEY_encrypt(pctx, ek, &eklen, key, keylen) <= 0)
         goto err;
 
-    ASN1_STRING_set0(ri->enc_key, ek, eklen);
+    ASN1_STRING_set0(ri->enc_key, ek, (int)eklen);
     ek = NULL;
 
     ret = 1;
@@ -221,7 +221,7 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
 
     OPENSSL_clear_free(*pek, *peklen);
     *pek = ek;
-    *peklen = eklen;
+    *peklen = (int)eklen;
 
  err:
     EVP_PKEY_CTX_free(pctx);
@@ -361,8 +361,11 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
                 if (xalg->parameter == NULL)
                     goto err;
             }
-            if (EVP_CIPHER_param_to_asn1(ctx, xalg->parameter) <= 0)
+            if (EVP_CIPHER_param_to_asn1(ctx, xalg->parameter) <= 0) {
+                ASN1_TYPE_free(xalg->parameter);
+                xalg->parameter = NULL;
                 goto err;
+            }
         }
 
         /* Lets do the pub key stuff :-) */
@@ -987,7 +990,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 
     EVP_MD_CTX_free(mctx);
 
-    ASN1_STRING_set0(si->enc_digest, abuf, siglen);
+    ASN1_STRING_set0(si->enc_digest, abuf, (int)siglen);
 
     return 1;
 

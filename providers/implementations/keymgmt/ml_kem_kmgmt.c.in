@@ -19,9 +19,13 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include <openssl/rand.h>
 #include <openssl/self_test.h>
 #include <openssl/param_build.h>
+#include <openssl/cms.h>
 #include "crypto/ml_kem.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
+#include "internal/sizes.h"
+#include "prov/der_hkdf.h"
+#include "prov/der_wrap.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
@@ -386,10 +390,11 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
     struct ml_kem_key_type_params_st p;
 
     /* Invalid attempt to mutate a key, what is the right error to report? */
-    if (key == NULL || ossl_ml_kem_have_pubkey(key))
+    if (key == NULL
+            || ossl_ml_kem_have_pubkey(key)
+            || !ml_kem_key_type_params_decoder(params, &p))
         return 0;
     v = ossl_ml_kem_key_vinfo(key);
-    p = ml_kem_key_type_params_decoder(params);
 
     /*
      * When a private key is provided, without a seed, any public key also
@@ -477,7 +482,7 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
     if (res > 0 && include_private
         && !ml_kem_pairwise_test(key, key->prov_flags)) {
 #ifdef FIPS_MODULE
-        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT_IMPORT);
 #endif
         ossl_ml_kem_key_reset(key);
         res = 0;
@@ -494,7 +499,9 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
                           ['PKEY_PARAM_PRIV_KEY',           'privkey',   'octet_string'],
                           ['PKEY_PARAM_PUB_KEY',            'pubkey',    'octet_string'],
                           ['PKEY_PARAM_ENCODED_PUBLIC_KEY', 'encpubkey', 'octet_string'],
-                         )); -}
+                          ['PKEY_PARAM_CMS_RI_TYPE',        'ri_type',   'int'],
+                          ['PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM', 'kemri_kdf_alg', 'octet_string'],
+                          )); -}
 
 static const OSSL_PARAM *ml_kem_gettable_params(void *provctx)
 {
@@ -502,7 +509,7 @@ static const OSSL_PARAM *ml_kem_gettable_params(void *provctx)
 }
 
 #ifndef FIPS_MODULE
-void *ml_kem_load(const void *reference, size_t reference_sz)
+static void *ml_kem_load(const void *reference, size_t reference_sz)
 {
     ML_KEM_KEY *key = NULL;
     uint8_t *encoded_dk = NULL;
@@ -537,12 +544,13 @@ void *ml_kem_load(const void *reference, size_t reference_sz)
             if (!ml_kem_pairwise_test(key, key->prov_flags))
                 goto err;
         }
-        OPENSSL_free(encoded_dk);
+        OPENSSL_secure_clear_free(encoded_dk, key->vinfo->prvkey_bytes);
         return key;
     }
 
  err:
-    OPENSSL_free(encoded_dk);
+    if (key != NULL && key->vinfo != NULL)
+        OPENSSL_secure_clear_free(encoded_dk, key->vinfo->prvkey_bytes);
     ossl_ml_kem_key_free(key);
     return NULL;
 }
@@ -569,16 +577,21 @@ static int ml_kem_get_key_param(const ML_KEM_KEY *key, OSSL_PARAM *p,
 static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
 {
     ML_KEM_KEY *key = vkey;
-    const ML_KEM_VINFO *v = ossl_ml_kem_key_vinfo(key);
-    struct ml_kem_get_params_st p = ml_kem_get_params_decoder(params);
+    const ML_KEM_VINFO *v;
+    struct ml_kem_get_params_st p;
 
-    if (p.bits != NULL && !OSSL_PARAM_set_int(p.bits, v->bits))
+    if (key == NULL || !ml_kem_get_params_decoder(params, &p))
         return 0;
 
-    if (p.secbits != NULL && !OSSL_PARAM_set_int(p.secbits, v->secbits))
+    v = ossl_ml_kem_key_vinfo(key);
+
+    if (p.bits != NULL && !OSSL_PARAM_set_size_t(p.bits, v->bits))
         return 0;
 
-    if (p.maxsize != NULL && !OSSL_PARAM_set_int(p.maxsize, v->ctext_bytes))
+    if (p.secbits != NULL && !OSSL_PARAM_set_size_t(p.secbits, v->secbits))
+        return 0;
+
+    if (p.maxsize != NULL && !OSSL_PARAM_set_size_t(p.maxsize, v->ctext_bytes))
         return 0;
 
     if (p.seccat != NULL && !OSSL_PARAM_set_int(p.seccat, v->security_category))
@@ -611,6 +624,36 @@ static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
                                   &ossl_ml_kem_encode_seed))
             return 0;
     }
+
+#ifndef OPENSSL_NO_CMS
+    if (p.ri_type != NULL && !OSSL_PARAM_set_int(p.ri_type, CMS_RECIPINFO_KEM))
+        return 0;
+
+    if (p.kemri_kdf_alg != NULL) {
+        uint8_t aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
+        int ret;
+        size_t aid_len = 0;
+        WPACKET pkt;
+        uint8_t *aid = NULL;
+
+        ret = WPACKET_init_der(&pkt, aid_buf, sizeof(aid_buf));
+        ret &= ossl_DER_w_begin_sequence(&pkt, -1)
+            && ossl_DER_w_precompiled(&pkt, -1, ossl_der_oid_id_alg_hkdf_with_sha256,
+                                      sizeof(ossl_der_oid_id_alg_hkdf_with_sha256))
+            && ossl_DER_w_end_sequence(&pkt, -1);
+        if (ret && WPACKET_finish(&pkt)) {
+            WPACKET_get_total_written(&pkt, &aid_len);
+            aid = WPACKET_get_curr(&pkt);
+        }
+        WPACKET_cleanup(&pkt);
+        if (!ret)
+            return 0;
+        if (aid != NULL && aid_len != 0 &&
+            !OSSL_PARAM_set_octet_string(p.kemri_kdf_alg, aid, aid_len))
+            return 0;
+    }
+#endif
+
     return 1;
 }
 
@@ -630,10 +673,8 @@ static int ml_kem_set_params(void *vkey, const OSSL_PARAM params[])
     size_t publen = 0;
     struct ml_kem_set_params_st p;
 
-    if (ossl_param_is_empty(params))
-        return 1;
-
-    p = ml_kem_set_params_decoder(params);
+    if (key == NULL || !ml_kem_set_params_decoder(params, &p))
+        return 0;
 
     /* Used in TLS via EVP_PKEY_set1_encoded_public_key(). */
     if (p.pub != NULL
@@ -667,12 +708,8 @@ static int ml_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
     PROV_ML_KEM_GEN_CTX *gctx = vgctx;
     struct ml_kem_gen_set_params_st p;
 
-    if (gctx == NULL)
+    if (gctx == NULL || !ml_kem_gen_set_params_decoder(params, &p))
         return 0;
-    if (ossl_param_is_empty(params))
-        return 1;
-
-    p = ml_kem_gen_set_params_decoder(params);
 
     if (p.propq != NULL) {
         if (p.propq->data_type != OSSL_PARAM_UTF8_STRING)

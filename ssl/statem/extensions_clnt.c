@@ -795,6 +795,7 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
             /* SSLfatal() already called */
             return EXT_RETURN_FAIL;
         }
+        valid_keyshare++;
     } else {
         if (s->ext.supportedgroups == NULL) /* use default */
             add_only_one = 1;
@@ -816,11 +817,16 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
                 /* SSLfatal() already called */
                 return EXT_RETURN_FAIL;
             }
+            valid_keyshare++;
             if (add_only_one)
                 break;
-
-            valid_keyshare++;
         }
+    }
+
+    if (valid_keyshare == 0) {
+        /* No key shares were allowed */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_KEY_SHARE);
+        return EXT_RETURN_FAIL;
     }
 
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
@@ -1554,7 +1560,7 @@ int tls_parse_stoc_session_ticket(SSL_CONNECTION *s, PACKET *pkt,
 
     if (s->ext.session_ticket_cb != NULL &&
         !s->ext.session_ticket_cb(ssl, PACKET_data(pkt),
-                                  PACKET_remaining(pkt),
+                                  (int)PACKET_remaining(pkt),
                                   s->ext.session_ticket_cb_arg)) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_BAD_EXTENSION);
         return 0;
@@ -1598,14 +1604,8 @@ int tls_parse_stoc_status_request(SSL_CONNECTION *s, PACKET *pkt,
     }
 
     if (SSL_CONNECTION_IS_TLS13(s)) {
-        /* We only know how to handle this if it's for the first Certificate in
-         * the chain. We ignore any other responses.
-         */
-        if (chainidx != 0)
-            return 1;
-
         /* SSLfatal() already called */
-        return tls_process_cert_status_body(s, pkt);
+        return tls_process_cert_status_body(s, chainidx, pkt);
     }
 
     /* Set flag to expect CertificateStatus message */
@@ -1726,7 +1726,7 @@ int tls_parse_stoc_npn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
     if (sctx->ext.npn_select_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                 &selected, &selected_len,
-                                PACKET_data(pkt), PACKET_remaining(pkt),
+                                PACKET_data(pkt), (unsigned int)PACKET_remaining(pkt),
                                 sctx->ext.npn_select_cb_arg) != SSL_TLSEXT_ERR_OK
             || selected_len == 0) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_BAD_EXTENSION);

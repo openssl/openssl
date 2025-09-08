@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -266,7 +266,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         BY_DIR_HASH htmp, *hent;
 
         ent = sk_BY_DIR_ENTRY_value(ctx->dirs, i);
-        j = strlen(ent->dir) + 1 + 8 + 6 + 1 + 1;
+        j = (int)strlen(ent->dir) + 1 + 8 + 6 + 1 + 1;
         if (!BUF_MEM_grow(b, j)) {
             ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
             goto finish;

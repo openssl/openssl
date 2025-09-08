@@ -160,7 +160,7 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
     int ret = 0;
     const ML_DSA_PARAMS *params = priv->params;
     EVP_MD_CTX *md_ctx = NULL;
-    uint32_t k = params->k, l = params->l;
+    uint32_t k = (uint32_t)params->k, l = (uint32_t)params->l;
     uint32_t gamma1 = params->gamma1, gamma2 = params->gamma2;
     uint8_t *alloc = NULL, *w1_encoded;
     size_t alloc_len, w1_encoded_len;
@@ -241,7 +241,7 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
         VECTOR *ct0 = &w1;
         uint32_t z_max, r0_max, ct0_max, h_ones;
 
-        vector_expand_mask(&y, rho_prime, sizeof(rho_prime), kappa,
+        vector_expand_mask(&y, rho_prime, sizeof(rho_prime), (uint32_t)kappa,
                            gamma1, md_ctx, priv->shake256_md);
         vector_copy(y_ntt, &y);
         vector_ntt(y_ntt);
@@ -256,7 +256,7 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
                          w1_encoded, w1_encoded_len, c_tilde, c_tilde_len))
             break;
 
-        if (!poly_sample_in_ball_ntt(c_ntt, c_tilde, c_tilde_len,
+        if (!poly_sample_in_ball_ntt(c_ntt, c_tilde, (int)c_tilde_len,
                                      md_ctx, priv->shake256_md, params->tau))
             break;
 
@@ -286,7 +286,7 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
         vector_make_hint(ct0, &cs2, &w, gamma2, &sig.hint);
 
         ct0_max = vector_max(ct0);
-        h_ones = vector_count_ones(&sig.hint);
+        h_ones = (uint32_t)vector_count_ones(&sig.hint);
         /* Same reasoning applies to the leak as above */
         if (value_barrier_32(constant_time_ge(ct0_max, gamma2)
                              | constant_time_lt(params->omega, h_ones)))
@@ -326,8 +326,8 @@ static int ml_dsa_verify_internal(const ML_DSA_KEY *pub,
     VECTOR az_ntt, ct1_ntt, *z_ntt, *w1, *w_approx;
     ML_DSA_SIG sig;
     const ML_DSA_PARAMS *params = pub->params;
-    uint32_t k = pub->params->k;
-    uint32_t l = pub->params->l;
+    uint32_t k = (uint32_t)pub->params->k;
+    uint32_t l = (uint32_t)pub->params->l;
     uint32_t gamma2 = params->gamma2;
     size_t w1_encoded_len;
     size_t num_polys_sig = k + l;
@@ -375,7 +375,7 @@ static int ml_dsa_verify_internal(const ML_DSA_KEY *pub,
         goto err;
 
     /* Compute verifiers challenge c_ntt = NTT(SampleInBall(c_tilde)) */
-    if (!poly_sample_in_ball_ntt(c_ntt, c_tilde_sig, c_tilde_len,
+    if (!poly_sample_in_ball_ntt(c_ntt, c_tilde_sig, (int)c_tilde_len,
                                  md_ctx, pub->shake256_md, params->tau))
         goto err;
 

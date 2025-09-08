@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -549,7 +549,7 @@ static int named_group_creation_test(void)
 int setup_tests(void)
 {
     crv_len = EC_get_builtin_curves(NULL, 0);
-    if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
+    if (!TEST_ptr(curves = OPENSSL_malloc_array(crv_len, sizeof(*curves)))
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
         return 0;
 
@@ -559,13 +559,13 @@ int setup_tests(void)
     ADD_TEST(ec2m_field_sanity);
     ADD_TEST(field_tests_ec2_simple);
 #endif
-    ADD_ALL_TESTS(field_tests_default, crv_len);
+    ADD_ALL_TESTS(field_tests_default, (int)crv_len);
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
     ADD_TEST(underflow_test);
 #endif
     ADD_TEST(set_private_key);
     ADD_TEST(decoded_flag_test);
-    ADD_ALL_TESTS(ecpkparams_i2d2i_test, crv_len);
+    ADD_ALL_TESTS(ecpkparams_i2d2i_test, (int)crv_len);
     ADD_TEST(named_group_creation_test);
 
     return 1;

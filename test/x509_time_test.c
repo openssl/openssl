@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -261,7 +261,7 @@ static int test_x509_cmp_time(int idx)
     memset(&t, 0, sizeof(t));
     t.type = x509_cmp_tests[idx].type;
     t.data = (unsigned char*)(x509_cmp_tests[idx].data);
-    t.length = strlen(x509_cmp_tests[idx].data);
+    t.length = (int)strlen(x509_cmp_tests[idx].data);
     t.flags = 0;
 
     result = X509_cmp_time(&t, &x509_cmp_tests[idx].cmp_time);

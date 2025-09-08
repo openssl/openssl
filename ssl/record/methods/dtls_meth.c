@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -209,7 +209,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     ERR_clear_last_mark();
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "dec %zd\n", rr->length);
-        BIO_dump_indent(trc_out, rr->data, rr->length, 4);
+        BIO_dump_indent(trc_out, rr->data, (int)rr->length, 4);
     } OSSL_TRACE_END(TLS);
 
     /* r->length is now the compressed data plus mac */

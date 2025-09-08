@@ -279,12 +279,12 @@ static TXE *qtx_resize_txe(OSSL_QTX *qtx, TXE_LIST *txl, TXE *txe, size_t n)
      * data.
      */
     txe2 = OPENSSL_realloc(txe, sizeof(TXE) + n);
-    if (txe2 == NULL || txe == txe2) {
+    if (txe2 == NULL) {
         if (p == NULL)
             ossl_list_txe_insert_head(txl, txe);
         else
             ossl_list_txe_insert_after(txl, p, txe);
-        return txe2;
+        return NULL;
     }
 
     if (p == NULL)
@@ -541,7 +541,7 @@ static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
     }
 
     /* Feed AAD data. */
-    if (EVP_CipherUpdate(cctx, NULL, &l, hdr, hdr_len) != 1) {
+    if (EVP_CipherUpdate(cctx, NULL, &l, hdr, (int)hdr_len) != 1) {
         ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         return 0;
     }
@@ -556,7 +556,7 @@ static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
             break;
 
         if (EVP_CipherUpdate(cctx, txe_data(txe) + txe->data_len,
-                             &l, src, src_len) != 1) {
+                             &l, src, (int)src_len) != 1) {
             ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
             return 0;
         }

@@ -662,7 +662,7 @@ const EVP_PKEY_METHOD *EVP_PKEY_meth_get0(size_t idx)
     idx -= OSSL_NELEM(standard_methods);
     if (idx >= (size_t)sk_EVP_PKEY_METHOD_num(app_pkey_methods))
         return NULL;
-    return sk_EVP_PKEY_METHOD_value(app_pkey_methods, idx);
+    return sk_EVP_PKEY_METHOD_value(app_pkey_methods, (int)idx);
 }
 #endif
 
@@ -1604,7 +1604,7 @@ int EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str)
     len = strlen(str);
     if (len > INT_MAX)
         return -1;
-    return ctx->pmeth->ctrl(ctx, cmd, len, (void *)str);
+    return ctx->pmeth->ctrl(ctx, cmd, (int)len, (void *)str);
 }
 
 int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex)

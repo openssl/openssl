@@ -567,21 +567,21 @@ static size_t build_request_set(SSL *ssl)
         /*
          * Expand our poll_list, outbiolist, and outnames arrays
          */
-        poll_list = OPENSSL_realloc(poll_list,
-                                    sizeof(SSL_POLL_ITEM) * poll_count);
+        poll_list = OPENSSL_realloc_array(poll_list,
+                                          poll_count, sizeof(SSL_POLL_ITEM));
         if (poll_list == NULL) {
             fprintf(stderr, "Unable to realloc poll_list\n");
             goto err;
         }
 
-        outbiolist = OPENSSL_realloc(outbiolist,
-                                     sizeof(BIO *) * poll_count);
+        outbiolist = OPENSSL_realloc_array(outbiolist,
+                                           poll_count, sizeof(BIO *));
         if (outbiolist == NULL) {
             fprintf(stderr, "Unable to realloc outbiolist\n");
             goto err;
         }
 
-        outnames = OPENSSL_realloc(outnames, sizeof(char *) * poll_count);
+        outnames = OPENSSL_realloc_array(outnames, poll_count, sizeof(char *));
         if (outnames == NULL) {
             fprintf(stderr, "Unable to realloc outnames\n");
             goto err;
@@ -883,6 +883,11 @@ int main(int argc, char *argv[])
         goto end;
     }
 
+    if (reqnames == NULL) {
+        fprintf(stderr, "Failed to allocate memory for request names\n");
+        goto end;
+    }
+
     hostname = argv[argnext++];
     port = argv[argnext++];
     reqfile = argv[argnext];
@@ -906,8 +911,6 @@ int main(int argc, char *argv[])
             goto end;
         }
     }
-    BIO_free(req_bio);
-    req_bio = NULL;
     reqnames[read_offset + 1] = '\0';
 
     if (!setup_connection(hostname, port, &ctx, &ssl)) {
@@ -919,7 +922,8 @@ int main(int argc, char *argv[])
 
     while (req != NULL) {
         total_requests++;
-        req_array = OPENSSL_realloc(req_array, sizeof(char *) * total_requests);
+        req_array = OPENSSL_realloc_array(req_array,
+                                          total_requests, sizeof(char *));
         if (req_array == NULL)
             goto end;
         req_array[total_requests - 1] = req;
@@ -1037,6 +1041,7 @@ int main(int argc, char *argv[])
      */
     BIO_ADDR_free(peer_addr);
     OPENSSL_free(reqnames);
+    BIO_free(req_bio);
     BIO_free(session_bio);
     for (poll_idx = 0; poll_idx < poll_count; poll_idx++) {
         BIO_free(outbiolist[poll_idx]);

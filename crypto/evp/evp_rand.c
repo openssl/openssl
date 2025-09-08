@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -723,7 +723,7 @@ size_t evp_rand_get_seed(EVP_RAND_CTX *ctx,
                          int prediction_resistance,
                          const unsigned char *adin, size_t adin_len)
 {
-    int res;
+    size_t res;
 
     if (!evp_rand_lock(ctx))
         return 0;

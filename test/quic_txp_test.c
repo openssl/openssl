@@ -11,6 +11,7 @@
 #include "internal/quic_statm.h"
 #include "internal/quic_demux.h"
 #include "internal/quic_record_rx.h"
+#include "internal/quic_channel.h"
 #include "testutil.h"
 #include "quic_record_test_util.h"
 
@@ -74,6 +75,7 @@ struct helper {
         OSSL_QUIC_FRAME_CONN_CLOSE      conn_close;
     } frame;
     OSSL_QUIC_ACK_RANGE     ack_ranges[16];
+    QUIC_CHANNEL *client_ch;
 };
 
 static void helper_cleanup(struct helper *h)
@@ -106,6 +108,7 @@ static void helper_cleanup(struct helper *h)
     ossl_quic_demux_free(h->demux);
     BIO_free(h->bio1);
     BIO_free(h->bio2);
+    ossl_quic_channel_free(h->client_ch);
 }
 
 static void demux_default_handler(QUIC_URXE *e, void *arg,
@@ -123,8 +126,10 @@ static int helper_init(struct helper *h)
 {
     int rc = 0;
     size_t i;
+    QUIC_CHANNEL_ARGS client_ch_args;
 
     memset(h, 0, sizeof(*h));
+    memset(&client_ch_args, 0, sizeof(client_ch_args));
 
     /* Initialisation */
     if (!TEST_true(BIO_new_bio_dgram_pair(&h->bio1, 0, &h->bio2, 0)))
@@ -182,13 +187,17 @@ static int helper_init(struct helper *h)
     if (!TEST_ptr(h->args.ackm = ossl_ackm_new(fake_now, NULL,
                                                &h->statm,
                                                h->cc_method,
-                                               h->cc_data)))
+                                               h->cc_data,
+                                               /* is_server */0)))
         goto err;
 
+    h->client_ch = ossl_quic_channel_alloc(&client_ch_args);
+    if (!TEST_ptr(h->client_ch))
+        goto err;
     if (!TEST_true(ossl_quic_stream_map_init(&h->qsm, NULL, NULL,
                                              &h->max_streams_bidi_rxfc,
                                              &h->max_streams_uni_rxfc,
-                                             /*is_server=*/0)))
+                                             h->client_ch)))
         goto err;
 
     h->have_qsm = 1;
@@ -1704,7 +1713,7 @@ int setup_tests(void)
 {
     ADD_ALL_TESTS(test_script, OSSL_NELEM(scripts));
     ADD_ALL_TESTS(test_dyn_script_1,
-                  OSSL_NELEM(dyn_script_1_crypto_1a)
-                  - dyn_script_1_start_from + 1);
+                  (int)(OSSL_NELEM(dyn_script_1_crypto_1a)
+                        - dyn_script_1_start_from + 1));
     return 1;
 }

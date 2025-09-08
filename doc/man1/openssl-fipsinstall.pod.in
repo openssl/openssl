@@ -237,9 +237,7 @@ explicitly permitted by the various standards.
 
 =item B<-hkdf_digest_check>
 
-Configure the module to enable a run-time digest check when deriving a key by
-HKDF.
-See NIST SP 800-56Cr2 for details.
+This option is deprecated.
 
 =item B<-tls13_kdf_digest_check>
 
@@ -261,9 +259,7 @@ See NIST SP 800-135r1 for details.
 
 =item B<-sskdf_digest_check>
 
-Configure the module to enable a run-time digest check when deriving a key by
-SSKDF.
-See NIST SP 800-56Cr2 for details.
+This option is deprecated.
 
 =item B<-x963kdf_digest_check>
 
@@ -493,7 +489,7 @@ B<-ecdh_cofactor_check>
 
 =head1 COPYRIGHT
 
-Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

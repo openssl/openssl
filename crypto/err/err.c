@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -35,7 +35,7 @@ static int err_load_strings(const ERR_STRING_DATA *str);
 #endif
 
 #ifndef OPENSSL_NO_ERR
-static ERR_STRING_DATA ERR_str_libraries[] = {
+static const ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_NONE, 0, 0), "unknown library"},
     {ERR_PACK(ERR_LIB_SYS, 0, 0), "system library"},
     {ERR_PACK(ERR_LIB_BN, 0, 0), "bignum routines"},
@@ -813,7 +813,8 @@ void ERR_add_error_data(int num, ...)
 
 void ERR_add_error_vdata(int num, va_list args)
 {
-    int i, len, size;
+    int i;
+    size_t len, size;
     int flags = ERR_TXT_MALLOCED | ERR_TXT_STRING;
     char *str, *arg;
     ERR_STATE *es;
@@ -865,7 +866,7 @@ void ERR_add_error_vdata(int num, va_list args)
             }
             str = p;
         }
-        OPENSSL_strlcat(str, arg, (size_t)size);
+        OPENSSL_strlcat(str, arg, size);
     }
     if (!err_set_error_data_int(str, size, flags, 0))
         OPENSSL_free(str);

@@ -1,5 +1,5 @@
 /*-
- * Copyright 2021-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -118,9 +118,9 @@ static int get_key_values(EVP_PKEY *pkey)
 
     fprintf(stdout, "Curve name: %s\n", out_curvename);
     fprintf(stdout, "Public key:\n");
-    BIO_dump_indent_fp(stdout, out_pubkey, out_pubkey_len, 2);
+    BIO_dump_indent_fp(stdout, out_pubkey, (int)out_pubkey_len, 2);
     fprintf(stdout, "Private Key:\n");
-    BIO_dump_indent_fp(stdout, out_privkey, out_privkey_len, 2);
+    BIO_dump_indent_fp(stdout, out_privkey, (int)out_privkey_len, 2);
 
     ret = 1;
 cleanup:

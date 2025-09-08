@@ -2,7 +2,7 @@ name: "Run openssl quic interop testing"
 
 on:
   workflow_run:
-    workflows: ["Build openssl interop container from master"]
+    workflows: ["Build openssl interop containers"]
     types: [completed]
   workflow_dispatch:
 
@@ -11,9 +11,11 @@ jobs:
     strategy:
       matrix:
         tests: [http3, transfer, handshake, retry, chacha20, resumption, multiplexing, ipv6]
-        servers: [quic-go, ngtcp2, mvfst, quiche, nginx, msquic, haproxy]
+        servers: [quic-go, ngtcp2, mvfst, quiche, nginx, msquic, haproxy, msquic-openssl]
         exclude:
           - servers: msquic
+            tests: retry
+          - servers: msquic-openssl
             tests: retry
       fail-fast: false
     runs-on: ubuntu-latest
@@ -36,10 +38,15 @@ jobs:
           for i in {1..3}; do sudo apt-get install -y tshark && break; sleep 10; done
       - name: Patch implementations file
         run: |
-          jq '.openssl = { image: "quay.io/openssl-ci/openssl-quic-interop"
-                         , url: "https://github.com/openssl/openssl"
-                         , role: "both"
-                         }' ./implementations.json > ./implementations.tmp
+          jq '. + {
+            "openssl": { image: "quay.io/openssl-ci/openssl-quic-interop"
+                       , url: "https://github.com/openssl/openssl"
+                       , role: "both"
+                       },
+            "msquic-openssl": { image: "quay.io/openssl-ci/msquic-openssl"
+                              , url: "https://github.com/microsoft/msquic"
+                              , role: "both"
+                              }}' ./implementations.json > ./implementations.tmp
           mv ./implementations.tmp implementations.json
       - name: "Update to docker-compose 2.36 and docker engine 28.1.1"
         run: |
@@ -56,20 +63,14 @@ jobs:
         run: |
           docker version
           docker compose version
-      - name: Patch Docker compose file
-        run: |
-          yq -i '.services.sim.networks.leftnet += {"interface_name" : "eth0"}
-                 | .services.sim.networks.rightnet += {"interface_name" : "eth1"}
-                 | .services.server.networks.rightnet += {"interface_name" : "eth0"}
-                 | .services.client.networks.leftnet += {"interface_name" : "eth0"}' docker-compose.yml
-      - name: "run interop with openssl client"
+      - name: "Run interop with openssl client"
         run: |
           python3 ./run.py -c openssl -t ${{ matrix.tests }} -s ${{ matrix.servers }} --log-dir ./logs-client -d
   run_quic_interop_openssl_server:
     strategy:
       matrix:
         tests: [http3, transfer, handshake, retry, chacha20, resumption, amplificationlimit, ipv6]
-        clients: [quic-go, ngtcp2, mvfst, quiche, msquic, openssl, chrome]
+        clients: [quic-go, ngtcp2, mvfst, quiche, msquic, openssl, chrome, msquic-openssl]
         exclude:
           - clients: mvfst
             tests: amplificationlimit
@@ -94,10 +95,15 @@ jobs:
           for i in {1..3}; do sudo apt-get install -y tshark && break; done
       - name: Patch implementations file
         run: |
-          jq '.openssl = { image: "quay.io/openssl-ci/openssl-quic-interop"
-                         , url: "https://github.com/openssl/openssl"
-                         , role: "both"
-                         }' ./implementations.json > ./implementations.tmp
+          jq '. + {
+            "openssl": { image: "quay.io/openssl-ci/openssl-quic-interop"
+                       , url: "https://github.com/openssl/openssl"
+                       , role: "both"
+                       },
+            "msquic-openssl": { image: "quay.io/openssl-ci/msquic-openssl"
+                              , url: "https://github.com/microsoft/msquic"
+                              , role: "both"
+                              }}' ./implementations.json > ./implementations.tmp
           mv ./implementations.tmp implementations.json
       - name: "Update to docker-compose 2.36 and docker engine 28.1.1"
         run: |
@@ -114,12 +120,6 @@ jobs:
         run: |
           docker version
           docker compose version
-      - name: Patch Docker compose file
-        run: |
-          yq -i '.services.sim.networks.leftnet += {"interface_name" : "eth0"}
-                 | .services.sim.networks.rightnet += {"interface_name" : "eth1"}
-                 | .services.server.networks.rightnet += {"interface_name" : "eth0"}
-                 | .services.client.networks.leftnet += {"interface_name" : "eth0"}' docker-compose.yml
-      - name: "run interop with openssl server"
+      - name: "Run interop with openssl server"
         run: |
           python3 ./run.py -s openssl -t ${{ matrix.tests }} -c ${{ matrix.clients }} --log-dir ./logs-server -d

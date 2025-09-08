@@ -62,17 +62,11 @@ A version number for the fips install process. Should be 1.
 
 =item B<install-status>
 
-An indicator that the self-tests were successfully run.
-This should only be written after the module has
-successfully passed its self tests during installation.
-If this field is not present, then the self tests will run when the module
-loads.
+This field is deprecated and is no longer used.
 
 =item B<install-mac>
 
-A MAC of the value of the B<install-status> option, to prevent accidental
-changes to that value.
-It is written-to at the same time as B<install-status> is updated.
+This field is deprecated and is no longer used.
 
 =back
 
@@ -112,7 +106,7 @@ See L<openssl-fipsinstall(1)/OPTIONS> B<-signature_digest_check>
 
 =item B<hkdf-digest-check>
 
-See L<openssl-fipsinstall(1)/OPTIONS> B<-hkdf_digest_check>
+This option is deprecated.
 
 =item B<tls13-kdf-digest-check>
 
@@ -128,7 +122,7 @@ See L<openssl-fipsinstall(1)/OPTIONS> B<-sshkdf_digest_check>
 
 =item B<sskdf-digest-check>
 
-See L<openssl-fipsinstall(1)/OPTIONS> B<-sskdf_digest_check>
+This option is deprecated.
 
 =item B<x963kdf-digest-check>
 
@@ -233,7 +227,7 @@ This functionality was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -508,11 +508,11 @@ new_txt_simple_respoonse(const char *fill_pattern, unsigned int fsize)
     if (rts == NULL)
         return NULL;
 
-    if ((rts->rts_pattern = strdup(fill_pattern)) == NULL) {
+    if ((rts->rts_pattern = OPENSSL_strdup(fill_pattern)) == NULL) {
         OPENSSL_free(rts);
         return NULL;
     }
-    rts->rts_pattern_len = strlen(fill_pattern);
+    rts->rts_pattern_len = (unsigned int)strlen(fill_pattern);
     rts->rts_len = fsize;
 
     rb = (struct response_buffer *)rts;
@@ -603,11 +603,11 @@ new_txt_full_respoonse(const char *fill_pattern, unsigned int fsize)
     if (rtf == NULL)
         return NULL;
 
-    if ((rtf->rtf_pattern = strdup(fill_pattern)) == NULL) {
+    if ((rtf->rtf_pattern = OPENSSL_strdup(fill_pattern)) == NULL) {
         OPENSSL_free(rtf);
         return NULL;
     }
-    rtf->rtf_pattern_len = strlen(fill_pattern);
+    rtf->rtf_pattern_len = (unsigned int)strlen(fill_pattern);
 
     t = time(&t);
     ctime_r(&t, date_str);
@@ -975,7 +975,8 @@ create_poll_manager(void)
         return NULL;
 
     ossl_list_pe_init(&pm->pm_head);
-    pm->pm_poll_set = OPENSSL_malloc(sizeof (struct poll_event) * POLL_GROW);
+    pm->pm_poll_set = OPENSSL_malloc_array(POLL_GROW,
+                                           sizeof (struct poll_event));
     if (pm->pm_poll_set != NULL) {
         pm->pm_poll_set_sz = POLL_GROW;
         pm->pm_event_count = 0;
@@ -992,7 +993,6 @@ rebuild_poll_set(struct poll_manager *pm)
 {
     struct poll_event *new_poll_set;
     struct poll_event *pe;
-    size_t new_sz;
     size_t pe_num;
     size_t i;
 
@@ -1004,9 +1004,9 @@ rebuild_poll_set(struct poll_manager *pm)
         /*
          * grow poll set by POLL_GROW
          */
-        new_sz = sizeof (struct poll_event) * (pm->pm_poll_set_sz + POLL_GROW);
-        new_poll_set = (struct poll_event *)OPENSSL_realloc(pm->pm_poll_set,
-                                                            new_sz);
+        new_poll_set = OPENSSL_realloc_array(pm->pm_poll_set,
+                                             pm->pm_poll_set_sz + POLL_GROW,
+                                             sizeof (struct poll_event));
         if (new_poll_set == NULL)
             return -1;
         pm->pm_poll_set = new_poll_set;
@@ -1016,10 +1016,9 @@ rebuild_poll_set(struct poll_manager *pm)
         /*
          * shrink poll set by POLL_DOWNSIZ
          */
-        new_sz = sizeof (struct poll_event) *
-            (pm->pm_poll_set_sz - POLL_DOWNSIZ);
-        new_poll_set = (struct poll_event *)OPENSSL_realloc(pm->pm_poll_set,
-                                                            new_sz);
+        new_poll_set = OPENSSL_realloc_array(pm->pm_poll_set,
+                                             pm->pm_poll_set_sz - POLL_DOWNSIZ,
+                                             sizeof (struct poll_event));
         if (new_poll_set == NULL)
             return -1;
         pm->pm_poll_set = new_poll_set;
@@ -1037,7 +1036,7 @@ rebuild_poll_set(struct poll_manager *pm)
                 POLL_PRINTA(pe->pe_poll_item.events),
                 POLL_PRINTA(~pe->pe_want_mask));
     }
-    pm->pm_event_count = i;
+    pm->pm_event_count = (unsigned int)i;
     pm->pm_need_rebuild = 0;
 
     return 0;
@@ -1456,7 +1455,7 @@ app_read_cb(struct poll_event *pe)
         return rv;
     }
     pes->pes_wpos += read_len;
-    pes->pes_wpos_sz -= read_len;
+    pes->pes_wpos_sz -= (unsigned int)read_len;
 
     rv = parse_request(pes);
 
@@ -1869,7 +1868,7 @@ create_socket(uint16_t port)
     struct sockaddr_in sa = {0};
 
     /* Retrieve the file descriptor for a new UDP socket */
-    if ((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+    if ((fd = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         DPRINTF(stderr, "cannot create socket");
         return -1;
     }

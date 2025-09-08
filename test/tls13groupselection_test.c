@@ -311,17 +311,17 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] =
         { "X25519:secp256r1:X448:secp521r1:-X448:-secp256r1:-X25519:-secp521r1",
           "",
           CLIENT_PREFERENCE,
-          NEGOTIATION_FAILURE
+          NEGOTIATION_FAILURE, INIT
         },
         { "secp384r1:secp521r1:X25519", /* test 39 */
           "prime256v1:X448",
           CLIENT_PREFERENCE,
-          NEGOTIATION_FAILURE
+          NEGOTIATION_FAILURE, INIT
         },
         { "secp521r1:secp384r1:X25519", /* test 40 */
           "prime256v1:X448",
           SERVER_PREFERENCE,
-          NEGOTIATION_FAILURE
+          NEGOTIATION_FAILURE, INIT
         },
         /*
          * These are allowed
@@ -340,6 +340,15 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] =
           SERVER_PREFERENCE,
           "secp521r1", SH
         },
+        /*
+         * Not a syntax error, but invalid because brainpoolP256r1 is the only
+         * key share and is not valid in TLSv1.3
+         */
+        { "*brainpoolP256r1:X25519", /* test 43 */
+          "X25519",
+          SERVER_PREFERENCE,
+          NEGOTIATION_FAILURE, INIT
+        }
     };
 
 static void server_response_check_cb(int write_p, int version,
@@ -441,7 +450,7 @@ static int test_groupnegotiation(const struct tls13groupselection_test_st *curre
         TEST_true_or_end(SSL_CTX_set_min_proto_version(client_ctx, TLS1_3_VERSION));
         TEST_true_or_end(SSL_CTX_set_min_proto_version(server_ctx, TLS1_3_VERSION));
         if (current_test_vector->preference == SERVER_PREFERENCE)
-            SSL_CTX_set_options(server_ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+            SSL_CTX_set_options(server_ctx, SSL_OP_SERVER_PREFERENCE);
     }
     /* Creation of the SSL objects */
     if (!TEST_true(create_ssl_objects(server_ctx, client_ctx,
@@ -461,7 +470,7 @@ static int test_groupnegotiation(const struct tls13groupselection_test_st *curre
         TEST_true_or_end(SSL_set_min_proto_version(serverssl, TLS1_3_VERSION));
 
         if (current_test_vector->preference == SERVER_PREFERENCE)
-            SSL_set_options(serverssl, SSL_OP_CIPHER_SERVER_PREFERENCE);
+            SSL_set_options(serverssl, SSL_OP_SERVER_PREFERENCE);
     }
 
     /* We set the message callback on the client side (which checks SH/HRR) */
@@ -489,6 +498,10 @@ static int test_groupnegotiation(const struct tls13groupselection_test_st *curre
             ok = 1;
     } else {
         TEST_false_or_end(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE));
+        if (test_type == TEST_NEGOTIATION_FAILURE &&
+                !TEST_int_eq((int)current_test_vector->expected_server_response,
+                             (int)server_response))
+            goto end;
         ok = 1;
     }
 
