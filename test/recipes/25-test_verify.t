@@ -610,13 +610,15 @@ SKIP: {
         if $^O =~ /^(MSWin32|VMS)$/;
     my $foo_file = "foo:cert.pem";
     copy($rootcert, $foo_file);
-    ok(vfy_root("-CAstore", $foo_file), "CAstore foo:file");
-    ok(vfy_root("-CAstore", "file:".$foo_file), "CAstore file:foo:file");
+    ok(vfy_root("-CAstore", $foo_file), "CAstore foo:cert.pem");
+    ok(vfy_root("-CAstore", "file:".$foo_file), "CAstore file:foo:cert.pem");
 }
-my $foo_file = "cert.pem";
-copy($rootcert, $foo_file);
-ok(vfy_root("-CAstore", $foo_file), "CAstore foo:file");
-ok(vfy_root("-CAstore", "file:".$foo_file), "CAstore file:foo:file");
+
+my $file = "cert.pem";
+copy($rootcert, $file);
+ok(vfy_root("-CAstore", $file), "CAstore cert.pem");
+ok(vfy_root("-CAstore", "file:".$file), "CAstore file:cert.pem");
+
 my $abs_cert = abs_path($rootcert);
 # Windows file: URIs should have a path part starting with a slash, i.e.
 # file://authority/C:/what/ever/foo.pem and file:///C:/what/ever/foo.pem
