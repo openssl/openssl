@@ -89,7 +89,7 @@ int ossl_dh_key_fromdata(DH *dh, const OSSL_PARAM params[], int include_private)
 }
 
 int ossl_dh_params_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM *privlen,
-                          const FFC_PARAM_PTRS *pp)
+                          const FFC_OSSL_PARAMS *pp)
 {
     const long l = DH_get_length(dh);
 

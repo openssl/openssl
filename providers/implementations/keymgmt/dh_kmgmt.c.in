@@ -320,7 +320,7 @@ static const OSSL_PARAM *dh_export_types(int selection)
 }
 
 struct dh_params_st {
-    FFC_PARAM_PTRS ffp;
+    FFC_OSSL_PARAMS ffp;
     OSSL_PARAM *bits;
     OSSL_PARAM *secbits;
     OSSL_PARAM *maxsize;

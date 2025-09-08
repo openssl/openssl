@@ -317,7 +317,7 @@ static const OSSL_PARAM *dsa_export_types(int selection)
 }
 
 struct dsa_params_st {
-    FFC_PARAM_PTRS ffp;
+    FFC_OSSL_PARAMS ffp;
     OSSL_PARAM *bits;
     OSSL_PARAM *secbits;
     OSSL_PARAM *maxsize;
