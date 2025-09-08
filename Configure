@@ -528,7 +528,6 @@ my @disablables = (
     "srp",
     "srtp",
     "sse2",
-    "ssl",
     "ssl-trace",
     "stdio",
     "sslkeylog",
@@ -582,6 +581,9 @@ my %deprecated_disablables = (
     "ripemd" => "rmd160",
     "ui" => "ui-console",
     "heartbeats" => undef,
+    "ssl" => undef,
+    "ssl3" => undef,
+    "ssl3-method" => undef,
     );
 
 # All of the following are disabled by default:
@@ -613,8 +615,6 @@ our %disabled = ( # "what"         => "comment"
                   "msan"                => "default",
                   "rc5"                 => "default",
                   "sctp"                => "default",
-                  "ssl3"                => "default",
-                  "ssl3-method"         => "default",
                   "sslkeylog"           => "default",
                   "tfo"                 => "default",
                   "trace"               => "default",
@@ -643,14 +643,12 @@ my @disable_cascades = (
                              "rc2", "rc4", "rmd160",
                              "scrypt", "seed", "siphash", "siv",
                              "slh-dsa", "sm3", "sm4", "srp",
-                             "srtp", "ssl3-method", "ssl-trace",
+                             "srtp", "ssl-trace",
                              "tfo",
                              "ts", "ui-console", "whirlpool",
                              "fips-securitychecks" ],
     sub { $config{processor} eq "386" }
                         => [ "sse2" ],
-    "ssl"               => [ "ssl3" ],
-    "ssl3-method"       => [ "ssl3" ],
     "zlib"              => [ "zlib-dynamic" ],
     "brotli"            => [ "brotli-dynamic" ],
     "zstd"              => [ "zstd-dynamic" ],
@@ -884,6 +882,13 @@ while (@argvcopy)
                         $unsupported_options{$_} = 1;
                         next;
                         }
+
+                # Do not allow users to enable deprecated flags
+                if (/^enable-(.+)$/ && exists $deprecated_disablables{$word})
+                        {
+                        $unsupported_options{$_} = 1;
+                        next;
+                        }
                 }
         if (/^no-(.+)$/ || /^disable-(.+)$/)
                 {
@@ -902,11 +907,6 @@ while (@argvcopy)
                                 $disabled{$proto} = "option(dtls)";
                                 }
                         $disabled{"dtls"} = "option(dtls)";
-                        }
-                elsif ($1 eq "ssl")
-                        {
-                        # Last one of its kind
-                        $disabled{"ssl3"} = "option(ssl)";
                         }
                 elsif ($1 eq "tls")
                         {
