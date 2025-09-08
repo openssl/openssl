@@ -25,6 +25,7 @@
 #include "internal/sizes.h"
 #include "internal/tlsgroups.h"
 #include "internal/ssl_unwrap.h"
+#include "crypto/ctype.h"
 #include "ssl_local.h"
 #include "quic/quic_local.h"
 #include <openssl/ct.h>
@@ -1626,7 +1627,7 @@ int tls1_set_groups_list(SSL_CTX *ctx,
     if (gcb.ksid_arr == NULL)
         goto end;
 
-    while (str[0] != '\0' && isspace((unsigned char)*str))
+    while (str[0] != '\0' && ossl_isspace((unsigned char)*str))
         str++;
     if (str[0] == '\0')
         goto empty_list;
