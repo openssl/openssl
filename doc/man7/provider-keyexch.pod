@@ -28,7 +28,7 @@ provider-keyexch - The keyexch library E<lt>-E<gt> provider functions
  int OSSL_FUNC_keyexch_set_peer(void *ctx, void *provkey);
  int OSSL_FUNC_keyexch_derive(void *ctx, unsigned char *secret, size_t *secretlen,
                               size_t outlen);
- int OSSL_FUNC_keyexch_derive_skey(void *ctx, void *provctx,
+ int OSSL_FUNC_keyexch_derive_skey(void *ctx, const char *key_type, void *provctx,
                                    OSSL_FUNC_skeymgmt_import_fn *import,
                                    size_t keylen, const OSSL_PARAM params[]);
 
@@ -138,8 +138,12 @@ The length of the shared secret should be written to I<*secretlen>.
 If I<secret> is NULL then the maximum length of the shared secret should be
 written to I<*secretlen>.
 
-OSSL_FUNC_keyexch_derive_skey() is similar to OSSL_FUNC_keyexch_derive() but works
-with an opaque provider-specific object instead of raw bytes buffer.
+OSSL_FUNC_keyexch_derive_skey() is similar to OSSL_FUNC_keyexch_derive() but
+uses an opaque object for storing the derived key. It accepts I<key_type>
+parameter to give a hint to the provider what type of the key (e.g. generic or
+AES) would be generated and I<import> function from the B<EVP_SKEYMGMT> object
+to be associated with the key. The B<EVP_SKEYMGMT> object comes from the same
+provider as the KDF itself.
 
 =head2 Key Exchange Parameters Functions
 

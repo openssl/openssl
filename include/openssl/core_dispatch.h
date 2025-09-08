@@ -583,7 +583,7 @@ OSSL_CORE_MAKE_FUNC(int, kdf_set_ctx_params,
                     (void *kctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, kdf_set_skey,
                     (void *kctx, void *skeydata, const char *paramname))
-OSSL_CORE_MAKE_FUNC(void *, kdf_derive_skey, (void *ctx, void *provctx,
+OSSL_CORE_MAKE_FUNC(void *, kdf_derive_skey, (void *ctx, const char *key_type, void *provctx,
                                               OSSL_FUNC_skeymgmt_import_fn *import,
                                               size_t keylen, const OSSL_PARAM params[]))
 
@@ -844,7 +844,7 @@ OSSL_CORE_MAKE_FUNC(int, keyexch_get_ctx_params, (void *ctx,
                                                      OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keyexch_gettable_ctx_params,
                     (void *ctx, void *provctx))
-OSSL_CORE_MAKE_FUNC(void *, keyexch_derive_skey, (void *ctx, void *provctx,
+OSSL_CORE_MAKE_FUNC(void *, keyexch_derive_skey, (void *ctx, const char *key_type, void *provctx,
                                                   OSSL_FUNC_skeymgmt_import_fn *import,
                                                   size_t keylen, const OSSL_PARAM params[]))
 

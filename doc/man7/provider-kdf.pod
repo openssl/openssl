@@ -26,7 +26,7 @@ provider-kdf - The KDF library E<lt>-E<gt> provider functions
  int OSSL_FUNC_kdf_reset(void *kctx);
  int OSSL_FUNC_kdf_derive(void *kctx, unsigned char *key, size_t keylen,
                           const OSSL_PARAM params[]);
- void *OSSL_FUNC_kdf_derive_skey(void *ctx, void *provctx,
+ void *OSSL_FUNC_kdf_derive_skey(void *ctx, const char *key_type, void *provctx,
                                  OSSL_FUNC_skeymgmt_import_fn *import,
                                  size_t keylen, const OSSL_PARAM params[]);
 
@@ -124,7 +124,11 @@ If the algorithm does not support the requested I<keylen> the function must
 return error.
 
 OSSL_FUNC_kdf_derive_skey() is similar to OSSL_FUNC_kdf_derive() but uses an
-opaque object for storing the derived key.
+opaque object for storing the derived key. It accepts I<key_type> parameter to
+give a hint to the provider what type of the key (e.g. generic or AES) would be
+generated and I<import> function from the B<EVP_SKEYMGMT> object to be
+associated with the key. The B<EVP_SKEYMGMT> object comes from the same
+provider as the KDF itself.
 
 =head2 KDF Parameters
 
