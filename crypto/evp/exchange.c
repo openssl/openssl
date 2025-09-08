@@ -643,7 +643,7 @@ EVP_SKEY *EVP_PKEY_derive_SKEY(EVP_PKEY_CTX *ctx, EVP_SKEYMGMT *mgmt,
         return NULL;
     }
 
-    ret->keydata = ctx->op.kex.exchange->derive_skey(ctx->op.kex.algctx,
+    ret->keydata = ctx->op.kex.exchange->derive_skey(ctx->op.kex.algctx, key_type,
                                                      ossl_provider_ctx(skeymgmt->prov),
                                                      skeymgmt->import, keylen, params);
 
