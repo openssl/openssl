@@ -648,16 +648,19 @@ void *app_malloc_array(size_t n, size_t sz, const char *what)
     return vp;
 }
 
-char *next_item(char *opt) /* in list separated by comma and/or space */
+char *next_item(char *opt) /* in list separated by comma and/or spaces */
 {
     /* advance to separator (comma or whitespace), if any */
-    while (*opt != ',' && !isspace(_UC(*opt)) && *opt != '\0')
+    while (*opt != '\0' && *opt != ',' && !isspace(_UC(*opt)))
         opt++;
     if (*opt != '\0') {
+        int found_comma = *opt == ',';
+
         /* terminate current item */
         *opt++ = '\0';
-        /* skip over any whitespace after separator */
-        while (isspace(_UC(*opt)))
+        /* skip over any further separators, but only one comma */
+        while ((!found_comma && (found_comma = (*opt == ',')))
+            || isspace(_UC(*opt)))
             opt++;
     }
     return *opt == '\0' ? NULL : opt; /* NULL indicates end of input */
