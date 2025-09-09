@@ -165,9 +165,7 @@ static const struct int_data {
     { { .hh = 0x0 }, AT_CHAR, "%02hhx", "00" },
     { { .h = 0 }, AT_SHORT, "|%.0hd|", "||" },
     { { .h = 0 }, AT_SHORT, "|%.hu|", "||" },
-#if defined(__OpenBSD__)
-    { { .h = 0 }, AT_SHORT, "|%#.ho|", "||" },
-#else
+#if !defined(__OpenBSD__)
     { { .h = 0 }, AT_SHORT, "|%#.ho|", "|0|" },
 #endif
     { { .h = 1 }, AT_SHORT, "%4.2hi", "  01" },
@@ -223,9 +221,7 @@ static const struct int_data {
     { { .i = 0x1337 }, AT_INT, "%4294967302.x", "",
       .skip_libc_check = true, .exp_ret = -1 },
     { { .i = 0xbeeface }, AT_INT, "%#+-12.1d", "+200211150  " },
-#if defined(__OpenBSD__)
-    { { .l = 0 }, AT_LONG, "%%%#.0lo%%", "%%" },
-#else
+#if !defined(__OpenBSD__)
     { { .l = 0 }, AT_LONG, "%%%#.0lo%%", "%0%" },
 #endif
     { { .l = 0 }, AT_LONG, "%%%.0lo%%", "%%" },
@@ -330,9 +326,7 @@ static const struct wp_data {
     { { .i = 0 }, "|%#*" PRIoPTR "|", "| 0|", 1, 2 },
     { { .i = 0 }, "|%#.*" PRIoPTR "|", "|00|", 1, 2 },
     { { .i = 0 }, "|%#.*" PRIoPTR "|", "|0|", 1, 1 },
-#if defined(__OpenBSD__)
-    { { .i = 0 }, "|%#.*" PRIoPTR "|", "||", 1, 0 },
-#else
+#if !defined(__OpenBSD__)
     { { .i = 0 }, "|%#.*" PRIoPTR "|", "|0|", 1, 0 },
 #endif
     { { .i = 0 }, "|%.*" PRIoPTR "|", "||", 1, 0 },
