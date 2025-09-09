@@ -8,9 +8,6 @@ ENDIF
 IF[{- !$disabled{demos} -}]
   SUBDIRS=demos
 ENDIF
-IF[{- !$disabled{'deprecated-3.0'} -}]
-  SUBDIRS=engines
-ENDIF
 SUBDIRS=exporters
 
 LIBS=libcrypto libssl
