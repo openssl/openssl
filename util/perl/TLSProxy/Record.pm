@@ -407,7 +407,8 @@ sub decrypt()
             return $data if (length($data) == 2);
         }
         $mactaglen = 16;
-    } elsif ($self->version >= VERS_TLS_1_1()) {
+    } elsif ((!$self->{isdtls} && $self->version() >= VERS_TLS_1_1)
+             || ($self->{isdtls} && $self->version() <= VERS_DTLS_1)) {
         #16 bytes for a standard IV
         $data = substr($data, 16);
 
