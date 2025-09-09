@@ -366,7 +366,11 @@ Known answer test for a Deterministic Random Bit Generator.
 
 =item "Conditional_PCT" (B<OSSL_SELF_TEST_TYPE_PCT>)
 
-Conditional test that is run during the generation or importing of key pairs.
+Conditional test that is run during the generation of key pairs.
+
+=item "Import_PCT" (B<OSSL_SELF_TEST_TYPE_PCT_IMPORT>)
+
+Conditional test that is run during the import of key pairs.
 
 =item "Conditional_KAT" (B<OSSL_SELF_TEST_TYPE_PCT_KAT>)
 
@@ -446,6 +450,8 @@ Digest tests used with the "KAT_Digest" type.
 =item "RSA" (B<OSSL_SELF_TEST_DESC_SIGN_RSA>)
 
 =item "ECDSA" (B<OSSL_SELF_TEST_DESC_SIGN_ECDSA>)
+
+=item "DetECDSA" (B<OSSL_SELF_TEST_DESC_SIGN_DetECDSA>)
 
 =item "EDDSA" (B<OSSL_SELF_TEST_DESC_SIGN_EDDSA>)
 

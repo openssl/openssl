@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 113;
+plan tests => 116;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -747,6 +747,13 @@ $cert = "self-signed_CA_with_keyUsages.pem";
 generate_cert($cert, "-in", srctop_file(@certs, "ext-check.csr"),
     "-copy_extensions", "copy");
 has_keyUsage($cert, 1);
+
+# keyUsage=contentCommitment is an alias for nonRepudiation
+$cert = "self-issued-v3_CA_keyUsage_contentCommitment.pem";
+generate_cert($cert, "-addext", "keyUsage = contentCommitment",
+    "-in", srctop_file(@certs, "x509-check.csr"));
+cert_contains($cert, "Non Repudiation", 1);
+cert_contains($cert, "Content Commitment", 0);
 
 # Generate cert using req with '-modulus'
 ok(run(app(["openssl", "req", "-x509", "-new", "-days", "365",

@@ -430,21 +430,28 @@ OPENSSL_VERSION_BUILD_METADATA          define
 OPENSSL_VERSION_PRE_RELEASE_STR         define
 OPENSSL_VERSION_BUILD_METADATA_STR      define
 OPENSSL_VERSION_TEXT                    define
+OPENSSL_calloc                          define
 OPENSSL_clear_free                      define
 OPENSSL_clear_realloc                   define
+OPENSSL_clear_realloc_array             define
 OPENSSL_free                            define
 OPENSSL_malloc                          define
+OPENSSL_malloc_array                    define
 OPENSSL_aligned_alloc                   define
+OPENSSL_aligned_alloc_array             define
 OPENSSL_malloc_init                     define
 OPENSSL_mem_debug_pop                   define deprecated 3.0.0
 OPENSSL_mem_debug_push                  define deprecated 3.0.0
 OPENSSL_memdup                          define
 OPENSSL_no_config                       define deprecated 1.1.0
 OPENSSL_realloc                         define
+OPENSSL_realloc_array                   define
 OPENSSL_secure_actual_size              define
 OPENSSL_secure_clear_free               define
 OPENSSL_secure_free                     define
+OPENSSL_secure_calloc                   define
 OPENSSL_secure_malloc                   define
+OPENSSL_secure_malloc_array             define
 OPENSSL_secure_zalloc                   define
 OPENSSL_strdup                          define
 OPENSSL_strndup                         define

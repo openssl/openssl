@@ -2606,12 +2606,15 @@ int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
 }
 
 /*
- * This function is used to set the X509_STORE_CTX purpose and trust values.
+ * Use this function to set the X509_STORE_CTX purpose and/or trust id values.
+ * The |def_purpose| argument is used if the given purpose value is 0.
+ * The |purpose| is unchanged if also the def_purpose argument is 0.
+ * The |trust| is unchanged if the given trust value is X509_TRUST_DEFAULT.
  * This is intended to be used when another structure has its own trust and
- * purpose values which (if set) will be inherited by the ctx. If they aren't
- * set then we will usually have a default purpose in mind which should then
- * be used to set the trust value. An example of this is SSL use: an SSL
- * structure will have its own purpose and trust settings which the
+ * purpose values, which (if set) will be inherited by the |ctx|. If they aren't
+ * set then we will usually have a default purpose in mind, which should then
+ * be used to set the trust id. An example of this is SSL use: an SSL
+ * structure will have its own purpose and trust settings, which the
  * application can set: if they aren't set then we use the default of SSL
  * client/server.
  */
@@ -2648,10 +2651,10 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
             ptmp = X509_PURPOSE_get0(idx);
         }
         /* If trust not set then get from purpose default */
-        if (trust == 0)
+        if (trust == X509_TRUST_DEFAULT)
             trust = ptmp->trust;
     }
-    if (trust != 0) {
+    if (trust != X509_TRUST_DEFAULT) {
         idx = X509_TRUST_get_by_id(trust);
         if (idx == -1) {
             ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_TRUST_ID);
@@ -2661,7 +2664,7 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 
     if (ctx->param->purpose == 0 && purpose != 0)
         ctx->param->purpose = purpose;
-    if (ctx->param->trust == 0 && trust != 0)
+    if (ctx->param->trust == X509_TRUST_DEFAULT && trust != X509_TRUST_DEFAULT)
         ctx->param->trust = trust;
     return 1;
 }

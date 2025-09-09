@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -63,7 +63,7 @@ int bn_mod_add_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
         return 0;
 
     if (mtop > OSSL_NELEM(storage)) {
-        tp = OPENSSL_malloc(mtop * sizeof(BN_ULONG));
+        tp = OPENSSL_malloc_array(mtop, sizeof(BN_ULONG));
         if (tp == NULL)
             return 0;
     }

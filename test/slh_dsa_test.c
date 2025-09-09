@@ -183,10 +183,11 @@ static int slh_dsa_key_validate_failure_test(void)
      * Loading 128s private key data into a 128f algorithm will have an incorrect
      * public key.
      */
-    if (!TEST_ptr(key = slh_dsa_key_from_data("SLH-DSA-SHA2-128f",
-                                              slh_dsa_sha2_128s_0_keygen_priv,
-                                              sizeof(slh_dsa_sha2_128s_0_keygen_priv), 0)))
-        return 0;
+    key = slh_dsa_key_from_data("SLH-DSA-SHA2-128f",
+                                slh_dsa_sha2_128s_0_keygen_priv,
+                                sizeof(slh_dsa_sha2_128s_0_keygen_priv), 0);
+    if (!TEST_ptr(key))
+        goto end;
     if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL)))
         goto end;
     if (!TEST_int_eq(EVP_PKEY_pairwise_check(vctx), 0))
@@ -480,7 +481,7 @@ static int slh_dsa_deterministic_usage_test(void)
     if (!TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &sig_len, msg, msg_len), 1))
         goto err;
     len = sig_len;
-    if (!TEST_ptr(sig = OPENSSL_zalloc(sig_len * 2))
+    if (!TEST_ptr(sig = OPENSSL_calloc(2, sig_len))
             || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &len, msg, msg_len), 1)
             || !TEST_size_t_eq(sig_len, len)
             || !TEST_int_eq(EVP_PKEY_sign(dupctx, sig + sig_len, &len,

@@ -83,55 +83,6 @@ static int set_multi_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL *in_tbl);
 int app_init(long mesgwin);
 
-int chopup_args(ARGS *arg, char *buf)
-{
-    int quoted;
-    char c = '\0', *p = NULL;
-
-    arg->argc = 0;
-    if (arg->size == 0) {
-        arg->size = 20;
-        arg->argv = app_malloc(sizeof(*arg->argv) * arg->size, "argv space");
-    }
-
-    for (p = buf;;) {
-        /* Skip whitespace. */
-        while (*p && isspace(_UC(*p)))
-            p++;
-        if (*p == '\0')
-            break;
-
-        /* The start of something good :-) */
-        if (arg->argc >= arg->size) {
-            char **tmp;
-
-            arg->size += 20;
-            tmp = OPENSSL_realloc(arg->argv, sizeof(*arg->argv) * arg->size);
-            if (tmp == NULL)
-                return 0;
-            arg->argv = tmp;
-        }
-        quoted = *p == '\'' || *p == '"';
-        if (quoted)
-            c = *p++;
-        arg->argv[arg->argc++] = p;
-
-        /* now look for the end of this */
-        if (quoted) {
-            while (*p && *p != c)
-                p++;
-            *p++ = '\0';
-        } else {
-            while (*p && !isspace(_UC(*p)))
-                p++;
-            if (*p)
-                *p++ = '\0';
-        }
-    }
-    arg->argv[arg->argc] = NULL;
-    return 1;
-}
-
 #ifndef APP_INIT
 int app_init(long mesgwin)
 {
@@ -691,6 +642,16 @@ void *app_malloc(size_t sz, const char *what)
     if (vp == NULL)
         app_bail_out("%s: Could not allocate %zu bytes for %s\n",
                      opt_getprog(), sz, what);
+    return vp;
+}
+
+void *app_malloc_array(size_t n, size_t sz, const char *what)
+{
+    void *vp = OPENSSL_malloc_array(n, sz);
+
+    if (vp == NULL)
+        app_bail_out("%s: Could not allocate %zu*%zu bytes for %s\n",
+                     opt_getprog(), n, sz, what);
     return vp;
 }
 
@@ -3286,7 +3247,7 @@ void wait_for_async(SSL *s)
         return;
     if (numfds == 0)
         return;
-    fds = app_malloc(sizeof(OSSL_ASYNC_FD) * numfds, "allocate async fds");
+    fds = app_malloc_array(numfds, sizeof(*fds), "allocate async fds");
     if (!SSL_get_all_async_fds(s, fds, &numfds)) {
         OPENSSL_free(fds);
         return;
@@ -3461,7 +3422,7 @@ OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
     if (opts == NULL)
         return NULL;
 
-    params = OPENSSL_zalloc(sizeof(OSSL_PARAM) * (sz + 1));
+    params = OPENSSL_calloc(sz + 1, sizeof(OSSL_PARAM));
     if (params == NULL)
         return NULL;
 

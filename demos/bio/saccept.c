@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -53,7 +53,8 @@ int main(int argc, char *argv[])
 {
     char *port = NULL;
     BIO *in = NULL;
-    BIO *ssl_bio, *tmp;
+    BIO *ssl_bio = NULL;
+    BIO *tmp;
     SSL_CTX *ctx;
     char buf[512];
     int ret = EXIT_FAILURE, i;
@@ -83,6 +84,7 @@ int main(int argc, char *argv[])
      * Basically it means the SSL BIO will be automatically setup
      */
     BIO_set_accept_bios(in, ssl_bio);
+    ssl_bio = NULL;
 
     /* Arrange to leave server loop on interrupt */
     sigsetup();
@@ -121,5 +123,6 @@ int main(int argc, char *argv[])
     if (ret != EXIT_SUCCESS)
         ERR_print_errors_fp(stderr);
     BIO_free(in);
+    BIO_free_all(ssl_bio);
     return ret;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -94,7 +94,10 @@ static int test_int_stack(int reserve)
             TEST_info("int stack size %d", i);
             goto end;
         }
-        sk_sint_push(s, v + i);
+        if (!TEST_int_eq(sk_sint_push(s, v + i), i + 1)) {
+            TEST_info("int stack size %d", i);
+            goto end;
+        }
     }
     if (!TEST_int_eq(sk_sint_num(s), n))
         goto end;

@@ -239,13 +239,13 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
         TLS_GROUP_INFO *tmp = NULL;
 
         if (ctx->group_list_max_len == 0)
-            tmp = OPENSSL_malloc(sizeof(TLS_GROUP_INFO)
-                                 * TLS_GROUP_LIST_MALLOC_BLOCK_SIZE);
+            tmp = OPENSSL_malloc_array(TLS_GROUP_LIST_MALLOC_BLOCK_SIZE,
+                                       sizeof(TLS_GROUP_INFO));
         else
-            tmp = OPENSSL_realloc(ctx->group_list,
-                                  (ctx->group_list_max_len
-                                   + TLS_GROUP_LIST_MALLOC_BLOCK_SIZE)
-                                  * sizeof(TLS_GROUP_INFO));
+            tmp = OPENSSL_realloc_array(ctx->group_list,
+                                        ctx->group_list_max_len
+                                        + TLS_GROUP_LIST_MALLOC_BLOCK_SIZE,
+                                        sizeof(TLS_GROUP_INFO));
         if (tmp == NULL)
             return 0;
         ctx->group_list = tmp;
@@ -389,13 +389,13 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
         TLS_SIGALG_INFO *tmp = NULL;
 
         if (ctx->sigalg_list_max_len == 0)
-            tmp = OPENSSL_malloc(sizeof(TLS_SIGALG_INFO)
-                                 * TLS_SIGALG_LIST_MALLOC_BLOCK_SIZE);
+            tmp = OPENSSL_malloc_array(TLS_SIGALG_LIST_MALLOC_BLOCK_SIZE,
+                                       sizeof(TLS_SIGALG_INFO));
         else
-            tmp = OPENSSL_realloc(ctx->sigalg_list,
-                                  (ctx->sigalg_list_max_len
-                                   + TLS_SIGALG_LIST_MALLOC_BLOCK_SIZE)
-                                  * sizeof(TLS_SIGALG_INFO));
+            tmp = OPENSSL_realloc_array(ctx->sigalg_list,
+                                        ctx->sigalg_list_max_len
+                                        + TLS_SIGALG_LIST_MALLOC_BLOCK_SIZE,
+                                        sizeof(TLS_SIGALG_INFO));
         if (tmp == NULL)
             return 0;
         ctx->sigalg_list = tmp;
@@ -688,7 +688,7 @@ int ssl_load_sigalgs(SSL_CTX *ctx)
     /* now populate ctx->ssl_cert_info */
     if (ctx->sigalg_list_len > 0) {
         OPENSSL_free(ctx->ssl_cert_info);
-        ctx->ssl_cert_info = OPENSSL_zalloc(sizeof(lu) * ctx->sigalg_list_len);
+        ctx->ssl_cert_info = OPENSSL_calloc(ctx->sigalg_list_len, sizeof(lu));
         if (ctx->ssl_cert_info == NULL)
             return 0;
         for(i = 0; i < ctx->sigalg_list_len; i++) {
@@ -1099,11 +1099,11 @@ int tls1_set_groups(uint16_t **grpext, size_t *grpextlen,
         ERR_raise(ERR_LIB_SSL, SSL_R_BAD_LENGTH);
         return 0;
     }
-    if ((glist = OPENSSL_malloc(ngroups * sizeof(*glist))) == NULL)
+    if ((glist = OPENSSL_malloc_array(ngroups, sizeof(*glist))) == NULL)
         goto err;
-    if ((kslist = OPENSSL_malloc(1 * sizeof(*kslist))) == NULL)
+    if ((kslist = OPENSSL_malloc_array(1, sizeof(*kslist))) == NULL)
         goto err;
-    if ((tpllist = OPENSSL_malloc(1 * sizeof(*tpllist))) == NULL)
+    if ((tpllist = OPENSSL_malloc_array(1, sizeof(*tpllist))) == NULL)
         goto err;
     for (i = 0; i < ngroups; i++) {
         unsigned long idmask;
@@ -1334,9 +1334,10 @@ static int gid_cb(const char *elem, int len, void *arg)
                      * First, we restore any keyshare prefix in a new zero-terminated string
                      * (if not already present)
                      */
-                    restored_default_group_string = OPENSSL_malloc((1 /* max prefix length */ +
-                                                                    strlen(default_group_strings[i].group_string) +
-                                                                    1 /* \0 */) * sizeof(char));
+                    restored_default_group_string =
+                        OPENSSL_malloc(1 /* max prefix length */ +
+                                       strlen(default_group_strings[i].group_string) +
+                                       1 /* \0 */);
                     if (restored_default_group_string == NULL)
                         return 0;
                     if (add_keyshare
@@ -1385,8 +1386,9 @@ static int gid_cb(const char *elem, int len, void *arg)
     /* Memory management in case more groups are present compared to initial allocation */
     if (garg->gidcnt == garg->gidmax) {
         uint16_t *tmp =
-            OPENSSL_realloc(garg->gid_arr,
-                            (garg->gidmax + GROUPLIST_INCREMENT) * sizeof(*garg->gid_arr));
+            OPENSSL_realloc_array(garg->gid_arr,
+                                  garg->gidmax + GROUPLIST_INCREMENT,
+                                  sizeof(*garg->gid_arr));
 
         if (tmp == NULL)
             return 0;
@@ -1397,8 +1399,9 @@ static int gid_cb(const char *elem, int len, void *arg)
     /* Memory management for key share groups */
     if (garg->ksidcnt == garg->ksidmax) {
         uint16_t *tmp =
-            OPENSSL_realloc(garg->ksid_arr,
-                            (garg->ksidmax + GROUPLIST_INCREMENT) * sizeof(*garg->ksid_arr));
+            OPENSSL_realloc_array(garg->ksid_arr,
+                                  garg->ksidmax + GROUPLIST_INCREMENT,
+                                  sizeof(*garg->ksid_arr));
 
         if (tmp == NULL)
             return 0;
@@ -1542,8 +1545,9 @@ static int tuple_cb(const char *tuple, int len, void *arg)
     /* Memory management for tuples */
     if (garg->tplcnt == garg->tplmax) {
         size_t *tmp =
-            OPENSSL_realloc(garg->tuplcnt_arr,
-                            (garg->tplmax + GROUPLIST_INCREMENT) * sizeof(*garg->tuplcnt_arr));
+            OPENSSL_realloc_array(garg->tuplcnt_arr,
+                                  garg->tplmax + GROUPLIST_INCREMENT,
+                                  sizeof(*garg->tuplcnt_arr));
 
         if (tmp == NULL)
             return 0;
@@ -1552,7 +1556,7 @@ static int tuple_cb(const char *tuple, int len, void *arg)
     }
 
     /* Convert to \0-terminated string */
-    restored_tuple_string = OPENSSL_malloc((len + 1 /* \0 */) * sizeof(char));
+    restored_tuple_string = OPENSSL_malloc(len + 1 /* \0 */);
     if (restored_tuple_string == NULL)
         return 0;
     memcpy(restored_tuple_string, tuple, len);
@@ -1611,14 +1615,14 @@ int tls1_set_groups_list(SSL_CTX *ctx,
     gcb.ctx = ctx;
 
     /* Prepare initial chunks of memory for groups, tuples and keyshares groupIDs */
-    gcb.gid_arr = OPENSSL_malloc(gcb.gidmax * sizeof(*gcb.gid_arr));
+    gcb.gid_arr = OPENSSL_malloc_array(gcb.gidmax, sizeof(*gcb.gid_arr));
     if (gcb.gid_arr == NULL)
         goto end;
-    gcb.tuplcnt_arr = OPENSSL_malloc(gcb.tplmax * sizeof(*gcb.tuplcnt_arr));
+    gcb.tuplcnt_arr = OPENSSL_malloc_array(gcb.tplmax, sizeof(*gcb.tuplcnt_arr));
     if (gcb.tuplcnt_arr == NULL)
         goto end;
     gcb.tuplcnt_arr[0] = 0;
-    gcb.ksid_arr = OPENSSL_malloc(gcb.ksidmax * sizeof(*gcb.ksid_arr));
+    gcb.ksid_arr = OPENSSL_malloc_array(gcb.ksidmax, sizeof(*gcb.ksid_arr));
     if (gcb.ksid_arr == NULL)
         goto end;
 
@@ -2193,11 +2197,11 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
 
     sigalgs_len = OSSL_NELEM(sigalg_lookup_tbl) + ctx->sigalg_list_len;
 
-    cache = OPENSSL_zalloc(sizeof(const SIGALG_LOOKUP) * sigalgs_len);
+    cache = OPENSSL_calloc(sigalgs_len, sizeof(const SIGALG_LOOKUP));
     if (cache == NULL || tmpkey == NULL)
         goto err;
 
-    tls12_sigalgs_list = OPENSSL_zalloc(sizeof(uint16_t) * sigalgs_len);
+    tls12_sigalgs_list = OPENSSL_calloc(sigalgs_len, sizeof(uint16_t));
     if (tls12_sigalgs_list == NULL)
         goto err;
 
@@ -2955,9 +2959,11 @@ int tls1_set_server_sigalgs(SSL_CONNECTION *s)
     if (s->s3.tmp.valid_flags)
         memset(s->s3.tmp.valid_flags, 0, s->ssl_pkey_num * sizeof(uint32_t));
     else
-        s->s3.tmp.valid_flags = OPENSSL_zalloc(s->ssl_pkey_num * sizeof(uint32_t));
-    if (s->s3.tmp.valid_flags == NULL)
+        s->s3.tmp.valid_flags = OPENSSL_calloc(s->ssl_pkey_num, sizeof(uint32_t));
+    if (s->s3.tmp.valid_flags == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
     /*
      * If peer sent no signature algorithms check to see if we support
      * the default algorithm for each certificate type
@@ -3528,7 +3534,7 @@ static int tls1_set_shared_sigalgs(SSL_CONNECTION *s)
     }
     nmatch = tls12_shared_sigalgs(s, NULL, pref, preflen, allow, allowlen);
     if (nmatch) {
-        if ((salgs = OPENSSL_malloc(nmatch * sizeof(*salgs))) == NULL)
+        if ((salgs = OPENSSL_malloc_array(nmatch, sizeof(*salgs))) == NULL)
             return 0;
         nmatch = tls12_shared_sigalgs(s, salgs, pref, preflen, allow, allowlen);
     } else {
@@ -3553,7 +3559,7 @@ int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen)
 
     size >>= 1;
 
-    if ((buf = OPENSSL_malloc(size * sizeof(*buf))) == NULL)
+    if ((buf = OPENSSL_malloc_array(size, sizeof(*buf))) == NULL)
         return 0;
     for (i = 0; i < size && PACKET_get_net_2(pkt, &stmp); i++)
         buf[i] = stmp;
@@ -3845,7 +3851,7 @@ int tls1_set_raw_sigalgs(CERT *c, const uint16_t *psigs, size_t salglen,
 {
     uint16_t *sigalgs;
 
-    if ((sigalgs = OPENSSL_malloc(salglen * sizeof(*sigalgs))) == NULL)
+    if ((sigalgs = OPENSSL_malloc_array(salglen, sizeof(*sigalgs))) == NULL)
         return 0;
     memcpy(sigalgs, psigs, salglen * sizeof(*sigalgs));
 
@@ -3869,7 +3875,7 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
 
     if (salglen & 1)
         return 0;
-    if ((sigalgs = OPENSSL_malloc((salglen / 2) * sizeof(*sigalgs))) == NULL)
+    if ((sigalgs = OPENSSL_malloc_array(salglen / 2, sizeof(*sigalgs))) == NULL)
         return 0;
     for (i = 0, sptr = sigalgs; i < salglen; i += 2) {
         size_t j;

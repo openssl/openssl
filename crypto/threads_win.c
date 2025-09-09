@@ -128,7 +128,7 @@ static struct rcu_qp *allocate_new_qp_group(struct rcu_lock_st *lock,
                                             uint32_t count)
 {
     struct rcu_qp *new =
-        OPENSSL_zalloc(sizeof(*new) * count);
+        OPENSSL_calloc(count, sizeof(*new));
 
     lock->group_count = count;
     return new;
@@ -228,7 +228,7 @@ static void ossl_rcu_free_local_data(void *arg)
     OPENSSL_free(data);
 }
 
-void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
+int ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
 {
     struct rcu_thr_data *data;
     int i;
@@ -242,9 +242,17 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
 
     if (data == NULL) {
         data = OPENSSL_zalloc(sizeof(*data));
-        OPENSSL_assert(data != NULL);
-        CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_RCU_KEY, lock->ctx, data);
-        ossl_init_thread_start(NULL, lock->ctx, ossl_rcu_free_local_data);
+        if (data == NULL)
+            return 0;
+        if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_RCU_KEY, lock->ctx, data)) {
+            OPENSSL_free(data);
+            return 0;
+        }
+        if (!ossl_init_thread_start(NULL, lock->ctx, ossl_rcu_free_local_data)) {
+            OPENSSL_free(data);
+            CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_RCU_KEY, lock->ctx, NULL);
+            return 0;
+        }
     }
 
     for (i = 0; i < MAX_QPS; i++) {
@@ -252,7 +260,7 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
             available_qp = i;
         /* If we have a hold on this lock already, we're good */
         if (data->thread_qps[i].lock == lock)
-            return;
+            return 1;
     }
 
     /*
@@ -263,6 +271,7 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
     data->thread_qps[available_qp].qp = get_hold_current_qp(lock);
     data->thread_qps[available_qp].depth = 1;
     data->thread_qps[available_qp].lock = lock;
+    return 1;
 }
 
 void ossl_rcu_write_lock(CRYPTO_RCU_LOCK *lock)

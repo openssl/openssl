@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -154,8 +154,8 @@ static int setup_cipher_list(void)
      * so that some of the allocated space will be wasted, but the loss
      * is deemed acceptable...
      */
-    cipher_list = OPENSSL_malloc(sk_SSL_CIPHER_num(sk_ciphers) *
-                                 sizeof(cipher_list[0]));
+    cipher_list = OPENSSL_malloc_array(sk_SSL_CIPHER_num(sk_ciphers),
+                                       sizeof(cipher_list[0]));
     if (!TEST_ptr(cipher_list))
         goto err;
 

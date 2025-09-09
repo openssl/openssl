@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 
-# Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -24,7 +24,7 @@ open OUT,"| \"$^X\" $xlate $flavour \"$output\""
 $code=<<___;
 #include "arm_arch.h"
 
-# Theses are offsets into the CIPH_DIGEST struct
+/* These are offsets into the CIPH_DIGEST struct */
 #define CIPHER_KEY	0
 #define CIPHER_KEY_ROUNDS	8
 #define CIPHER_IV	16

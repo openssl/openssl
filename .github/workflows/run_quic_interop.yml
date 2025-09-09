@@ -63,13 +63,7 @@ jobs:
         run: |
           docker version
           docker compose version
-      - name: Patch Docker compose file
-        run: |
-          yq -i '.services.sim.networks.leftnet += {"interface_name" : "eth0"}
-                 | .services.sim.networks.rightnet += {"interface_name" : "eth1"}
-                 | .services.server.networks.rightnet += {"interface_name" : "eth0"}
-                 | .services.client.networks.leftnet += {"interface_name" : "eth0"}' docker-compose.yml
-      - name: "run interop with openssl client"
+      - name: "Run interop with openssl client"
         run: |
           python3 ./run.py -c openssl -t ${{ matrix.tests }} -s ${{ matrix.servers }} --log-dir ./logs-client -d
   run_quic_interop_openssl_server:
@@ -126,12 +120,6 @@ jobs:
         run: |
           docker version
           docker compose version
-      - name: Patch Docker compose file
-        run: |
-          yq -i '.services.sim.networks.leftnet += {"interface_name" : "eth0"}
-                 | .services.sim.networks.rightnet += {"interface_name" : "eth1"}
-                 | .services.server.networks.rightnet += {"interface_name" : "eth0"}
-                 | .services.client.networks.leftnet += {"interface_name" : "eth0"}' docker-compose.yml
-      - name: "run interop with openssl server"
+      - name: "Run interop with openssl server"
         run: |
           python3 ./run.py -s openssl -t ${{ matrix.tests }} -c ${{ matrix.clients }} --log-dir ./logs-server -d

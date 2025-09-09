@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -549,7 +549,7 @@ static int named_group_creation_test(void)
 int setup_tests(void)
 {
     crv_len = EC_get_builtin_curves(NULL, 0);
-    if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
+    if (!TEST_ptr(curves = OPENSSL_malloc_array(crv_len, sizeof(*curves)))
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
         return 0;
 

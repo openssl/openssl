@@ -3528,8 +3528,8 @@ static int test_empty_salt_info_HKDF(void)
     unsigned char key[] = "012345678901234567890123456789";
     unsigned char info[] = "";
     const unsigned char expected[] = {
-	0x67, 0x12, 0xf9, 0x27, 0x8a, 0x8a, 0x3a, 0x8f, 0x7d, 0x2c, 0xa3, 0x6a,
-	0xaa, 0xe9, 0xb3, 0xb9, 0x52, 0x5f, 0xe0, 0x06,
+        0x67, 0x12, 0xf9, 0x27, 0x8a, 0x8a, 0x3a, 0x8f, 0x7d, 0x2c, 0xa3, 0x6a,
+        0xaa, 0xe9, 0xb3, 0xb9, 0x52, 0x5f, 0xe0, 0x06,
     };
     size_t expectedlen = sizeof(expected);
 
@@ -5798,6 +5798,8 @@ static int test_custom_md_meth(void)
     nid = OBJ_create("1.3.6.1.4.1.16604.998866.1", "custom-md", "custom-md");
     if (!TEST_int_ne(nid, NID_undef))
         goto err;
+    if (!TEST_int_eq(OBJ_txt2nid("1.3.6.1.4.1.16604.998866.1"), nid))
+        goto err;
     tmp = EVP_MD_meth_new(nid, NID_undef);
     if (!TEST_ptr(tmp))
         goto err;
@@ -5892,6 +5894,8 @@ static int test_custom_ciph_meth(void)
 
     nid = OBJ_create("1.3.6.1.4.1.16604.998866.2", "custom-ciph", "custom-ciph");
     if (!TEST_int_ne(nid, NID_undef))
+        goto err;
+    if (!TEST_int_eq(OBJ_txt2nid("1.3.6.1.4.1.16604.998866.2"), nid))
         goto err;
     tmp = EVP_CIPHER_meth_new(nid, 16, 16);
     if (!TEST_ptr(tmp))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -399,7 +399,7 @@ int setup_tests(void)
 
     /* get a list of all internal curves */
     crv_len = EC_get_builtin_curves(NULL, 0);
-    if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
+    if (!TEST_ptr(curves = OPENSSL_malloc_array(crv_len, sizeof(*curves)))
         || !TEST_true(EC_get_builtin_curves(curves, crv_len))) {
         fake_rand_finish(fake_rand);
         return 0;

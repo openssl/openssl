@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -40,9 +40,9 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
     ret->qual = NULL;
     if ((ret->data = sk_OPENSSL_PSTRING_new_null()) == NULL)
         goto err;
-    if ((ret->index = OPENSSL_malloc(sizeof(*ret->index) * num)) == NULL)
+    if ((ret->index = OPENSSL_malloc_array(num, sizeof(*ret->index))) == NULL)
         goto err;
-    if ((ret->qual = OPENSSL_malloc(sizeof(*(ret->qual)) * num)) == NULL)
+    if ((ret->qual = OPENSSL_malloc_array(num, sizeof(*(ret->qual)))) == NULL)
         goto err;
     for (i = 0; i < num; i++) {
         ret->index[i] = NULL;

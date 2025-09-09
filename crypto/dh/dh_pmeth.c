@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -408,7 +408,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
     }
     dh = (DH *)EVP_PKEY_get0_DH(ctx->pkey);
     dhpub = EVP_PKEY_get0_DH(ctx->peerkey);
-    if (dhpub == NULL) {
+    if (dhpub == NULL || dh == NULL) {
         ERR_raise(ERR_LIB_DH, DH_R_KEYS_NOT_SET);
         return 0;
     }

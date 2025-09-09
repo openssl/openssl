@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  * Ported from Ribose contributions from Botan.
  *
@@ -177,7 +177,7 @@ int ossl_sm2_encrypt(const EC_KEY *key,
         goto done;
     }
 
-    x2y2 = OPENSSL_zalloc(2 * field_size);
+    x2y2 = OPENSSL_calloc(2, field_size);
     C3 = OPENSSL_zalloc(C3_size);
 
     if (x2y2 == NULL || C3 == NULL)
@@ -343,7 +343,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     }
 
     msg_mask = OPENSSL_zalloc(msg_len);
-    x2y2 = OPENSSL_zalloc(2 * field_size);
+    x2y2 = OPENSSL_calloc(2, field_size);
     computed_C3 = OPENSSL_zalloc(hash_size);
 
     if (msg_mask == NULL || x2y2 == NULL || computed_C3 == NULL)

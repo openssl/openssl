@@ -165,7 +165,7 @@ jobs:
     - name: install packages
       run: |
         sudo apt-get update
-        sudo apt-get -yq --force-yes install \
+        sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install \
             gcc-${{ matrix.platform.arch }} \
             ${{ matrix.platform.libs }}
     - uses: actions/checkout@v4
@@ -192,7 +192,7 @@ jobs:
 
     - name: install qemu
       if: matrix.platform.tests != 'none'
-      run: sudo apt-get -yq --force-yes install qemu-user
+      run: sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install qemu-user
 
     - name: Set QEMU environment
       if: matrix.platform.qemucpu != ''

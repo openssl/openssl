@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2020
  * Copyright Siemens AG 2015-2020
  *
@@ -12,14 +12,6 @@
 /* CMP functions for PKIMessage checking */
 
 #include "cmp_local.h"
-#include <openssl/cmp_util.h>
-
-/* explicit #includes not strictly needed since implied by the above: */
-#include <openssl/asn1t.h>
-#include <openssl/cmp.h>
-#include <openssl/crmf.h>
-#include <openssl/err.h>
-#include <openssl/x509.h>
 
 /* Verify a message protected by signature according to RFC section 5.1.3.3 */
 static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,

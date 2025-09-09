@@ -47,7 +47,7 @@ jobs:
     - name: install packages
       run: |
         sudo apt-get update
-        sudo apt-get -yq --force-yes install ${{ matrix.fuzzy.install }}
+        sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install ${{ matrix.fuzzy.install }}
     - name: Adjust ASLR for sanitizer
       run: |
         sudo cat /proc/sys/vm/mmap_rnd_bits

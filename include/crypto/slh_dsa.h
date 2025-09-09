@@ -23,15 +23,18 @@
 typedef struct slh_dsa_hash_ctx_st SLH_DSA_HASH_CTX;
 typedef struct slh_dsa_key_st SLH_DSA_KEY;
 
+__owur OSSL_LIB_CTX *ossl_slh_dsa_key_get0_libctx(const SLH_DSA_KEY *key);
 __owur SLH_DSA_KEY *ossl_slh_dsa_key_new(OSSL_LIB_CTX *libctx, const char *propq,
                                          const char *alg);
 void ossl_slh_dsa_key_free(SLH_DSA_KEY *key);
+void ossl_slh_dsa_key_reset(SLH_DSA_KEY *key);
 __owur SLH_DSA_KEY *ossl_slh_dsa_key_dup(const SLH_DSA_KEY *src, int selection);
 __owur int ossl_slh_dsa_key_equal(const SLH_DSA_KEY *key1, const SLH_DSA_KEY *key2,
                                   int selection);
 __owur int ossl_slh_dsa_key_has(const SLH_DSA_KEY *key, int selection);
 __owur int ossl_slh_dsa_key_pairwise_check(const SLH_DSA_KEY *key);
-__owur int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM *params,
+__owur int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM *pub,
+                                     const OSSL_PARAM *param_priv,
                                      int include_private);
 __owur int ossl_slh_dsa_generate_key(SLH_DSA_HASH_CTX *ctx, SLH_DSA_KEY *out,
                                      OSSL_LIB_CTX *libctx,

@@ -664,12 +664,14 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
     unsigned int group_id = 0;
 
     /* Prepare memory to hold the extracted key share groups and related pubkeys */
-    *keyshares_arr = OPENSSL_malloc(*keyshares_max * sizeof(**keyshares_arr));
+    *keyshares_arr = OPENSSL_malloc_array(*keyshares_max,
+                                          sizeof(**keyshares_arr));
     if (*keyshares_arr == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto failure;
     }
-    *encoded_pubkey_arr = OPENSSL_malloc(*keyshares_max * sizeof(**encoded_pubkey_arr));
+    *encoded_pubkey_arr = OPENSSL_malloc_array(*keyshares_max,
+                                               sizeof(**encoded_pubkey_arr));
     if (*encoded_pubkey_arr == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto failure;
@@ -750,16 +752,17 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
         if (*keyshares_cnt == *keyshares_max) {
             PACKET *tmp_pkt;
             uint16_t *tmp =
-                OPENSSL_realloc(*keyshares_arr,
-                                (*keyshares_max + GROUPLIST_INCREMENT) * sizeof(**keyshares_arr));
+                OPENSSL_realloc_array(*keyshares_arr,
+                                      *keyshares_max + GROUPLIST_INCREMENT,
+                                      sizeof(**keyshares_arr));
 
             if (tmp == NULL)
                 goto failure;
             *keyshares_arr = tmp;
             tmp_pkt =
-                OPENSSL_realloc(*encoded_pubkey_arr,
-                                (*keyshares_max + GROUPLIST_INCREMENT) *
-                                sizeof(**encoded_pubkey_arr));
+                OPENSSL_realloc_array(*encoded_pubkey_arr,
+                                      *keyshares_max + GROUPLIST_INCREMENT,
+                                      sizeof(**encoded_pubkey_arr));
             if (tmp_pkt == NULL)
                 goto failure;
             *encoded_pubkey_arr = tmp_pkt;

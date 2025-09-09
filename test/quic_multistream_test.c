@@ -82,8 +82,8 @@ struct helper {
 #if defined(OPENSSL_THREADS)
     struct child_thread_args    *threads;
     size_t                      num_threads;
-    CRYPTO_MUTEX		*misc_m;
-    CRYPTO_CONDVAR		*misc_cv;
+    CRYPTO_MUTEX                *misc_m;
+    CRYPTO_CONDVAR              *misc_cv;
 #endif
 
     OSSL_TIME       start_time;
@@ -198,6 +198,7 @@ struct script_op {
 #define OPK_C_WRITE_EX2                             52
 #define OPK_SKIP_IF_BLOCKING                        53
 #define OPK_C_STREAM_RESET_FAIL                     54
+#define OPK_C_SHUTDOWN                              55
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -270,6 +271,8 @@ struct script_op {
     {OPK_C_SET_DEFAULT_STREAM_MODE, NULL, (mode), NULL, NULL},
 #define OP_C_SET_INCOMING_STREAM_POLICY(policy) \
     {OPK_C_SET_INCOMING_STREAM_POLICY, NULL, (policy), NULL, NULL},
+#define OP_C_SHUTDOWN(reason, flags) \
+    {OPK_C_SHUTDOWN, (reason), (flags), NULL, NULL},
 #define OP_C_SHUTDOWN_WAIT(reason, flags) \
     {OPK_C_SHUTDOWN_WAIT, (reason), (flags), NULL, NULL},
 #define OP_C_EXPECT_CONN_CLOSE_INFO(ec, app, remote)                \
@@ -1658,6 +1661,25 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             }
             break;
 
+        case OPK_C_SHUTDOWN:
+            {
+                int ret;
+                QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
+                SSL_SHUTDOWN_EX_ARGS args = {0};
+
+                ossl_quic_engine_set_inhibit_tick(ossl_quic_channel_get0_engine(ch), 0);
+
+                if (!TEST_ptr(c_tgt))
+                    goto out;
+
+                args.quic_reason = (const char *)op->arg0;
+
+                ret = SSL_shutdown_ex(c_tgt, op->arg1, &args, sizeof(args));
+                if (!TEST_int_ge(ret, 0))
+                    goto out;
+            }
+            break;
+
         case OPK_C_SHUTDOWN_WAIT:
             {
                 int ret;
@@ -1886,7 +1908,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     goto out;
                 }
 
-                h->threads = OPENSSL_zalloc(op->arg1 * sizeof(struct child_thread_args));
+                h->threads = OPENSSL_calloc(op->arg1, sizeof(struct child_thread_args));
                 if (!TEST_ptr(h->threads))
                     goto out;
 
@@ -5787,6 +5809,189 @@ static const struct script_op script_85[] = {
     OP_END
 };
 
+#define POLL_FMT "%s%s%s%s%s%s%s%s%s%s%s%s%s"
+#define POLL_PRINTA(_revents_) \
+    (_revents_) & SSL_POLL_EVENT_F ? "SSL_POLL_EVENT_F " : "", \
+    (_revents_) & SSL_POLL_EVENT_EL ? "SSL_POLL_EVENT_EL " : "", \
+    (_revents_) & SSL_POLL_EVENT_EC ? "SSL_POLL_EVENT_EC " : "", \
+    (_revents_) & SSL_POLL_EVENT_ECD ? "SSL_POLL_EVENT_ECD " : "", \
+    (_revents_) & SSL_POLL_EVENT_ER ? "SSL_POLL_EVENT_ER " : "", \
+    (_revents_) & SSL_POLL_EVENT_EW ? "SSL_POLL_EVENT_EW " : "", \
+    (_revents_) & SSL_POLL_EVENT_R ? "SSL_POLL_EVENT_R " : "", \
+    (_revents_) & SSL_POLL_EVENT_W ? "SSL_POLL_EVENT_W " : "", \
+    (_revents_) & SSL_POLL_EVENT_IC ? "SSL_POLL_EVENT_IC " : "", \
+    (_revents_) & SSL_POLL_EVENT_ISB ? "SSL_POLL_EVENT_ISB " : "", \
+    (_revents_) & SSL_POLL_EVENT_ISU ? "SSL_POLL_EVENT_ISU " : "", \
+    (_revents_) & SSL_POLL_EVENT_OSB ? "SSL_POLL_EVENT_OSB " : "", \
+    (_revents_) & SSL_POLL_EVENT_OSU ? "SSL_POLL_EVENT_OSU " : ""
+
+/* 88. Test SSL_poll (lite, non-blocking) */
+ossl_unused static int script_88_poll(struct helper *h, struct helper_local *hl)
+{
+    int ok = 1, ret, expected_ret = 1;
+    static const struct timeval timeout = {0};
+    size_t result_count, processed;
+    SSL_POLL_ITEM items[2] = {0}, *item = items;
+    SSL *c_a;
+    size_t i;
+    uint64_t mode, expected_revents[2] = {0};
+
+    if (!TEST_ptr(c_a = helper_local_get_c_stream(hl, "a")))
+        return 0;
+
+    item->desc    = SSL_as_poll_descriptor(c_a);
+    item->events  = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc    = SSL_as_poll_descriptor(h->c_conn);
+    item->events  = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    result_count = SIZE_MAX;
+    ret = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
+                   &timeout, 0,
+                   &result_count);
+
+    mode = hl->check_op->arg2;
+    switch (mode) {
+    case 0:
+        /* No incoming data yet */
+        expected_revents[0]     = SSL_POLL_EVENT_W;
+        expected_revents[1]     = SSL_POLL_EVENT_OS;
+        break;
+    case 1:
+        /* Expect more events */
+        expected_revents[0]     = SSL_POLL_EVENT_R;
+        expected_revents[1]     = SSL_POLL_EVENT_OS;
+        break;
+    default:
+        return 0;
+    }
+
+    if (!TEST_int_eq(ret, expected_ret))
+        ok = 0;
+
+    /*
+     * Unlike script 85 which always expects all objects
+     * get signaled in single call to SSL_poll() we must
+     * assume here we can get notification for only one.
+     */
+    processed = 0;
+    for (i = 0; i < OSSL_NELEM(items); ++i) {
+        if (items[i].revents == 0)
+            continue;
+
+        processed++;
+        if (!TEST_uint64_t_eq(items[i].revents, expected_revents[i])) {
+            TEST_info("wanted: " POLL_FMT " got: " POLL_FMT,
+                      POLL_PRINTA(expected_revents[i]),
+                      POLL_PRINTA(items[i].revents));
+            TEST_error("mismatch at index %zu in poll results, mode %d",
+                       i, (int)mode);
+            ok = 0;
+        }
+    }
+
+    if (!TEST_size_t_eq(processed, result_count))
+        ok = 0;
+
+    return ok;
+}
+
+ossl_unused static int script_88_poll_conly(struct helper *h, struct helper_local *hl)
+{
+    int ok = 1;
+    static const struct timeval timeout = {0};
+    size_t result_count;
+    SSL_POLL_ITEM items[1] = {0};
+    int done = 0;
+    OSSL_TIME t_limit;
+
+    result_count = SIZE_MAX;
+
+    items[0].desc    = SSL_as_poll_descriptor(h->c_conn);
+    items[0].events  = UINT64_MAX;
+    items[0].revents = UINT64_MAX;
+
+    t_limit = ossl_time_add(ossl_time_now(),
+                            ossl_ticks2time(5 * OSSL_TIME_SECOND));
+    while (done == 0 && ok == 1) {
+        ok = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
+                       &timeout, 0,
+                       &result_count);
+
+        if (!TEST_int_eq(ok, 1))
+            continue;
+
+        if (result_count == 0)
+            OSSL_sleep(10);
+
+        TEST_info("received event " POLL_FMT, POLL_PRINTA(items[0].revents));
+
+        if ((items[0].revents & SSL_POLL_EVENT_EC) == SSL_POLL_EVENT_EC)
+            SSL_shutdown(h->c_conn);
+        done =
+            ((items[0].revents & SSL_POLL_EVENT_ECD) == SSL_POLL_EVENT_ECD);
+
+        if (ossl_time_compare(ossl_time_now(), t_limit) == 1) {
+            TEST_error("shutdown time exceeded 5sec");
+            ok = 0;
+        }
+    }
+
+    return ok;
+}
+
+/*
+ * verify SSL_poll() signals SSL_POLL_EVENT_EC event
+ * to notify client it's time to call SSL_shutdown().
+ */
+static const struct script_op script_88[] = {
+    OP_SKIP_IF_BLOCKING     (16)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+
+    /* Check nothing readable yet. */
+    OP_CHECK                (script_88_poll, 0 /* ->arg2 */)
+
+    OP_C_WRITE              (a, "flamingo", 8)
+    OP_C_CONCLUDE           (a)
+
+    /* Send something that will make client sockets readable. */
+    OP_S_READ_EXPECT        (a, "flamingo", 8)
+    OP_S_WRITE              (a, "flamingo", 8)
+    OP_S_CONCLUDE           (a)
+
+    OP_CHECK                (script_88_poll, 1 /* ->arg2 */)
+
+    OP_C_READ_EXPECT        (a, "flamingo", 8)
+
+    /*
+     * client calls non-blocking SSL_shutdown() and gives
+     * server chance to run by calling sleep.
+     */
+    OP_C_SHUTDOWN           (NULL, 0)
+    OP_SLEEP(100)
+
+    /*
+     * Here we call SSL_poll() and handle SSL_POLL_EVENT_EC
+     * and SSL_POLL_EVENT_ECD on connection object. Whenever
+     * _EC event comes we call SSL_shutdown() to keep connection
+     * draining. We keep calling SSL_poll()/SSL_shutdown() until
+     * SSL_poll() signals SSL_POLL_EVENT_ECD to let us know connection
+     * has dried out and con be closed.
+     */
+    OP_CHECK                (script_88_poll_conly, 0)
+
+    OP_END
+};
 /* 86. Event Handling Mode Configuration */
 static int set_event_handling_mode_conn(struct helper *h, struct helper_local *hl)
 {
@@ -5979,7 +6184,8 @@ static const struct script_op *const scripts[] = {
     script_84,
     script_85,
     script_86,
-    script_87
+    script_87,
+    script_88,
 };
 
 static int test_script(int idx)
@@ -6009,6 +6215,7 @@ static int test_script(int idx)
 
     TEST_info("Running script %d (order=%d, blocking=%d)", script_idx + 1,
               free_order, blocking);
+
     return run_script(scripts[script_idx], script_name, free_order, blocking);
 }
 

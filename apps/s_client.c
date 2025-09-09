@@ -1665,7 +1665,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (proxystr != NULL) {
-#ifndef OPENSSL_NO_HTTP
+# ifndef OPENSSL_NO_HTTP
         int res;
         char *tmp_host = host, *tmp_port = port;
 
@@ -1700,11 +1700,11 @@ int s_client_main(int argc, char **argv)
                        "%s: -proxy argument malformed or ambiguous\n", prog);
             goto end;
         }
-#else
+# else
         BIO_printf(bio_err,
                    "%s: -proxy not supported in no-http build\n", prog);
-	goto end;
-#endif
+        goto end;
+# endif
     }
 
 

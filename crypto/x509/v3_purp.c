@@ -186,7 +186,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
         return 0;
     }
     if (trust < X509_TRUST_DEFAULT || name == NULL || sname == NULL || ck == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
 
@@ -800,7 +800,7 @@ static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x,
     return ku_reject(x, KU_KEY_ENCIPHERMENT) ? 0 : ret;
 }
 
-/* common S/MIME checks */
+/* common S/MIME client checks */
 static int purpose_smime(const X509 *x, int non_leaf)
 {
     if (xku_reject(x, XKU_SMIME))
@@ -869,7 +869,7 @@ static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
      */
     if (non_leaf)
         return check_ca(x);
-    /* Leaf certificate is checked in OCSP_verify() */
+    /* Leaf certificate is checked in OCSP_basic_verify() */
     return 1;
 }
 

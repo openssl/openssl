@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -504,11 +504,11 @@ int ossl_ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 
     totalnum = num + numblocks;
 
-    wsize = OPENSSL_malloc(totalnum * sizeof(wsize[0]));
-    wNAF_len = OPENSSL_malloc(totalnum * sizeof(wNAF_len[0]));
+    wsize = OPENSSL_malloc_array(totalnum, sizeof(wsize[0]));
+    wNAF_len = OPENSSL_malloc_array(totalnum, sizeof(wNAF_len[0]));
     /* include space for pivot */
-    wNAF = OPENSSL_malloc((totalnum + 1) * sizeof(wNAF[0]));
-    val_sub = OPENSSL_malloc(totalnum * sizeof(val_sub[0]));
+    wNAF = OPENSSL_malloc_array(totalnum + 1, sizeof(wNAF[0]));
+    val_sub = OPENSSL_malloc_array(totalnum, sizeof(val_sub[0]));
 
     /* Ensure wNAF is initialised in case we end up going to err */
     if (wNAF != NULL)
@@ -651,7 +651,7 @@ int ossl_ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
      * 'val_sub[i]' is a pointer to the subarray for the i-th point, or to a
      * subarray of 'pre_comp->points' if we already have precomputation.
      */
-    val = OPENSSL_malloc((num_val + 1) * sizeof(val[0]));
+    val = OPENSSL_malloc_array(num_val + 1, sizeof(val[0]));
     if (val == NULL)
         goto err;
     val[num_val] = NULL;        /* pivot element */
@@ -883,7 +883,7 @@ int ossl_ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     num = pre_points_per_block * numblocks; /* number of points to compute
                                              * and store */
 
-    points = OPENSSL_malloc(sizeof(*points) * (num + 1));
+    points = OPENSSL_malloc_array(num + 1, sizeof(*points));
     if (points == NULL)
         goto err;
 

@@ -4533,7 +4533,7 @@ static int keygen_test_run(EVP_TEST *t)
     }
 
     if (sk_OPENSSL_STRING_num(keygen->in_controls) > 0) {
-        if ((params = OPENSSL_malloc(sizeof(OSSL_PARAM) * 4)) == NULL)
+        if ((params = OPENSSL_malloc_array(4, sizeof(OSSL_PARAM))) == NULL)
             goto err;
         if (!ctrl2params(t, keygen->in_controls,
                          EVP_PKEY_CTX_settable_params(genctx),

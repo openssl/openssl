@@ -11,8 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-         fetch-depth: 0
       - name: "log in to quay.io"
         run: |
           docker login -u openssl-ci+machine -p ${{ secrets.QUAY_IO_PASSWORD }} quay.io
@@ -38,7 +36,8 @@ jobs:
           docker login -u openssl-ci+machine -p ${{ secrets.QUAY_IO_PASSWORD }} quay.io
       - name: Patch qns.Dockerfile
         run: |
-          sed 's/RUN     cmake -DQUIC_BUILD_TOOLS=on -DQUIC_ENABLE_LOGGING=on ../RUN     cmake -DQUIC_BUILD_TOOLS=on -DQUIC_ENABLE_LOGGING=on -DQUIC_TLS_LIB=openssl ../' ./scripts/qns.Dockerfile
+          sed -i 's/RUN     cmake -DQUIC_BUILD_TOOLS=on -DQUIC_ENABLE_LOGGING=on ../RUN     cmake -DQUIC_BUILD_TOOLS=on -DQUIC_ENABLE_LOGGING=on -DQUIC_TLS_LIB=openssl ../' ./scripts/qns.Dockerfile
+          if grep -q "RUN     cmake -DQUIC_BUILD_TOOLS=on -DQUIC_ENABLE_LOGGING=on -DQUIC_TLS_LIB=openssl .." ./scripts/qns.Dockerfile; then echo "Patched successfully"; else exit 1; fi
       - name: "Build container"
         run: |
           docker build -f ./scripts/qns.Dockerfile -t quay.io/openssl-ci/msquic-openssl:latest .

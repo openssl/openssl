@@ -665,7 +665,7 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
         }
     }
 
-    buf = OPENSSL_malloc(PEM_BUFSIZE * 8);
+    buf = OPENSSL_malloc_array(PEM_BUFSIZE, 8);
     if (buf == NULL)
         goto err;
 

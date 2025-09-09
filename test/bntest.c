@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -2355,7 +2355,7 @@ static int test_rand_range_single(size_t n)
     unsigned int i, v;
     int res = 0;
 
-    if (!TEST_ptr(counts = OPENSSL_zalloc(sizeof(*counts) * range))
+    if (!TEST_ptr(counts = OPENSSL_calloc(range, sizeof(*counts)))
         || !TEST_ptr(rng = BN_new())
         || !TEST_ptr(val = BN_new())
         || !TEST_true(BN_set_word(rng, range)))

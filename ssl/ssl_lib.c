@@ -124,8 +124,8 @@ static int dane_ctx_enable(struct dane_ctx_st *dctx)
     if (dctx->mdevp != NULL)
         return 1;
 
-    mdevp = OPENSSL_zalloc(n * sizeof(*mdevp));
-    mdord = OPENSSL_zalloc(n * sizeof(*mdord));
+    mdevp = OPENSSL_calloc(n, sizeof(*mdevp));
+    mdord = OPENSSL_calloc(n, sizeof(*mdord));
 
     if (mdord == NULL || mdevp == NULL) {
         OPENSSL_free(mdord);
@@ -232,12 +232,12 @@ static int dane_mtype_set(struct dane_ctx_st *dctx,
         uint8_t *mdord;
         int n = ((int)mtype) + 1;
 
-        mdevp = OPENSSL_realloc(dctx->mdevp, n * sizeof(*mdevp));
+        mdevp = OPENSSL_realloc_array(dctx->mdevp, n, sizeof(*mdevp));
         if (mdevp == NULL)
             return -1;
         dctx->mdevp = mdevp;
 
-        mdord = OPENSSL_realloc(dctx->mdord, n * sizeof(*mdord));
+        mdord = OPENSSL_realloc_array(dctx->mdord, n, sizeof(*mdord));
         if (mdord == NULL)
             return -1;
         dctx->mdord = mdord;
@@ -4446,7 +4446,7 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.keyshares);
     OPENSSL_free(a->ext.tuples);
     OPENSSL_free(a->ext.alpn);
-    OPENSSL_secure_free(a->ext.secure);
+    OPENSSL_secure_clear_free(a->ext.secure, sizeof(*a->ext.secure));
 
     ssl_evp_md_free(a->md5);
     ssl_evp_md_free(a->sha1);
@@ -6461,9 +6461,6 @@ static int ct_extract_ocsp_response_scts(SSL_CONNECTION *s)
 
             scts = OCSP_SINGLERESP_get1_ext_d2i(single,
                                                 NID_ct_cert_scts, NULL, NULL);
-
-            OCSP_SINGLERESP_free(single);
-
             if (scts == NULL)  {
                 scts_extracted = -1;
                 goto err;
@@ -6899,7 +6896,7 @@ int SSL_client_hello_get1_extensions_present(SSL *s, int **out, size_t *outlen)
         *outlen = 0;
         return 1;
     }
-    if ((present = OPENSSL_malloc(sizeof(*present) * num)) == NULL)
+    if ((present = OPENSSL_malloc_array(num, sizeof(*present))) == NULL)
         return 0;
     for (i = 0; i < sc->clienthello->pre_proc_exts_len; i++) {
         ext = sc->clienthello->pre_proc_exts + i;
@@ -7145,7 +7142,7 @@ int ssl_cache_cipherlist(SSL_CONNECTION *s, PACKET *cipher_suites, int sslv2form
          * slightly over allocate because we won't store those. But that isn't a
          * problem.
          */
-        raw = OPENSSL_malloc(numciphers * TLS_CIPHER_LEN);
+        raw = OPENSSL_malloc_array(numciphers, TLS_CIPHER_LEN);
         s->s3.tmp.ciphers_raw = raw;
         if (raw == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);

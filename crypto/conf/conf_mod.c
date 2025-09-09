@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -411,7 +411,9 @@ static CONF_MODULE *module_find(const char *name)
     if (!RUN_ONCE(&init_module_list_lock, do_init_module_list_lock))
         return NULL;
 
-    ossl_rcu_read_lock(module_list_lock);
+    if (!ossl_rcu_read_lock(module_list_lock))
+        return NULL;
+
     mods = ossl_rcu_deref(&supported_modules);
 
     for (i = 0; i < sk_CONF_MODULE_num(mods); i++) {

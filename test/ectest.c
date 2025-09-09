@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -2825,6 +2825,9 @@ static int custom_params_test(int id)
     unsigned char *pub1 = NULL , *pub2 = NULL;
     OSSL_PARAM_BLD *param_bld = NULL;
     OSSL_PARAM *params1 = NULL, *params2 = NULL;
+    const unsigned char *export = NULL;
+    size_t export_size = 0;
+    EVP_SKEY *skey = NULL;
 
     /* Do some setup */
     nid = curves[id].nid;
@@ -3053,9 +3056,22 @@ static int custom_params_test(int id)
             || !TEST_mem_eq(buf1, t, buf2, sslen))
         goto err;
 
+    /* compute keyexchange once more using the EVP_SKEY export */
+    EVP_PKEY_CTX_free(pctx1);
+    if (!TEST_ptr(pctx1 = EVP_PKEY_CTX_new(pkey1, NULL))
+            || !TEST_int_eq(EVP_PKEY_derive_init(pctx1), 1)
+            || !TEST_int_eq(EVP_PKEY_derive_set_peer(pctx1, pkey2), 1)
+            || !TEST_ptr(skey = EVP_PKEY_derive_SKEY(pctx1, NULL, OSSL_SKEY_TYPE_GENERIC,
+                                                     NULL, t, NULL))
+            || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &export, &export_size), 1)
+            /* compare with previous result */
+            || !TEST_mem_eq(export, export_size, buf2, sslen))
+        goto err;
+
     ret = 1;
 
  err:
+    EVP_SKEY_free(skey);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     OSSL_PARAM_BLD_free(param_bld);
@@ -3125,7 +3141,7 @@ static int ec_d2i_publickey_test(void)
 int setup_tests(void)
 {
     crv_len = EC_get_builtin_curves(NULL, 0);
-    if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
+    if (!TEST_ptr(curves = OPENSSL_malloc_array(crv_len, sizeof(*curves)))
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
         return 0;
 

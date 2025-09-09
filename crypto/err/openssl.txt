@@ -1079,6 +1079,7 @@ PROV_R_FAILED_TO_SIGN:175:failed to sign
 PROV_R_FINAL_CALL_OUT_OF_ORDER:237:final call out of order
 PROV_R_FIPS_MODULE_CONDITIONAL_ERROR:227:fips module conditional error
 PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE:224:fips module entering error state
+PROV_R_FIPS_MODULE_IMPORT_PCT_ERROR:253:fips module import pct error
 PROV_R_FIPS_MODULE_IN_ERROR_STATE:225:fips module in error state
 PROV_R_GENERATE_ERROR:191:generate error
 PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE:165:\
@@ -1167,6 +1168,7 @@ PROV_R_PARENT_STRENGTH_TOO_WEAK:194:parent strength too weak
 PROV_R_PATH_MUST_BE_ABSOLUTE:219:path must be absolute
 PROV_R_PERSONALISATION_STRING_TOO_LONG:195:personalisation string too long
 PROV_R_PSS_SALTLEN_TOO_SMALL:172:pss saltlen too small
+PROV_R_REPEATED_PARAMETER:252:repeated parameter
 PROV_R_REQUEST_TOO_LARGE_FOR_DRBG:196:request too large for drbg
 PROV_R_REQUIRE_CTR_MODE_CIPHER:206:require ctr mode cipher
 PROV_R_RESEED_ERROR:197:reseed error

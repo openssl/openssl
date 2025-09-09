@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -12,13 +12,7 @@
 /* CMP functions for PKIHeader handling */
 
 #include "cmp_local.h"
-
-#include <openssl/rand.h>
-
-/* explicit #includes not strictly needed since implied by the above: */
-#include <openssl/asn1t.h>
-#include <openssl/cmp.h>
-#include <openssl/err.h>
+#include <openssl/rand.h> /* for RAND_bytes_ex() */
 
 int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER *hdr, int pvno)
 {

@@ -7969,7 +7969,7 @@ static int ssl_srp_cb(SSL *s, int *ad, void *arg)
 static int create_new_vfile(char *userid, char *password, const char *filename)
 {
     char *gNid = NULL;
-    OPENSSL_STRING *row = OPENSSL_zalloc(sizeof(row) * (DB_NUMBER + 1));
+    OPENSSL_STRING *row = OPENSSL_calloc(DB_NUMBER + 1, sizeof(*row));
     TXT_DB *db = NULL;
     int ret = 0;
     BIO *out = NULL, *dummy = BIO_new_mem_buf("", 0);

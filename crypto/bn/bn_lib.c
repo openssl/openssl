@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -276,9 +276,9 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         return NULL;
     }
     if (BN_get_flags(b, BN_FLG_SECURE))
-        a = OPENSSL_secure_zalloc(words * sizeof(*a));
+        a = OPENSSL_secure_calloc(words, sizeof(*a));
     else
-        a = OPENSSL_zalloc(words * sizeof(*a));
+        a = OPENSSL_calloc(words, sizeof(*a));
     if (ossl_unlikely(a == NULL))
         return NULL;
 

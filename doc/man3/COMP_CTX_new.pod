@@ -64,8 +64,8 @@ COMP_CTX_get_type() and COMP_get_type() return the NID for the B<COMP_CTX> and
 B<COMP_METHOD>, respectively. COMP_get_name() returns the name of the algorithm
 of the given B<COMP_METHOD>.
 
-COMP_compress_block() compresses b<ilen> bytes from the buffer I<in> into the
-buffer b<out> of size I<olen> using the algorithm specified by I<ctx>.
+COMP_compress_block() compresses B<ilen> bytes from the buffer I<in> into the
+buffer B<out> of size I<olen> using the algorithm specified by I<ctx>.
 
 COMP_expand_block() expands I<ilen> bytes from the buffer I<in> into the
 buffer I<out> of size I<olen> using the algorithm specified by I<ctx>.
@@ -174,7 +174,7 @@ Brotli and Zstandard functions were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

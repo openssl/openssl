@@ -12,7 +12,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
-#include "endecoder_local.h"
+#include "prov/endecoder_local.h"
 #include "crypto/lms.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"

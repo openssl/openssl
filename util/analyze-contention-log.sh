@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -eu
 # Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").
@@ -15,29 +15,21 @@
 #
 TEMPDIR=$(mktemp -d /tmp/contention.XXXXXX)
 
-LOGFILE=$1
 trap "rm -rf $TEMPDIR" EXIT
 
-if [ ! -f $LOGFILE ]
-then
-    echo "No log file found"
-    exit 1
-fi
-LOGFILEBASE=$(basename $LOGFILE)
-
-echo "Splitting files"
+echo "Splitting files" > /dev/stderr
 
 #
 #start by splitting the log into separate stack traces
 #
-mkdir $TEMPDIR/individual_files
-cp $LOGFILE $TEMPDIR/individual_files/$LOGFILEBASE
+mkdir "$TEMPDIR/individual_files"
+cat "$@" > "$TEMPDIR/individual_files/log"
 pushd $TEMPDIR/individual_files/ > /dev/null
 awk '
     BEGIN {RS = ""; FS = "\n"}
-    {file_num++; print > ("stacktrace" file_num ".txt")}' ./$LOGFILEBASE
+    {file_num++; print > ("stacktrace" file_num ".txt")}' ./log
 popd > /dev/null
-rm $TEMPDIR/individual_files/$LOGFILEBASE
+rm -f $TEMPDIR/individual_files/log
 
 #
 # Make some associative arrays to track our stats
@@ -46,9 +38,9 @@ declare -A filenames
 declare -A total_latency
 declare -A latency_counts
 
-echo "Gathering latencies"
+echo "Gathering latencies" > /dev/stderr
 FILECOUNT=$(ls $TEMPDIR/individual_files/stacktrace*.* | wc -l)
-let currentidx=0
+currentidx=0
 
 #
 # Look at every stack trace, get and record its latency, and hash value
@@ -61,8 +53,8 @@ do
     #now compute its sha1sum
     SHA1SUM=$(sha1sum $i | awk '{print $1}')
     filenames["$SHA1SUM"]=$i
-    let CUR_LATENCY=0
-    let LATENCY_COUNT=0
+    CUR_LATENCY=0
+    LATENCY_COUNT=0
 
     #
     # If we already have a latency total for this hash value
@@ -71,8 +63,8 @@ do
     #
     if [[ -v total_latency["$SHA1SUM"] ]]
     then
-        let CUR_LATENCY=${total_latency["$SHA1SUM"]}
-        let LATENCY_COUNT=${latency_counts["$SHA1SUM"]}
+        CUR_LATENCY=${total_latency["$SHA1SUM"]}
+        LATENCY_COUNT=${latency_counts["$SHA1SUM"]}
     fi
 
     #
@@ -81,8 +73,8 @@ do
     #
     total_latency["$SHA1SUM"]=$(dc -e "$CUR_LATENCY $LATENCY + p")
     latency_counts["$SHA1SUM"]=$(dc -e "$LATENCY_COUNT 1 + p")
-    echo -e -n "FILE $currentidx/$FILECOUNT \r"
-    let currentidx=$currentidx+1
+    echo -e -n "FILE $currentidx/$FILECOUNT \r" > /dev/stderr
+    currentidx=$((currentidx + 1))
 done
 
 #

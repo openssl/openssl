@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -271,8 +271,10 @@ struct hkdf_all_set_ctx_params_st {
     OSSL_PARAM *digest;
     OSSL_PARAM *key;
     OSSL_PARAM *salt;
+#ifdef FIPS_MODULE
     OSSL_PARAM *ind_k;
     OSSL_PARAM *ind_d;
+#endif
     OSSL_PARAM *prefix;
     OSSL_PARAM *label;
     OSSL_PARAM *data;
@@ -360,7 +362,7 @@ static int hkdf_common_set_ctx_params
                           ['KDF_PARAM_DIGEST',         'digest', 'utf8_string'],
                           ['KDF_PARAM_KEY',            'key',    'octet_string'],
                           ['KDF_PARAM_SALT',           'salt',   'octet_string'],
-                          ['KDF_PARAM_FIPS_KEY_CHECK', 'ind_k',  'int'],
+                          ['KDF_PARAM_FIPS_KEY_CHECK', 'ind_k',  'int', 'fips'],
                           ['KDF_PARAM_INFO',           'info',   'octet_string', HKDF_MAX_INFOS],
                          )); -}
 
@@ -400,7 +402,7 @@ static const OSSL_PARAM *kdf_hkdf_settable_ctx_params(ossl_unused void *ctx,
                           ['KDF_PARAM_MODE',                    'mode',   'int'],
                           ['KDF_PARAM_SALT',                    'salt',   'octet_string'],
                           ['KDF_PARAM_INFO',                    'info',   'octet_string'],
-                          ['KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int'],
+                          ['KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
                          )); -}
 
 static const OSSL_PARAM *hkdf_gettable_ctx_params(ossl_unused void *ctx,
@@ -454,7 +456,7 @@ static int hkdf_common_get_ctx_params(void *vctx, OSSL_PARAM params[])
             default:
                 return 0;
             }
-        } else if (p.mode->data_type == OSSL_PARAM_INTEGER) {
+        } else {
             if (!OSSL_PARAM_set_int(p.mode, ctx->mode))
                 return 0;
         }
@@ -499,16 +501,15 @@ static void *kdf_hkdf_fixed_digest_new(void *provctx, const char *digest)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     KDF_HKDF *ctx;
-    OSSL_PARAM params[2];
+    OSSL_PARAM param;
 
     ctx = kdf_hkdf_new(provctx);
     if (ctx == NULL)
         return NULL;
 
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_DIGEST,
-                                                 (char *)digest, 0);
-    params[1] = OSSL_PARAM_construct_end();
-    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx)) {
+    param = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_DIGEST,
+                                             (char *)digest, 0);
+    if (!ossl_prov_digest_load(&ctx->digest, &param, NULL, NULL, libctx)) {
         kdf_hkdf_free(ctx);
         return NULL;
     }
@@ -527,7 +528,7 @@ static void *kdf_hkdf_fixed_digest_new(void *provctx, const char *digest)
                           ['KDF_PARAM_DIGEST',         'digest', 'utf8_string',  'hidden'],
                           ['KDF_PARAM_KEY',            'key',    'octet_string'],
                           ['KDF_PARAM_SALT',           'salt',   'octet_string'],
-                          ['KDF_PARAM_FIPS_KEY_CHECK', 'ind_k',  'int'],
+                          ['KDF_PARAM_FIPS_KEY_CHECK', 'ind_k',  'int', 'fips'],
                           ['KDF_PARAM_INFO',           'info',   'octet_string', HKDF_MAX_INFOS],
                          )); -}
 
@@ -1014,8 +1015,8 @@ static int kdf_tls1_3_derive(void *vctx, unsigned char *key, size_t keylen,
                           ['KDF_PARAM_DIGEST',            'digest', 'utf8_string'],
                           ['KDF_PARAM_KEY',               'key',    'octet_string'],
                           ['KDF_PARAM_SALT',              'salt',   'octet_string'],
-                          ['KDF_PARAM_FIPS_KEY_CHECK',    'ind_k',  'int'],
-                          ['KDF_PARAM_FIPS_DIGEST_CHECK', 'ind_d',  'int'],
+                          ['KDF_PARAM_FIPS_KEY_CHECK',    'ind_k',  'int', 'fips'],
+                          ['KDF_PARAM_FIPS_DIGEST_CHECK', 'ind_d',  'int', 'fips'],
                           ['KDF_PARAM_PREFIX',            'prefix', 'octet_string'],
                           ['KDF_PARAM_LABEL',             'label',  'octet_string'],
                           ['KDF_PARAM_DATA',              'data',   'octet_string'],
