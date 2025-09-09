@@ -4846,6 +4846,19 @@ int SSL_set_record_size_limit(SSL *ssl, uint16_t limit) {
     return 1;
 }
 
+unsigned int SSL_get_max_send_fragment(const SSL *s)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+
+    return sc->rlayer.wrlmethod->get_max_frag_len(sc->rlayer.wrl);
+}
+
+unsigned int SSL_get_max_recv_fragment(const SSL *s) {
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+
+    return sc->rlayer.rrlmethod->get_max_frag_len(sc->rlayer.rrl);
+}
+
 uint8_t SSL_SESSION_get_max_fragment_length(const SSL_SESSION *session)
 {
     if (session->ext.max_fragment_len_mode == TLSEXT_max_fragment_length_UNSPECIFIED)

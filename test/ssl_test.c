@@ -191,6 +191,53 @@ static int check_alpn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
     return ret;
 }
 
+static int check_record_size_limit_negotiated(HANDSHAKE_RESULT *result,
+                                                SSL_TEST_CTX *test_ctx) {
+   int ret = 1;
+
+   if (!TEST_int_eq(test_ctx->record_size_limit_negotiated,
+                    result->record_size_limit_negotiated))
+       ret = 0;
+
+    if (!TEST_int_eq(test_ctx->max_frag_len_negotiated,
+                     result->max_frag_len_negotiated))
+        ret = 0;
+
+    return ret;
+}
+
+static int check_max_send_or_recv_frag_len(HANDSHAKE_RESULT *result,
+                                                SSL_TEST_CTX *test_ctx) {
+    int ret = 1;
+
+    if (test_ctx->expected_client_max_send_frag_len) {
+        if (!TEST_int_eq(test_ctx->expected_client_max_send_frag_len,
+                         result->client_max_send_frag_len))
+            ret = 0;
+    }
+
+    if (test_ctx->expected_client_max_recv_frag_len) {
+        if (!TEST_int_eq(test_ctx->expected_client_max_recv_frag_len,
+                         result->client_max_recv_frag_len))
+            ret = 0;
+    }
+
+    if (test_ctx->expected_server_max_send_frag_len) {
+        if (!TEST_int_eq(test_ctx->expected_server_max_send_frag_len,
+                         result->server_max_send_frag_len))
+            ret = 0;
+    }
+
+    if (test_ctx->expected_server_max_recv_frag_len) {
+        if (!TEST_int_eq(test_ctx->expected_server_max_recv_frag_len,
+                         result->server_max_recv_frag_len))
+            ret = 0;
+    }
+
+    return ret;
+}
+
+
 static int check_session_ticket_app_data(HANDSHAKE_RESULT *result,
                                          SSL_TEST_CTX *test_ctx)
 {
@@ -387,6 +434,8 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         ret &= check_client_sign_hash(result, test_ctx);
         ret &= check_client_sign_type(result, test_ctx);
         ret &= check_client_ca_names(result, test_ctx);
+        // ret &= check_record_size_limit_negotiated(result, test_ctx);
+        ret &= check_max_send_or_recv_frag_len(result, test_ctx);
     }
     return ret;
 }

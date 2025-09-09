@@ -295,6 +295,7 @@ struct ossl_record_method_st {
      * setting during construction of the record layer.
      */
     void (*set_max_frag_len)(OSSL_RECORD_LAYER *rl, size_t max_frag_len);
+    size_t (*get_max_frag_len)(OSSL_RECORD_LAYER *rl);
 
     /*
      * The maximum expansion in bytes that the record layer might add while

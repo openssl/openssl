@@ -470,6 +470,7 @@ void tls_get_state(OSSL_RECORD_LAYER *rl, const char **shortstr,
 int tls_set_options(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options);
 const COMP_METHOD *tls_get_compression(OSSL_RECORD_LAYER *rl);
 void tls_set_max_frag_len(OSSL_RECORD_LAYER *rl, size_t record_size_limit);
+size_t tls_get_max_frag_len(OSSL_RECORD_LAYER *rl);
 int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl);
 int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
                            size_t firstlen, size_t nextlen);

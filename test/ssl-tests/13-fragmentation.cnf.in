@@ -111,6 +111,7 @@ our @tests = (
         client => {
             extra => {
                 MaxFragmentLenExt => 1024,
+                DisableRecordSizeLimit => "Yes",
             },
         },
         test => {
@@ -124,6 +125,7 @@ our @tests = (
         client => {
             extra => {
                 MaxFragmentLenExt => 2048,
+                DisableRecordSizeLimit => "Yes",
             },
         },
         test => {
@@ -137,11 +139,18 @@ our @tests = (
         client => {
             extra => {
                 MaxFragmentLenExt => 512,
+                DisableRecordSizeLimit => "Yes",
             },
         },
         test => {
-            ApplicationData => 3072,
-            MaxFragmentSize => 1024,
+            ApplicationData                   => 3072,
+            MaxFragmentSize                   => 1024,
+
+            ExpectedClientMaxSendFragmentSize => 512,
+            ExpectedClientMaxRecvFragmentSize => 512,
+
+            ExpectedServerMaxSendFragmentSize => 512,
+            ExpectedServerMaxRecvFragmentSize => 512,
         }
     },
     {
@@ -150,11 +159,18 @@ our @tests = (
         client => {
             extra => {
                 MaxFragmentLenExt => 2048,
+                DisableRecordSizeLimit => "Yes",
             },
         },
         test => {
             ApplicationData => 3072,
             MaxFragmentSize => 1024,
+
+            ExpectedClientMaxSendFragmentSize => 2048,
+            ExpectedClientMaxRecvFragmentSize => 2048,
+
+            ExpectedServerMaxSendFragmentSize => 2048,
+            ExpectedServerMaxRecvFragmentSize => 2048,
         }
     },
     {
@@ -163,6 +179,7 @@ our @tests = (
         client => {
             extra => {
                 MaxFragmentLenExt => 4096,
+                DisableRecordSizeLimit => "Yes",
             },
         },
         test => {
@@ -176,6 +193,7 @@ our @tests = (
         client => {
             extra => {
                 MaxFragmentLenExt => 2048,
+                DisableRecordSizeLimit => "Yes",
             },
         },
         test => {
@@ -184,10 +202,54 @@ our @tests = (
         }
     },
     {
-        name   => "Record Size Limit extension negotiated",
+        name   => "Record Size Limit extension negotiated, not asymmetric",
         server => {
             extra => {
                 RecordSizeLimit => 64,
+            },
+        },
+        client => {
+            extra => {
+                RecordSizeLimit => 64,
+            },
+        },
+        test   => {
+            ApplicationData                   => 32768,
+
+            ExpectedClientMaxSendFragmentSize => 64,
+            ExpectedClientMaxRecvFragmentSize => 64,
+
+            ExpectedServerMaxSendFragmentSize => 64,
+            ExpectedServerMaxRecvFragmentSize => 64,
+        }
+    },
+    {
+        name   => "Record Size Limit extension negotiated, asymmetric",
+        server => {
+            extra => {
+                RecordSizeLimit => 1024,
+            },
+        },
+        client => {
+            extra => {
+                RecordSizeLimit => 128,
+            },
+        },
+        test   => {
+            ApplicationData                   => 32768,
+
+            ExpectedClientMaxSendFragmentSize => 1024,
+            ExpectedClientMaxRecvFragmentSize => 128,
+
+            ExpectedServerMaxSendFragmentSize => 128,
+            ExpectedServerMaxRecvFragmentSize => 1024,
+        }
+    },
+    {
+        name   => "Record Size Limit extension not negotiated",
+        server => {
+            extra => {
+                DisableRecordSizeLimit => "Yes",
             },
         },
         client => {
@@ -200,25 +262,41 @@ our @tests = (
         }
     },
     {
-        # Endpoints can send records of any size permitted by the protocol or other negotiated extensions.
-
-        name   => "Record Size Limit extension not negotiated",
+        name   => "Server rejects invalid Record Size Limit value",
         server => { },
+        client => {
+            extra => {
+                RecordSizeLimit => 20,
+            },
+        },
+        test   => {
+            ExpectedResult => "ServerFail",
+            ExpectedServerAlert => "IllegalParameter",
+        }
+    },
+    {
+        name   => "Client rejects invalid Record Size Limit value",
+        server => {
+            extra => {
+                RecordSizeLimit => 20,
+            },
+        },
         client => {
             extra => {
                 RecordSizeLimit => 64,
             },
         },
         test   => {
-            ApplicationData => 32768,
+            ExpectedResult => "ClientFail",
+            ExpectedClientAlert => "IllegalParameter",
         }
     },
     {
         # TODO
-        name   => "Record Size Limit and Maximum Fragment Length configured.",
+
+        name   => "Maximum Fragment Len extension 1024, Record Size Limit negotiated",
         server => {
             extra => {
-                RecordSizeLimit => 64,
             },
         },
         client => {

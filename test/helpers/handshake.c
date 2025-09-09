@@ -567,31 +567,22 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                                    test->max_fragment_size), 1))
         goto err;
 
-    if (extra->server.record_size_limit == 0) {
+    if (extra->server.disable_record_size_limit)
         SSL_CTX_set_options(server_ctx, SSL_OP_NO_RECORD_SIZE_LIMIT_EXT);
-    } else {
-        if (!TEST_int_eq(SSL_CTX_set_record_size_limit(server_ctx,
-                                      extra->server.record_size_limit), 1))
-            goto err;
-    }
+
+    server_ctx->ext.record_size_limit = extra->server.record_size_limit;
 
     if (server2_ctx != NULL) {
-        if (extra->server2.record_size_limit == 0) {
+        if (extra->server2.disable_record_size_limit)
             SSL_CTX_set_options(server2_ctx, SSL_OP_NO_RECORD_SIZE_LIMIT_EXT);
-        } else {
-            if (!TEST_int_eq(SSL_CTX_set_record_size_limit(server2_ctx,
-                                          extra->server2.record_size_limit), 1))
-                goto err;
-        }
+
+        server2_ctx->ext.record_size_limit = extra->server2.record_size_limit;
     }
 
-    if (extra->client.record_size_limit == 0) {
+    if (extra->client.disable_record_size_limit)
         SSL_CTX_set_options(client_ctx, SSL_OP_NO_RECORD_SIZE_LIMIT_EXT);
-    } else {
-        if (!TEST_int_eq(SSL_CTX_set_record_size_limit(client_ctx,
-                                           extra->client.record_size_limit), 1))
-            goto err;
-    }
+
+    client_ctx->ext.record_size_limit = extra->client.record_size_limit;
 
     switch (extra->client.verify_callback) {
     case SSL_TEST_VERIFY_ACCEPT_ALL:
@@ -1575,6 +1566,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     const STACK_OF(X509_NAME) *names;
     time_t start;
     const char* cipher;
+    SSL_CONNECTION *client_con = NULL, *server_con = NULL;
 
     if (ret == NULL)
         return NULL;
@@ -1773,6 +1765,9 @@ static HANDSHAKE_RESULT *do_handshake_internal(
         }
     }
  err:
+    client_con = SSL_CONNECTION_FROM_SSL(client.ssl);
+    server_con = SSL_CONNECTION_FROM_SSL(server.ssl);
+
     ret->server_alert_sent = server_ex_data.alert_sent;
     ret->server_num_fatal_alerts_sent = server_ex_data.num_fatal_alerts_sent;
     ret->server_alert_received = client_ex_data.alert_received;
@@ -1816,6 +1811,18 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
     SSL_get0_alpn_selected(server.ssl, &proto, &proto_len);
     ret->server_alpn_negotiated = dup_str(proto, proto_len);
+
+    ret->record_size_limit_negotiated = USE_RECORD_SIZE_LIMIT(client_con)
+                                           && USE_RECORD_SIZE_LIMIT(server_con);
+
+    ret->max_frag_len_negotiated = USE_MAX_FRAGMENT_LENGTH_EXT(client_con)
+                                     && USE_MAX_FRAGMENT_LENGTH_EXT(server_con);
+
+    ret->client_max_send_frag_len = SSL_get_max_send_fragment(client.ssl);
+    ret->client_max_recv_frag_len = SSL_get_max_recv_fragment(client.ssl);
+
+    ret->server_max_send_frag_len = SSL_get_max_send_fragment(server.ssl);
+    ret->server_max_recv_frag_len = SSL_get_max_recv_fragment(server.ssl);
 
     if ((sess = SSL_get0_session(server.ssl)) != NULL) {
         SSL_SESSION_get0_ticket_appdata(sess, (void**)&tick, &tick_len);

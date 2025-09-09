@@ -129,6 +129,7 @@ static const test_enum ssl_alerts[] = {
     {"BadCertificate", SSL_AD_BAD_CERTIFICATE},
     {"NoApplicationProtocol", SSL_AD_NO_APPLICATION_PROTOCOL},
     {"CertificateRequired", SSL_AD_CERTIFICATE_REQUIRED},
+    {"IllegalParameter", SSL_AD_ILLEGAL_PARAMETER},
 };
 
 __owur static int parse_alert(int *alert, const char *value)
@@ -497,6 +498,9 @@ IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, max_fragment_size)
 IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CLIENT_CONF, client, record_size_limit)
 IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_SERVER_CONF, server, record_size_limit)
 
+IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CLIENT_CONF, client, disable_record_size_limit)
+IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_SERVER_CONF, server, disable_record_size_limit)
+
 /* Maximum-Fragment-Length TLS extension mode */
 static const test_enum ssl_max_fragment_len_mode[] = {
     {"None", TLSEXT_max_fragment_length_DISABLED},
@@ -690,6 +694,16 @@ IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CLIENT_CONF, client, no_extms_on_reneg)
 /* FIPS provider version limiting */
 IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, fips_version)
 
+/* Extension negotiation. */
+
+IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, max_frag_len_negotiated)
+IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, record_size_limit_negotiated)
+
+IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, expected_client_max_send_frag_len)
+IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, expected_client_max_recv_frag_len)
+IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, expected_server_max_send_frag_len)
+IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, expected_server_max_recv_frag_len)
+
 /* Known test options and their corresponding parse methods. */
 
 /* Top-level options. */
@@ -702,6 +716,8 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ExpectedResult", &parse_expected_result },
     { "ExpectedClientAlert", &parse_client_alert },
     { "ExpectedServerAlert", &parse_server_alert },
+    { "MaxFragmentLenNegotiated", &parse_test_max_frag_len_negotiated},
+    { "RecordSizeLimitNegotiated", &parse_test_record_size_limit_negotiated},
     { "ExpectedProtocol", &parse_protocol },
     { "ExpectedServerName", &parse_expected_servername },
     { "SessionTicketExpected", &parse_session_ticket },
@@ -724,6 +740,10 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ExpectedClientSignHash", &parse_expected_client_sign_hash },
     { "ExpectedClientSignType", &parse_expected_client_sign_type },
     { "ExpectedClientCANames", &parse_expected_client_ca_names },
+    { "ExpectedClientMaxSendFragmentSize", &parse_test_expected_client_max_send_frag_len},
+    { "ExpectedClientMaxRecvFragmentSize", &parse_test_expected_client_max_recv_frag_len},
+    { "ExpectedServerMaxSendFragmentSize", &parse_test_expected_server_max_send_frag_len},
+    { "ExpectedServerMaxRecvFragmentSize", &parse_test_expected_server_max_recv_frag_len},
     { "UseSCTP", &parse_test_use_sctp },
     { "CompressCertificates", &parse_test_compress_certificates },
     { "EnableClientSCTPLabelBug", &parse_test_enable_client_sctp_label_bug },
@@ -750,6 +770,7 @@ static const ssl_test_client_option ssl_test_client_options[] = {
     { "SRPPassword", &parse_client_srp_password },
     { "MaxFragmentLenExt", &parse_max_fragment_len_mode },
     { "RecordSizeLimit", &parse_client_record_size_limit},
+    { "DisableRecordSizeLimit", &parse_client_disable_record_size_limit},
     { "EnablePHA", &parse_client_enable_pha },
     { "RenegotiateNoExtms", &parse_client_no_extms_on_reneg },
 };
@@ -771,6 +792,7 @@ static const ssl_test_server_option ssl_test_server_options[] = {
     { "ForcePHA", &parse_server_force_pha },
     { "SessionTicketAppData", &parse_server_session_ticket_app_data },
     { "RecordSizeLimit", &parse_server_record_size_limit},
+    { "DisableRecordSizeLimit", &parse_server_disable_record_size_limit},
 };
 
 SSL_TEST_CTX *SSL_TEST_CTX_new(OSSL_LIB_CTX *libctx)

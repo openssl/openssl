@@ -51,6 +51,8 @@ typedef struct handshake_result {
     char *server_npn_negotiated;
     char *client_alpn_negotiated;
     char *server_alpn_negotiated;
+    int record_size_limit_negotiated;
+    int max_frag_len_negotiated;
     /* Was the handshake resumed? */
     int client_resumed;
     int server_resumed;
@@ -77,6 +79,11 @@ typedef struct handshake_result {
     char *cipher;
     /* session ticket application data */
     char *result_session_ticket_app_data;
+    size_t client_max_send_frag_len;
+    size_t client_max_recv_frag_len;
+
+    size_t server_max_send_frag_len;
+    size_t server_max_recv_frag_len;
 } HANDSHAKE_RESULT;
 
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void);

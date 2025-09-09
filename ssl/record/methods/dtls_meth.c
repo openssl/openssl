@@ -796,6 +796,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_set_options,
     tls_get_compression,
     tls_set_max_frag_len,
+    tls_get_max_frag_len,
     dtls_get_max_record_overhead,
     tls_increment_sequence_ctr,
     tls_alloc_buffers,

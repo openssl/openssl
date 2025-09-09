@@ -2073,6 +2073,10 @@ void tls_set_max_frag_len(OSSL_RECORD_LAYER *rl, size_t max_frag_len)
      */
 }
 
+size_t tls_get_max_frag_len(OSSL_RECORD_LAYER *rl) {
+    return rl->max_frag_len;
+}
+
 int tls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl)
 {
     int i;
@@ -2176,6 +2180,7 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_set_options,
     tls_get_compression,
     tls_set_max_frag_len,
+    tls_get_max_frag_len,
     NULL,
     tls_increment_sequence_ctr,
     tls_alloc_buffers,
