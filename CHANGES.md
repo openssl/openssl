@@ -32,7 +32,9 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
- * none yet
+ * Added `-hmac-env` and `-hmac-stdin` options to openssl-dgst.
+
+   *Igor Ustinov*
 
 OpenSSL 3.6
 -----------
