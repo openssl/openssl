@@ -105,6 +105,7 @@ static char *privkey8192 = NULL;
 static char *srpvfile = NULL;
 static char *tmpfilename = NULL;
 static char *dhfile = NULL;
+static char *datadir = NULL;
 
 static int is_fips = 0;
 static int fips_ems_check = 0;
@@ -127,6 +128,15 @@ static X509 *ocspcert = NULL;
 #endif
 
 #define CLIENT_VERSION_LEN      2
+
+/* The ssltrace test assumes some options are switched on/off */
+#if !defined(OPENSSL_NO_SSL_TRACE) \
+    && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD) \
+    && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH) \
+    && !defined(OPENSSL_NO_ML_DSA) && !defined(OPENSSL_NO_ML_KEM) \
+    && !defined(OPENSSL_NO_TLS1_3)
+# define DO_SSL_TRACE_TEST
+#endif
 
 /*
  * This structure is used to validate that the correct number of log messages
@@ -13730,6 +13740,74 @@ static int test_no_renegotiation(int idx)
     return testresult;
 }
 
+#if defined(DO_SSL_TRACE_TEST)
+/*
+ * Tests that the SSL_trace() msg_callback works as expected with a PQ Groups.
+ */
+static int test_ssl_trace(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+    BIO *bio = NULL;
+    char *reffile = NULL;
+    char *grouplist = "MLKEM512:MLKEM768:MLKEM1024:X25519MLKEM768:SecP256r1MLKEM768"
+        ":SecP384r1MLKEM1024:secp521r1:secp384r1:secp256r1";
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_3_VERSION, TLS1_3_VERSION,
+                                       &sctx, &cctx, cert, privkey))
+            || !TEST_ptr(bio = BIO_new(BIO_s_mem()))
+            || !TEST_true(SSL_CTX_set1_groups_list(sctx, grouplist))
+            || !TEST_true(SSL_CTX_set1_groups_list(cctx, grouplist))
+            || !TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                                                   "TLS_AES_128_GCM_SHA256"))
+            || !TEST_true(SSL_CTX_set_ciphersuites(sctx,
+                                                   "TLS_AES_128_GCM_SHA256"))
+# ifdef SSL_OP_LEGACY_EC_POINT_FORMATS
+            || !TEST_true(SSL_CTX_set_options(cctx, SSL_OP_LEGACY_EC_POINT_FORMATS))
+            || !TEST_true(SSL_CTX_set_options(sctx, SSL_OP_LEGACY_EC_POINT_FORMATS))
+# endif
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL)))
+        goto err;
+
+    SSL_set_msg_callback(clientssl, SSL_trace);
+    SSL_set_msg_callback_arg(clientssl, bio);
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto err;
+
+    /* Skip the comparison of the trace when the fips provider is used. */
+    if (is_fips) {
+        /* Check whether there was something written. */
+        if (!TEST_int_gt(BIO_pending(bio), 0))
+            goto err;
+    } else {
+
+# ifdef OPENSSL_NO_ZLIB
+        reffile = test_mk_file_path(datadir, "ssltraceref.txt");
+# else
+        reffile = test_mk_file_path(datadir, "ssltraceref-zlib.txt");
+# endif
+        if (!TEST_true(compare_with_reference_file(bio, reffile)))
+            goto err;
+    }
+
+    testresult = 1;
+ err:
+    BIO_free(bio);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    OPENSSL_free(reffile);
+
+    return testresult;
+}
+#endif
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -13763,6 +13841,8 @@ int setup_tests(void)
             || !TEST_ptr(configfile = test_get_argument(4))
             || !TEST_ptr(dhfile = test_get_argument(5)))
         return 0;
+
+    datadir = test_get_argument(6);
 
     if (!TEST_true(OSSL_LIB_CTX_load_config(libctx, configfile)))
         return 0;
@@ -14065,6 +14145,10 @@ int setup_tests(void)
     ADD_TEST(test_quic_tls_early_data);
 #endif
     ADD_ALL_TESTS(test_no_renegotiation, 2);
+#if defined(DO_SSL_TRACE_TEST)
+    if (datadir != NULL)
+        ADD_TEST(test_ssl_trace);
+#endif
     return 1;
 
  err:
