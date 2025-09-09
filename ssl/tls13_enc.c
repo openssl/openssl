@@ -39,7 +39,7 @@ int tls13_hkdf_expand_ex(OSSL_LIB_CTX *libctx, const char *propq,
 {
     EVP_KDF *kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_TLS1_3_KDF, propq);
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[7], *p = params;
+    OSSL_PARAM params[8], *p = params;
     int mode = EVP_PKEY_HKDEF_MODE_EXPAND_ONLY;
     const char *mdname = EVP_MD_get0_name(md);
     int ret;
@@ -84,6 +84,10 @@ int tls13_hkdf_expand_ex(OSSL_LIB_CTX *libctx, const char *propq,
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_DATA,
                                                  (unsigned char *)data,
                                                  datalen);
+    if (propq != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
+                                                (char *)propq, 0);
+
     *p++ = OSSL_PARAM_construct_end();
 
     ret = EVP_KDF_derive(kctx, out, outlen, params) <= 0;
