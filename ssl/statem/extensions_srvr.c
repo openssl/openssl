@@ -786,7 +786,7 @@ failure:
  * assign to selected_group and also set the related index in the candidate group list,
  * or set selected_group to 0 if no overlap
  */
-#ifndef OPENSSL_NO_TLS1_3
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_DTLS1_3)
 static void check_overlap(SSL_CONNECTION *s,
     const uint16_t *prio_groups, size_t prio_num_groups,
     const uint16_t *candidate_groups, size_t candidate_num_groups,
@@ -796,6 +796,7 @@ static void check_overlap(SSL_CONNECTION *s,
     uint16_t current_group;
     size_t group_idx = prio_num_groups;
     size_t new_group_idx = 0;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     *candidate_group_idx = 0;
     *prio_group_idx = 0;
@@ -806,8 +807,8 @@ static void check_overlap(SSL_CONNECTION *s,
                 prio_num_groups, 1, &new_group_idx)
             || !tls_group_allowed(s, candidate_groups[current_group],
                 SSL_SECOP_CURVE_SUPPORTED)
-            || !tls_valid_group(s, candidate_groups[current_group], TLS1_3_VERSION,
-                TLS1_3_VERSION, 0, NULL))
+            || !tls_valid_group(s, candidate_groups[current_group], version1_3,
+                version1_3, 0, NULL))
             /* No overlap or group not suitable, check next group */
             continue;
 

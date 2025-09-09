@@ -284,6 +284,8 @@ struct tls_sigalg_st {
     unsigned int secbits;
     unsigned int mintls;
     unsigned int maxtls;
+    unsigned int mindtls;
+    unsigned int maxdtls;
 };
 
 #define XORSIGALG_NAME "xorhmacsig"
@@ -299,6 +301,8 @@ static struct tls_sigalg_st xor_sigalg = {
     128, /* secbits */
     TLS1_3_VERSION, /* mintls */
     0, /* maxtls */
+    DTLS1_3_VERSION, /* mindtls */
+    0, /* maxdtls */
 };
 
 static struct tls_sigalg_st xor_sigalg_hash = {
@@ -306,6 +310,8 @@ static struct tls_sigalg_st xor_sigalg_hash = {
     128, /* secbits */
     TLS1_3_VERSION, /* mintls */
     0, /* maxtls */
+    DTLS1_3_VERSION, /* mindtls */
+    0, /* maxdtls */
 };
 
 static struct tls_sigalg_st xor_sigalg12 = {
@@ -313,6 +319,8 @@ static struct tls_sigalg_st xor_sigalg12 = {
     128, /* secbits */
     TLS1_2_VERSION, /* mintls */
     TLS1_2_VERSION, /* maxtls */
+    DTLS1_2_VERSION, /* mindtls */
+    DTLS1_2_VERSION, /* maxdtls */
 };
 
 static const OSSL_PARAM xor_sig_nohash_params[] = {
@@ -331,6 +339,10 @@ static const OSSL_PARAM xor_sig_nohash_params[] = {
         &xor_sigalg.mintls),
     OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS,
         &xor_sigalg.maxtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS,
+        &xor_sigalg.mindtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS,
+        &xor_sigalg.maxdtls),
     OSSL_PARAM_END
 };
 
@@ -352,6 +364,10 @@ static const OSSL_PARAM xor_sig_hash_params[] = {
         &xor_sigalg_hash.mintls),
     OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS,
         &xor_sigalg_hash.maxtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS,
+        &xor_sigalg_hash.mindtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS,
+        &xor_sigalg_hash.maxdtls),
     OSSL_PARAM_END
 };
 
@@ -371,6 +387,10 @@ static const OSSL_PARAM xor_sig_12_params[] = {
         &xor_sigalg12.mintls),
     OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS,
         &xor_sigalg12.maxtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS,
+        &xor_sigalg12.mindtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS,
+        &xor_sigalg12.maxdtls),
     OSSL_PARAM_END
 };
 

@@ -555,8 +555,6 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
-    /* No provider sigalgs are supported in DTLS, reset after checking. */
-    sinf->mindtls = sinf->maxdtls = -1;
 
     /* The remaining parameters below are mandatory again */
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS);
@@ -578,9 +576,11 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
-    if ((sinf->mintls != 0) && (sinf->mintls != -1) && ((sinf->mintls > TLS1_3_VERSION)))
+    if ((sinf->mintls != 0) && (sinf->mintls != -1)
+        && ((sinf->mintls > TLS1_3_VERSION)))
         sinf->mintls = sinf->maxtls = -1;
-    if ((sinf->maxtls != 0) && (sinf->maxtls != -1) && ((sinf->maxtls < TLS1_3_VERSION)))
+    if ((sinf->maxtls != 0) && (sinf->maxtls != -1)
+        && ((sinf->maxtls < TLS1_3_VERSION)))
         sinf->mintls = sinf->maxtls = -1;
 
     /* Ignore unusable sigalgs */
@@ -2020,19 +2020,19 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
         TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256,
         NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
         NID_ecdsa_with_SHA256, NID_brainpoolP256r1, 1, 0,
-        TLS1_3_VERSION, 0, -1, -1 },
+        TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
     { TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_name,
         TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_alias,
         TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384,
         NID_sha384, SSL_MD_SHA384_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
         NID_ecdsa_with_SHA384, NID_brainpoolP384r1, 1, 0,
-        TLS1_3_VERSION, 0, -1, -1 },
+        TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
     { TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name,
         TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_alias,
         TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512,
         NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
         NID_ecdsa_with_SHA512, NID_brainpoolP512r1, 1, 0,
-        TLS1_3_VERSION, 0, -1, -1 },
+        TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
 
     { TLSEXT_SIGALG_rsa_pss_rsae_sha256_name,
         "PSS+SHA256", TLSEXT_SIGALG_rsa_pss_rsae_sha256,
@@ -2187,13 +2187,10 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
     SIGALG_LOOKUP *cache = NULL;
     uint16_t *tls12_sigalgs_list = NULL;
     EVP_PKEY *tmpkey = EVP_PKEY_new();
-    int istls;
     int ret = 0;
 
     if (ctx == NULL)
         goto err;
-
-    istls = !SSL_CTX_IS_DTLS(ctx);
 
     sigalgs_len = OSSL_NELEM(sigalg_lookup_tbl) + ctx->sigalg_list_len;
 
@@ -2254,10 +2251,10 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
         cache[cache_idx].curve = NID_undef;
         cache[cache_idx].mintls = TLS1_3_VERSION;
         cache[cache_idx].maxtls = TLS1_3_VERSION;
-        cache[cache_idx].mindtls = -1;
-        cache[cache_idx].maxdtls = -1;
+        cache[cache_idx].mindtls = DTLS1_3_VERSION;
+        cache[cache_idx].maxdtls = DTLS1_3_VERSION;
         /* Compatibility with TLS 1.3 is checked on load */
-        cache[cache_idx].available = istls;
+        cache[cache_idx].available = 1;
         cache[cache_idx].advertise = 0;
         cache_idx++;
     }
@@ -3354,7 +3351,7 @@ static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op,
      * At some point we should fully axe DSA/etc. in ClientHello as per (D)TLSv1.3
      * spec
      */
-    if (!s->server && s->s3.tmp.min_ver > 0
+    if (!s->server && s->s3.tmp.min_ver != 0
         && ssl_version_cmp(s, s->s3.tmp.min_ver, version1_3) >= 0
         && (lu->sig == EVP_PKEY_DSA || lu->hash_idx == SSL_MD_SHA1_IDX
             || lu->hash_idx == SSL_MD_MD5_IDX
@@ -3375,7 +3372,7 @@ static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op,
             return 0;
         if (!s->server
             && SSL_CONNECTION_GET_SSL(s)->method->version == any_version
-            && s->s3.tmp.max_ver > 0
+            && s->s3.tmp.max_ver != 0
             && ssl_version_cmp(s, s->s3.tmp.max_ver, version1_3) >= 0) {
             int i, num;
             STACK_OF(SSL_CIPHER) *sk;
@@ -3386,7 +3383,7 @@ static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op,
              * ciphersuites enabled.
              */
 
-            if (s->s3.tmp.min_ver > 0
+            if (s->s3.tmp.min_ver != 0
                 && ssl_version_cmp(s, s->s3.tmp.min_ver, version1_3) >= 0)
                 return 0;
 
