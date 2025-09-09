@@ -519,7 +519,7 @@ int mempacket_swap_epoch(BIO *bio)
             if (epoch == 0)
                 epoch = 4;
 
-            len = ((rec[DTLS13_UNI_HDR_RECORD_LEN_HI] << 8) | rec[DTLS13_UNI_HDR_RECORD_LEN_LO])
+            len = ((rec[DTLS13_UNI_HDR_RECORD_LEN_HI] << 8) | rec[DTLS13_UNI_HDR_RECORD_LEN_LO]);
             len += rechdrlen;
         } else {
             epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
