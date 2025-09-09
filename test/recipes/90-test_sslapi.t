@@ -45,7 +45,10 @@ ok(run(test(["sslapitest", srctop_dir("test", "certs"),
              srctop_file("test",
                          "recipes",
                          "90-test_sslapi_data",
-                         "dhparams.pem")])),
+                         "dhparams.pem"),
+             srctop_dir("test",
+                        "recipes",
+                        "90-test_sslapi_data")])),
              "running sslapitest");
 
 SKIP: {
