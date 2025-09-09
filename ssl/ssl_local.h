@@ -310,7 +310,7 @@
 
 /* Check if an SSL_CTX structure is using DTLS */
 # define SSL_CTX_IS_DTLS(ctx) \
-     ((ctx->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS) != 0)
+    ((ctx->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS) != 0)
 
 /* Check if we are using TLSv1.3 */
 # define SSL_CONNECTION_IS_TLS13(s) (!SSL_CONNECTION_IS_DTLS(s) \
