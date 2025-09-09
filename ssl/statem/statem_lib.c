@@ -2447,8 +2447,8 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
                      SSL_R_INAPPROPRIATE_FALLBACK);
             return 0;
         }
-        /* Only when accepting (D)TLS1.3 */
-        if (real_max == version1_3
+        /* Only when accepting TLS1.3 */
+        if (ssl_version_cmp(s, s->version, version1_3)
             && memcmp(tls12downgrade,
                       s->s3.server_random + SSL3_RANDOM_SIZE
                       - sizeof(tls12downgrade),
