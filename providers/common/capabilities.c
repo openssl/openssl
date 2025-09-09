@@ -284,9 +284,9 @@ typedef struct tls_sigalg_constants_st {
 } TLS_SIGALG_CONSTANTS;
 
 static const TLS_SIGALG_CONSTANTS sigalg_constants_list[3] = {
-    { 0x0904, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { 0x0905, 192, TLS1_3_VERSION, 0, -1, -1 },
-    { 0x0906, 256, TLS1_3_VERSION, 0, -1, -1 },
+    { 0x0904, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { 0x0905, 192, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { 0x0906, 256, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
 };
 
 #define TLS_SIGALG_ENTRY(tlsname, algorithm, oid, idx)               \
