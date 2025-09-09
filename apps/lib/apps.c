@@ -716,7 +716,7 @@ char *next_item(char *opt) /* in list separated by comma and/or spaces */
         /* terminate current item */
         *opt++ = '\0';
         /* skip over any further separators, but only one comma */
-        while ((!found_comma && *opt == ',' && (found_comma = 1))
+        while ((!found_comma && (found_comma = (*opt == ',')))
                || isspace(_UC(*opt)))
             opt++;
     }
