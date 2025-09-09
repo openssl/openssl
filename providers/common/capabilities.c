@@ -294,22 +294,22 @@ typedef struct tls_sigalg_constants_st {
 } TLS_SIGALG_CONSTANTS;
 
 static const TLS_SIGALG_CONSTANTS sigalg_constants_list[] = {
-    { TLSEXT_SIGALG_mldsa44, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_mldsa65, 192, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_mldsa87, 256, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_sha2_128s, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_sha2_128f, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_sha2_192s, 192, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_sha2_192f, 192, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_sha2_256s, 256, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_sha2_256f, 256, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_shake_128s, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_shake_128f, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_shake_192s, 192, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_shake_192f, 192, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_shake_256s, 256, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_shake_256f, 256, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_sm2sig_sm3, 128, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_mldsa44, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_mldsa65, 192, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_mldsa87, 256, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_sha2_128s, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_sha2_128f, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_sha2_192s, 192, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_sha2_192f, 192, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_sha2_256s, 256, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_sha2_256f, 256, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_shake_128s, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_shake_128f, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_shake_192s, 192, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_shake_192f, 192, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_shake_256s, 256, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_shake_256f, 256, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_sm2sig_sm3, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
 };
 
 #define TLS_SIGALG_ENTRY(tlsname, algorithm, oid, idx)               \
