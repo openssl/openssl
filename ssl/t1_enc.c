@@ -35,7 +35,7 @@ static int tls1_PRF(SSL_CONNECTION *s,
     const EVP_MD *md = ssl_prf_md(s);
     EVP_KDF *kdf;
     EVP_KDF_CTX *kctx = NULL;
-    OSSL_PARAM params[8], *p = params;
+    OSSL_PARAM params[9], *p = params;
     const char *mdname;
 
     if (md == NULL) {
@@ -71,6 +71,13 @@ static int tls1_PRF(SSL_CONNECTION *s,
                                              (void *)seed4, (size_t)seed4_len);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
                                              (void *)seed5, (size_t)seed5_len);
+    /*
+     * If we have a propery query string, the kdf needs to know about it in the event
+     * the specific kdf in use allocated a digest as part of its implementation
+     */
+    if (SSL_CONNECTION_GET_CTX(s)->propq != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
+                                                (char *)SSL_CONNECTION_GET_CTX(s)->propq, 0);
     *p = OSSL_PARAM_construct_end();
     if (EVP_KDF_derive(kctx, out, olen, params)) {
         EVP_KDF_CTX_free(kctx);
