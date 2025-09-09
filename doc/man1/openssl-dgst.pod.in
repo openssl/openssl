@@ -343,7 +343,7 @@ The FIPS-related options were removed in OpenSSL 1.1.0.
 
 The B<-engine> and B<-engine_impl> options were deprecated in OpenSSL 3.0.
 
-The B<-hmac-env> and B<-hmac-stdin> options ware added in OpenSSL 3.6.
+The B<-hmac-env> and B<-hmac-stdin> options were added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
