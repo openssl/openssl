@@ -567,13 +567,13 @@ struct dh_gen_set_params_st {
     OSSL_PARAM *group_name;
     OSSL_PARAM *privlen;
     OSSL_PARAM *pbits;
-    OSSL_PARAM *qbits;      /* HDX only */
-    OSSL_PARAM *digest;     /* HDX only */
-    OSSL_PARAM *propq;      /* HDX only */
-    OSSL_PARAM *g_index;    /* HDX only */
-    OSSL_PARAM *seed;       /* HDX only */
-    OSSL_PARAM *p_counter;  /* HDX only */
-    OSSL_PARAM *h;          /* HDX only */
+    OSSL_PARAM *qbits;      /* DHX only */
+    OSSL_PARAM *digest;     /* DHX only */
+    OSSL_PARAM *propq;      /* DHX only */
+    OSSL_PARAM *g_index;    /* DHX only */
+    OSSL_PARAM *seed;       /* DHX only */
+    OSSL_PARAM *p_counter;  /* DHX only */
+    OSSL_PARAM *h;          /* DHX only */
     OSSL_PARAM *generator;  /* DH only */
 };
 
