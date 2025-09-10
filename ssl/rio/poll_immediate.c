@@ -425,7 +425,7 @@ int SSL_poll(SSL_POLL_ITEM *items,
     if (num_items == 0) {
         if (timeout == NULL)
             goto out;
-        OSSL_sleep(ossl_time2ms(ossl_time_from_timeval(*timeout)));
+        OSSL_sleep_interruptible(ossl_time2ms(ossl_time_from_timeval(*timeout)));
         goto out;
     }
 
