@@ -66,7 +66,7 @@ int compare_ssl_trace_with_file(BIO *membio, const char *reffile)
             TEST_error("Actual and ref line data length mismatch");
             TEST_info("%s", buf1);
             TEST_info("%s", buf2);
-           goto err;
+            goto err;
         }
         for (i = 0; i < line_len; i++) {
             /* '?' is a wild card character in the reference text */

@@ -465,11 +465,11 @@ static int test_ssl_trace(void)
             goto err;
     } else {
 
-#ifdef OPENSSL_NO_ZLIB
+# ifdef OPENSSL_NO_ZLIB
         reffile = test_mk_file_path(datadir, "ssltraceref.txt");
-#else
+# else
         reffile = test_mk_file_path(datadir, "ssltraceref-zlib.txt");
-#endif
+# endif
         if (!TEST_true(compare_ssl_trace_with_file(bio, reffile)))
             goto err;
     }

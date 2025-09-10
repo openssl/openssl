@@ -13751,8 +13751,7 @@ static int test_ssl_trace(void)
     BIO *bio = NULL;
     char *reffile = NULL;
     char *grouplist = "MLKEM512:MLKEM768:MLKEM1024:X25519MLKEM768:SecP256r1MLKEM768"
-                      ":SecP384r1MLKEM1024:secp521r1:secp384r1:secp256r1";
-
+        ":SecP384r1MLKEM1024:secp521r1:secp384r1:secp256r1";
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),
@@ -13762,7 +13761,7 @@ static int test_ssl_trace(void)
             || !TEST_true(SSL_CTX_set1_groups_list(sctx, grouplist))
             || !TEST_true(SSL_CTX_set1_groups_list(cctx, grouplist))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                          NULL, NULL)))
+                                             NULL, NULL)))
         goto err;
 
     SSL_set_msg_callback(clientssl, SSL_trace);
@@ -13778,11 +13777,11 @@ static int test_ssl_trace(void)
             goto err;
     } else {
 
-#ifdef OPENSSL_NO_ZLIB
+# ifdef OPENSSL_NO_ZLIB
         reffile = test_mk_file_path(datadir, "ssltraceref.txt");
-#else
+# else
         reffile = test_mk_file_path(datadir, "ssltraceref-zlib.txt");
-#endif
+# endif
         if (!TEST_true(compare_ssl_trace_with_file(bio, reffile)))
             goto err;
     }
@@ -13793,6 +13792,7 @@ static int test_ssl_trace(void)
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
+    OPENSSL_free(reffile);
 
     return testresult;
 }
@@ -13829,9 +13829,10 @@ int setup_tests(void)
             || !TEST_ptr(tmpfilename = test_get_argument(2))
             || !TEST_ptr(modulename = test_get_argument(3))
             || !TEST_ptr(configfile = test_get_argument(4))
-            || !TEST_ptr(dhfile = test_get_argument(5))
-            || !TEST_ptr(datadir = test_get_argument(6)))
+            || !TEST_ptr(dhfile = test_get_argument(5)))
         return 0;
+
+    datadir = test_get_argument(6);
 
     if (!TEST_true(OSSL_LIB_CTX_load_config(libctx, configfile)))
         return 0;
@@ -14135,7 +14136,8 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_no_renegotiation, 2);
 #if defined(DO_SSL_TRACE_TEST)
-    ADD_TEST(test_ssl_trace);
+    if (datadir != NULL)
+        ADD_TEST(test_ssl_trace);
 #endif
     return 1;
 

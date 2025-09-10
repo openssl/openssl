@@ -42,7 +42,7 @@ Header:
         {0x00, 0x2F} TLS_RSA_WITH_AES_128_CBC_SHA
       compression_methods (len=1)
         No Compression (0x00)
-      extensions, length = 930
+      extensions, length = ?
         extension_type=renegotiate(65281), length=1
             <EMPTY>
         extension_type=ec_point_formats(11), length=2
@@ -109,7 +109,7 @@ Header:
       session_id (len=32): ?
       cipher_suite {0x13, 0x02} TLS_AES_256_GCM_SHA384
       compression_method: No Compression (0x00)
-      extensions, length = 782
+      extensions, length = ?
         extension_type=supported_versions(43), length=2
             TLS 1.3 (772)
         extension_type=key_share(51), length=772
