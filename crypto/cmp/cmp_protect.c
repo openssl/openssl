@@ -225,7 +225,8 @@ static int set1_pwd_senderKID(OSSL_CMP_PKIHEADER *hdr, const ASN1_OCTET_STRING *
         const X509_NAME *sender;
         int res;
 
-        if (gn->type == GEN_DIRNAME && (sender = gn->d.directoryName) != NULL
+        if (gn != NULL && gn->type == GEN_DIRNAME
+            && (sender = gn->d.directoryName) != NULL
             && (res = X509_NAME_get_index_by_NID(sender, NID_commonName, -1)) >= 0) {
             ASN1_STRING *astr = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(sender, res));
             ASN1_OCTET_STRING *ostr = NULL;
