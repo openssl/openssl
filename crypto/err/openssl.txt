@@ -1296,7 +1296,6 @@ RSA_R_RANDOMNESS_SOURCE_STRENGTH_INSUFFICIENT:180:\
 RSA_R_RSA_OPERATIONS_NOT_SUPPORTED:130:rsa operations not supported
 RSA_R_SLEN_CHECK_FAILED:136:salt length check failed
 RSA_R_SLEN_RECOVERY_FAILED:135:salt length recovery failed
-RSA_R_SSLV3_ROLLBACK_ATTACK:115:sslv3 rollback attack
 RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD:116:\
 	the asn1 object identifier is not known for this md
 RSA_R_UNKNOWN_ALGORITHM_TYPE:117:unknown algorithm type
@@ -1654,8 +1653,6 @@ SSL_R_TOO_MUCH_EARLY_DATA:164:too much early data
 SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS:314:unable to find ecdh parameters
 SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS:239:\
 	unable to find public key parameters
-SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES:242:unable to load ssl3 md5 routines
-SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES:243:unable to load ssl3 sha1 routines
 SSL_R_UNEXPECTED_CCS_MESSAGE:262:unexpected ccs message
 SSL_R_UNEXPECTED_END_OF_EARLY_DATA:178:unexpected end of early data
 SSL_R_UNEXPECTED_EOF_WHILE_READING:294:unexpected eof while reading
