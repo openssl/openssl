@@ -124,6 +124,9 @@ ASN1_STRING *ossl_rsa_ctx_to_pss_string(EVP_PKEY_CTX *pkctx);
 int ossl_rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
                         const X509_ALGOR *sigalg, EVP_PKEY *pkey);
 
+int ossl_rsa_generate_multi_prime_key(RSA *rsa, int bits, int primes,
+                                      BIGNUM *e_value, BN_GENCB *cb,
+                                      uint32_t a, uint32_t b);
 # ifdef FIPS_MODULE
 int ossl_rsa_key_pairwise_test(RSA *rsa);
 # endif /* FIPS_MODULE */
