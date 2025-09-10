@@ -21,7 +21,6 @@
 #include "internal/thread_once.h"
 #include <openssl/x509.h>
 #include <openssl/trace.h>
-#include <openssl/engine.h>
 #include "conf_local.h"
 
 DEFINE_STACK_OF(CONF_MODULE)

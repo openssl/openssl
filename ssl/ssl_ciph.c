@@ -18,7 +18,6 @@
 #include <ctype.h>
 #include <openssl/objects.h>
 #include <openssl/comp.h>
-#include <openssl/engine.h>
 #include <openssl/crypto.h>
 #include <openssl/conf.h>
 #include <openssl/trace.h>

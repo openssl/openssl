@@ -19,7 +19,6 @@
 #include "crypto/evp.h"
 #include "internal/conf.h"
 #include "crypto/async.h"
-#include "crypto/engine.h"
 #include "internal/comp.h"
 #include "internal/err.h"
 #include "crypto/err.h"

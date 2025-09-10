@@ -27,7 +27,6 @@
 # include <openssl/x509.h>
 # include <openssl/conf.h>
 # include <openssl/txt_db.h>
-# include <openssl/engine.h>
 # include <openssl/ocsp.h>
 # include <openssl/http.h>
 # include <signal.h>

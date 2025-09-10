@@ -25,7 +25,6 @@
 #include <openssl/pkcs12.h>
 #include "crypto/asn1.h"
 #include <openssl/des.h>
-#include <openssl/engine.h>
 
 #define MIN_LENGTH      4
 
