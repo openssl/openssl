@@ -675,41 +675,6 @@ EC_R_UNKNOWN_ORDER:114:unknown order
 EC_R_UNSUPPORTED_FIELD:131:unsupported field
 EC_R_WRONG_CURVE_PARAMETERS:145:wrong curve parameters
 EC_R_WRONG_ORDER:130:wrong order
-ENGINE_R_ALREADY_LOADED:100:already loaded
-ENGINE_R_ARGUMENT_IS_NOT_A_NUMBER:133:argument is not a number
-ENGINE_R_CMD_NOT_EXECUTABLE:134:cmd not executable
-ENGINE_R_COMMAND_TAKES_INPUT:135:command takes input
-ENGINE_R_COMMAND_TAKES_NO_INPUT:136:command takes no input
-ENGINE_R_CONFLICTING_ENGINE_ID:103:conflicting engine id
-ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED:119:ctrl command not implemented
-ENGINE_R_DSO_FAILURE:104:DSO failure
-ENGINE_R_DSO_NOT_FOUND:132:dso not found
-ENGINE_R_ENGINES_SECTION_ERROR:148:engines section error
-ENGINE_R_ENGINE_CONFIGURATION_ERROR:102:engine configuration error
-ENGINE_R_ENGINE_IS_NOT_IN_LIST:105:engine is not in the list
-ENGINE_R_ENGINE_SECTION_ERROR:149:engine section error
-ENGINE_R_FAILED_LOADING_PRIVATE_KEY:128:failed loading private key
-ENGINE_R_FAILED_LOADING_PUBLIC_KEY:129:failed loading public key
-ENGINE_R_FINISH_FAILED:106:finish failed
-ENGINE_R_ID_OR_NAME_MISSING:108:'id' or 'name' missing
-ENGINE_R_INIT_FAILED:109:init failed
-ENGINE_R_INTERNAL_LIST_ERROR:110:internal list error
-ENGINE_R_INVALID_ARGUMENT:143:invalid argument
-ENGINE_R_INVALID_CMD_NAME:137:invalid cmd name
-ENGINE_R_INVALID_CMD_NUMBER:138:invalid cmd number
-ENGINE_R_INVALID_INIT_VALUE:151:invalid init value
-ENGINE_R_INVALID_STRING:150:invalid string
-ENGINE_R_NOT_INITIALISED:117:not initialised
-ENGINE_R_NOT_LOADED:112:not loaded
-ENGINE_R_NO_CONTROL_FUNCTION:120:no control function
-ENGINE_R_NO_INDEX:144:no index
-ENGINE_R_NO_LOAD_FUNCTION:125:no load function
-ENGINE_R_NO_REFERENCE:130:no reference
-ENGINE_R_NO_SUCH_ENGINE:116:no such engine
-ENGINE_R_UNIMPLEMENTED_CIPHER:146:unimplemented cipher
-ENGINE_R_UNIMPLEMENTED_DIGEST:147:unimplemented digest
-ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD:101:unimplemented public key method
-ENGINE_R_VERSION_INCOMPATIBILITY:145:version incompatibility
 ESS_R_EMPTY_ESS_CERT_ID_LIST:107:empty ess cert id list
 ESS_R_ESS_CERT_DIGEST_ERROR:103:ess cert digest error
 ESS_R_ESS_CERT_ID_NOT_FOUND:104:ess cert id not found
