@@ -203,21 +203,23 @@ static void *kmac_fetch_new(void *provctx, const OSSL_PARAM *params)
     struct kmac_new_st p;
     int md_size;
 
-    if (kctx == NULL || !kmac_new_decoder(params, &p))
+    if (kctx == NULL)
         return 0;
+    if (!kmac_new_decoder(params, &p))
+        goto err;
     if (!ossl_prov_digest_load(&kctx->digest, p.digest, p.propq, p.engine,
-                               PROV_LIBCTX_OF(provctx))) {
-        kmac_free(kctx);
-        return 0;
-    }
+                               PROV_LIBCTX_OF(provctx)))
+        goto err;
 
     md_size = EVP_MD_get_size(ossl_prov_digest_md(&kctx->digest));
-    if (md_size <= 0) {
-        kmac_free(kctx);
-        return 0;
-    }
+    if (md_size <= 0)
+        goto err;
     kctx->out_len = (size_t)md_size;
     return kctx;
+
+err:
+    kmac_free(kctx);
+    return NULL;
 }
 
 static void *kmac128_new(void *provctx)
