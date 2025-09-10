@@ -975,10 +975,12 @@ doapr_outch(struct pr_desc *desc, int c)
             (*(desc->buffer))[(desc->currlen)++] = (char)c;
     }
 
-    desc->pos++;
+    if (desc->pos < LLONG_MAX)
+        desc->pos++;
 
     return 1;
 }
+
 
 /***************************************************************************/
 
