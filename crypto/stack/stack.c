@@ -38,41 +38,54 @@ OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk,
 {
     OPENSSL_sk_compfunc old = sk->comp;
 
-    if (sk->comp != c)
+    if (sk->comp != c && sk->num > 1)
         sk->sorted = 0;
     sk->comp = c;
 
     return old;
 }
 
-OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
+static OPENSSL_STACK *internal_copy(const OPENSSL_STACK *sk,
+                                    OPENSSL_sk_copyfunc copy_func,
+                                    OPENSSL_sk_freefunc free_func)
 {
     OPENSSL_STACK *ret;
+    int i;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+    if ((ret = OPENSSL_sk_new_null()) == NULL)
         goto err;
 
-    if (sk == NULL) {
-        ret->num = 0;
-        ret->sorted = 0;
-        ret->comp = NULL;
-    } else {
-        /* direct structure assignment */
-        *ret = *sk;
-    }
+    if (sk == NULL)
+        goto done;
 
-    if (sk == NULL || sk->num == 0) {
-        /* postpone |ret->data| allocation */
-        ret->data = NULL;
-        ret->num_alloc = 0;
-        return ret;
-    }
+    /* direct structure assignment */
+    *ret = *sk;
+    ret->data = NULL;
+    ret->num_alloc = 0;
 
-    /* duplicate |sk->data| content */
-    ret->data = OPENSSL_malloc_array(sk->num_alloc, sizeof(*ret->data));
+    if (ret->num == 0)
+        goto done; /* nothing to copy */
+
+    ret->num_alloc = ret->num > min_nodes ? ret->num : min_nodes;
+    ret->data = OPENSSL_calloc(ret->num_alloc, sizeof(*ret->data));
     if (ret->data == NULL)
         goto err;
-    memcpy(ret->data, sk->data, sizeof(void *) * sk->num);
+    if (copy_func == NULL) {
+        memcpy(ret->data, sk->data, sizeof(*ret->data) * ret->num);
+    } else {
+        for (i = 0; i < ret->num; ++i) {
+            if (sk->data[i] == NULL)
+                continue;
+            if ((ret->data[i] = copy_func(sk->data[i])) == NULL) {
+                while (--i >= 0)
+                    if (ret->data[i] != NULL)
+                        free_func((void *)ret->data[i]);
+                goto err;
+            }
+        }
+    }
+
+ done:
     return ret;
 
  err:
@@ -84,48 +97,12 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
                                     OPENSSL_sk_copyfunc copy_func,
                                     OPENSSL_sk_freefunc free_func)
 {
-    OPENSSL_STACK *ret;
-    int i;
+    return internal_copy(sk, copy_func, free_func);
+}
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
-        goto err;
-
-    if (sk == NULL) {
-        ret->num = 0;
-        ret->sorted = 0;
-        ret->comp = NULL;
-    } else {
-        /* direct structure assignment */
-        *ret = *sk;
-    }
-
-    if (sk == NULL || sk->num == 0) {
-        /* postpone |ret| data allocation */
-        ret->data = NULL;
-        ret->num_alloc = 0;
-        return ret;
-    }
-
-    ret->num_alloc = sk->num > min_nodes ? sk->num : min_nodes;
-    ret->data = OPENSSL_calloc(ret->num_alloc, sizeof(*ret->data));
-    if (ret->data == NULL)
-        goto err;
-
-    for (i = 0; i < ret->num; ++i) {
-        if (sk->data[i] == NULL)
-            continue;
-        if ((ret->data[i] = copy_func(sk->data[i])) == NULL) {
-            while (--i >= 0)
-                if (ret->data[i] != NULL)
-                    free_func((void *)ret->data[i]);
-            goto err;
-        }
-    }
-    return ret;
-
- err:
-    OPENSSL_sk_free(ret);
-    return NULL;
+OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
+{
+    return internal_copy(sk, NULL, NULL);
 }
 
 OPENSSL_STACK *OPENSSL_sk_new_null(void)
@@ -232,6 +209,7 @@ OPENSSL_STACK *OPENSSL_sk_new_reserve(OPENSSL_sk_compfunc c, int n)
         return NULL;
 
     st->comp = c;
+    st->sorted = 1; /* empty or single-element stack is considered sorted */
 
     if (n <= 0)
         return st;
@@ -286,7 +264,7 @@ int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
         st->data[loc] = data;
     }
     st->num++;
-    st->sorted = 0;
+    st->sorted = st->num <= 1;
     return st->num;
 }
 
@@ -298,6 +276,7 @@ static ossl_inline void *internal_delete(OPENSSL_STACK *st, int loc)
         memmove(&st->data[loc], &st->data[loc + 1],
                 sizeof(st->data[0]) * (st->num - loc - 1));
     st->num--;
+    st->sorted = st->sorted || st->num <= 1;
 
     return (void *)ret;
 }
@@ -487,7 +466,7 @@ void *OPENSSL_sk_set(OPENSSL_STACK *st, int i, const void *data)
         return NULL;
     }
     st->data[i] = data;
-    st->sorted = 0;
+    st->sorted = st->num <= 1;
     return (void *)st->data[i];
 }
 
