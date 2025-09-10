@@ -80,31 +80,43 @@ sub run_tests
         );
     }
 
+    my $client_flags = "";
+
+    if ($run_test_as_dtls == 1) {
+        # TLSProxy does not handle partial messages for DTLS.
+        $client_flags = $client_flags." -groups DEFAULT:-?X25519MLKEM768";
+    }
+
     #Test 1: Downgrade from (D)TLSv1.3 to (D)TLSv1.2
-    $proxy->clientflags("-groups ?X25519:?P-256:?ffdh2048");
+    $proxy->clear();
     $proxy->filter(\&downgrade_filter);
+    $proxy->clientflags($client_flags);
     $testtype = DOWNGRADE_TO_TLS_1_2;
-    skip "Unable to start up Proxy for tests", $testcount if !$proxy->start() &&
-                                                             !TLSProxy::Message->fail();
+    skip "Unable to start up Proxy for tests", $testcount if !$proxy->start() && !$run_test_as_dtls;
     ok(is_illegal_parameter_client_alert(), "Downgrade ".$proto1_3." to ".$proto1_2);
 
-    #Test 2: Downgrade from (D)TLSv1.3 to (D)TLSv1.2 (server sends TLSv1.1/DTLSv1 signal)
+    #Test 2: Downgrade from (D)TLSv1.3 to (D)TLSv1.2 (server sends (D)TLSv1.1 signal)
     $proxy->clear();
-    $proxy->clientflags("-groups ?X25519:?P-256:?ffdh2048");
     $testtype = DOWNGRADE_TO_TLS_1_2_WITH_TLS_1_1_SIGNAL;
+    $proxy->clientflags($client_flags);
     $proxy->start();
     ok(is_illegal_parameter_client_alert(),
-       "Downgrade from ".$proto1_3." to ".$proto1_2." (server sends ".$proto1_1." signal)");
+        "Downgrade from ".$proto1_3." to ".$proto1_2." (server sends ".$proto1_1." signal)");
 
-    #Test 3: Client falls back from (D)TLSv1.3 (server does not support the fallback
-    #        SCSV)
+    #Test 3: Client falls back from (D)TLSv1.3 (server does not support the
+    #        fallback SCSV)
     $proxy->clear();
+    $proxy->filter(\&downgrade_filter);
     $testtype = FALLBACK_FROM_TLS_1_3;
     $proxy->clientflags("-fallback_scsv -max_protocol ".$proto1_2);
     $proxy->start();
     ok(is_illegal_parameter_client_alert(), "Fallback from ".$proto1_3);
 
-    my $client_flags = "-groups ?X25519:?P-256:?ffdh2048 -min_protocol ".$proto1_1." -cipher DEFAULT:\@SECLEVEL=0";
+    $client_flags = "-min_protocol ".$proto1_1." -cipher DEFAULT:\@SECLEVEL=0";
+    if ($run_test_as_dtls == 1) {
+        # TLSProxy does not handle partial messages for DTLS.
+        $client_flags = $client_flags." -groups DEFAULT:-?X25519MLKEM768";
+    }
     my $server_flags = "-min_protocol ".$proto1_1;
     my $ciphers = "AES128-SHA:\@SECLEVEL=0";
 
@@ -132,14 +144,6 @@ sub run_tests
         $proxy->start();
         ok(is_illegal_parameter_client_alert(),
            "Downgrade ".$proto1_3." to ".$proto1_1." (server sends ".$proto1_2." signal)");
-    }
-
-    SKIP: {
-        skip "TLSv1.1 disabled", 1
-            if !$run_test_as_dtls && disabled("tls1_1");
-        # TODO(DTLS-1.3): This seems to hang after successfull test for DTLS
-        skip "Hangs with DTLS", 1
-            if $run_test_as_dtls;
 
         #Test 6: Downgrade from (D)TLSv1.2 to TLSv1.1/DTLSv1
         $proxy->clear();
@@ -191,20 +195,22 @@ sub downgrade_filter
 {
     my $proxy = shift;
 
-    # We're only interested in the initial ClientHello and ServerHello except
-    # if we are expecting DTLS1.2 handshake in which case the client will send
-    # a second ClientHello
-    my $second_client_hello = $testtype == FALLBACK_FROM_TLS_1_3 && $proxy->isdtls
-                              && $proxy->flight == 2;
+    # We're only interested in the initial ClientHello except if we are expecting
+    # DTLS1.2 handshake in which case the client will send a second ClientHello
+    my $dtls12hs = $proxy->isdtls && ($testtype == FALLBACK_FROM_TLS_1_3
+                                      || $testtype == DOWNGRADE_TO_TLS_1_2_WITH_TLS_1_1_SIGNAL
+                                      || $testtype == DOWNGRADE_TO_TLS_1_1_WITH_TLS_1_2_SIGNAL);
+    my $client_hello = $proxy->flight == 0 || ($dtls12hs && $proxy->flight == 2);
+    my $server_hello = ($dtls12hs && $proxy->flight == 3)
+                        || (!$dtls12hs && $proxy->flight == 1);
 
-    if ($proxy->flight > 1 && !$second_client_hello) {
+    if (!$server_hello && !$client_hello) {
         return;
     }
 
     my $message = ${$proxy->message_list}[$proxy->flight];
 
-    # ServerHello
-    if ($proxy->flight == 1 && defined($message)) {
+    if ($server_hello == 1 && defined($message)) {
         # Update the last byte of the downgrade signal
         if ($testtype == DOWNGRADE_TO_TLS_1_2_WITH_TLS_1_1_SIGNAL) {
             $message->random(substr($message->random, 0, 31) . "\0");
@@ -218,28 +224,27 @@ sub downgrade_filter
     }
 
     # ClientHello
-    if (($proxy->flight == 0 && !$proxy->isdtls) || $second_client_hello) {
-        my $ext;
-        my $version12hi = $proxy->isdtls == 1 ? 0xFE : 0x03;
-        my $version12lo = $proxy->isdtls == 1 ? 0xFD : 0x03;
-        my $version11hi = $proxy->isdtls == 1 ? 0xFE : 0x03;
-        my $version11lo = $proxy->isdtls == 1 ? 0xFF : 0x02;
+    if ($client_hello == 1) {
         if ($testtype == FALLBACK_FROM_TLS_1_3) {
             #The default ciphersuite we use for TLSv1.2 without any SCSV
             my @ciphersuites = (TLSProxy::Message::CIPHER_RSA_WITH_AES_128_CBC_SHA);
             $message->ciphersuite_len(2 * scalar @ciphersuites);
             $message->ciphersuites(\@ciphersuites);
-        }
-        else {
+        } else {
+            my $ext;
+            my $version12hi = $proxy->isdtls == 1 ? 0xFE : 0x03;
+            my $version12lo = $proxy->isdtls == 1 ? 0xFD : 0x03;
+            my $version11hi = $proxy->isdtls == 1 ? 0xFE : 0x03;
+            my $version11lo = $proxy->isdtls == 1 ? 0xFF : 0x02;
+
             if ($testtype == DOWNGRADE_TO_TLS_1_2
                 || $testtype == DOWNGRADE_TO_TLS_1_2_WITH_TLS_1_1_SIGNAL) {
                 $ext = pack "C3",
-                    0x02,       # Length
+                    0x02, # Length
                     $version12hi, $version12lo;
-            }
-            else {
+            } else {
                 $ext = pack "C3",
-                    0x02,       # Length
+                    0x02, # Length
                     $version11hi, $version11lo;
             }
 

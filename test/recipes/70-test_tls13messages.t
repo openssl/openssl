@@ -219,6 +219,7 @@ sub run_tests
 {
     my $run_test_as_dtls = shift;
     my $proxy_start_success = 0;
+    my $dflt_client_flags = "";
 
     (undef, my $session) = tempfile();
     my $proxy;
@@ -237,6 +238,10 @@ sub run_tests
             srctop_file("apps", "server.pem"),
             (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
         );
+    }
+
+    if ($run_test_as_dtls == 1) {
+        $dflt_client_flags = " -groups DEFAULT:-?X25519MLKEM768";
     }
 
     $proxy->clear();
@@ -273,7 +278,7 @@ sub run_tests
         #Test 3: A status_request handshake (client request only)
         $proxy->clear();
         $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-        $proxy->clientflags("-no_rx_cert_comp -status");
+        $proxy->clientflags("-no_rx_cert_comp -status".$dflt_client_flags);
         $proxy_start_success = $proxy->start();
         skip "TLSProxy did not start correctly", 4 if $proxy_start_success == 0;
         checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
@@ -284,7 +289,7 @@ sub run_tests
         #Test 4: A status_request handshake (server support only)
         $proxy->clear();
         $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-        $proxy->clientflags("-no_rx_cert_comp");
+        $proxy->clientflags("-no_rx_cert_comp".$dflt_client_flags);
         $proxy->serverflags("-no_rx_cert_comp -status_file "
             . srctop_file("test", "recipes", "ocsp-response.der"));
         $proxy->start();
@@ -295,7 +300,7 @@ sub run_tests
         #Test 5: A status_request handshake (client and server)
         $proxy->clear();
         $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-        $proxy->clientflags("-no_rx_cert_comp -status");
+        $proxy->clientflags("-no_rx_cert_comp -status".$dflt_client_flags);
         $proxy->serverflags("-no_rx_cert_comp -status_file "
             . srctop_file("test", "recipes", "ocsp-response.der"));
         $proxy->start();
@@ -309,7 +314,7 @@ sub run_tests
         $proxy->clear();
         $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
         $proxy->clientflags("-no_rx_cert_comp -status -enable_pha -cert "
-            . srctop_file("apps", "server.pem"));
+            . srctop_file("apps", "server.pem").$dflt_client_flags);
         $proxy->serverflags("-no_rx_cert_comp -Verify 5 -status_file "
             . srctop_file("test", "recipes", "ocsp-response.der"));
         $proxy->start();
@@ -324,7 +329,8 @@ sub run_tests
     #Test 7: A client auth handshake
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -enable_pha -cert " . srctop_file("apps", "server.pem"));
+    $proxy->clientflags("-no_rx_cert_comp -enable_pha".$dflt_client_flags
+                        ." -cert ".srctop_file("apps", "server.pem"));
     $proxy->serverflags("-no_rx_cert_comp -Verify 5");
     $proxy_start_success = $proxy->start();
     skip "TLSProxy did not start correctly", $testcount - 6 if $proxy_start_success == 0;
@@ -336,7 +342,7 @@ sub run_tests
     #Test 8: Server name handshake (no client request)
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -noservername");
+    $proxy->clientflags("-no_rx_cert_comp -noservername".$dflt_client_flags);
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
         checkhandshake::DEFAULT_EXTENSIONS
@@ -346,7 +352,7 @@ sub run_tests
     #Test 9: Server name handshake (server support only)
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -noservername");
+    $proxy->clientflags("-no_rx_cert_comp -noservername".$dflt_client_flags);
     $proxy->serverflags("-no_rx_cert_comp -servername testhost");
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
@@ -357,7 +363,7 @@ sub run_tests
     #Test 10: Server name handshake (client and server)
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -servername testhost");
+    $proxy->clientflags("-no_rx_cert_comp -servername testhost".$dflt_client_flags);
     $proxy->serverflags("-no_rx_cert_comp -servername testhost");
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
@@ -368,7 +374,7 @@ sub run_tests
     #Test 11: ALPN handshake (client request only)
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -alpn test");
+    $proxy->clientflags("-no_rx_cert_comp -alpn test".$dflt_client_flags);
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
         checkhandshake::DEFAULT_EXTENSIONS
@@ -378,7 +384,7 @@ sub run_tests
     #Test 12: ALPN handshake (server support only)
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp");
+    $proxy->clientflags("-no_rx_cert_comp".$dflt_client_flags);
     $proxy->serverflags("-no_rx_cert_comp -alpn test");
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
@@ -388,7 +394,7 @@ sub run_tests
     #Test 13: ALPN handshake (client and server)
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -alpn test");
+    $proxy->clientflags("-no_rx_cert_comp -alpn test".$dflt_client_flags);
     $proxy->serverflags("-no_rx_cert_comp -alpn test");
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
@@ -408,7 +414,7 @@ sub run_tests
         $proxy->clear();
         $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
         #Note: -ct also sends status_request
-        $proxy->clientflags("-no_rx_cert_comp -ct");
+        $proxy->clientflags("-no_rx_cert_comp -ct".$dflt_client_flags);
         $proxy->serverflags("-no_rx_cert_comp -status_file "
             . srctop_file("test", "recipes", "ocsp-response.der")
             . " -serverinfo " . srctop_file("test", "serverinfo2.pem"));
