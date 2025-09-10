@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 #include <openssl/types.h>
 #include "testutil.h"
@@ -15,7 +18,11 @@
 
 #if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L
 # include <signal.h>
-#endif
+
+# define HAVE_SIGNALS 1
+#else
+# define HAVE_SIGNALS 0
+#endif /* defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L */
 
 static int test_sanity_null_zero(void)
 {
@@ -138,71 +145,109 @@ static const struct sleep_test_vector {
     uint64_t val;
 } sleep_test_vectors[] = { { 0 }, { 1 }, { 999 }, { 1000 } };
 
-#if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L
+#if HAVE_SIGNALS
 static void
 alrm_handler(int sig)
 {
 }
-#endif /* defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L */
+#endif /* HAVE_SIGNALS */
 
-static int test_sanity_sleep(int i)
+static void
+arm_timer(void)
+{
+#if HAVE_SIGNALS
+    static const struct sigaction sa = { .sa_handler = alrm_handler };
+    static const struct itimerval it = { .it_value.tv_usec = 111111 };
+    sigset_t mask;
+
+    if (sigaction(SIGALRM, &sa, NULL)) {
+        TEST_perror("test_sanity_sleep: sigaction");
+        return;
+    }
+
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGALRM);
+    if (sigprocmask(SIG_UNBLOCK, &mask, NULL)) {
+        TEST_perror("test_sanity_sleep: sigprocmask");
+        return;
+    }
+
+    if (setitimer(ITIMER_REAL, &it, NULL)) {
+        TEST_perror("test_sanity_sleep: arm setitimer");
+        return;
+    }
+#endif /* HAVE_SIGNALS */
+}
+
+static void
+disarm_timer(void)
+{
+#if HAVE_SIGNALS
+    static const struct itimerval it;
+
+    if (setitimer(ITIMER_REAL, &it, NULL)) {
+        TEST_perror("test_sanity_sleep: disarm setitimer");
+        return;
+    }
+#endif /* HAVE_SIGNALS */
+}
+
+static int check_sanity_sleep(bool is_interruptible, int i)
 {
     const struct sleep_test_vector * const td = sleep_test_vectors + i;
     OSSL_TIME start = ossl_time_now();
+    uint64_t ret = 0;
     uint64_t ms;
 
-#if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L
     /*
      * Set up an interrupt timer to check that OSSL_sleep doesn't return early
      * due to interrupts.
      */
-    do {
-        static const struct sigaction sa = { .sa_handler = alrm_handler };
-        static const struct itimerval it = { .it_value.tv_usec = 111111 };
-        sigset_t mask;
+    arm_timer();
 
-        if (sigaction(SIGALRM, &sa, NULL)) {
-            TEST_perror("test_sanity_sleep: sigaction");
-            break;
-        }
+    if (is_interruptible)
+        ret = OSSL_sleep_interruptible(td->val);
+    else
+        OSSL_sleep(td->val);
 
-        sigemptyset(&mask);
-        sigaddset(&mask, SIGALRM);
-        if (sigprocmask(SIG_UNBLOCK, &mask, NULL)) {
-            TEST_perror("test_sanity_sleep: sigprocmask");
-            break;
-        }
+    disarm_timer();
 
-        if (setitimer(ITIMER_REAL, &it, NULL)) {
-            TEST_perror("test_sanity_sleep: arm setitimer");
-            break;
-        }
-    } while (0);
-#endif /* defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L */
+    ms = ossl_time2ms(ossl_time_subtract(ossl_time_now(), start));
 
     /*
      * On any reasonable system this must sleep at least the specified time
      * but not more than 20 seconds more than that.
      */
-    OSSL_sleep(td->val);
-
-#if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L
-    /* disarm the timer */
-    do {
-        static const struct itimerval it;
-
-        if (setitimer(ITIMER_REAL, &it, NULL)) {
-            TEST_perror("test_sanity_sleep: disarm setitimer");
-            break;
-        }
-    } while (0);
-#endif /* defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L */
-
-    ms = ossl_time2ms(ossl_time_subtract(ossl_time_now(), start));
-
-    if (!TEST_uint64_t_ge(ms, td->val) + !TEST_uint64_t_le(ms, td->val + 20000))
+    if (!TEST_uint64_t_le(ms, td->val + 20000))
         return 0;
+
+    if (is_interruptible) {
+        TEST_note("Requested sleep: %" PRIu64 ", slept %" PRIu64
+                  ", returned %" PRIu64, td->val, ms, ret);
+
+        if ((ms < td->val) && (ret == 0)) {
+            TEST_error("Slept less than requested and the return value is 0");
+            return 0;
+        }
+        /* The "+ 2" is to account for possible imprecisions in timekeeping */
+        if (!TEST_uint64_t_ge(ms + ret + 2, td->val))
+            return 0;
+    } else {
+        if (!TEST_uint64_t_ge(ms, td->val))
+            return 0;
+    }
+
     return 1;
+}
+
+static int test_sanity_sleep(int i)
+{
+    return check_sanity_sleep(false, i);
+}
+
+static int test_sanity_sleep_interruptible(int i)
+{
+    return check_sanity_sleep(true, i);
 }
 
 int setup_tests(void)
@@ -215,5 +260,7 @@ int setup_tests(void)
     ADD_TEST(test_sanity_range);
     ADD_TEST(test_sanity_memcmp);
     ADD_ALL_TESTS(test_sanity_sleep, OSSL_NELEM(sleep_test_vectors));
+    ADD_ALL_TESTS(test_sanity_sleep_interruptible,
+                  OSSL_NELEM(sleep_test_vectors));
     return 1;
 }

@@ -2,13 +2,15 @@
 
 =head1 NAME
 
-OSSL_sleep - delay execution for a specified number of milliseconds
+OSSL_sleep, OSSL_sleep_interruptible - delay execution for a specified number
+of milliseconds
 
 =head1 SYNOPSIS
 
  #include <openssl/crypto.h>
 
  void OSSL_sleep(uint64_t millis);
+ uint64_t OSSL_sleep_interruptible(uint64_t millis);
 
 =head1 DESCRIPTION
 
@@ -18,14 +20,21 @@ it may be affected by system activity, by the time spent processing the call,
 limitation on the underlying system call parameter size or by system timer
 granularity.
 
+OSSL_sleep_interruptible() is a variant of the sleep function that may return
+early if interrupted (by a signal on POSIX systems, for example).
 
 =head1 RETURN VALUES
 
 OSSL_sleep() does not return any value.
 
+OSSL_sleep_interruptible() returns the number of milliseconds left at the end
+of the call (zero if the delay has fully lapsed, nonzero if the underlying
+system-specific sleep call has interrupted prematurely).
+
 =head1 HISTORY
 
-OSSL_sleep() was added in OpenSSL 3.2.
+OSSL_sleep() was added in OpenSSL 3.2;  OSSL_sleep_interruptible() was added
+in OpenSSL 4.0.
 
 Before OpenSSL 3.6, there were system-specific limitations on the maximum
 duration of the sleep:  on Windows, the maximum amount of time it will sleep

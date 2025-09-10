@@ -580,7 +580,15 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx);
 int OSSL_LIB_CTX_get_conf_diagnostics(OSSL_LIB_CTX *ctx);
 void OSSL_LIB_CTX_set_conf_diagnostics(OSSL_LIB_CTX *ctx, int value);
 
+/** Sleeps at least millis milliseconds, ignores signals. */
 void OSSL_sleep(uint64_t millis);
+/**
+ * Sleeps at least millis milliseconds, may return early on a signal.
+ *
+ * @param millis Number of millisecond to delay the execution for.
+ * @return Number of milliseconds left before the end of the requested delay.
+ */
+uint64_t OSSL_sleep_interruptible(uint64_t millis);
 
 
 void *OSSL_LIB_CTX_get_data(OSSL_LIB_CTX *ctx, int index);
