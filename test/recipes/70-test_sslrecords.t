@@ -284,7 +284,6 @@ sub run_tests
         $proxy->filter(\&empty_app_data);
         $proxy->start();
         ok(TLSProxy::Message->success(), "Empty app data in DTLS");
-
     }
 }
 
