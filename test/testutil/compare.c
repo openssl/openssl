@@ -24,7 +24,6 @@ int compare_ssl_trace_with_file(BIO *membio, const char *reffile)
 {
     BIO *file = NULL, *newfile = NULL;
     char buf1[8192], buf2[8192];
-    // char *reffile;
     int ret = 0;
     size_t i;
 

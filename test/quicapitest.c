@@ -441,7 +441,7 @@ static int test_ssl_trace(void)
     int testresult = 0;
     BIO *bio = NULL;
     char *reffile = NULL;
- 
+
     if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method()))
             || !TEST_ptr(bio = BIO_new(BIO_s_mem()))
             || !TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256"))

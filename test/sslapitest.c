@@ -13754,7 +13754,6 @@ static int test_ssl_trace(void)
                       ":SecP384r1MLKEM1024:secp521r1:secp384r1:secp256r1";
 
 
-    fprintf(stderr, "HOOP running test_ssl_trace\n");
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),
                                        TLS1_VERSION, 0,
@@ -13768,7 +13767,7 @@ static int test_ssl_trace(void)
 
     SSL_set_msg_callback(clientssl, SSL_trace);
     SSL_set_msg_callback_arg(clientssl, bio);
-    
+
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto err;
 
@@ -13780,10 +13779,8 @@ static int test_ssl_trace(void)
     } else {
 
 #ifdef OPENSSL_NO_ZLIB
-    fprintf(stderr, "HOOP running test_ssl_trace NO_ZLIEB\n");
         reffile = test_mk_file_path(datadir, "ssltraceref.txt");
 #else
-    fprintf(stderr, "HOOP running test_ssl_trace ZLIB\n");
         reffile = test_mk_file_path(datadir, "ssltraceref-zlib.txt");
 #endif
         if (!TEST_true(compare_ssl_trace_with_file(bio, reffile)))
