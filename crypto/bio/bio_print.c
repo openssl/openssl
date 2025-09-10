@@ -476,9 +476,11 @@ fmtstr(struct pr_desc *desc, const char *value, int flags, int min, int max)
 
     strln = OPENSSL_strnlen(value, max < 0 ? SIZE_MAX : (size_t)max);
 
-    padlen = (int)(min - strln);
-    if (min < 0 || padlen < 0)
-        padlen = 0;
+    if (min >= 0 && strln < INT_MAX) {
+        padlen = min - (int)strln;
+        if (padlen < 0)
+            padlen = 0;
+    }
     if (max >= 0) {
         /*
          * Calculate the maximum output including padding.
