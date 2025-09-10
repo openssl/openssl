@@ -90,7 +90,6 @@
 # define RSA_R_RSA_OPERATIONS_NOT_SUPPORTED               130
 # define RSA_R_SLEN_CHECK_FAILED                          136
 # define RSA_R_SLEN_RECOVERY_FAILED                       135
-# define RSA_R_SSLV3_ROLLBACK_ATTACK                      115
 # define RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 116
 # define RSA_R_UNKNOWN_ALGORITHM_TYPE                     117
 # define RSA_R_UNKNOWN_DIGEST                             166
