@@ -308,7 +308,7 @@ our @tests = (
         }
     },
     {
-        name   => "Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.",
+        name   => "Both Max Fragment Len and Record Size Limit sent by client, same value, Record Size Limit negotiated",
         server => {
             extra => {
                 RecordSizeLimit => 256,
@@ -331,7 +331,7 @@ our @tests = (
         }
     },
     {
-        name   => "Both Max Fragment Len and Record Size Limit sent by client (different value), Record Size Limit negotiated.",
+        name   => "Both Max Fragment Len and Record Size Limit sent by client, different value, Record Size Limit negotiated",
         server => {
             extra => {
                 RecordSizeLimit => 256,
@@ -355,7 +355,7 @@ our @tests = (
         }
     },
     {
-        name   => "Both Max Fragment Len and Record Size Limit sent by client (same value), Max Fragment Len negotiated",
+        name   => "Both Max Fragment Len and Record Size Limit sent by client, same value, Max Fragment Len negotiated",
         server => {
             extra => {
                 DisableRecordSizeLimit => "Yes",
@@ -378,7 +378,7 @@ our @tests = (
         }
     },
     {
-        name   => "Both Max Fragment Len and Record Size Limit sent by client (different value), Max Fragment Len negotiated",
+        name   => "Both Max Fragment Len and Record Size Limit sent by client, different value, Max Fragment Len negotiated",
         server => {
             extra => {
                 DisableRecordSizeLimit => "Yes",

@@ -1,6 +1,6 @@
 # Generated with generate_ssl_tests.pl
 
-num_tests = 28
+num_tests = 31
 
 test-0 = 0-one-fragment-minus-app-data
 test-1 = 1-one-fragment-app-data
@@ -23,13 +23,16 @@ test-17 = 17-Record Size Limit extension negotiated, asymmetric
 test-18 = 18-Record Size Limit extension not negotiated
 test-19 = 19-Server rejects invalid Record Size Limit value
 test-20 = 20-Client rejects invalid Record Size Limit value
-test-21 = 21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.
-test-22 = 22-large-app-data-aes-sha1-multibuffer
-test-23 = 23-large-app-data-aes-sha2-multibuffer
-test-24 = 24-large-app-data-aes-sha1-multibuffer-odd-fragment
-test-25 = 25-large-app-data-aes-sha2-multibuffer-odd-fragment
-test-26 = 26-small-app-data-aes-sha1-multibuffer
-test-27 = 27-small-app-data-aes-sha2-multibuffer
+test-21 = 21-Both Max Fragment Len and Record Size Limit sent by client, same value, Record Size Limit negotiated
+test-22 = 22-Both Max Fragment Len and Record Size Limit sent by client, different value, Record Size Limit negotiated
+test-23 = 23-Both Max Fragment Len and Record Size Limit sent by client, same value, Max Fragment Len negotiated
+test-24 = 24-Both Max Fragment Len and Record Size Limit sent by client, different value, Max Fragment Len negotiated
+test-25 = 25-large-app-data-aes-sha1-multibuffer
+test-26 = 26-large-app-data-aes-sha2-multibuffer
+test-27 = 27-large-app-data-aes-sha1-multibuffer-odd-fragment
+test-28 = 28-large-app-data-aes-sha2-multibuffer-odd-fragment
+test-29 = 29-small-app-data-aes-sha1-multibuffer
+test-30 = 30-small-app-data-aes-sha2-multibuffer
 # ===========================================================
 
 [0-one-fragment-minus-app-data]
@@ -619,19 +622,19 @@ RecordSizeLimit = 64
 
 # ===========================================================
 
-[21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.]
-ssl_conf = 21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-ssl
+[21-Both Max Fragment Len and Record Size Limit sent by client, same value, Record Size Limit negotiated]
+ssl_conf = 21-Both Max Fragment Len and Record Size Limit sent by client, same value, Record Size Limit negotiated-ssl
 
-[21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-ssl]
-server = 21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-server
-client = 21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-client
+[21-Both Max Fragment Len and Record Size Limit sent by client, same value, Record Size Limit negotiated-ssl]
+server = 21-Both Max Fragment Len and Record Size Limit sent by client, same value, Record Size Limit negotiated-server
+client = 21-Both Max Fragment Len and Record Size Limit sent by client, same value, Record Size Limit negotiated-client
 
-[21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-server]
+[21-Both Max Fragment Len and Record Size Limit sent by client, same value, Record Size Limit negotiated-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-client]
+[21-Both Max Fragment Len and Record Size Limit sent by client, same value, Record Size Limit negotiated-client]
 CipherString = DEFAULT
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -643,162 +646,272 @@ ExpectedClientMaxSendFragmentSize = 256
 ExpectedServerMaxRecvFragmentSize = 256
 ExpectedServerMaxSendFragmentSize = 1024
 MaxFragmentSize = 16384
-server = 21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-server-extra
-client = 21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-client-extra
+server = 21-Both Max Fragment Len and Record Size Limit sent by client, same value, Record Size Limit negotiated-server-extra
+client = 21-Both Max Fragment Len and Record Size Limit sent by client, same value, Record Size Limit negotiated-client-extra
 
-[21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-server-extra]
+[21-Both Max Fragment Len and Record Size Limit sent by client, same value, Record Size Limit negotiated-server-extra]
 RecordSizeLimit = 256
 
-[21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-client-extra]
+[21-Both Max Fragment Len and Record Size Limit sent by client, same value, Record Size Limit negotiated-client-extra]
 MaxFragmentLenExt = 1024
 
 
 # ===========================================================
 
-[22-large-app-data-aes-sha1-multibuffer]
-ssl_conf = 22-large-app-data-aes-sha1-multibuffer-ssl
+[22-Both Max Fragment Len and Record Size Limit sent by client, different value, Record Size Limit negotiated]
+ssl_conf = 22-Both Max Fragment Len and Record Size Limit sent by client, different value, Record Size Limit negotiated-ssl
 
-[22-large-app-data-aes-sha1-multibuffer-ssl]
-server = 22-large-app-data-aes-sha1-multibuffer-server
-client = 22-large-app-data-aes-sha1-multibuffer-client
+[22-Both Max Fragment Len and Record Size Limit sent by client, different value, Record Size Limit negotiated-ssl]
+server = 22-Both Max Fragment Len and Record Size Limit sent by client, different value, Record Size Limit negotiated-server
+client = 22-Both Max Fragment Len and Record Size Limit sent by client, different value, Record Size Limit negotiated-client
 
-[22-large-app-data-aes-sha1-multibuffer-server]
+[22-Both Max Fragment Len and Record Size Limit sent by client, different value, Record Size Limit negotiated-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[22-large-app-data-aes-sha1-multibuffer-client]
+[22-Both Max Fragment Len and Record Size Limit sent by client, different value, Record Size Limit negotiated-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-22]
+ApplicationData = 32768
+ExpectedClientMaxRecvFragmentSize = 768
+ExpectedClientMaxSendFragmentSize = 256
+ExpectedServerMaxRecvFragmentSize = 256
+ExpectedServerMaxSendFragmentSize = 768
+MaxFragmentSize = 16384
+server = 22-Both Max Fragment Len and Record Size Limit sent by client, different value, Record Size Limit negotiated-server-extra
+client = 22-Both Max Fragment Len and Record Size Limit sent by client, different value, Record Size Limit negotiated-client-extra
+
+[22-Both Max Fragment Len and Record Size Limit sent by client, different value, Record Size Limit negotiated-server-extra]
+RecordSizeLimit = 256
+
+[22-Both Max Fragment Len and Record Size Limit sent by client, different value, Record Size Limit negotiated-client-extra]
+MaxFragmentLenExt = 1024
+RecordSizeLimit = 768
+
+
+# ===========================================================
+
+[23-Both Max Fragment Len and Record Size Limit sent by client, same value, Max Fragment Len negotiated]
+ssl_conf = 23-Both Max Fragment Len and Record Size Limit sent by client, same value, Max Fragment Len negotiated-ssl
+
+[23-Both Max Fragment Len and Record Size Limit sent by client, same value, Max Fragment Len negotiated-ssl]
+server = 23-Both Max Fragment Len and Record Size Limit sent by client, same value, Max Fragment Len negotiated-server
+client = 23-Both Max Fragment Len and Record Size Limit sent by client, same value, Max Fragment Len negotiated-client
+
+[23-Both Max Fragment Len and Record Size Limit sent by client, same value, Max Fragment Len negotiated-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[23-Both Max Fragment Len and Record Size Limit sent by client, same value, Max Fragment Len negotiated-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-23]
+ApplicationData = 32768
+ExpectedClientMaxRecvFragmentSize = 1024
+ExpectedClientMaxSendFragmentSize = 1024
+ExpectedServerMaxRecvFragmentSize = 1024
+ExpectedServerMaxSendFragmentSize = 1024
+MaxFragmentSize = 16384
+server = 23-Both Max Fragment Len and Record Size Limit sent by client, same value, Max Fragment Len negotiated-server-extra
+client = 23-Both Max Fragment Len and Record Size Limit sent by client, same value, Max Fragment Len negotiated-client-extra
+
+[23-Both Max Fragment Len and Record Size Limit sent by client, same value, Max Fragment Len negotiated-server-extra]
+DisableRecordSizeLimit = Yes
+
+[23-Both Max Fragment Len and Record Size Limit sent by client, same value, Max Fragment Len negotiated-client-extra]
+MaxFragmentLenExt = 1024
+
+
+# ===========================================================
+
+[24-Both Max Fragment Len and Record Size Limit sent by client, different value, Max Fragment Len negotiated]
+ssl_conf = 24-Both Max Fragment Len and Record Size Limit sent by client, different value, Max Fragment Len negotiated-ssl
+
+[24-Both Max Fragment Len and Record Size Limit sent by client, different value, Max Fragment Len negotiated-ssl]
+server = 24-Both Max Fragment Len and Record Size Limit sent by client, different value, Max Fragment Len negotiated-server
+client = 24-Both Max Fragment Len and Record Size Limit sent by client, different value, Max Fragment Len negotiated-client
+
+[24-Both Max Fragment Len and Record Size Limit sent by client, different value, Max Fragment Len negotiated-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[24-Both Max Fragment Len and Record Size Limit sent by client, different value, Max Fragment Len negotiated-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-24]
+ApplicationData = 32768
+ExpectedClientMaxRecvFragmentSize = 1024
+ExpectedClientMaxSendFragmentSize = 1024
+ExpectedServerMaxRecvFragmentSize = 1024
+ExpectedServerMaxSendFragmentSize = 1024
+MaxFragmentSize = 16384
+server = 24-Both Max Fragment Len and Record Size Limit sent by client, different value, Max Fragment Len negotiated-server-extra
+client = 24-Both Max Fragment Len and Record Size Limit sent by client, different value, Max Fragment Len negotiated-client-extra
+
+[24-Both Max Fragment Len and Record Size Limit sent by client, different value, Max Fragment Len negotiated-server-extra]
+DisableRecordSizeLimit = Yes
+
+[24-Both Max Fragment Len and Record Size Limit sent by client, different value, Max Fragment Len negotiated-client-extra]
+MaxFragmentLenExt = 1024
+RecordSizeLimit = 512
+
+
+# ===========================================================
+
+[25-large-app-data-aes-sha1-multibuffer]
+ssl_conf = 25-large-app-data-aes-sha1-multibuffer-ssl
+
+[25-large-app-data-aes-sha1-multibuffer-ssl]
+server = 25-large-app-data-aes-sha1-multibuffer-server
+client = 25-large-app-data-aes-sha1-multibuffer-client
+
+[25-large-app-data-aes-sha1-multibuffer-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[25-large-app-data-aes-sha1-multibuffer-client]
 CipherString = AES128-SHA
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-22]
+[test-25]
 ApplicationData = 1048576
 MaxFragmentSize = 4096
 
 
 # ===========================================================
 
-[23-large-app-data-aes-sha2-multibuffer]
-ssl_conf = 23-large-app-data-aes-sha2-multibuffer-ssl
+[26-large-app-data-aes-sha2-multibuffer]
+ssl_conf = 26-large-app-data-aes-sha2-multibuffer-ssl
 
-[23-large-app-data-aes-sha2-multibuffer-ssl]
-server = 23-large-app-data-aes-sha2-multibuffer-server
-client = 23-large-app-data-aes-sha2-multibuffer-client
+[26-large-app-data-aes-sha2-multibuffer-ssl]
+server = 26-large-app-data-aes-sha2-multibuffer-server
+client = 26-large-app-data-aes-sha2-multibuffer-client
 
-[23-large-app-data-aes-sha2-multibuffer-server]
+[26-large-app-data-aes-sha2-multibuffer-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[23-large-app-data-aes-sha2-multibuffer-client]
+[26-large-app-data-aes-sha2-multibuffer-client]
 CipherString = AES128-SHA256
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-23]
+[test-26]
 ApplicationData = 1048576
 MaxFragmentSize = 4096
 
 
 # ===========================================================
 
-[24-large-app-data-aes-sha1-multibuffer-odd-fragment]
-ssl_conf = 24-large-app-data-aes-sha1-multibuffer-odd-fragment-ssl
+[27-large-app-data-aes-sha1-multibuffer-odd-fragment]
+ssl_conf = 27-large-app-data-aes-sha1-multibuffer-odd-fragment-ssl
 
-[24-large-app-data-aes-sha1-multibuffer-odd-fragment-ssl]
-server = 24-large-app-data-aes-sha1-multibuffer-odd-fragment-server
-client = 24-large-app-data-aes-sha1-multibuffer-odd-fragment-client
+[27-large-app-data-aes-sha1-multibuffer-odd-fragment-ssl]
+server = 27-large-app-data-aes-sha1-multibuffer-odd-fragment-server
+client = 27-large-app-data-aes-sha1-multibuffer-odd-fragment-client
 
-[24-large-app-data-aes-sha1-multibuffer-odd-fragment-server]
+[27-large-app-data-aes-sha1-multibuffer-odd-fragment-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[24-large-app-data-aes-sha1-multibuffer-odd-fragment-client]
+[27-large-app-data-aes-sha1-multibuffer-odd-fragment-client]
 CipherString = AES128-SHA
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-24]
+[test-27]
 ApplicationData = 1048579
 MaxFragmentSize = 5115
 
 
 # ===========================================================
 
-[25-large-app-data-aes-sha2-multibuffer-odd-fragment]
-ssl_conf = 25-large-app-data-aes-sha2-multibuffer-odd-fragment-ssl
+[28-large-app-data-aes-sha2-multibuffer-odd-fragment]
+ssl_conf = 28-large-app-data-aes-sha2-multibuffer-odd-fragment-ssl
 
-[25-large-app-data-aes-sha2-multibuffer-odd-fragment-ssl]
-server = 25-large-app-data-aes-sha2-multibuffer-odd-fragment-server
-client = 25-large-app-data-aes-sha2-multibuffer-odd-fragment-client
+[28-large-app-data-aes-sha2-multibuffer-odd-fragment-ssl]
+server = 28-large-app-data-aes-sha2-multibuffer-odd-fragment-server
+client = 28-large-app-data-aes-sha2-multibuffer-odd-fragment-client
 
-[25-large-app-data-aes-sha2-multibuffer-odd-fragment-server]
+[28-large-app-data-aes-sha2-multibuffer-odd-fragment-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[25-large-app-data-aes-sha2-multibuffer-odd-fragment-client]
+[28-large-app-data-aes-sha2-multibuffer-odd-fragment-client]
 CipherString = AES128-SHA256
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-25]
+[test-28]
 ApplicationData = 1048573
 MaxFragmentSize = 5125
 
 
 # ===========================================================
 
-[26-small-app-data-aes-sha1-multibuffer]
-ssl_conf = 26-small-app-data-aes-sha1-multibuffer-ssl
+[29-small-app-data-aes-sha1-multibuffer]
+ssl_conf = 29-small-app-data-aes-sha1-multibuffer-ssl
 
-[26-small-app-data-aes-sha1-multibuffer-ssl]
-server = 26-small-app-data-aes-sha1-multibuffer-server
-client = 26-small-app-data-aes-sha1-multibuffer-client
+[29-small-app-data-aes-sha1-multibuffer-ssl]
+server = 29-small-app-data-aes-sha1-multibuffer-server
+client = 29-small-app-data-aes-sha1-multibuffer-client
 
-[26-small-app-data-aes-sha1-multibuffer-server]
+[29-small-app-data-aes-sha1-multibuffer-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[26-small-app-data-aes-sha1-multibuffer-client]
+[29-small-app-data-aes-sha1-multibuffer-client]
 CipherString = AES128-SHA
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-26]
+[test-29]
 ApplicationData = 4096
 MaxFragmentSize = 4096
 
 
 # ===========================================================
 
-[27-small-app-data-aes-sha2-multibuffer]
-ssl_conf = 27-small-app-data-aes-sha2-multibuffer-ssl
+[30-small-app-data-aes-sha2-multibuffer]
+ssl_conf = 30-small-app-data-aes-sha2-multibuffer-ssl
 
-[27-small-app-data-aes-sha2-multibuffer-ssl]
-server = 27-small-app-data-aes-sha2-multibuffer-server
-client = 27-small-app-data-aes-sha2-multibuffer-client
+[30-small-app-data-aes-sha2-multibuffer-ssl]
+server = 30-small-app-data-aes-sha2-multibuffer-server
+client = 30-small-app-data-aes-sha2-multibuffer-client
 
-[27-small-app-data-aes-sha2-multibuffer-server]
+[30-small-app-data-aes-sha2-multibuffer-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[27-small-app-data-aes-sha2-multibuffer-client]
+[30-small-app-data-aes-sha2-multibuffer-client]
 CipherString = AES128-SHA256
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-27]
+[test-30]
 ApplicationData = 4096
 MaxFragmentSize = 4096
 
