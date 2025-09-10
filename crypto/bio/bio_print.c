@@ -47,6 +47,7 @@ static int fmtint(struct pr_desc *, int64_t, int, int, int, int);
 static int fmtfp(struct pr_desc *, LDOUBLE, int, int, int, int);
 #endif
 static int doapr_outch(struct pr_desc *, int);
+static int eob_ok(struct pr_desc *desc, long long left);
 static int _dopr(char **sbuffer, char **buffer,
                  size_t *maxlen, size_t *retlen, int *truncated,
                  const char *format, va_list args);
@@ -467,7 +468,7 @@ out:
 static int
 fmtstr(struct pr_desc *desc, const char *value, int flags, int min, int max)
 {
-    int padlen;
+    int padlen = 0;
     size_t strln;
     int cnt = 0;
 
@@ -491,26 +492,42 @@ fmtstr(struct pr_desc *desc, const char *value, int flags, int min, int max)
         else
             max = INT_MAX;
     }
-    if (flags & DP_F_MINUS)
-        padlen = -padlen;
 
-    while ((padlen > 0) && (max < 0 || cnt < max)) {
-        if (!doapr_outch(desc, ' '))
-            return 0;
-        --padlen;
-        ++cnt;
+    if (!(flags & DP_F_MINUS) && padlen > 0) {
+        /* cap padlen to max so we can pass it as-is to eob_ok() */
+        if (max >= 0) {
+            if (padlen > max)
+                padlen = max;
+            cnt = padlen;
+        }
+        while (padlen > 0 && eob_ok(desc, padlen)) {
+            if (!doapr_outch(desc, ' '))
+                return 0;
+            --padlen;
+        }
     }
-    while (strln > 0 && (max < 0 || cnt < max)) {
+    if (max >= 0) {
+        /* cap strln to (max - cnt) so we can pass it as-is to eob_ok() */
+        if (strln > INT_MAX || (int)strln > max - cnt)
+            strln = max - cnt;
+        cnt += (int)strln;
+    }
+    while (strln > 0 && eob_ok(desc, strln)) {
         if (!doapr_outch(desc, *value++))
             return 0;
         --strln;
-        ++cnt;
     }
-    while ((padlen < 0) && (max < 0 || cnt < max)) {
-        if (!doapr_outch(desc, ' '))
-            return 0;
-        ++padlen;
-        ++cnt;
+    if ((flags & DP_F_MINUS) && padlen > 0) {
+        /* cap padlen to (max - cnt) so we can pass it as-is to eob_ok() */
+        if (max >= 0) {
+            if (padlen > max - cnt)
+                padlen = max - cnt;
+        }
+        while (padlen > 0 && eob_ok(desc, padlen)) {
+            if (!doapr_outch(desc, ' '))
+                return 0;
+            --padlen;
+        }
     }
     return 1;
 }
@@ -590,7 +607,7 @@ fmtint(struct pr_desc *desc,
     }
 
     /* spaces */
-    while (spadlen > 0) {
+    while (spadlen > 0 && eob_ok(desc, spadlen)) {
         if (!doapr_outch(desc, ' '))
             return 0;
         --spadlen;
@@ -610,7 +627,7 @@ fmtint(struct pr_desc *desc,
 
     /* zeros */
     if (zpadlen > 0) {
-        while (zpadlen > 0) {
+        while (zpadlen > 0 && eob_ok(desc, zpadlen)) {
             if (!doapr_outch(desc, '0'))
                 return 0;
             --zpadlen;
@@ -623,10 +640,14 @@ fmtint(struct pr_desc *desc,
     }
 
     /* left justified spaces */
-    while (spadlen < 0) {
-        if (!doapr_outch(desc, ' '))
-            return 0;
-        ++spadlen;
+    if (spadlen < 0) {
+        spadlen = -spadlen;
+
+        while (spadlen > 0 && eob_ok(desc, spadlen)) {
+            if (!doapr_outch(desc, ' '))
+                return 0;
+            --spadlen;
+        }
     }
     return 1;
 }
@@ -862,17 +883,19 @@ fmtfp(struct pr_desc *desc,
             --padlen;
             signvalue = 0;
         }
-        while (padlen > 0) {
+        while (padlen > 0 && eob_ok(desc, padlen)) {
             if (!doapr_outch(desc, '0'))
                 return 0;
             --padlen;
         }
+        padlen = 0;
     }
-    while (padlen > 0) {
+    while (padlen > 0 && eob_ok(desc, padlen)) {
         if (!doapr_outch(desc, ' '))
             return 0;
         --padlen;
     }
+    padlen = 0;
     if (signvalue && !doapr_outch(desc, signvalue))
         return 0;
 
@@ -894,7 +917,7 @@ fmtfp(struct pr_desc *desc,
                 return 0;
         }
     }
-    while (zpadlen > 0) {
+    while (zpadlen > 0 && eob_ok(desc, zpadlen)) {
         if (!doapr_outch(desc, '0'))
             return 0;
         --zpadlen;
@@ -921,10 +944,14 @@ fmtfp(struct pr_desc *desc,
         }
     }
 
-    while (padlen < 0) {
-        if (!doapr_outch(desc, ' '))
-            return 0;
-        ++padlen;
+    if (padlen < 0) {
+        padlen = -padlen;
+
+        while (padlen > 0 && eob_ok(desc, padlen)) {
+            if (!doapr_outch(desc, ' '))
+                return 0;
+            --padlen;
+        }
     }
     return 1;
 }
@@ -981,6 +1008,41 @@ doapr_outch(struct pr_desc *desc, int c)
     return 1;
 }
 
+/**
+ * Checks if we reached an end of a non-extandable buffer (sbuffer) and updates
+ * desc->pos by adding the amount of bytes left if the end of buffer is reached.
+ * That allow quickly short-circuiting long loops with unreasonably long paddings
+ * and widths.
+ *
+ * @param desc Pointer to a print descriptor.
+ * @param left Bytes left in the chunk caller is currently processing.
+ * @return 0 - end of buffer is reached, no need to continue;
+ *         1 - there is still space in the buffer, the caller may continue to
+ *         try to output bytes in the buffer with doapr_outch().
+ */
+static int eob_ok(struct pr_desc *desc, long long left)
+{
+    /*
+     * desc->buffer is auto-sizeable, so we are never supposed to reach the end
+     * of it.
+     */
+    if (desc->buffer != NULL)
+        return 1;
+
+    if (desc->currlen >= desc->maxlen) {
+        if (left > 0) {
+            if (desc->pos < LLONG_MAX - left) {
+                desc->pos += left;
+            } else {
+                desc->pos = LLONG_MAX;
+            }
+        }
+
+        return 0;
+    }
+
+    return 1;
+}
 
 /***************************************************************************/
 
