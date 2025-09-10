@@ -121,8 +121,8 @@ EXT_RETURN tls_construct_ctos_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
      * they have no need to limit the size of records."
      *
      * The extension is by default sent, unless disabled by the user.
-     * If a Max Fragment Length extension has been configured, then send both extensions with the
-     * same value.
+     * If a Max Fragment Length extension has been configured, then send both
+     * extensions with the same value.
      */
 
     if ((s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT) != 0) {

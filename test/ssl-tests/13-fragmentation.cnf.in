@@ -272,6 +272,9 @@ our @tests = (
         },
         test   => {
             ApplicationData => 32768,
+
+            ExpectedClientMaxSendFragmentSize => 512,
+            ExpectedServerMaxSendFragmentSize => 512,
         }
     },
     {
@@ -305,20 +308,97 @@ our @tests = (
         }
     },
     {
-        # TODO
-
-        name   => "Maximum Fragment Len extension 1024, Record Size Limit negotiated",
+        name   => "Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.",
         server => {
             extra => {
+                RecordSizeLimit => 256,
             },
         },
         client => {
             extra => {
-                RecordSizeLimit => 64,
+                MaxFragmentLenExt => 1024,
             },
         },
         test   => {
-            ApplicationData => 32768,
+            ApplicationData                   => 32768,
+            MaxFragmentSize                   => 16384,
+
+            ExpectedClientMaxSendFragmentSize => 256,
+            ExpectedClientMaxRecvFragmentSize => 1024,
+
+            ExpectedServerMaxSendFragmentSize => 1024,
+            ExpectedServerMaxRecvFragmentSize => 256,
+        }
+    },
+    {
+        name   => "Both Max Fragment Len and Record Size Limit sent by client (different value), Record Size Limit negotiated.",
+        server => {
+            extra => {
+                RecordSizeLimit => 256,
+            },
+        },
+        client => {
+            extra => {
+                MaxFragmentLenExt => 1024,
+                RecordSizeLimit   => 768,
+            },
+        },
+        test   => {
+            ApplicationData                   => 32768,
+            MaxFragmentSize                   => 16384,
+
+            ExpectedClientMaxSendFragmentSize => 256,
+            ExpectedClientMaxRecvFragmentSize => 768,
+
+            ExpectedServerMaxSendFragmentSize => 768,
+            ExpectedServerMaxRecvFragmentSize => 256,
+        }
+    },
+    {
+        name   => "Both Max Fragment Len and Record Size Limit sent by client (same value), Max Fragment Len negotiated",
+        server => {
+            extra => {
+                DisableRecordSizeLimit => "Yes",
+            },
+        },
+        client => {
+            extra => {
+                MaxFragmentLenExt => 1024,
+            },
+        },
+        test   => {
+            ApplicationData                   => 32768,
+            MaxFragmentSize                   => 16384,
+
+            ExpectedClientMaxSendFragmentSize => 1024,
+            ExpectedClientMaxRecvFragmentSize => 1024,
+
+            ExpectedServerMaxSendFragmentSize => 1024,
+            ExpectedServerMaxRecvFragmentSize => 1024,
+        }
+    },
+    {
+        name   => "Both Max Fragment Len and Record Size Limit sent by client (different value), Max Fragment Len negotiated",
+        server => {
+            extra => {
+                DisableRecordSizeLimit => "Yes",
+            },
+        },
+        client => {
+            extra => {
+                MaxFragmentLenExt => 1024,
+                RecordSizeLimit   => 512,
+            },
+        },
+        test   => {
+            ApplicationData                   => 32768,
+            MaxFragmentSize                   => 16384,
+
+            ExpectedClientMaxSendFragmentSize => 1024,
+            ExpectedClientMaxRecvFragmentSize => 1024,
+
+            ExpectedServerMaxSendFragmentSize => 1024,
+            ExpectedServerMaxRecvFragmentSize => 1024,
         }
     },
 );

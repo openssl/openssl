@@ -23,7 +23,7 @@ test-17 = 17-Record Size Limit extension negotiated, asymmetric
 test-18 = 18-Record Size Limit extension not negotiated
 test-19 = 19-Server rejects invalid Record Size Limit value
 test-20 = 20-Client rejects invalid Record Size Limit value
-test-21 = 21-Maximum Fragment Len extension 1024, Record Size Limit negotiated
+test-21 = 21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.
 test-22 = 22-large-app-data-aes-sha1-multibuffer
 test-23 = 23-large-app-data-aes-sha2-multibuffer
 test-24 = 24-large-app-data-aes-sha1-multibuffer-odd-fragment
@@ -545,6 +545,8 @@ VerifyMode = Peer
 
 [test-18]
 ApplicationData = 32768
+ExpectedClientMaxSendFragmentSize = 512
+ExpectedServerMaxSendFragmentSize = 512
 server = 18-Record Size Limit extension not negotiated-server-extra
 client = 18-Record Size Limit extension not negotiated-client-extra
 
@@ -617,32 +619,38 @@ RecordSizeLimit = 64
 
 # ===========================================================
 
-[21-Maximum Fragment Len extension 1024, Record Size Limit negotiated]
-ssl_conf = 21-Maximum Fragment Len extension 1024, Record Size Limit negotiated-ssl
+[21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.]
+ssl_conf = 21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-ssl
 
-[21-Maximum Fragment Len extension 1024, Record Size Limit negotiated-ssl]
-server = 21-Maximum Fragment Len extension 1024, Record Size Limit negotiated-server
-client = 21-Maximum Fragment Len extension 1024, Record Size Limit negotiated-client
+[21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-ssl]
+server = 21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-server
+client = 21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-client
 
-[21-Maximum Fragment Len extension 1024, Record Size Limit negotiated-server]
+[21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[21-Maximum Fragment Len extension 1024, Record Size Limit negotiated-client]
+[21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-client]
 CipherString = DEFAULT
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-21]
 ApplicationData = 32768
-server = 21-Maximum Fragment Len extension 1024, Record Size Limit negotiated-server-extra
-client = 21-Maximum Fragment Len extension 1024, Record Size Limit negotiated-client-extra
+ExpectedClientMaxRecvFragmentSize = 1024
+ExpectedClientMaxSendFragmentSize = 256
+ExpectedServerMaxRecvFragmentSize = 256
+ExpectedServerMaxSendFragmentSize = 1024
+MaxFragmentSize = 16384
+server = 21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-server-extra
+client = 21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-client-extra
 
-[21-Maximum Fragment Len extension 1024, Record Size Limit negotiated-server-extra]
+[21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-server-extra]
+RecordSizeLimit = 256
 
-[21-Maximum Fragment Len extension 1024, Record Size Limit negotiated-client-extra]
-RecordSizeLimit = 64
+[21-Both Max Fragment Len and Record Size Limit sent by client (same value), Record Size Limit negotiated.-client-extra]
+MaxFragmentLenExt = 1024
 
 
 # ===========================================================
