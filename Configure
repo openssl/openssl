@@ -480,7 +480,6 @@ my @disablables = (
     "ecdsa",
     "ecx",
     "egd",
-    "engine",
     "err",
     "external-tests",
     "filenames",
@@ -647,8 +646,7 @@ my @disable_cascades = (
                              "aria", "async", "atexit", "autoload-config",
                              "blake2", "bf", "camellia", "cast", "chacha",
                              "cmac", "cms", "cmp", "comp", "ct",
-                             "des", "dgram", "dh", "dsa",
-                             "ec", "engine",
+                             "des", "dgram", "dh", "dsa", "ec",
                              "filenames",
                              "idea", "ktls", "lms",
                              "md4", "ml-dsa", "ml-kem", "multiblock",
@@ -695,7 +693,6 @@ my @disable_cascades = (
     # or modules.
     "pic"               => [ "shared", "module" ],
 
-    "engine"            => [ grep(/eng$/, @disablables) ],
     "hw"                => [ "padlockeng" ],
 
     # no-autoalginit is only useful when building non-shared
@@ -723,7 +720,7 @@ my @disable_cascades = (
 
     "blake2"            => [ "argon2" ],
 
-    "deprecated-3.0"    => [ "engine", "srp" ],
+    "deprecated-3.0"    => [ "srp" ],
 
     "http"              => [ "ocsp" ]
     );
@@ -1951,7 +1948,6 @@ foreach my $what (sort keys %disabled) {
         my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
         push @{$config{openssl_feature_defines}}, $macro;
 
-        $skipdir{engines} = $what if $what eq 'engine';
         $skipdir{"crypto/$skipdir"} = $what
             unless $what eq 'async' || $what eq 'err' || $what eq 'dso' || $what eq 'http';
     }
