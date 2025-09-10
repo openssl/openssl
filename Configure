@@ -1959,9 +1959,10 @@ foreach my $what (sort keys %disabled) {
 
     $config{options} .= " no-$what";
 
+    # TODO remove engine from here after cleanup
     if (!grep { $what eq $_ } ( 'buildtest-c++', 'fips', 'threads', 'shared',
-                                'module', 'pic', 'dynamic-engine', 'makedepend',
-                                'sse2', 'legacy' )) {
+                                'module', 'pic', 'makedepend',
+                                'sse2', 'legacy', 'engine' )) {
         (my $WHAT = uc $what) =~ s|-|_|g;
         my $skipdir = $what;
 
@@ -2087,6 +2088,13 @@ if ($builder eq "unified") {
         my $sourced = catdir($srcdir, @curd);
         my $buildd = catdir($blddir, @curd);
 
+        # TODO remove me when engines/ is removed
+        # This is needed now, to skip the directory from getting into the config
+        if ($curd[0] eq "engines" or
+           ($curd[0] eq "crypto" and $curd[1] eq "engine")) {
+            next;
+        }
+
         my $unixdir = join('/', @curd);
         if (exists $skipdir{$unixdir}) {
             my $what = $skipdir{$unixdir};
@@ -2210,6 +2218,12 @@ if ($builder eq "unified") {
             my $attr_str = shift;
             my @values = @_;
 
+            # TODO remove me when the engine docs are cleared up
+            # This is needed now, to skip the engine docs getting into the
+            # config
+            if (grep { /openssl-engine/ } @values) {
+                return;
+            }
             if (defined $index_str) {
                 my @indexes = ( '' );
                 if ($index_str !~ m|^\s*$|) {
@@ -2544,6 +2558,12 @@ EOF
             my $dest = $_;
             my $ddest = $dest;
 
+            # TODO remove me when the engine docs are cleared up
+            # This is needed now, to skip the engine docs getting into the
+            # config
+            if ($dest =~ /engine/) {
+                next;
+            }
             if ($dest =~ /^\|(.*)\|$/) {
                 # Collect the raw target
                 $unified_info{targets}->{$1} = 1;
