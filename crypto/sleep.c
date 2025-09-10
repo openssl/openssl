@@ -29,8 +29,10 @@
 #  include <unistd.h>
 static void ossl_sleep_millis(uint64_t millis)
 {
-    unsigned int s = (unsigned int)(millis / 1000);
-    unsigned int us = (unsigned int)((millis % 1000) * 1000);
+    unsigned int s = millis < 1000LLU * UINT_MAX ? (unsigned int)(millis / 1000)
+                                                 : UINT_MAX;
+    unsigned int us = millis < 1000LLU * UINT_MAX
+        ? (unsigned int)((millis % 1000) * 1000) : 0;
 
     if (s > 0)
         sleep(s);
