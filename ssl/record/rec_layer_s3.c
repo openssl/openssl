@@ -1244,10 +1244,9 @@ void ssl_set_record_size_limit(const SSL_CONNECTION *s, int which) {
 
     if ((which & SSL3_CHANGE_CIPHER_CLIENT_WRITE) == SSL3_CHANGE_CIPHER_CLIENT_WRITE || (which & SSL3_CHANGE_CIPHER_SERVER_WRITE) == SSL3_CHANGE_CIPHER_SERVER_WRITE) {
         s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
-            s->ext.peer_record_size_limit);
+            MIN(s->max_send_fragment, s->ext.peer_record_size_limit));
     } else if ((which & SSL3_CHANGE_CIPHER_CLIENT_READ) == SSL3_CHANGE_CIPHER_CLIENT_READ || (which & SSL3_CHANGE_CIPHER_SERVER_READ) == SSL3_CHANGE_CIPHER_SERVER_READ) {
-        s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
-            s->ext.record_size_limit);
+        s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl, s->ext.record_size_limit);
     }
 }
 

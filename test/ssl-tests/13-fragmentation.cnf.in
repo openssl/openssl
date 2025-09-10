@@ -117,6 +117,12 @@ our @tests = (
         test => {
             ApplicationData => 3072,
             MaxFragmentSize => 16384,
+
+            ExpectedClientMaxSendFragmentSize => 1024,
+            ExpectedClientMaxRecvFragmentSize => 1024,
+
+            ExpectedServerMaxSendFragmentSize => 1024,
+            ExpectedServerMaxRecvFragmentSize => 1024,
         }
     },
     {
@@ -131,6 +137,12 @@ our @tests = (
         test => {
             ApplicationData => 3072,
             MaxFragmentSize => 2048,
+
+            ExpectedClientMaxSendFragmentSize => 2048,
+            ExpectedClientMaxRecvFragmentSize => 2048,
+
+            ExpectedServerMaxSendFragmentSize => 2048,
+            ExpectedServerMaxRecvFragmentSize => 2048,
         }
     },
     {
@@ -154,7 +166,7 @@ our @tests = (
         }
     },
     {
-        name => "Maximum Fragment Len extension 1024 lower than FragmentSize 1024",
+        name => "Maximum Fragment Len extension 2048 bigger than FragmentSize 1024",
         server => { },
         client => {
             extra => {
@@ -166,10 +178,10 @@ our @tests = (
             ApplicationData => 3072,
             MaxFragmentSize => 1024,
 
-            ExpectedClientMaxSendFragmentSize => 2048,
+            ExpectedClientMaxSendFragmentSize => 1024,
             ExpectedClientMaxRecvFragmentSize => 2048,
 
-            ExpectedServerMaxSendFragmentSize => 2048,
+            ExpectedServerMaxSendFragmentSize => 1024,
             ExpectedServerMaxRecvFragmentSize => 2048,
         }
     },
@@ -237,6 +249,7 @@ our @tests = (
         },
         test   => {
             ApplicationData                   => 32768,
+            MaxFragmentSize                   => 16384,
 
             ExpectedClientMaxSendFragmentSize => 1024,
             ExpectedClientMaxRecvFragmentSize => 128,

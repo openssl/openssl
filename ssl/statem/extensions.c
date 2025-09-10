@@ -12,13 +12,14 @@
 # include <spt_extensions.h> /* timeval */
 #endif
 
-#include <string.h>
-#include "internal/nelem.h"
-#include "internal/cryptlib.h"
-#include "internal/ssl_unwrap.h"
 #include "../ssl_local.h"
+#include "internal/cryptlib.h"
+#include "internal/nelem.h"
+#include "internal/ssl_unwrap.h"
 #include "statem_local.h"
 #include <openssl/ocsp.h>
+#include <string.h>
+#include <sys/param.h>
 
 static int final_renegotiate(SSL_CONNECTION *s, unsigned int context, int sent);
 static int init_server_name(SSL_CONNECTION *s, unsigned int context);
@@ -1759,10 +1760,9 @@ static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
 
     if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
         s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
-                                              GET_MAX_FRAGMENT_LENGTH(s->session));
-
+                                           GET_MAX_FRAGMENT_LENGTH(s->session));
         s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
-                                              ssl_get_max_send_fragment(s, 0));
+                MIN(s->max_send_fragment, GET_MAX_FRAGMENT_LENGTH(s->session)));
     }
 
     return 1;

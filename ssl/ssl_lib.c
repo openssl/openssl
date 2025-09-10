@@ -7368,44 +7368,36 @@ __owur unsigned int ssl_get_proto_record_hard_limit(const SSL_CONNECTION *sc) {
 __owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc,
                                               uint8_t type)
 {
-    if (sc->rlayer.wrl != NULL && sc->rlayer.wrl->funcs != NULL
-        && sc->rlayer.wrl->funcs->get_record_type != NULL) {
-        type = sc->rlayer.wrl->funcs->get_record_type(sc->rlayer.wrl, type);
+  if (sc->rlayer.wrl != NULL) {
+    if (sc->rlayer.wrl->funcs->get_record_type != NULL) {
+            /* For TLS 1.3, get the real type. */
+            type = sc->rlayer.wrl->funcs->get_record_type(sc->rlayer.wrl, type);
+        }
+
+        /* If Record Size Limit extension is negotiated, only use it with
+         * encrypted data. */
+        if (USE_RECORD_SIZE_LIMIT(sc) && type != SSL3_RT_APPLICATION_DATA)
+            return sc->max_send_fragment;
+
+        /* Do not bother checking with Maximum Fragment Length extension since
+         * it applies to all record types. */
+
+        return sc->rlayer.wrlmethod->get_max_frag_len(sc->rlayer.wrl);
     }
 
-    /* Return any active Record Size Limit extension */
-    if (USE_RECORD_SIZE_LIMIT(sc) && type == SSL3_RT_APPLICATION_DATA)
-        return sc->ext.peer_record_size_limit;
-
-    /* Return any active Max Fragment Len extension */
-    if (sc->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(sc->session))
-        return GET_MAX_FRAGMENT_LENGTH(sc->session);
-
-    /* return current SSL connection setting */
-    return (unsigned int)sc->max_send_fragment;
+    return sc->max_send_fragment;
 }
 
 __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc,
                                                 uint8_t type)
 {
-    if (sc->rlayer.wrl != NULL && sc->rlayer.wrl->funcs != NULL
-        && sc->rlayer.wrl->funcs->get_record_type != NULL) {
-        type = sc->rlayer.wrl->funcs->get_record_type(sc->rlayer.wrl, type);
-    }
+    unsigned int max_send_fragment = 0;
 
-    if (USE_RECORD_SIZE_LIMIT(sc)
-        && sc->split_send_fragment > sc->ext.peer_record_size_limit
-        && type == SSL3_RT_APPLICATION_DATA)
-        return sc->ext.peer_record_size_limit;
+    max_send_fragment = ssl_get_max_send_fragment(sc, type);
 
-    /* Return a value regarding an active Max Fragment Len extension */
-    if (sc->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(sc->session)
-        && sc->split_send_fragment > GET_MAX_FRAGMENT_LENGTH(sc->session))
-        return GET_MAX_FRAGMENT_LENGTH(sc->session);
-
-    /* else limit |split_send_fragment| to current |max_send_fragment| */
-    if (sc->split_send_fragment > sc->max_send_fragment)
-        return (unsigned int)sc->max_send_fragment;
+    /* Limit split_send_fragment to current max_send_fragment */
+    if (sc->split_send_fragment > max_send_fragment)
+        return max_send_fragment;
 
     /* return current SSL connection setting */
     return (unsigned int)sc->split_send_fragment;

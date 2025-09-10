@@ -15,7 +15,7 @@ test-9 = 9-large-app-data-odd-fragment-size
 test-10 = 10-Maximum Fragment Len extension set to 1024 w. FragmentSize disabled
 test-11 = 11-Maximum Fragment Len extension equal FragmentSize to 2048
 test-12 = 12-Maximum Fragment Len extension 512 lower than FragmentSize 1024
-test-13 = 13-Maximum Fragment Len extension 1024 lower than FragmentSize 1024
+test-13 = 13-Maximum Fragment Len extension 2048 bigger than FragmentSize 1024
 test-14 = 14-Maximum Fragment Len extension 4096 greater than FragmentSize 2048
 test-15 = 15-Maximum Fragment Len extension 2048 greater than FragmentSize 1024
 test-16 = 16-Record Size Limit extension negotiated, not asymmetric
@@ -284,6 +284,10 @@ VerifyMode = Peer
 
 [test-10]
 ApplicationData = 3072
+ExpectedClientMaxRecvFragmentSize = 1024
+ExpectedClientMaxSendFragmentSize = 1024
+ExpectedServerMaxRecvFragmentSize = 1024
+ExpectedServerMaxSendFragmentSize = 1024
 MaxFragmentSize = 16384
 client = 10-Maximum Fragment Len extension set to 1024 w. FragmentSize disabled-client-extra
 
@@ -313,6 +317,10 @@ VerifyMode = Peer
 
 [test-11]
 ApplicationData = 3072
+ExpectedClientMaxRecvFragmentSize = 2048
+ExpectedClientMaxSendFragmentSize = 2048
+ExpectedServerMaxRecvFragmentSize = 2048
+ExpectedServerMaxSendFragmentSize = 2048
 MaxFragmentSize = 2048
 client = 11-Maximum Fragment Len extension equal FragmentSize to 2048-client-extra
 
@@ -356,33 +364,33 @@ MaxFragmentLenExt = 512
 
 # ===========================================================
 
-[13-Maximum Fragment Len extension 1024 lower than FragmentSize 1024]
-ssl_conf = 13-Maximum Fragment Len extension 1024 lower than FragmentSize 1024-ssl
+[13-Maximum Fragment Len extension 2048 bigger than FragmentSize 1024]
+ssl_conf = 13-Maximum Fragment Len extension 2048 bigger than FragmentSize 1024-ssl
 
-[13-Maximum Fragment Len extension 1024 lower than FragmentSize 1024-ssl]
-server = 13-Maximum Fragment Len extension 1024 lower than FragmentSize 1024-server
-client = 13-Maximum Fragment Len extension 1024 lower than FragmentSize 1024-client
+[13-Maximum Fragment Len extension 2048 bigger than FragmentSize 1024-ssl]
+server = 13-Maximum Fragment Len extension 2048 bigger than FragmentSize 1024-server
+client = 13-Maximum Fragment Len extension 2048 bigger than FragmentSize 1024-client
 
-[13-Maximum Fragment Len extension 1024 lower than FragmentSize 1024-server]
+[13-Maximum Fragment Len extension 2048 bigger than FragmentSize 1024-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[13-Maximum Fragment Len extension 1024 lower than FragmentSize 1024-client]
+[13-Maximum Fragment Len extension 2048 bigger than FragmentSize 1024-client]
 CipherString = DEFAULT
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-13]
 ApplicationData = 3072
-ExpectedClientMaxRecvFragmentSize = 512
-ExpectedClientMaxSendFragmentSize = 512
-ExpectedServerMaxRecvFragmentSize = 512
-ExpectedServerMaxSendFragmentSize = 512
+ExpectedClientMaxRecvFragmentSize = 2048
+ExpectedClientMaxSendFragmentSize = 1024
+ExpectedServerMaxRecvFragmentSize = 2048
+ExpectedServerMaxSendFragmentSize = 1024
 MaxFragmentSize = 1024
-client = 13-Maximum Fragment Len extension 1024 lower than FragmentSize 1024-client-extra
+client = 13-Maximum Fragment Len extension 2048 bigger than FragmentSize 1024-client-extra
 
-[13-Maximum Fragment Len extension 1024 lower than FragmentSize 1024-client-extra]
+[13-Maximum Fragment Len extension 2048 bigger than FragmentSize 1024-client-extra]
 DisableRecordSizeLimit = Yes
 MaxFragmentLenExt = 2048
 
@@ -505,6 +513,7 @@ ExpectedClientMaxRecvFragmentSize = 128
 ExpectedClientMaxSendFragmentSize = 1024
 ExpectedServerMaxRecvFragmentSize = 1024
 ExpectedServerMaxSendFragmentSize = 128
+MaxFragmentSize = 16384
 server = 17-Record Size Limit extension negotiated, asymmetric-server-extra
 client = 17-Record Size Limit extension negotiated, asymmetric-client-extra
 
