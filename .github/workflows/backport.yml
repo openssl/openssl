@@ -17,30 +17,50 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        branch: ['3.5', '3.4', '3.3', '3.2', '3.0']
+        release: [
+          {
+            branch: '3.6',
+            cppflags: ''
+          }, {
+            branch: '3.5',
+            cppflags: 'CPPFLAGS=-ansi'
+          }, {
+            branch: '3.4',
+            cppflags: 'CPPFLAGS=-ansi'
+          }, {
+            branch: '3.3',
+            cppflags: 'CPPFLAGS=-ansi',
+          }, {
+            branch: '3.2',
+            cppflags: 'CPPFLAGS=-ansi'
+          }, {
+            branch: '3.0',
+            cppflags: 'CPPFLAGS=-ansi'
+          }
+        ]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.branch) }}
+      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.release.branch) }}
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: 0
     - name: cherry-pick
-      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.branch) }}
+      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.release.branch) }}
       run: |
            REFEND=$(git rev-parse HEAD)
            REFSTART=$(git rev-parse $REFEND~${{ github.event.pull_request.commits }})
-           git checkout ${{ format('openssl-{0}', matrix.branch) }}
+           git checkout ${{ format('openssl-{0}', matrix.release.branch) }}
            git config user.name "OpenSSL Machine"
            git config user.email "openssl-machine@openssl.org"
            echo Cherry-picking $REFSTART..$REFEND
            git cherry-pick $REFSTART..$REFEND
     - name: config
-      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.branch) }}
-      run: CPPFLAGS=-ansi ./config --strict-warnings --banner=Configured no-asm enable-fips --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
+      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.release.branch) }}
+      run: ${{ matrix.release.cppflags }} ./config --strict-warnings --banner=Configured no-asm enable-fips --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
     - name: make
-      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.branch) }}
+      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.release.branch) }}
       run: make -s -j4
     - name: make test
-      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.branch) }}
+      if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.release.branch) }}
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
