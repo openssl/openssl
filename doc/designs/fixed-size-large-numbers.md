@@ -154,6 +154,11 @@ The `OSSL_FN` type and API will be designed in such a way to enable it to
 become public at some point in the future. The initial version will not be
 public and will only be used internally.
 
+*Initial implementation is predicted to be internal.  However, the intent is
+to make this a public API some time in the future.  Therefore, all type and
+function names are made to look like publicly declared types and functions,
+to make the future transition easy.*
+
 Let's go over the details
 
 Using the C99 flexible array member feature
