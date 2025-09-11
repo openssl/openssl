@@ -59,7 +59,7 @@ OpenSSL 3.6
 
    *Viktor Dukhovni*
 
- * Added support for EVP_SKEY opaque symmetric key objects to the key
+ * Added support for `EVP_SKEY` opaque symmetric key objects to the key
    derivation and key exchange provider methods. Added `EVP_KDF_CTX_set_SKEY()`,
    `EVP_KDF_derive_SKEY()`, and `EVP_PKEY_derive_SKEY()` functions.
 
@@ -73,8 +73,8 @@ OpenSSL 3.6
 
    *Nikola Pajkovsky*
 
- * Added i2d_PKCS8PrivateKey(3) API to complement i2d_PrivateKey(3), the former
-   always outputs PKCS#8.
+ * Added `i2d_PKCS8PrivateKey(3)` API to complement `i2d_PrivateKey(3)`,
+   the former always outputs PKCS#8.
 
    *Viktor Dukhovni*
 
@@ -88,7 +88,7 @@ OpenSSL 3.6
 
  * Added notification when all stream FINs are acknowledged in QUIC. Introduced
    `ossl_quic_channel_notify_flush_done()` so that once final FINs are ACKed,
-   the channel transitions to terminating and SSL_poll() signals completion.
+   the channel transitions to terminating and `SSL_poll()` signals completion.
    This allows applications to progress shutdown reliably.
 
    *Alexandr Nedvedicky*
@@ -140,8 +140,8 @@ OpenSSL 3.6
 
    *Pavol Zacik*
 
- * Refactored OSSL_PARAM name parsing so that automatically generated
-   parsers are used instead of OSSL_PARAM_locate calls.  This should
+ * Refactored `OSSL_PARAM` name parsing so that automatically generated
+   parsers are used instead of `OSSL_PARAM_locate()` calls.  This should
    also ensure that the list of acceptable parameters better matches
    those which are actually processed.  It should also provide a small
    performance improvement because repeated iteration over passed
@@ -154,8 +154,8 @@ OpenSSL 3.6
 
    *Dr Paul Dale*
 
- * Introduce SSL_OP_SERVER_PREFERENCE superceding misleadingly
-   named SSL_OP_CIPHER_SERVER_PREFERENCE.
+ * Introduce `SSL_OP_SERVER_PREFERENCE` superceding misleadingly
+   named `SSL_OP_CIPHER_SERVER_PREFERENCE`.
 
    *Michael Baentsch*
 
@@ -180,15 +180,15 @@ OpenSSL 3.6
 
    *Anthony Ioppolo*
 
- * Relax the path check in OpenSSL's 'file:' scheme implementation for
-   OSSL_STORE.  Previously, when the 'file:' scheme is an explicit part
+ * Relax the path check in OpenSSL's `file:` scheme implementation for
+   `OSSL_STORE`.  Previously, when the `file:` scheme is an explicit part
    of the URI, our implementation required an absolute path, such as
-   'file:/path/to/file.pem'.  This requirement is now relaxed, allowing
-   'file:path/to/file.pem', as well as 'file:file.pem'.
+   `file:/path/to/file.pem`.  This requirement is now relaxed, allowing
+   `file:path/to/file.pem`, as well as `file:file.pem`.
 
    *Richard Levitte*
 
- * Changed openssl-pkey(1) to match the documentation when private keys
+ * Changed `openssl-pkey(1)` to match the documentation when private keys
    are output in DER format (`-outform DER`) by producing the `PKCS#8` form by
    default.  Previously this would output the *traditional* form for those
    older key types (`DSA`, `RSA`, `ECDSA`) that had such a form.  The
@@ -202,16 +202,17 @@ OpenSSL 3.6
 
    *Dmitry Belyavskiy based on Clemens Lang's code*
 
- * Support setting a free function thunk to OPENSSL_sk stack types. Using a thunk
+ * Support setting a free function thunk to `OPENSSL_sk` stack types. Using a thunk
    allows the type specific free function to be called with the correct type
-   information from generic functions like OPENSSL_sk_pop_free().
+   information from generic functions like `OPENSSL_sk_pop_free()`.
 
    *Frederik Wedel-Heinen*
 
  * Enabled x86-64 SM4 optimizations with SM4 ISA Extension available starting
-   Lunar Lake and Arrow Lake S CPUs. The expected performance improvement is
-   ~3.6x for sm4-cbc, ~2.9x for sm4-gcm, ~9.2x for sm4-xts, ~5.3x for sm4-ccm
-   (on average, may vary depending on the data size) on Arrow Lake S.
+   Lunar Lake and Arrow Lake S CPUs. The expected performance improvement
+   is ~3.6x for `sm4-cbc`, ~2.9x for `sm4-gcm`, ~9.2x for `sm4-xts`,
+   ~5.3x for `sm4-ccm` (on average, may vary depending on the data size)
+   on Arrow Lake S.
 
    *Alina Elizarova*
 
@@ -229,7 +230,7 @@ OpenSSL 3.6
    *Adrian Stanciu*
 
  * Change default EC point formats configuration to support only 'uncompressed'
-   format, and add SSL_OP_LEGACY_EC_POINT_FORMATS flag and options to re-enable
+   format, and add `SSL_OP_LEGACY_EC_POINT_FORMATS` flag and options to re-enable
    previous default if required.
 
    *Tim Perry*
@@ -240,8 +241,8 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
- * Add X509_CRL_get0_tbs_sigalg() accessor for the signature AlgorithmIdentifier
-   inside a CRL's TBSCertList.
+ * Add `X509_CRL_get0_tbs_sigalg()` accessor for the signature
+   `AlgorithmIdentifier` inside a CRL's `TBSCertList`.
 
    *Theo Buehler*
 
