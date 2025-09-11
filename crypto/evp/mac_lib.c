@@ -259,8 +259,8 @@ unsigned char *EVP_Q_mac(OSSL_LIB_CTX *libctx,
                          unsigned char *out, size_t outsize, size_t *outlen)
 {
     EVP_MAC *mac = EVP_MAC_fetch(libctx, name, propq);
-    OSSL_PARAM subalg_param[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
-    int p_idx = 0;
+    OSSL_PARAM subalg_param[3];
+    OSSL_PARAM *p = subalg_param;
     EVP_MAC_CTX *ctx = NULL;
     size_t len = 0;
     unsigned char *res = NULL;
@@ -285,9 +285,7 @@ unsigned char *EVP_Q_mac(OSSL_LIB_CTX *libctx,
                 goto err;
             }
         }
-        subalg_param[p_idx] =
-            OSSL_PARAM_construct_utf8_string(param_name, (char *)subalg, 0);
-        p_idx++;
+        *p++ = OSSL_PARAM_construct_utf8_string(param_name, (char *)subalg, 0);
     }
 
     /*
@@ -296,11 +294,12 @@ unsigned char *EVP_Q_mac(OSSL_LIB_CTX *libctx,
      * If we don't do this then passing a property doesn't get used when constructing
      * compund algorithms like hmacs
      */
-    if (propq != NULL) {
-        subalg_param[p_idx] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES,
-                                                               (char *)propq, 0);
-        p_idx++;
-    }
+    if (propq != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES,
+                                                (char *)propq, 0);
+
+    *p = OSSL_PARAM_construct_end();
+
     /* Single-shot - on NULL key input, set dummy key value for EVP_MAC_Init. */
     if (key == NULL && keylen == 0)
         key = data;
