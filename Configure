@@ -481,7 +481,6 @@ my @disablables = (
     "ecdsa",
     "ecx",
     "egd",
-    "engine",
     "err",
     "external-tests",
     "filenames",
@@ -642,8 +641,7 @@ my @disable_cascades = (
                              "aria", "async", "atexit", "autoload-config",
                              "blake2", "bf", "camellia", "cast", "chacha",
                              "cmac", "cms", "cmp", "comp", "ct",
-                             "des", "dgram", "dh", "dsa",
-                             "ec", "engine",
+                             "des", "dgram", "dh", "dsa", "ec",
                              "filenames",
                              "idea", "ktls", "lms",
                              "md4", "ml-dsa", "ml-kem", "multiblock",
@@ -697,8 +695,6 @@ my @disable_cascades = (
     # or modules.
     "pic"               => [ "shared", "module" ],
 
-    "engine"            => [ "dynamic-engine", grep(/eng$/, @disablables) ],
-    "dynamic-engine"    => [ "loadereng" ],
     "hw"                => [ "padlockeng" ],
 
     # no-autoalginit is only useful when building non-shared
@@ -726,7 +722,7 @@ my @disable_cascades = (
 
     "blake2"            => [ "argon2" ],
 
-    "deprecated-3.0"    => [ "engine", "srp" ],
+    "deprecated-3.0"    => [ "srp" ],
 
     "http"              => [ "ocsp" ]
     );
@@ -1963,9 +1959,10 @@ foreach my $what (sort keys %disabled) {
 
     $config{options} .= " no-$what";
 
+    # TODO remove engine from here after cleanup
     if (!grep { $what eq $_ } ( 'buildtest-c++', 'fips', 'threads', 'shared',
-                                'module', 'pic', 'dynamic-engine', 'makedepend',
-                                'sse2', 'legacy' )) {
+                                'module', 'pic', 'makedepend',
+                                'sse2', 'legacy', 'engine' )) {
         (my $WHAT = uc $what) =~ s|-|_|g;
         my $skipdir = $what;
 
@@ -1976,7 +1973,6 @@ foreach my $what (sort keys %disabled) {
         my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
         push @{$config{openssl_feature_defines}}, $macro;
 
-        $skipdir{engines} = $what if $what eq 'engine';
         $skipdir{"crypto/$skipdir"} = $what
             unless $what eq 'async' || $what eq 'err' || $what eq 'dso' || $what eq 'http';
     }
@@ -2091,6 +2087,13 @@ if ($builder eq "unified") {
         my @curd = @{shift @build_dirs};
         my $sourced = catdir($srcdir, @curd);
         my $buildd = catdir($blddir, @curd);
+
+        # TODO remove me when engines/ is removed
+        # This is needed now, to skip the directory from getting into the config
+        if ($curd[0] eq "engines" or
+           ($curd[0] eq "crypto" and $curd[1] eq "engine")) {
+            next;
+        }
 
         my $unixdir = join('/', @curd);
         if (exists $skipdir{$unixdir}) {
@@ -2215,6 +2218,12 @@ if ($builder eq "unified") {
             my $attr_str = shift;
             my @values = @_;
 
+            # TODO remove me when the engine docs are cleared up
+            # This is needed now, to skip the engine docs getting into the
+            # config
+            if (grep { /openssl-engine/ } @values) {
+                return;
+            }
             if (defined $index_str) {
                 my @indexes = ( '' );
                 if ($index_str !~ m|^\s*$|) {
@@ -2549,6 +2558,12 @@ EOF
             my $dest = $_;
             my $ddest = $dest;
 
+            # TODO remove me when the engine docs are cleared up
+            # This is needed now, to skip the engine docs getting into the
+            # config
+            if ($dest =~ /engine/) {
+                next;
+            }
             if ($dest =~ /^\|(.*)\|$/) {
                 # Collect the raw target
                 $unified_info{targets}->{$1} = 1;
