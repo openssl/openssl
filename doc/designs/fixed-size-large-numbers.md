@@ -25,6 +25,8 @@ into wrappers around the latter.
   - [Using the C99 flexible array member feature][]
   - [The `OSSL_FN` type][]
   - [The `OSSL_FN_CTX` type][]
+    - [The `OSSL_FN_CTX` type, with frames][]
+    - [The `OSSL_FN_CTX` type, without frames][]
   - [The `BIGNUM` type][]
   - [Mutability][]
   - [Dropping `top` from `BIGNUM`][]
@@ -35,6 +37,9 @@ into wrappers around the latter.
 - [Repurposing existing code][]
 - [How to apply `OSSL_FN`][]
 - [Where to apply `OSSL_FN`][]
+- [How to apply `OSSL_FN_CTX`][]
+  - [The variant with frames][]
+  - [The variant without frames][]
 - [Testing][]
 
 # Background
@@ -216,11 +221,28 @@ struct ossl_fn_st {
 
 [The `OSSL_FN_CTX` type]: #the-ossl_fn_ctx-type
 
-The `OSSL_FN_CTX` type represents an arena (a large enough chunk of memory)
-in which `OSSL_FN` instances are allocated.  The memory area of this arena
-is further divided into frames, allowing the functions `OSSL_FN_CTX_begin()`
-and `OSSL_FN_CTX_end()` (similar to `BN_CTX_begin()` and `BN_CTX_end()`) to
-do their work.
+The `OSSL_FN_CTX` type is made to replace the `BN_CTX` type where `OSSL_FN`
+type is used instead of `BIGNUM`.
+
+The `OSSL_FN_CTX` type is to be implemented as an arena (a large enough chunk
+of memory) in which `OSSL_FN` instances are allocated.  More in detail, there
+are two possibilities.
+
+### The `OSSL_FN_CTX` type, with frames
+
+[The `OSSL_FN_CTX` type, with frames]: #The-OSSL_FN_CTX-type-with-frames
+
+This variant is intended to mimic all `BN_CTX` functionality.  The idea is to
+create a large `OSSL_FN_CTX` at the top function of a complex calculation, and
+pass it around to all sub-function calls.
+
+Each sub-function would begin with starting a frame (using `OSSL_FN_CTX_begin()`,
+similar in spirit to `BN_CTX_start()`) in the passed `OSSL_FN_CTX` arena,
+obtain what temporary `OSSL_FN`s it needs from it (using `OSSL_FN_CTX_get()`,
+similar in spirit to `BN_CTX_get()`), perform what calculations it needs, and
+finish with ending the frame (using `OSSL_FN_CTX_end()`, similar in spirit to
+`BN_CTX_end()`), which relinquishing that frame's space in the `OSSL_FN_CTX`
+arena, and thereby making that same space available for the next sub-function.
 
 ```c
 typedef struct ossl_fn_ctx_st OSSL_FN_CTX;
@@ -275,6 +297,36 @@ used in a fairly limited fashion.  Furthermore, the `BN_CTX` internals allow
 for a maximum of 16 `BIGNUM`s.  A corresponding arena could the reasonably
 have the size 16 \* *size of largest fixed number* plus a little extra for
 bookkeeping purposes.
+
+### The `OSSL_FN_CTX` type, without frames
+
+[The `OSSL_FN_CTX` type, without frames]: #The-OSSL_FN_CTX-type-without-frames
+
+Compared to the variant with frames, this `OSSL_FN_CTX` variant is much
+simpler, but also more heap allocation intense.
+
+The idea with this one is that each function that needs to obtain temporary
+`OSSL_FN`s would also create their own `OSSL_FN_CTX`, independently from any
+other function.
+
+```c
+typedef struct ossl_fn_ctx_st OSSL_FN_CTX;
+
+struct ossl_fn_ctx_st {
+    /*
+     * Pointer to the free area of the arena.  Every time OSSL_FN_CTX_get() is
+     * called, the current value of this pointer is returned, and it's updated
+     * by incrementing it by the number of bytes given by OSSL_FN_CTX_get().
+     * The available number of bytes is limited by what's left in the arena.
+     */
+    unsigned char *free_memory;
+    /*
+     * The arena itself.
+     */
+    size_t msize; /* bytes */
+    unsigned char memory[];
+};
+```
 
 ## The `BIGNUM` type
 
@@ -395,6 +447,14 @@ OSSL_FN *OSSL_FN_CTX_get(OSSL_FN_CTX *ctx, size_t size);
 whole arena in secure memory.  The impact compared to allocating individual
 `OSSL_FN` instances in secure memory is considered minimal.*
 
+If the variant of `OSSL_FN_CTX` *with frames* is chosen, the following
+functions will also have to be defined:
+
+```c
+void OSSL_FN_CTX_start(OSSL_FN_CTX *ctx);
+void OSSL_FN_CTX_end(OSSL_FN_CTX *ctx);
+```
+
 ## Wrapping an `OSSL_FN` function with a `BIGNUM` function
 
 [Wrapping an `OSSL_FN` function with a `BIGNUM` function]: #wrapping-an-ossl_fn-function-with-a-bignum-function
@@ -499,6 +559,48 @@ Whether those uses need to be considered for conversion to `OSSL_FN` is an
 open question.  The current judgement is that this is less critical than
 the calculations mentioned above, and that this conversion do not have to be
 part of an initial implementation of this design.
+
+# How to apply `OSSL_FN_CTX`
+
+[How to apply `OSSL_FN_CTX`]: #how-to-apply-ossl_fn_ctx
+
+## The variant with frames
+
+[The variant with frames]: #the-variant-with-frames
+
+All internal uses of `BN_CTX_new()` and `BN_CTX_new_ex()` are to be replaced
+with calls of `OSSL_FN_CTX_new()`.
+
+All internal uses of `BN_CTX_secure_new()` and `BN_CTX_secure_new_ex()` are to
+be replaced with calls of `OSSL_FN_CTX_secure_new()`.
+
+All internal uses of `BN_CTX_free()` are to be replaced with calls of
+`OSSL_FN_CTX_free()`.
+
+All internal uses of `BN_CTX_start()` are to be replaced with calls of
+`OSSL_FN_CTX_start()`.
+
+All internal uses of `BN_CTX_get()` are to be replaced with calls of
+`OSSL_FN_CTX_get()`.
+
+All internal uses of `BN_CTX_end()` are to be replaced with calls of
+`OSSL_FN_CTX_end()`.
+
+## The variant without frames
+
+[The variant without frames]: #the-variant-without-frames
+
+All internal uses of `BN_CTX_new()`, `BN_CTX_new_ex()`, `BN_CTX_secure_new()`,
+`BN_CTX_secure_new_ex()`, and `BN_CTX_free()` are to be dropped.
+
+All internal uses of `BN_CTX_start()` are to be replaced with calls of
+`OSSL_FN_CTX_new()`.
+
+All internal uses of `BN_CTX_get()` are to be replaced with calls of
+`OSSL_FN_CTX_get()`.
+
+All internal uses of `BN_CTX_end()` are to be replaced with calls of
+`OSSL_FN_CTX_free()`.
 
 # Testing
 
