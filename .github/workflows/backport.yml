@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        branch: ['3.5', '3.4', '3.3', '3.2', '3.0']
+        branch: ['3.6', '3.5', '3.4', '3.3', '3.2', '3.0']
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
