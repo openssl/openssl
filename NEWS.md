@@ -43,7 +43,7 @@ changes:
 
   * Added NIST security categories for PKEY objects.
 
-  * Added support for EVP_SKEY opaque symmetric key objects to the key
+  * Added support for `EVP_SKEY` opaque symmetric key objects to the key
     derivation and key exchange provider methods. Added `EVP_KDF_CTX_set_SKEY()`,
     `EVP_KDF_derive_SKEY()`, and `EVP_PKEY_derive_SKEY()` functions.
 
