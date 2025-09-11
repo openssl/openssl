@@ -14,7 +14,6 @@ use TLSProxy::Proxy;
 use checkhandshake qw(checkhandshake @handmessages @extensions);
 use Cwd qw(abs_path);
 
-
 my $test_name = "test_tls13certcomp";
 setup($test_name);
 

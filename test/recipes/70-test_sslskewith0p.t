@@ -12,7 +12,6 @@ use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 use Cwd qw(abs_path);
 
-
 my $test_name = "test_sslskewith0p";
 setup($test_name);
 

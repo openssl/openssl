@@ -12,7 +12,6 @@ use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 use Cwd qw(abs_path);
 
-
 my $test_name = "test_tls13alerts";
 setup($test_name);
 

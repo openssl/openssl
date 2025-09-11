@@ -14,7 +14,6 @@ use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 use Cwd qw(abs_path);
 
-
 my $test_name = "test_sslcbcpadding";
 setup($test_name);
 
