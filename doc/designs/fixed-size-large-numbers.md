@@ -1,6 +1,8 @@
-# Fixed size large numbers
+Fixed size large numbers
+========================
 
-## *`BIGNUM` redesign for better constant time calculations*
+*`BIGNUM` redesign for better constant time calculations*
+---------------------------------------------------------
 
 <center>
 <p><h3>Abstract</h3></p>
@@ -42,7 +44,8 @@ into wrappers around the latter.
   - [The variant without frames][]
 - [Testing][]
 
-# Background
+Background
+==========
 
 [Background]: #background
 
@@ -79,7 +82,8 @@ vulnerability.
       are updated
 [^2]: `top` is diminished
 
-# Goals
+Goals
+=====
 
 [Goals]: #goals
 
@@ -103,7 +107,8 @@ The included sub-goals are:
   are not just constant-time in themselves, but that the whole set of
   calculations remains constant-time, within OpenSSL code
 
-# Challenges
+Challenges
+==========
 
 [Challenges]: #challenges
 
@@ -122,7 +127,8 @@ The challenges we have are:
   used in the calculations involved has a fixed size, i.e. to avoid the sort
   of dynamic sizing that the `BIGNUM` functionality does.
 
-# Design
+Design
+======
 
 [Design]: #design
 
@@ -150,7 +156,8 @@ public and will only be used internally.
 
 Let's go over the details
 
-## Using the C99 flexible array member feature
+Using the C99 flexible array member feature
+-------------------------------------------
 
 [Using the C99 flexible array member feature]: #using-the-c99-flexible-array-member-feature
 
@@ -186,7 +193,8 @@ here is to precede the flexible array member with a member whose atomic type
 is assumed to be large enough that no padding is needed after it, such as
 `size_t` or a pointer.
 
-## The `OSSL_FN` type
+The `OSSL_FN` type
+------------------
 
 [The `OSSL_FN` type]: #the-ossl_fn-type
 
@@ -217,7 +225,8 @@ struct ossl_fn_st {
 };
 ```
 
-## The `OSSL_FN_CTX` type
+The `OSSL_FN_CTX` type
+----------------------
 
 [The `OSSL_FN_CTX` type]: #the-ossl_fn_ctx-type
 
@@ -328,7 +337,8 @@ struct ossl_fn_ctx_st {
 };
 ```
 
-## The `BIGNUM` type
+The `BIGNUM` type
+-----------------
 
 [The `BIGNUM` type]: #the-bignum-type
 
@@ -389,7 +399,8 @@ support multiple suímultaneous acquisitions.  By design, holding pointers to
 a `BIGNUM` and its wrapped `OSSL_FN` at the same time should only happen in
 a very short term.
 
-## Mutability
+Mutability
+----------
 
 [Mutability]: #mutability
 
@@ -403,7 +414,8 @@ accordingly.
 The `OSSL_FN_CTX`  API is much more strict.  The size of an `OSSL_FN_CTX`
 instance is immutable after it has been allocated, except when it is freed.
 
-## Dropping `top` from `BIGNUM`
+Dropping `top` from `BIGNUM`
+----------------------------
 
 [Dropping `top` from `BIGNUM`]: #dropping-top-from-bignum
 
@@ -416,7 +428,8 @@ This may come at a performance cost for users calling the `BIGNUM`
 API. However, it's our judgement that this is acceptable to get better
 overall safety.
 
-## Memory functionality for `OSSL_FN`
+Memory functionality for `OSSL_FN`
+----------------------------------
 
 [Memory functionality for `OSSL_FN`]: #memory-functionality-for-ossl_fn
 
@@ -428,7 +441,8 @@ OSSL_FN *OSSL_FN_new(size_t size);
 void OSSL_FN_free(OSSL_FN *f);
 ```
 
-## Memory functionality for `OSSL_FN_CTX`
+Memory functionality for `OSSL_FN_CTX`
+--------------------------------------
 
 [Memory functionality for `OSSL_FN_CTX`]: #memory-functionality-for-ossl_fn_ctx
 
@@ -455,7 +469,8 @@ void OSSL_FN_CTX_start(OSSL_FN_CTX *ctx);
 void OSSL_FN_CTX_end(OSSL_FN_CTX *ctx);
 ```
 
-## Wrapping an `OSSL_FN` function with a `BIGNUM` function
+Wrapping an `OSSL_FN` function with a `BIGNUM` function
+-------------------------------------------------------
 
 [Wrapping an `OSSL_FN` function with a `BIGNUM` function]: #wrapping-an-ossl_fn-function-with-a-bignum-function
 
@@ -501,7 +516,8 @@ int BN_add(BIGNUM *r, BIGNUM *a, BIGNUM *b)
 *(This is not perfect code, it's just an example.  Actual code should be
 more perfect)*
 
-## Failures
+Failures
+--------
 
 [Failures]: #failures
 
@@ -512,7 +528,8 @@ that the `OSSL_FN` API can fail:
   sized `OSSL_FN` to store future calculation results in.  *This is akin to
   memory allocation failures in so far that there isn't enough memory space*
 
-# Repurposing existing code
+Repurposing existing code
+=========================
 
 [Repurposing existing code]: #repurposing-existing-code
 
@@ -529,7 +546,8 @@ above](#wrapping-a-ossl_fn-function-with-a-bignum-function), thereby
 functionally separating the dynamic properties of `BIGNUM`s from the less
 dynamic properties of  `OSSL_FN`s.
 
-# How to apply `OSSL_FN`
+How to apply `OSSL_FN`
+======================
 
 [How to apply `OSSL_FN`]: #how-to-apply-ossl_fn
 
@@ -542,7 +560,8 @@ pre-determined as well.
 If the inputs are originally in form of `BIGNUM`, the wrapped `OSSL_FN` can be
 acquired from the `BIGNUM` with `BN_acquire_fn()`, which can adjusts its size.
 
-# Where to apply `OSSL_FN`
+Where to apply `OSSL_FN`
+========================
 
 [Where to apply `OSSL_FN`]: #where-to-apply-ossl_fn
 
@@ -560,11 +579,13 @@ open question.  The current judgement is that this is less critical than
 the calculations mentioned above, and that this conversion do not have to be
 part of an initial implementation of this design.
 
-# How to apply `OSSL_FN_CTX`
+How to apply `OSSL_FN_CTX`
+==========================
 
 [How to apply `OSSL_FN_CTX`]: #how-to-apply-ossl_fn_ctx
 
-## The variant with frames
+The variant with frames
+-----------------------
 
 [The variant with frames]: #the-variant-with-frames
 
@@ -586,7 +607,8 @@ All internal uses of `BN_CTX_get()` are to be replaced with calls of
 All internal uses of `BN_CTX_end()` are to be replaced with calls of
 `OSSL_FN_CTX_end()`.
 
-## The variant without frames
+The variant without frames
+--------------------------
 
 [The variant without frames]: #the-variant-without-frames
 
@@ -602,7 +624,8 @@ All internal uses of `BN_CTX_get()` are to be replaced with calls of
 All internal uses of `BN_CTX_end()` are to be replaced with calls of
 `OSSL_FN_CTX_free()`.
 
-# Testing
+Testing
+=======
 
 [Testing]: #testing
 
