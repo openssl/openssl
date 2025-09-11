@@ -33,7 +33,8 @@ into wrappers around the latter.
   - [Wrapping an `OSSL_FN` function with a `BIGNUM` function][]
   - [Failures][]
 - [Repurposing existing code][]
-- [Where to apply `OSSL_FN` and `OSSL_FN_CTX` and where not to][]
+- [How to apply `OSSL_FN`][]
+- [Where to apply `OSSL_FN`][]
 - [Testing][]
 
 # Background
@@ -297,7 +298,8 @@ as well as to wrap an `OSSL_FN` in a `BIGNUM`:
 /*
  * BN_acquire_fn() and BN_release_fn() function together.  It is done this
  * way as a safety measure, to make sure that a BIGNUM doesn't expand an OSSL_FN
- * that the caller currently has a handle on.
+ * that the caller currently has a handle on.  However, it's possible to
+ * adjust the size if the OSSL_FN while acquiring it.
  */
 OSSL_FN *BN_acquire_fn(BIGNUM *a, size_t bits)
 {
@@ -467,16 +469,36 @@ above](#wrapping-a-ossl_fn-function-with-a-bignum-function), thereby
 functionally separating the dynamic properties of `BIGNUM`s from the less
 dynamic properties of  `OSSL_FN`s.
 
-# Where to apply `OSSL_FN` and `OSSL_FN_CTX` and where not to
+# How to apply `OSSL_FN`
 
-[Where to apply `OSSL_FN` and `OSSL_FN_CTX` and where not to]: #where-to-apply-ossl_fn-and-ossl_fn_ctx-and-where-not-to
+[How to apply `OSSL_FN`]: #how-to-apply-ossl_fn
+
+The purpose of `OSSL_FN` is to make the number constant size (which implies
+constant time) for a crypto system.  Therefore, for any function that performs
+some sort of numeric operation on a set of input `OSSL_FN`s, the sizes of
+those inputs must be pre-determined, and the size of the result must be
+pre-determined as well.
+
+If the inputs are originally in form of `BIGNUM`, the wrapped `OSSL_FN` can be
+acquired from the `BIGNUM` with `BN_acquire_fn()`, which can adjusts its size.
+
+# Where to apply `OSSL_FN`
+
+[Where to apply `OSSL_FN`]: #where-to-apply-ossl_fn
 
 `OSSL_FN` should primarily be used instead of `BIGNUM` in internal
 calculations throughout OpenSSLs libraries.  Exceptions can be made where
 calculations aren't security critical.
 
-Other uses of `BIGNUM` aren't as critical to replace with `OSSL_FN`, at
-least in an initial implementation of this design.
+In this, "calculations" is meant in a mathematical sense, i.e. whatever what
+would be expressed as a mathematical formula is considered a "calculation".
+
+However, `BIGNUM` has other uses than mere calculations.  For example,
+`BIGNUM` is used as storage of numbers that were originally ASN1 INTEGERs.
+Whether those uses need to be considered for conversion to `OSSL_FN` is an
+open question.  The current judgement is that this is less critical than
+the calculations mentioned above, and that this conversion do not have to be
+part of an initial implementation of this design.
 
 # Testing
 
