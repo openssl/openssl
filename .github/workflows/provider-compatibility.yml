@@ -138,6 +138,11 @@ jobs:
             tgz: branch-3.5.tar.gz,
             extra_config: "",
           }, {
+            name: openssl-3.6,
+            dir: branch-3.6,
+            tgz: branch-3.6.tar.gz,
+            extra_config: "",
+          }, {
             name: master,
             dir: branch-master,
             tgz: branch-master.tar.gz,
