@@ -133,7 +133,8 @@ static X509 *ocspcert = NULL;
 #if !defined(OPENSSL_NO_SSL_TRACE) \
     && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD) \
     && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH) \
-    && !defined(OPENSSL_NO_ML_DSA) && !defined(OPENSSL_NO_ML_KEM)
+    && !defined(OPENSSL_NO_ML_DSA) && !defined(OPENSSL_NO_ML_KEM) \
+    && !defined(OPENSSL_NO_TLS1_3)
 # define DO_SSL_TRACE_TEST
 #endif
 
@@ -13755,11 +13756,19 @@ static int test_ssl_trace(void)
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),
-                                       TLS1_VERSION, 0,
+                                       TLS1_3_VERSION, TLS1_3_VERSION,
                                        &sctx, &cctx, cert, privkey))
             || !TEST_ptr(bio = BIO_new(BIO_s_mem()))
             || !TEST_true(SSL_CTX_set1_groups_list(sctx, grouplist))
             || !TEST_true(SSL_CTX_set1_groups_list(cctx, grouplist))
+            || !TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                                                   "TLS_AES_128_GCM_SHA256"))
+            || !TEST_true(SSL_CTX_set_ciphersuites(sctx,
+                                                   "TLS_AES_128_GCM_SHA256"))
+# ifdef SSL_OP_LEGACY_EC_POINT_FORMATS
+            || !TEST_true(SSL_CTX_set_options(cctx, SSL_OP_LEGACY_EC_POINT_FORMATS))
+            || !TEST_true(SSL_CTX_set_options(sctx, SSL_OP_LEGACY_EC_POINT_FORMATS))
+# endif
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL)))
         goto err;
@@ -13782,12 +13791,13 @@ static int test_ssl_trace(void)
 # else
         reffile = test_mk_file_path(datadir, "ssltraceref-zlib.txt");
 # endif
-        if (!TEST_true(compare_ssl_trace_with_file(bio, reffile)))
+        if (!TEST_true(compare_with_reference_file(bio, reffile)))
             goto err;
     }
 
     testresult = 1;
  err:
+    BIO_free(bio);
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);

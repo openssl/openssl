@@ -470,7 +470,7 @@ static int test_ssl_trace(void)
 # else
         reffile = test_mk_file_path(datadir, "ssltraceref-zlib.txt");
 # endif
-        if (!TEST_true(compare_ssl_trace_with_file(bio, reffile)))
+        if (!TEST_true(compare_with_reference_file(bio, reffile)))
             goto err;
     }
 

@@ -20,7 +20,7 @@ static void strip_line_ends(char *str)
     str[i] = '\0';
 }
 
-int compare_ssl_trace_with_file(BIO *membio, const char *reffile)
+int compare_with_reference_file(BIO *membio, const char *reffile)
 {
     BIO *file = NULL, *newfile = NULL;
     char buf1[8192], buf2[8192];
