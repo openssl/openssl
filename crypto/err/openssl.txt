@@ -1581,22 +1581,22 @@ SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES:362:srtp could not allocate profiles
 SSL_R_SRTP_PROTECTION_PROFILE_LIST_TOO_LONG:363:\
 	srtp protection profile list too long
 SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE:364:srtp unknown protection profile
-SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH:232:\
+SSL_R_TLS_EXT_INVALID_MAX_FRAGMENT_LENGTH:232:\
 	ssl3 ext invalid max fragment length
-SSL_R_SSL3_EXT_INVALID_SERVERNAME:319:ssl3 ext invalid servername
-SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE:320:ssl3 ext invalid servername type
-SSL_R_SSL3_SESSION_ID_TOO_LONG:300:ssl3 session id too long
-SSL_R_SSLV3_ALERT_BAD_CERTIFICATE:1042:ssl/tls alert bad certificate
-SSL_R_SSLV3_ALERT_BAD_RECORD_MAC:1020:ssl/tls alert bad record mac
-SSL_R_SSLV3_ALERT_CERTIFICATE_EXPIRED:1045:ssl/tls alert certificate expired
-SSL_R_SSLV3_ALERT_CERTIFICATE_REVOKED:1044:ssl/tls alert certificate revoked
-SSL_R_SSLV3_ALERT_CERTIFICATE_UNKNOWN:1046:ssl/tls alert certificate unknown
-SSL_R_SSLV3_ALERT_DECOMPRESSION_FAILURE:1030:ssl/tls alert decompression failure
-SSL_R_SSLV3_ALERT_HANDSHAKE_FAILURE:1040:ssl/tls alert handshake failure
-SSL_R_SSLV3_ALERT_ILLEGAL_PARAMETER:1047:ssl/tls alert illegal parameter
-SSL_R_SSLV3_ALERT_NO_CERTIFICATE:1041:ssl/tls alert no certificate
-SSL_R_SSLV3_ALERT_UNEXPECTED_MESSAGE:1010:ssl/tls alert unexpected message
-SSL_R_SSLV3_ALERT_UNSUPPORTED_CERTIFICATE:1043:\
+SSL_R_TLS_EXT_INVALID_SERVERNAME:319:ssl3 ext invalid servername
+SSL_R_TLS_EXT_INVALID_SERVERNAME_TYPE:320:ssl3 ext invalid servername type
+SSL_R_TLS_SESSION_ID_TOO_LONG:300:ssl3 session id too long
+SSL_R_TLS_ALERT_BAD_CERTIFICATE:1042:ssl/tls alert bad certificate
+SSL_R_TLS_ALERT_BAD_RECORD_MAC:1020:ssl/tls alert bad record mac
+SSL_R_TLS_ALERT_CERTIFICATE_EXPIRED:1045:ssl/tls alert certificate expired
+SSL_R_TLS_ALERT_CERTIFICATE_REVOKED:1044:ssl/tls alert certificate revoked
+SSL_R_TLS_ALERT_CERTIFICATE_UNKNOWN:1046:ssl/tls alert certificate unknown
+SSL_R_TLS_ALERT_DECOMPRESSION_FAILURE:1030:ssl/tls alert decompression failure
+SSL_R_TLS_ALERT_HANDSHAKE_FAILURE:1040:ssl/tls alert handshake failure
+SSL_R_TLS_ALERT_ILLEGAL_PARAMETER:1047:ssl/tls alert illegal parameter
+SSL_R_TLS_ALERT_NO_CERTIFICATE:1041:ssl/tls alert no certificate
+SSL_R_TLS_ALERT_UNEXPECTED_MESSAGE:1010:ssl/tls alert unexpected message
+SSL_R_TLS_ALERT_UNSUPPORTED_CERTIFICATE:1043:\
 	ssl/tls alert unsupported certificate
 SSL_R_SSL_COMMAND_SECTION_EMPTY:117:ssl command section empty
 SSL_R_SSL_COMMAND_SECTION_NOT_FOUND:125:ssl command section not found

@@ -1521,7 +1521,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
     session_id_len = PACKET_remaining(&session_id);
     if (session_id_len > sizeof(s->session->session_id)
         || session_id_len > SSL3_SESSION_ID_SIZE) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_SSL3_SESSION_ID_TOO_LONG);
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_TLS_SESSION_ID_TOO_LONG);
         goto err;
     }
 

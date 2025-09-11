@@ -1366,7 +1366,7 @@ int tls_parse_stoc_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
     /* |value| should contains a valid max-fragment-length code. */
     if (!IS_MAX_FRAGMENT_LENGTH_EXT_VALID(value)) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                 SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
+                 SSL_R_TLS_EXT_INVALID_MAX_FRAGMENT_LENGTH);
         return 0;
     }
 
@@ -1378,7 +1378,7 @@ int tls_parse_stoc_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
      */
     if (value != s->ext.max_fragment_len_mode) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                 SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
+                 SSL_R_TLS_EXT_INVALID_MAX_FRAGMENT_LENGTH);
         return 0;
     }
 
