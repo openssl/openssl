@@ -289,10 +289,15 @@ unsigned char *EVP_Q_mac(OSSL_LIB_CTX *libctx,
     }
 
     /*
-     * If we passed in a propery query, make sure the underlying algorithm uses it
-     * if its a compound alg and needs to fetch its own internally
-     * If we don't do this then passing a property doesn't get used when constructing
-     * compund algorithms like hmacs
+     * If we passed in a property query, make sure the underlying algorithm uses it.
+     * Compound algorithms may fetch other underlying algorithms (i.e. a MAC algorithm
+     * may use a digest algorithm as part of its internal work), and the MAC decides which
+     * implementation of the underlying digest to use based on the
+     * OSSL_ALG_PARAM_PROPERTIES parameter, rather than the propq value passed in the
+     * EVP_MAC_fetch call above.
+     * If we don't set this parameter, then the MAC alg may use the default provider
+     * to allocate an underlying digest, rather than the one that we would have gotten
+     * by using the propq value here.
      */
     if (propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES,
