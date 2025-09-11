@@ -23,8 +23,8 @@
  * The SHA1, SHA256, SHA384 and SHA512 digests
  * The CTR-DRBG random number generator
  *
- * Note that, like the old engine, the implementations of the above algoritms
- * are designed not to actually follow the prescribed algoritms themselves, but rather
+ * Note that, like the old engine, the implementations of the above algorithms
+ * are designed not to actually follow the prescribed algorithms themselves, but rather
  * just to returns known/predictable data values for the purposes of testing.  As such
  * DO NOT USE THIS PROVIDER FOR ANY PRODUCTION PURPOSE.  TESTING ONLY!!!!
  *
@@ -173,7 +173,7 @@ static int ossltest_dgst_update(void *ctx, const void *data,
 }
 
 /**
- * @brief Finalize the disget output.
+ * @brief Finalize the digest output.
  *
  * provide pre-set data (increasing count) for the MD5 DIGEST
  *
@@ -464,6 +464,9 @@ static int ossl_test_aes128cbc_update(void *vprovctx, char *out, size_t *outl,
      * record our input buffer
      */
     ctx->inbuf = OPENSSL_zalloc(inl);
+    if (ctx->inbuf == NULL)
+        return 0;
+
     memcpy(ctx->inbuf, in, inl);
 
     soutl = EVP_Cipher(ctx->sub_ctx, (unsigned char *)out, in, (unsigned int)inl);
@@ -935,7 +938,7 @@ static int ossl_test_aes128gcm_set_ctx_params(void *vprovctx, const OSSL_PARAM p
 }
 
 /**
- * @brief Describe parameters that can be queriedn aes-128-gcm.
+ * @brief Describe parameters that can be queried aes-128-gcm.
  *
  * @param vprovctx void *vprovctx.
  * @return const OSSL_PARAM *.
@@ -1027,6 +1030,9 @@ static void *ossl_testaes128cbchmacsha1_newctx(void *provctx)
         return NULL;
 
     new = OPENSSL_zalloc(sizeof(PROV_EVP_AES128_CBC_HMAC_SHA1_CTX));
+    if (new == NULL)
+        return NULL;
+
     new->libctx = PROV_LIBCTX_OF(provctx);
     new->payload_length = NO_PAYLOAD_LENGTH;
 
@@ -1183,7 +1189,7 @@ static int ossl_test_aes128cbchmacsha1_update(void *vprovctx, unsigned char *out
                     return 0;
             /*
              * We need to return the actual dummied up payload of this
-             * operatiion, so reduce the length of the output by the padding
+             * operation, so reduce the length of the output by the padding
              * size that we just stripped as well as the leading IV, which
              * is the first AES_BLOCK_SIZE bytes
              */
@@ -1504,7 +1510,7 @@ static int drbg_ctr_uninstantiate_wrapper(void *vdrbg)
 }
 
 /**
- * @brief Generate pseudorandom bytes from the CTR DRBG.
+ * @brief Generate pseudo-random bytes from the CTR DRBG.
  *
  * @param vdrbg void *vdrbg.
  * @param out unsigned char *out.
