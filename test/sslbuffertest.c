@@ -257,9 +257,9 @@ static int test_free_buffers(int test)
             goto end;
 
         /*
-        * Attempt a read. This should fail because only a partial record is
-        * available.
-        */
+         * Attempt a read. This should fail because only a partial record is
+         * available.
+         */
         if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf),
                                     &readbytes)))
             goto end;
