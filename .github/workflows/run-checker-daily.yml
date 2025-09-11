@@ -61,7 +61,6 @@ jobs:
           no-ecdsa,
           enable-ec_nistp_64_gcc_128,
           enable-egd,
-          no-engine,
 #          enable-external-tests,  # Requires extra setup
           enable-fips,
           enable-fips enable-acvp-tests,
@@ -112,7 +111,6 @@ jobs:
           enable-ssl3,
           enable-ssl3-method,
           enable-sslkeylog,
-          no-static-engine no-shared,
           no-tests,
           enable-tfo,
           no-tls1,
