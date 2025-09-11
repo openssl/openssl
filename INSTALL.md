@@ -1161,8 +1161,8 @@ Don't build support for negotiating the specified SSL/TLS protocol.
 
 If `no-tls` is selected then all of `tls1`, `tls1_1`, `tls1_2` and `tls1_3`
 are disabled.
-Similarly `no-dtls` will disable `dtls1` and `dtls1_2`.  The `no-ssl` option is
-synonymous with `no-ssl3`.  Note this only affects version negotiation.
+Similarly `no-dtls` will disable `dtls1` and `dtls1_2`.
+`no-ssl` and `no-ssl3` are deprecated and do nothing.
 OpenSSL will still provide the methods for applications to explicitly select
 the individual protocol versions.
 
@@ -1178,6 +1178,7 @@ Analogous to `no-{protocol}` but in addition do not build the methods for
 applications to explicitly select individual protocol versions.  Note that there
 is no `no-tls1_3-method` option because there is no application method for
 TLSv1.3.
+`no-ssl3` is deprecated and does nothing.
 
 Using individual protocol methods directly is deprecated.  Applications should
 use `TLS_method()` instead.
