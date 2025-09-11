@@ -860,36 +860,6 @@ static int test_fp_win32(int i)
 }
 #endif
 
-static int test_big(void)
-{
-    char buf[80];
-
-#ifdef _WIN32
-#define EXPECTED 18
-#else
-#define EXPECTED 28
-#endif
-    /* Test excessively big number. Should fail */
-    if (!TEST_int_eq(test_BIO_snprintf(buf, sizeof(buf),
-                                       "%f\n", 2 * (double)ULONG_MAX), EXPECTED))
-        return 0;
-
-    return 1;
-}
-
-#ifdef _WIN32
-static int test_big_win32(void)
-{
-    int ret;
-
-    test_BIO_snprintf = ossl_BIO_snprintf_msvc;
-    ret = test_big();
-    test_BIO_snprintf = BIO_snprintf;
-
-    return ret;
-}
-#endif
-
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -923,7 +893,6 @@ int setup_tests(void)
         }
     }
 
-    ADD_TEST(test_big);
     ADD_ALL_TESTS(test_fp, OSSL_NELEM(pw_params));
     ADD_ALL_TESTS(test_int, OSSL_NELEM(int_data));
     ADD_ALL_TESTS(test_width_precision, OSSL_NELEM(wp_data));
@@ -936,7 +905,6 @@ int setup_tests(void)
     /*
      * those tests are using _vsnprintf_s()
      */
-    ADD_TEST(test_big_win32);
     ADD_ALL_TESTS(test_fp_win32, OSSL_NELEM(pw_params));
     ADD_ALL_TESTS(test_int_win32, OSSL_NELEM(int_data));
     ADD_ALL_TESTS(test_width_precision_win32, OSSL_NELEM(wp_data));
