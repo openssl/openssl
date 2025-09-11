@@ -39,9 +39,6 @@ changes:
     derivation and key exchange provider methods. Added `EVP_KDF_CTX_set_SKEY()`,
     `EVP_KDF_derive_SKEY()`, and `EVP_PKEY_derive_SKEY()` functions.
 
-  * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
-    This is mandated by FIPS 140-3 IG 10.3.A additional comment 1.
-
   * Added LMS signature verification support as per [SP 800-208]. This
     support is present in both the FIPS and default providers.
 
