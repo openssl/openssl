@@ -9,6 +9,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/time.h"
+
 #include "cmp_local.h"
 
 #define IS_CREP(t) ((t) == OSSL_CMP_PKIBODY_IP || (t) == OSSL_CMP_PKIBODY_CP \
@@ -351,7 +353,22 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
             OSSL_CMP_MSG_free(prep);
             prep = NULL;
             if (sleep) {
-                OSSL_sleep((unsigned long)(1000 * check_after));
+                /*
+                 * We cannot rely on the fact that OSSL_sleep() delays
+                 * for the requested amount of time, as it is prohibited
+                 * to do so, so we have to call it in loop until
+                 * the needed time is passed.
+                 */
+                OSSL_TIME now = ossl_time_now();
+                OSSL_TIME finish =
+                    ossl_time_add(now, ossl_ms2time(1000 * check_after));
+                uint64_t left = 1000 * check_after;
+
+                do {
+                    OSSL_sleep(left);
+                    now = ossl_time_now();
+                    left = ossl_time2ms(ossl_time_subtract(finish, now));
+                } while (ossl_time_compare(now, finish) <= 0);
             } else {
                 if (checkAfter != NULL)
                     *checkAfter = (int)check_after;
