@@ -29,7 +29,18 @@ OpenSSL 3.4
 
 ### Changes between 3.4.2 and 3.4.3 [xx XXX xxxx]
 
- * none yet
+ * Hardened the provider implementation of the RSA public key "encrypt"
+   operation to add a missing check that the caller-indicated output buffer
+   size is at least as large as the byte count of the RSA modulus.  The issue
+   was reported by Arash Ale Ebrahim from SYSPWN.
+
+   This operation is typically invoked via `EVP_PKEY_encrypt(3)`.  Callers that
+   in fact provide a sufficiently large buffer, but fail to correctly indicate
+   its size may now encounter unexpected errors.  In applications that attempt
+   RSA public encryption into a buffer that is too small, an out-of-bounds
+   write is now avoided and an error is reported instead.
+
+   *Viktor Dukhovni*
 
 ### Changes between 3.4.1 and 3.4.2 [1 Jul 2025]
 
