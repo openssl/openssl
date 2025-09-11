@@ -186,12 +186,7 @@ static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
 
     if (!EVP_MD_is_a(hash_alg, SN_sha256)) {
         alg = X509_ALGOR_new();
-        if (alg == NULL) {
-            ERR_raise(ERR_LIB_ESS, ERR_R_ASN1_LIB);
-            goto err;
-        }
-        X509_ALGOR_set_md(alg, hash_alg);
-        if (alg->algorithm == NULL) {
+        if (alg == NULL || !X509_ALGOR_set_md(alg, hash_alg) || alg->algorithm == NULL) {
             ERR_raise(ERR_LIB_ESS, ERR_R_ASN1_LIB);
             goto err;
         }
