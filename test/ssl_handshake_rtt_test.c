@@ -22,7 +22,6 @@
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
-#include <openssl/engine.h>
 
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
