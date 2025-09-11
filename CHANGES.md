@@ -59,6 +59,20 @@ OpenSSL 3.6
 
    *Viktor Dukhovni*
 
+ * Secure memory allocation calls are no longer used for HMAC keys.
+
+   *Dr Paul Dale*
+
+ * `openssl req` no longer generates certificates with an empty extension list
+   when SKID/AKID are set to `none` during generation
+
+   *David Benjamin*
+
+ * The man page date is now derived from the release date provided
+   in `VERSION.dat` and not the current date for the released builds.
+
+   *Enji Cooper*
+
  * Added support for `EVP_SKEY` opaque symmetric key objects to the key
    derivation and key exchange provider methods. Added `EVP_KDF_CTX_set_SKEY()`,
    `EVP_KDF_derive_SKEY()`, and `EVP_PKEY_derive_SKEY()` functions.
@@ -146,11 +160,6 @@ OpenSSL 3.6
    those which are actually processed.  It should also provide a small
    performance improvement because repeated iteration over passed
    parameter arrays is avoided.
-
-   *Dr Paul Dale*
-
- * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
-   This is mandated by FIPS 140-3 IG 10.3.A additional comment 1.
 
    *Dr Paul Dale*
 
