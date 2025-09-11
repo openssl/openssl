@@ -747,7 +747,7 @@ const EC_METHOD *EC_GFp_sm2p256_method(void)
         ossl_ec_GFp_simple_point_copy,
         ossl_ec_GFp_simple_point_set_to_infinity,
         ossl_ec_GFp_simple_point_set_affine_coordinates,
-        ecp_sm2p256_get_affine,
+        ossl_ec_GFp_simple_point_get_affine_coordinates,
         0, 0, 0,
         ossl_ec_GFp_simple_add,
         ossl_ec_GFp_simple_dbl,
@@ -763,7 +763,7 @@ const EC_METHOD *EC_GFp_sm2p256_method(void)
         ecp_sm2p256_field_mul,
         ecp_sm2p256_field_sqr,
         0 /* field_div */,
-        0 /* field_inv */,
+        ossl_ec_GFp_simple_field_inv,
         0 /* field_encode */,
         0 /* field_decode */,
         0 /* field_set_to_one */,
@@ -779,7 +779,7 @@ const EC_METHOD *EC_GFp_sm2p256_method(void)
         ossl_ecdsa_simple_sign_setup,
         ossl_ecdsa_simple_sign_sig,
         ossl_ecdsa_simple_verify_sig,
-        ecp_sm2p256_inv_mod_ord,
+        0, /* use constant‑time fallback for inverse mod order */
         0, /* blind_coordinates */
         0, /* ladder_pre */
         0, /* ladder_step */
