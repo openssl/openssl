@@ -4003,7 +4003,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 break;
             len = strlen((char *)parg);
             if (len == 0 || len > TLSEXT_MAXLEN_host_name) {
-                ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
+                ERR_raise(ERR_LIB_SSL, SSL_R_TLS_EXT_INVALID_SERVERNAME);
                 return 0;
             }
             if ((sc->ext.hostname = OPENSSL_strdup((char *)parg)) == NULL) {
@@ -4011,7 +4011,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 return 0;
             }
         } else {
-            ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
+            ERR_raise(ERR_LIB_SSL, SSL_R_TLS_EXT_INVALID_SERVERNAME_TYPE);
             return 0;
         }
         break;
