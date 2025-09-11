@@ -1668,7 +1668,7 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     if (!sign)
         binderout = tmpbinder;
 
-    if (sctx->propq) {
+    if (sctx->propq != NULL) {
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                      (char *)EVP_MD_get0_name(md), 0);
         params[1] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
