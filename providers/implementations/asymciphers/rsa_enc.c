@@ -136,20 +136,25 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
                        size_t outsize, const unsigned char *in, size_t inlen)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
+    size_t len = RSA_size(prsactx->rsa);
     int ret;
 
     if (!ossl_prov_is_running())
         return 0;
 
-    if (out == NULL) {
-        size_t len = RSA_size(prsactx->rsa);
+    if (len == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
+        return 0;
+    }
 
-        if (len == 0) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
-            return 0;
-        }
+    if (out == NULL) {
         *outlen = len;
         return 1;
+    }
+
+    if (outsize < len) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+        return 0;
     }
 
     if (prsactx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
