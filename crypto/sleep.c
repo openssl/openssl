@@ -9,10 +9,9 @@
 
 #include <openssl/crypto.h>
 #include "internal/e_os.h"
-#include "internal/time.h"
 
 /* system-specific variants defining OSSL_sleep() */
-#if (defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)) && !defined(OPENSSL_USE_SLEEP_BUSYLOOP)
+#if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
 
 # if defined(OPENSSL_USE_USLEEP)                        \
     || defined(__DJGPP__)                               \
@@ -27,7 +26,7 @@
  */
 
 #  include <unistd.h>
-static void ossl_sleep_millis(uint64_t millis)
+void OSSL_sleep(uint64_t millis)
 {
     unsigned int s = (unsigned int)(millis / 1000);
     unsigned int us = (unsigned int)((millis % 1000) * 1000);
@@ -46,7 +45,7 @@ static void ossl_sleep_millis(uint64_t millis)
 # elif defined(__TANDEM) && !defined(_REENTRANT)
 
 #  include <cextdecs.h(PROCESS_DELAY_)>
-static void ossl_sleep_millis(uint64_t millis)
+void OSSL_sleep(uint64_t millis)
 {
     /* HPNS does not support usleep for non threaded apps */
     PROCESS_DELAY_(millis * 1000);
@@ -56,7 +55,7 @@ static void ossl_sleep_millis(uint64_t millis)
 
 /* nanosleep is defined by POSIX.1-2001 */
 #  include <time.h>
-static void ossl_sleep_millis(uint64_t millis)
+void OSSL_sleep(uint64_t millis)
 {
     struct timespec ts;
 
@@ -69,7 +68,7 @@ static void ossl_sleep_millis(uint64_t millis)
 #elif defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
 # include <windows.h>
 
-static void ossl_sleep_millis(uint64_t millis)
+void OSSL_sleep(uint64_t millis)
 {
     /*
      * Windows' Sleep() takes a DWORD argument, which is smaller than
@@ -84,7 +83,7 @@ static void ossl_sleep_millis(uint64_t millis)
 
 #else
 /* Fallback to a busy wait */
-# define USE_SLEEP_SECS
+# include "internal/time.h"
 
 static void ossl_sleep_secs(uint64_t secs)
 {
@@ -108,28 +107,10 @@ static void ossl_sleep_millis(uint64_t millis)
     while (ossl_time_compare(ossl_time_now(), finish) < 0)
         /* busy wait */ ;
 }
-#endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
 
 void OSSL_sleep(uint64_t millis)
 {
-    OSSL_TIME now = ossl_time_now();
-    OSSL_TIME finish = ossl_time_add(now, ossl_ms2time(millis));
-    uint64_t left = millis;
-
-#if defined(USE_SLEEP_SECS)
-    do {
-        ossl_sleep_secs(left / 1000);
-        now = ossl_time_now();
-        left = ossl_time2ms(ossl_time_subtract(finish, now));
-    } while (ossl_time_compare(now, finish) < 0 && left > 1000);
-
-    if (ossl_time_compare(now, finish) >= 0)
-        return;
-#endif
-
-    do {
-        ossl_sleep_millis(left);
-        now = ossl_time_now();
-        left = ossl_time2ms(ossl_time_subtract(finish, now));
-    } while (ossl_time_compare(now, finish) < 0);
+    ossl_sleep_secs(millis / 1000);
+    ossl_sleep_millis(millis % 1000);
 }
+#endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
