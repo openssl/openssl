@@ -379,8 +379,13 @@ static void *ossl_test_aes128cbc_dupctx(void *vprovctx)
 
     dup = OPENSSL_memdup(ctx, sizeof(PROV_EVP_AES128_CBC_CTX));
 
-    dup->sub_ctx = EVP_CIPHER_CTX_dup(ctx->sub_ctx);
-
+    if (dup != NULL) {
+        dup->sub_ctx = EVP_CIPHER_CTX_dup(ctx->sub_ctx);
+        if (dup->sub_ctx == NULL) {
+            OPENSSL_free(dup);
+            dup = NULL;
+        }
+    }
     return dup;
 }
 
@@ -732,8 +737,13 @@ static void *ossl_test_aes128gcm_dupctx(void *vprovctx)
 
     dup = OPENSSL_memdup(ctx, sizeof(PROV_EVP_AES128_GCM_CTX));
 
-    dup->sub_ctx = EVP_CIPHER_CTX_dup(ctx->sub_ctx);
-
+    if (dup != NULL) {
+        dup->sub_ctx = EVP_CIPHER_CTX_dup(ctx->sub_ctx);
+        if (dup->sub_ctx == NULL) {
+            OPENSSL_free(dup);
+            dup = NULL;
+        }
+    }
     return dup;
 }
 
@@ -1048,11 +1058,8 @@ static void ossl_test_aes128cbchmacsha1_freectx(void *vprovctx)
 static void *ossl_test_aes128cbchmacsha1_dupctx(void *vprovctx)
 {
     PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *ctx = (PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *)vprovctx;
-    PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *dup;
 
-    dup = OPENSSL_memdup(ctx, sizeof(PROV_EVP_AES128_CBC_HMAC_SHA1_CTX));
-
-    return dup;
+    return OPENSSL_memdup(ctx, sizeof(PROV_EVP_AES128_CBC_HMAC_SHA1_CTX));
 }
 
 /**
