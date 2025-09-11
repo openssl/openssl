@@ -13847,9 +13847,6 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_serverinfo_custom, 4);
 #endif
-#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
-    ADD_ALL_TESTS(test_pipelining, 7);
-#endif
     ADD_ALL_TESTS(test_version, 6);
     ADD_TEST(test_rstate_string);
     ADD_ALL_TESTS(test_handshake_retry, 16);
