@@ -44,8 +44,6 @@ B<openssl list>
 [B<-public-key-methods>]
 [B<-store-loaders>]
 [B<-providers>]
-{- output_off() if $disabled{"deprecated-3.0"}; ""
--}[B<-engines>]
 {- output_on() if $disabled{"deprecated-3.0"}; ""
 -}[B<-disabled>]
 [B<-objects>]
@@ -251,13 +249,6 @@ Display a list of all loaded providers with their names, version and status.
 In verbose mode, the full version and all provider parameters will additionally
 be displayed.
 
-
-=item B<-engines>
-
-This option is deprecated.
-
-Display a list of loaded engines.
-
 =item B<-disabled>
 
 Display a list of disabled features, those that were compiled out
@@ -309,10 +300,12 @@ In both cases, C<bar> is the name of the provider.
 
 =head1 HISTORY
 
-The B<-engines>, B<-digest-commands>, and B<-cipher-commands> options
+The B<-digest-commands>, and B<-cipher-commands> options
 were deprecated in OpenSSL 3.0.
 
 The B<-skey-managers> option was added in OpenSSL 3.5.
+
+The B<-engines> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

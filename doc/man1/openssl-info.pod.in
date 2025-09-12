@@ -10,7 +10,6 @@ openssl-info - print OpenSSL built-in information
 B<openssl info>
 [B<-help>]
 [B<-configdir>]
-[B<-enginesdir>]
 [B<-modulesdir> ]
 [B<-dsoext>]
 [B<-dirnamesep>]
@@ -40,14 +39,9 @@ Print out a usage message.
 
 Outputs the default directory for OpenSSL configuration files.
 
-=item B<-enginesdir>
-
-Outputs the default directory for OpenSSL engine modules.
-
 =item B<-modulesdir>
 
-Outputs the default directory for OpenSSL dynamically loadable modules
-other than engine modules.
+Outputs the default directory for OpenSSL dynamically loadable modules.
 
 =item B<-dsoext>
 
@@ -85,6 +79,8 @@ Outputs the Windows install context.
 This command was added in OpenSSL 3.0.
 
 The B<-windowscontext> option was added in OpenSSL 3.4.
+
+The B<-enginesdir> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
