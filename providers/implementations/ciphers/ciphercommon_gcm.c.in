@@ -144,15 +144,15 @@ static int setivinv(PROV_GCM_CTX *ctx, unsigned char *in, size_t inl)
 }
 
 {- produce_param_decoder('ossl_cipher_gcm_get_ctx_params',
-                         (['CIPHER_PARAM_KEYLEN',               'keylen', 'size_t'],
-                          ['CIPHER_PARAM_IVLEN',                'ivlen',  'size_t'],
-                          ['CIPHER_PARAM_AEAD_TAGLEN',          'taglen', 'size_t'],
-                          ['CIPHER_PARAM_IV',                   'iv',     'octet_string'],
-                          ['CIPHER_PARAM_UPDATED_IV',           'updiv',  'octet_string'],
-                          ['CIPHER_PARAM_AEAD_TAG',             'tag',    'octet_string'],
-                          ['CIPHER_PARAM_AEAD_TLS1_AAD_PAD',    'pad',    'size_t'],
-                          ['CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN', 'ivgen',  'octet_string'],
-                          ['CIPHER_PARAM_AEAD_IV_GENERATED',    'gen',    'uint'],
+                         (['OSSL_CIPHER_PARAM_KEYLEN',               'keylen', 'size_t'],
+                          ['OSSL_CIPHER_PARAM_IVLEN',                'ivlen',  'size_t'],
+                          ['OSSL_CIPHER_PARAM_AEAD_TAGLEN',          'taglen', 'size_t'],
+                          ['OSSL_CIPHER_PARAM_IV',                   'iv',     'octet_string'],
+                          ['OSSL_CIPHER_PARAM_UPDATED_IV',           'updiv',  'octet_string'],
+                          ['OSSL_CIPHER_PARAM_AEAD_TAG',             'tag',    'octet_string'],
+                          ['OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD',    'pad',    'size_t'],
+                          ['OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN', 'ivgen',  'octet_string'],
+                          ['OSSL_CIPHER_PARAM_AEAD_IV_GENERATED',    'gen',    'uint'],
                          )); -}
 
 const OSSL_PARAM *ossl_gcm_gettable_ctx_params(
@@ -251,11 +251,11 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
 {- produce_param_decoder
         ('ossl_cipher_gcm_set_ctx_params',
-         (['CIPHER_PARAM_AEAD_IVLEN',           'ivlen', 'size_t'],
-          ['CIPHER_PARAM_AEAD_TAG',             'tag',   'octet_string'],
-          ['CIPHER_PARAM_AEAD_TLS1_AAD',        'aad',   'octet_string'],
-          ['CIPHER_PARAM_AEAD_TLS1_IV_FIXED',   'fixed', 'octet_string'],
-          ['CIPHER_PARAM_AEAD_TLS1_SET_IV_INV', 'inviv', 'octet_string'],
+         (['OSSL_CIPHER_PARAM_AEAD_IVLEN',           'ivlen', 'size_t'],
+          ['OSSL_CIPHER_PARAM_AEAD_TAG',             'tag',   'octet_string'],
+          ['OSSL_CIPHER_PARAM_AEAD_TLS1_AAD',        'aad',   'octet_string'],
+          ['OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED',   'fixed', 'octet_string'],
+          ['OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV', 'inviv', 'octet_string'],
          )); -}
 
 const OSSL_PARAM *ossl_gcm_settable_ctx_params(

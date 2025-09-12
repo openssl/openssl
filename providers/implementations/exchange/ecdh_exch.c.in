@@ -249,15 +249,15 @@ void *ecdh_dupctx(void *vpecdhctx)
 }
 
 {- produce_param_decoder('ecdh_set_ctx_params',
-                         (['EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE',    'mode',      'int'],
-                          ['EXCHANGE_PARAM_KDF_TYPE',                 'kdf',       'utf8_string'],
-                          ['EXCHANGE_PARAM_KDF_DIGEST',               'digest',    'utf8_string'],
-                          ['EXCHANGE_PARAM_KDF_DIGEST_PROPS',         'propq',     'utf8_string'],
-                          ['EXCHANGE_PARAM_KDF_OUTLEN',               'len',       'size_t'],
-                          ['EXCHANGE_PARAM_KDF_UKM',                  'ukm',       'octet_string'],
-                          ['EXCHANGE_PARAM_FIPS_KEY_CHECK',           'ind_k',     'int', 'fips'],
-                          ['EXCHANGE_PARAM_FIPS_DIGEST_CHECK',        'ind_d',     'int', 'fips'],
-                          ['EXCHANGE_PARAM_FIPS_ECDH_COFACTOR_CHECK', 'ind_cofac', 'int', 'fips'],
+                         (['OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE',    'mode',      'int'],
+                          ['OSSL_EXCHANGE_PARAM_KDF_TYPE',                 'kdf',       'utf8_string'],
+                          ['OSSL_EXCHANGE_PARAM_KDF_DIGEST',               'digest',    'utf8_string'],
+                          ['OSSL_EXCHANGE_PARAM_KDF_DIGEST_PROPS',         'propq',     'utf8_string'],
+                          ['OSSL_EXCHANGE_PARAM_KDF_OUTLEN',               'len',       'size_t'],
+                          ['OSSL_EXCHANGE_PARAM_KDF_UKM',                  'ukm',       'octet_string'],
+                          ['OSSL_EXCHANGE_PARAM_FIPS_KEY_CHECK',           'ind_k',     'int', 'fips'],
+                          ['OSSL_EXCHANGE_PARAM_FIPS_DIGEST_CHECK',        'ind_d',     'int', 'fips'],
+                          ['OSSL_EXCHANGE_PARAM_FIPS_ECDH_COFACTOR_CHECK', 'ind_cofac', 'int', 'fips'],
                          )); -}
 
 static
@@ -366,12 +366,12 @@ const OSSL_PARAM *ecdh_settable_ctx_params(ossl_unused void *vpecdhctx,
 }
 
 {- produce_param_decoder('ecdh_get_ctx_params',
-                         (['EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE', 'mode',   'int'],
-                          ['EXCHANGE_PARAM_KDF_TYPE',              'kdf',    'utf8_string'],
-                          ['EXCHANGE_PARAM_KDF_DIGEST',            'digest', 'utf8_string'],
-                          ['EXCHANGE_PARAM_KDF_OUTLEN',            'len',    'size_t'],
-                          ['EXCHANGE_PARAM_KDF_UKM',               'ukm',    'octet_ptr'],
-                          ['ALG_PARAM_FIPS_APPROVED_INDICATOR',    'ind',    'int', 'fips'],
+                         (['OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE', 'mode',   'int'],
+                          ['OSSL_EXCHANGE_PARAM_KDF_TYPE',              'kdf',    'utf8_string'],
+                          ['OSSL_EXCHANGE_PARAM_KDF_DIGEST',            'digest', 'utf8_string'],
+                          ['OSSL_EXCHANGE_PARAM_KDF_OUTLEN',            'len',    'size_t'],
+                          ['OSSL_EXCHANGE_PARAM_KDF_UKM',               'ukm',    'octet_ptr'],
+                          ['OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR',    'ind',    'int', 'fips'],
                          )); -}
 
 static

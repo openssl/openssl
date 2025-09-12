@@ -68,7 +68,7 @@ static int lms_match(const void *keydata1, const void *keydata2, int selection)
 }
 
 {- produce_param_decoder('lms_import',
-                         (['PKEY_PARAM_PUB_KEY',           'pub',     'octet_string'],
+                         (['OSSL_PKEY_PARAM_PUB_KEY',           'pub',     'octet_string'],
                          )); -}
 
 static int lms_import(void *keydata, int selection, const OSSL_PARAM params[])

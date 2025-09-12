@@ -182,11 +182,11 @@ static int kdf_pvk_derive(void *vctx, unsigned char *key, size_t keylen,
 }
 
 {- produce_param_decoder('pvk_set_ctx_params',
-                         (['KDF_PARAM_PROPERTIES',  'propq',    'utf8_string'],
-                          ['ALG_PARAM_ENGINE',      'engine',   'utf8_string', 'hidden'],
-                          ['KDF_PARAM_DIGEST',      'digest',   'utf8_string'],
-                          ['KDF_PARAM_PASSWORD',    'pass',     'octet_string'],
-                          ['KDF_PARAM_SALT',        'salt',     'octet_string'],
+                         (['OSSL_KDF_PARAM_PROPERTIES',  'propq',    'utf8_string'],
+                          ['OSSL_ALG_PARAM_ENGINE',      'engine',   'utf8_string', 'hidden'],
+                          ['OSSL_KDF_PARAM_DIGEST',      'digest',   'utf8_string'],
+                          ['OSSL_KDF_PARAM_PASSWORD',    'pass',     'octet_string'],
+                          ['OSSL_KDF_PARAM_SALT',        'salt',     'octet_string'],
                          )); -}
 
 static int kdf_pvk_set_ctx_params(void *vctx, const OSSL_PARAM params[])
@@ -220,7 +220,7 @@ static const OSSL_PARAM *kdf_pvk_settable_ctx_params(ossl_unused void *ctx,
 }
 
 {- produce_param_decoder('pvk_get_ctx_params',
-                         (['KDF_PARAM_SIZE',    'size', 'size_t'],
+                         (['OSSL_KDF_PARAM_SIZE',    'size', 'size_t'],
                          )); -}
 
 static int kdf_pvk_get_ctx_params(void *vctx, OSSL_PARAM params[])

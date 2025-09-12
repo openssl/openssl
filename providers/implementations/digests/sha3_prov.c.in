@@ -587,8 +587,8 @@ static void *keccak_dupctx(void *ctx)
 }
 
 {- produce_param_decoder('shake_get_ctx_params',
-                         (['DIGEST_PARAM_XOFLEN',   'xoflen',   'size_t'],
-                          ['DIGEST_PARAM_SIZE',     'size',     'size_t'],
+                         (['OSSL_DIGEST_PARAM_XOFLEN',   'xoflen',   'size_t'],
+                          ['OSSL_DIGEST_PARAM_SIZE',     'size',     'size_t'],
                          )); -}
 
 static const OSSL_PARAM *shake_gettable_ctx_params(ossl_unused void *ctx,
@@ -618,8 +618,8 @@ static int shake_get_ctx_params(void *vctx, OSSL_PARAM params[])
 }
 
 {- produce_param_decoder('shake_set_ctx_params',
-                         (['DIGEST_PARAM_XOFLEN',   'xoflen',   'size_t'],
-                          ['DIGEST_PARAM_SIZE',     'xoflen',   'size_t'],
+                         (['OSSL_DIGEST_PARAM_XOFLEN',   'xoflen',   'size_t'],
+                          ['OSSL_DIGEST_PARAM_SIZE',     'xoflen',   'size_t'],
                          )); -}
 
 static const OSSL_PARAM *shake_settable_ctx_params(ossl_unused void *ctx,

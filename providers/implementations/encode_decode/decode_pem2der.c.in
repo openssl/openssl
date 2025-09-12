@@ -79,8 +79,8 @@ static void pem2der_freectx(void *vctx)
 }
 
 {- produce_param_decoder('pem2der_set_ctx_params',
-                         (['DECODER_PARAM_PROPERTIES',    'propq', 'utf8_string'],
-                          ['OBJECT_PARAM_DATA_STRUCTURE', 'ds',    'utf8_string'],
+                         (['OSSL_DECODER_PARAM_PROPERTIES',    'propq', 'utf8_string'],
+                          ['OSSL_OBJECT_PARAM_DATA_STRUCTURE', 'ds',    'utf8_string'],
                          )); -}
 
 static const OSSL_PARAM *pem2der_settable_ctx_params(ossl_unused void *provctx)

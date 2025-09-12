@@ -24,7 +24,7 @@ static OSSL_FUNC_digest_gettable_ctx_params_fn blake_gettable_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn blake_settable_ctx_params;
 
 {- produce_param_decoder('blake_get_ctx_params',
-                         (['DIGEST_PARAM_SIZE',     'size',   'uint'],
+                         (['OSSL_DIGEST_PARAM_SIZE',     'size',   'uint'],
                          )); -}
 
 static const OSSL_PARAM *blake_gettable_ctx_params(ossl_unused void *ctx,
@@ -34,7 +34,7 @@ static const OSSL_PARAM *blake_gettable_ctx_params(ossl_unused void *ctx,
 }
 
 {- produce_param_decoder('blake_set_ctx_params',
-                         (['DIGEST_PARAM_SIZE',     'size',   'uint'],
+                         (['OSSL_DIGEST_PARAM_SIZE',     'size',   'uint'],
                          )); -}
 
 static const OSSL_PARAM *blake_settable_ctx_params(ossl_unused void *ctx,

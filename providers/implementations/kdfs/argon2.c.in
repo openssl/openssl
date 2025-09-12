@@ -1395,18 +1395,18 @@ static int set_property_query(KDF_ARGON2 *ctx, const char *propq)
 }
 
 {- produce_param_decoder('argon2_set_ctx_params',
-                         (['KDF_PARAM_PASSWORD',       'pw',     'octet_string'],
-                          ['KDF_PARAM_SALT',           'salt',   'octet_string'],
-                          ['KDF_PARAM_SECRET',         'secret', 'octet_string'],
-                          ['KDF_PARAM_ARGON2_AD',      'ad',     'octet_string'],
-                          ['KDF_PARAM_SIZE',           'size',   'uint32'],
-                          ['KDF_PARAM_ITER',           'iter',   'uint32'],
-                          ['KDF_PARAM_THREADS',        'thrds',  'uint32'],
-                          ['KDF_PARAM_ARGON2_LANES',   'lanes',  'uint32'],
-                          ['KDF_PARAM_ARGON2_MEMCOST', 'mem',    'uint32'],
-                          ['KDF_PARAM_EARLY_CLEAN',    'eclean', 'uint32'],
-                          ['KDF_PARAM_ARGON2_VERSION', 'vers',   'uint32'],
-                          ['KDF_PARAM_PROPERTIES',     'propq',  'utf8_string'],
+                         (['OSSL_KDF_PARAM_PASSWORD',       'pw',     'octet_string'],
+                          ['OSSL_KDF_PARAM_SALT',           'salt',   'octet_string'],
+                          ['OSSL_KDF_PARAM_SECRET',         'secret', 'octet_string'],
+                          ['OSSL_KDF_PARAM_ARGON2_AD',      'ad',     'octet_string'],
+                          ['OSSL_KDF_PARAM_SIZE',           'size',   'uint32'],
+                          ['OSSL_KDF_PARAM_ITER',           'iter',   'uint32'],
+                          ['OSSL_KDF_PARAM_THREADS',        'thrds',  'uint32'],
+                          ['OSSL_KDF_PARAM_ARGON2_LANES',   'lanes',  'uint32'],
+                          ['OSSL_KDF_PARAM_ARGON2_MEMCOST', 'mem',    'uint32'],
+                          ['OSSL_KDF_PARAM_EARLY_CLEAN',    'eclean', 'uint32'],
+                          ['OSSL_KDF_PARAM_ARGON2_VERSION', 'vers',   'uint32'],
+                          ['OSSL_KDF_PARAM_PROPERTIES',     'propq',  'utf8_string'],
                          )); -}
 
 static int argon2_set_ctx_params(KDF_ARGON2 *ctx, const OSSL_PARAM params[],
@@ -1502,7 +1502,7 @@ static const OSSL_PARAM *kdf_argon2_settable_ctx_params(ossl_unused void *ctx,
 }
 
 {- produce_param_decoder('argon2_get_ctx_params',
-                         (['KDF_PARAM_SIZE',                    'size', 'size_t'],
+                         (['OSSL_KDF_PARAM_SIZE',                    'size', 'size_t'],
                          )); -}
 
 static int kdf_argon2_get_ctx_params(void *vctx, OSSL_PARAM params[])

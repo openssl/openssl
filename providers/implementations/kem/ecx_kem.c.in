@@ -245,8 +245,8 @@ static int ecxkem_auth_decapsulate_init(void *vctx, void *vecx, void *vauthpub,
 }
 
 {- produce_param_decoder('ecxkem_set_ctx_params',
-                         (['KEM_PARAM_OPERATION',   'op',   'utf8_string'],
-                          ['KEM_PARAM_IKME',        'ikme', 'octet_string'],
+                         (['OSSL_KEM_PARAM_OPERATION',   'op',   'utf8_string'],
+                          ['OSSL_KEM_PARAM_IKME',        'ikme', 'octet_string'],
                          )); -}
 
 static int ecxkem_set_ctx_params(void *vctx, const OSSL_PARAM params[])

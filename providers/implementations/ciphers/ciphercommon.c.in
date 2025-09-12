@@ -29,16 +29,16 @@ use OpenSSL::paramnames qw(produce_param_decoder);
  * Generic cipher functions for OSSL_PARAM gettables and settables
  */
 {- produce_param_decoder('ossl_cipher_generic_get_params',
-                         (['CIPHER_PARAM_MODE',             'mode',   'uint'],
-                          ['CIPHER_PARAM_KEYLEN',           'keylen', 'size_t'],
-                          ['CIPHER_PARAM_IVLEN',            'ivlen',  'size_t'],
-                          ['CIPHER_PARAM_BLOCK_SIZE',       'bsize',  'size_t'],
-                          ['CIPHER_PARAM_AEAD',             'aead',   'int' ],
-                          ['CIPHER_PARAM_CUSTOM_IV',        'custiv', 'int' ],
-                          ['CIPHER_PARAM_CTS',              'cts',    'int' ],
-                          ['CIPHER_PARAM_TLS1_MULTIBLOCK',  'mb',     'int' ],
-                          ['CIPHER_PARAM_HAS_RAND_KEY',     'rand',   'int' ],
-                          ['CIPHER_PARAM_ENCRYPT_THEN_MAC', 'etm',    'int' ],
+                         (['OSSL_CIPHER_PARAM_MODE',             'mode',   'uint'],
+                          ['OSSL_CIPHER_PARAM_KEYLEN',           'keylen', 'size_t'],
+                          ['OSSL_CIPHER_PARAM_IVLEN',            'ivlen',  'size_t'],
+                          ['OSSL_CIPHER_PARAM_BLOCK_SIZE',       'bsize',  'size_t'],
+                          ['OSSL_CIPHER_PARAM_AEAD',             'aead',   'int' ],
+                          ['OSSL_CIPHER_PARAM_CUSTOM_IV',        'custiv', 'int' ],
+                          ['OSSL_CIPHER_PARAM_CTS',              'cts',    'int' ],
+                          ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK',  'mb',     'int' ],
+                          ['OSSL_CIPHER_PARAM_HAS_RAND_KEY',     'rand',   'int' ],
+                          ['OSSL_CIPHER_PARAM_ENCRYPT_THEN_MAC', 'etm',    'int' ],
                          )); -}
 
 const OSSL_PARAM *ossl_cipher_generic_gettable_params(ossl_unused void *provctx)
@@ -107,13 +107,13 @@ int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
 #define cipher_generic_get_ctx_params_st    ossl_cipher_get_ctx_param_list_st
 
 {- produce_param_decoder('cipher_generic_get_ctx_params',
-                         (['CIPHER_PARAM_KEYLEN',     'keylen', 'size_t'],
-                          ['CIPHER_PARAM_IVLEN',      'ivlen',  'size_t'],
-                          ['CIPHER_PARAM_PADDING',    'pad',    'uint'],
-                          ['CIPHER_PARAM_NUM',        'num',    'uint' ],
-                          ['CIPHER_PARAM_IV',         'iv',     'octet_string' ],
-                          ['CIPHER_PARAM_UPDATED_IV', 'updiv',  'octet_string' ],
-                          ['CIPHER_PARAM_TLS_MAC',    'tlsmac', 'octet_string' ],
+                         (['OSSL_CIPHER_PARAM_KEYLEN',     'keylen', 'size_t'],
+                          ['OSSL_CIPHER_PARAM_IVLEN',      'ivlen',  'size_t'],
+                          ['OSSL_CIPHER_PARAM_PADDING',    'pad',    'uint'],
+                          ['OSSL_CIPHER_PARAM_NUM',        'num',    'uint' ],
+                          ['OSSL_CIPHER_PARAM_IV',         'iv',     'octet_string' ],
+                          ['OSSL_CIPHER_PARAM_UPDATED_IV', 'updiv',  'octet_string' ],
+                          ['OSSL_CIPHER_PARAM_TLS_MAC',    'tlsmac', 'octet_string' ],
                          )); -}
 
 const OSSL_PARAM *ossl_cipher_generic_gettable_ctx_params
@@ -125,11 +125,11 @@ const OSSL_PARAM *ossl_cipher_generic_gettable_ctx_params
 #define cipher_generic_set_ctx_params_st    ossl_cipher_set_ctx_param_list_st
 
 {- produce_param_decoder('cipher_generic_set_ctx_params',
-                         (['CIPHER_PARAM_PADDING',      'pad',         'uint'],
-                          ['CIPHER_PARAM_NUM',          'num',         'uint'],
-                          ['CIPHER_PARAM_USE_BITS',     'bits',        'uint'],
-                          ['CIPHER_PARAM_TLS_VERSION',  'tlsvers',     'uint'],
-                          ['CIPHER_PARAM_TLS_MAC_SIZE', 'tlsmacsize',  'size_t'],
+                         (['OSSL_CIPHER_PARAM_PADDING',      'pad',         'uint'],
+                          ['OSSL_CIPHER_PARAM_NUM',          'num',         'uint'],
+                          ['OSSL_CIPHER_PARAM_USE_BITS',     'bits',        'uint'],
+                          ['OSSL_CIPHER_PARAM_TLS_VERSION',  'tlsvers',     'uint'],
+                          ['OSSL_CIPHER_PARAM_TLS_MAC_SIZE', 'tlsmacsize',  'size_t'],
                          )); -}
 
 const OSSL_PARAM *ossl_cipher_generic_settable_ctx_params
@@ -144,12 +144,12 @@ const OSSL_PARAM *ossl_cipher_generic_settable_ctx_params
 #define cipher_var_keylen_set_ctx_params_st ossl_cipher_set_ctx_param_list_st
 
 {- produce_param_decoder('cipher_var_keylen_set_ctx_params',
-                         (['CIPHER_PARAM_PADDING',      'pad',         'uint'],
-                          ['CIPHER_PARAM_NUM',          'num',         'uint'],
-                          ['CIPHER_PARAM_USE_BITS',     'bits',        'uint'],
-                          ['CIPHER_PARAM_TLS_VERSION',  'tlsvers',     'uint'],
-                          ['CIPHER_PARAM_TLS_MAC_SIZE', 'tlsmacsize',  'size_t'],
-                          ['CIPHER_PARAM_KEYLEN',       'keylen',      'size_t'],
+                         (['OSSL_CIPHER_PARAM_PADDING',      'pad',         'uint'],
+                          ['OSSL_CIPHER_PARAM_NUM',          'num',         'uint'],
+                          ['OSSL_CIPHER_PARAM_USE_BITS',     'bits',        'uint'],
+                          ['OSSL_CIPHER_PARAM_TLS_VERSION',  'tlsvers',     'uint'],
+                          ['OSSL_CIPHER_PARAM_TLS_MAC_SIZE', 'tlsmacsize',  'size_t'],
+                          ['OSSL_CIPHER_PARAM_KEYLEN',       'keylen',      'size_t'],
                          )); -}
 
 const OSSL_PARAM *ossl_cipher_var_keylen_settable_ctx_params

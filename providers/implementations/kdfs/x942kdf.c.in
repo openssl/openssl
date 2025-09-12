@@ -530,20 +530,20 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen,
 }
 
 {- produce_param_decoder('sshkdf_set_ctx_params',
-                         (['KDF_PARAM_PROPERTIES',          'propq',    'utf8_string'],
-                          ['ALG_PARAM_ENGINE',              'engine',   'utf8_string', 'hidden'],
-                          ['KDF_PARAM_DIGEST',              'digest',   'utf8_string'],
-                          ['KDF_PARAM_SECRET',              'secret',   'octet_string'],
-                          ['KDF_PARAM_KEY',                 'secret',   'octet_string'],
-                          ['KDF_PARAM_UKM',                 'uinfo',    'octet_string'],
-                          ['KDF_PARAM_X942_ACVPINFO',       'acvp',     'octet_string'],
-                          ['KDF_PARAM_X942_PARTYUINFO',     'uinfo',    'octet_string'],
-                          ['KDF_PARAM_X942_PARTYVINFO',     'vinfo',    'octet_string'],
-                          ['KDF_PARAM_X942_SUPP_PUBINFO',   'pub',      'octet_string'],
-                          ['KDF_PARAM_X942_SUPP_PRIVINFO',  'priv',     'octet_string'],
-                          ['KDF_PARAM_X942_USE_KEYBITS',    'kbits',    'int'],
-                          ['KDF_PARAM_CEK_ALG',             'cekalg',   'utf8_string'],
-                          ['KDF_PARAM_FIPS_KEY_CHECK',      'ind_k',    'int', 'fips'],
+                         (['OSSL_KDF_PARAM_PROPERTIES',          'propq',    'utf8_string'],
+                          ['OSSL_ALG_PARAM_ENGINE',              'engine',   'utf8_string', 'hidden'],
+                          ['OSSL_KDF_PARAM_DIGEST',              'digest',   'utf8_string'],
+                          ['OSSL_KDF_PARAM_SECRET',              'secret',   'octet_string'],
+                          ['OSSL_KDF_PARAM_KEY',                 'secret',   'octet_string'],
+                          ['OSSL_KDF_PARAM_UKM',                 'uinfo',    'octet_string'],
+                          ['OSSL_KDF_PARAM_X942_ACVPINFO',       'acvp',     'octet_string'],
+                          ['OSSL_KDF_PARAM_X942_PARTYUINFO',     'uinfo',    'octet_string'],
+                          ['OSSL_KDF_PARAM_X942_PARTYVINFO',     'vinfo',    'octet_string'],
+                          ['OSSL_KDF_PARAM_X942_SUPP_PUBINFO',   'pub',      'octet_string'],
+                          ['OSSL_KDF_PARAM_X942_SUPP_PRIVINFO',  'priv',     'octet_string'],
+                          ['OSSL_KDF_PARAM_X942_USE_KEYBITS',    'kbits',    'int'],
+                          ['OSSL_KDF_PARAM_CEK_ALG',             'cekalg',   'utf8_string'],
+                          ['OSSL_KDF_PARAM_FIPS_KEY_CHECK',      'ind_k',    'int', 'fips'],
                          )); -}
 
 static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
@@ -629,8 +629,8 @@ static const OSSL_PARAM *x942kdf_settable_ctx_params(ossl_unused void *ctx,
 }
 
 {- produce_param_decoder('sshkdf_get_ctx_params',
-                         (['KDF_PARAM_SIZE',                    'size', 'size_t'],
-                          ['KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',  'int', 'fips'],
+                         (['OSSL_KDF_PARAM_SIZE',                    'size', 'size_t'],
+                          ['OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',  'int', 'fips'],
                          )); -}
 
 static int x942kdf_get_ctx_params(void *vctx, OSSL_PARAM params[])

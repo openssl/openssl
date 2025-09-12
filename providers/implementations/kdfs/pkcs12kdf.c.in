@@ -244,13 +244,13 @@ static int kdf_pkcs12_derive(void *vctx, unsigned char *key, size_t keylen,
 }
 
 {- produce_param_decoder('pkcs12_set_ctx_params',
-                         (['KDF_PARAM_PROPERTIES',  'propq',    'utf8_string'],
-                          ['ALG_PARAM_ENGINE',      'engine',   'utf8_string', 'hidden'],
-                          ['KDF_PARAM_DIGEST',      'digest',   'utf8_string'],
-                          ['KDF_PARAM_PASSWORD',    'pw',       'octet_string'],
-                          ['KDF_PARAM_SALT',        'salt',     'octet_string'],
-                          ['KDF_PARAM_ITER',        'iter',     'uint64'],
-                          ['KDF_PARAM_PKCS12_ID',   'p12id',    'int'],
+                         (['OSSL_KDF_PARAM_PROPERTIES',  'propq',    'utf8_string'],
+                          ['OSSL_ALG_PARAM_ENGINE',      'engine',   'utf8_string', 'hidden'],
+                          ['OSSL_KDF_PARAM_DIGEST',      'digest',   'utf8_string'],
+                          ['OSSL_KDF_PARAM_PASSWORD',    'pw',       'octet_string'],
+                          ['OSSL_KDF_PARAM_SALT',        'salt',     'octet_string'],
+                          ['OSSL_KDF_PARAM_ITER',        'iter',     'uint64'],
+                          ['OSSL_KDF_PARAM_PKCS12_ID',   'p12id',    'int'],
                          )); -}
 
 static int kdf_pkcs12_set_ctx_params(void *vctx, const OSSL_PARAM params[])
@@ -290,7 +290,7 @@ static const OSSL_PARAM *kdf_pkcs12_settable_ctx_params(
 }
 
 {- produce_param_decoder('pkcs12_get_ctx_params',
-                         (['KDF_PARAM_SIZE',                    'size', 'size_t'],
+                         (['OSSL_KDF_PARAM_SIZE',                    'size', 'size_t'],
                          )); -}
 
 static int kdf_pkcs12_get_ctx_params(void *vctx, OSSL_PARAM params[])

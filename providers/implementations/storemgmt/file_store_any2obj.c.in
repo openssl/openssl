@@ -71,7 +71,7 @@ static void any2obj_freectx(void *ctx)
 }
 
 {- produce_param_decoder('any2obj_set_ctx_params',
-                         (['OBJECT_PARAM_DATA_STRUCTURE', 'datastruct', 'utf8_string'],
+                         (['OSSL_OBJECT_PARAM_DATA_STRUCTURE', 'datastruct', 'utf8_string'],
                          )); -}
 
 static int any2obj_set_ctx_params(void *vctx, const OSSL_PARAM params[])

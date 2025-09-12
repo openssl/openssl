@@ -232,9 +232,9 @@ static int jitter_reseed(void *vseed,
 }
 
 {- produce_param_decoder('jitter_get_ctx_params',
-                         (['RAND_PARAM_STATE',                   'state',  'int'],
-                          ['RAND_PARAM_STRENGTH',                'str',    'uint'],
-                          ['RAND_PARAM_MAX_REQUEST',             'maxreq', 'size_t'],
+                         (['OSSL_RAND_PARAM_STATE',                   'state',  'int'],
+                          ['OSSL_RAND_PARAM_STRENGTH',                'str',    'uint'],
+                          ['OSSL_RAND_PARAM_MAX_REQUEST',             'maxreq', 'size_t'],
                         )); -}
 
 static int jitter_get_ctx_params(void *vseed, OSSL_PARAM params[])

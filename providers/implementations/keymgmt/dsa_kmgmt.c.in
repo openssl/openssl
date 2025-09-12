@@ -330,21 +330,21 @@ struct dsa_params_st {
 #define dsa_get_params_st dsa_params_st
 
 {- produce_param_decoder('dsa_get_params',
-                         (['PKEY_PARAM_BITS',               'bits',           'int'],
-                          ['PKEY_PARAM_SECURITY_BITS',      'secbits',        'int'],
-                          ['PKEY_PARAM_MAX_SIZE',           'maxsize',        'int'],
-                          ['PKEY_PARAM_SECURITY_CATEGORY',  'seccat',         'int'],
-                          ['PKEY_PARAM_DEFAULT_DIGEST',     'digest',         'utf8_string'],
-                          ['PKEY_PARAM_FFC_P',              'ffp.p',          'BN'],
-                          ['PKEY_PARAM_FFC_Q',              'ffp.q',          'BN'],
-                          ['PKEY_PARAM_FFC_G',              'ffp.g',          'BN'],
-                          ['PKEY_PARAM_FFC_COFACTOR',       'ffp.cofactor',   'BN'],
-                          ['PKEY_PARAM_FFC_GINDEX',         'ffp.g_index',    'int'],
-                          ['PKEY_PARAM_FFC_PCOUNTER',       'ffp.p_counter',  'int'],
-                          ['PKEY_PARAM_FFC_H',              'ffp.h',          'int'],
-                          ['PKEY_PARAM_FFC_SEED',           'ffp.seed',       'octet_string'],
-                          ['PKEY_PARAM_PUB_KEY',            'pubkey',         'BN'],
-                          ['PKEY_PARAM_PRIV_KEY',           'privkey',        'BN'],
+                         (['OSSL_PKEY_PARAM_BITS',               'bits',           'int'],
+                          ['OSSL_PKEY_PARAM_SECURITY_BITS',      'secbits',        'int'],
+                          ['OSSL_PKEY_PARAM_MAX_SIZE',           'maxsize',        'int'],
+                          ['OSSL_PKEY_PARAM_SECURITY_CATEGORY',  'seccat',         'int'],
+                          ['OSSL_PKEY_PARAM_DEFAULT_DIGEST',     'digest',         'utf8_string'],
+                          ['OSSL_PKEY_PARAM_FFC_P',              'ffp.p',          'BN'],
+                          ['OSSL_PKEY_PARAM_FFC_Q',              'ffp.q',          'BN'],
+                          ['OSSL_PKEY_PARAM_FFC_G',              'ffp.g',          'BN'],
+                          ['OSSL_PKEY_PARAM_FFC_COFACTOR',       'ffp.cofactor',   'BN'],
+                          ['OSSL_PKEY_PARAM_FFC_GINDEX',         'ffp.g_index',    'int'],
+                          ['OSSL_PKEY_PARAM_FFC_PCOUNTER',       'ffp.p_counter',  'int'],
+                          ['OSSL_PKEY_PARAM_FFC_H',              'ffp.h',          'int'],
+                          ['OSSL_PKEY_PARAM_FFC_SEED',           'ffp.seed',       'octet_string'],
+                          ['OSSL_PKEY_PARAM_PUB_KEY',            'pubkey',         'BN'],
+                          ['OSSL_PKEY_PARAM_PRIV_KEY',           'privkey',        'BN'],
                          )); -}
 
 static ossl_inline int dsa_get_params(void *key, OSSL_PARAM params[])
@@ -493,16 +493,16 @@ static int dsa_set_gen_seed(struct dsa_gen_ctx *gctx, unsigned char *seed,
 }
 
 {- produce_param_decoder('dsa_gen_set_params',
-                         (['PKEY_PARAM_FFC_TYPE',         'type',      'utf8_string'],
-                          ['PKEY_PARAM_FFC_PBITS',        'pbits',     'size_t'],
-                          ['PKEY_PARAM_FFC_QBITS',        'qbits',     'size_t'],
-                          ['PKEY_PARAM_FFC_DIGEST',       'digest',    'utf8_string'],
-                          ['PKEY_PARAM_FFC_DIGEST_PROPS', 'propq',     'utf8_string'],
-                          ['PKEY_PARAM_FFC_GINDEX',       'g_index',   'int'],
-                          ['PKEY_PARAM_FFC_SEED',         'seed',      'octet_string'],
-                          ['PKEY_PARAM_FFC_PCOUNTER',     'p_counter', 'int'],
-                          ['PKEY_PARAM_FFC_H',            'h',         'int'],
-                          ['PKEY_PARAM_FIPS_SIGN_CHECK',  'ind_sign',  'int', 'fips'],
+                         (['OSSL_PKEY_PARAM_FFC_TYPE',         'type',      'utf8_string'],
+                          ['OSSL_PKEY_PARAM_FFC_PBITS',        'pbits',     'size_t'],
+                          ['OSSL_PKEY_PARAM_FFC_QBITS',        'qbits',     'size_t'],
+                          ['OSSL_PKEY_PARAM_FFC_DIGEST',       'digest',    'utf8_string'],
+                          ['OSSL_PKEY_PARAM_FFC_DIGEST_PROPS', 'propq',     'utf8_string'],
+                          ['OSSL_PKEY_PARAM_FFC_GINDEX',       'g_index',   'int'],
+                          ['OSSL_PKEY_PARAM_FFC_SEED',         'seed',      'octet_string'],
+                          ['OSSL_PKEY_PARAM_FFC_PCOUNTER',     'p_counter', 'int'],
+                          ['OSSL_PKEY_PARAM_FFC_H',            'h',         'int'],
+                          ['OSSL_PKEY_PARAM_FIPS_SIGN_CHECK',  'ind_sign',  'int', 'fips'],
                          )); -}
 
 static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
@@ -581,7 +581,7 @@ static const OSSL_PARAM *dsa_gen_settable_params(ossl_unused void *genctx,
 }
 
 {- produce_param_decoder('dsa_gen_get_params',
-                         (['PKEY_PARAM_FIPS_APPROVED_INDICATOR', 'ind', 'int', 'fips'],
+                         (['OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR', 'ind', 'int', 'fips'],
                          )); -}
 
 static int dsa_gen_get_params(void *genctx, OSSL_PARAM *params)

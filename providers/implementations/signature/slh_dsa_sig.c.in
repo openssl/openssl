@@ -261,10 +261,10 @@ static int slh_dsa_digest_verify(void *vctx, const uint8_t *sig, size_t siglen,
 }
 
 {- produce_param_decoder('slh_dsa_set_ctx_params',
-                         (['SIGNATURE_PARAM_CONTEXT_STRING',   'context', 'octet_string'],
-                          ['SIGNATURE_PARAM_TEST_ENTROPY',     'entropy', 'octet_string'],
-                          ['SIGNATURE_PARAM_DETERMINISTIC',    'det',     'int'],
-                          ['SIGNATURE_PARAM_MESSAGE_ENCODING', 'msgenc',  'int'],
+                         (['OSSL_SIGNATURE_PARAM_CONTEXT_STRING',   'context', 'octet_string'],
+                          ['OSSL_SIGNATURE_PARAM_TEST_ENTROPY',     'entropy', 'octet_string'],
+                          ['OSSL_SIGNATURE_PARAM_DETERMINISTIC',    'det',     'int'],
+                          ['OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING', 'msgenc',  'int'],
                          )); -}
 
 static int slh_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
@@ -312,7 +312,7 @@ static const OSSL_PARAM *slh_dsa_settable_ctx_params(void *vctx,
 }
 
 {- produce_param_decoder('slh_dsa_get_ctx_params',
-                         (['SIGNATURE_PARAM_ALGORITHM_ID', 'algid', 'octet_string'],
+                         (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID', 'algid', 'octet_string'],
                          )); -}
 
 static const OSSL_PARAM *slh_dsa_gettable_ctx_params(ossl_unused void *vctx,

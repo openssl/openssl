@@ -141,8 +141,8 @@ static int hmac_drbg_kdf_derive(void *vctx, unsigned char *out, size_t outlen,
 }
 
 {- produce_param_decoder('hmac_drbg_kdf_get_ctx_params',
-                         (['KDF_PARAM_MAC',    'mac',    'utf8_string'],
-                          ['KDF_PARAM_DIGEST', 'digest', 'utf8_string'],
+                         (['OSSL_KDF_PARAM_MAC',    'mac',    'utf8_string'],
+                          ['OSSL_KDF_PARAM_DIGEST', 'digest', 'utf8_string'],
                          )); -}
 
 static int hmac_drbg_kdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
@@ -180,11 +180,11 @@ static const OSSL_PARAM *hmac_drbg_kdf_gettable_ctx_params(
 }
 
 {- produce_param_decoder('hmac_drbg_kdf_set_ctx_params',
-                         (['KDF_PARAM_PROPERTIES',       'propq',  'utf8_string'],
-                          ['ALG_PARAM_ENGINE',           'engine', 'utf8_string', 'hidden'],
-                          ['KDF_PARAM_DIGEST',           'digest', 'utf8_string'],
-                          ['KDF_PARAM_HMACDRBG_ENTROPY', 'ent',    'octet_string'],
-                          ['KDF_PARAM_HMACDRBG_NONCE',   'nonce',  'octet_string'],
+                         (['OSSL_KDF_PARAM_PROPERTIES',       'propq',  'utf8_string'],
+                          ['OSSL_ALG_PARAM_ENGINE',           'engine', 'utf8_string', 'hidden'],
+                          ['OSSL_KDF_PARAM_DIGEST',           'digest', 'utf8_string'],
+                          ['OSSL_KDF_PARAM_HMACDRBG_ENTROPY', 'ent',    'octet_string'],
+                          ['OSSL_KDF_PARAM_HMACDRBG_NONCE',   'nonce',  'octet_string'],
                          )); -}
 
 static int hmac_drbg_kdf_set_ctx_params(void *vctx,

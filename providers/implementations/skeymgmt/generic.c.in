@@ -34,7 +34,7 @@ void generic_free(void *keydata)
 }
 
 {- produce_param_decoder('generic_skey_import',
-                         (['SKEY_PARAM_RAW_BYTES',  'raw_bytes',    'octet_string'],
+                         (['OSSL_SKEY_PARAM_RAW_BYTES',  'raw_bytes',    'octet_string'],
                          )); -}
 
 void *generic_import(void *provctx, int selection, const OSSL_PARAM params[])

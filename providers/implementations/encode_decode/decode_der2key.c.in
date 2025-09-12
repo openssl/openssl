@@ -173,7 +173,7 @@ der2key_newctx(void *provctx, const struct keytype_desc_st *desc)
 }
 
 {- produce_param_decoder('der2key_set_ctx_params',
-                         (['DECODER_PARAM_PROPERTIES', 'propq', 'utf8_string'],
+                         (['OSSL_DECODER_PARAM_PROPERTIES', 'propq', 'utf8_string'],
                          )); -}
 
 static const OSSL_PARAM *der2key_settable_ctx_params(ossl_unused void *provctx)
