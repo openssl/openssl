@@ -179,6 +179,30 @@ static int test_int_stack(int reserve)
             goto end;
         }
 
+    if (!TEST_true(sk_sint_is_sorted(s)))
+        goto end;
+
+    for (i = 0; i < n_exfinds; i++) {
+        int loc = sk_sint_find_ex(s, &exfinds[i].value);
+        int value = *sk_sint_value(s, loc);
+
+        /* inserting in the correct location should preserve is_sorted */
+        if (value < exfinds[i].value)
+            loc++;
+        sk_sint_insert(s, &exfinds[i].value, loc);
+        if (!TEST_true(sk_sint_is_sorted(s)))
+            goto end;
+    }
+
+    if (!TEST_true(sk_sint_is_sorted(s)))
+        goto end;
+
+    /* inserting out of order should make the array unsorted again */
+    sk_sint_insert(s, v + 6, 0);
+
+    if (!TEST_false(sk_sint_is_sorted(s)))
+        goto end;
+
     /* shift */
     if (!TEST_ptr_eq(sk_sint_shift(s), v + 6))
         goto end;
