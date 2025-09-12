@@ -100,7 +100,7 @@ static int ml_kem_decapsulate_init(void *vctx, void *vkey,
 }
 
 {- produce_param_decoder('ml_kem_set_ctx_params',
-                         (['KEM_PARAM_IKME', 'ikme', 'octet_string'],
+                         (['OSSL_KEM_PARAM_IKME', 'ikme', 'octet_string'],
                          )); -}
 
 static int ml_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])

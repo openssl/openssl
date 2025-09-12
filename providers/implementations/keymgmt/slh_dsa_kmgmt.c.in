@@ -112,8 +112,8 @@ static int slh_dsa_validate(const void *key_data, int selection, int check_type)
 }
 
 {- produce_param_decoder('slh_dsa_import',
-                         (['PKEY_PARAM_PUB_KEY',           'pub',     'octet_string'],
-                          ['PKEY_PARAM_PRIV_KEY',          'priv',    'octet_string'],
+                         (['OSSL_PKEY_PARAM_PUB_KEY',           'pub',     'octet_string'],
+                          ['OSSL_PKEY_PARAM_PRIV_KEY',          'priv',    'octet_string'],
                          )); -}
 
 static int slh_dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
@@ -142,13 +142,13 @@ static const OSSL_PARAM *slh_dsa_imexport_types(int selection)
 }
 
 {- produce_param_decoder('slh_dsa_get_params',
-                         (['PKEY_PARAM_BITS',              'bits',    'int'],
-                          ['PKEY_PARAM_SECURITY_BITS',     'secbits', 'int'],
-                          ['PKEY_PARAM_MAX_SIZE',          'maxsize', 'int'],
-                          ['PKEY_PARAM_SECURITY_CATEGORY', 'seccat',  'int'],
-                          ['PKEY_PARAM_MANDATORY_DIGEST',  'mandgst', 'utf8_string'],
-                          ['PKEY_PARAM_PUB_KEY',           'pub',     'octet_string'],
-                          ['PKEY_PARAM_PRIV_KEY',          'priv',    'octet_string'],
+                         (['OSSL_PKEY_PARAM_BITS',              'bits',    'int'],
+                          ['OSSL_PKEY_PARAM_SECURITY_BITS',     'secbits', 'int'],
+                          ['OSSL_PKEY_PARAM_MAX_SIZE',          'maxsize', 'int'],
+                          ['OSSL_PKEY_PARAM_SECURITY_CATEGORY', 'seccat',  'int'],
+                          ['OSSL_PKEY_PARAM_MANDATORY_DIGEST',  'mandgst', 'utf8_string'],
+                          ['OSSL_PKEY_PARAM_PUB_KEY',           'pub',     'octet_string'],
+                          ['OSSL_PKEY_PARAM_PRIV_KEY',          'priv',    'octet_string'],
                          )); -}
 
 static const OSSL_PARAM *slh_dsa_gettable_params(void *provctx)
@@ -387,8 +387,8 @@ static void *slh_dsa_gen(void *genctx, const char *alg)
 }
 
 {- produce_param_decoder('slh_dsa_gen_set_params',
-                         (['PKEY_PARAM_PROPERTIES',   'propq', 'utf8_string'],
-                          ['PKEY_PARAM_SLH_DSA_SEED', 'seed',  'octet_string'],
+                         (['OSSL_PKEY_PARAM_PROPERTIES',   'propq', 'utf8_string'],
+                          ['OSSL_PKEY_PARAM_SLH_DSA_SEED', 'seed',  'octet_string'],
                          )); -}
 
 static int slh_dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])

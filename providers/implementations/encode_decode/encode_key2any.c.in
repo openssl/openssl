@@ -1138,9 +1138,9 @@ static void key2any_freectx(void *vctx)
 }
 
 {- produce_param_decoder('key2any_set_ctx_params',
-                         (['ENCODER_PARAM_CIPHER',          'cipher', 'utf8_string'],
-                          ['ENCODER_PARAM_PROPERTIES',      'propq',  'utf8_string'],
-                          ['ENCODER_PARAM_SAVE_PARAMETERS', 'svprm',  'int'],
+                         (['OSSL_ENCODER_PARAM_CIPHER',          'cipher', 'utf8_string'],
+                          ['OSSL_ENCODER_PARAM_PROPERTIES',      'propq',  'utf8_string'],
+                          ['OSSL_ENCODER_PARAM_SAVE_PARAMETERS', 'svprm',  'int'],
                          )); -}
 
 static const OSSL_PARAM *key2any_settable_ctx_params(ossl_unused void *provctx)

@@ -400,9 +400,9 @@ static void *sm2sig_dupctx(void *vpsm2ctx)
 }
 
 {- produce_param_decoder('sm2sig_get_ctx_params',
-                         (['SIGNATURE_PARAM_ALGORITHM_ID', 'algid',  'octet_string'],
-                          ['SIGNATURE_PARAM_DIGEST_SIZE',  'size',   'size_t'],
-                          ['SIGNATURE_PARAM_DIGEST',       'digest', 'utf8_string'],
+                         (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID', 'algid',  'octet_string'],
+                          ['OSSL_SIGNATURE_PARAM_DIGEST_SIZE',  'size',   'size_t'],
+                          ['OSSL_SIGNATURE_PARAM_DIGEST',       'digest', 'utf8_string'],
                          )); -}
 
 static int sm2sig_get_ctx_params(void *vpsm2ctx, OSSL_PARAM *params)
@@ -438,9 +438,9 @@ static const OSSL_PARAM *sm2sig_gettable_ctx_params(ossl_unused void *vpsm2ctx,
 }
 
 {- produce_param_decoder('sm2sig_set_ctx_params',
-                         (['SIGNATURE_PARAM_DIGEST_SIZE', 'size',   'size_t'],
-                          ['SIGNATURE_PARAM_DIGEST',      'digest', 'utf8_string'],
-                          ['PKEY_PARAM_DIST_ID',          'distid', 'octet_string'],
+                         (['OSSL_SIGNATURE_PARAM_DIGEST_SIZE', 'size',   'size_t'],
+                          ['OSSL_SIGNATURE_PARAM_DIGEST',      'digest', 'utf8_string'],
+                          ['OSSL_PKEY_PARAM_DIST_ID',          'distid', 'octet_string'],
                          )); -}
 
 static int sm2sig_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])

@@ -94,7 +94,7 @@ static void key2ms_freectx(void *vctx)
 }
 
 {- produce_param_decoder('key2pvk_set_ctx_params',
-                         (['ENCODER_PARAM_ENCRYPT_LEVEL', 'enclvl', 'int'],
+                         (['OSSL_ENCODER_PARAM_ENCRYPT_LEVEL', 'enclvl', 'int'],
                          )); -}
 
 static const OSSL_PARAM *key2pvk_settable_ctx_params(ossl_unused void *provctx)
