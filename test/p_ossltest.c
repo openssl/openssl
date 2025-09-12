@@ -736,6 +736,7 @@ static void ossl_test_aes128gcm_freectx(void *vprovctx)
     PROV_EVP_AES128_GCM_CTX *ctx = (PROV_EVP_AES128_GCM_CTX *)vprovctx;
 
     EVP_CIPHER_CTX_free(ctx->sub_ctx);
+    OPENSSL_free(ctx);
 }
 
 /**
