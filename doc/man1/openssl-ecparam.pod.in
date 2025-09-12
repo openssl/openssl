@@ -23,7 +23,7 @@ B<openssl ecparam>
 [B<-param_enc> I<arg>]
 [B<-no_seed>]
 [B<-genkey>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
 =head1 DESCRIPTION
@@ -121,8 +121,6 @@ is included in the ECParameters structure (see RFC 3279).
 
 This option will generate an EC private key using the specified parameters.
 
-{- $OpenSSL::safe::opt_engine_item -}
-
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
@@ -172,9 +170,9 @@ L<openssl-dsaparam(1)>
 
 =head1 HISTORY
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
-
 The B<-C> option was removed in OpenSSL 3.0.
+
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

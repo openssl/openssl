@@ -12,7 +12,7 @@ B<openssl rand>
 [B<-out> I<file>]
 [B<-base64>]
 [B<-hex>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 I<num>[K|M|G|T]
 
@@ -55,8 +55,6 @@ Perform base64 encoding on the output.
 
 Show the output as a hex string.
 
-{- $OpenSSL::safe::opt_engine_item -}
-
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
@@ -72,7 +70,7 @@ L<EVP_RAND(7)>
 
 =head1 HISTORY
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
