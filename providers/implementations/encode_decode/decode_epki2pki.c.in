@@ -59,7 +59,7 @@ static void epki2pki_freectx(void *vctx)
 }
 
 {- produce_param_decoder('epki2pki_set_ctx_params',
-                         (['DECODER_PARAM_PROPERTIES', 'propq', 'utf8_string'],
+                         (['OSSL_DECODER_PARAM_PROPERTIES', 'propq', 'utf8_string'],
                          )); -}
 
 static const OSSL_PARAM *epki2pki_settable_ctx_params(ossl_unused void *provctx)

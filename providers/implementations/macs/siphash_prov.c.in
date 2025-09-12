@@ -153,9 +153,9 @@ static int siphash_final(void *vmacctx, unsigned char *out, size_t *outl,
 }
 
 {- produce_param_decoder('siphash_get_ctx_params',
-                         (['MAC_PARAM_SIZE',        'size', 'size_t'],
-                          ['MAC_PARAM_C_ROUNDS',    'c',    'uint'],
-                          ['MAC_PARAM_D_ROUNDS',    'd',    'uint'],
+                         (['OSSL_MAC_PARAM_SIZE',        'size', 'size_t'],
+                          ['OSSL_MAC_PARAM_C_ROUNDS',    'c',    'uint'],
+                          ['OSSL_MAC_PARAM_D_ROUNDS',    'd',    'uint'],
                          )); -}
 
 static const OSSL_PARAM *siphash_gettable_ctx_params(ossl_unused void *ctx,
@@ -182,10 +182,10 @@ static int siphash_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 }
 
 {- produce_param_decoder('siphash_set_params',
-                         (['MAC_PARAM_SIZE',        'size', 'size_t'],
-                          ['MAC_PARAM_KEY',         'key',  'octet_string'],
-                          ['MAC_PARAM_C_ROUNDS',    'c',    'uint'],
-                          ['MAC_PARAM_D_ROUNDS',    'd',    'uint'],
+                         (['OSSL_MAC_PARAM_SIZE',        'size', 'size_t'],
+                          ['OSSL_MAC_PARAM_KEY',         'key',  'octet_string'],
+                          ['OSSL_MAC_PARAM_C_ROUNDS',    'c',    'uint'],
+                          ['OSSL_MAC_PARAM_D_ROUNDS',    'd',    'uint'],
                          )); -}
 
 static const OSSL_PARAM *siphash_settable_ctx_params(ossl_unused void *ctx,
