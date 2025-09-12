@@ -445,6 +445,9 @@ void OPENSSL_cpuid_setup(void)
          MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_QCOMM, QCOM_CPU_PART_ORYON_X1)) &&
         (OPENSSL_armcap_P & ARMV8_SHA3))
         OPENSSL_armcap_P |= ARMV8_HAVE_SHA3_AND_WORTH_USING;
+    if ((OPENSSL_armcap_P & ARMV8_SVE2) != 0
+        && (e = getenv("OPENSSL_SVE2_POLY1305")) != NULL && atoi(e) != 0)
+        OPENSSL_armcap_P |= ARMV8_SVE2_POLY1305;
 # endif
 }
 #endif /* _WIN32, __ARM_MAX_ARCH__ >= 7 */
