@@ -29,7 +29,7 @@ B<openssl speed>
 [B<-mlock>]
 [B<-testmode>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<algorithm> ...]
 
 =head1 DESCRIPTION
@@ -53,8 +53,7 @@ see L<openssl(1)/COMMAND SUMMARY>.
 =item B<-elapsed>
 
 When calculating operations- or bytes-per-second, use wall-clock time
-instead of CPU user time as divisor. It can be useful when testing speed
-of hardware engines.
+instead of CPU user time as divisor.
 
 =item B<-evp> I<algo>
 
@@ -139,8 +138,6 @@ the speed command will return with a failure result.
 
 {- $OpenSSL::safe::opt_r_item -}
 
-{- $OpenSSL::safe::opt_engine_item -}
-
 {- $OpenSSL::safe::opt_provider_item -}
 
 =item I<algorithm> ...
@@ -166,6 +163,8 @@ The B<-engine> option was deprecated in OpenSSL 3.0.
 DSA512 was removed in OpenSSL 3.2.
 
 The B<-testmode> option was added in OpenSSL 3.4.
+
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

@@ -101,7 +101,7 @@ Credentials format options:
 [B<-crlform> I<PEM|DER>]
 [B<-keyform> I<PEM|DER|P12>]
 [B<-otherpass> I<arg>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 Random state options:
 
@@ -944,8 +944,6 @@ If not given here, the password will be prompted for if needed.
 For more information about the format of I<arg> see
 L<openssl-passphrase-options(1)>.
 
-{- $OpenSSL::safe::opt_engine_item -}
-
 =back
 
 =head2 Provider options
@@ -1514,6 +1512,8 @@ and B<-rsp_crl> options were added in OpenSSL 3.4.
 
 B<-centralkeygen>, B<-newkeyout>, B<-rsp_key> and
 B<-rsp_keypass> were added in OpenSSL 3.5.
+
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
