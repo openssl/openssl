@@ -22,6 +22,7 @@
 #endif
 #include "crypto/evp.h" /* evp_method_store_cache_flush */
 #include "crypto/rand.h"
+#include "internal/common.h"
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
 #include "internal/provider.h"
@@ -320,6 +321,8 @@ void *ossl_provider_store_new(OSSL_LIB_CTX *ctx)
         ossl_provider_store_free(store);
         return NULL;
     }
+    /* XXX This should go away */
+    sk_OSSL_PROVIDER_sort(store->providers);
     store->libctx = ctx;
     store->use_fallbacks = 1;
 
@@ -401,6 +404,7 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
 {
     struct provider_store_st *store = NULL;
     OSSL_PROVIDER *prov = NULL;
+    int locked = 0;
 
     if ((store = get_provider_store(libctx)) != NULL) {
         OSSL_PROVIDER tmpl = { 0, };
@@ -418,16 +422,19 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
 #endif
 
         tmpl.name = (char *)name;
-        if (!CRYPTO_THREAD_write_lock(store->lock))
-            return NULL;
-        sk_OSSL_PROVIDER_sort(store->providers);
+        if (!(locked = CRYPTO_THREAD_read_lock(store->lock)))
+            goto done;
+        if (!ossl_assert(sk_OSSL_PROVIDER_is_sorted(store->providers)))
+            goto done;
         if ((i = sk_OSSL_PROVIDER_find(store->providers, &tmpl)) != -1)
             prov = sk_OSSL_PROVIDER_value(store->providers, i);
-        CRYPTO_THREAD_unlock(store->lock);
         if (prov != NULL && !ossl_provider_up_ref(prov))
             prov = NULL;
     }
 
+done:
+    if (locked)
+        CRYPTO_THREAD_unlock(store->lock);
     return prov;
 }
 
@@ -649,7 +656,7 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
                                int retain_fallbacks)
 {
     struct provider_store_st *store;
-    int idx;
+    int idx, in_store = 0;
     OSSL_PROVIDER tmpl = { 0, };
     OSSL_PROVIDER *actualtmp = NULL;
 
@@ -663,14 +670,17 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
         return 0;
 
     tmpl.name = (char *)prov->name;
-    idx = sk_OSSL_PROVIDER_find(store->providers, &tmpl);
-    if (idx == -1)
+    idx = sk_OSSL_PROVIDER_find_ex(store->providers, &tmpl);
+    actualtmp = sk_OSSL_PROVIDER_value(store->providers, idx);
+    if (idx >= 0) {
+        int lex = strcmp(actualtmp->name, prov->name);
+        if (lex < 0)
+            idx++;
+        in_store = (lex == 0);
+    }
+    if (!in_store) {
         actualtmp = prov;
-    else
-        actualtmp = sk_OSSL_PROVIDER_value(store->providers, idx);
-
-    if (idx == -1) {
-        if (sk_OSSL_PROVIDER_push(store->providers, prov) == 0)
+        if (sk_OSSL_PROVIDER_insert(store->providers, prov, idx) == 0)
             goto err;
         prov->store = store;
         if (!create_provider_children(prov)) {
@@ -692,7 +702,7 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
         *actualprov = actualtmp;
     }
 
-    if (idx >= 0) {
+    if (in_store) {
         /*
          * The provider is already in the store. Probably two threads
          * independently initialised their own provider objects with the same
@@ -1503,6 +1513,8 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
         }
         activated_fallback_count++;
     }
+
+    sk_OSSL_PROVIDER_sort(store->providers);
 
     if (activated_fallback_count > 0) {
         store->use_fallbacks = 0;
