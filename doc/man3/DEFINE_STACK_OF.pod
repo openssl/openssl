@@ -52,9 +52,9 @@ OPENSSL_sk_sort, OPENSSL_sk_unshift, OPENSSL_sk_value, OPENSSL_sk_zero
  void sk_TYPE_pop_free(STACK_OF(TYPE) *sk, sk_TYPE_freefunc freefunc);
  int sk_TYPE_insert(STACK_OF(TYPE) *sk, TYPE *ptr, int idx);
  TYPE *sk_TYPE_set(STACK_OF(TYPE) *sk, int idx, const TYPE *ptr);
- int sk_TYPE_find(STACK_OF(TYPE) *sk, TYPE *ptr);
- int sk_TYPE_find_ex(STACK_OF(TYPE) *sk, TYPE *ptr);
- int sk_TYPE_find_all(STACK_OF(TYPE) *sk, TYPE *ptr, int *pnum);
+ int sk_TYPE_find(const STACK_OF(TYPE) *sk, TYPE *ptr);
+ int sk_TYPE_find_ex(const STACK_OF(TYPE) *sk, TYPE *ptr);
+ int sk_TYPE_find_all(const STACK_OF(TYPE) *sk, TYPE *ptr, int *pnum);
  void sk_TYPE_sort(const STACK_OF(TYPE) *sk);
  int sk_TYPE_is_sorted(const STACK_OF(TYPE) *sk);
  STACK_OF(TYPE) *sk_TYPE_dup(const STACK_OF(TYPE) *sk);
