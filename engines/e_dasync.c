@@ -363,20 +363,6 @@ static void destroy_pkey(void)
     dasync_rsa = NULL;
 }
 
-# ifndef OPENSSL_NO_DYNAMIC_ENGINE
-static int bind_helper(ENGINE *e, const char *id)
-{
-    if (id && (strcmp(id, engine_dasync_id) != 0))
-        return 0;
-    if (!bind_dasync(e))
-        return 0;
-    return 1;
-}
-
-IMPLEMENT_DYNAMIC_CHECK_FN()
-    IMPLEMENT_DYNAMIC_BIND_FN(bind_helper)
-# endif
-
 static ENGINE *engine_dasync(void)
 {
     ENGINE *ret = ENGINE_new();

@@ -20,9 +20,6 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
 #include <openssl/err.h>
 /* Needed to get the other O_xxx flags. */
 #ifdef OPENSSL_SYS_VMS
@@ -65,12 +62,10 @@ static int apps_startup(void)
 #endif
 
     /* Set non-default library initialisation settings */
-    if (!OPENSSL_init_ssl(OPENSSL_INIT_ENGINE_ALL_BUILTIN
-                          | OPENSSL_INIT_LOAD_CONFIG, NULL))
+    if (!OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
 
     (void)setup_ui_method();
-    (void)setup_engine_loader();
 
     /*
      * NOTE: This is an undocumented feature required for testing only.
@@ -92,7 +87,6 @@ static void apps_shutdown(void)
 {
     app_providers_cleanup();
     OSSL_LIB_CTX_free(app_get0_libctx());
-    destroy_engine_loader();
     destroy_ui_method();
 }
 

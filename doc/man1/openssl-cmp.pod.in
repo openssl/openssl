@@ -99,9 +99,9 @@ Credentials format options:
 
 [B<-certform> I<PEM|DER>]
 [B<-crlform> I<PEM|DER>]
-[B<-keyform> I<PEM|DER|P12|ENGINE>]
+[B<-keyform> I<PEM|DER|P12>]
 [B<-otherpass> I<arg>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 Random state options:
 
@@ -926,7 +926,7 @@ Default value is DER.
 DER format is preferred because it enables more efficient storage
 of large CRLs.
 
-=item B<-keyform> I<PEM|DER|P12|ENGINE>
+=item B<-keyform> I<PEM|DER|P12>
 
 The format of the key input; unspecified by default.
 See L<openssl(1)/Format Options> for details.
@@ -943,22 +943,6 @@ If not given here, the password will be prompted for if needed.
 
 For more information about the format of I<arg> see
 L<openssl-passphrase-options(1)>.
-
-{- $OpenSSL::safe::opt_engine_item -}
-
-{- output_off() if $disabled{"deprecated-3.0"}; "" -}
-As an alternative to using this combination:
-
-    -engine {engineid} -key {keyid} -keyform ENGINE
-
-... it's also possible to just give the key ID in URI form to B<-key>,
-like this:
-
-    -key org.openssl.engine:{engineid}:{keyid}
-
-This applies to all options specifying keys: B<-key>, B<-newkey>, and
-B<-tls_key>.
-{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 
 =back
 
@@ -1528,6 +1512,8 @@ and B<-rsp_crl> options were added in OpenSSL 3.4.
 
 B<-centralkeygen>, B<-newkeyout>, B<-rsp_key> and
 B<-rsp_keypass> were added in OpenSSL 3.5.
+
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

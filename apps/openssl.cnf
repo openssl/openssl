@@ -311,7 +311,6 @@ default_tsa = tsa_config1	# the default TSA section
 # These are used by the TSA reply generation only.
 dir		= ./demoCA		# TSA root directory
 serial		= $dir/tsaserial	# The current serial number (mandatory)
-crypto_device	= builtin		# OpenSSL engine to use for signing
 signer_cert	= $dir/tsacert.pem 	# The TSA signing certificate
 					# (optional)
 certs		= $dir/cacert.pem	# Certificate chain to include in reply

@@ -80,9 +80,7 @@ struct driver_info_st {
     char *driver_name;
 };
 
-#ifdef OPENSSL_NO_DYNAMIC_ENGINE
 void engine_load_devcrypto_int(void);
-#endif
 
 static int clean_devcrypto_session(session_op_t *sess) {
     if (ioctl(cfd, CIOCFSESSION, &sess->ses) < 0) {
@@ -1329,7 +1327,6 @@ static int bind_devcrypto(ENGINE *e) {
         );
 }
 
-#ifdef OPENSSL_NO_DYNAMIC_ENGINE
 /*
  * In case this engine is built into libcrypto, then it doesn't offer any
  * ability to be dynamically loadable.
@@ -1362,22 +1359,3 @@ void engine_load_devcrypto_int(void)
      */
     ERR_pop_to_mark();
 }
-
-#else
-
-static int bind_helper(ENGINE *e, const char *id)
-{
-    if ((id && (strcmp(id, engine_devcrypto_id) != 0))
-        || !open_devcrypto())
-        return 0;
-    if (!bind_devcrypto(e)) {
-        close_devcrypto();
-        return 0;
-    }
-    return 1;
-}
-
-IMPLEMENT_DYNAMIC_CHECK_FN()
-IMPLEMENT_DYNAMIC_BIND_FN(bind_helper)
-
-#endif

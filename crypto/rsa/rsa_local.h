@@ -57,8 +57,6 @@ struct rsa_st {
     OSSL_LIB_CTX *libctx;
     int32_t version;
     const RSA_METHOD *meth;
-    /* functional reference if 'meth' is ENGINE-provided */
-    ENGINE *engine;
     BIGNUM *n;
     BIGNUM *e;
     BIGNUM *d;
