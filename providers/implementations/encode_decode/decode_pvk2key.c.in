@@ -89,7 +89,7 @@ static void pvk2key_freectx(void *vctx)
 }
 
 {- produce_param_decoder('pvk2key_set_ctx_params',
-                         (['DECODER_PARAM_PROPERTIES', 'propq', 'utf8_string'],
+                         (['OSSL_DECODER_PARAM_PROPERTIES', 'propq', 'utf8_string'],
                          )); -}
 
 static const OSSL_PARAM *pvk2key_settable_ctx_params(ossl_unused void *provctx)

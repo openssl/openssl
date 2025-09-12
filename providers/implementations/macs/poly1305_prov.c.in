@@ -138,7 +138,7 @@ static int poly1305_final(void *vmacctx, unsigned char *out, size_t *outl,
 }
 
 {- produce_param_decoder('poly1305_get_params',
-                         (['MAC_PARAM_SIZE',        'size', 'size_t'],
+                         (['OSSL_MAC_PARAM_SIZE',        'size', 'size_t'],
                          )); -}
 
 static const OSSL_PARAM *poly1305_gettable_params(void *provctx)
@@ -160,7 +160,7 @@ static int poly1305_get_params(OSSL_PARAM params[])
 }
 
 {- produce_param_decoder('poly1305_set_ctx_params',
-                         (['MAC_PARAM_KEY',     'key',  'octet_string'],
+                         (['OSSL_MAC_PARAM_KEY',     'key',  'octet_string'],
                         )); -}
 
 static const OSSL_PARAM *poly1305_settable_ctx_params(ossl_unused void *ctx,

@@ -369,15 +369,15 @@ static void *rsa_dupctx(void *vprsactx)
 }
 
 {- produce_param_decoder('rsa_get_ctx_params',
-                         (['ASYM_CIPHER_PARAM_OAEP_DIGEST',             'oaep',   'utf8_string'],
-                          ['ASYM_CIPHER_PARAM_PAD_MODE',                'pad',    'utf8_string'],
-                          ['ASYM_CIPHER_PARAM_PAD_MODE',                'pad',    'int'],
-                          ['ASYM_CIPHER_PARAM_MGF1_DIGEST',             'mgf1',   'utf8_string'],
-                          ['ASYM_CIPHER_PARAM_OAEP_LABEL',              'label',  'octet_ptr'],
-                          ['ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION',      'tlsver', 'uint'],
-                          ['ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION',  'negver', 'uint'],
-                          ['ASYM_CIPHER_PARAM_IMPLICIT_REJECTION',      'imrej',  'uint'],
-                          ['ASYM_CIPHER_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
+                         (['OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST',             'oaep',   'utf8_string'],
+                          ['OSSL_ASYM_CIPHER_PARAM_PAD_MODE',                'pad',    'utf8_string'],
+                          ['OSSL_ASYM_CIPHER_PARAM_PAD_MODE',                'pad',    'int'],
+                          ['OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST',             'mgf1',   'utf8_string'],
+                          ['OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL',              'label',  'octet_ptr'],
+                          ['OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION',      'tlsver', 'uint'],
+                          ['OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION',  'negver', 'uint'],
+                          ['OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION',      'imrej',  'uint'],
+                          ['OSSL_ASYM_CIPHER_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
                          )); -}
 
 static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
@@ -459,18 +459,18 @@ static const OSSL_PARAM *rsa_gettable_ctx_params(ossl_unused void *vprsactx,
 }
 
 {- produce_param_decoder('rsa_set_ctx_params',
-                         (['ASYM_CIPHER_PARAM_OAEP_DIGEST',                  'oaep',    'utf8_string'],
-                          ['ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS',            'oaep_pq', 'utf8_string'],
-                          ['ASYM_CIPHER_PARAM_PAD_MODE',                     'pad',     'utf8_string'],
-                          ['ASYM_CIPHER_PARAM_PAD_MODE',                     'pad',     'int'],
-                          ['ASYM_CIPHER_PARAM_MGF1_DIGEST',                  'mgf1',    'utf8_string'],
-                          ['ASYM_CIPHER_PARAM_MGF1_DIGEST_PROPS',            'mgf1_pq', 'utf8_string'],
-                          ['ASYM_CIPHER_PARAM_OAEP_LABEL',                   'label',   'octet_string'],
-                          ['ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION',           'tlsver',  'uint'],
-                          ['ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION',       'negver',  'uint'],
-                          ['ASYM_CIPHER_PARAM_IMPLICIT_REJECTION',           'imrej',   'uint'],
-                          ['ASYM_CIPHER_PARAM_FIPS_KEY_CHECK',               'ind_k',   'int', 'fips'],
-                          ['ASYM_CIPHER_PARAM_FIPS_RSA_PKCS15_PAD_DISABLED', 'ind_pad', 'int', 'fips'],
+                         (['OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST',                  'oaep',    'utf8_string'],
+                          ['OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS',            'oaep_pq', 'utf8_string'],
+                          ['OSSL_ASYM_CIPHER_PARAM_PAD_MODE',                     'pad',     'utf8_string'],
+                          ['OSSL_ASYM_CIPHER_PARAM_PAD_MODE',                     'pad',     'int'],
+                          ['OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST',                  'mgf1',    'utf8_string'],
+                          ['OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST_PROPS',            'mgf1_pq', 'utf8_string'],
+                          ['OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL',                   'label',   'octet_string'],
+                          ['OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION',           'tlsver',  'uint'],
+                          ['OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION',       'negver',  'uint'],
+                          ['OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION',           'imrej',   'uint'],
+                          ['OSSL_ASYM_CIPHER_PARAM_FIPS_KEY_CHECK',               'ind_k',   'int', 'fips'],
+                          ['OSSL_ASYM_CIPHER_PARAM_FIPS_RSA_PKCS15_PAD_DISABLED', 'ind_pad', 'int', 'fips'],
                          )); -}
 
 static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
