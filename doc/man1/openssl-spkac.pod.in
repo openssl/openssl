@@ -17,7 +17,7 @@ B<openssl> B<spkac>
 [B<-out> I<filename>]
 [B<-digest> I<digest>]
 [B<-key> I<filename>|I<uri>]
-[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>]
 [B<-passin> I<arg>]
 [B<-challenge> I<string>]
 [B<-pubkey>]
@@ -25,7 +25,7 @@ B<openssl> B<spkac>
 [B<-spksect> I<section>]
 [B<-noout>]
 [B<-verify>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -62,7 +62,7 @@ Create an SPKAC file using the private key specified by I<filename> or I<uri>.
 The B<-in>, B<-noout>, B<-spksect> and B<-verify> options are ignored if
 present.
 
-=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>
 
 The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -100,8 +100,6 @@ being created).
 =item B<-verify>
 
 Verifies the digital signature on the supplied SPKAC.
-
-{- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
 
@@ -153,9 +151,9 @@ L<openssl-ca(1)>
 
 =head1 HISTORY
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
-
 The B<-digest> option was added in OpenSSL 3.0.
+
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

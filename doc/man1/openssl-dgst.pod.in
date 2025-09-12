@@ -20,7 +20,7 @@ B<openssl> B<dgst>|I<digest>
 [B<-r>]
 [B<-out> I<filename>]
 [B<-sign> I<filename>|I<uri>]
-[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>]
 [B<-passin> I<arg>]
 [B<-verify> I<filename>]
 [B<-prverify> I<filename>]
@@ -32,9 +32,6 @@ B<openssl> B<dgst>|I<digest>
 [B<-mac> I<alg>]
 [B<-macopt> I<nm>:I<v>]
 [B<-fips-fingerprint>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- output_off() if $disabled{"deprecated-3.0"}; ""
--}[B<-engine_impl> I<id>]{-
-  output_on() if $disabled{"deprecated-3.0"}; "" -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [I<file> ...]
@@ -126,7 +123,7 @@ be set. For these algorithms the input is buffered (and not digested) before
 signing. For these algorithms, if the input is larger than 16MB an error
 will occur.
 
-=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>
 
 The format of the key to sign with; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -193,8 +190,7 @@ option.
 
 Create MAC (keyed Message Authentication Code). The most popular MAC
 algorithm is HMAC (hash-based MAC), but there are other MAC algorithms
-which are not based on hash, for instance B<gost-mac> algorithm,
-supported by the B<gost> engine. MAC keys and other options should be set
+which are not based on hash. MAC keys and other options should be set
 via B<-macopt> parameter.
 
 Cannot be used together with -hmac, -hmac-env and -hmac-stdin.
@@ -261,17 +257,6 @@ Compute HMAC using a specific key for certain OpenSSL-FIPS operations.
 
 {- $OpenSSL::safe::opt_r_item -}
 
-{- $OpenSSL::safe::opt_engine_item -}
-{- output_off() if $disabled{"deprecated-3.0"}; "" -}
-The engine is not used for digests unless the B<-engine_impl> option is
-used or it is configured to do so, see L<config(5)/Engine Configuration Module>.
-
-=item B<-engine_impl> I<id>
-
-When used with the B<-engine> option, it specifies to also use
-engine I<id> for digest operations.
-
-{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 {- $OpenSSL::safe::opt_provider_item -}
 
 =item I<file> ...
@@ -341,7 +326,7 @@ L<openssl-mac(1)>
 The default digest was changed from MD5 to SHA256 in OpenSSL 1.1.0.
 The FIPS-related options were removed in OpenSSL 1.1.0.
 
-The B<-engine> and B<-engine_impl> options were deprecated in OpenSSL 3.0.
+The B<-engine> and B<-engine_impl> options were removed in OpenSSL 4.0.
 
 The B<-hmac-env> and B<-hmac-stdin> options were added in OpenSSL 4.0.
 
