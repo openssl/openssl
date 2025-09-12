@@ -314,7 +314,9 @@ static int cshake_absorb_bytepad_strings(CSHAKE_CTX *ctx)
         slen = 2;
     }
     /* Calculate the number of padding zeros to fill up the block */
-    zlen = w - ((sizeof(bytepad_header) + nlen + slen) % w);
+    zlen = ((sizeof(bytepad_header) + nlen + slen) % w);
+    if (zlen != 0)
+        zlen = w - zlen;
 
     /* left encoded(w) || encodestring(n) || encodestring(s) || zero_padding */
     return EVP_DigestUpdate(ctx->mdctx, bytepad_header, sizeof(bytepad_header))
