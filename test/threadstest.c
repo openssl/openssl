@@ -1385,6 +1385,9 @@ int setup_tests(void)
     OPTION_CHOICE o;
     char *datadir;
 
+#ifdef __unix__
+    alarm(9000);
+#endif
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
         case OPT_FIPS:
