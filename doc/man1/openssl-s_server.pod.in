@@ -28,13 +28,13 @@ B<openssl> B<s_server>
 [B<-serverinfo> I<val>]
 [B<-key> I<filename>|I<uri>]
 [B<-key2> I<filename>|I<uri>]
-[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>]
 [B<-pass> I<val>]
 [B<-dcert> I<infile>]
 [B<-dcertform> B<DER>|B<PEM>|B<P12>]
 [B<-dcert_chain> I<infile>]
 [B<-dkey> I<filename>|I<uri>]
-[B<-dkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-dkeyform> B<DER>|B<PEM>|B<P12>]
 [B<-dpass> I<val>]
 [B<-nbio_test>]
 [B<-crlf>]
@@ -132,7 +132,7 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [B<-enable_server_rpk>]
 [B<-enable_client_rpk>]
 
@@ -243,7 +243,7 @@ be used.
 
 The private Key file to use for servername if not given via B<-cert2>.
 
-=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>
 
 The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -277,7 +277,7 @@ The input can be in PEM, DER, or PKCS#12 format.
 The format of the additional certificate file; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
-=item B<-dkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-dkeyform> B<DER>|B<PEM>|B<P12>
 
 The format of the additional private key; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -794,8 +794,6 @@ Pre-compresses certificates (RFC8879) that will be sent during the handshake.
 
 {- $OpenSSL::safe::opt_r_item -}
 
-{- $OpenSSL::safe::opt_engine_item -}
-
 {- $OpenSSL::safe::opt_provider_item -}
 
 {- $OpenSSL::safe::opt_v_item -}
@@ -925,7 +923,7 @@ The -no_alt_chains option was added in OpenSSL 1.1.0.
 The
 -allow-no-dhe-kex and -prioritize_chacha options were added in OpenSSL 1.1.1.
 
-The B<-srpvfile>, B<-srpuserseed>, and B<-engine>
+The B<-srpvfile> and B<-srpuserseed>
 option were deprecated in OpenSSL 3.0.
 
 The
@@ -937,6 +935,8 @@ and B<-tfo>
 options were added in OpenSSL 3.2.
 
 The B<-status_all> option was added in OpenSSL 3.6.
+
+The B<engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
