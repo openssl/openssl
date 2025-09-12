@@ -221,9 +221,12 @@ int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
                          const char *ciphername,
                          const char *mdname,
                          const char *engine,
-                         const char *properties)
+                         const char *properties,
+                         const OSSL_PARAM param[])
 {
-    OSSL_PARAM mac_params[5], *mp = mac_params;
+    OSSL_PARAM mac_params[5], *mp = mac_params, *mergep;
+    int free_merge = 0;
+    int ret;
 
     if (mdname != NULL)
         *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
@@ -243,8 +246,29 @@ int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
 
     *mp = OSSL_PARAM_construct_end();
 
-    return EVP_MAC_CTX_set_params(macctx, mac_params);
+    /*
+     * OSSL_PARAM_merge returns NULL and sets an error if either
+     * list passed to it is NULL, and we aren't guaranteed that the
+     * passed in value of param is not NULL here.
+     * Given that we just want the union of the two lists, even if one
+     * is empty, we have to check for that case, and if param is NULL,
+     * just use the mac_params list.  In turn we only free the merge
+     * result if we actually did the merge
+     */
+    if (param == NULL) {
+        mergep = mac_params;
+    } else {
+        free_merge = 1;
+        mergep = OSSL_PARAM_merge(mac_params, param);
+        if (mergep == NULL)
+            return 0;
+    }
 
+    ret = EVP_MAC_CTX_set_params(macctx, mergep);
+
+    if (free_merge == 1)
+        OSSL_PARAM_free(mergep);
+    return ret;
 }
 
 int ossl_prov_macctx_load(EVP_MAC_CTX **macctx,
@@ -291,7 +315,7 @@ int ossl_prov_macctx_load(EVP_MAC_CTX **macctx,
     if (pengine != NULL && !OSSL_PARAM_get_utf8_string_ptr(pengine, &engine))
         return 0;
 
-    if (ossl_prov_set_macctx(*macctx, ciphername, mdname, engine, properties))
+    if (ossl_prov_set_macctx(*macctx, ciphername, mdname, engine, properties, NULL))
         return 1;
 
     EVP_MAC_CTX_free(*macctx);
