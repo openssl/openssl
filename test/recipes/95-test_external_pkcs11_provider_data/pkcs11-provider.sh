@@ -63,6 +63,8 @@ echo "------------------------------------------------------------------"
 echo "Running tests"
 echo "------------------------------------------------------------------"
 
+# We run test on Fedora with previous version of Kryoptic, so disable ML-DSA test
+export SUPPORT_ML_DSA=0
 # For maintenance reasons and simplicity we only run test with kryoptic token
 meson test -C $PKCS11_PROVIDER_BUILDDIR --suite=kryoptic
 
