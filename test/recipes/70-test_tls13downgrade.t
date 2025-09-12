@@ -85,7 +85,7 @@ sub run_tests
     my $testtype = DOWNGRADE_TO_TLS_1_2;
     skip "Unable to start up Proxy for tests", $testcount if !$proxy->start() &&
                                                              !TLSProxy::Message->fail();
-    ok(is_illegal_parameter_client_alert(), "Downgrade TLSv1.3 to TLSv1.2");
+    ok(is_illegal_parameter_client_alert(), "Downgrade (D)TLSv1.3 to (D)TLSv1.2");
 
     #Test 2: Downgrade from (D)TLSv1.3 to (D)TLSv1.2 (server sends TLSv1.1/DTLSv1 signal)
     $proxy->clear();
@@ -208,7 +208,7 @@ sub downgrade_filter
     }
 
     # ClientHello
-    if (($proxy->flight == 0 && !isdtls) || $second_client_hello) {
+    if (($proxy->flight == 0 && !$proxy->isdtls) || $second_client_hello) {
         my $ext;
         my $version12hi = $proxy->isdtls == 1 ? 0xFE : 0x03;
         my $version12lo = $proxy->isdtls == 1 ? 0xFD : 0x03;
