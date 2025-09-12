@@ -28,7 +28,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 {
     EVP_CIPHER_CTX *ciph_ctx;
     EVP_PKEY *mac_key;
-    OSSL_PARAM params[3], *p = params;
+    OSSL_PARAM params[2], *p = params;
     int enc = (rl->direction == OSSL_RECORD_DIRECTION_WRITE) ? 1 : 0;
 
     if (level != OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
@@ -74,9 +74,6 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
             mac_key = EVP_PKEY_new_mac_key(mactype, NULL, mackey,
                                            (int)mackeylen);
         }
-
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                                (char *)EVP_MD_get0_name(md), 0);
 
         /*
          * We want the underlying mac to use our passed property query when allocating
