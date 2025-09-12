@@ -28,6 +28,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 {
     EVP_CIPHER_CTX *ciph_ctx;
     EVP_PKEY *mac_key;
+    OSSL_PARAM params[2], *p = params;
     int enc = (rl->direction == OSSL_RECORD_DIRECTION_WRITE) ? 1 : 0;
 
     if (level != OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
@@ -73,10 +74,21 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
             mac_key = EVP_PKEY_new_mac_key(mactype, NULL, mackey,
                                            (int)mackeylen);
         }
+
+        /*
+         * We want the underlying mac to use our passed property query when allocating
+         * its internal digest as well
+         */
+        if (rl->propq != NULL)
+            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
+                                                    (char *)rl->propq, 0);
+
+        *p = OSSL_PARAM_construct_end();
+
         if (mac_key == NULL
             || EVP_DigestSignInit_ex(rl->md_ctx, NULL, EVP_MD_get0_name(md),
                                      rl->libctx, rl->propq, mac_key,
-                                     NULL) <= 0) {
+                                     params) <= 0) {
             EVP_PKEY_free(mac_key);
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;

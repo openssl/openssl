@@ -19,6 +19,7 @@
 #include "../ssl_local.h"
 #include "statem_local.h"
 #include <openssl/ocsp.h>
+#include <openssl/core_names.h>
 
 static int final_renegotiate(SSL_CONNECTION *s, unsigned int context, int sent);
 static int init_server_name(SSL_CONNECTION *s, unsigned int context);
@@ -1536,6 +1537,7 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     int ret = -1;
     int usepskfored = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     /* Ensure cast to size_t is safe */
     if (!ossl_assert(hashsizei > 0)) {
@@ -1666,9 +1668,12 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     if (!sign)
         binderout = tmpbinder;
 
+    if (sctx->propq != NULL)
+        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
+                                                     (char *)sctx->propq, 0);
     bindersize = hashsize;
     if (EVP_DigestSignInit_ex(mctx, NULL, EVP_MD_get0_name(md), sctx->libctx,
-                              sctx->propq, mackey, NULL) <= 0
+                              sctx->propq, mackey, params) <= 0
             || EVP_DigestSignUpdate(mctx, hash, hashsize) <= 0
             || EVP_DigestSignFinal(mctx, binderout, &bindersize) <= 0
             || bindersize != hashsize) {
