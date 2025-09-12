@@ -652,4 +652,6 @@ X509 *load_cert_der(const unsigned char *bytes, int len);
 STACK_OF(X509) *load_certs_pem(const char *file);
 X509_REQ *load_csr_der(const char *file, OSSL_LIB_CTX *libctx);
 time_t test_asn1_string_to_time_t(const char *asn1_string);
+
+int compare_with_reference_file(BIO *membio, const char *reffile);
 #endif                          /* OSSL_TESTUTIL_H */
