@@ -171,7 +171,7 @@ static int gmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 }
 
 {- produce_param_decoder('gmac_get_params',
-                         (['MAC_PARAM_SIZE',    'size', 'size_t'],
+                         (['OSSL_MAC_PARAM_SIZE',    'size', 'size_t'],
                         )); -}
 
 static const OSSL_PARAM *gmac_gettable_params(void *provctx)
@@ -193,11 +193,11 @@ static int gmac_get_params(OSSL_PARAM params[])
 }
 
 {- produce_param_decoder('gmac_set_ctx_params',
-                         (['MAC_PARAM_CIPHER',     'cipher', 'utf8_string'],
-                          ['ALG_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
-                          ['MAC_PARAM_PROPERTIES', 'propq',  'utf8_string'],
-                          ['MAC_PARAM_KEY',        'key',    'octet_string'],
-                          ['MAC_PARAM_IV',         'iv',     'octet_string'],
+                         (['OSSL_MAC_PARAM_CIPHER',     'cipher', 'utf8_string'],
+                          ['OSSL_ALG_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
+                          ['OSSL_MAC_PARAM_PROPERTIES', 'propq',  'utf8_string'],
+                          ['OSSL_MAC_PARAM_KEY',        'key',    'octet_string'],
+                          ['OSSL_MAC_PARAM_IV',         'iv',     'octet_string'],
                          )); -}
 
 static const OSSL_PARAM *gmac_settable_ctx_params(ossl_unused void *ctx,

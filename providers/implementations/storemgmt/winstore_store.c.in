@@ -109,8 +109,8 @@ static void *winstore_attach(void *provctx, OSSL_CORE_BIO *cin)
 }
 
 {- produce_param_decoder('winstore_set_ctx_params',
-                         (['STORE_PARAM_SUBJECT',    'sub',   'octet_string'],
-                          ['STORE_PARAM_PROPERTIES', 'propq', 'utf8_string'],
+                         (['OSSL_STORE_PARAM_SUBJECT',    'sub',   'octet_string'],
+                          ['OSSL_STORE_PARAM_PROPERTIES', 'propq', 'utf8_string'],
                          )); -}
 
 static const OSSL_PARAM *winstore_settable_ctx_params(void *loaderctx, const OSSL_PARAM params[])

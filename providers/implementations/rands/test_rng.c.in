@@ -186,11 +186,11 @@ static size_t test_rng_nonce(void *vtest, unsigned char *out,
 }
 
 {- produce_param_decoder('test_rng_get_ctx_params',
-                         (['RAND_PARAM_STATE',                   'state',  'int'],
-                          ['RAND_PARAM_STRENGTH',                'str',    'uint'],
-                          ['RAND_PARAM_MAX_REQUEST',             'maxreq', 'size_t'],
-                          ['RAND_PARAM_GENERATE',                'gen',    'uint'],
-                          ['RAND_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
+                         (['OSSL_RAND_PARAM_STATE',                   'state',  'int'],
+                          ['OSSL_RAND_PARAM_STRENGTH',                'str',    'uint'],
+                          ['OSSL_RAND_PARAM_MAX_REQUEST',             'maxreq', 'size_t'],
+                          ['OSSL_RAND_PARAM_GENERATE',                'gen',    'uint'],
+                          ['OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
                          )); -}
 
 static int test_rng_get_ctx_params(void *vtest, OSSL_PARAM params[])
@@ -228,11 +228,11 @@ static const OSSL_PARAM *test_rng_gettable_ctx_params(ossl_unused void *vtest,
 }
 
 {- produce_param_decoder('test_rng_set_ctx_params',
-                         (['RAND_PARAM_TEST_ENTROPY',   'ent',    'octet_string'],
-                          ['RAND_PARAM_TEST_NONCE',     'nonce',  'octet_string'],
-                          ['RAND_PARAM_STRENGTH',       'str',    'uint'],
-                          ['RAND_PARAM_MAX_REQUEST',    'maxreq', 'size_t'],
-                          ['RAND_PARAM_GENERATE',       'gen',    'uint'],
+                         (['OSSL_RAND_PARAM_TEST_ENTROPY',   'ent',    'octet_string'],
+                          ['OSSL_RAND_PARAM_TEST_NONCE',     'nonce',  'octet_string'],
+                          ['OSSL_RAND_PARAM_STRENGTH',       'str',    'uint'],
+                          ['OSSL_RAND_PARAM_MAX_REQUEST',    'maxreq', 'size_t'],
+                          ['OSSL_RAND_PARAM_GENERATE',       'gen',    'uint'],
                          )); -}
 
 static int test_rng_set_ctx_params(void *vtest, const OSSL_PARAM params[])

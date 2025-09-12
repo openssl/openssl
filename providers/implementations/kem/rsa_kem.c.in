@@ -177,7 +177,7 @@ static int rsakem_decapsulate_init(void *vprsactx, void *vrsa,
 }
 
 {- produce_param_decoder('rsakem_get_ctx_params',
-                         (['KEM_PARAM_FIPS_APPROVED_INDICATOR', 'ind', 'int', 'fips'],
+                         (['OSSL_KEM_PARAM_FIPS_APPROVED_INDICATOR', 'ind', 'int', 'fips'],
                          )); -}
 
 static int rsakem_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
@@ -200,8 +200,8 @@ static const OSSL_PARAM *rsakem_gettable_ctx_params(ossl_unused void *vprsactx,
 }
 
 {- produce_param_decoder('rsakem_set_ctx_params',
-                         (['KEM_PARAM_OPERATION',       'op',    'utf8_string'],
-                          ['KEM_PARAM_FIPS_KEY_CHECK',  'ind_k', 'int', 'fips'],
+                         (['OSSL_KEM_PARAM_OPERATION',       'op',    'utf8_string'],
+                          ['OSSL_KEM_PARAM_FIPS_KEY_CHECK',  'ind_k', 'int', 'fips'],
                          )); -}
 
 static int rsakem_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
