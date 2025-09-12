@@ -13,7 +13,7 @@ openssl-rsa - RSA key processing command
 
 B<openssl> B<rsa>
 [B<-help>]
-[B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-inform> B<DER>|B<PEM>|B<P12>]
 [B<-outform> B<DER>|B<PEM>]
 [B<-in> I<filename>|I<uri>]
 [B<-passin> I<arg>]
@@ -43,7 +43,7 @@ B<openssl> B<rsa>
 [B<-pvk-strong>]
 [B<-pvk-weak>]
 [B<-pvk-none>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -58,7 +58,7 @@ various forms and their components printed out.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-inform> B<DER>|B<PEM>|B<P12>
 
 The key input format; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -147,8 +147,6 @@ Enable 'Weak' PVK encoding level.
 
 Don't enforce PVK encoding.
 
-{- $OpenSSL::safe::opt_engine_item -}
-
 {- $OpenSSL::safe::opt_provider_item -}
 
 =back
@@ -203,7 +201,7 @@ L<openssl-gendsa(1)>
 
 =head1 HISTORY
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

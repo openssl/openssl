@@ -43,7 +43,7 @@ B<-reply>
 [B<-out> I<response.tsr>]
 [B<-token_out>]
 [B<-text>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 B<openssl> B<ts>
 B<-verify>
@@ -294,8 +294,6 @@ response (TimeStampResp). (Optional)
 
 If this option is specified the output is human-readable text format
 instead of DER. (Optional)
-
-{- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
 
@@ -641,7 +639,7 @@ seeding mechanism. The new seeding mechanism makes it unnecessary to
 define a RANDFILE for saving and restoring randomness. This option is
 retained mainly for compatibility reasons.
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 SEE ALSO
 
