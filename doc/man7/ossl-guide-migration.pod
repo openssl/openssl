@@ -157,10 +157,6 @@ will still work. However, their applicability will be limited.
 
 New algorithms provided via engines will still work.
 
-Engine-backed keys can be loaded via custom B<OSSL_STORE> implementation.
-In this case the B<EVP_PKEY> objects created via L<ENGINE_load_private_key(3)>
-will be considered legacy and will continue to work.
-
 To ensure the future compatibility, the engines should be turned to providers.
 To prefer the provider-based hardware offload, you can specify the default
 properties to prefer your provider.

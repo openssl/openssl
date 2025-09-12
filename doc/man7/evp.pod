@@ -101,8 +101,7 @@ L<EVP_PKEY_sign(3)>,
 L<EVP_PKEY_verify(3)>,
 L<EVP_PKEY_verify_recover(3)>,
 L<EVP_PKEY_derive(3)>,
-L<EVP_BytesToKey(3)>,
-L<ENGINE_by_id(3)>
+L<EVP_BytesToKey(3)>
 
 =head1 COPYRIGHT
 
