@@ -494,6 +494,13 @@ static int ossl_test_aes128cbc_update(void *vprovctx, char *out, size_t *outl,
          * padval, which is the number of padding bytes - 1;
          */
         padnum = out[inl - 1];
+
+        /*
+         * Make sure the soutl doesn't go negative
+         */
+        if (soutl <= padnum + 16)
+            goto err;
+
         soutl -= padnum + 1;
         /*
          * shorten by explicit iv length
