@@ -429,6 +429,15 @@ Output = 2bac5716803a9cda8f9e84365ab0a681327b5ba34fdedfb1c12e6e807f45284b
 Ctrl = n:
 Ctrl = s:
 
+# A test from https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/cSHAKE-128-1.0/internalProjection.json
+# where the encoding of the strings is exactly a multiple of the block size w. i.e. no zero padding is added.
+# The output length was modified to be on a byte boundary.
+FIPSversion = >=4.0.0
+Digest = CSHAKE-128
+Input = EA18
+Ctrl = s:fmkctMwhBB[<Kta&RJ5r5ToA9N9~Y-,kin8y]xB}kviaDk_kPI^{o#N1|JIF5x.67pR]]fGX)6'=j.{MnLN1M0zf@'|3OzirhSJS9#.i#&rXz1FnM{WgI|g'tk=Ui5*-L4T6cH4k?d.H<Bk/`.dRC#HklD_LeV~mz
+Output = 2EEF41BD1680C16F36AE2B9C004805F7426AC9D4BB6BF7CFC78606A6E6F6F518EB6C0BE768
+
 Title = Case insensitive digest tests
 
 Digest = Sha3-256
