@@ -198,14 +198,14 @@ static const struct int_data {
       .skip_libc_ret_check = true, .exp_ret = -1 },
     { { .i = 0x1337 }, AT_INT, "|%2147483639.x|",
       "|                                                              ",
-      .skip_libc_ret_check = true, .exp_ret = -1 },
+      .skip_libc_check = true, .exp_ret = -1 },
 #if !defined(OPENSSL_SYS_WINDOWS)
     /*
      * those test crash on x86 windows built by VS-2019
      */
     { { .i = 0x1337 }, AT_INT, "|%.2147483639x|",
       "|00000000000000000000000000000000000000000000000000000000000000",
-      .skip_libc_ret_check = true, .exp_ret = -1 },
+      .skip_libc_check = true, .exp_ret = -1 },
     /*
      * We treat the following three format strings as errneous and bail out
      * mid-string.
