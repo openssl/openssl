@@ -11,7 +11,7 @@ Support for computing SHAKE, CSHAKE or KECCAK-KMAC digests through the
 B<EVP_MD> API.
 
 CSHAKE is an Extendable Output Function (XOF), that allows custom strings
-"n" and "s". If these strings are both empty then it is identical to CSHAKE,
+"n" and "s". If these strings are both empty then it is identical to SHAKE,
 otherwise it uses KECCAK.
 
 KECCAK-KMAC is an Extendable Output Function (XOF), with a definition
