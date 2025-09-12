@@ -286,7 +286,7 @@ int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
             return 0;
     }
 
-    ret = EVP_MAC_CTX_set_params(macctx, mac_params);
+    ret = EVP_MAC_CTX_set_params(macctx, mergep);
 
     if (free_merge == 1)
         OSSL_PARAM_free(mergep);
