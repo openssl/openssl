@@ -21,7 +21,7 @@ B<openssl> B<pkcs12>
 [B<-nocerts>]
 [B<-noout>]
 [B<-legacy>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 
 PKCS#12 input (parsing) options:
@@ -152,8 +152,6 @@ in the build. The default algorithm for private key encryption is 3DES_CBC.
 If the legacy option is not specified, then the legacy provider is not loaded
 and the default encryption algorithm for both certificates and private keys is
 AES_256_CBC with PBKDF2 for key derivation.
-
-{- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
 
@@ -485,9 +483,10 @@ L<ossl_store-file(7)>
 
 =head1 HISTORY
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
 The B<-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
 The B<-macsaltlen> option default changed from 8 to 16 bytes in OpenSSL 3.6.
+
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

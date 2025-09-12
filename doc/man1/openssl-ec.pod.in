@@ -13,7 +13,7 @@ openssl-ec - EC key processing
 
 B<openssl> B<ec>
 [B<-help>]
-[B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-inform> B<DER>|B<PEM>|B<P12>]
 [B<-outform> B<DER>|B<PEM>]
 [B<-in> I<filename>|I<uri>]
 [B<-passin> I<arg>]
@@ -31,7 +31,7 @@ B<openssl> B<ec>
 [B<-param_enc> I<arg>]
 [B<-no_public>]
 [B<-check>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -49,7 +49,7 @@ PKCS#8 private key format use the L<openssl-pkcs8(1)> command.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-inform> B<DER>|B<PEM>|B<P12>
 
 The key input format; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -144,8 +144,6 @@ This option omits the public key components from the private key output.
 
 This option checks the consistency of an EC private or public key.
 
-{- $OpenSSL::safe::opt_engine_item -}
-
 {- $OpenSSL::safe::opt_provider_item -}
 
 =back
@@ -192,10 +190,10 @@ L<openssl-rsa(1)>
 
 =head1 HISTORY
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
-
 The B<-conv_form> and B<-no_public> options are no longer supported
 with keys loaded from an engine in OpenSSL 3.0.
+
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
