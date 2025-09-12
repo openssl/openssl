@@ -216,12 +216,12 @@
             "Groups to advertise (colon-separated list)" }, \
         {"named_curve", OPT_S_NAMEDCURVE, 's', \
             "Elliptic curve used for ECDHE (server-side only)" }, \
-        {"cipher", OPT_S_CIPHER, 's', "Specify TLSv1.2 and below cipher list to be used"}, \
-        {"ciphersuites", OPT_S_CIPHERSUITES, 's', "Specify TLSv1.3 ciphersuites to be used"}, \
+        {"cipher", OPT_S_CIPHER, 's', "Specify (D)TLSv1.2 and below cipher list to be used"}, \
+        {"ciphersuites", OPT_S_CIPHERSUITES, 's', "Specify (D)TLSv1.3 ciphersuites to be used"}, \
         {"min_protocol", OPT_S_MINPROTO, 's', "Specify the minimum protocol version to be used"}, \
         {"max_protocol", OPT_S_MAXPROTO, 's', "Specify the maximum protocol version to be used"}, \
         {"record_padding", OPT_S_RECORD_PADDING, 's', \
-            "Block size to pad TLS 1.3 records to."}, \
+            "Block size to pad (D)TLS 1.3 records to."}, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
             "Perform all sorts of protocol violations for testing purposes"}, \
         {"no_middlebox", OPT_S_NO_MIDDLEBOX, '-', \

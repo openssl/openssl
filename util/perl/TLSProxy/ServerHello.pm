@@ -25,7 +25,7 @@ sub new
     my ($isdtls,
         $server,
         $msgseq,
-        $msgfrag,
+        $msgfraglen,
         $msgfragoffs,
         $data,
         $records,
@@ -37,7 +37,7 @@ sub new
         $server,
         TLSProxy::Message::MT_SERVER_HELLO,
         $msgseq,
-        $msgfrag,
+        $msgfraglen,
         $msgfragoffs,
         $data,
         $records,
@@ -111,7 +111,8 @@ sub parse
 
     if ($random eq $hrrrandom) {
         TLSProxy::Proxy->is_tls13(1);
-    } elsif ($neg_version == TLSProxy::Record::VERS_TLS_1_3()) {
+    } elsif ($neg_version == TLSProxy::Record::VERS_TLS_1_3()
+             || $neg_version == TLSProxy::Record::VERS_DTLS_1_3()) {
         TLSProxy::Proxy->is_tls13(1);
 
         TLSProxy::Record->server_encrypting(1);

@@ -87,7 +87,7 @@ static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
         return -1;
 
     rdata = OPENSSL_malloc(sizeof(*rdata));
-    item = pitem_new(rec->seq_num, rdata);
+    item = pitem_new_u64(rec->seq_num, rdata);
     if (rdata == NULL || item == NULL) {
         OPENSSL_free(rdata);
         pitem_free(item);
@@ -205,9 +205,12 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
     TLS_RECORD *rr;
     void (*cb) (const SSL *ssl, int type2, int val) = NULL;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    int is_dtls13;
 
     if (sc == NULL)
         return -1;
+
+    is_dtls13 = SSL_CONNECTION_IS_DTLS13(sc);
 
     if ((type && (type != SSL3_RT_APPLICATION_DATA) &&
          (type != SSL3_RT_HANDSHAKE)) ||
@@ -255,7 +258,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
                                                       &rr->rechandle,
                                                       &rr->version, &rr->type,
                                                       &rr->data, &rr->length,
-                                                      &rr->epoch, rr->seq_num));
+                                                      &rr->epoch, &rr->seq_num));
             if (ret <= 0) {
                 ret = dtls1_read_failed(sc, ret);
                 /*
@@ -311,13 +314,20 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
         return 0;
     }
 
+    if (rr->type == SSL3_RT_HANDSHAKE && SSL_CONNECTION_IS_DTLS13(sc)) {
+        sc->s3.tmp.record_epoch = rr->epoch;
+        sc->s3.tmp.record_seq_num = rr->seq_num;
+    }
+
     if (type == rr->type
-        || (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC
-            && type == SSL3_RT_HANDSHAKE && recvd_type != NULL)) {
+            || (type == SSL3_RT_HANDSHAKE
+                && ((!is_dtls13 && recvd_type != NULL && rr->type == SSL3_RT_CHANGE_CIPHER_SPEC)
+                    || (is_dtls13 && rr->type == SSL3_RT_ACK)))) {
         /*
          * SSL3_RT_APPLICATION_DATA or
          * SSL3_RT_HANDSHAKE or
-         * SSL3_RT_CHANGE_CIPHER_SPEC
+         * SSL3_RT_CHANGE_CIPHER_SPEC or
+         * SSL3_RT_ACK
          */
         /*
          * make sure that we are not getting application data when we are
@@ -371,6 +381,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
         }
 #endif
         *readbytes = n;
+
         return 1;
     }
 
@@ -406,7 +417,8 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
             cb(s, SSL_CB_READ_ALERT, j);
         }
 
-        if (alert_level == SSL3_AL_WARNING) {
+        if ((!is_dtls13 && alert_level == SSL3_AL_WARNING)
+                || (is_dtls13 && alert_descr == SSL_AD_USER_CANCELLED)) {
             sc->s3.warn_alert = alert_descr;
             if (!ssl_release_record(sc, rr, 0))
                 return -1;
@@ -417,38 +429,34 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
                          SSL_R_TOO_MANY_WARN_ALERTS);
                 return -1;
             }
+        }
 
-            if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
+        /*
+         * Apart from close_notify the only other warning alert in DTLSv1.3
+         * is user_cancelled - which we just ignore.
+         */
+        if (is_dtls13 && alert_descr == SSL_AD_USER_CANCELLED) {
+            goto start;
+        } else if (alert_descr == SSL_AD_CLOSE_NOTIFY
+                   && (is_dtls13 || alert_level == SSL3_AL_WARNING)) {
 #ifndef OPENSSL_NO_SCTP
-                /*
-                 * With SCTP and streams the socket may deliver app data
-                 * after a close_notify alert. We have to check this first so
-                 * that nothing gets discarded.
-                 */
-                if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
-                    BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s)) > 0) {
-                    sc->d1->shutdown_received = 1;
-                    sc->rwstate = SSL_READING;
-                    BIO_clear_retry_flags(SSL_get_rbio(s));
-                    BIO_set_retry_read(SSL_get_rbio(s));
-                    return -1;
-                }
-#endif
-                sc->shutdown |= SSL_RECEIVED_SHUTDOWN;
-                return 0;
-            } else if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
-                /*
-                 * This is a warning but we receive it if we requested
-                 * renegotiation and the peer denied it. Terminate with a fatal
-                 * alert because if the application tried to renegotiate it
-                 * presumably had a good reason and expects it to succeed. In
-                 * the future we might have a renegotiation where we don't care
-                 * if the peer refused it where we carry on.
-                 */
-                SSLfatal(sc, SSL_AD_HANDSHAKE_FAILURE, SSL_R_NO_RENEGOTIATION);
+            /*
+            * With SCTP and streams the socket may deliver app data
+            * after a close_notify alert. We have to check this first so
+            * that nothing gets discarded.
+            */
+            if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
+            BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s)) > 0) {
+                sc->d1->shutdown_received = 1;
+                sc->rwstate = SSL_READING;
+                BIO_clear_retry_flags(SSL_get_rbio(s));
+                BIO_set_retry_read(SSL_get_rbio(s));
                 return -1;
             }
-        } else if (alert_level == SSL3_AL_FATAL) {
+#endif
+            sc->shutdown |= SSL_RECEIVED_SHUTDOWN;
+            return 0;
+        } else if (alert_level == SSL3_AL_FATAL || is_dtls13) {
             sc->rwstate = SSL_NOTHING;
             sc->s3.fatal_alert = alert_descr;
             SSLfatal_data(sc, SSL_AD_NO_ALERT,
@@ -459,12 +467,24 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
                 return -1;
             SSL_CTX_remove_session(sc->session_ctx, sc->session);
             return 0;
-        } else {
-            SSLfatal(sc, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_ALERT_TYPE);
+        } else if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
+            /*
+             * This is a warning but we receive it if we requested
+             * renegotiation and the peer denied it. Terminate with a fatal
+             * alert because if the application tried to renegotiate it
+             * presumably had a good reason and expects it to succeed. In
+             * the future we might have a renegotiation where we don't care
+             * if the peer refused it where we carry on.
+             */
+            SSLfatal(sc, SSL_AD_HANDSHAKE_FAILURE, SSL_R_NO_RENEGOTIATION);
             return -1;
+        } else if (alert_level == SSL3_AL_WARNING) {
+            /* We ignore any other warning alert in (D)TLSv1.2 and below */
+            goto start;
         }
 
-        goto start;
+        SSLfatal(sc, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_ALERT_TYPE);
+        return -1;
     }
 
     if (sc->shutdown & SSL_SENT_SHUTDOWN) { /* but we have not received a
@@ -488,33 +508,33 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
     /*
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
-    if (rr->type == SSL3_RT_HANDSHAKE && !ossl_statem_get_in_handshake(sc)) {
-        struct hm_header_st msg_hdr;
+    if (!ossl_statem_get_in_handshake(sc) && rr->type == SSL3_RT_HANDSHAKE) {
+        unsigned char msg_type;
 
         /*
          * This may just be a stale retransmit. Also sanity check that we have
          * at least enough record bytes for a message header
          */
-        if (rr->epoch != sc->rlayer.d->r_epoch
+        if (rr->epoch != dtls1_get_epoch(sc, SSL3_CC_READ)
                 || rr->length < DTLS1_HM_HEADER_LENGTH) {
             if (!ssl_release_record(sc, rr, 0))
                 return -1;
             goto start;
         }
 
-        dtls1_get_message_header(rr->data, &msg_hdr);
+        msg_type = *rr->data;
 
         /*
          * If we are server, we may have a repeated FINISHED of the client
          * here, then retransmit our CCS and FINISHED.
          */
-        if (msg_hdr.type == SSL3_MT_FINISHED) {
+        if (msg_type == SSL3_MT_FINISHED) {
             if (dtls1_check_timeout_num(sc) < 0) {
                 /* SSLfatal) already called */
                 return -1;
             }
 
-            if (dtls1_retransmit_buffered_messages(sc) <= 0) {
+            if (dtls1_retransmit_sent_messages(sc) <= 0) {
                 /* Fail if we encountered a fatal error */
                 if (ossl_statem_in_error(sc))
                     return -1;
@@ -535,7 +555,10 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
             }
             goto start;
         }
+    }
 
+    if (!ossl_statem_get_in_handshake(sc)
+        && (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ACK)) {
         /*
          * To get here we must be trying to read app data but found handshake
          * data. But if we're trying to read app data, and we're not in init
@@ -591,6 +614,34 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
          */
         SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, ERR_R_INTERNAL_ERROR);
         return -1;
+
+    case SSL3_RT_ACK:
+        switch (sc->negotiated_version) {
+        case DTLS1_3_VERSION:
+            /* ACK should have been handled if DTLSv1.3 has been negotiated. */
+            SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, ERR_R_INTERNAL_ERROR);
+            return -1;
+
+        case DTLS_ANY_VERSION:
+            /*
+             * This must be an ACK from a DTLSv1.3 server for a partial
+             * ClientHello. We always send the full message again if the
+             * ClientHello is not responded to with a ServerHello before the
+             * timer runs out. Drop the record.
+             */
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
+            goto start;
+
+        default:
+            /*
+             * If we receive an ACK record when we have negotiated a lower version
+             * than DTLSv1.3 then we respond with an unexpected record fatal alert.
+             */
+            SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_RECORD);
+            return -1;
+        }
+
     case SSL3_RT_APPLICATION_DATA:
         /*
          * At this point, we were expecting handshake data, but have
@@ -655,13 +706,15 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
     }
 
     tmpl.type = type;
+    if (sc->version == DTLS1_3_VERSION)
+        tmpl.version = DTLS1_2_VERSION;
     /*
      * Special case: for hello verify request, client version 1.0 and we
      * haven't decided which version to use yet send back using version 1.0
      * header: otherwise some clients will ignore it.
      */
-    if (s->method->version == DTLS_ANY_VERSION
-            && sc->max_proto_version != DTLS1_BAD_VER)
+    else if (s->method->version == DTLS_ANY_VERSION
+             && sc->max_proto_version != DTLS1_BAD_VER)
         tmpl.version = DTLS1_VERSION;
     else
         tmpl.version = sc->version;
@@ -673,6 +726,30 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
 
     if (ret > 0)
         *written = len;
+
+    /*
+     * Add record number to the buffered sent message
+     */
+    if (type == SSL3_RT_HANDSHAKE && ret > 0 && SSL_CONNECTION_IS_DTLS13(sc)) {
+        pitem *item;
+        unsigned char prio[8];
+        dtls_sent_msg *sent_msg;
+        DTLS1_RECORD_NUMBER *rec_num;
+
+        dtls1_get_queue_priority(prio, sc->d1->w_msg.msg_seq, 0);
+        item = pqueue_find(&sc->d1->sent_messages, prio);
+
+        if (item == NULL)
+            return ret;
+
+        sent_msg = (dtls_sent_msg *)item->data;
+        rec_num = dtls1_record_number_new(tmpl.epoch, tmpl.sequence_number);
+
+        if (rec_num == NULL)
+            return -1;
+
+        ossl_list_record_number_insert_tail(&sent_msg->rec_nums, rec_num);
+    }
 
     return ret;
 }

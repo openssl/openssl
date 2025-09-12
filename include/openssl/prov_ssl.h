@@ -27,7 +27,10 @@ extern "C" {
 # define TLS1_3_VERSION                  0x0304
 # define DTLS1_VERSION                   0xFEFF
 # define DTLS1_2_VERSION                 0xFEFD
+# define DTLS1_3_VERSION                 0xFEFC
 # define DTLS1_BAD_VER                   0x0100
+
+# define PROTO_VERSION_UNSET             0
 
 /* QUIC uses a 4 byte unsigned version number */
 # define OSSL_QUIC1_VERSION              0x0000001
