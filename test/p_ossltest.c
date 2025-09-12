@@ -11,8 +11,10 @@
  * @file p_ossltest.c
  * @brief a test provider for use in several of our unit tests
  *
- * This file implements a provider that reproduces the functionality
- * of our old ossltest engine.
+ * This file implements a provider that goes through the motions of implementing
+ * various algorithms, but then discards the actual results of that work in favor
+ * of predictable return data for the purposes of having known data to compare against
+ * in our various tls tests.
  *
  * It implements the following algorithms
  *
@@ -23,9 +25,9 @@
  * The SHA1, SHA256, SHA384 and SHA512 digests
  * The CTR-DRBG random number generator
  *
- * Note that, like the old engine, the implementations of the above algorithms
- * are designed not to actually follow the prescribed algorithms themselves, but rather
- * just to returns known/predictable data values for the purposes of testing.  As such
+ * Note that the implementations of the above algorithms are designed not to
+ * actually follow the prescribed algorithms themselves, but rather just to
+ * returns known/predictable data values for the purposes of testing.  As such
  * DO NOT USE THIS PROVIDER FOR ANY PRODUCTION PURPOSE.  TESTING ONLY!!!!
  *
  * The digests all return incremental data in accordance with the size of their message
@@ -84,7 +86,7 @@ static const OSSL_PARAM ossltest_param_types[] = {
  * Just returns the standard provider query-able parameters
  * OSSL_PROV_PARAM_NAME - The name of our provider
  * OSSL_PROV_PARAM_VERSION - The version of this provider build
- * OSSL_PROV_PARAM_BUILDINFO - The configuartion it was built with
+ * OSSL_PROV_PARAM_BUILDINFO - The configuration it was built with
  * OSSL_PROV_PARAM_STATUS - Weather or not its currently activated
  *
  * @param provctx void *provctx.
@@ -156,7 +158,7 @@ static int ossltest_dgst_init(void *ctx)
 
 /**
  * @brief Process input data to update the digest state.
- * Since This provider returns fixed data for each digest
+ * Since this provider returns fixed data for each digest
  * we don't actually have to do any work here, just return 1.
  * This is used for all our provided digests
  *
@@ -303,7 +305,6 @@ static const OSSL_ALGORITHM ossltest_digests[] = {
 typedef struct {
     OSSL_LIB_CTX *libctx;
     EVP_CIPHER_CTX *sub_ctx;
-    unsigned char *inbuf;
 } PROV_EVP_AES128_CBC_CTX;
 
 /**
@@ -361,7 +362,6 @@ static void ossl_test_aes128cbc_freectx(void *vprovctx)
     PROV_EVP_AES128_CBC_CTX *ctx = (PROV_EVP_AES128_CBC_CTX *)vprovctx;
 
     EVP_CIPHER_CTX_free(ctx->sub_ctx);
-    OPENSSL_free(ctx->inbuf);
     OPENSSL_free(ctx);
 }
 
@@ -407,9 +407,6 @@ static int ossl_test_aes128cbc_einit(void *vprovctx, const unsigned char *key,
 {
     PROV_EVP_AES128_CBC_CTX *ctx = (PROV_EVP_AES128_CBC_CTX *)vprovctx;
 
-    OPENSSL_free(ctx->inbuf);
-    ctx->inbuf = NULL;
-
     return EVP_CipherInit_ex2(ctx->sub_ctx, NULL, key, iv, 1, params);
 }
 
@@ -430,9 +427,6 @@ static int ossl_test_aes128cbc_dinit(void *vprovctx, const unsigned char *key,
                                      size_t ivlen, const OSSL_PARAM params[])
 {
     PROV_EVP_AES128_CBC_CTX *ctx = (PROV_EVP_AES128_CBC_CTX *)vprovctx;
-
-    OPENSSL_free(ctx->inbuf);
-    ctx->inbuf = NULL;
 
     return EVP_CipherInit_ex2(ctx->sub_ctx, NULL, key, iv, 0, params);
 }
@@ -459,25 +453,38 @@ static int ossl_test_aes128cbc_update(void *vprovctx, char *out, size_t *outl,
     int padnum;
     unsigned char padval;
     size_t loop;
+    uint8_t *inbuf = NULL;
+    int ret = 0;
+
+    *outl = 0;
 
     /*
      * record our input buffer
      */
-    ctx->inbuf = OPENSSL_zalloc(inl);
-    if (ctx->inbuf == NULL)
+    inbuf = OPENSSL_zalloc(inl);
+    if (inbuf == NULL)
         return 0;
 
-    memcpy(ctx->inbuf, in, inl);
+    memcpy(inbuf, in, inl);
 
     soutl = EVP_Cipher(ctx->sub_ctx, (unsigned char *)out, in, (unsigned int)inl);
+
+    if (soutl <= 0)
+        goto err;
+    
     /*
      * replace the ciphertext with our plain text
      */
-    memcpy(out, ctx->inbuf, inl);
+    memcpy(out, inbuf, inl);
 
     if (EVP_CIPHER_CTX_is_encrypting(ctx->sub_ctx)) {
+        if (outsize < (inl + 16) % 16)
+            goto err;
         padnum = (int)(16 - (inl % 16));
         padval = (unsigned char)(padnum - 1);
+        if (((size_t)(soutl + padnum)) > outsize)
+            goto err;
+
         for (loop = inl; loop < inl + padnum; loop++)
             out[loop] = padval;
         soutl += padnum;
@@ -494,10 +501,11 @@ static int ossl_test_aes128cbc_update(void *vprovctx, char *out, size_t *outl,
         soutl -= 16;
     }
 
+    ret = 1;
     *outl = soutl;
-    OPENSSL_free(ctx->inbuf);
-    ctx->inbuf = NULL;
-    return 1;
+err:
+    OPENSSL_free(inbuf);
+    return ret;
 }
 
 /**
@@ -663,7 +671,6 @@ static const OSSL_DISPATCH ossl_testaes128_cbc_functions[] = {
 typedef struct {
     OSSL_LIB_CTX *libctx;
     EVP_CIPHER_CTX *sub_ctx;
-    unsigned char *inbuf;
 } PROV_EVP_AES128_GCM_CTX;
 
 /**
@@ -722,8 +729,6 @@ static void ossl_test_aes128gcm_freectx(void *vprovctx)
     PROV_EVP_AES128_GCM_CTX *ctx = (PROV_EVP_AES128_GCM_CTX *)vprovctx;
 
     EVP_CIPHER_CTX_free(ctx->sub_ctx);
-    OPENSSL_free(ctx->inbuf);
-    OPENSSL_free(ctx);
 }
 
 /**
@@ -768,9 +773,6 @@ static int ossl_test_aes128gcm_einit(void *vprovctx, const unsigned char *key,
 {
     PROV_EVP_AES128_GCM_CTX *ctx = (PROV_EVP_AES128_GCM_CTX *)vprovctx;
 
-    OPENSSL_free(ctx->inbuf);
-    ctx->inbuf = NULL;
-
     return EVP_EncryptInit_ex2(ctx->sub_ctx, NULL, key, iv, params);
 }
 
@@ -791,9 +793,6 @@ static int ossl_test_aes128gcm_dinit(void *vprovctx, const unsigned char *key,
                                      size_t ivlen, const OSSL_PARAM params[])
 {
     PROV_EVP_AES128_GCM_CTX *ctx = (PROV_EVP_AES128_GCM_CTX *)vprovctx;
-
-    OPENSSL_free(ctx->inbuf);
-    ctx->inbuf = NULL;
 
     return EVP_DecryptInit_ex2(ctx->sub_ctx, NULL, key, iv, params);
 }
@@ -816,8 +815,9 @@ static int ossl_test_aes128gcm_update(void *vprovctx, char *out, size_t *outl,
 {
     PROV_EVP_AES128_GCM_CTX *ctx = (PROV_EVP_AES128_GCM_CTX *)vprovctx;
     int ret, soutl;
+    uint8_t *inbuf;
 
-    ctx->inbuf = OPENSSL_memdup(in, inl);
+    inbuf = OPENSSL_memdup(in, inl);
 
     if (EVP_CIPHER_CTX_is_encrypting(ctx->sub_ctx))
         ret = EVP_EncryptUpdate(ctx->sub_ctx, (unsigned char *)out,
@@ -831,10 +831,9 @@ static int ossl_test_aes128gcm_update(void *vprovctx, char *out, size_t *outl,
      * Once the cipher is complete, throw it away and use the
      * plaintext as our output
      */
-    if (ctx->inbuf != NULL && out != NULL)
-        memcpy(out, ctx->inbuf, inl);
-    OPENSSL_free(ctx->inbuf);
-    ctx->inbuf = NULL;
+    if (inbuf != NULL && out != NULL)
+        memcpy(out, inbuf, inl);
+    OPENSSL_free(inbuf);
 
     return ret;
 }
@@ -1012,7 +1011,6 @@ typedef struct {
     size_t payload_length;
     unsigned int tls_ver;
     size_t pad_size;
-    unsigned char *inbuf;
 } PROV_EVP_AES128_CBC_HMAC_SHA1_CTX;
 
 /**
@@ -1050,8 +1048,8 @@ static void ossl_test_aes128cbchmacsha1_freectx(void *vprovctx)
 {
     PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *ctx = (PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *)vprovctx;
 
-    OPENSSL_free(ctx->inbuf);
     OPENSSL_free(ctx);
+    return;
 }
 
 /**
@@ -1086,8 +1084,6 @@ static int ossl_test_aes128cbchmacsha1_einit(void *vprovctx, const unsigned char
 {
     PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *ctx = (PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *)vprovctx;
 
-    OPENSSL_free(ctx->inbuf);
-    ctx->inbuf = NULL;
     ctx->payload_length = NO_PAYLOAD_LENGTH;
     ctx->encrypting = 1;
     return 1;
@@ -1111,8 +1107,6 @@ static int ossl_test_aes128cbchmacsha1_dinit(void *vprovctx, const unsigned char
 {
     PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *ctx = (PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *)vprovctx;
 
-    OPENSSL_free(ctx->inbuf);
-    ctx->inbuf = NULL;
     ctx->payload_length = NO_PAYLOAD_LENGTH;
     ctx->encrypting = 0;
     return 1;
