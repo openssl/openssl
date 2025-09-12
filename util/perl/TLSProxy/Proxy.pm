@@ -424,7 +424,7 @@ sub clientstart
         my $pid;
         my $execcmd = $self->execute
              ." s_client -provider=p_ossltest -provider=default -propquery ?provider=p_ossltest"
-             ." -keylogfile ./keys.log -connect $self->{proxy_addr}:$self->{proxy_port}";
+             ." -connect $self->{proxy_addr}:$self->{proxy_port}";
         if ($self->{isdtls}) {
             $execcmd .= " -dtls -max_protocol DTLSv1.2"
                         # TLSProxy does not support message fragmentation. So
