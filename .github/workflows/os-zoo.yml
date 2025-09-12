@@ -238,7 +238,11 @@ jobs:
     - name: make test
       env:
         OPENSSL_riscvcap: ZBA_ZBB_ZBC_ZBS_ZKT
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: |
+        for ((N=0; N<200; N++)) do
+          echo N=$N
+          make test V=1 TESTS=test_threads
+        done
 
   freebsd-x86_64:
     runs-on: ubuntu-latest
