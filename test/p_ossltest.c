@@ -471,7 +471,7 @@ static int ossl_test_aes128cbc_update(void *vprovctx, char *out, size_t *outl,
 
     if (soutl <= 0)
         goto err;
-    
+
     /*
      * replace the ciphertext with our plain text
      */
