@@ -22,6 +22,7 @@
 #include "internal/quic_record_tx.h"
 #include "internal/quic_error.h"
 #include "internal/packet.h"
+#include "internal/time.h"
 #include "internal/tsan_assist.h"
 
 #define GROWTH_ALLOWANCE 1024
@@ -504,10 +505,24 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
     if (ossl_time_is_infinite(mintimeout))
         return 0;
 
-    if (using_fake_time)
+    if (using_fake_time) {
         qtest_add_time(ossl_time2ms(mintimeout));
-    else
-        OSSL_sleep(ossl_time2ms(mintimeout));
+    } else {
+        /*
+         * We cannot rely on the fact that OSSL_sleep() delays
+         * for the requested amount of time, as it is prohibited
+         * to do so, so we have to call it in loop until
+         * the needed time is passed.
+         */
+        OSSL_TIME finish = ossl_time_add(now, mintimeout);
+        uint64_t left = ossl_time2ms(mintimeout);
+
+        do {
+            OSSL_sleep(left);
+            now = ossl_time_now();
+            left = ossl_time2ms(ossl_time_subtract(finish, now));
+        } while (ossl_time_compare(now, finish) <= 0);
+    }
 
     return 1;
 }

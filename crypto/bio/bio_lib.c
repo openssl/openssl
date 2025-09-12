@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <openssl/crypto.h>
 #include "internal/numbers.h"
+#include "internal/time.h"
 #include "bio_local.h"
 
 /*
@@ -986,7 +987,23 @@ static int bio_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)
         if ((unsigned long)sec_diff * 1000 < nap_milliseconds)
             nap_milliseconds = (unsigned int)sec_diff * 1000;
     }
-    OSSL_sleep(nap_milliseconds);
+    /*
+     * We cannot rely on the fact that OSSL_sleep() delays
+     * for the requested amount of time, as it is prohibited
+     * to do so, so we have to call it in loop until
+     * the needed time is passed.
+     */
+    {
+        OSSL_TIME now = ossl_time_now();
+        OSSL_TIME finish = ossl_time_add(now, ossl_ms2time(nap_milliseconds));
+        uint64_t left = nap_milliseconds;
+
+        do {
+            OSSL_sleep(left);
+            now = ossl_time_now();
+            left = ossl_time2ms(ossl_time_subtract(finish, now));
+        } while (ossl_time_compare(now, finish) <= 0);
+    }
     return 1;
 }
 

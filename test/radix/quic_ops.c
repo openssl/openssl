@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 #include "internal/sockets.h"
+#include "internal/time.h"
 #include <openssl/rand.h>
 
 static const unsigned char alpn_ossltest[] = {
@@ -1023,7 +1024,23 @@ DEF_FUNC(hf_sleep)
 
     F_POP(ms);
 
-    OSSL_sleep(ms);
+    /*
+     * We cannot rely on the fact that OSSL_sleep() delays
+     * for the requested amount of time, as it is prohibited
+     * to do so, so we have to call it in loop until
+     * the needed time is passed.
+     */
+    {
+        OSSL_TIME now = ossl_time_now();
+        OSSL_TIME finish = ossl_time_add(now, ossl_ms2time(ms));
+        uint64_t left = ms;
+
+        do {
+            OSSL_sleep(left);
+            now = ossl_time_now();
+            left = ossl_time2ms(ossl_time_subtract(finish, now));
+        } while (ossl_time_compare(now, finish) <= 0);
+    }
 
     ok = 1;
 err:

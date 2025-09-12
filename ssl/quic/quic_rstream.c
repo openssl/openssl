@@ -95,7 +95,7 @@ static int read_internal(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,
             break;
 
         if (data == NULL) {
-            size_t max_len;
+            size_t max_len = 0;
 
             data = ring_buf_get_ptr(&qrs->rbuf, range.start, &max_len);
             if (!ossl_assert(data != NULL))
@@ -193,7 +193,7 @@ int ossl_quic_rstream_get_record(QUIC_RSTREAM *qrs,
                                  int *fin)
 {
     const unsigned char *record_ = NULL;
-    size_t rec_len_, max_len;
+    size_t rec_len_, max_len = 0;
 
     if (!ossl_sframe_list_lock_head(&qrs->fl, &qrs->head_range, &record_, fin)) {
         /* No head frame to lock and return */

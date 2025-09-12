@@ -20,6 +20,7 @@
 #include <openssl/engine.h>
 #include "internal/e_os.h"
 #include "internal/nelem.h"
+#include "internal/time.h"
 #include "ssltestlib.h"
 #include "../testutil.h"
 
@@ -1369,8 +1370,20 @@ int create_bare_ssl_connection_ex(SSL *serverssl, SSL *clientssl, int want,
              * It looks like we're just spinning. Pause for a short period to
              * give the DTLS timer a chance to do something. We only do this for
              * the first few times to prevent hangs.
+             * We cannot rely on the fact that OSSL_sleep() delays
+             * for the requested amount of time, as it is prohibited
+             * to do so, so we have to call it in loop until
+             * the needed time is passed.
              */
-            OSSL_sleep(50);
+            OSSL_TIME now = ossl_time_now();
+            OSSL_TIME finish = ossl_time_add(now, ossl_ms2time(50));
+            uint64_t left = 50;
+
+            do {
+                OSSL_sleep(left);
+                now = ossl_time_now();
+                left = ossl_time2ms(ossl_time_subtract(finish, now));
+            } while (ossl_time_compare(now, finish) <= 0);
         }
     } while (retc <=0 || rets <= 0);
 
