@@ -1792,8 +1792,8 @@ static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
         s->ext.peer_record_size_limit = proto_record_hard_limit;
 
     /*
-     * Unlike Maximum Fragment Length, we wait until seeing / sending CCS
-     * handshake message for limiting bytes sent by the record layer.
+     * Unlike Maximum Fragment Length, we wait until we update the read/write
+     * record layer when new security parameters are negotiated.
      */
 
     return 1;

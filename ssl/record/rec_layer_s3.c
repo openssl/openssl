@@ -378,7 +378,7 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
     n = (len - tot);
 
     max_send_fragment = ssl_get_max_send_fragment(s, type);
-    split_send_fragment = ssl_get_split_send_fragment(s, type);
+    split_send_fragment = MIN(max_send_fragment, s->split_send_fragment);
 
     if (max_send_fragment == 0
             || split_send_fragment == 0

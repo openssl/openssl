@@ -511,6 +511,12 @@ static void quic_set_max_frag_len(OSSL_RECORD_LAYER *rl, size_t max_frag_len)
     /* This really doesn't make any sense for QUIC. Ignore it */
 }
 
+static size_t quic_get_max_frag_len(OSSL_RECORD_LAYER *rl)
+{
+    /* This really doesn't make any sense for QUIC. Ignore it */
+    return 0;
+}
+
 static int quic_alloc_buffers(OSSL_RECORD_LAYER *rl)
 {
     /*
@@ -588,10 +594,11 @@ static const OSSL_RECORD_METHOD quic_tls_record_method = {
     quic_set_options,
     quic_get_compression,
     quic_set_max_frag_len,
+    quic_get_max_frag_len,
     quic_get_max_record_overhead, /* Never called */
     quic_increment_sequence_ctr, /* Never called */
     quic_alloc_buffers,
-    quic_free_buffers
+    quic_free_buffers,
 };
 
 static int add_transport_params_cb(SSL *s, unsigned int ext_type,
