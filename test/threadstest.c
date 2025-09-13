@@ -317,11 +317,17 @@ static void writer_fn(int id, int *iterations)
     int count;
     OSSL_TIME t1, t2;
     uint64_t *old, *new;
+    unsigned int idx = 0;
+    uint64_t *cache[16];
 
     t1 = ossl_time_now();
+    memset(cache, 0, sizeof(cache));
 
     for (count = 0; ; count++) {
-        new = CRYPTO_malloc(sizeof(uint64_t), NULL, 0);
+        idx = (idx + 1) % 16;
+        new = cache[idx];
+        if (new == NULL)
+            new = CRYPTO_malloc(sizeof(uint64_t), NULL, 0);
         *new = (uint64_t)0xBAD;
         if (contention == 0)
             OSSL_sleep(1000);
@@ -335,7 +341,9 @@ static void writer_fn(int id, int *iterations)
         ossl_rcu_write_unlock(rcu_lock);
         if (contention != 0) {
             ossl_synchronize_rcu(rcu_lock);
-            CRYPTO_free(old, NULL, 0);
+            if (old != NULL)
+                *old &= 0xFF;
+            cache[idx] = old;
         }
         t2 = ossl_time_now();
         #ifdef __aarch64__
@@ -358,6 +366,8 @@ static void writer_fn(int id, int *iterations)
             break;
     }
     *iterations = count;
+    for (idx = 0; idx < 16; idx++)
+        CRYPTO_free(cache[idx], NULL, 0);
     return;
 }
 
