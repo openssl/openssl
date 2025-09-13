@@ -27,6 +27,7 @@
 #include <openssl/encoder.h>
 #include "internal/provider.h"
 #include "internal/sizes.h"
+#include "internal/asn1.h"
 
 struct X509_pubkey_st {
     X509_ALGOR *algor;
@@ -148,10 +149,13 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
     }
 
     /* This ensures that |*in| advances properly no matter what */
-    if ((ret = ASN1_item_ex_d2i(pval, in, len,
-                                ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL),
-                                tag, aclass, opt, ctx)) <= 0)
+    if ((ret = asn1_item_embed_d2i(pval, in, len,
+                                   ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL),
+                                   tag, aclass, opt, ctx, 0,
+                                   NULL, NULL)) <= 0) {
+        x509_pubkey_ex_free(pval, it);
         return ret;
+    }
 
     publen = *in - in_saved;
     if (!ossl_assert(publen > 0)) {
