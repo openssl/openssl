@@ -1238,18 +1238,6 @@ static int ssl_post_record_layer_select(SSL_CONNECTION *s, int direction)
     return 1;
 }
 
-void ssl_set_record_size_limit(const SSL_CONNECTION *s, int which) {
-    if (!USE_RECORD_SIZE_LIMIT(s))
-        return;
-
-    if ((which & SSL3_CHANGE_CIPHER_CLIENT_WRITE) == SSL3_CHANGE_CIPHER_CLIENT_WRITE || (which & SSL3_CHANGE_CIPHER_SERVER_WRITE) == SSL3_CHANGE_CIPHER_SERVER_WRITE) {
-        s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
-            MIN(s->max_send_fragment, s->ext.peer_record_size_limit));
-    } else if ((which & SSL3_CHANGE_CIPHER_CLIENT_READ) == SSL3_CHANGE_CIPHER_CLIENT_READ || (which & SSL3_CHANGE_CIPHER_SERVER_READ) == SSL3_CHANGE_CIPHER_SERVER_READ) {
-        s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl, s->ext.record_size_limit);
-    }
-}
-
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                              int direction, int level,
                              unsigned char *secret, size_t secretlen,
@@ -1258,8 +1246,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                              unsigned char *mackey, size_t mackeylen,
                              const EVP_CIPHER *ciph, size_t taglen,
                              int mactype, const EVP_MD *md,
-                             const SSL_COMP *comp, const EVP_MD *kdfdigest)
-{
+                             const SSL_COMP *comp, const EVP_MD *kdfdigest) {
     OSSL_PARAM options[5], *opts = options;
     OSSL_PARAM settings[6], *set =  settings;
     const OSSL_RECORD_METHOD **thismethod;
@@ -1268,9 +1255,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     const OSSL_RECORD_METHOD *meth;
     int use_etm, stream_mac = 0, tlstree = 0;
-    unsigned int maxfrag = (direction == OSSL_RECORD_DIRECTION_WRITE)
-                           ? ssl_get_max_send_fragment(s, 0)
-                           : SSL3_RT_MAX_PLAIN_LENGTH;
+    unsigned int maxfrag = s->max_send_fragment;
     int use_early_data = 0;
     uint32_t max_early_data;
     COMP_METHOD *compm = (comp == NULL) ? NULL : comp->method;
@@ -1342,15 +1327,24 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_TLSTREE,
                                           &tlstree);
 
-    /*
-     * We only need to do this for the read side. The write side should already
-     * have the correct value due to the ssl_get_max_send_fragment() call above
-     */
-    if (direction == OSSL_RECORD_DIRECTION_READ
-            && s->session != NULL
-            && USE_MAX_FRAGMENT_LENGTH_EXT(s->session))
-        maxfrag = GET_MAX_FRAGMENT_LENGTH(s->session);
+    /* Max Fragment Length applies to all kinds of messages: protected or
+     * unprotected. */
+    if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
+        if (direction == OSSL_RECORD_DIRECTION_READ)
+            maxfrag = GET_MAX_FRAGMENT_LENGTH(s->session);
+        else if (direction == OSSL_RECORD_DIRECTION_WRITE)
+            maxfrag =
+                 MIN(s->max_send_fragment, GET_MAX_FRAGMENT_LENGTH(s->session));
+    }
 
+    /* Record Size Limit only applies to protected messages, either by
+     * encryption or by authentification. */
+    if ((ciph != NULL || md != NULL) && USE_RECORD_SIZE_LIMIT(s)) {
+        if (direction == OSSL_RECORD_DIRECTION_READ)
+            maxfrag = s->ext.record_size_limit;
+        else if (direction == OSSL_RECORD_DIRECTION_WRITE)
+            maxfrag = MIN(s->max_send_fragment, s->ext.peer_record_size_limit);
+    }
 
     if (maxfrag != SSL3_RT_MAX_PLAIN_LENGTH)
         *set++ = OSSL_PARAM_construct_uint(OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_FRAG_LEN,

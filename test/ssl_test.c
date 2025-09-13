@@ -191,21 +191,6 @@ static int check_alpn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
     return ret;
 }
 
-static int check_record_size_limit_negotiated(HANDSHAKE_RESULT *result,
-                                                SSL_TEST_CTX *test_ctx) {
-   int ret = 1;
-
-   if (!TEST_int_eq(test_ctx->record_size_limit_negotiated,
-                    result->record_size_limit_negotiated))
-       ret = 0;
-
-    if (!TEST_int_eq(test_ctx->max_frag_len_negotiated,
-                     result->max_frag_len_negotiated))
-        ret = 0;
-
-    return ret;
-}
-
 static int check_max_send_or_recv_frag_len(HANDSHAKE_RESULT *result,
                                                 SSL_TEST_CTX *test_ctx) {
     int ret = 1;

@@ -240,10 +240,6 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which) {
         goto err;
                                     }
 
-    if (c != NULL) {
-        ssl_set_record_size_limit(s, which);
-    }
-
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "which = %04X, key:\n", which);
         BIO_dump_indent(trc_out, key, EVP_CIPHER_get_key_length(c), 4);
