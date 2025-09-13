@@ -347,6 +347,13 @@ static void writer_fn(int id, int *iterations)
                 break;
         } else
         #endif
+        #ifdef __powerpc64__
+        extern unsigned int OPENSSL_ppccap_P;
+        if (contention != 0 && OPENSSL_ppccap_P == 0xbe) {
+            if ((ossl_time2seconds(t2) - ossl_time2seconds(t1)) >= 4000)
+                break;
+        } else
+        #endif
         if ((ossl_time2seconds(t2) - ossl_time2seconds(t1)) >= 4)
             break;
     }
