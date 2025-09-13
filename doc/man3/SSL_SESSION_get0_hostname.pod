@@ -23,9 +23,10 @@ SSL_SESSION_set1_alpn_selected
 
 =head1 DESCRIPTION
 
-SSL_SESSION_get0_hostname() retrieves the SNI value that was sent by the
-client when the session was created if it was accepted by the server. Otherwise
-NULL is returned.
+SSL_SESSION_get0_hostname() retrieves the Server Name Indication (SNI) value
+that was sent by the client when the session was created if the server
+acknowledged the client's SNI extension by including an empty SNI extension
+in response. Otherwise NULL is returned.
 
 The value returned is a pointer to memory maintained within B<s> and
 should not be free'd.
@@ -44,8 +45,7 @@ B<alpn>.
 
 =head1 RETURN VALUES
 
-SSL_SESSION_get0_hostname() returns either a string or NULL based on if there
-is the SNI value sent by client.
+SSL_SESSION_get0_hostname() returns the SNI string if available, or NULL if not.
 
 SSL_SESSION_set1_hostname() returns 1 on success or 0 on error.
 
