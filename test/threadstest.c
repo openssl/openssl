@@ -338,6 +338,13 @@ static void writer_fn(int id, int *iterations)
             CRYPTO_free(old, NULL, 0);
         }
         t2 = ossl_time_now();
+        #ifdef __powerpc64__
+        extern unsigned int OPENSSL_ppccap_P;
+        if (contention != 0 && OPENSSL_ppccap_P == 0xbe) {
+            if ((ossl_time2seconds(t2) - ossl_time2seconds(t1)) >= 4000)
+                break;
+        } else
+        #endif
         if ((ossl_time2seconds(t2) - ossl_time2seconds(t1)) >= 4)
             break;
     }
@@ -1385,6 +1392,9 @@ int setup_tests(void)
     OPTION_CHOICE o;
     char *datadir;
 
+#ifdef __unix__
+    alarm(9000);
+#endif
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
         case OPT_FIPS:
