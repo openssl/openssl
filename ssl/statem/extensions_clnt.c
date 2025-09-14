@@ -124,9 +124,8 @@ EXT_RETURN tls_construct_ctos_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
      * extensions with the same value.
      */
 
-    if ((s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT) != 0) {
+    if ((s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT) != 0)
         return EXT_RETURN_NOT_SENT;
-    }
 
     if (s->ext.record_size_limit == TLSEXT_record_size_limit_UNSPECIFIED) {
         if (IS_MAX_FRAGMENT_LENGTH_EXT_VALID(s->ext.max_fragment_len_mode))
@@ -135,8 +134,8 @@ EXT_RETURN tls_construct_ctos_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
         else
             s->ext.record_size_limit = ssl_get_proto_record_hard_limit(s);
 
-        // Huh ? Other examples in the codebases shows an if condition, but the assertion aborts the program.
-        ossl_assert(s->ext.record_size_limit != 0);
+        if (!ossl_assert(s->ext.record_size_limit != 0))
+            return EXT_RETURN_FAIL;
     }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_record_size_limit)

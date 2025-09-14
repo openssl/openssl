@@ -171,7 +171,6 @@ int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length);
 int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
                                   char *file, int line);
 
-
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                              int direction, int level,
                              unsigned char *secret, size_t secretlen,

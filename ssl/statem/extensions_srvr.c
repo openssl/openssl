@@ -218,7 +218,8 @@ int tls_parse_ctos_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
 
 int tls_parse_ctos_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
                                      unsigned int context,
-                                     X509 *x, size_t chainidx) {
+                                     X509 *x, size_t chainidx)
+{
     unsigned int peer_record_size_limit;
 
     if ((s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT) != 0)
