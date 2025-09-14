@@ -4800,9 +4800,13 @@ int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
-    if (sc == NULL
-        || (IS_QUIC(ssl) && mode != TLSEXT_max_fragment_length_DISABLED))
+    if (sc == NULL)
         return 0;
+
+    if (IS_QUIC(ssl) && mode != TLSEXT_max_fragment_length_DISABLED) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_NOT_USABLE_WITH_QUIC);
+        return 0;
+    }
 
     if (mode != TLSEXT_max_fragment_length_DISABLED
             && !IS_MAX_FRAGMENT_LENGTH_EXT_VALID(mode)) {
@@ -4833,6 +4837,7 @@ int SSL_set_record_size_limit(SSL *ssl, uint16_t limit) {
     }
 
     if (IS_QUIC(ssl)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_NOT_USABLE_WITH_QUIC);
         return 0;
     }
 
@@ -4846,14 +4851,14 @@ int SSL_set_record_size_limit(SSL *ssl, uint16_t limit) {
     return 1;
 }
 
-unsigned int SSL_get_max_send_fragment(const SSL *s)
+size_t SSL_get_max_send_fragment(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     return sc->rlayer.wrlmethod->get_max_frag_len(sc->rlayer.wrl);
 }
 
-unsigned int SSL_get_max_recv_fragment(const SSL *s) {
+size_t SSL_get_max_recv_fragment(const SSL *s) {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     return sc->rlayer.rrlmethod->get_max_frag_len(sc->rlayer.rrl);

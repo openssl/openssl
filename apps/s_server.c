@@ -946,7 +946,7 @@ typedef enum OPTION_choice {
     OPT_CRLF, OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_IDENTITY, OPT_PSK_HINT, OPT_PSK,
     OPT_PSK_SESS, OPT_SRPVFILE, OPT_SRPUSERSEED, OPT_REV, OPT_WWW,
-    OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC, OPT_SSL_CONFIG,
+    OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC, OPT_SSL_CONFIG, OPT_RECORD_SIZE_LIMIT,
     OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_SSL3, OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN, OPT_STATELESS,
@@ -1137,6 +1137,8 @@ const OPTIONS s_server_options[] = {
     {"mtu", OPT_MTU, 'p', "Set link-layer MTU"},
     {"read_buf", OPT_READ_BUF, 'p',
      "Default read buffer size to be used for connections"},
+    {"record_size_limit", OPT_RECORD_SIZE_LIMIT, 'p',
+    "Enable Record Size Limit (min. value : 64)"},
     {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'p',
      "Size used to split data for encrypt pipelines"},
     {"max_send_frag", OPT_MAX_SEND_FRAG, 'p', "Maximum Size of send frames "},
@@ -1297,6 +1299,7 @@ int s_server_main(int argc, char *argv[])
     int s_tlsextstatus = 0;
 # endif
     int no_resume_ephemeral = 0;
+    uint16_t record_size_limit = 0;
     unsigned int max_send_fragment = 0;
     unsigned int split_send_fragment = 0, max_pipelines = 0;
     const char *s_serverinfo_file = NULL;
@@ -1866,6 +1869,9 @@ int s_server_main(int argc, char *argv[])
         case OPT_ASYNC:
             async = 1;
             break;
+        case OPT_RECORD_SIZE_LIMIT:
+            record_size_limit = atoi(opt_arg());
+            break;
         case OPT_MAX_SEND_FRAG:
             max_send_fragment = atoi(opt_arg());
             break;
@@ -2217,6 +2223,14 @@ int s_server_main(int argc, char *argv[])
     if (use_zc_sendfile)
         SSL_CTX_set_options(ctx, SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE);
 #endif
+
+    if (record_size_limit > 0
+            && !SSL_CTX_set_record_size_limit(ctx, record_size_limit)) {
+        BIO_printf(bio_err,
+                         "%s: Record Size Limit %u is out of permitted range\n",
+                         prog, max_pipelines);
+        goto end;
+            }
 
     if (max_send_fragment > 0
         && !SSL_CTX_set_max_send_fragment(ctx, max_send_fragment)) {

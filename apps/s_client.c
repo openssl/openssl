@@ -506,7 +506,7 @@ typedef enum OPTION_choice {
     OPT_CASTORE, OPT_NOCASTORE, OPT_CHAINCASTORE, OPT_VERIFYCASTORE,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_NOSERVERNAME, OPT_ASYNC,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_PROTOHOST,
-    OPT_MAXFRAGLEN, OPT_REC_SIZE_LIMIT, OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG,
+    OPT_MAXFRAGLEN, OPT_RECORD_SIZE_LIMIT, OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG,
     OPT_MAX_PIPELINES, OPT_READ_BUF, OPT_KEYLOG_FILE, OPT_EARLY_DATA, OPT_REQCAFILE,
     OPT_TFO,
     OPT_V_ENUM,
@@ -562,9 +562,9 @@ const OPTIONS s_client_options[] = {
 #endif
     {"maxfraglen", OPT_MAXFRAGLEN, 'p',
      "Enable Maximum Fragment Length Negotiation (len values: 512, 1024, 2048 and 4096)"},
-    {"record_size_limit", OPT_REC_SIZE_LIMIT, 'p',
-    "Enable Record Size Limit extension (min. value : 64)"},
-    {"max_send_frag", OPT_MAX_SEND_FRAG, 'p', "Maximum Size of send frames "},
+    {"record_size_limit", OPT_RECORD_SIZE_LIMIT, 'p',
+    "Enable Record Size Limit (min. value : 64)"},
+    {"max_send_frag", OPT_MAX_SEND_FRAG, 'p', "Maximum Size of TLS record"},
     {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'p',
      "Size used to split data for encrypt pipelines"},
     {"max_pipelines", OPT_MAX_PIPELINES, 'p',
@@ -1571,7 +1571,7 @@ int s_client_main(int argc, char **argv)
                 goto opthelp;
             }
             break;
-        case OPT_REC_SIZE_LIMIT:
+        case OPT_RECORD_SIZE_LIMIT:
             limit = (uint16_t)atoi(opt_arg());
             record_size_limit = limit;
             break;
@@ -1922,8 +1922,12 @@ int s_client_main(int argc, char **argv)
     }
 
     if (record_size_limit > 0
-            && !SSL_CTX_set_record_size_limit(ctx, record_size_limit))
-      goto end;
+            && !SSL_CTX_set_record_size_limit(ctx, record_size_limit)) {
+        BIO_printf(bio_err,
+                         "%s: Record Size Limit %u is out of permitted range\n",
+                         prog, max_pipelines);
+        goto end;
+    }
 
     if (record_size_limit > 0 && maxfraglen > 0) {
       BIO_printf(bio_err, "Warning: Max Fragment Length extension and Record Size Limit activated. Both extension will be sent.\n");

@@ -430,6 +430,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
      "ssl3 ext invalid servername"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE),
      "ssl3 ext invalid servername type"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SSL3_NOT_USABLE_WITH_QUIC),
+     "ssl3 not usable with quic"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SSL3_SESSION_ID_TOO_LONG),
      "ssl3 session id too long"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SSLV3_ALERT_BAD_CERTIFICATE),

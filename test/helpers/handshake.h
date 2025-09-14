@@ -79,6 +79,9 @@ typedef struct handshake_result {
     char *cipher;
     /* session ticket application data */
     char *result_session_ticket_app_data;
+
+    /* Record layer fragment max recv / send fragment length. */
+
     size_t client_max_send_frag_len;
     size_t client_max_recv_frag_len;
 

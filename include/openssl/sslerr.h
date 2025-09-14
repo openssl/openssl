@@ -272,6 +272,7 @@
 # define SSL_R_SSL3_EXT_INVALID_RECORD_SIZE_LIMIT         424
 # define SSL_R_SSL3_EXT_INVALID_SERVERNAME                319
 # define SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE           320
+# define SSL_R_SSL3_NOT_USABLE_WITH_QUIC                  425
 # define SSL_R_SSL3_SESSION_ID_TOO_LONG                   300
 # define SSL_R_SSLV3_ALERT_BAD_CERTIFICATE                1042
 # define SSL_R_SSLV3_ALERT_BAD_RECORD_MAC                 1020
