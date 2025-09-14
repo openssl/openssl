@@ -228,8 +228,8 @@ int ossl_bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
     if (!bn_rsa_fips186_4_find_aux_prob_prime(Xp1i, p1i, ctx, rounds, cb)
             || !bn_rsa_fips186_4_find_aux_prob_prime(Xp2i, p2i, ctx, rounds, cb))
         goto err;
-    /* (Table B.1) auxiliary prime Max length check */
-    if ((BN_num_bits(p1i) + BN_num_bits(p2i)) >=
+    /* (FIPS 186-5 Table A.1) auxiliary prime Max length check */
+    if ((BN_num_bits(p1i) + BN_num_bits(p2i)) >
             bn_rsa_fips186_5_aux_prime_max_sum_size_for_prob_primes(nlen))
         goto err;
     /* (Steps 4.3/5.3) - generate prime */
