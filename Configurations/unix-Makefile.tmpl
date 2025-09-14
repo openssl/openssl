@@ -1778,10 +1778,16 @@ EOF
           if (platform->isstaticlib($_)) {
               push @linklibs, platform->convertext($_);
           } else {
-              my $d = "-L" . dirname($_);
+              my $d = dirname($_);
               my $l = basename($_);
-              $l =~ s/^lib//;
-              $l = "-l" . $l;
+              if ($target{msvc_syntax} // 0) {
+                  $d = "/LIBPATH:" . $d;
+                  $l = $l . '.lib';
+              } else {
+                  $d = "-L" . $d;
+                  $l =~ s/^lib//;
+                  $l = "-l" . $l;
+              }
               push @linklibs, $l;
               push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
           }
@@ -1877,13 +1883,26 @@ $import: $full
 EOF
           }
       }
-      $recipe .= <<"EOF";
+      if ($target{msvc_syntax} // 0) {
+          # Clang-CL accepts the rest of the command line after /link as linker
+          # options, but does not forward /LIBPATH like GCC/Clang forwards -L
+          # and so on. Therefore, object files must go before linker flags.
+          $recipe .= <<"EOF";
+$full: $fulldeps
+	\$(CC) \$(LIB_CFLAGS) $shared_soname \\
+		-o $full \\
+		$fullobjs \\
+		$linklibs \$(LIB_EX_LIBS) \$(LIB_LDFLAGS) $linkflags $shared_imp $shared_def
+EOF
+      } else {
+          $recipe .= <<"EOF";
 $full: $fulldeps
 	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
 		-o $full$shared_def \\
 		$fullobjs \\
 		$linklibs \$(LIB_EX_LIBS)
 EOF
+      }
       if (windowsdll()) {
           $recipe .= <<"EOF";
 	rm -f apps/$full
@@ -1915,10 +1934,16 @@ EOF
           if (platform->isstaticlib($_)) {
               push @linklibs, platform->convertext($_);
           } else {
-              my $d = "-L" . dirname($_);
+              my $d = dirname($_);
               my $l = basename($_);
-              $l =~ s/^lib//;
-              $l = "-l" . $l;
+              if ($target{msvc_syntax} // 0) {
+                  $d = "/LIBPATH:" . $d;
+                  $l = $l . '.lib';
+              } else {
+                  $d = "-L" . $d;
+                  $l =~ s/^lib//;
+                  $l = "-l" . $l;
+              }
               push @linklibs, $l;
               push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
           }
@@ -1940,13 +1965,23 @@ EOF
                       fill_lines(' ', $COLUMNS - length($dso) - 2,
                                  @objs, @defs, @deps));
 
-      return <<"EOF";
+      if ($target{msvc_syntax} // 0) {
+          return <<"EOF";
+$dso: $deps
+	\$(CC) \$(DSO_CFLAGS) \\
+		-o $dso \\
+		$objs \\
+		$linklibs\$(DSO_EX_LIBS) \$(DSO_LDFLAGS) $linkflags $shared_def
+EOF
+      } else {
+          return <<"EOF";
 $dso: $deps
 	\$(CC) \$(DSO_CFLAGS) $linkflags\$(DSO_LDFLAGS) \\
 		-o $dso$shared_def \\
 		$objs \\
 		$linklibs\$(DSO_EX_LIBS)
 EOF
+      }
   }
   sub obj2lib {
       my %args = @_;
@@ -1994,10 +2029,16 @@ EOF
           if (platform->isstaticlib($_)) {
               push @linklibs, platform->convertext($_);
           } else {
-              my $d = "-L" . dirname($_);
+              my $d = dirname($_);
               my $l = basename($_);
-              $l =~ s/^lib//;
-              $l = "-l" . $l;
+              if ($target{msvc_syntax} // 0) {
+                  $d = "/LIBPATH:" . $d;
+                  $l = $l . '.lib';
+              } else {
+                  $d = "-L" . $d;
+                  $l =~ s/^lib//;
+                  $l = "-l" . $l;
+              }
               push @linklibs, $l;
               push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
           }
@@ -2016,7 +2057,17 @@ EOF
                       fill_lines(' ', $COLUMNS - length($bin) - 2,
                                  @objs, @deps));
 
-      return <<"EOF";
+      if ($target{msvc_syntax} // 0) {
+          return <<"EOF";
+$bin: $deps
+	rm -f $bin
+	\$\${LDCMD:-$cmd} $cmdflags \\
+		-o $bin \\
+		$objs \\
+		$linklibs\$(BIN_EX_LIBS) \$(BIN_LDFLAGS) $linkflags
+EOF
+      } else {
+          return <<"EOF";
 $bin: $deps
 	rm -f $bin
 	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(BIN_LDFLAGS) \\
@@ -2024,6 +2075,7 @@ $bin: $deps
 		$objs \\
 		$linklibs\$(BIN_EX_LIBS)
 EOF
+      }
   }
   sub in2script {
       my %args = @_;
