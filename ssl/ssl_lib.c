@@ -13,26 +13,25 @@
 #include "internal/e_winsock.h"
 #include "ssl_local.h"
 
-#include "internal/cryptlib.h"
-#include "internal/ktls.h"
-#include "internal/nelem.h"
-#include "internal/refcount.h"
-#include "internal/ssl_unwrap.h"
-#include "internal/thread_once.h"
-#include "internal/to_hex.h"
-#include "quic/quic_local.h"
-#include "record/methods/recmethod_local.h"
-#include <openssl/async.h>
-#include <openssl/core_names.h>
-#include <openssl/ct.h>
+#include <openssl/objects.h>
+#include <openssl/x509v3.h>
+#include <openssl/rand.h>
+#include <openssl/ocsp.h>
 #include <openssl/dh.h>
 #include <openssl/engine.h>
-#include <openssl/objects.h>
-#include <openssl/ocsp.h>
-#include <openssl/provider.h>
-#include <openssl/rand.h>
+#include <openssl/async.h>
+#include <openssl/ct.h>
 #include <openssl/trace.h>
-#include <openssl/x509v3.h>
+#include <openssl/core_names.h>
+#include <openssl/provider.h>
+#include "internal/cryptlib.h"
+#include "internal/nelem.h"
+#include "internal/refcount.h"
+#include "internal/thread_once.h"
+#include "internal/ktls.h"
+#include "internal/to_hex.h"
+#include "internal/ssl_unwrap.h"
+#include "quic/quic_local.h"
 
 #ifndef OPENSSL_NO_SSLKEYLOG
 # include <sys/stat.h>
