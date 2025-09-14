@@ -1747,6 +1747,14 @@ $obj: $deps
 		mv $dep.tmp $dep; \\
 	fi
 EOF
+      } elsif (($target{msvc_syntax} // 0) && grep /\.rc$/, @srcs) {
+          # Use $(CC) to preprocess the resource script before compiling it
+          $recipe .= <<"EOF";
+$obj: $deps
+	\$(CC) $incs $defs \$(CFLAGS) -E $srcs > $srcs.i
+	$cmd $cmdflags $cmdcompile /fo\$\@ $srcs.i
+	\$(RM) $srcs.i
+EOF
       } else {
           $recipe .= <<"EOF";
 $obj: $deps
