@@ -364,6 +364,7 @@ our @tests = (
         client => {
             extra => {
                 MaxFragmentLenExt => 1024,
+                # Record Size Limit is sent by default at the same value when Max Fragment Length is configured.
             },
         },
         test   => {
