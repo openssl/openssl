@@ -236,10 +236,6 @@ typedef struct {
     int enable_server_sctp_label_bug;
     /* Whether to expect a session id from the server */
     ssl_session_id_t session_id_expected;
-    /* If the Maximum Fragment Length extension is negotiated. */
-    int max_frag_len_negotiated;
-    /* If the Record Size Limit extension is negotiated. */
-    int record_size_limit_negotiated;
 
     size_t expected_client_max_send_frag_len;
     size_t expected_client_max_recv_frag_len;

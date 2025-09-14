@@ -930,10 +930,11 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
          * Record overflow checking (e.g. checking if
          * thisrr->length > SSL3_RT_MAX_PLAIN_LENGTH) is the responsibility of
          * the post_process_record() function above. However we check here if
-         * the received packet overflows the current record size limit.
-         * Note: rl->record_size_limit != SSL3_RT_MAX_PLAIN_LENGTH and KTLS are
+         * the received packet overflows the current max fragment length or
+         * record size limit setting if there is one.
+         * Note: rl->max_frag_len != SSL3_RT_MAX_PLAIN_LENGTH and KTLS are
          * mutually exclusive. Also note that with KTLS thisrr->length can
-         * be > SSL3_RT_MAX_PLAIN_LENGTH (and rl->record_size_limit must be ignored)
+         * be > SSL3_RT_MAX_PLAIN_LENGTH (and rl->max_frag_len must be ignored)
          */
         if (rl->max_frag_len != SSL3_RT_MAX_PLAIN_LENGTH
                 && thisrr->length > rl->max_frag_len) {
@@ -1265,7 +1266,7 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         return OSSL_RECORD_RETURN_FATAL;
 
     /*
-     * Default the value for record size limit. This may be overridden by the
+     * Default the value for max_frag_len. This may be overridden by the
      * settings
      */
     rl->max_frag_len = SSL3_RT_MAX_PLAIN_LENGTH;

@@ -68,7 +68,7 @@ static int final_early_data(SSL_CONNECTION *s, unsigned int context, int sent);
 static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
                                 int sent);
 static int final_record_size_limit(SSL_CONNECTION *s, unsigned int context,
-                                int sent);
+                                   int sent);
 static int init_post_handshake_auth(SSL_CONNECTION *s, unsigned int context);
 static int final_psk(SSL_CONNECTION *s, unsigned int context, int sent);
 static int tls_init_compress_certificate(SSL_CONNECTION *sc, unsigned int context);
@@ -122,7 +122,7 @@ typedef struct extensions_definition_st {
  * Extensions should be added to test/ext_internal_test.c as well, as that
  * tests the ordering of the extensions.
  *
- * Each extension has an initializer, a client and
+ * Each extension has an initialiser, a client and
  * server side parser and a finalizer. The initializer is called (if the
  * extension is relevant to the given context) even if we did not see the
  * extension in the message that we received. The parser functions are only

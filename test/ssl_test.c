@@ -419,7 +419,6 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         ret &= check_client_sign_hash(result, test_ctx);
         ret &= check_client_sign_type(result, test_ctx);
         ret &= check_client_ca_names(result, test_ctx);
-        // ret &= check_record_size_limit_negotiated(result, test_ctx);
         ret &= check_max_send_or_recv_frag_len(result, test_ctx);
     }
     return ret;

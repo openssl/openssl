@@ -217,8 +217,8 @@ int tls_parse_ctos_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
 }
 
 int tls_parse_ctos_record_size_limit(SSL_CONNECTION *s, PACKET *pkt,
-                                  unsigned int context,
-                                  X509 *x, size_t chainidx) {
+                                     unsigned int context,
+                                     X509 *x, size_t chainidx) {
     unsigned int peer_record_size_limit;
 
     if ((s->options & SSL_OP_NO_RECORD_SIZE_LIMIT_EXT) != 0)
@@ -271,7 +271,7 @@ int tls_parse_ctos_srp(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     if (!PACKET_strndup(&srp_I, &s->srp_ctx.login)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
-        }
+    }
 
     return 1;
 }
@@ -1711,7 +1711,7 @@ EXT_RETURN tls_construct_stoc_record_size_limit(SSL_CONNECTION *s, WPACKET *pkt,
         || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
-        }
+    }
 
     return EXT_RETURN_SENT;
 }

@@ -606,8 +606,6 @@ SSL_CTX_set_domain_flags                ?	3_5_0	EXIST::FUNCTION:
 SSL_CTX_get_domain_flags                ?	3_5_0	EXIST::FUNCTION:
 SSL_get_domain_flags                    ?	3_5_0	EXIST::FUNCTION:
 SSL_CTX_set_new_pending_conn_cb         ?	3_5_0	EXIST::FUNCTION:
-SSL_SESSION_get_record_size_limit       ?	3_6_0	EXIST::FUNCTION:
-SSL_SESSION_get_peer_record_size_limit  ?	3_6_0	EXIST::FUNCTION:
 SSL_CTX_set_record_size_limit           ?	3_7_0	EXIST::FUNCTION:
 SSL_set_record_size_limit               ?	3_7_0	EXIST::FUNCTION:
 SSL_get_max_send_fragment               ?	3_7_0	EXIST::FUNCTION:

@@ -797,7 +797,7 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
         xlen = (ext[0] << 8) | ext[1];
         if (extlen != xlen + 2)
             return 0;
-        return 1;
+        return ssl_trace_list(bio, indent + 2, ext + 2, xlen, 2, ssl_groups_tbl);
 
     case TLSEXT_TYPE_application_layer_protocol_negotiation:
         if (extlen < 2)
