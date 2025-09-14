@@ -28,7 +28,9 @@
 #include "internal/nelem.h"
 #include "internal/refcount.h"
 #include "internal/thread_once.h"
+#include "record/methods/recmethod_local.h"
 #include "internal/ktls.h"
+
 #include "internal/to_hex.h"
 #include "internal/ssl_unwrap.h"
 #include "quic/quic_local.h"

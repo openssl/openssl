@@ -694,10 +694,7 @@ IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CLIENT_CONF, client, no_extms_on_reneg)
 /* FIPS provider version limiting */
 IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, fips_version)
 
-/* Extension negotiation. */
-
-IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, max_frag_len_negotiated)
-IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, record_size_limit_negotiated)
+/* Max send/recv fragment length. */
 
 IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, expected_client_max_send_frag_len)
 IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, expected_client_max_recv_frag_len)
@@ -716,8 +713,6 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ExpectedResult", &parse_expected_result },
     { "ExpectedClientAlert", &parse_client_alert },
     { "ExpectedServerAlert", &parse_server_alert },
-    { "MaxFragmentLenNegotiated", &parse_test_max_frag_len_negotiated},
-    { "RecordSizeLimitNegotiated", &parse_test_record_size_limit_negotiated},
     { "ExpectedProtocol", &parse_protocol },
     { "ExpectedServerName", &parse_expected_servername },
     { "SessionTicketExpected", &parse_session_ticket },
