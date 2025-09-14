@@ -10,7 +10,7 @@
      our $makedep_scheme = $config{makedep_scheme};
      our $makedepcmd = platform->makedepcmd();
 
-     sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw)/ }
+     sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw|win64)/ }
 
      # Shared AIX support is special. We put libcrypto[64].so.ver into
      # libcrypto.a and use libcrypto_a.a as static one, unless using
