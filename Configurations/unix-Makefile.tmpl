@@ -1957,11 +1957,25 @@ EOF
       my $max_per_call = 500;
       my @objs_grouped;
       push @objs_grouped, join(" ", splice @objs, 0, $max_per_call) while @objs;
-      my $fill_lib =
-          join("\n\t", (map { "\$(AR) \$(ARFLAGS) $lib $_" } @objs_grouped));
+      my $rsp = '';
+      my $fill_lib;
+      if ($target{msvc_syntax} // 0) {
+          # MSVC-like tools overwrite the lib file and do not support appending
+          # objects in multiple calls. Use response file instead
+          $rsp = "$lib.rsp";
+          my $gen_rsp =
+              join("\n\t", (map { "\@echo '$_' >> $rsp" } @objs_grouped));
+          $fill_lib = $gen_rsp . "\n" . <<"EOF";
+	\$(AR) \$(ARFLAGS) /out:$lib \@$rsp
+	\$(RM) $rsp
+EOF
+      } else {
+          $fill_lib =
+              join("\n\t", (map { "\$(AR) \$(ARFLAGS) $lib $_" } @objs_grouped));
+      }
       return <<"EOF";
 $lib: $deps
-	\$(RM) $lib
+	\$(RM) $lib $rsp
 	$fill_lib
 	\$(RANLIB) \$\@ || echo Never mind.
 EOF
