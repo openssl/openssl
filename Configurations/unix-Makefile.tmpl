@@ -1939,6 +1939,21 @@ $full: $fulldeps
 		$fullobjs \\
 		$linklibs \$(LIB_EX_LIBS)
 EOF
+      } elsif ($target{msvc_syntax} // 0) {
+          # Clang-CL accepts the rest of the command line after /link as linker
+          # options, but does not forward /LIBPATH like GCC/Clang forwards -L
+          # and so on. Therefore, object files must go before linker flags.
+          $recipe .= <<"EOF";
+$full: $fulldeps
+	\$(file >\$@.lst, \\
+		$fullobjs \\
+	)
+	\$(CC) \$(LIB_CFLAGS) $shared_soname \\
+		-o $full \\
+		@\$@.lst \\
+		$linklibs \$(LIB_EX_LIBS) \$(LIB_LDFLAGS) $linkflags $shared_imp $shared_def
+	rm -f \$@.lst
+EOF
       } else {
           $recipe .= <<"EOF";
 $full: $fulldeps
@@ -2014,13 +2029,23 @@ EOF
                       fill_lines(' ', $COLUMNS - length($dso) - 2,
                                  @objs, @defs, @deps));
 
-      return <<"EOF";
+      if ($target{msvc_syntax} // 0) {
+          return <<"EOF";
+$dso: $deps
+	\$(CC) \$(DSO_CFLAGS) \\
+		-o $dso \\
+		$objs \\
+		$linklibs\$(DSO_EX_LIBS) \$(DSO_LDFLAGS) $linkflags $shared_def
+EOF
+      } else {
+          return <<"EOF";
 $dso: $deps
 	\$(CC) \$(DSO_CFLAGS) $linkflags\$(DSO_LDFLAGS) \\
 		-o $dso$shared_def \\
 		$objs \\
 		$linklibs\$(DSO_EX_LIBS)
 EOF
+      }
   }
   sub obj2lib {
       my %args = @_;
@@ -2105,7 +2130,17 @@ EOF
                       fill_lines(' ', $COLUMNS - length($bin) - 2,
                                  @objs, @deps));
 
-      return <<"EOF";
+      if ($target{msvc_syntax} // 0) {
+          return <<"EOF";
+$bin: $deps
+	rm -f $bin
+	\$\${LDCMD:-$cmd} $cmdflags \\
+		-o $bin \\
+		$objs \\
+		$linklibs\$(BIN_EX_LIBS) \$(BIN_LDFLAGS) $linkflags
+EOF
+      } else {
+          return <<"EOF";
 $bin: $deps
 	rm -f $bin
 	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(BIN_LDFLAGS)$wrapflags \\
@@ -2113,6 +2148,7 @@ $bin: $deps
 		$objs \\
 		$linklibs\$(BIN_EX_LIBS)$utlibs
 EOF
+      }
   }
   sub in2script {
       my %args = @_;
