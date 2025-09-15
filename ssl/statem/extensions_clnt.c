@@ -40,7 +40,7 @@ EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
         }
 
 #ifndef OPENSSL_NO_ECH
-       ECH_SAME_EXT(s, context, pkt)
+        ECH_SAME_EXT(s, context, pkt)
 #endif
 
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
