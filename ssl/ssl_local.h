@@ -2668,8 +2668,7 @@ __owur int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
                                    void *key);
 
 __owur unsigned int ssl_get_proto_record_hard_limit(const SSL_CONNECTION *sc);
-__owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc,
-                                              uint8_t type);
+__owur size_t ssl_get_max_send_fragment(const SSL_CONNECTION *sc, uint8_t type);
 
 __owur const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname);

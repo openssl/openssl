@@ -7366,8 +7366,8 @@ __owur unsigned int ssl_get_proto_record_hard_limit(const SSL_CONNECTION *sc) {
     return get_proto_record_hard_limit(sc->version);
 }
 
-__owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc,
-                                              uint8_t type)
+__owur size_t ssl_get_max_send_fragment(const SSL_CONNECTION *sc,
+                                        uint8_t type)
 {
     if (sc->rlayer.wrl != NULL) {
         /* For TLS 1.3, get the real type. */
