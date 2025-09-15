@@ -39,7 +39,6 @@ ENGINE *ENGINE_new(void)
         OPENSSL_free(ret);
         return NULL;
     }
-    ENGINE_REF_PRINT(ret, 0, 1);
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data)) {
         CRYPTO_FREE_REF(&ret->struct_ref);
         OPENSSL_free(ret);
@@ -81,7 +80,6 @@ int engine_free_util(ENGINE *e, int not_locked)
     if (e == NULL)
         return 1;
     CRYPTO_DOWN_REF(&e->struct_ref, &i);
-    ENGINE_REF_PRINT(e, 0, -1);
     if (i > 0)
         return 1;
     REF_ASSERT_ISNT(i < 0);
