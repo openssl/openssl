@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -460,17 +460,18 @@ static int ossl_test_aes128cbc_update(void *vprovctx, char *out, size_t *outl,
 
     if (EVP_CIPHER_CTX_is_encrypting(ctx->sub_ctx)) {
         /*
-         * On encrypt, Make sure output buffer is large enough to hold the crypto
-         * result plus any needed padding, keeping in mind that for inputs
-         * less than the block size (16), we pad the remainder of this block
-         * plus a full extra block.
+         * On encrypt, Make sure output buffer is large enough to hold the
+         * crypto result plus any needed padding, keeping in mind that for
+         * inputs less than the block size (16), we pad to the remainder of this
+         * block (i.e. up to 15 bytes). For inputs equal to the block size, we
+         * add an additional block of padding (16 bytes).
          */
         if (outsize < inl + (16 - (inl % 16)))
             goto err;
     } else {
         /*
          * On decrypt we just need to make sure the output buffer is at least
-         * least as large as the input buffer, to store the result
+         * as large as the input buffer, to store the result.
          */
         if (outsize < inl)
             goto err;
