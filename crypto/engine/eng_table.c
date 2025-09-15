@@ -262,13 +262,7 @@ ENGINE *ossl_engine_table_select(ENGINE_TABLE **table, int nid,
             if (fnd->funct)
                 engine_unlocked_finish(fnd->funct, 0);
             fnd->funct = ret;
-            OSSL_TRACE4(ENGINE_TABLE,
-                        "%s:%d, nid=%d, setting default to '%s'\n",
-                        f, l, nid, ret->id);
         }
-        OSSL_TRACE4(ENGINE_TABLE,
-                    "%s:%d, nid=%d, using newly initialised '%s'\n",
-                    f, l, nid, ret->id);
         goto end;
     }
     goto trynext;
@@ -279,14 +273,6 @@ ENGINE *ossl_engine_table_select(ENGINE_TABLE **table, int nid,
      */
     if (fnd)
         fnd->uptodate = 1;
-    if (ret)
-        OSSL_TRACE4(ENGINE_TABLE,
-                   "%s:%d, nid=%d, caching ENGINE '%s'\n",
-                   f, l, nid, ret->id);
-    else
-        OSSL_TRACE3(ENGINE_TABLE,
-                    "%s:%d, nid=%d, caching 'no matching ENGINE'\n",
-                    f, l, nid);
     CRYPTO_THREAD_unlock(global_engine_lock);
     /*
      * Whatever happened, any failed init()s are not failures in this

@@ -213,7 +213,6 @@ const EVP_PKEY_ASN1_METHOD *ENGINE_pkey_asn1_find_str(ENGINE **pe,
             ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
             return NULL;
         }
-        ENGINE_REF_PRINT(fstr.e, 0, 1);
     }
     *pe = fstr.e;
     CRYPTO_THREAD_unlock(global_engine_lock);
