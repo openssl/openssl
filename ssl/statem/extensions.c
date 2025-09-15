@@ -1124,6 +1124,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
      * the real ECH extension value
      */
     if (s->server
+        || context != SSL_EXT_CLIENT_HELLO
         || s->ext.ech.attempted == 0
         || s->ext.ech.ch_depth == 1
         || s->ext.ech.grease == OSSL_ECH_IS_GREASE) {
@@ -2065,7 +2066,7 @@ static EXT_RETURN tls_construct_compress_certificate(SSL_CONNECTION *sc, WPACKET
     if (sc->cert_comp_prefs[0] == TLSEXT_comp_cert_none)
         return EXT_RETURN_NOT_SENT;
 # ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(sc, pkt);
+    ECH_SAME_EXT(sc, context, pkt);
 # endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_compress_certificate)
