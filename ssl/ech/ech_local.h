@@ -282,7 +282,9 @@ typedef struct ossl_ech_conn_st {
  * be the same as in the inner.
  *
  * This macro should be called in each _ctos_ function that doesn't explicitly
- * have special ECH handling.
+ * have special ECH handling. There are some _ctos_ functions that are called
+ * from a server, but we don't want to do anything in such cases. We also
+ * screen out cases where the context is not handling the ClientHello.
  *
  * Note that the placement of this macro needs a bit of thought - it has to go
  * after declarations (to keep the ansi-c compile happy) and also after any
@@ -290,15 +292,16 @@ typedef struct ossl_ech_conn_st {
  * state changes that would affect a possible 2nd call to the constructor.
  * Luckily, that's usually not too hard, but it's not mechanical.
  */
-#define ECH_SAME_EXT(s, pkt)                               \
-    if (s->ext.ech.es != NULL && s->ext.ech.grease == 0) { \
-        int ech_iosame_rv = ossl_ech_same_ext(s, pkt);     \
-                                                           \
-        if (ech_iosame_rv == OSSL_ECH_SAME_EXT_ERR)        \
-            return EXT_RETURN_FAIL;                        \
-        if (ech_iosame_rv == OSSL_ECH_SAME_EXT_DONE)       \
-            return EXT_RETURN_SENT;                        \
-        /* otherwise continue as normal */                 \
+#define ECH_SAME_EXT(s, context, pkt)                         \
+    if (context == SSL_EXT_CLIENT_HELLO && !s->server         \
+        && s->ext.ech.es != NULL && s->ext.ech.grease == 0) { \
+        int ech_iosame_rv = ossl_ech_same_ext(s, pkt);        \
+                                                              \
+        if (ech_iosame_rv == OSSL_ECH_SAME_EXT_ERR)           \
+            return EXT_RETURN_FAIL;                           \
+        if (ech_iosame_rv == OSSL_ECH_SAME_EXT_DONE)          \
+            return EXT_RETURN_SENT;                           \
+        /* otherwise continue as normal */                    \
     }
 
 /* Internal ECH APIs */
