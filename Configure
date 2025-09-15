@@ -580,6 +580,14 @@ my @disablables_int = qw(
     );
 
 my %deprecated_disablables = (
+    "engine" => undef,
+    "static-engine" => undef,
+    "dynamic-engine" => undef,
+    "afalgeng" => undef,
+    "capieng" => undef,
+    "devcryptoeng" => undef,
+    "loadereng" => undef,
+    "padlockeng" => undef,
     "ssl2" => undef,
     "buf-freelists" => undef,
     "crypto-mdebug-backtrace" => undef,
@@ -605,7 +613,6 @@ our %disabled = ( # "what"         => "comment"
                   "demos"               => "default",
                   "h3demo"              => "default",
                   "hqinterop"           => "default",
-                  "devcryptoeng"        => "default",
                   "ec_nistp_64_gcc_128" => "default",
                   "egd"                 => "default",
                   "external-tests"      => "default",
