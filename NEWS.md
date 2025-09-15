@@ -58,12 +58,19 @@ changes:
 OpenSSL 3.5
 -----------
 
-### Changes between 3.5.1 and 3.5.2 [5 Aug 2025]
+### Major changes between OpenSSL 3.5.2 and OpenSSL 3.5.3 [16 Sep 2025]
 
- * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
-   This is mandated by FIPS 140-3 IG 10.3.A additional comment 1.
+  * Added FIPS 140-3 PCT on DH key generation.
 
-   *Dr Paul Dale*
+    *Nikola Pajkovsky*
+
+  * Fixed the synthesised `OPENSSL_VERSION_NUMBER`.
+
+    *Richard Levitte*
+
+### Major changes between OpenSSL 3.5.1 and OpenSSL 3.5.2 [5 Aug 2025]
+
+  * none
 
 ### Major changes between OpenSSL 3.5.0 and OpenSSL 3.5.1 [1 Jul 2025]
 
