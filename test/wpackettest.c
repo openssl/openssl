@@ -588,7 +588,7 @@ static int test_WPACKET_quic_vlint_random(void)
 
     for (i = 0; i < 10000; ++i) {
         if (!TEST_int_gt(RAND_bytes(rand_data, sizeof(rand_data)), 0))
-            return cleanup(&pkt);
+            return 0;
 
         memcpy(&expected, rand_data, sizeof(uint64_t));
 
