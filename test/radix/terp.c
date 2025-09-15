@@ -871,8 +871,10 @@ err:
     }
 
     GEN_SCRIPT_cleanup(&gen_script);
-    BIO_printf(debug_bio, "Stats:\n  Ops executed: %16llu\n\n",
-               (unsigned long long)terp.ops_executed);
+    if (have_terp) {
+        BIO_printf(debug_bio, "Stats:\n  Ops executed: %16llu\n\n",
+                   (unsigned long long)terp.ops_executed);
+    }
     SCRIPT_INFO_print(script_info, debug_bio, /*error=*/!ok,
                       ok ? "completed" : "failed, exiting");
     return ok;
