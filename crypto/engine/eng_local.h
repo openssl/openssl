@@ -20,22 +20,6 @@
 extern CRYPTO_RWLOCK *global_engine_lock;
 
 /*
- * This prints the engine's pointer address, "struct" or "funct" to
- * indicate the reference type, the before and after reference count, and
- * the file:line-number pair. The "ENGINE_REF_PRINT" statements must come
- * *after* the change.
- */
-# define ENGINE_REF_PRINT(e, isfunct, diff)                             \
-    OSSL_TRACE6(ENGINE_REF_COUNT,                                       \
-               "engine: %p %s from %d to %d (%s:%d)\n",                 \
-               (void *)(e), (isfunct ? "funct" : "struct"),             \
-               ((isfunct)                                               \
-                ? ((e)->funct_ref - (diff))                             \
-                : (eng_struct_ref(e) - (diff))),                        \
-               ((isfunct) ? (e)->funct_ref : eng_struct_ref(e)),        \
-               (OPENSSL_FILE), (OPENSSL_LINE))
-
-/*
  * Any code that will need cleanup operations should use these functions to
  * register callbacks. engine_cleanup_int() will call all registered
  * callbacks in order. NB: both the "add" functions assume the engine lock to
