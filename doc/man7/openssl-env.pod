@@ -162,17 +162,6 @@ Traces decoder operations.
 
 Traces encoder operations.
 
-=item B<ENGINE_REF_COUNT>
-
-Reference counts in the ENGINE structure will be monitored with a line
-of generated for each change.
-
-=item B<ENGINE_TABLE>
-
-The function that is used by RSA, DSA (etc) code to select registered
-ENGINEs, cache defaults and functional references (etc), will generate
-debugging summaries.
-
 =item B<HTTP>
 
 Traces the HTTP client and server, such as messages being sent and received.
