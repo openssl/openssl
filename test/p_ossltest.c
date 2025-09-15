@@ -458,6 +458,24 @@ static int ossl_test_aes128cbc_update(void *vprovctx, char *out, size_t *outl,
 
     *outl = 0;
 
+    if (EVP_CIPHER_CTX_is_encrypting(ctx->sub_ctx)) {
+        /*
+         * On encrypt, Make sure output buffer is large enough to hold the crypto
+         * result plus any needed padding, keeping in mind that for inputs
+         * less than the block size (16), we pad the remainder of this block
+         * plus a full extra block.
+         */
+        if (outsize < inl + (16 - (inl % 16)))
+            goto err;
+    } else {
+        /*
+         * On decrypt we just need to make sure the output buffer is at least
+         * least as large as the input buffer, to store the result
+         */
+        if (outsize < inl)
+            goto err;
+    }
+
     /*
      * record our input buffer
      */
@@ -478,8 +496,6 @@ static int ossl_test_aes128cbc_update(void *vprovctx, char *out, size_t *outl,
     memcpy(out, inbuf, inl);
 
     if (EVP_CIPHER_CTX_is_encrypting(ctx->sub_ctx)) {
-        if (outsize < (inl + 16) % 16)
-            goto err;
         padnum = (int)(16 - (inl % 16));
         padval = (unsigned char)(padnum - 1);
         if (((size_t)(soutl + padnum)) > outsize)
