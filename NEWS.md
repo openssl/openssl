@@ -25,10 +25,6 @@ OpenSSL 3.5
 
 ### Major changes between OpenSSL 3.5.2 and OpenSSL 3.5.3 [under development]
 
-  * Added PCT for key import for SLH-DSA when in FIPS mode.
-
-    *Dr Paul Dale*
-
   * Added FIPS 140-3 PCT on DH key generation.
 
     *Nikola Pajkovsky*
