@@ -40,7 +40,7 @@ EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
         }
 
 #ifndef OPENSSL_NO_ECH
-        ECH_SAME_EXT(s, pkt)
+       ECH_SAME_EXT(s, context, pkt)
 #endif
 
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
@@ -55,7 +55,7 @@ EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
 #ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 #endif
 
     /* Add a complete RI extension if renegotiating */
@@ -124,7 +124,7 @@ EXT_RETURN tls_construct_ctos_maxfragmentlen(SSL_CONNECTION *s, WPACKET *pkt,
     if (s->ext.max_fragment_len_mode == TLSEXT_max_fragment_length_DISABLED)
         return EXT_RETURN_NOT_SENT;
 #ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 #endif
 
     /* Add Max Fragment Length extension if client enabled it. */
@@ -153,7 +153,7 @@ EXT_RETURN tls_construct_ctos_srp(SSL_CONNECTION *s, WPACKET *pkt,
     if (s->srp_ctx.login == NULL)
         return EXT_RETURN_NOT_SENT;
 # ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 # endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_srp)
@@ -234,7 +234,7 @@ EXT_RETURN tls_construct_ctos_ec_pt_formats(SSL_CONNECTION *s, WPACKET *pkt,
     if (!use_ecc(s, min_version, max_version))
         return EXT_RETURN_NOT_SENT;
 #ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 #endif
 
     /* Add TLS extension ECPointFormats to the ClientHello message */
@@ -274,7 +274,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
             && (SSL_CONNECTION_IS_DTLS(s) || max_version < TLS1_3_VERSION))
         return EXT_RETURN_NOT_SENT;
 #ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 #endif
 
     /*
@@ -333,7 +333,7 @@ EXT_RETURN tls_construct_ctos_session_ticket(SSL_CONNECTION *s, WPACKET *pkt,
     if (!tls_use_ticket(s))
         return EXT_RETURN_NOT_SENT;
 #ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 #endif
 
     if (!s->new_session && s->session != NULL
@@ -393,7 +393,7 @@ EXT_RETURN tls_construct_ctos_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
 #ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 #endif
 
     salglen = tls12_get_psigalgs(s, 1, &salg);
@@ -426,7 +426,7 @@ EXT_RETURN tls_construct_ctos_status_request(SSL_CONNECTION *s, WPACKET *pkt,
     if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp)
         return EXT_RETURN_NOT_SENT;
 # ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 # endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request)
@@ -489,7 +489,7 @@ EXT_RETURN tls_construct_ctos_npn(SSL_CONNECTION *s, WPACKET *pkt,
         || !SSL_IS_FIRST_HANDSHAKE(s))
         return EXT_RETURN_NOT_SENT;
 # ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 # endif
 
     /*
@@ -566,7 +566,7 @@ EXT_RETURN tls_construct_ctos_use_srtp(SSL_CONNECTION *s, WPACKET *pkt,
     if (clnt == NULL)
         return EXT_RETURN_NOT_SENT;
 # ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 # endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_use_srtp)
@@ -607,7 +607,7 @@ EXT_RETURN tls_construct_ctos_etm(SSL_CONNECTION *s, WPACKET *pkt,
     if (s->options & SSL_OP_NO_ENCRYPT_THEN_MAC)
         return EXT_RETURN_NOT_SENT;
 #ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 #endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_encrypt_then_mac)
@@ -631,7 +631,7 @@ EXT_RETURN tls_construct_ctos_sct(SSL_CONNECTION *s, WPACKET *pkt,
     if (x != NULL)
         return EXT_RETURN_NOT_SENT;
 # ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 # endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_signed_certificate_timestamp)
@@ -651,7 +651,7 @@ EXT_RETURN tls_construct_ctos_ems(SSL_CONNECTION *s, WPACKET *pkt,
     if (s->options & SSL_OP_NO_EXTENDED_MASTER_SECRET)
         return EXT_RETURN_NOT_SENT;
 #ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 #endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_extended_master_secret)
@@ -682,7 +682,7 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
     if (max_version < TLS1_3_VERSION)
         return EXT_RETURN_NOT_SENT;
 #ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 #endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
@@ -717,7 +717,7 @@ EXT_RETURN tls_construct_ctos_psk_kex_modes(SSL_CONNECTION *s, WPACKET *pkt,
     int nodhe = s->options & SSL_OP_ALLOW_NO_DHE_KEX;
 
 # ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 # endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk_kex_modes)
@@ -812,7 +812,7 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
     size_t valid_keyshare = 0;
 
 # ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 # endif
 
     /* key_share extension */
@@ -903,7 +903,7 @@ EXT_RETURN tls_construct_ctos_cookie(SSL_CONNECTION *s, WPACKET *pkt,
     if (s->ext.tls13_cookie_len == 0)
         return EXT_RETURN_NOT_SENT;
 #ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 #endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_cookie)
@@ -1134,7 +1134,7 @@ EXT_RETURN tls_construct_ctos_padding(SSL_CONNECTION *s, WPACKET *pkt,
     if ((s->options & SSL_OP_TLSEXT_PADDING) == 0)
         return EXT_RETURN_NOT_SENT;
 #ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt);
+    ECH_SAME_EXT(s, context, pkt);
 #endif
 
     /*
@@ -1508,7 +1508,7 @@ EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pk
     if (!s->pha_enabled)
         return EXT_RETURN_NOT_SENT;
 # ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, pkt)
+    ECH_SAME_EXT(s, context, pkt)
 # endif
 
     /* construct extension - 0 length, no contents */
@@ -2405,7 +2405,7 @@ EXT_RETURN tls_construct_ctos_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
     if (sc->client_cert_type == NULL)
         return EXT_RETURN_NOT_SENT;
 #ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(sc, pkt)
+    ECH_SAME_EXT(sc, context, pkt)
 #endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_client_cert_type)
@@ -2460,7 +2460,7 @@ EXT_RETURN tls_construct_ctos_server_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
     if (sc->server_cert_type == NULL)
         return EXT_RETURN_NOT_SENT;
 #ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(sc, pkt)
+    ECH_SAME_EXT(sc, context, pkt)
 #endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_cert_type)
