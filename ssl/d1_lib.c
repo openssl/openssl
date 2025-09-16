@@ -53,6 +53,21 @@ const SSL3_ENC_METHOD DTLSv1_2_enc_data = {
     dtls1_handshake_write
 };
 
+const SSL3_ENC_METHOD DTLSv1_3_enc_data = {
+    tls13_setup_key_block,
+    tls13_generate_master_secret,
+    tls13_change_cipher_state,
+    tls13_final_finish_mac,
+    TLS_MD_CLIENT_FINISH_CONST, TLS_MD_CLIENT_FINISH_CONST_SIZE,
+    TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
+    tls13_alert_code,
+    tls13_export_keying_material,
+    SSL_ENC_FLAG_DTLS | SSL_ENC_FLAG_SIGALGS | SSL_ENC_FLAG_SHA256_PRF,
+    dtls1_set_handshake_header,
+    dtls1_close_construct_packet,
+    dtls1_handshake_write
+};
+
 OSSL_TIME dtls1_default_timeout(void)
 {
     /*
@@ -81,23 +96,12 @@ int dtls1_new(SSL *ssl)
         return 0;
     }
 
-    d1->buffered_messages = pqueue_new();
-    d1->sent_messages = pqueue_new();
-
-    if (s->server) {
+    if (s->server)
         d1->cookie_len = sizeof(s->d1->cookie);
-    }
 
     d1->link_mtu = 0;
     d1->mtu = 0;
-
-    if (d1->buffered_messages == NULL || d1->sent_messages == NULL) {
-        pqueue_free(d1->buffered_messages);
-        pqueue_free(d1->sent_messages);
-        OPENSSL_free(d1);
-        ssl3_free(ssl);
-        return 0;
-    }
+    d1->hello_verify_request = SSL_HVR_NONE;
 
     s->d1 = d1;
 
@@ -110,44 +114,128 @@ int dtls1_new(SSL *ssl)
 static void dtls1_clear_queues(SSL_CONNECTION *s)
 {
     dtls1_clear_received_buffer(s);
-    dtls1_clear_sent_buffer(s);
+    dtls1_clear_sent_buffer(s, 0);
+    ossl_list_record_number_elem_free(&s->d1->ack_rec_num);
 }
 
 void dtls1_clear_received_buffer(SSL_CONNECTION *s)
 {
     pitem *item = NULL;
     hm_fragment *frag = NULL;
+    pqueue *rcvd_messages = &s->d1->rcvd_messages;
 
-    while ((item = pqueue_pop(s->d1->buffered_messages)) != NULL) {
+    while ((item = pqueue_pop(rcvd_messages)) != NULL) {
         frag = (hm_fragment *)item->data;
         dtls1_hm_fragment_free(frag);
         pitem_free(item);
     }
 }
 
-void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
+void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list)
+{
+    DTLS1_RECORD_NUMBER *p_elem;
+    DTLS1_RECORD_NUMBER *p_elem_next = NULL;
+
+    if (p_list != NULL)
+        p_elem_next = ossl_list_record_number_head(p_list);
+
+    while ((p_elem = p_elem_next) != NULL) {
+        p_elem_next = ossl_list_record_number_next(p_elem_next);
+        ossl_list_record_number_remove(p_list, p_elem);
+        OPENSSL_free(p_elem);
+    }
+}
+
+DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum)
+{
+    DTLS1_RECORD_NUMBER *recnum = OPENSSL_zalloc(sizeof(*recnum));
+
+    if (recnum != NULL) {
+        recnum->epoch = epoch;
+        recnum->seqnum = seqnum;
+    }
+
+    return recnum;
+}
+
+void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint16_t before_epoch)
 {
     pitem *item = NULL;
-    hm_fragment *frag = NULL;
+    piterator iter = pqueue_iterator(&s->d1->sent_messages);
 
-    while ((item = pqueue_pop(s->d1->sent_messages)) != NULL) {
-        frag = (hm_fragment *)item->data;
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
+        DTLS1_RECORD_NUMBER *recnum;
+        DTLS1_RECORD_NUMBER *recnum_next = ossl_list_record_number_head(&sent_msg->rec_nums);
 
-        if (frag->msg_header.is_ccs
-                && frag->msg_header.saved_retransmit_state.wrlmethod != NULL
-                && s->rlayer.wrl != frag->msg_header.saved_retransmit_state.wrl) {
+        while ((recnum = recnum_next) != NULL) {
+            recnum_next = ossl_list_record_number_next(recnum_next);
+
+            if (recnum->epoch < before_epoch) {
+                ossl_list_record_number_remove(&sent_msg->rec_nums, recnum);
+                OPENSSL_free(recnum);
+            }
+        }
+    }
+}
+
+void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
+{
+    pitem *item = NULL;
+    pqueue *remaining_sent_messages = pqueue_new();
+    pqueue *sent_messages = &s->d1->sent_messages;
+
+    while ((item = pqueue_pop(sent_messages)) != NULL) {
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
+        unsigned char msg_type = sent_msg->msg_info.msg_type;
+        unsigned char record_type = sent_msg->msg_info.record_type;
+
+        if (SSL_CONNECTION_IS_DTLS13(s)
+            && !ossl_list_record_number_is_empty(&sent_msg->rec_nums)
+            && keep_unacked_msgs) {
+            pqueue_insert(remaining_sent_messages, item);
+            continue;
+        }
+
+        if (((!SSL_CONNECTION_IS_DTLS13(s) && record_type == SSL3_RT_CHANGE_CIPHER_SPEC)
+             || (SSL_CONNECTION_IS_DTLS13(s)
+                 && (msg_type == SSL3_MT_FINISHED
+                     || msg_type == SSL3_MT_SERVER_HELLO
+                     || msg_type == SSL3_MT_KEY_UPDATE)))
+            && sent_msg->saved_retransmit_state.wrlmethod != NULL
+            && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl) {
             /*
              * If we're freeing the CCS then we're done with the old wrl and it
              * can bee freed
              */
-            frag->msg_header.saved_retransmit_state.wrlmethod->free(frag->msg_header.saved_retransmit_state.wrl);
+            sent_msg->saved_retransmit_state.wrlmethod->free(sent_msg->saved_retransmit_state.wrl);
         }
 
-        dtls1_hm_fragment_free(frag);
+        dtls1_sent_msg_free(sent_msg);
         pitem_free(item);
     }
+
+    if (SSL_CONNECTION_IS_DTLS13(s))
+        while ((item = pqueue_pop(remaining_sent_messages)) != NULL)
+            pqueue_insert(&s->d1->sent_messages, item);
+
+    pqueue_free(remaining_sent_messages);
 }
 
+int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s)
+{
+    pitem *item;
+    piterator iter = pqueue_iterator(&s->d1->sent_messages);
+
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+        if (!ossl_list_record_number_is_empty(&msg->rec_nums))
+            return 1;
+    }
+
+    return 0;
+}
 
 void dtls1_free(SSL *ssl)
 {
@@ -156,24 +244,17 @@ void dtls1_free(SSL *ssl)
     if (s == NULL)
         return;
 
-    if (s->d1 != NULL) {
+    if (s->d1 != NULL)
         dtls1_clear_queues(s);
-        pqueue_free(s->d1->buffered_messages);
-        pqueue_free(s->d1->sent_messages);
-    }
 
     DTLS_RECORD_LAYER_free(&s->rlayer);
-
     ssl3_free(ssl);
-
     OPENSSL_free(s->d1);
     s->d1 = NULL;
 }
 
 int dtls1_clear(SSL *ssl)
 {
-    pqueue *buffered_messages;
-    pqueue *sent_messages;
     size_t mtu;
     size_t link_mtu;
 
@@ -187,8 +268,6 @@ int dtls1_clear(SSL *ssl)
     if (s->d1) {
         DTLS_timer_cb timer_cb = s->d1->timer_cb;
 
-        buffered_messages = s->d1->buffered_messages;
-        sent_messages = s->d1->sent_messages;
         mtu = s->d1->mtu;
         link_mtu = s->d1->link_mtu;
 
@@ -207,9 +286,6 @@ int dtls1_clear(SSL *ssl)
             s->d1->mtu = mtu;
             s->d1->link_mtu = link_mtu;
         }
-
-        s->d1->buffered_messages = buffered_messages;
-        s->d1->sent_messages = sent_messages;
     }
 
     if (!ssl3_clear(ssl))
@@ -361,7 +437,7 @@ void dtls1_stop_timer(SSL_CONNECTION *s)
     s->d1->timeout_duration_us = 1000000;
     dtls1_bio_set_next_timeout(s->rbio, s->d1);
     /* Clear retransmission buffer */
-    dtls1_clear_sent_buffer(s);
+    dtls1_clear_sent_buffer(s, 0);
 }
 
 int dtls1_check_timeout_num(SSL_CONNECTION *s)
@@ -409,7 +485,7 @@ int dtls1_handle_timeout(SSL_CONNECTION *s)
 
     dtls1_start_timer(s);
     /* Calls SSLfatal() if required */
-    return dtls1_retransmit_buffered_messages(s);
+    return dtls1_retransmit_sent_messages(s);
 }
 
 #define LISTEN_SUCCESS              2
@@ -831,12 +907,11 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
      * Reset the record layer - but this time we can use the record we just
      * buffered in s->rlayer.rrlnext
      */
-    if (!ssl_set_new_record_layer(s,
-                                  DTLS_ANY_VERSION,
+    if (!ssl_set_new_record_layer(s, DTLS_ANY_VERSION,
                                   OSSL_RECORD_DIRECTION_READ,
                                   OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
-                                  NULL, 0, NULL, 0, NULL,  0, NULL, 0,
-                                  NID_undef, NULL, NULL, NULL)) {
+                                  NULL, NULL, 0, NULL, 0, NULL,  0, NULL, 0, NULL,
+                                  0, NID_undef, NULL, NULL, NULL)) {
         /* SSLfatal already called */
         ret = -1;
         goto end;
@@ -932,7 +1007,7 @@ size_t dtls1_min_mtu(SSL_CONNECTION *s)
 
 size_t DTLS_get_data_mtu(const SSL *ssl)
 {
-    size_t mac_overhead, int_overhead, blocksize, ext_overhead;
+    size_t mac_overhead, int_overhead, blocksize, ext_overhead, rechdrlen = 0;
     const SSL_CIPHER *ciph = SSL_get_current_cipher(ssl);
     size_t mtu;
     const SSL_CONNECTION *s = SSL_CONNECTION_FROM_CONST_SSL_ONLY(ssl);
@@ -954,10 +1029,33 @@ size_t DTLS_get_data_mtu(const SSL *ssl)
     else
         int_overhead += mac_overhead;
 
+    if (SSL_version(ssl) == DTLS1_3_VERSION) {
+        switch (SSL_get_state(ssl)) {
+        case TLS_ST_BEFORE:
+        case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
+        case TLS_ST_CR_SRVR_HELLO:
+        case TLS_ST_CW_CLNT_HELLO:
+        case TLS_ST_CW_COMP_CERT:
+        case TLS_ST_CW_KEY_EXCH:
+        case TLS_ST_SW_HELLO_REQ:
+        case TLS_ST_SR_CLNT_HELLO:
+        case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
+        case TLS_ST_SW_SRVR_HELLO:
+        case TLS_ST_CR_HELLO_REQ:
+            rechdrlen = DTLS1_RT_HEADER_LENGTH;
+            break;
+        default:
+            rechdrlen = DTLS13_UNI_HDR_FIXED_LENGTH;
+            break;
+        }
+    } else {
+        rechdrlen = DTLS1_RT_HEADER_LENGTH;
+    }
+
     /* Subtract external overhead (e.g. IV/nonce, separate MAC) */
-    if (ext_overhead + DTLS1_RT_HEADER_LENGTH >= mtu)
+    if (ext_overhead + rechdrlen >= mtu)
         return 0;
-    mtu -= ext_overhead + DTLS1_RT_HEADER_LENGTH;
+    mtu -= ext_overhead + rechdrlen;
 
     /* Round encrypted payload down to cipher block size (for CBC etc.)
      * No check for overflow since 'mtu % blocksize' cannot exceed mtu. */
