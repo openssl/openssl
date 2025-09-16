@@ -126,8 +126,23 @@ static void rwwriter_fn(int id, int *iterations)
 
     for (count = 0; ; count++) {
         new = CRYPTO_zalloc(sizeof (int), NULL, 0);
-        if (contention == 0)
-            OSSL_sleep(1000);
+        if (contention == 0) {
+            /*
+             * We cannot rely on the fact that OSSL_sleep() delays
+             * for the requested amount of time, as it is prohibited
+             * to do so, so we have to call it in loop until
+             * the needed time is passed.
+             */
+            OSSL_TIME now = ossl_time_now();
+            OSSL_TIME finish = ossl_time_add(now, ossl_ms2time(1000));
+            uint64_t left = 1000;
+
+            do {
+                OSSL_sleep(left);
+                now = ossl_time_now();
+                left = ossl_time2ms(ossl_time_subtract(finish, now));
+            } while (ossl_time_compare(now, finish) <= 0);
+        }
         if (!CRYPTO_THREAD_write_lock(rwtorturelock))
             abort();
         if (rwwriter_ptr != NULL) {
@@ -323,8 +338,23 @@ static void writer_fn(int id, int *iterations)
     for (count = 0; ; count++) {
         new = CRYPTO_malloc(sizeof(uint64_t), NULL, 0);
         *new = (uint64_t)0xBAD;
-        if (contention == 0)
-            OSSL_sleep(1000);
+        if (contention == 0) {
+            /*
+             * We cannot rely on the fact that OSSL_sleep() delays
+             * for the requested amount of time, as it is prohibited
+             * to do so, so we have to call it in loop until
+             * the needed time is passed.
+             */
+            OSSL_TIME now = ossl_time_now();
+            OSSL_TIME finish = ossl_time_add(now, ossl_ms2time(1000));
+            uint64_t left = 1000;
+
+            do {
+                OSSL_sleep(left);
+                now = ossl_time_now();
+                left = ossl_time2ms(ossl_time_subtract(finish, now));
+            } while (ossl_time_compare(now, finish) <= 0);
+        }
         ossl_rcu_write_lock(rcu_lock);
         old = ossl_rcu_deref(&writer_ptr);
         TSAN_ACQUIRE(&writer_ptr);

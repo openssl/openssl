@@ -171,7 +171,7 @@ int fips_provider_version_ge(OSSL_LIB_CTX *libctx, int major, int minor, int pat
 int fips_provider_version_match(OSSL_LIB_CTX *libctx, const char *versions)
 {
     const char *p;
-    int major, minor, patch, r;
+    int major, minor, patch, r = -1;
     enum {
         MODE_EQ, MODE_NE, MODE_LE, MODE_LT, MODE_GT, MODE_GE
     } mode;

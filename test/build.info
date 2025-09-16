@@ -23,6 +23,7 @@ IF[{- !$disabled{uplink} -}]
   $INITSRC=../ms/applink.c
 ENDIF
 $LIBAPPSSRC=../apps/lib/opt.c $AUXLIBAPPSSRC
+$LIBCRYPTOSRC=../crypto/time.c
 
 IF[{- !$disabled{tests} -}]
   LIBS{noinst,has_main}=libtestutil.a
@@ -31,7 +32,8 @@ IF[{- !$disabled{tests} -}]
           testutil/format_output.c testutil/load.c testutil/fake_random.c \
           testutil/test_cleanup.c testutil/main.c testutil/testutil_init.c \
           testutil/options.c testutil/test_options.c testutil/provider.c \
-          testutil/apps_shims.c testutil/random.c testutil/helper.c $LIBAPPSSRC
+          testutil/apps_shims.c testutil/random.c testutil/helper.c \
+          $LIBAPPSSRC $LIBCRYPTOSRC
   INCLUDE[libtestutil.a]=../include ../apps/include ..
   DEPEND[libtestutil.a]=../libcrypto
 

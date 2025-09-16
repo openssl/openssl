@@ -333,7 +333,7 @@ void CRYPTO_clear_free(void *str, size_t num, const char *file, int line)
 {
     if (str == NULL)
         return;
-    if (num)
+    if (num != 0)
         OPENSSL_cleanse(str, num);
     CRYPTO_free(str, file, line);
 }
