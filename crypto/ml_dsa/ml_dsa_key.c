@@ -319,6 +319,7 @@ int ossl_ml_dsa_key_has(const ML_DSA_KEY *key, int selection)
 static int public_from_private(const ML_DSA_KEY *key, EVP_MD_CTX *md_ctx,
                                VECTOR *t1, VECTOR *t0)
 {
+    int ret = 0;
     const ML_DSA_PARAMS *params = key->params;
     uint32_t k = (uint32_t)params->k, l = (uint32_t)params->l;
     POLY *polys;
@@ -351,9 +352,10 @@ static int public_from_private(const ML_DSA_KEY *key, EVP_MD_CTX *md_ctx,
 
     /* Zeroize secret */
     vector_zero(&s1_ntt);
+    ret = 1;
 err:
     OPENSSL_free(polys);
-    return 1;
+    return ret;
 }
 
 int ossl_ml_dsa_key_public_from_private(ML_DSA_KEY *key)
