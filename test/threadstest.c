@@ -183,13 +183,16 @@ static void rwreader_fn(int *iterations)
         CRYPTO_atomic_add(&rwwriter2_done, 0, &lw2, atomiclock);
 
         count++;
-        if (rwwriter_ptr != NULL && old > *rwwriter_ptr) {
-            TEST_info("rwwriter pointer went backwards\n");
-            rw_torture_result = 0;
+        if (rwwriter_ptr != NULL) {
+            if (old > *rwwriter_ptr) {
+                TEST_info("rwwriter pointer went backwards! %d : %d\n",
+                          old, *rwwriter_ptr);
+                rw_torture_result = 0;
+            }
+            old = *rwwriter_ptr;
         }
         if (CRYPTO_THREAD_unlock(rwtorturelock) == 0)
             abort();
-        *iterations = count;
         if (rw_torture_result == 0) {
             *iterations = count;
             return;
