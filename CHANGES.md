@@ -29,7 +29,7 @@ OpenSSL Releases
 OpenSSL 3.6
 -----------
 
-### Changes between 3.5 and 3.6 beta 1 [16 Sep 2025]
+### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
  * Secure memory allocation calls are no longer used for HMAC keys.
 
