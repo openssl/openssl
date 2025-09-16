@@ -28,6 +28,10 @@ OpenSSL Releases
 OpenSSL 3.5
 -----------
 
+### Changes between 3.5.3 and 3.5.4 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.5.2 and 3.5.3 [16 Sep 2025]
 
  * Avoided a potential race condition introduced in 3.5.1, where
