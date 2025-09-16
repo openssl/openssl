@@ -50,7 +50,7 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
-static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
+static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str,
                          int len, EVP_KEYMGMT *keymgmt);
 static void evp_pkey_free_it(EVP_PKEY *key);
 
@@ -464,7 +464,7 @@ static EVP_PKEY *new_raw_key_int(OSSL_LIB_CTX *libctx,
         goto err;
     }
 
-    if (!pkey_set_type(pkey, NULL, nidtype, strtype, -1, NULL)) {
+    if (!pkey_set_type(pkey, nidtype, strtype, -1, NULL)) {
         /* ERR_raise(ERR_LIB_EVP, ...) already called */
         goto err;
     }
@@ -692,12 +692,12 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
 
 int EVP_PKEY_set_type(EVP_PKEY *pkey, int type)
 {
-    return pkey_set_type(pkey, NULL, type, NULL, -1, NULL);
+    return pkey_set_type(pkey, type, NULL, -1, NULL);
 }
 
 int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
 {
-    return pkey_set_type(pkey, NULL, EVP_PKEY_NONE, str, len, NULL);
+    return pkey_set_type(pkey, EVP_PKEY_NONE, str, len, NULL);
 }
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -1473,8 +1473,8 @@ EVP_PKEY *EVP_PKEY_new(void)
  * Setup a public key management method.
  *
  * For legacy keys, either |type| or |str| is expected to have the type
- * information.  In this case, the setup consists of finding an ASN1 method
- * and potentially an ENGINE, and setting those fields in |pkey|.
+ * information. In this case, the setup consists of finding an ASN1 method
+ * and setting those fields in |pkey|.
  *
  * For provider side keys, |keymgmt| is expected to be non-NULL.  In this
  * case, the setup consists of setting the |keymgmt| field in |pkey|.
@@ -1482,21 +1482,18 @@ EVP_PKEY *EVP_PKEY_new(void)
  * If pkey is NULL just return 1 or 0 if the key management method exists.
  */
 
-/* TODO - remove engine parameter */
-static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
+static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str,
                          int len, EVP_KEYMGMT *keymgmt)
 {
 #ifndef FIPS_MODULE
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
-    ENGINE **eptr = (e == NULL) ? &e : NULL;
 #endif
 
     /*
      * The setups can't set both legacy and provider side methods.
      * It is forbidden
      */
-    if (!ossl_assert(type == EVP_PKEY_NONE || keymgmt == NULL)
-        || !ossl_assert(e == NULL || keymgmt == NULL)) {
+    if (!ossl_assert(type == EVP_PKEY_NONE || keymgmt == NULL)) {
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -1523,9 +1520,9 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
     }
 #ifndef FIPS_MODULE
     if (str != NULL)
-        ameth = EVP_PKEY_asn1_find_str(eptr, str, len);
+        ameth = EVP_PKEY_asn1_find_str(NULL, str, len);
     else if (type != EVP_PKEY_NONE)
-        ameth = EVP_PKEY_asn1_find(eptr, type);
+        ameth = EVP_PKEY_asn1_find(NULL, type);
 #endif
 
 
@@ -1591,7 +1588,7 @@ static void find_ameth(const char *name, void *data)
      */
     ERR_set_mark();
 
-    if (pkey_set_type(NULL, NULL, EVP_PKEY_NONE, name, (int)strlen(name),
+    if (pkey_set_type(NULL, EVP_PKEY_NONE, name, (int)strlen(name),
                       NULL)) {
         if (str[0] == NULL)
             str[0] = name;
@@ -1624,7 +1621,7 @@ int EVP_PKEY_set_type_by_keymgmt(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt)
 # define EVP_PKEY_TYPE_STR NULL
 # define EVP_PKEY_TYPE_STRLEN -1
 #endif
-    return pkey_set_type(pkey, NULL, EVP_PKEY_NONE,
+    return pkey_set_type(pkey, EVP_PKEY_NONE,
                          EVP_PKEY_TYPE_STR, EVP_PKEY_TYPE_STRLEN,
                          keymgmt);
 
