@@ -353,7 +353,7 @@ static int public_from_private(const ML_DSA_KEY *key, EVP_MD_CTX *md_ctx,
     vector_zero(&s1_ntt);
 err:
     OPENSSL_free(polys);
-    return 1;
+    return 0;
 }
 
 int ossl_ml_dsa_key_public_from_private(ML_DSA_KEY *key)
