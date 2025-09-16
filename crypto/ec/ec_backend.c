@@ -603,8 +603,7 @@ EC_KEY *ossl_ec_key_dup(const EC_KEY *src, int selection)
         return NULL;
     }
 
-    if ((ret = ossl_ec_key_new_method_int(src->libctx, src->propq,
-                                          NULL)) == NULL)
+    if ((ret = ossl_ec_key_new_method_int(src->libctx, src->propq)) == NULL)
         return NULL;
 
     /* copy the parameters */

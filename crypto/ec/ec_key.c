@@ -33,13 +33,13 @@ static int ecdsa_keygen_pairwise_test(EC_KEY *eckey, OSSL_CALLBACK *cb,
 #ifndef FIPS_MODULE
 EC_KEY *EC_KEY_new(void)
 {
-    return ossl_ec_key_new_method_int(NULL, NULL, NULL);
+    return ossl_ec_key_new_method_int(NULL, NULL);
 }
 #endif
 
 EC_KEY *EC_KEY_new_ex(OSSL_LIB_CTX *ctx, const char *propq)
 {
-    return ossl_ec_key_new_method_int(ctx, propq, NULL);
+    return ossl_ec_key_new_method_int(ctx, propq);
 }
 
 EC_KEY *EC_KEY_new_by_curve_name_ex(OSSL_LIB_CTX *ctx, const char *propq,
