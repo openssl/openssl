@@ -28,7 +28,7 @@ OpenSSL Releases
 OpenSSL 3.5
 -----------
 
-### Changes between 3.5.2 and 3.5.3 [xx XXX xxxx]
+### Changes between 3.5.2 and 3.5.3 [16 Sep 2025]
 
  * Avoided a potential race condition introduced in 3.5.1, where
    `OSSL_STORE_CTX` kept open during lookup while potentially being used
