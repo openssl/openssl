@@ -691,8 +691,7 @@ struct ec_key_method_st {
 
 #define EC_KEY_METHOD_DYNAMIC   1
 
-EC_KEY *ossl_ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
-                                   ENGINE *engine);
+EC_KEY *ossl_ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq);
 
 int ossl_ec_key_gen(EC_KEY *eckey);
 int ossl_ecdh_compute_key(unsigned char **pout, size_t *poutlen,
