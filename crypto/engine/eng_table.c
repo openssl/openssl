@@ -209,12 +209,8 @@ ENGINE *ossl_engine_table_select(ENGINE_TABLE **table, int nid,
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
 #endif
 
-    if (!(*table)) {
-        OSSL_TRACE3(ENGINE_TABLE,
-                   "%s:%d, nid=%d, nothing registered!\n",
-                   f, l, nid);
+    if (!(*table))
         return NULL;
-    }
 
     if (!CRYPTO_THREAD_write_lock(global_engine_lock))
         return NULL;
@@ -231,9 +227,6 @@ ENGINE *ossl_engine_table_select(ENGINE_TABLE **table, int nid,
     if (!fnd)
         goto end;
     if (fnd->funct && engine_unlocked_init(fnd->funct)) {
-        OSSL_TRACE4(ENGINE_TABLE,
-                   "%s:%d, nid=%d, using ENGINE '%s' cached\n",
-                   f, l, nid, fnd->funct->id);
         ret = fnd->funct;
         goto end;
     }
@@ -243,13 +236,8 @@ ENGINE *ossl_engine_table_select(ENGINE_TABLE **table, int nid,
     }
  trynext:
     ret = sk_ENGINE_value(fnd->sk, loop++);
-    if (!ret) {
-        OSSL_TRACE3(ENGINE_TABLE,
-                    "%s:%d, nid=%d, "
-                    "no registered implementations would initialise\n",
-                    f, l, nid);
+    if (!ret)
         goto end;
-    }
     /* Try to initialise the ENGINE? */
     if ((ret->funct_ref > 0) || !(table_flags & ENGINE_TABLE_FLAG_NOINIT))
         initres = engine_unlocked_init(ret);
