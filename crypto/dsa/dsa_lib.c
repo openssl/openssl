@@ -23,7 +23,7 @@
 #include "crypto/dh.h" /* required by DSA_dup_DH() */
 #include "dsa_local.h"
 
-static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx);
+static DSA *dsa_new_intern(OSSL_LIB_CTX *libctx);
 
 #ifndef FIPS_MODULE
 
@@ -126,7 +126,7 @@ const DSA_METHOD *DSA_get_method(DSA *d)
     return d->meth;
 }
 
-static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
+static DSA *dsa_new_intern(OSSL_LIB_CTX *libctx)
 {
     DSA *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -171,20 +171,22 @@ static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     return NULL;
 }
 
-DSA *DSA_new_method(ENGINE *engine)
+DSA *DSA_new_method(ossl_unused ENGINE *engine)
 {
-    return dsa_new_intern(engine, NULL);
+    if (engine != NULL)
+        return NULL;
+    return dsa_new_intern(NULL);
 }
 
 DSA *ossl_dsa_new(OSSL_LIB_CTX *libctx)
 {
-    return dsa_new_intern(NULL, libctx);
+    return dsa_new_intern(libctx);
 }
 
 #ifndef FIPS_MODULE
 DSA *DSA_new(void)
 {
-    return dsa_new_intern(NULL, NULL);
+    return dsa_new_intern(NULL);
 }
 #endif
 
