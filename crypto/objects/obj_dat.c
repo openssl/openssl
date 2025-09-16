@@ -758,6 +758,7 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
 {
     ASN1_OBJECT *o = NULL;
     ADDED_OBJ *ao[4] = { NULL, NULL, NULL, NULL }, *aop[4];
+    int dup_nid = NID_undef;
     int i;
 
     if ((o = OBJ_dup(obj)) == NULL)
@@ -782,6 +783,59 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
             ao[i]->type = i;
             ao[i]->obj = o;
             aop[i] = lh_ADDED_OBJ_retrieve(added, ao[i]);
+            if (aop[i] != NULL) {
+                switch (i) {
+                case ADDED_DATA:
+                    /*
+                     * If we match on data, then we should compare the requested
+                     * and existing nid.  If they match, we can return the existing
+                     * nid, otherwise, NID_undef.
+                     */
+                    if (aop[i]->obj->nid == obj->nid)
+                        dup_nid = obj->nid;
+                    break;
+                case ADDED_SNAME:
+                    /*
+                     * matched on shortname, lets see if long name matches
+                     * if both longnames are NULL its a match, if only
+                     * one is NULL, we return NID_undef, otherwise,
+                     * string compare the long names to determine
+                     * the matching state
+                     */
+                    if (aop[i]->obj->ln == NULL && obj->ln == NULL)
+                        dup_nid = aop[i]->obj->nid;
+                    else if (aop[i]->obj->ln == NULL || obj->ln == NULL)
+                        dup_nid = NID_undef;
+                    else if (!strcmp(aop[i]->obj->ln, obj->ln))
+                        dup_nid = aop[i]->obj->nid;
+                    break;
+                case ADDED_LNAME:
+                    /*
+                     * matched on longname, check shortname
+                     * if both shortnames are NULL, its a match
+                     * if only one is NULL, we return NID_undef
+                     * otherwise, do a string comparison of the names
+                     */
+                    if (aop[i]->obj->sn == NULL && obj->sn == NULL)
+                        dup_nid = aop[i]->obj->nid;
+                    else if (aop[i]->obj->sn == NULL || obj->sn == NULL)
+                        dup_nid = NID_undef;
+                    else if (!strcmp(aop[i]->obj->sn, obj->sn))
+                        dup_nid = aop[i]->obj->nid;
+                    break;
+                default:
+                    /*
+                     * All other matches just return NID_undef
+                     */
+                    break;
+                }
+                goto err;
+            }
+        }
+    }
+
+    for (i = ADDED_DATA; i <= ADDED_NID; i++) {
+        if (ao[i] != NULL) {
             if (aop[i] != NULL)
                 aop[i]->type = -1;
             (void)lh_ADDED_OBJ_insert(added, ao[i]);
@@ -811,7 +865,7 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
     for (i = ADDED_DATA; i <= ADDED_NID; i++)
         OPENSSL_free(ao[i]);
     ASN1_OBJECT_free(o);
-    return NID_undef;
+    return dup_nid;
 }
 
 int OBJ_obj2nid(const ASN1_OBJECT *a)
