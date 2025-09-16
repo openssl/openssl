@@ -164,6 +164,7 @@ static int test_int_stack(int reserve)
     for (i = 0; i < n_exfinds; i++) {
         int loc = sk_sint_find_ex(s, &exfinds[i].value);
         int value = *sk_sint_value(s, loc);
+
         /* inserting in the correct location should preserve is_sorted */
         if (value < exfinds[i].value)
             loc++;
