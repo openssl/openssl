@@ -318,6 +318,10 @@ OSSL_trace_set_channel(), OSSL_trace_set_prefix(),
 OSSL_trace_set_suffix(), and OSSL_trace_set_callback() were all added
 in OpenSSL 3.0.
 
+The B<OSSL_TRACE_CATEGORY_ENGINE_TABLE> and
+B<OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT> tracing categories were removed in
+OpenSSL 4.0.  For details please see L<ossl-guide-migration(7)>
+
 =head1 COPYRIGHT
 
 Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
