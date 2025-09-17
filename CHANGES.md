@@ -69,7 +69,7 @@ OpenSSL 3.6
    *Dr Paul Dale*
 
  * `openssl req` no longer generates certificates with an empty extension list
-   when SKID/AKID are set to `none` during generation
+   when SKID/AKID are set to `none` during generation.
 
    *David Benjamin*
 
@@ -139,8 +139,8 @@ OpenSSL 3.6
 
    *Julian Zhu*
 
- * Added options `CRYPTO_MEM_SEC` and `CRYPTO_MEM_SEC_MINSIZE` to openssl app to
-   initialize secure memory at the beginning of openssl app.
+ * Added options `CRYPTO_MEM_SEC` and `CRYPTO_MEM_SEC_MINSIZE` to openssl app
+   to initialize secure memory at the beginning of openssl app.
 
    *Norbert Pocs*
 
@@ -211,14 +211,14 @@ OpenSSL 3.6
 
    *Viktor Dukhovni*
 
- * Added an `openssl configutl` utility for processing the openssl
+ * Added an `openssl configutl` utility for processing the OpenSSL
    configuration file and dumping the equal configuration file.
 
    *Dmitry Belyavskiy based on Clemens Lang's code*
 
- * Support setting a free function thunk to `OPENSSL_sk` stack types. Using a thunk
-   allows the type specific free function to be called with the correct type
-   information from generic functions like `OPENSSL_sk_pop_free()`.
+ * Support setting a free function thunk to `OPENSSL_sk` stack types. Using
+   a thunk allows the type specific free function to be called with the correct
+   type information from generic functions like `OPENSSL_sk_pop_free()`.
 
    *Frederik Wedel-Heinen*
 
@@ -260,8 +260,8 @@ OpenSSL 3.6
 
    *Theo Buehler*
 
- * HKDF with (SHA-256, SHA-384, SHA-512) has assigned OIDs. Added ability to load
-   HKDF configured with these explicit digests by name or OID.
+ * HKDF with (SHA-256, SHA-384, SHA-512) has assigned OIDs. Added ability
+   to load HKDF configured with these explicit digests by name or OID.
 
    *Daniel Van Geest (CryptoNext Security)*
 
@@ -274,9 +274,11 @@ OpenSSL 3.6
  * Added support for TLS 1.3 OCSP multi-stapling for server certs.
      * new `s_client` options:
        * `-ocsp_check_leaf`: Checks the status of the leaf (server) certificate.
-       * `-ocsp_check_all`: Checks the status of all certificates in the server chain.
+       * `-ocsp_check_all`: Checks the status of all certificates in the server
+         chain.
      * new `s_server` option:
-       * `-status_all` Provides OCSP status information for the entire server certificate chain (multi-stapling) for TLS 1.3 and later.
+       * `-status_all` Provides OCSP status information for the entire server
+         certificate chain (multi-stapling) for TLS 1.3 and later.
 
      * Improved `-status_file` option can now be given multiple times to provide
        multiple files containing OCSP responses.
