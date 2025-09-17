@@ -39,6 +39,7 @@ struct added_obj_st {
 
 static unsigned long added_obj_hash(const ADDED_OBJ *ca);
 static int added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb);
+static int add_object(const ASN1_OBJECT *obj, int indirect);
 
 static LHASH_OF(ADDED_OBJ) *added = NULL;
 static CRYPTO_RWLOCK *ossl_obj_lock = NULL;
@@ -153,6 +154,19 @@ static unsigned long added_obj_hash(const ADDED_OBJ *ca)
     ret &= 0x3fffffffL;
     ret |= ((unsigned long)ca->type) << 30L;
     return ret;
+}
+
+/*
+ * Compare two ASN1_OBJECTs, including SNAME and LNAME, but not NIDs.
+ */
+static int obj_equivalent(const ASN1_OBJECT *a, const ASN1_OBJECT *b)
+{
+    return a->length == b->length
+        && memcmp(a->data, b->data, (size_t)a->length) == 0
+        && (a->sn == NULL) == (b->sn == NULL)
+        && strcmp(a->sn ? a->sn : "", b->sn ? b->sn : "") == 0
+        && (a->ln == NULL) == (b->ln == NULL)
+        && strcmp(a->ln ? a->ln : "", b->ln ? b->ln : "") == 0;
 }
 
 static int added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb)
@@ -722,15 +736,11 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
         goto err;
     }
 
-    tmpoid->nid = OBJ_new_nid(1);
-
-    if (tmpoid->nid == NID_undef)
-        goto err;
-
+    tmpoid->nid = NID_undef;
     tmpoid->sn = (char *)sn;
     tmpoid->ln = (char *)ln;
 
-    ok = OBJ_add_object(tmpoid);
+    ok = add_object(tmpoid, 1);
 
     tmpoid->sn = NULL;
     tmpoid->ln = NULL;
@@ -754,14 +764,35 @@ const unsigned char *OBJ_get0_data(const ASN1_OBJECT *obj)
     return obj->data;
 }
 
-int OBJ_add_object(const ASN1_OBJECT *obj)
+static int add_object(const ASN1_OBJECT *obj, int indirect)
 {
-    ASN1_OBJECT *o = NULL;
+    ASN1_OBJECT *o = NULL, *dup = NULL;
     ADDED_OBJ *ao[4] = { NULL, NULL, NULL, NULL }, *aop[4];
-    int i;
+    int i, ret = NID_undef, nid = obj->nid;
 
-    if ((o = OBJ_dup(obj)) == NULL)
-        return NID_undef;
+    /*
+     * Indirect calls leave the NID unspecified, in which case we generate a
+     * fresh NID here.  Direct calls via `OBJ_add_object()` must explicity
+     * specify the nid, and we then also check against the compile-time bsearch
+     * lists that the indirect calls have checked while holding a read lock.
+     */
+    if (indirect) {
+        if (nid != NID_undef
+            || (nid = OBJ_new_nid(1)) < NUM_NID
+            || (o = OBJ_dup(obj)) == NULL)
+            return ret;
+        o->nid = nid;
+    } else if (nid < NUM_NID
+               || (obj->data != NULL
+                   && OBJ_bsearch_obj(&obj, obj_objs, NUM_OBJ) != NULL)
+               || (obj->sn != NULL
+                   && OBJ_bsearch_sn(&obj, sn_objs, NUM_SN) != NULL)
+               || (obj->ln != NULL
+                   && OBJ_bsearch_ln(&obj, ln_objs, NUM_LN) != NULL)
+               || (o = OBJ_dup(obj)) == NULL) {
+        return ret;
+    }
+
     if ((ao[ADDED_NID] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL
             || (o->length != 0
                 && obj->data != NULL
@@ -778,24 +809,41 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
     }
 
     for (i = ADDED_DATA; i <= ADDED_NID; i++) {
-        if (ao[i] != NULL) {
-            ao[i]->type = i;
-            ao[i]->obj = o;
-            aop[i] = lh_ADDED_OBJ_retrieve(added, ao[i]);
-            if (aop[i] != NULL)
-                aop[i]->type = -1;
-            (void)lh_ADDED_OBJ_insert(added, ao[i]);
-            if (lh_ADDED_OBJ_error(added)) {
-                if (aop[i] != NULL)
-                    aop[i]->type = i;
-                while (i-- > ADDED_DATA) {
+        if (ao[i] == NULL)
+            continue;
+        ao[i]->type = i;
+        ao[i]->obj = o;
+        if ((aop[i] = lh_ADDED_OBJ_retrieve(added, ao[i])) != NULL)
+            dup = aop[i]->obj;
+    }
+
+    if (dup != NULL) {
+        /*
+         * We found a possible conflict.  If the caller did not specify a NID,
+         * return NID_undef to signal the conflict.  Otherwise, if the NID and
+         * parameters are unchanged, return the old NID, else NID_undef to
+         * signal the conflict.  This ensures that object registrations are
+         * immutable.
+         *
+         * In the future, ideally also return an equivalent existing NID also
+         * when the caller did not specify a NID, as in OBJ_create().
+         */
+        if (obj->nid == dup->nid && obj_equivalent(obj, dup))
+            ret = dup->nid;
+        goto err;
+    }
+
+    for (i = ADDED_DATA; i <= ADDED_NID; i++) {
+        if (ao[i] == NULL)
+            continue;
+        (void)lh_ADDED_OBJ_insert(added, ao[i]);
+        if (lh_ADDED_OBJ_error(added)) {
+            while (i-- > ADDED_DATA) {
+                if (ao[i] != NULL)
                     lh_ADDED_OBJ_delete(added, ao[i]);
-                    if (aop[i] != NULL)
-                        aop[i]->type = i;
-                }
-                ERR_raise(ERR_LIB_OBJ, ERR_R_CRYPTO_LIB);
-                goto err;
             }
+            ERR_raise(ERR_LIB_OBJ, ERR_R_CRYPTO_LIB);
+            goto err;
         }
     }
     o->flags &=
@@ -811,7 +859,12 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
     for (i = ADDED_DATA; i <= ADDED_NID; i++)
         OPENSSL_free(ao[i]);
     ASN1_OBJECT_free(o);
-    return NID_undef;
+    return ret;
+}
+
+int OBJ_add_object(const ASN1_OBJECT *obj)
+{
+    return add_object(obj, 0);
 }
 
 int OBJ_obj2nid(const ASN1_OBJECT *a)
