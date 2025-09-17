@@ -592,6 +592,14 @@ static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
     return verify_cb_cert(ctx, x, depth, X509_V_ERR_INVALID_PURPOSE);
 }
 
+/* qsort comparator for ASN1_OBJECT* (by OID) */
+static int cmp_asn1obj_ptr(const void *a, const void *b)
+{
+    const ASN1_OBJECT *oa = *(const ASN1_OBJECT * const *)a;
+    const ASN1_OBJECT *ob = *(const ASN1_OBJECT * const *)b;
+    return OBJ_cmp(oa, ob);
+}
+
 /*
  * Return 1 if `exts` contains no duplicate extension OIDs,
  *  0 if a duplicate is found,
@@ -599,30 +607,26 @@ static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
  */
 static int has_no_dup_ext_oids(const STACK_OF(X509_EXTENSION) *exts)
 {
-    STACK_OF(ASN1_OBJECT) *seen;
-    int ne, i, j;
-
-    if (exts == NULL)
+    int ne, i;
+    ASN1_OBJECT **arr;
+    if (exts == NULL || (ne = sk_X509_EXTENSION_num(exts)) <= 1)
         return 1;
-    ne = sk_X509_EXTENSION_num(exts);
-    seen = sk_ASN1_OBJECT_new_null();
-    if (seen == NULL)
+    arr = OPENSSL_malloc(sizeof(*arr) * (size_t)ne);
+    if (arr == NULL)
         return -1;
     for (i = 0; i < ne; i++) {
-        X509_EXTENSION *ext = sk_X509_EXTENSION_value((STACK_OF(X509_EXTENSION)*)exts, i);
-        ASN1_OBJECT    *oid = X509_EXTENSION_get_object(ext);
-        for (j = 0; j < sk_ASN1_OBJECT_num(seen); j++) {
-            if (OBJ_cmp(oid, sk_ASN1_OBJECT_value(seen, j)) == 0) {
-                sk_ASN1_OBJECT_free(seen);
-                return 0;
-            }
-        }
-        if (!sk_ASN1_OBJECT_push(seen, oid)) {
-            sk_ASN1_OBJECT_free(seen);
-            return -1;
+        X509_EXTENSION *ext =
+            sk_X509_EXTENSION_value((STACK_OF(X509_EXTENSION)*)exts, i);
+        arr[i] = X509_EXTENSION_get_object(ext); /* borrowed, do not free */
+    }
+    qsort(arr, (size_t)ne, sizeof(*arr), cmp_asn1obj_ptr);
+    for (i = 1; i < ne; i++) {
+        if (OBJ_cmp(arr[i - 1], arr[i]) == 0) {
+            OPENSSL_free(arr);
+            return 0; /* duplicate found */
         }
     }
-    sk_ASN1_OBJECT_free(seen);
+    OPENSSL_free(arr);
     return 1;
 }
 
@@ -661,11 +665,18 @@ static int check_extensions(X509_STORE_CTX *ctx)
 
     for (i = 0; i < num; i++) {
         x = sk_X509_value(ctx->chain, i);
+        /* Enforce RFC 5280 §4.2: no duplicate extension OIDs (mandatory) */
+        exts = X509_get0_extensions(x);
+        rv = has_no_dup_ext_oids(exts);
+        if (rv < 0)
+            return 0;
+        CB_FAIL_IF(rv == 0, ctx, x, i, X509_V_ERR_DUPLICATE_EXTENSION);
         CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
                        && (x->ex_flags & EXFLAG_CRITICAL) != 0,
                    ctx, x, i, X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);
         CB_FAIL_IF(!allow_proxy_certs && (x->ex_flags & EXFLAG_PROXY) != 0,
                    ctx, x, i, X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED);
+
         ret = X509_check_ca(x);
         switch (must_be_ca) {
         case -1:
@@ -701,13 +712,6 @@ static int check_extensions(X509_STORE_CTX *ctx)
                            * !(i == 0 && (x->ex_flags & EXFLAG_CA) == 0
                            *          && (x->ex_flags & EXFLAG_SI) != 0)
                            */
-            /* A given extension MUST NOT appear more than once per RFC 5280 §4.2 */
-            if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0 && num > 1) {
-                exts = X509_get0_extensions(x);
-                rv = has_no_dup_ext_oids(exts);
-                CB_FAIL_IF(rv < 0, ctx, x, i, X509_V_ERR_OUT_OF_MEM);
-                CB_FAIL_IF(rv == 0, ctx, x, i, X509_V_ERR_DUPLICATE_EXTENSION);
-            }
             /* Check Basic Constraints according to RFC 5280 section 4.2.1.9 */
             if (x->ex_pathlen != -1) {
                 CB_FAIL_IF((x->ex_flags & EXFLAG_CA) == 0,
@@ -1916,13 +1920,13 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
     int chnum = sk_X509_num(ctx->chain) - 1;
     int rv;
 
-    /* A given extension MUST NOT appear more than once per RFC 5280 §4.2 */
-    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0) {
-        exts = X509_CRL_get0_extensions(crl);
-        rv = has_no_dup_ext_oids(exts);
-        CB_FAIL_IF(rv < 0, ctx, NULL, 0, X509_V_ERR_OUT_OF_MEM);
-        CB_FAIL_IF(rv == 0, ctx, NULL, 0, X509_V_ERR_DUPLICATE_EXTENSION);
-    }
+    /* RFC 5280 §4.2: a given extension MUST NOT appear more than once */
+    exts = X509_CRL_get0_extensions(crl);
+    rv = has_no_dup_ext_oids(exts);
+    if (rv < 0)
+        return 0;
+    CB_FAIL_IF(rv == 0, ctx, NULL, 0, X509_V_ERR_DUPLICATE_EXTENSION);
+
     /* If we have an alternative CRL issuer cert use that */
     if (ctx->current_issuer != NULL) {
         issuer = ctx->current_issuer;
