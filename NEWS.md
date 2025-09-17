@@ -29,7 +29,7 @@ OpenSSL 3.6
 This release incorporates the following potentially significant or incompatible
 changes:
 
-  * Added FIPS 140-3 PCT on DH key generation
+  * Added FIPS 140-3 PCT on DH key generation.
 
   * Added NIST security categories for PKEY objects.
 
@@ -45,7 +45,7 @@ changes:
 
   * The VxWorks platforms have been removed.
 
-  * Added an `openssl configutl` utility for processing the openssl
+  * Added an `openssl configutl` utility for processing the OpenSSL
     configuration file and dumping the equal configuration file.
 
   * Added support for FIPS 186-5 deterministic ECDSA signature
