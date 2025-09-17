@@ -65,7 +65,7 @@ OSSL_CMP_PKIHEADER *OSSL_CMP_MSG_get0_header(const OSSL_CMP_MSG *msg)
 
 const char *ossl_cmp_bodytype_to_string(int type)
 {
-    static const char *type_names[] = {
+    static const char *const type_names[] = {
         "IR", "IP", "CR", "CP", "P10CR",
         "POPDECC", "POPDECR", "KUR", "KUP",
         "KRR", "KRP", "RR", "RP", "CCR", "CCP",

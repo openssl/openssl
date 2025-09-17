@@ -1224,7 +1224,7 @@ err:
 static const OSSL_PARAM *ec_gen_settable_params(ossl_unused void *genctx,
                                                 ossl_unused void *provctx)
 {
-    static OSSL_PARAM settable[] = {
+    static const OSSL_PARAM settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_USE_COFACTOR_ECDH, NULL),
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_ENCODING, NULL, 0),

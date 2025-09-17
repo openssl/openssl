@@ -579,7 +579,7 @@ static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 static const OSSL_PARAM *rsa_gen_settable_params(ossl_unused void *genctx,
                                                  ossl_unused void *provctx)
 {
-    static OSSL_PARAM settable[] = {
+    static const OSSL_PARAM settable[] = {
         rsa_gen_basic,
         OSSL_PARAM_END
     };
@@ -590,7 +590,7 @@ static const OSSL_PARAM *rsa_gen_settable_params(ossl_unused void *genctx,
 static const OSSL_PARAM *rsapss_gen_settable_params(ossl_unused void *genctx,
                                                     ossl_unused void *provctx)
 {
-    static OSSL_PARAM settable[] = {
+    static const OSSL_PARAM settable[] = {
         rsa_gen_basic,
         rsa_gen_pss,
         OSSL_PARAM_END

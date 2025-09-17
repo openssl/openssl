@@ -71,7 +71,7 @@ static int test_tbl_standard(void)
 
 static int test_standard_methods(void)
 {
-    const EVP_PKEY_ASN1_METHOD **tmp;
+    const EVP_PKEY_ASN1_METHOD * const *tmp;
     int last_pkey_id = -1;
     size_t i;
     int ok = 1;

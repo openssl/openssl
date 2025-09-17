@@ -32,7 +32,7 @@ static int test_standard_exts(void)
 {
     size_t i;
     int prev = -1, good = 1;
-    const X509V3_EXT_METHOD **tmp;
+    const X509V3_EXT_METHOD * const *tmp;
 
     tmp = standard_exts;
     for (i = 0; i < OSSL_NELEM(standard_exts); i++, tmp++) {

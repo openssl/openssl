@@ -129,7 +129,7 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
      * PEM names we recognise.  Other PEM names should be recognised by
      * other decoder implementations.
      */
-    static struct pem_name_map_st {
+    static const struct pem_name_map_st {
         const char *pem_name;
         int object_type;
         const char *data_type;

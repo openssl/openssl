@@ -43,7 +43,7 @@ static int rsa_ossl_finish(RSA *rsa);
 #ifdef S390X_MOD_EXP
 static int rsa_ossl_s390x_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa,
                                 BN_CTX *ctx);
-static RSA_METHOD rsa_pkcs1_ossl_meth = {
+static const RSA_METHOD rsa_pkcs1_ossl_meth = {
     "OpenSSL PKCS#1 RSA",
     rsa_ossl_public_encrypt,
     rsa_ossl_public_decrypt,     /* signature verification */
@@ -61,7 +61,7 @@ static RSA_METHOD rsa_pkcs1_ossl_meth = {
     NULL                        /* rsa_multi_prime_keygen */
 };
 #else
-static RSA_METHOD rsa_pkcs1_ossl_meth = {
+static const RSA_METHOD rsa_pkcs1_ossl_meth = {
     "OpenSSL PKCS#1 RSA",
     rsa_ossl_public_encrypt,
     rsa_ossl_public_decrypt,     /* signature verification */
