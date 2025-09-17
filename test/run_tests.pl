@@ -39,22 +39,22 @@ if (!defined($jobs)) {
         # Perl was built on Linux, so try nproc, which is apparently
         # the less worse way if you are restricted in a
         # container/cgroup
-        my $tmp = `nproc 2>/dev/null`;
-        if ($? eq 0 && $tmp > 0) {
+        my $tmp = qx(nproc 2>/dev/null);
+        if ($? == 0 && $tmp > 0) {
             $cpus = $tmp;
         }
     }
     if (!defined($cpus) && -r "/proc/cpuinfo") {
         # Smells like Linux or something else attempting bug for bug
         # compatibilty with the /proc paradigm.
-        my $tmp = `grep -c ^processor /proc/cpuinfo 2>/dev/null`;
+        my $tmp = qx(grep -c ^processor /proc/cpuinfo 2>/dev/null);
         if ($? eq 0 && $tmp > 0) {
             $cpus = $tmp;
         }
     }
     if (!defined($cpus)) {
         # OpenBSD, FreeBSD, MacOS
-        my $tmp = `sysctl -n hw.ncpu 2>/dev/null`;
+        my $tmp = qx(sysctl -n hw.ncpu 2>/dev/null);
         if ($? eq 0 && $tmp > 0) {
             $cpus = $tmp;
         }
