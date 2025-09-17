@@ -17,7 +17,7 @@
 extern unsigned int OPENSSL_arm_midr;
 static inline int vpsm4_capable(void)
 {
-    return (OPENSSL_armcap_P & ARMV8_CPUID) && (MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V1) || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N1));
+    return (OPENSSL_armcap_P & ARMV8_NEON);
 }
 static inline int vpsm4_ex_capable(void)
 {
