@@ -1369,7 +1369,8 @@ static int ossl_test_aes128cbchmacsha1_set_ctx_params(void *vprovctx, const OSSL
 
     p = OSSL_PARAM_locate((OSSL_PARAM *)params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD);
     if (p != NULL) {
-        OSSL_PARAM_get_octet_string_ptr(p, (const void **)&val, &vlen);
+        if (OSSL_PARAM_get_octet_string_ptr(p, (const void **)&val, &vlen) != 1)
+            return 0;
         len = val[EVP_AEAD_TLS1_AAD_LEN - 2] << 8 | val[EVP_AEAD_TLS1_AAD_LEN - 1];
         ctx->tls_ver = val[EVP_AEAD_TLS1_AAD_LEN - 4] << 8 | val[EVP_AEAD_TLS1_AAD_LEN -3];
 
@@ -1665,8 +1666,10 @@ static int drbg_ctr_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 {
     OSSL_PARAM *p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_MAX_REQUEST);
 
-    if (p != NULL)
-        OSSL_PARAM_set_size_t(p, (size_t)(1 << 16));
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, (size_t)(1 << 16))) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
 
     return 1;
 }
