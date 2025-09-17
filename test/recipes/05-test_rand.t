@@ -33,8 +33,11 @@ SKIP: {
     my $expected = '0102030405060708090a0b0c0d0e0f10';
 
     $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
-    @randdata = run(app(['openssl', 'rand', '-provider', 'p_ossltest', '-provider', 'default', '-propquery', '?provider=p_ossltest', '-hex', '16' ]),
-                    capture => 1, statusvar => \$success);
+    skip "provider modules are not supported by this OpenSSL build", 1
+        if disabled("module");
+
+    @randdata = run(app(['openssl', 'rand', '-provider', 'p_ossltest', '-provider', 'default', '-propquery', '?provider=p_ossltest', '-hex', '16' ]), capture => 1, statusvar => \$success);
+
     chomp(@randdata);
     ok($success && $randdata[0] eq $expected,
        "rand with ossltest provider: Check rand output is as expected");
@@ -42,5 +45,4 @@ SKIP: {
     @randdata = run(app(['openssl', 'rand', '-hex', '2K' ]),
                     capture => 1, statusvar => \$success);
     chomp(@randdata);
-
 }
