@@ -609,7 +609,7 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
     }
 }
 
-static EVP_CIPHER chacha20_poly1305 = {
+static const EVP_CIPHER chacha20_poly1305 = {
     NID_chacha20_poly1305,
     1,                  /* block_size */
     CHACHA_KEY_SIZE,    /* key_len */

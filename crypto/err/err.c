@@ -86,7 +86,7 @@ static const ERR_STRING_DATA ERR_str_libraries[] = {
  * Should make sure that all ERR_R_ reasons defined in include/openssl/err.h.in
  * are listed.  For maintainability, please keep all reasons in the same order.
  */
-static ERR_STRING_DATA ERR_str_reasons[] = {
+static const ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_SYS_LIB, "system lib"},
     {ERR_R_BN_LIB, "BN lib"},
     {ERR_R_RSA_LIB, "RSA lib"},
