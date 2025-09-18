@@ -2761,7 +2761,7 @@ err:
 int tls_parse_stoc_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     X509 *x, size_t chainidx)
 {
-    unsigned int rlen = 0;
+    size_t rlen = 0;
     const unsigned char *rval = NULL;
     unsigned char *srval = NULL;
     PACKET rcfgs_pkt;

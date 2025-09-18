@@ -549,9 +549,9 @@ int ossl_ech_same_key_share(void)
  * say if extension at index |ind| in ext_defs is to be ECH compressed
  * return 1 if this one is to be compressed, 0 if not, -1 for error
  */
-int ossl_ech_2bcompressed(int ind)
+int ossl_ech_2bcompressed(size_t ind)
 {
-    const int nexts = OSSL_NELEM(ext_defs);
+    const size_t nexts = OSSL_NELEM(ext_defs);
 
 #ifdef DUPEMALL
     return 0;
@@ -1091,7 +1091,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
             if (ossl_ech_2bcompressed(i) == pass)
                 continue;
             /* stash index - needed for COMPRESS ECH handling */
-            s->ext.ech.ext_ind = i;
+            s->ext.ech.ext_ind = (int)i;
 #endif
             /* Skip if not relevant for our context */
             if (!should_add_extension(s, thisexd->context, context, max_version))
