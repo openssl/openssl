@@ -652,6 +652,19 @@ X509 *load_cert_der(const unsigned char *bytes, int len);
 STACK_OF(X509) *load_certs_pem(const char *file);
 X509_REQ *load_csr_der(const char *file, OSSL_LIB_CTX *libctx);
 time_t test_asn1_string_to_time_t(const char *asn1_string);
-
 int compare_with_reference_file(BIO *membio, const char *reffile);
+/*
+ * Create an X509 from an array of strings.
+ */
+X509 *X509_from_strings(const char **pem);
+/*
+ * Create a CRL from an array of strings.
+ */
+X509_CRL *CRL_from_strings(const char **pem);
+/*
+ * Glue an array of strings together.  Return a BIO and put the string
+ * into |*out| so we can free it.
+ */
+BIO *glue2bio(const char **pem, char **out);
+
 #endif                          /* OSSL_TESTUTIL_H */
