@@ -41,7 +41,7 @@ void ossl_ech_pbuf(const char *msg, const unsigned char *buf, const size_t blen)
             BIO_printf(trc_out, "%s: blen is %lu\n", msg, (unsigned long)blen);
         } else {
             BIO_printf(trc_out, "%s (%lu)\n", msg, (unsigned long)blen);
-            BIO_dump_indent(trc_out, buf, blen, 4);
+            BIO_dump_indent(trc_out, buf, (int)blen, 4);
         }
     }
     OSSL_TRACE_END(TLS);
@@ -377,7 +377,8 @@ int ossl_ech_pick_matching_cfg(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY **ee,
     OSSL_HPKE_SUITE *suite)
 {
     int namematch = 0, nameoverride = 0, suitematch = 0, num, cind = 0;
-    unsigned int csuite = 0, tsuite = 0, hnlen = 0;
+    unsigned int csuite = 0, tsuite = 0;
+    size_t hnlen = 0;
     OSSL_ECHSTORE_ENTRY *lee = NULL, *tee = NULL;
     OSSL_ECHSTORE *es = NULL;
     char *hn = NULL;
@@ -625,8 +626,8 @@ int ossl_ech_reset_hs_buffer(SSL_CONNECTION *s, const unsigned char *buf,
 size_t ossl_ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
     size_t encoded_len)
 {
-    int length_of_padding = 0, length_with_snipadding = 0;
-    int innersnipadding = 0, length_with_padding = 0;
+    size_t length_of_padding = 0, length_with_snipadding = 0;
+    size_t innersnipadding = 0, length_with_padding = 0;
     size_t mnl = 0, isnilen = 0;
 
     if (s == NULL || ee == NULL)
@@ -659,13 +660,13 @@ size_t ossl_ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
         length_with_padding += OSSL_ECH_PADDING_INCREMENT;
     OSSL_TRACE_BEGIN(TLS)
     {
-        BIO_printf(trc_out, "EAAE: padding: mnl: %zu, lws: %d "
-                            "lop: %d, clear_len (len with padding): %d, orig: %zu\n",
+        BIO_printf(trc_out, "EAAE: padding: mnl: %zu, lws: %zu "
+                            "lop: %zu, clear_len (len with padding): %zu, orig: %zu\n",
             mnl, length_with_snipadding, length_of_padding,
             length_with_padding, encoded_len);
     }
     OSSL_TRACE_END(TLS);
-    return (size_t)length_with_padding;
+    return length_with_padding;
 }
 
 /*
@@ -964,7 +965,7 @@ static int ech_hkdf_extract_wrap(SSL_CONNECTION *s, EVP_MD *md, int for_hrr,
     ossl_ech_pbuf("cc: client_random", p, SSL3_RANDOM_SIZE);
 #endif
     if (EVP_PKEY_CTX_set1_hkdf_key(pctx, p, SSL3_RANDOM_SIZE) != 1
-        || EVP_PKEY_CTX_set1_hkdf_salt(pctx, zeros, hashlen) != 1
+        || EVP_PKEY_CTX_set1_hkdf_salt(pctx, zeros, (int)hashlen) != 1
         || EVP_PKEY_derive(pctx, NULL, &retlen) != 1
         || hashlen != retlen
         || EVP_PKEY_derive(pctx, notsecret, &retlen) != 1) {
