@@ -80,7 +80,7 @@ header version number (B<OPENSSL_VERSION_MAJOR>.B<OPENSSL_VERSION_MINOR>) is
 greater than or equal to B<maj>.B<min>.
 
 B<OPENSSL_VERSION_NUMBER> is a combination of the major, minor and
-patch version into a single integer 0xMNN00PP0L, where:
+patch version into a single integer 0xMNN00PPSL, where:
 
 =over 4
 
@@ -95,6 +95,24 @@ is the number from B<OPENSSL_VERSION_MINOR>, in hexadecimal notation
 =item PP
 
 is the number from B<OPENSSL_VERSION_PATCH>, in hexadecimal notation
+
+=item S
+
+is a release indicator:
+
+=over 4
+
+=item 0
+
+this is a pre-release version.  This is equivalent to the value of the
+B<OPENSSL_VERSION_PRE_RELEASE> macro being a nonempty string.
+
+=item f
+
+this is a released version.  This is equivalent to the value of the
+B<OPENSSL_VERSION_PRE_RELEASE> macro being an empty string.
+
+=back
 
 =back
 
@@ -255,6 +273,11 @@ L<crypto(7)>
 
 The macros and functions described here were added in OpenSSL 3.0,
 except for OPENSSL_VERSION_NUMBER and OpenSSL_version_num().
+
+=head1 BUGS
+
+Some earlier OpenSSL 3 versions had the S bits of B<OPENSSL_VERSION_NUMBER>
+always set to zero, even in released versions.
 
 =head1 COPYRIGHT
 
