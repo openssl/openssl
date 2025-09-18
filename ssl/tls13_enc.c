@@ -537,7 +537,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
-                handlen = s->ext.ech.innerch_len;
+                handlen = (long)s->ext.ech.innerch_len;
                 hdata = s->ext.ech.innerch;
             } else
 #endif
