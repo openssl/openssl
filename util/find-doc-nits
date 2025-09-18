@@ -1309,6 +1309,7 @@ sub check_env_vars {
             if $debug;
         push @except_dirs, "$config{sourcedir}/$_";
     }
+    close $gs_pipe;
     # git call has failed, trying to parse .gitmodules manually
     if (!$git_ok) {
         print STDERR "DEBUG[check_env_vars]: .gitmodules parsing fallback\n"
@@ -1336,8 +1337,19 @@ sub check_env_vars {
     @except_env_files = map { realpath($_) } @except_env_files;
 
     # look for source files
-    find(sub { push @env_files, $File::Find::name if /\.c$|\.in$/; },
-         $config{sourcedir});
+    $git_ok = 0;
+    open my $glf_pipe, '-|', "git ls-files -- \"$config{sourcedir}\"";
+    while (<$glf_pipe>) {
+        $git_ok = 1;
+        s/\R$//; # better chomp
+        push @env_files, $_ if /\.c$|\.in$/;
+    }
+    close $glf_pipe;
+    # git call has failed, trying to find files manually
+    if (!$git_ok) {
+        find(sub { push @env_files, $File::Find::name if /\.c$|\.in$/; },
+             $config{sourcedir});
+    }
 
     foreach my $filename (@env_files) {
         my $realfilename = realpath($filename);
