@@ -303,10 +303,6 @@ was changed to return 0 in this condition as for other errors.
 
 OPENSSL_sk_set_thunks() was added in OpenSSL 3.6.0.
 
-Before OpenSSL 3.6.0 B<sk_I<TYPE>_find>() would potentially mutate an unsorted I<sk>, by sorting it
-before searching with a binary search. It was changed to not mutate an unsorted I<sk>, and to do
-a linear seach instead of a binary search on an unsorted I<sk>.
-
 =head1 COPYRIGHT
 
 Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
