@@ -276,60 +276,6 @@ static X509 *test_root2 = NULL;
 static X509 *test_leaf2 = NULL;
 
 /*
- * Glue an array of strings together.  Return a BIO and put the string
- * into |*out| so we can free it.
- */
-static BIO *glue2bio(const char **pem, char **out)
-{
-    size_t s = 0;
-
-    *out = glue_strings(pem, &s);
-    return BIO_new_mem_buf(*out, (int)s);
-}
-
-/*
- * Create a CRL from an array of strings.
- */
-static X509_CRL *CRL_from_strings(const char **pem)
-{
-    X509_CRL *crl;
-    char *p;
-    BIO *b = glue2bio(pem, &p);
-
-    if (b == NULL) {
-        OPENSSL_free(p);
-        return NULL;
-    }
-
-    crl = PEM_read_bio_X509_CRL(b, NULL, NULL, NULL);
-
-    OPENSSL_free(p);
-    BIO_free(b);
-    return crl;
-}
-
-/*
- * Create an X509 from an array of strings.
- */
-static X509 *X509_from_strings(const char **pem)
-{
-    X509 *x;
-    char *p;
-    BIO *b = glue2bio(pem, &p);
-
-    if (b == NULL) {
-        OPENSSL_free(p);
-        return NULL;
-    }
-
-    x = PEM_read_bio_X509(b, NULL, NULL, NULL);
-
-    OPENSSL_free(p);
-    BIO_free(b);
-    return x;
-}
-
-/*
  * Verify |leaf| certificate (chained up to |root|).  |crls| if
  * not NULL, is a list of CRLs to include in the verification. It is
  * also free'd before returning, which is kinda yucky but convenient.

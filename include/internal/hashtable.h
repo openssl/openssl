@@ -173,6 +173,11 @@ memset((key), 0, sizeof(*(key))); \
 #define TO_HT_KEY(key) &(key)->key_header
 
 /*
+ * Converts a defined keybuf type to an HT_KEY
+ */
+#define FROM_KEYBUF_TO_HT_KEY(keybuf, type) (type)((keybuf) - sizeof(HT_KEY))
+
+/*
  * Converts an HT_KEY back to its defined
  * type
  */

@@ -218,19 +218,20 @@ static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     OSSL_STORE_SEARCH *criterion =
         OSSL_STORE_SEARCH_by_name((X509_NAME *)name); /* won't modify it */
     int ok = by_store(ctx, type, criterion, ret);
-    STACK_OF(X509_OBJECT) *store_objects =
-        X509_STORE_get0_objects(X509_LOOKUP_get_store(ctx));
     X509_OBJECT *tmp = NULL;
 
     OSSL_STORE_SEARCH_free(criterion);
 
     if (ok) {
+        STACK_OF(X509_OBJECT) *store_objects;
         X509_STORE *store = X509_LOOKUP_get_store(ctx);
 
-        if (!ossl_x509_store_read_lock(store))
+        if (ossl_x509_store_read_lock(store) == 0)
             return 0;
-        tmp = X509_OBJECT_retrieve_by_subject(store_objects, type, name);
-        X509_STORE_unlock(store);
+        store_objects = ossl_x509_store_ht_get_by_name(store, name);
+        if (store_objects != NULL)
+            tmp = X509_OBJECT_retrieve_by_subject(store_objects, type, name);
+        ossl_x509_store_read_unlock(store);
     }
 
     ok = 0;
