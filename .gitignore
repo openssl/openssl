@@ -140,6 +140,8 @@ providers/implementations/skeymgmt/generic.c
 providers/implementations/storemgmt/file_store_any2obj.c
 providers/implementations/storemgmt/file_store.c
 providers/implementations/storemgmt/winstore_store.c
+providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.c
+providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.c
 providers/implementations/ciphers/ciphercommon.c
 providers/implementations/ciphers/ciphercommon_ccm.c
 providers/implementations/ciphers/ciphercommon_gcm.c
