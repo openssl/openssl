@@ -90,6 +90,8 @@ SOURCE[$COMMON_GOAL]=\
         ciphercommon_gcm.c ciphercommon_gcm_hw.c \
         ciphercommon_ccm.c ciphercommon_ccm_hw.c
 
+INCLUDE[cipher_aes_cbc_hmac_sha.o]=.
+INCLUDE[cipher_aes_cbc_hmac_sha_etm.o]=.
 INCLUDE[ciphercommon.o]=.
 INCLUDE[cipher_chacha20_poly1305.o]=.
 
