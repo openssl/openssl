@@ -3991,7 +3991,7 @@ X509_STORE_CTX_set0_untrusted           4082	4_0_0	EXIST::FUNCTION:
 OPENSSL_hexchar2int                     4083	4_0_0	EXIST::FUNCTION:
 X509_STORE_set_ex_data                  4084	4_0_0	EXIST::FUNCTION:
 X509_STORE_get_ex_data                  4085	4_0_0	EXIST::FUNCTION:
-X509_STORE_get0_objects                 4086	4_0_0	EXIST::FUNCTION:
+X509_STORE_get0_objects                 4086	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_0
 X509_OBJECT_get_type                    4087	4_0_0	EXIST::FUNCTION:
 X509_STORE_set_verify                   4088	4_0_0	EXIST::FUNCTION:
 X509_OBJECT_new                         4089	4_0_0	EXIST::FUNCTION:

@@ -747,6 +747,7 @@ static int obj_ht_foreach_object(HT_VALUE *v, void *arg)
     return 0;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_4_0
 STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs)
 {
     X509_STORE *store = (X509_STORE *)xs;
@@ -759,6 +760,7 @@ STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs)
 
     return xs->objs;
 }
+#endif
 
 STACK_OF(X509_OBJECT) *X509_STORE_get1_objects(X509_STORE *store)
 {
