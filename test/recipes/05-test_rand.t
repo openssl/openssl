@@ -13,7 +13,7 @@ use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir/;
 use Cwd qw(abs_path);
 
-plan tests => 6;
+plan tests => 5;
 setup("test_rand");
 
 ok(run(test(["rand_test", srctop_file("test", "default.cnf")])));
@@ -28,16 +28,16 @@ ok(run(test(["drbgtest"])));
 ok(run(test(["rand_status_test"])));
 
 SKIP: {
-    skip "engine is not supported by this OpenSSL build", 2
-        if disabled("engine") || disabled("dynamic-engine");
-
     my $success;
     my @randdata;
     my $expected = '0102030405060708090a0b0c0d0e0f10';
 
     $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
-    @randdata = run(app(['openssl', 'rand', '-provider', 'p_ossltest', '-provider', 'default', '-propquery', '?provider=p_ossltest', '-hex', '16' ]),
-                    capture => 1, statusvar => \$success);
+    skip "provider modules are not supported by this OpenSSL build", 1
+        if disabled("module");
+
+    @randdata = run(app(['openssl', 'rand', '-provider', 'p_ossltest', '-provider', 'default', '-propquery', '?provider=p_ossltest', '-hex', '16' ]), capture => 1, statusvar => \$success);
+
     chomp(@randdata);
     ok($success && $randdata[0] eq $expected,
        "rand with ossltest provider: Check rand output is as expected");
@@ -45,10 +45,4 @@ SKIP: {
     @randdata = run(app(['openssl', 'rand', '-hex', '2K' ]),
                     capture => 1, statusvar => \$success);
     chomp(@randdata);
-
-    @randdata = run(app(['openssl', 'rand', '-engine', 'dasync', '-hex', '16' ]),
-                    capture => 1, statusvar => \$success);
-    chomp(@randdata);
-    ok($success && length($randdata[0]) == 32,
-       "rand with dasync: Check rand output is of expected length");
 }
