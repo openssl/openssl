@@ -9,6 +9,7 @@ EVP_PKEY_assign_RSA, EVP_PKEY_assign_DSA, EVP_PKEY_assign_DH,
 EVP_PKEY_assign_EC_KEY, EVP_PKEY_assign_POLY1305, EVP_PKEY_assign_SIPHASH,
 EVP_PKEY_get0_hmac, EVP_PKEY_get0_poly1305, EVP_PKEY_get0_siphash,
 EVP_PKEY_get0, EVP_PKEY_type, EVP_PKEY_get_id, EVP_PKEY_get_base_id,
+EVP_PKEY_set1_engine, EVP_PKEY_get0_engine,
 EVP_PKEY_id, EVP_PKEY_base_id -
 EVP_PKEY assignment functions
 
@@ -52,6 +53,9 @@ see L<openssl_user_macros(7)>:
  int EVP_PKEY_assign_EC_KEY(EVP_PKEY *pkey, EC_KEY *key);
  int EVP_PKEY_assign_POLY1305(EVP_PKEY *pkey, ASN1_OCTET_STRING *key);
  int EVP_PKEY_assign_SIPHASH(EVP_PKEY *pkey, ASN1_OCTET_STRING *key);
+
+ ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey);
+ int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *engine);
 
 =head1 DESCRIPTION
 
@@ -122,6 +126,18 @@ the provider's key. Subsequent calls to EVP_PKEY_get1_RSA(),
 EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and EVP_PKEY_get1_EC_KEY() will always
 return the cached copy returned by the first call.
 
+EVP_PKEY_get0_engine() was used exclusively with ENGINE functionality, which has
+been removed in OpenSSL 4.0. However to preserve a level of API compatibility,
+this symbol is maintained and it only returns 0 without any changes made.
+Applications should use providers instead of engines (see L<provider(7)> for
+details).
+
+EVP_PKEY_set1_engine() was used exclusively with ENGINE functionality, which has
+been removed in OpenSSL 4.0. However to preserve a level of API compatibility,
+this symbol is maintained and it only returns 0 without any changes made.
+Applications should use providers instead of engines (see L<provider(7)> for
+details).
+
 =head1 WARNINGS
 
 The following functions are only reliable with B<EVP_PKEY>s that have
@@ -183,6 +199,8 @@ and EVP_PKEY_assign_SIPHASH() return 1 for success and 0 for failure.
 EVP_PKEY_get_base_id(), EVP_PKEY_get_id() and EVP_PKEY_type() return a key
 type or B<NID_undef> (equivalently B<EVP_PKEY_NONE>) on error.
 
+EVP_PKEY_set1_engine() returns 0.
+
 =head1 SEE ALSO
 
 L<EVP_PKEY_new(3)>, L<SM2(7)>
@@ -198,8 +216,8 @@ EVP_PKEY_get1_RSA, EVP_PKEY_get1_DSA, EVP_PKEY_get1_DH, EVP_PKEY_get1_EC_KEY,
 EVP_PKEY_get0_RSA, EVP_PKEY_get0_DSA, EVP_PKEY_get0_DH, EVP_PKEY_get0_EC_KEY,
 EVP_PKEY_assign_RSA, EVP_PKEY_assign_DSA, EVP_PKEY_assign_DH,
 EVP_PKEY_assign_EC_KEY, EVP_PKEY_assign_POLY1305, EVP_PKEY_assign_SIPHASH,
-EVP_PKEY_get0_hmac, EVP_PKEY_get0_poly1305 and EVP_PKEY_get0_siphash
-were deprecated in OpenSSL 3.0.
+EVP_PKEY_get0_hmac, EVP_PKEY_get0_poly1305 and EVP_PKEY_get0_siphash,
+EVP_PKEY_set1_engine and EVP_PKEY_get0_engine were deprecated in OpenSSL 3.0.
 
 The return value from EVP_PKEY_get0_RSA, EVP_PKEY_get0_DSA, EVP_PKEY_get0_DH,
 EVP_PKEY_get0_EC_KEY were made const in OpenSSL 3.0.

@@ -19,10 +19,7 @@
 extern "C" {
 # endif
 
-# ifndef OPENSSL_NO_ENGINE
-
 int ossl_err_load_ENGINE_strings(void);
-# endif
 
 # ifdef  __cplusplus
 }

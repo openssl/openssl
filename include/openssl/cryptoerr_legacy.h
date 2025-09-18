@@ -51,6 +51,7 @@ OSSL_DEPRECATEDIN_3_0 int ERR_load_DSA_strings(void);
 #  ifndef OPENSSL_NO_EC
 OSSL_DEPRECATEDIN_3_0 int ERR_load_EC_strings(void);
 #  endif
+OSSL_DEPRECATEDIN_3_0 int ERR_load_ENGINE_strings(void);
 OSSL_DEPRECATEDIN_3_0 int ERR_load_ERR_strings(void);
 OSSL_DEPRECATEDIN_3_0 int ERR_load_EVP_strings(void);
 OSSL_DEPRECATEDIN_3_0 int ERR_load_KDF_strings(void);

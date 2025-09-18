@@ -10,6 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/engineerr.h>
+#include <openssl/trace.h>
 #include "crypto/engineerr.h"
 
 #ifndef OPENSSL_NO_ENGINE
@@ -81,14 +82,13 @@ static const ERR_STRING_DATA ENGINE_str_reasons[] = {
 
 # endif
 
-int ossl_err_load_ENGINE_strings(void)
-{
-# ifndef OPENSSL_NO_ERR
-    if (ERR_reason_error_string(ENGINE_str_reasons[0].error) == NULL)
-        ERR_load_strings_const(ENGINE_str_reasons);
-# endif
-    return 1;
-}
 #else
 NON_EMPTY_TRANSLATION_UNIT
 #endif
+
+int ossl_err_load_ENGINE_strings(void)
+{
+    OSSL_TRACE(TRACE, "ENGINE feature was removed in version 4.0. Please \
+                       consider using providers");
+    return 0;
+}

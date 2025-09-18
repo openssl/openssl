@@ -513,12 +513,10 @@ EVP_PKEY *EVP_PKEY_new_raw_private_key_ex(OSSL_LIB_CTX *libctx,
                            len, 1);
 }
 
-EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *e,
+EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ossl_unused ENGINE *e,
                                        const unsigned char *priv,
                                        size_t len)
 {
-    /* make the compiler happy */
-    (void)e;
     return new_raw_key_int(NULL, NULL, NULL, type, priv, len, 1);
 }
 
@@ -530,12 +528,10 @@ EVP_PKEY *EVP_PKEY_new_raw_public_key_ex(OSSL_LIB_CTX *libctx,
                            len, 0);
 }
 
-EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *e,
+EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ossl_unused ENGINE *e,
                                       const unsigned char *pub,
                                       size_t len)
 {
-    /* make the compiler happy */
-    (void)e;
     return new_raw_key_int(NULL, NULL, NULL, type, pub, len, 0);
 }
 
@@ -698,6 +694,24 @@ int EVP_PKEY_set_type(EVP_PKEY *pkey, int type)
 int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
 {
     return pkey_set_type(pkey, EVP_PKEY_NONE, str, len, NULL);
+}
+
+/* ENGINEs are removed, keeping this functions as no-op returning failure */
+int EVP_PKEY_set1_engine(ossl_unused EVP_PKEY *pkey, ossl_unused ENGINE *e)
+{
+    OSSL_TRACE(TRACE, "ENGINE feature was removed in version 4.0. Please \
+                       consider using providers");
+
+    return 0;
+}
+
+/* same as above */
+ENGINE *EVP_PKEY_get0_engine(ossl_unused const EVP_PKEY *pkey)
+{
+    OSSL_TRACE(TRACE, "ENGINE feature was removed in version 4.0. Please \
+                       consider using providers");
+
+    return NULL;
 }
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0

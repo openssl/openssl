@@ -18,6 +18,7 @@
 # endif
 
 # include <openssl/opensslconf.h>
+# include <openssl/engineerr.h>
 
 # ifndef OPENSSL_NO_ENGINE
 #  ifndef OPENSSL_NO_DEPRECATED_1_1_0
@@ -33,7 +34,6 @@
 #  include <openssl/types.h>
 #  include <openssl/symhacks.h>
 #  include <openssl/x509.h>
-#  include <openssl/engineerr.h>
 #  ifdef  __cplusplus
 extern "C" {
 #  endif
