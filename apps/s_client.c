@@ -3451,8 +3451,9 @@ static void print_ech_retry_configs(BIO *bio, SSL *s)
      * print nicely, note that any non-supported versions
      * sent by server will have been filtered out by now
      */
-    if ((biom = BIO_new(BIO_s_mem())) == NULL
-        || BIO_write(biom, rtval, rtlen) <= 0
+    if (rtlen > INT_MAX
+        || (biom = BIO_new(BIO_s_mem())) == NULL
+        || BIO_write(biom, rtval, (int)rtlen) <= 0
         || (es = OSSL_ECHSTORE_new(NULL, NULL)) == NULL
         || OSSL_ECHSTORE_read_echconfiglist(es, biom) != 1) {
         BIO_printf(bio, "ECH: Error loading retry-configs\n");
