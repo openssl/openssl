@@ -33,6 +33,7 @@ X509 object cache. The cache contains B<X509> and B<X509_CRL> objects. The
 returned pointer must not be freed by the calling application. If the store is
 shared across multiple threads, it is not safe to use the result of this
 function. Use X509_STORE_get1_objects() instead, which avoids this problem.
+Function was deprecated in OpenSSL 3.7.
 
 X509_STORE_get1_all_certs() returns a list of all certificates in the store.
 The caller is responsible for freeing the returned list.
