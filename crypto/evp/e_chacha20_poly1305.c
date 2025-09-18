@@ -155,7 +155,9 @@ typedef struct {
     unsigned int nonce[12/4];
     unsigned char tag[POLY1305_BLOCK_SIZE];
     unsigned char tls_aad[POLY1305_BLOCK_SIZE];
-    struct { uint64_t aad, text; } len;
+    struct {
+        uint64_t aad, text;
+    } len;
     int aad, mac_inited, tag_len, nonce_len;
     size_t tls_payload_length;
 } EVP_CHACHA_AEAD_CTX;
