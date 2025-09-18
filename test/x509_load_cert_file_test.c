@@ -13,7 +13,6 @@
 
 #include "testutil.h"
 
-
 static const char *chain;
 static const char *crl;
 
@@ -130,7 +129,7 @@ static int test_load_same_cn_certs(void)
 
     if (!TEST_ptr(nm = X509_NAME_new())
         || !TEST_true(X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC,
-                                                 (unsigned char*)"www.example.test",
+                                                 (unsigned char *)"www.example.test",
                                                  -1, -1, 0)))
         goto err;
 
@@ -143,7 +142,7 @@ static int test_load_same_cn_certs(void)
         || !TEST_true(X509_STORE_add_cert(store, cert1))
         || !TEST_true(X509_STORE_add_crl(store, crl2))
         || !TEST_true(X509_STORE_add_cert(store, cert2))
-         // deliberately not taking lock in a single thread
+        /* deliberately not taking lock in a single thread */
         || !TEST_ptr(objs = X509_STORE_get0_objects(store))
         || !TEST_int_eq(sk_X509_OBJECT_num(objs), 3)
         || !TEST_ptr(sk_x509 = X509_STORE_CTX_get1_certs(s_ctx, nm))
@@ -152,8 +151,8 @@ static int test_load_same_cn_certs(void)
         || !TEST_int_eq(sk_X509_CRL_num(sk_x509_crl), 1))
         goto err;
 
-
     ret = 1;
+
 err:
     X509_NAME_free(nm);
     OSSL_STACK_OF_X509_free(sk_x509);

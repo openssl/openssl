@@ -193,12 +193,14 @@ static int x509_object_cmp(const X509_OBJECT *const *a,
 static void objs_ht_free(HT_VALUE *v)
 {
     STACK_OF(X509_OBJECT) *objs = v->value;
+
     sk_X509_OBJECT_pop_free(objs, X509_OBJECT_free);
 }
 
 static uint64_t obj_ht_hash(uint8_t *keybuf, size_t keylen)
 {
     OBJS_KEY *k = FROM_KEYBUF_TO_HT_KEY(keybuf, OBJS_KEY *);
+
     return ossl_fnv1a_hash(k->keyfields.xn_canon, k->keyfields.xn_canon_enclen);
 }
 
@@ -336,9 +338,8 @@ X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *ctx,
     return ret;
 }
 
-
 STACK_OF(X509_OBJECT) *ossl_x509_store_ht_get_by_name(const X509_STORE *store,
-                                                       const X509_NAME *xn)
+                                                      const X509_NAME *xn)
 {
     HT_VALUE *v;
     OBJS_KEY key;
@@ -362,7 +363,7 @@ STACK_OF(X509_OBJECT) *ossl_x509_store_ht_get_by_name(const X509_STORE *store,
 }
 
 static int x509_name_objs_ht_insert(const X509_STORE *store, const X509_NAME *xn,
-                                   STACK_OF(X509_OBJECT) *objs, X509_OBJECT *obj)
+                                    STACK_OF(X509_OBJECT) *objs, X509_OBJECT *obj)
 {
     int ret = 0, added = 0;
     OBJS_KEY key;
@@ -745,7 +746,6 @@ STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs)
 
     if ((objs = sk_X509_OBJECT_new(x509_object_cmp)) == NULL)
         return NULL;
-
 
     ossl_ht_foreach_until(store->objs_ht, obj_ht_foreach_object, &objs);
     sk_X509_OBJECT_pop_free(store->objs, X509_OBJECT_free);
