@@ -834,7 +834,7 @@ static int ech_ingest_test(int run)
     char *pn = NULL, *ec = NULL;
 
     if ((in = BIO_new(BIO_s_mem())) == NULL
-        || BIO_write(in, tv->tv, tv->len) <= 0
+        || BIO_write(in, tv->tv, (int)tv->len) <= 0
         || (out = BIO_new(BIO_s_mem())) == NULL
         || (es = OSSL_ECHSTORE_new(NULL, NULL)) == NULL)
         goto end;
