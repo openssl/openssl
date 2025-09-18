@@ -296,8 +296,11 @@ int SSL_ech_get1_retry_config(SSL *ssl, unsigned char **ec, size_t *eclen)
     const char *propq = NULL;
 
     s = SSL_CONNECTION_FROM_SSL(ssl);
-    if (s == NULL || ec == NULL || eclen == NULL)
+    if (s == NULL || ec == NULL || eclen == NULL
+        || s->ext.ech.returned_len > INT_MAX) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
+    }
     if (s->ext.ech.returned == NULL) {
         *ec = NULL;
         *eclen = 0;
@@ -316,7 +319,7 @@ int SSL_ech_get1_retry_config(SSL *ssl, unsigned char **ec, size_t *eclen)
         propq = s->ext.ech.es->propq;
     }
     if ((in = BIO_new(BIO_s_mem())) == NULL
-        || BIO_write(in, s->ext.ech.returned, s->ext.ech.returned_len) <= 0
+        || BIO_write(in, s->ext.ech.returned, (int)s->ext.ech.returned_len) <= 0
         || (ve = OSSL_ECHSTORE_new(libctx, propq)) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -355,7 +358,7 @@ int SSL_CTX_ech_set1_outer_alpn_protos(SSL_CTX *ctx,
     if (protos == NULL)
         return 1;
     if (protos_len == 0) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
     ctx->ext.ech.alpn_outer = OPENSSL_memdup(protos, protos_len);
@@ -413,11 +416,11 @@ int SSL_set1_ech_config_list(SSL *ssl, const uint8_t *ecl, size_t ecl_len)
         s->ext.ech.es = NULL;
         return 1;
     }
-    if (ecl_len == 0) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    if (ecl_len == 0 || ecl_len > INT_MAX) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
-    if ((es_in = BIO_new_mem_buf(ecl, ecl_len)) == NULL
+    if ((es_in = BIO_new_mem_buf(ecl, (int)ecl_len)) == NULL
         || (es = OSSL_ECHSTORE_new(NULL, NULL)) == NULL
         || OSSL_ECHSTORE_read_echconfiglist(es, es_in) != 1
         || SSL_set1_echstore(ssl, es) != 1) {
