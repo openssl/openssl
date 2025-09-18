@@ -246,11 +246,11 @@ err:
 static int ech_final_config_checks(OSSL_ECHSTORE_ENTRY *ee)
 {
     OSSL_HPKE_SUITE hpke_suite;
-    size_t ind, num;
+    int ind, num;
     int goodsuitefound = 0;
 
     /* check local support for some suite */
-    for (ind = 0; ind != ee->nsuites; ind++) {
+    for (ind = 0; ind != (int)ee->nsuites; ind++) {
         /*
          * suite_check says yes to the pseudo-aead for export, but we don't
          * want to see it here coming from outside in an encoding
@@ -296,12 +296,14 @@ static int ech_final_config_checks(OSSL_ECHSTORE_ENTRY *ee)
 static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
     EVP_PKEY *priv, int for_retry)
 {
-    unsigned int ech_content_length = 0, tmpi;
+    size_t ech_content_length = 0;
+    unsigned int tmpi;
     const unsigned char *tmpecp = NULL;
     size_t tmpeclen = 0, test_publen = 0;
     PACKET ver_pkt, pub_pkt, cipher_suites, public_name_pkt, exts;
     uint16_t thiskemid;
-    unsigned int suiteoctets = 0, ci = 0;
+    size_t suiteoctets = 0;
+    unsigned int ci = 0;
     unsigned char cipher[OSSL_ECH_CIPHER_LEN], max_name_len;
     unsigned char test_pub[OSSL_ECH_CRYPTO_VAR_SIZE];
     OSSL_ECHSTORE_ENTRY *ee = NULL;
@@ -348,12 +350,13 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
         || !PACKET_memdup(&pub_pkt, &ee->pub, &ee->pub_len)
         || !PACKET_get_length_prefixed_2(&ver_pkt, &cipher_suites)
         || (suiteoctets = PACKET_remaining(&cipher_suites)) <= 0
-        || (suiteoctets % 2) == 1) {
+        || (suiteoctets % 2) == 1
+        || suiteoctets / OSSL_ECH_CIPHER_LEN > UINT_MAX) {
         ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
     }
     thiskemid = (uint16_t)tmpi;
-    ee->nsuites = suiteoctets / OSSL_ECH_CIPHER_LEN;
+    ee->nsuites = (unsigned int)(suiteoctets / OSSL_ECH_CIPHER_LEN);
     ee->suites = OPENSSL_malloc(ee->nsuites * sizeof(*ee->suites));
     if (ee->suites == NULL)
         goto err;
@@ -573,7 +576,7 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        tdeclen = BIO_read(btmp, binbuf, encodedlen);
+        tdeclen = BIO_read(btmp, binbuf, (int)encodedlen);
         if (tdeclen <= 0) { /* need int for -1 return in failure case */
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
@@ -838,7 +841,7 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
             goto err;
         }
         if (PEM_write_bio(out, PEM_STRING_ECHCONFIG, NULL,
-                ee->encoded, ee->encoded_len)
+                ee->encoded, (long)ee->encoded_len)
             <= 0) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
@@ -870,7 +873,7 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
         WPACKET_get_total_written(&epkt, &allencoded_len);
         if (PEM_write_bio(out, PEM_STRING_ECHCONFIG, NULL,
                 (unsigned char *)epkt_mem->data,
-                allencoded_len)
+                (long)allencoded_len)
             <= 0) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
@@ -916,12 +919,12 @@ int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, int index, time_t *loaded_secs,
         return 0;
     }
     *loaded_secs = now - ee->loadtime;
+    *public_name = NULL;
+    *echconfig = NULL;
     if (ee->public_name != NULL) {
         *public_name = OPENSSL_strdup(ee->public_name);
         if (*public_name == NULL)
             goto err;
-    } else {
-        *public_name = NULL;
     }
     *has_private = (ee->keyshare == NULL ? 0 : 1);
     /* Now "print" the ECHConfigList */
@@ -953,10 +956,12 @@ int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, int index, time_t *loaded_secs,
             ee->exts == NULL ? 0 : sk_OSSL_ECHEXT_num(ee->exts));
     }
     ehlen = BIO_get_mem_data(out, &ignore);
+    if (ehlen > INT_MAX)
+        goto err;
     *echconfig = OPENSSL_malloc(ehlen + 1);
     if (*echconfig == NULL)
         goto err;
-    if (BIO_read(out, *echconfig, ehlen) <= 0) {
+    if (BIO_read(out, *echconfig, (int)ehlen) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -965,6 +970,10 @@ int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, int index, time_t *loaded_secs,
     return 1;
 err:
     BIO_free(out);
+    OPENSSL_free(*public_name);
+    *public_name = NULL;
+    OPENSSL_free(*echconfig);
+    *echconfig = NULL;
     return 0;
 }
 
