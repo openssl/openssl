@@ -12,7 +12,8 @@ See the individual manual pages for details.
 =head1 DESCRIPTION
 
 This guide details the changes required to migrate to new versions of OpenSSL.
-Currently this covers OpenSSL 4.0. For earlier versions refer to
+This document covers migration from OpenSSL 3.x to OpenSSL 4.0.
+For migration from earlier versions see also
 L<https://docs.openssl.org/3.6/man7/ossl-guide-migration/>.
 For an overview of some of the key concepts introduced in OpenSSL 4.0 see
 L<crypto(7)>.
