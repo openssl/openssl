@@ -146,6 +146,7 @@ providers/implementations/ciphers/ciphercommon_gcm.c
 providers/implementations/ciphers/cipher_chacha20_poly1305.c
 providers/implementations/digests/blake2_prov.c
 providers/implementations/digests/digestcommon.c
+providers/implementations/digests/mdc2_prov.c
 providers/implementations/digests/sha3_prov.c
 providers/implementations/include/prov/blake2_params.inc
 providers/implementations/macs/cmac_prov.c
