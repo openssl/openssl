@@ -604,7 +604,7 @@ ok(vfy_root("-CAstore", $rootcert, "-CAfile", $rootcert), "CAfile and existing C
 ok(!vfy_root("-CAstore", "non-existing", "-CAfile", $rootcert), "CAfile and non-existing CAstore");
 
 SKIP: {
-    skip "file names with colons aren't supported on Windows and VMS", 2
+    skip "file names with colons aren't supported on Windows and VMS", 1
         if $^O =~ /^(MSWin32|VMS)$/;
     my $foo_file = "foo:cert.pem";
     copy($rootcert, $foo_file);
