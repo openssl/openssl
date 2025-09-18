@@ -48,14 +48,14 @@ if (!defined($jobs)) {
         # Smells like Linux or something else attempting bug for bug
         # compatibilty with the /proc paradigm.
         my $tmp = qx(grep -c ^processor /proc/cpuinfo 2>/dev/null);
-        if ($? eq 0 && $tmp > 0) {
+        if ($? == 0 && $tmp > 0) {
             $cpus = $tmp;
         }
     }
     if (!defined($cpus)) {
         # OpenBSD, FreeBSD, MacOS
         my $tmp = qx(sysctl -n hw.ncpu 2>/dev/null);
-        if ($? eq 0 && $tmp > 0) {
+        if ($? == 0 && $tmp > 0) {
             $cpus = $tmp;
         }
     }
