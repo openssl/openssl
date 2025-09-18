@@ -28,11 +28,17 @@ X509_STORE_get1_objects() returns a snapshot of all objects in the store's X509
 cache. The cache contains B<X509> and B<X509_CRL> objects. The caller is
 responsible for freeing the returned list.
 
-X509_STORE_get0_objects() retrieves an internal pointer to the store's
-X509 object cache. The cache contains B<X509> and B<X509_CRL> objects. The
-returned pointer must not be freed by the calling application. If the store is
-shared across multiple threads, it is not safe to use the result of this
-function. Use X509_STORE_get1_objects() instead, which avoids this problem.
+X509_STORE_get0_objects() was deprecated in OpenSSL 4.0. Applications
+should instead use X509_STORE_get1_objects() to avoid potential
+issues associated with X509_STORE_get0_objects(). The
+X509_STORE_get0_objects() returns an internal pointer to the
+store's cache of X509 and X509_CRL objects. This pointer
+references internal data structures and must not be freed by the
+application. Since the returned pointer exposes shared internal state, its use in
+multithreaded contexts is inherently unsafe without external
+synchronisation. When a store is shared across threads, callers are
+required to acquire the store lock via X509_STORE_lock() before
+invoking X509_STORE_get0_objects().
 
 X509_STORE_get1_all_certs() returns a list of all certificates in the store.
 The caller is responsible for freeing the returned list.
