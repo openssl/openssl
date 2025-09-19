@@ -135,7 +135,6 @@ containing additional information on specific topics.
  * [Information about the OpenSSL QUIC protocol implementation](README-QUIC.md)
  * [Information about the OpenSSL Provider architecture](README-PROVIDERS.md)
  * [Information about using the OpenSSL FIPS validated module](README-FIPS.md)
- * [Information about the legacy OpenSSL Engine architecture](README-ENGINES.md)
 
 The OpenSSL Guide
 -----------------
