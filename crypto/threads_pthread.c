@@ -92,8 +92,10 @@ __tsan_mutex_post_lock((x), 0, 0)
 /*
  * The Non-Stop KLT thread model currently seems broken in its rwlock
  * implementation
+ * Likewise is there a problem with the glibc implementation on riscv.
  */
-# if defined(PTHREAD_RWLOCK_INITIALIZER) && !defined(_KLT_MODEL_)
+# if defined(PTHREAD_RWLOCK_INITIALIZER) && !defined(_KLT_MODEL_) \
+                                         && !defined(__riscv)
 #  define USE_RWLOCK
 # endif
 
