@@ -105,6 +105,8 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/ciphers/ciphercommon_ccm.c \
          providers/implementations/ciphers/ciphercommon_gcm.c \
          providers/implementations/ciphers/cipher_chacha20_poly1305.c \
+         providers/implementations/ciphers/cipher_null.c \
+         providers/implementations/ciphers/cipher_rc4_hmac_md5.c \
          providers/implementations/digests/blake2_prov.c \
          providers/implementations/digests/digestcommon.c \
          providers/implementations/digests/mdc2_prov.c \
@@ -214,6 +216,8 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/ciphers/ciphercommon_ccm.c \
        providers/implementations/ciphers/ciphercommon_gcm.c \
        providers/implementations/ciphers/cipher_chacha20_poly1305.c \
+       providers/implementations/ciphers/cipher_null.c \
+       providers/implementations/ciphers/cipher_rc4_hmac_md5.c \
        providers/implementations/digests/blake2_prov.c \
        providers/implementations/digests/digestcommon.c \
        providers/implementations/digests/mdc2_prov.c \
@@ -347,6 +351,10 @@ GENERATE[providers/implementations/ciphers/ciphercommon_gcm.c]=\
     providers/implementations/ciphers/ciphercommon_gcm.c.in
 GENERATE[providers/implementations/ciphers/cipher_chacha20_poly1305.c]=\
     providers/implementations/ciphers/cipher_chacha20_poly1305.c.in
+GENERATE[providers/implementations/ciphers/cipher_null.c]=\
+    providers/implementations/ciphers/cipher_null.c.in
+GENERATE[providers/implementations/ciphers/cipher_rc4_hmac_md5.c]=\
+    providers/implementations/ciphers/cipher_rc4_hmac_md5.c.in
 GENERATE[providers/implementations/digests/blake2_prov.c]=\
     providers/implementations/digests/blake2_prov.c.in
 GENERATE[providers/implementations/digests/digestcommon.c]=\
