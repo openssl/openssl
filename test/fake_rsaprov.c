@@ -32,6 +32,8 @@ static int exptypes_selection;
 static int query_id;
 static int key_deleted;
 
+unsigned fake_rsa_query_operation_name = 0;
+
 struct fake_rsa_keydata {
     int selection;
     int status;
@@ -77,7 +79,7 @@ static const char *fake_rsa_keymgmt_query(int id)
     /* record global for checking */
     query_id = id;
 
-    return "RSA";
+    return fake_rsa_query_operation_name ? NULL: "RSA";
 }
 
 static int fake_rsa_keymgmt_import(void *keydata, int selection,
