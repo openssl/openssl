@@ -9,7 +9,7 @@ Fixed size large numbers
 
 <p>
 In this design, we explore and define how OpenSSL's `BIGNUM` library can
-be remodelled for constant-time calculations. Furthermore, we explore and
+be remodelled for constant-size calculations. Furthermore, we explore and
 define a fixed size large number library, which never changes the in-memory
 size of a number once it has been allocated. Finally, we define how `BIGNUM`
 functions with corresponding fixed size large number functions can be remade
@@ -24,7 +24,6 @@ into wrappers around the latter.
 - [Goals][]
 - [Challenges][]
 - [Design][]
-  - [Using the C99 flexible array member feature][]
   - [The `OSSL_FN` type][]
   - [The `OSSL_FN_CTX` type][]
     - [The `OSSL_FN_CTX` type, with frames][]
@@ -43,6 +42,8 @@ into wrappers around the latter.
   - [The variant with frames][]
   - [The variant without frames][]
 - [Testing][]
+- [Appendix][]
+  - [Using the C99 flexible array member feature][]
 
 Background
 ==========
@@ -87,8 +88,11 @@ Goals
 
 [Goals]: #goals
 
-Overall goal: Introduce a new type and API that are inherently constant time
+Overall goal: Introduce a new type and API that are inherently constant size
 to replace the existing `BIGNUM` usage.
+
+The intention is to enhance this one aspect of constant time calculations.
+Other aspects are considered out of scope for this design.
 
 The included sub-goals are:
 
@@ -96,16 +100,17 @@ The included sub-goals are:
   size adjustments of the large numbers once their individual size has been
   established
 * To define that large number type and API in such a way it's compatible
-  with and can be used by the `BIGNUM` API
-* To ensure that the new large number API is constant-time
+  with and can be used by the `BIGNUM` API through easy transition to the
+  new type.
+* To ensure that the new large number API is constant-size
 * To repurpose as much as possible of our current `BIGNUM` code for the new
-  large number API, especially our assembler code (it's assumed that
+  large number API, especially our assembler code (with the assumption that
   everything that doesn't change the `BIGNUM` sizes can be repurposed as is)
 * To replace the public `BIGNUM` API that has been repurposed as wrappers
   around the new large number API
 * To replace all security critical large number calculations so that they
-  are not just constant-time in themselves, but that the whole set of
-  calculations remains constant-time, within OpenSSL code
+  are not just constant-size in themselves, but that the whole set of
+  calculations remains constant-size, within OpenSSL code
 
 Challenges
 ==========
@@ -116,11 +121,11 @@ The challenges we have are:
 
 - **`BIGNUM` usage**
 
-  Because `BIGNUM` is a public API, it's likely to be used by OpenSSL users.
-  Existing functionality needs to be backward compatible, but performance
+  Because `BIGNUM` is a public facing API, it's likely to be used by OpenSSL
+  users.  This existing API needs to be backward compatible, but performance
   isn't necessarily critical.
 
-- **Constant-time**
+- **constant-time through constant-size**
 
   To make calculation time predictable on a broader scale than on a
   per-operation basis, there's a need to ensure that each large number being
@@ -145,58 +150,23 @@ the `BIGNUM`, yet compatible with BIGNUM insofar that the `BIGNUM` type
 wraps around the `OSSL_FN` type, and `BIGNUM` functions wrap around
 corresponding `OSSL_FN` functions when there are any.
 
-The overall design also defines another new type, `OSSL_FN_CTX`, with an API
-that is similar to the `BN_CTX` API, but that is otherwise not compatible in
-so far that there is no way to get an `OSSL_FN_CTX` instance out of a
-`BN_CTX` instance.
+The idea is that a `BIGNUM` (`BN_`) function may call an `OSSL_FN` function,
+but not the other way around, i.e. when an `OSSL_FN` function is called, an
+"`OSSL_FN` only" bubble is entered, and such a function must therefore only
+in turn call other `OSSL_FN` functions for large number operations, rather
+than `BIGNUM` functions.
+
+The overall design also defines new associated types to replace their
+`BIGNUM` counterparts: `OSSL_FN_CTX`, `OSSL_FN_BLINDING`, `OSSL_FN_MONT_CTX`,
+and `OSSL_FN_RECP_CTX`.  Notably, however, the callback type `BN_GENCB`
+isn't replaced, as it contains nothing `BIGNUM`, and can therefore be reused
+unchanged with an `OSSL_FN` API.
 
 The `OSSL_FN` type and API will be designed in such a way to enable it to
-become public at some point in the future. The initial version will not be
-public and will only be used internally.
-
-*Initial implementation is predicted to be internal.  However, the intent is
-to make this a public API some time in the future.  Therefore, all type and
-function names are made to look like publicly declared types and functions,
-to make the future transition easy.*
+become public at some point in the future.  *The initial version will not be
+public and will only be used internally within OpenSSL.*
 
 Let's go over the details
-
-Using the C99 flexible array member feature
--------------------------------------------
-
-[Using the C99 flexible array member feature]: #using-the-c99-flexible-array-member-feature
-
-In this design, the C99 feature that's dubbed "flexible array member" is used
-extensively.  This a `struct` member that's an array, that must come last in
-the struct, and that is incomplete in so far that no array size is given.  It
-can look like this:
-
-``` C
-struct t {
-    size_t a;
-    char b;
-    char c[]; /**< flexible array member */
-};
-```
-
-Some attention must be payed to how it's arranged in memory.  According to C99
-specification, `sizeof(struct t) == offsetof(struct t, c)`, i.e. the flexible
-array member is located after `struct` padding, if padding occurs.  However,
-gcc operates differently, and locates the flexible array member before the
-padding.  This is especially pertinent when the flexible array member is an
-array of `char`.  In other words, this is what happens for `struct t` on a
-64-bit system:
-
-|     | `offsetof(struct t, a)` | `offsetof(struct t, b)` | `offsetof(struct t, c)` | `sizeof(struct t)` |
-|-----|:-----------------------:|:-----------------------:|:-----------------------:|:------------------:|
-| C99 | 0                       | 8                       | 16                      | 16                 |
-| gcc | 0                       | 8                       | 9                       | 16                 |
-
-For consistent placement of the flexible array member, one therefore needs to
-pay attention to possible `struct` padding.  Among other methods, one chosen
-here is to precede the flexible array member with a member whose atomic type
-is assumed to be large enough that no padding is needed after it, such as
-`size_t` or a pointer.
 
 The `OSSL_FN` type
 ------------------
@@ -230,6 +200,11 @@ struct ossl_fn_st {
 };
 ```
 
+To be noted is that current cryptosystems never use negative numbers, so
+it's possible that the `is_negative` flag will never be used.  Therefore, it
+is possible that it will never exist in actual implementation.  It is
+retained in this design, though, to keep that option open.
+
 The `OSSL_FN_CTX` type
 ----------------------
 
@@ -244,7 +219,7 @@ are two possibilities.
 
 ### The `OSSL_FN_CTX` type, with frames
 
-[The `OSSL_FN_CTX` type, with frames]: #The-OSSL_FN_CTX-type-with-frames
+[The `OSSL_FN_CTX` type, with frames]: #the-ossl_fn_ctx-type-with-frames
 
 This variant is intended to mimic all `BN_CTX` functionality.  The idea is to
 create a large `OSSL_FN_CTX` at the top function of a complex calculation, and
@@ -314,7 +289,7 @@ bookkeeping purposes.
 
 ### The `OSSL_FN_CTX` type, without frames
 
-[The `OSSL_FN_CTX` type, without frames]: #The-OSSL_FN_CTX-type-without-frames
+[The `OSSL_FN_CTX` type, without frames]: #the-ossl_fn_ctx-type-without-frames
 
 Compared to the variant with frames, this `OSSL_FN_CTX` variant is much
 simpler, but also more heap allocation intense.
@@ -341,6 +316,26 @@ struct ossl_fn_ctx_st {
     unsigned char memory[];
 };
 ```
+
+Other associated types
+----------------------
+
+[Other associated types]: #other-associated-types
+
+There are a few types that, like `BN_CTX` / `OSSL_FN_CTX`, are used to hold
+a context around some more complicated calculations.  Just like `OSSL_FN_CTX`,
+The `OSSL_FN` variants of these types are made into strictly separate types,
+not compatible with their `BIGNUM` counterparts.
+
+| `BIGNUM` types | `OSSL_FN` types    |
+|----------------|--------------------|
+| `BN_BLINDING`  | `OSSL_FN_BLINDING` |
+| `BN_MONT_CTX`  | `OSSL_FN_MONT_CTX` |
+| `BN_RECP_CTX`  | `OSSL_FN_RECP_CTX` |
+
+Their `OSSL_FN` APIs for these types should be possible to create by
+repurposing the corresponding `BIGNUM` APIs, with adjustments for the
+constant-size requirements of all `OSSL_FN` functions.
 
 The `BIGNUM` type
 -----------------
@@ -370,6 +365,8 @@ as well as to wrap an `OSSL_FN` in a `BIGNUM`:
  */
 OSSL_FN *BN_acquire_fn(BIGNUM *a, size_t bits)
 {
+    if (a->data->is_acquired)
+        return NULL; /* only one acquisition at a time */
     if ((bn_expand(a, bits)) <= 0)
         return NULL;
     a->data->is_acquired = 1;
@@ -379,7 +376,17 @@ void BN_release_fn(BIGNUM *a)
 {
     a->data->is_acquired = 0;
 }
+```
 
+Note that these functions are not designed to be thread-safe, nor do they
+support multiple suímultaneous acquisitions.  By design, holding pointers to
+a `BIGNUM` and its wrapped `OSSL_FN` at the same time should only happen in
+a very short term.
+
+If there's a need, it would also be possible to wrap an `OSSL_FN` with a
+`BIGNUM`:
+
+``` C
 /*
  * When wrapping an OSSL_FN in a BIGNUM, the OSSL_FN is considered acquired
  * until the caller decides to release it.
@@ -399,10 +406,8 @@ BIGNUM *BN_wrap_fn(OSSL_FN *a)
 }
 ```
 
-Note that these functions are not designed to be thread-safe, nor do they
-support multiple suímultaneous acquisitions.  By design, holding pointers to
-a `BIGNUM` and its wrapped `OSSL_FN` at the same time should only happen in
-a very short term.
+This should be avoided, but we retain this possibility just in case its use
+is unavoidable.
 
 Mutability
 ----------
@@ -418,6 +423,10 @@ accordingly.
 
 The `OSSL_FN_CTX`  API is much more strict.  The size of an `OSSL_FN_CTX`
 instance is immutable after it has been allocated, except when it is freed.
+
+In the case where an `OSSL_FN` is "acquired" (i.e. the calling code holds a
+pointer to a `OSSL_FN` and to a `BIGNUM` that wraps it), `BIGNUM` must
+consider the `OSSL_FN` size as immutable.
 
 Dropping `top` from `BIGNUM`
 ----------------------------
@@ -483,10 +492,10 @@ This is one example of what that would look like. This assumes that there is
 a function `OSSL_FN_add()`:
 
 ```c
-int OSSL_FN_add(OSSL_FN *r, OSSL_FN *a, OSSL_FN *b)
+int OSSL_FN_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
 {
     /*
-     * Code from the current BN_add() goes here, without the part that touche
+     * Code from the current BN_add() goes here, without the part that touches
      * top and dmax (top doesn't exist in this design, but it does exist in
      * current OpenSSL code)
      */
@@ -495,31 +504,40 @@ int OSSL_FN_add(OSSL_FN *r, OSSL_FN *a, OSSL_FN *b)
 int BN_add(BIGNUM *r, BIGNUM *a, BIGNUM *b)
 {
     int ret;
-    size_t max_size = a->data.dsize; /* number of sizeof(BN_ULONG) limbs */
-    BN_ULONG n = a->data->d[max_size-1];
 
-    if (b->data.dsize > max_size) {
-        max_size = b->data->dsize;
-        n = b->data->d[max_size-1];
+    if (!r->data.is_acquired) {
+        size_t max_size = a->data.dsize; /* number of sizeof(BN_ULONG) limbs */
+        BN_ULONG n = a->data->d[max_size-1];
+
+        if (b->data.dsize > max_size) {
+            max_size = b->data->dsize;
+            n = b->data->d[max_size-1];
+        }
+
+        /*
+         * If the highest limb in the biggest number is non-zero and they are
+         * both positive or both negative, it's assumed that the resulting
+         * bignum may grow by one limb.
+         */
+        if (n != 0 && a->data->is_negative == b->data->is_negative)
+            max_size++;
+
+        if ((ret = bn_expand(r, max_size * BN_BITS2)) <= 0)
+            return ret;
     }
 
     /*
-     * If the highest limb in the biggest number is non-zero and they are both
-     * positive or both negative, it's assumed that the resulting bignum may
-     * grow by one limb.
+     * It's not necessary to "acquire" the OSSL_FNs here, because it's
+     * assumed that the call of OSSL_FN_add() enters a "OSSL_FN only" bubble.
      */
-    if (n != 0 && a->data->is_negative == b->data->is_negative)
-        max_size++;
-
-    if ((ret = bn_expand(r, max_size * BN_BITS2)) > 0)
-        ret = OSSL_FN_add(r->data, a->data, b->data);
+    ret = OSSL_FN_add(r->data, a->data, b->data);
 
     return ret;
 }
 ```
 
-*(This is not perfect code, it's just an example.  Actual code should be
-more perfect)*
+*(This is not perfect and tested code, it's just an example.  Actual code
+should be more perfect, and of course, tested)*
 
 Failures
 --------
@@ -547,7 +565,7 @@ functionality with zero change, apart from function name changes.
 Furthermore, this design assumes that the remaining functions, which do
 manipulate the size of the `BIGNUM`, or are public facing `BIGNUM`
 functions, can be rewritten in the same way as [the `BN_add()` example
-above](#wrapping-a-ossl_fn-function-with-a-bignum-function), thereby
+above](#wrapping-an-ossl_fn-function-with-a-bignum-function), thereby
 functionally separating the dynamic properties of `BIGNUM`s from the less
 dynamic properties of  `OSSL_FN`s.
 
@@ -556,14 +574,13 @@ How to apply `OSSL_FN`
 
 [How to apply `OSSL_FN`]: #how-to-apply-ossl_fn
 
-The purpose of `OSSL_FN` is to make the number constant size (which implies
-constant time) for a crypto system.  Therefore, for any function that performs
-some sort of numeric operation on a set of input `OSSL_FN`s, the sizes of
-those inputs must be pre-determined, and the size of the result must be
-pre-determined as well.
-
-If the inputs are originally in form of `BIGNUM`, the wrapped `OSSL_FN` can be
-acquired from the `BIGNUM` with `BN_acquire_fn()`, which can adjusts its size.
+The purpose of `OSSL_FN` is to make the number constant size (implying
+enhanced constant time) for a crypto system.  To guarantee this with high
+confidence, any function that performs some sort of numeric operation on a
+set of input `OSSL_FN`s must only use other functions that only affect the
+contents of their `d` array, but not its size.  Those are typically other
+`OSSL_FN` functions, or reused bignum functions that receive the `d` array
+and its size directly.
 
 Where to apply `OSSL_FN`
 ========================
@@ -578,11 +595,14 @@ In this, "calculations" is meant in a mathematical sense, i.e. whatever what
 would be expressed as a mathematical formula is considered a "calculation".
 
 However, `BIGNUM` has other uses than mere calculations.  For example,
-`BIGNUM` is used as storage of numbers that were originally ASN1 INTEGERs.
-Whether those uses need to be considered for conversion to `OSSL_FN` is an
-open question.  The current judgement is that this is less critical than
-the calculations mentioned above, and that this conversion do not have to be
-part of an initial implementation of this design.
+`BIGNUM` is used as storage of numbers that were originally ASN.1 INTEGERs,
+and while individual ASN.1 INTEGERs always have a known size, they are
+usually just one number in a set, and it's often only known at a later time
+what are the size requirements of the cryptosystem that use them.
+For example, the size of an RSA key can only be determined when a known
+number in that key - usually *n* - has been seen by code, and this affects
+what size all numbers in an RSA key should be adjusted to before doing
+calculations on them.
 
 How to apply `OSSL_FN_CTX`
 ==========================
@@ -646,3 +666,46 @@ similar timing statistics using `BIGNUM` when reimplemented according to this
 design.  It is *assumed* that the new statistics will show a higher degree
 of constant time, [due to `top` being dropped](#dropping-top-from-bignum),
 even though not as much as pure `OSSL_FN` operations.
+
+Appendix
+========
+
+[Appendix]: #appendix
+
+Using the C99 flexible array member feature
+-------------------------------------------
+
+[Using the C99 flexible array member feature]: #using-the-c99-flexible-array-member-feature
+
+In this design, the C99 feature that's dubbed "flexible array member" is used
+extensively.  This a `struct` member that's an array, that must come last in
+the struct, and that is incomplete in so far that no array size is given.  It
+can look like this:
+
+``` C
+struct t {
+    size_t a;
+    char b;
+    char c[]; /**< flexible array member */
+};
+```
+
+Some attention must be payed to how it's arranged in memory.  It's debated
+whether the offset of a flexible array member's offset from the start of the
+`struct` is set to be before or after the `struct`'s end padding, i.e. whether
+`sizeof(struct t) == offsetof(struct t, c)` is true or not in all circumstances.
+
+Here's how that would differ on a 64-bit system:
+
+| location of `c` | `offsetof(struct t, a)` | `offsetof(struct t, b)` | `offsetof(struct t, c)` | `sizeof(struct t)` |
+|-----------------|:-----------------------:|:-----------------------:|:-----------------------:|:------------------:|
+| before padding  | 0                       | 8                       | 9                       | 16                 |
+| after padding   | 0                       | 8                       | 16                      | 16                 |
+
+To be noted, `gcc` and `clang` favor "before padding".
+
+For consistent placement of the flexible array member, one therefore needs to
+pay attention to possible `struct` padding.  Among other methods, one chosen
+here is to precede the flexible array member with a member whose type is
+assumed to be large enough that no padding is needed after it, such as
+`size_t` or a pointer.
