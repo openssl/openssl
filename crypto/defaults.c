@@ -33,17 +33,6 @@ static char openssldir[MAX_PATH + 1];
 static char *openssldirptr = NULL;
 
 /**
- * @brief The directory where OpenSSL engines are located.
- */
-
-static char enginesdir[MAX_PATH + 1];
-
-/**
- * @brief The pointer to the enginesdir buffer
- */
-static char *enginesdirptr = NULL;
-
-/**
  * @brief The directory where OpenSSL modules are located.
  */
 static char modulesdir[MAX_PATH + 1];
@@ -122,7 +111,6 @@ static CRYPTO_ONCE defaults_setup_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
 {
     get_windows_regdirs(openssldir, sizeof(openssldir), L"OPENSSLDIR");
-    get_windows_regdirs(enginesdir, sizeof(enginesdir), L"ENGINESDIR");
     get_windows_regdirs(modulesdir, sizeof(modulesdir), L"MODULESDIR");
 
     /*
@@ -130,9 +118,6 @@ DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
      */
     if (strlen(openssldir) > 0)
         openssldirptr = openssldir;
-
-    if (strlen(enginesdir) > 0)
-        enginesdirptr = enginesdir;
 
     if (strlen(modulesdir) > 0)
         modulesdirptr = modulesdir;
@@ -154,22 +139,6 @@ const char *ossl_get_openssldir(void)
     return (const char *)openssldirptr;
 # else
     return OPENSSLDIR;
-#endif
-}
-
-/**
- * @brief Get the directory where OpenSSL engines are located.
- *
- * @return A pointer to a string containing the engines directory path.
- */
-const char *ossl_get_enginesdir(void)
-{
-#if defined(_WIN32) && defined (OSSL_WINCTX)
-    if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
-        return NULL;
-    return (const char *)enginesdirptr;
-#else
-    return ENGINESDIR;
 #endif
 }
 
