@@ -35,6 +35,13 @@ If the file isn't determined to be formatted as PEM, the content is
 loaded in raw form in its entirety and passed to the available file
 handlers as is, with no PEM name or headers.
 
+Store 'file' also supports load of symmetric keys from arbitrary files. As
+symmetric keys don't have any structure and encapsulation, the interpretation
+of a file as a symmetric key should be requested explicitly via
+L<OSSL_STORE_expect(3)>.
+
+When loading from a file, symmetric keys are limited to 2048 bytes in length.
+
 Each file handler is expected to handle PEM and non-PEM content as
 appropriate.  Some may refuse non-PEM content for the sake of
 determinism (for example, there are keys out in the wild that are
@@ -57,11 +64,15 @@ See L<passphrase-encoding(7)> for more information.
 
 =head1 SEE ALSO
 
-L<ossl_store(7)>, L<passphrase-encoding(7)>
+L<ossl_store(7)>, L<passphrase-encoding(7)>, L<OSSL_STORE_expect(3)>
+
+=head1 HISTORY
+
+Support for reading symmetric keys from files was added in OpenSSL 4.0
 
 =head1 COPYRIGHT
 
-Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
