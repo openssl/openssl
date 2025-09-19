@@ -26,7 +26,7 @@ my @absolutes = qw(PREFIX libdir);
 # since the LIBDIR subdirectories depend on the calculation of LIBDIR from
 # PREFIX.
 my @subdirs = _pairs (PREFIX => [ qw(BINDIR LIBDIR INCLUDEDIR APPLINKDIR) ],
-                      LIBDIR => [ qw(ENGINESDIR MODULESDIR PKGCONFIGDIR
+                      LIBDIR => [ qw(MODULESDIR PKGCONFIGDIR
                                      CMAKECONFIGDIR) ]);
 # For completeness, other expected variables
 my @others = qw(VERSION LDLIBS);

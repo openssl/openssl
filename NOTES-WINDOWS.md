@@ -112,11 +112,10 @@ install it to a variety of locations.
 The following keys:
 
     `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\OPENSSLDIR`
-    `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\ENGINESDIR`
     `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\MODULESDIR`
 
 Can be administratively set, and openssl will take the paths found there as the
-values for OPENSSLDIR, ENGINESDIR and MODULESDIR respectively.
+values for OPENSSLDIR and MODULESDIR respectively.
 
 To enable the reading of registry keys from windows builds, add
 `-DOSSL_WINCTX=<string>`to the Configure command line.  This define is used
