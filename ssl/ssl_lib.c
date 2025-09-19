@@ -7369,23 +7369,30 @@ __owur unsigned int ssl_get_proto_record_hard_limit(const SSL_CONNECTION *sc) {
 __owur size_t ssl_get_max_send_fragment(const SSL_CONNECTION *sc,
                                         uint8_t type)
 {
+    size_t wrlayer_max_send_fragment = 0;
+    size_t max_send_fragment = sc->max_send_fragment;
+
     if (sc->rlayer.wrl != NULL) {
         /* For TLS 1.3, get the real type. */
-        if (sc->rlayer.wrl->funcs->get_record_type != NULL)
+        if (sc->rlayer.wrl->funcs != NULL
+            && sc->rlayer.wrl->funcs->get_record_type != NULL)
             type = sc->rlayer.wrl->funcs->get_record_type(sc->rlayer.wrl, type);
 
         /* If Record Size Limit extension is negotiated, only use it with
          * encrypted data. */
         if (USE_RECORD_SIZE_LIMIT(sc) && type != SSL3_RT_APPLICATION_DATA)
-            return sc->max_send_fragment;
+            return max_send_fragment;
 
         /* Do not bother checking with Maximum Fragment Length extension since
          * it applies to all record types. */
 
-        return sc->rlayer.wrlmethod->get_max_frag_len(sc->rlayer.wrl);
+        wrlayer_max_send_fragment =
+                         sc->rlayer.wrlmethod->get_max_frag_len(sc->rlayer.wrl);
+        if (wrlayer_max_send_fragment != 0)
+            return wrlayer_max_send_fragment;
     }
 
-    return sc->max_send_fragment;
+    return max_send_fragment;
 }
 
 int SSL_stateless(SSL *s)
