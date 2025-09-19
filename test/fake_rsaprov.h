@@ -14,5 +14,10 @@
 /* Fake RSA provider implementation */
 OSSL_PROVIDER *fake_rsa_start(OSSL_LIB_CTX *libctx);
 void fake_rsa_finish(OSSL_PROVIDER *p);
+
+/* Fake RSA provider: query_operation_name(OSSL_OP_SIGNATURE) returns NULL */
+OSSL_PROVIDER *fake_rsa_qopnn_start(OSSL_LIB_CTX *libctx);
+void fake_rsa_qopnn_finish(OSSL_PROVIDER *p);
+
 OSSL_PARAM *fake_rsa_key_params(int priv);
 void fake_rsa_restore_store_state(void);

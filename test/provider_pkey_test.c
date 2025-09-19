@@ -239,6 +239,64 @@ end:
     return ret;
 }
 
+static int test_pkey_can_sign_qopnn(void)
+{
+    OSSL_PROVIDER *fake_rsa = NULL, *fake_rsa_qopn = NULL;
+    EVP_PKEY *pkey_fake = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    OSSL_PARAM *params = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(fake_rsa = fake_rsa_start(libctx)))
+        return 0;
+    if (!TEST_ptr(params = fake_rsa_key_params(0))
+        || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA",
+                                                      "provider=fake-rsa"))
+        || !TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_true(EVP_PKEY_fromdata(ctx, &pkey_fake, EVP_PKEY_PUBLIC_KEY,
+                                        params))
+        || !TEST_true(EVP_PKEY_can_sign(pkey_fake))
+        || !TEST_ptr(pkey_fake))
+        goto end;
+
+    EVP_PKEY_CTX_free(ctx);
+    ctx = NULL;
+    EVP_PKEY_free(pkey_fake);
+    pkey_fake = NULL;
+    OSSL_PARAM_free(params);
+    params = NULL;
+
+    if (!TEST_ptr(fake_rsa_qopn = fake_rsa_qopnn_start(libctx)))
+        return 0;
+    if (!TEST_ptr(params = fake_rsa_key_params(0))
+        || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA",
+                                                      "provider=fake-rsa-qopnn"))
+        || !TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_true(EVP_PKEY_fromdata(ctx, &pkey_fake, EVP_PKEY_PUBLIC_KEY,
+                                        params))
+        || !TEST_true(EVP_PKEY_can_sign(pkey_fake))
+        || !TEST_ptr(pkey_fake))
+        goto end;
+
+    EVP_PKEY_CTX_free(ctx);
+    ctx = NULL;
+    EVP_PKEY_free(pkey_fake);
+    pkey_fake = NULL;
+    OSSL_PARAM_free(params);
+    params = NULL;
+
+    ret = 1;
+end:
+
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey_fake);
+    OSSL_PARAM_free(params);
+
+    fake_rsa_finish(fake_rsa);
+    fake_rsa_qopnn_finish(fake_rsa_qopn);
+    return ret;
+}
+
 static int test_pkey_store(int idx)
 {
     OSSL_PROVIDER *deflt = NULL;
@@ -719,6 +777,7 @@ int setup_tests(void)
     ADD_TEST(test_pkey_sig);
     ADD_TEST(test_alternative_keygen_init);
     ADD_TEST(test_pkey_eq);
+    ADD_TEST(test_pkey_can_sign_qopnn);
     ADD_ALL_TESTS(test_pkey_store, 2);
     ADD_TEST(test_pkey_delete);
     ADD_TEST(test_pkey_store_open_ex);

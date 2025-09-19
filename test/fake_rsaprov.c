@@ -1285,3 +1285,104 @@ void fake_rsa_finish(OSSL_PROVIDER *p)
 {
     OSSL_PROVIDER_unload(p);
 }
+
+static const char *fake_rsa_qopnn_keymgmt_query(int id)
+{
+    /*
+     * Documented behavior for OSSL_FUNC_keymgmt_query_operation_name()
+     * allows it to return NULL, in which case the fallback should be to use
+     * EVP_KEYMGMT_get0_name(). That is exactly the thing we are testing here.
+     */
+    return NULL;
+}
+
+static const OSSL_DISPATCH fake_rsa_qopnn_keymgmt_funcs[] = {
+    { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))fake_rsa_keymgmt_new },
+    { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))fake_rsa_keymgmt_free},
+    { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))fake_rsa_keymgmt_has },
+    { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
+      (void (*)(void))fake_rsa_qopnn_keymgmt_query},
+    { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))fake_rsa_keymgmt_import },
+    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES,
+      (void (*)(void))fake_rsa_keymgmt_imptypes },
+    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))fake_rsa_keymgmt_export },
+    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES,
+      (void (*)(void))fake_rsa_keymgmt_exptypes },
+    { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))fake_rsa_keymgmt_load },
+    { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))fake_rsa_gen_init },
+    { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))fake_rsa_gen },
+    { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))fake_rsa_gen_cleanup },
+    OSSL_DISPATCH_END
+};
+
+static const OSSL_ALGORITHM fake_rsa_qopnn_keymgmt_algs[] = {
+    { "RSA:rsaEncryption", "provider=fake-rsa-qopnn", fake_rsa_qopnn_keymgmt_funcs,
+      "Fake RSA Key Management" },
+    { NULL, NULL, NULL, NULL }
+};
+
+static const OSSL_ALGORITHM *fake_rsa_qopnn_query(void *provctx,
+                                                  int operation_id,
+                                                  int *no_cache)
+{
+    *no_cache = 0;
+    switch (operation_id) {
+    case OSSL_OP_SIGNATURE:
+        return fake_rsa_sig_algs;
+
+    case OSSL_OP_KEYMGMT:
+        return fake_rsa_qopnn_keymgmt_algs;
+
+    case OSSL_OP_STORE:
+        return fake_rsa_store_algs;
+
+    case OSSL_OP_DECODER:
+        return fake_rsa_decoder_algs;
+    }
+    return NULL;
+}
+
+/* Functions we provide to the core */
+static const OSSL_DISPATCH fake_rsa_qopnn_method[] = {
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))fake_rsa_prov_teardown },
+    { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fake_rsa_qopnn_query},
+    OSSL_DISPATCH_END
+};
+
+static int fake_rsa_qopnn_provider_init(const OSSL_CORE_HANDLE *handle,
+                                        const OSSL_DISPATCH *in,
+                                        const OSSL_DISPATCH **out, void **provctx)
+{
+    OSSL_LIB_CTX *libctx;
+    PROV_FAKE_RSA_CTX *prov_ctx;
+
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new_from_dispatch(handle, in)))
+        return 0;
+
+    if (!TEST_ptr(prov_ctx = OPENSSL_malloc(sizeof(*prov_ctx)))) {
+        OSSL_LIB_CTX_free(libctx);
+        return 0;
+    }
+
+    prov_ctx->libctx = libctx;
+
+    *provctx = prov_ctx;
+    *out = fake_rsa_qopnn_method;
+    return 1;
+}
+
+OSSL_PROVIDER *fake_rsa_qopnn_start(OSSL_LIB_CTX *ctx)
+{
+    OSSL_PROVIDER *p;
+
+    if (!TEST_true(OSSL_PROVIDER_add_builtin(ctx, "fake-rsa-qopnn",
+                                             fake_rsa_qopnn_provider_init))
+            || !TEST_ptr(p = OSSL_PROVIDER_try_load(ctx, "fake-rsa-qopnn", 1)))
+        return NULL;
+    return p;
+}
+
+void fake_rsa_qopnn_finish(OSSL_PROVIDER *p)
+{
+    OSSL_PROVIDER_unload(p);
+}
