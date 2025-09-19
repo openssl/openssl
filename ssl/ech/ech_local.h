@@ -335,7 +335,7 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
 /* these are internal but located in ssl/statem/extensions.c */
 int ossl_ech_same_ext(SSL_CONNECTION *s, WPACKET *pkt);
 int ossl_ech_same_key_share(void);
-int ossl_ech_2bcompressed(int ind);
+int ossl_ech_2bcompressed(size_t ind);
 int ossl_ech_copy_inner2outer(SSL_CONNECTION *s, uint16_t ext_type, int ind,
                               WPACKET *pkt);
 
