@@ -101,6 +101,10 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/storemgmt/winstore_store.c \
          providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.c \
          providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.c \
+         providers/implementations/ciphers/cipher_aes_gcm_siv.c \
+         providers/implementations/ciphers/cipher_aes_ocb.c \
+         providers/implementations/ciphers/cipher_aes_siv.c \
+         providers/implementations/ciphers/cipher_aes_wrp.c \
          providers/implementations/ciphers/cipher_aes_xts.c \
          providers/implementations/ciphers/ciphercommon.c \
          providers/implementations/ciphers/ciphercommon_ccm.c \
@@ -215,6 +219,10 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/storemgmt/winstore_store.c \
        providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.c \
        providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.c \
+       providers/implementations/ciphers/cipher_aes_gcm_siv.c \
+       providers/implementations/ciphers/cipher_aes_ocb.c \
+       providers/implementations/ciphers/cipher_aes_siv.c \
+       providers/implementations/ciphers/cipher_aes_wrp.c \
        providers/implementations/ciphers/cipher_aes_xts.c \
        providers/implementations/ciphers/ciphercommon.c \
        providers/implementations/ciphers/ciphercommon_ccm.c \
@@ -349,6 +357,14 @@ GENERATE[providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.c]=\
     providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.c.in
 GENERATE[providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.c]=\
     providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.c.in
+GENERATE[providers/implementations/ciphers/cipher_aes_gcm_siv.c]=\
+    providers/implementations/ciphers/cipher_aes_gcm_siv.c.in
+GENERATE[providers/implementations/ciphers/cipher_aes_ocb.c]=\
+    providers/implementations/ciphers/cipher_aes_ocb.c.in
+GENERATE[providers/implementations/ciphers/cipher_aes_siv.c]=\
+    providers/implementations/ciphers/cipher_aes_siv.c.in
+GENERATE[providers/implementations/ciphers/cipher_aes_wrp.c]=\
+    providers/implementations/ciphers/cipher_aes_wrp.c.in
 GENERATE[providers/implementations/ciphers/cipher_aes_xts.c]=\
     providers/implementations/ciphers/cipher_aes_xts.c.in
 GENERATE[providers/implementations/ciphers/ciphercommon.c]=\
