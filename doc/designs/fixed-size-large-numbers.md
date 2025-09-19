@@ -361,7 +361,7 @@ as well as to wrap an `OSSL_FN` in a `BIGNUM`:
  * BN_acquire_fn() and BN_release_fn() function together.  It is done this
  * way as a safety measure, to make sure that a BIGNUM doesn't expand an OSSL_FN
  * that the caller currently has a handle on.  However, it's possible to
- * adjust the size if the OSSL_FN while acquiring it.
+ * adjust the size of the OSSL_FN while acquiring it.
  */
 OSSL_FN *BN_acquire_fn(BIGNUM *a, size_t bits)
 {
@@ -479,8 +479,8 @@ If the variant of `OSSL_FN_CTX` *with frames* is chosen, the following
 functions will also have to be defined:
 
 ```c
-void OSSL_FN_CTX_start(OSSL_FN_CTX *ctx);
-void OSSL_FN_CTX_end(OSSL_FN_CTX *ctx);
+int OSSL_FN_CTX_start(OSSL_FN_CTX *ctx);
+int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx);
 ```
 
 Wrapping an `OSSL_FN` function with a `BIGNUM` function
