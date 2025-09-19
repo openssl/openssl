@@ -45,10 +45,7 @@ ok(run(test(["sslapitest", srctop_dir("test", "certs"),
              srctop_file("test",
                          "recipes",
                          "90-test_sslapi_data",
-                         "dhparams.pem"),
-             srctop_dir("test",
-                        "recipes",
-                        "90-test_sslapi_data")])),
+                         "dhparams.pem")])),
              "running sslapitest");
 
 SKIP: {
@@ -65,10 +62,7 @@ SKIP: {
                  srctop_file("test",
                              "recipes",
                              "90-test_sslapi_data",
-                             "dhparams.pem"),
-                 srctop_dir("test",
-                            "recipes",
-                            "90-test_sslapi_data")])),
+                             "dhparams.pem")])),
                  "running sslapitest with default fips config");
 
     run(test(["fips_version_test", "-config", $provconf, ">=3.1.0"]),
@@ -146,10 +140,7 @@ SKIP: {
                     srctop_file("test",
                                 "recipes",
                                 "90-test_sslapi_data",
-                                "dhparams.pem"),
-                    srctop_dir("test",
-                               "recipes",
-                               "90-test_sslapi_data")])),
+                                "dhparams.pem")])),
        "running sslapitest with modified fips config");
 }
 
