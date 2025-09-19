@@ -21,6 +21,6 @@ DEPEND[""]=openssl.pc
 GENERATE[../installdata.pm]=../util/mkinstallvars.pl \
     "PREFIX=$(INSTALLTOP)" BINDIR=bin "LIBDIR=$(LIBDIR)" "libdir=$(libdir)" \
     INCLUDEDIR=include APPLINKDIR=include/openssl \
-    "ENGINESDIR=$(ENGINESDIR)" "MODULESDIR=$(MODULESDIR)" \
+    "MODULESDIR=$(MODULESDIR)" \
     "PKGCONFIGDIR=$(PKGCONFIGDIR)" "CMAKECONFIGDIR=$(CMAKECONFIGDIR)" \
     "LDLIBS=$(LIB_EX_LIBS)" "VERSION=$(VERSION)"

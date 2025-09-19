@@ -273,7 +273,7 @@ const char *OPENSSL_info(int t)
     case OPENSSL_INFO_CONFIG_DIR:
         return ossl_get_openssldir();
     case OPENSSL_INFO_ENGINES_DIR:
-        return ossl_get_enginesdir();
+        return NULL;
     case OPENSSL_INFO_MODULES_DIR:
         return ossl_get_modulesdir();
     case OPENSSL_INFO_DSO_EXTENSION:

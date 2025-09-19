@@ -72,7 +72,6 @@ jobs:
       run: |
         echo ${Env:OSSL_VERSION}
         reg.exe add HKLM\SOFTWARE\OpenSSL-${Env:OSSL_VERSION}-openssl /v OPENSSLDIR /t REG_EXPAND_SZ /d TESTOPENSSLDIR /reg:32
-        reg.exe add HKLM\SOFTWARE\OpenSSL-${Env:OSSL_VERSION}-openssl /v ENGINESDIR /t REG_EXPAND_SZ /d TESTOPENSSLDIR /reg:32
         reg.exe add HKLM\SOFTWARE\OpenSSL-${Env:OSSL_VERSION}-openssl /v MODULESDIR /t REG_EXPAND_SZ /d TESTOPENSSLDIR /reg:32
         reg.exe query HKLM\SOFTWARE\OpenSSL-${Env:OSSL_VERSION}-openssl /v OPENSSLDIR /reg:32
     - name: get cpu info
