@@ -105,6 +105,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/ciphers/ciphercommon.c \
          providers/implementations/ciphers/ciphercommon_ccm.c \
          providers/implementations/ciphers/ciphercommon_gcm.c \
+         providers/implementations/ciphers/cipher_chacha20.c \
          providers/implementations/ciphers/cipher_chacha20_poly1305.c \
          providers/implementations/ciphers/cipher_null.c \
          providers/implementations/ciphers/cipher_rc4_hmac_md5.c \
@@ -218,6 +219,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/ciphers/ciphercommon.c \
        providers/implementations/ciphers/ciphercommon_ccm.c \
        providers/implementations/ciphers/ciphercommon_gcm.c \
+       providers/implementations/ciphers/cipher_chacha20.c \
        providers/implementations/ciphers/cipher_chacha20_poly1305.c \
        providers/implementations/ciphers/cipher_null.c \
        providers/implementations/ciphers/cipher_rc4_hmac_md5.c \
@@ -355,6 +357,8 @@ GENERATE[providers/implementations/ciphers/ciphercommon_ccm.c]=\
     providers/implementations/ciphers/ciphercommon_ccm.c.in
 GENERATE[providers/implementations/ciphers/ciphercommon_gcm.c]=\
     providers/implementations/ciphers/ciphercommon_gcm.c.in
+GENERATE[providers/implementations/ciphers/cipher_chacha20.c]=\
+    providers/implementations/ciphers/cipher_chacha20.c.in
 GENERATE[providers/implementations/ciphers/cipher_chacha20_poly1305.c]=\
     providers/implementations/ciphers/cipher_chacha20_poly1305.c.in
 GENERATE[providers/implementations/ciphers/cipher_null.c]=\
