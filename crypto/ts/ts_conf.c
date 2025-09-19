@@ -15,7 +15,6 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 #include <openssl/ts.h>
 #include <openssl/conf_api.h>
 

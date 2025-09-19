@@ -16,7 +16,6 @@
 #include <openssl/conf.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
-#include <openssl/engine.h>
 #include "internal/provider.h"
 #include "crypto/rand.h"
 #include "conf_local.h"

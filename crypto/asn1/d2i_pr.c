@@ -16,7 +16,6 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/decoder.h>
-#include <openssl/engine.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include "crypto/asn1.h"

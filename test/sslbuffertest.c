@@ -20,7 +20,9 @@
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#include <openssl/engine.h>
+#if defined(TODO_REWRITE_ME_DASYNC_PROVIDER)
+# include <openssl/engine.h>
+#endif
 
 #ifndef OPENSSL_NO_QUIC
 /* This test does not link libssl so avoid pulling in QUIC unwrappers. */

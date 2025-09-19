@@ -94,7 +94,6 @@ set 'eng = NULL;' to start with the default OpenSSL RSA implementation:
 =head1 SEE ALSO
 
 L<d2i_X509(3)>,
-L<ENGINE_by_id(3)>,
 L<EVP_PKEY_CTX_new(3)>,
 L<EVP_PKEY_decrypt(3)>,
 L<EVP_PKEY_sign(3)>,

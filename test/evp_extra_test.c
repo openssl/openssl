@@ -30,7 +30,9 @@
 #include <openssl/aes.h>
 #include <openssl/decoder.h>
 #include <openssl/rsa.h>
-#include <openssl/engine.h>
+#if defined(TODO_REWRITE_ME_DASYNC_PROVIDER)
+# include <openssl/engine.h>
+#endif
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
 # include <crypto/ml_kem.h>

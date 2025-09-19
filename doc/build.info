@@ -1071,10 +1071,6 @@ DEPEND[html/man3/EC_POINT_new.html]=man3/EC_POINT_new.pod
 GENERATE[html/man3/EC_POINT_new.html]=man3/EC_POINT_new.pod
 DEPEND[man/man3/EC_POINT_new.3]=man3/EC_POINT_new.pod
 GENERATE[man/man3/EC_POINT_new.3]=man3/EC_POINT_new.pod
-DEPEND[html/man3/ENGINE_add.html]=man3/ENGINE_add.pod
-GENERATE[html/man3/ENGINE_add.html]=man3/ENGINE_add.pod
-DEPEND[man/man3/ENGINE_add.3]=man3/ENGINE_add.pod
-GENERATE[man/man3/ENGINE_add.3]=man3/ENGINE_add.pod
 DEPEND[html/man3/ERR_GET_LIB.html]=man3/ERR_GET_LIB.pod
 GENERATE[html/man3/ERR_GET_LIB.html]=man3/ERR_GET_LIB.pod
 DEPEND[man/man3/ERR_GET_LIB.3]=man3/ERR_GET_LIB.pod
@@ -3313,7 +3309,6 @@ html/man3/EC_KEY_get_enc_flags.html \
 html/man3/EC_KEY_new.html \
 html/man3/EC_POINT_add.html \
 html/man3/EC_POINT_new.html \
-html/man3/ENGINE_add.html \
 html/man3/ERR_GET_LIB.html \
 html/man3/ERR_clear_error.html \
 html/man3/ERR_error_string.html \
@@ -3985,7 +3980,6 @@ man/man3/EC_KEY_get_enc_flags.3 \
 man/man3/EC_KEY_new.3 \
 man/man3/EC_POINT_add.3 \
 man/man3/EC_POINT_new.3 \
-man/man3/ENGINE_add.3 \
 man/man3/ERR_GET_LIB.3 \
 man/man3/ERR_clear_error.3 \
 man/man3/ERR_error_string.3 \
