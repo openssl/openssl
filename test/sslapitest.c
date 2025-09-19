@@ -105,7 +105,6 @@ static char *privkey8192 = NULL;
 static char *srpvfile = NULL;
 static char *tmpfilename = NULL;
 static char *dhfile = NULL;
-static char *datadir = NULL;
 
 static int is_fips = 0;
 static int fips_ems_check = 0;
@@ -130,17 +129,13 @@ static X509 *ocspcert = NULL;
 #define CLIENT_VERSION_LEN      2
 
 /* The ssltrace test assumes some options are switched on/off */
-/*
- * Disable SSL_TRACE_TEST to fix up CI pipeline a following commit
- * will resolve the testing issue
- * #if !defined(OPENSSL_NO_SSL_TRACE) \
- *   && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD) \
- *   && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH) \
- *   && !defined(OPENSSL_NO_ML_DSA) && !defined(OPENSSL_NO_ML_KEM) \
- *   && !defined(OPENSSL_NO_TLS1_3)
- * # define DO_SSL_TRACE_TEST
- * #endif
- */
+#if !defined(OPENSSL_NO_SSL_TRACE) \
+    && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD) \
+    && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH) \
+    && !defined(OPENSSL_NO_ML_DSA) && !defined(OPENSSL_NO_ML_KEM) \
+    && !defined(OPENSSL_NO_TLS1_3)
+# define DO_SSL_TRACE_TEST
+#endif
 
 /*
  * This structure is used to validate that the correct number of log messages
@@ -13748,7 +13743,7 @@ static int test_no_renegotiation(int idx)
 /*
  * Tests that the SSL_trace() msg_callback works as expected with a PQ Groups.
  */
-static int test_ssl_trace(void)
+static int test_ssl_trace_supported_groups(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
@@ -13757,6 +13752,18 @@ static int test_ssl_trace(void)
     char *reffile = NULL;
     char *grouplist = "MLKEM512:MLKEM768:MLKEM1024:X25519MLKEM768:SecP256r1MLKEM768"
         ":SecP384r1MLKEM1024:secp521r1:secp384r1:secp256r1";
+    size_t expected_group_count = 9;
+    ssl_trace_expected_groups expected_groups[] = {
+        {"MLKEM512 (512)", 0},
+        {"MLKEM768 (513)", 0},
+        {"MLKEM1024 (514)", 0},
+        {"X25519MLKEM768 (4588)", 0},
+        {"SecP256r1MLKEM768 (4587)", 0},
+        {"SecP384r1MLKEM1024 (4589)", 0},
+        {"secp521r1 (P-521) (25)", 0},
+        {"secp384r1 (P-384) (24)", 0},
+        {"secp256r1 (P-256) (23)", 0},
+    };
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),
@@ -13789,13 +13796,9 @@ static int test_ssl_trace(void)
         if (!TEST_int_gt(BIO_pending(bio), 0))
             goto err;
     } else {
-
-# ifdef OPENSSL_NO_ZLIB
-        reffile = test_mk_file_path(datadir, "ssltraceref.txt");
-# else
-        reffile = test_mk_file_path(datadir, "ssltraceref-zlib.txt");
-# endif
-        if (!TEST_true(compare_with_reference_file(bio, reffile)))
+        if (!TEST_true(compare_with_expected_supported_groups(bio,
+                                                              expected_groups,
+                                                              expected_group_count)))
             goto err;
     }
 
@@ -13845,8 +13848,6 @@ int setup_tests(void)
             || !TEST_ptr(configfile = test_get_argument(4))
             || !TEST_ptr(dhfile = test_get_argument(5)))
         return 0;
-
-    datadir = test_get_argument(6);
 
     if (!TEST_true(OSSL_LIB_CTX_load_config(libctx, configfile)))
         return 0;
@@ -14150,8 +14151,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_no_renegotiation, 2);
 #if defined(DO_SSL_TRACE_TEST)
-    if (datadir != NULL)
-        ADD_TEST(test_ssl_trace);
+    ADD_TEST(test_ssl_trace_supported_groups);
 #endif
     return 1;
 

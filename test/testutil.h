@@ -597,6 +597,11 @@ typedef struct stanza_st {
     BIO *key;                   /* temp memory BIO for reading in keys */
 } STANZA;
 
+typedef struct ssl_trace_expected_groups_st {
+    const char *group;
+    int found;
+} ssl_trace_expected_groups;
+
 /*
  * Prepare to start reading the file |testfile| as input.
  */
@@ -654,4 +659,7 @@ X509_REQ *load_csr_der(const char *file, OSSL_LIB_CTX *libctx);
 time_t test_asn1_string_to_time_t(const char *asn1_string);
 
 int compare_with_reference_file(BIO *membio, const char *reffile);
+int compare_with_expected_supported_groups(BIO *membio,
+                                           ssl_trace_expected_groups *expected,
+                                           size_t expected_count);
 #endif                          /* OSSL_TESTUTIL_H */
