@@ -29,9 +29,7 @@ OpenSSL 3.6
 This release incorporates the following potentially significant or incompatible
 changes:
 
-  * Added PCT for key import for SLH-DSA when in FIPS mode
-
-  * Added FIPS 140-3 PCT on DH key generation
+  * Added FIPS 140-3 PCT on DH key generation.
 
   * Added NIST security categories for PKEY objects.
 
@@ -47,7 +45,7 @@ changes:
 
   * The VxWorks platforms have been removed.
 
-  * Added an `openssl configutl` utility for processing the openssl
+  * Added an `openssl configutl` utility for processing the OpenSSL
     configuration file and dumping the equal configuration file.
 
   * Added support for FIPS 186-5 deterministic ECDSA signature
@@ -58,12 +56,19 @@ changes:
 OpenSSL 3.5
 -----------
 
-### Changes between 3.5.1 and 3.5.2 [5 Aug 2025]
+### Major changes between OpenSSL 3.5.2 and OpenSSL 3.5.3 [16 Sep 2025]
 
- * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
-   This is mandated by FIPS 140-3 IG 10.3.A additional comment 1.
+  * Added FIPS 140-3 PCT on DH key generation.
 
-   *Dr Paul Dale*
+    *Nikola Pajkovsky*
+
+  * Fixed the synthesised `OPENSSL_VERSION_NUMBER`.
+
+    *Richard Levitte*
+
+### Major changes between OpenSSL 3.5.1 and OpenSSL 3.5.2 [5 Aug 2025]
+
+  * none
 
 ### Major changes between OpenSSL 3.5.0 and OpenSSL 3.5.1 [1 Jul 2025]
 

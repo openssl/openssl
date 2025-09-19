@@ -36,7 +36,7 @@ OpenSSL 3.6
    *Dr Paul Dale*
 
  * `openssl req` no longer generates certificates with an empty extension list
-   when SKID/AKID are set to `none` during generation
+   when SKID/AKID are set to `none` during generation.
 
    *David Benjamin*
 
@@ -58,7 +58,7 @@ OpenSSL 3.6
 
    *Viktor Dukhovni*
 
- * Added support for EVP_SKEY opaque symmetric key objects to the key
+ * Added support for `EVP_SKEY` opaque symmetric key objects to the key
    derivation and key exchange provider methods. Added `EVP_KDF_CTX_set_SKEY()`,
    `EVP_KDF_derive_SKEY()`, and `EVP_PKEY_derive_SKEY()` functions.
 
@@ -119,8 +119,8 @@ OpenSSL 3.6
 
    *Julian Zhu*
 
- * Added options `CRYPTO_MEM_SEC` and `CRYPTO_MEM_SEC_MINSIZE` to openssl app to
-   initialize secure memory at the beginning of openssl app.
+ * Added options `CRYPTO_MEM_SEC` and `CRYPTO_MEM_SEC_MINSIZE` to openssl app
+   to initialize secure memory at the beginning of openssl app.
 
    *Norbert Pocs*
 
@@ -191,14 +191,14 @@ OpenSSL 3.6
 
    *Viktor Dukhovni*
 
- * Added an `openssl configutl` utility for processing the openssl
+ * Added an `openssl configutl` utility for processing the OpenSSL
    configuration file and dumping the equal configuration file.
 
    *Dmitry Belyavskiy based on Clemens Lang's code*
 
- * Support setting a free function thunk to `OPENSSL_sk` stack types. Using a thunk
-   allows the type specific free function to be called with the correct type
-   information from generic functions like `OPENSSL_sk_pop_free()`.
+ * Support setting a free function thunk to `OPENSSL_sk` stack types. Using
+   a thunk allows the type specific free function to be called with the correct
+   type information from generic functions like `OPENSSL_sk_pop_free()`.
 
    *Frederik Wedel-Heinen*
 
@@ -240,8 +240,8 @@ OpenSSL 3.6
 
    *Theo Buehler*
 
- * HKDF with (SHA-256, SHA-384, SHA-512) has assigned OIDs. Added ability to load
-   HKDF configured with these explicit digests by name or OID.
+ * HKDF with (SHA-256, SHA-384, SHA-512) has assigned OIDs. Added ability
+   to load HKDF configured with these explicit digests by name or OID.
 
    *Daniel Van Geest (CryptoNext Security)*
 
@@ -254,9 +254,11 @@ OpenSSL 3.6
  * Added support for TLS 1.3 OCSP multi-stapling for server certs.
      * new `s_client` options:
        * `-ocsp_check_leaf`: Checks the status of the leaf (server) certificate.
-       * `-ocsp_check_all`: Checks the status of all certificates in the server chain.
+       * `-ocsp_check_all`: Checks the status of all certificates in the server
+         chain.
      * new `s_server` option:
-       * `-status_all` Provides OCSP status information for the entire server certificate chain (multi-stapling) for TLS 1.3 and later.
+       * `-status_all` Provides OCSP status information for the entire server
+         certificate chain (multi-stapling) for TLS 1.3 and later.
 
      * Improved `-status_file` option can now be given multiple times to provide
        multiple files containing OCSP responses.
@@ -275,6 +277,56 @@ OpenSSL 3.6
 
 OpenSSL 3.5
 -----------
+
+### Changes between 3.5.2 and 3.5.3 [16 Sep 2025]
+
+ * Avoided a potential race condition introduced in 3.5.1, where
+   `OSSL_STORE_CTX` kept open during lookup while potentially being used
+   by multiple threads simultaneously, that could lead to potential crashes
+   when multiple concurrent TLS connections are served.
+
+   *Matt Caswell*
+
+ * The FIPS provider no longer performs a PCT on key import for RSA, DH,
+   and EC keys (that was introduced in 3.5.2), following the latest update
+   on that requirement in FIPS 140-3 IG 10.3.A additional comment 1.
+
+   *Dr Paul Dale*
+
+ * Secure memory allocation calls are no longer used for HMAC keys.
+
+   *Dr Paul Dale*
+
+ * `openssl req` no longer generates certificates with an empty extension list
+   when SKID/AKID are set to `none` during generation.
+
+   *David Benjamin*
+
+ * The man page date is now derived from the release date provided
+   in `VERSION.dat` and not the current date for the released builds.
+
+   *Enji Cooper*
+
+ * Hardened the provider implementation of the RSA public key "encrypt"
+   operation to add a missing check that the caller-indicated output buffer
+   size is at least as large as the byte count of the RSA modulus.  The issue
+   was reported by Arash Ale Ebrahim from SYSPWN.
+
+   This operation is typically invoked via `EVP_PKEY_encrypt(3)`.  Callers that
+   in fact provide a sufficiently large buffer, but fail to correctly indicate
+   its size may now encounter unexpected errors.  In applications that attempt
+   RSA public encryption into a buffer that is too small, an out-of-bounds
+   write is now avoided and an error is reported instead.
+
+   *Viktor Dukhovni*
+
+ * Added FIPS 140-3 PCT on DH key generation.
+
+   *Nikola Pajkovsky*
+
+ * Fixed the synthesised `OPENSSL_VERSION_NUMBER`.
+
+   *Richard Levitte*
 
 ### Changes between 3.5.1 and 3.5.2 [5 Aug 2025]
 
