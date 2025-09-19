@@ -41,6 +41,7 @@
 # include "crypto/uierr.h"
 # include "crypto/x509err.h"
 # include "crypto/x509v3err.h"
+# include "crypto/engineerr.h"
 
 # ifdef OPENSSL_NO_ERR
 #  define IMPLEMENT_LEGACY_ERR_LOAD(lib)        \
@@ -81,6 +82,7 @@ IMPLEMENT_LEGACY_ERR_LOAD(DSA)
 # ifndef OPENSSL_NO_EC
 IMPLEMENT_LEGACY_ERR_LOAD(EC)
 # endif
+IMPLEMENT_LEGACY_ERR_LOAD(ENGINE)
 IMPLEMENT_LEGACY_ERR_LOAD(ERR)
 IMPLEMENT_LEGACY_ERR_LOAD(EVP)
 IMPLEMENT_LEGACY_ERR_LOAD(OBJ)

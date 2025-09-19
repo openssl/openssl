@@ -18,6 +18,7 @@
 #include <openssl/engine.h>
 #include <openssl/ts.h>
 #include <openssl/conf_api.h>
+#include <openssl/trace.h>
 
 /* Macro definitions for the configuration file. */
 #define BASE_SECTION                    "tsa"
@@ -156,6 +157,26 @@ int TS_CONF_set_serial(CONF *conf, const char *section, TS_serial_cb cb,
     ret = 1;
  err:
     return ret;
+}
+
+/* ENGINEs are removed, keeping this functions as no-op returning failure */
+int TS_CONF_set_crypto_device(ossl_unused CONF *conf,
+                              ossl_unused const char *section,
+                              ossl_unused const char *device)
+{
+    OSSL_TRACE(TRACE, "ENGINE feature was removed in version 4.0. Please \
+                       consider using providers");
+
+    return 0;
+}
+
+/* same as above */
+int TS_CONF_set_default_engine(ossl_unused const char *name)
+{
+    OSSL_TRACE(TRACE, "ENGINE feature was removed in version 4.0. Please \
+                       consider using providers");
+
+    return 0;
 }
 
 int TS_CONF_set_signer_cert(CONF *conf, const char *section,
