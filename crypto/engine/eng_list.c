@@ -452,8 +452,7 @@ ENGINE *ENGINE_by_id(const char *id)
      * Prevent infinite recursion if we're looking for the dynamic engine.
      */
     if (strcmp(id, "dynamic")) {
-        if ((load_dir = ossl_safe_getenv("OPENSSL_ENGINES")) == NULL)
-            load_dir = ossl_get_enginesdir();
+        load_dir = ossl_safe_getenv("OPENSSL_ENGINES");
         iterator = ENGINE_by_id("dynamic");
         if (!iterator || !ENGINE_ctrl_cmd_string(iterator, "ID", id, 0) ||
             !ENGINE_ctrl_cmd_string(iterator, "DIR_LOAD", "2", 0) ||

@@ -56,13 +56,8 @@
       map { platform->sharedname($_) // () }
       grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
       @{$unified_info{libraries}};
-  our @install_engines =
-      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-             && $unified_info{attributes}->{modules}->{$_}->{engine} }
-      @{$unified_info{modules}};
   our @install_modules =
       grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-             && !$unified_info{attributes}->{modules}->{$_}->{engine}
              && !$unified_info{attributes}->{modules}->{$_}->{fips} }
       @{$unified_info{modules}};
   our @install_fipsmodules =
@@ -109,7 +104,6 @@
                 @{$config{lib_defines}}, @{$config{shared_defines}},
                 @cnf_defines,
                 'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
-                'ENGINESDIR="""$(ENGINESDIR_C)"""',
                 'MODULESDIR="""$(MODULESDIR_C)"""'
                 )
       . '$(DEFINES)'
@@ -353,7 +347,6 @@ GENERATED={- # common0.tmpl provides @generated
 
 INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @install_libs) -}
 INSTALL_SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @install_shlibs) -}
-INSTALL_ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @install_engines) -}
 INSTALL_MODULES={- join(", ", map { "-\n\t".$_.".EXE" } @install_modules) -}
 INSTALL_FIPSMODULE={- join(", ", map { "-\n\t".$_.".EXE" } @install_fipsmodules) -}
 INSTALL_FIPSMODULECONF=[.providers]fipsmodule.cnf
@@ -387,8 +380,6 @@ OPENSSLDIR={- catdir($config{openssldir}) or
                               : "SYS\$COMMON:[OPENSSL-COMMON]" -}
 # The same, but for C
 OPENSSLDIR_C={- platform->osslprefix() -}DATAROOT:[000000]
-# Where installed ENGINE modules reside, for C
-ENGINESDIR_C={- platform->osslprefix() -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
 # Where modules reside, for C
 MODULESDIR_C={- platform->osslprefix() -}MODULES{- $target{pointer_size} -}:
 
@@ -598,10 +589,10 @@ depend : descrip.mms
 
 # Install helper targets #############################################
 
-install_sw : install_dev install_engines install_modules -
+install_sw : install_dev install_modules -
              install_runtime install_startup install_ivp
 
-uninstall_sw : uninstall_dev uninstall_modules uninstall_engines -
+uninstall_sw : uninstall_dev uninstall_modules -
                uninstall_runtime uninstall_startup uninstall_ivp
 
 install_docs : install_html_docs
@@ -659,15 +650,6 @@ install_dev : check_INSTALLTOP install_runtime_libs
         {- join("\n        ",
                 map { "COPY/PROT=W:R $_.OLB ossl_installroot:[LIB.'arch']" }
                 @install_libs) -}
-
-install_engines : check_INSTALLTOP install_runtime_libs build_modules
-        @ {- output_off() unless scalar @install_engines; "" -} !
-        @ WRITE SYS$OUTPUT "*** Installing engines"
-        - CREATE/DIR ossl_installroot:[ENGINES{- $sover_dirname.$target{pointer_size} -}.'arch']
-        {- join("\n        ",
-                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover_dirname$target{pointer_size}.'arch']" }
-                @install_engines) -}
-        @ {- output_on() unless scalar @install_engines; "" -} !
 
 install_modules : check_INSTALLTOP install_runtime_libs build_modules
         @ {- output_off() unless scalar @install_modules; "" -} !

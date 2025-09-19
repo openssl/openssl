@@ -229,7 +229,6 @@ static ossl_inline int ossl_is_absolute_path(const char *path)
 }
 
 const char *ossl_get_openssldir(void);
-const char *ossl_get_enginesdir(void);
 const char *ossl_get_modulesdir(void);
 const char *ossl_get_wininstallcontext(void);
 
