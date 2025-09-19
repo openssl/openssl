@@ -932,7 +932,6 @@ int s_client_main(int argc, char **argv)
 #define MAX_SI_TYPES 100
     unsigned short serverinfo_types[MAX_SI_TYPES];
     int serverinfo_count = 0, start = 0, len;
-    uint16_t limit = 0;
 #ifndef OPENSSL_NO_NEXTPROTONEG
     const char *next_proto_neg_in = NULL;
 #endif
@@ -956,6 +955,7 @@ int s_client_main(int argc, char **argv)
     int count4or6 = 0;
     uint8_t maxfraglen = 0;
     uint16_t record_size_limit = 0;
+    int record_size_limit_disabled = 0;
     int c_nbio = 0, c_msg = 0, c_ign_eof = 0, c_brief = 0;
     int c_tlsextdebug = 0;
 #ifndef OPENSSL_NO_OCSP
@@ -1572,8 +1572,9 @@ int s_client_main(int argc, char **argv)
             }
             break;
         case OPT_RECORD_SIZE_LIMIT:
-            limit = (uint16_t)atoi(opt_arg());
-            record_size_limit = limit;
+            record_size_limit = (uint16_t)atoi(opt_arg());
+            if (record_size_limit == 0)
+                record_size_limit_disabled = 1;
             break;
         case OPT_MAX_SEND_FRAG:
             max_send_fragment = atoi(opt_arg());
@@ -1921,8 +1922,10 @@ int s_client_main(int argc, char **argv)
         goto end;
     }
 
-    if (record_size_limit > 0
-            && !SSL_CTX_set_record_size_limit(ctx, record_size_limit)) {
+    if (record_size_limit_disabled)
+        SSL_CTX_set_options(ctx, SSL_OP_NO_RECORD_SIZE_LIMIT_EXT);
+    else if (record_size_limit > 0 &&
+             !SSL_CTX_set_record_size_limit(ctx, record_size_limit)) {
         BIO_printf(bio_err,
                          "%s: Record Size Limit %u is out of permitted range\n",
                          prog, max_pipelines);

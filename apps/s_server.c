@@ -1300,6 +1300,7 @@ int s_server_main(int argc, char *argv[])
 # endif
     int no_resume_ephemeral = 0;
     uint16_t record_size_limit = 0;
+    int record_size_limit_disabled = 0;
     unsigned int max_send_fragment = 0;
     unsigned int split_send_fragment = 0, max_pipelines = 0;
     const char *s_serverinfo_file = NULL;
@@ -1871,6 +1872,8 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_RECORD_SIZE_LIMIT:
             record_size_limit = atoi(opt_arg());
+            if (record_size_limit == 0)
+                record_size_limit_disabled = 1;
             break;
         case OPT_MAX_SEND_FRAG:
             max_send_fragment = atoi(opt_arg());
@@ -2224,13 +2227,17 @@ int s_server_main(int argc, char *argv[])
         SSL_CTX_set_options(ctx, SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE);
 #endif
 
-    if (record_size_limit > 0
-            && !SSL_CTX_set_record_size_limit(ctx, record_size_limit)) {
+
+    if (record_size_limit_disabled)
+        SSL_CTX_set_options(ctx, SSL_OP_NO_RECORD_SIZE_LIMIT_EXT);
+    else if (record_size_limit > 0 &&
+             !SSL_CTX_set_record_size_limit(ctx, record_size_limit)) {
         BIO_printf(bio_err,
                          "%s: Record Size Limit %u is out of permitted range\n",
                          prog, max_pipelines);
         goto end;
-            }
+    }
+
 
     if (max_send_fragment > 0
         && !SSL_CTX_set_max_send_fragment(ctx, max_send_fragment)) {
