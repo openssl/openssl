@@ -1146,7 +1146,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
             if (ossl_ech_2bcompressed(i) == pass)
                 continue;
             /* stash index - needed for COMPRESS ECH handling */
-            s->ext.ech.ext_ind = i;
+            s->ext.ech.ext_ind = (int)i;
 #endif
             /* Skip if not relevant for our context */
             if (!should_add_extension(s, thisexd->context, context, max_version))
