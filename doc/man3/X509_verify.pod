@@ -25,7 +25,7 @@ verify certificate, certificate request, or CRL signature
 =head1 DESCRIPTION
 
 X509_verify() verifies the signature of certificate I<x> using public key
-I<pkey>. Only the signature is checked: no other checks (such as certificate
+I<pkey>. Only the signature and extensions are checked: no other checks (such as certificate
 chain validity) are performed.
 
 X509_self_signed() checks whether certificate I<cert> is self-signed.
