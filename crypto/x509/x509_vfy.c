@@ -85,6 +85,10 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
 
 static int internal_verify(X509_STORE_CTX *ctx);
 
+static int x509_cmp_time_int(const ASN1_TIME *ctm,
+                             time_t *cmp_time,
+                             int greater_than_equal);
+
 static int null_callback(int ok, X509_STORE_CTX *e)
 {
     return ok;
@@ -2076,7 +2080,7 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
     CB_FAIL_IF(i == 0, ctx, x, depth, X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD);
     CB_FAIL_IF(i > 0, ctx, x, depth, X509_V_ERR_CERT_NOT_YET_VALID);
 
-    i = X509_cmp_time(X509_get0_notAfter(x), ptime);
+    i = x509_cmp_time_int(X509_get0_notAfter(x), ptime, 1);
     if (i <= 0 && depth < 0)
         return 0;
     CB_FAIL_IF(i == 0, ctx, x, depth, X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD);
@@ -2211,8 +2215,20 @@ int X509_cmp_current_time(const ASN1_TIME *ctm)
     return X509_cmp_time(ctm, NULL);
 }
 
-/* returns 0 on error, otherwise 1 if ctm > cmp_time, else -1 */
 int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
+{
+    return x509_cmp_time_int(ctm, cmp_time, 0);
+}
+
+/*
+ * Compare the time in an ASN1_TIME structure with the given time_t value.
+ * If greater_than_equal is not set (0). Then return 1 if ctm > cmp_time,
+ * -1 if ctm <= cmp_time and 0 if there is an error.
+ *
+ * If greater_than_equal is set (1). Then return 1 if ctm >= cmp_time,
+ * -1 if ctm < cmp_time and 0 if there is an error.
+ */
+static int x509_cmp_time_int(const ASN1_TIME *ctm, time_t *cmp_time, int greater_than_equal)
 {
     static const size_t utctime_length = sizeof("YYMMDDHHMMSSZ") - 1;
     static const size_t generalizedtime_length = sizeof("YYYYMMDDHHMMSSZ") - 1;
@@ -2270,6 +2286,11 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
         goto err;
     if (ASN1_TIME_diff(&day, &sec, ctm, asn1_cmp_time) == 0)
         goto err;
+
+    if (greater_than_equal == 1 && sec == 0 && day == 0) {
+        ret = 1;
+        goto err;
+    }
 
     /*
      * X509_cmp_time comparison is <=.
