@@ -13758,6 +13758,9 @@ static int test_ssl_trace(void)
     char *grouplist = "MLKEM512:MLKEM768:MLKEM1024:X25519MLKEM768:SecP256r1MLKEM768"
         ":SecP384r1MLKEM1024:secp521r1:secp384r1:secp256r1";
 
+    if (!fips_provider_version_ge(libctx, 3, 5, 0))
+        return TEST_skip("FIPS provider does not support MLKEM algorithms");
+
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),
                                        TLS1_3_VERSION, TLS1_3_VERSION,
