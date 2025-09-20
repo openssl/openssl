@@ -98,6 +98,25 @@ is the number from B<OPENSSL_VERSION_PATCH>, in hexadecimal notation
 
 =back
 
+For releases with the same B<OPENSSL_VERSION_NUMBER> OpenSSL endeavors
+to maintain API/ABI stability. Specifically given the API/ABI of the
+initial major release no API will be removed, or changed, and no
+incompatible changes will be made to the ABI. It is should be safe to
+link an application built with any release of the same major version,
+assuming it uses no more API/ABI functionality that was available in
+the initial release.
+
+API/ABI additions may occur at particular B<OPENSSL_VERISION
+MINOR>. Once added those API/ABI additions will not change in
+subsequent minor releases of the same major version. Applications
+using API/ABI introduced at a particular minor release may link
+any minor release equal to or later than the one they were built with.
+
+Patch releases will change B<OPENSSL_VERSION_PATCH>. Patch releases of
+the same minor release will not make API/ABI changes or additions.
+They are present in the version only so that a particular desired
+patch level may be verified. 
+
 =head2 Functions
 
 OPENSSL_version_major(), OPENSSL_version_minor(), OPENSSL_version_patch(),
@@ -255,6 +274,11 @@ L<crypto(7)>
 
 The macros and functions described here were added in OpenSSL 3.0,
 except for OPENSSL_VERSION_NUMBER and OpenSSL_version_num().
+
+OPENSSL_VERSION_NUMBER historically did not attempt to follow semantic
+versioning and avoid API/ABI breakage within any range of version changes.
+necessitating care when linking different versions. This has changed for
+releases post OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
