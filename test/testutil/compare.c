@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <ctype.h>
 #include "../testutil.h"
 
 static void strip_line_ends(char *str)
@@ -18,6 +19,23 @@ static void strip_line_ends(char *str)
          i--);
 
     str[i] = '\0';
+}
+
+static void strip_whitespace_before(char *str)
+{
+    int i = 0;
+    int j = 0;
+
+    if (str == NULL)
+        return;
+
+    while (isspace((unsigned char)str[i]))
+        i++;
+
+    while (str[i] != '\0')
+        str[j++] = str[i++];
+
+    str[j] = '\0';
 }
 
 int compare_with_reference_file(BIO *membio, const char *reffile)
@@ -84,5 +102,51 @@ int compare_with_reference_file(BIO *membio, const char *reffile)
  err:
     BIO_free(file);
     BIO_free(newfile);
+    return ret;
+}
+
+int compare_with_expected_supported_groups(BIO *membio,
+                                           ssl_trace_expected_groups *expected,
+                                           size_t expected_count)
+{
+    char *startgroup = "extension_type=supported_groups(10), length=20";
+    char *endgroup = "extension_type=";
+    char buf1[8192];
+    int ret = 0;
+    size_t i;
+
+    if (!TEST_ptr(expected))
+        goto err;
+
+    while (BIO_gets(membio, buf1, sizeof(buf1)) > 0) {
+        strip_line_ends(buf1);
+        strip_whitespace_before(buf1);
+        if (strncmp(buf1, startgroup, strlen(startgroup)) == 0) {
+            /* Found the start of the supported groups */
+            while (BIO_gets(membio, buf1, sizeof(buf1)) > 0) {
+                strip_line_ends(buf1);
+                strip_whitespace_before(buf1);
+                if (strncmp(buf1, endgroup, strlen(endgroup)) == 0)
+                    break;
+                for (i = 0; i < expected_count; i++) {
+                    if (strstr(buf1, expected[i].group) != NULL) {
+                        expected[i].found = 1;
+                        break;
+                    }
+                }
+            }
+            break;
+        }
+    }
+
+    for (i = 0; i < expected_count; i++) {
+        if (!TEST_int_eq(expected[i].found, 1)) {
+            TEST_error("Did not find expected group %s", expected[i].group);
+            goto err;
+        }
+    }
+
+    ret = 1;
+ err:
     return ret;
 }
