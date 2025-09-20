@@ -130,17 +130,13 @@ static X509 *ocspcert = NULL;
 #define CLIENT_VERSION_LEN      2
 
 /* The ssltrace test assumes some options are switched on/off */
-/*
- * Disable SSL_TRACE_TEST to fix up CI pipeline a following commit
- * will resolve the testing issue
- * #if !defined(OPENSSL_NO_SSL_TRACE) \
- *   && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD) \
- *   && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH) \
- *   && !defined(OPENSSL_NO_ML_DSA) && !defined(OPENSSL_NO_ML_KEM) \
- *   && !defined(OPENSSL_NO_TLS1_3)
- * # define DO_SSL_TRACE_TEST
- * #endif
- */
+#if !defined(OPENSSL_NO_SSL_TRACE) \
+        && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD) \
+        && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH) \
+        && !defined(OPENSSL_NO_ML_DSA) && !defined(OPENSSL_NO_ML_KEM) \
+        && !defined(OPENSSL_NO_TLS1_3)
+# define DO_SSL_TRACE_TEST
+#endif
 
 /*
  * This structure is used to validate that the correct number of log messages
@@ -13757,6 +13753,9 @@ static int test_ssl_trace(void)
     char *reffile = NULL;
     char *grouplist = "MLKEM512:MLKEM768:MLKEM1024:X25519MLKEM768:SecP256r1MLKEM768"
         ":SecP384r1MLKEM1024:secp521r1:secp384r1:secp256r1";
+
+    if (!fips_provider_version_ge(libctx, 3, 5, 0))
+        return TEST_skip("FIPS provider does not support MLKEM algorithms");
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),
