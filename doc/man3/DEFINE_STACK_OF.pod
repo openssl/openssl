@@ -170,15 +170,14 @@ B<sk_I<TYPE>_set>() sets element I<idx> of I<sk> to I<ptr> replacing the current
 element. The new element value is returned or NULL if an error occurred:
 this will only happen if I<sk> is NULL or I<idx> is out of range.
 
-B<sk_I<TYPE>_find>() searches I<sk> for the element I<ptr>.  In the case
-where no comparison function has been specified, the function performs
-a linear search for a pointer equal to I<ptr>. The index of the first
-matching element is returned or B<-1> if there is no match. In the case
-where a comparison function has been specified, I<sk> is sorted and
-B<sk_I<TYPE>_find>() returns the index of a matching element or B<-1> if there
-is no match. Note that, in this case the comparison function will usually
-compare the values pointed to rather than the pointers themselves and
-the order of elements in I<sk> can change.
+B<sk_I<TYPE>_find>() searches I<sk> for the element I<ptr>. In the
+case where no comparison function has been specified, the function
+performs a linear search for a pointer equal to I<ptr>. In the case
+where a comparison function has been specified, the function performs
+a search for a element that the comparison function indicates is a
+match. If the stack is sorted, a binary search is used, otherwise, a
+linear search is used. B<sk_I<TYPE>_find>() returns the index of a
+matching element or B<-1> if there is no match.
 
 B<sk_I<TYPE>_find_ex>() operates like B<sk_I<TYPE>_find>() except when a
 comparison function has been specified and no matching element is found.
