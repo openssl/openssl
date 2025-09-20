@@ -99,12 +99,24 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/storemgmt/file_store_any2obj.c \
          providers/implementations/storemgmt/file_store.c \
          providers/implementations/storemgmt/winstore_store.c \
+         providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.c \
+         providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.c \
+         providers/implementations/ciphers/cipher_aes_gcm_siv.c \
+         providers/implementations/ciphers/cipher_aes_ocb.c \
+         providers/implementations/ciphers/cipher_aes_siv.c \
+         providers/implementations/ciphers/cipher_aes_wrp.c \
+         providers/implementations/ciphers/cipher_aes_xts.c \
          providers/implementations/ciphers/ciphercommon.c \
          providers/implementations/ciphers/ciphercommon_ccm.c \
          providers/implementations/ciphers/ciphercommon_gcm.c \
+         providers/implementations/ciphers/cipher_chacha20.c \
          providers/implementations/ciphers/cipher_chacha20_poly1305.c \
+         providers/implementations/ciphers/cipher_null.c \
+         providers/implementations/ciphers/cipher_rc4_hmac_md5.c \
+         providers/implementations/ciphers/cipher_sm4_xts.c \
          providers/implementations/digests/blake2_prov.c \
          providers/implementations/digests/digestcommon.c \
+         providers/implementations/digests/mdc2_prov.c \
          providers/implementations/digests/sha3_prov.c \
          providers/implementations/include/prov/blake2_params.inc \
          providers/implementations/macs/cmac_prov.c \
@@ -205,12 +217,24 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/storemgmt/file_store_any2obj.c \
        providers/implementations/storemgmt/file_store.c \
        providers/implementations/storemgmt/winstore_store.c \
+       providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.c \
+       providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.c \
+       providers/implementations/ciphers/cipher_aes_gcm_siv.c \
+       providers/implementations/ciphers/cipher_aes_ocb.c \
+       providers/implementations/ciphers/cipher_aes_siv.c \
+       providers/implementations/ciphers/cipher_aes_wrp.c \
+       providers/implementations/ciphers/cipher_aes_xts.c \
        providers/implementations/ciphers/ciphercommon.c \
        providers/implementations/ciphers/ciphercommon_ccm.c \
        providers/implementations/ciphers/ciphercommon_gcm.c \
+       providers/implementations/ciphers/cipher_chacha20.c \
        providers/implementations/ciphers/cipher_chacha20_poly1305.c \
+       providers/implementations/ciphers/cipher_null.c \
+       providers/implementations/ciphers/cipher_rc4_hmac_md5.c \
+       providers/implementations/ciphers/cipher_sm4_xts.c \
        providers/implementations/digests/blake2_prov.c \
        providers/implementations/digests/digestcommon.c \
+       providers/implementations/digests/mdc2_prov.c \
        providers/implementations/digests/sha3_prov.c \
        providers/implementations/include/prov/blake2_params.inc \
        providers/implementations/macs/cmac_prov.c \
@@ -329,18 +353,42 @@ GENERATE[providers/implementations/storemgmt/file_store.c]=\
     providers/implementations/storemgmt/file_store.c.in
 GENERATE[providers/implementations/storemgmt/winstore_store.c]=\
     providers/implementations/storemgmt/winstore_store.c.in
+GENERATE[providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.c]=\
+    providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.c.in
+GENERATE[providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.c]=\
+    providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.c.in
+GENERATE[providers/implementations/ciphers/cipher_aes_gcm_siv.c]=\
+    providers/implementations/ciphers/cipher_aes_gcm_siv.c.in
+GENERATE[providers/implementations/ciphers/cipher_aes_ocb.c]=\
+    providers/implementations/ciphers/cipher_aes_ocb.c.in
+GENERATE[providers/implementations/ciphers/cipher_aes_siv.c]=\
+    providers/implementations/ciphers/cipher_aes_siv.c.in
+GENERATE[providers/implementations/ciphers/cipher_aes_wrp.c]=\
+    providers/implementations/ciphers/cipher_aes_wrp.c.in
+GENERATE[providers/implementations/ciphers/cipher_aes_xts.c]=\
+    providers/implementations/ciphers/cipher_aes_xts.c.in
 GENERATE[providers/implementations/ciphers/ciphercommon.c]=\
     providers/implementations/ciphers/ciphercommon.c.in
 GENERATE[providers/implementations/ciphers/ciphercommon_ccm.c]=\
     providers/implementations/ciphers/ciphercommon_ccm.c.in
 GENERATE[providers/implementations/ciphers/ciphercommon_gcm.c]=\
     providers/implementations/ciphers/ciphercommon_gcm.c.in
+GENERATE[providers/implementations/ciphers/cipher_chacha20.c]=\
+    providers/implementations/ciphers/cipher_chacha20.c.in
 GENERATE[providers/implementations/ciphers/cipher_chacha20_poly1305.c]=\
     providers/implementations/ciphers/cipher_chacha20_poly1305.c.in
+GENERATE[providers/implementations/ciphers/cipher_null.c]=\
+    providers/implementations/ciphers/cipher_null.c.in
+GENERATE[providers/implementations/ciphers/cipher_rc4_hmac_md5.c]=\
+    providers/implementations/ciphers/cipher_rc4_hmac_md5.c.in
+GENERATE[providers/implementations/ciphers/cipher_sm4_xts.c]=\
+    providers/implementations/ciphers/cipher_sm4_xts.c.in
 GENERATE[providers/implementations/digests/blake2_prov.c]=\
     providers/implementations/digests/blake2_prov.c.in
 GENERATE[providers/implementations/digests/digestcommon.c]=\
     providers/implementations/digests/digestcommon.c.in
+GENERATE[providers/implementations/digests/mdc2_prov.c]=\
+    providers/implementations/digests/mdc2_prov.c.in
 GENERATE[providers/implementations/digests/sha3_prov.c]=\
     providers/implementations/digests/sha3_prov.c.in
 GENERATE[providers/implementations/include/prov/blake2_params.inc]=\
