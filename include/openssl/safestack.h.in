@@ -161,17 +161,18 @@ extern "C" {
     { \
         return (t2 *)OPENSSL_sk_set((OPENSSL_STACK *)sk, idx, (const void *)ptr); \
     } \
-    static ossl_unused ossl_inline int sk_##t1##_find(STACK_OF(t1) *sk, t2 *ptr) \
+    static ossl_unused ossl_inline int sk_##t1##_find(const STACK_OF(t1) *sk, t2 *ptr) \
     { \
-        return OPENSSL_sk_find((OPENSSL_STACK *)sk, (const void *)ptr); \
+        return OPENSSL_sk_find((const OPENSSL_STACK *)sk, (const void *)ptr); \
     } \
-    static ossl_unused ossl_inline int sk_##t1##_find_ex(STACK_OF(t1) *sk, t2 *ptr) \
+    static ossl_unused ossl_inline int sk_##t1##_find_ex(const STACK_OF(t1) *sk, t2 *ptr) \
     { \
-        return OPENSSL_sk_find_ex((OPENSSL_STACK *)sk, (const void *)ptr); \
+        return OPENSSL_sk_find_ex((const OPENSSL_STACK *)sk, (const void *)ptr); \
     } \
-    static ossl_unused ossl_inline int sk_##t1##_find_all(STACK_OF(t1) *sk, t2 *ptr, int *pnum) \
+    static ossl_unused ossl_inline int sk_##t1##_find_all(const STACK_OF(t1) *sk, t2 *ptr, \
+                                                          int *pnum)    \
     { \
-        return OPENSSL_sk_find_all((OPENSSL_STACK *)sk, (const void *)ptr, pnum); \
+        return OPENSSL_sk_find_all((const OPENSSL_STACK *)sk, (const void *)ptr, pnum); \
     } \
     static ossl_unused ossl_inline void sk_##t1##_sort(STACK_OF(t1) *sk) \
     { \
