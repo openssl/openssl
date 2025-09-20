@@ -1683,7 +1683,9 @@ EOF
 
           return <<"EOF";
 $args{src}: $gen0 $deps
+	if [ -r "\$@" ]; then chmod u+w \$@; fi
 	\$(PERL)$perlmodules "$dofile" "-o$target{build_file}" $gen0$gen_args > \$@
+	chmod a-w \$@
 EOF
       } elsif (grep { $_ eq $gen0 } @{$unified_info{programs}}) {
           #
@@ -2040,10 +2042,11 @@ EOF
                            rel2abs($config{builddir}));
       return <<"EOF";
 $script: $sources configdata.pm
+	if [ -r "$script" ]; then chmod u+w $script; fi
 	\$(RM) "$script"
 	\$(PERL) "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
 	    "-o$target{build_file}" $sources > "$script"
-	chmod a+x $script
+	chmod a+x,a-w $script
 EOF
   }
   sub generatedir {

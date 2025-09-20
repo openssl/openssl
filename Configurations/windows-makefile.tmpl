@@ -845,7 +845,9 @@ EOF
 
           return <<"EOF";
 $args{src}: "$gen0" $deps
+	if exist \$@ attrib -r \$@
 	"\$(PERL)"$perlmodules "$dofile" "-o$target{build_file}" "$gen0"$gen_args > \$@
+	attrib +r \$@
 EOF
       } elsif (grep { $_ eq $gen0 } @{$unified_info{programs}}) {
           #
@@ -1054,8 +1056,10 @@ EOF
                            rel2abs($config{builddir}));
       return <<"EOF";
 $script: $sources configdata.pm
+	if exist $script attrib -r $script
 	"\$(PERL)" "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
 	    "-o$target{build_file}" $sources > \$@
+	attrib +r $script
 EOF
   }
   sub generatedir {
