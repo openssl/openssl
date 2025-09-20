@@ -2130,7 +2130,7 @@ static int check_policy(X509_STORE_CTX *ctx)
  *
  * Return 1 on success, 0 otherwise.
  */
-static int ossl_x509_compare_asn1_time(const X509_VERIFY_PARAM *vpm,
+int ossl_x509_compare_asn1_time(const X509_VERIFY_PARAM *vpm,
                                        const ASN1_TIME *time, int *comparison)
 {
     const time_t *check_time = NULL;
