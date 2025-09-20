@@ -1364,6 +1364,42 @@ static int test_x509_store(void)
     return ret;
 }
 
+/* Test using OBJ_create in multiple threads */
+static void test_obj_create_worker(void)
+{
+    int i, nid, nid2;
+    time_t now;
+    char name[40];
+
+    for (i = 0; i < 4; i++) {
+        now = time(NULL);
+        sprintf(name, "Time in Seconds = %ld", (long) now);
+        while (now == time(NULL))
+            /* no-op */;
+        nid = OBJ_create(NULL, NULL, name);
+        nid2 = OBJ_ln2nid(name);
+        if (nid != NID_undef) {
+            if (nid2 != nid) {
+                TEST_info("oops: name='%s' nid=%d nid2=%d", name, nid, nid2);
+                multi_set_success(0);
+                break;
+            }
+        } else {
+            if (nid2 == NID_undef) {
+                TEST_info("oops: name='%s' nid=%d nid2=%d", name, nid, nid2);
+                multi_set_success(0);
+                break;
+            }
+        }
+    }
+}
+
+static int test_obj_stress(void)
+{
+    return thread_run_test(&test_obj_create_worker, MAXIMUM_THREADS,
+                           &test_obj_create_worker, 0, NULL);
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -1453,6 +1489,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_pem_read);
     ADD_TEST(test_x509_store);
+    ADD_TEST(test_obj_stress);
     return 1;
 }
 
