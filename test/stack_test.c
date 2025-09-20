@@ -321,6 +321,7 @@ static int test_uchar_stack(int reserve)
 end:
     sk_uchar_free(r);
     sk_uchar_free(s);
+    sk_uchar_free(q);
     return testresult;
 }
 
