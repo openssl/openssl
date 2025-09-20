@@ -31,7 +31,41 @@ my $srctop = $ENV{SRCTOP} || $ENV{TOP};
 my $bldtop = $ENV{BLDTOP} || $ENV{TOP};
 my $recipesdir = catdir($srctop, "test", "recipes");
 my $libdir = rel2abs(catdir($srctop, "util", "perl"));
-my $jobs = $ENV{HARNESS_JOBS} // 1;
+
+my $jobs = $ENV{HARNESS_JOBS};
+if (!defined($jobs)) {
+    my $cpus = $ENV{"NUMBER_OF_PROCESSORS"}; # Windows sets this.
+    if (!defined($cpus) && $^O =~ /linux/) {
+        # Perl was built on Linux, so try nproc, which is apparently
+        # the less worse way if you are restricted in a
+        # container/cgroup
+        my $tmp = qx(nproc 2>/dev/null);
+        if ($? == 0 && $tmp > 0) {
+            $cpus = $tmp;
+        }
+    }
+    if (!defined($cpus) && -r "/proc/cpuinfo") {
+        # Smells like Linux or something else attempting bug for bug
+        # compatibilty with the /proc paradigm.
+        my $tmp = qx(grep -c ^processor /proc/cpuinfo 2>/dev/null);
+        if ($? == 0 && $tmp > 0) {
+            $cpus = $tmp;
+        }
+    }
+    if (!defined($cpus)) {
+        # OpenBSD, FreeBSD, MacOS
+        my $tmp = qx(sysctl -n hw.ncpu 2>/dev/null);
+        if ($? == 0 && $tmp > 0) {
+            $cpus = $tmp;
+        }
+    }
+
+    if (defined($cpus) && $cpus > 0) {
+        $jobs = $cpus;
+    } else {
+        $jobs = 1;
+    }
+}
 
 $ENV{OPENSSL_CONF} = rel2abs(catfile($srctop, "apps", "openssl.cnf"));
 $ENV{OPENSSL_CONF_INCLUDE} = rel2abs(catdir($bldtop, "test"));
