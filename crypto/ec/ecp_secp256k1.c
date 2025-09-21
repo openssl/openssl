@@ -33,15 +33,16 @@
 #include "internal/numbers.h"
 #include "ecp_secp256k1_modinv64.h"
 
-
 #ifndef INT128_MAX
 # error "Your compiler doesn't appear to support 128-bit integer types"
 #endif
 
 #define P256_LIMBS (256 / BN_BITS2)
 
-/** Maximum allowed magnitudes for group element coordinates
- *  in affine (x, y) and jacobian (x, y, z) representation. */
+/**
+ * Maximum allowed magnitudes for group element coordinates
+ * in affine (x, y) and jacobian (x, y, z) representation.
+ */
 #define SECP256K1_GE_X_MAGNITUDE_MAX  4
 #define SECP256K1_GE_Y_MAGNITUDE_MAX  3
 #define SECP256K1_GEJ_X_MAGNITUDE_MAX 4
@@ -54,7 +55,8 @@ typedef struct {
 } secp256k1_fe;
 
 /* Unpacks a constant into a overlapping multi-limbed FE element. */
-#define SECP256K1_FE_CONST_INNER(d7, d6, d5, d4, d3, d2, d1, d0) { \
+#define SECP256K1_FE_CONST_INNER(d7, d6, d5, d4, d3, d2, d1, d0) \
+{ \
     (d0) | (((uint64_t)(d1) & 0xFFFFFUL) << 32), \
     ((uint64_t)(d1) >> 20) | (((uint64_t)(d2)) << 12) | (((uint64_t)(d3) & 0xFFUL) << 44), \
     ((uint64_t)(d3) >> 8) | (((uint64_t)(d4) & 0xFFFFFFFUL) << 24), \
@@ -70,7 +72,8 @@ typedef struct {
     uint64_t n[4];
 } secp256k1_fe_storage;
 
-#define SECP256K1_FE_STORAGE_CONST(d7, d6, d5, d4, d3, d2, d1, d0) {{ \
+#define SECP256K1_FE_STORAGE_CONST(d7, d6, d5, d4, d3, d2, d1, d0) \
+{{ \
     (d0) | (((uint64_t)(d1)) << 32), \
     (d2) | (((uint64_t)(d3)) << 32), \
     (d4) | (((uint64_t)(d5)) << 32), \
@@ -82,8 +85,8 @@ typedef struct {
 /** The number of entries a table with precomputed multiples needs to have. */
 #define ECMULT_TABLE_SIZE(w) (1 << ((w)-2))
 
-
-static ossl_inline void secp256k1_fe_mul_inner(uint64_t *r, const uint64_t *a, const uint64_t * b) {
+static ossl_inline void secp256k1_fe_mul_inner(uint64_t *r, const uint64_t *a, const uint64_t * b)
+{
     secp256k1_uint128 c, d;
     uint64_t t3, t4, tx, u0;
     uint64_t a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3], a4 = a[4];
@@ -190,7 +193,8 @@ static ossl_inline void secp256k1_fe_mul_inner(uint64_t *r, const uint64_t *a, c
     /* [r4 r3 r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
 }
 
-static ossl_inline void secp256k1_fe_sqr_inner(uint64_t *r, const uint64_t *a) {
+static ossl_inline void secp256k1_fe_sqr_inner(uint64_t *r, const uint64_t *a)
+{
     secp256k1_uint128 c, d;
     uint64_t a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3], a4 = a[4];
     uint64_t t3, t4, tx, u0;
@@ -275,7 +279,8 @@ static ossl_inline void secp256k1_fe_sqr_inner(uint64_t *r, const uint64_t *a) {
  *  accept any input with magnitude at most M, and have different rules for propagating magnitude to their
  *  output.
  */
-static void secp256k1_fe_normalize_weak(secp256k1_fe *r) {
+static void secp256k1_fe_normalize_weak(secp256k1_fe *r)
+{
     uint64_t t0 = r->n[0], t1 = r->n[1], t2 = r->n[2], t3 = r->n[3], t4 = r->n[4];
 
     /* Reduce t4 at the start so there will be at most a single carry from the first pass */
@@ -291,7 +296,8 @@ static void secp256k1_fe_normalize_weak(secp256k1_fe *r) {
     r->n[0] = t0; r->n[1] = t1; r->n[2] = t2; r->n[3] = t3; r->n[4] = t4;
 }
 
-static void secp256k1_fe_normalize(secp256k1_fe *r) {
+static void secp256k1_fe_normalize(secp256k1_fe *r)
+{
     uint64_t t0 = r->n[0], t1 = r->n[1], t2 = r->n[2], t3 = r->n[3], t4 = r->n[4];
 
     /* Reduce t4 at the start so there will be at most a single carry from the first pass */
@@ -322,7 +328,8 @@ static void secp256k1_fe_normalize(secp256k1_fe *r) {
     r->n[0] = t0; r->n[1] = t1; r->n[2] = t2; r->n[3] = t3; r->n[4] = t4;
 }
 
-static void secp256k1_fe_normalize_var(secp256k1_fe *r) {
+static void secp256k1_fe_normalize_var(secp256k1_fe *r)
+{
     uint64_t t0 = r->n[0], t1 = r->n[1], t2 = r->n[2], t3 = r->n[3], t4 = r->n[4];
 
     /* Reduce t4 at the start so there will be at most a single carry from the first pass */
@@ -354,7 +361,8 @@ static void secp256k1_fe_normalize_var(secp256k1_fe *r) {
     r->n[0] = t0; r->n[1] = t1; r->n[2] = t2; r->n[3] = t3; r->n[4] = t4;
 }
 
-static int secp256k1_fe_normalizes_to_zero_var(secp256k1_fe *r) {
+static int secp256k1_fe_normalizes_to_zero_var(secp256k1_fe *r)
+{
     uint64_t t0, t1, t2, t3, t4;
     uint64_t z0, z1;
     uint64_t x;
@@ -392,7 +400,8 @@ static int secp256k1_fe_normalizes_to_zero_var(secp256k1_fe *r) {
     return (z0 == 0) | (z1 == 0xFFFFFFFFFFFFFULL);
 }
 
-static int secp256k1_fe_normalizes_to_zero(const secp256k1_fe *r) {
+static int secp256k1_fe_normalizes_to_zero(const secp256k1_fe *r)
+{
     uint64_t t0 = r->n[0], t1 = r->n[1], t2 = r->n[2], t3 = r->n[3], t4 = r->n[4];
 
     /* z0 tracks a possible raw value of 0, z1 tracks a possible raw value of P */
@@ -412,17 +421,20 @@ static int secp256k1_fe_normalizes_to_zero(const secp256k1_fe *r) {
     return (z0 == 0) | (z1 == 0xFFFFFFFFFFFFFULL);
 }
 
-static ossl_inline void secp256k1_fe_set_int(secp256k1_fe *r, int a) {
+static ossl_inline void secp256k1_fe_set_int(secp256k1_fe *r, int a)
+{
     r->n[0] = a;
     r->n[1] = r->n[2] = r->n[3] = r->n[4] = 0;
 }
 
-static ossl_inline int secp256k1_fe_is_zero(const secp256k1_fe *a) {
+static ossl_inline int secp256k1_fe_is_zero(const secp256k1_fe *a)
+{
     const uint64_t *t = a->n;
     return (t[0] | t[1] | t[2] | t[3] | t[4]) == 0;
 }
 
-static ossl_inline void secp256k1_fe_negate(secp256k1_fe *r, const secp256k1_fe *a, int m) {
+static ossl_inline void secp256k1_fe_negate(secp256k1_fe *r, const secp256k1_fe *a, int m)
+{
     r->n[0] = 0xFFFFEFFFFFC2FULL * 2 * (m + 1) - a->n[0];
     r->n[1] = 0xFFFFFFFFFFFFFULL * 2 * (m + 1) - a->n[1];
     r->n[2] = 0xFFFFFFFFFFFFFULL * 2 * (m + 1) - a->n[2];
@@ -430,7 +442,8 @@ static ossl_inline void secp256k1_fe_negate(secp256k1_fe *r, const secp256k1_fe 
     r->n[4] = 0x0FFFFFFFFFFFFULL * 2 * (m + 1) - a->n[4];
 }
 
-static ossl_inline void secp256k1_fe_mul_int(secp256k1_fe *r, int a) {
+static ossl_inline void secp256k1_fe_mul_int(secp256k1_fe *r, int a)
+{
     r->n[0] *= a;
     r->n[1] *= a;
     r->n[2] *= a;
@@ -438,7 +451,8 @@ static ossl_inline void secp256k1_fe_mul_int(secp256k1_fe *r, int a) {
     r->n[4] *= a;
 }
 
-static ossl_inline void secp256k1_fe_add(secp256k1_fe *r, const secp256k1_fe *a) {
+static ossl_inline void secp256k1_fe_add(secp256k1_fe *r, const secp256k1_fe *a)
+{
     r->n[0] += a->n[0];
     r->n[1] += a->n[1];
     r->n[2] += a->n[2];
@@ -446,7 +460,8 @@ static ossl_inline void secp256k1_fe_add(secp256k1_fe *r, const secp256k1_fe *a)
     r->n[4] += a->n[4];
 }
 
-static void secp256k1_fe_mul(secp256k1_fe *r, const secp256k1_fe *a, const secp256k1_fe * b) {
+static void secp256k1_fe_mul(secp256k1_fe *r, const secp256k1_fe *a, const secp256k1_fe * b)
+{
     secp256k1_fe_mul_inner(r->n, a->n, b->n);
 }
 
@@ -454,7 +469,8 @@ static void secp256k1_fe_sqr(secp256k1_fe *r, const secp256k1_fe *a) {
     secp256k1_fe_sqr_inner(r->n, a->n);
 }
 
-static ossl_inline void secp256k1_fe_cmov(secp256k1_fe *r, const secp256k1_fe *a, int flag) {
+static ossl_inline void secp256k1_fe_cmov(secp256k1_fe *r, const secp256k1_fe *a, int flag)
+{
     uint64_t mask0;
     volatile int vflag = flag;
     mask0 = vflag + ~((uint64_t)0);
@@ -466,7 +482,8 @@ static ossl_inline void secp256k1_fe_cmov(secp256k1_fe *r, const secp256k1_fe *a
     r->n[4] = constant_time_select_64(mask0, r->n[4], a->n[4]);
 }
 
-static ossl_inline void secp256k1_fe_storage_cmov(secp256k1_fe_storage *r, const secp256k1_fe_storage *a, int flag) {
+static ossl_inline void secp256k1_fe_storage_cmov(secp256k1_fe_storage *r, const secp256k1_fe_storage *a, int flag)
+{
     uint64_t mask0;
     volatile int vflag = flag;
     mask0 = vflag + ~((uint64_t)0);
@@ -477,14 +494,16 @@ static ossl_inline void secp256k1_fe_storage_cmov(secp256k1_fe_storage *r, const
     r->n[3] = constant_time_select_64(mask0, r->n[3], a->n[3]);
 }
 
-static void secp256k1_fe_to_storage(secp256k1_fe_storage *r, const secp256k1_fe *a) {
+static void secp256k1_fe_to_storage(secp256k1_fe_storage *r, const secp256k1_fe *a)
+{
     r->n[0] = a->n[0] | a->n[1] << 52;
     r->n[1] = a->n[1] >> 12 | a->n[2] << 40;
     r->n[2] = a->n[2] >> 24 | a->n[3] << 28;
     r->n[3] = a->n[3] >> 36 | a->n[4] << 16;
 }
 
-static ossl_inline void secp256k1_fe_from_storage(secp256k1_fe *r, const secp256k1_fe_storage *a) {
+static ossl_inline void secp256k1_fe_from_storage(secp256k1_fe *r, const secp256k1_fe_storage *a)
+{
     r->n[0] = a->n[0] & 0xFFFFFFFFFFFFFULL;
     r->n[1] = a->n[0] >> 52 | ((a->n[1] << 12) & 0xFFFFFFFFFFFFFULL);
     r->n[2] = a->n[1] >> 40 | ((a->n[2] << 24) & 0xFFFFFFFFFFFFFULL);
@@ -492,7 +511,8 @@ static ossl_inline void secp256k1_fe_from_storage(secp256k1_fe *r, const secp256
     r->n[4] = a->n[3] >> 16;
 }
 
-static ossl_inline int ecp_secp256k1_bignum_field_elem(secp256k1_fe* out, const BIGNUM* in) {
+static ossl_inline int ecp_secp256k1_bignum_field_elem(secp256k1_fe* out, const BIGNUM* in)
+{
     secp256k1_fe_storage out_st;
     if (!bn_copy_words(out_st.n, in, P256_LIMBS)) {
         return 0;
@@ -501,7 +521,8 @@ static ossl_inline int ecp_secp256k1_bignum_field_elem(secp256k1_fe* out, const 
     return 1;
 }
 
-static ossl_inline int ecp_secp256k1_field_elem_bignum(BIGNUM* out, const secp256k1_fe* in) {
+static ossl_inline int ecp_secp256k1_field_elem_bignum(BIGNUM* out, const secp256k1_fe* in)
+{
     secp256k1_fe_storage in_st;
     secp256k1_fe in_norm = *in;
     secp256k1_fe_normalize_var(&in_norm);
@@ -515,7 +536,8 @@ static ossl_inline int ecp_secp256k1_field_elem_bignum(BIGNUM* out, const secp25
     bn_set_words(out, in.d, P256_LIMBS)
 
 
-ossl_inline static int secp256k1_fe_equal(const secp256k1_fe *a, const secp256k1_fe *b) {
+ossl_inline static int secp256k1_fe_equal(const secp256k1_fe *a, const secp256k1_fe *b)
+{
     secp256k1_fe na;
 
     secp256k1_fe_negate(&na, a, 1);
@@ -523,7 +545,8 @@ ossl_inline static int secp256k1_fe_equal(const secp256k1_fe *a, const secp256k1
     return secp256k1_fe_normalizes_to_zero(&na);
 }
 
-static void secp256k1_fe_from_signed62(secp256k1_fe *r, const secp256k1_modinv64_signed62 *a) {
+static void secp256k1_fe_from_signed62(secp256k1_fe *r, const secp256k1_modinv64_signed62 *a)
+{
     const uint64_t M52 = UINT64_MAX >> 12;
     const uint64_t a0 = a->v[0], a1 = a->v[1], a2 = a->v[2], a3 = a->v[3], a4 = a->v[4];
 
@@ -534,7 +557,8 @@ static void secp256k1_fe_from_signed62(secp256k1_fe *r, const secp256k1_modinv64
     r->n[4] = (a3 >> 22 | a4 << 40);
 }
 
-static void secp256k1_fe_to_signed62(secp256k1_modinv64_signed62 *r, const secp256k1_fe *a) {
+static void secp256k1_fe_to_signed62(secp256k1_modinv64_signed62 *r, const secp256k1_fe *a)
+{
     const uint64_t M62 = UINT64_MAX >> 2;
     const uint64_t a0 = a->n[0], a1 = a->n[1], a2 = a->n[2], a3 = a->n[3], a4 = a->n[4];
 
@@ -545,7 +569,8 @@ static void secp256k1_fe_to_signed62(secp256k1_modinv64_signed62 *r, const secp2
     r->v[4] =  a4 >> 40;
 }
 
-static void secp256k1_fe_inv(secp256k1_fe *r, const secp256k1_fe *x) {
+static void secp256k1_fe_inv(secp256k1_fe *r, const secp256k1_fe *x)
+{
     secp256k1_fe tmp = *x;
     secp256k1_modinv64_signed62 s;
 
@@ -555,7 +580,8 @@ static void secp256k1_fe_inv(secp256k1_fe *r, const secp256k1_fe *x) {
     secp256k1_fe_from_signed62(r, &s);
 }
 
-static ossl_inline void secp256k1_fe_half(secp256k1_fe *r) {
+static ossl_inline void secp256k1_fe_half(secp256k1_fe *r)
+{
     uint64_t t0 = r->n[0], t1 = r->n[1], t2 = r->n[2], t3 = r->n[3], t4 = r->n[4];
     uint64_t one = (uint64_t)1;
     uint64_t mask = -(t0 & one) >> 12;
@@ -631,11 +657,13 @@ typedef struct {
 #define SECP256K1_N_H_2 ((uint64_t)0xFFFFFFFFFFFFFFFFULL)
 #define SECP256K1_N_H_3 ((uint64_t)0x7FFFFFFFFFFFFFFFULL)
 
-ossl_inline static unsigned int secp256k1_scalar_get_bits(const secp256k1_scalar *a, unsigned int offset, unsigned int count) {
+ossl_inline static unsigned int secp256k1_scalar_get_bits(const secp256k1_scalar *a, unsigned int offset, unsigned int count)
+{
     return (a->d[offset >> 6] >> (offset & 0x3F)) & ((((uint64_t)1) << count) - 1);
 }
 
-ossl_inline static unsigned int secp256k1_scalar_get_bits_var(const secp256k1_scalar *a, unsigned int offset, unsigned int count) {
+ossl_inline static unsigned int secp256k1_scalar_get_bits_var(const secp256k1_scalar *a, unsigned int offset, unsigned int count)
+{
     if ((offset + count - 1) >> 6 == offset >> 6) {
         return secp256k1_scalar_get_bits(a, offset, count);
     } else {
@@ -682,11 +710,13 @@ static void secp256k1_scalar_cadd_bit(secp256k1_scalar *r, unsigned int bit, int
 }
 #endif
 
-ossl_inline static int secp256k1_scalar_is_zero(const secp256k1_scalar *a) {
+ossl_inline static int secp256k1_scalar_is_zero(const secp256k1_scalar *a)
+{
     return (a->d[0] | a->d[1] | a->d[2] | a->d[3]) == 0;
 }
 
-static void secp256k1_scalar_negate(secp256k1_scalar *r, const secp256k1_scalar *a) {
+static void secp256k1_scalar_negate(secp256k1_scalar *r, const secp256k1_scalar *a)
+{
     uint64_t nonzero = 0xFFFFFFFFFFFFFFFFULL * (secp256k1_scalar_is_zero(a) == 0);
     secp256k1_uint128 t;
 
@@ -914,7 +944,8 @@ ossl_inline static void secp256k1_scalar_mul_shift_var(secp256k1_scalar *r, cons
     secp256k1_scalar_cadd_bit(r, 0, (l[(shift - 1) >> 6] >> ((shift - 1) & 0x3f)) & 1);
 }
 #endif
-static void secp256k1_scalar_from_signed62(secp256k1_scalar *r, const secp256k1_modinv64_signed62 *a) {
+static void secp256k1_scalar_from_signed62(secp256k1_scalar *r, const secp256k1_modinv64_signed62 *a)
+{
     const uint64_t a0 = a->v[0], a1 = a->v[1], a2 = a->v[2], a3 = a->v[3], a4 = a->v[4];
 
     r->d[0] = a0      | a1 << 62;
@@ -923,7 +954,8 @@ static void secp256k1_scalar_from_signed62(secp256k1_scalar *r, const secp256k1_
     r->d[3] = a3 >> 6 | a4 << 56;
 }
 
-static void secp256k1_scalar_to_signed62(secp256k1_modinv64_signed62 *r, const secp256k1_scalar *a) {
+static void secp256k1_scalar_to_signed62(secp256k1_modinv64_signed62 *r, const secp256k1_scalar *a)
+{
     const uint64_t M62 = UINT64_MAX >> 2;
     const uint64_t a0 = a->d[0], a1 = a->d[1], a2 = a->d[2], a3 = a->d[3];
 
@@ -934,7 +966,8 @@ static void secp256k1_scalar_to_signed62(secp256k1_modinv64_signed62 *r, const s
     r->v[4] =  a3 >> 56;
 }
 
-static void secp256k1_scalar_inverse(secp256k1_scalar *r, const secp256k1_scalar *x) {
+static void secp256k1_scalar_inverse(secp256k1_scalar *r, const secp256k1_scalar *x)
+{
     secp256k1_modinv64_signed62 s;
 
     secp256k1_scalar_to_signed62(&s, x);
@@ -982,7 +1015,8 @@ static const secp256k1_ge secp256k1_ge_const_g = SECP256K1_GE_CONST(
     0xFD17B448UL, 0xA6855419UL, 0x9C47D08FUL, 0xFB10D4B8UL
 );
 
-static void secp256k1_ge_set_gej_zinv(secp256k1_ge *r, const secp256k1_gej *a, const secp256k1_fe *zi) {
+static void secp256k1_ge_set_gej_zinv(secp256k1_ge *r, const secp256k1_gej *a, const secp256k1_fe *zi)
+{
     secp256k1_fe zi2;
     secp256k1_fe zi3;
     secp256k1_fe_sqr(&zi2, zi);
@@ -1002,13 +1036,15 @@ static int secp256k1_ge_is_infinity(const secp256k1_ge *a) {
     return a->infinity;
 }
 #endif
-static void secp256k1_ge_neg(secp256k1_ge *r, const secp256k1_ge *a) {
+static void secp256k1_ge_neg(secp256k1_ge *r, const secp256k1_ge *a)
+{
     *r = *a;
     secp256k1_fe_normalize_weak(&r->y);
     secp256k1_fe_negate(&r->y, &r->y, 1);
 }
 
-static void secp256k1_ge_set_gej(secp256k1_ge *r, secp256k1_gej *a) {
+static void secp256k1_ge_set_gej(secp256k1_ge *r, secp256k1_gej *a)
+{
     secp256k1_fe z2, z3;
     r->infinity = a->infinity;
     secp256k1_fe_inv(&a->z, &a->z);
@@ -1021,7 +1057,8 @@ static void secp256k1_ge_set_gej(secp256k1_ge *r, secp256k1_gej *a) {
     r->y = a->y;
 }
 
-static void secp256k1_ge_globalz_set_table_gej(size_t len, secp256k1_ge *r, secp256k1_fe *globalz, const secp256k1_gej *a, const secp256k1_fe *zr) {
+static void secp256k1_ge_globalz_set_table_gej(size_t len, secp256k1_ge *r, secp256k1_fe *globalz, const secp256k1_gej *a, const secp256k1_fe *zr)
+{
     size_t i = len - 1;
     secp256k1_fe zs;
 
@@ -1044,21 +1081,24 @@ static void secp256k1_ge_globalz_set_table_gej(size_t len, secp256k1_ge *r, secp
     }
 }
 
-static void secp256k1_gej_set_infinity(secp256k1_gej *r) {
+static void secp256k1_gej_set_infinity(secp256k1_gej *r)
+{
     r->infinity = 1;
     secp256k1_fe_set_int(&r->x, 0);
     secp256k1_fe_set_int(&r->y, 0);
     secp256k1_fe_set_int(&r->z, 0);
 }
 
-static void secp256k1_gej_set_ge(secp256k1_gej *r, const secp256k1_ge *a) {
+static void secp256k1_gej_set_ge(secp256k1_gej *r, const secp256k1_ge *a)
+{
    r->infinity = a->infinity;
    r->x = a->x;
    r->y = a->y;
    secp256k1_fe_set_int(&r->z, 1);
 }
 
-static void secp256k1_gej_neg(secp256k1_gej *r, const secp256k1_gej *a) {
+static void secp256k1_gej_neg(secp256k1_gej *r, const secp256k1_gej *a)
+{
     r->infinity = a->infinity;
     r->x = a->x;
     r->y = a->y;
@@ -1067,7 +1107,8 @@ static void secp256k1_gej_neg(secp256k1_gej *r, const secp256k1_gej *a) {
     secp256k1_fe_negate(&r->y, &r->y, 1);
 }
 
-static ossl_inline void secp256k1_gej_double(secp256k1_gej *r, const secp256k1_gej *a) {
+static ossl_inline void secp256k1_gej_double(secp256k1_gej *r, const secp256k1_gej *a)
+{
     /* Operations: 3 mul, 4 sqr, 8 add/half/mul_int/negate */
     secp256k1_fe l, s, t;
 
@@ -1099,7 +1140,8 @@ static ossl_inline void secp256k1_gej_double(secp256k1_gej *r, const secp256k1_g
     secp256k1_fe_negate(&r->y, &r->y, 2);  /* Y3 = -(L*(X3 + T) + S^2) (3) */
 }
 
-static void secp256k1_gej_double_var(secp256k1_gej *r, const secp256k1_gej *a, secp256k1_fe *rzr) {
+static void secp256k1_gej_double_var(secp256k1_gej *r, const secp256k1_gej *a, secp256k1_fe *rzr)
+{
 
     /** For secp256k1, 2Q is infinity if and only if Q is infinity. This is because if 2Q = infinity,
      *  Q must equal -Q, or that Q.y == -(Q.y), or Q.y is 0. For a point on y^2 = x^3 + 7 to have
@@ -1127,11 +1169,13 @@ static void secp256k1_gej_double_var(secp256k1_gej *r, const secp256k1_gej *a, s
     secp256k1_gej_double(r, a);
 }
 
-static ossl_inline void secp256k1_gej_double_nonzero(secp256k1_gej *r, const secp256k1_gej *a, secp256k1_fe *rzr) {
+static ossl_inline void secp256k1_gej_double_nonzero(secp256k1_gej *r, const secp256k1_gej *a, secp256k1_fe *rzr)
+{
     secp256k1_gej_double_var(r, a, rzr);
 }
 
-static void secp256k1_gej_add_ge_var(secp256k1_gej *r, const secp256k1_gej *a, const secp256k1_ge *b, secp256k1_fe *rzr) {
+static void secp256k1_gej_add_ge_var(secp256k1_gej *r, const secp256k1_gej *a, const secp256k1_ge *b, secp256k1_fe *rzr)
+{
     /* Operations: 8 mul, 3 sqr, 11 add/negate/normalizes_to_zero (ignoring special cases) */
     secp256k1_fe z12, u1, u2, s1, s2, h, i, h2, h3, t;
 
@@ -1188,11 +1232,13 @@ static void secp256k1_gej_add_ge_var(secp256k1_gej *r, const secp256k1_gej *a, c
     secp256k1_fe_add(&r->y, &h3);
 }
 
-static int secp256k1_gej_is_infinity(const secp256k1_gej *a) {
+static int secp256k1_gej_is_infinity(const secp256k1_gej *a)
+{
     return a->infinity;
 }
 
-static int secp256k1_gej_equals_ge_var(const secp256k1_gej *a, const secp256k1_ge *b) {
+static int secp256k1_gej_equals_ge_var(const secp256k1_gej *a, const secp256k1_ge *b)
+{
     secp256k1_gej tmp;
 
     secp256k1_gej_neg(&tmp, a);
@@ -1200,7 +1246,8 @@ static int secp256k1_gej_equals_ge_var(const secp256k1_gej *a, const secp256k1_g
     return secp256k1_gej_is_infinity(&tmp);
 }
 
-static int secp256k1_gej_is_valid_var(const secp256k1_gej *a) {
+static int secp256k1_gej_is_valid_var(const secp256k1_gej *a)
+{
     secp256k1_fe y2, x3, z2, z6;
     if (a->infinity) {
         return 1;
@@ -1220,7 +1267,8 @@ static int secp256k1_gej_is_valid_var(const secp256k1_gej *a) {
     return secp256k1_fe_equal(&y2, &x3);
 }
 
-static void secp256k1_gej_add_var(secp256k1_gej *r, const secp256k1_gej *a, const secp256k1_gej *b, secp256k1_fe *rzr) {
+static void secp256k1_gej_add_var(secp256k1_gej *r, const secp256k1_gej *a, const secp256k1_gej *b, secp256k1_fe *rzr)
+{
     /* 12 mul, 4 sqr, 11 add/negate/normalizes_to_zero (ignoring special cases) */
     secp256k1_fe z22, z12, u1, u2, s1, s2, h, i, h2, h3, t;
 
@@ -1279,7 +1327,8 @@ static void secp256k1_gej_add_var(secp256k1_gej *r, const secp256k1_gej *a, cons
     secp256k1_fe_add(&r->y, &h3);
 }
 
-static void secp256k1_gej_add_ge(secp256k1_gej *r, const secp256k1_gej *a, const secp256k1_ge *b) {
+static void secp256k1_gej_add_ge(secp256k1_gej *r, const secp256k1_gej *a, const secp256k1_ge *b)
+{
     /* Operations: 7 mul, 5 sqr, 21 add/cmov/half/mul_int/negate/normalizes_to_zero */
     secp256k1_fe zz, u1, u2, s1, s2, t, tt, m, n, q, rr;
     secp256k1_fe m_alt, rr_alt;
@@ -1411,18 +1460,21 @@ static void secp256k1_gej_add_ge(secp256k1_gej *r, const secp256k1_gej *a, const
     r->infinity = secp256k1_fe_normalizes_to_zero(&r->z);
 }
 
-static void secp256k1_ge_from_storage(secp256k1_ge *r, const secp256k1_ge_storage *a) {
+static void secp256k1_ge_from_storage(secp256k1_ge *r, const secp256k1_ge_storage *a)
+{
     secp256k1_fe_from_storage(&r->x, &a->x);
     secp256k1_fe_from_storage(&r->y, &a->y);
     r->infinity = 0;
 }
 
-static ossl_inline void secp256k1_ge_storage_cmov(secp256k1_ge_storage *r, const secp256k1_ge_storage *a, int flag) {
+static ossl_inline void secp256k1_ge_storage_cmov(secp256k1_ge_storage *r, const secp256k1_ge_storage *a, int flag)
+{
     secp256k1_fe_storage_cmov(&r->x, &a->x, flag);
     secp256k1_fe_storage_cmov(&r->y, &a->y, flag);
 }
 
-static int secp256k1_gej_eq_var(const secp256k1_gej *a, const secp256k1_gej *b) {
+static int secp256k1_gej_eq_var(const secp256k1_gej *a, const secp256k1_gej *b)
+{
     secp256k1_gej tmp;
 
     secp256k1_gej_neg(&tmp, a);
@@ -1435,7 +1487,8 @@ static int secp256k1_gej_eq_var(const secp256k1_gej *a, const secp256k1_gej *b) 
  *  contain prej[0].z / a.z. The other zr[i] values = prej[i].z / prej[i-1].z.
  *  Prej's Z values are undefined, except for the last value.
  */
-static void secp256k1_ecmult_odd_multiples_table(int n, secp256k1_gej *prej, secp256k1_fe *zr, const secp256k1_gej *a) {
+static void secp256k1_ecmult_odd_multiples_table(int n, secp256k1_gej *prej, secp256k1_fe *zr, const secp256k1_gej *a)
+{
     secp256k1_gej d;
     secp256k1_ge a_ge, d_ge;
     int i;
@@ -1474,7 +1527,8 @@ static void secp256k1_ecmult_odd_multiples_table(int n, secp256k1_gej *prej, sec
  *  stores the X and Y coordinates as ge_storage points in pre, and stores the
  *  global Z in rz. It only operates on tables sized for WINDOW_A wnaf multiples.
  */
-static void secp256k1_ecmult_odd_multiples_table_globalz_windowa(secp256k1_ge *pre, secp256k1_fe *globalz, const secp256k1_gej *a) {
+static void secp256k1_ecmult_odd_multiples_table_globalz_windowa(secp256k1_ge *pre, secp256k1_fe *globalz, const secp256k1_gej *a)
+{
     secp256k1_gej prej[ECMULT_TABLE_SIZE(WINDOW_A)];
     secp256k1_fe zr[ECMULT_TABLE_SIZE(WINDOW_A)];
 
@@ -1510,7 +1564,8 @@ static void secp256k1_ecmult_odd_multiples_table_globalz_windowa(secp256k1_ge *p
  *  - the number of set values in wnaf is returned. This number is at most 256, and at most one more
  *    than the number of bits in the (absolute value) of the input.
  */
-static int secp256k1_ecmult_wnaf(int *wnaf, int len, const secp256k1_scalar *a, int w) {
+static int secp256k1_ecmult_wnaf(int *wnaf, int len, const secp256k1_scalar *a, int w)
+{
     secp256k1_scalar s;
     int last_set_bit = -1;
     int bit = 0;
@@ -1555,7 +1610,8 @@ static int secp256k1_ecmult_wnaf(int *wnaf, int len, const secp256k1_scalar *a, 
     return last_set_bit + 1;
 }
 
-static void secp256k1_ecmult(secp256k1_gej *r, const secp256k1_gej *a, const secp256k1_scalar *na) {
+static void secp256k1_ecmult(secp256k1_gej *r, const secp256k1_gej *a, const secp256k1_scalar *na)
+{
     secp256k1_ge pre_a[ECMULT_TABLE_SIZE(WINDOW_A)];
     secp256k1_ge tmpa;
     secp256k1_fe Z;
@@ -1642,7 +1698,8 @@ static int ecp_secp256k1_get_affine(const EC_GROUP *group,
     return 1;
 }
 
-static int ecp_secp256k1_export_point(EC_POINT *point, const secp256k1_gej *pt, const EC_GROUP *group) {
+static int ecp_secp256k1_export_point(EC_POINT *point, const secp256k1_gej *pt, const EC_GROUP *group)
+{
     if (secp256k1_gej_is_infinity(pt)) {
         EC_POINT_set_to_infinity(group, point);
         return 1;
@@ -1658,7 +1715,8 @@ static int ecp_secp256k1_export_point(EC_POINT *point, const secp256k1_gej *pt, 
     return 1;
 }
 
-static int ecp_secp256k1_import_point(secp256k1_gej *pt, const EC_GROUP *group, const EC_POINT *point) {
+static int ecp_secp256k1_import_point(secp256k1_gej *pt, const EC_GROUP *group, const EC_POINT *point)
+{
     if (EC_POINT_is_at_infinity(group, point)) {
         secp256k1_gej_set_infinity(pt);
         return 1;
@@ -1684,7 +1742,8 @@ static int ecp_secp256k1_is_affine_G(const EC_GROUP *group, const EC_POINT *gene
     return secp256k1_gej_equals_ge_var(&pt, &secp256k1_ge_const_g);
 }
 
-static void secp256k1_ecmult_gen(secp256k1_gej *r, const secp256k1_scalar *gn) {
+static void secp256k1_ecmult_gen(secp256k1_gej *r, const secp256k1_scalar *gn)
+{
     secp256k1_ge add;
     secp256k1_ge_storage adds;
     int bits;
@@ -1835,7 +1894,8 @@ static int ecp_secp256k1_field_sqr(const EC_GROUP *group, BIGNUM *r,
     return 1;
 }
 
-static int ecp_secp256k1_field_inv(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, BN_CTX *ctx) {
+static int ecp_secp256k1_field_inv(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
+{
     secp256k1_fe a_fe, r_fe;
 
     if (a == NULL || r == NULL)

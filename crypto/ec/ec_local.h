@@ -647,7 +647,8 @@ const EC_METHOD *EC_GFp_s390x_nistp521_method(void);
 #endif
 
 #if !defined(OPENSSL_NO_EC_NISTP_64_GCC_128)
-/** Returns optimized methods for secp256k1 curve.
+/**
+ * Returns optimized methods for secp256k1 curve.
  *  \return  EC_METHOD object
  */
 const EC_METHOD *EC_GFp_secp256k1_method(void);

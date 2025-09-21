@@ -2937,10 +2937,10 @@ static const ec_list_element curve_list[] = {
 # endif
     {NID_secp256k1, &_EC_SECG_PRIME_256K1.h,
 # if !defined(OPENSSL_NO_EC_NISTP_64_GCC_128)
-    EC_GFp_secp256k1_method,
+     EC_GFp_secp256k1_method,
 # else
-    0,
-#endif
+     0,
+# endif
      "SECG curve over a 256 bit prime field"},
     /* SECG secp256r1 is the same as X9.62 prime256v1 and hence omitted */
     {NID_secp384r1, &_EC_NIST_PRIME_384.h,
