@@ -76,12 +76,14 @@ typedef struct {
 } secp256k1_fe_storage;
 
 #define SECP256K1_FE_STORAGE_CONST(d7, d6, d5, d4, d3, d2, d1, d0) \
-    {{ \
-        (d0) | (((uint64_t)(d1)) << 32), \
-        (d2) | (((uint64_t)(d3)) << 32), \
-        (d4) | (((uint64_t)(d5)) << 32), \
-        (d6) | (((uint64_t)(d7)) << 32) \
-    }}
+    { \
+        { \
+            (d0) | (((uint64_t)(d1)) << 32), \
+            (d2) | (((uint64_t)(d3)) << 32), \
+            (d4) | (((uint64_t)(d5)) << 32), \
+            (d6) | (((uint64_t)(d7)) << 32) \
+        } \
+    }
 
 /* optimal for 128-bit and 256-bit exponents. */
 #define WINDOW_A 5
@@ -134,7 +136,8 @@ static ossl_inline void secp256k1_fe_mul_inner(uint64_t *r, const uint64_t *a, c
     secp256k1_u128_rshift(&d, 52);
 
     /* [d t4 t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
-    tx = (t4 >> 48); t4 &= (M >> 4);
+    tx = (t4 >> 48);
+    t4 &= (M >> 4);
 
     /* [d t4+(tx<<48) t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
 
@@ -296,7 +299,8 @@ static ossl_inline void secp256k1_fe_sqr_inner(uint64_t *r, const uint64_t *a)
     /* [r4 r3 r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
 }
 
-/** Implements arithmetic modulo FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE FFFFFC2F,
+/**
+ * Implements arithmetic modulo FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE FFFFFC2F,
  *  represented as 5 uint64_t's in base 2^52. The values are allowed to contain >52 each. In particular,
  *  each FieldElem has a 'magnitude' associated with it. Internally, a magnitude M means each element
  *  is at most M*(2^53-1), except the most significant one, which is limited to M*(2^49-1). All operations
@@ -308,7 +312,8 @@ static void secp256k1_fe_normalize_weak(secp256k1_fe *r)
     uint64_t t0 = r->n[0], t1 = r->n[1], t2 = r->n[2], t3 = r->n[3], t4 = r->n[4];
 
     /* Reduce t4 at the start so there will be at most a single carry from the first pass */
-    uint64_t x = t4 >> 48; t4 &= 0x0FFFFFFFFFFFFULL;
+    uint64_t x = t4 >> 48;
+    t4 &= 0x0FFFFFFFFFFFFULL;
 
     /* The first pass ensures the magnitude is 1, ... */
     t0 += x * 0x1000003D1ULL;
@@ -324,7 +329,11 @@ static void secp256k1_fe_normalize_weak(secp256k1_fe *r)
     t4 += (t3 >> 52);
     t3 &= 0xFFFFFFFFFFFFFULL;
 
-    r->n[0] = t0; r->n[1] = t1; r->n[2] = t2; r->n[3] = t3; r->n[4] = t4;
+    r->n[0] = t0;
+    r->n[1] = t1;
+    r->n[2] = t2;
+    r->n[3] = t3;
+    r->n[4] = t4;
 }
 
 static void secp256k1_fe_normalize(secp256k1_fe *r)
@@ -333,7 +342,8 @@ static void secp256k1_fe_normalize(secp256k1_fe *r)
 
     /* Reduce t4 at the start so there will be at most a single carry from the first pass */
     uint64_t m;
-    uint64_t x = t4 >> 48; t4 &= 0x0FFFFFFFFFFFFULL;
+    uint64_t x = t4 >> 48;
+    t4 &= 0x0FFFFFFFFFFFFULL;
 
     /* The first pass ensures the magnitude is 1, ... */
     t0 += x * 0x1000003D1ULL;
@@ -373,7 +383,11 @@ static void secp256k1_fe_normalize(secp256k1_fe *r)
     /* Mask off the possible multiple of 2^256 from the final reduction */
     t4 &= 0x0FFFFFFFFFFFFULL;
 
-    r->n[0] = t0; r->n[1] = t1; r->n[2] = t2; r->n[3] = t3; r->n[4] = t4;
+    r->n[0] = t0;
+    r->n[1] = t1;
+    r->n[2] = t2;
+    r->n[3] = t3;
+    r->n[4] = t4;
 }
 
 static void secp256k1_fe_normalize_var(secp256k1_fe *r)
@@ -382,7 +396,8 @@ static void secp256k1_fe_normalize_var(secp256k1_fe *r)
 
     /* Reduce t4 at the start so there will be at most a single carry from the first pass */
     uint64_t m;
-    uint64_t x = t4 >> 48; t4 &= 0x0FFFFFFFFFFFFULL;
+    uint64_t x = t4 >> 48;
+    t4 &= 0x0FFFFFFFFFFFFULL;
 
     /* The first pass ensures the magnitude is 1, ... */
     t0 += x * 0x1000003D1ULL;
@@ -484,10 +499,8 @@ static int secp256k1_fe_normalizes_to_zero_var(secp256k1_fe *r)
 static int secp256k1_fe_normalizes_to_zero(const secp256k1_fe *r)
 {
     uint64_t t0 = r->n[0], t1 = r->n[1], t2 = r->n[2], t3 = r->n[3], t4 = r->n[4];
-
     /* z0 tracks a possible raw value of 0, z1 tracks a possible raw value of P */
     uint64_t z0, z1;
-
     /* Reduce t4 at the start so there will be at most a single carry from the first pass */
     uint64_t x = t4 >> 48;
     t4 &= 0x0FFFFFFFFFFFFULL;
@@ -563,7 +576,8 @@ static void secp256k1_fe_mul(secp256k1_fe *r, const secp256k1_fe *a, const secp2
     secp256k1_fe_mul_inner(r->n, a->n, b->n);
 }
 
-static void secp256k1_fe_sqr(secp256k1_fe *r, const secp256k1_fe *a) {
+static void secp256k1_fe_sqr(secp256k1_fe *r, const secp256k1_fe *a)
+{
     secp256k1_fe_sqr_inner(r->n, a->n);
 }
 
@@ -609,7 +623,7 @@ static ossl_inline void secp256k1_fe_from_storage(secp256k1_fe *r, const secp256
     r->n[4] = a->n[3] >> 16;
 }
 
-static ossl_inline int ecp_secp256k1_bignum_field_elem(secp256k1_fe* out, const BIGNUM* in)
+static ossl_inline int ecp_secp256k1_bignum_field_elem(secp256k1_fe *out, const BIGNUM *in)
 {
     secp256k1_fe_storage out_st;
     if (!bn_copy_words(out_st.n, in, P256_LIMBS)) {
@@ -619,7 +633,7 @@ static ossl_inline int ecp_secp256k1_bignum_field_elem(secp256k1_fe* out, const 
     return 1;
 }
 
-static ossl_inline int ecp_secp256k1_field_elem_bignum(BIGNUM* out, const secp256k1_fe* in)
+static ossl_inline int ecp_secp256k1_field_elem_bignum(BIGNUM *out, const secp256k1_fe *in)
 {
     secp256k1_fe_storage in_st;
     secp256k1_fe in_norm = *in;
@@ -769,51 +783,6 @@ ossl_inline static unsigned int secp256k1_scalar_get_bits_var(const secp256k1_sc
     }
 }
 
-#if 0
-ossl_inline static int secp256k1_scalar_reduce(secp256k1_scalar *r, unsigned int overflow) {
-    secp256k1_uint128 t;
-
-    secp256k1_u128_from_u64(&t, r->d[0]);
-    secp256k1_u128_accum_u64(&t, overflow * SECP256K1_N_C_0);
-    r->d[0] = secp256k1_u128_to_u64(&t);
-    secp256k1_u128_rshift(&t, 64);
-    secp256k1_u128_accum_u64(&t, r->d[1]);
-    secp256k1_u128_accum_u64(&t, overflow * SECP256K1_N_C_1);
-    r->d[1] = secp256k1_u128_to_u64(&t);
-    secp256k1_u128_rshift(&t, 64);
-    secp256k1_u128_accum_u64(&t, r->d[2]);
-    secp256k1_u128_accum_u64(&t, overflow * SECP256K1_N_C_2);
-    r->d[2] = secp256k1_u128_to_u64(&t);
-    secp256k1_u128_rshift(&t, 64);
-    secp256k1_u128_accum_u64(&t, r->d[3]);
-    r->d[3] = secp256k1_u128_to_u64(&t);
-
-    return overflow;
-}
-
-static void secp256k1_scalar_cadd_bit(secp256k1_scalar *r, unsigned int bit, int flag) {
-    secp256k1_uint128 t;
-    volatile int vflag = flag;
-
-    bit += ((uint32_t) vflag - 1) & 0x100;  /* forcing (bit >> 6) > 3 makes this a noop */
-    secp256k1_u128_from_u64(&t, r->d[0]);
-    secp256k1_u128_accum_u64(&t, ((uint64_t)((bit >> 6) == 0)) << (bit & 0x3F));
-    r->d[0] = secp256k1_u128_to_u64(&t);
-    secp256k1_u128_rshift(&t, 64);
-    secp256k1_u128_accum_u64(&t, r->d[1]);
-    secp256k1_u128_accum_u64(&t, ((uint64_t)((bit >> 6) == 1)) << (bit & 0x3F));
-    r->d[1] = secp256k1_u128_to_u64(&t);
-    secp256k1_u128_rshift(&t, 64);
-    secp256k1_u128_accum_u64(&t, r->d[2]);
-    secp256k1_u128_accum_u64(&t, ((uint64_t)((bit >> 6) == 2)) << (bit & 0x3F));
-    r->d[2] = secp256k1_u128_to_u64(&t);
-    secp256k1_u128_rshift(&t, 64);
-    secp256k1_u128_accum_u64(&t, r->d[3]);
-    secp256k1_u128_accum_u64(&t, ((uint64_t)((bit >> 6) == 3)) << (bit & 0x3F));
-    r->d[3] = secp256k1_u128_to_u64(&t);
-}
-#endif
-
 ossl_inline static int secp256k1_scalar_is_zero(const secp256k1_scalar *a)
 {
     return (a->d[0] | a->d[1] | a->d[2] | a->d[3]) == 0;
@@ -841,219 +810,6 @@ static void secp256k1_scalar_negate(secp256k1_scalar *r, const secp256k1_scalar 
     r->d[3] = secp256k1_u128_to_u64(&t) & nonzero;
 }
 
-#if 0
-/* Inspired by the macros in OpenSSL's crypto/bn/asm/x86_64-gcc.c. */
-
-/** Add a*b to the number defined by (c0,c1,c2). c2 must never overflow. */
-#define muladd(a,b) { \
-    uint64_t tl, th; \
-    { \
-        secp256k1_uint128 t; \
-        secp256k1_u128_mul(&t, a, b); \
-        th = secp256k1_u128_hi_u64(&t);  /* at most 0xFFFFFFFFFFFFFFFE */ \
-        tl = secp256k1_u128_to_u64(&t); \
-    } \
-    c0 += tl;                 /* overflow is handled on the next line */ \
-    th += (c0 < tl);          /* at most 0xFFFFFFFFFFFFFFFF */ \
-    c1 += th;                 /* overflow is handled on the next line */ \
-    c2 += (c1 < th);          /* never overflows by contract (verified in the next line) */ \
-}
-
-/** Add a*b to the number defined by (c0,c1). c1 must never overflow. */
-#define muladd_fast(a,b) { \
-    uint64_t tl, th; \
-    { \
-        secp256k1_uint128 t; \
-        secp256k1_u128_mul(&t, a, b); \
-        th = secp256k1_u128_hi_u64(&t);  /* at most 0xFFFFFFFFFFFFFFFE */ \
-        tl = secp256k1_u128_to_u64(&t); \
-    } \
-    c0 += tl;                 /* overflow is handled on the next line */ \
-    th += (c0 < tl);          /* at most 0xFFFFFFFFFFFFFFFF */ \
-    c1 += th;                 /* never overflows by contract (verified in the next line) */ \
-}
-
-/** Add a to the number defined by (c0,c1,c2). c2 must never overflow. */
-#define sumadd(a) { \
-    unsigned int over; \
-    c0 += (a);                  /* overflow is handled on the next line */ \
-    over = (c0 < (a));         \
-    c1 += over;                 /* overflow is handled on the next line */ \
-    c2 += (c1 < over);          /* never overflows by contract */ \
-}
-
-/** Add a to the number defined by (c0,c1). c1 must never overflow, c2 must be zero. */
-#define sumadd_fast(a) { \
-    c0 += (a);                 /* overflow is handled on the next line */ \
-    c1 += (c0 < (a));          /* never overflows by contract (verified the next line) */ \
-}
-
-/** Extract the lowest 64 bits of (c0,c1,c2) into n, and left shift the number 64 bits. */
-#define extract(n) { \
-    (n) = c0; \
-    c0 = c1; \
-    c1 = c2; \
-    c2 = 0; \
-}
-
-/** Extract the lowest 64 bits of (c0,c1,c2) into n, and left shift the number 64 bits. c2 is required to be zero. */
-#define extract_fast(n) { \
-    (n) = c0; \
-    c0 = c1; \
-    c1 = 0; \
-}
-
-static void secp256k1_scalar_reduce_512(secp256k1_scalar *r, const uint64_t *l) {
-    secp256k1_uint128 c128;
-    uint64_t c, c0, c1, c2;
-    uint64_t n0 = l[4], n1 = l[5], n2 = l[6], n3 = l[7];
-    uint64_t m0, m1, m2, m3, m4, m5;
-    uint32_t m6;
-    uint64_t p0, p1, p2, p3;
-    uint32_t p4;
-
-    /* Reduce 512 bits into 385. */
-    /* m[0..6] = l[0..3] + n[0..3] * SECP256K1_N_C. */
-    c0 = l[0]; c1 = 0; c2 = 0;
-    muladd_fast(n0, SECP256K1_N_C_0);
-    extract_fast(m0);
-    sumadd_fast(l[1]);
-    muladd(n1, SECP256K1_N_C_0);
-    muladd(n0, SECP256K1_N_C_1);
-    extract(m1);
-    sumadd(l[2]);
-    muladd(n2, SECP256K1_N_C_0);
-    muladd(n1, SECP256K1_N_C_1);
-    sumadd(n0);
-    extract(m2);
-    sumadd(l[3]);
-    muladd(n3, SECP256K1_N_C_0);
-    muladd(n2, SECP256K1_N_C_1);
-    sumadd(n1);
-    extract(m3);
-    muladd(n3, SECP256K1_N_C_1);
-    sumadd(n2);
-    extract(m4);
-    sumadd_fast(n3);
-    extract_fast(m5);
-    m6 = c0;
-
-    /* Reduce 385 bits into 258. */
-    /* p[0..4] = m[0..3] + m[4..6] * SECP256K1_N_C. */
-    c0 = m0; c1 = 0; c2 = 0;
-    muladd_fast(m4, SECP256K1_N_C_0);
-    extract_fast(p0);
-    sumadd_fast(m1);
-    muladd(m5, SECP256K1_N_C_0);
-    muladd(m4, SECP256K1_N_C_1);
-    extract(p1);
-    sumadd(m2);
-    muladd(m6, SECP256K1_N_C_0);
-    muladd(m5, SECP256K1_N_C_1);
-    sumadd(m4);
-    extract(p2);
-    sumadd_fast(m3);
-    muladd_fast(m6, SECP256K1_N_C_1);
-    sumadd_fast(m5);
-    extract_fast(p3);
-    p4 = c0 + m6;
-
-    /* Reduce 258 bits into 256. */
-    /* r[0..3] = p[0..3] + p[4] * SECP256K1_N_C. */
-    secp256k1_u128_from_u64(&c128, p0);
-    secp256k1_u128_accum_mul(&c128, SECP256K1_N_C_0, p4);
-    r->d[0] = secp256k1_u128_to_u64(&c128);
-    secp256k1_u128_rshift(&c128, 64);
-    secp256k1_u128_accum_u64(&c128, p1);
-    secp256k1_u128_accum_mul(&c128, SECP256K1_N_C_1, p4);
-    r->d[1] = secp256k1_u128_to_u64(&c128);
-    secp256k1_u128_rshift(&c128, 64);
-    secp256k1_u128_accum_u64(&c128, p2);
-    secp256k1_u128_accum_u64(&c128, p4);
-    r->d[2] = secp256k1_u128_to_u64(&c128);
-    secp256k1_u128_rshift(&c128, 64);
-    secp256k1_u128_accum_u64(&c128, p3);
-    r->d[3] = secp256k1_u128_to_u64(&c128);
-    c = secp256k1_u128_hi_u64(&c128);
-
-    /* Final reduction of r. */
-    secp256k1_scalar_reduce(r, c + secp256k1_scalar_check_overflow(r));
-}
-
-static void secp256k1_scalar_mul_512(uint64_t *l8, const secp256k1_scalar *a, const secp256k1_scalar *b) {
-    /* 160 bit accumulator. */
-    uint64_t c0 = 0, c1 = 0;
-    uint32_t c2 = 0;
-
-    /* l8[0..7] = a[0..3] * b[0..3]. */
-    muladd_fast(a->d[0], b->d[0]);
-    extract_fast(l8[0]);
-    muladd(a->d[0], b->d[1]);
-    muladd(a->d[1], b->d[0]);
-    extract(l8[1]);
-    muladd(a->d[0], b->d[2]);
-    muladd(a->d[1], b->d[1]);
-    muladd(a->d[2], b->d[0]);
-    extract(l8[2]);
-    muladd(a->d[0], b->d[3]);
-    muladd(a->d[1], b->d[2]);
-    muladd(a->d[2], b->d[1]);
-    muladd(a->d[3], b->d[0]);
-    extract(l8[3]);
-    muladd(a->d[1], b->d[3]);
-    muladd(a->d[2], b->d[2]);
-    muladd(a->d[3], b->d[1]);
-    extract(l8[4]);
-    muladd(a->d[2], b->d[3]);
-    muladd(a->d[3], b->d[2]);
-    extract(l8[5]);
-    muladd_fast(a->d[3], b->d[3]);
-    extract_fast(l8[6]);
-    l8[7] = c0;
-}
-
-#undef sumadd
-#undef sumadd_fast
-#undef muladd
-#undef muladd_fast
-#undef muladd2
-#undef extract
-#undef extract_fast
-
-static void secp256k1_scalar_mul(secp256k1_scalar *r, const secp256k1_scalar *a, const secp256k1_scalar *b) {
-    uint64_t l[8];
-    secp256k1_scalar_mul_512(l, a, b);
-    secp256k1_scalar_reduce_512(r, l);
-}
-static int secp256k1_scalar_shr_int(secp256k1_scalar *r, int n) {
-    int ret;
-
-    ret = r->d[0] & ((1 << n) - 1);
-    r->d[0] = (r->d[0] >> n) + (r->d[1] << (64 - n));
-    r->d[1] = (r->d[1] >> n) + (r->d[2] << (64 - n));
-    r->d[2] = (r->d[2] >> n) + (r->d[3] << (64 - n));
-    r->d[3] = (r->d[3] >> n);
-    return ret;
-}
-
-
-ossl_inline static void secp256k1_scalar_mul_shift_var(secp256k1_scalar *r, const secp256k1_scalar *a, const secp256k1_scalar *b, unsigned int shift) {
-    uint64_t l[8];
-    unsigned int shiftlimbs;
-    unsigned int shiftlow;
-    unsigned int shifthigh;
-
-    secp256k1_scalar_mul_512(l, a, b);
-    shiftlimbs = shift >> 6;
-    shiftlow = shift & 0x3F;
-    shifthigh = 64 - shiftlow;
-    r->d[0] = shift < 512 ? (l[0 + shiftlimbs] >> shiftlow | (shift < 448 && shiftlow ? (l[1 + shiftlimbs] << shifthigh) : 0)) : 0;
-    r->d[1] = shift < 448 ? (l[1 + shiftlimbs] >> shiftlow | (shift < 384 && shiftlow ? (l[2 + shiftlimbs] << shifthigh) : 0)) : 0;
-    r->d[2] = shift < 384 ? (l[2 + shiftlimbs] >> shiftlow | (shift < 320 && shiftlow ? (l[3 + shiftlimbs] << shifthigh) : 0)) : 0;
-    r->d[3] = shift < 320 ? (l[3 + shiftlimbs] >> shiftlow) : 0;
-    secp256k1_scalar_cadd_bit(r, 0, (l[(shift - 1) >> 6] >> ((shift - 1) & 0x3f)) & 1);
-}
-#endif
 static void secp256k1_scalar_from_signed62(secp256k1_scalar *r, const secp256k1_modinv64_signed62 *a)
 {
     const uint64_t a0 = a->v[0], a1 = a->v[1], a2 = a->v[2], a3 = a->v[3], a4 = a->v[4];
@@ -1115,7 +871,8 @@ typedef struct {
 
 #include "ecp_secp256k1_table.h"
 
-/** Generator for secp256k1, value 'g' defined in
+/**
+ * Generator for secp256k1, value 'g' defined in
  *  "Standards for Efficient Cryptography" (SEC2) 2.7.1.
  */
 static const secp256k1_ge secp256k1_ge_const_g = SECP256K1_GE_CONST(
@@ -1135,17 +892,7 @@ static void secp256k1_ge_set_gej_zinv(secp256k1_ge *r, const secp256k1_gej *a, c
     secp256k1_fe_mul(&r->y, &a->y, &zi3);
     r->infinity = a->infinity;
 }
-#if 0
-static void secp256k1_ge_set_xy(secp256k1_ge *r, const secp256k1_fe *x, const secp256k1_fe *y) {
-    r->infinity = 0;
-    r->x = *x;
-    r->y = *y;
-}
 
-static int secp256k1_ge_is_infinity(const secp256k1_ge *a) {
-    return a->infinity;
-}
-#endif
 static void secp256k1_ge_neg(secp256k1_ge *r, const secp256k1_ge *a)
 {
     *r = *a;
@@ -1224,7 +971,8 @@ static ossl_inline void secp256k1_gej_double(secp256k1_gej *r, const secp256k1_g
 
     r->infinity = a->infinity;
 
-    /* Formula used:
+    /*
+     * Formula used:
      * L = (3/2) * X1^2
      * S = Y1^2
      * T = -X1*S
@@ -1253,7 +1001,8 @@ static ossl_inline void secp256k1_gej_double(secp256k1_gej *r, const secp256k1_g
 static void secp256k1_gej_double_var(secp256k1_gej *r, const secp256k1_gej *a, secp256k1_fe *rzr)
 {
 
-    /** For secp256k1, 2Q is infinity if and only if Q is infinity. This is because if 2Q = infinity,
+    /**
+     * For secp256k1, 2Q is infinity if and only if Q is infinity. This is because if 2Q = infinity,
      *  Q must equal -Q, or that Q.y == -(Q.y), or Q.y is 0. For a point on y^2 = x^3 + 7 to have
      *  y=0, x^3 must be -7 mod p. However, -7 has no cube root mod p.
      *
@@ -1362,7 +1111,8 @@ static int secp256k1_gej_is_valid_var(const secp256k1_gej *a)
     if (a->infinity) {
         return 1;
     }
-    /** y^2 = x^3 + 7
+    /**
+     * y^2 = x^3 + 7
      *  (Y/Z^3)^2 = (X/Z^2)^3 + 7
      *  Y^2 / Z^6 = X^3 / Z^6 + 7
      *  Y^2 = X^3 + 7*Z^6
