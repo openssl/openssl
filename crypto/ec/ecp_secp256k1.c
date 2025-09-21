@@ -56,15 +56,18 @@ typedef struct {
 
 /* Unpacks a constant into a overlapping multi-limbed FE element. */
 #define SECP256K1_FE_CONST_INNER(d7, d6, d5, d4, d3, d2, d1, d0) \
-{ \
-    (d0) | (((uint64_t)(d1) & 0xFFFFFUL) << 32), \
-    ((uint64_t)(d1) >> 20) | (((uint64_t)(d2)) << 12) | (((uint64_t)(d3) & 0xFFUL) << 44), \
-    ((uint64_t)(d3) >> 8) | (((uint64_t)(d4) & 0xFFFFFFFUL) << 24), \
-    ((uint64_t)(d4) >> 28) | (((uint64_t)(d5)) << 4) | (((uint64_t)(d6) & 0xFFFFUL) << 36), \
-    ((uint64_t)(d6) >> 16) | (((uint64_t)(d7)) << 16) \
-}
+    { \
+        (d0) | (((uint64_t)(d1) & 0xFFFFFUL) << 32), \
+        ((uint64_t)(d1) >> 20) | (((uint64_t)(d2)) << 12) | (((uint64_t)(d3) & 0xFFUL) << 44), \
+        ((uint64_t)(d3) >> 8) | (((uint64_t)(d4) & 0xFFFFFFFUL) << 24), \
+        ((uint64_t)(d4) >> 28) | (((uint64_t)(d5)) << 4) | (((uint64_t)(d6) & 0xFFFFUL) << 36), \
+        ((uint64_t)(d6) >> 16) | (((uint64_t)(d7)) << 16) \
+    }
 
-#define SECP256K1_FE_CONST(d7, d6, d5, d4, d3, d2, d1, d0) {SECP256K1_FE_CONST_INNER((d7), (d6), (d5), (d4), (d3), (d2), (d1), (d0))}
+#define SECP256K1_FE_CONST(d7, d6, d5, d4, d3, d2, d1, d0) \
+    { \
+        SECP256K1_FE_CONST_INNER((d7), (d6), (d5), (d4), (d3), (d2), (d1), (d0)) \
+    }
 
 static const secp256k1_fe secp256k1_fe_one = SECP256K1_FE_CONST(0, 0, 0, 0, 0, 0, 0, 1);
 
@@ -73,12 +76,12 @@ typedef struct {
 } secp256k1_fe_storage;
 
 #define SECP256K1_FE_STORAGE_CONST(d7, d6, d5, d4, d3, d2, d1, d0) \
-{{ \
-    (d0) | (((uint64_t)(d1)) << 32), \
-    (d2) | (((uint64_t)(d3)) << 32), \
-    (d4) | (((uint64_t)(d5)) << 32), \
-    (d6) | (((uint64_t)(d7)) << 32) \
-}}
+    {{ \
+        (d0) | (((uint64_t)(d1)) << 32), \
+        (d2) | (((uint64_t)(d3)) << 32), \
+        (d4) | (((uint64_t)(d5)) << 32), \
+        (d6) | (((uint64_t)(d7)) << 32) \
+    }}
 
 /* optimal for 128-bit and 256-bit exponents. */
 #define WINDOW_A 5
@@ -92,7 +95,8 @@ static ossl_inline void secp256k1_fe_mul_inner(uint64_t *r, const uint64_t *a, c
     uint64_t a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3], a4 = a[4];
     const uint64_t M = 0xFFFFFFFFFFFFFULL, R = 0x1000003D10ULL;
 
-    /*  [... a b c] is a shorthand for ... + a<<104 + b<<52 + c<<0 mod n.
+    /*
+     *  [... a b c] is a shorthand for ... + a<<104 + b<<52 + c<<0 mod n.
      *  for 0 <= x <= 4, px is a shorthand for sum(a[i]*b[x-i], i=0..x).
      *  for 4 <= x <= 8, px is a shorthand for sum(a[i]*b[x-i], i=(x-4)..4)
      *  Note that [x 0 0 0 0 0] = [x*R].
@@ -107,10 +111,12 @@ static ossl_inline void secp256k1_fe_mul_inner(uint64_t *r, const uint64_t *a, c
     secp256k1_u128_mul(&c, a4, b[4]);
 
     /* [c 0 0 0 0 d 0 0 0] = [p8 0 0 0 0 p3 0 0 0] */
-    secp256k1_u128_accum_mul(&d, R, secp256k1_u128_to_u64(&c)); secp256k1_u128_rshift(&c, 64);
+    secp256k1_u128_accum_mul(&d, R, secp256k1_u128_to_u64(&c));
+    secp256k1_u128_rshift(&c, 64);
 
     /* [(c<<12) 0 0 0 0 0 d 0 0 0] = [p8 0 0 0 0 p3 0 0 0] */
-    t3 = secp256k1_u128_to_u64(&d) & M; secp256k1_u128_rshift(&d, 52);
+    t3 = secp256k1_u128_to_u64(&d) & M;
+    secp256k1_u128_rshift(&d, 52);
 
     /* [(c<<12) 0 0 0 0 d t3 0 0 0] = [p8 0 0 0 0 p3 0 0 0] */
 
@@ -124,7 +130,8 @@ static ossl_inline void secp256k1_fe_mul_inner(uint64_t *r, const uint64_t *a, c
     secp256k1_u128_accum_mul(&d, R << 12, secp256k1_u128_to_u64(&c));
 
     /* [d t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
-    t4 = secp256k1_u128_to_u64(&d) & M; secp256k1_u128_rshift(&d, 52);
+    t4 = secp256k1_u128_to_u64(&d) & M;
+    secp256k1_u128_rshift(&d, 52);
 
     /* [d t4 t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
     tx = (t4 >> 48); t4 &= (M >> 4);
@@ -140,7 +147,8 @@ static ossl_inline void secp256k1_fe_mul_inner(uint64_t *r, const uint64_t *a, c
     secp256k1_u128_accum_mul(&d, a4, b[1]);
 
     /* [d t4+(tx<<48) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
-    u0 = secp256k1_u128_to_u64(&d) & M; secp256k1_u128_rshift(&d, 52);
+    u0 = secp256k1_u128_to_u64(&d) & M;
+    secp256k1_u128_rshift(&d, 52);
 
     /* [d u0 t4+(tx<<48) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
     /* [d 0 t4+(tx<<48)+(u0<<52) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
@@ -150,7 +158,8 @@ static ossl_inline void secp256k1_fe_mul_inner(uint64_t *r, const uint64_t *a, c
     secp256k1_u128_accum_mul(&c, u0, R >> 4);
 
     /* [d 0 t4 t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
-    r[0] = secp256k1_u128_to_u64(&c) & M; secp256k1_u128_rshift(&c, 52);
+    r[0] = secp256k1_u128_to_u64(&c) & M;
+    secp256k1_u128_rshift(&c, 52);
 
     /* [d 0 t4 t3 0 c r0] = [p8 0 0 p5 p4 p3 0 0 p0] */
 
@@ -163,10 +172,12 @@ static ossl_inline void secp256k1_fe_mul_inner(uint64_t *r, const uint64_t *a, c
     secp256k1_u128_accum_mul(&d, a4, b[2]);
 
     /* [d 0 t4 t3 0 c r0] = [p8 0 p6 p5 p4 p3 0 p1 p0] */
-    secp256k1_u128_accum_mul(&c, secp256k1_u128_to_u64(&d) & M, R); secp256k1_u128_rshift(&d, 52);
+    secp256k1_u128_accum_mul(&c, secp256k1_u128_to_u64(&d) & M, R);
+    secp256k1_u128_rshift(&d, 52);
 
     /* [d 0 0 t4 t3 0 c r0] = [p8 0 p6 p5 p4 p3 0 p1 p0] */
-    r[1] = secp256k1_u128_to_u64(&c) & M; secp256k1_u128_rshift(&c, 52);
+    r[1] = secp256k1_u128_to_u64(&c) & M;
+    secp256k1_u128_rshift(&c, 52);
 
     /* [d 0 0 t4 t3 c r1 r0] = [p8 0 p6 p5 p4 p3 0 p1 p0] */
 
@@ -179,15 +190,18 @@ static ossl_inline void secp256k1_fe_mul_inner(uint64_t *r, const uint64_t *a, c
     secp256k1_u128_accum_mul(&d, a4, b[3]);
 
     /* [d 0 0 t4 t3 c t1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
-    secp256k1_u128_accum_mul(&c, R, secp256k1_u128_to_u64(&d)); secp256k1_u128_rshift(&d, 64);
+    secp256k1_u128_accum_mul(&c, R, secp256k1_u128_to_u64(&d));
+    secp256k1_u128_rshift(&d, 64);
     /* [(d<<12) 0 0 0 t4 t3 c r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
 
-    r[2] = secp256k1_u128_to_u64(&c) & M; secp256k1_u128_rshift(&c, 52);
+    r[2] = secp256k1_u128_to_u64(&c) & M;
+    secp256k1_u128_rshift(&c, 52);
     /* [(d<<12) 0 0 0 t4 t3+c r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
     secp256k1_u128_accum_mul(&c, R << 12, secp256k1_u128_to_u64(&d));
     secp256k1_u128_accum_u64(&c, t3);
     /* [t4 c r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
-    r[3] = secp256k1_u128_to_u64(&c) & M; secp256k1_u128_rshift(&c, 52);
+    r[3] = secp256k1_u128_to_u64(&c) & M;
+    secp256k1_u128_rshift(&c, 52);
     /* [t4+c r3 r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
     r[4] = secp256k1_u128_to_u64(&c) + t4;
     /* [r4 r3 r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
@@ -205,24 +219,27 @@ static ossl_inline void secp256k1_fe_sqr_inner(uint64_t *r, const uint64_t *a)
      *  Note that [x 0 0 0 0 0] = [x*R].
      */
 
-    secp256k1_u128_mul(&d, a0*2, a3);
-    secp256k1_u128_accum_mul(&d, a1*2, a2);
+    secp256k1_u128_mul(&d, a0 * 2, a3);
+    secp256k1_u128_accum_mul(&d, a1 * 2, a2);
     /* [d 0 0 0] = [p3 0 0 0] */
     secp256k1_u128_mul(&c, a4, a4);
     /* [c 0 0 0 0 d 0 0 0] = [p8 0 0 0 0 p3 0 0 0] */
-    secp256k1_u128_accum_mul(&d, R, secp256k1_u128_to_u64(&c)); secp256k1_u128_rshift(&c, 64);
+    secp256k1_u128_accum_mul(&d, R, secp256k1_u128_to_u64(&c));
+    secp256k1_u128_rshift(&c, 64);
     /* [(c<<12) 0 0 0 0 0 d 0 0 0] = [p8 0 0 0 0 p3 0 0 0] */
-    t3 = secp256k1_u128_to_u64(&d) & M; secp256k1_u128_rshift(&d, 52);
+    t3 = secp256k1_u128_to_u64(&d) & M;
+    secp256k1_u128_rshift(&d, 52);
     /* [(c<<12) 0 0 0 0 d t3 0 0 0] = [p8 0 0 0 0 p3 0 0 0] */
 
     a4 *= 2;
     secp256k1_u128_accum_mul(&d, a0, a4);
-    secp256k1_u128_accum_mul(&d, a1*2, a3);
+    secp256k1_u128_accum_mul(&d, a1 * 2, a3);
     secp256k1_u128_accum_mul(&d, a2, a2);
     /* [(c<<12) 0 0 0 0 d t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
     secp256k1_u128_accum_mul(&d, R << 12, secp256k1_u128_to_u64(&c));
     /* [d t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
-    t4 = secp256k1_u128_to_u64(&d) & M; secp256k1_u128_rshift(&d, 52);
+    t4 = secp256k1_u128_to_u64(&d) & M;
+    secp256k1_u128_rshift(&d, 52);
     /* [d t4 t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
     tx = (t4 >> 48); t4 &= (M >> 4);
     /* [d t4+(tx<<48) t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
@@ -230,16 +247,18 @@ static ossl_inline void secp256k1_fe_sqr_inner(uint64_t *r, const uint64_t *a)
     secp256k1_u128_mul(&c, a0, a0);
     /* [d t4+(tx<<48) t3 0 0 c] = [p8 0 0 0 p4 p3 0 0 p0] */
     secp256k1_u128_accum_mul(&d, a1, a4);
-    secp256k1_u128_accum_mul(&d, a2*2, a3);
+    secp256k1_u128_accum_mul(&d, a2 * 2, a3);
     /* [d t4+(tx<<48) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
-    u0 = secp256k1_u128_to_u64(&d) & M; secp256k1_u128_rshift(&d, 52);
+    u0 = secp256k1_u128_to_u64(&d) & M;
+    secp256k1_u128_rshift(&d, 52);
     /* [d u0 t4+(tx<<48) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
     /* [d 0 t4+(tx<<48)+(u0<<52) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
     u0 = (u0 << 4) | tx;
     /* [d 0 t4+(u0<<48) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
     secp256k1_u128_accum_mul(&c, u0, R >> 4);
     /* [d 0 t4 t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
-    r[0] = secp256k1_u128_to_u64(&c) & M; secp256k1_u128_rshift(&c, 52);
+    r[0] = secp256k1_u128_to_u64(&c) & M;
+    secp256k1_u128_rshift(&c, 52);
     /* [d 0 t4 t3 0 c r0] = [p8 0 0 p5 p4 p3 0 0 p0] */
 
     a0 *= 2;
@@ -248,9 +267,11 @@ static ossl_inline void secp256k1_fe_sqr_inner(uint64_t *r, const uint64_t *a)
     secp256k1_u128_accum_mul(&d, a2, a4);
     secp256k1_u128_accum_mul(&d, a3, a3);
     /* [d 0 t4 t3 0 c r0] = [p8 0 p6 p5 p4 p3 0 p1 p0] */
-    secp256k1_u128_accum_mul(&c, secp256k1_u128_to_u64(&d) & M, R); secp256k1_u128_rshift(&d, 52);
+    secp256k1_u128_accum_mul(&c, secp256k1_u128_to_u64(&d) & M, R);
+    secp256k1_u128_rshift(&d, 52);
     /* [d 0 0 t4 t3 0 c r0] = [p8 0 p6 p5 p4 p3 0 p1 p0] */
-    r[1] = secp256k1_u128_to_u64(&c) & M; secp256k1_u128_rshift(&c, 52);
+    r[1] = secp256k1_u128_to_u64(&c) & M;
+    secp256k1_u128_rshift(&c, 52);
     /* [d 0 0 t4 t3 c r1 r0] = [p8 0 p6 p5 p4 p3 0 p1 p0] */
 
     secp256k1_u128_accum_mul(&c, a0, a2);
@@ -258,15 +279,18 @@ static ossl_inline void secp256k1_fe_sqr_inner(uint64_t *r, const uint64_t *a)
     /* [d 0 0 t4 t3 c r1 r0] = [p8 0 p6 p5 p4 p3 p2 p1 p0] */
     secp256k1_u128_accum_mul(&d, a3, a4);
     /* [d 0 0 t4 t3 c r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
-    secp256k1_u128_accum_mul(&c, R, secp256k1_u128_to_u64(&d)); secp256k1_u128_rshift(&d, 64);
+    secp256k1_u128_accum_mul(&c, R, secp256k1_u128_to_u64(&d));
+    secp256k1_u128_rshift(&d, 64);
     /* [(d<<12) 0 0 0 t4 t3 c r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
-    r[2] = secp256k1_u128_to_u64(&c) & M; secp256k1_u128_rshift(&c, 52);
+    r[2] = secp256k1_u128_to_u64(&c) & M;
+    secp256k1_u128_rshift(&c, 52);
     /* [(d<<12) 0 0 0 t4 t3+c r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
 
     secp256k1_u128_accum_mul(&c, R << 12, secp256k1_u128_to_u64(&d));
     secp256k1_u128_accum_u64(&c, t3);
     /* [t4 c r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
-    r[3] = secp256k1_u128_to_u64(&c) & M; secp256k1_u128_rshift(&c, 52);
+    r[3] = secp256k1_u128_to_u64(&c) & M;
+    secp256k1_u128_rshift(&c, 52);
     /* [t4+c r3 r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
     r[4] = secp256k1_u128_to_u64(&c) + t4;
     /* [r4 r3 r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
@@ -288,10 +312,17 @@ static void secp256k1_fe_normalize_weak(secp256k1_fe *r)
 
     /* The first pass ensures the magnitude is 1, ... */
     t0 += x * 0x1000003D1ULL;
-    t1 += (t0 >> 52); t0 &= 0xFFFFFFFFFFFFFULL;
-    t2 += (t1 >> 52); t1 &= 0xFFFFFFFFFFFFFULL;
-    t3 += (t2 >> 52); t2 &= 0xFFFFFFFFFFFFFULL;
-    t4 += (t3 >> 52); t3 &= 0xFFFFFFFFFFFFFULL;
+    t1 += (t0 >> 52);
+    t0 &= 0xFFFFFFFFFFFFFULL;
+
+    t2 += (t1 >> 52);
+    t1 &= 0xFFFFFFFFFFFFFULL;
+
+    t3 += (t2 >> 52);
+    t2 &= 0xFFFFFFFFFFFFFULL;
+
+    t4 += (t3 >> 52);
+    t3 &= 0xFFFFFFFFFFFFFULL;
 
     r->n[0] = t0; r->n[1] = t1; r->n[2] = t2; r->n[3] = t3; r->n[4] = t4;
 }
@@ -306,10 +337,20 @@ static void secp256k1_fe_normalize(secp256k1_fe *r)
 
     /* The first pass ensures the magnitude is 1, ... */
     t0 += x * 0x1000003D1ULL;
-    t1 += (t0 >> 52); t0 &= 0xFFFFFFFFFFFFFULL;
-    t2 += (t1 >> 52); t1 &= 0xFFFFFFFFFFFFFULL; m = t1;
-    t3 += (t2 >> 52); t2 &= 0xFFFFFFFFFFFFFULL; m &= t2;
-    t4 += (t3 >> 52); t3 &= 0xFFFFFFFFFFFFFULL; m &= t3;
+    t1 += (t0 >> 52);
+    t0 &= 0xFFFFFFFFFFFFFULL;
+
+    t2 += (t1 >> 52);
+    t1 &= 0xFFFFFFFFFFFFFULL;
+    m = t1;
+
+    t3 += (t2 >> 52);
+    t2 &= 0xFFFFFFFFFFFFFULL;
+    m &= t2;
+
+    t4 += (t3 >> 52);
+    t3 &= 0xFFFFFFFFFFFFFULL;
+    m &= t3;
 
     /* At most a single final reduction is needed; check if the value is >= the field characteristic */
     x = (t4 >> 48) | ((t4 == 0x0FFFFFFFFFFFFULL) & (m == 0xFFFFFFFFFFFFFULL)
@@ -317,10 +358,17 @@ static void secp256k1_fe_normalize(secp256k1_fe *r)
 
     /* Apply the final reduction (for constant-time behaviour, we do it always) */
     t0 += x * 0x1000003D1ULL;
-    t1 += (t0 >> 52); t0 &= 0xFFFFFFFFFFFFFULL;
-    t2 += (t1 >> 52); t1 &= 0xFFFFFFFFFFFFFULL;
-    t3 += (t2 >> 52); t2 &= 0xFFFFFFFFFFFFFULL;
-    t4 += (t3 >> 52); t3 &= 0xFFFFFFFFFFFFFULL;
+    t1 += (t0 >> 52);
+    t0 &= 0xFFFFFFFFFFFFFULL;
+
+    t2 += (t1 >> 52);
+    t1 &= 0xFFFFFFFFFFFFFULL;
+
+    t3 += (t2 >> 52);
+    t2 &= 0xFFFFFFFFFFFFFULL;
+
+    t4 += (t3 >> 52);
+    t3 &= 0xFFFFFFFFFFFFFULL;
 
     /* Mask off the possible multiple of 2^256 from the final reduction */
     t4 &= 0x0FFFFFFFFFFFFULL;
@@ -338,10 +386,20 @@ static void secp256k1_fe_normalize_var(secp256k1_fe *r)
 
     /* The first pass ensures the magnitude is 1, ... */
     t0 += x * 0x1000003D1ULL;
-    t1 += (t0 >> 52); t0 &= 0xFFFFFFFFFFFFFULL;
-    t2 += (t1 >> 52); t1 &= 0xFFFFFFFFFFFFFULL; m = t1;
-    t3 += (t2 >> 52); t2 &= 0xFFFFFFFFFFFFFULL; m &= t2;
-    t4 += (t3 >> 52); t3 &= 0xFFFFFFFFFFFFFULL; m &= t3;
+    t1 += (t0 >> 52);
+    t0 &= 0xFFFFFFFFFFFFFULL;
+
+    t2 += (t1 >> 52);
+    t1 &= 0xFFFFFFFFFFFFFULL;
+    m = t1;
+
+    t3 += (t2 >> 52);
+    t2 &= 0xFFFFFFFFFFFFFULL;
+    m &= t2;
+
+    t4 += (t3 >> 52);
+    t3 &= 0xFFFFFFFFFFFFFULL;
+    m &= t3;
 
     /* At most a single final reduction is needed; check if the value is >= the field characteristic */
     x = (t4 >> 48) | ((t4 == 0x0FFFFFFFFFFFFULL) & (m == 0xFFFFFFFFFFFFFULL)
@@ -349,16 +407,27 @@ static void secp256k1_fe_normalize_var(secp256k1_fe *r)
 
     if (x) {
         t0 += 0x1000003D1ULL;
-        t1 += (t0 >> 52); t0 &= 0xFFFFFFFFFFFFFULL;
-        t2 += (t1 >> 52); t1 &= 0xFFFFFFFFFFFFFULL;
-        t3 += (t2 >> 52); t2 &= 0xFFFFFFFFFFFFFULL;
-        t4 += (t3 >> 52); t3 &= 0xFFFFFFFFFFFFFULL;
+        t1 += (t0 >> 52);
+        t0 &= 0xFFFFFFFFFFFFFULL;
+
+        t2 += (t1 >> 52);
+        t1 &= 0xFFFFFFFFFFFFFULL;
+
+        t3 += (t2 >> 52);
+        t2 &= 0xFFFFFFFFFFFFFULL;
+
+        t4 += (t3 >> 52);
+        t3 &= 0xFFFFFFFFFFFFFULL;
 
         /* Mask off the possible multiple of 2^256 from the final reduction */
         t4 &= 0x0FFFFFFFFFFFFULL;
     }
 
-    r->n[0] = t0; r->n[1] = t1; r->n[2] = t2; r->n[3] = t3; r->n[4] = t4;
+    r->n[0] = t0;
+    r->n[1] = t1;
+    r->n[2] = t2;
+    r->n[3] = t3;
+    r->n[4] = t4;
 }
 
 static int secp256k1_fe_normalizes_to_zero_var(secp256k1_fe *r)
@@ -392,10 +461,22 @@ static int secp256k1_fe_normalizes_to_zero_var(secp256k1_fe *r)
     t4 &= 0x0FFFFFFFFFFFFULL;
 
     t1 += (t0 >> 52);
-    t2 += (t1 >> 52); t1 &= 0xFFFFFFFFFFFFFULL; z0 |= t1; z1 &= t1;
-    t3 += (t2 >> 52); t2 &= 0xFFFFFFFFFFFFFULL; z0 |= t2; z1 &= t2;
-    t4 += (t3 >> 52); t3 &= 0xFFFFFFFFFFFFFULL; z0 |= t3; z1 &= t3;
-                                                z0 |= t4; z1 &= t4 ^ 0xF000000000000ULL;
+    t2 += (t1 >> 52);
+    t1 &= 0xFFFFFFFFFFFFFULL;
+    z0 |= t1;
+    z1 &= t1;
+
+    t3 += (t2 >> 52);
+    t2 &= 0xFFFFFFFFFFFFFULL;
+    z0 |= t2;
+    z1 &= t2;
+
+    t4 += (t3 >> 52);
+    t3 &= 0xFFFFFFFFFFFFFULL;
+    z0 |= t3;
+    z1 &= t3;
+    z0 |= t4;
+    z1 &= t4 ^ 0xF000000000000ULL;
 
     return (z0 == 0) | (z1 == 0xFFFFFFFFFFFFFULL);
 }
@@ -408,15 +489,32 @@ static int secp256k1_fe_normalizes_to_zero(const secp256k1_fe *r)
     uint64_t z0, z1;
 
     /* Reduce t4 at the start so there will be at most a single carry from the first pass */
-    uint64_t x = t4 >> 48; t4 &= 0x0FFFFFFFFFFFFULL;
+    uint64_t x = t4 >> 48;
+    t4 &= 0x0FFFFFFFFFFFFULL;
 
     /* The first pass ensures the magnitude is 1, ... */
     t0 += x * 0x1000003D1ULL;
-    t1 += (t0 >> 52); t0 &= 0xFFFFFFFFFFFFFULL; z0  = t0; z1  = t0 ^ 0x1000003D0ULL;
-    t2 += (t1 >> 52); t1 &= 0xFFFFFFFFFFFFFULL; z0 |= t1; z1 &= t1;
-    t3 += (t2 >> 52); t2 &= 0xFFFFFFFFFFFFFULL; z0 |= t2; z1 &= t2;
-    t4 += (t3 >> 52); t3 &= 0xFFFFFFFFFFFFFULL; z0 |= t3; z1 &= t3;
-                                                z0 |= t4; z1 &= t4 ^ 0xF000000000000ULL;
+    t1 += (t0 >> 52);
+    t0 &= 0xFFFFFFFFFFFFFULL;
+    z0  = t0;
+    z1  = t0 ^ 0x1000003D0ULL;
+
+    t2 += (t1 >> 52);
+    t1 &= 0xFFFFFFFFFFFFFULL;
+    z0 |= t1;
+    z1 &= t1;
+
+    t3 += (t2 >> 52);
+    t2 &= 0xFFFFFFFFFFFFFULL;
+    z0 |= t2;
+    z1 &= t2;
+
+    t4 += (t3 >> 52);
+    t3 &= 0xFFFFFFFFFFFFFULL;
+    z0 |= t3;
+    z1 &= t3;
+    z0 |= t4;
+    z1 &= t4 ^ 0xF000000000000ULL;
 
     return (z0 == 0) | (z1 == 0xFFFFFFFFFFFFFULL);
 }
@@ -677,13 +775,16 @@ ossl_inline static int secp256k1_scalar_reduce(secp256k1_scalar *r, unsigned int
 
     secp256k1_u128_from_u64(&t, r->d[0]);
     secp256k1_u128_accum_u64(&t, overflow * SECP256K1_N_C_0);
-    r->d[0] = secp256k1_u128_to_u64(&t); secp256k1_u128_rshift(&t, 64);
+    r->d[0] = secp256k1_u128_to_u64(&t);
+    secp256k1_u128_rshift(&t, 64);
     secp256k1_u128_accum_u64(&t, r->d[1]);
     secp256k1_u128_accum_u64(&t, overflow * SECP256K1_N_C_1);
-    r->d[1] = secp256k1_u128_to_u64(&t); secp256k1_u128_rshift(&t, 64);
+    r->d[1] = secp256k1_u128_to_u64(&t);
+    secp256k1_u128_rshift(&t, 64);
     secp256k1_u128_accum_u64(&t, r->d[2]);
     secp256k1_u128_accum_u64(&t, overflow * SECP256K1_N_C_2);
-    r->d[2] = secp256k1_u128_to_u64(&t); secp256k1_u128_rshift(&t, 64);
+    r->d[2] = secp256k1_u128_to_u64(&t);
+    secp256k1_u128_rshift(&t, 64);
     secp256k1_u128_accum_u64(&t, r->d[3]);
     r->d[3] = secp256k1_u128_to_u64(&t);
 
@@ -697,13 +798,16 @@ static void secp256k1_scalar_cadd_bit(secp256k1_scalar *r, unsigned int bit, int
     bit += ((uint32_t) vflag - 1) & 0x100;  /* forcing (bit >> 6) > 3 makes this a noop */
     secp256k1_u128_from_u64(&t, r->d[0]);
     secp256k1_u128_accum_u64(&t, ((uint64_t)((bit >> 6) == 0)) << (bit & 0x3F));
-    r->d[0] = secp256k1_u128_to_u64(&t); secp256k1_u128_rshift(&t, 64);
+    r->d[0] = secp256k1_u128_to_u64(&t);
+    secp256k1_u128_rshift(&t, 64);
     secp256k1_u128_accum_u64(&t, r->d[1]);
     secp256k1_u128_accum_u64(&t, ((uint64_t)((bit >> 6) == 1)) << (bit & 0x3F));
-    r->d[1] = secp256k1_u128_to_u64(&t); secp256k1_u128_rshift(&t, 64);
+    r->d[1] = secp256k1_u128_to_u64(&t);
+    secp256k1_u128_rshift(&t, 64);
     secp256k1_u128_accum_u64(&t, r->d[2]);
     secp256k1_u128_accum_u64(&t, ((uint64_t)((bit >> 6) == 2)) << (bit & 0x3F));
-    r->d[2] = secp256k1_u128_to_u64(&t); secp256k1_u128_rshift(&t, 64);
+    r->d[2] = secp256k1_u128_to_u64(&t);
+    secp256k1_u128_rshift(&t, 64);
     secp256k1_u128_accum_u64(&t, r->d[3]);
     secp256k1_u128_accum_u64(&t, ((uint64_t)((bit >> 6) == 3)) << (bit & 0x3F));
     r->d[3] = secp256k1_u128_to_u64(&t);
@@ -722,13 +826,16 @@ static void secp256k1_scalar_negate(secp256k1_scalar *r, const secp256k1_scalar 
 
     secp256k1_u128_from_u64(&t, ~a->d[0]);
     secp256k1_u128_accum_u64(&t, SECP256K1_N_0 + 1);
-    r->d[0] = secp256k1_u128_to_u64(&t) & nonzero; secp256k1_u128_rshift(&t, 64);
+    r->d[0] = secp256k1_u128_to_u64(&t) & nonzero;
+    secp256k1_u128_rshift(&t, 64);
     secp256k1_u128_accum_u64(&t, ~a->d[1]);
     secp256k1_u128_accum_u64(&t, SECP256K1_N_1);
-    r->d[1] = secp256k1_u128_to_u64(&t) & nonzero; secp256k1_u128_rshift(&t, 64);
+    r->d[1] = secp256k1_u128_to_u64(&t) & nonzero;
+    secp256k1_u128_rshift(&t, 64);
     secp256k1_u128_accum_u64(&t, ~a->d[2]);
     secp256k1_u128_accum_u64(&t, SECP256K1_N_2);
-    r->d[2] = secp256k1_u128_to_u64(&t) & nonzero; secp256k1_u128_rshift(&t, 64);
+    r->d[2] = secp256k1_u128_to_u64(&t) & nonzero;
+    secp256k1_u128_rshift(&t, 64);
     secp256k1_u128_accum_u64(&t, ~a->d[3]);
     secp256k1_u128_accum_u64(&t, SECP256K1_N_3);
     r->d[3] = secp256k1_u128_to_u64(&t) & nonzero;
@@ -855,13 +962,16 @@ static void secp256k1_scalar_reduce_512(secp256k1_scalar *r, const uint64_t *l) 
     /* r[0..3] = p[0..3] + p[4] * SECP256K1_N_C. */
     secp256k1_u128_from_u64(&c128, p0);
     secp256k1_u128_accum_mul(&c128, SECP256K1_N_C_0, p4);
-    r->d[0] = secp256k1_u128_to_u64(&c128); secp256k1_u128_rshift(&c128, 64);
+    r->d[0] = secp256k1_u128_to_u64(&c128);
+    secp256k1_u128_rshift(&c128, 64);
     secp256k1_u128_accum_u64(&c128, p1);
     secp256k1_u128_accum_mul(&c128, SECP256K1_N_C_1, p4);
-    r->d[1] = secp256k1_u128_to_u64(&c128); secp256k1_u128_rshift(&c128, 64);
+    r->d[1] = secp256k1_u128_to_u64(&c128);
+    secp256k1_u128_rshift(&c128, 64);
     secp256k1_u128_accum_u64(&c128, p2);
     secp256k1_u128_accum_u64(&c128, p4);
-    r->d[2] = secp256k1_u128_to_u64(&c128); secp256k1_u128_rshift(&c128, 64);
+    r->d[2] = secp256k1_u128_to_u64(&c128);
+    secp256k1_u128_rshift(&c128, 64);
     secp256k1_u128_accum_u64(&c128, p3);
     r->d[3] = secp256k1_u128_to_u64(&c128);
     c = secp256k1_u128_hi_u64(&c128);
@@ -1288,10 +1398,14 @@ static void secp256k1_gej_add_var(secp256k1_gej *r, const secp256k1_gej *a, cons
     secp256k1_fe_sqr(&z12, &a->z);
     secp256k1_fe_mul(&u1, &a->x, &z22);
     secp256k1_fe_mul(&u2, &b->x, &z12);
-    secp256k1_fe_mul(&s1, &a->y, &z22); secp256k1_fe_mul(&s1, &s1, &b->z);
-    secp256k1_fe_mul(&s2, &b->y, &z12); secp256k1_fe_mul(&s2, &s2, &a->z);
-    secp256k1_fe_negate(&h, &u1, 1); secp256k1_fe_add(&h, &u2);
-    secp256k1_fe_negate(&i, &s2, 1); secp256k1_fe_add(&i, &s1);
+    secp256k1_fe_mul(&s1, &a->y, &z22);
+    secp256k1_fe_mul(&s1, &s1, &b->z);
+    secp256k1_fe_mul(&s2, &b->y, &z12);
+    secp256k1_fe_mul(&s2, &s2, &a->z);
+    secp256k1_fe_negate(&h, &u1, 1);
+    secp256k1_fe_add(&h, &u2);
+    secp256k1_fe_negate(&i, &s2, 1);
+    secp256k1_fe_add(&i, &s1);
     if (secp256k1_fe_normalizes_to_zero_var(&h)) {
         if (secp256k1_fe_normalizes_to_zero_var(&i)) {
             secp256k1_gej_double_var(r, a, rzr);
@@ -1334,7 +1448,8 @@ static void secp256k1_gej_add_ge(secp256k1_gej *r, const secp256k1_gej *a, const
     secp256k1_fe m_alt, rr_alt;
     int degenerate;
 
-    /*  In:
+    /*
+     *  In:
      *    Eric Brier and Marc Joye, Weierstrass Elliptic Curves and Side-Channel Attacks.
      *    In D. Naccache and P. Paillier, Eds., Public Key Cryptography, vol. 2274 of Lecture Notes in Computer Science, pages 335-345. Springer-Verlag, 2002.
      *  we find as solution for a unified addition/doubling formula:
@@ -1396,32 +1511,40 @@ static void secp256k1_gej_add_ge(secp256k1_gej *r, const secp256k1_gej *a, const
     secp256k1_fe_negate(&m_alt, &u2, 1);                /* Malt = -X2*Z1^2 (2) */
     secp256k1_fe_mul(&tt, &u1, &m_alt);                 /* tt = -U1*U2 (1) */
     secp256k1_fe_add(&rr, &tt);                         /* rr = R = T^2-U1*U2 (2) */
-    /* If lambda = R/M = R/0 we have a problem (except in the "trivial"
-     * case that Z = z1z2 = 0, and this is special-cased later on). */
+    /*
+     * If lambda = R/M = R/0 we have a problem (except in the "trivial"
+     * case that Z = z1z2 = 0, and this is special-cased later on).
+     */
     degenerate = secp256k1_fe_normalizes_to_zero(&m);
-    /* This only occurs when y1 == -y2 and x1^3 == x2^3, but x1 != x2.
+    /*
+     * This only occurs when y1 == -y2 and x1^3 == x2^3, but x1 != x2.
      * This means either x1 == beta*x2 or beta*x1 == x2, where beta is
      * a nontrivial cube root of one. In either case, an alternate
      * non-indeterminate expression for lambda is (y1 - y2)/(x1 - x2),
-     * so we set R/M equal to this. */
+     * so we set R/M equal to this.
+     */
     rr_alt = s1;
     secp256k1_fe_mul_int(&rr_alt, 2);       /* rr_alt = Y1*Z2^3 - Y2*Z1^3 (GEJ_Y_M*2) */
     secp256k1_fe_add(&m_alt, &u1);          /* Malt = X1*Z2^2 - X2*Z1^2 (GEJ_X_M+2) */
 
     secp256k1_fe_cmov(&rr_alt, &rr, !degenerate);       /* rr_alt (GEJ_Y_M*2) */
     secp256k1_fe_cmov(&m_alt, &m, !degenerate);         /* m_alt (GEJ_X_M+2) */
-    /* Now Ralt / Malt = lambda and is guaranteed not to be Ralt / 0.
+    /*
+     * Now Ralt / Malt = lambda and is guaranteed not to be Ralt / 0.
      * From here on out Ralt and Malt represent the numerator
      * and denominator of lambda; R and M represent the explicit
-     * expressions x1^2 + x2^2 + x1x2 and y1 + y2. */
+     * expressions x1^2 + x2^2 + x1x2 and y1 + y2.
+     */
     secp256k1_fe_sqr(&n, &m_alt);                       /* n = Malt^2 (1) */
     secp256k1_fe_negate(&q, &t,
         SECP256K1_GEJ_X_MAGNITUDE_MAX + 1);             /* q = -T (GEJ_X_M+2) */
     secp256k1_fe_mul(&q, &q, &n);                       /* q = Q = -T*Malt^2 (1) */
-    /* These two lines use the observation that either M == Malt or M == 0,
+    /*
+     * These two lines use the observation that either M == Malt or M == 0,
      * so M^3 * Malt is either Malt^4 (which is computed by squaring), or
      * zero (which is "computed" by cmov). So the cost is one squaring
-     * versus two multiplications. */
+     * versus two multiplications.
+     */
     secp256k1_fe_sqr(&n, &n);                           /* n = Malt^4 (1) */
     secp256k1_fe_cmov(&n, &m, degenerate);              /* n = M^3 * Malt (GEJ_Y_M+1) */
     secp256k1_fe_sqr(&t, &rr_alt);                      /* t = Ralt^2 (1) */
@@ -1441,7 +1564,8 @@ static void secp256k1_gej_add_ge(secp256k1_gej *r, const secp256k1_gej *a, const
     secp256k1_fe_cmov(&r->y, &b->y, a->infinity);
     secp256k1_fe_cmov(&r->z, &secp256k1_fe_one, a->infinity);
 
-    /* Set r->infinity if r->z is 0.
+    /*
+     * Set r->infinity if r->z is 0.
      *
      * If a->infinity is set, then r->infinity = (r->z == 0) = (1 == 0) = false,
      * which is correct because the function assumes that b is not infinity.
@@ -1456,7 +1580,8 @@ static void secp256k1_gej_add_ge(secp256k1_gej *r, const secp256k1_gej *a, const
      * Case y1 != -y2:
      * In this case, we can't have a = -b.
      * We have degenerate = false, r->z = (y1 + y2) * Z.
-     * Then r->infinity = ((y1 + y2)Z == 0) = (y1 == -y2) = false. */
+     * Then r->infinity = ((y1 + y2)Z == 0) = (y1 == -y2) = false.
+     */
     r->infinity = secp256k1_fe_normalizes_to_zero(&r->z);
 }
 
@@ -1482,7 +1607,8 @@ static int secp256k1_gej_eq_var(const secp256k1_gej *a, const secp256k1_gej *b)
     return secp256k1_gej_is_infinity(&tmp);
 }
 
-/** Fill a table 'prej' with precomputed odd multiples of a. Prej will contain
+/**
+ * Fill a table 'prej' with precomputed odd multiples of a. Prej will contain
  *  the values [1*a,3*a,...,(2*n-1)*a], so it space for n values. zr[0] will
  *  contain prej[0].z / a.z. The other zr[i] values = prej[i].z / prej[i-1].z.
  *  Prej's Z values are undefined, except for the last value.
@@ -1495,7 +1621,7 @@ static void secp256k1_ecmult_odd_multiples_table(int n, secp256k1_gej *prej, sec
 
     secp256k1_gej_double_var(&d, a, NULL);
 
-    /*
+    /**
      * Perform the additions on an isomorphism where 'd' is affine: drop the z coordinate
      * of 'd', and scale the 1P starting value's x/y coordinates without changing its z.
      */
@@ -1514,14 +1640,15 @@ static void secp256k1_ecmult_odd_multiples_table(int n, secp256k1_gej *prej, sec
         secp256k1_gej_add_ge_var(&prej[i], &prej[i-1], &d_ge, &zr[i]);
     }
 
-    /*
+    /**
      * Each point in 'prej' has a z coordinate too small by a factor of 'd.z'. Only
      * the final point's z coordinate is actually used though, so just update that.
      */
     secp256k1_fe_mul(&prej[n-1].z, &prej[n-1].z, &d.z);
 }
 
-/** Fill a table 'pre' with precomputed odd multiples of a.
+/**
+ * Fill a table 'pre' with precomputed odd multiples of a.
  *
  *  It brings its resulting point set to a single constant Z denominator,
  *  stores the X and Y coordinates as ge_storage points in pre, and stores the
@@ -1538,8 +1665,10 @@ static void secp256k1_ecmult_odd_multiples_table_globalz_windowa(secp256k1_ge *p
     secp256k1_ge_globalz_set_table_gej(ECMULT_TABLE_SIZE(WINDOW_A), pre, globalz, prej, zr);
 }
 
-/** The following two macro retrieves a particular odd multiple from a table
- *  of precomputed multiples. */
+/**
+ * The following two macro retrieves a particular odd multiple from a table
+ *  of precomputed multiples.
+ */
 #define ECMULT_TABLE_GET_GE(r,pre,n,w) do { \
     if ((n) > 0) { \
         *(r) = (pre)[((n)-1)/2]; \
@@ -1557,7 +1686,8 @@ static void secp256k1_ecmult_odd_multiples_table_globalz_windowa(secp256k1_ge *p
     } \
 } while(0)
 
-/** Convert a number to WNAF notation. The number becomes represented by sum(2^i * wnaf[i], i=0..bits),
+/**
+ * Convert a number to WNAF notation. The number becomes represented by sum(2^i * wnaf[i], i=0..bits),
  *  with the following guarantees:
  *  - each wnaf[i] is either 0, or an odd integer between -(1<<(w-1) - 1) and (1<<(w-1) - 1)
  *  - two non-zero entries in wnaf are separated by at least w-1 zeroes.
@@ -1626,7 +1756,8 @@ static void secp256k1_ecmult(secp256k1_gej *r, const secp256k1_gej *a, const sec
     bits_na = secp256k1_ecmult_wnaf(wnaf_na, 256, na, WINDOW_A);
     bits = bits_na;
 
-    /* Calculate odd multiples of a.
+    /**
+     * Calculate odd multiples of a.
      * All multiples are brought to the same Z 'denominator', which is stored
      * in Z. Due to secp256k1' isomorphism we can do all operations pretending
      * that the Z coordinate was 1, use affine addition formulae, and correct
@@ -1650,7 +1781,7 @@ static void secp256k1_ecmult(secp256k1_gej *r, const secp256k1_gej *a, const sec
     }
 }
 
-/*
+/**
  * Convert Jacobian coordinate point into affine coordinate (x,y)
  */
 static int ecp_secp256k1_get_affine(const EC_GROUP *group,
@@ -1755,7 +1886,8 @@ static void secp256k1_ecmult_gen(secp256k1_gej *r, const secp256k1_scalar *gn)
         bits = secp256k1_scalar_get_bits(gn, j * 4, 4);
         #if 1
         for (int i = 0; i < 16; i++) {
-            /** This uses a conditional move to avoid any secret data in array indexes.
+            /**
+             * This uses a conditional move to avoid any secret data in array indexes.
              *   _Any_ use of secret indexes has been demonstrated to result in timing
              *   sidechannels, even when the cache-line access patterns are uniform.
              *  See also:
