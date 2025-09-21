@@ -1931,6 +1931,7 @@ tcg 18 : tcg-registry 			: Trusted Computing Group Registry
 tcg 19 : tcg-traits				: Trusted Computing Group Traits
 
 tcg-platformClass 1 : tcg-common 							: Trusted Computing Group Common
+tcg-platformClass 4 : tcg-dice	 							: Trusted Computing Group DICE
 tcg-common 1		: tcg-at-platformManufacturerStr		: TCG Platform Manufacturer String
 tcg-common 2		: tcg-at-platformManufacturerId			: TCG Platform Manufacturer ID
 tcg-common 3		: tcg-at-platformConfigUri				: TCG Platform Configuration URI
@@ -2061,6 +2062,15 @@ tcg-tr-category 34 : tcg-tr-cat-platformFirmwareSignatureVerification 	: Platfor
 tcg-tr-category 35 : tcg-tr-cat-platformFirmwareUpdateCompliance 		: Platform Firmware Update Compliance Trait Category
 tcg-tr-category 36 : tcg-tr-cat-RTM 									: Root of Trust of Measurement Trait Category
 tcg-tr-category 37 : tcg-tr-cat-PublicKey 								: Public Key Trait Category
+
+tcg-dice 100   : tcg-dice-kp 											: TCG DICE Key Purposes
+tcg-dice-kp 6  : tcg-dice-kp-identityInit								: Initial Identity
+tcg-dice-kp 7  : tcg-dice-kp-identityLoc								: Local Identity
+tcg-dice-kp 8  : tcg-dice-kp-attestInit									: Initial Attestation
+tcg-dice-kp 9  : tcg-dice-kp-attestLoc									: Local Attestation
+tcg-dice-kp 10 : tcg-dice-kp-assertInit									: Initial Assertion
+tcg-dice-kp 11 : tcg-dice-kp-assertLoc									: Local Assertion
+tcg-dice-kp 12 : tcg-dice-kp-eca										: Embedded Certificate Authority
 
 !Alias nistKems nistAlgorithms 4
 nistKems 1 : id-alg-ml-kem-512  : ML-KEM-512

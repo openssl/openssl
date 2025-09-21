@@ -1498,3 +1498,12 @@ HKDF_SHA384		1497
 HKDF_SHA512		1498
 id_smime_ori		1499
 id_smime_ori_kem		1500
+tcg_dice		1501
+tcg_dice_kp		1502
+tcg_dice_kp_identityInit		1503
+tcg_dice_kp_identityLoc		1504
+tcg_dice_kp_attestInit		1505
+tcg_dice_kp_attestLoc		1506
+tcg_dice_kp_assertInit		1507
+tcg_dice_kp_assertLoc		1508
+tcg_dice_kp_eca		1509
