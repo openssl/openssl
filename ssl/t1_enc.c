@@ -72,7 +72,7 @@ static int tls1_PRF(SSL_CONNECTION *s,
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
                                              (void *)seed5, (size_t)seed5_len);
     /*
-     * If we have a propery query string, the kdf needs to know about it in the event
+     * If we have a property query string, the kdf needs to know about it in the event
      * the specific kdf in use allocated a digest as part of its implementation
      */
     if (SSL_CONNECTION_GET_CTX(s)->propq != NULL)
