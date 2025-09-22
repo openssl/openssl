@@ -14,6 +14,7 @@
 #include "crypto/evp.h"
 #include "internal/provider.h"
 #include "internal/numbers.h"   /* includes SIZE_MAX */
+#include "internal/common.h"
 #include "evp_local.h"
 
 static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
@@ -37,7 +38,7 @@ static const char *canon_mdname(const char *mdname)
 static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, const char *mdname,
                           OSSL_LIB_CTX *libctx, const char *props,
-                          ENGINE *e, EVP_PKEY *pkey, int ver,
+                          EVP_PKEY *pkey, int ver,
                           const OSSL_PARAM params[])
 {
     EVP_PKEY_CTX *locpctx = NULL;
@@ -55,10 +56,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
     if (ctx->pctx == NULL) {
         reinit = 0;
-        if (e == NULL)
-            ctx->pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, props);
-        else
-            ctx->pctx = EVP_PKEY_CTX_new(pkey, e);
+        ctx->pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, props);
     }
     if (ctx->pctx == NULL)
         return 0;
@@ -351,7 +349,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         *pctx = ctx->pctx;
     if (ctx->pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM)
         return 1;
-    if (!EVP_DigestInit_ex(ctx, type, e))
+    if (!EVP_DigestInit_ex(ctx, type, NULL))
         return 0;
     /*
      * This indicates the current algorithm requires
@@ -375,14 +373,16 @@ int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const char *props, EVP_PKEY *pkey,
                           const OSSL_PARAM params[])
 {
-    return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 0,
+    return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, pkey, 0,
                           params);
 }
 
 int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                        const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, e, pkey, 0,
+    if (!ossl_assert(e == NULL))
+        return 0;
+    return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, pkey, 0,
                           NULL);
 }
 
@@ -391,14 +391,16 @@ int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                             const char *props, EVP_PKEY *pkey,
                             const OSSL_PARAM params[])
 {
-    return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 1,
+    return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, pkey, 1,
                           params);
 }
 
 int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                          const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, e, pkey, 1,
+    if (!ossl_assert(e == NULL))
+        return 0;
+    return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, pkey, 1,
                           NULL);
 }
 

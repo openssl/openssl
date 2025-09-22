@@ -20,6 +20,7 @@
 #include <openssl/cmac.h>
 #include <openssl/err.h>
 #include "crypto/cmac.h"
+#include "internal/common.h"
 
 #define LOCAL_BUF_SIZE 2048
 struct CMAC_CTX_st {
@@ -109,14 +110,13 @@ int CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
 }
 
 int ossl_cmac_init(CMAC_CTX *ctx, const void *key, size_t keylen,
-                   const EVP_CIPHER *cipher, ENGINE *impl,
-                   const OSSL_PARAM param[])
+                   const EVP_CIPHER *cipher, const OSSL_PARAM param[])
 {
     static const unsigned char zero_iv[EVP_MAX_BLOCK_LENGTH] = { 0 };
     int block_len;
 
     /* All zeros means restart */
-    if (!key && !cipher && !impl && keylen == 0) {
+    if (key == NULL && cipher == NULL && keylen == 0) {
         /* Not initialised */
         if (ctx->nlast_block == -1)
             return 0;
@@ -133,13 +133,8 @@ int ossl_cmac_init(CMAC_CTX *ctx, const void *key, size_t keylen,
     if (cipher != NULL) {
         /* Ensure we can't use this ctx until we also have a key */
         ctx->nlast_block = -1;
-        if (impl != NULL) {
-            if (!EVP_EncryptInit_ex(ctx->cctx, cipher, impl, NULL, NULL))
-                return 0;
-        } else {
-            if (!EVP_EncryptInit_ex2(ctx->cctx, cipher, NULL, NULL, param))
-                return 0;
-        }
+        if (!EVP_EncryptInit_ex2(ctx->cctx, cipher, NULL, NULL, param))
+            return 0;
     }
     /* Non-NULL key means initialisation complete */
     if (key != NULL) {
@@ -174,7 +169,9 @@ int ossl_cmac_init(CMAC_CTX *ctx, const void *key, size_t keylen,
 int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
               const EVP_CIPHER *cipher, ENGINE *impl)
 {
-    return ossl_cmac_init(ctx, key, keylen, cipher, impl, NULL);
+    if (!ossl_assert(impl == NULL))
+        return 0;
+    return ossl_cmac_init(ctx, key, keylen, cipher, NULL);
 }
 
 int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)

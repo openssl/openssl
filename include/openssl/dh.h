@@ -205,7 +205,7 @@ OSSL_DEPRECATEDIN_3_0 const DH_METHOD *DH_OpenSSL(void);
 OSSL_DEPRECATEDIN_3_0 void DH_set_default_method(const DH_METHOD *meth);
 OSSL_DEPRECATEDIN_3_0 const DH_METHOD *DH_get_default_method(void);
 OSSL_DEPRECATEDIN_3_0 int DH_set_method(DH *dh, const DH_METHOD *meth);
-OSSL_DEPRECATEDIN_3_0 DH *DH_new_method(ENGINE *engine);
+OSSL_DEPRECATEDIN_3_0 DH *DH_new_method(ENGINE *engine /* must be NULL */);
 
 OSSL_DEPRECATEDIN_3_0 DH *DH_new(void);
 OSSL_DEPRECATEDIN_3_0 void DH_free(DH *dh);

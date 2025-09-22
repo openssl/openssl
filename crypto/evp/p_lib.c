@@ -45,6 +45,7 @@
 # include "crypto/x509.h"
 #endif
 #include "internal/provider.h"
+#include "internal/common.h"
 #include "evp_local.h"
 
 static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str,
@@ -514,8 +515,8 @@ EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *e,
                                        const unsigned char *priv,
                                        size_t len)
 {
-    /* make the compiler happy */
-    (void)e;
+    if (!ossl_assert(e == NULL))
+        return NULL;
     return new_raw_key_int(NULL, NULL, NULL, type, priv, len, 1);
 }
 
@@ -531,8 +532,8 @@ EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *e,
                                       const unsigned char *pub,
                                       size_t len)
 {
-    /* make the compiler happy */
-    (void)e;
+    if (!ossl_assert(e == NULL))
+        return NULL;
     return new_raw_key_int(NULL, NULL, NULL, type, pub, len, 0);
 }
 
@@ -684,6 +685,8 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
 EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                 size_t len, const EVP_CIPHER *cipher)
 {
+    if (!ossl_assert(e == NULL))
+        return NULL;
     return new_cmac_key_int(priv, len, NULL, cipher, NULL, NULL);
 }
 
@@ -1702,10 +1705,9 @@ err:
 void evp_pkey_free_legacy(EVP_PKEY *x)
 {
     const EVP_PKEY_ASN1_METHOD *ameth = x->ameth;
-    ENGINE *tmpe = NULL;
 
     if (ameth == NULL && x->legacy_cache_pkey.ptr != NULL)
-        ameth = EVP_PKEY_asn1_find(&tmpe, x->type);
+        ameth = EVP_PKEY_asn1_find(NULL, x->type);
 
     if (ameth != NULL) {
         if (x->legacy_cache_pkey.ptr != NULL) {

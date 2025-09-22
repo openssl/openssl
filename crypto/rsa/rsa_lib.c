@@ -19,6 +19,7 @@
 #include <openssl/param_build.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
+#include "internal/common.h"
 #include "crypto/bn.h"
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
@@ -26,12 +27,12 @@
 #include "crypto/security_bits.h"
 #include "rsa_local.h"
 
-static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx);
+static RSA *rsa_new_intern(OSSL_LIB_CTX *libctx);
 
 #ifndef FIPS_MODULE
 RSA *RSA_new(void)
 {
-    return rsa_new_intern(NULL, NULL);
+    return rsa_new_intern(NULL);
 }
 
 const RSA_METHOD *RSA_get_method(const RSA *rsa)
@@ -57,16 +58,18 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth)
 
 RSA *RSA_new_method(ENGINE *engine)
 {
-    return rsa_new_intern(engine, NULL);
+    if (!ossl_assert(engine == NULL))
+        return NULL;
+    return rsa_new_intern(NULL);
 }
 #endif
 
 RSA *ossl_rsa_new_with_ctx(OSSL_LIB_CTX *libctx)
 {
-    return rsa_new_intern(NULL, libctx);
+    return rsa_new_intern(libctx);
 }
 
-static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
+static RSA *rsa_new_intern(OSSL_LIB_CTX *libctx)
 {
     RSA *ret = OPENSSL_zalloc(sizeof(*ret));
 

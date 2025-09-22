@@ -157,8 +157,7 @@ static int check_pem(const char *nm, const char *name)
         const EVP_PKEY_ASN1_METHOD *ameth;
         slen = ossl_pem_check_suffix(nm, "PARAMETERS");
         if (slen > 0) {
-            ENGINE *e;
-            ameth = EVP_PKEY_asn1_find_str(&e, nm, slen);
+            ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);
             if (ameth) {
                 int r;
                 if (ameth->param_decode)
