@@ -17,16 +17,17 @@
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_SM4
+
+#define OPENSSL_CPUID_OBJ
+#define VPSM4_ASM
+
+#if defined(OPENSSL_CPUID_OBJ) && (defined(__aarch64__) || defined(_M_ARM64))
+# include "crypto/arm_arch.h"
+#endif
+
 # include "crypto/sm4.h"
 # include "crypto/modes.h"
 # include "crypto/sm4_platform.h"
-
-// Include architecture-specific header for capability flags
-# if defined(OPENSSL_CPUID_OBJ)
-#  if defined(__aarch64__) ||  defined (_M_ARM64)
-#   include "arm_arch.h"
-#  endif
-# endif
 
 static int test_sm4_ecb(void)
 {
@@ -146,12 +147,14 @@ static int test_sm4_cbc(void)
     memcpy(iv, iv_bytes, SM4_BLOCK_SIZE); /* Reset IV for decryption */
 #if defined(VPSM4_EX_CAPABLE)
     if (vpsm4_ex_capable()) {
+	vpsm4_ex_set_decrypt_key(key_bytes, &key);
         vpsm4_ex_cbc_encrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
                              SM4_DECRYPT);
     } else
 #endif
 #if defined(VPSM4_CAPABLE)
     if (vpsm4_capable()) {
+	vpsm4_set_decrypt_key(key_bytes, &key);
         vpsm4_cbc_encrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
                           SM4_DECRYPT);
     } else
