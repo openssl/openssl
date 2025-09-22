@@ -163,8 +163,7 @@ static int cmac_setkey(struct cmac_data_st *macctx,
         p = prms;
 #endif
     rv = ossl_cmac_init(macctx->ctx, key, keylen,
-                        ossl_prov_cipher_cipher(&macctx->cipher),
-                        NULL, p);
+                        ossl_prov_cipher_cipher(&macctx->cipher), p);
     ossl_prov_cipher_reset(&macctx->cipher);
     return rv;
 }

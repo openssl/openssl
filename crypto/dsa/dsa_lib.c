@@ -163,7 +163,7 @@ static DSA *dsa_new_intern(OSSL_LIB_CTX *libctx)
     return NULL;
 }
 
-DSA *DSA_new_method(ossl_unused ENGINE *engine)
+DSA *DSA_new_method(ENGINE *engine)
 {
     if (engine != NULL)
         return NULL;

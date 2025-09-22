@@ -222,8 +222,10 @@ int RAND_poll(void)
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 static int rand_set_rand_method_internal(const RAND_METHOD *meth,
-                                         ossl_unused ENGINE *e)
+                                         ENGINE *e)
 {
+    if (e != NULL)
+        return 0;
     if (!RUN_ONCE(&rand_init, do_rand_init))
         return 0;
 

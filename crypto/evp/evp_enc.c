@@ -579,8 +579,8 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                       ENGINE *impl, const unsigned char *key,
                       const unsigned char *iv, int enc)
 {
-    /* to make the compilers happy */
-    (void)impl;
+    if (impl != NULL)
+        return 0;
     return evp_cipher_init_internal(ctx, cipher, key, iv, enc, 0, NULL);
 }
 
@@ -747,7 +747,9 @@ int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                        ENGINE *impl, const unsigned char *key,
                        const unsigned char *iv)
 {
-    return EVP_CipherInit_ex(ctx, cipher, impl, key, iv, 1);
+    if (impl != NULL)
+        return 0;
+    return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 1);
 }
 
 int EVP_EncryptInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -767,7 +769,9 @@ int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                        ENGINE *impl, const unsigned char *key,
                        const unsigned char *iv)
 {
-    return EVP_CipherInit_ex(ctx, cipher, impl, key, iv, 0);
+    if (impl != NULL)
+        return 0;
+    return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 0);
 }
 
 int EVP_DecryptInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,

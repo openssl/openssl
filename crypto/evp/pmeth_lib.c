@@ -152,8 +152,7 @@ int evp_pkey_ctx_state(const EVP_PKEY_CTX *ctx)
     return EVP_PKEY_STATE_LEGACY;
 }
 
-static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
-                                 EVP_PKEY *pkey, ENGINE *e,
+static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx, EVP_PKEY *pkey,
                                  const char *keytype, const char *propquery,
                                  int id)
 
@@ -182,29 +181,16 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
         }
     }
     /* If no ID was found here, we can only resort to find a keymgmt */
-    if (id == -1) {
-#ifndef FIPS_MODULE
-        /* Using engine with a key without id will not work */
-        if (e != NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_ALGORITHM);
-            return NULL;
-        }
-#endif
+    if (id == -1)
         goto common;
-    }
 
 #ifndef FIPS_MODULE
     /*
      * Here, we extract what information we can for the purpose of
      * supporting usage with implementations from providers, to make
      * for a smooth transition from legacy stuff to provider based stuff.
-     *
-     * If an engine is given, this is entirely legacy, and we should not
-     * pretend anything else, so we clear the name.
      */
-    if (e != NULL)
-        keytype = NULL;
-    if (e == NULL && (pkey == NULL || pkey->foreign == 0))
+    if (pkey == NULL || pkey->foreign == 0)
         keytype = OBJ_nid2sn(id);
 
     if (pkey != NULL && pkey->foreign)
@@ -216,10 +202,10 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
 #endif /* FIPS_MODULE */
  common:
     /*
-     * If there's no engine and no app supplied pmeth and there's a name, we try
+     * If there's no app supplied pmeth and there's a name, we try
      * fetching a provider implementation.
      */
-    if (e == NULL && app_pmeth == NULL && keytype != NULL) {
+    if (app_pmeth == NULL && keytype != NULL) {
         /*
          * If |pkey| is given and is provided, we take a reference to its
          * keymgmt.  Otherwise, we fetch one for the keytype we got. This
@@ -316,13 +302,13 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_name(OSSL_LIB_CTX *libctx,
                                          const char *name,
                                          const char *propquery)
 {
-    return int_ctx_new(libctx, NULL, NULL, name, propquery, -1);
+    return int_ctx_new(libctx, NULL, name, propquery, -1);
 }
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_pkey(OSSL_LIB_CTX *libctx, EVP_PKEY *pkey,
                                          const char *propquery)
 {
-    return int_ctx_new(libctx, pkey, NULL, NULL, propquery, -1);
+    return int_ctx_new(libctx, pkey, NULL, propquery, -1);
 }
 
 void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx)
@@ -409,12 +395,16 @@ void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth)
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e)
 {
-    return int_ctx_new(NULL, pkey, e, NULL, NULL, -1);
+    if (e != NULL)
+        return NULL;
+    return int_ctx_new(NULL, pkey, NULL, NULL, -1);
 }
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e)
 {
-    return int_ctx_new(NULL, NULL, e, NULL, NULL, id);
+    if (e != NULL)
+        return NULL;
+    return int_ctx_new(NULL, NULL, NULL, NULL, id);
 }
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
