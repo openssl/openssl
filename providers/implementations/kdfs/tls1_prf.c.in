@@ -158,6 +158,9 @@ static void *kdf_tls1_prf_dup(void *vctx)
     const TLS1_PRF *src = (const TLS1_PRF *)vctx;
     TLS1_PRF *dest;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     dest = kdf_tls1_prf_new(src->provctx);
     if (dest != NULL) {
         if (src->P_hash != NULL

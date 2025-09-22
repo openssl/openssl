@@ -203,6 +203,9 @@ static void *kmac_fetch_new(void *provctx, const OSSL_PARAM *params)
     struct kmac_new_st p;
     int md_size;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     if (kctx == NULL)
         return 0;
     if (!kmac_new_decoder(params, &p))

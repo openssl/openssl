@@ -129,6 +129,9 @@ static void *kdf_pbkdf2_dup(void *vctx)
     const KDF_PBKDF2 *src = (const KDF_PBKDF2 *)vctx;
     KDF_PBKDF2 *dest;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     /* We need a new PBKDF2 object but uninitialised since we're filling it */
     dest = kdf_pbkdf2_new_no_init(src->provctx);
     if (dest != NULL) {

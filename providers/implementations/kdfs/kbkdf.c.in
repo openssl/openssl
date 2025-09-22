@@ -163,6 +163,9 @@ static void *kbkdf_dup(void *vctx)
     const KBKDF *src = (const KBKDF *)vctx;
     KBKDF *dest;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     dest = kbkdf_new(src->provctx);
     if (dest != NULL) {
         dest->ctx_init = EVP_MAC_CTX_dup(src->ctx_init);

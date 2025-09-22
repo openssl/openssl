@@ -82,6 +82,10 @@ static void hmac_drbg_kdf_free(void *vctx)
 }
 
 static int ossl_drbg_hmac_dup(PROV_DRBG_HMAC *dst, const PROV_DRBG_HMAC *src) {
+
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (src->ctx != NULL) {
         dst->ctx = EVP_MAC_CTX_dup(src->ctx);
         if (dst->ctx == NULL)
@@ -99,6 +103,9 @@ static void *hmac_drbg_kdf_dup(void *vctx)
 {
     const KDF_HMAC_DRBG *src = (const KDF_HMAC_DRBG *)vctx;
     KDF_HMAC_DRBG *dst;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     dst = hmac_drbg_kdf_new(src->provctx);
     if (dst != NULL) {
