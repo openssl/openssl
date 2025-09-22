@@ -19,6 +19,14 @@
 #ifndef OPENSSL_NO_SM4
 # include "crypto/sm4.h"
 # include "crypto/modes.h"
+# include "crypto/sm4_platform.h"
+
+// Include architecture-specific header for capability flags
+# if defined(OPENSSL_CPUID_OBJ)
+#  if defined(__aarch64__) ||  defined (_M_ARM64)
+#   include "arm_arch.h"
+#  endif
+# endif
 
 static int test_sm4_ecb(void)
 {
@@ -113,10 +121,22 @@ static int test_sm4_cbc(void)
     /* --- Test Encryption --- */
     ossl_sm4_set_key(key_bytes, &key);
     memcpy(iv, iv_bytes, SM4_BLOCK_SIZE); /* Use a working copy of the IV */
-    /*ossl_sm4_cbc_encrypt(plaintext, ciphertext, sizeof(plaintext), &key, iv,
-                         SM4_ENCRYPT);*/
-    CRYPTO_cbc128_encrypt(plaintext, ciphertext, sizeof(plaintext), &key, iv,
+#if defined(VPSM4_EX_CAPABLE)
+    if (vpsm4_ex_capable()) {
+        vpsm4_ex_cbc_encrypt(plaintext, ciphertext, sizeof(plaintext), &key, iv,
+                             SM4_ENCRYPT);
+    } else
+#endif
+#if defined(VPSM4_CAPABLE)
+    if (vpsm4_capable()) {
+        vpsm4_cbc_encrypt(plaintext, ciphertext, sizeof(plaintext), &key, iv,
+                          SM4_ENCRYPT);
+    } else
+#endif
+    {
+        CRYPTO_cbc128_encrypt(plaintext, ciphertext, sizeof(plaintext), &key, iv,
                               (block128_f)ossl_sm4_encrypt);
+    }
 
     if (!TEST_mem_eq(ciphertext, sizeof(ciphertext),
                      expected_ciphertext, sizeof(expected_ciphertext)))
@@ -124,10 +144,22 @@ static int test_sm4_cbc(void)
 
     /* --- Test Decryption --- */
     memcpy(iv, iv_bytes, SM4_BLOCK_SIZE); /* Reset IV for decryption */
-    /*ossl_sm4_cbc_encrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
-                         SM4_DECRYPT);*/
-    CRYPTO_cbc128_decrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
+#if defined(VPSM4_EX_CAPABLE)
+    if (vpsm4_ex_capable()) {
+        vpsm4_ex_cbc_encrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
+                             SM4_DECRYPT);
+    } else
+#endif
+#if defined(VPSM4_CAPABLE)
+    if (vpsm4_capable()) {
+        vpsm4_cbc_encrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
+                          SM4_DECRYPT);
+    } else
+#endif
+    {
+        CRYPTO_cbc128_decrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
                               (block128_f)ossl_sm4_decrypt);
+    }
 
     if (!TEST_mem_eq(decrypted, sizeof(decrypted), plaintext, sizeof(plaintext)))
         return 0;
