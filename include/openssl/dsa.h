@@ -128,7 +128,7 @@ OSSL_DEPRECATEDIN_3_0 int DSA_set_method(DSA *dsa, const DSA_METHOD *);
 OSSL_DEPRECATEDIN_3_0 const DSA_METHOD *DSA_get_method(DSA *d);
 
 OSSL_DEPRECATEDIN_3_0 DSA *DSA_new(void);
-OSSL_DEPRECATEDIN_3_0 DSA *DSA_new_method(ENGINE *engine);
+OSSL_DEPRECATEDIN_3_0 DSA *DSA_new_method(ENGINE *engine /* must be NULL */);
 OSSL_DEPRECATEDIN_3_0 void DSA_free(DSA *r);
 /* "up" the DSA object's reference count */
 OSSL_DEPRECATEDIN_3_0 int DSA_up_ref(DSA *r);
