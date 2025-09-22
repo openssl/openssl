@@ -319,7 +319,8 @@ typedef int (*OSSL_STORE_close_fn)(OSSL_STORE_LOADER_CTX *ctx);
 # endif
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0
-OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme);
+OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e /* must be NULL */,
+                                         const char *scheme);
 OSSL_DEPRECATEDIN_3_0
 int OSSL_STORE_LOADER_set_open(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_open_fn open_function);

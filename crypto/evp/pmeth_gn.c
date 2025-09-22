@@ -13,6 +13,7 @@
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "internal/core.h"
+#include "internal/common.h"
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "crypto/bn.h"
@@ -318,7 +319,10 @@ EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e,
 {
     EVP_PKEY_CTX *mac_ctx = NULL;
     EVP_PKEY *mac_key = NULL;
-    mac_ctx = EVP_PKEY_CTX_new_id(type, e);
+
+    if (!ossl_assert(e == NULL))
+        return NULL;
+    mac_ctx = EVP_PKEY_CTX_new_id(type, NULL);
     if (!mac_ctx)
         return NULL;
     if (EVP_PKEY_keygen_init(mac_ctx) <= 0)
