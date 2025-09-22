@@ -687,6 +687,22 @@ static int test_property_list_to_string(int i)
     return ret;
 }
 
+static int test_property_list_to_string_bounds(void)
+{
+    OSSL_PROPERTY_LIST *pl = NULL;
+    char buf[16];
+    int ret = 0;
+
+    if (!TEST_ptr(pl = ossl_parse_query(NULL, "provider='$1'", 1)))
+        goto err;
+    if (!TEST_size_t_eq(ossl_property_list_to_string(NULL, pl, buf, 10), 14))
+        goto err;
+    ret = 1;
+ err:
+    ossl_property_free(pl);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_property_string);
@@ -701,5 +717,6 @@ int setup_tests(void)
     ADD_TEST(test_query_cache_stochastic);
     ADD_TEST(test_fips_mode);
     ADD_ALL_TESTS(test_property_list_to_string, OSSL_NELEM(to_string_tests));
+    ADD_TEST(test_property_list_to_string_bounds);
     return 1;
 }
