@@ -179,9 +179,9 @@ respectively:
 
 The recommended groups for TLS 1.3 are presently documented in the default
 TLS group list in the OpenSSL code base. Starting with OpenSSL 3.5, the
-hybrid algorithm B<X25519MLKEM768> is at the top of this default list to
-provide mitigation against threats from future quantum computing as well as
-providing state-of-the-art classic crypto protection.
+hybrid algorithm B<X25519MLKEM768> is first in this default list.
+It mitigates against threats from future quantum computers while
+still providing state-of-the-art classical key exchange protection.
 
 Further details regarding post-quantum algorithm considerations are documented
 in the HISTORY section below.
