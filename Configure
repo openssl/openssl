@@ -883,8 +883,9 @@ while (@argvcopy)
                         next;
                         }
 
-                # Do not allow users to enable deprecated flags
-                if (/^enable-(.+)$/ && exists $deprecated_disablables{$word})
+                # Do not allow users to enable removed features
+                if (/^enable-(.+)$/ && exists $deprecated_disablables{$word}
+                        && $deprecated_disablables{$word} eq undef)
                         {
                         $unsupported_options{$_} = 1;
                         next;
