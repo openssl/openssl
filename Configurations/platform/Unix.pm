@@ -34,6 +34,9 @@ sub shlibextsimple      { (my $x = $target{shared_extension} || '.so')
 sub shlibvariant        { $target{shlib_variant} || "" }
 sub makedepcmd          { $disabled{makedepend} ? undef : $config{makedepcmd} }
 
+# Only relevant when cross-compiling for Windows
+sub resext              { '.res.obj' }
+
 # No conversion of assembler extension on Unix
 sub asm {
     return $_[1];
