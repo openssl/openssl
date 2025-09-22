@@ -74,7 +74,7 @@ All functions returning an integer return 1 on success and 0 if an error occurre
 =item B<LEGACY_GOST_PKCS12>
 
 =for comment
-https://tc26.ru/standards/metodicheskie-rekomendatsii/transportnyy-klyuchevoy-konteyner.html section 5.1
+https://tc26.ru/standarts/metodicheskie-rekomendatsii/transportnyy-klyuchevoy-konteyner.html section 5.1
 https://tc26.ru/standard/rs/%D0%A0%2050.1.112-2016.pdf section 5
 https://meganorm.ru/mega_doc/norm/prikaz/25/r_1323565_1_041-2022_rekomendatsii_po_standartizatsii.html section 7.1
 
