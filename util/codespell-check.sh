@@ -6,6 +6,32 @@
 #
 # Any arguments provided (such as -w) are added to the
 # codespell invocation.
+#
+# You can add this check to your git pre-commit hooks
+# with something akin to the following:
+# --------8<----------
+#check_codespell_diff() {
+#    spelling_mistakes=""
+#    while read -r -d '' path; do
+#        spelling_mistakes="`util/codespell-check.sh $path`"
+#    done
+#    if [ -n "$spelling_mistakes" ]; then
+#        cat >&2 <<EOF
+# -- Spelling Mistakes --
+#The code you want to commit has spelling mistakes:
+#
+#$spelling_mistakes
+#
+#Fix them and then commit. See util/codespell-check.sh
+#for more information
+#EOF
+#        exit 1
+#    fi
+#}
+#git diff-index --cached -z --name-only "$against" \
+#    | check_codespell_diff \
+#    || exit 1
+# ---------8<-----------
 
 codespell --ignore-regex '\b[a-zA-Z][a-zA-Z]\b' \
 	  -L 'ADDAD, addin, adin, allws, alo, Alo, alow, anS, Buda, buildd, bve, cann, CANN, ciph, Collison, consumation, DELET, dota, Durin, ect, ede, endianess, endin, engineerr, ENGINEerr, FILETEST, filetests, htmp, inbrace, ine, informat, ISCONNECTION, isnt, KEYPAIR, keyserver, larg, LOd, Manger, Merget, nclusion, NOo, OPTIO, outin, passin, poping, pris, rewinded, shouldnot, SHS, Sorce, sover, succes, testss, Thi, tmplate, tne, uis, usign, vew, Widgits, aas, Aas, AAS, abd, ABD, accreting, AFAIR, afile, afterAll, AfterAll, Ake, ALine, allEdges, alloced, alloco, ALS, alsptd, ang, ans, ANS, aNULL, archType, arithmetics, assertIn, atLeast, AtLeast, atMost, bootup, BRE, CAF, cant, Chang, checkin, childs, circularly, Circularly, claus, Claus, clen, CLOS, Collet, compilability, compileTime, CompileTime, complies, COMPLIES, configury, co-ordinate, co-ordinates, crasher, crashers, crate, Crate, CRATE, creat, CREAT, CrOS, crypted, CRYPTED, currentY, DAA, datas, debbugs, Debbugs, dependancies, dependancy, dependant, deque, Deque, doubleclick, doubleClick, DoubleClick, dout, Dout, DOUT, dum, dur, Dur, ECT, EDE, FileTest, flate, Flate, FLATE, fpr, FPR, FPT, gord, gost, Gost, GOST, Hart, hasTable, hel, hist, HIST, HSI, ifset, iif, IIF, implementor, Implementor, implementors, Implementors, inactivate, indention, indx, inh, inout, inOut, InOut, INOUT, ist, IST, keep-alives, keypair, keyPair, Keypair, KeyPair, keypairs, keyPairs, Keypairs, KeyPairs, LAMDA, leapYear, LOD, Maked, Manuel, ment, minimise, mis, Mis, MIS, mitre, Mitre, MITRE, mmaped, msdos, MSDOS, nam, Nam, NAM, Ned, nin, Nin, nmake, NMake, NMAKE, notin, Notin, NotIn, numer, OCE, offsetp, ois, onText, OnText, openin, OptIn, origN, paeth, Paeth, PAETH, parm, pARM, Parm, PARM, parms, pARMS, Parms, PARMs, PARMS, pass-thru, pres, Pres, prevEnd, PullRequest, que, readd, Readd, readded, Readded, regArg, regArgs, requestor, Requestor, requestors, re-usable, Re-usable, re-use, Re-use, re-used, Re-used, re-uses, Re-uses, re-using, Re-using, sav, SEH, ser, Ser, SER, servent, shouldBe, siz, SIZ, SME, SOM, splitted, statics, Statics, strRange, technics, therefor, Therefor, therefrom, thirdparty, thirdParty, Thirdparty, ThirdParty, THIRDPARTY, thru, Thur, THUR, tolen, tthe, UIs, upto, upTo, uptodate, upToDate, UpToDate, useable, Useable, userA, UserA, varN, vertexes, vor, WAN, Wirth, wont, WRONLY, WTH, roperties, igest, equest, equests, ategory, couldn, wasn, ture, biom, bion, sHolder' \
