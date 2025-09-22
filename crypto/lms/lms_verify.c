@@ -51,7 +51,7 @@ int lms_sig_compute_tc_from_path(const unsigned char *paths, uint32_t n,
 
     /*
      * Calculate the public key Tc using the path
-     * The root hash is the hash of its 2 childrens Hash values.
+     * The root hash is the hash of its 2 children's Hash values.
      * A child hash for each level is passed in by paths, and we have
      * a leaf value that can be used with the path to calculate the parent
      * hash.

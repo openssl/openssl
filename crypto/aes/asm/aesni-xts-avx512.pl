@@ -2194,7 +2194,7 @@ ___
     vpxorq 	 %zmm6,%zmm5,%zmm5{%k2}
     vpxord 	 %zmm5,%zmm7,%zmm10
 
-    # Make next 8 tweek values by all x 2^8
+    # Make next 8 tweak values by all x 2^8
     vpsrldq 	 \$0xf,%zmm9,%zmm13
     vpclmulqdq 	 \$0x0,%zmm25,%zmm13,%zmm14
     vpslldq 	 \$0x1,%zmm9,%zmm11
@@ -2234,7 +2234,7 @@ ___
     jmp 	 .L_do_n_blocks_${rndsuffix}
 
     .L_start_by8_${rndsuffix}:
-    # Make first 7 tweek values
+    # Make first 7 tweak values
     vbroadcasti32x4 	 ($TW),%zmm0
     vbroadcasti32x4 shufb_15_7(%rip),%zmm8
     mov 	 \$0xaa,$tmp1

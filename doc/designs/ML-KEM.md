@@ -44,7 +44,7 @@ subsequent computations (encapsulation).
 Since the private key includes the public key as one of its components, the matrix
 is also pre-computed and stored with the private key, and then need not be
 regenerated during decapsulation.
-During encapsulation (typically peformed by servers), it is in principle
+During encapsulation (typically performed by servers), it is in principle
 possible to save space and compute the matrix elements *just-in-time*, as each
 matrix element is used exactly once.
 This is not currently implemented, and the matrix is pre-computed in full.
@@ -90,7 +90,7 @@ Keys can be generated via the usual **EVP_PKEY_generate()** and
 
 An explicit seed can be specified by setting the key generation
 **OSSL_PKEY_PARAM_ML_KEM_SEED** parameter to a 64-byte octet-string
-(concatentation of the **d** and **z** values (32-bytes each) in that order).
+(concatenation of the **d** and **z** values (32-bytes each) in that order).
 
 KEM API
 -------

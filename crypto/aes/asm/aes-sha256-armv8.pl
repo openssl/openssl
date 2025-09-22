@@ -427,7 +427,7 @@ $code.=<<___;
 
 	/* get outstanding bytes of the digest */
 	sub		x12,x5,x2
-	/* substract loaded bytes */
+	/* subtract loaded bytes */
 	sub		x5,x5,64
 
 	/*
@@ -2590,7 +2590,7 @@ asm_sha256_hmac_aescbc_dec:
 	rev32		v28.16b,v28.16b		/* endian swap w2 */
 	rev32		v29.16b,v29.16b		/* endian swap w3 */
 
-	/* substract loaded bytes */
+	/* subtract loaded bytes */
 	sub		x5,x5,64
 	/*
 	 * now we can do the loop prolog, 1st sha256 block
@@ -2746,7 +2746,7 @@ asm_sha256_hmac_aescbc_dec:
 	sha256h		q22, q23, v7.4s
 	sha256h2	q23, q21, v7.4s
 
-	/* substract loaded bytes */
+	/* subtract loaded bytes */
 	sub		x5,x5,64
 
 	/*
@@ -3017,7 +3017,7 @@ $code.=<<___;
 	add		v25.4s,v25.4s,v23.4s	/* EFGH += working copy */
 	/* save aes res, bump aes_out_ptr */
 	st1		{v3.16b},[x1],16
-	/* substract loaded bytes */
+	/* subtract loaded bytes */
 	sub		x5,x5,64
 	cbnz		x15,.Ldec_main_loop	/* loop if more to do */
 	/*
