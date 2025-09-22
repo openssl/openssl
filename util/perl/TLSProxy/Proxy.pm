@@ -275,6 +275,16 @@ sub start
     my ($self) = shift;
     my $pid;
 
+    #
+    # s390x is a somewhat special case here.  It uses hw acceleration under
+    # the covers when computing MACs, and in so doing avoids the use of the
+    # needed ossltest provider when computing the underlying digest.  Since
+    # TLSProxy needs the ossltest provider to compute reliable known data in
+    # the digest, we disable MAC hw accleration here to ensure that the provider
+    # gets used, just as it does with other architectures.
+    #
+    $ENV{OPENSSL_s390xcap} = "kmac:~0:~f000";
+
     # Create the Proxy socket
     my $proxaddr = $self->{proxy_addr};
     $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
