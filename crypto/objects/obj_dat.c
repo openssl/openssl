@@ -39,6 +39,7 @@ struct added_obj_st {
 
 static unsigned long added_obj_hash(const ADDED_OBJ *ca);
 static int added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb);
+static int add_object(const ASN1_OBJECT *obj, int indirect);
 
 static LHASH_OF(ADDED_OBJ) *added = NULL;
 static CRYPTO_RWLOCK *ossl_obj_lock = NULL;
@@ -739,7 +740,7 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
     tmpoid->sn = (char *)sn;
     tmpoid->ln = (char *)ln;
 
-    ok = OBJ_add_object(tmpoid);
+    ok = add_object(tmpoid, 1);
 
     tmpoid->sn = NULL;
     tmpoid->ln = NULL;
@@ -763,22 +764,21 @@ const unsigned char *OBJ_get0_data(const ASN1_OBJECT *obj)
     return obj->data;
 }
 
-int OBJ_add_object(const ASN1_OBJECT *obj)
+static int add_object(const ASN1_OBJECT *obj, int indirect)
 {
     ASN1_OBJECT *o = NULL, *dup = NULL;
     ADDED_OBJ *ao[4] = { NULL, NULL, NULL, NULL }, *aop[4];
     int i, ret = NID_undef, nid = obj->nid;
 
     /*
-     * The caller may leave the NID unspecified, in which case we generate a
-     * fresh NID here.  When an explicit nid is given, check that the NID is
-     * not in the compile-time range: [0, NUM_NID-1] and none of the OID, SN or
-     * LN are already taken.  When the nid is instead NID_undef, we assume the
-     * caller has already checked the OID, SN and LN.  This is the case with
-     * the expected calls via OBJ_create().
+     * Indirect calls leave the NID unspecified, in which case we generate a
+     * fresh NID here.  Direct calls via `OBJ_add_object()` must explicity
+     * specify the nid, and we then also check against the compile-time bsearch
+     * lists that the indirect calls have checked while holding a read lock.
      */
-    if (nid == NID_undef) {
-        if ((nid = OBJ_new_nid(1)) < NUM_NID
+    if (indirect) {
+        if (nid != NID_undef
+            || (nid = OBJ_new_nid(1)) < NUM_NID
             || (o = OBJ_dup(obj)) == NULL)
             return ret;
         o->nid = nid;
@@ -860,6 +860,11 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
         OPENSSL_free(ao[i]);
     ASN1_OBJECT_free(o);
     return ret;
+}
+
+int OBJ_add_object(const ASN1_OBJECT *obj)
+{
+    return add_object(obj, 0);
 }
 
 int OBJ_obj2nid(const ASN1_OBJECT *a)
