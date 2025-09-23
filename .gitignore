@@ -408,3 +408,13 @@ doc-nits
 # LSP (Language Server Protocol) support
 .cache/
 compile_commands.json
+
+
+# Ignore build output directories
+/build-*
+
+# Ignore test output and temporary files
+*.cnf.expected
+*.s.expected
+*.txt.expected
+test-runs.log
