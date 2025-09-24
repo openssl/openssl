@@ -2889,13 +2889,13 @@ int ossl_quic_conn_stream_conclude(SSL *s)
 
     if (!quic_mutation_allowed(ctx.qc, /*req_active=*/1)) {
         ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
-        qctx_unlock(ctx.qc);
+        quic_unlock(ctx.qc);
         return ret;
     }
 
     if (!quic_validate_for_write(ctx.xso, &err)) {
         ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, err, NULL);
-        qctx_unlock(ctx.qc);
+        quic_unlock(ctx.qc);
         return ret;
     }
 
