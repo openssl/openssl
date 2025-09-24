@@ -67,19 +67,66 @@ static int test_sm4_ecb(void)
     ossl_sm4_set_key(k, &key);
     memcpy(block, input, SM4_BLOCK_SIZE);
 
-    ossl_sm4_encrypt(block, block, &key);
+#if defined(VPSM4_EX_CAPABLE)
+    if (vpsm4_ex_capable()) {
+        vpsm4_ex_ecb_encrypt(block, block, sizeof(block), &key, SM4_ENCRYPT);
+    } else
+#endif
+#if defined(VPSM4_CAPABLE)
+    if (vpsm4_capable()) {
+        vpsm4_ecb_encrypt(block, block, sizeof(block), &key, SM4_ENCRYPT);
+    } else
+#endif
+    {
+        ossl_sm4_encrypt(block, block, &key);
+    }
     if (!TEST_mem_eq(block, SM4_BLOCK_SIZE, expected, SM4_BLOCK_SIZE))
         return 0;
 
-    for (i = 0; i != 999999; ++i)
-        ossl_sm4_encrypt(block, block, &key);
-
+    for (i = 0; i != 999999; ++i) {
+#if defined(VPSM4_EX_CAPABLE)
+        if (vpsm4_ex_capable()) {
+            vpsm4_ex_ecb_encrypt(block, block, sizeof(block), &key, SM4_ENCRYPT);
+        } else
+#endif
+#if defined(VPSM4_CAPABLE)
+        if (vpsm4_capable()) {
+            vpsm4_ecb_encrypt(block, block, sizeof(block), &key, SM4_ENCRYPT);
+        } else
+#endif
+        {
+            ossl_sm4_encrypt(block, block, &key);
+        }
+    }
     if (!TEST_mem_eq(block, SM4_BLOCK_SIZE, expected_iter, SM4_BLOCK_SIZE))
         return 0;
 
-    for (i = 0; i != 1000000; ++i)
-        ossl_sm4_decrypt(block, block, &key);
+#if defined(VPSM4_EX_CAPABLE)
+    if (vpsm4_ex_capable()) {
+        vpsm4_ex_set_decrypt_key(k, &key);
+    } else
+#endif
+#if defined(VPSM4_CAPABLE)
+    if (vpsm4_capable()) {
+        vpsm4_set_decrypt_key(k, &key);
+    }
+#endif
 
+    for (i = 0; i != 1000000; ++i) {
+#if defined(VPSM4_EX_CAPABLE)
+        if (vpsm4_ex_capable()) {
+            vpsm4_ex_ecb_encrypt(block, block, sizeof(block), &key, SM4_DECRYPT);
+        } else
+#endif
+#if defined(VPSM4_CAPABLE)
+        if (vpsm4_capable()) {
+            vpsm4_ecb_encrypt(block, block, sizeof(block), &key, SM4_DECRYPT);
+        } else
+#endif
+        {
+        ossl_sm4_decrypt(block, block, &key);
+        }
+    }
     if (!TEST_mem_eq(block, SM4_BLOCK_SIZE, input, SM4_BLOCK_SIZE))
         return 0;
 
@@ -147,14 +194,14 @@ static int test_sm4_cbc(void)
     memcpy(iv, iv_bytes, SM4_BLOCK_SIZE); /* Reset IV for decryption */
 #if defined(VPSM4_EX_CAPABLE)
     if (vpsm4_ex_capable()) {
-	vpsm4_ex_set_decrypt_key(key_bytes, &key);
+	    vpsm4_ex_set_decrypt_key(key_bytes, &key);
         vpsm4_ex_cbc_encrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
                              SM4_DECRYPT);
     } else
 #endif
 #if defined(VPSM4_CAPABLE)
     if (vpsm4_capable()) {
-	vpsm4_set_decrypt_key(key_bytes, &key);
+	    vpsm4_set_decrypt_key(key_bytes, &key);
         vpsm4_cbc_encrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
                           SM4_DECRYPT);
     } else
