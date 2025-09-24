@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[9571] = {
+static const unsigned char so[9631] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1353,9 +1353,18 @@ static const unsigned char so[9571] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x03,0x1E,  /* [ 9538] OBJ_HKDF_SHA512 */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x0D,  /* [ 9549] OBJ_id_smime_ori */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x0D,0x03,  /* [ 9559] OBJ_id_smime_ori_kem */
+    0x67,0x81,0x05,0x05,0x04,                      /* [ 9570] OBJ_tcg_dice */
+    0x67,0x81,0x05,0x05,0x04,0x64,                 /* [ 9575] OBJ_tcg_dice_kp */
+    0x67,0x81,0x05,0x05,0x04,0x64,0x06,            /* [ 9581] OBJ_tcg_dice_kp_identityInit */
+    0x67,0x81,0x05,0x05,0x04,0x64,0x07,            /* [ 9588] OBJ_tcg_dice_kp_identityLoc */
+    0x67,0x81,0x05,0x05,0x04,0x64,0x08,            /* [ 9595] OBJ_tcg_dice_kp_attestInit */
+    0x67,0x81,0x05,0x05,0x04,0x64,0x09,            /* [ 9602] OBJ_tcg_dice_kp_attestLoc */
+    0x67,0x81,0x05,0x05,0x04,0x64,0x0A,            /* [ 9609] OBJ_tcg_dice_kp_assertInit */
+    0x67,0x81,0x05,0x05,0x04,0x64,0x0B,            /* [ 9616] OBJ_tcg_dice_kp_assertLoc */
+    0x67,0x81,0x05,0x05,0x04,0x64,0x0C,            /* [ 9623] OBJ_tcg_dice_kp_eca */
 };
 
-#define NUM_NID 1501
+#define NUM_NID 1510
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2858,9 +2867,18 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-alg-hkdf-with-sha512", "HKDF-SHA512", NID_HKDF_SHA512, 11, &so[9538]},
     {"id-smime-ori", "id-smime-ori", NID_id_smime_ori, 10, &so[9549]},
     {"id-smime-ori-kem", "id-smime-ori-kem", NID_id_smime_ori_kem, 11, &so[9559]},
+    {"tcg-dice", "Trusted Computing Group DICE", NID_tcg_dice, 5, &so[9570]},
+    {"tcg-dice-kp", "TCG DICE Key Purposes", NID_tcg_dice_kp, 6, &so[9575]},
+    {"tcg-dice-kp-identityInit", "Initial Identity", NID_tcg_dice_kp_identityInit, 7, &so[9581]},
+    {"tcg-dice-kp-identityLoc", "Local Identity", NID_tcg_dice_kp_identityLoc, 7, &so[9588]},
+    {"tcg-dice-kp-attestInit", "Initial Attestation", NID_tcg_dice_kp_attestInit, 7, &so[9595]},
+    {"tcg-dice-kp-attestLoc", "Local Attestation", NID_tcg_dice_kp_attestLoc, 7, &so[9602]},
+    {"tcg-dice-kp-assertInit", "Initial Assertion", NID_tcg_dice_kp_assertInit, 7, &so[9609]},
+    {"tcg-dice-kp-assertLoc", "Local Assertion", NID_tcg_dice_kp_assertLoc, 7, &so[9616]},
+    {"tcg-dice-kp-eca", "Embedded Certificate Authority", NID_tcg_dice_kp_eca, 7, &so[9623]},
 };
 
-#define NUM_SN 1492
+#define NUM_SN 1501
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -4220,6 +4238,15 @@ static const unsigned int sn_objs[NUM_SN] = {
     1378,    /* "tcg-ce-virtualPlatformAttestationService" */
     1381,    /* "tcg-ce-virtualPlatformBackupService" */
     1336,    /* "tcg-common" */
+    1501,    /* "tcg-dice" */
+    1502,    /* "tcg-dice-kp" */
+    1507,    /* "tcg-dice-kp-assertInit" */
+    1508,    /* "tcg-dice-kp-assertLoc" */
+    1505,    /* "tcg-dice-kp-attestInit" */
+    1506,    /* "tcg-dice-kp-attestLoc" */
+    1509,    /* "tcg-dice-kp-eca" */
+    1503,    /* "tcg-dice-kp-identityInit" */
+    1504,    /* "tcg-dice-kp-identityLoc" */
     1331,    /* "tcg-kp" */
     1370,    /* "tcg-kp-AIKCertificate" */
     1374,    /* "tcg-kp-AdditionalPlatformAttributeCertificate" */
@@ -4356,7 +4383,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1492
+#define NUM_LN 1501
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4440,6 +4467,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1087,    /* "ED25519" */
     1088,    /* "ED448" */
     1431,    /* "EK Certificate Trait Category" */
+    1509,    /* "Embedded Certificate Authority" */
     1368,    /* "Endorsement Key Certificate" */
      389,    /* "Enterprises" */
     1383,    /* "Ethernet MAC Address" */
@@ -4512,9 +4540,15 @@ static const unsigned int ln_objs[NUM_LN] = {
     1150,    /* "ISO-UA" */
      667,    /* "Independent" */
      665,    /* "Inherit all" */
+    1507,    /* "Initial Assertion" */
+    1505,    /* "Initial Attestation" */
+    1503,    /* "Initial Identity" */
      647,    /* "International Organizations" */
     1388,    /* "Internet Engineering Task Force Registry" */
      142,    /* "Invalidity Date" */
+    1508,    /* "Local Assertion" */
+    1506,    /* "Local Attestation" */
+    1504,    /* "Local Identity" */
      504,    /* "MIME MHS" */
     1457,    /* "ML-DSA-44" */
     1458,    /* "ML-DSA-65" */
@@ -4677,6 +4711,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1358,    /* "TCG Credential Specification" */
     1359,    /* "TCG Credential Type" */
     1362,    /* "TCG Cryptographic Anchors" */
+    1502,    /* "TCG DICE Key Purposes" */
     1367,    /* "TCG NULL Algorithm" */
     1343,    /* "TCG Platform Configuration" */
     1339,    /* "TCG Platform Configuration URI" */
@@ -4715,6 +4750,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1330,    /* "Trusted Computing Group Certificate Extensions" */
     1332,    /* "Trusted Computing Group Certificate Policies" */
     1336,    /* "Trusted Computing Group Common" */
+    1501,    /* "Trusted Computing Group DICE" */
     1331,    /* "Trusted Computing Group Key Purposes" */
     1329,    /* "Trusted Computing Group Platform Classes" */
     1327,    /* "Trusted Computing Group Protocols" */
@@ -5852,7 +5888,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1349
+#define NUM_OBJ 1358
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -6246,6 +6282,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1382,    /* OBJ_tcg_prt_tpmIdProtocol        2 23 133 3 1 */
     1367,    /* OBJ_tcg_algorithm_null           2 23 133 4 1 */
     1336,    /* OBJ_tcg_common                   2 23 133 5 1 */
+    1501,    /* OBJ_tcg_dice                     2 23 133 5 4 */
     1376,    /* OBJ_tcg_ce_relevantCredentials   2 23 133 6 2 */
     1377,    /* OBJ_tcg_ce_relevantManifests     2 23 133 6 3 */
     1378,    /* OBJ_tcg_ce_virtualPlatformAttestationService 2 23 133 6 4 */
@@ -6324,6 +6361,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1342,    /* OBJ_tcg_at_platformSerial        2 23 133 5 1 6 */
     1343,    /* OBJ_tcg_at_platformConfiguration 2 23 133 5 1 7 */
     1344,    /* OBJ_tcg_at_platformIdentifier    2 23 133 5 1 8 */
+    1502,    /* OBJ_tcg_dice_kp                  2 23 133 5 4 100 */
     1387,    /* OBJ_tcg_registry_componentClass_tcg 2 23 133 18 3 1 */
     1388,    /* OBJ_tcg_registry_componentClass_ietf 2 23 133 18 3 2 */
     1389,    /* OBJ_tcg_registry_componentClass_dmtf 2 23 133 18 3 3 */
@@ -6473,6 +6511,13 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1364,    /* OBJ_tcg_at_platformConfiguration_v2 2 23 133 5 1 7 2 */
     1365,    /* OBJ_tcg_at_platformConfiguration_v3 2 23 133 5 1 7 3 */
     1366,    /* OBJ_tcg_at_platformConfigUri_v3  2 23 133 5 1 7 4 */
+    1503,    /* OBJ_tcg_dice_kp_identityInit     2 23 133 5 4 100 6 */
+    1504,    /* OBJ_tcg_dice_kp_identityLoc      2 23 133 5 4 100 7 */
+    1505,    /* OBJ_tcg_dice_kp_attestInit       2 23 133 5 4 100 8 */
+    1506,    /* OBJ_tcg_dice_kp_attestLoc        2 23 133 5 4 100 9 */
+    1507,    /* OBJ_tcg_dice_kp_assertInit       2 23 133 5 4 100 10 */
+    1508,    /* OBJ_tcg_dice_kp_assertLoc        2 23 133 5 4 100 11 */
+    1509,    /* OBJ_tcg_dice_kp_eca              2 23 133 5 4 100 12 */
      754,    /* OBJ_camellia_128_ecb             0 3 4401 5 3 1 9 1 */
      766,    /* OBJ_camellia_128_ofb128          0 3 4401 5 3 1 9 3 */
      757,    /* OBJ_camellia_128_cfb128          0 3 4401 5 3 1 9 4 */
