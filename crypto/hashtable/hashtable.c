@@ -176,6 +176,11 @@ static void internal_free_nop(HT_VALUE *v)
     return;
 }
 
+static uint64_t internal_ht_hash_fn(HT_KEY *key)
+{
+    return ossl_fnv1a_hash(key->keybuf, key->keysize);
+}
+
 HT *ossl_ht_new(const HT_CONFIG *conf)
 {
     HT *new = OPENSSL_zalloc(sizeof(*new));
@@ -222,7 +227,7 @@ HT *ossl_ht_new(const HT_CONFIG *conf)
         goto err;
 
     if (new->config.ht_hash_fn == NULL)
-        new->config.ht_hash_fn = ossl_fnv1a_hash;
+        new->config.ht_hash_fn = internal_ht_hash_fn;
 
     return new;
 
@@ -648,7 +653,7 @@ int ossl_ht_insert(HT *h, HT_KEY *key, HT_VALUE *data, HT_VALUE **olddata)
      * we have to take our lock here to prevent other changes
      * to the bucket list
      */
-    hash = h->config.ht_hash_fn(key->keybuf, key->keysize);
+    hash = h->config.ht_hash_fn(key);
 
     for (i = 0;
          (rc = ossl_ht_insert_locked(h, hash, newval, olddata)) == -1
@@ -677,7 +682,7 @@ HT_VALUE *ossl_ht_get(HT *h, HT_KEY *key)
     uint64_t ehash;
     int lockless_reads = h->config.lockless_reads;
 
-    hash = h->config.ht_hash_fn(key->keybuf, key->keysize);
+    hash = h->config.ht_hash_fn(key);
 
     md = ossl_rcu_deref(&h->md);
     neigh_idx = neigh_idx_start = hash & md->neighborhood_mask;
@@ -726,7 +731,7 @@ int ossl_ht_delete(HT *h, HT_KEY *key)
     if (h->config.lockless_reads)
         return 0;
 
-    hash = h->config.ht_hash_fn(key->keybuf, key->keysize);
+    hash = h->config.ht_hash_fn(key);
 
     neigh_idx = hash & h->md->neighborhood_mask;
     PREFETCH_NEIGHBORHOOD(h->md->neighborhoods[neigh_idx]);

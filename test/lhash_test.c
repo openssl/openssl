@@ -207,9 +207,9 @@ static int int_foreach(HT_VALUE *v, void *arg)
     return 1;
 }
 
-static uint64_t hashtable_hash(uint8_t *key, size_t keylen)
+static uint64_t hashtable_hash(HT_KEY *key)
 {
-    return (uint64_t)(*(uint32_t *)key);
+    return (uint64_t)(*(uint32_t *)key->keybuf);
 }
 
 static int test_int_hashtable(void)

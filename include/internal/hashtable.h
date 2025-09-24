@@ -50,7 +50,7 @@ typedef struct ht_value_list_st {
 typedef struct ht_config_st {
     OSSL_LIB_CTX *ctx;
     void (*ht_free_fn)(HT_VALUE *obj);
-    uint64_t (*ht_hash_fn)(uint8_t *key, size_t keylen);
+    uint64_t (*ht_hash_fn)(HT_KEY *key);
     size_t init_neighborhoods;
     uint32_t collision_check;
     uint32_t lockless_reads;
