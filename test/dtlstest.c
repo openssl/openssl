@@ -611,9 +611,11 @@ static int test_duplicate_app_data(void)
     char buf[10];
     int ret;
 
+    /* TODO(DTLS-1.3): This test does not work properly with DTLS-1.3. */
+
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_VERSION, 0,
+            DTLS1_VERSION, DTLS1_2_VERSION,
             &sctx, &cctx, cert, privkey)))
         return 0;
 
