@@ -20,8 +20,8 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_INFORM, OPT_IN, OPT_OUTFORM, OPT_OUT, OPT_KEYFORM, OPT_KEY,
-    OPT_ISSUER, OPT_LASTUPDATE, OPT_NEXTUPDATE, OPT_FINGERPRINT,
+    OPT_INFORM, OPT_IN, OPT_OUTFORM, OPT_OUT, OPT_KEYFORM, OPT_KEYFILE, OPT_PASSIN,
+    OPT_KEY, OPT_ISSUER, OPT_LASTUPDATE, OPT_NEXTUPDATE, OPT_FINGERPRINT,
     OPT_CRLNUMBER, OPT_BADSIG, OPT_GENDELTA, OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_VERIFY, OPT_DATEOPT, OPT_TEXT, OPT_HASH,
     OPT_HASH_OLD, OPT_NOOUT, OPT_NAMEOPT, OPT_MD, OPT_PROV_ENUM
@@ -35,8 +35,11 @@ const OPTIONS crl_options[] = {
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file - default stdin"},
     {"inform", OPT_INFORM, 'F', "CRL input format (DER or PEM); has no effect"},
-    {"key", OPT_KEY, '<', "CRL signing Private key to use"},
+    {"keyfile", OPT_KEYFILE, 's', "The CA private key"},
     {"keyform", OPT_KEYFORM, 'F', "Private key file format (DER/PEM/P12); has no effect"},
+    {"passin", OPT_PASSIN, 's', "Key and cert input file pass phrase source"},
+    {"key", OPT_KEY, 's',
+     "Key to decrypt the private key or cert files if encrypted. Better use -passin"},
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "output file - default stdout"},
@@ -85,6 +88,7 @@ int crl_main(int argc, char **argv)
     EVP_PKEY *pkey;
     EVP_MD *digest = (EVP_MD *)EVP_sha1();
     char *infile = NULL, *outfile = NULL, *crldiff = NULL, *keyfile = NULL;
+    char *passin = NULL, *passinarg = NULL;
     char *digestname = NULL;
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL, *prog;
     OPTION_CHOICE o;
@@ -93,7 +97,7 @@ int crl_main(int argc, char **argv)
     int ret = 1, num = 0, badsig = 0, fingerprint = 0, crlnumber = 0;
     int text = 0, do_ver = 0, noCAfile = 0, noCApath = 0, noCAstore = 0;
     unsigned long dateopt = ASN1_DTFLGS_RFC822;
-    int i;
+    int i, free_passin = 0;
 #ifndef OPENSSL_NO_MD5
     int hash_old = 0;
 #endif
@@ -121,6 +125,7 @@ int crl_main(int argc, char **argv)
         case OPT_OUTFORM:
             if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
                 goto opthelp;
+            BIO_printf(bio_out, "outform set to %d\n", outformat);
             break;
         case OPT_OUT:
             outfile = opt_arg();
@@ -129,8 +134,14 @@ int crl_main(int argc, char **argv)
             if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyformat))
                 goto opthelp;
             break;
-        case OPT_KEY:
+        case OPT_KEYFILE:
             keyfile = opt_arg();
+            break;
+        case OPT_KEY:
+            passin = opt_arg();
+            break;
+        case OPT_PASSIN:
+            passinarg = opt_arg();
             break;
         case OPT_GENDELTA:
             crldiff = opt_arg();
@@ -265,7 +276,15 @@ int crl_main(int argc, char **argv)
         newcrl = load_crl(crldiff, informat, 0, "other CRL");
         if (!newcrl)
             goto end;
-        pkey = load_key(keyfile, keyformat, 0, NULL, NULL, "CRL signing key");
+        if (passin == NULL) {
+            free_passin = 1;
+            if (!app_passwd(passinarg, NULL, &passin, NULL)) {
+                BIO_printf(bio_err, "Error getting password\n");
+                goto end;
+            }
+        }
+        pkey = load_key(keyfile, keyformat, 0, passin, NULL, "CRL signing key");
+        cleanse(passin);
         if (pkey == NULL) {
             X509_CRL_free(newcrl);
             goto end;
@@ -388,6 +407,9 @@ int crl_main(int argc, char **argv)
     if (ret != 0)
         ERR_print_errors(bio_err);
     BIO_free_all(out);
+    cleanse(passin);
+    if (free_passin)
+        OPENSSL_free(passin);
     EVP_MD_free(digest);
     X509_CRL_free(x);
     X509_STORE_CTX_free(ctx);

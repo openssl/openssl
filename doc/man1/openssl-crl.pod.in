@@ -11,8 +11,10 @@ B<openssl> B<crl>
 [B<-help>]
 [B<-inform> B<DER>|B<PEM>]
 [B<-outform> B<DER>|B<PEM>]
-[B<-key> I<filename>]
+[B<-keyfile> I<filename>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>]
+[B<-key> I<arg>]
+[B<-passin> I<arg>]
 [B<-dateopt>]
 [B<-text>]
 [B<-in> I<filename>]
@@ -54,7 +56,7 @@ See L<openssl-format-options(1)> for details.
 The CRL output format; the default is B<PEM>.
 See L<openssl-format-options(1)> for details.
 
-=item B<-key> I<filename>
+=item B<-keyfile> I<filename>
 
 The private key to be used to sign the CRL.
 
@@ -62,6 +64,22 @@ The private key to be used to sign the CRL.
 
 The format of the private key file; unspecified by default.
 See L<openssl-format-options(1)> for details.
+
+=item B<-key> I<password>
+
+=for openssl foreign manual ps(1)
+
+The password used to encrypt the private key. Since on some
+systems the command line arguments are visible (e.g., when using
+L<ps(1)> on Unix),
+this option should be used with caution.
+Better use B<-passin>.
+
+=item B<-passin> I<arg>
+
+The key password source for key files and certificate PKCS#12 files.
+For more information about the format of B<arg>
+see L<openssl-passphrase-options(1)>.
 
 =item B<-in> I<filename>
 
