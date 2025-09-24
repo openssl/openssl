@@ -86,11 +86,9 @@ sub run_tests
         #        HRR and the SH
         $proxy->clear();
         if (disabled("ec")) {
-            $proxy->clientflags("-curves DEFAULT:-?X25519MLKEM768");
             $proxy->serverflags("-curves ffdhe3072");
         }
         else {
-            $proxy->clientflags("-curves P-256");
             $proxy->serverflags("-curves P-256");
         }
         $testtype = CHANGE_HRR_CIPHERSUITE;
@@ -105,11 +103,9 @@ sub run_tests
     #        we end up selecting a different ciphersuite between HRR and the SH
     $proxy->clear();
     if (disabled("ec")) {
-        $proxy->clientflags("-curves ffdhe3072");
         $proxy->serverflags("-curves ffdhe3072");
     }
     else {
-        $proxy->clientflags("-curves P-384");
         $proxy->serverflags("-curves P-384");
     }
     $proxy->ciphersuitess("TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
@@ -160,13 +156,9 @@ sub run_tests
     #        extension
     $fatal_alert = 0;
     $proxy->clear();
-
     if (disabled("ec")) {
-        $proxy->clientflags("-curves ffdhe3072");
         $proxy->serverflags("-curves ffdhe3072");
-    }
-    else {
-        $proxy->clientflags("-curves P-384");
+    } else {
         $proxy->serverflags("-curves P-384");
     }
     $testtype = NO_SUPPORTED_VERSIONS;
