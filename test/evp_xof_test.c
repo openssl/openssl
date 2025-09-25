@@ -468,7 +468,7 @@ static int do_shake_squeeze_dup_test(int tstid, const char *alg,
     EVP_MD_CTX *cur, *ctx = NULL, *dupctx = NULL;
     unsigned char *out = NULL;
     size_t i = 0, sz = 10;
-    size_t dupoffset = dupoffset_tests[tstid];
+    size_t dupoffset = dupoffset_tests[tstid&3];
 
     if (!TEST_ptr(ctx = shake_setup(alg)))
         return 0;
@@ -501,6 +501,8 @@ err:
     return ret;
 }
 
+static const char *sha3_algs[] = { "SHAKE256", "CSHAKE256", "TUPLEHASH256" };
+
 /* Test that the internal state can be copied */
 static int shake_squeeze_dup_test(int tstid)
 {
@@ -508,7 +510,7 @@ static int shake_squeeze_dup_test(int tstid)
     EVP_MD_CTX *ctx = NULL;
     unsigned char msg[16];
     unsigned char out[1000];
-    const char *alg = ((tstid & 1) == 0) ? "SHAKE256" : "CSHAKE256";
+    const char *alg = sha3_algs[tstid];
 
     if (!TEST_int_gt(RAND_bytes(msg, sizeof(msg)), 0)
         || !TEST_ptr(ctx = shake_setup(alg))
@@ -530,7 +532,7 @@ static int shake_squeeze_no_absorb_test(int tstid)
     EVP_MD_CTX *ctx = NULL;
     unsigned char out[1000];
     unsigned char out2[1000];
-    const char *alg = ((tstid == 0) ? "SHAKE128" : "CSHAKE128");
+    const char *alg = sha3_algs[tstid];
 
     if (!TEST_ptr(ctx = shake_setup(alg))
         || !TEST_true(EVP_DigestFinalXOF(ctx, out, sizeof(out))))
@@ -562,16 +564,59 @@ static int xof_fail_test(void)
     return ret;
 }
 
+#include "tuplehash.inc"
+
+static int tuplehash_tuple_test(int tstid)
+{
+    int i, ret = 0;
+    const TUPLEHASH_TEST *tst = tuplehash_tests + tstid;
+    OSSL_PARAM params[4];
+    EVP_MD_CTX *ctx = NULL;
+    uint8_t *out = NULL;
+    size_t sz = tst->outlen;
+    int xof = tst->xof;
+
+    if (!TEST_ptr(ctx = shake_setup(tst->alg)))
+        return 0;
+    if (!TEST_ptr(out = OPENSSL_zalloc(tst->outlen)))
+        goto err;
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_S, tst->custom, 0);
+    params[1] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &sz);
+    params[2] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_XOF, &xof);
+    params[3] = OSSL_PARAM_construct_end();
+    if (!EVP_MD_CTX_set_params(ctx, params))
+        goto err;
+    /* Apply the list of tuples */
+    for (i = 0; i < tst->num_tuples; ++i) {
+        if (!TEST_true(EVP_DigestUpdate(ctx, tst->tuples[i].in,
+                                        tst->tuples[i].inlen)))
+            goto err;
+    }
+    if (!TEST_true(EVP_DigestFinalXOF(ctx, out, tst->outlen))
+        || !TEST_mem_eq(out, tst->outlen, tst->out, tst->outlen)
+        /* Test that a second call to EVP_DigestFinalXOF fails */
+        || !TEST_false(EVP_DigestFinalXOF(ctx, out, sizeof(out)))
+        /* Test that a call to EVP_DigestSqueeze fails */
+        || !TEST_false(EVP_DigestSqueeze(ctx, out, sizeof(out))))
+        goto err;
+    ret = 1;
+err:
+    OPENSSL_free(out);
+    EVP_MD_CTX_free(ctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(shake_kat_test, 2);
     ADD_ALL_TESTS(shake_kat_digestfinal_test, 2);
     ADD_ALL_TESTS(shake_kat_digestfinal_xoflen_test, 2);
     ADD_ALL_TESTS(shake_absorb_test, 2);
-    ADD_ALL_TESTS(shake_squeeze_no_absorb_test, 2);
+    ADD_ALL_TESTS(shake_squeeze_no_absorb_test, 3);
     ADD_ALL_TESTS(shake_squeeze_kat_test, OSSL_NELEM(stride_tests));
     ADD_ALL_TESTS(shake_squeeze_large_test, OSSL_NELEM(stride_tests));
     ADD_ALL_TESTS(shake_squeeze_dup_test, OSSL_NELEM(dupoffset_tests));
+    ADD_ALL_TESTS(tuplehash_tuple_test, OSSL_NELEM(tuplehash_tests));
     ADD_TEST(xof_fail_test);
     return 1;
 }
