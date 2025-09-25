@@ -229,6 +229,10 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
         return 0;
     }
     if (ciph) {
+        if (cms->d.encryptedData != NULL) {
+            M_ASN1_free_of(cms->d.encryptedData, CMS_EncryptedData);
+            cms->d.encryptedData = NULL;
+        }
         cms->d.encryptedData = M_ASN1_new_of(CMS_EncryptedData);
         if (!cms->d.encryptedData) {
             ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
