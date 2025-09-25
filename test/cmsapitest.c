@@ -389,7 +389,7 @@ static int test_CMS_set1_key_mem_leak()
 {
     CMS_ContentInfo *cms;
     unsigned char key[32] = {0};
-    int i, ret = 0;
+    int ret = 0;
 
     if (!TEST_ptr(cms = CMS_ContentInfo_new()))
         return 0;
