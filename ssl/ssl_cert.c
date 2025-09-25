@@ -436,8 +436,8 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     SSL_CTX *sctx;
 #ifndef OPENSSL_NO_OCSP
     SSL *ssl;
-#endif
     const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+#endif
 
     /* Something must be passed in */
     if ((sk == NULL || sk_X509_num(sk) == 0) && rpk == NULL)
