@@ -547,7 +547,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
                  * lower level transport
                  */
                 || (lbitisset ? !PACKET_get_net_2(&dtlsrecord, &length)
-                              : (length = TLS_BUFFER_get_len(&rl->rbuf)) > 0)) {
+                              : (length = (unsigned int)TLS_BUFFER_get_len(&rl->rbuf)) > 0)) {
                 rr->length = 0;
                 rl->packet_length = 0;
                 goto again;
