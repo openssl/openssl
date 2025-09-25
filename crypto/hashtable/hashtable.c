@@ -71,7 +71,6 @@
 # include <sanitizer/tsan_interface.h>
 #endif
 
-#include "internal/numbers.h"
 /*
  * When we do a lookup/insert/delete, there is a high likelihood
  * that we will iterate over at least part of the neighborhood list
@@ -188,10 +187,14 @@ HT *ossl_ht_new(const HT_CONFIG *conf)
     if (new == NULL)
         return NULL;
 
-    new->atomic_lock = CRYPTO_THREAD_lock_new();
-    if (new->atomic_lock == NULL)
+    if (conf->lockless_reads && conf->no_rcu)
         goto err;
 
+    if (!conf->no_rcu) {
+        new->atomic_lock = CRYPTO_THREAD_lock_new();
+        if (new->atomic_lock == NULL)
+            goto err;
+    }
     memcpy(&new->config, conf, sizeof(*conf));
 
     if (new->config.init_neighborhoods != 0) {
@@ -222,18 +225,21 @@ HT *ossl_ht_new(const HT_CONFIG *conf)
         goto err;
     new->md->neighborhood_mask = new->wpd.neighborhood_len - 1;
 
-    new->lock = ossl_rcu_lock_new(1, conf->ctx);
-    if (new->lock == NULL)
-        goto err;
-
+    if (!conf->no_rcu) {
+        new->lock = ossl_rcu_lock_new(1, conf->ctx);
+        if (new->lock == NULL)
+            goto err;
+    }
     if (new->config.ht_hash_fn == NULL)
         new->config.ht_hash_fn = internal_ht_hash_fn;
 
     return new;
 
 err:
-    CRYPTO_THREAD_lock_free(new->atomic_lock);
-    ossl_rcu_lock_free(new->lock);
+    if (!conf->no_rcu) {
+        CRYPTO_THREAD_lock_free(new->atomic_lock);
+        ossl_rcu_lock_free(new->lock);
+    }
     if (new->md != NULL)
         OPENSSL_free(new->md->neighborhood_ptr_to_free);
     OPENSSL_free(new->md);
@@ -243,16 +249,25 @@ err:
 
 int ossl_ht_read_lock(HT *htable)
 {
+    if (ossl_ht_get_cfg_no_rcu(htable))
+        return 1;
+
     return ossl_rcu_read_lock(htable->lock);
 }
 
 void ossl_ht_read_unlock(HT *htable)
 {
+    if (ossl_ht_get_cfg_no_rcu(htable))
+        return;
+
     ossl_rcu_read_unlock(htable->lock);
 }
 
 void ossl_ht_write_lock(HT *htable)
 {
+    if (ossl_ht_get_cfg_no_rcu(htable))
+        return;
+
     ossl_rcu_write_lock(htable->lock);
     htable->wpd.need_sync = 0;
 }
@@ -260,6 +275,9 @@ void ossl_ht_write_lock(HT *htable)
 void ossl_ht_write_unlock(HT *htable)
 {
     int need_sync = htable->wpd.need_sync;
+
+    if (ossl_ht_get_cfg_no_rcu(htable))
+        return;
 
     htable->wpd.need_sync = 0;
     ossl_rcu_write_unlock(htable->lock);
@@ -308,15 +326,25 @@ static int ossl_ht_flush_internal(HT *h)
     newmd->neighborhood_mask = DEFAULT_NEIGH_LEN - 1;
 
     /* Swap the old and new mutable data sets */
-    oldmd = ossl_rcu_deref(&h->md);
-    ossl_rcu_assign_ptr(&h->md, &newmd);
+    if (!ossl_ht_get_cfg_no_rcu(h)) {
+        oldmd = ossl_rcu_deref(&h->md);
+        ossl_rcu_assign_ptr(&h->md, &newmd);
+    } else {
+        oldmd = h->md;
+        h->md = newmd;
+    }
 
     /* Set the number of entries to 0 */
     h->wpd.value_count = 0;
     h->wpd.neighborhood_len = DEFAULT_NEIGH_LEN;
 
-    ossl_rcu_call(h->lock, free_oldmd, oldmd);
+    if (!ossl_ht_get_cfg_no_rcu(h)) {
+        ossl_rcu_call(h->lock, free_oldmd, oldmd);
+    } else {
+        free_oldmd(oldmd);
+    }
     h->wpd.need_sync = 1;
+
     return 1;
 }
 
@@ -334,8 +362,10 @@ void ossl_ht_free(HT *h)
     ossl_ht_flush_internal(h);
     ossl_ht_write_unlock(h);
     /* Freeing the lock does a final sync for us */
-    CRYPTO_THREAD_lock_free(h->atomic_lock);
-    ossl_rcu_lock_free(h->lock);
+    if (!ossl_ht_get_cfg_no_rcu(h)) {
+        CRYPTO_THREAD_lock_free(h->atomic_lock);
+        ossl_rcu_lock_free(h->lock);
+    }
     OPENSSL_free(h->md->neighborhood_ptr_to_free);
     OPENSSL_free(h->md);
     OPENSSL_free(h);
@@ -492,9 +522,14 @@ static int grow_hashtable(HT *h, size_t oldsize)
     /*
      * Now we replace the old mutable data with the new
      */
-    ossl_rcu_assign_ptr(&h->md, &newmd);
-    ossl_rcu_call(h->lock, free_old_neigh_table, oldmd);
-    h->wpd.need_sync = 1;
+    if (!ossl_ht_get_cfg_no_rcu(h)) {
+        ossl_rcu_assign_ptr(&h->md, &newmd);
+        ossl_rcu_call(h->lock, free_old_neigh_table, oldmd);
+        h->wpd.need_sync = 1;
+    } else {
+        h->md = newmd;
+        free_old_neigh_table(oldmd);
+    }
     /*
      * And we're done
      */
@@ -552,7 +587,10 @@ static int ossl_ht_insert_locked(HT *h, uint64_t hash,
         PREFETCH_NEIGHBORHOOD(md->neighborhoods[neigh_idx]);
 
         for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
-            ival = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
+            if (!ossl_ht_get_cfg_no_rcu(h))
+                ival = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
+            else
+                ival = (HT_VALUE *)md->neighborhoods[neigh_idx].entries[j].value;
             if (ival == NULL) {
                 empty_idx = j;
                 /* lockless_reads implies no deletion, we can break out */
@@ -560,9 +598,13 @@ static int ossl_ht_insert_locked(HT *h, uint64_t hash,
                     goto not_found;
                 continue;
             }
-            if (!CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
-                                    &ihash, h->atomic_lock))
-                return 0;
+            if (!ossl_ht_get_cfg_no_rcu(h)) {
+                if (!CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
+                                        &ihash, h->atomic_lock))
+                    return 0;
+            } else {
+                ihash = md->neighborhoods[neigh_idx].entries[j].hash;
+            }
             if (compare_hash(hash, ihash) && match_key(&newval->value.key,
                                                        &ival->key)) {
                 if (olddata == NULL) {
@@ -570,13 +612,20 @@ static int ossl_ht_insert_locked(HT *h, uint64_t hash,
                     return 0;
                 }
                 /* Do a replacement */
-                if (!CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[j].hash,
-                                         hash, h->atomic_lock))
-                    return 0;
-                *olddata = (HT_VALUE *)md->neighborhoods[neigh_idx].entries[j].value;
-                ossl_rcu_assign_ptr(&md->neighborhoods[neigh_idx].entries[j].value,
-                                    &newval);
-                ossl_rcu_call(h->lock, free_old_ht_value, *olddata);
+                if (!ossl_ht_get_cfg_no_rcu(h)) {
+                    if (!CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[j].hash,
+                                             hash, h->atomic_lock))
+                        return 0;
+                    *olddata = (HT_VALUE *)md->neighborhoods[neigh_idx].entries[j].value;
+                    ossl_rcu_assign_ptr(&md->neighborhoods[neigh_idx].entries[j].value,
+                                        &newval);
+                    ossl_rcu_call(h->lock, free_old_ht_value, *olddata);
+                } else {
+                    md->neighborhoods[neigh_idx].entries[j].hash = hash;
+                    *olddata = (HT_VALUE *)md->neighborhoods[neigh_idx].entries[j].value;
+                    md->neighborhoods[neigh_idx].entries[j].value = newval;
+                    free_old_ht_value(*olddata);
+                }
                 h->wpd.need_sync = 1;
                 return 1;
             }
@@ -591,12 +640,17 @@ static int ossl_ht_insert_locked(HT *h, uint64_t hash,
     /* If we get to here, its just an insert */
     if (empty_idx == SIZE_MAX)
         return -1; /* out of space */
-    if (!CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[empty_idx].hash,
-                             hash, h->atomic_lock))
-        return 0;
+    if (!ossl_ht_get_cfg_no_rcu(h)) {
+        if (!CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[empty_idx].hash,
+                                 hash, h->atomic_lock))
+            return 0;
+        ossl_rcu_assign_ptr(&md->neighborhoods[neigh_idx].entries[empty_idx].value,
+                            &newval);
+    } else {
+        md->neighborhoods[neigh_idx].entries[empty_idx].hash = hash;
+        md->neighborhoods[neigh_idx].entries[empty_idx].value = newval;
+    }
     h->wpd.value_count++;
-    ossl_rcu_assign_ptr(&md->neighborhoods[neigh_idx].entries[empty_idx].value,
-                        &newval);
     return 1;
 }
 
@@ -684,21 +738,31 @@ HT_VALUE *ossl_ht_get(HT *h, HT_KEY *key)
 
     hash = h->config.ht_hash_fn(key);
 
-    md = ossl_rcu_deref(&h->md);
+    if (!ossl_ht_get_cfg_no_rcu(h))
+        md = ossl_rcu_deref(&h->md);
+    else
+        md = h->md;
     neigh_idx = neigh_idx_start = hash & md->neighborhood_mask;
     do {
         PREFETCH_NEIGHBORHOOD(md->neighborhoods[neigh_idx]);
         for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
-            ival = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
+            if (!ossl_ht_get_cfg_no_rcu(h))
+                ival = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
+            else
+                ival = md->neighborhoods[neigh_idx].entries[j].value;
             if (ival == NULL) {
                 if (lockless_reads)
                     /* lockless_reads implies no deletion, we can break out */
                     return NULL;
                 continue;
             }
-            if (!CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
-                                    &ehash, h->atomic_lock))
-                return NULL;
+            if (!ossl_ht_get_cfg_no_rcu(h)) {
+                if (!CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
+                                        &ehash, h->atomic_lock))
+                    return NULL;
+            } else {
+                ehash = md->neighborhoods[neigh_idx].entries[j].hash;
+            }
             if (compare_hash(hash, ehash) && match_key(&ival->value.key, key))
                 return (HT_VALUE *)ival;
         }
@@ -741,19 +805,32 @@ int ossl_ht_delete(HT *h, HT_KEY *key)
             continue;
         if (compare_hash(hash, h->md->neighborhoods[neigh_idx].entries[j].hash)
             && match_key(key, &v->value.key)) {
-            if (!CRYPTO_atomic_store(&h->md->neighborhoods[neigh_idx].entries[j].hash,
-                                     0, h->atomic_lock))
-                break;
+            if (ossl_ht_get_cfg_no_rcu(h)) {
+                if (!CRYPTO_atomic_store(&h->md->neighborhoods[neigh_idx].entries[j].hash,
+                                         0, h->atomic_lock))
+                    break;
+                ossl_rcu_assign_ptr(&h->md->neighborhoods[neigh_idx].entries[j].value, &nv);
+            } else {
+                h->md->neighborhoods[neigh_idx].entries[j].hash = 0;
+                h->md->neighborhoods[neigh_idx].entries[j].value = NULL;
+            }
             h->wpd.value_count--;
-            ossl_rcu_assign_ptr(&h->md->neighborhoods[neigh_idx].entries[j].value,
-                                &nv);
             rc = 1;
             break;
         }
     }
     if (rc == 1) {
-        ossl_rcu_call(h->lock, free_old_entry, v);
+        if (!ossl_ht_get_cfg_no_rcu(h))
+            ossl_rcu_call(h->lock, free_old_entry, v);
+        else
+            free_old_entry(v);
         h->wpd.need_sync = 1;
     }
+
     return rc;
+}
+
+int ossl_ht_get_cfg_no_rcu(HT *htable)
+{
+    return htable->config.no_rcu;
 }
