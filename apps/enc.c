@@ -731,19 +731,14 @@ int enc_main(int argc, char **argv)
                 goto end;
             }
         } else {
-            char *storepass = NULL;
-
-            if (!app_passwd(storepassarg, NULL, &storepass, NULL)) {
-                BIO_printf(bio_err,
-                    "Error getting store password from 'storepass' argument\n");
-            }
-            mgmt = EVP_SKEYMGMT_fetch(app_get0_libctx(),
-                skeymgmt != NULL ? skeymgmt : EVP_CIPHER_name(cipher),
-                app_get0_propq());
-            if (mgmt == NULL)
-                goto end;
-
             if (skeyuri != NULL) {
+                char *storepass = NULL;
+
+                if (!app_passwd(storepassarg, NULL, &storepass, NULL)) {
+                    BIO_printf(bio_err,
+                        "Error getting store password from 'storepass' argument\n");
+                }
+
                 skey = load_skey(skeyuri, FORMAT_UNDEF, 0, storepass, 0);
                 OPENSSL_free(storepass);
                 if (skey == NULL) {

@@ -856,14 +856,14 @@ static const char *format2string(int format)
         SET_EXPECT(val);       \
     }
 /* Provide (error msg) text for some of the credential types to be loaded. */
-#define FAIL_NAME                                                             \
-    (ppkey != NULL ? "private key" : ppubkey != NULL ? "public key"           \
-            : pparams != NULL                        ? "key parameters"       \
-            : pcert != NULL                          ? "certificate"          \
-            : pcerts != NULL                         ? "certificates"         \
-            : pcrl != NULL                           ? "CRL"                  \
-            : pcrls != NULL                          ? "CRLs"                 \
-            : pskey != NULL                          ? "symmetric key" : NULL \
+#define FAIL_NAME                                                       \
+    (ppkey != NULL ? "private key" : ppubkey != NULL ? "public key"     \
+            : pparams != NULL                        ? "key parameters" \
+            : pcert != NULL                          ? "certificate"    \
+            : pcerts != NULL                         ? "certificates"   \
+            : pcrl != NULL                           ? "CRL"            \
+            : pcrls != NULL                          ? "CRLs"           \
+            : pskey != NULL                          ? "symmetric key"  \
                                                      : NULL)
 /*
  * Load those types of credentials for which the result pointer is not NULL.
