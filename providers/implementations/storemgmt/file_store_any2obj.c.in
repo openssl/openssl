@@ -327,7 +327,7 @@ static int raw2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         goto err;
 
     if ((mem = BUF_MEM_new()) == NULL
-        || !BUF_MEM_grow(mem, max_len)) {
+        || BUF_MEM_grow(mem, max_len) == 0) {
         ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         goto err;
     }
