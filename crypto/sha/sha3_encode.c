@@ -68,6 +68,30 @@ int ossl_sp800_185_right_encode(unsigned char *out,
     return 1;
 }
 
+int ossl_sp800_185_encode_string_header(unsigned char *out,
+    size_t out_max_len, size_t *out_len,
+    size_t in_len)
+{
+    size_t i, bits, len, sz;
+
+    bits = 8 * in_len;
+    len = get_encode_size(bits);
+    sz = 1 + len;
+
+    if (sz > out_max_len) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_LENGTH_TOO_LARGE);
+        return 0;
+    }
+
+    out[0] = (unsigned char)len;
+    for (i = len; i > 0; --i) {
+        out[i] = (bits & 0xFF);
+        bits >>= 8;
+    }
+    *out_len = sz;
+    return 1;
+}
+
 /*
  * Encodes a string with a left encoded length added. Note that the
  * in_len is converted to bits (* 8).
@@ -82,24 +106,18 @@ int ossl_sp800_185_encode_string(unsigned char *out,
     if (in == NULL) {
         *out_len = 0;
     } else {
-        size_t i, bits, len, sz;
+        if (!ossl_sp800_185_encode_string_header(out, out_max_len, out_len, in_len))
+            return 0;
+        size_t sz;
 
-        bits = 8 * in_len;
-        len = get_encode_size(bits);
-        sz = 1 + len + in_len;
-
+        sz = *out_len + in_len;
         if (sz > out_max_len) {
             ERR_raise(ERR_LIB_PROV, PROV_R_LENGTH_TOO_LARGE);
             return 0;
         }
-
-        out[0] = (unsigned char)len;
-        for (i = len; i > 0; --i) {
-            out[i] = (bits & 0xFF);
-            bits >>= 8;
-        }
-        memcpy(out + len + 1, in, in_len);
-        *out_len = sz;
+        out += *out_len;
+        *out_len += in_len;
+        memcpy(out, in, in_len);
     }
     return 1;
 }
