@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_MD-SHAKE, EVP_MD-CSHAKE, EVP_MD-CSHAKE-KECCAK,
+EVP_MD-SHAKE, EVP_MD-CSHAKE, EVP_MD-TUPLEHASH, EVP_MD-CSHAKE-KECCAK,
 - The SHAKE / KECCAK family EVP_MD implementations
 
 =head1 DESCRIPTION
@@ -10,9 +10,12 @@ EVP_MD-SHAKE, EVP_MD-CSHAKE, EVP_MD-CSHAKE-KECCAK,
 Support for computing SHAKE, CSHAKE or CSHAKE-KECCAK digests through the
 B<EVP_MD> API.
 
-CSHAKE is an Extendable Output Function (XOF), that allows custom strings
-"n" and "s". If these strings are both empty then it is identical to SHAKE,
-otherwise it uses CSHAKE-KECCAK.
+CSHAKE is an Extendable Output Function (XOF), that allows strings
+for the function name "n" and customization string "s". If these strings are
+both empty then it is identical to SHAKE, otherwise it uses CSHAKE-KECCAK.
+
+TUPLEHASH is an Extendable Output Function (XOF), that can hash a tuple of
+zero or more input strings. It uses CSHAKE internally.
 
 CSHAKE-KECCAK is an Extendable Output Function (XOF), with a definition
 similar to SHAKE but appends 2 extra zero bits. It is used internally by CSHAKE.
@@ -39,6 +42,14 @@ Known names are "CSHAKE-128" and "CSHAKE128".
 =item CSHAKE-256
 
 Known names are "CSHAKE-256" and "CSHAKE256".
+
+=item TUPLEHASH-128
+
+Known names are "TUPLEHASH-128" and "TUPLEHASH128".
+
+=item TUPLEHASH-256
+
+Known names are "TUPLEHASH-256" and "TUPLEHASH256".
 
 =item CSHAKE-KECCAK-128
 
@@ -67,18 +78,14 @@ This implementation supports the following L<OSSL_PARAM(3)> entries:
 Sets or Gets the digest length for extendable output functions.
 The length of the "xoflen" parameter should not exceed that of a B<size_t>.
 
-The SHAKE-128 and SHAKE-256 implementations do not have any default digest
-length.
-
-The CSHAKE-128 and CSHAKE-256 implementations have default digest lengths of
-32 and 64 bytes respectively (which correspond to security strengths of 128 and
-256 bits respectively).
-
-For SHAKE this parameter must be set before calling either EVP_DigestFinal_ex()
-or EVP_DigestFinal(), since these functions were not designed to handle
-variable length output. If it is not set CSHAKE will use the default value.
-It is recommended to either use EVP_DigestSqueeze() or
+The SHAKE-128 and SHAKE-256 implementations do not have a default digest length,
+so this parameter MUST be set before calling either EVP_DigestFinal_ex()
+or EVP_DigestFinal(). It is recommended to either use EVP_DigestSqueeze() or
 EVP_DigestFinalXOF() instead.
+
+The CSHAKE-128, CSHAKE-256, TUPLEHASH-128 and TUPLEHASH-256 implementations have
+default digest lengths of 32, 64, 32 and 64 bytes respectively
+(which correspond to security strengths of 128, 256, 128 and 256 bits respectively).
 
 =item "size" (B<OSSL_DIGEST_PARAM_SIZE>) <unsigned integer>
 
@@ -91,14 +98,22 @@ Sets the function name string used by CSHAKE that can be set to one of
 
 =item "customization" (B<OSSL_DIGEST_PARAM_CUSTOMIZATION>)<UTF8 string>
 
-Sets a customisation string used by CSHAKE.
+Sets a customisation string used by CSHAKE and TUPLEHASH.
 It is an optional value with a length of at most 512 bytes, and is
 empty by default.
 
 =item "properties" (B<OSSL_DIGEST_PARAM_PROPERTIES>) <UTF8 string>
 
-An optional property used internally by CSHAKE when fetching either
-SHAKE or KECCAK algorithms.
+An optional property used internally by CSHAKE and TUPLEHASH when fetching either
+SHAKE, KECCAK or CSHAKE algorithms.
+
+=item "xof", (B<OSSL_DIGEST_PARAM_XOF>) <integer>
+
+Sets the XOF mode for TupleHash. Setting this to a non zero value indicates that
+the output can be extended to any desired length, (i.e. the output length is not
+known until after outputs begin to be produced). The default value is zero.
+
+See NIST SP800-185 Section 5.3.1 'TupleHash With Arbitrary-Length Output'.
 
 =back
 
@@ -106,14 +121,84 @@ See L<EVP_DigestInit(3)/PARAMETERS> for further information related to parameter
 
 =head1 NOTES
 
-For SHAKE-128 and CSHAKE-128, to ensure the maximum security strength of
-128 bits, the output length passed to EVP_DigestFinalXOF() should be at least 32.
+For SHAKE-128, CSHAKE-128 and TUPLEHASH-128, to ensure the maximum security
+strength of 128 bits, the output length passed to EVP_DigestFinalXOF() should be
+at least 32.
 
-For SHAKE-256 and CSHAKE-256, to ensure the maximum security strength of
-256 bits, the output length passed to EVP_DigestFinalXOF() should be at least 64.
+For SHAKE-256, CSHAKE-256 and TUPLEHASH-256, to ensure the maximum security
+strength of 256 bits, the output length passed to EVP_DigestFinalXOF() should be
+at least 64.
 
 The SHA3 specification allows bit strings to be used, but OpenSSL only allows
 byte strings for inputs, and outputs.
+
+=head1 EXAMPLES
+
+The following examples do not check for errors.
+
+=head2 TupleHash
+
+This example hashes 3 input tuples using the default output size for TUPLEHASH-256
+
+ EVP_MD_CTX *mdctx;
+ EVP_MD *md;
+ OSSL_PARAM params[3], *p = params;
+ /* The default output size is 64 bytes for TUPLEHASH-256 */
+ uint8_t out[64];
+ size_t xoflen = sizeof(out);
+ unsigned int outlen = (unsigned int)xoflen;
+ uint8_t tuple1[] = { 1, 2, 3, 4, 5 };
+ uint8_t tuple3[] = { 6, 7, 8, 9, 10 };
+
+ mdctx = EVP_MD_CTX_new();
+ md = EVP_MD_fetch(NULL, "TUPLEHASH-256", NULL);
+
+ *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_CUSTOMIZATION,
+     "MyCustomString", 0);
+ /*
+  * Optionally set OSSL_DIGEST_PARAM_XOFLEN if we want a size larger than the default
+  * For this example it does not need to be set.
+  */
+ *p++ = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &xoflen);
+ *p = OSSL_PARAM_construct_end();
+ EVP_DigestInit_ex2(mdctx, md, params);
+
+ /* Hash some input Tuples */
+ EVP_DigestUpdate(mdctx, tuple1, sizeof(tuple1));
+ /* NULL is a valid tuple */
+ EVP_DigestUpdate(mdctx, NULL, 0);
+ EVP_DigestUpdate(mdctx, tuple3, sizeof(tuple3));
+
+ /* EVP_DigestSqueeze() could also be used here instead of EVP_DigestFinalXOF */
+ EVP_DigestFinal(mdctx, out, &outlen);
+
+This example hashes 3 input tuples using an arbitrary length XOF
+
+ int xof = 1;
+ EVP_MD_CTX *mdctx = NULL;
+ EVP_MD *md = NULL;
+ OSSL_PARAM params[3], *p = params;
+ uint8_t out[128];
+ uint8_t tuple1[] = { 1, 2, 3, 4, 5 };
+ uint8_t tuple3[] = { 6, 7, 8, 9, 10 };
+
+ mdctx = EVP_MD_CTX_new();
+ md = EVP_MD_fetch(NULL, "TUPLEHASH-256", NULL);
+ /* Set 'XOF' mode if we dont know what the output size will be */
+ *p++ = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_XOF, &xof);
+ *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_CUSTOMIZATION,
+     "MyCustomString", 0);
+ *p = OSSL_PARAM_construct_end();
+ EVP_DigestInit_ex2(mdctx, md, params);
+
+ /* Hash some input Tuples */
+ EVP_DigestUpdate(mdctx, tuple1, sizeof(tuple1));
+ /* NULL is a valid input tuple */
+ EVP_DigestUpdate(mdctx, NULL, 0);
+ EVP_DigestUpdate(mdctx, tuple3, sizeof(tuple3));
+ /* At this point we could also use EVP_DigestFinalXOF() instead of EVP_DigestSqueeze */
+ EVP_DigestSqueeze(mdctx, out1, sizeof(out1));
+ EVP_DigestSqueeze(mdctx, out2, sizeof(out2));
 
 =head1 CONFORMING TO
 
@@ -124,6 +209,8 @@ byte strings for inputs, and outputs.
 =item SP800-185 Section 3 cSHAKE
 
 =item SP800-185 Section 4 KMAC
+
+=item SP800-185 Section 4 TUPLEHASH
 
 =back
 
@@ -136,11 +223,11 @@ L<EVP_MD_CTX_set_params(3)>, L<provider-digest(7)>, L<OSSL_PROVIDER-default(7)>
 Since OpenSSL 3.4 the SHAKE-128 and SHAKE-256 implementations have no default
 digest length.
 
-CSHAKE-128 and CSHAKE-256 were added in OpenSSL 4.0
+CSHAKE-128, CSHAKE-256, TUPLEHASH-128 and TUPLEHASH-256 were added in OpenSSL 4.0
 
 =head1 COPYRIGHT
 
-Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

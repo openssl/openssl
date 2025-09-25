@@ -298,9 +298,9 @@ static int fips_self_test(void *provctx)
         { PROV_NAMES_SHAKE_128, FIPS_DEFAULT_PROPERTIES, ossl_shake_128_functions },   \
         { PROV_NAMES_SHAKE_256, FIPS_DEFAULT_PROPERTIES, ossl_shake_256_functions },   \
         { PROV_NAMES_CSHAKE_128, FIPS_DEFAULT_PROPERTIES, ossl_cshake_128_functions }, \
-    {                                                                                  \
-        PROV_NAMES_CSHAKE_256, FIPS_DEFAULT_PROPERTIES, ossl_cshake_256_functions      \
-    }
+        { PROV_NAMES_CSHAKE_256, FIPS_DEFAULT_PROPERTIES, ossl_cshake_256_functions }, \
+        { PROV_NAMES_TUPLEHASH_128, FIPS_DEFAULT_PROPERTIES, ossl_tuplehash_128_functions }, \
+        { PROV_NAMES_TUPLEHASH_256, FIPS_DEFAULT_PROPERTIES, ossl_tuplehash_256_functions }
 
 static const OSSL_ALGORITHM fips_digests[] = {
     FIPS_DIGESTS_COMMON(),
