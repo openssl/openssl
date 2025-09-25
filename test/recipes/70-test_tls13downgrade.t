@@ -125,9 +125,9 @@ sub run_tests
     my $ciphers = "AES128-SHA:\@SECLEVEL=0";
 
     SKIP: {
-        skip "TLSv1.1 disabled", 2
+        skip "TLSv1.1 disabled", 3
             if !$run_test_as_dtls && disabled("tls1_1");
-        skip "DTLSv1 disabled", 2
+        skip "DTLSv1 disabled", 3
             if $run_test_as_dtls == 1 && disabled("dtls1");
 
         #Test 4: Downgrade from (D)TLSv1.3 to TLSv1.1/DTLSv1
