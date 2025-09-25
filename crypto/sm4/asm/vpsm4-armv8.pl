@@ -262,14 +262,19 @@ $code.=<<___;
     and     $byte0, $word, #0xff
 	ubfx    $byte1, $word, #8, #8
 	ubfx    $byte2, $word, #16, #8
-    ldrb    $byte0, [$ptr, $byte0]
-    ldrb    $byte1, [$ptr, $byte1]
-    ldrb    $byte2, [$ptr, $byte2]
+    ldrb    $byte0, [$ptr, x9]
+    ldrb    $byte1, [$ptr, x16]
+    ldrb    $byte2, [$ptr, x17]
     orr     $byte0, $byte0, $byte1, lsl #8
     lsr     $byte1, $word, #24
     orr     $byte0, $byte0, $byte2, lsl #16
-    ldrb    $byte1, [$ptr, $byte1]
-    orr     $word, $byte0, $byte1, lsl #24
+    ldrb    $byte1, [$ptr, x16]
+    orr     $byte0, $byte0, $byte1, lsl #24
+
+	eor	$word,$byte0,$byte0,ror #32-2
+	eor	$word,$word,$byte0,ror #32-10
+	eor	$word,$word,$byte0,ror #32-18
+	eor	$word,$word,$byte0,ror #32-24
 ___
 }
 
