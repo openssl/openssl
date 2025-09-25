@@ -70,7 +70,6 @@ if (!defined($jobs)) {
 $ENV{OPENSSL_CONF} = rel2abs(catfile($srctop, "apps", "openssl.cnf"));
 $ENV{OPENSSL_CONF_INCLUDE} = rel2abs(catdir($bldtop, "test"));
 $ENV{OPENSSL_MODULES} = rel2abs(catdir($bldtop, "providers"));
-$ENV{OPENSSL_ENGINES} = rel2abs(catdir($bldtop, "engines"));
 $ENV{CTLOG_FILE} = rel2abs(catfile($srctop, "test", "ct", "log_list.cnf"));
 
 # On platforms that support this, this will ensure malloc returns data that is
