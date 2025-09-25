@@ -89,6 +89,9 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
 
 static int use_session_cb_cnt = 0;
 static int find_session_cb_cnt = 0;
+#endif
+
+#if !defined(OSSL_NO_USABLE_TLS1_3)
 static int end_of_early_data = 0;
 #endif
 
