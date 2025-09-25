@@ -385,7 +385,7 @@ end:
     return ret;
 }
 
-static int test_CMS_set1_key_mem_leak()
+static int test_CMS_set1_key_mem_leak(void)
 {
     CMS_ContentInfo *cms;
     unsigned char key[32] = {0};
