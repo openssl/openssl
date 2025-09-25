@@ -617,7 +617,7 @@ int tls_parse_ctos_psk_kex_modes(SSL_CONNECTION *s, PACKET *pkt,
  * received in the ClientHello and to select the group used of the key exchange
  */
 
-#ifndef OPENSSL_NO_TLS1_3
+#if !defined(OPENSSL_NO_TLS1_3) && !defined(OPENSSL_NO_DTLS1_3)
 /*
  * Accept a key share group by setting the related variables in s->s3 and
  * by generating a pubkey for this group
