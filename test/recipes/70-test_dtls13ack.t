@@ -13,15 +13,13 @@ use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 use TLSProxy::Message;
+use Cwd qw(abs_path);
 
 my $test_name = "test_dtls13ack";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
     if $^O =~ /^(VMS)$/ || $^O =~ /^(MSWin32)$/;
-
-plan skip_all => "$test_name needs the dynamic engine feature enabled"
-    if disabled("engine") || disabled("dynamic-engine");
 
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
