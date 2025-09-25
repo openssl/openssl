@@ -29,7 +29,7 @@ The number `{nn}` is (somewhat loosely) grouped as follows:
     15-19  individual asymmetric cipher algorithms
     20-24  openssl commands (some otherwise not tested)
     25-29  certificate forms, generation and verification
-    30-35  engine and evp
+    30-35  evp
     60-79  APIs:
        60  X509 subsystem
        61  BIO subsystem

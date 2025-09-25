@@ -9,7 +9,6 @@
 
 #include <string.h>
 
-#include <openssl/engine.h>
 #include "internal/e_os.h"
 #include "internal/nelem.h"
 #include "ssltestlib.h"
