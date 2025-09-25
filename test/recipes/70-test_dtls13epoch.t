@@ -21,6 +21,9 @@ setup($test_name);
 plan skip_all => "DTLSProxy isn't usable on $^O"
     if ($^O =~ /^(VMS)$/) || ($^O =~ /^(MSWin32)$/);
 
+plan skip_all => "$test_name needs the module feature enabled"
+    if disabled("module");
+
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
