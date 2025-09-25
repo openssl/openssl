@@ -385,6 +385,29 @@ end:
     return ret;
 }
 
+static int test_CMS_set1_key_mem_leak(void)
+{
+    CMS_ContentInfo *cms;
+    unsigned char key[32] = {0};
+    int ret = 0;
+
+    if (!TEST_ptr(cms = CMS_ContentInfo_new()))
+        return 0;
+
+    if (!TEST_true(CMS_EncryptedData_set1_key(cms, EVP_aes_256_cbc(),
+                                              key, 32)))
+        goto end;
+
+    if (!TEST_true(CMS_EncryptedData_set1_key(cms, EVP_aes_128_cbc(),
+                                              key, 16)))
+        goto end;
+
+    ret = 1;
+end:
+    CMS_ContentInfo_free(cms);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile\n")
 
 int setup_tests(void)
@@ -431,6 +454,7 @@ int setup_tests(void)
     ADD_TEST(test_encrypt_decrypt_aes_256_gcm);
     ADD_TEST(test_CMS_add1_cert);
     ADD_TEST(test_d2i_CMS_bio_NULL);
+    ADD_TEST(test_CMS_set1_key_mem_leak);
     ADD_ALL_TESTS(test_d2i_CMS_decode, 2);
     return 1;
 }
