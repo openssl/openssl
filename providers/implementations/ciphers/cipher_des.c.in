@@ -152,13 +152,9 @@ static int des_get_ctx_params(void *vctx, OSSL_PARAM params[])
             || !ossl_cipher_common_get_ctx_params(vctx, &p.com))
         return 0;
 
-    if (p.rkey != NULL) {
-        if (p.rkey->data_type != OSSL_PARAM_OCTET_STRING
-                || p.rkey->data_size != ctx->keylen
-                || !des_generatekey(ctx, p.rkey->data)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GENERATE_KEY);
-            return 0;
-        }
+    if (p.rkey != NULL && !des_generatekey(ctx, p.rkey->data)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GENERATE_KEY);
+        return 0;
     }
     return 1;
 }

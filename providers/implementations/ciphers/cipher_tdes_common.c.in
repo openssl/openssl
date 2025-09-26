@@ -174,13 +174,9 @@ int ossl_tdes_get_ctx_params(void *vctx, OSSL_PARAM params[])
             || !ossl_cipher_common_get_ctx_params(base, &p.com))
         return 0;
 
-    if (p.rkey != NULL) {
-        if (p.rkey->data_type != OSSL_PARAM_OCTET_STRING
-                || p.rkey->data_size != base->keylen
-                || !tdes_generatekey(base, p.rkey->data)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GENERATE_KEY);
-            return 0;
-        }
+    if (p.rkey != NULL && !tdes_generatekey(base, p.rkey->data)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GENERATE_KEY);
+        return 0;
     }
 
     if (!OSSL_FIPS_IND_GET_CTX_FROM_PARAM(ctx, p.ind))
@@ -243,5 +239,5 @@ int ossl_tdes_get_params(OSSL_PARAM params[], unsigned int md, uint64_t flags,
     }
 
     return ossl_cipher_common_get_params(&p.com, md, flags,
-                                          kbits, blkbits, ivbits);
+                                         kbits, blkbits, ivbits);
 }
