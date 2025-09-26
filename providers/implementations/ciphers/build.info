@@ -93,7 +93,9 @@ SOURCE[$COMMON_GOAL]=\
 INCLUDE[cipher_aes_cbc_hmac_sha.o cipher_aes_cbc_hmac_sha_etm.o \
         cipher_aes_gcm_siv.o cipher_aes_ocb.o cipher_aes_siv.o \
         cipher_aes_wrp.o cipher_aes_xts.o ciphercommon.o cipher_chacha20.o \
-        cipher_chacha20_poly1305.o cipher_rc4_hmac_md5.o cipher_sm4_xts.o]=.
+        cipher_chacha20_poly1305.o cipher_des.o cipher_rc2.o \
+        cipher_rc4_hmac_md5.o cipher_rc5.o cipher_sm4_xts.o \
+        cipher_tdes_common.o]=.
 
 IF[{- !$disabled{des} -}]
   SOURCE[$TDES_1_GOAL]=cipher_tdes.c cipher_tdes_common.c cipher_tdes_hw.c

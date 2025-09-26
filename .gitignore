@@ -152,9 +152,13 @@ providers/implementations/ciphers/ciphercommon_ccm.c
 providers/implementations/ciphers/ciphercommon_gcm.c
 providers/implementations/ciphers/cipher_chacha20.c
 providers/implementations/ciphers/cipher_chacha20_poly1305.c
+providers/implementations/ciphers/cipher_des.c
 providers/implementations/ciphers/cipher_null.c
+providers/implementations/ciphers/cipher_rc2.c
 providers/implementations/ciphers/cipher_rc4_hmac_md5.c
+providers/implementations/ciphers/cipher_rc5.c
 providers/implementations/ciphers/cipher_sm2_xts.c
+providers/implementations/ciphers/cipher_tdes_common.c
 providers/implementations/digests/blake2_prov.c
 providers/implementations/digests/digestcommon.c
 providers/implementations/digests/mdc2_prov.c
