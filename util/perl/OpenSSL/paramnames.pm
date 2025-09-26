@@ -838,6 +838,7 @@ sub output_param_decoder {
     my @params = @_;
     my @keys = ();
     my %prms = ();
+    my %structs = ();
     my %concat_num = ();
     my %ifdefs = ();
 
@@ -850,6 +851,12 @@ sub output_param_decoder {
         my $pident = $params[$i][1];
         my $ptype = $params[$i][2];
         my $pnum = $params[$i][3];
+
+        if ($pname =~ /^struct/) {
+            # Structures are stashed and skipped
+            $structs{$pident} = $pname;
+            next;
+        }
 
         $prms{$pname} = $pident;
 
@@ -885,10 +892,23 @@ sub output_param_decoder {
     # Output param pointer structure
     printf "#ifndef %s_st\n", $decoder_name_base;
     printf "struct %s_st {\n", $decoder_name_base;
+
+    # Output any structure members
+    if (%structs > 0) {
+        foreach my $sname (sort keys %structs) {
+            printf "    %s %s;\n", $structs{$sname}, $sname;
+        }
+    }
+
+    # Parameter elements
     my %done_prms = ();
     foreach my $pident (sort values %prms) {
         if ($pident eq $invalid_param) {
             # Skip error cases in structure
+            next;
+        }
+        if ($pident =~ /[.]/) {
+            # Skip names with dots since they refer to structures
             next;
         }
         if (not defined $done_prms{$pident}) {
