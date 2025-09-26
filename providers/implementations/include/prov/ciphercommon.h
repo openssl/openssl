@@ -113,6 +113,7 @@ OSSL_FUNC_cipher_final_fn ossl_cipher_generic_block_final;
 OSSL_FUNC_cipher_update_fn ossl_cipher_generic_stream_update;
 OSSL_FUNC_cipher_final_fn ossl_cipher_generic_stream_final;
 OSSL_FUNC_cipher_cipher_fn ossl_cipher_generic_cipher;
+OSSL_FUNC_cipher_gettable_params_fn ossl_cipher_generic_gettable_params;
 OSSL_FUNC_cipher_get_ctx_params_fn ossl_cipher_generic_get_ctx_params;
 OSSL_FUNC_cipher_set_ctx_params_fn ossl_cipher_generic_set_ctx_params;
 OSSL_FUNC_cipher_gettable_params_fn     ossl_cipher_generic_gettable_params;
@@ -362,25 +363,42 @@ const OSSL_PARAM * name##_settable_ctx_params(ossl_unused void *cctx,          \
     return name##_known_settable_ctx_params;                                   \
 }
 
+struct ossl_cipher_get_param_list_st {
+    OSSL_PARAM *mode;
+    OSSL_PARAM *keylen;
+    OSSL_PARAM *ivlen;
+    OSSL_PARAM *bsize;
+    OSSL_PARAM *aead;
+    OSSL_PARAM *custiv;
+    OSSL_PARAM *cts;
+    OSSL_PARAM *mb;
+    OSSL_PARAM *rand;
+    OSSL_PARAM *etm;
+};
+
 struct ossl_cipher_get_ctx_param_list_st {
-    OSSL_PARAM *keylen;         /* all ciphers */
-    OSSL_PARAM *ivlen;          /* all ciphers */
-    OSSL_PARAM *pad;            /* all ciphers */
-    OSSL_PARAM *num;            /* all ciphers */
-    OSSL_PARAM *iv;             /* all ciphers */
-    OSSL_PARAM *updiv;          /* all ciphers */
-    OSSL_PARAM *tlsmac;         /* generic cipher */
+    OSSL_PARAM *keylen;
+    OSSL_PARAM *ivlen;
+    OSSL_PARAM *pad;
+    OSSL_PARAM *num;
+    OSSL_PARAM *iv;
+    OSSL_PARAM *updiv;
+    OSSL_PARAM *tlsmac;
 };
 
 struct ossl_cipher_set_ctx_param_list_st {
-    OSSL_PARAM *pad;            /* all ciphers */
-    OSSL_PARAM *num;            /* all ciphers */
-    OSSL_PARAM *bits;           /* generic cipher */
-    OSSL_PARAM *tlsvers;        /* generic cipher */
-    OSSL_PARAM *tlsmacsize;     /* generic cipher */
-    OSSL_PARAM *keylen;         /* variable key length ciphers */
+    OSSL_PARAM *pad;
+    OSSL_PARAM *num;
+    OSSL_PARAM *bits;
+    OSSL_PARAM *tlsvers;
+    OSSL_PARAM *tlsmacsize;
+    OSSL_PARAM *keylen;
 };
 
+int ossl_cipher_common_get_params
+    (const struct ossl_cipher_get_param_list_st *p,
+     unsigned int md, uint64_t flags, size_t kbits,
+     size_t blkbits, size_t ivbits);
 int ossl_cipher_common_get_ctx_params
     (PROV_CIPHER_CTX *ctx, const struct ossl_cipher_get_ctx_param_list_st *p);
 int ossl_cipher_common_set_ctx_params
