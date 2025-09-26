@@ -67,11 +67,11 @@ DH *ossl_dh_new_ex(OSSL_LIB_CTX *libctx)
     return dh_new_intern(NULL, libctx);
 }
 
-static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
+static DH *dh_new_intern(ossl_unused ENGINE *engine, OSSL_LIB_CTX *libctx)
 {
     DH *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    if (ret == NULL)
+    if (ret == NULL || engine != NULL)
         return NULL;
 
     ret->lock = CRYPTO_THREAD_lock_new();
