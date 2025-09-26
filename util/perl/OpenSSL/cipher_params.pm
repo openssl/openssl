@@ -7,7 +7,9 @@ require Exporter;
 our @ISA= qw(Exporter);
 our @EXPORT = qw(cipher_generic_gettable_params
                  cipher_generic_gettable_ctx_params
-                 cipher_generic_settable_ctx_params);
+                 cipher_generic_settable_ctx_params
+                 cipher_var_keylen_settable_ctx_params
+                );
 
 sub cipher_generic_gettable_params {
     return (['struct ossl_cipher_get_param_list_st', 'com'],
@@ -46,6 +48,12 @@ sub cipher_generic_settable_ctx_params {
             ['OSSL_CIPHER_PARAM_USE_BITS',     'com.bits',       'uint'],
             ['OSSL_CIPHER_PARAM_TLS_VERSION',  'com.tlsvers',    'uint'],
             ['OSSL_CIPHER_PARAM_TLS_MAC_SIZE', 'com.tlsmacsize', 'size_t'],
+           );
+}
+
+sub cipher_var_keylen_settable_ctx_params {
+    return (cipher_generic_settable_ctx_params(),
+            ['OSSL_CIPHER_PARAM_KEYLEN',       'com.keylen',     'size_t'],
            );
 }
 
