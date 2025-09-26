@@ -265,6 +265,15 @@ const RAND_METHOD *RAND_get_rand_method(void)
     CRYPTO_THREAD_unlock(rand_meth_lock);
     return tmp_meth;
 }
+
+/* ENGINEs are removed, keeping this functions as no-op returning failure */
+int RAND_set_rand_engine(ossl_unused ENGINE *engine)
+{
+    OSSL_TRACE(TRACE, "ENGINE feature was removed in version 4.0. Please \
+                       consider using providers");
+
+    return 0;
+}
 # endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
 void RAND_seed(const void *buf, int num)
