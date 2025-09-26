@@ -39,7 +39,7 @@ static int dsa_finish(DSA *dsa);
 static BIGNUM *dsa_mod_inverse_fermat(const BIGNUM *k, const BIGNUM *q,
                                       BN_CTX *ctx);
 
-static DSA_METHOD openssl_dsa_meth = {
+static const DSA_METHOD openssl_dsa_meth = {
     "OpenSSL DSA method",
     dsa_do_sign,
     dsa_sign_setup_no_digest,
