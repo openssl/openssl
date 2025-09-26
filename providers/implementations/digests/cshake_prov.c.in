@@ -44,7 +44,6 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 
 /* Maximum size of both the encoded strings (N and S) */
 #define CSHAKE_MAX_ENCODED_STRING (CSHAKE_MAX_STRING + CSHAKE_MAX_ENCODED_HEADER_LEN)
-
 #define CSHAKE_FLAGS (PROV_DIGEST_FLAG_XOF | PROV_DIGEST_FLAG_ALGID_ABSENT)
 
 typedef struct cshake_ctx_st {

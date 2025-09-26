@@ -175,7 +175,7 @@ my %params = (
     'OSSL_DIGEST_PARAM_ALGID_ABSENT' =>     "algid-absent",  # int, 0 or 1
     'OSSL_DIGEST_PARAM_FUNCTION_NAME' =>    "function-name", # utf8 string
     'OSSL_DIGEST_PARAM_CUSTOMIZATION' =>    "customization", # utf8 string
-    'OSSL_DIGEST_PARAM_PROPERTIES' => '*ALG_PARAM_PROPERTIES',# utf8 string
+    'OSSL_DIGEST_PARAM_PROPERTIES' => '*OSSL_ALG_PARAM_PROPERTIES',# utf8 string
 
 # MAC parameters
     'OSSL_MAC_PARAM_KEY' =>            "key",           # octet string

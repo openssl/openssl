@@ -214,9 +214,9 @@ static EVP_MD_CTX *xof_digest_setup(const TEST_DATA *td)
     if (!TEST_ptr(ctx = EVP_MD_CTX_new()))
         goto err;
     if (td->param_n != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string("n", (char *)td->param_n, 0);
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_FUNCTION_NAME, (char *)td->param_n, 0);
     if (td->param_s != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string("s", (char *)td->param_s, 0);
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_CUSTOMIZATION, (char *)td->param_s, 0);
     *p = OSSL_PARAM_construct_end();
     if (!TEST_true(EVP_DigestInit_ex2(ctx, md, params)))
         goto err;
@@ -476,8 +476,8 @@ err:
 
 static int xof_squeeze_kat_test(int tstid)
 {
-    const TEST_DATA *td = xof_test_data + (tstid % 2);
     const STRIDE_TEST_DATA *sd = stride_test_data + tstid;
+    const TEST_DATA *td = xof_test_data + (tstid % (OSSL_NELEM(xof_test_data)));
 
     return do_xof_squeeze_test(td, sd, td->in, td->inlen, td->out, td->outlen);
 }
@@ -491,7 +491,7 @@ static int xof_squeeze_kat_test(int tstid)
 static int xof_squeeze_large_test(int tstid)
 {
     const STRIDE_TEST_DATA *sd = stride_test_data + tstid;
-    const TEST_DATA *td = xof_test_data + (tstid % 2);
+    const TEST_DATA *td = xof_test_data + (tstid % (OSSL_NELEM(xof_test_data)));
     int ret = 0;
     EVP_MD_CTX *ctx = NULL;
     unsigned char msg[16];
@@ -559,7 +559,7 @@ err:
 static int xof_squeeze_dup_test(int tstid)
 {
     size_t dupoffset = dupoffset_test_data[tstid];
-    const TEST_DATA *td = xof_test_data + (tstid % 2);
+    const TEST_DATA *td = xof_test_data + (tstid % (OSSL_NELEM(xof_test_data)));
     int ret = 0;
     EVP_MD_CTX *ctx = NULL;
     unsigned char msg[16];
