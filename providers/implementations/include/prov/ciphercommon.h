@@ -392,7 +392,7 @@ struct ossl_cipher_set_ctx_param_list_st {
     OSSL_PARAM *bits;
     OSSL_PARAM *tlsvers;
     OSSL_PARAM *tlsmacsize;
-    OSSL_PARAM *keylen;
+    OSSL_PARAM *keylen;     /* variable key length ciphers only */
 };
 
 int ossl_cipher_common_get_params
@@ -402,6 +402,8 @@ int ossl_cipher_common_get_params
 int ossl_cipher_common_get_ctx_params
     (PROV_CIPHER_CTX *ctx, const struct ossl_cipher_get_ctx_param_list_st *p);
 int ossl_cipher_common_set_ctx_params
+    (PROV_CIPHER_CTX *ctx, const struct ossl_cipher_set_ctx_param_list_st *p);
+int ossl_cipher_common_var_keylen_set_ctx_params
     (PROV_CIPHER_CTX *ctx, const struct ossl_cipher_set_ctx_param_list_st *p);
 
 int ossl_cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
