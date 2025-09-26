@@ -2640,7 +2640,7 @@ CON_FUNC_RETURN tls_construct_server_key_exchange(SSL_CONNECTION *s,
         }
 
         /* Get NID of appropriate shared curve */
-        curve_id = tls1_shared_group(s, -2);
+        curve_id = tls1_shared_group(s, -2, 0, 1);
         if (curve_id == 0) {
             SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                      SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
