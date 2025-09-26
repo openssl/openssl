@@ -50,10 +50,11 @@ typedef struct ht_value_list_st {
 typedef struct ht_config_st {
     OSSL_LIB_CTX *ctx;
     void (*ht_free_fn)(HT_VALUE *obj);
-    uint64_t (*ht_hash_fn)(uint8_t *key, size_t keylen);
+    uint64_t (*ht_hash_fn)(HT_KEY *key);
     size_t init_neighborhoods;
     uint32_t collision_check;
     uint32_t lockless_reads;
+    uint32_t no_rcu;
 } HT_CONFIG;
 
 /*
@@ -221,7 +222,10 @@ pfx ossl_unused vtype *ossl_unused ossl_ht_##name##_##vtype##_get(HT *h,       \
     vv = ossl_ht_get(h, key);                                                  \
     if (vv == NULL)                                                            \
         return NULL;                                                           \
-    *v = ossl_rcu_deref(&vv);                                                  \
+    if (!ossl_ht_get_cfg_no_rcu(h))                                            \
+        *v = ossl_rcu_deref(&vv);                                              \
+    else                                                                       \
+        *v = vv;                                                               \
     return ossl_ht_##name##_##vtype##_from_value(*v);                          \
 }                                                                              \
                                                                                \
@@ -351,5 +355,10 @@ void ossl_ht_value_list_free(HT_VALUE_LIST *list);
  * on key.  Returns NULL if the element was not found.
  */
 HT_VALUE *ossl_ht_get(HT *htable, HT_KEY *key);
+
+/*
+ * Returns config option *no_rcu* value.
+ */
+int ossl_ht_get_cfg_no_rcu(HT *htable);
 
 #endif

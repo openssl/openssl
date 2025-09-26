@@ -207,12 +207,12 @@ static int int_foreach(HT_VALUE *v, void *arg)
     return 1;
 }
 
-static uint64_t hashtable_hash(uint8_t *key, size_t keylen)
+static uint64_t hashtable_hash(HT_KEY *key)
 {
-    return (uint64_t)(*(uint32_t *)key);
+    return (uint64_t)(*(uint32_t *)key->keybuf);
 }
 
-static int test_int_hashtable(void)
+static int test_int_hashtable(int idx)
 {
     static struct {
         int data;
@@ -227,11 +227,8 @@ static int test_int_hashtable(void)
     };
     const size_t n_dels = OSSL_NELEM(dels);
     HT_CONFIG hash_conf = {
-        NULL,
-        NULL,
-        NULL,
-        0,
-        1,
+        .collision_check = 1,
+        .no_rcu = idx,
     };
     INTKEY key;
     int rc = 0;
@@ -405,13 +402,14 @@ static int test_hashtable_stress(int idx)
     unsigned int i;
     int testresult = 0, *p;
     HT_CONFIG hash_conf = {
-        NULL,              /* use default context */
-        hashtable_intfree, /* our free function */
-        hashtable_hash,    /* our hash function */
-        625000,            /* preset hash size */
-        1,                 /* Check collisions */
-        0                  /* Lockless reads */
+        .ht_free_fn = hashtable_intfree,
+        .ht_hash_fn = hashtable_hash,
+        .init_neighborhoods = 625000,
+        .collision_check = 1,
+        .lockless_reads = idx % 2,
+        .no_rcu = idx / 2,
     };
+
     HT *h;
     INTKEY key;
     HT_VALUE *v;
@@ -419,9 +417,11 @@ static int test_hashtable_stress(int idx)
     struct timeval start, end, delta;
 #endif
 
-    hash_conf.lockless_reads = idx;
     h = ossl_ht_new(&hash_conf);
-
+    if (h == NULL
+        && hash_conf.no_rcu
+        && hash_conf.lockless_reads)
+        return 1;
 
     if (!TEST_ptr(h))
         goto end;
@@ -456,7 +456,7 @@ static int test_hashtable_stress(int idx)
         const int j = (7 * i + 4) % n * 3 + 1;
         HT_SET_KEY_FIELD(&key, mykey, j);
 
-        switch (idx) {
+        switch (idx % 2) {
         case 0:
             if (!TEST_int_eq((ossl_ht_delete(h, TO_HT_KEY(&key))), 1)) {
                 TEST_info("hashtable didn't delete key %d\n", j);
@@ -503,9 +503,14 @@ HT_END_KEY_DEFN(MTKEY)
 
 IMPLEMENT_HT_VALUE_TYPE_FNS(TEST_MT_ENTRY, mt, static)
 
+struct ht_internal_st {
+    HT_CONFIG config;
+};
+
 static int worker_num = 0;
 static CRYPTO_RWLOCK *worker_lock;
 static CRYPTO_RWLOCK *testrand_lock;
+static CRYPTO_RWLOCK *no_rcu_lock;
 static int free_failure = 0;
 static int shutting_down = 0;
 static int global_iteration = 0;
@@ -573,21 +578,36 @@ static void do_mt_hash_work(void)
         }
         switch(behavior) {
         case DO_LOOKUP:
-            if (!ossl_ht_read_lock(m_ht))
-                break;
+            if (!m_ht->config.no_rcu) {
+                if (!ossl_ht_read_lock(m_ht))
+                    break;
+            } else {
+                if (!TEST_true(CRYPTO_THREAD_read_lock(no_rcu_lock)))
+                    break;
+            }
             m = ossl_ht_mt_TEST_MT_ENTRY_get(m_ht, TO_HT_KEY(&key), &v);
             if (m != NULL && m != expected_m) {
                 worker_exits[num] = "Read unexpected value from hashtable";
                 TEST_info("Iteration %d Read unexpected value %p when %p expected",
                           giter, (void *)m, (void *)expected_m);
             }
-            ossl_ht_read_unlock(m_ht);
+            if (!m_ht->config.no_rcu) {
+                ossl_ht_read_unlock(m_ht);
+            } else {
+                if (!TEST_true(CRYPTO_THREAD_unlock(no_rcu_lock)))
+                    break;
+            }
             if (worker_exits[num] != NULL)
                 return;
             break;
         case DO_INSERT:
         case DO_REPLACE:
-            ossl_ht_write_lock(m_ht);
+            if (!m_ht->config.no_rcu) {
+                ossl_ht_write_lock(m_ht);
+            } else {
+                if (!TEST_true(CRYPTO_THREAD_write_lock(no_rcu_lock)))
+                    break;
+            }
             if (behavior == DO_REPLACE) {
                 expected_rc = 1;
                 r = &m;
@@ -607,12 +627,22 @@ static void do_mt_hash_work(void)
             }
             if (expected_rc == 1)
                 expected_m->in_table = 1;
-            ossl_ht_write_unlock(m_ht);
+            if (!m_ht->config.no_rcu) {
+                ossl_ht_write_unlock(m_ht);
+            } else {
+                if (!TEST_true(CRYPTO_THREAD_unlock(no_rcu_lock)))
+                    break;
+            }
             if (worker_exits[num] != NULL)
                 return;
             break;
         case DO_DELETE:
-            ossl_ht_write_lock(m_ht);
+            if (!m_ht->config.no_rcu) {
+                ossl_ht_write_lock(m_ht);
+            } else {
+                if (!TEST_true(CRYPTO_THREAD_write_lock(no_rcu_lock)))
+                    break;
+            }
             expected_rc = expected_m->in_table;
             if (expected_rc == 1) {
                 /*
@@ -632,7 +662,12 @@ static void do_mt_hash_work(void)
                           expected_m->in_table ? "in table" : "not in table");
                 worker_exits[num] = "Failure on delete";
             }
-            ossl_ht_write_unlock(m_ht);
+            if (!m_ht->config.no_rcu) {
+                ossl_ht_write_unlock(m_ht);
+            } else {
+                if (!TEST_true(CRYPTO_THREAD_unlock(no_rcu_lock)))
+                    break;
+            }
             if (worker_exits[num] != NULL)
                 return;
             break;
@@ -643,14 +678,13 @@ static void do_mt_hash_work(void)
     }
 }
 
-static int test_hashtable_multithread(void)
+static int test_hashtable_multithread(int idx)
 {
     HT_CONFIG hash_conf = {
-        NULL,              /* use default context */
-        hashtable_mt_free, /* our free function */
-        NULL,              /* default hash function */
-        0,                 /* default hash size */
-        1,                 /* Check collisions */
+        .ht_free_fn = hashtable_mt_free,
+        .init_neighborhoods = 0,
+        .collision_check = 1,
+        .no_rcu = idx,
     };
     int ret = 0;
     thread_t workers[NUM_WORKERS];
@@ -671,6 +705,8 @@ static int test_hashtable_multithread(void)
     if (!TEST_ptr(worker_lock = CRYPTO_THREAD_lock_new()))
         goto end_free;
     if (!TEST_ptr(testrand_lock = CRYPTO_THREAD_lock_new()))
+        goto end_free;
+    if (!TEST_ptr(no_rcu_lock = CRYPTO_THREAD_lock_new()))
         goto end_free;
 #ifdef MEASURE_HASH_PERFORMANCE
     gettimeofday(&start, NULL);
@@ -709,11 +745,15 @@ shutdown:
     TEST_info("multithread stress runs 40000 ops in %ld.%ld seconds", delta.tv_sec, delta.tv_usec);
 #endif
 
+    worker_num = 0;
+    free_failure = 0;
+    global_iteration = 0;
 end_free:
     shutting_down = 1;
     ossl_ht_free(m_ht);
     CRYPTO_THREAD_lock_free(worker_lock);
     CRYPTO_THREAD_lock_free(testrand_lock);
+    CRYPTO_THREAD_lock_free(no_rcu_lock);
 end:
     return ret;
 }
@@ -722,8 +762,8 @@ int setup_tests(void)
 {
     ADD_TEST(test_int_lhash);
     ADD_TEST(test_stress);
-    ADD_TEST(test_int_hashtable);
-    ADD_ALL_TESTS(test_hashtable_stress, 2);
-    ADD_TEST(test_hashtable_multithread);
+    ADD_ALL_TESTS(test_int_hashtable, 2);
+    ADD_ALL_TESTS(test_hashtable_stress, 4);
+    ADD_ALL_TESTS(test_hashtable_multithread, 2);
     return 1;
 }
