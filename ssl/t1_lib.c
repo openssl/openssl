@@ -1769,8 +1769,14 @@ int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,
             return 0;
     }
 
-    if (!tls_group_allowed(s, group_id, SSL_SECOP_CURVE_CHECK))
-        return 0;
+    if (group_id >= OSSL_TLS_GROUP_ID_FFDHE_START &&
+        group_id <= OSSL_TLS_GROUP_ID_FFDHE_END) {
+        if (!tls_group_allowed(s, group_id, SSL_SECOP_TMP_DH))
+            return 0;
+    } else {
+        if (!tls_group_allowed(s, group_id, SSL_SECOP_CURVE_CHECK))
+            return 0;
+    }
 
     /* For clients, nothing more to check */
     if (!s->server)
