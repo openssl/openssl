@@ -71,9 +71,9 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item CSHAKE, see L<EVP_MD-CSHAKE(7)>
 
-=item KECCAK-KMAC, see L<EVP_MD-KECCAK-KMAC(7)>
+=item CSHAKE-KECCAK, see L<EVP_MD-CSHAKE-KECCAK(7)>
 
-KECCAK-KMAC is only used internally as a sub algorithm of KMAC.
+It is used internally as a sub algorithm of CSHAKE.
 
 =item ML-DSA-MU, see L<EVP_MD-ML-DSA-MU(7)>
 
