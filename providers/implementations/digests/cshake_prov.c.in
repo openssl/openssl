@@ -139,7 +139,7 @@ static int cshake_set_shake_mode(CSHAKE_CTX *ctx, int shake)
     if (shake)
         name = (ctx->bitlen == 128 ? "SHAKE128" : "SHAKE256");
     else
-        name = (ctx->bitlen == 128 ? "KECCAK-KMAC128" : "KECCAK-KMAC256");
+        name = (ctx->bitlen == 128 ? "CSHAKE-KECCAK-128" : "CSHAKE-KECCAK-256");
 
     if (ctx->md == NULL || !EVP_MD_is_a(ctx->md, name)) {
         ctx->inited = 0;
@@ -164,8 +164,12 @@ static void *cshake_newctx(void *provctx, size_t bitlen)
         return NULL;
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL) {
-        ctx->bitlen = bitlen;
         ctx->mdctx = EVP_MD_CTX_create();
+        if (ctx->mdctx == NULL) {
+            OPENSSL_free(ctx);
+            return NULL;
+        }
+        ctx->bitlen = bitlen;
         ctx->libctx = PROV_LIBCTX_OF(provctx);
     }
     return ctx;
@@ -431,21 +435,21 @@ static void *cshake_##bitlen##_newctx(void *provctx)                           \
     return cshake_newctx(provctx, bitlen);                                     \
 }                                                                              \
 PROV_FUNC_DIGEST_GET_PARAM(cshake_##bitlen, SHA3_BLOCKSIZE(bitlen),            \
-                           KMAC_MDSIZE(bitlen), CSHAKE_FLAGS)                  \
+                           CSHAKE_KECCAK_MDSIZE(bitlen), CSHAKE_FLAGS)         \
 const OSSL_DISPATCH ossl_cshake_##bitlen##_functions[] = {                     \
     { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))cshake_##bitlen##_newctx },     \
     { OSSL_FUNC_DIGEST_INIT, (void (*)(void))cshake_init },                    \
     { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))cshake_update },                \
     { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))cshake_final },                  \
-    { OSSL_FUNC_DIGEST_SQUEEZE, (void (*)(void))cshake_squeeze },               \
+    { OSSL_FUNC_DIGEST_SQUEEZE, (void (*)(void))cshake_squeeze },              \
     { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))cshake_freectx },              \
     { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))cshake_dupctx },                \
     { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))cshake_set_ctx_params },\
     { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))cshake_settable_ctx_params },                             \
-    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, (void (*)(void))cshake_get_ctx_params }, \
+    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, (void (*)(void))cshake_get_ctx_params },\
     { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,                                    \
-     (void (*)(void))cshake_gettable_ctx_params },                              \
+     (void (*)(void))cshake_gettable_ctx_params },                             \
     PROV_DISPATCH_FUNC_DIGEST_GET_PARAMS(cshake_##bitlen),                     \
     PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 

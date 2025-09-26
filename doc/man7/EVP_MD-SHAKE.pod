@@ -2,22 +2,20 @@
 
 =head1 NAME
 
-EVP_MD-SHAKE, EVP_MD-KECCAK-KMAC, EVP_MD-CSHAKE
+EVP_MD-SHAKE, EVP_MD-CSHAKE, EVP_MD-CSHAKE-KECCAK,
 - The SHAKE / KECCAK family EVP_MD implementations
 
 =head1 DESCRIPTION
 
-Support for computing SHAKE, CSHAKE or KECCAK-KMAC digests through the
+Support for computing SHAKE, CSHAKE or CSHAKE-KECCAK digests through the
 B<EVP_MD> API.
 
 CSHAKE is an Extendable Output Function (XOF), that allows custom strings
 "n" and "s". If these strings are both empty then it is identical to SHAKE,
-otherwise it uses KECCAK.
+otherwise it uses CSHAKE-KECCAK.
 
-KECCAK-KMAC is an Extendable Output Function (XOF), with a definition
-similar to SHAKE, used by the KMAC EVP_MAC implementation (see
-L<EVP_MAC-KMAC(7)>). This is basically CSHAKE where "n" is the fixed value
-"KMAC".
+CSHAKE-KECCAK is an Extendable Output Function (XOF), with a definition
+similar to SHAKE but appends 2 extra zero bits. It is used internally by CSHAKE.
 
 =head2 Identities
 
@@ -25,20 +23,6 @@ This implementation is available in the FIPS provider as well as the default
 provider, and includes the following varieties:
 
 =over 4
-
-=item KECCAK-KMAC-128
-
-Known names are "KECCAK-KMAC-128" and "KECCAK-KMAC128".  This is used
-by L<EVP_MAC-KMAC128(7)>.  Using the notation from NIST FIPS 202
-(Section 6.2), we have S<KECCAK-KMAC-128(M, d)> = S<KECCAK[256](M || 00, d)>
-(see the description of KMAC128 in Appendix A of NIST SP 800-185).
-
-=item KECCAK-KMAC-256
-
-Known names are "KECCAK-KMAC-256" and "KECCAK-KMAC256".  This is used
-by L<EVP_MAC-KMAC256(7)>.  Using the notation from NIST FIPS 202
-(Section 6.2), we have S<KECCAK-KMAC-256(M, d)> = S<KECCAK[512](M || 00, d)>
-(see the description of KMAC256 in Appendix A of NIST SP 800-185).
 
 =item SHAKE-128
 
@@ -55,6 +39,20 @@ Known names are "CSHAKE-128" and "CSHAKE128".
 =item CSHAKE-256
 
 Known names are "CSHAKE-256" and "CSHAKE256".
+
+=item CSHAKE-KECCAK-128
+
+Other known names are "KECCAK-KMAC-128" and "KECCAK-KMAC128".  This is used
+by L<EVP_MAC-KMAC128(7)>.  Using the notation from NIST FIPS 202
+(Section 6.2), we have S<KECCAK-KMAC-128(M, d)> = S<KECCAK[256](M || 00, d)>
+(see the description of KMAC128 in Appendix A of NIST SP 800-185).
+
+=item CSHAKE-KECCAK-256
+
+Other known names are "KECCAK-KMAC-256" and "KECCAK-KMAC256".  This is used
+by L<EVP_MAC-KMAC256(7)>.  Using the notation from NIST FIPS 202
+(Section 6.2), we have S<KECCAK-KMAC-256(M, d)> = S<KECCAK[512](M || 00, d)>
+(see the description of KMAC256 in Appendix A of NIST SP 800-185).
 
 =back
 
