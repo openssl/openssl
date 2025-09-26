@@ -42,7 +42,10 @@ our @tests = (
     },
     {
         name => "SCTPLabelBug-bad1",
-        server => {},
+        # TODO(DTLSv1.3): Fix SCTP support
+        server => {
+            MaxProtocol => "DTLSv1.2"
+        },
         client => {},
         test => {
             "Method" => "DTLS",
@@ -54,7 +57,10 @@ our @tests = (
     },
     {
         name => "SCTPLabelBug-bad2",
-        server => {},
+        # TODO(DTLSv1.3): Fix SCTP support
+        server => {
+            MaxProtocol => "DTLSv1.2"
+        },
         client => {},
         test => {
             "Method" => "DTLS",

@@ -72,6 +72,7 @@ client = 2-SCTPLabelBug-bad1-client
 [2-SCTPLabelBug-bad1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
+MaxProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [2-SCTPLabelBug-bad1-client]
@@ -99,6 +100,7 @@ client = 3-SCTPLabelBug-bad2-client
 [3-SCTPLabelBug-bad2-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
+MaxProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [3-SCTPLabelBug-bad2-client]

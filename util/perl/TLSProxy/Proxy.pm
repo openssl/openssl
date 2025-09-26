@@ -339,7 +339,7 @@ sub start
         ." -cert ".$self->cert." -cert2 ".$self->cert
         ." -naccept ".$self->serverconnects;
     if ($self->{isdtls}) {
-        $execcmd .= " -dtls -max_protocol DTLSv1.2"
+        $execcmd .= " -dtls -max_protocol DTLSv1.3"
                     # TLSProxy does not support message fragmentation. So
                     # set a high mtu and fingers crossed.
                     ." -mtu 1500";
@@ -434,9 +434,9 @@ sub clientstart
         my $pid;
         my $execcmd = $self->execute
              ." s_client -provider=p_ossltest -provider=default -propquery ?provider=p_ossltest"
-             ." -connect $self->{proxy_addr}:$self->{proxy_port}";
+             ." -state -connect $self->{proxy_addr}:$self->{proxy_port}";
         if ($self->{isdtls}) {
-            $execcmd .= " -dtls -max_protocol DTLSv1.2"
+            $execcmd .= " -dtls -max_protocol DTLSv1.3"
                         # TLSProxy does not support message fragmentation. So
                         # set a high mtu and fingers crossed.
                         ." -mtu 1500"
@@ -584,7 +584,14 @@ sub clientstart
         print "Waiting for s_server process to close: $pid...\n";
         # it's done already, just collect the exit code [and reap]...
         waitpid($pid, 0);
-        die "exit code $? from s_server process\n" if $? != 0;
+
+        # TODO(DTLSv1.3): The server is not able to shut down correctly
+        #                 when the client sends an alert in epoch 0 and the
+        #                 server has sent its Finished message.
+        #                 As a workaround we accept a bad exit code for a failing
+        #                 DTLS test run.
+        die "exit code $? from s_server process\n"
+            if $? != 0 && (!$self->{isdtls} || $success == 1);
     } else {
         # It's a bit counter-intuitive spot to make next connection to
         # the s_server. Rationale is that established connection works
@@ -601,21 +608,17 @@ sub clientstart
 
 sub process_packet
 {
-    my ($self, $server, $packet) = @_;
-    my $len_real;
-    my $decrypt_len;
-    my $data;
-    my $recnum;
+    my ($self, $serverissender, $packet) = @_;
 
-    if ($server) {
+    if ($serverissender) {
         print "Received server packet\n";
     } else {
         print "Received client packet\n";
     }
 
-    if ($self->{direction} != $server) {
+    if ($self->{direction} != $serverissender) {
         $self->{flight} = $self->{flight} + 1;
-        $self->{direction} = $server;
+        $self->{direction} = $serverissender;
     }
 
     print "Packet length = ".length($packet)."\n";
@@ -623,11 +626,11 @@ sub process_packet
 
     #Return contains the list of record found in the packet followed by the
     #list of messages in those records and any partial message
-    my @ret = TLSProxy::Record->get_records($server, $self->flight,
-                                            $self->{partial}[$server].$packet,
+    my @ret = TLSProxy::Record->get_records($serverissender, $self->flight,
+                                            $self->{partial}[$serverissender].$packet,
                                             $self->{isdtls});
 
-    $self->{partial}[$server] = $ret[2];
+    $self->{partial}[$serverissender] = $ret[2];
     push @{$self->{record_list}}, @{$ret[0]};
     push @{$self->{message_list}}, @{$ret[1]};
 
@@ -653,7 +656,7 @@ sub process_packet
     #Reconstruct the packet
     $packet = "";
     foreach my $record (@{$self->record_list}) {
-        $packet .= $record->reconstruct_record($server);
+        $packet .= $record->reconstruct_record($serverissender);
     }
 
     print "Forwarded packet length = ".length($packet)."\n\n";

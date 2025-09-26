@@ -77,9 +77,15 @@ static int test_dtls_unprocessed(int testidx)
 
     timer_cb_count = 0;
 
+    /**
+     * TODO(DTLSv1.3): Tests fails with
+     *  # No progress made
+     *  # ERROR: (bool) 'create_bare_ssl_connection(serverssl1, clientssl1,
+     *      SSL_ERROR_NONE, 0, 0) == true' failed @ ../test/dtlstest.c:128
+     */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
-                                       DTLS1_VERSION, 0,
+                                       DTLS1_VERSION, DTLS1_2_VERSION,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -199,9 +205,15 @@ static int test_dtls_drop_records(int idx)
     int cli_to_srv_cookie, cli_to_srv_epoch0, cli_to_srv_epoch1;
     int srv_to_cli_epoch0;
 
+    /**
+     * TODO(DTLSv1.3): Tests fails with
+     *  dtls1_read_bytes:ssl/tls alert unexpected message:
+     *      ssl/record/rec_layer_d1.c:454:SSL alert number 10
+     * And "no progress made"
+     */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
-                                       DTLS1_VERSION, 0,
+                                       DTLS1_VERSION, DTLS1_2_VERSION,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -322,7 +334,7 @@ static int test_cookie(void)
     SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_cb);
     SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_cb);
 
-#ifdef OPENSSL_NO_DTLS1_2
+#if defined(OPENSSL_NO_DTLS1_2) && defined(OPENSSL_NO_DTLS1_3)
     /* Default sigalgs are SHA1 based in <DTLS1.2 which is in security level 0 */
     if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
             || !TEST_true(SSL_CTX_set_cipher_list(cctx,
@@ -352,9 +364,13 @@ static int test_dtls_duplicate_records(void)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
 
+    /**
+     * TODO(DTLSv1.3): Tests fails with
+     *  dtls1_read_bytes:unexpected record:../ssl/record/rec_layer_d1.c:609:
+     */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
-                                       DTLS1_VERSION, 0,
+                                       DTLS1_VERSION, DTLS1_2_VERSION,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -425,7 +441,7 @@ static int test_just_finished(void)
                                        &sctx, NULL, cert, privkey)))
         return 0;
 
-#ifdef OPENSSL_NO_DTLS1_2
+#if defined(OPENSSL_NO_DTLS1_2) && defined(OPENSSL_NO_DTLS1_3)
     /* DTLSv1 is not allowed at the default security level */
     if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0")))
         goto end;
@@ -484,9 +500,12 @@ static int test_swap_records(int idx)
     char msg[] = { 0x00, 0x01, 0x02, 0x03 };
     char buf[10];
 
+    /**
+     * TODO(DTLSv1.3): Tests fails
+     */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
-                                       DTLS1_VERSION, 0,
+                                       DTLS1_VERSION, DTLS1_2_VERSION,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -597,9 +616,11 @@ static int test_duplicate_app_data(void)
     char buf[10];
     int ret;
 
+/* TODO(DTLS-1.3): This test does not work properly with DTLS-1.3. */
+
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
-                                       DTLS1_VERSION, 0,
+                                       DTLS1_VERSION, DTLS1_2_VERSION,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 

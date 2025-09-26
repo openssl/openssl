@@ -207,6 +207,7 @@ static int psk_use_session_cb(SSL *s, const EVP_MD *md,
 {
     SSL_SESSION *usesess = NULL;
     const SSL_CIPHER *cipher = NULL;
+    const int version1_3 = SSL_is_dtls(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (psksess != NULL) {
         if (!SSL_SESSION_up_ref(psksess))
@@ -234,7 +235,7 @@ static int psk_use_session_cb(SSL *s, const EVP_MD *md,
         if (usesess == NULL
                 || !SSL_SESSION_set1_master_key(usesess, key, key_len)
                 || !SSL_SESSION_set_cipher(usesess, cipher)
-                || !SSL_SESSION_set_protocol_version(usesess, TLS1_3_VERSION)) {
+                || !SSL_SESSION_set_protocol_version(usesess, version1_3)) {
             OPENSSL_free(key);
             goto err;
         }
@@ -497,9 +498,9 @@ typedef enum OPTION_choice {
 #endif
     OPT_SSL3, OPT_SSL_CONFIG,
     OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
-    OPT_DTLS1_2, OPT_QUIC, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_KEYFORM,
-    OPT_PASS, OPT_CERT_CHAIN, OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN,
-    OPT_NEXTPROTONEG, OPT_ALPN,
+    OPT_DTLS1_2, OPT_DTLS1_3, OPT_QUIC, OPT_SCTP, OPT_TIMEOUT, OPT_MTU,
+    OPT_KEYFORM, OPT_PASS, OPT_CERT_CHAIN, OPT_KEY, OPT_RECONNECT,
+    OPT_BUILD_CHAIN, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH,
     OPT_CAFILE, OPT_NOCAFILE, OPT_CHAINCAFILE, OPT_VERIFYCAFILE,
     OPT_CASTORE, OPT_NOCASTORE, OPT_CHAINCASTORE, OPT_VERIFYCASTORE,
@@ -710,6 +711,9 @@ const OPTIONS s_client_options[] = {
 #ifndef OPENSSL_NO_DTLS1_2
     {"dtls1_2", OPT_DTLS1_2, '-', "Just use DTLSv1.2"},
 #endif
+#ifndef OPENSSL_NO_DTLS1_3
+    {"dtls1_3", OPT_DTLS1_3, '-', "Just use DTLSv1.3"},
+#endif
 #ifndef OPENSSL_NO_SCTP
     {"sctp", OPT_SCTP, '-', "Use SCTP"},
     {"sctp_label_bug", OPT_SCTP_LABEL_BUG, '-', "Enable SCTP label length bug"},
@@ -812,7 +816,7 @@ static const OPT_PAIR services[] = {
 #define IS_PROT_FLAG(o) \
  (o == OPT_SSL3 || o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
   || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2 \
-  || o == OPT_QUIC)
+  || o == OPT_DTLS1_3 || o == OPT_QUIC)
 
 /* Free |*dest| and optionally set it to a copy of |source|. */
 static void freeandcopy(char **dest, const char *source)
@@ -825,6 +829,7 @@ static void freeandcopy(char **dest, const char *source)
 
 static int new_session_cb(SSL *s, SSL_SESSION *sess)
 {
+    const int version1_3 = SSL_is_dtls(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (sess_out != NULL) {
         BIO *stmp = BIO_new_file(sess_out, "w");
@@ -838,10 +843,10 @@ static int new_session_cb(SSL *s, SSL_SESSION *sess)
     }
 
     /*
-     * Session data gets dumped on connection for TLSv1.2 and below, and on
-     * arrival of the NewSessionTicket for TLSv1.3.
+     * Session data gets dumped on connection for (D)TLSv1.2 and below, and on
+     * arrival of the NewSessionTicket for (D)TLSv1.3.
      */
-    if (SSL_version(s) == TLS1_3_VERSION) {
+    if (SSL_version(s) == version1_3) {
         BIO_printf(bio_c_out,
                    "---\nPost-Handshake New Session Ticket arrived:\n");
         SSL_SESSION_print(bio_c_out, sess);
@@ -943,6 +948,9 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_CT
     char *ctlog_file = NULL;
     int ct_validation = 0;
+#endif
+#ifndef OPENSSL_NO_NEXTPROTONEG
+    int version1_3;
 #endif
     int min_version = 0, max_version = 0, prot_opt = 0, no_prot_opt = 0;
     int async = 0;
@@ -1378,6 +1386,18 @@ int s_client_main(int argc, char **argv)
             isquic = 0;
 #endif
             break;
+        case OPT_DTLS1_3:
+#ifndef OPENSSL_NO_DTLS1_3
+            meth = DTLS_client_method();
+            min_version = DTLS1_3_VERSION;
+            max_version = DTLS1_3_VERSION;
+            socket_type = SOCK_DGRAM;
+            isdtls = 1;
+# ifndef OPENSS_NO_QUIC
+            isquic = 0;
+# endif
+#endif
+            break;
         case OPT_QUIC:
 #ifndef OPENSSL_NO_QUIC
             meth = OSSL_QUIC_client_method();
@@ -1601,6 +1621,10 @@ int s_client_main(int argc, char **argv)
         }
     }
 
+#ifndef OPENSSL_NO_NEXTPROTONEG
+    version1_3 = isdtls ? DTLS1_3_VERSION : TLS1_3_VERSION;
+#endif
+
     /* Optional argument is connect string if -connect not used. */
     if (opt_num_rest() == 1) {
         /* Don't allow -connect and a separate argument. */
@@ -1641,7 +1665,7 @@ int s_client_main(int argc, char **argv)
     }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-    if (min_version == TLS1_3_VERSION && next_proto_neg_in != NULL) {
+    if (min_version == version1_3 && next_proto_neg_in != NULL) {
         BIO_printf(bio_err, "Cannot supply -nextprotoneg with TLSv1.3\n");
         goto opthelp;
     }
@@ -3405,7 +3429,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     X509 *peer = NULL;
     STACK_OF(X509) *sk;
     const SSL_CIPHER *c;
-    int i, istls13 = (SSL_version(s) == TLS1_3_VERSION);
+    const int version1_3 = SSL_is_dtls(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+    int i;
     long verify_result;
 #ifndef OPENSSL_NO_COMP
     const COMP_METHOD *comp, *expansion;
@@ -3594,7 +3619,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     }
 #endif
 
-    if (istls13) {
+    if (SSL_version(s) == version1_3) {
         switch (SSL_get_early_data_status(s)) {
         case SSL_EARLY_DATA_NOT_SENT:
             BIO_printf(bio, "Early data was not sent\n");
@@ -3654,7 +3679,8 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     OCSP_RESPONSE *rsp;
 
-    if (SSL_version(s) >= TLS1_3_VERSION) {
+    if ((!SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION)
+        || (SSL_is_dtls(s) && SSL_version(s) <= DTLS1_3_VERSION)) {
         (void)SSL_get0_tlsext_status_ocsp_resp_ex(s, &sk_resp);
 
         BIO_puts(arg, "OCSP responses: ");
@@ -3886,6 +3912,8 @@ static int user_data_add(struct user_data_st *user_data, size_t i)
 
 static int user_data_execute(struct user_data_st *user_data, int cmd, char *arg)
 {
+    const int version1_3 = SSL_is_dtls(user_data->con) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+
     switch (cmd) {
     case USER_COMMAND_HELP:
         /* This only ever occurs in advanced mode, so just emit advanced help */
@@ -3898,7 +3926,7 @@ static int user_data_execute(struct user_data_st *user_data, int cmd, char *arg)
         BIO_printf(bio_err, "  {reconnect}: Reconnect to the peer\n");
         if (SSL_is_quic(user_data->con)) {
             BIO_printf(bio_err, "  {fin}: Send FIN on the stream. No further writing is possible\n");
-        } else if(SSL_version(user_data->con) == TLS1_3_VERSION) {
+        } else if(SSL_version(user_data->con) == version1_3) {
             BIO_printf(bio_err, "  {keyup:req|noreq}: Send a Key Update message\n");
             BIO_printf(bio_err, "                     Arguments:\n");
             BIO_printf(bio_err, "                     req   = peer update requested (default)\n");
@@ -3960,6 +3988,7 @@ static int user_data_process(struct user_data_st *user_data, size_t *len,
 {
     char *buf_start = user_data->buf + user_data->bufoff;
     size_t outlen = user_data->buflen;
+    const int version1_3 = SSL_is_dtls(user_data->con) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (user_data->buflen == 0) {
         *len = 0;
@@ -4045,7 +4074,7 @@ static int user_data_process(struct user_data_st *user_data, size_t *len,
             } else if(SSL_is_quic(user_data->con)) {
                 if (OPENSSL_strcasecmp(cmd_start, "fin") == 0)
                     cmd = USER_COMMAND_FIN;
-            } if (SSL_version(user_data->con) == TLS1_3_VERSION) {
+            } if (SSL_version(user_data->con) == version1_3) {
                 if (OPENSSL_strcasecmp(cmd_start, "keyup") == 0) {
                     cmd = USER_COMMAND_KEY_UPDATE;
                     if (arg_start == NULL)

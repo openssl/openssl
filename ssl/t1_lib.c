@@ -547,8 +547,6 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
-    /* No provider sigalgs are supported in DTLS, reset after checking. */
-    sinf->mindtls = sinf->maxdtls = -1;
 
     /* The remaining parameters below are mandatory again */
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS);
@@ -561,16 +559,20 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
-    if ((sinf->maxtls != 0) && (sinf->maxtls != -1) &&
-        ((sinf->maxtls < sinf->mintls))) {
+    /*
+     * There are no discrepancies for signature algs between comparable
+     * versions of tls and dtls. Hence we check tls versions only.
+     */
+    if ((sinf->maxtls != 0) && (sinf->maxtls != -1)
+            && ((sinf->maxtls < sinf->mintls))) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
-    if ((sinf->mintls != 0) && (sinf->mintls != -1) &&
-        ((sinf->mintls > TLS1_3_VERSION)))
+    if ((sinf->mintls != 0) && (sinf->mintls != -1)
+        && ((sinf->mintls > TLS1_3_VERSION)))
         sinf->mintls = sinf->maxtls = -1;
-    if ((sinf->maxtls != 0) && (sinf->maxtls != -1) &&
-        ((sinf->maxtls < TLS1_3_VERSION)))
+    if ((sinf->maxtls != 0) && (sinf->maxtls != -1)
+        && ((sinf->maxtls < TLS1_3_VERSION)))
         sinf->mintls = sinf->maxtls = -1;
 
     /* Ignore unusable sigalgs */
@@ -865,6 +867,7 @@ int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
                                                        group_id);
     int ret;
     int group_minversion, group_maxversion;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (okfortls13 != NULL)
         *okfortls13 = 0;
@@ -884,11 +887,9 @@ int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
     if (group_minversion > 0)
         ret &= (ssl_version_cmp(s, maxversion, group_minversion) >= 0);
 
-    if (!SSL_CONNECTION_IS_DTLS(s)) {
-        if (ret && okfortls13 != NULL && maxversion == TLS1_3_VERSION)
-            *okfortls13 = (group_maxversion == 0)
-                          || (group_maxversion >= TLS1_3_VERSION);
-    }
+    if (ret && okfortls13 != NULL && maxversion == version1_3)
+        *okfortls13 = (group_maxversion == 0)
+                      || (ssl_version_cmp(s, group_maxversion, maxversion) >= 0);
     ret &= !isec
            || strcmp(ginfo->algorithm, "EC") == 0
            || strcmp(ginfo->algorithm, "X25519") == 0
@@ -1808,7 +1809,7 @@ static int tls1_check_pkey_comp(SSL_CONNECTION *s, EVP_PKEY *pkey)
         return 0;
     if (point_conv == POINT_CONVERSION_UNCOMPRESSED) {
             comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
-    } else if (SSL_CONNECTION_IS_TLS13(s)) {
+    } else if (SSL_CONNECTION_IS_VERSION13(s)) {
         /*
          * ec_point_formats extension is not used in TLSv1.3 so we ignore
          * this check.
@@ -2020,19 +2021,19 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA256, NID_brainpoolP256r1, 1, 0,
-     TLS1_3_VERSION, 0, -1, -1},
+     TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0},
     {TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_name,
      TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_alias,
      TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384,
      NID_sha384, SSL_MD_SHA384_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA384, NID_brainpoolP384r1, 1, 0,
-     TLS1_3_VERSION, 0, -1, -1},
+     TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0},
     {TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name,
      TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_alias,
      TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512,
      NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA512, NID_brainpoolP512r1, 1, 0,
-     TLS1_3_VERSION, 0, -1, -1},
+     TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0},
 
     {TLSEXT_SIGALG_rsa_pss_rsae_sha256_name,
      "PSS+SHA256", TLSEXT_SIGALG_rsa_pss_rsae_sha256,
@@ -2187,13 +2188,10 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
     SIGALG_LOOKUP *cache = NULL;
     uint16_t *tls12_sigalgs_list = NULL;
     EVP_PKEY *tmpkey = EVP_PKEY_new();
-    int istls;
     int ret = 0;
 
     if (ctx == NULL)
         goto err;
-
-    istls = !SSL_CTX_IS_DTLS(ctx);
 
     sigalgs_len = OSSL_NELEM(sigalg_lookup_tbl) + ctx->sigalg_list_len;
 
@@ -2254,10 +2252,10 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
         cache[cache_idx].curve = NID_undef;
         cache[cache_idx].mintls = TLS1_3_VERSION;
         cache[cache_idx].maxtls = TLS1_3_VERSION;
-        cache[cache_idx].mindtls = -1;
-        cache[cache_idx].maxdtls = -1;
+        cache[cache_idx].mindtls = DTLS1_3_VERSION;
+        cache[cache_idx].maxdtls = DTLS1_3_VERSION;
         /* Compatibility with TLS 1.3 is checked on load */
-        cache[cache_idx].available = istls;
+        cache[cache_idx].available = 1;
         cache[cache_idx].advertise = 0;
         cache_idx++;
     }
@@ -2709,13 +2707,13 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
 
     pkeyid = EVP_PKEY_get_id(pkey);
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
-        /* Disallow DSA for TLS 1.3 */
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
+        /* Disallow DSA for (D)TLS 1.3 */
         if (pkeyid == EVP_PKEY_DSA) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
             return 0;
         }
-        /* Only allow PSS for TLS 1.3 */
+        /* Only allow PSS for (D)TLS 1.3 */
         if (pkeyid == EVP_PKEY_RSA)
             pkeyid = EVP_PKEY_RSA_PSS;
     }
@@ -2738,10 +2736,10 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
     }
 
     /*
-     * Check sigalgs is known. Disallow SHA1/SHA224 with TLS 1.3. Check key type
+     * Check sigalgs is known. Disallow SHA1/SHA224 with (D)TLS 1.3. Check key type
      * is consistent with signature: RSA keys can be used for RSA-PSS
      */
-    if ((SSL_CONNECTION_IS_TLS13(s)
+    if ((SSL_CONNECTION_IS_VERSION13(s)
             && (lu->hash == NID_sha1 || lu->hash == NID_sha224))
         || (pkeyid != lu->sig
         && (lu->sig != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA))) {
@@ -2766,8 +2764,8 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
             return 0;
         }
 
-        /* For TLS 1.3 or Suite B check curve matches signature algorithm */
-        if (SSL_CONNECTION_IS_TLS13(s) || tls1_suiteb(s)) {
+        /* For (D)TLS 1.3 or Suite B check curve matches signature algorithm */
+        if (SSL_CONNECTION_IS_VERSION13(s) || tls1_suiteb(s)) {
             int curve = ssl_get_EC_curve_nid(pkey);
 
             if (lu->curve != NID_undef && curve != lu->curve) {
@@ -2775,7 +2773,7 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
                 return 0;
             }
         }
-        if (!SSL_CONNECTION_IS_TLS13(s)) {
+        if (!SSL_CONNECTION_IS_VERSION13(s)) {
             /* Check curve matches extensions */
             if (!tls1_check_group_id(s, tls1_get_group_id(pkey), 1)) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_CURVE);
@@ -2932,8 +2930,9 @@ int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
             && (c->algorithm_mkey & (SSL_kECDHE | SSL_kECDHEPSK)) != 0)
         minversion = SSL3_VERSION;
 
-    if (ssl_version_cmp(s, minversion, s->s3.tmp.max_ver) > 0
-        || ssl_version_cmp(s, maxversion, s->s3.tmp.min_ver) < 0)
+    if (minversion <= 0 || maxversion <= 0
+            || ssl_version_cmp(s, minversion, s->s3.tmp.max_ver) > 0
+            || ssl_version_cmp(s, maxversion, s->s3.tmp.min_ver) < 0)
         return 1;
 
     return !ssl_security(s, op, c->strength_bits, 0, (void *)c);
@@ -3021,7 +3020,7 @@ SSL_TICKET_STATUS tls_get_ticket_from_client(SSL_CONNECTION *s,
     s->ext.ticket_expected = 0;
 
     /*
-     * If tickets disabled or not supported by the protocol version
+     * If tickets are disabled or not supported by the protocol version
      * (e.g. TLSv1.3) behave as if no ticket present to permit stateful
      * resumption.
      */
@@ -3087,7 +3086,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
         ret = SSL_TICKET_EMPTY;
         goto end;
     }
-    if (!SSL_CONNECTION_IS_TLS13(s) && s->ext.session_secret_cb) {
+    if (!SSL_CONNECTION_IS_VERSION13(s) && s->ext.session_secret_cb) {
         /*
          * Indicate that the ticket couldn't be decrypted rather than
          * generating the session from ticket now, trigger
@@ -3172,7 +3171,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
             goto end;
         }
         EVP_CIPHER_free(aes256cbc);
-        if (SSL_CONNECTION_IS_TLS13(s))
+        if (SSL_CONNECTION_IS_VERSION13(s))
             renew_ticket = 1;
     }
     /*
@@ -3318,7 +3317,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
         }
     }
 
-    if (s->ext.session_secret_cb == NULL || SSL_CONNECTION_IS_TLS13(s)) {
+    if (s->ext.session_secret_cb == NULL || SSL_CONNECTION_IS_VERSION13(s)) {
         switch (ret) {
         case SSL_TICKET_NO_DECRYPT:
         case SSL_TICKET_SUCCESS_RENEW:
@@ -3338,18 +3337,20 @@ static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op,
 {
     unsigned char sigalgstr[2];
     int secbits;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
+                                                     : TLS1_3_VERSION;
 
     if (lu == NULL || !lu->available)
         return 0;
-    /* DSA is not allowed in TLS 1.3 */
-    if (SSL_CONNECTION_IS_TLS13(s) && lu->sig == EVP_PKEY_DSA)
+    /* DSA is not allowed in (D)TLSv1.3 */
+    if (SSL_CONNECTION_IS_VERSION13(s) && lu->sig == EVP_PKEY_DSA)
         return 0;
     /*
-     * At some point we should fully axe DSA/etc. in ClientHello as per TLS 1.3
+     * At some point we should fully axe DSA/etc. in ClientHello as per (D)TLSv1.3
      * spec
      */
-    if (!s->server && !SSL_CONNECTION_IS_DTLS(s)
-        && s->s3.tmp.min_ver >= TLS1_3_VERSION
+    if (!s->server && s->s3.tmp.min_ver != 0
+        && ssl_version_cmp(s, s->s3.tmp.min_ver, version1_3) >= 0
         && (lu->sig == EVP_PKEY_DSA || lu->hash_idx == SSL_MD_SHA1_IDX
             || lu->hash_idx == SSL_MD_MD5_IDX
             || lu->hash_idx == SSL_MD_SHA224_IDX))
@@ -3362,22 +3363,26 @@ static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op,
     if (lu->sig == NID_id_GostR3410_2012_256
             || lu->sig == NID_id_GostR3410_2012_512
             || lu->sig == NID_id_GostR3410_2001) {
-        /* We never allow GOST sig algs on the server with TLSv1.3 */
-        if (s->server && SSL_CONNECTION_IS_TLS13(s))
+        int any_version = SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION : TLS_ANY_VERSION;
+
+        /* We never allow GOST sig algs on the server with (D)TLSv1.3 */
+        if (s->server && SSL_CONNECTION_IS_VERSION13(s))
             return 0;
         if (!s->server
-                && SSL_CONNECTION_GET_SSL(s)->method->version == TLS_ANY_VERSION
-                && s->s3.tmp.max_ver >= TLS1_3_VERSION) {
+                && SSL_CONNECTION_GET_SSL(s)->method->version == any_version
+                && s->s3.tmp.max_ver != 0
+                && ssl_version_cmp(s, s->s3.tmp.max_ver, version1_3) >= 0) {
             int i, num;
             STACK_OF(SSL_CIPHER) *sk;
 
             /*
-             * We're a client that could negotiate TLSv1.3. We only allow GOST
-             * sig algs if we could negotiate TLSv1.2 or below and we have GOST
+             * We're a client that could negotiate (D)TLSv1.3. We only allow GOST
+             * sig algs if we could negotiate (D)TLSv1.2 or below and we have GOST
              * ciphersuites enabled.
              */
 
-            if (s->s3.tmp.min_ver >= TLS1_3_VERSION)
+            if (s->s3.tmp.min_ver != 0
+                && ssl_version_cmp(s, s->s3.tmp.min_ver, version1_3) >= 0)
                 return 0;
 
             sk = SSL_get_ciphers(SSL_CONNECTION_GET_SSL(s));
@@ -3460,7 +3465,7 @@ int tls12_copy_sigalgs(SSL_CONNECTION *s, WPACKET *pkt,
          * If TLS 1.3 must have at least one valid TLS 1.3 message
          * signing algorithm: i.e. neither RSA nor SHA1/SHA224
          */
-        if (rv == 0 && (!SSL_CONNECTION_IS_TLS13(s)
+        if (rv == 0 && (!SSL_CONNECTION_IS_VERSION13(s)
             || (lu->sig != EVP_PKEY_RSA
                 && lu->hash != NID_sha1
                 && lu->hash != NID_sha224)))
@@ -3612,7 +3617,7 @@ int tls1_process_sigalgs(SSL_CONNECTION *s)
         int idx = sigptr->sig_idx;
 
         /* Ignore PKCS1 based sig algs in TLSv1.3 */
-        if (SSL_CONNECTION_IS_TLS13(s) && sigptr->sig == EVP_PKEY_RSA)
+        if (SSL_CONNECTION_IS_VERSION13(s) && sigptr->sig == EVP_PKEY_RSA)
             continue;
         /* If not disabled indicate we can explicitly sign */
         if (pvalid[idx] == 0
@@ -3935,7 +3940,7 @@ static int tls1_check_sig_alg(SSL_CONNECTION *s, X509 *x, int default_nid)
     if (default_nid)
         return sig_nid == default_nid ? 1 : 0;
 
-    if (SSL_CONNECTION_IS_TLS13(s) && s->s3.tmp.peer_cert_sigalgs != NULL) {
+    if (SSL_CONNECTION_IS_VERSION13(s) && s->s3.tmp.peer_cert_sigalgs != NULL) {
         /*
          * If we're in TLSv1.3 then we only get here if we're checking the
          * chain. If the peer has specified peer_cert_sigalgs then we use them
@@ -4149,7 +4154,7 @@ int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
             }
         }
         /* Check signature algorithm of each cert in chain */
-        if (SSL_CONNECTION_IS_TLS13(s)) {
+        if (SSL_CONNECTION_IS_VERSION13(s)) {
             /*
              * We only get here if the application has called SSL_check_chain(),
              * so check_flags is always set.
@@ -4648,7 +4653,7 @@ int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs)
     s->s3.tmp.cert = NULL;
     s->s3.tmp.sigalg = NULL;
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         lu = find_sig_alg(s, NULL, NULL);
         if (lu == NULL) {
             if (!fatalerrs)

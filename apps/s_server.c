@@ -58,6 +58,7 @@ typedef unsigned int u_int;
 #endif
 #include "internal/sockets.h"
 #include "internal/statem.h"
+#include "ssl/ssl_local.h"
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(int s, int stype, int prot, unsigned char *context);
@@ -134,16 +135,17 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
 {
     long key_len = 0;
     unsigned char *key;
+    const int version1_3 = SSL_is_dtls(ssl) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (s_debug)
         BIO_printf(bio_s_out, "psk_server_cb\n");
 
-    if (!SSL_is_dtls(ssl) && SSL_version(ssl) >= TLS1_3_VERSION) {
+    if (PROTOCOL_VERSION_CMP(SSL_is_dtls(ssl), SSL_version(ssl), version1_3) >= 0) {
         /*
          * This callback is designed for use in (D)TLSv1.2 (or below). It is
          * possible to use a single callback for all protocol versions - but it
-         * is preferred to use a dedicated callback for TLSv1.3. For TLSv1.3 we
-         * have psk_find_session_cb.
+         * is preferred to use a dedicated callback for (D)TLSv1.3. For
+         * (D)TLSv1.3 we have psk_find_session_cb.
          */
         return 0;
     }
@@ -614,11 +616,10 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
         sk_OCSP_RESPONSE_pop_free(*sk_resp, OCSP_RESPONSE_free);
 
     SSL_get0_chain_certs(s, &server_certs);
-    /*
-     * TODO(DTLS-1.3): in future DTLS should also be considered
-     */
+
     if (server_certs != NULL && srctx->status_all &&
-        !SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) {
+        ((!SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION)
+         || (SSL_is_dtls(s) && SSL_version(s) <= DTLS1_3_VERSION))) {
         /* certificate chain is available */
         num = sk_X509_num(server_certs) + 1;
     }
@@ -761,11 +762,10 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     }
 
     SSL_get0_chain_certs(s, &server_certs);
-    /*
-     * TODO(DTLS-1.3): in future DTLS should also be considered
-     */
+
     if (server_certs != NULL && srctx->status_all &&
-        !SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) {
+        ((!SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION)
+         || (SSL_is_dtls(s) && SSL_version(s) <= DTLS1_3_VERSION))) {
         /* certificate chain is available */
         num = sk_X509_num(server_certs) + 1;
     } else {
@@ -949,8 +949,8 @@ typedef enum OPTION_choice {
     OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC, OPT_SSL_CONFIG,
     OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_SSL3, OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
-    OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN, OPT_STATELESS,
-    OPT_ID_PREFIX, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
+    OPT_DTLS1_2, OPT_DTLS1_3, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN,
+    OPT_STATELESS, OPT_ID_PREFIX, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN, OPT_SENDFILE,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
     OPT_KEYLOG_FILE, OPT_MAX_EARLY, OPT_RECV_MAX_EARLY, OPT_EARLY_DATA,
@@ -1161,7 +1161,7 @@ const OPTIONS s_server_options[] = {
      "The maximum number of bytes of early data (hard limit)"},
     {"early_data", OPT_EARLY_DATA, '-', "Attempt to read early data"},
     {"num_tickets", OPT_S_NUM_TICKETS, 'n',
-     "The number of TLSv1.3 session tickets that a server will automatically issue" },
+     "The number of (D)TLSv1.3 session tickets that a server will automatically issue" },
     {"anti_replay", OPT_ANTI_REPLAY, '-', "Switch on anti-replay protection (default)"},
     {"no_anti_replay", OPT_NO_ANTI_REPLAY, '-', "Switch off anti-replay protection"},
     {"http_server_binmode", OPT_HTTP_SERVER_BINMODE, '-', "opening files in binary mode when acting as http server (-WWW and -HTTP)"},
@@ -1193,6 +1193,9 @@ const OPTIONS s_server_options[] = {
 #endif
 #ifndef OPENSSL_NO_DTLS1_2
     {"dtls1_2", OPT_DTLS1_2, '-', "Just talk DTLSv1.2"},
+#endif
+#ifndef OPENSSL_NO_DTLS1_3
+    {"dtls1_3", OPT_DTLS1_3, '-', "Just talk DTLSv1.3"},
 #endif
 #ifndef OPENSSL_NO_SCTP
     {"sctp", OPT_SCTP, '-', "Use SCTP"},
@@ -1226,7 +1229,8 @@ const OPTIONS s_server_options[] = {
 
 #define IS_PROT_FLAG(o) \
  (o == OPT_SSL3 || o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
-  || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2)
+  || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2 \
+  || o == OPT_DTLS1_3)
 
 int s_server_main(int argc, char *argv[])
 {
@@ -1286,6 +1290,9 @@ int s_server_main(int argc, char *argv[])
 #endif
 #ifndef OPENSSL_NO_SRTP
     char *srtp_profiles = NULL;
+#endif
+#if !(defined(OPENSSL_NO_NEXTPROTONEG) && defined(OPENSSL_NO_PSK))
+    int version1_3;
 #endif
     int min_version = 0, max_version = 0, prot_opt = 0, no_prot_opt = 0;
     int s_server_verify = SSL_VERIFY_NONE;
@@ -1789,6 +1796,14 @@ int s_server_main(int argc, char *argv[])
             socket_type = SOCK_DGRAM;
 #endif
             break;
+        case OPT_DTLS1_3:
+#ifndef OPENSSL_NO_DTLS
+            meth = DTLS_server_method();
+            min_version = DTLS1_3_VERSION;
+            max_version = DTLS1_3_VERSION;
+            socket_type = SOCK_DGRAM;
+#endif
+            break;
         case OPT_SCTP:
 #ifndef OPENSSL_NO_SCTP
             protocol = IPPROTO_SCTP;
@@ -1940,6 +1955,10 @@ int s_server_main(int argc, char *argv[])
         }
     }
 
+#if !(defined(OPENSSL_NO_NEXTPROTONEG) && defined(OPENSSL_NO_PSK))
+    version1_3 = (socket_type == SOCK_DGRAM) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+#endif
+
     /* No extra arguments. */
     if (!opt_check_rest_arg(NULL))
         goto opthelp;
@@ -1948,7 +1967,7 @@ int s_server_main(int argc, char *argv[])
         goto end;
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-    if (min_version == TLS1_3_VERSION && next_proto_neg_in != NULL) {
+    if (min_version == version1_3 && next_proto_neg_in != NULL) {
         BIO_printf(bio_err, "Cannot supply -nextprotoneg with TLSv1.3\n");
         goto opthelp;
     }
@@ -2438,7 +2457,7 @@ int s_server_main(int argc, char *argv[])
     }
 
     if (psk_identity_hint != NULL) {
-        if (min_version == TLS1_3_VERSION) {
+        if (min_version == version1_3) {
             BIO_printf(bio_s_out, "PSK warning: there is NO identity hint in TLSv1.3\n");
         } else {
             if (!SSL_CTX_use_psk_identity_hint(ctx, psk_identity_hint)) {
