@@ -683,6 +683,12 @@ static void warn_cert(const char *uri, X509 *cert, int warn_EE,
                       X509_VERIFY_PARAM *vpm)
 {
     uint32_t ex_flags = X509_get_extension_flags(cert);
+    /*
+     * This should not be used as as example for how to verify
+     * certificates. This treats an invalid not before or an invalid
+     * not after time in the certificate as infinitely valid, which
+     * you don't want outside of a toy testing function like this.
+     */
     int res = X509_cmp_timeframe(vpm, X509_get0_notBefore(cert),
                                  X509_get0_notAfter(cert));
 
