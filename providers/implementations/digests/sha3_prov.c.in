@@ -506,7 +506,7 @@ static PROV_SHA3_METHOD shake_ARMSHA3_md =
     }
 # define CSHAKE_KECCAK_SET_MD(bitlen)                                          \
     if (OPENSSL_armcap_P & ARMV8_HAVE_SHA3_AND_WORTH_USING) {                  \
-        ctx->meth = sha3_ARMSHA3_md;                                           \
+        ctx->meth = shake_ARMSHA3_md;                                          \
     } else {                                                                   \
         ctx->meth = shake_generic_md;                                          \
     }
