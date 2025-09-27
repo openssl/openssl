@@ -330,14 +330,18 @@ static int chacha20_poly1305_cipher(void *vctx, unsigned char *out,
 static int chacha20_poly1305_final(void *vctx, unsigned char *out, size_t *outl,
                                    size_t outsize)
 {
-    PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+    PROV_CHACHA20_POLY1305_CTX *ctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
     PROV_CIPHER_HW_CHACHA20_POLY1305 *hw =
-        (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->hw;
+        (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->base.hw;
 
     if (!ossl_prov_is_running())
         return 0;
 
-    if (hw->aead_cipher(ctx, out, outl, NULL, 0) <= 0)
+    /* The tag must be set before actually decrypting data */
+    if (!ctx->base.enc && ctx->tag_len == 0)
+        return 0;
+
+    if (hw->aead_cipher((PROV_CIPHER_CTX *)ctx, out, outl, NULL, 0) <= 0)
         return 0;
 
     *outl = 0;

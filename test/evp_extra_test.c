@@ -4066,10 +4066,16 @@ static int test_decrypt_null_chunks(void)
     unsigned char msg[] = "It was the best of times, it was the worst of times";
     unsigned char ciphertext[80];
     unsigned char plaintext[80];
+    unsigned char tag[16];
     /* We initialise tmp to a non zero value on purpose */
     int ctlen, ptlen, tmp = 99;
     int ret = 0;
     const int enc_offset = 10, dec_offset = 20;
+    OSSL_PARAM params[2];
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+                                                  tag, sizeof(tag));
+    params[1] = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, "ChaCha20-Poly1305", testpropq))
             || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
@@ -4086,12 +4092,13 @@ static int test_decrypt_null_chunks(void)
                                             sizeof(msg) - enc_offset))
             || !TEST_int_eq(ctlen += tmp, sizeof(msg))
             || !TEST_true(EVP_EncryptFinal(ctx, ciphertext + ctlen, &tmp))
-            || !TEST_int_eq(tmp, 0))
+            || !TEST_int_eq(tmp, 0)
+            || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, params)))
         goto err;
 
     /* Deliberately initialise tmp to a non zero value */
     tmp = 99;
-    if (!TEST_true(EVP_DecryptInit_ex(ctx, cipher, NULL, key, iv))
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx, cipher, key, iv, params))
             || !TEST_true(EVP_DecryptUpdate(ctx, plaintext, &ptlen, ciphertext,
                                             dec_offset))
             /*
@@ -5254,6 +5261,83 @@ static int test_evp_updated_iv(int idx)
         TEST_info("test_evp_updated_iv %d: %s", idx, errmsg);
     EVP_CIPHER_CTX_free(ctx);
     EVP_CIPHER_free(type);
+    return testresult;
+}
+
+typedef struct {
+    const char *cipher;
+} EVP_FINAL_NO_TAG_TEST_st;
+
+static const EVP_FINAL_NO_TAG_TEST_st evp_final_no_tag[] = {
+    {
+        "chacha20-poly1305"
+    },
+    {
+        "aes-256-gcm"
+    }
+};
+
+static int test_evp_final_no_tag(int idx)
+{
+    const EVP_FINAL_NO_TAG_TEST_st *t = &evp_final_no_tag[idx];
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    unsigned char tag[16];
+    unsigned char data[5] = {1, 1, 1, 1, 1};
+    uint32_t data_len = 5;
+    unsigned char ctext[1024], plaintext[1024];
+    int ctext_len = 0, len = 0, testresult = 0;
+    unsigned char key[] = {
+        0xc9, 0xee, 0xa3, 0x0c, 0x1c, 0x59, 0x0c, 0x8b, 0xd8, 0xbb, 0xa1, 0x1c,
+        0xbc, 0x3a, 0x56, 0xe7, 0xb7, 0xe1, 0x9f, 0xfd, 0x3b, 0x4a, 0xa3, 0xd5,
+        0xc4, 0xdc, 0x2e, 0x62, 0xe6, 0x75, 0x15, 0x5c
+    };
+    unsigned char iv[16] = {
+        0x03, 0x2d, 0x79, 0xef, 0xed, 0x2e, 0xad, 0x3e, 0x0b, 0xdc, 0x8f, 0x57,
+        0x0d, 0x0e, 0x0f, 0x10
+    };
+
+    if ((cipher = EVP_CIPHER_fetch(testctx, t->cipher, testpropq)) == NULL) {
+        TEST_info("cipher %s not supported, skipping", t->cipher);
+        goto ok;
+    }
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
+    if (!TEST_true(EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv)))
+        goto err;
+    if (!TEST_true(EVP_EncryptUpdate(ctx, ctext, &len, data, data_len)))
+        goto err;
+    ctext_len = len;
+    if (!TEST_true(EVP_EncryptFinal_ex(ctx, ctext + len, &len)))
+        goto err;
+
+    ctext_len += len;
+    if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, tag)))
+        goto err;
+    EVP_CIPHER_CTX_free(ctx);
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
+    if (!TEST_true(EVP_DecryptInit_ex(ctx, cipher, NULL, key, iv)))
+        goto err;
+    if (!TEST_true(EVP_DecryptUpdate(ctx, plaintext, &len, ctext, ctext_len)))
+        goto err;
+    if (!TEST_mem_eq(plaintext, 5, data, 5))
+        goto err;
+
+    /*
+     * The tag must be set before decrypting the data; here we expect failure
+     * for each of the defined ciphers.
+     */
+    if (!TEST_false(EVP_DecryptFinal_ex(ctx, ctext + len, &len)))
+        goto err;
+
+ok:
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
     return testresult;
 }
 
@@ -6923,6 +7007,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_reinit_seq, OSSL_NELEM(evp_reinit_tests));
     ADD_ALL_TESTS(test_gcm_reinit, OSSL_NELEM(gcm_reinit_tests));
     ADD_ALL_TESTS(test_evp_updated_iv, OSSL_NELEM(evp_updated_iv_tests));
+    ADD_ALL_TESTS(test_evp_final_no_tag, OSSL_NELEM(evp_final_no_tag));
+
     ADD_ALL_TESTS(test_ivlen_change, OSSL_NELEM(ivlen_change_ciphers));
     if (OSSL_NELEM(keylen_change_ciphers) - 1 > 0)
         ADD_ALL_TESTS(test_keylen_change, OSSL_NELEM(keylen_change_ciphers) - 1);
