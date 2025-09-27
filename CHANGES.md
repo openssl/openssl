@@ -32,6 +32,10 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added CSHAKE as per [SP 800-185]
+
+   *Shane Lontis*
+
  * various function parameters have been constified,
    in particular for X509-related functions.
 
@@ -21701,3 +21705,4 @@ ndif
 [CMVP]: https://csrc.nist.gov/projects/cryptographic-module-validation-program
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
+[SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final

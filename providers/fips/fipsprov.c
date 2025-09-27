@@ -287,7 +287,9 @@ static int fips_self_test(void *provctx)
     { PROV_NAMES_SHA3_384, FIPS_DEFAULT_PROPERTIES, ossl_sha3_384_functions }, \
     { PROV_NAMES_SHA3_512, FIPS_DEFAULT_PROPERTIES, ossl_sha3_512_functions }, \
     { PROV_NAMES_SHAKE_128, FIPS_DEFAULT_PROPERTIES, ossl_shake_128_functions }, \
-    { PROV_NAMES_SHAKE_256, FIPS_DEFAULT_PROPERTIES, ossl_shake_256_functions }
+    { PROV_NAMES_SHAKE_256, FIPS_DEFAULT_PROPERTIES, ossl_shake_256_functions }, \
+    { PROV_NAMES_CSHAKE_128, FIPS_DEFAULT_PROPERTIES, ossl_cshake_128_functions }, \
+    { PROV_NAMES_CSHAKE_256, FIPS_DEFAULT_PROPERTIES, ossl_cshake_256_functions }
 
 static const OSSL_ALGORITHM fips_digests[] = {
     FIPS_DIGESTS_COMMON(),
@@ -298,14 +300,10 @@ static const OSSL_ALGORITHM fips_digests_internal[] = {
     /* Used by LMS/HSS */
     { PROV_NAMES_SHA2_256_192, FIPS_DEFAULT_PROPERTIES,
       ossl_sha256_192_internal_functions },
-    /*
-     * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
-     * KMAC128 and KMAC256.
-     */
-    { PROV_NAMES_KECCAK_KMAC_128, FIPS_DEFAULT_PROPERTIES,
-      ossl_keccak_kmac_128_functions },
-    { PROV_NAMES_KECCAK_KMAC_256, FIPS_DEFAULT_PROPERTIES,
-      ossl_keccak_kmac_256_functions },
+    { PROV_NAMES_CSHAKE_KECCAK_128, FIPS_DEFAULT_PROPERTIES,
+      ossl_cshake_keccak_128_functions },
+    { PROV_NAMES_CSHAKE_KECCAK_256, FIPS_DEFAULT_PROPERTIES,
+      ossl_cshake_keccak_256_functions },
     { NULL, NULL, NULL }
 };
 
