@@ -199,7 +199,8 @@ static int pkey_check_fips_approved(EVP_PKEY_CTX *ctx, EVP_TEST *t)
 
     params[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR,
         &approved);
-    if (!EVP_PKEY_CTX_get_params(ctx, params))
+    if ((EVP_PKEY_CTX_get_params(ctx, params) <= 0)
+        || !OSSL_PARAM_modified(params))
         return 0;
     return check_fips_approved(t, approved);
 }
@@ -4883,7 +4884,7 @@ static int check_deterministic_noncetype(EVP_TEST *t,
         params[1] = OSSL_PARAM_construct_end();
         if (!EVP_PKEY_CTX_set_params(mdata->pctx, params))
             t->err = "EVP_PKEY_CTX_set_params_ERROR";
-        else if (!EVP_PKEY_CTX_get_params(mdata->pctx, params))
+        else if (EVP_PKEY_CTX_get_params(mdata->pctx, params) <= 0)
             t->err = "EVP_PKEY_CTX_get_params_ERROR";
         else if (!OSSL_PARAM_modified(&params[0]))
             t->err = "nonce_type_not_modified_ERROR";
