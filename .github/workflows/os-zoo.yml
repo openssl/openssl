@@ -79,7 +79,7 @@ jobs:
       run: ./util/opensslwrap.sh version -c
     - name: make test
       env:
-        OPENSSL_riscvcap: ZBA_ZBB_ZBC_ZBS_ZKT
+        OPENSSL_riscvcap: RV64GC_ZBA_ZBB_ZBC_ZBS_ZKT_V
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   linux-riscv64:
@@ -97,7 +97,7 @@ jobs:
       run: ./util/opensslwrap.sh version -c
     - name: make test
       env:
-        OPENSSL_riscvcap: ZBA_ZBB_ZBC_ZBS_ZKT
+        OPENSSL_riscvcap: RV64GC_ZBA_ZBB_ZBC_ZBS_ZKT_V
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   freebsd-x86_64:
