@@ -4729,7 +4729,9 @@ static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHA
         goto err;
     }
 
-    ossl_quic_channel_get_peer_addr(ch, &qc->init_peer_addr); /* best effort */
+    if (csm_analyse_init_peer_addr( ossl_quic_port_get_net_wbio(ql->port), &qc->init_peer_addr))
+        ossl_quic_channel_set_peer_addr(ch, &qc->init_peer_addr);
+
     qc->pending                 = 1;
     qc->engine                  = ql->engine;
     qc->port                    = ql->port;
@@ -4999,6 +5001,17 @@ size_t ossl_quic_get_accept_connection_queue_len(SSL *ssl)
     qctx_unlock(&ctx);
     return ret;
 }
+
+int ossl_quic_get_peer_addr(SSL *ssl, BIO_ADDR *peer_addr)
+{
+    QCTX ctx;
+
+    if (!expect_quic_cs(ssl, &ctx))
+        return 0;
+
+    return ossl_quic_channel_get_peer_addr(ctx.qc->ch, peer_addr);
+}
+
 
 /*
  * QUIC Front-End I/O API: Domains

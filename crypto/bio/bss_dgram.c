@@ -1660,6 +1660,19 @@ static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
              */
             BIO_ADDR_clear(msg->local);
 
+    /*
+     * Mirror logic from dgram_read(): cache the peer address on successful read
+     */
+    if (BIO_ADDR_family(&data->peer) == AF_UNSPEC && mh.msg_name != NULL && mh.msg_namelen > 0) {
+        BIO_ADDR peer;
+
+        memset(&peer, 0, sizeof(peer));
+        memcpy(&peer, mh.msg_name, mh.msg_namelen > sizeof(peer)
+               ? sizeof(peer)
+               : (size_t)mh.msg_namelen);
+        BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, &peer);
+    }
+
     *num_processed = 1;
     return 1;
 
