@@ -3718,7 +3718,7 @@ static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
                                  const QUIC_CONN_ID *peer_odcid)
 {
     /* Note our newly learnt peer address and CIDs. */
-    if (!BIO_ADDR_copy(&ch->cur_peer_addr, peer))
+    if (!ossl_quic_channel_set_peer_addr(ch, peer))
         return 0;
 
     ch->init_dcid       = *peer_dcid;

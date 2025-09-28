@@ -710,6 +710,10 @@ or allow them to be handled using L<SSL_accept_stream(3)>.
 Used to configure or disable default stream mode; see the MODES OF OPERATION
 section for details.
 
+=item L<SSL_get_peer_addr(3)>
+
+Used to obtain the peer address from a QUIC connection or stream.
+
 =back
 
 The following BIO APIs are not specific to QUIC but have been added to

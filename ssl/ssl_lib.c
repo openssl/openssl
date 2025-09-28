@@ -8105,6 +8105,18 @@ size_t SSL_get_accept_connection_queue_len(SSL *ssl)
 #endif
 }
 
+int SSL_get_peer_addr(SSL *ssl, BIO_ADDR *peer_addr)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(ssl))
+        return 0;
+
+    return ossl_quic_get_peer_addr(ssl, peer_addr);
+#else
+    return 0;
+#endif
+}
+
 int SSL_listen(SSL *ssl)
 {
 #ifndef OPENSSL_NO_QUIC
