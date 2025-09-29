@@ -1667,7 +1667,7 @@ static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
         BIO_ADDR peer;
 
         memset(&peer, 0, sizeof(peer));
-        memcpy(&peer, mh.msg_name, mh.msg_namelen > sizeof(peer)
+        memcpy(&peer, mh.msg_name, (size_t)mh.msg_namelen > sizeof(peer)
                ? sizeof(peer)
                : (size_t)mh.msg_namelen);
         BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, &peer);
