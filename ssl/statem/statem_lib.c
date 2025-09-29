@@ -1328,7 +1328,7 @@ unsigned long tls_output_rpk(SSL_CONNECTION *sc, WPACKET *pkt, CERT_PKEY *cpk)
 {
     int pdata_len = 0;
     unsigned char *pdata = NULL;
-    X509_PUBKEY *xpk = NULL;
+    const X509_PUBKEY *xpk = NULL;
     unsigned long ret = 0;
     X509 *x509 = NULL;
 

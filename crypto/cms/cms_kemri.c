@@ -83,7 +83,7 @@ int ossl_cms_RecipientInfo_kemri_init(CMS_RecipientInfo *ri, X509 *recip,
     CMS_OtherRecipientInfo *ori;
     CMS_KEMRecipientInfo *kemri;
     int idtype;
-    X509_PUBKEY *x_pubkey;
+    const X509_PUBKEY *x_pubkey;
     X509_ALGOR *x_alg;
 
     ri->d.ori = M_ASN1_new_of(CMS_OtherRecipientInfo);
