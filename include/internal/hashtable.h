@@ -199,8 +199,11 @@ pfx ossl_unused int ossl_ht_##name##_##vtype##_insert(HT *h, HT_KEY *key,      \
     inval.value = data;                                                        \
     inval.type_id = &name##_##vtype##_id;                                      \
     rc = ossl_ht_insert(h, key, &inval, olddata == NULL ? NULL : &oval);       \
-    if (oval != NULL)                                                          \
+    if (oval != NULL) {                                                        \
         *olddata = (vtype *)oval->value;                                       \
+        if (ossl_ht_get_cfg_no_rcu(h))                                         \
+            OPENSSL_free(oval);                                                \
+    }                                                                          \
     return rc;                                                                 \
 }                                                                              \
                                                                                \

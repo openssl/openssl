@@ -624,7 +624,6 @@ static int ossl_ht_insert_locked(HT *h, uint64_t hash,
                     md->neighborhoods[neigh_idx].entries[j].hash = hash;
                     *olddata = (HT_VALUE *)md->neighborhoods[neigh_idx].entries[j].value;
                     md->neighborhoods[neigh_idx].entries[j].value = newval;
-                    free_old_ht_value(*olddata);
                 }
                 h->wpd.need_sync = 1;
                 return 1;
@@ -805,7 +804,7 @@ int ossl_ht_delete(HT *h, HT_KEY *key)
             continue;
         if (compare_hash(hash, h->md->neighborhoods[neigh_idx].entries[j].hash)
             && match_key(key, &v->value.key)) {
-            if (ossl_ht_get_cfg_no_rcu(h)) {
+            if (!ossl_ht_get_cfg_no_rcu(h)) {
                 if (!CRYPTO_atomic_store(&h->md->neighborhoods[neigh_idx].entries[j].hash,
                                          0, h->atomic_lock))
                     break;
