@@ -204,7 +204,7 @@ int X509_ocspid_print(BIO *bp, const X509 *x)
     int derlen;
     int i;
     unsigned char SHA1md[SHA_DIGEST_LENGTH];
-    ASN1_BIT_STRING *keybstr;
+    const ASN1_BIT_STRING *keybstr;
     const X509_NAME *subj;
     EVP_MD *md = NULL;
 
