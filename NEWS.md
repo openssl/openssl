@@ -24,7 +24,19 @@ OpenSSL 3.4
 
 ### Major changes between OpenSSL 3.4.2 and OpenSSL 3.4.3 [under development]
 
-  * none
+OpenSSL 3.4.3 is a security patch release. The most severe CVE fixed in this
+release is Moderate.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fix Out-of-bounds read & write in RFC 3211 KEK Unwrap.
+    ([CVE-2025-9230])
+
+  * Fix Timing side-channel in SM2 algorithm on 64 bit ARM.
+    ([CVE-2025-9231])
+
+  * Fix Out-of-bounds read in HTTP client no_proxy handling.
+    ([CVE-2025-9232])
 
 ### Major changes between OpenSSL 3.4.1 and OpenSSL 3.4.2 [1 Jul 2025]
 
@@ -1843,8 +1855,11 @@ OpenSSL 0.9.x
   * Support for various new platforms
 
 <!-- Links -->
-
+[CVE-2025-9232]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9232
+[CVE-2025-9231]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9231
+[CVE-2025-9230]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9230
 [CVE-2024-13176]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-13176
+[CVE-2024-12797]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-12797
 [CVE-2024-9143]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-9143
 [CVE-2024-6119]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-6119
 [CVE-2024-5535]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-5535
