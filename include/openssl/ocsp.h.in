@@ -310,24 +310,24 @@ int OCSP_REQUEST_get_ext_by_NID(OCSP_REQUEST *x, int nid, int lastpos);
 int OCSP_REQUEST_get_ext_by_OBJ(OCSP_REQUEST *x, const ASN1_OBJECT *obj,
     int lastpos);
 int OCSP_REQUEST_get_ext_by_critical(OCSP_REQUEST *x, int crit, int lastpos);
-X509_EXTENSION *OCSP_REQUEST_get_ext(OCSP_REQUEST *x, int loc);
+const X509_EXTENSION *OCSP_REQUEST_get_ext(OCSP_REQUEST *x, int loc);
 X509_EXTENSION *OCSP_REQUEST_delete_ext(OCSP_REQUEST *x, int loc);
 void *OCSP_REQUEST_get1_ext_d2i(OCSP_REQUEST *x, int nid, int *crit,
     int *idx);
 int OCSP_REQUEST_add1_ext_i2d(OCSP_REQUEST *x, int nid, void *value, int crit,
     unsigned long flags);
-int OCSP_REQUEST_add_ext(OCSP_REQUEST *x, X509_EXTENSION *ex, int loc);
+int OCSP_REQUEST_add_ext(OCSP_REQUEST *x, const X509_EXTENSION *ex, int loc);
 
 int OCSP_ONEREQ_get_ext_count(OCSP_ONEREQ *x);
 int OCSP_ONEREQ_get_ext_by_NID(OCSP_ONEREQ *x, int nid, int lastpos);
 int OCSP_ONEREQ_get_ext_by_OBJ(OCSP_ONEREQ *x, const ASN1_OBJECT *obj, int lastpos);
 int OCSP_ONEREQ_get_ext_by_critical(OCSP_ONEREQ *x, int crit, int lastpos);
-X509_EXTENSION *OCSP_ONEREQ_get_ext(OCSP_ONEREQ *x, int loc);
+const X509_EXTENSION *OCSP_ONEREQ_get_ext(OCSP_ONEREQ *x, int loc);
 X509_EXTENSION *OCSP_ONEREQ_delete_ext(OCSP_ONEREQ *x, int loc);
 void *OCSP_ONEREQ_get1_ext_d2i(OCSP_ONEREQ *x, int nid, int *crit, int *idx);
 int OCSP_ONEREQ_add1_ext_i2d(OCSP_ONEREQ *x, int nid, void *value, int crit,
     unsigned long flags);
-int OCSP_ONEREQ_add_ext(OCSP_ONEREQ *x, X509_EXTENSION *ex, int loc);
+int OCSP_ONEREQ_add_ext(OCSP_ONEREQ *x, const X509_EXTENSION *ex, int loc);
 
 int OCSP_BASICRESP_get_ext_count(OCSP_BASICRESP *x);
 int OCSP_BASICRESP_get_ext_by_NID(OCSP_BASICRESP *x, int nid, int lastpos);
@@ -335,13 +335,13 @@ int OCSP_BASICRESP_get_ext_by_OBJ(OCSP_BASICRESP *x, const ASN1_OBJECT *obj,
     int lastpos);
 int OCSP_BASICRESP_get_ext_by_critical(OCSP_BASICRESP *x, int crit,
     int lastpos);
-X509_EXTENSION *OCSP_BASICRESP_get_ext(OCSP_BASICRESP *x, int loc);
+const X509_EXTENSION *OCSP_BASICRESP_get_ext(OCSP_BASICRESP *x, int loc);
 X509_EXTENSION *OCSP_BASICRESP_delete_ext(OCSP_BASICRESP *x, int loc);
 void *OCSP_BASICRESP_get1_ext_d2i(OCSP_BASICRESP *x, int nid, int *crit,
     int *idx);
 int OCSP_BASICRESP_add1_ext_i2d(OCSP_BASICRESP *x, int nid, void *value,
     int crit, unsigned long flags);
-int OCSP_BASICRESP_add_ext(OCSP_BASICRESP *x, X509_EXTENSION *ex, int loc);
+int OCSP_BASICRESP_add_ext(OCSP_BASICRESP *x, const X509_EXTENSION *ex, int loc);
 
 int OCSP_SINGLERESP_get_ext_count(OCSP_SINGLERESP *x);
 int OCSP_SINGLERESP_get_ext_by_NID(OCSP_SINGLERESP *x, int nid, int lastpos);
@@ -349,13 +349,13 @@ int OCSP_SINGLERESP_get_ext_by_OBJ(OCSP_SINGLERESP *x, const ASN1_OBJECT *obj,
     int lastpos);
 int OCSP_SINGLERESP_get_ext_by_critical(OCSP_SINGLERESP *x, int crit,
     int lastpos);
-X509_EXTENSION *OCSP_SINGLERESP_get_ext(OCSP_SINGLERESP *x, int loc);
+const X509_EXTENSION *OCSP_SINGLERESP_get_ext(OCSP_SINGLERESP *x, int loc);
 X509_EXTENSION *OCSP_SINGLERESP_delete_ext(OCSP_SINGLERESP *x, int loc);
 void *OCSP_SINGLERESP_get1_ext_d2i(OCSP_SINGLERESP *x, int nid, int *crit,
     int *idx);
 int OCSP_SINGLERESP_add1_ext_i2d(OCSP_SINGLERESP *x, int nid, void *value,
     int crit, unsigned long flags);
-int OCSP_SINGLERESP_add_ext(OCSP_SINGLERESP *x, X509_EXTENSION *ex, int loc);
+int OCSP_SINGLERESP_add_ext(OCSP_SINGLERESP *x, const X509_EXTENSION *ex, int loc);
 const OCSP_CERTID *OCSP_SINGLERESP_get0_id(const OCSP_SINGLERESP *x);
 
 DECLARE_ASN1_FUNCTIONS(OCSP_SINGLERESP)

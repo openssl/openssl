@@ -1276,8 +1276,8 @@ int copy_extensions(X509 *x, X509_REQ *req, int copy_type)
     exts = X509_REQ_get_extensions(req);
 
     for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-        X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
-        ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
+        const X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
+        const ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
         int idx = X509_get_ext_by_OBJ(x, obj, -1);
 
         /* Does extension exist in target? */
@@ -2414,13 +2414,12 @@ static int adapt_keyid_ext(X509 *cert, X509V3_CTX *ext_ctx,
 
     idx = X509v3_get_ext_by_OBJ(exts, X509_EXTENSION_get_object(new_ext), -1);
     if (idx >= 0) {
-        X509_EXTENSION *found_ext = X509v3_get_ext(exts, idx);
-        ASN1_OCTET_STRING *encoded = X509_EXTENSION_get_data(found_ext);
+        const X509_EXTENSION *found_ext = X509v3_get_ext(exts, idx);
+        const ASN1_OCTET_STRING *encoded = X509_EXTENSION_get_data(found_ext);
         int disabled = ASN1_STRING_length(encoded) <= 2; /* indicating "none" */
 
         if (disabled) {
-            X509_delete_ext(cert, idx);
-            X509_EXTENSION_free(found_ext);
+            X509_EXTENSION_free(X509_delete_ext(cert, idx));
         } /* else keep existing key identifier, which might be outdated */
         rv = 1;
     } else {

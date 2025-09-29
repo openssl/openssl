@@ -274,7 +274,7 @@ static X509_REQ *x509_to_req(X509 *cert, int ext_copy, const char *names)
         goto err;
     for (i = 0; i < n; i++) {
         X509_EXTENSION *ex = sk_X509_EXTENSION_value(cert_exts, i);
-        ASN1_OBJECT *obj = X509_EXTENSION_get_object(ex);
+        const ASN1_OBJECT *obj = X509_EXTENSION_get_object(ex);
 
         if (OBJ_cmp(obj, skid) != 0 && OBJ_cmp(obj, akid) != 0
             && !sk_X509_EXTENSION_push(exts, ex))
@@ -904,7 +904,7 @@ cert_loop:
     if (clrext && ext_names != NULL)
         BIO_puts(bio_err, "Warning: Ignoring -ext since -clrext is given\n");
     for (i = X509_get_ext_count(x) - 1; i >= 0; i--) {
-        X509_EXTENSION *ex = X509_get_ext(x, i);
+        const X509_EXTENSION *ex = X509_get_ext(x, i);
         const char *sn = OBJ_nid2sn(OBJ_obj2nid(X509_EXTENSION_get_object(ex)));
 
         if (clrext || (ext_names != NULL && strstr(ext_names, sn) == NULL))
@@ -1343,7 +1343,7 @@ static int print_x509v3_exts(BIO *bio, X509 *x, const char *ext_names)
     const STACK_OF(X509_EXTENSION) *exts = NULL;
     STACK_OF(X509_EXTENSION) *exts2 = NULL;
     X509_EXTENSION *ext = NULL;
-    ASN1_OBJECT *obj;
+    const ASN1_OBJECT *obj;
     int i, j, ret = 0, num, nn = 0;
     const char *sn, **names = NULL;
     char *tmp_ext_names = NULL;

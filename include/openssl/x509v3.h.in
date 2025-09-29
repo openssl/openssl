@@ -715,11 +715,11 @@ int X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist);
 int X509V3_EXT_add_alias(int nid_to, int nid_from);
 void X509V3_EXT_cleanup(void);
 
-const X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext);
+const X509V3_EXT_METHOD *X509V3_EXT_get(const X509_EXTENSION *ext);
 const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid);
 int X509V3_add_standard_extensions(void);
 STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line);
-void *X509V3_EXT_d2i(X509_EXTENSION *ext);
+void *X509V3_EXT_d2i(const X509_EXTENSION *ext);
 void *X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
     int *idx);
 
@@ -735,7 +735,7 @@ int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
 
 void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
     int ml);
-int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
+int X509V3_EXT_print(BIO *out, const X509_EXTENSION *ext, unsigned long flag,
     int indent);
 #ifndef OPENSSL_NO_STDIO
 int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
@@ -746,7 +746,7 @@ int X509V3_extensions_print(BIO *out, const char *title,
 
 int X509_check_ca(const X509 *x);
 int X509_check_purpose(const X509 *x, int id, int ca);
-int X509_supported_extension(X509_EXTENSION *ex);
+int X509_supported_extension(const X509_EXTENSION *ex);
 int X509_check_issued(X509 *issuer, X509 *subject);
 int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid);
 void X509_set_proxy_flag(X509 *x);
