@@ -27,10 +27,26 @@ use lib bldtop_dir('.');
 
 my $no_sde = not exists($ENV{'OPENSSL_SDE_PATH'});
 my $conf = srctop_file("test", 'default.cnf');
+my $no_ec = disabled("ec");
+
+#evpciph_aes_sde.txt
 
 my @files = qw(
-                evpciph_aes_sde.txt
+                evpciph_aes_ccm_cavs.txt
+                evpciph_aes_common.txt
+                evpciph_aes_cts.txt
+                evpciph_aes_wrap.txt
+                evpciph_aes_stitched.txt
+                evpmd_sha.txt
+                evpciph_aes_ocb.txt
+                evpciph_chacha.txt
+                evpciph_sm4.txt
+                evpmac_sm3.txt
               );
+push @files, qw(
+                evppkey_ecdh.txt
+                evppkey_ecdsa_sigalg.txt
+               ) unless $no_ec;
 
 # Intel SDE emulates the CPUID instruction and therefore only supports
 # applications that query for supported features via the CPUID instruction.
@@ -103,8 +119,10 @@ foreach my $f ( @files ) {
 
       push(@sde_options, "-chip_check_exe_only") if ($osname eq 'MSWin32' && exists($win_chip_check_only_hash{$cpu}));
       push(@sde_options, "--");
+      my $fp = data_file("$f");
+      $fp =~ s/sde/evp/;
       ok(run(sdetest(\@sde_options,
-                     ["evp_test", "-config", $conf, data_file("$f")])),
-                      "running sde $cpu -- evp_test -config $conf $f");
+                     ["evp_test", "-config", $conf, ])),
+                      "running sde $cpu -- evp_test -config $conf $fp");
   }
 }
