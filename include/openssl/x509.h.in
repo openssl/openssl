@@ -695,7 +695,7 @@ void X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
     const ASN1_BIT_STRING **psuid);
 const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
 
-ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
+const ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
 
 #define X509_REQ_VERSION_1 0
 
