@@ -3001,6 +3001,7 @@ err:
 static BIO_ADDR *addr_from_raw4(const unsigned char ip[4], uint16_t port_host)
 {
     BIO_ADDR *a = BIO_ADDR_new();
+
     if (a == NULL)
         return NULL;
     if (!BIO_ADDR_rawmake(a, AF_INET, ip, 4, htons(port_host))) {
@@ -3020,7 +3021,6 @@ static int create_quic_ssl_objects_seed_peer(SSL_CTX *sctx, SSL_CTX *cctx,
     BIO_ADDR *cli_local = NULL;   /* client bind */
     BIO_ADDR *srv_ep    = NULL;   /* server endpoint for qc_init() */
     BIO_ADDR *cli_ep    = NULL;   /* client endpoint */
-    struct in_addr srv_ip, cli_ip;
     int ret = 0;
 
     *cssl = *lssl = NULL;
@@ -3055,7 +3055,7 @@ static int create_quic_ssl_objects_seed_peer(SSL_CTX *sctx, SSL_CTX *cctx,
 
     if (!TEST_ptr(srv_ep = addr_from_raw4(srv_ip4, srv_port))
         || !TEST_true(qc_init(*cssl, srv_ep)))
-      goto err;
+        goto err;
     BIO_ADDR_free(srv_ep);
     srv_ep = NULL;
 
@@ -3095,7 +3095,7 @@ static int test_quic_peer_addr_basic(void)
 
     if (!TEST_ptr(sctx = create_server_ctx())
         || !TEST_ptr(cctx = create_client_ctx()))
-      goto err;
+        goto err;
 
     TEST_true(create_quic_ssl_objects_seed_peer(sctx, cctx, &qlistener, &clientssl,
                                                 srv_ip4, srv_port,
@@ -3107,14 +3107,14 @@ static int test_quic_peer_addr_basic(void)
     SSL_handle_events(qlistener);
 
     if (!TEST_true(ret = SSL_connect(clientssl)))
-      goto err;
+        goto err;
     SSL_handle_events(qlistener);
 
     /* Accept the new QUIC connection from the listener */
     if (!TEST_ptr(serverssl = SSL_accept_connection(qlistener, 0)))
         goto err;
 
-    /* Server should report client’s address/port */
+    /* Server should report client's address/port */
     got = BIO_ADDR_new();
     BIO_ADDR_clear(got);
     if (!TEST_int_eq(ret = SSL_get_peer_addr(serverssl, got), 1)
@@ -3125,7 +3125,7 @@ static int test_quic_peer_addr_basic(void)
         || !TEST_int_eq((int)ntohs(BIO_ADDR_rawport(got)), (int)cli_port))
         goto err;
 
-    /* Client should report server’s address/port */
+    /* Client should report server's address/port */
     BIO_ADDR_clear(got);
     if (!TEST_int_eq(ret = SSL_get_peer_addr(clientssl, got), 1)
         || !TEST_int_eq(BIO_ADDR_family(got), AF_INET)
@@ -3156,7 +3156,6 @@ err:
     SSL_CTX_free(sctx);
     return 0;
 }
-
 
 /***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")

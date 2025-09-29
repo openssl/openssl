@@ -8117,7 +8117,6 @@ int SSL_get_peer_addr(SSL *ssl, BIO_ADDR *peer_addr)
 #endif
 }
 
-
 int SSL_listen(SSL *ssl)
 {
 #ifndef OPENSSL_NO_QUIC

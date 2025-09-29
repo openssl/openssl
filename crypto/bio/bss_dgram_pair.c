@@ -445,7 +445,6 @@ static int dgp_peer_ex_index(void)
     return dgp_peer_ex_idx;
 }
 
-
 /* BIO_eof (BIO_CTRL_EOF) */
 static int dgram_pair_ctrl_eof(BIO *bio)
 {
@@ -459,7 +458,6 @@ static int dgram_pair_ctrl_eof(BIO *bio)
         return 1;
     if (!is_dgram_pair(b))
         return 0;
-
 
     peerb = b->peer->ptr;
     if (!ossl_assert(peerb != NULL))
@@ -809,8 +807,7 @@ static long dgram_pair_ctrl(BIO *bio, int cmd, long num, void *ptr)
         ret = (long)dgram_pair_ctrl_get_effective_caps(bio);
         break;
 
-    case BIO_CTRL_DGRAM_SET_PEER:
-    {
+    case BIO_CTRL_DGRAM_SET_PEER: {
         int exi = dgp_peer_ex_index();
         BIO_ADDR *cp;
 
@@ -830,8 +827,7 @@ static long dgram_pair_ctrl(BIO *bio, int cmd, long num, void *ptr)
         return BIO_set_ex_data(bio, exi, cp) ? 1 : 0;
     }
 
-    case BIO_CTRL_DGRAM_DETECT_PEER_ADDR:
-   {
+    case BIO_CTRL_DGRAM_DETECT_PEER_ADDR: {
         int exi = dgp_peer_ex_index();
         BIO_ADDR *seed;
         size_t need, n;
@@ -848,11 +844,12 @@ static long dgram_pair_ctrl(BIO *bio, int cmd, long num, void *ptr)
         return (long)n;  /* mirror socket BIO behavior */
     }
 
-    case BIO_CTRL_RESET:
-    {
+    case BIO_CTRL_RESET: {
         int exi = dgp_peer_ex_index();
+
         if (exi >= 0) {
             BIO_ADDR *seed = (BIO_ADDR *)BIO_get_ex_data(bio, exi);
+
             if (seed != NULL)
                 (void)BIO_set_ex_data(bio, exi, NULL); /* triggers free */
         }
