@@ -8,6 +8,7 @@
  */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
+use OpenSSL::ffp_params;
 -}
 
 /*
@@ -335,16 +336,9 @@ struct dsa_params_st {
                           ['OSSL_PKEY_PARAM_MAX_SIZE',           'maxsize',        'int'],
                           ['OSSL_PKEY_PARAM_SECURITY_CATEGORY',  'seccat',         'int'],
                           ['OSSL_PKEY_PARAM_DEFAULT_DIGEST',     'digest',         'utf8_string'],
-                          ['OSSL_PKEY_PARAM_FFC_P',              'ffp.p',          'BN'],
-                          ['OSSL_PKEY_PARAM_FFC_Q',              'ffp.q',          'BN'],
-                          ['OSSL_PKEY_PARAM_FFC_G',              'ffp.g',          'BN'],
-                          ['OSSL_PKEY_PARAM_FFC_COFACTOR',       'ffp.cofactor',   'BN'],
-                          ['OSSL_PKEY_PARAM_FFC_GINDEX',         'ffp.g_index',    'int'],
-                          ['OSSL_PKEY_PARAM_FFC_PCOUNTER',       'ffp.p_counter',  'int'],
-                          ['OSSL_PKEY_PARAM_FFC_H',              'ffp.h',          'int'],
-                          ['OSSL_PKEY_PARAM_FFC_SEED',           'ffp.seed',       'octet_string'],
                           ['OSSL_PKEY_PARAM_PUB_KEY',            'pubkey',         'BN'],
                           ['OSSL_PKEY_PARAM_PRIV_KEY',           'privkey',        'BN'],
+                          ffp_get_params(),
                          )); -}
 
 static ossl_inline int dsa_get_params(void *key, OSSL_PARAM params[])
