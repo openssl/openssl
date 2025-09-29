@@ -273,6 +273,7 @@ struct bio_dgram_pair_st {
 #define MIN_BUF_LEN (1024)
 
 #define is_dgram_pair(b) (b->peer != NULL)
+static int dgp_peer_ex_idx = -1;
 
 static int dgram_pair_init(BIO *bio)
 {
@@ -428,6 +429,22 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
     b2->peer = NULL;
     return 1;
 }
+
+static void dgp_peer_ex_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+                             int idx, long argl, void *argp)
+{
+    OPENSSL_free(ptr); /* ptr is malloc'ed BIO_ADDR */
+}
+
+static int dgp_peer_ex_index(void)
+{
+    if (dgp_peer_ex_idx >= 0)
+        return dgp_peer_ex_idx;
+    dgp_peer_ex_idx = BIO_get_ex_new_index(0, "dgram_pair_peer", NULL, NULL,
+                                           dgp_peer_ex_free);
+    return dgp_peer_ex_idx;
+}
+
 
 /* BIO_eof (BIO_CTRL_EOF) */
 static int dgram_pair_ctrl_eof(BIO *bio)
@@ -791,6 +808,56 @@ static long dgram_pair_ctrl(BIO *bio, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_GET_EFFECTIVE_CAPS: /* Non-threadsafe */
         ret = (long)dgram_pair_ctrl_get_effective_caps(bio);
         break;
+
+    case BIO_CTRL_DGRAM_SET_PEER:
+    {
+        int exi = dgp_peer_ex_index();
+        BIO_ADDR *cp;
+
+        if (exi < 0 || ptr == NULL)
+            return 0;
+        if (BIO_ADDR_family((BIO_ADDR *)ptr) == AF_UNSPEC)
+            return 0;
+
+        cp = OPENSSL_malloc(sizeof(*cp));
+        if (cp == NULL)
+            return 0;
+        if (!BIO_ADDR_copy(cp, (BIO_ADDR *)ptr)) {
+            OPENSSL_free(cp);
+            return 0;
+        }
+        /* Replace prior value; set_ex_data takes ownership and frees old via dgp_peer_ex_free */
+        return BIO_set_ex_data(bio, exi, cp) ? 1 : 0;
+    }
+
+    case BIO_CTRL_DGRAM_DETECT_PEER_ADDR:
+   {
+        int exi = dgp_peer_ex_index();
+        BIO_ADDR *seed;
+        size_t need, n;
+
+        if (exi < 0 || ptr == NULL)
+            return 0;
+        seed = (BIO_ADDR *)BIO_get_ex_data(bio, exi);
+        if (seed == NULL || BIO_ADDR_family(seed) == AF_UNSPEC)
+            return 0;
+
+        need = BIO_ADDR_sockaddr_size(seed);
+        n = (num == 0 || (size_t)num > need) ? need : (size_t)num;
+        memcpy(ptr, seed, n);
+        return (long)n;  /* mirror socket BIO behavior */
+    }
+
+    case BIO_CTRL_RESET:
+    {
+        int exi = dgp_peer_ex_index();
+        if (exi >= 0) {
+            BIO_ADDR *seed = (BIO_ADDR *)BIO_get_ex_data(bio, exi);
+            if (seed != NULL)
+                (void)BIO_set_ex_data(bio, exi, NULL); /* triggers free */
+        }
+        break;
+    }
 
     default:
         ret = dgram_mem_ctrl(bio, cmd, num, ptr);
