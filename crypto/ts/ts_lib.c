@@ -48,8 +48,8 @@ int TS_OBJ_print_bio(BIO *bio, const ASN1_OBJECT *obj)
 int TS_ext_print_bio(BIO *bio, const STACK_OF(X509_EXTENSION) *extensions)
 {
     int i, critical, n;
-    X509_EXTENSION *ex;
-    ASN1_OBJECT *obj;
+    const X509_EXTENSION *ex;
+    const ASN1_OBJECT *obj;
 
     BIO_printf(bio, "Extensions:\n");
     n = X509v3_get_ext_count(extensions);
