@@ -294,7 +294,7 @@ static unsigned char *generic_asn1(const char *value, X509V3_CTX *ctx,
 static void delete_ext(STACK_OF(X509_EXTENSION) *sk, X509_EXTENSION *dext)
 {
     int idx;
-    ASN1_OBJECT *obj;
+    const ASN1_OBJECT *obj;
 
     obj = X509_EXTENSION_get_object(dext);
     while ((idx = X509v3_get_ext_by_OBJ(sk, obj, -1)) >= 0)

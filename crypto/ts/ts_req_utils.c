@@ -162,7 +162,7 @@ int TS_REQ_get_ext_by_critical(TS_REQ *a, int crit, int lastpos)
     return X509v3_get_ext_by_critical(a->extensions, crit, lastpos);
 }
 
-X509_EXTENSION *TS_REQ_get_ext(TS_REQ *a, int loc)
+const X509_EXTENSION *TS_REQ_get_ext(TS_REQ *a, int loc)
 {
     return X509v3_get_ext(a->extensions, loc);
 }

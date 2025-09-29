@@ -74,11 +74,15 @@ static int ct_x509_get_ext(X509 *cert, int nid, int *is_duplicated)
  */
 __owur static int ct_x509_cert_fixup(X509 *cert, X509 *presigner)
 {
+    int ret = 0;
     int preidx, certidx;
     int pre_akid_ext_is_dup, cert_akid_ext_is_dup;
+    X509_EXTENSION *new = NULL;
 
-    if (presigner == NULL)
-        return 1;
+    if (presigner == NULL) {
+        ret = 1;
+        goto done;
+    }
 
     preidx = ct_x509_get_ext(presigner, NID_authority_key_identifier,
         &pre_akid_ext_is_dup);
@@ -87,32 +91,41 @@ __owur static int ct_x509_cert_fixup(X509 *cert, X509 *presigner)
 
     /* An error occurred whilst searching for the extension */
     if (preidx < -1 || certidx < -1)
-        return 0;
+        goto done;
     /* Invalid certificate if they contain duplicate extensions */
     if (pre_akid_ext_is_dup || cert_akid_ext_is_dup)
-        return 0;
+        goto done;
     /* AKID must be present in both certificate or absent in both */
     if (preidx >= 0 && certidx == -1)
-        return 0;
+        goto done;
     if (preidx == -1 && certidx >= 0)
-        return 0;
+        goto done;
     /* Copy issuer name */
     if (!X509_set_issuer_name(cert, X509_get_issuer_name(presigner)))
-        return 0;
+        goto done;
     if (preidx != -1) {
         /* Retrieve and copy AKID encoding */
-        X509_EXTENSION *preext = X509_get_ext(presigner, preidx);
-        X509_EXTENSION *certext = X509_get_ext(cert, certidx);
-        ASN1_OCTET_STRING *preextdata;
+        const X509_EXTENSION *preext = X509_get_ext(presigner, preidx);
+        const X509_EXTENSION *certext = X509_get_ext(cert, certidx);
+        const ASN1_OCTET_STRING *preextdata;
 
         /* Should never happen */
         if (preext == NULL || certext == NULL)
-            return 0;
+            goto done;
+        if ((new = X509_EXTENSION_dup(certext)) == NULL)
+            goto done;
         preextdata = X509_EXTENSION_get_data(preext);
-        if (preextdata == NULL || !X509_EXTENSION_set_data(certext, preextdata))
-            return 0;
+        if (preextdata == NULL || !X509_EXTENSION_set_data(new, preextdata))
+            goto done;
+        X509_EXTENSION_free(X509_delete_ext(cert, certidx));
+        certext = NULL;
+        if (!X509_add_ext(cert, new, certidx))
+            goto done;
+        ret = 1;
     }
-    return 1;
+done:
+    X509_EXTENSION_free(new);
+    return ret;
 }
 
 int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner)

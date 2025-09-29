@@ -1545,7 +1545,7 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
  */
 static int crl_extension_match(X509_CRL *a, X509_CRL *b, int nid)
 {
-    ASN1_OCTET_STRING *exta = NULL, *extb = NULL;
+    const ASN1_OCTET_STRING *exta = NULL, *extb = NULL;
     int i = X509_CRL_get_ext_by_NID(a, nid, -1);
 
     if (i >= 0) {
@@ -2585,8 +2585,7 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
      * number to correct value too.
      */
     for (i = 0; i < X509_CRL_get_ext_count(newer); i++) {
-        X509_EXTENSION *ext = X509_CRL_get_ext(newer, i);
-
+        const X509_EXTENSION *ext = X509_CRL_get_ext(newer, i);
         if (!X509_CRL_add_ext(crl, ext, -1)) {
             ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
             goto err;

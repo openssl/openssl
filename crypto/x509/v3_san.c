@@ -337,7 +337,7 @@ static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens)
 {
     GENERAL_NAMES *ialt = NULL;
     GENERAL_NAME *gen;
-    X509_EXTENSION *ext;
+    const X509_EXTENSION *ext;
     int i, num;
 
     if (ctx != NULL && (ctx->flags & X509V3_CTX_TEST) != 0)
