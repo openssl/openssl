@@ -39,6 +39,10 @@ This release incorporates the following bug fixes and mitigations:
   * Fix Out-of-bounds read in HTTP client no_proxy handling.
     ([CVE-2025-9232])
 
+  * Reverted the synthesised `OPENSSL_VERSION_NUMBER` change for the release
+    builds, as it broke some exiting applications that relied on the previous
+    3.x semantics, as documented in `OpenSSL_version(3)`.
+
 ### Major changes between OpenSSL 3.5.2 and OpenSSL 3.5.3 [16 Sep 2025]
 
 OpenSSL 3.5.3 is a bug fix release.
@@ -55,6 +59,8 @@ This release incorporates the following bug fixes and mitigations:
 ### Major changes between OpenSSL 3.5.1 and OpenSSL 3.5.2 [5 Aug 2025]
 
 OpenSSL 3.5.2 is a bug fix release.
+
+This release incorporates the following bug fixes and mitigations:
 
   * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
 

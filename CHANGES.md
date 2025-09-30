@@ -77,6 +77,23 @@ OpenSSL 3.5
 
    *Stanislav Fort*
 
+ * The FIPS provider no longer performs a PCT on key import for ECX keys
+   (that was introduced in 3.5.2), following the latest update
+   on that requirement in FIPS 140-3 IG 10.3.A additional comment 1.
+
+   *Eugene Syromiatnikov*
+
+ * Fixed the length of the ASN.1 sequence for the SM3 digests of RSA-encrypted
+   signatures.
+
+   *Xiao Lou Dong Feng*
+
+ * Reverted the synthesised `OPENSSL_VERSION_NUMBER` change for the release
+   builds, as it broke some exiting applications that relied on the previous
+   3.x semantics, as documented in `OpenSSL_version(3)`.
+
+   *Richard Levitte*
+
 ### Changes between 3.5.2 and 3.5.3 [16 Sep 2025]
 
  * Avoided a potential race condition introduced in 3.5.1, where
