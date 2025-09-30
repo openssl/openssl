@@ -137,7 +137,7 @@ static int test_sm4_ecb(void)
  * Internal SM4 CBC test. This uses the low-level ossl_sm4_cbc_encrypt
  * function to directly test the internal implementation.
  */
-static int test_sm4_cbc(void)
+static int test_vpsm4_cbc(void)
 {
     /* Test vector from IETF draft-ribose-cfrg-sm4-04 section 8.4.1 */
     static const uint8_t key_bytes[SM4_BLOCK_SIZE] = {
@@ -216,12 +216,66 @@ static int test_sm4_cbc(void)
 
     return 1;
 }
+
+/*
+ * Internal SM4 CBC test - compiled C implementation. 
+ */
+static int test_sm4_cbc(void)
+{
+    /* Test vector from IETF draft-ribose-cfrg-sm4-04 section 8.4.1 */
+    static const uint8_t key_bytes[SM4_BLOCK_SIZE] = {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+    static const uint8_t iv_bytes[SM4_BLOCK_SIZE] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
+    };
+    static const uint8_t plaintext[32] = {
+        0xaa, 0xaa, 0xaa, 0xaa, 0xbb, 0xbb, 0xbb, 0xbb,
+        0xcc, 0xcc, 0xcc, 0xcc, 0xdd, 0xdd, 0xdd, 0xdd,
+        0xee, 0xee, 0xee, 0xee, 0xff, 0xff, 0xff, 0xff,
+        0xaa, 0xaa, 0xaa, 0xaa, 0xbb, 0xbb, 0xbb, 0xbb
+    };
+    static const uint8_t expected_ciphertext[32] = {
+        0x78, 0xeb, 0xb1, 0x1c, 0xc4, 0x0b, 0x0a, 0x48,
+        0x31, 0x2a, 0xae, 0xb2, 0x04, 0x02, 0x44, 0xcb,
+        0x4c, 0xb7, 0x01, 0x69, 0x51, 0x90, 0x92, 0x26,
+        0x97, 0x9b, 0x0d, 0x15, 0xdc, 0x6a, 0x8f, 0x6d
+    };
+
+    SM4_KEY key;
+    uint8_t ciphertext[sizeof(plaintext)];
+    uint8_t decrypted[sizeof(plaintext)];
+    uint8_t iv[SM4_BLOCK_SIZE];
+
+    /* --- Test Encryption --- */
+    ossl_sm4_set_key(key_bytes, &key);
+    memcpy(iv, iv_bytes, SM4_BLOCK_SIZE); /* Use a working copy of the IV */
+    CRYPTO_cbc128_encrypt(plaintext, ciphertext, sizeof(plaintext), &key, iv,
+                          (block128_f)ossl_sm4_encrypt);
+
+    if (!TEST_mem_eq(ciphertext, sizeof(ciphertext),
+                     expected_ciphertext, sizeof(expected_ciphertext)))
+        return 0;
+
+    /* --- Test Decryption --- */
+    memcpy(iv, iv_bytes, SM4_BLOCK_SIZE); /* Reset IV for decryption */
+    CRYPTO_cbc128_decrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
+                          (block128_f)ossl_sm4_decrypt);
+
+    if (!TEST_mem_eq(decrypted, sizeof(decrypted), plaintext, sizeof(plaintext)))
+        return 0;
+
+    return 1;
+}
 #endif
 
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_SM4
     ADD_TEST(test_sm4_ecb);
+    ADD_TEST(test_vpsm4_cbc);
     ADD_TEST(test_sm4_cbc);
 #endif
     return 1;
