@@ -27,6 +27,10 @@ OpenSSL Releases
 OpenSSL 3.4
 -----------
 
+### Changes between 3.4.3 and 3.4.4 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.4.2 and 3.4.3 [30 Sep 2025]
 
  * Fix Out-of-bounds read & write in RFC 3211 KEK Unwrap
