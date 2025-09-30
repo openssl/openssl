@@ -11,7 +11,6 @@
 #include "internal/thread_once.h"
 #include "internal/refcount.h"
 #include <openssl/dsa.h>
-#include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/lhash.h>
 #include <openssl/x509.h>

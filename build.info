@@ -8,9 +8,6 @@ ENDIF
 IF[{- !$disabled{demos} -}]
   SUBDIRS=demos
 ENDIF
-IF[{- !$disabled{'deprecated-3.0'} -}]
-  SUBDIRS=engines
-ENDIF
 SUBDIRS=exporters
 
 LIBS=libcrypto libssl
@@ -416,7 +413,7 @@ DEPEND[openssl.pc]=libcrypto.pc libssl.pc
 GENERATE[builddata.pm]=util/mkinstallvars.pl \
     PREFIX=. BINDIR=apps APPLINKDIR=ms \
     LIBDIR= INCLUDEDIR=include "INCLUDEDIR=$(SRCDIR)/include" \
-    ENGINESDIR=engines MODULESDIR=providers \
+    MODULESDIR=providers \
     "VERSION=$(VERSION)" "LDLIBS=$(LIB_EX_LIBS)"
 
 DEPEND[""]=openssl.pc

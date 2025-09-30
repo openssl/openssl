@@ -14,7 +14,6 @@
 #endif
 #include <stdio.h>
 #include <openssl/rand.h>
-#include <openssl/engine.h>
 #include "internal/refcount.h"
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"

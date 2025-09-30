@@ -19,7 +19,6 @@
 #include <openssl/x509.h>
 #include <openssl/pkcs12.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 #include <openssl/dh.h>
 #include <openssl/decoder.h>
 #include <openssl/ui.h>

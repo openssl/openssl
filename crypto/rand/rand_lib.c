@@ -88,7 +88,6 @@ static RAND_GLOBAL *rand_get_global(OSSL_LIB_CTX *libctx)
 # include <limits.h>
 # include <openssl/conf.h>
 # include <openssl/trace.h>
-# include <openssl/engine.h>
 # include "crypto/rand_pool.h"
 # include "prov/seeding.h"
 # include "internal/e_os.h"

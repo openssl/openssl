@@ -17,7 +17,9 @@
 
 #include <string.h>
 
-#include <openssl/engine.h>
+#if defined(TODO_REWRITE_ME_DASYNC_PROVIDER)
+# include <openssl/engine.h>
+#endif
 #include "internal/e_os.h"
 #include "internal/nelem.h"
 #include "ssltestlib.h"
