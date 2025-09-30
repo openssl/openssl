@@ -811,6 +811,10 @@ DEPEND[html/man3/CMS_EncryptedData_encrypt.html]=man3/CMS_EncryptedData_encrypt.
 GENERATE[html/man3/CMS_EncryptedData_encrypt.html]=man3/CMS_EncryptedData_encrypt.pod
 DEPEND[man/man3/CMS_EncryptedData_encrypt.3]=man3/CMS_EncryptedData_encrypt.pod
 GENERATE[man/man3/CMS_EncryptedData_encrypt.3]=man3/CMS_EncryptedData_encrypt.pod
+DEPEND[html/man3/CMS_EncryptedData_set1_key.html]=man3/CMS_EncryptedData_set1_key.pod
+GENERATE[html/man3/CMS_EncryptedData_set1_key.html]=man3/CMS_EncryptedData_set1_key.pod
+DEPEND[man/man3/CMS_EncryptedData_set1_key.3]=man3/CMS_EncryptedData_set1_key.pod
+GENERATE[man/man3/CMS_EncryptedData_set1_key.3]=man3/CMS_EncryptedData_set1_key.pod
 DEPEND[html/man3/CMS_EnvelopedData_create.html]=man3/CMS_EnvelopedData_create.pod
 GENERATE[html/man3/CMS_EnvelopedData_create.html]=man3/CMS_EnvelopedData_create.pod
 DEPEND[man/man3/CMS_EnvelopedData_create.3]=man3/CMS_EnvelopedData_create.pod
@@ -3258,6 +3262,7 @@ html/man3/BUF_MEM_new.html \
 html/man3/CMAC_CTX.html \
 html/man3/CMS_EncryptedData_decrypt.html \
 html/man3/CMS_EncryptedData_encrypt.html \
+html/man3/CMS_EncryptedData_set1_key.html \
 html/man3/CMS_EnvelopedData_create.html \
 html/man3/CMS_add0_cert.html \
 html/man3/CMS_add1_recipient_cert.html \
@@ -3931,6 +3936,7 @@ man/man3/BUF_MEM_new.3 \
 man/man3/CMAC_CTX.3 \
 man/man3/CMS_EncryptedData_decrypt.3 \
 man/man3/CMS_EncryptedData_encrypt.3 \
+man/man3/CMS_EncryptedData_set1_key.3 \
 man/man3/CMS_EnvelopedData_create.3 \
 man/man3/CMS_add0_cert.3 \
 man/man3/CMS_add1_recipient_cert.3 \
