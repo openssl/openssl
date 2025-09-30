@@ -16,6 +16,7 @@
 #include <openssl/rand.h> /* RAND_get0_public() */
 #include <openssl/proverr.h>
 #include <openssl/indicator.h>
+#include <openssl/self_test.h>
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "prov/implementations.h"
@@ -29,7 +30,10 @@
 #include "crypto/context.h"
 #include "fipscommon.h"
 #include "internal/core.h"
+#include "internal/fips.h"
 #include "internal/mem_alloc_utils.h"
+#include "internal/thread_once.h"
+#include "internal/threads_common.h"
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
@@ -120,8 +124,12 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     return fgbl;
 }
 
+static void deferred_deinit(void);
+
 void ossl_fips_prov_ossl_ctx_free(void *fgbl)
 {
+    /* Also free deferred variables when the FIPS Global context is killed */
+    deferred_deinit();
     OPENSSL_free(fgbl);
 }
 
@@ -1237,4 +1245,168 @@ void OSSL_INDICATOR_get_callback(OSSL_LIB_CTX *libctx,
         if (cb != NULL)
             *cb = NULL;
     }
+}
+
+/* Deferred test infrastructure */
+
+/* Guards access to deferred self-test */
+static CRYPTO_RWLOCK *deferred_lock;
+
+static CRYPTO_ONCE deferred_once = CRYPTO_ONCE_STATIC_INIT;
+static void deferred_init(void)
+{
+    if ((deferred_lock = CRYPTO_THREAD_lock_new()) == NULL)
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_CREATE_LOCK);
+}
+static void deferred_deinit(void)
+{
+    if (deferred_lock) {
+        CRYPTO_THREAD_lock_free(deferred_lock);
+        deferred_lock = NULL;
+    }
+}
+
+static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, FIPS_DEFERRED_TEST *test)
+{
+    int ret = FIPS_DEFERRED_TEST_FAILED;
+
+    if (!CRYPTO_THREAD_run_once(&deferred_once, deferred_init))
+        return FIPS_DEFERRED_TEST_FAILED;
+
+    if (deferred_lock == NULL)
+        return FIPS_DEFERRED_TEST_FAILED;
+
+    /*
+     * before we do anything, make sure a local test is not already in
+     * progress or we'll deadlock
+     */
+    if (CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_FIPS_DEFERRED_KEY,
+                                   libctx) != NULL)
+        return FIPS_DEFERRED_TEST_IN_PROGRESS;
+
+    if (CRYPTO_THREAD_write_lock(deferred_lock)) {
+        OSSL_SELF_TEST *ev = NULL;
+        bool unset_key = false;
+        OSSL_CALLBACK *cb = NULL;
+        void *cb_arg = NULL;
+
+        /*
+         * check again as another thread may have just performed this
+         * test and marked it as passed
+         */
+        if (test->state == FIPS_DEFERRED_TEST_PASSED) {
+            ret = FIPS_DEFERRED_TEST_PASSED;
+            goto done;
+        }
+
+        /*
+         * mark that we are executing a test on the local thread, does not
+         * matter what value, as long as it is not NULL, Cool?
+         */
+        if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_FIPS_DEFERRED_KEY,
+                                        libctx, (void *)0xC001))
+            goto done;
+
+        unset_key = true;
+
+        if (c_stcbfn != NULL && c_get_libctx != NULL)
+            c_stcbfn(c_get_libctx(FIPS_get_core_handle(libctx)), &cb, &cb_arg);
+
+        if ((ev = OSSL_SELF_TEST_new(cb, cb_arg)) == NULL)
+            goto done;
+
+        /* Mark test as in progress */
+        test->state = FIPS_DEFERRED_TEST_IN_PROGRESS;
+
+        /* execute test */
+        if (SELF_TEST_kats_single(ev, libctx, test->category, test->algorithm))
+            ret = FIPS_DEFERRED_TEST_PASSED;
+
+    done:
+        /* Mark test as pass or fail */
+        test->state = ret;
+
+        if (ev)
+            OSSL_SELF_TEST_free(ev);
+        if (unset_key)
+            CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_FIPS_DEFERRED_KEY,
+                                       libctx, NULL);
+        CRYPTO_THREAD_unlock(deferred_lock);
+    }
+    return ret;
+}
+
+static void deferred_test_error(int category)
+{
+    const char *category_name = "Unknown Category Test";
+
+    switch (category) {
+    case FIPS_DEFERRED_KAT_CIPHER:
+        category_name = OSSL_SELF_TEST_TYPE_KAT_CIPHER;
+        break;
+    case FIPS_DEFERRED_KAT_ASYM_CIPHER:
+        category_name = OSSL_SELF_TEST_TYPE_KAT_ASYM_CIPHER;
+        break;
+    case FIPS_DEFERRED_KAT_ASYM_KEYGEN:
+        category_name = OSSL_SELF_TEST_TYPE_KAT_ASYM_KEYGEN;
+        break;
+    case FIPS_DEFERRED_KAT_KEM:
+        category_name = OSSL_SELF_TEST_TYPE_KAT_KEM;
+        break;
+    case FIPS_DEFERRED_KAT_DIGEST:
+        category_name = OSSL_SELF_TEST_TYPE_KAT_DIGEST;
+        break;
+    case FIPS_DEFERRED_KAT_SIGNATURE:
+        category_name = OSSL_SELF_TEST_TYPE_KAT_SIGNATURE;
+        break;
+    case FIPS_DEFERRED_KAT_KDF:
+        category_name = OSSL_SELF_TEST_TYPE_KAT_KDF;
+        break;
+    case FIPS_DEFERRED_KAT_KA:
+        category_name = OSSL_SELF_TEST_TYPE_KAT_KA;
+        break;
+    case FIPS_DEFERRED_DRBG:
+        category_name = OSSL_SELF_TEST_TYPE_DRBG;
+        break;
+    }
+    ossl_set_error_state(category_name);
+}
+
+int FIPS_deferred_self_tests(OSSL_LIB_CTX *libctx, FIPS_DEFERRED_TEST tests[])
+{
+    int i;
+
+    /*
+     * NOTE: that the order in which we check the 'state' here is not important,
+     * if multiple threads are racing to check it the worst case scenario is
+     * that they will all try to run the tests. Proper locking for preventing
+     * concurrent tests runs and saving state from multiple threads is handled
+     * in FIPS_kat_deferred() so this race is of no real consequence.
+     */
+    for (i = 0; tests[i].algorithm != NULL; i++) {
+        if (tests[i].state != FIPS_DEFERRED_TEST_PASSED) {
+            int state;
+
+            /* any other threads that request a self test will lock and wait */
+            state = FIPS_kat_deferred(libctx, &tests[i]);
+            switch (state) {
+            case FIPS_DEFERRED_TEST_IN_PROGRESS:
+                /*
+                 * A self test is in progress for this thread so we let this
+                 * thread continue and perform the test while all other
+                 * threads wait for it to complete.
+                 */
+                return 1;
+            case FIPS_DEFERRED_TEST_PASSED:
+                /* success, move on to the next */
+                break;
+            default:
+                deferred_test_error(tests[i].category);
+                return 0;
+            }
+        }
+    }
+
+    /* all tests passed */
+    return 1;
 }
