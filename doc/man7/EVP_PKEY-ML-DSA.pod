@@ -19,7 +19,7 @@ and the private key I<priv>.
 Each of the different key types has an associated security category.
 This value is one of 2, 3 or 5 for key types B<ML-DSA-44>, B<ML-DSA-65>
 and B<ML-DSA-87> respectively, which correspond to security strengths of
-128, 192 and 256 repsectively.
+128, 192 and 256 respectively.
 
 =head2 Keygen Parameters
 
