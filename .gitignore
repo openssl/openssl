@@ -414,7 +414,7 @@ compile_commands.json
 /build-*
 
 # Ignore test output and temporary files
-*.cnf.expected
+*.cnf.expected*
 *.s.expected
 *.txt.expected
 test-runs.log
