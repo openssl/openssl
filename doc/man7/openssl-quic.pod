@@ -566,7 +566,7 @@ L<SSL_accept_connection(3)>.
 
 =item L<SSL_accept_connection(3)>
 
-Accepts a new incoming connection for a listner SSL object. A new SSL object
+Accepts a new incoming connection for a listener SSL object. A new SSL object
 representing the accepted connection is created and returned on success. If no
 incoming connection is available and the listener SSL object is configured in
 nonblocking mode, NULL is returned.

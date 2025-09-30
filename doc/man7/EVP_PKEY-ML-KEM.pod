@@ -110,7 +110,7 @@ configuration options programmatically.
 
 =item C<ml-kem.import_pct_type> (B<OSSL_PKEY_PARAM_ML_KEM_IMPORT_PCT_TYPE>) <UTF8 string>
 
-When an B<ML-KEM> key is imported as an explict FIPS 203 B<dk> decapsulation
+When an B<ML-KEM> key is imported as an explicit FIPS 203 B<dk> decapsulation
 key, rather than a seed, a pairwise consistency test (PCT) is optionally
 performed.
 By default, or when this parameter is set explicitly to C<random>, the PCT
