@@ -288,8 +288,6 @@ $code.=<<___;
 	eor	$tmpw,$word2,$word3
 	eor	$wtmp2,$wtmp0,$word1
 	eor	$tmpw,$tmpw,$wtmp2
-	// Pre-load next round keys
-	//ldp	w16,w17,[$kptr],8
 ___
 	&sbox_1word_gpr($tmpw);
 $code.=<<___;
@@ -306,7 +304,6 @@ $code.=<<___;
 	// B2 ^= SBOX(B0 ^ B1 ^ B3 ^ RK2)
 	eor	$tmpw,$word0,$word1
 	eor	$wtmp2,$wtmp0,$word3
-	//eor	$wtmp2,w16,$word3
 	eor	$tmpw,$tmpw,$wtmp2
 ___
 	&sbox_1word_gpr($tmpw);
@@ -315,7 +312,6 @@ $code.=<<___;
 	// B3 ^= SBOX(B0 ^ B1 ^ B2 ^ RK3)
 	eor	$tmpw,$word0,$word1
 	eor	$wtmp2,$word2,$wtmp1
-	//eor	$wtmp2,$word2,w17
 	eor	$tmpw,$tmpw,$wtmp2
 ___
 	&sbox_1word_gpr($tmpw);

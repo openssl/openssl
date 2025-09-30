@@ -169,12 +169,12 @@ static int test_sm4_cbc(void)
     /* --- Test Encryption --- */
     ossl_sm4_set_key(key_bytes, &key);
     memcpy(iv, iv_bytes, SM4_BLOCK_SIZE); /* Use a working copy of the IV */
-//#if defined(VPSM4_EX_CAPABLE)
-//    if (vpsm4_ex_capable()) {
-//        vpsm4_ex_cbc_encrypt(plaintext, ciphertext, sizeof(plaintext), &key, iv,
-//                             SM4_ENCRYPT);
-//    } else
-//#endif
+#if defined(VPSM4_EX_CAPABLE)
+    if (vpsm4_ex_capable()) {
+        vpsm4_ex_cbc_encrypt(plaintext, ciphertext, sizeof(plaintext), &key, iv,
+                             SM4_ENCRYPT);
+    } else
+#endif
 #if defined(VPSM4_CAPABLE)
     if (vpsm4_capable()) {
         vpsm4_cbc_encrypt(plaintext, ciphertext, sizeof(plaintext), &key, iv,
@@ -192,13 +192,13 @@ static int test_sm4_cbc(void)
 
     /* --- Test Decryption --- */
     memcpy(iv, iv_bytes, SM4_BLOCK_SIZE); /* Reset IV for decryption */
-//#if defined(VPSM4_EX_CAPABLE)
-//    if (vpsm4_ex_capable()) {
-//	    vpsm4_ex_set_decrypt_key(key_bytes, &key);
-//        vpsm4_ex_cbc_encrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
-//                             SM4_DECRYPT);
-//    } else
-//#endif
+#if defined(VPSM4_EX_CAPABLE)
+    if (vpsm4_ex_capable()) {
+	    vpsm4_ex_set_decrypt_key(key_bytes, &key);
+        vpsm4_ex_cbc_encrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
+                             SM4_DECRYPT);
+    } else
+#endif
 #if defined(VPSM4_CAPABLE)
     if (vpsm4_capable()) {
 	    vpsm4_set_decrypt_key(key_bytes, &key);
