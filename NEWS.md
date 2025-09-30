@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.3
 -----------
 
-### Major changes between OpenSSL 3.3.4 and OpenSSL 3.3.5 [under development]
+### Major changes between OpenSSL 3.3.4 and OpenSSL 3.3.5 [30 Sep 2025]
 
 OpenSSL 3.3.5 is a security patch release. The most severe CVE fixed in this
 release is Moderate.
