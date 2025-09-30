@@ -20,6 +20,7 @@
 #include "self_test.h"
 #include "crypto/ml_kem.h"
 #include "self_test_data.inc"
+#include "internal/fips.h"
 
 static int set_kat_drbg(OSSL_LIB_CTX *ctx,
                         const unsigned char *entropy, size_t entropy_len,
@@ -955,6 +956,8 @@ static int self_test_digests(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_digest_tests); ++i) {
+        if (st_kat_digest_tests[i].deferred)
+            continue;
         if (!self_test_digest(&st_kat_digest_tests[i], st, libctx))
             ret = 0;
     }
@@ -966,6 +969,8 @@ static int self_test_ciphers(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_cipher_tests); ++i) {
+        if (st_kat_cipher_tests[i].base.deferred)
+            continue;
         if (!self_test_cipher(&st_kat_cipher_tests[i], st, libctx))
             ret = 0;
     }
@@ -979,6 +984,8 @@ static int self_test_kems(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     int i;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_kem_tests); ++i) {
+        if (st_kat_kem_tests[i].deferred)
+            continue;
         if (!self_test_kem(&st_kat_kem_tests[i], st, libctx))
             ret = 0;
     }
@@ -991,6 +998,8 @@ static int self_test_asym_ciphers(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_cipher_tests); ++i) {
+        if (st_kat_asym_cipher_tests[i].deferred)
+            continue;
         if (!self_test_asym_cipher(&st_kat_asym_cipher_tests[i], st, libctx))
             ret = 0;
     }
@@ -1002,6 +1011,8 @@ static int self_test_kdfs(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_kdf_tests); ++i) {
+        if (st_kat_kdf_tests[i].deferred)
+            continue;
         if (!self_test_kdf(&st_kat_kdf_tests[i], st, libctx))
             ret = 0;
     }
@@ -1013,6 +1024,8 @@ static int self_test_drbgs(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_drbg_tests); ++i) {
+        if (st_kat_drbg_tests[i].deferred)
+            continue;
         if (!self_test_drbg(&st_kat_drbg_tests[i], st, libctx))
             ret = 0;
     }
@@ -1026,6 +1039,8 @@ static int self_test_kas(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     int i;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_kas_tests); ++i) {
+        if (st_kat_kas_tests[i].deferred)
+            continue;
         if (!self_test_ka(&st_kat_kas_tests[i], st, libctx))
             ret = 0;
     }
@@ -1039,6 +1054,8 @@ static int self_test_signatures(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_sign_tests); ++i) {
+        if (st_kat_sign_tests[i].deferred)
+            continue;
         if (!self_test_digest_sign(&st_kat_sign_tests[i], st, libctx))
             ret = 0;
     }
@@ -1191,6 +1208,8 @@ static int self_test_asym_keygens(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_keygen_tests); ++i) {
+        if (st_kat_asym_keygen_tests[i].deferred)
+            continue;
         if (!self_test_asym_keygen(&st_kat_asym_keygen_tests[i], st, libctx))
             ret = 0;
     }
@@ -1256,3 +1275,149 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     return ret;
 }
 
+/*
+ * Run a single algorithm KAT.
+ * This is similar to SELF_TEST_kats() but only runs the test for a single
+ * algorithm.
+ * Return 1 is successful, otherwise return 0. If no test is found for the
+ * algorithm it also returns 0.
+ * This runs all the tests for the given algorithm regardless of if any fail.
+ *
+ * NOTE: currently test that require the TEST RNG will not work, as we can't
+ * replace the working DRBG with the TEST DRB after initialization.
+ */
+int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+                          int type, const char *alg_name)
+{
+    int ret = 1;
+    int i, found = 0;
+
+    if (alg_name == NULL)
+        return 0;
+
+    /* self_test_digests */
+    if (type == FIPS_DEFERRED_KAT_DIGEST) {
+        for (i = 0; i < (int)OSSL_NELEM(st_kat_digest_tests); ++i) {
+            if (strcmp(st_kat_digest_tests[i].algorithm, alg_name) == 0) {
+                found = 1;
+                if (!self_test_digest(&st_kat_digest_tests[i], st, libctx)) {
+                    ret = 0;
+                    goto done;
+                }
+            }
+        }
+    }
+
+    /* self_test_ciphers */
+    if (type == FIPS_DEFERRED_KAT_CIPHER) {
+        for (i = 0; i < (int)OSSL_NELEM(st_kat_cipher_tests); ++i) {
+            if (strcmp(st_kat_cipher_tests[i].base.algorithm, alg_name) == 0) {
+                found = 1;
+                if (!self_test_cipher(&st_kat_cipher_tests[i], st, libctx)) {
+                    ret = 0;
+                    goto done;
+                }
+            }
+        }
+    }
+
+#ifndef OPENSSL_NO_LMS
+    if (type == FIPS_DEFERRED_KAT_SIGNATURE
+            && strcmp("LMS", alg_name) == 0) {
+        found = 1;
+        if (!self_test_LMS(st, libctx)) {
+            ret = 0;
+            goto done;
+        }
+    }
+#endif  /* OPENSSL_NO_LMS */
+
+    /* self_test_signatures */
+    if (type == FIPS_DEFERRED_KAT_SIGNATURE) {
+        for (i = 0; i < (int)OSSL_NELEM(st_kat_sign_tests); ++i) {
+            if (strcmp(st_kat_sign_tests[i].sigalgorithm, alg_name) == 0
+                || strcmp(st_kat_sign_tests[i].keytype, alg_name) == 0) {
+                found = 1;
+                if (!self_test_digest_sign(&st_kat_sign_tests[i], st, libctx)) {
+                    ret = 0;
+                    goto done;
+                }
+            }
+        }
+    }
+
+    /* self_test_kdfs */
+    if (type == FIPS_DEFERRED_KAT_KDF) {
+        for (i = 0; i < (int)OSSL_NELEM(st_kat_kdf_tests); ++i) {
+            if (strcmp(st_kat_kdf_tests[i].algorithm, alg_name) == 0) {
+                found = 1;
+                if (!self_test_kdf(&st_kat_kdf_tests[i], st, libctx)) {
+                    ret = 0;
+                    goto done;
+                }
+            }
+        }
+    }
+
+    /* self_test_kas */
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+    if (type == FIPS_DEFERRED_KAT_KA) {
+        for (i = 0; i < (int)OSSL_NELEM(st_kat_kas_tests); ++i) {
+            if (strcmp(st_kat_kas_tests[i].algorithm, alg_name) == 0) {
+                found = 1;
+                if (!self_test_ka(&st_kat_kas_tests[i], st, libctx)) {
+                    ret = 0;
+                    goto done;
+                }
+            }
+        }
+    }
+#endif
+
+    /* self_test_asym_keygens */
+#if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
+    if (type == FIPS_DEFERRED_KAT_ASYM_KEYGEN) {
+        for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_keygen_tests); ++i) {
+            if (strcmp(st_kat_asym_keygen_tests[i].algorithm, alg_name) == 0) {
+                found = 1;
+                if (!self_test_asym_keygen(&st_kat_asym_keygen_tests[i], st, libctx)) {
+                    ret = 0;
+                    goto done;
+                }
+            }
+        }
+    }
+#endif /* OPENSSL_NO_ML_DSA */
+
+    /* self_test_kems */
+#ifndef OPENSSL_NO_ML_KEM
+    if (type == FIPS_DEFERRED_KAT_KEM) {
+        for (i = 0; i < (int)OSSL_NELEM(st_kat_kem_tests); ++i) {
+            if (strcmp(st_kat_kem_tests[i].algorithm, alg_name) == 0) {
+                found = 1;
+                if (!self_test_kem(&st_kat_kem_tests[i], st, libctx)) {
+                    ret = 0;
+                    goto done;
+                }
+            }
+        }
+    }
+#endif
+
+    /* self_test_asym_ciphers */
+    if (type == FIPS_DEFERRED_KAT_ASYM_CIPHER) {
+        for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_cipher_tests); ++i) {
+            if (strcmp(st_kat_asym_cipher_tests[i].algorithm, alg_name) == 0) {
+                found = 1;
+                if (!self_test_asym_cipher(&st_kat_asym_cipher_tests[i], st, libctx)) {
+                    ret = 0;
+                    goto done;
+                }
+            }
+        }
+    }
+
+done:
+    /* If no test was found for alg_name, it is considered a failure */
+    return ret && found;
+}
