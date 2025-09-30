@@ -280,7 +280,7 @@ sub start
     # the covers when computing MACs, and in so doing avoids the use of the
     # needed ossltest provider when computing the underlying digest.  Since
     # TLSProxy needs the ossltest provider to compute reliable known data in
-    # the digest, we disable MAC hw accleration here to ensure that the provider
+    # the digest, we disable MAC hw acceleration here to ensure that the provider
     # gets used, just as it does with other architectures.
     #
     $ENV{OPENSSL_s390xcap} = "kmac:~0:~f000";

@@ -772,7 +772,7 @@ static int add_object(const ASN1_OBJECT *obj, int indirect)
 
     /*
      * Indirect calls leave the NID unspecified, in which case we generate a
-     * fresh NID here.  Direct calls via `OBJ_add_object()` must explicity
+     * fresh NID here.  Direct calls via `OBJ_add_object()` must explicitly
      * specify the nid, and we then also check against the compile-time bsearch
      * lists that the indirect calls have checked while holding a read lock.
      */
