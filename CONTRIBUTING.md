@@ -69,7 +69,8 @@ guidelines:
 
  4. Code provided should follow our [coding style] and [documentation policy]
     and compile without warnings.
-    Code must be formatted by the `clang-format` utility.
+    There is a [Perl tool](util/check-format.pl) that helps
+    finding code formatting mistakes and other coding style nits.
     Where `gcc` or `clang` is available, you should use the
     `--strict-warnings` `Configure` option.  OpenSSL compiles on many varied
     platforms: try to ensure you only use portable features.
