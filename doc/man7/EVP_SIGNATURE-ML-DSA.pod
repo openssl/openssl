@@ -17,7 +17,7 @@ L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final> Section 4 Table 1.
 (The signatures range in size from ~2.5K to ~4.5K depending on the type chosen).
 There are 3 different security categories also depending on the type.
 
-L<EVP_SIGNATURE_fetch(3)> can be used to explicitely fetch one of the 3
+L<EVP_SIGNATURE_fetch(3)> can be used to explicitly fetch one of the 3
 algorithms which can then be used with L<EVP_PKEY_sign_message_init(3)>,
 L<EVP_PKEY_sign(3)>, L<EVP_PKEY_verify_message_init(3)>, and
 L<EVP_PKEY_verify(3)> to perform one-shot message signing or signature verification.
@@ -87,7 +87,7 @@ See L<EVP_PKEY-ML-DSA(7)> for information related to B<ML-DSA> keys.
 
 =head1 NOTES
 
-For backwards compatability reasons EVP_DigestSignInit_ex(), EVP_DigestSign(),
+For backwards compatibility reasons EVP_DigestSignInit_ex(), EVP_DigestSign(),
 EVP_DigestVerifyInit_ex() and EVP_DigestVerify() may also be used, but the digest
 passed in I<mdname> must be NULL.
 
