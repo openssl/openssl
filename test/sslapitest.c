@@ -10801,13 +10801,14 @@ static int create_cert_key(int idx, char *certfilename, char *privkeyfilename)
         || !TEST_true(X509_gmtime_adj(X509_getm_notBefore(x509), 0))
         || !TEST_true(X509_gmtime_adj(X509_getm_notAfter(x509), 31536000L))
         || !TEST_true(X509_set_pubkey(x509, pkey))
-        || !TEST_ptr(name = X509_get_subject_name(x509))
+        || !TEST_ptr(name = X509_NAME_new())
         || !TEST_true(X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC,
             (unsigned char *)"CH", -1, -1, 0))
         || !TEST_true(X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC,
             (unsigned char *)"test.org", -1, -1, 0))
         || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
             (unsigned char *)"localhost", -1, -1, 0))
+        || !TEST_true(X509_set_subject_name(x509, name))
         || !TEST_true(X509_set_issuer_name(x509, name))
         || !TEST_true(X509_sign(x509, pkey, EVP_sha1()))
         || !TEST_ptr(keybio = BIO_new_file(privkeyfilename, "wb"))
@@ -10818,6 +10819,7 @@ static int create_cert_key(int idx, char *certfilename, char *privkeyfilename)
 
     EVP_PKEY_free(pkey);
     X509_free(x509);
+    X509_NAME_free(name);
     EVP_PKEY_CTX_free(evpctx);
     BIO_free(keybio);
     BIO_free(certbio);

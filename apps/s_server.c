@@ -711,7 +711,7 @@ static int get_ocsp_resp_from_responder_single(SSL *s, X509 *x,
     int use_ssl;
     STACK_OF(OPENSSL_STRING) *aia = NULL;
     X509 *cert;
-    X509_NAME *iname;
+    const X509_NAME *iname;
     STACK_OF(X509) *chain = NULL;
     SSL_CTX *ssl_ctx;
     X509_STORE_CTX *inctx = NULL;

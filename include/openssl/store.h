@@ -227,8 +227,8 @@ int OSSL_STORE_supports_search(OSSL_STORE_CTX *ctx, int search_type);
  * The input is considered to be owned by the caller, and must therefore
  * remain present throughout the lifetime of the returned OSSL_STORE_SEARCH
  */
-OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_name(X509_NAME *name);
-OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_issuer_serial(X509_NAME *name,
+OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_name(const X509_NAME *name);
+OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_issuer_serial(const X509_NAME *name,
     const ASN1_INTEGER
         *serial);
 OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_key_fingerprint(const EVP_MD *digest,
@@ -242,7 +242,7 @@ void OSSL_STORE_SEARCH_free(OSSL_STORE_SEARCH *search);
 
 /* Search term accessors */
 int OSSL_STORE_SEARCH_get_type(const OSSL_STORE_SEARCH *criterion);
-X509_NAME *OSSL_STORE_SEARCH_get0_name(const OSSL_STORE_SEARCH *criterion);
+const X509_NAME *OSSL_STORE_SEARCH_get0_name(const OSSL_STORE_SEARCH *criterion);
 const ASN1_INTEGER *OSSL_STORE_SEARCH_get0_serial(const OSSL_STORE_SEARCH
         *criterion);
 const unsigned char *OSSL_STORE_SEARCH_get0_bytes(const OSSL_STORE_SEARCH

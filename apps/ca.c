@@ -1477,10 +1477,10 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     const X509_NAME *name = NULL;
     X509_NAME *CAname = NULL, *subject = NULL;
     const ASN1_TIME *tm;
-    ASN1_STRING *str, *str2;
-    ASN1_OBJECT *obj;
+    const ASN1_STRING *str, *str2;
+    const ASN1_OBJECT *obj;
     X509 *ret = NULL;
-    X509_NAME_ENTRY *ne, *tne;
+    const X509_NAME_ENTRY *ne, *tne;
     EVP_PKEY *pktmp;
     int ok = -1, i, j, last, nid;
     const char *p;
@@ -1563,7 +1563,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
         last = -1;
         for (;;) {
-            X509_NAME_ENTRY *push = NULL;
+            const X509_NAME_ENTRY *push = NULL;
 
             /* lookup the object in the supplied name list */
             j = X509_NAME_get_index_by_OBJ(name, obj, last);
@@ -2015,7 +2015,9 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
     /*
      * Build up the subject name set.
      */
-    n = X509_REQ_get_subject_name(req);
+    n = X509_NAME_new();
+    if (n == NULL)
+        goto end;
 
     for (i = 0;; i++) {
         if (sk_CONF_VALUE_num(sk) <= i)
@@ -2057,6 +2059,9 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
         goto end;
     }
 
+    if (!X509_REQ_set_subject_name(req, n))
+        goto end;
+
     /*
      * Now extract the key from the SPKI structure.
      */
@@ -2085,6 +2090,7 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
         ext_copy, 0, dateopt);
 end:
     X509_REQ_free(req);
+    X509_NAME_free(n);
     CONF_free(parms);
     NETSCAPE_SPKI_free(spki);
     X509_NAME_ENTRY_free(ne);

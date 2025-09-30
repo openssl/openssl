@@ -938,7 +938,7 @@ int OSSL_STORE_supports_search(OSSL_STORE_CTX *ctx, int search_type)
 }
 
 /* Search term constructors */
-OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_name(X509_NAME *name)
+OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_name(const X509_NAME *name)
 {
     OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
 
@@ -950,7 +950,7 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_name(X509_NAME *name)
     return search;
 }
 
-OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_issuer_serial(X509_NAME *name,
+OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_issuer_serial(const X509_NAME *name,
     const ASN1_INTEGER *serial)
 {
     OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
@@ -1022,7 +1022,7 @@ int OSSL_STORE_SEARCH_get_type(const OSSL_STORE_SEARCH *criterion)
     return criterion->search_type;
 }
 
-X509_NAME *OSSL_STORE_SEARCH_get0_name(const OSSL_STORE_SEARCH *criterion)
+const X509_NAME *OSSL_STORE_SEARCH_get0_name(const OSSL_STORE_SEARCH *criterion)
 {
     return criterion->name;
 }

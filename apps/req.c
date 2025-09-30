@@ -48,7 +48,7 @@
 #define UNSET_DAYS -2 /* -1 may be used for testing expiration checks */
 #define EXT_COPY_UNSET -1
 
-static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, X509_NAME *fsubj,
+static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, const X509_NAME *fsubj,
     int mutlirdn, int attribs, unsigned long chtype);
 static int prompt_info(X509_REQ *req,
     STACK_OF(CONF_VALUE) *dn_sk, const char *dn_sect,
@@ -292,7 +292,7 @@ int req_main(int argc, char **argv)
     char *passin = NULL, *passout = NULL;
     char *nofree_passin = NULL, *nofree_passout = NULL;
     char *subj = NULL;
-    X509_NAME *fsubj = NULL;
+    const X509_NAME *fsubj = NULL;
     char *template = default_config_file, *keyout = NULL;
     const char *keyalg = NULL;
     OPTION_CHOICE o;
@@ -819,9 +819,10 @@ int req_main(int argc, char **argv)
             EVP_PKEY *pub_key = X509_REQ_get0_pubkey(req);
             EVP_PKEY *issuer_key = CAcert != NULL ? CAkey : pkey;
             X509V3_CTX ext_ctx;
-            X509_NAME *issuer = CAcert != NULL ? X509_get_subject_name(CAcert) : X509_REQ_get_subject_name(req);
-            X509_NAME *n_subj = fsubj != NULL ? fsubj : X509_REQ_get_subject_name(req);
 
+            const X509_NAME *n_subj = fsubj != NULL ? fsubj : X509_REQ_get_subject_name(req);
+            const X509_NAME *issuer = CAcert != NULL ? X509_get_subject_name(CAcert)
+                                                     : X509_REQ_get_subject_name(req);
             if (CAcert != NULL && keyfile != NULL)
                 BIO_puts(bio_err,
                     "Warning: Not using -key or -newkey for signing since -CA option is given\n");
@@ -1072,7 +1073,7 @@ end:
     lh_OPENSSL_STRING_free(addexts);
     OPENSSL_free(keyalgstr);
     X509_REQ_free(req);
-    X509_NAME_free(fsubj);
+    X509_NAME_free((X509_NAME *)fsubj);
     X509_free(new_x509);
     X509_free(CAcert);
     EVP_PKEY_free(CAkey);
@@ -1084,7 +1085,7 @@ end:
     return ret;
 }
 
-static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, X509_NAME *fsubj,
+static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, const X509_NAME *fsubj,
     int multirdn, int attribs, unsigned long chtype)
 {
     int ret = 0, i;
@@ -1149,7 +1150,11 @@ static int prompt_info(X509_REQ *req,
     char *type, *value;
     const char *def;
     CONF_VALUE *v;
-    X509_NAME *subj = X509_REQ_get_subject_name(req);
+    X509_NAME *subj;
+    int ret = 0;
+
+    if ((subj = X509_NAME_new()) == NULL)
+        goto err;
 
     if (!batch) {
         BIO_puts(bio_err,
@@ -1200,32 +1205,37 @@ static int prompt_info(X509_REQ *req,
             if ((nid = OBJ_txt2nid(type)) == NID_undef)
                 goto start;
             if (!join(buf, sizeof(buf), v->name, "_default", "Name"))
-                return 0;
+                goto err;
             if ((def = app_conf_try_string(req_conf, dn_sect, buf)) == NULL)
                 def = "";
 
             if (!join(buf, sizeof(buf), v->name, "_value", "Name"))
-                return 0;
+                goto err;
             if ((value = app_conf_try_string(req_conf, dn_sect, buf)) == NULL)
                 value = NULL;
 
             if (!join(buf, sizeof(buf), v->name, "_min", "Name"))
-                return 0;
+                goto err;
             if (!app_conf_try_number(req_conf, dn_sect, buf, &n_min))
                 n_min = -1;
 
             if (!join(buf, sizeof(buf), v->name, "_max", "Name"))
-                return 0;
+                goto err;
             if (!app_conf_try_number(req_conf, dn_sect, buf, &n_max))
                 n_max = -1;
 
             if (!add_DN_object(subj, v->value, def, value, nid,
                     n_min, n_max, chtype, mval))
-                return 0;
+                goto err;
         }
         if (X509_NAME_entry_count(subj) == 0) {
             BIO_puts(bio_err, "Error: No objects specified in config file\n");
-            return 0;
+            goto err;
+        }
+
+        if (X509_REQ_set_subject_name(req, subj) == 0) {
+            BIO_printf(bio_err, "Error: Can't set subject name\n");
+            goto err;
         }
 
         if (attribs) {
@@ -1255,31 +1265,38 @@ static int prompt_info(X509_REQ *req,
                     def = "";
 
                 if (!join(buf, sizeof(buf), type, "_value", "Name"))
-                    return 0;
+                    goto err;
+                ;
                 value = app_conf_try_string(req_conf, attr_sect, buf);
 
                 if (!join(buf, sizeof(buf), type, "_min", "Name"))
-                    return 0;
+                    goto err;
+                ;
                 if (!app_conf_try_number(req_conf, attr_sect, buf, &n_min))
                     n_min = -1;
 
                 if (!join(buf, sizeof(buf), type, "_max", "Name"))
-                    return 0;
+                    goto err;
+                ;
                 if (!app_conf_try_number(req_conf, attr_sect, buf, &n_max))
                     n_max = -1;
-
                 if (!add_attribute_object(req,
                         v->value, def, value, nid, n_min,
                         n_max, chtype))
-                    return 0;
+                    goto err;
+                ;
             }
         }
     } else {
         BIO_puts(bio_err, "No template, please set one up.\n");
-        return 0;
+        goto err;
     }
 
-    return 1;
+    ret = 1;
+
+err:
+    X509_NAME_free(subj);
+    return ret;
 }
 
 static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
@@ -1291,8 +1308,10 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
     char *type;
     CONF_VALUE *v;
     X509_NAME *subj;
+    int ret = 0;
 
-    subj = X509_REQ_get_subject_name(req);
+    if ((subj = X509_NAME_new()) == NULL)
+        goto err;
 
     for (i = 0; i < sk_CONF_VALUE_num(dn_sk); i++) {
         int mval;
@@ -1330,7 +1349,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
         if (!X509_NAME_add_entry_by_txt(subj, type, chtype,
                 (unsigned char *)v->value, -1, -1,
                 mval))
-            return 0;
+            goto err;
     }
 
     if (!X509_NAME_entry_count(subj)) {
@@ -1342,10 +1361,20 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
             v = sk_CONF_VALUE_value(attr_sk, i);
             if (!X509_REQ_add1_attr_by_txt(req, v->name, chtype,
                     (unsigned char *)v->value, -1))
-                return 0;
+                goto err;
         }
     }
-    return 1;
+
+    if (X509_REQ_set_subject_name(req, subj) == 0) {
+        BIO_printf(bio_err, "Error: Can't set subject name\n");
+        goto err;
+    }
+
+    ret = 1;
+
+err:
+    X509_NAME_free(subj);
+    return ret;
 }
 
 static int add_DN_object(X509_NAME *n, char *text, const char *def,
