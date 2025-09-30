@@ -15,7 +15,7 @@ X509_NAME lookup and enumeration functions
                                 const ASN1_OBJECT *obj, int lastpos);
 
  int X509_NAME_entry_count(const X509_NAME *name);
- X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc);
+ cont X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc);
 
  Deprecated Functions:
 

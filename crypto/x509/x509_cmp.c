@@ -97,7 +97,7 @@ int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
     return rv < 0 ? -1 : rv > 0;
 }
 
-X509_NAME *X509_get_issuer_name(const X509 *a)
+const X509_NAME *X509_get_issuer_name(const X509 *a)
 {
     return a->cert_info.issuer;
 }
@@ -114,7 +114,7 @@ unsigned long X509_issuer_name_hash_old(const X509 *x)
 }
 #endif
 
-X509_NAME *X509_get_subject_name(const X509 *a)
+const X509_NAME *X509_get_subject_name(const X509 *a)
 {
     return a->cert_info.subject;
 }
