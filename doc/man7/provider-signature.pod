@@ -504,7 +504,7 @@ Generation".
 The FIPS provider does not support deterministic digital signature generation
 for DSA.
 
-The FIPS provider supports determinisitic digital signature generation for
+The FIPS provider supports deterministic digital signature generation for
 ECDSA.
 
 =item "kat" (B<OSSL_SIGNATURE_PARAM_KAT>) <unsigned integer>

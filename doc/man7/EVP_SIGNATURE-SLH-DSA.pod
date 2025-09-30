@@ -28,7 +28,7 @@ C<s> types have smaller signature sizes, and the C<f> variants are faster,
 (The signatures range from ~8K to ~50K depending on the type chosen). There are
 3 different security categories also depending on the type.
 
-L<EVP_SIGNATURE_fetch(3)> can be used to explicitely fetch one of the 12
+L<EVP_SIGNATURE_fetch(3)> can be used to explicitly fetch one of the 12
 algorithms which can then be used with L<EVP_PKEY_sign_message_init(3)>,
 L<EVP_PKEY_sign(3)>, L<EVP_PKEY_verify_message_init(3)>, and
 L<EVP_PKEY_verify(3)> to perform one-shot message signing or verification.
@@ -38,7 +38,7 @@ encodes the message internally as 0x00 || len(ctx) || ctx || message.
 where B<ctx> is some optional value of size 0x00..0xFF.
 OpenSSL also allows the message to not be encoded which is required for
 testing. OpenSSL does not support Pre Hash SLH-DSA Signature Generation, but this
-may be done by the user by doing Pre hash encoding externally and then chosing
+may be done by the user by doing Pre hash encoding externally and then choosing
 the option to not encode the message.
 
 =head2 SLH-DSA Signature Parameters
