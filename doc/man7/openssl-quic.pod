@@ -712,7 +712,7 @@ section for details.
 
 =item L<SSL_get_peer_addr(3)>
 
-Used to optiain the peer address from a QUIC connection or stream.
+Used to obtain the peer address from a QUIC connection or stream.
 
 
 =back

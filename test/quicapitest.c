@@ -3037,7 +3037,6 @@ static int create_quic_ssl_objects_seed_peer(SSL_CTX *sctx, SSL_CTX *cctx,
     /* Seed server's peer = client's endpoint */
     if ((cli_ep = addr_from_raw4(cli_ip4, cli_port)) == NULL)
         goto err;
-    (void)BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_PEER, 0, cli_ep);
     BIO_ADDR_free(cli_ep);
     cli_ep = NULL;
 
