@@ -30,6 +30,27 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.17 and 3.0.18 [xx XXX xxxx]
 
+ * Avoided a potential race condition introduced in 3.0.17, where
+   `OSSL_STORE_CTX` kept open during lookup while potentially being used
+   by multiple threads simultaneously, that could lead to potential crashes
+   when multiple concurrent TLS connections are served.
+
+   *Matt Caswell*
+
+ * Secure memory allocation calls are no longer used for HMAC keys.
+
+   *Dr Paul Dale*
+
+ * `openssl req` no longer generates certificates with an empty extension list
+   when SKID/AKID are set to `none` during generation.
+
+   *David Benjamin*
+
+ * The man page date is now derived from the release date provided
+   in `VERSION.dat` and not the current date for the released builds.
+
+   *Enji Cooper*
+
  * Hardened the provider implementation of the RSA public key "encrypt"
    operation to add a missing check that the caller-indicated output buffer
    size is at least as large as the byte count of the RSA modulus.  The issue
@@ -42,6 +63,27 @@ breaking changes, and mappings for the large list of deprecated functions.
    write is now avoided and an error is reported instead.
 
    *Viktor Dukhovni*
+
+ * Fixed `25-test_verify.t` test failures on Windows, present since 3.0.17.
+
+   *David von Oheimb and Eugene Syromiatnikov*
+
+ * Fixed remaining buffer size calculation in property list quoting routine
+   that could lead to potential buffer overflows in the output
+   of `OPENSSL_TRACE=QUERY`.
+   Reported by Aniruddhan Murali and Noble Saji Mathews.
+
+   *Viktor Dukhovni*
+
+ * Fixed possible integer overflow in `BIO_f_reliable` record parser that could
+   lead to an out-of-bounds read.
+
+   *Luigino Camastra*
+
+ * `CPUINFO` information is now printed on POWER (available
+    via `openssl version -c` or `openssl info -cpuinfo` commands).
+
+   *Bernd Edlinger*
 
 ### Changes between 3.0.16 and 3.0.17 [1 Jul 2025]
 
