@@ -20,6 +20,10 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
+### Major changes between OpenSSL 3.2.6 and OpenSSL 3.2.7 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.2.5 and OpenSSL 3.2.6 [30 Sep 2025]
 
 OpenSSL 3.2.6 is a security patch release. The most severe CVE fixed in this
