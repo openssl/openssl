@@ -76,6 +76,27 @@ OpenSSL 3.4
 
    *Stanislav Fort*
 
+ * Avoided a potential race condition introduced in 3.4.2, where
+   `OSSL_STORE_CTX` kept open during lookup while potentially being used
+   by multiple threads simultaneously, that could lead to potential crashes
+   when multiple concurrent TLS connections are served.
+
+   *Matt Caswell*
+
+ * Secure memory allocation calls are no longer used for HMAC keys.
+
+   *Dr Paul Dale*
+
+ * `openssl req` no longer generates certificates with an empty extension list
+   when SKID/AKID are set to `none` during generation.
+
+   *David Benjamin*
+
+ * The man page date is now derived from the release date provided
+   in `VERSION.dat` and not the current date for the released builds.
+
+   *Enji Cooper*
+
  * Hardened the provider implementation of the RSA public key "encrypt"
    operation to add a missing check that the caller-indicated output buffer
    size is at least as large as the byte count of the RSA modulus.  The issue
@@ -88,6 +109,11 @@ OpenSSL 3.4
    write is now avoided and an error is reported instead.
 
    *Viktor Dukhovni*
+
+ * Fixed the length of the ASN.1 sequence for the SM3 digests of RSA-encrypted
+   signatures.
+
+   *Xiao Lou Dong Feng*
 
 ### Changes between 3.4.1 and 3.4.2 [1 Jul 2025]
 
