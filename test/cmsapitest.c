@@ -409,6 +409,78 @@ end:
     return ret;
 }
 
+static int test_encrypted_data(void)
+{
+    const char *msg = "Hello world";
+    BIO *msgbio = BIO_new_mem_buf(msg, (int)strlen(msg));
+    uint8_t key[16] = {0};
+    size_t keylen = 16;
+    CMS_ContentInfo *cms;
+    BIO *decryptbio = BIO_new(BIO_s_mem());
+    char buf[80];
+    int ret = 0;
+
+    cms = CMS_EncryptedData_encrypt(msgbio, EVP_aes_128_cbc(), key, keylen, SMIME_BINARY);
+    if (!TEST_ptr(cms))
+        goto end;
+
+    if (!TEST_true(CMS_EncryptedData_decrypt(cms, key, keylen, NULL, decryptbio, SMIME_BINARY)))
+        goto end;
+
+    /* Check we got the message we first started with */
+    if (!TEST_int_eq(BIO_gets(decryptbio, buf, sizeof(buf)), (int)strlen(msg))
+            || !TEST_int_eq(strcmp(buf, msg), 0))
+        goto end;
+
+    ret = 1;
+end:
+    CMS_ContentInfo_free(cms);
+    BIO_free(msgbio);
+    BIO_free(decryptbio);
+    return ret;
+}
+
+static int test_encrypted_data_aead(void)
+{
+    const char *msg = "Hello world";
+    BIO *msgbio = BIO_new_mem_buf(msg, (int)strlen(msg));
+    uint8_t key[16] = {0};
+    size_t keylen = 16;
+    CMS_ContentInfo *cms;
+    BIO *decryptbio = BIO_new(BIO_s_mem());
+    int ret = 0;
+
+    cms = CMS_ContentInfo_new();
+    if (!TEST_ptr(cms))
+        goto end;
+
+    /*
+     * AEAD algorithms are not supported by the CMS EncryptedData so setting
+     * the cipher to AES GCM 128 will result in a failure
+     */
+    if (!TEST_false(CMS_EncryptedData_set1_key(cms, EVP_aes_128_gcm(), key, keylen)))
+        goto end;
+
+    CMS_ContentInfo_free(cms);
+    cms = NULL;
+
+    /*
+     * AEAD algorithms are not supported by the CMS EncryptedData so setting
+     * the cipher to AES GCM 128 will result in a failure
+     */
+    cms = CMS_EncryptedData_encrypt(msgbio, EVP_aes_128_gcm(), key, keylen, SMIME_BINARY);
+    if (!TEST_ptr_null(cms))
+        goto end;
+
+    ret = 1;
+
+end:
+    CMS_ContentInfo_free(cms);
+    BIO_free(msgbio);
+    BIO_free(decryptbio);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile\n")
 
 int setup_tests(void)
@@ -456,6 +528,8 @@ int setup_tests(void)
     ADD_TEST(test_CMS_add1_cert);
     ADD_TEST(test_d2i_CMS_bio_NULL);
     ADD_TEST(test_CMS_set1_key_mem_leak);
+    ADD_TEST(test_encrypted_data);
+    ADD_TEST(test_encrypted_data_aead);
     ADD_ALL_TESTS(test_d2i_CMS_decode, 2);
     return 1;
 }
