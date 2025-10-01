@@ -310,6 +310,7 @@ $code.=<<___;
 .global asm_aescbc_sha512_hmac
 .type	asm_aescbc_sha512_hmac,%function
 
+.rodata
 .align 6
 .LK512:
 	.quad	0x428a2f98d728ae22,0x7137449123ef65cd
@@ -354,6 +355,7 @@ $code.=<<___;
 	.quad	0x5fcb6fab3ad6faec,0x6c44198c4a475817
 	.quad	0	// terminator
 
+.text
 	.align	4
 asm_aescbc_sha512_hmac:
 	AARCH64_VALID_CALL_TARGET
@@ -372,7 +374,8 @@ asm_aescbc_sha512_hmac:
 	ldr		x9, [x6, #CIPHER_KEY_ROUNDS]
 	mov		x12, x7				/* backup x7 */
 
-	adr		x10, .LK512
+	adrp		x10, .LK512
+	add		x10, x10, :lo12:.LK512
 
 	lsr		x11, x2, #4			/* aes_block = len/16 */
 	cbz		x11, .Lret			/* return if aes_block = 0 */
@@ -2087,7 +2090,8 @@ asm_sha512_hmac_aescbc_dec:
 	ldr		x9, [x6, #CIPHER_KEY_ROUNDS]
 	mov		x12, x7			/* backup x7 */
 
-	adr		x10, .LK512
+	adrp		x10, .LK512
+	add		x10, x10, :lo12:.LK512
 
 	lsr		x11, x2, #4		/* aes_block = len/16 */
 	cbz		x11, .Ldec_ret		/* return if aes_block = 0 */
