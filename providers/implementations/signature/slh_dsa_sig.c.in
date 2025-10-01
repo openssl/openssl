@@ -14,6 +14,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
+#include <openssl/self_test.h>
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
@@ -21,6 +22,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "crypto/slh_dsa.h"
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
+#include "internal/fips.h"
 
 #define SLH_DSA_MAX_ADD_RANDOM_LEN 32
 
@@ -38,6 +40,34 @@ static OSSL_FUNC_signature_freectx_fn slh_dsa_freectx;
 static OSSL_FUNC_signature_dupctx_fn slh_dsa_dupctx;
 static OSSL_FUNC_signature_set_ctx_params_fn slh_dsa_set_ctx_params;
 static OSSL_FUNC_signature_settable_ctx_params_fn slh_dsa_settable_ctx_params;
+
+#ifdef FIPS_MODULE
+static FIPS_DEFERRED_TEST slh_sig_deferred_tests[] = {
+    {
+        "SLH-DSA-SHA2-128f",
+        FIPS_DEFERRED_KAT_SIGNATURE,
+        FIPS_DEFERRED_TEST_INIT
+    },
+    {
+        "SLH-DSA-SHAKE-128f",
+        FIPS_DEFERRED_KAT_SIGNATURE,
+        FIPS_DEFERRED_TEST_INIT
+    },
+    { NULL, 0, 0 },
+};
+#endif
+
+static int slh_dsa_self_check(OSSL_LIB_CTX *libctx)
+{
+    if (!ossl_prov_is_running())
+        return 0;
+
+#ifdef FIPS_MODULE
+    return FIPS_deferred_self_tests(libctx, slh_sig_deferred_tests);
+#else
+    return 1;
+#endif
+}
 
 /*
  * NOTE: Any changes to this structure may require updating slh_dsa_dupctx().
@@ -73,7 +103,7 @@ static void *slh_dsa_newctx(void *provctx, const char *alg, const char *propq)
 {
     PROV_SLH_DSA_CTX *ctx;
 
-    if (!ossl_prov_is_running())
+    if (!slh_dsa_self_check(PROV_LIBCTX_OF(provctx)))
         return NULL;
 
     ctx = OPENSSL_zalloc(sizeof(PROV_SLH_DSA_CTX));
@@ -153,7 +183,7 @@ static int slh_dsa_signverify_msg_init(void *vctx, void *vkey,
     PROV_SLH_DSA_CTX *ctx = (PROV_SLH_DSA_CTX *)vctx;
     SLH_DSA_KEY *key = vkey;
 
-    if (!ossl_prov_is_running()
+    if (!slh_dsa_self_check(ossl_slh_dsa_key_get0_libctx(key))
             || ctx == NULL)
         return 0;
 
@@ -209,7 +239,7 @@ static int slh_dsa_sign(void *vctx, unsigned char *sig, size_t *siglen,
     uint8_t add_rand[SLH_DSA_MAX_ADD_RANDOM_LEN], *opt_rand = NULL;
     size_t n = 0;
 
-    if (!ossl_prov_is_running())
+    if (!slh_dsa_self_check(ctx->libctx))
         return 0;
 
     if (sig != NULL) {
@@ -248,7 +278,7 @@ static int slh_dsa_verify(void *vctx, const uint8_t *sig, size_t siglen,
 {
     PROV_SLH_DSA_CTX *ctx = (PROV_SLH_DSA_CTX *)vctx;
 
-    if (!ossl_prov_is_running())
+    if (!slh_dsa_self_check(ctx->libctx))
         return 0;
     return ossl_slh_dsa_verify(ctx->hash_ctx, msg, msg_len,
                                ctx->context_string, ctx->context_string_len,
