@@ -548,8 +548,12 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {258, "ffdhe4096"},
     {259, "ffdhe6144"},
     {260, "ffdhe8192"},
+    {512, "MLKEM512"},
+    {513, "MLKEM768"},
+    {514, "MLKEM1024"},
     {4587, "SecP256r1MLKEM768"},
     {4588, "X25519MLKEM768"},
+    {4589, "SecP384r1MLKEM1024"},
     {25497, "X25519Kyber768Draft00"},
     {25498, "SecP256r1Kyber768Draft00"},
     {0xFF01, "arbitrary_explicit_prime_curves"},
@@ -1306,7 +1310,7 @@ static int ssl_print_certificate(BIO *bio, const SSL_CONNECTION *sc, int indent,
         x = NULL;
     }
     if (x ==  NULL)
-        BIO_puts(bio, "<UNPARSEABLE CERTIFICATE>\n");
+        BIO_puts(bio, "<UNPARSABLE CERTIFICATE>\n");
     else {
         BIO_puts(bio, "\n------details-----\n");
         X509_print_ex(bio, x, XN_FLAG_ONELINE, 0);
@@ -1537,7 +1541,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, const SSL_CONNECTION *sc
         p = msg;
         nm = d2i_X509_NAME(NULL, &p, (long)dlen);
         if (!nm) {
-            BIO_puts(bio, "<UNPARSEABLE DN>\n");
+            BIO_puts(bio, "<UNPARSABLE DN>\n");
         } else {
             X509_NAME_print_ex(bio, nm, 0, XN_FLAG_ONELINE);
             BIO_puts(bio, "\n");

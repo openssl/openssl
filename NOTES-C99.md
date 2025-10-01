@@ -20,3 +20,16 @@ The list here is going to be updated by features we either
 The list of C-99 features we don't support in OpenSSL project follows:
 
    - do not use `//` for comments, stick to `/* ... */`
+
+   - do not use `<complex.h>`. MSVC doesn't quite implement it to standard.
+
+   - do not use variable length arrays, i.e. arrays where the size is
+     determined by another variable.  MSVC doesn't implement it at all.
+     For clarity, this is an example of such an array:
+
+     ``` C
+     int fun(size_t n)
+     {
+         char s[n]; /* variable size array */
+         ...
+     ```

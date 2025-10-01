@@ -309,53 +309,23 @@ int BIO_sock_should_retry(int i)
 
 int BIO_sock_non_fatal_error(int err)
 {
-    switch (err) {
 # if defined(OPENSSL_SYS_WINDOWS)
-#  if defined(WSAEWOULDBLOCK)
-    case WSAEWOULDBLOCK:
+    return err == WSAEWOULDBLOCK
+        || err == WSAENOTCONN
+        || err == WSAEINTR
+        || err == WSAEINPROGRESS
+        || err == WSAEALREADY;
+# else /* POSIX.1-2001 */
+    return err == EWOULDBLOCK
+        || err == EAGAIN
+        || err == ENOTCONN
+        || err == EINTR
+#  if ! defined (__DJGPP__)
+        || err == EPROTO
 #  endif
+        || err == EINPROGRESS
+        || err == EALREADY;
 # endif
-
-# ifdef EWOULDBLOCK
-#  ifdef WSAEWOULDBLOCK
-#   if WSAEWOULDBLOCK != EWOULDBLOCK
-    case EWOULDBLOCK:
-#   endif
-#  else
-    case EWOULDBLOCK:
-#  endif
-# endif
-
-# if defined(ENOTCONN)
-    case ENOTCONN:
-# endif
-
-# ifdef EINTR
-    case EINTR:
-# endif
-
-# ifdef EAGAIN
-#  if EWOULDBLOCK != EAGAIN
-    case EAGAIN:
-#  endif
-# endif
-
-# ifdef EPROTO
-    case EPROTO:
-# endif
-
-# ifdef EINPROGRESS
-    case EINPROGRESS:
-# endif
-
-# ifdef EALREADY
-    case EALREADY:
-# endif
-        return 1;
-    default:
-        break;
-    }
-    return 0;
 }
 
 #endif                          /* #ifndef OPENSSL_NO_SOCK */

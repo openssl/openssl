@@ -154,7 +154,7 @@ typedef struct {
     int security_category;
 } ML_KEM_VINFO;
 
-/* Retrive global variant-specific parameters */
+/* Retrieve global variant-specific parameters */
 const ML_KEM_VINFO *ossl_ml_kem_get_vinfo(int evp_type);
 
 /* Known as ML_KEM_KEY via crypto/types.h */

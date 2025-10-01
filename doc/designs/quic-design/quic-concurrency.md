@@ -386,7 +386,7 @@ int ossl_cml_write(QUIC_CML *cml, QUIC_CML_PIPE pipe_handle,
 /*
  * Returns the number of bytes a receiving pipe currently has waiting to be
  * read. The returned value may increase over time asynchronously but will only
- * decreate in response to an ossl_cml_read call.
+ * decrease in response to an ossl_cml_read call.
  */
 size_t ossl_cml_read_available(QUIC_CML *cml, QUIC_CML_PIPE pipe_handle);
 

@@ -640,7 +640,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         return -1;
     /*
      * Get the first byte of the buffer to tell us what operation
-     * to preform
+     * to perform
      */
     buffer_cursor = consume_uint8t(buf, &len, &operation);
     if (buffer_cursor == NULL)

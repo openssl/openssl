@@ -257,14 +257,25 @@ int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
         return 0;
 
     if ((loc >= st->num) || (loc < 0)) {
-        st->data[st->num] = data;
+        loc = st->num;
+        st->data[loc] = data;
     } else {
         memmove(&st->data[loc + 1], &st->data[loc],
                 sizeof(st->data[0]) * (st->num - loc));
         st->data[loc] = data;
     }
     st->num++;
-    st->sorted = st->num <= 1;
+    if (st->sorted && st->num > 1) {
+        if (st->comp != NULL) {
+            if (loc > 0 && (st->comp(&st->data[loc - 1], &st->data[loc]) > 0))
+                st->sorted = 0;
+            if (loc < st->num - 1
+                && (st->comp(&st->data[loc + 1], &st->data[loc]) < 0))
+                st->sorted = 0;
+        } else {
+            st->sorted = 0;
+        }
+    }
     return st->num;
 }
 
@@ -302,7 +313,7 @@ void *OPENSSL_sk_delete(OPENSSL_STACK *st, int loc)
     return internal_delete(st, loc);
 }
 
-static int internal_find(OPENSSL_STACK *st, const void *data,
+static int internal_find(const OPENSSL_STACK *st, const void *data,
                          int ret_val_options, int *pnum_matched)
 {
     const void *r;
@@ -367,17 +378,17 @@ static int internal_find(OPENSSL_STACK *st, const void *data,
     return r == NULL ? -1 : (int)((const void **)r - st->data);
 }
 
-int OPENSSL_sk_find(OPENSSL_STACK *st, const void *data)
+int OPENSSL_sk_find(const OPENSSL_STACK *st, const void *data)
 {
     return internal_find(st, data, OSSL_BSEARCH_FIRST_VALUE_ON_MATCH, NULL);
 }
 
-int OPENSSL_sk_find_ex(OPENSSL_STACK *st, const void *data)
+int OPENSSL_sk_find_ex(const OPENSSL_STACK *st, const void *data)
 {
     return internal_find(st, data, OSSL_BSEARCH_VALUE_ON_NOMATCH, NULL);
 }
 
-int OPENSSL_sk_find_all(OPENSSL_STACK *st, const void *data, int *pnum)
+int OPENSSL_sk_find_all(const OPENSSL_STACK *st, const void *data, int *pnum)
 {
     return internal_find(st, data, OSSL_BSEARCH_FIRST_VALUE_ON_MATCH, pnum);
 }

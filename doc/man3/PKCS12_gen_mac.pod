@@ -81,7 +81,7 @@ https://meganorm.ru/mega_doc/norm/prikaz/25/r_1323565_1_041-2022_rekomendatsii_p
 If this environment variable is set, MAC generation that utilises
 GOST R 34.11-94 or GOST 34.11-2012 hashing algorithms is performed the usual
 way and not in accordance with the specification provided in the methodical
-recommendation MP 26.2.002-2012 (or in its later versions, standartisation
+recommendation MP 26.2.002-2012 (or in its later versions, standardisation
 recommendation P 50.1.112-2016 or P 1323565.1.041-2022)
 of Technical Committee 26, that specifies that the key used for MAC
 generation should be the last 32 bytes of the 96-byte sequence generated

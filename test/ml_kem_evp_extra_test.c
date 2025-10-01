@@ -140,7 +140,17 @@ static int test_ml_kem(void)
     if (!TEST_int_gt(EVP_PKEY_copy_parameters(bkey, akey), 0))
         goto err;
 
+    /* Bob's empty key is not equal to Alice's */
+    if (!TEST_false(EVP_PKEY_eq(akey, bkey))
+        || !TEST_false(EVP_PKEY_eq(bkey, akey)))
+        goto err;
+
     if (!TEST_true(EVP_PKEY_set1_encoded_public_key(bkey, rawpub, publen)))
+        goto err;
+
+    /* Bob's copy of Alice's public key makes the two equal */
+    if (!TEST_true(EVP_PKEY_eq(akey, bkey))
+        || !TEST_true(EVP_PKEY_eq(bkey, akey)))
         goto err;
 
     /* Encapsulate Bob's key */

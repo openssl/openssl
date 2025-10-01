@@ -54,7 +54,7 @@ and `EVP_PKEY_verify()` remain supported.
 Some more recent verification algorithms need to obtain the signature
 before processing the data.
 This is particularly important for streaming modes of operation.
-This design proposes a mechanism to accomodate these algorithms
+This design proposes a mechanism to accommodate these algorithms
 and modes of operation.
 
 New public API - API Reference
