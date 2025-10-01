@@ -41,11 +41,11 @@ which CA certificates are loaded should be used. There is one default directory,
 one default file and one default store.
 The default CA certificates directory is called F<certs> in the default OpenSSL
 directory, and this is also the default store.
-Alternatively the C<SSL_CERT_DIR> environment variable can be defined to
+Alternatively the B<SSL_CERT_DIR> environment variable can be defined to
 override this location.
 The default CA certificates file is called F<cert.pem> in the default
 OpenSSL directory.
-Alternatively the C<SSL_CERT_FILE> environment variable can be defined to
+Alternatively the B<SSL_CERT_FILE> environment variable can be defined to
 override this location.
 I<ctx> B<MUST NOT> be NULL.
 
