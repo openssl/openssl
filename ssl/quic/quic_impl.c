@@ -4729,9 +4729,6 @@ static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHA
         goto err;
     }
 
-    if (csm_analyse_init_peer_addr(ossl_quic_port_get_net_wbio(ql->port), &qc->init_peer_addr))
-        ossl_quic_channel_set_peer_addr(ch, &qc->init_peer_addr);
-
     qc->pending                 = 1;
     qc->engine                  = ql->engine;
     qc->port                    = ql->port;
