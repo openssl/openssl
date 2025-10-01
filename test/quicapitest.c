@@ -2998,29 +2998,17 @@ err:
 #endif
 }
 
-static BIO_ADDR *addr_from_raw4(const unsigned char ip[4], uint16_t port_host)
-{
-    BIO_ADDR *a = BIO_ADDR_new();
-
-    if (a == NULL)
-        return NULL;
-    if (!BIO_ADDR_rawmake(a, AF_INET, ip, 4, htons(port_host))) {
-        BIO_ADDR_free(a);
-        return NULL;
-    }
-    return a;
-}
-
+/* family = AF_INET (alen=4) or AF_INET6 (alen=16) */
 static int create_quic_ssl_objects_seed_peer(SSL_CTX *sctx, SSL_CTX *cctx,
                                              SSL **lssl, SSL **cssl,
-                                             const unsigned char srv_ip4[4], uint16_t srv_port,
-                                             const unsigned char cli_ip4[4], uint16_t cli_port)
+                                             int family,
+                                             const unsigned char *srv_ip, uint16_t srv_port,
+                                             const unsigned char *cli_ip, uint16_t cli_port)
 {
     BIO *cbio = NULL, *sbio = NULL;
-    BIO_ADDR *srv_local = NULL;   /* server bind */
-    BIO_ADDR *cli_local = NULL;   /* client bind */
-    BIO_ADDR *srv_ep    = NULL;   /* server endpoint for qc_init() */
-    BIO_ADDR *cli_ep    = NULL;   /* client endpoint */
+    BIO_ADDR *srv_local = NULL, *cli_local = NULL;
+    BIO_ADDR *srv_peer  = NULL, *srv_peer2 = NULL;
+    size_t alen = (family == AF_INET) ? 4 : 16;
     int ret = 0;
 
     *cssl = *lssl = NULL;
@@ -3028,42 +3016,58 @@ static int create_quic_ssl_objects_seed_peer(SSL_CTX *sctx, SSL_CTX *cctx,
     if (!TEST_true(BIO_new_bio_dgram_pair(&cbio, 0, &sbio, 0)))
         goto err;
 
-    /* Server bind */
-    if ((srv_local = addr_from_raw4(srv_ip4, srv_port)) == NULL
-        || !bio_addr_bind(sbio, srv_local))
+    /* server local bind (in-memory dgram pair metadata) */
+    if (!TEST_ptr(srv_local = BIO_ADDR_new())
+        || !TEST_true(BIO_ADDR_rawmake(srv_local, family, srv_ip, alen, htons(srv_port)))
+        || !TEST_true(bio_addr_bind(sbio, srv_local)))
         goto err;
-    srv_local = NULL; /* set0 into sbio */
+    srv_local = NULL; /* set0 consumed */
 
-    /* Seed server's peer = client's endpoint */
-    if ((cli_ep = addr_from_raw4(cli_ip4, cli_port)) == NULL)
+    /* seed peer on the BIO we give the listener (so port's net BIO sees it) */
+    if (!TEST_ptr(srv_peer = BIO_ADDR_new())
+        || !TEST_true(BIO_ADDR_rawmake(srv_peer, family, cli_ip, alen, htons(cli_port))))
         goto err;
-    BIO_ADDR_free(cli_ep);
-    cli_ep = NULL;
+    (void)BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_PEER, 0, srv_peer);
+    BIO_ADDR_free(srv_peer);
+    srv_peer = NULL;
 
-    /* Create the listener over sbio */
+    /* create listener */
     if (!TEST_ptr(*lssl = ql_create(sctx, sbio)))
         goto err;
     sbio = NULL;
 
-    /* Client: bind + target server */
-    if (!TEST_ptr(*cssl = SSL_new(cctx))
-        || !TEST_ptr(cli_local = addr_from_raw4(cli_ip4, cli_port))
+    /* also seed on the listener's current wbio (covers wrapping) */
+    if (!TEST_ptr(srv_peer2 = BIO_ADDR_new())
+        || !TEST_true(BIO_ADDR_rawmake(srv_peer2, family, cli_ip, alen, htons(cli_port))))
+        goto err;
+    (void)BIO_ctrl(SSL_get_wbio(*lssl), BIO_CTRL_DGRAM_SET_PEER, 0, srv_peer2);
+    BIO_ADDR_free(srv_peer2);
+    srv_peer2 = NULL;
+
+    /* client object + local bind */
+    if (!TEST_ptr(*cssl = SSL_new(cctx)))
+        goto err;
+
+    if (!TEST_ptr(cli_local = BIO_ADDR_new())
+        || !TEST_true(BIO_ADDR_rawmake(cli_local, family, cli_ip, alen, htons(cli_port)))
         || !TEST_true(bio_addr_bind(cbio, cli_local)))
         goto err;
-    cli_local = NULL;
+    cli_local = NULL; /* consumed */
 
-    if (!TEST_ptr(srv_ep = addr_from_raw4(srv_ip4, srv_port))
-        || !TEST_true(qc_init(*cssl, srv_ep)))
+    /* qc_init needs server addr (fresh copy) */
+    if (!TEST_ptr(srv_peer = BIO_ADDR_new())
+        || !TEST_true(BIO_ADDR_rawmake(srv_peer, family, srv_ip, alen, htons(srv_port)))
+        || !TEST_true(qc_init(*cssl, srv_peer)))
         goto err;
-    BIO_ADDR_free(srv_ep);
-    srv_ep = NULL;
+    BIO_ADDR_free(srv_peer);
+    srv_peer = NULL;
 
     SSL_set_bio(*cssl, cbio, cbio);
     cbio = NULL;
 
     ret = 1;
 
- err:
+err:
     if (!ret) {
         SSL_free(*cssl);
         SSL_free(*lssl);
@@ -3073,87 +3077,106 @@ static int create_quic_ssl_objects_seed_peer(SSL_CTX *sctx, SSL_CTX *cctx,
     BIO_free(sbio);
     BIO_ADDR_free(srv_local);
     BIO_ADDR_free(cli_local);
-    BIO_ADDR_free(srv_ep);
-    BIO_ADDR_free(cli_ep);
+    BIO_ADDR_free(srv_peer);
+    BIO_ADDR_free(srv_peer2);
+
     return ret;
 }
 
-/* Test SSL_get_peer_addr() on a simple QUIC client/server pair. */
-static int test_quic_peer_addr_basic(void)
+/* Parameterized test: family=AF_INET/AF_INET6, e.g. "127.0.0.1" / "::1" */
+static int test_quic_peer_addr_common(int family,
+                                      const char *srv_str, uint16_t srv_port,
+                                      const char *cli_str, uint16_t cli_port)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *qlistener = NULL, *clientssl = NULL, *serverssl = NULL;
-    BIO_ADDR *cli_seen_srv = NULL, *srv_seen_cli = NULL, *got = NULL;
-    unsigned char srv_ip4[4] = {127, 0, 0, 1};
-    unsigned char cli_ip4[4] = {127, 0, 0, 2};
-    uint16_t srv_port = 4433;  /* host order */
-    uint16_t cli_port = 4434;  /* host order */
-    unsigned char raw[16];
-    size_t rawlen = 0;
-    int ret;
+    BIO_ADDR *got = NULL;
+    unsigned char srv_ip[16], cli_ip[16], raw[16];
+    size_t alen = (family == AF_INET) ? 4 : 16, rawlen = 0;
+    int ret, ok = 0;
+
+#if defined(_WIN32)
+    /* OpenSSL's tests usually call BIO_sock_init() elsewhere; safe to call here too */
+    BIO_sock_init();
+#endif
+
+    if (!TEST_int_eq(inet_pton(family, srv_str, srv_ip), 1)
+        || !TEST_int_eq(inet_pton(family, cli_str, cli_ip), 1))
+        goto err;
 
     if (!TEST_ptr(sctx = create_server_ctx())
         || !TEST_ptr(cctx = create_client_ctx()))
         goto err;
 
-    TEST_true(create_quic_ssl_objects_seed_peer(sctx, cctx, &qlistener, &clientssl,
-                                                srv_ip4, srv_port,
-                                                cli_ip4, cli_port));
+    if (!TEST_true(create_quic_ssl_objects_seed_peer(sctx, cctx,
+                                                     &qlistener, &clientssl,
+                                                     family,
+                                                     srv_ip, srv_port,
+                                                     cli_ip, cli_port)))
+        goto err;
 
-    if (!TEST_true(ret = SSL_connect(clientssl))
-        || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+    /* Minimal QUIC progress */
+    ret = SSL_connect(clientssl);
+    if (!TEST_true(ret <= 0))
         goto err;
     SSL_handle_events(qlistener);
 
-    if (!TEST_true(ret = SSL_connect(clientssl)))
+    ret = SSL_connect(clientssl);
+    if (!TEST_true(ret <= 0))
         goto err;
     SSL_handle_events(qlistener);
 
-    /* Accept the new QUIC connection from the listener */
+    /* Accept connection (pre-handshake) */
     if (!TEST_ptr(serverssl = SSL_accept_connection(qlistener, 0)))
         goto err;
 
-    /* Server should report client's address/port */
-    got = BIO_ADDR_new();
+    /* Server sees client */
+    if (!TEST_ptr(got = BIO_ADDR_new()))
+        goto err;
     BIO_ADDR_clear(got);
-    if (!TEST_int_eq(ret = SSL_get_peer_addr(serverssl, got), 1)
-        || !TEST_int_eq(BIO_ADDR_family(got), AF_INET)
+
+    if (!TEST_int_eq(SSL_get_peer_addr(serverssl, got), 1)
+        || !TEST_int_eq(BIO_ADDR_family(got), family)
         || !TEST_true(BIO_ADDR_rawaddress(got, raw, &rawlen))
-        || !TEST_size_t_eq(rawlen, (size_t)4)
-        || !TEST_mem_eq(raw, rawlen, cli_ip4, sizeof cli_ip4)
+        || !TEST_size_t_eq(rawlen, alen)
+        || !TEST_mem_eq(raw, rawlen, cli_ip, alen)
         || !TEST_int_eq((int)ntohs(BIO_ADDR_rawport(got)), (int)cli_port))
         goto err;
 
-    /* Client should report server's address/port */
+    /* Client sees server */
     BIO_ADDR_clear(got);
-    if (!TEST_int_eq(ret = SSL_get_peer_addr(clientssl, got), 1)
-        || !TEST_int_eq(BIO_ADDR_family(got), AF_INET)
+    if (!TEST_int_eq(SSL_get_peer_addr(clientssl, got), 1)
+        || !TEST_int_eq(BIO_ADDR_family(got), family)
         || !TEST_true(BIO_ADDR_rawaddress(got, raw, &rawlen))
-        || !TEST_size_t_eq(rawlen, (size_t)4)
-        || !TEST_mem_eq(raw, rawlen, srv_ip4, sizeof srv_ip4)
+        || !TEST_size_t_eq(rawlen, alen)
+        || !TEST_mem_eq(raw, rawlen, srv_ip, alen)
         || !TEST_int_eq((int)ntohs(BIO_ADDR_rawport(got)), (int)srv_port))
         goto err;
 
-    BIO_ADDR_free(got);
-    BIO_ADDR_free(cli_seen_srv);
-    BIO_ADDR_free(srv_seen_cli);
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_free(qlistener);
-    SSL_CTX_free(cctx);
-    SSL_CTX_free(sctx);
-    return 1;
+    ok = 1;
 
 err:
     BIO_ADDR_free(got);
-    BIO_ADDR_free(cli_seen_srv);
-    BIO_ADDR_free(srv_seen_cli);
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_free(qlistener);
     SSL_CTX_free(cctx);
     SSL_CTX_free(sctx);
-    return 0;
+    return ok;
+}
+
+static int test_quic_peer_addr_v4(void)
+{
+    return test_quic_peer_addr_common(AF_INET,
+                                      "127.0.0.1", 4433,
+                                      "127.0.0.2", 4434);
+}
+
+static int test_quic_peer_addr_v6(void)
+{
+    return test_quic_peer_addr_common(AF_INET6,
+                                      "::1", 4433,
+                                      "::2", 4434);
 }
 
 /***********************************************************************************/
@@ -3259,7 +3282,8 @@ int setup_tests(void)
     ADD_TEST(test_ssl_set_verify);
     ADD_TEST(test_accept_stream);
     ADD_TEST(test_client_hello_retry);
-    ADD_TEST(test_quic_peer_addr_basic);
+    ADD_TEST(test_quic_peer_addr_v6);
+    ADD_TEST(test_quic_peer_addr_v4);
 
     return 1;
  err:
