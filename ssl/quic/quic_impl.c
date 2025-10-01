@@ -5002,14 +5002,20 @@ size_t ossl_quic_get_accept_connection_queue_len(SSL *ssl)
     return ret;
 }
 
+QUIC_TAKES_LOCK
 int ossl_quic_get_peer_addr(SSL *ssl, BIO_ADDR *peer_addr)
 {
     QCTX ctx;
+    int ret;
 
     if (!expect_quic_cs(ssl, &ctx))
         return 0;
 
-    return ossl_quic_channel_get_peer_addr(ctx.qc->ch, peer_addr);
+    qctx_lock(&ctx);
+    ret = ossl_quic_channel_get_peer_addr(ctx.qc->ch, peer_addr);
+    qctx_unlock(&ctx);
+
+    return ret;
 }
 
 /*
