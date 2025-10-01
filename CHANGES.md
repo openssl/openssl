@@ -29,6 +29,10 @@ OpenSSL Releases
 OpenSSL 3.6
 -----------
 
+### Changes between 3.6.0 and 3.6.1 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.5 and 3.6.0 [1 Oct 2025]
 
  * Added support for `EVP_SKEY` opaque symmetric key objects to the key
