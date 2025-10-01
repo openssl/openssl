@@ -11,6 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
+#include <openssl/self_test.h>
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
@@ -18,6 +19,7 @@
 #include "crypto/slh_dsa.h"
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
+#include "internal/fips.h"
 #include "providers/implementations/signature/slh_dsa_sig.inc"
 
 #define SLH_DSA_MAX_ADD_RANDOM_LEN 32
@@ -36,6 +38,34 @@ static OSSL_FUNC_signature_freectx_fn slh_dsa_freectx;
 static OSSL_FUNC_signature_dupctx_fn slh_dsa_dupctx;
 static OSSL_FUNC_signature_set_ctx_params_fn slh_dsa_set_ctx_params;
 static OSSL_FUNC_signature_settable_ctx_params_fn slh_dsa_settable_ctx_params;
+
+#ifdef FIPS_MODULE
+static FIPS_DEFERRED_TEST slh_sig_deferred_tests[] = {
+    {
+        "SLH-DSA-SHA2-128f",
+        FIPS_DEFERRED_KAT_SIGNATURE,
+        FIPS_DEFERRED_TEST_INIT
+    },
+    {
+        "SLH-DSA-SHAKE-128f",
+        FIPS_DEFERRED_KAT_SIGNATURE,
+        FIPS_DEFERRED_TEST_INIT
+    },
+    { NULL, 0, 0 },
+};
+#endif
+
+static int slh_dsa_self_check(OSSL_LIB_CTX *libctx)
+{
+    if (!ossl_prov_is_running())
+        return 0;
+
+#ifdef FIPS_MODULE
+    return FIPS_deferred_self_tests(libctx, slh_sig_deferred_tests);
+#else
+    return 1;
+#endif
+}
 
 /*
  * NOTE: Any changes to this structure may require updating slh_dsa_dupctx().
@@ -71,7 +101,7 @@ static void *slh_dsa_newctx(void *provctx, const char *alg, const char *propq)
 {
     PROV_SLH_DSA_CTX *ctx;
 
-    if (!ossl_prov_is_running())
+    if (!slh_dsa_self_check(PROV_LIBCTX_OF(provctx)))
         return NULL;
 
     ctx = OPENSSL_zalloc(sizeof(PROV_SLH_DSA_CTX));

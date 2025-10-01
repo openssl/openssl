@@ -45,6 +45,29 @@ static OSSL_FUNC_keymgmt_dup_fn slh_dsa_dup_key;
 
 #define SLH_DSA_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_KEYPAIR)
 
+#ifdef FIPS_MODULE
+static FIPS_DEFERRED_TEST slh_key_gen_deferred_tests[] = {
+    {
+        "SLH-DSA-SHA2-128f",
+        FIPS_DEFERRED_KAT_ASYM_KEYGEN,
+        FIPS_DEFERRED_TEST_INIT
+    },
+    { NULL, 0, 0 },
+};
+#endif
+
+static int slh_dsa_self_check(OSSL_LIB_CTX *libctx)
+{
+    if (!ossl_prov_is_running())
+        return 0;
+
+#ifdef FIPS_MODULE
+    return FIPS_deferred_self_tests(libctx, slh_key_gen_deferred_tests);
+#else
+    return 1;
+#endif
+}
+
 struct slh_dsa_gen_ctx {
     SLH_DSA_HASH_CTX *ctx;
     OSSL_LIB_CTX *libctx;
@@ -55,7 +78,7 @@ struct slh_dsa_gen_ctx {
 
 static void *slh_dsa_new_key(void *provctx, const char *alg)
 {
-    if (!ossl_prov_is_running())
+    if (!slh_dsa_self_check(PROV_LIBCTX_OF(provctx)))
         return 0;
 
     return ossl_slh_dsa_key_new(PROV_LIBCTX_OF(provctx), NULL, alg);
@@ -248,6 +271,7 @@ static void *slh_dsa_load(const void *reference, size_t reference_sz)
     if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
         /* The contents of the reference is the address to our object */
         key = *(SLH_DSA_KEY **)reference;
+
         /* We grabbed, so we detach it */
         *(SLH_DSA_KEY **)reference = NULL;
         return key;
@@ -294,7 +318,8 @@ static int slh_dsa_fips140_pairwise_test(const SLH_DSA_KEY *key,
     int alloc_ctx = 0;
 
     /* During self test, it is a waste to do this test */
-    if (ossl_fips_self_testing())
+    if (ossl_fips_self_testing()
+        || slh_key_gen_deferred_tests[0].state == FIPS_DEFERRED_TEST_IN_PROGRESS)
         return 1;
 
     if (ctx == NULL) {

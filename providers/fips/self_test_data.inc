@@ -3280,7 +3280,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
     {
         OSSL_SELF_TEST_DESC_SIGN_SLH_DSA,
         "SLH-DSA-SHA2-128f", "SLH-DSA-SHA2-128f",
-        0, SIGNATURE_MODE_SIG_DIGESTED,
+        1, SIGNATURE_MODE_SIG_DIGESTED,
         slh_dsa_sha2_128f_key_params,
         ITM(slh_dsa_sha2_sig_msg),
         NULL, 0, NULL, 0, NULL, 0,
@@ -3290,7 +3290,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
     {
         OSSL_SELF_TEST_DESC_SIGN_SLH_DSA,
         "SLH-DSA-SHAKE-128f", "SLH-DSA-SHAKE-128f",
-        0, SIGNATURE_MODE_SIG_DIGESTED,
+        1, SIGNATURE_MODE_SIG_DIGESTED,
         slh_dsa_shake_128f_key_params,
         ITM(slh_dsa_shake_sig_msg),
         NULL, 0, NULL, 0, NULL, 0,
@@ -3705,7 +3705,7 @@ static const ST_KAT_ASYM_KEYGEN st_kat_asym_keygen_tests[] = {
 # if !defined(OPENSSL_NO_SLH_DSA)
     {
         OSSL_SELF_TEST_DESC_KEYGEN_SLH_DSA,
-        "SLH-DSA-SHA2-128f", 0,
+        "SLH-DSA-SHA2-128f", 1,
         slh_dsa_sha2_128f_keygen_init_params,
         slh_dsa_128f_keygen_expected_params
     },
