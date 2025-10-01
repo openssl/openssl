@@ -506,8 +506,7 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
 }
 
 static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
-                                       int is_server, int is_tserver,
-                                       const BIO_ADDR *init_peer)
+                                       int is_server, int is_tserver)
 {
     QUIC_CHANNEL_ARGS args = {0};
     QUIC_CHANNEL *ch;
@@ -565,10 +564,6 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
         return NULL;
     }
 
-    /* Set initial peer before creating the SSL */
-    if (init_peer != NULL && BIO_ADDR_family(init_peer) != AF_UNSPEC)
-        ossl_quic_channel_set_peer_addr(ch, init_peer);
-
     ossl_qtx_set_bio(ch->qtx, port->net_wbio);
     return ch;
 }
@@ -576,8 +571,7 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
 QUIC_CHANNEL *ossl_quic_port_create_outgoing(QUIC_PORT *port, SSL *tls)
 {
     return port_make_channel(port, tls, NULL, /* is_server= */ 0,
-                             /* is_tserver= */ 0,
-                             /* peer */ NULL);
+                             /* is_tserver= */ 0);
 }
 
 QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
@@ -591,8 +585,7 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
      * later in port_default_packet_handler() when calling port_bind_channel().
      */
     ch = port_make_channel(port, tls, NULL, /* is_server= */ 1,
-                           /* is_tserver_ch */ 1,
-                           /* peer */ NULL);
+                           /* is_tserver_ch */ 1);
     port->tserver_ch = ch;
     port->allow_incoming = 1;
     return ch;
@@ -756,7 +749,7 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
         ossl_qrx_set_msg_callback_arg(ch->qrx, ch->msg_callback_arg);
     } else {
         ch = port_make_channel(port, NULL, qrx, /* is_server= */ 1,
-                               /* is_tserver */ 0, peer);
+                               /* is_tserver */ 0);
     }
 
     if (ch == NULL)
