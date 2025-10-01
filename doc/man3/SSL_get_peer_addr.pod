@@ -4,7 +4,6 @@
 
 SSL_get_peer_addr - obtain the peer address of a QUIC connection
 
-
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
