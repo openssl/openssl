@@ -737,3 +737,24 @@ jobs:
         ./util/opensslwrap.sh version -c
     - name: test external pyca
       run: make test TESTS="test_external_pyca" VERBOSE=1
+
+  openbsd-x86_64:
+    runs-on: ubuntu-latest
+    name: Test on OpenBSD
+    steps:
+    - uses: actions/checkout@v4
+    - name: OpenBSD runner
+      id: openbsd-test
+      uses: vmactions/openbsd-vm@v1
+      with:
+        envs: 'MYTOKEN MYTOKEN2'
+        usesh: true
+        prepare: |
+           pkg_add git
+
+        run: |
+           git clone --detpth 1 https://github.com/openssl/openssl
+           cd openssl
+           ./Configure --strict-warnings --banner=Configured
+           make -j4
+           HARNESS_JOBS=4 make test
