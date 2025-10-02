@@ -384,6 +384,9 @@ static void *x942kdf_dup(void *vctx)
     const KDF_X942 *src = (const KDF_X942 *)vctx;
     KDF_X942 *dest;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     dest = x942kdf_new(src->provctx);
     if (dest != NULL) {
         if (!ossl_prov_memdup(src->secret, src->secret_len,

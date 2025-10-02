@@ -39,6 +39,9 @@ static void *mlx_kem_newctx(void *provctx)
 {
     PROV_MLX_KEM_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL)
         return NULL;
 
