@@ -663,7 +663,7 @@ int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
                              STACK_OF(CONF_VALUE) **extlist);
 int X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool);
 int X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint);
-void X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf);
+int X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf);
 void X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH_OF(CONF_VALUE) *lhash);
 # endif
 
@@ -671,8 +671,8 @@ char *X509V3_get_string(X509V3_CTX *ctx, const char *name, const char *section);
 STACK_OF(CONF_VALUE) *X509V3_get_section(X509V3_CTX *ctx, const char *section);
 void X509V3_string_free(X509V3_CTX *ctx, char *str);
 void X509V3_section_free(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *section);
-void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject,
-                    X509_REQ *req, X509_CRL *crl, int flags);
+int X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject,
+                   X509_REQ *req, X509_CRL *crl, int flags);
 /* For API backward compatibility, this is separate from X509V3_set_ctx(): */
 int X509V3_set_issuer_pkey(X509V3_CTX *ctx, EVP_PKEY *pkey);
 
