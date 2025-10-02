@@ -123,7 +123,8 @@ no warnings qw(uninitialized);
 my $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 my $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
-my $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
+my $win64=0;
+$win64=1 if ($flavour =~ /[nm]asm|mingw64|win64/ || $output =~ /\.asm$/);
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; my $dir=$1; my $xlate;
 ( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
