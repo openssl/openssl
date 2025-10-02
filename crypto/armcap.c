@@ -341,14 +341,14 @@ void OPENSSL_cpuid_setup(void)
 #  endif
     }
 #  ifdef __aarch64__
-        if (getauxval(OSSL_HWCAP) & OSSL_HWCAP_SVE)
-            OPENSSL_armcap_P |= ARMV8_SVE;
+    if (getauxval(OSSL_HWCAP) & OSSL_HWCAP_SVE)
+        OPENSSL_armcap_P |= ARMV8_SVE;
 
-        if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_SVE2)
-            OPENSSL_armcap_P |= ARMV8_SVE2;
+    if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_SVE2)
+        OPENSSL_armcap_P |= ARMV8_SVE2;
 
-        if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_RNG)
-            OPENSSL_armcap_P |= ARMV8_RNG;
+    if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_RNG)
+        OPENSSL_armcap_P |= ARMV8_RNG;
 #  endif
 
 # else /* !__APPLE__ && !OSSL_IMPLEMENT_GETAUXVAL */
