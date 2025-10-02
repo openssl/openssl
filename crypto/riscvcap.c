@@ -73,7 +73,8 @@ static void parse_env(const char *envstr)
 
     for (size_t i = 0; i < kRISCVNumCaps; ++i) {
         /* Prefix capability with underscore in preparation for search */
-        BIO_snprintf(buf, BUFLEN, "_%s", RISCV_capabilities[i].name);
+        strcpy(buf, "_");
+        strncat(buf, RISCV_capabilities[i].name, BUFLEN - 2);
         if (strstr(envstrupper, buf) != NULL) {
             /* Match, set relevant bit in OPENSSL_riscvcap_P[] */
             OPENSSL_riscvcap_P[RISCV_capabilities[i].index] |=
