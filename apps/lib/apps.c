@@ -1676,7 +1676,6 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
     CONF *dbattr_conf = NULL;
     char buf[BSIZE];
 #ifndef OPENSSL_NO_POSIX_IO
-    FILE *dbfp;
     struct stat dbst;
 #endif
 
@@ -1685,10 +1684,9 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
         goto err;
 
 #ifndef OPENSSL_NO_POSIX_IO
-    BIO_get_fp(in, &dbfp);
-    if (fstat(fileno(dbfp), &dbst) == -1) {
+    if (stat(dbfile, &dbst) == -1) {
         ERR_raise_data(ERR_LIB_SYS, errno,
-                       "calling fstat(%s)", dbfile);
+                       "calling stat(%s)", dbfile);
         goto err;
     }
 #endif
