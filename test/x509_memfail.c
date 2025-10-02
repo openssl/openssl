@@ -57,8 +57,8 @@ static int do_x509(int allow_failure)
         goto err;
 
     if (!TEST_int_lt(ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF),
-                                     (X509_ALGOR *)alg, (ASN1_BIT_STRING *)sig,
-                                     NULL, pkey), 0))
+                                      (X509_ALGOR *)alg, (ASN1_BIT_STRING *)sig,
+                                      NULL, pkey), 0))
         goto err;
 
     X509_issuer_name_hash(x509);

@@ -278,7 +278,7 @@ jobs:
     - name: make test
       continue-on-error: true
       run: |
-        make TESTS=test_handshake-memfail test
+        make TESTS="test_handshake-memfail test_x509-memfail" test
 
   enable_brotli_and_asan_ubsan:
     runs-on: ubuntu-latest
