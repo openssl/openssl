@@ -270,9 +270,9 @@ struct bio_dgram_pair_st {
     unsigned int grows_on_write    : 1; /* Set for BIO_s_dgram_mem only */
 };
 
-# define MIN_BUF_LEN (1024)
+#define MIN_BUF_LEN (1024)
 
-# define is_dgram_pair(b) (b->peer != NULL)
+#define is_dgram_pair(b) (b->peer != NULL)
 
 static int dgram_pair_init(BIO *bio)
 {
@@ -442,6 +442,7 @@ static int dgram_pair_ctrl_eof(BIO *bio)
         return 1;
     if (!is_dgram_pair(b))
         return 0;
+
 
     peerb = b->peer->ptr;
     if (!ossl_assert(peerb != NULL))

@@ -714,7 +714,6 @@ section for details.
 
 Used to obtain the peer address from a QUIC connection or stream.
 
-
 =back
 
 The following BIO APIs are not specific to QUIC but have been added to
