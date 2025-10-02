@@ -636,6 +636,8 @@ clean: libclean ## Clean the workspace, keep the configuration
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
 	-find . -name '*{- platform->depext() -}' \! -name '.*' \! -type d -exec $(RM) {} \;
 	-find . -name '*{- platform->objext() -}' \! -name '.*' \! -type d -exec $(RM) {} \;
+	{- $config{target} =~ /^win64-/ ? "-find . -name '*.pdb' \\! -name '.*' \\! -type d -exec \$(RM) {} \\;" : "\@ :" -}
+	{- $config{target} =~ /^win64-/ ? "\$(RM) \$(MODULES:.dll=" . platform->libext() . ')' : "\@ :" -}
 	$(RM) core
 	$(RM) tags TAGS doc-nits md-nits
 	$(RM) -r $(RESULT_D)
