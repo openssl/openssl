@@ -753,7 +753,7 @@ jobs:
            pkg_add git
 
         run: |
-           git clone --detpth 1 https://github.com/openssl/openssl
+           git clone --depth 1 https://github.com/openssl/openssl
            cd openssl
            ./Configure --strict-warnings --banner=Configured
            make -j4
