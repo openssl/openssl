@@ -31,10 +31,16 @@ verification or chain store
 =head1 DESCRIPTION
 
 SSL_CTX_set0_verify_cert_store() and SSL_CTX_set1_verify_cert_store()
-set the certificate store used for certificate verification to B<st>.
+set the certificate store used for peer certificate verification to B<st>.
+They override for this purpose any locations set by
+L<SSL_CTX_load_verify_locations(3)>, L<SSL_CTX_set_default_verify_paths(3)>,
+L<SSL_CTX_load_verify_file(3)>, L<SSL_CTX_set_default_verify_file(3)>, etc.
 
-SSL_CTX_set0_chain_cert_store() and SSL_CTX_set1_chain_cert_store()
-set the certificate store used for certificate chain building to B<st>.
+SSL_CTX_set0_chain_cert_store() and SSL_CTX_set1_chain_cert_store() set the
+cert store for building the chain of the own client/server certificate to B<st>.
+They override for this purpose any locations set by
+L<SSL_CTX_load_verify_locations(3)>, L<SSL_CTX_set_default_verify_paths(3)>,
+L<SSL_CTX_load_verify_file(3)>, L<SSL_CTX_set_default_verify_file(3)>, etc.
 
 SSL_set0_verify_cert_store(), SSL_set1_verify_cert_store(),
 SSL_set0_chain_cert_store() and SSL_set1_chain_cert_store() are similar
@@ -87,16 +93,20 @@ All these functions return 1 for success and 0 for failure.
 =head1 SEE ALSO
 
 L<ssl(7)>,
-L<SSL_CTX_add_extra_chain_cert(3)>
-L<SSL_CTX_set0_chain(3)>
-L<SSL_CTX_set1_chain(3)>
-L<SSL_CTX_add0_chain_cert(3)>
-L<SSL_CTX_add1_chain_cert(3)>
-L<SSL_set0_chain(3)>
-L<SSL_set1_chain(3)>
-L<SSL_add0_chain_cert(3)>
-L<SSL_add1_chain_cert(3)>
-L<SSL_CTX_build_cert_chain(3)>
+L<SSL_CTX_load_verify_dir(3)>, L<SSL_CTX_load_verify_file(3)>,
+L<SSL_CTX_load_verify_store(3)>, L<SSL_CTX_set_default_verify_paths(3)>,
+L<SSL_CTX_set_default_verify_dir(3)>, L<SSL_CTX_set_default_verify_file(3)>,
+L<SSL_CTX_set_default_verify_store(3)>, L<SSL_CTX_load_verify_locations(3)>,
+L<SSL_CTX_add_extra_chain_cert(3)>,
+L<SSL_CTX_set0_chain(3)>,
+L<SSL_CTX_set1_chain(3)>,
+L<SSL_CTX_add0_chain_cert(3)>,
+L<SSL_CTX_add1_chain_cert(3)>,
+L<SSL_set0_chain(3)>,
+L<SSL_set1_chain(3)>,
+L<SSL_add0_chain_cert(3)>,
+L<SSL_add1_chain_cert(3)>,
+L<SSL_CTX_build_cert_chain(3)>,
 L<SSL_build_cert_chain(3)>
 
 =head1 HISTORY
