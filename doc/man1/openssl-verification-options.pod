@@ -192,8 +192,9 @@ Part of these checks are enabled only if the B<-x509_strict> option is given.
 The second step is to check the X.509v3 extensions of every certificate
 for consistency with the intended specific purpose, if any.
 If no purpose is given explicitly then no such checks are done except for
-CMS signature checking, where by default C<smimesign> is checked, and SSL/(D)TLS
-connection setup, where by default C<sslserver> or C<sslclient> are checked.
+CMS signature checking, where by default C<smimesign> is checked, SSL/(D)TLS
+connection setup, where by default C<sslserver> or C<sslclient> are checked,
+and that no duplicate extensions are found.
 The X.509v3 extensions of the target or "leaf" certificate
 must be compatible with the specified purpose.
 All other certificates down the chain are checked to be valid CA certificates,
