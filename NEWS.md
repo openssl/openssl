@@ -2160,4 +2160,5 @@ OpenSSL 0.9.x
 [issue tracker]: https://github.com/openssl/openssl/issues
 [CMVP]: https://csrc.nist.gov/projects/cryptographic-module-validation-program
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
+[SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
 [jitterentropy-library]: https://github.com/smuellerDD/jitterentropy-library
