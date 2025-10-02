@@ -650,6 +650,7 @@ clean: libclean ## Clean the workspace, keep the configuration
 	$(RM) $(MANDOCS7)
 	$(RM) $(PROGRAMS) $(TESTPROGS) $(MODULES) $(FIPSMODULE) $(SCRIPTS)
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
+	{- $config{target} =~ /^win64-/ ? "\$(RM) \$(MODULES:.dll=" . platform->libext() . ')' : "\@ :" -}
 	$(RM) core
 	$(RM) tags TAGS doc-nits md-nits
 	$(RM) -r $(RESULT_D)
@@ -671,6 +672,7 @@ clean: libclean ## Clean the workspace, keep the configuration
 	        -o \! -type d \
 	           \( -name '*{- platform->depext() -}' \
 	              -o -name '*{- platform->objext() -}' \
+	              {- $config{target} =~ /^win64-/ ? "-o -name '*.pdb'" : "" -} \
 	              -o -type l \) \
 	           \! -name '.*' \
 	           -exec $(RM) '{}' +
