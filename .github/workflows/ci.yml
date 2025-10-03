@@ -758,25 +758,3 @@ jobs:
            ./Configure --strict-warnings --banner=Configured
            make -j4
            HARNESS_JOBS=4 make test
-
-  openbsd-aarch64:
-    runs-on: ubuntu-latest
-    name: Test on OpenBSD (aarch64)
-    steps:
-    - uses: actions/checkout@v4
-    - name: OpenBSD runner
-      id: openbsd-test
-      uses: vmactions/openbsd-vm@v1
-      with:
-        envs: 'MYTOKEN MYTOKEN2'
-        usesh: true
-        arch: aarch64
-        prepare: |
-           pkg_add git
-
-        run: |
-           git clone --depth 1 https://github.com/openssl/openssl
-           cd openssl
-           ./Configure --strict-warnings --banner=Configured
-           make -j4
-           HARNESS_JOBS=4 make test
