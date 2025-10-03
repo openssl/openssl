@@ -278,3 +278,89 @@ jobs:
         run: |
           ./util/opensslwrap.sh version -c
           .github/workflows/make-test
+
+  openbsd-x86_64:
+    runs-on: ubuntu-latest
+    name: Test on OpenBSD (amd64)
+    steps:
+    - uses: actions/checkout@v4
+    - name: config
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+        operating_system: openbsd
+        architecture: amd64
+        cpu_count: 4
+        memory: 5G
+        shutdown_vm: false
+        run:
+          ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+    - name: config dump
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      with:
+        operating_system: openbsd
+        architecture: amd64
+        cpu_count: 4
+        memory: 5G
+        shutdown_vm: false
+        run: ./configdata.pm --dump
+    - name: make
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      with:
+        operating_system: openbsd
+        architecture: amd64
+        cpu_count: 4
+        memory: 5G
+        shutdown_vm: false
+        run: make -j4
+    - name: make test
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      with:
+        operating_system: openbsd
+        architecture: amd64
+        cpu_count: 4
+        memory: 5G
+        run: |
+          ./util/opensslwrap.sh version -c
+          .github/workflows/make-test
+
+  openbsd-aarch64:
+    runs-on: ubuntu-latest
+    name: Test on OpenBSD (amd64)
+    steps:
+    - uses: actions/checkout@v4
+    - name: config
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+        operating_system: openbsd
+        architecture: arm64
+        cpu_count: 4
+        memory: 5G
+        shutdown_vm: false
+        run:
+          ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+    - name: config dump
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      with:
+        operating_system: openbsd
+        architecture: arm64
+        cpu_count: 4
+        memory: 5G
+        shutdown_vm: false
+        run: ./configdata.pm --dump
+    - name: make
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      with:
+        operating_system: openbsd
+        architecture: arm64
+        cpu_count: 4
+        memory: 5G
+        shutdown_vm: false
+        run: make -j4
+    - name: make test
+      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      with:
+        operating_system: openbsd
+        architecture: arm64
+        cpu_count: 4
+        memory: 5G
+        run: |
+          ./util/opensslwrap.sh version -c
+          .github/workflows/make-test
