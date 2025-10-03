@@ -747,35 +747,45 @@ jobs:
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
-        version: "7.7"
+        architecture: x86-64
+        version: '7.7'
+        shell: bash
         cpu_count: 4
         memory: 5G
         shutdown_vm: false
-        run:
+        run: |
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
-        version: "7.7"
+        architecture: x86-64
+        version: '7.7'
+        shell: bash
         cpu_count: 4
         memory: 5G
         shutdown_vm: false
-        run: ./configdata.pm --dump
+        run: |
+          ./configdata.pm --dump
     - name: make
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
-        version: "7.7"
+        architecture: x86-64
+        version: '7.7'
+        shell: bash
         cpu_count: 4
         memory: 5G
         shutdown_vm: false
-        run: make -j4
+        run: |
+          make -j4
     - name: make test
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
-        version: "7.7"
+        architecture: x86-64
+        version: '7.7'
+        shell: bash
         cpu_count: 4
         memory: 5G
         run: |
@@ -791,39 +801,45 @@ jobs:
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
-        version: "7.7"
+        version: '7.7'
         architecture: arm64
+        shell: bash
         cpu_count: 4
         memory: 5G
         shutdown_vm: false
-        run:
+        run: |
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
-        version: "7.7"
+        version: '7.7'
         architecture: arm64
+        shell: bash
         cpu_count: 4
         memory: 5G
         shutdown_vm: false
-        run: ./configdata.pm --dump
+        run: |
+          ./configdata.pm --dump
     - name: make
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
-        version: "7.7"
+        version: '7.7'
         architecture: arm64
+        shell: bash
         cpu_count: 4
         memory: 5G
         shutdown_vm: false
-        run: make -j4
+        run: |
+          make -j4
     - name: make test
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
-        version: "7.7"
+        version: '7.7'
         architecture: arm64
+        shell: bash
         cpu_count: 4
         memory: 5G
         run: |
