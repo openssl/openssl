@@ -770,7 +770,7 @@ jobs:
       with:
         envs: 'MYTOKEN MYTOKEN2'
         usesh: true
-        arch: aarch54
+        arch: aarch64
         prepare: |
            pkg_add git
 
