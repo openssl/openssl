@@ -1991,7 +1991,7 @@ EOF
       my @objs = map { platform->obj($_) } @{$args{objs}};
       my $deps = join(" \\\n" . ' ' x (length($lib) + 2),
                       fill_lines(' ', $COLUMNS - length($lib) - 2, @objs));
-      my $max_per_call = 500;
+      my $max_per_call = $target{max_objects_per_link_call} // 500;
       my @objs_grouped;
       push @objs_grouped, join(" ", splice @objs, 0, $max_per_call) while @objs;
       my $rsp = '';
