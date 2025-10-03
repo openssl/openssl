@@ -2315,7 +2315,7 @@ int do_updatedb(CA_DB *db, time_t *now)
     return cnt;
 }
 
-static const char *crl_reasons[] = {
+static const char *const crl_reasons[] = {
     /* CRL reason strings */
     "unspecified",
     "keyCompromise",
