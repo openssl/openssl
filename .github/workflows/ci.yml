@@ -747,6 +747,7 @@ jobs:
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
+        version: "7.7"
         architecture: amd64
         cpu_count: 4
         memory: 5G
@@ -757,6 +758,7 @@ jobs:
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
+        version: "7.7"
         architecture: amd64
         cpu_count: 4
         memory: 5G
@@ -766,6 +768,7 @@ jobs:
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
+        version: "7.7"
         architecture: amd64
         cpu_count: 4
         memory: 5G
@@ -775,6 +778,7 @@ jobs:
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
+        version: "7.7"
         architecture: amd64
         cpu_count: 4
         memory: 5G
@@ -791,6 +795,7 @@ jobs:
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
+        version: "7.7"
         architecture: arm64
         cpu_count: 4
         memory: 5G
@@ -801,6 +806,7 @@ jobs:
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
+        version: "7.7"
         architecture: arm64
         cpu_count: 4
         memory: 5G
@@ -810,6 +816,7 @@ jobs:
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
+        version: "7.7"
         architecture: arm64
         cpu_count: 4
         memory: 5G
@@ -819,6 +826,7 @@ jobs:
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
         operating_system: openbsd
+        version: "7.7"
         architecture: arm64
         cpu_count: 4
         memory: 5G
