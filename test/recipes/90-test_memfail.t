@@ -96,7 +96,7 @@ for my $idx (@hsseq) {
     # next <idx> mallocs pass, followed by the next single malloc failing, with the remainder
     # passing
     #
-    $ENV{OPENSSL_MALLOC_FAILURES} = "$hsskipcount\@0;$idx\@0;1\@100;0\@0"; 
+    $ENV{OPENSSL_MALLOC_FAILURES} = "$hsskipcount\@0;$idx\@0;1\@100;0\@0";
     ok(run(test(["handshake-memfail", "run", srctop_dir("test", "certs")])));
 }
 
