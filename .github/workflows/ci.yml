@@ -749,9 +749,6 @@ jobs:
         operating_system: openbsd
         architecture: x86-64
         version: '7.7'
-        shell: bash
-        cpu_count: 4
-        memory: 5G
         shutdown_vm: false
         run: |
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
@@ -761,9 +758,6 @@ jobs:
         operating_system: openbsd
         architecture: x86-64
         version: '7.7'
-        shell: bash
-        cpu_count: 4
-        memory: 5G
         shutdown_vm: false
         run: |
           ./configdata.pm --dump
@@ -773,9 +767,6 @@ jobs:
         operating_system: openbsd
         architecture: x86-64
         version: '7.7'
-        shell: bash
-        cpu_count: 4
-        memory: 5G
         shutdown_vm: false
         run: |
           make -j4
@@ -785,9 +776,6 @@ jobs:
         operating_system: openbsd
         architecture: x86-64
         version: '7.7'
-        shell: bash
-        cpu_count: 4
-        memory: 5G
         run: |
           ./util/opensslwrap.sh version -c
           .github/workflows/make-test
@@ -803,9 +791,6 @@ jobs:
         operating_system: openbsd
         version: '7.7'
         architecture: arm64
-        shell: bash
-        cpu_count: 4
-        memory: 5G
         shutdown_vm: false
         run: |
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
@@ -815,9 +800,6 @@ jobs:
         operating_system: openbsd
         version: '7.7'
         architecture: arm64
-        shell: bash
-        cpu_count: 4
-        memory: 5G
         shutdown_vm: false
         run: |
           ./configdata.pm --dump
@@ -827,9 +809,6 @@ jobs:
         operating_system: openbsd
         version: '7.7'
         architecture: arm64
-        shell: bash
-        cpu_count: 4
-        memory: 5G
         shutdown_vm: false
         run: |
           make -j4
@@ -839,9 +818,6 @@ jobs:
         operating_system: openbsd
         version: '7.7'
         architecture: arm64
-        shell: bash
-        cpu_count: 4
-        memory: 5G
         run: |
           ./util/opensslwrap.sh version -c
           .github/workflows/make-test
