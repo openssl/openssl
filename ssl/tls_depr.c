@@ -10,9 +10,20 @@
 /* We need to use some HMAC deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include <openssl/engine.h>
+#include <openssl/trace.h>
 #include "ssl_local.h"
 #include "internal/ssl_unwrap.h"
 
+/* ENGINEs are removed, keeping this functions as no-op returning failure */
+int SSL_CTX_set_client_cert_engine(ossl_unused SSL_CTX *ctx,
+                                   ossl_unused ENGINE *e)
+{
+    OSSL_TRACE(TRACE, "ENGINE feature was removed in version 4.0. Please \
+                       consider using providers");
+
+    return 0;
+}
 /*
  * The HMAC APIs below are only used to support the deprecated public API
  * macro SSL_CTX_set_tlsext_ticket_key_cb(). The application supplied callback

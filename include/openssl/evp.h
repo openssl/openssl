@@ -1387,6 +1387,10 @@ int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len);
 int EVP_PKEY_set_type_by_keymgmt(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt);
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0
+int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e);
+OSSL_DEPRECATEDIN_3_0
+ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey);
+OSSL_DEPRECATEDIN_3_0
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key);
 OSSL_DEPRECATEDIN_3_0
 void *EVP_PKEY_get0(const EVP_PKEY *pkey);

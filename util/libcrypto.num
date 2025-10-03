@@ -5941,3 +5941,9 @@ CRYPTO_realloc_array                    ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_clear_realloc_array              ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_secure_malloc_array              ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_secure_calloc                    ?	4_0_0	EXIST::FUNCTION:
+ERR_load_ENGINE_strings                 ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+EVP_PKEY_set1_engine                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+EVP_PKEY_get0_engine                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+RAND_set_rand_engine                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+TS_CONF_set_crypto_device               ?	4_0_0	EXIST::FUNCTION:TS
+TS_CONF_set_default_engine              ?	4_0_0	EXIST::FUNCTION:TS

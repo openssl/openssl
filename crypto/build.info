@@ -143,3 +143,7 @@ GENERATE[loongarch64cpuid.s]=loongarch64cpuid.pl
 IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
   SHARED_SOURCE[../libcrypto]=dllmain.c
 ENDIF
+
+# ENGINE support is dropped, but we need to keep the symbol
+# ossl_err_load_ENGINE_strings which is implemented in this file
+SOURCE[../libcrypto]=engine/eng_err.c
