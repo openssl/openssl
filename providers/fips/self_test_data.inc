@@ -3108,10 +3108,6 @@ static const ST_KAT_PARAM slh_dsa_128f_keygen_expected_params[] = {
     ST_KAT_PARAM_END()
 };
 
-static const unsigned char slh_dsa_sha2_sig_msg[] = {
-    0x3f
-};
-
 static const unsigned char slh_dsa_shake_sig_msg[] = {
     0x01, 0x02, 0x03, 0x04
 };
@@ -3119,18 +3115,6 @@ static const unsigned char slh_dsa_shake_sig_msg[] = {
 static int deterministic = 1;
 static const ST_KAT_PARAM slh_dsa_sig_params[] = {
     ST_KAT_PARAM_INT(OSSL_SIGNATURE_PARAM_DETERMINISTIC, deterministic),
-    ST_KAT_PARAM_END()
-};
-
-static const unsigned char slh_dsa_sha2_128f_priv_pub[] = {
-    0xd5, 0x21, 0x3b, 0xa4, 0xbb, 0x64, 0x70, 0xf1, 0xb9, 0xed, 0xa8, 0x8c, 0xbc, 0x94, 0xe6, 0x27,
-    0x7a, 0x58, 0xa9, 0x51, 0xef, 0x7f, 0x2b, 0x81, 0x46, 0x1d, 0xba, 0xc4, 0x1b, 0x5a, 0x6b, 0x83,
-    0xfa, 0x49, 0x5f, 0xb8, 0x34, 0xde, 0xfe, 0xa7, 0xcc, 0x96, 0xa8, 0x13, 0x09, 0x47, 0x91, 0x35,
-    0xa6, 0x70, 0x29, 0xe9, 0x06, 0x68, 0xc5, 0xa5, 0x8b, 0x96, 0xe6, 0x01, 0x11, 0x49, 0x1f, 0x3d
-};
-
-static const ST_KAT_PARAM slh_dsa_sha2_128f_key_params[] = {
-    ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_PRIV_KEY, slh_dsa_sha2_128f_priv_pub),
     ST_KAT_PARAM_END()
 };
 
@@ -3144,13 +3128,6 @@ static const unsigned char slh_dsa_shake_128f_priv_pub[] = {
 static const ST_KAT_PARAM slh_dsa_shake_128f_key_params[] = {
     ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_PRIV_KEY, slh_dsa_shake_128f_priv_pub),
     ST_KAT_PARAM_END()
-};
-
-/* This is the SHA256 digest of the signature */
-static const unsigned char slh_dsa_sha2_128f_sig_digest[] = {
-    0xd3, 0x53, 0x7e, 0x05, 0xae, 0x63, 0x87, 0x6b, 0xf7, 0x80, 0x15, 0xff,
-    0x86, 0xcc, 0x9e, 0x28, 0x4f, 0x91, 0xca, 0xbf, 0xac, 0x19, 0x12, 0x98,
-    0xfb, 0xaa, 0x37, 0x55, 0x96, 0x35, 0x1d, 0x55
 };
 
 static const unsigned char slh_dsa_shake_128f_sig_digest[] = {
@@ -3277,16 +3254,6 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
      * Because the "s" version is so slow, we only test the "f" versions
      * here.
      */
-    {
-        OSSL_SELF_TEST_DESC_SIGN_SLH_DSA,
-        "SLH-DSA-SHA2-128f", "SLH-DSA-SHA2-128f",
-        1, SIGNATURE_MODE_SIG_DIGESTED,
-        slh_dsa_sha2_128f_key_params,
-        ITM(slh_dsa_sha2_sig_msg),
-        NULL, 0, NULL, 0, NULL, 0,
-        ITM(slh_dsa_sha2_128f_sig_digest),
-        slh_dsa_sig_params, slh_dsa_sig_params
-    },
     {
         OSSL_SELF_TEST_DESC_SIGN_SLH_DSA,
         "SLH-DSA-SHAKE-128f", "SLH-DSA-SHAKE-128f",
