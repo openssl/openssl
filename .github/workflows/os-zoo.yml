@@ -324,7 +324,7 @@ jobs:
 
   openbsd-aarch64:
     runs-on: ubuntu-latest
-    name: Test on OpenBSD (amd64)
+    name: Test on OpenBSD (arm64)
     steps:
     - uses: actions/checkout@v4
     - name: config
