@@ -1889,12 +1889,23 @@ EOF
           # Clang-CL accepts the rest of the command line after /link as linker
           # options, but does not forward /LIBPATH like GCC/Clang forwards -L
           # and so on. Therefore, object files must go before linker flags.
+          # To overcome the low command line length limit on Windows, a
+          # response file must also be used for the objects
+          my $max_per_call = $target{max_objects_per_link_call} // 500;
+          my @objs_grouped;
+          push @objs_grouped, join(" ", splice @fullobjs, 0, $max_per_call)
+              while @fullobjs;
+          my $rsp = "$full.rsp";
+          my $gen_rsp =
+              join("\n\t", (map { "\@echo '$_' >> $rsp" } @objs_grouped));
           $recipe .= <<"EOF";
 $full: $fulldeps
+	\$(RM) $rsp
+	$gen_rsp
 	\$(CC) \$(LIB_CFLAGS) $shared_soname \\
 		-o $full \\
-		$fullobjs \\
-		$linklibs \$(LIB_EX_LIBS) \$(LIB_LDFLAGS) $linkflags $shared_imp $shared_def
+		$linklibs \$(LIB_EX_LIBS) \$(LIB_LDFLAGS) $linkflags $shared_imp $shared_def \@$rsp
+	\$(RM) $rsp
 EOF
       } else {
           $recipe .= <<"EOF";
