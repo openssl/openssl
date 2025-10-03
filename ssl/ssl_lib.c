@@ -4607,7 +4607,8 @@ void ssl_set_masks(SSL_CONNECTION *s)
 
     dh_tmp = (c->dh_tmp != NULL
               || c->dh_tmp_cb != NULL
-              || c->dh_tmp_auto);
+              || c->dh_tmp_auto
+              || tls1_shared_group(s, -2, 1, 0) != 0);
 
     rsa_enc = pvalid[SSL_PKEY_RSA] & CERT_PKEY_VALID;
     rsa_sign = pvalid[SSL_PKEY_RSA] & CERT_PKEY_VALID;
