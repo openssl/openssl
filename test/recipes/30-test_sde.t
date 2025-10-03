@@ -122,7 +122,7 @@ foreach my $f ( @files ) {
       my $fp = data_file("$f");
       $fp =~ s/sde/evp/;
       ok(run(sdetest(\@sde_options,
-                     ["evp_test", "-config", $conf, ])),
-                      "running sde $cpu -- evp_test -config $conf $fp");
+                     ["evp_test", "-config", $conf, $fp])),
+                      "running sde -$cpu -- evp_test -config $conf $fp");
   }
 }
