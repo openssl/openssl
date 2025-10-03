@@ -28,7 +28,7 @@ favor of the provider interface for enabling extended functionality.  The
 impact of this removal is significant and may require updating of applications
 which make use of ENGINES.
 
-Noteable impacts from this removal:
+Notable impacts from this removal:
 
 =over 4
 
