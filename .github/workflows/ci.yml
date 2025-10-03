@@ -745,6 +745,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: config
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      with:
         operating_system: openbsd
         architecture: amd64
         cpu_count: 4
@@ -781,13 +782,14 @@ jobs:
           ./util/opensslwrap.sh version -c
           .github/workflows/make-test
 
-  openbsd-aarch64:
+  openbsd-arm64:
     runs-on: ubuntu-latest
     name: Test on OpenBSD (arm64)
     steps:
     - uses: actions/checkout@v4
     - name: config
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      with:
         operating_system: openbsd
         architecture: arm64
         cpu_count: 4
