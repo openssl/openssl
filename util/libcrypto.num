@@ -5947,3 +5947,6 @@ CRYPTO_realloc_array                    ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_clear_realloc_array              ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_secure_malloc_array              ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_secure_calloc                    ?	4_0_0	EXIST::FUNCTION:
+OPENSSL_posix_to_tm                     ?	4_0_0	EXIST::FUNCTION:
+OPENSSL_tm_to_posix                     ?	4_0_0	EXIST::FUNCTION:
+OPENSSL_timegm                          ?	4_0_0	EXIST::FUNCTION:

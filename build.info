@@ -39,6 +39,7 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/ocsp.h \
          include/openssl/pkcs12.h \
          include/openssl/pkcs7.h \
+         include/openssl/posix_time.h \
          include/openssl/safestack.h \
          include/openssl/srp.h \
          include/openssl/ssl.h \
