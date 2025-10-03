@@ -1492,9 +1492,8 @@ static const OSSL_PARAM *rsa_gettable_ctx_params(ossl_unused void *vprsactx,
 #ifdef FIPS_MODULE
 static int rsa_x931_padding_allowed(PROV_RSA_CTX *ctx)
 {
-    int approved = ((ctx->operation & EVP_PKEY_OP_SIGN) == 0);
-
-    if (!approved) {
+    if ((ctx->operation
+         & (EVP_PKEY_OP_SIGNMSG | EVP_PKEY_OP_SIGN)) != 0) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE2,
                                          ctx->libctx,
                                          "RSA Sign set ctx", "X931 Padding",
