@@ -748,7 +748,6 @@ jobs:
       with:
         operating_system: openbsd
         version: "7.7"
-        architecture: amd64
         cpu_count: 4
         memory: 5G
         shutdown_vm: false
@@ -759,7 +758,6 @@ jobs:
       with:
         operating_system: openbsd
         version: "7.7"
-        architecture: amd64
         cpu_count: 4
         memory: 5G
         shutdown_vm: false
@@ -769,7 +767,6 @@ jobs:
       with:
         operating_system: openbsd
         version: "7.7"
-        architecture: amd64
         cpu_count: 4
         memory: 5G
         shutdown_vm: false
@@ -779,7 +776,6 @@ jobs:
       with:
         operating_system: openbsd
         version: "7.7"
-        architecture: amd64
         cpu_count: 4
         memory: 5G
         run: |
