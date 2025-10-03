@@ -106,11 +106,11 @@ for my $idx (@x509seq) {
     # We need to setup our openssl malloc failures env var to fail the target malloc
     # the format of this string is a series of A@B;C@D tuples where A,C are the number
     # of mallocs to consider, and B,D are the likelyhood that they should fail.
-    # We always skip the first "skip" allocations, then iteratively guarantee that 
+    # We always skip the first "skip" allocations, then iteratively guarantee that
     # next <idx> mallocs pass, followed by the next single malloc failing, with the remainder
     # passing
     #
-    $ENV{OPENSSL_MALLOC_FAILURES} = "$x509skipcount\@0;$idx\@0;1\@100;0\@0"; 
+    $ENV{OPENSSL_MALLOC_FAILURES} = "$x509skipcount\@0;$idx\@0;1\@100;0\@0";
     ok(run(test(["x509-memfail", "run", srctop_file("test", "certs", "servercert.pem")])));
 }
 
