@@ -16,6 +16,28 @@
 /* Return 1 if the FIPS self tests are running and 0 otherwise */
 int ossl_fips_self_testing(void);
 
+/* Deferred KAT tests categories */
+#  define OSSL_DEFERRED_KAT_INTEGRITY 0
+#  define OSSL_DEFERRED_KAT_CIPHER 1
+#  define OSSL_DEFERRED_KAT_ASYM_CIPHER 2
+#  define OSSL_DEFERRED_KAT_ASYM_KEYGEN 3
+#  define OSSL_DEFERRED_KAT_KEM 4
+#  define OSSL_DEFERRED_KAT_DIGEST 5
+#  define OSSL_DEFERRED_KAT_SIGNATURE 6
+#  define OSSL_DEFERRED_KAT_KDF 7
+#  define OSSL_DEFERRED_KAT_KA 8
+#  define OSSL_DEFERRED_MAX 9
+
+struct ossl_deferred_test_st {
+    const char *algorithm;
+    int category;
+    int pass;
+};
+
+typedef struct ossl_deferred_test_st OSSL_DEFERRED_TEST;
+
+int FIPS_deferred_self_tests(OSSL_LIB_CTX *libctx, OSSL_DEFERRED_TEST tests[]);
+
 # endif /* FIPS_MODULE */
 
 #endif
