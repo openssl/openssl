@@ -43,11 +43,11 @@ L<SSL_accept_connection(3)>, L<SSL_accept_stream(3)>, L<BIO_ADDR(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 4.0.
+This function was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
