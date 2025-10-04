@@ -217,12 +217,14 @@ $code.=<<___;
 .global asm_aescbc_sha1_hmac
 .type	asm_aescbc_sha1_hmac,%function
 
+.rodata
 .align	4
 .Lrcon:
 	.word	0x5a827999, 0x5a827999, 0x5a827999, 0x5a827999
 	.word	0x6ed9eba1, 0x6ed9eba1, 0x6ed9eba1, 0x6ed9eba1
 	.word	0x8f1bbcdc, 0x8f1bbcdc, 0x8f1bbcdc, 0x8f1bbcdc
 	.word	0xca62c1d6, 0xca62c1d6, 0xca62c1d6, 0xca62c1d6
+.text
 
 asm_aescbc_sha1_hmac:
 	AARCH64_VALID_CALL_TARGET
@@ -276,7 +278,8 @@ asm_aescbc_sha1_hmac:
 	ldp		q10,q11,[x9],32		/* rk[2],rk[3] */
 	prfm		PLDL1KEEP,[x0,64]	/* pref next aes_ptr_in */
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	aese		v0.16b,v9.16b
 	aesmc		v0.16b,v0.16b
 	prfm		PLDL1KEEP,[x1,64]	/* pref next aes_ptr_out  */
@@ -1524,7 +1527,8 @@ $code.=<<___;
  */
 .Lenc_short_cases:
 	ldp		q8,q9,[x9],32
-	adr		x8,.Lrcon			/* rcon */
+	adrp		x8,.Lrcon			/* rcon */
+	add		x8,x8,:lo12:.Lrcon
 	mov		w15,0x80			/* sha padding word */
 	ldp		q10,q11,[x9],32
 	lsl		x11,x10,4			/* len = aes_blocks*16 */
@@ -2426,7 +2430,8 @@ asm_sha1_hmac_aescbc_dec:
 	blt		.Ldec_short_cases	/* branch if < 12 */
 
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	ldp		q4,q5,[x8],32		/* key0,key1 */
 	ldp		q6,q7,[x8],32		/* key2,key3 */
 
@@ -3866,7 +3871,8 @@ $code.=<<___;
  */
 .Ldec_short_cases:
 	ldp		q8,q9,[x9],32
-	adr		x8,.Lrcon		/* rcon */
+	adrp		x8,.Lrcon		/* rcon */
+	add		x8,x8,:lo12:.Lrcon
 	ldp		q10,q11,[x9],32
 	lsl		x11,x10,4		/* len = aes_blocks*16 */
 

@@ -216,6 +216,7 @@ $code.=<<___;
 .global	asm_aescbc_sha256_hmac
 .type	asm_aescbc_sha256_hmac,%function
 
+.rodata
 .align	4
 .Lrcon:
 	.word	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5
@@ -238,6 +239,7 @@ $code.=<<___;
 .Linit_sha_state:
 	.word	0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
 	.word	0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+.text
 
 asm_aescbc_sha256_hmac:
 	AARCH64_VALID_CALL_TARGET
@@ -253,7 +255,8 @@ asm_aescbc_sha256_hmac:
 	stp		d10,d11,[sp,#16]
 
 	/* address of sha init state consts */
-	adr		x12,.Linit_sha_state
+	adrp		x12,.Linit_sha_state
+	add		x12,x12,:lo12:.Linit_sha_state
 	prfm		PLDL1KEEP,[x1,0]	/* pref next aes_ptr_out */
 	lsr		x10,x2,4		/* aes_blocks = len/16 */
 
@@ -296,7 +299,8 @@ asm_aescbc_sha256_hmac:
 	aesmc		v0.16b,v0.16b
 	prfm		PLDL1KEEP,[x1,64]	/* pref next aes_ptr_out  */
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	ld1		{v12.16b},[x9],16	/* rk[4] */
 	aese		v0.16b,v10.16b
 	aesmc		v0.16b,v0.16b
@@ -435,7 +439,8 @@ $code.=<<___;
 	 */
 .Lenc_main_loop:
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	/*
 	 * Because both mov, rev32 and eor have a busy cycle,this takes longer
 	 * than it looks. That's OK since there are 6 cycles before we can use
@@ -703,7 +708,8 @@ $code.=<<___;
 	 */
 	ld1		{v0.16b},[x0],16
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	ld1		{v4.16b},[x8],16	/* key0 */
 	ld1		{v5.16b},[x8],16	/* key1 */
 	ld1		{v6.16b},[x8],16	/* key2 */
@@ -893,7 +899,8 @@ $code.=<<___;
 /* quad 0 */
 .Lbm2fromQ0:
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 
 	ld1		{v4.16b},[x8],16	/* key0 */
 	ld1		{v5.16b},[x8],16	/* key1 */
@@ -1164,7 +1171,8 @@ $code.=<<___;
  */
 1:
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 
 	ld1		{v4.16b},[x8],16	/* key0 */
 	ld1		{v5.16b},[x8],16	/* key1 */
@@ -1323,7 +1331,8 @@ $code.=<<___;
 	 * do last sha of pad block
 	 */
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 
 	/* quad 0 */
 	ld1		{v4.16b},[x8],16	/* key0 */
@@ -1460,7 +1469,8 @@ $code.=<<___;
 	eor		v28.16b, v28.16b, v28.16b
 	eor		v29.16b, v29.16b, v29.16b
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	/* load o_key_pad partial hash */
 	ldp		q24,q25,[x7]
 
@@ -1641,7 +1651,8 @@ $code.=<<___;
  * already in place excepting the final word.
  */
 .Lenc_short_loop:
-	adr		x8,.Lrcon			/* rcon */
+	adrp		x8,.Lrcon			/* rcon */
+	add		x8,x8,:lo12:.Lrcon
 	/* read next aes block, update aes_ptr_in */
 	ld1		{v0.16b},[x0],16
 	eor		v0.16b,v0.16b,v3.16b		/* xor w/prev value */
@@ -2019,7 +2030,8 @@ $code.=<<___;
  */
 1:
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 
 	ld1		{v4.16b},[x8],16	/* key0 */
 	ld1		{v5.16b},[x8],16	/* key1 */
@@ -2180,7 +2192,8 @@ $code.=<<___;
 	/* do final block */
 
 	/* base address for sha round consts */
-	adr		x8,.Lrcon		/* top of rcon */
+	adrp		x8,.Lrcon		/* top of rcon */
+	add		x8,x8,:lo12:.Lrcon
 
 	/* quad 0 */
 	ld1		{v4.16b},[x8],16	/* key0 */
@@ -2317,7 +2330,8 @@ $code.=<<___;
 	eor		v28.16b, v28.16b, v28.16b
 	eor		v29.16b, v29.16b, v29.16b
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	/* load o_key_pad partial hash */
 	ldp		q24,q25,[x7]
 
@@ -2562,7 +2576,8 @@ asm_sha256_hmac_aescbc_dec:
 	lsr		x10,x2,4		/* aes_blocks = len/16 */
 	stp		d14,d15,[sp,#48]
 	/* address of sha init state consts */
-	adr		x12,.Linit_sha_state
+	adrp		x12,.Linit_sha_state
+	add		x12,x12,:lo12:.Linit_sha_state
 	stp		x19,x20,[sp,#64]
 
 	ldr		x9, [x6, #CIPHER_KEY]
@@ -2598,7 +2613,8 @@ asm_sha256_hmac_aescbc_dec:
 	prfm		PLDL1KEEP,[x0,64]	/* pref next aes_ptr_in */
 	prfm		PLDL1KEEP,[x1,64]	/* pref next aes_ptr_out */
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	/*
 	 * do the first sha256 block on the plaintext
 	 */
@@ -2781,7 +2797,8 @@ asm_sha256_hmac_aescbc_dec:
 	prfm		PLDL1KEEP,[x1,64]
 	mov		v23.16b,v25.16b		/* working EFGH <- EFGH */
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 
 	/*
 	 * aes xform 0, sha quad 0
@@ -3035,7 +3052,8 @@ $code.=<<___;
 	prfm		PLDL1KEEP,[x1,64]
 	mov		v23.16b,v25.16b		/* working EFGH <- EFGH */
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	ld1		{v4.16b},[x8],16	/* key0 */
 	ld1		{v5.16b},[x8],16	/* key1 */
 
@@ -3398,7 +3416,8 @@ $code.=<<___;
  */
 .Ljoin_common:
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	mov		w15,0x80	/* that's the 1 of the pad */
 .Lpost_loop_Q0:
 	/* assume this was final block */
@@ -3663,7 +3682,8 @@ $code.=<<___;
 	/* read first aes block, bump aes_ptr_in */
 	ld1		{v0.16b},[x0]
 	ld1		{v31.16b},[x0],16
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	ld1		{v4.16b},[x8],16	/* key0 */
 	aesd		v0.16b,v8.16b
 	aesimc		v0.16b,v0.16b
@@ -3844,7 +3864,8 @@ $code.=<<___;
 
 .Lzero_aes_blocks_left:
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	ld1		{v4.16b},[x8],16	/* key0 */
 	ld1		{v5.16b},[x8],16	/* key1 */
 
@@ -3990,7 +4011,8 @@ $code.=<<___;
 	 * Calculate final HMAC
 	 */
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	/* load o_key_pad partial hash */
 	ld1		{v24.16b},[x7],16
 	ld1		{v25.16b},[x7]
@@ -4163,7 +4185,8 @@ $code.=<<___;
  */
 .Ldec_short_cases:
 	ldp		q8,q9,[x9],32
-	adr		x8,.Lrcon		/* rcon */
+	adrp		x8,.Lrcon		/* rcon */
+	add		x8,x8,:lo12:.Lrcon
 	ldp		q10,q11,[x9],32
 	lsl		x11,x10,4		/* len=aes_blocks*16 */
 
