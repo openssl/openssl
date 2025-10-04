@@ -744,7 +744,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: config
-      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      uses: cross-platform-actions/action@fe8a7b572196ff79ded1979dc2bb9ee67d1ddb252 #v0.28.0
       with:
         operating_system: openbsd
         architecture: x86-64
@@ -753,7 +753,7 @@ jobs:
         run: |
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
-      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      uses: cross-platform-actions/action@fe8a7b572196ff79ded1979dc2bb9ee67d1ddb252 #v0.28.0
       with:
         operating_system: openbsd
         architecture: x86-64
@@ -762,7 +762,7 @@ jobs:
         run: |
           ./configdata.pm --dump
     - name: make
-      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      uses: cross-platform-actions/action@fe8a7b572196ff79ded1979dc2bb9ee67d1ddb252 #v0.28.0
       with:
         operating_system: openbsd
         architecture: x86-64
@@ -771,7 +771,7 @@ jobs:
         run: |
           make -j4
     - name: make test
-      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      uses: cross-platform-actions/action@fe8a7b572196ff79ded1979dc2bb9ee67d1ddb252 #v0.28.0
       with:
         operating_system: openbsd
         architecture: x86-64
@@ -786,7 +786,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: config
-      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      uses: cross-platform-actions/action@fe8a7b572196ff79ded1979dc2bb9ee67d1ddb252 #v0.28.0
       with:
         operating_system: openbsd
         version: '7.7'
@@ -795,7 +795,7 @@ jobs:
         run: |
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
-      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      uses: cross-platform-actions/action@fe8a7b572196ff79ded1979dc2bb9ee67d1ddb252 #v0.28.0
       with:
         operating_system: openbsd
         version: '7.7'
@@ -804,7 +804,7 @@ jobs:
         run: |
           ./configdata.pm --dump
     - name: make
-      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      uses: cross-platform-actions/action@fe8a7b572196ff79ded1979dc2bb9ee67d1ddb252 #v0.28.0
       with:
         operating_system: openbsd
         version: '7.7'
@@ -813,7 +813,7 @@ jobs:
         run: |
           make -j4
     - name: make test
-      uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
+      uses: cross-platform-actions/action@fe8a7b572196ff79ded1979dc2bb9ee67d1ddb252 #v0.28.0
       with:
         operating_system: openbsd
         version: '7.7'
