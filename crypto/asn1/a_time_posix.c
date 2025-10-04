@@ -275,5 +275,3 @@ int OPENSSL_gmtime_diff(int *out_days, int *out_secs, const struct tm *from,
 
     return 1;
 }
-
-
