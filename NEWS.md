@@ -37,21 +37,19 @@ OpenSSL 3.6
 This release incorporates the following potentially significant or incompatible
 changes:
 
-  * Added FIPS 140-3 PCT on DH key generation.
-
   * Added NIST security categories for PKEY objects.
 
   * Added support for `EVP_SKEY` opaque symmetric key objects to the key
     derivation and key exchange provider methods. Added `EVP_KDF_CTX_set_SKEY()`,
     `EVP_KDF_derive_SKEY()`, and `EVP_PKEY_derive_SKEY()` functions.
 
-  * Added LMS signature verification support as per [SP 800-208]. This
-    support is present in both the FIPS and default providers.
+  * Added LMS signature verification support as per [SP 800-208].
+    This support is present in both the FIPS and default providers.
 
-  * An ANSI-C toolchain is no longer sufficient for building OpenSSL. The code
-    should build on compilers supporting C-99 features.
+  * An ANSI-C toolchain is no longer sufficient for building OpenSSL.
+    The code should be built using compilers supporting C-99 features.
 
-  * The VxWorks platforms have been removed.
+  * Support for the VxWorks platforms has been removed.
 
   * Added an `openssl configutl` utility for processing the OpenSSL
     configuration file and dumping the equal configuration file.
@@ -59,12 +57,12 @@ changes:
   * Added support for FIPS 186-5 deterministic ECDSA signature
     generation to the FIPS provider.
 
-  * Deprecated `EVP_PKEY_ASN1_METHOD` related functions.
+  * Deprecated `EVP_PKEY_ASN1_METHOD`-related functions.
 
 OpenSSL 3.5
 -----------
 
-### Major changes between OpenSSL 3.5.3 and OpenSSL 3.5.4 [under development]
+### Major changes between OpenSSL 3.5.3 and OpenSSL 3.5.4 [30 Sep 2025]
 
 OpenSSL 3.5.4 is a security patch release. The most severe CVE fixed in this
 release is Moderate.
@@ -79,6 +77,10 @@ This release incorporates the following bug fixes and mitigations:
 
   * Fix Out-of-bounds read in HTTP client no_proxy handling.
     ([CVE-2025-9232])
+
+  * Reverted the synthesised `OPENSSL_VERSION_NUMBER` change for the release
+    builds, as it broke some exiting applications that relied on the previous
+    3.x semantics, as documented in `OpenSSL_version(3)`.
 
 ### Major changes between OpenSSL 3.5.2 and OpenSSL 3.5.3 [16 Sep 2025]
 
@@ -96,6 +98,8 @@ This release incorporates the following bug fixes and mitigations:
 ### Major changes between OpenSSL 3.5.1 and OpenSSL 3.5.2 [5 Aug 2025]
 
 OpenSSL 3.5.2 is a bug fix release.
+
+This release incorporates the following bug fixes and mitigations:
 
   * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
 
@@ -2160,4 +2164,5 @@ OpenSSL 0.9.x
 [issue tracker]: https://github.com/openssl/openssl/issues
 [CMVP]: https://csrc.nist.gov/projects/cryptographic-module-validation-program
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
+[SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
 [jitterentropy-library]: https://github.com/smuellerDD/jitterentropy-library
