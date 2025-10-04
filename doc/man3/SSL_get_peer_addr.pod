@@ -29,7 +29,7 @@ from OpenSSL.
 
 The B<BIO_ADDR> type is an OpenSSL abstraction which can represent
 both IPv4 and IPv6 socket addresses. Applications can get the address
-familiy via the L<BIO_ADDR(3)> API.
+family via the L<BIO_ADDR(3)> API.
 
 =head1 RETURN VALUES
 
