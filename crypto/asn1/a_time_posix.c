@@ -144,16 +144,16 @@ static int utc_from_posix_time(int64_t time, int *out_year, int *out_month,
     day_of_era = days - era * 146097;
     year_of_era = (day_of_era - day_of_era / 1460 + day_of_era / 36524 -
                    day_of_era / 146096) / 365;
-    *out_year = (int)(year_of_era + era * 400);  /* Year starts on Mar 1 */
+    *out_year = (int) (year_of_era + era * 400);  /* Year starts on Mar 1 */
     day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 -
                                 year_of_era / 100);
     month_of_year = (5 * day_of_year + 2) / 153;
     *out_month = (int) (month_of_year < 10 ? month_of_year + 3 :
-                  month_of_year - 9);
+                        month_of_year - 9);
     if (*out_month <= 2)
         (*out_year)++;  /* Adjust year back to Jan 1 start of year. */
 
-    *out_day = (int)(day_of_year - (153 * month_of_year + 2) / 5 + 1);
+    *out_day = (int) (day_of_year - (153 * month_of_year + 2) / 5 + 1);
     *out_hours = (int) leftover_seconds / SECS_PER_HOUR;
     leftover_seconds %= SECS_PER_HOUR;
     *out_minutes = (int) leftover_seconds / 60;
@@ -275,5 +275,3 @@ int OPENSSL_gmtime_diff(int *out_days, int *out_secs, const struct tm *from,
 
     return 1;
 }
-
-
