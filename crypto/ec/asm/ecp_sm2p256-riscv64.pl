@@ -881,6 +881,7 @@ $code.=<<___;
 	add $t1, $t1, $s6
 	sltu $c2, $t1, $s6
 	add $t1, $t1, $c1
+	sltu $c1, $t1, $c1
 	add $c1, $c1, $c2
 	add $t2, $t2, $c1
 	sltu $c1, $t2, $c1
