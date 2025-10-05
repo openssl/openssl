@@ -2193,6 +2193,7 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 {
     const X509_VERIFY_PARAM *vpm = ctx->param;
     int i, comparison;
+    const ASN1_TIME *notafter;
 
     i = ossl_x509_compare_asn1_time(vpm, X509_get0_notBefore(x), &comparison);
     if (i == 0 && depth < 0)
@@ -2202,7 +2203,18 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
     CB_FAIL_IF(i == 0, ctx, x, depth, X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD);
     CB_FAIL_IF(comparison > 0, ctx, x, depth, X509_V_ERR_CERT_NOT_YET_VALID);
 
-    i = ossl_x509_compare_asn1_time(vpm, X509_get0_notAfter(x), &comparison);
+    /*
+     * RFC 5280 4.1.2.5:
+     * To indicate that a certificate has no well-defined expiration date,
+     * the notAfter SHOULD be assigned the GeneralizedTime value of
+     * 99991231235959Z.
+     */
+    notafter = X509_get0_notAfter(x);
+    if (strcmp((const char *)ASN1_STRING_get0_data(notafter), "99991231235959Z")
+        == 0)
+        return 1;
+
+    i = ossl_x509_compare_asn1_time(vpm, notafter, &comparison);
     if (i == 0 && depth < 0)
         return 0;
     if (comparison < 0 && depth < 0)
