@@ -2193,6 +2193,7 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 {
     const X509_VERIFY_PARAM *vpm = ctx->param;
     int i, comparison;
+    const ASN1_TIME *notafter;
 
     i = ossl_x509_compare_asn1_time(vpm, X509_get0_notBefore(x), &comparison);
     if (i == 0 && depth < 0)
@@ -2202,7 +2203,18 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
     CB_FAIL_IF(i == 0, ctx, x, depth, X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD);
     CB_FAIL_IF(comparison > 0, ctx, x, depth, X509_V_ERR_CERT_NOT_YET_VALID);
 
-    i = ossl_x509_compare_asn1_time(vpm, X509_get0_notAfter(x), &comparison);
+    /*
+     * RFC 5280 4.1.2.5:
+     * To indicate that a certificate has no well-defined expiration date,
+     * the notAfter SHOULD be assigned the GeneralizedTime value of
+     * 99991231235959Z.
+     */
+    notafter = X509_get0_notAfter(x);
+    if (strcmp((const char *)ASN1_STRING_get0_data(notafter), "99991231235959Z")
+        == 0)
+        return 1;
+
+    i = ossl_x509_compare_asn1_time(vpm, notafter, &comparison);
     if (i == 0 && depth < 0)
         return 0;
     if (comparison < 0 && depth < 0)
@@ -2358,7 +2370,7 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
 /*
  * Return 0 if time should not be checked or reference time is in range,
  * or else 1 if it is past the end, or -1 if it is before the start
- * treats unvalid start and end as times infinitely in the past or
+ * treats invalid start and end as times infinitely in the past or
  * future, respectively. Do not use on untrusted input (meaning
  * do not use this when validating certificates for actual use)
  */
@@ -2383,11 +2395,11 @@ int X509_cmp_timeframe(const X509_VERIFY_PARAM *vpm,
      * treated as infinitely in the past or future, due to the use
      * X509_cmp_time, and the 0 return for an invalid time.
      *
-     * Treating NULL as infinite a bit off but probably mosty harmless
+     * Treating NULL as infinite a bit off but probably mostly harmless
      * in practice because X509_get0_notBefore and friends do not
      * return NULL. However, if you can end up using a cert with an
      * invalid time that whatever signed it did not validate it in a
-     * compatible way with us, You can end up with inifinite validity
+     * compatible way with us, You can end up with infinite validity
      * when you did not expect it. Depending on how you got the
      * certificate and what you are doing based upon this decision
      * this could have undesirable consequences.
