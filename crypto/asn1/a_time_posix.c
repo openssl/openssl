@@ -34,7 +34,7 @@ static int is_valid_date(int64_t year, int64_t month, int64_t day)
 {
     int days_in_month;
 
-    if (day < 1 || month < 1 || year < 0 || year > 9999)
+    if (day < 1 || year < 0 || year > 9999)
         return 0;
     switch (month) {
     case 1:
