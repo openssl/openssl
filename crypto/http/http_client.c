@@ -1304,7 +1304,8 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
         if (resp == NULL && redirection_url != NULL) {
             if (redirection_ok(++n_redirs, current_url, redirection_url)
                     && may_still_retry(max_time, &timeout)) {
-                (void)BIO_reset(bio);
+                if (bio != NULL)
+                    (void)BIO_reset(bio);
                 OPENSSL_free(current_url);
                 current_url = redirection_url;
                 if (*redirection_url == '/') { /* redirection to same server */
