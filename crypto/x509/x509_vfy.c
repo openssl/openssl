@@ -2370,7 +2370,7 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
 /*
  * Return 0 if time should not be checked or reference time is in range,
  * or else 1 if it is past the end, or -1 if it is before the start
- * treats unvalid start and end as times infinitely in the past or
+ * treats invalid start and end as times infinitely in the past or
  * future, respectively. Do not use on untrusted input (meaning
  * do not use this when validating certificates for actual use)
  */
@@ -2395,11 +2395,11 @@ int X509_cmp_timeframe(const X509_VERIFY_PARAM *vpm,
      * treated as infinitely in the past or future, due to the use
      * X509_cmp_time, and the 0 return for an invalid time.
      *
-     * Treating NULL as infinite a bit off but probably mosty harmless
+     * Treating NULL as infinite a bit off but probably mostly harmless
      * in practice because X509_get0_notBefore and friends do not
      * return NULL. However, if you can end up using a cert with an
      * invalid time that whatever signed it did not validate it in a
-     * compatible way with us, You can end up with inifinite validity
+     * compatible way with us, You can end up with infinite validity
      * when you did not expect it. Depending on how you got the
      * certificate and what you are doing based upon this decision
      * this could have undesirable consequences.
