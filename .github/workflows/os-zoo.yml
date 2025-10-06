@@ -281,7 +281,6 @@ jobs:
 
   openbsd-x86_64:
     runs-on: ubuntu-latest
-    name: Test on OpenBSD (amd64)
     steps:
     - uses: actions/checkout@v4
     - name: config
