@@ -267,8 +267,9 @@ static CERT_TEST_DATA cert_test_data[] = {
 static int test_a_time(X509_STORE_CTX *ctx, X509 *x509,
                        const int64_t test_time,
                        int64_t notBefore, int64_t notAfter,
-                       int64_t lower_limit, int64_t upper_limit) {
-    int expected_value, error, expected_error;;
+                       int64_t lower_limit, int64_t upper_limit)
+{
+    int expected_value, error, expected_error;
     X509_VERIFY_PARAM *vpm;
 
     /* Skip tests out of time_t range */
@@ -296,9 +297,8 @@ static int test_a_time(X509_STORE_CTX *ctx, X509 *x509,
     }
 
     expected_value = notBefore <= test_time;
-    if (expected_value) {
+    if (expected_value)
         expected_value = notAfter == MAX_CERT_TIME || notAfter >= test_time;
-    }
 
     if (notBefore > test_time)
         expected_error = X509_V_ERR_CERT_NOT_YET_VALID;
@@ -312,7 +312,7 @@ static int test_a_time(X509_STORE_CTX *ctx, X509 *x509,
     if (ossl_x509_check_cert_time(ctx, x509, 0) != expected_value) {
         TEST_info("ossl_X509_check_cert_time %s unexpectedly when verifying "
                   "notBefore %lld, notAfter %lld at time %lld\n",
-                  expected_value ? "failed" : "succeeded", 
+                  expected_value ? "failed" : "succeeded",
                   (long long)notBefore, (long long)notAfter,
                   (long long)test_time);
         return 1;
@@ -321,7 +321,7 @@ static int test_a_time(X509_STORE_CTX *ctx, X509 *x509,
     if (ossl_x509_check_certificate_times(vpm, x509, &error) != expected_value) {
         TEST_info("ossl_X509_check_certificate_times %s unexpectedly when "
                   "verifying notBefore %lld, notAfter %lld at time %lld\n",
-                  expected_value ? "failed" : "succeeded", 
+                  expected_value ? "failed" : "succeeded",
                   (long long)notBefore, (long long)notAfter,
                   (long long)test_time);
         return 1;
@@ -331,7 +331,7 @@ static int test_a_time(X509_STORE_CTX *ctx, X509 *x509,
                   "expected %d when verifying notBefore %lld, notAfter %lld "
                   "at time %lld\n",
                   error, expected_error,
-                  (long long)notBefore, (long long )notAfter,
+                  (long long)notBefore, (long long)notAfter,
                   (long long)test_time);
         return 1;
     }
@@ -350,25 +350,25 @@ static int do_x509_time_tests(CERT_TEST_DATA *tests, size_t ntests, int64_t lowe
 
     if ((x509 = X509_new()) == NULL) {
         TEST_info("Malloc posral se do postele.");
-            goto err;
+        goto err;
     }
     if ((ctx = X509_STORE_CTX_new()) == NULL) {
         TEST_info("Malloc posral se do postele.");
-            goto err;
+        goto err;
     }
     X509_STORE_CTX_init(ctx, NULL, NULL, NULL);
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL) {
         TEST_info("Malloc posral se do postele.");
-            goto err;
+        goto err;
     }
     X509_STORE_CTX_set0_param(ctx, vpm);
     if ((nb = ASN1_TIME_new()) == NULL) {
         TEST_info("Malloc posral se do postele.");
-            goto err;
+        goto err;
     }
     if ((na = ASN1_TIME_new()) == NULL) {
         TEST_info("Malloc posral se do postele.");
-            goto err;
+        goto err;
     }
 
     for (i = 0; i < ntests; i++) {
@@ -421,7 +421,7 @@ static int do_x509_time_tests(CERT_TEST_DATA *tests, size_t ntests, int64_t lowe
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
                                 tests[i].NotAfter, lower_limit, upper_limit);
 
-        test_time =  1442939232;
+        test_time = 1442939232;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
                                 tests[i].NotAfter, lower_limit, upper_limit);
         test_time = 1443004020;
@@ -499,16 +499,16 @@ static int tests_X509_check_time(void)
 
     if (time_t_is_32_bit) {
         if (time_t_is_unsigned) {
-            return do_x509_time_tests(cert_test_data, sizeof(cert_test_data) / sizeof(CERT_TEST_DATA),
-                                      INT32_MIN, INT32_MAX);
-        }
-        else {
-            return do_x509_time_tests(cert_test_data, sizeof(cert_test_data) / sizeof(CERT_TEST_DATA),
-                                      0, UINT32_MAX);
+            return do_x509_time_tests(cert_test_data, sizeof(cert_test_data)
+                                      / sizeof(CERT_TEST_DATA), INT32_MIN,
+                                      INT32_MAX);
+        } else {
+            return do_x509_time_tests(cert_test_data, sizeof(cert_test_data)
+                                      / sizeof(CERT_TEST_DATA), 0, UINT32_MAX);
         }
     }
-    return do_x509_time_tests(cert_test_data, sizeof(cert_test_data) / sizeof(CERT_TEST_DATA),
-                              INT64_MIN, INT64_MAX);
+    return do_x509_time_tests(cert_test_data, sizeof(cert_test_data)
+                              / sizeof(CERT_TEST_DATA), INT64_MIN, INT64_MAX);
 }
 
 int setup_tests(void)
