@@ -453,12 +453,20 @@ static int test_encrypted_data_aead(void)
     if (!TEST_ptr(cms))
         goto end;
 
+    /*
+     * AEAD algorithms are not supported by the CMS EncryptedData so setting
+     * the cipher to AES GCM 128 will result in a failure
+     */
     if (!TEST_false(CMS_EncryptedData_set1_key(cms, EVP_aes_128_gcm(), key, keylen)))
         goto end;
 
     CMS_ContentInfo_free(cms);
     cms = NULL;
 
+    /*
+     * AEAD algorithms are not supported by the CMS EncryptedData so setting
+     * the cipher to AES GCM 128 will result in a failure
+     */
     cms = CMS_EncryptedData_encrypt(msgbio, EVP_aes_128_gcm(), key, keylen, SMIME_BINARY);
     if (!TEST_ptr_null(cms))
         goto end;

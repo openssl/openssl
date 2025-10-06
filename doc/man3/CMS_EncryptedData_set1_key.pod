@@ -27,10 +27,6 @@ returns 1.
 
 L<CMS_EncryptedData_encrypt(3)>, L<CMS_EncryptedData_decrypt(3)>
 
-=head1 HISTORY
-
-CMS_EncryptedData_set1_key() method was added in OpenSSL 3.0.
-
 =head1 COPYRIGHT
 
 Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
