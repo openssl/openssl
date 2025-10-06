@@ -2131,13 +2131,13 @@ static int check_policy(X509_STORE_CTX *ctx)
  * Return 1 on success, 0 otherwise.
  */
 int ossl_x509_compare_asn1_time(const X509_VERIFY_PARAM *vpm,
-                                       const ASN1_TIME *time, int *comparison)
+                                const ASN1_TIME *time, int *comparison)
 {
     const time_t *check_time = NULL;
 
-    if ((vpm->flags & X509_V_FLAG_USE_CHECK_TIME) != 0)
+    if ((vpm->flags & X509_V_FLAG_USE_CHECK_TIME) != 0) {
         check_time = &vpm->check_time;
-    else if ((vpm->flags & X509_V_FLAG_NO_CHECK_TIME) != 0) {
+    } else if ((vpm->flags & X509_V_FLAG_NO_CHECK_TIME) != 0) {
         *comparison = 0;
         return 1;
     }
@@ -2389,10 +2389,9 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
 int X509_cmp_timeframe(const X509_VERIFY_PARAM *vpm,
                        const ASN1_TIME *start, const ASN1_TIME *end)
 {
+    unsigned long flags = vpm == NULL ? 0 : X509_VERIFY_PARAM_get_flags(vpm);
     time_t ref_time;
     time_t *time = NULL;
-
-    unsigned long flags = vpm == NULL ? 0 : X509_VERIFY_PARAM_get_flags(vpm);
 
     if ((flags & X509_V_FLAG_USE_CHECK_TIME) != 0) {
         ref_time = X509_VERIFY_PARAM_get_time(vpm);
