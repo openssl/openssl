@@ -894,11 +894,8 @@ int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
     buffer = app_malloc(length, "cookie generate buffer");
 
     memcpy(buffer, &port, sizeof(port));
-    if (!BIO_ADDR_rawaddress(peer, buffer + sizeof(port), NULL)) {
-        BIO_printf(bio_err, "Failed getting peer address\n");
-        BIO_ADDR_free(lpeer);
-        return 0;
-    }
+    if (!BIO_ADDR_rawaddress(peer, buffer + sizeof(port), NULL))
+        goto end;
 
     if (EVP_Q_mac(NULL, "HMAC", NULL, "SHA1", NULL,
                   cookie_secret, COOKIE_SECRET_LENGTH, buffer, length,
