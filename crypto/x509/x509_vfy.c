@@ -2154,6 +2154,7 @@ int ossl_x509_check_certificate_times(const X509_VERIFY_PARAM *vpm, X509 *x,
 {
     int err = 0, ret = 0;
     int comparison;
+    const ASN1_TIME *notafter;
 
     if (!ossl_x509_compare_asn1_time(vpm, X509_get0_notBefore(x), &comparison)) {
         err = X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
@@ -2163,7 +2164,18 @@ int ossl_x509_check_certificate_times(const X509_VERIFY_PARAM *vpm, X509 *x,
         err = X509_V_ERR_CERT_NOT_YET_VALID;
         goto done;
     }
-    if (!ossl_x509_compare_asn1_time(vpm, X509_get0_notAfter(x), &comparison)) {
+    /*
+     * RFC 5280 4.1.2.5:
+     * To indicate that a certificate has no well-defined expiration date,
+     * the notAfter SHOULD be assigned the GeneralizedTime value of
+     * 99991231235959Z.
+     */
+    notafter = X509_get0_notAfter(x);
+    if (strcmp((const char *)ASN1_STRING_get0_data(notafter), "99991231235959Z")
+        == 0)
+        return 1;
+
+    if (!ossl_x509_compare_asn1_time(vpm, notafter, &comparison)) {
         err = X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
         goto done;
     }
