@@ -25,6 +25,7 @@ jobs:
           386,
           no-afalgeng,
           no-apps,
+          no-argon2,
           no-aria,
           no-asan,
           no-asm,
