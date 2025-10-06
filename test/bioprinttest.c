@@ -541,7 +541,8 @@ static int test_n(int i)
         ptrdiff_t t;
     } n = { 0 };
 
-#if defined(_set_printf_count_output)
+#if defined(OPENSSL_SYS_WINDOWS) && !defined(__MINGW32__) && \
+    !defined(__CYGWIN__)
     /*
      * MS CRT is special and throws an exception when %n is used even
      * in non-*_s versions of printf routines, and there is a special function
