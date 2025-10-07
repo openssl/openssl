@@ -541,7 +541,12 @@ static int test_n(int i)
         ptrdiff_t t;
     } n = { 0 };
 
-#if defined(OPENSSL_SYS_WINDOWS)
+#if defined(__MINGW32__)
+    /* _set_printf_count_output below does not appear to be available in MinGW */
+    TEST_note("Can't enable %%n handling for snprintf"
+              ", skipping the checks against libc");
+    return 1;
+#elif defined(OPENSSL_SYS_WINDOWS)
     /*
      * MS CRT is special and throws an exception when %n is used even
      * in non-*_s versions of printf routines, and there is a special function
@@ -564,7 +569,7 @@ static int test_n(int i)
         }
         return 1;
     }
-#endif /* defined(OPENSSL_SYS_WINDOWS) || defined(__OpenBSD__) */
+#endif /* defined(__MINGW__) || defined(OPENSSL_SYS_WINDOWS) || defined(__OpenBSD__) */
 
     memset(bio_buf, '@', sizeof(bio_buf));
     memset(std_buf, '#', sizeof(std_buf));
