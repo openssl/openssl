@@ -25,8 +25,11 @@ OPENSSL_tm_to_posix - platform-agnostic OpenSSL time routines
 
 =head1 DESCRIPTION
 
-OPENSSL_gmtime() returns the UTC time specified by I<timer> into the provided
-I<result> argument.
+OPENSSL_gmtime() returns the UTC time specified by I<timer> into the
+provided I<result> argument. |timer| must be in the range of year 0 to
+9999.  Only the fields I<tm_year>, I<tm_mon>, I<tm_mday>, I<tm_hour>,
+I<tm_min>, and I<tm_sec> will be updated  in I<result> on success,
+all other fields will be zeroed.
 
 OPENSSL_gmtime_adj() adds the offsets in I<offset_day> and I<offset_sec> to I<tm>.
 
@@ -35,8 +38,11 @@ OPENSSL_gmtime_diff() calculates the difference between I<from> and I<to>.
 OPENSSL_timegm() converts a time structure in UTC time in I<tm> to a time_t value in
 I<out_time>.
 
-OPENSSL_posix_to_tm() converts an int64_t POSIX time value in I<time>, which must be in the
-range of year 0 to 9999, to a broken out time value in I<tm>.
+OPENSSL_posix_to_tm() converts a int64_t POSIX time value in I<time>,
+which must be in the range of year 0 to 9999, to a broken out time
+value in I<tm>. Only the fields I<tm_year>, I<tm_mon>, I<tm_mday>,
+I<tm_hour>, I<tm_min>, and I<tm_sec> will be updated in I<tm>
+on success, all other fields will be zeroed.
 
 OPENSSL_tm_to_posix() converts a time value between the years 0 and 9999 in I<tm>
 to a POSIX time value in I<out>.
