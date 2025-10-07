@@ -381,11 +381,11 @@ static int do_x509_time_tests(CERT_TEST_DATA *tests, size_t ntests, int64_t lowe
             continue;
 
         if (ASN1_TIME_adj(nb, (time_t)tests[i].NotBefore, 0, 0) == NULL) {
-            TEST_info("Could not create NotBefore");
+            TEST_info("Could not create NotBefore for time %lld\n", (long long) tests[i].NotBefore);
             goto err;
         }
         if (ASN1_TIME_adj(na, (time_t)tests[i].NotAfter, 0, 0) == NULL) {
-            TEST_info("Could not create NotAfter");
+            TEST_info("Could not create NotAfter for time %lld\n", (long long) tests[i].NotBefore);
             goto err;
         }
 
