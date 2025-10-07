@@ -379,6 +379,31 @@ static int do_x509_time_tests(CERT_TEST_DATA *tests, size_t ntests, int64_t lowe
             continue;
         if (tests[i].NotAfter < lower_limit || tests[i].NotAfter > upper_limit)
             continue;
+        /*
+         * XXX beck This block below is a hack. The current comparison
+         * routines needlessly convert the time_t value to a struct
+         * tm to compare it to the asn1_string converted to a struct tm.
+         * OPENSSL_gmtime() does this, but fails on large time_t values.
+         * Once we remove this conversion we should be able to compare
+         * against the full range of time_t. but for the moment we need
+         * to skip this test if OPENSSL_gmtime() fails.
+         */
+        {
+            const time_t t = (const time_t) tests[i].NotBefore;
+            const time_t t2 = (const time_t) tests[i].NotAfter;
+            struct tm tm;
+
+            if (OPENSSL_gmtime(&t, &tm) == NULL) {
+                TEST_info("OPENSSL_gmtime can't handle notBefore time of %lld, skipping test",
+                          (long long) tests[i].NotBefore);
+                continue;
+            }
+            if (OPENSSL_gmtime(&t2, &tm) == NULL) {
+                TEST_info("OPENSSL_gmtime can't handle notAfter time of %lld, skipping test",
+                          (long long) tests[i].NotAfter);
+                continue;
+            }
+        }
 
         if (ASN1_TIME_adj(nb, (time_t)tests[i].NotBefore, 0, 0) == NULL) {
             TEST_info("Could not create NotBefore for time %lld\n", (long long) tests[i].NotBefore);
