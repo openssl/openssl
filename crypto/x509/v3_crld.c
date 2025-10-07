@@ -16,7 +16,7 @@
 
 #include "crypto/x509.h"
 #include "ext_dat.h"
-#include "x509_local.h"
+#include "internal/x509_local.h"
 
 static void *v2i_crld(const X509V3_EXT_METHOD *method,
                       X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);

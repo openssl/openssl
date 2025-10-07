@@ -14,7 +14,7 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 #include "crypto/asn1.h"
-#include "x509_local.h"
+#include "internal/x509_local.h"
 
 /*
  * Maximum length of X509_NAME: much larger than anything we should

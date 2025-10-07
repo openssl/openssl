@@ -12,7 +12,7 @@
 #include <openssl/objects.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include "x509_local.h"
+#include "internal/x509_local.h"
 #include <crypto/x509.h>
 
 /*-
