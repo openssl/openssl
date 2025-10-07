@@ -280,7 +280,7 @@ static int cert_acceptable(const OSSL_CMP_CTX *ctx,
             message = "cert has an invalid not after field";
             break;
         default:
-            message= "cert is invalid for an unspecfied reason";
+            message = "cert is invalid for an unspecfied reason";
             break;
         }
 
