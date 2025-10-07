@@ -2131,17 +2131,20 @@ static int check_policy(X509_STORE_CTX *ctx)
  * Return 1 on success, 0 otherwise.
  */
 int ossl_x509_compare_asn1_time(const X509_VERIFY_PARAM *vpm,
-                                const ASN1_TIME *time, int *comparison)
+                                const ASN1_TIME *asn1_time, int *comparison)
 {
+    const time_t now = time(NULL);
     const time_t *check_time = NULL;
 
-    if ((vpm->flags & X509_V_FLAG_USE_CHECK_TIME) != 0) {
+    if (vpm == NULL) {
+        check_time = &now;
+    } else if ((vpm->flags & X509_V_FLAG_USE_CHECK_TIME) != 0) {
         check_time = &vpm->check_time;
     } else if ((vpm->flags & X509_V_FLAG_NO_CHECK_TIME) != 0) {
         *comparison = 0;
         return 1;
     }
-    return x509_cmp_time_internal(time, check_time, comparison);
+    return x509_cmp_time_internal(asn1_time, check_time, comparison);
 }
 
 /*-
