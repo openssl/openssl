@@ -551,6 +551,7 @@ static int test_n(int i)
     if (_get_printf_count_output() == 0) {
         TEST_note("Can't enable %%n handling for snprintf"
                   ", skipping the checks against libc");
+        return 1;
     }
 #elif defined(__OpenBSD__)
     {
