@@ -43,6 +43,7 @@ static int ossl_X509_check(OSSL_CMP_CTX *ctx, const char *source, X509 *cert,
     ret = ossl_x509_check_certificate_times(vpm, cert, &err);
     if (!ret) {
         const char * msg;
+
         switch (err) {
         case X509_V_ERR_CERT_NOT_YET_VALID:
             msg = "not yet valid";

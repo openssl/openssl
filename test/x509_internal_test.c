@@ -1,4 +1,5 @@
-/* Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+/*
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -338,7 +339,8 @@ static int test_a_time(X509_STORE_CTX *ctx, X509 *x509,
     return 0;
 }
 
-static int do_x509_time_tests(CERT_TEST_DATA *tests, size_t ntests, int64_t lower_limit, int64_t upper_limit)
+static int do_x509_time_tests(CERT_TEST_DATA *tests, size_t ntests,
+                              int64_t lower_limit, int64_t upper_limit)
 {
     int ret = 0;
     int failures = 0;
