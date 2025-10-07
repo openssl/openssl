@@ -16,7 +16,7 @@
 #include <openssl/x509v3.h>
 #include "crypto/x509.h"
 
-#include "x509_local.h"
+#include "internal/x509_local.h"
 
 /* X509_VERIFY_PARAM functions */
 

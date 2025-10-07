@@ -25,7 +25,7 @@
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
 #include "ext_dat.h"
-#include "x509_local.h"
+#include "internal/x509_local.h"
 
 #ifndef OPENSSL_NO_RFC3779
 

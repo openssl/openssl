@@ -20,7 +20,7 @@
 #include "crypto/x509.h"
 #include <openssl/bn.h>
 #include "ext_dat.h"
-#include "x509_local.h"
+#include "internal/x509_local.h"
 
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char *const *a, const char *const *b);

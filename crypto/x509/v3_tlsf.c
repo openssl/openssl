@@ -14,7 +14,7 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
-#include "x509_local.h"
+#include "internal/x509_local.h"
 
 static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
                                              TLS_FEATURE *tls_feature,

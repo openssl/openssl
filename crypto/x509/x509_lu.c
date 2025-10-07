@@ -15,7 +15,7 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 #include <openssl/x509v3.h>
-#include "x509_local.h"
+#include "internal/x509_local.h"
 
 #define X509_OBJS_HT_BUCKETS 512
 

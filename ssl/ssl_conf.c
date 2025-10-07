@@ -15,8 +15,10 @@
 #include <openssl/objects.h>
 #include <openssl/decoder.h>
 #include <openssl/core_dispatch.h>
+#include <openssl/x509v3.h>
 #include "internal/nelem.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/x509_local.h"
 
 /*
  * structure holding name tables. This is used for permitted elements in lists
@@ -46,6 +48,10 @@ typedef struct {
 #define SSL_TFLAG_CERT      0x100
 /* Flag is for verify mode */
 #define SSL_TFLAG_VFY       0x200
+/* Flag is for certificate validation */
+#define SSL_TFLAG_CERTVAL   0x300
+/* Flag is for hostname verification */
+#define SSL_TFLAG_HOSTVER   0x400
 /* Option can only be used for clients */
 #define SSL_TFLAG_CLIENT SSL_CONF_FLAG_CLIENT
 /* Option can only be used for servers */
@@ -70,6 +76,12 @@ typedef struct {
 #define SSL_FLAG_VFY_SRV(str, flag) \
         {str, (int)(sizeof(str) - 1), SSL_TFLAG_VFY | SSL_TFLAG_SERVER, flag}
 
+#define SSL_FLAG_CERTVAL(str, flag) \
+        {str, (int)(sizeof(str) - 1), SSL_TFLAG_CERTVAL | SSL_TFLAG_BOTH, flag}
+
+#define SSL_FLAG_HOSTVER(str, flag) \
+        {str, (int)(sizeof(str) - 1), SSL_TFLAG_HOSTVER | SSL_TFLAG_BOTH, flag}
+
 /*
  * Opaque structure containing SSL configuration context.
  */
@@ -88,6 +100,8 @@ struct ssl_conf_ctx_st {
     SSL *ssl;
     /* Pointer to SSL or SSL_CTX options field or NULL if none */
     uint64_t *poptions;
+    /* Pointer to SSL_STORE_CTX flags or NULL if none */
+    uint64_t *pcertval_flags;
     /* Certificate filenames for each type */
     char **cert_filename;
     /* Number of elements in the cert_filename array */
@@ -96,6 +110,8 @@ struct ssl_conf_ctx_st {
     uint32_t *pcert_flags;
     /* Pointer to SSL or SSL_CTX verify_mode or NULL if none */
     uint32_t *pvfy_flags;
+    /* Pointer to X509_VERIFY_PARAM_ID flags or NULL if none */
+    uint32_t *phostver_flags;
     /* Pointer to SSL or SSL_CTX min_version field or NULL if none */
     int *min_version;
     /* Pointer to SSL or SSL_CTX max_version field or NULL if none */
@@ -133,6 +149,17 @@ static void ssl_set_option(SSL_CONF_CTX *cctx, unsigned int name_flags,
         else
             *cctx->poptions &= ~option_value;
         return;
+
+    case SSL_TFLAG_CERTVAL:
+        if (onoff)
+            *cctx->pcertval_flags |= option_value;
+        else
+            *cctx->pcertval_flags &= ~option_value;
+        return;
+
+    case SSL_TFLAG_HOSTVER:
+        pflags =  cctx->phostver_flags;
+        break;
 
     default:
         return;
@@ -436,6 +463,157 @@ static int cmd_VerifyMode(SSL_CONF_CTX *cctx, const char *value)
     cctx->tbl = ssl_vfy_list;
     cctx->ntbl = OSSL_NELEM(ssl_vfy_list);
     return CONF_parse_list(value, ',', 1, ssl_set_option_list, cctx);
+}
+
+static int cmd_CertValidation(SSL_CONF_CTX *cctx, const char *value)
+{
+    static const ssl_flag_tbl ssl_certval_list[] = {
+        SSL_FLAG_CERTVAL("UseCheckTime", X509_V_FLAG_USE_CHECK_TIME),
+        SSL_FLAG_CERTVAL("CRLCheck", X509_V_FLAG_CRL_CHECK),
+        SSL_FLAG_CERTVAL("CRLCheckAll", X509_V_FLAG_CRL_CHECK_ALL),
+        SSL_FLAG_CERTVAL("IgnoreCritical", X509_V_FLAG_IGNORE_CRITICAL),
+        SSL_FLAG_CERTVAL("Strict", X509_V_FLAG_X509_STRICT),
+        SSL_FLAG_CERTVAL("AllowProxyCerts", X509_V_FLAG_ALLOW_PROXY_CERTS),
+        SSL_FLAG_CERTVAL("PolicyCheck", X509_V_FLAG_POLICY_CHECK),
+        SSL_FLAG_CERTVAL("ExplicitPolicy", X509_V_FLAG_EXPLICIT_POLICY),
+        SSL_FLAG_CERTVAL("InhibitAnyPolicy", X509_V_FLAG_INHIBIT_ANY),
+        SSL_FLAG_CERTVAL("InhibitPolicyMapping", X509_V_FLAG_INHIBIT_MAP),
+        SSL_FLAG_CERTVAL("NotifyPolicy", X509_V_FLAG_NOTIFY_POLICY),
+        SSL_FLAG_CERTVAL("ExtendedCRLFeatures", X509_V_FLAG_EXTENDED_CRL_SUPPORT),
+        SSL_FLAG_CERTVAL("EnableDeltaCRLs", X509_V_FLAG_USE_DELTAS),
+        SSL_FLAG_CERTVAL("CheckSelfSignedSign", X509_V_FLAG_CHECK_SS_SIGNATURE),
+        SSL_FLAG_CERTVAL("SuiteB128Only", X509_V_FLAG_SUITEB_128_LOS_ONLY),
+        SSL_FLAG_CERTVAL("SuiteB192", X509_V_FLAG_SUITEB_192_LOS),
+        SSL_FLAG_CERTVAL("SuiteB128", X509_V_FLAG_SUITEB_128_LOS),
+        SSL_FLAG_CERTVAL("PartialChain", X509_V_FLAG_PARTIAL_CHAIN),
+        SSL_FLAG_CERTVAL("NoCheckTime", X509_V_FLAG_NO_CHECK_TIME),
+    };
+    if (value == NULL)
+        return -3;
+    cctx->tbl = ssl_certval_list;
+    cctx->ntbl = (sizeof(ssl_certval_list)/sizeof(ssl_certval_list[0]));
+    return CONF_parse_list(value, ',', 1, ssl_set_option_list, cctx);
+}
+
+static int cmd_SetValidHost(SSL_CONF_CTX *cctx, const char *value)
+{
+    int rv = 0;
+    X509_VERIFY_PARAM *param = NULL;
+    if (cctx->ssl)
+        param = cctx->ssl->param;
+    else if (cctx->ctx)
+        param = cctx->ctx->param;
+    if( param != NULL )
+        rv = X509_VERIFY_PARAM_set1_host(param, value, 0);
+    return rv > 0;
+}
+
+static int cmd_AddValidHost(SSL_CONF_CTX *cctx, const char *value)
+{
+    int rv = 0;
+    X509_VERIFY_PARAM *param = NULL;
+    if (cctx->ssl)
+        param = cctx->ssl->param;
+    else if (cctx->ctx)
+        param = cctx->ctx->param;
+    if( param != NULL )
+        rv = X509_VERIFY_PARAM_add1_host(param, value, 0);
+    return rv > 0;
+}
+
+static int cmd_SetValidIP(SSL_CONF_CTX *cctx, const char *value)
+{
+    int rv = 0;
+    X509_VERIFY_PARAM *param = NULL;
+    if (cctx->ssl)
+        param = cctx->ssl->param;
+    else if (cctx->ctx)
+        param = cctx->ctx->param;
+    if( param != NULL )
+        rv = X509_VERIFY_PARAM_set1_ip_asc(param, value);
+    return rv > 0;
+}
+
+static int cmd_SetValidHostOrIP(SSL_CONF_CTX *cctx, const char *value)
+{
+    int rv = 0;
+    X509_VERIFY_PARAM *param = NULL;
+    if (cctx->ssl)
+        param = cctx->ssl->param;
+    else if (cctx->ctx)
+        param = cctx->ctx->param;
+    if( param != NULL ) {
+        rv = X509_VERIFY_PARAM_set1_ip_asc(param, value);
+        if( rv == 0 ) {
+            rv = X509_VERIFY_PARAM_set1_host(param, value, 0);
+        }
+    }
+    return rv > 0;
+}
+
+static int cmd_SetValidFlags(SSL_CONF_CTX *cctx, const char *value)
+{
+    static const ssl_flag_tbl ssl_host_flags_list[] = {
+        SSL_FLAG_HOSTVER("AlwaysCheckSubject", X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT),
+        SSL_FLAG_HOSTVER("NoWildcards", X509_CHECK_FLAG_NO_WILDCARDS),
+        SSL_FLAG_HOSTVER("NoPartialWildcards", X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS),
+        SSL_FLAG_HOSTVER("MultiLabelWildcards", X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS),
+        SSL_FLAG_HOSTVER("SingleLabelSubdomains", X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS),
+        SSL_FLAG_HOSTVER("NeverCheckSubject", X509_CHECK_FLAG_NEVER_CHECK_SUBJECT),
+    };
+    if (value == NULL)
+        return -3;
+    cctx->tbl = ssl_host_flags_list;
+    cctx->ntbl = (sizeof(ssl_host_flags_list)/sizeof(ssl_host_flags_list[0]));
+    return CONF_parse_list(value, ',', 1, ssl_set_option_list, cctx);
+}
+
+static int do_add(SSL_CONF_CTX *cctx,
+                    const char *CAfile, const char *CApath)
+{
+    X509_STORE **st;
+    SSL_CTX *ctx;
+    OSSL_LIB_CTX *libctx = NULL;
+    const char *propq = NULL;
+
+    if (cctx->ctx != NULL) {
+        ctx = cctx->ctx;
+    } else if (cctx->ssl != NULL) {
+        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
+
+        if (sc == NULL)
+            return 0;
+
+        ctx = cctx->ssl->ctx;
+    } else {
+        return 1;
+    }
+    if (ctx != NULL) {
+        libctx = ctx->libctx;
+        propq = ctx->propq;
+    }
+    st = &ctx->cert_store;
+    if (*st == NULL) {
+        *st = X509_STORE_new();
+        if (*st == NULL)
+            return 0;
+    }
+
+    if (CAfile != NULL && !X509_STORE_load_file_ex(*st, CAfile, libctx, propq))
+        return 0;
+    if (CApath != NULL && !X509_STORE_load_path(*st, CApath))
+        return 0;
+    return 1;
+}
+
+static int cmd_AddCAPath(SSL_CONF_CTX *cctx, const char *value)
+{
+    return do_add(cctx, NULL, value);
+}
+
+static int cmd_AddCAFile(SSL_CONF_CTX *cctx, const char *value)
+{
+    return do_add(cctx, value, NULL);
 }
 
 static int cmd_Certificate(SSL_CONF_CTX *cctx, const char *value)
@@ -785,6 +963,16 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_STRING(MaxProtocol, "max_protocol", 0),
     SSL_CONF_CMD_STRING(Options, NULL, 0),
     SSL_CONF_CMD_STRING(VerifyMode, NULL, 0),
+    SSL_CONF_CMD_STRING(CertValidation, NULL, 0),
+    SSL_CONF_CMD_STRING(SetValidFlags, NULL, SSL_CONF_FLAG_CERTIFICATE),
+    SSL_CONF_CMD_STRING(SetValidHost, NULL, SSL_CONF_FLAG_CERTIFICATE),
+    SSL_CONF_CMD_STRING(AddValidHost, NULL, SSL_CONF_FLAG_CERTIFICATE),
+    SSL_CONF_CMD_STRING(SetValidIP, NULL, SSL_CONF_FLAG_CERTIFICATE),
+    SSL_CONF_CMD_STRING(SetValidHostOrIP, NULL, SSL_CONF_FLAG_CERTIFICATE),
+    SSL_CONF_CMD(AddCAPath, "addCApath", SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_DIR),
+    SSL_CONF_CMD(AddCAFile, "addCAfile", SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_FILE),
     SSL_CONF_CMD(Certificate, "cert", SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
     SSL_CONF_CMD(PrivateKey, "key", SSL_CONF_FLAG_CERTIFICATE,
@@ -1153,6 +1341,8 @@ void SSL_CONF_CTX_set_ssl(SSL_CONF_CTX *cctx, SSL *ssl)
         cctx->max_version = &sc->max_proto_version;
         cctx->pcert_flags = &sc->cert->cert_flags;
         cctx->pvfy_flags = &sc->verify_mode;
+        cctx->pcertval_flags = &ssl->ctx->cert_store->param->flags;
+        cctx->phostver_flags = &ssl->ctx->cert_store->param->hostflags;
         cctx->cert_filename = OPENSSL_zalloc(sc->ssl_pkey_num
                                              * sizeof(*cctx->cert_filename));
         if (cctx->cert_filename != NULL)
@@ -1163,6 +1353,8 @@ void SSL_CONF_CTX_set_ssl(SSL_CONF_CTX *cctx, SSL *ssl)
         cctx->max_version = NULL;
         cctx->pcert_flags = NULL;
         cctx->pvfy_flags = NULL;
+        cctx->pcertval_flags = NULL;
+        cctx->phostver_flags = NULL;
     }
 }
 
@@ -1177,6 +1369,8 @@ void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx)
         cctx->max_version = &ctx->max_proto_version;
         cctx->pcert_flags = &ctx->cert->cert_flags;
         cctx->pvfy_flags = &ctx->verify_mode;
+        cctx->pcertval_flags = &ctx->cert_store->param->flags;
+        cctx->phostver_flags = &ctx->cert_store->param->hostflags;
         cctx->cert_filename = OPENSSL_zalloc((SSL_PKEY_NUM + ctx->sigalg_list_len)
                                              * sizeof(*cctx->cert_filename));
         if (cctx->cert_filename != NULL)
@@ -1187,5 +1381,7 @@ void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx)
         cctx->max_version = NULL;
         cctx->pcert_flags = NULL;
         cctx->pvfy_flags = NULL;
+        cctx->pcertval_flags = NULL;
+        cctx->phostver_flags = NULL;
     }
 }

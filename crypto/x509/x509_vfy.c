@@ -27,7 +27,7 @@
 #include <openssl/core_names.h>
 #include "internal/dane.h"
 #include "crypto/x509.h"
-#include "x509_local.h"
+#include "internal/x509_local.h"
 
 /* CRL score values */
 
