@@ -14189,6 +14189,320 @@ end:
 #endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 }
 
+static int test_ssl_conf_CertValidation(SSL_CONF_CTX *confctx,
+                                        SSL_CTX *ssl_ctx,
+                                        SSL *ssl)
+{
+    int ret = 0;
+    X509_VERIFY_PARAM *param;
+    unsigned long flags;
+
+    if (ssl_ctx != NULL) {
+        param = SSL_CTX_get0_param(ssl_ctx);
+    } else if (ssl != NULL) {
+        param = SSL_get0_param(ssl);
+    } else {
+        goto end;
+    }
+
+    /* Verify that we can set and clear flags using "CertValidation" */
+    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "CertValidation", "UseCheckTime"), 2))
+        goto end;
+
+    flags = X509_VERIFY_PARAM_get_flags(param);
+    if ((flags & X509_V_FLAG_USE_CHECK_TIME) == 0)
+        goto end;
+
+    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "CertValidation", "-UseCheckTime"), 2))
+        goto end;
+
+    flags = X509_VERIFY_PARAM_get_flags(param);
+    if ((flags & X509_V_FLAG_USE_CHECK_TIME) != 0)
+        goto end;
+
+    ret = 1;
+end:
+    return ret;
+}
+
+static int test_ssl_conf_SetValidFlags(SSL_CONF_CTX *confctx,
+                                       SSL_CTX *ssl_ctx,
+                                       SSL *ssl)
+{
+    int ret = 0;
+    X509_VERIFY_PARAM *param;
+    unsigned int flags;
+
+    if (ssl_ctx != NULL) {
+        param = SSL_CTX_get0_param(ssl_ctx);
+    } else if (ssl != NULL) {
+        param = SSL_get0_param(ssl);
+    } else {
+        goto end;
+    }
+
+    /* Verify that we can set and clear flags using "SetValidFlags" */
+    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidFlags", "AlwaysCheckSubject"), 2))
+        goto end;
+
+    flags = X509_VERIFY_PARAM_get_hostflags(param);
+    if ((flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT) == 0)
+        goto end;
+
+    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidFlags", "-AlwaysCheckSubject"), 2))
+        goto end;
+
+    flags = X509_VERIFY_PARAM_get_flags(param);
+    if ((flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT) != 0)
+        goto end;
+
+    ret = 1;
+end:
+    return ret;
+}
+
+static int test_ssl_conf_SetValidHost(SSL_CONF_CTX *confctx,
+                                      SSL_CTX *ssl_ctx,
+                                      SSL *ssl)
+{
+    static const char *first_hostname = "host1.openssl.org";
+    static const char *second_hostname = "host2.openssl.org";
+    static const char *third_hostname = "host3.openssl.org";
+    int ret = 0;
+    X509_VERIFY_PARAM *param;
+    char *host;
+
+    if (ssl_ctx != NULL) {
+        param = SSL_CTX_get0_param(ssl_ctx);
+    } else if (ssl != NULL) {
+        param = SSL_get0_param(ssl);
+    } else {
+        goto end;
+    }
+
+    /* Verify that we can set, add, and clear valid hosts using "SetValidHost" and "AddValidHost" */
+    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidHost", first_hostname), 2))
+        goto end;
+
+    host = X509_VERIFY_PARAM_get0_host(param, 0);
+    if (!TEST_str_eq(host, first_hostname))
+        goto end;
+
+    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidHost", second_hostname), 2))
+        goto end;
+
+    host = X509_VERIFY_PARAM_get0_host(param, 0);
+    if (!TEST_str_eq(host, second_hostname))
+        goto end;
+
+    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "AddValidHost", third_hostname), 2))
+        goto end;
+
+    host = X509_VERIFY_PARAM_get0_host(param, 0);
+    if (!TEST_str_eq(host, second_hostname))
+        goto end;
+
+    host = X509_VERIFY_PARAM_get0_host(param, 1);
+    if (!TEST_str_eq(host, third_hostname))
+        goto end;
+
+    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidHost", ""), 2))
+        goto end;
+
+    host = X509_VERIFY_PARAM_get0_host(param, 0);
+    if (!TEST_true(host == NULL))
+        goto end;
+
+    ret = 1;
+end:
+    return ret;
+}
+
+static int test_ssl_conf_SetValidIP(SSL_CONF_CTX *confctx,
+                                    SSL_CTX *ssl_ctx,
+                                    SSL *ssl)
+{
+    static const char *first_ip = "192.168.29.65";
+    static const char *second_ip = "10.10.10.19";
+    int ret = 0;
+    X509_VERIFY_PARAM *param;
+    char *ip_str = NULL;
+
+    if (ssl_ctx != NULL) {
+        param = SSL_CTX_get0_param(ssl_ctx);
+    } else if (ssl != NULL) {
+        param = SSL_get0_param(ssl);
+    } else {
+        goto end;
+    }
+
+    /* Verify that we can set and replace valid IP addresses using "SetValidIP" */
+    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidIP", first_ip), 2))
+        goto end;
+
+    ip_str = X509_VERIFY_PARAM_get1_ip_asc(param);
+    if (!TEST_str_eq(ip_str, first_ip))
+        goto end;
+    OPENSSL_free(ip_str);
+    ip_str = NULL;
+
+    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidIP", second_ip), 2))
+        goto end;
+
+    ip_str = X509_VERIFY_PARAM_get1_ip_asc(param);
+    if (!TEST_str_eq(ip_str, second_ip))
+        goto end;
+
+    ret = 1;
+end:
+    OPENSSL_free(ip_str);
+    return ret;
+}
+
+static int test_ssl_conf_SetValidHostOrIP(SSL_CONF_CTX *confctx,
+                                          SSL_CTX *ssl_ctx,
+                                          SSL *ssl)
+{
+    static const char *first_hostname = "host4.openssl.org";
+    static const char *second_hostname = "host5.openssl.org";
+    static const char *third_hostname = "host6.openssl.org";
+    static const char *first_ip = "192.168.58.5";
+    static const char *second_ip = "10.11.12.13";
+    int ret = 0;
+    X509_VERIFY_PARAM *param;
+    char *host;
+    char *ip_str = NULL;
+
+    if (ssl_ctx != NULL) {
+        param = SSL_CTX_get0_param(ssl_ctx);
+    } else if (ssl != NULL) {
+        param = SSL_get0_param(ssl);
+    } else {
+        goto end;
+    }
+
+    /* Set up some starting values */
+    if (X509_VERIFY_PARAM_set1_host(param, first_hostname, 0) != 1)
+        goto end;
+    if (X509_VERIFY_PARAM_add1_host(param, second_hostname, 0) != 1)
+        goto end;
+    if (X509_VERIFY_PARAM_set1_ip_asc(param, first_ip) != 1)
+        goto end;
+
+    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidHostOrIP", third_hostname), 2))
+        goto end;
+
+    /* There should now be 1 valid hostname, "host6", and the IP should still be "192.168..." */
+    host = X509_VERIFY_PARAM_get0_host(param, 0);
+    if (!TEST_str_eq(host, third_hostname))
+        goto end;
+    host = X509_VERIFY_PARAM_get0_host(param, 1);
+    if (!TEST_str_eq(host, NULL))
+        goto end;
+    ip_str = X509_VERIFY_PARAM_get1_ip_asc(param);
+    if (!TEST_str_eq(ip_str, first_ip))
+        goto end;
+    OPENSSL_free(ip_str);
+    ip_str = NULL;
+
+    /* Reset hostnames */
+    if (X509_VERIFY_PARAM_set1_host(param, first_hostname, 0) != 1)
+        goto end;
+    if (X509_VERIFY_PARAM_add1_host(param, second_hostname, 0) != 1)
+        goto end;
+
+    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidHostOrIP", second_ip), 2))
+        goto end;
+
+    /* There should still be 2 valid hostnames, and the IP should now be "10.11..." */
+    host = X509_VERIFY_PARAM_get0_host(param, 0);
+    if (!TEST_str_eq(host, first_hostname))
+        goto end;
+    host = X509_VERIFY_PARAM_get0_host(param, 1);
+    if (!TEST_str_eq(host, second_hostname))
+        goto end;
+    ip_str = X509_VERIFY_PARAM_get1_ip_asc(param);
+    if (!TEST_str_eq(ip_str, second_ip))
+        goto end;
+
+    ret = 1;
+end:
+    OPENSSL_free(ip_str);
+    return ret;
+}
+
+static int test_ssl_conf(void)
+{
+    int ret = 0;
+    SSL_CTX *ssl_ctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONF_CTX *confctx = NULL;
+
+    /* Test SSL_CONF commands using an SSL_CTX */
+    if (!TEST_ptr(ssl_ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method())))
+        goto end;
+    if (!TEST_ptr(confctx = SSL_CONF_CTX_new()))
+        goto end;
+    SSL_CONF_CTX_set_flags(confctx, SSL_CONF_FLAG_FILE
+                           | SSL_CONF_FLAG_CERTIFICATE
+                           | SSL_CONF_FLAG_SERVER);
+    SSL_CONF_CTX_set_ssl_ctx(confctx, ssl_ctx);
+
+    if (!test_ssl_conf_CertValidation(confctx, ssl_ctx, NULL))
+        goto end;
+
+    if (!test_ssl_conf_SetValidFlags(confctx, ssl_ctx, NULL))
+        goto end;
+
+    if (!test_ssl_conf_SetValidHost(confctx, ssl_ctx, NULL))
+        goto end;
+
+    if (!test_ssl_conf_SetValidIP(confctx, ssl_ctx, NULL))
+        goto end;
+
+    if (!test_ssl_conf_SetValidHostOrIP(confctx, ssl_ctx, NULL))
+        goto end;
+
+    SSL_CONF_CTX_free(confctx);
+    confctx = NULL;
+    SSL_CTX_free(ssl_ctx);
+    ssl_ctx = NULL;
+
+    /* Test SSL_CONF commands using an SSL */
+    if (!TEST_ptr(ssl_ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method())))
+        goto end;
+    if (!TEST_ptr(ssl = SSL_new(ssl_ctx)))
+        goto end;
+    if (!TEST_ptr(confctx = SSL_CONF_CTX_new()))
+        goto end;
+    SSL_CONF_CTX_set_flags(confctx, SSL_CONF_FLAG_FILE
+                           | SSL_CONF_FLAG_CERTIFICATE
+                           | SSL_CONF_FLAG_SERVER);
+    SSL_CONF_CTX_set_ssl(confctx, ssl);
+
+    if (!test_ssl_conf_CertValidation(confctx, NULL, ssl))
+        goto end;
+
+    if (!test_ssl_conf_SetValidFlags(confctx, NULL, ssl))
+        goto end;
+
+    if (!test_ssl_conf_SetValidHost(confctx, NULL, ssl))
+        goto end;
+
+    if (!test_ssl_conf_SetValidIP(confctx, NULL, ssl))
+        goto end;
+
+    if (!test_ssl_conf_SetValidHostOrIP(confctx, NULL, ssl))
+        goto end;
+
+    ret = 1;
+end:
+    SSL_CONF_CTX_free(confctx);
+    SSL_free(ssl);
+    SSL_CTX_free(ssl_ctx);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -14531,6 +14845,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_ssl_set_groups_unsupported_keyshare, 2);
     ADD_TEST(test_ssl_conf_flags);
+    ADD_TEST(test_ssl_conf);
     return 1;
 
 err:
