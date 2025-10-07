@@ -1016,7 +1016,7 @@ static int validate_certifiate_time(const ASN1_TIME *ctm)
  *  (-1, 0, or 1) in *out_comparison.
  */
 static int x509_cmp_time_internal(const ASN1_TIME *ctm, const time_t *cmp_time,
-                                  int* out_comparison)
+                                  int *out_comparison)
 {
     time_t t = cmp_time == NULL ? time(NULL) : *cmp_time;
     int comparison;
