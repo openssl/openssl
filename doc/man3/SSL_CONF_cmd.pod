@@ -378,6 +378,12 @@ These options indicate a file or directory used for building certificate
 chains or verifying certificate chains. These options are only supported
 if certificate operations are permitted.
 
+=item B<AddCAFile>, B<AddCAPath>
+
+These options indicate a file or directory containing trusted certificate
+authorities for validation. These options are only supported
+if certificate operations are permitted.
+
 =item B<RequestCAFile>
 
 This option indicates a file containing a set of certificates in PEM form.
@@ -547,7 +553,7 @@ sure to also leave TLS 1.1 enabled.
 =item B<Options>
 
 The B<value> argument is a comma separated list of various flags to set.
-If a flag string is preceded B<-> it is disabled.
+If a flag string is preceded by B<-> that flag is disabled.
 See the L<SSL_CTX_set_options(3)> function for more details of
 individual options.
 
@@ -691,6 +697,127 @@ to request a certificate post-handshake. Servers only. TLSv1.3 only.
 A file or directory of certificates in PEM format whose names are used as the
 set of acceptable names for client CAs. Servers only. This option is only
 supported if certificate operations are permitted.
+
+=item B<CertValidation>
+
+The B<value> argument is a comma separated list of certificate validation
+flags to set.  If a flag string is preceded by B<-> that flag is disabled.
+See the L<X509_VERIFY_PARAM_set_flags(3)> function for more details of
+individual options.
+
+All supported flags are listed below.
+
+B<UseCheckTime> Equivalent to B<X509_V_FLAG_USE_CHECK_TIME>.
+
+B<CRLCheck> enables CRL checking for the leaf certificate.  Equivalent
+to B<X509_V_FLAG_CRL_CHECK>.
+
+B<CRLCheckAll> enables CRL checking for the entire certificate chain.
+Equivalent to B<X509_V_FLAG_CRL_CHECK_ALL>.
+
+B<IgnoreCritical> disables critical extension checking.  Equivalent to
+B<X509_V_FLAG_IGNORE_CRITICAL>.
+
+B<Strict> disables workarounds for for some broken certificates, and
+strictly applies X509 rules.  Equivalent to B<X509_V_FLAG_X509_STRICT>.
+
+B<AllowProxyCerts> enables proxy certificate verification.  Equivalent
+to B<X509_V_FLAG_ALLOW_PROXY_CERTS>.
+
+B<PolicyCheck> enables certificate policy checking.  Equivalent to
+B<X509_V_FLAG_POLICY_CHECK>.
+
+B<ExplicitPolicy> sets the require explicit policy flag as defined
+in RFC3280.  Equivalent to B<X509_V_FLAG_EXPLICIT_POLICY>.
+
+B<InhibitAnyPolicy> sets the inhibit any policy flag as defined in
+RFC3280.  Equivalent to B<X509_V_FLAG_INHIBIT_ANY>.
+
+B<InhibitPolicyMapping> sets the inhibit policy mapping flag as
+defined in RFC3280.  Equivalent to B<X509_V_FLAG_INHIBIT_MAP>.
+
+B<NotifyPolicy> Equivalent to B<X509_V_FLAG_NOTIFY_POLICY>.
+
+B<ExtendedCRLFeatures> enables additional features such as indirect
+CRLs and CRLs signed by different keys. Equivalent to
+B<X509_V_FLAG_EXTENDED_CRL_SUPPORT>.
+
+B<EnableDeltaCRLs> use delta CRLs to determine certificate status.
+Equivalent to B<X509_V_FLAG_USE_DELTAS>.
+
+B<CheckSelfSignedSign> enables checking the self-signature of the
+last certificate in a chain.  Equivalent to
+B<X509_V_FLAG_CHECK_SS_SIGNATURE>.
+
+B<SuiteB128Only> Equivalent to B<X509_V_FLAG_SUITEB_128_LOS_ONLY>.
+
+B<SuiteB192> Equivalent to B<X509_V_FLAG_SUITEB_192_LOS>.
+
+B<SuiteB128> Equivalent to B<X509_V_FLAG_SUITEB_128_LOS>.
+
+B<PartialChain> causes non-self-signed certificates in the trust
+store to be treated as trust anchors.  Equivalent to
+B<X509_V_FLAG_PARTIAL_CHAIN>.
+
+B<NoCheckTime> suppresses checking the validity period of certificate
+and CRLs.  Equivalent to B<X509_V_FLAG_NO_CHECK_TIME>.
+
+=item B<SetValidFlags>
+
+The B<value> argument is a comma separated list of host validation flags
+to set.  If a flag string is preceded by B<-> that flag is disabled.
+See the L<X509_VERIFY_PARAM_set_hostflags(3)> function for more details of
+individual options.
+
+All supported flags are listed below.
+
+B<AlwaysCheckSubject> causes certificate DNS hostname verification to
+always consider the subject DN.  Equivalent to
+B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT>.
+
+B<NoWildcards> disables wildcard expansion when checking a DNS hostname.
+Equivalent to B<X509_CHECK_FLAG_NO_WILDCARDS>.
+
+B<NoPartialWildcards> suppresses support for "*" as wildcard pattern in
+labels that have a prefix or suffix, such as: "www*" or "*www"
+when checking a DNS hostname.  Equivalent to
+B<X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS>.
+
+B<MultiLabelWildcards> allows a "*" that constitutes the complete
+label of a DNS name (e.g. "*.example.com") to match more than one
+label in name when checking a DNS hostname.  Equivalent to
+B<X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS>.
+
+B<SingleLabelSubdomains> restricts name values which start with ".",
+that would otherwise match any sub-domain in the peer certificate, to
+only match direct child sub-domains when checking a DNS hostname.
+Equivalent to B<X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS>.
+
+B<NeverCheckSubject> causes certificate hostname verification to
+never consider the subject DN.  Equivalent to
+B<X509_CHECK_FLAG_NEVER_CHECK_SUBJECT>.
+
+=item B<SetValidHost>
+
+The B<value> argument is the expected DNS hostname to use for certificate
+verification.  Any previous value is cleared.
+
+=item B<AddValidHost>
+
+The B<value> argument is an expected DNS hostname to use for certificate
+verification, in addition to any previously set value.
+
+=item B<SetValidIP>
+
+The B<value> argument is the expected IPv4 or IPv6 address to use for
+certificate verification.  Any previous value is cleared.
+
+=item B<SetValidHostOrIP>
+
+The B<value> argument is the expected DNS hostname, IPv4 address, or IPv6
+address to use for certificate verification.  If it is a hostname, any
+previous hostname is cleared.  If it is an IP address, any previous IP
+address is cleared.
 
 =back
 
