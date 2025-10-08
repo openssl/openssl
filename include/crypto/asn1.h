@@ -149,4 +149,6 @@ X509_ALGOR *ossl_X509_ALGOR_from_nid(int nid, int ptype, void *pval);
 
 void ossl_asn1_string_set_bits_left(ASN1_STRING *str, unsigned int num);
 
+ASN1_TIME *ossl_asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type);
+
 #endif /* ndef OSSL_CRYPTO_ASN1_H */

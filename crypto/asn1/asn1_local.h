@@ -90,8 +90,6 @@ int ossl_c2i_uint64_int(uint64_t *ret, int *neg, const unsigned char **pp,
                         long len);
 int ossl_i2c_uint64_int(unsigned char *p, uint64_t r, int neg);
 
-ASN1_TIME *ossl_asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type);
-
 int ossl_asn1_item_ex_new_intern(ASN1_VALUE **pval, const ASN1_ITEM *it,
                                  OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_asn1_time_time_t_to_tm(const time_t *time, struct tm *out_tm);

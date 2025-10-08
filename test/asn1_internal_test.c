@@ -220,6 +220,94 @@ static int test_obj_create_once(const char *oid, const char *sn, const char *ln)
     return 1;
 }
 
+static int test_asn1_time_conversion(char *time_string, const char *file,
+                                     int line)
+{
+    int ret = 0;
+    int is_utc = 0;
+    struct tm tm;
+    ASN1_TIME *asn1_time = NULL;
+    ASN1_TIME *result = NULL;
+
+    if (!TEST_ptr(asn1_time = ASN1_TIME_new()))
+        goto err;
+    if (!TEST_true(ASN1_TIME_set_string(asn1_time, time_string)))
+        goto err;
+    if (!TEST_true(ASN1_TIME_to_tm(asn1_time, &tm)))
+        goto err;
+    is_utc = (tm.tm_year >= 50 && tm.tm_year <= 1949);
+    if (is_utc) {
+        /* our original string could have been provided as gen, or utc */
+        if (strlen(time_string) == 13) {
+            if (!TEST_ptr(result = ossl_asn1_time_from_tm(result, &tm,
+                                                          V_ASN1_UNDEF)))
+                goto err;
+        } else {
+            if (!TEST_ptr(result
+                          = ossl_asn1_time_from_tm(result, &tm,
+                                                   V_ASN1_GENERALIZEDTIME)))
+                goto err;
+        }
+    } else {
+        if (!TEST_ptr(result
+                      = ossl_asn1_time_from_tm(result, &tm,
+                                               V_ASN1_GENERALIZEDTIME)))
+            goto err;
+    }
+    if (!TEST_true((strcmp(time_string,
+                           (const char *)ASN1_STRING_get0_data(result))
+                    == 0))) {
+        TEST_info("Expected time: %s, Got time: %s\n", time_string,
+                  ASN1_STRING_get0_data(result));
+        goto err;
+    }
+
+    ret = 1;
+
+ err:
+    if (!ret)
+        TEST_info("Failed to convert time %s at %s:%d\n", time_string, file, line);
+    ASN1_STRING_free(asn1_time);
+    ASN1_STRING_free(result);
+    return ret;
+}
+
+/*
+ * These should not go through time_t so they should work on any
+ * platform.
+ */
+static int test_asn1_time_tm_conversions(void)
+{
+    int fails = 0;
+
+    fails += !test_asn1_time_conversion("00000101000000Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("10000101000000Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("16001231235959Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("16010101000000Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("700101000000Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("19691231235959Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("691231235959Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("19700101000000Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("700101000000Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("20000101000000Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("20380119031407Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("20380119031408Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("20380119031409Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("21060207062814Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("21060207062815Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("21060207062816Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("30000101000000Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("40000101000000Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("50000101000000Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("60000101000000Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("70000101000000Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("80000101000000Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("90000101000000Z", __FILE__, __LINE__);
+    fails += !test_asn1_time_conversion("99991231235959Z", __FILE__, __LINE__);
+
+    return fails == 0;
+}
+
 static int test_obj_create(void)
 {
 /* Stolen from evp_extra_test.c */
@@ -466,5 +554,6 @@ int setup_tests(void)
     ADD_TEST(test_obj_create);
     ADD_TEST(test_obj_nid_undef);
     ADD_TEST(posix_time_test);
+    ADD_TEST(test_asn1_time_tm_conversions);
     return 1;
 }
