@@ -21,34 +21,13 @@
 #ifndef OPENSSL_NO_STDIO
 #include <stdio.h>
 #endif
-#include <openssl/opensslconf.h>
 #include <openssl/types.h>
 #include <openssl/crypto.h>
 #include <openssl/bnerr.h>
+#include <openssl/bn_limbs.h>
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-/*
- * 64-bit processor with LP64 ABI
- */
-#ifdef SIXTY_FOUR_BIT_LONG
-typedef unsigned long BN_ULONG;
-#define BN_BYTES 8
-#endif
-
-/*
- * 64-bit processor other than LP64 ABI
- */
-#ifdef SIXTY_FOUR_BIT
-typedef unsigned long long BN_ULONG;
-#define BN_BYTES 8
-#endif
-
-#ifdef THIRTY_TWO_BIT
-typedef unsigned int BN_ULONG;
-#define BN_BYTES 4
 #endif
 
 #define BN_BITS2 (BN_BYTES * 8)
