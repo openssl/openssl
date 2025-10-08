@@ -690,7 +690,7 @@ struct t {
 };
 ```
 
-Some attention must be payed to how it's arranged in memory.  It's debated
+Some attention must be paid to how it's arranged in memory.  It's debated
 whether the offset of a flexible array member's offset from the start of the
 `struct` is set to be before or after the `struct`'s end padding, i.e. whether
 `sizeof(struct t) == offsetof(struct t, c)` is true or not in all circumstances.
