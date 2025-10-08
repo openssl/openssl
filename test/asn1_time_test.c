@@ -94,6 +94,26 @@ static const struct TESTDATA_asn1_to_utc asn1_to_utc[] = {
         -1,
     },
     {
+        /* test days out of bound (non leap year)*/
+        "210229005959Z",
+        -1,
+    },
+    {
+        /* test days not out of bound (non leap year) */
+        "210228005959Z",
+        1614473999,
+    },
+    {
+        /* test days not out of bound (leap year)*/
+        "200229005959Z",
+        1582937999,
+    },
+    {
+        /* test days out of bound (leap year)*/
+        "200230005959Z",
+        -1
+    },
+    {
         /* test month out of bound */
         "211328005960Z",
         -1,
