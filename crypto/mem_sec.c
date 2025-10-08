@@ -263,6 +263,8 @@ size_t CRYPTO_secure_used(void)
     size_t ret = 0;
 
 #ifndef OPENSSL_NO_SECURE_MEMORY
+    if (!secure_mem_initialized)
+        return 0;
     if (!CRYPTO_THREAD_read_lock(sec_malloc_lock))
         return 0;
 
@@ -278,6 +280,8 @@ size_t CRYPTO_secure_actual_size(void *ptr)
 #ifndef OPENSSL_NO_SECURE_MEMORY
     size_t actual_size;
 
+    if (!secure_mem_initialized)
+        return 0;
     if (!CRYPTO_THREAD_read_lock(sec_malloc_lock))
         return 0;
     actual_size = sh_actual_size(ptr);
