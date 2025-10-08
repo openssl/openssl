@@ -268,7 +268,8 @@ static CERT_TEST_DATA cert_test_data[] = {
 static int test_a_time(X509_STORE_CTX *ctx, X509 *x509,
                        const int64_t test_time,
                        int64_t notBefore, int64_t notAfter,
-                       int64_t lower_limit, int64_t upper_limit)
+                       int64_t lower_limit, int64_t upper_limit,
+                       const char *file, const int line)
 {
     int expected_value, error, expected_error;
     X509_VERIFY_PARAM *vpm;
@@ -291,8 +292,9 @@ static int test_a_time(X509_STORE_CTX *ctx, X509 *x509,
         struct tm tm;
 
         if (OPENSSL_gmtime(&t, &tm) == NULL) {
-            TEST_info("OPENSSL_gmtime can't handle time of %lld, skipping test",
-                      (long long) test_time);
+            TEST_info("%s:%d - OPENSSL_gmtime can't handle time of %lld, "
+                      "skipping test.",
+                      file, line, (long long) test_time);
             return 0;
         }
     }
@@ -311,8 +313,9 @@ static int test_a_time(X509_STORE_CTX *ctx, X509 *x509,
     vpm = X509_STORE_CTX_get0_param(ctx);
     X509_VERIFY_PARAM_set_time(vpm, test_time);
     if (ossl_x509_check_cert_time(ctx, x509, 0) != expected_value) {
-        TEST_info("ossl_X509_check_cert_time %s unexpectedly when verifying "
-                  "notBefore %lld, notAfter %lld at time %lld\n",
+        TEST_info("%s:%d - ossl_X509_check_cert_time %s unexpectedly when "
+                  "verifying notBefore %lld, notAfter %lld at time %lld\n",
+                  file, line,
                   expected_value ? "failed" : "succeeded",
                   (long long)notBefore, (long long)notAfter,
                   (long long)test_time);
@@ -320,17 +323,19 @@ static int test_a_time(X509_STORE_CTX *ctx, X509 *x509,
     }
     error = 0;
     if (ossl_x509_check_certificate_times(vpm, x509, &error) != expected_value) {
-        TEST_info("ossl_X509_check_certificate_times %s unexpectedly when "
-                  "verifying notBefore %lld, notAfter %lld at time %lld\n",
+        TEST_info("%s:%d - ossl_X509_check_certificate_times %s unexpectedly "
+                  "when verifying notBefore %lld, notAfter %lld at time %lld\n",
+                  file, line,
                   expected_value ? "failed" : "succeeded",
                   (long long)notBefore, (long long)notAfter,
                   (long long)test_time);
         return 1;
     }
     if (error != expected_error) {
-        TEST_info("ossl_X509_check_certificate_times error return was %d, "
-                  "expected %d when verifying notBefore %lld, notAfter %lld "
-                  "at time %lld\n",
+        TEST_info("%s:%d - ossl_X509_check_certificate_times error return was "
+                  "%d, expected %d when verifying notBefore %lld, notAfter "
+                  "%lld at time %lld\n",
+                  file, line,
                   error, expected_error,
                   (long long)notBefore, (long long)notAfter,
                   (long long)test_time);
@@ -429,73 +434,86 @@ static int do_x509_time_tests(CERT_TEST_DATA *tests, size_t ntests,
         /* Test boundaries of NotBefore */
         test_time = tests[i].NotBefore - 1;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = tests[i].NotBefore;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = tests[i].NotBefore + 1;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
-
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         /* Test boundaries of NotAfter */
         test_time = tests[i].NotAfter - 1;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = tests[i].NotAfter;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = tests[i].NotAfter + 1;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
-
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = 1442939232;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = 1443004020;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
-
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = MIN_UTC_TIME;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = MIN_UTC_TIME - 1;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
-
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = MAX_UTC_TIME;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
-
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = MAX_UTC_TIME + 1;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
-
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         /* Test integer value boundaries */
         test_time = INT64_MIN;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = INT32_MIN;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = -1;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = 0;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = 1;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = INT32_MAX;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = UINT32_MAX;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit, upper_limit);
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
         test_time = INT64_MAX;
         failures += test_a_time(ctx, x509, test_time, tests[i].NotBefore,
-                                tests[i].NotAfter, lower_limit,
-                                upper_limit);
+                                tests[i].NotAfter, lower_limit, upper_limit,
+                                __FILE__, __LINE__);
     }
 
     ret = (failures == 0);
