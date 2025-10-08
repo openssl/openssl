@@ -154,4 +154,6 @@ int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
                         char opt, ASN1_TLC *ctx, int depth,
                         OSSL_LIB_CTX *libctx, const char *propq);
 
+ASN1_TIME *ossl_asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type);
+
 #endif /* ndef OSSL_CRYPTO_ASN1_H */
