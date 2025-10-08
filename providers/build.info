@@ -75,9 +75,11 @@ DEPEND[$LIBDEFAULT]=$LIBCOMMON
 # by using the appropriate libraries as source).  Note that for shared
 # libraries, SOURCEd libraries are considered as if they were specified
 # with DEPEND.
-$DEFAULTGOAL=../libcrypto
-SOURCE[$DEFAULTGOAL]=$LIBDEFAULT defltprov.c
-INCLUDE[$DEFAULTGOAL]=implementations/include
+IF[{- !$disabled{'default-provider'} -}]
+  $DEFAULTGOAL=../libcrypto
+  SOURCE[$DEFAULTGOAL]=$LIBDEFAULT defltprov.c
+  INCLUDE[$DEFAULTGOAL]=implementations/include
+ENDIF
 
 #
 # Base provider stuff
