@@ -192,6 +192,9 @@ static void clean_master_key(void *data)
     MASTER_KEY_ENTRY *mkey = data;
     int i;
 
+    if (data == NULL)
+        return;
+
     for (i = 0; i < CRYPTO_THREAD_LOCAL_KEY_MAX; i++) {
         if (mkey[i].ctx_table != NULL)
             clean_master_key_id(&mkey[i]);
@@ -390,6 +393,24 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
      */
     return ossl_sa_CTX_TABLE_ENTRY_set(mkey[id].ctx_table,
                                        (uintptr_t)ctx, data);
+}
+
+void CRYPTO_THREAD_clean_local(void)
+{
+    MASTER_KEY_ENTRY *mkey;
+
+    /*
+     * If we never initialized the master key, there
+     * is no data to clean, so we are done here
+     */
+    if (master_key_init == 0)
+        return;
+
+    mkey = CRYPTO_THREAD_get_local(&master_key);
+    if (mkey != NULL) {
+        clean_master_key(mkey);
+        CRYPTO_THREAD_set_local(&master_key, NULL);
+    }
 }
 
 #ifdef FIPS_MODULE
