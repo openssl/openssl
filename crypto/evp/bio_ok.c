@@ -77,6 +77,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include "internal/endian.h"
+#include "internal/numbers.h"   /* includes SIZE_MAX */
 #include "crypto/evp.h"
 
 static int ok_write(BIO *h, const char *buf, int num);
