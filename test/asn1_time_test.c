@@ -69,6 +69,36 @@ static const struct TESTDATA_asn1_to_utc asn1_to_utc[] = {
         1616893200,
     },
     {
+        /* test seconds out of bound */
+        "210328005960Z",
+        -1,
+    },
+    {
+        /* test minutes out of bound */
+        "210328006059Z",
+        -1,
+    },
+    {
+        /* test hours out of bound */
+        "210328255959Z",
+        -1,
+    },
+    {
+        /* test days out of bound */
+        "210332005959Z",
+        -1,
+    },
+    {
+        /* test days out of bound */
+        "210230005959Z",
+        -1,
+    },
+    {
+        /* test month out of bound */
+        "211328005960Z",
+        -1,
+    },
+    {
         /*
          * Invalid strings should get -1 as a result
          */
