@@ -38,6 +38,13 @@ struct thread_event_handler_st {
 #ifndef FIPS_MODULE
     const void *index;
 #endif
+    /*
+     * prio is an arbitrary uint32_t defining the order in which
+     * cleanup handlers are run.  Higher values get run later than
+     * lower values.  Handlers with the same priority are run in
+     * an unspecified order
+     */
+    uint32_t prio;
     void *arg;
     OSSL_thread_stop_handler_fn handfn;
     THREAD_EVENT_HANDLER *next;
@@ -386,11 +393,13 @@ static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
 #endif
 }
 
-int ossl_init_thread_start(const void *index, void *arg,
-                           OSSL_thread_stop_handler_fn handfn)
+int ossl_init_thread_start_prio(const void *index, void *arg,
+                           OSSL_thread_stop_handler_fn handfn, uint32_t prio)
 {
     THREAD_EVENT_HANDLER **hands;
     THREAD_EVENT_HANDLER *hand;
+    THREAD_EVENT_HANDLER *prev, *idx;
+    int entry_count = 0;
     OSSL_LIB_CTX *ctx = NULL;
 #ifdef FIPS_MODULE
     /*
@@ -424,14 +433,47 @@ int ossl_init_thread_start(const void *index, void *arg,
         return 0;
 
     hand->handfn = handfn;
+    hand->prio = prio;
     hand->arg = arg;
 #ifndef FIPS_MODULE
     hand->index = index;
 #endif
-    hand->next = *hands;
-    *hands = hand;
+
+    /*
+     * We need to do an ordered insert here, with entries at a higher
+     * priority value appearing later in the list
+     */
+    prev = NULL;
+    idx = *hands;
+    while (idx != NULL) {
+        entry_count++;
+        if (idx->prio <= hand->prio) {
+            prev = idx;
+            idx = idx->next;
+        } else {
+            break;
+        }
+    }
+    if (entry_count == 0) {
+        hand->next = *hands;
+        *hands = hand;
+    } else {
+        if (prev == NULL) {
+            hand->next = *hands;
+            *hands = hand;
+        } else {
+            prev->next = hand;
+            hand->next = idx;
+        }
+    }
 
     return 1;
+}
+
+int ossl_init_thread_start(const void *index, void *arg,
+                           OSSL_thread_stop_handler_fn handfn)
+{
+    return ossl_init_thread_start_prio(index, arg, handfn, 0);
 }
 
 #ifndef FIPS_MODULE
