@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 206;
+plan tests => 212;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -595,6 +595,23 @@ ok(!verify("ee-cert-policies-bad", "", ["root-cert"], ["ca-pol-cert"],
            "-policy_check", "-policy", "1.3.6.1.4.1.16604.998855.1",
            "-explicit_policy"),
    "Bad certificate policy");
+
+# Verify Validity Period Boundaries with -attime
+# ee-expired2 Not Before: Sep 18 14:37:57 2025 GMT -- 1758206277
+#              Not After: Sep 16 14:37:57 2035 GMT -- 2073566277
+ok(!verify("ee-expired2", "", ["root-cert"], ["ca-cert"], "-attime",
+           "1758206276"), "Certificate invalid at time 1758206276");
+ok(verify("ee-expired2", "", ["root-cert"], ["ca-cert"], "-attime",
+          "1758206277"), "Certificate valid at time 1758206277");
+ok(verify("ee-expired2", "", ["root-cert"], ["ca-cert"], "-attime",
+          "1758206278"), "Certificate valid at time 1758206278");
+ok(verify("ee-expired2", "", ["root-cert"], ["ca-cert"], "-attime",
+          "2073566276"), "Certificate valid at time 2073566276");
+ok(verify("ee-expired2", "", ["root-cert"], ["ca-cert"], "-attime",
+          "2073566277"), "Certificate valid at time 2073566277");
+ok(!verify("ee-expired2", "", ["root-cert"], ["ca-cert"], "-attime",
+           "2073566278"), "Certificate invalid at time 2073566278");
+
 
 # CAstore option
 my $rootcertname = "root-cert";
