@@ -452,6 +452,7 @@ my @disablables = (
     "crypto-mdebug",
     "allocfail-tests",
     "ct",
+    "default-fallback-provider", # Don't make the default provider a fallback
     "default-thread-pool",
     "demos",
     "h3demo",

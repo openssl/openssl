@@ -17,11 +17,18 @@ OSSL_provider_init_fn ossl_fips_intern_provider_init;
 #ifdef STATIC_LEGACY
 OSSL_provider_init_fn ossl_legacy_provider_init;
 #endif
+
+#ifndef OPENSSL_NO_DEFAULT_FALLBACK_PROVIDER
+# define DEFAULT_FALLBACK 1
+#else
+# define DEFAULT_FALLBACK 0
+#endif
+
 const OSSL_PROVIDER_INFO ossl_predefined_providers[] = {
 #ifdef FIPS_MODULE
     { "fips", NULL, ossl_fips_intern_provider_init, NULL, 1 },
 #else
-    { "default", NULL, ossl_default_provider_init, NULL, 1 },
+    { "default", NULL, ossl_default_provider_init, NULL, DEFAULT_FALLBACK },
 # ifdef STATIC_LEGACY
     { "legacy", NULL, ossl_legacy_provider_init, NULL, 0 },
 # endif
