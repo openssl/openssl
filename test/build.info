@@ -1038,6 +1038,11 @@ IF[{- !$disabled{tests} -}]
       DEPEND[rsa_x931_test]=../libcrypto.a libtestutil.a
     ENDIF
 
+    PROGRAMS{noinst}=fn_internal_test
+    SOURCE[fn_internal_test]=fn_internal_test.c
+    INCLUDE[fn_internal_test]=.. ../include ../crypto/fn ../apps/include
+    DEPEND[fn_internal_test]=../libcrypto.a libtestutil.a
+
     SOURCE[bn_internal_test]=bn_internal_test.c
     INCLUDE[bn_internal_test]=.. ../include ../crypto/bn ../apps/include
     DEPEND[bn_internal_test]=../libcrypto.a libtestutil.a
