@@ -571,7 +571,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
         }
 
         /* Message sequence number can only be 0 or 1 */
-        if (msgseq > 2) {
+        if (msgseq > 1) {
             ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_SEQUENCE_NUMBER);
             goto end;
         }
