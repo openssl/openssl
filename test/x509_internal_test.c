@@ -269,7 +269,7 @@ static int test_a_time(X509_STORE_CTX *ctx, X509 *x509,
                        const int64_t test_time,
                        int64_t notBefore, int64_t notAfter,
                        int64_t lower_limit, int64_t upper_limit,
-                       const char* file, const int line)
+                       const char *file, const int line)
 {
     int expected_value, error, expected_error;
     X509_VERIFY_PARAM *vpm;
