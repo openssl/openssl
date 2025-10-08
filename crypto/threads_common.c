@@ -126,6 +126,11 @@ typedef struct master_key_entry {
     SPARSE_ARRAY_OF(CTX_TABLE_ENTRY) *ctx_table;
 } MASTER_KEY_ENTRY;
 
+typedef struct master_key_st {
+    int cleanup_added;
+    MASTER_KEY_ENTRY entries[CRYPTO_THREAD_LOCAL_KEY_MAX];
+} MASTER_KEY;
+
 /**
  * @brief holds our per thread data with the operating system
  *
@@ -189,14 +194,17 @@ static void clean_master_key_id(MASTER_KEY_ENTRY *entry)
  */
 static void clean_master_key(void *data)
 {
-    MASTER_KEY_ENTRY *mkey = data;
+    MASTER_KEY *mkey = data;
     int i;
 
+    if (mkey == NULL)
+        return;
     for (i = 0; i < CRYPTO_THREAD_LOCAL_KEY_MAX; i++) {
-        if (mkey[i].ctx_table != NULL)
-            clean_master_key_id(&mkey[i]);
+        if (mkey->entries[i].ctx_table != NULL)
+            clean_master_key_id(&mkey->entries[i]);
     }
     OPENSSL_free(mkey);
+    CRYPTO_THREAD_set_local(&master_key, NULL);
 }
 
 /**
@@ -211,18 +219,14 @@ static void clean_master_key(void *data)
  */
 static void init_master_key(void)
 {
+
     /*
-     * Note: We assign a cleanup function here, which is atypical for
-     * uses of CRYPTO_THREAD_init_local.  This is because, nominally
-     * we expect that the use of ossl_init_thread_start will be used
-     * to notify openssl of exiting threads.  However, in this case
-     * we want the metadata for this interface (the sparse arrays) to
-     * stay valid until the thread actually exits, which is what the
-     * clean_master_key function does.  Data held in the sparse arrays
-     * (that is assigned via CRYPTO_THREAD_set_local_ex), are still expected
-     * to be cleaned via the ossl_init_thread_start/stop api.
+     * Init our master key.
+     * Threads which use this key clean their data
+     * via a cleanup handler in CRYPTO_THREAD_set_local_ex when they first
+     * allocate the sparse array for that thread associated with the key.
      */
-    if (!CRYPTO_THREAD_init_local(&master_key, clean_master_key))
+    if (!CRYPTO_THREAD_init_local(&master_key, NULL))
         return;
 
     /*
@@ -254,7 +258,7 @@ static void init_master_key(void)
  */
 void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ctx)
 {
-    MASTER_KEY_ENTRY *mkey;
+    MASTER_KEY *mkey;
     CTX_TABLE_ENTRY ctxd;
 
     ctx = (ctx == CRYPTO_THREAD_NO_CONTEXT) ? NULL : ossl_lib_ctx_get_concrete(ctx);
@@ -287,7 +291,7 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
      * Get the specific data entry in the master key
      * table for the key id we are searching for
      */
-    if (mkey[id].ctx_table == NULL)
+    if (mkey->entries[id].ctx_table == NULL)
         return NULL;
 
     /*
@@ -298,13 +302,21 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
      * the pointer to a unitptr_t, we can use that as an ordinal index into
      * the sparse array.
      */
-    ctxd = ossl_sa_CTX_TABLE_ENTRY_get(mkey[id].ctx_table, (uintptr_t)ctx);
+    ctxd = ossl_sa_CTX_TABLE_ENTRY_get(mkey->entries[id].ctx_table, (uintptr_t)ctx);
 
     /*
      * If we find an entry for the passed in context, return its data pointer
      */
     return ctxd;
 }
+
+#ifndef FIPS_MODULE
+static void thread_stop_clear_mkey(void *arg)
+{
+   MASTER_KEY *mkey = CRYPTO_THREAD_get_local(&master_key); 
+   clean_master_key(mkey);
+}
+#endif
 
 /**
  * @brief Associates context-specific data with a thread-local key.
@@ -333,7 +345,8 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
 int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
                                OSSL_LIB_CTX *ctx, void *data)
 {
-    MASTER_KEY_ENTRY *mkey;
+    MASTER_KEY *mkey;
+    int ret = 0;
 
     ctx = (ctx == CRYPTO_THREAD_NO_CONTEXT) ? NULL : ossl_lib_ctx_get_concrete(ctx);
     /*
@@ -355,10 +368,10 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
         /*
          * we didn't find one, but that's ok, just initialize it now
          */
-        mkey = OPENSSL_calloc(CRYPTO_THREAD_LOCAL_KEY_MAX,
-                              sizeof(MASTER_KEY_ENTRY));
+        mkey = OPENSSL_zalloc(sizeof(MASTER_KEY));
         if (mkey == NULL)
             return 0;
+
         /*
          * make sure to assign it to our master key thread-local storage
          */
@@ -366,18 +379,19 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
             OPENSSL_free(mkey);
             return 0;
         }
+
     }
 
     /*
      * Find the entry that we are looking for using our id index
      */
-    if (mkey[id].ctx_table == NULL) {
+    if (mkey->entries[id].ctx_table == NULL) {
 
         /*
          * Didn't find it, that's ok, just add it now
          */
-        mkey[id].ctx_table = ossl_sa_CTX_TABLE_ENTRY_new();
-        if (mkey[id].ctx_table == NULL)
+        mkey->entries[id].ctx_table = ossl_sa_CTX_TABLE_ENTRY_new();
+        if (mkey->entries[id].ctx_table == NULL)
             return 0;
     }
 
@@ -388,8 +402,39 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
      *
      * Assign to the entry in the table so that we can find it later
      */
-    return ossl_sa_CTX_TABLE_ENTRY_set(mkey[id].ctx_table,
-                                       (uintptr_t)ctx, data);
+    ret = ossl_sa_CTX_TABLE_ENTRY_set(mkey->entries[id].ctx_table,
+                                      (uintptr_t)ctx, data);
+
+    /*
+     * This is done so that on library cleanup, we ensure that thread local storage for our
+     * master key is deallocated - i.e. like other thread local storage that uses system level keys,
+     * we want to have zero allocated heap after OPENSSL_cleanup is called.
+     * Note we only do this for the non-fips build case, as FIPS Thread local storage is reaped via
+     * CRYPTO_THREAD_clean_for_fips, so we don't need to worry about it here.
+     * But we need to be very careful about a few things:
+     * 1) We need to only call this at the end of this function, and only if we allocated a new
+     *    mkey.  The latter constraint is because we don't want to register a new thread cleanup
+     *    routine when we allocate the mkey, to avoid multiple cleanup handler.  The latter
+     *    is because calling this function may recurse back to here, as this function calls
+     *    CRYPTO_THREAD_set_local_ex(TEVENT_KEY).  Calling this right before we return ensures
+     *    that any such recursion will find the key that we set here, and not loop forever.
+     *
+     * 2) We need to call this at the maximum loweset priority (i.e. this cleanup handler MUST
+     *    run last in our list.  This is done so that every other cleanup handler has an opportunity
+     *    to run (and consequently find keys that we store in the mkey sparse array to free).  If
+     *    this handler runs before any other, then we remove the sparse array that stores those keys
+     *    and subsequent handlers don't find their thread local storage data pointers to free, ergo
+     *    we leak memory.  So we set this at the lowest possible priority (UINT_MAX) to ensure it
+     *    runs last.
+     */
+#ifndef FIPS_MODULE
+    if (mkey->cleanup_added == 0) {
+        ossl_init_thread_start_prio(NULL, NULL, thread_stop_clear_mkey, UINT_MAX);
+        mkey->cleanup_added = 1;
+    }
+#endif
+
+    return ret;
 }
 
 #ifdef FIPS_MODULE
