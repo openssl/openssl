@@ -28,6 +28,8 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
 int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
                                OSSL_LIB_CTX *ctx, void *data);
 
+void CRYPTO_THREAD_clean_local(void);
+
 # ifdef FIPS_MODULE
 void CRYPTO_THREAD_clean_local_for_fips(void);
 # endif
