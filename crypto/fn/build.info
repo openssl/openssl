@@ -1,0 +1,8 @@
+$LIBCRYPTO=../../libcrypto
+$LIBFIPS=../../providers/libfips.a
+LIBS=$LIBCRYPTO
+
+$COMMON=fn_lib.c
+
+SOURCE[$LIBCRYPTO]=$COMMON
+SOURCE[$LIBFIPS]=$COMMON
