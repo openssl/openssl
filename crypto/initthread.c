@@ -272,6 +272,8 @@ void OPENSSL_thread_stop(void)
 
         init_thread_remove_handlers(hands);
         OPENSSL_free(hands);
+
+        CRYPTO_THREAD_clean_local();
     }
 }
 
