@@ -1079,7 +1079,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
 
     /* mem default */
     mem = nghttp3_mem_default();
-
+    memset(&h3ssl, 0, sizeof(h3ssl));
     for (;;) {
         nghttp3_nv resp[10];
         size_t num_nv;
