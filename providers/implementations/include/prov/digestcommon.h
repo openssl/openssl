@@ -126,6 +126,21 @@ extern "C" {
         { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))set_ctx_params },           \
         PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
+#define IMPLEMENT_digest_functions_with_serialize(                                 \
+    name, CTX, blksize, dgstsize, flags, init, upd, fin,                           \
+    serialize, deserialize)                                                        \
+    static OSSL_FUNC_digest_init_fn name##_internal_init;                          \
+    static int name##_internal_init(void *ctx, const OSSL_PARAM params[])          \
+    {                                                                              \
+        return ossl_prov_is_running() && init(ctx);                                \
+    }                                                                              \
+    PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_START(name, CTX, blksize, dgstsize, flags, \
+        upd, fin),                                                                 \
+        { OSSL_FUNC_DIGEST_INIT, (void (*)(void))name##_internal_init },           \
+        { OSSL_FUNC_DIGEST_SERIALIZE, (void (*)(void))serialize },                 \
+        { OSSL_FUNC_DIGEST_DESERIALIZE, (void (*)(void))deserialize },             \
+        PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
+
 const OSSL_PARAM *ossl_digest_default_gettable_params(void *provctx);
 int ossl_digest_default_get_params(OSSL_PARAM params[], size_t blksz,
     size_t paramsz, unsigned long flags);
