@@ -9,6 +9,9 @@
 #include "ossl-nghttp3.h"
 #include <openssl/err.h>
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 static int done;
 
 static void make_nv(nghttp3_nv *nv, const char *name, const char *value)
@@ -76,15 +79,47 @@ static int on_end_stream(nghttp3_conn *h3conn, int64_t stream_id,
     return 0;
 }
 
+static int try_conn(OSSL_DEMO_H3_CONN *conn, const char *bare_hostname)
+{
+    nghttp3_nv nva[16];
+    size_t num_nv = 0;
+
+    /* Build HTTP headers. */
+    make_nv(&nva[num_nv++], ":method", "GET");
+    make_nv(&nva[num_nv++], ":scheme", "https");
+    make_nv(&nva[num_nv++], ":authority", bare_hostname);
+    make_nv(&nva[num_nv++], ":path", "/");
+    make_nv(&nva[num_nv++], "user-agent", "OpenSSL-Demo/nghttp3");
+
+    /* Submit request. */
+    if (!OSSL_DEMO_H3_CONN_submit_request(conn, nva, num_nv, NULL, NULL)) {
+        ERR_raise_data(ERR_LIB_USER, ERR_R_OPERATION_FAIL,
+                       "cannot submit HTTP/3 request");
+        return 0;
+    }
+
+    /* Wait for request to complete. */
+    done = 0;
+    while (!done)
+        if (!OSSL_DEMO_H3_CONN_handle_events(conn)) {
+            ERR_raise_data(ERR_LIB_USER, ERR_R_OPERATION_FAIL,
+                           "cannot handle events");
+            return 0;
+        }
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     int ret = 1;
+    int ok;
     SSL_CTX *ctx = NULL;
     OSSL_DEMO_H3_CONN *conn = NULL;
-    nghttp3_nv nva[16];
     nghttp3_callbacks callbacks = {0};
-    size_t num_nv = 0;
     const char *addr;
+    char *hostname, *service;
+    BIO_ADDRINFO *bai = NULL;
+    const BIO_ADDRINFO *bai_walk;
 
     /* Check arguments. */
     if (argc < 2) {
@@ -94,6 +129,29 @@ int main(int argc, char **argv)
 
     addr = argv[1];
 
+    hostname = NULL;
+    service = NULL;
+    if (BIO_parse_hostserv(addr, &hostname, &service, 0) != 1) {
+        fprintf(stderr, "usage: %s <host:port>\n", argv[0]);
+        goto err;
+    }
+
+    if (hostname == NULL || service == NULL) {
+        fprintf(stderr, "usage: %s <host:port>\n", argv[0]);
+        goto err;
+    }
+
+    /*
+     * Remember DNS may return more IP addresses (and it typically does these
+     * dual-stack days).
+     */
+    ok = BIO_lookup_ex(hostname, service, BIO_LOOKUP_CLIENT,
+                       0, SOCK_DGRAM, IPPROTO_UDP, &bai);
+    if (ok == 0) {
+        fprintf(stderr, "host %s not found\n", hostname);
+        goto err;
+    }
+ 
     /* Setup SSL_CTX. */
     if ((ctx = SSL_CTX_new(OSSL_QUIC_client_method())) == NULL)
         goto err;
@@ -109,42 +167,44 @@ int main(int argc, char **argv)
     callbacks.recv_data     = on_recv_data;
     callbacks.end_stream    = on_end_stream;
 
-    /* Create connection. */
-    if ((conn = OSSL_DEMO_H3_CONN_new_for_addr(ctx, addr, &callbacks,
-                                               NULL, NULL)) == NULL) {
-        ERR_raise_data(ERR_LIB_USER, ERR_R_OPERATION_FAIL,
-                       "cannot create HTTP/3 connection");
-        goto err;
-    }
-
-    /* Build HTTP headers. */
-    make_nv(&nva[num_nv++], ":method", "GET");
-    make_nv(&nva[num_nv++], ":scheme", "https");
-    make_nv(&nva[num_nv++], ":authority", addr);
-    make_nv(&nva[num_nv++], ":path", "/");
-    make_nv(&nva[num_nv++], "user-agent", "OpenSSL-Demo/nghttp3");
-
-    /* Submit request. */
-    if (!OSSL_DEMO_H3_CONN_submit_request(conn, nva, num_nv, NULL, NULL)) {
-        ERR_raise_data(ERR_LIB_USER, ERR_R_OPERATION_FAIL,
-                       "cannot submit HTTP/3 request");
-        goto err;
-    }
-
-    /* Wait for request to complete. */
-    while (!done)
-        if (!OSSL_DEMO_H3_CONN_handle_events(conn)) {
-            ERR_raise_data(ERR_LIB_USER, ERR_R_OPERATION_FAIL,
-                           "cannot handle events");
-            goto err;
+    /*
+     * Unlike TCP there is no handshake on UDP protocol.
+     * The BIO subsystem uses connect(2) to establish
+     * connection. However connect(2) for UDP does not
+     * perform handshake, so BIO just assumes the remote
+     * service is reachable on the first address returned
+     * by DNS. It's the SSL-handshake itself when QUIC stack
+     * realizes the service is not reachable, so the application
+     * needs to initiate a QUIC connection on the next address
+     * returned by DNS.
+     */
+    for (bai_walk = bai; bai_walk != NULL;
+         bai_walk = BIO_ADDRINFO_next(bai_walk)) {
+        conn = OSSL_DEMO_H3_CONN_new_for_addr(ctx, bai_walk, hostname,
+                                              &callbacks, NULL, NULL);
+        if (conn != NULL) {
+            if (try_conn(conn, addr) == 0) {
+                /*
+                 * Failure, try the next address.
+                 */
+                OSSL_DEMO_H3_CONN_free(conn);
+                conn = NULL;
+                ret = 1;
+            } else {
+                /*
+                 * Success, done.
+                 */
+                ret = 0;
+                break;
+            }
         }
-
-    ret = 0;
+    }
 err:
     if (ret != 0)
         ERR_print_errors_fp(stderr);
 
     OSSL_DEMO_H3_CONN_free(conn);
     SSL_CTX_free(ctx);
+    BIO_ADDRINFO_free(bai);
     return ret;
 }
