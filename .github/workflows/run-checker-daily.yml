@@ -389,3 +389,26 @@ jobs:
         ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
+
+  bn_debug:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - name: config
+      run: ./config --debug --strict-warnings -DBN_DEBUG --banner=Configured -DOPENSSL_NO_SECURE_MEMORY && perl configdata.pm --dump
+    - name: make
+      run: make -j4 # verbose, so no -s here
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: make test
+      run: .github/workflows/make-test
+    - name: save artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@bn_debug"
+        path: artifacts.tar.gz
