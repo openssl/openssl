@@ -784,7 +784,8 @@ typedef enum PROTOCOL_choice {
     PROTO_LMTP,
     PROTO_NNTP,
     PROTO_SIEVE,
-    PROTO_LDAP
+    PROTO_LDAP,
+    PROTO_RPC
 } PROTOCOL_CHOICE;
 
 static const OPT_PAIR services[] = {
@@ -802,6 +803,7 @@ static const OPT_PAIR services[] = {
     {"nntp", PROTO_NNTP},
     {"sieve", PROTO_SIEVE},
     {"ldap", PROTO_LDAP},
+    {"rpc", PROTO_RPC},
     {NULL, 0}
 };
 
@@ -2861,6 +2863,37 @@ int s_client_main(int argc, char **argv)
                 goto shut;
             }
             mbuf_len = 0;
+        }
+        break;
+    case PROTO_RPC:
+        {
+            static const unsigned char rpc_null[] = {
+              /* lastfrag:1 length: 40  xid: 1234  */
+                0x80, 0x00, 0x00, 0x28, 0x01, 0x02, 0x03, 0x04,
+              /* msg_type: CALL         rpcvers: 2 */
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+              /* prog: NFS              prog version: 4 */
+                0x00, 0x01, 0x86, 0xa3, 0x00, 0x00, 0x00, 0x04,
+              /* proc: NULL */
+                0x00, 0x00, 0x00, 0x00,
+              /* auth flavor: AUTH_TLS  auth length: 0 */
+                0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00,
+              /* verf flavor: AUTH_NONE verf length: 0 */
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            };
+            static const unsigned char verf_tls[] = {
+              /* verf flavor: AUTH_NONE verf length: 8 */
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08,
+              /* verf opaque: STARTTLS */
+                0x53, 0x54, 0x41, 0x52, 0x54, 0x54, 0x4c, 0x53,
+            };
+
+            int bytes;
+            BIO_write(sbio, rpc_null, 44);
+            (void)BIO_flush(sbio);
+            bytes = BIO_read(sbio, mbuf, BUFSIZZ);
+            if (bytes != 36 || memcmp(mbuf+16, verf_tls, 16) != 0)
+                goto shut;
         }
         break;
     }
