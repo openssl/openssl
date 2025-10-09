@@ -574,7 +574,9 @@ $TABLE:
 	.quad	0x0001020304050607,0x08090a0b0c0d0e0f
 	.quad	0x0001020304050607,0x08090a0b0c0d0e0f
 	.asciz	"SHA512 block transform for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
+___
 
+$code.=<<___ if ($avx>1);
 # $K512 duplicates data every 16 bytes.
 # The Intel(R) SHA512 implementation requires reads of 32 consecutive bytes.
 .align 64
@@ -620,6 +622,8 @@ ${TABLE}_single:
     .quad 0x3c9ebe0a15c9bebc, 0x431d67c49c100d4c
     .quad 0x4cc5d4becb3e42b6, 0x597f299cfc657e2a
     .quad 0x5fcb6fab3ad6faec, 0x6c44198c4a475817
+___
+$code.=<<___;
 .previous
 ___
 }
@@ -2379,7 +2383,7 @@ ___
 }}
 }}}}}
 
-if ($SZ==8) {
+if ($SZ==8 && $avx>1) {
 $code.=<<___;
 .type ${func}_sha512ext,\@function,3
 .align 64
