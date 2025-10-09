@@ -193,8 +193,7 @@ static int verify_cb_crl(X509_STORE_CTX *ctx, int err)
 /*
  * Inform the verify callback of an error, OCSP-specific variant.
  * It is called also on OCSP response errors, if the
- * X509_V_FLAG_OCSP_RESP_CHECK or X509_V_FLAG_OCSP_RESP_CHECK_ALL flag
- * is set.
+ * X509_V_FLAG_OCSP_RESP_CHECK flag is set.
  * Here, the error depth and certificate are already set, we just specify
  * the error number.
  *
@@ -1134,10 +1133,10 @@ trusted:
 static int check_revocation(X509_STORE_CTX *ctx)
 {
     int i = 0, last = 0, ok = 0;
-    int crl_check_enabled = (ctx->param->flags & (X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL)) != 0;
-    int crl_check_all_enabled = (ctx->param->flags & X509_V_FLAG_CRL_CHECK_ALL) != 0;
-    int ocsp_check_enabled = (ctx->param->flags & (X509_V_FLAG_OCSP_RESP_CHECK | X509_V_FLAG_OCSP_RESP_CHECK_ALL)) != 0;
-    int ocsp_check_all_enabled = (ctx->param->flags & X509_V_FLAG_OCSP_RESP_CHECK_ALL) != 0;
+    int crl_check_enabled = (ctx->param->flags & X509_V_FLAG_CRL_CHECK) != 0;
+    int crl_check_all_enabled = crl_check_enabled && (ctx->param->flags & X509_V_FLAG_CRL_CHECK_ALL) != 0;
+    int ocsp_check_enabled = (ctx->param->flags & X509_V_FLAG_OCSP_RESP_CHECK) != 0;
+    int ocsp_check_all_enabled = ocsp_check_enabled && (ctx->param->flags & X509_V_FLAG_OCSP_RESP_CHECK_ALL) != 0;
 
     if (!crl_check_enabled && !ocsp_check_enabled)
         return 1;
