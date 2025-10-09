@@ -21,6 +21,7 @@
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/posix_time.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 
@@ -264,6 +265,198 @@ static int test_obj_nid_undef(void)
     return 1;
 }
 
+/* 0000-01-01 00:00:00 UTC */
+#define MIN_POSIX_TIME INT64_C(-62167219200)
+/* 9999-12-31 23:59:59 UTC */
+#define MAX_POSIX_TIME INT64_C(253402300799)
+
+extern ASN1_TIME *ossl_asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type);
+
+/* A time_t immune way to get an ASN1_TIME via the same internal conversion */
+static int ossl_asn1_time_from_posix(int64_t posix_time, ASN1_TIME *out_time)
+{
+    struct tm tm;
+
+    if (!OPENSSL_posix_to_tm(posix_time, &tm))
+        return 0;
+    if (out_time == NULL)
+        return 0;
+    return ossl_asn1_time_from_tm(out_time, &tm, V_ASN1_UNDEF) != NULL;
+}
+
+static int test_a_posix_time(int64_t time, struct tm *tm, ASN1_TIME *asn1_time)
+{
+    /*
+     * We test a posix time by converting it to a tm, converting
+     * that to an ASN1_TIME, converting the ASN1_TIME back to a tm,
+     * and then converting the tm back to a posix time.
+     *
+     * We expect all of those steps to fail correctly for values
+     * outside of the valid range, and to work correctly for
+     * values in the range
+     */
+    int expected_to_work = time >= MIN_POSIX_TIME && time <= MAX_POSIX_TIME;
+    time_t time_as_time_t;
+    int ret = 1;
+
+    if (!TEST_int_eq(OPENSSL_posix_to_tm(time, tm), expected_to_work)) {
+        TEST_info("OPENSSL_posix_to_tm %s unexpectedly converting %lld\n",
+                  expected_to_work ? "failed" : "succeeded", (long long) time);
+        ret = 0;
+
+    }
+    if (ret && expected_to_work && OPENSSL_timegm(tm, &time_as_time_t)) {
+        /*
+         * When we got a tm from the previous step, and if
+         * OPENSSL_timegm succeeds, whatever value we are testing fits
+         * in a time_t on this platform, so we can call ASN1_TIME_adj
+         * with it to try to convert to ASN1_TIME. It remains an enduring
+         * tragedy that adj takes time_t and not int64_t.
+         */
+        if ((ASN1_TIME_adj(asn1_time, time_as_time_t, 0, 0) != NULL)
+            == !expected_to_work) {
+            TEST_info("ASN1_TIME_adj %s unexpectedly converting %lld\n",
+                      expected_to_work ? "failed" : "succeeded",
+                      (long long) time);
+            ret = 0;
+        }
+    } else {
+        /*
+         * otherwise we still call the same underlying conversion, but without
+         * passing through time_t, to test the underlying conversion to ASN1_TIME.
+         */
+        if (!TEST_int_eq(ossl_asn1_time_from_posix(time, asn1_time),
+                         expected_to_work)) {
+            TEST_info("ossl_asn1_time_from_posix %s unexpectedly converting %lld\n",
+                      expected_to_work ? "failed" : "succeeded",
+                      (long long) time);
+            ret = 0;
+        }
+    }
+    if (expected_to_work) {
+        int64_t should_be_same = time - 1;
+
+        /*
+         * We should have an ASN1_TIME from the previous steps, it should
+         * convert to a tm (no matter what time_t is)
+         */
+        if (!ASN1_TIME_to_tm(asn1_time, tm)) {
+            TEST_info("ASN1_TIME_to_tm failed unexpectedly converting %lld\n",
+                      (long long) time);
+            ret = 0;
+        }
+        /* That tm should convert back to a posix time */
+        if (!TEST_int_eq(OPENSSL_tm_to_posix(tm, &should_be_same),
+                         expected_to_work)) {
+            TEST_info("OPENSSL_tm_to_posix failed unexpectedly converting %lld\n",
+                      (long long) time);
+            ret = 0;
+        }
+        /* The resulting posix time should be the same one we started with. */
+        if (!TEST_int64_t_eq(time, should_be_same)) {
+            TEST_info("Got converted time of time of %lld, expected %lld\n",
+                      (long long) should_be_same, (long long) time);
+            ret = 0;
+        }
+    }
+
+    return ret;
+}
+
+static int posix_time_test(void)
+{
+    int ret = 0;
+    int64_t test_time;
+    struct tm tm;
+    ASN1_TIME *conversion_time = NULL;
+
+    conversion_time = ASN1_TIME_new();
+    if (!TEST_ptr(conversion_time)) {
+        TEST_info("malloc failed\n");
+        goto err;
+    }
+
+    /*
+     * Frequently platform conversions can not deal with one second before the
+     * the Unix epoch, due to inheriting terrible API design and knocking this
+     * time value out as an error return.
+     *
+     * We should do better.
+     */
+    if (!test_a_posix_time(-1, &tm, conversion_time))
+        goto err;
+
+    /* The epoch should also not be an error */
+    if (!test_a_posix_time(0, &tm, conversion_time))
+        goto err;
+    /*
+     * A time oddly near the epoch, but not quite at the epoch.,
+     * In memory of Vernor Vinge.
+     */
+    if (!test_a_posix_time(-16751025, &tm, conversion_time))
+        goto err;
+
+    /* Test the minimum boundary */
+    if (!test_a_posix_time(MIN_POSIX_TIME - 1, &tm, conversion_time))
+        goto err;
+
+    if (!test_a_posix_time(MIN_POSIX_TIME, &tm, conversion_time))
+        goto err;
+
+    /* Test the maximum boundary */
+    if (!test_a_posix_time(MAX_POSIX_TIME, &tm, conversion_time))
+        goto err;
+
+    if (!test_a_posix_time(MAX_POSIX_TIME + 1, &tm, conversion_time))
+        goto err;
+
+    /*
+     * Only the bad idea bears who visited the platform authors know
+     * for certain what decisions were made about time_t. So let's
+     * make sure we test the realistic limiting values of the
+     * possible outcomes of that visit.
+     */
+    if (!test_a_posix_time(INT_MAX, &tm, conversion_time))
+        goto err;
+
+    if (!test_a_posix_time(INT_MIN, &tm, conversion_time))
+        goto err;
+
+    if (!test_a_posix_time(UINT_MAX, &tm, conversion_time))
+        goto err;
+
+    if (!test_a_posix_time(INT32_MAX, &tm, conversion_time))
+        goto err;
+
+    if (!test_a_posix_time(INT32_MIN, &tm, conversion_time))
+        goto err;
+
+    if (!test_a_posix_time(UINT32_MAX, &tm, conversion_time))
+        goto err;
+
+    if (!test_a_posix_time(INT64_MAX, &tm, conversion_time))
+        goto err;
+
+    if (!test_a_posix_time(INT64_MIN, &tm, conversion_time))
+        goto err;
+
+    /* Test from outside through and past the full range of validity */
+#define INCREMENT 100000 /* because doing them all is a bit slow */
+
+    for (test_time = MIN_POSIX_TIME - INCREMENT;
+         test_time <= MAX_POSIX_TIME + INCREMENT;
+         test_time += INCREMENT) {
+        if (!test_a_posix_time(test_time, &tm, conversion_time))
+            goto err;
+    }
+
+    ret = 1;
+
+ err:
+    ASN1_TIME_free(conversion_time);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_tbl_standard);
@@ -272,5 +465,6 @@ int setup_tests(void)
     ADD_TEST(test_unicode_range);
     ADD_TEST(test_obj_create);
     ADD_TEST(test_obj_nid_undef);
+    ADD_TEST(posix_time_test);
     return 1;
 }

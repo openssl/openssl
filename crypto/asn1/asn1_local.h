@@ -94,3 +94,5 @@ ASN1_TIME *ossl_asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type);
 
 int ossl_asn1_item_ex_new_intern(ASN1_VALUE **pval, const ASN1_ITEM *it,
                                  OSSL_LIB_CTX *libctx, const char *propq);
+int ossl_asn1_time_time_t_to_tm(const time_t *time, struct tm *out_tm);
+int ossl_asn1_time_tm_to_time_t(const struct tm *tm, time_t *out);
