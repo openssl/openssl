@@ -642,3 +642,12 @@ Key = RSA-2048
 Input = "Hello World"
 Result = DIGESTSIGNINIT_ERROR
 
+# RSA Signing with X931 is not approved in FIPS 140-3
+Availablein = fips
+FIPSversion = >=4.0.0
+DigestSign = SHA256
+Key = RSA-2048
+Ctrl = rsa_padding_mode:x931
+Input = "Hello World"
+Result = PKEY_CTRL_ERROR
+Reason = illegal or unsupported padding mode
