@@ -50,6 +50,7 @@ static OSSL_FUNC_provider_random_bytes_fn fips_random_bytes;
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
 
 extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
+extern OSSL_FUNC_core_thread_master_key_fn *c_thread_master_key;
 
 /*
  * Should these function pointers be stored in the provider side provctx? Could
@@ -60,6 +61,7 @@ extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
 static OSSL_FUNC_core_gettable_params_fn *c_gettable_params;
 static OSSL_FUNC_core_get_params_fn *c_get_params;
 OSSL_FUNC_core_thread_start_fn *c_thread_start;
+OSSL_FUNC_core_thread_master_key_fn *c_thread_master_key;
 static OSSL_FUNC_core_new_error_fn *c_new_error;
 static OSSL_FUNC_core_set_error_debug_fn *c_set_error_debug;
 static OSSL_FUNC_core_vset_error_fn *c_vset_error;
@@ -841,6 +843,9 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
             break;
         case OSSL_FUNC_CORE_THREAD_START:
             set_func(c_thread_start, OSSL_FUNC_core_thread_start(in));
+            break;
+        case OSSL_FUNC_CORE_LOCAL_STORAGE_KEY:
+            set_func(c_thread_master_key, OSSL_FUNC_core_thread_master_key(in));
             break;
         case OSSL_FUNC_CORE_NEW_ERROR:
             set_func(c_new_error, OSSL_FUNC_core_new_error(in));

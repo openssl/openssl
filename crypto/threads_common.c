@@ -90,6 +90,11 @@
 #include "internal/cryptlib.h"
 #include "internal/threads_common.h"
 
+#ifdef FIPS_MODULE
+# include "prov/provider_ctx.h"
+extern OSSL_FUNC_core_thread_master_key_fn *c_thread_master_key;
+#endif
+
 /**
  * @struct CTX_TABLE_ENTRY
  * @brief Represents a wrapper for context-specific data.
@@ -225,9 +230,24 @@ static void init_master_key(void)
      * Threads which use this key clean their data
      * via a cleanup handler in CRYPTO_THREAD_set_local_ex when they first
      * allocate the sparse array for that thread associated with the key.
+     *
+     * In the fips case, we use our core dispatch method to fetch the master key
+     * value from libcrypto, if its available, allowing us to share the key (and
+     * cleanup routines with libcrypto).  If its not available (i.e. if we're
+     * using a newer fips provider with an older libcrypto), then we have to register
+     * out own key with a cleanup handler, so as to properly reap memory on exit.
      */
+#ifndef FIPS_MODULE
     if (!CRYPTO_THREAD_init_local(&master_key, NULL))
         return;
+#else
+    if (c_thread_master_key != NULL) {
+        master_key = c_thread_master_key();
+    } else {
+        if (!CRYPTO_THREAD_init_local(&master_key, clean_master_key))
+            return;
+    }
+#endif
 
     /*
      * Indicate that the key has been set up.
@@ -313,8 +333,9 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
 #ifndef FIPS_MODULE
 static void thread_stop_clear_mkey(void *arg)
 {
-   MASTER_KEY *mkey = CRYPTO_THREAD_get_local(&master_key); 
-   clean_master_key(mkey);
+    MASTER_KEY *mkey = CRYPTO_THREAD_get_local(&master_key);
+
+    clean_master_key(mkey);
 }
 #endif
 
@@ -455,3 +476,10 @@ void CRYPTO_THREAD_clean_local_for_fips(void)
     CRYPTO_THREAD_cleanup_local(&master_key);
 }
 #endif
+
+CRYPTO_THREAD_LOCAL CRYPTO_THREAD_get_local_master_key(void)
+{
+    if (!CRYPTO_THREAD_run_once(&master_once, init_master_key))
+        return 0;
+    return master_key;
+}
