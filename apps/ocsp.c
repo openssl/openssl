@@ -19,6 +19,13 @@
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
+#include <errno.h>
+
+#ifdef HTTP_DAEMON
+# include <signal.h>
+# include <syslog.h>
+# include <sys/stat.h>
+#endif
 
 /* Needs to be included before the openssl headers */
 #include "apps.h"
