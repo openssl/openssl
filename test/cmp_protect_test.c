@@ -477,7 +477,7 @@ static int execute_X509_STORE_test(CMP_PROTECT_TEST_FIXTURE *fixture)
                                                   fixture->callback_arg)))
         goto err;
     sk = X509_STORE_get1_all_certs(store);
-    if (!TEST_int_eq(0, STACK_OF_X509_cmp(sk, fixture->chain)))
+    if (!TEST_int_eq(0, STACK_OF_X509_cmp_deep(sk, fixture->chain)))
         goto err;
     res = 1;
  err:

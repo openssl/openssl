@@ -232,7 +232,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     int i, j, k;
     unsigned long h;
     BUF_MEM *b = NULL;
-    X509_OBJECT stmp, *tmp;
+    X509_OBJECT stmp, *tmp = NULL;
     const char *postfix = "";
 
     if (name == NULL)
@@ -348,10 +348,18 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
          *       sorted and sorting the would result in O(n^2 log n) complexity.
          */
         if (k > 0) {
-            if (!X509_STORE_lock(xl->store_ctx))
+            STACK_OF(X509_OBJECT) *objs;
+
+            if (ossl_x509_store_read_lock(xl->store_ctx) == 0)
                 goto finish;
-            j = sk_X509_OBJECT_find(xl->store_ctx->objs, &stmp);
-            tmp = sk_X509_OBJECT_value(xl->store_ctx->objs, j);
+            if (xl->store_ctx->objs_ht)
+                objs = ossl_x509_store_ht_get_by_name(xl->store_ctx, name);
+            else
+                objs = xl->store_ctx->objs;
+            if (objs != NULL) {
+                j = sk_X509_OBJECT_find(objs, &stmp);
+                tmp = sk_X509_OBJECT_value(objs, j);
+            }
             X509_STORE_unlock(xl->store_ctx);
         } else {
             tmp = NULL;
@@ -419,14 +427,6 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         }
     }
  finish:
-    /* If we changed anything, resort the objects for faster lookup */
-    if (X509_STORE_lock(xl->store_ctx)) {
-        if (!sk_X509_OBJECT_is_sorted(xl->store_ctx->objs)) {
-            sk_X509_OBJECT_sort(xl->store_ctx->objs);
-        }
-        X509_STORE_unlock(xl->store_ctx);
-    }
-
     BUF_MEM_free(b);
     return ok;
 }
