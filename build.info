@@ -394,11 +394,11 @@ DEPEND[""]=OpenSSLConfigVersion.cmake
 
 # This file sets the build directory up for pkg-config
 GENERATE[libcrypto.pc]=exporters/pkg-config/libcrypto.pc.in
-DEPEND[libcrypto.pc]=builddata.pm
+DEPEND[libcrypto.pc]=installdata.pm
 GENERATE[libssl.pc]=exporters/pkg-config/libssl.pc.in
-DEPEND[libssl.pc]=builddata.pm
+DEPEND[libssl.pc]=installdata.pm
 GENERATE[openssl.pc]=exporters/pkg-config/openssl.pc.in
-DEPEND[openssl.pc]=builddata.pm
+DEPEND[openssl.pc]=installdata.pm
 DEPEND[openssl.pc]=libcrypto.pc libssl.pc
 
 GENERATE[builddata.pm]=util/mkinstallvars.pl \
