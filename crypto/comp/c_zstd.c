@@ -732,7 +732,7 @@ static int bio_zstd_flush(BIO *b)
         /* Compress some more */
         zret = ZSTD_flushStream(ctx->compress.state, &ctx->compress.outbuf);
         if (ZSTD_isError(zret)) {
-            ERR_raise(ERR_LIB_COMP, COMP_R_ZSTD_DECODE_ERROR);
+            ERR_raise(ERR_LIB_COMP, COMP_R_ZSTD_COMPRESS_ERROR);
             ERR_add_error_data(1, ZSTD_getErrorName(zret));
             return 0;
         }
