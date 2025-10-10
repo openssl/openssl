@@ -3433,7 +3433,9 @@ static int test_evp_md_ctx_serialize(int tstid)
 {
     static const char *algs[] = {
         "SHA224", "SHA256", "SHA256-192",
-        "SHA384", "SHA512", "SHA512-224", "SHA512-256"
+        "SHA384", "SHA512", "SHA512-224", "SHA512-256",
+        "SHA3-224", "SHA3-256", "SHA3-384", "SHA3-512",
+        "KECCAK-KMAC-128", "KECCAK-KMAC-256"
     };
     OSSL_LIB_CTX *ctx = NULL;
     EVP_MD_CTX *mdctx1 = NULL, *mdctx2 = NULL;
@@ -3585,7 +3587,7 @@ int setup_tests(void)
     ADD_TEST(test_evp_md_ctx_dup);
     ADD_TEST(test_evp_md_ctx_copy);
     ADD_TEST(test_evp_md_ctx_copy2);
-    ADD_ALL_TESTS(test_evp_md_ctx_serialize, 7);
+    ADD_ALL_TESTS(test_evp_md_ctx_serialize, 13);
     ADD_ALL_TESTS(test_provider_unload_effective, 2);
 #if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
     ADD_TEST(test_evp_pbe_alg_add);
