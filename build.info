@@ -95,7 +95,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/signature/rsa_sig.c \
          providers/implementations/signature/slh_dsa_sig.c \
          providers/implementations/signature/sm2_sig.c \
-         providers/implementations/skeymgmt/generic.c \
+         providers/implementations/skeymgmt/generic.inc \
          providers/implementations/storemgmt/file_store_any2obj.c \
          providers/implementations/storemgmt/file_store.c \
          providers/implementations/storemgmt/winstore_store.c \
@@ -213,7 +213,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/signature/rsa_sig.c \
        providers/implementations/signature/slh_dsa_sig.c \
        providers/implementations/signature/sm2_sig.c \
-       providers/implementations/skeymgmt/generic.c \
+       providers/implementations/skeymgmt/generic.inc \
        providers/implementations/storemgmt/file_store_any2obj.c \
        providers/implementations/storemgmt/file_store.c \
        providers/implementations/storemgmt/winstore_store.c \
@@ -345,8 +345,8 @@ GENERATE[providers/implementations/signature/slh_dsa_sig.c]=\
     providers/implementations/signature/slh_dsa_sig.c.in
 GENERATE[providers/implementations/signature/sm2_sig.c]=\
     providers/implementations/signature/sm2_sig.c.in
-GENERATE[providers/implementations/skeymgmt/generic.c]=\
-    providers/implementations/skeymgmt/generic.c.in
+GENERATE[providers/implementations/skeymgmt/generic.inc]=\
+    providers/implementations/skeymgmt/generic.inc.in
 GENERATE[providers/implementations/storemgmt/file_store_any2obj.c]=\
     providers/implementations/storemgmt/file_store_any2obj.c.in
 GENERATE[providers/implementations/storemgmt/file_store.c]=\
