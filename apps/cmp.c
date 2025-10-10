@@ -577,7 +577,7 @@ const OPTIONS cmp_options[] = {
      "Trusted certificates for client authentication"},
     {"srv_untrusted", OPT_SRV_UNTRUSTED, 's',
      "Intermediate certs that may be useful for verifying CMP protection"},
-    {"ref_cert", OPT_RSP_CERT, 's',
+    {"ref_cert", OPT_REF_CERT, 's',
      "Certificate to be expected for rr and any oldCertID in kur messages"},
     {"rsp_cert", OPT_RSP_CERT, 's',
      "Certificate to be returned as mock enrollment result"},
