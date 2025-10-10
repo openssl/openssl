@@ -1501,10 +1501,8 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     if (port_try_handle_stateless_reset(port, e))
         goto undesirable;
 
-    if (dcid != NULL
-        && ossl_quic_lcidm_lookup(port->lcidm, dcid, NULL,
+    if (ossl_quic_lcidm_lookup(port->lcidm, dcid, NULL,
                                   (void **)&ch)) {
-        assert(ch != NULL);
         ossl_quic_channel_inject(ch, e);
         return;
     }
