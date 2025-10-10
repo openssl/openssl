@@ -11007,6 +11007,11 @@ static int test_set_tmp_dh(int idx)
         return 1;
 #  endif
 
+    OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
+
+    if (!TEST_ptr(tlsprov))
+        goto end;
+
     if (idx >= 5 && idx <= 8) {
         dhpkey = get_tmp_dh_params();
         if (!TEST_ptr(dhpkey))
@@ -11070,7 +11075,9 @@ static int test_set_tmp_dh(int idx)
 
     if (!TEST_true(SSL_set_min_proto_version(serverssl, TLS1_2_VERSION))
             || !TEST_true(SSL_set_max_proto_version(serverssl, TLS1_2_VERSION))
-            || !TEST_true(SSL_set_cipher_list(serverssl, "DHE-RSA-AES128-SHA")))
+            || !TEST_true(SSL_set_cipher_list(serverssl, "DHE-RSA-AES128-SHA"))
+            /* This is required so the server does not use RFC7919 groups */
+            || !TEST_true(SSL_set1_groups_list(clientssl, "xorgroup")))
         goto end;
 
     /*
@@ -11092,6 +11099,7 @@ static int test_set_tmp_dh(int idx)
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     EVP_PKEY_free(dhpkey);
+    OSSL_PROVIDER_unload(tlsprov);
 
     return testresult;
 }
@@ -11101,6 +11109,7 @@ static int test_set_tmp_dh(int idx)
  */
 static int test_dh_auto(int idx)
 {
+    OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
     SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method());
     SSL_CTX *sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -11109,6 +11118,9 @@ static int test_dh_auto(int idx)
     char *thiscert = NULL, *thiskey = NULL;
     size_t expdhsize = 0;
     const char *ciphersuite = "DHE-RSA-AES128-SHA";
+
+    if (!TEST_ptr(tlsprov))
+        goto end;
 
     if (!TEST_ptr(sctx) || !TEST_ptr(cctx))
         goto end;
@@ -11181,7 +11193,9 @@ static int test_dh_auto(int idx)
             || !TEST_true(SSL_set_min_proto_version(serverssl, TLS1_2_VERSION))
             || !TEST_true(SSL_set_max_proto_version(serverssl, TLS1_2_VERSION))
             || !TEST_true(SSL_set_cipher_list(serverssl, ciphersuite))
-            || !TEST_true(SSL_set_cipher_list(clientssl, ciphersuite)))
+            || !TEST_true(SSL_set_cipher_list(clientssl, ciphersuite))
+            /* This is required so the server does not use RFC7919 groups */
+            || !TEST_true(SSL_set1_groups_list(clientssl, "xorgroup")))
         goto end;
 
     /*
@@ -11209,10 +11223,229 @@ static int test_dh_auto(int idx)
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     EVP_PKEY_free(tmpkey);
+    OSSL_PROVIDER_unload(tlsprov);
 
     return testresult;
-
 }
+
+#  ifndef OPENSSL_NO_TLS1_3
+/*
+ * Test the server will reject FFDHE ciphersuites if no supported FFDHE group is
+ * advertised by the client.
+ */
+static int test_no_shared_ffdhe_group(int idx)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method());
+    SSL_CTX *sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0, ret, expected = 1;
+    char *clientgroup = NULL, *servergroup = NULL, *ciphersuite = NULL;
+    int want_error = SSL_ERROR_NONE;
+
+    if (!TEST_ptr(sctx) || !TEST_ptr(cctx))
+        goto end;
+
+    switch (idx) {
+    case 0:
+        clientgroup = "ffdhe2048";
+        servergroup = "ffdhe3072";
+        ciphersuite = "DHE-RSA-AES128-SHA:AES128-SHA";
+        break;
+    case 1:
+        clientgroup = "ffdhe3072";
+        servergroup = "ffdhe4096";
+        ciphersuite = "DHE-RSA-AES128-SHA:AES128-SHA";
+        break;
+    case 2:
+        clientgroup = "ffdhe4096";
+        servergroup = "ffdhe6144";
+        ciphersuite = "DHE-RSA-AES128-SHA:AES128-SHA";
+        break;
+    case 3:
+        clientgroup = "ffdhe6144";
+        servergroup = "ffdhe8192";
+        ciphersuite = "DHE-RSA-AES128-SHA:AES128-SHA";
+        break;
+    case 4:
+        clientgroup = "ffdhe8192";
+        servergroup = "ffdhe2048";
+        ciphersuite = "DHE-RSA-AES128-SHA:AES128-SHA";
+        break;
+    case 5:
+        clientgroup = "ffdhe2048";
+        servergroup = "ffdhe3072";
+        ciphersuite = "DHE-RSA-AES128-SHA";
+        expected = 0;
+        want_error = SSL_ERROR_SSL;
+        break;
+    case 6:
+        clientgroup = "ffdhe3072";
+        servergroup = "ffdhe4096";
+        ciphersuite = "DHE-RSA-AES128-SHA";
+        expected = 0;
+        want_error = SSL_ERROR_SSL;
+        break;
+    case 7:
+        clientgroup = "ffdhe4096";
+        servergroup = "ffdhe6144";
+        ciphersuite = "DHE-RSA-AES128-SHA";
+        expected = 0;
+        want_error = SSL_ERROR_SSL;
+        break;
+    case 8:
+        clientgroup = "ffdhe6144";
+        servergroup = "ffdhe8192";
+        ciphersuite = "DHE-RSA-AES128-SHA";
+        expected = 0;
+        want_error = SSL_ERROR_SSL;
+        break;
+    case 9:
+        clientgroup = "ffdhe8192";
+        servergroup = "ffdhe2048";
+        ciphersuite = "DHE-RSA-AES128-SHA";
+        expected = 0;
+        want_error = SSL_ERROR_SSL;
+        break;
+    default:
+        TEST_error("Invalid text index");
+        goto end;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, NULL,
+                                       NULL,
+                                       0,
+                                       0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(SSL_set_dh_auto(serverssl, 1))
+            || !TEST_true(SSL_set_min_proto_version(serverssl, TLS1_2_VERSION))
+            || !TEST_true(SSL_set_max_proto_version(serverssl, TLS1_2_VERSION))
+            || !TEST_true(SSL_set_cipher_list(serverssl, ciphersuite))
+            || !TEST_true(SSL_set_cipher_list(clientssl, ciphersuite))
+            || !TEST_true(SSL_set1_groups_list(serverssl, servergroup))
+            || !TEST_true(SSL_set1_groups_list(clientssl, clientgroup)))
+        goto end;
+
+    ret = create_ssl_connection(serverssl, clientssl, want_error);
+    if (!TEST_int_eq(expected, ret))
+        goto end;
+
+    if (expected <= 0) {
+        testresult = 1;
+        goto end;
+    }
+
+    if (TEST_int_eq(TLS1_CK_DHE_RSA_WITH_AES_128_SHA,
+                    SSL_CIPHER_get_id(SSL_get_current_cipher(clientssl))))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * Test the server will use the supported FFDHE group advertised by the client.
+ */
+static int test_shared_ffdhe_group(int idx)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method());
+    SSL_CTX *sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    EVP_PKEY *tmpkey = NULL;
+    char *servergroups = "ffdhe2048:ffdhe3072:ffdhe4096:ffdhe6144:ffdhe8192";
+    char *clientgroup = NULL;
+    const char *ciphersuite = "DHE-RSA-AES128-SHA";
+    char gname[10];
+    size_t gname_len;
+
+    if (!TEST_ptr(sctx) || !TEST_ptr(cctx))
+        goto end;
+
+    switch (idx) {
+    case 0:
+        clientgroup = "ffdhe2048";
+        break;
+    case 1:
+        clientgroup = "ffdhe3072";
+        break;
+    case 2:
+        clientgroup = "ffdhe4096";
+        break;
+    case 3:
+        clientgroup = "ffdhe6144";
+        break;
+    case 4:
+        clientgroup = "ffdhe8192";
+        break;
+    default:
+        TEST_error("Invalid text index");
+        goto end;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, NULL,
+                                       NULL,
+                                       0,
+                                       0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(SSL_set_dh_auto(serverssl, 1))
+            || !TEST_true(SSL_set_min_proto_version(serverssl, TLS1_2_VERSION))
+            || !TEST_true(SSL_set_max_proto_version(serverssl, TLS1_2_VERSION))
+            || !TEST_true(SSL_set_cipher_list(serverssl, ciphersuite))
+            || !TEST_true(SSL_set_cipher_list(clientssl, ciphersuite))
+            || !TEST_true(SSL_set1_groups_list(serverssl, servergroups))
+            || !TEST_true(SSL_set1_groups_list(clientssl, clientgroup)))
+        goto end;
+
+    /*
+     * Send the server's first flight. At this point the server has created the
+     * temporary DH key but hasn't finished using it yet. Once used it is
+     * removed, so we cannot test it.
+     */
+    if (!TEST_int_le(SSL_connect(clientssl), 0)
+            || !TEST_int_le(SSL_accept(serverssl), 0))
+        goto end;
+
+    if (!TEST_int_gt(SSL_get_tmp_key(serverssl, &tmpkey), 0))
+        goto end;
+    if (!TEST_true(EVP_PKEY_get_group_name(tmpkey, gname, sizeof(gname), &gname_len))
+            || !TEST_str_eq(gname, clientgroup))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    EVP_PKEY_free(tmpkey);
+
+    return testresult;
+}
+#  endif /* OPENSSL_NO_TLS1_3 */
+
 # endif /* OPENSSL_NO_DH */
 #endif /* OPENSSL_NO_TLS1_2 */
 
@@ -14105,6 +14338,10 @@ int setup_tests(void)
 # ifndef OPENSSL_NO_DH
     ADD_ALL_TESTS(test_set_tmp_dh, 11);
     ADD_ALL_TESTS(test_dh_auto, 7);
+#  ifndef OPENSSL_NO_TLS1_3
+    ADD_ALL_TESTS(test_no_shared_ffdhe_group, 10);
+    ADD_ALL_TESTS(test_shared_ffdhe_group, 5);
+#  endif
 # endif
 #endif
 #ifndef OSSL_NO_USABLE_TLS1_3
