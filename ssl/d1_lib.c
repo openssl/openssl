@@ -748,7 +748,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
                    3);
 
             if (s->msg_callback)
-                s->msg_callback(1, 0, SSL3_RT_HEADER, buf,
+                s->msg_callback(1, version, SSL3_RT_HEADER, wbuf,
                                 DTLS1_RT_HEADER_LENGTH, ssl,
                                 s->msg_callback_arg);
 
