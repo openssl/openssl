@@ -39,8 +39,8 @@ COMP_METHOD *COMP_zstd(void);
 #  error Wrong (i.e. linux) zstd.h included.
 # endif
 
-# if ZSTD_VERSION_MAJOR != 1 && ZSTD_VERSION_MINOR < 4
-#  error Expecting version 1.4 or greater of ZSTD
+# if ZSTD_VERSION_MAJOR != 1 || ZSTD_VERSION_MINOR < 4
+#  error Expecting version 1.4 or greater of ZSTD 1.x
 # endif
 
 # ifndef ZSTD_SHARED
