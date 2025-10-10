@@ -101,6 +101,9 @@ static int save_statusInfo(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si)
 
         if (dup == NULL || !sk_ASN1_UTF8STRING_push(ctx->statusString, dup)) {
             ASN1_UTF8STRING_free(dup);
+            sk_ASN1_UTF8STRING_pop_free(ctx->statusString,
+                                        ASN1_UTF8STRING_free);
+            (void)ossl_cmp_ctx_set0_statusString(ctx, NULL);
             return 0;
         }
     }
