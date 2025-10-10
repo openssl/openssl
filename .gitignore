@@ -136,7 +136,7 @@ providers/implementations/signature/ml_dsa_sig.c
 providers/implementations/signature/rsa_sig.c
 providers/implementations/signature/slh_dsa_sig.c
 providers/implementations/signature/sm2_sig.c
-providers/implementations/skeymgmt/generic.c
+providers/implementations/skeymgmt/generic.inc
 providers/implementations/storemgmt/file_store_any2obj.c
 providers/implementations/storemgmt/file_store.c
 providers/implementations/storemgmt/winstore_store.c
@@ -155,6 +155,7 @@ providers/implementations/ciphers/cipher_chacha20_poly1305.c
 providers/implementations/ciphers/cipher_null.c
 providers/implementations/ciphers/cipher_rc4_hmac_md5.c
 providers/implementations/ciphers/cipher_sm2_xts.c
+providers/implementations/ciphers/cipher_sm4_xts.c
 providers/implementations/digests/blake2_prov.c
 providers/implementations/digests/digestcommon.c
 providers/implementations/digests/mdc2_prov.c

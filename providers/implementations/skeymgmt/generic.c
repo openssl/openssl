@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <string.h>
 #include <openssl/core_dispatch.h>
@@ -22,6 +19,8 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/implementations.h"
 #include "prov/skeymgmt_lcl.h"
 
+#include "providers/implementations/skeymgmt/generic.inc"
+
 void generic_free(void *keydata)
 {
     PROV_SKEY *generic = keydata;
@@ -32,10 +31,6 @@ void generic_free(void *keydata)
     OPENSSL_clear_free(generic->data, generic->length);
     OPENSSL_free(generic);
 }
-
-{- produce_param_decoder('generic_skey_import',
-                         (['OSSL_SKEY_PARAM_RAW_BYTES',  'raw_bytes',    'octet_string'],
-                         )); -}
 
 void *generic_import(void *provctx, int selection, const OSSL_PARAM params[])
 {
