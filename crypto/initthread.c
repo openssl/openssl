@@ -331,7 +331,12 @@ int ossl_thread_event_ctx_new(OSSL_LIB_CTX *libctx)
 
 void ossl_thread_event_ctx_free(OSSL_LIB_CTX *ctx)
 {
-    CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_TEVENT_KEY, ctx, NULL);
+    /*
+     * The free for the per-thread handler array is handled during OSSL_thread_stop now
+     * in the mkey cleanup routine in threds_common.c.  Just keep this here for balance with
+     * the corresponding new method.
+     */
+    return;
 }
 
 static void ossl_arg_thread_stop(void *arg)
@@ -394,7 +399,7 @@ static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
 }
 
 int ossl_init_thread_start_prio(const void *index, void *arg,
-                           OSSL_thread_stop_handler_fn handfn, uint32_t prio)
+                                OSSL_thread_stop_handler_fn handfn, uint32_t prio)
 {
     THREAD_EVENT_HANDLER **hands;
     THREAD_EVENT_HANDLER *hand;
