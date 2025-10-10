@@ -1113,6 +1113,7 @@ If the transaction contains more requests, the remaining ones are not saved.
 
 Save the first CMP requests created by the client to the given file and exit.
 Any options related to CMP servers and their responses are ignored.
+This option does not combine with the B<-port> option.
 
 This option is useful for supporting offline scenarios where the certificate
 request (or any other CMP request) is produced beforehand and sent out later.
