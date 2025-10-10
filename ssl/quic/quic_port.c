@@ -1503,6 +1503,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
 
     if (ossl_quic_lcidm_lookup(port->lcidm, dcid, NULL,
                                   (void **)&ch)) {
+        assert(ch != NULL);
         ossl_quic_channel_inject(ch, e);
         return;
     }
