@@ -903,7 +903,7 @@ static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
     }
 
     if (!WPACKET_init(&wpkt, buf_mem)
-        || !WPACKET_memset(&wpkt, token->is_retry, 1)
+        || !WPACKET_put_bytes_u8(&wpkt, token->is_retry)
         || !WPACKET_memcpy(&wpkt, &token->timestamp,
                            sizeof(token->timestamp))
         || (token->is_retry
