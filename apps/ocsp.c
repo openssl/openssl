@@ -38,7 +38,7 @@
 int setpgid(pid_t pid, pid_t pgid)
 {
     errno = ENOSYS;
-    return 0;
+    return -1;
 }
 /* not supported */
 pid_t fork(void)
