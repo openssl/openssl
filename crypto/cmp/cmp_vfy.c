@@ -725,6 +725,11 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         const X509_NAME *actual_sender;
         char *str;
 
+        if (hdr->sender == NULL) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_SENDER_IDENTIFICATION);
+            return 0;
+        }
+
         if (hdr->sender->type != GEN_DIRNAME) {
             ERR_raise(ERR_LIB_CMP, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);
             return 0;
