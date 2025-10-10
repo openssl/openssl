@@ -3263,7 +3263,7 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx)
                 goto next;
             }
             OPENSSL_free(path);
-            resp = OSSL_CMP_CTX_server_perform(cmp_ctx, req);
+            resp = OSSL_CMP_CTX_server_perform(srv_cmp_ctx, req);
             OSSL_CMP_MSG_free(req);
             if (resp == NULL) {
                 (void)http_server_send_status(prog, cbio,
