@@ -729,12 +729,9 @@ int x509_main(int argc, char **argv)
                 extsect = "default";
         }
         X509V3_set_ctx_test(&ctx2);
-        X509V3_set_nconf(&ctx2, extconf);
-        if (!X509V3_EXT_add_nconf(extconf, &ctx2, extsect, NULL)) {
-            BIO_printf(bio_err,
-                       "Error checking extension section %s\n", extsect);
+        if (!do_EXT_add_nconf(extconf, extconf, &ctx2, extsect, NULL,
+                              "Error checking extension section %s\n"))
             goto err;
-        }
     }
 
     if (multi && (reqfile || newcert)) {
@@ -896,20 +893,18 @@ int x509_main(int argc, char **argv)
         }
     }
 
-    X509V3_set_ctx(&ext_ctx, issuer_cert, x, NULL, NULL, X509V3_CTX_REPLACE);
+    if (!X509V3_set_ctx(&ext_ctx, issuer_cert, x,
+                        NULL, NULL, X509V3_CTX_REPLACE))
+        goto end;
     /* prepare fallback for AKID, but only if issuer cert equals subject cert */
     if (CAfile == NULL) {
         if (!X509V3_set_issuer_pkey(&ext_ctx, privkey))
             goto err;
     }
-    if (extconf != NULL && !x509toreq) {
-        X509V3_set_nconf(&ext_ctx, extconf);
-        if (!X509V3_EXT_add_nconf(extconf, &ext_ctx, extsect, x)) {
-            BIO_printf(bio_err,
-                       "Error adding extensions from section %s\n", extsect);
-            goto err;
-        }
-    }
+    if (extconf != NULL && !x509toreq
+        && !do_EXT_add_nconf(extconf, extconf, &ext_ctx, extsect, x,
+                             "Error adding extensions from section %s\n"))
+        goto err;
 
     /* At this point the contents of the certificate x have been finished. */
 
@@ -930,14 +925,10 @@ int x509_main(int argc, char **argv)
         }
         if ((rq = x509_to_req(x, ext_copy, ext_names)) == NULL)
             goto err;
-        if (extconf != NULL) {
-            X509V3_set_nconf(&ext_ctx, extconf);
-            if (!X509V3_EXT_REQ_add_nconf(extconf, &ext_ctx, extsect, rq)) {
-                BIO_printf(bio_err,
-                           "Error adding request extensions from section %s\n", extsect);
-                goto err;
-            }
-        }
+        if (extconf != NULL
+            && !do_EXT_REQ_add_nconf(extconf, extconf, &ext_ctx, extsect, rq,
+                                     "Error adding request extensions from section %s\n"))
+            goto err;
         if (!do_X509_REQ_sign(rq, privkey, digest, sigopts))
             goto err;
         if (!noout) {
