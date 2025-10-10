@@ -84,13 +84,6 @@ int dtls1_new(SSL *ssl)
     d1->buffered_messages = pqueue_new();
     d1->sent_messages = pqueue_new();
 
-    if (s->server) {
-        d1->cookie_len = sizeof(s->d1->cookie);
-    }
-
-    d1->link_mtu = 0;
-    d1->mtu = 0;
-
     if (d1->buffered_messages == NULL || d1->sent_messages == NULL) {
         pqueue_free(d1->buffered_messages);
         pqueue_free(d1->sent_messages);
@@ -198,10 +191,6 @@ int dtls1_clear(SSL *ssl)
 
         /* Restore the timer callback from previous state */
         s->d1->timer_cb = timer_cb;
-
-        if (s->server) {
-            s->d1->cookie_len = sizeof(s->d1->cookie);
-        }
 
         if (SSL_get_options(ssl) & SSL_OP_NO_QUERY_MTU) {
             s->d1->mtu = mtu;
