@@ -139,7 +139,7 @@ int init_client(int *sock, const char *host, const char *port,
                           BIO_SOCK_REUSEADDR)) {
                 BIO_closesocket(*sock);
                 *sock = INVALID_SOCKET;
-                break;
+                continue;
             }
         }
 
