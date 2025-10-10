@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include <openssl/byteorder.h>
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
@@ -32,17 +33,16 @@
  * of the functions in the dispatch table are correct.
  */
 static OSSL_FUNC_digest_init_fn keccak_init;
-static OSSL_FUNC_digest_init_fn keccak_init_params;
 static OSSL_FUNC_digest_update_fn keccak_update;
 static OSSL_FUNC_digest_final_fn keccak_final;
 static OSSL_FUNC_digest_freectx_fn keccak_freectx;
 static OSSL_FUNC_digest_copyctx_fn keccak_copyctx;
 static OSSL_FUNC_digest_dupctx_fn keccak_dupctx;
 static OSSL_FUNC_digest_squeeze_fn shake_squeeze;
-static OSSL_FUNC_digest_get_ctx_params_fn shake_get_ctx_params;
 static OSSL_FUNC_digest_gettable_ctx_params_fn shake_gettable_ctx_params;
-static OSSL_FUNC_digest_set_ctx_params_fn shake_set_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn shake_settable_ctx_params;
+static OSSL_FUNC_digest_gettable_ctx_params_fn sha3_gettable_ctx_params;
+static OSSL_FUNC_digest_settable_ctx_params_fn sha3_settable_ctx_params;
 static sha3_absorb_fn generic_sha3_absorb;
 static sha3_final_fn generic_sha3_final;
 static sha3_squeeze_fn generic_sha3_squeeze;
@@ -66,12 +66,6 @@ static int keccak_init(void *vctx, ossl_unused const OSSL_PARAM params[])
     /* The newctx() handles most of the ctx fixed setup. */
     ossl_sha3_reset((KECCAK1600_CTX *)vctx);
     return 1;
-}
-
-static int keccak_init_params(void *vctx, const OSSL_PARAM params[])
-{
-    return keccak_init(vctx, NULL)
-            && shake_set_ctx_params(vctx, params);
 }
 
 static int keccak_update(void *vctx, const unsigned char *inp, size_t len)
@@ -532,6 +526,9 @@ static void *uname##_newctx(void *provctx)                                     \
 
 #define PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags)   \
 PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)                     \
+    static OSSL_FUNC_digest_init_fn name##_init_params;                        \
+    static OSSL_FUNC_digest_set_ctx_params_fn name##_set_ctx_params;           \
+    static OSSL_FUNC_digest_get_ctx_params_fn name##_get_ctx_params;           \
 const OSSL_DISPATCH ossl_##name##_functions[] = {                              \
     { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))name##_newctx },                \
     { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))keccak_update },                \
@@ -539,23 +536,27 @@ const OSSL_DISPATCH ossl_##name##_functions[] = {                              \
     { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))keccak_freectx },              \
     { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))keccak_dupctx },                \
     { OSSL_FUNC_DIGEST_COPYCTX, (void (*)(void))keccak_copyctx },              \
+    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))name##_set_ctx_params }, \
+    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, (void (*)(void))name##_get_ctx_params }, \
     PROV_DISPATCH_FUNC_DIGEST_GET_PARAMS(name)
 
 #define PROV_FUNC_SHA3_DIGEST(name, bitlen, blksize, dgstsize, flags)          \
     PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags),      \
-    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))keccak_init },                    \
+    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))name##_init_params },             \
+    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                    \
+        (void (*)(void))sha3_settable_ctx_params },                            \
+    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,                                    \
+        (void (*)(void))sha3_gettable_ctx_params },                            \
     PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 #define PROV_FUNC_SHAKE_DIGEST(name, bitlen, blksize, dgstsize, flags)         \
     PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags),      \
     { OSSL_FUNC_DIGEST_SQUEEZE, (void (*)(void))shake_squeeze },               \
-    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))keccak_init_params },             \
-    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))shake_set_ctx_params }, \
+    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))name##_init_params },             \
     { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                    \
-     (void (*)(void))shake_settable_ctx_params },                              \
-    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, (void (*)(void))shake_get_ctx_params }, \
+        (void (*)(void))shake_settable_ctx_params },                           \
     { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,                                    \
-     (void (*)(void))shake_gettable_ctx_params },                              \
+        (void (*)(void))shake_gettable_ctx_params },                           \
     PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 static void keccak_freectx(void *vctx)
@@ -584,13 +585,165 @@ static void *keccak_dupctx(void *ctx)
     return ret;
 }
 
+static const unsigned char keccakmagic[] = "KECCAKv1";
+#define KECCAK_SERIALIZATION_LEN \
+    ( \
+     (sizeof(keccakmagic) - 1) /* magic string */ \
+     + (sizeof(uint64_t) * 5 * 5) /* c->A */ \
+     + (KECCAK1600_WIDTH / 8 - 32) /* c->buf */ \
+     + (sizeof(uint64_t) * 5) /* c->block_size, c->md_size, c->bufsz, c->pad, c->xof_state */ \
+     + sizeof(uint64_t) /* impl-ID */ \
+     )
+
+static int KECCAK_Serialize(KECCAK1600_CTX *c, unsigned char *output, size_t *outlen, int id)
+{
+    unsigned char *p;
+    int i, j;
+
+    if (output == NULL) {
+        if (outlen == NULL)
+            return 0;
+
+        *outlen = KECCAK_SERIALIZATION_LEN;
+        return 1;
+    }
+
+    if (outlen != NULL && *outlen < KECCAK_SERIALIZATION_LEN)
+        return 0;
+
+    p = output;
+
+    /* Magic code */
+    memcpy(p, keccakmagic, sizeof(keccakmagic) - 1);
+    p += sizeof(keccakmagic) - 1;
+
+    /* A matrix */
+    for (i = 0; i < 5; i++) {
+        for (j = 0; j < 5; j++)
+            p = OPENSSL_store_u64_le(p, c->A[i][j]);
+    }
+
+    /* buf */
+    memcpy(p, c->buf, sizeof(c->buf));
+    p += sizeof(c->buf);
+
+    p = OPENSSL_store_u64_le(p, c->block_size);
+    p = OPENSSL_store_u64_le(p, c->md_size);
+    p = OPENSSL_store_u64_le(p, c->bufsz);
+    p = OPENSSL_store_u64_le(p, c->pad);
+    p = OPENSSL_store_u64_le(p, c->xof_state);
+
+    p = OPENSSL_store_u64_le(p, id);
+
+    if (outlen != NULL)
+        *outlen = KECCAK_SERIALIZATION_LEN;
+
+    return 1;
+}
+
+static int KECCAK_Deserialize(KECCAK1600_CTX *c, unsigned char *input, size_t len, int id)
+{
+    const unsigned char *p;
+    uint64_t val;
+    int i, j;
+
+    if (c == NULL || input == NULL || len != KECCAK_SERIALIZATION_LEN)
+        return 0;
+
+    /* Magic code */
+    if (memcmp(input, keccakmagic, sizeof(keccakmagic) - 1) != 0)
+        return 0;
+
+    p = input + sizeof(keccakmagic) - 1;
+
+    /* A matrix */
+    for (i = 0; i < 5; i++) {
+        for (j = 0; j < 5; j++) {
+            p = OPENSSL_load_u64_le(&val, p);
+            c->A[i][j] = val;
+        }
+    }
+
+    /* buf */
+    memcpy(c->buf, p, sizeof(c->buf));
+    p += sizeof(c->buf);
+
+    p = OPENSSL_load_u64_le(&val, p);
+    c->block_size = (size_t)val;
+    p = OPENSSL_load_u64_le(&val, p);
+    c->md_size = (size_t)val;
+    p = OPENSSL_load_u64_le(&val, p);
+    c->bufsz = (size_t)val;
+    p = OPENSSL_load_u64_le(&val, p);
+    c->pad = (unsigned char)val;
+    p = OPENSSL_load_u64_le(&val, p);
+    c->xof_state = (int)val;
+
+    p = OPENSSL_load_u64_le(&val, p);
+    if (val != (uint64_t)id) {
+        OPENSSL_cleanse(c, sizeof(c));
+        return 0;
+    }
+
+    return 1;
+}
+
+static const OSSL_PARAM *sha3_gettable_ctx_params(ossl_unused void *ctx,
+                                                  ossl_unused void *provctx)
+{
+    return sha3_get_ctx_params_list;
+}
+
+static int sha3_get_ctx_params(void *vctx, OSSL_PARAM params[], int id)
+{
+    struct sha3_get_ctx_params_st p;
+    KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
+
+    if (ctx == NULL || !sha3_get_ctx_params_decoder(params, &p))
+        return 0;
+
+    if (p.buffer != NULL) {
+        size_t outlen;
+        int ret;
+        if (p.buffer->data_type != OSSL_PARAM_OCTET_STRING)
+            return 0;
+        outlen = p.buffer->data_size;
+        if ((ret = KECCAK_Serialize(ctx, p.buffer->data, &outlen, id)))
+            p.buffer->return_size = outlen;
+        return ret;
+    }
+    return 1;
+}
+
+static const OSSL_PARAM *sha3_settable_ctx_params(ossl_unused void *ctx,
+                                                  ossl_unused void *provctx)
+{
+    return sha3_set_ctx_params_list;
+}
+
+static int sha3_set_ctx_params(void *vctx, const OSSL_PARAM params[], int id)
+{
+    struct sha3_set_ctx_params_st p;
+    KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
+
+    if (ossl_unlikely(ctx == NULL || !sha3_set_ctx_params_decoder(params, &p)))
+        return 0;
+
+    if (ossl_unlikely(p.buffer != NULL)) {
+        if (p.buffer->data_type != OSSL_PARAM_OCTET_STRING)
+            return 0;
+        return KECCAK_Deserialize(ctx, p.buffer->data, p.buffer->data_size, id);
+    }
+    return 1;
+}
+
 static const OSSL_PARAM *shake_gettable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *provctx)
 {
     return shake_get_ctx_params_list;
 }
 
-static int shake_get_ctx_params(void *vctx, OSSL_PARAM params[])
+static int shake_get_ctx_params(void *vctx, OSSL_PARAM params[], int id)
 {
     struct shake_get_ctx_params_st p;
     KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
@@ -607,6 +760,16 @@ static int shake_get_ctx_params(void *vctx, OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
         return 0;
     }
+    if (p.buffer != NULL) {
+        size_t outlen;
+        int ret;
+        if (p.buffer->data_type != OSSL_PARAM_OCTET_STRING)
+            return 0;
+        outlen = p.buffer->data_size;
+        if ((ret = KECCAK_Serialize(ctx, p.buffer->data, &outlen, id)))
+            p.buffer->return_size = outlen;
+        return ret;
+    }
     return 1;
 }
 
@@ -616,7 +779,7 @@ static const OSSL_PARAM *shake_settable_ctx_params(ossl_unused void *ctx,
     return shake_set_ctx_params_list;
 }
 
-static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[], int id)
 {
     struct shake_set_ctx_params_st p;
     KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
@@ -629,17 +792,44 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
         return 0;
     }
+    if (ossl_unlikely(p.buffer != NULL)) {
+        if (p.buffer->data_type != OSSL_PARAM_OCTET_STRING)
+            return 0;
+        return KECCAK_Deserialize(ctx, p.buffer->data, p.buffer->data_size, id);
+    }
     return 1;
 }
 
+#define IMPLEMENT_CTX_PARAM_FNS(prefix, name, id)                           \
+    static int name##_init_params(void *vctx, const OSSL_PARAM params[])    \
+    {                                                                       \
+        return keccak_init(vctx, NULL)                                      \
+                && prefix##_set_ctx_params(vctx, params, id);               \
+    }                                                                       \
+    static int name##_set_ctx_params(void *vctx, const OSSL_PARAM params[]) \
+    {                                                                       \
+        return prefix##_set_ctx_params(vctx, params, id);                   \
+    }                                                                       \
+    static int name##_get_ctx_params(void *vctx, OSSL_PARAM params[])       \
+    {                                                                       \
+        return prefix##_get_ctx_params(vctx, params, id);                   \
+    }                                                                       \
+
+#define KECCAK_SER_ID 0x010000
+#define SHAKE_SER_ID 0x020000
+#define SHA3_SER_ID 0x040000
+#define KMAK_SER_ID 0x080000
+
 #define IMPLEMENT_SHA3_functions(bitlen)                                       \
     SHA3_newctx(sha3, SHA3_##bitlen, sha3_##bitlen, bitlen, '\x06')            \
+    IMPLEMENT_CTX_PARAM_FNS(sha3, sha3_##bitlen, SHA3_SER_ID + bitlen)         \
     PROV_FUNC_SHA3_DIGEST(sha3_##bitlen, bitlen,                               \
                           SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),         \
                           SHA3_FLAGS)
 
 #define IMPLEMENT_KECCAK_functions(bitlen)                                     \
     SHA3_newctx(keccak, KECCAK_##bitlen, keccak_##bitlen, bitlen, '\x01')      \
+    IMPLEMENT_CTX_PARAM_FNS(sha3, keccak_##bitlen, KECCAK_SER_ID + bitlen)     \
     PROV_FUNC_SHA3_DIGEST(keccak_##bitlen, bitlen,                             \
                           SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),         \
                           SHA3_FLAGS)
@@ -647,12 +837,14 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 #define IMPLEMENT_SHAKE_functions(bitlen)                                      \
     SHAKE_newctx(shake, SHAKE_##bitlen, shake_##bitlen, bitlen,                \
                  0 /* no default md length */, '\x1f')                         \
+    IMPLEMENT_CTX_PARAM_FNS(shake, shake_##bitlen, SHAKE_SER_ID + bitlen)      \
     PROV_FUNC_SHAKE_DIGEST(shake_##bitlen, bitlen,                             \
                            SHA3_BLOCKSIZE(bitlen), 0,                          \
                            SHAKE_FLAGS)
 
 #define IMPLEMENT_KMAC_functions(bitlen)                                       \
     KMAC_newctx(keccak_kmac_##bitlen, bitlen, '\x04')                          \
+    IMPLEMENT_CTX_PARAM_FNS(shake, keccak_kmac_##bitlen, KMAK_SER_ID + bitlen) \
     PROV_FUNC_SHAKE_DIGEST(keccak_kmac_##bitlen, bitlen,                       \
                            SHA3_BLOCKSIZE(bitlen), KMAC_MDSIZE(bitlen),        \
                            KMAC_FLAGS)
