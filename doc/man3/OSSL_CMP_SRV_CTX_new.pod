@@ -107,6 +107,7 @@ which may be due to normal successful end of the transaction or due to an error.
 OSSL_CMP_CTX_server_perform() is an interface to
 OSSL_CMP_SRV_process_request() that can be used by a CMP client
 in the same way as L<OSSL_CMP_MSG_http_perform(3)>.
+In particular, the first parameter I<client_ctx> is the B<OSSL_CMP_CTX> of the client.
 The B<OSSL_CMP_SRV_CTX> must be set as I<transfer_cb_arg> of I<client_ctx>.
 
 OSSL_CMP_SRV_CTX_new() creates and initializes an B<OSSL_CMP_SRV_CTX> structure
