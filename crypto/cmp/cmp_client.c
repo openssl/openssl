@@ -117,6 +117,10 @@ static int is_crep_with_waiting(const OSSL_CMP_MSG *resp, int rid)
         return 0;
 
     crepmsg = resp->body->value.ip; /* same for cp and kup */
+
+    if (sk_OSSL_CMP_CERTRESPONSE_num(crepmsg->response) > 1)
+        return 0;
+
     crep = ossl_cmp_certrepmessage_get0_certresponse(crepmsg, rid);
 
     return (crep != NULL
