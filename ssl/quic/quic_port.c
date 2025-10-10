@@ -630,8 +630,12 @@ void ossl_quic_port_drop_incoming(QUIC_PORT *port)
          * ch->tls ref and frees the channel
          */
         sc = SSL_CONNECTION_FROM_SSL(tls);
-        if (sc == NULL)
-            break;
+        if (sc == NULL) {
+            ossl_quic_channel_free(ch);
+            if (tls != NULL)
+                SSL_free(tls);
+            continue
+        }
 
         user_ssl = SSL_CONNECTION_GET_USER_SSL(sc);
         if (user_ssl == tls) {
