@@ -685,7 +685,7 @@ static int bio_brotli_flush(BIO *b)
         brret = BrotliEncoderCompressStream(ctx->encode.state, BROTLI_OPERATION_FINISH, &ctx->encode.avail_in,
                                             (const uint8_t**)&ctx->encode.next_in, &ctx->encode.avail_out, &ctx->encode.next_out, NULL);
         if (brret != BROTLI_TRUE) {
-            ERR_raise(ERR_LIB_COMP, COMP_R_BROTLI_DECODE_ERROR);
+            ERR_raise(ERR_LIB_COMP, COMP_R_BROTLI_ENCODE_ERROR);
             ERR_add_error_data(1, "brotli encoder error");
             return 0;
         }
