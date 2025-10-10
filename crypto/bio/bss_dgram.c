@@ -2014,44 +2014,54 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 
             if (msg.msg_flags & MSG_NOTIFICATION) {
                 union sctp_notification snp;
+                size_t copy;
 
-                memcpy(&snp, out, sizeof(snp));
-                if (snp.sn_header.sn_type == SCTP_SENDER_DRY_EVENT) {
+                memset(&snp, 0, sizeof(snp));
+                copy = (size_t)n < sizeof(snp) ? (size_t)n : sizeof(snp);
+
+                /* Only consult header if we received at least the header */
+                if (copy >= sizeof(snp.sn_header) {
+                    memcpy(&snp, out, copy);
+
+                    if (snp.sn_header.sn_type == SCTP_SENDER_DRY_EVENT) {
 #  ifdef SCTP_EVENT
-                    struct sctp_event event;
+                        struct sctp_event event;
 #  else
-                    struct sctp_event_subscribe event;
-                    socklen_t eventsize;
+                        struct sctp_event_subscribe event;
+                        socklen_t eventsize;
 #  endif
 
-                    /* disable sender dry event */
+                        memcpy(&snp, out, copy);
+
+                        /* disable sender dry event */
 #  ifdef SCTP_EVENT
-                    memset(&event, 0, sizeof(event));
-                    event.se_assoc_id = 0;
-                    event.se_type = SCTP_SENDER_DRY_EVENT;
-                    event.se_on = 0;
-                    i = setsockopt(b->num, IPPROTO_SCTP, SCTP_EVENT, &event,
-                                   sizeof(struct sctp_event));
-                    if (i < 0) {
-                        ret = i;
-                        break;
-                    }
+                        memset(&event, 0, sizeof(event));
+                        event.se_assoc_id = 0;
+                        event.se_type = SCTP_SENDER_DRY_EVENT;
+                        event.se_on = 0;
+                        i = setsockopt(b->num, IPPROTO_SCTP, SCTP_EVENT, &event,
+                                       sizeof(struct sctp_event));
+                        if (i < 0) {
+                            ret = i;
+                            break;
+                        }
 #  else
-                    eventsize = sizeof(struct sctp_event_subscribe);
-                    i = getsockopt(b->num, IPPROTO_SCTP, SCTP_EVENTS, &event,
-                                   &eventsize);
-                    if (i < 0) {
-                        ret = i;
-                        break;
-                    }
+                        eventsize = sizeof(struct sctp_event_subscribe);
+                        i = getsockopt(b->num, IPPROTO_SCTP, SCTP_EVENTS, &event,
+                                       &eventsize);
+                        if (i < 0) {
+                            ret = i;
+                            break;
+                        }
 
-                    event.sctp_sender_dry_event = 0;
+                        event.sctp_sender_dry_event = 0;
 
-                    i = setsockopt(b->num, IPPROTO_SCTP, SCTP_EVENTS, &event,
-                                   sizeof(struct sctp_event_subscribe));
-                    if (i < 0) {
-                        ret = i;
-                        break;
+                        i = setsockopt(b->num, IPPROTO_SCTP, SCTP_EVENTS, &event,
+                                       sizeof(struct sctp_event_subscribe));
+                        if (i < 0) {
+                            ret = i;
+                            break;
+                        }
                     }
 #  endif
                 }
