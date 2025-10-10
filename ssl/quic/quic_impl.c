@@ -4151,7 +4151,7 @@ static int quic_get_stream_error_code(SSL *ssl, int is_write,
     if (!expect_quic_with_stream_lock(ssl, /*remote_init=*/-1, /*io=*/0, &ctx))
         return -1;
 
-    quic_classify_stream(ctx.qc, ctx.xso->stream, /*is_write=*/0,
+    quic_classify_stream(ctx.qc, ctx.xso->stream, is_write,
                          &state, app_error_code);
 
     qctx_unlock(&ctx);
