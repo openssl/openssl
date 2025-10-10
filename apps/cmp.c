@@ -3263,7 +3263,7 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx)
                 goto next;
             }
             OPENSSL_free(path);
-            resp = OSSL_CMP_CTX_server_perform(cmp_ctx, req);
+            resp = OSSL_CMP_CTX_server_perform(cmp_ctx /* of client */, req);
             OSSL_CMP_MSG_free(req);
             if (resp == NULL) {
                 (void)http_server_send_status(prog, cbio,
@@ -3736,8 +3736,9 @@ int cmp_main(int argc, char **argv)
 
         if ((srv_ctx = setup_srv_ctx(engine)) == NULL)
             goto err;
+        OSSL_CMP_CTX_set_transfer_cb_arg(cmp_ctx /* of client */, srv_ctx);
+
         srv_cmp_ctx = OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx);
-        OSSL_CMP_CTX_set_transfer_cb_arg(cmp_ctx, srv_ctx);
         if (!OSSL_CMP_CTX_set_log_cb(srv_cmp_ctx, print_to_bio_err)) {
             CMP_err1("cannot set up error reporting and logging for %s", prog);
             goto err;
