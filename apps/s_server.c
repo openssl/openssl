@@ -1177,7 +1177,7 @@ int s_server_main(int argc, char *argv[])
             if (BIO_parse_hostserv(opt_arg(), NULL, &port, BIO_PARSE_PRIO_SERV) < 1) {
                 BIO_printf(bio_err,
                            "%s: -port argument malformed or ambiguous\n",
-                           port);
+                           prog);
                 goto end;
             }
             break;
@@ -1192,7 +1192,7 @@ int s_server_main(int argc, char *argv[])
             if (BIO_parse_hostserv(opt_arg(), &host, &port, BIO_PARSE_PRIO_SERV) < 1) {
                 BIO_printf(bio_err,
                            "%s: -accept argument malformed or ambiguous\n",
-                           port);
+                           prog);
                 goto end;
             }
             break;
