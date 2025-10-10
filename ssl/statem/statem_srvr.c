@@ -2767,8 +2767,7 @@ CON_FUNC_RETURN tls_construct_server_key_exchange(SSL_CONNECTION *s,
          * point itself
          */
         if (!WPACKET_put_bytes_u8(pkt, NAMED_CURVE_TYPE)
-                || !WPACKET_put_bytes_u8(pkt, 0)
-                || !WPACKET_put_bytes_u8(pkt, curve_id)
+                || !WPACKET_put_bytes_u16(pkt, curve_id)
                 || !WPACKET_sub_memcpy_u8(pkt, encodedPoint, encodedlen)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
