@@ -85,7 +85,7 @@ int dtls1_new(SSL *ssl)
     d1->sent_messages = pqueue_new();
 
     if (s->server) {
-        d1->cookie_len = sizeof(s->d1->cookie);
+        d1->cookie_len = 0;
     }
 
     d1->link_mtu = 0;
@@ -200,7 +200,7 @@ int dtls1_clear(SSL *ssl)
         s->d1->timer_cb = timer_cb;
 
         if (s->server) {
-            s->d1->cookie_len = sizeof(s->d1->cookie);
+            s->d1->cookie_len = 0;
         }
 
         if (SSL_get_options(ssl) & SSL_OP_NO_QUERY_MTU) {
