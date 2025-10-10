@@ -2014,9 +2014,16 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 
             if (msg.msg_flags & MSG_NOTIFICATION) {
                 union sctp_notification snp;
+                size_t copy;
 
-                memcpy(&snp, out, sizeof(snp));
-                if (snp.sn_header.sn_type == SCTP_SENDER_DRY_EVENT) {
+                memset(&snp, 0, sizeof(snp));
+                copy = (size_t)n < sizeof(snp) ? (size_t)n : sizeof(snp);
+                if (copy > 0)
+                    memcpy(&snp, out, copy);
+
+                /* Only consult header if we received at least the header */
+                if (copy >= sizeof(snp.sn_header)
+                    && snp.sn_header.sn_type == SCTP_SENDER_DRY_EVENT) {
 #  ifdef SCTP_EVENT
                     struct sctp_event event;
 #  else
