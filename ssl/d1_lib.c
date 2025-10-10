@@ -424,6 +424,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     const unsigned char *data;
     unsigned char *buf = NULL, *wbuf;
     size_t fragoff, fraglen, msglen;
+    size_t first_reclen = 0;
     unsigned int rectype, versmajor, versminor, msgseq, msgtype, clientvers, cookielen;
     BIO *rbio, *wbio;
     BIO_ADDR *tmpclient = NULL;
@@ -543,8 +544,9 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
         }
         /*
          * We allow data remaining at the end of the packet because there could
-         * be a second record (but we ignore it)
+         * be a second record. Record it now so we can ignore it later.
          */
+        first_reclen = DTLS1_RT_HEADER_LENGTH + PACKET_remaining(&msgpkt);
 
         /* This is an initial ClientHello so the epoch has to be 0 */
         if (seq[0] != 0 || seq[1] != 0) {
@@ -820,8 +822,16 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     if (BIO_dgram_get_peer(rbio, client) <= 0)
         BIO_ADDR_clear(client);
 
-    /* Buffer the record for use by the record layer */
-    if (BIO_write(s->rlayer.rrlnext, buf, n) != n) {
+    /*
+     * Buffer the record for use by the record layer.
+     * Only feed the validated first record to the record layer.
+     * Any trailing bytes in the datagram are ignored at this stage.
+     */
+    if (first_reclen == 0 || first_reclen > (size_t)n)
+        first_reclen = (size_t)n;
+
+    if (BIO_write(s->rlayer.rrlnext, buf, (int)first_reclen)
+        != (int)first_reclen) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         ret = -1;
         goto end;
