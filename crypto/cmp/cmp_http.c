@@ -11,9 +11,9 @@
 
 #include "cmp_local.h"
 
-static int keep_alive(int keep_alive, int body_type, BIO **bios)
+static int keep_alive(int want_keep_alive, int body_type, BIO **bios)
 {
-    if (keep_alive != 0 && bios == NULL
+    if (want_keep_alive != 0 && bios == NULL
         /*
          * Ask for persistent connection only if may need more round trips.
          * Do so even with disableConfirm because polling might be needed.
@@ -23,8 +23,8 @@ static int keep_alive(int keep_alive, int body_type, BIO **bios)
             && body_type != OSSL_CMP_PKIBODY_P10CR
             && body_type != OSSL_CMP_PKIBODY_KUR
             && body_type != OSSL_CMP_PKIBODY_POLLREQ)
-        keep_alive = 0;
-    return keep_alive;
+        want_keep_alive = 0;
+    return want_keep_alive;
 }
 
 /*
@@ -55,8 +55,16 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
     bios = OSSL_CMP_CTX_get_transfer_cb_arg(ctx);
     if (ctx->serverPort != 0)
         BIO_snprintf(server_port, sizeof(server_port), "%d", ctx->serverPort);
-    tls_used = ctx->tls_used >= 0 ? ctx->tls_used != 0
-        : OSSL_CMP_CTX_get_http_cb_arg(ctx) != NULL; /* backward compat */
+    /* Decide TLS usage: explicit setting wins, otherwise secure default.
+     * If a callback is present we expect TLS.
+     */
+    if (ctx->tls_used >= 0) {
+        tls_used = (ctx->tls_used != 0);
+    } else if (ctx->http_cb != NULL) {
+        tls_used = 1;
+    } else {
+        tls_used = 1;
+    }
     if (ctx->http_ctx == NULL) { /* using existing connection or yet not set up own connection */
         const char *path = ctx->serverPath;
 
