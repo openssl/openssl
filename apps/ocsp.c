@@ -438,8 +438,13 @@ int ocsp_main(int argc, char **argv)
             cert = load_cert(opt_arg(), FORMAT_UNDEF, "certificate");
             if (cert == NULL)
                 goto end;
-            if (cert_id_md == NULL)
-                cert_id_md = (EVP_MD *)EVP_sha1();
+            if (cert_id_md == NULL) {
+                cert_id_md = EVP_MD_fetch(NULL, "SHA1", NULL);
+                if (cert_id_md == NULL) {
+                    BIO_printf(bio_err, "Unable to fetch digest SHA1\n");
+                    goto end;
+                }
+            }
             if (!add_ocsp_cert(&req, cert, cert_id_md, issuer, ids))
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
@@ -448,8 +453,13 @@ int ocsp_main(int argc, char **argv)
             break;
         case OPT_SERIAL:
             reset_unknown();
-            if (cert_id_md == NULL)
-                cert_id_md = (EVP_MD *)EVP_sha1();
+            if (cert_id_md == NULL) {
+                cert_id_md = EVP_MD_fetch(NULL, "SHA1", NULL);
+                if (cert_id_md == NULL) {
+                    BIO_printf(bio_err, "Unable to fetch digest SHA1\n");
+                    goto end;
+                }
+            }
             if (!add_ocsp_serial(&req, opt_arg(), cert_id_md, issuer, ids))
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
