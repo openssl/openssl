@@ -1602,7 +1602,7 @@ static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
                  * address, as for OS X and Windows in some circumstances
                  * (see below).
                  */
-                BIO_ADDR_clear(msg->local);
+                BIO_ADDR_clear(BIO_MSG_N(msg, stride, i).local);
     }
 
     *num_processed = (size_t)ret;
