@@ -544,6 +544,10 @@ static int lex_do(struct lexer *lex)
     const char *p = lex->term_end, *end = lex->end, *term_end;
 
     for (; is_term_sep_ws(*p) && p < end; ++p);
+    if (p == end) {
+        lex->p = lex->term_end = end;
+        return 0;
+    }
 
     if (p == end) {
         lex->p          = end;
@@ -551,7 +555,7 @@ static int lex_do(struct lexer *lex)
         return 0;
     }
 
-    for (term_end = p; !is_term_sep_ws(*term_end) && term_end < end; ++term_end);
+    for (term_end = p; term_end < end && !is_term_sep_ws(*term_end); ++term_end) ;
 
     lex->p          = p;
     lex->term_end   = term_end;
