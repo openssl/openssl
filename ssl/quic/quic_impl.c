@@ -5165,11 +5165,13 @@ int ossl_quic_get_shutdown(const SSL *s)
     if (!expect_quic_conn_only(s, &ctx))
         return 0;
 
+    qctx_lock(&ctx);
     if (ossl_quic_channel_is_term_any(ctx.qc->ch)) {
         shut |= SSL_SENT_SHUTDOWN;
         if (!ossl_quic_channel_is_closing(ctx.qc->ch))
             shut |= SSL_RECEIVED_SHUTDOWN;
     }
+    qctx_unlock(&ctx);
 
     return shut;
 }
