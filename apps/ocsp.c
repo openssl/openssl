@@ -907,7 +907,7 @@ static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert,
                          const EVP_MD *cert_id_md, X509 *issuer,
                          STACK_OF(OCSP_CERTID) *ids)
 {
-    OCSP_CERTID *id;
+    OCSP_CERTID *id = NULL;
 
     if (issuer == NULL) {
         BIO_printf(bio_err, "No issuer certificate specified\n");
@@ -925,6 +925,7 @@ static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert,
     return 1;
 
  err:
+    OCSP_CERTID_free(id);
     BIO_printf(bio_err, "Error Creating OCSP request\n");
     return 0;
 }
