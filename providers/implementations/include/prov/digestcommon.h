@@ -121,6 +121,27 @@ PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_START(name, CTX, blksize, dgstsize, flags, \
     { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))set_ctx_params },       \
 PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
+# define IMPLEMENT_digest_functions_with_ctx_params(                           \
+    name, CTX, blksize, dgstsize, flags, init, upd, fin,                       \
+    gettable_ctx_params, get_ctx_params,                                       \
+    settable_ctx_params, set_ctx_params)                                       \
+static OSSL_FUNC_digest_init_fn name##_internal_init;                          \
+static int name##_internal_init(void *ctx, const OSSL_PARAM params[])          \
+{                                                                              \
+    return ossl_prov_is_running()                                              \
+           && init(ctx)                                                        \
+           && set_ctx_params(ctx, params);                                     \
+}                                                                              \
+PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_START(name, CTX, blksize, dgstsize, flags, \
+                                          upd, fin),                           \
+    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))name##_internal_init },           \
+    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS, (void (*)(void))gettable_ctx_params }, \
+    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, (void (*)(void))get_ctx_params },       \
+    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS, (void (*)(void))settable_ctx_params }, \
+    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))set_ctx_params },       \
+PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
+
+
 
 const OSSL_PARAM *ossl_digest_default_gettable_params(void *provctx);
 int ossl_digest_default_get_params(OSSL_PARAM params[], size_t blksz,
