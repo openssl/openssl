@@ -3607,7 +3607,6 @@ int cmp_main(int argc, char **argv)
     int i;
     X509 *newcert = NULL;
     ENGINE *engine = NULL;
-    OSSL_CMP_CTX *srv_cmp_ctx = NULL;
     int ret = 0; /* default: failure */
 
     if (!handle_opts_upfront(argc, argv))
@@ -3715,10 +3714,16 @@ int cmp_main(int argc, char **argv)
             goto err;
         }
     }
+
     if (opt_server != NULL && opt_use_mock_srv) {
         CMP_err("cannot use both -server and -use_mock_srv options");
         goto err;
     }
+    if ((opt_server == NULL || opt_use_mock_srv) && opt_tls_used) {
+        CMP_warn("ignoring -tls_used option since -server is not given or -use_mock_srv is given");
+        opt_tls_used = 0;
+    }
+
 #endif
 
     if (opt_ignore_keyusage)
@@ -3733,6 +3738,7 @@ int cmp_main(int argc, char **argv)
 #endif
                                     )) {
         OSSL_CMP_SRV_CTX *srv_ctx;
+        OSSL_CMP_CTX *srv_cmp_ctx;
 
         if ((srv_ctx = setup_srv_ctx(engine)) == NULL)
             goto err;
@@ -3744,17 +3750,13 @@ int cmp_main(int argc, char **argv)
             goto err;
         }
         OSSL_CMP_CTX_set_log_verbosity(srv_cmp_ctx, opt_verbosity);
-    }
 
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
-    if (opt_tls_used && (opt_use_mock_srv || opt_server == NULL)) {
-        CMP_warn("ignoring -tls_used option since -use_mock_srv is given or -server is not given");
-        opt_tls_used = 0;
-    }
-
-    if (opt_port != NULL) { /* act as very basic CMP HTTP server */
-        ret = cmp_server(srv_cmp_ctx);
-        goto err;
+        if (opt_port != NULL) { /* act as very basic CMP HTTP server only */
+            ret = cmp_server(srv_cmp_ctx);
+            goto err;
+        }
+#endif
     }
 
     /* act as CMP client, possibly using internal mock server */
@@ -3762,10 +3764,14 @@ int cmp_main(int argc, char **argv)
     if (opt_reqout_only != NULL) {
         const char *msg = "option is ignored since -reqout_only option is given";
 
-# if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
+#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
+        if (opt_port != NULL) {
+            CMP_err("the -reqout_only client option does not combine with -port implying server behavior");
+            goto err;
+        }
         if (opt_server != NULL)
             CMP_warn1("-server %s", msg);
-# endif
+#endif
         if (opt_use_mock_srv)
             CMP_warn1("-use_mock_srv %s", msg);
         if (opt_reqout != NULL)
@@ -3777,12 +3783,13 @@ int cmp_main(int argc, char **argv)
         opt_reqout = opt_reqout_only;
     }
     if (opt_rspin != NULL) {
+#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
         if (opt_server != NULL)
             CMP_warn("-server option is not used if enough filenames given for -rspin");
+#endif
         if (opt_use_mock_srv)
             CMP_warn("-use_mock_srv option is not used if enough filenames given for -rspin");
     }
-#endif
 
     if (!setup_client_ctx(cmp_ctx, engine)) {
         CMP_err("cannot set up CMP context");
