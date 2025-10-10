@@ -226,13 +226,15 @@ out:
 void get_sock_info_address(int asock, char **hostname, char **service)
 {
     union BIO_sock_info_u info;
+    info.addr = NULL;
 
     if (hostname != NULL)
         *hostname = NULL;
     if (service != NULL)
         *service = NULL;
 
-    if ((info.addr = BIO_ADDR_new()) != NULL
+    info.addr = BIO_ADDR_new();
+    if (info.addr != NULL
             && BIO_sock_info(asock, BIO_SOCK_INFO_ADDRESS, &info)) {
         if (hostname != NULL)
             *hostname = BIO_ADDR_hostname_string(info.addr, 1);
