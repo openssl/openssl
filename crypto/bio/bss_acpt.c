@@ -231,8 +231,10 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                 }
                 ERR_clear_last_mark();
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                               "calling socket(%s, %s)",
-                                c->param_addr, c->param_serv);
+                               "calling socket(domain=%d, type=%d, protocol=%d)",
+                                BIO_ADDRINFO_family(c->addr_iter),
+                                BIO_ADDRINFO_socktype(c->addr_iter),
+                                BIO_ADDRINFO_protocol(c->addr_iter));
                 ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_CREATE_SOCKET);
                 goto exit_loop;
             }
