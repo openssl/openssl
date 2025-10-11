@@ -333,7 +333,7 @@ int SMIME_write_ASN1_ex(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
     } else if (ctype_nid == NID_pkcs7_signed) {
         if (econt_nid == NID_id_smime_ct_receipt)
             msg_type = "signed-receipt";
-        else if (sk_X509_ALGOR_num(mdalgs) >= 0)
+        else if (mdalgs != NULL && sk_X509_ALGOR_num(mdalgs) > 0)
             msg_type = "signed-data";
         else
             msg_type = "certs-only";
