@@ -812,7 +812,19 @@ int conn_gets(BIO *bio, char *buf, int size)
             break;
     }
     *ptr = '\0';
-    return ret > 0 || (bio->flags & BIO_FLAGS_IN_EOF) != 0 ? (int)(ptr - buf) : ret;
+    /*
+     * If we read any bytes and then hit a retryable condition, return the
+     * partial length instead of <= 0. Since we are returning success,
+     * do not advertise a retry via flags.
+     */
+    if (ptr != buf) {
+        BIO_clear_retry_flags(bio);
+        return (int)(ptr - buf);
+    }
+
+    return ret > 0 || (bio->flags & BIO_FLAGS_IN_EOF) != 0
+           ? (int)(ptr - buf)
+           : ret;
 }
 
 static int conn_sendmmsg(BIO *bio, BIO_MSG *msg, size_t stride, size_t num_msgs,
