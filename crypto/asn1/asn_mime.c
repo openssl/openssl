@@ -158,9 +158,7 @@ static ASN1_VALUE *b64_read_asn1(BIO *bio, const ASN1_ITEM *it, ASN1_VALUE **x,
 static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
 {
     const EVP_MD *md;
-    int i, have_unknown = 0, write_comma, ret = 0, md_nid;
-    have_unknown = 0;
-    write_comma = 0;
+    int i, have_unknown = 0, write_comma = 0, ret = 0, md_nid;
     for (i = 0; i < sk_X509_ALGOR_num(mdalgs); i++) {
         if (write_comma && BIO_puts(out, ",") < 0)
             goto err;
