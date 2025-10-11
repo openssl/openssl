@@ -731,10 +731,17 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
                 &wbuf[DTLS1_RT_HEADER_LENGTH + DTLS1_HM_HEADER_LENGTH - 3],
                 3);
 
-            if (s->msg_callback)
-                s->msg_callback(1, version, SSL3_RT_HEADER, wbuf,
-                    DTLS1_RT_HEADER_LENGTH, ssl,
-                    s->msg_callback_arg);
+            if (s->msg_callback) {
+                /* Report the outgoing DTLS record header */
+                s->msg_callback(1, (int)version, SSL3_RT_HEADER,
+                    wbuf, DTLS1_RT_HEADER_LENGTH,
+                    ssl, s->msg_callback_arg);
+                /* Report the HelloVerifyRequest handshake message */
+                s->msg_callback(1, (int)version, SSL3_RT_HANDSHAKE,
+                    wbuf + DTLS1_RT_HEADER_LENGTH,
+                    wreclen - DTLS1_RT_HEADER_LENGTH,
+                    ssl, s->msg_callback_arg);
+            }
 
             if ((tmpclient = BIO_ADDR_new()) == NULL) {
                 ERR_raise(ERR_LIB_SSL, ERR_R_BIO_LIB);
