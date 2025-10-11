@@ -969,6 +969,9 @@ int ossl_quic_wire_decode_transport_param_cid(PACKET *pkt,
 
     cid->id_len = (unsigned char)len;
     memcpy(cid->id, body, cid->id_len);
+    if (cid->id_len < QUIC_MAX_CONN_ID_LEN)
+        memset(cid->id + cid->id_len, 0,
+               QUIC_MAX_CONN_ID_LEN - cid->id_len);
     return 1;
 }
 
@@ -1005,6 +1008,9 @@ int ossl_quic_wire_decode_transport_param_preferred_addr(PACKET *pkt,
     p->ipv4_port    = (uint16_t)ipv4_port;
     p->ipv6_port    = (uint16_t)ipv6_port;
     p->cid.id_len   = (unsigned char)cidl;
+    if (p->cid.id_len < QUIC_MAX_CONN_ID_LEN)
+        memset(p->cid.id + p->cid.id_len, 0,
+               QUIC_MAX_CONN_ID_LEN - p->cid.id_len);
     return 1;
 }
 
