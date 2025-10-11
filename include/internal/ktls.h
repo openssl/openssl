@@ -393,7 +393,7 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
     unsigned char *p = data;
     const size_t prepend_length = SSL3_RT_HEADER_LENGTH;
 
-    if (length < prepend_length + EVP_GCM_TLS_TAG_LEN) {
+    if (length < prepend_length) {
         errno = EINVAL;
         return -1;
     }
@@ -403,7 +403,7 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
     msg.msg_controllen = sizeof(cmsgbuf.buf);
 
     msg_iov.iov_base = p + prepend_length;
-    msg_iov.iov_len = length - prepend_length - EVP_GCM_TLS_TAG_LEN;
+    msg_iov.iov_len = length - prepend_length;
     msg.msg_iov = &msg_iov;
     msg.msg_iovlen = 1;
 
