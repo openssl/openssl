@@ -750,6 +750,12 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
          * handle any number of key shares)
          */
         if (*keyshares_cnt == *keyshares_max) {
+            /* detect wrap on addition */
+            if (*keyshares_max + GROUPLIST_INCREMENT < *keyshares_max) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto failure;
+            }
+
             PACKET *tmp_pkt;
             uint16_t *tmp =
                 OPENSSL_realloc_array(*keyshares_arr,
