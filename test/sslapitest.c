@@ -8703,7 +8703,7 @@ static int int_test_ssl_get_shared_ciphers(int tst, int clnt)
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
             || (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                                                SSL_ERROR_NONE))
+                                                 SSL_ERROR_NONE))
                 && handshakeok))
         goto end;
 
