@@ -2467,10 +2467,16 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
             fc_new_hwm = shdr->offset + shdr->len;
 
         /* Log chunk to TXPIM. */
-        chunk.stream_id         = shdr->stream_id;
-        chunk.start             = shdr->offset;
-        chunk.end               = shdr->offset + shdr->len - 1;
-        chunk.has_fin           = shdr->is_fin;
+        chunk.stream_id = shdr->stream_id;
+        if (shdr->len > 0) {
+            chunk.start = shdr->offset;
+            chunk.end   = shdr->offset + shdr->len - 1;
+        } else {
+            /* No data carried in this frame. */
+            chunk.start = UINT64_MAX;
+            chunk.end   = 0;
+        }
+        chunk.has_fin = shdr->is_fin;
         chunk.has_stop_sending  = 0;
         chunk.has_reset_stream  = 0;
         if (!ossl_quic_txpim_pkt_append_chunk(tpkt, &chunk))
