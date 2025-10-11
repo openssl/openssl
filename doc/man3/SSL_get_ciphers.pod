@@ -76,6 +76,8 @@ description of SSL_get1_supported_ciphers() above). This function will return
 available shared ciphersuites whether or not they are enabled. This is a server
 side function only and must only be called after the completion of the initial
 handshake.
+The function sets an empty string when B<ssl> fails the handshake due to the
+absence of shared ciphers.
 
 =head1 NOTES
 
