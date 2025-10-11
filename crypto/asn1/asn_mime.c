@@ -1048,6 +1048,11 @@ static int strip_eol(char *linebuf, int *plen, int flags)
     char *p, c;
     int is_eol = 0;
 
+    if (len <= 0) {
+        *plen = 0;
+        return 0;
+    }
+
 #ifndef OPENSSL_NO_CMS
     if ((flags & CMS_BINARY) != 0) {
         if (len <= 0 || linebuf[len - 1] != '\n')
