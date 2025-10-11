@@ -228,6 +228,9 @@ int tls_parse_ctos_srp(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
+    OPENSSL_free(s->srp_ctx.login);
+    s->srp_ctx.login = NULL;
+
     if (!PACKET_strndup(&srp_I, &s->srp_ctx.login)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
