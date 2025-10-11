@@ -423,7 +423,7 @@ static int dgram_read(BIO *b, char *out, int outl)
         ret = recvfrom(b->num, out, outl, flags,
                        BIO_ADDR_sockaddr_noconst(&peer), &len);
 
-        if (!data->connected && ret >= 0)
+        if (!data->connected && ret >= 0 && !(flags & MSG_PEEK))
             BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, &peer);
 
         BIO_clear_retry_flags(b);
