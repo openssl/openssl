@@ -3419,6 +3419,11 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
     int i;
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
+    if (buf == NULL || size <= 0)
+        return NULL;
+
+    buf[0] = '\0';
+
     if (sc == NULL)
         return NULL;
 
