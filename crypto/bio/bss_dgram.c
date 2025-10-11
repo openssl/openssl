@@ -1588,7 +1588,7 @@ static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
 
     for (i = 0; i < (size_t)ret; ++i) {
         BIO_MSG_N(msg, stride, i).data_len = mh[i].msg_len;
-        BIO_MSG_N(msg, stride, i).flags    = 0;
+        BIO_MSG_N(msg, stride, i).flags    = (uint64_t)mh[i].msg_hdr.msg_flags;
         /*
          * *(msg->peer) will have been filled in by recvmmsg;
          * for msg->local we parse the control data returned
@@ -1633,7 +1633,7 @@ static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
     }
 
     msg->data_len   = (size_t)l;
-    msg->flags      = 0;
+    msg->flags      = (uint64_t)mh.msg_flags;
 
     if (msg->local != NULL)
         if (extract_local(b, &mh, msg->local) < 1)
@@ -1684,7 +1684,7 @@ static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
         }
 
         msg[0].data_len = num_bytes_received;
-        msg[0].flags    = 0;
+        msg[0].flags    = (uint64_t)wmsg.dwFlags;
         if (msg[0].local != NULL)
             if (extract_local(b, &wmsg, msg[0].local) < 1)
                 /*
