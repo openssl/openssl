@@ -408,8 +408,13 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
     msg.msg_iovlen = 1;
 
     ret = recvmsg(fd, &msg, 0);
-    if (ret < 0)
+    if (ret <= 0)
         return ret;
+
+    if ((msg.msg_flags & (MSG_EOR | MSG_CTRUNC)) != MSG_EOR) {
+        errno = EMSGSIZE;
+        return -1;
+    }
 
     if (msg.msg_controllen > 0) {
         cmsg = CMSG_FIRSTHDR(&msg);
