@@ -442,8 +442,11 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
         return SSL_TLSEXT_ERR_NOACK;
 
     if (servername != NULL) {
-        if (OPENSSL_strcasecmp(servername, p->servername))
+        if (OPENSSL_strcasecmp(servername, p->servername)) {
+            if (ad != NULL)
+                *ad = SSL_AD_UNRECOGNIZED_NAME;
             return p->extension_error;
+        }
         if (ctx2 != NULL) {
             BIO_printf(p->biodebug, "Switching server context.\n");
             SSL_set_SSL_CTX(s, ctx2);
