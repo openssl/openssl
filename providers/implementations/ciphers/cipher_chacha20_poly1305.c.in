@@ -338,8 +338,10 @@ static int chacha20_poly1305_final(void *vctx, unsigned char *out, size_t *outl,
         return 0;
 
     /* The tag must be set before actually decrypting data */
-    if (!ctx->base.enc && ctx->tag_len == 0)
+    if (!ctx->base.enc && ctx->tag_len == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
         return 0;
+    }
 
     if (hw->aead_cipher((PROV_CIPHER_CTX *)ctx, out, outl, NULL, 0) <= 0)
         return 0;
