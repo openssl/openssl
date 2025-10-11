@@ -234,9 +234,7 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
             break;
 
         default:
-            if (have_unknown) {
-                write_comma = 0;
-            } else {
+            if (!have_unknown) {
                 if (BIO_puts(out, "unknown") < 0)
                     goto err;
                 have_unknown = 1;
