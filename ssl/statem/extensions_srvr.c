@@ -638,7 +638,7 @@ static int tls_accept_ksgroup(SSL_CONNECTION *s, uint16_t ksgroup, PACKET *encod
     if (tls13_set_encoded_pub_key(s->s3.peer_tmp,
                                   PACKET_data(encoded_pubkey),
                                   PACKET_remaining(encoded_pubkey)) <= 0) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_ECPOINT);
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
         return 0;
     }
     return 1;
