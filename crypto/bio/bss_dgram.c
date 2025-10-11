@@ -1991,6 +1991,9 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
                         continue;
 #  ifdef SCTP_RCVINFO
                     if (cmsg->cmsg_type == SCTP_RCVINFO) {
+                        if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct sctp_rcvinfo)))
+                            continue;
+
                         struct sctp_rcvinfo *rcvinfo;
 
                         rcvinfo = (struct sctp_rcvinfo *)CMSG_DATA(cmsg);
@@ -2005,6 +2008,9 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 #  endif
 #  ifdef SCTP_SNDRCV
                     if (cmsg->cmsg_type == SCTP_SNDRCV) {
+                        if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct sctp_sndrcvinfo)))
+                            continue;
+
                         struct sctp_sndrcvinfo *sndrcvinfo;
 
                         sndrcvinfo =
