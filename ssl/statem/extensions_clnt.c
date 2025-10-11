@@ -2008,7 +2008,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
 
         if (tls13_set_encoded_pub_key(skey, PACKET_data(&encoded_pt),
                                       PACKET_remaining(&encoded_pt)) <= 0) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_ECPOINT);
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
             EVP_PKEY_free(skey);
             return 0;
         }
