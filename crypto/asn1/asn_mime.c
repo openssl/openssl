@@ -566,7 +566,7 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
     out = BIO_push(bf, out);
     if (flags & SMIME_BINARY) {
         while ((len = BIO_read(in, linebuf, MAX_SMLEN)) > 0) {
-            if (BIO_write(out, linebuf, len) != len && out != NULL)
+            if (BIO_write(out, linebuf, len) != len)
                 goto err;
         }
     } else {
@@ -586,7 +586,7 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
                             goto err;
                     eolcnt = 0;
                 }
-                if (BIO_write(out, linebuf, len) != len && out != NULL)
+                if (BIO_write(out, linebuf, len) != len)
                     goto err;
                 if (eol && BIO_puts(out, "\r\n") < 0)
                     goto err;
@@ -633,7 +633,7 @@ int SMIME_text(BIO *in, BIO *out)
     }
     sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
     while ((len = BIO_read(in, iobuf, sizeof(iobuf))) > 0)
-        if (BIO_write(out, iobuf, len) != len && out != NULL)
+        if (out != NULL && BIO_write(out, iobuf, len) != len)
             return 0;
     return len >= 0;
 }
