@@ -407,7 +407,7 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
     unsigned char *p = data;
     const size_t prepend_length = SSL3_RT_HEADER_LENGTH;
 
-    if (length < prepend_length + EVP_GCM_TLS_TAG_LEN) {
+    if (length < prepend_length) {
         errno = EINVAL;
         return -1;
     }
@@ -417,17 +417,27 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
     msg.msg_controllen = sizeof(cmsgbuf.buf);
 
     msg_iov.iov_base = p + prepend_length;
-    msg_iov.iov_len = length - prepend_length - EVP_GCM_TLS_TAG_LEN;
+    msg_iov.iov_len = length - prepend_length;
     msg.msg_iov = &msg_iov;
     msg.msg_iovlen = 1;
+
+    memset(p, 0, prepend_length);
 
     ret = recvmsg(fd, &msg, 0);
     if (ret < 0)
         return ret;
 
+    if ((msg.msg_flags & (MSG_EOR | MSG_CTRUNC)) != MSG_EOR) {
+        errno = EMSGSIZE;
+        return -1;
+    }
+
     if (msg.msg_controllen > 0) {
         cmsg = CMSG_FIRSTHDR(&msg);
-        if (cmsg->cmsg_type == TLS_GET_RECORD_TYPE) {
+        if (cmsg != NULL
+            && cmsg->cmsg_level == SOL_TLS
+            && cmsg->cmsg_type == TLS_GET_RECORD_TYPE
+            && cmsg->cmsg_len >= CMSG_LEN(sizeof(unsigned char))) {
             p[0] = *((unsigned char *)CMSG_DATA(cmsg));
             p[1] = TLS1_2_VERSION_MAJOR;
             p[2] = TLS1_2_VERSION_MINOR;
