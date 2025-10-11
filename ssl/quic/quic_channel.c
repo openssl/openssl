@@ -3815,9 +3815,10 @@ int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     if (!ossl_assert(ch->state == QUIC_CHANNEL_STATE_IDLE && ch->is_server))
         return 0;
 
-    ch->cur_local_cid = *peer_dcid;
     if (!ossl_quic_lcidm_bind_channel(ch->lcidm, ch, peer_dcid))
         return 0;
+
+    ch->cur_local_cid = *peer_dcid;
 
     /*
      * peer_odcid <=> is initial dst conn id chosen by peer in its
