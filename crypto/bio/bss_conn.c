@@ -229,7 +229,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
 
         case BIO_CONN_S_BLOCKED_CONNECT:
             /* wait for socket being writable, before querying BIO_sock_error */
-            if (BIO_socket_wait(b->num, 0, time(NULL)) == 0)
+            if (BIO_socket_wait(b->num, 0, time(NULL) + 1) == 0)
                 break;
             i = BIO_sock_error(b->num);
             if (i != 0) {
