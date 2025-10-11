@@ -753,15 +753,21 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
                 OPENSSL_realloc(*keyshares_arr,
                                 (*keyshares_max + GROUPLIST_INCREMENT) * sizeof(**keyshares_arr));
 
-            if (tmp == NULL)
+            if (tmp == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto failure;
+            }
+
             *keyshares_arr = tmp;
             tmp_pkt =
                 OPENSSL_realloc(*encoded_pubkey_arr,
                                 (*keyshares_max + GROUPLIST_INCREMENT) *
                                 sizeof(**encoded_pubkey_arr));
-            if (tmp_pkt == NULL)
+            if (tmp_pkt == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto failure;
+            }
+
             *encoded_pubkey_arr = tmp_pkt;
             *keyshares_max += GROUPLIST_INCREMENT;
         }
