@@ -1934,8 +1934,10 @@ void dgram_sctp_handle_auth_free_key_event(BIO *b,
 
     if (authkeyevent->auth_indication == SCTP_AUTH_FREE_KEY) {
         struct sctp_authkeyid authkeyid;
+        memset(&authkeyid, 0, sizeof(authkeyid));
 
-        /* delete key */
+        /* scope to current association unless the app does otherwise */
+        authkeyid.scact_assoc_id  = SCTP_CURRENT_ASSOC;
         authkeyid.scact_keynumber = authkeyevent->auth_keynumber;
         ret = setsockopt(b->num, IPPROTO_SCTP, SCTP_AUTH_DELETE_KEY,
                          &authkeyid, sizeof(struct sctp_authkeyid));
