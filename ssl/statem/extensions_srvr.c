@@ -250,6 +250,9 @@ int tls_parse_ctos_ec_pt_formats(SSL_CONNECTION *s, PACKET *pkt,
     }
 
     if (!s->hit) {
+        OPENSSL_free(s->ext.peer_ecpointformats);
+        s->ext.peer_ecpointformats = NULL;
+        s->ext.peer_ecpointformats_len = 0;
         if (!PACKET_memdup(&ec_point_format_list,
                            &s->ext.peer_ecpointformats,
                            &s->ext.peer_ecpointformats_len)) {
