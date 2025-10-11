@@ -86,7 +86,7 @@ void *ASN1_item_d2i_fp_ex(const ASN1_ITEM *it, FILE *in, void *x,
                           OSSL_LIB_CTX *libctx, const char *propq)
 {
     BIO *b;
-    char *ret;
+    void *ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_BUF_LIB);
