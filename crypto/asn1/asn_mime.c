@@ -669,6 +669,12 @@ static int multi_split(BIO *bio, int flags, const char *bound, STACK_OF(BIO) **r
             first = 1;
             part++;
         } else if (state == 2) {
+            if (bpart == NULL) {
+                bpart = BIO_new(BIO_s_mem());
+                if (bpart == NULL)
+                    return 0;
+                BIO_set_mem_eof_return(bpart, 0);
+            }
             if (!sk_BIO_push(parts, bpart)) {
                 BIO_free(bpart);
                 return 0;
