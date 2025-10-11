@@ -1115,11 +1115,17 @@ static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
             if (cmsg->cmsg_type != IP_PKTINFO)
                 continue;
 
+            if (cmsg->cmsg_len < BIO_CMSG_LEN(sizeof(struct in_pktinfo)))
+                continue;
+
             local->s_in.sin_addr =
                 ((struct in_pktinfo *)BIO_CMSG_DATA(cmsg))->ipi_addr;
 
 #   elif defined(IP_RECVDSTADDR)
             if (cmsg->cmsg_type != IP_RECVDSTADDR)
+                continue;
+
+            if (cmsg->cmsg_len < BIO_CMSG_LEN(sizeof(struct in_addr)))
                 continue;
 
             local->s_in.sin_addr = *(struct in_addr *)BIO_CMSG_DATA(cmsg);
@@ -1142,6 +1148,9 @@ static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
 
 #    if defined(IPV6_RECVPKTINFO)
             if (cmsg->cmsg_type != IPV6_PKTINFO)
+                continue;
+
+            if (cmsg->cmsg_len < BIO_CMSG_LEN(sizeof(struct in6_pktinfo)))
                 continue;
 
             {
@@ -1982,6 +1991,9 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
                         continue;
 #  ifdef SCTP_RCVINFO
                     if (cmsg->cmsg_type == SCTP_RCVINFO) {
+                        if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct sctp_rcvinfo)))
+                            continue;
+
                         struct sctp_rcvinfo *rcvinfo;
 
                         rcvinfo = (struct sctp_rcvinfo *)CMSG_DATA(cmsg);
@@ -1996,6 +2008,9 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 #  endif
 #  ifdef SCTP_SNDRCV
                     if (cmsg->cmsg_type == SCTP_SNDRCV) {
+                        if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct sctp_sndrcvinfo)))
+                            continue;
+
                         struct sctp_sndrcvinfo *sndrcvinfo;
 
                         sndrcvinfo =
