@@ -185,7 +185,8 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
     p[0] = tgr->tls_type;
     p[1] = tgr->tls_vmajor;
     p[2] = tgr->tls_vminor;
-    *(uint16_t *)(p + 3) = htons(ret);
+    p[3] = (ret >> 8) & 0xff;
+    p[4] = ret & 0xff;
 
     return ret + prepend_length;
 }
