@@ -110,7 +110,7 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 {
     FILE *fp = NULL;
     struct sockaddr_un addr;
-    int mybuffer, ret = -1, i, numbytes, fd;
+    int mybuffer, ret = -1, i, numbytes, fd = -1;
     unsigned char tempbuf[255];
 
     if (bytes > (int)sizeof(tempbuf))
@@ -128,7 +128,7 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 #else
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
 #endif
-    if (fd == -1 || (fp = fdopen(fd, "r+")) == NULL)
+    if (fd == -1)
         return -1;
     setbuf(fp, NULL);
 
@@ -173,6 +173,14 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
         }
     }
 
+    /* Create stream only after a successful connect to avoid stale FILE* on fd swap. */
+    fp = fdopen(fd, "r+");
+    if (fp == NULL) {
+        close(fd);
+        return -1;
+    }
+    setbuf(fp, NULL);
+
     /* Make request, see how many bytes we can get back. */
     tempbuf[0] = 1;
     tempbuf[1] = bytes;
@@ -198,6 +206,8 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
  err:
     if (fp != NULL)
         fclose(fp);
+    else if (fd != -1)
+        close(fd);
     return ret;
 }
 
