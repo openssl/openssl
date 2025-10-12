@@ -4643,25 +4643,34 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
      * created channel, so once we pop the new channel from the port above
      * we just need to extract it
      */
-    if (new_ch == NULL
-        || (conn_ssl = ossl_quic_channel_get0_tls(new_ch)) == NULL
-        || (conn = SSL_CONNECTION_FROM_SSL(conn_ssl)) == NULL
-        || (conn_ssl = SSL_CONNECTION_GET_USER_SSL(conn)) == NULL)
+    if (new_ch == NULL)
         goto out;
+
+    /*
+     * All objects below must exist, because new_ch != NULL. The objects are
+     * bound to new_ch. If channel constructor fails to create any item here
+     * it just fails to create channel.
+     */
+    if (!ossl_assert((conn_ssl = ossl_quic_channel_get0_tls(new_ch)) != NULL)
+        || !ossl_assert((conn = SSL_CONNECTION_FROM_SSL(conn_ssl)) != NULL)
+        || !ossl_assert((conn_ssl = SSL_CONNECTION_GET_USER_SSL(conn)) != NULL))
+        goto out;
+
     qc = (QUIC_CONNECTION *)conn_ssl;
-    qc->listener = ctx.ql;
     qc->pending = 0;
     if (!SSL_up_ref(&ctx.ql->obj.ssl)) {
+        /*
+         * You might expect ossl_quic_channel_free() to be called here. Be
+         * assured it happens, The process goes as follows:
+         *    - The SSL_free() here is being handled by ossl_quic_free().
+         *    - The very last step of ossl_quic_free() is call to qc_cleanup()
+         *      where channel gets freed.
+         */
         SSL_free(conn_ssl);
-        SSL_free(ossl_quic_channel_get0_tls(new_ch));
-        conn_ssl = NULL;
     }
+    qc->listener = ctx.ql;
 
 out:
-    if (conn_ssl == NULL && new_ch != NULL) {
-        ossl_quic_channel_free(new_ch);
-        new_ch = NULL;
-    }
 
     qctx_unlock(&ctx);
     return conn_ssl;
