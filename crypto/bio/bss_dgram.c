@@ -1938,7 +1938,7 @@ void dgram_sctp_handle_auth_free_key_event(BIO *b,
         memset(&authkeyid, 0, sizeof(authkeyid));
 
         /* scope to current association unless the app does otherwise */
-        authkeyid.scact_assoc_id  = SCTP_CURRENT_ASSOC;
+        authkeyid.scact_assoc_id  = authkeyevent->auth_assoc_id;
         authkeyid.scact_keynumber = authkeyevent->auth_keynumber;
         ret = setsockopt(b->num, IPPROTO_SCTP, SCTP_AUTH_DELETE_KEY,
                          &authkeyid, sizeof(struct sctp_authkeyid));
