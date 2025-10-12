@@ -182,6 +182,11 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
         goto err;
     numbytes = tempbuf[0];
 
+    if (numbytes <= 0 || numbytes > bytes
+        || numbytes > (int)sizeof(tempbuf)) {
+        goto err;
+    }
+
     /* Which buffer are we using? */
     mybuffer = buf == NULL;
     if (mybuffer)
