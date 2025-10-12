@@ -3795,6 +3795,7 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
  * @param peer        Pointer to a BIO_ADDR structure representing the peer's
  *                    address.
  * @param peer_scid   Pointer to the peer's source connection ID (QUIC_CONN_ID).
+ *                    This must not be NULL.
  * @param peer_dcid   Pointer to the peer's destination connection ID
  *                    (QUIC_CONN_ID). This must not be NULL.
  * @param peer_odcid  Pointer to the original destination connection ID
@@ -3817,6 +3818,8 @@ int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
 
     if (!ossl_quic_lcidm_bind_channel(ch->lcidm, ch, peer_dcid))
         return 0;
+
+    OPENSSL_assert(peer_scid != NULL);
 
     ch->cur_local_cid = *peer_dcid;
 
