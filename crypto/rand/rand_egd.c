@@ -113,6 +113,10 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
     int mybuffer, ret = -1, i, numbytes, fd;
     unsigned char tempbuf[255];
 
+#if defined(OPENSSL_SYS_TANDEM)
+    hpns_connect_attempt = 0;
+#endif
+
     if (bytes > (int)sizeof(tempbuf))
         return -1;
 
@@ -134,8 +138,12 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 
     /* Try to connect */
     for (;;) {
-        if (connect(fd, (struct sockaddr *)&addr, i) == 0)
+        if (connect(fd, (struct sockaddr *)&addr, i) == 0) {
+#if defined(OPENSSL_SYS_TANDEM)
+            hpns_connect_attempt = 0;
+#endif
             break;
+        }
 # ifdef EISCONN
         if (errno == EISCONN)
             break;
