@@ -4795,8 +4795,6 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
     qc->pending = 0;
     if (!SSL_up_ref(&ctx.ql->obj.ssl)) {
         SSL_free(conn_ssl);
-        SSL_free(ossl_quic_channel_get0_tls(new_ch));
-        conn_ssl = NULL;
     }
 
 out:
