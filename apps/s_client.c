@@ -44,7 +44,6 @@ typedef unsigned int u_int;
 #include <openssl/async.h>
 #ifndef OPENSSL_NO_CT
 # include <openssl/ct.h>
-#include <stdbool.h>
 #endif
 #include "s_apps.h"
 #include "timeouts.h"
@@ -1928,12 +1927,14 @@ int s_client_main(int argc, char **argv)
              !SSL_CTX_set_record_size_limit(ctx, record_size_limit)) {
         BIO_printf(bio_err,
                          "%s: Record Size Limit %u is out of permitted range\n",
-                         prog, max_pipelines);
+                         prog, record_size_limit);
         goto end;
     }
 
     if (record_size_limit > 0 && maxfraglen > 0) {
-      BIO_printf(bio_err, "Warning: Max Fragment Length extension and Record Size Limit activated. Both extension will be sent.\n");
+      BIO_printf(bio_err,
+                 "Warning: Max Fragment Length extension and Record Size Limit"
+                 " activated. Both extension will be sent.\n");
     }
 
     if (!ssl_load_stores(ctx,

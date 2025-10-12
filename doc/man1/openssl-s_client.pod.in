@@ -571,7 +571,7 @@ C<512>, C<1024>, C<2048>, and C<4096>.
 
 =item B<-record_size_limit> I<len>
 
-Specify a Record Size Limit value; allowed range is C<64> - C<16384>, and a value of 0 disable the negotiation of this
+Specify a Record Size Limit value; allowed range is C<64> - C<16384>, and a value of 0 disables the negotiation of this
 extension.
 
 =item B<-max_send_frag> I<int>

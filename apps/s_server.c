@@ -2234,7 +2234,7 @@ int s_server_main(int argc, char *argv[])
              !SSL_CTX_set_record_size_limit(ctx, record_size_limit)) {
         BIO_printf(bio_err,
                          "%s: Record Size Limit %u is out of permitted range\n",
-                         prog, max_pipelines);
+                         prog, record_size_limit);
         goto end;
     }
 
