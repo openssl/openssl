@@ -128,8 +128,13 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 #else
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
 #endif
-    if (fd == -1 || (fp = fdopen(fd, "r+")) == NULL)
+    if (fd == -1)
         return -1;
+    fp = fdopen(fd, "r+");
+    if (fp == NULL) {
+        close(fd);
+        return -1;
+    }
     setbuf(fp, NULL);
 
     /* Try to connect */
