@@ -4658,6 +4658,11 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
     }
 
 out:
+    if (conn_ssl == NULL && new_ch != NULL) {
+        ossl_quic_channel_free(new_ch);
+        new_ch = NULL;
+    }
+
     qctx_unlock(&ctx);
     return conn_ssl;
 }
