@@ -435,6 +435,16 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
         }
     } else {
         serverCon = scon;
+        /*
+         * Reset the SSL object before reusing it for a new connection.
+         * This clears prior handshake and I/O state while keeping
+         * configuration inherited from the SSL_CTX.
+         */
+        if (!SSL_clear(serverCon)) {
+            ERR_print_errors(bio_err);
+            BIO_free(conn);
+            return NULL;
+        }
         SSL_set_connect_state(serverCon);
     }
 
