@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -75,6 +76,31 @@ static int test_sctp_auth_basic(void)
     }
 
     /*
+     * Subscribe to association change notifications so we can learn
+     * the association id on a one-to-many socket after connect.
+     * Prefer RFC6458 SCTP_EVENT when available, otherwise use SCTP_EVENTS.
+     */
+# ifdef SCTP_EVENT
+    {
+        struct sctp_event ev;
+
+        memset(&ev, 0, sizeof(ev));
+        ev.se_type = SCTP_ASSOC_CHANGE;
+        ev.se_on = 1;
+        ev.se_assoc_id = 0;
+        (void)setsockopt(cfd, IPPROTO_SCTP, SCTP_EVENT, &ev, sizeof(ev));
+    }
+# else
+    {
+        struct sctp_event_subscribe es;
+
+        memset(&es, 0, sizeof(es));
+        es.sctp_association_event = 1;
+        (void)setsockopt(cfd, IPPROTO_SCTP, SCTP_EVENTS, &es, sizeof(es));
+    }
+# endif
+
+    /*
      * Wrap both ends with BIO_s_datagram_sctp before connect, so that
      * BIO_new_dgram_sctp can enable SCTP AUTH chunks on the sockets.
      * If SCTP AUTH is not available, this returns NULL and we skip.
@@ -100,38 +126,35 @@ static int test_sctp_auth_basic(void)
 
         memset(&st, 0, sizeof(st));
 
-#ifdef SCTP_GET_ASOC_ID_LIST
         /*
-         * On one-to-many sockets, SCTP_STATUS requires a valid assoc id.
-         * Ask the kernel for the list of association ids and take the first.
+         * Read one SCTP notification and extract the assoc id from the
+         * SCTP_ASSOC_CHANGE event that is delivered after connect.
+         * Use a short receive timeout to avoid hanging if notifications
+         * are not supported.
          */
         {
-            struct sctp_assoc_ids ids;
-            socklen_t idslen = (socklen_t)sizeof(ids);
-            memset(&ids, 0, sizeof(ids));
+            union sctp_notification sn;
+            struct timeval tv;
+            ssize_t nread;
 
-            if (!TEST_int_ge(getsockopt(cfd, IPPROTO_SCTP,
-                                        SCTP_GET_ASOC_ID_LIST,
-                                        &ids, &idslen), 0)) {
-                TEST_skip("SCTP_GET_ASOC_ID_LIST not supported by kernel for this socket");
+            memset(&sn, 0, sizeof(sn));
+            tv.tv_sec = 2;
+            tv.tv_usec = 0;
+            (void)setsockopt(cfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+
+            nread = recv(cfd, &sn, sizeof(sn), 0);
+            if (nread < (ssize_t)sizeof(struct sctp_assoc_change)
+                || sn.sn_header.sn_type != SCTP_ASSOC_CHANGE) {
+                TEST_skip("no SCTP_ASSOC_CHANGE notification received");
                 skipped = 1;
                 goto out;
             }
-            if (!TEST_true(ids.asls_numb_present > 0)) {
-                TEST_error("no associations present after connect");
-                goto out;
-            }
-            st.sstat_assoc_id = ids.asls_assoc_id[0];
+            st.sstat_assoc_id = sn.sn_assoc_change.sac_assoc_id;
         }
-#else
-        TEST_skip("SCTP_GET_ASOC_ID_LIST not available in headers");
-        skipped = 1;
-        goto out;
-#endif
 
-        if (!TEST_int_ge(getsockopt(cfd, IPPROTO_SCTP, SCTP_STATUS, &st, &stlen), 0))
-            goto out;
         if (!TEST_true(st.sstat_assoc_id != 0))
+            goto out;
+        if (!TEST_int_ge(getsockopt(cfd, IPPROTO_SCTP, SCTP_STATUS, &st, &stlen), 0))
             goto out;
 
         /* Query current active key number for this assoc */
@@ -188,18 +211,27 @@ static int test_sctp_auth_basic(void)
 
     ret = 1;
 
- out:
-    if (cb != NULL)
-        BIO_free(cb);
-    if (sb != NULL)
-        BIO_free(sb);
-    if (cfd >= 0)
-        close(cfd);
-    if (sfd >= 0)
-        close(sfd);
-    if (skipped)
-        return 1; /* skipped tests still count as pass for harness */
-    return ret;
+ out: {
+        /* Capture errno right at the failure point before cleanup can change it */
+        int out_errno = errno;
+
+        if (cb != NULL)
+            BIO_free(cb);
+        if (sb != NULL)
+            BIO_free(sb);
+        if (cfd >= 0)
+            close(cfd);
+        if (sfd >= 0)
+            close(sfd);
+
+        /* If we are failing and not skipping, print the saved errno */
+        if (!ret && !skipped && out_errno != 0)
+            TEST_note("failure errno=%d (%s)", out_errno, strerror(out_errno));
+
+        if (skipped)
+            return 1; /* skipped tests still count as pass for harness */
+        return ret;
+    }
 #endif /* OPENSSL_NO_SCTP */
 }
 
