@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <openssl/store.h>
 #include <openssl/core_dispatch.h>
@@ -32,6 +29,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 # include <windows.h>
 #endif
 #include <wincrypt.h>
+#include "providers/implementations/storemgmt/winstore_store.inc"
 
 enum {
     STATE_IDLE,
@@ -107,11 +105,6 @@ static void *winstore_attach(void *provctx, OSSL_CORE_BIO *cin)
 {
     return NULL; /* not supported */
 }
-
-{- produce_param_decoder('winstore_set_ctx_params',
-                         (['OSSL_STORE_PARAM_SUBJECT',    'sub',   'octet_string'],
-                          ['OSSL_STORE_PARAM_PROPERTIES', 'propq', 'utf8_string'],
-                         )); -}
 
 static const OSSL_PARAM *winstore_settable_ctx_params(void *loaderctx, const OSSL_PARAM params[])
 {
