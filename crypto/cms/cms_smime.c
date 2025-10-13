@@ -462,7 +462,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     if (!(flags & CMS_NO_CONTENT_VERIFY)) {
         for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
-            if (CMS_SignerInfo_verify_content(si, cmsbio) <= 0) {
+            if (CMS_SignerInfo_verify_ex(si, cmsbio, tmpin) <= 0) {
                 ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_VERIFY_ERROR);
                 goto err;
             }
