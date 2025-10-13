@@ -105,6 +105,7 @@ const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms);
 
 BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont);
 int CMS_dataFinal(CMS_ContentInfo *cms, BIO *bio);
+int CMS_dataFinal_ex(CMS_ContentInfo *cms, BIO *bio, BIO *data);
 
 ASN1_OCTET_STRING **CMS_get0_content(CMS_ContentInfo *cms);
 int CMS_is_detached(CMS_ContentInfo *cms);
