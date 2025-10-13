@@ -362,6 +362,11 @@ extern const OSSL_DISPATCH ossl_mlx_curve_sm2_kem_kmgmt_functions[];
 #endif
 #endif
 #endif
+#ifndef OPENSSL_NO_HQC
+extern const OSSL_DISPATCH ossl_hqc_128_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_hqc_192_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_hqc_256_keymgmt_functions[];
+#endif
 #ifndef OPENSSL_NO_SLH_DSA
 extern const OSSL_DISPATCH ossl_slh_dsa_sha2_128s_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_slh_dsa_sha2_128f_keymgmt_functions[];

@@ -655,6 +655,14 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { PROV_NAMES_X448MLKEM1024, "provider=default", ossl_mlx_x448_kem_kmgmt_functions,
         PROV_DESCS_X448MLKEM1024 },
 #endif
+#ifndef OPENSSL_NO_HQC
+    { PROV_NAMES_HQC_KEM_128, "provider=default", ossl_hqc_128_keymgmt_functions,
+        PROV_DESCS_HQC_KEM_128 },
+    { PROV_NAMES_HQC_KEM_192, "provider=default", ossl_hqc_192_keymgmt_functions,
+        PROV_DESCS_HQC_KEM_192 },
+    { PROV_NAMES_HQC_KEM_256, "provider=default", ossl_hqc_256_keymgmt_functions,
+        PROV_DESCS_HQC_KEM_256 },
+#endif
 #if !defined(OPENSSL_NO_EC)
     { PROV_NAMES_SecP256r1MLKEM768, "provider=default", ossl_mlx_p256_kem_kmgmt_functions,
         PROV_DESCS_SecP256r1MLKEM768 },
