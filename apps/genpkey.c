@@ -15,7 +15,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-static int verbose = 1;
+static int verbose = 0;
 
 static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e,
                             OSSL_LIB_CTX *libctx, const char *propq);
@@ -254,7 +254,7 @@ int genpkey_main(int argc, char **argv)
     EVP_PKEY_CTX_set_app_data(ctx, bio_err);
 
     pkey = do_param ? app_paramgen(ctx, algname)
-                    : app_keygen(ctx, algname, 0, 0 /* not verbose */);
+                    : app_keygen(ctx, algname, 0, verbose);
     if (pkey == NULL)
         goto end;
 
