@@ -137,9 +137,9 @@ providers/implementations/signature/rsa_sig.c
 providers/implementations/signature/slh_dsa_sig.c
 providers/implementations/signature/sm2_sig.c
 providers/implementations/skeymgmt/generic.inc
-providers/implementations/storemgmt/file_store_any2obj.c
-providers/implementations/storemgmt/file_store.c
-providers/implementations/storemgmt/winstore_store.c
+providers/implementations/storemgmt/file_store_any2obj.inc
+providers/implementations/storemgmt/file_store.inc
+providers/implementations/storemgmt/winstore_store.inc
 providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.c
 providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.c
 providers/implementations/ciphers/cipher_aes_gcm_siv.c

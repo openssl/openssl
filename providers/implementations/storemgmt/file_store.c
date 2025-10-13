@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /* This file has quite some overlap with engines/e_loader_attic.c */
 
@@ -34,6 +31,8 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/bio.h"
 #include "prov/providercommon.h"
 #include "prov/file_store_local.h"
+
+#include "providers/implementations/storemgmt/file_store.inc"
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)
 
@@ -292,13 +291,6 @@ void *file_attach(void *provctx, OSSL_CORE_BIO *cin)
  *  Setting parameters
  *  ------------------
  */
-
-{- produce_param_decoder('file_set_ctx_params',
-                         (['OSSL_STORE_PARAM_PROPERTIES', 'propq',  'utf8_string'],
-                          ['OSSL_STORE_PARAM_EXPECT',     'expect', 'int'],
-                          ['OSSL_STORE_PARAM_SUBJECT',    'sub',    'octet_string'],
-                          ['OSSL_STORE_PARAM_INPUT_TYPE', 'type',   'utf8_string'],
-                         )); -}
 
 static const OSSL_PARAM *file_settable_ctx_params(void *provctx)
 {

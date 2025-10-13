@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * This is a decoder that's completely internal to the 'file:' store
@@ -41,6 +38,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "crypto/pem.h"          /* For internal PVK and "blob" headers */
 #include "prov/bio.h"
 #include "prov/file_store_local.h"
+#include "providers/implementations/storemgmt/file_store_any2obj.inc"
 
 /*
  * newctx and freectx are not strictly necessary.  However, the method creator,
@@ -69,10 +67,6 @@ static void any2obj_freectx(void *ctx)
 {
     OPENSSL_free(ctx);
 }
-
-{- produce_param_decoder('any2obj_set_ctx_params',
-                         (['OSSL_OBJECT_PARAM_DATA_STRUCTURE', 'datastruct', 'utf8_string'],
-                         )); -}
 
 static int any2obj_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
@@ -190,7 +184,6 @@ static int msblob2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     if (!ok)
         goto next;
 
-
     ERR_set_mark();
     p = (unsigned char *)&mem->data[0];
     ok = ossl_do_blob_header(&p, 16, &magic, &bitlen, &isdss, &ispub) > 0;
@@ -258,7 +251,6 @@ static int pvk2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     ERR_pop_to_mark();
     if (!ok)
         goto next;
-
 
     ERR_set_mark();
     p = (unsigned char *)&mem->data[0];
