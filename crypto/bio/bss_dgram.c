@@ -154,6 +154,7 @@ static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
                           uint64_t flags, size_t *num_processed);
 
 # ifndef OPENSSL_NO_SCTP
+static sctp_assoc_t dgram_sctp_resolve_assoc(int fd);
 static int dgram_sctp_write(BIO *h, const char *buf, int num);
 static int dgram_sctp_read(BIO *h, char *buf, int size);
 static int dgram_sctp_puts(BIO *h, const char *str);
@@ -1946,6 +1947,22 @@ void dgram_sctp_handle_auth_free_key_event(BIO *b,
 }
 #  endif
 
+/*
+ * Resolve a stable association id for key management on 1-to-many sockets.
+ * Falls back to SCTP_CURRENT_ASSOC if none is available.
+ */
+static sctp_assoc_t dgram_sctp_resolve_assoc(int fd)
+{
+    struct sctp_status st;
+    socklen_t sl = (socklen_t)sizeof(st);
+
+    memset(&st, 0, sizeof(st));
+    if (getsockopt(fd, IPPROTO_SCTP, SCTP_STATUS, &st, &sl) == 0
+        && st.sstat_assoc_id != 0)
+        return st.sstat_assoc_id;
+    return SCTP_CURRENT_ASSOC;
+}
+
 static int dgram_sctp_read(BIO *b, char *out, int outl)
 {
     int ret = 0, n = 0, i, optval;
@@ -2342,7 +2359,7 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
 
         /* Get active key */
         memset(&authkeyid, 0, sizeof(authkeyid));
-        authkeyid.scact_assoc_id = SCTP_CURRENT_ASSOC;
+        authkeyid.scact_assoc_id = dgram_sctp_resolve_assoc(b->num);
         sockopt_len = sizeof(struct sctp_authkeyid);
         ret =
             getsockopt(b->num, IPPROTO_SCTP, SCTP_AUTH_ACTIVE_KEY, &authkeyid,
@@ -2358,7 +2375,7 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
             break;
         }
         memset(authkey, 0, sockopt_len);
-        authkey->sca_assoc_id = SCTP_CURRENT_ASSOC;
+        authkey->sca_assoc_id = dgram_sctp_resolve_assoc(b->num);
         authkey->sca_keynumber = authkeyid.scact_keynumber + 1;
 #  ifndef __FreeBSD__
         /*
@@ -2378,7 +2395,7 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
             break;
 
         /* Reset active key */
-        authkeyid.scact_assoc_id = SCTP_CURRENT_ASSOC;
+        authkeyid.scact_assoc_id = dgram_sctp_resolve_assoc(b->num);
         ret = setsockopt(b->num, IPPROTO_SCTP, SCTP_AUTH_ACTIVE_KEY,
                          &authkeyid, sizeof(struct sctp_authkeyid));
         if (ret < 0)
@@ -2390,7 +2407,7 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
 
         /* Get active key */
         memset(&authkeyid, 0, sizeof(authkeyid));
-        authkeyid.scact_assoc_id = SCTP_CURRENT_ASSOC;
+        authkeyid.scact_assoc_id = dgram_sctp_resolve_assoc(b->num);
         sockopt_len = sizeof(struct sctp_authkeyid);
         ret =
             getsockopt(b->num, IPPROTO_SCTP, SCTP_AUTH_ACTIVE_KEY, &authkeyid,
@@ -2400,7 +2417,7 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
 
         /* Set active key */
         authkeyid.scact_keynumber = authkeyid.scact_keynumber + 1;
-        authkeyid.scact_assoc_id = SCTP_CURRENT_ASSOC;
+        authkeyid.scact_assoc_id = dgram_sctp_resolve_assoc(b->num);
         ret = setsockopt(b->num, IPPROTO_SCTP, SCTP_AUTH_ACTIVE_KEY,
                          &authkeyid, sizeof(struct sctp_authkeyid));
         if (ret < 0)
@@ -2429,7 +2446,7 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
         if (data->ccs_rcvd == 1 && data->ccs_sent == 1) {
             /* Get active key */
             memset(&authkeyid, 0, sizeof(authkeyid));
-            authkeyid.scact_assoc_id = SCTP_CURRENT_ASSOC;
+            authkeyid.scact_assoc_id = dgram_sctp_resolve_assoc(b->num);
             sockopt_len = sizeof(struct sctp_authkeyid);
             ret =
                 getsockopt(b->num, IPPROTO_SCTP, SCTP_AUTH_ACTIVE_KEY,
@@ -2444,7 +2461,7 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
             authkeyid.scact_keynumber = authkeyid.scact_keynumber - 1;
 #  ifdef SCTP_AUTH_DEACTIVATE_KEY
             sockopt_len = sizeof(struct sctp_authkeyid);
-            authkeyid.scact_assoc_id = SCTP_CURRENT_ASSOC;
+            authkeyid.scact_assoc_id = dgram_sctp_resolve_assoc(b->num);
             ret = setsockopt(b->num, IPPROTO_SCTP, SCTP_AUTH_DEACTIVATE_KEY,
                              &authkeyid, sockopt_len);
             if (ret < 0)
@@ -2453,7 +2470,7 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
 #  ifndef SCTP_AUTHENTICATION_EVENT
             if (authkeyid.scact_keynumber > 0) {
                 authkeyid.scact_keynumber = authkeyid.scact_keynumber - 1;
-                authkeyid.scact_assoc_id = SCTP_CURRENT_ASSOC;
+                authkeyid.scact_assoc_id = dgram_sctp_resolve_assoc(b->num);
                 ret = setsockopt(b->num, IPPROTO_SCTP, SCTP_AUTH_DELETE_KEY,
                                  &authkeyid, sizeof(struct sctp_authkeyid));
                 if (ret < 0)

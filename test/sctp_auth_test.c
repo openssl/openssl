@@ -55,6 +55,7 @@ static int test_sctp_auth_basic(void)
     srv.sin_port = 0;
     {
         int on = 1;
+
         (void)setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
     }
     if (!TEST_int_ge(bind(sfd, (struct sockaddr *)&srv, sizeof(srv)), 0))
@@ -96,6 +97,7 @@ static int test_sctp_auth_basic(void)
     {
         struct sctp_status st;
         socklen_t stlen = (socklen_t)sizeof(st);
+
         memset(&st, 0, sizeof(st));
         if (!TEST_int_ge(getsockopt(cfd, IPPROTO_SCTP, SCTP_STATUS, &st, &stlen), 0))
             goto out;
