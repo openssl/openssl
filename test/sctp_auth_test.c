@@ -99,6 +99,36 @@ static int test_sctp_auth_basic(void)
         socklen_t stlen = (socklen_t)sizeof(st);
 
         memset(&st, 0, sizeof(st));
+
+#ifdef SCTP_GET_ASOC_ID_LIST
+        /*
+         * On one-to-many sockets, SCTP_STATUS requires a valid assoc id.
+         * Ask the kernel for the list of association ids and take the first.
+         */
+        {
+            struct sctp_assoc_ids ids;
+            socklen_t idslen = (socklen_t)sizeof(ids);
+            memset(&ids, 0, sizeof(ids));
+
+            if (!TEST_int_ge(getsockopt(cfd, IPPROTO_SCTP,
+                                        SCTP_GET_ASOC_ID_LIST,
+                                        &ids, &idslen), 0)) {
+                TEST_skip("SCTP_GET_ASOC_ID_LIST not supported by kernel for this socket");
+                skipped = 1;
+                goto out;
+            }
+            if (!TEST_true(ids.asls_numb_present > 0)) {
+                TEST_error("no associations present after connect");
+                goto out;
+            }
+            st.sstat_assoc_id = ids.asls_assoc_id[0];
+        }
+#else
+        TEST_skip("SCTP_GET_ASOC_ID_LIST not available in headers");
+        skipped = 1;
+        goto out;
+#endif
+
         if (!TEST_int_ge(getsockopt(cfd, IPPROTO_SCTP, SCTP_STATUS, &st, &stlen), 0))
             goto out;
         if (!TEST_true(st.sstat_assoc_id != 0))
