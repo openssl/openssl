@@ -425,7 +425,7 @@ const char *ossl_cms_ctx_get0_propq(const CMS_CTX *ctx);
 void ossl_cms_resolve_libctx(CMS_ContentInfo *ci);
 
 CMS_ContentInfo *ossl_cms_Data_create(OSSL_LIB_CTX *ctx, const char *propq);
-int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio,
+int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
                        const unsigned char *precomp_md,
                        unsigned int precomp_mdlen);
 
@@ -437,7 +437,7 @@ int ossl_cms_DigestedData_do_final(const CMS_ContentInfo *cms,
                                    BIO *chain, int verify);
 
 BIO *ossl_cms_SignedData_init_bio(CMS_ContentInfo *cms);
-int ossl_cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain,
+int ossl_cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain, BIO *data,
                               const unsigned char *precomp_md,
                               unsigned int precomp_mdlen);
 int ossl_cms_set1_SignerIdentifier(CMS_SignerIdentifier *sid, X509 *cert,
