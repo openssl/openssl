@@ -5948,3 +5948,4 @@ CRYPTO_clear_realloc_array              ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_secure_malloc_array              ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_secure_calloc                    ?	4_0_0	EXIST::FUNCTION:
 CMS_dataFinal_hashless                  ?	4_0_0	EXIST::FUNCTION:CMS
+CMS_SignerInfo_verify_hashless          ?	4_0_0	EXIST::FUNCTION:CMS
