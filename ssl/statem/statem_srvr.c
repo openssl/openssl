@@ -2823,8 +2823,10 @@ CON_FUNC_RETURN tls_construct_server_key_exchange(SSL_CONNECTION *s,
         }
 
         if (EVP_DigestSign(md_ctx, NULL, &siglen, tbs, tbslen) <=0
+                || siglen == 0
                 || !WPACKET_sub_reserve_bytes_u16(pkt, siglen, &sigbytes1)
                 || EVP_DigestSign(md_ctx, sigbytes1, &siglen, tbs, tbslen) <= 0
+                || siglen == 0
                 || !WPACKET_sub_allocate_bytes_u16(pkt, siglen, &sigbytes2)
                 || sigbytes1 != sigbytes2) {
             OPENSSL_free(tbs);
