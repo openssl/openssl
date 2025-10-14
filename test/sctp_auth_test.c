@@ -157,6 +157,17 @@ static int test_sctp_auth_basic(void)
         if (!TEST_int_ge(getsockopt(cfd, IPPROTO_SCTP, SCTP_STATUS, &st, &stlen), 0))
             goto out;
 
+#ifdef SCTP_SNDINFO
+        {
+            struct sctp_sndinfo si;
+
+            memset(&si, 0, sizeof(si));
+            si.snd_assoc_id = st.sstat_assoc_id;
+            if (BIO_ctrl(cb, BIO_CTRL_DGRAM_SCTP_SET_SNDINFO, (long)sizeof(si), &si) <= 0)
+                goto out;
+        }
+#endif
+
         /* Query current active key number for this assoc */
         struct sctp_authkeyid ak;
         socklen_t aklen = (socklen_t)sizeof(ak);
@@ -178,12 +189,15 @@ static int test_sctp_auth_basic(void)
         /* Exercise the fixed control paths */
         {
             long lret;
+            uint16_t new_id;
 
-            lret = BIO_ctrl(cb, BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY, 0, key);
+            lret = BIO_ctrl(cb, BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY, (long)sizeof(key), key);
             if (!TEST_int_eq(lret, 0))
                 goto out;
 
-            lret = BIO_ctrl(cb, BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY, 0, NULL);
+            new_id = (uint16_t)(before_keyno + 1);
+            lret = BIO_ctrl(cb, BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY, (long)new_id, NULL);
+
             if (!TEST_int_eq(lret, 0))
                 goto out;
 
