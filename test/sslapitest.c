@@ -8699,7 +8699,6 @@ static int int_test_ssl_get_shared_ciphers(int tst, int clnt)
                                     shared_ciphers_data[tst].srvrtls13ciphers))))
         goto end;
 
-
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
                                       NULL)))
         goto end;
