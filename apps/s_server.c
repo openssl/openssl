@@ -3002,7 +3002,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
             for (;;) {
                 /* should do a select for the write */
 #ifdef RENEG
-                static count = 0;
+                static int count = 0;
                 if (++count == 100) {
                     count = 0;
                     SSL_renegotiate(con);
