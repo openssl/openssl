@@ -2020,7 +2020,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
                 copy = (size_t)n < sizeof(snp) ? (size_t)n : sizeof(snp);
 
                 /* Only consult header if we received at least the header */
-                if (copy >= sizeof(snp.sn_header) {
+                if (copy >= sizeof(snp.sn_header)) {
                     memcpy(&snp, out, copy);
 
                     if (snp.sn_header.sn_type == SCTP_SENDER_DRY_EVENT) {
