@@ -140,11 +140,9 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
             }
             i = BIO_read(in, &(b->data[len]), (int)want);
 
-            if (diff == 0) {
-                if (i <= 0) {
-                    ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);
-                    goto err;
-                }
+            if (i <= 0 && diff == 0) {
+                ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);
+                goto err;
             }
 
             if (i > 0) {
@@ -255,10 +253,6 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
     *pb = b;
     return (int)off;
  err:
-   /* Keep the most recent ERR_raise for the caller. Clear only the mark.
-    * Do not use ERR_pop_to_mark here, since that would drop the error
-    * record raised on this path.
-    */
     ERR_clear_last_mark();
     BUF_MEM_free(b);
     return -1;
