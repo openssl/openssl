@@ -1742,6 +1742,7 @@ static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
                    msg[0].peer != NULL ? &slen : NULL);
     if (ret <= 0) {
         ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+        *num_processed = 0;
         return 0;
     }
 
