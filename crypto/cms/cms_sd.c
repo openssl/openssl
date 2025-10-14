@@ -341,6 +341,68 @@ static int ossl_cms_add1_signing_cert_v2(CMS_SignerInfo *si,
     return ret;
 }
 
+static const struct {
+    const char *name;
+    int md_nid;
+    int noattr_md_nid; /* in case of 'without signed attributes' */
+} key2data[] = {
+    { "ML-DSA-44", NID_shake256, NID_sha512   },
+    { "ML-DSA-65", NID_shake256, NID_sha512   },
+    { "ML-DSA-87", NID_shake256, NID_sha512   },
+    { "ED25519",   NID_sha512,   NID_sha512   }, /* RFC 8032 */
+    { "ED448",     NID_shake256, NID_shake256 }, /* RFC 8032 */
+    { "SLH-DSA-SHA2-128f",  NID_sha256,   NID_sha256 }, /* RFC 9814 */
+    { "SLH-DSA-SHA2-128s",  NID_sha256,   NID_sha256 },
+    { "SLH-DSA-SHA2-192f",  NID_sha512,   NID_sha256 },
+    { "SLH-DSA-SHA2-192s",  NID_sha512,   NID_sha256 },
+    { "SLH-DSA-SHA2-256f",  NID_sha512,   NID_sha256 },
+    { "SLH-DSA-SHA2-256s",  NID_sha512,   NID_sha256 },
+    { "SLH-DSA-SHAKE-128f", NID_shake128, NID_sha256 },
+    { "SLH-DSA-SHAKE-128s", NID_shake128, NID_sha256 },
+    { "SLH-DSA-SHAKE-192f", NID_shake256, NID_sha256 },
+    { "SLH-DSA-SHAKE-192s", NID_shake256, NID_sha256 },
+    { "SLH-DSA-SHAKE-256f", NID_shake256, NID_sha256 },
+    { "SLH-DSA-SHAKE-256s", NID_shake256, NID_sha256 },
+    { NULL, NID_undef, NID_undef } /* last */
+};
+
+static const EVP_MD *ossl_cms_get_default_md(EVP_PKEY *pk)
+{
+    const EVP_MD *md;
+    unsigned int i;
+    int def_nid = NID_undef;
+
+    for (i = 0; key2data[i].name; i++) {
+        if (EVP_PKEY_is_a(pk, key2data[i].name)) {
+            def_nid = key2data[i].md_nid;
+            break;
+        }
+    }
+
+    if (def_nid == NID_undef &&
+        EVP_PKEY_get_default_digest_nid(pk, &def_nid) <= 0) {
+        ERR_raise_data(ERR_LIB_CMS, CMS_R_NO_DEFAULT_DIGEST,
+                       "pkey nid=%d", EVP_PKEY_get_id(pk));
+        return NULL;
+    }
+    md = EVP_get_digestbynid(def_nid);
+    if (md == NULL)
+        ERR_raise_data(ERR_LIB_CMS, CMS_R_NO_DEFAULT_DIGEST,
+                       "default md nid=%d", def_nid);
+    return md;
+}
+
+static const EVP_MD *ossl_cms_get_noattr_md(EVP_PKEY *pk)
+{
+    unsigned int i;
+
+    for (i = 0; key2data[i].name; i++) {
+        if (EVP_PKEY_is_a(pk, key2data[i].name))
+            return EVP_get_digestbynid(key2data[i].noattr_md_nid);
+    }
+    return NULL;
+}
+
 CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                                 X509 *signer, EVP_PKEY *pk, const EVP_MD *md,
                                 unsigned int flags)
@@ -398,20 +460,13 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     if (!ossl_cms_set1_SignerIdentifier(si->sid, signer, type, ctx))
         goto err;
 
-    if (md == NULL) {
-        int def_nid;
+    if (md == NULL && (md = ossl_cms_get_default_md(pk)) == NULL) {
+        goto err;
+    } else if ((flags & CMS_NOATTR) != 0) {
+        const EVP_MD *tmp_md = ossl_cms_get_noattr_md(pk);
 
-        if (EVP_PKEY_get_default_digest_nid(pk, &def_nid) <= 0) {
-            ERR_raise_data(ERR_LIB_CMS, CMS_R_NO_DEFAULT_DIGEST,
-                           "pkey nid=%d", EVP_PKEY_get_id(pk));
-            goto err;
-        }
-        md = EVP_get_digestbynid(def_nid);
-        if (md == NULL) {
-            ERR_raise_data(ERR_LIB_CMS, CMS_R_NO_DEFAULT_DIGEST,
-                           "default md nid=%d", def_nid);
-            goto err;
-        }
+        if (tmp_md)
+            md = tmp_md;
     }
 
     X509_ALGOR_set_md(si->digestAlgorithm, md);
@@ -427,7 +482,6 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
         if (EVP_MD_is_a(md, name))
             break;
     }
-
     if (i == sk_X509_ALGOR_num(sd->digestAlgorithms)) {
         if ((alg = X509_ALGOR_new()) == NULL) {
             ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
@@ -440,7 +494,6 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             goto err;
         }
     }
-
     if (!(flags & CMS_KEY_PARAM) && !cms_sd_asn1_ctrl(si, 0)) {
         ERR_raise_data(ERR_LIB_CMS, CMS_R_UNSUPPORTED_SIGNATURE_ALGORITHM,
                        "pkey nid=%d", EVP_PKEY_get_id(pk));
@@ -458,7 +511,6 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                 goto err;
             }
         }
-
         if (!(flags & CMS_NOSMIMECAP)) {
             STACK_OF(X509_ALGOR) *smcap = NULL;
 
@@ -518,7 +570,6 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             goto err;
         }
     }
-
     if (flags & CMS_KEY_PARAM) {
         if (flags & CMS_NOATTR) {
             si->pctx = EVP_PKEY_CTX_new_from_pkey(ossl_cms_ctx_get0_libctx(ctx),
@@ -542,20 +593,17 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             EVP_MD_CTX_set_flags(si->mctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
         }
     }
-
     if (sd->signerInfos == NULL)
         sd->signerInfos = sk_CMS_SignerInfo_new_null();
     if (sd->signerInfos == NULL || !sk_CMS_SignerInfo_push(sd->signerInfos, si)) {
         ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
         goto err;
     }
-
     return si;
 
  err:
     M_ASN1_free_of(si, CMS_SignerInfo);
     return NULL;
-
 }
 
 void ossl_cms_SignerInfos_set_cmsctx(CMS_ContentInfo *cms)
