@@ -936,7 +936,7 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
                            const EVP_MD *cert_id_md, X509 *issuer,
                            STACK_OF(OCSP_CERTID) *ids)
 {
-    OCSP_CERTID *id;
+    OCSP_CERTID *id = NULL;
     const X509_NAME *iname;
     ASN1_BIT_STRING *ikey;
     ASN1_INTEGER *sno;
@@ -960,11 +960,14 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
     ASN1_INTEGER_free(sno);
     if (id == NULL || !sk_OCSP_CERTID_push(ids, id))
         goto err;
-    if (!OCSP_request_add0_id(*req, id))
+    if (!OCSP_request_add0_id(*req, id)) {
+        id = NULL;
         goto err;
+    }
     return 1;
 
  err:
+    OCSP_CERTID_free(id);
     BIO_printf(bio_err, "Error Creating OCSP request\n");
     return 0;
 }
