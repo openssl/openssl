@@ -8788,9 +8788,9 @@ static int int_test_ssl_get_shared_ciphers(int tst, int clnt)
     int testresult = 0;
     char buf[1024];
     OSSL_LIB_CTX *tmplibctx = OSSL_LIB_CTX_new();
-    const char *ciphexp = is_fips ? shared_ciphers_data[tst].fipsshared
-                                  : shared_ciphers_data[tst].shared;
-    int handshakeok = strcmp(ciphexp, "") != 0;
+    const char *expbuf = is_fips ? shared_ciphers_data[tst].fipsshared
+                                 : shared_ciphers_data[tst].shared;
+    int handshakeok = strcmp(expbuf, "") != 0;
 
     if (!TEST_ptr(tmplibctx))
         goto end;
@@ -8831,22 +8831,22 @@ static int int_test_ssl_get_shared_ciphers(int tst, int clnt)
                 shared_ciphers_data[tst].srvrtls13ciphers))))
         goto end;
 
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                             NULL, NULL))
-            || (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                                                 SSL_ERROR_NONE))
-                && handshakeok))
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+                                      NULL)))
         goto end;
 
-    create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE);
+    if (handshakeok) {
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                             SSL_ERROR_NONE)))
+            goto end;
+    } else {
+        if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+                                              SSL_ERROR_NONE)))
+            goto end;
+    }
 
-    if ((!TEST_ptr(SSL_get_shared_ciphers(serverssl, buf, sizeof(buf)))
-         && handshakeok)
-        || !TEST_int_eq(strcmp(buf,
-                            is_fips
-                                ? shared_ciphers_data[tst].fipsshared
-                                : shared_ciphers_data[tst].shared),
-            0)) {
+    if (!TEST_ptr(SSL_get_shared_ciphers(serverssl, buf, sizeof(buf)))
+        || !TEST_int_eq(strcmp(buf, expbuf), 0)) {
         TEST_info("Shared ciphers are: %s\n", buf);
         goto end;
     }
