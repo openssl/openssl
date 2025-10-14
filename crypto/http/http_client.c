@@ -36,6 +36,7 @@
 #define HTTP_STATUS_CODE_MOVED_PERMANENTLY 301
 #define HTTP_STATUS_CODE_FOUND             302
 #define HTTP_STATUS_CODES_NONFATAL_ERROR   400
+#define HTTP_STATUS_CODE_NOT_FOUND         404
 
 /* Stateful HTTP request code, supporting blocking and non-blocking I/O */
 
@@ -488,11 +489,12 @@ static int parse_http_line1(char *line, int *found_keep_alive)
     case HTTP_STATUS_CODE_FOUND:
         return retcode;
     default:
-        if (retcode < HTTP_STATUS_CODES_NONFATAL_ERROR) {
+        if (retcode == HTTP_STATUS_CODE_NOT_FOUND
+            || retcode < HTTP_STATUS_CODES_NONFATAL_ERROR) {
             ERR_raise_data(ERR_LIB_HTTP, HTTP_R_STATUS_CODE_UNSUPPORTED, "code=%s", code);
             if (*reason != '\0')
                 ERR_add_error_data(2, ", reason=", reason);
-        } /* must return content normally if status >= 400 */
+        } /* must return content normally if status >= 400, still tentatively raised error on 404 */
         return retcode;
     }
 
