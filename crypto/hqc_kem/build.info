@@ -1,0 +1,6 @@
+LIBS = ../../libcrypto
+
+IF[{- !$disabled{'ml-kem'} -}]
+    SOURCE[../../libcrypto]=hqc_kem.c
+    SOURCE[../../providers/libfips.a]=hqc_kem.c
+ENDIF

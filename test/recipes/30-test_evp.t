@@ -34,6 +34,7 @@ my $no_siv = disabled("siv");
 my $no_argon2 = disabled("argon2");
 my $no_ml_dsa = disabled("ml-dsa");
 my $no_ml_kem = disabled("ml-kem");
+my $no_hqc = disabled("hqc");
 my $no_lms = disabled("lms");
 my $no_sskdf = disabled("sskdf");
 my $no_x942kdf = disabled("x942kdf");
@@ -137,6 +138,11 @@ push @files, qw(
                 evppkey_ml_kem_keygen.txt
                 evppkey_ml_kem_encap_decap.txt
                ) unless $no_ml_kem;
+push @files, qw(
+                evppkey_hqc_128_keygen.txt
+                evppkey_hqc_192_keygen.txt
+                evppkey_hqc_256_keygen.txt
+               ) unless $no_hqc;
 push @files, qw(
                 evppkey_lms_sigver.txt
                ) unless $no_lms;

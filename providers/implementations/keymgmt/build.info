@@ -14,6 +14,7 @@ $ML_DSA_GOAL=../../libdefault.a ../../libfips.a
 $ML_KEM_GOAL=../../libdefault.a ../../libfips.a
 $TLS_ML_KEM_HYBRID_GOAL=../../libdefault.a ../../libfips.a
 $SLH_DSA_GOAL=../../libdefault.a ../../libfips.a
+$HQC_KEM_GOAL=../../libdefault.a
 
 IF[{- !$disabled{dh} -}]
   SOURCE[$DH_GOAL]=dh_kmgmt.c
@@ -48,6 +49,10 @@ IF[{- !$disabled{'ml-kem'} -}]
   ENDIF
   SOURCE[$ML_KEM_GOAL]=ml_kem_kmgmt.c
   DEPEND[ml_kem_kmgmt.o]=../../common/include/prov/der_hkdf.h
+ENDIF
+
+IF[{- !$disabled{'hqc'} -}]
+  SOURCE[$HQC_KEM_GOAL]=hqc_kmgmt.c
 ENDIF
 
 SOURCE[$RSA_GOAL]=rsa_kmgmt.c
