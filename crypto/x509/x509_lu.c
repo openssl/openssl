@@ -370,7 +370,6 @@ static int x509_name_objs_ht_insert(const X509_STORE *store, const X509_NAME *xn
     int ret = 0, added = 0;
     OBJS_KEY key;
     HT_VALUE val = {0};
-    HT_VALUE *oldval = NULL;
 
     if (objs != NULL) {
         added = sk_X509_OBJECT_push(objs, obj) != 0;
@@ -379,10 +378,8 @@ static int x509_name_objs_ht_insert(const X509_STORE *store, const X509_NAME *xn
 
     if (xn->canon_enc == NULL || xn->modified) {
         ret = i2d_X509_NAME((X509_NAME *)xn, NULL);
-        if (ret < 0) {
-            X509_OBJECT_free(obj);
+        if (ret < 0)
             return 0;
-        }
     }
 
     objs = sk_X509_OBJECT_new(x509_object_cmp);
@@ -399,7 +396,7 @@ static int x509_name_objs_ht_insert(const X509_STORE *store, const X509_NAME *xn
     HT_SET_KEY_FIELD(&key, xn_canon, xn->canon_enc);
     HT_SET_KEY_FIELD(&key, xn_canon_enclen, xn->canon_enclen);
     val.value = (void *)objs;
-    ret = ossl_ht_insert(store->objs_ht, TO_HT_KEY(&key), &val, &oldval);
+    ret = ossl_ht_insert(store->objs_ht, TO_HT_KEY(&key), &val, NULL);
     if (ret != 1) {
         sk_X509_OBJECT_free(objs);
         return 0;
