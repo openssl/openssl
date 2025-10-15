@@ -17,13 +17,15 @@
  */
 # include <openssl/opensslconf.h>
 
+# include "internal/cryptlib.h"
+# include "internal/numbers.h"
 # if !defined(OPENSSL_SYS_UEFI)
 #  include "crypto/bn_conf.h"
 # endif
 
 # include "crypto/bn.h"
-# include "internal/cryptlib.h"
-# include "internal/numbers.h"
+
+# include "../fn/fn_local.h"
 
 /*
  * These preprocessor symbols control various aspects of the bignum headers
@@ -206,6 +208,11 @@
                 const BIGNUM *_bnum2 = (a); \
                 if (_bnum2 != NULL) { \
                         int _top = _bnum2->top; \
+                        /* BIGNUM <-> OSSL_FN compat checks */ \
+                        assert((_bnum2->data == NULL /* && _bnum2->d == NULL */) \
+                               || (_bnum2->d == _bnum2->data->d \
+                                   && _bnum2->dmax == _bnum2->data->dsize)); \
+                        /* BIGNUM specific checks */ \
                         assert((_top == 0 && !_bnum2->neg) || \
                                (_top && ((_bnum2->flags & BN_FLG_FIXED_TOP) \
                                          || _bnum2->d[_top - 1] != 0))); \
@@ -247,16 +254,24 @@ BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                       int num);
 
 struct bignum_st {
-    BN_ULONG *d;                /*
-                                 * Pointer to an array of 'BN_BITS2' bit
-                                 * chunks. These chunks are organised in
-                                 * a least significant chunk first order.
-                                 */
-    int top;                    /* Index of last used d +1. */
-    /* The next are internal book keeping for bn_expand. */
-    int dmax;                   /* Size of the d array. */
-    int neg;                    /* one if the number is negative */
+    /* The number itself is a FIXNUM */
+    OSSL_FN *data;
+
+    /* Some of these flags are replicated in OSSL_FN, some are not */
     int flags;
+
+    /*
+     * TODO(FIXNUM) The fields that follow ARE TO BE REMOVED when all relevant
+     * BN_ functions have transitioned to be wrappers around OSSL_FN_ functions.
+     * All of this is maintained by bn_expand and BIGNUM allocators and
+     * deallocators.
+     */
+
+    BN_ULONG *d;                 /* Pointer to |data->d| */
+    int top;                     /* Index of last used d +1. */
+    /* The next are internal book keeping for bn_expand. */
+    int dmax;                    /* Copy of |data->dsize| */
+    int neg;                     /* One if the number is negative */
 };
 
 /* Used for montgomery multiplication */
