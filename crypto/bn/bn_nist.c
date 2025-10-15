@@ -185,43 +185,38 @@ static const BN_ULONG _nist_p_521_sqr[] = {
 #endif
 
 static const BIGNUM ossl_bignum_nist_p_192 = {
-    (BN_ULONG *)_nist_p_192[0],
-    BN_NIST_192_TOP,
-    BN_NIST_192_TOP,
-    0,
-    BN_FLG_STATIC_DATA
+    .d = (BN_ULONG *)_nist_p_192[0],
+    .top = BN_NIST_192_TOP,
+    .dmax = BN_NIST_192_TOP,
+    .flags = BN_FLG_STATIC_DATA,
 };
 
 static const BIGNUM ossl_bignum_nist_p_224 = {
-    (BN_ULONG *)_nist_p_224[0],
-    BN_NIST_224_TOP,
-    BN_NIST_224_TOP,
-    0,
-    BN_FLG_STATIC_DATA
+    .d = (BN_ULONG *)_nist_p_224[0],
+    .top = BN_NIST_224_TOP,
+    .dmax = BN_NIST_224_TOP,
+    .flags = BN_FLG_STATIC_DATA,
 };
 
 static const BIGNUM ossl_bignum_nist_p_256 = {
-    (BN_ULONG *)_nist_p_256[0],
-    BN_NIST_256_TOP,
-    BN_NIST_256_TOP,
-    0,
-    BN_FLG_STATIC_DATA
+    .d = (BN_ULONG *)_nist_p_256[0],
+    .top = BN_NIST_256_TOP,
+    .dmax = BN_NIST_256_TOP,
+    .flags = BN_FLG_STATIC_DATA,
 };
 
 static const BIGNUM ossl_bignum_nist_p_384 = {
-    (BN_ULONG *)_nist_p_384[0],
-    BN_NIST_384_TOP,
-    BN_NIST_384_TOP,
-    0,
-    BN_FLG_STATIC_DATA
+    .d = (BN_ULONG *)_nist_p_384[0],
+    .top = BN_NIST_384_TOP,
+    .dmax = BN_NIST_384_TOP,
+    .flags = BN_FLG_STATIC_DATA,
 };
 
 static const BIGNUM ossl_bignum_nist_p_521 = {
-    (BN_ULONG *)_nist_p_521,
-    BN_NIST_521_TOP,
-    BN_NIST_521_TOP,
-    0,
-    BN_FLG_STATIC_DATA
+    .d = (BN_ULONG *)_nist_p_521,
+    .top = BN_NIST_521_TOP,
+    .dmax = BN_NIST_521_TOP,
+    .flags = BN_FLG_STATIC_DATA,
 };
 
 const BIGNUM *BN_get0_nist_prime_192(void)
@@ -361,10 +356,10 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     } buf;
     BN_ULONG c_d[BN_NIST_192_TOP], *res;
     static const BIGNUM ossl_bignum_nist_p_192_sqr = {
-        (BN_ULONG *)_nist_p_192_sqr,
-        OSSL_NELEM(_nist_p_192_sqr),
-        OSSL_NELEM(_nist_p_192_sqr),
-        0, BN_FLG_STATIC_DATA
+        .d = (BN_ULONG *)_nist_p_192_sqr,
+        .top = OSSL_NELEM(_nist_p_192_sqr),
+        .dmax = OSSL_NELEM(_nist_p_192_sqr),
+        .flags = BN_FLG_STATIC_DATA,
     };
 
     field = &ossl_bignum_nist_p_192; /* just to make sure */
@@ -498,10 +493,10 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     BN_ULONG c_d[BN_NIST_224_TOP], *res;
     bn_addsub_f adjust;
     static const BIGNUM ossl_bignum_nist_p_224_sqr = {
-        (BN_ULONG *)_nist_p_224_sqr,
-        OSSL_NELEM(_nist_p_224_sqr),
-        OSSL_NELEM(_nist_p_224_sqr),
-        0, BN_FLG_STATIC_DATA
+        .d = (BN_ULONG *)_nist_p_224_sqr,
+        .top = OSSL_NELEM(_nist_p_224_sqr),
+        .dmax = OSSL_NELEM(_nist_p_224_sqr),
+        .flags = BN_FLG_STATIC_DATA,
     };
 
     field = &ossl_bignum_nist_p_224; /* just to make sure */
@@ -670,10 +665,10 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     BN_ULONG c_d[BN_NIST_256_TOP], *res;
     bn_addsub_f adjust;
     static const BIGNUM ossl_bignum_nist_p_256_sqr = {
-        (BN_ULONG *)_nist_p_256_sqr,
-        OSSL_NELEM(_nist_p_256_sqr),
-        OSSL_NELEM(_nist_p_256_sqr),
-        0, BN_FLG_STATIC_DATA
+        .d = (BN_ULONG *)_nist_p_256_sqr,
+        .top = OSSL_NELEM(_nist_p_256_sqr),
+        .dmax = OSSL_NELEM(_nist_p_256_sqr),
+        .flags = BN_FLG_STATIC_DATA,
     };
 
     field = &ossl_bignum_nist_p_256; /* just to make sure */
@@ -907,10 +902,10 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     BN_ULONG c_d[BN_NIST_384_TOP], *res;
     bn_addsub_f adjust;
     static const BIGNUM ossl_bignum_nist_p_384_sqr = {
-        (BN_ULONG *)_nist_p_384_sqr,
-        OSSL_NELEM(_nist_p_384_sqr),
-        OSSL_NELEM(_nist_p_384_sqr),
-        0, BN_FLG_STATIC_DATA
+        .d = (BN_ULONG *)_nist_p_384_sqr,
+        .top = OSSL_NELEM(_nist_p_384_sqr),
+        .dmax = OSSL_NELEM(_nist_p_384_sqr),
+        .flags = BN_FLG_STATIC_DATA,
     };
 
     field = &ossl_bignum_nist_p_384; /* just to make sure */
@@ -1159,10 +1154,10 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     int top = a->top, i;
     BN_ULONG *r_d, *a_d = a->d, t_d[BN_NIST_521_TOP], val, tmp, *res;
     static const BIGNUM ossl_bignum_nist_p_521_sqr = {
-        (BN_ULONG *)_nist_p_521_sqr,
-        OSSL_NELEM(_nist_p_521_sqr),
-        OSSL_NELEM(_nist_p_521_sqr),
-        0, BN_FLG_STATIC_DATA
+        .d = (BN_ULONG *)_nist_p_521_sqr,
+        .top = OSSL_NELEM(_nist_p_521_sqr),
+        .dmax = OSSL_NELEM(_nist_p_521_sqr),
+        .flags = BN_FLG_STATIC_DATA,
     };
 
     field = &ossl_bignum_nist_p_521; /* just to make sure */
