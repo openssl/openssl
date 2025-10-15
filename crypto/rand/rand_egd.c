@@ -113,7 +113,7 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
     int mybuffer, ret = -1, i, numbytes, fd = -1;
     unsigned char tempbuf[255];
 
-    if (bytes > (int)sizeof(tempbuf))
+    if (bytes <= 0 || bytes > (int)sizeof(tempbuf))
         return -1;
 
     /* Make socket. */
@@ -188,6 +188,11 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
     if (fread(tempbuf, sizeof(char), 1, fp) != 1 || tempbuf[0] == 0)
         goto err;
     numbytes = tempbuf[0];
+
+    if (numbytes <= 0 || numbytes > bytes
+        || numbytes > (int)sizeof(tempbuf)) {
+        goto err;
+    }
 
     /* Which buffer are we using? */
     mybuffer = buf == NULL;
