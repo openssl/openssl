@@ -482,9 +482,18 @@ static int test_time_dup(void)
 
 static int convert_asn1_to_time_t(int idx)
 {
-    time_t testdateutc;
+    time_t testdateutc = -1;
 
-    testdateutc = test_asn1_string_to_time_t(asn1_to_utc[idx].input);
+    if (!test_asn1_string_to_time_t(asn1_to_utc[idx].input, &testdateutc)) {
+        if (!TEST_time_t_eq(-1, asn1_to_utc[idx].expected)) {
+            TEST_info("test_asn1_string_to_time_t (%s) failed: expected %lli"
+                      ", got %lli\n",
+                      asn1_to_utc[idx].input,
+                      (long long int)asn1_to_utc[idx].expected,
+                      (long long int)testdateutc);
+            return 0;
+        }
+    }
 
     if (!TEST_time_t_eq(testdateutc, asn1_to_utc[idx].expected)) {
         TEST_info("test_asn1_string_to_time_t (%s) failed: expected %lli, got %lli\n",
@@ -523,35 +532,35 @@ static int convert_tm_to_asn1_time(void)
 int setup_tests(void)
 {
     /*
-     * On platforms where |time_t| is an unsigned integer, t will be a
-     * positive number.
+     * Unsigned time_t was a very foolish visit from the bad idea bears to
+     * defer one problem for a short period of time by creating an entirely
+     * new class of problems. Nevertheless it exists on some older and
+     * embedded platforms and we have to cope with it.
+     *
+     * On platforms where |time_t| is unsigned, t will be a positive
+     * number.
      *
      * We check if we're on a platform with a signed |time_t| with '!(t > 0)'
      * because some compilers are picky if you do 't < 0', or even 't <= 0'
      * if |t| is unsigned.
+     *
+     * Because we pass values through as time_t in the table test, we must
+     * exclude the negative values if time_t is unsigned.
      */
     time_t t = -1;
-    /*
-     * On some platforms, |time_t| is signed, but a negative value is an
-     * error, and using it with gmtime() or localtime() generates a NULL.
-     * If that is the case, we can't perform tests on negative values.
-     */
-    struct tm *ptm = localtime(&t);
 
     ADD_ALL_TESTS(test_table_pos, OSSL_NELEM(tbl_testdata_pos));
-    if (!(t > 0) && ptm != NULL) {
+    if (!(t > 0)) {
         TEST_info("Adding negative-sign time_t tests");
         ADD_ALL_TESTS(test_table_neg, OSSL_NELEM(tbl_testdata_neg));
     }
     if (sizeof(time_t) > sizeof(uint32_t)) {
         TEST_info("Adding 64-bit time_t tests");
         ADD_ALL_TESTS(test_table_pos_64bit, OSSL_NELEM(tbl_testdata_pos_64bit));
-#ifndef __hpux
-        if (!(t > 0) && ptm != NULL) {
+        if (!(t > 0)) {
             TEST_info("Adding negative-sign 64-bit time_t tests");
             ADD_ALL_TESTS(test_table_neg_64bit, OSSL_NELEM(tbl_testdata_neg_64bit));
         }
-#endif
     }
     ADD_ALL_TESTS(test_table_compare, OSSL_NELEM(tbl_compare_testdata));
     ADD_TEST(test_time_dup);

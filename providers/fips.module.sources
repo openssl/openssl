@@ -569,6 +569,7 @@ include/openssl/pem.h
 include/openssl/pemerr.h
 include/openssl/pkcs7.h.in
 include/openssl/pkcs7err.h
+include/openssl/posix_time.h
 include/openssl/prov_ssl.h
 include/openssl/proverr.h
 include/openssl/provider.h

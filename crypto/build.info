@@ -104,7 +104,7 @@ $UTIL_COMMON=\
 
 SOURCE[../libcrypto]=$UTIL_COMMON \
         mem.c mem_sec.c \
-        comp_methods.c cversion.c info.c cpt_err.c ebcdic.c uid.c o_time.c \
+        comp_methods.c cversion.c info.c cpt_err.c ebcdic.c uid.c \
         o_dir.c o_fopen.c getenv.c o_init.c init.c trace.c provider.c \
         provider_child.c punycode.c passphrase.c sleep.c \
         quic_vlint.c time.c defaults.c ssl_err.c
