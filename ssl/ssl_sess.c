@@ -726,6 +726,7 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
 int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
 {
     int ret = 0;
+    int in_hash;
     SSL_SESSION *s;
 
     /*
@@ -772,6 +773,9 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
         s = c;
     }
 
+    /* Only link into LRU if c actually lives in the hash table */
+    in_hash = (lh_SSL_SESSION_retrieve(ctx->sessions, c) != NULL);
+
     /* Adjust last used time, and add back into the cache at the appropriate spot */
     if (ctx->session_cache_mode & SSL_SESS_CACHE_UPDATE_TIME) {
         c->time = ossl_time_now();
@@ -796,7 +800,8 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
         }
     }
 
-    SSL_SESSION_list_add(ctx, c);
+    if (in_hash)
+        SSL_SESSION_list_add(ctx, c);
 
     if (s != NULL) {
         /*
