@@ -3,7 +3,7 @@
 # filesystem for this job can be reached.  Please note that any changes made to
 # this job involving file system paths should be made prefixed with, or relative
 # to that directory
-name: Interoperability tests with GnuTLS and NSS
+name: Interoperability tests with GnuTLS, NSS and OpenSSH
 on:
   schedule:
     - cron: '55 02 * * *'
@@ -53,3 +53,48 @@ jobs:
           tmt run -av plans -n interop tests -f "tag: interop-openssl & tag: interop-$COMPONENT" provision -h local --feeling-safe execute -h tmt --interactive
           openssl version
           echo "Finished - important to prevent unwanted output truncating"
+  openssh_interop:
+    name: "openssh interop ${{ matrix.branch.openssl }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: [
+          { openssl: 'master', openssh: 'openssl-master'},
+          { openssl: 'openssl-3.6', openssh: 'openssl-3.6'},
+          { openssl: 'openssl-3.5', openssh: 'openssl-3.5'},
+          { openssl: 'openssl-3.4', openssh: 'openssl-3.4'},
+          { openssl: 'openssl-3.3', openssh: 'openssl-3.3'},
+          { openssl: 'openssl-3.2', openssh: 'openssl-3.2'},
+          { openssl: 'openssl-3.0', openssh: 'openssl-3.0'}
+        ]
+    runs-on: ubuntu-latest
+    env:
+      EPHEMERAL_VM: yes
+      TEST_SSH_UNSAFE_PERMISSIONS: 1
+      TEST_SSH_HOSTBASED_AUTH: yes
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+        ref: ${{ matrix.branch.openssl }}
+        fetch-depth: 1
+    - name: config
+      run: ./config --banner=Configured -fPIC --prefix=/opt/openssl no-docs shared -Wl,-rpath,/opt/openssl/lib64 && perl configdata.pm --dump
+    - name: make
+      run: |
+        make -s -j4
+        make -s -j4 install_sw
+    - name: install dependencies of openssh
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq install autoconf zlib1g-dev
+    - name: run openssh
+      run: |
+        git clone --branch master --depth 1 https://github.com/openssh/openssh-portable.git
+        cd openssh-portable
+        sh ./.github/setup_ci.sh ${{ matrix.branch.openssh }} ubuntu-latest
+        autoreconf
+        sh ./.github/configure.sh ${{ matrix.branch.openssh }}
+        make clean
+        make -s -j4
+        sh ./.github/run_test.sh
