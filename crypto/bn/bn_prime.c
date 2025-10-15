@@ -55,11 +55,10 @@ static const BN_ULONG small_prime_factors[] = {
 
 #define BN_SMALL_PRIME_FACTORS_TOP OSSL_NELEM(small_prime_factors)
 static const BIGNUM _bignum_small_prime_factors = {
-    (BN_ULONG *)small_prime_factors,
-    BN_SMALL_PRIME_FACTORS_TOP,
-    BN_SMALL_PRIME_FACTORS_TOP,
-    0,
-    BN_FLG_STATIC_DATA
+    .d = (BN_ULONG *)small_prime_factors,
+    .top = BN_SMALL_PRIME_FACTORS_TOP,
+    .dmax = BN_SMALL_PRIME_FACTORS_TOP,
+    .flags = BN_FLG_STATIC_DATA,
 };
 
 const BIGNUM *ossl_bn_get0_small_factors(void)

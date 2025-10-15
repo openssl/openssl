@@ -119,3 +119,10 @@ void OSSL_FN_clear_free(OSSL_FN *f)
 {
     ossl_fn_free_internal(f, true);
 }
+
+void OSSL_FN_clear(OSSL_FN *f)
+{
+    size_t limbssize = f->dsize * sizeof(OSSL_FN_ULONG);
+
+    OPENSSL_cleanse(f->d, limbssize);
+}
