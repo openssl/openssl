@@ -13,6 +13,7 @@
 
 #include <openssl/bn.h>
 #include <limits.h>
+#include "types.h"
 
 BIGNUM *bn_wexpand(BIGNUM *a, int words);
 BIGNUM *bn_expand2(BIGNUM *a, int words);
