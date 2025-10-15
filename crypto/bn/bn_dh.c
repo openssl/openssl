@@ -1006,49 +1006,53 @@ static const BN_ULONG ffdhe8192_q[] = {
 # define make_dh_bn(x)                   \
     extern const BIGNUM ossl_bignum_##x; \
     const BIGNUM ossl_bignum_##x = {     \
-        (BN_ULONG *) x,                  \
-        OSSL_NELEM(x),                   \
-        OSSL_NELEM(x),                   \
-        0, BN_FLG_STATIC_DATA };
+        .d = (BN_ULONG *)x,              \
+        .top = OSSL_NELEM(x),            \
+        .dmax = OSSL_NELEM(x),           \
+        .flags = BN_FLG_STATIC_DATA,     \
+    }
 
 static const BN_ULONG value_2 = 2;
 
 const BIGNUM ossl_bignum_const_2 = {
-    (BN_ULONG *)&value_2, 1, 1, 0, BN_FLG_STATIC_DATA
+    .d = (BN_ULONG *)&value_2,
+    .top = 1,
+    .dmax = 1,
+    .flags = BN_FLG_STATIC_DATA,
 };
 
-make_dh_bn(dh1024_160_p)
-make_dh_bn(dh1024_160_q)
-make_dh_bn(dh1024_160_g)
-make_dh_bn(dh2048_224_p)
-make_dh_bn(dh2048_224_q)
-make_dh_bn(dh2048_224_g)
-make_dh_bn(dh2048_256_p)
-make_dh_bn(dh2048_256_q)
-make_dh_bn(dh2048_256_g)
+make_dh_bn(dh1024_160_p);
+make_dh_bn(dh1024_160_q);
+make_dh_bn(dh1024_160_g);
+make_dh_bn(dh2048_224_p);
+make_dh_bn(dh2048_224_q);
+make_dh_bn(dh2048_224_g);
+make_dh_bn(dh2048_256_p);
+make_dh_bn(dh2048_256_q);
+make_dh_bn(dh2048_256_g);
 
-make_dh_bn(ffdhe2048_p)
-make_dh_bn(ffdhe2048_q)
-make_dh_bn(ffdhe3072_p)
-make_dh_bn(ffdhe3072_q)
-make_dh_bn(ffdhe4096_p)
-make_dh_bn(ffdhe4096_q)
-make_dh_bn(ffdhe6144_p)
-make_dh_bn(ffdhe6144_q)
-make_dh_bn(ffdhe8192_p)
-make_dh_bn(ffdhe8192_q)
+make_dh_bn(ffdhe2048_p);
+make_dh_bn(ffdhe2048_q);
+make_dh_bn(ffdhe3072_p);
+make_dh_bn(ffdhe3072_q);
+make_dh_bn(ffdhe4096_p);
+make_dh_bn(ffdhe4096_q);
+make_dh_bn(ffdhe6144_p);
+make_dh_bn(ffdhe6144_q);
+make_dh_bn(ffdhe8192_p);
+make_dh_bn(ffdhe8192_q);
 
 # ifndef FIPS_MODULE
-make_dh_bn(modp_1536_p)
-make_dh_bn(modp_1536_q)
+make_dh_bn(modp_1536_p);
+make_dh_bn(modp_1536_q);
 # endif
-make_dh_bn(modp_2048_p)
-make_dh_bn(modp_2048_q)
-make_dh_bn(modp_3072_p)
-make_dh_bn(modp_3072_q)
-make_dh_bn(modp_4096_p)
-make_dh_bn(modp_4096_q)
-make_dh_bn(modp_6144_p)
-make_dh_bn(modp_6144_q)
-make_dh_bn(modp_8192_p)
-make_dh_bn(modp_8192_q)
+make_dh_bn(modp_2048_p);
+make_dh_bn(modp_2048_q);
+make_dh_bn(modp_3072_p);
+make_dh_bn(modp_3072_q);
+make_dh_bn(modp_4096_p);
+make_dh_bn(modp_4096_q);
+make_dh_bn(modp_6144_p);
+make_dh_bn(modp_6144_q);
+make_dh_bn(modp_8192_p);
+make_dh_bn(modp_8192_q);
