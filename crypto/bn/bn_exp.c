@@ -612,7 +612,7 @@ int bn_mod_exp_mont_fixed_top(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     unsigned char *powerbufFree = NULL;
     int powerbufLen = 0;
     unsigned char *powerbuf = NULL;
-    BIGNUM tmp, am;
+    BIGNUM tmp = { .data = NULL }, am = { .data = NULL };
 #if defined(SPARC_T4_MONT)
     unsigned int t4 = 0;
 #endif

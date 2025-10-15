@@ -15,6 +15,8 @@
 #include "internal/numbers.h"
 #include "crypto/bn.h"
 
+#include "../fn/fn_local.h"
+
 /*
  * These preprocessor symbols control various aspects of the bignum headers
  * and library code. They're not defined by any "normal" configuration, as
@@ -189,18 +191,19 @@
 #else
 #define bn_pollute(a)
 #endif
-#define bn_check_top(a)                                           \
-    do {                                                          \
-        const BIGNUM *_bnum2 = (a);                               \
-        if (_bnum2 != NULL) {                                     \
-            int _top = _bnum2->top;                               \
-            if (_top == 0) {                                      \
-                assert(!_bnum2->neg);                             \
-            } else if ((_bnum2->flags & BN_FLG_FIXED_TOP) == 0) { \
-                assert(_bnum2->d[_top - 1] != 0);                 \
-            }                                                     \
-            bn_pollute(_bnum2);                                   \
-        }                                                         \
+#define bn_check_top(a)                                                                                                        \
+    do {                                                                                                                       \
+        const BIGNUM *_bnum2 = (a);                                                                                            \
+        if (_bnum2 != NULL) {                                                                                                  \
+            int _top = _bnum2->top;                                                                                            \
+            /* BIGNUM <-> OSSL_FN compat checks */                                                                             \
+            assert((_bnum2->data == NULL /* && _bnum2->d == NULL */)                                                           \
+                || (_bnum2->d == _bnum2->data->d                                                                               \
+                    && _bnum2->dmax == _bnum2->data->dsize));                                                                  \
+            /* BIGNUM specific checks */                                                                                       \
+            assert((_top == 0 && !_bnum2->neg) || (_top && ((_bnum2->flags & BN_FLG_FIXED_TOP) || _bnum2->d[_top - 1] != 0))); \
+            bn_pollute(_bnum2);                                                                                                \
+        }                                                                                                                      \
     } while (0)
 
 #define bn_fix_top(a) bn_check_top(a)
@@ -236,16 +239,24 @@ BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     int num);
 
 struct bignum_st {
-    BN_ULONG *d; /*
-                  * Pointer to an array of 'BN_BITS2' bit
-                  * chunks. These chunks are organised in
-                  * a least significant chunk first order.
-                  */
+    /* The number itself is a FIXNUM */
+    OSSL_FN *data;
+
+    /* Some of these flags are replicated in OSSL_FN, some are not */
+    int flags;
+
+    /*
+     * TODO(FIXNUM) The fields that follow ARE TO BE REMOVED when all relevant
+     * BN_ functions have transitioned to be wrappers around OSSL_FN_ functions.
+     * All of this is maintained by bn_expand and BIGNUM allocators and
+     * deallocators.
+     */
+
+    BN_ULONG *d; /* Pointer to |data->d| */
     int top; /* Index of last used d +1. */
     /* The next are internal book keeping for bn_expand. */
-    int dmax; /* Size of the d array. */
-    int neg; /* one if the number is negative */
-    int flags;
+    int dmax; /* Copy of |data->dsize| */
+    int neg; /* One if the number is negative */
 };
 
 /* Used for montgomery multiplication */
