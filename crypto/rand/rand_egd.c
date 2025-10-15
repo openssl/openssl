@@ -130,7 +130,6 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 #endif
     if (fd == -1)
         return -1;
-    setbuf(fp, NULL);
 
     /* Try to connect */
     for (;;) {
