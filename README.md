@@ -22,6 +22,13 @@ and Tim J. Hudson.
 
 The official Home Page of the OpenSSL Project is [www.openssl.org].
 
+## Development Workflow
+
+Conan-based builds (modern package manager support)
+---------------------------------------------------
+For a concise, show-over-tell guide to building and consuming OpenSSL with Conan 2.x, see [BUILDING-CONAN.md](BUILDING-CONAN.md). It includes minimal examples (`conan install`, `CMakeDeps`, `find_package(OpenSSL REQUIRED)`) and platform notes.
+
+
 Table of Contents
 =================
 
