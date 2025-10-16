@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /* Dispatch functions for chacha20 cipher */
 
@@ -17,6 +14,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "cipher_chacha20.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/ciphers/cipher_chacha20.inc"
 
 #define CHACHA20_KEYLEN (CHACHA_KEY_SIZE)
 #define CHACHA20_BLKLEN (1)
@@ -103,12 +101,6 @@ static int chacha20_get_params(OSSL_PARAM params[])
                                           CHACHA20_IVLEN * 8);
 }
 
-{- produce_param_decoder('chacha20_get_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN',     'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IVLEN',      'ivlen',  'size_t'],
-                          ['OSSL_CIPHER_PARAM_UPDATED_IV', 'upd_iv', 'octet_string'],
-                         )); -}
-
 static int chacha20_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_CHACHA20_CTX *ctx = (PROV_CHACHA20_CTX *)vctx;
@@ -146,11 +138,6 @@ const OSSL_PARAM *chacha20_gettable_ctx_params(ossl_unused void *cctx,
 {
     return chacha20_get_ctx_params_list;
 }
-
-{- produce_param_decoder('chacha20_set_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN', 'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IVLEN',  'ivlen',  'size_t'],
-                         )); -}
 
 static int chacha20_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
@@ -249,4 +236,3 @@ const OSSL_DISPATCH ossl_chacha20_functions[] = {
         (void (*)(void))chacha20_settable_ctx_params },
     OSSL_DISPATCH_END
 };
-

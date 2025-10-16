@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <string.h>
 #include <openssl/crypto.h>
@@ -17,6 +14,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/implementations.h"
 #include "prov/ciphercommon.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/ciphers/cipher_null.inc"
 
 typedef struct prov_cipher_null_ctx_st {
     int enc;
@@ -108,12 +106,6 @@ static int null_get_params(OSSL_PARAM params[])
     return ossl_cipher_generic_get_params(params, 0, 0, 0, 8, 0);
 }
 
-{- produce_param_decoder('null_get_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN',  'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IVLEN',   'ivlen',  'size_t'],
-                          ['OSSL_CIPHER_PARAM_TLS_MAC', 'mac',    'octet_ptr'],
-                         )); -}
-
 static OSSL_FUNC_cipher_gettable_ctx_params_fn null_gettable_ctx_params;
 static const OSSL_PARAM *null_gettable_ctx_params(ossl_unused void *cctx,
                                                   ossl_unused void *provctx)
@@ -148,17 +140,12 @@ static int null_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return 1;
 }
 
-{- produce_param_decoder('null_set_ctx_params',
-                         (['OSSL_CIPHER_PARAM_TLS_MAC_SIZE', 'macsize', 'size_t'],
-                         )); -}
-
 static OSSL_FUNC_cipher_settable_ctx_params_fn null_settable_ctx_params;
 static const OSSL_PARAM *null_settable_ctx_params(ossl_unused void *cctx,
                                                   ossl_unused void *provctx)
 {
     return null_set_ctx_params_list;
 }
-
 
 static OSSL_FUNC_cipher_set_ctx_params_fn null_set_ctx_params;
 static int null_set_ctx_params(void *vctx, const OSSL_PARAM params[])

@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /* Dispatch functions for gcm mode */
 
@@ -18,6 +15,8 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/ciphercommon_gcm.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+
+#include "providers/implementations/ciphers/ciphercommon_gcm.inc"
 
 static int gcm_tls_init(PROV_GCM_CTX *dat, unsigned char *aad, size_t aad_len);
 static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
@@ -143,18 +142,6 @@ static int setivinv(PROV_GCM_CTX *ctx, unsigned char *in, size_t inl)
     return 1;
 }
 
-{- produce_param_decoder('ossl_cipher_gcm_get_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN',               'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IVLEN',                'ivlen',  'size_t'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TAGLEN',          'taglen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IV',                   'iv',     'octet_string'],
-                          ['OSSL_CIPHER_PARAM_UPDATED_IV',           'updiv',  'octet_string'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TAG',             'tag',    'octet_string'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD',    'pad',    'size_t'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN', 'ivgen',  'octet_string'],
-                          ['OSSL_CIPHER_PARAM_AEAD_IV_GENERATED',    'gen',    'uint'],
-                         )); -}
-
 const OSSL_PARAM *ossl_gcm_gettable_ctx_params(
         ossl_unused void *cctx, ossl_unused void *provctx
     )
@@ -248,15 +235,6 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
     return 1;
 }
-
-{- produce_param_decoder
-        ('ossl_cipher_gcm_set_ctx_params',
-         (['OSSL_CIPHER_PARAM_AEAD_IVLEN',           'ivlen', 'size_t'],
-          ['OSSL_CIPHER_PARAM_AEAD_TAG',             'tag',   'octet_string'],
-          ['OSSL_CIPHER_PARAM_AEAD_TLS1_AAD',        'aad',   'octet_string'],
-          ['OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED',   'fixed', 'octet_string'],
-          ['OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV', 'inviv', 'octet_string'],
-         )); -}
 
 const OSSL_PARAM *ossl_gcm_settable_ctx_params(
         ossl_unused void *cctx, ossl_unused void *provctx

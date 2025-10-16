@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * This file uses the low level AES functions (which are deprecated for
@@ -20,6 +17,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "cipher_aes.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
+#include "providers/implementations/ciphers/cipher_aes_wrp.inc"
 
 /* AES wrap with padding has IV length of 4, without padding 8 */
 #define AES_WRAP_PAD_IVLEN   4
@@ -48,7 +46,6 @@ typedef struct prov_aes_wrap_ctx_st {
     aeswrap_fn wrapfn;
 
 } PROV_AES_WRAP_CTX;
-
 
 static void *aes_wrap_newctx(size_t kbits, size_t blkbits,
                              size_t ivbits, unsigned int mode, uint64_t flags)
@@ -262,10 +259,6 @@ static int aes_wrap_cipher(void *vctx,
     *outl = len;
     return 1;
 }
-
-{- produce_param_decoder('aes_wrap_set_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN', 'keylen', 'size_t'],
-                         )); -}
 
 static const OSSL_PARAM *aes_wrap_settable_ctx_params(ossl_unused void *cctx,
                                                       ossl_unused void *provctx)

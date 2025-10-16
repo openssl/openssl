@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /* Dispatch functions for ccm mode */
 
@@ -17,6 +14,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/ciphercommon_ccm.h"
 #include "prov/providercommon.h"
 
+#include "providers/implementations/ciphers/ciphercommon_ccm.inc"
 
 static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
                                size_t *padlen, const unsigned char *in,
@@ -68,13 +66,6 @@ static size_t ccm_get_ivlen(PROV_CCM_CTX *ctx)
 {
     return 15 - ctx->l;
 }
-
-{- produce_param_decoder('ossl_cipher_ccm_set_ctx_params',
-                         (['OSSL_CIPHER_PARAM_AEAD_IVLEN',           'ivlen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TAG',             'tag',   'octet_string'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TLS1_AAD',        'aad',   'octet_string'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED',   'fixed', 'octet_string'],
-                         )); -}
 
 const OSSL_PARAM *ossl_ccm_settable_ctx_params(
         ossl_unused void *cctx, ossl_unused void *provctx
@@ -154,16 +145,6 @@ int ossl_ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
     return 1;
 }
-
-{- produce_param_decoder('ossl_cipher_ccm_get_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN',               'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IVLEN',                'ivlen',  'size_t'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TAGLEN',          'taglen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IV',                   'iv',     'octet_string'],
-                          ['OSSL_CIPHER_PARAM_UPDATED_IV',           'updiv',  'octet_string'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TAG',             'tag',    'octet_string'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD',    'pad',    'size_t'],
-                         )); -}
 
 const OSSL_PARAM *ossl_ccm_gettable_ctx_params(
         ossl_unused void *cctx, ossl_unused void *provctx

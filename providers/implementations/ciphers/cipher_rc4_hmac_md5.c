@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /* Dispatch functions for RC4_HMAC_MD5 cipher */
 
@@ -22,6 +19,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "cipher_rc4_hmac_md5.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/ciphers/cipher_rc4_hmac_md5.inc"
 
 #define RC4_HMAC_MD5_FLAGS (PROV_CIPHER_FLAG_VARIABLE_LENGTH                   \
                             | PROV_CIPHER_FLAG_AEAD)
@@ -102,12 +100,6 @@ static int rc4_hmac_md5_dinit(void *ctx, const unsigned char *key,
     return rc4_hmac_md5_set_ctx_params(ctx, params);
 }
 
-{- produce_param_decoder('rc4_hmac_md5_get_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN',            'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IVLEN',             'ivlen',  'size_t'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD', 'pad',    'size_t'],
-                         )); -}
-
 static const OSSL_PARAM *rc4_hmac_md5_gettable_ctx_params(ossl_unused void *cctx,
                                                           ossl_unused void *provctx)
 {
@@ -138,14 +130,6 @@ static int rc4_hmac_md5_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
     return 1;
 }
-
-{- produce_param_decoder('rc4_hmac_md5_set_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN',        'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IVLEN',         'ivlen',  'size_t'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TLS1_AAD', 'aad',    'octet_string'],
-                          ['OSSL_CIPHER_PARAM_AEAD_MAC_KEY',  'mackey', 'octet_string'],
-                          ['OSSL_CIPHER_PARAM_TLS_VERSION',   'tlsver', 'uint'],
-                         )); -}
 
 static const OSSL_PARAM *rc4_hmac_md5_settable_ctx_params(ossl_unused void *cctx,
                                                           ossl_unused void *provctx)

@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * AES low level APIs are deprecated for public use, but still ok for internal
@@ -32,6 +29,8 @@ const OSSL_DISPATCH ossl_##nm##kbits##sub##_functions[] = {                    \
     OSSL_DISPATCH_END                                                              \
 };
 #else
+
+# include "providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.inc"
 
 # define AES_CBC_HMAC_SHA_FLAGS (PROV_CIPHER_FLAG_AEAD                         \
                                  | PROV_CIPHER_FLAG_TLS1_MULTIBLOCK)
@@ -66,23 +65,6 @@ static int aes_dinit(void *ctx, const unsigned char *key, size_t keylen,
         return 0;
     return aes_set_ctx_params(ctx, params);
 }
-
-{- produce_param_decoder('aes_cbc_hmac_sha_set_ctx_params',
-                         (['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT',
-                           'maxfrag',  'size_t',       "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
-                          ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD',
-                           'mb_aad',   'size_t',       "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
-                          ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE',
-                           'ileave',   'uint',         "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
-                          ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC',
-                           'enc',      'octet_string', "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
-                          ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN',
-                           'enc_in',   'octet_string', "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
-                          ['OSSL_CIPHER_PARAM_AEAD_MAC_KEY',  'key',    'octet_string'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TLS1_AAD', 'tlsaad', 'octet_string'],
-                          ['OSSL_CIPHER_PARAM_KEYLEN',        'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_TLS_VERSION',   'tlsver', 'uint' ],
-                         )); -}
 
 const OSSL_PARAM *aes_settable_ctx_params(ossl_unused void *cctx,
                                           ossl_unused void *provctx)
@@ -209,22 +191,6 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
     return ret;
 }
-
-{- produce_param_decoder('aes_cbc_hmac_sha_get_ctx_params',
-                         (['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE',
-                           'max',     'size_t', "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
-                          ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE',
-                           'inter',   'uint',   "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
-                          ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN',
-                           'packlen', 'uint',   "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
-                          ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN',
-                           'enclen',  'size_t', "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
-                          ['OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD', 'pad',    'size_t'],
-                          ['OSSL_CIPHER_PARAM_KEYLEN',            'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IVLEN',             'ivlen',  'size_t'],
-                          ['OSSL_CIPHER_PARAM_IV',                'iv',     'octet_string'],
-                          ['OSSL_CIPHER_PARAM_UPDATED_IV',        'upd_iv', 'octet_string'],
-                         )); -}
 
 static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
