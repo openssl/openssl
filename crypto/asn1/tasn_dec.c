@@ -14,6 +14,7 @@
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+#include "crypto/asn1.h"
 #include "internal/numbers.h"
 #include "asn1_local.h"
 
@@ -24,12 +25,6 @@
  * recursive invocations of asn1_item_embed_d2i().
  */
 #define ASN1_MAX_CONSTRUCTED_NEST 30
-
-static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
-                               long len, const ASN1_ITEM *it,
-                               int tag, int aclass, char opt, ASN1_TLC *ctx,
-                               int depth, OSSL_LIB_CTX *libctx,
-                               const char *propq);
 
 static int asn1_check_eoc(const unsigned char **in, long len);
 static int asn1_find_end(const unsigned char **in, long len, char inf);
@@ -159,11 +154,11 @@ ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **pval,
  * tag mismatch return -1 to handle OPTIONAL
  */
 
-static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
-                               long len, const ASN1_ITEM *it,
-                               int tag, int aclass, char opt, ASN1_TLC *ctx,
-                               int depth, OSSL_LIB_CTX *libctx,
-                               const char *propq)
+int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
+                        long len, const ASN1_ITEM *it,
+                        int tag, int aclass, char opt, ASN1_TLC *ctx,
+                        int depth, OSSL_LIB_CTX *libctx,
+                        const char *propq)
 {
     const ASN1_TEMPLATE *tt, *errtt = NULL;
     const ASN1_EXTERN_FUNCS *ef;
