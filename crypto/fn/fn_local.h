@@ -11,6 +11,8 @@
 # define OSSL_CRYPTO_FN_LOCAL_H
 
 # include <string.h>
+# include <stddef.h>
+# include <stdint.h>
 # include <openssl/opensslconf.h>
 # include <openssl/e_os2.h>
 # include "internal/common.h"
@@ -22,6 +24,19 @@
 #  define OSSL_FN_MASK          UINT32_MAX
 # elif OSSL_FN_BYTES == 8
 /* 64-bit systems */
+#  define OSSL_FN_MASK          UINT64_MAX
+# else
+#  error "OpenSSL doesn't support large numbers on this platform"
+# endif
+
+# define OSSL_FN_HIGH_BIT_MASK  (OSSL_FN_ULONG_C(1) << (OSSL_FN_BYTES * 8 - 1))
+
+# if OSSL_FN_BYTES == 4
+/* 32-bit systems */
+#  define OSSL_FN_ULONG_C(n)    UINT32_C(n)
+#  define OSSL_FN_MASK          UINT32_MAX
+# elif OSSL_FN_BYTES == 8
+#  define OSSL_FN_ULONG_C(n)    UINT64_C(n)
 #  define OSSL_FN_MASK          UINT64_MAX
 # else
 #  error "OpenSSL doesn't support large numbers on this platform"
@@ -78,5 +93,38 @@ static ossl_inline OSSL_FN *ossl_fn_copy_internal(OSSL_FN *dest,
         return NULL;
     return dest;
 }
+
+/**
+ * Add two OSSL_FN numbers with no regard for their sign.
+ * This is a helper function for OSSL_FN_add() and OSSL_FN_sub().
+ *
+ * @param[out]  r       The OSSL_FN for the result
+ * @param[in]   a       The first operand
+ * @param[in]   b       The second operand
+ * @returns     1 on success, 0 on error
+ * @pre         'r' must be physically large enough to be likely to contain
+ *              the result
+ * @post        There must be no carry ('r' must be physically large enough
+ *              to also contain the carry)
+ */
+int ossl_fn_uadd(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b);
+
+/**
+ * Subtract two OSSL_FN numbers with no regard for their sign.
+ * This is a helper function for OSSL_FN_add() and OSSL_FN_sub().
+ *
+ * The caller must see to it that a is numerically larger than b.
+ * If it isn't, an error will be raised, and the content of r may
+ * be overwritten, undefined with what.
+ *
+ * @param[out]  r       The OSSL_FN for the result
+ * @param[in]   a       The first operand
+ * @param[in]   b       The second operand
+ * @returns     1 on success, 0 on error
+ * @pre         'r' must be physically large enough to be likely to contain
+ *              the result
+ * @post        There must be no borrow ('a' must be numerically larger than 'b')
+ */
+int ossl_fn_usub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b);
 
 #endif
