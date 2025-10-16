@@ -662,8 +662,8 @@ again:
      */
     if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)
         && rl->version == DTLS1_3_VERSION
-        && ossl_assert(rl->sn_enc_ctx != NULL)
-        && (!ossl_assert(rl->packet_length >= rechdrlen + DTLS13_CIPHERTEXT_MINSIZE)
+        && rl->sn_enc_ctx != NULL
+        && ((rl->packet_length < rechdrlen + DTLS13_CIPHERTEXT_MINSIZE)
             || !dtls_crypt_sequence_number(rl->sn_enc_ctx,
                 recseqnum + recseqnumoffs,
                 recseqnumlen,
@@ -960,6 +960,30 @@ static size_t dtls_get_max_record_overhead(OSSL_RECORD_LAYER *rl)
     return rchdrlen + rl->eivlen + blocksize + rl->taglen + contenttypelen;
 }
 
+static int dtls_get_sequence_number(OSSL_RECORD_LAYER *rl, uint64_t *sequence)
+{
+    *sequence = rl->sequence;
+    return 1;
+}
+
+static int dtls_set_sequence_number(OSSL_RECORD_LAYER *rl, uint64_t sequence)
+{
+    rl->sequence = sequence;
+    return 1;
+}
+
+static int dtls_get_epoch(OSSL_RECORD_LAYER *rl, uint16_t *epoch)
+{
+    *epoch = rl->epoch;
+    return 1;
+}
+
+static int dtls_set_curr_mtu(OSSL_RECORD_LAYER *rl, size_t mtu)
+{
+    rl->curr_mtu = mtu;
+    return 1;
+}
+
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     dtls_new_record_layer,
     dtls_free,
@@ -984,6 +1008,10 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_set_max_frag_len,
     dtls_get_max_record_overhead,
     tls_increment_sequence_ctr,
+    dtls_get_sequence_number,
+    dtls_set_sequence_number,
+    dtls_get_epoch,
+    dtls_set_curr_mtu,
     tls_alloc_buffers,
     tls_free_buffers
 };
