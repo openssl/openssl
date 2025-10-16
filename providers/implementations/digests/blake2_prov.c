@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <string.h>
 #include <openssl/crypto.h>
@@ -19,23 +16,16 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/blake2.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
+#include "providers/implementations/digests/blake2_prov.inc"
 
 static OSSL_FUNC_digest_gettable_ctx_params_fn blake_gettable_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn blake_settable_ctx_params;
-
-{- produce_param_decoder('blake_get_ctx_params',
-                         (['OSSL_DIGEST_PARAM_SIZE',     'size',   'uint'],
-                         )); -}
 
 static const OSSL_PARAM *blake_gettable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *pctx)
 {
     return blake_get_ctx_params_list;
 }
-
-{- produce_param_decoder('blake_set_ctx_params',
-                         (['OSSL_DIGEST_PARAM_SIZE',     'size',   'uint'],
-                         )); -}
 
 static const OSSL_PARAM *blake_settable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *pctx)

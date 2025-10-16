@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <string.h>
 #include <openssl/core_names.h>
@@ -23,6 +20,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 #include "internal/common.h"
+#include "providers/implementations/digests/sha3_prov.inc"
 
 #define SHA3_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 #define SHAKE_FLAGS (PROV_DIGEST_FLAG_XOF | PROV_DIGEST_FLAG_ALGID_ABSENT)
@@ -586,11 +584,6 @@ static void *keccak_dupctx(void *ctx)
     return ret;
 }
 
-{- produce_param_decoder('shake_get_ctx_params',
-                         (['OSSL_DIGEST_PARAM_XOFLEN',   'xoflen',   'size_t'],
-                          ['OSSL_DIGEST_PARAM_SIZE',     'size',     'size_t'],
-                         )); -}
-
 static const OSSL_PARAM *shake_gettable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *provctx)
 {
@@ -616,11 +609,6 @@ static int shake_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
     return 1;
 }
-
-{- produce_param_decoder('shake_set_ctx_params',
-                         (['OSSL_DIGEST_PARAM_XOFLEN',   'xoflen',   'size_t'],
-                          ['OSSL_DIGEST_PARAM_SIZE',     'xoflen',   'size_t'],
-                         )); -}
 
 static const OSSL_PARAM *shake_settable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *provctx)

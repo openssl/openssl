@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * MDC2 low level APIs are deprecated for public use, but still ok for
@@ -26,13 +23,10 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include <internal/common.h>
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
+#include "providers/implementations/digests/mdc2_prov.inc"
 
 static OSSL_FUNC_digest_set_ctx_params_fn mdc2_set_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn mdc2_settable_ctx_params;
-
-{- produce_param_decoder('mdc2_set_ctx_params',
-                         (['OSSL_DIGEST_PARAM_PAD_TYPE', 'pad', 'uint'],
-                         )); -}
 
 static const OSSL_PARAM *mdc2_settable_ctx_params(ossl_unused void *ctx,
                                                   ossl_unused void *provctx)

@@ -114,10 +114,10 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/ciphers/cipher_null.inc \
          providers/implementations/ciphers/cipher_rc4_hmac_md5.inc \
          providers/implementations/ciphers/cipher_sm4_xts.inc \
-         providers/implementations/digests/blake2_prov.c \
-         providers/implementations/digests/digestcommon.c \
-         providers/implementations/digests/mdc2_prov.c \
-         providers/implementations/digests/sha3_prov.c \
+         providers/implementations/digests/blake2_prov.inc \
+         providers/implementations/digests/digestcommon.inc \
+         providers/implementations/digests/mdc2_prov.inc \
+         providers/implementations/digests/sha3_prov.inc \
          providers/implementations/include/prov/blake2_params.inc \
          providers/implementations/macs/cmac_prov.c \
          providers/implementations/macs/gmac_prov.c \
@@ -232,10 +232,10 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/ciphers/cipher_null.inc \
        providers/implementations/ciphers/cipher_rc4_hmac_md5.inc \
        providers/implementations/ciphers/cipher_sm4_xts.inc \
-       providers/implementations/digests/blake2_prov.c \
-       providers/implementations/digests/digestcommon.c \
-       providers/implementations/digests/mdc2_prov.c \
-       providers/implementations/digests/sha3_prov.c \
+       providers/implementations/digests/blake2_prov.inc \
+       providers/implementations/digests/digestcommon.inc \
+       providers/implementations/digests/mdc2_prov.inc \
+       providers/implementations/digests/sha3_prov.inc \
        providers/implementations/include/prov/blake2_params.inc \
        providers/implementations/macs/cmac_prov.c \
        providers/implementations/macs/gmac_prov.c \
@@ -383,14 +383,14 @@ GENERATE[providers/implementations/ciphers/cipher_rc4_hmac_md5.inc]=\
     providers/implementations/ciphers/cipher_rc4_hmac_md5.inc.in
 GENERATE[providers/implementations/ciphers/cipher_sm4_xts.inc]=\
     providers/implementations/ciphers/cipher_sm4_xts.inc.in
-GENERATE[providers/implementations/digests/blake2_prov.c]=\
-    providers/implementations/digests/blake2_prov.c.in
-GENERATE[providers/implementations/digests/digestcommon.c]=\
-    providers/implementations/digests/digestcommon.c.in
-GENERATE[providers/implementations/digests/mdc2_prov.c]=\
-    providers/implementations/digests/mdc2_prov.c.in
-GENERATE[providers/implementations/digests/sha3_prov.c]=\
-    providers/implementations/digests/sha3_prov.c.in
+GENERATE[providers/implementations/digests/blake2_prov.inc]=\
+    providers/implementations/digests/blake2_prov.inc.in
+GENERATE[providers/implementations/digests/digestcommon.inc]=\
+    providers/implementations/digests/digestcommon.inc.in
+GENERATE[providers/implementations/digests/mdc2_prov.inc]=\
+    providers/implementations/digests/mdc2_prov.inc.in
+GENERATE[providers/implementations/digests/sha3_prov.inc]=\
+    providers/implementations/digests/sha3_prov.inc.in
 GENERATE[providers/implementations/include/prov/blake2_params.inc]=\
     providers/implementations/include/prov/blake2_params.inc.in
 GENERATE[providers/implementations/macs/cmac_prov.c]=\
