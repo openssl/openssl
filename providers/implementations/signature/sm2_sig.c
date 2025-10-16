@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * ECDSA low level APIs are deprecated for public use, but still ok for
@@ -35,6 +32,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "crypto/ec.h"
 #include "crypto/sm2.h"
 #include "prov/der_sm2.h"
+#include "providers/implementations/signature/sm2_sig.inc"
 
 static OSSL_FUNC_signature_newctx_fn sm2sig_newctx;
 static OSSL_FUNC_signature_sign_init_fn sm2sig_signature_init;
@@ -314,7 +312,6 @@ int sm2sig_digest_sign_final(void *vpsm2ctx, unsigned char *sig, size_t *siglen,
     return sm2sig_sign(vpsm2ctx, sig, siglen, sigsize, digest, (size_t)dlen);
 }
 
-
 int sm2sig_digest_verify_final(void *vpsm2ctx, const unsigned char *sig,
                                size_t siglen)
 {
@@ -399,12 +396,6 @@ static void *sm2sig_dupctx(void *vpsm2ctx)
     return NULL;
 }
 
-{- produce_param_decoder('sm2sig_get_ctx_params',
-                         (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID', 'algid',  'octet_string'],
-                          ['OSSL_SIGNATURE_PARAM_DIGEST_SIZE',  'size',   'size_t'],
-                          ['OSSL_SIGNATURE_PARAM_DIGEST',       'digest', 'utf8_string'],
-                         )); -}
-
 static int sm2sig_get_ctx_params(void *vpsm2ctx, OSSL_PARAM *params)
 {
     PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
@@ -436,12 +427,6 @@ static const OSSL_PARAM *sm2sig_gettable_ctx_params(ossl_unused void *vpsm2ctx,
 {
     return sm2sig_get_ctx_params_list;
 }
-
-{- produce_param_decoder('sm2sig_set_ctx_params',
-                         (['OSSL_SIGNATURE_PARAM_DIGEST_SIZE', 'size',   'size_t'],
-                          ['OSSL_SIGNATURE_PARAM_DIGEST',      'digest', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_DIST_ID',          'distid', 'octet_string'],
-                         )); -}
 
 static int sm2sig_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
 {

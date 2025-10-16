@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
@@ -26,6 +23,10 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/provider_ctx.h"
 #include "prov/der_ecx.h"
 #include "crypto/ecx.h"
+
+#define eddsa_set_variant_ctx_params_st eddsa_set_ctx_params_st
+
+#include "providers/implementations/signature/eddsa_sig.inc"
 
 #ifdef S390X_EC_ASM
 # include "s390x_arch.h"
@@ -792,10 +793,6 @@ static const char **ed448_sigalg_query_key_types(void)
     return keytypes;
 }
 
-{- produce_param_decoder('eddsa_get_ctx_params',
-                         (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID', 'id', 'octet_string'],
-                         )); -}
-
 static int eddsa_get_ctx_params(void *vpeddsactx, OSSL_PARAM *params)
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
@@ -818,11 +815,6 @@ static const OSSL_PARAM *eddsa_gettable_ctx_params(ossl_unused void *vpeddsactx,
 {
     return eddsa_get_ctx_params_list;
 }
-
-{- produce_param_decoder('eddsa_set_ctx_params',
-                         (['OSSL_SIGNATURE_PARAM_INSTANCE',       'inst', 'utf8_string'],
-                          ['OSSL_SIGNATURE_PARAM_CONTEXT_STRING', 'ctx',  'octet_string'],
-                         )); -}
 
 static int eddsa_set_ctx_params_internal
         (PROV_EDDSA_CTX *peddsactx, const struct eddsa_set_ctx_params_st *p)
@@ -891,7 +883,6 @@ static const OSSL_PARAM *eddsa_settable_ctx_params(ossl_unused void *vpeddsactx,
     return eddsa_set_ctx_params_list;
 }
 
-
 static int eddsa_set_ctx_params(void *vpeddsactx, const OSSL_PARAM params[])
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
@@ -901,11 +892,6 @@ static int eddsa_set_ctx_params(void *vpeddsactx, const OSSL_PARAM params[])
         return 0;
     return eddsa_set_ctx_params_internal(peddsactx, &p);
 }
-
-#define eddsa_set_variant_ctx_params_st         eddsa_set_ctx_params_st
-{- produce_param_decoder('eddsa_set_variant_ctx_params',
-                         (['OSSL_SIGNATURE_PARAM_CONTEXT_STRING', 'ctx',  'octet_string'],
-                         )); -}
 
 static const OSSL_PARAM *
 eddsa_settable_variant_ctx_params(ossl_unused void *vpeddsactx,
