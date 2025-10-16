@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * DH low level APIs are deprecated for public use, but still ok for
@@ -30,6 +27,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
 #include "crypto/dh.h"
+#include "providers/implementations/exchange/dh_exch.inc"
 
 static OSSL_FUNC_keyexch_newctx_fn dh_newctx;
 static OSSL_FUNC_keyexch_init_fn dh_init;
@@ -341,18 +339,6 @@ err:
     return NULL;
 }
 
-{- produce_param_decoder('dh_set_ctx_params',
-                         (['OSSL_EXCHANGE_PARAM_PAD',               'pad',    'int'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_TYPE',          'kdf',    'utf8_string'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_DIGEST',        'digest', 'utf8_string'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_DIGEST_PROPS',  'propq',  'utf8_string'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_OUTLEN',        'len',    'size_t'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_UKM',           'ukm',    'octet_string'],
-                          ['OSSL_KDF_PARAM_CEK_ALG',                'cekalg', 'utf8_string'],
-                          ['OSSL_EXCHANGE_PARAM_FIPS_KEY_CHECK',    'ind_k',  'int', 'fips'],
-                          ['OSSL_EXCHANGE_PARAM_FIPS_DIGEST_CHECK', 'ind_d',  'int', 'fips'],
-                         )); -}
-
 static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
@@ -464,15 +450,6 @@ static const OSSL_PARAM *dh_settable_ctx_params(ossl_unused void *vpdhctx,
 {
     return dh_set_ctx_params_list;
 }
-
-{- produce_param_decoder('dh_get_ctx_params',
-                         (['OSSL_EXCHANGE_PARAM_KDF_TYPE',           'kdf',    'utf8_string'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_DIGEST',         'digest', 'utf8_string'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_OUTLEN',         'len',    'size_t'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_UKM',            'ukm',    'octet_ptr'],
-                          ['OSSL_KDF_PARAM_CEK_ALG',                 'cekalg', 'utf8_string'],
-                          ['OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
-                         )); -}
 
 static const OSSL_PARAM *dh_gettable_ctx_params(ossl_unused void *vpdhctx,
                                                 ossl_unused void *provctx)
