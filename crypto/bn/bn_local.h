@@ -154,7 +154,8 @@
  *   bn_check_top() is as before.
  * - if BN_DEBUG *is* defined;
  *   - bn_check_top() tries to pollute unused words even if the bignum 'top' is
- *     consistent. (ed: only if BN_RAND_DEBUG is defined)
+ *     consistent. (ed: only if BN_RAND_DEBUG is defined and the bignum doesn't
+ *     have an associated OSSL_FN instance)
  *   - bn_fix_top() maps to bn_check_top() rather than "fixing" anything.
  * The idea is to have debug builds flag up inconsistent bignums when they
  * occur. If that occurs in a bn_fix_top(), we examine the code in question; if
@@ -188,7 +189,7 @@
 #   define bn_pollute(a) \
         do { \
             const BIGNUM *_bnum1 = (a); \
-            if (_bnum1->top < _bnum1->dmax) { \
+            if (_bnum1->data == NULL && _bnum1->top < _bnum1->dmax) { \
                 unsigned char _tmp_char; \
                 /* We cast away const without the compiler knowing, any \
                  * *genuinely* constant variables that aren't mutable \

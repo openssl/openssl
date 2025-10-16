@@ -14,6 +14,7 @@
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA OSSL_FN_str_reasons[] = {
+    {ERR_PACK(ERR_LIB_OSSL_FN, 0, OSSL_FN_R_ARG2_LT_ARG3), "arg2 lt arg3"},
     {ERR_PACK(ERR_LIB_OSSL_FN, 0, OSSL_FN_R_RESULT_ARG_TOO_SMALL),
      "result arg too small"},
     {0, NULL}
