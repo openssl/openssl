@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -19,6 +16,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "providers/implementations/keymgmt/lms_kmgmt.inc"
 
 static OSSL_FUNC_keymgmt_new_fn lms_new_key;
 static OSSL_FUNC_keymgmt_free_fn lms_free_key;
@@ -66,10 +64,6 @@ static int lms_match(const void *keydata1, const void *keydata2, int selection)
         return 0;
     return ossl_lms_key_equal(key1, key2, selection);
 }
-
-{- produce_param_decoder('lms_import',
-                         (['OSSL_PKEY_PARAM_PUB_KEY',           'pub',     'octet_string'],
-                         )); -}
 
 static int lms_import(void *keydata, int selection, const OSSL_PARAM params[])
 {

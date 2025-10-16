@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -22,6 +19,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "providers/implementations/keymgmt/slh_dsa_kmgmt.inc"
 
 #ifdef FIPS_MODULE
 static int slh_dsa_fips140_pairwise_test(const SLH_DSA_KEY *key,
@@ -111,11 +109,6 @@ static int slh_dsa_validate(const void *key_data, int selection, int check_type)
     return 1;
 }
 
-{- produce_param_decoder('slh_dsa_import',
-                         (['OSSL_PKEY_PARAM_PUB_KEY',           'pub',     'octet_string'],
-                          ['OSSL_PKEY_PARAM_PRIV_KEY',          'priv',    'octet_string'],
-                         )); -}
-
 static int slh_dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     SLH_DSA_KEY *key = keydata;
@@ -140,16 +133,6 @@ static const OSSL_PARAM *slh_dsa_imexport_types(int selection)
         return NULL;
     return slh_dsa_import_list;
 }
-
-{- produce_param_decoder('slh_dsa_get_params',
-                         (['OSSL_PKEY_PARAM_BITS',              'bits',    'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_BITS',     'secbits', 'int'],
-                          ['OSSL_PKEY_PARAM_MAX_SIZE',          'maxsize', 'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_CATEGORY', 'seccat',  'int'],
-                          ['OSSL_PKEY_PARAM_MANDATORY_DIGEST',  'mandgst', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_PUB_KEY',           'pub',     'octet_string'],
-                          ['OSSL_PKEY_PARAM_PRIV_KEY',          'priv',    'octet_string'],
-                         )); -}
 
 static const OSSL_PARAM *slh_dsa_gettable_params(void *provctx)
 {
@@ -385,11 +368,6 @@ static void *slh_dsa_gen(void *genctx, const char *alg)
     ossl_slh_dsa_key_free(key);
     return NULL;
 }
-
-{- produce_param_decoder('slh_dsa_gen_set_params',
-                         (['OSSL_PKEY_PARAM_PROPERTIES',   'propq', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_SLH_DSA_SEED', 'seed',  'octet_string'],
-                         )); -}
 
 static int slh_dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {

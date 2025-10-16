@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -24,6 +21,8 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
+
+#include "providers/implementations/keymgmt/template_kmgmt.inc"
 
 extern const OSSL_DISPATCH ossl_template_keymgmt_functions[];
 
@@ -181,11 +180,6 @@ err:
     return ret;
 }
 
-{- produce_param_decoder('template_key_types',
-                         (['OSSL_PKEY_PARAM_PUB_KEY',  'pub_key',  'octet_string'],
-                          ['OSSL_PKEY_PARAM_PRIV_KEY', 'priv_key', 'octet_string'],
-                         )); -}
-
 static int ossl_template_key_fromdata(void *key,
                                       const OSSL_PARAM params[],
                                       int include_private)
@@ -237,14 +231,6 @@ static const OSSL_PARAM *template_imexport_types(int selection)
     return NULL;
 }
 
-{- produce_param_decoder('template_get_params',
-                         (['OSSL_PKEY_PARAM_BITS',               'bits',    'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_BITS',      'secbits', 'int'],
-                          ['OSSL_PKEY_PARAM_MAX_SIZE',           'size',    'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_CATEGORY',  'seccat',  'int'],
-                          ['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY', 'encpub',  'octet_string'],
-                         )); -}
-
 static int template_get_params(void *key, OSSL_PARAM params[])
 {
     struct template_get_params_st p;
@@ -277,10 +263,6 @@ static const OSSL_PARAM *template_gettable_params(void *provctx)
     return template_get_params_list;
 }
 
-{- produce_param_decoder('template_set_params',
-                         (['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY', 'pub', 'octet_string'],
-                         )); -}
-
 static int template_set_params(void *key, const OSSL_PARAM params[])
 {
     struct template_set_params_st p;
@@ -302,10 +284,6 @@ static const OSSL_PARAM *template_settable_params(void *provctx)
     debug_print("settable params called\n");
     return template_set_params_list;
 }
-
-{- produce_param_decoder('template_gen_set_params',
-                         (['OSSL_PKEY_PARAM_GROUP_NAME', 'name', 'utf8_string'],
-                        )); -}
 
 static int template_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {

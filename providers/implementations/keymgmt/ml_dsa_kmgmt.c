@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -23,6 +20,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/ml_dsa.h"
+#include "providers/implementations/keymgmt/ml_dsa_kmgmt.inc"
 
 static OSSL_FUNC_keymgmt_free_fn ml_dsa_free_key;
 static OSSL_FUNC_keymgmt_has_fn ml_dsa_has;
@@ -182,12 +180,6 @@ static int ml_dsa_validate(const void *key_data, int selection, int check_type)
     return 1;
 }
 
-{- produce_param_decoder('ml_dsa_key_type_params',
-                         (['OSSL_PKEY_PARAM_ML_DSA_SEED', 'seed',    'octet_string'],
-                          ['OSSL_PKEY_PARAM_PUB_KEY',     'pubkey',  'octet_string'],
-                          ['OSSL_PKEY_PARAM_PRIV_KEY',    'privkey', 'octet_string'],
-                         )); -}
-
 /**
  * @brief Load a ML_DSA key from raw data.
  *
@@ -310,17 +302,6 @@ static const OSSL_PARAM *ml_dsa_imexport_types(int selection)
     return ml_dsa_key_type_params_list;
 }
 
-{- produce_param_decoder('ml_dsa_get_params',
-                         (['OSSL_PKEY_PARAM_BITS',              'bits',    'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_BITS',     'secbits', 'int'],
-                          ['OSSL_PKEY_PARAM_MAX_SIZE',          'maxsize', 'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_CATEGORY', 'seccat',  'int'],
-                          ['OSSL_PKEY_PARAM_MANDATORY_DIGEST',  'dgstp',   'utf8_string'],
-                          ['OSSL_PKEY_PARAM_ML_DSA_SEED',       'seed',    'octet_string'],
-                          ['OSSL_PKEY_PARAM_PUB_KEY',           'pubkey',  'octet_string'],
-                          ['OSSL_PKEY_PARAM_PRIV_KEY',          'privkey', 'octet_string'],
-                         )); -}
-
 static const OSSL_PARAM *ml_dsa_gettable_params(void *provctx)
 {
     return ml_dsa_get_params_list;
@@ -351,7 +332,6 @@ static int ml_dsa_get_params(void *keydata, OSSL_PARAM params[])
     if (p.seccat != NULL
             && !OSSL_PARAM_set_int(p.seccat, ossl_ml_dsa_key_get_security_category(key)))
         return 0;
-
 
     if (p.seed != NULL) {
         d = ossl_ml_dsa_key_get_seed(key);
@@ -518,11 +498,6 @@ static void *ml_dsa_gen(void *genctx, int evp_type)
     ossl_ml_dsa_key_free(key);
     return NULL;
 }
-
-{- produce_param_decoder('ml_dsa_gen_set_params',
-                         (['OSSL_PKEY_PARAM_ML_DSA_SEED', 'seed',  'octet_string'],
-                          ['OSSL_PKEY_PARAM_PROPERTIES',  'propq', 'utf8_string'],
-                         )); -}
 
 static int ml_dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {

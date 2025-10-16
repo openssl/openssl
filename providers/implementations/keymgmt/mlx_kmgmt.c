@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -25,6 +22,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
+#include "providers/implementations/keymgmt/mlx_kmgmt.inc"
 
 static OSSL_FUNC_keymgmt_gen_fn mlx_kem_gen;
 static OSSL_FUNC_keymgmt_gen_cleanup_fn mlx_kem_gen_cleanup;
@@ -100,7 +98,6 @@ mlx_kem_key_new(unsigned int v, OSSL_LIB_CTX *libctx, char *propq)
     return NULL;
 }
 
-
 static int mlx_kem_has(const void *vkey, int selection)
 {
     const MLX_KEY *key = vkey;
@@ -146,11 +143,6 @@ static int mlx_kem_match(const void *vkey1, const void *vkey2, int selection)
     return EVP_PKEY_eq(key1->mkey, key2->mkey)
         && EVP_PKEY_eq(key1->xkey, key2->xkey);
 }
-
-{- produce_param_decoder('ml_kem_import_export',
-                         (['OSSL_PKEY_PARAM_PRIV_KEY', 'privkey', 'octet_string'],
-                          ['OSSL_PKEY_PARAM_PUB_KEY',  'pubkey',  'octet_string'],
-                         )); -}
 
 typedef struct export_cb_arg_st {
     const char *algorithm_name;
@@ -475,15 +467,6 @@ static int mlx_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
     return mlx_kem_key_fromdata(key, params, include_private);
 }
 
-{- produce_param_decoder('mlx_get_params',
-                         (['OSSL_PKEY_PARAM_BITS',               'bits',     'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_BITS',      'secbits',  'int'],
-                          ['OSSL_PKEY_PARAM_MAX_SIZE',           'maxsize',  'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_CATEGORY',  'seccat',   'int'],
-                          ['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY', 'pub',      'octet_string'],
-                          ['OSSL_PKEY_PARAM_PRIV_KEY',           'priv',     'octet_string'],
-                         )); -}
-
 static const OSSL_PARAM *mlx_kem_gettable_params(void *provctx)
 {
     return mlx_get_params_list;
@@ -584,11 +567,6 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     return 1;
 }
 
-{- produce_param_decoder('mlx_set_params',
-                         (['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY', 'pub',   'octet_string'],
-                          ['OSSL_PKEY_PARAM_PROPERTIES',         'propq', 'utf8_string'],
-                         )); -}
-
 static const OSSL_PARAM *mlx_kem_settable_params(void *provctx)
 {
     return mlx_set_params_list;
@@ -632,10 +610,6 @@ static int mlx_kem_set_params(void *vkey, const OSSL_PARAM params[])
 
     return load_keys(key, pubenc, publen, NULL, 0);
 }
-
-{- produce_param_decoder('mlx_gen_set_params',
-                         (['OSSL_PKEY_PARAM_PROPERTIES', 'propq', 'utf8_string'],
-                         )); -}
 
 static int mlx_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
 {
