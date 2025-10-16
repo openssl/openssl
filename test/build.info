@@ -1043,6 +1043,11 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[fn_internal_test]=.. ../include ../crypto/fn ../apps/include
     DEPEND[fn_internal_test]=../libcrypto.a libtestutil.a
 
+    PROGRAMS{noinst}=fn_api_test
+    SOURCE[fn_api_test]=fn_api_test.c
+    INCLUDE[fn_api_test]=.. ../include ../crypto/fn ../apps/include
+    DEPEND[fn_api_test]=../libcrypto.a libtestutil.a
+
     SOURCE[bn_internal_test]=bn_internal_test.c
     INCLUDE[bn_internal_test]=.. ../include ../crypto/bn ../apps/include
     DEPEND[bn_internal_test]=../libcrypto.a libtestutil.a
