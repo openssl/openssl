@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * ECDSA low level APIs are deprecated for public use, but still ok for
@@ -35,6 +32,26 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/securitycheck.h"
 #include "prov/der_ec.h"
 #include "crypto/ec.h"
+
+struct ecdsa_all_set_ctx_params_st {
+    OSSL_PARAM *digest;     /* ecdsa_set_ctx_params */
+    OSSL_PARAM *propq;      /* ecdsa_set_ctx_params */
+    OSSL_PARAM *size;       /* ecdsa_set_ctx_params */
+#ifdef FIPS_MODULE
+    OSSL_PARAM *ind_d;
+    OSSL_PARAM *ind_k;
+#endif
+#if !defined(OPENSSL_NO_ACVP_TESTS)
+    OSSL_PARAM *kat;
+#endif
+    OSSL_PARAM *nonce;
+    OSSL_PARAM *sig;        /* ecdsa_sigalg_set_ctx_params */
+};
+
+#define ecdsa_set_ctx_params_st ecdsa_all_set_ctx_params_st
+#define ecdsa_sigalg_set_ctx_params_st ecdsa_all_set_ctx_params_st
+
+#include "providers/implementations/signature/ecdsa_sig.inc"
 
 static OSSL_FUNC_signature_newctx_fn ecdsa_newctx;
 static OSSL_FUNC_signature_sign_init_fn ecdsa_sign_init;
@@ -675,15 +692,6 @@ static void *ecdsa_dupctx(void *vctx)
     return NULL;
 }
 
-{- produce_param_decoder('ecdsa_get_ctx_params',
-                         (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID',            'algid',  'octet_string'],
-                          ['OSSL_SIGNATURE_PARAM_DIGEST_SIZE',             'size',   'size_t'],
-                          ['OSSL_SIGNATURE_PARAM_DIGEST',                  'digest', 'utf8_string'],
-                          ['OSSL_SIGNATURE_PARAM_NONCE_TYPE',              'nonce',  'uint'],
-                          ['OSSL_SIGNATURE_PARAM_FIPS_VERIFY_MESSAGE',     'verify', 'uint', 'fips'],
-                          ['OSSL_SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
-                         )); -}
-
 static int ecdsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
 {
     PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
@@ -726,21 +734,6 @@ static const OSSL_PARAM *ecdsa_gettable_ctx_params(ossl_unused void *vctx,
     return ecdsa_get_ctx_params_list;
 }
 
-struct ecdsa_all_set_ctx_params_st {
-    OSSL_PARAM *digest;     /* ecdsa_set_ctx_params */
-    OSSL_PARAM *propq;      /* ecdsa_set_ctx_params */
-    OSSL_PARAM *size;       /* ecdsa_set_ctx_params */
-#ifdef FIPS_MODULE
-    OSSL_PARAM *ind_d;
-    OSSL_PARAM *ind_k;
-#endif
-#if !defined(OPENSSL_NO_ACVP_TESTS)
-    OSSL_PARAM *kat;
-#endif
-    OSSL_PARAM *nonce;
-    OSSL_PARAM *sig;        /* ecdsa_sigalg_set_ctx_params */
-};
-
 /**
  * @brief Set up common params for ecdsa_set_ctx_params and
  * ecdsa_sigalg_set_ctx_params. The caller is responsible for checking |vctx| is
@@ -765,19 +758,6 @@ static int ecdsa_common_set_ctx_params(PROV_ECDSA_CTX *ctx,
         return 0;
     return 1;
 }
-
-#define ecdsa_set_ctx_params_st  ecdsa_all_set_ctx_params_st
-
-{- produce_param_decoder('ecdsa_set_ctx_params',
-                         (['OSSL_SIGNATURE_PARAM_DIGEST',            'digest',   'utf8_string'],
-                          ['OSSL_SIGNATURE_PARAM_PROPERTIES',        'propq',    'utf8_string'],
-                          ['OSSL_SIGNATURE_PARAM_DIGEST_SIZE',       'size',     'size_t'],
-                          ['OSSL_SIGNATURE_PARAM_KAT',               'kat',      'uint',
-                           "#if !defined(OPENSSL_NO_ACVP_TESTS)"],
-                          ['OSSL_SIGNATURE_PARAM_NONCE_TYPE',        'nonce',    'uint'],
-                          ['OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK',    'ind_k',    'int', 'fips'],
-                          ['OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK', 'ind_d',    'int', 'fips'],
-                         )); -}
 
 static int ecdsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
@@ -956,17 +936,6 @@ static const char **ecdsa_sigalg_query_key_types(void)
 
     return keytypes;
 }
-
-#define ecdsa_sigalg_set_ctx_params_st  ecdsa_all_set_ctx_params_st
-
-{- produce_param_decoder('ecdsa_sigalg_set_ctx_params',
-                         (['OSSL_SIGNATURE_PARAM_SIGNATURE',         'sig',   'octet_string'],
-                          ['OSSL_SIGNATURE_PARAM_KAT',               'kat',   'uint',
-                           "#if !defined(OPENSSL_NO_ACVP_TESTS)"],
-                          ['OSSL_SIGNATURE_PARAM_NONCE_TYPE',        'nonce', 'uint'],
-                          ['OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK',    'ind_k', 'int', 'fips'],
-                          ['OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK', 'ind_d', 'int', 'fips'],
-                         )); -}
 
 static const OSSL_PARAM *ecdsa_sigalg_settable_ctx_params(void *vctx,
                                                         ossl_unused void *provctx)

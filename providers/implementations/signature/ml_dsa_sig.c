@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include "internal/deprecated.h"
 
@@ -26,6 +23,11 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "internal/common.h"
 #include "internal/packet.h"
 #include "internal/sizes.h"
+
+#define ml_dsa_set_ctx_params_st        ml_dsa_verifymsg_set_ctx_params_st
+#define ml_dsa_set_ctx_params_decoder   ml_dsa_verifymsg_set_ctx_params_decoder
+
+#include "providers/implementations/signature/ml_dsa_sig.inc"
 
 #define ML_DSA_MESSAGE_ENCODE_RAW  0
 #define ML_DSA_MESSAGE_ENCODE_PURE 1
@@ -365,25 +367,6 @@ static int ml_dsa_digest_verify(void *vctx,
  * Only need the param list for the signing case.  The decoder and structure
  * are shared between the sign and verify cases.
  */
-#define ml_dsa_set_ctx_params_st        ml_dsa_verifymsg_set_ctx_params_st
-#define ml_dsa_set_ctx_params_decoder   ml_dsa_verifymsg_set_ctx_params_decoder
-
-{- produce_param_decoder('ml_dsa_set_ctx_params',
-                         (['OSSL_SIGNATURE_PARAM_CONTEXT_STRING',   'ctx',    'octet_string'],
-                          ['OSSL_SIGNATURE_PARAM_TEST_ENTROPY',     'ent',    'octet_string'],
-                          ['OSSL_SIGNATURE_PARAM_DETERMINISTIC',    'det',    'int'],
-                          ['OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING', 'msgenc', 'int'],
-                          ['OSSL_SIGNATURE_PARAM_MU',               'mu',     'int'],
-                         )); -}
-
-{- produce_param_decoder('ml_dsa_verifymsg_set_ctx_params',
-                         (['OSSL_SIGNATURE_PARAM_CONTEXT_STRING',   'ctx',    'octet_string'],
-                          ['OSSL_SIGNATURE_PARAM_TEST_ENTROPY',     'ent',    'octet_string'],
-                          ['OSSL_SIGNATURE_PARAM_DETERMINISTIC',    'det',    'int'],
-                          ['OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING', 'msgenc', 'int'],
-                          ['OSSL_SIGNATURE_PARAM_MU',               'mu',     'int'],
-                          ['OSSL_SIGNATURE_PARAM_SIGNATURE',        'sig',    'octet_string'],
-                         )); -}
 
 static int ml_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
@@ -448,10 +431,6 @@ static const OSSL_PARAM *ml_dsa_settable_ctx_params(void *vctx,
     else
         return ml_dsa_set_ctx_params_list;
 }
-
-{- produce_param_decoder('ml_dsa_get_ctx_params',
-                         (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID', 'id', 'octet_string'],
-                         )); -}
 
 static const OSSL_PARAM *ml_dsa_gettable_ctx_params(ossl_unused void *vctx,
                                                     ossl_unused void *provctx)

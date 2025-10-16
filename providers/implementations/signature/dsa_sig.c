@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * DSA low level APIs are deprecated for public use, but still ok for
@@ -672,12 +669,22 @@ static void *dsa_dupctx(void *vpdsactx)
     return NULL;
 }
 
-{- produce_param_decoder('dsa_get_ctx_params',
-                         (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID',            'algid',  'octet_string'],
-                          ['OSSL_SIGNATURE_PARAM_DIGEST',                  'digest', 'utf8_string'],
-                          ['OSSL_SIGNATURE_PARAM_NONCE_TYPE',              'nonce',  'uint'],
-                          ['OSSL_SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
-                         )); -}
+struct dsa_all_set_ctx_params_st {
+    OSSL_PARAM *digest;     /* dsa_set_ctx_params */
+    OSSL_PARAM *propq;      /* dsa_set_ctx_params */
+#ifdef FIPS_MODULE
+    OSSL_PARAM *ind_d;
+    OSSL_PARAM *ind_k;
+    OSSL_PARAM *ind_sign;
+#endif
+    OSSL_PARAM *nonce;
+    OSSL_PARAM *sig;        /* dsa_sigalg_set_ctx_params */
+};
+
+#define dsa_set_ctx_params_st dsa_all_set_ctx_params_st
+#define dsa_sigalg_set_ctx_params_st dsa_all_set_ctx_params_st
+
+#include "providers/implementations/signature/dsa_sig.inc"
 
 static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
 {
@@ -711,18 +718,6 @@ static const OSSL_PARAM *dsa_gettable_ctx_params(ossl_unused void *ctx,
     return dsa_get_ctx_params_list;
 }
 
-struct dsa_all_set_ctx_params_st {
-    OSSL_PARAM *digest;     /* dsa_set_ctx_params */
-    OSSL_PARAM *propq;      /* dsa_set_ctx_params */
-#ifdef FIPS_MODULE
-    OSSL_PARAM *ind_d;
-    OSSL_PARAM *ind_k;
-    OSSL_PARAM *ind_sign;
-#endif
-    OSSL_PARAM *nonce;
-    OSSL_PARAM *sig;        /* dsa_sigalg_set_ctx_params */
-};
-
 /**
  * @brief Setup common params for dsa_set_ctx_params and dsa_sigalg_set_ctx_params
  * The caller is responsible for checking |vpdsactx| is not NULL and |params|
@@ -746,17 +741,6 @@ static int dsa_common_set_ctx_params(PROV_DSA_CTX *pdsactx,
         return 0;
     return 1;
 }
-
-#define dsa_set_ctx_params_st  dsa_all_set_ctx_params_st
-
-{- produce_param_decoder('dsa_set_ctx_params',
-                         (['OSSL_SIGNATURE_PARAM_DIGEST',            'digest',   'utf8_string'],
-                          ['OSSL_SIGNATURE_PARAM_PROPERTIES',        'propq',    'utf8_string'],
-                          ['OSSL_SIGNATURE_PARAM_NONCE_TYPE',        'nonce',    'uint'],
-                          ['OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK',    'ind_k',    'int', 'fips'],
-                          ['OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK', 'ind_d',    'int', 'fips'],
-                          ['OSSL_SIGNATURE_PARAM_FIPS_SIGN_CHECK',   'ind_sign', 'int', 'fips'],
-                         )); -}
 
 static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
 {
@@ -935,16 +919,6 @@ static const char **dsa_sigalg_query_key_types(void)
 
     return keytypes;
 }
-
-#define dsa_sigalg_set_ctx_params_st  dsa_all_set_ctx_params_st
-
-{- produce_param_decoder('dsa_sigalg_set_ctx_params',
-                         (['OSSL_SIGNATURE_PARAM_SIGNATURE',         'sig',      'octet_string'],
-                          ['OSSL_SIGNATURE_PARAM_NONCE_TYPE',        'nonce',    'uint'],
-                          ['OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK',    'ind_k',    'int', 'fips'],
-                          ['OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK', 'ind_d',    'int', 'fips'],
-                          ['OSSL_SIGNATURE_PARAM_FIPS_SIGN_CHECK',   'ind_sign', 'int', 'fips'],
-                         )); -}
 
 static const OSSL_PARAM *dsa_sigalg_settable_ctx_params(void *vpdsactx,
                                                         ossl_unused void *provctx)

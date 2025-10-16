@@ -119,8 +119,8 @@ providers/implementations/kem/rsa_kem.inc
 providers/implementations/keymgmt/ml_dsa_kmgmt.inc
 providers/implementations/keymgmt/ml_kem_kmgmt.inc
 providers/implementations/keymgmt/mlx_kmgmt.inc
-providers/implementations/signature/dsa_sig.c
-providers/implementations/signature/ecdsa_sig.c
+providers/implementations/signature/dsa_sig.inc
+providers/implementations/signature/ecdsa_sig.inc
 providers/implementations/keymgmt/dh_kmgmt.inc
 providers/implementations/keymgmt/dsa_kmgmt.inc
 providers/implementations/keymgmt/ecx_kmgmt.inc
@@ -131,11 +131,11 @@ providers/implementations/keymgmt/ml_kem_kmgmt.inc
 providers/implementations/keymgmt/mlx_kmgmt.inc
 providers/implementations/keymgmt/slh_dsa_kmgmt.inc
 providers/implementations/keymgmt/template_kmgmt.inc
-providers/implementations/signature/eddsa_sig.c
-providers/implementations/signature/ml_dsa_sig.c
-providers/implementations/signature/rsa_sig.c
-providers/implementations/signature/slh_dsa_sig.c
-providers/implementations/signature/sm2_sig.c
+providers/implementations/signature/eddsa_sig.inc
+providers/implementations/signature/ml_dsa_sig.inc
+providers/implementations/signature/rsa_sig.inc
+providers/implementations/signature/slh_dsa_sig.inc
+providers/implementations/signature/sm2_sig.inc
 providers/implementations/skeymgmt/generic.inc
 providers/implementations/storemgmt/file_store_any2obj.inc
 providers/implementations/storemgmt/file_store.inc
