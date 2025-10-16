@@ -167,13 +167,13 @@ providers/implementations/macs/hmac_prov.inc
 providers/implementations/macs/kmac_prov.inc
 providers/implementations/macs/poly1305_prov.inc
 providers/implementations/macs/siphash_prov.inc
-providers/implementations/rands/drbg_ctr.c
-providers/implementations/rands/drbg_hash.c
-providers/implementations/rands/drbg_hmac.c
-providers/implementations/rands/fips_crng_test.c
-providers/implementations/rands/seed_src.c
-providers/implementations/rands/seed_src_jitter.c
-providers/implementations/rands/test_rng.c
+providers/implementations/rands/drbg_ctr.inc
+providers/implementations/rands/drbg_hash.inc
+providers/implementations/rands/drbg_hmac.inc
+providers/implementations/rands/fips_crng_test.inc
+providers/implementations/rands/seed_src.inc
+providers/implementations/rands/seed_src_jitter.inc
+providers/implementations/rands/test_rng.inc
 
 # error code files
 /crypto/err/openssl.txt.old

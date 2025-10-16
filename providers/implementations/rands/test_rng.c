@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <string.h>
 #include <stdlib.h>
@@ -26,6 +23,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/implementations.h"
+#include "providers/implementations/rands/test_rng.inc"
 
 static OSSL_FUNC_rand_newctx_fn test_rng_new;
 static OSSL_FUNC_rand_freectx_fn test_rng_free;
@@ -185,14 +183,6 @@ static size_t test_rng_nonce(void *vtest, unsigned char *out,
     return i;
 }
 
-{- produce_param_decoder('test_rng_get_ctx_params',
-                         (['OSSL_RAND_PARAM_STATE',                   'state',  'int'],
-                          ['OSSL_RAND_PARAM_STRENGTH',                'str',    'uint'],
-                          ['OSSL_RAND_PARAM_MAX_REQUEST',             'maxreq', 'size_t'],
-                          ['OSSL_RAND_PARAM_GENERATE',                'gen',    'uint'],
-                          ['OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
-                         )); -}
-
 static int test_rng_get_ctx_params(void *vtest, OSSL_PARAM params[])
 {
     PROV_TEST_RNG *t = (PROV_TEST_RNG *)vtest;
@@ -226,14 +216,6 @@ static const OSSL_PARAM *test_rng_gettable_ctx_params(ossl_unused void *vtest,
 {
     return test_rng_get_ctx_params_list;
 }
-
-{- produce_param_decoder('test_rng_set_ctx_params',
-                         (['OSSL_RAND_PARAM_TEST_ENTROPY',   'ent',    'octet_string'],
-                          ['OSSL_RAND_PARAM_TEST_NONCE',     'nonce',  'octet_string'],
-                          ['OSSL_RAND_PARAM_STRENGTH',       'str',    'uint'],
-                          ['OSSL_RAND_PARAM_MAX_REQUEST',    'maxreq', 'size_t'],
-                          ['OSSL_RAND_PARAM_GENERATE',       'gen',    'uint'],
-                         )); -}
 
 static int test_rng_set_ctx_params(void *vtest, const OSSL_PARAM params[])
 {
