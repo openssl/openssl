@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * The following implementation is part of RFC 9180 related to DHKEM using
@@ -39,6 +36,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "crypto/ec.h"
 #include "prov/ecx.h"
 #include "prov/eckem.h"
+#include "providers/implementations/kem/ec_kem.inc"
 
 typedef struct {
     EC_KEY *recipient_key;
@@ -287,12 +285,6 @@ static int eckem_auth_decapsulate_init(void *vctx, void *vecx, void *vauthpub,
 {
     return eckem_init(vctx, EVP_PKEY_OP_DECAPSULATE, vecx, vauthpub, params);
 }
-
-
-{- produce_param_decoder('eckem_set_ctx_params',
-                         (['OSSL_KEM_PARAM_OPERATION',   'op',   'utf8_string'],
-                          ['OSSL_KEM_PARAM_IKME',        'ikme', 'octet_string'],
-                         )); -}
 
 static int eckem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {

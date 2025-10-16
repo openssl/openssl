@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <string.h>
 #include <openssl/crypto.h>
@@ -24,6 +21,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/kem/ml_kem_kem.inc"
 
 static OSSL_FUNC_kem_newctx_fn ml_kem_newctx;
 static OSSL_FUNC_kem_freectx_fn ml_kem_freectx;
@@ -98,10 +96,6 @@ static int ml_kem_decapsulate_init(void *vctx, void *vkey,
     }
     return ml_kem_init(vctx, EVP_PKEY_OP_DECAPSULATE, key, params);
 }
-
-{- produce_param_decoder('ml_kem_set_ctx_params',
-                         (['OSSL_KEM_PARAM_IKME', 'ikme', 'octet_string'],
-                         )); -}
 
 static int ml_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
