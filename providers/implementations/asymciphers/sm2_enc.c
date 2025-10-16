@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include "internal/deprecated.h"
 
@@ -25,6 +22,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_util.h"
+#include "providers/implementations/asymciphers/sm2_enc.inc"
 
 static OSSL_FUNC_asym_cipher_newctx_fn sm2_newctx;
 static OSSL_FUNC_asym_cipher_encrypt_init_fn sm2_init;
@@ -158,10 +156,6 @@ static void *sm2_dupctx(void *vpsm2ctx)
     return dstctx;
 }
 
-{- produce_param_decoder('sm2_get_ctx_params',
-                         (['OSSL_ASYM_CIPHER_PARAM_DIGEST',  'digest',   'utf8_string'],
-                         )); -}
-
 static int sm2_get_ctx_params(void *vpsm2ctx, OSSL_PARAM *params)
 {
     PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
@@ -186,12 +180,6 @@ static const OSSL_PARAM *sm2_gettable_ctx_params(ossl_unused void *vpsm2ctx,
 {
     return sm2_get_ctx_params_list;
 }
-
-{- produce_param_decoder('sm2_set_ctx_params',
-                         (['OSSL_ASYM_CIPHER_PARAM_DIGEST',     'digest', 'utf8_string'],
-                          ['OSSL_ASYM_CIPHER_PARAM_PROPERTIES', 'propq',  'utf8_string'],
-                          ['OSSL_ASYM_CIPHER_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
-                         )); -}
 
 static int sm2_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
 {

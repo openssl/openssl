@@ -48,8 +48,8 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/x509_acert.h \
          include/openssl/x509_vfy.h \
          include/crypto/bn_conf.h include/crypto/dso_conf.h \
-         providers/implementations/asymciphers/rsa_enc.c \
-         providers/implementations/asymciphers/sm2_enc.c \
+         providers/implementations/asymciphers/rsa_enc.inc \
+         providers/implementations/asymciphers/sm2_enc.inc \
          providers/implementations/exchange/dh_exch.c \
          providers/implementations/exchange/ecdh_exch.c \
          providers/implementations/exchange/ecx_exch.c \
@@ -166,8 +166,8 @@ GENERATE[include/openssl/x509_vfy.h]=include/openssl/x509_vfy.h.in
 GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 
-DEPEND[providers/implementations/asymciphers/rsa_enc.c \
-       providers/implementations/asymciphers/sm2_enc.c \
+DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
+       providers/implementations/asymciphers/sm2_enc.inc \
        providers/implementations/exchange/dh_exch.c \
        providers/implementations/exchange/ecdh_exch.c \
        providers/implementations/exchange/ecx_exch.c \
@@ -251,10 +251,10 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/rands/seed_src_jitter.c \
        providers/implementations/rands/test_rng.c \
        include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
-GENERATE[providers/implementations/asymciphers/rsa_enc.c]=\
-    providers/implementations/asymciphers/rsa_enc.c.in
-GENERATE[providers/implementations/asymciphers/sm2_enc.c]=\
-    providers/implementations/asymciphers/sm2_enc.c.in
+GENERATE[providers/implementations/asymciphers/rsa_enc.inc]=\
+    providers/implementations/asymciphers/rsa_enc.inc.in
+GENERATE[providers/implementations/asymciphers/sm2_enc.inc]=\
+    providers/implementations/asymciphers/sm2_enc.inc.in
 GENERATE[providers/implementations/exchange/dh_exch.c]=\
     providers/implementations/exchange/dh_exch.c.in
 GENERATE[providers/implementations/exchange/ecdh_exch.c]=\

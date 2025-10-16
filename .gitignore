@@ -86,8 +86,8 @@ providers/common/include/prov/der_wrap.h
 providers/common/include/prov/der_sm2.h
 providers/common/include/prov/der_ml_dsa.h
 providers/common/include/prov/der_hkdf.h
-providers/implementations/asymciphers/rsa_enc.c
-providers/implementations/asymciphers/sm2_enc.c
+providers/implementations/asymciphers/rsa_enc.inc
+providers/implementations/asymciphers/sm2_enc.inc
 providers/implementations/exchange/dh_exch.c
 providers/implementations/exchange/ecdh_exch.c
 providers/implementations/exchange/ecx_exch.c
