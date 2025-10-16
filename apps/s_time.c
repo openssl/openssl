@@ -268,7 +268,7 @@ int s_time_main(int argc, char **argv)
 
     if (want_verify) {
         X509_VERIFY_PARAM *vpm;
-        SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+        SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
         vpm = SSL_CTX_get0_param(ctx);
         if (vpm != NULL && verify_args.depth >= 0)
             X509_VERIFY_PARAM_set_depth(vpm, verify_args.depth);
