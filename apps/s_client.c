@@ -3165,15 +3165,6 @@ int s_client_main(int argc, char **argv)
             }
         } else if (ssl_pending
                    || (!isquic && FD_ISSET(SSL_get_fd(con), &readfds))) {
-#ifdef RENEG
-            {
-                static int iiii;
-                if (++iiii == 52) {
-                    SSL_renegotiate(con);
-                    iiii = 0;
-                }
-            }
-#endif
             k = SSL_read(con, sbuf, BUFSIZZ);
 
             switch (SSL_get_error(con, k)) {
