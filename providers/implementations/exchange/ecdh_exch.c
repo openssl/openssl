@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * ECDH low level APIs are deprecated for public use, but still ok for
@@ -31,6 +28,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
 #include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63() */
+#include "providers/implementations/exchange/ecdh_exch.inc"
 
 static OSSL_FUNC_keyexch_newctx_fn ecdh_newctx;
 static OSSL_FUNC_keyexch_init_fn ecdh_init;
@@ -248,18 +246,6 @@ void *ecdh_dupctx(void *vpecdhctx)
     return NULL;
 }
 
-{- produce_param_decoder('ecdh_set_ctx_params',
-                         (['OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE',    'mode',      'int'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_TYPE',                 'kdf',       'utf8_string'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_DIGEST',               'digest',    'utf8_string'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_DIGEST_PROPS',         'propq',     'utf8_string'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_OUTLEN',               'len',       'size_t'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_UKM',                  'ukm',       'octet_string'],
-                          ['OSSL_EXCHANGE_PARAM_FIPS_KEY_CHECK',           'ind_k',     'int', 'fips'],
-                          ['OSSL_EXCHANGE_PARAM_FIPS_DIGEST_CHECK',        'ind_d',     'int', 'fips'],
-                          ['OSSL_EXCHANGE_PARAM_FIPS_ECDH_COFACTOR_CHECK', 'ind_cofac', 'int', 'fips'],
-                         )); -}
-
 static
 int ecdh_set_ctx_params(void *vpecdhctx, const OSSL_PARAM params[])
 {
@@ -364,15 +350,6 @@ const OSSL_PARAM *ecdh_settable_ctx_params(ossl_unused void *vpecdhctx,
 {
     return ecdh_set_ctx_params_list;
 }
-
-{- produce_param_decoder('ecdh_get_ctx_params',
-                         (['OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE', 'mode',   'int'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_TYPE',              'kdf',    'utf8_string'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_DIGEST',            'digest', 'utf8_string'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_OUTLEN',            'len',    'size_t'],
-                          ['OSSL_EXCHANGE_PARAM_KDF_UKM',               'ukm',    'octet_ptr'],
-                          ['OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR',    'ind',    'int', 'fips'],
-                         )); -}
 
 static
 int ecdh_get_ctx_params(void *vpecdhctx, OSSL_PARAM params[])

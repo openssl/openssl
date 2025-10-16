@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
@@ -21,6 +18,10 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
+
+#ifdef FIPS_MODULE
+# include "providers/implementations/exchange/ecx_exch.inc"
+#endif
 
 static OSSL_FUNC_keyexch_newctx_fn x25519_newctx;
 static OSSL_FUNC_keyexch_newctx_fn x448_newctx;
@@ -181,9 +182,7 @@ static void *ecx_dupctx(void *vecxctx)
 }
 
 #ifdef FIPS_MODULE
-{- produce_param_decoder('ecx_get_ctx_params',
-                         (['OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR', 'ind', 'int', 'fips'],
-                         )); -}
+
 #endif
 
 static const OSSL_PARAM *ecx_gettable_ctx_params(ossl_unused void *vctx,

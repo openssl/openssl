@@ -50,9 +50,9 @@ DEPEND[]=include/openssl/asn1.h \
          include/crypto/bn_conf.h include/crypto/dso_conf.h \
          providers/implementations/asymciphers/rsa_enc.inc \
          providers/implementations/asymciphers/sm2_enc.inc \
-         providers/implementations/exchange/dh_exch.c \
-         providers/implementations/exchange/ecdh_exch.c \
-         providers/implementations/exchange/ecx_exch.c \
+         providers/implementations/exchange/dh_exch.inc \
+         providers/implementations/exchange/ecdh_exch.inc \
+         providers/implementations/exchange/ecx_exch.inc \
          providers/implementations/encode_decode/decode_der2key.inc \
          providers/implementations/encode_decode/decode_epki2pki.inc \
          providers/implementations/encode_decode/decode_pem2der.inc \
@@ -168,9 +168,9 @@ GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 
 DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/asymciphers/sm2_enc.inc \
-       providers/implementations/exchange/dh_exch.c \
-       providers/implementations/exchange/ecdh_exch.c \
-       providers/implementations/exchange/ecx_exch.c \
+       providers/implementations/exchange/dh_exch.inc \
+       providers/implementations/exchange/ecdh_exch.inc \
+       providers/implementations/exchange/ecx_exch.inc \
        providers/implementations/encode_decode/decode_der2key.inc \
        providers/implementations/encode_decode/decode_epki2pki.inc \
        providers/implementations/encode_decode/decode_pem2der.inc \
@@ -255,12 +255,12 @@ GENERATE[providers/implementations/asymciphers/rsa_enc.inc]=\
     providers/implementations/asymciphers/rsa_enc.inc.in
 GENERATE[providers/implementations/asymciphers/sm2_enc.inc]=\
     providers/implementations/asymciphers/sm2_enc.inc.in
-GENERATE[providers/implementations/exchange/dh_exch.c]=\
-    providers/implementations/exchange/dh_exch.c.in
-GENERATE[providers/implementations/exchange/ecdh_exch.c]=\
-    providers/implementations/exchange/ecdh_exch.c.in
-GENERATE[providers/implementations/exchange/ecx_exch.c]=\
-    providers/implementations/exchange/ecx_exch.c.in
+GENERATE[providers/implementations/exchange/dh_exch.inc]=\
+    providers/implementations/exchange/dh_exch.inc.in
+GENERATE[providers/implementations/exchange/ecdh_exch.inc]=\
+    providers/implementations/exchange/ecdh_exch.inc.in
+GENERATE[providers/implementations/exchange/ecx_exch.inc]=\
+    providers/implementations/exchange/ecx_exch.inc.in
 GENERATE[providers/implementations/encode_decode/decode_der2key.inc]=\
     providers/implementations/encode_decode/decode_der2key.inc.in
 GENERATE[providers/implementations/encode_decode/decode_epki2pki.inc]=\
