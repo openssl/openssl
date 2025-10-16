@@ -1266,6 +1266,8 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     int use_early_data = 0;
     uint32_t max_early_data;
     COMP_METHOD *compm = (comp == NULL) ? NULL : comp->method;
+    uint16_t epoch_zero;
+    uint64_t seq;
 
     meth = ssl_select_next_record_layer(s, direction, level);
 
@@ -1367,6 +1369,25 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     }
 
     *set = OSSL_PARAM_construct_end();
+
+    /*
+     * For DTLS save off the sequence number for epoch 0 when we are setting up
+     * a new write record layer. This is needed for handling in case of HRR
+     * and we create a new write record layer for epoch 0.
+     */
+    if (direction == OSSL_RECORD_DIRECTION_WRITE
+        && SSL_CONNECTION_IS_DTLS(s)
+        && s->rlayer.wrl != NULL
+        && meth->get_epoch(s->rlayer.wrl, &epoch_zero) == 1
+        && epoch_zero == 0) {
+        if (meth->get_sequence(s->rlayer.wrl,
+                &seq)
+            != 1) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        s->rlayer.wlayer_epoch_zero_sequence = seq;
+    }
 
     for (;;) {
         int rlret;
@@ -1470,6 +1491,24 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         || direction == OSSL_RECORD_DIRECTION_READ
         || pqueue_peek(&s->d1->sent_messages) == NULL) {
         if (*thismethod != NULL && !(*thismethod)->free(*thisrl)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+
+    /*
+     * For DTLS if we created a new write record layer
+     * for epoch zero we need to set the sequence number.
+     * This is needed for handling HRR case.
+     */
+    if (direction == OSSL_RECORD_DIRECTION_WRITE
+        && SSL_CONNECTION_IS_DTLS(s)
+        && meth->get_epoch(newrl, &epoch_zero) == 1
+        && epoch_zero == 0) {
+
+        if (meth->set_sequence(newrl,
+                s->rlayer.wlayer_epoch_zero_sequence)
+            != 1) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }

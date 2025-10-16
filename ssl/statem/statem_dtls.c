@@ -242,6 +242,13 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
         if (len > ssl_get_max_send_fragment(s))
             len = ssl_get_max_send_fragment(s);
 
+        /*
+         * For DTLS1.3 and padding lets update the max fragment size
+         * accordingly
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s))
+            s->rlayer.wrlmethod->set_curr_mtu(s->rlayer.wrl, curr_mtu);
+
         msgstart = (unsigned char *)&s->init_buf->data[s->init_off];
 
         if (recordtype == SSL3_RT_HANDSHAKE) {

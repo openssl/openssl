@@ -758,7 +758,11 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
         }
         /* Fall through */
     case TLS_ST_SW_KEY_UPDATE:
-        st->hand_state = TLS_ST_OK;
+        if (SSL_CONNECTION_IS_DTLS13(s))
+            /* We wait for ACK */
+            return WRITE_TRAN_FINISHED;
+        else
+            st->hand_state = TLS_ST_OK;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_SESSION_TICKET:

@@ -594,6 +594,10 @@ static const OSSL_RECORD_METHOD quic_tls_record_method = {
     quic_set_max_frag_len,
     quic_get_max_record_overhead, /* Never called */
     quic_increment_sequence_ctr, /* Never called */
+    NULL,
+    NULL,
+    NULL,
+    NULL,
     quic_alloc_buffers,
     quic_free_buffers
 };

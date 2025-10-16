@@ -609,6 +609,10 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_set_max_frag_len,
     NULL,
     tls_increment_sequence_ctr,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
     ktls_alloc_buffers,
     ktls_free_buffers
 };
