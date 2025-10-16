@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <string.h>
 #include <openssl/core_dispatch.h>
@@ -23,6 +20,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/macs/siphash_prov.inc"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -152,12 +150,6 @@ static int siphash_final(void *vmacctx, unsigned char *out, size_t *outl,
     return SipHash_Final(&ctx->siphash, out, hlen);
 }
 
-{- produce_param_decoder('siphash_get_ctx_params',
-                         (['OSSL_MAC_PARAM_SIZE',        'size', 'size_t'],
-                          ['OSSL_MAC_PARAM_C_ROUNDS',    'c',    'uint'],
-                          ['OSSL_MAC_PARAM_D_ROUNDS',    'd',    'uint'],
-                         )); -}
-
 static const OSSL_PARAM *siphash_gettable_ctx_params(ossl_unused void *ctx,
                                                      ossl_unused void *provctx)
 {
@@ -180,13 +172,6 @@ static int siphash_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
         return 0;
     return 1;
 }
-
-{- produce_param_decoder('siphash_set_params',
-                         (['OSSL_MAC_PARAM_SIZE',        'size', 'size_t'],
-                          ['OSSL_MAC_PARAM_KEY',         'key',  'octet_string'],
-                          ['OSSL_MAC_PARAM_C_ROUNDS',    'c',    'uint'],
-                          ['OSSL_MAC_PARAM_D_ROUNDS',    'd',    'uint'],
-                         )); -}
 
 static const OSSL_PARAM *siphash_settable_ctx_params(ossl_unused void *ctx,
                                                      void *provctx)

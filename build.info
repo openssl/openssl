@@ -119,12 +119,12 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/digests/mdc2_prov.inc \
          providers/implementations/digests/sha3_prov.inc \
          providers/implementations/include/prov/blake2_params.inc \
-         providers/implementations/macs/cmac_prov.c \
-         providers/implementations/macs/gmac_prov.c \
-         providers/implementations/macs/hmac_prov.c \
-         providers/implementations/macs/kmac_prov.c \
-         providers/implementations/macs/poly1305_prov.c \
-         providers/implementations/macs/siphash_prov.c \
+         providers/implementations/macs/cmac_prov.inc \
+         providers/implementations/macs/gmac_prov.inc \
+         providers/implementations/macs/hmac_prov.inc \
+         providers/implementations/macs/kmac_prov.inc \
+         providers/implementations/macs/poly1305_prov.inc \
+         providers/implementations/macs/siphash_prov.inc \
          providers/implementations/rands/drbg_ctr.c \
          providers/implementations/rands/drbg_hash.c \
          providers/implementations/rands/drbg_hmac.c \
@@ -237,12 +237,12 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/digests/mdc2_prov.inc \
        providers/implementations/digests/sha3_prov.inc \
        providers/implementations/include/prov/blake2_params.inc \
-       providers/implementations/macs/cmac_prov.c \
-       providers/implementations/macs/gmac_prov.c \
-       providers/implementations/macs/hmac_prov.c \
-       providers/implementations/macs/kmac_prov.c \
-       providers/implementations/macs/poly1305_prov.c \
-       providers/implementations/macs/siphash_prov.c \
+       providers/implementations/macs/cmac_prov.inc \
+       providers/implementations/macs/gmac_prov.inc \
+       providers/implementations/macs/hmac_prov.inc \
+       providers/implementations/macs/kmac_prov.inc \
+       providers/implementations/macs/poly1305_prov.inc \
+       providers/implementations/macs/siphash_prov.inc \
        providers/implementations/rands/drbg_ctr.c \
        providers/implementations/rands/drbg_hash.c \
        providers/implementations/rands/drbg_hmac.c \
@@ -393,18 +393,18 @@ GENERATE[providers/implementations/digests/sha3_prov.inc]=\
     providers/implementations/digests/sha3_prov.inc.in
 GENERATE[providers/implementations/include/prov/blake2_params.inc]=\
     providers/implementations/include/prov/blake2_params.inc.in
-GENERATE[providers/implementations/macs/cmac_prov.c]=\
-    providers/implementations/macs/cmac_prov.c.in
-GENERATE[providers/implementations/macs/gmac_prov.c]=\
-    providers/implementations/macs/gmac_prov.c.in
-GENERATE[providers/implementations/macs/hmac_prov.c]=\
-    providers/implementations/macs/hmac_prov.c.in
-GENERATE[providers/implementations/macs/kmac_prov.c]=\
-    providers/implementations/macs/kmac_prov.c.in
-GENERATE[providers/implementations/macs/poly1305_prov.c]=\
-    providers/implementations/macs/poly1305_prov.c.in
-GENERATE[providers/implementations/macs/siphash_prov.c]=\
-    providers/implementations/macs/siphash_prov.c.in
+GENERATE[providers/implementations/macs/cmac_prov.inc]=\
+    providers/implementations/macs/cmac_prov.inc.in
+GENERATE[providers/implementations/macs/gmac_prov.inc]=\
+    providers/implementations/macs/gmac_prov.inc.in
+GENERATE[providers/implementations/macs/hmac_prov.inc]=\
+    providers/implementations/macs/hmac_prov.inc.in
+GENERATE[providers/implementations/macs/kmac_prov.inc]=\
+    providers/implementations/macs/kmac_prov.inc.in
+GENERATE[providers/implementations/macs/poly1305_prov.inc]=\
+    providers/implementations/macs/poly1305_prov.inc.in
+GENERATE[providers/implementations/macs/siphash_prov.inc]=\
+    providers/implementations/macs/siphash_prov.inc.in
 GENERATE[providers/implementations/rands/drbg_ctr.c]=\
     providers/implementations/rands/drbg_ctr.c.in
 GENERATE[providers/implementations/rands/drbg_hash.c]=\

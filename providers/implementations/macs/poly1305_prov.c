@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <string.h>
 
@@ -24,6 +21,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/macs/poly1305_prov.inc"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -137,10 +135,6 @@ static int poly1305_final(void *vmacctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-{- produce_param_decoder('poly1305_get_params',
-                         (['OSSL_MAC_PARAM_SIZE',        'size', 'size_t'],
-                         )); -}
-
 static const OSSL_PARAM *poly1305_gettable_params(void *provctx)
 {
     return poly1305_get_params_list;
@@ -158,10 +152,6 @@ static int poly1305_get_params(OSSL_PARAM params[])
 
     return 1;
 }
-
-{- produce_param_decoder('poly1305_set_ctx_params',
-                         (['OSSL_MAC_PARAM_KEY',     'key',  'octet_string'],
-                        )); -}
 
 static const OSSL_PARAM *poly1305_settable_ctx_params(ossl_unused void *ctx,
                                                       ossl_unused void *provctx)
