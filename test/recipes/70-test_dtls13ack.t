@@ -18,9 +18,6 @@ use Cwd qw(abs_path);
 my $test_name = "test_dtls13ack";
 setup($test_name);
 
-# TODO(DTLSv1.3): The test currently does not work as changes to ´engines/e_ossltest.c´
-# in #25119 should be ported to the ossltest provider.
-plan skip_all => "This doesn't work properly currently";
 plan skip_all => "TLSProxy isn't usable on $^O"
     if $^O =~ /^(VMS)$/ || $^O =~ /^(MSWin32)$/;
 
