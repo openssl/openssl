@@ -25,7 +25,7 @@ The number `{nn}` is (somewhat loosely) grouped as follows:
 
     00-04  sanity, internal and essential API tests
     05-09  individual symmetric cipher algorithms
-    10-14  math (bignum)
+    10-14  math (bignum and ossl_fn)
     15-19  individual asymmetric cipher algorithms
     20-24  openssl commands (some otherwise not tested)
     25-29  certificate forms, generation and verification
