@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * low level APIs are deprecated for public use, but still ok for
@@ -35,6 +32,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/endecoder_local.h"
+#include "providers/implementations/encode_decode/decode_pvk2key.inc"
 
 struct pvk2key_ctx_st;            /* Forward declaration */
 typedef int check_key_fn(void *, struct pvk2key_ctx_st *ctx);
@@ -87,10 +85,6 @@ static void pvk2key_freectx(void *vctx)
 
     OPENSSL_free(ctx);
 }
-
-{- produce_param_decoder('pvk2key_set_ctx_params',
-                         (['OSSL_DECODER_PARAM_PROPERTIES', 'propq', 'utf8_string'],
-                         )); -}
 
 static const OSSL_PARAM *pvk2key_settable_ctx_params(ossl_unused void *provctx)
 {

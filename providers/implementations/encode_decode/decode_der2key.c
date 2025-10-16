@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * low level APIs are deprecated for public use, but still ok for
@@ -47,6 +44,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "internal/nelem.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
+#include "providers/implementations/encode_decode/decode_der2key.inc"
 
 #ifndef OPENSSL_NO_SLH_DSA
 typedef struct {
@@ -171,10 +169,6 @@ der2key_newctx(void *provctx, const struct keytype_desc_st *desc)
     }
     return ctx;
 }
-
-{- produce_param_decoder('der2key_set_ctx_params',
-                         (['OSSL_DECODER_PARAM_PROPERTIES', 'propq', 'utf8_string'],
-                         )); -}
 
 static const OSSL_PARAM *der2key_settable_ctx_params(ossl_unused void *provctx)
 {

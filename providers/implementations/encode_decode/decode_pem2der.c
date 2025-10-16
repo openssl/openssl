@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * RSA low level APIs are deprecated for public use, but still ok for
@@ -33,6 +30,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/decoders.h"
 #include "prov/implementations.h"
 #include "prov/endecoder_local.h"
+#include "providers/implementations/encode_decode/decode_pem2der.inc"
 
 static int read_pem(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
                     char **pem_name, char **pem_header,
@@ -77,11 +75,6 @@ static void pem2der_freectx(void *vctx)
 
     OPENSSL_free(ctx);
 }
-
-{- produce_param_decoder('pem2der_set_ctx_params',
-                         (['OSSL_DECODER_PARAM_PROPERTIES',    'propq', 'utf8_string'],
-                          ['OSSL_OBJECT_PARAM_DATA_STRUCTURE', 'ds',    'utf8_string'],
-                         )); -}
 
 static const OSSL_PARAM *pem2der_settable_ctx_params(ossl_unused void *provctx)
 {
