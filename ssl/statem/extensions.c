@@ -1560,7 +1560,7 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     if (s->hello_retry_request == SSL_HRR_PENDING) {
         size_t hdatalen;
         long hdatalen_l;
-        void *hdata;
+        unsigned char *hdata;
 
         hdatalen = hdatalen_l = BIO_get_mem_data(s->s3.handshake_buffer, &hdata);
         if (hdatalen_l <= 0) {
@@ -1568,28 +1568,69 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
             goto err;
         }
 
-        /*
-         * For servers the handshake buffer data will include the second
-         * ClientHello - which we don't want - so we need to take that bit off.
-         */
-        if (s->server) {
+        if (s->negotiated_version == DTLS1_3_VERSION) {
             PACKET hashprefix, msg;
+            unsigned long dtlsbodylen;
+            unsigned int dtls_offset = DTLS1_HM_HEADER_LENGTH - SSL3_HM_HEADER_LENGTH;
 
-            /* Find how many bytes are left after the first two messages */
+            /*
+             * RFC 9147 states that for DTLS 1.3 all transcripts should be
+             * calculated without the message_seq, fragment_offset and
+             * fragment_length values. See Section 5.2
+             *
+             * Since the data is coming from handshake_buffer it hasn't
+             * been processed in ssl3_finish_mac where these values are
+             * removed. Therefore for both the server and client we will
+             * need to not supply them to the Digest Update
+             */
             if (!PACKET_buf_init(&hashprefix, hdata, hdatalen)
                 || !PACKET_forward(&hashprefix, 1)
                 || !PACKET_get_length_prefixed_3(&hashprefix, &msg)
                 || !PACKET_forward(&hashprefix, 1)
-                || !PACKET_get_length_prefixed_3(&hashprefix, &msg)) {
+                || !PACKET_get_net_3(&hashprefix, &dtlsbodylen)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            hdatalen -= PACKET_remaining(&hashprefix);
-        }
 
-        if (EVP_DigestUpdate(mctx, hdata, hdatalen) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
+            hdatalen -= PACKET_remaining(&hashprefix);
+
+            if (EVP_DigestUpdate(mctx, hdata, hdatalen) <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+
+            /*
+             * Now skip the four bytes for the part of the DTLS header to not
+             * include in the transcript.
+             */
+            if (EVP_DigestUpdate(mctx, hdata + hdatalen + dtls_offset, dtlsbodylen) <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        } else {
+            /*
+             * For servers the handshake buffer data will include the second
+             * ClientHello - which we don't want - so we need to take that bit off.
+             */
+            if (s->server) {
+                PACKET hashprefix, msg;
+
+                /* Find how many bytes are left after the first two messages */
+                if (!PACKET_buf_init(&hashprefix, hdata, hdatalen)
+                    || !PACKET_forward(&hashprefix, 1)
+                    || !PACKET_get_length_prefixed_3(&hashprefix, &msg)
+                    || !PACKET_forward(&hashprefix, 1)
+                    || !PACKET_get_length_prefixed_3(&hashprefix, &msg)) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+                hdatalen -= PACKET_remaining(&hashprefix);
+            }
+
+            if (EVP_DigestUpdate(mctx, hdata, hdatalen) <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
         }
     }
 

@@ -751,6 +751,20 @@ static long mempacket_test_ctrl(BIO *bio, int cmd, long num, void *ptr)
     case MEMPACKET_CTRL_SET_DUPLICATE_REC:
         ctx->duprec = (int)num;
         break;
+    /*
+     * TODO (DTLSv1.3):
+     * The dtlstest is setup for DTLS1.2 and a
+     * small MTU. The tests want to drop records
+     * and move packets around. Changing the MTU
+     * will affect the number of records. Thus
+     * several tests will start to fail with this
+     * change. Since dtlstest still needs to be
+     * modified to support DTLS1.3 we should look
+     * at changing this when dtlstest is reworked.
+     * case BIO_CTRL_DGRAM_QUERY_MTU:
+     * ret = 1500;
+     * break;
+     */
     case BIO_CTRL_RESET:
     case BIO_CTRL_DUP:
     case BIO_CTRL_PUSH:

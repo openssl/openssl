@@ -122,6 +122,8 @@ typedef struct record_layer_st {
     /* Record layer data to be processed */
     TLS_RECORD tlsrecs[SSL_MAX_PIPELINES];
 
+    /* DTLS epoch zero write sequence number */
+    uint64_t wlayer_epoch_zero_sequence;
 } RECORD_LAYER;
 
 /*****************************************************************************

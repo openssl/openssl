@@ -358,6 +358,9 @@ struct ossl_record_layer_st {
     /* renegotiation starts a new set of sequence numbers */
     DTLS_BITMAP next_bitmap;
 
+    /* DTLS curr mtu size */
+    size_t curr_mtu;
+
     /*
      * Whether we are currently in a handshake or not. Only maintained for DTLS
      */

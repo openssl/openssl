@@ -312,6 +312,26 @@ struct ossl_record_method_st {
     int (*increment_sequence_ctr)(OSSL_RECORD_LAYER *rl);
 
     /*
+     * Get the Sequence number
+     */
+    int (*get_sequence)(OSSL_RECORD_LAYER *rl, uint64_t *sequence);
+
+    /*
+     * Set the Sequence number to a specific value
+     */
+    int (*set_sequence)(OSSL_RECORD_LAYER *rl, uint64_t sequence);
+
+    /*
+     * Get the Epoch value
+     */
+    int (*get_epoch)(OSSL_RECORD_LAYER *rl, uint16_t *epoch);
+
+    /*
+     * Set the current MTU length to be used for the record layer.
+     */
+    int (*set_curr_mtu)(OSSL_RECORD_LAYER *rl, size_t curr_mtu);
+
+    /*
      * Allocate read or write buffers. Does nothing if already allocated.
      * Assumes default buffer length and 1 pipeline.
      */

@@ -1264,6 +1264,8 @@ int tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
      */
     rl->max_frag_len = SSL3_RT_MAX_PLAIN_LENGTH;
 
+    rl->curr_mtu = 0;
+
     /* Loop through all the settings since they must all be understood */
     if (settings != NULL) {
         for (p = settings; p->key != NULL; p++) {
@@ -2217,6 +2219,10 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_set_max_frag_len,
     NULL,
     tls_increment_sequence_ctr,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
     tls_alloc_buffers,
     tls_free_buffers
 };

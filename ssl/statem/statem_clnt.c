@@ -492,6 +492,12 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
         /* Fall through */
 
     case TLS_ST_CW_END_OF_EARLY_DATA:
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            /* If we are done with early data we need to clean up Epoch 1 messages sent */
+            dtls1_clear_sent_buffer(s, 0);
+        }
+        /* Fall through */
+
     case TLS_ST_CW_CHANGE:
         if (s->s3.tmp.cert_req == 0)
             st->hand_state = TLS_ST_CW_FINISHED;
@@ -773,6 +779,7 @@ int ossl_statem_dtls_client_use_timer(SSL_CONNECTION *s)
 WORK_STATE ossl_statem_client_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
+    const int versionany = SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION : TLS_ANY_VERSION;
 
     switch (st->hand_state) {
     default:
@@ -795,7 +802,7 @@ WORK_STATE ossl_statem_client_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
              * write record layer in order to write in plaintext again.
              */
             if (!ssl_set_new_record_layer(s,
-                    TLS_ANY_VERSION,
+                    versionany,
                     OSSL_RECORD_DIRECTION_WRITE,
                     OSSL_RECORD_PROTECTION_LEVEL_NONE,
                     NULL, 0, NULL, NULL, 0, NULL, 0,
