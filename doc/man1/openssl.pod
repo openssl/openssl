@@ -722,7 +722,8 @@ For information about specific commands, see L<openssl-engine(1)>,
 L<openssl-rehash(1)>, and L<tsget(1)>.
 
 For information about querying or specifying CPU architecture flags, see
-L<OPENSSL_ia32cap(3)>, L<OPENSSL_s390xcap(3)> and L<OPENSSL_riscvcap(3)>.
+L<OPENSSL_ia32cap(3)>, L<OPENSSL_ppccap(3)>, L<OPENSSL_s390xcap(3)>,
+and L<OPENSSL_riscvcap(3)>.
 
 =head1 SEE ALSO
 

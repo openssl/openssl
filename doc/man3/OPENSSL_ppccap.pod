@@ -1,0 +1,155 @@
+=pod
+
+=head1 NAME
+
+OPENSSL_ppccap - the PowerPC processor capabilities vector
+
+=head1 SYNOPSIS
+
+ env OPENSSL_ppccap=... <application>
+
+=head1 DESCRIPTION
+
+libcrypto supports PowerPC instruction set extensions. These extensions are
+represented by bits in the PowerPC capabilities vector. When libcrypto
+initializes, it stores the results returned by PowerPC CPU capabilities detection
+logic in the PowerPC capabilities vector. The CPU capabilities detection methods
+are OS-dependent and use a combination of information gathered by the kernel
+during boot and probe functions that attempt to execute instructions and trap
+illegal instruction signals with a signal handler.
+
+To override the set of extensions available to an application, you can set the
+B<OPENSSL_ppccap> environment variable before you start the application. The
+environment variable is assigned a numerical value that denotes the bits in
+the PowerPC capabilities vector. The ppc_arch.h header file states that, "Flags'
+usage can appear ambiguous, because they are set rather to reflect OpenSSL
+performance preferences than actual processor capabilities."
+
+Multiple extensions are enabled by logically OR-ing the values that represent the
+desired extensions.
+
+B<Notes>: Enabling an extension on a CPU that does not support the extension
+will result in a SIGILL crash. On AIX, all vector instructions can be disabled
+with the schedo -ro allow_vmx=0 command. DO NOT USE THIS COMMAND to disable
+vector instructions in the OS when it is running on a CPU level that supports the
+instructions without also disabling them in libcrpto via the OPENSSL_ppccap
+environment variable or the application will crash with a SIGILL.
+
+Currently, the following extensions are defined:
+
+=over 4
+
+=item 0x01
+
+Name: B<PPC_FPU64>
+
+This flag is obsolete.
+
+=item 0x02
+
+Name: B<PPC_ALTIVEC>
+
+Meaning: Use AltiVec (aka VMX) instructions. In some but not all cases, this
+capability gates the use of later ISA vector instructions. The associated probe
+instruction is vor (vector logical or).
+
+Effect: Enables use of vector instructions but does not enable extensions added
+at specific ISA levels. However, disabling this capability disables a subset of
+vector extensions added at specific ISA levels even if they are otherwise
+enabled.
+
+=item 0x04
+
+Name: B<PPC_CRYPTO207>
+
+Meaning: Use instructions added in ISA level 2.07. The associated probe
+instruction instruction is vcipher (vector AES cipher round).
+
+Effect: Enables AES, SHA-2 sigma, and other ISA 2.07 instructions for AES, SHA-2,
+GHASH, and Poly1305.
+
+=item 0x08
+
+Name: B<PPC_FPU>
+
+Meaning: Use FPU instructions. The associated probe instruction is fmr (floating
+move register).
+
+Effect: Enables Poly1305 FPU implementation. The PPC_CRYPTO207 capability
+overrides this effect.
+
+=item 0x10
+
+Name: B<PPC_MADD300>
+
+Meaning: Use instructions added in ISA level 3.00. The associated probe
+instruction is maddhdu (multiply-add high doubleword unsigned).
+
+Effect: Enables use of the polynomial multiply and other ISA 3.00 instructions
+for AES-GCM, P-384, and P-521.
+
+=item 0x20
+
+Name: B<PPC_MFTB>
+
+Meaning: Use the mftb (move from time base) instruction. The associated probe
+instruction is mftb.
+
+Effect: Enables use of the mftb instruction to sample the lower 32 bits of the
+CPU time base register in order to acquire entropy. Considered obsolete.  The
+PPC_MFSPR268 capability overrides this capability.
+
+=item 0x40
+
+Name: B<PPC_MFSPR268>
+
+Meaning: Use the mfspr (move from special purpose register) instruction to
+read SPR 268. The associated probe instruction is mfspr 268.
+
+Effect: Enables use of the mfspr instruction to sample the lower 32 bits of the
+CPU time base register from SPR 268, the TBL (time base lower) register, in order
+to acquire entropy.
+
+=item 0x80
+
+Name: B<PPC_BRD31>
+
+Meaning: Use instructions added in ISA level 3.1. The associated probe instruction
+is brd (byte-reverse doubleword).
+
+Effect: Enables use of ISA 3.1 instructions in ChaCha20.
+
+=back
+
+=head1 RETURN VALUES
+
+Not available.
+
+=head1 EXAMPLES
+
+Check currently detected capabilities:
+
+ $ openssl info -cpusettings
+ OPENSSL_ppccap=0x2E
+
+The detected capabilities in the above example indicate that PPC_MFTB, PPC_FPU,
+PPC_CRYPTO207, PPC_MFSPR268, and PPC_ALTIVEC are enabled.
+
+Disable all instruction set extensions:
+
+ OPENSSL_ppccap=0x00
+
+Enable base AltiVec extensions:
+
+ OPENSSL_ppccap=0x02
+
+=head1 COPYRIGHT
+
+Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
