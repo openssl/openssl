@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -25,6 +22,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/provider_util.h"
+#include "providers/implementations/kdfs/scrypt.inc"
 
 #ifndef OPENSSL_NO_SCRYPT
 
@@ -218,16 +216,6 @@ static int is_power_of_two(uint64_t value)
     return (value != 0) && ((value & (value - 1)) == 0);
 }
 
-{- produce_param_decoder('scrypt_set_ctx_params',
-                         (['OSSL_KDF_PARAM_PASSWORD',      'pw',     'octet_string'],
-                          ['OSSL_KDF_PARAM_SALT',          'salt',   'octet_string'],
-                          ['OSSL_KDF_PARAM_SCRYPT_N',      'n',      'uint64'],
-                          ['OSSL_KDF_PARAM_SCRYPT_R',      'r',      'uint32'],
-                          ['OSSL_KDF_PARAM_SCRYPT_P',      'p',      'uint32'],
-                          ['OSSL_KDF_PARAM_SCRYPT_MAXMEM', 'maxmem', 'uint64'],
-                          ['OSSL_KDF_PARAM_PROPERTIES',    'propq',  'utf8_string'],
-                         )); -}
-
 static int kdf_scrypt_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct scrypt_set_ctx_params_st p;
@@ -283,10 +271,6 @@ static const OSSL_PARAM *kdf_scrypt_settable_ctx_params(ossl_unused void *ctx,
 {
     return scrypt_set_ctx_params_list;
 }
-
-{- produce_param_decoder('scrypt_get_ctx_params',
-                         (['OSSL_KDF_PARAM_SIZE',                    'size', 'size_t'],
-                         )); -}
 
 static int kdf_scrypt_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {

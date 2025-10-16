@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * DES low level APIs are deprecated for public use, but still ok for internal
@@ -33,6 +30,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/kdfs/krb5kdf.inc"
 
 /* KRB5 KDF defined in RFC 3961, Section 5.1 */
 
@@ -154,14 +152,6 @@ static int krb5kdf_derive(void *vctx, unsigned char *key, size_t keylen,
                    key, keylen);
 }
 
-{- produce_param_decoder('krb5kdf_set_ctx_params',
-                         (['OSSL_KDF_PARAM_PROPERTIES',  'propq',    'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',      'engine',   'utf8_string', 'hidden'],
-                          ['OSSL_KDF_PARAM_CIPHER',      'cipher',   'utf8_string'],
-                          ['OSSL_KDF_PARAM_KEY',         'key',      'octet_string'],
-                          ['OSSL_KDF_PARAM_CONSTANT',    'cnst',     'octet_string'],
-                         )); -}
-
 static int krb5kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct krb5kdf_set_ctx_params_st p;
@@ -191,10 +181,6 @@ static const OSSL_PARAM *krb5kdf_settable_ctx_params(ossl_unused void *ctx,
 {
      return krb5kdf_set_ctx_params_list;
 }
-
-{- produce_param_decoder('krb5kdf_get_ctx_params',
-                         (['OSSL_KDF_PARAM_SIZE',                    'size', 'size_t'],
-                         )); -}
 
 static int krb5kdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
@@ -503,4 +489,3 @@ out:
     OPENSSL_cleanse(block, EVP_MAX_BLOCK_LENGTH * 2);
     return ret;
 }
-

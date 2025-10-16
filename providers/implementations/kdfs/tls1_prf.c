@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * Refer to "The TLS Protocol Version 1.0" Section 5
@@ -96,6 +93,8 @@ static int tls1_prf_alg(EVP_MAC_CTX *mdctx, EVP_MAC_CTX *sha1ctx,
 #define TLS_MD_MASTER_SECRET_CONST_SIZE   13
 
 #define TLSPRF_MAX_SEEDS    6
+
+#include "providers/implementations/kdfs/tls1_prf.inc"
 
 /* TLS KDF kdf context structure */
 typedef struct {
@@ -286,17 +285,6 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
                         key, keylen);
 }
 
-{- produce_param_decoder('tls1prf_set_ctx_params',
-                         (['OSSL_KDF_PARAM_PROPERTIES',        'propq',  'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',            'engine', 'utf8_string', 'hidden'],
-                          ['OSSL_KDF_PARAM_DIGEST',            'digest', 'utf8_string'],
-                          ['OSSL_KDF_PARAM_SECRET',            'secret', 'octet_string'],
-                          ['OSSL_KDF_PARAM_SEED',              'seed',   'octet_string', TLSPRF_MAX_SEEDS],
-                          ['OSSL_KDF_PARAM_FIPS_EMS_CHECK',    'ind_e',  'int', 'fips'],
-                          ['OSSL_KDF_PARAM_FIPS_DIGEST_CHECK', 'ind_d',  'int', 'fips'],
-                          ['OSSL_KDF_PARAM_FIPS_KEY_CHECK',    'ind_k',  'int', 'fips'],
-                         )); -}
-
 static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct tls1prf_set_ctx_params_st p;
@@ -427,11 +415,6 @@ static const OSSL_PARAM *kdf_tls1_prf_settable_ctx_params(
 {
     return tls1prf_set_ctx_params_list;
 }
-
-{- produce_param_decoder('tls1prf_get_ctx_params',
-                         (['OSSL_KDF_PARAM_SIZE',                    'size', 'size_t'],
-                          ['OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',  'int', 'fips'],
-                         )); -}
 
 static int kdf_tls1_prf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {

@@ -9,9 +9,6 @@
  * RFC 9106 Argon2 (see https://www.rfc-editor.org/rfc/rfc9106.txt)
  *
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -45,6 +42,8 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #endif
 
 #ifndef OPENSSL_NO_ARGON2
+
+# include "providers/implementations/kdfs/argon2.inc"
 
 # define ARGON2_MIN_LANES 1u
 # define ARGON2_MAX_LANES 0xFFFFFFu
@@ -1394,21 +1393,6 @@ static int set_property_query(KDF_ARGON2 *ctx, const char *propq)
     return 1;
 }
 
-{- produce_param_decoder('argon2_set_ctx_params',
-                         (['OSSL_KDF_PARAM_PASSWORD',       'pw',     'octet_string'],
-                          ['OSSL_KDF_PARAM_SALT',           'salt',   'octet_string'],
-                          ['OSSL_KDF_PARAM_SECRET',         'secret', 'octet_string'],
-                          ['OSSL_KDF_PARAM_ARGON2_AD',      'ad',     'octet_string'],
-                          ['OSSL_KDF_PARAM_SIZE',           'size',   'uint32'],
-                          ['OSSL_KDF_PARAM_ITER',           'iter',   'uint32'],
-                          ['OSSL_KDF_PARAM_THREADS',        'thrds',  'uint32'],
-                          ['OSSL_KDF_PARAM_ARGON2_LANES',   'lanes',  'uint32'],
-                          ['OSSL_KDF_PARAM_ARGON2_MEMCOST', 'mem',    'uint32'],
-                          ['OSSL_KDF_PARAM_EARLY_CLEAN',    'eclean', 'uint32'],
-                          ['OSSL_KDF_PARAM_ARGON2_VERSION', 'vers',   'uint32'],
-                          ['OSSL_KDF_PARAM_PROPERTIES',     'propq',  'utf8_string'],
-                         )); -}
-
 static int argon2_set_ctx_params(KDF_ARGON2 *ctx, const OSSL_PARAM params[],
                                  OSSL_PARAM **size_param_ptr)
 {
@@ -1500,10 +1484,6 @@ static const OSSL_PARAM *kdf_argon2_settable_ctx_params(ossl_unused void *ctx,
 {
     return argon2_set_ctx_params_list;
 }
-
-{- produce_param_decoder('argon2_get_ctx_params',
-                         (['OSSL_KDF_PARAM_SIZE',                    'size', 'size_t'],
-                         )); -}
 
 static int kdf_argon2_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
