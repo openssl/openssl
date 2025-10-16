@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * DSA low level APIs are deprecated for public use, but still ok for
@@ -329,23 +326,7 @@ struct dsa_params_st {
 
 #define dsa_get_params_st dsa_params_st
 
-{- produce_param_decoder('dsa_get_params',
-                         (['OSSL_PKEY_PARAM_BITS',               'bits',           'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_BITS',      'secbits',        'int'],
-                          ['OSSL_PKEY_PARAM_MAX_SIZE',           'maxsize',        'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_CATEGORY',  'seccat',         'int'],
-                          ['OSSL_PKEY_PARAM_DEFAULT_DIGEST',     'digest',         'utf8_string'],
-                          ['OSSL_PKEY_PARAM_FFC_P',              'ffp.p',          'BN'],
-                          ['OSSL_PKEY_PARAM_FFC_Q',              'ffp.q',          'BN'],
-                          ['OSSL_PKEY_PARAM_FFC_G',              'ffp.g',          'BN'],
-                          ['OSSL_PKEY_PARAM_FFC_COFACTOR',       'ffp.cofactor',   'BN'],
-                          ['OSSL_PKEY_PARAM_FFC_GINDEX',         'ffp.g_index',    'int'],
-                          ['OSSL_PKEY_PARAM_FFC_PCOUNTER',       'ffp.p_counter',  'int'],
-                          ['OSSL_PKEY_PARAM_FFC_H',              'ffp.h',          'int'],
-                          ['OSSL_PKEY_PARAM_FFC_SEED',           'ffp.seed',       'octet_string'],
-                          ['OSSL_PKEY_PARAM_PUB_KEY',            'pubkey',         'BN'],
-                          ['OSSL_PKEY_PARAM_PRIV_KEY',           'privkey',        'BN'],
-                         )); -}
+#include "providers/implementations/keymgmt/dsa_kmgmt.inc"
 
 static ossl_inline int dsa_get_params(void *key, OSSL_PARAM params[])
 {
@@ -492,19 +473,6 @@ static int dsa_set_gen_seed(struct dsa_gen_ctx *gctx, unsigned char *seed,
     return 1;
 }
 
-{- produce_param_decoder('dsa_gen_set_params',
-                         (['OSSL_PKEY_PARAM_FFC_TYPE',         'type',      'utf8_string'],
-                          ['OSSL_PKEY_PARAM_FFC_PBITS',        'pbits',     'size_t'],
-                          ['OSSL_PKEY_PARAM_FFC_QBITS',        'qbits',     'size_t'],
-                          ['OSSL_PKEY_PARAM_FFC_DIGEST',       'digest',    'utf8_string'],
-                          ['OSSL_PKEY_PARAM_FFC_DIGEST_PROPS', 'propq',     'utf8_string'],
-                          ['OSSL_PKEY_PARAM_FFC_GINDEX',       'g_index',   'int'],
-                          ['OSSL_PKEY_PARAM_FFC_SEED',         'seed',      'octet_string'],
-                          ['OSSL_PKEY_PARAM_FFC_PCOUNTER',     'p_counter', 'int'],
-                          ['OSSL_PKEY_PARAM_FFC_H',            'h',         'int'],
-                          ['OSSL_PKEY_PARAM_FIPS_SIGN_CHECK',  'ind_sign',  'int', 'fips'],
-                         )); -}
-
 static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
     struct dsa_gen_ctx *gctx = genctx;
@@ -579,10 +547,6 @@ static const OSSL_PARAM *dsa_gen_settable_params(ossl_unused void *genctx,
 {
     return dsa_gen_set_params_list;
 }
-
-{- produce_param_decoder('dsa_gen_get_params',
-                         (['OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR', 'ind', 'int', 'fips'],
-                         )); -}
 
 static int dsa_gen_get_params(void *genctx, OSSL_PARAM *params)
 {

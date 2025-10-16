@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <assert.h>
 #include <string.h>
@@ -206,10 +203,22 @@ static int ecx_match(const void *keydata1, const void *keydata2, int selection)
     return ok;
 }
 
-{- produce_param_decoder('ecx_imexport_types',
-                         (['OSSL_PKEY_PARAM_PUB_KEY',  'pub',  'octet_string'],
-                          ['OSSL_PKEY_PARAM_PRIV_KEY', 'priv', 'octet_string'],
-                         )); -}
+struct ecx_ed_common_get_params_st {
+    OSSL_PARAM *bits;
+    OSSL_PARAM *secbits;
+    OSSL_PARAM *size;
+    OSSL_PARAM *seccat;
+    OSSL_PARAM *pub;
+    OSSL_PARAM *priv;
+    OSSL_PARAM *encpub; /* ECX only */
+    OSSL_PARAM *ind;    /* ECX only */
+    OSSL_PARAM *digest; /* Ed only */
+};
+
+#define ecx_get_params_st ecx_ed_common_get_params_st
+#define ed_get_params_st ecx_ed_common_get_params_st
+
+#include "providers/implementations/keymgmt/ecx_kmgmt.inc"
 
 static int ecx_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
@@ -295,43 +304,6 @@ static const OSSL_PARAM *ecx_imexport_types(int selection)
         return ecx_imexport_types_list;
     return NULL;
 }
-
-struct ecx_ed_common_get_params_st {
-    OSSL_PARAM *bits;
-    OSSL_PARAM *secbits;
-    OSSL_PARAM *size;
-    OSSL_PARAM *seccat;
-    OSSL_PARAM *pub;
-    OSSL_PARAM *priv;
-    OSSL_PARAM *encpub; /* ECX only */
-    OSSL_PARAM *ind;    /* ECX only */
-    OSSL_PARAM *digest; /* Ed only */
-};
-
-#define ecx_get_params_st   ecx_ed_common_get_params_st
-
-{- produce_param_decoder('ecx_get_params',
-                         (['OSSL_PKEY_PARAM_BITS',                    'bits',    'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_BITS',           'secbits', 'int'],
-                          ['OSSL_PKEY_PARAM_MAX_SIZE',                'size',    'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_CATEGORY',       'seccat',  'int'],
-                          ['OSSL_PKEY_PARAM_PUB_KEY',                 'pub',     'octet_string'],
-                          ['OSSL_PKEY_PARAM_PRIV_KEY',                'priv',    'octet_string'],
-                          ['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY',      'encpub',  'octet_string'],
-                          ['OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR', 'ind',     'int', 'fips'],
-                         )); -}
-
-#define ed_get_params_st   ecx_ed_common_get_params_st
-
-{- produce_param_decoder('ed_get_params',
-                         (['OSSL_PKEY_PARAM_BITS',              'bits',    'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_BITS',     'secbits', 'int'],
-                          ['OSSL_PKEY_PARAM_MAX_SIZE',          'size',    'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_CATEGORY', 'seccat',  'int'],
-                          ['OSSL_PKEY_PARAM_PUB_KEY',           'pub',     'octet_string'],
-                          ['OSSL_PKEY_PARAM_PRIV_KEY',          'priv',    'octet_string'],
-                          ['OSSL_PKEY_PARAM_MANDATORY_DIGEST',  'digest',  'utf8_string'],
-                         )); -}
 
 /* This getter is shared by ED25519, ED448, X25519 and X448 */
 static int ecx_ed_common_get_params(void *key,
@@ -444,11 +416,6 @@ static int set_property_query(ECX_KEY *ecxkey, const char *propq)
     }
     return 1;
 }
-
-{- produce_param_decoder('ecx_set_params',
-                         (['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY',  'pub',   'octet_string'],
-                          ['OSSL_PKEY_PARAM_PROPERTIES',          'propq', 'utf8_string'],
-                         )); -}
 
 static int ecx_set_params(void *key, const OSSL_PARAM params[])
 {
@@ -578,12 +545,6 @@ static void *ed448_gen_init(void *provctx, int selection,
 {
     return ecx_gen_init(provctx, selection, params, ECX_KEY_TYPE_ED448, NULL);
 }
-
-{- produce_param_decoder('ecx_gen_set_params',
-                         (['OSSL_PKEY_PARAM_GROUP_NAME', 'group',    'utf8_string'],
-                          ['OSSL_KDF_PARAM_PROPERTIES',  'kdfpropq', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_DHKEM_IKM',  'ikm',      'octet_string'],
-                         )); -}
 
 static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {

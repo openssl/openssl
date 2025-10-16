@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /* We need to use some engine deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
@@ -192,6 +189,16 @@ struct mac_common_params_st {
     OSSL_PARAM *engine;
 };
 
+#define mac_import_st mac_common_params_st
+#define cmac_import_st mac_common_params_st
+#define mac_get_params_st mac_common_params_st
+#define cmac_get_params_st mac_common_params_st
+#define mac_set_params_st mac_common_params_st
+#define mac_gen_set_params_st mac_common_params_st
+#define cmac_gen_set_params_st mac_common_params_st
+
+#include "providers/implementations/keymgmt/mac_legacy_kmgmt.inc"
+
 static int mac_key_fromdata(MAC_KEY *key, const struct mac_common_params_st *p)
 {
     if (p->key != NULL) {
@@ -232,13 +239,6 @@ static int mac_key_fromdata(MAC_KEY *key, const struct mac_common_params_st *p)
     return 0;
 }
 
-#define mac_import_st  mac_common_params_st
-
-{- produce_param_decoder('mac_import',
-                         (['OSSL_PKEY_PARAM_PRIV_KEY',   'key',   'octet_string'],
-                          ['OSSL_PKEY_PARAM_PROPERTIES', 'propq', 'utf8_string'],
-                         )); -}
-
 static int mac_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     MAC_KEY *key = keydata;
@@ -259,15 +259,6 @@ static const OSSL_PARAM *mac_imexport_types(int selection)
         return mac_import_list;
     return NULL;
 }
-
-#define cmac_import_st  mac_common_params_st
-
-{- produce_param_decoder('cmac_import',
-                         (['OSSL_PKEY_PARAM_PRIV_KEY',   'key',    'octet_string'],
-                          ['OSSL_PKEY_PARAM_CIPHER',     'cipher', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
-                          ['OSSL_PKEY_PARAM_PROPERTIES', 'propq',  'utf8_string'],
-                         )); -}
 
 static int cmac_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
@@ -353,12 +344,6 @@ err:
     return ret;
 }
 
-#define mac_get_params_st mac_common_params_st
-
-{- produce_param_decoder('mac_get_params',
-                         (['OSSL_PKEY_PARAM_PRIV_KEY', 'key', 'octet_string'],
-                         )); -}
-
 static int mac_get_params(void *keydata, OSSL_PARAM params[])
 {
     struct mac_common_params_st p;
@@ -375,14 +360,6 @@ static const OSSL_PARAM *mac_gettable_params(void *provctx)
     return mac_get_params_list;
 }
 
-#define cmac_get_params_st mac_common_params_st
-
-{- produce_param_decoder('cmac_get_params',
-                         (['OSSL_PKEY_PARAM_PRIV_KEY', 'key',    'octet_string'],
-                          ['OSSL_PKEY_PARAM_CIPHER',   'cipher', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_ENGINE',   'engine', 'utf8_string', 'hidden'],
-                        )); -}
-
 static int cmac_get_params(void *keydata, OSSL_PARAM params[])
 {
     struct mac_common_params_st p;
@@ -394,17 +371,10 @@ static int cmac_get_params(void *keydata, OSSL_PARAM params[])
     return key_to_params(key, NULL, &p);
 }
 
-
 static const OSSL_PARAM *cmac_gettable_params(void *provctx)
 {
     return cmac_get_params_list;
 }
-
-#define mac_set_params_st mac_common_params_st
-
-{- produce_param_decoder('mac_set_params',
-                         (['OSSL_PKEY_PARAM_PRIV_KEY', 'key', 'octet_string'],
-                         )); -}
 
 static int mac_set_params(void *keydata, const OSSL_PARAM params[])
 {
@@ -482,12 +452,6 @@ static int mac_gen_set_params_common(struct mac_gen_ctx *gctx,
     return 1;
 }
 
-#define mac_gen_set_params_st mac_common_params_st
-
-{- produce_param_decoder('mac_gen_set_params',
-                         (['OSSL_PKEY_PARAM_PRIV_KEY', 'key', 'octet_string'],
-                         )); -}
-
 static int mac_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
     struct mac_gen_ctx *gctx = genctx;
@@ -498,15 +462,6 @@ static int mac_gen_set_params(void *genctx, const OSSL_PARAM params[])
 
     return mac_gen_set_params_common(gctx, &p);
 }
-
-#define cmac_gen_set_params_st mac_common_params_st
-
-{- produce_param_decoder('cmac_gen_set_params',
-                         (['OSSL_PKEY_PARAM_PRIV_KEY',   'key',    'octet_string'],
-                          ['OSSL_PKEY_PARAM_CIPHER',     'cipher', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_PROPERTIES', 'propq',  'utf8_string'],
-                          ['OSSL_PKEY_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
-                         )); -}
 
 static int cmac_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
@@ -638,4 +593,3 @@ const OSSL_DISPATCH ossl_cmac_legacy_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))mac_gen_cleanup },
     OSSL_DISPATCH_END
 };
-

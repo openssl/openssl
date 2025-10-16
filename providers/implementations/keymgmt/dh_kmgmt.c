@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * DH low level APIs are deprecated for public use, but still ok for
@@ -333,25 +330,26 @@ struct dh_params_st {
 
 #define dh_get_params_st dh_params_st
 
-{- produce_param_decoder('dh_get_params',
-                         (['OSSL_PKEY_PARAM_BITS',               'bits',           'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_BITS',      'secbits',        'int'],
-                          ['OSSL_PKEY_PARAM_MAX_SIZE',           'maxsize',        'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_CATEGORY',  'seccat',         'int'],
-                          ['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY', 'encpubkey',      'octet_string'],
-                          ['OSSL_PKEY_PARAM_FFC_P',              'ffp.p',          'BN'],
-                          ['OSSL_PKEY_PARAM_FFC_Q',              'ffp.q',          'BN'],
-                          ['OSSL_PKEY_PARAM_FFC_G',              'ffp.g',          'BN'],
-                          ['OSSL_PKEY_PARAM_FFC_COFACTOR',       'ffp.cofactor',   'BN'],
-                          ['OSSL_PKEY_PARAM_FFC_GINDEX',         'ffp.g_index',    'int'],
-                          ['OSSL_PKEY_PARAM_FFC_PCOUNTER',       'ffp.p_counter',  'int'],
-                          ['OSSL_PKEY_PARAM_FFC_H',              'ffp.h',          'int'],
-                          ['OSSL_PKEY_PARAM_DH_PRIV_LEN',        'privlen',        'int'],
-                          ['OSSL_PKEY_PARAM_FFC_SEED',           'ffp.seed',       'octet_string'],
-                          ['OSSL_PKEY_PARAM_GROUP_NAME',         'ffp.group_name', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_PUB_KEY',            'pubkey',         'BN'],
-                          ['OSSL_PKEY_PARAM_PRIV_KEY',           'privkey',        'BN'],
-                         )); -}
+struct dh_gen_set_params_st {
+    OSSL_PARAM *type;
+    OSSL_PARAM *group_name;
+    OSSL_PARAM *privlen;
+    OSSL_PARAM *pbits;
+    OSSL_PARAM *qbits;      /* DHX only */
+    OSSL_PARAM *digest;     /* DHX only */
+    OSSL_PARAM *propq;      /* DHX only */
+    OSSL_PARAM *g_index;    /* DHX only */
+    OSSL_PARAM *seed;       /* DHX only */
+    OSSL_PARAM *p_counter;  /* DHX only */
+    OSSL_PARAM *h;          /* DHX only */
+    OSSL_PARAM *generator;  /* DH only */
+};
+
+#define dhx_gen_set_params_st dh_gen_set_params_st
+
+#define dh_gen_set_params_st dh_gen_set_params_st
+
+#include "providers/implementations/keymgmt/dh_kmgmt.inc"
 
 static int dh_get_params(void *key, OSSL_PARAM params[])
 {
@@ -391,10 +389,6 @@ static const OSSL_PARAM *dh_gettable_params(void *provctx)
 {
     return dh_get_params_list;
 }
-
-{- produce_param_decoder('dh_set_params',
-                         (['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY', 'encpubkey', 'octet_string'],
-                         )); -}
 
 static const OSSL_PARAM *dh_settable_params(void *provctx)
 {
@@ -561,55 +555,6 @@ static int dh_set_gen_seed(struct dh_gen_ctx *gctx, unsigned char *seed,
     }
     return 1;
 }
-
-struct dh_gen_set_params_st {
-    OSSL_PARAM *type;
-    OSSL_PARAM *group_name;
-    OSSL_PARAM *privlen;
-    OSSL_PARAM *pbits;
-    OSSL_PARAM *qbits;      /* DHX only */
-    OSSL_PARAM *digest;     /* DHX only */
-    OSSL_PARAM *propq;      /* DHX only */
-    OSSL_PARAM *g_index;    /* DHX only */
-    OSSL_PARAM *seed;       /* DHX only */
-    OSSL_PARAM *p_counter;  /* DHX only */
-    OSSL_PARAM *h;          /* DHX only */
-    OSSL_PARAM *generator;  /* DH only */
-};
-
-#define dhx_gen_set_params_st dh_gen_set_params_st
-
-{- produce_param_decoder('dhx_gen_set_params',
-                         (['OSSL_PKEY_PARAM_FFC_TYPE',          'type',       'utf8_string'],
-                          ['OSSL_PKEY_PARAM_GROUP_NAME',        'group_name', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_DH_PRIV_LEN',       'privlen',    'int'],
-                          ['OSSL_PKEY_PARAM_FFC_PBITS',         'pbits',      'size_t'],
-                          ['OSSL_PKEY_PARAM_FFC_QBITS',         'qbits',      'size_t'],
-                          ['OSSL_PKEY_PARAM_FFC_DIGEST',        'digest',     'utf8_string'],
-                          ['OSSL_PKEY_PARAM_FFC_DIGEST_PROPS',  'propq',      'utf8_string'],
-                          ['OSSL_PKEY_PARAM_FFC_GINDEX',        'g_index',    'int'],
-                          ['OSSL_PKEY_PARAM_FFC_SEED',          'seed',       'octet_string'],
-                          ['OSSL_PKEY_PARAM_FFC_PCOUNTER',      'p_counter',  'int'],
-                          ['OSSL_PKEY_PARAM_FFC_H',             'h',          'int'],
-                          ['OSSL_PKEY_PARAM_DH_GENERATOR',      'invalid param'],
-                         )); -}
-
-#define dh_gen_set_params_st dh_gen_set_params_st
-
-{- produce_param_decoder('dh_gen_set_params',
-                         (['OSSL_PKEY_PARAM_FFC_TYPE',          'type',       'utf8_string'],
-                          ['OSSL_PKEY_PARAM_GROUP_NAME',        'group_name', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_DH_PRIV_LEN',       'privlen',    'int'],
-                          ['OSSL_PKEY_PARAM_FFC_PBITS',         'pbits',      'size_t'],
-                          ['OSSL_PKEY_PARAM_DH_GENERATOR',      'generator',  'int'],
-                          ['OSSL_PKEY_PARAM_FFC_GINDEX',        'invalid param'],
-                          ['OSSL_PKEY_PARAM_FFC_PCOUNTER',      'invalid param'],
-                          ['OSSL_PKEY_PARAM_FFC_H',             'invalid param'],
-                          ['OSSL_PKEY_PARAM_FFC_SEED',          'invalid param'],
-                          ['OSSL_PKEY_PARAM_FFC_QBITS',         'invalid param'],
-                          ['OSSL_PKEY_PARAM_FFC_DIGEST',        'invalid param'],
-                          ['OSSL_PKEY_PARAM_FFC_DIGEST_PROPS',  'invalid param'],
-                         )); -}
 
 static int dh_gen_common_set_params(struct dh_gen_ctx *gctx,
                                     const struct dhx_gen_set_params_st *p)
