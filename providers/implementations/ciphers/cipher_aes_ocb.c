@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * AES low level APIs are deprecated for public use, but still ok for internal
@@ -22,6 +19,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/providercommon.h"
 #include "prov/ciphercommon_aead.h"
 #include "prov/implementations.h"
+#include "providers/implementations/ciphers/cipher_aes_ocb.inc"
 
 #define AES_OCB_FLAGS AEAD_FLAGS
 
@@ -353,12 +351,6 @@ static void *aes_ocb_dupctx(void *vctx)
     return ret;
 }
 
-{- produce_param_decoder('aes_ocb_set_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN',     'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_AEAD_IVLEN', 'ivlen',  'size_t'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TAG',   'tag',    'octet_string'],
-                         )); -}
-
 static const OSSL_PARAM *cipher_ocb_settable_ctx_params(ossl_unused void *cctx,
                                                         ossl_unused void *p_ctx)
 {
@@ -427,15 +419,6 @@ static int aes_ocb_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
     return 1;
 }
-
-{- produce_param_decoder('aes_ocb_get_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN',      'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IVLEN',       'ivlen',  'size_t'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TAGLEN', 'taglen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IV',          'iv',     'octet_string'],
-                          ['OSSL_CIPHER_PARAM_UPDATED_IV',  'upd_iv', 'octet_string'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TAG',    'tag',    'octet_string'],
-                         )); -}
 
 static const OSSL_PARAM *cipher_ocb_gettable_ctx_params(ossl_unused void *cctx,
                                                         ossl_unused void *p_ctx)

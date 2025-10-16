@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /* Dispatch functions for chacha20_poly1305 cipher */
 
@@ -17,6 +14,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "cipher_chacha20_poly1305.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/ciphers/cipher_chacha20_poly1305.inc"
 
 #define CHACHA20_POLY1305_KEYLEN CHACHA_KEY_SIZE
 #define CHACHA20_POLY1305_BLKLEN 1
@@ -100,14 +98,6 @@ static int chacha20_poly1305_get_params(OSSL_PARAM params[])
                                           CHACHA20_POLY1305_IVLEN * 8);
 }
 
-{- produce_param_decoder('chacha20_poly1305_get_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN',            'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IVLEN',             'ivlen',  'size_t'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TAGLEN',       'taglen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TAG',          'tag',    'octet_string'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD', 'pad',    'size_t'],
-                         )); -}
-
 static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_CHACHA20_POLY1305_CTX *ctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
@@ -164,14 +154,6 @@ static const OSSL_PARAM *chacha20_poly1305_gettable_ctx_params
     return chacha20_poly1305_get_ctx_params_list;
 }
 
-{- produce_param_decoder('chacha20_poly1305_set_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN',             'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IVLEN',              'ivlen',  'size_t'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TAG',           'tag',    'octet_string'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TLS1_AAD',      'aad',    'octet_string'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED', 'fixed',  'octet_string'],
-                         )); -}
-
 static const OSSL_PARAM *chacha20_poly1305_settable_ctx_params(
         ossl_unused void *cctx, ossl_unused void *provctx
     )
@@ -190,7 +172,6 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
 
     if (!chacha20_poly1305_set_ctx_params_decoder(params, &p))
         return 0;
-
 
     if (p.keylen != NULL) {
         if (!OSSL_PARAM_get_size_t(p.keylen, &len)) {
@@ -374,4 +355,3 @@ const OSSL_DISPATCH ossl_chacha20_ossl_poly1305_functions[] = {
         (void (*)(void))chacha20_poly1305_settable_ctx_params },
     OSSL_DISPATCH_END
 };
-

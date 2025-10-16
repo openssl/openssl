@@ -99,21 +99,21 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/storemgmt/file_store_any2obj.inc \
          providers/implementations/storemgmt/file_store.inc \
          providers/implementations/storemgmt/winstore_store.inc \
-         providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.c \
-         providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.c \
-         providers/implementations/ciphers/cipher_aes_gcm_siv.c \
-         providers/implementations/ciphers/cipher_aes_ocb.c \
-         providers/implementations/ciphers/cipher_aes_siv.c \
-         providers/implementations/ciphers/cipher_aes_wrp.c \
-         providers/implementations/ciphers/cipher_aes_xts.c \
-         providers/implementations/ciphers/ciphercommon.c \
-         providers/implementations/ciphers/ciphercommon_ccm.c \
-         providers/implementations/ciphers/ciphercommon_gcm.c \
-         providers/implementations/ciphers/cipher_chacha20.c \
-         providers/implementations/ciphers/cipher_chacha20_poly1305.c \
-         providers/implementations/ciphers/cipher_null.c \
-         providers/implementations/ciphers/cipher_rc4_hmac_md5.c \
-         providers/implementations/ciphers/cipher_sm4_xts.c \
+         providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.inc \
+         providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.inc \
+         providers/implementations/ciphers/cipher_aes_gcm_siv.inc \
+         providers/implementations/ciphers/cipher_aes_ocb.inc \
+         providers/implementations/ciphers/cipher_aes_siv.inc \
+         providers/implementations/ciphers/cipher_aes_wrp.inc \
+         providers/implementations/ciphers/cipher_aes_xts.inc \
+         providers/implementations/ciphers/ciphercommon.inc \
+         providers/implementations/ciphers/ciphercommon_ccm.inc \
+         providers/implementations/ciphers/ciphercommon_gcm.inc \
+         providers/implementations/ciphers/cipher_chacha20.inc \
+         providers/implementations/ciphers/cipher_chacha20_poly1305.inc \
+         providers/implementations/ciphers/cipher_null.inc \
+         providers/implementations/ciphers/cipher_rc4_hmac_md5.inc \
+         providers/implementations/ciphers/cipher_sm4_xts.inc \
          providers/implementations/digests/blake2_prov.c \
          providers/implementations/digests/digestcommon.c \
          providers/implementations/digests/mdc2_prov.c \
@@ -217,21 +217,21 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/storemgmt/file_store_any2obj.inc \
        providers/implementations/storemgmt/file_store.inc \
        providers/implementations/storemgmt/winstore_store.inc \
-       providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.c \
-       providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.c \
-       providers/implementations/ciphers/cipher_aes_gcm_siv.c \
-       providers/implementations/ciphers/cipher_aes_ocb.c \
-       providers/implementations/ciphers/cipher_aes_siv.c \
-       providers/implementations/ciphers/cipher_aes_wrp.c \
-       providers/implementations/ciphers/cipher_aes_xts.c \
-       providers/implementations/ciphers/ciphercommon.c \
-       providers/implementations/ciphers/ciphercommon_ccm.c \
-       providers/implementations/ciphers/ciphercommon_gcm.c \
-       providers/implementations/ciphers/cipher_chacha20.c \
-       providers/implementations/ciphers/cipher_chacha20_poly1305.c \
-       providers/implementations/ciphers/cipher_null.c \
-       providers/implementations/ciphers/cipher_rc4_hmac_md5.c \
-       providers/implementations/ciphers/cipher_sm4_xts.c \
+       providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.inc \
+       providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.inc \
+       providers/implementations/ciphers/cipher_aes_gcm_siv.inc \
+       providers/implementations/ciphers/cipher_aes_ocb.inc \
+       providers/implementations/ciphers/cipher_aes_siv.inc \
+       providers/implementations/ciphers/cipher_aes_wrp.inc \
+       providers/implementations/ciphers/cipher_aes_xts.inc \
+       providers/implementations/ciphers/ciphercommon.inc \
+       providers/implementations/ciphers/ciphercommon_ccm.inc \
+       providers/implementations/ciphers/ciphercommon_gcm.inc \
+       providers/implementations/ciphers/cipher_chacha20.inc \
+       providers/implementations/ciphers/cipher_chacha20_poly1305.inc \
+       providers/implementations/ciphers/cipher_null.inc \
+       providers/implementations/ciphers/cipher_rc4_hmac_md5.inc \
+       providers/implementations/ciphers/cipher_sm4_xts.inc \
        providers/implementations/digests/blake2_prov.c \
        providers/implementations/digests/digestcommon.c \
        providers/implementations/digests/mdc2_prov.c \
@@ -353,36 +353,36 @@ GENERATE[providers/implementations/storemgmt/file_store.inc]=\
     providers/implementations/storemgmt/file_store.inc.in
 GENERATE[providers/implementations/storemgmt/winstore_store.inc]=\
     providers/implementations/storemgmt/winstore_store.inc.in
-GENERATE[providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.c]=\
-    providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.c.in
-GENERATE[providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.c]=\
-    providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.c.in
-GENERATE[providers/implementations/ciphers/cipher_aes_gcm_siv.c]=\
-    providers/implementations/ciphers/cipher_aes_gcm_siv.c.in
-GENERATE[providers/implementations/ciphers/cipher_aes_ocb.c]=\
-    providers/implementations/ciphers/cipher_aes_ocb.c.in
-GENERATE[providers/implementations/ciphers/cipher_aes_siv.c]=\
-    providers/implementations/ciphers/cipher_aes_siv.c.in
-GENERATE[providers/implementations/ciphers/cipher_aes_wrp.c]=\
-    providers/implementations/ciphers/cipher_aes_wrp.c.in
-GENERATE[providers/implementations/ciphers/cipher_aes_xts.c]=\
-    providers/implementations/ciphers/cipher_aes_xts.c.in
-GENERATE[providers/implementations/ciphers/ciphercommon.c]=\
-    providers/implementations/ciphers/ciphercommon.c.in
-GENERATE[providers/implementations/ciphers/ciphercommon_ccm.c]=\
-    providers/implementations/ciphers/ciphercommon_ccm.c.in
-GENERATE[providers/implementations/ciphers/ciphercommon_gcm.c]=\
-    providers/implementations/ciphers/ciphercommon_gcm.c.in
-GENERATE[providers/implementations/ciphers/cipher_chacha20.c]=\
-    providers/implementations/ciphers/cipher_chacha20.c.in
-GENERATE[providers/implementations/ciphers/cipher_chacha20_poly1305.c]=\
-    providers/implementations/ciphers/cipher_chacha20_poly1305.c.in
-GENERATE[providers/implementations/ciphers/cipher_null.c]=\
-    providers/implementations/ciphers/cipher_null.c.in
-GENERATE[providers/implementations/ciphers/cipher_rc4_hmac_md5.c]=\
-    providers/implementations/ciphers/cipher_rc4_hmac_md5.c.in
-GENERATE[providers/implementations/ciphers/cipher_sm4_xts.c]=\
-    providers/implementations/ciphers/cipher_sm4_xts.c.in
+GENERATE[providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.inc]=\
+    providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.inc.in
+GENERATE[providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.inc]=\
+    providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.inc.in
+GENERATE[providers/implementations/ciphers/cipher_aes_gcm_siv.inc]=\
+    providers/implementations/ciphers/cipher_aes_gcm_siv.inc.in
+GENERATE[providers/implementations/ciphers/cipher_aes_ocb.inc]=\
+    providers/implementations/ciphers/cipher_aes_ocb.inc.in
+GENERATE[providers/implementations/ciphers/cipher_aes_siv.inc]=\
+    providers/implementations/ciphers/cipher_aes_siv.inc.in
+GENERATE[providers/implementations/ciphers/cipher_aes_wrp.inc]=\
+    providers/implementations/ciphers/cipher_aes_wrp.inc.in
+GENERATE[providers/implementations/ciphers/cipher_aes_xts.inc]=\
+    providers/implementations/ciphers/cipher_aes_xts.inc.in
+GENERATE[providers/implementations/ciphers/ciphercommon.inc]=\
+    providers/implementations/ciphers/ciphercommon.inc.in
+GENERATE[providers/implementations/ciphers/ciphercommon_ccm.inc]=\
+    providers/implementations/ciphers/ciphercommon_ccm.inc.in
+GENERATE[providers/implementations/ciphers/ciphercommon_gcm.inc]=\
+    providers/implementations/ciphers/ciphercommon_gcm.inc.in
+GENERATE[providers/implementations/ciphers/cipher_chacha20.inc]=\
+    providers/implementations/ciphers/cipher_chacha20.inc.in
+GENERATE[providers/implementations/ciphers/cipher_chacha20_poly1305.inc]=\
+    providers/implementations/ciphers/cipher_chacha20_poly1305.inc.in
+GENERATE[providers/implementations/ciphers/cipher_null.inc]=\
+    providers/implementations/ciphers/cipher_null.inc.in
+GENERATE[providers/implementations/ciphers/cipher_rc4_hmac_md5.inc]=\
+    providers/implementations/ciphers/cipher_rc4_hmac_md5.inc.in
+GENERATE[providers/implementations/ciphers/cipher_sm4_xts.inc]=\
+    providers/implementations/ciphers/cipher_sm4_xts.inc.in
 GENERATE[providers/implementations/digests/blake2_prov.c]=\
     providers/implementations/digests/blake2_prov.c.in
 GENERATE[providers/implementations/digests/digestcommon.c]=\

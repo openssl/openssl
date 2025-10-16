@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /* Dispatch functions for AES SIV mode */
 
@@ -24,6 +21,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/ciphercommon_aead.h"
 #include "prov/provider_ctx.h"
 #include "cipher_aes_gcm_siv.h"
+#include "providers/implementations/ciphers/cipher_aes_gcm_siv.inc"
 
 static int ossl_aes_gcm_siv_set_ctx_params(void *vctx, const OSSL_PARAM params[]);
 
@@ -175,12 +173,6 @@ static int ossl_aes_gcm_siv_stream_final(void *vctx, unsigned char *out, size_t 
     return !error;
 }
 
-{- produce_param_decoder('ossl_aes_gcm_siv_get_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN',      'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TAGLEN', 'taglen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TAG',    'tag',    'octet_string'],
-                         )); -}
-
 static int ossl_aes_gcm_siv_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_AES_GCM_SIV_CTX *ctx = (PROV_AES_GCM_SIV_CTX *)vctx;
@@ -216,12 +208,6 @@ static const OSSL_PARAM *ossl_aes_gcm_siv_gettable_ctx_params(ossl_unused void *
 {
     return ossl_aes_gcm_siv_get_ctx_params_list;
 }
-
-{- produce_param_decoder('aes_gcm_siv_set_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN',      'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_SPEED',       'speed',  'uint'],
-                          ['OSSL_CIPHER_PARAM_AEAD_TAG',    'tag',    'octet_string'],
-                         )); -}
 
 static int ossl_aes_gcm_siv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {

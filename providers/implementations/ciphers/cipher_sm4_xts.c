@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /* Dispatch functions for SM4 XTS mode */
 
@@ -16,6 +13,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "cipher_sm4_xts.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/ciphers/cipher_sm4_xts.inc"
 
 #define SM4_XTS_FLAGS PROV_CIPHER_FLAG_CUSTOM_IV
 #define SM4_XTS_IV_BITS 128
@@ -190,10 +188,6 @@ static int sm4_xts_stream_final(void *vctx, unsigned char *out, size_t *outl,
     *outl = 0;
     return 1;
 }
-
-{- produce_param_decoder('sm4_xts_set_ctx_params',
-                         (['OSSL_CIPHER_PARAM_XTS_STANDARD', 'std', 'utf8_string'],
-                         )); -}
 
 static const OSSL_PARAM *sm4_xts_settable_ctx_params(ossl_unused void *cctx,
                                                      ossl_unused void *provctx)

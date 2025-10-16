@@ -7,9 +7,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * AES low level APIs are deprecated for public use, but still ok for internal
@@ -22,6 +19,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "cipher_aes_xts.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/ciphers/cipher_aes_xts.inc"
 
 #define AES_XTS_FLAGS PROV_CIPHER_FLAG_CUSTOM_IV
 #define AES_XTS_IV_BITS 128
@@ -243,10 +241,6 @@ static int aes_xts_stream_final(void *vctx, unsigned char *out, size_t *outl,
     *outl = 0;
     return 1;
 }
-
-{- produce_param_decoder('aes_xts_set_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN', 'keylen', 'size_t'],
-                         )); -}
 
 static const OSSL_PARAM *aes_xts_settable_ctx_params(ossl_unused void *cctx,
                                                      ossl_unused void *provctx)

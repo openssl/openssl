@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include "internal/deprecated.h"
 
@@ -23,6 +20,9 @@ const OSSL_DISPATCH ossl_##nm##kbits##sub##_functions[] = {                    \
     OSSL_DISPATCH_END                                                          \
 };
 #else
+
+# include "providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.inc"
+
 static OSSL_FUNC_cipher_encrypt_init_fn aes_einit;
 static OSSL_FUNC_cipher_decrypt_init_fn aes_dinit;
 static OSSL_FUNC_cipher_gettable_ctx_params_fn aes_gettable_ctx_params;
@@ -31,12 +31,6 @@ static OSSL_FUNC_cipher_settable_ctx_params_fn aes_settable_ctx_params;
 # define aes_update ossl_cipher_generic_stream_update
 # define aes_final ossl_cipher_generic_stream_final
 # define aes_cipher ossl_cipher_generic_cipher
-
-{- produce_param_decoder('aes_cbc_hmac_sha_etm_set_ctx_params',
-                         (['OSSL_CIPHER_PARAM_AEAD_MAC_KEY', 'key',    'octet_string'],
-                          ['OSSL_CIPHER_PARAM_KEYLEN',       'keylen', 'size_t'],
-                          ['OSSL_CIPHER_HMAC_PARAM_MAC',     'mac',    'octet_string'],
-                         )); -}
 
 static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
@@ -105,14 +99,6 @@ static int aes_dinit(void *ctx, const unsigned char *key, size_t keylen,
         return 0;
     return aes_set_ctx_params(ctx, params);
 }
-
-{- produce_param_decoder('aes_cbc_hmac_sha_etm_get_ctx_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN',     'keylen', 'size_t'],
-                          ['OSSL_CIPHER_PARAM_IVLEN',      'ivlen',  'size_t'],
-                          ['OSSL_CIPHER_PARAM_IV',         'iv',     'octet_string'],
-                          ['OSSL_CIPHER_PARAM_UPDATED_IV', 'upd_iv', 'octet_string'],
-                          ['OSSL_CIPHER_HMAC_PARAM_MAC',   'mac',    'octet_string'],
-                         )); -}
 
 static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
