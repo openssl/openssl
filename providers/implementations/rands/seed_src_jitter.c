@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <string.h>
 #include <openssl/rand.h>
@@ -30,6 +27,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 
 #ifndef OPENSSL_NO_JITTER
 # include <jitterentropy.h>
+# include "providers/implementations/rands/seed_src_jitter.inc"
 
 # define JITTER_MAX_NUM_TRIES 3
 
@@ -230,12 +228,6 @@ static int jitter_reseed(void *vseed,
     }
     return 1;
 }
-
-{- produce_param_decoder('jitter_get_ctx_params',
-                         (['OSSL_RAND_PARAM_STATE',                   'state',  'int'],
-                          ['OSSL_RAND_PARAM_STRENGTH',                'str',    'uint'],
-                          ['OSSL_RAND_PARAM_MAX_REQUEST',             'maxreq', 'size_t'],
-                        )); -}
 
 static int jitter_get_ctx_params(void *vseed, OSSL_PARAM params[])
 {

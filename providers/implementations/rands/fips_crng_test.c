@@ -10,9 +10,6 @@
 /*
  * Implementation of SP 800-90B section 4.4 Approved Continuous Health Tests.
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <string.h>
 #include <openssl/evp.h>
@@ -29,6 +26,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/drbg.h"
 #include "prov/seeding.h"
 #include "crypto/context.h"
+#include "providers/implementations/rands/fips_crng_test.inc"
 
 static OSSL_FUNC_rand_newctx_fn crng_test_new;
 static OSSL_FUNC_rand_freectx_fn crng_test_free;
@@ -364,13 +362,6 @@ static void crng_test_unlock(ossl_unused void *vcrngt)
     if (crngt->lock != NULL)
         CRYPTO_THREAD_unlock(crngt->lock);
 }
-
-{- produce_param_decoder('crng_test_get_ctx_params',
-                         (['OSSL_RAND_PARAM_STATE',                   'state',  'int'],
-                          ['OSSL_RAND_PARAM_STRENGTH',                'str',    'uint'],
-                          ['OSSL_RAND_PARAM_MAX_REQUEST',             'maxreq', 'size_t'],
-                          ['OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
-                         )); -}
 
 static int crng_test_get_ctx_params(void *vcrngt, OSSL_PARAM params[])
 {

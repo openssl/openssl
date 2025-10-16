@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <assert.h>
 #include <stdlib.h>
@@ -30,6 +27,11 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "crypto/evp/evp_local.h"
 #include "internal/provider.h"
 
+#define drbg_hash_get_ctx_params_st  drbg_get_ctx_params_st
+#define drbg_hash_set_ctx_params_st  drbg_set_ctx_params_st
+
+#include "providers/implementations/rands/drbg_hash.inc"
+
 static OSSL_FUNC_rand_newctx_fn drbg_hash_new_wrapper;
 static OSSL_FUNC_rand_freectx_fn drbg_hash_free;
 static OSSL_FUNC_rand_instantiate_fn drbg_hash_instantiate_wrapper;
@@ -42,10 +44,8 @@ static OSSL_FUNC_rand_gettable_ctx_params_fn drbg_hash_gettable_ctx_params;
 static OSSL_FUNC_rand_get_ctx_params_fn drbg_hash_get_ctx_params;
 static OSSL_FUNC_rand_verify_zeroization_fn drbg_hash_verify_zeroization;
 
-static int drbg_hash_set_ctx_params_locked
-        (PROV_DRBG *drbg, const struct drbg_set_ctx_params_st *p);
-static int drbg_hash_set_ctx_params_decoder(const OSSL_PARAM params[],
-                                            struct drbg_set_ctx_params_st *p);
+static int drbg_hash_set_ctx_params_locked(PROV_DRBG *drbg,
+                                           const struct drbg_set_ctx_params_st *p);
 
 /* 888 bits from SP800-90Ar1 10.1 table 2 */
 #define HASH_PRNG_MAX_SEEDLEN    (888/8)
@@ -474,26 +474,6 @@ static void drbg_hash_free(void *vdrbg)
     ossl_rand_drbg_free(drbg);
 }
 
-#define drbg_hash_get_ctx_params_st  drbg_get_ctx_params_st
-
-{- produce_param_decoder('drbg_hash_get_ctx_params',
-                         (['OSSL_DRBG_PARAM_DIGEST',                 'digest',      'utf8_string'],
-                          ['OSSL_RAND_PARAM_STATE',                  'state',       'int'],
-                          ['OSSL_RAND_PARAM_STRENGTH',               'str',         'uint'],
-                          ['OSSL_RAND_PARAM_MAX_REQUEST',            'maxreq',      'size_t'],
-                          ['OSSL_DRBG_PARAM_MIN_ENTROPYLEN',         'minentlen',   'size_t'],
-                          ['OSSL_DRBG_PARAM_MAX_ENTROPYLEN',         'maxentlen',   'size_t'],
-                          ['OSSL_DRBG_PARAM_MIN_NONCELEN',           'minnonlen',   'size_t'],
-                          ['OSSL_DRBG_PARAM_MAX_NONCELEN',           'maxnonlen',   'size_t'],
-                          ['OSSL_DRBG_PARAM_MAX_PERSLEN',            'maxperlen',   'size_t'],
-                          ['OSSL_DRBG_PARAM_MAX_ADINLEN',            'maxadlen',    'size_t'],
-                          ['OSSL_DRBG_PARAM_RESEED_COUNTER',         'reseed_cnt',  'uint'],
-                          ['OSSL_DRBG_PARAM_RESEED_TIME',            'reseed_time', 'time_t'],
-                          ['OSSL_DRBG_PARAM_RESEED_REQUESTS',        'reseed_req',  'uint'],
-                          ['OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL',   'reseed_int',  'uint64'],
-                          ['OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',         'int', 'fips'],
-                         )); -}
-
 static int drbg_hash_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
@@ -624,18 +604,6 @@ static int drbg_hash_set_ctx_params_locked
 
     return ossl_drbg_set_ctx_params(ctx, p);
 }
-
-#define drbg_hash_set_ctx_params_st  drbg_set_ctx_params_st
-
-{- produce_param_decoder('drbg_hash_set_ctx_params',
-                         (['OSSL_DRBG_PARAM_PROPERTIES',           'propq',       'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',                'engine',      'utf8_string', 'hidden'],
-                          ['OSSL_DRBG_PARAM_DIGEST',               'digest',      'utf8_string'],
-                          ['OSSL_PROV_PARAM_CORE_PROV_NAME',       'prov',        'utf8_string'],
-                          ['OSSL_DRBG_PARAM_RESEED_REQUESTS',      'reseed_req',  'uint'],
-                          ['OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL', 'reseed_time', 'uint64'],
-                          ['OSSL_KDF_PARAM_FIPS_DIGEST_CHECK',     'ind_d',       'int', 'fips'],
-                         )); -}
 
 static int drbg_hash_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
