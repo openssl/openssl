@@ -5745,6 +5745,8 @@ OSSL_CRMF_ENCRYPTEDVALUE_decrypt        ?	4_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_ENCRYPTEDKEY_get1_pkey        ?	4_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_MSG_centralkeygen_requested   ?	4_0_0	EXIST::FUNCTION:CRMF
 CMS_EnvelopedData_dup                   ?	4_0_0	EXIST::FUNCTION:CMS
+CMS_SignerInfo_get0_signer_cert         ?	4_0_0	EXIST::FUNCTION:CMS
+CMS_SignerInfo_get_verification_result  ?	4_0_0	EXIST::FUNCTION:CMS
 OSSL_CRMF_ENCRYPTEDKEY_init_envdata     ?	4_0_0	EXIST::FUNCTION:CMS,CRMF
 EVP_get1_default_properties             ?	4_0_0	EXIST::FUNCTION:
 RAND_set1_random_provider               ?	4_0_0	EXIST::FUNCTION:
