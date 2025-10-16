@@ -13,6 +13,9 @@
 # define OSSL_CRYPTO_TYPES_H
 # pragma once
 
+/* At some point in the future, this may move to include/openssl/types.h */
+typedef struct ossl_fn_st OSSL_FN;
+
 # ifdef OPENSSL_NO_DEPRECATED_3_0
 typedef struct rsa_st RSA;
 typedef struct rsa_meth_st RSA_METHOD;
