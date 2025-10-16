@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * See SP800-185 "Appendix A - KMAC, .... in Terms of Keccak[c]"
@@ -64,6 +61,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
 #include "internal/cryptlib.h" /* ossl_assert */
+#include "providers/implementations/macs/kmac_prov.inc"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -190,12 +188,6 @@ static struct kmac_data_st *kmac_new(void *provctx)
 }
 
 #define kmac_new_list
-
-{- produce_param_decoder('kmac_new',
-                         (['OSSL_MAC_PARAM_DIGEST',     'digest', 'utf8_string'],
-                          ['OSSL_MAC_PARAM_PROPERTIES', 'propq',  'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
-                         )); -}
 
 static void *kmac_fetch_new(void *provctx, const OSSL_PARAM *params)
 {
@@ -403,12 +395,6 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     return ok;
 }
 
-{- produce_param_decoder('kmac_get_ctx_params',
-                         (['OSSL_MAC_PARAM_SIZE',                    'size',   'size_t'],
-                          ['OSSL_MAC_PARAM_BLOCK_SIZE',              'bsize',  'size_t'],
-                          ['OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
-                         )); -}
-
 static const OSSL_PARAM *kmac_gettable_ctx_params(ossl_unused void *ctx,
                                                   ossl_unused void *provctx)
 {
@@ -438,15 +424,6 @@ static int kmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 
     return 1;
 }
-
-{- produce_param_decoder('kmac_set_ctx_params',
-                         (['OSSL_MAC_PARAM_XOF',               'xof',     'int'],
-                          ['OSSL_MAC_PARAM_SIZE',              'size',    'size_t'],
-                          ['OSSL_MAC_PARAM_KEY',               'key',     'octet_string'],
-                          ['OSSL_MAC_PARAM_CUSTOM',            'custom',  'octet_string'],
-                          ['OSSL_MAC_PARAM_FIPS_KEY_CHECK',    'ind_k',   'int', 'fips'],
-                          ['OSSL_MAC_PARAM_FIPS_NO_SHORT_MAC', 'ind_sht', 'int', 'fips'],
-                         )); -}
 
 static const OSSL_PARAM *kmac_settable_ctx_params(ossl_unused void *ctx,
                                                   ossl_unused void *provctx)

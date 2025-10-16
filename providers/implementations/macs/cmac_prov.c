@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * CMAC low level APIs are deprecated for public use, but still ok for internal
@@ -31,6 +28,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
 #include "crypto/cmac.h"
+#include "providers/implementations/macs/cmac_prov.inc"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -203,12 +201,6 @@ static int cmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     return CMAC_Final(macctx->ctx, out, outl);
 }
 
-{- produce_param_decoder('cmac_get_ctx_params',
-                         (['OSSL_MAC_PARAM_SIZE',                    'size',   'size_t'],
-                          ['OSSL_MAC_PARAM_BLOCK_SIZE',              'bsize',  'size_t'],
-                          ['OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
-                         )); -}
-
 static const OSSL_PARAM *cmac_gettable_ctx_params(ossl_unused void *ctx,
                                                   ossl_unused void *provctx)
 {
@@ -234,14 +226,6 @@ static int cmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 
     return 1;
 }
-
-{- produce_param_decoder('cmac_set_ctx_params',
-                         (['OSSL_MAC_PARAM_CIPHER',                'cipher', 'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',                'engine', 'utf8_string', 'hidden'],
-                          ['OSSL_MAC_PARAM_PROPERTIES',            'propq',  'utf8_string'],
-                          ['OSSL_MAC_PARAM_KEY',                   'key',    'octet_string'],
-                          ['OSSL_CIPHER_PARAM_FIPS_ENCRYPT_CHECK', 'ind_ec', 'int', 'fips'],
-                         )); -}
 
 static const OSSL_PARAM *cmac_settable_ctx_params(ossl_unused void *ctx,
                                                   ossl_unused void *provctx)
