@@ -53,13 +53,13 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/exchange/dh_exch.c \
          providers/implementations/exchange/ecdh_exch.c \
          providers/implementations/exchange/ecx_exch.c \
-         providers/implementations/encode_decode/decode_der2key.c \
-         providers/implementations/encode_decode/decode_epki2pki.c \
-         providers/implementations/encode_decode/decode_pem2der.c \
-         providers/implementations/encode_decode/decode_pvk2key.c \
-         providers/implementations/encode_decode/decode_spki2typespki.c \
-         providers/implementations/encode_decode/encode_key2any.c \
-         providers/implementations/encode_decode/encode_key2ms.c \
+         providers/implementations/encode_decode/decode_der2key.inc \
+         providers/implementations/encode_decode/decode_epki2pki.inc \
+         providers/implementations/encode_decode/decode_pem2der.inc \
+         providers/implementations/encode_decode/decode_pvk2key.inc \
+         providers/implementations/encode_decode/decode_spki2typespki.inc \
+         providers/implementations/encode_decode/encode_key2any.inc \
+         providers/implementations/encode_decode/encode_key2ms.inc \
          providers/implementations/kdfs/argon2.c \
          providers/implementations/kdfs/hkdf.c \
          providers/implementations/kdfs/hmacdrbg_kdf.c \
@@ -171,13 +171,13 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/exchange/dh_exch.c \
        providers/implementations/exchange/ecdh_exch.c \
        providers/implementations/exchange/ecx_exch.c \
-       providers/implementations/encode_decode/decode_der2key.c \
-       providers/implementations/encode_decode/decode_epki2pki.c \
-       providers/implementations/encode_decode/decode_pem2der.c \
-       providers/implementations/encode_decode/decode_pvk2key.c \
-       providers/implementations/encode_decode/decode_spki2typespki.c \
-       providers/implementations/encode_decode/encode_key2any.c \
-       providers/implementations/encode_decode/encode_key2ms.c \
+       providers/implementations/encode_decode/decode_der2key.inc \
+       providers/implementations/encode_decode/decode_epki2pki.inc \
+       providers/implementations/encode_decode/decode_pem2der.inc \
+       providers/implementations/encode_decode/decode_pvk2key.inc \
+       providers/implementations/encode_decode/decode_spki2typespki.inc \
+       providers/implementations/encode_decode/encode_key2any.inc \
+       providers/implementations/encode_decode/encode_key2ms.inc \
        providers/implementations/kdfs/argon2.c \
        providers/implementations/kdfs/hkdf.c \
        providers/implementations/kdfs/hmacdrbg_kdf.c \
@@ -261,20 +261,20 @@ GENERATE[providers/implementations/exchange/ecdh_exch.c]=\
     providers/implementations/exchange/ecdh_exch.c.in
 GENERATE[providers/implementations/exchange/ecx_exch.c]=\
     providers/implementations/exchange/ecx_exch.c.in
-GENERATE[providers/implementations/encode_decode/decode_der2key.c]=\
-    providers/implementations/encode_decode/decode_der2key.c.in
-GENERATE[providers/implementations/encode_decode/decode_epki2pki.c]=\
-    providers/implementations/encode_decode/decode_epki2pki.c.in
-GENERATE[providers/implementations/encode_decode/decode_pem2der.c]=\
-    providers/implementations/encode_decode/decode_pem2der.c.in
-GENERATE[providers/implementations/encode_decode/decode_pvk2key.c]=\
-    providers/implementations/encode_decode/decode_pvk2key.c.in
-GENERATE[providers/implementations/encode_decode/decode_spki2typespki.c]=\
-    providers/implementations/encode_decode/decode_spki2typespki.c.in
-GENERATE[providers/implementations/encode_decode/encode_key2any.c]=\
-    providers/implementations/encode_decode/encode_key2any.c.in
-GENERATE[providers/implementations/encode_decode/encode_key2ms.c]=\
-    providers/implementations/encode_decode/encode_key2ms.c.in
+GENERATE[providers/implementations/encode_decode/decode_der2key.inc]=\
+    providers/implementations/encode_decode/decode_der2key.inc.in
+GENERATE[providers/implementations/encode_decode/decode_epki2pki.inc]=\
+    providers/implementations/encode_decode/decode_epki2pki.inc.in
+GENERATE[providers/implementations/encode_decode/decode_pem2der.inc]=\
+    providers/implementations/encode_decode/decode_pem2der.inc.in
+GENERATE[providers/implementations/encode_decode/decode_pvk2key.inc]=\
+    providers/implementations/encode_decode/decode_pvk2key.inc.in
+GENERATE[providers/implementations/encode_decode/decode_spki2typespki.inc]=\
+    providers/implementations/encode_decode/decode_spki2typespki.inc.in
+GENERATE[providers/implementations/encode_decode/encode_key2any.inc]=\
+    providers/implementations/encode_decode/encode_key2any.inc.in
+GENERATE[providers/implementations/encode_decode/encode_key2ms.inc]=\
+    providers/implementations/encode_decode/encode_key2ms.inc.in
 GENERATE[providers/implementations/kdfs/argon2.c]=\
     providers/implementations/kdfs/argon2.c.in
 GENERATE[providers/implementations/kdfs/hkdf.c]=\

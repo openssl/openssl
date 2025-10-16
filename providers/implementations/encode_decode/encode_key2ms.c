@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * Low level APIs are deprecated for public use, but still ok for internal use.
@@ -31,6 +28,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
 #include "prov/endecoder_local.h"
+#include "providers/implementations/encode_decode/encode_key2ms.inc"
 
 struct key2ms_ctx_st {
     PROV_CTX *provctx;
@@ -92,10 +90,6 @@ static void key2ms_freectx(void *vctx)
     ossl_pw_clear_passphrase_data(&ctx->pwdata);
     OPENSSL_free(ctx);
 }
-
-{- produce_param_decoder('key2pvk_set_ctx_params',
-                         (['OSSL_ENCODER_PARAM_ENCRYPT_LEVEL', 'enclvl', 'int'],
-                         )); -}
 
 static const OSSL_PARAM *key2pvk_settable_ctx_params(ossl_unused void *provctx)
 {

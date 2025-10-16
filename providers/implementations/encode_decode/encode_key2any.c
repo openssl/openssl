@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * Low level APIs are deprecated for public use, but still ok for internal use.
@@ -44,6 +41,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/endecoder_local.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
+#include "providers/implementations/encode_decode/encode_key2any.inc"
 
 #if defined(OPENSSL_NO_DH) && defined(OPENSSL_NO_DSA) && defined(OPENSSL_NO_EC)
 # define OPENSSL_NO_KEYPARAMS
@@ -71,7 +69,6 @@ typedef int key_to_der_fn(BIO *out, const void *key,
                           key_to_paramstring_fn *p2s,
                           OSSL_i2d_of_void_ctx *k2d, KEY2ANY_CTX *ctx);
 typedef int write_bio_of_void_fn(BIO *bp, const void *x);
-
 
 /* Free the blob allocated during key_to_paramstring_fn */
 static void free_asn1_data(int type, void *data)
@@ -161,7 +158,6 @@ static X509_PUBKEY *key_to_pubkey(const void *key, int key_nid,
     int derlen;
     /* The final X509_PUBKEY */
     X509_PUBKEY *xpk = NULL;
-
 
     if ((xpk = X509_PUBKEY_new()) == NULL
         || (derlen = k2d(key, &der, (void *)ctx)) <= 0
@@ -1136,12 +1132,6 @@ static void key2any_freectx(void *vctx)
     EVP_CIPHER_free(ctx->cipher);
     OPENSSL_free(ctx);
 }
-
-{- produce_param_decoder('key2any_set_ctx_params',
-                         (['OSSL_ENCODER_PARAM_CIPHER',          'cipher', 'utf8_string'],
-                          ['OSSL_ENCODER_PARAM_PROPERTIES',      'propq',  'utf8_string'],
-                          ['OSSL_ENCODER_PARAM_SAVE_PARAMETERS', 'svprm',  'int'],
-                         )); -}
 
 static const OSSL_PARAM *key2any_settable_ctx_params(ossl_unused void *provctx)
 {

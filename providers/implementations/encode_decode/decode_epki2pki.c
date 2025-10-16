@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
@@ -27,6 +24,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/decoders.h"
 #include "prov/implementations.h"
 #include "prov/endecoder_local.h"
+#include "providers/implementations/encode_decode/decode_epki2pki.inc"
 
 static OSSL_FUNC_decoder_newctx_fn epki2pki_newctx;
 static OSSL_FUNC_decoder_freectx_fn epki2pki_freectx;
@@ -57,10 +55,6 @@ static void epki2pki_freectx(void *vctx)
 
     OPENSSL_free(ctx);
 }
-
-{- produce_param_decoder('epki2pki_set_ctx_params',
-                         (['OSSL_DECODER_PARAM_PROPERTIES', 'propq', 'utf8_string'],
-                         )); -}
 
 static const OSSL_PARAM *epki2pki_settable_ctx_params(ossl_unused void *provctx)
 {
