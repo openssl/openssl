@@ -493,12 +493,6 @@ static int test_keylog_no_master_key(int idx)
         smeth = DTLS_server_method();
         cmeth = DTLS_client_method();
         vermin = DTLS1_VERSION;
-        /*
-         * TODO(DTLSv1.3): Test fails in
-         * TEST_int_eq(SSL_read_early_data(), SSL_READ_EARLY_DATA_ERROR)
-         */
-        testresult = TEST_skip("Test fails with DTLSv1.3");
-        goto end;
 # if defined(OSSL_NO_USABLE_DTLS13)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
@@ -3169,18 +3163,17 @@ static int test_psk_tickets(int idx)
     const SSL_METHOD *smeth, *cmeth;
     int vermin, vermax = 0;
     int testdtls = idx > 0;
+    int clientpskver = TLS1_3_VERSION;
 
     if (testdtls) {
         smeth = DTLS_server_method();
         cmeth = DTLS_client_method();
+        clientpskver = DTLS1_3_VERSION;
         vermin = DTLS1_VERSION;
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("DTLSv1.3 is not usable");
         goto end;
 # endif
-        /* TODO(DTLSv1.3): Test fails with DTLS */
-        testresult = TEST_skip("Test fails with DTLS");
-        goto end;
     } else {
         smeth = TLS_server_method();
         cmeth = TLS_client_method();
@@ -3212,7 +3205,9 @@ static int test_psk_tickets(int idx)
                                       NULL, NULL)))
         goto end;
     clientpsk = serverpsk = create_a_psk(clientssl, SHA384_DIGEST_LENGTH);
-    if (!TEST_ptr(clientpsk) || !TEST_true(SSL_SESSION_up_ref(clientpsk)))
+    if (!TEST_ptr(clientpsk)
+        || !TEST_true(SSL_SESSION_up_ref(clientpsk))
+        || !TEST_true(SSL_SESSION_set_protocol_version(clientpsk, clientpskver)))
         goto end;
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
@@ -3248,6 +3243,7 @@ static int test_extra_tickets(int idx)
     size_t nbytes;
     unsigned char c, buf[1];
     int testdtls = (idx >= 6);
+    int expected_new_called = 0;
 
     new_called = 0;
     do_cache = 1;
@@ -3258,13 +3254,6 @@ static int test_extra_tickets(int idx)
         testresult = TEST_skip("DTLSv1.3 is not usable");
         goto end;
 # endif
-        /*
-         * TODO(DTLSv1.3): Tests fails when enabling DTLS:
-         * # ERROR: (bool) 'SSL_write_ex(serverssl, &c, 0, &nbytes) == true' failed
-         *                                                  @ test/sslapitest.c:2799
-         */
-        testresult = TEST_skip("Test fails with DTLS");
-        goto end;
     } else {
 # if defined(OSSL_NO_USABLE_TLS1_3)
         testresult = TEST_skip("TLSv1.3 is not usable");
@@ -3369,6 +3358,14 @@ static int test_extra_tickets(int idx)
     /* Restore a BIO that will let the write succeed */
     SSL_set0_wbio(serverssl, tmp);
     tmp = NULL;
+
+    /*
+     * When the DTLS 1.3 write fails it doesn't get queued up and thus
+     * New Session Tickets can be issued.
+     */
+    if (testdtls)
+        expected_new_called = 2;
+
     /*
      * These calls should just queue the request and not send anything
      * even if we explicitly try to hit the state machine.
@@ -3377,27 +3374,40 @@ static int test_extra_tickets(int idx)
             || !TEST_true(SSL_new_session_ticket(serverssl))
             || !TEST_int_eq(0, new_called)
             || !TEST_true(SSL_do_handshake(serverssl))
-            || !TEST_int_eq(0, new_called))
+            || !TEST_int_eq(expected_new_called, new_called))
         goto end;
     /* Re-do the write; still no tickets sent */
     if (!TEST_true(SSL_write_ex(serverssl, &c, 1, &nbytes))
             || !TEST_size_t_eq(1, nbytes)
-            || !TEST_int_eq(0, new_called)
-            || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes))
-            || !TEST_int_eq(0, new_called)
+            || !TEST_int_eq(expected_new_called, new_called))
+        goto end;
+
+    /*
+     * When the DTLS 1.3 write fails it doesn't get queued up and thus
+     * New Session Tickets can be issued.
+     */
+    if (testdtls)
+        expected_new_called = 4;
+
+    if (!TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes))
+            || !TEST_int_eq(expected_new_called, new_called)
             || !TEST_size_t_eq(sizeof(buf), nbytes)
             || !TEST_int_eq(c, buf[0])
             || !TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes)))
         goto end;
     /* Even trying to hit the state machine now will still not send tickets */
     if (!TEST_true(SSL_do_handshake(serverssl))
-            || !TEST_int_eq(0, new_called))
+            || !TEST_int_eq(expected_new_called, new_called))
         goto end;
     /* Now the *next* write should send the tickets */
     c = '6';
+
+    if (!testdtls)
+        expected_new_called = 2;
+
     if (!TEST_true(SSL_write_ex(serverssl, &c, 1, &nbytes))
             || !TEST_size_t_eq(1, nbytes)
-            || !TEST_int_eq(2, new_called)
+            || !TEST_int_eq(expected_new_called, new_called)
             || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes))
             || !TEST_int_eq(4, new_called)
             || !TEST_size_t_eq(sizeof(buf), nbytes)
@@ -3971,11 +3981,13 @@ static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
     int artificial = (artificial_ticket_time > 0);
     const SSL_METHOD *cmeth, *smeth;
     int vermin, vermax = 0;
+    int pskver = TLS1_3_VERSION;
 
     if (testdtls) {
         smeth = DTLS_server_method();
         cmeth = DTLS_client_method();
         vermin = DTLS1_VERSION;
+        pskver = DTLS1_3_VERSION;
     } else {
         smeth = TLS_server_method();
         cmeth = TLS_client_method();
@@ -4029,7 +4041,8 @@ static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
                     */
                 || !TEST_true(SSL_SESSION_set_max_early_data(clientpsk,
                                                              0x100))
-                || !TEST_true(SSL_SESSION_up_ref(clientpsk))) {
+                || !TEST_true(SSL_SESSION_up_ref(clientpsk))
+                || !TEST_true(SSL_SESSION_set_protocol_version(clientpsk, pskver))) {
             SSL_SESSION_free(clientpsk);
             clientpsk = NULL;
             return 0;
@@ -4109,12 +4122,8 @@ static int test_early_data_read_write(int idx)
     OSSL_TIME timer;
     int testdtls = idx >= 6;
 
-    if (testdtls) {
+    if (testdtls)
         idx -= 6;
-        /* TODO(DTLSv1.3): Tests fails for various reasons */
-        testresult = TEST_skip("Tests fails with DTLS");
-        goto end;
-    }
 # if defined(OSSL_NO_USABLE_TLS1_3)
     if (!testdtls) {
         testresult = TEST_skip("TLSv1.3 is not usable");
@@ -4185,59 +4194,108 @@ static int test_early_data_read_write(int idx)
         goto end;
 
     /*
-     * If client writes normal data it should mean writing early data is no
-     * longer possible.
+     * DTLS 1.3 Client will finish the handshake when the SSL_write_ex is called.
+     * This is the same as TLS 1.3, but for DTLS 1.3 the client doesn't exit the
+     * state machine. Instead it waits to read a DTLS 1.3 ACK from the server.
+     * This cannot happen with how this test is written.
+     *
+     * Therefore the call to SSL_write_ex will return false.
      */
-    if (!TEST_true(SSL_write_ex(clientssl, MSG5, strlen(MSG5), &written))
-            || !TEST_size_t_eq(written, strlen(MSG5))
-            || !TEST_int_eq(SSL_get_early_data_status(clientssl),
-                            SSL_EARLY_DATA_ACCEPTED))
-        goto end;
+    if (testdtls) {
+        /*
+         * If client writes normal data it should mean writing early data is no
+         * longer possible.
+         */
+        written = 0;
+        if (!TEST_false(SSL_write_ex(clientssl, MSG5, strlen(MSG5), &written))
+                || !TEST_size_t_eq(written, 0)
+                || !TEST_int_eq(SSL_get_early_data_status(clientssl),
+                                SSL_EARLY_DATA_ACCEPTED))
+            goto end;
 
-    /*
-     * At this point the client has written EndOfEarlyData, ClientFinished and
-     * normal (fully protected) data. We are going to cause a delay between the
-     * arrival of EndOfEarlyData and ClientFinished. We read out all the data
-     * in the read BIO, and then just put back the EndOfEarlyData message.
-     */
-    rbio = SSL_get_rbio(serverssl);
-    if (!TEST_true(BIO_read_ex(rbio, data, sizeof(data), &rawread))
-            || !TEST_size_t_lt(rawread, sizeof(data))
-            || !TEST_size_t_gt(rawread, SSL3_RT_HEADER_LENGTH))
-        goto end;
+        /*
+         * Server should be told he can still read early data since
+         * the server hasn't read the Client Finish message
+         */
+        readbytes = 0;
+        if (!TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+                                             &readbytes),
+                         SSL_READ_EARLY_DATA_FINISH)
+                || !TEST_size_t_eq(readbytes, 0))
+            goto end;
 
-    /* Record length is in the 4th and 5th bytes of the record header */
-    eoedlen = SSL3_RT_HEADER_LENGTH + (data[3] << 8 | data[4]);
-    if (!TEST_true(BIO_write_ex(rbio, data, eoedlen, &rawwritten))
-            || !TEST_size_t_eq(rawwritten, eoedlen))
-        goto end;
+        /*
+         * Server has not finished init yet, so should still be able to write early
+         * data.
+         */
+        if (!TEST_true(SSL_write_early_data(serverssl, MSG6, strlen(MSG6),
+                                            &written))
+                || !TEST_size_t_eq(written, strlen(MSG6)))
+            goto end;
 
-    /* Server should be told that there is no more early data */
-    if (!TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
-                                         &readbytes),
-                     SSL_READ_EARLY_DATA_FINISH)
-            || !TEST_size_t_eq(readbytes, 0))
-        goto end;
+        /*
+         * Server should not receive anything here since the data was not sent
+         * by the client in the call above. The reason for that is the client
+         * is waiting for the ACK to the Client Finish message.
+         */
+        if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes)))
+            goto end;
+    } else {
+        /*
+         * If client writes normal data it should mean writing early data is no
+         * longer possible.
+         */
+        if (!TEST_true(SSL_write_ex(clientssl, MSG5, strlen(MSG5), &written))
+                || !TEST_size_t_eq(written, strlen(MSG5))
+                || !TEST_int_eq(SSL_get_early_data_status(clientssl),
+                                SSL_EARLY_DATA_ACCEPTED))
+            goto end;
 
-    /*
-     * Server has not finished init yet, so should still be able to write early
-     * data.
-     */
-    if (!TEST_true(SSL_write_early_data(serverssl, MSG6, strlen(MSG6),
-                                        &written))
-            || !TEST_size_t_eq(written, strlen(MSG6)))
-        goto end;
+        /*
+         * At this point the client has written EndOfEarlyData, ClientFinished and
+         * normal (fully protected) data. We are going to cause a delay between the
+         * arrival of EndOfEarlyData and ClientFinished. We read out all the data
+         * in the read BIO, and then just put back the EndOfEarlyData message.
+         */
+        rbio = SSL_get_rbio(serverssl);
+        if (!TEST_true(BIO_read_ex(rbio, data, sizeof(data), &rawread))
+                || !TEST_size_t_lt(rawread, sizeof(data))
+                || !TEST_size_t_gt(rawread, SSL3_RT_HEADER_LENGTH))
+            goto end;
 
-    /* Push the ClientFinished and the normal data back into the server rbio */
-    if (!TEST_true(BIO_write_ex(rbio, data + eoedlen, rawread - eoedlen,
-                                &rawwritten))
-            || !TEST_size_t_eq(rawwritten, rawread - eoedlen))
-        goto end;
+        /* Record length is in the 4th and 5th bytes of the record header */
+        eoedlen = SSL3_RT_HEADER_LENGTH + (data[3] << 8 | data[4]);
+        if (!TEST_true(BIO_write_ex(rbio, data, eoedlen, &rawwritten))
+                || !TEST_size_t_eq(rawwritten, eoedlen))
+            goto end;
 
-    /* Server should be able to read normal data */
-    if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
-            || !TEST_size_t_eq(readbytes, strlen(MSG5)))
-        goto end;
+        /* Server should be told that there is no more early data */
+        if (!TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+                                             &readbytes),
+                         SSL_READ_EARLY_DATA_FINISH)
+                || !TEST_size_t_eq(readbytes, 0))
+            goto end;
+
+        /*
+         * Server has not finished init yet, so should still be able to write early
+         * data.
+         */
+        if (!TEST_true(SSL_write_early_data(serverssl, MSG6, strlen(MSG6),
+                                            &written))
+                || !TEST_size_t_eq(written, strlen(MSG6)))
+            goto end;
+
+        /* Push the ClientFinished and the normal data back into the server rbio */
+        if (!TEST_true(BIO_write_ex(rbio, data + eoedlen, rawread - eoedlen,
+                                    &rawwritten))
+                || !TEST_size_t_eq(rawwritten, rawread - eoedlen))
+            goto end;
+
+        /* Server should be able to read normal data */
+        if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+                || !TEST_size_t_eq(readbytes, strlen(MSG5)))
+            goto end;
+    }
 
     /* Client and server should not be able to write/read early data now */
     if (!TEST_false(SSL_write_early_data(clientssl, MSG6, strlen(MSG6),
@@ -4297,9 +4355,21 @@ static int test_early_data_read_write(int idx)
             || !TEST_mem_eq(buf, readbytes, MSG1, strlen(MSG1)))
         goto end;
 
-    if (!TEST_int_gt(SSL_connect(clientssl), 0)
-            || !TEST_int_gt(SSL_accept(serverssl), 0))
-        goto end;
+    if (testdtls) {
+        /*
+         * Since DTLS1.3 requires the Client to receive an
+         * ACK so the first call to SSL_connect will fail
+         * since it is waiting for the ACK from the server
+         */
+        if (!TEST_int_lt(SSL_connect(clientssl), 0)
+                || !TEST_int_gt(SSL_accept(serverssl), 0)
+                || !TEST_int_gt(SSL_connect(clientssl), 0))
+            goto end;
+    } else {
+        if (!TEST_int_gt(SSL_connect(clientssl), 0)
+                || !TEST_int_gt(SSL_accept(serverssl), 0))
+            goto end;
+    }
 
     /* Client and server should not be able to write/read early data now */
     if (!TEST_false(SSL_write_early_data(clientssl, MSG6, strlen(MSG6),
@@ -4378,9 +4448,6 @@ static int test_early_data_replay_int(int idx, int usecb, int confopt)
         testresult = TEST_skip("DTLSv1.3 is not usable");
         goto end;
 # endif
-        /* TODO(DTLSv1.3): Tests fails with dtls. */
-        testresult = TEST_skip("Tests fails with dtls");
-        goto end;
     } else {
         smeth = TLS_server_method();
         cmeth = TLS_client_method();
@@ -4468,13 +4535,28 @@ static int test_early_data_replay_int(int idx, int usecb, int confopt)
             testresult = check_early_data_timeout(timer);
             goto end;
         }
-        if (!TEST_mem_eq(MSG1, strlen(MSG1), buf, readbytes)
-                   /*
-                    * Server will have sent its flight so client can now send
-                    * end of early data and complete its half of the handshake
-                    */
-                || !TEST_int_gt(SSL_connect(clientssl), 0)
-                || !TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+        if (!TEST_mem_eq(MSG1, strlen(MSG1), buf, readbytes))
+            goto end;
+
+        if (testdtls) {
+            /*
+             * Server will have sent its flight so client can now send
+             * end of early data and complete its half of the handshake
+             * DTLS1.3 will return an error for the client is waiting
+             * for an ACK from the server
+             */
+            if (!TEST_int_lt(SSL_connect(clientssl), 0))
+                goto end;
+        } else {
+            /*
+             * Server will have sent its flight so client can now send
+             * end of early data and complete its half of the handshake
+             */
+            if (!TEST_int_gt(SSL_connect(clientssl), 0))
+                goto end;
+        }
+
+        if (!TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
                                              &readbytes),
                                 SSL_READ_EARLY_DATA_FINISH)
                 || !TEST_int_eq(SSL_get_early_data_status(serverssl),
@@ -4653,6 +4735,9 @@ static int early_data_skip_helper(int testdtls, int testtype, int cipher, int id
             const unsigned char bad_early_data[] = {
                 0x17, 0x03, 0x03, 0x00, 0x01, 0x00
             };
+            const unsigned char bad_early_data_dtls[] = {
+                0x2D, 0x00, 0x00, 0x00, 0x01, 0x00
+            };
 
             /*
              * We force the client to attempt a write. This will fail because
@@ -4667,9 +4752,21 @@ static int early_data_skip_helper(int testdtls, int testtype, int cipher, int id
              * Inject some early_data after the second ClientHello. This should
              * cause the server to fail
              */
-            if (!TEST_true(BIO_write_ex(wbio, bad_early_data,
-                                        sizeof(bad_early_data), &written)))
-                goto end;
+            if (testdtls) {
+                /*
+                 * Injecting bad DTLS data, but since the sequence number needs
+                 * to be encrypted the SSL_Read below will result in a different
+                 * error message. This is cause the packet gets dropped.
+                 */
+                if (!TEST_true(BIO_write_ex(wbio, bad_early_data_dtls,
+                                            sizeof(bad_early_data_dtls), &written)))
+                    goto end;
+
+            } else {
+                if (!TEST_true(BIO_write_ex(wbio, bad_early_data,
+                                            sizeof(bad_early_data), &written)))
+                    goto end;
+            }
         }
         /* FALLTHROUGH */
 
@@ -4679,10 +4776,15 @@ static int early_data_skip_helper(int testdtls, int testtype, int cipher, int id
          * (case 3) or sent invalid early_data (case 2) so the connection should
          * abort.
          */
-        if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
-                || !TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_SSL))
-            goto end;
-
+        if (testdtls) {
+            if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+                    || !TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_WANT_READ))
+                goto end;
+        } else {
+            if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+                    || !TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_SSL))
+                goto end;
+        }
         /* Connection has failed - nothing more to do */
         testresult = 1;
         goto end;
@@ -4690,6 +4792,23 @@ static int early_data_skip_helper(int testdtls, int testtype, int cipher, int id
     default:
         TEST_error("Invalid test type");
         goto end;
+    }
+
+    /*
+     * To finish the DTLS1.3 handshake the client needs to
+     * process the ack message from the server before it
+     * can write data.
+     *
+     * The SSL_write_ex from the client will fail since
+     * the client needs to send a finish message and will
+     * wait for the server to send the ACK response.
+     */
+    if (testdtls) {
+        if (!TEST_true(SSL_connect(clientssl)))
+            goto end;
+
+        if (!TEST_true(SSL_accept(serverssl)))
+            goto end;
     }
 
     ERR_clear_error();
@@ -4736,9 +4855,17 @@ static int test_early_data_skip(int idx)
 
     if (testdtls) {
         idx -= OSSL_NELEM(ciphersuites) * 3;
-
-        /* TODO(DTLSv1.3): testing with DTLS fails for various reasons */
-        return TEST_skip("Tests fails with DTLS");
+        if (idx % OSSL_NELEM(ciphersuites) == 0 || idx % OSSL_NELEM(ciphersuites) == 5
+            || idx % OSSL_NELEM(ciphersuites) == 6) {
+            /*
+             * TODO(DTLSv1.3): testing with DTLS fails for DTLS1.3 Padding
+             * needs to be implemented https://github.com/openssl/project/issues/1700
+             *
+             * TODO(DTLSv1.3): Testing DTLS1.3 with Integrity only ciphersuits fails
+             * https://github.com/openssl/project/issues/1702
+             */
+            return TEST_skip("Tests fails with DTLS1.3 for ciphers are not supported");
+        }
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         return TEST_skip("No usable DTLSv1.3");
 # endif
@@ -4763,9 +4890,17 @@ static int test_early_data_skip_hrr(int idx)
 
     if (testdtls) {
         idx -= OSSL_NELEM(ciphersuites) * 3;
-
-        /* TODO(DTLSv1.3): testing with DTLS fails for various reasons */
-        return TEST_skip("Tests fails with DTLS");
+        if (idx % OSSL_NELEM(ciphersuites) == 0 || idx % OSSL_NELEM(ciphersuites) == 5
+            || idx % OSSL_NELEM(ciphersuites) == 6) {
+            /*
+             * TODO(DTLSv1.3): testing with DTLS fails for DTLS1.3 Padding
+             * needs to be implemented https://github.com/openssl/project/issues/1700
+             *
+             * TODO(DTLSv1.3): Testing DTLS1.3 with Integrity only ciphersuits fails
+             * https://github.com/openssl/project/issues/1702
+             */
+            return TEST_skip("Tests fails with DTLS1.3 for ciphers are not supported");
+        }
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         return TEST_skip("No usable DTLSv1.3");
 # endif
@@ -4791,9 +4926,17 @@ static int test_early_data_skip_hrr_fail(int idx)
 
     if (testdtls) {
         idx -= OSSL_NELEM(ciphersuites) * 3;
-
-        /* TODO(DTLSv1.3): testing with DTLS fails for various reasons */
-        return TEST_skip("Tests fails with DTLS");
+        if (idx % OSSL_NELEM(ciphersuites) == 0 || idx % OSSL_NELEM(ciphersuites) == 5
+            || idx % OSSL_NELEM(ciphersuites) == 6) {
+            /*
+             * TODO(DTLSv1.3): testing with DTLS fails for DTLS1.3 Padding
+             * needs to be implemented https://github.com/openssl/project/issues/1700
+             *
+             * TODO(DTLSv1.3): Testing DTLS1.3 with Integrity only ciphersuits fails
+             * https://github.com/openssl/project/issues/1702
+             */
+            return TEST_skip("Tests fails with DTLS1.3 for ciphers are not supported");
+        }
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         return TEST_skip("No usable DTLSv1.3");
 # endif
@@ -4818,9 +4961,17 @@ static int test_early_data_skip_abort(int idx)
 
     if (testdtls) {
         idx -= OSSL_NELEM(ciphersuites) * 3;
-
-        /* TODO(DTLSv1.3): testing with DTLS fails for various reasons */
-        return TEST_skip("Tests fails with DTLS");
+        if (idx % OSSL_NELEM(ciphersuites) == 0 || idx % OSSL_NELEM(ciphersuites) == 5
+            || idx % OSSL_NELEM(ciphersuites) == 6) {
+            /*
+             * TODO(DTLSv1.3): testing with DTLS fails for DTLS1.3 Padding
+             * needs to be implemented https://github.com/openssl/project/issues/1700
+             *
+             * TODO(DTLSv1.3): Testing DTLS1.3 with Integrity only ciphersuits fails
+             * https://github.com/openssl/project/issues/1702
+             */
+            return TEST_skip("Tests fails with DTLS1.3 for ciphers are not supported");
+        }
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         return TEST_skip("No usable DTLSv1.3");
 # endif
@@ -4851,10 +5002,6 @@ static int test_early_data_not_sent(int idx)
 
     if (testdtls) {
         idx -= 3;
-
-        /* TODO(DTLSv1.3): Tests fails for DTLS. */
-        testresult = TEST_skip("Tests fails for DTLS");
-        goto end;
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
@@ -4886,6 +5033,20 @@ static int test_early_data_not_sent(int idx)
             || !TEST_int_eq(SSL_get_early_data_status(clientssl),
                             SSL_EARLY_DATA_NOT_SENT))
         goto end;
+
+    if (testdtls) {
+        /*
+         * We need to move the state machine along for DTLS1.3
+         * The client needs to read the server hello and send its
+         * finish message and the server needs to ACK the finish
+         * message
+         */
+        if (!TEST_true(SSL_connect(clientssl)))
+            goto end;
+
+        if (!TEST_true(SSL_accept(serverssl)))
+            goto end;
+    }
 
     /* Continue writing the message we started earlier */
     if (!TEST_true(SSL_write_ex(clientssl, MSG1, strlen(MSG1), &written))
@@ -4965,11 +5126,6 @@ static int test_early_data_psk(int idx)
     if (testdtls) {
         idx -= 8;
         version1_2 = DTLS1_2_VERSION;
-
-        /* TODO(DTLSv1.3) tests fails */
-        testresult = TEST_skip("Tests fails with DTLS");
-
-        goto end;
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
@@ -5120,6 +5276,20 @@ static int test_early_data_psk(int idx)
             goto end;
         }
 
+        if (testdtls) {
+            /*
+             * We need to move the state machine along for DTLS1.3
+             * The client needs to read the server hello and send its
+             * finish message and the server needs to ACK the finish
+             * message
+             */
+            if (!TEST_true(SSL_connect(clientssl)))
+                goto end;
+
+            if (!TEST_true(SSL_accept(serverssl)))
+                goto end;
+        }
+
         if ((readearlyres == SSL_READ_EARLY_DATA_SUCCESS
                     && !TEST_mem_eq(buf, readbytes, MSG1, strlen(MSG1)))
                 || !TEST_int_eq(SSL_get_early_data_status(serverssl), edstatus)
@@ -5203,11 +5373,15 @@ static int test_early_data_psk_with_all_ciphers(int idx)
 
     if (testdtls) {
         idx -= 7;
-
-        /* TODO(DTLSv1.3): Tests fails */
-        testresult = TEST_skip("Tests fails with DTLS");
-
-        goto end;
+        /*
+         * TODO(DTLSv1.3): testing with DTLS fails for DTLS1.3 Padding
+         * needs to be implemented https://github.com/openssl/project/issues/1700
+         *
+         * TODO(DTLSv1.3): Testing DTLS1.3 with Integrity only ciphersuits fails
+         * https://github.com/openssl/project/issues/1702
+         */
+        if (idx >= 3)
+            return TEST_skip("Tests fails with DTLS1.3 for ciphers are not supported");
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
@@ -5271,6 +5445,20 @@ static int test_early_data_psk_with_all_ciphers(int idx)
         goto end;
     }
 
+    if (testdtls) {
+        /*
+         * We need to move the state machine along for DTLS1.3
+         * The client needs to read the server hello and send its
+         * finish message and the server needs to ACK the finish
+         * message
+         */
+        if (!TEST_true(SSL_connect(clientssl)))
+            goto end;
+
+        if (!TEST_true(SSL_accept(serverssl)))
+            goto end;
+    }
+
     if (!TEST_mem_eq(buf, readbytes, MSG1, strlen(MSG1))
             || !TEST_int_eq(SSL_get_early_data_status(serverssl),
                                                       SSL_EARLY_DATA_ACCEPTED)
@@ -5320,11 +5508,6 @@ static int test_early_data_not_expected(int idx)
 
     if (testdtls) {
         idx -= 3;
-
-        /* TODO(DTLSv1.3): Tests fails */
-        testresult = TEST_skip("Tests fails with DTLS");
-
-        goto end;
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
@@ -5346,18 +5529,38 @@ static int test_early_data_not_expected(int idx)
                                         &written)))
         goto end;
 
-    /*
-     * Server should skip over early data and then block waiting for client to
-     * continue handshake
-     */
-    if (!TEST_int_le(SSL_accept(serverssl), 0)
-     || !TEST_int_gt(SSL_connect(clientssl), 0)
-     || !TEST_int_eq(SSL_get_early_data_status(serverssl),
-                     SSL_EARLY_DATA_REJECTED)
-     || !TEST_int_gt(SSL_accept(serverssl), 0)
-     || !TEST_int_eq(SSL_get_early_data_status(clientssl),
-                     SSL_EARLY_DATA_REJECTED))
-        goto end;
+    if (testdtls) {
+        /*
+         * For DTLS1.3 the call to SSL_connect here still fails since
+         * it is waiting on the server to send an ACK to its Finished message.
+         */
+
+        /*
+         * Server should skip over early data and then block waiting for client to
+         * continue handshake
+         */
+        if (!TEST_int_le(SSL_accept(serverssl), 0)
+                || !TEST_int_lt(SSL_connect(clientssl), 0)
+                || !TEST_int_eq(SSL_get_early_data_status(serverssl),
+                                SSL_EARLY_DATA_REJECTED)
+                || !TEST_int_gt(SSL_accept(serverssl), 0)
+                || !TEST_int_eq(SSL_get_early_data_status(clientssl),
+                                SSL_EARLY_DATA_REJECTED))
+            goto end;
+    } else {
+        /*
+         * Server should skip over early data and then block waiting for client to
+         * continue handshake
+         */
+        if (!TEST_int_le(SSL_accept(serverssl), 0)
+                || !TEST_int_gt(SSL_connect(clientssl), 0)
+                || !TEST_int_eq(SSL_get_early_data_status(serverssl),
+                                SSL_EARLY_DATA_REJECTED)
+                || !TEST_int_gt(SSL_accept(serverssl), 0)
+                || !TEST_int_eq(SSL_get_early_data_status(clientssl),
+                                SSL_EARLY_DATA_REJECTED))
+            goto end;
+    }
 
     /* Send some normal data from client to server */
     if (!TEST_true(SSL_write_ex(clientssl, MSG2, strlen(MSG2), &written))
@@ -6452,17 +6655,14 @@ static int test_tls13_psk(int idx)
     const SSL_METHOD *smeth, *cmeth;
     int vermin, vermax = 0;
     int testdtls = idx >= 4;
+    int clientpskver = TLS1_3_VERSION;
 
     if (testdtls) {
         smeth = DTLS_server_method();
         cmeth = DTLS_client_method();
         vermin = DTLS1_VERSION;
+        clientpskver = DTLS1_3_VERSION;
         idx -= 4;
-        /* TODO(DTLSv1.3): Tests fails */
-        testresult = TEST_skip("Tests skip with DTLS");
-
-        goto end;
-
 #  if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
@@ -6574,7 +6774,7 @@ static int test_tls13_psk(int idx)
                                                       sizeof(key)))
             || !TEST_true(SSL_SESSION_set_cipher(clientpsk, cipher))
             || !TEST_true(SSL_SESSION_set_protocol_version(clientpsk,
-                                                           TLS1_3_VERSION))
+                                                           clientpskver))
             || !TEST_true(SSL_SESSION_up_ref(clientpsk)))
         goto end;
     serverpsk = clientpsk;
@@ -6871,37 +7071,20 @@ static int verify_stateless_cookie_callback(SSL *ssl, const unsigned char *cooki
     return verify_cookie_callback(ssl, cookie, (unsigned int)cookie_len);
 }
 
-static int test_stateless(int idx)
+/*
+ * DTLS does not need to be tested here. Since DTLS has a Sequence number
+ * it cannot use SSL_Stateless. If you want to use stateless DTLS
+ * use DTLSv1_listen instead. This test is already covered in
+ * dtlsv1listentest.c
+ */
+static int test_stateless()
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
-    const SSL_METHOD *smeth, *cmeth;
-    int vermin, vermax = 0;
-    int testdtls = idx >= 1;
 
-    if (testdtls) {
-        smeth = DTLS_server_method();
-        cmeth = DTLS_client_method();
-        vermin = DTLS1_VERSION;
-# if defined(OSSL_NO_USABLE_DTLS1_3) || defined(OPENSSL_NO_DTLS1_2)
-        testresult = TEST_skip("DTLSv1.3 not usable or no DTLSv1.2");
-        goto end;
-# endif
-        /* TODO(DTLSv1.3): Fails with DTLS */
-        testresult = TEST_skip("Test fails with DTLS");
-        goto end;
-    } else {
-        smeth = TLS_server_method();
-        cmeth = TLS_client_method();
-        vermin = TLS1_VERSION;
-# if defined(OSSL_NO_USABLE_TLS1_3) || defined(OPENSSL_NO_TLS1_2)
-        testresult = TEST_skip("TLSv1.3 not usable or no TLSv1.2");
-        goto end;
-# endif
-    }
-
-    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -7705,10 +7888,6 @@ static int test_export_key_mat_early(int idx)
 
     if (testdtls) {
         idx -= 3;
-
-        /* TODO(DTLSv1.3): Tests fails. */
-        testresult = TEST_skip("Tests fails with DTLS");
-        goto end;
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
@@ -7796,17 +7975,6 @@ static int test_key_update(int idx)
         smeth = DTLS_server_method();
         cmeth = DTLS_client_method();
         vermin = DTLS1_3_VERSION;
-        /*
-         * TODO(DTLSv1.3): Test fails with DTLS
-         * # ERROR: (bool) 'SSL_key_update(..) == true' failed
-         *                                              @ test/sslapitest.c:7033
-         * # false
-         * # 00BBFC4AF87F0000:error:0A000079:SSL routines
-         *                   :SSL_key_update:still in init:ssl/ssl_lib.c:2811:
-         */
-        testresult = TEST_skip("Test fails with DTLS");
-
-        goto end;
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
@@ -7838,6 +8006,42 @@ static int test_key_update(int idx)
                                           : SSL_KEY_UPDATE_REQUESTED))
                     || !TEST_true(SSL_do_handshake(clientssl)))
                 goto end;
+
+            if (testdtls) {
+                /*
+                 * For DTLS1.3 we need to call the server side too since
+                 * he needs to send an ACK and client has to process that ACK
+                 */
+                if (!TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)), -1))
+                    goto end;
+
+                /*
+                 * DTLS 1.3 Client will read the ACK message
+                 */
+                if (!TEST_int_eq(SSL_read(clientssl, buf, sizeof(buf)), -1))
+                    goto end;
+
+                /*
+                 * If DTLS1.3 Server needs to send an Key Update back
+                 * it needs to make a do_handshake call too
+                 */
+                if (j == 1) {
+                    if (!TEST_int_eq(SSL_write(serverssl, mess, (int)strlen(mess)), -1))
+                        goto end;
+
+                    /*
+                     * Client needs to read the servers key update and send an ACK
+                     */
+                    if (!TEST_int_eq(SSL_read(clientssl, buf, sizeof(buf)), -1))
+                        goto end;
+
+                    /*
+                     * The server needs to read the ACK
+                     */
+                    if (!TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)), -1))
+                        goto end;
+                }
+            }
         }
 
         /* Check that sending and receiving app data is ok */
@@ -7882,6 +8086,7 @@ static int test_key_update_peer_in_write(int idx)
     const SSL_METHOD *smeth, *cmeth;
     int vermin, vermax = 0;
     int testdtls = idx >= 2;
+    int expected_update_result = 1;
 
     if (testdtls) {
         smeth = DTLS_server_method();
@@ -7889,25 +8094,6 @@ static int test_key_update_peer_in_write(int idx)
         vermin = DTLS1_3_VERSION;
         idx -= 2;
 
-        if (idx == 0) {
-            /*
-             * TODO(DTLSv1.3): Test fails with
-             * ERROR: (int) 'SSL_do_handshake(peerupdate) == 1' failed
-             *                                         @ test/sslapitest.c:7116
-             */
-            testresult = TEST_skip("Test fails in SSL_do_handshake() for DTLS");
-
-            goto end;
-        }
-
-        if (idx == 1) {
-            /*
-             * TODO(DTLSv1.3): Test leaks memory
-             */
-            testresult = TEST_skip("Test finds a leak of a RL object");
-
-            goto end;
-        }
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
@@ -7934,8 +8120,28 @@ static int test_key_update_peer_in_write(int idx)
     peerupdate = idx == 0 ? clientssl : serverssl;
     peerwrite = idx == 0 ? serverssl : clientssl;
 
+    /*
+     * DTLS 1.3 if the client sends the key update it will return -1
+     * since it is waiting for an ACK from the server.
+     */
+    if (testdtls) {
+        size_t bytes_read = 0;
+
+        /*
+         * For DTLS1.3 the server needs to read the NewSessionTicket
+         * ack from the client before it can process the KeyUpdate
+         * message.
+         */
+        if (idx == 1)
+            if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf), &bytes_read))
+                    || !TEST_size_t_eq(bytes_read, 0))
+                goto end;
+
+        expected_update_result = -1;
+    }
+
     if (!TEST_true(SSL_key_update(peerupdate, SSL_KEY_UPDATE_REQUESTED))
-            || !TEST_int_eq(SSL_do_handshake(peerupdate), 1))
+            || !TEST_int_eq(SSL_do_handshake(peerupdate), expected_update_result))
         goto end;
 
     /* Swap the writing endpoint's write BIO to force a retry */
@@ -7964,6 +8170,29 @@ static int test_key_update_peer_in_write(int idx)
             || !TEST_true(SSL_want_read(peerwrite))
             || !TEST_true(SSL_net_read_desired(peerwrite)))
         goto end;
+
+    if (testdtls) {
+        /*
+         * The peer write just sent an Key Update message
+         * it is waiting to get an ACK and cannot write
+         * until it receives an ACK.
+         */
+        if (!TEST_int_eq(SSL_read(peerupdate, buf, sizeof(buf)), -1))
+            goto end;
+
+        /*
+         * The peerwrite needs to construct its key update
+         */
+        if (!TEST_int_eq(SSL_write(peerwrite, mess, (int)strlen(mess)), -1))
+            goto end;
+
+        /*
+         * The peerupdate needs to ack the key update sent by
+         * the peerwrite
+         */
+        if (!TEST_int_eq(SSL_read(peerupdate, buf, sizeof(buf)), -1))
+            goto end;
+    }
 
     /*
      * Complete the write we started previously and read it from the other
@@ -8021,10 +8250,6 @@ static int test_key_update_peer_in_read(int idx)
         cmeth = DTLS_client_method();
         vermin = DTLS1_3_VERSION;
         idx -= 2;
-        /* TODO(DTLSv1.3): Test fails */
-        testresult = TEST_skip("Test fails with DTLS");
-
-        goto end;
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
@@ -8056,41 +8281,100 @@ static int test_key_update_peer_in_read(int idx)
     SSL_set_bio(local, lbio, lbio);
     SSL_set_bio(peer, pbio, pbio);
 
-    /*
-     * we first write keyupdate msg then appdata in local
-     * write data in local will fail with SSL_ERROR_WANT_WRITE,because
-     * lwbuf app data msg size + key updata msg size > 512(the size of
-     * the bio pair buffer)
-     */
-    if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
-            || !TEST_int_eq(SSL_write(local, lwbuf, sizeof(lwbuf)), -1)
-            || !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_WRITE))
-        goto end;
+    if (testdtls) {
+        /*
+         * we first write keyupdate msg then appdata in local
+         * write data in local will fail with SSL_ERROR_WANT_WRITE,because
+         * lwbuf app data msg size + key updata msg size > 512(the size of
+         * the bio pair buffer)
+         *
+         * DTLS 1.3 will return a SSL_ERROR_WANT_READ for the client wants
+         * an ACK to its KeyUpdate message.
+         */
+        if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
+                || !TEST_int_eq(SSL_write(local, lwbuf, sizeof(lwbuf)), -1)
+                || !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_READ))
+            goto end;
 
-    /*
-     * first read keyupdate msg in peer in peer
-     * then read appdata that we know will fail with SSL_ERROR_WANT_READ
-     */
-    if (!TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), -1)
-            || !TEST_int_eq(SSL_get_error(peer, -1), SSL_ERROR_WANT_READ))
-        goto end;
+        /*
+         * first read keyupdate msg in peer in peer
+         * then read appdata that we know will fail with SSL_ERROR_WANT_READ
+         */
+        if (!TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), -1)
+                || !TEST_int_eq(SSL_get_error(peer, -1), SSL_ERROR_WANT_READ))
+            goto end;
 
-    /* Now write some data in peer - we will write the key update */
-    if (!TEST_int_eq(SSL_write(peer, mess, (int)strlen(mess)), (int)strlen(mess)))
-        goto end;
+        /*
+         * For DTLS1.3 the peer now needs to write to send out
+         * its key update message.
+         *
+         * It will send an SSL_ERROR_WANT_READ since it is waiting
+         * for an ACK from the other side.
+         */
+        /* Now write some data in peer - we will write the key update */
+        if (!TEST_int_eq(SSL_write(peer, mess, (int)strlen(mess)), -1)
+                || !TEST_int_eq(SSL_get_error(peer, -1), SSL_ERROR_WANT_READ))
+            goto end;
 
-    /*
-     * write data in local previously that we will complete
-     * read data in peer previously that we will complete
-     */
-    if (!TEST_int_eq(SSL_write(local, lwbuf, sizeof(lwbuf)), sizeof(lwbuf))
-            || !TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), sizeof(prbuf)))
-        goto end;
+        /*
+         * Local needs to read the ACK and respond to the Key Update and
+         * it will send out the ACK to the key update.
+         */
+        if (!TEST_int_eq(SSL_read(local, prbuf, sizeof(prbuf)), -1)
+                || !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_READ))
+            goto end;
 
-    /* check that sending and receiving appdata ok */
-    if (!TEST_int_eq(SSL_write(local, mess, (int)strlen(mess)), (int)strlen(mess))
-            || !TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), (int)strlen(mess)))
-        goto end;
+        /*
+         * For DTLS1.3 since the handshake wasn't complete no data
+         * was written thus this call will cause an SSL_ERROR_WANT_WRITE
+         */
+        if (!TEST_int_eq(SSL_write(local, lwbuf, sizeof(lwbuf)), -1)
+                || !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_WRITE)
+                || !TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), -1)
+                || !TEST_int_eq(SSL_get_error(peer, -1), SSL_ERROR_WANT_READ))
+            goto end;
+
+        /* check that sending and receiving appdata ok */
+        if (!TEST_int_eq(SSL_write(local, mess, (int)strlen(mess)), (int)strlen(mess))
+                || !TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), (int)strlen(mess)))
+            goto end;
+    } else {
+        /*
+         * we first write keyupdate msg then appdata in local
+         * write data in local will fail with SSL_ERROR_WANT_WRITE,because
+         * lwbuf app data msg size + key updata msg size > 512(the size of
+         * the bio pair buffer)
+         */
+        if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
+                || !TEST_int_eq(SSL_write(local, lwbuf, sizeof(lwbuf)), -1)
+                || !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_WRITE))
+            goto end;
+
+        /*
+         * first read keyupdate msg in peer in peer
+         * then read appdata that we know will fail with SSL_ERROR_WANT_READ
+         */
+        if (!TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), -1)
+                || !TEST_int_eq(SSL_get_error(peer, -1), SSL_ERROR_WANT_READ))
+            goto end;
+
+        /* Now write some data in peer - we will write the key update */
+        if (!TEST_int_eq(SSL_write(peer, mess, (int)strlen(mess)), (int)strlen(mess)))
+            goto end;
+
+        /*
+         * write data in local previously that we will complete
+         * read data in peer previously that we will complete
+         */
+        if (!TEST_int_eq(SSL_write(local, lwbuf, sizeof(lwbuf)), sizeof(lwbuf))
+                || !TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), sizeof(prbuf)))
+            goto end;
+
+        /* check that sending and receiving appdata ok */
+        if (!TEST_int_eq(SSL_write(local, mess, (int)strlen(mess)), (int)strlen(mess))
+                || !TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), (int)strlen(mess)))
+            goto end;
+    }
 
     testresult = 1;
 
@@ -8122,16 +8406,15 @@ static int test_key_update_local_in_write(int idx)
     const SSL_METHOD *smeth, *cmeth;
     int vermin, vermax = 0;
     int testdtls = idx >= 2;
+    int expected_do_handshake_result = 1;
 
     if (testdtls) {
         smeth = DTLS_server_method();
         cmeth = DTLS_client_method();
         vermin = TLS1_3_VERSION;
         idx -= 2;
-        /* TODO(DTLSv1.3): Test fails */
-        testresult = TEST_skip("Test fails with DTLS");
-
-        goto end;
+        if (idx == 0)
+            expected_do_handshake_result = -1;
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
@@ -8176,10 +8459,15 @@ static int test_key_update_local_in_write(int idx)
     SSL_set0_wbio(local, tmp);
     tmp = NULL;
 
-    /* SSL_key_update will fail, because writing in local*/
-    if (!TEST_false(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
-        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()), SSL_R_BAD_WRITE_RETRY))
-    goto end;
+    /*
+     * For DTLS1.3 the key udpate will succeed for it would
+     * have just dropped the packet above
+     */
+    if (!testdtls)
+        /* SSL_key_update will fail, because writing in local */
+        if (!TEST_false(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()), SSL_R_BAD_WRITE_RETRY))
+            goto end;
 
     ERR_clear_error();
     /* write data in local previously that we will complete */
@@ -8188,9 +8476,37 @@ static int test_key_update_local_in_write(int idx)
 
     /* SSL_key_update will succeed because there is no pending write data */
     if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
-        || !TEST_int_eq(SSL_do_handshake(local), 1))
+        || !TEST_int_eq(SSL_do_handshake(local), expected_do_handshake_result))
         goto end;
 
+    if (testdtls) {
+        /*
+         * For DTLS1.3 the peer needs to read the ACKS
+         * from the new session tickets.
+         */
+        if (!TEST_true(SSL_read(peer, buf, sizeof(buf))))
+            goto end;
+
+        /*
+         * For DTLS1.3 the peer needs to read the key update
+         * and send an ACK
+         */
+        if (!TEST_int_eq(SSL_read(peer, buf, sizeof(buf)), -1))
+            goto end;
+
+        /*
+         * DTLS1.3 the peer needs to write to send out
+         * its key update
+         */
+        if (!TEST_int_eq(SSL_write(peer, mess, (int)strlen(mess)), -1))
+            goto end;
+
+        /*
+         * The local side needs to read the ACK
+         */
+        if (!TEST_int_eq(SSL_read(local, buf, sizeof(buf)), -1))
+            goto end;
+    }
     /*
      * we write some appdata in local
      * read data in peer - we will read the keyupdate msg
@@ -8235,16 +8551,14 @@ static int test_key_update_local_in_read(int idx)
     const SSL_METHOD *smeth, *cmeth;
     int vermin, vermax = 0;
     int testdtls = idx >= 2;
+    int expected_do_handshake_result = 1;
 
     if (testdtls) {
         smeth = DTLS_server_method();
         cmeth = DTLS_client_method();
         vermin = DTLS1_3_VERSION;
         idx -= 2;
-        /* TODO(DTLSv1.3): Test fails */
-        testresult = TEST_skip("Test fails with DTLS");
-
-        goto end;
+        expected_do_handshake_result = -1;
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
@@ -8288,16 +8602,54 @@ static int test_key_update_local_in_read(int idx)
 
     /* SSL_do_handshake will send keyupdate msg */
     if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
-            || !TEST_int_eq(SSL_do_handshake(local), 1))
+            || !TEST_int_eq(SSL_do_handshake(local), expected_do_handshake_result))
         goto end;
 
-    /*
-     * write data in peer previously that we will complete
-     * read data in local previously that we will complete
-     */
-    if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), sizeof(pwbuf))
-        || !TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), sizeof(lrbuf)))
-        goto end;
+    if (testdtls) {
+        /*
+         * For DTLS1.3 the peer needs to read the key update
+         * and send an ACK
+         */
+        if (!TEST_true(SSL_read(peer, prbuf, sizeof(prbuf))))
+            goto end;
+
+        /*
+         * DTLS1.3 the peer needs to write to send out
+         * its key update
+         */
+        if (!TEST_int_eq(SSL_write(peer, pwbuf, (int)strlen(pwbuf)), -1))
+            goto end;
+
+        /*
+         * The local side needs to read the ACK and key update
+         * and send the ack to the key update
+         */
+        if (!TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), -1))
+            goto end;
+
+        /*
+         * The peer needs to read the ACK
+         */
+        if (!TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), -1))
+            goto end;
+
+        /*
+         * For DTLS1.3 this still fails since there is to much
+         * data for the bio buffer
+         */
+        if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), -1)
+                || !TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), -1))
+            goto end;
+
+    } else {
+        /*
+         * write data in peer previously that we will complete
+         * read data in local previously that we will complete
+         */
+        if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), sizeof(pwbuf))
+            || !TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), sizeof(lrbuf)))
+            goto end;
+    }
 
     /*
      * write data in local
@@ -12564,15 +12916,12 @@ static int test_read_ahead_key_change(int idx)
     const SSL_METHOD *smeth, *cmeth;
     int vermin, vermax = 0;
     int testdtls = idx >= 1;
+    int number_iterations = 2;
 
     if (testdtls) {
         smeth = DTLS_server_method();
         cmeth = DTLS_client_method();
         vermin = DTLS1_3_VERSION;
-        /* TODO(DTLSv1.3): Test fails with DTLS */
-        testresult = TEST_skip("Test fails with DTLS");
-        goto end;
-
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLS 1.3");
         goto end;
@@ -12609,6 +12958,40 @@ static int test_read_ahead_key_change(int idx)
     if (!TEST_true(SSL_key_update(clientssl, SSL_KEY_UPDATE_NOT_REQUESTED)))
         goto end;
 
+    if (testdtls) {
+        /*
+         * Have the client send out the Key Update so we can have
+         * it process the ACK from the key Update
+         */
+        if (!TEST_true(SSL_do_handshake(clientssl)))
+            goto end;
+
+        /*
+         * The server first needs to read the ACKs from the
+         * new session tickets.
+         *
+         * During this read it will read the write from above.
+         */
+        if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf) - 1,
+                                   &readbytes))
+                || !TEST_size_t_eq(readbytes, strlen(msg)))
+            goto end;
+
+        /*
+         * Since the first 11 bytes where just read the loop below
+         * only needs to execute once.
+         */
+        number_iterations = 1;
+
+        /*
+         * For DTLS1.3 before the client can write it needs to get the
+         * ACK from the server.
+         */
+        if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf) - 1,
+                                    &readbytes)))
+            goto end;
+    }
+
     if (!TEST_true(SSL_write_ex(clientssl, msg, strlen(msg), &written))
         || !TEST_size_t_eq(written, strlen(msg)))
         goto end;
@@ -12620,7 +13003,7 @@ static int test_read_ahead_key_change(int idx)
      * still process the read_ahead data correctly even though it crosses
      * epochs
      */
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < number_iterations; i++) {
         if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf) - 1,
                                     &readbytes)))
             goto end;
@@ -12697,10 +13080,6 @@ static int test_tls13_record_padding(int idx)
         cmeth = DTLS_client_method();
         vermin = DTLS1_3_VERSION;
         idx -= 6;
-        /* TODO(DTLSv1.3): Test fails with DTLS */
-        testresult = TEST_skip("Test fails with DTLS");
-
-        goto end;
 # if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLS 1.3");
         goto end;
@@ -14962,7 +15341,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_custom_exts, 3);
 #endif
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
-    ADD_ALL_TESTS(test_stateless, 2);
+    ADD_TEST(test_stateless);
 #endif
     ADD_ALL_TESTS(test_export_key_mat, 6);
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
