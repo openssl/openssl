@@ -60,20 +60,20 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/encode_decode/decode_spki2typespki.inc \
          providers/implementations/encode_decode/encode_key2any.inc \
          providers/implementations/encode_decode/encode_key2ms.inc \
-         providers/implementations/kdfs/argon2.c \
-         providers/implementations/kdfs/hkdf.c \
-         providers/implementations/kdfs/hmacdrbg_kdf.c \
-         providers/implementations/kdfs/kbkdf.c \
-         providers/implementations/kdfs/krb5kdf.c \
-         providers/implementations/kdfs/pbkdf1.c \
-         providers/implementations/kdfs/pbkdf2.c \
-         providers/implementations/kdfs/pkcs12kdf.c \
-         providers/implementations/kdfs/pvkkdf.c \
-         providers/implementations/kdfs/scrypt.c \
-         providers/implementations/kdfs/sshkdf.c \
-         providers/implementations/kdfs/sskdf.c \
-         providers/implementations/kdfs/tls1_prf.c \
-         providers/implementations/kdfs/x942kdf.c \
+         providers/implementations/kdfs/argon2.inc \
+         providers/implementations/kdfs/hkdf.inc \
+         providers/implementations/kdfs/hmacdrbg_kdf.inc \
+         providers/implementations/kdfs/kbkdf.inc \
+         providers/implementations/kdfs/krb5kdf.inc \
+         providers/implementations/kdfs/pbkdf1.inc \
+         providers/implementations/kdfs/pbkdf2.inc \
+         providers/implementations/kdfs/pkcs12kdf.inc \
+         providers/implementations/kdfs/pvkkdf.inc \
+         providers/implementations/kdfs/scrypt.inc \
+         providers/implementations/kdfs/sshkdf.inc \
+         providers/implementations/kdfs/sskdf.inc \
+         providers/implementations/kdfs/tls1_prf.inc \
+         providers/implementations/kdfs/x942kdf.inc \
          providers/implementations/kem/ec_kem.c \
          providers/implementations/kem/ecx_kem.c \
          providers/implementations/kem/ml_kem_kem.c \
@@ -178,20 +178,20 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/encode_decode/decode_spki2typespki.inc \
        providers/implementations/encode_decode/encode_key2any.inc \
        providers/implementations/encode_decode/encode_key2ms.inc \
-       providers/implementations/kdfs/argon2.c \
-       providers/implementations/kdfs/hkdf.c \
-       providers/implementations/kdfs/hmacdrbg_kdf.c \
-       providers/implementations/kdfs/kbkdf.c \
-       providers/implementations/kdfs/krb5kdf.c \
-       providers/implementations/kdfs/pbkdf1.c \
-       providers/implementations/kdfs/pbkdf2.c \
-       providers/implementations/kdfs/pkcs12kdf.c \
-       providers/implementations/kdfs/pvkkdf.c \
-       providers/implementations/kdfs/scrypt.c \
-       providers/implementations/kdfs/sshkdf.c \
-       providers/implementations/kdfs/sskdf.c \
-       providers/implementations/kdfs/tls1_prf.c \
-       providers/implementations/kdfs/x942kdf.c \
+       providers/implementations/kdfs/argon2.inc \
+       providers/implementations/kdfs/hkdf.inc \
+       providers/implementations/kdfs/hmacdrbg_kdf.inc \
+       providers/implementations/kdfs/kbkdf.inc \
+       providers/implementations/kdfs/krb5kdf.inc \
+       providers/implementations/kdfs/pbkdf1.inc \
+       providers/implementations/kdfs/pbkdf2.inc \
+       providers/implementations/kdfs/pkcs12kdf.inc \
+       providers/implementations/kdfs/pvkkdf.inc \
+       providers/implementations/kdfs/scrypt.inc \
+       providers/implementations/kdfs/sshkdf.inc \
+       providers/implementations/kdfs/sskdf.inc \
+       providers/implementations/kdfs/tls1_prf.inc \
+       providers/implementations/kdfs/x942kdf.inc \
        providers/implementations/kem/ec_kem.c \
        providers/implementations/kem/ecx_kem.c \
        providers/implementations/kem/ml_kem_kem.c \
@@ -275,34 +275,34 @@ GENERATE[providers/implementations/encode_decode/encode_key2any.inc]=\
     providers/implementations/encode_decode/encode_key2any.inc.in
 GENERATE[providers/implementations/encode_decode/encode_key2ms.inc]=\
     providers/implementations/encode_decode/encode_key2ms.inc.in
-GENERATE[providers/implementations/kdfs/argon2.c]=\
-    providers/implementations/kdfs/argon2.c.in
-GENERATE[providers/implementations/kdfs/hkdf.c]=\
-    providers/implementations/kdfs/hkdf.c.in
-GENERATE[providers/implementations/kdfs/hmacdrbg_kdf.c]=\
-    providers/implementations/kdfs/hmacdrbg_kdf.c.in
-GENERATE[providers/implementations/kdfs/kbkdf.c]=\
-    providers/implementations/kdfs/kbkdf.c.in
-GENERATE[providers/implementations/kdfs/krb5kdf.c]=\
-    providers/implementations/kdfs/krb5kdf.c.in
-GENERATE[providers/implementations/kdfs/pbkdf1.c]=\
-    providers/implementations/kdfs/pbkdf1.c.in
-GENERATE[providers/implementations/kdfs/pbkdf2.c]=\
-    providers/implementations/kdfs/pbkdf2.c.in
-GENERATE[providers/implementations/kdfs/pkcs12kdf.c]=\
-    providers/implementations/kdfs/pkcs12kdf.c.in
-GENERATE[providers/implementations/kdfs/pvkkdf.c]=\
-    providers/implementations/kdfs/pvkkdf.c.in
-GENERATE[providers/implementations/kdfs/scrypt.c]=\
-    providers/implementations/kdfs/scrypt.c.in
-GENERATE[providers/implementations/kdfs/sshkdf.c]=\
-    providers/implementations/kdfs/sshkdf.c.in
-GENERATE[providers/implementations/kdfs/sskdf.c]=\
-    providers/implementations/kdfs/sskdf.c.in
-GENERATE[providers/implementations/kdfs/tls1_prf.c]=\
-    providers/implementations/kdfs/tls1_prf.c.in
-GENERATE[providers/implementations/kdfs/x942kdf.c]=\
-    providers/implementations/kdfs/x942kdf.c.in
+GENERATE[providers/implementations/kdfs/argon2.inc]=\
+    providers/implementations/kdfs/argon2.inc.in
+GENERATE[providers/implementations/kdfs/hkdf.inc]=\
+    providers/implementations/kdfs/hkdf.inc.in
+GENERATE[providers/implementations/kdfs/hmacdrbg_kdf.inc]=\
+    providers/implementations/kdfs/hmacdrbg_kdf.inc.in
+GENERATE[providers/implementations/kdfs/kbkdf.inc]=\
+    providers/implementations/kdfs/kbkdf.inc.in
+GENERATE[providers/implementations/kdfs/krb5kdf.inc]=\
+    providers/implementations/kdfs/krb5kdf.inc.in
+GENERATE[providers/implementations/kdfs/pbkdf1.inc]=\
+    providers/implementations/kdfs/pbkdf1.inc.in
+GENERATE[providers/implementations/kdfs/pbkdf2.inc]=\
+    providers/implementations/kdfs/pbkdf2.inc.in
+GENERATE[providers/implementations/kdfs/pkcs12kdf.inc]=\
+    providers/implementations/kdfs/pkcs12kdf.inc.in
+GENERATE[providers/implementations/kdfs/pvkkdf.inc]=\
+    providers/implementations/kdfs/pvkkdf.inc.in
+GENERATE[providers/implementations/kdfs/scrypt.inc]=\
+    providers/implementations/kdfs/scrypt.inc.in
+GENERATE[providers/implementations/kdfs/sshkdf.inc]=\
+    providers/implementations/kdfs/sshkdf.inc.in
+GENERATE[providers/implementations/kdfs/sskdf.inc]=\
+    providers/implementations/kdfs/sskdf.inc.in
+GENERATE[providers/implementations/kdfs/tls1_prf.inc]=\
+    providers/implementations/kdfs/tls1_prf.inc.in
+GENERATE[providers/implementations/kdfs/x942kdf.inc]=\
+    providers/implementations/kdfs/x942kdf.inc.in
 GENERATE[providers/implementations/kem/ec_kem.c]=\
     providers/implementations/kem/ec_kem.c.in
 GENERATE[providers/implementations/kem/ecx_kem.c]=\

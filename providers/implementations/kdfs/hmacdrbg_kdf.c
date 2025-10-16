@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +19,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/implementations.h"
 #include "prov/hmac_drbg.h"
 #include "prov/provider_ctx.h"
+#include "providers/implementations/kdfs/hmacdrbg_kdf.inc"
 
 static OSSL_FUNC_kdf_newctx_fn hmac_drbg_kdf_new;
 static OSSL_FUNC_kdf_dupctx_fn hmac_drbg_kdf_dup;
@@ -140,11 +138,6 @@ static int hmac_drbg_kdf_derive(void *vctx, unsigned char *out, size_t outlen,
     return ossl_drbg_hmac_generate(drbg, out, outlen, NULL, 0);
 }
 
-{- produce_param_decoder('hmac_drbg_kdf_get_ctx_params',
-                         (['OSSL_KDF_PARAM_MAC',    'mac',    'utf8_string'],
-                          ['OSSL_KDF_PARAM_DIGEST', 'digest', 'utf8_string'],
-                         )); -}
-
 static int hmac_drbg_kdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     KDF_HMAC_DRBG *hmac = (KDF_HMAC_DRBG *)vctx;
@@ -178,14 +171,6 @@ static const OSSL_PARAM *hmac_drbg_kdf_gettable_ctx_params(
 {
     return hmac_drbg_kdf_get_ctx_params_list;
 }
-
-{- produce_param_decoder('hmac_drbg_kdf_set_ctx_params',
-                         (['OSSL_KDF_PARAM_PROPERTIES',       'propq',  'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',           'engine', 'utf8_string', 'hidden'],
-                          ['OSSL_KDF_PARAM_DIGEST',           'digest', 'utf8_string'],
-                          ['OSSL_KDF_PARAM_HMACDRBG_ENTROPY', 'ent',    'octet_string'],
-                          ['OSSL_KDF_PARAM_HMACDRBG_NONCE',   'nonce',  'octet_string'],
-                         )); -}
 
 static int hmac_drbg_kdf_set_ctx_params(void *vctx,
                                         const OSSL_PARAM params[])

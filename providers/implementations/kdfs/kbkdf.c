@@ -7,9 +7,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * This implements https://csrc.nist.gov/publications/detail/sp/800-108/final
@@ -53,6 +50,8 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #define ossl_min(a, b) ((a) < (b)) ? (a) : (b)
 
 #define KBKDF_MAX_INFOS 5
+
+#include "providers/implementations/kdfs/kbkdf.inc"
 
 typedef enum {
     COUNTER = 0,
@@ -368,23 +367,6 @@ done:
     return ret;
 }
 
-{- produce_param_decoder('kbkdf_set_ctx_params',
-                         (['OSSL_KDF_PARAM_INFO',                'info',   'octet_string', KBKDF_MAX_INFOS],
-                          ['OSSL_KDF_PARAM_SALT',                'salt',   'octet_string'],
-                          ['OSSL_KDF_PARAM_KEY',                 'key',    'octet_string'],
-                          ['OSSL_KDF_PARAM_SEED',                'seed',   'octet_string'],
-                          ['OSSL_KDF_PARAM_DIGEST',              'digest', 'utf8_string'],
-                          ['OSSL_KDF_PARAM_CIPHER',              'cipher', 'utf8_string'],
-                          ['OSSL_KDF_PARAM_MAC',                 'mac',    'utf8_string'],
-                          ['OSSL_KDF_PARAM_MODE',                'mode',   'utf8_string'],
-                          ['OSSL_KDF_PARAM_PROPERTIES',          'propq',  'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',              'engine', 'utf8_string', 'hidden'],
-                          ['OSSL_KDF_PARAM_KBKDF_USE_L',         'use_l',  'int'],
-                          ['OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR', 'sep',    'int'],
-                          ['OSSL_KDF_PARAM_KBKDF_R',             'r',      'int'],
-                          ['OSSL_KDF_PARAM_FIPS_KEY_CHECK',      'ind_k',  'int', 'fips'],
-                         )); -}
-
 static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     KBKDF *ctx = (KBKDF *)vctx;
@@ -484,11 +466,6 @@ static const OSSL_PARAM *kbkdf_settable_ctx_params(ossl_unused void *ctx,
 {
     return kbkdf_set_ctx_params_list;
 }
-
-{- produce_param_decoder('kbkdf_get_ctx_params',
-                         (['OSSL_KDF_PARAM_SIZE',                    'size', 'size_t'],
-                          ['OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',  'int', 'fips'],
-                         )); -}
 
 static int kbkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {

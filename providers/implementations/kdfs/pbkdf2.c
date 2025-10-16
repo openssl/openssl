@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * HMAC low level APIs are deprecated for public use, but still ok for internal
@@ -32,6 +29,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 #include "prov/securitycheck.h"
+#include "providers/implementations/kdfs/pbkdf2.inc"
 
 /* Constants specified in SP800-132 */
 #define KDF_PBKDF2_MIN_KEY_LEN_BITS 112
@@ -282,16 +280,6 @@ static int kdf_pbkdf2_derive(void *vctx, unsigned char *key, size_t keylen,
                          md, key, keylen, ctx->lower_bound_checks);
 }
 
-{- produce_param_decoder('pbkdf2_set_ctx_params',
-                         (['OSSL_KDF_PARAM_PROPERTIES',  'propq',    'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',      'engine',   'utf8_string', 'hidden'],
-                          ['OSSL_KDF_PARAM_DIGEST',      'digest',   'utf8_string'],
-                          ['OSSL_KDF_PARAM_PASSWORD',    'pw',       'octet_string'],
-                          ['OSSL_KDF_PARAM_SALT',        'salt',     'octet_string'],
-                          ['OSSL_KDF_PARAM_ITER',        'iter',     'uint64'],
-                          ['OSSL_KDF_PARAM_PKCS5',       'pkcs5',    'int'],
-                         )); -}
-
 static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct pbkdf2_set_ctx_params_st p;
@@ -355,11 +343,6 @@ static const OSSL_PARAM *kdf_pbkdf2_settable_ctx_params(ossl_unused void *ctx,
 {
     return pbkdf2_set_ctx_params_list;
 }
-
-{- produce_param_decoder('pbkdf2_get_ctx_params',
-                         (['OSSL_KDF_PARAM_SIZE',                    'size', 'size_t'],
-                          ['OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',  'int', 'fips'],
-                         )); -}
 
 static int kdf_pbkdf2_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {

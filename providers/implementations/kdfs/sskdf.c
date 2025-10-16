@@ -7,9 +7,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 /*
  * Refer to https://csrc.nist.gov/publications/detail/sp/800-56c/rev-1/final
@@ -553,6 +550,11 @@ struct sskdf_all_set_ctx_params_st {
     int num_info;
 };
 
+#define sskdf_set_ctx_params_st sskdf_all_set_ctx_params_st
+#define x963kdf_set_ctx_params_st sskdf_all_set_ctx_params_st
+
+#include "providers/implementations/kdfs/sskdf.inc"
+
 static int sskdf_common_set_ctx_params
         (KDF_SSKDF *ctx, struct sskdf_all_set_ctx_params_st *p,
          const OSSL_PARAM *params)
@@ -608,21 +610,6 @@ static int sskdf_common_set_ctx_params
     return 1;
 }
 
-#define sskdf_set_ctx_params_st sskdf_all_set_ctx_params_st
-
-{- produce_param_decoder('sskdf_set_ctx_params',
-                         (['OSSL_KDF_PARAM_SECRET',         'secret', 'octet_string'],
-                          ['OSSL_KDF_PARAM_KEY',            'secret', 'octet_string'],
-                          ['OSSL_KDF_PARAM_INFO',           'info',   'octet_string', SSKDF_MAX_INFOS],
-                          ['OSSL_KDF_PARAM_PROPERTIES',     'propq',  'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',         'engine', 'utf8_string', 'hidden'],
-                          ['OSSL_KDF_PARAM_DIGEST',         'digest', 'utf8_string'],
-                          ['OSSL_KDF_PARAM_MAC',            'mac',    'utf8_string'],
-                          ['OSSL_KDF_PARAM_SALT',           'salt',   'octet_string'],
-                          ['OSSL_KDF_PARAM_MAC_SIZE',       'size',   'size_t'],
-                          ['OSSL_KDF_PARAM_FIPS_KEY_CHECK', 'ind_k',  'int', 'fips'],
-                         )); -}
-
 static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
@@ -652,11 +639,6 @@ static const OSSL_PARAM *sskdf_settable_ctx_params(ossl_unused void *ctx,
     return sskdf_set_ctx_params_list;
 }
 
-{- produce_param_decoder('sskdf_get_ctx_params',
-                         (['OSSL_KDF_PARAM_SIZE',                    'size',   'size_t'],
-                          ['OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
-                         )); -}
-
 static int sskdf_common_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
@@ -681,22 +663,6 @@ static const OSSL_PARAM *sskdf_common_gettable_ctx_params
 {
     return sskdf_get_ctx_params_list;
 }
-
-#define x963kdf_set_ctx_params_st sskdf_all_set_ctx_params_st
-
-{- produce_param_decoder('x963kdf_set_ctx_params',
-                         (['OSSL_KDF_PARAM_SECRET',            'secret', 'octet_string'],
-                          ['OSSL_KDF_PARAM_KEY',               'secret', 'octet_string'],
-                          ['OSSL_KDF_PARAM_INFO',              'info',   'octet_string', SSKDF_MAX_INFOS],
-                          ['OSSL_KDF_PARAM_PROPERTIES',        'propq',  'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',            'engine', 'utf8_string', 'hidden'],
-                          ['OSSL_KDF_PARAM_DIGEST',            'digest', 'utf8_string'],
-                          ['OSSL_KDF_PARAM_MAC',               'mac',    'utf8_string'],
-                          ['OSSL_KDF_PARAM_SALT',              'salt',   'octet_string'],
-                          ['OSSL_KDF_PARAM_MAC_SIZE',          'size',   'size_t'],
-                          ['OSSL_KDF_PARAM_FIPS_DIGEST_CHECK', 'ind_d',  'int', 'fips'],
-                          ['OSSL_KDF_PARAM_FIPS_KEY_CHECK',    'ind_k',  'int', 'fips'],
-                         )); -}
 
 static int x963kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {

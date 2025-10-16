@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -25,6 +22,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 #include "prov/securitycheck.h"
+#include "providers/implementations/kdfs/sshkdf.inc"
 
 /* See RFC 4253, Section 7.2 */
 static OSSL_FUNC_kdf_newctx_fn kdf_sshkdf_new;
@@ -209,18 +207,6 @@ static int kdf_sshkdf_derive(void *vctx, unsigned char *key, size_t keylen,
                   ctx->type, key, keylen);
 }
 
-{- produce_param_decoder('sshkdf_set_ctx_params',
-                         (['OSSL_KDF_PARAM_PROPERTIES',        'propq',   'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',            'engine',  'utf8_string', 'hidden'],
-                          ['OSSL_KDF_PARAM_DIGEST',            'digest',  'utf8_string'],
-                          ['OSSL_KDF_PARAM_KEY',               'key',     'octet_string'],
-                          ['OSSL_KDF_PARAM_SSHKDF_XCGHASH',    'xcg',     'octet_string'],
-                          ['OSSL_KDF_PARAM_SSHKDF_SESSION_ID', 'sid',     'octet_string'],
-                          ['OSSL_KDF_PARAM_SSHKDF_TYPE',       'type',    'utf8_string'],
-                          ['OSSL_KDF_PARAM_FIPS_DIGEST_CHECK', 'ind_d',   'int', 'fips'],
-                          ['OSSL_KDF_PARAM_FIPS_KEY_CHECK',    'ind_k',   'int', 'fips'],
-                         )); -}
-
 static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct sshkdf_set_ctx_params_st p;
@@ -296,11 +282,6 @@ static const OSSL_PARAM *kdf_sshkdf_settable_ctx_params(ossl_unused void *ctx,
 {
     return sshkdf_set_ctx_params_list;
 }
-
-{- produce_param_decoder('sshkdf_get_ctx_params',
-                         (['OSSL_KDF_PARAM_SIZE',                    'size', 'size_t'],
-                          ['OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',  'int', 'fips'],
-                         )); -}
 
 static int kdf_sshkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {

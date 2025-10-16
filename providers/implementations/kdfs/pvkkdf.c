@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <string.h>
 #include <openssl/evp.h>
@@ -21,6 +18,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
+#include "providers/implementations/kdfs/pvkkdf.inc"
 
 static OSSL_FUNC_kdf_newctx_fn kdf_pvk_new;
 static OSSL_FUNC_kdf_dupctx_fn kdf_pvk_dup;
@@ -181,14 +179,6 @@ static int kdf_pvk_derive(void *vctx, unsigned char *key, size_t keylen,
     return res;
 }
 
-{- produce_param_decoder('pvk_set_ctx_params',
-                         (['OSSL_KDF_PARAM_PROPERTIES',  'propq',    'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',      'engine',   'utf8_string', 'hidden'],
-                          ['OSSL_KDF_PARAM_DIGEST',      'digest',   'utf8_string'],
-                          ['OSSL_KDF_PARAM_PASSWORD',    'pass',     'octet_string'],
-                          ['OSSL_KDF_PARAM_SALT',        'salt',     'octet_string'],
-                         )); -}
-
 static int kdf_pvk_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct pvk_set_ctx_params_st p;
@@ -218,10 +208,6 @@ static const OSSL_PARAM *kdf_pvk_settable_ctx_params(ossl_unused void *ctx,
 {
     return pvk_set_ctx_params_list;
 }
-
-{- produce_param_decoder('pvk_get_ctx_params',
-                         (['OSSL_KDF_PARAM_SIZE',    'size', 'size_t'],
-                         )); -}
 
 static int kdf_pvk_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {

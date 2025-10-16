@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <openssl/trace.h>
 #include <stdlib.h>
@@ -26,6 +23,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
+#include "providers/implementations/kdfs/pkcs12kdf.inc"
 
 static OSSL_FUNC_kdf_newctx_fn kdf_pkcs12_new;
 static OSSL_FUNC_kdf_dupctx_fn kdf_pkcs12_dup;
@@ -243,16 +241,6 @@ static int kdf_pkcs12_derive(void *vctx, unsigned char *key, size_t keylen,
                             ctx->id, ctx->iter, md, key, keylen);
 }
 
-{- produce_param_decoder('pkcs12_set_ctx_params',
-                         (['OSSL_KDF_PARAM_PROPERTIES',  'propq',    'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',      'engine',   'utf8_string', 'hidden'],
-                          ['OSSL_KDF_PARAM_DIGEST',      'digest',   'utf8_string'],
-                          ['OSSL_KDF_PARAM_PASSWORD',    'pw',       'octet_string'],
-                          ['OSSL_KDF_PARAM_SALT',        'salt',     'octet_string'],
-                          ['OSSL_KDF_PARAM_ITER',        'iter',     'uint64'],
-                          ['OSSL_KDF_PARAM_PKCS12_ID',   'p12id',    'int'],
-                         )); -}
-
 static int kdf_pkcs12_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct pkcs12_set_ctx_params_st p;
@@ -288,10 +276,6 @@ static const OSSL_PARAM *kdf_pkcs12_settable_ctx_params(
 {
     return pkcs12_set_ctx_params_list;
 }
-
-{- produce_param_decoder('pkcs12_get_ctx_params',
-                         (['OSSL_KDF_PARAM_SIZE',                    'size', 'size_t'],
-                         )); -}
 
 static int kdf_pkcs12_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
