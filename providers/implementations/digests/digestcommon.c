@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-{-
-use OpenSSL::paramnames qw(produce_param_decoder);
--}
 
 #include <string.h>
 #include <openssl/err.h>
@@ -16,12 +13,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/digestcommon.h"
 #include "internal/common.h"
 
-{- produce_param_decoder('digest_default_get_params',
-                         (['OSSL_DIGEST_PARAM_BLOCK_SIZE',   'bsize',    'size_t'],
-                          ['OSSL_DIGEST_PARAM_SIZE',         'size',     'size_t'],
-                          ['OSSL_DIGEST_PARAM_XOF',          'xof',      'int'],
-                          ['OSSL_DIGEST_PARAM_ALGID_ABSENT', 'aldid',    'int'],
-                         )); -}
+#include "providers/implementations/digests/digestcommon.inc"
 
 int ossl_digest_default_get_params(OSSL_PARAM params[], size_t blksz,
                                    size_t paramsz, unsigned long flags)
