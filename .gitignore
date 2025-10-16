@@ -112,10 +112,10 @@ providers/implementations/kdfs/sshkdf.inc
 providers/implementations/kdfs/sskdf.inc
 providers/implementations/kdfs/tls1_prf.inc
 providers/implementations/kdfs/x942kdf.inc
-providers/implementations/kem/ec_kem.c
-providers/implementations/kem/ecx_kem.c
-providers/implementations/kem/ml_kem_kem.c
-providers/implementations/kem/rsa_kem.c
+providers/implementations/kem/ec_kem.inc
+providers/implementations/kem/ecx_kem.inc
+providers/implementations/kem/ml_kem_kem.inc
+providers/implementations/kem/rsa_kem.inc
 providers/implementations/keymgmt/ml_dsa_kmgmt.c
 providers/implementations/keymgmt/ml_kem_kmgmt.c
 providers/implementations/keymgmt/mlx_kmgmt.c
