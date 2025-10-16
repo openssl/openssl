@@ -420,3 +420,16 @@ doc-nits
 # LSP (Language Server Protocol) support
 .cache/
 compile_commands.json
+
+# Conan
+.conan/
+.conan2/
+conanbuild.sh
+conanbuildenv*.sh
+conanrun.sh
+conanrunenv*.sh
+deactivate_conanbuild.sh
+deactivate_conanrun.sh
+CMakePresets.json
+conan_toolchain.cmake
+conan.lock
