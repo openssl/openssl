@@ -1097,6 +1097,11 @@ void *EVP_MD_CTX_get0_md_data(const EVP_MD_CTX *ctx)
     return ctx->md_data;
 }
 
+void *ossl_evp_md_ctx_get0_algctx(const EVP_MD_CTX *ctx)
+{
+    return ctx->algctx;
+}
+
 int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
                                              const void *data, size_t count)
 {
