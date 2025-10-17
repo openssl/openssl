@@ -837,7 +837,7 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
     X509 *x;
     X509_OBJECT *obj;
     X509_STORE *store = ctx->store;
-    STACK_OF(X509_OBJECT) *objs;
+    STACK_OF(X509_OBJECT) *objs = NULL;
 
     if (store == NULL)
         return sk_X509_new_null();
@@ -850,8 +850,7 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
         if (objs != NULL)
             idx = x509_object_idx_cnt(objs, X509_LU_X509, nm, &cnt);
     } else {
-        objs = store->objs;
-        idx = x509_object_idx_cnt(objs, X509_LU_X509, nm, &cnt);
+        idx = x509_object_idx_cnt(store->objs, X509_LU_X509, nm, &cnt);
     }
     if (idx < 0 || objs == NULL) {
         /*
@@ -868,6 +867,8 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
             objs = ossl_x509_store_ht_get_by_name(store, nm);
             if (objs == NULL)
                 goto end;
+        } else {
+            objs = store->objs;
         }
         idx = x509_object_idx_cnt(objs, X509_LU_X509, nm, &cnt);
     }
