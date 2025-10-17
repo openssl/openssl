@@ -47,10 +47,11 @@ typedef int (OSSL_SLH_HASHFUNC_H)(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed,
                                   const uint8_t *m1, const uint8_t *m2,
                                   uint8_t *out, size_t out_len);
 
-typedef int (OSSL_SLH_HASHFUNC_T)(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed,
-                                  const uint8_t *adrs,
-                                  const uint8_t *m1, size_t m1_len,
-                                  uint8_t *out, size_t out_len);
+#define OSSL_SLH_HASHFUNC_T OSSL_SLH_HASHFUNC_F
+
+typedef int (OSSL_SLH_HASHFUNC_wots_pk_gen)(SLH_DSA_HASH_CTX *hctx,
+                                           const uint8_t *sk_seed, const uint8_t *pk_seed,
+                                           uint8_t *adrs, uint8_t *pk_out, size_t pk_out_len);
 
 typedef struct slh_hash_func_st {
     OSSL_SLH_HASHFUNC_H_MSG *H_MSG;
@@ -59,8 +60,9 @@ typedef struct slh_hash_func_st {
     OSSL_SLH_HASHFUNC_F *F;
     OSSL_SLH_HASHFUNC_H *H;
     OSSL_SLH_HASHFUNC_T *T;
+    OSSL_SLH_HASHFUNC_wots_pk_gen *wots_pk_gen;
 } SLH_HASH_FUNC;
 
-const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake);
+const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake, int security_category);
 
 #endif
