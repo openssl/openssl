@@ -233,6 +233,10 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
         return 0;
     }
     if (ciph) {
+        if ((EVP_CIPHER_get_flags(ciph) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_CONTENT_ENCRYPTION_ALGORITHM);
+            return 0;
+        }
         if (cms->d.encryptedData != NULL) {
             M_ASN1_free_of(cms->d.encryptedData, CMS_EncryptedData);
             cms->d.encryptedData = NULL;
