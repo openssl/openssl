@@ -48,7 +48,8 @@
 struct slh_dsa_hash_ctx_st {
     const SLH_DSA_KEY *key; /* This key is not owned by this object */
     EVP_MD_CTX *md_ctx;     /* Either SHAKE OR SHA-256 */
-    EVP_MD_CTX *md_big_ctx; /* Either SHA-512 or points to |md_ctx| for SHA-256*/
+    EVP_MD_CTX *md_pkseed_ctx; /* md_ctx with PK.seed hashed in it */
+    EVP_MD_CTX *md_sha512_ctx; /* Either SHA-512 OR NULL */
     EVP_MAC_CTX *hmac_ctx;  /* required by SHA algorithms for PRFmsg() */
     int hmac_digest_used;   /* Used for lazy init of hmac_ctx digest */
 };
@@ -63,11 +64,11 @@ __owur int ossl_slh_wots_pk_from_sig(SLH_DSA_HASH_CTX *ctx,
                                      PACKET *sig_rpkt, const uint8_t *msg,
                                      const uint8_t *pk_seed, uint8_t *adrs,
                                      uint8_t *pk_out, size_t pk_out_len);
-
 __owur int ossl_slh_xmss_node(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk_seed,
                               uint32_t node_id, uint32_t height,
                               const uint8_t *pk_seed, uint8_t *adrs,
                               uint8_t *pk_out, size_t pk_out_len);
+
 __owur int ossl_slh_xmss_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
                               const uint8_t *sk_seed, uint32_t node_id,
                               const uint8_t *pk_seed, uint8_t *adrs,
