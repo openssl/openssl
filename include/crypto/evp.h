@@ -1000,4 +1000,6 @@ int evp_pkey_decrypt_alloc(EVP_PKEY_CTX *ctx, unsigned char **outp,
 int ossl_md2hmacnid(int mdnid);
 int ossl_hmac2mdnid(int hmac_nid);
 
+void *ossl_evp_md_ctx_get0_algctx(const EVP_MD_CTX *ctx);
+
 #endif /* OSSL_CRYPTO_EVP_H */
