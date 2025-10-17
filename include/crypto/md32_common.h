@@ -181,9 +181,14 @@ int HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
 
     n = c->num;
     if (ossl_likely(n != 0)) {
+        /* Gets here if we already have buffered input data */
         p = (unsigned char *)c->data;
 
         if (len >= HASH_CBLOCK || len + n >= HASH_CBLOCK) {
+            /*
+             * If there is enough input to fill the buffer then fill the
+             * buffer and process a single chunk.
+             */
             memcpy(p + n, data, HASH_CBLOCK - n);
             HASH_BLOCK_DATA_ORDER(c, p, 1);
             n = HASH_CBLOCK - n;
@@ -198,20 +203,22 @@ int HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
              */
             memset(p, 0, HASH_CBLOCK); /* keep it zeroed */
         } else {
+            /* Otherwise just keep filling the buffer */
             memcpy(p + n, data, len);
             c->num += (unsigned int)len;
             return 1;
         }
     }
 
-    n = len / HASH_CBLOCK;
+    n = len / HASH_CBLOCK; /* Get number of input chunks (e.g. multiple of 512 bits for SHA256) */
     if (n > 0) {
+        /* Process chunks */
         HASH_BLOCK_DATA_ORDER(c, data, n);
         n *= HASH_CBLOCK;
         data += n;
         len -= n;
     }
-
+    /* Buffer any left over data */
     if (len != 0) {
         p = (unsigned char *)c->data;
         c->num = (unsigned int)len;
@@ -222,7 +229,7 @@ int HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
 
 void HASH_TRANSFORM(HASH_CTX *c, const unsigned char *data)
 {
-    HASH_BLOCK_DATA_ORDER(c, data, 1);
+    HASH_BLOCK_DATA_ORDER(c, data, 1); /* Process a single chunk */
 }
 
 int HASH_FINAL(unsigned char *md, HASH_CTX *c)
@@ -230,16 +237,26 @@ int HASH_FINAL(unsigned char *md, HASH_CTX *c)
     unsigned char *p = (unsigned char *)c->data;
     size_t n = c->num;
 
-    p[n] = 0x80; /* there is always room for one */
+    /*
+     * Pad the input by adding a 1 bit + K zero bits + input length (L)
+     * as a 64 bit value. K must align the data to a chunk boundary.
+     */
+    p[n] = 0x80;                /* there is always room for one */
     n++;
 
     if (n > (HASH_CBLOCK - 8)) {
+        /*
+         * If there is not enough room in the buffer to add L, then fill the
+         * current buffer with zeros, and process the chunk
+         */
         memset(p + n, 0, HASH_CBLOCK - n);
         n = 0;
         HASH_BLOCK_DATA_ORDER(c, p, 1);
     }
+    /* Add zero padding - but leave enough room for L */
     memset(p + n, 0, HASH_CBLOCK - 8 - n);
 
+    /* Add the 64 bit L value to the end of the buffer */
     p += HASH_CBLOCK - 8;
 #if defined(DATA_ORDER_IS_BIG_ENDIAN)
     (void)HOST_l2c(c->Nh, p);
@@ -249,6 +266,7 @@ int HASH_FINAL(unsigned char *md, HASH_CTX *c)
     (void)HOST_l2c(c->Nh, p);
 #endif
     p -= HASH_CBLOCK;
+    /* Process the final padded chunk */
     HASH_BLOCK_DATA_ORDER(c, p, 1);
     c->num = 0;
     OPENSSL_cleanse(p, HASH_CBLOCK);
