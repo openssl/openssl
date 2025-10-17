@@ -3001,13 +3001,6 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
             l = k = 0;
             for (;;) {
                 /* should do a select for the write */
-#ifdef RENEG
-                static count = 0;
-                if (++count == 100) {
-                    count = 0;
-                    SSL_renegotiate(con);
-                }
-#endif
                 k = SSL_write(con, &(buf[l]), (unsigned int)i);
 #ifndef OPENSSL_NO_SRP
                 while (SSL_get_error(con, k) == SSL_ERROR_WANT_X509_LOOKUP) {
@@ -3388,9 +3381,6 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     SSL *con;
     const SSL_CIPHER *c;
     BIO *io, *ssl_bio, *sbio, *edio;
-#ifdef RENEG
-    int total_bytes = 0;
-#endif
     int width;
 #ifndef OPENSSL_NO_KTLS
     int use_sendfile_for_req = use_sendfile;
@@ -3808,22 +3798,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                     if (i <= 0)
                         break;
 
-#ifdef RENEG
-                    total_bytes += i;
-                    BIO_printf(bio_err, "%d\n", i);
-                    if (total_bytes > 3 * 1024) {
-                        total_bytes = 0;
-                        BIO_printf(bio_err, "RENEGOTIATE\n");
-                        SSL_renegotiate(con);
-                    }
-#endif
-
                     for (j = 0; j < i;) {
-#ifdef RENEG
-                        static count = 0;
-                        if (++count == 13)
-                            SSL_renegotiate(con);
-#endif
                         k = BIO_write(io, &(buf[j]), i - j);
                         if (k <= 0) {
                             if (!BIO_should_retry(io)
