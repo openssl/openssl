@@ -156,7 +156,7 @@ int init_client(int *sock, const char *host, const char *port,
             if (tmpbio == NULL) {
                 BIO_closesocket(*sock);
                 *sock = INVALID_SOCKET;
-                continue;
+                goto out;
             }
             BIO_free(tmpbio);
         }
