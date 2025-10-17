@@ -55,6 +55,7 @@ int ossl_keccak_init(KECCAK1600_CTX *ctx, unsigned char pad,
 int ossl_sha3_update(KECCAK1600_CTX *ctx, const void *_inp, size_t len);
 int ossl_sha3_final(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen);
 int ossl_sha3_squeeze(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen);
+int ossl_sha3_absorb(KECCAK1600_CTX *ctx, const unsigned char *inp, size_t len);
 
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
     size_t r);

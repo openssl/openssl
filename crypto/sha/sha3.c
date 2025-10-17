@@ -12,6 +12,7 @@
 #include "crypto/s390x_arch.h"
 #endif
 #include "internal/sha3.h"
+#include "internal/common.h"
 
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r, int next);
 
@@ -124,6 +125,43 @@ int ossl_sha3_final(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
 
     ctx->xof_state = XOF_STATE_FINAL;
     SHA3_squeeze(ctx->A, out, outlen, bsz, 0);
+    return 1;
+}
+
+/* This is a buffered absorb function. */
+int ossl_sha3_absorb(KECCAK1600_CTX *ctx, const unsigned char *inp, size_t len)
+{
+    const size_t bsz = ctx->block_size;
+    size_t num, rem;
+
+    if (ossl_unlikely(len == 0))
+        return 1;
+
+    /* Is there anything in the buffer already ? */
+    if (ossl_likely((num = ctx->bufsz) != 0)) {
+        /* Calculate how much space is left in the buffer */
+        rem = bsz - num;
+        /* If the new input does not fill the buffer then just add it */
+        if (len < rem) {
+            memcpy(ctx->buf + num, inp, len);
+            ctx->bufsz += len;
+            return 1;
+        }
+        /* otherwise fill up the buffer and absorb the buffer */
+        memcpy(ctx->buf + num, inp, rem);
+        /* Update the input pointer */
+        inp += rem;
+        len -= rem;
+        ctx->meth.absorb(ctx, ctx->buf, bsz);
+        ctx->bufsz = 0;
+    }
+    /* Absorb the input - rem = leftover part of the input < blocksize) */
+    rem = ctx->meth.absorb(ctx, inp, len);
+    /* Copy the leftover bit of the input into the buffer */
+    if (ossl_likely(rem)) {
+        memcpy(ctx->buf, inp + len - rem, rem);
+        ctx->bufsz = rem;
+    }
     return 1;
 }
 
