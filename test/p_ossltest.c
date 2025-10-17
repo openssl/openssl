@@ -855,9 +855,7 @@ static int ossl_test_aes128ecb_update(void *vprovctx, char *out, size_t *outl,
 
     memcpy(inbuf, in, inl);
 
-    soutl = EVP_Cipher(ctx->sub_ctx, (unsigned char *)out, in, (unsigned int)inl);
-
-    if (soutl <= 0)
+    if (!EVP_CipherUpdate(ctx->sub_ctx, (unsigned char *)out, &soutl, in, (int)inl))
         goto err;
 
     /*
@@ -890,6 +888,11 @@ static int ossl_test_aes128ecb_final(void *vprovctx, unsigned char *out, size_t 
     int ret;
 
     ret = EVP_CipherFinal_ex(ctx->sub_ctx, out, &soutl);
+
+    if (soutl >= 0)
+        *outl = (size_t)soutl;
+    else
+        return 0;
 
     return ret;
 }
@@ -954,15 +957,8 @@ static int ossl_test_aes128ecb_get_ctx_params(void *vprovctx, OSSL_PARAM params[
 
 static int ossl_test_aes128ecb_set_ctx_params(void *vprovctx, const OSSL_PARAM params[])
 {
-    /*
-     * Normally this gets called to set
-     * OSSL_CIPHER_PARAM_TLS_VERSION
-     * OSSL_CIPHER_PARAM_TLS_MAC_SIZE
-     * but we don't want the underlying cipher to do that, we will
-     * handle that padding in ecb_update on our own, so intercept and
-     * squash that here
-     */
-    return 1;
+    PROV_EVP_AES128_ECB_CTX *ctx = (PROV_EVP_AES128_ECB_CTX *)vprovctx;
+    return EVP_CIPHER_CTX_set_params(ctx->sub_ctx, params);
 }
 
 /**
