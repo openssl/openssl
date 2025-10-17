@@ -1547,7 +1547,7 @@ and B<-rsp_crl> options were added in OpenSSL 3.4.
 B<-centralkeygen>, b<-newkeyout>, B<-rsp_key> and
 B<-rsp_keypass> were added in OpenSSL 3.5.
 
-The B<-ta_in_ip_extracerts> quirk option was added in OpenSSL 3.6.
+The B<-ta_in_ip_extracerts> quirk option was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
