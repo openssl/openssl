@@ -418,9 +418,15 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
 #endif
 
         tmpl.name = (char *)name;
-        if (!CRYPTO_THREAD_write_lock(store->lock))
+        if (!CRYPTO_THREAD_read_lock(store->lock))
             return NULL;
-        sk_OSSL_PROVIDER_sort(store->providers);
+        if (!sk_OSSL_PROVIDER_is_sorted(store->providers)) {
+            CRYPTO_THREAD_unlock(store->lock);
+            if (!CRYPTO_THREAD_write_lock(store->lock))
+                return NULL;
+            if (!sk_OSSL_PROVIDER_is_sorted(store->providers))
+                sk_OSSL_PROVIDER_sort(store->providers);
+        }
         if ((i = sk_OSSL_PROVIDER_find(store->providers, &tmpl)) != -1)
             prov = sk_OSSL_PROVIDER_value(store->providers, i);
         CRYPTO_THREAD_unlock(store->lock);
