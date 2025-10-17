@@ -868,6 +868,8 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
             objs = ossl_x509_store_ht_get_by_name(store, nm);
             if (objs == NULL)
                 goto end;
+        } else {
+            objs = store->objs;
         }
         idx = x509_object_idx_cnt(objs, X509_LU_X509, nm, &cnt);
     }
