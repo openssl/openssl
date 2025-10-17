@@ -369,7 +369,7 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         } else {
             ossl_cmp_info(ctx, "received final response after polling");
             if (!ossl_cmp_ctx_set1_first_senderNonce(ctx, NULL))
-                return 0;
+                goto err;
             break;
         }
     }
@@ -830,7 +830,7 @@ int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
             goto err;
 
         if (!save_senderNonce_if_waiting(ctx, rep, rid))
-            return 0;
+            goto err;
     } else {
         if (req_type < 0)
             return ossl_cmp_exchange_error(ctx, OSSL_CMP_PKISTATUS_rejection,
@@ -873,7 +873,7 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
         goto err;
 
     if (!save_senderNonce_if_waiting(ctx, rep, rid))
-        return 0;
+        goto err;
 
     if (cert_response(ctx, 1 /* sleep */, rid, &rep, NULL, req_type, rep_type)
         <= 0)
