@@ -18,6 +18,8 @@
 
 int ossl_init_thread_start(const void *index, void *arg,
                            OSSL_thread_stop_handler_fn handfn);
+int ossl_init_thread_start_prio(const void *index, void *arg,
+                                OSSL_thread_stop_handler_fn handfn, uint32_t prio);
 int ossl_init_thread_deregister(void *index);
 int ossl_init_thread(void);
 void ossl_cleanup_thread(void);

@@ -26,6 +26,7 @@
 #include "internal/thread_once.h"
 #include "internal/provider.h"
 #include "internal/refcount.h"
+#include "internal/threads_common.h"
 #include "internal/bio.h"
 #include "internal/core.h"
 #include "provider_local.h"
@@ -2250,6 +2251,8 @@ static OSSL_FUNC_core_gettable_params_fn core_gettable_params;
 static OSSL_FUNC_core_get_params_fn core_get_params;
 static OSSL_FUNC_core_get_libctx_fn core_get_libctx;
 static OSSL_FUNC_core_thread_start_fn core_thread_start;
+static OSSL_FUNC_core_thread_master_key_fn core_thread_master_key;
+
 #ifndef FIPS_MODULE
 static OSSL_FUNC_core_new_error_fn core_new_error;
 static OSSL_FUNC_core_set_error_debug_fn core_set_error_debug;
@@ -2359,6 +2362,11 @@ static int core_thread_start(const OSSL_CORE_HANDLE *handle,
     OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
 
     return ossl_init_thread_start(prov, arg, handfn);
+}
+
+static CRYPTO_THREAD_LOCAL core_thread_master_key(void)
+{
+    return CRYPTO_THREAD_get_local_master_key();
 }
 
 /*
@@ -2599,6 +2607,7 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
     { OSSL_FUNC_CORE_GET_LIBCTX, (void (*)(void))core_get_libctx },
     { OSSL_FUNC_CORE_THREAD_START, (void (*)(void))core_thread_start },
+    { OSSL_FUNC_CORE_LOCAL_STORAGE_KEY, (void (*)(void))core_thread_master_key },
 #ifndef FIPS_MODULE
     { OSSL_FUNC_CORE_NEW_ERROR, (void (*)(void))core_new_error },
     { OSSL_FUNC_CORE_SET_ERROR_DEBUG, (void (*)(void))core_set_error_debug },
