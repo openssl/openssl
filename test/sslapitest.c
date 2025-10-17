@@ -1950,7 +1950,6 @@ static int ocsp_server_cb_single(SSL *s, void *arg)
         OPENSSL_free(ocsp_resp_der);
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
-    OPENSSL_free(ocsp_resp_der);
 
     ocsp_server_called = 1;
     return SSL_TLSEXT_ERR_OK;
