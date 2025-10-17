@@ -1166,17 +1166,17 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
             /* We don't find the file: use default test string */
             h3ssl.ptr_data = nulldata;
             h3ssl.ldata = nulldata_sz;
-            sprintf(slength, "%zu", h3ssl.ldata);
+            snprintf(slength, sizeof(slength), "%zu", h3ssl.ldata);
             /* content-type: text/html */
             make_nv(&resp[num_nv++], "content-type", "text/html");
         } else if (h3ssl.ldata == INT_MAX) {
             /* endless file for tests */
-            sprintf(slength, "%zu", h3ssl.ldata);
+            snprintf(slength, sizeof(slength), "%zu", h3ssl.ldata);
             h3ssl.ptr_data = (uint8_t *) malloc(4096);
             memset(h3ssl.ptr_data, 'A', 4096);
         } else {
             /* normal file we have opened */
-            sprintf(slength, "%zu", h3ssl.ldata);
+            snprintf(slength, sizeof(slength), "%zu", h3ssl.ldata);
             h3ssl.ptr_data = (uint8_t *) get_file_data(&h3ssl);
             if (h3ssl.ptr_data == NULL)
                 abort();
