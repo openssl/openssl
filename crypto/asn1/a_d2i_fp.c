@@ -139,10 +139,12 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
                 goto err;
             }
             i = BIO_read(in, &(b->data[len]), (int)want);
-            if (i < 0 && diff == 0) {
+
+            if (i <= 0 && diff == 0) {
                 ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);
                 goto err;
             }
+
             if (i > 0) {
                 if (len + i < len) {
                     ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LONG);
