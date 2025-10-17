@@ -1423,15 +1423,18 @@ subtest "encrypt to three recipients with RSA-OAEP, key only decrypt" => sub {
 };
 
 subtest "EdDSA tests for CMS" => sub {
-    plan tests => 2;
+    plan tests => 6;
 
     SKIP: {
-        skip "ECX (EdDSA) is not supported in this build", 2
+        skip "ECX (EdDSA) is not supported in this build", 6
             if disabled("ecx");
 
         my $crt1 = srctop_file("test", "certs", "root-ed25519.pem");
         my $key1 = srctop_file("test", "certs", "root-ed25519.privkey.pem");
         my $sig1 = "sig1.cms";
+        my $crt2 = srctop_file("test", "certs", "root-ed448-cert.pem");
+        my $key2 = srctop_file("test", "certs", "root-ed448-key.pem");
+        my $sig2 = "sig2.cms";
 
         ok(run(app(["openssl", "cms", @prov, "-sign", "-md", "sha512", "-in", $smcont,
                     "-signer", $crt1, "-inkey", $key1, "-out", $sig1])),
@@ -1440,14 +1443,34 @@ subtest "EdDSA tests for CMS" => sub {
         ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig1,
                     "-CAfile", $crt1, "-content", $smcont])),
            "accept CMS verify with Ed25519");
+
+        ok(run(app(["openssl", "cms", @prov, "-sign", "-in", $smcont,
+                    "-outform", "DER", "-certfile", $smroot, "-noattr",
+                    "-signer", $crt1, "-inkey", $key1, "-out", $sig1])),
+           "accept CMS signature with Ed25519 and -noattr");
+
+        ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig1,
+                    "-inform", "DER", "-certfile", $crt1,
+                    "-noverify", "-content", $smcont])),
+           "accept CMS verify with Ed25519 and -noattr");
+
+        ok(run(app(["openssl", "cms", @prov, "-sign", "-in", $smcont,
+                    "-outform", "DER", "-certfile", $smroot, "-noattr",
+                    "-signer", $crt2, "-inkey", $key2, "-out", $sig2])),
+           "accept CMS signature with Ed448 and -noattr");
+
+        ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig2,
+                    "-inform", "DER", "-certfile", $crt2,
+                    "-noverify", "-content", $smcont])),
+           "accept CMS verify with Ed448 and -noattr");
     }
 };
 
 subtest "ML-DSA tests for CMS" => sub {
-    plan tests => 2;
+    plan tests => 4;
 
     SKIP: {
-        skip "ML-DSA is not supported in this build", 2
+        skip "ML-DSA is not supported in this build", 4
             if disabled("ml-dsa") || $no_pqc;
 
         my $sig1 = "sig1.cms";
@@ -1461,14 +1484,24 @@ subtest "ML-DSA tests for CMS" => sub {
         ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig1,
                     "-CAfile", $smroot, "-content", $smcont])),
            "accept CMS verify with ML-DSA-44");
+
+        ok(run(app(["openssl", "cms", @prov, "-sign", "-in", $smcont,
+                    "-outform", "DER", "-certfile", $smroot, "-noattr",
+                    "-signer", catfile($smdir, "sm_mldsa44.pem"), "-out", $sig1])),
+           "accept CMS signature with ML-DSA-44 and -noattr");
+
+        ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig1,
+                    "-inform", "DER", "-certfile", catfile($smdir, "sm_mldsa44.pem"),
+                    "-noverify", "-content", $smcont])),
+           "accept CMS verify with ML-DSA-44 and -noattr");
     }
 };
 
 subtest "SLH-DSA tests for CMS" => sub {
-    plan tests => 6;
+    plan tests => 8;
 
     SKIP: {
-        skip "SLH-DSA is not supported in this build", 6
+        skip "SLH-DSA is not supported in this build", 8
             if disabled("slh-dsa") || $no_pqc;
 
         my $sig1 = "sig1.cms";
@@ -1502,6 +1535,16 @@ subtest "SLH-DSA tests for CMS" => sub {
         ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig1,
                     "-CAfile", $smroot, "-content", $smcont])),
            "accept CMS verify with SLH-DSA-SHAKE-256s");
+
+        ok(run(app(["openssl", "cms", @prov, "-sign", "-in", $smcont,
+                    "-outform", "DER", "-certfile", $smroot, "-noattr",
+                    "-signer", catfile($smdir, "sm_slhdsa_shake_256s.pem"), "-out", $sig1])),
+           "accept CMS signature with SLH-DSA-SHAKE-256s and -noattr");
+
+        ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig1,
+                    "-inform", "DER", "-certfile", catfile($smdir, "sm_slhdsa_shake_256s.pem"),
+                    "-noverify", "-content", $smcont])),
+           "accept CMS verify with SLH-DSA-SHAKE-256s and -noattr");
     }
 };
 
