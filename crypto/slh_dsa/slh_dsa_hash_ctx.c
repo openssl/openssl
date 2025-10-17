@@ -42,8 +42,7 @@ SLH_DSA_HASH_CTX *ossl_slh_dsa_hash_ctx_new(const SLH_DSA_KEY *key)
     if (ret->md_pkseed_ctx == NULL)
         goto err;
     if (key->pub != NULL
-            && !ossl_slh_dsa_hash_ctx_prehash_pk_seed(ret,
-                    SLH_DSA_PK_SEED(key), key->params->n))
+            && !ossl_slh_dsa_hash_ctx_prehash_pk_seed(ret, SLH_DSA_PK_SEED(key), key->params->n))
         goto err;
     if (!key->params->is_shake) {
         if (key->hmac != NULL) {
@@ -104,7 +103,7 @@ SLH_DSA_HASH_CTX *ossl_slh_dsa_hash_ctx_dup(const SLH_DSA_HASH_CTX *src)
  * @brief Cache the pk seed.
  * SLH_DSA performs a large number of hash operations that consist of either
  *  SHAKE256(PK.seed || .. ) OR
- *  SHA256(PK.seed || toByte(0, 64 − n) || ...)
+ *  SHA256(PK.seed || toByte(0, 64 - n) || ...)
  * So cache this value and reuse it as the starting point for many hash functions.
  */
 int ossl_slh_dsa_hash_ctx_prehash_pk_seed(SLH_DSA_HASH_CTX *ctx,
@@ -114,10 +113,8 @@ int ossl_slh_dsa_hash_ctx_prehash_pk_seed(SLH_DSA_HASH_CTX *ctx,
 
     if (!EVP_DigestUpdate(ctx->md_pkseed_ctx, pkseed, n))
         return 0;
-    if (!ctx->key->params->is_shake)
-        if (!EVP_DigestUpdate(ctx->md_pkseed_ctx, zeros, 64 - n))
-        return 0;
-    return 1;
+    return ctx->key->params->is_shake
+        || EVP_DigestUpdate(ctx->md_pkseed_ctx, zeros, 64 - n);
 }
 
 /**
