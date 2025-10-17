@@ -113,7 +113,7 @@ OSSL_CORE_MAKE_FUNC(int, core_obj_create,
                      const char *sn, const char *ln))
 
 /* Functions to get our thread local storage key */
-# define OSSL_FUNC_CORE_LOCAL_STORAGE_KEY      13
+#define OSSL_FUNC_CORE_LOCAL_STORAGE_KEY      13
 OSSL_CORE_MAKE_FUNC(CRYPTO_THREAD_LOCAL, core_thread_master_key, ())
 
 /* Memory allocation, freeing, clearing. */
