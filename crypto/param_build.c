@@ -382,6 +382,7 @@ OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld)
     blk = p_blks + (OSSL_PARAM_ALIGNED_BLOCK *)(params);
     last = param_bld_convert(bld, params, blk, s);
     ossl_param_set_secure_block(last, s, ss);
+    last->return_size = total;
 
     /* Reset builder for reuse */
     bld->total_blocks = 0;

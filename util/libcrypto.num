@@ -5947,3 +5947,4 @@ CRYPTO_realloc_array                    ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_clear_realloc_array              ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_secure_malloc_array              ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_secure_calloc                    ?	4_0_0	EXIST::FUNCTION:
+OSSL_PARAM_clear_free                   ?	4_0_0	EXIST::FUNCTION:

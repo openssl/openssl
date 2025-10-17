@@ -883,6 +883,36 @@ static int test_param_merge(void)
     OSSL_PARAM_free(p);
     return ret;
 }
+static int test_param_clear_free(void)
+{
+    int values[] = {1, 2};
+    OSSL_PARAM *dup, *manual;
+    OSSL_PARAM base[3];
+    int ret = 0;
+
+    base[0] = OSSL_PARAM_construct_int("int", &values[0]);
+    base[1] = OSSL_PARAM_construct_int("int", &values[1]);
+    base[2] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(dup = OSSL_PARAM_dup(base)))
+        goto err;
+
+    OSSL_PARAM_clear_free(dup);
+
+    if (!TEST_ptr(manual = OPENSSL_zalloc(sizeof(OSSL_PARAM) * 3)))
+        goto err;
+
+    manual[0] = OSSL_PARAM_construct_int("int", &values[0]);
+    manual[1] = OSSL_PARAM_construct_int("int", &values[1]);
+    manual[2] = OSSL_PARAM_construct_end();
+
+    OSSL_PARAM_clear_free(manual);
+
+    ret = 1;
+
+err:
+    return ret;
+}
 
 int setup_tests(void)
 {
@@ -903,5 +933,6 @@ int setup_tests(void)
     ADD_TEST(test_param_modified);
     ADD_TEST(test_param_copy_null);
     ADD_TEST(test_param_merge);
+    ADD_TEST(test_param_clear_free);
     return 1;
 }
