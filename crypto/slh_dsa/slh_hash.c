@@ -25,12 +25,12 @@
 #define NIBBLE_MASK 15
 
 /* Most hash functions in SLH-DSA truncate the output */
-#define sha256_final(ctx, out, outlen) \
-    (ctx)->md_len = outlen;            \
+#define sha256_final(ctx, out, outlen)     \
+    (ctx)->md_len = (unsigned int)outlen;  \
     SHA256_Final(out, ctx)
 
-#define sha512_final(ctx, out, outlen) \
-    (ctx)->md_len = outlen;            \
+#define sha512_final(ctx, out, outlen)     \
+    (ctx)->md_len = (unsigned int)outlen;  \
     SHA512_Final(out, ctx)
 
 static OSSL_SLH_HASHFUNC_PRF slh_prf_sha256;
@@ -151,7 +151,7 @@ slh_hmsg_sha256(SLH_DSA_HASH_CTX *hctx, const uint8_t *r, const uint8_t *pk_seed
     size_t m = params->m;
     size_t n = params->n;
     uint8_t seed[2 * SLH_MAX_N + SHA256_DIGEST_LENGTH];
-    long seed_len = SHA256_DIGEST_LENGTH + 2 * n;
+    long seed_len = SHA256_DIGEST_LENGTH + (long)(2 * n);
 
     memcpy(seed, r, n);
     memcpy(seed + n, pk_seed, n);
@@ -175,7 +175,7 @@ slh_hmsg_sha512(SLH_DSA_HASH_CTX *hctx, const uint8_t *r, const uint8_t *pk_seed
     size_t m = params->m;
     size_t n = params->n;
     uint8_t seed[2 * SLH_MAX_N + SHA512_DIGEST_LENGTH];
-    long seed_len = SHA512_DIGEST_LENGTH + 2 * n;
+    long seed_len = SHA512_DIGEST_LENGTH + (long)(2 * n);
 
     memcpy(seed, r, n);
     memcpy(seed + n, pk_seed, n);
@@ -188,7 +188,6 @@ slh_hmsg_sha512(SLH_DSA_HASH_CTX *hctx, const uint8_t *r, const uint8_t *pk_seed
     return SHA512_Final(seed + 2 * n, sctx)
         && (PKCS1_MGF1(out, (long)m, seed, seed_len, hctx->key->md_sha512) == 0);
 }
-
 
 static int
 slh_prf_msg_sha2(SLH_DSA_HASH_CTX *hctx,
@@ -210,10 +209,12 @@ slh_prf_msg_sha2(SLH_DSA_HASH_CTX *hctx,
      * So we do a lazy update here on the first call.
      */
     if (hctx->hmac_digest_used == 0) {
+        const char *nm = EVP_MD_get0_name(key->md_sha512 == NULL ? key->md : key->md_sha512);
+
         p = params;
         /* The underlying digest to be used */
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                                (char *)EVP_MD_get0_name(key->md_sha512 == NULL ? key->md : key->md_sha512), 0);
+                                                (char *)nm, 0);
         if (key->propq != NULL)
             *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
                                                     (char *)key->propq, 0);
@@ -252,12 +253,12 @@ int slh_wots_pk_gen_sha2(SLH_DSA_HASH_CTX *hctx,
     size_t n = hctx->key->params->n;
     size_t i, j = 0, len = SLH_WOTS_LEN(n);
     uint8_t sk[SLH_MAX_N];
+    SHA256_CTX *sctx = (SHA256_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_pkseed_ctx);
+    SHA256_CTX ctx;
     const SLH_ADRS_FUNC *adrsf = hctx->key->adrs_func;
     SLH_ADRS_DECLARE(sk_adrs);
     SLH_ADRS_FN_DECLARE(adrsf, set_chain_address);
     SLH_ADRS_FN_DECLARE(adrsf, set_hash_address);
-    SHA256_CTX *sctx = (SHA256_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_pkseed_ctx);
-    SHA256_CTX ctx;
 
     adrsf->copy(sk_adrs, adrs);
     adrsf->set_type_and_clear(sk_adrs, SLH_ADRS_TYPE_WOTS_PRF);
@@ -385,7 +386,7 @@ slh_t_sha256(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs
 
     SHA256_Update(&sctx, adrs, SLH_ADRSC_SIZE);
     SHA256_Update(&sctx, ml, ml_len);
-    sha256_final(&sctx, out,  hctx->key->params->n);
+    sha256_final(&sctx, out, hctx->key->params->n);
     return 1;
 }
 
@@ -402,7 +403,7 @@ slh_t_sha512(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs
     SHA512_Update(sctx, zeros, 128 - n);
     SHA512_Update(sctx, adrs, SLH_ADRSC_SIZE);
     SHA512_Update(sctx, ml, ml_len);
-    sha512_final(sctx, out,  hctx->key->params->n);
+    sha512_final(sctx, out, hctx->key->params->n);
     return 1;
 }
 
