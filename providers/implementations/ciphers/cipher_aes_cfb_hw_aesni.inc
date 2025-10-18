@@ -30,6 +30,7 @@
 static int ossl_aes_cfb8_vaes_eligible(void) { return 0; }
 static int ossl_aes_cfb1_vaes_eligible(void) { return 0; }
 
+#if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 /* active in 64-bit builds when AES-NI, AVX512F, and VAES are detected */
 static int aes_cfb128_vaes_encdec_wrapper(
     PROV_CIPHER_CTX* dat,
@@ -56,6 +57,7 @@ static int aes_cfb128_vaes_encdec_wrapper(
 
     return 1;
 }
+#endif
  
 /* generates AES round keys for AES-NI and VAES implementations */
 static int cipher_hw_aesni_initkey(PROV_CIPHER_CTX *dat,
