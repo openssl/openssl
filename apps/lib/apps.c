@@ -453,7 +453,7 @@ X509 *load_cert_pass(const char *uri, int format, int maybe_stdin,
         }
     } else {
         (void)load_key_certs_crls(uri, format, maybe_stdin, pass, desc, 0,
-                                  NULL, NULL, NULL, &cert, NULL, NULL, NULL);
+                                  NULL, NULL, NULL, &cert, NULL, NULL, NULL, NULL);
     }
     return cert;
 }
@@ -475,7 +475,7 @@ X509_CRL *load_crl(const char *uri, int format, int maybe_stdin,
         }
     } else {
         (void)load_key_certs_crls(uri, format, maybe_stdin, NULL, desc, 0,
-                                  NULL, NULL,  NULL, NULL, NULL, &crl, NULL);
+                                  NULL, NULL,  NULL, NULL, NULL, &crl, NULL, NULL);
     }
     return crl;
 }
@@ -569,7 +569,7 @@ EVP_PKEY *load_key(const char *uri, int format, int may_stdin,
     if (format == FORMAT_ENGINE)
         uri = allocated_uri = make_engine_uri(e, uri, desc);
     (void)load_key_certs_crls(uri, format, may_stdin, pass, desc, 0,
-                              &pkey, NULL, NULL, NULL, NULL, NULL, NULL);
+                              &pkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
     OPENSSL_free(allocated_uri);
     return pkey;
@@ -588,10 +588,10 @@ EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
     if (format == FORMAT_ENGINE)
         uri = allocated_uri = make_engine_uri(e, uri, desc);
     (void)load_key_certs_crls(uri, format, maybe_stdin, pass, desc, 1,
-                              NULL, &pkey, NULL, NULL, NULL, NULL, NULL);
+                              NULL, &pkey, NULL, NULL, NULL, NULL, NULL, NULL);
     if (pkey == NULL)
         (void)load_key_certs_crls(uri, format, maybe_stdin, pass, desc, 0,
-                                  &pkey, NULL, NULL, NULL, NULL, NULL, NULL);
+                                  &pkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     OPENSSL_free(allocated_uri);
     return pkey;
 }
@@ -606,7 +606,7 @@ EVP_PKEY *load_keyparams_suppress(const char *uri, int format, int maybe_stdin,
         desc = "key parameters";
     (void)load_key_certs_crls(uri, format, maybe_stdin, NULL, desc,
                               suppress_decode_errors,
-                              NULL, NULL, &params, NULL, NULL, NULL, NULL);
+                              NULL, NULL, &params, NULL, NULL, NULL, NULL, NULL);
     if (params != NULL && keytype != NULL && !EVP_PKEY_is_a(params, keytype)) {
         ERR_print_errors(bio_err);
         BIO_printf(bio_err,
@@ -622,6 +622,17 @@ EVP_PKEY *load_keyparams(const char *uri, int format, int maybe_stdin,
                          const char *keytype, const char *desc)
 {
     return load_keyparams_suppress(uri, format, maybe_stdin, keytype, desc, 0);
+}
+
+EVP_SKEY *load_skey(const char *uri, int format, int may_stdin,
+                    const char *pass, int quiet)
+{
+    EVP_SKEY *skey = NULL;
+
+    (void)load_key_certs_crls(uri, format, may_stdin, pass, NULL, 0,
+                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, &skey);
+
+    return skey;
 }
 
 void app_bail_out(char *fmt, ...)
@@ -724,7 +735,7 @@ int load_cert_certs(const char *uri,
     }
     pass_string = get_passwd(pass, desc);
     ret = load_key_certs_crls(uri, FORMAT_UNDEF, 0, pass_string, desc, 0,
-                              NULL, NULL, NULL, pcert, pcerts, NULL, NULL);
+                              NULL, NULL, NULL, pcert, pcerts, NULL, NULL, NULL);
     clear_free(pass_string);
 
     if (ret) {
@@ -832,7 +843,7 @@ int load_certs(const char *uri, int maybe_stdin, STACK_OF(X509) **certs,
     if (desc == NULL)
         desc = "certificates";
     ret = load_key_certs_crls(uri, FORMAT_UNDEF, maybe_stdin, pass, desc, 0,
-                              NULL, NULL, NULL, NULL, certs, NULL, NULL);
+                              NULL, NULL, NULL, NULL, certs, NULL, NULL, NULL);
 
     if (!ret && was_NULL) {
         OSSL_STACK_OF_X509_free(*certs);
@@ -853,7 +864,7 @@ int load_crls(const char *uri, STACK_OF(X509_CRL) **crls,
     if (desc == NULL)
         desc = "CRLs";
     ret = load_key_certs_crls(uri, FORMAT_UNDEF, 0, pass, desc, 0,
-                              NULL, NULL, NULL, NULL, NULL, NULL, crls);
+                              NULL, NULL, NULL, NULL, NULL, NULL, crls, NULL);
 
     if (!ret && was_NULL) {
         sk_X509_CRL_pop_free(*crls, X509_CRL_free);
@@ -890,13 +901,14 @@ static const char *format2string(int format)
     (ppkey != NULL ? "private key" : ppubkey != NULL ? "public key" :  \
      pparams != NULL ? "key parameters" :                              \
      pcert != NULL ? "certificate" : pcerts != NULL ? "certificates" : \
-     pcrl != NULL ? "CRL" : pcrls != NULL ? "CRLs" : NULL)
+     pcrl != NULL ? "CRL" : pcrls != NULL ? "CRLs" : \
+     pskey != NULL ? "symmetric key" : NULL)
 /*
  * Load those types of credentials for which the result pointer is not NULL.
  * Reads from stdin if 'uri' is NULL and 'maybe_stdin' is nonzero.
  * 'format' parameter may be FORMAT_PEM, FORMAT_ASN1, or 0 for no hint.
  * desc may contain more detail on the credential(s) to be loaded for error msg
- * For non-NULL ppkey, pcert, and pcrl the first suitable value found is loaded.
+ * For non-NULL ppkey, pcert, pcrl, and pskey the first suitable value found is loaded.
  * If pcerts is non-NULL and *pcerts == NULL then a new cert list is allocated.
  * If pcerts is non-NULL then all available certificates are appended to *pcerts
  * except any certificate assigned to *pcert.
@@ -906,18 +918,20 @@ static const char *format2string(int format)
  * In any case (also on error) the caller is responsible for freeing all members
  * of *pcerts and *pcrls (as far as they are not NULL).
  */
+
 int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
                         const char *pass, const char *desc, int quiet,
                         EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
                         EVP_PKEY **pparams,
                         X509 **pcert, STACK_OF(X509) **pcerts,
-                        X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls)
+                        X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls,
+                        EVP_SKEY **pskey)
 {
     PW_CB_DATA uidata;
     OSSL_STORE_CTX *ctx = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
-    int ncerts = 0, ncrls = 0, expect = -1;
+    int ncerts = 0, ncrls = 0, nskeys = 0, expect = -1;
     const char *failed = FAIL_NAME;
     const char *input_type;
     OSSL_PARAM itp[2];
@@ -937,9 +951,10 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     SET_EXPECT1(ppubkey, OSSL_STORE_INFO_PUBKEY);
     SET_EXPECT1(pparams, OSSL_STORE_INFO_PARAMS);
     SET_EXPECT1(pcert, OSSL_STORE_INFO_CERT);
+    SET_EXPECT1(pskey, OSSL_STORE_INFO_SKEY);
     /*
      * Up to here, the following holds.
-     * If just one of the ppkey, ppubkey, pparams, and pcert function parameters
+     * If just one of the ppkey, ppubkey, pparams, pcert, and pskey function parameters
      * is nonzero, expect > 0 indicates which type of credential is expected.
      * If expect == 0, more than one of them is nonzero (multiple types expected).
      */
@@ -1008,6 +1023,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
             BIO_printf(bio_err, "Could not open file or uri for loading");
         goto end;
     }
+
     /* expect == 0 means here multiple types of credentials are to be loaded */
     if (expect > 0 && !OSSL_STORE_expect(ctx, expect)) {
         if (!quiet)
@@ -1019,7 +1035,8 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     /* from here, failed != NULL only if actually an error has been detected */
 
     while ((ppkey != NULL || ppubkey != NULL || pparams != NULL
-            || pcert != NULL || pcerts != NULL || pcrl != NULL || pcrls != NULL)
+            || pcert != NULL || pcerts != NULL || pcrl != NULL || pcrls != NULL
+            || pskey != NULL)
            && !OSSL_STORE_eof(ctx)) {
         OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
         int type, ok = 1;
@@ -1086,6 +1103,14 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
             }
             ncrls += ok;
             break;
+        case OSSL_STORE_INFO_SKEY:
+            if (pskey != NULL) {
+                ok = (*pskey = OSSL_STORE_INFO_get1_SKEY(info)) != NULL;
+                if (ok)
+                    pskey = NULL;
+            }
+            nskeys += ok;
+            break;
         default:
             /* skip any other type; ok stays == 1 */
             break;
@@ -1108,6 +1133,8 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
             pcerts = NULL;
         if (ncrls > 0)
             pcrls = NULL;
+        if (nskeys > 0)
+            pskey = NULL;
         failed = FAIL_NAME;
         if (failed != NULL && !quiet)
             BIO_printf(bio_err, "Could not find");

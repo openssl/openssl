@@ -5947,3 +5947,6 @@ CRYPTO_realloc_array                    ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_clear_realloc_array              ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_secure_malloc_array              ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_secure_calloc                    ?	4_0_0	EXIST::FUNCTION:
+OSSL_STORE_INFO_new_SKEY                ?	4_0_0	EXIST::FUNCTION:
+OSSL_STORE_INFO_get0_SKEY               ?	4_0_0	EXIST::FUNCTION:
+OSSL_STORE_INFO_get1_SKEY               ?	4_0_0	EXIST::FUNCTION:
