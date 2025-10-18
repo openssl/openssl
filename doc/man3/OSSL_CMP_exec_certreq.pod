@@ -119,7 +119,7 @@ otherwise the issuer DN and serial number
 of the certificate set by L<OSSL_CMP_CTX_set1_oldCert(3)>,
 otherwise the subject DN and public key
 of the certificate signing request set by L<OSSL_CMP_CTX_set1_p10CSR(3)>.
-RFC 4210 is vague in which PKIStatus should be returned by the server.
+RFC 9810 is vague in which PKIStatus should be returned by the server.
 We take "accepted" and "grantedWithMods" as clear success and handle
 "revocationWarning" and "revocationNotification" just as warnings because CAs
 typically return them as an indication that the certificate was already revoked.
@@ -138,7 +138,7 @@ and returns the list of B<ITAV>s received in a genp response message.
 This can be used, for instance,
 with infoType C<signKeyPairTypes> to obtain the set of signature
 algorithm identifiers that the CA will certify for subject public keys.
-See RFC 4210 section 5.3.19 and appendix E.5 for details.
+See RFC 9810 section 5.3.19 and appendix D.5 for details.
 Functions implementing more specific genm/genp exchanges are described next.
 
 OSSL_CMP_get1_caCerts() uses a genm/genp message exchange with infoType caCerts
@@ -151,7 +151,7 @@ OSSL_CMP_get1_rootCaKeyUpdate() uses a genm request message
 with infoType rootCaCert to obtain from the CMP server referenced by I<ctx>
 in a genp response message with infoType rootCaKeyUpdate any update of the
 given root CA certificate I<oldWithOld> and verifies it as far as possible.
-See RFC 4210 section 4.4 for details.
+See RFC 9810 section 4.4 for details.
 On success it assigns to I<*newWithNew> the root certificate received.
 When the I<newWithOld> and I<oldWithNew> output parameters are not NULL,
 it assigns to them the corresponding transition certificates.
@@ -183,7 +183,7 @@ Both must be freed by the caller.
 
 =head1 NOTES
 
-CMP is defined in RFC 4210 (and CRMF in RFC 4211).
+CMP is defined in RFC 9810 (and CRMF in RFC 4211).
 
 The CMP client implementation is limited to one request per CMP message
 (and consequently to at most one response component per CMP message).

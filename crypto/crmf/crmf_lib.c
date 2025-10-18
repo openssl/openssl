@@ -861,7 +861,7 @@ unsigned char
 
 /*
  * Decrypts the certificate in the given encryptedValue using private key pkey.
- * This is needed for the indirect PoP method as in RFC 4210 section 5.2.8.2.
+ * This is needed for the indirect PoP method as in RFC 9810 section 5.2.8.3.2.
  *
  * returns a pointer to the decrypted certificate
  * returns NULL on error or if no certificate available
@@ -891,7 +891,7 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecer
 }
 /*-
  * Decrypts the certificate in the given encryptedKey using private key pkey.
- * This is needed for the indirect PoP method as in RFC 4210 section 5.2.8.2.
+ * This is needed for the indirect PoP method as in RFC 9810 section 5.2.8.3.2.
  *
  * returns a pointer to the decrypted certificate
  * returns NULL on error or if no certificate available

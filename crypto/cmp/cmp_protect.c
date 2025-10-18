@@ -291,7 +291,7 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         goto err;
 
     /*
-     * As required by RFC 4210 section 5.1.1., if the sender name is not known
+     * As required by RFC 9810 section 5.1.1., if the sender name is not known
      * to the client it set to NULL-DN. In this case for identification at least
      * the senderKID must be set, where we took the referenceValue as fallback.
      */
