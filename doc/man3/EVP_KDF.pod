@@ -6,7 +6,7 @@ EVP_KDF, EVP_KDF_fetch, EVP_KDF_free, EVP_KDF_up_ref,
 EVP_KDF_CTX, EVP_KDF_CTX_new, EVP_KDF_CTX_free, EVP_KDF_CTX_dup,
 EVP_KDF_CTX_reset, EVP_KDF_derive,
 EVP_KDF_CTX_set_SKEY, EVP_KDF_derive_SKEY,
-EVP_KDF_CTX_get_kdf_size,
+EVP_KDF_CTX_get_kdf_size, EVP_KDF_CTX_get0_kdf, EVP_KDF_CTX_get1_kdf,
 EVP_KDF_get0_provider, EVP_KDF_CTX_kdf, EVP_KDF_is_a,
 EVP_KDF_get0_name, EVP_KDF_names_do_all, EVP_KDF_get0_description,
 EVP_KDF_CTX_get_params, EVP_KDF_CTX_set_params, EVP_KDF_do_all_provided,
@@ -22,7 +22,8 @@ EVP_KDF_CTX_gettable_params, EVP_KDF_CTX_settable_params - EVP KDF routines
  typedef struct evp_kdf_ctx_st EVP_KDF_CTX;
 
  EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf);
- const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx);
+ const EVP_KDF *EVP_KDF_CTX_get0_kdf(const EVP_KDF_CTX *ctx);
+ EVP_KDF *EVP_KDF_CTX_get1_kdf(EVP_KDF_CTX *ctx);
  void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx);
  EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src);
  void EVP_KDF_CTX_reset(EVP_KDF_CTX *ctx);
@@ -56,6 +57,8 @@ EVP_KDF_CTX_gettable_params, EVP_KDF_CTX_settable_params - EVP KDF routines
  const OSSL_PARAM *EVP_KDF_CTX_gettable_params(const EVP_KDF *kdf);
  const OSSL_PARAM *EVP_KDF_CTX_settable_params(const EVP_KDF *kdf);
  const OSSL_PROVIDER *EVP_KDF_get0_provider(const EVP_KDF *kdf);
+
+ #define EVP_KDF_CTX_kdf EVP_KDF_CTX_get0_kdf
 
 =head1 DESCRIPTION
 
@@ -99,8 +102,9 @@ EVP_KDF_CTX_new() creates a new context for the KDF implementation I<kdf>.
 EVP_KDF_CTX_free() frees up the context I<ctx>.  If I<ctx> is NULL, nothing
 is done.
 
-EVP_KDF_CTX_kdf() returns the B<EVP_KDF> associated with the context
-I<ctx>.
+EVP_KDF_CTX_get0_kdf() returns the B<EVP_KDF> associated with the context
+I<ctx>. EVP_KDF_CTX_get1_kdf() is the same except ownership is passed to
+the caller. EVP_KDF_CTX_kdf() is an alias for EVP_KDF_CTX_get0_kdf().
 
 =head2 Computing functions
 

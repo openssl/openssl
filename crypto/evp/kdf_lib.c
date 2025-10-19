@@ -104,8 +104,15 @@ const OSSL_PROVIDER *EVP_KDF_get0_provider(const EVP_KDF *kdf)
     return kdf->prov;
 }
 
-const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx)
+const EVP_KDF *EVP_KDF_CTX_get0_kdf(const EVP_KDF_CTX *ctx)
 {
+    return ctx->meth;
+}
+
+EVP_KDF *EVP_KDF_CTX_get1_kdf(const EVP_KDF_CTX *ctx)
+{
+    if (!EVP_KDF_up_ref(ctx->meth))
+        return NULL;
     return ctx->meth;
 }
 
