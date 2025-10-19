@@ -199,6 +199,11 @@ OpenSSL Releases
 
    *Timo Keller*
 
+ * Added `EVP_KDF_CTX_get0_kdf()` and `EVP_KDF_CTX_get1_kdf()` functions
+   as a replacement for the now deprecated `EVP_KDF_CTX_kdf()`.
+
+   *Leon Timmermans*
+
  * Add `FIPS_mode()` as a convenience define to
    `EVP_default_properties_is_fips_enabled(NULL)`, which is
    shorthand to check whether the `fips=yes` property is currently enabled

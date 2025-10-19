@@ -37,7 +37,13 @@ const char *EVP_KDF_get0_description(const EVP_KDF *kdf);
 int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name);
 const char *EVP_KDF_get0_name(const EVP_KDF *kdf);
 const OSSL_PROVIDER *EVP_KDF_get0_provider(const EVP_KDF *kdf);
-const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx);
+const EVP_KDF *EVP_KDF_CTX_get0_kdf(const EVP_KDF_CTX *ctx);
+EVP_KDF *EVP_KDF_CTX_get1_kdf(const EVP_KDF_CTX *ctx);
+
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
+OSSL_DEPRECATEDIN_4_1_FOR("Use EVP_KDF_CTX_get0_kdf")
+const EVP_KDF *EVP_KDF_CTX_kdf(const EVP_KDF_CTX *ctx);
+#endif /* !OPENSSL_NO_DEPRECATED_4_1 */
 
 void EVP_KDF_CTX_reset(EVP_KDF_CTX *ctx);
 size_t EVP_KDF_CTX_get_kdf_size(EVP_KDF_CTX *ctx);
