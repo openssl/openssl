@@ -458,25 +458,6 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
     return ret;
 }
 
-#ifdef FIPS_MODULE
-void CRYPTO_THREAD_clean_local_for_fips(void)
-{
-    MASTER_KEY_ENTRY *mkey;
-
-    /*
-     * If we never initialized the master key, there
-     * is no data to clean, so we are done here
-     */
-    if (master_key_init == 0)
-        return;
-
-    mkey = CRYPTO_THREAD_get_local(&master_key);
-    if (mkey != NULL)
-        clean_master_key(mkey);
-    CRYPTO_THREAD_cleanup_local(&master_key);
-}
-#endif
-
 CRYPTO_THREAD_LOCAL CRYPTO_THREAD_get_local_master_key(void)
 {
     if (!CRYPTO_THREAD_run_once(&master_once, init_master_key))
