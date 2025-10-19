@@ -1616,7 +1616,7 @@ EVP_KDF_get0_description                1614	4_0_0	EXIST::FUNCTION:
 EVP_KDF_is_a                            1615	4_0_0	EXIST::FUNCTION:
 EVP_KDF_get0_name                       1616	4_0_0	EXIST::FUNCTION:
 EVP_KDF_get0_provider                   1617	4_0_0	EXIST::FUNCTION:
-EVP_KDF_CTX_kdf                         1618	4_0_0	EXIST::FUNCTION:
+EVP_KDF_CTX_kdf                         1618	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
 EVP_KDF_CTX_reset                       1619	4_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get_kdf_size                1620	4_0_0	EXIST::FUNCTION:
 EVP_KDF_derive                          1621	4_0_0	EXIST::FUNCTION:
@@ -5722,3 +5722,5 @@ CRYPTO_atomic_cmp_exch_ptr              ?	4_1_0	EXIST::FUNCTION:
 EVP_EC_affine2oct                       ?	4_1_0	EXIST::FUNCTION:
 OPENSSL_sk_set_copy_thunks              ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_new_not_owned               ?	4_1_0	EXIST::FUNCTION:
+EVP_KDF_CTX_get0_kdf                    ?	4_1_0	EXIST::FUNCTION:
+EVP_KDF_CTX_get1_kdf                    ?	4_1_0	EXIST::FUNCTION:
