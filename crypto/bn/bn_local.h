@@ -10,20 +10,10 @@
 #ifndef OSSL_CRYPTO_BN_LOCAL_H
 # define OSSL_CRYPTO_BN_LOCAL_H
 
-/*
- * The EDK2 build doesn't use bn_conf.h; it sets THIRTY_TWO_BIT or
- * SIXTY_FOUR_BIT in its own environment since it doesn't re-run our
- * Configure script and needs to support both 32-bit and 64-bit.
- */
 # include <openssl/opensslconf.h>
-
-# if !defined(OPENSSL_SYS_UEFI)
-#  include "crypto/bn_conf.h"
-# endif
-
-# include "crypto/bn.h"
 # include "internal/cryptlib.h"
 # include "internal/numbers.h"
+# include "crypto/bn.h"
 
 /*
  * These preprocessor symbols control various aspects of the bignum headers
