@@ -33,14 +33,6 @@ SLH_DSA_HASH_CTX *ossl_slh_dsa_hash_ctx_new(const SLH_DSA_KEY *key)
         return NULL;
 
     ret->key = key;
-    ret->md_ctx = EVP_MD_CTX_new();
-    if (ret->md_ctx == NULL)
-        goto err;
-    if (EVP_DigestInit_ex2(ret->md_ctx, key->md, NULL) != 1)
-        goto err;
-    ret->md_pkseed_ctx = EVP_MD_CTX_dup(ret->md_ctx);
-    if (ret->md_pkseed_ctx == NULL)
-        goto err;
     if (key->pub != NULL
             && !ossl_slh_dsa_hash_ctx_prehash_pk_seed(ret, SLH_DSA_PK_SEED(key), key->params->n))
         goto err;
@@ -48,14 +40,6 @@ SLH_DSA_HASH_CTX *ossl_slh_dsa_hash_ctx_new(const SLH_DSA_KEY *key)
         if (key->hmac != NULL) {
             ret->hmac_ctx = EVP_MAC_CTX_new(key->hmac);
             if (ret->hmac_ctx == NULL)
-                goto err;
-        }
-        if (key->md_sha512 != NULL) {
-            /* Gets here for certain SHA2 algorithms */
-            ret->md_sha512_ctx = EVP_MD_CTX_new();
-            if (ret->md_sha512_ctx == NULL)
-                goto err;
-            if (EVP_DigestInit_ex2(ret->md_sha512_ctx, key->md_sha512, NULL) != 1)
                 goto err;
         }
     }
@@ -81,14 +65,7 @@ SLH_DSA_HASH_CTX *ossl_slh_dsa_hash_ctx_dup(const SLH_DSA_HASH_CTX *src)
     /* Note that the key is not ref counted, since it does not own the key */
     ret->key = src->key;
 
-    if (src->md_ctx != NULL
-            && (ret->md_ctx = EVP_MD_CTX_dup(src->md_ctx)) == NULL)
-        goto err;
-    if (src->md_pkseed_ctx != NULL
-            && (ret->md_pkseed_ctx = EVP_MD_CTX_dup(src->md_pkseed_ctx)) == NULL)
-        goto err;
-    if (src->md_sha512_ctx != NULL
-            && (ret->md_sha512_ctx = EVP_MD_CTX_dup(src->md_sha512_ctx)) == NULL)
+    if (!src->key->hash_func->prehash_dup(ret, src))
         goto err;
     if (src->hmac_ctx != NULL
             && (ret->hmac_ctx = EVP_MAC_CTX_dup(src->hmac_ctx)) == NULL)
@@ -109,12 +86,7 @@ SLH_DSA_HASH_CTX *ossl_slh_dsa_hash_ctx_dup(const SLH_DSA_HASH_CTX *src)
 int ossl_slh_dsa_hash_ctx_prehash_pk_seed(SLH_DSA_HASH_CTX *ctx,
                                           const uint8_t *pkseed, size_t n)
 {
-    static uint8_t zeros[64] = { 0 };
-
-    if (!EVP_DigestUpdate(ctx->md_pkseed_ctx, pkseed, n))
-        return 0;
-    return ctx->key->params->is_shake
-        || EVP_DigestUpdate(ctx->md_pkseed_ctx, zeros, 64 - n);
+    return ctx->key->hash_func->prehash_pk_seed(ctx, pkseed, n);
 }
 
 /**
@@ -126,9 +98,8 @@ void ossl_slh_dsa_hash_ctx_free(SLH_DSA_HASH_CTX *ctx)
 {
     if (ctx == NULL)
         return;
-    EVP_MD_CTX_free(ctx->md_ctx);
-    EVP_MD_CTX_free(ctx->md_pkseed_ctx);
-    EVP_MD_CTX_free(ctx->md_sha512_ctx);
+    OPENSSL_free(ctx->shactx);
+    OPENSSL_free(ctx->shactx_pkseed);
     EVP_MAC_CTX_free(ctx->hmac_ctx);
     OPENSSL_free(ctx);
 }

@@ -63,7 +63,7 @@ slh_hmsg_shake(SLH_DSA_HASH_CTX *hctx, const uint8_t *r,
                const uint8_t *msg, size_t msg_len,
                uint8_t *out, size_t out_len)
 {
-    KECCAK1600_CTX *sctx = (KECCAK1600_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_ctx);
+    KECCAK1600_CTX *sctx = (KECCAK1600_CTX *)(hctx->shactx);
     const SLH_DSA_PARAMS *params = hctx->key->params;
     size_t m = params->m;
     size_t n = params->n;
@@ -85,7 +85,7 @@ slh_prf_msg_shake(SLH_DSA_HASH_CTX *hctx, const uint8_t *sk_prf,
     unsigned char out[SLH_MAX_N];
     const SLH_DSA_PARAMS *params = hctx->key->params;
     size_t n = params->n;
-    KECCAK1600_CTX *sctx = (KECCAK1600_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_ctx);
+    KECCAK1600_CTX *sctx = (KECCAK1600_CTX *)(hctx->shactx);
 
     ossl_sha3_reset(sctx);
     ossl_sha3_absorb(sctx, sk_prf, n);
@@ -101,7 +101,7 @@ slh_f_shake(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
 {
     const SLH_DSA_PARAMS *params = hctx->key->params;
     size_t n = params->n;
-    KECCAK1600_CTX sctx = *((KECCAK1600_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_pkseed_ctx));
+    KECCAK1600_CTX sctx = *((KECCAK1600_CTX *)(hctx->shactx_pkseed));
 
     ossl_sha3_absorb(&sctx, adrs, SLH_ADRS_SIZE);
     ossl_sha3_absorb(&sctx, m1, m1_len);
@@ -116,7 +116,7 @@ slh_prf_shake(SLH_DSA_HASH_CTX *hctx,
 {
     const SLH_DSA_PARAMS *params = hctx->key->params;
     size_t n = params->n;
-    KECCAK1600_CTX sctx = *((KECCAK1600_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_pkseed_ctx));
+    KECCAK1600_CTX sctx = *((KECCAK1600_CTX *)(hctx->shactx_pkseed));
 
     ossl_sha3_absorb(&sctx, adrs, SLH_ADRS_SIZE);
     ossl_sha3_absorb(&sctx, sk_seed, n);
@@ -128,14 +128,14 @@ static int
 slh_h_shake(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
             const uint8_t *m1, const uint8_t *m2, uint8_t *out, size_t out_len)
 {
-    KECCAK1600_CTX sctx = *((KECCAK1600_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_pkseed_ctx));
+    KECCAK1600_CTX ctx = *((KECCAK1600_CTX *)(hctx->shactx_pkseed)), *sctx = &ctx;
     const SLH_DSA_PARAMS *params = hctx->key->params;
     size_t n = params->n;
 
-    ossl_sha3_absorb(&sctx, adrs, SLH_ADRS_SIZE);
-    ossl_sha3_absorb(&sctx, m1, n);
-    ossl_sha3_absorb(&sctx, m2, n);
-    ossl_sha3_final(&sctx, out, n);
+    ossl_sha3_absorb(sctx, adrs, SLH_ADRS_SIZE);
+    ossl_sha3_absorb(sctx, m1, n);
+    ossl_sha3_absorb(sctx, m2, n);
+    ossl_sha3_final(sctx, out, n);
     return 1;
 }
 
@@ -146,7 +146,7 @@ slh_hmsg_sha256(SLH_DSA_HASH_CTX *hctx, const uint8_t *r, const uint8_t *pk_seed
                 const uint8_t *pk_root, const uint8_t *msg, size_t msg_len,
                 uint8_t *out, size_t out_len)
 {
-    SHA256_CTX *sctx = (SHA256_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_ctx);
+    SHA256_CTX ctx, *sctx = &ctx;
     const SLH_DSA_PARAMS *params = hctx->key->params;
     size_t m = params->m;
     size_t n = params->n;
@@ -170,7 +170,7 @@ slh_hmsg_sha512(SLH_DSA_HASH_CTX *hctx, const uint8_t *r, const uint8_t *pk_seed
                 const uint8_t *pk_root, const uint8_t *msg, size_t msg_len,
                 uint8_t *out, size_t out_len)
 {
-    SHA512_CTX *sctx = (SHA512_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_sha512_ctx);
+    SHA512_CTX ctx, *sctx = &ctx;
     const SLH_DSA_PARAMS *params = hctx->key->params;
     size_t m = params->m;
     size_t n = params->n;
@@ -236,24 +236,25 @@ slh_prf_sha256(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed,
                const uint8_t *sk_seed, const uint8_t *adrs,
                uint8_t *out, size_t out_len)
 {
-    SHA256_CTX sctx = *((SHA256_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_pkseed_ctx));
+    SHA256_CTX ctx = *((SHA256_CTX *)hctx->shactx_pkseed), *sctx = &ctx;
     size_t n = hctx->key->params->n;
 
-    SHA256_Update(&sctx, adrs, SLH_ADRSC_SIZE);
-    SHA256_Update(&sctx, sk_seed, n);
-    sha256_final(&sctx, out, n);
+    SHA256_Update(sctx, adrs, SLH_ADRSC_SIZE);
+    SHA256_Update(sctx, sk_seed, n);
+    sha256_final(sctx, out, n);
     return 1;
 }
 
-int slh_wots_pk_gen_sha2(SLH_DSA_HASH_CTX *hctx,
-                         const uint8_t *sk_seed, const uint8_t *pk_seed,
-                         uint8_t *adrs, uint8_t *pk_out, size_t pk_out_len)
+static int
+slh_wots_pk_gen_sha2(SLH_DSA_HASH_CTX *hctx,
+                     const uint8_t *sk_seed, const uint8_t *pk_seed,
+                     uint8_t *adrs, uint8_t *pk_out, size_t pk_out_len)
 {
     int ret = 0;
     size_t n = hctx->key->params->n;
     size_t i, j = 0, len = SLH_WOTS_LEN(n);
     uint8_t sk[SLH_MAX_N];
-    SHA256_CTX *sctx = (SHA256_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_pkseed_ctx);
+    SHA256_CTX *sctx = (SHA256_CTX *)(hctx->shactx_pkseed);
     SHA256_CTX ctx;
     const SLH_ADRS_FUNC *adrsf = hctx->key->adrs_func;
     SLH_ADRS_DECLARE(sk_adrs);
@@ -301,7 +302,7 @@ int slh_wots_pk_gen_shake(SLH_DSA_HASH_CTX *hctx,
     SLH_ADRS_DECLARE(sk_adrs);
     SLH_ADRS_FN_DECLARE(adrsf, set_chain_address);
     SLH_ADRS_FN_DECLARE(adrsf, set_hash_address);
-    KECCAK1600_CTX *sctx = (KECCAK1600_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_pkseed_ctx);
+    KECCAK1600_CTX *sctx = (KECCAK1600_CTX *)(hctx->shactx_pkseed);
     KECCAK1600_CTX ctx;
 
     adrsf->copy(sk_adrs, adrs);
@@ -337,11 +338,11 @@ static int
 slh_f_sha256(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
              const uint8_t *m1, size_t m1_len, uint8_t *out, size_t out_len)
 {
-    SHA256_CTX sctx = *((SHA256_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_pkseed_ctx));
+    SHA256_CTX ctx = *((SHA256_CTX *)hctx->shactx_pkseed), *sctx = &ctx;
 
-    SHA256_Update(&sctx, adrs, SLH_ADRSC_SIZE);
-    SHA256_Update(&sctx, m1, m1_len);
-    sha256_final(&sctx, out, hctx->key->params->n);
+    SHA256_Update(sctx, adrs, SLH_ADRSC_SIZE);
+    SHA256_Update(sctx, m1, m1_len);
+    sha256_final(sctx, out, hctx->key->params->n);
     return 1;
 }
 
@@ -349,14 +350,14 @@ static int
 slh_h_sha256(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
              const uint8_t *m1, const uint8_t *m2, uint8_t *out, size_t out_len)
 {
-    SHA256_CTX sctx = *((SHA256_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_pkseed_ctx));
+    SHA256_CTX ctx = *((SHA256_CTX *)hctx->shactx_pkseed), *sctx = &ctx;
     const SLH_DSA_PARAMS *prms = hctx->key->params;
     size_t n = prms->n;
 
-    SHA256_Update(&sctx, adrs, SLH_ADRSC_SIZE);
-    SHA256_Update(&sctx, m1, n);
-    SHA256_Update(&sctx, m2, n);
-    sha256_final(&sctx, out, n);
+    SHA256_Update(sctx, adrs, SLH_ADRSC_SIZE);
+    SHA256_Update(sctx, m1, n);
+    SHA256_Update(sctx, m2, n);
+    sha256_final(sctx, out, n);
     return 1;
 }
 
@@ -364,7 +365,7 @@ static int
 slh_h_sha512(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
              const uint8_t *m1, const uint8_t *m2, uint8_t *out, size_t out_len)
 {
-    SHA512_CTX *sctx = (SHA512_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_sha512_ctx);
+    SHA512_CTX ctx, *sctx = &ctx;
     const SLH_DSA_PARAMS *prms = hctx->key->params;
     size_t n = prms->n;
 
@@ -382,11 +383,11 @@ static int
 slh_t_sha256(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
              const uint8_t *ml, size_t ml_len, uint8_t *out, size_t out_len)
 {
-    SHA256_CTX sctx = *((SHA256_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_pkseed_ctx));
+    SHA256_CTX ctx = *((SHA256_CTX *)hctx->shactx_pkseed), *sctx = &ctx;
 
-    SHA256_Update(&sctx, adrs, SLH_ADRSC_SIZE);
-    SHA256_Update(&sctx, ml, ml_len);
-    sha256_final(&sctx, out, hctx->key->params->n);
+    SHA256_Update(sctx, adrs, SLH_ADRSC_SIZE);
+    SHA256_Update(sctx, ml, ml_len);
+    sha256_final(sctx, out, hctx->key->params->n);
     return 1;
 }
 
@@ -394,7 +395,7 @@ static int
 slh_t_sha512(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
              const uint8_t *ml, size_t ml_len, uint8_t *out, size_t out_len)
 {
-    SHA512_CTX *sctx = (SHA512_CTX *)ossl_evp_md_ctx_get0_algctx(hctx->md_sha512_ctx);
+    SHA512_CTX ctx, *sctx = &ctx;
     const SLH_DSA_PARAMS *prms = hctx->key->params;
     size_t n = prms->n;
 
@@ -407,10 +408,71 @@ slh_t_sha512(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs
     return 1;
 }
 
+static int slh_hash_shake_precache(SLH_DSA_HASH_CTX *hctx, const uint8_t *pkseed, size_t n)
+{
+    KECCAK1600_CTX *ctx = NULL, *seedctx = NULL;
+
+    ctx = ossl_shake256_new();
+    if (ctx == NULL)
+        return 0;
+    seedctx = OPENSSL_memdup(ctx, sizeof(*ctx));
+    if (seedctx == NULL) {
+        OPENSSL_free(ctx);
+        return 0;
+    }
+    ossl_sha3_absorb(seedctx, pkseed, n);
+    hctx->shactx = (void *)ctx;
+    hctx->shactx_pkseed = (void *)seedctx;
+    return 1;
+}
+
+static int slh_hash_shake_dup(SLH_DSA_HASH_CTX *dst, const SLH_DSA_HASH_CTX *src)
+{
+    if (src->shactx != NULL) {
+        dst->shactx = OPENSSL_memdup(src->shactx, sizeof(KECCAK1600_CTX));
+        if (dst->shactx == NULL)
+            return 0;
+    }
+    if (src->shactx_pkseed != NULL) {
+        dst->shactx_pkseed = OPENSSL_memdup(src->shactx_pkseed, sizeof(KECCAK1600_CTX));
+        if (dst->shactx_pkseed == NULL) {
+            OPENSSL_free(dst->shactx);
+            dst->shactx = NULL;
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int slh_hash_sha256_precache(SLH_DSA_HASH_CTX *hctx, const uint8_t *pkseed, size_t n)
+{
+    SHA256_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+
+    if (ctx == NULL)
+        return 0;
+    SHA256_Init(ctx);
+    SHA256_Update(ctx, pkseed, n);
+    SHA256_Update(ctx, zeros, 64 - n);
+    hctx->shactx_pkseed = (void *)ctx;
+    return 1;
+}
+
+static int slh_hash_sha256_dup(SLH_DSA_HASH_CTX *dst, const SLH_DSA_HASH_CTX *src)
+{
+    if (src->shactx_pkseed != NULL) {
+        dst->shactx_pkseed = OPENSSL_memdup(src->shactx_pkseed, sizeof(SHA256_CTX));
+        if (dst->shactx_pkseed == NULL)
+            return 0;
+    }
+    return 1;
+}
+
 const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake, int security_category)
 {
     static const SLH_HASH_FUNC methods[] = {
         {
+            slh_hash_shake_precache,
+            slh_hash_shake_dup,
             slh_hmsg_shake,
             slh_prf_shake,
             slh_prf_msg_shake,
@@ -420,6 +482,8 @@ const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake, int security_category)
             slh_wots_pk_gen_shake
         },
         {
+            slh_hash_sha256_precache,
+            slh_hash_sha256_dup,
             slh_hmsg_sha256,
             slh_prf_sha256,
             slh_prf_msg_sha2,
@@ -429,6 +493,8 @@ const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake, int security_category)
             slh_wots_pk_gen_sha2
         },
         {
+            slh_hash_sha256_precache,
+            slh_hash_sha256_dup,
             slh_hmsg_sha512,
             slh_prf_sha256,
             slh_prf_msg_sha2,
