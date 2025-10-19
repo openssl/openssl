@@ -645,6 +645,17 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
         /* issuer certificate is next in chain */
         issuer = sk_X509_value(server_certs, i);
 
+        /*
+         * in the case the root CA certificate is not included in the chain
+         * we assme that the last remaining response is issued by it
+         */
+        if (issuer == NULL && i == (num - 1) && sk_OCSP_RESPONSE_num(sk_resp_unordered) == 1) {
+            resp = sk_OCSP_RESPONSE_value(sk_resp_unordered, 0);
+            (void)sk_OCSP_RESPONSE_push(*sk_resp, resp);
+            sk_OCSP_RESPONSE_delete(sk_resp_unordered, 0);
+            continue;
+        }
+
         if (issuer == NULL
             || (cert_id = OCSP_cert_to_id(NULL, ssl_cert, issuer)) == NULL) {
             sk_OCSP_RESPONSE_push(*sk_resp, NULL);
