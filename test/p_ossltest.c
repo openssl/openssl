@@ -735,7 +735,7 @@ static void *ossl_testaes128_ecb_newctx(void *provctx)
         goto err;
 
     return new;
-    err:
+err:
     EVP_CIPHER_CTX_free(new->sub_ctx);
     OPENSSL_free(new);
     return NULL;
@@ -865,7 +865,7 @@ static int ossl_test_aes128ecb_update(void *vprovctx, char *out, size_t *outl,
 
     ret = 1;
     *outl = soutl;
-    err:
+err:
     OPENSSL_free(inbuf);
     return ret;
 }
@@ -958,6 +958,7 @@ static int ossl_test_aes128ecb_get_ctx_params(void *vprovctx, OSSL_PARAM params[
 static int ossl_test_aes128ecb_set_ctx_params(void *vprovctx, const OSSL_PARAM params[])
 {
     PROV_EVP_AES128_ECB_CTX *ctx = (PROV_EVP_AES128_ECB_CTX *)vprovctx;
+
     return EVP_CIPHER_CTX_set_params(ctx->sub_ctx, params);
 }
 
@@ -1005,7 +1006,7 @@ static const OSSL_PARAM *ossl_test_aes128ecb_settable_ctx_params(void *cctx, voi
 
 static const OSSL_DISPATCH ossl_testaes128_ecb_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX,
-        (void (*)(void)) ossl_testaes128_ecb_newctx },
+      (void (*)(void)) ossl_testaes128_ecb_newctx },
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) ossl_test_aes128ecb_freectx },
     { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void)) ossl_test_aes128ecb_dupctx },
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_test_aes128ecb_einit },
@@ -1014,17 +1015,17 @@ static const OSSL_DISPATCH ossl_testaes128_ecb_functions[] = {
     { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))ossl_test_aes128ecb_final },
     { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))ossl_test_aes128ecb_cipher },
     { OSSL_FUNC_CIPHER_GET_PARAMS,
-        (void (*)(void)) ossl_test_aes128ecb_get_params },
+      (void (*)(void)) ossl_test_aes128ecb_get_params },
     { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,
-        (void (*)(void))ossl_test_aes128ecb_get_ctx_params },
+      (void (*)(void))ossl_test_aes128ecb_get_ctx_params },
     { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,
-        (void (*)(void))ossl_test_aes128ecb_set_ctx_params },
+      (void (*)(void))ossl_test_aes128ecb_set_ctx_params },
     { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,
-        (void (*)(void))ossl_test_aes128ecb_gettable_params },
+      (void (*)(void))ossl_test_aes128ecb_gettable_params },
     { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,
-        (void (*)(void))ossl_test_aes128ecb_gettable_ctx_params },
+      (void (*)(void))ossl_test_aes128ecb_gettable_ctx_params },
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,
-        (void (*)(void))ossl_test_aes128ecb_settable_ctx_params },
+      (void (*)(void))ossl_test_aes128ecb_settable_ctx_params },
     OSSL_DISPATCH_END
 };
 
