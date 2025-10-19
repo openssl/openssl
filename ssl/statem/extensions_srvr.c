@@ -1753,11 +1753,20 @@ EXT_RETURN tls_construct_stoc_status_request(SSL_CONNECTION *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,
                                              size_t chainidx)
 {
+    OCSP_RESPONSE *resp;
+
     /* We don't currently support this extension inside a CertificateRequest */
     if (context == SSL_EXT_TLS1_3_CERTIFICATE_REQUEST)
         return EXT_RETURN_NOT_SENT;
 
     if (!s->ext.status_expected)
+        return EXT_RETURN_NOT_SENT;
+
+    /* Try to retrieve OCSP response for the actual certificate */
+    resp = ossl_get_ocsp_response(s, (int)chainidx);
+
+    /* If no OCSP response was found the extension is not sent */
+    if (resp == NULL)
         return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request)
@@ -1772,7 +1781,7 @@ EXT_RETURN tls_construct_stoc_status_request(SSL_CONNECTION *s, WPACKET *pkt,
      * separate message
      */
     if (SSL_CONNECTION_IS_TLS13(s)
-        && !tls_construct_cert_status_body(s, chainidx, pkt)) {
+        && !tls_construct_cert_status_body(s, resp, pkt)) {
         /* SSLfatal() already called */
         return EXT_RETURN_FAIL;
     }
