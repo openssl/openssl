@@ -111,9 +111,13 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/ciphers/ciphercommon_gcm.c \
          providers/implementations/ciphers/cipher_chacha20.c \
          providers/implementations/ciphers/cipher_chacha20_poly1305.c \
+         providers/implementations/ciphers/cipher_des.c \
          providers/implementations/ciphers/cipher_null.c \
+         providers/implementations/ciphers/cipher_rc2.c \
          providers/implementations/ciphers/cipher_rc4_hmac_md5.c \
+         providers/implementations/ciphers/cipher_rc5.c \
          providers/implementations/ciphers/cipher_sm4_xts.c \
+         providers/implementations/ciphers/cipher_tdes_common.c \
          providers/implementations/digests/blake2_prov.c \
          providers/implementations/digests/digestcommon.c \
          providers/implementations/digests/mdc2_prov.c \
@@ -229,9 +233,13 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/ciphers/ciphercommon_gcm.c \
        providers/implementations/ciphers/cipher_chacha20.c \
        providers/implementations/ciphers/cipher_chacha20_poly1305.c \
+       providers/implementations/ciphers/cipher_des.c \
        providers/implementations/ciphers/cipher_null.c \
+       providers/implementations/ciphers/cipher_rc2.c \
        providers/implementations/ciphers/cipher_rc4_hmac_md5.c \
+       providers/implementations/ciphers/cipher_rc5.c \
        providers/implementations/ciphers/cipher_sm4_xts.c \
+       providers/implementations/ciphers/cipher_tdes_common.c \
        providers/implementations/digests/blake2_prov.c \
        providers/implementations/digests/digestcommon.c \
        providers/implementations/digests/mdc2_prov.c \
@@ -377,12 +385,20 @@ GENERATE[providers/implementations/ciphers/cipher_chacha20.c]=\
     providers/implementations/ciphers/cipher_chacha20.c.in
 GENERATE[providers/implementations/ciphers/cipher_chacha20_poly1305.c]=\
     providers/implementations/ciphers/cipher_chacha20_poly1305.c.in
+GENERATE[providers/implementations/ciphers/cipher_des.c]=\
+    providers/implementations/ciphers/cipher_des.c.in
 GENERATE[providers/implementations/ciphers/cipher_null.c]=\
     providers/implementations/ciphers/cipher_null.c.in
+GENERATE[providers/implementations/ciphers/cipher_rc2.c]=\
+    providers/implementations/ciphers/cipher_rc2.c.in
 GENERATE[providers/implementations/ciphers/cipher_rc4_hmac_md5.c]=\
     providers/implementations/ciphers/cipher_rc4_hmac_md5.c.in
+GENERATE[providers/implementations/ciphers/cipher_rc5.c]=\
+    providers/implementations/ciphers/cipher_rc5.c.in
 GENERATE[providers/implementations/ciphers/cipher_sm4_xts.c]=\
     providers/implementations/ciphers/cipher_sm4_xts.c.in
+GENERATE[providers/implementations/ciphers/cipher_tdes_common.c]=\
+    providers/implementations/ciphers/cipher_tdes_common.c.in
 GENERATE[providers/implementations/digests/blake2_prov.c]=\
     providers/implementations/digests/blake2_prov.c.in
 GENERATE[providers/implementations/digests/digestcommon.c]=\

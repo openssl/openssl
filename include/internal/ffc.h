@@ -122,7 +122,7 @@ typedef struct ffc_params_st {
     int keylength;
 } FFC_PARAMS;
 
-typedef struct {
+typedef struct ffc_ossl_params_st {
     OSSL_PARAM *p;                  /* OSSL_PKEY_PARAM_FFC_P */
     OSSL_PARAM *q;                  /* OSSL_PKEY_PARAM_FFC_Q */
     OSSL_PARAM *g;                  /* OSSL_PKEY_PARAM_FFC_G */
