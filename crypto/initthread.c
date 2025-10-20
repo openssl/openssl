@@ -452,6 +452,11 @@ int ossl_init_thread_start_prio(const void *index, void *arg,
     idx = *hands;
     while (idx != NULL) {
         entry_count++;
+        /*
+         * Only allow one entry to be last
+         */
+        if ((idx->prio == UINT_MAX) && hand->prio == UINT_MAX)
+            return 0;
         if (idx->prio <= hand->prio) {
             prev = idx;
             idx = idx->next;
