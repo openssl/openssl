@@ -232,7 +232,7 @@ Title = FIPS indicator tests
 
 # Test that operations with unapproved parameters are rejected
 Availablein = fips
-FIPSversion = >=3.4.0
+FIPSversion = >=3.4.0 <4.0.0
 KDF = PBKDF2
 Ctrl.pass = pass:password
 Ctrl.salt = salt:salt
@@ -243,7 +243,7 @@ Reason = invalid salt length
 
 # Test that operations with unapproved parameters are reported as unapproved
 Availablein = fips
-FIPSversion = >=3.4.0
+FIPSversion = >=3.4.0 <4.0.0
 KDF = PBKDF2
 Unapproved = 1
 Ctrl.pkcs5 = pkcs5:1
@@ -268,6 +268,7 @@ Output = 043c508e57c6427036fd2c6cd2a02ec7530a412c
 Title = Test that a too low iteration count raises an error
 
 Availablein = fips
+FIPSversion = <4.0.0
 KDF = PBKDF2
 Ctrl.pass = pass:password
 Ctrl.salt = salt:saltydaysarethebest
