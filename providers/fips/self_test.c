@@ -174,7 +174,7 @@ DEP_INIT_ATTRIBUTE void init(void)
 DEP_FINI_ATTRIBUTE void cleanup(void)
 {
     CRYPTO_THREAD_lock_free(self_test_lock);
-    CRYPTO_THREAD_clean_local_for_fips();
+    CRYPTO_THREAD_clean_local();
 }
 #endif
 
