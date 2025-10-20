@@ -2692,7 +2692,7 @@ static int test_ssl_listen_ex(void)
     SSL_CTX *cctx = NULL, *sctx = NULL, *qmctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
     int testresult = 0;
-    int ret, i;
+    int ret = 0, i;
 
     if (!TEST_ptr(sctx = create_server_ctx())
         || !TEST_ptr(cctx = create_client_ctx()))
