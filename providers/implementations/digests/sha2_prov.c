@@ -17,44 +17,39 @@
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/evp.h>
+#include <openssl/err.h>
 #include <openssl/sha.h>
 #include <openssl/params.h>
+#include <openssl/proverr.h>
 #include <openssl/core_names.h>
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 #include "crypto/sha.h"
+#include "internal/common.h"
+#include "providers/implementations/digests/sha2_prov.inc"
 
 #define SHA2_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
-
-static OSSL_FUNC_digest_set_ctx_params_fn sha1_set_ctx_params;
-static OSSL_FUNC_digest_settable_ctx_params_fn sha1_settable_ctx_params;
-
-static const OSSL_PARAM known_sha1_settable_ctx_params[] = {
-    { OSSL_DIGEST_PARAM_SSL3_MS, OSSL_PARAM_OCTET_STRING, NULL, 0, 0 },
-    OSSL_PARAM_END
-};
-static const OSSL_PARAM *sha1_settable_ctx_params(ossl_unused void *ctx,
-    ossl_unused void *provctx)
-{
-    return known_sha1_settable_ctx_params;
-}
 
 /* Special set_params method for SSL3 */
 static int sha1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
-    const OSSL_PARAM *p;
+    struct sha1_set_ctx_params_st p;
     SHA_CTX *ctx = (SHA_CTX *)vctx;
 
-    if (ctx == NULL)
+    if (ossl_unlikely(ctx == NULL || !sha1_set_ctx_params_decoder(params, &p)))
         return 0;
-    if (ossl_param_is_empty(params))
-        return 1;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_SSL3_MS);
-    if (p != NULL && p->data_type == OSSL_PARAM_OCTET_STRING)
+    if (p.ssl3_ms != NULL)
         return ossl_sha1_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
-            (int)p->data_size, p->data);
+            (int)p.ssl3_ms->data_size, p.ssl3_ms->data);
+
     return 1;
+}
+
+static const OSSL_PARAM *sha1_settable_ctx_params(ossl_unused void *ctx,
+    ossl_unused void *provctx)
+{
+    return sha1_set_ctx_params_list;
 }
 
 static const unsigned char sha256magic[] = "SHA256v1";
