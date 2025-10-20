@@ -333,7 +333,7 @@ int SMIME_write_ASN1_ex(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
     } else if (ctype_nid == NID_pkcs7_signed) {
         if (econt_nid == NID_id_smime_ct_receipt)
             msg_type = "signed-receipt";
-        else if (sk_X509_ALGOR_num(mdalgs) >= 0)
+        else if (mdalgs != NULL && sk_X509_ALGOR_num(mdalgs) > 0)
             msg_type = "signed-data";
         else
             msg_type = "certs-only";
@@ -669,6 +669,12 @@ static int multi_split(BIO *bio, int flags, const char *bound, STACK_OF(BIO) **r
             first = 1;
             part++;
         } else if (state == 2) {
+            if (bpart == NULL) {
+                bpart = BIO_new(BIO_s_mem());
+                if (bpart == NULL)
+                    return 0;
+                BIO_set_mem_eof_return(bpart, 0);
+            }
             if (!sk_BIO_push(parts, bpart)) {
                 BIO_free(bpart);
                 return 0;
@@ -877,7 +883,7 @@ static char *strip_start(char *name)
 static char *strip_end(char *name)
 {
     char *p, c;
-    if (!name)
+    if (!name || *name == '\0')
         return NULL;
     /* Look for first non whitespace or quote */
     for (p = name + strlen(name) - 1; p >= name; p--) {
@@ -1047,6 +1053,11 @@ static int strip_eol(char *linebuf, int *plen, int flags)
     int len = *plen;
     char *p, c;
     int is_eol = 0;
+
+    if (len <= 0) {
+        *plen = 0;
+        return 0;
+    }
 
 #ifndef OPENSSL_NO_CMS
     if ((flags & CMS_BINARY) != 0) {
