@@ -133,13 +133,13 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
         goto err;
     if (!BN_rshift(d, b, i - recp->num_bits))
         goto err;
-    d->neg = 0;
+    bn_set_negative_internal(d, 0);
 
     if (!BN_mul(b, &(recp->N), d, ctx))
         goto err;
     if (!BN_usub(r, m, b))
         goto err;
-    r->neg = 0;
+    bn_set_negative_internal(r, 0);
 
     j = 0;
     while (BN_ucmp(r, &(recp->N)) >= 0) {
@@ -153,8 +153,8 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
             goto err;
     }
 
-    r->neg = BN_is_zero(r) ? 0 : m->neg;
-    d->neg = m->neg ^ recp->N.neg;
+    bn_set_negative_internal(r, BN_is_zero(r) ? 0 : bn_is_negative_internal(m));
+    bn_set_negative_internal(d, bn_is_negative_internal(m) ^ bn_is_negative_internal(&recp->N));
     ret = 1;
  err:
     BN_CTX_end(ctx);

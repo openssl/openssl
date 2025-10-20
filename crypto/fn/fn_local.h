@@ -21,6 +21,8 @@ struct ossl_fn_st {
     unsigned int is_dynamically_allocated : 1;
     /* Flag: alloced with OSSL_FN_secure_new() */
     unsigned int is_securely_allocated : 1;
+    /* Flag: the number is negative */
+    unsigned int is_negative : 1;
 
     /*
      * The d array, with its size in number of OSSL_FN_ULONG.
