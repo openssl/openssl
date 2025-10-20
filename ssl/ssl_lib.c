@@ -3453,10 +3453,9 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
     }
 
     /* No overlap */
-    if (p == buf)
-        return NULL;
+    if (p != buf)
+        p[-1] = '\0';
 
-    p[-1] = '\0';
     return buf;
 }
 
