@@ -17,44 +17,39 @@
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/evp.h>
+#include <openssl/err.h>
 #include <openssl/sha.h>
 #include <openssl/params.h>
+#include <openssl/proverr.h>
 #include <openssl/core_names.h>
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 #include "crypto/sha.h"
+#include "internal/common.h"
+#include "providers/implementations/digests/sha2_prov.inc"
 
 #define SHA2_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
-
-static OSSL_FUNC_digest_set_ctx_params_fn sha1_set_ctx_params;
-static OSSL_FUNC_digest_settable_ctx_params_fn sha1_settable_ctx_params;
-
-static const OSSL_PARAM known_sha1_settable_ctx_params[] = {
-    {OSSL_DIGEST_PARAM_SSL3_MS, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
-    OSSL_PARAM_END
-};
-static const OSSL_PARAM *sha1_settable_ctx_params(ossl_unused void *ctx,
-                                                  ossl_unused void *provctx)
-{
-    return known_sha1_settable_ctx_params;
-}
 
 /* Special set_params method for SSL3 */
 static int sha1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
-    const OSSL_PARAM *p;
+    struct sha1_set_ctx_params_st p;
     SHA_CTX *ctx = (SHA_CTX *)vctx;
 
-    if (ctx == NULL)
+    if (ossl_unlikely(ctx == NULL || !sha1_set_ctx_params_decoder(params, &p)))
         return 0;
-    if (ossl_param_is_empty(params))
-        return 1;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_SSL3_MS);
-    if (p != NULL && p->data_type == OSSL_PARAM_OCTET_STRING)
+    if (p.ssl3_ms != NULL)
         return ossl_sha1_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                              (int)p->data_size, p->data);
+                              (int)p.ssl3_ms->data_size, p.ssl3_ms->data);
+
     return 1;
+}
+
+static const OSSL_PARAM *sha1_settable_ctx_params(ossl_unused void *ctx,
+                                                  ossl_unused void *provctx)
+{
+    return sha1_set_ctx_params_list;
 }
 
 static const unsigned char sha256magic[] = "SHA256v1";
@@ -261,47 +256,26 @@ static int SHA512_Deserialize(SHA512_CTX *c, const unsigned char *input,
     return 1;
 }
 
-static OSSL_FUNC_digest_settable_ctx_params_fn sha2_settable_ctx_params;
-static OSSL_FUNC_digest_gettable_ctx_params_fn sha2_gettable_ctx_params;
-
-static const OSSL_PARAM known_sha2_settable_ctx_params[] = {
-    {OSSL_DIGEST_SERIALIZATION, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
-    OSSL_PARAM_END
-};
-static const OSSL_PARAM *sha2_settable_ctx_params(ossl_unused void *ctx,
-                                                  ossl_unused void *provctx)
-{
-    return known_sha2_settable_ctx_params;
-}
-
-static const OSSL_PARAM known_sha2_gettable_ctx_params[] = {
-    {OSSL_DIGEST_SERIALIZATION, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
-    OSSL_PARAM_END
-};
-static const OSSL_PARAM *sha2_gettable_ctx_params(ossl_unused void *ctx,
-                                                  ossl_unused void *provctx)
-{
-    return known_sha2_gettable_ctx_params;
-}
-
 #define SHA2_IMPLEMENT_CTX_PARAMS(name, bits, size)                           \
     static OSSL_FUNC_digest_get_ctx_params_fn name##_get_ctx_params;          \
     static int name##_get_ctx_params(void *vctx, OSSL_PARAM params[])         \
     {                                                                         \
-        OSSL_PARAM *p;                                                        \
+        struct sha2_get_ctx_params_st p;                                      \
                                                                               \
-        if (vctx == NULL)                                                     \
-            return 0;                                                         \
-        if ((p = OSSL_PARAM_locate(params, OSSL_DIGEST_SERIALIZATION)) != NULL) { \
+        if (ossl_unlikely(vctx == NULL                                        \
+            || !sha2_get_ctx_params_decoder(params, &p)))                     \
+        return 0;                                                             \
+                                                                              \
+        if (p.serial != NULL) {                                               \
             size_t outlen;                                                    \
             int ret;                                                          \
                                                                               \
-            if (p->data_type != OSSL_PARAM_OCTET_STRING)                      \
+            if (p.serial->data_type != OSSL_PARAM_OCTET_STRING)               \
                 return 0;                                                     \
-            outlen = p->data_size;                                            \
-            if ((ret = SHA##bits##_Serialize((SHA##bits##_CTX *)vctx, p->data,\
-                                             &outlen)))                       \
-                p->return_size = outlen;                                      \
+            outlen = p.serial->data_size;                                     \
+            if ((ret = SHA##bits##_Serialize((SHA##bits##_CTX *)vctx,         \
+                                             p.serial->data, &outlen)))       \
+                p.serial->return_size = outlen;                               \
             return ret;                                                       \
         }                                                                     \
         return 1;                                                             \
@@ -309,19 +283,33 @@ static const OSSL_PARAM *sha2_gettable_ctx_params(ossl_unused void *ctx,
     static OSSL_FUNC_digest_set_ctx_params_fn name##_set_ctx_params;          \
     static int name##_set_ctx_params(void *vctx, const OSSL_PARAM params[])   \
     {                                                                         \
-        const OSSL_PARAM *p;                                                  \
+        struct sha2_set_ctx_params_st p;                                      \
                                                                               \
-        if (vctx == NULL)                                                     \
-            return 0;                                                         \
-        p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_SERIALIZATION);       \
-        if (p != NULL) {                                                      \
-            if (p->data_type != OSSL_PARAM_OCTET_STRING)                      \
+        if (ossl_unlikely(vctx == NULL                                        \
+            || !sha2_set_ctx_params_decoder(params, &p)))                     \
+        return 0;                                                             \
+                                                                              \
+        if (p.serial != NULL) {                                               \
+            if (p.serial->data_type != OSSL_PARAM_OCTET_STRING)               \
                 return 0;                                                     \
-            return SHA##bits##_Deserialize((SHA##bits##_CTX *)vctx, p->data,  \
-                                           p->data_size, size);               \
+            return SHA##bits##_Deserialize((SHA##bits##_CTX *)vctx,           \
+                                           p.serial->data,                    \
+                                           p.serial->data_size, size);        \
         }                                                                     \
         return 1;                                                             \
     }
+
+static const OSSL_PARAM *sha2_gettable_ctx_params(ossl_unused void *ctx,
+                                                  ossl_unused void *provctx)
+{
+    return sha2_get_ctx_params_list;
+}
+
+static const OSSL_PARAM *sha2_settable_ctx_params(ossl_unused void *ctx,
+                                                  ossl_unused void *provctx)
+{
+    return sha2_set_ctx_params_list;
+}
 
 SHA2_IMPLEMENT_CTX_PARAMS(SHA224, 256, SHA224_DIGEST_LENGTH)
 SHA2_IMPLEMENT_CTX_PARAMS(SHA256, 256, SHA256_DIGEST_LENGTH)
