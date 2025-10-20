@@ -582,7 +582,11 @@ static int bio_zstd_read(BIO *b, char *out, int outl)
     ZSTD_outBuffer outBuf;
     BIO *next = BIO_next(b);
 
-    if (out == NULL || outl <= 0)
+    if (out == NULL) {
+        ERR_raise(ERR_LIB_COMP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+    if (outl <= 0)
         return 0;
 
     ctx = BIO_get_data(b);
@@ -591,7 +595,7 @@ static int bio_zstd_read(BIO *b, char *out, int outl)
         ctx->decompress.buffer = OPENSSL_malloc(ctx->decompress.bufsize);
         if (ctx->decompress.buffer == NULL) {
             ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);
-            return 0;
+            return -1;
         }
         ctx->decompress.inbuf.src = ctx->decompress.buffer;
         ctx->decompress.inbuf.size = 0;
