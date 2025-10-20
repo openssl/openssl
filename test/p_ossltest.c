@@ -889,10 +889,10 @@ static int ossl_test_aes128ecb_final(void *vprovctx, unsigned char *out, size_t 
 
     ret = EVP_CipherFinal_ex(ctx->sub_ctx, out, &soutl);
 
-    if (soutl >= 0)
-        *outl = (size_t)soutl;
-    else
+    if (ret == 0 || soutl < 0)
         return 0;
+
+    *outl = (size_t)soutl;
 
     return ret;
 }
