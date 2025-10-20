@@ -1317,6 +1317,13 @@ ENDIF
   INCLUDE[bio_pw_callback_test]=../include ../apps/include
   DEPEND[bio_pw_callback_test]=../libcrypto libtestutil.a
 
+IF[{- !$disabled{sctp} && !$disabled{dgram} -}]
+  PROGRAMS{noinst}=sctp_auth_test
+  SOURCE[sctp_auth_test]=sctp_auth_test.c
+  INCLUDE[sctp_auth_test]=.. ../include ../apps/include
+  DEPEND[sctp_auth_test]=libtestutil.a ../libcrypto libtestutil.a
+ENDIF
+
 {-
    use File::Spec::Functions;
    use File::Basename;
