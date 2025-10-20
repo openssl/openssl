@@ -450,7 +450,7 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
      */
 #ifndef FIPS_MODULE
     if (mkey->cleanup_added == 0) {
-        if (!ossl_init_thread_start_prio(NULL, NULL, thread_stop_clear_mkey, UINT_MAX))
+        if (!ossl_init_thread_start_ex(NULL, NULL, thread_stop_clear_mkey, UINT_MAX))
             return 0;
         mkey->cleanup_added = 1;
     }

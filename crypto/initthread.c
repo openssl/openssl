@@ -388,8 +388,8 @@ static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
 #endif
 }
 
-int ossl_init_thread_start_prio(const void *index, void *arg,
-                                OSSL_thread_stop_handler_fn handfn, uint32_t prio)
+int ossl_init_thread_start_ex(const void *index, void *arg,
+                              OSSL_thread_stop_handler_fn handfn, uint32_t prio)
 {
     THREAD_EVENT_HANDLER **hands;
     THREAD_EVENT_HANDLER *hand;
@@ -473,7 +473,7 @@ int ossl_init_thread_start_prio(const void *index, void *arg,
 int ossl_init_thread_start(const void *index, void *arg,
                            OSSL_thread_stop_handler_fn handfn)
 {
-    return ossl_init_thread_start_prio(index, arg, handfn, 0);
+    return ossl_init_thread_start_ex(index, arg, handfn, 0);
 }
 
 #ifndef FIPS_MODULE
