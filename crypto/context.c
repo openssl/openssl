@@ -325,8 +325,6 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
 #endif
 
 #ifdef FIPS_MODULE
-    ossl_thread_event_ctx_free(ctx);
-
     if (ctx->fips_prov != NULL) {
         ossl_fips_prov_ossl_ctx_free(ctx->fips_prov);
         ctx->fips_prov = NULL;

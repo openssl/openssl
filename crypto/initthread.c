@@ -329,16 +329,6 @@ int ossl_thread_event_ctx_new(OSSL_LIB_CTX *libctx)
     return 0;
 }
 
-void ossl_thread_event_ctx_free(OSSL_LIB_CTX *ctx)
-{
-    /*
-     * The free for the per-thread handler array is handled during OSSL_thread_stop now
-     * in the mkey cleanup routine in threds_common.c.  Just keep this here for balance with
-     * the corresponding new method.
-     */
-    return;
-}
-
 static void ossl_arg_thread_stop(void *arg)
 {
     ossl_ctx_thread_stop((OSSL_LIB_CTX *)arg);
