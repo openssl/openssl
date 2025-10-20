@@ -305,6 +305,7 @@ ERR_raise                               define
 ERR_raise_data                          define
 EVP_DigestSignUpdate                    define
 EVP_DigestVerifyUpdate                  define
+EVP_KDF_CTX_kdf                         define
 EVP_MD_CTX_get_block_size               define
 EVP_MD_CTX_get0_name                    define
 EVP_MD_CTX_get_size                     define

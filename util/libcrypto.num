@@ -4593,7 +4593,7 @@ EVP_CIPHER_fetch                        4720	4_0_0	EXIST::FUNCTION:
 EVP_CIPHER_get_mode                     4721	4_0_0	EXIST::FUNCTION:
 OPENSSL_info                            4722	4_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_new                         4723	4_0_0	EXIST::FUNCTION:
-EVP_KDF_CTX_kdf                         4724	4_0_0	EXIST::FUNCTION:
+EVP_KDF_CTX_kdf                         4724	4_0_0	NOEXIST::FUNCTION:
 i2d_KeyParams                           4725	4_0_0	EXIST::FUNCTION:
 d2i_KeyParams                           4726	4_0_0	EXIST::FUNCTION:
 i2d_KeyParams_bio                       4727	4_0_0	EXIST::FUNCTION:
@@ -5947,3 +5947,5 @@ CRYPTO_realloc_array                    ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_clear_realloc_array              ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_secure_malloc_array              ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_secure_calloc                    ?	4_0_0	EXIST::FUNCTION:
+EVP_KDF_CTX_get0_kdf                    ?	4_0_0	EXIST::FUNCTION:
+EVP_KDF_CTX_get1_kdf                    ?	4_0_0	EXIST::FUNCTION:

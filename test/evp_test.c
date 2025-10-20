@@ -3992,7 +3992,7 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
     KDF_DATA *kdata = t->data;
     int rv;
     char *p, *name;
-    const OSSL_PARAM *defs = EVP_KDF_settable_ctx_params(EVP_KDF_CTX_kdf(kctx));
+    const OSSL_PARAM *defs = EVP_KDF_settable_ctx_params(EVP_KDF_CTX_get0_kdf(kctx));
 
     if (!TEST_ptr(name = OPENSSL_strdup(value)))
         return 0;
