@@ -25,10 +25,10 @@ int BN_nnmod(BIGNUM *r, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
 
     if (!(BN_mod(r, m, d, ctx)))
         return 0;
-    if (!r->neg)
+    if (!bn_is_negative_internal(r))
         return 1;
     /* now   -|d| < r < 0,  so we have to set  r := r + |d| */
-    return (d->neg ? BN_sub : BN_add) (r, r, d);
+    return (bn_is_negative_internal(d) ? BN_sub : BN_add) (r, r, d);
 }
 
 int BN_mod_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
@@ -92,7 +92,7 @@ int bn_mod_add_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     }
     bn_set_top(r, (int)mtop);
     r->flags |= BN_FLG_FIXED_TOP;
-    r->neg = 0;
+    bn_set_negative_internal(r, 0);
 
     if (tp != storage)
         OPENSSL_free(tp);
@@ -178,7 +178,7 @@ int bn_mod_sub_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 
     bn_set_top(r, (int)mtop);
     r->flags |= BN_FLG_FIXED_TOP;
-    r->neg = 0;
+    bn_set_negative_internal(r, 0);
 
     return 1;
 }
@@ -197,7 +197,7 @@ int BN_mod_sub_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 
     if (!BN_sub(r, a, b))
         return 0;
-    if (r->neg)
+    if (bn_is_negative_internal(r))
         return BN_add(r, r, m);
     return 1;
 }
@@ -271,11 +271,11 @@ int BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m,
     if (!BN_nnmod(r, a, m, ctx))
         return 0;
 
-    if (m->neg) {
+    if (bn_is_negative_internal(m)) {
         abs_m = BN_dup(m);
         if (abs_m == NULL)
             return 0;
-        abs_m->neg = 0;
+        bn_set_negative_internal(abs_m, 0);
     }
 
     ret = BN_mod_lshift_quick(r, r, n, (abs_m ? abs_m : m));

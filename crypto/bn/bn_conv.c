@@ -24,7 +24,7 @@ char *BN_bn2hex(const BIGNUM *a)
     if (buf == NULL)
         goto err;
     p = buf;
-    if (a->neg)
+    if (bn_is_negative_internal(a))
         *p++ = '-';
     for (i = a->top - 1; i >= 0; i--) {
         for (j = BN_BITS2 - 8; j >= 0; j -= 8) {
@@ -76,7 +76,7 @@ char *BN_bn2dec(const BIGNUM *a)
         *p++ = '0';
         *p++ = '\0';
     } else {
-        if (BN_is_negative(t))
+        if (bn_is_negative_internal(t))
             *p++ = '-';
 
         while (!BN_is_zero(t)) {
@@ -185,7 +185,7 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
     bn_check_top(ret);
     /* Don't set the negative flag if it's zero. */
     if (ret->top != 0)
-        ret->neg = neg;
+        bn_set_negative_internal(ret, neg);
     return num;
  err:
     if (*bn == NULL)
@@ -255,7 +255,7 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
     bn_check_top(ret);
     /* Don't set the negative flag if it's zero. */
     if (ret->top != 0)
-        ret->neg = neg;
+        bn_set_negative_internal(ret, neg);
     return num;
  err:
     if (*bn == NULL)
@@ -279,6 +279,6 @@ int BN_asc2bn(BIGNUM **bn, const char *a)
     }
     /* Don't set the negative flag if it's zero. */
     if (*a == '-' && (*bn)->top != 0)
-        (*bn)->neg = 1;
+        bn_set_negative_internal((*bn), 1);
     return 1;
 }

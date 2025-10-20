@@ -336,7 +336,7 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
             && BN_mul(r1r2x2, r1x2, r2, ctx)))
         goto err;
     /* Make positive by adding the modulus */
-    if (BN_is_negative(R) && !BN_add(R, R, r1r2x2))
+    if (bn_is_negative_internal(R) && !BN_add(R, R, r1r2x2))
         goto err;
 
     /*

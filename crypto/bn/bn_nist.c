@@ -364,7 +364,7 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
     field = &ossl_bignum_nist_p_192; /* just to make sure */
 
-    if (BN_is_negative(a) || BN_ucmp(a, &ossl_bignum_nist_p_192_sqr) >= 0)
+    if (bn_is_negative_internal(a) || BN_ucmp(a, &ossl_bignum_nist_p_192_sqr) >= 0)
         return BN_nnmod(r, a, field, ctx);
 
     i = BN_ucmp(field, a);
@@ -501,7 +501,7 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
     field = &ossl_bignum_nist_p_224; /* just to make sure */
 
-    if (BN_is_negative(a) || BN_ucmp(a, &ossl_bignum_nist_p_224_sqr) >= 0)
+    if (bn_is_negative_internal(a) || BN_ucmp(a, &ossl_bignum_nist_p_224_sqr) >= 0)
         return BN_nnmod(r, a, field, ctx);
 
     i = BN_ucmp(field, a);
@@ -673,7 +673,7 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
     field = &ossl_bignum_nist_p_256; /* just to make sure */
 
-    if (BN_is_negative(a) || BN_ucmp(a, &ossl_bignum_nist_p_256_sqr) >= 0)
+    if (bn_is_negative_internal(a) || BN_ucmp(a, &ossl_bignum_nist_p_256_sqr) >= 0)
         return BN_nnmod(r, a, field, ctx);
 
     i = BN_ucmp(field, a);
@@ -910,7 +910,7 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
     field = &ossl_bignum_nist_p_384; /* just to make sure */
 
-    if (BN_is_negative(a) || BN_ucmp(a, &ossl_bignum_nist_p_384_sqr) >= 0)
+    if (bn_is_negative_internal(a) || BN_ucmp(a, &ossl_bignum_nist_p_384_sqr) >= 0)
         return BN_nnmod(r, a, field, ctx);
 
     i = BN_ucmp(field, a);
@@ -1162,7 +1162,7 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
     field = &ossl_bignum_nist_p_521; /* just to make sure */
 
-    if (BN_is_negative(a) || BN_ucmp(a, &ossl_bignum_nist_p_521_sqr) >= 0)
+    if (bn_is_negative_internal(a) || BN_ucmp(a, &ossl_bignum_nist_p_521_sqr) >= 0)
         return BN_nnmod(r, a, field, ctx);
 
     i = BN_ucmp(field, a);

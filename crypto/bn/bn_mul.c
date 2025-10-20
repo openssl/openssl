@@ -617,7 +617,7 @@ int bn_mul_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 #if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
  end:
 #endif
-    rr->neg = a->neg ^ b->neg;
+    bn_set_negative_internal(rr, bn_is_negative_internal(a) ^ bn_is_negative_internal(b));
     rr->flags |= BN_FLG_FIXED_TOP;
     if (r != rr && BN_copy(r, rr) == NULL)
         goto err;

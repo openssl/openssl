@@ -34,7 +34,7 @@ int BN_bn2mpi(const BIGNUM *a, unsigned char *d)
     if (ext)
         d[4] = 0;
     num = BN_bn2bin(a, &(d[4 + ext]));
-    if (a->neg)
+    if (bn_is_negative_internal(a))
         d[4] |= 0x80;
     return (num + 4 + ext);
 }
@@ -65,7 +65,7 @@ BIGNUM *BN_mpi2bn(const unsigned char *d, int n, BIGNUM *ain)
         return NULL;
 
     if (len == 0) {
-        a->neg = 0;
+        bn_set_negative_internal(a, 0);
         bn_set_top(a, 0);
         return a;
     }
@@ -77,7 +77,7 @@ BIGNUM *BN_mpi2bn(const unsigned char *d, int n, BIGNUM *ain)
             BN_free(a);
         return NULL;
     }
-    a->neg = neg;
+    bn_set_negative_internal(a, neg);
     if (neg) {
         BN_clear_bit(a, BN_num_bits(a) - 1);
     }

@@ -68,7 +68,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
     /*
      * Build table for a1:   val1[i] := a1^(2*i + 1) mod m  for i = 0 .. 2^(window1-1)
      */
-    if (a1->neg || BN_ucmp(a1, m) >= 0) {
+    if (bn_is_negative_internal(a1) || BN_ucmp(a1, m) >= 0) {
         if (!BN_mod(val1[0], a1, m, ctx))
             goto err;
         a_mod_m = val1[0];
@@ -97,7 +97,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
     /*
      * Build table for a2:   val2[i] := a2^(2*i + 1) mod m  for i = 0 .. 2^(window2-1)
      */
-    if (a2->neg || BN_ucmp(a2, m) >= 0) {
+    if (bn_is_negative_internal(a2) || BN_ucmp(a2, m) >= 0) {
         if (!BN_mod(val2[0], a2, m, ctx))
             goto err;
         a_mod_m = val2[0];

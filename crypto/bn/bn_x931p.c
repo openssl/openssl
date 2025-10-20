@@ -105,7 +105,7 @@ int BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
     if (!BN_sub(p, p, t))
         goto err;
 
-    if (p->neg && !BN_add(p, p, p1p2))
+    if (bn_is_negative_internal(p) && !BN_add(p, p, p1p2))
         goto err;
 
     /* p now equals Rp */

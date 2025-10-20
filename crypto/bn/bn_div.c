@@ -77,8 +77,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
         if (!BN_rshift1(D, D))
             goto end;
     }
-    rem->neg = BN_is_zero(rem) ? 0 : m->neg;
-    dv->neg = m->neg ^ d->neg;
+    bn_set_negative_internal(rem, BN_is_zero(rem) ? 0 : bn_is_negative_internal(m));
+    bn_set_negative_internal(dv, bn_is_negative_internal(m) ^ bn_is_negative_internal(d));
     ret = 1;
  end:
     BN_CTX_end(ctx);
@@ -289,7 +289,7 @@ int bn_div_fixed_top(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,
     if (!BN_copy(sdiv, divisor))
         goto err;
     norm_shift = bn_left_align(sdiv);
-    sdiv->neg = 0;
+    bn_set_negative_internal(sdiv, 0);
     /*
      * Note that bn_lshift_fixed_top's output is always one limb longer
      * than input, even when norm_shift is zero. This means that amount of
@@ -329,7 +329,7 @@ int bn_div_fixed_top(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,
     if (!bn_wexpand(res, loop))
         goto err;
     num_neg = num->neg;
-    res->neg = (num_neg ^ divisor->neg);
+    bn_set_negative_internal(res, (num_neg ^ bn_is_negative_internal(divisor)));
     bn_set_top(res, loop);
     res->flags |= BN_FLG_FIXED_TOP;
     resp = &(res->d[loop]);
@@ -447,7 +447,7 @@ int bn_div_fixed_top(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,
         *--resp = q;
     }
     /* snum holds remainder, it's as wide as divisor */
-    snum->neg = num_neg;
+    bn_set_negative_internal(snum, num_neg);
     bn_set_top(snum, div_n);
     snum->flags |= BN_FLG_FIXED_TOP;
 

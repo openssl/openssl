@@ -95,7 +95,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
          */
         if (!BN_rshift(q, p, 2))
             goto end;
-        q->neg = 0;
+        bn_set_negative_internal(q, 0);
         if (!BN_add_word(q, 1))
             goto end;
         if (!BN_mod_exp(ret, A, q, p, ctx))
@@ -140,7 +140,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
         /* b := (2*a)^((|p|-5)/8) */
         if (!BN_rshift(q, p, 3))
             goto end;
-        q->neg = 0;
+        bn_set_negative_internal(q, 0);
         if (!BN_mod_exp(b, t, q, p, ctx))
             goto end;
 
@@ -172,7 +172,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
      */
     if (!BN_copy(q, p))
         goto end;               /* use 'q' as temp */
-    q->neg = 0;
+    bn_set_negative_internal(q, 0);
     i = 2;
     do {
         /*
@@ -186,7 +186,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
             if (!BN_priv_rand_ex(y, BN_num_bits(p), 0, 0, 0, ctx))
                 goto end;
             if (BN_ucmp(y, p) >= 0) {
-                if (!(p->neg ? BN_add : BN_sub) (y, y, p))
+                if (!(bn_is_negative_internal(p) ? BN_add : BN_sub) (y, y, p))
                     goto end;
             }
             /* now 0 <= y < |p| */

@@ -139,7 +139,7 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
         return 0;
     }
 
-    if (range->neg || BN_is_zero(range)) {
+    if (bn_is_negative_internal(range) || BN_is_zero(range)) {
         ERR_raise(ERR_LIB_BN, BN_R_INVALID_RANGE);
         return 0;
     }
@@ -249,7 +249,7 @@ int ossl_bn_priv_rand_range_fixed_top(BIGNUM *r, const BIGNUM *range,
         return 0;
     }
 
-    if (range->neg || BN_is_zero(range)) {
+    if (bn_is_negative_internal(range) || BN_is_zero(range)) {
         ERR_raise(ERR_LIB_BN, BN_R_INVALID_RANGE);
         return 0;
     }

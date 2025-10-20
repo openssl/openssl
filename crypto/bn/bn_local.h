@@ -234,6 +234,7 @@ static ossl_inline void bn_check_top(const BIGNUM *bn)
             /* assert(_bnum2->d == NULL); */
             assert(bn->d == bn->data->d);
             assert(bn->dmax == bn->data->dsize);
+            assert(!!_bnum2->neg == !!_bnum2->data->is_negative);
             assert(bn_check_zero(&bn->d[bn->top], bn->dmax - bn->top));
         }
         /* BIGNUM specific checks */
@@ -685,6 +686,21 @@ static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
         return a;
 
     return bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2);
+}
+
+static ossl_inline void bn_set_negative_internal(BIGNUM *a, int b)
+{
+    a->neg = b;
+    if (a->data != NULL)
+        a->data->is_negative = a->neg;
+}
+
+static ossl_inline int bn_is_negative_internal(const BIGNUM *a)
+{
+# ifdef BN_DEBUG
+    assert(a->data == NULL || a->data->is_negative == a->neg);
+# endif
+    return (a->neg != 0);
 }
 
 int ossl_bn_check_prime(const BIGNUM *w, int checks, BN_CTX *ctx,

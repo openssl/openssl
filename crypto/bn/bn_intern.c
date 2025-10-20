@@ -45,7 +45,7 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
     next_bit = bit << 1;        /* at most 256 */
     mask = next_bit - 1;        /* at most 255 */
 
-    if (BN_is_negative(scalar)) {
+    if (bn_is_negative_internal(scalar)) {
         sign = -1;
     }
 
@@ -178,7 +178,7 @@ void bn_set_static_words(BIGNUM *a, const BN_ULONG *words, int size)
     a->d = (BN_ULONG *)words;
     /* No need to call bn_set_top() in this case */
     a->dmax = a->top = size;
-    a->neg = 0;
+    bn_set_negative_internal(a, 0);
     a->flags |= BN_FLG_STATIC_DATA;
     bn_correct_top(a);
 }
