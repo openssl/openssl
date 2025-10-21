@@ -3,7 +3,7 @@
 # filesystem for this job can be reached.  Please note that any changes made to
 # this job involving file system paths should be made prefixed with, or relative
 # to that directory
-name: Interoperability tests with GnuTLS and NSS
+name: Interoperability tests with GnuTLS, NSS and OpenSSH
 on:
   schedule:
     - cron: '55 02 * * *'
@@ -75,10 +75,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
+        persist-credentials: false
         ref: ${{ matrix.branch.openssl }}
         fetch-depth: 1
     - name: config
-      run: ./config --banner=Configured -fPIC --prefix=/opt/openssl no-docs no-threads shared -Wl,-rpath,/opt/openssl/lib64 && perl configdata.pm --dump
+      run: ./config --banner=Configured -fPIC --prefix=/opt/openssl no-docs shared -Wl,-rpath,/opt/openssl/lib64 && perl configdata.pm --dump
     - name: make
       run: |
         make -s -j4
