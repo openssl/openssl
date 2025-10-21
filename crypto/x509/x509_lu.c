@@ -17,7 +17,7 @@
 #include <openssl/x509v3.h>
 #include "x509_local.h"
 
-#define X509_OBJS_HT_BUCKETS 512
+#define X509_OBJS_HT_BUCKETS 8
 
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 {
