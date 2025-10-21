@@ -2174,8 +2174,8 @@ int ossl_x509_check_certificate_times(const X509_VERIFY_PARAM *vpm, X509 *x,
      * 99991231235959Z.
      */
     notafter = X509_get0_notAfter(x);
-    if (strcmp((const char *)ASN1_STRING_get0_data(notafter), "99991231235959Z")
-        == 0)
+    if (notafter->length == 15
+        && memcmp(ASN1_STRING_get0_data(notafter), "99991231235959Z", 15) == 0)
         return 1;
 
     if (!ossl_x509_compare_asn1_time(vpm, notafter, &comparison)) {
@@ -2225,8 +2225,8 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
      * 99991231235959Z.
      */
     notafter = X509_get0_notAfter(x);
-    if (strcmp((const char *)ASN1_STRING_get0_data(notafter), "99991231235959Z")
-        == 0)
+    if (notafter->length == 15
+        && memcmp(ASN1_STRING_get0_data(notafter), "99991231235959Z", 15) == 0)
         return 1;
 
     i = ossl_x509_compare_asn1_time(vpm, notafter, &comparison);
