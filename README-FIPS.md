@@ -199,3 +199,19 @@ build information via changes to strings in `VERSION.dat`.
 Setting "PRE_RELEASE_TAG" (dashed suffix), "BUILD_METADATA" (plus
 suffix), and "FIPS_VENDOR" allow to control reported FIPS provider
 name and build version as required for CMVP submission.
+
+Pedantic mode
+=============
+
+Many algorithm may have "unapproved yet allowed", "allowed for legacy
+use", "allowed but deprecated", "will be approved with future
+revisions of standards", or "allowed when meeting specific FIPS
+I.G. requirements in limited scenarios" behaviors. These are typically
+configured as allowed (no failure), but have a dynamic approved
+service indicator stating failure. One can use `-pedantic` option to
+`fipsinstall` to change all dynamic service indicators to always
+enforcing. A bigger ratchet is to always enforce `-pedantic` mode at
+compile time. This can be achieved with `enable-fips-pedanticonly`
+configure time option. This will always initialize all dynamic
+indicators to enforcing mode, and require one to use `-pedantic`
+option when calling `fipsinstall` utility.
