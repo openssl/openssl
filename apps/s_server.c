@@ -647,7 +647,7 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
 
         /*
          * in the case the root CA certificate is not included in the chain
-         * we assme that the last remaining response is issued by it
+         * we assume that the last remaining response is issued by it
          */
         if (issuer == NULL && i == (num - 1) && sk_OCSP_RESPONSE_num(sk_resp_unordered) == 1) {
             resp = sk_OCSP_RESPONSE_value(sk_resp_unordered, 0);
