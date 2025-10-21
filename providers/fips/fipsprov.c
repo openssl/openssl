@@ -114,10 +114,10 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
 
 #ifdef OPENSSL_NO_FIPS_PEDANTICONLY
 # define OSSL_FIPS_PARAM(structname, paramname, initvalue) \
-     init_fips_option(&fgbl->fips_##structname, initvalue);
+    init_fips_option(&fgbl->fips_##structname, initvalue);
 #else
 # define OSSL_FIPS_PARAM(structname, paramname, initvalue) \
-     init_fips_option(&fgbl->fips_##structname, 1);
+    init_fips_option(&fgbl->fips_##structname, 1);
 #endif
 #include "fips_indicator_params.inc"
 #undef OSSL_FIPS_PARAM
