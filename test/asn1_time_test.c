@@ -558,17 +558,6 @@ static int test_gmtime_diff_limits(void)
         goto err;
 
     /*
-     * OPENSSL_gmtime[diff/adj] use struct tm as input to public
-     * API. However unlike most platform provided time conversion
-     * functions, it does not validate the values in the tm as per C99
-     * spec before attempting to use it. It also only partly limits
-     * what it will convert to the ASN1_TIME date range, and does not
-     * support the entire range. The define below makes tests that
-     * fail pass to match the current behaviour.
-     */
-#define ITS_TRADITION_THAT_MAKES_IT_OK
-
-    /*
      * Struct tm permits second 60 in C99. As neither of the values
      * tested here are actually a for realsies leap second, (We do not
      * consult any reference for valid leap seconds from the platform
@@ -587,9 +576,7 @@ static int test_gmtime_diff_limits(void)
         ps = psec;
         if (!TEST_false((pd == expected_days + 1 && ps == 0))) {
             TEST_info("OPENSSL_gmtime_diff incorrectly includes bogus leap second");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
             goto err;
-#endif
         } else {
             if (!TEST_int64_t_eq(pd, expected_days))
                 goto err;
@@ -606,9 +593,7 @@ static int test_gmtime_diff_limits(void)
         ps = psec;
         if (!TEST_false((pd == expected_days && ps == expected_secs - 60))) {
             TEST_info("OPENSSL_gmtime_diff incorrectly includes bogus leap second");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
             goto err;
-#endif
         } else {
             if (!TEST_int64_t_eq(pd, expected_days))
                 goto err;
@@ -625,9 +610,7 @@ static int test_gmtime_diff_limits(void)
         ps = psec;
         if (!TEST_false((pd == expected_days + 1 && ps == 0))) {
             TEST_info("OPENSSL_gmtime_diff incorrectly includes bogus leap second");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
             goto err;
-#endif
         } else {
             if (!TEST_int64_t_eq(pd, expected_days))
                 goto err;
@@ -641,9 +624,7 @@ static int test_gmtime_diff_limits(void)
     min_tm.tm_mon = 12;
     if (!TEST_false(OPENSSL_gmtime_diff(&pday, &psec, &min_tm, &max_tm))) {
         TEST_info("OPENSSL_gmtime_diff incorrectly allows month 12");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     min_tm.tm_mon = saved_value;
 
@@ -651,9 +632,7 @@ static int test_gmtime_diff_limits(void)
     min_tm.tm_mon = -1;
     if (!TEST_false(OPENSSL_gmtime_diff(&pday, &psec, &min_tm, &max_tm))) {
         TEST_info("OPENSSL_gmtime_diff incorrectly allows month -1");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     min_tm.tm_mon = saved_value;
 
@@ -661,9 +640,7 @@ static int test_gmtime_diff_limits(void)
     min_tm.tm_mday = 32;
     if (!TEST_false(OPENSSL_gmtime_diff(&pday, &psec, &min_tm, &max_tm))) {
         TEST_info("OPENSSL_gmtime_diff incorrectly allows the 32nd of January");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     min_tm.tm_mday = saved_value;
 
@@ -671,9 +648,7 @@ static int test_gmtime_diff_limits(void)
     min_tm.tm_mday = 0;
     if (!TEST_false(OPENSSL_gmtime_diff(&pday, &psec, &min_tm, &max_tm))) {
         TEST_info("OPENSSL_gmtime_diff incorrectly allows the 0th of January");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     min_tm.tm_mday = saved_value;
 
@@ -681,9 +656,7 @@ static int test_gmtime_diff_limits(void)
     min_tm.tm_hour = 24;
     if (!TEST_false(OPENSSL_gmtime_diff(&pday, &psec, &min_tm, &max_tm))) {
         TEST_info("OPENSSL_gmtime_diff incorrectly allows hour 24");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     min_tm.tm_hour = saved_value;
 
@@ -691,9 +664,7 @@ static int test_gmtime_diff_limits(void)
     min_tm.tm_hour = -1;
     if (!TEST_false(OPENSSL_gmtime_diff(&pday, &psec, &min_tm, &max_tm))) {
         TEST_info("OPENSSL_gmtime_diff incorrectly allows hour -1");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     min_tm.tm_hour = saved_value;
 
@@ -701,9 +672,7 @@ static int test_gmtime_diff_limits(void)
     min_tm.tm_min = 60;
     if (!TEST_false(OPENSSL_gmtime_diff(&pday, &psec, &min_tm, &max_tm))) {
         TEST_info("OPENSSL_gmtime_diff incorrectly allows minute 60");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     min_tm.tm_min = saved_value;
 
@@ -711,9 +680,7 @@ static int test_gmtime_diff_limits(void)
     min_tm.tm_min = -1;
     if (!TEST_false(OPENSSL_gmtime_diff(&pday, &psec, &min_tm, &max_tm))) {
         TEST_info("OPENSSL_gmtime_diff incorrectly allows minute -1");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     min_tm.tm_min = saved_value;
 
@@ -721,9 +688,7 @@ static int test_gmtime_diff_limits(void)
     min_tm.tm_sec = -1;
     if (!TEST_false(OPENSSL_gmtime_diff(&pday, &psec, &min_tm, &max_tm))) {
         TEST_info("OPENSSL_gmtime_diff incorrectly allows second -1");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     min_tm.tm_sec = saved_value;
 
@@ -731,9 +696,7 @@ static int test_gmtime_diff_limits(void)
     min_tm.tm_sec = 61; /* Not allowed per C99. */
     if (!TEST_false(OPENSSL_gmtime_diff(&pday, &psec, &min_tm, &max_tm))) {
         TEST_info("OPENSSL_gmtime_diff incorrectly allows second 61");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     min_tm.tm_sec = saved_value;
 
@@ -881,10 +844,7 @@ static int test_gmtime_range(void)
     /* Adj should work for year 0000. */
     if (!TEST_true(OPENSSL_gmtime_adj(&copy, 0, 0))) {
         TEST_info("OPENSSL_gmtime_adj unexpectedly failed for year 0");
-        /* ... except that it doesn't */
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
 
     memcpy(&copy, &tm, sizeof(tm));
@@ -903,41 +863,31 @@ static int test_gmtime_range(void)
     if (!TEST_true(OPENSSL_gmtime_adj(&copy, - days, - seconds))) {
         TEST_info("OPENSSL_gmtime_adj unexpectedly failed for "
                   "%d days and %ld seconds", - days, - seconds);
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
     if (!TEST_mem_eq(&copy, sizeof(copy), &tm, sizeof(tm))) {
         TEST_info("tm does not have expected value after adj of "
                   "%d days and %ld seconds", days, seconds);
         goto err;
     }
-#endif
     seconds = (long) ((MAX_POSIX_TIME - MIN_POSIX_TIME) % (int64_t)LONG_MAX);
     days = (int) ((MAX_POSIX_TIME - MIN_POSIX_TIME
                    - (int64_t)seconds) / SECS_PER_DAY);
     if (!TEST_true(OPENSSL_gmtime_adj(&copy, days, seconds))) {
         TEST_info("OPENSSL_gmtime_adj unexpectedly failed for "
                   "%d days and %ld seconds", - days, - seconds);
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     if (!TEST_true(OPENSSL_gmtime_adj(&copy, - days, - seconds))) {
         TEST_info("OPENSSL_gmtime_adj unexpectedly failed for "
                   "%d days and %ld seconds", - days, - seconds);
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
     if (!TEST_mem_eq(&copy, sizeof(copy), &tm, sizeof(tm))) {
         TEST_info("tm does not have expected value after adj of "
                   "%d days and %ld seconds", days, seconds);
         goto err;
     }
-#endif
 
     /* 99991231235959Z - MAX_POSIX_TIME. */
     memset(&tm, 0, sizeof(tm));
@@ -1011,80 +961,60 @@ static int test_gmtime_range(void)
     tm.tm_mon = 12;
     if (!TEST_false(OPENSSL_gmtime_adj(&tm, 0, 0))) {
         TEST_info("OPENSSL_gmtime_adj incorrectly allows month 12");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     tm.tm_mon = -1;
     if (!TEST_false(OPENSSL_gmtime_adj(&tm, 0, 0))) {
         TEST_info("OPENSSL_gmtime_adj incorrectly allows month -1");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     tm.tm_mon = 0;
 
     tm.tm_mday = 32;
     if (!TEST_false(OPENSSL_gmtime_adj(&tm, 0, 0))) {
         TEST_info("OPENSSL_gmtime_adj incorrectly allows 32nd of January");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     tm.tm_mday = 0;
     if (!TEST_false(OPENSSL_gmtime_adj(&tm, 0, 0))) {
         TEST_info("OPENSSL_gmtime_adj incorrectly allows the 0th of January");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     tm.tm_mday = 1;
 
     tm.tm_hour = 24;
     if (!TEST_false(OPENSSL_gmtime_adj(&tm, 0, 0))) {
         TEST_info("OPENSSL_gmtime_adj incorrectly allows hour 24");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     tm.tm_hour = -1;
     if (!TEST_false(OPENSSL_gmtime_adj(&tm, 0, 0))) {
         TEST_info("OPENSSL_gmtime_adj incorrectly allows hour -1");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     tm.tm_hour = 0;
 
     tm.tm_min = 60;
     if (!TEST_false(OPENSSL_gmtime_adj(&tm, 0, 0))) {
         TEST_info("OPENSSL_gmtime_adj incorrectly allows minute 60");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     tm.tm_min = -1;
     if (!TEST_false(OPENSSL_gmtime_adj(&tm, 0, 0))) {
         TEST_info("OPENSSL_gmtime_adj incorrectly allows minute -1");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     tm.tm_min = 0;
 
     tm.tm_sec = -1;
     if (!TEST_false(OPENSSL_gmtime_adj(&tm, 0, 0))) {
         TEST_info("OPENSSL_gmtime_adj incorrectly allows second -1");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     tm.tm_sec = 61; /* Not allowed per C99. */
     if (!TEST_false(OPENSSL_gmtime_adj(&tm, 0, 0))) {
         TEST_info("OPENSSL_gmtime_adj incorrectly allows second 61");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
         goto err;
-#endif
     }
     tm.tm_sec = 0;
 
@@ -1103,9 +1033,7 @@ static int test_gmtime_range(void)
     if (!TEST_false(OPENSSL_gmtime_adj(&copy, 0, 0))) {
         if (!TEST_mem_eq(&copy, sizeof(copy), &tm, sizeof(tm))) {
             TEST_info("OPENSSL_gmtime_adj incorrectly accepted a bogus leap second");
-#if !defined(ITS_TRADITION_THAT_MAKES_IT_OK)
             goto err;
-#endif
         }
     }
     tm.tm_sec = 0;
