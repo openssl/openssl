@@ -35,11 +35,6 @@
 
 #define TICKET_NONCE_SIZE       8
 
-/* during tests this is returned instead of a proper hash for the issuer name */
-static char DUMMY_HASH[] =
-    { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-      0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13 };
-
 typedef struct {
   ASN1_TYPE *kxBlob;
   ASN1_TYPE *opaqueBlob;
@@ -467,12 +462,13 @@ int send_certificate_request(SSL_CONNECTION *s)
  */
 OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, size_t chainidx)
 {
+    OCSP_RESPONSE *resp = NULL;
+#ifndef OPENSSL_NO_OCSP
     int i = 0, num = 0;
     unsigned int len;
     X509 *x = NULL;
     STACK_OF(X509) *chain_certs = NULL;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
-    OCSP_RESPONSE *resp = NULL;
     OCSP_BASICRESP *bs = NULL;
     OCSP_SINGLERESP *sr = NULL;
     OCSP_CERTID *cid = NULL;
@@ -548,15 +544,6 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, size_t chainidx)
                     return NULL;
                 }
 
-                /*
-                 * during some test cases we don't get a proper issuer name hash
-                 * this is a work around for this, we just return the response if
-                 * we get this dummy hash value instead of checking that it is the
-                 * correct one
-                 */
-                if (!memcmp(DUMMY_HASH, md, len))
-                    return resp;
-
                 num = OCSP_resp_count(bs);
                 for (i = 0; i < num; i++) {
                     sr = OCSP_resp_get0(bs, i);
@@ -589,6 +576,7 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, size_t chainidx)
             ERR_pop_to_mark();
         }
     }
+#endif
 
     return resp;
 }
@@ -4479,8 +4467,10 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, OCSP_RESPONSE *resp, WPACK
         return 0;
     }
 
+#ifndef OPENSSL_NO_OCSP
     if (resp != NULL)
         resplen = i2d_OCSP_RESPONSE(resp, &respder);
+#endif
 
     if (!WPACKET_sub_memcpy_u24(pkt, respder, resplen)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
