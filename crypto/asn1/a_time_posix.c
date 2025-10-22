@@ -21,6 +21,7 @@
 #include <openssl/asn1.h>
 #include <openssl/posix_time.h>
 
+#include <crypto/x509.h>
 #include "asn1_local.h"
 
 #define SECS_PER_HOUR (int64_t)(60 * 60)
@@ -272,6 +273,19 @@ int OPENSSL_gmtime_diff(int *out_days, int *out_secs, const struct tm *from,
 
     *out_secs = (int) timediff;
     *out_days = (int) daydiff;
+
+    return 1;
+}
+
+int ossl_posix_to_asn1_time(int64_t posix_time, ASN1_TIME **out_time)
+{
+    struct tm ts;
+
+    if (!OPENSSL_posix_to_tm(posix_time, &ts))
+        return 0;
+
+    if ((*out_time = ossl_asn1_time_from_tm(*out_time, &ts, V_ASN1_UNDEF)) == NULL)
+        return 0;
 
     return 1;
 }
