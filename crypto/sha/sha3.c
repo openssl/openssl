@@ -401,8 +401,8 @@ KECCAK1600_CTX *ossl_shake256_new(void)
     ctx->md_size = SIZE_MAX;
     ctx->meth = shake_generic_meth;
 #if defined(S390_SHA3)
-    if (S390_SHA3_CAPABLE(s390X_SHAKE256)) {
-        ctx->pad = s390X_SHAKE256;
+    if (S390_SHA3_CAPABLE(s390X_SHAKE_256)) {
+        ctx->pad = s390X_SHAKE_256;
         ctx->meth = shake_s390x_meth;
     }
 #elif defined(__aarch64__) && defined(KECCAK1600_ASM)
