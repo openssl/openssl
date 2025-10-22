@@ -843,11 +843,6 @@ static int test_gmtime_range(void)
                   "%d days and %ld seconds", - days, - seconds);
         goto err;
     }
-    /*
-     * Adj currently fails for result times before 1900, but can
-     * start with a time before that, as long as the result is
-     * before year 10000.
-     */
     if (!TEST_true(OPENSSL_gmtime_adj(&copy, - days, - seconds))) {
         TEST_info("OPENSSL_gmtime_adj unexpectedly failed for "
                   "%d days and %ld seconds", - days, - seconds);
