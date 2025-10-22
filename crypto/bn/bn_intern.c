@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "crypto/fn_intern.h"
 #include "bn_local.h"
 
 /*
@@ -189,8 +190,15 @@ int bn_set_words(BIGNUM *a, const BN_ULONG *words, int num_words)
         return 0;
     }
 
-    memcpy(a->d, words, sizeof(BN_ULONG) * num_words);
+    if (a->data == NULL)
+        /* TODO(FIXNUM): a->data should not be NULL in the future */
+        memcpy(a->d, words, sizeof(BN_ULONG) * num_words);
+    else
+        ossl_fn_set_words(a->data, words, num_words);
+
+    /* TODO(FIXNUM): The following two lines are TO BE REMOVED */
     a->top = num_words;
     bn_correct_top(a);
+
     return 1;
 }
