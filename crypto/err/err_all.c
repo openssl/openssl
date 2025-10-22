@@ -13,6 +13,7 @@
 #include "crypto/cryptoerr.h"
 #include "crypto/asn1err.h"
 #include "crypto/bnerr.h"
+#include "crypto/fnerr.h"
 #include "crypto/ecerr.h"
 #include "crypto/buffererr.h"
 #include "crypto/bioerr.h"
@@ -50,6 +51,7 @@ int ossl_err_load_crypto_strings(void)
 #ifndef OPENSSL_NO_ERR
         || ossl_err_load_ERR_strings() == 0 /* include error strings for SYSerr */
         || ossl_err_load_BN_strings() == 0
+        || ossl_err_load_OSSL_FN_strings() == 0
         || ossl_err_load_RSA_strings() == 0
 #ifndef OPENSSL_NO_DH
         || ossl_err_load_DH_strings() == 0

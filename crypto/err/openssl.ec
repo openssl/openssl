@@ -43,6 +43,7 @@ L PROV          include/openssl/proverr.h       providers/common/provider_err.c 
 L OSSL_ENCODER  include/openssl/encodererr.h    crypto/encode_decode/encoder_err.c      include/crypto/encodererr.h
 L OSSL_DECODER  include/openssl/decodererr.h    crypto/encode_decode/decoder_err.c      include/crypto/decodererr.h
 L HTTP          include/openssl/httperr.h       crypto/http/http_err.c                  include/crypto/httperr.h
+L OSSL_FN       NONE                            crypto/fn/fn_err.c                      include/crypto/fnerr.h
 
 # SSL/TLS alerts
 R SSL_R_SSLV3_ALERT_UNEXPECTED_MESSAGE          1010
