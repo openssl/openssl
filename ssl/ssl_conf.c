@@ -158,7 +158,7 @@ static void ssl_set_option(SSL_CONF_CTX *cctx, unsigned int name_flags,
         return;
 
     case SSL_TFLAG_HOSTVER:
-        pflags =  cctx->phostver_flags;
+        pflags = cctx->phostver_flags;
         break;
 
     default:
@@ -488,10 +488,11 @@ static int cmd_CertValidation(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_CERTVAL("PartialChain", X509_V_FLAG_PARTIAL_CHAIN),
         SSL_FLAG_CERTVAL("NoCheckTime", X509_V_FLAG_NO_CHECK_TIME),
     };
+
     if (value == NULL)
         return -3;
     cctx->tbl = ssl_certval_list;
-    cctx->ntbl = (sizeof(ssl_certval_list)/sizeof(ssl_certval_list[0]));
+    cctx->ntbl = (sizeof(ssl_certval_list) / sizeof(ssl_certval_list[0]));
     return CONF_parse_list(value, ',', 1, ssl_set_option_list, cctx);
 }
 
@@ -499,11 +500,12 @@ static int cmd_SetValidHost(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 0;
     X509_VERIFY_PARAM *param = NULL;
+
     if (cctx->ssl)
         param = cctx->ssl->param;
     else if (cctx->ctx)
         param = cctx->ctx->param;
-    if( param != NULL )
+    if (param != NULL)
         rv = X509_VERIFY_PARAM_set1_host(param, value, 0);
     return rv > 0;
 }
@@ -512,11 +514,12 @@ static int cmd_AddValidHost(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 0;
     X509_VERIFY_PARAM *param = NULL;
+
     if (cctx->ssl)
         param = cctx->ssl->param;
     else if (cctx->ctx)
         param = cctx->ctx->param;
-    if( param != NULL )
+    if (param != NULL)
         rv = X509_VERIFY_PARAM_add1_host(param, value, 0);
     return rv > 0;
 }
@@ -525,11 +528,12 @@ static int cmd_SetValidIP(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 0;
     X509_VERIFY_PARAM *param = NULL;
+
     if (cctx->ssl)
         param = cctx->ssl->param;
     else if (cctx->ctx)
         param = cctx->ctx->param;
-    if( param != NULL )
+    if (param != NULL)
         rv = X509_VERIFY_PARAM_set1_ip_asc(param, value);
     return rv > 0;
 }
@@ -538,15 +542,15 @@ static int cmd_SetValidHostOrIP(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 0;
     X509_VERIFY_PARAM *param = NULL;
+
     if (cctx->ssl)
         param = cctx->ssl->param;
     else if (cctx->ctx)
         param = cctx->ctx->param;
-    if( param != NULL ) {
+    if (param != NULL) {
         rv = X509_VERIFY_PARAM_set1_ip_asc(param, value);
-        if( rv == 0 ) {
+        if (rv == 0)
             rv = X509_VERIFY_PARAM_set1_host(param, value, 0);
-        }
     }
     return rv > 0;
 }
@@ -561,15 +565,16 @@ static int cmd_SetValidFlags(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_HOSTVER("SingleLabelSubdomains", X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS),
         SSL_FLAG_HOSTVER("NeverCheckSubject", X509_CHECK_FLAG_NEVER_CHECK_SUBJECT),
     };
+
     if (value == NULL)
         return -3;
     cctx->tbl = ssl_host_flags_list;
-    cctx->ntbl = (sizeof(ssl_host_flags_list)/sizeof(ssl_host_flags_list[0]));
+    cctx->ntbl = (sizeof(ssl_host_flags_list) / sizeof(ssl_host_flags_list[0]));
     return CONF_parse_list(value, ',', 1, ssl_set_option_list, cctx);
 }
 
 static int do_add(SSL_CONF_CTX *cctx,
-                    const char *CAfile, const char *CApath)
+                  const char *CAfile, const char *CApath)
 {
     X509_STORE **st;
     SSL_CTX *ctx;
