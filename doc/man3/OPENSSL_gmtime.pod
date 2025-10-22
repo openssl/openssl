@@ -51,11 +51,7 @@ I<tm_hour>, I<tm_min>, and I<tm_sec> will be updated in I<tm> on
 success.
 
 OPENSSL_tm_to_posix() converts a time value between the years 0 and
-9999 in I<tm> to a POSIX time value in I<out>. Only the fields
-I<tm_year>, I<tm_mon>, I<tm_mday>, I<tm_hour>, I<tm_min>, and
-I<tm_sec> will be read from I<tm> and all other fields will be
-ignored. Out of range values, including leap seconds, are not
-permitted.
+9999 in I<tm> to a POSIX time value in I<out>.
 
 =head1 NOTES
 
@@ -66,6 +62,7 @@ purpose time conversions, and should not be used for other purposes.
 When these functions use a I<struct tm> as input, they consider only
 the I<tm_year>, I<tm_mon>, I<tm_mday>, I<tm_hour>, I<tm_min>, and
 I<tm_sec> fields of the structure, all other fields are ignored.
+Out of range values,including leap seconds, are not permitted.
 
 OPENSSL_gmtime_adj() converts I<tm> into a days and seconds value,
 adds I<offset_day> and I<offset_sec> to the values, and then converts
@@ -78,33 +75,26 @@ time.
 
 OPENSSL_gmtime_adj() converts I<tm> into a days and seconds value,
 adds the offsets, then converts back into a I<struct tm> specified by
-I<tm>.  Only the fieldsI<tm_year>, I<tm_mon>, I<tm_mday>, I<tm_hour>,
-I<tm_min>, and I<tm_sec> will be used from I<tm> and all other fields
-will be ignored, and will be zeroed in the result. Out of range
-values, including leap seconds, are not permitted.
+I<tm>.
 
 OPENSSL_gmtime_diff() calculates the difference between the two
 I<struct tm> structures I<from> and I<to>. The difference in days is
 placed into I<*pday>, the remaining seconds are placed to
 I<*psec>. The value in I<*psec> will be less than the number of
-seconds per day (86400). Only the fields I<tm_year>, I<tm_mon>,
-I<tm_mday>, I<tm_hour>, I<tm_min>, and I<tm_sec> will be used from in
-I<from> and I<to>. all other fields will be ignored. Out of range
-values, including leap seconds, are not permitted.
+seconds per day (86400).
 
 =head1 RETURN VALUES
 
-OPENSSL_gmtime returns I<result> on success or NULL for failure.
-It can fail if the time is not representable in a struct tm,
-or if the year is less than 0 or more than 9999,
+OPENSSL_gmtime returns I<result> on success or NULL for failure. It
+can fail if the input time is outside of the range of year 0 to 9999.
 
-OPENSSL_timegm() returns 1 for success or 0 for failure.  It can fail
-if the time is not representable in a time_t, or if the year is less
-than 0 or more than 9999.
+OPENSSL_posix_to_tm() return 1 for success or 0 on failure. It
+can fail if the input time is outside of the range of year 0 to 9999.
 
-OPENSSL_posix_to_tm() and OPENSSL_tm_to_posix()
-return 1 for success or 0 on failure.
-It is a failure if the year is less than 0 or more than 9999,
+OPENSSL_timegm() and OPENSSL_tm_to_posix return 1 for success or 0 for
+failure.  OpenSSL_timegm() can fail it the time is not representable
+in a time_t, and both may fail on invalid or out of range input in the
+input tm.
 
 OPENSSL_gmtime_adj() and OPENSSL_gmtime_diff() return 0 on error, and 1 on success.
 
