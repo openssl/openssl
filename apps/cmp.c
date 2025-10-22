@@ -3802,6 +3802,10 @@ int cmp_main(int argc, char **argv)
             goto err;
         }
         OSSL_CMP_CTX_set_log_verbosity(srv_cmp_ctx, opt_verbosity);
+        if (opt_ignore_keyusage)
+            (void)OSSL_CMP_CTX_set_option(srv_cmp_ctx, OSSL_CMP_OPT_IGNORE_KEYUSAGE, 1);
+        if (opt_no_cache_extracerts)
+            (void)OSSL_CMP_CTX_set_option(srv_cmp_ctx, OSSL_CMP_OPT_NO_CACHE_EXTRACERTS, 1);
 
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
         if (opt_port != NULL) { /* act as very basic CMP HTTP server only */
