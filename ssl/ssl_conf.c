@@ -502,12 +502,14 @@ static int cmd_SetValidHost(SSL_CONF_CTX *cctx, const char *value)
     X509_VERIFY_PARAM *param = NULL;
 
     if (cctx->ssl) {
-	SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
-	if (sc == NULL)
-	    return 0;
+        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
+
+        if (sc == NULL)
+            return 0;
         param = sc->param;
-    } else if (cctx->ctx)
+    } else if (cctx->ctx) {
         param = cctx->ctx->param;
+    }
     if (param != NULL)
         rv = X509_VERIFY_PARAM_set1_host(param, value, 0);
     return rv > 0;
@@ -519,12 +521,14 @@ static int cmd_AddValidHost(SSL_CONF_CTX *cctx, const char *value)
     X509_VERIFY_PARAM *param = NULL;
 
     if (cctx->ssl) {
-	SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
-	if (sc == NULL)
-	    return 0;
+        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
+
+        if (sc == NULL)
+            return 0;
         param = sc->param;
-    } else if (cctx->ctx)
+    } else if (cctx->ctx) {
         param = cctx->ctx->param;
+    }
     if (param != NULL)
         rv = X509_VERIFY_PARAM_add1_host(param, value, 0);
     return rv > 0;
@@ -536,12 +540,14 @@ static int cmd_SetValidIP(SSL_CONF_CTX *cctx, const char *value)
     X509_VERIFY_PARAM *param = NULL;
 
     if (cctx->ssl) {
-	SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
-	if (sc == NULL)
-	    return 0;
+        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
+
+        if (sc == NULL)
+            return 0;
         param = sc->param;
-    } else if (cctx->ctx)
+    } else if (cctx->ctx) {
         param = cctx->ctx->param;
+    }
     if (param != NULL)
         rv = X509_VERIFY_PARAM_set1_ip_asc(param, value);
     return rv > 0;
@@ -553,12 +559,14 @@ static int cmd_SetValidHostOrIP(SSL_CONF_CTX *cctx, const char *value)
     X509_VERIFY_PARAM *param = NULL;
 
     if (cctx->ssl) {
-	SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
-	if (sc == NULL)
-	    return 0;
+        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
+
+        if (sc == NULL)
+            return 0;
         param = sc->param;
-    } else if (cctx->ctx)
+    } else if (cctx->ctx) {
         param = cctx->ctx->param;
+    }
     if (param != NULL) {
         rv = X509_VERIFY_PARAM_set1_ip_asc(param, value);
         if (rv == 0)
