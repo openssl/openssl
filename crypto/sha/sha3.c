@@ -12,7 +12,7 @@
 #include "internal/common.h"
 
 #if defined(__aarch64__) && defined(KECCAK1600_ASM)
-# include "arm_arch.h"
+# include "crypto/arm_arch.h"
 #endif
 
 #if defined(__s390x__) && defined(OPENSSL_CPUID_OBJ)
