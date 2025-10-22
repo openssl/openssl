@@ -112,7 +112,7 @@ OPENSSL_gmtime_adj() and OPENSSL_gmtime_diff() return 0 on error, and 1 on succe
 
 OPENSSL_gmtime() is not platform-agnostic due to possible limitations
 in the range of the platform I<time_t> type. OPENSSL_posix_to_tm
-provides similar functionaly in a platform independent manner.
+provides similar functionally in a platform independent manner.
 
 =head1 HISTORY
 
