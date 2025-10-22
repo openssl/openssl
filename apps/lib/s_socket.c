@@ -154,8 +154,9 @@ int init_client(int *sock, const char *host, const char *port,
             BIO *tmpbio = BIO_new_dgram_sctp(*sock, BIO_NOCLOSE);
 
             if (tmpbio == NULL) {
-                ERR_print_errors(bio_err);
-                return 0;
+                BIO_closesocket(*sock);
+                *sock = INVALID_SOCKET;
+                goto out;
             }
             BIO_free(tmpbio);
         }
