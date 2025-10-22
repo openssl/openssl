@@ -147,6 +147,7 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 0,using popo 1 with -centralkeygen, -section,, -cmd,cr,, -centralkeygen, -popo,1, -newkeyout,_RESULT_DIR/newkeyout.pem
 1, using popo -1 redundantly with -centralkeygen, -section,, -cmd,cr,, -centralkeygen, -popo,-1, -newkeyout,_RESULT_DIR/newkeyout2.pem
 1, using popo -1 alternatively to -centralkeygen, -section,, -cmd,cr,, -popo,-1, -newkeyout,_RESULT_DIR/newkeyout3.pem, -newkeypass,pass:12345, -certout,_RESULT_DIR/test.cert3.pem
-1, using centrally generated key (and cert) , -section,, -cmd,cr,,-cert,_RESULT_DIR/test.cert3.pem, -key,_RESULT_DIR/newkeyout3.pem, -keypass,pass:12345
+1, using centrally generated key (and cert) with existing chain, -section,, -cmd,cr,,-cert,_RESULT_DIR/test.cert3.pem, -key,_RESULT_DIR/newkeyout3.pem, -keypass,pass:12345, -extracerts, issuing.crt
+0, using centrally generated key (and cert) missing chain, -section,, -cmd,cr,,-cert,_RESULT_DIR/test.cert3.pem, -key,_RESULT_DIR/newkeyout3.pem, -keypass,pass:12345, -extracerts, ""
 0, using centrally generated key with wrong password, -section,, -cmd,cr,,-cert,_RESULT_DIR/test.cert3.pem, -key,_RESULT_DIR/newkeyout3.pem, -keypass,pass:wrong
 0, using popo -1 (instead of -centralkeygen) without -newkeyout, -section,, -cmd,cr,, -popo,-1,,BLANK,,BLANK,,BLANK,,BLANK
