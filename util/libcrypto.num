@@ -5949,3 +5949,7 @@ OSSL_DECODER_CTX_set_finalized          ?	4_0_0	EXIST::FUNCTION:
 OSSL_DECODER_CTX_get_finalized          ?	4_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_finalized          ?	4_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_get_finalized          ?	4_0_0	EXIST::FUNCTION:
+PEM_read_PKCS12                         ?	4_0_0	EXIST::FUNCTION:
+PEM_read_bio_PKCS12                     ?	4_0_0	EXIST::FUNCTION:
+PEM_write_PKCS12                        ?	4_0_0	EXIST::FUNCTION:
+PEM_write_bio_PKCS12                    ?	4_0_0	EXIST::FUNCTION:
