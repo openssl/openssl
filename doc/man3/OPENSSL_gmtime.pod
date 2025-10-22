@@ -62,7 +62,7 @@ purpose time conversions, and should not be used for other purposes.
 When these functions use a I<struct tm> as input, they consider only
 the I<tm_year>, I<tm_mon>, I<tm_mday>, I<tm_hour>, I<tm_min>, and
 I<tm_sec> fields of the structure, all other fields are ignored.
-Out of range values,including leap seconds, are not permitted.
+Out of range values, including leap seconds, are not permitted.
 
 OPENSSL_gmtime_adj() converts I<tm> into a days and seconds value,
 adds I<offset_day> and I<offset_sec> to the values, and then converts
@@ -85,24 +85,18 @@ seconds per day (86400).
 
 =head1 RETURN VALUES
 
-OPENSSL_gmtime returns I<result> on success or NULL for failure. It
+OPENSSL_gmtime() returns I<result> on success or NULL for failure. It
 can fail if the input time is outside of the range of year 0 to 9999.
 
 OPENSSL_posix_to_tm() return 1 for success or 0 on failure. It
 can fail if the input time is outside of the range of year 0 to 9999.
 
-OPENSSL_timegm() and OPENSSL_tm_to_posix return 1 for success or 0 for
+OPENSSL_timegm() and OPENSSL_tm_to_posix() return 1 for success or 0 for
 failure.  OpenSSL_timegm() can fail it the time is not representable
 in a time_t, and both may fail on invalid or out of range input in the
 input tm.
 
 OPENSSL_gmtime_adj() and OPENSSL_gmtime_diff() return 0 on error, and 1 on success.
-
-=head1 BUGS
-
-OPENSSL_gmtime() is not platform-agnostic due to possible limitations
-in the range of the platform I<time_t> type. OPENSSL_posix_to_tm
-provides similar functionally in a platform independent manner.
 
 =head1 HISTORY
 
