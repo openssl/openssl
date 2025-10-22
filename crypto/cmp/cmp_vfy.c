@@ -507,11 +507,11 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
             return 1;
         }
         /* cached sender cert has shown to be no more successfully usable */
-        (void)ossl_cmp_ctx_set1_validatedSrvCert(ctx, NULL);
         /* re-do the above check (just) for adding diagnostic information */
         ossl_cmp_info(ctx,
             "trying to verify msg signature with previously validated cert");
         (void)check_msg_given_cert(ctx, scrt, msg);
+        (void)ossl_cmp_ctx_set1_validatedSrvCert(ctx, NULL); /* this invalidates scrt */
     }
 
     res = check_msg_all_certs(ctx, msg, 0 /* using ctx->trusted */)
