@@ -361,6 +361,12 @@ implements a form of trust-on-first-use (TOFU).
 Do not cache certificates received in the extraCerts CMP message field.
 Otherwise they are stored to potentially help validate further messages.
 
+In any case, after successfully validating an incoming message, its protection
+certificate (if any) is cached for reuse with validation of subsequent messages.
+This is done not only for efficiency but also
+to eliminate the need for the sender to include its certificate and related chain
+in the extraCerts field of subsequent messages of the same transaction.
+
 =back
 
 OSSL_CMP_CTX_get_option() reads the current value of the given option
