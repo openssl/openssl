@@ -324,10 +324,17 @@ void X509_VERIFY_PARAM_set_auth_level(X509_VERIFY_PARAM *param, int auth_level)
 
 time_t X509_VERIFY_PARAM_get_time(const X509_VERIFY_PARAM *param)
 {
-    return param->check_time;
+    /* This will be in the time_t range, because the only setter uses time_t */
+    return (time_t)param->check_time;
 }
 
 void X509_VERIFY_PARAM_set_time(X509_VERIFY_PARAM *param, time_t t)
+{
+    param->check_time = (int64_t)t;
+    param->flags |= X509_V_FLAG_USE_CHECK_TIME;
+}
+
+void ossl_x509_verify_param_set_time_posix(X509_VERIFY_PARAM *param, int64_t t)
 {
     param->check_time = t;
     param->flags |= X509_V_FLAG_USE_CHECK_TIME;

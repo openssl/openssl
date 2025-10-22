@@ -24,6 +24,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/ocsp.h>
 #include <openssl/objects.h>
+#include <openssl/posix_time.h>
 #include <openssl/core_names.h>
 #include "internal/dane.h"
 #include "crypto/x509.h"
@@ -959,7 +960,7 @@ static int check_id(X509_STORE_CTX *ctx)
 /*
  * Returns 1 is an ASN1 time is valid for an RFC5280 certificate, 0 otherwise
  */
-static int validate_certifiate_time(const ASN1_TIME *ctm)
+static int validate_certificate_time(const ASN1_TIME *ctm)
 {
     static const size_t utctime_length = sizeof("YYMMDDHHMMSSZ") - 1;
     static const size_t generalizedtime_length = sizeof("YYYYMMDDHHMMSSZ") - 1;
@@ -1009,25 +1010,20 @@ static int validate_certifiate_time(const ASN1_TIME *ctm)
     return 1;
 }
 
-/*
- *  Compare a certificate time to a time_t.
- *  returns 0 if either the certificate time or time_t were invalid on not
- *  representable. Otherwise returns 1 and stores the comparison result
- *  (-1, 0, or 1) in *out_comparison.
- */
-static int x509_cmp_time_internal(const ASN1_TIME *ctm, const time_t *cmp_time,
-                                  int *out_comparison)
+/* Validate and convert certificate time to a posix time */
+static int certificate_time_to_posix(const ASN1_TIME *ctm, int64_t *out_time)
 {
-    time_t t = cmp_time == NULL ? time(NULL) : *cmp_time;
-    int comparison;
+    struct tm stm;
 
-    if (!validate_certifiate_time(ctm))
+    if (!validate_certificate_time(ctm))
         return 0;
 
-    if ((comparison = ASN1_TIME_cmp_time_t(ctm, t)) == -2)
+    if (!ASN1_TIME_to_tm(ctm, &stm))
         return 0;
 
-    *out_comparison = comparison;
+    if (!OPENSSL_tm_to_posix(&stm, out_time))
+        return 0;
+
     return 1;
 }
 
@@ -1410,48 +1406,55 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
     return ok;
 }
 
-/* Check CRL times against values in X509_STORE_CTX */
-static int check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
+/*
+ * returns 1 and sets verification time if time should be checked.
+ * returns 0 if time should not be checked.
+ */
+static int get_verification_time(const X509_VERIFY_PARAM *vpm,
+                                 int64_t *verification_time)
 {
-    time_t *ptime;
-    int i, comparison;
-
-    if ((ctx->param->flags & X509_V_FLAG_USE_CHECK_TIME) != 0)
-        ptime = &ctx->param->check_time;
-    else if ((ctx->param->flags & X509_V_FLAG_NO_CHECK_TIME) != 0)
-        return 1;
+    if (vpm != NULL && (vpm->flags & X509_V_FLAG_USE_CHECK_TIME) != 0)
+        *verification_time = vpm->check_time;
     else
-        ptime = NULL;
+        *verification_time = (int64_t)time(NULL);
+
+    return vpm == NULL || (vpm->flags & X509_V_FLAG_NO_CHECK_TIME) == 0;
+}
+
+/* Check CRL times against values in X509_STORE_CTX */
+int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
+{
+    int64_t verification_time, last_update, next_update;
+    int err;
+
+    if (!get_verification_time(ctx->param, &verification_time))
+        return 1;
+
     if (notify)
         ctx->current_crl = crl;
 
-    i = x509_cmp_time_internal(X509_CRL_get0_lastUpdate(crl), ptime, &comparison);
-    if (i == 0) {
-        if (!notify)
+    if (!certificate_time_to_posix(X509_CRL_get0_lastUpdate(crl),
+                                   &last_update)) {
+        err = X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD;
+        if (!notify || !verify_cb_crl(ctx, err))
             return 0;
-        if (!verify_cb_crl(ctx, X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD))
-            return 0;
-    }
-
-    if (comparison > 0) {
-        if (!notify)
-            return 0;
-        if (!verify_cb_crl(ctx, X509_V_ERR_CRL_NOT_YET_VALID))
+    } else if (verification_time < last_update) {
+        err = X509_V_ERR_CRL_NOT_YET_VALID;
+        if (!notify || !verify_cb_crl(ctx, err))
             return 0;
     }
 
     if (X509_CRL_get0_nextUpdate(crl)) {
-        i = x509_cmp_time_internal(X509_CRL_get0_nextUpdate(crl), ptime, &comparison);
-
-        if (i == 0) {
-            if (!notify)
+        if (!certificate_time_to_posix(X509_CRL_get0_nextUpdate(crl),
+                                       &next_update)) {
+            err = X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD;
+            if (!notify || !verify_cb_crl(ctx, err))
                 return 0;
-            if (!verify_cb_crl(ctx, X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD))
-                return 0;
-        }
-        /* Ignore expiration of base CRL is delta is valid */
-        if (comparison < 0 && (ctx->current_crl_score & CRL_SCORE_TIME_DELTA) == 0) {
-            if (!notify || !verify_cb_crl(ctx, X509_V_ERR_CRL_HAS_EXPIRED))
+        } else if (verification_time > next_update
+                   /* Ignore expiration of base CRL is delta is valid */
+                   && (ctx->current_crl_score & CRL_SCORE_TIME_DELTA) == 0) {
+            err = X509_V_ERR_CRL_HAS_EXPIRED;
+            if (!notify || !verify_cb_crl(ctx, err))
                 return 0;
         }
     }
@@ -1598,7 +1601,7 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl, int *pscore,
 
             *dcrl = delta;
 
-            if (check_crl_time(ctx, delta, 0))
+            if (ossl_x509_check_crl_time(ctx, delta, 0))
                 *pscore |= CRL_SCORE_TIME_DELTA;
 
             return;
@@ -1649,7 +1652,7 @@ static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
         crl_score |= CRL_SCORE_NOCRITICAL;
 
     /* Check expiration */
-    if (check_crl_time(ctx, crl, 0))
+    if (ossl_x509_check_crl_time(ctx, crl, 0))
         crl_score |= CRL_SCORE_TIME;
 
     /* Check authority key ID and locate certificate issuer */
@@ -1991,7 +1994,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
     }
 
     if ((ctx->current_crl_score & CRL_SCORE_TIME) == 0 &&
-        !check_crl_time(ctx, crl, 1))
+        !ossl_x509_check_crl_time(ctx, crl, 1))
         return 0;
 
     /* Attempt to get issuer certificate public key */
@@ -2124,28 +2127,6 @@ static int check_policy(X509_STORE_CTX *ctx)
 }
 
 /*-
- * Check an ASN1_time against X509 verify parameter time.
- *
- * Return 1 on success, 0 otherwise.
- */
-int ossl_x509_compare_asn1_time(const X509_VERIFY_PARAM *vpm,
-                                const ASN1_TIME *asn1_time, int *comparison)
-{
-    const time_t now = time(NULL);
-    const time_t *check_time = NULL;
-
-    if (vpm == NULL) {
-        check_time = &now;
-    } else if ((vpm->flags & X509_V_FLAG_USE_CHECK_TIME) != 0) {
-        check_time = &vpm->check_time;
-    } else if ((vpm->flags & X509_V_FLAG_NO_CHECK_TIME) != 0) {
-        *comparison = 0;
-        return 1;
-    }
-    return x509_cmp_time_internal(asn1_time, check_time, comparison);
-}
-
-/*-
  * Check certificate validity times.
  *
  * Return 1 on success, 0 otherwise.
@@ -2153,34 +2134,41 @@ int ossl_x509_compare_asn1_time(const X509_VERIFY_PARAM *vpm,
 int ossl_x509_check_certificate_times(const X509_VERIFY_PARAM *vpm, X509 *x,
                                       int *error)
 {
-    int err = 0, ret = 0;
-    int comparison;
-    const ASN1_TIME *notafter;
+    int ret = 0, err = 0;
+    int64_t notafter_seconds, notbefore_seconds, verification_time;
 
-    if (!ossl_x509_compare_asn1_time(vpm, X509_get0_notBefore(x), &comparison)) {
+    if (!get_verification_time(vpm, &verification_time)) {
+        ret = 1;
+        goto done;
+    }
+
+    if (!certificate_time_to_posix(X509_get0_notBefore(x), &notbefore_seconds)) {
         err = X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
         goto done;
     }
-    if (comparison > 0) {
+
+    if (verification_time < notbefore_seconds) {
         err = X509_V_ERR_CERT_NOT_YET_VALID;
         goto done;
     }
+
+    if (!certificate_time_to_posix(X509_get0_notAfter(x), &notafter_seconds)) {
+        err = X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
+        goto done;
+    }
+
     /*
      * RFC 5280 4.1.2.5:
      * To indicate that a certificate has no well-defined expiration date,
      * the notAfter SHOULD be assigned the GeneralizedTime value of
-     * 99991231235959Z.
+     * 99991231235959Z. This is INT64_C(253402300799) in epoch seconds.
      */
-    notafter = X509_get0_notAfter(x);
-    if (notafter->length == 15
-        && memcmp(ASN1_STRING_get0_data(notafter), "99991231235959Z", 15) == 0)
-        return 1;
-
-    if (!ossl_x509_compare_asn1_time(vpm, notafter, &comparison)) {
-        err = X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
+    if (notafter_seconds == INT64_C(253402300799)) {
+        ret = 1;
         goto done;
     }
-    if (comparison < 0) {
+
+    if (verification_time > notafter_seconds) {
         err = X509_V_ERR_CERT_HAS_EXPIRED;
         goto done;
     }
@@ -2205,35 +2193,41 @@ done:
 int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 {
     const X509_VERIFY_PARAM *vpm = ctx->param;
-    int i, comparison;
-    const ASN1_TIME *notafter;
+    int64_t notafter_seconds, notbefore_seconds, verification_time;
+    int err;
 
-    i = ossl_x509_compare_asn1_time(vpm, X509_get0_notBefore(x), &comparison);
-    if (i == 0 && depth < 0)
-        return 0;
-    if (comparison > 0 && depth < 0)
-        return 0;
-    CB_FAIL_IF(i == 0, ctx, x, depth, X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD);
-    CB_FAIL_IF(comparison > 0, ctx, x, depth, X509_V_ERR_CERT_NOT_YET_VALID);
-
-    /*
-     * RFC 5280 4.1.2.5:
-     * To indicate that a certificate has no well-defined expiration date,
-     * the notAfter SHOULD be assigned the GeneralizedTime value of
-     * 99991231235959Z.
-     */
-    notafter = X509_get0_notAfter(x);
-    if (notafter->length == 15
-        && memcmp(ASN1_STRING_get0_data(notafter), "99991231235959Z", 15) == 0)
+    if (!get_verification_time(vpm, &verification_time))
         return 1;
 
-    i = ossl_x509_compare_asn1_time(vpm, notafter, &comparison);
-    if (i == 0 && depth < 0)
-        return 0;
-    if (comparison < 0 && depth < 0)
-        return 0;
-    CB_FAIL_IF(i == 0, ctx, x, depth, X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD);
-    CB_FAIL_IF(comparison < 0, ctx, x, depth, X509_V_ERR_CERT_HAS_EXPIRED);
+    if (!certificate_time_to_posix(X509_get0_notBefore(x), &notbefore_seconds)) {
+        err = X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
+        if (depth < 0 || verify_cb_cert(ctx, x, depth, err) == 0)
+            return 0;
+    } else if (verification_time < notbefore_seconds) {
+        err = X509_V_ERR_CERT_NOT_YET_VALID;
+        if (depth < 0 || verify_cb_cert(ctx, x, depth, err) == 0)
+            return 0;
+    }
+
+    if (!certificate_time_to_posix(X509_get0_notAfter(x), &notafter_seconds)) {
+        err = X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
+        if (depth < 0 || verify_cb_cert(ctx, x, depth, err) == 0)
+            return 0;
+    } else {
+        /*
+         * RFC 5280 4.1.2.5:
+         * To indicate that a certificate has no well-defined expiration date,
+         * the notAfter SHOULD be assigned the GeneralizedTime value of
+         * 99991231235959Z. This is INT64_C(253402300799) in epoch seconds.
+         */
+        if (notafter_seconds == INT64_C(253402300799))
+            return 1;
+        if (verification_time > notafter_seconds) {
+            err = X509_V_ERR_CERT_HAS_EXPIRED;
+            if (depth < 0 || verify_cb_cert(ctx, x, depth, err) == 0)
+                return 0;
+        }
+    }
 
     return 1;
 }
@@ -2368,16 +2362,17 @@ int X509_cmp_current_time(const ASN1_TIME *ctm)
 /* returns 0 on error, otherwise 1 if ctm > cmp_time, else -1 */
 int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
 {
-    int comparison;
+    int64_t cert_time, posix_time = cmp_time == NULL ? (int64_t)time(NULL)
+        : (int64_t)*cmp_time;
 
-    if (!x509_cmp_time_internal(ctm, cmp_time, &comparison))
+    if (!certificate_time_to_posix(ctm, &cert_time))
         return 0;
 
-    /* It's tradition, that makes it OK. Hyrum's law bites forever */
-    if (comparison == 0)
-        comparison = -1;
+    if (cert_time > posix_time)
+        return 1;
 
-    return comparison;
+    /* It's tradition, that makes it OK. Hyrum's law bites forever */
+    return -1;
 }
 
 /*

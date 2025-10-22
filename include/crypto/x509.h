@@ -389,7 +389,7 @@ STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE) 
                                                        int type,
                                                        const unsigned char *bytes,
                                                        int len);
-                                            
+
 int ossl_print_attribute_value(BIO *out,
                                int obj_nid,
                                const ASN1_TYPE *av,
@@ -403,5 +403,8 @@ int ossl_x509_check_certificate_times(const X509_VERIFY_PARAM *vpm, X509 *x,
                                       int *error);
 /* No error callback if depth < 0 */
 int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth);
+int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify);
+int ossl_posix_to_asn1_time(int64_t posix_time, ASN1_TIME **out_time);
+void ossl_x509_verify_param_set_time_posix(X509_VERIFY_PARAM *param, int64_t t);
 
 #endif  /* OSSL_CRYPTO_X509_H */
