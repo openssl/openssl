@@ -46,7 +46,7 @@ to a broken out time value in I<tm>. I<time> must be a value of the
 number of seconds relative to 0 hours, 0 minutes, 0 seconds, January 1,
 1970, Coordinated Universal Time, without including leap seconds, and
 must be in the range of the year 0 to 9999 inclusively. I<tm> will be
-zeroed, and Only the fields I<tm_year>, I<tm_mon>, I<tm_mday>,
+zeroed, and only the fields I<tm_year>, I<tm_mon>, I<tm_mday>,
 I<tm_hour>, I<tm_min>, and I<tm_sec> will be updated in I<tm> on
 success.
 
@@ -100,7 +100,7 @@ OPENSSL_gmtime_adj() and OPENSSL_gmtime_diff() return 0 on error, and 1 on succe
 
 =head1 BUGS
 
-OPENSSL_gmtime() and OPENSSL_timegm() areq not platform-agnostic due
+OPENSSL_gmtime() and OPENSSL_timegm() are not platform-agnostic due
 to possible limitations in the range of the platform I<time_t>
 type. OPENSSL_posix_to_tm() and OPENSSL_tm_to_posix() provide similar
 functionality in a platform independent manner.
