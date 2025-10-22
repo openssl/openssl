@@ -22,9 +22,10 @@
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/provider_util.h"
-#include "providers/implementations/kdfs/scrypt.inc"
 
 #ifndef OPENSSL_NO_SCRYPT
+
+#include "providers/implementations/kdfs/scrypt.inc"
 
 static OSSL_FUNC_kdf_newctx_fn kdf_scrypt_new;
 static OSSL_FUNC_kdf_dupctx_fn kdf_scrypt_dup;
