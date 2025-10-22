@@ -3781,8 +3781,7 @@ int cmp_main(int argc, char **argv)
     if (opt_ignore_keyusage)
         (void)OSSL_CMP_CTX_set_option(cmp_ctx, OSSL_CMP_OPT_IGNORE_KEYUSAGE, 1);
     if (opt_no_cache_extracerts)
-        (void)OSSL_CMP_CTX_set_option(cmp_ctx, OSSL_CMP_OPT_NO_CACHE_EXTRACERTS,
-            1);
+        (void)OSSL_CMP_CTX_set_option(cmp_ctx, OSSL_CMP_OPT_NO_CACHE_EXTRACERTS, 1);
 
     if (opt_reqout_only == NULL && (opt_use_mock_srv
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
@@ -3798,7 +3797,7 @@ int cmp_main(int argc, char **argv)
 
         srv_cmp_ctx = OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx);
         if (!OSSL_CMP_CTX_set_log_cb(srv_cmp_ctx, print_to_bio_err)) {
-            CMP_err1("Cannot set up error reporting and logging for %s", prog);
+            CMP_err1("Cannot set up server-side error reporting and logging for %s", prog);
             goto err;
         }
         OSSL_CMP_CTX_set_log_verbosity(srv_cmp_ctx, opt_verbosity);
