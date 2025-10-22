@@ -15,6 +15,7 @@
  */
 
 #include "crypto/fn.h"
+#include "crypto/fn_intern.h"
 #include "fn_local.h"
 #include "testutil.h"
 
@@ -37,6 +38,7 @@ static int test_alloc(void)
 {
     int ret = 1;
     OSSL_FN *f = NULL;
+    const OSSL_FN_ULONG *u = NULL;
 
     /*
      * OSSL_FN_new_bits() calls OSSL_FN_new_bytes(), which calls
@@ -49,11 +51,12 @@ static int test_alloc(void)
      * shaving off 17 bits for demonstration purposes.
      */
     if (!TEST_ptr(f = OSSL_FN_new_bits(sizeof(OSSL_FN_ULONG) * 16 - 17))
-        || !TEST_uint_eq(f->is_dynamically_allocated, 1)
-        || !TEST_uint_eq(f->is_securely_allocated, 0)
-        || !TEST_int_eq(f->dsize, 2)
-        || !TEST_size_t_eq(f->d[0], 0)
-        || !TEST_size_t_eq(f->d[1], 0))
+        || !TEST_true(ossl_fn_is_dynamically_allocated(f))
+        || !TEST_false(ossl_fn_is_securely_allocated(f))
+        || !TEST_size_t_eq(ossl_fn_get_dsize(f), 2)
+        || !TEST_ptr(u = ossl_fn_get_words(f))
+        || !TEST_size_t_eq(u[0], 0)
+        || !TEST_size_t_eq(u[1], 0))
         ret = 0;
     OSSL_FN_free(f);
 
@@ -64,6 +67,7 @@ static int test_secure_alloc(void)
 {
     int ret = 1;
     OSSL_FN *f = NULL;
+    const OSSL_FN_ULONG *u = NULL;
 
     /*
      * OSSL_FN_secure_new_bits() calls OSSL_FN_secure_new_bytes(), which calls
@@ -76,11 +80,12 @@ static int test_secure_alloc(void)
      * shaving off 17 bits for demonstration purposes.
      */
     if (!TEST_ptr(f = OSSL_FN_secure_new_bits(sizeof(OSSL_FN_ULONG) * 16 - 17))
-        || !TEST_uint_eq(f->is_dynamically_allocated, 1)
-        || !TEST_uint_eq(f->is_securely_allocated, 1)
-        || !TEST_int_eq(f->dsize, 2)
-        || !TEST_size_t_eq(f->d[0], 0)
-        || !TEST_size_t_eq(f->d[1], 0))
+        || !TEST_true(ossl_fn_is_dynamically_allocated(f))
+        || !TEST_true(ossl_fn_is_securely_allocated(f))
+        || !TEST_size_t_eq(ossl_fn_get_dsize(f), 2)
+        || !TEST_ptr(u = ossl_fn_get_words(f))
+        || !TEST_size_t_eq(u[0], 0)
+        || !TEST_size_t_eq(u[1], 0))
         ret = 0;
     OSSL_FN_free(f);
 
