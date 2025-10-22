@@ -646,7 +646,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
         scrt = ctx->srvCert;
         if (scrt == NULL) {
             if (ctx->trusted == NULL && ctx->secretValue != NULL) {
-                ossl_cmp_info(ctx, "no trust store nor pinned server cert available for verifying signature-based CMP message protection");
+                ossl_cmp_info(ctx, "no trust store nor pinned sender cert available for verifying signature-based CMP message protection");
                 ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_TRUST_ANCHOR);
                 return 0;
             }
@@ -660,7 +660,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
             /* use ctx->srvCert for signature check even if not acceptable */
             if (verify_signature(ctx, msg, scrt)) {
                 ossl_cmp_debug(ctx,
-                    "successfully validated signature-based CMP message protection using pinned server cert");
+                    "successfully validated signature-based CMP message protection using pinned sender cert");
                 return ossl_cmp_ctx_set1_validatedSrvCert(ctx, scrt);
             }
             ossl_cmp_warn(ctx, "CMP message signature verification failed");
