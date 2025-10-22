@@ -882,7 +882,8 @@ OSSL_CMP_CTX_set1_serialNumber(),
 OSSL_CMP_CTX_get0_libctx(), OSSL_CMP_CTX_get0_propq(), and
 OSSL_CMP_CTX_get0_validatedSrvCert() were added in OpenSSL 3.2.
 
-OSSL_CMP_CTX_get0_geninfo_ITAVs() was added in OpenSSL 3.3.
+OSSL_CMP_CTX_get0_geninfo_ITAVs() and
+the B<OSSL_CMP_OPT_NO_CACHE_EXTRACERTS> option were added in OpenSSL 3.3.
 
 Support for central key generation, requested via B<OSSL_CRMF_POPO_NONE>,
 was added in OpenSSL 3.5.
