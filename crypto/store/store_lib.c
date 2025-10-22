@@ -84,6 +84,11 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
      */
     schemes[schemes_n++] = "file";
 
+    if (uri == NULL) {
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
+        return NULL;
+    }
+
     /*
      * Now, check if we have something that looks like a scheme, and add it
      * as a second scheme.  However, also check if there's an authority start
