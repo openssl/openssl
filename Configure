@@ -631,7 +631,7 @@ our %disabled = ( # "what"         => "comment"
 my @disable_cascades = (
     # "what"            => [ "cascade", ... ]
     "bulk"              => [ "shared", "dso",
-                             "aria", "async", "atexit", "autoload-config",
+                             "argon2", "aria", "async", "atexit", "autoload-config",
                              "blake2", "bf", "camellia", "cast", "chacha",
                              "cmac", "cms", "cmp", "comp", "ct",
                              "des", "dgram", "dh", "dsa",
@@ -641,8 +641,8 @@ my @disable_cascades = (
                              "md4", "ml-dsa", "ml-kem", "multiblock",
                              "nextprotoneg", "ocsp", "ocb", "poly1305", "psk",
                              "rc2", "rc4", "rmd160",
-                             "seed", "siphash", "siv",
-                             "sm3", "sm4", "srp",
+                             "scrypt", "seed", "siphash", "siv",
+                             "slh-dsa", "sm3", "sm4", "srp",
                              "srtp", "ssl3-method", "ssl-trace",
                              "tfo",
                              "ts", "ui-console", "whirlpool",
