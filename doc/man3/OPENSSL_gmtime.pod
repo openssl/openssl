@@ -20,8 +20,8 @@ OPENSSL_tm_to_posix - platform-agnostic OpenSSL time routines
 
  #include <openssl/posix_time.h>
  int OPENSSL_timegm(const struct tm *tm, time_t *out_time);
- int OPENSSL_posix_to_tm(int64_t time struct tm *out_tm);
- int OPENSSL_tm_to_posix(struct tm t_tm int64_t *out);
+ int OPENSSL_posix_to_tm(int64_t time, struct tm *out_tm);
+ int OPENSSL_tm_to_posix(struct tm t_tm, int64_t *out);
 
 =head1 DESCRIPTION
 
