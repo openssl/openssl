@@ -101,7 +101,7 @@ struct ssl_conf_ctx_st {
     /* Pointer to SSL or SSL_CTX options field or NULL if none */
     uint64_t *poptions;
     /* Pointer to SSL_STORE_CTX flags or NULL if none */
-    uint64_t *pcertval_flags;
+    uint32_t *pcertval_flags;
     /* Certificate filenames for each type */
     char **cert_filename;
     /* Number of elements in the cert_filename array */
