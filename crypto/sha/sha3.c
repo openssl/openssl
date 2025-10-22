@@ -8,17 +8,22 @@
  */
 
 #include <string.h>
+#include "internal/sha3.h"
+#include "internal/common.h"
+
+#if defined(__aarch64__) && defined(KECCAK1600_ASM)
+# include "arm_arch.h"
+#endif
+
 #if defined(__s390x__) && defined(OPENSSL_CPUID_OBJ)
 # include "crypto/s390x_arch.h"
-# if defined(KECCAK1600_ASM))
+# if defined(KECCAK1600_ASM)
 #  define S390_SHA3 1
 #  define S390_SHA3_CAPABLE(name) \
     ((OPENSSL_s390xcap_P.kimd[0] & S390X_CAPBIT(name)) \
     && (OPENSSL_s390xcap_P.klmd[0] & S390X_CAPBIT(name))
 # endif
 #endif
-#include "internal/sha3.h"
-#include "internal/common.h"
 
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r, int next);
 
