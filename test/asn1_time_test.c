@@ -703,17 +703,15 @@ static int test_gmtime_diff_limits(void)
     saved_value = min_tm.tm_year;
     min_tm.tm_year -= 1;
     /* These should now be outside the asn1 time range. */
-    if (!TEST_false(OPENSSL_gmtime_diff(&pday, &psec, &min_tm, &max_tm))) {
-            goto err;
-    }
+    if (!TEST_false(OPENSSL_gmtime_diff(&pday, &psec, &min_tm, &max_tm)))
+        goto err;
     min_tm.tm_year = saved_value;
     expected_days -= 365;
 
     saved_value = max_tm.tm_year;
     max_tm.tm_year += 1;
-    if (!TEST_false(OPENSSL_gmtime_diff(&pday, &psec, &min_tm, &max_tm))) {
-            goto err;
-    }
+    if (!TEST_false(OPENSSL_gmtime_diff(&pday, &psec, &min_tm, &max_tm)))
+        goto err;
     max_tm.tm_year = saved_value;
 
     ret = 1;
@@ -733,15 +731,10 @@ static int64_t time_t_min(void)
         OPENSSL_assert(sizeof(time_t) == sizeof(uint32_t));
         return INT64_C(0);
     } else {
-#if defined(OPENSSL_SYS_WINDOWS)
-        /* Windows can't handle before 1970, even with signed time_t */
-        return INT64_C(0);
-#else
         if (sizeof(time_t) == sizeof(int32_t))
             return (int64_t)INT32_MIN;
         OPENSSL_assert(sizeof(time_t) == sizeof(uint64_t));
         return INT64_MIN;
-#endif
     }
 }
 
@@ -757,12 +750,7 @@ static int64_t time_t_max(void)
         if (sizeof(time_t) == sizeof(int32_t))
             return (int64_t)INT32_MAX;
         OPENSSL_assert(sizeof(time_t) == sizeof(uint64_t));
-#if defined(OPENSSL_SYS_WINDOWS)
-	/* Windows can't do past year 3000 even on signed 64 bit time_t */
-        return INT64_C(32535215999);
-#else
         return INT64_MAX;
-#endif
     }
 }
 
