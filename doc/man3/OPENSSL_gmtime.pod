@@ -98,6 +98,12 @@ input tm.
 
 OPENSSL_gmtime_adj() and OPENSSL_gmtime_diff() return 0 on error, and 1 on success.
 
+=head1 BUGS
+
+OPENSSL_gmtime() is not platform-agnostic due to possible limitations
+in the range of the platform I<time_t> type. OPENSSL_posix_to_tm
+provides similar functionally in a platform independent manner.
+
 =head1 HISTORY
 
 OPENSSL_gmtime() returns NULL on error, or I<result> on success.
