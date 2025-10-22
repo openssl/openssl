@@ -39,26 +39,27 @@ int ossl_slh_xmss_node(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk_seed,
 {
     const SLH_DSA_KEY *key = ctx->key;
     SLH_ADRS_FUNC_DECLARE(key, adrsf);
+    size_t n = key->params->n;
 
     if (h == 0) {
         /* For leaf nodes generate the public key */
         adrsf->set_type_and_clear(adrs, SLH_ADRS_TYPE_WOTS_HASH);
         adrsf->set_keypair_address(adrs, node_id);
         if (!ossl_slh_wots_pk_gen(ctx, sk_seed, pk_seed, adrs,
-                                  pk_out, pk_out_len))
+                                  pk_out, n))
             return 0;
     } else {
-        uint8_t lnode[SLH_MAX_N], rnode[SLH_MAX_N];
+        uint8_t nodes[SLH_MAX_N * 2], *rnode = nodes + n;
 
         if (!ossl_slh_xmss_node(ctx, sk_seed, 2 * node_id, h - 1, pk_seed, adrs,
-                                lnode, sizeof(lnode))
+                                nodes, n)
                 || !ossl_slh_xmss_node(ctx, sk_seed, 2 * node_id + 1, h - 1,
-                                       pk_seed, adrs, rnode, sizeof(rnode)))
+                                       pk_seed, adrs, rnode, n))
             return 0;
         adrsf->set_type_and_clear(adrs, SLH_ADRS_TYPE_TREE);
         adrsf->set_tree_height(adrs, h);
         adrsf->set_tree_index(adrs, node_id);
-        if (!key->hash_func->H(ctx, pk_seed, adrs, lnode, rnode, pk_out, pk_out_len))
+        if (!key->hash_func->H(ctx, pk_seed, adrs, nodes, 2 * n, pk_out, n))
             return 0;
     }
     return 1;
@@ -144,19 +145,20 @@ int ossl_slh_xmss_pk_from_sig(SLH_DSA_HASH_CTX *ctx, uint32_t node_id,
     const SLH_DSA_KEY *key = ctx->key;
     SLH_HASH_FUNC_DECLARE(key, hashf);
     SLH_ADRS_FUNC_DECLARE(key, adrsf);
-    SLH_HASH_FN_DECLARE(hashf, H);
+    OSSL_SLH_HASHFUNC_HASH *H = hashf->H;
     SLH_ADRS_FN_DECLARE(adrsf, set_tree_index);
     SLH_ADRS_FN_DECLARE(adrsf, set_tree_height);
     uint32_t k;
     size_t n = key->params->n;
     uint32_t hm = key->params->hm;
-    uint8_t *node = pk_out;
-    const uint8_t *auth_path; /* Pointer to buffer offset in |pkt_sig| */
+    uint8_t nodes[SLH_MAX_N * 3];
+    uint8_t *start = nodes, *mid = start + n, *end = mid + n, *cur;
+    const uint8_t *auth_path;
 
     adrsf->set_type_and_clear(adrs, SLH_ADRS_TYPE_WOTS_HASH);
     adrsf->set_keypair_address(adrs, node_id);
     if (!ossl_slh_wots_pk_from_sig(ctx, sig_rpkt, msg, pk_seed, adrs,
-                                   node, pk_out_len))
+                                   mid, n))
         return 0;
 
     adrsf->set_type_and_clear(adrs, SLH_ADRS_TYPE_TREE);
@@ -165,17 +167,19 @@ int ossl_slh_xmss_pk_from_sig(SLH_DSA_HASH_CTX *ctx, uint32_t node_id,
         if (!PACKET_get_bytes(sig_rpkt, &auth_path, n))
             return 0;
         set_tree_height(adrs, k + 1);
-        if ((node_id & 1) == 0) { /* even */
-            node_id >>= 1;
-            set_tree_index(adrs, node_id);
-            if (!H(ctx, pk_seed, adrs, node, auth_path, node, pk_out_len))
-                return 0;
-        } else { /* odd */
-            node_id = (node_id - 1) >> 1;
-            set_tree_index(adrs, node_id);
-            if (!H(ctx, pk_seed, adrs, auth_path, node, node, pk_out_len))
-                return 0;
+        if ((node_id & 1) == 0) {
+            node_id >>= 1; /* even */
+            cur = mid;
+            memcpy(end, auth_path, n);
+        } else {
+            node_id = (node_id - 1) >> 1; /* odd */
+            cur = start;
+            memcpy(cur, auth_path, n);
         }
+        set_tree_index(adrs, node_id);
+        if (!H(ctx, pk_seed, adrs, cur, 2 * n, mid, n))
+            return 0;
     }
+    memcpy(pk_out, mid, n);
     return 1;
 }

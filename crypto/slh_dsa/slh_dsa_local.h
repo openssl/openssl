@@ -47,8 +47,9 @@
  */
 struct slh_dsa_hash_ctx_st {
     const SLH_DSA_KEY *key; /* This key is not owned by this object */
-    EVP_MD_CTX *md_ctx;     /* Either SHAKE OR SHA-256 */
-    EVP_MD_CTX *md_big_ctx; /* Either SHA-512 or points to |md_ctx| for SHA-256*/
+    EVP_MD_CTX *sha_ctx;    /* Either SHAKE OR SHA-256 */
+    EVP_MD_CTX *sha_ctx_pkseed; /* A SHAKE or SHA256 related ctx with PK.seed hashed in it */
+    EVP_MD_CTX *sha512_ctx; /* SHA-512 or NULL */
     EVP_MAC_CTX *hmac_ctx;  /* required by SHA algorithms for PRFmsg() */
     int hmac_digest_used;   /* Used for lazy init of hmac_ctx digest */
 };

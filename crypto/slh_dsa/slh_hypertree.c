@@ -81,7 +81,7 @@ int ossl_slh_ht_sign(SLH_DSA_HASH_CTX *ctx,
                                  WPACKET_get_curr(sig_wpkt) - psig))
                 return 0;
             if (!ossl_slh_xmss_pk_from_sig(ctx, leaf_id, xmss_sig_rpkt, root,
-                                           pk_seed, adrs, root, sizeof(root)))
+                                           pk_seed, adrs, root, n))
                 return 0;
             leaf_id = tree_id & mask;
             tree_id >>= hm;
@@ -126,7 +126,7 @@ int ossl_slh_ht_verify(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg, PACKET *sig_pk
         adrsf->set_layer_address(adrs, layer);
         adrsf->set_tree_address(adrs, tree_id);
         if (!ossl_slh_xmss_pk_from_sig(ctx, leaf_id, sig_pkt, node,
-                                       pk_seed, adrs, node, sizeof(node)))
+                                       pk_seed, adrs, node, n))
             return 0;
         leaf_id = tree_id & mask;
         tree_id >>= tree_height;
