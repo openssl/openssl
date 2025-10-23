@@ -511,7 +511,9 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
         /* re-do the above check (just) for adding diagnostic information */
         ossl_cmp_info(ctx,
             "trying to verify msg signature with previously validated cert");
+        ctx->log_cb = backup_log_cb;
         (void)check_msg_given_cert(ctx, scrt, msg);
+        ctx->log_cb = NULL;
         (void)ossl_cmp_ctx_set1_validatedSrvCert(ctx, NULL); /* this invalidates scrt */
     }
 
