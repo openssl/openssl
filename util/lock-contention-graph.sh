@@ -7,8 +7,12 @@
 # or at https://www.openssl.org/source/license.html
 #
 # Script to graph logs produced by REPORT_RWLOCK_CONTENTION vs time
-# Usage: ./lock-contention-graph.sh <logfile>
+# Usage: ./lock-contention-graph.sh <logfile> <labels>
 #
+# Parameters:
+# logfile - output file from REPORT_RWLOCK_CONTENTION
+# labels - optional value to add timestamp markers to contention event edges
+#          for correlation with log file timestamps
 # Output:
 # The displayed graph is plots application run time on the x axis in
 # microseconds, with the y axis representing contention events for each
