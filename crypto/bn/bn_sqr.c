@@ -35,7 +35,7 @@ int bn_sqr_fixed_top(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
     al = a->top;
     if (al <= 0) {
         r->top = 0;
-        r->neg = 0;
+        bn_set_negative_internal(r, 0);
         return 1;
     }
 
@@ -91,7 +91,7 @@ int bn_sqr_fixed_top(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 #endif
     }
 
-    rr->neg = 0;
+    bn_set_negative_internal(rr, 0);
     rr->top = max;
     rr->flags |= BN_FLG_FIXED_TOP;
     if (r != rr && BN_copy(r, rr) == NULL)

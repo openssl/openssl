@@ -90,7 +90,7 @@ BN_ULONG BN_div_word(BIGNUM *a, BN_ULONG w)
         a->top--;
     ret >>= j;
     if (!a->top)
-        a->neg = 0; /* don't allow negative zero */
+        bn_set_negative_internal(a, 0); /* don't allow negative zero */
     bn_check_top(a);
     return ret;
 }
@@ -110,11 +110,11 @@ int BN_add_word(BIGNUM *a, BN_ULONG w)
     if (BN_is_zero(a))
         return BN_set_word(a, w);
     /* handle 'a' when negative */
-    if (a->neg) {
-        a->neg = 0;
+    if (bn_is_negative_internal(a)) {
+        bn_set_negative_internal(a, 0);
         i = BN_sub_word(a, w);
         if (!BN_is_zero(a))
-            a->neg = !(a->neg);
+            bn_set_negative_internal(a, !(bn_is_negative_internal(a)));
         return i;
     }
     for (i = 0; w != 0 && i < a->top; i++) {
@@ -145,20 +145,20 @@ int BN_sub_word(BIGNUM *a, BN_ULONG w)
     if (BN_is_zero(a)) {
         i = BN_set_word(a, w);
         if (i != 0)
-            BN_set_negative(a, 1);
+            bn_set_negative_internal(a, 1);
         return i;
     }
     /* handle 'a' when negative */
-    if (a->neg) {
-        a->neg = 0;
+    if (bn_is_negative_internal(a)) {
+        bn_set_negative_internal(a, 0);
         i = BN_add_word(a, w);
-        a->neg = 1;
+        bn_set_negative_internal(a, 1);
         return i;
     }
 
     if ((a->top == 1) && (a->d[0] < w)) {
         a->d[0] = w - a->d[0];
-        a->neg = 1;
+        bn_set_negative_internal(a, 1);
         return 1;
     }
     i = 0;

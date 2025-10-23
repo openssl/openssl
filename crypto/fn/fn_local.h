@@ -10,7 +10,10 @@
 #ifndef OSSL_CRYPTO_FN_LOCAL_H
 # define OSSL_CRYPTO_FN_LOCAL_H
 
+# include <string.h>
 # include <openssl/opensslconf.h>
+# include <openssl/e_os2.h>
+# include "internal/common.h"
 # include "crypto/fn.h"
 
 struct ossl_fn_st {
@@ -18,6 +21,8 @@ struct ossl_fn_st {
     unsigned int is_dynamically_allocated : 1;
     /* Flag: alloced with OSSL_FN_secure_new() */
     unsigned int is_securely_allocated : 1;
+    /* Flag: the number is negative */
+    unsigned int is_negative : 1;
 
     /*
      * The d array, with its size in number of OSSL_FN_ULONG.
@@ -31,5 +36,34 @@ struct ossl_fn_st {
     int dsize;
     OSSL_FN_ULONG d[];
 };
+
+/*
+ * Internal functions to support BIGNUM's bn_expand_internal, BN_copy, and
+ * similar.
+ * The caller must ensure that src and dest are not NULL.
+ * With ossl_fn_copy_internal, bn_words may be given -1 to signify that the
+ * number of BN_ULONG should be found in src.
+ */
+static ossl_inline OSSL_FN *ossl_fn_copy_internal_limbs(OSSL_FN *dest,
+                                                        const OSSL_FN_ULONG *src,
+                                                        int limbs)
+{
+    if (ossl_unlikely(dest->dsize < limbs))
+        return NULL;
+    memcpy(dest->d, src, limbs * sizeof(dest->d[0]));
+    memset(dest->d + limbs, 0, (dest->dsize - limbs) * sizeof(dest->d[0]));
+    return dest;
+}
+
+static ossl_inline OSSL_FN *ossl_fn_copy_internal(OSSL_FN *dest,
+                                                  const OSSL_FN *src,
+                                                  int bn_words)
+{
+    int words = bn_words < 0 ? src->dsize : bn_words;
+
+    if (ossl_fn_copy_internal_limbs(dest, src->d, words) == NULL)
+        return NULL;
+    return dest;
+}
 
 #endif

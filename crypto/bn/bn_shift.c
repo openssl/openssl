@@ -20,7 +20,7 @@ int BN_lshift1(BIGNUM *r, const BIGNUM *a)
     bn_check_top(a);
 
     if (r != a) {
-        r->neg = a->neg;
+        bn_set_negative_internal(r, bn_is_negative_internal(a));
         if (bn_wexpand(r, a->top + 1) == NULL)
             return 0;
         r->top = a->top;
@@ -59,7 +59,7 @@ int BN_rshift1(BIGNUM *r, const BIGNUM *a)
     if (a != r) {
         if (bn_wexpand(r, i) == NULL)
             return 0;
-        r->neg = a->neg;
+        bn_set_negative_internal(r, bn_is_negative_internal(a));
     }
     rp = r->d;
     r->top = i;
@@ -73,7 +73,7 @@ int BN_rshift1(BIGNUM *r, const BIGNUM *a)
         c = t << (BN_BITS2 - 1);
     }
     if (!r->top)
-        r->neg = 0; /* don't allow negative zero */
+        bn_set_negative_internal(r, 0); /* don't allow negative zero */
     bn_check_top(r);
     return 1;
 }
@@ -140,7 +140,7 @@ int bn_lshift_fixed_top(BIGNUM *r, const BIGNUM *a, int n)
     if (nw != 0)
         memset(r->d, 0, sizeof(*t) * nw);
 
-    r->neg = a->neg;
+    bn_set_negative_internal(r, bn_is_negative_internal(a));
     r->top = a->top + nw + 1;
     r->flags |= BN_FLG_FIXED_TOP;
 
@@ -208,7 +208,7 @@ int bn_rshift_fixed_top(BIGNUM *r, const BIGNUM *a, int n)
     }
     t[i] = l >> rb;
 
-    r->neg = a->neg;
+    bn_set_negative_internal(r, bn_is_negative_internal(a));
     r->top = top;
     r->flags |= BN_FLG_FIXED_TOP;
 
