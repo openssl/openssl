@@ -111,7 +111,7 @@ struct ssl_conf_ctx_st {
     /* Pointer to SSL or SSL_CTX verify_mode or NULL if none */
     uint32_t *pvfy_flags;
     /* Pointer to X509_VERIFY_PARAM_ID flags or NULL if none */
-    uint32_t *phostver_flags;
+    unsigned int *phostver_flags;
     /* Pointer to SSL or SSL_CTX min_version field or NULL if none */
     int *min_version;
     /* Pointer to SSL or SSL_CTX max_version field or NULL if none */
