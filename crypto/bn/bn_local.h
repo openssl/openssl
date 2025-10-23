@@ -731,4 +731,50 @@ static ossl_inline int bn_set_top(BIGNUM *b, int newtop)
     return b->top;
 }
 
+/*
+ * bn_acquire_ossl_fn() and bn_release() work in tandem, and are
+ * most useful in OSSL_FN_ wrapper functions, specifically with the
+ * BIGNUM in which an operation result is written.
+ */
+
+/**
+ * Acquire the OSSL_FN from a BIGNUM.  The BIGNUM should no longer be
+ * used until bn_release() is called.
+ *
+ * @param[in]   b       The BIGNUM instance to get an OSSL_FN from
+ * @param[in]   limbs   The minimum number of limbs 'b' should be expanded to
+ * @returns     the OSSL_FN instance of the BIGNUM, if there is one
+ * @pre         b and b->data must not be NULL
+ */
+static ossl_inline OSSL_FN *bn_acquire_ossl_fn(BIGNUM *b, size_t limbs)
+{
+    if (ossl_unlikely(b == NULL || b->data == NULL))
+        return NULL;
+
+    bn_wexpand(b, limbs);
+    /* TODO(FINUM): should we add a flag bit for this in b->flags ? */
+    return b->data;
+}
+
+/**
+ * Release the BIGNUM from which the OSSL_FN was acquired.  This will
+ * adjust the BIGNUM to what was done with its OSSL_FN, and the BIGNUM
+ * can again be used with BN_ functions.
+ *
+ * @param[in]   b       The BIGNUM instance to release
+ * @pre         b and b->data must not be NULL
+ */
+static ossl_inline void bn_release(BIGNUM *b)
+{
+    if (ossl_unlikely(b == NULL || b->data == NULL))
+        return;
+
+    /* We assume that bn_acquire_ossl_fn has been called */
+    b->top = b->dmax = b->data->dsize;
+    b->flags |= BN_FLG_FIXED_TOP;
+    bn_set_negative_internal(b, b->data->is_negative);
+
+    bn_fix_top(b);
+}
+
 #endif
