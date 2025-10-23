@@ -249,6 +249,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
     }
 
     *pb = b;
+    (void)ERR_clear_last_mark();
     return (int)off;
  err:
     ERR_clear_last_mark();
