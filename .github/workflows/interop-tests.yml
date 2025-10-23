@@ -9,6 +9,8 @@ on:
     - cron: '55 02 * * *'
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   test:
     if: github.repository == 'openssl/openssl'
