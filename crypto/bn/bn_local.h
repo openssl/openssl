@@ -233,6 +233,7 @@ static ossl_inline void bn_check_top(const BIGNUM *bn)
         } else if ((bn->flags & BN_FLG_FIXED_TOP) == 0) {
             assert(bn->d[bn->top - 1] != 0);
         }
+        assert(bn->dmax >= 0 && bn->dmax <= BN_MAX_WORDS);
     }
 }
 
