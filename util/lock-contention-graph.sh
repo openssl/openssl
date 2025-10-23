@@ -8,6 +8,16 @@
 #
 # Script to graph logs produced by REPORT_RWLOCK_CONTENTION vs time
 # Usage: ./lock-contention-graph.sh <logfile>
+#
+# Output:
+# The displayed graph is plots application run time on the x axis in
+# microseconds, with the y axis representing contention events for each
+# found thread individually as a unit step function.
+#
+# i.e. thread 1 toggles between the values 0 and 1, with 0 representing
+# no contention, and 1 representing waiting on a lock.  Thread 2 is offset
+# on the y axis by 1, toggling between 2 and 3, with the former representing no
+# contention, and 3 representing waiting on a lock to become available.
 ###################################################################
 
 TEMPDIR=$(mktemp -d /tmp/contentiongraph.XXXXXX)
@@ -91,7 +101,6 @@ done
 #
 # Now lets use gnuplot to plot all the contentions
 #
-
 cat << EOF > $TEMPDIR/gnuplot.script
 set term qt 
 set format x '%.0f'
