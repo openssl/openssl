@@ -56,8 +56,10 @@ static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
 sig_err:
     res = ossl_x509_print_ex_brief(bio, cert, X509_FLAG_NO_EXTENSIONS);
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_VALIDATING_SIGNATURE);
-    if (res)
-        ERR_add_error_mem_bio("\n", bio);
+    if (res) {
+        ERR_add_error_txt(NULL, "\n");
+        ERR_add_error_mem_bio(NULL, bio);
+    }
     res = 0;
 
 end:
@@ -405,7 +407,7 @@ static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
     int i;
 
     if (sk_X509_num(certs) <= 0) {
-        ossl_cmp_log1(WARN, ctx, "no %s", desc);
+        ossl_cmp_log1(INFO, ctx, "no %s", desc);
         return 0;
     }
 
@@ -425,7 +427,7 @@ static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
         }
     }
     if (in_extraCerts && n_acceptable_certs == 0)
-        ossl_cmp_warn(ctx, "no acceptable cert in extraCerts");
+        ossl_cmp_log1(WARN, ctx, "no acceptable %s", desc);
     return 0;
 }
 
