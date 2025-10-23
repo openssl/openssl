@@ -118,6 +118,7 @@ static int execute_exec_GENM_ses_test(CMP_SES_TEST_FIXTURE *fixture)
 {
     return execute_exec_GENM_ses_test_single(fixture)
         && OSSL_CMP_CTX_reinit(fixture->cmp_ctx)
+        && ossl_cmp_info(fixture->cmp_ctx, "--- second GENM session after reinit ---")
         && execute_exec_GENM_ses_test_single(fixture);
 }
 
