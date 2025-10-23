@@ -280,7 +280,7 @@ static OSSL_FN *bn_expand_internal(const BIGNUM *b, int words)
 {
     OSSL_FN *a = NULL;
 
-    if (ossl_unlikely(words > (INT_MAX / (4 * BN_BITS2)))) {
+    if (ossl_unlikely(words > BN_MAX_WORDS)) {
         ERR_raise(ERR_LIB_BN, BN_R_BIGNUM_TOO_LONG);
         return NULL;
     }
