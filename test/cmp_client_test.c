@@ -88,13 +88,26 @@ err:
     return NULL;
 }
 
+static void print_errors_PKIStatusInfo(OSSL_CMP_CTX *ctx)
+{
+    int status = OSSL_CMP_CTX_get_status(ctx);
+    char buf[1024];
+    const char *string = OSSL_CMP_CTX_snprint_PKIStatus(ctx, buf, sizeof(buf));
+
+    OSSL_CMP_CTX_print_errors(ctx);
+    if (status > OSSL_CMP_PKISTATUS_accepted && string != NULL)
+        ossl_cmp_log1(WARN, ctx, "mock server response statusInfo: %s", string);
+}
+
 static int execute_exec_RR_ses_test(CMP_SES_TEST_FIXTURE *fixt)
 {
-    return TEST_int_eq(OSSL_CMP_CTX_get_status(fixt->cmp_ctx),
-               OSSL_CMP_PKISTATUS_unspecified)
-        && TEST_int_eq(OSSL_CMP_exec_RR_ses(fixt->cmp_ctx),
-            fixt->expected == OSSL_CMP_PKISTATUS_accepted)
-        && TEST_int_eq(OSSL_CMP_CTX_get_status(fixt->cmp_ctx), fixt->expected);
+    int ret = TEST_int_eq(OSSL_CMP_CTX_get_status(fixt->cmp_ctx),
+                  OSSL_CMP_PKISTATUS_unspecified)
+        && (TEST_int_eq(OSSL_CMP_exec_RR_ses(fixt->cmp_ctx),
+            fixt->expected == OSSL_CMP_PKISTATUS_accepted));
+
+    print_errors_PKIStatusInfo(fixt->cmp_ctx);
+    return ret && TEST_int_eq(OSSL_CMP_CTX_get_status(fixt->cmp_ctx), fixt->expected);
 }
 
 static int execute_exec_GENM_ses_test_single(CMP_SES_TEST_FIXTURE *fixture)
@@ -106,6 +119,7 @@ static int execute_exec_GENM_ses_test_single(CMP_SES_TEST_FIXTURE *fixture)
 
     OSSL_CMP_CTX_push0_genm_ITAV(ctx, itav);
     itavs = OSSL_CMP_exec_GENM_ses(ctx);
+    print_errors_PKIStatusInfo(ctx);
 
     sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
     return TEST_int_eq(OSSL_CMP_CTX_get_status(ctx), fixture->expected)
@@ -128,7 +142,7 @@ static int execute_exec_certrequest_ses_test(CMP_SES_TEST_FIXTURE *fixture)
     X509 *res = OSSL_CMP_exec_certreq(ctx, fixture->req_type, NULL);
     int status = OSSL_CMP_CTX_get_status(ctx);
 
-    OSSL_CMP_CTX_print_errors(ctx);
+    print_errors_PKIStatusInfo(ctx);
     if (!TEST_int_eq(status, fixture->expected)
         && !(fixture->expected == OSSL_CMP_PKISTATUS_waiting
             && TEST_int_eq(status, OSSL_CMP_PKISTATUS_trans)))
