@@ -654,12 +654,6 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     if (!OSSL_CMP_CTX_set1_recipient(ctx, hdr->sender->d.directoryName))
         goto err;
 
-    if (srv_ctx->polling && req_type != OSSL_CMP_PKIBODY_POLLREQ
-        && req_type != OSSL_CMP_PKIBODY_ERROR) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_EXPECTED_POLLREQ);
-        goto err;
-    }
-
     if (assuming_new_transaction(ctx, req)) {
         /* start of a new transaction, reset transactionID and senderNonce */
         if (!transaction_reinit(srv_ctx))
@@ -671,6 +665,11 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
             ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
             goto err;
 #endif
+        }
+        if (srv_ctx->polling && req_type != OSSL_CMP_PKIBODY_POLLREQ
+            && req_type != OSSL_CMP_PKIBODY_ERROR) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_EXPECTED_POLLREQ);
+            goto err;
         }
     }
 
