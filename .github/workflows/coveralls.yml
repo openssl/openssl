@@ -31,12 +31,15 @@ jobs:
     steps:
       - name: Define branches
         id: branches
+        env:
+          GITHUB_EVENT_INPUTS_BRANCH: ${{ github.event.inputs.branch }}
+          GITHUB_EVENT_INPUTS_EXTRA_CONFIG: ${{ github.event.inputs.extra_config }}
         run: |
           if [ "${{ github.event_name}}" = "workflow_dispatch" ]; then
           MATRIX=$(cat << EOF
           [{
-            "branch": "${{ github.event.inputs.branch }}",
-            "extra_config": "${{ github.event.inputs.extra_config }}"
+            "branch": "${GITHUB_EVENT_INPUTS_BRANCH}",
+            "extra_config": "${GITHUB_EVENT_INPUTS_EXTRA_CONFIG}"
           }]
           EOF
           )
