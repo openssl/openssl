@@ -8,6 +8,8 @@ on:
     paths:
       - "doc/man*/**"
 
+permissions: {}
+
 jobs:
   trigger:
     if: github.repository == 'openssl/openssl'

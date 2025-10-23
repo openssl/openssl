@@ -12,6 +12,8 @@ on:
     tags:
       - "openssl-*"
 
+permissions: {}
+
 jobs:
   release:
     runs-on: "releaser"
