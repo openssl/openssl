@@ -194,7 +194,13 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 #define AARCH64_VALIDATE_LINK_REGISTER
 #endif
 
-#if GNU_PROPERTY_AARCH64_POINTER_AUTH != 0 || GNU_PROPERTY_AARCH64_BTI != 0
+#if defined(__ARM_FEATURE_GCS_DEFAULT) && __ARM_FEATURE_GCS_DEFAULT == 1
+#define GNU_PROPERTY_AARCH64_GCS (1 << 2)
+#else
+#define GNU_PROPERTY_AARCH64_GCS 0 /* No GCS */
+#endif
+
+#if GNU_PROPERTY_AARCH64_POINTER_AUTH != 0 || GNU_PROPERTY_AARCH64_BTI != 0 || GNU_PROPERTY_AARCH64_GCS != 0
 /* clang-format off */
 .pushsection .note.gnu.property, "a";
 /* clang-format on */
@@ -205,7 +211,7 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 .asciz "GNU";
 .long 0xc0000000; /* GNU_PROPERTY_AARCH64_FEATURE_1_AND */
 .long 4;
-.long(GNU_PROPERTY_AARCH64_POINTER_AUTH | GNU_PROPERTY_AARCH64_BTI);
+.long(GNU_PROPERTY_AARCH64_POINTER_AUTH | GNU_PROPERTY_AARCH64_BTI | GNU_PROPERTY_AARCH64_GCS);
 .long 0;
 .popsection;
 #endif
