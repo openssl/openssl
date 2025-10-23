@@ -721,4 +721,58 @@ static ossl_inline int bn_set_top(BIGNUM *b, int newtop)
     return b->top;
 }
 
+/*
+ * bn_acquire_ossl_fn() and bn_release() work in tandem, and are
+ * most useful in OSSL_FN_ wrapper functions, specifically with the
+ * BIGNUM in which an operation result is written.
+ */
+
+/**
+ * Acquire the OSSL_FN from a BIGNUM.  The BIGNUM should no longer be
+ * used until bn_release() is called.
+ *
+ * @param[in]   b       The BIGNUM instance to get an OSSL_FN from
+ * @param[in]   limbs   The minimum number of limbs 'b' should be expanded to.
+ *                      Note that this doesn't set 'top', that's done by
+ *                      bn_release().
+ * @returns     the OSSL_FN instance of the BIGNUM, if there is one
+ * @pre         b and b->data must not be NULL
+ */
+static ossl_inline OSSL_FN *bn_acquire_ossl_fn(BIGNUM *b, int limbs)
+{
+    if (ossl_unlikely(b == NULL || b->data == NULL))
+        return NULL;
+
+    if (bn_wexpand(b, limbs) == NULL)
+        return NULL;
+    /* TODO(FIXNUM): should we add a flag bit for this in b->flags ? */
+    return b->data;
+}
+
+/**
+ * Release the BIGNUM from which the OSSL_FN was acquired.  This will
+ * adjust the BIGNUM to what was done with its OSSL_FN, and the BIGNUM
+ * can again be used with BN_ functions.
+ *
+ * @param[in]   b       The BIGNUM instance to release
+ * @param[in]   limbs   The maximum number of significant limbs.  This sets
+ *                      'top'.
+ * @pre         b and b->data must not be NULL
+ */
+static ossl_inline void bn_release(BIGNUM *b, int limbs)
+{
+    if (ossl_unlikely(b == NULL || b->data == NULL))
+        return;
+
+    int fixed_top = (b->flags & BN_FLG_FIXED_TOP) != 0;
+
+    bn_set_top(b, limbs);
+
+    /* Don't correct top if BN_FLG_FIXED_TOP was set */
+    if (fixed_top)
+        return;
+
+    bn_correct_top(b);
+}
+
 #endif
