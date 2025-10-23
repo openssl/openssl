@@ -1422,7 +1422,7 @@ static int get_verification_time(const X509_VERIFY_PARAM *vpm,
 }
 
 /* Check CRL times against values in X509_STORE_CTX */
-static int check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
+int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
 {
     int64_t verification_time, last_update, next_update;
     int err;
@@ -1601,7 +1601,7 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl, int *pscore,
 
             *dcrl = delta;
 
-            if (check_crl_time(ctx, delta, 0))
+            if (ossl_x509_check_crl_time(ctx, delta, 0))
                 *pscore |= CRL_SCORE_TIME_DELTA;
 
             return;
@@ -1652,7 +1652,7 @@ static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
         crl_score |= CRL_SCORE_NOCRITICAL;
 
     /* Check expiration */
-    if (check_crl_time(ctx, crl, 0))
+    if (ossl_x509_check_crl_time(ctx, crl, 0))
         crl_score |= CRL_SCORE_TIME;
 
     /* Check authority key ID and locate certificate issuer */
@@ -1996,7 +1996,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
     }
 
     if ((ctx->current_crl_score & CRL_SCORE_TIME) == 0 &&
-        !check_crl_time(ctx, crl, 1))
+        !ossl_x509_check_crl_time(ctx, crl, 1))
         return 0;
 
     /* Attempt to get issuer certificate public key */

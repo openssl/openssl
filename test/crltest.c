@@ -376,14 +376,19 @@ static int test_basic_crl(void)
                               X509_V_FLAG_CRL_CHECK, PARAM_TIME), X509_V_OK)
         && TEST_int_eq(verify(test_leaf, test_root,
                               make_CRL_stack(basic_crl, revoked_crl),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME), X509_V_ERR_CERT_REVOKED);
-    if (r) {
-        X509_CRL_get0_signature(basic_crl, NULL, &alg);
-        tbsalg = X509_CRL_get0_tbs_sigalg(basic_crl);
-        r = TEST_ptr(alg)
-            && TEST_ptr(tbsalg)
-            && TEST_int_eq(X509_ALGOR_cmp(alg, tbsalg), 0);
-    }
+                              X509_V_FLAG_CRL_CHECK, PARAM_TIME), X509_V_ERR_CERT_REVOKED)
+        && TEST_int_eq(verify(test_leaf, test_root,
+                              make_CRL_stack(basic_crl, revoked_crl),
+                              X509_V_FLAG_CRL_CHECK, PARAM_TIME2), X509_V_ERR_CRL_HAS_EXPIRED)
+        && TEST_int_eq(verify(test_leaf, test_root,
+                              make_CRL_stack(basic_crl, revoked_crl),
+                              X509_V_FLAG_CRL_CHECK, 0), X509_V_ERR_CRL_NOT_YET_VALID);
+
+    X509_CRL_get0_signature(basic_crl, NULL, &alg);
+    tbsalg = X509_CRL_get0_tbs_sigalg(basic_crl);
+    r = TEST_ptr(alg)
+        && TEST_ptr(tbsalg)
+        && TEST_int_eq(X509_ALGOR_cmp(alg, tbsalg), 0);
 
     X509_CRL_free(basic_crl);
     X509_CRL_free(revoked_crl);
