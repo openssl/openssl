@@ -518,14 +518,14 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 
     res = check_msg_all_certs(ctx, msg, 0 /* using ctx->trusted */)
         || check_msg_all_certs(ctx, msg, 1 /* 3gpp */);
-    ctx->log_cb = backup_log_cb;
-    if (res) {
-        /* discard any diagnostic information on trying to use certs */
-        (void)ERR_pop_to_mark();
+
+    ctx->log_cb = backup_log_cb; /* re-enable logging */
+    /* discard any previous diagnostic information on trying to use certs */
+    (void)ERR_pop_to_mark();
+
+    if (res)
         goto end;
-    }
     /* failed finding a sender cert that verifies the message signature */
-    (void)ERR_clear_last_mark();
 
     sname = X509_NAME_oneline(sender->d.directoryName, NULL, 0);
     skid_str = skid == NULL ? NULL : i2s_ASN1_OCTET_STRING(NULL, skid);
