@@ -124,6 +124,8 @@
 #  define BN_DEC_FMT2     "%09u"
 # endif
 
+# define BN_MAX_WORDS     (INT_MAX / (4 * BN_BITS2))
+
 BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num,
                           BN_ULONG w);
 BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
@@ -232,6 +234,7 @@ static ossl_inline void bn_check_top(const BIGNUM *bn)
         } else if ((bn->flags & BN_FLG_FIXED_TOP) == 0) {
             assert(bn->d[bn->top - 1] != 0);
         }
+        assert(bn->dmax >= 0 && bn->dmax <= BN_MAX_WORDS);
     }
 }
 
