@@ -209,6 +209,11 @@ object on which it is called) or NULL.
 
 SSL_listen() returns 1 on success or 0 on failure.
 
+SSL_listen_ex() returns 1 when a new connection was accepted on the new_conn
+parameter, 0 if no new connection was available at the time of the call, or -1
+in the event an internal error occurred, signaling a need to check the error
+queue.
+
 SSL_accept_connection() returns a pointer to a new SSL object on success or NULL
 on failure. On success, the caller assumes ownership of the reference.
 
