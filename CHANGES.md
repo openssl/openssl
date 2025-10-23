@@ -58,6 +58,17 @@ OpenSSL 4.1
 
    *Daniel Kubec and Viktor Dukhovni*
 
+ * Declare support for AArch64 Guarded Control Stack (GCS) in assembly code.
+
+   When building with compilers that support GCS (Clang 18+, GCC 15+),
+   assembly modules are marked as compatible when branch protection is
+   enabled (e.g. -mbranch-protection=standard). No functional changes to
+   the assembly implementations are required, but compliance ensures
+   correct operation with shadow stack enforcement.
+
+   *Guillaume Gardet*
+   *Gowtham Suresh Kumar*
+
  * Added support for DTLS 1.3 (RFC 9147). Refer to the ossl-guide-dtlsv13(7)
    manpage for details.
 
