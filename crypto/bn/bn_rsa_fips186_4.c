@@ -41,11 +41,10 @@ static const BN_ULONG inv_sqrt_2_val[] = {
 };
 
 const BIGNUM ossl_bn_inv_sqrt_2 = {
-    (BN_ULONG *)inv_sqrt_2_val,
-    OSSL_NELEM(inv_sqrt_2_val),
-    OSSL_NELEM(inv_sqrt_2_val),
-    0,
-    BN_FLG_STATIC_DATA
+    .d = (BN_ULONG *)inv_sqrt_2_val,
+    .top = OSSL_NELEM(inv_sqrt_2_val),
+    .dmax = OSSL_NELEM(inv_sqrt_2_val),
+    .flags = BN_FLG_STATIC_DATA,
 };
 
 /*

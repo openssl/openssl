@@ -174,6 +174,7 @@ void bn_set_static_words(BIGNUM *a, const BN_ULONG *words, int size)
      * |const| qualifier omission is compensated by BN_FLG_STATIC_DATA
      * flag, which effectively means "read-only data".
      */
+    a->data = NULL;
     a->d = (BN_ULONG *)words;
     a->dmax = a->top = size;
     a->neg = 0;

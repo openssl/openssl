@@ -121,6 +121,13 @@ void OSSL_FN_free(OSSL_FN *f);
  */
 void OSSL_FN_clear_free(OSSL_FN *f);
 
+/**
+ * Cleanse the data of an OSSL_FN instance, effectively making it zero.
+ *
+ * @param[in]   f       The OSSL_FN instance to be cleared.
+ */
+void OSSL_FN_clear(OSSL_FN *f);
+
 # ifdef  __cplusplus
 }
 # endif
