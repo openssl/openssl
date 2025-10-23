@@ -25,6 +25,7 @@ jobs:
         repository: "openssl/openssl"
         token: ${{ secrets.GHE_TOKEN }}
         path: ${{ github.ref_name }}
+        persist-credentials: false
     - name: "Prepare assets"
       run: |
         cd ${{ github.ref_name }}

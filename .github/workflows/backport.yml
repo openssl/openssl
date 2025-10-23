@@ -45,6 +45,7 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: 0
+        persist-credentials: false
     - name: cherry-pick
       if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.release.branch) }}
       run: |

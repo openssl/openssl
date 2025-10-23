@@ -147,6 +147,7 @@ jobs:
           path: ${{ matrix.branch.dir }}
           repository: openssl/openssl
           ref: ${{ matrix.branch.name }}
+          persist-credentials: false
       - name: localegen
         run: sudo locale-gen tr_TR.UTF-8
 

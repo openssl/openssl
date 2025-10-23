@@ -33,6 +33,8 @@ jobs:
     runs-on: ${{ matrix.platform.os }}
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: install nasm
@@ -103,6 +105,8 @@ jobs:
     runs-on: windows-2022
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: prepare the build directory
@@ -142,6 +146,8 @@ jobs:
     runs-on: windows-2022
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: prepare the build directory
@@ -198,6 +204,8 @@ jobs:
     steps:
 # Checkout before cygwin can mess with PATH...
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - uses: cygwin/cygwin-install-action@f61179d72284ceddc397ed07ddb444d82bf9e559 #v5
       with:
          packages: perl git make gcc-core

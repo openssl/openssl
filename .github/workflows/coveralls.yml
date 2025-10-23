@@ -88,6 +88,7 @@ jobs:
       with:
         submodules: recursive
         ref: ${{ matrix.branches.branch }}
+        persist-credentials: false
     - name: cache commit id
       run: |
         echo "githubid=`/usr/bin/git log -1 --format='%H'`" >>$GITHUB_ENV

@@ -25,6 +25,8 @@ jobs:
         sudo apt-get update
         sudo apt-get -y install ${{ matrix.gcc }}
     - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -59,6 +61,8 @@ jobs:
         sudo apt-get update || true
         sudo apt-get -y install ${{ matrix.clang }}
     - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config

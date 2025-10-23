@@ -44,6 +44,8 @@ jobs:
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -64,12 +66,15 @@ jobs:
     steps:
     - name: checkout openssl
       uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: checkout jitter
       uses: actions/checkout@v4
       with:
         repository: smuellerDD/jitterentropy-library
         ref: v3.5.0
         path: jitter
+        persist-credentials: false
     - name: build jitter
       run: make -C jitter/
     - name: checkout fuzz/corpora submodule
@@ -89,6 +94,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: Adjust ASLR for sanitizer
