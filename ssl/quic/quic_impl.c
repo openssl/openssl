@@ -4640,10 +4640,10 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
     int ret = 0;
 
     if (!expect_quic_listener(listener, &lctx))
-        return 0;
+        return -1;
 
     if (!expect_quic_cs(new_conn, &cctx))
-        return 0;
+        return -1;
 
     qctx_lock_for_io(&lctx);
     if (ossl_quic_port_get_using_peeloff(lctx.ql->port) == -1) {
