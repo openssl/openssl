@@ -158,8 +158,11 @@ static void ssl_set_option(SSL_CONF_CTX *cctx, unsigned int name_flags,
         return;
 
     case SSL_TFLAG_HOSTVER:
-        pflags = cctx->phostver_flags;
-        break;
+        if (onoff)
+            *cctx->phostver_flags |= option_value;
+        else
+            *cctx->phostver_flags &= ~option_value;
+        return;
 
     default:
         return;
