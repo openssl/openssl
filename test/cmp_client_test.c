@@ -127,15 +127,17 @@ static int execute_exec_GENM_ses_test_single(CMP_SES_TEST_FIXTURE *fixture)
     ASN1_OBJECT *type = OBJ_txt2obj("1.3.6.1.5.5.7.4.2", 1);
     OSSL_CMP_ITAV *itav = OSSL_CMP_ITAV_create(type, NULL);
     STACK_OF(OSSL_CMP_ITAV) *itavs;
+    int ret;
 
     OSSL_CMP_CTX_push0_genm_ITAV(ctx, itav);
     itavs = OSSL_CMP_exec_GENM_ses(ctx);
 
+    ret = TEST_int_eq(OSSL_CMP_CTX_get_status(ctx), fixture->expected)
+        && (fixture->expected == OSSL_CMP_PKISTATUS_accepted
+                ? TEST_ptr(itavs)
+                : TEST_ptr_null(itavs));
     sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
-    return TEST_int_eq(OSSL_CMP_CTX_get_status(ctx), fixture->expected)
-            && fixture->expected == OSSL_CMP_PKISTATUS_accepted
-        ? TEST_ptr(itavs)
-        : TEST_ptr_null(itavs);
+    return ret;
 }
 
 static int execute_exec_GENM_ses_test(CMP_SES_TEST_FIXTURE *fixture)
