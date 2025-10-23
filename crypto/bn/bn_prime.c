@@ -55,11 +55,10 @@ static const BN_ULONG small_prime_factors[] = {
 
 #define BN_SMALL_PRIME_FACTORS_TOP OSSL_NELEM(small_prime_factors)
 static const BIGNUM _bignum_small_prime_factors = {
-    (BN_ULONG *)small_prime_factors,
-    BN_SMALL_PRIME_FACTORS_TOP,
-    BN_SMALL_PRIME_FACTORS_TOP,
-    0,
-    BN_FLG_STATIC_DATA
+    .d = (BN_ULONG *)small_prime_factors,
+    .top = BN_SMALL_PRIME_FACTORS_TOP,
+    .dmax = BN_SMALL_PRIME_FACTORS_TOP,
+    .flags = BN_FLG_STATIC_DATA,
 };
 
 const BIGNUM *ossl_bn_get0_small_factors(void)
@@ -374,7 +373,7 @@ int ossl_bn_miller_rabin_is_prime(const BIGNUM *w, int iterations, BN_CTX *ctx,
         goto err;
 
     /* check w is larger than 3, otherwise the random b will be too small */
-    if (BN_is_zero(w3) || BN_is_negative(w3))
+    if (BN_is_zero(w3) || bn_is_negative_internal(w3))
         goto err;
 
     /* (Step 1) Calculate largest integer 'a' such that 2^a divides w-1 */

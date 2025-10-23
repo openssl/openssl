@@ -10,14 +10,47 @@
 #ifndef OSSL_CRYPTO_FN_LOCAL_H
 # define OSSL_CRYPTO_FN_LOCAL_H
 
+# include <string.h>
+# include <stddef.h>
+# include <stdint.h>
 # include <openssl/opensslconf.h>
+# include <openssl/e_os2.h>
+# include "internal/common.h"
 # include "crypto/fn.h"
+# include "crypto/fn_intern.h"
+
+# if OSSL_FN_BYTES == 4
+/* 32-bit systems */
+#  define OSSL_FN_MASK          UINT32_MAX
+# elif OSSL_FN_BYTES == 8
+/* 64-bit systems */
+#  define OSSL_FN_MASK          UINT64_MAX
+# else
+#  error "OpenSSL doesn't support large numbers on this platform"
+# endif
+
+# define OSSL_FN_HIGH_BIT_MASK  (OSSL_FN_ULONG_C(1) << (OSSL_FN_BYTES * 8 - 1))
+
+# if OSSL_FN_BYTES == 4
+/* 32-bit systems */
+#  define OSSL_FN_ULONG_C(n)    UINT32_C(n)
+#  define OSSL_FN_MASK          UINT32_MAX
+# elif OSSL_FN_BYTES == 8
+#  define OSSL_FN_ULONG_C(n)    UINT64_C(n)
+#  define OSSL_FN_MASK          UINT64_MAX
+# else
+#  error "OpenSSL doesn't support large numbers on this platform"
+# endif
+
+# define OSSL_FN_HIGH_BIT_MASK  (OSSL_FN_ULONG_C(1) << (OSSL_FN_BYTES * 8 - 1))
 
 struct ossl_fn_st {
     /* Flag: alloced with OSSL_FN_new() or  OSSL_FN_secure_new() */
     unsigned int is_dynamically_allocated : 1;
     /* Flag: alloced with OSSL_FN_secure_new() */
     unsigned int is_securely_allocated : 1;
+    /* Flag: the number is negative */
+    unsigned int is_negative : 1;
 
     /*
      * The d array, with its size in number of OSSL_FN_ULONG.
@@ -31,5 +64,60 @@ struct ossl_fn_st {
     int dsize;
     OSSL_FN_ULONG d[];
 };
+
+/*
+ * Internal functions to support BIGNUM's bn_expand_internal, BN_copy, and
+ * similar.
+ * The caller must ensure that src and dest are not NULL.
+ * With ossl_fn_copy_internal, bn_words may be given -1 to signify that the
+ * number of BN_ULONG should be found in src.
+ */
+static ossl_inline OSSL_FN *ossl_fn_copy_internal_limbs(OSSL_FN *dest,
+                                                        const OSSL_FN_ULONG *src,
+                                                        int limbs)
+{
+    if (ossl_unlikely(dest->dsize < limbs))
+        return NULL;
+    memcpy(dest->d, src, limbs * sizeof(dest->d[0]));
+    memset(dest->d + limbs, 0, (dest->dsize - limbs) * sizeof(dest->d[0]));
+    return dest;
+}
+
+static ossl_inline OSSL_FN *ossl_fn_copy_internal(OSSL_FN *dest,
+                                                  const OSSL_FN *src,
+                                                  int bn_words)
+{
+    int words = bn_words < 0 ? src->dsize : bn_words;
+
+    if (ossl_fn_copy_internal_limbs(dest, src->d, words) == NULL)
+        return NULL;
+    return dest;
+}
+
+/**
+ * Add two OSSL_FN numbers with no regard for their sign.
+ * This is a helper function for OSSL_FN_add() and OSSL_FN_sub().
+ *
+ * @param[out]  r       The OSSL_FN for the result
+ * @param[in]   a       The first operand
+ * @param[in]   b       The second operand
+ * @returns     1 on success, 0 on error
+ */
+int ossl_fn_uadd(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b);
+
+/**
+ * Subtract two OSSL_FN numbers with no regard for their sign.
+ * This is a helper function for OSSL_FN_add() and OSSL_FN_sub().
+ *
+ * The caller must see to it that a is numerically larger than b.
+ * If it isn't, an error will be raised, and the content of r may
+ * be overwritten, undefined with what.
+ *
+ * @param[out]  r       The OSSL_FN for the result
+ * @param[in]   a       The first operand
+ * @param[in]   b       The second operand
+ * @returns     1 on success, 0 on error
+ */
+int ossl_fn_usub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b);
 
 #endif

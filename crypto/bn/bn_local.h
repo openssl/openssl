@@ -17,13 +17,15 @@
  */
 # include <openssl/opensslconf.h>
 
+# include "internal/cryptlib.h"
+# include "internal/numbers.h"
 # if !defined(OPENSSL_SYS_UEFI)
 #  include "crypto/bn_conf.h"
 # endif
 
 # include "crypto/bn.h"
-# include "internal/cryptlib.h"
-# include "internal/numbers.h"
+
+# include "../fn/fn_local.h"
 
 /*
  * These preprocessor symbols control various aspects of the bignum headers
@@ -152,7 +154,8 @@
  *   bn_check_top() is as before.
  * - if BN_DEBUG *is* defined;
  *   - bn_check_top() tries to pollute unused words even if the bignum 'top' is
- *     consistent. (ed: only if BN_RAND_DEBUG is defined)
+ *     consistent. (ed: only if BN_RAND_DEBUG is defined and the bignum doesn't
+ *     have an associated OSSL_FN instance)
  *   - bn_fix_top() maps to bn_check_top() rather than "fixing" anything.
  * The idea is to have debug builds flag up inconsistent bignums when they
  * occur. If that occurs in a bn_fix_top(), we examine the code in question; if
@@ -168,6 +171,10 @@
  */
 
 # ifdef BN_DEBUG
+
+/* ossl_assert() isn't fit for BN_DEBUG purposes, use assert() instead */
+#  include <assert.h>
+
 /*
  * The new BN_FLG_FIXED_TOP flag marks vectors that were not treated with
  * bn_correct_top, in other words such vectors are permitted to have zeros
@@ -182,7 +189,7 @@
 #   define bn_pollute(a) \
         do { \
             const BIGNUM *_bnum1 = (a); \
-            if (_bnum1->top < _bnum1->dmax) { \
+            if (_bnum1->data == NULL && _bnum1->top < _bnum1->dmax) { \
                 unsigned char _tmp_char; \
                 /* We cast away const without the compiler knowing, any \
                  * *genuinely* constant variables that aren't mutable \
@@ -202,9 +209,15 @@
                 const BIGNUM *_bnum2 = (a); \
                 if (_bnum2 != NULL) { \
                         int _top = _bnum2->top; \
-                        (void)ossl_assert((_top == 0 && !_bnum2->neg) || \
-                                  (_top && ((_bnum2->flags & BN_FLG_FIXED_TOP) \
-                                            || _bnum2->d[_top - 1] != 0))); \
+                        /* BIGNUM <-> OSSL_FN compat checks */ \
+                        assert((_bnum2->data == NULL /* && _bnum2->d == NULL */) \
+                               || (_bnum2->d == _bnum2->data->d \
+                                   && _bnum2->dmax == _bnum2->data->dsize \
+                                   && !!_bnum2->neg == !!_bnum2->data->is_negative)); \
+                        /* BIGNUM specific checks */ \
+                        assert((_top == 0 && !_bnum2->neg) || \
+                               (_top && ((_bnum2->flags & BN_FLG_FIXED_TOP) \
+                                         || _bnum2->d[_top - 1] != 0))); \
                         bn_pollute(_bnum2); \
                 } \
         } while(0)
@@ -243,16 +256,24 @@ BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                       int num);
 
 struct bignum_st {
-    BN_ULONG *d;                /*
-                                 * Pointer to an array of 'BN_BITS2' bit
-                                 * chunks. These chunks are organised in
-                                 * a least significant chunk first order.
-                                 */
-    int top;                    /* Index of last used d +1. */
-    /* The next are internal book keeping for bn_expand. */
-    int dmax;                   /* Size of the d array. */
-    int neg;                    /* one if the number is negative */
+    /* The number itself is a FIXNUM */
+    OSSL_FN *data;
+
+    /* Some of these flags are replicated in OSSL_FN, some are not */
     int flags;
+
+    /*
+     * TODO(FIXNUM) The fields that follow ARE TO BE REMOVED when all relevant
+     * BN_ functions have transitioned to be wrappers around OSSL_FN_ functions.
+     * All of this is maintained by bn_expand and BIGNUM allocators and
+     * deallocators.
+     */
+
+    BN_ULONG *d;                 /* Pointer to |data->d| */
+    int top;                     /* Index of last used d +1. */
+    /* The next are internal book keeping for bn_expand. */
+    int dmax;                    /* Copy of |data->dsize| */
+    int neg;                     /* Copy of |data->is_negative| */
 };
 
 /* Used for montgomery multiplication */
@@ -677,7 +698,68 @@ static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
     return bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2);
 }
 
+static ossl_inline void bn_set_negative_internal(BIGNUM *a, int b)
+{
+    a->neg = b;
+    if (a->data != NULL)
+        a->data->is_negative = a->neg;
+}
+
+static ossl_inline int bn_is_negative_internal(const BIGNUM *a)
+{
+# ifdef BN_DEBUG
+    assert(a->data == NULL || a->data->is_negative == a->neg);
+# endif
+    return (a->neg != 0);
+}
+
 int ossl_bn_check_prime(const BIGNUM *w, int checks, BN_CTX *ctx,
                         int do_trial_division, BN_GENCB *cb);
+
+/*
+ * bn_acquire_ossl_fn() and bn_release() work in tandem, and are
+ * most useful in OSSL_FN_ wrapper functions, specifically with the
+ * BIGNUM in which an operation result is written.
+ */
+
+/**
+ * Acquire the OSSL_FN from a BIGNUM.  The BIGNUM should no longer be
+ * used until bn_release() is called.
+ *
+ * @param[in]   b       The BIGNUM instance to get an OSSL_FN from
+ * @param[in]   limbs   The minimum number of limbs 'b' should be expanded to
+ * @returns     the OSSL_FN instance of the BIGNUM, if there is one
+ * @pre         b and b->data must not be NULL
+ */
+static ossl_inline OSSL_FN *bn_acquire_ossl_fn(BIGNUM *b, size_t limbs)
+{
+    if (ossl_unlikely(b == NULL || b->data == NULL))
+        return NULL;
+
+    bn_wexpand(b, limbs);
+    /* TODO(FINUM): should we add a flag bit for this in b->flags ? */
+    return b->data;
+}
+
+/**
+ * Release the BIGNUM from which the OSSL_FN was acquired.  This will
+ * adjust the BIGNUM to what was done with its OSSL_FN, and the BIGNUM
+ * can again be used with BN_ functions.
+ *
+ * @param[in]   b       The BIGNUM instance to release
+ * @pre         b and b->data must not be NULL
+ */
+static ossl_inline void bn_release(BIGNUM *b)
+{
+    if (ossl_unlikely(b == NULL || b->data == NULL))
+        return;
+
+    /* We assume that bn_acquire_ossl_fn has been called */
+    b->top = b->dmax = b->data->dsize;
+    b->flags |= BN_FLG_FIXED_TOP;
+    bn_set_negative_internal(b, b->data->is_negative);
+
+    bn_check_top(b);
+}
 
 #endif

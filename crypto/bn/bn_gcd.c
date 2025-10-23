@@ -55,9 +55,9 @@ BIGNUM *bn_mod_inverse_no_branch(BIGNUM *in,
         goto err;
     if (BN_copy(A, n) == NULL)
         goto err;
-    A->neg = 0;
+    bn_set_negative_internal(A, 0);
 
-    if (B->neg || (BN_ucmp(B, A) >= 0)) {
+    if (bn_is_negative_internal(B) || (BN_ucmp(B, A) >= 0)) {
         /*
          * Turn BN_FLG_CONSTTIME flag on, so that when BN_div is invoked,
          * BN_div_no_branch will be called eventually.
@@ -167,7 +167,7 @@ BIGNUM *bn_mod_inverse_no_branch(BIGNUM *in,
 
     if (BN_is_one(A)) {
         /* Y*a == 1  (mod |n|) */
-        if (!Y->neg && BN_ucmp(Y, n) < 0) {
+        if (!bn_is_negative_internal(Y) && BN_ucmp(Y, n) < 0) {
             if (!BN_copy(R, Y))
                 goto err;
         } else {
@@ -244,8 +244,8 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
         goto err;
     if (BN_copy(A, n) == NULL)
         goto err;
-    A->neg = 0;
-    if (B->neg || (BN_ucmp(B, A) >= 0)) {
+    bn_set_negative_internal(A, 0);
+    if (bn_is_negative_internal(B) || (BN_ucmp(B, A) >= 0)) {
         if (!BN_nnmod(B, B, A, ctx))
             goto err;
     }
@@ -492,7 +492,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
 
     if (BN_is_one(A)) {
         /* Y*a == 1  (mod |n|) */
-        if (!Y->neg && BN_ucmp(Y, n) < 0) {
+        if (!bn_is_negative_internal(Y) && BN_ucmp(Y, n) < 0) {
             if (!BN_copy(R, Y))
                 goto err;
         } else {
@@ -589,12 +589,12 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
      * assumption without the need of side-channel information. */
     if (BN_is_zero(in_b)) {
         ret = BN_copy(r, in_a) != NULL;
-        r->neg = 0;
+        bn_set_negative_internal(r, 0);
         return ret;
     }
     if (BN_is_zero(in_a)) {
         ret = BN_copy(r, in_b) != NULL;
-        r->neg = 0;
+        bn_set_negative_internal(r, 0);
         return ret;
     }
 
@@ -658,7 +658,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
             /* make sure g->top > 0 (i.e. if top == 0 then g == 0 always) */
             & (~((unsigned int)(g->top - 1) >> (sizeof(g->top) * 8 - 1)));
         delta = (-cond & -delta) | ((cond - 1) & delta);
-        r->neg ^= cond;
+        bn_set_negative_internal(r, bn_is_negative_internal(r) ^ cond);
         /* swap */
         BN_consttime_swap(cond, r, g, top);
 
@@ -675,7 +675,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     }
 
     /* remove possible negative sign */
-    r->neg = 0;
+    bn_set_negative_internal(r, 0);
     /* add powers of 2 removed, then correct the artificial shift */
     if (!BN_lshift(r, r, pow2_shifts)
         || !BN_rshift1(r, r))
