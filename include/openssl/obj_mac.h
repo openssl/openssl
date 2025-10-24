@@ -6044,6 +6044,11 @@
 #define NID_tcg_common          1336
 #define OBJ_tcg_common          OBJ_tcg_platformClass,1L
 
+#define SN_tcg_dice             "tcg-dice"
+#define LN_tcg_dice             "Trusted Computing Group DICE"
+#define NID_tcg_dice            1501
+#define OBJ_tcg_dice            OBJ_tcg_platformClass,4L
+
 #define SN_tcg_at_platformManufacturerStr               "tcg-at-platformManufacturerStr"
 #define LN_tcg_at_platformManufacturerStr               "TCG Platform Manufacturer String"
 #define NID_tcg_at_platformManufacturerStr              1337
@@ -6628,6 +6633,46 @@
 #define LN_tcg_tr_cat_PublicKey         "Public Key Trait Category"
 #define NID_tcg_tr_cat_PublicKey                1453
 #define OBJ_tcg_tr_cat_PublicKey                OBJ_tcg_tr_category,37L
+
+#define SN_tcg_dice_kp          "tcg-dice-kp"
+#define LN_tcg_dice_kp          "TCG DICE Key Purposes"
+#define NID_tcg_dice_kp         1502
+#define OBJ_tcg_dice_kp         OBJ_tcg_dice,100L
+
+#define SN_tcg_dice_kp_identityInit             "tcg-dice-kp-identityInit"
+#define LN_tcg_dice_kp_identityInit             "Initial Identity"
+#define NID_tcg_dice_kp_identityInit            1503
+#define OBJ_tcg_dice_kp_identityInit            OBJ_tcg_dice_kp,6L
+
+#define SN_tcg_dice_kp_identityLoc              "tcg-dice-kp-identityLoc"
+#define LN_tcg_dice_kp_identityLoc              "Local Identity"
+#define NID_tcg_dice_kp_identityLoc             1504
+#define OBJ_tcg_dice_kp_identityLoc             OBJ_tcg_dice_kp,7L
+
+#define SN_tcg_dice_kp_attestInit               "tcg-dice-kp-attestInit"
+#define LN_tcg_dice_kp_attestInit               "Initial Attestation"
+#define NID_tcg_dice_kp_attestInit              1505
+#define OBJ_tcg_dice_kp_attestInit              OBJ_tcg_dice_kp,8L
+
+#define SN_tcg_dice_kp_attestLoc                "tcg-dice-kp-attestLoc"
+#define LN_tcg_dice_kp_attestLoc                "Local Attestation"
+#define NID_tcg_dice_kp_attestLoc               1506
+#define OBJ_tcg_dice_kp_attestLoc               OBJ_tcg_dice_kp,9L
+
+#define SN_tcg_dice_kp_assertInit               "tcg-dice-kp-assertInit"
+#define LN_tcg_dice_kp_assertInit               "Initial Assertion"
+#define NID_tcg_dice_kp_assertInit              1507
+#define OBJ_tcg_dice_kp_assertInit              OBJ_tcg_dice_kp,10L
+
+#define SN_tcg_dice_kp_assertLoc                "tcg-dice-kp-assertLoc"
+#define LN_tcg_dice_kp_assertLoc                "Local Assertion"
+#define NID_tcg_dice_kp_assertLoc               1508
+#define OBJ_tcg_dice_kp_assertLoc               OBJ_tcg_dice_kp,11L
+
+#define SN_tcg_dice_kp_eca              "tcg-dice-kp-eca"
+#define LN_tcg_dice_kp_eca              "Embedded Certificate Authority"
+#define NID_tcg_dice_kp_eca             1509
+#define OBJ_tcg_dice_kp_eca             OBJ_tcg_dice_kp,12L
 
 #define OBJ_nistKems            OBJ_nistAlgorithms,4L
 
