@@ -491,6 +491,7 @@ static int do_x509_time_tests(CERT_TEST_DATA *tests, size_t ntests)
 err:
     X509_STORE_CTX_free(ctx);
     X509_free(x509);
+    X509_CRL_free(crl);
     ASN1_STRING_free(nb);
     ASN1_STRING_free(na);
     return ret;
