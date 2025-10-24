@@ -159,6 +159,7 @@ providers/implementations/ciphers/cipher_sm4_xts.inc
 providers/implementations/digests/blake2_prov.inc
 providers/implementations/digests/digestcommon.inc
 providers/implementations/digests/mdc2_prov.inc
+providers/implementations/digests/sha2_prov.inc
 providers/implementations/digests/sha3_prov.inc
 providers/implementations/include/prov/blake2_params.inc
 providers/implementations/macs/cmac_prov.inc

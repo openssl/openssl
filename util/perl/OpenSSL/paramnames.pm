@@ -173,6 +173,7 @@ my %params = (
     'OSSL_DIGEST_PARAM_SIZE' =>         "size",         # size_t
     'OSSL_DIGEST_PARAM_XOF' =>          "xof",          # int, 0 or 1
     'OSSL_DIGEST_PARAM_ALGID_ABSENT' => "algid-absent", # int, 0 or 1
+    'OSSL_DIGEST_SERIALIZATION' =>      "serialization",# octet string
 
 # MAC parameters
     'OSSL_MAC_PARAM_KEY' =>            "key",           # octet string
