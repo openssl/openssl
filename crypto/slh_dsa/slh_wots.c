@@ -95,8 +95,8 @@ static int slh_wots_chain(SLH_DSA_HASH_CTX *ctx, const uint8_t *in,
 {
     const SLH_DSA_KEY *key = ctx->key;
     SLH_HASH_FUNC_DECLARE(key, hashf);
+    OSSL_SLH_HASHFUNC_HASH *F = hashf->F;
     SLH_ADRS_FUNC_DECLARE(key, adrsf);
-    SLH_HASH_FN_DECLARE(hashf, F);
     SLH_ADRS_FN_DECLARE(adrsf, set_hash_address);
     size_t j = start_index, end_index;
     size_t n = key->params->n;
@@ -147,10 +147,9 @@ int ossl_slh_wots_pk_gen(SLH_DSA_HASH_CTX *ctx,
     uint8_t tmp[SLH_WOTS_LEN_MAX * SLH_MAX_N];
     WPACKET pkt, *tmp_wpkt = &pkt; /* Points to the |tmp| buffer */
     size_t tmp_len = 0;
-
     SLH_HASH_FUNC_DECLARE(key, hashf);
     SLH_ADRS_FUNC_DECLARE(key, adrsf);
-    SLH_HASH_FN_DECLARE(hashf, PRF);
+    OSSL_SLH_HASHFUNC_HASH *PRF = hashf->PRF;
     SLH_ADRS_FN_DECLARE(adrsf, set_chain_address);
     SLH_ADRS_DECLARE(sk_adrs);
     SLH_ADRS_DECLARE(wots_pk_adrs);
@@ -163,7 +162,7 @@ int ossl_slh_wots_pk_gen(SLH_DSA_HASH_CTX *ctx,
 
     for (i = 0; i < len; ++i) { /* len = 2n + 3 */
         set_chain_address(sk_adrs, (uint32_t)i);
-        if (!PRF(ctx, pk_seed, sk_seed, sk_adrs, sk, sizeof(sk)))
+        if (!PRF(ctx, pk_seed, sk_adrs, sk_seed, n, sk, n))
             goto end;
 
         set_chain_address(adrs, (uint32_t)i);
@@ -176,7 +175,7 @@ int ossl_slh_wots_pk_gen(SLH_DSA_HASH_CTX *ctx,
     adrsf->copy(wots_pk_adrs, adrs);
     adrsf->set_type_and_clear(wots_pk_adrs, SLH_ADRS_TYPE_WOTS_PK);
     adrsf->copy_keypair_address(wots_pk_adrs, adrs);
-    ret = hashf->T(ctx, pk_seed, wots_pk_adrs, tmp, tmp_len, pk_out, pk_out_len);
+    ret = hashf->T(ctx, pk_seed, wots_pk_adrs, tmp, tmp_len, pk_out, n);
 end:
     WPACKET_finish(tmp_wpkt);
     OPENSSL_cleanse(tmp, sizeof(tmp));
@@ -214,10 +213,10 @@ int ossl_slh_wots_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
     size_t len = len1 + SLH_WOTS_LEN2;  /* 2 * n + 3 (3 checksum nibbles) */
 
     SLH_ADRS_DECLARE(sk_adrs);
-    SLH_HASH_FUNC_DECLARE(key, hashf);
     SLH_ADRS_FUNC_DECLARE(key, adrsf);
-    SLH_HASH_FN_DECLARE(hashf, PRF);
+    SLH_HASH_FUNC_DECLARE(key, hashf);
     SLH_ADRS_FN_DECLARE(adrsf, set_chain_address);
+    OSSL_SLH_HASHFUNC_HASH *PRF = hashf->PRF;
 
     /*
      * Convert n message bytes to 2*n base w=16 integers
@@ -234,7 +233,7 @@ int ossl_slh_wots_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
     for (i = 0; i < len; ++i) {
         set_chain_address(sk_adrs, (uint32_t)i);
         /* compute chain i secret */
-        if (!PRF(ctx, pk_seed, sk_seed, sk_adrs, sk, sizeof(sk)))
+        if (!PRF(ctx, pk_seed, sk_adrs, sk_seed, n, sk, n))
             goto err;
         set_chain_address(adrs, (uint32_t)i);
         /* compute chain i signature */
@@ -307,7 +306,7 @@ int ossl_slh_wots_pk_from_sig(SLH_DSA_HASH_CTX *ctx,
     if (!WPACKET_get_total_written(tmp_pkt, &tmp_len))
         goto err;
     ret = hashf->T(ctx, pk_seed, wots_pk_adrs, tmp, tmp_len,
-                   pk_out, pk_out_len);
+                   pk_out, n);
  err:
     if (!WPACKET_finish(tmp_pkt))
         ret = 0;

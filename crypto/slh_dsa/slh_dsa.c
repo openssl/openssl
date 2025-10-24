@@ -55,7 +55,7 @@ static int slh_sign_internal(SLH_DSA_HASH_CTX *hctx,
     PACKET r_packet, *rpkt = &r_packet;
     uint8_t *r, *sig_fors; /* Pointers into buffer inside |wpkt| */
     WPACKET w_packet, *wpkt = &w_packet; /* Points to output |sig| buffer */
-    const uint8_t *pk_seed, *sk_seed; /* pointers to elements within |priv| */
+    const uint8_t *pk_seed_and_root, *pk_seed, *sk_seed; /* pointers to elements within |priv| */
     uint8_t pk_fors[SLH_MAX_N];
     uint64_t tree_id;
     uint32_t leaf_id;
@@ -85,18 +85,18 @@ static int slh_sign_internal(SLH_DSA_HASH_CTX *hctx,
     if (!PACKET_buf_init(rpkt, m_digest, params->m))
         return 0;
 
-    pk_seed = SLH_DSA_PK_SEED(priv);
+    pk_seed = pk_seed_and_root = SLH_DSA_PK_SEED(priv); /* this is n * 2 bytes */
     sk_seed = SLH_DSA_SK_SEED(priv);
 
     if (opt_rand == NULL)
-        opt_rand = pk_seed;
+        opt_rand = pk_seed_and_root;
 
     adrsf->zero(adrs);
     /* calculate Randomness value r, and output to the SLH-DSA signature */
     r = WPACKET_get_curr(wpkt);
     if (!hashf->PRF_MSG(hctx, SLH_DSA_SK_PRF(priv), opt_rand, msg, msg_len, wpkt)
             /* generate a digest of size |params->m| bytes where m is (30..49) */
-            || !hashf->H_MSG(hctx, r, pk_seed, SLH_DSA_PK_ROOT(priv), msg, msg_len,
+            || !hashf->H_MSG(hctx, r, pk_seed_and_root, msg, msg_len,
                              m_digest, sizeof(m_digest))
             /* Grab the first md_len bytes of m_digest to use in fors_sign() */
             || !PACKET_get_bytes(rpkt, &md, md_len)
@@ -155,6 +155,7 @@ static int slh_verify_internal(SLH_DSA_HASH_CTX *hctx,
     const SLH_DSA_PARAMS *params = pub->params;
     uint32_t n = params->n;
     const uint8_t *pk_seed, *pk_root; /* Pointers to elements in |pub| */
+    const uint8_t *pk_seed_and_root; /* 2 * n bytes */
     PACKET pkt, *sig_rpkt = &pkt; /* Points to the |sig| buffer */
     uint8_t m_digest[SLH_MAX_M];
     const uint8_t *md; /* This is a pointer into the buffer in m_digest_rpkt */
@@ -180,10 +181,10 @@ static int slh_verify_internal(SLH_DSA_HASH_CTX *hctx,
 
     adrsf->zero(adrs);
 
-    pk_seed = SLH_DSA_PK_SEED(pub);
+    pk_seed_and_root = pk_seed = SLH_DSA_PK_SEED(pub);
     pk_root = SLH_DSA_PK_ROOT(pub);
 
-    if (!hashf->H_MSG(hctx, r, pk_seed, pk_root, msg, msg_len,
+    if (!hashf->H_MSG(hctx, r, pk_seed_and_root, msg, msg_len,
                       m_digest, sizeof(m_digest)))
         return 0;
 

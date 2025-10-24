@@ -13,165 +13,204 @@
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include <openssl/rsa.h> /* PKCS1_MGF1() */
+#include <openssl/sha.h> /* PKCS1_MGF1() */
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
 
 #define MAX_DIGEST_SIZE 64 /* SHA-512 is used for security category 3 & 5 */
 
-static OSSL_SLH_HASHFUNC_H_MSG slh_hmsg_sha2;
-static OSSL_SLH_HASHFUNC_PRF slh_prf_sha2;
-static OSSL_SLH_HASHFUNC_PRF_MSG slh_prf_msg_sha2;
-static OSSL_SLH_HASHFUNC_F slh_f_sha2;
-static OSSL_SLH_HASHFUNC_H slh_h_sha2;
-static OSSL_SLH_HASHFUNC_T slh_t_sha2;
-
+static OSSL_SLH_HASHFUNC_HASH slh_hash_sha256;
+static OSSL_SLH_HASHFUNC_HASH slh_hash_sha512;
+static OSSL_SLH_HASHFUNC_HASH slh_hash_shake;
 static OSSL_SLH_HASHFUNC_H_MSG slh_hmsg_shake;
-static OSSL_SLH_HASHFUNC_PRF slh_prf_shake;
+#ifdef NORMAL
+static OSSL_SLH_HASHFUNC_H_MSG slh_hmsg_sha256;
+static OSSL_SLH_HASHFUNC_PRF_MSG slh_prf_msg_sha256;
+#endif
+static OSSL_SLH_HASHFUNC_H_MSG slh_hmsg_sha512;
+static OSSL_SLH_HASHFUNC_PRF_MSG slh_prf_msg_sha512;
 static OSSL_SLH_HASHFUNC_PRF_MSG slh_prf_msg_shake;
-static OSSL_SLH_HASHFUNC_F slh_f_shake;
-static OSSL_SLH_HASHFUNC_H slh_h_shake;
-static OSSL_SLH_HASHFUNC_T slh_t_shake;
+static OSSL_SLH_HASHFUNC_prehash_pk_seed slh_prehash_pk_seed_sha256;
+static OSSL_SLH_HASHFUNC_prehash_pk_seed slh_prehash_pk_seed_shake;
 
-static ossl_inline int xof_digest_3(EVP_MD_CTX *ctx,
-                                    const uint8_t *in1, size_t in1_len,
-                                    const uint8_t *in2, size_t in2_len,
-                                    const uint8_t *in3, size_t in3_len,
-                                    uint8_t *out, size_t out_len)
-{
-    return (EVP_DigestInit_ex2(ctx, NULL, NULL) == 1
-            && EVP_DigestUpdate(ctx, in1, in1_len) == 1
-            && EVP_DigestUpdate(ctx, in2, in2_len) == 1
-            && EVP_DigestUpdate(ctx, in3, in3_len) == 1
-            && EVP_DigestFinalXOF(ctx, out, out_len) == 1);
-}
+static const uint8_t zeros[128] = { 0 };
 
-static ossl_inline int xof_digest_4(EVP_MD_CTX *ctx,
-                                    const uint8_t *in1, size_t in1_len,
-                                    const uint8_t *in2, size_t in2_len,
-                                    const uint8_t *in3, size_t in3_len,
-                                    const uint8_t *in4, size_t in4_len,
-                                    uint8_t *out, size_t out_len)
-{
-    return (EVP_DigestInit_ex2(ctx, NULL, NULL) == 1
-            && EVP_DigestUpdate(ctx, in1, in1_len) == 1
-            && EVP_DigestUpdate(ctx, in2, in2_len) == 1
-            && EVP_DigestUpdate(ctx, in3, in3_len) == 1
-            && EVP_DigestUpdate(ctx, in4, in4_len) == 1
-            && EVP_DigestFinalXOF(ctx, out, out_len) == 1);
-}
+/* See FIPS 205 Section 11.1 for SHAKE hash functions */
 
-/* See FIPS 205 Section 11.1 */
+/*
+ * Pre caches SHA256(pkseed) so that it can be used multiple times by
+ * duping ctx->sha_ctx_pkseed.
+ */
 static int
-slh_hmsg_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *r,
-               const uint8_t *pk_seed, const uint8_t *pk_root,
+slh_prehash_pk_seed_shake(SLH_DSA_HASH_CTX *hctx, const uint8_t *pkseed, size_t n)
+{
+    EVP_MD_CTX *ctx = hctx->sha_ctx_pkseed;
+
+    return EVP_DigestUpdate(ctx, pkseed, n);
+}
+
+/* SHAKE256(pk_seed || ADRS || in, n) */
+static int slh_hash_shake(SLH_DSA_HASH_CTX *hctx,
+                          const uint8_t *pk_seed, const uint8_t *adrs,
+                          const uint8_t *in, size_t in_len,
+                          uint8_t *out, size_t out_len)
+{
+    EVP_MD_CTX *ctx = EVP_MD_CTX_dup(hctx->sha_ctx_pkseed);
+    int ret = (ctx != NULL)
+        && EVP_DigestUpdate(ctx, adrs, SLH_ADRS_SIZE)
+        && EVP_DigestUpdate(ctx, in, in_len)
+        && EVP_DigestFinalXOF(ctx, out, hctx->key->params->n);
+
+    EVP_MD_CTX_free(ctx);
+    return ret;
+}
+
+/* SHAKE256(r || pk_seed || pk_root || msg, m) */
+static int
+slh_hmsg_shake(SLH_DSA_HASH_CTX *hctx, const uint8_t *r,
+               const uint8_t *pk_seed_and_root,
                const uint8_t *msg, size_t msg_len,
                uint8_t *out, size_t out_len)
 {
-    const SLH_DSA_PARAMS *params = ctx->key->params;
+    EVP_MD_CTX *ctx = hctx->sha_ctx;
+    const SLH_DSA_PARAMS *params = hctx->key->params;
     size_t m = params->m;
     size_t n = params->n;
 
-    return xof_digest_4(ctx->md_ctx, r, n, pk_seed, n, pk_root, n,
-                        msg, msg_len, out, m);
+    return EVP_DigestInit_ex2(ctx, NULL, NULL)
+        && EVP_DigestUpdate(ctx, r, n)
+        && EVP_DigestUpdate(ctx, pk_seed_and_root, 2 * n)
+        && EVP_DigestUpdate(ctx, msg, msg_len)
+        && EVP_DigestFinalXOF(ctx, out, m);
 }
 
+/* SHAKE256(SK.prf || opt_rand || msg, n) */
 static int
-slh_prf_shake(SLH_DSA_HASH_CTX *ctx,
-              const uint8_t *pk_seed, const uint8_t *sk_seed,
-              const uint8_t *adrs, uint8_t *out, size_t out_len)
-{
-    const SLH_DSA_PARAMS *params = ctx->key->params;
-    size_t n = params->n;
-
-    return xof_digest_3(ctx->md_ctx, pk_seed, n, adrs, SLH_ADRS_SIZE,
-                        sk_seed, n, out, n);
-}
-
-static int
-slh_prf_msg_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk_prf,
+slh_prf_msg_shake(SLH_DSA_HASH_CTX *hctx, const uint8_t *sk_prf,
                   const uint8_t *opt_rand, const uint8_t *msg, size_t msg_len,
                   WPACKET *pkt)
 {
     unsigned char out[SLH_MAX_N];
-    const SLH_DSA_PARAMS *params = ctx->key->params;
-    size_t n = params->n;
+    EVP_MD_CTX *ctx = hctx->sha_ctx;
+    size_t n = hctx->key->params->n;
 
-    return xof_digest_3(ctx->md_ctx, sk_prf, n, opt_rand, n, msg, msg_len, out, n)
+    return EVP_DigestInit_ex2(ctx, NULL, NULL)
+        && EVP_DigestUpdate(ctx, sk_prf, n)
+        && EVP_DigestUpdate(ctx, opt_rand, n)
+        && EVP_DigestUpdate(ctx, msg, msg_len)
+        && EVP_DigestFinalXOF(ctx, out, n)
         && WPACKET_memcpy(pkt, out, n);
 }
 
-static int
-slh_f_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed, const uint8_t *adrs,
-            const uint8_t *m1, size_t m1_len, uint8_t *out, size_t out_len)
-{
-    const SLH_DSA_PARAMS *params = ctx->key->params;
-    size_t n = params->n;
+/* See FIPS 205 Section 11.2.1 and 11.2.2 for SHA256/SHA512 Hash Functions */
 
-    return xof_digest_3(ctx->md_ctx, pk_seed, n, adrs, SLH_ADRS_SIZE, m1, m1_len, out, n);
+/* Trunc(SHA256(pk_seed || zeros(64 - n) || in), n) */
+static int
+slh_hash_sha256(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
+                const uint8_t *in, size_t inlen, uint8_t *out, size_t outlen)
+{
+    int ret;
+    uint8_t digest[MAX_DIGEST_SIZE];
+    EVP_MD_CTX *ctx = EVP_MD_CTX_dup(hctx->sha_ctx_pkseed);
+
+    ret = (ctx != NULL)
+        && EVP_DigestUpdate(ctx, adrs, SLH_ADRSC_SIZE)
+        && EVP_DigestUpdate(ctx, in, inlen)
+        && EVP_DigestFinal_ex(ctx, digest, NULL);
+    if (ret)
+        memcpy(out, digest, hctx->key->params->n); /* Truncated to n bytes */
+    EVP_MD_CTX_free(ctx);
+    return ret;
 }
 
 static int
-slh_h_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed, const uint8_t *adrs,
-            const uint8_t *m1, const uint8_t *m2, uint8_t *out, size_t out_len)
+slh_hash_sha512(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
+                const uint8_t *in, size_t inlen, uint8_t *out, size_t outlen)
 {
-    const SLH_DSA_PARAMS *params = ctx->key->params;
-    size_t n = params->n;
+    int ret;
+    uint8_t digest[MAX_DIGEST_SIZE];
+    EVP_MD_CTX *ctx = hctx->sha512_ctx;
+    size_t n = hctx->key->params->n;
 
-    return xof_digest_4(ctx->md_ctx, pk_seed, n, adrs, SLH_ADRS_SIZE, m1, n, m2, n, out, n);
+    ret = EVP_DigestInit_ex2(ctx, NULL, NULL)
+        && EVP_DigestUpdate(ctx, pk_seed, n)
+        && EVP_DigestUpdate(ctx, zeros, 128 - n)
+        && EVP_DigestUpdate(ctx, adrs, SLH_ADRSC_SIZE)
+        && EVP_DigestUpdate(ctx, in, inlen)
+        && EVP_DigestFinal_ex(ctx, digest, NULL);
+    if (ret)
+        memcpy(out, digest, n); /* Truncated to n bytes */
+    return ret;
 }
 
+/*
+ * Pre caches SHA256(pkseed || zeros(64 -n) so that it can be used multiple
+ * times by duping ctx->sha_ctx_pkseed.
+ */
 static int
-slh_t_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed, const uint8_t *adrs,
-            const uint8_t *ml, size_t ml_len, uint8_t *out, size_t out_len)
+slh_prehash_pk_seed_sha256(SLH_DSA_HASH_CTX *hctx, const uint8_t *pkseed, size_t n)
 {
-    const SLH_DSA_PARAMS *params = ctx->key->params;
-    size_t n = params->n;
+    EVP_MD_CTX *ctx = hctx->sha_ctx_pkseed;
 
-    return xof_digest_3(ctx->md_ctx, pk_seed, n, adrs, SLH_ADRS_SIZE, ml, ml_len, out, n);
+    return EVP_DigestUpdate(ctx, pkseed, n)
+        && EVP_DigestUpdate(ctx, zeros, 64 - n);
 }
 
+/*
+ * Either
+ *  MGF1-SHA-256(r || pk_seed || SHA-256(r || pk_seed || pk_root || msg), m)
+ * OR
+ *  MGF1-SHA-512(r || pk_seed || SHA-512(r || pk_seed || pk_root || msg), m)
+ */
 static ossl_inline int
-digest_4(EVP_MD_CTX *ctx,
-         const uint8_t *in1, size_t in1_len, const uint8_t *in2, size_t in2_len,
-         const uint8_t *in3, size_t in3_len, const uint8_t *in4, size_t in4_len,
+slh_hmsg(EVP_MD_CTX *ctx, EVP_MD *md, const SLH_DSA_PARAMS *params, size_t sz,
+         const uint8_t *r, const uint8_t *pk_seed_and_root,
+         const uint8_t *msg, size_t msg_len,
          uint8_t *out)
 {
-    return (EVP_DigestInit_ex2(ctx, NULL, NULL) == 1
-            && EVP_DigestUpdate(ctx, in1, in1_len) == 1
-            && EVP_DigestUpdate(ctx, in2, in2_len) == 1
-            && EVP_DigestUpdate(ctx, in3, in3_len) == 1
-            && EVP_DigestUpdate(ctx, in4, in4_len) == 1
-            && EVP_DigestFinal_ex(ctx, out, NULL) == 1);
-}
-
-/* FIPS 205 Section 11.2.1 and 11.2.2 */
-
-static int
-slh_hmsg_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *r, const uint8_t *pk_seed,
-              const uint8_t *pk_root, const uint8_t *msg, size_t msg_len,
-              uint8_t *out, size_t out_len)
-{
-    const SLH_DSA_PARAMS *params = hctx->key->params;
     size_t m = params->m;
     size_t n = params->n;
+    /* Seed will contain r || PK.seed || SHA-XXX(r || PK.seed || PK.root || msg) */
     uint8_t seed[2 * SLH_MAX_N + MAX_DIGEST_SIZE];
-    int sz = EVP_MD_get_size(hctx->key->md_big);
-    size_t seed_len = (size_t)sz + 2 * n;
-
-    if (sz <= 0)
-        return 0;
+    size_t seed_len = 2 * n + sz;
 
     memcpy(seed, r, n);
-    memcpy(seed + n, pk_seed, n);
-    return digest_4(hctx->md_big_ctx, r, n, pk_seed, n, pk_root, n, msg, msg_len,
-                    seed + 2 * n)
-        && (PKCS1_MGF1(out, (long)m, seed, (long)seed_len, hctx->key->md_big) == 0);
+    memcpy(seed + n, pk_seed_and_root, n);
+    return EVP_DigestInit_ex2(ctx, NULL, NULL)
+        && EVP_DigestUpdate(ctx, r, n)
+        && EVP_DigestUpdate(ctx, pk_seed_and_root, n * 2)
+        && EVP_DigestUpdate(ctx, msg, msg_len)
+        && EVP_DigestFinal_ex(ctx, seed + 2 * n, NULL)
+        && (PKCS1_MGF1(out, (long)m, seed, (long)seed_len, md) == 0);
 }
 
+/* MGF1-SHA-256(r || pk_seed || SHA-256(r || pk_seed || pk_root || msg), m) */
 static int
-slh_prf_msg_sha2(SLH_DSA_HASH_CTX *hctx,
-                 const uint8_t *sk_prf, const uint8_t *opt_rand,
-                 const uint8_t *msg, size_t msg_len, WPACKET *pkt)
+slh_hmsg_sha256(SLH_DSA_HASH_CTX *hctx, const uint8_t *r,
+                const uint8_t *pk_seed_and_root,
+                const uint8_t *msg, size_t msg_len,
+                uint8_t *out, size_t out_len)
+{
+    return slh_hmsg(hctx->sha_ctx, hctx->key->md_sha, hctx->key->params,
+                    SHA256_DIGEST_LENGTH, r, pk_seed_and_root, msg, msg_len, out);
+}
+
+/* MGF1-SHA-512(r || pk_seed || SHA-512(r || pk_seed || pk_root || msg), m) */
+static int
+slh_hmsg_sha512(SLH_DSA_HASH_CTX *hctx, const uint8_t *r,
+                const uint8_t *pk_seed_and_root,
+                const uint8_t *msg, size_t msg_len,
+                uint8_t *out, size_t out_len)
+{
+    return slh_hmsg(hctx->sha512_ctx, hctx->key->md_sha512, hctx->key->params,
+                    SHA512_DIGEST_LENGTH, r, pk_seed_and_root, msg, msg_len, out);
+}
+
+/* Trunc(n)(HMAC-SHA-XXX(SK.prf, opt_rand || msg) */
+static int
+slh_prf_msg_sha(SLH_DSA_HASH_CTX *hctx, EVP_MD *md,
+                const uint8_t *sk_prf, const uint8_t *opt_rand,
+                const uint8_t *msg, size_t msg_len, WPACKET *pkt)
 {
     int ret;
     const SLH_DSA_KEY *key = hctx->key;
@@ -191,7 +230,7 @@ slh_prf_msg_sha2(SLH_DSA_HASH_CTX *hctx,
         p = params;
         /* The underlying digest to be used */
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                                (char *)EVP_MD_get0_name(key->md_big), 0);
+                                                (char *)EVP_MD_get0_name(md), 0);
         if (key->propq != NULL)
             *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
                                                     (char *)key->propq, 0);
@@ -208,83 +247,56 @@ slh_prf_msg_sha2(SLH_DSA_HASH_CTX *hctx,
     return ret;
 }
 
-static ossl_inline int
-do_hash(EVP_MD_CTX *ctx, size_t n, const uint8_t *pk_seed, const uint8_t *adrs,
-        const uint8_t *m, size_t m_len, size_t b, uint8_t *out, size_t out_len)
-{
-    int ret;
-    uint8_t zeros[128] = { 0 };
-    uint8_t digest[MAX_DIGEST_SIZE];
-
-    ret = digest_4(ctx, pk_seed, n, zeros, b - n, adrs, SLH_ADRSC_SIZE,
-                   m, m_len, digest);
-    /* Truncated returned value is n = 16 bytes */
-    memcpy(out, digest, n);
-    return ret;
-}
-
+/* Trunc(n)(HMAC-SHA-256(sk_prf, opt_rand || msg) */
 static int
-slh_prf_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed,
-             const uint8_t *sk_seed, const uint8_t *adrs,
-             uint8_t *out, size_t out_len)
+slh_prf_msg_sha256(SLH_DSA_HASH_CTX *hctx,
+                   const uint8_t *sk_prf, const uint8_t *opt_rand,
+                   const uint8_t *msg, size_t msg_len, WPACKET *pkt)
 {
-    size_t n = hctx->key->params->n;
-
-    return do_hash(hctx->md_ctx, n, pk_seed, adrs, sk_seed, n,
-                   OSSL_SLH_DSA_SHA2_NUM_ZEROS_H_AND_T_BOUND1, out, out_len);
+    return slh_prf_msg_sha(hctx, hctx->key->md_sha, sk_prf, opt_rand,
+                           msg, msg_len, pkt);
 }
 
+/* Trunc(n)(HMAC-SHA-512(sk_prf, opt_rand || msg) */
 static int
-slh_f_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
-           const uint8_t *m1, size_t m1_len, uint8_t *out, size_t out_len)
+slh_prf_msg_sha512(SLH_DSA_HASH_CTX *hctx,
+                   const uint8_t *sk_prf, const uint8_t *opt_rand,
+                   const uint8_t *msg, size_t msg_len, WPACKET *pkt)
 {
-    return do_hash(hctx->md_ctx, hctx->key->params->n, pk_seed, adrs, m1, m1_len,
-                   OSSL_SLH_DSA_SHA2_NUM_ZEROS_H_AND_T_BOUND1, out, out_len);
+    return slh_prf_msg_sha(hctx, hctx->key->md_sha512, sk_prf, opt_rand,
+                           msg, msg_len, pkt);
 }
 
-static int
-slh_h_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
-           const uint8_t *m1, const uint8_t *m2, uint8_t *out, size_t out_len)
-{
-    uint8_t m[SLH_MAX_N * 2];
-    const SLH_DSA_PARAMS *prms = hctx->key->params;
-    size_t n = prms->n;
-
-    memcpy(m, m1, n);
-    memcpy(m + n, m2, n);
-    return do_hash(hctx->md_big_ctx, n, pk_seed, adrs, m, 2 * n,
-                   prms->sha2_h_and_t_bound, out, out_len);
-}
-
-static int
-slh_t_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
-           const uint8_t *ml, size_t ml_len, uint8_t *out, size_t out_len)
-{
-    const SLH_DSA_PARAMS *prms = hctx->key->params;
-
-    return do_hash(hctx->md_big_ctx, prms->n, pk_seed, adrs, ml, ml_len,
-                   prms->sha2_h_and_t_bound, out, out_len);
-}
-
-const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake)
+const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake, int security_category)
 {
     static const SLH_HASH_FUNC methods[] = {
         {
+            slh_prehash_pk_seed_shake,
+            slh_hash_shake, /* prf */
+            slh_hash_shake, /* f */
+            slh_hash_shake, /* h */
+            slh_hash_shake, /* t */
             slh_hmsg_shake,
-            slh_prf_shake,
             slh_prf_msg_shake,
-            slh_f_shake,
-            slh_h_shake,
-            slh_t_shake
         },
         {
-            slh_hmsg_sha2,
-            slh_prf_sha2,
-            slh_prf_msg_sha2,
-            slh_f_sha2,
-            slh_h_sha2,
-            slh_t_sha2
-        }
+            slh_prehash_pk_seed_sha256,
+            slh_hash_sha256,    /* prf */
+            slh_hash_sha256,    /* f */
+            slh_hash_sha256,    /* h */
+            slh_hash_sha256,    /* t */
+            slh_hmsg_sha256,
+            slh_prf_msg_sha256,
+        },
+        {
+            slh_prehash_pk_seed_sha256,
+            slh_hash_sha256,    /* prf */
+            slh_hash_sha256,    /* f */
+            slh_hash_sha512,    /* h */
+            slh_hash_sha512,    /* t */
+            slh_hmsg_sha512,
+            slh_prf_msg_sha512,
+        },
     };
-    return &methods[is_shake ? 0 : 1];
+    return &methods[is_shake ? 0 : (security_category == 1 ? 1 : 2)];
 }
