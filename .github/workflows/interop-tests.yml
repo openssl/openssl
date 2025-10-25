@@ -59,13 +59,13 @@ jobs:
       fail-fast: false
       matrix:
         branch: [
-          { openssl: 'master', openssh: 'openssl-master'},
-          { openssl: 'openssl-3.6', openssh: 'openssl-3.6'},
-          { openssl: 'openssl-3.5', openssh: 'openssl-3.5'},
-          { openssl: 'openssl-3.4', openssh: 'openssl-3.4'},
-          { openssl: 'openssl-3.3', openssh: 'openssl-3.3'},
-          { openssl: 'openssl-3.2', openssh: 'openssl-3.2'},
-          { openssl: 'openssl-3.0', openssh: 'openssl-3.0'}
+          { openssl: 'master', openssh: 'openssl-master', openssl_config: 'no-docs'},
+          { openssl: 'openssl-3.6', openssh: 'openssl-3.6', openssl_config: 'no-docs'},
+          { openssl: 'openssl-3.5', openssh: 'openssl-3.5', openssl_config: 'no-docs'},
+          { openssl: 'openssl-3.4', openssh: 'openssl-3.4', openssl_config: 'no-docs'},
+          { openssl: 'openssl-3.3', openssh: 'openssl-3.3', openssl_config: 'no-docs'},
+          { openssl: 'openssl-3.2', openssh: 'openssl-3.2', openssl_config: 'no-docs'},
+          { openssl: 'openssl-3.0', openssh: 'openssl-3.0', openssl_config: ''}
         ]
     runs-on: ubuntu-latest
     env:
@@ -79,7 +79,7 @@ jobs:
         ref: ${{ matrix.branch.openssl }}
         fetch-depth: 1
     - name: config
-      run: ./config --banner=Configured -fPIC --prefix=/opt/openssl no-docs shared -Wl,-rpath,/opt/openssl/lib64 && perl configdata.pm --dump
+      run: ./config --banner=Configured -fPIC --prefix=/opt/openssl ${{ matrix.openssl_config }} shared -Wl,-rpath,/opt/openssl/lib64 && perl configdata.pm --dump
     - name: make
       run: |
         make -s -j4
