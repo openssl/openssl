@@ -39,8 +39,7 @@ SSL_is_tls() returns 1 if the connection is using SSL/TLS or 0 if not.
 
 SSL_is_quic() returns 1 if the connection is using QUIC or 0 if not.
 
-SSL_CTX_is_quic() returns 1 if the ctx used to create connections creates QUIC
-connections or 0 if not
+SSL_CTX_is_quic() returns 1 if the ctx creates QUIC connections or 0 if not.
 
 =head1 RETURN VALUES
 
