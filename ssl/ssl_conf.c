@@ -694,12 +694,30 @@ static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
      * All we care about are non-negative values,
      * the setters check the range
      */
-    if (cctx->ctx)
-        rv = SSL_CTX_set_block_padding_ex(cctx->ctx, (size_t)block_padding,
+    if (cctx->ctx) {
+        /*
+         * QUIC always pads TLS data at the packet level, and as such, attempting
+         * to set block padding at the record level fails in calls to SSL_CTX_set_block_padding_ex.
+         * However, when configuring record padding via config file, we have no idea if we are
+         * going to create TCP or QUIC based SSL's, so silently ignore this configuration option
+         * for QUIC.
+         */
+        if (SSL_CTX_is_quic(cctx->ctx))
+            rv = 1;
+        else
+            rv = SSL_CTX_set_block_padding_ex(cctx->ctx, (size_t)block_padding,
+                                              (size_t)hs_padding);
+    }
+    if (cctx->ssl) {
+        /*
+         * As above, ignore this config option for QUIC
+         */
+        if (SSL_is_quic(cctx->ssl))
+            rv = 1;
+        else
+            rv = SSL_set_block_padding_ex(cctx->ssl, (size_t)block_padding,
                                           (size_t)hs_padding);
-    if (cctx->ssl)
-        rv = SSL_set_block_padding_ex(cctx->ssl, (size_t)block_padding,
-                                      (size_t)hs_padding);
+    }
 out:
     OPENSSL_free(copy);
     return rv;
