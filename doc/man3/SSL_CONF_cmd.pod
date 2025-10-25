@@ -411,7 +411,7 @@ values must be >1 or <=16384.
 
 Note that, for QUIC objects, padding is always performed at the
 packet level, and so cannot be done at the record level.  Given that, when the
-config file is created, there is no knoweldge of what kind of SSL objects are
+config file is created, there is no knowledge of what kind of SSL objects are
 being created, this option is silently ignored for QUIC objects.
 
 =item B<SignatureAlgorithms>
