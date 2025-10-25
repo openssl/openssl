@@ -28,7 +28,7 @@ SOURCE[$PBKDF1_GOAL]=pbkdf1.c
 
 SOURCE[$PBKDF2_GOAL]=pbkdf2.c
 
-SOURCE[$PBKDF1_GOAL]=pvkkdf.c
+SOURCE[$PVKKDF_GOAL]=pvkkdf.c
 
 SOURCE[$PKCS12KDF_GOAL]=pkcs12kdf.c
 
