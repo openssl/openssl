@@ -11,7 +11,7 @@
 #include <openssl/store.h>
 #include "internal/cryptlib.h"
 #include "crypto/x509.h"
-#include "x509_local.h"
+#include "internal/x509_local.h"
 
 typedef struct cached_store_st {
     char *uri;

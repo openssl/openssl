@@ -14,7 +14,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
-#include "x509_local.h"
+#include "internal/x509_local.h"
 #include "pcy_local.h"
 #include "ext_dat.h"
 

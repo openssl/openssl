@@ -22,7 +22,7 @@
 #include <openssl/x509v3.h>
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
-#include "x509_local.h"
+#include "internal/x509_local.h"
 
 int X509_set_version(X509 *x, long version)
 {
