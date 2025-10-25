@@ -13,3 +13,5 @@ updates:
       - "approval: review pending"
     reviewers:
       - "openssl/committers"
+    cooldown:
+      default-days: 7

@@ -9,6 +9,8 @@ on:
     - cron: '55 02 * * *'
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   test:
     runs-on: ubuntu-22.04
@@ -24,6 +26,8 @@ jobs:
       COMPONENT: ${{ matrix.COMPONENT }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Display environment
         run: export
       - name : Install needed tools

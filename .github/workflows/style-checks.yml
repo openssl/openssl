@@ -24,6 +24,7 @@ jobs:
       with:
         fetch-depth: 0
         path: openssl
+        persist-credentials: false
     - name: check style for each commit 
       working-directory: openssl
       shell: bash

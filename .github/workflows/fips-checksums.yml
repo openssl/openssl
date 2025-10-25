@@ -14,6 +14,8 @@ permissions:
 jobs:
   compute-checksums:
     runs-on: ubuntu-latest
+    outputs:
+      fips_status: ${{ steps.fips_result.outputs.fips_status }}
     steps:
       - name: install unifdef
         run: |
@@ -31,6 +33,7 @@ jobs:
           repository: ${{ github.event.pull_request.base.repo.full_name }}
           ref: ${{ github.event.pull_request.base.ref }}
           path: source-pristine
+          persist-credentials: false
       - name: config pristine
         run: ../source-pristine/config enable-fips
         working-directory: ./build-pristine
@@ -46,6 +49,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: source
+          persist-credentials: false
       - name: config
         run: ../source/config enable-fips
         working-directory: ./build
@@ -63,19 +67,24 @@ jobs:
           cp -a build-pristine/providers/fips.module.sources.new source/providers/fips.module.sources
           cp -a build-pristine/providers/fips-sources.checksums.new source/providers/fips-sources.checksums
           cp -a build-pristine/providers/fips.checksum.new source/providers/fips.checksum
-      - name: make diff-fips-checksums
-        run: make diff-fips-checksums && touch ../artifact/fips_unchanged || ( touch ../artifact/fips_changed ; echo FIPS CHANGED )
-        working-directory: ./build
-      - name: save PR number
-        run: echo ${{ github.event.number }} > ./artifact/pr_num
-      - name: save artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: fips_checksum
-          path: artifact/
+      - id: fips_result
+        name: diff-fips-checksums (record status)
+        run: |
+          set +e
+          make -C build diff-fips-checksums
+          rc=$?
+          if [ $rc -eq 0 ]; then
+            echo "fips_status=unchanged" >> "$GITHUB_OUTPUT"
+          else
+            echo "fips_status=changed" >> "$GITHUB_OUTPUT"
+            echo "FIPS CHANGED"
+          fi
+          exit 0
 
   compute-abidiff:
     runs-on: ubuntu-latest
+    outputs:
+      abi_status: ${{ steps.abi_result.outputs.abi_status }}
     env:
       BUILD_OPTS: -g --strict-warnings enable-ktls enable-fips enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-trace enable-zlib enable-zstd
     steps:
@@ -93,6 +102,7 @@ jobs:
           repository: ${{ github.event.pull_request.base.repo.full_name }}
           ref: ${{ github.event.pull_request.base.ref }}
           path: source-pristine
+          persist-credentials: false
       - name: config pristine
         run: ../source-pristine/config --banner=Configured $BUILD_OPTS && perl configdata.pm --dump
         working-directory: ./build-pristine
@@ -102,18 +112,80 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: source
+          persist-credentials: false
       - name: config
         run: ../source/config --banner=Configured $BUILD_OPTS && perl configdata.pm --dump
         working-directory: ./build
       - name: make
         run: make -s -j4
         working-directory: ./build
-      - name: abidiff
-        run: abidiff --headers-dir1 build-pristine/include/openssl --headers-dir2 build/include/openssl --drop-private-types ./build-pristine/libcrypto.so ./build/libcrypto.so && abidiff --headers-dir1 build-pristine/include/openssl --headers-dir2 build/include/openssl --drop-private-types ./build-pristine/libssl.so ./build/libssl.so && touch ./artifact/abi_unchanged || ( touch ./artifact/abi_changed ; echo ABI CHANGED )
-      - name: save PR number
-        run: echo ${{ github.event.number }} > ./artifact/pr_num
-      - name: save artifact
-        uses: actions/upload-artifact@v4
+      - id: abi_result
+        name: abidiff (record status)
+        run: |
+          set +e
+          abidiff --headers-dir1 build-pristine/include/openssl --headers-dir2 build/include/openssl --drop-private-types ./build-pristine/libcrypto.so ./build/libcrypto.so \
+          && abidiff --headers-dir1 build-pristine/include/openssl --headers-dir2 build/include/openssl --drop-private-types ./build-pristine/libssl.so ./build/libssl.so
+          rc=$?
+          if [ $rc -eq 0 ]; then
+            echo "abi_status=unchanged" >> "$GITHUB_OUTPUT"
+          else
+            echo "abi_status=changed" >> "$GITHUB_OUTPUT"
+            echo "ABI CHANGED"
+          fi
+          exit 0
+
+  apply-label:
+    permissions:
+      contents: read
+      pull-requests: write
+    needs: [compute-checksums, compute-abidiff]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply/Remove labels (github-script)
+        uses: actions/github-script@v7
+        env:
+          PR_NUM: ${{ github.event.number }}
+          FIPS_STATUS: ${{ needs.compute-checksums.outputs.fips_status }}
+          ABI_STATUS: ${{ needs.compute-abidiff.outputs.abi_status }}
         with:
-          name: abidiff
-          path: artifact/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNum = Number(process.env.PR_NUM);
+            const fipsStatus = process.env.FIPS_STATUS;
+            const abiStatus  = process.env.ABI_STATUS;
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+
+            const FIPS_LABEL = 'severity: fips change';
+            const ABI_LABEL  = 'severity: ABI change';
+
+            async function ensureRemoved(label) {
+              const { data } = await github.rest.issues.listLabelsOnIssue({ owner, repo, issue_number: prNum });
+              const exists = data.some(l => l.name === label);
+              if (exists) {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number: prNum, name: label });
+                core.info(`Removed label: ${label}`);
+              } else {
+                core.info(`Label not present: ${label}`);
+              }
+            }
+
+            // FIPS
+            if (fipsStatus === 'changed') {
+              await github.rest.issues.addLabels({ owner, repo, issue_number: prNum, labels: [FIPS_LABEL] });
+              core.info(`Added label: ${FIPS_LABEL}`);
+            } else if (fipsStatus === 'unchanged') {
+              await ensureRemoved(FIPS_LABEL);
+            } else {
+              core.warning(`Unknown FIPS status: ${fipsStatus}`);
+            }
+
+            // ABI
+            if (abiStatus === 'changed') {
+              await github.rest.issues.addLabels({ owner, repo, issue_number: prNum, labels: [ABI_LABEL] });
+              core.info(`Added label: ${ABI_LABEL}`);
+            } else if (abiStatus === 'unchanged') {
+              await ensureRemoved(ABI_LABEL);
+            } else {
+              core.warning(`Unknown ABI status: ${abiStatus}`);
+            }
