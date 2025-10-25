@@ -1023,6 +1023,11 @@ int SSL_is_quic(const SSL *s)
     return IS_QUIC(s);
 }
 
+int SSL_CTX_is_quic(const SSL_CTX *c)
+{
+    return IS_QUIC_CTX(c);
+}
+
 int SSL_up_ref(SSL *s)
 {
     int i;
