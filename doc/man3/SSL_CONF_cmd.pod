@@ -408,6 +408,11 @@ Padding attempts to pad TLSv1.3 records so that they are a multiple of the set
 length on send. A value of 0 or 1 turns off padding as relevant. Otherwise, the
 values must be >1 or <=16384.
 
+Note that, for QUIC objects, padding is always performed at the
+packet level, and so cannot be done at the record level.  Given that, when the
+config file is created, there is no knowledge of what kind of SSL objects are
+being created, this option is silently ignored for QUIC objects.
+
 =item B<SignatureAlgorithms>
 
 This sets the supported signature algorithms for TLSv1.2 and TLSv1.3.
