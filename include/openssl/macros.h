@@ -44,9 +44,11 @@
           __declspec(deprecated("Since OpenSSL " # since))
 #     define OSSL_DEPRECATED_FOR(since, message) \
           __declspec(deprecated("Since OpenSSL " # since ";" message))
+#     define OSSL_DEPRECATED_MESSAGE(message) __declspec(deprecated(message))
 #    elif _MSC_VER >= 1310
 #     define OSSL_DEPRECATED(since) __declspec(deprecated)
 #     define OSSL_DEPRECATED_FOR(since, message) __declspec(deprecated)
+#     define OSSL_DEPRECATED_MESSAGE(message) __declspec(deprecated)
 #    endif
 #   elif defined(__GNUC__)
      /*
@@ -58,14 +60,17 @@
           __attribute__((deprecated("Since OpenSSL " # since)))
 #     define OSSL_DEPRECATED_FOR(since, message) \
           __attribute__((deprecated("Since OpenSSL " # since ";" message)))
+#     define OSSL_DEPRECATED_MESSAGE(message) __attribute__((deprecated(message)))
 #    elif __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ > 0)
 #     define OSSL_DEPRECATED(since) __attribute__((deprecated))
 #     define OSSL_DEPRECATED_FOR(since, message) __attribute__((deprecated))
+#     define OSSL_DEPRECATED_MESSAGE(message) __attribute__((deprecated))
 #    endif
 #   elif defined(__SUNPRO_C)
 #    if (__SUNPRO_C >= 0x5130)
 #     define OSSL_DEPRECATED(since) __attribute__ ((deprecated))
 #     define OSSL_DEPRECATED_FOR(since, message) __attribute__ ((deprecated))
+#     define OSSL_DEPRECATED_MESSAGE(message) __attribute__((deprecated))
 #    endif
 #   endif
 #  endif
@@ -73,11 +78,12 @@
 
 /*
  * Still not defined?  Then define no-op macros. This means these macros
- * are unsuitable for use in a typedef.
+ * are unsuitable for use in a typedef except OSSL_DEPRECATED_MESSAGE.
  */
 # ifndef OSSL_DEPRECATED
 #  define OSSL_DEPRECATED(since)                extern
 #  define OSSL_DEPRECATED_FOR(since, message)   extern
+#  define OSSL_DEPRECATED_MESSAGE(message)
 # endif
 
 /*
