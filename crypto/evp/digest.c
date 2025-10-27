@@ -723,6 +723,46 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
     return 1;
 }
 
+int EVP_DigestSerialize(EVP_MD_CTX *ctx, unsigned char *out, size_t *outlen)
+{
+    if (ctx->digest == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
+        return 0;
+    }
+
+    if (ctx->digest->prov == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+        return 0;
+    }
+
+    if (ctx->digest->serialize == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_METHOD_NOT_SUPPORTED);
+        return 0;
+    }
+
+    return ctx->digest->serialize(ctx->algctx, out, outlen);
+}
+
+int EVP_DigestDeserialize(EVP_MD_CTX *ctx, const unsigned char *in, size_t inlen)
+{
+    if (ctx->digest == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
+        return 0;
+    }
+
+    if (ctx->digest->prov == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+        return 0;
+    }
+
+    if (ctx->digest->deserialize == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_METHOD_NOT_SUPPORTED);
+        return 0;
+    }
+
+    return ctx->digest->deserialize(ctx->algctx, in, inlen);
+}
+
 int EVP_Digest(const void *data, size_t count,
                unsigned char *md, unsigned int *size, const EVP_MD *type,
                ENGINE *impl)
@@ -1119,6 +1159,14 @@ static void *evp_md_from_algorithm(int name_id,
             if (md->copyctx == NULL)
                 md->copyctx =
                     OSSL_FUNC_digest_copyctx(fns);
+            break;
+        case OSSL_FUNC_DIGEST_SERIALIZE:
+            if (md->serialize == NULL)
+                md->serialize = OSSL_FUNC_digest_serialize(fns);
+            break;
+        case OSSL_FUNC_DIGEST_DESERIALIZE:
+            if (md->deserialize == NULL)
+                md->deserialize = OSSL_FUNC_digest_deserialize(fns);
             break;
         }
     }

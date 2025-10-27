@@ -304,6 +304,17 @@ __owur static ossl_inline int PACKET_get_net_8(PACKET *pkt, uint64_t *data)
     return 1;
 }
 
+__owur static ossl_inline int PACKET_get_net_8_len(PACKET *pkt, size_t *data)
+{
+    uint64_t i;
+    int ret = PACKET_get_net_8(pkt, &i);
+
+    if (ret)
+        *data = (size_t)i;
+
+    return 1;
+}
+
 /* Peek ahead at 1 byte from |pkt| and store the value in |*data| */
 __owur static ossl_inline int PACKET_peek_1(const PACKET *pkt,
                                             unsigned int *data)
