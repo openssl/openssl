@@ -25,8 +25,9 @@ parameters for I<xs>. The returned pointer must not be freed by the
 calling application
 
 X509_STORE_get1_objects() returns a snapshot of all objects in the store's X509
-cache. The cache contains B<X509> and B<X509_CRL> objects. The caller is
-responsible for freeing the returned list.
+cache. The cache contains B<X509> and B<X509_CRL> objects. The caller
+is responsible for freeing the returned list,
+using sk_X509_OBJECT_pop_free(sk, X509_OBJECT_free).
 
 X509_STORE_get0_objects() retrieves an internal pointer to the store's
 X509 object cache. The cache contains B<X509> and B<X509_CRL> objects. The
@@ -35,7 +36,8 @@ shared across multiple threads, it is not safe to use the result of this
 function. Use X509_STORE_get1_objects() instead, which avoids this problem.
 
 X509_STORE_get1_all_certs() returns a list of all certificates in the store.
-The caller is responsible for freeing the returned list.
+The caller is responsible for freeing the returned list
+with OSSL_STACK_OF_X509_free().
 
 =head1 RETURN VALUES
 
@@ -54,6 +56,7 @@ certificates on success, else NULL.
 
 =head1 SEE ALSO
 
+L<DEFINE_STACK_OF(3)>,
 L<X509_STORE_new(3)>
 
 =head1 HISTORY
