@@ -10,6 +10,9 @@
 #ifndef OSSL_CRYPTO_BN_LOCAL_H
 # define OSSL_CRYPTO_BN_LOCAL_H
 
+# include <assert.h>
+# include <string.h>
+
 # include <openssl/opensslconf.h>
 # include "internal/cryptlib.h"
 # include "internal/numbers.h"
@@ -18,20 +21,12 @@
 # include "../fn/fn_local.h"
 
 /*
- * These preprocessor symbols control various aspects of the bignum headers
- * and library code. They're not defined by any "normal" configuration, as
- * they are intended for development and testing purposes. NB: defining
- * them can be useful for debugging application code as well as openssl
- * itself. BN_DEBUG - turn on various debugging alterations to the bignum
- * code BN_RAND_DEBUG - uses random poisoning of unused words to trip up
- * mismanagement of bignum internals. Enable BN_RAND_DEBUG is known to
- * break some of the OpenSSL tests.
+ * BN_RAND_DEBUG was historically used to poison unused words in bignum data,
+ * for integrity debugging purposes.  This isn't done any more, but enabling
+ * BN_RAND_DEBUG also defined BN_DEBUG, which we preserve for the moment.
  */
 # if defined(BN_RAND_DEBUG) && !defined(BN_DEBUG)
 #  define BN_DEBUG
-# endif
-# if defined(BN_RAND_DEBUG)
-#  include <openssl/rand.h>
 # endif
 
 /*
@@ -132,30 +127,37 @@
 
 /*-
  * Bignum consistency macros
+ *
  * There is one "API" macro, bn_fix_top(), for stripping leading zeroes from
  * bignum data after direct manipulations on the data. There is also an
  * "internal" macro, bn_check_top(), for verifying that there are no leading
- * zeroes. Unfortunately, some auditing is required due to the fact that
- * bn_fix_top() has become an overabused duct-tape because bignum data is
- * occasionally passed around in an inconsistent state. So the following
- * changes have been made to sort this out;
+ * zeroes, and in case the BIGNUM has an integrated OSSL_FN, check the
+ * consistency of the integration, including that the unused part of the
+ * data is all zeros.
+ *
+ * Unfortunately, some auditing is required due to the fact that bn_fix_top()
+ * has become an overabused duck-tape because bignum data is occasionally
+ * passed around in an inconsistent state. So the following changes have been
+ * made to sort this out;
+ *
  * - bn_fix_top()s implementation has been moved to bn_correct_top()
- * - if BN_DEBUG isn't defined, bn_fix_top() maps to bn_correct_top(), and
- *   bn_check_top() is as before.
- * - if BN_DEBUG *is* defined;
- *   - bn_check_top() tries to pollute unused words even if the bignum 'top' is
- *     consistent. (ed: only if BN_RAND_DEBUG is defined)
+ * - if BN_DEBUG isn't defined:
+ *   - bn_check_top() does nothing.
+ *   - bn_fix_top() maps to bn_correct_top()
+ * - if BN_DEBUG is defined:
+ *   - bn_check_top() performs its consistency checks
  *   - bn_fix_top() maps to bn_check_top() rather than "fixing" anything.
+ *
  * The idea is to have debug builds flag up inconsistent bignums when they
- * occur. If that occurs in a bn_fix_top(), we examine the code in question; if
- * the use of bn_fix_top() was appropriate (ie. it follows directly after code
- * that manipulates the bignum) it is converted to bn_correct_top(), and if it
- * was not appropriate, we convert it permanently to bn_check_top() and track
- * down the cause of the bug. Eventually, no internal code should be using the
- * bn_fix_top() macro. External applications and libraries should try this with
- * their own code too, both in terms of building against the openssl headers
- * with BN_DEBUG defined *and* linking with a version of OpenSSL built with it
- * defined. This not only improves external code, it provides more test
+ * occur. If that occurs in a bn_fix_top(), we examine the code in question;
+ * if the use of bn_fix_top() was appropriate (ie. it follows directly after
+ * code that manipulates the bignum) it is converted to bn_correct_top(),
+ * and if it was not appropriate, we convert it permanently to bn_check_top()
+ * and track down the cause of the bug. Eventually, no internal code should be
+ * using the bn_fix_top() macro. External applications and libraries should try
+ * this with their own code too, both in terms of building against the openssl
+ * headers with BN_DEBUG defined *and* linking with a version of OpenSSL built
+ * with it defined. This not only improves external code, it provides more test
  * coverage for openssl's own code.
  */
 
@@ -174,39 +176,36 @@
  * all operations manipulating the bit in question in non-BN_DEBUG build.
  */
 #  define BN_FLG_FIXED_TOP 0x10000
-#  ifdef BN_RAND_DEBUG
-#   define bn_pollute(a) \
-        do { \
-            const BIGNUM *_bnum1 = (a); \
-            if (_bnum1->top < _bnum1->dmax) { \
-                unsigned char _tmp_char; \
-                /* We cast away const without the compiler knowing, any \
-                 * *genuinely* constant variables that aren't mutable \
-                 * wouldn't be constructed with top!=dmax. */ \
-                BN_ULONG *_not_const; \
-                memcpy(&_not_const, &_bnum1->d, sizeof(_not_const)); \
-                (void)RAND_bytes(&_tmp_char, 1); /* Debug only - safe to ignore error return */\
-                memset(_not_const + _bnum1->top, _tmp_char, \
-                       sizeof(*_not_const) * (_bnum1->dmax - _bnum1->top)); \
-            } \
-        } while(0)
-#  else
-#   define bn_pollute(a)
-#  endif
+
+static ossl_inline bool bn_check_zero(BN_ULONG *words, int num_words)
+{
+    for (int i = 0; i < num_words; i++)
+        if (words[i] != 0)
+            return false;
+    return true;
+}
+
 #  define bn_check_top(a) \
         do { \
                 const BIGNUM *_bnum2 = (a); \
                 if (_bnum2 != NULL) { \
                         int _top = _bnum2->top; \
+                        int _dmax = _bnum2->dmax; \
+                        BN_ULONG *_d = _bnum2->d; \
                         /* BIGNUM <-> OSSL_FN compat checks */ \
-                        assert((_bnum2->data == NULL /* && _bnum2->d == NULL */) \
-                               || (_bnum2->d == _bnum2->data->d \
-                                   && _bnum2->dmax == _bnum2->data->dsize)); \
+                        if (_bnum2->data != NULL) { \
+                                /* Assertion for the future */ \
+                                /* assert(_bnum2->d == NULL); */ \
+                                assert(_d == _bnum2->data->d); \
+                                assert(_dmax == _bnum2->data->dsize); \
+                                assert(bn_check_zero(&_d[_top], _dmax - _top)); \
+                        } \
                         /* BIGNUM specific checks */ \
-                        assert((_top == 0 && !_bnum2->neg) || \
-                               (_top && ((_bnum2->flags & BN_FLG_FIXED_TOP) \
-                                         || _bnum2->d[_top - 1] != 0))); \
-                        bn_pollute(_bnum2); \
+                        if (_top == 0) { \
+                                assert(!_bnum2->neg); \
+                        } else if ((_bnum2->flags & BN_FLG_FIXED_TOP) == 0) { \
+                                assert(_bnum2->d[_top - 1] != 0); \
+                        } \
                 } \
         } while(0)
 
@@ -225,7 +224,6 @@
 # else                          /* !BN_DEBUG */
 
 #  define BN_FLG_FIXED_TOP 0
-#  define bn_pollute(a)
 #  define bn_check_top(a)
 #  define bn_fix_top(a)           bn_correct_top(a)
 #  define bn_check_size(bn, bits)
@@ -688,5 +686,30 @@ static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
 
 int ossl_bn_check_prime(const BIGNUM *w, int checks, BN_CTX *ctx,
                         int do_trial_division, BN_GENCB *cb);
+
+/**
+ * Set top on a given BIGNUM.  If it has an associated OSSL_FN (the 'data'
+ * field is non-NULL), and the new 'top' is less than the existing 'top',
+ * zeroise the space between them.
+ *
+ * @param[in]   b       The BIGNUM instance to zeroise
+ * @param[in]   newtop  The new 'top'
+ * @returns     the new 'top'
+ * @pre         b must not be NULL and newtop must be zero or positive
+ */
+static ossl_inline int bn_set_top(BIGNUM *b, int newtop)
+{
+    assert(b != NULL && newtop >= 0);
+
+    if (b->data != NULL && newtop < b->top) {
+        BN_ULONG *start = &(b->d[newtop]);
+        size_t bytes = sizeof(BN_ULONG) * (b->top - newtop);
+
+        memset(start, 0, bytes);
+    }
+
+    b->top = newtop;
+    return b->top;
+}
 
 #endif
