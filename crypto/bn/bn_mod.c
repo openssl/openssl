@@ -90,7 +90,7 @@ int bn_mod_add_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
         rp[i] = (carry & tp[i]) | (~carry & rp[i]);
         ((volatile BN_ULONG *)tp)[i] = 0;
     }
-    r->top = (int)mtop;
+    bn_set_top(r, (int)mtop);
     r->flags |= BN_FLG_FIXED_TOP;
     r->neg = 0;
 
@@ -176,7 +176,7 @@ int bn_mod_sub_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
         carry += (rp[i] < ta);
     }
 
-    r->top = (int)mtop;
+    bn_set_top(r, (int)mtop);
     r->flags |= BN_FLG_FIXED_TOP;
     r->neg = 0;
 

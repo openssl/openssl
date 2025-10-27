@@ -61,7 +61,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
     BN_zero(dv);
     if (bn_wexpand(dv, 1) == NULL)
         goto end;
-    dv->top = 1;
+    bn_set_top(dv, 1);
 
     if (!BN_lshift(D, D, nm - nd))
         goto end;
@@ -310,7 +310,9 @@ int bn_div_fixed_top(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,
         if (bn_wexpand(snum, div_n + 1) == NULL)
             goto err;
         memset(&(snum->d[num_n]), 0, (div_n - num_n + 1) * sizeof(BN_ULONG));
-        snum->top = num_n = div_n + 1;
+        num_n = div_n + 1;
+        bn_set_top(snum, num_n);
+        snum->flags |= BN_FLG_FIXED_TOP;
     }
 
     loop = num_n - div_n;
@@ -330,13 +332,15 @@ int bn_div_fixed_top(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,
         goto err;
     num_neg = num->neg;
     res->neg = (num_neg ^ divisor->neg);
-    res->top = loop;
+    bn_set_top(res, loop);
     res->flags |= BN_FLG_FIXED_TOP;
     resp = &(res->d[loop]);
 
     /* space for temp */
     if (!bn_wexpand(tmp, (div_n + 1)))
         goto err;
+    tmp->top = div_n + 1;
+    tmp->flags |= BN_FLG_FIXED_TOP;
 
     for (i = 0; i < loop; i++, wnumtop--) {
         BN_ULONG q, l0;
@@ -446,7 +450,7 @@ int bn_div_fixed_top(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,
     }
     /* snum holds remainder, it's as wide as divisor */
     snum->neg = num_neg;
-    snum->top = div_n;
+    bn_set_top(snum, div_n);
     snum->flags |= BN_FLG_FIXED_TOP;
 
     if (rm != NULL && bn_rshift_fixed_top(rm, snum, norm_shift) == 0)
