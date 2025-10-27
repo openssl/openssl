@@ -104,14 +104,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, macos-15, macos-15-large]
+        os: [macos-14, macos-14-large, macos-15, macos-15-large]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --strict-warnings --banner=Configured enable-fips
+      run: ./config --strict-warnings --banner=Configured enable-fips enable-demos enable-h3demo
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
