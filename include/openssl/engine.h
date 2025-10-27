@@ -19,7 +19,69 @@
 
 # include <openssl/opensslconf.h>
 
-# ifndef OPENSSL_NO_ENGINE
+/*
+ * There is no OPENSSL_NO_NO_ENGINE, Engines are permanently disabled
+ * and OPENSSL_NO_ENGINE must be defined
+ *
+ * This header now generates compatible definitions according
+ * to OPENSSL_ENGINE_STUBS define.
+ * Note we have to use compile-time message to warn only if API is really used.
+ * To avoid complicated macros we kind-of abuse existing OSSL_DEPRACATED macros.
+ */
+# ifdef OPENSSL_ENGINE_STUBS
+#  define ENGINE_INFO_MSG \
+    " API symbol is replaced with stub to avoid linker error."
+
+#  define ENGINE_FUNC(ret_type, name, args, args_names, default_val) \
+    OSSL_DEPRECATED_MESSAGE(#name ENGINE_INFO_MSG) \
+    static inline ret_type name args \
+    { \
+        (void)args_names; /* avoid unused parameter warnings */ \
+        return default_val; /* stub return */ \
+    }
+
+#  define ENGINE_FUNC_NOARGS(ret_type, name, default_val) \
+    OSSL_DEPRECATED_MESSAGE(#name ENGINE_INFO_MSG) \
+    static inline ret_type name(void) \
+    { \
+        return default_val; /* stub return */ \
+    }
+
+#  define ENGINE_VOID_FUNC(name, args, args_names) \
+    OSSL_DEPRECATED_MESSAGE(#name ENGINE_INFO_MSG) \
+    static inline void name args \
+    { \
+        (void)args_names; /* avoid unused parameter warnings */ \
+    }
+
+#  define ENGINE_VOID_FUNC_NOARGS(name) \
+    OSSL_DEPRECATED_MESSAGE(#name ENGINE_INFO_MSG) \
+    static inline void name(void) \
+    { \
+    }
+# else /* OPENSSL_ENGINE_STUBS */
+#  define ENGINE_INFO_MSG \
+    " API symbol is removed. Define OPENSSL_ENGINE_STUBS to mask linker errors."
+
+#  define ENGINE_FUNC(ret_type, name, args, args_names, default_val) \
+    OSSL_DEPRECATED_MESSAGE(#name ENGINE_INFO_MSG) \
+    ret_type name args;
+
+#  define ENGINE_FUNC_NOARGS(ret_type, name, default_val) \
+    OSSL_DEPRECATED_MESSAGE(#name ENGINE_INFO_MSG) \
+    ret_type name(void);
+
+#  define ENGINE_VOID_FUNC(name, args, args_names) \
+    OSSL_DEPRECATED_MESSAGE(#name ENGINE_INFO_MSG) \
+    void name args;
+
+#  define ENGINE_VOID_FUNC_NOARGS(name) \
+    OSSL_DEPRECATED_MESSAGE(#name ENGINE_INFO_MSG) \
+    void name(void);
+# endif /* OPENSSL_ENGINE_STUBS */
+
+# ifdef ENGINE_FUNC
+
 #  ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #   include <openssl/bn.h>
 #   include <openssl/rsa.h>
@@ -315,25 +377,36 @@ typedef int (*ENGINE_PKEY_ASN1_METHS_PTR) (ENGINE *, EVP_PKEY_ASN1_METHOD **,
 
 /* Get the first/last "ENGINE" type available. */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_first(void);
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_last(void);
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_first(void); */
+ENGINE_FUNC_NOARGS(ENGINE *, ENGINE_get_first, NULL)
+
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_last(void); */
+ENGINE_FUNC_NOARGS(ENGINE *, ENGINE_get_last, NULL)
+
 #  endif
 /* Iterate to the next/previous "ENGINE" type (NULL = end of the list). */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_next(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_prev(ENGINE *e);
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_next(ENGINE *e); */
+ENGINE_FUNC(ENGINE *, ENGINE_get_next, (ENGINE *e), (e), NULL)
+
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_prev(ENGINE *e); */
+ENGINE_FUNC(ENGINE *, ENGINE_get_prev, (ENGINE *e), (e), NULL)
+
 #  endif
 /* Add another "ENGINE" type into the array. */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 int ENGINE_add(ENGINE *e);
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_add(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_add, (ENGINE *e), (e), 0)
 #  endif
 /* Remove an existing "ENGINE" type from the array. */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 int ENGINE_remove(ENGINE *e);
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_remove(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_remove, (ENGINE *e), (e), 0)
 #  endif
 /* Retrieve an engine from the list by its unique "id" value. */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_by_id(const char *id);
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_by_id(const char *id); */
+ENGINE_FUNC(ENGINE *, ENGINE_by_id, (const char *id), (id), NULL)
 #  endif
 
 #  ifndef OPENSSL_NO_DEPRECATED_1_1_0
@@ -355,7 +428,8 @@ OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_by_id(const char *id);
         OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_RDRAND, NULL)
 #  endif
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 void ENGINE_load_builtin_engines(void);
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_load_builtin_engines(void); */
+ENGINE_VOID_FUNC_NOARGS(ENGINE_load_builtin_engines)
 #  endif
 
 /*
@@ -363,8 +437,11 @@ OSSL_DEPRECATEDIN_3_0 void ENGINE_load_builtin_engines(void);
  * "registry" handling.
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 unsigned int ENGINE_get_table_flags(void);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_set_table_flags(unsigned int flags);
+/* OSSL_DEPRECATEDIN_3_0 unsigned int ENGINE_get_table_flags(void); */
+ENGINE_FUNC_NOARGS(unsigned int, ENGINE_get_table_flags, 0)
+
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_set_table_flags(unsigned int flags); */
+ENGINE_VOID_FUNC(ENGINE_set_table_flags, (unsigned int flags), (flags))
 #  endif
 
 /*- Manage registration of ENGINEs per "table". For each type, there are 3
@@ -375,33 +452,60 @@ OSSL_DEPRECATEDIN_3_0 void ENGINE_set_table_flags(unsigned int flags);
  * Cleanup is automatically registered from each table when required.
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 int ENGINE_register_RSA(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_RSA(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_RSA(void);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_register_DSA(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_DSA(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_DSA(void);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_register_EC(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_EC(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_EC(void);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_register_DH(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_DH(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_DH(void);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_register_RAND(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_RAND(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_RAND(void);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_register_ciphers(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_ciphers(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_ciphers(void);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_register_digests(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_digests(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_digests(void);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_register_pkey_meths(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_pkey_meths(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_pkey_meths(void);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_register_pkey_asn1_meths(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_pkey_asn1_meths(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_pkey_asn1_meths(void);
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_register_RSA(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_register_RSA, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_RSA(ENGINE *e); */
+ENGINE_VOID_FUNC(ENGINE_unregister_RSA, (ENGINE *e), (e))
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_RSA(void); */
+ENGINE_VOID_FUNC_NOARGS(ENGINE_register_all_RSA)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_register_DSA(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_register_DSA, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_DSA(ENGINE *e); */
+ENGINE_VOID_FUNC(ENGINE_unregister_DSA, (ENGINE *e), (e))
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_DSA(void); */
+ENGINE_VOID_FUNC_NOARGS(ENGINE_register_all_DSA)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_register_EC(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_register_EC, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_EC(ENGINE *e); */
+ENGINE_VOID_FUNC(ENGINE_unregister_EC, (ENGINE *e), (e))
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_EC(void); */
+ENGINE_VOID_FUNC_NOARGS(ENGINE_unregister_all_EC)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_register_DH(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_register_DH, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_DH(ENGINE *e); */
+ENGINE_VOID_FUNC(ENGINE_unregister_DH, (ENGINE *e), (e))
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_DH(void); */
+ENGINE_VOID_FUNC_NOARGS(ENGINE_register_all_DH)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_register_RAND(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_register_RAND, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_RAND(ENGINE *e); */
+ENGINE_VOID_FUNC(ENGINE_unregister_RAND, (ENGINE *e), (e))
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_RAND(void); */
+ENGINE_VOID_FUNC_NOARGS(ENGINE_register_all_RAND)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_register_ciphers(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_register_ciphers, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_ciphers(ENGINE *e); */
+ENGINE_VOID_FUNC(ENGINE_unregister_ciphers, (ENGINE *e), (e))
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_ciphers(void); */
+ENGINE_VOID_FUNC_NOARGS(ENGINE_register_all_ciphers)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_register_digests(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_register_digests, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_digests(ENGINE *e); */
+ENGINE_VOID_FUNC(ENGINE_unregister_digests, (ENGINE *e), (e))
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_digests(void); */
+ENGINE_VOID_FUNC_NOARGS(ENGINE_register_all_digests)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_register_pkey_meths(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_register_pkey_meths, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_pkey_meths(ENGINE *e); */
+ENGINE_VOID_FUNC(ENGINE_unregister_pkey_meths, (ENGINE *e), (e))
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_pkey_meths(void); */
+ENGINE_VOID_FUNC_NOARGS(ENGINE_register_all_pkey_meths)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_register_pkey_asn1_meths(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_register_pkey_asn1_meths, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_pkey_asn1_meths(ENGINE *e); */
+ENGINE_VOID_FUNC(ENGINE_unregister_pkey_asn1_meths, (ENGINE *e), (e))
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_pkey_asn1_meths(void); */
+ENGINE_VOID_FUNC_NOARGS(ENGINE_register_all_pkey_asn1_meths)
 #  endif
 
 /*
@@ -411,8 +515,10 @@ OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_pkey_asn1_meths(void);
  * more selective initialisation.
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 int ENGINE_register_complete(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_register_all_complete(void);
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_register_complete(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_register_complete, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_register_all_complete(void); */
+ENGINE_FUNC_NOARGS(int, ENGINE_register_all_complete, 0)
 #  endif
 
 /*
@@ -426,8 +532,12 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_register_all_complete(void);
  * references in such situations.
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p,
-                                      void (*f) (void));
+/*
+ * OSSL_DEPRECATEDIN_3_0 int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p,
+ *                                       void (*f) (void));
+ */
+ENGINE_FUNC(int, ENGINE_ctrl, (ENGINE *e, int cmd, long i, void *p,
+                               void (*f) (void)), (e, cmd, i, p, f), 0)
 #  endif
 
 /*
@@ -437,7 +547,8 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p,
  * ENGINE_ctrl_cmd_string(), only ENGINE_ctrl().
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 int ENGINE_cmd_is_executable(ENGINE *e, int cmd);
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_cmd_is_executable(ENGINE *e, int cmd); */
+ENGINE_FUNC(int, ENGINE_cmd_is_executable, (ENGINE *e, int cmd), (e, cmd), 0)
 #  endif
 
 /*
@@ -447,9 +558,14 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_cmd_is_executable(ENGINE *e, int cmd);
  * on how to use the cmd_name and cmd_optional.
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 int ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name,
-                                          long i, void *p, void (*f) (void),
-                                          int cmd_optional);
+/*
+ * OSSL_DEPRECATEDIN_3_0 int ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name,
+ *                                           long i, void *p, void (*f) (void),
+ *                                           int cmd_optional);
+ */
+ENGINE_FUNC(int, ENGINE_ctrl_cmd, (ENGINE *e, const char *cmd_name, long i,
+                                   void *p, void (*f) (void),
+                                   int cmd_optional), (e, cmd_name, i, p, f), 0)
 #  endif
 
 /*
@@ -475,9 +591,14 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name,
  * same ENGINE-enabled devices, across applications.
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0
-int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
-                           int cmd_optional);
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
+ *                            int cmd_optional);
+ */
+ENGINE_FUNC(int, ENGINE_ctrl_cmd_string,
+            (ENGINE *e, const char *cmd_name, const char *arg, int cmd_optional),
+            (e, cmd_name, arg, cmd_optional), 0)
 #  endif
 
 /*
@@ -489,50 +610,148 @@ int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
  * exposed and break binary compatibility!
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_new(void);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_free(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_up_ref(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_id(ENGINE *e, const char *id);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_name(ENGINE *e, const char *name);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_EC(ENGINE *e, const EC_KEY_METHOD *ecdsa_meth);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth);
-OSSL_DEPRECATEDIN_3_0
-int ENGINE_set_destroy_function(ENGINE *e,ENGINE_GEN_INT_FUNC_PTR destroy_f);
-OSSL_DEPRECATEDIN_3_0
-int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f);
-OSSL_DEPRECATEDIN_3_0
-int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f);
-OSSL_DEPRECATEDIN_3_0
-int ENGINE_set_ctrl_function(ENGINE *e, ENGINE_CTRL_FUNC_PTR ctrl_f);
-OSSL_DEPRECATEDIN_3_0
-int ENGINE_set_load_privkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpriv_f);
-OSSL_DEPRECATEDIN_3_0
-int ENGINE_set_load_pubkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f);
-OSSL_DEPRECATEDIN_3_0
-int ENGINE_set_load_ssl_client_cert_function(ENGINE *e,
-                                             ENGINE_SSL_CLIENT_CERT_PTR loadssl_f);
-OSSL_DEPRECATEDIN_3_0
-int ENGINE_set_ciphers(ENGINE *e, ENGINE_CIPHERS_PTR f);
-OSSL_DEPRECATEDIN_3_0
-int ENGINE_set_digests(ENGINE *e, ENGINE_DIGESTS_PTR f);
-OSSL_DEPRECATEDIN_3_0
-int ENGINE_set_pkey_meths(ENGINE *e, ENGINE_PKEY_METHS_PTR f);
-OSSL_DEPRECATEDIN_3_0
-int ENGINE_set_pkey_asn1_meths(ENGINE *e, ENGINE_PKEY_ASN1_METHS_PTR f);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_flags(ENGINE *e, int flags);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_cmd_defns(ENGINE *e,
-                                               const ENGINE_CMD_DEFN *defns);
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_new(void); */
+ENGINE_FUNC_NOARGS(ENGINE *, ENGINE_new, NULL)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_free(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_free, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_up_ref(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_up_ref, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_set_id(ENGINE *e, const char *id); */
+ENGINE_FUNC(int, ENGINE_set_id, (ENGINE *e, const char *id), (e, id), 0)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_set_name(ENGINE *e, const char *name); */
+ENGINE_FUNC(int, ENGINE_set_name, (ENGINE *e, const char *name), (e, name), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth);
+ */
+ENGINE_FUNC(int, ENGINE_set_RSA, (ENGINE *e, const RSA_METHOD *rsa_meth),
+            (e, rsa_meth), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth);
+ */
+ENGINE_FUNC(int, ENGINE_set_DSA, (ENGINE *e, const DSA_METHOD *dsa_meth),
+            (e, dsa_meth), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_EC(ENGINE *e, const EC_KEY_METHOD *ecdsa_meth);
+ */
+ENGINE_FUNC(int, ENGINE_set_EC, (ENGINE *e, const EC_KEY_METHOD *ecdsa_meth),
+            (e, ecdsa_meth), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
+ */
+ENGINE_FUNC(int, ENGINE_set_DH, (ENGINE *e, const DH_METHOD *dh_meth),
+            (e, dh_meth), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth);
+ */
+ENGINE_FUNC(int, ENGINE_set_RAND, (ENGINE *e, const RAND_METHOD *rand_meth),
+            (e, rand_meth), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_destroy_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR destroy_f);
+ */
+ENGINE_FUNC(int, ENGINE_set_destroy_function,
+            (ENGINE *e, ENGINE_GEN_INT_FUNC_PTR destroy_f),
+            (e, destroy_f), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f);
+ */
+ENGINE_FUNC(int, ENGINE_set_init_function,
+            (ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f),
+            (e, init_f), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f);
+ */
+ENGINE_FUNC(int, ENGINE_set_finish_function,
+            (ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f),
+            (e, finish_f), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_ctrl_function(ENGINE *e, ENGINE_CTRL_FUNC_PTR ctrl_f);
+ */
+ENGINE_FUNC(int, ENGINE_set_ctrl_function,
+            (ENGINE *e, ENGINE_CTRL_FUNC_PTR ctrl_f),
+            (e, ctrl_f), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_load_privkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpriv_f);
+ */
+ENGINE_FUNC(int, ENGINE_set_load_privkey_function,
+            (ENGINE *e, ENGINE_LOAD_KEY_PTR loadpriv_f),
+            (e, loadpriv_f), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_load_pubkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f);
+ */
+ENGINE_FUNC(int, ENGINE_set_load_pubkey_function,
+            (ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f),
+            (e, loadpub_f), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_load_ssl_client_cert_function(ENGINE *e,
+ *                                      ENGINE_SSL_CLIENT_CERT_PTR loadssl_f);
+ */
+ENGINE_FUNC(int, ENGINE_set_load_ssl_client_cert_function,
+            (ENGINE *e, ENGINE_SSL_CLIENT_CERT_PTR loadssl_f),
+            (e, loadssl_f), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_ciphers(ENGINE *e, ENGINE_CIPHERS_PTR f);
+ */
+ENGINE_FUNC(int, ENGINE_set_ciphers, (ENGINE *e, ENGINE_CIPHERS_PTR f), (e, f), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_digests(ENGINE *e, ENGINE_DIGESTS_PTR f);
+ */
+ENGINE_FUNC(int, ENGINE_set_digests, (ENGINE *e, ENGINE_DIGESTS_PTR f), (e, f), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_pkey_meths(ENGINE *e, ENGINE_PKEY_METHS_PTR f);
+ */
+ENGINE_FUNC(int, ENGINE_set_pkey_meths, (ENGINE *e, ENGINE_PKEY_METHS_PTR f),
+            (e, f), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_pkey_asn1_meths(ENGINE *e, ENGINE_PKEY_ASN1_METHS_PTR f);
+ */
+ENGINE_FUNC(int, ENGINE_set_pkey_asn1_meths, (ENGINE *e, ENGINE_PKEY_ASN1_METHS_PTR f),
+            (e, f), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0 int ENGINE_set_flags(ENGINE *e, int flags);
+ */
+ENGINE_FUNC(int, ENGINE_set_flags, (ENGINE *e, int flags), (e, flags), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
+ */
+ENGINE_FUNC(int, ENGINE_set_cmd_defns, (ENGINE *e, const ENGINE_CMD_DEFN *defns),
+            (e, defns), 0)
 #  endif
 /* These functions allow control over any per-structure ENGINE data. */
-#  define ENGINE_get_ex_new_index(l, p, newf, dupf, freef) \
+#  ifndef OPENSSL_ENGINE_STUBS
+#   define ENGINE_get_ex_new_index(l, p, newf, dupf, freef) \
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_ENGINE, l, p, newf, dupf, freef)
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
-OSSL_DEPRECATEDIN_3_0 void *ENGINE_get_ex_data(const ENGINE *e, int idx);
-# endif
+#  else
+ENGINE_FUNC(int, ENGINE_get_ex_new_index, (long l, void *p, CRYPTO_EX_new *newf,
+                                           CRYPTO_EX_dup *dupf, CRYPTO_EX_free *freef),
+            (l, p, newf, dupf, freef), 0)
+#  endif
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
+ */
+ENGINE_FUNC(int, ENGINE_set_ex_data, (ENGINE *e, int idx, void *arg),
+            (e, idx, arg), 0)
+/* OSSL_DEPRECATEDIN_3_0 void *ENGINE_get_ex_data(const ENGINE *e, int idx); */
+ENGINE_FUNC(void *, ENGINE_get_ex_data, (ENGINE *e, int idx), (e, idx), NULL)
+#  endif
 
 #  ifndef OPENSSL_NO_DEPRECATED_1_1_0
 /*
@@ -549,53 +768,132 @@ OSSL_DEPRECATEDIN_3_0 void *ENGINE_get_ex_data(const ENGINE *e, int idx);
  * obtained a structural reference may be problematic!
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 const char *ENGINE_get_id(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 const char *ENGINE_get_name(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 const RSA_METHOD *ENGINE_get_RSA(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 const EC_KEY_METHOD *ENGINE_get_EC(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0
-ENGINE_GEN_INT_FUNC_PTR ENGINE_get_destroy_function(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0
-ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0
-ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0
-ENGINE_CTRL_FUNC_PTR ENGINE_get_ctrl_function(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0
-ENGINE_LOAD_KEY_PTR ENGINE_get_load_privkey_function(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0
-ENGINE_LOAD_KEY_PTR ENGINE_get_load_pubkey_function(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0
-ENGINE_SSL_CLIENT_CERT_PTR ENGINE_get_ssl_client_cert_function(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0
-ENGINE_CIPHERS_PTR ENGINE_get_ciphers(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0
-ENGINE_DIGESTS_PTR ENGINE_get_digests(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0
-ENGINE_PKEY_METHS_PTR ENGINE_get_pkey_meths(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0
-ENGINE_PKEY_ASN1_METHS_PTR ENGINE_get_pkey_asn1_meths(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0
-const EVP_CIPHER *ENGINE_get_cipher(ENGINE *e, int nid);
-OSSL_DEPRECATEDIN_3_0
-const EVP_MD *ENGINE_get_digest(ENGINE *e, int nid);
-OSSL_DEPRECATEDIN_3_0
-const EVP_PKEY_METHOD *ENGINE_get_pkey_meth(ENGINE *e, int nid);
-OSSL_DEPRECATEDIN_3_0
-const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth(ENGINE *e, int nid);
-OSSL_DEPRECATEDIN_3_0
-const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth_str(ENGINE *e,
-                                                          const char *str,
-                                                          int len);
-OSSL_DEPRECATEDIN_3_0
-const EVP_PKEY_ASN1_METHOD *ENGINE_pkey_asn1_find_str(ENGINE **pe,
-                                                      const char *str, int len);
-OSSL_DEPRECATEDIN_3_0
-const ENGINE_CMD_DEFN *ENGINE_get_cmd_defns(const ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_get_flags(const ENGINE *e);
+/* OSSL_DEPRECATEDIN_3_0 const char *ENGINE_get_id(const ENGINE *e); */
+ENGINE_FUNC(const char *, ENGINE_get_id, (const ENGINE *e), (e), NULL)
+/* OSSL_DEPRECATEDIN_3_0 const char *ENGINE_get_name(const ENGINE *e); */
+ENGINE_FUNC(const char *, ENGINE_get_name, (const ENGINE *e), (e), NULL)
+/* OSSL_DEPRECATEDIN_3_0 const RSA_METHOD *ENGINE_get_RSA(const ENGINE *e); */
+ENGINE_FUNC(const RSA_METHOD *, ENGINE_get_RSA, (const ENGINE *e), (e), NULL)
+/* OSSL_DEPRECATEDIN_3_0 const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e); */
+ENGINE_FUNC(const DSA_METHOD *, ENGINE_get_DSA, (const ENGINE *e), (e), NULL)
+/* OSSL_DEPRECATEDIN_3_0 const EC_KEY_METHOD *ENGINE_get_EC(const ENGINE *e); */
+ENGINE_FUNC(const EC_KEY_METHOD *, ENGINE_get_EC, (const ENGINE *e), (e), NULL)
+/* OSSL_DEPRECATEDIN_3_0 const DH_METHOD *ENGINE_get_DH(const ENGINE *e); */
+ENGINE_FUNC(const DH_METHOD *, ENGINE_get_DH, (const ENGINE *e), (e), NULL)
+/* OSSL_DEPRECATEDIN_3_0 const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e); */
+ENGINE_FUNC(const RAND_METHOD *, ENGINE_get_RAND, (const ENGINE *e), (e), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * ENGINE_GEN_INT_FUNC_PTR ENGINE_get_destroy_function(const ENGINE *e);
+ */
+ENGINE_FUNC(ENGINE_GEN_INT_FUNC_PTR, ENGINE_get_destroy_function,
+            (const ENGINE *e), (e), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(const ENGINE *e);
+ */
+ENGINE_FUNC(ENGINE_GEN_INT_FUNC_PTR, ENGINE_get_init_function,
+            (const ENGINE *e), (e), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e);
+ */
+ENGINE_FUNC(ENGINE_GEN_INT_FUNC_PTR, ENGINE_get_finish_function,
+            (const ENGINE *e), (e), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * ENGINE_CTRL_FUNC_PTR ENGINE_get_ctrl_function(const ENGINE *e);
+ */
+ENGINE_FUNC(ENGINE_CTRL_FUNC_PTR, ENGINE_get_ctrl_function,
+            (const ENGINE *e), (e), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * ENGINE_LOAD_KEY_PTR ENGINE_get_load_privkey_function(const ENGINE *e);
+ */
+ENGINE_FUNC(ENGINE_LOAD_KEY_PTR, ENGINE_get_load_privkey_function,
+            (const ENGINE *e), (e), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * ENGINE_LOAD_KEY_PTR ENGINE_get_load_pubkey_function(const ENGINE *e);
+ */
+ENGINE_FUNC(ENGINE_LOAD_KEY_PTR, ENGINE_get_load_pubkey_function,
+            (const ENGINE *e), (e), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0 ENGINE_SSL_CLIENT_CERT_PTR
+ * ENGINE_get_ssl_client_cert_function(const ENGINE *e);
+ */
+ENGINE_FUNC(ENGINE_SSL_CLIENT_CERT_PTR, ENGINE_get_ssl_client_cert_function,
+            (const ENGINE *e), (e), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * ENGINE_CIPHERS_PTR ENGINE_get_ciphers(const ENGINE *e);
+ */
+ENGINE_FUNC(ENGINE_CIPHERS_PTR, ENGINE_get_ciphers,
+            (const ENGINE *e), (e), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * ENGINE_DIGESTS_PTR ENGINE_get_digests(const ENGINE *e);
+ */
+ENGINE_FUNC(ENGINE_DIGESTS_PTR, ENGINE_get_digests,
+            (const ENGINE *e), (e), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * ENGINE_PKEY_METHS_PTR ENGINE_get_pkey_meths(const ENGINE *e);
+ */
+ENGINE_FUNC(ENGINE_PKEY_METHS_PTR, ENGINE_get_pkey_meths,
+            (const ENGINE *e), (e), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * ENGINE_PKEY_ASN1_METHS_PTR ENGINE_get_pkey_asn1_meths(const ENGINE *e);
+ */
+ENGINE_FUNC(ENGINE_PKEY_ASN1_METHS_PTR, ENGINE_get_pkey_asn1_meths,
+            (const ENGINE *e), (e), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * const EVP_CIPHER *ENGINE_get_cipher(ENGINE *e, int nid);
+ */
+ENGINE_FUNC(const EVP_CIPHER *, ENGINE_get_cipher,
+            (ENGINE *e, int nid), (e, nid), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * const EVP_MD *ENGINE_get_digest(ENGINE *e, int nid);
+ */
+ENGINE_FUNC(const EVP_MD *, ENGINE_get_digest,
+            (ENGINE *e, int nid), (e, nid), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * const EVP_PKEY_METHOD *ENGINE_get_pkey_meth(ENGINE *e, int nid);
+ */
+ENGINE_FUNC(const EVP_PKEY_METHOD *, ENGINE_get_pkey_meth,
+            (ENGINE *e, int nid), (e, nid), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth(ENGINE *e, int nid);
+ */
+ENGINE_FUNC(const EVP_PKEY_ASN1_METHOD *, ENGINE_get_pkey_asn1_meth,
+            (ENGINE *e, int nid), (e, nid), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth_str(ENGINE *e,
+ *                                             const char *str, int len);
+ */
+ENGINE_FUNC(const EVP_PKEY_ASN1_METHOD *, ENGINE_get_pkey_asn1_meth_str,
+            (ENGINE *e, const char *str, int len), (e, str, len), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * const EVP_PKEY_ASN1_METHOD *ENGINE_pkey_asn1_find_str(ENGINE **pe,
+ *                                             const char *str, int len);
+ */
+ENGINE_FUNC(const EVP_PKEY_ASN1_METHOD *, ENGINE_pkey_asn1_find_str,
+            (ENGINE **pe, const char *str, int len), (pe, str, len), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * const ENGINE_CMD_DEFN *ENGINE_get_cmd_defns(const ENGINE *e);
+ */
+ENGINE_FUNC(const ENGINE_CMD_DEFN *, ENGINE_get_cmd_defns,
+            (const ENGINE *e), (e), NULL)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_get_flags(const ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_get_flags, (const ENGINE *e), (e), 0)
 #  endif
 
 /*
@@ -617,7 +915,8 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_get_flags(const ENGINE *e);
  * and cannot initialise.
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 int ENGINE_init(ENGINE *e);
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_init(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_init, (ENGINE *e), (e), 0)
 #  endif
 /*
  * Free a functional reference to an engine type. This does not require a
@@ -625,7 +924,8 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_init(ENGINE *e);
  * reference.
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 int ENGINE_finish(ENGINE *e);
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_finish(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_finish, (ENGINE *e), (e), 0)
 #  endif
 
 /*
@@ -634,17 +934,36 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_finish(ENGINE *e);
  * whatever.
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0
-EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
-                                  UI_METHOD *ui_method, void *callback_data);
-OSSL_DEPRECATEDIN_3_0
-EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
-                                 UI_METHOD *ui_method, void *callback_data);
-OSSL_DEPRECATEDIN_3_0
-int ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s, STACK_OF(X509_NAME) *ca_dn,
-                                X509 **pcert, EVP_PKEY **ppkey,
-                                STACK_OF(X509) **pother,
-                                UI_METHOD *ui_method, void *callback_data);
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
+ *                                   UI_METHOD *ui_method, void *callback_data);
+ */
+ENGINE_FUNC(EVP_PKEY *, ENGINE_load_private_key,
+            (ENGINE *e, const char *key_id, UI_METHOD *ui_method,
+             void *callback_data),
+            (e, key_id, ui_method, callback_data), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
+ *                                  UI_METHOD *ui_method, void *callback_data);
+ */
+ENGINE_FUNC(EVP_PKEY *, ENGINE_load_public_key,
+            (ENGINE *e, const char *key_id, UI_METHOD *ui_method,
+             void *callback_data),
+            (e, key_id, ui_method, callback_data), NULL)
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s, STACK_OF(X509_NAME) *ca_dn,
+ *                                 X509 **pcert, EVP_PKEY **ppkey,
+ *                                 STACK_OF(X509) **pother,
+ *                                 UI_METHOD *ui_method, void *callback_data);
+ */
+ENGINE_FUNC(int, ENGINE_load_ssl_client_cert,
+            (ENGINE *e, SSL *s, STACK_OF(X509_NAME) *ca_dn, X509 **pcert,
+             EVP_PKEY **ppkey, STACK_OF(X509) **pother, UI_METHOD *ui_method,
+             void *callback_data),
+            (e, s, ca_dn, pcert, ppkey, pother, ui_method, callback_data), 0)
 #  endif
 
 /*
@@ -654,24 +973,33 @@ int ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s, STACK_OF(X509_NAME) *ca_dn,
  * discarded.
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_default_RSA(void);
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_default_RSA(void); */
+ENGINE_FUNC_NOARGS(ENGINE *, ENGINE_get_default_RSA, NULL)
 #  endif
 /* Same for the other "methods" */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_default_DSA(void);
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_default_EC(void);
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_default_DH(void);
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_default_RAND(void);
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_default_DSA(void); */
+ENGINE_FUNC_NOARGS(ENGINE *, ENGINE_get_default_DSA, NULL)
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_default_EC(void); */
+ENGINE_FUNC_NOARGS(ENGINE *, ENGINE_get_default_EC, NULL)
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_default_DH(void); */
+ENGINE_FUNC_NOARGS(ENGINE *, ENGINE_get_default_DH, NULL)
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_default_RAND(void); */
+ENGINE_FUNC_NOARGS(ENGINE *, ENGINE_get_default_RAND, NULL)
 #  endif
 /*
  * These functions can be used to get a functional reference to perform
  * ciphering or digesting corresponding to "nid".
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_cipher_engine(int nid);
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_digest_engine(int nid);
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_pkey_meth_engine(int nid);
-OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_pkey_asn1_meth_engine(int nid);
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_cipher_engine(int nid); */
+ENGINE_FUNC(ENGINE *, ENGINE_get_cipher_engine, (int nid), (nid), NULL)
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_digest_engine(int nid); */
+ENGINE_FUNC(ENGINE *, ENGINE_get_digest_engine, (int nid), (nid), NULL)
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_pkey_meth_engine(int nid); */
+ENGINE_FUNC(ENGINE *, ENGINE_get_pkey_meth_engine, (int nid), (nid), NULL)
+/* OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_pkey_asn1_meth_engine(int nid); */
+ENGINE_FUNC(ENGINE *, ENGINE_get_pkey_asn1_meth_engine, (int nid), (nid), NULL)
 #  endif
 
 /*
@@ -681,20 +1009,33 @@ OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_pkey_asn1_meth_engine(int nid);
  * reference 'e'.
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_RSA(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_string(ENGINE *e,
-                                                    const char *def_list);
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_RSA(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_set_default_RSA, (ENGINE *e), (e), 0)
+/*
+ * OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_string(ENGINE *e,
+ *                                                     const char *def_list);
+ */
+ENGINE_FUNC(int, ENGINE_set_default_string, (ENGINE *e, const char *def_list),
+            (e, def_list), 0)
 #  endif
 /* Same for the other "methods" */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_DSA(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_EC(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_DH(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_RAND(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_ciphers(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_digests(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_pkey_meths(ENGINE *e);
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_pkey_asn1_meths(ENGINE *e);
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_DSA(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_set_default_DSA, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_EC(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_set_default_EC, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_DH(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_set_default_DH, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_RAND(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_set_default_RAND, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_ciphers(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_set_default_ciphers, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_digests(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_set_default_digests, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_pkey_meths(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_set_default_pkey_meths, (ENGINE *e), (e), 0)
+/* OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_pkey_asn1_meths(ENGINE *e); */
+ENGINE_FUNC(int, ENGINE_set_default_pkey_asn1_meths, (ENGINE *e), (e), 0)
 #  endif
 
 /*
@@ -705,8 +1046,14 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default_pkey_asn1_meths(ENGINE *e);
  * selective functions.
  */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 int ENGINE_set_default(ENGINE *e, unsigned int flags);
-OSSL_DEPRECATEDIN_3_0 void ENGINE_add_conf_module(void);
+/*
+ * OSSL_DEPRECATEDIN_3_0
+ * int ENGINE_set_default(ENGINE *e, unsigned int flags);
+ */
+ENGINE_FUNC(int, ENGINE_set_default, (ENGINE *e, unsigned int flags),
+            (e, flags), 0)
+/* OSSL_DEPRECATEDIN_3_0 void ENGINE_add_conf_module(void); */
+ENGINE_VOID_FUNC_NOARGS(ENGINE_add_conf_module)
 #  endif
 
 /* Deprecated functions ... */
@@ -817,11 +1164,13 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
  * static data and let the loading application and loaded ENGINE compare
  * their respective values.
  */
-void *ENGINE_get_static_state(void);
+/* void *ENGINE_get_static_state(void); */
+ENGINE_FUNC_NOARGS(void *, ENGINE_get_static_state, NULL)
 
 #  if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
 #   ifndef OPENSSL_NO_DEPRECATED_1_1_0
-OSSL_DEPRECATEDIN_1_1_0 void ENGINE_setup_bsd_cryptodev(void);
+/* OSSL_DEPRECATEDIN_1_1_0 void ENGINE_setup_bsd_cryptodev(void); */
+ENGINE_VOID_FUNC_NOARGS(ENGINE_setup_bsd_cryptodev)
 #   endif
 #  endif
 
@@ -829,5 +1178,11 @@ OSSL_DEPRECATEDIN_1_1_0 void ENGINE_setup_bsd_cryptodev(void);
 #  ifdef  __cplusplus
 }
 #  endif
-# endif /* OPENSSL_NO_ENGINE */
+
+#  undef ENGINE_INFO_MSG
+#  undef ENGINE_FUNC
+#  undef ENGINE_VOID_FUNC
+#  undef ENGINE_FUNC_NOARGS
+#  undef ENGINE_VOID_FUNC_NOARGS
+# endif
 #endif  /* OPENSSL_ENGINE_H */
