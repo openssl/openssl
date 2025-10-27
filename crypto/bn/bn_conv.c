@@ -178,7 +178,7 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
         }
         j -= BN_BYTES * 2;
     }
-    ret->top = h;
+    bn_set_top(ret, h);
     bn_correct_top(ret);
 
     *bn = ret;
