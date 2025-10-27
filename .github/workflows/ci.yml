@@ -180,11 +180,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   no-shared-macos:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-14, macos-14-large]
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-14
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -347,11 +343,7 @@ jobs:
       working-directory: ./build
 
   out-of-readonly-source-and-install-macos:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-15, macos-15-large]
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-15
     steps:
     - uses: actions/checkout@v4
       with:
