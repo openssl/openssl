@@ -66,7 +66,7 @@ BIGNUM *BN_mpi2bn(const unsigned char *d, int n, BIGNUM *ain)
 
     if (len == 0) {
         a->neg = 0;
-        a->top = 0;
+        bn_set_top(a, 0);
         return a;
     }
     d += 4;

@@ -96,7 +96,7 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     if (bn_wexpand(r, max + 1) == NULL)
         return 0;
 
-    r->top = max;
+    bn_set_top(r, max);
 
     ap = a->d;
     bp = b->d;
@@ -114,7 +114,7 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
         carry &= (t2 == 0);
     }
     *rp = carry;
-    r->top += (int)carry;
+    bn_set_top(r, r->top + (int)carry);
 
     r->neg = 0;
     bn_check_top(r);
@@ -162,9 +162,8 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     while (max && *--rp == 0)
         max--;
 
-    r->top = max;
+    bn_set_top(r, max);
     r->neg = 0;
-    bn_pollute(r);
 
     return 1;
 }

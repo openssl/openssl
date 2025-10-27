@@ -404,7 +404,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         r->d[0] = (0 - m->d[0]) & BN_MASK2;
         for (i = 1; i < j; i++)
             r->d[i] = (~m->d[i]) & BN_MASK2;
-        r->top = j;
+        bn_set_top(r, j);
         r->flags |= BN_FLG_FIXED_TOP;
     } else
 #endif
@@ -470,7 +470,8 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         val[0]->d[0] = 1;       /* borrow val[0] */
         for (i = 1; i < j; i++)
             val[0]->d[i] = 0;
-        val[0]->top = j;
+        bn_set_top(val[0], j);
+        val[0]->flags |= BN_FLG_FIXED_TOP;
         if (!BN_mod_mul_montgomery(rr, r, val[0], mont, ctx))
             goto err;
     } else
@@ -587,7 +588,7 @@ static int MOD_EXP_CTIME_COPY_FROM_PREBUF(BIGNUM *b, int top,
         }
     }
 
-    b->top = top;
+    bn_set_top(b, top);
     b->flags |= BN_FLG_FIXED_TOP;
     return 1;
 }
@@ -687,7 +688,7 @@ int bn_mod_exp_mont_fixed_top(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
             goto err;
         RSAZ_1024_mod_exp_avx2(rr->d, a->d, p->d, m->d, mont->RR.d,
                                mont->n0[0]);
-        rr->top = 16;
+        bn_set_top(rr, 16);
         rr->neg = 0;
         bn_correct_top(rr);
         ret = 1;
@@ -696,7 +697,7 @@ int bn_mod_exp_mont_fixed_top(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         if (NULL == bn_wexpand(rr, 8))
             goto err;
         RSAZ_512_mod_exp(rr->d, a->d, p->d, m->d, mont->n0[0], mont->RR.d);
-        rr->top = 8;
+        bn_set_top(rr, 8);
         rr->neg = 0;
         bn_correct_top(rr);
         ret = 1;
@@ -1510,12 +1511,12 @@ int BN_mod_exp_mont_consttime_x2(BIGNUM *rr1, const BIGNUM *a1, const BIGNUM *p1
                                           mont2->RR.d, mont2->n0[0],
                                           mod_bits);
 
-        rr1->top = topn;
+        bn_set_top(rr1, topn);
         rr1->neg = 0;
         bn_correct_top(rr1);
         bn_check_top(rr1);
 
-        rr2->top = topn;
+        bn_set_top(rr2, topn);
         rr2->neg = 0;
         bn_correct_top(rr2);
         bn_check_top(rr2);

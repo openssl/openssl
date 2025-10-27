@@ -459,7 +459,7 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
         ? r_d
         : c_d;
     nist_cp_bn(r_d, res, BN_NIST_192_TOP);
-    r->top = BN_NIST_192_TOP;
+    bn_set_top(r, BN_NIST_192_TOP);
     bn_correct_top(r);
 
     return 1;
@@ -633,7 +633,7 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
         ? r_d
         : c_d;
     nist_cp_bn(r_d, res, BN_NIST_224_TOP);
-    r->top = BN_NIST_224_TOP;
+    bn_set_top(r, BN_NIST_224_TOP);
     bn_correct_top(r);
 
     return 1;
@@ -866,7 +866,7 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
         ? r_d
         : c_d;
     nist_cp_bn(r_d, res, BN_NIST_256_TOP);
-    r->top = BN_NIST_256_TOP;
+    bn_set_top(r, BN_NIST_256_TOP);
     bn_correct_top(r);
 
     return 1;
@@ -1138,7 +1138,7 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
         ? r_d
         : c_d;
     nist_cp_bn(r_d, res, BN_NIST_384_TOP);
-    r->top = BN_NIST_384_TOP;
+    bn_set_top(r, BN_NIST_384_TOP);
     bn_correct_top(r);
 
     return 1;
@@ -1210,7 +1210,7 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
         ? r_d
         : t_d;
     nist_cp_bn(r_d, res, BN_NIST_521_TOP);
-    r->top = BN_NIST_521_TOP;
+    bn_set_top(r, BN_NIST_521_TOP);
     bn_correct_top(r);
 
     return 1;
