@@ -372,7 +372,7 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
             ossl_fn_copy_internal_limbs(a->data, b->d, bn_words);
     }
     a->neg = b->neg;
-    a->top = b->top;
+    bn_set_top(a, b->top);
     a->flags |= b->flags & BN_FLG_FIXED_TOP;
     bn_check_top(a);
     return a;
@@ -428,7 +428,7 @@ void BN_clear(BIGNUM *a)
     else if (a->d != NULL)
         OPENSSL_cleanse(a->d, sizeof(*a->d) * a->dmax);
     a->neg = 0;
-    a->top = 0;
+    bn_set_top(a, 0);
     a->flags &= ~BN_FLG_FIXED_TOP;
 }
 
@@ -449,7 +449,7 @@ int BN_set_word(BIGNUM *a, BN_ULONG w)
         return 0;
     a->neg = 0;
     a->d[0] = w;
-    a->top = (w ? 1 : 0);
+    bn_set_top(a, (w ? 1 : 0));
     a->flags &= ~BN_FLG_FIXED_TOP;
     bn_check_top(a);
     return 1;
@@ -531,7 +531,7 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
     }
     /* If it was all zeros, we're done */
     if (len == 0) {
-        ret->top = 0;
+        bn_set_top(ret, 0);
         return ret;
     }
     n = ((len - 1) / BN_BYTES) + 1; /* Number of resulting bignum chunks */
@@ -539,7 +539,7 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
         BN_free(bn);
         return NULL;
     }
-    ret->top = n;
+    bn_set_top(ret, n);
     ret->neg = neg;
     for (i = 0; n-- > 0; i++) {
         BN_ULONG l = 0; /* Accumulator */
@@ -820,7 +820,7 @@ int BN_cmp(const BIGNUM *a, const BIGNUM *b)
 
 int BN_set_bit(BIGNUM *a, int n)
 {
-    int i, j, k;
+    int i, j;
 
     if (n < 0)
         return 0;
@@ -830,9 +830,12 @@ int BN_set_bit(BIGNUM *a, int n)
     if (a->top <= i) {
         if (bn_wexpand(a, i + 1) == NULL)
             return 0;
-        for (k = a->top; k < i + 1; k++)
-            a->d[k] = 0;
-        a->top = i + 1;
+        /*
+         * If 'a' is actually expanded, we know that the expanded
+         * part of the 'd' array is zeroed during allocation, so
+         * no need to zero it again here.
+         */
+        bn_set_top(a, i + 1);
         a->flags &= ~BN_FLG_FIXED_TOP;
     }
 
@@ -885,9 +888,9 @@ int ossl_bn_mask_bits_fixed_top(BIGNUM *a, int n)
     if (w >= a->top)
         return 0;
     if (b == 0)
-        a->top = w;
+        bn_set_top(a, w);
     else {
-        a->top = w + 1;
+        bn_set_top(a, w + 1);
         a->d[w] &= ~(BN_MASK2 << b);
     }
     a->flags |= BN_FLG_FIXED_TOP;
@@ -1054,7 +1057,7 @@ int BN_security_bits(int L, int N)
 void BN_zero_ex(BIGNUM *a)
 {
     a->neg = 0;
-    a->top = 0;
+    bn_set_top(a, 0);
     a->flags &= ~BN_FLG_FIXED_TOP;
 }
 
@@ -1065,7 +1068,12 @@ int BN_abs_is_word(const BIGNUM *a, const BN_ULONG w)
 
 int BN_is_zero(const BIGNUM *a)
 {
-    return a->top == 0;
+    if ((a->flags & BN_FLG_FIXED_TOP) == 0)
+        return a->top == 0;
+    for (size_t i = a->top; i-- > 0;)
+        if (a->d[i] != (BN_ULONG)0)
+            return 0;
+    return 1;
 }
 
 int BN_is_one(const BIGNUM *a)
@@ -1196,6 +1204,11 @@ void bn_correct_top_consttime(BIGNUM *a)
     }
 
     mask = constant_time_eq_int(atop, 0);
+    /*
+     * We just went through the whole 'd' array to identify where
+     * any leading set of zeros are located, so there's no need to
+     * call bn_set_top() here.
+     */
     a->top = atop;
     a->neg = constant_time_select_int(mask, 0, a->neg);
     a->flags &= ~BN_FLG_FIXED_TOP;
@@ -1212,10 +1225,14 @@ void bn_correct_top(BIGNUM *a)
             if (*ftl != 0)
                 break;
         }
+        /*
+         * We just verified that the BN_ULONGs between a->top and
+         * tmp_top are all zero, so there's no need to call
+         * bn_set_top() here.
+         */
         a->top = tmp_top;
     }
     if (a->top == 0)
         a->neg = 0;
     a->flags &= ~BN_FLG_FIXED_TOP;
-    bn_pollute(a);
 }
