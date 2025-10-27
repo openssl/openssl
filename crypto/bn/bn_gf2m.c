@@ -267,7 +267,7 @@ int BN_GF2m_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
         r->d[i] = at->d[i];
     }
 
-    r->top = at->top;
+    bn_set_top(r, at->top);
     bn_correct_top(r);
 
     return 1;
@@ -305,7 +305,7 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
         for (j = 0; j < a->top; j++) {
             r->d[j] = a->d[j];
         }
-        r->top = a->top;
+        bn_set_top(r, a->top);
     }
     z = r->d;
 
@@ -419,7 +419,7 @@ int BN_GF2m_mod_mul_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     zlen = a->top + b->top + 4;
     if (!bn_wexpand(s, zlen))
         goto err;
-    s->top = zlen;
+    bn_set_top(s, zlen);
 
     for (i = 0; i < zlen; i++)
         s->d[i] = 0;
@@ -498,7 +498,7 @@ int BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const int p[],
         s->d[2 * i] = SQR0(a->d[i]);
     }
 
-    s->top = 2 * a->top;
+    bn_set_top(s, 2 * a->top);
     bn_correct_top(s);
     if (!BN_GF2m_mod_arr(r, s, p))
         goto err;
@@ -618,20 +618,20 @@ static int BN_GF2m_mod_inv_vartime(BIGNUM *r, const BIGNUM *a,
         udp = u->d;
         for (i = u->top; i < top; i++)
             udp[i] = 0;
-        u->top = top;
+        bn_set_top(u, top);
         if (!bn_wexpand(b, top))
             goto err;
         bdp = b->d;
         bdp[0] = 1;
         for (i = 1; i < top; i++)
             bdp[i] = 0;
-        b->top = top;
+        bn_set_top(b, top);
         if (!bn_wexpand(c, top))
             goto err;
         cdp = c->d;
         for (i = 0; i < top; i++)
             cdp[i] = 0;
-        c->top = top;
+        bn_set_top(c, top);
         vdp = v->d; /* It pays off to "cache" *->d pointers,
                      * because it allows optimizer to be more
                      * aggressive. But we don't have to "cache"
