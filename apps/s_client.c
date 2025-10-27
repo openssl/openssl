@@ -2233,10 +2233,7 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
         if (!SSL_set_session(con, sess)) {
-# ifndef OPENSSL_NO_ECH
-            /* Nothing to do with ECH, but a missing free here */
             SSL_SESSION_free(sess);
-# endif
             BIO_printf(bio_err, "Can't set session\n");
             goto end;
         }
@@ -2259,34 +2256,33 @@ int s_client_main(int argc, char **argv)
     }
 
 # ifndef OPENSSL_NO_ECH
-    if (ech_config_list != NULL
-        && SSL_set1_ech_config_list(con, (unsigned char *)ech_config_list,
-                                    strlen(ech_config_list)) != 1) {
-        BIO_printf(bio_err, "%s: error setting ECHConfigList.\n", prog);
-        goto end;
-    }
-    if (ech_config_list != NULL && sni_outer_name != NULL) {
-        rv = 0;
-        if (OPENSSL_strcasecmp(sni_outer_name, OSSL_ECH_NAME_NONE) == 0)
-            rv = SSL_ech_set1_outer_server_name(con, NULL, 1);
-        else
-            rv = SSL_ech_set1_outer_server_name(con, sni_outer_name, 0);
-        if (rv != 1) {
-            BIO_printf(bio_err, "%s: setting ECH outer name to %s failed.\n",
-                       prog, sni_outer_name);
-            ERR_print_errors(bio_err);
+    if (ech_config_list != NULL) {
+        if (SSL_set1_ech_config_list(con, (unsigned char *)ech_config_list,
+                                     strlen(ech_config_list)) != 1) {
+            BIO_printf(bio_err, "%s: error setting ECHConfigList.\n", prog);
             goto end;
         }
-    }
-    if (ech_config_list != NULL && ech_inner_name != NULL) {
-        if (ech_inner_name != NULL
-            && OPENSSL_strcasecmp(ech_inner_name, OSSL_ECH_NAME_NONE) != 0) {
-            if (!X509_VERIFY_PARAM_set1_host(vpm, ech_inner_name,
-                                             strlen(ech_inner_name))
-                || !SSL_CTX_set1_param(ctx, vpm)) {
-                BIO_printf(bio_err, "Error setting verify params.\n");
+        if (sni_outer_name != NULL) {
+            rv = 0;
+            if (OPENSSL_strcasecmp(sni_outer_name, OSSL_ECH_NAME_NONE) == 0)
+                rv = SSL_ech_set1_outer_server_name(con, NULL, 1);
+            else
+                rv = SSL_ech_set1_outer_server_name(con, sni_outer_name, 0);
+            if (rv != 1) {
+                BIO_printf(bio_err, "%s: setting ECH outer name to %s failed.\n",
+                           prog, sni_outer_name);
                 ERR_print_errors(bio_err);
                 goto end;
+            }
+        }
+        if (ech_inner_name != NULL) {
+            if (OPENSSL_strcasecmp(ech_inner_name, OSSL_ECH_NAME_NONE) != 0) {
+                if (SSL_set1_host(con, ech_inner_name) != 1) {
+                    BIO_printf(bio_err, "Error setting ECH inner to %s.\n",
+                               ech_inner_name);
+                    ERR_print_errors(bio_err);
+                    goto end;
+                }
             }
         }
     }

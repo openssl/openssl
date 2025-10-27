@@ -453,9 +453,7 @@ typedef struct tlsextctx_st {
     char *servername;
     BIO *biodebug;
     int extension_error;
-# ifndef OPENSSL_NO_ECH
-    X509 *scert; /* Not an ECH thing, but ECH needs 2nd cert for testing */
-# endif
+    X509 *scert; /* ECH needs 2nd cert for testing */
 } tlsextctx;
 
 # ifndef OPENSSL_NO_ECH
@@ -537,6 +535,7 @@ static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
         if (res == 0)
             res = getnameinfo(sa, salen, clientip, INET6_ADDRSTRLEN,
                               0, 0, NI_NUMERICHOST);
+        /* TODO(ECH): test if the below is needed */
         if (res != 0)
             strncpy(clientip, "dunno", INET6_ADDRSTRLEN);
     }
@@ -1564,12 +1563,7 @@ int s_server_main(int argc, char *argv[])
     OPTION_CHOICE o;
     EVP_PKEY *s_key2 = NULL;
     X509 *s_cert2 = NULL;
-# ifndef OPENSSL_NO_ECH
-    /* again the added field isn't really ECH specific */
     tlsextctx tlsextcbp = { NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING, NULL };
-# else
-    tlsextctx tlsextcbp = { NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING };
-# endif
     const char *ssl_config = NULL;
     int read_buf_len = 0;
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -2726,15 +2720,12 @@ int s_server_main(int argc, char *argv[])
     if (alpn_ctx.data)
         SSL_CTX_set_alpn_select_cb(ctx, alpn_cb, &alpn_ctx);
 
-# ifndef OPENSSL_NO_ECH
     /*
      * If we have a 2nd context to which we might switch, then set
-     * the same alpn callback for that too. (Note: this isn't
-     * really ECH-specific, it probaby ought happen in any case.)
+     * the same alpn callback for that too.
      */
     if (s_cert2 != NULL && alpn_ctx.data != NULL)
         SSL_CTX_set_alpn_select_cb(ctx2, alpn_cb, &alpn_ctx);
-# endif
 
     if (!no_dhe) {
         EVP_PKEY *dhpkey = NULL;
