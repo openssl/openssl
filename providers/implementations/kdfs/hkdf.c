@@ -507,12 +507,6 @@ static int kdf_hkdf_fixed_digest_set_ctx_params(void *vctx, const OSSL_PARAM par
     if (ctx == NULL || !hkdf_fixed_digest_set_ctx_params_decoder(params, &p))
         return 0;
 
-    if (p.digest != NULL) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
-                       "Setting the digest is not supported for fixed-digest HKDFs");
-        return 0;
-    }
-
     if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, p.ind_k))
         return 0;
 
