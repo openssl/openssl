@@ -845,7 +845,7 @@ The subject and the public key contained in this certificate
 serve as fallback values in the certificate template of IR/CR/KUR messages.
 
 The subject of this certificate will be used as sender of outgoing CMP messages,
-while the subject of B<-oldcert> or B<-subjectName> may provide fallback values.
+while the subject of B<-oldcert> or B<-subject> may provide fallback values.
 
 The issuer of this certificate is used as one of the recipient fallback values
 and as fallback issuer entry in the certificate template of IR/CR/KUR messages.
