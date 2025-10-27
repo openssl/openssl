@@ -410,11 +410,18 @@ static int sk_X509_contains(STACK_OF(X509) *sk, X509 *cert)
  * better not set |check_signing_allowed|.
  * Maybe not touch X509_STORE_CTX_get1_issuer(), for API backward compatibility.
  */
+/*
+ * Note: RFCs 3280 and 4158 do not allow eliminating a certificate solely
+ * because of an AKID mismatch. We prioritise candidates based on the level
+ * of AKID's matching.
+ */
 static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
                                  int no_dup, STACK_OF(X509) *sk, X509 *x)
 {
     int i;
     X509 *candidate, *issuer = NULL;
+    int candidate_rate;
+    int issuer_rate = 0;
 
     for (i = 0; i < sk_X509_num(sk); i++) {
         candidate = sk_X509_value(sk, i);
@@ -422,21 +429,30 @@ static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
             && !((x->ex_flags & EXFLAG_SI) != 0 && sk_X509_num(ctx->chain) == 1)
             && sk_X509_contains(ctx->chain, candidate))
             continue;
-        if (ctx->check_issued(ctx, x, candidate)) {
+        candidate_rate = 2 * ctx->check_issued(ctx, x, candidate);
+        if (candidate_rate > 0) {
             if (check_signing_allowed
                 /* yet better not check key usage for trust anchors */
                 && ossl_x509_signing_allowed(candidate, x) != X509_V_OK)
                 continue;
-            if (ossl_x509_check_cert_time(ctx, candidate, -1))
-                return candidate;
+            if (!ossl_x509_check_cert_time(ctx, candidate, -1)) {
+                if (issuer == NULL
+                    || ASN1_TIME_compare(X509_get0_notAfter(candidate),
+                                         X509_get0_notAfter(issuer)) > 0)
+                    candidate_rate--;
+                else
+                    continue;
+            }
+        }
+        if (candidate_rate == 6)
+            return candidate;
+        if (candidate_rate > issuer_rate) {
             /*
              * Leave in *issuer the first match that has the latest expiration
              * date so we return nearest match if no certificate time is OK.
              */
-            if (issuer == NULL
-                    || ASN1_TIME_compare(X509_get0_notAfter(candidate),
-                                         X509_get0_notAfter(issuer)) > 0)
-                issuer = candidate;
+            issuer = candidate;
+            issuer_rate = candidate_rate;
         }
     }
     return issuer;
@@ -488,12 +504,25 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     return ret;
 }
 
-/* Check that the given certificate |x| is issued by the certificate |issuer| */
+/*
+ * Check that the given certificate |x| is issued by the certificate |issuer|
+ * RFCs 3280 and 4158 do not allow eliminating a certificate solely because of
+ * an AKID mismatch. That's why this function can return positive values of
+ * three different levels of confidence:
+ * 3 if AKID matches
+ * 2 if if AKID:keyIdentifier matches or is absent, but
+ *   AKID:authorityCertSerialNumber or AKID:authorityCertIssuer mismatches
+ * 1 if AKID:keyIdentifier mismatches
+ */
 static int check_issued(ossl_unused X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 {
     int err = ossl_x509_likely_issued(issuer, x);
 
     if (err == X509_V_OK)
+        return 3;
+    if (err == X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH)
+        return 2;
+    if (err == X509_V_ERR_AKID_SKID_MISMATCH)
         return 1;
     /*
      * SUBJECT_ISSUER_MISMATCH just means 'x' is clearly not issued by 'issuer'.
@@ -3701,6 +3730,17 @@ static int build_chain(X509_STORE_CTX *ctx)
 
         num = sk_X509_num(ctx->chain);
         ctx->error_depth = num - 1;
+        /*
+         * If the top certificate is in trusted and the flag
+         * X509_V_FLAG_PARTIAL_CHAIN is set, we don't need to build
+         * the chain further
+         */
+        if (trust == X509_TRUST_UNTRUSTED && DANETLS_HAS_DANE_TA(dane))
+            trust = check_dane_pkeys(ctx);
+        if (trust == X509_TRUST_UNTRUSTED && num == ctx->num_untrusted)
+            trust = check_trust(ctx, num);
+        if (trust != X509_TRUST_UNTRUSTED)
+            break;
         /*
          * Look in the trust store if enabled for first lookup, or we've run
          * out of untrusted issuers and search here is not disabled.  When we

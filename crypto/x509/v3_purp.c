@@ -1038,6 +1038,14 @@ int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject)
     return X509_V_OK;
 }
 
+/*
+ * Returns:
+ * X509_V_OK if AKID matches or is absent
+ * X509_V_ERR_AKID_SKID_MISMATCH if AKID:keyIdentifier mismatches
+ * X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH if AKID:keyIdentifier matches or
+ *   is absent, but AKID:authorityCertSerialNumber or AKID:authorityCertIssuer
+ *   mismatches
+ */
 int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
 {
     if (akid == NULL)

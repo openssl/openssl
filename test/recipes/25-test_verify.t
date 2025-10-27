@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 212;
+plan tests => 213;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -612,6 +612,9 @@ ok(verify("ee-expired2", "", ["root-cert"], ["ca-cert"], "-attime",
 ok(!verify("ee-expired2", "", ["root-cert"], ["ca-cert"], "-attime",
            "2073566278"), "Certificate invalid at time 2073566278");
 
+# AKID extention
+ok(verify("AKIDmismatch-cert", "", ["root-cert"], ["ca-cert"]),
+   "verification doesn't fail because of a mismatched AKID");
 
 # CAstore option
 my $rootcertname = "root-cert";
