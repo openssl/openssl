@@ -267,7 +267,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-14, macos-14-large]
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ github.repository != 'openssl/openssl' && matrix.os == 'macos-14-large' && 'macos-15' || matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -579,7 +579,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-15, macos-15-large]
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ github.repository == 'openssl/openssl' && matrix.os == 'macos-15-large' && 'macos-14' || matrix.os }}
     steps:
     - uses: actions/checkout@v4
       with:
