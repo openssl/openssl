@@ -263,11 +263,7 @@ jobs:
         path: artifacts.tar.gz
 
   no-shared-macos:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-14, macos-14-large]
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-14
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -286,7 +282,7 @@ jobs:
       if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
-        name: "ci@no-shared-${{ matrix.os }}"
+        name: "ci@no-shared-macos-14"
         path: artifacts.tar.gz
 
   non-caching:
@@ -575,11 +571,7 @@ jobs:
       working-directory: ./build
 
   out-of-readonly-source-and-install-macos:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-15, macos-15-large]
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-15
     steps:
     - uses: actions/checkout@v4
       with:
@@ -613,7 +605,7 @@ jobs:
       if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
-        name: "ci@out-of-readonly-source-and-install-${{ matrix.os }}"
+        name: "ci@out-of-readonly-source-and-install-macos-15"
         path: build/artifacts.tar.gz
     - name: make install
       run: make install
