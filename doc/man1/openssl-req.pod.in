@@ -403,7 +403,7 @@ If an extension is added using this option that has the same OID as one
 defined in the extension section of the config file, it overrides that one.
 
 This option can be given multiple times.
-Doing so, the same key most not be given more than once.
+Doing so, the same key must not be given more than once.
 
 =item B<-precert>
 
