@@ -2733,9 +2733,17 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
         return 0;
     }
 
-    /* if this sigalg is loaded, set so far unknown pkeyid to its sig NID */
-    if (pkeyid == EVP_PKEY_KEYMGMT)
-        pkeyid = lu->sig;
+    /* If we don't know the pkey nid yet go and find it */
+    if (pkeyid == EVP_PKEY_KEYMGMT) {
+        const SSL_CERT_LOOKUP *scl =
+            ssl_cert_lookup_by_pkey(pkey, NULL, SSL_CONNECTION_GET_CTX(s));
+
+        if (scl == NULL) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
+            return 0;
+        }
+        pkeyid = scl->pkey_nid;
+    }
 
     /* Should never happen */
     if (pkeyid == -1) {
