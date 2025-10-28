@@ -270,6 +270,35 @@ static const char **unknown_critical_crls[] = {
     kUnknownCriticalCRL, kUnknownCriticalCRL2
 };
 
+/*
+ * RFC 5280 states that only CRL files with the Indirect CRL flag set to True in
+ * the IDP extension require the certificate_issuer extension.
+ * https://github.com/openssl/openssl/issues/27465
+ */
+
+static const char *kCertIssuerNoIDPCRL[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIIDBDCCAewCAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
+    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
+    "Ck15IENvbXBhbnkxEzARBgNVBAMMCk15IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJv\n",
+    "b3QgQ0EXDTI1MDEwMTAwMDAwMFoXDTI1MTIwMTAwMDAwMFowgf8wJQIUHIACLvgf\n",
+    "JAXulqYS3LYf4KxwHl4XDTI1MDQxNzEwMTY1MVowgdUCEQCMuBk+zOZx7AAAAABY\n",
+    "LIp6Fw0yNTAzMDQwMDAwMDBaMIGwMAoGA1UdFQQDCgEEMBgGA1UdGAQRGA8yMDI1\n",
+    "MDMxNDAwMDAwMFowgYcGA1UdHQEB/wR9MHukeTB3MQswCQYDVQQGDAJVTjEPMA0G\n",
+    "A1UECAwGTXkgU1QxMRUwEwYDVQQHDAxNWSBMb2NhbGl0eTExETAPBgNVBAoTCE15\n",
+    "IFVuaXQxMREwDwYDVQQLDAhNeSBVbml0MTEaMBgGA1UEAwwRd3d3Lm15Y29tcGFu\n",
+    "eS5jb22gPTA7MBgGA1UdFAQRAg8Zz//e2nTt8vakRgzO4UAwHwYDVR0jBBgwFoAU\n",
+    "12GJH5OWi3ZUFunld9x8t2UbgCQwDQYJKoZIhvcNAQELBQADggEBAFOSlDm/mLRm\n",
+    "YnnKJr4lZb6HzjY3KvJ/p//uIh9/OOOGBlVNF+wwrCi/JtPMY/N29DHH17l6dV9d\n",
+    "hmyeg/8KScZUKxvDGyQxkd3sKrK/nahjmcLR5FGx5sqhnBUl7wzcdgObey5pAwYv\n",
+    "azVKH4EkKJ5KE/a9sGgxiAXHp8anSu8xvmqjSA6M9mS1X643QvCsPDdGHWD2iHom\n",
+    "0/FegR60yNqYaMERJz0jJv8SJ3Co38TlhH/Zr+N86RLYj3tPOsxcY5K1P8VZVPV/\n",
+    "DxVqhesv7EaeiXDhiSTFcRXytqOQX3wju4RdxiyqMd4iT98N8nTxRdbBo4EVQKql\n",
+    "PNhJBxQG0VQ=\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
 static X509 *test_root = NULL;
 static X509 *test_leaf = NULL;
 static X509 *test_root2 = NULL;
@@ -506,6 +535,21 @@ static int test_reuse_crl(int idx)
     return r;
 }
 
+/*
+ * Validation to ensure Certificate Issuer extensions in CRL entries only appear
+ * when the Indirect CRL flag is TRUE in the Issuing Distribution Point (IDP)
+ * extension, as required by RFC 5280 section 5.3.3.
+ */
+
+static int test_crl_cert_issuer_ext(void)
+{
+    X509_CRL *crl = CRL_from_strings(kCertIssuerNoIDPCRL);
+    int test = TEST_ptr_null(crl);
+
+    X509_CRL_free(crl);
+    return test;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(test_root = X509_from_strings(kCRLTestRoot))
@@ -519,8 +563,10 @@ int setup_tests(void)
     ADD_TEST(test_bad_issuer_crl);
     ADD_TEST(test_crl_empty_idp);
     ADD_TEST(test_known_critical_crl);
+    ADD_TEST(test_crl_cert_issuer_ext);
     ADD_ALL_TESTS(test_unknown_critical_crl, OSSL_NELEM(unknown_critical_crls));
     ADD_ALL_TESTS(test_reuse_crl, 6);
+
     return 1;
 }
 
