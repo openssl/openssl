@@ -134,8 +134,9 @@ static ASN1_TYPE *generate_v3(const char *str, X509V3_CTX *cnf, int depth,
             return NULL;
         }
         ret = asn1_multi(asn1_tags.utype, asn1_tags.str, cnf, depth, perr);
-    } else
+    } else {
         ret = asn1_str2type(asn1_tags.str, asn1_tags.format, asn1_tags.utype);
+    }
 
     if (!ret)
         return NULL;
@@ -169,16 +170,20 @@ static ASN1_TYPE *generate_v3(const char *str, X509V3_CTX *cnf, int depth,
             /* Indefinite length constructed */
             hdr_constructed = 2;
             hdr_len = 0;
-        } else
+        } else {
             /* Just retain constructed flag */
             hdr_constructed = r & V_ASN1_CONSTRUCTED;
+        }
         /*
          * Work out new length with IMPLICIT tag: ignore constructed because
          * it will mess up if indefinite length
          */
         len = ASN1_object_size(0, hdr_len, asn1_tags.imp_tag);
-    } else
+        if (len == -1)
+            goto err;
+    } else {
         len = cpy_len;
+    }
 
     /* Work out length in any EXPLICIT, starting from end */
 
@@ -189,6 +194,8 @@ static ASN1_TYPE *generate_v3(const char *str, X509V3_CTX *cnf, int depth,
         etmp->exp_len = len;
         /* Total object length: length including new header */
         len = ASN1_object_size(0, len, etmp->exp_tag);
+        if (len == -1)
+            goto err;
     }
 
     /* Allocate buffer for new encoding */
