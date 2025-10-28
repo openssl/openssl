@@ -195,12 +195,16 @@ or both of them, separated by C<,>.
 Either or both can have the option B<always>,
 indicated by putting a colon C<:> between the value and this option.
 For self-signed certificates the AKID is suppressed unless B<always> is present.
+In order to find out, if the certificate is about to be self-signed, the
+private key as given by B<X509V3_set_issuer_pkey> is compared to the
+public key in the subject_certificate.
+When there is no private key available, the AKID will not be suppressed.
 By default the B<x509>, B<req>, and B<ca> apps behave as if
 "none" was given for self-signed certificates and "keyid, issuer" otherwise.
 
 If B<keyid> is present, an attempt is made to
 copy the subject key identifier (SKID) from the issuer certificate except if
-the issuer certificate is the same as the current one and it is not self-signed.
+the issuer certificate does not have the subject key identifier extension.
 The hash of the public key related to the signing key is taken as fallback
 if the issuer certificate is the same as the current certificate.
 If B<always> is present but no value can be obtained, an error is returned.
