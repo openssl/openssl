@@ -107,7 +107,6 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     ASN1_INTEGER *serial = NULL;
     X509_EXTENSION *ext;
     X509 *issuer_cert;
-    int self_signed = 0;
     AUTHORITY_KEYID *akeyid = AUTHORITY_KEYID_new();
 
     if (akeyid == NULL)
@@ -157,15 +156,8 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         goto err;
     }
 
-    if (ctx->subject_cert != NULL && ctx->issuer_pkey != NULL) {
-        ERR_set_mark();
-        self_signed = X509_check_private_key(ctx->subject_cert,
-                                             ctx->issuer_pkey);
-        ERR_pop_to_mark();
-    }
-
-    /* unless forced with "always", AKID is suppressed for self-signed certs */
-    if (keyid == 2 || (keyid == 1 && !self_signed)) {
+    /* unless forced with "always", AKID is optional */
+    if (keyid != 0) {
         /*
          * prefer any pre-existing subject key identifier of the issuer cert
          * except issuer cert is same as subject cert and private key is given
@@ -193,7 +185,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         }
     }
 
-    if (issuer == 2 || (issuer == 1 && ikeyid == NULL && !self_signed)) {
+    if (issuer == 2 || (issuer == 1 && ikeyid == NULL)) {
         isname = X509_NAME_dup(X509_get_issuer_name(issuer_cert));
         serial = ASN1_INTEGER_dup(X509_get0_serialNumber(issuer_cert));
         if (isname == NULL || serial == NULL) {
