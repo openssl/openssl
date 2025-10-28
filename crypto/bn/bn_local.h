@@ -124,6 +124,36 @@
 #  define BN_DEC_FMT2     "%09u"
 # endif
 
+BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num,
+                          BN_ULONG w);
+BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
+void bn_sqr_words(BN_ULONG *rp, const BN_ULONG *ap, int num);
+BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d);
+BN_ULONG bn_add_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
+                      int num);
+BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
+                      int num);
+
+struct bignum_st {
+    /* The number itself is a FIXNUM */
+    OSSL_FN *data;
+
+    /* Some of these flags are replicated in OSSL_FN, some are not */
+    int flags;
+
+    /*
+     * TODO(FIXNUM) The fields that follow ARE TO BE REMOVED when all relevant
+     * BN_ functions have transitioned to be wrappers around OSSL_FN_ functions.
+     * All of this is maintained by bn_expand and BIGNUM allocators and
+     * deallocators.
+     */
+
+    BN_ULONG *d;                 /* Pointer to |data->d| */
+    int top;                     /* Index of last used d +1. */
+    /* The next are internal book keeping for bn_expand. */
+    int dmax;                    /* Copy of |data->dsize| */
+    int neg;                     /* One if the number is negative */
+};
 
 /*-
  * Bignum consistency macros
@@ -185,41 +215,35 @@ static ossl_inline bool bn_check_zero(BN_ULONG *words, int num_words)
     return true;
 }
 
-#  define bn_check_top(a) \
-        do { \
-                const BIGNUM *_bnum2 = (a); \
-                if (_bnum2 != NULL) { \
-                        int _top = _bnum2->top; \
-                        int _dmax = _bnum2->dmax; \
-                        BN_ULONG *_d = _bnum2->d; \
-                        /* BIGNUM <-> OSSL_FN compat checks */ \
-                        if (_bnum2->data != NULL) { \
-                                /* Assertion for the future */ \
-                                /* assert(_bnum2->d == NULL); */ \
-                                assert(_d == _bnum2->data->d); \
-                                assert(_dmax == _bnum2->data->dsize); \
-                                assert(bn_check_zero(&_d[_top], _dmax - _top)); \
-                        } \
-                        /* BIGNUM specific checks */ \
-                        if (_top == 0) { \
-                                assert(!_bnum2->neg); \
-                        } else if ((_bnum2->flags & BN_FLG_FIXED_TOP) == 0) { \
-                                assert(_bnum2->d[_top - 1] != 0); \
-                        } \
-                } \
-        } while(0)
+static ossl_inline void bn_check_top(const BIGNUM *bn)
+{
+    if (bn != NULL) {
+        /* BIGNUM <-> OSSL_FN compat checks */
+        if (bn->data != NULL) {
+            /* TODO(FIXNUM): Assertion for the future */
+            /* assert(_bnum2->d == NULL); */
+            assert(bn->d == bn->data->d);
+            assert(bn->dmax == bn->data->dsize);
+            assert(bn_check_zero(&bn->d[bn->top], bn->dmax - bn->top));
+        }
+        /* BIGNUM specific checks */
+        if (bn->top == 0) {
+            assert(!bn->neg);
+        } else if ((bn->flags & BN_FLG_FIXED_TOP) == 0) {
+            assert(bn->d[bn->top - 1] != 0);
+        }
+    }
+}
 
 #  define bn_fix_top(a)           bn_check_top(a)
 
+static ossl_inline void bn_wcheck_size(const BIGNUM *bn, int words)
+{
+    assert(words <= bn->dmax);
+    assert(words >= bn->top);
+}
+
 #  define bn_check_size(bn, bits) bn_wcheck_size(bn, ((bits+BN_BITS2-1))/BN_BITS2)
-#  define bn_wcheck_size(bn, words) \
-        do { \
-                const BIGNUM *_bnum2 = (bn); \
-                assert((words) <= (_bnum2)->dmax && \
-                       (words) >= (_bnum2)->top); \
-                /* avoid unused variable warning with NDEBUG */ \
-                (void)(_bnum2); \
-        } while(0)
 
 # else                          /* !BN_DEBUG */
 
@@ -230,37 +254,6 @@ static ossl_inline bool bn_check_zero(BN_ULONG *words, int num_words)
 #  define bn_wcheck_size(bn, words)
 
 # endif
-
-BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num,
-                          BN_ULONG w);
-BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
-void bn_sqr_words(BN_ULONG *rp, const BN_ULONG *ap, int num);
-BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d);
-BN_ULONG bn_add_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
-                      int num);
-BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
-                      int num);
-
-struct bignum_st {
-    /* The number itself is a FIXNUM */
-    OSSL_FN *data;
-
-    /* Some of these flags are replicated in OSSL_FN, some are not */
-    int flags;
-
-    /*
-     * TODO(FIXNUM) The fields that follow ARE TO BE REMOVED when all relevant
-     * BN_ functions have transitioned to be wrappers around OSSL_FN_ functions.
-     * All of this is maintained by bn_expand and BIGNUM allocators and
-     * deallocators.
-     */
-
-    BN_ULONG *d;                 /* Pointer to |data->d| */
-    int top;                     /* Index of last used d +1. */
-    /* The next are internal book keeping for bn_expand. */
-    int dmax;                    /* Copy of |data->dsize| */
-    int neg;                     /* One if the number is negative */
-};
 
 /* Used for montgomery multiplication */
 struct bn_mont_ctx_st {
