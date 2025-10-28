@@ -369,7 +369,6 @@ static int drbg_hmac_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
     PROV_DRBG_HMAC *hmac;
-    const char *name;
     const EVP_MD *md;
     struct drbg_get_ctx_params_st p;
     int ret = 0, complete = 0;
@@ -387,14 +386,6 @@ static int drbg_hmac_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 
     if (drbg->lock != NULL && !CRYPTO_THREAD_read_lock(drbg->lock))
         return 0;
-
-    if (p.mac != NULL) {
-        if (hmac->ctx == NULL)
-            goto err;
-        name = EVP_MAC_get0_name(EVP_MAC_CTX_get0_mac(hmac->ctx));
-        if (!OSSL_PARAM_set_utf8_string(p.mac, name))
-            goto err;
-    }
 
     if (p.digest != NULL) {
         md = ossl_prov_digest_md(&hmac->digest);
@@ -424,7 +415,6 @@ static int drbg_fetch_algs_from_prov(const struct drbg_set_ctx_params_st *p,
 {
     OSSL_PROVIDER *prov = NULL;
     EVP_MD *md = NULL;
-    EVP_MAC *mac = NULL;
     int ret = 0;
 
     if (macctx == NULL || digest == NULL)
@@ -448,24 +438,7 @@ static int drbg_fetch_algs_from_prov(const struct drbg_set_ctx_params_st *p,
         }
     }
 
-    if (p->mac == NULL) {
-        ret = 1;
-        goto done;
-    }
-
-    if (p->mac->data_type != OSSL_PARAM_UTF8_STRING)
-        goto done;
-
-    EVP_MAC_CTX_free(*macctx);
-    *macctx = NULL;
-
-    mac = evp_mac_fetch_from_prov(prov, (const char *)p->mac->data, NULL);
-    if (mac) {
-        *macctx = EVP_MAC_CTX_new(mac);
-        /* The context holds on to the MAC */
-        EVP_MAC_free(mac);
-        ret = 1;
-    }
+    ret = 1;
 
 done:
     ossl_provider_free(prov);
@@ -488,15 +461,17 @@ static int drbg_hmac_set_ctx_params_locked
     (void)ERR_set_mark();
     if (!drbg_fetch_algs_from_prov(p, libctx, &hmac->ctx, &prov_md)) {
         (void)ERR_pop_to_mark();
-        /* fall back to full implementation search */
-        if (!ossl_prov_digest_load(&hmac->digest, p->digest, p->propq,
-                                   p->engine, libctx))
-            return 0;
+        if (p->digest != NULL) {
+            /* fall back to full implementation search */
+            if (!ossl_prov_digest_load(&hmac->digest, p->digest, p->propq,
+                                       p->engine, libctx))
+                return 0;
 
-        if (!ossl_prov_macctx_load(&hmac->ctx, p->mac, NULL, p->digest,
-                                   p->propq, p->engine,
-                                   NULL, NULL, NULL, libctx))
-            return 0;
+            if (!ossl_prov_macctx_load(&hmac->ctx, NULL, NULL, p->digest,
+                                       p->propq, p->engine,
+                                       "HMAC", NULL, NULL, libctx))
+                return 0;
+        }
     } else {
         (void)ERR_clear_last_mark();
         if (prov_md)
