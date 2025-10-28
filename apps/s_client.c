@@ -744,6 +744,7 @@ const OPTIONS s_client_options[] = {
     {"use_srtp", OPT_USE_SRTP, 's',
      "Offer SRTP key management with a colon-separated profile list"},
 #endif
+
 # ifndef OPENSSL_NO_ECH
     {"ech_config_list", OPT_ECHCONFIGLIST, 's',
      "Set ECHConfigList, value is base 64 encoded ECHConfigList"},

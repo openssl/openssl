@@ -535,9 +535,6 @@ static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
         if (res == 0)
             res = getnameinfo(sa, salen, clientip, INET6_ADDRSTRLEN,
                               0, 0, NI_NUMERICHOST);
-        /* TODO(ECH): test if the below is needed */
-        if (res != 0)
-            strncpy(clientip, "dunno", INET6_ADDRSTRLEN);
     }
     /* Name that matches "main" ctx */
     servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
