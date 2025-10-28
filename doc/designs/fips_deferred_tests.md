@@ -41,9 +41,8 @@ Requirements
    before the first cryptographic use of that algorithm.
 2. **Idempotency**: Once a self-test has been successfully executed for an
    algorithm, it must not be run again. A successful result will be cached.
-3. **Failure Handling**: If a self-test fails, the corresponding algorithm
-   must be immediately disabled and put into an error state. Any attempt
-   to use it must fail. This error state should be permanent.
+3. **Failure Handling**: If a self-test fails, the module is put into an
+   error state and no other operation will be allowed.
 4. **Dependency Management**: The system must handle dependencies between
    algorithms. If a high-level algorithm's self-test depends on a
    lower-level one, the lower-level test must be executed first.
@@ -121,7 +120,7 @@ and any test listed in the list is executed in order, while the triggering
 test is awaits in FIPS_DEFERRED_TEST_IN_PROGRESS state.
 
 Initial Startup Self-Tests
--------------------------
+--------------------------
 
 Not all self-tests can be deferred. The FIPS provider will still perform
 a minimal set of tests upon loading:
@@ -152,10 +151,45 @@ an error on any subsequent invocation.
 Implementation Details
 ----------------------
 
+Current Implementation
+----------------------
+
+The current implementation provides the foundational mechanism for deferred
+self-tests through two key functions: `FIPS_deferred_self_tests()` and
+`FIPS_kat_deferred()`. Together, they ensure that conditional self-tests are
+executed in a thread-safe manner.
+
+When a cryptographic algorithm is initialized for the first time, its
+implementation calls `FIPS_deferred_self_tests()` with a list of required
+tests. This function iterates through the list and, for any test that has
+not already passed, calls `FIPS_kat_deferred()` to run it.
+
+The `FIPS_kat_deferred()` function is responsible for the core execution and
+synchronization logic. It employs a locking mechanism to handle concurrent
+requests from multiple threads. A single, global `CRYPTO_RWLOCK` is used,
+and any thread that needs to run a test must acquire an exclusive write lock.
+This serializes all self-test executions, guaranteeing that only one test
+can run at any given time across the entire FIPS provider.
+
+To handle nested test calls (e.g., an algorithm's test depending on another
+primitive) and prevent deadlocks, the mechanism uses thread-local storage.
+Before attempting to acquire the global lock, `FIPS_kat_deferred()` checks a
+thread-local flag. If the flag is set, it indicates the current thread is
+already executing a test, and the function returns immediately with a
+`FIPS_DEFERRED_TEST_IN_PROGRESS` status to avoid a recursive lock attempt.
+
+Furthermore, `FIPS_kat_deferred()` uses a double-checked locking pattern to
+avoid redundant work. It checks a test's status before acquiring the lock
+and checks it again after acquiring it. This efficiently handles the race
+condition where another thread completes the test while the current thread
+was waiting for the lock. The final test status (`PASSED` or `FAILED`) is
+updated within the critical section protected by the lock, ensuring the
+result is safely published and visible to all threads.
+
 Data Structures
 ---------------
 
-The  fips_deferred_test_st structure will be changed to look like this:
+The fips_deferred_test_st structure will be changed to look like this:
 
 ```c
 struct fips_deferred_test_st {
