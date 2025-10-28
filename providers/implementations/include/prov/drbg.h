@@ -231,7 +231,6 @@ struct drbg_get_ctx_params_st {
     OSSL_PARAM *cipher;         /* CTR DRBG */
     OSSL_PARAM *df;             /* CTR DRBG */
     OSSL_PARAM *digest;         /* HASH & HMAC DRBG */
-    OSSL_PARAM *mac;            /* HMAC DRBG */
 };
 
 int ossl_drbg_get_ctx_params(PROV_DRBG *drbg,
@@ -247,7 +246,6 @@ struct drbg_set_ctx_params_st {
     OSSL_PARAM *cipher;     /* CTR DRBG */
     OSSL_PARAM *df;         /* CTR DRBG */
     OSSL_PARAM *digest;     /* HASH and HMAC DRBG */
-    OSSL_PARAM *mac;        /* HMAC DRBG */
     OSSL_PARAM *ind_d;      /* HASH and HMAC DRBG */
     OSSL_PARAM *prov;
     OSSL_PARAM *reseed_req;

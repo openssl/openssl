@@ -12,8 +12,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 -}
 
 {- produce_param_decoder('drbg_hmac_get_ctx_params',
-                         (['OSSL_DRBG_PARAM_MAC',                    'mac',         'utf8_string'],
-                          ['OSSL_DRBG_PARAM_DIGEST',                 'digest',      'utf8_string'],
+                         (['OSSL_DRBG_PARAM_DIGEST',                 'digest',      'utf8_string'],
                           ['OSSL_RAND_PARAM_STATE',                  'state',       'int'],
                           ['OSSL_RAND_PARAM_STRENGTH',               'str',         'uint'],
                           ['OSSL_RAND_PARAM_MAX_REQUEST',            'maxreq',      'size_t'],
@@ -34,7 +33,6 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                          (['OSSL_DRBG_PARAM_PROPERTIES',           'propq',       'utf8_string'],
                           ['OSSL_ALG_PARAM_ENGINE',                'engine',      'utf8_string', 'hidden'],
                           ['OSSL_DRBG_PARAM_DIGEST',               'digest',      'utf8_string'],
-                          ['OSSL_DRBG_PARAM_MAC',                  'mac',         'utf8_string'],
                           ['OSSL_PROV_PARAM_CORE_PROV_NAME',       'prov',        'utf8_string'],
                           ['OSSL_DRBG_PARAM_RESEED_REQUESTS',      'reseed_req',  'uint'],
                           ['OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL', 'reseed_time', 'uint64'],
