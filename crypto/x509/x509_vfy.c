@@ -1669,9 +1669,7 @@ static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
     }
 
     *preasons = tmp_reasons;
-
     return crl_score;
-
 }
 
 static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
