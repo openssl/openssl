@@ -323,22 +323,6 @@ int ossl_prov_macctx_load(EVP_MAC_CTX **macctx,
     return 0;
 }
 
-int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
-                                      const OSSL_PARAM params[],
-                                      const char *macname,
-                                      const char *ciphername,
-                                      const char *mdname,
-                                      OSSL_LIB_CTX *libctx)
-{
-    return ossl_prov_macctx_load
-            (macctx, OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_MAC),
-             OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_CIPHER),
-             OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST),
-             OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_PROPERTIES),
-             OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_ENGINE),
-             macname, ciphername, mdname, libctx);
-}
-
 void ossl_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE *in,
                                          OSSL_ALGORITHM *out)
 {
