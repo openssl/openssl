@@ -309,7 +309,7 @@ int BIO_sock_non_fatal_error(int err)
         || err == EAGAIN
         || err == ENOTCONN
         || err == EINTR
-#  if ! defined (__DJGPP__)
+#  if !defined(__DJGPP__) && !defined(OPENSSL_SYS_TANDEM)
         || err == EPROTO
 #  endif
         || err == EINPROGRESS

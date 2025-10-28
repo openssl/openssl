@@ -10,6 +10,24 @@
 #define TESTUTIL_NO_size_t_COMPARISON
 
 #include <inttypes.h>
+#if defined(__TANDEM) && defined(__H_Series_RVU)
+/* Restrict this block to NonStop J-series (Itanium) only. */
+# if defined(__LP64)
+#  define PRIdPTR                  "lld"
+#  define PRIiPTR                  "lli"
+#  define PRIoPTR                  "llo"
+#  define PRIuPTR                  "llu"
+#  define PRIxPTR                  "llx"
+#  define PRIXPTR                  "llX"
+# else
+#  define PRIdPTR                  "d"
+#  define PRIiPTR                  "i"
+#  define PRIoPTR                  "o"
+#  define PRIuPTR                  "u"
+#  define PRIxPTR                  "x"
+#  define PRIXPTR                  "X"
+# endif
+#endif
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
