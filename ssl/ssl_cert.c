@@ -1332,13 +1332,13 @@ int ssl_cert_lookup_by_nid(int nid, size_t *pidx, SSL_CTX *ctx)
     size_t i;
 
     for (i = 0; i < OSSL_NELEM(ssl_cert_info); i++) {
-        if (ssl_cert_info[i].nid == nid) {
+        if (ssl_cert_info[i].pkey_nid == nid) {
             *pidx = i;
             return 1;
         }
     }
     for (i = 0; i < ctx->sigalg_list_len; i++) {
-        if (ctx->ssl_cert_info[i].nid == nid) {
+        if (ctx->ssl_cert_info[i].pkey_nid == nid) {
             *pidx = SSL_PKEY_NUM + i;
             return 1;
         }
@@ -1354,8 +1354,8 @@ const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx,
     for (i = 0; i < OSSL_NELEM(ssl_cert_info); i++) {
         const SSL_CERT_LOOKUP *tmp_lu = &ssl_cert_info[i];
 
-        if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->nid))
-            || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->nid))) {
+        if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->pkey_nid))
+            || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->pkey_nid))) {
             if (pidx != NULL)
                 *pidx = i;
             return tmp_lu;
@@ -1365,8 +1365,8 @@ const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx,
     for (i = 0; i < ctx->sigalg_list_len; i++) {
         SSL_CERT_LOOKUP *tmp_lu = &(ctx->ssl_cert_info[i]);
 
-        if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->nid))
-            || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->nid))) {
+        if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->pkey_nid))
+            || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->pkey_nid))) {
             if (pidx != NULL)
                 *pidx = SSL_PKEY_NUM + i;
             return &ctx->ssl_cert_info[i];
