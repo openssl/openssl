@@ -725,7 +725,7 @@ int ssl_load_sigalgs(SSL_CTX *ctx)
             return 0;
         for(i = 0; i < ctx->sigalg_list_len; i++) {
             const char *keytype = inferred_keytype(&ctx->sigalg_list[i]);
-            ctx->ssl_cert_info[i].nid = OBJ_txt2nid(keytype);
+            ctx->ssl_cert_info[i].pkey_nid = OBJ_txt2nid(keytype);
             ctx->ssl_cert_info[i].amask = SSL_aANY;
         }
     }
@@ -3567,7 +3567,7 @@ static int tls12_get_cert_sigalg_idx(const SSL_CONNECTION *s,
     /* If not recognised or not supported by cipher mask it is not suitable */
     if (clu == NULL
             || (clu->amask & s->s3.tmp.new_cipher->algorithm_auth) == 0
-            || (clu->nid == EVP_PKEY_RSA_PSS
+            || (clu->pkey_nid == EVP_PKEY_RSA_PSS
                 && (s->s3.tmp.new_cipher->algorithm_mkey & SSL_kRSA) != 0))
         return -1;
 
