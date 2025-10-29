@@ -334,6 +334,8 @@ char *ossl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep)
     char *tmp;
     size_t tmp_n;
 
+    if (buflen < 0)
+        return NULL;
     if (buflen == 0)
         return OPENSSL_zalloc(1);
 

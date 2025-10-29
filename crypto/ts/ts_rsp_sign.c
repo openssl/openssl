@@ -633,9 +633,13 @@ static int ossl_ess_add1_signing_cert(PKCS7_SIGNER_INFO *si,
                                       const ESS_SIGNING_CERT *sc)
 {
     ASN1_STRING *seq = NULL;
-    int len = i2d_ESS_SIGNING_CERT(sc, NULL);
-    unsigned char *p, *pp = OPENSSL_malloc(len);
+    int len;
+    unsigned char *p, *pp;
 
+    len = i2d_ESS_SIGNING_CERT(sc, NULL);
+    if (len <= 0)
+        return 0;
+    pp = OPENSSL_malloc(len);
     if (pp == NULL)
         return 0;
 
@@ -660,9 +664,13 @@ static int ossl_ess_add1_signing_cert_v2(PKCS7_SIGNER_INFO *si,
                                          const ESS_SIGNING_CERT_V2 *sc)
 {
     ASN1_STRING *seq = NULL;
-    int len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
-    unsigned char *p, *pp = OPENSSL_malloc(len);
+    int len;
+    unsigned char *p, *pp;
 
+    len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
+    if (len <= 0)
+        return 0;
+    pp = OPENSSL_malloc(len);
     if (pp == NULL)
         return 0;
 

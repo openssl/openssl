@@ -471,6 +471,10 @@ int PKCS12_set_pbmac1_pbkdf2(PKCS12 *p12, const char *pass, int passlen,
     }
 
     if (salt == NULL) {
+        if (saltlen <= 0) {
+            ERR_raise(ERR_LIB_PKCS12, PKCS12_R_INVALID_SALT_LENGTH);
+            goto err;
+        }
         known_salt = OPENSSL_malloc(saltlen);
         if (known_salt == NULL)
             goto err;
