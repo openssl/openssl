@@ -249,9 +249,7 @@ Specifies the number of times the DRBG has been seeded or reseeded.
 
 =item "cipher" (B<OSSL_DRBG_PARAM_CIPHER>) <UTF8 string>
 
-=item "mac" (B<OSSL_DRBG_PARAM_MAC>) <UTF8 string>
-
-Sets the name of the underlying cipher, digest or MAC to be used.
+Sets the name of the underlying cipher or digest to be used.
 It must name a suitable algorithm for the DRBG that's being used.
 
 =item "properties" (B<OSSL_DRBG_PARAM_PROPERTIES>) <UTF8 string>
