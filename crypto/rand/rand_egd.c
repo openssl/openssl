@@ -104,6 +104,7 @@ static int hpns_connect_attempt = 0;
 
 #endif /* defined(OPENSSL_SYS_HPNS) */
 
+
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 {
     FILE *fp = NULL;
@@ -111,7 +112,7 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
     int mybuffer, ret = -1, i, numbytes, fd = -1;
     unsigned char tempbuf[255];
 #if defined(OPENSSL_SYS_TANDEM)
-    hpns_connect_attempt = 0;
+    int hpns_connect_attempt = 0;
 #endif
 
     if (bytes <= 0 || bytes > (int)sizeof(tempbuf))
@@ -134,12 +135,8 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 
     /* Try to connect */
     for (;;) {
-        if (connect(fd, (struct sockaddr *)&addr, i) == 0) {
-#if defined(OPENSSL_SYS_TANDEM)
-            hpns_connect_attempt = 0;
-#endif
+        if (connect(fd, (struct sockaddr *)&addr, i) == 0)
             break;
-        }
 # ifdef EISCONN
         if (errno == EISCONN)
             break;
