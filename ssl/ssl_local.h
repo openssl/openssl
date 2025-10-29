@@ -773,7 +773,7 @@ typedef struct tls_sigalg_info_st {
  * CERT_PKEY entries
  */
 typedef struct {
-    int nid; /* NID of public key algorithm */
+    int pkey_nid; /* NID of public key algorithm */
     uint32_t amask; /* authmask corresponding to key type */
 } SSL_CERT_LOOKUP;
 
