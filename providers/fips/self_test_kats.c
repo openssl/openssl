@@ -329,9 +329,6 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
 
     drbg_params[0] = OSSL_PARAM_construct_utf8_string(t->param_name,
                                                       t->param_value, 0);
-    /* This is only used by HMAC-DRBG but it is ignored by the others */
-    drbg_params[1] =
-        OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_MAC, "HMAC", 0);
     if (!EVP_RAND_CTX_set_params(drbg, drbg_params))
         goto err;
 
