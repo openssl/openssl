@@ -654,7 +654,19 @@ struct stack_traces {
 /* The glibc gettid() definition presents only since 2.30. */
 static ossl_inline pid_t get_tid(void)
 {
+#  ifdef OPENSSL_SYS_MACOSX
+    /*
+     * MACOS has the gettid call, but it does something completely different
+     * here than on other unixes.  Specifically it returns the uid of the calling thread
+     * (if set), or -1.  We need to use a MACOS specific call to get the thread id here
+     */
+    uint64_t tid;
+
+    pthread_threadid_np(NULL, &tid);
+    return (pid_t)tid;
+#  else
     return syscall(SYS_gettid);
+#  endif
 }
 
 #  ifdef FIPS_MODULE
