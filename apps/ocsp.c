@@ -1134,6 +1134,12 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
             X509 *ca_cert = sk_X509_value(ca, jj);
             OCSP_CERTID *ca_id = OCSP_cert_to_id(cert_id_md, NULL, ca_cert);
 
+            if (ca_id == NULL) {
+                *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR,
+                    NULL);
+                goto end;
+            }
+
             if (OCSP_id_issuer_cmp(ca_id, cid) == 0) {
                 found = 1;
                 if (resp_md != NULL)
