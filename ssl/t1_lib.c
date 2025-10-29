@@ -418,6 +418,15 @@ int ssl_load_groups(SSL_CTX *ctx)
     return 1;
 }
 
+static const char *inferred_keytype(const TLS_SIGALG_INFO *sinf)
+{
+    return (sinf->keytype != NULL
+            ? sinf->keytype
+            : (sinf->sig_name != NULL
+               ? sinf->sig_name
+               : sinf->sigalg_name));
+}
+
 #define TLS_SIGALG_LIST_MALLOC_BLOCK_SIZE        10
 static OSSL_CALLBACK add_provider_sigalgs;
 static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
@@ -614,11 +623,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
      */
     ret = 1;
     ERR_set_mark();
-    keytype = (sinf->keytype != NULL
-               ? sinf->keytype
-               : (sinf->sig_name != NULL
-                  ? sinf->sig_name
-                  : sinf->sigalg_name));
+    keytype = inferred_keytype(sinf);
     keymgmt = EVP_KEYMGMT_fetch(ctx->libctx, keytype, ctx->propq);
     if (keymgmt != NULL) {
         /*
@@ -719,7 +724,8 @@ int ssl_load_sigalgs(SSL_CTX *ctx)
         if (ctx->ssl_cert_info == NULL)
             return 0;
         for(i = 0; i < ctx->sigalg_list_len; i++) {
-            ctx->ssl_cert_info[i].nid = OBJ_txt2nid(ctx->sigalg_list[i].sigalg_name);
+            const char *keytype = inferred_keytype(&ctx->sigalg_list[i]);
+            ctx->ssl_cert_info[i].nid = OBJ_txt2nid(keytype);
             ctx->ssl_cert_info[i].amask = SSL_aANY;
         }
     }
