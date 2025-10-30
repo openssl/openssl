@@ -159,7 +159,11 @@ void FuzzerSetRand(void)
     if (!OSSL_PROVIDER_add_builtin(NULL, "fuzz-rand", fuzz_rand_provider_init)
         || !RAND_set_DRBG_type(NULL, "fuzz", NULL, NULL, NULL)
         || (r_prov = OSSL_PROVIDER_try_load(NULL, "fuzz-rand", 1)) == NULL)
+#ifdef ERROR_INJECT
+        exit(0);
+#else
         exit(1);
+#endif
 }
 
 void FuzzerClearRand(void)
