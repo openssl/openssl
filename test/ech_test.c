@@ -11,6 +11,7 @@
 #include <openssl/hpke.h>
 #include "testutil.h"
 #include "helpers/ssltestlib.h"
+#include "internal/packet.h"
 
 #ifndef OPENSSL_NO_ECH
 
@@ -23,6 +24,7 @@ static char *certsdir = NULL;
 static char *cert = NULL;
 static char *privkey = NULL;
 static char *rootcert = NULL;
+static int ch_test_cb_ok = 0;
 
 /* TODO(ECH): add some testing of SSL_OP_ECH_IGNORE_CID */
 
@@ -39,7 +41,9 @@ static int ch_test_cb(SSL *ssl, int *al, void *arg)
 {
     char *servername = NULL;
     const unsigned char *pos;
-    size_t len, remaining;
+    size_t remaining;
+    unsigned int servname_type;
+    PACKET pkt, sni, hostname;
 
     if (verbose) {
         TEST_info("ch_test_cb called");
@@ -49,38 +53,25 @@ static int ch_test_cb(SSL *ssl, int *al, void *arg)
             TEST_info("there is NO ECH extension");
         }
     }
-
-    /* this is based on a CH callback used in the apache httpd server */
     if (!SSL_client_hello_get0_ext(ssl, TLSEXT_TYPE_server_name, &pos,
                                    &remaining)
             || remaining <= 2)
         goto give_up;
-    /* Extract the length of the supplied list of names. */
-    len = (*(pos++) << 8);
-    len += *(pos++);
-    if (len + 2 != remaining)
+    if (!PACKET_buf_init(&pkt, pos, remaining)
+        || !PACKET_as_length_prefixed_2(&pkt, &sni)
+        || PACKET_remaining(&sni) == 0
+        || !PACKET_get_1(&sni, &servname_type)
+        || servname_type != TLSEXT_NAMETYPE_host_name
+        || !PACKET_as_length_prefixed_2(&sni, &hostname)
+        || (PACKET_remaining(&hostname) > TLSEXT_MAXLEN_host_name) 
+        || PACKET_contains_zero_byte(&hostname)
+        || !PACKET_strndup(&hostname, &servername))
         goto give_up;
-    remaining = len;
-    /*
-     * The list in practice only has a single element, so we only consider
-     * the first one.
-     */
-    if (remaining <= 3 || *pos++ != TLSEXT_NAMETYPE_host_name)
-        goto give_up;
-    remaining--;
-
-    /* Now we can finally pull out the byte array with the actual hostname. */
-    len = (*(pos++) << 8);
-    len += *(pos++);
-    if (len + 2 != remaining)
-        goto give_up;
-
-    servername = OPENSSL_malloc(len + 1);
-    memcpy(servername, pos, len);
-    servername[len] = '\0';
     if (verbose)
         TEST_info("servername: %s", servername);
     OPENSSL_free(servername);
+    /* signal to caller all is good */
+    ch_test_cb_ok = 1;
     return 1;
 give_up:
     return 0;
@@ -1318,6 +1309,8 @@ static int test_ech_roundtrip_helper(int idx, int combo)
     if (combo == OSSL_ECH_TEST_ENOE
         && !TEST_int_eq(clientstatus, SSL_ECH_STATUS_NOT_CONFIGURED))
         goto end;
+    if (combo == OSSL_ECH_TEST_CBS && !TEST_int_eq(ch_test_cb_ok, 1))
+        goto end;
     /* all good */
     if (combo == OSSL_ECH_TEST_BASIC || combo == OSSL_ECH_TEST_HRR
         || combo == OSSL_ECH_TEST_CUSTOM || combo == OSSL_ECH_TEST_CBS) {
@@ -1393,6 +1386,7 @@ end:
     SSL_free(serverssl);
     SSL_CTX_free(cctx);
     SSL_CTX_free(sctx);
+    ch_test_cb_ok = 0;
     return res;
 }
 

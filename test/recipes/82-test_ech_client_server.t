@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -176,8 +176,7 @@ sub wrong_test {
 }
 
 sub grease_test {
-    print("\n\nWrong ECHConfig test.\n");
-    # hardcoded 'cause we want a fail
+    print("\n\nGREASE ECHConfig test.\n");
     my $b64="GREASE";
     my $win="^ECH: GREASE";
     start_ech_client_server($b64, $win);
