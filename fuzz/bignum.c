@@ -32,12 +32,12 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     int success = 0;
     size_t l1 = 0, l2 = 0, l3 = 0;
     int s1 = 0, s3 = 0;
-    BN_CTX *ctx;
-    BIGNUM *b1;
-    BIGNUM *b2;
-    BIGNUM *b3;
-    BIGNUM *b4;
-    BIGNUM *b5;
+    BN_CTX *ctx = NULL;
+    BIGNUM *b1 = NULL;
+    BIGNUM *b2 = NULL;
+    BIGNUM *b3 = NULL;
+    BIGNUM *b4 = NULL;
+    BIGNUM *b5 = NULL;
 
     b1 = BN_new();
     b2 = BN_new();
@@ -46,7 +46,15 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     b5 = BN_new();
     ctx = BN_CTX_new();
 
-    /* Divide the input into three parts, using the values of the first two
+    if (b1 == NULL || b2 == NULL || b3 == NULL || b4 == NULL || b5 == NULL ||
+        ctx == NULL) {
+        /* Do not crash with abort */
+        success = 1;
+        goto done;
+    }
+
+    /*
+     * Divide the input into three parts, using the values of the first two
      * bytes to choose lengths, which generate b1, b2 and b3. Use three bits
      * of the third byte to choose signs for the three numbers.
      */
