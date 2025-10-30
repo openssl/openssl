@@ -989,6 +989,7 @@ PKCS12_R_ENCRYPT_ERROR:103:encrypt error
 PKCS12_R_ERROR_SETTING_ENCRYPTED_DATA_TYPE:120:error setting encrypted data type
 PKCS12_R_INVALID_NULL_ARGUMENT:104:invalid null argument
 PKCS12_R_INVALID_NULL_PKCS12_POINTER:105:invalid null pkcs12 pointer
+PKCS12_R_INVALID_SALT_LENGTH:117:invalid salt length
 PKCS12_R_INVALID_TYPE:112:invalid type
 PKCS12_R_IV_GEN_ERROR:106:iv gen error
 PKCS12_R_KEY_GEN_ERROR:107:key gen error
