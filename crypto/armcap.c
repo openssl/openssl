@@ -297,7 +297,8 @@ void OPENSSL_cpuid_setup(void)
                ((strncmp(uarch, "Apple M1", 8) == 0) ||
                 (strncmp(uarch, "Apple M2", 8) == 0) ||
                 (strncmp(uarch, "Apple M3", 8) == 0) ||
-                (strncmp(uarch, "Apple M4", 8) == 0))) {
+                (strncmp(uarch, "Apple M4", 8) == 0) ||
+                (strncmp(uarch, "Apple M5", 8) == 0))) {
                 OPENSSL_armcap_P |= ARMV8_UNROLL8_EOR3;
                 OPENSSL_armcap_P |= ARMV8_HAVE_SHA3_AND_WORTH_USING;
             }
