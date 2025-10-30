@@ -1451,7 +1451,8 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
         port = OSSL_HTTPS_PORT;
 
     if (mbuf == NULL || fbio == NULL) {
-        BIO_printf(bio_err /* may be NULL */, "%s: out of memory", prog);
+        if (bio_err)
+            BIO_printf(bio_err /* may be NULL */, "%s: out of memory", prog);
         goto end;
     }
     BIO_push(fbio, bio);
