@@ -63,7 +63,7 @@ static ossl_inline void bn_select_words(BN_ULONG *r, BN_ULONG mask,
     size_t i;
 
     for (i = 0; i < num; i++) {
-        r[i] = constant_time_select_64(mask, a[i], b[i]);
+        r[i] = constant_time_select_bn(mask, a[i], b[i]);
     }
 }
 
