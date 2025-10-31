@@ -59,7 +59,6 @@ static int ch_test_cb(SSL *ssl, int *al, void *arg)
         goto give_up;
     if (!PACKET_buf_init(&pkt, pos, remaining)
         || !PACKET_as_length_prefixed_2(&pkt, &sni)
-        || PACKET_remaining(&sni) == 0
         || !PACKET_get_1(&sni, &servname_type)
         || servname_type != TLSEXT_NAMETYPE_host_name
         || !PACKET_as_length_prefixed_2(&sni, &hostname)
