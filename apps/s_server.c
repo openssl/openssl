@@ -480,7 +480,7 @@ static unsigned int ech_print_cb(SSL *s, const char *str)
  * the only way to get the "outer" SNI is via SSL_ech_get1_status.
  */
 
-/* apparently 26 is all we need */
+/* apparently 26 is all we need, but round it up to 32 to be on the safe side */
 #  define ECH_TIME_STR_LEN 32
 
 static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
