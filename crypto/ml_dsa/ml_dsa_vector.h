@@ -23,15 +23,13 @@ struct vector_st {
  *              does not own/free this.
  * @param num_polys The number of |polys| blocks (k or l)
  */
-static ossl_inline ossl_unused
-void vector_init(VECTOR *v, POLY *polys, size_t num_polys)
+static ossl_inline ossl_unused void vector_init(VECTOR *v, POLY *polys, size_t num_polys)
 {
     v->poly = polys;
     v->num_poly = num_polys;
 }
 
-static ossl_inline ossl_unused
-int vector_alloc(VECTOR *v, size_t num_polys)
+static ossl_inline ossl_unused int vector_alloc(VECTOR *v, size_t num_polys)
 {
     v->poly = OPENSSL_malloc_array(num_polys, sizeof(POLY));
     if (v->poly == NULL)
@@ -40,8 +38,7 @@ int vector_alloc(VECTOR *v, size_t num_polys)
     return 1;
 }
 
-static ossl_inline ossl_unused
-int vector_secure_alloc(VECTOR *v, size_t num_polys)
+static ossl_inline ossl_unused int vector_secure_alloc(VECTOR *v, size_t num_polys)
 {
     v->poly = OPENSSL_secure_malloc_array(num_polys, sizeof(POLY));
     if (v->poly == NULL)
@@ -50,16 +47,14 @@ int vector_secure_alloc(VECTOR *v, size_t num_polys)
     return 1;
 }
 
-static ossl_inline ossl_unused
-void vector_free(VECTOR *v)
+static ossl_inline ossl_unused void vector_free(VECTOR *v)
 {
     OPENSSL_free(v->poly);
     v->poly = NULL;
     v->num_poly = 0;
 }
 
-static ossl_inline ossl_unused
-void vector_secure_free(VECTOR *v, size_t rank)
+static ossl_inline ossl_unused void vector_secure_free(VECTOR *v, size_t rank)
 {
     OPENSSL_secure_clear_free(v->poly, rank * sizeof(POLY));
     v->poly = NULL;
@@ -67,8 +62,7 @@ void vector_secure_free(VECTOR *v, size_t rank)
 }
 
 /* @brief zeroize a vectors polynomial coefficients */
-static ossl_inline ossl_unused
-void vector_zero(VECTOR *va)
+static ossl_inline ossl_unused void vector_zero(VECTOR *va)
 {
     if (va->poly != NULL)
         memset(va->poly, 0, va->num_poly * sizeof(va->poly[0]));
@@ -152,15 +146,15 @@ vector_mult_scalar(const VECTOR *lhs, const POLY *rhs, VECTOR *out)
 
 static ossl_inline ossl_unused int
 vector_expand_S(EVP_MD_CTX *h_ctx, const EVP_MD *md, int eta,
-                const uint8_t *seed, VECTOR *s1, VECTOR *s2)
+    const uint8_t *seed, VECTOR *s1, VECTOR *s2)
 {
     return ossl_ml_dsa_vector_expand_S(h_ctx, md, eta, seed, s1, s2);
 }
 
 static ossl_inline ossl_unused void
 vector_expand_mask(VECTOR *out, const uint8_t *rho_prime, size_t rho_prime_len,
-                   uint32_t kappa, uint32_t gamma1,
-                   EVP_MD_CTX *h_ctx, const EVP_MD *md)
+    uint32_t kappa, uint32_t gamma1,
+    EVP_MD_CTX *h_ctx, const EVP_MD *md)
 {
     size_t i;
     uint8_t derived_seed[ML_DSA_RHO_PRIME_BYTES + 2];
@@ -173,7 +167,7 @@ vector_expand_mask(VECTOR *out, const uint8_t *rho_prime, size_t rho_prime_len,
         derived_seed[ML_DSA_RHO_PRIME_BYTES] = index & 0xFF;
         derived_seed[ML_DSA_RHO_PRIME_BYTES + 1] = (index >> 8) & 0xFF;
         poly_expand_mask(out->poly + i, derived_seed, sizeof(derived_seed),
-                         gamma1, h_ctx, md);
+            gamma1, h_ctx, md);
     }
 }
 
@@ -256,13 +250,13 @@ vector_count_ones(const VECTOR *v)
 
 static ossl_inline ossl_unused void
 vector_make_hint(const VECTOR *ct0, const VECTOR *cs2, const VECTOR *w,
-                 uint32_t gamma2, VECTOR *out)
+    uint32_t gamma2, VECTOR *out)
 {
     size_t i;
 
     for (i = 0; i < out->num_poly; i++)
         poly_make_hint(ct0->poly + i, cs2->poly + i, w->poly + i, gamma2,
-                       out->poly + i);
+            out->poly + i);
 }
 
 static ossl_inline ossl_unused void

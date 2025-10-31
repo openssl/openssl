@@ -28,13 +28,13 @@ err:
 }
 
 static int ssl_ctx_select_alpn(SSL *ssl,
-                               const unsigned char **out, unsigned char *out_len,
-                               const unsigned char *in, unsigned int in_len,
-                               void *arg)
+    const unsigned char **out, unsigned char *out_len,
+    const unsigned char *in, unsigned int in_len,
+    void *arg)
 {
     if (SSL_select_next_proto((unsigned char **)out, out_len,
-                              alpn_ossltest, sizeof(alpn_ossltest), in, in_len)
-            != OPENSSL_NPN_NEGOTIATED)
+            alpn_ossltest, sizeof(alpn_ossltest), in, in_len)
+        != OPENSSL_NPN_NEGOTIATED)
         return SSL_TLSEXT_ERR_ALERT_FATAL;
 
     return SSL_TLSEXT_ERR_OK;
@@ -60,9 +60,11 @@ static int ssl_ctx_configure(SSL_CTX *ctx, int is_server)
         SSL_CTX_set_keylog_callback(ctx, keylog_cb);
 
     if (!TEST_int_eq(SSL_CTX_use_certificate_file(ctx, cert_file,
-                                                  SSL_FILETYPE_PEM), 1)
+                         SSL_FILETYPE_PEM),
+            1)
         || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(ctx, key_file,
-                                                    SSL_FILETYPE_PEM), 1))
+                            SSL_FILETYPE_PEM),
+            1))
         return 0;
 
     SSL_CTX_set_alpn_select_cb(ctx, ssl_ctx_select_alpn, NULL);
@@ -70,7 +72,7 @@ static int ssl_ctx_configure(SSL_CTX *ctx, int is_server)
 }
 
 static int ssl_create_bound_socket(uint16_t listen_port,
-                                   int *p_fd, uint16_t *p_result_port)
+    int *p_fd, uint16_t *p_result_port)
 {
     int ok = 0;
     int fd = -1;
@@ -91,7 +93,7 @@ static int ssl_create_bound_socket(uint16_t listen_port,
         goto err;
 
     if (!TEST_true(BIO_ADDR_rawmake(addr, AF_INET,
-                                    &ina, sizeof(ina), 0)))
+            &ina, sizeof(ina), 0)))
         goto err;
 
     if (!TEST_true(BIO_bind(fd, addr, 0)))
@@ -118,7 +120,7 @@ err:
 }
 
 static int ssl_attach_bio_dgram(SSL *ssl,
-                                uint16_t local_port, uint16_t *actual_port)
+    uint16_t local_port, uint16_t *actual_port)
 {
     int s_fd = -1;
     BIO *bio;
@@ -191,8 +193,8 @@ DEF_FUNC(hf_new_ssl)
 
     F_POP2(name, flags);
 
-    is_domain   = ((flags & 2) != 0);
-    is_server   = ((flags & 1) != 0);
+    is_domain = ((flags & 2) != 0);
+    is_server = ((flags & 1) != 0);
 
     method = is_server ? OSSL_QUIC_server_method() : OSSL_QUIC_client_method();
     if (!TEST_ptr(ctx = SSL_CTX_new(method)))
@@ -200,8 +202,8 @@ DEF_FUNC(hf_new_ssl)
 
 #if defined(OPENSSL_THREADS)
     if (!TEST_true(SSL_CTX_set_domain_flags(ctx,
-                                            SSL_DOMAIN_FLAG_MULTI_THREAD
-                                            | SSL_DOMAIN_FLAG_BLOCKING)))
+            SSL_DOMAIN_FLAG_MULTI_THREAD
+                | SSL_DOMAIN_FLAG_BLOCKING)))
         goto err;
 #endif
 
@@ -423,7 +425,7 @@ DEF_FUNC(hf_stream_reset)
 {
     int ok = 0;
     const char *name;
-    SSL_STREAM_RESET_ARGS args = {0};
+    SSL_STREAM_RESET_ARGS args = { 0 };
     SSL *ssl;
 
     F_POP2(name, args.quic_error_code);
@@ -477,7 +479,7 @@ DEF_FUNC(hf_shutdown_wait)
     int ok = 0, ret;
     uint64_t flags;
     SSL *ssl;
-    SSL_SHUTDOWN_EX_ARGS args = {0};
+    SSL_SHUTDOWN_EX_ARGS args = { 0 };
     QUIC_CHANNEL *ch;
 
     F_POP(args.quic_reason);
@@ -528,16 +530,15 @@ static int check_consistent_want(SSL *s, int ret)
     int w = SSL_want(s);
 
     int ok = TEST_true(
-        (ec == SSL_ERROR_NONE                 && w == SSL_NOTHING)
-    ||  (ec == SSL_ERROR_ZERO_RETURN          && w == SSL_NOTHING)
-    ||  (ec == SSL_ERROR_SSL                  && w == SSL_NOTHING)
-    ||  (ec == SSL_ERROR_SYSCALL              && w == SSL_NOTHING)
-    ||  (ec == SSL_ERROR_WANT_READ            && w == SSL_READING)
-    ||  (ec == SSL_ERROR_WANT_WRITE           && w == SSL_WRITING)
-    ||  (ec == SSL_ERROR_WANT_CLIENT_HELLO_CB && w == SSL_CLIENT_HELLO_CB)
-    ||  (ec == SSL_ERROR_WANT_X509_LOOKUP     && w == SSL_X509_LOOKUP)
-    ||  (ec == SSL_ERROR_WANT_RETRY_VERIFY    && w == SSL_RETRY_VERIFY)
-    );
+        (ec == SSL_ERROR_NONE && w == SSL_NOTHING)
+        || (ec == SSL_ERROR_ZERO_RETURN && w == SSL_NOTHING)
+        || (ec == SSL_ERROR_SSL && w == SSL_NOTHING)
+        || (ec == SSL_ERROR_SYSCALL && w == SSL_NOTHING)
+        || (ec == SSL_ERROR_WANT_READ && w == SSL_READING)
+        || (ec == SSL_ERROR_WANT_WRITE && w == SSL_WRITING)
+        || (ec == SSL_ERROR_WANT_CLIENT_HELLO_CB && w == SSL_CLIENT_HELLO_CB)
+        || (ec == SSL_ERROR_WANT_X509_LOOKUP && w == SSL_X509_LOOKUP)
+        || (ec == SSL_ERROR_WANT_RETRY_VERIFY && w == SSL_RETRY_VERIFY));
 
     if (!ok)
         TEST_error("got error=%d, want=%d", ec, w);
@@ -657,8 +658,8 @@ DEF_FUNC(hf_read_expect)
         goto err;
 
     r = SSL_read_ex(ssl, RT()->tmp_buf + RT()->tmp_buf_offset,
-                    buf_len - RT()->tmp_buf_offset,
-                    &bytes_read);
+        buf_len - RT()->tmp_buf_offset,
+        &bytes_read);
     if (!TEST_true(check_consistent_want(ssl, r)))
         goto err;
 
@@ -675,8 +676,8 @@ DEF_FUNC(hf_read_expect)
         goto err;
 
     OPENSSL_free(RT()->tmp_buf);
-    RT()->tmp_buf         = NULL;
-    RT()->tmp_buf_offset  = 0;
+    RT()->tmp_buf = NULL;
+    RT()->tmp_buf_offset = 0;
 
     ok = 1;
 err:
@@ -687,7 +688,7 @@ DEF_FUNC(hf_read_fail)
 {
     int ok = 0, r;
     SSL *ssl;
-    char buf[1] = {0};
+    char buf[1] = { 0 };
     size_t bytes_read = 0;
     uint64_t do_wait;
 
@@ -722,7 +723,7 @@ DEF_FUNC(hf_connect_wait)
 
         /* 0 is the success case for SSL_set_alpn_protos(). */
         if (!TEST_false(SSL_set_alpn_protos(ssl, alpn_ossltest,
-                                            sizeof(alpn_ossltest))))
+                sizeof(alpn_ossltest))))
             goto err;
     }
 
@@ -813,7 +814,7 @@ DEF_FUNC(hf_expect_fin)
         F_SPIN_AGAIN();
 
     if (!TEST_int_eq(SSL_get_error(ssl, 0),
-                     SSL_ERROR_ZERO_RETURN))
+            SSL_ERROR_ZERO_RETURN))
         goto err;
 
     if (!TEST_int_eq(SSL_want(ssl), SSL_NOTHING))
@@ -828,7 +829,7 @@ DEF_FUNC(hf_expect_conn_close_info)
 {
     int ok = 0;
     SSL *ssl;
-    SSL_CONN_CLOSE_INFO cc_info = {0};
+    SSL_CONN_CLOSE_INFO cc_info = { 0 };
     uint64_t error_code, expect_app, expect_remote;
 
     F_POP(error_code);
@@ -841,9 +842,9 @@ DEF_FUNC(hf_expect_conn_close_info)
         F_SPIN_AGAIN();
 
     if (!TEST_int_eq((int)expect_app,
-                     (cc_info.flags & SSL_CONN_CLOSE_FLAG_TRANSPORT) == 0)
+            (cc_info.flags & SSL_CONN_CLOSE_FLAG_TRANSPORT) == 0)
         || !TEST_int_eq((int)expect_remote,
-                        (cc_info.flags & SSL_CONN_CLOSE_FLAG_LOCAL) == 0)
+            (cc_info.flags & SSL_CONN_CLOSE_FLAG_LOCAL) == 0)
         || !TEST_uint64_t_eq(error_code, cc_info.error_code)) {
         TEST_info("connection close reason: %s", cc_info.reason);
         goto err;
@@ -879,9 +880,9 @@ DEF_FUNC(hf_expect_err)
 
     F_POP2(lib, reason);
     if (!TEST_size_t_eq((size_t)ERR_GET_LIB(ERR_peek_last_error()),
-                        (size_t)lib)
+            (size_t)lib)
         || !TEST_size_t_eq((size_t)ERR_GET_REASON(ERR_peek_last_error()),
-                           (size_t)reason))
+            (size_t)reason))
         goto err;
 
     ok = 1;
@@ -939,8 +940,8 @@ DEF_FUNC(hf_select_ssl)
     if (!TEST_uint64_t_lt(slot, NUM_SLOTS))
         goto err;
 
-    RT()->slot[slot]    = obj;
-    RT()->ssl[slot]     = obj->ssl;
+    RT()->slot[slot] = obj;
+    RT()->ssl[slot] = obj->ssl;
     ok = 1;
 err:
     return ok;
@@ -955,8 +956,8 @@ DEF_FUNC(hf_clear_slot)
     if (!TEST_uint64_t_lt(slot, NUM_SLOTS))
         goto err;
 
-    RT()->slot[slot]    = NULL;
-    RT()->ssl[slot]     = NULL;
+    RT()->slot[slot] = NULL;
+    RT()->ssl[slot] = NULL;
     ok = 1;
 err:
     return ok;
@@ -1030,233 +1031,233 @@ err:
     return ok;
 }
 
-#define OP_UNBIND(name)                                         \
-    (OP_PUSH_PZ(#name),                                         \
-     OP_FUNC(hf_unbind))
+#define OP_UNBIND(name) \
+    (OP_PUSH_PZ(#name), \
+        OP_FUNC(hf_unbind))
 
-#define OP_SELECT_SSL(slot, name)                               \
-    (OP_PUSH_U64(slot),                                         \
-     OP_PUSH_PZ(#name),                                         \
-     OP_FUNC(hf_select_ssl))
+#define OP_SELECT_SSL(slot, name) \
+    (OP_PUSH_U64(slot),           \
+        OP_PUSH_PZ(#name),        \
+        OP_FUNC(hf_select_ssl))
 
-#define OP_CLEAR_SLOT(slot)                                     \
-    (OP_PUSH_U64(slot),                                         \
-     OP_FUNC(hf_clear_slot))
+#define OP_CLEAR_SLOT(slot) \
+    (OP_PUSH_U64(slot),     \
+        OP_FUNC(hf_clear_slot))
 
-#define OP_CONNECT_WAIT(name)                                   \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_FUNC(hf_connect_wait))
+#define OP_CONNECT_WAIT(name) \
+    (OP_SELECT_SSL(0, name),  \
+        OP_FUNC(hf_connect_wait))
 
-#define OP_LISTEN(name)                                         \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_FUNC(hf_listen))
+#define OP_LISTEN(name)      \
+    (OP_SELECT_SSL(0, name), \
+        OP_FUNC(hf_listen))
 
-#define OP_NEW_SSL_C(name)                                      \
-    (OP_PUSH_PZ(#name),                                         \
-     OP_PUSH_U64(0),                                            \
-     OP_FUNC(hf_new_ssl))
+#define OP_NEW_SSL_C(name) \
+    (OP_PUSH_PZ(#name),    \
+        OP_PUSH_U64(0),    \
+        OP_FUNC(hf_new_ssl))
 
-#define OP_NEW_SSL_L(name)                                      \
-    (OP_PUSH_PZ(#name),                                         \
-     OP_PUSH_U64(1),                                            \
-     OP_FUNC(hf_new_ssl))
+#define OP_NEW_SSL_L(name) \
+    (OP_PUSH_PZ(#name),    \
+        OP_PUSH_U64(1),    \
+        OP_FUNC(hf_new_ssl))
 
-#define OP_NEW_SSL_D(name)                                      \
-    (OP_PUSH_PZ(#name),                                         \
-     OP_PUSH_U64(3),                                            \
-     OP_FUNC(hf_new_ssl))
+#define OP_NEW_SSL_D(name) \
+    (OP_PUSH_PZ(#name),    \
+        OP_PUSH_U64(3),    \
+        OP_FUNC(hf_new_ssl))
 
-#define OP_NEW_SSL_L_LISTEN(name)                               \
-    (OP_NEW_SSL_L(name),                                        \
-     OP_LISTEN(name))
+#define OP_NEW_SSL_L_LISTEN(name) \
+    (OP_NEW_SSL_L(name),          \
+        OP_LISTEN(name))
 
-#define OP_NEW_SSL_L_FROM(domain_name, listener_name, flags)    \
-    (OP_SELECT_SSL(0, domain_name),                             \
-     OP_PUSH_PZ(#listener_name),                                \
-     OP_PUSH_U64(flags),                                        \
-     OP_FUNC(hf_new_ssl_listener_from))
+#define OP_NEW_SSL_L_FROM(domain_name, listener_name, flags) \
+    (OP_SELECT_SSL(0, domain_name),                          \
+        OP_PUSH_PZ(#listener_name),                          \
+        OP_PUSH_U64(flags),                                  \
+        OP_FUNC(hf_new_ssl_listener_from))
 
 #define OP_NEW_SSL_L_FROM_LISTEN(domain_name, listener_name, flags) \
-    (OP_NEW_SSL_L_FROM(domain_name, listener_name, flags),      \
-     OP_LISTEN(listener_name))
+    (OP_NEW_SSL_L_FROM(domain_name, listener_name, flags),          \
+        OP_LISTEN(listener_name))
 
-#define OP_SET_PEER_ADDR_FROM(dst_name, src_name)               \
-    (OP_SELECT_SSL(0, dst_name),                                \
-     OP_SELECT_SSL(1, src_name),                                \
-     OP_FUNC(hf_set_peer_addr_from))
+#define OP_SET_PEER_ADDR_FROM(dst_name, src_name) \
+    (OP_SELECT_SSL(0, dst_name),                  \
+        OP_SELECT_SSL(1, src_name),               \
+        OP_FUNC(hf_set_peer_addr_from))
 
-#define OP_SIMPLE_PAIR_CONN()                                   \
-    (OP_NEW_SSL_L_LISTEN(L),                                    \
-     OP_NEW_SSL_C(C),                                           \
-     OP_SET_PEER_ADDR_FROM(C, L),                               \
-     OP_CONNECT_WAIT(C))
+#define OP_SIMPLE_PAIR_CONN()        \
+    (OP_NEW_SSL_L_LISTEN(L),         \
+        OP_NEW_SSL_C(C),             \
+        OP_SET_PEER_ADDR_FROM(C, L), \
+        OP_CONNECT_WAIT(C))
 
-#define OP_SIMPLE_PAIR_CONN_D()                                 \
-    (OP_NEW_SSL_D(Ds),                                          \
-     OP_NEW_SSL_L_FROM_LISTEN(Ds, L, 0),                        \
-     OP_NEW_SSL_C(C),                                           \
-     OP_SET_PEER_ADDR_FROM(C, L),                               \
-     OP_CONNECT_WAIT(C))
+#define OP_SIMPLE_PAIR_CONN_D()             \
+    (OP_NEW_SSL_D(Ds),                      \
+        OP_NEW_SSL_L_FROM_LISTEN(Ds, L, 0), \
+        OP_NEW_SSL_C(C),                    \
+        OP_SET_PEER_ADDR_FROM(C, L),        \
+        OP_CONNECT_WAIT(C))
 
-#define OP_SIMPLE_PAIR_CONN_ND()                                \
-    (OP_SIMPLE_PAIR_CONN(),                                     \
-     OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE))
+#define OP_SIMPLE_PAIR_CONN_ND() \
+    (OP_SIMPLE_PAIR_CONN(),      \
+        OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE))
 
-#define OP_NEW_STREAM(conn_name, stream_name, flags)            \
-    (OP_SELECT_SSL(0, conn_name),                               \
-     OP_PUSH_PZ(#stream_name),                                  \
-     OP_PUSH_U64(flags),                                        \
-     OP_PUSH_U64(0),                                            \
-     OP_FUNC(hf_new_stream))
+#define OP_NEW_STREAM(conn_name, stream_name, flags) \
+    (OP_SELECT_SSL(0, conn_name),                    \
+        OP_PUSH_PZ(#stream_name),                    \
+        OP_PUSH_U64(flags),                          \
+        OP_PUSH_U64(0),                              \
+        OP_FUNC(hf_new_stream))
 
-#define OP_ACCEPT_STREAM_WAIT(conn_name, stream_name, flags)    \
-    (OP_SELECT_SSL(0, conn_name),                               \
-     OP_PUSH_PZ(#stream_name),                                  \
-     OP_PUSH_U64(flags),                                        \
-     OP_PUSH_U64(1),                                            \
-     OP_FUNC(hf_new_stream))
+#define OP_ACCEPT_STREAM_WAIT(conn_name, stream_name, flags) \
+    (OP_SELECT_SSL(0, conn_name),                            \
+        OP_PUSH_PZ(#stream_name),                            \
+        OP_PUSH_U64(flags),                                  \
+        OP_PUSH_U64(1),                                      \
+        OP_FUNC(hf_new_stream))
 
-#define OP_ACCEPT_STREAM_NONE(conn_name)                        \
-    (OP_SELECT_SSL(0, conn_name),                               \
-     OP_FUNC(hf_accept_stream_none))
+#define OP_ACCEPT_STREAM_NONE(conn_name) \
+    (OP_SELECT_SSL(0, conn_name),        \
+        OP_FUNC(hf_accept_stream_none))
 
-#define OP_ACCEPT_CONN_WAIT(listener_name, conn_name, flags)    \
-    (OP_SELECT_SSL(0, listener_name),                           \
-     OP_PUSH_PZ(#conn_name),                                    \
-     OP_PUSH_U64(flags),                                        \
-     OP_FUNC(hf_accept_conn))
+#define OP_ACCEPT_CONN_WAIT(listener_name, conn_name, flags) \
+    (OP_SELECT_SSL(0, listener_name),                        \
+        OP_PUSH_PZ(#conn_name),                              \
+        OP_PUSH_U64(flags),                                  \
+        OP_FUNC(hf_accept_conn))
 
 #define OP_ACCEPT_CONN_WAIT_ND(listener_name, conn_name, flags) \
     (OP_ACCEPT_CONN_WAIT(listener_name, conn_name, flags),      \
-     OP_SET_DEFAULT_STREAM_MODE(conn_name, SSL_DEFAULT_STREAM_MODE_NONE))
+        OP_SET_DEFAULT_STREAM_MODE(conn_name, SSL_DEFAULT_STREAM_MODE_NONE))
 
-#define OP_ACCEPT_CONN_NONE(listener_name)                      \
-    (OP_SELECT_SSL(0, listener_name),                           \
-     OP_FUNC(hf_accept_conn_none))
+#define OP_ACCEPT_CONN_NONE(listener_name) \
+    (OP_SELECT_SSL(0, listener_name),      \
+        OP_FUNC(hf_accept_conn_none))
 
-#define OP_ACCEPT_CONN_WAIT1(listener_name, conn_name, flags)   \
-    (OP_ACCEPT_CONN_WAIT(listener_name, conn_name, flags),      \
-     OP_ACCEPT_CONN_NONE(listener_name))
+#define OP_ACCEPT_CONN_WAIT1(listener_name, conn_name, flags) \
+    (OP_ACCEPT_CONN_WAIT(listener_name, conn_name, flags),    \
+        OP_ACCEPT_CONN_NONE(listener_name))
 
 #define OP_ACCEPT_CONN_WAIT1_ND(listener_name, conn_name, flags) \
     (OP_ACCEPT_CONN_WAIT_ND(listener_name, conn_name, flags),    \
-     OP_ACCEPT_CONN_NONE(listener_name))
+        OP_ACCEPT_CONN_NONE(listener_name))
 
-#define OP_WRITE(name, buf, buf_len)                            \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_PUSH_BUFP(buf, buf_len),                                \
-     OP_FUNC(hf_write))
+#define OP_WRITE(name, buf, buf_len) \
+    (OP_SELECT_SSL(0, name),         \
+        OP_PUSH_BUFP(buf, buf_len),  \
+        OP_FUNC(hf_write))
 
-#define OP_WRITE_RAND(name, buf_len)                            \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_PUSH_SIZE(buf_len),                                     \
-     OP_FUNC(hf_write_rand))
+#define OP_WRITE_RAND(name, buf_len) \
+    (OP_SELECT_SSL(0, name),         \
+        OP_PUSH_SIZE(buf_len),       \
+        OP_FUNC(hf_write_rand))
 
-#define OP_WRITE_B(name, buf)                                   \
+#define OP_WRITE_B(name, buf) \
     OP_WRITE(name, (buf), sizeof(buf))
 
-#define OP_WRITE_EX2(name, buf, buf_len, flags)                 \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_PUSH_BUFP(buf, buf_len),                                \
-     OP_PUSH_U64(flags),                                        \
-     OP_FUNC(hf_write_ex2))
+#define OP_WRITE_EX2(name, buf, buf_len, flags) \
+    (OP_SELECT_SSL(0, name),                    \
+        OP_PUSH_BUFP(buf, buf_len),             \
+        OP_PUSH_U64(flags),                     \
+        OP_FUNC(hf_write_ex2))
 
-#define OP_WRITE_FAIL(name)                                     \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_FUNC(hf_write_fail))
+#define OP_WRITE_FAIL(name)  \
+    (OP_SELECT_SSL(0, name), \
+        OP_FUNC(hf_write_fail))
 
-#define OP_CONCLUDE(name)                                       \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_FUNC(hf_conclude))
+#define OP_CONCLUDE(name)    \
+    (OP_SELECT_SSL(0, name), \
+        OP_FUNC(hf_conclude))
 
-#define OP_READ_EXPECT(name, buf, buf_len)                      \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_PUSH_BUFP(buf, buf_len),                                \
-     OP_FUNC(hf_read_expect))
+#define OP_READ_EXPECT(name, buf, buf_len) \
+    (OP_SELECT_SSL(0, name),               \
+        OP_PUSH_BUFP(buf, buf_len),        \
+        OP_FUNC(hf_read_expect))
 
-#define OP_READ_EXPECT_B(name, buf)                             \
+#define OP_READ_EXPECT_B(name, buf) \
     OP_READ_EXPECT(name, (buf), sizeof(buf))
 
-#define OP_READ_FAIL()                                          \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_PUSH_U64(0),                                            \
-     OP_FUNC(hf_read_fail))
+#define OP_READ_FAIL()       \
+    (OP_SELECT_SSL(0, name), \
+        OP_PUSH_U64(0),      \
+        OP_FUNC(hf_read_fail))
 
-#define OP_READ_FAIL_WAIT(name)                                 \
+#define OP_READ_FAIL_WAIT(name) \
     (OP_SELECT_SSL(0, name),                                    \
      OP_PUSH_U64(1),                                            \
      OP_FUNC(hf_read_fail)
 
-#define OP_POP_ERR()                                            \
+#define OP_POP_ERR() \
     OP_FUNC(hf_pop_err)
 
-#define OP_SET_DEFAULT_STREAM_MODE(name, mode)                  \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_PUSH_U64(mode),                                         \
-     OP_FUNC(hf_set_default_stream_mode))
+#define OP_SET_DEFAULT_STREAM_MODE(name, mode) \
+    (OP_SELECT_SSL(0, name),                   \
+        OP_PUSH_U64(mode),                     \
+        OP_FUNC(hf_set_default_stream_mode))
 
 #define OP_SET_INCOMING_STREAM_POLICY(name, policy, error_code) \
     (OP_SELECT_SSL(0, name),                                    \
-     OP_PUSH_U64(policy),                                       \
-     OP_PUSH_U64(error_code),                                   \
-     OP_FUNC(hf_set_incoming_stream_policy))
+        OP_PUSH_U64(policy),                                    \
+        OP_PUSH_U64(error_code),                                \
+        OP_FUNC(hf_set_incoming_stream_policy))
 
-#define OP_STREAM_RESET(name, error_code)                       \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_PUSH_U64(flags),                                        \
-     OP_PUSH_U64(error_code),                                   \
-     OP_FUNC(hf_stream_reset))                                  \
+#define OP_STREAM_RESET(name, error_code) \
+    (OP_SELECT_SSL(0, name),              \
+        OP_PUSH_U64(flags),               \
+        OP_PUSH_U64(error_code),          \
+        OP_FUNC(hf_stream_reset))
 
-#define OP_SHUTDOWN_WAIT(name, flags, error_code, reason)       \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_PUSH_U64(flags),                                        \
-     OP_PUSH_U64(error_code),                                   \
-     OP_PUSH_PZ(reason),                                        \
-     OP_FUNC(hf_shutdown_wait))
+#define OP_SHUTDOWN_WAIT(name, flags, error_code, reason) \
+    (OP_SELECT_SSL(0, name),                              \
+        OP_PUSH_U64(flags),                               \
+        OP_PUSH_U64(error_code),                          \
+        OP_PUSH_PZ(reason),                               \
+        OP_FUNC(hf_shutdown_wait))
 
-#define OP_DETACH(conn_name, stream_name)                       \
-    (OP_SELECT_SSL(0, conn_name),                               \
-     OP_PUSH_PZ(#stream_name),                                  \
-     OP_FUNC(hf_detach))
+#define OP_DETACH(conn_name, stream_name) \
+    (OP_SELECT_SSL(0, conn_name),         \
+        OP_PUSH_PZ(#stream_name),         \
+        OP_FUNC(hf_detach))
 
-#define OP_ATTACH(conn_name, stream_name)                       \
-    (OP_SELECT_SSL(0, conn_name),                               \
-     OP_PUSH_PZ(stream_name),                                   \
-     OP_FUNC(hf_attach))
+#define OP_ATTACH(conn_name, stream_name) \
+    (OP_SELECT_SSL(0, conn_name),         \
+        OP_PUSH_PZ(stream_name),          \
+        OP_FUNC(hf_attach))
 
-#define OP_EXPECT_FIN(name)                                     \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_FUNC(hf_expect_fin))
+#define OP_EXPECT_FIN(name)  \
+    (OP_SELECT_SSL(0, name), \
+        OP_FUNC(hf_expect_fin))
 
 #define OP_EXPECT_CONN_CLOSE_INFO(name, error_code, expect_app, expect_remote) \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_PUSH_U64(expect_app),                                   \
-     OP_PUSH_U64(expect_remote),                                \
-     OP_PUSH_U64(error_code),                                   \
-     OP_FUNC(hf_expect_conn_close_info))
+    (OP_SELECT_SSL(0, name),                                                   \
+        OP_PUSH_U64(expect_app),                                               \
+        OP_PUSH_U64(expect_remote),                                            \
+        OP_PUSH_U64(error_code),                                               \
+        OP_FUNC(hf_expect_conn_close_info))
 
-#define OP_WAIT_FOR_DATA(name)                                  \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_FUNC(hf_wait_for_data))
+#define OP_WAIT_FOR_DATA(name) \
+    (OP_SELECT_SSL(0, name),   \
+        OP_FUNC(hf_wait_for_data))
 
-#define OP_EXPECT_ERR(lib, reason)                              \
-    (OP_PUSH_U64(lib),                                          \
-     OP_PUSH_U64(reason),                                       \
-     OP_FUNC(hf_expect_err))
+#define OP_EXPECT_ERR(lib, reason) \
+    (OP_PUSH_U64(lib),             \
+        OP_PUSH_U64(reason),       \
+        OP_FUNC(hf_expect_err))
 
-#define OP_EXPECT_SSL_ERR(name, expected)                       \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_PUSH_U64(expected),                                     \
-     OP_FUNC(hf_expect_ssl_err))
+#define OP_EXPECT_SSL_ERR(name, expected) \
+    (OP_SELECT_SSL(0, name),              \
+        OP_PUSH_U64(expected),            \
+        OP_FUNC(hf_expect_ssl_err))
 
-#define OP_EXPECT_STREAM_ID(expected)                           \
-    (OP_PUSH_U64(expected),                                     \
-     OP_FUNC(hf_expect_stream_id))
+#define OP_EXPECT_STREAM_ID(expected) \
+    (OP_PUSH_U64(expected),           \
+        OP_FUNC(hf_expect_stream_id))
 
-#define OP_SKIP_TIME(ms)                                        \
-    (OP_PUSH_U64(ms),                                           \
-     OP_FUNC(hf_skip_time))
+#define OP_SKIP_TIME(ms) \
+    (OP_PUSH_U64(ms),    \
+        OP_FUNC(hf_skip_time))
 
-#define OP_SLEEP(ms)                                            \
-    (OP_PUSH_U64(ms),                                           \
-     OP_FUNC(hf_sleep))
+#define OP_SLEEP(ms)  \
+    (OP_PUSH_U64(ms), \
+        OP_FUNC(hf_sleep))

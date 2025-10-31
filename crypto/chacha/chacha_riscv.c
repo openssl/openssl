@@ -41,15 +41,15 @@
 #include "crypto/riscv_arch.h"
 
 void ChaCha20_ctr32_v_zbb_zvkb(unsigned char *out, const unsigned char *inp,
-                               size_t len, const unsigned int key[8],
-                               const unsigned int counter[4]);
+    size_t len, const unsigned int key[8],
+    const unsigned int counter[4]);
 
 void ChaCha20_ctr32_v_zbb(unsigned char *out, const unsigned char *inp,
-                          size_t len, const unsigned int key[8],
-                          const unsigned int counter[4]);
+    size_t len, const unsigned int key[8],
+    const unsigned int counter[4]);
 
 void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp, size_t len,
-                    const unsigned int key[8], const unsigned int counter[4])
+    const unsigned int key[8], const unsigned int counter[4])
 {
     if (len > CHACHA_BLK_SIZE && RISCV_HAS_ZBB() && riscv_vlen() >= 128) {
         if (RISCV_HAS_ZVKB()) {

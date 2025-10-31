@@ -13,7 +13,7 @@
 #include "testutil.h"
 
 static const OSSL_ALGORITHM *obj_query(void *provctx, int operation_id,
-                                       int *no_cache)
+    int *no_cache)
 {
     *no_cache = 0;
     return NULL;
@@ -47,9 +47,9 @@ static OSSL_FUNC_core_obj_create_fn *c_obj_create = NULL;
 #define NODIG_SIGALG_LN "my-nodig-sigalg-long"
 
 static int obj_provider_init(const OSSL_CORE_HANDLE *handle,
-                             const OSSL_DISPATCH *in,
-                             const OSSL_DISPATCH **out,
-                             void **provctx)
+    const OSSL_DISPATCH *in,
+    const OSSL_DISPATCH **out,
+    void **provctx)
 {
     *provctx = (void *)handle;
     *out = obj_dispatch_table;
@@ -70,12 +70,12 @@ static int obj_provider_init(const OSSL_CORE_HANDLE *handle,
     }
 
     if (!c_obj_create(handle, DIGEST_OID, DIGEST_SN, DIGEST_LN)
-            || !c_obj_create(handle, SIG_OID, SIG_SN, SIG_LN)
-            || !c_obj_create(handle, SIGALG_OID, SIGALG_SN, SIGALG_LN))
+        || !c_obj_create(handle, SIG_OID, SIG_SN, SIG_LN)
+        || !c_obj_create(handle, SIGALG_OID, SIGALG_SN, SIGALG_LN))
         return 0;
 
     if (!c_obj_create(handle, NODIG_SIG_OID, NODIG_SIG_SN, NODIG_SIG_LN)
-            || !c_obj_create(handle, NODIG_SIGALG_OID, NODIG_SIGALG_SN, NODIG_SIGALG_LN))
+        || !c_obj_create(handle, NODIG_SIGALG_OID, NODIG_SIGALG_SN, NODIG_SIGALG_LN))
         return 0;
 
     if (!c_obj_add_sigid(handle, SIGALG_OID, DIGEST_SN, SIG_LN))
@@ -102,26 +102,26 @@ static int obj_create_test(void)
         goto err;
 
     if (!TEST_true(OSSL_PROVIDER_add_builtin(libctx, "obj-prov",
-                                             obj_provider_init))
-            || !TEST_ptr(objprov = OSSL_PROVIDER_load(libctx, "obj-prov")))
+            obj_provider_init))
+        || !TEST_ptr(objprov = OSSL_PROVIDER_load(libctx, "obj-prov")))
         goto err;
 
     /* Check that the provider created the OIDs/NIDs we expected */
     sigalgnid = OBJ_txt2nid(SIGALG_OID);
     if (!TEST_int_ne(sigalgnid, NID_undef)
-            || !TEST_true(OBJ_find_sigid_algs(sigalgnid, &digestnid, &signid))
-            || !TEST_int_ne(digestnid, NID_undef)
-            || !TEST_int_ne(signid, NID_undef)
-            || !TEST_int_eq(digestnid, OBJ_sn2nid(DIGEST_SN))
-            || !TEST_int_eq(signid, OBJ_ln2nid(SIG_LN)))
+        || !TEST_true(OBJ_find_sigid_algs(sigalgnid, &digestnid, &signid))
+        || !TEST_int_ne(digestnid, NID_undef)
+        || !TEST_int_ne(signid, NID_undef)
+        || !TEST_int_eq(digestnid, OBJ_sn2nid(DIGEST_SN))
+        || !TEST_int_eq(signid, OBJ_ln2nid(SIG_LN)))
         goto err;
 
     /* Check empty digest alg storage capability */
     sigalgnid = OBJ_txt2nid(NODIG_SIGALG_OID);
     if (!TEST_int_ne(sigalgnid, NID_undef)
-            || !TEST_true(OBJ_find_sigid_algs(sigalgnid, &digestnid, &signid))
-            || !TEST_int_eq(digestnid, NID_undef)
-            || !TEST_int_ne(signid, NID_undef))
+        || !TEST_true(OBJ_find_sigid_algs(sigalgnid, &digestnid, &signid))
+        || !TEST_int_eq(digestnid, NID_undef)
+        || !TEST_int_ne(signid, NID_undef))
         goto err;
 
     /* Testing OBJ_find_sigid_by_algs */
@@ -129,29 +129,25 @@ static int obj_create_test(void)
     sigalgnid = OBJ_sn2nid(SIGALG_SN);
     digestnid = OBJ_sn2nid(DIGEST_SN);
     signid = OBJ_ln2nid(SIG_LN);
-    if ((!OBJ_find_sigid_by_algs(&foundsid, digestnid, signid)) ||
-        (foundsid != sigalgnid))
+    if ((!OBJ_find_sigid_by_algs(&foundsid, digestnid, signid)) || (foundsid != sigalgnid))
         return 0;
     /* Check wrong signature/digest combination is rejected */
-    if ((OBJ_find_sigid_by_algs(&foundsid, OBJ_sn2nid("SHA512"), signid)) &&
-        (foundsid == sigalgnid))
+    if ((OBJ_find_sigid_by_algs(&foundsid, OBJ_sn2nid("SHA512"), signid)) && (foundsid == sigalgnid))
         return 0;
     /* Now also check signature not needing digest is found */
     /* a) when some digest is given */
     sigalgnid = OBJ_sn2nid(NODIG_SIGALG_SN);
     digestnid = OBJ_sn2nid("SHA512");
     signid = OBJ_ln2nid(NODIG_SIG_LN);
-    if ((!OBJ_find_sigid_by_algs(&foundsid, digestnid, signid)) ||
-        (foundsid != sigalgnid))
+    if ((!OBJ_find_sigid_by_algs(&foundsid, digestnid, signid)) || (foundsid != sigalgnid))
         return 0;
     /* b) when NID_undef is passed */
     digestnid = NID_undef;
-    if ((!OBJ_find_sigid_by_algs(&foundsid, digestnid, signid)) ||
-        (foundsid != sigalgnid))
+    if ((!OBJ_find_sigid_by_algs(&foundsid, digestnid, signid)) || (foundsid != sigalgnid))
         return 0;
 
     testresult = 1;
- err:
+err:
     OSSL_PROVIDER_unload(objprov);
     OSSL_LIB_CTX_free(libctx);
     return testresult;

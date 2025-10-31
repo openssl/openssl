@@ -7,11 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 #ifndef OSSL_NGHTTP3_H
-# define OSSL_NGHTTP3_H
+#define OSSL_NGHTTP3_H
 
-# include <openssl/bio.h>
-# include <openssl/ssl.h>
-# include <nghttp3/nghttp3.h>
+#include <openssl/bio.h>
+#include <openssl/ssl.h>
+#include <nghttp3/nghttp3.h>
 
 /*
  * ossl-nghttp3: Demo binding of nghttp3 to OpenSSL QUIC
@@ -46,9 +46,9 @@ typedef struct ossl_demo_h3_stream_st OSSL_DEMO_H3_STREAM;
  * Returns NULL on failure.
  */
 OSSL_DEMO_H3_CONN *OSSL_DEMO_H3_CONN_new_for_conn(BIO *qconn_bio,
-                                                  const nghttp3_callbacks *callbacks,
-                                                  const nghttp3_settings *settings,
-                                                  void *user_data);
+    const nghttp3_callbacks *callbacks,
+    const nghttp3_settings *settings,
+    void *user_data);
 
 /*
  * Works identically to OSSL_DEMO_H3_CONN_new_for_conn except that it manages
@@ -61,10 +61,10 @@ OSSL_DEMO_H3_CONN *OSSL_DEMO_H3_CONN_new_for_conn(BIO *qconn_bio,
  * SSL_METHOD.
  */
 OSSL_DEMO_H3_CONN *OSSL_DEMO_H3_CONN_new_for_addr(SSL_CTX *ctx,
-                                                  const char *addr,
-                                                  const nghttp3_callbacks *callbacks,
-                                                  const nghttp3_settings *settings,
-                                                  void *user_data);
+    const char *addr,
+    const nghttp3_callbacks *callbacks,
+    const nghttp3_settings *settings,
+    void *user_data);
 
 /* Equivalent to SSL_connect(OSSL_DEMO_H3_CONN_get0_connection(conn)). */
 int OSSL_DEMO_H3_CONN_connect(OSSL_DEMO_H3_CONN *conn);
@@ -98,9 +98,9 @@ int OSSL_DEMO_H3_CONN_handle_events(OSSL_DEMO_H3_CONN *conn);
  * OSSL_DEMO_H3_STREAM_get_user_data.
  */
 int OSSL_DEMO_H3_CONN_submit_request(OSSL_DEMO_H3_CONN *conn,
-                           const nghttp3_nv *hdr, size_t hdrlen,
-                           const nghttp3_data_reader *dr,
-                           void *stream_user_data);
+    const nghttp3_nv *hdr, size_t hdrlen,
+    const nghttp3_data_reader *dr,
+    void *stream_user_data);
 
 /*
  * Returns the user data value which was specified in

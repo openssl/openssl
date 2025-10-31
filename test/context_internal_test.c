@@ -20,13 +20,13 @@ static int test_set0_default(void)
     int testresult = 0;
 
     if (!TEST_ptr(global)
-            || !TEST_ptr(local)
-            || !TEST_ptr_eq(global, OSSL_LIB_CTX_set0_default(NULL)))
+        || !TEST_ptr(local)
+        || !TEST_ptr_eq(global, OSSL_LIB_CTX_set0_default(NULL)))
         goto err;
 
     /* Check we can change the local default context */
     if (!TEST_ptr(prev = OSSL_LIB_CTX_set0_default(local))
-            || !TEST_ptr_eq(global, prev))
+        || !TEST_ptr_eq(global, prev))
         goto err;
 
     /* Calling OSSL_LIB_CTX_set0_default() with a NULL should be a no-op */
@@ -39,11 +39,11 @@ static int test_set0_default(void)
 
     /* Check we can swap back to the global default */
     if (!TEST_ptr(prev = OSSL_LIB_CTX_set0_default(global))
-            || !TEST_ptr_eq(local, prev))
+        || !TEST_ptr_eq(local, prev))
         goto err;
 
     testresult = 1;
- err:
+err:
     OSSL_LIB_CTX_free(local);
     return testresult;
 }
@@ -70,7 +70,7 @@ static int test_set_get_conf_diagnostics(void)
         goto err;
 
     res = 1;
- err:
+err:
     OSSL_LIB_CTX_free(ctx);
     return res;
 }

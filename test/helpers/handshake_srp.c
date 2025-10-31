@@ -21,18 +21,19 @@
 
 static char *client_srp_cb(SSL *s, void *arg)
 {
-    CTX_DATA *ctx_data = (CTX_DATA*)(arg);
+    CTX_DATA *ctx_data = (CTX_DATA *)(arg);
     return OPENSSL_strdup(ctx_data->srp_password);
 }
 
 static int server_srp_cb(SSL *s, int *ad, void *arg)
 {
-    CTX_DATA *ctx_data = (CTX_DATA*)(arg);
+    CTX_DATA *ctx_data = (CTX_DATA *)(arg);
     if (strcmp(ctx_data->srp_user, SSL_get_srp_username(s)) != 0)
         return SSL3_AL_FATAL;
     if (SSL_set_srp_server_param_pw(s, ctx_data->srp_user,
-                                    ctx_data->srp_password,
-                                    "2048" /* known group */) < 0) {
+            ctx_data->srp_password,
+            "2048" /* known group */)
+        < 0) {
         *ad = SSL_AD_INTERNAL_ERROR;
         return SSL3_AL_FATAL;
     }
@@ -40,11 +41,11 @@ static int server_srp_cb(SSL *s, int *ad, void *arg)
 }
 
 int configure_handshake_ctx_for_srp(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
-                                    SSL_CTX *client_ctx,
-                                    const SSL_TEST_EXTRA_CONF *extra,
-                                    CTX_DATA *server_ctx_data,
-                                    CTX_DATA *server2_ctx_data,
-                                    CTX_DATA *client_ctx_data)
+    SSL_CTX *client_ctx,
+    const SSL_TEST_EXTRA_CONF *extra,
+    CTX_DATA *server_ctx_data,
+    CTX_DATA *server2_ctx_data,
+    CTX_DATA *client_ctx_data)
 {
     if (extra->server.srp_user != NULL) {
         SSL_CTX_set_srp_username_callback(server_ctx, server_srp_cb);
@@ -76,7 +77,7 @@ int configure_handshake_ctx_for_srp(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     }
     if (extra->client.srp_user != NULL) {
         if (!TEST_true(SSL_CTX_set_srp_username(client_ctx,
-                                                extra->client.srp_user)))
+                extra->client.srp_user)))
             return 0;
         SSL_CTX_set_srp_client_pwd_callback(client_ctx, client_srp_cb);
         client_ctx_data->srp_password = OPENSSL_strdup(extra->client.srp_password);

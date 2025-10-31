@@ -28,7 +28,7 @@ static int test_thread_reported_flags(void)
         return 0;
 #else
     if (!TEST_int_eq(flags & OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL,
-                     OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL))
+            OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL))
         return 0;
 #endif
 
@@ -37,7 +37,7 @@ static int test_thread_reported_flags(void)
         return 0;
 #else
     if (!TEST_int_eq(flags & OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN,
-                     OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN))
+            OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN))
         return 0;
 #endif
 
@@ -46,10 +46,10 @@ static int test_thread_reported_flags(void)
 
 #ifndef OPENSSL_NO_THREAD_POOL
 
-# define TEST_THREAD_NATIVE_FN_SET_VALUE 1
+#define TEST_THREAD_NATIVE_FN_SET_VALUE 1
 static uint32_t test_thread_native_fn(void *data)
 {
-    uint32_t *ldata = (uint32_t*) data;
+    uint32_t *ldata = (uint32_t *)data;
     *ldata = *ldata + 1;
     return *ldata - 1;
 }
@@ -92,7 +92,7 @@ static int test_thread_native(void)
     return 1;
 }
 
-# if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
+#if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
 static int test_thread_internal(void)
 {
     uint32_t retval[3];
@@ -243,7 +243,7 @@ cleanup:
     OSSL_LIB_CTX_free(cust_ctx);
     return status;
 }
-# endif
+#endif
 
 static uint32_t test_thread_native_multiple_joins_fn1(void *data)
 {
@@ -298,9 +298,9 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_THREAD_POOL)
     ADD_TEST(test_thread_native);
     ADD_TEST(test_thread_native_multiple_joins);
-# if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
+#if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
     ADD_TEST(test_thread_internal);
-# endif
+#endif
 #endif
 
     return 1;

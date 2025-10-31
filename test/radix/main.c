@@ -23,7 +23,7 @@ static int test_script(int idx)
 {
     SCRIPT_INFO *script_info = scripts[idx];
     int testresult;
-    TERP_CONFIG cfg = {0};
+    TERP_CONFIG cfg = { 0 };
 
     if (!TEST_true(bindings_process_init(0, 0)))
         return 0;
