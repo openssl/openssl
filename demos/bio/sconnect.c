@@ -66,10 +66,18 @@ int main(int argc, char *argv[])
 
     /* Use it inside an SSL BIO */
     ssl_bio = BIO_new(BIO_f_ssl());
+    if (ssl_bio == NULL)
+        goto err;
+
     BIO_set_ssl(ssl_bio, ssl, BIO_CLOSE);
 
     /* Lets use a connect BIO under the SSL BIO */
     out = BIO_new(BIO_s_connect());
+    if (out == NULL) {
+        BIO_free(ssl_bio);
+        goto err;
+    }
+
     BIO_set_conn_hostname(out, hostport);
 
     /* The BIO has parsed the host:port and even IPv6 literals in [] */
