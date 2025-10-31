@@ -31,6 +31,7 @@
         OPT_V_SUITEB_128_ONLY, OPT_V_SUITEB_128, OPT_V_SUITEB_192, \
         OPT_V_PARTIAL_CHAIN, OPT_V_NO_ALT_CHAINS, OPT_V_NO_CHECK_TIME, \
         OPT_V_VERIFY_AUTH_LEVEL, OPT_V_ALLOW_PROXY_CERTS, \
+        OPT_V_NO_WILDCARDS, \
         OPT_V__LAST
 
 # define OPT_V_OPTIONS \
@@ -82,7 +83,9 @@
             "accept chains anchored by intermediate trust-store CAs"}, \
         { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "(deprecated)" }, \
         { "no_check_time", OPT_V_NO_CHECK_TIME, '-', "ignore certificate validity time" }, \
-        { "allow_proxy_certs", OPT_V_ALLOW_PROXY_CERTS, '-', "allow the use of proxy certificates" }
+        { "allow_proxy_certs", OPT_V_ALLOW_PROXY_CERTS, '-', "allow the use of proxy certificates" }, \
+        { "no_wildcards", OPT_V_NO_WILDCARDS, '-',  \
+        "prevent the use of wildcards in certificates when used in conjunction with `-verify_hostname`" }
 
 # define OPT_V_CASES \
         OPT_V__FIRST: case OPT_V__LAST: break; \
@@ -115,7 +118,8 @@
         case OPT_V_PARTIAL_CHAIN: \
         case OPT_V_NO_ALT_CHAINS: \
         case OPT_V_NO_CHECK_TIME: \
-        case OPT_V_ALLOW_PROXY_CERTS
+        case OPT_V_ALLOW_PROXY_CERTS: \
+        case OPT_V_NO_WILDCARDS 
 
 /*
  * Common "extended validation" options.
