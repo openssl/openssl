@@ -17,6 +17,7 @@ permissions:
 
 jobs:
   alpine:
+    if: github.repository == 'openssl/openssl'
     strategy:
       fail-fast: false
       matrix:
@@ -52,6 +53,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   linux:
+    if: github.repository == 'openssl/openssl'
     strategy:
       fail-fast: false
       matrix:
@@ -101,6 +103,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   macos:
+    if: github.repository == 'openssl/openssl'
     strategy:
       fail-fast: false
       matrix:
@@ -124,6 +127,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   windows:
+    if: github.repository == 'openssl/openssl'
     strategy:
       fail-fast: false
       matrix:
@@ -245,6 +249,7 @@ jobs:
 
   freebsd-x86_64:
     runs-on: ubuntu-latest
+    if: github.repository == 'openssl/openssl'
     steps:
     - uses: actions/checkout@v4
     - name: config

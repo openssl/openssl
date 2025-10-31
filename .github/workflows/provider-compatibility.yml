@@ -28,6 +28,7 @@ env:
 
 jobs:
   fips-releases:
+    if: github.repository == 'openssl/openssl'
     strategy:
       matrix:
         release: [
@@ -103,6 +104,7 @@ jobs:
           retention-days: 7
 
   development-branches:
+    if: github.repository == 'openssl/openssl'
     strategy:
       matrix:
         branch: [
@@ -203,6 +205,7 @@ jobs:
           retention-days: 7
 
   cross-testing:
+    if: github.repository == 'openssl/openssl'
     needs: [fips-releases, development-branches]
     runs-on: ubuntu-latest
     strategy:

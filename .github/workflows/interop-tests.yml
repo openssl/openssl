@@ -11,6 +11,7 @@ on:
 
 jobs:
   test:
+    if: github.repository == 'openssl/openssl'
     runs-on: ubuntu-22.04
     container:
       image: docker.io/fedora:40
@@ -54,6 +55,7 @@ jobs:
           openssl version
           echo "Finished - important to prevent unwanted output truncating"
   openssh_interop:
+    if: github.repository == 'openssl/openssl'
     name: "openssh interop ${{ matrix.branch.openssl }}"
     strategy:
       fail-fast: false
