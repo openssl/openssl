@@ -26,7 +26,7 @@ jobs:
     # push event commit message contains '[riscv ci]'
     # cron job
     # manual dispatch
-    if: contains(github.event.pull_request.title, 'riscv') || contains(github.event.pull_request.title, 'RISC-V') || contains(github.event.pull_request.body, '[riscv ci]') || contains(github.event.head_commit.message, '[riscv ci]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: contains(github.event.pull_request.title, 'riscv') || contains(github.event.pull_request.title, 'RISC-V') || contains(github.event.pull_request.body, '[riscv ci]') || contains(github.event.head_commit.message, '[riscv ci]') || (github.event_name == 'schedule' && github.repository == 'openssl/openssl') || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:

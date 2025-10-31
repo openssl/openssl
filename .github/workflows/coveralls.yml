@@ -73,6 +73,7 @@ jobs:
           echo "branches<<EOF"$'\n'"$MATRIX"$'\n'EOF >> "$GITHUB_OUTPUT"
 
   coverage:
+    if: github.repository == 'openssl/openssl'
     needs: define-matrix
     permissions:
       checks: write     # for coverallsapp/github-action to create new checks
