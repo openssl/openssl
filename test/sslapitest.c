@@ -1402,6 +1402,9 @@ static int execute_test_ktls_sendfile(int tls_version, const char *cipher,
     BIO_free(out);
     out = NULL;
     in = BIO_new_file(tmpfilename, "rb");
+    if (!TEST_ptr(in))
+        goto end;
+
     BIO_get_fp(in, &ffdp);
     ffd = fileno(ffdp);
 
