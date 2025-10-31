@@ -24,4 +24,4 @@
 int ossl_DER_w_algorithmIdentifier_DSA(WPACKET *pkt, int tag, DSA *dsa);
 /* Signature */
 int ossl_DER_w_algorithmIdentifier_DSA_with_MD(WPACKET *pkt, int tag,
-                                               DSA *dsa, int mdnid);
+    DSA *dsa, int mdnid);
