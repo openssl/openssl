@@ -1072,7 +1072,10 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
     ret = ctx->cipher->cfinal(ctx->algctx, out, &soutl,
                               blocksize == 1 ? 0 : blocksize);
-
+    if (!ret) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+        return 0;
+    }
     if (ret) {
         if (soutl > INT_MAX) {
             ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
@@ -1294,7 +1297,10 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
     ret = ctx->cipher->cfinal(ctx->algctx, out, &soutl,
                               blocksize == 1 ? 0 : blocksize);
-
+    if (!ret) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+        return 0;
+    }
     if (ret) {
         if (soutl > INT_MAX) {
             ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
