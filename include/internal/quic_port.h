@@ -159,10 +159,14 @@ size_t ossl_quic_port_get_num_incoming_channels(const QUIC_PORT *port);
 /* Sets if incoming connections should currently be allowed. */
 void ossl_quic_port_set_allow_incoming(QUIC_PORT *port, int allow_incoming);
 
-/* Sets flag to indicate we are using SSL_listen_ex to get connections */
-void ossl_quic_port_set_using_peeloff(QUIC_PORT *port, int using_peeloff);
-
-int ossl_quic_port_get_using_peeloff(QUIC_PORT *port);
+#define PEELOFF_LISTEN -1
+#define PEELOFF_ACCEPT 1
+#define PEELOFF_UNSET 0
+/*
+ * Sets flag to indicate we are using SSL_listen_ex to get connections
+ * returns 1 if set was successful, or 0 if the set fails
+ */
+int ossl_quic_port_set_using_peeloff(QUIC_PORT *port, int using_peeloff);
 
 /* Returns 1 if we are using addressed mode on the read side. */
 int ossl_quic_port_is_addressed_r(const QUIC_PORT *port);
