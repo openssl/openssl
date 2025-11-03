@@ -14,7 +14,7 @@ use File::Path 2.00 qw(rmtree mkpath);
 setup("test_memfail");
 
 #
-# Don't run this test if mdebug isn't enabled, it won't work
+# Don't run this test if allocfail-tests isn't enabled, it won't work
 #
 plan skip_all => "$test_name requires allocfail-tests to be enabled"
     if disabled("allocfail-tests");
@@ -30,55 +30,34 @@ run(test(["handshake-memfail", "count", srctop_dir("test", "certs")], stderr => 
 
 run(test(["x509-memfail", "count", srctop_file("test", "certs", "servercert.pem")], stderr => "$resultdir/x509countinfo.txt"));
 
-#
-# Read the handshake result file into an array
-#
-open my $hshandle, '<', "$resultdir/hscountinfo.txt";
-chomp(my @hslines = <$hshandle>);
-close $hshandle;
+sub get_count_info {
+    my ($infile) = @_;
+    my @vals;
 
-#
-# some line contains our counts, find and split that into an array
-#
-my @hsvals;
-foreach(@hslines) {
-    if ($_ =~/skip:/) {
-        @hsvals = split ' ', $_;
-        break;
+    # Read in our input file
+    open my $handle, '<', "$infile";
+    chomp(my @lines = <$handle>);
+    close $handle;
+
+    # parse the input file
+    foreach(@lines) {
+        if ($_ =~/skip:/) {
+            @vals = split ' ', $_;
+            last;
+        }
     }
+    #
+    #The number of allocations we skip is in argument 2
+    #The number of mallocs we shoudl test is in argument 4
+    #
+    my $skipcount = $vals[2];
+    my $malloccount = $vals[4];
+    return ($skipcount, $malloccount);
 }
 
-#
-# The number of mallocs we need to skip is in entry two
-# The number of mallocs to test is in entry 4
-#
-my $hsskipcount = $hsvals[2];
-my $hsmalloccount = $hsvals[4];
+my ($hsskipcount, $hsmalloccount) = get_count_info("$resultdir/hscountinfo.txt");
 
-#
-# Read the x509 result file into an array
-#
-open my $x509handle, '<', "$resultdir/x509countinfo.txt";
-chomp(my @x509lines = <$x509handle>);
-close $x509handle;
-
-#
-# some line contains our counts, find and split that into an array
-#
-my @x509vals;
-foreach(@x509lines) {
-    if ($_ =~/skip:/) {
-        @x509vals = split ' ', $_;
-        break;
-    }
-}
-
-#
-# The number of mallocs we need to skip is in entry two
-# The number of mallocs to test is in entry 4
-#
-my $x509skipcount = $x509vals[2];
-my $x509malloccount = $x509vals[4];
+my ($x509skipcount, $x509malloccount) = get_count_info("$resultdir/x509countinfo.txt");
 
 #
 # Now we can plan our tests.  We plan to run malloccount iterations of this
@@ -86,31 +65,26 @@ my $x509malloccount = $x509vals[4];
 #
 plan tests => $hsmalloccount + $x509malloccount;
 
-my @hsseq = (1..$hsmalloccount);
-for my $idx (@hsseq) {
-    #
-    # We need to setup our openssl malloc failures env var to fail the target malloc
-    # the format of this string is a series of A@B;C@D tuples where A,C are the number
-    # of mallocs to consider, and B,D are the likelyhood that they should fail.
-    # We always skip the first "skip" allocations, then iteratively guarantee that
-    # next <idx> mallocs pass, followed by the next single malloc failing, with the remainder
-    # passing
-    #
-    $ENV{OPENSSL_MALLOC_FAILURES} = "$hsskipcount\@0;$idx\@0;1\@100;0\@0";
-    ok(run(test(["handshake-memfail", "run", srctop_dir("test", "certs")])));
+sub run_memfail_test {
+    my $skipcount = $_[0];
+    my @mallocseq = (1..$_[1]);
+    my @cmd = $_[2];
+
+    for my $idx (@mallocseq) {
+        #
+        # We need to setup our openssl malloc failures env var to fail the target malloc
+        # the format of this string is a series of A@B;C@D tuples where A,C are the number
+        # of mallocs to consider, and B,D are the likelyhood that they should fail.
+        # We always skip the first "skip" allocations, then iteratively guarantee that
+        # next <idx> mallocs pass, followed by the next single malloc failing, with the remainder
+        # passing
+        #
+        $ENV{OPENSSL_MALLOC_FAILURES} = "$skipcount\@0;$idx\@0;1\@100;0\@0";
+        ok(run(test(@cmd)));
+    }
 }
 
-my @x509seq = (1..$x509malloccount);
-for my $idx (@x509seq) {
-    #
-    # We need to setup our openssl malloc failures env var to fail the target malloc
-    # the format of this string is a series of A@B;C@D tuples where A,C are the number
-    # of mallocs to consider, and B,D are the likelyhood that they should fail.
-    # We always skip the first "skip" allocations, then iteratively guarantee that
-    # next <idx> mallocs pass, followed by the next single malloc failing, with the remainder
-    # passing
-    #
-    $ENV{OPENSSL_MALLOC_FAILURES} = "$x509skipcount\@0;$idx\@0;1\@100;0\@0";
-    ok(run(test(["x509-memfail", "run", srctop_file("test", "certs", "servercert.pem")])));
-}
+run_memfail_test($hsskipcount, $hsmalloccount, ["handshake-memfail", "run", srctop_dir("test", "certs")]);
+
+run_memfail_test($x509skipcount, $x509malloccount, ["x509-memfail", "run", srctop_file("test", "certs", "servercert.pem")]);
 
