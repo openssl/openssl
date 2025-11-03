@@ -345,7 +345,7 @@ jobs:
     if: github.repository == 'openssl/openssl'
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-15, macos-15-large ]
+        os: [ubuntu-latest, macos-15, macos-15-intel]
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v4

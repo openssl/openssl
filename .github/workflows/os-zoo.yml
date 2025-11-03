@@ -107,7 +107,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, macos-14-large, macos-15, macos-15-large]
+        os: [macos-14, macos-15, macos-15-intel]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -178,8 +178,7 @@ jobs:
         nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
 
   linux-arm64:
-    runs-on: linux-arm64
-    if: github.repository == 'openssl/openssl'
+    runs-on: ubuntu-24.04-arm
     steps:
     - uses: actions/checkout@v4
     - name: config
