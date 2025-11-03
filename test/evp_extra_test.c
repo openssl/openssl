@@ -1477,13 +1477,11 @@ static int test_EC_priv_pub(void)
     bld = NULL;
 
     /*
-     * We indicate only parameters here, in spite of having built a key that
-     * has a private part, because the PEM_write_bio_PrivateKey_ex call is
-     * expected to fail because it does not support exporting a private EC
-     * key without a corresponding public key
+     * ossl_ec_key_fromdata() automatically generates the public key on import
+     * if one is not provided, so fail the test if a public key is not
+     * available.
      */
-    if (!test_selection(params_and_priv, OSSL_KEYMGMT_SELECT_ALL_PARAMETERS)
-        || test_selection(params_and_priv, OSSL_KEYMGMT_SELECT_PUBLIC_KEY))
+    if (!test_selection(params_and_priv, OSSL_KEYMGMT_SELECT_KEYPAIR))
         goto err;
 
     /* Test !priv and pub */
