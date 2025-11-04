@@ -238,7 +238,7 @@ int ossl_bn_rsa_fips186_5_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
         goto err;
     /* (FIPS 186-5 Table A.1) auxiliary prime Max length check */
     if ((BN_num_bits(p1i) + BN_num_bits(p2i)) >=
-            bn_rsa_fips186_5_aux_prime_max_sum_size_for_prob_primes(nlen))
+            bn_rsa_fips186_5_aux_prime_max_sum_size_for_prob_primes(nlen, c))
         goto err;
     /* (Steps 4.3/5.3) - generate prime */
     if (!ossl_bn_rsa_fips186_5_derive_prime(p, Xpout, Xp, p1i, p2i, nlen, e,
