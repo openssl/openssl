@@ -102,12 +102,30 @@ const X509_EXTENSION *X509_get_ext(const X509 *x, int loc)
 
 X509_EXTENSION *X509_delete_ext(X509 *x, int loc)
 {
-    return delete_ext(&x->cert_info.extensions, loc);
+    X509_EXTENSION *ret;
+
+    if (x->cert_info.extensions == NULL)
+        return NULL;
+    if ((ret = delete_ext(&x->cert_info.extensions, loc)) != NULL)
+        x->cert_info.enc.modified = 1;
+    return ret;
 }
 
 int X509_add_ext(X509 *x, const X509_EXTENSION *ex, int loc)
 {
-    return (X509v3_add_ext(&(x->cert_info.extensions), ex, loc) != NULL);
+    STACK_OF(X509_EXTENSION) *exts = x->cert_info.extensions;
+
+    if (X509v3_add_ext(&exts, ex, loc) == NULL)
+        return 0;
+    if (sk_X509_EXTENSION_num(exts) != 0) {
+        x->cert_info.extensions = exts;
+    } else {
+        sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+        sk_X509_EXTENSION_pop_free(x->cert_info.extensions, X509_EXTENSION_free);
+        x->cert_info.extensions = NULL;
+    }
+    x->cert_info.enc.modified = 1;
+    return 1;
 }
 
 void *X509_get_ext_d2i(const X509 *x, int nid, int *crit, int *idx)
@@ -118,6 +136,11 @@ void *X509_get_ext_d2i(const X509 *x, int nid, int *crit, int *idx)
 int X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit,
     unsigned long flags)
 {
+    /*
+     * Assume modified, sadly the underlying function does not tell us whether
+     * changes were made, or not.
+     */
+    x->cert_info.enc.modified = 1;
     return X509V3_add1_i2d(&x->cert_info.extensions, nid, value, crit,
         flags);
 }

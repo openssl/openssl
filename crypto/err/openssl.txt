@@ -1852,6 +1852,7 @@ X509_R_IDP_MISMATCH:128:idp mismatch
 X509_R_INVALID_ATTRIBUTES:138:invalid attributes
 X509_R_INVALID_DIRECTORY:113:invalid directory
 X509_R_INVALID_DISTPOINT:143:invalid distpoint
+X509_R_INVALID_EXTENSION:146:invalid extension
 X509_R_INVALID_FIELD_NAME:119:invalid field name
 X509_R_INVALID_TRUST:123:invalid trust
 X509_R_ISSUER_MISMATCH:129:issuer mismatch

@@ -610,7 +610,7 @@ has_AKID($cert, 0); # forced no AKID
 
 $cert = "self-signed_v3_CA_explicit_AKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid");
-has_AKID($cert, 0); # for self-signed cert, AKID suppressed and not forced
+has_AKID($cert, 1);
 
 $cert = "self-signed_v3_CA_forced_AKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid:always");
@@ -619,7 +619,7 @@ strict_verify($cert, 1);
 
 $cert = "self-signed_v3_CA_issuer_AKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = issuer");
-has_AKID($cert, 0); # suppressed AKID since not forced
+has_AKID($cert, 1);
 
 $cert = "self-signed_v3_CA_forced_issuer_AKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = issuer:always");
@@ -627,11 +627,11 @@ cert_contains($cert, "Authority Key Identifier: DirName:/CN=CA serial:", 1); # f
 
 $cert = "self-signed_v3_CA_nonforced_keyid_issuer_AKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid, issuer");
-has_AKID($cert, 0); # AKID not present because not forced and cert self-signed
+has_AKID($cert, 1);
 
 $cert = "self-signed_v3_CA_keyid_forced_issuer_AKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid, issuer:always");
-cert_contains($cert, "Authority Key Identifier: DirName:/CN=CA serial:", 1); # issuer AKID forced, with keyid not forced
+cert_contains($cert, "Authority Key Identifier: keyid(:[0-9A-Fa-f]{2})+ DirName:/CN=CA serial:", 1);
 
 $cert = "self-signed_v3_CA_forced_keyid_issuer_AKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid:always, issuer");

@@ -117,8 +117,8 @@ void X509_REQ_set_extension_nids(int *nids)
     ext_nids = nids;
 }
 
-static STACK_OF(X509_EXTENSION) *get_extensions_by_nid(const X509_REQ *req,
-    int nid)
+STACK_OF(X509_EXTENSION) *
+ossl_x509_req_get1_extensions_by_nid(const X509_REQ *req, int nid)
 {
     X509_ATTRIBUTE *attr;
     const ASN1_TYPE *ext = NULL;
@@ -147,7 +147,7 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(const X509_REQ *req)
     if (req == NULL || ext_nids == NULL)
         return NULL;
     for (pnid = ext_nids; *pnid != NID_undef; pnid++) {
-        exts = get_extensions_by_nid(req, *pnid);
+        exts = ossl_x509_req_get1_extensions_by_nid(req, *pnid);
         if (exts == NULL)
             return NULL;
         if (sk_X509_EXTENSION_num(exts) > 0)
@@ -176,7 +176,7 @@ int X509_REQ_add_extensions_nid(X509_REQ *req,
 
     loc = X509at_get_attr_by_NID(req->req_info.attributes, nid, -1);
     if (loc != -1) {
-        if ((mod_exts = get_extensions_by_nid(req, nid)) == NULL)
+        if ((mod_exts = ossl_x509_req_get1_extensions_by_nid(req, nid)) == NULL)
             return 0;
         if (X509v3_add_extensions(&mod_exts, exts) == NULL)
             goto end;

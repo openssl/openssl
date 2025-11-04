@@ -120,6 +120,20 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
     } else
         sk = *x;
 
+    /*
+     * Empty OCTET STRINGs and empty SEQUENCEs encode to just two bytes of tag
+     * (0x04 or 0x30) and length (0x00).
+     */
+    if (ex->value.length == 2
+        && (ex->value.data[0] == 0x30 || ex->value.data[0] == 0x04)) {
+        ASN1_OBJECT *obj = ex->object;
+        ASN1_OBJECT *skid = OBJ_nid2obj(NID_subject_key_identifier);
+        ASN1_OBJECT *akid = OBJ_nid2obj(NID_authority_key_identifier);
+
+        if (OBJ_cmp(obj, skid) == 0 || OBJ_cmp(obj, akid) == 0)
+            goto done;
+    }
+
     n = sk_X509_EXTENSION_num(sk);
     if (loc > n)
         loc = n;
@@ -134,6 +148,7 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
     }
+done:
     if (*x == NULL)
         *x = sk;
     return sk;
