@@ -41,6 +41,8 @@ typedef struct b64_struct {
     EVP_ENCODE_CTX *base64;
     unsigned char buf[EVP_ENCODE_LENGTH(B64_BLOCK_SIZE) + 10];
     unsigned char tmp[B64_BLOCK_SIZE];
+    unsigned char *encoded_buf;
+    size_t encoded_buf_len;
 } BIO_B64_CTX;
 
 static const BIO_METHOD methods_b64 = {
@@ -72,6 +74,8 @@ static int b64_new(BIO *bi)
 
     ctx->cont = 1;
     ctx->start = 1;
+    ctx->encoded_buf = NULL;
+    ctx->encoded_buf_len = 0;
     ctx->base64 = EVP_ENCODE_CTX_new();
     if (ctx->base64 == NULL) {
         OPENSSL_free(ctx);
@@ -95,6 +99,9 @@ static int b64_free(BIO *a)
     if (ctx == NULL)
         return 0;
 
+    OPENSSL_free(ctx->encoded_buf);
+    ctx->encoded_buf = NULL;
+    ctx->encoded_buf_len = 0;
     EVP_ENCODE_CTX_free(ctx->base64);
     OPENSSL_free(ctx);
     BIO_set_data(a, NULL);
@@ -379,97 +386,36 @@ static int b64_write(BIO *b, const char *in, int inl)
     if (in == NULL || inl <= 0)
         return 0;
 
-    while (inl > 0) {
-        n = inl > B64_BLOCK_SIZE ? B64_BLOCK_SIZE : inl;
+    int encoded_length = EVP_ENCODE_LENGTH(inl);
 
-        if ((BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL) != 0) {
-            if (ctx->tmp_len > 0) {
-                if (!ossl_assert(ctx->tmp_len <= 3)) {
-                    ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-                    return ret == 0 ? -1 : ret;
-                }
-                n = 3 - ctx->tmp_len;
-                /*
-                 * There's a theoretical possibility for this
-                 */
-                if (n > inl)
-                    n = inl;
-                memcpy(&(ctx->tmp[ctx->tmp_len]), in, n);
-                ctx->tmp_len += n;
-                ret += n;
-                if (ctx->tmp_len < 3)
-                    break;
-                ctx->buf_len =
-                    EVP_EncodeBlock(ctx->buf, ctx->tmp, ctx->tmp_len);
-                if (!ossl_assert(ctx->buf_len <= (int)sizeof(ctx->buf))) {
-                    ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-                    return ret == 0 ? -1 : ret;
-                }
-                if (!ossl_assert(ctx->buf_len >= ctx->buf_off)) {
-                    ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-                    return ret == 0 ? -1 : ret;
-                }
-                /*
-                 * Since we're now done using the temporary buffer, the
-                 * length should be 0'd
-                 */
-                ctx->tmp_len = 0;
-            } else {
-                if (n < 3) {
-                    memcpy(ctx->tmp, in, n);
-                    ctx->tmp_len = n;
-                    ret += n;
-                    break;
-                }
-                n -= n % 3;
-                ctx->buf_len =
-                    EVP_EncodeBlock(ctx->buf, (unsigned char *)in, n);
-                if (!ossl_assert(ctx->buf_len <= (int)sizeof(ctx->buf))) {
-                    ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-                    return ret == 0 ? -1 : ret;
-                }
-                if (!ossl_assert(ctx->buf_len >= ctx->buf_off)) {
-                    ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-                    return ret == 0 ? -1 : ret;
-                }
-                ret += n;
-            }
-        } else {
-            if (!EVP_EncodeUpdate(ctx->base64, ctx->buf, &ctx->buf_len,
-                                  (unsigned char *)in, n))
-                return ret == 0 ? -1 : ret;
-            if (!ossl_assert(ctx->buf_len <= (int)sizeof(ctx->buf))) {
-                ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-                return ret == 0 ? -1 : ret;
-            }
-            if (!ossl_assert(ctx->buf_len >= ctx->buf_off)) {
-                ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-                return ret == 0 ? -1 : ret;
-            }
-            ret += n;
+    if (ctx->encoded_buf == NULL || (size_t)encoded_length > ctx->encoded_buf_len) {
+        OPENSSL_free(ctx->encoded_buf);
+        ctx->encoded_buf = OPENSSL_malloc(encoded_length);
+        if (ctx->encoded_buf == NULL) {
+            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+            return -1;
         }
-        inl -= n;
-        in += n;
+        ctx->encoded_buf_len = encoded_length;
+    }
 
-        ctx->buf_off = 0;
-        n = ctx->buf_len;
-        while (n > 0) {
-            i = BIO_write(next, &(ctx->buf[ctx->buf_off]), n);
-            if (i <= 0) {
-                BIO_copy_next_retry(b);
-                return ret == 0 ? i : ret;
-            }
-            n -= i;
-            ctx->buf_off += i;
-            if (!ossl_assert(ctx->buf_off <= (int)sizeof(ctx->buf))) {
-                ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-                return ret == 0 ? -1 : ret;
-            }
-            if (!ossl_assert(ctx->buf_len >= ctx->buf_off)) {
-                ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-                return ret == 0 ? -1 : ret;
-            }
-        }
+    unsigned char *encoded = ctx->encoded_buf;
+
+    if (encoded == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+    int n_bytes_enc = 0;
+    if (!EVP_EncodeUpdate(ctx->base64, encoded, &n_bytes_enc,
+                          (unsigned char *)in, inl)) {
+        if (ret == 0)
+            return -1;
+        return ret;
+    }
+    ret += inl;
+    i = BIO_write(next, encoded, n_bytes_enc);
+    if (i <= 0) {
+        BIO_copy_next_retry(b);
+        return ret == 0 ? i : ret;
         ctx->buf_len = 0;
         ctx->buf_off = 0;
     }
