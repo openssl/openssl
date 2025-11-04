@@ -329,6 +329,8 @@ int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, STACK_OF(X509) *certs,
                             int flags);
 
 STACK_OF(X509_ATTRIBUTE) *ossl_x509at_dup(const STACK_OF(X509_ATTRIBUTE) *x);
+STACK_OF(X509_EXTENSION) *
+ossl_x509_req_get1_extensions_by_nid(const X509_REQ *req, int nid);
 
 int ossl_x509_PUBKEY_get0_libctx(OSSL_LIB_CTX **plibctx, const char **ppropq,
                                  const X509_PUBKEY *key);

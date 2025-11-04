@@ -164,8 +164,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         ss = same_issuer;
     ERR_pop_to_mark();
 
-    /* unless forced with "always", AKID is suppressed for self-signed certs */
-    if (keyid == 2 || (keyid == 1 && !ss)) {
+    if (keyid != 0) {
         /*
          * prefer any pre-existing subject key identifier of the issuer cert
          * except issuer cert is same as subject cert and is not self-signed
@@ -193,7 +192,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         }
     }
 
-    if (issuer == 2 || (issuer == 1 && !ss && ikeyid == NULL)) {
+    if (issuer == 2 || (issuer == 1 && (keyid == 0 || ikeyid == NULL))) {
         isname = X509_NAME_dup(X509_get_issuer_name(issuer_cert));
         serial = ASN1_INTEGER_dup(X509_get0_serialNumber(issuer_cert));
         if (isname == NULL || serial == NULL) {
