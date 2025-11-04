@@ -305,7 +305,7 @@ L<EVP_RSA_gen(3)>, L<EVP_KEYMGMT(3)>, L<EVP_PKEY(3)>, L<provider-keymgmt(7)>
 
 =head1 HISTORY
 
-The RSA key generation parameters "a" and "b" were added in OpenSSL 3.6.
+The RSA key generation parameters "a" and "b" were added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

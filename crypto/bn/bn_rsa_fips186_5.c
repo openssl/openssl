@@ -373,8 +373,7 @@ int ossl_bn_rsa_fips186_5_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
     if (c == 0) {
         r1r2x2_step = r1r2x2;
     } else {
-        if (!BN_copy(r1r2x8, r1r2x2)
-                || !BN_mul_word(r1r2x8, 4))
+        if (!BN_lshift(r1r2x8, r1r2x2, 2))
             goto err;
         r1r2x2_step = r1r2x8;
     }
