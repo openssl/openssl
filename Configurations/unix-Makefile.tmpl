@@ -442,6 +442,8 @@ CNF_LDFLAGS={- join(' ', $target{lflags} || (),
                          @{$config{lflags}}) -}
 CNF_EX_LIBS={- join(' ', $target{ex_libs} || (),
                          @{$config{ex_libs}}) -}
+JITTER_EX_LIBS={- $disabled{jitter} || $disabled{'jitter-dynamic'}
+                  ? '' : '-ljitterentropy' -}
 
 # Variables starting with LIB_ are used to build library object files
 # and shared libraries.
@@ -1595,6 +1597,23 @@ reconfigure reconf:
                  } @_;
   }
 
+  # With enable-jitter-dynamic, libjitterentropy is only linked into the
+  # artifacts containing the JITTER seed source: the shared libcrypto, the
+  # FIPS provider with enable-fips-jitter, and anything linked with the
+  # static archives containing it.
+  sub jitter_ex_libs {
+      my $module = shift;
+      return '' if $disabled{jitter} || $disabled{'jitter-dynamic'};
+      my $archives = $disabled{'fips-jitter'} ? 'crypto|default'
+                                              : 'crypto|default|fips';
+      return ' $(JITTER_EX_LIBS)'
+          if (defined $module && $module eq 'providers/fips'
+              && !$disabled{'fips-jitter'})
+             || grep { defined $_ && platform->isstaticlib($_)
+                       && basename($_) =~ /^lib(?:$archives)\./ } @_;
+      return '';
+  }
+
   sub generatetarget {
       my %args = @_;
       my $deps = join(" ", compute_platform_depends(@{$args{deps}}));
@@ -1904,6 +1923,9 @@ EOF
       }
       my $linkflags = join("", map { $_." " } @linkdirs);
       my $linklibs = join("", map { $_." " } @linklibs);
+      my $jitterlibs = $args{lib} eq 'libcrypto'
+          && !$disabled{jitter} && !$disabled{'jitter-dynamic'}
+          ? ' $(JITTER_EX_LIBS)' : '';
       my @objs = map { platform->convertext($_) }
                  grep { !platform->isdef($_) }
                  @{$args{objs}};
@@ -1999,7 +2021,7 @@ $full: $fulldeps
 	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
 		-o $full$shared_def \\
 		$fullobjs \\
-		$linklibs \$(LIB_EX_LIBS)
+		$linklibs \$(LIB_EX_LIBS)$jitterlibs
 EOF
       } else {
           $recipe .= <<"EOF";
@@ -2010,7 +2032,7 @@ $full: $fulldeps
 	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
 		-o $full$shared_def \\
 		@\$@.lst \\
-		$linklibs \$(LIB_EX_LIBS)
+		$linklibs \$(LIB_EX_LIBS)$jitterlibs
 	rm -f \$@.lst
 EOF
       }
@@ -2055,6 +2077,7 @@ EOF
       }
       my $linkflags = join("", map { $_." " } @linkdirs);
       my $linklibs = join("", map { $_." " } @linklibs);
+      my $jitterlibs = jitter_ex_libs($args{module}, @{$args{deps}});
       my @objs = map { platform->convertext($_) }
                  grep { !platform->isdef($_) }
                  @{$args{objs}};
@@ -2075,7 +2098,7 @@ $dso: $deps
 	\$(CC) \$(DSO_CFLAGS) $linkflags\$(DSO_LDFLAGS) \\
 		-o $dso$shared_def \\
 		$objs \\
-		$linklibs\$(DSO_EX_LIBS)
+		$linklibs\$(DSO_EX_LIBS)$jitterlibs
 EOF
   }
   sub obj2lib {
@@ -2129,6 +2152,7 @@ EOF
       $utlibs //= '';
       my $linkflags = join("", map { $_." " } @linkdirs);
       my $linklibs = join("", map { $_." " } @linklibs);
+      my $jitterlibs = jitter_ex_libs(undef, @{$args{deps}});
       my $cmd = '$(CC)';
       my $cmdflags = '$(BIN_CFLAGS)';
       if (grep /_cc\.o$/, @{$args{objs}}) {
@@ -2147,7 +2171,7 @@ $bin: $deps
 	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(BIN_LDFLAGS)$wrapflags \\
 		-o $bin \\
 		$objs \\
-		$linklibs\$(BIN_EX_LIBS)$utlibs
+		$linklibs\$(BIN_EX_LIBS)$jitterlibs$utlibs
 EOF
   }
   sub in2script {

@@ -33,6 +33,14 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added the `enable-jitter-dynamic` configuration option to link against
+   the shared jitterentropy library instead of the static one.  It is only
+   supported on Unix-like targets.  The `JITTER` seed source now initialises
+   the jitterentropy library only once.
+   <!-- https://github.com/openssl/openssl/pull/29064 -->
+
+   *Pedro Monreal*
+
  * `EVP_SKEY_get0_raw_key()` now accepts a NULL key pointer to retrieve only
    the key length.  The length is obtained from the `OSSL_SKEY_PARAM_KEY_LENGTH`
    key parameter without exporting the key, so it is also available for keys

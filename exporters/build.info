@@ -24,4 +24,4 @@ GENERATE[../installdata.pm]=../util/mkinstallvars.pl \
     INCLUDEDIR=include APPLINKDIR=include/openssl \
     "MODULESDIR=$(MODULESDIR)" \
     "PKGCONFIGDIR=$(PKGCONFIGDIR)" "CMAKECONFIGDIR=$(CMAKECONFIGDIR)" \
-    "LDLIBS=$(LIB_EX_LIBS)" "VERSION=$(VERSION)"
+    "LDLIBS=$(LIB_EX_LIBS){- $disabled{"jitter-dynamic"} ? "" : " $(JITTER_EX_LIBS)" -}" "VERSION=$(VERSION)"
