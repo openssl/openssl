@@ -375,6 +375,37 @@ int X509V3_EXT_CRL_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
     return X509V3_EXT_add_nconf_sk(conf, ctx, section, sk);
 }
 
+static int
+update_req_extensions(X509_REQ *req, int *pnid, STACK_OF(X509_EXTENSION) *exts)
+{
+    unsigned char *ext = NULL;
+    int ret = 0, loc = -1, extlen;
+
+    if (pnid == NULL || *pnid == NID_undef)
+        if ((pnid = X509_REQ_get_extension_nids()) == NULL)
+            return 0;
+    loc = X509at_get_attr_by_NID(req->req_info.attributes, *pnid, -1);
+
+    extlen = ASN1_item_i2d((const ASN1_VALUE *)exts,
+        &ext, ASN1_ITEM_rptr(X509_EXTENSIONS));
+    if (extlen <= 0)
+        return ret;
+
+    if (loc != -1) {
+        X509_ATTRIBUTE *att = X509at_delete_attr(req->req_info.attributes, loc);
+
+        if (att == NULL)
+            goto end;
+        X509at_delete_attr(req->req_info.attributes, loc);
+        X509_ATTRIBUTE_free(att);
+    }
+    ret = X509_REQ_add1_attr_by_NID(req, *pnid, V_ASN1_SEQUENCE, ext, extlen);
+
+end:
+    OPENSSL_free(ext);
+    return ret;
+}
+
 /*
  * Add extensions to certificate request. Just check in case req is NULL.
  * Note that on error new elements may remain added to req if req != NULL.
@@ -383,10 +414,26 @@ int X509V3_EXT_REQ_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
     X509_REQ *req)
 {
     STACK_OF(X509_EXTENSION) *exts = NULL;
-    int ret = X509V3_EXT_add_nconf_sk(conf, ctx, section, &exts);
+    int ret, *pnid = NULL;
 
+    /*
+     * Load current extensions if any, so we can replace any duplicates, possibly
+     * with nothing in the case of empty AKID/SKID.
+     */
+    if (req != NULL) {
+        for (pnid = X509_REQ_get_extension_nids(); *pnid != NID_undef; pnid++) {
+            exts = ossl_x509_req_get1_extensions_by_nid(req, *pnid);
+            if (sk_X509_EXTENSION_num(exts) > 0)
+                break;
+            sk_X509_EXTENSION_free(exts);
+            exts = NULL;
+        }
+    }
+
+    ret = X509V3_EXT_add_nconf_sk(conf, ctx, section, &exts);
+    /* Replace original extension list (stack) with updated stack */
     if (ret && req != NULL && exts != NULL)
-        ret = X509_REQ_add_extensions(req, exts);
+        ret = update_req_extensions(req, pnid, exts);
     sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
     return ret;
 }

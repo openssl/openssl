@@ -593,7 +593,7 @@ int req_main(int argc, char **argv)
             digest = p;
     }
 
-    if (extsect == NULL)
+    if (extsect == NULL && !x509v1)
         extsect = app_conf_try_string(req_conf, section,
             gen_x509 ? V3_EXTENSIONS : REQ_EXTENSIONS);
     if (extsect != NULL) {

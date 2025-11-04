@@ -330,6 +330,40 @@ static int add_object(STACK_OF(ASN1_OBJECT) **sk, const char *name,
     return 0;
 }
 
+static CONF *load_ext_conf(const char *file, const char *sect, int quiet)
+{
+    BIO *bio = NULL;
+    CONF *conf;
+
+    if (file == NULL)
+        file = default_config_file;
+    if (file != NULL && *file != '\0')
+        bio = bio_open_default_quiet(file, 'r', FORMAT_TEXT);
+    else if (!quiet) {
+        BIO_puts(bio_err, "The -extfile option, or else the default "
+                          "configuration filename must be nonempty");
+        return NULL;
+    }
+
+    if (bio == NULL) {
+        if (!quiet)
+            BIO_printf(bio_err, "Error opening: %s\n", file);
+        return NULL;
+    }
+
+    conf = NCONF_new_ex(app_get0_libctx(), NULL);
+    if (conf != NULL && NCONF_load_bio(conf, bio, NULL) <= 0) {
+        NCONF_free(conf);
+        conf = NULL;
+    }
+    BIO_free(bio);
+    if (conf != NULL)
+        return conf;
+    if (!quiet)
+        BIO_printf(bio_err, "Error loading configuration from: %s\n", file);
+    return conf;
+}
+
 int x509_main(int argc, char **argv)
 {
     ASN1_INTEGER *sno = NULL;
@@ -339,7 +373,7 @@ int x509_main(int argc, char **argv)
     X509V3_CTX ext_ctx;
     EVP_PKEY *privkey = NULL, *CAkey = NULL, *pubkey = NULL;
     EVP_PKEY *pkey;
-    int newcert = 0;
+    int newcert = 0, newout = 0;
     char *issu = NULL, *subj = NULL, *digest = NULL;
     X509_NAME *fissu = NULL, *fsubj = NULL;
     const unsigned long chtype = MBSTRING_ASC;
@@ -679,6 +713,29 @@ int x509_main(int argc, char **argv)
     if (!opt_check_md(digest))
         goto opthelp;
 
+    if (reqfile || newcert || privkey != NULL || CAfile != NULL)
+        newout = 1;
+    else if (sno != NULL
+        || not_before != NULL
+        || not_after != NULL
+        || days != UNSET_DAYS
+        || preserve_dates
+        || issu != NULL
+        || subj != NULL
+        || pubkeyfile != NULL
+        || clrext
+        || extfile != NULL
+        || extsect != NULL
+        || sigopts != NULL) {
+        BIO_printf(bio_err,
+            "The %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s and %s "
+            "options are only valid when signing a new certificate\n",
+            "set_serial", "not_before", "not_after", "days",
+            "preserve_dates", "set_issuer", "set_subject", "subj",
+            "force_pubkey", "clrext", "extfile", "extensions", "sigopt");
+        goto err;
+    }
+
     if (preserve_dates && not_before != NULL) {
         BIO_puts(bio_err, "Cannot use -preserve_dates with -not_before option\n");
         goto err;
@@ -766,24 +823,29 @@ int x509_main(int argc, char **argv)
             WARN_NO_CA("-CAcreateserial");
     }
 
-    if (extfile == NULL) {
-        if (extsect != NULL)
-            BIO_puts(bio_err,
-                "Warning: ignoring -extensions option without -extfile\n");
-    } else {
+    /*
+     * Failure to find or process the default config file is silent, when no
+     * `-extensions` was specified.  Otherwise, the requested extensions
+     * section must be present.
+     */
+    int confquiet = extsect == NULL && extfile == NULL;
+    if (newout)
+        extconf = load_ext_conf(extfile, extsect, confquiet);
+
+    if (extconf != NULL) {
         X509V3_CTX ctx2;
 
-        if ((extconf = app_load_config(extfile)) == NULL)
-            goto err;
         if (extsect == NULL) {
             extsect = app_conf_try_string(extconf, "default", "extensions");
-            if (extsect == NULL)
+            if (extfile != NULL && extsect == NULL)
                 extsect = "default";
         }
         X509V3_set_ctx_test(&ctx2);
         if (!do_EXT_add_nconf(extconf, extconf, &ctx2, NULL,
                 "Error checking extension section %s\n", extsect))
             goto err;
+    } else if (newout && !confquiet) {
+        goto err;
     }
 
     if (multi && (reqfile || newcert)) {
@@ -947,10 +1009,11 @@ cert_loop:
         if (!X509V3_set_issuer_pkey(&ext_ctx, privkey))
             goto err;
     }
-    if (extconf != NULL && !x509toreq
-        && !do_EXT_add_nconf(extconf, extconf, &ext_ctx, x,
-            "Error adding extensions from section %s\n", extsect))
-        goto err;
+    if (extconf != NULL && !x509toreq) {
+        if (!do_EXT_add_nconf(extconf, extconf, &ext_ctx, x,
+                "Error adding extensions from section %s\n", extsect))
+            goto err;
+    }
 
     /* At this point the contents of the certificate x have been finished. */
 
@@ -971,10 +1034,11 @@ cert_loop:
         }
         if ((rq = x509_to_req(x, ext_copy, ext_names)) == NULL)
             goto err;
-        if (extconf != NULL
-            && !do_EXT_REQ_add_nconf(extconf, extconf, &ext_ctx, rq,
-                "Error adding request extensions from section %s\n", extsect))
-            goto err;
+        if (extconf != NULL) {
+            if (!do_EXT_REQ_add_nconf(extconf, extconf, &ext_ctx, rq,
+                    "Error adding request extensions from section %s\n", extsect))
+                goto err;
+        }
         if (!do_X509_REQ_sign(rq, privkey, digest, sigopts))
             goto err;
         if (!noout) {
