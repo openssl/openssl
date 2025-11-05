@@ -100,6 +100,9 @@ buffer should be populated in I<*bytes_read>. The buffer should remain valid
 until OpenSSL calls the OSSL_FUNC_SSL_QUIC_TLS_crypto_release_rcd_fn callback.
 CRYPTO frame data is assumed to have been decrypted using the most recent read
 protection level set via the yield_secret_cb callback (if it has been called).
+This callback runs in context of SSL_read() function. The QUIC stack should at
+least SSL_read(ssl, NULL, 0) whenever CRYPTO frame is received to let OpenSSL
+TLS now there are CRYPTO frames to be processed.
 
 The OSSL_FUNC_SSL_QUIC_TLS_crypto_release_rcd_fn callback (function id
 B<OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_RELEASE_RCD>) is called when data previously
