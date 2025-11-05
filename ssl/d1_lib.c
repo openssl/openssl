@@ -1031,6 +1031,10 @@ size_t DTLS_get_data_mtu(const SSL *ssl)
             rechdrlen = DTLS13_UNI_HDR_FIXED_LENGTH;
             break;
         }
+
+        /* Added record type at the end of the data */
+        int_overhead++;
+
     } else {
         rechdrlen = DTLS1_RT_HEADER_LENGTH;
     }
