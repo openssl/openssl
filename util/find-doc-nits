@@ -113,6 +113,7 @@ my $ignored = qr/(?| ^i2d_
                  |   ^DEFINE_LHASH_OF_(INTERNAL|DEPRECATED)
                  |   ^OSSL_HTO[BL]E(16|32|64)   # undefed
                  |   ^OSSL_[BL]E(16|32|64)TOH   # undefed
+                 |   ^ENGINE_   # TODO(ENGINE REMOVAL): Fix docs
                  )/x;
 
 # There are macro functions added before version 1.1.1 we don't want to track
