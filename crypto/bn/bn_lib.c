@@ -326,6 +326,8 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
         else if (b->d != NULL)
             bn_free_d(b, true);
         b->data = a;
+        /* Update all 'negative' flags */
+        bn_set_negative_internal(b, b->neg);
         /* TODO(FIXNUM) The following is TO BE REMOVED */
         b->d = b->data->d;
         b->dmax = b->data->dsize;
@@ -372,8 +374,8 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
         else if (b->d != NULL)
             ossl_fn_copy_internal_limbs(a->data, b->d, bn_words);
     }
-    a->neg = b->neg;
-    a->top = b->top;
+    bn_set_negative_internal(a, bn_is_negative_internal(b));
+    bn_set_top(a, b->top);
     a->flags |= b->flags & BN_FLG_FIXED_TOP;
     bn_check_top(a);
     return a;
@@ -402,19 +404,19 @@ void BN_swap(BIGNUM *a, BIGNUM *b)
     tmp_d = a->d;
     tmp_top = a->top;
     tmp_dmax = a->dmax;
-    tmp_neg = a->neg;
+    tmp_neg = bn_is_negative_internal(a);
 
     a->data = b->data;
     a->d = b->d;
     a->top = b->top;
     a->dmax = b->dmax;
-    a->neg = b->neg;
+    bn_set_negative_internal(a, bn_is_negative_internal(b));
 
     b->data = tmp_data;
     b->d = tmp_d;
     b->top = tmp_top;
     b->dmax = tmp_dmax;
-    b->neg = tmp_neg;
+    bn_set_negative_internal(b, tmp_neg);
 
     a->flags = FLAGS_STRUCT(flags_old_a) | FLAGS_DATA(flags_old_b);
     b->flags = FLAGS_STRUCT(flags_old_b) | FLAGS_DATA(flags_old_a);
@@ -431,8 +433,8 @@ void BN_clear(BIGNUM *a)
         OSSL_FN_clear(a->data);
     else if (a->d != NULL)
         OPENSSL_cleanse(a->d, sizeof(*a->d) * a->dmax);
-    a->neg = 0;
-    a->top = 0;
+    bn_set_negative_internal(a, 0);
+    bn_set_top(a, 0);
     a->flags &= ~BN_FLG_FIXED_TOP;
 }
 
@@ -451,9 +453,9 @@ int BN_set_word(BIGNUM *a, BN_ULONG w)
     bn_check_top(a);
     if (bn_wexpand(a, 1) == NULL)
         return 0;
-    a->neg = 0;
+    bn_set_negative_internal(a, 0);
     a->d[0] = w;
-    a->top = (w ? 1 : 0);
+    bn_set_top(a, (w ? 1 : 0));
     a->flags &= ~BN_FLG_FIXED_TOP;
     bn_check_top(a);
     return 1;
@@ -533,7 +535,7 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
     }
     /* If it was all zeros, we're done */
     if (len == 0) {
-        ret->top = 0;
+        bn_set_top(ret, 0);
         return ret;
     }
     n = ((len - 1) / BN_BYTES) + 1; /* Number of resulting bignum chunks */
@@ -541,8 +543,8 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
         BN_free(bn);
         return NULL;
     }
-    ret->top = n;
-    ret->neg = neg;
+    bn_set_top(ret, n);
+    bn_set_negative_internal(ret, neg);
     for (i = 0; n-- > 0; i++) {
         BN_ULONG l = 0;        /* Accumulator */
         unsigned int m = 0;    /* Offset in a bignum chunk, in bits */
@@ -593,8 +595,8 @@ static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen,
 
     /* Take note of the signedness of the bignum */
     if (signedness == SIGNED) {
-        xor = a->neg ? 0xff : 0x00;
-        carry = a->neg;
+        xor = bn_is_negative_internal(a) ? 0xff : 0x00;
+        carry = bn_is_negative_internal(a);
 
         /*
          * if |n * 8 == n|, then the MSbit is set, otherwise unset.
@@ -603,8 +605,8 @@ static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen,
          * to 2's complement.
          */
         ext = (n * 8 == n8)
-            ? !a->neg            /* MSbit set on nonnegative bignum */
-            : a->neg;            /* MSbit unset on negative bignum */
+            ? !bn_is_negative_internal(a)            /* MSbit set on nonnegative bignum */
+            : bn_is_negative_internal(a);            /* MSbit unset on negative bignum */
     }
 
     if (tolen == -1) {
@@ -791,13 +793,13 @@ int BN_cmp(const BIGNUM *a, const BIGNUM *b)
     bn_check_top(a);
     bn_check_top(b);
 
-    if (a->neg != b->neg) {
-        if (a->neg)
+    if (bn_is_negative_internal(a) != bn_is_negative_internal(b)) {
+        if (bn_is_negative_internal(a))
             return -1;
         else
             return 1;
     }
-    if (a->neg == 0) {
+    if (bn_is_negative_internal(a) == 0) {
         gt = 1;
         lt = -1;
     } else {
@@ -822,7 +824,7 @@ int BN_cmp(const BIGNUM *a, const BIGNUM *b)
 
 int BN_set_bit(BIGNUM *a, int n)
 {
-    int i, j, k;
+    int i, j;
 
     if (n < 0)
         return 0;
@@ -832,9 +834,12 @@ int BN_set_bit(BIGNUM *a, int n)
     if (a->top <= i) {
         if (bn_wexpand(a, i + 1) == NULL)
             return 0;
-        for (k = a->top; k < i + 1; k++)
-            a->d[k] = 0;
-        a->top = i + 1;
+        /*
+         * If 'a' is actually expanded, we know that the expanded
+         * part of the 'd' array is zeroed during allocation, so
+         * no need to zero it again here.
+         */
+        bn_set_top(a, i + 1);
         a->flags &= ~BN_FLG_FIXED_TOP;
     }
 
@@ -887,9 +892,9 @@ int ossl_bn_mask_bits_fixed_top(BIGNUM *a, int n)
     if (w >= a->top)
         return 0;
     if (b == 0)
-        a->top = w;
+        bn_set_top(a, w);
     else {
-        a->top = w + 1;
+        bn_set_top(a, w + 1);
         a->d[w] &= ~(BN_MASK2 << b);
     }
     a->flags |= BN_FLG_FIXED_TOP;
@@ -909,10 +914,8 @@ int BN_mask_bits(BIGNUM *a, int n)
 
 void BN_set_negative(BIGNUM *a, int b)
 {
-    if (b && !BN_is_zero(a))
-        a->neg = 1;
-    else
-        a->neg = 0;
+    b = (b && !BN_is_zero(a));
+    bn_set_negative_internal(a, b);
 }
 
 int bn_cmp_words(const BN_ULONG *a, const BN_ULONG *b, int n)
@@ -980,15 +983,15 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
     bn_wcheck_size(a, nwords);
     bn_wcheck_size(b, nwords);
 
-    condition = ((~condition & ((condition - 1))) >> (BN_BITS2 - 1)) - 1;
+    condition = ((~condition & (condition - 1)) >> (BN_BITS2 - 1)) - 1;
 
     t = (a->top ^ b->top) & condition;
     a->top ^= t;
     b->top ^= t;
 
-    t = (a->neg ^ b->neg) & condition;
-    a->neg ^= t;
-    b->neg ^= t;
+    t = (bn_is_negative_internal(a) ^ bn_is_negative_internal(b)) & condition;
+    bn_set_negative_internal(a, bn_is_negative_internal(a) ^ (int)t);
+    bn_set_negative_internal(b, bn_is_negative_internal(b) ^ (int)t);
 
     /*-
      * BN_FLG_STATIC_DATA: indicates that data may not be written to. Intention
@@ -1055,8 +1058,8 @@ int BN_security_bits(int L, int N)
 
 void BN_zero_ex(BIGNUM *a)
 {
-    a->neg = 0;
-    a->top = 0;
+    bn_set_negative_internal(a, 0);
+    bn_set_top(a, 0);
     a->flags &= ~BN_FLG_FIXED_TOP;
 }
 
@@ -1067,17 +1070,22 @@ int BN_abs_is_word(const BIGNUM *a, const BN_ULONG w)
 
 int BN_is_zero(const BIGNUM *a)
 {
-    return a->top == 0;
+    if ((a->flags & BN_FLG_FIXED_TOP) == 0)
+        return a->top == 0;
+    for (size_t i = a->top; i-- > 0;)
+        if (a->d[i] != (BN_ULONG)0)
+            return 0;
+    return 1;
 }
 
 int BN_is_one(const BIGNUM *a)
 {
-    return BN_abs_is_word(a, 1) && !a->neg;
+    return BN_abs_is_word(a, 1) && !bn_is_negative_internal(a);
 }
 
 int BN_is_word(const BIGNUM *a, const BN_ULONG w)
 {
-    return BN_abs_is_word(a, w) && (!w || !a->neg);
+    return BN_abs_is_word(a, w) && (!w || !bn_is_negative_internal(a));
 }
 
 int ossl_bn_is_word_fixed_top(const BIGNUM *a, const BN_ULONG w)
@@ -1085,7 +1093,7 @@ int ossl_bn_is_word_fixed_top(const BIGNUM *a, const BN_ULONG w)
     int res, i;
     const BN_ULONG *ap = a->d;
 
-    if (a->neg || a->top == 0)
+    if (bn_is_negative_internal(a) || a->top == 0)
         return 0;
 
     res = constant_time_select_int((int)constant_time_eq_bn(ap[0], w), 1, 0);
@@ -1118,7 +1126,12 @@ void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int flags)
     dest->d = b->d;
     dest->top = b->top;
     dest->dmax = b->dmax;
-    dest->neg = b->neg;
+    /*
+     * Because dest->data == b->data, calling bn_set_negative_internal()
+     * here would be superfluous (not to say dangerous in a multi-threaded
+     * scenario).
+     */
+    dest->neg = bn_is_negative_internal(b);
     dest->flags = ((dest->flags & BN_FLG_MALLOCED)
                    | (b->flags & ~BN_FLG_MALLOCED)
                    | BN_FLG_STATIC_DATA | flags);
@@ -1198,8 +1211,13 @@ void bn_correct_top_consttime(BIGNUM *a)
     }
 
     mask = constant_time_eq_int(atop, 0);
+    /*
+     * We just went through the whole 'd' array to identify where
+     * any leading set of zeros are located, so there's no need to
+     * call bn_set_top() here.
+     */
     a->top = atop;
-    a->neg = constant_time_select_int(mask, 0, a->neg);
+    bn_set_negative_internal(a, constant_time_select_int(mask, 0, bn_is_negative_internal(a)));
     a->flags &= ~BN_FLG_FIXED_TOP;
 }
 
@@ -1214,10 +1232,14 @@ void bn_correct_top(BIGNUM *a)
             if (*ftl != 0)
                 break;
         }
+        /*
+         * We just verified that the BN_ULONGs between a->top and
+         * tmp_top are all zero, so there's no need to call
+         * bn_set_top() here.
+         */
         a->top = tmp_top;
     }
     if (a->top == 0)
-        a->neg = 0;
+        bn_set_negative_internal(a, 0);
     a->flags &= ~BN_FLG_FIXED_TOP;
-    bn_pollute(a);
 }

@@ -83,9 +83,9 @@ int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
         ret = 1;
     }
 
-    if (B->neg) {
-        B->neg = 0;
-        if (A->neg)
+    if (bn_is_negative_internal(B)) {
+        bn_set_negative_internal(B, 0);
+        if (bn_is_negative_internal(A))
             ret = -ret;
     }
 
@@ -119,7 +119,7 @@ int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 
         /* Cohen's step 4: */
         /* multiply 'ret' by  $(-1)^{(A-1)(B-1)/4}$ */
-        if ((A->neg ? ~BN_lsw(A) : BN_lsw(A)) & BN_lsw(B) & 2)
+        if ((bn_is_negative_internal(A) ? ~BN_lsw(A) : BN_lsw(A)) & BN_lsw(B) & 2)
             ret = -ret;
 
         /* (A, B) := (B mod |A|, |A|) */
@@ -129,7 +129,7 @@ int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
         tmp = A;
         A = B;
         B = tmp;
-        tmp->neg = 0;
+        bn_set_negative_internal(tmp, 0);
     }
  end:
     BN_CTX_end(ctx);

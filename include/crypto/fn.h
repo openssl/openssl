@@ -128,6 +128,62 @@ void OSSL_FN_clear_free(OSSL_FN *f);
  */
 void OSSL_FN_clear(OSSL_FN *f);
 
+/**
+ * Add two OSSL_FN numbers.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b);
+
+/**
+ * Add an OSSL_FN_ULONG word to an OSSL_FN numbers.
+ *
+ * @param[in,out]       a       The OSSL_FN to add the word to
+ * @param[in]           w       The OSSL_FN_ULONG word
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_add_word(OSSL_FN *a, const OSSL_FN_ULONG *w);
+
+/**
+ * Subtract two OSSL_FN numbers.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b);
+
+/**
+ * Subtract an OSSL_FN_ULONG word from an OSSL_FN numbers.
+ *
+ * @param[in,out]       a       The OSSL_FN to subtract the word from
+ * @param[in]           w       The OSSL_FN_ULONG word
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_sub_word(OSSL_FN *a, const OSSL_FN_ULONG *w);
+
+/**
+ * Compare two OSSL_FN numbers.
+ *
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @returns             -1 if a < b, 0 if a == b, and 1 if a > b
+ */
+int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b);
+
+/**
+ * Compare the absolute value of two OSSL_FN numbers.
+ *
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @returns             -1 if |a| < |b|, 0 if |a| == |b|, and 1 if |a| > |b|
+ */
+int OSSL_FN_ucmp(const OSSL_FN *a, const OSSL_FN *b);
+
 # ifdef  __cplusplus
 }
 # endif
