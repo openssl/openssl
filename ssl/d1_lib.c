@@ -1067,6 +1067,10 @@ size_t DTLS_get_data_mtu(const SSL *ssl)
         return 0;
     mtu -= int_overhead;
 
+    /* Added record type at the end of the data */
+    if (SSL_version(ssl) == DTLS1_3_VERSION)
+        mtu -= 1;
+
     return mtu;
 }
 
