@@ -111,12 +111,7 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
         for (i = 0; i < 30; i++) {
             /* DTLS_get_data_mtu() with record MTU 500+i returned mtus[i] ... */
 
-            /**
-             * TODO(DTLSv1.3): This check fails with message:
-             * PSK-AES256-GCM-SHA384: s=471, mtus[i]=471, reclen=501, i=500
-             */
-            if (!TEST_false(s <= mtus[i] && reclen > (size_t)(500 + i))
-                && SSL_version(clnt_ssl) != DTLS1_3_VERSION) {
+            if (!TEST_false(s <= mtus[i] && reclen > (size_t)(500 + i))) {
                 /*
                  * We sent a packet smaller than or equal to mtus[j] and
                  * that made a record *larger* than the record MTU 500+j!
