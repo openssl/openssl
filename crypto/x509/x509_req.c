@@ -160,7 +160,8 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(OSSL_FUTURE_CONST X509_REQ *re
 
 /*
  * Add a STACK_OF extensions to a certificate request: allow alternative OIDs
- * in case we want to create a non standard one.
+ * in case we want to create a non standard one. If there are already
+ * extensions with the same OID, replace them with the new ones.
  */
 int X509_REQ_add_extensions_nid(X509_REQ *req,
                                 const STACK_OF(X509_EXTENSION) *exts, int nid)
@@ -178,17 +179,15 @@ int X509_REQ_add_extensions_nid(X509_REQ *req,
     if (loc != -1) {
         if ((mod_exts = get_extensions_by_nid(req, nid)) == NULL)
             return 0;
-        if (X509v3_add_extensions(&mod_exts, exts) == NULL)
-            goto end;
+    } else {
+        if ((mod_exts = sk_X509_EXTENSION_new_null()) == NULL)
+            return 0;
     }
 
-    /* Generate encoding of extensions */
-    extlen = ASN1_item_i2d((const ASN1_VALUE *)
-                           (mod_exts == NULL ? exts : mod_exts),
-                           &ext, ASN1_ITEM_rptr(X509_EXTENSIONS));
-    if (extlen <= 0)
+    if (X509v3_add_extensions(&mod_exts, exts) == NULL)
         goto end;
-    if (mod_exts != NULL) {
+
+    if (loc != -1) {
         X509_ATTRIBUTE *att = X509at_delete_attr(req->req_info.attributes, loc);
 
         if (att == NULL)
@@ -196,6 +195,16 @@ int X509_REQ_add_extensions_nid(X509_REQ *req,
         X509_ATTRIBUTE_free(att);
     }
 
+    if (sk_X509_EXTENSION_num(mod_exts) == 0) {
+        rv = 1;
+        goto end;
+    }
+
+    /* Generate encoding of extensions */
+    extlen = ASN1_item_i2d((const ASN1_VALUE *)mod_exts,
+                           &ext, ASN1_ITEM_rptr(X509_EXTENSIONS));
+    if (extlen <= 0)
+        goto end;
     rv = X509_REQ_add1_attr_by_NID(req, nid, V_ASN1_SEQUENCE, ext, extlen);
     OPENSSL_free(ext);
 

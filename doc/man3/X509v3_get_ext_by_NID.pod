@@ -90,8 +90,13 @@ The passed extension I<ex> is duplicated so it must be freed after use.
 X509v3_add_extensions() adds the list of extensions I<exts> to STACK I<*target>.
 The STACK I<*target> is returned unchanged if I<exts> is NULL or an empty list.
 Otherwise a new stack is allocated if I<*target> is NULL.
-An extension to be added
-that has the same OID as a pre-existing one replaces this earlier one.
+An extension to be added that has the same OID as a pre-existing one replaces
+this earlier one. However in case the added extensions contain just an
+empty AKID and/or SKID extension, that extension is not added.
+Only the pre-existing extensions of the same type are deleted.
+In that case it is possible that the returned stack is an empty array.
+It is recommended to call this functions with an empty array instead of
+NULL I<*target> and drop the empty array return afterwards.
 
 X509_get_ext_count(), X509_get_ext(), X509_get_ext_by_NID(),
 X509_get_ext_by_OBJ(), X509_get_ext_by_critical(), X509_delete_ext()
