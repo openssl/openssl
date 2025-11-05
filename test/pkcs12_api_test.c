@@ -253,6 +253,33 @@ const OPTIONS *test_get_options(void)
     return options;
 }
 
+static int test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL;
+    STACK_OF(X509) *ca = NULL;
+    PKCS12 *p12 = NULL;
+
+    if (!TEST_ptr(p12 = PKCS12_load(in_file)))
+        return 0;
+    if (!TEST_true(PKCS12_parse(p12, in_pass, &key, &cert, &ca)))
+        goto err;
+    PKCS12_free(p12);
+
+    if (!TEST_ptr(p12 = PKCS12_create_ex2("pass", NULL, key, cert, ca,
+                                          NID_undef, NID_undef, 0, -1, 0,
+                                          testctx, NULL, NULL, NULL)))
+        goto err;
+    ret = TEST_true(PKCS12_set_pbmac1_pbkdf2(p12, "pass", -1, NULL, 0, 0, NULL, NULL));
+err:
+    PKCS12_free(p12);
+    EVP_PKEY_free(key);
+    X509_free(cert);
+    OSSL_STACK_OF_X509_free(ca);
+    return ret;
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -292,6 +319,7 @@ int setup_tests(void)
     ADD_TEST(test_null_args);
     ADD_TEST(pkcs12_parse_test);
     ADD_ALL_TESTS(pkcs12_create_ex2_test, 3);
+    ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero);
     return 1;
 }
 
