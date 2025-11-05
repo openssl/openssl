@@ -546,6 +546,7 @@ int bn_mul_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
         if (al == 4) {
             if (bn_wexpand(rr, 8) == NULL)
                 goto err;
+            rr->flags |= BN_FLG_FIXED_TOP;
             rr->top = 8;
             bn_mul_comba4(rr->d, a->d, b->d);
             goto end;
@@ -554,6 +555,7 @@ int bn_mul_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
         if (al == 8) {
             if (bn_wexpand(rr, 16) == NULL)
                 goto err;
+            rr->flags |= BN_FLG_FIXED_TOP;
             rr->top = 16;
             bn_mul_comba8(rr->d, a->d, b->d);
             goto end;
@@ -582,32 +584,40 @@ int bn_mul_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
             if (al > j || bl > j) {
                 if (bn_wexpand(t, k * 4) == NULL)
                     goto err;
+                t->top = k * 4;
+                t->flags |= BN_FLG_FIXED_TOP;
                 if (bn_wexpand(rr, k * 4) == NULL)
                     goto err;
+                rr->top = k * 4;
+                rr->flags |= BN_FLG_FIXED_TOP;
                 bn_mul_part_recursive(rr->d, a->d, b->d,
                                       j, al - j, bl - j, t->d);
             } else {            /* al <= j || bl <= j */
 
                 if (bn_wexpand(t, k * 2) == NULL)
                     goto err;
+                t->top = k * 2;
+                t->flags |= BN_FLG_FIXED_TOP;
                 if (bn_wexpand(rr, k * 2) == NULL)
                     goto err;
+                rr->top = k * 2;
+                rr->flags |= BN_FLG_FIXED_TOP;
                 bn_mul_recursive(rr->d, a->d, b->d, j, al - j, bl - j, t->d);
             }
-            rr->top = top;
+            bn_set_top(rr, top);
             goto end;
         }
     }
 #endif                          /* BN_RECURSION */
     if (bn_wexpand(rr, top) == NULL)
         goto err;
-    rr->top = top;
+    bn_set_top(rr, top);
     bn_mul_normal(rr->d, a->d, al, b->d, bl);
 
 #if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
  end:
 #endif
-    rr->neg = a->neg ^ b->neg;
+    bn_set_negative_internal(rr, bn_is_negative_internal(a) ^ bn_is_negative_internal(b));
     rr->flags |= BN_FLG_FIXED_TOP;
     if (r != rr && BN_copy(r, rr) == NULL)
         goto err;

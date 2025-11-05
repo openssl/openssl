@@ -46,8 +46,8 @@ int bn_mul_mont_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
         if (bn_wexpand(r, num) == NULL)
             return 0;
         if (bn_mul_mont(r->d, a->d, b->d, mont->N.d, mont->n0, num)) {
-            r->neg = a->neg ^ b->neg;
-            r->top = num;
+            bn_set_negative_internal(r, bn_is_negative_internal(a) ^ bn_is_negative_internal(b));
+            bn_set_top(r, num);
             r->flags |= BN_FLG_FIXED_TOP;
             return 1;
         }
@@ -95,7 +95,7 @@ static int bn_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
     n = &(mont->N);
     nl = n->top;
     if (nl == 0) {
-        ret->top = 0;
+        bn_set_top(ret, 0);
         return 1;
     }
 
@@ -103,7 +103,7 @@ static int bn_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
     if (bn_wexpand(r, max) == NULL)
         return 0;
 
-    r->neg ^= n->neg;
+    bn_set_negative_internal(r, bn_is_negative_internal(r) ^ bn_is_negative_internal(n));
     np = n->d;
     rp = r->d;
 
@@ -113,7 +113,7 @@ static int bn_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
         rp[i] &= v;
     }
 
-    r->top = max;
+    bn_set_top(r, max);
     r->flags |= BN_FLG_FIXED_TOP;
     n0 = mont->n0[0];
 
@@ -132,9 +132,9 @@ static int bn_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 
     if (bn_wexpand(ret, nl) == NULL)
         return 0;
-    ret->top = nl;
+    bn_set_top(ret, nl);
     ret->flags |= BN_FLG_FIXED_TOP;
-    ret->neg = r->neg;
+    bn_set_negative_internal(ret, bn_is_negative_internal(r));
 
     rp = ret->d;
 
@@ -323,10 +323,10 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
             if (bn_expand(Ri, (int)sizeof(BN_ULONG) * 2) == NULL)
                 goto err;
             /* Ri-- (mod double word size) */
-            Ri->neg = 0;
+            bn_set_negative_internal(Ri, 0);
             Ri->d[0] = BN_MASK2;
             Ri->d[1] = BN_MASK2;
-            Ri->top = 2;
+            bn_set_top(Ri, 2);
         }
         if (!BN_div(Ri, NULL, Ri, &tmod, ctx))
             goto err;

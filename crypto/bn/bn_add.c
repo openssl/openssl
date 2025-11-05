@@ -18,16 +18,16 @@ int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     bn_check_top(a);
     bn_check_top(b);
 
-    if (a->neg == b->neg) {
-        r_neg = a->neg;
+    if (bn_is_negative_internal(a) == bn_is_negative_internal(b)) {
+        r_neg = bn_is_negative_internal(a);
         ret = BN_uadd(r, a, b);
     } else {
         cmp_res = BN_ucmp(a, b);
         if (cmp_res > 0) {
-            r_neg = a->neg;
+            r_neg = bn_is_negative_internal(a);
             ret = BN_usub(r, a, b);
         } else if (cmp_res < 0) {
-            r_neg = b->neg;
+            r_neg = bn_is_negative_internal(b);
             ret = BN_usub(r, b, a);
         } else {
             r_neg = 0;
@@ -36,7 +36,7 @@ int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
         }
     }
 
-    r->neg = r_neg;
+    bn_set_negative_internal(r, r_neg);
     bn_check_top(r);
     return ret;
 }
@@ -49,16 +49,16 @@ int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     bn_check_top(a);
     bn_check_top(b);
 
-    if (a->neg != b->neg) {
-        r_neg = a->neg;
+    if (bn_is_negative_internal(a) != bn_is_negative_internal(b)) {
+        r_neg = bn_is_negative_internal(a);;
         ret = BN_uadd(r, a, b);
     } else {
         cmp_res = BN_ucmp(a, b);
         if (cmp_res > 0) {
-            r_neg = a->neg;
+            r_neg = bn_is_negative_internal(a);;
             ret = BN_usub(r, a, b);
         } else if (cmp_res < 0) {
-            r_neg = !b->neg;
+            r_neg = !bn_is_negative_internal(b);;
             ret = BN_usub(r, b, a);
         } else {
             r_neg = 0;
@@ -67,7 +67,7 @@ int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
         }
     }
 
-    r->neg = r_neg;
+    bn_set_negative_internal(r, r_neg);
     bn_check_top(r);
     return ret;
 }
@@ -96,7 +96,7 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     if (bn_wexpand(r, max + 1) == NULL)
         return 0;
 
-    r->top = max;
+    bn_set_top(r, max);
 
     ap = a->d;
     bp = b->d;
@@ -114,9 +114,9 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
         carry &= (t2 == 0);
     }
     *rp = carry;
-    r->top += (int)carry;
+    bn_set_top(r, r->top + (int)carry);
 
-    r->neg = 0;
+    bn_set_negative_internal(r, 0);
     bn_check_top(r);
     return 1;
 }
@@ -162,9 +162,8 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     while (max && *--rp == 0)
         max--;
 
-    r->top = max;
-    r->neg = 0;
-    bn_pollute(r);
+    bn_set_top(r, max);
+    bn_set_negative_internal(r, 0);
 
     return 1;
 }

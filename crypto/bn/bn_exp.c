@@ -141,7 +141,7 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 #ifdef MONT_MUL_MOD
     if (BN_is_odd(m)) {
 # ifdef MONT_EXP_WORD
-        if (a->top == 1 && !a->neg
+        if (a->top == 1 && !bn_is_negative_internal(a)
             && (BN_get_flags(p, BN_FLG_CONSTTIME) == 0)
             && (BN_get_flags(a, BN_FLG_CONSTTIME) == 0)
             && (BN_get_flags(m, BN_FLG_CONSTTIME) == 0)) {
@@ -204,11 +204,11 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     if (val[0] == NULL)
         goto err;
 
-    if (m->neg) {
+    if (bn_is_negative_internal(m)) {
         /* ignore sign of 'm' */
         if (!BN_copy(aa, m))
             goto err;
-        aa->neg = 0;
+        bn_set_negative_internal(aa, 0);
         if (BN_RECP_CTX_set(&recp, aa, ctx) <= 0)
             goto err;
     } else {
@@ -368,7 +368,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
             goto err;
     }
 
-    if (a->neg || BN_ucmp(a, m) >= 0) {
+    if (bn_is_negative_internal(a) || BN_ucmp(a, m) >= 0) {
         if (!BN_nnmod(val[0], a, m, ctx))
             goto err;
         aa = val[0];
@@ -404,7 +404,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         r->d[0] = (0 - m->d[0]) & BN_MASK2;
         for (i = 1; i < j; i++)
             r->d[i] = (~m->d[i]) & BN_MASK2;
-        r->top = j;
+        bn_set_top(r, j);
         r->flags |= BN_FLG_FIXED_TOP;
     } else
 #endif
@@ -470,7 +470,8 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         val[0]->d[0] = 1;       /* borrow val[0] */
         for (i = 1; i < j; i++)
             val[0]->d[i] = 0;
-        val[0]->top = j;
+        bn_set_top(val[0], j);
+        val[0]->flags |= BN_FLG_FIXED_TOP;
         if (!BN_mod_mul_montgomery(rr, r, val[0], mont, ctx))
             goto err;
     } else
@@ -587,7 +588,7 @@ static int MOD_EXP_CTIME_COPY_FROM_PREBUF(BIGNUM *b, int top,
         }
     }
 
-    b->top = top;
+    bn_set_top(b, top);
     b->flags |= BN_FLG_FIXED_TOP;
     return 1;
 }
@@ -666,7 +667,7 @@ int bn_mod_exp_mont_fixed_top(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
             goto err;
     }
 
-    if (a->neg || BN_ucmp(a, m) >= 0) {
+    if (bn_is_negative_internal(a) || BN_ucmp(a, m) >= 0) {
         BIGNUM *reduced = BN_CTX_get(ctx);
         if (reduced == NULL
             || !BN_nnmod(reduced, a, m, ctx)) {
@@ -687,8 +688,8 @@ int bn_mod_exp_mont_fixed_top(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
             goto err;
         RSAZ_1024_mod_exp_avx2(rr->d, a->d, p->d, m->d, mont->RR.d,
                                mont->n0[0]);
-        rr->top = 16;
-        rr->neg = 0;
+        bn_set_top(rr, 16);
+        bn_set_negative_internal(rr, 0);
         bn_correct_top(rr);
         ret = 1;
         goto err;
@@ -696,8 +697,8 @@ int bn_mod_exp_mont_fixed_top(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         if (NULL == bn_wexpand(rr, 8))
             goto err;
         RSAZ_512_mod_exp(rr->d, a->d, p->d, m->d, mont->n0[0], mont->RR.d);
-        rr->top = 8;
-        rr->neg = 0;
+        bn_set_top(rr, 8);
+        bn_set_negative_internal(rr, 0);
         bn_correct_top(rr);
         ret = 1;
         goto err;
@@ -766,6 +767,7 @@ int bn_mod_exp_mont_fixed_top(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         for (i = 1; i < top; i++)
             tmp.d[i] = (~m->d[i]) & BN_MASK2;
         tmp.top = top;
+        tmp.flags |= BN_FLG_FIXED_TOP;
     } else
 #endif
     if (!bn_to_mont_fixed_top(&tmp, BN_value_one(), mont, ctx))
@@ -1509,13 +1511,13 @@ int BN_mod_exp_mont_consttime_x2(BIGNUM *rr1, const BIGNUM *a1, const BIGNUM *p1
                                           mont2->RR.d, mont2->n0[0],
                                           mod_bits);
 
-        rr1->top = topn;
-        rr1->neg = 0;
+        bn_set_top(rr1, topn);
+        bn_set_negative_internal(rr1, 0);
         bn_correct_top(rr1);
         bn_check_top(rr1);
 
-        rr2->top = topn;
-        rr2->neg = 0;
+        bn_set_top(rr2, topn);
+        bn_set_negative_internal(rr2, 0);
         bn_correct_top(rr2);
         bn_check_top(rr2);
 

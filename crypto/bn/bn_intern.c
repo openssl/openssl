@@ -45,7 +45,7 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
     next_bit = bit << 1;        /* at most 256 */
     mask = next_bit - 1;        /* at most 255 */
 
-    if (BN_is_negative(scalar)) {
+    if (bn_is_negative_internal(scalar)) {
         sign = -1;
     }
 
@@ -176,8 +176,9 @@ void bn_set_static_words(BIGNUM *a, const BN_ULONG *words, int size)
      */
     a->data = NULL;
     a->d = (BN_ULONG *)words;
+    /* No need to call bn_set_top() in this case */
     a->dmax = a->top = size;
-    a->neg = 0;
+    bn_set_negative_internal(a, 0);
     a->flags |= BN_FLG_STATIC_DATA;
     bn_correct_top(a);
 }
@@ -189,8 +190,11 @@ int bn_set_words(BIGNUM *a, const BN_ULONG *words, int num_words)
         return 0;
     }
 
+    /* TODO(FIXNUM): In the future, we'll use an OSSL_FN function on a->data */
     memcpy(a->d, words, sizeof(BN_ULONG) * num_words);
-    a->top = num_words;
+
+    /* TODO(FIXNUM): The following two lines are TO BE REMOVED */
+    bn_set_top(a, num_words);
     bn_correct_top(a);
     return 1;
 }
