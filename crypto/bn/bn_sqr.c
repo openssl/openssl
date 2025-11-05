@@ -34,7 +34,7 @@ int bn_sqr_fixed_top(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 
     al = a->top;
     if (al <= 0) {
-        r->top = 0;
+        bn_set_top(r, 0);
         r->neg = 0;
         return 1;
     }
@@ -91,8 +91,12 @@ int bn_sqr_fixed_top(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 #endif
     }
 
+    /* Ensure that tmp won't cause any trouble */
+    tmp->top = tmp->dmax;
+    tmp->flags |= BN_FLG_FIXED_TOP;
+
     rr->neg = 0;
-    rr->top = max;
+    bn_set_top(rr, max);
     rr->flags |= BN_FLG_FIXED_TOP;
     if (r != rr && BN_copy(r, rr) == NULL)
         goto err;
@@ -100,7 +104,6 @@ int bn_sqr_fixed_top(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
     ret = 1;
  err:
     bn_check_top(rr);
-    bn_check_top(tmp);
     BN_CTX_end(ctx);
     return ret;
 }
