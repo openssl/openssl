@@ -18,7 +18,7 @@
 #include <openssl/x509v3.h>
 #include "internal/nelem.h"
 #include "internal/ssl_unwrap.h"
-#include "internal/x509_local.h"
+#include "internal/x509.h"
 
 /*
  * structure holding name tables. This is used for permitted elements in lists
