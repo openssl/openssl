@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 117;
+plan tests => 119;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -586,6 +586,10 @@ $cert = "self-signed_v3_CA_no_SKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = none");
 cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # no SKID and no AKID
 #TODO strict_verify($cert, 0);
+
+$cert = "self-signed_v3_CA_no_SKID_impossible_AKID.pem";
+generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = none", "-addext", "authorityKeyIdentifier = keyid");
+cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # still no SKID and no AKID
 
 $cert = "self-signed_v3_CA_given_SKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = 45");

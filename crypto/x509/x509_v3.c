@@ -156,6 +156,7 @@ STACK_OF(X509_EXTENSION) *X509v3_add_extensions(STACK_OF(X509_EXTENSION) **targe
     for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
         X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
         ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
+        ASN1_OCTET_STRING *encoded = X509_EXTENSION_get_data(ext);
         int idx = X509v3_get_ext_by_OBJ(*target, obj, -1);
 
         /* Does extension exist in target? */
@@ -165,6 +166,15 @@ STACK_OF(X509_EXTENSION) *X509v3_add_extensions(STACK_OF(X509_EXTENSION) **targe
                 X509_EXTENSION_free(sk_X509_EXTENSION_delete(*target, idx));
                 idx = X509v3_get_ext_by_OBJ(*target, obj, -1);
             } while (idx != -1);
+        }
+        switch (OBJ_obj2nid(obj)) {
+        case NID_subject_key_identifier:
+        case NID_authority_key_identifier:
+            if (ASN1_STRING_length(encoded) <= 2) /* indicating "none" */
+                continue;
+            break;
+        default:
+            break;
         }
         if (!X509v3_add_ext(target, ext, -1))
             return NULL;

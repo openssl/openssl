@@ -127,6 +127,7 @@ X509_PUBKEY *OSSL_CMP_MSG_get0_certreq_publickey(const OSSL_CMP_MSG *msg)
 static int add1_extension(X509_EXTENSIONS **pexts, int nid, int crit, void *ex)
 {
     X509_EXTENSION *ext;
+    int idx;
     int res;
 
     if (!ossl_assert(pexts != NULL)) /* pointer to var must not be NULL */
@@ -134,6 +135,9 @@ static int add1_extension(X509_EXTENSIONS **pexts, int nid, int crit, void *ex)
 
     if ((ext = X509V3_EXT_i2d(nid, crit, ex)) == NULL)
         return 0;
+
+    while ((idx = X509v3_get_ext_by_NID(*pexts, nid, -1)) >= 0)
+        X509_EXTENSION_free(X509v3_delete_ext(*pexts, idx));
 
     res = X509v3_add_ext(pexts, ext, 0) != NULL;
     X509_EXTENSION_free(ext);
@@ -326,6 +330,8 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
     /* extensions */
     if (ctx->p10CSR != NULL
             && (exts = X509_REQ_get_extensions(ctx->p10CSR)) == NULL)
+        goto err;
+    if (exts == NULL && (exts = sk_X509_EXTENSION_new_null()) == NULL)
         goto err;
     if (!ctx->SubjectAltName_nodefault && !HAS_SAN(ctx) && refcert != NULL
         && (default_sans = X509V3_get_d2i(X509_get0_extensions(refcert),

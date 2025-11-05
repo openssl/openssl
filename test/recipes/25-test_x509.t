@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 140;
+plan tests => 142;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -630,3 +630,14 @@ SKIP: {
 
     ok(run(test(["x509_test", $psscert])), "running x509_test");
 }
+
+my $cert = "cert.pem";
+my $SKID_AKID = "subjectKeyIdentifier,authorityKeyIdentifier";
+my $no_SKID_cnf = "no_SKID.cnf";
+open(my $fh, '>', $no_SKID_cnf) or die "Could not open file $no_SKID_cnf";
+print $fh "subjectKeyIdentifier = none";
+close $fh;
+ok(run(app(["openssl", "x509", "-new", "-subj", "/",
+            "-extfile", $no_SKID_cnf, "-key", srctop_file(@certs, "ee-key.pem"),
+            "-out", $cert])));
+cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # no SKID and no AKID
