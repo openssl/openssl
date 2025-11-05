@@ -26,6 +26,7 @@ $CHACHA_GOAL=../../libdefault.a
 $CHACHAPOLY_GOAL=../../libdefault.a
 $SIV_GOAL=../../libdefault.a
 $SIV_GCM_GOAL=../../libdefault.a
+$ASCON_GOAL=../../libdefault.a
 
 IF[{- !$disabled{asm} -}]
   $GHASHDEF_x86=GHASH_ASM
@@ -92,8 +93,9 @@ SOURCE[$COMMON_GOAL]=\
 
 INCLUDE[cipher_aes_cbc_hmac_sha.o cipher_aes_cbc_hmac_sha_etm.o \
         cipher_aes_gcm_siv.o cipher_aes_ocb.o cipher_aes_siv.o \
-        cipher_aes_wrp.o cipher_aes_xts.o ciphercommon.o cipher_chacha20.o \
-        cipher_chacha20_poly1305.o cipher_rc4_hmac_md5.o cipher_sm4_xts.o]=.
+        cipher_aes_wrp.o cipher_aes_xts.o cipher_ascon_aead128.o ciphercommon.o \
+        cipher_chacha20.o cipher_chacha20_poly1305.o cipher_rc4_hmac_md5.o \
+        cipher_sm4_xts.o]=.
 
 IF[{- !$disabled{des} -}]
   SOURCE[$TDES_1_GOAL]=cipher_tdes.c cipher_tdes_common.c cipher_tdes_hw.c
@@ -128,6 +130,12 @@ IF[{- !$disabled{siv} -}]
         cipher_aes_gcm_siv.c cipher_aes_gcm_siv_hw.c \
         cipher_aes_gcm_siv_polyval.c
   SOURCE[$SIV_GOAL]=cipher_aes_siv.c cipher_aes_siv_hw.c
+ENDIF
+
+IF[{- !$disabled{ascon_aead128} -}]
+  SOURCE[$ASCON_GOAL]=\
+        cipher_ascon_aead128.c
+  INCLUDE[$ASCON_GOAL]=../include
 ENDIF
 
 IF[{- !$disabled{des} -}]

@@ -261,6 +261,10 @@ extern const OSSL_DISPATCH ossl_aes192gcm_siv_functions[];
 extern const OSSL_DISPATCH ossl_aes256gcm_siv_functions[];
 #endif /* OPENSSL_NO_SIV */
 
+#ifndef OPENSSL_NO_ASCON128
+extern const OSSL_DISPATCH ossl_ascon_aead128_functions[];
+#endif /* OPENSSL_NO_ASCON128 */
+
 /* MACs */
 extern const OSSL_DISPATCH ossl_blake2bmac_functions[];
 extern const OSSL_DISPATCH ossl_blake2smac_functions[];

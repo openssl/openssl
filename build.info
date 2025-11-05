@@ -105,8 +105,9 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/ciphers/cipher_aes_ocb.inc \
          providers/implementations/ciphers/cipher_aes_siv.inc \
          providers/implementations/ciphers/cipher_aes_wrp.inc \
-         providers/implementations/ciphers/cipher_aes_xts.inc \
-         providers/implementations/ciphers/ciphercommon.inc \
+       providers/implementations/ciphers/cipher_aes_xts.inc \
+       providers/implementations/ciphers/cipher_ascon_aead128.inc \
+       providers/implementations/ciphers/ciphercommon.inc \
          providers/implementations/ciphers/ciphercommon_ccm.inc \
          providers/implementations/ciphers/ciphercommon_gcm.inc \
          providers/implementations/ciphers/cipher_chacha20.inc \
@@ -223,6 +224,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/ciphers/cipher_aes_siv.inc \
        providers/implementations/ciphers/cipher_aes_wrp.inc \
        providers/implementations/ciphers/cipher_aes_xts.inc \
+       providers/implementations/ciphers/cipher_ascon_aead128.inc \
        providers/implementations/ciphers/ciphercommon.inc \
        providers/implementations/ciphers/ciphercommon_ccm.inc \
        providers/implementations/ciphers/ciphercommon_gcm.inc \
@@ -366,6 +368,8 @@ GENERATE[providers/implementations/ciphers/cipher_aes_wrp.inc]=\
     providers/implementations/ciphers/cipher_aes_wrp.inc.in
 GENERATE[providers/implementations/ciphers/cipher_aes_xts.inc]=\
     providers/implementations/ciphers/cipher_aes_xts.inc.in
+GENERATE[providers/implementations/ciphers/cipher_ascon_aead128.inc]=\
+    providers/implementations/ciphers/cipher_ascon_aead128.inc.in
 GENERATE[providers/implementations/ciphers/ciphercommon.inc]=\
     providers/implementations/ciphers/ciphercommon.inc.in
 GENERATE[providers/implementations/ciphers/ciphercommon_ccm.inc]=\
