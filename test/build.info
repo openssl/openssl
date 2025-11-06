@@ -55,7 +55,7 @@ IF[{- !$disabled{tests} -}]
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bio_callback_test bio_memleak_test bio_core_test bio_dgram_test param_build_test \
           bioprinttest sslapitest ssl_handshake_rtt_test dtlstest sslcorrupttest \
-          bio_base64_test bio_enc_test pkey_meth_test pkey_meth_kdf_test evp_kdf_test uitest \
+          bio_base64_test test_base64_simdutf bio_enc_test pkey_meth_test pkey_meth_kdf_test evp_kdf_test uitest \
           cipherbytes_test threadstest_fips threadpool_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test asn1_stable_parse_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
@@ -646,6 +646,12 @@ IF[{- !$disabled{tests} -}]
   SOURCE[bio_base64_test]=bio_base64_test.c
   INCLUDE[bio_base64_test]=../include ../apps/include
   DEPEND[bio_base64_test]=../libcrypto libtestutil.a
+
+  SOURCE[test_base64_simdutf] = test_base64_simdutf.c
+  INCLUDE[test_base64_simdutf] = ../include ../apps/include ../crypto/include ../crypto/evp/  ../source/include ../source/apps/include
+  DEPEND[test_base64_simdutf] = ../libcrypto libtestutil.a ../libcrypto.a
+  DEFINE[test_base64_simdutf] = __AVX2__ USE_AVX2
+
 
   SOURCE[bio_enc_test]=bio_enc_test.c
   INCLUDE[bio_enc_test]=../include ../apps/include
