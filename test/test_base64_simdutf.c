@@ -106,7 +106,17 @@ static const unsigned char data_bin2ascii[65] =
 static const unsigned char srpdata_bin2ascii[65] =
     "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz./";
 
+#ifndef CHARSET_EBCDIC
 # define conv_bin2ascii(a, table)       ((table)[(a)&0x3f])
+#else
+/*
+ * We assume that PEM encoded files are EBCDIC files (i.e., printable text
+ * files). Convert them here while decoding. When encoding, output is EBCDIC
+ * (text) format again. (No need for conversion in the conv_bin2ascii macro,
+ * as the underlying textstring data_bin2ascii[] is already EBCDIC)
+ */
+# define conv_bin2ascii(a, table)       ((table)[(a)&0x3f])
+#endif
 
 static int evp_encodeblock_int_old(EVP_ENCODE_CTX *ctx, unsigned char *t,
                                    const unsigned char *f, int dlen)
