@@ -8011,6 +8011,18 @@ static int test_key_update(int idx)
                 /*
                  * For DTLS1.3 we need to call the server side too since
                  * he needs to send an ACK and client has to process that ACK
+                 *
+                 * For SSL_KEY_UPDATE_REQUESTED the after loop 0
+                 * The server read will result in sending the prior
+                 * key update. So unlike the TLS test for DTSL
+                 * we cannot wait until all 40 messages have been
+                 * queued. There for DTLS we will clean things
+                 * up before the write/reads below.
+                 * If we do not let the server send its key update
+                 * then it will not be able to send the ACK from
+                 * the client update and then the client will
+                 * not be able to send the next key update for it
+                 * is waiting on an ACK.
                  */
                 if (!TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)), -1))
                     goto end;
@@ -8130,13 +8142,17 @@ static int test_key_update_peer_in_write(int idx)
         /*
          * For DTLS1.3 the server needs to read the NewSessionTicket
          * ack from the client before it can process the KeyUpdate
-         * message.
+         * message from down below.
          */
         if (idx == 1)
             if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf), &bytes_read))
                     || !TEST_size_t_eq(bytes_read, 0))
                 goto end;
 
+        /*
+         * Expected update result is -1 for the peerupdate will be
+         * waiting for an ACK from the other side.
+         */
         expected_update_result = -1;
     }
 
@@ -8188,7 +8204,10 @@ static int test_key_update_peer_in_write(int idx)
 
         /*
          * The peerupdate needs to ack the key update sent by
-         * the peerwrite
+         * the peerwrite.
+         *
+         * If this doesn't happen in the SSL_write below it will
+         * fail for the peerwrite is waiting on an ACK.
          */
         if (!TEST_int_eq(SSL_read(peerupdate, buf, sizeof(buf)), -1))
             goto end;
@@ -8244,6 +8263,8 @@ static int test_key_update_peer_in_read(int idx)
     const SSL_METHOD *smeth, *cmeth;
     int vermin, vermax = 0;
     int testdtls = idx >= 2;
+    int bio_size = 512;
+    int dtls_max_size = 495; /* bio_size - DTLS1.3 Header (5 bytes) - DTLS1.3 ACK - buffer */
 
     if (testdtls) {
         smeth = DTLS_server_method();
@@ -8275,8 +8296,13 @@ static int test_key_update_peer_in_read(int idx)
     local = idx == 0 ? clientssl : serverssl;
     peer = idx == 0 ? serverssl : clientssl;
 
-    if (!TEST_int_eq(BIO_new_bio_pair(&lbio, 512, &pbio, 512), 1))
-        goto end;
+    if (testdtls) {
+        if (!TEST_int_eq(BIO_new_bio_dgram_pair(&lbio, bio_size, &pbio, bio_size), 1))
+            goto end;
+    } else {
+        if (!TEST_int_eq(BIO_new_bio_pair(&lbio, bio_size, &pbio, bio_size), 1))
+            goto end;
+    }
 
     SSL_set_bio(local, lbio, lbio);
     SSL_set_bio(peer, pbio, pbio);
@@ -8328,10 +8354,8 @@ static int test_key_update_peer_in_read(int idx)
          * For DTLS1.3 since the handshake wasn't complete no data
          * was written thus this call will cause an SSL_ERROR_WANT_WRITE
          */
-        if (!TEST_int_eq(SSL_write(local, lwbuf, sizeof(lwbuf)), -1)
-                || !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_WRITE)
-                || !TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), -1)
-                || !TEST_int_eq(SSL_get_error(peer, -1), SSL_ERROR_WANT_READ))
+        if (!TEST_int_eq(SSL_write(local, lwbuf, dtls_max_size), dtls_max_size)
+                || !TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), dtls_max_size))
             goto end;
 
         /* check that sending and receiving appdata ok */
@@ -8481,10 +8505,13 @@ static int test_key_update_local_in_write(int idx)
 
     if (testdtls) {
         /*
-         * For DTLS1.3 the peer needs to read the ACKS
-         * from the new session tickets.
+         * So the local can write again down below the
+         * peer needs to read the data and the Key Update
+         * and send an ACK back to the local. Though
+         * first we must read the right above and the
+         * ACKS from the new session ticket.
          */
-        if (!TEST_true(SSL_read(peer, buf, sizeof(buf))))
+        if (!TEST_int_eq(SSL_read(peer, buf, sizeof(buf)), (int)strlen(mess)))
             goto end;
 
         /*
@@ -8493,7 +8520,17 @@ static int test_key_update_local_in_write(int idx)
          */
         if (!TEST_int_eq(SSL_read(peer, buf, sizeof(buf)), -1))
             goto end;
+    }
 
+    /*
+     * we write some appdata in local
+     * read data in peer - we will read the keyupdate msg
+     */
+    if (!TEST_int_eq(SSL_write(local, mess, (int)strlen(mess)), (int)strlen(mess))
+        || !TEST_int_eq(SSL_read(peer, buf, sizeof(buf)), (int)strlen(mess)))
+        goto end;
+
+    if (testdtls) {
         /*
          * DTLS1.3 the peer needs to write to send out
          * its key update
@@ -8507,13 +8544,6 @@ static int test_key_update_local_in_write(int idx)
         if (!TEST_int_eq(SSL_read(local, buf, sizeof(buf)), -1))
             goto end;
     }
-    /*
-     * we write some appdata in local
-     * read data in peer - we will read the keyupdate msg
-     */
-    if (!TEST_int_eq(SSL_write(local, mess, (int)strlen(mess)), (int)strlen(mess))
-        || !TEST_int_eq(SSL_read(peer, buf, sizeof(buf)), (int)strlen(mess)))
-        goto end;
 
     /* Write more peer more data to ensure we send the keyupdate message back */
     if (!TEST_int_eq(SSL_write(peer, mess, (int)strlen(mess)), (int)strlen(mess))
@@ -8552,6 +8582,7 @@ static int test_key_update_local_in_read(int idx)
     int vermin, vermax = 0;
     int testdtls = idx >= 2;
     int expected_do_handshake_result = 1;
+    int bio_size = 512;
 
     if (testdtls) {
         smeth = DTLS_server_method();
@@ -8584,22 +8615,32 @@ static int test_key_update_local_in_read(int idx)
     local = idx == 0 ? clientssl : serverssl;
     peer = idx == 0 ? serverssl : clientssl;
 
-    if (!TEST_int_eq(BIO_new_bio_pair(&lbio, 512, &pbio, 512), 1))
-        goto end;
+    if (testdtls) {
+        if (!TEST_int_eq(BIO_new_bio_dgram_pair(&lbio, bio_size, &pbio, bio_size), 1))
+            goto end;
+    } else {
+        if (!TEST_int_eq(BIO_new_bio_pair(&lbio, bio_size, &pbio, bio_size), 1))
+            goto end;
+    }
 
     SSL_set_bio(local, lbio, lbio);
     SSL_set_bio(peer, pbio, pbio);
 
-    /* write app data in peer will fail with SSL_ERROR_WANT_WRITE */
-    if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), -1)
-        || !TEST_int_eq(SSL_get_error(peer, -1), SSL_ERROR_WANT_WRITE))
-        goto end;
+    if (testdtls) {
+        if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), 515)
+            || !TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), 515))
+            goto end;
+    } else {
+        /* write app data in peer will fail with SSL_ERROR_WANT_WRITE */
+        if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), -1)
+            || !TEST_int_eq(SSL_get_error(peer, -1), SSL_ERROR_WANT_WRITE))
+            goto end;
 
-    /* read appdata in local will fail with SSL_ERROR_WANT_READ */
-    if (!TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), -1)
-            || !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_READ))
-        goto end;
-
+        /* read appdata in local will fail with SSL_ERROR_WANT_READ */
+        if (!TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), -1)
+                || !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_READ))
+            goto end;
+    }
     /* SSL_do_handshake will send keyupdate msg */
     if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
             || !TEST_int_eq(SSL_do_handshake(local), expected_do_handshake_result))
@@ -8612,7 +8653,11 @@ static int test_key_update_local_in_read(int idx)
          */
         if (!TEST_true(SSL_read(peer, prbuf, sizeof(prbuf))))
             goto end;
-
+        /*
+         * The local side needs to read the ACK
+         */
+        if (!TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), -1))
+            goto end;
         /*
          * DTLS1.3 the peer needs to write to send out
          * its key update
@@ -8626,30 +8671,15 @@ static int test_key_update_local_in_read(int idx)
          */
         if (!TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), -1))
             goto end;
-
-        /*
-         * The peer needs to read the ACK
-         */
-        if (!TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), -1))
-            goto end;
-
-        /*
-         * For DTLS1.3 this still fails since there is to much
-         * data for the bio buffer
-         */
-        if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), -1)
-                || !TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), -1))
-            goto end;
-
-    } else {
-        /*
-         * write data in peer previously that we will complete
-         * read data in local previously that we will complete
-         */
-        if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), sizeof(pwbuf))
-            || !TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), sizeof(lrbuf)))
-            goto end;
     }
+
+    /*
+     * write data in peer previously that we will complete
+     * read data in local previously that we will complete
+     */
+    if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), sizeof(pwbuf))
+        || !TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), sizeof(lrbuf)))
+        goto end;
 
     /*
      * write data in local
