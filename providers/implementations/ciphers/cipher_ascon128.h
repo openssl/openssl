@@ -11,7 +11,7 @@
 # define OSSL_PROV_CIPHER_ASCON128_H
 
 # include "ciphercommon_ascon.h"
-# include <ascon.h>  /* LibAscon library header */
+# include "crypto/ascon.h"  /* ASCON algorithm header */
 
 /*********************************************************************
  *
@@ -59,4 +59,3 @@ struct ascon_ctx_st
 extern const OSSL_DISPATCH ossl_ascon128_functions[];
 
 #endif /* OSSL_PROV_CIPHER_ASCON128_H */
-
