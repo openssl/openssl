@@ -193,6 +193,11 @@ Use scrypt to create a hex-encoded derived key from a password and salt:
     openssl kdf -keylen 64 -kdfopt pass:password -kdfopt salt:NaCl \
                 -kdfopt n:1024 -kdfopt r:8 -kdfopt p:16 \
                 -kdfopt maxmem_bytes:10485760 SCRYPT
+# Example: derive a 32-byte key using HKDF with SHA-256
+openssl kdf -keylen 32 -kdfopt digest:SHA256 \
+    -kdfopt salt:00112233445566778899AABBCCDDEEFF \
+    -kdfopt key:000102030405060708090A0B0C0D0E0F \
+    -kdfopt info:A1A2A3A4A5A6A7A8A9
 
 =head1 NOTES
 
