@@ -63,4 +63,11 @@
 # define OSSL_TLS_GROUP_ID_X25519MLKEM768     0x11EC
 # define OSSL_TLS_GROUP_ID_SecP384r1MLKEM1024 0x11ED
 
+/*
+ * RFC 7919: "Codepoints ... between 256 and 511, inclusive ... are set aside
+ * for FFDHE groups"
+ */
+# define OSSL_TLS_GROUP_ID_FFDHE_START      0x0100 /* inclusive */
+# define OSSL_TLS_GROUP_ID_FFDHE_END        0x01FF /* inclusive */
+
 #endif
