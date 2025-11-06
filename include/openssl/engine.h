@@ -1174,6 +1174,40 @@ ENGINE_VOID_FUNC_NOARGS(ENGINE_setup_bsd_cryptodev)
 #   endif
 #  endif
 
+/*
+ * Stubs for ENGINE-related API functions that were removed
+ * from other headers.
+ */
+
+/* int ossl_err_load_ENGINE_strings(void); */
+ENGINE_FUNC_NOARGS(int, ossl_err_load_ENGINE_strings, 1)
+
+/* int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e); */
+ENGINE_FUNC(int, EVP_PKEY_set1_engine, (EVP_PKEY *pkey, ENGINE *e), (pkey, e), 0)
+
+/* ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey); */
+ENGINE_FUNC(ENGINE *, EVP_PKEY_get0_engine, (const EVP_PKEY *pkey), (pkey), NULL)
+
+/* int RAND_set_rand_engine(ENGINE *engine); */
+ENGINE_FUNC(int, RAND_set_rand_engine, (ENGINE *engine), (engine), 0)
+
+/*
+ * int TS_CONF_set_crypto_device(CONF *conf, const char *section,
+ *                              const char *device);
+ */
+ENGINE_FUNC(int, TS_CONF_set_crypto_device,
+            (CONF *conf, const char *section, const char *device),
+            (conf, section, device), 0)
+
+/* int TS_CONF_set_default_engine(const char *name); */
+ENGINE_FUNC(int, TS_CONF_set_default_engine, (const char *name), (name), 0)
+
+/* int ERR_load_ENGINE_strings(void); */
+ENGINE_FUNC_NOARGS(int, ERR_load_ENGINE_strings, 1)
+
+/* int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e); */
+ENGINE_FUNC(int, SSL_CTX_set_client_cert_engine, (SSL_CTX *ctx, ENGINE *e),
+            (ctx, e), 0)
 
 #  ifdef  __cplusplus
 }
