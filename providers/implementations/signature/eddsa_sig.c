@@ -191,6 +191,7 @@ static int eddsa_setup_instance(void *vpeddsactx, int instance_id,
         peddsactx->prehash_flag = 0;
         peddsactx->context_string_flag = 0;
         break;
+#ifndef FIPS_MODULE
     case ID_Ed25519ctx:
         if (peddsactx->key->type != ECX_KEY_TYPE_ED25519)
             return 0;
@@ -198,6 +199,7 @@ static int eddsa_setup_instance(void *vpeddsactx, int instance_id,
         peddsactx->prehash_flag = 0;
         peddsactx->context_string_flag = 1;
         break;
+#endif
     case ID_Ed25519ph:
         if (peddsactx->key->type != ECX_KEY_TYPE_ED25519)
             return 0;
@@ -855,9 +857,11 @@ static int eddsa_set_ctx_params(void *vpeddsactx, const OSSL_PARAM params[])
         if (OPENSSL_strcasecmp(pinstance_name, SN_Ed25519) == 0) {
             eddsa_setup_instance(peddsactx, ID_Ed25519, 0,
                                  peddsactx->prehash_by_caller_flag);
+#ifndef FIPS_MODULE
         } else if (OPENSSL_strcasecmp(pinstance_name, SN_Ed25519ctx) == 0) {
             eddsa_setup_instance(peddsactx, ID_Ed25519ctx, 0,
                                  peddsactx->prehash_by_caller_flag);
+#endif
         } else if (OPENSSL_strcasecmp(pinstance_name, SN_Ed25519ph) == 0) {
             eddsa_setup_instance(peddsactx, ID_Ed25519ph, 0,
                                  peddsactx->prehash_by_caller_flag);
@@ -869,6 +873,10 @@ static int eddsa_set_ctx_params(void *vpeddsactx, const OSSL_PARAM params[])
                                  peddsactx->prehash_by_caller_flag);
         } else {
             /* we did not recognize the instance */
+            ERR_raise_data(ERR_LIB_PROV,
+                           PROV_R_INVALID_EDDSA_INSTANCE_FOR_ATTEMPTED_OPERATION,
+                           "unknown INSTANCE name: %s",
+                           pinstance_name != NULL ? pinstance_name : "<null>");
             return 0;
         }
 
