@@ -18,6 +18,10 @@
 #include "crypto/sparse_array.h"
 #include "rsa_local.h"
 #include "internal/constant_time.h"
+#if defined(OPENSSL_SYS_TANDEM)
+# include "internal/tsan_assist.h"
+# include "internal/threads_common.h"
+#endif
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
@@ -210,6 +214,26 @@ static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
     return r;
 }
 
+#if defined(OPENSSL_SYS_TANDEM)
+static TSAN_QUALIFIER uint64_t tsan_thread_id = 1;
+#endif
+
+static uintptr_t get_unique_thread_id(void)
+{
+#if defined(OPENSSL_SYS_TANDEM)
+    uintptr_t thread_id = (uintptr_t)CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_TANDEM_ID_KEY,
+                                                                NULL);
+
+    if (thread_id == 0) {
+        thread_id = tsan_counter(&tsan_thread_id);
+        CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_TANDEM_ID_KEY, NULL, (void *)thread_id);
+    }
+    return thread_id;
+#else
+    return (uintptr_t)CRYPTO_THREAD_get_current_id();
+#endif
+}
+
 static void free_bn_blinding(ossl_uintmax_t idx, BN_BLINDING *b, void *arg)
 {
     BN_BLINDING_free(b);
@@ -231,7 +255,7 @@ void *ossl_rsa_alloc_blinding(void)
 static BN_BLINDING *ossl_rsa_get_thread_bn_blinding(RSA *rsa)
 {
     SPARSE_ARRAY_OF(BN_BLINDING) *blindings = rsa->blindings_sa;
-    uintptr_t tid = (uintptr_t)CRYPTO_THREAD_get_current_id();
+    uintptr_t tid = get_unique_thread_id();
 
     return ossl_sa_BN_BLINDING_get(blindings, tid);
 }
@@ -239,7 +263,7 @@ static BN_BLINDING *ossl_rsa_get_thread_bn_blinding(RSA *rsa)
 static int ossl_rsa_set_thread_bn_blinding(RSA *rsa, BN_BLINDING *b)
 {
     SPARSE_ARRAY_OF(BN_BLINDING) *blindings = rsa->blindings_sa;
-    uintptr_t tid = (uintptr_t)CRYPTO_THREAD_get_current_id();
+    uintptr_t tid = get_unique_thread_id();
 
     return ossl_sa_BN_BLINDING_set(blindings, tid, b);
 }
