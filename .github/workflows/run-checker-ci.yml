@@ -41,18 +41,33 @@ jobs:
           no-tls1_2,
           no-tls1_3,
           enable-trace enable-fips,
+          enable-jitter-dynamic,
           no-ui,
           no-quic
         ]
     runs-on: ubuntu-latest
     steps:
+    - name: checkout jitter
+      uses: actions/checkout@v5
+      with:
+        repository: smuellerDD/jitterentropy-library
+        ref: v3.6.3
+        path: jitter
+        persist-credentials: false
+    - name: build jitter
+      run: |
+        pushd jitter/
+        make
+        ln -s libjitterentropy.so.3.6.3 libjitterentropy.so
+        ln -s libjitterentropy.so.3.6.3 libjitterentropy.so.3
+        popd
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: CC=clang ./config --banner=Configured --strict-warnings ${{ matrix.opt }}
+      run: CC=clang ./config --banner=Configured --strict-warnings ${{ matrix.opt }} --with-jitter-include=jitter/ --with-jitter-lib=jitter/
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -63,5 +78,5 @@ jobs:
         if [ -x apps/openssl ] ; then ./util/opensslwrap.sh version -c ; fi
     - name: Check platform symbol usage
       run: ./util/checkplatformsyms.pl ./util/platform_symbols/unix-symbols.txt ./libcrypto.so ./libssl.so
-    - name: make test
+    - name: LD_LIBRARY_PATH=$PWD/jitter:$LD_LIBRARY_PATH make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
