@@ -648,10 +648,8 @@ IF[{- !$disabled{tests} -}]
   DEPEND[bio_base64_test]=../libcrypto libtestutil.a
 
   SOURCE[test_base64_simdutf] = test_base64_simdutf.c
-  INCLUDE[test_base64_simdutf] = ../include ../apps/include ../crypto/include ../crypto/evp/  ../source/include ../source/apps/include
+  INCLUDE[test_base64_simdutf] = ../include ../apps/include ../crypto/include ../crypto/evp/
   DEPEND[test_base64_simdutf] = ../libcrypto libtestutil.a ../libcrypto.a
-  DEFINE[test_base64_simdutf] = __AVX2__ USE_AVX2
-
 
   SOURCE[bio_enc_test]=bio_enc_test.c
   INCLUDE[bio_enc_test]=../include ../apps/include
