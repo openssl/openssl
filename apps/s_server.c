@@ -601,7 +601,8 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
                                             STACK_OF(OCSP_RESPONSE) *sk_resp_unordered,
                                             STACK_OF(OCSP_RESPONSE) **sk_resp)
 {
-    STACK_OF(X509) *server_certs = NULL;
+    STACK_OF(X509) *server_chain = NULL;
+    SSL_CTX *ssl_ctx;
     X509 *ssl_cert = NULL;
     X509 *issuer = NULL;
     OCSP_RESPONSE *resp = NULL;
@@ -613,14 +614,16 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
     if (*sk_resp != NULL)
         sk_OCSP_RESPONSE_pop_free(*sk_resp, OCSP_RESPONSE_free);
 
-    SSL_get0_chain_certs(s, &server_certs);
+    //SSL_get0_chain_certs(s, &server_chain);
+    ssl_ctx = SSL_get_SSL_CTX(s);
+    SSL_CTX_get0_chain_certs(ssl_ctx, &server_chain);
     /*
      * TODO(DTLS-1.3): in future DTLS should also be considered
      */
-    if (server_certs != NULL && srctx->status_all &&
+    if (server_chain != NULL && srctx->status_all &&
         !SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) {
         /* certificate chain is available */
-        num = sk_X509_num(server_certs) + 1;
+        num = sk_X509_num(server_chain) + 1;
     }
 
     /* get OCSP response for server certificate first */
@@ -640,10 +643,10 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
 
     for (i = 0; i < num; i++) {
         if (i != 0) /* for each certificate in chain (except root) get the OCSP response */
-            ssl_cert = sk_X509_value(server_certs, i - 1);
+            ssl_cert = sk_X509_value(server_chain, i - 1);
 
         /* issuer certificate is next in chain */
-        issuer = sk_X509_value(server_certs, i);
+        issuer = sk_X509_value(server_chain, i);
 
         /*
          * in the case the root CA certificate is not included in the chain
@@ -762,8 +765,9 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
                                         STACK_OF(OCSP_RESPONSE) **sk_resp)
 {
     X509 *ssl_cert = NULL;
+    SSL_CTX *ssl_ctx;
     int i, num = 0;
-    STACK_OF(X509) *server_certs = NULL;
+    STACK_OF(X509) *server_chain = NULL;
     OCSP_RESPONSE *resp = NULL;
 
     if (*sk_resp != NULL) {
@@ -771,14 +775,16 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
         *sk_resp = NULL;
     }
 
-    SSL_get0_chain_certs(s, &server_certs);
+    SSL_get0_chain_certs(s, &server_chain);
+    ssl_ctx = SSL_get_SSL_CTX(s);
+    SSL_CTX_get0_chain_certs(ssl_ctx, &server_chain);
     /*
      * TODO(DTLS-1.3): in future DTLS should also be considered
      */
-    if (server_certs != NULL && srctx->status_all &&
+    if (server_chain != NULL && srctx->status_all &&
         !SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) {
         /* certificate chain is available */
-        num = sk_X509_num(server_certs) + 1;
+        num = sk_X509_num(server_chain) + 1;
     } else {
         /*
          * certificate chain is not available,
@@ -803,7 +809,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     /* for each certificate in chain (except root) get the OCSP response */
     for (i = 0; i < num; i++) {
         if (i != 0) /* get OCSP response for server certificate first */
-            ssl_cert = sk_X509_value(server_certs, i - 1);
+            ssl_cert = sk_X509_value(server_chain, i - 1);
 
         resp = NULL;
         if (get_ocsp_resp_from_responder_single(s, ssl_cert, srctx, &resp) != SSL_TLSEXT_ERR_OK)

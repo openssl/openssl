@@ -460,7 +460,7 @@ int send_certificate_request(SSL_CONNECTION *s)
  * chainidx.
  * If no OCSP response could be found NULL is returned.
  */
-OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, size_t chainidx)
+OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, int chainidx)
 {
     OCSP_RESPONSE *resp = NULL;
 #ifndef OPENSSL_NO_OCSP
@@ -491,17 +491,17 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, size_t chainidx)
     SSL_get0_chain_certs(ssl, &chain_certs);
 
     /*
-     * if the certificate chain was built, get the status message for the
-     * requested certificate specified by chainidx  SSL_get0_chain_certs
-     * contains certificate chain except the server cert
+     * If the certificate chain was built, get the status message for the
+     * requested certificate specified by chainidx.
+     * SSL_get0_chain_certs provides certificate chain except the server cert.
      *
      * if chainidx = 0 the server certificate is requested
      * if chainidx > 0 an intermediate certificate is requested
      */
-    if (chain_certs != NULL && (int)chainidx <= sk_X509_num(chain_certs) && chainidx > 0)
-        x = sk_X509_value(chain_certs, (int)chainidx - 1);
-    else
+    if (chainidx == 0)
         x = SSL_get_certificate(ssl);
+    else
+        x = sk_X509_value(chain_certs, chainidx - 1);
     if (x == NULL)
         return NULL;
 
@@ -509,16 +509,17 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, size_t chainidx)
     if (X509_self_signed(x, 0))
         return NULL;
 
-    if ((resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp_ex, (int)chainidx)) != NULL) {
+    if ((resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp_ex, chainidx)) != NULL) {
         /*
-         * check if its the right response in the case it is a successful response
-         * as not every time the issuer certificate is available the check just
-         * uses the issuer name and the serial number from the current certificate
+         * Find the corresponding single OCSP response by comparing the current
+         * certificate's serial number, and the hash of the current certificate's
+         * issuer name, to the serial number and issuer name hash in each OCSP
+         * response received.
          */
         if (OCSP_response_status(resp) == OCSP_RESPONSE_STATUS_SUCCESSFUL) {
             /*
-             * set a mark for the error queue her to be able to ignore errors
-             * happening because of test cases
+             * Set a mark for the error queue here to be able to ignore errors
+             * happening because of test cases.
              */
             ERR_set_mark();
             if (((bs = OCSP_response_get1_basic(resp)) != NULL)
@@ -4487,6 +4488,9 @@ CON_FUNC_RETURN tls_construct_cert_status(SSL_CONNECTION *s, WPACKET *pkt)
     OCSP_RESPONSE *resp;
 
     resp = get_ocsp_response(s, 0);
+
+    if (resp == NULL)
+        return CON_FUNC_DONT_SEND;
 
     if (resp != NULL && !tls_construct_cert_status_body(s, resp, pkt)) {
         /* SSLfatal() already called */

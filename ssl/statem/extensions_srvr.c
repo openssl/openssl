@@ -1763,10 +1763,10 @@ EXT_RETURN tls_construct_stoc_status_request(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_NOT_SENT;
 
     /* Try to retrieve OCSP response for the actual certificate */
-    resp = get_ocsp_response(s, chainidx);
+    resp = get_ocsp_response(s, (int)chainidx);
 
     /* If no OCSP response was found the extension is not sent */
-    if (SSL_CONNECTION_IS_TLS13(s) && resp == NULL)
+    if (resp == NULL)
         return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request)
