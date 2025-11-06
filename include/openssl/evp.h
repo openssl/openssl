@@ -1982,6 +1982,7 @@ int EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
                                void *data);
 const OSSL_PARAM *EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig);
 const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig);
+int EVP_SIGNATURE_has_message_update(const EVP_SIGNATURE *sig);
 
 void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher);
 int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher);
