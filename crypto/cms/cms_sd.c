@@ -347,39 +347,35 @@ static const struct {
     int md_a_must; /* md is a 'MUST' */
     int noattr_md_nid;  /* in case of 'without signed attributes' */
     int noattr_md_a_must; /* noattr_md is a 'MUST' not a 'SHOULD' */
-    int has_msg_update;
 } key2data[] = {
-    { "ML-DSA-44", NID_shake256, 0, NID_sha512,   0, 1, },
-    { "ML-DSA-65", NID_shake256, 0, NID_sha512,   0, 1, },
-    { "ML-DSA-87", NID_shake256, 0, NID_sha512,   0, 1, },
-    { "ED25519",   NID_sha512,   0, NID_sha512,   1, 0, }, /* RFC 8419 */
+    { "ML-DSA-44", NID_shake256, 0, NID_sha512,   0, },
+    { "ML-DSA-65", NID_shake256, 0, NID_sha512,   0, },
+    { "ML-DSA-87", NID_shake256, 0, NID_sha512,   0, },
+    { "ED25519",   NID_sha512,   0, NID_sha512,   1, }, /* RFC 8419 */
     /* RFC 8419 3.1 ED448: id-shake256-len MUST be used => NID_undef for now */
-    { "ED448",              NID_undef,    1, NID_shake256, 1, 0, },
-    { "SLH-DSA-SHA2-128f",  NID_sha256,   0, NID_sha256,   0, 0, }, /* RFC 9814 */
-    { "SLH-DSA-SHA2-128s",  NID_sha256,   0, NID_sha256,   0, 0, },
-    { "SLH-DSA-SHA2-192f",  NID_sha512,   0, NID_sha512,   0, 0, },
-    { "SLH-DSA-SHA2-192s",  NID_sha512,   0, NID_sha512,   0, 0, },
-    { "SLH-DSA-SHA2-256f",  NID_sha512,   0, NID_sha512,   0, 0, },
-    { "SLH-DSA-SHA2-256s",  NID_sha512,   0, NID_sha512,   0, 0, },
-    { "SLH-DSA-SHAKE-128f", NID_shake128, 0, NID_shake128, 0, 0, },
-    { "SLH-DSA-SHAKE-128s", NID_shake128, 0, NID_shake128, 0, 0, },
-    { "SLH-DSA-SHAKE-192f", NID_shake256, 0, NID_shake256, 0, 0, },
-    { "SLH-DSA-SHAKE-192s", NID_shake256, 0, NID_shake256, 0, 0, },
-    { "SLH-DSA-SHAKE-256f", NID_shake256, 0, NID_shake256, 0, 0, },
-    { "SLH-DSA-SHAKE-256s", NID_shake256, 0, NID_shake256, 0, 0, },
-    { NULL, NID_undef, 0, NID_undef, 0, 0, } /* last */
+    { "ED448",              NID_undef,    1, NID_shake256, 1, },
+    { "SLH-DSA-SHA2-128f",  NID_sha256,   0, NID_sha256,   0, }, /* RFC 9814 */
+    { "SLH-DSA-SHA2-128s",  NID_sha256,   0, NID_sha256,   0, },
+    { "SLH-DSA-SHA2-192f",  NID_sha512,   0, NID_sha512,   0, },
+    { "SLH-DSA-SHA2-192s",  NID_sha512,   0, NID_sha512,   0, },
+    { "SLH-DSA-SHA2-256f",  NID_sha512,   0, NID_sha512,   0, },
+    { "SLH-DSA-SHA2-256s",  NID_sha512,   0, NID_sha512,   0, },
+    { "SLH-DSA-SHAKE-128f", NID_shake128, 0, NID_shake128, 0, },
+    { "SLH-DSA-SHAKE-128s", NID_shake128, 0, NID_shake128, 0, },
+    { "SLH-DSA-SHAKE-192f", NID_shake256, 0, NID_shake256, 0, },
+    { "SLH-DSA-SHAKE-192s", NID_shake256, 0, NID_shake256, 0, },
+    { "SLH-DSA-SHAKE-256f", NID_shake256, 0, NID_shake256, 0, },
+    { "SLH-DSA-SHAKE-256s", NID_shake256, 0, NID_shake256, 0, },
+    { NULL, NID_undef, 0, NID_undef, 0, } /* last */
 };
 
-static const char *cms_mdless_signing(EVP_PKEY *pkey,
-                                      int *has_msg_update)
+static const char *cms_mdless_signing(EVP_PKEY *pkey)
 {
     unsigned int i;
 
     for (i = 0; key2data[i].name; i++) {
-        if (EVP_PKEY_is_a(pkey, key2data[i].name)) {
-            *has_msg_update = key2data[i].has_msg_update;
+        if (EVP_PKEY_is_a(pkey, key2data[i].name))
             return key2data[i].name;
-        }
     }
     return NULL;
 }
@@ -1020,8 +1016,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
         if (siglen == 0 || (sig = OPENSSL_malloc(siglen)) == NULL)
             goto err;
 
-        if ((algorithm = cms_mdless_signing(si->pkey,
-                                            &has_msg_update)) != NULL) {
+        if ((algorithm = cms_mdless_signing(si->pkey)) != NULL) {
             size_t sig_len;
 
             if (!data) {
@@ -1041,6 +1036,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
                 goto err;
 
             sig_len = siglen;
+            has_msg_update = EVP_SIGNATURE_has_message_update(sig_alg);
             if (cms_EVP_PKEY_sign(pctx, data, sig, &sig_len,
                                   has_msg_update) != 1)
                 goto err;
@@ -1337,8 +1333,7 @@ int CMS_SignerInfo_verify_ex(CMS_SignerInfo *si, BIO *chain, BIO *data)
         if (pkctx == NULL)
             goto err;
 
-        if ((algorithm = cms_mdless_signing(si->pkey,
-                                            &has_msg_update)) != NULL) {
+        if ((algorithm = cms_mdless_signing(si->pkey)) != NULL) {
             if (!data) {
                 ERR_raise(ERR_LIB_CMS, CMS_R_NO_CONTENT);
                 goto err;
@@ -1350,6 +1345,7 @@ int CMS_SignerInfo_verify_ex(CMS_SignerInfo *si, BIO *chain, BIO *data)
             if (EVP_PKEY_verify_message_init(pkctx, sig_alg, NULL) != 1)
                 goto err;
 
+            has_msg_update = EVP_SIGNATURE_has_message_update(sig_alg);
             r = cms_EVP_PKEY_verify(pkctx, data, si->signature->data,
                                     si->signature->length, has_msg_update);
         } else {
