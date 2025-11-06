@@ -52,6 +52,10 @@ is not always updated meaning a stale version is sometimes used. This is not
 normally a problem because modifying the signed portion will invalidate the
 signature and signing will always update the encoding.
 
+When signing X509 certificates and certificate requests, any B<empty>
+subjectKeyIdentifier (empty string) or authorityKeyIdentifier (empty sequence)
+extensions are flagged as an error and the signature operation fails.
+
 =head1 RETURN VALUES
 
 All functions return the size of the signature
