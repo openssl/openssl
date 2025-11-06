@@ -464,6 +464,7 @@ GENERATE[builddata.pm]=util/mkinstallvars.pl \
     PREFIX=. BINDIR=apps APPLINKDIR=ms \
     LIBDIR= INCLUDEDIR=include "INCLUDEDIR=$(SRCDIR)/include" \
     ENGINESDIR=engines MODULESDIR=providers \
+    libdir= CMAKECONFIGDIR= PKGCONFIGDIR= \
     "VERSION=$(VERSION)" "LDLIBS=$(LIB_EX_LIBS)"
 
 DEPEND[""]=openssl.pc
