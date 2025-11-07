@@ -18,10 +18,11 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
-         repository: 'quic-interop/quic-interop-runner'
-         fetch-depth: 0
+          repository: 'quic-interop/quic-interop-runner'
+          fetch-depth: 0
+          persist-credentials: false
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
@@ -49,10 +50,11 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
-         repository: 'quic-interop/quic-interop-runner'
-         fetch-depth: 0
+          repository: 'quic-interop/quic-interop-runner'
+          fetch-depth: 0
+          persist-credentials: false
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
