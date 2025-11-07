@@ -40,7 +40,7 @@ jobs:
         ]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       if: ${{ contains(join(github.event.pull_request.labels.*.name,','),matrix.release.branch) }}
       with:
         ref: ${{ github.event.pull_request.head.sha }}
