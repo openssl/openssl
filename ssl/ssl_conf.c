@@ -18,7 +18,6 @@
 #include <openssl/x509v3.h>
 #include "internal/nelem.h"
 #include "internal/ssl_unwrap.h"
-#include "internal/x509.h"
 
 /*
  * structure holding name tables. This is used for permitted elements in lists
@@ -100,8 +99,6 @@ struct ssl_conf_ctx_st {
     SSL *ssl;
     /* Pointer to SSL or SSL_CTX options field or NULL if none */
     uint64_t *poptions;
-    /* Pointer to SSL_STORE_CTX flags or NULL if none */
-    long unsigned int *pcertval_flags;
     /* Certificate filenames for each type */
     char **cert_filename;
     /* Number of elements in the cert_filename array */
@@ -110,12 +107,16 @@ struct ssl_conf_ctx_st {
     uint32_t *pcert_flags;
     /* Pointer to SSL or SSL_CTX verify_mode or NULL if none */
     uint32_t *pvfy_flags;
-    /* Pointer to X509_VERIFY_PARAM_ID flags or NULL if none */
-    unsigned int *phostver_flags;
     /* Pointer to SSL or SSL_CTX min_version field or NULL if none */
     int *min_version;
     /* Pointer to SSL or SSL_CTX max_version field or NULL if none */
     int *max_version;
+    /* Pointer to context PARAM field or NULL if none */
+    X509_VERIFY_PARAM *param;
+    /* Copy of SSL_STORE_CTX flags */
+    long unsigned int pcertval_flags;
+    /* Copy of X509_VERIFY_PARAM_ID flags */
+    unsigned int phostver_flags;
     /* Current flag table being worked on */
     const ssl_flag_tbl *tbl;
     /* Size of table */
@@ -152,16 +153,19 @@ static void ssl_set_option(SSL_CONF_CTX *cctx, unsigned int name_flags,
 
     case SSL_TFLAG_CERTVAL:
         if (onoff)
-            *cctx->pcertval_flags |= option_value;
+            cctx->pcertval_flags |= option_value;
         else
-            *cctx->pcertval_flags &= ~option_value;
+            cctx->pcertval_flags &= ~option_value;
+        X509_VERIFY_PARAM_clear_flags(cctx->param, ~cctx->pcertval_flags);
+        X509_VERIFY_PARAM_set_flags(cctx->param, cctx->pcertval_flags);
         return;
 
     case SSL_TFLAG_HOSTVER:
         if (onoff)
-            *cctx->phostver_flags |= option_value;
+            cctx->phostver_flags |= option_value;
         else
-            *cctx->phostver_flags &= ~option_value;
+            cctx->phostver_flags &= ~option_value;
+        X509_VERIFY_PARAM_set_hostflags(cctx->param, cctx->phostver_flags);
         return;
 
     default:
@@ -1364,8 +1368,9 @@ void SSL_CONF_CTX_set_ssl(SSL_CONF_CTX *cctx, SSL *ssl)
         cctx->max_version = &sc->max_proto_version;
         cctx->pcert_flags = &sc->cert->cert_flags;
         cctx->pvfy_flags = &sc->verify_mode;
-        cctx->pcertval_flags = &ssl->ctx->cert_store->param->flags;
-        cctx->phostver_flags = &ssl->ctx->cert_store->param->hostflags;
+        cctx->param = SSL_get0_param(ssl);
+        cctx->pcertval_flags = X509_VERIFY_PARAM_get_flags(cctx->param);
+        cctx->phostver_flags = X509_VERIFY_PARAM_get_hostflags(cctx->param);
         cctx->cert_filename = OPENSSL_zalloc(sc->ssl_pkey_num
                                              * sizeof(*cctx->cert_filename));
         if (cctx->cert_filename != NULL)
@@ -1376,8 +1381,9 @@ void SSL_CONF_CTX_set_ssl(SSL_CONF_CTX *cctx, SSL *ssl)
         cctx->max_version = NULL;
         cctx->pcert_flags = NULL;
         cctx->pvfy_flags = NULL;
-        cctx->pcertval_flags = NULL;
-        cctx->phostver_flags = NULL;
+        cctx->param = NULL;
+        cctx->pcertval_flags = 0;
+        cctx->phostver_flags = 0;
     }
 }
 
@@ -1392,8 +1398,9 @@ void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx)
         cctx->max_version = &ctx->max_proto_version;
         cctx->pcert_flags = &ctx->cert->cert_flags;
         cctx->pvfy_flags = &ctx->verify_mode;
-        cctx->pcertval_flags = &ctx->cert_store->param->flags;
-        cctx->phostver_flags = &ctx->cert_store->param->hostflags;
+        cctx->param = SSL_CTX_get0_param(ctx);
+        cctx->pcertval_flags = X509_VERIFY_PARAM_get_flags(cctx->param);
+        cctx->phostver_flags = X509_VERIFY_PARAM_get_hostflags(cctx->param);
         cctx->cert_filename = OPENSSL_zalloc((SSL_PKEY_NUM + ctx->sigalg_list_len)
                                              * sizeof(*cctx->cert_filename));
         if (cctx->cert_filename != NULL)
@@ -1404,7 +1411,8 @@ void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx)
         cctx->max_version = NULL;
         cctx->pcert_flags = NULL;
         cctx->pvfy_flags = NULL;
-        cctx->pcertval_flags = NULL;
-        cctx->phostver_flags = NULL;
+        cctx->param = NULL;
+        cctx->pcertval_flags = 0;
+        cctx->phostver_flags = 0;
     }
 }
