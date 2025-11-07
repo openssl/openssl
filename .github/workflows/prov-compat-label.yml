@@ -224,7 +224,7 @@ jobs:
           fi
         continue-on-error: true
 
-      - uses: actions/download-artifact@v4.1.8
+      - uses: actions/download-artifact@v6.0.0
         if: steps.early_exit.outcome == 'success'
         with:
           name: ${{ matrix.tree_a }}.tar.gz
@@ -232,7 +232,7 @@ jobs:
         if: steps.early_exit.outcome == 'success'
         run: tar xzf "${{ matrix.tree_a }}.tar.gz"
 
-      - uses: actions/download-artifact@v4.1.8
+      - uses: actions/download-artifact@v6.0.0
         if: steps.early_exit.outcome == 'success'
         with:
           name: ${{ matrix.tree_b }}.tar.gz
