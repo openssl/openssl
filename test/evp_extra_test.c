@@ -4443,6 +4443,12 @@ static int test_evp_iv_aes(int idx)
         ref_iv = gcm_state;
         ref_len = sizeof(gcm_state);
         break;
+    case 12:
+        ref_iv = NULL;
+        ref_len = 0;
+        start_iv = NULL; /* This will cause a random iv to be generated internally */
+        type = EVP_CIPHER_fetch(testctx, "aes-128-gcm", testpropq);
+        break;
     case 4:
         type = EVP_aes_128_ccm();
         /* FALLTHROUGH */
@@ -4465,12 +4471,6 @@ static int test_evp_iv_aes(int idx)
                                 EVP_CIPHER_fetch(testctx, "aes-128-ocb", testpropq);
         ref_iv = ocb_state;
         ref_len = sizeof(ocb_state);
-        break;
-    case 12:
-        ref_iv = NULL;
-        ref_len = 0;
-        start_iv = NULL; /* This will cause a random iv to be generated internally */
-        type = EVP_CIPHER_fetch(testctx, "aes-128-gcm", testpropq);
         break;
 #endif
     default:
