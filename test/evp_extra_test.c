@@ -4468,6 +4468,7 @@ static int test_evp_iv_aes(int idx)
         break;
     case 12:
         ref_iv = NULL;
+        ref_len = 0;
         start_iv = NULL; /* This will cause a random iv to be generated internally */
         type = EVP_CIPHER_fetch(testctx, "aes-128-gcm", testpropq);
         break;
