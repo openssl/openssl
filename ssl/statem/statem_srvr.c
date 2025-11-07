@@ -527,6 +527,7 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, int chainidx)
                 /* use the first single response to get the algorithm used */
                 cid = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
 
+                /* determine the md algorithm which was used to create cert id */
                 OCSP_id_get0_info(&respIssuerNameHash, &cert_id_md_oid, NULL, &respSerial, cid);
                 if (cert_id_md_oid != NULL)
                     cert_id_md = EVP_get_digestbyobj(cert_id_md_oid);
@@ -549,7 +550,10 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, int chainidx)
                 for (i = 0; i < num; i++) {
                     sr = OCSP_resp_get0(bs, i);
 
-                    /* determine the md algorithm which was used to create cert id */
+                    /*
+                     * get the CertID from the OCSP response to compare it with the information
+                     * from the certificate
+                     */
                     sr_cert_id = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
 
                     OCSP_id_get0_info(&respIssuerNameHash, NULL, NULL, &respSerial, sr_cert_id);
@@ -563,8 +567,7 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, int chainidx)
                 OCSP_BASICRESP_free(bs);
 
                 /*
-                 * if we did not find the right single response in the OCSP response we
-                 * construct an empty message
+                 * if we did not find the right single response we return NULL here
                  */
                 if (i == num)
                     resp = NULL;
@@ -4469,8 +4472,7 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, OCSP_RESPONSE *resp, WPACK
     }
 
 #ifndef OPENSSL_NO_OCSP
-    if (resp != NULL)
-        resplen = i2d_OCSP_RESPONSE(resp, &respder);
+    resplen = i2d_OCSP_RESPONSE(resp, &respder);
 #endif
 
     if (!WPACKET_sub_memcpy_u24(pkt, respder, resplen)) {
@@ -4492,7 +4494,7 @@ CON_FUNC_RETURN tls_construct_cert_status(SSL_CONNECTION *s, WPACKET *pkt)
     if (resp == NULL)
         return CON_FUNC_DONT_SEND;
 
-    if (resp != NULL && !tls_construct_cert_status_body(s, resp, pkt)) {
+    if (!tls_construct_cert_status_body(s, resp, pkt)) {
         /* SSLfatal() already called */
         return CON_FUNC_ERROR;
     }

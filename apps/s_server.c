@@ -602,7 +602,6 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
                                             STACK_OF(OCSP_RESPONSE) **sk_resp)
 {
     STACK_OF(X509) *server_chain = NULL;
-    SSL_CTX *ssl_ctx;
     X509 *ssl_cert = NULL;
     X509 *issuer = NULL;
     OCSP_RESPONSE *resp = NULL;
@@ -614,9 +613,7 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
     if (*sk_resp != NULL)
         sk_OCSP_RESPONSE_pop_free(*sk_resp, OCSP_RESPONSE_free);
 
-    //SSL_get0_chain_certs(s, &server_chain);
-    ssl_ctx = SSL_get_SSL_CTX(s);
-    SSL_CTX_get0_chain_certs(ssl_ctx, &server_chain);
+    SSL_get0_chain_certs(s, &server_chain);
     /*
      * TODO(DTLS-1.3): in future DTLS should also be considered
      */
