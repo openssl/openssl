@@ -26,7 +26,7 @@ jobs:
           mkdir ./build
           mkdir ./source
           mkdir ./artifact
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: ${{ github.event.pull_request.base.repo.full_name }}
           ref: ${{ github.event.pull_request.base.ref }}
@@ -43,7 +43,7 @@ jobs:
       - name: make fips-checksums pristine
         run: make fips-checksums
         working-directory: ./build-pristine
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: source
       - name: config
@@ -88,7 +88,7 @@ jobs:
           mkdir ./artifact
       - name: install extra config support
         run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: ${{ github.event.pull_request.base.repo.full_name }}
           ref: ${{ github.event.pull_request.base.ref }}
@@ -99,7 +99,7 @@ jobs:
       - name: make pristine
         run: make -s -j4
         working-directory: ./build-pristine
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: source
       - name: config
