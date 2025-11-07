@@ -86,6 +86,15 @@ static int crl_set_issuers(X509_CRL *crl)
     GENERAL_NAMES *gens, *gtmp;
     STACK_OF(X509_REVOKED) *revoked;
 
+    /*
+     * The CRL's nextUpdate field is optional, but we will still verify
+     * lastUpdate and treat missing or invalid values as a failure.
+     */
+    if (crl->crl.lastUpdate == NULL) {
+        crl->flags |= EXFLAG_INVALID;
+        return 0;
+    }
+
     revoked = X509_CRL_get_REVOKED(crl);
 
     gens = NULL;
@@ -94,6 +103,19 @@ static int crl_set_issuers(X509_CRL *crl)
         STACK_OF(X509_EXTENSION) *exts;
         ASN1_ENUMERATED *reason;
         X509_EXTENSION *ext;
+        const ASN1_TIME *rev_date;
+        ASN1_GENERALIZEDTIME *inv_date;
+        int nid;
+
+        /*
+         * The revocation date is a mandatory attribute. If we get NULL here, it
+         * means the validation has failed and an error has been pushed onto the
+         * error stack.
+         */
+        if ((rev_date = X509_REVOKED_get0_revocationDate(rev)) == NULL) {
+            crl->flags |= EXFLAG_INVALID;
+            return 0;
+        }
 
         gtmp = X509_REVOKED_get_ext_d2i(rev,
                                         NID_certificate_issuer, &j, NULL);
@@ -142,18 +164,30 @@ static int crl_set_issuers(X509_CRL *crl)
         } else
             rev->reason = CRL_REASON_NONE;
 
-        /* Check for critical CRL entry extensions */
+        /* Check for critical CRL entry extensions and validate time. */
 
         exts = rev->extensions;
 
         for (j = 0; j < sk_X509_EXTENSION_num(exts); j++) {
             ext = sk_X509_EXTENSION_value(exts, j);
+            nid = OBJ_obj2nid(X509_EXTENSION_get_object(ext));
+
+            /*
+             * If we obtain the extension but the time is NULL, it means that
+             * the validation has failed and the reason will be pushed onto the
+             * error stack.
+             */
+            if (nid == NID_invalidity_date) {
+                if ((inv_date = X509V3_EXT_d2i(ext)) == NULL) {
+                    crl->flags |= EXFLAG_INVALID;
+                    return 0;
+                }
+                ASN1_GENERALIZEDTIME_free(inv_date);
+            }
             if (X509_EXTENSION_get_critical(ext)) {
-                if (OBJ_obj2nid(X509_EXTENSION_get_object(ext))
-                    == NID_certificate_issuer)
+                if (nid == NID_certificate_issuer)
                     continue;
                 crl->flags |= EXFLAG_CRITICAL;
-                break;
             }
         }
 

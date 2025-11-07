@@ -46,6 +46,10 @@ OpenSSL 4.0
 
    *Ryan Hooper*
 
+ * Reject CRLs with invalid ASN1_DATE attributes.
+
+   *Daniel Kubec*
+
 OpenSSL 3.6
 -----------
 
