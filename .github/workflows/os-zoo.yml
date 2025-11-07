@@ -32,8 +32,9 @@ jobs:
     steps:
     - name: install packages
       run: apk --no-cache add build-base perl linux-headers ${{ matrix.cc }}
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
+        persist-credentials: false
         ref: ${{ matrix.branch }}
     - name: config
       run: |
@@ -84,8 +85,9 @@ jobs:
     runs-on: ubuntu-latest
     container: ${{ matrix.zoo.image }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
+        persist-credentials: false
         ref: ${{ matrix.branch }}
     - name: install packages
       run: ${{ matrix.zoo.install }}
@@ -110,8 +112,9 @@ jobs:
         os: [macos-13, macos-14, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
+        persist-credentials: false
         ref: ${{ matrix.branch }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
@@ -136,8 +139,9 @@ jobs:
         os: [windows-2019, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
+        persist-credentials: false
         ref: ${{ matrix.branch }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
@@ -177,7 +181,9 @@ jobs:
   linux-arm64:
     runs-on: linux-arm64
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: config
       run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
@@ -192,7 +198,9 @@ jobs:
   freebsd-x86_64:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: config
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
