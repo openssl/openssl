@@ -27,7 +27,9 @@ jobs:
       run: |
         echo ${{ secrets.COVERITY_AUTH_KEY }} | base64 -d > /auth_key_file.txt
         chmod 0600 /auth_key_file.txt
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: Config
       run: CC=gcc ./config --strict-warnings --banner=Configured --debug enable-lms enable-fips enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests -DPEDANTIC
     - name: Config dump

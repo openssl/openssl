@@ -37,7 +37,9 @@ jobs:
         make -j$(nproc) && make install
         perl -MTest::More -e 'print "$Test::More::VERSION\n"'
         popd
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: Build openssl
       run: ./config && make -j $(nproc)
     - name: Install sed
