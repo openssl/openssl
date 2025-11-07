@@ -26,14 +26,8 @@ plan skip_all => "These tests are not supported in a fuzz build"
     if config('options') =~ /-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION|enable-fuzz-afl/;
 
 plan tests =>
-    ($no_fips ? 1 : 2)          # quicapitest with fips
+    ($no_fips ? 0 : 1)          # quicapitest with fips
     + 1;                        # quicapitest with default provider
-
-ok(run(test(["quicapitest", "default",
-             srctop_file("test", "default.cnf"),
-             srctop_dir("test", "certs"),
-             srctop_dir("test", "recipes", "75-test_quicapi_data")])),
-             "running quicapitest");
 
 ok(run(test(["quicapitest", "default",
              srctop_file("test", "default-recordpadding.cnf"),
