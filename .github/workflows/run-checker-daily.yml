@@ -441,7 +441,7 @@ jobs:
       run: .github/workflows/make-test
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: "ci@bn_debug"
         path: artifacts.tar.gz
