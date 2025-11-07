@@ -142,7 +142,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Apply/Remove labels (github-script)
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUM: ${{ github.event.number }}
           FIPS_STATUS: ${{ needs.compute-checksums.outputs.fips_status }}
