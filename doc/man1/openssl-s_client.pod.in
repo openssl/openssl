@@ -131,6 +131,7 @@ B<openssl> B<s_client>
 [B<-ech_grease_type> I<type>]
 [B<-ech_ignore_cid>]
 [B<-ech_sni_outer> I<value>]
+[B<-ech_no_outer_sni>]
 [B<-ech_select> I<config-index>]
 
 =head1 DESCRIPTION
@@ -885,6 +886,10 @@ use a random value instead.
 When doing Encrypted Client Hello (ECH), this allows the caller to specify a
 subject name indication (SNI) value to use in the outer ClientHello over-riding
 the public_name value from the relevant ECHConfigList.
+
+=item B<-ech_no_sni_outer>
+
+Setting this flag means no outer SNI will be emitted in the (outer) ClientHello.
 
 =item B<-ech_select> I<config-index>
 

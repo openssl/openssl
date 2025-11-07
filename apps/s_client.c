@@ -108,17 +108,12 @@ static BIO *bio_c_out = NULL;
 static int c_quiet = 0;
 static char *sess_out = NULL;
 # ifndef OPENSSL_NO_ECH
-/*
- * ECH_NAME_NONE provides a way to indicate e.g. that no
- * outer SNI ought be sent, when overriding the public_name from
- * an ECHConfigList, and similarly for the inner SNI.
- */
-#  define ECH_NAME_NONE "NONE"
 static char *ech_config_list = NULL, *ech_grease_suite = NULL;
 static const char *sni_outer_name = NULL;
 static int ech_grease = 0, ech_ignore_cid = 0;
 static int ech_select = OSSL_ECHSTORE_ALL;
 static int ech_grease_type = OSSL_ECH_CURRENT_VERSION;
+static int ech_no_outer_sni = 0;
 # endif
 static SSL_SESSION *psksess = NULL;
 
@@ -539,6 +534,7 @@ typedef enum OPTION_choice {
     OPT_ECHCONFIGLIST, OPT_SNIOUTER, OPT_ALPN_OUTER,
     OPT_ECH_SELECT, OPT_ECH_IGNORE_CONFIG_ID,
     OPT_ECH_GREASE, OPT_ECH_GREASE_SUITE, OPT_ECH_GREASE_TYPE,
+    OPT_ECH_NO_OUTER_SNI,
 # endif
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
@@ -751,8 +747,7 @@ const OPTIONS s_client_options[] = {
     {"ech_alpn_outer", OPT_ALPN_OUTER, 's',
      "Specify outer ALPN value, when using ECH (comma-separated list)"},
     {"ech_sni_outer", OPT_SNIOUTER, 's',
-     "The name to put in the outer CH when overriding the server's choice," \
-     " or \""ECH_NAME_NONE"\""},
+     "The name to put in the outer CH when overriding the server's choice"},
     {"ech_select", OPT_ECH_SELECT, 'n',
      "Select one ECHConfig from the set provided via -ech_config_list"},
     {"ech_grease", OPT_ECH_GREASE, '-',
@@ -763,6 +758,8 @@ const OPTIONS s_client_options[] = {
      "Use this TLS extension type for GREASE values when not really using ECH"},
     {"ech_ignore_cid", OPT_ECH_IGNORE_CONFIG_ID, '-',
      "Ignore the server-chosen ECH config ID and send a random value"},
+    {"ech_no_outer_sni", OPT_ECH_NO_OUTER_SNI, '-',
+     "Do not send the server name (SNI) extension in the outer ClientHello"},
 # endif
 #ifndef OPENSSL_NO_SRP
     {"srpuser", OPT_SRPUSER, 's', "(deprecated) SRP authentication for 'user'"},
@@ -1595,6 +1592,9 @@ int s_client_main(int argc, char **argv)
         case OPT_ECH_IGNORE_CONFIG_ID:
             ech_ignore_cid = 1;
             break;
+        case OPT_ECH_NO_OUTER_SNI:
+            ech_no_outer_sni = 1;
+            break;
 # endif
         case OPT_NOSERVERNAME:
             noservername = 1;
@@ -2259,12 +2259,22 @@ int s_client_main(int argc, char **argv)
             BIO_printf(bio_err, "%s: error setting ECHConfigList.\n", prog);
             goto end;
         }
+        if (ech_no_outer_sni == 1) {
+            if (sni_outer_name != NULL) {
+                BIO_printf(bio_err, "%s: can't set -ech_no_outer_sni and" \
+                           "-ech_outer_sni together.\n", prog);
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+            if (SSL_ech_set1_outer_server_name(con, NULL, 1) != 1) {
+                BIO_printf(bio_err, "%s: setting no ECH outer name failed.\n",
+                           prog);
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+        }
         if (sni_outer_name != NULL) {
-            rv = 0;
-            if (OPENSSL_strcasecmp(sni_outer_name, ECH_NAME_NONE) == 0)
-                rv = SSL_ech_set1_outer_server_name(con, NULL, 1);
-            else
-                rv = SSL_ech_set1_outer_server_name(con, sni_outer_name, 0);
+            rv = SSL_ech_set1_outer_server_name(con, sni_outer_name, 0);
             if (rv != 1) {
                 BIO_printf(bio_err, "%s: setting ECH outer name to %s failed.\n",
                            prog, sni_outer_name);

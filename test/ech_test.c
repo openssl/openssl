@@ -62,7 +62,7 @@ static int ch_test_cb(SSL *ssl, int *al, void *arg)
         || !PACKET_get_1(&sni, &servname_type)
         || servname_type != TLSEXT_NAMETYPE_host_name
         || !PACKET_as_length_prefixed_2(&sni, &hostname)
-        || (PACKET_remaining(&hostname) > TLSEXT_MAXLEN_host_name) 
+        || (PACKET_remaining(&hostname) > TLSEXT_MAXLEN_host_name)
         || PACKET_contains_zero_byte(&hostname)
         || !PACKET_strndup(&hostname, &servername))
         goto give_up;
