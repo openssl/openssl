@@ -198,7 +198,7 @@ jobs:
     steps:
 # Checkout before cygwin can mess with PATH...
     - uses: actions/checkout@v4
-    - uses: cygwin/cygwin-install-action@f61179d72284ceddc397ed07ddb444d82bf9e559 #v5
+    - uses: cygwin/cygwin-install-action@f2009323764960f80959895c7bc3bb30210afe4d #v6
       with:
          packages: perl git make gcc-core
     - name: Check repo
