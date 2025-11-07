@@ -19,7 +19,7 @@
 /* Included before async.h to avoid some warnings */
 # include <windows.h>
 # if !defined(OPENSSL_NO_ECH) && !defined(PATH_MAX)
-#  define PATH_MAX 1024
+#  define PATH_MAX 4096
 # endif
 #endif
 
@@ -522,7 +522,7 @@ static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
     }
 #  endif
     memset(clientip, 0, INET6_ADDRSTRLEN);
-    strncpy(clientip, "dunno", INET6_ADDRSTRLEN);
+    strncpy(clientip, "unknown", INET6_ADDRSTRLEN);
     memset(&ss, 0, salen);
     sa = (struct sockaddr *)&ss;
     res = BIO_get_fd(SSL_get_wbio(s), &sockfd);
@@ -1436,9 +1436,11 @@ const OPTIONS s_server_options[] = {
      "Set the advertised protocols for the ALPN extension (comma-separated list)"},
 
 # ifndef OPENSSL_NO_ECH
-    {"ech_key", OPT_ECH_PEM, 's', "Load ECH key pair"},
-    {"ech_dir", OPT_ECH_DIR, 's', "Load ECH key pairs (for retries)"},
-    {"ech_noretry_dir", OPT_ECH_NORETRY, 's', "Load ECH key pairs (not for retry)"},
+    {"ech_key", OPT_ECH_PEM, 's', "Load ECH PEM-formatted key pair"},
+    {"ech_dir", OPT_ECH_DIR, 's', "Load ECH key pairs (for retries) " \
+     "from the specified directory"},
+    {"ech_noretry_dir", OPT_ECH_NORETRY, 's', "Load ECH key pairs (not " \
+     "for retry) from the specified directory"},
     {"ech_trialdecrypt", OPT_ECH_TRIALDECRYPT, '-',
      "Do trial decryption even if ECH record_digest matching fails"},
     {"ech_greaseretries", OPT_ECH_GREASE_RT, '-',

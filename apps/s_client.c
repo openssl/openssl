@@ -109,13 +109,13 @@ static int c_quiet = 0;
 static char *sess_out = NULL;
 # ifndef OPENSSL_NO_ECH
 /*
- * OSSL_ECH_NAME_NONE provides a way to indicate e.g. that no
+ * ECH_NAME_NONE provides a way to indicate e.g. that no
  * outer SNI ought be sent, when overriding the public_name from
  * an ECHConfigList, and similarly for the inner SNI.
  */
-#  define OSSL_ECH_NAME_NONE "NONE"
+#  define ECH_NAME_NONE "NONE"
 static char *ech_config_list = NULL, *ech_grease_suite = NULL;
-static const char *ech_inner_name = NULL, *sni_outer_name = NULL;
+static const char *sni_outer_name = NULL;
 static int ech_grease = 0, ech_ignore_cid = 0;
 static int ech_select = OSSL_ECHSTORE_ALL;
 static int ech_grease_type = OSSL_ECH_CURRENT_VERSION;
@@ -747,13 +747,12 @@ const OPTIONS s_client_options[] = {
 
 # ifndef OPENSSL_NO_ECH
     {"ech_config_list", OPT_ECHCONFIGLIST, 's',
-     "Set ECHConfigList, value is base 64 encoded ECHConfigList"},
+     "Set ECHConfigList, value is base64-encoded ECHConfigList"},
     {"ech_alpn_outer", OPT_ALPN_OUTER, 's',
-     "Specify outer ALPN value, when using ECH (comma-separated list, or " \
-     "\"NONE\"))"},
+     "Specify outer ALPN value, when using ECH (comma-separated list)"},
     {"ech_sni_outer", OPT_SNIOUTER, 's',
      "The name to put in the outer CH when overriding the server's choice," \
-     " or \"NONE\""},
+     " or \""ECH_NAME_NONE"\""},
     {"ech_select", OPT_ECH_SELECT, 'n',
      "Select one ECHConfig from the set provided via -ech_config_list"},
     {"ech_grease", OPT_ECH_GREASE, '-',
@@ -1570,9 +1569,6 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_SERVERNAME:
             servername = opt_arg();
-# ifndef OPENSSL_NO_ECH
-            ech_inner_name = servername;
-# endif
             break;
 # ifndef OPENSSL_NO_ECH
         case OPT_ECHCONFIGLIST:
@@ -2265,7 +2261,7 @@ int s_client_main(int argc, char **argv)
         }
         if (sni_outer_name != NULL) {
             rv = 0;
-            if (OPENSSL_strcasecmp(sni_outer_name, OSSL_ECH_NAME_NONE) == 0)
+            if (OPENSSL_strcasecmp(sni_outer_name, ECH_NAME_NONE) == 0)
                 rv = SSL_ech_set1_outer_server_name(con, NULL, 1);
             else
                 rv = SSL_ech_set1_outer_server_name(con, sni_outer_name, 0);
@@ -2274,16 +2270,6 @@ int s_client_main(int argc, char **argv)
                            prog, sni_outer_name);
                 ERR_print_errors(bio_err);
                 goto end;
-            }
-        }
-        if (ech_inner_name != NULL) {
-            if (OPENSSL_strcasecmp(ech_inner_name, OSSL_ECH_NAME_NONE) != 0) {
-                if (SSL_set1_host(con, ech_inner_name) != 1) {
-                    BIO_printf(bio_err, "Error setting ECH inner to %s.\n",
-                               ech_inner_name);
-                    ERR_print_errors(bio_err);
-                    goto end;
-                }
             }
         }
     }

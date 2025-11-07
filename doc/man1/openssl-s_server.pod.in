@@ -969,6 +969,8 @@ options were added in OpenSSL 3.2.
 
 The B<-status_all> option was added in OpenSSL 3.6.
 
+The B<ech> options were added in OpenSSL 4.0.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
