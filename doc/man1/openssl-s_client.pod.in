@@ -125,12 +125,12 @@ B<openssl> B<s_client>
 [B<-enable_client_rpk>]
 [I<host>:I<port>]
 [B<-ech_config_list>]
-[B<-ech_alpn_outer> I<protocols>]
+[B<-ech_outer_alpn> I<protocols>]
 [B<-ech_grease>]
 [B<-ech_grease_suite> I<suite>]
 [B<-ech_grease_type> I<type>]
 [B<-ech_ignore_cid>]
-[B<-ech_sni_outer> I<value>]
+[B<-ech_outer_sni> I<value>]
 [B<-ech_no_outer_sni>]
 [B<-ech_select> I<config-index>]
 
@@ -840,7 +840,7 @@ nor B<-connect> are provided, falls back to attempting to connect to
 I<localhost> on port I<4433>.
 If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 
-=item B<-ech_alpn_outer> I<protocols>
+=item B<-ech_outer_alpn> I<protocols>
 
 When doing Encrypted Client Hello (ECH), this allows the caller to specify
 ALPN values to use in the outer ClientHello. (A "normal" ALPN value
@@ -881,15 +881,15 @@ Encrypted Client Hello (ECH) extensions contain a configuration identifier
 (DNS). As those identifiers could be revealing, the client has the option to
 use a random value instead.
 
-=item B<-ech_sni_outer> I<value>
+=item B<-ech_outer_sni> I<value>
 
 When doing Encrypted Client Hello (ECH), this allows the caller to specify a
 subject name indication (SNI) value to use in the outer ClientHello over-riding
 the public_name value from the relevant ECHConfigList.
 
-=item B<-ech_no_sni_outer>
+=item B<-ech_no_outer_sni>
 
-Setting this flag means no outer SNI will be emitted in the (outer) ClientHello.
+Setting this flag means no SNI will be emitted in the outer ClientHello.
 
 =item B<-ech_select> I<config-index>
 

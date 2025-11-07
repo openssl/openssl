@@ -744,10 +744,12 @@ const OPTIONS s_client_options[] = {
 # ifndef OPENSSL_NO_ECH
     {"ech_config_list", OPT_ECHCONFIGLIST, 's',
      "Set ECHConfigList, value is base64-encoded ECHConfigList"},
-    {"ech_alpn_outer", OPT_ALPN_OUTER, 's',
+    {"ech_outer_alpn", OPT_ALPN_OUTER, 's',
      "Specify outer ALPN value, when using ECH (comma-separated list)"},
-    {"ech_sni_outer", OPT_SNIOUTER, 's',
+    {"ech_outer_sni", OPT_SNIOUTER, 's',
      "The name to put in the outer CH when overriding the server's choice"},
+    {"ech_no_outer_sni", OPT_ECH_NO_OUTER_SNI, '-',
+     "Do not send the server name (SNI) extension in the outer ClientHello"},
     {"ech_select", OPT_ECH_SELECT, 'n',
      "Select one ECHConfig from the set provided via -ech_config_list"},
     {"ech_grease", OPT_ECH_GREASE, '-',
@@ -758,8 +760,6 @@ const OPTIONS s_client_options[] = {
      "Use this TLS extension type for GREASE values when not really using ECH"},
     {"ech_ignore_cid", OPT_ECH_IGNORE_CONFIG_ID, '-',
      "Ignore the server-chosen ECH config ID and send a random value"},
-    {"ech_no_outer_sni", OPT_ECH_NO_OUTER_SNI, '-',
-     "Do not send the server name (SNI) extension in the outer ClientHello"},
 # endif
 #ifndef OPENSSL_NO_SRP
     {"srpuser", OPT_SRPUSER, 's', "(deprecated) SRP authentication for 'user'"},
@@ -1709,10 +1709,12 @@ int s_client_main(int argc, char **argv)
         }
     }
 # ifndef OPENSSL_NO_ECH
-    if ((alpn_outer_in != NULL || sni_outer_name != NULL)
+    if ((alpn_outer_in != NULL || sni_outer_name != NULL
+         || ech_no_outer_sni == 1)
         && ech_config_list == NULL) {
-        BIO_printf(bio_err, "%s: Can't use -ech_sni_outer_name nor "
-                   "-ech_alpn_outer without -ech_config_list\n", prog);
+        BIO_printf(bio_err, "%s: Can't use -ech_outer_sni nor "
+                   "-ech_outer_alpn nor -no_ech_outer_sni without "
+                   "-ech_config_list\n", prog);
         goto opthelp;
     }
 # endif
@@ -2165,7 +2167,7 @@ int s_client_main(int argc, char **argv)
 
         alpn_outer = next_protos_parse(&alpn_outer_len, alpn_outer_in);
         if (alpn_outer == NULL) {
-            BIO_printf(bio_err, "Error parsing -alpn_outer argument\n");
+            BIO_printf(bio_err, "Error parsing -ech_outer_alpn argument\n");
             goto end;
         }
         if (SSL_CTX_ech_set1_outer_alpn_protos(ctx, alpn_outer,
@@ -2261,9 +2263,8 @@ int s_client_main(int argc, char **argv)
         }
         if (ech_no_outer_sni == 1) {
             if (sni_outer_name != NULL) {
-                BIO_printf(bio_err, "%s: can't set -ech_no_outer_sni and" \
+                BIO_printf(bio_err, "%s: can't set -ech_no_outer_sni and "
                            "-ech_outer_sni together.\n", prog);
-                ERR_print_errors(bio_err);
                 goto end;
             }
             if (SSL_ech_set1_outer_server_name(con, NULL, 1) != 1) {
