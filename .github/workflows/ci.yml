@@ -765,7 +765,7 @@ jobs:
     - name: make
       run: make -s -j4
     - name: Setup Python
-      uses: actions/setup-python@v5.3.0
+      uses: actions/setup-python@v6.0.0
       with:
         python-version: ${{ matrix.PYTHON }}
     - uses: dtolnay/rust-toolchain@6d653acede28d24f02e3cd41383119e8b1b35921
