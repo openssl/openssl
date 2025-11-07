@@ -295,6 +295,72 @@ static const char *kCertIssuerNoIDPCRL[] = {
     "0/FegR60yNqYaMERJz0jJv8SJ3Co38TlhH/Zr+N86RLYj3tPOsxcY5K1P8VZVPV/\n",
     "DxVqhesv7EaeiXDhiSTFcRXytqOQX3wju4RdxiyqMd4iT98N8nTxRdbBo4EVQKql\n",
     "PNhJBxQG0VQ=\n",
+    NULL
+};
+
+/*
+ * CRLs with an invalid Invalidity Date.
+ * https://github.com/openssl/openssl/issues/27445
+ */
+
+static const char *kInvalidDateMM[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICwDCCAagCAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
+    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
+    "Ck15IENvbXBhbnkxEzARBgNVBAMMCk15IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJv\n",
+    "b3QgQ0EXDTI1MDEwMTAwMDAwMFoXDTI1MTIwMTAwMDAwMFowgbswJQIUHIACLvgf\n",
+    "JAXulqYS3LYf4KxwHl4XDTI1MDQxNzEwMTY1MVowSAIRAIy4GT7M5nHsAAAAAFgs\n",
+    "inoXDTI1MDMwNDAwMDAwMFowJDAKBgNVHRUEAwoBADAWBgNVHRgEDxgNMjAxMTEz\n",
+    "MTIyNDQ2WjBIAhEAjLgZPszmcewAAAAAWCyKehcNMjUwMzA0MDAwMDAwWjAkMAoG\n",
+    "A1UdFQQDCgEEMBYGA1UdGAQPGA0yMDEyMTMxMjI1NDdaoD0wOzAYBgNVHRQEEQIP\n",
+    "Gc//3tp07fL2pEYMzuFAMB8GA1UdIwQYMBaAFNdhiR+Tlot2VBbp5XfcfLdlG4Ak\n",
+    "MA0GCSqGSIb3DQEBCwUAA4IBAQCXPgi5aD+9nPVYmpebHQHeyZgyj5DWf+Jhb0iT\n",
+    "ljjOVLht83c59eCH2bsi+ZiGSI7d6nPdqP5PL0sX2Pp1NBEJk3LanlTXdmJbhEzV\n",
+    "uTEQPgtHt2fFHVLDbFatQhTpXt+wXTahogE1oRleunG2nYzSuDBUQHKj+2VEhPxh\n",
+    "ghMLkp3ZM59SJUp8MPWLLjoGtHsIYBHlw6clnq/7tmuzDYBZPerW2gMPjKuywSYj\n",
+    "pcWJOYTFzeOrEW5wRHVMs0jDwaOOeJNlRHEJ19SsGTDSNPTk8n3OwTKSOaJ+Y9M0\n",
+    "O2p9+7c2oIK6AnLuVNTyiBtEqMvukBkHT8PPPIpsJrzGUTj6\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+static const char *kInvalidDateSS[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICdTCCAV0CAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
+    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
+    "Ck15IENvbXBhbnkxEzARBgNVBAMMCk15IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJv\n",
+    "b3QgQ0EXDTI1MDEwMTAwMDAwMFoXDTI1MTIwMTAwMDAwMFowcTAlAhQcgAIu+B8k\n",
+    "Be6WphLcth/grHAeXhcNMjUwNDE3MTAxNjUxWjBIAhEAjLgZPszmcewAAAAAWCyK\n",
+    "ehcNMjUwMzA0MDAwMDAwWjAkMAoGA1UdFQQDCgEFMBYGA1UdGAQPGA0yMDI0MDgy\n",
+    "MTAwMDBaoD0wOzAYBgNVHRQEEQIPGc//3tp07fL2pEYMzuFAMB8GA1UdIwQYMBaA\n",
+    "FNdhiR+Tlot2VBbp5XfcfLdlG4AkMA0GCSqGSIb3DQEBCwUAA4IBAQCl9pd3BaSn\n",
+    "crbjvcjLZH0nomP8ipuez5+eTYSdb3Tpams7/70l/YrDZnR633LJLWKOTJpkP8DA\n",
+    "2e9FWVY086enUy3AxAzsAEpnFeuACPLqqGAAgOGy/Ad6gIwR3CK4vcF+SfSHNvh0\n",
+    "50305mFrur737C3yaC1MALqkMOPeZYIm+loKK8Q3qmk2dbt5Vj4hdi09tsti3Wl+\n",
+    "SoR94psjlmzgi3/+Wf5Ubdo9LhyXjjGlx/oZm+Y55Ti30NC4HuAA7UsWLwcaD23T\n",
+    "fLmUgatPdqozdGKtK0PsuxH2sfPaVnWQExkTBysZV4iQ7OvcadhShLyjwvGHT69D\n",
+    "EK028LrNrWTA\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+static const char *kInvalidDateUTC[] = {
+
+    "-----BEGIN X509 CRL-----\n",
+    "MIICdTCCAV0CAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
+    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
+    "Ck15IENvbXBhbnkxEzARBgNVBAMMCk15IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJv\n",
+    "b3QgQ0EXDTI1MDEwMTAwMDAwMFoXDTI1MTIwMTAwMDAwMFowcTAlAhQcgAIu+B8k\n",
+    "Be6WphLcth/grHAeXhcNMjUwNDE3MTAxNjUxWjBIAhEAjLgZPszmcewAAAAAWCyK\n",
+    "ehcNMjUwMzA0MDAwMDAwWjAkMAoGA1UdFQQDCgEEMBYGA1UdGAQPFw0yNDExMTQw\n",
+    "NjQ0MDBaoD0wOzAYBgNVHRQEEQIPGc//3tp07fL2pEYMzuFAMB8GA1UdIwQYMBaA\n",
+    "FNdhiR+Tlot2VBbp5XfcfLdlG4AkMA0GCSqGSIb3DQEBCwUAA4IBAQDKX5PynQJ8\n",
+    "EHENKO7avhGO2z/lz/7nU76tbkGVZHgS/Vufsr/x934sRTBxkGdE8COU67FiU+Yx\n",
+    "dO2yfPjHqgoxDlxXTrI71lElSCMURDY1vR/7cHhlbQlr/TXW4vLBnwAsXYx6gjV7\n",
+    "nHxvTwvb6DE5VXN7CrWfQ+UpVpE/OymjDVcPBBp5mMKvac4PaNdlGU3BcRGx+6iH\n",
+    "/CRNHU3fgOi37KqQ3rEZBRN1CI5JX7gFf6fCFRJNFnWez65FoHkA0L/J52y6QLdm\n",
+    "KPHBluIk4UD6eeZNDAC1keYDfIsY1fDvPm4W1Hd0J5QgjKcxFXK8qRi7BPy3UZjw\n",
+    "yYUQ4YV+e1Je\n",
     "-----END X509 CRL-----\n",
     NULL
 };
@@ -557,6 +623,56 @@ static int test_crl_cert_issuer_ext(void)
     return test;
 }
 
+/*
+ * This function clears the error stack before parsing and delegates the actual
+ * decoding to CRL_from_strings().
+ */
+static X509_CRL *crl_clear_err_parse(const char **pem)
+{
+    ERR_clear_error();
+    return CRL_from_strings(pem);
+}
+
+/*
+ * Checks whether a specific error reason is present in the error stack.
+ * This function iterates over the current thread's error queue using
+ * ERR_get_error_all(), extracting all pending errors. If any of them match
+ * the specified reason code (as returned by ERR_GET_REASON()), the function
+ * returns 1 to indicate that the corresponding error was found.
+ */
+static int err_chk(int lib, int reason)
+{
+#if defined(OPENSSL_NO_ERR) || defined(OPENSSL_SMALL_FOOTPRINT) || \
+    defined(OPENSSL_NO_DEPRECATED_3_0) || defined(OPENSSL_NO_HTTP)
+    return 1;
+#endif
+    unsigned long e;
+
+    while ((e = ERR_get_error_all(NULL, NULL, NULL, NULL, NULL)))
+        if (ERR_GET_LIB(e) == lib && ERR_GET_REASON(e) == reason)
+            return 1;
+
+    return 0;
+}
+
+static int test_crl_date_invalid(void)
+{
+    X509_CRL *tmm = NULL, *tss = NULL, *utc = NULL;
+    int test = 0;
+
+    test = TEST_ptr_null((tmm = crl_clear_err_parse(kInvalidDateMM)))
+        && TEST_true(err_chk(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT))
+        && TEST_ptr_null((tss = crl_clear_err_parse(kInvalidDateSS)))
+        && TEST_true(err_chk(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT))
+        && TEST_ptr_null((utc = crl_clear_err_parse(kInvalidDateUTC)))
+        && TEST_true(err_chk(ERR_LIB_ASN1, ASN1_R_WRONG_TAG));
+
+    X509_CRL_free(tmm);
+    X509_CRL_free(utc);
+    X509_CRL_free(tss);
+    return test;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(test_root = X509_from_strings(kCRLTestRoot))
@@ -571,6 +687,7 @@ int setup_tests(void)
     ADD_TEST(test_crl_empty_idp);
     ADD_TEST(test_known_critical_crl);
     ADD_TEST(test_crl_cert_issuer_ext);
+    ADD_TEST(test_crl_date_invalid);
     ADD_ALL_TESTS(test_unknown_critical_crl, OSSL_NELEM(unknown_critical_crls));
     ADD_ALL_TESTS(test_reuse_crl, 6);
 
