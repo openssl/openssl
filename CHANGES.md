@@ -57,6 +57,14 @@ OpenSSL 4.0
 
    *Ryan Hooper*
 
+ * Fixed CRLs with invalid ASN1_TIME in invalidityDate extensions,
+   where verification incorrectly succeeded. Enforced proper
+   handling of ASN1_TIME validation results so that any CRL
+   containing invalid time fields is rejected immediately,
+   preventing the error from propagating to verification.
+
+   *Daniel Kubec*
+
  * Added `OSSL_[EN|DE]CODER_CTX_[set|get]_finalized()` functions.
    `OSSL_[EN|DE]CODER_CTX_set_*()` and `OSSL_[EN|DE]CODER_CTX_add_*()`
    functions return 0 if the context is already finalised.
