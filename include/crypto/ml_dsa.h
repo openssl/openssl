@@ -50,6 +50,9 @@
 # define ML_DSA_KEY_PROV_FLAGS_DEFAULT \
     (ML_DSA_KEY_PREFER_SEED | ML_DSA_KEY_RETAIN_SEED)
 
+/* ML-DSA has 2 signing modes.. either PURE or HASH */
+#define ML_DSA_SIG_MODE_PURE   NID_undef
+#define ML_DSA_SIG_MODE_SHA512 NID_sha512
 /*
  * Refer to FIPS 204 Section 4 Parameter sets.
  * Fields that are shared between all algorithms (such as q & d) have been omitted.

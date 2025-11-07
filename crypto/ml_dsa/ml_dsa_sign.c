@@ -67,7 +67,8 @@ static void signature_init(ML_DSA_SIG *sig,
  */
 
 EVP_MD_CTX *ossl_ml_dsa_mu_init(const ML_DSA_KEY *key, int encode,
-                                const uint8_t *ctx, size_t ctx_len)
+                                const uint8_t *ctx, size_t ctx_len,
+                                int hash)
 {
     EVP_MD_CTX *md_ctx;
     uint8_t itb[2];
@@ -86,11 +87,11 @@ EVP_MD_CTX *ossl_ml_dsa_mu_init(const ML_DSA_KEY *key, int encode,
     if (!EVP_DigestUpdate(md_ctx, key->tr, sizeof(key->tr)))
         goto err;
     /* M' = .. */
-    if (encode) {
+    if (encode != ML_DSA_MESSAGE_ENCODE_RAW) {
         if (ctx_len > ML_DSA_MAX_CONTEXT_STRING_LEN)
             goto err;
         /* IntegerToBytes(0, 1) .. */
-        itb[0] = 0;
+        itb[0] = hash ? 1 : 0;
         /* || IntegerToBytes(|ctx|, 1) || .. */
         itb[1] = (uint8_t)ctx_len;
         if (!EVP_DigestUpdate(md_ctx, itb, 2))
@@ -419,6 +420,7 @@ err:
  */
 int ossl_ml_dsa_sign(const ML_DSA_KEY *priv, int msg_is_mu,
                      const uint8_t *msg, size_t msg_len,
+                     const uint8_t *oid, size_t oid_len,
                      const uint8_t *context, size_t context_len,
                      const uint8_t *rand, size_t rand_len, int encode,
                      unsigned char *sig, size_t *sig_len, size_t sig_size)
@@ -445,10 +447,12 @@ int ossl_ml_dsa_sign(const ML_DSA_KEY *priv, int msg_is_mu,
         mu_ptr = msg;
         mu_len = msg_len;
     } else {
-        md_ctx = ossl_ml_dsa_mu_init(priv, encode, context, context_len);
+        md_ctx = ossl_ml_dsa_mu_init(priv, encode, context, context_len, oid != NULL);
         if (md_ctx == NULL)
             return 0;
 
+        if (oid != NULL && !ossl_ml_dsa_mu_update(md_ctx, oid, oid_len))
+                goto err;
         if (!ossl_ml_dsa_mu_update(md_ctx, msg, msg_len))
             goto err;
 
@@ -469,6 +473,7 @@ err:
  */
 int ossl_ml_dsa_verify(const ML_DSA_KEY *pub, int msg_is_mu,
                        const uint8_t *msg, size_t msg_len,
+                       const uint8_t *oid, size_t oid_len,
                        const uint8_t *context, size_t context_len, int encode,
                        const uint8_t *sig, size_t sig_len)
 {
@@ -485,11 +490,13 @@ int ossl_ml_dsa_verify(const ML_DSA_KEY *pub, int msg_is_mu,
         mu_ptr = msg;
         mu_len = msg_len;
     } else {
-        md_ctx = ossl_ml_dsa_mu_init(pub, encode, context, context_len);
+        md_ctx = ossl_ml_dsa_mu_init(pub, encode, context, context_len, oid != NULL);
         if (md_ctx == NULL)
             return 0;
 
-        if (!ossl_ml_dsa_mu_update(md_ctx, msg, msg_len))
+        if (oid != NULL && !ossl_ml_dsa_mu_update(md_ctx, oid, oid_len))
+                goto err;
+        if (!ossl_ml_dsa_mu_update(md_ctx, oid, oid_len))
             goto err;
 
         if (!ossl_ml_dsa_mu_finalize(md_ctx, mu, mu_len))
