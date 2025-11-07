@@ -4370,13 +4370,12 @@ static int test_evp_iv_aes(int idx)
         1, 2, 3, 4, 5, 6, 7, 8,
         9, 10, 11, 12, 13, 14, 15, 16
     };
-    unsigned char ciphertext[32], oiv[16], iv[16];
-    unsigned char *ref_iv;
+    unsigned char ciphertext[32], oiv1[16], oiv[16], iv[16], uiv[16];
+    unsigned char *ref_iv, *start_iv = init_iv;
     unsigned char cbc_state[16] = {
         0x10, 0x2f, 0x05, 0xcc, 0xc2, 0x55, 0x72, 0xb9,
         0x88, 0xe6, 0x4a, 0x17, 0x10, 0x74, 0x22, 0x5e
     };
-
     unsigned char ofb_state[16] = {
         0x76, 0xe6, 0x66, 0x61, 0xd0, 0x8a, 0xe4, 0x64,
         0xdd, 0x66, 0xbf, 0x00, 0xf0, 0xe3, 0x6f, 0xfd
@@ -4444,6 +4443,12 @@ static int test_evp_iv_aes(int idx)
         ref_iv = gcm_state;
         ref_len = sizeof(gcm_state);
         break;
+    case 12:
+        ref_iv = NULL;
+        ref_len = 0;
+        start_iv = NULL; /* This will cause a random iv to be generated internally */
+        type = EVP_CIPHER_fetch(testctx, "aes-128-gcm", testpropq);
+        break;
     case 4:
         type = EVP_aes_128_ccm();
         /* FALLTHROUGH */
@@ -4474,7 +4479,8 @@ static int test_evp_iv_aes(int idx)
 
     if (!TEST_ptr(type)
             || !TEST_ptr((ctx = EVP_CIPHER_CTX_new()))
-            || !TEST_true(EVP_EncryptInit_ex(ctx, type, NULL, key, init_iv))
+            || !TEST_true(EVP_EncryptInit_ex(ctx, type, NULL, key, start_iv))
+            || !TEST_true(EVP_CIPHER_CTX_get_original_iv(ctx, oiv1, sizeof(oiv1)))
             || !TEST_true(EVP_EncryptUpdate(ctx, ciphertext, &len, msg,
                           (int)sizeof(msg)))
             || !TEST_true(EVP_CIPHER_CTX_get_original_iv(ctx, oiv, sizeof(oiv)))
@@ -4486,19 +4492,21 @@ static int test_evp_iv_aes(int idx)
     if (!TEST_size_t_gt(ivlen, 0))
         goto err;
 
-    if (!TEST_mem_eq(init_iv, ivlen, oiv, ivlen)
-            || !TEST_mem_eq(ref_iv, ref_len, iv, ivlen))
+    if (start_iv == NULL)
+        start_iv = oiv1;
+    if (!TEST_mem_eq(start_iv, ivlen, oiv, ivlen)
+            || (ref_iv != NULL && !TEST_mem_eq(ref_iv, ref_len, iv, ivlen)))
         goto err;
 
     /* CBC, OFB, and CFB modes: the updated iv must be reset after reinit */
     if (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, NULL))
-        || !TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv))))
+        || !TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, uiv, sizeof(uiv))))
         goto err;
     if (iv_reset) {
-        if (!TEST_mem_eq(init_iv, ivlen, iv, ivlen))
+        if (!TEST_mem_eq(start_iv, ivlen, uiv, ivlen))
             goto err;
     } else {
-        if (!TEST_mem_eq(ref_iv, ivlen, iv, ivlen))
+        if (!TEST_mem_eq(uiv, ivlen, iv, ivlen))
             goto err;
     }
 
@@ -6986,7 +6994,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_pkey_ctx_fail_without_provider, 2);
 
     ADD_TEST(test_rand_agglomeration);
-    ADD_ALL_TESTS(test_evp_iv_aes, 12);
+    ADD_ALL_TESTS(test_evp_iv_aes, 13);
 #ifndef OPENSSL_NO_DES
     ADD_ALL_TESTS(test_evp_iv_des, 6);
 #endif
