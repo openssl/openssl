@@ -548,7 +548,7 @@ sure to also leave TLS 1.1 enabled.
 =item B<Options>
 
 The B<value> argument is a comma separated list of various flags to set.
-If a flag string is preceded B<-> it is disabled.
+If a flag string is preceded by B<-> that flag is disabled.
 See the L<SSL_CTX_set_options(3)> function for more details of
 individual options.
 
@@ -696,7 +696,7 @@ supported if certificate operations are permitted.
 =item B<CertValidation>
 
 The B<value> argument is a comma separated list of certificate validation
-flags to set.  If a flag string is preceded B<-> it is disabled.
+flags to set.  If a flag string is preceeded by B<-> that flag is disabled.
 See the L<X509_VERIFY_PARAM_set_flags(3)> function for more details of
 individual options.
 
@@ -760,7 +760,7 @@ and CRLs.  Equivalent to B<X509_V_FLAG_NO_CHECK_TIME>.
 =item B<SetValidFlags>
 
 The B<value> argument is a comma separated list of host validation flags
-to set.  If a flag string is preceded B<-> it is disabled.
+to set.  If a flag string is preceded by B<-> that flag is disabled.
 See the L<X509_VERIFY_PARAM_set_hostflags(3)> function for more details of
 individual options.
 

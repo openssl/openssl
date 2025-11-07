@@ -9,6 +9,7 @@
 
 #include "internal/e_os.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include "ssl_local.h"
 #include <openssl/conf.h>
@@ -615,10 +616,9 @@ static int do_add(SSL_CONF_CTX *cctx,
     } else {
         return 1;
     }
-    if (ctx != NULL) {
-        libctx = ctx->libctx;
-        propq = ctx->propq;
-    }
+    assert(ctx != NULL);
+    libctx = ctx->libctx;
+    propq = ctx->propq;
     st = &ctx->cert_store;
     if (*st == NULL) {
         *st = X509_STORE_new();
@@ -723,10 +723,9 @@ static int do_store(SSL_CONF_CTX *cctx,
     } else {
         return 1;
     }
-    if (ctx != NULL) {
-        libctx = ctx->libctx;
-        propq = ctx->propq;
-    }
+    assert(ctx != NULL);
+    libctx = ctx->libctx;
+    propq = ctx->propq;
     st = verify_store ? &cert->verify_store : &cert->chain_store;
     if (*st == NULL) {
         *st = X509_STORE_new();
