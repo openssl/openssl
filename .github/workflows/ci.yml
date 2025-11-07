@@ -269,7 +269,6 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - name: checkout fuzz/corpora submodule
     - name: Adjust ASLR for sanitizer
       run: |
         sudo cat /proc/sys/vm/mmap_rnd_bits
