@@ -29,8 +29,9 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install unifdef
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
+        persist-credentials: false
         fetch-depth: 0
     - name: config
       run: ./config --banner=Configured --strict-warnings enable-fips && perl configdata.pm --dump
@@ -44,7 +45,9 @@ jobs:
   check_docs:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: config
       run: ./config --banner=Configured --strict-warnings enable-fips && perl configdata.pm --dump
     - name: make build_generated
@@ -62,7 +65,9 @@ jobs:
   check-ansi:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: config
       run: CPPFLAGS=-ansi ./config --banner=Configured no-asm no-makedepend enable-buildtest-c++ enable-fips --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
     - name: make
@@ -71,7 +76,9 @@ jobs:
   basic_gcc:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: localegen
       run: sudo locale-gen tr_TR.UTF-8
     - name: config
@@ -84,7 +91,9 @@ jobs:
   basic_clang:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: config
       run: CC=clang ./config --banner=Configured no-fips --strict-warnings && perl configdata.pm --dump
     - name: make
@@ -95,7 +104,9 @@ jobs:
   linux-arm64:
     runs-on: ${{ github.repository == 'openssl/openssl' && 'linux-arm64' || 'ubuntu-24.04-arm' }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: config
       run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
@@ -112,7 +123,9 @@ jobs:
   freebsd-x86_64:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: config
       uses: cross-platform-actions/action@fe0167d8082ac584754ef3ffb567fded22642c7d #v0.27.0
       with:
@@ -149,7 +162,9 @@ jobs:
   minimal:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: config
       run: ./config --banner=Configured --strict-warnings no-bulk no-pic no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
     - name: make
@@ -160,7 +175,9 @@ jobs:
   no-deprecated:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: config
       run: ./config --banner=Configured --strict-warnings no-deprecated enable-fips && perl configdata.pm --dump
     - name: make
@@ -171,7 +188,9 @@ jobs:
   no-shared-ubuntu:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: config
       run: ./config --banner=Configured --strict-warnings no-shared no-fips && perl configdata.pm --dump
     - name: make
@@ -182,7 +201,9 @@ jobs:
   no-shared-macos:
     runs-on: macos-14
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: config
       run: ./config --banner=Configured --strict-warnings no-shared no-fips && perl configdata.pm --dump
     - name: make
@@ -193,7 +214,9 @@ jobs:
   non-caching:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: Adjust ASLR for sanitizer
       run: |
         sudo cat /proc/sys/vm/mmap_rnd_bits
@@ -208,7 +231,9 @@ jobs:
   address_ub_sanitizer:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: Adjust ASLR for sanitizer
       run: |
         sudo cat /proc/sys/vm/mmap_rnd_bits
@@ -223,7 +248,9 @@ jobs:
   memory_sanitizer:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: Adjust ASLR for sanitizer
       run: |
         sudo cat /proc/sys/vm/mmap_rnd_bits
@@ -239,7 +266,10 @@ jobs:
   threads_sanitizer:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: checkout fuzz/corpora submodule
     - name: Adjust ASLR for sanitizer
       run: |
         sudo cat /proc/sys/vm/mmap_rnd_bits
@@ -254,7 +284,9 @@ jobs:
   enable_non-default_options:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: modprobe tls
       run: sudo modprobe tls
     - name: config
@@ -267,7 +299,9 @@ jobs:
   fips_and_ktls:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: modprobe tls
       run: sudo modprobe tls
     - name: config
@@ -280,7 +314,9 @@ jobs:
   no-legacy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: config
       run: ./config --banner=Configured --strict-warnings no-legacy enable-fips && perl configdata.pm --dump
     - name: make
@@ -291,7 +327,9 @@ jobs:
   legacy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: config
       run: ./config --banner=Configured -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-fips && perl configdata.pm --dump
     - name: make
@@ -318,9 +356,10 @@ jobs:
   out-of-readonly-source-and-install-ubuntu:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         path: ./source
+        persist-credentials: false
     - name: make source read-only
       run: chmod -R a-w ./source
     - name: create build and install directories
@@ -345,9 +384,10 @@ jobs:
   out-of-readonly-source-and-install-macos:
     runs-on: macos-15
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         path: ./source
+        persist-credentials: false
     - name: make source read-only
       run: chmod -R a-w ./source
     - name: create build and install directories
@@ -372,9 +412,10 @@ jobs:
   external-tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: recursive
+        persist-credentials: false
     - name: package installs
       run: |
         sudo apt-get update
@@ -403,9 +444,10 @@ jobs:
         PYTHON:
           - 3.9
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: recursive
+        persist-credentials: false
     - name: Configure OpenSSL
       run: ./config --banner=Configured --strict-warnings --debug enable-external-tests && perl configdata.pm --dump
     - name: make

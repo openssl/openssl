@@ -27,7 +27,9 @@ jobs:
             config: --strict-warnings no-fips
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 #v1.13.0
       with:
         arch: ${{ matrix.platform.arch }}
@@ -64,7 +66,9 @@ jobs:
           - windows-2025
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 #v1.13.0
     - uses: shogo82148/actions-setup-perl@49c14f24551d2de3bf56fb107a869c3760b1875e #v1.33.0
     - name: prepare the build directory
@@ -88,7 +92,9 @@ jobs:
           - windows-2025
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 #v1.13.0
     - uses: shogo82148/actions-setup-perl@49c14f24551d2de3bf56fb107a869c3760b1875e #v1.33.0
     - name: prepare the build directory

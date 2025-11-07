@@ -41,7 +41,9 @@ jobs:
         ]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: config
       run: CC=clang ./config --banner=Configured --strict-warnings ${{ matrix.opt }}
     - name: config dump
