@@ -1058,7 +1058,7 @@ int RAND_set_DRBG_type(OSSL_LIB_CTX *ctx, const char *drbg, const char *propq,
     if (dgbl == NULL)
         return 0;
     if (dgbl->primary != NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, RAND_R_ALREADY_INSTANTIATED);
+        ERR_raise(ERR_LIB_RAND, RAND_R_ALREADY_INSTANTIATED);
         return 0;
     }
     return random_set_string(&dgbl->rng_name, drbg)
@@ -1075,7 +1075,7 @@ int RAND_set_seed_source_type(OSSL_LIB_CTX *ctx, const char *seed,
     if (dgbl == NULL)
         return 0;
     if (dgbl->seed != NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, RAND_R_ALREADY_INSTANTIATED);
+        ERR_raise(ERR_LIB_RAND, RAND_R_ALREADY_INSTANTIATED);
         return 0;
     }
     return random_set_string(&dgbl->seed_name, seed)
