@@ -1,6 +1,5 @@
 # ASCON algorithm implementation
-# Note: Currently using a stub header (ascon.h) for build testing.
-# When LibAscon is fully integrated, source files will be added here:
-# LIBS=../../libcrypto
-# SOURCE[../../libcrypto]=ascon.c ascon_aead128.c ascon_aead128a.c ascon_aead80pq.c
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]=ascon_permutations.c ascon_buffering.c ascon_aead_common.c ascon_aead128.c
+INCLUDE[../../libcrypto]=../include
 
