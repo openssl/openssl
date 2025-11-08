@@ -13,7 +13,8 @@
 
 #if defined(OPENSSL_SYS_UNIX) \
     && defined(OPENSSL_THREADS) && !defined(OPENSSL_NO_ASYNC) \
-    && !defined(__ANDROID__) && !defined(__OpenBSD__)
+    && !defined(__ANDROID__) && !defined(__OpenBSD__) \
+    && !defined(OPENSSL_SYS_TANDEM)
 
 # include <unistd.h>
 
