@@ -13967,6 +13967,7 @@ static int test_ssl_conf_SetValidIP(SSL_CONF_CTX *confctx,
     if (!TEST_str_eq(ip_str, first_ip))
         goto end;
     OPENSSL_free(ip_str);
+    ip_str = NULL;
 
     if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidIP", second_ip), 2))
         goto end;
@@ -14025,6 +14026,7 @@ static int test_ssl_conf_SetValidHostOrIP(SSL_CONF_CTX *confctx,
     if (!TEST_str_eq(ip_str, first_ip))
         goto end;
     OPENSSL_free(ip_str);
+    ip_str = NULL;
 
     /* Reset hostnames */
     if (X509_VERIFY_PARAM_set1_host(param, first_hostname, 0) != 1)
