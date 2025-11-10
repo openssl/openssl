@@ -13959,9 +13959,8 @@ static int test_ssl_conf_SetValidIP(SSL_CONF_CTX *confctx,
     }
 
     /* Verify that we can set and replace valid IP addresses using "SetValidIP" */
-    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidIP", first_ip), 2)) {
+    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidIP", first_ip), 2))
         goto end;
-    }
 
     ip_str = X509_VERIFY_PARAM_get1_ip_asc(param);
     if (!TEST_str_eq(ip_str, first_ip))
