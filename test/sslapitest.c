@@ -13948,7 +13948,7 @@ static int test_ssl_conf_SetValidIP(SSL_CONF_CTX *confctx,
     static const char *second_ip = "10.10.10.19";
     int ret = 0;
     X509_VERIFY_PARAM *param;
-    char *ip_str;
+    char *ip_str = NULL;
 
     if (ssl_ctx != NULL) {
         param = SSL_CTX_get0_param(ssl_ctx);
@@ -13959,14 +13959,14 @@ static int test_ssl_conf_SetValidIP(SSL_CONF_CTX *confctx,
     }
 
     /* Verify that we can set and replace valid IP addresses using "SetValidIP" */
-    ip_str = X509_VERIFY_PARAM_get1_ip_asc(param);
-
-    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidIP", first_ip), 2))
+    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidIP", first_ip), 2)) {
         goto end;
+    }
 
     ip_str = X509_VERIFY_PARAM_get1_ip_asc(param);
     if (!TEST_str_eq(ip_str, first_ip))
         goto end;
+    OPENSSL_free(ip_str);
 
     if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidIP", second_ip), 2))
         goto end;
@@ -13977,6 +13977,7 @@ static int test_ssl_conf_SetValidIP(SSL_CONF_CTX *confctx,
 
     ret = 1;
 end:
+    OPENSSL_free(ip_str);
     return ret;
 }
 
@@ -13992,7 +13993,7 @@ static int test_ssl_conf_SetValidHostOrIP(SSL_CONF_CTX *confctx,
     int ret = 0;
     X509_VERIFY_PARAM *param;
     char *host;
-    char *ip_str;
+    char *ip_str = NULL;
 
     if (ssl_ctx != NULL) {
         param = SSL_CTX_get0_param(ssl_ctx);
@@ -14023,6 +14024,7 @@ static int test_ssl_conf_SetValidHostOrIP(SSL_CONF_CTX *confctx,
     ip_str = X509_VERIFY_PARAM_get1_ip_asc(param);
     if (!TEST_str_eq(ip_str, first_ip))
         goto end;
+    OPENSSL_free(ip_str);
 
     /* Reset hostnames */
     if (X509_VERIFY_PARAM_set1_host(param, first_hostname, 0) != 1)
@@ -14046,6 +14048,7 @@ static int test_ssl_conf_SetValidHostOrIP(SSL_CONF_CTX *confctx,
 
     ret = 1;
 end:
+    OPENSSL_free(ip_str);
     return ret;
 }
 
