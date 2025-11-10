@@ -696,7 +696,7 @@ supported if certificate operations are permitted.
 =item B<CertValidation>
 
 The B<value> argument is a comma separated list of certificate validation
-flags to set.  If a flag string is preceeded by B<-> that flag is disabled.
+flags to set.  If a flag string is preceded by B<-> that flag is disabled.
 See the L<X509_VERIFY_PARAM_set_flags(3)> function for more details of
 individual options.
 
@@ -788,7 +788,7 @@ that would otherwise match any sub-domain in the peer certificate, to
 only match direct child sub-domains when checking a DNS hostname.
 Equivalent to B<X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS>.
 
-B<NeverCheckSubject> causes vertificate hostname verification to
+B<NeverCheckSubject> causes certificate hostname verification to
 never consider the subject DN.  Equivalent to
 B<X509_CHECK_FLAG_NEVER_CHECK_SUBJECT>.
 
