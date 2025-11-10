@@ -166,29 +166,7 @@ extern "C"
  */
 # define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
-/**
- * @internal
- * States used to understand which function of the API was called before
- * for the input assertions and to known if the associated data has been
- * updated or not.
- * @see #ASCON_INPUT_ASSERTS
- */
-typedef enum
-{
-    ASCON_FLOW_CLEANED = 0,
-    ASCON_FLOW_HASH_INITIALISED,
-    ASCON_FLOW_HASH_UPDATED,
-    ASCON_FLOW_AEAD128_80pq_INITIALISED,
-    ASCON_FLOW_AEAD128_80pq_ASSOC_DATA_UPDATED,
-    ASCON_FLOW_AEAD128_80pq_ENCRYPT_UPDATED,
-    ASCON_FLOW_AEAD128_80pq_DECRYPT_UPDATED,
-    ASCON_FLOW_AEAD128a_INITIALISED,
-    ASCON_FLOW_AEAD128a_ASSOC_DATA_UPDATED,
-    ASCON_FLOW_AEAD128a_ENCRYPT_UPDATED,
-    ASCON_FLOW_AEAD128a_DECRYPT_UPDATED,
-    ASCON_FLOW_HASHA_INITIALISED,
-    ASCON_FLOW_HASHA_UPDATED,
-} ascon_flow_t;
+/* ascon_flow_t enum is defined in crypto/ascon.h */
 
 /** @internal Decodes an uint64_t from a big-endian encoded array of 8 bytes. */
 uint64_t

@@ -47,6 +47,8 @@ struct ascon_ctx_st
     intctx_t *internal_ctx; /* a handle for the implementation internal context*/
     bool assoc_data_processed;  /* whether associated data has been processed */
     size_t tag_len;          /* tag length being used */
+    uint8_t iv[ASCON_AEAD_NONCE_LEN]; /* storing the IV (nonce) for get_updated_iv */
+    bool iv_set;             /* whether the IV has been set */
 };
 
 /*********************************************************************

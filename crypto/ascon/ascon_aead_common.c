@@ -14,6 +14,7 @@
  * Original authors: see LibAscon AUTHORS.md file
  */
 
+# include <string.h>
 # include "crypto/ascon.h"
 # include "ascon_internal.h"
 
@@ -57,6 +58,8 @@ ascon_aead128_80pq_finalise_assoc_data(ascon_aead_ctx_t* const ctx)
      * data or not. */
     ctx->bufstate.sponge.x4 ^= 1U;
     ctx->bufstate.buffer_len = 0;
+    /* Clear the buffer to ensure no stale data remains */
+    memset(ctx->bufstate.buffer, 0, sizeof(ctx->bufstate.buffer));
 }
 
 void
