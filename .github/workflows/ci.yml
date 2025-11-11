@@ -162,6 +162,47 @@ jobs:
         name: "ci@linux-arm64"
         path: artifacts.tar.gz
 
+  linux-x86:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: run container
+      run: |
+        CONTAINER_ID=$(podman run -d -v $(pwd):/mnt -w /mnt --platform=linux/i386 docker.io/i386/debian:13 sleep infinity)
+        echo "CONTAINER_ID=$CONTAINER_ID" >> "$GITHUB_ENV"
+    - name: install dependencies
+      run:
+        podman exec -t $CONTAINER_ID sh -c "apt-get update && apt-get install -y gcc perl make"
+    - name: config
+      run: |
+        podman exec -t $CONTAINER_ID sh -c \
+          "./config --strict-warnings linux-x86 enable-demos enable-fips enable-lms enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace"
+    - name: config dump
+      run: |
+        podman exec -t $CONTAINER_ID sh -c \
+          "./configdata.pm --dump"
+    - name: make
+      run: |
+        podman exec -t $CONTAINER_ID sh -c \
+        "make -j"
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        podman exec -t $CONTAINER_ID sh -c \
+          "./util/opensslwrap.sh version -c"
+    - name: make test
+      run: |
+        podman exec -t $CONTAINER_ID sh -c \
+          ".github/workflows/make-test"
+    - name: save artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v5
+      with:
+        name: "ci@linux-x86"
+        path: artifacts.tar.gz
+
   freebsd-x86_64:
     runs-on: ubuntu-latest
     steps:
