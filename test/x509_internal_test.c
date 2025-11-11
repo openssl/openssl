@@ -343,60 +343,60 @@ static int do_x509_time_tests(CERT_TEST_DATA *tests, size_t ntests)
     ASN1_TIME *nb = NULL, *na = NULL;
     size_t i;
 
-    if ((x509 = X509_new()) == NULL) {
-        TEST_info("Malloc posral se do postele.");
+    if (!TEST_ptr(x509 = X509_new())) {
+        TEST_info("Malloc failed");
         goto err;
     }
-    if ((crl = X509_CRL_new()) == NULL) {
-        TEST_info("Malloc posral se do postele.");
+    if (!TEST_ptr(crl = X509_CRL_new())) {
+        TEST_info("Malloc failed");
         goto err;
     }
-    if ((ctx = X509_STORE_CTX_new()) == NULL) {
-        TEST_info("Malloc posral se do postele.");
+    if (!TEST_ptr(ctx = X509_STORE_CTX_new())) {
+        TEST_info("Malloc failed");
         goto err;
     }
     X509_STORE_CTX_init(ctx, NULL, NULL, NULL);
-    if ((vpm = X509_VERIFY_PARAM_new()) == NULL) {
-        TEST_info("Malloc posral se do postele.");
+    if (!TEST_ptr(vpm = X509_VERIFY_PARAM_new())) {
+        TEST_info("Malloc failed");
         goto err;
     }
     X509_STORE_CTX_set0_param(ctx, vpm);
-    if ((nb = ASN1_TIME_new()) == NULL) {
-        TEST_info("Malloc posral se do postele.");
+    if (!TEST_ptr(nb = ASN1_TIME_new())) {
+        TEST_info("Malloc failed");
         goto err;
     }
-    if ((na = ASN1_TIME_new()) == NULL) {
-        TEST_info("Malloc posral se do postele.");
+    if (!TEST_ptr(na = ASN1_TIME_new())) {
+        TEST_info("Malloc failed");
         goto err;
     }
 
     for (i = 0; i < ntests; i++) {
         int64_t test_time;
 
-        if (!ossl_posix_to_asn1_time(tests[i].NotBefore, &nb)) {
+        if (!TEST_true(ossl_posix_to_asn1_time(tests[i].NotBefore, &nb))) {
             TEST_info("Could not create NotBefore for time %lld\n", (long long) tests[i].NotBefore);
             goto err;
         }
-        if (!ossl_posix_to_asn1_time(tests[i].NotAfter, &na)) {
+        if (!TEST_true(ossl_posix_to_asn1_time(tests[i].NotAfter, &na))) {
             TEST_info("Could not create NotAfter for time %lld\n", (long long) tests[i].NotBefore);
             goto err;
         }
 
         /* Forcibly jam the times into the X509 */
-        if (!X509_set1_notBefore(x509, nb)) {
+        if (!TEST_true(X509_set1_notBefore(x509, nb))) {
             TEST_info("X509_set1_notBefore failed");
             goto err;
         }
-        if (!X509_set1_notAfter(x509, na)) {
-            TEST_info("X509_set1_notBefore failed");
+        if (!TEST_true(X509_set1_notAfter(x509, na))) {
+            TEST_info("X509_set1_notAftere failed");
             goto err;
         }
         /* Forcibly jam the times into the CRL */
-        if (!X509_CRL_set1_lastUpdate(crl, nb)) {
+        if (!TEST_true(X509_CRL_set1_lastUpdate(crl, nb))) {
             TEST_info("X509_CRL_set1_lastUdate failed");
             goto err;
         }
-        if (!X509_CRL_set1_nextUpdate(crl, na)) {
+        if (!TEST_true(X509_CRL_set1_nextUpdate(crl, na))) {
             TEST_info("X509_CRL_set1_nextUpdate failed");
             goto err;
         }
