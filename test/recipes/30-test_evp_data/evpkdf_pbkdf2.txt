@@ -232,13 +232,14 @@ Title = FIPS indicator tests
 
 # Test that operations with unapproved parameters are rejected
 Availablein = fips
-FIPSversion = >=3.4.0
+FIPSversion = >=4.0.0
 KDF = PBKDF2
 Ctrl.pass = pass:password
 Ctrl.salt = salt:salt
 Ctrl.iter = iter:4096
 Ctrl.digest = digest:sha1
-Result = KDF_CTRL_ERROR
+Output = 0102030405060708091011121314
+Result = KDF_DERIVE_ERROR
 Reason = invalid salt length
 
 # Test that operations with unapproved parameters are reported as unapproved
@@ -268,12 +269,14 @@ Output = 043c508e57c6427036fd2c6cd2a02ec7530a412c
 Title = Test that a too low iteration count raises an error
 
 Availablein = fips
+FIPSversion = >=4.0.0
 KDF = PBKDF2
 Ctrl.pass = pass:password
 Ctrl.salt = salt:saltydaysarethebest
 Ctrl.iter = iter:10
 Ctrl.digest = digest:sha1
-Result = KDF_CTRL_ERROR
+Output = 0102030405060708091011121314
+Result = KDF_DERIVE_ERROR
 Reason = invalid iteration count
 
 Availablein = default
@@ -282,5 +285,29 @@ Ctrl.pass = pass:password
 Ctrl.salt = salt:salt
 Ctrl.iter = iter:0
 Ctrl.digest = digest:sha1
-Result = KDF_CTRL_ERROR
+Result = KDF_DERIVE_ERROR
 Reason = invalid iteration count
+
+Title = Test that a small key length raises an error
+
+Availablein = fips
+FIPSversion = >=4.0.0
+KDF = PBKDF2
+Ctrl.pass = pass:password
+Ctrl.salt = salt:saltydaysarethebest
+Ctrl.iter = iter:1000
+Ctrl.digest = digest:sha1
+Output = 01020304050607080910111213
+Result = KDF_DERIVE_ERROR
+Reason = key size too small
+
+Availablein = fips
+FIPSversion = >=4.0.0
+KDF = PBKDF2
+Ctrl.pkcs5 = pkcs5:1
+Unapproved = 1
+Ctrl.pass = pass:password
+Ctrl.salt = salt:saltydaysarethebest
+Ctrl.iter = iter:1000
+Ctrl.digest = digest:sha1
+Output = 8915d6c7940f9f9f
