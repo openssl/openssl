@@ -36,7 +36,6 @@
     OSSL_DEPRECATED_MESSAGE(#name ENGINE_INFO_MSG) \
     static inline ret_type name args \
     { \
-        (void)args_names; /* avoid unused parameter warnings */ \
         return default_val; /* stub return */ \
     }
 
@@ -51,7 +50,6 @@
     OSSL_DEPRECATED_MESSAGE(#name ENGINE_INFO_MSG) \
     static inline void name args \
     { \
-        (void)args_names; /* avoid unused parameter warnings */ \
     }
 
 #  define ENGINE_VOID_FUNC_NOARGS(name) \
@@ -98,6 +96,15 @@
 #  include <openssl/engineerr.h>
 #  ifdef  __cplusplus
 extern "C" {
+#  endif
+
+/* Ignore stubs unused arguments */
+#  if defined(__GNUC__)
+#   pragma GCC diagnostic push
+#   pragma GCC diagnostic ignored "-Wunused-value"
+#  elif defined(__clang__)
+#   pragma clang diagnostic push
+#   pragma clang diagnostic ignored "-Wunused-value"
 #  endif
 
 /*
@@ -1218,5 +1225,12 @@ ENGINE_FUNC(int, SSL_CTX_set_client_cert_engine, (SSL_CTX *ctx, ENGINE *e),
 #  undef ENGINE_VOID_FUNC
 #  undef ENGINE_FUNC_NOARGS
 #  undef ENGINE_VOID_FUNC_NOARGS
+
+#  if defined(__GNUC__)
+#   pragma GCC diagnostic pop
+#  elif defined(__clang__)
+#   pragma clang diagnostic pop
+#  endif
+
 # endif
 #endif  /* OPENSSL_ENGINE_H */
