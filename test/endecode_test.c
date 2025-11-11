@@ -1370,6 +1370,56 @@ static int ec_encode_to_data_multi(void)
 }
 #endif /* OPENSSL_NO_EC */
 
+/*
+ * Test that OSSL_ENCODER_CTX setters return 0 after finalising the context
+ */
+static int encoder_ctx_setters(void)
+{
+    int ret;
+    OSSL_ENCODER_CTX *ectx = NULL;
+
+    ret = TEST_ptr(ectx = OSSL_ENCODER_CTX_new())
+        && TEST_int_eq(OSSL_ENCODER_CTX_get_finalized(ectx), 0)
+        && TEST_int_eq(OSSL_ENCODER_CTX_set_selection(ectx,
+                                                      EVP_PKEY_KEYPAIR), 1)
+        && TEST_int_eq(OSSL_ENCODER_CTX_set_output_type(ectx, "DER"), 1)
+        && TEST_int_eq(OSSL_ENCODER_CTX_set_output_structure(ectx, "PKCS8"), 1)
+        && TEST_int_eq(OSSL_ENCODER_CTX_set_finalized(ectx), 1)
+        && TEST_int_eq(OSSL_ENCODER_CTX_set_selection(ectx,
+                                                      EVP_PKEY_PUBLIC_KEY), 0)
+        && TEST_int_eq(OSSL_ENCODER_CTX_set_output_type(ectx, "PEM"), 0)
+        && TEST_int_eq(OSSL_ENCODER_CTX_set_output_structure(ectx, "PKCS8"), 0)
+        && TEST_int_eq(OSSL_ENCODER_CTX_add_extra(ectx, NULL, NULL), 0)
+        && TEST_int_eq(OSSL_ENCODER_CTX_get_finalized(ectx), 1);
+    OSSL_ENCODER_CTX_free(ectx);
+    return ret;
+}
+
+/*
+ * Test that OSSL_DECODER_CTX setters return 0 after finalising the context
+ */
+static int decoder_ctx_setters(void)
+{
+    int ret;
+    OSSL_DECODER_CTX *dctx = NULL;
+
+    ret = TEST_ptr(dctx = OSSL_DECODER_CTX_new())
+        && TEST_int_eq(OSSL_DECODER_CTX_get_finalized(dctx), 0)
+        && TEST_int_eq(OSSL_DECODER_CTX_set_selection(dctx,
+                                                      EVP_PKEY_KEYPAIR), 1)
+        && TEST_int_eq(OSSL_DECODER_CTX_set_input_type(dctx, "DER"), 1)
+        && TEST_int_eq(OSSL_DECODER_CTX_set_input_structure(dctx, "PKCS8"), 1)
+        && TEST_int_eq(OSSL_DECODER_CTX_set_finalized(dctx), 1)
+        && TEST_int_eq(OSSL_DECODER_CTX_set_selection(dctx,
+                                                      EVP_PKEY_PUBLIC_KEY), 0)
+        && TEST_int_eq(OSSL_DECODER_CTX_set_input_type(dctx, "PEM"), 0)
+        && TEST_int_eq(OSSL_DECODER_CTX_set_input_structure(dctx, "PKCS8"), 0)
+        && TEST_int_eq(OSSL_DECODER_CTX_add_extra(dctx, NULL, NULL), 0)
+        && TEST_int_eq(OSSL_DECODER_CTX_get_finalized(dctx), 1);
+    OSSL_DECODER_CTX_free(dctx);
+    return ret;
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -1668,6 +1718,9 @@ int setup_tests(void)
             ADD_TEST_SUITE(SLH_DSA_SHAKE_256f);
         }
 #endif /* OPENSSL_NO_SLH_DSA */
+
+        ADD_TEST(encoder_ctx_setters);
+        ADD_TEST(decoder_ctx_setters);
     }
 
     return 1;

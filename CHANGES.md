@@ -46,6 +46,12 @@ OpenSSL 4.0
 
    *Ryan Hooper*
 
+ * Added `OSSL_[EN|DE]CODER_CTX_[set|get]_finalized()` functions.
+   `OSSL_[EN|DE]CODER_CTX_set_*()` and `OSSL_[EN|DE]CODER_CTX_add_*()`
+   functions return 0 if the context is already finalised.
+
+   *Igor Ustinov*
+
 OpenSSL 3.6
 -----------
 
