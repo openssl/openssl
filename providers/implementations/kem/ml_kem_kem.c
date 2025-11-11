@@ -105,12 +105,6 @@ static int ml_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (ctx == NULL || !ml_kem_set_ctx_params_decoder(params, &p))
         return 0;
 
-    if (ctx->op == EVP_PKEY_OP_DECAPSULATE && ctx->entropy != NULL) {
-        /* Decapsulation is deterministic */
-        OPENSSL_cleanse(ctx->entropy, ML_KEM_RANDOM_BYTES);
-        ctx->entropy = NULL;
-    }
-
     /* Encapsulation ephemeral input key material "ikmE" */
     if (ctx->op == EVP_PKEY_OP_ENCAPSULATE && p.ikme != NULL) {
         size_t len = ML_KEM_RANDOM_BYTES;
@@ -220,6 +214,7 @@ static int ml_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
     PROV_ML_KEM_CTX *ctx = vctx;
     ML_KEM_KEY *key = ctx->key;
     size_t decap_slen = ML_KEM_SHARED_SECRET_BYTES;
+    int ret;
 
     if (!ossl_ml_kem_have_prvkey(key)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
@@ -245,7 +240,14 @@ static int ml_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
     }
 
     /* ML-KEM decap handles incorrect ciphertext lengths internally */
-    return ossl_ml_kem_decap(shsec, decap_slen, ctext, clen, key);
+    ret = ossl_ml_kem_decap(shsec, decap_slen, ctext, clen, key);
+
+    /* Clear this to be cautious */
+    if (ctx->entropy != NULL) {
+        OPENSSL_cleanse(ctx->entropy, ML_KEM_RANDOM_BYTES);
+        ctx->entropy = NULL;
+    }
+    return ret;
 }
 
 const OSSL_DISPATCH ossl_ml_kem_asym_kem_functions[] = {
