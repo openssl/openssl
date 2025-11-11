@@ -174,6 +174,11 @@ int OSSL_ENCODER_CTX_set_selection(OSSL_ENCODER_CTX *ctx, int selection)
         return 0;
     }
 
+    if (ctx->finalized != 0) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
     if (!ossl_assert(selection != 0)) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
@@ -191,6 +196,11 @@ int OSSL_ENCODER_CTX_set_output_type(OSSL_ENCODER_CTX *ctx,
         return 0;
     }
 
+    if (ctx->finalized != 0) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
     ctx->output_type = output_type;
     return 1;
 }
@@ -200,6 +210,11 @@ int OSSL_ENCODER_CTX_set_output_structure(OSSL_ENCODER_CTX *ctx,
 {
     if (!ossl_assert(ctx != NULL) || !ossl_assert(output_structure != NULL)) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ctx->finalized != 0) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
 
@@ -315,6 +330,11 @@ int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder)
         return 0;
     }
 
+    if (ctx->finalized != 0) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
     prov = OSSL_ENCODER_get0_provider(encoder);
     provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
@@ -339,6 +359,16 @@ int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder)
 int OSSL_ENCODER_CTX_add_extra(OSSL_ENCODER_CTX *ctx,
                                OSSL_LIB_CTX *libctx, const char *propq)
 {
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ctx->finalized != 0) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
     return 1;
 }
 
@@ -356,6 +386,12 @@ int OSSL_ENCODER_CTX_set_construct(OSSL_ENCODER_CTX *ctx,
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+
+    if (ctx->finalized != 0) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
     ctx->construct = construct;
     return 1;
 }
@@ -367,6 +403,12 @@ int OSSL_ENCODER_CTX_set_construct_data(OSSL_ENCODER_CTX *ctx,
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+
+    if (ctx->finalized != 0) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
     ctx->construct_data = construct_data;
     return 1;
 }
@@ -378,8 +420,33 @@ int OSSL_ENCODER_CTX_set_cleanup(OSSL_ENCODER_CTX *ctx,
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+
+    if (ctx->finalized != 0) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
     ctx->cleanup = cleanup;
     return 1;
+}
+
+int OSSL_ENCODER_CTX_set_finalized(OSSL_ENCODER_CTX *ctx)
+{
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    ctx->finalized = 1;
+    return 1;
+}
+
+int OSSL_ENCODER_CTX_get_finalized(OSSL_ENCODER_CTX *ctx)
+{
+    if (ctx == NULL)
+        return 0;
+
+    return ctx->finalized;
 }
 
 OSSL_ENCODER *
