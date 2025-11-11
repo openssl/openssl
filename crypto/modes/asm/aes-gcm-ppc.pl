@@ -157,6 +157,7 @@ my $code.=<<___;
 # Xi = v0
 # H Poly = v2
 # Hash keys = v3 - v14
+# vs10: vpermxor vector
 # Scratch: v23 - v29
 #
 .macro PPC_GFMUL128_8x
@@ -273,6 +274,7 @@ my $code.=<<___;
 
 #
 # Compute update single ghash
+# vs10: vpermxor vector
 # scratch: v1, v22..v27
 #
 .macro PPC_GHASH1x H S1
@@ -477,8 +479,6 @@ __Encrypt_1x:
 	cmpdi	12, 0
 	bgt	__Loop_1x
 
-	# Don't update IV for OpenSSL.
-	#stxvb16x 32+30, 0, 7		# update IV (no need for openssl)
 	stxvb16x 32+0, 0, 8		# update Xi
 	blr
 .size   aes_gcm_crypt_1x,.-aes_gcm_crypt_1x
@@ -547,14 +547,14 @@ __Encrypt_partial:
 .size   __Process_partial,.-__Process_partial
 
 ################################################################################
-# aes_p10_gcm_encrypt (const void *inp, void *out, size_t len,
+# ppc_aes_gcm_encrypt (const void *inp, void *out, size_t len,
 #               const char *rk, unsigned char iv[16], void *Xip);
 #
 #    r3 - inp
 #    r4 - out
 #    r5 - len
 #    r6 - AES round keys
-#    r7 - iv and other data
+#    r7 - iv
 #    r8 - Xi, HPoli, hash keys
 #
 #    rounds is at offset 240 in rk
@@ -565,9 +565,6 @@ __Encrypt_partial:
 .align 5
 ppc_aes_gcm_encrypt:
 .localentry     ppc_aes_gcm_encrypt,0
-
-	cmpdi	5, 0
-	ble	__Invalid_msg_len
 
 	SAVE_REGS
 	LOAD_HASH_TABLE
@@ -723,7 +720,6 @@ __Finish_ghash:
 	# Update IV and Xi
 	xxlor	30+32, 9, 9		# last ctr
 	vadduwm	30, 30, 31		# increase ctr
-	#stxvb16x 32+30, 0, 7		# update IV (no need for openssl)
 	stxvb16x 32+0, 0, 8		# update Xi
 
 	addi    5, 5, -128
@@ -748,7 +744,7 @@ __Process_more_enc:
 .size   ppc_aes_gcm_encrypt,.-ppc_aes_gcm_encrypt
 
 ################################################################################
-# aes_p10_gcm_decrypt (const void *inp, void *out, size_t len,
+# ppc_aes_gcm_decrypt (const void *inp, void *out, size_t len,
 #               const char *rk, unsigned char iv[16], void *Xip);
 # 8x Decrypt
 #
@@ -757,9 +753,6 @@ __Process_more_enc:
 .align 5
 ppc_aes_gcm_decrypt:
 .localentry	ppc_aes_gcm_decrypt, 0
-
-	cmpdi	5, 0
-	ble	__Invalid_msg_len
 
 	SAVE_REGS
 	LOAD_HASH_TABLE
@@ -1016,7 +1009,6 @@ __Finish_ghash_dec:
 
 	xxlor	30+32, 9, 9		# last ctr
 	vadduwm	30, 30, 31		# increase ctr
-	#stxvb16x 32+30, 0, 7		# update IV (no need for openssl)
 	stxvb16x 32+0, 0, 8		# update Xi
 
 	addi    5, 5, -128
@@ -1041,18 +1033,14 @@ __Process_more_dec:
 
 aes_gcm_out:
 .localentry	aes_gcm_out,0
-	#stxvb16x 32, 0, 8		# write out Xi
-__done:
+
 	mr	3, 11			# return count
 
 	RESTORE_REGS
 	blr
-__Invalid_msg_len:
-	li	3, 0
-	blr
 .size	aes_gcm_out,.-aes_gcm_out
 
-.data
+.rodata
 .align 4
 # for vector permute and xor
 permx:
