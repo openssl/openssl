@@ -70,8 +70,7 @@ static int ml_kem_init(void *vctx, int op, void *key,
         return 0;
     ctx->key = key;
     ctx->op = op;
-    if (ctx->op == EVP_PKEY_OP_DECAPSULATE && ctx->entropy != NULL) {
-        /* Decapsulation is deterministic */
+    if (ctx->entropy != NULL) {
         OPENSSL_cleanse(ctx->entropy, ML_KEM_RANDOM_BYTES);
         ctx->entropy = NULL;
     }
