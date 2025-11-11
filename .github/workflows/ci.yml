@@ -672,7 +672,9 @@ jobs:
       run: ./config --banner=Configured --strict-warnings --debug no-afalgeng enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
-    - uses: dtolnay/rust-toolchain@fcf085fcb4b4b8f63f96906cd713eb52181b5ea4
+    - uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331
+      with:
+        toolchain: stable
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -737,7 +739,7 @@ jobs:
       uses: actions/setup-python@v6.0.0
       with:
         python-version: ${{ matrix.PYTHON }}
-    - uses: dtolnay/rust-toolchain@fcf085fcb4b4b8f63f96906cd713eb52181b5ea4
+    - uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331
       with:
         toolchain: ${{ matrix.RUST }}
     - name: get cpu info
