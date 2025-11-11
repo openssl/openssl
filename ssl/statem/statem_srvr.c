@@ -481,6 +481,7 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, int chainidx)
     const X509_NAME *certIssuerName;
     unsigned char md[EVP_MAX_MD_SIZE];
     const ASN1_INTEGER *certSerial;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     /*
      * In TLSv1.3 the caller gives the index of the certificate for which the
@@ -526,6 +527,8 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, int chainidx)
                 && ((sr = OCSP_resp_get0(bs, 0)) != NULL)) {
                 /* use the first single response to get the algorithm used */
                 cid = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
+
+                EVP_set_default_properties(sctx->libctx, sctx->propq);
 
                 /* determine the md algorithm which was used to create cert id */
                 OCSP_id_get0_info(&respIssuerNameHash, &cert_id_md_oid, NULL, &respSerial, cid);
