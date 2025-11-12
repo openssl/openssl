@@ -1030,9 +1030,8 @@ size_t DTLS_get_data_mtu(const SSL *ssl)
         int_overhead += mac_overhead;
 
     /* Added record type at the end of the data */
-    if (SSL_version(ssl) == DTLS1_3_VERSION) {
+    if (SSL_version(ssl) == DTLS1_3_VERSION)
         int_overhead++;
-    }
 
     if (SSL_version(ssl) == DTLS1_3_VERSION) {
         switch (SSL_get_state(ssl)) {
