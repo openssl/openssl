@@ -573,6 +573,11 @@ void check_certbag(PKCS12_BUILDER *pb, const unsigned char *bytes, int len,
         pb->success = 0;
         goto err;
     }
+    if (!TEST_ptr_null(PKCS12_SAFEBAG_get0_bag_obj(bag))) {
+        pb->success = 0;
+        goto err;
+    }
+
     ref_x509 = load_cert_asn1(bytes, len);
     if (!TEST_false(X509_cmp(x509, ref_x509)))
         pb->success = 0;
@@ -632,6 +637,10 @@ void check_keybag(PKCS12_BUILDER *pb, const unsigned char *bytes, int len,
         break;
 
     default:
+        pb->success = 0;
+        goto err;
+    }
+    if (!TEST_ptr_null(PKCS12_SAFEBAG_get0_bag_type(bag))) {
         pb->success = 0;
         goto err;
     }
