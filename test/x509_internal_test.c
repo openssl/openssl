@@ -383,23 +383,18 @@ static int do_x509_time_tests(CERT_TEST_DATA *tests, size_t ntests)
         }
 
         /* Forcibly jam the times into the X509 */
-        if (!TEST_true(X509_set1_notBefore(x509, nb))) {
-            TEST_info("X509_set1_notBefore failed");
+        if (!TEST_true(X509_set1_notBefore(x509, nb)))
             goto err;
-        }
-        if (!TEST_true(X509_set1_notAfter(x509, na))) {
+
+        if (!TEST_true(X509_set1_notAfter(x509, na)))
             TEST_info("X509_set1_notAftere failed");
-            goto err;
-        }
+
         /* Forcibly jam the times into the CRL */
-        if (!TEST_true(X509_CRL_set1_lastUpdate(crl, nb))) {
-            TEST_info("X509_CRL_set1_lastUdate failed");
+        if (!TEST_true(X509_CRL_set1_lastUpdate(crl, nb)))
             goto err;
-        }
-        if (!TEST_true(X509_CRL_set1_nextUpdate(crl, na))) {
-            TEST_info("X509_CRL_set1_nextUpdate failed");
+
+        if (!TEST_true(X509_CRL_set1_nextUpdate(crl, na)))
             goto err;
-        }
 
         /* Test boundaries of NotBefore */
         test_time = tests[i].NotBefore - 1;
