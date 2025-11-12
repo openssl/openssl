@@ -638,6 +638,11 @@ L<EVP_SIGNATURE_is_a(3)>, L<ASN1_item_sign_ctx(3)>
 
 The provider SIGNATURE interface was introduced in OpenSSL 3.0.
 
+The OSSL_FUNC_signature_sign_message_init(), OSSL_FUNC_signature_sign_message_update(),
+OSSL_FUNC_signature_sign_message_final(), OSSL_FUNC_signature_verify_message_init(),
+OSSL_FUNC_signature_verify_message_update() and OSSL_FUNC_signature_verify_message_final()
+functions were added in OpenSSL 3.4.
+
 The Signature Parameters "fips-indicator", "key-check" and "digest-check" were added in
 OpenSSL 3.4.
 
