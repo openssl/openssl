@@ -4128,13 +4128,12 @@ static int test_early_data_read_write(int idx)
         testresult = TEST_skip("DTLSv1.3 is not usable");
         goto end;
 # endif
-    }
+    } else {
 # if defined(OSSL_NO_USABLE_TLS1_3)
-    else {
         testresult = TEST_skip("TLSv1.3 is not usable");
         goto end;
-    }
 # endif
+    }
 
     /* Artificially give the next 2 tickets some age for non PSK sessions */
     if (idx != 2)
@@ -7088,9 +7087,9 @@ static int test_stateless(void)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
 
- # if defined(OSSL_NO_USABLE_TLS1_3) || defined(OPENSSL_NO_TLS1_2)
-        testresult = TEST_skip("TLSv1.3 not usable or no TLSv1.2");
-        goto end;
+# if defined(OSSL_NO_USABLE_TLS1_3) || defined(OPENSSL_NO_TLS1_2)
+    testresult = TEST_skip("TLSv1.3 not usable or no TLSv1.2");
+    goto end;
 # endif
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
@@ -8309,13 +8308,12 @@ static int test_key_update_peer_in_read(int idx)
     if (!testdtls) {
         if (!TEST_int_eq(BIO_new_bio_pair(&lbio, bio_size, &pbio, bio_size), 1))
             goto end;
-    }
+    } else {
 # if !defined(OSSL_NO_USABLE_DTLS1_3)
-    else {
         if (!TEST_int_eq(BIO_new_bio_dgram_pair(&lbio, bio_size, &pbio, bio_size), 1))
             goto end;
-    }
 # endif
+    }
 
     SSL_set_bio(local, lbio, lbio);
     SSL_set_bio(peer, pbio, pbio);
@@ -8631,13 +8629,13 @@ static int test_key_update_local_in_read(int idx)
     if (!testdtls) {
         if (!TEST_int_eq(BIO_new_bio_pair(&lbio, bio_size, &pbio, bio_size), 1))
             goto end;
-    }
+    } else {
 # if !defined(OSSL_NO_USABLE_DTLS1_3)
-    else {
         if (!TEST_int_eq(BIO_new_bio_dgram_pair(&lbio, bio_size, &pbio, bio_size), 1))
             goto end;
-    }
 # endif
+    }
+
 
     SSL_set_bio(local, lbio, lbio);
     SSL_set_bio(peer, pbio, pbio);
