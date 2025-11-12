@@ -4202,7 +4202,9 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
     if (SSL_CONNECTION_IS_TLS13(s)) {
         size_t i, hashlen;
         uint64_t nonce;
-        static const unsigned char nonce_label[] = "resumption";
+        /* ASCII: "resumption", in hex for EBCDIC compatibility */
+        static const unsigned char nonce_label[] = { 0x72, 0x65, 0x73, 0x75, 0x6D,
+                                                     0x70, 0x74, 0x69, 0x6F, 0x6E };
         const EVP_MD *md = ssl_handshake_md(s);
         int hashleni = EVP_MD_get_size(md);
 
@@ -4249,7 +4251,7 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
 
         if (!tls13_hkdf_expand(s, md, s->resumption_master_secret,
                                nonce_label,
-                               sizeof(nonce_label) - 1,
+                               sizeof(nonce_label),
                                tick_nonce,
                                TICKET_NONCE_SIZE,
                                s->session->master_key,
