@@ -493,7 +493,7 @@ static int test_keylog_no_master_key(int idx)
         smeth = DTLS_server_method();
         cmeth = DTLS_client_method();
         vermin = DTLS1_VERSION;
-# if defined(OSSL_NO_USABLE_DTLS13)
+# if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
 # endif
@@ -4122,10 +4122,15 @@ static int test_early_data_read_write(int idx)
     OSSL_TIME timer;
     int testdtls = idx >= 6;
 
-    if (testdtls)
+    if (testdtls) {
         idx -= 6;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("DTLSv1.3 is not usable");
+        goto end;
+# endif
+    }
 # if defined(OSSL_NO_USABLE_TLS1_3)
-    if (!testdtls) {
+    else {
         testresult = TEST_skip("TLSv1.3 is not usable");
         goto end;
     }
@@ -7083,6 +7088,11 @@ static int test_stateless(void)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
 
+ # if defined(OSSL_NO_USABLE_TLS1_3) || defined(OPENSSL_NO_TLS1_2)
+        testresult = TEST_skip("TLSv1.3 not usable or no TLSv1.2");
+        goto end;
+# endif
+
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(), TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
@@ -8296,13 +8306,16 @@ static int test_key_update_peer_in_read(int idx)
     local = idx == 0 ? clientssl : serverssl;
     peer = idx == 0 ? serverssl : clientssl;
 
-    if (testdtls) {
-        if (!TEST_int_eq(BIO_new_bio_dgram_pair(&lbio, bio_size, &pbio, bio_size), 1))
-            goto end;
-    } else {
+    if (!testdtls) {
         if (!TEST_int_eq(BIO_new_bio_pair(&lbio, bio_size, &pbio, bio_size), 1))
             goto end;
     }
+# if !defined(OSSL_NO_USABLE_DTLS1_3)
+    else {
+        if (!TEST_int_eq(BIO_new_bio_dgram_pair(&lbio, bio_size, &pbio, bio_size), 1))
+            goto end;
+    }
+# endif
 
     SSL_set_bio(local, lbio, lbio);
     SSL_set_bio(peer, pbio, pbio);
@@ -8615,13 +8628,16 @@ static int test_key_update_local_in_read(int idx)
     local = idx == 0 ? clientssl : serverssl;
     peer = idx == 0 ? serverssl : clientssl;
 
-    if (testdtls) {
-        if (!TEST_int_eq(BIO_new_bio_dgram_pair(&lbio, bio_size, &pbio, bio_size), 1))
-            goto end;
-    } else {
+    if (!testdtls) {
         if (!TEST_int_eq(BIO_new_bio_pair(&lbio, bio_size, &pbio, bio_size), 1))
             goto end;
     }
+# if !defined(OSSL_NO_USABLE_DTLS1_3)
+    else {
+        if (!TEST_int_eq(BIO_new_bio_dgram_pair(&lbio, bio_size, &pbio, bio_size), 1))
+            goto end;
+    }
+# endif
 
     SSL_set_bio(local, lbio, lbio);
     SSL_set_bio(peer, pbio, pbio);
