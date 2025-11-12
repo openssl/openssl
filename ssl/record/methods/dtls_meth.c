@@ -961,19 +961,19 @@ static size_t dtls_get_max_record_overhead(OSSL_RECORD_LAYER *rl)
     return rchdrlen + rl->eivlen + blocksize + rl->taglen + contenttypelen;
 }
 
-int dtls_get_sequence_number(OSSL_RECORD_LAYER *rl, uint64_t *sequence)
+static int dtls_get_sequence_number(OSSL_RECORD_LAYER *rl, uint64_t *sequence)
 {
     *sequence = rl->sequence;
     return 1;
 }
 
-int dtls_set_sequence_number(OSSL_RECORD_LAYER *rl, uint64_t sequence)
+static int dtls_set_sequence_number(OSSL_RECORD_LAYER *rl, uint64_t sequence)
 {
     rl->sequence = sequence;
     return 1;
 }
 
-int dtls_get_epoch(OSSL_RECORD_LAYER *rl, uint16_t *epoch)
+static int dtls_get_epoch(OSSL_RECORD_LAYER *rl, uint16_t *epoch)
 {
     *epoch = rl->epoch;
     return 1;

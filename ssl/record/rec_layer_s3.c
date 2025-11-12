@@ -1264,7 +1264,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     int use_early_data = 0;
     uint32_t max_early_data;
     COMP_METHOD *compm = (comp == NULL) ? NULL : comp->method;
-    uint16_t epoch;
+    uint16_t epoch_zero;
     uint64_t seq;
 
     meth = ssl_select_next_record_layer(s, direction, level);
@@ -1377,8 +1377,8 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     if (direction == OSSL_RECORD_DIRECTION_WRITE
             && SSL_CONNECTION_IS_DTLS(s)
             && s->rlayer.wrl != NULL
-            && meth->get_epoch(s->rlayer.wrl, &epoch) == 1
-            && epoch == 0) {
+            && meth->get_epoch(s->rlayer.wrl, &epoch_zero) == 1
+            && epoch_zero == 0) {
         if (meth->get_sequence(s->rlayer.wrl,
                                &seq) != 1) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1501,8 +1501,8 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
      */
     if (direction == OSSL_RECORD_DIRECTION_WRITE
             && SSL_CONNECTION_IS_DTLS(s)
-            && meth->get_epoch(newrl, &epoch) == 1
-            && epoch == 0) {
+            && meth->get_epoch(newrl, &epoch_zero) == 1
+            && epoch_zero == 0) {
 
         if (meth->set_sequence(newrl,
                                s->rlayer.wlayer_epoch_zero_sequence) != 1) {
