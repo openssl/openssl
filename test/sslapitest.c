@@ -7077,7 +7077,7 @@ static int verify_stateless_cookie_callback(SSL *ssl, const unsigned char *cooki
  * use DTLSv1_listen instead. This test is already covered in
  * dtlsv1listentest.c
  */
-static int test_stateless()
+static int test_stateless(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
