@@ -193,7 +193,7 @@ static int test_unicode_range(void)
 
 static int test_invalid_utf8(void)
 {
-    const unsigned char inv_utf8[] = "\xF5\x90\x80\x80";
+    const unsigned char inv_utf8[] = "\xF4\x90\x80\x80";
     unsigned long val;
 
     if (!TEST_int_lt(UTF8_getc(inv_utf8, sizeof(inv_utf8), &val), 0))
