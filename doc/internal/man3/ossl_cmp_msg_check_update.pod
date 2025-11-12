@@ -51,6 +51,7 @@ The callback is passed also the arguments B<ctx>, B<msg>, and <cb_arg>
 The callback should return 1 on acceptance, 0 on rejection, or -1 on error.
 It should not put an error on the error stack since this could be misleading.
 
+Unless the B<OSSL_CMP_OPT_NO_CACHE_EXTRACERTS> is set in the B<ctx>,
 ossl_cmp_msg_check_update() adds all extraCerts contained in the <msg> to
 the list of untrusted certificates in B<ctx> such that they are already usable
 for OSSL_CMP_validate_msg(), which is called internally, and for future use.
@@ -58,7 +59,7 @@ Thus they are available also to the certificate confirmation callback, and the
 peer does not need to send them again (at least not in the same transaction).
 Note that it does not help validating the message before storing the extraCerts
 because they are not part of the protected portion of the message anyway.
-For efficiency, the extraCerts are prepended to the list so they get used first.
+For efficiency, the extraCerts being cached are prepended to the list so they get used first.
 
 If all checks pass then ossl_cmp_msg_check_update()
 records in B<ctx> the senderNonce of the received message as the new recipNonce
