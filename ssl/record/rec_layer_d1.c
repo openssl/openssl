@@ -559,7 +559,8 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
 
     if (!ossl_statem_get_in_handshake(sc)
         && (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ACK)) {
-        int ined = (sc->early_data_state == SSL_EARLY_DATA_READING);
+        int in_early_data = (sc->early_data_state == SSL_EARLY_DATA_READING);
+
         /*
          * To get here we must be trying to read app data but found handshake
          * data. But if we're trying to read app data, and we're not in init
@@ -582,7 +583,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
          * handshake message, then we don't want to continue to try and read
          * the application data any more. It won't be "early" now.
          */
-        if (ined)
+        if (in_early_data)
             return -1;
 
         if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
