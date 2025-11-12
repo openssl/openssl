@@ -68,7 +68,7 @@ has been introduced with PR #28725 and will be used as a basis for
 implementing a more complete deferral and dependency tracking mechanism as
 described in the requirements.
 
-In particular the state management will be expanded to include equivalency
+In particular, the state management will be expanded to include equivalency
 and explicit dependency requirements.
 
 The FIPS_kat_deferred() function will handle recursing into executing explicit
@@ -76,13 +76,13 @@ dependencies if needed, and marking all equivalent tests as passed at once.
 
 This function operates on the basis of locking execution of tests to a single
 thread and therefore can safely manipulate the data required to maintain
-state across all threads as well as handling ordering of tests execution.
+state across all threads as well as handling ordering of test execution.
 
 Triggering Self-Tests
 ---------------------
 
 Each algorithm implementation will be modified to trigger its corresponding
-self-test at initialization similar to how SLH-DSA test have already been
+self-test at initialization similar to how SLH-DSA tests have already been
 changed. This will typically be within the algorithm's `newctx()` or `init()`
 function, as this is the earliest point at which an application signals its
 intent to use the algorithm.
@@ -94,6 +94,10 @@ structures of the same type.
 One will handle test equivalency and will be named 'also_satisfies', the other
 will handle explicit dependencies that are not implicitly handled by
 initialization functions.
+
+Note that the `also_satisfies` list will *not* be used recursively (see the
+Examples section for an explanation of why this can't be done), while the
+`depends_on` list is used in a recursive fashion.
 
 Dependency Handling
 -------------------
@@ -112,12 +116,12 @@ as the machinery that checks for the need to execute self-tests is disabled to
 avoid deadlocks (See how `FIPS_kat_deferred()` behaves when it detects that the
 current thread is already running a self-test).
 
-OpenSSL functional test may need to be changed to account for test nesting,
+OpenSSL functional tests may need to be changed to account for test nesting,
 especially when fault injection is implemented.
 
 When `FIPS_kat_deferred()` is executed, the `depends_on` array is checked,
 and any test listed in the list is executed in order, while the triggering
-test is awaits in FIPS_DEFERRED_TEST_IN_PROGRESS state.
+test awaits in FIPS_DEFERRED_TEST_IN_PROGRESS state.
 
 Initial Startup Self-Tests
 --------------------------
@@ -128,7 +132,7 @@ a minimal set of tests upon loading:
 1. **Module Integrity Check**: A HMAC-SHA256 check of the provider module
    itself.
 2. **DRBG Tests**: These tests currently depend on temporarily installing
-   an alternative TEST random generator, and can't be (in this form)
+   an alternative TEST random generator, and can't be (in this form)
    executed while other threads may try to access the random generator.
 
 The existing `OSSL_SELF_TEST_onbegin()` callback will be modified to run
@@ -143,16 +147,107 @@ passed via equivalency (`also_satisfies` lists).
 Error Handling
 --------------
 
-On test failure, a FAILED state is recorded in the state structure for the
-algorithm, and any dependent failure will propagate upwards through the
-dependency chain. An algorithm that is marked failed will immediately return
-an error on any subsequent invocation.
+Ideally on a test failure, a FAILED state is recorded in the state structure
+for the algorithm, and any dependent failure will propagate upwards through
+the dependency chain. An algorithm that is marked failed will immediately
+return an error on any subsequent invocation until the operator attempts
+error recovery by running all tests again.
+
+However, for simplicity of implementation if an algorithm test fails the
+module will be put into an error state, and any further operation will be
+denied until the process is restarted.
+
+Examples
+--------
+
+The following examples explain how some of the tests interact and can be
+ordered to achieve higher efficiency.
+
+### Example 1: simple self-test
+
+For example an application that just uses the SHA-256 digest will not need to
+execute any of the HMAC, key derivation or Signature tests, etc...  At
+instantiation of the digest (basically when the application calls
+EVP_DigestInit[\_ex|\_ex2]) if a SHA-256 specific test has not been run yet,
+the init function itself (sha256_internal_init() inside the FIPS module) will
+trigger the self-test.
+
+### Example 2: composite algorithms
+
+For composite algorithms, i.e., algorithms that use other internal algorithms
+it is possible that a higher level test is considered by the FIPS standard as
+satisfying KAT requirements also for the inner algorithm used.
+
+For example the self-test for HMAC is considered sufficient also for testing
+the underlying digest. Therefore the current HMAC test (which uses SHA-256)
+will link to the SHA-256 in the 'also_satisfies' list.
+
+When the application invokes EVP_MAC_init() it internally causes the FIPS
+module hmac_init() function to execute. If the HMAC test has not been run yet
+it will be executed. This test lists the SHA-256 test as also satisfied
+
+Once the HMAC test is complete the FIPS_KAT_deferred code will check the
+'also_satisfies' list and will mark each test in that list as passed. Note that
+this is not done recursivively because there is no guarantee that a higher
+level test always transitively satisfies lower level test. A high level test
+should list explicitly in `also_satisfies` all the algorithms that can be
+considered tested.
+
+### Example 3: composite algorithms and equivalence behavior
+
+An example of a high level test that would incorrectly mark `also_satisfies`
+tests if it were allowed to do it recursively is the following:
+
+Let's assume the application invokes the PBKDF2 derivation function. Let's also
+assume, for the sake of argument, that the PBKDF2 test uses HMAC with SHA3-256
+in its KAT.  The PBKDF2 test can list HMAC as also satisfied, but if we were to
+recursively mark the tests in HMAC's `also_satisfies` list as passed, this would
+incorrectly mark the SHA-256 digest as passed because that's the digest used by
+the HMAC's own test.  However this is not what was actually tested.
+
+In order to properly mark the actual test that have been used, the PBKDF2 test
+will explicitly list HMAC and SHA3-256 in the `also_satisfies` list of tests.
+
+### Example 4: simple tests and dependencies behavior
+
+Another example is the use of `depends_on` to run equivalent but broader tests
+when that makes sense. For example if we consider the HMAC test as low impact,
+we could decide to avoid writing two tests, one for HMAC+SHA-256 and one for
+SHA-256 standalone and mark the HMAC test as a dependency for the SHA-256 test.
+
+In this case when the application calls EVP_DigestInit with SHA-256 the internal
+sha256_internal_init() will call the machinery to execute the self-test.
+
+This self-test will be an empty function that just returns an error if executed
+directly (this is a safety measure to avoid mistakes the function will never be
+invoked in normal conditions).  However the actual FIPS_DEFERRED_TEST for
+SHA-256 lists the HMAC test as "dependency" in the `depends_on` list.
+
+When FIPS_KAT_deferred is invoked it checks whether there are tests listed in
+the depends_on list before executing the actual self-test, and if there are
+tests, it executes those first (recursively). It will find the HMAC test and
+execute it.  The HMAC test lists SHA-256 as also satisfied, therefore at the end
+of the test, the SHA-256 test will be marked as passed and control returned back
+up to the calling test. FIPS_KAT_deferred will now check if the SHA-256 test is
+already passed. Finding it already passed just returns and never actually
+executes the SHA-256 test directly. In case of mistakes (for example the HMAC
+test is later changed to use SHA3-256 and marks only that algorithm as also
+satisfied) the SHA-256 self-test is executed, but this hollow test just returns
+failure, catching the fact that a change of dependent self-test broke a promise.
+
+Note that this is a special case of using dependencies to satisfy a test via
+indirection, in some cases dependencies will just be necessary tests that have
+to be run before the current test can be run but do not otherwise necessarily
+affect the subsequent running of the depending test.
+
+For example, all tests could mark the integrity test as a depends_on if it were
+optional, therefore forcing the integrity test before any other cryptographic
+operation could be executed.
 
 Implementation Details
 ----------------------
 
-Current Implementation
-----------------------
+### Current Implementation
 
 The current implementation provides the foundational mechanism for deferred
 self-tests through two key functions: `FIPS_deferred_self_tests()` and
@@ -186,10 +281,9 @@ was waiting for the lock. The final test status (`PASSED` or `FAILED`) is
 updated within the critical section protected by the lock, ensuring the
 result is safely published and visible to all threads.
 
-Data Structures
----------------
+### Data Structures
 
-The fips_deferred_test_st structure will be changed to look like this:
+The `fips_deferred_test_st` structure will be changed to look like this:
 
 ```c
 struct fips_deferred_test_st {
