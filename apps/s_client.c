@@ -3643,7 +3643,7 @@ static void print_ech_status(BIO *bio, SSL *s, int estat)
         BIO_printf(bio, "ECH: success: %d\n", estat);
         break;
     case SSL_ECH_STATUS_GREASE_ECH:
-        BIO_printf(bio, "ECH: GREASE+retry-configs%d\n", estat);
+        BIO_printf(bio, "ECH: GREASE+retry-configs: %d\n", estat);
         break;
     case SSL_ECH_STATUS_BACKEND:
         BIO_printf(bio, "ECH: BACKEND: %d\n", estat);

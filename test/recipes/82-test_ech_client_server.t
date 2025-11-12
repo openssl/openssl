@@ -32,7 +32,7 @@ plan skip_all => "$test_name requires TLSv1.3 enabled"
 plan skip_all => "$test_name is not available Windows or VMS"
     if $^O =~ /^(VMS|MSWin32|msys)$/;
 
-plan tests => 6;
+plan tests => 18;
 
 my $shlib_wrap   = bldtop_file("util", "shlib_wrap.sh");
 my $apps_openssl = bldtop_file("apps", "openssl");
@@ -43,9 +43,31 @@ my $server_pem            = srctop_file("test", "certs", "echserver.pem");
 my $server_key            = srctop_file("test", "certs", "echserver.key");
 my $root_pem              = srctop_file("test", "certs", "rootcert.pem");
 
+sub extract_ecl()
+{
+    # extract b64 encoded ECHConfigList from pem file
+    my $lb64 = "";
+    my $inwanted = 0;
+    open( my $fh, '<', $echconfig_pem ) or die "Can't open $echconfig_pem $!";
+    while( my $line = <$fh>) {
+        chomp $line;
+        if ( $line =~ /^-----BEGIN ECHCONFIG/) {
+            $inwanted = 1;
+        } elsif ( $line =~ /^-----END ECHCONFIG/) {
+            $inwanted = 0;
+        } elsif ($inwanted == 1) {
+            $lb64 .= $line;
+        }
+    }
+    print("base64 ECHConfigList: $lb64\n");
+    return($lb64);
+}
+
+my $good_b64 = extract_ecl();
+
 sub start_ech_client_server
 {
-    my ( $b64ech, $winpattern ) = @_;
+    my ( $test_type, $winpattern ) = @_;
 
     # start an s_server listening on some random port, with ECH enabled
     # and willing to accept one request 
@@ -56,12 +78,26 @@ sub start_ech_client_server
     #                  -ech_key $echconfig_pem
     #                  -servername example.com
     #                  -tls1_3 
-    my @s_server_cmd = ("s_server", "-accept", "0", "-naccept", "1",
-                        "-cert", $server_pem, "-key", $server_key,
-                        "-cert2", $server_pem, "-key2", $server_key,
-                        "-ech_key", $echconfig_pem,
-                        "-servername", "example.com",
-                        "-tls1_3");
+    my @s_server_cmd;
+    if ($test_type eq "cid-free" ) {
+        # turn on trial-decrypt, so client can use random CID
+        @s_server_cmd = ("s_server", "-accept", "0", "-naccept", "1",
+                         "-cert", $server_pem, "-key", $server_key,
+                         "-cert2", $server_pem, "-key2", $server_key,
+                         "-ech_key", $echconfig_pem,
+                         "-servername", "example.com",
+                         "-ech_trialdecrypt",
+                         "-tls1_3");
+    } else {
+        # default for all other tests (for now)
+        @s_server_cmd = ("s_server", "-accept", "0", "-naccept", "1",
+                         "-cert", $server_pem, "-key", $server_key,
+                         "-cert2", $server_pem, "-key2", $server_key,
+                         "-ech_key", $echconfig_pem,
+                         "-servername", "example.com",
+                         "-ech_greaseretries",
+                         "-tls1_3");
+    }
     print("@s_server_cmd\n");
     $s_server_pid = open3(my $s_server_i, my $s_server_o,
                              my $s_server_e = gensym,
@@ -97,22 +133,85 @@ sub start_ech_client_server
     #                  -ech_config_list "ADn+...AA="
     #                  -prexit
     my @s_client_cmd;
-    if ($b64ech ne "GREASE" ) {
+    if ($test_type eq "GREASE-suite" ) {
+        # GREASE
         @s_client_cmd = ("s_client",
-                            "-connect", "localhost:$s_server_port",
-                            "-servername", "server.example",
-                            "-CAfile", $root_pem,
-                            "-ech_config_list", $b64ech,
-                            "-prexit");
-                        # for loadsa debugging add...
-                        # "-debug", "-msg", "-trace", "-tlsextdebug");
+                         "-connect", "localhost:$s_server_port",
+                         "-servername", "server.example",
+                         "-CAfile", $root_pem,
+                         "-ech_grease_suite", "0x21,2,3",
+                         "-prexit");
+    } elsif ($test_type eq "lots-of-options" ) {
+        # real ECH with lots of options
+        @s_client_cmd = ("s_client",
+                         "-connect", "localhost:$s_server_port",
+                         "-servername", "server.example",
+                         "-CAfile", $root_pem,
+                         "-ech_config_list", $good_b64,
+                         "-ech_outer_sni", "foodle.doodle",
+                         "-ech_select", "0",
+                         "-alpn", "http/1.1",
+                         "-ech_outer_alpn", "http451",
+                         "-prexit");
+    } elsif ($test_type eq "GREASE-type" ) {
+        # GREASE with suite
+        @s_client_cmd = ("s_client",
+                         "-connect", "localhost:$s_server_port",
+                         "-servername", "server.example",
+                         "-CAfile", $root_pem,
+                         "-ech_grease_type", "12345",
+                         "-prexit");
+    } elsif ($test_type eq "GREASE" ) {
+        # GREASE with suite
+        @s_client_cmd = ("s_client",
+                         "-connect", "localhost:$s_server_port",
+                         "-servername", "server.example",
+                         "-CAfile", $root_pem,
+                         "-ech_grease",
+                         "-prexit");
+    } elsif ($test_type eq "no-outer" ) {
+        # Real ECH, no outer SNI
+        @s_client_cmd = ("s_client",
+                         "-connect", "localhost:$s_server_port",
+                         "-servername", "server.example",
+                         "-CAfile", $root_pem,
+                         "-ech_config_list", $good_b64,
+                         "-ech_no_outer_sni",
+                         "-prexit");
+    } elsif ($test_type eq "bad-ech" ) {
+        # bad ECH
+        @s_client_cmd = ("s_client",
+                         "-connect", "localhost:$s_server_port",
+                         "-servername", "server.example",
+                         "-CAfile", $root_pem,
+                         "-ech_config_list", "AEH+DQA91wAgACCBdNrnZxqNrUXSyimqqnfmNG4lHtVsbmaaIeRoUoFWFQAEAAEAAQAOc2VydmVyLmV4YW1wbGUAAA==",
+                         "-prexit");
+    } elsif ($test_type eq "cid-free" ) {
+        # Real ECH, ignore CID
+        @s_client_cmd = ("s_client",
+                         "-connect", "localhost:$s_server_port",
+                         "-servername", "server.example",
+                         "-CAfile", $root_pem,
+                         "-ech_config_list", $good_b64,
+                         "-ech_ignore_cid",
+                         "-prexit");
+    } elsif ($test_type eq "cid-wrong" ) {
+        # Real ECH, ignore CID, no trial decrypt
+        @s_client_cmd = ("s_client",
+                         "-connect", "localhost:$s_server_port",
+                         "-servername", "server.example",
+                         "-CAfile", $root_pem,
+                         "-ech_config_list", $good_b64,
+                         "-ech_ignore_cid",
+                         "-prexit");
     } else {
+        # Real ECH, and default
         @s_client_cmd = ("s_client",
-                            "-connect", "localhost:$s_server_port",
-                            "-servername", "server.example",
-                            "-CAfile", $root_pem,
-                            "-ech_grease",
-                            "-prexit");
+                         "-connect", "localhost:$s_server_port",
+                         "-servername", "server.example",
+                         "-CAfile", $root_pem,
+                         "-ech_config_list", $good_b64,
+                         "-prexit");
     }
     print("@s_client_cmd\n");
     local (*sc_input);
@@ -142,49 +241,102 @@ sub start_ech_client_server
 
 sub basic_test {
     print("\n\nBasic test.\n");
-    # extract b64 encoded ECHConfigList from pem file
-    my $b64 = "";
-    my $inwanted = 0;
-    open( my $fh, '<', $echconfig_pem ) or die "Can't open $echconfig_pem $!";
-    while( my $line = <$fh>) {
-        chomp $line;
-        if ( $line =~ /^-----BEGIN ECHCONFIG/) {
-            $inwanted = 1;
-        } elsif ( $line =~ /^-----END ECHCONFIG/) {
-            $inwanted = 0;
-        } elsif ($inwanted == 1) {
-            $b64 .= $line;
-        }
-    }
-    print("base64 ECHConfigList: $b64\n");
+    my $tt = "basic";
     my $win = "^ECH: success";
-    start_ech_client_server($b64, $win);
+    start_ech_client_server($tt, $win);
     ok($s_server_port ne "0", "s_server port check");
     print("s_server ready, on port $s_server_port pid: $s_server_pid\n");
-    ok($s_client_match == 1, "s_client using with ECH");
+    ok($s_client_match == 1, "s_client with ECH on command line");
 }
 
 sub wrong_test {
     print("\n\nWrong ECHConfig test.\n");
     # hardcoded 'cause we want a fail
-    my $b64="AEH+DQA91wAgACCBdNrnZxqNrUXSyimqqnfmNG4lHtVsbmaaIeRoUoFWFQAEAAEAAQAOc2VydmVyLmV4YW1wbGUAAA==";
+    my $tt="bad-ech",
     my $win="^ECH: failed.retry-configs: -105";
-    start_ech_client_server($b64, $win);
+    start_ech_client_server($tt, $win);
     ok($s_server_port ne "0", "s_server port check");
     print("s_server ready, on port $s_server_port pid: $s_server_pid\n");
-    ok($s_client_match == 1, "s_client using with ECH");
+    ok($s_client_match == 1, "s_client with bad ECH");
 }
 
 sub grease_test {
     print("\n\nGREASE ECHConfig test.\n");
-    my $b64="GREASE";
+    my $tt="GREASE";
     my $win="^ECH: GREASE";
-    start_ech_client_server($b64, $win);
+    start_ech_client_server($tt, $win);
     ok($s_server_port ne "0", "s_server port check");
     print("s_server ready, on port $s_server_port pid: $s_server_pid\n");
-    ok($s_client_match == 1, "s_client using with ECH");
+    ok($s_client_match == 1, "s_client with GREASE ECH");
+}
+
+sub grease_suite_test {
+    print("\n\nGREASE suite ECHConfig test.\n");
+    my $tt="GREASE-suite";
+    my $win="^ECH: GREASE";
+    start_ech_client_server($tt, $win);
+    ok($s_server_port ne "0", "s_server port check");
+    print("s_server ready, on port $s_server_port pid: $s_server_pid\n");
+    ok($s_client_match == 1, "s_client with GREASE-suite ECH");
+}
+
+sub grease_type_test {
+    print("\n\nGREASE type ECH test.\n");
+    my $tt="GREASE-type";
+    my $win="^ECH: GREASE";
+    start_ech_client_server($tt, $win);
+    ok($s_server_port ne "0", "s_server port check");
+    print("s_server ready, on port $s_server_port pid: $s_server_pid\n");
+    ok($s_client_match == 1, "s_client with GREASE-type ECH");
+}
+
+sub lots_of_options_test {
+    print("\n\nLots of options ECH test.\n");
+    my $tt="lots-of-options";
+    my $win="^ECH: success";
+    start_ech_client_server($tt, $win);
+    ok($s_server_port ne "0", "s_server port check");
+    print("s_server ready, on port $s_server_port pid: $s_server_pid\n");
+    ok($s_client_match == 1, "s_client with lots of ECH options");
+}
+
+sub no_outer_test {
+    print("\n\nNo outer SNI test.\n");
+    my $tt = "no-outer";
+    my $win = "^ECH: success";
+    start_ech_client_server($tt, $win);
+    ok($s_server_port ne "0", "s_server port check");
+    print("s_server ready, on port $s_server_port pid: $s_server_pid\n");
+    ok($s_client_match == 1, "s_client with no outer SNI ECH");
+}
+
+sub cid_free_test {
+    print("\n\nIgnore CIDs test.\n");
+    my $tt = "cid-free";
+    my $win = "^ECH: success";
+    start_ech_client_server($tt, $win);
+    ok($s_server_port ne "0", "s_server port check");
+    print("s_server ready, on port $s_server_port pid: $s_server_pid\n");
+    ok($s_client_match == 1, "s_client/s_server with no CID/trial decrypt");
+}
+
+sub cid_wrong_test {
+    print("\n\nIgnore CIDs test.\n");
+    my $tt = "cid-wrong";
+    my $win = "^ECH: failed";
+    start_ech_client_server($tt, $win);
+    ok($s_server_port ne "0", "s_server port check");
+    print("s_server ready, on port $s_server_port pid: $s_server_pid\n");
+    ok($s_client_match == 1, "s_client/s_server with no CID/no trial decrypt");
 }
 
 basic_test();
 wrong_test();
 grease_test();
+grease_suite_test();
+grease_type_test();
+lots_of_options_test();
+no_outer_test();
+cid_free_test();
+cid_wrong_test();
+
