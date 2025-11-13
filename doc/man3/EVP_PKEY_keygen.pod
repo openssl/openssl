@@ -177,11 +177,10 @@ Generate a key from a set of parameters:
  #include <openssl/rsa.h>
 
  EVP_PKEY_CTX *ctx;
- ENGINE *eng;
  EVP_PKEY *pkey = NULL, *param;
 
- /* Assumed param, eng are set up already */
- ctx = EVP_PKEY_CTX_new(param, eng);
+ /* Assumed param is set up already */
+ ctx = EVP_PKEY_CTX_new(param, NULL);
  if (!ctx)
      /* Error occurred */
  if (EVP_PKEY_keygen_init(ctx) <= 0)

@@ -124,7 +124,6 @@ be chosen from the following set:
     'u' An unsigned number that fits in the C<unsigned long> type
     'c' File in PEM, DER, or S/MIME format
     'F' A file in PEM or DER format
-    'E' Like 'F' but also allows ENGINE
     'f' Any file format
 
 The B<helpstr> is what to display when the user uses the help option,

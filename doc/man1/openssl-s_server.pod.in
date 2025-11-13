@@ -563,9 +563,8 @@ Cannot be used in conjunction with B<-early_data>.
 =item B<-async>
 
 Switch on asynchronous mode. Cryptographic operations will be performed
-asynchronously. This will only have an effect if an asynchronous capable engine
-is also used via the B<-engine> option. For test purposes the dummy async engine
-(dasync) can be used (if available).
+asynchronously. This will only have an effect if an asynchronous capable
+provider is also used via the B<-provider> option.
 
 =item B<-max_send_frag> I<+int>
 
@@ -574,19 +573,15 @@ See L<SSL_CTX_set_max_send_fragment(3)> for further information.
 
 =item B<-split_send_frag> I<+int>
 
-The size used to split data for encrypt pipelines. If more data is written in
-one go than this value then it will be split into multiple pipelines, up to the
-maximum number of pipelines defined by max_pipelines. This only has an effect if
-a suitable cipher suite has been negotiated, an engine that supports pipelining
-has been loaded, and max_pipelines is greater than 1. See
-L<SSL_CTX_set_split_send_fragment(3)> for further information.
+This is used for pipelines. There is currently B<no support> for cipher
+pipelining in libssl. See L<SSL_CTX_set_max_send_fragment(3)> for further
+information.
 
 =item B<-max_pipelines> I<+int>
 
-The maximum number of encrypt/decrypt pipelines to be used. This will only have
-an effect if an engine has been loaded that supports pipelining (e.g. the dasync
-engine) and a suitable cipher suite has been negotiated. The default value is 1.
-See L<SSL_CTX_set_max_pipelines(3)> for further information.
+This is used for pipelines. There is currently B<no support> for cipher
+pipelining in libssl. See L<SSL_CTX_set_max_send_fragment(3)> for further
+information.
 
 =item B<-naccept> I<+int>
 

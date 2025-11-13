@@ -583,12 +583,6 @@ This is used with B<SCRIPTS>, to specify that some scripts should be
 installed in the "misc" directory rather than the normal program
 directory.
 
-=item B<engine>
-
-This is used with B<MODULES>, to specify what modules are engines and
-should be installed in the engines directory instead of the modules
-directory.
-
 =item B<weak>
 
 This is used with B<DEPEND> where libraries are involved, to specify
