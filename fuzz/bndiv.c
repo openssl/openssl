@@ -94,14 +94,19 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
     success = success && BN_cmp(b5, b1) == 0;
     if (!success) {
+        printf("b1 = ");
         BN_print_fp(stdout, b1);
         putchar('\n');
+        printf("b2 = ");
         BN_print_fp(stdout, b2);
         putchar('\n');
+        printf("b3 = ");
         BN_print_fp(stdout, b3);
         putchar('\n');
+        printf("b4 = ");
         BN_print_fp(stdout, b4);
         putchar('\n');
+        printf("b5 = ");
         BN_print_fp(stdout, b5);
         putchar('\n');
         printf("%d %d %d %d %d %d %d\n", BN_is_negative(b1),
@@ -111,6 +116,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                && (BN_is_negative(b4) || BN_is_zero(b4)),
                BN_cmp(b5, b1));
         puts("----\n");
+        fflush(stdout);
     }
 
  done:
