@@ -1029,10 +1029,6 @@ size_t DTLS_get_data_mtu(const SSL *ssl)
     else
         int_overhead += mac_overhead;
 
-    /* Added record type at the end of the data */
-    if (SSL_version(ssl) == DTLS1_3_VERSION)
-        int_overhead++;
-
     if (SSL_version(ssl) == DTLS1_3_VERSION) {
         switch (SSL_get_state(ssl)) {
         case TLS_ST_BEFORE:
@@ -1052,6 +1048,10 @@ size_t DTLS_get_data_mtu(const SSL *ssl)
             rechdrlen = DTLS13_UNI_HDR_FIXED_LENGTH;
             break;
         }
+
+        /* Added record type at the end of the data */
+        int_overhead++;
+
     } else {
         rechdrlen = DTLS1_RT_HEADER_LENGTH;
     }
