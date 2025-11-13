@@ -16,10 +16,9 @@
 #include "prov/providercommon.h"
 #include "prov/ciphercommon_aead.h"
 
-/* Compatibility: OSSL_CIPHER_PARAM_AEAD_AAD may not be defined in all OpenSSL versions */
-#ifndef OSSL_CIPHER_PARAM_AEAD_AAD
-# define OSSL_CIPHER_PARAM_AEAD_AAD "aad"
-#endif
+/* Return value constants */
+#define OSSL_RV_SUCCESS 1
+#define OSSL_RV_ERROR 0
 
 /*
  * Note: get_iv_length and get_tag_length are not standard OpenSSL dispatch functions.
@@ -38,15 +37,16 @@ static void ascon_aead128_cleanctx(void *vctx)
     ctx->assoc_data_processed = false;
     ctx->tag_len = FIXED_TAG_LENGTH;
     ctx->iv_set = false;
-    memset(ctx->internal_ctx, 0, sizeof(*(ctx->internal_ctx)));
-    memset(ctx->tag, 0, sizeof(ctx->tag));
-    memset(ctx->iv, 0, sizeof(ctx->iv));
+    if (ctx->internal_ctx != NULL)
+        OPENSSL_cleanse(ctx->internal_ctx, sizeof(*(ctx->internal_ctx)));
+    OPENSSL_cleanse(ctx->tag, sizeof(ctx->tag));
+    OPENSSL_cleanse(ctx->iv, sizeof(ctx->iv));
 }
 
 static void *ascon_aead128_newctx(void *provctx)
 {
     struct ascon_aead128_ctx_st *ctx;
-    intctx_t *intctx;
+    ascon_aead_ctx_t *intctx;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -64,7 +64,7 @@ static void *ascon_aead128_newctx(void *provctx)
 
     intctx = OPENSSL_zalloc(sizeof(*intctx));
     if (intctx == NULL) {
-        OPENSSL_clear_free(ctx, sizeof(*ctx));
+        OPENSSL_free(ctx);
         return NULL;
     }
     ctx->internal_ctx = intctx;
@@ -85,20 +85,7 @@ static void *ascon_aead128_dupctx(void *vctx)
         return NULL;
 
     /* Copy all context fields */
-    dst->direction = src->direction;
-    dst->is_ongoing = src->is_ongoing;
-    dst->is_tag_set = src->is_tag_set;
-    dst->assoc_data_processed = src->assoc_data_processed;
-    dst->tag_len = src->tag_len;
-    dst->iv_set = src->iv_set;
-
-    /* Copy tag if it's set */
-    if (src->is_tag_set)
-        memcpy(dst->tag, src->tag, FIXED_TAG_LENGTH);
-
-    /* Copy IV if it's set */
-    if (src->iv_set)
-        memcpy(dst->iv, src->iv, ASCON_AEAD_NONCE_LEN);
+    *dst = *src;
 
     /* Deep copy the internal LibAscon context */
     if (src->internal_ctx != NULL && dst->internal_ctx != NULL)
@@ -116,8 +103,8 @@ static void ascon_aead128_freectx(void *vctx)
 
     ctx->provctx = NULL;
     ascon_aead128_cleanctx(ctx);
-    OPENSSL_clear_free(ctx->internal_ctx, sizeof(*ctx->internal_ctx));
-    OPENSSL_clear_free(ctx, sizeof(*ctx));
+    OPENSSL_free(ctx->internal_ctx);
+    OPENSSL_free(ctx);
 }
 
 /* Internal initialization function (shared by encrypt and decrypt init) */
@@ -443,7 +430,6 @@ static const OSSL_PARAM *ascon_aead128_settable_ctx_params(ossl_unused void *cct
                                                              ossl_unused void *provctx)
 {
     static const OSSL_PARAM table[] = {
-        {OSSL_CIPHER_PARAM_AEAD_AAD, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
         {OSSL_CIPHER_PARAM_AEAD_TAG, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
         {OSSL_CIPHER_PARAM_AEAD_TAGLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0},
         {NULL, 0, NULL, 0, 0},
@@ -463,40 +449,7 @@ static int ascon_aead128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
 
     for (p = params; p->key != NULL; p++) {
-        if (strcmp(p->key, OSSL_CIPHER_PARAM_AEAD_AAD) == 0) {
-            /* Process associated data (AAD) before encryption/decryption */
-            if (!ctx->is_ongoing) {
-                /* Must have initialized with key and nonce first */
-                ok = 0;
-                break;
-            }
-
-            /* Can only add AAD before encryption/decryption updates start */
-            if (ctx->assoc_data_processed) {
-                /* AAD already processed or encryption started - cannot add more */
-                ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
-                ok = 0;
-                break;
-            }
-
-            /* Process AAD if provided */
-            if (p->data != NULL && p->data_type == OSSL_PARAM_OCTET_STRING
-                && p->data_size > 0) {
-                ascon_aead128a_assoc_data_update(ctx->internal_ctx, p->data,
-                                                  p->data_size);
-            } else if (p->data_size == 0) {
-                /* Empty AAD is allowed */
-                /* LibAscon allows calling with NULL data and 0 length */
-                if (p->data == NULL || p->data_type == OSSL_PARAM_OCTET_STRING) {
-                    /* Empty AAD - still valid, no-op */
-                    ok = 1;
-                } else {
-                    ok = 0;
-                }
-            } else {
-                ok = 0;
-            }
-        } else if (strcmp(p->key, OSSL_CIPHER_PARAM_AEAD_TAGLEN) == 0) {
+        if (strcmp(p->key, OSSL_CIPHER_PARAM_AEAD_TAGLEN) == 0) {
             size_t tag_len = 0;
 
             if (!OSSL_PARAM_get_size_t(p, &tag_len)) {

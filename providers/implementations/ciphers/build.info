@@ -132,10 +132,9 @@ IF[{- !$disabled{siv} -}]
   SOURCE[$SIV_GOAL]=cipher_aes_siv.c cipher_aes_siv_hw.c
 ENDIF
 
-IF[{- !$disabled{ascon128} -}]
+IF[{- !$disabled{ascon_aead128} -}]
   SOURCE[$ASCON_GOAL]=\
-        cipher_ascon_aead128.c \
-        ciphercommon_ascon.c
+        cipher_ascon_aead128.c
   INCLUDE[$ASCON_GOAL]=../include
 ENDIF
 
