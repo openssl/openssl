@@ -18,6 +18,12 @@ jobs:
   release:
     runs-on: "releaser"
     steps:
+    - name: "Install syft"
+      run: |
+        export SYFT_VERSION=1.37.0
+        export SYFT_PACKAGE=syft_$SYFT_VERSION_linux_amd64.deb
+        sudo curl -L --output=./$SYFT_PACKAGE https://github.com/anchore/syft/releases/download/v$SYFT_VERSION/$SYFT_PACKAGE
+        sudo apt-get install -y ./$SYFT_PACKAGE
     - name: "Checkout"
       uses: "actions/checkout@v5"
       with:
@@ -38,6 +44,24 @@ jobs:
         openssl sha1 -r "$GITHUB_REF_NAME.tar.gz" > "$GITHUB_REF_NAME.tar.gz.sha1"
         openssl sha256 -r "$GITHUB_REF_NAME.tar.gz" > "$GITHUB_REF_NAME.tar.gz.sha256"
         gpg -u "$SIGNING_KEY_UID" -o "$GITHUB_REF_NAME.tar.gz.asc" -sba "$GITHUB_REF_NAME.tar.gz"
+    - name: "Build SBOM"
+      run: |
+        VERSION="$(echo "$GITHUB_REF_NAME" | cut -d '-' -f 2-)"
+        cd "$GITHUB_REF_NAME"
+        # extract the generated tarball
+        mkdir sbom
+        cd sbom
+        tar xvf ../assets/$GITHUB_REF_NAME.tar.gz
+        cd ../assets
+        # build our sbom based on the tarball contents
+        export SYFT_FILE_METADATA_SELECTION=all
+        export SYFT_LICENSE_CONTENT=all
+        syft scan --select-catalogers +sbom-cataloger,+file-contents-cataloger --source-name OpenSSL --source-version $VERSION --source-supplier OpenSSL --base-path ../sbom/$GITHUB_REF_NAME/ --output spdx-json=./$GITHUB_REF_NAME.sbom --from dir ../sbom/$GITHUB_REF_NAME/
+
+        # fixup license info
+        sed -i -e "s/\"licenseDeclared\":\"NOASSERTION\"/\"licenseDeclared\":\"Apache-2.0\"/g" ./$GITHUB_REF_NAME-sbom.json
+        sed -i -e "s/\"licenseConcluded\":\"NOASSERTION\"/\"licenseConcluded\":\"Apache-2.0\"/g" ./$GITHUB_REF_NAME-sbom.json
+        gpg -u "$SIGNING_KEY_UID" -o "$GITHUB_REF_NAME.sbom.asc" -sba "$GITHUB_REF_NAME.sbom"
     - name: "Create release"
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
