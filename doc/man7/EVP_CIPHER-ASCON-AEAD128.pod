@@ -2,11 +2,12 @@
 
 =head1 NAME
 
-EVP_CIPHER-ASCON128 - The Ascon128 EVP_CIPHER implementations
+EVP_CIPHER-ASCON-AEAD128 - The Ascon-AEAD128 EVP_CIPHER implementations
 
 =head1 DESCRIPTION
 
-Support for ASCON-128 symmetric encryption using the B<EVP_CIPHER> API
+Support for Ascon-AEAD128 (NIST SP 800-232) symmetric authenticated encryption
+using the B<EVP_CIPHER> API
 
 =head2 Algorithm Names
 
@@ -14,9 +15,9 @@ The following algorithms are available in the default provider:
 
 =over 4
 
-=item "ASCON128"
+=item "ASCON-AEAD128"
 
-=item "ascon128"
+=item "ascon-aead128"
 
 =back
 
@@ -26,16 +27,33 @@ This implementation supports the parameters described in L<EVP_EncryptInit(3)/PA
 
 =head1 NOTES
 
-ASCON-128 is part of the Ascon family of algorithms selected by NIST for
-standardization. It provides authenticated encryption suitable for lightweight
-and constrained environments.
+Ascon-AEAD128 is the NIST-standardized authenticated encryption algorithm
+specified in NIST SP 800-232. It is based on the Ascon128a variant of the Ascon
+family of algorithms, suitable for lightweight and constrained environments.
 
 The algorithm supports associated data (AAD) that is authenticated but not
 encrypted. AAD can be provided before encryption/decryption operations begin.
 
+Ascon-AEAD128 uses a 128-bit key, 128-bit nonce, and produces a 128-bit
+authentication tag. The implementation processes data in 128-bit (16-byte) blocks
+using the Ascon-p[8] permutation for data processing and Ascon-p[12] for
+initialization and finalization.
+
+=head1 CONFORMING TO
+
+=over 4
+
+=item NIST SP 800-232
+
+=back
+
 =head1 SEE ALSO
 
 L<provider-cipher(7)>, L<OSSL_PROVIDER-default(7)>
+
+=head1 HISTORY
+
+Ascon-AEAD128 was added in OpenSSL 4.X
 
 =head1 COPYRIGHT
 
