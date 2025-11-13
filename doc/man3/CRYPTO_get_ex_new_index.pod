@@ -48,7 +48,6 @@ The specific structures are:
     DH
     DSA
     EC_KEY
-    ENGINE
     EVP_PKEY
     RSA
     SSL
@@ -166,7 +165,8 @@ CRYPTO_alloc_ex_data() was added in OpenSSL 3.0.
 The signature of the dup_func() callback was changed in OpenSSL 3.0 to use the
 type B<void **> for B<from_d>.  Previously this parameter was of type B<void *>.
 
-Support for ENGINE "exdata" was deprecated in OpenSSL 3.0.
+Support for ENGINE "exdata" was deprecated in OpenSSL 3.0 and removed in
+OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
