@@ -48,7 +48,6 @@ The specific structures are:
     DH
     DSA
     EC_KEY
-    ENGINE
     EVP_PKEY
     RSA
     SSL
@@ -160,6 +159,8 @@ note that NULL may be a valid value.
 dup_func() should return 0 for failure and 1 for success.
 
 =head1 HISTORY
+
+Support for ENGINE "exdata" was removed in OpenSSL 4.0.
 
 CRYPTO_alloc_ex_data() was added in OpenSSL 3.0.
 

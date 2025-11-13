@@ -80,8 +80,7 @@ flags can be tested in one go. All flags that are currently set are returned, or
 zero if none of the flags are set. DSA_clear_flags() clears the specified flags
 within the DSA object.
 
-DSA_get0_engine() returns a handle to the ENGINE that has been set for this DSA
-object, or NULL if no such ENGINE has been set.
+DSA_get0_engine() returns NULL as ENGINE feature was removed.
 
 =head1 NOTES
 
@@ -96,8 +95,7 @@ DSA_set0_pqg() and DSA_set0_key() return 1 on success or 0 on failure.
 
 DSA_test_flags() returns the current state of the flags in the DSA object.
 
-DSA_get0_engine() returns the ENGINE set for the DSA object or NULL if no ENGINE
-has been set.
+DSA_get0_engine() returns NULL.
 
 =head1 SEE ALSO
 
