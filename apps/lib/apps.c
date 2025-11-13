@@ -3495,25 +3495,6 @@ EVP_PKEY *app_paramgen(EVP_PKEY_CTX *ctx, const char *alg)
     return res;
 }
 
-/*
- * Return non-zero if the legacy path is still an option.
- * This decision is based on the global command line operations and the
- * behaviour thus far.
- */
-int opt_legacy_okay(void)
-{
-    int provider_options = opt_provider_option_given();
-    int libctx = app_get0_libctx() != NULL || app_get0_propq() != NULL;
-
-    /*
-     * Having a provider option specified or a custom library context or
-     * property query, is a sure sign we're not using legacy.
-     */
-    if (provider_options || libctx)
-        return 0;
-    return 1;
-}
-
 #define MAX_KEY_SIZE 2048 /* Hope nobody needs mac key longer than 2048 bytes */
 
 /*
