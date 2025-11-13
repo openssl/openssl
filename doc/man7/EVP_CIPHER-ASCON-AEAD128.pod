@@ -55,6 +55,10 @@ L<provider-cipher(7)>, L<OSSL_PROVIDER-default(7)>
 
 Ascon-AEAD128 was added in OpenSSL 4.X
 
+This implementation conforms to the NIST SP 800-232 specification for
+Ascon-AEAD128, which defines the authenticated encryption scheme using the
+Ascon128a algorithm variant. The NIST draft specification used the Ascon128 algorithm variant.
+
 =head1 COPYRIGHT
 
 Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
