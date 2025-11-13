@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-OPENSSL_load_builtin_modules, ASN1_add_oid_module, ENGINE_add_conf_module - add standard configuration modules
+OPENSSL_load_builtin_modules, ASN1_add_oid_module
+- add standard configuration modules
 
 =head1 SYNOPSIS
 
@@ -10,7 +11,6 @@ OPENSSL_load_builtin_modules, ASN1_add_oid_module, ENGINE_add_conf_module - add 
 
  void OPENSSL_load_builtin_modules(void);
  void ASN1_add_oid_module(void);
- void ENGINE_add_conf_module(void);
 
 =head1 DESCRIPTION
 
@@ -19,8 +19,6 @@ configuration modules to the internal list. They can then be used by the
 OpenSSL configuration code.
 
 ASN1_add_oid_module() adds just the ASN1 OBJECT module.
-
-ENGINE_add_conf_module() adds just the ENGINE configuration module.
 
 =head1 NOTES
 
@@ -43,10 +41,6 @@ None of the functions return a value.
 =head1 SEE ALSO
 
 L<config(5)>, L<OPENSSL_config(3)>
-
-=head1 HISTORY
-
-ENGINE_add_conf_module() was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

@@ -27,8 +27,7 @@ I<pkey>.  Note that some signature algorithms (i.e. Ed25519 and Ed448)
 do not use a digest during signing.  In this case I<pnid> will be set
 to NID_undef.  This function is only reliable for legacy keys, which
 are keys with a B<EVP_PKEY_ASN1_METHOD>; these keys have typically
-been loaded from engines, or created with L<EVP_PKEY_assign_RSA(3)> or
-similar.
+been created with L<EVP_PKEY_assign_RSA(3)> or similar.
 
 =head1 NOTES
 

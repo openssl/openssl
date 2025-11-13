@@ -35,47 +35,37 @@ Applications should instead use the OSSL_PROVIDER APIs.
 
 An B<RSA_METHOD> specifies the functions that OpenSSL uses for RSA
 operations. By modifying the method, alternative implementations such as
-hardware accelerators may be used. IMPORTANT: See the NOTES section for
-important information about how these RSA API functions are affected by the
-use of B<ENGINE> API calls.
+hardware accelerators may be used.
 
 Initially, the default RSA_METHOD is the OpenSSL internal implementation,
 as returned by RSA_PKCS1_OpenSSL().
 
 RSA_set_default_method() makes B<meth> the default method for all RSA
 structures created later.
-B<NB>: This is true only whilst no ENGINE has
-been set as a default for RSA, so this function is no longer recommended.
-This function is not thread-safe and should not be called at the same time
+B<NB>: This function is not thread-safe and should not be called at the same time
 as other OpenSSL functions.
 
 RSA_get_default_method() returns a pointer to the current default
-RSA_METHOD. However, the meaningfulness of this result is dependent on
-whether the ENGINE API is being used, so this function is no longer
-recommended.
+RSA_METHOD.
 
 RSA_set_method() selects B<meth> to perform all operations using the key
-B<rsa>. This will replace the RSA_METHOD used by the RSA key and if the
-previous method was supplied by an ENGINE, the handle to that ENGINE will
-be released during the change. It is possible to have RSA keys that only
-work with certain RSA_METHOD implementations (e.g. from an ENGINE module
-that supports embedded hardware-protected keys), and in such cases
+B<rsa>. This will replace the RSA_METHOD used by the RSA key.
+It is possible to have RSA keys that only
+work with certain RSA_METHOD implementations, and in such cases
 attempting to change the RSA_METHOD for the key can have unexpected
 results.
 
 RSA_get_method() returns a pointer to the RSA_METHOD being used by B<rsa>.
-This method may or may not be supplied by an ENGINE implementation, but if
-it is, the return value can only be guaranteed to be valid as long as the
+The return value can only be guaranteed to be valid as long as the
 RSA key itself is valid and does not have its implementation changed by
 RSA_set_method().
 
 RSA_flags() returns the B<flags> that are set for B<rsa>'s current
 RSA_METHOD. See the BUGS section.
 
-RSA_new_method() allocates and initializes an RSA structure so that
-B<engine> will be used for the RSA operations. If B<engine> is NULL, the
-default ENGINE for RSA operations is used, and if no default ENGINE is set,
-the RSA_METHOD controlled by RSA_set_default_method() is used.
+RSA_new_method() allocates and initializes an RSA structure.
+B<engine> must be NULL and the RSA_METHOD controlled by RSA_set_default_method()
+is used.
 
 RSA_flags() returns the B<flags> that are set for B<rsa>'s current method.
 
@@ -149,11 +139,7 @@ and RSA_get_method() return pointers to the respective RSA_METHODs.
 RSA_set_default_method() returns no value.
 
 RSA_set_method() returns a pointer to the old RSA_METHOD implementation
-that was replaced. However, this return value should probably be ignored
-because if it was supplied by an ENGINE, the pointer could be invalidated
-at any time if the ENGINE is unloaded (in fact it could be unloaded as a
-result of the RSA_set_method() function releasing its handle to the
-ENGINE). For this reason, the return type may be replaced with a B<void>
+that was replaced. The return type may be replaced with a B<void>
 declaration in a future release.
 
 RSA_new_method() returns NULL and sets an error code that can be obtained
@@ -185,7 +171,7 @@ was replaced to always return NULL in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

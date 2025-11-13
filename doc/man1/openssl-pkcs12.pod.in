@@ -245,20 +245,16 @@ by default.
 
 This specifies the input filename or URI.
 Standard input is used by default.
-With the B<-export> option this is a file with certificates and a key,
-or a URI that refers to a key accessed via an engine.
+With the B<-export> option this is a file with certificates and a key.
 The order of credentials in a file doesn't matter but one private key and
 its corresponding certificate should be present. If additional
 certificates are present they will also be included in the PKCS#12 output file.
 
 =item B<-inkey> I<filename>|I<uri>
 
-The private key input for PKCS12 output.
+The input filename for the private key for PKCS12 output.
 If this option is not specified then the input file (B<-in> argument) must
 contain a private key.
-If no engine is used, the argument is taken as a file.
-If the B<-engine> option is used or the URI has prefix C<org.openssl.engine:>
-then the rest of the URI is taken as key identifier for the given engine.
 
 =item B<-certfile> I<filename>
 

@@ -111,8 +111,6 @@ desired length, and pass that buffer to L<EVP_PKEY_derive(3)> along with (a
 pointer initialized to) the desired length. Passing a B<NULL> buffer to obtain
 the length is allowed when using EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY.
 
-Optimised versions of HKDF can be implemented in an ENGINE.
-
 =head1 RETURN VALUES
 
 All these functions return 1 for success and 0 or a negative value for failure.

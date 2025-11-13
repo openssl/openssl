@@ -131,14 +131,15 @@ an application will have to periodically "poll" the job by attempting to restart
 it to see if it is ready to continue.
 
 B<ASYNC_WAIT_CTX>s also have a "callback" mechanism to notify applications. The
-callback is set by an application, and it will be automatically called when an
-engine completes a cryptography operation, so that the application can resume
-the paused work flow without polling. An engine could be written to look whether
-the callback has been set. If it has then it would use the callback mechanism
-in preference to the file descriptor notifications. If a callback is not set
-then the engine may use file descriptor based notifications. Please note that
-not all engines may support the callback mechanism, so the callback may not be
-used even if it has been set. See ASYNC_WAIT_CTX_new() for more details.
+callback is set by an application, and it will be automatically called when a
+provider completes a cryptography operation, so that the application can resume
+the paused work flow without polling. A provider could be written to look
+whether the callback has been set. If it has then it would use the callback
+mechanism in preference to the file descriptor notifications. If a callback is
+not set then the provider may use file descriptor based notifications. Please
+note that not all providers may support the callback mechanism, so the callback
+may not be used even if it has been set. See ASYNC_WAIT_CTX_new() for more
+details.
 
 The ASYNC_block_pause() function will prevent the currently active job from
 pausing. The block will remain in place until a subsequent call to
@@ -243,8 +244,8 @@ The following example demonstrates how to use most of the core async APIs:
      /*
       * Create a way to inform the calling thread when this job is ready
       * to resume, in this example we're using file descriptors.
-      * For offloading the task to an asynchronous ENGINE it's not necessary,
-      * the ENGINE should handle that internally.
+      * For offloading the task to an asynchronous provider it's not necessary,
+      * the provider should handle that internally.
       */
 
      if (pipe(pipefds) != 0) {

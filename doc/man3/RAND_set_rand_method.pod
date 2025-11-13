@@ -30,12 +30,8 @@ generation.
 RAND_OpenSSL() returns the default B<RAND_METHOD> implementation by OpenSSL.
 This implementation ensures that the PRNG state is unique for each thread.
 
-If an B<ENGINE> is loaded that provides the RAND API, however, it will
-be used instead of the method returned by RAND_OpenSSL().  This is deprecated
-in OpenSSL 3.0.
 
-RAND_set_rand_method() makes B<meth> the method for PRNG use.  If an
-ENGINE was providing the method, it will be released first.
+RAND_set_rand_method() makes B<meth> the method for PRNG use.
 
 RAND_get_rand_method() returns a pointer to the current B<RAND_METHOD>.
 
@@ -66,7 +62,6 @@ methods.
 L<EVP_RAND(3)>,
 L<RAND_set_DRBG_type(3)>,
 L<RAND_bytes(3)>,
-L<ENGINE_by_id(3)>,
 L<EVP_RAND(7)>,
 L<RAND(7)>
 
