@@ -76,6 +76,15 @@ OpenSSL 4.0
 
    *Daniel Kubec*
 
+ * ENGINE support was removed. The `no-engine` build option and the
+   `OPENSSL_NO_ENGINE` macro is always present.
+   Applications using `ENGINE_` functions unguarded with `OPENSSL_NO_ENGINE`
+   can be built by defining a macro `OPENSSL_ENGINE_STUBS`, however all these
+   functions will return error when called. Provider API should be used to
+   replace ENGINEs functionality.
+
+   *Milan Broz*, *Neil Horman*, *Norbert Pocs*
+
 OpenSSL 3.6
 -----------
 
