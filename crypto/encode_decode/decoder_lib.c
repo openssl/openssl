@@ -165,7 +165,7 @@ int OSSL_DECODER_from_data(OSSL_DECODER_CTX *ctx, const unsigned char **pdata,
 
 int OSSL_DECODER_CTX_set_selection(OSSL_DECODER_CTX *ctx, int selection)
 {
-    if (!ossl_assert(ctx != NULL)) {
+    if (ctx == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -186,7 +186,7 @@ int OSSL_DECODER_CTX_set_selection(OSSL_DECODER_CTX *ctx, int selection)
 int OSSL_DECODER_CTX_set_input_type(OSSL_DECODER_CTX *ctx,
                                     const char *input_type)
 {
-    if (!ossl_assert(ctx != NULL)) {
+    if (ctx == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -207,7 +207,7 @@ int OSSL_DECODER_CTX_set_input_type(OSSL_DECODER_CTX *ctx,
 int OSSL_DECODER_CTX_set_input_structure(OSSL_DECODER_CTX *ctx,
                                          const char *input_structure)
 {
-    if (!ossl_assert(ctx != NULL)) {
+    if (ctx == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -398,7 +398,7 @@ int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder)
     void *decoderctx = NULL;
     void *provctx = NULL;
 
-    if (!ossl_assert(ctx != NULL) || !ossl_assert(decoder != NULL)) {
+    if (ctx == NULL || decoder == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -597,7 +597,7 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
     int numdecoders;
     STACK_OF(OSSL_DECODER) *skdecoders;
 
-    if (!ossl_assert(ctx != NULL)) {
+    if (ctx == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -705,7 +705,7 @@ int OSSL_DECODER_CTX_get_num_decoders(OSSL_DECODER_CTX *ctx)
 int OSSL_DECODER_CTX_set_construct(OSSL_DECODER_CTX *ctx,
                                    OSSL_DECODER_CONSTRUCT *construct)
 {
-    if (!ossl_assert(ctx != NULL)) {
+    if (ctx == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -722,7 +722,7 @@ int OSSL_DECODER_CTX_set_construct(OSSL_DECODER_CTX *ctx,
 int OSSL_DECODER_CTX_set_construct_data(OSSL_DECODER_CTX *ctx,
                                         void *construct_data)
 {
-    if (!ossl_assert(ctx != NULL)) {
+    if (ctx == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -739,7 +739,7 @@ int OSSL_DECODER_CTX_set_construct_data(OSSL_DECODER_CTX *ctx,
 int OSSL_DECODER_CTX_set_cleanup(OSSL_DECODER_CTX *ctx,
                                  OSSL_DECODER_CLEANUP *cleanup)
 {
-    if (!ossl_assert(ctx != NULL)) {
+    if (ctx == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -802,10 +802,8 @@ int OSSL_DECODER_export(OSSL_DECODER_INSTANCE *decoder_inst,
     OSSL_DECODER *decoder = NULL;
     void *decoderctx = NULL;
 
-    if (!(ossl_assert(decoder_inst != NULL)
-          && ossl_assert(reference != NULL)
-          && ossl_assert(export_cb != NULL)
-          && ossl_assert(export_cbarg != NULL))) {
+    if (decoder_inst == NULL || reference == NULL
+        || export_cb == NULL || export_cbarg == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
