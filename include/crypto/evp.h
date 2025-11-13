@@ -290,6 +290,8 @@ struct evp_md_st {
     OSSL_FUNC_digest_freectx_fn *freectx;
     OSSL_FUNC_digest_copyctx_fn *copyctx;
     OSSL_FUNC_digest_dupctx_fn *dupctx;
+    OSSL_FUNC_digest_serialize_fn *serialize;
+    OSSL_FUNC_digest_deserialize_fn *deserialize;
     OSSL_FUNC_digest_get_params_fn *get_params;
     OSSL_FUNC_digest_set_ctx_params_fn *set_ctx_params;
     OSSL_FUNC_digest_get_ctx_params_fn *get_ctx_params;

@@ -175,6 +175,87 @@ err:
     return NULL;
 }
 
+static int serialize(EVP_MD_CTX *ctx, uint8_t **out, size_t *outlen)
+{
+    size_t len = 0;
+    uint8_t *ret = NULL;
+
+    if (!TEST_true(EVP_DigestSerialize(ctx, NULL, &len))
+            || !TEST_ptr(ret = OPENSSL_zalloc(len))
+            || !TEST_true(EVP_DigestSerialize(ctx, ret, &len))) {
+        OPENSSL_free(ret);
+        return 0;
+    }
+    *out = ret;
+    *outlen = len;
+    return 1;
+
+}
+
+static int shake_final_serialize_test(int tstid)
+{
+    int ret = 0;
+    EVP_MD_CTX *ctx = NULL;
+    uint8_t out[sizeof(shake256_output)];
+    uint8_t *ser = NULL;
+    size_t serlen = 0;
+    int off = 0;
+
+    if (!TEST_ptr(ctx = shake_setup("SHAKE256")))
+        return 0;
+
+    while (1) {
+        if (tstid == 0) {
+            if (!serialize(ctx, &ser, &serlen))
+                goto end;
+            break;
+        }
+        if (!TEST_true(EVP_DigestUpdate(ctx, shake256_input, 16)))
+            goto end;
+        if (tstid == 1) {
+            if (!serialize(ctx, &ser, &serlen))
+                goto end;
+            break;
+        }
+
+        if (!TEST_true(EVP_DigestUpdate(ctx, shake256_input + 16,
+                                        sizeof(shake256_input) - 16)))
+            goto end;
+        if (tstid == 2) {
+            if (!serialize(ctx, &ser, &serlen))
+                goto end;
+            break;
+        }
+        if (!TEST_true(EVP_DigestFinalXOF(ctx, out, sizeof(out))))
+            goto end;
+        if (tstid == 3 && !serialize(ctx, &ser, &serlen))
+            goto end;
+        break;
+    }
+    EVP_MD_CTX_free(ctx);
+
+    if (!TEST_ptr(ctx = shake_setup("SHAKE256")))
+        return 0;
+
+    if (!TEST_true(EVP_DigestDeserialize(ctx, ser, serlen)))
+        goto end;
+    if (tstid == 1)
+        off = 16;
+    if (tstid < 2
+            && !TEST_true(EVP_DigestUpdate(ctx, shake256_input + off,
+                                           sizeof(shake256_input) - off)))
+        goto end;
+    if (!TEST_int_eq(EVP_DigestFinalXOF(ctx, out, sizeof(out)), tstid == 3 ? 0 : 1)
+            || !TEST_mem_eq(out, sizeof(out),
+                            shake256_output,sizeof(shake256_output)))
+        goto end;
+    ret = 1;
+end:
+    EVP_MD_CTX_free(ctx);
+    OPENSSL_free(ser);
+    return ret;
+}
+
 static int shake_kat_test(void)
 {
     int ret = 0;
@@ -550,5 +631,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(shake_squeeze_dup_test, OSSL_NELEM(dupoffset_tests));
     ADD_TEST(xof_fail_test);
     ADD_TEST(shake_squeeze_no_absorb_test);
+    ADD_ALL_TESTS(shake_final_serialize_test, 4);
     return 1;
 }
