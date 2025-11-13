@@ -39,7 +39,7 @@ const OPTIONS verify_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [cert...]\n"},
 
     OPT_SECTION("General"),
-    {"help", OPT_HELP, '-', "Display this summary"},
+    {"help", OPT_HELP, '-', "Display this summary and possible values for -purpose and -verify_name"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
@@ -72,7 +72,7 @@ const OPTIONS verify_options[] = {
     OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
-    {"cert", 0, 0, "Certificate(s) to verify (optional; stdin used otherwise)"},
+    {"certs", 0, 0, "Target certificate(s) to verify (optional; stdin used otherwise)"},
     {NULL}
 };
 
@@ -102,7 +102,7 @@ int verify_main(int argc, char **argv)
             goto end;
         case OPT_HELP:
             opt_help(verify_options);
-            BIO_printf(bio_err, "\nRecognized certificate chain purposes:\n");
+            BIO_printf(bio_err, "\nRecognized verification purposes:\n");
             for (i = 0; i < X509_PURPOSE_get_count(); i++) {
                 X509_PURPOSE *ptmp = X509_PURPOSE_get0(i);
 
@@ -111,7 +111,7 @@ int verify_main(int argc, char **argv)
                         X509_PURPOSE_get0_name(ptmp));
             }
 
-            BIO_printf(bio_err, "Recognized certificate policy names:\n");
+            BIO_printf(bio_err, "Recognized verification methods:\n");
             for (i = 0; i < X509_VERIFY_PARAM_get_count(); i++) {
                 const X509_VERIFY_PARAM *vptmp = X509_VERIFY_PARAM_get0(i);
 
