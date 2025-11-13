@@ -302,10 +302,11 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
     return evp_md_init_internal(ctx, type, NULL);
 }
 
-int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
+int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type,
+                      ENGINE *impl)
 {
-    /* make the compiler happy */
-    (void)impl;
+    if (impl != NULL)
+        return 0;
     return evp_md_init_internal(ctx, type, NULL);
 }
 
@@ -650,10 +651,10 @@ int EVP_Digest(const void *data, size_t count,
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     int ret;
 
-    if (ctx == NULL)
+    if (ctx == NULL || impl != NULL)
         return 0;
     EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_ONESHOT);
-    ret = EVP_DigestInit_ex(ctx, type, impl)
+    ret = EVP_DigestInit_ex(ctx, type, NULL)
         && EVP_DigestUpdate(ctx, data, count)
         && EVP_DigestFinal_ex(ctx, md, size);
     EVP_MD_CTX_free(ctx);

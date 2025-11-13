@@ -67,7 +67,7 @@ static void s390x_call_kmac(HMAC_CTX *ctx, const unsigned char *in, size_t len)
     ctx->plat.s390x.ikp = 1;
 }
 
-int s390x_HMAC_init(HMAC_CTX *ctx, const void *key, int key_len, ENGINE *impl)
+int s390x_HMAC_init(HMAC_CTX *ctx, const void *key, int key_len)
 {
     unsigned char *key_param;
     unsigned int key_param_len;
@@ -137,7 +137,7 @@ int s390x_HMAC_init(HMAC_CTX *ctx, const void *key, int key_len, ENGINE *impl)
             return 0;
 
         if (key_len > ctx->plat.s390x.blk_size) {
-            if (!EVP_DigestInit_ex(ctx->md_ctx, ctx->md, impl)
+            if (!EVP_DigestInit_ex(ctx->md_ctx, ctx->md, NULL)
                     || !EVP_DigestUpdate(ctx->md_ctx, key, key_len)
                     || !EVP_DigestFinal_ex(ctx->md_ctx, key_param,
                                            &key_param_len))

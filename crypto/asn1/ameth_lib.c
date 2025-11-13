@@ -75,23 +75,21 @@ static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
 }
 
 /*
- * Find an implementation of an ASN1 algorithm. If 'pe' is not NULL also
- * search through engines and set *pe to a functional reference to the engine
- * implementing 'type' or NULL if no engine implements it.
+ * Find an implementation of an ASN1 algorithm. If 'pe' is not NULL, it will be
+ * filled with NULL, as ENGINEs are removed, therefore it will never be found.
  */
 
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type)
 {
     const EVP_PKEY_ASN1_METHOD *t;
 
+    if (pe != NULL)
+        *pe = NULL;
     for (;;) {
         t = pkey_asn1_find(type);
         if (!t || !(t->pkey_flags & ASN1_PKEY_ALIAS))
             break;
         type = t->pkey_base_id;
-    }
-    if (pe) {
-        *pe = NULL;
     }
     return t;
 }
@@ -102,11 +100,10 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
     int i;
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
 
+    if (pe != NULL)
+        *pe = NULL;
     if (len == -1)
         len = (int)strlen(str);
-    if (pe) {
-        *pe = NULL;
-    }
     for (i = EVP_PKEY_asn1_get_count(); i-- > 0; ) {
         ameth = EVP_PKEY_asn1_get0(i);
         if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
