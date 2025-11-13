@@ -33,7 +33,7 @@ from the file descriptor). This function should only be called if the B<SSL>
 object is currently waiting for asynchronous work to complete (i.e.
 B<SSL_ERROR_WANT_ASYNC> has been received - see L<SSL_get_error(3)>). Typically
 the list will only contain one file descriptor. However, if multiple asynchronous
-capable engines are in use then more than one is possible. The number of file
+capable providers are in use then more than one is possible. The number of file
 descriptors returned is stored in I<*numfds> and the file descriptors themselves
 are in I<*fds>. The I<fds> parameter may be NULL in which case no file
 descriptors are returned but I<*numfds> is still populated. It is the callers

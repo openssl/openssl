@@ -191,7 +191,6 @@ will be allowed but the desired configuration will B<not> be used.
  providers = providers
  alg_section = evp_properties
  ssl_conf = ssl_configuration
- engines = engines
  random = random
 
  [oids]
@@ -205,9 +204,6 @@ will be allowed but the desired configuration will B<not> be used.
 
  [ssl_configuration]
  ... SSL/TLS configuration properties here ...
-
- [engines]
- ... engine properties here ...
 
  [random]
  ... random properties here ...
@@ -367,69 +363,6 @@ key types, as shown here:
  RSA.Certificate = server-rsa.pem
  ECDSA.Certificate = server-ecdsa.pem
 
-=head2 Engine Configuration
-
-The name B<engines> in the initialization section names the section
-containing the list of ENGINE configurations.
-As with the providers, each name in this section identifies an engine
-with the configuration for that engine.
-The engine-specific section is used to specify how to load the engine,
-activate it, and set other parameters.
-
-Within an engine section, the following names have meaning:
-
-=over 4
-
-=item B<engine_id>
-
-This is used to specify an alternate name, overriding the default name
-specified in the list of engines. If present, it must be first.
-For example:
-
- [engines]
- foo = foo_engine
-
- [foo_engine]
- engine_id = myfoo
-
-=item B<dynamic_path>
-
-This loads and adds an ENGINE from the given path. It is equivalent to
-sending the ctrls B<SO_PATH> with the path argument followed by B<LIST_ADD>
-with value B<2> and B<LOAD> to the dynamic ENGINE.  If this is not the
-required behaviour then alternative ctrls can be sent directly to the
-dynamic ENGINE using ctrl commands.
-
-=item B<init>
-
-This specifies whether to initialize the ENGINE. If the value is B<0> the
-ENGINE will not be initialized, if the value is B<1> an attempt is made
-to initialize
-the ENGINE immediately. If the B<init> command is not present then an
-attempt will be made to initialize the ENGINE after all commands in its
-section have been processed.
-
-=item B<default_algorithms>
-
-This sets the default algorithms an ENGINE will supply using the function
-ENGINE_set_default_string().
-
-=back
-
-All other names are taken to be the name of a ctrl command that is
-sent to the ENGINE, and the value is the argument passed with the command.
-The special value B<EMPTY> means no value is sent with the command.
-For example:
-
- [engines]
- foo = foo_engine
-
- [foo_engine]
- dynamic_path = /some/path/fooengine.so
- some_ctrl = some_value
- default_algorithms = ALL
- other_ctrl = EMPTY
-
 =head2 Random Configuration
 
 The name B<random> in the initialization section names the section
@@ -548,11 +481,6 @@ F<sample>.
 The path to the config file, or the empty string for none.
 Ignored in set-user-ID and set-group-ID programs.
 
-=item B<OPENSSL_ENGINES>
-
-The path to the engines directory.
-Ignored in set-user-ID and set-group-ID programs.
-
 =item B<OPENSSL_MODULES>
 
 The path to the directory with OpenSSL modules, such as providers.
@@ -585,6 +513,8 @@ could be used in pathnames, only the double-quote character was recognized,
 and comments began with a semi-colon.
 This function was deprecated in OpenSSL 3.0; applications with
 configuration files using that syntax will have to be modified.
+
+The I<engines> parameter was removed in OpenSSL 4.0.
 
 =head1 SEE ALSO
 
