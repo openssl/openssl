@@ -358,8 +358,8 @@ Cipher suites using SHA256 or SHA384.
 
 =item B<aGOST>
 
-Cipher suites using GOST R 34.10 (either 2001 or 94) for authentication
-(needs an engine supporting GOST algorithms).
+Cipher suites using GOST R 34.10 (either 2001 or 94) for authentication.
+(needs a provider supporting GOST algorithms)
 
 =item B<aGOST01>
 
