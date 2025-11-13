@@ -7,21 +7,22 @@
  * https://www.openssl.org/source/license.html
  */
 
-# include "cipher_ascon128.h"
-# include <stdlib.h>
-# include <string.h>
-# include <openssl/core_names.h>
-# include <openssl/proverr.h>
-# include "prov/implementations.h"
-# include "prov/providercommon.h"
-# include "prov/ciphercommon_aead.h"
+#include "cipher_ascon128.h"
+#include <stdlib.h>
+#include <string.h>
+#include <openssl/core_names.h>
+#include <openssl/proverr.h>
+#include "prov/implementations.h"
+#include "prov/providercommon.h"
+#include "prov/ciphercommon_aead.h"
 
 /* Compatibility: OSSL_CIPHER_PARAM_AEAD_AAD may not be defined in all OpenSSL versions */
-# ifndef OSSL_CIPHER_PARAM_AEAD_AAD
-#  define OSSL_CIPHER_PARAM_AEAD_AAD "aad"
-# endif
+#ifndef OSSL_CIPHER_PARAM_AEAD_AAD
+# define OSSL_CIPHER_PARAM_AEAD_AAD "aad"
+#endif
 
-/* Note: get_iv_length and get_tag_length are not standard OpenSSL dispatch functions.
+/*
+ * Note: get_iv_length and get_tag_length are not standard OpenSSL dispatch functions.
  * IV and tag lengths are retrieved via get_ctx_params instead.
  * These functions are kept for internal use only.
  */
@@ -62,8 +63,7 @@ static void *ascon128_newctx(void *provctx)
     ctx->iv_set = false;
 
     intctx = OPENSSL_zalloc(sizeof(*intctx));
-    if (intctx == NULL)
-    {
+    if (intctx == NULL) {
         OPENSSL_clear_free(ctx, sizeof(*ctx));
         return NULL;
     }
@@ -93,19 +93,16 @@ static void *ascon128_dupctx(void *vctx)
     dst->iv_set = src->iv_set;
 
     /* Copy tag if it's set */
-    if (src->is_tag_set) {
+    if (src->is_tag_set)
         memcpy(dst->tag, src->tag, FIXED_TAG_LENGTH);
-    }
 
     /* Copy IV if it's set */
-    if (src->iv_set) {
+    if (src->iv_set)
         memcpy(dst->iv, src->iv, ASCON_AEAD_NONCE_LEN);
-    }
 
     /* Deep copy the internal LibAscon context */
-    if (src->internal_ctx != NULL && dst->internal_ctx != NULL) {
+    if (src->internal_ctx != NULL && dst->internal_ctx != NULL)
         memcpy(dst->internal_ctx, src->internal_ctx, sizeof(*dst->internal_ctx));
-    }
 
     return dst;
 }
@@ -132,42 +129,36 @@ static int ascon128_internal_init(void *vctx, direction_t direction,
 {
     struct ascon_ctx_st *ctx = vctx;
 
-    if (ctx == NULL)
-    {
+    if (ctx == NULL) {
         return OSSL_RV_ERROR;
     }
 
     /* Validate key length if key is provided */
-    if (key != NULL)
-    {
-        if (keylen != ASCON_AEAD128_KEY_LEN)
-        {
+    if (key != NULL) {
+        if (keylen != ASCON_AEAD128_KEY_LEN) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return OSSL_RV_ERROR;
         }
     }
 
     /* Validate IV length if IV is provided */
-    if (iv != NULL)
-    {
-        if (ivlen != ASCON_AEAD_NONCE_LEN)
-        {
+    if (iv != NULL) {
+        if (ivlen != ASCON_AEAD_NONCE_LEN) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return OSSL_RV_ERROR;
         }
     }
 
     /* Only clean and initialize if both key and IV are provided */
-    if (key != NULL && iv != NULL)
-    {
+    if (key != NULL && iv != NULL) {
         /* Preserve tag for decryption - it may have been set before reinitialization */
         uint8_t saved_tag[FIXED_TAG_LENGTH];
         int tag_was_set = ctx->is_tag_set;
-        if (tag_was_set && direction == DECRYPTION)
-        {
+
+        if (tag_was_set && direction == DECRYPTION) {
             memcpy(saved_tag, ctx->tag, FIXED_TAG_LENGTH);
         }
-        
+
         ascon128_cleanctx(ctx);
         ctx->direction = direction;
         ascon_aead128_init(ctx->internal_ctx, key, iv);
@@ -175,14 +166,13 @@ static int ascon128_internal_init(void *vctx, direction_t direction,
         memcpy(ctx->iv, iv, ASCON_AEAD_NONCE_LEN);
         ctx->iv_set = true;
         ctx->is_ongoing = true;
-        
+
         /* Restore tag for decryption if it was set before reinitialization */
-        if (tag_was_set && direction == DECRYPTION)
-        {
+        if (tag_was_set && direction == DECRYPTION) {
             memcpy(ctx->tag, saved_tag, FIXED_TAG_LENGTH);
             ctx->is_tag_set = true;
         }
-        
+
         return OSSL_RV_SUCCESS;
     }
 
@@ -210,32 +200,27 @@ static int ascon128_update(void *vctx, unsigned char *out, size_t *outl,
 {
     struct ascon_ctx_st *ctx = vctx;
 
-    if (ctx == NULL)
-    {
+    if (ctx == NULL) {
         /* Context must be set before update */
         return OSSL_RV_ERROR;
     }
 
-    if (ctx->is_ongoing == false)
-    {
+    if (ctx->is_ongoing == false) {
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return OSSL_RV_ERROR;
     }
 
     /* Handle AAD operation (out == NULL) - process associated data */
-    if (out == NULL)
-    {
+    if (out == NULL) {
         /* Can only add AAD before encryption/decryption updates start */
-        if (ctx->assoc_data_processed)
-        {
+        if (ctx->assoc_data_processed) {
             /* AAD already processed or encryption started - cannot add more */
             ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
             return OSSL_RV_ERROR;
         }
 
         /* Process AAD if provided */
-        if (inl > 0 && in != NULL)
-        {
+        if (inl > 0 && in != NULL) {
             ascon_aead128_assoc_data_update(ctx->internal_ctx, in, inl);
         }
         if (outl != NULL)
@@ -243,8 +228,7 @@ static int ascon128_update(void *vctx, unsigned char *out, size_t *outl,
         return OSSL_RV_SUCCESS;
     }
 
-    if (ctx->direction == ENCRYPTION)
-    {
+    if (ctx->direction == ENCRYPTION) {
         /* Mark that we've started encryption - AAD cannot be added after this */
         /* LibAscon encrypt_update will finalize AAD automatically if needed */
         ctx->assoc_data_processed = true;
@@ -254,13 +238,12 @@ static int ascon128_update(void *vctx, unsigned char *out, size_t *outl,
         uint8_t *ciphertext = out;
         size_t ciphertext_len;
 
-        ciphertext_len = ascon_aead128_encrypt_update(ctx->internal_ctx, ciphertext, plaintext, plaintext_len);
+        ciphertext_len = ascon_aead128_encrypt_update(ctx->internal_ctx, ciphertext,
+                                                       plaintext, plaintext_len);
         if (outl != NULL)
             *outl = ciphertext_len;
         return OSSL_RV_SUCCESS;
-    }
-    else if (ctx->direction == DECRYPTION)
-    {
+    } else if (ctx->direction == DECRYPTION) {
         /* Mark that we've started decryption - AAD cannot be added after this */
         /* LibAscon decrypt_update will finalize AAD automatically if needed */
         ctx->assoc_data_processed = true;
@@ -270,7 +253,8 @@ static int ascon128_update(void *vctx, unsigned char *out, size_t *outl,
         const uint8_t *ciphertext = in;
         size_t ciphertext_len = inl;
 
-        plaintext_len = ascon_aead128_decrypt_update(ctx->internal_ctx, plaintext, ciphertext, ciphertext_len);
+        plaintext_len = ascon_aead128_decrypt_update(ctx->internal_ctx, plaintext,
+                                                     ciphertext, ciphertext_len);
         if (outl != NULL)
             *outl = plaintext_len;
         return OSSL_RV_SUCCESS;
@@ -278,63 +262,54 @@ static int ascon128_update(void *vctx, unsigned char *out, size_t *outl,
     return OSSL_RV_ERROR;
 }
 
-/* PROVIDER'S FINAL FUNCTION*/
+/* PROVIDER'S FINAL FUNCTION */
 
 static int ascon128_final(void *vctx, unsigned char *out, size_t *outl, size_t outsize)
 {
     struct ascon_ctx_st *ctx = vctx;
 
-    if (ctx == NULL)
-    {
+    if (ctx == NULL) {
         /* Context must be set before final */
         return OSSL_RV_ERROR;
     }
 
-    if (ctx->is_ongoing == false)
-    {
+    if (ctx->is_ongoing == false) {
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return OSSL_RV_ERROR;
     }
 
-    if (ctx->direction == ENCRYPTION)
-    {
+    if (ctx->direction == ENCRYPTION) {
         uint8_t *ciphertext = out;
         uint8_t *tag = ctx->tag;
         size_t tag_len = FIXED_TAG_LENGTH;
         size_t ret;
 
-        ret = ascon_aead128_encrypt_final((ascon_aead_ctx_t *)ctx->internal_ctx, ciphertext, tag, tag_len);
+        ret = ascon_aead128_encrypt_final((ascon_aead_ctx_t *)ctx->internal_ctx,
+                                          ciphertext, tag, tag_len);
         *outl = ret;
         ctx->is_tag_set = true;
 
         return OSSL_RV_SUCCESS;
-    }
-    else if (ctx->direction == DECRYPTION)
-    {
-
+    } else if (ctx->direction == DECRYPTION) {
         uint8_t *plaintext = out;
         bool is_tag_valid = false;
         size_t ret;
 
-        if (ctx->is_tag_set)
-        {
+        if (ctx->is_tag_set) {
             const uint8_t *expected_tag = ctx->tag;
             size_t expected_tag_len = FIXED_TAG_LENGTH;
 
-            ret = ascon_aead128_decrypt_final((ascon_aead_ctx_t *)ctx->internal_ctx, plaintext, &is_tag_valid, expected_tag, expected_tag_len);
+            ret = ascon_aead128_decrypt_final((ascon_aead_ctx_t *)ctx->internal_ctx,
+                                              plaintext, &is_tag_valid, expected_tag,
+                                              expected_tag_len);
 
-            if (is_tag_valid)
-            {
+            if (is_tag_valid) {
                 *outl = ret;
                 return OSSL_RV_SUCCESS;
-            }
-            else
-            {
+            } else {
                 return OSSL_RV_ERROR;
             }
-        }
-        else
-        {
+        } else {
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return OSSL_RV_ERROR;
         }
@@ -346,7 +321,7 @@ static int ascon128_final(void *vctx, unsigned char *out, size_t *outl, size_t o
 
 /* Parameters that libcrypto can get from this implementation */
 static const OSSL_PARAM *ascon128_gettable_params(ossl_unused void *cctx,
-                                                    ossl_unused void *provctx)
+                                                   ossl_unused void *provctx)
 {
     static const OSSL_PARAM table[] = {
         {"blocksize", OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0},
@@ -379,7 +354,7 @@ static int ascon128_get_params(OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM *ascon128_gettable_ctx_params(ossl_unused void *cctx,
-                                                       ossl_unused void *provctx)
+                                                      ossl_unused void *provctx)
 {
     static const OSSL_PARAM table[] = {
         {OSSL_CIPHER_PARAM_KEYLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0},
@@ -399,8 +374,7 @@ static int ascon128_get_ctx_params(void *vctx, OSSL_PARAM params[])
     OSSL_PARAM *p;
     int ok = 1;
 
-    if (ctx == NULL)
-    {
+    if (ctx == NULL) {
         return 0;
     }
 
@@ -414,22 +388,19 @@ static int ascon128_get_ctx_params(void *vctx, OSSL_PARAM params[])
         } else if (strcmp(p->key, OSSL_CIPHER_PARAM_AEAD_TAG) == 0) {
             /* Check that p->data_type matches "octet string" */
             /* Check that p->data (the given buffer) is not NULL */
-            if (p->data == NULL || p->data_type != OSSL_PARAM_OCTET_STRING)
-            {
+            if (p->data == NULL || p->data_type != OSSL_PARAM_OCTET_STRING) {
                 ok = 0;
                 break;
             }
 
             /* Check if the given buffer is big enough */
-            if (p->data_size < FIXED_TAG_LENGTH)
-            {
+            if (p->data_size < FIXED_TAG_LENGTH) {
                 ok = 0;
                 break;
             }
 
             /* Check if ctx->is_tag_set is true */
-            if (!ctx->is_tag_set)
-            {
+            if (!ctx->is_tag_set) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
                 ok = 0;
                 break;
@@ -441,22 +412,19 @@ static int ascon128_get_ctx_params(void *vctx, OSSL_PARAM params[])
         } else if (strcmp(p->key, OSSL_CIPHER_PARAM_UPDATED_IV) == 0) {
             /* Check that p->data_type matches "octet string" */
             /* Check that p->data (the given buffer) is not NULL */
-            if (p->data == NULL || p->data_type != OSSL_PARAM_OCTET_STRING)
-            {
+            if (p->data == NULL || p->data_type != OSSL_PARAM_OCTET_STRING) {
                 ok = 0;
                 break;
             }
 
             /* Check if the given buffer is big enough */
-            if (p->data_size < ASCON_AEAD_NONCE_LEN)
-            {
+            if (p->data_size < ASCON_AEAD_NONCE_LEN) {
                 ok = 0;
                 break;
             }
 
             /* Check if ctx->iv_set is true */
-            if (!ctx->iv_set)
-            {
+            if (!ctx->iv_set) {
                 ok = 0;
                 break;
             }
@@ -472,7 +440,7 @@ static int ascon128_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
 /* Parameters that libcrypto can send to this implementation */
 static const OSSL_PARAM *ascon128_settable_ctx_params(ossl_unused void *cctx,
-                                                       ossl_unused void *provctx)
+                                                      ossl_unused void *provctx)
 {
     static const OSSL_PARAM table[] = {
         {OSSL_CIPHER_PARAM_AEAD_AAD, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
@@ -490,24 +458,21 @@ static int ascon128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     int ok = 1;
 
-    if (ctx == NULL)
-    {
+    if (ctx == NULL) {
         return 0;
     }
 
     for (p = params; p->key != NULL; p++) {
         if (strcmp(p->key, OSSL_CIPHER_PARAM_AEAD_AAD) == 0) {
             /* Process associated data (AAD) before encryption/decryption */
-            if (!ctx->is_ongoing)
-            {
+            if (!ctx->is_ongoing) {
                 /* Must have initialized with key and nonce first */
                 ok = 0;
                 break;
             }
 
             /* Can only add AAD before encryption/decryption updates start */
-            if (ctx->assoc_data_processed)
-            {
+            if (ctx->assoc_data_processed) {
                 /* AAD already processed or encryption started - cannot add more */
                 ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
                 ok = 0;
@@ -515,37 +480,30 @@ static int ascon128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             }
 
             /* Process AAD if provided */
-            if (p->data != NULL && p->data_type == OSSL_PARAM_OCTET_STRING && p->data_size > 0)
-            {
-                ascon_aead128_assoc_data_update(ctx->internal_ctx, p->data, p->data_size);
-            }
-            else if (p->data_size == 0)
-            {
+            if (p->data != NULL && p->data_type == OSSL_PARAM_OCTET_STRING
+                && p->data_size > 0) {
+                ascon_aead128_assoc_data_update(ctx->internal_ctx, p->data,
+                                                 p->data_size);
+            } else if (p->data_size == 0) {
                 /* Empty AAD is allowed */
                 /* LibAscon allows calling with NULL data and 0 length */
-                if (p->data == NULL || p->data_type == OSSL_PARAM_OCTET_STRING)
-                {
+                if (p->data == NULL || p->data_type == OSSL_PARAM_OCTET_STRING) {
                     /* Empty AAD - still valid, no-op */
                     ok = 1;
-                }
-                else
-                {
+                } else {
                     ok = 0;
                 }
-            }
-            else
-            {
+            } else {
                 ok = 0;
             }
         } else if (strcmp(p->key, OSSL_CIPHER_PARAM_AEAD_TAGLEN) == 0) {
             size_t tag_len = 0;
-            if (!OSSL_PARAM_get_size_t(p, &tag_len))
-            {
+
+            if (!OSSL_PARAM_get_size_t(p, &tag_len)) {
                 ok = 0;
                 break;
             }
-            if (tag_len != FIXED_TAG_LENGTH)
-            {
+            if (tag_len != FIXED_TAG_LENGTH) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_NOT_SUPPORTED);
                 ok = 0;
                 break;
@@ -554,12 +512,10 @@ static int ascon128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             ok = 1;
         } else if (strcmp(p->key, OSSL_CIPHER_PARAM_AEAD_TAG) == 0) {
             /* When data is NULL, this is a request to set tag length (for encryption) */
-            if (p->data == NULL)
-            {
+            if (p->data == NULL) {
                 /* For encryption, we accept setting tag length via NULL data */
                 /* The tag length is passed in data_size */
-                if (p->data_size != FIXED_TAG_LENGTH)
-                {
+                if (p->data_size != FIXED_TAG_LENGTH) {
                     ERR_raise(ERR_LIB_PROV, PROV_R_NOT_SUPPORTED);
                     ok = 0;
                     break;
@@ -568,16 +524,14 @@ static int ascon128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                 ok = 1;
                 break;
             }
-            
-            if (p->data_type != OSSL_PARAM_OCTET_STRING)
-            {
+
+            if (p->data_type != OSSL_PARAM_OCTET_STRING) {
                 ok = 0;
                 break;
             }
 
             /* We only accept strictly 16-byte tags here */
-            if (p->data_size != FIXED_TAG_LENGTH)
-            {
+            if (p->data_size != FIXED_TAG_LENGTH) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_NOT_SUPPORTED);
                 ok = 0;
                 break;
@@ -589,9 +543,10 @@ static int ascon128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return ok;
 }
 
-/* One-shot cipher function for OSSL_FUNC_CIPHER_CIPHER
+/*
+ * One-shot cipher function for OSSL_FUNC_CIPHER_CIPHER
  * This function handles one-shot encryption/decryption operations.
- * Based on AES-SIV pattern: handles final (in == NULL), AAD (out == NULL), 
+ * Based on AES-SIV pattern: handles final (in == NULL), AAD (out == NULL),
  * and regular encryption/decryption operations.
  * For AEAD ciphers, CIPHER and UPDATE should behave the same way.
  */
@@ -607,11 +562,10 @@ static int ascon128_cipher(void *vctx, unsigned char *out, size_t *outl,
         return 0;
 
     /* Handle final operation (in == NULL) */
-    if (in == NULL)
-    {
+    if (in == NULL) {
         size_t final_outl = 0;
-        if (ascon128_final(ctx, out, &final_outl, outsize) == OSSL_RV_SUCCESS)
-        {
+
+        if (ascon128_final(ctx, out, &final_outl, outsize) == OSSL_RV_SUCCESS) {
             if (outl != NULL)
                 *outl = final_outl;
             return 1;
@@ -620,20 +574,16 @@ static int ascon128_cipher(void *vctx, unsigned char *out, size_t *outl,
     }
 
     /* Handle AAD operation (out == NULL) - process associated data */
-    if (out == NULL)
-    {
-        if (!ctx->is_ongoing)
-        {
+    if (out == NULL) {
+        if (!ctx->is_ongoing) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
             return 0;
         }
-        if (ctx->assoc_data_processed)
-        {
+        if (ctx->assoc_data_processed) {
             ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
             return 0;
         }
-        if (inl > 0)
-        {
+        if (inl > 0) {
             ascon_aead128_assoc_data_update(ctx->internal_ctx, in, inl);
         }
         if (outl != NULL)
@@ -642,23 +592,22 @@ static int ascon128_cipher(void *vctx, unsigned char *out, size_t *outl,
     }
 
     /* Check output buffer size */
-    if (outsize < inl)
-    {
+    if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
 
     /* Handle regular encryption/decryption (streaming update) */
-    if (!ctx->is_ongoing)
-    {
+    if (!ctx->is_ongoing) {
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return 0;
     }
 
     /* Use the same logic as update */
     size_t update_outl = 0;
-    if (ascon128_update(ctx, out, &update_outl, outsize, in, inl) == OSSL_RV_SUCCESS)
-    {
+
+    if (ascon128_update(ctx, out, &update_outl, outsize, in, inl)
+        == OSSL_RV_SUCCESS) {
         if (outl != NULL)
             *outl = update_outl;
         return 1;
@@ -707,4 +656,3 @@ const OSSL_DISPATCH ossl_ascon128_functions[] = {
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS, (void (*)(void))ascon128_settable_ctx_params },
     OSSL_DISPATCH_END
 };
-

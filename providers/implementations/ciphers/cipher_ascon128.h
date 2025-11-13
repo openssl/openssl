@@ -10,8 +10,8 @@
 #ifndef OSSL_PROV_CIPHER_ASCON128_H
 # define OSSL_PROV_CIPHER_ASCON128_H
 
-# include "ciphercommon_ascon.h"
-# include "crypto/ascon.h"  /* ASCON algorithm header */
+#include "ciphercommon_ascon.h"
+#include "crypto/ascon.h"  /* ASCON algorithm header */
 
 /*********************************************************************
  *
@@ -20,13 +20,12 @@
  *****/
 
 /* ASCON-128 uses a fixed 16-byte (128-bit) tag length */
-# ifndef FIXED_TAG_LENGTH
-#  define FIXED_TAG_LENGTH ASCON_AEAD_TAG_MIN_SECURE_LEN
-# endif
+#ifndef FIXED_TAG_LENGTH
+# define FIXED_TAG_LENGTH ASCON_AEAD_TAG_MIN_SECURE_LEN
+#endif
 
 /* Direction enum for encryption/decryption */
-typedef enum direction_et
-{
+typedef enum direction_et {
     ENCRYPTION,
     DECRYPTION
 } direction_t;
@@ -44,7 +43,7 @@ struct ascon_ctx_st
 
     direction_t direction;  /* either encryption or decryption */
     bool is_ongoing;        /* true = operation has started */
-    intctx_t *internal_ctx; /* a handle for the implementation internal context*/
+    intctx_t *internal_ctx; /* a handle for the implementation internal context */
     bool assoc_data_processed;  /* whether associated data has been processed */
     size_t tag_len;          /* tag length being used */
     uint8_t iv[ASCON_AEAD_NONCE_LEN]; /* storing the IV (nonce) for get_updated_iv */
