@@ -44,13 +44,6 @@ void *app_malloc_array(size_t n, size_t sz, const char *what)
     return vp;
 }
 
-/* shim to prevent sucking in too much from apps */
-
-int opt_legacy_okay(void)
-{
-    return 1;
-}
-
 /*
  * These three functions are defined here so that they don't need to come from
  * the apps source code and pull in a lot of additional things.
