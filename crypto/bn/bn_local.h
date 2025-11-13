@@ -695,7 +695,7 @@ int ossl_bn_check_prime(const BIGNUM *w, int checks, BN_CTX *ctx,
 
 /**
  * Set top on a given BIGNUM.  If it has an associated OSSL_FN (the 'data'
- * field is non-NULL), and the new 'top' is less than the existing 'top',
+ * field is non-NULL), and the new 'top' is less than the existing 'dmax',
  * zeroise the space between them.
  *
  * @param[in]   b       The BIGNUM instance to zeroise
@@ -707,9 +707,9 @@ static ossl_inline int bn_set_top(BIGNUM *b, int newtop)
 {
     assert(b != NULL && newtop >= 0);
 
-    if (b->data != NULL && newtop < b->top) {
+    if (b->data != NULL && newtop < b->dmax) {
         BN_ULONG *start = &(b->d[newtop]);
-        size_t bytes = sizeof(BN_ULONG) * (b->top - newtop);
+        size_t bytes = sizeof(BN_ULONG) * (b->dmax - newtop);
 
         memset(start, 0, bytes);
     }
