@@ -741,9 +741,10 @@ int load_cert_certs(const char *uri,
     return ret;
 }
 
-STACK_OF(X509) *load_certs_multifile(char *files, const char *pass,
+STACK_OF(X509) *load_certs_multifile(char *files, const char *source,
                                      const char *desc, X509_VERIFY_PARAM *vpm)
 {
+    char *pass = get_passwd(source, desc);
     STACK_OF(X509) *certs = NULL;
     STACK_OF(X509) *result = sk_X509_new_null();
 
@@ -764,11 +765,13 @@ STACK_OF(X509) *load_certs_multifile(char *files, const char *pass,
         certs = NULL;
         files = next;
     }
+    clear_free(pass);
     return result;
 
  oom:
     BIO_printf(bio_err, "out of memory\n");
  err:
+    clear_free(pass);
     OSSL_STACK_OF_X509_free(certs);
     OSSL_STACK_OF_X509_free(result);
     return NULL;
@@ -796,9 +799,10 @@ static X509_STORE *sk_X509_to_store(X509_STORE *store /* may be NULL */,
  * Create cert store structure with certificates read from given file(s).
  * Returns pointer to created X509_STORE on success, NULL on error.
  */
-X509_STORE *load_certstore(char *input, const char *pass, const char *desc,
+X509_STORE *load_certstore(char *input, const char *source, const char *desc,
                            X509_VERIFY_PARAM *vpm)
 {
+    char *pass = get_passwd(source, desc);
     X509_STORE *store = NULL;
     STACK_OF(X509) *certs = NULL;
 
@@ -808,15 +812,19 @@ X509_STORE *load_certstore(char *input, const char *pass, const char *desc,
 
         if (!load_cert_certs(input, NULL, &certs, 1, pass, desc, vpm)) {
             X509_STORE_free(store);
-            return NULL;
+            store = NULL;
+            goto end;
         }
         ok = (store = sk_X509_to_store(store, certs)) != NULL;
         OSSL_STACK_OF_X509_free(certs);
         certs = NULL;
         if (!ok)
-            return NULL;
+            goto end;
         input = next;
     }
+
+ end:
+    clear_free(pass);
     return store;
 }
 
@@ -913,7 +921,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
                         X509 **pcert, STACK_OF(X509) **pcerts,
                         X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls)
 {
-    PW_CB_DATA uidata;
+    PW_CB_DATA uidata = { pass, uri };
     OSSL_STORE_CTX *ctx = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
@@ -971,9 +979,6 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
          */
         SET_EXPECT(OSSL_STORE_INFO_CRL);
     }
-
-    uidata.password = pass;
-    uidata.prompt_info = uri;
 
     if ((input_type = format2string(format)) != NULL) {
         itp[0] = OSSL_PARAM_construct_utf8_string(OSSL_STORE_PARAM_INPUT_TYPE,
@@ -1110,7 +1115,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
             pcrls = NULL;
         failed = FAIL_NAME;
         if (failed != NULL && !quiet)
-            BIO_printf(bio_err, "Could not find");
+            BIO_printf(bio_err, "Could not find or decode");
     }
 
     if (failed != NULL && !quiet) {
