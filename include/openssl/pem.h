@@ -22,6 +22,7 @@
 # include <openssl/evp.h>
 # include <openssl/x509.h>
 # include <openssl/pemerr.h>
+# include <openssl/pkcs12.h>
 # ifndef OPENSSL_NO_STDIO
 #  include <stdio.h>
 # endif
@@ -60,6 +61,7 @@ extern "C" {
 # define PEM_STRING_SM2PRIVATEKEY "SM2 PRIVATE KEY"
 # define PEM_STRING_SM2PARAMETERS "SM2 PARAMETERS"
 # define PEM_STRING_ACERT        "ATTRIBUTE CERTIFICATE"
+# define PEM_STRING_PKCS12       "PKCS12"
 
 # define PEM_TYPE_ENCRYPTED      10
 # define PEM_TYPE_MIC_ONLY       20
@@ -453,6 +455,7 @@ DECLARE_PEM_rw(PKCS7, PKCS7)
 DECLARE_PEM_rw(NETSCAPE_CERT_SEQUENCE, NETSCAPE_CERT_SEQUENCE)
 DECLARE_PEM_rw(PKCS8, X509_SIG)
 DECLARE_PEM_rw(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO)
+DECLARE_PEM_rw(PKCS12, PKCS12)
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 DECLARE_PEM_rw_cb_attr(OSSL_DEPRECATEDIN_3_0, RSAPrivateKey, RSA)
 DECLARE_PEM_rw_attr(OSSL_DEPRECATEDIN_3_0, RSAPublicKey, RSA)
