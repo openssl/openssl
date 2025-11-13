@@ -536,12 +536,14 @@ static int eddsa_set_ctx_params(void *vpeddsactx, const OSSL_PARAM params[])
             peddsactx->dom2_flag = 0;
             peddsactx->prehash_flag = 0;
             peddsactx->context_string_flag = 0;
+#ifndef FIPS_MODULE
         } else if (OPENSSL_strcasecmp(pinstance_name, SN_Ed25519ctx) == 0) {
             peddsactx->instance_id = ID_Ed25519ctx;
             if (peddsactx->key->type != ECX_KEY_TYPE_ED25519) return 0;
             peddsactx->dom2_flag = 1;
             peddsactx->prehash_flag = 0;
             peddsactx->context_string_flag = 1;
+#endif
         } else if (OPENSSL_strcasecmp(pinstance_name, SN_Ed25519ph) == 0) {
             peddsactx->instance_id = ID_Ed25519ph;
             if (peddsactx->key->type != ECX_KEY_TYPE_ED25519) return 0;
