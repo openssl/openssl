@@ -11,12 +11,22 @@
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
 
+{- produce_param_decoder('sha3_set_ctx_params',
+                         (['OSSL_DIGEST_SERIALIZATION', 'buffer', 'octet_string'],
+                         )); -}
+
+{- produce_param_decoder('sha3_get_ctx_params',
+                         (['OSSL_DIGEST_SERIALIZATION', 'buffer', 'octet_string'],
+                         )); -}
+
 {- produce_param_decoder('shake_get_ctx_params',
                          (['OSSL_DIGEST_PARAM_XOFLEN',   'xoflen',   'size_t'],
                           ['OSSL_DIGEST_PARAM_SIZE',     'size',     'size_t'],
+                          ['OSSL_DIGEST_SERIALIZATION',  'buffer',   'octet_string'],
                          )); -}
 
 {- produce_param_decoder('shake_set_ctx_params',
                          (['OSSL_DIGEST_PARAM_XOFLEN',   'xoflen',   'size_t'],
                           ['OSSL_DIGEST_PARAM_SIZE',     'xoflen',   'size_t'],
+                          ['OSSL_DIGEST_SERIALIZATION',  'buffer',   'octet_string'],
                          )); -}
