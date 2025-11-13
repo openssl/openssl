@@ -10,7 +10,9 @@
 #ifndef OSSL_PROV_CIPHER_ASCON_AEAD128_H
 # define OSSL_PROV_CIPHER_ASCON_AEAD128_H
 
-#include "ciphercommon_ascon.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include <openssl/core.h>
 #include "crypto/ascon.h"  /* ASCON algorithm header */
 
 /*********************************************************************
@@ -30,23 +32,21 @@ typedef enum direction_et {
     DECRYPTION
 } direction_t;
 
-/* Internal context type alias */
-typedef ascon_aead_ctx_t intctx_t;
-
 /* ASCON-AEAD128 AEAD cipher context structure */
 struct ascon_aead128_ctx_st
 {
-    struct provider_ctx_st *provctx;
+    void *provctx;
+    ascon_aead_ctx_t *internal_ctx; /* a handle for the implementation internal context */
 
     uint8_t tag[FIXED_TAG_LENGTH]; /* storing the tag with fixed length */
-    bool is_tag_set;               /* whether a tag has been computed or set */
+    uint8_t iv[ASCON_AEAD_NONCE_LEN]; /* storing the IV (nonce) for get_updated_iv */
+
+    size_t tag_len;          /* tag length being used */
 
     direction_t direction;  /* either encryption or decryption */
+    bool is_tag_set;               /* whether a tag has been computed or set */
     bool is_ongoing;        /* true = operation has started */
-    intctx_t *internal_ctx; /* a handle for the implementation internal context */
     bool assoc_data_processed;  /* whether associated data has been processed */
-    size_t tag_len;          /* tag length being used */
-    uint8_t iv[ASCON_AEAD_NONCE_LEN]; /* storing the IV (nonce) for get_updated_iv */
     bool iv_set;             /* whether the IV has been set */
 };
 
