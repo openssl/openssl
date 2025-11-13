@@ -7,19 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_PROV_CIPHER_ASCON128_H
-# define OSSL_PROV_CIPHER_ASCON128_H
+#ifndef OSSL_PROV_CIPHER_ASCON_AEAD128_H
+# define OSSL_PROV_CIPHER_ASCON_AEAD128_H
 
 #include "ciphercommon_ascon.h"
 #include "crypto/ascon.h"  /* ASCON algorithm header */
 
 /*********************************************************************
  *
- *  ASCON-128 Context Structure and Types
+ *  ASCON-AEAD128 Context Structure and Types
  *
  *****/
 
-/* ASCON-128 uses a fixed 16-byte (128-bit) tag length */
+/* ASCON-AEAD128 uses a fixed 16-byte (128-bit) tag length */
 #ifndef FIXED_TAG_LENGTH
 # define FIXED_TAG_LENGTH ASCON_AEAD_TAG_MIN_SECURE_LEN
 #endif
@@ -33,8 +33,8 @@ typedef enum direction_et {
 /* Internal context type alias */
 typedef ascon_aead_ctx_t intctx_t;
 
-/* ASCON-128 AEAD cipher context structure */
-struct ascon_ctx_st
+/* ASCON-AEAD128 AEAD cipher context structure */
+struct ascon_aead128_ctx_st
 {
     struct provider_ctx_st *provctx;
 
@@ -52,11 +52,11 @@ struct ascon_ctx_st
 
 /*********************************************************************
  *
- *  ASCON-128 AEAD Function Declarations
+ *  ASCON-AEAD128 AEAD Function Declarations
  *
  *****/
 
-/* Dispatch table for ASCON-128 */
-extern const OSSL_DISPATCH ossl_ascon128_functions[];
+/* Dispatch table for ASCON-AEAD128 */
+extern const OSSL_DISPATCH ossl_ascon_aead128_functions[];
 
-#endif /* OSSL_PROV_CIPHER_ASCON128_H */
+#endif /* OSSL_PROV_CIPHER_ASCON_AEAD128_H */

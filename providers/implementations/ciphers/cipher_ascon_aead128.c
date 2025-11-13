@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cipher_ascon128.h"
+#include "cipher_ascon_aead128.h"
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/core_names.h>
@@ -27,11 +27,11 @@
  * These functions are kept for internal use only.
  */
 
-/* ASCON-128 uses a fixed key length of 16 bytes (128 bits) */
+/* ASCON-AEAD128 uses a fixed key length of 16 bytes (128 bits) */
 
-static void ascon128_cleanctx(void *vctx)
+static void ascon_aead128_cleanctx(void *vctx)
 {
-    struct ascon_ctx_st *ctx = vctx;
+    struct ascon_aead128_ctx_st *ctx = vctx;
 
     ctx->is_tag_set = false;
     ctx->is_ongoing = false;
@@ -43,9 +43,9 @@ static void ascon128_cleanctx(void *vctx)
     memset(ctx->iv, 0, sizeof(ctx->iv));
 }
 
-static void *ascon128_newctx(void *provctx)
+static void *ascon_aead128_newctx(void *provctx)
 {
-    struct ascon_ctx_st *ctx;
+    struct ascon_aead128_ctx_st *ctx;
     intctx_t *intctx;
 
     if (!ossl_prov_is_running())
@@ -72,16 +72,16 @@ static void *ascon128_newctx(void *provctx)
     return ctx;
 }
 
-static void *ascon128_dupctx(void *vctx)
+static void *ascon_aead128_dupctx(void *vctx)
 {
-    struct ascon_ctx_st *src = vctx;
-    struct ascon_ctx_st *dst = NULL;
+    struct ascon_aead128_ctx_st *src = vctx;
+    struct ascon_aead128_ctx_st *dst = NULL;
 
     if (src == NULL || !ossl_prov_is_running())
         return NULL;
 
     /* Create new context using the same provider context */
-    if ((dst = ascon128_newctx(src->provctx)) == NULL)
+    if ((dst = ascon_aead128_newctx(src->provctx)) == NULL)
         return NULL;
 
     /* Copy all context fields */
@@ -107,27 +107,27 @@ static void *ascon128_dupctx(void *vctx)
     return dst;
 }
 
-static void ascon128_freectx(void *vctx)
+static void ascon_aead128_freectx(void *vctx)
 {
-    struct ascon_ctx_st *ctx = vctx;
+    struct ascon_aead128_ctx_st *ctx = vctx;
 
     if (ctx == NULL)
         return;
 
     ctx->provctx = NULL;
-    ascon128_cleanctx(ctx);
+    ascon_aead128_cleanctx(ctx);
     OPENSSL_clear_free(ctx->internal_ctx, sizeof(*ctx->internal_ctx));
     OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
 /* Internal initialization function (shared by encrypt and decrypt init) */
 
-static int ascon128_internal_init(void *vctx, direction_t direction,
-                                  const unsigned char *key, size_t keylen,
-                                  const unsigned char *iv, size_t ivlen,
-                                  const OSSL_PARAM params[])
+static int ascon_aead128_internal_init(void *vctx, direction_t direction,
+                                        const unsigned char *key, size_t keylen,
+                                        const unsigned char *iv, size_t ivlen,
+                                        const OSSL_PARAM params[])
 {
-    struct ascon_ctx_st *ctx = vctx;
+    struct ascon_aead128_ctx_st *ctx = vctx;
 
     if (ctx == NULL) {
         return OSSL_RV_ERROR;
@@ -159,9 +159,9 @@ static int ascon128_internal_init(void *vctx, direction_t direction,
             memcpy(saved_tag, ctx->tag, FIXED_TAG_LENGTH);
         }
 
-        ascon128_cleanctx(ctx);
+        ascon_aead128_cleanctx(ctx);
         ctx->direction = direction;
-        ascon_aead128_init(ctx->internal_ctx, key, iv);
+        ascon_aead128a_init(ctx->internal_ctx, key, iv);
         /* Store the IV for get_updated_iv */
         memcpy(ctx->iv, iv, ASCON_AEAD_NONCE_LEN);
         ctx->iv_set = true;
@@ -181,24 +181,24 @@ static int ascon128_internal_init(void *vctx, direction_t direction,
     return OSSL_RV_SUCCESS;
 }
 
-static int ascon128_einit(void *vctx, const unsigned char *key, size_t keylen,
-                          const unsigned char *iv, size_t ivlen,
-                          const OSSL_PARAM params[])
+static int ascon_aead128_einit(void *vctx, const unsigned char *key, size_t keylen,
+                                const unsigned char *iv, size_t ivlen,
+                                const OSSL_PARAM params[])
 {
-    return ascon128_internal_init(vctx, ENCRYPTION, key, keylen, iv, ivlen, params);
+    return ascon_aead128_internal_init(vctx, ENCRYPTION, key, keylen, iv, ivlen, params);
 }
 
-static int ascon128_dinit(void *vctx, const unsigned char *key, size_t keylen,
-                          const unsigned char *iv, size_t ivlen,
-                          const OSSL_PARAM params[])
+static int ascon_aead128_dinit(void *vctx, const unsigned char *key, size_t keylen,
+                                const unsigned char *iv, size_t ivlen,
+                                const OSSL_PARAM params[])
 {
-    return ascon128_internal_init(vctx, DECRYPTION, key, keylen, iv, ivlen, params);
+    return ascon_aead128_internal_init(vctx, DECRYPTION, key, keylen, iv, ivlen, params);
 }
 
-static int ascon128_update(void *vctx, unsigned char *out, size_t *outl,
-                           size_t outsize, const unsigned char *in, size_t inl)
+static int ascon_aead128_update(void *vctx, unsigned char *out, size_t *outl,
+                                 size_t outsize, const unsigned char *in, size_t inl)
 {
-    struct ascon_ctx_st *ctx = vctx;
+    struct ascon_aead128_ctx_st *ctx = vctx;
 
     if (ctx == NULL) {
         /* Context must be set before update */
@@ -221,7 +221,7 @@ static int ascon128_update(void *vctx, unsigned char *out, size_t *outl,
 
         /* Process AAD if provided */
         if (inl > 0 && in != NULL) {
-            ascon_aead128_assoc_data_update(ctx->internal_ctx, in, inl);
+            ascon_aead128a_assoc_data_update(ctx->internal_ctx, in, inl);
         }
         if (outl != NULL)
             *outl = 0;
@@ -238,8 +238,8 @@ static int ascon128_update(void *vctx, unsigned char *out, size_t *outl,
         uint8_t *ciphertext = out;
         size_t ciphertext_len;
 
-        ciphertext_len = ascon_aead128_encrypt_update(ctx->internal_ctx, ciphertext,
-                                                       plaintext, plaintext_len);
+        ciphertext_len = ascon_aead128a_encrypt_update(ctx->internal_ctx, ciphertext,
+                                                        plaintext, plaintext_len);
         if (outl != NULL)
             *outl = ciphertext_len;
         return OSSL_RV_SUCCESS;
@@ -253,8 +253,8 @@ static int ascon128_update(void *vctx, unsigned char *out, size_t *outl,
         const uint8_t *ciphertext = in;
         size_t ciphertext_len = inl;
 
-        plaintext_len = ascon_aead128_decrypt_update(ctx->internal_ctx, plaintext,
-                                                     ciphertext, ciphertext_len);
+        plaintext_len = ascon_aead128a_decrypt_update(ctx->internal_ctx, plaintext,
+                                                        ciphertext, ciphertext_len);
         if (outl != NULL)
             *outl = plaintext_len;
         return OSSL_RV_SUCCESS;
@@ -264,9 +264,9 @@ static int ascon128_update(void *vctx, unsigned char *out, size_t *outl,
 
 /* PROVIDER'S FINAL FUNCTION */
 
-static int ascon128_final(void *vctx, unsigned char *out, size_t *outl, size_t outsize)
+static int ascon_aead128_final(void *vctx, unsigned char *out, size_t *outl, size_t outsize)
 {
-    struct ascon_ctx_st *ctx = vctx;
+    struct ascon_aead128_ctx_st *ctx = vctx;
 
     if (ctx == NULL) {
         /* Context must be set before final */
@@ -284,8 +284,8 @@ static int ascon128_final(void *vctx, unsigned char *out, size_t *outl, size_t o
         size_t tag_len = FIXED_TAG_LENGTH;
         size_t ret;
 
-        ret = ascon_aead128_encrypt_final((ascon_aead_ctx_t *)ctx->internal_ctx,
-                                          ciphertext, tag, tag_len);
+        ret = ascon_aead128a_encrypt_final((ascon_aead_ctx_t *)ctx->internal_ctx,
+                                            ciphertext, tag, tag_len);
         *outl = ret;
         ctx->is_tag_set = true;
 
@@ -299,9 +299,9 @@ static int ascon128_final(void *vctx, unsigned char *out, size_t *outl, size_t o
             const uint8_t *expected_tag = ctx->tag;
             size_t expected_tag_len = FIXED_TAG_LENGTH;
 
-            ret = ascon_aead128_decrypt_final((ascon_aead_ctx_t *)ctx->internal_ctx,
-                                              plaintext, &is_tag_valid, expected_tag,
-                                              expected_tag_len);
+            ret = ascon_aead128a_decrypt_final((ascon_aead_ctx_t *)ctx->internal_ctx,
+                                                plaintext, &is_tag_valid, expected_tag,
+                                                expected_tag_len);
 
             if (is_tag_valid) {
                 *outl = ret;
@@ -320,8 +320,8 @@ static int ascon128_final(void *vctx, unsigned char *out, size_t *outl, size_t o
 }
 
 /* Parameters that libcrypto can get from this implementation */
-static const OSSL_PARAM *ascon128_gettable_params(ossl_unused void *cctx,
-                                                   ossl_unused void *provctx)
+static const OSSL_PARAM *ascon_aead128_gettable_params(ossl_unused void *cctx,
+                                                        ossl_unused void *provctx)
 {
     static const OSSL_PARAM table[] = {
         {"blocksize", OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0},
@@ -334,7 +334,7 @@ static const OSSL_PARAM *ascon128_gettable_params(ossl_unused void *cctx,
     return table;
 }
 
-static int ascon128_get_params(OSSL_PARAM params[])
+static int ascon_aead128_get_params(OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
     int ok = 1;
@@ -353,8 +353,8 @@ static int ascon128_get_params(OSSL_PARAM params[])
     return ok;
 }
 
-static const OSSL_PARAM *ascon128_gettable_ctx_params(ossl_unused void *cctx,
-                                                      ossl_unused void *provctx)
+static const OSSL_PARAM *ascon_aead128_gettable_ctx_params(ossl_unused void *cctx,
+                                                             ossl_unused void *provctx)
 {
     static const OSSL_PARAM table[] = {
         {OSSL_CIPHER_PARAM_KEYLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0},
@@ -368,9 +368,9 @@ static const OSSL_PARAM *ascon128_gettable_ctx_params(ossl_unused void *cctx,
     return table;
 }
 
-static int ascon128_get_ctx_params(void *vctx, OSSL_PARAM params[])
+static int ascon_aead128_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
-    struct ascon_ctx_st *ctx = vctx;
+    struct ascon_aead128_ctx_st *ctx = vctx;
     OSSL_PARAM *p;
     int ok = 1;
 
@@ -439,8 +439,8 @@ static int ascon128_get_ctx_params(void *vctx, OSSL_PARAM params[])
 }
 
 /* Parameters that libcrypto can send to this implementation */
-static const OSSL_PARAM *ascon128_settable_ctx_params(ossl_unused void *cctx,
-                                                      ossl_unused void *provctx)
+static const OSSL_PARAM *ascon_aead128_settable_ctx_params(ossl_unused void *cctx,
+                                                             ossl_unused void *provctx)
 {
     static const OSSL_PARAM table[] = {
         {OSSL_CIPHER_PARAM_AEAD_AAD, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
@@ -452,9 +452,9 @@ static const OSSL_PARAM *ascon128_settable_ctx_params(ossl_unused void *cctx,
     return table;
 }
 
-static int ascon128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int ascon_aead128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
-    struct ascon_ctx_st *ctx = vctx;
+    struct ascon_aead128_ctx_st *ctx = vctx;
     const OSSL_PARAM *p;
     int ok = 1;
 
@@ -482,8 +482,8 @@ static int ascon128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             /* Process AAD if provided */
             if (p->data != NULL && p->data_type == OSSL_PARAM_OCTET_STRING
                 && p->data_size > 0) {
-                ascon_aead128_assoc_data_update(ctx->internal_ctx, p->data,
-                                                 p->data_size);
+                ascon_aead128a_assoc_data_update(ctx->internal_ctx, p->data,
+                                                  p->data_size);
             } else if (p->data_size == 0) {
                 /* Empty AAD is allowed */
                 /* LibAscon allows calling with NULL data and 0 length */
@@ -550,10 +550,10 @@ static int ascon128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
  * and regular encryption/decryption operations.
  * For AEAD ciphers, CIPHER and UPDATE should behave the same way.
  */
-static int ascon128_cipher(void *vctx, unsigned char *out, size_t *outl,
-                           size_t outsize, const unsigned char *in, size_t inl)
+static int ascon_aead128_cipher(void *vctx, unsigned char *out, size_t *outl,
+                                 size_t outsize, const unsigned char *in, size_t inl)
 {
-    struct ascon_ctx_st *ctx = vctx;
+    struct ascon_aead128_ctx_st *ctx = vctx;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -565,7 +565,7 @@ static int ascon128_cipher(void *vctx, unsigned char *out, size_t *outl,
     if (in == NULL) {
         size_t final_outl = 0;
 
-        if (ascon128_final(ctx, out, &final_outl, outsize) == OSSL_RV_SUCCESS) {
+        if (ascon_aead128_final(ctx, out, &final_outl, outsize) == OSSL_RV_SUCCESS) {
             if (outl != NULL)
                 *outl = final_outl;
             return 1;
@@ -584,7 +584,7 @@ static int ascon128_cipher(void *vctx, unsigned char *out, size_t *outl,
             return 0;
         }
         if (inl > 0) {
-            ascon_aead128_assoc_data_update(ctx->internal_ctx, in, inl);
+            ascon_aead128a_assoc_data_update(ctx->internal_ctx, in, inl);
         }
         if (outl != NULL)
             *outl = 0;
@@ -606,7 +606,7 @@ static int ascon128_cipher(void *vctx, unsigned char *out, size_t *outl,
     /* Use the same logic as update */
     size_t update_outl = 0;
 
-    if (ascon128_update(ctx, out, &update_outl, outsize, in, inl)
+    if (ascon_aead128_update(ctx, out, &update_outl, outsize, in, inl)
         == OSSL_RV_SUCCESS) {
         if (outl != NULL)
             *outl = update_outl;
@@ -618,15 +618,15 @@ static int ascon128_cipher(void *vctx, unsigned char *out, size_t *outl,
 
 /* These helper functions tell OpenSSL the IV and tag sizes for Ascon AEAD */
 
-static size_t ascon128_get_iv_length(ossl_unused void *vctx)
+static size_t ascon_aead128_get_iv_length(ossl_unused void *vctx)
 {
-    /* Ascon uses a 128-bit (16-byte) IV */
+    /* Ascon-AEAD128 uses a 128-bit (16-byte) IV */
     return ASCON_AEAD_NONCE_LEN;
 }
 
-static size_t ascon128_get_tag_length(ossl_unused void *vctx)
+static size_t ascon_aead128_get_tag_length(ossl_unused void *vctx)
 {
-    /* Ascon authentication tag is also 16 bytes (128 bits) */
+    /* Ascon-AEAD128 authentication tag is also 16 bytes (128 bits) */
     return FIXED_TAG_LENGTH;
 }
 
@@ -638,21 +638,21 @@ static size_t ascon128_get_tag_length(ossl_unused void *vctx)
 
 typedef void (*funcptr_t)(void);
 
-/* The dispatch table for ASCON-128 */
-const OSSL_DISPATCH ossl_ascon128_functions[] = {
-    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))ascon128_newctx },
-    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))ascon128_freectx },
-    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))ascon128_dupctx },
-    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ascon128_einit },
-    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ascon128_dinit },
-    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))ascon128_update },
-    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))ascon128_final },
-    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))ascon128_cipher },
-    { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))ascon128_get_params },
-    { OSSL_FUNC_CIPHER_GETTABLE_PARAMS, (void (*)(void))ascon128_gettable_params },
-    { OSSL_FUNC_CIPHER_GET_CTX_PARAMS, (void (*)(void))ascon128_get_ctx_params },
-    { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS, (void (*)(void))ascon128_gettable_ctx_params },
-    { OSSL_FUNC_CIPHER_SET_CTX_PARAMS, (void (*)(void))ascon128_set_ctx_params },
-    { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS, (void (*)(void))ascon128_settable_ctx_params },
+/* The dispatch table for ASCON-AEAD128 */
+const OSSL_DISPATCH ossl_ascon_aead128_functions[] = {
+    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))ascon_aead128_newctx },
+    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))ascon_aead128_freectx },
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))ascon_aead128_dupctx },
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ascon_aead128_einit },
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ascon_aead128_dinit },
+    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))ascon_aead128_update },
+    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))ascon_aead128_final },
+    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))ascon_aead128_cipher },
+    { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))ascon_aead128_get_params },
+    { OSSL_FUNC_CIPHER_GETTABLE_PARAMS, (void (*)(void))ascon_aead128_gettable_params },
+    { OSSL_FUNC_CIPHER_GET_CTX_PARAMS, (void (*)(void))ascon_aead128_get_ctx_params },
+    { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS, (void (*)(void))ascon_aead128_gettable_ctx_params },
+    { OSSL_FUNC_CIPHER_SET_CTX_PARAMS, (void (*)(void))ascon_aead128_set_ctx_params },
+    { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS, (void (*)(void))ascon_aead128_settable_ctx_params },
     OSSL_DISPATCH_END
 };

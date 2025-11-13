@@ -27,7 +27,7 @@
 
 /* Common definitions */
 /*
- * Note: FIXED_TAG_LENGTH is now defined in cipher_ascon128.h to avoid
+ * Note: FIXED_TAG_LENGTH is now defined in cipher_ascon_aead128.h to avoid
  * including LibAscon header in common header
  */
 #ifndef FIXED_TAG_LENGTH

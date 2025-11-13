@@ -93,7 +93,7 @@ SOURCE[$COMMON_GOAL]=\
 
 INCLUDE[cipher_aes_cbc_hmac_sha.o cipher_aes_cbc_hmac_sha_etm.o \
         cipher_aes_gcm_siv.o cipher_aes_ocb.o cipher_aes_siv.o \
-        cipher_aes_wrp.o cipher_aes_xts.o cipher_ascon128.o ciphercommon.o \
+        cipher_aes_wrp.o cipher_aes_xts.o cipher_ascon_aead128.o ciphercommon.o \
         cipher_chacha20.o cipher_chacha20_poly1305.o cipher_rc4_hmac_md5.o \
         cipher_sm4_xts.o]=.
 
@@ -134,7 +134,7 @@ ENDIF
 
 IF[{- !$disabled{ascon128} -}]
   SOURCE[$ASCON_GOAL]=\
-        cipher_ascon128.c \
+        cipher_ascon_aead128.c \
         ciphercommon_ascon.c
   INCLUDE[$ASCON_GOAL]=../include
 ENDIF

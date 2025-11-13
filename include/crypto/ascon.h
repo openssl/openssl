@@ -89,27 +89,27 @@ typedef struct ascon_aead_ctx_st {
     uint64_t k2;
 } ascon_aead_ctx_t;
 
-/* One-shot encryption/decryption functions */
-void ascon_aead128_encrypt(uint8_t *ciphertext, uint8_t *tag,
-                           const uint8_t key[ASCON_AEAD128_KEY_LEN],
-                           const uint8_t nonce[ASCON_AEAD_NONCE_LEN],
-                           const uint8_t *assoc_data, const uint8_t *plaintext,
-                           size_t assoc_data_len, size_t plaintext_len,
-                           size_t tag_len);
-bool ascon_aead128_decrypt(uint8_t *plaintext,
-                           const uint8_t key[ASCON_AEAD128_KEY_LEN],
-                           const uint8_t nonce[ASCON_AEAD_NONCE_LEN],
-                           const uint8_t *assoc_data, const uint8_t *ciphertext,
-                           const uint8_t *expected_tag, size_t assoc_data_len,
-                           size_t ciphertext_len, size_t expected_tag_len);
+/* One-shot encryption/decryption functions for Ascon-AEAD128 (based on ascon128a) */
+void ascon_aead128a_encrypt(uint8_t *ciphertext, uint8_t *tag,
+                            const uint8_t key[ASCON_AEAD128_KEY_LEN],
+                            const uint8_t nonce[ASCON_AEAD_NONCE_LEN],
+                            const uint8_t *assoc_data, const uint8_t *plaintext,
+                            size_t assoc_data_len, size_t plaintext_len,
+                            size_t tag_len);
+bool ascon_aead128a_decrypt(uint8_t *plaintext,
+                            const uint8_t key[ASCON_AEAD128_KEY_LEN],
+                            const uint8_t nonce[ASCON_AEAD_NONCE_LEN],
+                            const uint8_t *assoc_data, const uint8_t *ciphertext,
+                            const uint8_t *expected_tag, size_t assoc_data_len,
+                            size_t ciphertext_len, size_t expected_tag_len);
 
-/* Streaming encryption/decryption functions */
-void ascon_aead128_init(ascon_aead_ctx_t *ctx, const uint8_t key[ASCON_AEAD128_KEY_LEN], const uint8_t nonce[ASCON_AEAD_NONCE_LEN]);
-size_t ascon_aead128_encrypt_update(ascon_aead_ctx_t *ctx, uint8_t *out, const uint8_t *in, size_t inlen);
-size_t ascon_aead128_decrypt_update(ascon_aead_ctx_t *ctx, uint8_t *out, const uint8_t *in, size_t inlen);
-size_t ascon_aead128_encrypt_final(ascon_aead_ctx_t *ctx, uint8_t *out, uint8_t *tag, size_t taglen);
-size_t ascon_aead128_decrypt_final(ascon_aead_ctx_t *ctx, uint8_t *out, bool *is_valid, const uint8_t *tag, size_t taglen);
-void ascon_aead128_assoc_data_update(ascon_aead_ctx_t *ctx, const uint8_t *aad, size_t aadlen);
+/* Streaming encryption/decryption functions for Ascon-AEAD128 (based on ascon128a) */
+void ascon_aead128a_init(ascon_aead_ctx_t *ctx, const uint8_t key[ASCON_AEAD128_KEY_LEN], const uint8_t nonce[ASCON_AEAD_NONCE_LEN]);
+size_t ascon_aead128a_encrypt_update(ascon_aead_ctx_t *ctx, uint8_t *out, const uint8_t *in, size_t inlen);
+size_t ascon_aead128a_decrypt_update(ascon_aead_ctx_t *ctx, uint8_t *out, const uint8_t *in, size_t inlen);
+size_t ascon_aead128a_encrypt_final(ascon_aead_ctx_t *ctx, uint8_t *out, uint8_t *tag, size_t taglen);
+size_t ascon_aead128a_decrypt_final(ascon_aead_ctx_t *ctx, uint8_t *out, bool *is_valid, const uint8_t *tag, size_t taglen);
+void ascon_aead128a_assoc_data_update(ascon_aead_ctx_t *ctx, const uint8_t *aad, size_t aadlen);
 void ascon_aead_cleanup(ascon_aead_ctx_t *ctx);
 
 #endif /* OSSL_CRYPTO_ASCON_H */
