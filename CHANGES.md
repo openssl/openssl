@@ -46,6 +46,11 @@ OpenSSL 4.0
 
    *Ryan Hooper*
 
+ * Reject CRLs with Certificate Issuer extension in a certificate revocation
+   entry when Indirect flag is not TRUE in IDP extension of the CRL.
+
+   *Daniel Kubec*
+
 OpenSSL 3.6
 -----------
 
