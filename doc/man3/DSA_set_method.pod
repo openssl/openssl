@@ -30,39 +30,29 @@ Applications should providers instead of method overrides.
 
 A B<DSA_METHOD> specifies the functions that OpenSSL uses for DSA
 operations. By modifying the method, alternative implementations
-such as hardware accelerators may be used. IMPORTANT: See the NOTES section for
-important information about how these DSA API functions are affected by the use
-of B<ENGINE> API calls.
+such as hardware accelerators may be used.
 
 Initially, the default DSA_METHOD is the OpenSSL internal implementation,
 as returned by DSA_OpenSSL().
 
 DSA_set_default_method() makes B<meth> the default method for all DSA
 structures created later.
-B<NB>: This is true only whilst no ENGINE has
-been set as a default for DSA, so this function is no longer recommended.
-This function is not thread-safe and should not be called at the same time
+B<NB>: This function is not thread-safe and should not be called at the same time
 as other OpenSSL functions.
 
 DSA_get_default_method() returns a pointer to the current default
-DSA_METHOD. However, the meaningfulness of this result is dependent on
-whether the ENGINE API is being used, so this function is no longer
-recommended.
+DSA_METHOD.
 
 DSA_set_method() selects B<meth> to perform all operations using the key
-B<rsa>. This will replace the DSA_METHOD used by the DSA key and if the
-previous method was supplied by an ENGINE, the handle to that ENGINE will
-be released during the change. It is possible to have DSA keys that only
-work with certain DSA_METHOD implementations (e.g. from an ENGINE module
-that supports embedded hardware-protected keys), and in such cases
-attempting to change the DSA_METHOD for the key can have unexpected
-results. See L<DSA_meth_new(3)> for information on constructing custom DSA_METHOD
-objects;
+B<dsa>. This will replace the DSA_METHOD used by the DSA key.
+It is possible to have DSA keys that only work with certain DSA_METHOD
+implementations, and in such cases attempting to change the DSA_METHOD for the
+key can have unexpected results. See L<DSA_meth_new(3)> for information on
+constructing custom DSA_METHOD objects.
 
-DSA_new_method() allocates and initializes a DSA structure so that B<engine>
-will be used for the DSA operations. If B<engine> is NULL, the default engine
-for DSA operations is used, and if no default ENGINE is set, the DSA_METHOD
-controlled by DSA_set_default_method() is used.
+DSA_new_method() allocates and initializes a DSA structure so that the
+DSA_METHOD controlled by DSA_set_default_method() is used. I<engine> B<must>
+be NULL.
 
 =head1 RETURN VALUES
 
@@ -72,8 +62,7 @@ B<DSA_METHOD>s.
 DSA_set_default_method() returns no value.
 
 DSA_set_method() returns nonzero if the provided B<meth> was successfully set as
-the method for B<dsa> (including unloading the ENGINE handle if the previous
-method was supplied by an ENGINE).
+the method for B<dsa>.
 
 DSA_new_method() returns NULL and sets an error code that can be
 obtained by L<ERR_get_error(3)> if the allocation
@@ -89,7 +78,7 @@ All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

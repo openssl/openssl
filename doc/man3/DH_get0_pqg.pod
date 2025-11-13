@@ -92,10 +92,6 @@ flags can be tested in one go. All flags that are currently set are returned, or
 zero if none of the flags are set. DH_clear_flags() clears the specified flags
 within the DH object.
 
-DH_get0_engine() returns a handle to the ENGINE that has been set for this DH
-object, or NULL if no such ENGINE has been set. This function is deprecated. All
-engines should be replaced by providers.
-
 The DH_get_length() and DH_set_length() functions get and set the optional
 length parameter associated with this DH object. If the length is nonzero then
 it is used, otherwise it is ignored. The I<length> parameter indicates the
@@ -121,9 +117,6 @@ DH_get0_p(), DH_get0_q(), DH_get0_g(), DH_get0_priv_key(), and DH_get0_pub_key()
 return the respective value, or NULL if it is unset.
 
 DH_test_flags() returns the current state of the flags in the DH object.
-
-DH_get0_engine() returns the ENGINE set for the DH object or NULL if no ENGINE
-has been set.
 
 DH_get_length() returns the length of the secret exponent (private key) in bits,
 or zero if no such length has been explicitly set.

@@ -104,9 +104,8 @@ If RSA-PSS is used and restrictions apply then the digest must match.
 
 EVP_DigestVerifyInit() works in the same way as
 EVP_DigestVerifyInit_ex() except that the B<mdname> parameter will be
-inferred from the supplied digest B<type>, and B<props> will be NULL. Where
-supplied the ENGINE B<e> will be used for the signature verification and digest
-algorithm implementations. B<e> may be NULL.
+inferred from the supplied digest B<type>, and B<props> will be NULL.
+B<e> B<must> be NULL.
 
 EVP_DigestVerifyUpdate() hashes B<cnt> bytes of data at B<d> into the
 verification context B<ctx>. This function can be called several times on the

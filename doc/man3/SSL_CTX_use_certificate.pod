@@ -106,8 +106,8 @@ key of the X.509 certificate B<x>. If the B<override> argument is 0, then
 B<x>, B<pkey> and B<chain> are set only if all were not previously set.
 If B<override> is non-0, then the certificate, private key and chain certs
 are always set. If B<pkey> is NULL, then the public key of B<x> is used as
-the private key. This is intended to be used with hardware (via the ENGINE
-interface) that stores the private key securely, such that it cannot be
+the private key. This is intended to be used with hardware
+that stores the private key securely, such that it cannot be
 accessed by OpenSSL. The reference count of the public key is incremented
 (twice if there is no private key); it is not copied nor duplicated. This
 allows all private key validations checks to succeed without an actual
@@ -196,7 +196,7 @@ L<SSL_CTX_add_extra_chain_cert(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

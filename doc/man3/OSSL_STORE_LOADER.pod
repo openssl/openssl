@@ -158,7 +158,7 @@ L<OSSL_STORE_open_ex(3)>.
 
 =head2 Legacy Types and Functions (deprecated)
 
-These functions help applications and engines to create loaders for
+These functions help applications to create loaders for
 schemes they support.  These are all deprecated and discouraged in favour of
 provider implementations, see L<provider-storemgmt(7)>.
 
@@ -272,12 +272,10 @@ It returns 1 on success and 0 on error.
 =back
 
 OSSL_STORE_LOADER_new() creates a new B<OSSL_STORE_LOADER>.
-It takes an B<ENGINE> I<e> and a string I<scheme>.
-I<scheme> must I<always> be set.
-Both I<e> and I<scheme> are used as is and must therefore be alive as
-long as the created loader is.
+It takes  a string I<scheme>. I<scheme> must I<always> be set.
+I<e> B<must> be NULL. I<scheme> is used as is and must therefore be alive
+as long as the created loader is.
 
-OSSL_STORE_LOADER_get0_engine() returns the engine of the I<store_loader>.
 OSSL_STORE_LOADER_get0_scheme() returns the scheme of the I<store_loader>.
 
 OSSL_STORE_LOADER_set_open() sets the opener function for the

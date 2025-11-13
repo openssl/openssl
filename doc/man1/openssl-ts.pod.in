@@ -405,13 +405,6 @@ last timestamp response created. This number is incremented by 1 for
 each response. If the file does not exist at the time of response
 generation a new file is created with serial number 1. (Mandatory)
 
-=item B<crypto_device>
-
-Specifies the OpenSSL engine that will be set as the default for
-all available algorithms. The default value is built-in, you can specify
-any other engines supported by OpenSSL (e.g. use chil for the NCipher HSM).
-(Optional)
-
 =item B<signer_cert>
 
 TSA signing certificate in PEM format. The same as the B<-signer>
@@ -639,7 +632,8 @@ seeding mechanism. The new seeding mechanism makes it unnecessary to
 define a RANDFILE for saving and restoring randomness. This option is
 retained mainly for compatibility reasons.
 
-The B<-engine> option was removed in OpenSSL 4.0.
+The B<-engine> option and B<crypto_device> configuration option were removed in
+OpenSSL 4.0.
 
 =head1 SEE ALSO
 

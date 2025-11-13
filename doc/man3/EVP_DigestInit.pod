@@ -256,11 +256,12 @@ if the pointer is not NULL. At most B<EVP_MAX_MD_SIZE> bytes will be written.
 
 =item EVP_Digest()
 
-A wrapper around the Digest Init_ex, Update and Final_ex functions.
-Hashes I<count> bytes of data at I<data> using a digest I<type> from ENGINE
-I<impl>. The digest value is placed in I<md> and its length is written at I<size>
-if the pointer is not NULL. At most B<EVP_MAX_MD_SIZE> bytes will be written.
-If I<impl> is NULL the default implementation of digest I<type> is used.
+A wrapper around the EVP_DigestInit_ex(), EVP_DigestUpdate() and
+EVP_DigestFinal_ex() functions.
+Hashes I<count> bytes of data at I<data>. The digest value is placed in I<md>
+and its length is written at I<size> if the pointer is not NULL. At most
+B<EVP_MAX_MD_SIZE> bytes will be written. I<impl> B<must> be NULL and the
+default implementation of digest I<type> is used.
 
 =item EVP_DigestInit_ex2()
 
@@ -545,7 +546,7 @@ EVP_MD_CTX_get_params() can be used with the following OSSL_PARAM keys:
 
 Gets the digest Message Integrity Check algorithm string. This is used when
 creating S/MIME multipart/signed messages, as specified in RFC 3851.
-It may be used by external engines or providers.
+It may be used by external providers.
 
 =back
 

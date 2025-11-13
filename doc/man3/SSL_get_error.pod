@@ -135,10 +135,10 @@ Details depend on the application.
 
 =item SSL_ERROR_WANT_ASYNC
 
-The operation did not complete because an asynchronous engine is still
+The job did not complete because an asynchronous provider is still
 processing data. This will only occur if the mode has been set to SSL_MODE_ASYNC
 using L<SSL_CTX_set_mode(3)> or L<SSL_set_mode(3)> and an asynchronous capable
-engine is being used. An application can determine whether the engine has
+provider is being used. An application can determine whether the job has
 completed its processing using select() or poll() on the asynchronous wait file
 descriptor. This file descriptor is available by calling
 L<SSL_get_all_async_fds(3)> or L<SSL_get_changed_async_fds(3)>. The TLS/SSL I/O

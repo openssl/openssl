@@ -118,9 +118,6 @@ flags that are currently set are returned, or zero if none of the
 flags are set. RSA_clear_flags() clears the specified flags within the
 RSA object.
 
-RSA_get0_engine() returns a handle to the ENGINE that has been set for
-this RSA object, or NULL if no such ENGINE has been set.
-
 RSA_get_version() returns the version of an RSA object B<r>.
 
 =head1 NOTES
@@ -161,9 +158,6 @@ RSA_get_version() returns B<RSA_ASN1_VERSION_MULTI> for multi-prime RSA and
 B<RSA_ASN1_VERSION_DEFAULT> for normal two-prime RSA, as defined in RFC 8017.
 
 RSA_test_flags() returns the current state of the flags in the RSA object.
-
-RSA_get0_engine() returns the ENGINE set for the RSA object or NULL if no
-ENGINE has been set.
 
 =head1 SEE ALSO
 
