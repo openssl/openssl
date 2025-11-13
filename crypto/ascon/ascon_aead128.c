@@ -14,8 +14,8 @@
  * Original authors: see LibAscon AUTHORS.md file
  */
 
-# include "crypto/ascon.h"
-# include "ascon_internal.h"
+#include "crypto/ascon.h"
+#include "ascon_internal.h"
 
 ASCON_API void
 ascon_aead128_encrypt(uint8_t* ciphertext,
