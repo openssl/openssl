@@ -14,7 +14,11 @@
 #include "cmp_local.h"
 #include "internal/crmf.h"
 
-/* ASN.1 declarations from RFC4210 */
+/* explicit #includes not strictly needed since implied by the above: */
+#include <openssl/cmp.h>
+#include <openssl/crmf.h>
+
+/* ASN.1 declarations from RFC 9810 */
 ASN1_SEQUENCE(OSSL_CMP_REVANNCONTENT) = {
     /* OSSL_CMP_PKISTATUS is effectively ASN1_INTEGER so it is used directly */
     ASN1_SIMPLE(OSSL_CMP_REVANNCONTENT, status, ASN1_INTEGER),
