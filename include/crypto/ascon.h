@@ -3,12 +3,21 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/* ASCON-AEAD128 constants */
+#define ASCON_AEAD128_KEY_LEN 16      /* 128-bit key */
+#define ASCON_AEAD_NONCE_LEN 16       /* 128-bit nonce */
+#define ASCON_AEAD_TAG_MIN_SECURE_LEN 16  /* 128-bit tag */
+
+/* ASCON AEAD context structure */
 typedef struct {
     uint64_t state[5];
     uint64_t key[2];
     size_t offset;
     uint64_t flags;
 } ascon_aead128_ctx;
+
+/* Provider-compatible typedef */
+typedef ascon_aead128_ctx ascon_aead_ctx_t;
 
 #ifndef OPENSSL_BUILDING_OPENSSL
 void ascon_test_state();
