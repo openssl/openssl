@@ -169,6 +169,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
             if (e != ASN1_R_TOO_LONG)
                 goto err;
             ERR_pop_to_mark();
+            ERR_set_mark();
         }
         off += q - p;               /* end of data */
 
@@ -249,6 +250,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
     }
 
     *pb = b;
+    ERR_clear_last_mark();
     return (int)off;
  err:
     ERR_clear_last_mark();
