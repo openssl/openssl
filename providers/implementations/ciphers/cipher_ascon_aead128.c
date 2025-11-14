@@ -39,7 +39,7 @@ static void ascon_aead128_cleanctx(void *vctx)
     ctx->tag_len = FIXED_TAG_LENGTH;
     ctx->iv_set = false;
     if (ctx->internal_ctx != NULL)
-        OPENSSL_cleanse(ctx->internal_ctx, sizeof(*(ctx->internal_ctx)));
+        ascon_aead_cleanup(ctx->internal_ctx);
     OPENSSL_cleanse(ctx->tag, sizeof(ctx->tag));
     OPENSSL_cleanse(ctx->iv, sizeof(ctx->iv));
 }

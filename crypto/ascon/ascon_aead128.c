@@ -356,7 +356,7 @@ ascon_aead128_encrypt_final(ascon_aead_ctx_t* const ctx,
         }
     }
 
-    /* Secure cleanup of sensitive state */
+    /* Secure cleanup of sensitive local state */
     OPENSSL_cleanse(&s0, sizeof(s0));
     OPENSSL_cleanse(&s1, sizeof(s1));
     OPENSSL_cleanse(&s2, sizeof(s2));
@@ -364,6 +364,9 @@ ascon_aead128_encrypt_final(ascon_aead_ctx_t* const ctx,
     OPENSSL_cleanse(&s4, sizeof(s4));
     OPENSSL_cleanse(&k0, sizeof(k0));
     OPENSSL_cleanse(&k1, sizeof(k1));
+
+    /* Cleanup context structure */
+    ascon_aead_cleanup(ctx);
 
     return 0;
 }
@@ -447,6 +450,7 @@ ascon_aead128_decrypt_final(ascon_aead_ctx_t* const ctx,
         OPENSSL_cleanse(&s4, sizeof(s4));
         OPENSSL_cleanse(&k0, sizeof(k0));
         OPENSSL_cleanse(&k1, sizeof(k1));
+        ascon_aead_cleanup(ctx);
         return 0;
     }
 
@@ -459,7 +463,7 @@ ascon_aead128_decrypt_final(ascon_aead_ctx_t* const ctx,
     }
     *is_tag_valid = (diff == 0);
 
-    /* Secure cleanup of sensitive data */
+    /* Secure cleanup of sensitive local data */
     OPENSSL_cleanse(computed_tag, sizeof(computed_tag));
     OPENSSL_cleanse(expected_tag_val, sizeof(expected_tag_val));
     OPENSSL_cleanse(&s0, sizeof(s0));
@@ -469,6 +473,9 @@ ascon_aead128_decrypt_final(ascon_aead_ctx_t* const ctx,
     OPENSSL_cleanse(&s4, sizeof(s4));
     OPENSSL_cleanse(&k0, sizeof(k0));
     OPENSSL_cleanse(&k1, sizeof(k1));
+
+    /* Cleanup context structure */
+    ascon_aead_cleanup(ctx);
 
     return 0;
 }
