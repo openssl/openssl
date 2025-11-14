@@ -754,8 +754,9 @@ ok(!run(app(["openssl", "x509", "-checkend", $delta_early + 3600,
 # Single + expiring at boundary
 # Test may fail erroneously due to sequential now() calls
 # See https://github.com/openssl/openssl/pull/29155
+# Certificate should be valid at exact NotAfter time.
 my $delta_exact = Time::Piece->strptime( get_field($c_early, "Not After "),
-                    "%b %d %T %Y %Z")->epoch - Time::Piece->gmtime->epoch;
+                    "%b %d %T %Y %Z")->epoch - Time::Piece->gmtime->epoch + 1;
 ok(!run(app(["openssl", "x509", "-checkend", $delta_exact, "-in", $c_early])),
     "Single cert + expiring at -checkend boundary");
 # Multi + none expiring

@@ -265,7 +265,7 @@ static int cert_acceptable(const OSSL_CMP_CTX *ctx,
         return 0;
     }
 
-    if (!ossl_x509_check_certificate_times(vpm, cert, &err)) {
+    if (!X509_check_certificate_times(vpm, cert, &err)) {
         const char *message;
 
         switch (err) {
