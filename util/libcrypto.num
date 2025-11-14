@@ -4499,9 +4499,10 @@ X509_ALGOR_cmp                          ?	4_0_0	EXIST::FUNCTION:
 X509_ALGOR_copy                         ?	4_0_0	EXIST::FUNCTION:
 X509_NAME_dup                           ?	4_0_0	EXIST::FUNCTION:
 X509_NAME_ENTRY_dup                     ?	4_0_0	EXIST::FUNCTION:
-X509_cmp_time                           ?	4_0_0	EXIST::FUNCTION:
-X509_cmp_current_time                   ?	4_0_0	EXIST::FUNCTION:
-X509_cmp_timeframe                      ?	4_0_0	EXIST::FUNCTION:
+X509_cmp_time                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_0
+X509_cmp_current_time                   ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_0
+X509_cmp_timeframe                      ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_0
+X509_check_certificate_times            ?	4_0_0	EXIST::FUNCTION:
 X509_time_adj                           ?	4_0_0	EXIST::FUNCTION:
 X509_time_adj_ex                        ?	4_0_0	EXIST::FUNCTION:
 X509_gmtime_adj                         ?	4_0_0	EXIST::FUNCTION:

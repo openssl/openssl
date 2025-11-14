@@ -606,12 +606,12 @@ EVP_PKEY *load_keyparams(const char *uri, int format, int maybe_stdin,
 }
 
 EVP_SKEY *load_skey(const char *uri, int format, int may_stdin,
-                    const char *pass, int quiet)
+    const char *pass, int quiet)
 {
     EVP_SKEY *skey = NULL;
 
     (void)load_key_certs_crls(uri, format, may_stdin, pass, NULL, 0,
-                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, &skey);
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL, &skey);
 
     return skey;
 }
@@ -674,18 +674,16 @@ static void warn_cert_msg(const char *uri, X509 *cert, const char *msg)
 static void warn_cert(const char *uri, X509 *cert, int warn_EE,
     X509_VERIFY_PARAM *vpm)
 {
+    int error;
     uint32_t ex_flags = X509_get_extension_flags(cert);
-    /*
-     * This should not be used as as example for how to verify
-     * certificates. This treats an invalid not before or an invalid
-     * not after time in the certificate as infinitely valid, which
-     * you don't want outside of a toy testing function like this.
-     */
-    int res = X509_cmp_timeframe(vpm, X509_get0_notBefore(cert),
-        X509_get0_notAfter(cert));
 
-    if (res != 0)
-        warn_cert_msg(uri, cert, res > 0 ? "has expired" : "not yet valid");
+    if (!X509_check_certificate_times(vpm, cert, &error)) {
+        char msg[128];
+
+        ERR_error_string_n(error, msg, sizeof(msg));
+        warn_cert_msg(uri, cert, msg);
+    }
+
     if (warn_EE && (ex_flags & EXFLAG_V1) == 0 && (ex_flags & EXFLAG_CA) == 0)
         warn_cert_msg(uri, cert, "is not a CA cert");
 }
