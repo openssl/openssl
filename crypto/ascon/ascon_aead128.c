@@ -1,365 +1,282 @@
-/*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
- * this file except in compliance with the License.  You can obtain a copy
- * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
- */
+#include "ascon.h"
+#include <string.h>
 
-/*
- * 64-bit optimised implementation of Ascon128a AEAD cipher.
- *
- * This file is based on LibAscon (CC0 1.0 license).
- * Original authors: see LibAscon AUTHORS.md file
- */
-
-#include "crypto/ascon.h"
-#include "ascon_internal.h"
-
-ASCON_API void
-ascon_aead128a_encrypt(uint8_t* ciphertext,
-                       uint8_t* tag,
-                       const uint8_t key[ASCON_AEAD128_KEY_LEN],
-                       const uint8_t nonce[ASCON_AEAD_NONCE_LEN],
-                       const uint8_t* assoc_data,
-                       const uint8_t* plaintext,
-                       size_t assoc_data_len,
-                       size_t plaintext_len,
-                       size_t tag_len)
-{
-    ASCON_ASSERT(plaintext_len == 0 || ciphertext != NULL);
-    ASCON_ASSERT(tag_len != 0 || tag != NULL);
-    ASCON_ASSERT(key != NULL);
-    ASCON_ASSERT(nonce != NULL);
-    ASCON_ASSERT(assoc_data_len == 0 || assoc_data != NULL);
-    ASCON_ASSERT(plaintext_len == 0 || plaintext != NULL);
-    ascon_aead_ctx_t ctx;
-    ascon_aead128a_init(&ctx, key, nonce);
-    ascon_aead128a_assoc_data_update(&ctx, assoc_data, assoc_data_len);
-    const size_t new_ct_bytes = ascon_aead128a_encrypt_update(&ctx, ciphertext,
-                                                              plaintext,
-                                                              plaintext_len);
-    ascon_aead128a_encrypt_final(&ctx, ciphertext + new_ct_bytes,
-                                 tag, tag_len);
-}
-
-ASCON_API bool
-ascon_aead128a_decrypt(uint8_t* plaintext,
-                       const uint8_t key[ASCON_AEAD128_KEY_LEN],
-                       const uint8_t nonce[ASCON_AEAD_NONCE_LEN],
-                       const uint8_t* assoc_data,
-                       const uint8_t* ciphertext,
-                       const uint8_t* expected_tag,
-                       size_t assoc_data_len,
-                       size_t ciphertext_len,
-                       size_t expected_tag_len)
-{
-    ASCON_ASSERT(ciphertext_len == 0 || plaintext != NULL);
-    ASCON_ASSERT(key != NULL);
-    ASCON_ASSERT(nonce != NULL);
-    ASCON_ASSERT(assoc_data_len == 0 || assoc_data != NULL);
-    ASCON_ASSERT(ciphertext_len == 0 || ciphertext != NULL);
-    ASCON_ASSERT(expected_tag_len != 0 || expected_tag != NULL);
-    ascon_aead_ctx_t ctx;
-    bool is_tag_valid;
-    ascon_aead128a_init(&ctx, key, nonce);
-    ascon_aead128a_assoc_data_update(&ctx, assoc_data, assoc_data_len);
-    const size_t new_pt_bytes = ascon_aead128a_decrypt_update(&ctx,
-                                                              plaintext,
-                                                              ciphertext,
-                                                              ciphertext_len);
-    ascon_aead128a_decrypt_final(&ctx, plaintext + new_pt_bytes,
-                                 &is_tag_valid, expected_tag, expected_tag_len);
-    return is_tag_valid;
-}
-
-ASCON_API void
-ascon_aead128a_init(ascon_aead_ctx_t* const ctx,
-                    const uint8_t key[ASCON_AEAD128_KEY_LEN],
-                    const uint8_t nonce[ASCON_AEAD_NONCE_LEN])
-{
-    ASCON_ASSERT(ctx != NULL);
-    ASCON_ASSERT(key != NULL);
-    ASCON_ASSERT(nonce != NULL);
-    ascon_aead_init(ctx, key, nonce, ASCON_IV_AEAD128a);
-    ctx->bufstate.flow_state = ASCON_FLOW_AEAD128a_INITIALISED;
-}
+#define ROR64(x, i) ((x << (64 - i)) | (x >> i))
 
 /**
- * @internal
- * Function passed to buffered_accumulation() to absorb the associated data to
- * be authenticated, both during encryption and decryption.
+ * constant addition layer, NIST SP 800-232 Table 5
+ * 3c 2d 1e 0f f0 e1 d2 c3 b4 a5 96 87 78 69 5a 4b
  */
-static void
-absorb_assoc_data(ascon_sponge_t* sponge,
-                  uint8_t* const data_out,
-                  const uint8_t* const data)
-{
-    (void) data_out;
-    sponge->x0 ^= bigendian_decode_u64(data);
-    sponge->x1 ^= bigendian_decode_u64(data + ASCON_RATE);
-    ascon_permutation_8(sponge);
-}
+#define ASCONPC(x0, x1, x2, x3, x4, rcon) \
+    do {                                  \
+        x2 ^= rcon;                       \
+    } while (0)
 
 /**
- * @internal
- * Function passed to buffered_accumulation() to absorb the ciphertext
- * and squeeze out plaintext during decryption.
+ * nonlinear layer, lifted from p43 of
+ * https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/ascon-spec-final.pdf
  */
-static void
-absorb_ciphertext(ascon_sponge_t* const sponge,
-                  uint8_t* const plaintext,
-                  const uint8_t* const ciphertext)
+#define ASCONPS(x0, x1, x2, x3, x4) \
+    do {                            \
+        uint64_t q0, q1;            \
+        x0 ^= x4;                   \
+        x4 ^= x3;                   \
+        x2 ^= x1;                   \
+        q0 = x0 & (~x4);            \
+        q1 = x2 & (~x1);            \
+        x0 ^= q1;                   \
+        q1 = x4 & (~x3);            \
+        x2 ^= q1;                   \
+        q1 = x1 & (~x0);            \
+        x4 ^= q1;                   \
+        q1 = x3 & (~x2);            \
+        x1 ^= q1;                   \
+        x3 ^= q0;                   \
+        x1 ^= x0;                   \
+        x3 ^= x2;                   \
+        x0 ^= x4;                   \
+        x2 = ~x2;                   \
+    } while (0)
+
+/* linear layer, NIST SP 800-232 Figure 3 */
+#define ASCONPL(x0, x1, x2, x3, x4)          \
+    do {                                     \
+        x0 ^= ROR64(x0, 19) ^ ROR64(x0, 28); \
+        x1 ^= ROR64(x1, 61) ^ ROR64(x1, 39); \
+        x2 ^= ROR64(x2, 1) ^ ROR64(x2, 6);   \
+        x3 ^= ROR64(x3, 10) ^ ROR64(x3, 17); \
+        x4 ^= ROR64(x4, 7) ^ ROR64(x4, 41);  \
+    } while (0)
+
+/* one round */
+#define ASCONP1(x0, x1, x2, x3, x4, rcon)  \
+    do {                                   \
+        ASCONPC(x0, x1, x2, x3, x4, rcon); \
+        ASCONPS(x0, x1, x2, x3, x4);       \
+        ASCONPL(x0, x1, x2, x3, x4);       \
+    } while (0)
+
+/* 8 rounds */
+#define ASCONP8(x0, x1, x2, x3, x4)           \
+    do {                                      \
+        ASCONP1(x0, x1, x2, x3, x4, 0xB4ULL); \
+        ASCONP1(x0, x1, x2, x3, x4, 0xA5ULL); \
+        ASCONP1(x0, x1, x2, x3, x4, 0x96ULL); \
+        ASCONP1(x0, x1, x2, x3, x4, 0x87ULL); \
+        ASCONP1(x0, x1, x2, x3, x4, 0x78ULL); \
+        ASCONP1(x0, x1, x2, x3, x4, 0x69ULL); \
+        ASCONP1(x0, x1, x2, x3, x4, 0x5AULL); \
+        ASCONP1(x0, x1, x2, x3, x4, 0x4BULL); \
+    } while (0)
+
+/* 12 rounds */
+#define ASCONP12(x0, x1, x2, x3, x4)          \
+    do {                                      \
+        ASCONP1(x0, x1, x2, x3, x4, 0xF0ULL); \
+        ASCONP1(x0, x1, x2, x3, x4, 0xE1ULL); \
+        ASCONP1(x0, x1, x2, x3, x4, 0xD2ULL); \
+        ASCONP1(x0, x1, x2, x3, x4, 0xC3ULL); \
+        ASCONP8(x0, x1, x2, x3, x4);          \
+    } while (0)
+
+/* misc ascon flags for the context */
+#define ASCONFLG_AAD 0x0000000000000001ULL /* has AAD inputs? */
+#define ASCONFLG_DEC 0x0000000000000002ULL /* in decrypt mode? */
+#define ASCONFLG_DOMAINSEP 0x8000000000000000ULL /* ready to absorb non-AAD? */
+
+/* semi-portable inline declaration */
+#ifdef OPENSSL_BUILDING_OPENSSL
+#define ASCON_INLINE ossl_inline /* use the openssl one if we can */
+#elif defined(__OPTIMIZE__)
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#define ASCON_INLINE __forceinline
+#elif defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER) || defined(__ICC)
+#define ASCON_INLINE __attribute__((always_inline)) inline
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#define ASCON_INLINE inline /* C99? */
+#else
+#define ASCON_INLINE
+#endif
+#else
+#define ASCON_INLINE
+#endif
+
+/* omit test harness if this is openssl-internal */
+#ifndef OPENSSL_BUILDING_OPENSSL
+#include <stdio.h>
+
+void ascon_test_state()
 {
-    /* Absorb the ciphertext. */
-    const uint64_t c_0 = bigendian_decode_u64(ciphertext);
-    const uint64_t c_1 = bigendian_decode_u64(ciphertext + ASCON_RATE);
-    /* Squeeze out some plaintext */
-    bigendian_encode_u64(plaintext, sponge->x0 ^ c_0);
-    bigendian_encode_u64(plaintext + ASCON_RATE, sponge->x1 ^ c_1);
-    sponge->x0 = c_0;
-    sponge->x1 = c_1;
-    /* Permute the state */
-    ascon_permutation_8(sponge);
+    uint64_t s0 = 0, s1 = 0, s2 = 0, s3 = 0, s4 = 0;
+    s4 = 0x0000080100CC0002ULL;
+    ASCONP12(s0, s1, s2, s3, s4);
+    printf("%lx%lx%lx%lx%lx\n", s0, s1, s2, s3, s4);
 }
 
-/**
- * @internal
- * Function passed to buffered_accumulation() to absorb the plaintext
- * and squeeze out ciphertext during encryption.
- */
-static void
-absorb_plaintext(ascon_sponge_t* const sponge,
-                 uint8_t* const ciphertext,
-                 const uint8_t* const plaintext)
-{
-    /* Absorb the plaintext. */
-    sponge->x0 ^= bigendian_decode_u64(plaintext);
-    sponge->x1 ^= bigendian_decode_u64(plaintext + ASCON_RATE);
-    /* Squeeze out some ciphertext */
-    bigendian_encode_u64(ciphertext, sponge->x0);
-    bigendian_encode_u64(ciphertext + ASCON_RATE, sponge->x1);
-    /* Permute the state */
-    ascon_permutation_8(sponge);
-}
+#endif
 
-ASCON_API void
-ascon_aead128a_assoc_data_update(ascon_aead_ctx_t* const ctx,
-                                 const uint8_t* assoc_data,
-                                 size_t assoc_data_len)
+static ASCON_INLINE void ascon_aead128_update(ascon_aead128_ctx* ctx, unsigned char* out, const unsigned char* in, size_t len)
 {
-    ASCON_ASSERT(ctx != NULL);
-    ASCON_ASSERT(assoc_data_len == 0 || assoc_data != NULL);
-    ASCON_ASSERT(ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_INITIALISED
-                 || ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_ASSOC_DATA_UPDATED);
-    if (assoc_data_len > 0) {
-        ctx->bufstate.flow_state = ASCON_FLOW_AEAD128a_ASSOC_DATA_UPDATED;
-        buffered_accumulation(&ctx->bufstate, NULL, assoc_data,
-                              absorb_assoc_data, assoc_data_len,
-                              ASCON_DOUBLE_RATE);
-    }
-}
+    uint64_t s0, s1, s2, s3, s4, flags;
+    unsigned char pad = 0x01;
 
-/**
- * @internal
- * Handles the finalisation of the associated data before any plaintext or
- * ciphertext is being processed.
- *
- * MUST be called ONLY once!
- */
-static void
-ascon_128a_finalise_assoc_data(ascon_aead_ctx_t* const ctx)
-{
-    /* If there was at least some associated data obtained so far,
-     * pad it and absorb any content of the buffer.
-     * Note: this step is performed even if the buffer is now empty because
-     * a state permutation is required if there was at least some associated
-     * data absorbed beforehand. */
-    if (ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_ASSOC_DATA_UPDATED) {
-        if (ctx->bufstate.buffer_len >= ASCON_RATE) {
-            ctx->bufstate.sponge.x0 ^= bigendian_decode_u64(ctx->bufstate.buffer);
-            const uint_fast8_t second_half = (uint_fast8_t) (
-                    ctx->bufstate.buffer_len - ASCON_RATE);
-            ctx->bufstate.sponge.x1 ^= bigendian_decode_varlen(
-                    ctx->bufstate.buffer + ASCON_RATE, second_half);
-            ctx->bufstate.sponge.x1 ^= PADDING(second_half);
-        } else {
-            ctx->bufstate.sponge.x0 ^= bigendian_decode_varlen(ctx->bufstate.buffer,
-                                                               ctx->bufstate.buffer_len);
-            ctx->bufstate.sponge.x0 ^= PADDING(ctx->bufstate.buffer_len);
+    if (ctx->flags & ASCONFLG_DOMAINSEP) {
+        flags = ctx->flags;
+        if (flags & ASCONFLG_AAD) {
+            ctx->flags = 0;
+            ascon_aead128_update(ctx, NULL, &pad, 1);
+            ASCONP8(ctx->state[0], ctx->state[1], ctx->state[2], ctx->state[3], ctx->state[4]);
+            flags ^= ASCONFLG_AAD;
+            ctx->offset = 0;
         }
-        ascon_permutation_8(&ctx->bufstate.sponge);
+        ctx->state[4] ^= ASCONFLG_DOMAINSEP;
+        flags ^= ASCONFLG_DOMAINSEP;
+        ctx->flags = flags;
     }
-    /* Application of a constant at end of associated data for domain
-     * separation. Done always, regardless if there was some associated
-     * data or not. */
-    ctx->bufstate.sponge.x4 ^= 1U;
-    ctx->bufstate.buffer_len = 0;
+
+    s0 = ctx->state[0];
+    s1 = ctx->state[1];
+    s2 = ctx->state[2];
+    s3 = ctx->state[3];
+    s4 = ctx->state[4];
+
+    while (len--) {
+        unsigned char ob, ib = *in++;
+        if (ctx->offset >= 16) {
+            ASCONP8(s0, s1, s2, s3, s4);
+            ctx->offset = 0;
+        }
+
+        if (ctx->flags & ASCONFLG_DEC) {
+            if (ctx->offset >= 8) {
+                ob = (unsigned char)(s1 >> 8 * (ctx->offset & 0x7)) ^ ib;
+                s1 ^= (uint64_t)(ob) << 8 * (ctx->offset & 0x7);
+            } else {
+                ob = (unsigned char)(s0 >> 8 * ctx->offset) ^ ib;
+                s0 ^= (uint64_t)(ob) << 8 * ctx->offset;
+            }
+        } else {
+            if (ctx->offset >= 8) {
+                s1 ^= (uint64_t)(ib) << 8 * (ctx->offset & 0x7);
+                ob = (unsigned char)(s1 >> 8 * (ctx->offset & 0x7));
+            } else {
+                s0 ^= (uint64_t)(ib) << 8 * ctx->offset;
+                ob = (unsigned char)(s0 >> 8 * ctx->offset);
+            }
+        }
+
+        if (out != NULL)
+            *out++ = ob;
+
+        ctx->offset++;
+    }
+
+    ctx->state[0] = s0;
+    ctx->state[1] = s1;
+    ctx->state[2] = s2;
+    ctx->state[3] = s3;
+    ctx->state[4] = s4;
 }
 
-ASCON_API size_t
-ascon_aead128a_encrypt_update(ascon_aead_ctx_t* const ctx,
-                              uint8_t* ciphertext,
-                              const uint8_t* plaintext,
-                              size_t plaintext_len)
+size_t ascon_aead128_encrypt_update(ascon_aead128_ctx* ctx, unsigned char* ct, const unsigned char* pt, size_t len)
 {
-    ASCON_ASSERT(ctx != NULL);
-    ASCON_ASSERT(plaintext_len == 0 || plaintext != NULL);
-    ASCON_ASSERT(plaintext_len == 0 || ciphertext != NULL);
-    ASCON_ASSERT(ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_INITIALISED
-                 || ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_ASSOC_DATA_UPDATED
-                 || ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_ENCRYPT_UPDATED);
-    if (ctx->bufstate.flow_state != ASCON_FLOW_AEAD128a_ENCRYPT_UPDATED) {
-        /* Finalise the associated data if not already done. */
-        ascon_128a_finalise_assoc_data(ctx);
-    }
-    ctx->bufstate.flow_state = ASCON_FLOW_AEAD128a_ENCRYPT_UPDATED;
-    /* Start absorbing plaintext and simultaneously squeezing out ciphertext */
-    return buffered_accumulation(&ctx->bufstate, ciphertext, plaintext,
-                                 absorb_plaintext, plaintext_len,
-                                 ASCON_DOUBLE_RATE);
+    ascon_aead128_update(ctx, ct, pt, len);
+    return len;
 }
 
-ASCON_API size_t
-ascon_aead128a_encrypt_final(ascon_aead_ctx_t* const ctx,
-                             uint8_t* const ciphertext,
-                             uint8_t* tag,
-                             size_t tag_len)
+size_t ascon_aead128_decrypt_update(ascon_aead128_ctx* ctx, unsigned char* pt, const unsigned char* ct, size_t len)
 {
-    ASCON_ASSERT(ctx != NULL);
-    ASCON_ASSERT(ciphertext != NULL);
-    ASCON_ASSERT(tag_len != 0 || tag != NULL);
-    ASCON_ASSERT(ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_INITIALISED
-                 || ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_ASSOC_DATA_UPDATED
-                 || ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_ENCRYPT_UPDATED);
-    if (ctx->bufstate.flow_state != ASCON_FLOW_AEAD128a_ENCRYPT_UPDATED) {
-        /* Finalise the associated data if not already done. */
-        ascon_128a_finalise_assoc_data(ctx);
-    }
-    size_t freshly_generated_ciphertext_len = 0;
-    /* If there is any remaining less-than-a-block plaintext to be absorbed
-     * cached in the buffer, pad it and absorb it. */
-    if (ctx->bufstate.buffer_len >= ASCON_RATE) {
-        /* Absorb plaintext in buffer */
-        ctx->bufstate.sponge.x0 ^= bigendian_decode_u64(ctx->bufstate.buffer);
-        const uint_fast8_t second_half =
-                (uint_fast8_t) (ctx->bufstate.buffer_len - ASCON_RATE);
-        ctx->bufstate.sponge.x1 ^= bigendian_decode_varlen(
-                ctx->bufstate.buffer + ASCON_RATE, second_half);
-        ctx->bufstate.sponge.x1 ^= PADDING(second_half);
-        /* Squeeze out the ciphertext */
-        bigendian_encode_u64(ciphertext, ctx->bufstate.sponge.x0);
-        bigendian_encode_varlen(ciphertext + ASCON_RATE, ctx->bufstate.sponge.x1,
-                                second_half);
-    } else {
-        /* Absorb plaintext in buffer */
-        ctx->bufstate.sponge.x0 ^= bigendian_decode_varlen(ctx->bufstate.buffer,
-                                                           ctx->bufstate.buffer_len);
-        ctx->bufstate.sponge.x0 ^= PADDING(ctx->bufstate.buffer_len);
-        /* Squeeze out the last ciphertext bytes, if any */
-        bigendian_encode_varlen(ciphertext, ctx->bufstate.sponge.x0,
-                                ctx->bufstate.buffer_len);
-    }
-    freshly_generated_ciphertext_len += ctx->bufstate.buffer_len;
-    /* End of encryption, start of tag generation.
-     * Apply key twice more with a permutation to set the state for the tag. */
-    ctx->bufstate.sponge.x2 ^= ctx->k0;
-    ctx->bufstate.sponge.x3 ^= ctx->k1;
-    ascon_permutation_12(&ctx->bufstate.sponge);
-    ctx->bufstate.sponge.x3 ^= ctx->k0;
-    ctx->bufstate.sponge.x4 ^= ctx->k1;
-    /* Squeeze out tag into its buffer. */
-    ascon_aead_generate_tag(ctx, tag, tag_len);
-    /* Final security cleanup of the internal state, key and buffer. */
-    ascon_aead_cleanup(ctx);
-    return freshly_generated_ciphertext_len;
+    ctx->flags |= ASCONFLG_DEC;
+    ascon_aead128_update(ctx, pt, ct, len);
+    return len;
 }
 
-ASCON_API size_t
-ascon_aead128a_decrypt_update(ascon_aead_ctx_t* const ctx,
-                              uint8_t* plaintext,
-                              const uint8_t* ciphertext,
-                              size_t ciphertext_len)
+size_t ascon_aead128_init(ascon_aead128_ctx* ctx, const unsigned char* k, const unsigned char* n)
 {
-    ASCON_ASSERT(ctx != NULL);
-    ASCON_ASSERT(ciphertext_len == 0 || ciphertext != NULL);
-    ASCON_ASSERT(ciphertext_len == 0 || plaintext != NULL);
-    ASCON_ASSERT(ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_INITIALISED
-                 || ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_ASSOC_DATA_UPDATED
-                 || ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_DECRYPT_UPDATED);
-    if (ctx->bufstate.flow_state != ASCON_FLOW_AEAD128a_DECRYPT_UPDATED) {
-        /* Finalise the associated data if not already done. */
-        ascon_128a_finalise_assoc_data(ctx);
-    }
-    ctx->bufstate.flow_state = ASCON_FLOW_AEAD128a_DECRYPT_UPDATED;
-    /* Start absorbing ciphertext and simultaneously squeezing out plaintext */
-    return buffered_accumulation(&ctx->bufstate, plaintext, ciphertext,
-                                 absorb_ciphertext, ciphertext_len,
-                                 ASCON_DOUBLE_RATE);
+    uint64_t s0, s1, s2, s3, s4, k0, k1;
+
+    memcpy(&s1, k, 8);
+    memcpy(&s2, k + 8, 8);
+    memcpy(&s3, n, 8);
+    memcpy(&s4, n + 8, 8);
+    ctx->key[0] = k0 = s1;
+    ctx->key[1] = k1 = s2;
+    s0 = 0x00001000808C0001ULL;
+    ASCONP12(s0, s1, s2, s3, s4);
+    s3 ^= k0;
+    s4 ^= k1;
+    ctx->state[0] = s0;
+    ctx->state[1] = s1;
+    ctx->state[2] = s2;
+    ctx->state[3] = s3;
+    ctx->state[4] = s4;
+    ctx->offset = 0;
+    ctx->flags = ASCONFLG_DOMAINSEP;
+    return 0;
 }
 
-ASCON_API size_t
-ascon_aead128a_decrypt_final(ascon_aead_ctx_t* const ctx,
-                             uint8_t* plaintext,
-                             bool* const is_tag_valid,
-                             const uint8_t* const expected_tag,
-                             const size_t expected_tag_len)
+size_t ascon_aead128_aad_update(ascon_aead128_ctx* ctx, const unsigned char* in, size_t len)
 {
-    ASCON_ASSERT(ctx != NULL);
-    ASCON_ASSERT(plaintext != NULL);
-    ASCON_ASSERT(expected_tag_len != 0 || expected_tag != NULL);
-    ASCON_ASSERT(is_tag_valid != NULL);
-    ASCON_ASSERT(ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_INITIALISED
-                 || ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_ASSOC_DATA_UPDATED
-                 || ctx->bufstate.flow_state == ASCON_FLOW_AEAD128a_DECRYPT_UPDATED);
-    if (ctx->bufstate.flow_state != ASCON_FLOW_AEAD128a_DECRYPT_UPDATED) {
-        /* Finalise the associated data if not already done. */
-        ascon_128a_finalise_assoc_data(ctx);
+    uint64_t flags;
+    size_t orig_len = len;
+
+    flags = ctx->flags;
+    ctx->flags = 0;
+    if (len > 0)
+        flags |= ASCONFLG_AAD;
+    while (len--) {
+        unsigned char ib = *in++;
+        ascon_aead128_update(ctx, NULL, &ib, 1);
     }
-    size_t freshly_generated_plaintext_len = 0;
-    /* If there is any remaining less-than-a-block ciphertext to be absorbed
-     * cached in the buffer, pad it and absorb it. */
-    if (ctx->bufstate.buffer_len >= ASCON_RATE) {
-        /* Absorb ciphertext in buffer */
-        const uint64_t c_0 = bigendian_decode_u64(ctx->bufstate.buffer);
-        const uint_fast8_t second_half =
-                (uint_fast8_t) (ctx->bufstate.buffer_len - ASCON_RATE);
-        const uint64_t c_1 = bigendian_decode_varlen(
-                ctx->bufstate.buffer + ASCON_RATE, second_half);
-        /* Squeeze out last plaintext bytes */
-        bigendian_encode_u64(plaintext, ctx->bufstate.sponge.x0 ^ c_0);
-        bigendian_encode_varlen(plaintext + ASCON_RATE,
-                                ctx->bufstate.sponge.x1 ^ c_1,
-                                second_half);
-        /* Final state changes at decryption's end */
-        ctx->bufstate.sponge.x0 = c_0;
-        ctx->bufstate.sponge.x1 &= ~mask_most_signif_bytes(second_half);
-        ctx->bufstate.sponge.x1 |= c_1;
-        ctx->bufstate.sponge.x1 ^= PADDING(second_half);
-    } else {
-        /* Absorb ciphertext in buffer */
-        const uint64_t c_0 = bigendian_decode_varlen(ctx->bufstate.buffer,
-                                                     ctx->bufstate.buffer_len);
-        /* Squeeze out last plaintext bytes */
-        bigendian_encode_varlen(plaintext, ctx->bufstate.sponge.x0 ^ c_0,
-                                ctx->bufstate.buffer_len);
-        /* Final state changes at decryption's end */
-        ctx->bufstate.sponge.x0 &= ~mask_most_signif_bytes(ctx->bufstate.buffer_len);
-        ctx->bufstate.sponge.x0 |= c_0;
-        ctx->bufstate.sponge.x0 ^= PADDING(ctx->bufstate.buffer_len);
+    ctx->flags = flags;
+    return orig_len;
+}
+
+size_t ascon_aead128_encrypt_final(ascon_aead128_ctx* ctx, unsigned char* tag)
+{
+    uint64_t s0, s1, s2, s3, s4, k0, k1;
+    unsigned char pad = 0x01;
+
+    ascon_aead128_update(ctx, NULL, NULL, 0);
+    ctx->flags = 0;
+    ascon_aead128_update(ctx, NULL, &pad, 1);
+
+    k0 = ctx->key[0];
+    k1 = ctx->key[1];
+    s0 = ctx->state[0];
+    s1 = ctx->state[1];
+    s2 = ctx->state[2] ^ k0;
+    s3 = ctx->state[3] ^ k1;
+    s4 = ctx->state[4];
+    ASCONP12(s0, s1, s2, s3, s4);
+    s3 ^= k0;
+    s4 ^= k1;
+    memcpy(tag, &s3, 8);
+    memcpy(tag + 8, &s4, 8);
+    return 16;
+}
+
+size_t ascon_aead128_decrypt_final(ascon_aead128_ctx* ctx, unsigned char* out, int* is_valid, const unsigned char* expected_tag, size_t expected_tag_len)
+{
+    unsigned char computed_tag[16];
+    size_t i;
+    unsigned char diff = 0;
+
+    /* Generate the tag (same as encrypt_final) */
+    ascon_aead128_encrypt_final(ctx, computed_tag);
+
+    if (expected_tag_len != 16) {
+        *is_valid = 0;
+        return 0;
     }
-    freshly_generated_plaintext_len += ctx->bufstate.buffer_len;
-    /* End of decryption, start of tag validation.
-     * Apply key twice more with a permutation to set the state for the tag. */
-    ctx->bufstate.sponge.x2 ^= ctx->k0;
-    ctx->bufstate.sponge.x3 ^= ctx->k1;
-    ascon_permutation_12(&ctx->bufstate.sponge);
-    ctx->bufstate.sponge.x3 ^= ctx->k0;
-    ctx->bufstate.sponge.x4 ^= ctx->k1;
-    /* Validate tag with variable len */
-    *is_tag_valid = ascon_aead_is_tag_valid(ctx, expected_tag, expected_tag_len);
-    /* Final security cleanup of the internal state and key. */
-    ascon_aead_cleanup(ctx);
-    return freshly_generated_plaintext_len;
+
+    for (i = 0; i < 16; i++) {
+        diff |= computed_tag[i] ^ expected_tag[i];
+    }
+
+    *is_valid = (diff == 0) ? 1 : 0;
+
+    (void)out;
+
+    return 0;
 }
