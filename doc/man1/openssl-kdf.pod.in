@@ -141,7 +141,7 @@ This option is identical to the B<-mac> option.
 
 Specifies the name of a supported KDF algorithm which will be used.
 The supported algorithms names include TLS1-PRF, HKDF, SSKDF, PBKDF2,
-SSHKDF, X942KDF-ASN1, X942KDF-CONCAT, X963KDF and SCRYPT.
+SNMPKDF, SSHKDF, X942KDF-ASN1, X942KDF-CONCAT, X963KDF and SCRYPT.
 
 =back
 
@@ -174,6 +174,12 @@ Use SSKDF with Hash to create a hex-encoded derived key from a secret key, salt 
     openssl kdf -keylen 14 -kdfopt digest:SHA2-256 \
                 -kdfopt hexkey:6dbdc23f045488 \
                 -kdfopt hexinfo:a1b2c3d4 SSKDF
+
+Use SNMPKDF to create a hex-encoded derived key from an engine ID, hash and password:
+
+    openssl kdf -keylen 20 -kdfopt digest:SHA1 \
+                -kdfopt pass:IFUcNbMl \
+                -kdfopt hexeid:800002b805123456789abcdef0123456789abcdef0123456789abcdef0123456 SNMPKDF
 
 Use SSHKDF to create a hex-encoded derived key from a secret key, hash and session_id:
 
@@ -208,6 +214,7 @@ L<EVP_KDF-SCRYPT(7)>,
 L<EVP_KDF-TLS1_PRF(7)>,
 L<EVP_KDF-PBKDF2(7)>,
 L<EVP_KDF-HKDF(7)>,
+L<EVP_KDF-SNMPKDF(7)>,
 L<EVP_KDF-SS(7)>,
 L<EVP_KDF-SSHKDF(7)>,
 L<EVP_KDF-X942-ASN1(7)>,
