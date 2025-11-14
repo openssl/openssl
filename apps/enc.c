@@ -70,12 +70,9 @@ const OPTIONS enc_options[] = {
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
-    {"k", OPT_K, 's', "Passphrase"},
-    {"kfile", OPT_KFILE, '<', "Read passphrase from file"},
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file"},
-    {"pass", OPT_PASS, 's', "Passphrase source"},
     {"v", OPT_V, '-', "Verbose output"},
     {"a", OPT_A, '-', "Base64 encode/decode, depending on encryption flag"},
     {"base64", OPT_A, '-', "Same as option -a"},
@@ -93,6 +90,9 @@ const OPTIONS enc_options[] = {
     {"S", OPT_UPPER_S, 's', "Salt, in hex"},
     {"iv", OPT_IV, 's', "IV in hex"},
     {"md", OPT_MD, 's', "Use specified digest to create a key from the passphrase"},
+    {"k", OPT_K, 's', "Passphrase (Deprecated"},
+    {"kfile", OPT_KFILE, '<', "Read passphrase from file (Deprecated)"},
+    {"pass", OPT_PASS, 's', "Passphrase source"},
     {"iter", OPT_ITER, 'p',
      "Specify the iteration count and force the use of PBKDF2"},
     {OPT_MORE_STR, 0, 0, "Default: " STR(PBKDF2_ITER_DEFAULT)},
