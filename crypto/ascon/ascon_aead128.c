@@ -16,9 +16,9 @@
 #include "crypto/ascon.h"
 #include <openssl/crypto.h>
 #include <string.h>
+#include <stdbool.h>
 #include "internal/numbers.h"
 #include "internal/common.h"
-#include "internal/compiler.h"
 
 /* Rotate right 64-bit value */
 #define ROR64(x, i) ((x << (64 - i)) | (x >> i))
@@ -176,6 +176,7 @@ ascon_aead128_update_internal(ascon_aead_ctx_t* ctx, unsigned char* out,
 }
 
 /* One-shot encryption */
+void
 ascon_aead128_encrypt(uint8_t* ciphertext, uint8_t* tag,
                       const uint8_t key[ASCON_AEAD128_KEY_LEN],
                       const uint8_t nonce[ASCON_AEAD_NONCE_LEN],
@@ -473,6 +474,7 @@ ascon_aead128_decrypt_final(ascon_aead_ctx_t* const ctx,
 }
 
 /* Cleanup function */
+void
 ascon_aead_cleanup(ascon_aead_ctx_t* const ctx)
 {
     if (ctx == NULL)
