@@ -2556,7 +2556,7 @@ void store_setup_crl_download(X509_STORE *st)
 }
 
 #ifndef OPENSSL_NO_SOCK
-int APP_is_IP_address(const char *host)
+int host_is_ip_address(const char *host)
 {
     size_t len;
     struct addrinfo hints, *res;
@@ -2649,7 +2649,7 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
 
         SSL_set_connect_state(ssl);
         BIO_set_ssl(sbio, ssl, BIO_CLOSE);
-        if (!APP_is_IP_address(info->server)) {
+        if (!host_is_ip_address(info->server)) {
             if (!SSL_set_tlsext_host_name(ssl, info->server)) /* set SNI */
                 goto err;
         }
