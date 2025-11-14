@@ -46,6 +46,10 @@ OpenSSL 4.0
 
    *Ryan Hooper*
 
+ * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
+
+   *Barry Fussell*, *Helen Zhang*
+
 OpenSSL 3.6
 -----------
 
