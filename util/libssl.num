@@ -606,3 +606,4 @@ SSL_CTX_get0_server_cert_type           ?	4_0_0	EXIST::FUNCTION:
 SSL_set_quic_tls_cbs                    ?	4_0_0	EXIST::FUNCTION:
 SSL_set_quic_tls_transport_params       ?	4_0_0	EXIST::FUNCTION:
 SSL_set_quic_tls_early_data_enabled     ?	4_0_0	EXIST::FUNCTION:
+SSL_CTX_is_quic                         ?	4_0_0	EXIST::FUNCTION:

@@ -1,0 +1,27 @@
+openssl_conf = openssl_init
+
+# Comment out the next line to ignore configuration errors
+config_diagnostics = 1
+
+[openssl_init]
+providers = provider_sect
+ssl_conf = ssl_section
+
+[ssl_section]
+system_default = system_default_section
+
+# Set block and record padding
+# Note: QUIC objects should ignore this, as they
+# always pad during datagram encryption
+[system_default_section]
+RecordPadding = 128,256
+
+[provider_sect]
+default = default_sect
+legacy  = legacy_sect
+
+[default_sect]
+activate = true
+
+[legacy_sect]
+activate = false

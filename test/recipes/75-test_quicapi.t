@@ -30,7 +30,7 @@ plan tests =>
     + 1;                        # quicapitest with default provider
 
 ok(run(test(["quicapitest", "default",
-             srctop_file("test", "default.cnf"),
+             srctop_file("test", "default-recordpadding.cnf"),
              srctop_dir("test", "certs"),
              srctop_dir("test", "recipes", "75-test_quicapi_data")])),
              "running quicapitest");
