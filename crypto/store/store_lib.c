@@ -78,7 +78,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
     size_t i;
 
     if (uri == NULL) {
-        ERR_raise(ERR_LIB_OSSL_STORE, CRYPTO_R_INVALID_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
