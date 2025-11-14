@@ -4775,24 +4775,22 @@ static int early_data_skip_helper(int testdtls, int testtype, int cipher, int id
         /* FALLTHROUGH */
 
     case 3:
-        /*
-         * This client has sent more early_data than we are willing to skip
-         * (case 3) or sent invalid early_data (case 2) so the connection should
-         * abort.
-         */
-        if (testdtls) {
-            if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
-                    || !TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_WANT_READ))
-                goto end;
-        } else {
-            if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
-                    || !TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_SSL))
-                goto end;
-        }
-        /* Connection has failed - nothing more to do */
-        testresult = 1;
-        goto end;
+        {
+            /*
+             * This client has sent more early_data than we are willing to skip
+             * (case 3) or sent invalid early_data (case 2) so the connection should
+             * abort.
+             */
+            int sslerr = testdtls ? SSL_ERROR_WANT_READ : SSL_ERROR_SSL;
 
+            if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+                    || !TEST_int_eq(SSL_get_error(serverssl, 0), sslerr))
+                goto end;
+
+            /* Connection has failed - nothing more to do */
+            testresult = 1;
+            goto end;
+        }
     default:
         TEST_error("Invalid test type");
         goto end;
@@ -5533,38 +5531,26 @@ static int test_early_data_not_expected(int idx)
                                         &written)))
         goto end;
 
-    if (testdtls) {
-        /*
-         * For DTLS1.3 the call to SSL_connect here still fails since
-         * it is waiting on the server to send an ACK to its Finished message.
-         */
+    if (!TEST_int_le(SSL_accept(serverssl), 0))
+        goto end;
 
-        /*
-         * Server should skip over early data and then block waiting for client to
-         * continue handshake
-         */
-        if (!TEST_int_le(SSL_accept(serverssl), 0)
-                || !TEST_int_lt(SSL_connect(clientssl), 0)
-                || !TEST_int_eq(SSL_get_early_data_status(serverssl),
-                                SSL_EARLY_DATA_REJECTED)
-                || !TEST_int_gt(SSL_accept(serverssl), 0)
-                || !TEST_int_eq(SSL_get_early_data_status(clientssl),
-                                SSL_EARLY_DATA_REJECTED))
+    /*
+     * For DTLS1.3 the call to SSL_connect here still fails since
+     * it is waiting on the server to send an ACK to its Finished message.
+     */
+    if (testdtls) {
+        if (!TEST_int_lt(SSL_connect(clientssl), 0))
             goto end;
     } else {
-        /*
-         * Server should skip over early data and then block waiting for client to
-         * continue handshake
-         */
-        if (!TEST_int_le(SSL_accept(serverssl), 0)
-                || !TEST_int_gt(SSL_connect(clientssl), 0)
-                || !TEST_int_eq(SSL_get_early_data_status(serverssl),
-                                SSL_EARLY_DATA_REJECTED)
-                || !TEST_int_gt(SSL_accept(serverssl), 0)
-                || !TEST_int_eq(SSL_get_early_data_status(clientssl),
-                                SSL_EARLY_DATA_REJECTED))
+        if (!TEST_int_gt(SSL_connect(clientssl), 0))
             goto end;
     }
+    if (!TEST_int_eq(SSL_get_early_data_status(serverssl),
+                     SSL_EARLY_DATA_REJECTED)
+            || !TEST_int_gt(SSL_accept(serverssl), 0)
+            || !TEST_int_eq(SSL_get_early_data_status(clientssl),
+                            SSL_EARLY_DATA_REJECTED))
+        goto end;
 
     /* Send some normal data from client to server */
     if (!TEST_true(SSL_write_ex(clientssl, MSG2, strlen(MSG2), &written))
@@ -8594,6 +8580,7 @@ static int test_key_update_local_in_read(int idx)
     int testdtls = idx >= 2;
     int expected_do_handshake_result = 1;
     int bio_size = 512;
+    int pwbuf_size = 515;
 
     if (testdtls) {
         smeth = DTLS_server_method();
@@ -8641,8 +8628,8 @@ static int test_key_update_local_in_read(int idx)
     SSL_set_bio(peer, pbio, pbio);
 
     if (testdtls) {
-        if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), 515)
-            || !TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), 515))
+        if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), pwbuf_size)
+            || !TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), pwbuf_size))
             goto end;
     } else {
         /* write app data in peer will fail with SSL_ERROR_WANT_WRITE */

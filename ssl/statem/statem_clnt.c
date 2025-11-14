@@ -499,6 +499,8 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
             /* If we are done with early data we need to clean up Epoch 1 messages sent */
             dtls1_clear_sent_buffer(s, 0);
         }
+        /* Fall through */
+
     case TLS_ST_CW_CHANGE:
         if (s->s3.tmp.cert_req == 0)
             st->hand_state = TLS_ST_CW_FINISHED;
