@@ -70,6 +70,10 @@ static int ml_kem_init(void *vctx, int op, void *key,
         return 0;
     ctx->key = key;
     ctx->op = op;
+    if (ctx->entropy != NULL) {
+        OPENSSL_cleanse(ctx->entropy, ML_KEM_RANDOM_BYTES);
+        ctx->entropy = NULL;
+    }
     return ml_kem_set_ctx_params(vctx, params);
 }
 
@@ -104,12 +108,6 @@ static int ml_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (ctx == NULL || !ml_kem_set_ctx_params_decoder(params, &p))
         return 0;
-
-    if (ctx->op == EVP_PKEY_OP_DECAPSULATE && ctx->entropy != NULL) {
-        /* Decapsulation is deterministic */
-        OPENSSL_cleanse(ctx->entropy, ML_KEM_RANDOM_BYTES);
-        ctx->entropy = NULL;
-    }
 
     /* Encapsulation ephemeral input key material "ikmE" */
     if (ctx->op == EVP_PKEY_OP_ENCAPSULATE && p.ikme != NULL) {
