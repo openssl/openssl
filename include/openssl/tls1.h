@@ -78,6 +78,9 @@ extern "C" {
 # define TLS1_AD_BAD_CERTIFICATE_HASH_VALUE 114
 # define TLS1_AD_UNKNOWN_PSK_IDENTITY    115/* fatal */
 # define TLS1_AD_NO_APPLICATION_PROTOCOL 120 /* fatal */
+# ifndef OPENSSL_NO_ECH
+#  define TLS1_AD_ECH_REQUIRED           121 /* fatal */
+# endif
 
 /* ExtensionType values from RFC3546 / RFC4366 / RFC6066 */
 # define TLSEXT_TYPE_server_name                 0
@@ -166,6 +169,11 @@ extern "C" {
 # ifndef OPENSSL_NO_NEXTPROTONEG
 /* This is not an IANA defined extension number */
 #  define TLSEXT_TYPE_next_proto_neg              13172
+# endif
+
+# ifndef OPENSSL_NO_ECH
+#  define TLSEXT_TYPE_ech                       0xfe0d
+#  define TLSEXT_TYPE_outer_extensions          0xfd00
 # endif
 
 /* NameType value from RFC3546 */

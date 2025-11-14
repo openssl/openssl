@@ -23,4 +23,9 @@ int ossl_ssl_get_error(const SSL *s, int i, int check_err);
 /* Set if this is our QUIC handshake layer */
 # define TLS1_FLAGS_QUIC_INTERNAL                0x4000
 
+/* We limit the number of key shares sent */
+# ifndef OPENSSL_CLIENT_MAX_KEY_SHARES
+#  define OPENSSL_CLIENT_MAX_KEY_SHARES 4
+# endif
+
 #endif

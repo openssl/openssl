@@ -1614,6 +1614,9 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_ZSTD
     BIO_puts(bio_out, "ZSTD\n");
 #endif
+#ifdef OPENSSL_NO_ECH
+    BIO_puts(bio_out, "ECH\n");
+#endif
 }
 
 /* Unified enum for help and list commands. */

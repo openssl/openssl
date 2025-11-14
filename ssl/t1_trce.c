@@ -500,6 +500,10 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
 # ifndef OPENSSL_NO_NEXTPROTONEG
     {TLSEXT_TYPE_next_proto_neg, "next_proto_neg"},
 # endif
+# ifndef OPENSSL_NO_ECH
+    {TLSEXT_TYPE_ech, "encrypted_client_hello"},
+    {TLSEXT_TYPE_outer_extensions, "outer_extension"},
+# endif
 };
 
 static const ssl_trace_tbl ssl_groups_tbl[] = {

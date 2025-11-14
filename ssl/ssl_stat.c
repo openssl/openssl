@@ -333,6 +333,10 @@ const char *SSL_alert_desc_string(int value)
         return "BH";
     case TLS1_AD_UNKNOWN_PSK_IDENTITY:
         return "UP";
+#ifndef OPENSSL_NO_ECH
+    case TLS1_AD_ECH_REQUIRED:
+        return "RR";
+#endif
     default:
         return "UK";
     }
@@ -403,6 +407,10 @@ const char *SSL_alert_desc_string_long(int value)
         return "unknown PSK identity";
     case TLS1_AD_NO_APPLICATION_PROTOCOL:
         return "no application protocol";
+#ifndef OPENSSL_NO_ECH
+    case TLS1_AD_ECH_REQUIRED:
+        return "ECH required";
+#endif
     default:
         return "unknown";
     }
