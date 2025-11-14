@@ -2827,7 +2827,6 @@ ASN1_STRING_set0                        ?	4_0_0	EXIST::FUNCTION:
 ASN1_STRING_length                      ?	4_0_0	EXIST::FUNCTION:
 ASN1_STRING_length_set                  ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ASN1_STRING_type                        ?	4_0_0	EXIST::FUNCTION:
-ASN1_STRING_data                        ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
 ASN1_STRING_get0_data                   ?	4_0_0	EXIST::FUNCTION:
 d2i_ASN1_BIT_STRING                     ?	4_0_0	EXIST::FUNCTION:
 i2d_ASN1_BIT_STRING                     ?	4_0_0	EXIST::FUNCTION:
