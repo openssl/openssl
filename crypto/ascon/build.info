@@ -1,0 +1,5 @@
+# ASCON algorithm implementation
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]=ascon_aead128.c
+INCLUDE[../../libcrypto]=../include
+
