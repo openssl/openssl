@@ -605,7 +605,8 @@ SSL_CTX_get0_client_cert_type           ?	4_0_0	EXIST::FUNCTION:
 SSL_CTX_get0_server_cert_type           ?	4_0_0	EXIST::FUNCTION:
 SSL_set_quic_tls_cbs                    ?	4_0_0	EXIST::FUNCTION:
 SSL_set_quic_tls_transport_params       ?	4_0_0	EXIST::FUNCTION:
-SSL_set_quic_tls_early_data_enabled     ?	4_0_0	EXIST::FUNCTION:OSSL_ECHSTORE_new                       ?	4_0_0	EXIST::FUNCTION:ECH
+SSL_set_quic_tls_early_data_enabled     ?	4_0_0	EXIST::FUNCTION:
+OSSL_ECHSTORE_new                       ?	4_0_0	EXIST::FUNCTION:ECH
 OSSL_ECHSTORE_new                       ?	4_0_0	EXIST::FUNCTION:ECH
 OSSL_ECHSTORE_free                      ?	4_0_0	EXIST::FUNCTION:ECH
 OSSL_ECHSTORE_new_config                ?	4_0_0	EXIST::FUNCTION:ECH
