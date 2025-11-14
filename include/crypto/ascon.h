@@ -2,6 +2,7 @@
 #define ASCON_H
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 /* ASCON-AEAD128 constants */
 #define ASCON_AEAD128_KEY_LEN 16      /* 128-bit key */
