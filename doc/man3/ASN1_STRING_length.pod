@@ -3,7 +3,7 @@
 =head1 NAME
 
 ASN1_STRING_dup, ASN1_STRING_cmp, ASN1_STRING_set, ASN1_STRING_length,
-ASN1_STRING_type, ASN1_STRING_get0_data, ASN1_STRING_data,
+ASN1_STRING_type, ASN1_STRING_get0_data,
 ASN1_STRING_to_UTF8 - ASN1_STRING utility functions
 
 =head1 SYNOPSIS
@@ -12,7 +12,6 @@ ASN1_STRING_to_UTF8 - ASN1_STRING utility functions
 
  int ASN1_STRING_length(ASN1_STRING *x);
  const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x);
- unsigned char *ASN1_STRING_data(ASN1_STRING *x);
 
  ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *a);
 
@@ -33,10 +32,6 @@ ASN1_STRING_length() returns the length of the content of I<x>. I<x> B<MUST NOT>
 ASN1_STRING_get0_data() returns an internal pointer to the data of I<x>.
 Since this is an internal pointer it should B<not> be freed or
 modified in any way. I<x> B<MUST NOT> be NULL.
-
-ASN1_STRING_data() is similar to ASN1_STRING_get0_data() except the
-returned value is not constant. This function is deprecated:
-applications should use ASN1_STRING_get0_data() instead.
 
 ASN1_STRING_dup() returns a copy of the structure I<a>.
 
@@ -68,11 +63,12 @@ These functions should B<not> be used to examine or modify B<ASN1_INTEGER>
 or B<ASN1_ENUMERATED> types: the relevant B<INTEGER> or B<ENUMERATED>
 utility functions should be used instead.
 
-In general it cannot be assumed that the data returned by ASN1_STRING_data()
-is null terminated or does not contain embedded nulls. The actual format
-of the data will depend on the actual string type itself: for example
-for an IA5String the data will be ASCII, for a BMPString two bytes per
-character in big endian format, and for a UTF8String it will be in UTF8 format.
+In general it cannot be assumed that the data returned by
+ASN1_STRING_get0_data() is null terminated or does not contain
+embedded nulls. The actual format of the data will depend on the
+actual string type itself: for example for an IA5String the data will
+be ASCII, for a BMPString two bytes per character in big endian
+format, and for a UTF8String it will be in UTF8 format.
 
 Similar care should be take to ensure the data is in the correct format
 when calling ASN1_STRING_set().
@@ -81,7 +77,7 @@ when calling ASN1_STRING_set().
 
 ASN1_STRING_length() returns the length of the content of I<x>.
 
-ASN1_STRING_get0_data() and ASN1_STRING_data() return an internal pointer to
+ASN1_STRING_get0_data() returns an internal pointer to
 the data of I<x>.
 
 ASN1_STRING_dup() returns a valid B<ASN1_STRING> structure or NULL if an
