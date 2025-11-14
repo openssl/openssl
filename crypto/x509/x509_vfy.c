@@ -52,6 +52,7 @@ static int dane_verify(X509_STORE_CTX *ctx);
 static int dane_verify_rpk(X509_STORE_CTX *ctx);
 static int null_callback(int ok, X509_STORE_CTX *e);
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
+static int has_no_dup_ext_oids(const STACK_OF(X509_EXTENSION) *exts);
 static int check_extensions(X509_STORE_CTX *ctx);
 static int check_name_constraints(X509_STORE_CTX *ctx);
 static int check_id(X509_STORE_CTX *ctx);
@@ -592,13 +593,52 @@ static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
     return verify_cb_cert(ctx, x, depth, X509_V_ERR_INVALID_PURPOSE);
 }
 
+/* qsort comparator for ASN1_OBJECT* (by OID) */
+static int cmp_asn1obj_ptr(const void *a, const void *b)
+{
+    const ASN1_OBJECT *oa = *(const ASN1_OBJECT * const *)a;
+    const ASN1_OBJECT *ob = *(const ASN1_OBJECT * const *)b;
+    return OBJ_cmp(oa, ob);
+}
+
+/*
+ * Return 1 if `exts` contains no duplicate extension OIDs,
+ *  0 if a duplicate is found,
+ * −1 on out‐of‐memory.
+ */
+static int has_no_dup_ext_oids(const STACK_OF(X509_EXTENSION) *exts)
+{
+    int ne, i;
+    ASN1_OBJECT **arr;
+    if (exts == NULL || (ne = sk_X509_EXTENSION_num(exts)) <= 1)
+        return 1;
+    arr = OPENSSL_malloc(sizeof(*arr) * (size_t)ne);
+    if (arr == NULL)
+        return -1;
+    for (i = 0; i < ne; i++) {
+        X509_EXTENSION *ext =
+            sk_X509_EXTENSION_value((STACK_OF(X509_EXTENSION)*)exts, i);
+        arr[i] = X509_EXTENSION_get_object(ext); /* borrowed, do not free */
+    }
+    qsort(arr, (size_t)ne, sizeof(*arr), cmp_asn1obj_ptr);
+    for (i = 1; i < ne; i++) {
+        if (OBJ_cmp(arr[i - 1], arr[i]) == 0) {
+            OPENSSL_free(arr);
+            return 0; /* duplicate found */
+        }
+    }
+    OPENSSL_free(arr);
+    return 1;
+}
+
 /*-
  * Check extensions of a cert chain for consistency with the supplied purpose.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
 static int check_extensions(X509_STORE_CTX *ctx)
 {
-    int i, must_be_ca, plen = 0;
+    int i, rv, must_be_ca, plen = 0;
+    const STACK_OF(X509_EXTENSION) *exts;
     X509 *x;
     int ret, proxy_path_length = 0;
     int purpose, allow_proxy_certs, num = sk_X509_num(ctx->chain);
@@ -626,11 +666,18 @@ static int check_extensions(X509_STORE_CTX *ctx)
 
     for (i = 0; i < num; i++) {
         x = sk_X509_value(ctx->chain, i);
+        /* Enforce RFC 5280 §4.2: no duplicate extension OIDs (mandatory) */
+        exts = X509_get0_extensions(x);
+        rv = has_no_dup_ext_oids(exts);
+        if (rv < 0)
+            return 0;
+        CB_FAIL_IF(rv == 0, ctx, x, i, X509_V_ERR_DUPLICATE_EXTENSION);
         CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
                        && (x->ex_flags & EXFLAG_CRITICAL) != 0,
                    ctx, x, i, X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);
         CB_FAIL_IF(!allow_proxy_certs && (x->ex_flags & EXFLAG_PROXY) != 0,
                    ctx, x, i, X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED);
+
         ret = X509_check_ca(x);
         switch (must_be_ca) {
         case -1:
@@ -1943,9 +1990,18 @@ done:
 static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 {
     X509 *issuer = NULL;
+    const STACK_OF(X509_EXTENSION) *exts;
     EVP_PKEY *ikey = NULL;
     int cnum = ctx->error_depth;
     int chnum = sk_X509_num(ctx->chain) - 1;
+    int rv;
+
+    /* RFC 5280 §4.2: a given extension MUST NOT appear more than once */
+    exts = X509_CRL_get0_extensions(crl);
+    rv = has_no_dup_ext_oids(exts);
+    if (rv < 0)
+        return 0;
+    CB_FAIL_IF(rv == 0, ctx, NULL, 0, X509_V_ERR_DUPLICATE_EXTENSION);
 
     /* If we have an alternative CRL issuer cert use that */
     if (ctx->current_issuer != NULL) {
@@ -2004,7 +2060,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
         return 0;
 
     if (ikey != NULL) {
-        int rv = X509_CRL_check_suiteb(crl, ikey, ctx->param->flags);
+        rv = X509_CRL_check_suiteb(crl, ikey, ctx->param->flags);
 
         if (rv != X509_V_OK && !verify_cb_crl(ctx, rv))
             return 0;
