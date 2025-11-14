@@ -128,6 +128,14 @@ because these functions do not free the extension they delete.
 They return an B<X509_EXTENSION> object which must be explicitly freed
 using X509_EXTENSION_free().
 
+X509v3_add_ext(), X509v3_add_extensions() and X509_add_ext() ignore any
+B<empty> values of the C<subjectKeyIdentifier> (empty OCTET STRING) or the
+C<authorityKeyIdentifier> (empty SEQUENCE) extensions.
+These empty values are not added to the extension list.
+In the case of X509v3_add_extensions() any previous instance of the same
+extension is deleted, so the call is not necessarily without side-effects in
+that case.
+
 =head1 RETURN VALUES
 
 X509v3_get_ext_count() returns the extension count or 0 for failure.
