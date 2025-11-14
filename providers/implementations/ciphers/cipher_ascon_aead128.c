@@ -148,7 +148,7 @@ static int ascon_aead128_internal_init(void *vctx, direction_t direction,
 
         ascon_aead128_cleanctx(ctx);
         ctx->direction = direction;
-        ascon_aead128a_init(ctx->internal_ctx, key, iv);
+        ascon_aead128_init(ctx->internal_ctx, key, iv);
         /* Store the IV for get_updated_iv */
         memcpy(ctx->iv, iv, ASCON_AEAD_NONCE_LEN);
         ctx->iv_set = true;
@@ -208,7 +208,7 @@ static int ascon_aead128_update(void *vctx, unsigned char *out, size_t *outl,
 
         /* Process AAD if provided */
         if (inl > 0 && in != NULL) {
-            ascon_aead128a_assoc_data_update(ctx->internal_ctx, in, inl);
+            ascon_aead128_assoc_data_update(ctx->internal_ctx, in, inl);
         }
         if (outl != NULL)
             *outl = 0;
@@ -225,7 +225,7 @@ static int ascon_aead128_update(void *vctx, unsigned char *out, size_t *outl,
         uint8_t *ciphertext = out;
         size_t ciphertext_len;
 
-        ciphertext_len = ascon_aead128a_encrypt_update(ctx->internal_ctx, ciphertext,
+        ciphertext_len = ascon_aead128_encrypt_update(ctx->internal_ctx, ciphertext,
                                                         plaintext, plaintext_len);
         if (outl != NULL)
             *outl = ciphertext_len;
@@ -240,7 +240,7 @@ static int ascon_aead128_update(void *vctx, unsigned char *out, size_t *outl,
         const uint8_t *ciphertext = in;
         size_t ciphertext_len = inl;
 
-        plaintext_len = ascon_aead128a_decrypt_update(ctx->internal_ctx, plaintext,
+        plaintext_len = ascon_aead128_decrypt_update(ctx->internal_ctx, plaintext,
                                                         ciphertext, ciphertext_len);
         if (outl != NULL)
             *outl = plaintext_len;
@@ -271,7 +271,7 @@ static int ascon_aead128_final(void *vctx, unsigned char *out, size_t *outl, siz
         size_t tag_len = FIXED_TAG_LENGTH;
         size_t ret;
 
-        ret = ascon_aead128a_encrypt_final((ascon_aead_ctx_t *)ctx->internal_ctx,
+        ret = ascon_aead128_encrypt_final((ascon_aead_ctx_t *)ctx->internal_ctx,
                                             ciphertext, tag, tag_len);
         *outl = ret;
         ctx->is_tag_set = true;
@@ -286,7 +286,7 @@ static int ascon_aead128_final(void *vctx, unsigned char *out, size_t *outl, siz
             const uint8_t *expected_tag = ctx->tag;
             size_t expected_tag_len = FIXED_TAG_LENGTH;
 
-            ret = ascon_aead128a_decrypt_final((ascon_aead_ctx_t *)ctx->internal_ctx,
+            ret = ascon_aead128_decrypt_final((ascon_aead_ctx_t *)ctx->internal_ctx,
                                                 plaintext, &is_tag_valid, expected_tag,
                                                 expected_tag_len);
 
@@ -537,7 +537,7 @@ static int ascon_aead128_cipher(void *vctx, unsigned char *out, size_t *outl,
             return 0;
         }
         if (inl > 0) {
-            ascon_aead128a_assoc_data_update(ctx->internal_ctx, in, inl);
+            ascon_aead128_assoc_data_update(ctx->internal_ctx, in, inl);
         }
         if (outl != NULL)
             *outl = 0;

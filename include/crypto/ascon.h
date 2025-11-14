@@ -22,10 +22,13 @@ typedef ascon_aead128_ctx ascon_aead_ctx_t;
 #ifndef OPENSSL_BUILDING_OPENSSL
 void ascon_test_state();
 #endif
-size_t ascon_aead128_init(ascon_aead128_ctx* ctx, const unsigned char* k, const unsigned char* n);
-size_t ascon_aead128_encrypt_update(ascon_aead128_ctx* ctx, unsigned char* ct, const unsigned char* pt, size_t len);
-size_t ascon_aead128_encrypt_final(ascon_aead128_ctx* ctx, unsigned char* tag);
-size_t ascon_aead128_decrypt_final(ascon_aead128_ctx* ctx, unsigned char* out, int* is_valid, const unsigned char* expected_tag, size_t expected_tag_len);
-size_t ascon_aead128_aad_update(ascon_aead128_ctx* ctx, const unsigned char* in, size_t len);
-size_t ascon_aead128_decrypt_update(ascon_aead128_ctx* ctx, unsigned char* pt, const unsigned char* ct, size_t len);
+
+/* Provider API functions */
+void ascon_aead128_init(ascon_aead_ctx_t* ctx, const uint8_t key[ASCON_AEAD128_KEY_LEN], const uint8_t nonce[ASCON_AEAD_NONCE_LEN]);
+void ascon_aead128_assoc_data_update(ascon_aead_ctx_t* ctx, const uint8_t* assoc_data, size_t assoc_data_len);
+size_t ascon_aead128_encrypt_update(ascon_aead_ctx_t* ctx, uint8_t* ciphertext, const uint8_t* plaintext, size_t plaintext_len);
+size_t ascon_aead128_encrypt_final(ascon_aead_ctx_t* ctx, uint8_t* ciphertext, uint8_t* tag, size_t tag_len);
+size_t ascon_aead128_decrypt_update(ascon_aead_ctx_t* ctx, uint8_t* plaintext, const uint8_t* ciphertext, size_t ciphertext_len);
+size_t ascon_aead128_decrypt_final(ascon_aead_ctx_t* ctx, uint8_t* plaintext, bool* is_tag_valid, const uint8_t* expected_tag, size_t expected_tag_len);
+void ascon_aead_cleanup(ascon_aead_ctx_t* ctx);
 #endif /* ASCON_H */
