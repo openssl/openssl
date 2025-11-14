@@ -19,7 +19,6 @@
 #define BASE_SECTION                    "tsa"
 #define ENV_DEFAULT_TSA                 "default_tsa"
 #define ENV_SERIAL                      "serial"
-#define ENV_CRYPTO_DEVICE               "crypto_device"
 #define ENV_SIGNER_CERT                 "signer_cert"
 #define ENV_CERTS                       "certs"
 #define ENV_SIGNER_KEY                  "signer_key"
