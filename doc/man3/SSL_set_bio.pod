@@ -15,13 +15,12 @@ SSL_set_bio, SSL_set0_rbio, SSL_set0_wbio - connect the SSL object with a BIO
 =head1 DESCRIPTION
 
 SSL_set0_rbio() connects the BIO B<rbio> for the read operations of the B<ssl>
-object. The SSL engine inherits the behaviour of B<rbio>. If the BIO is
-nonblocking then the B<ssl> object will also have nonblocking behaviour. This
-function transfers ownership of B<rbio> to B<ssl>. It will be automatically
-freed using L<BIO_free_all(3)> when the B<ssl> is freed. On calling this
-function, any existing B<rbio> that was previously set will also be freed via a
-call to L<BIO_free_all(3)> (this includes the case where the B<rbio> is set to
-the same value as previously).
+object. If the BIO is nonblocking then the B<ssl> object will also have
+nonblocking behaviour. This function transfers ownership of B<rbio> to B<ssl>.
+It will be automatically freed using L<BIO_free_all(3)> when the B<ssl> is
+freed. On calling this function, any existing B<rbio> that was previously set
+will also be freed via a call to L<BIO_free_all(3)> (this includes the case
+where the B<rbio> is set to the same value as previously).
 
 If using a custom BIO, B<rbio> must implement either
 L<BIO_meth_set_read_ex(3)> or L<BIO_meth_set_read(3)>.

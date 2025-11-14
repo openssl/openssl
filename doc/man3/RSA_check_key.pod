@@ -50,17 +50,6 @@ They return -1 if an error occurs while checking the key.
 If the key is invalid or an error occurred, the reason code can be
 obtained using L<ERR_get_error(3)>.
 
-=head1 NOTES
-
-Unlike most other RSA functions, this function does B<not> work
-transparently with any underlying ENGINE implementation because it uses the
-key data in the RSA structure directly. An ENGINE implementation can
-override the way key data is stored and handled, and can even provide
-support for HSM keys - in which case the RSA structure may contain B<no>
-key data at all! If the ENGINE in question is only being used for
-acceleration or analysis purposes, then in all likelihood the RSA key data
-is complete and untouched, but this can't be assumed in the general case.
-
 =head1 BUGS
 
 A method of verifying the RSA key using opaque RSA API functions might need
