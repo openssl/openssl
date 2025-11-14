@@ -293,7 +293,10 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
              * then the best thing to do is probably carry on regardless.
              */
             assert(s->s3.tmp.new_compression != NULL
-                   || BIO_wpending(s->wbio) <= (int)s->d1->mtu);
+                   || BIO_wpending(s->wbio) <= (int)s->d1->mtu
+                   || s->rlayer.record_padding_cb != NULL
+                   || s->rlayer.hs_padding != 0
+                   || s->rlayer.block_padding != 0);
 
             if (recordtype == SSL3_RT_HANDSHAKE && !s->d1->retransmitting
                     && s->init_off == 0) {
