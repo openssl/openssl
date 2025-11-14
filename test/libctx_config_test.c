@@ -43,6 +43,7 @@ OPT_TEST_DECLARE_USAGE("configfile\n")
 int setup_tests(void)
 {
     int test;
+
     test = TEST_true(test_skip_common_options())
         && TEST_ptr(cfg1 = test_get_argument(0))
         && TEST_ptr(cfg2 = test_get_argument(1));
