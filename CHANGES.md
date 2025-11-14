@@ -32,6 +32,10 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * The deprecated function ASN1_STRING_data has been removed.
+
+   *Bob Beck*
+
  * various function parameters have been constified,
    in particular for X509-related functions.
 
