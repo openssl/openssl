@@ -331,8 +331,6 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
     if (ctx->p10CSR != NULL
             && (exts = X509_REQ_get_extensions(ctx->p10CSR)) == NULL)
         goto err;
-    if (exts == NULL && (exts = sk_X509_EXTENSION_new_null()) == NULL)
-        goto err;
     if (!ctx->SubjectAltName_nodefault && !HAS_SAN(ctx) && refcert != NULL
         && (default_sans = X509V3_get_d2i(X509_get0_extensions(refcert),
                                           NID_subject_alt_name, NULL, NULL))
@@ -340,7 +338,8 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
             && !add1_extension(&exts, NID_subject_alt_name, crit, default_sans))
         goto err;
     if (sk_X509_EXTENSION_num(ctx->reqExtensions) > 0 /* augment/override existing ones */
-            && X509v3_add_extensions(&exts, ctx->reqExtensions) == NULL)
+            && ((exts == NULL && (exts = sk_X509_EXTENSION_new_null()) == NULL)
+                || X509v3_add_extensions(&exts, ctx->reqExtensions) == NULL))
         goto err;
     if (sk_GENERAL_NAME_num(ctx->subjectAltNames) > 0
             && !add1_extension(&exts, NID_subject_alt_name,
