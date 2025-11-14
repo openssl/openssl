@@ -94,6 +94,9 @@ static void usage(void)
 # endif
 #endif
 
+#if !defined(RUSAGE_SELF) && defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
+# include <sys/times.h>
+#endif
 int main(int ac, char **av)
 {
 #if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
@@ -101,7 +104,13 @@ int main(int ac, char **av)
     struct stat sb;
     FILE *fp;
     char *contents;
+# if !defined(RUSAGE_SELF)
+    struct tms rus;
+    struct timeval u_start, u_end, u_elapsed;
+    struct timeval s_start, s_end, s_elapsed;
+# else
     struct rusage start, end, elapsed;
+# endif
     struct timeval e_start, e_end, e_elapsed;
 
     /* Parse JCL. */
@@ -177,11 +186,19 @@ int main(int ac, char **av)
         perror("elapsed start");
         exit(EXIT_FAILURE);
     }
+# if !defined(RUSAGE_SELF)
+    times(&rus);
+    u_start.tv_sec = rus.tms_utime / CLOCKS_PER_SEC;
+    u_start.tv_usec = (rus.tms_utime * 1000000) / CLOCKS_PER_SEC;
+    s_start.tv_sec = rus.tms_stime / CLOCKS_PER_SEC;
+    s_start.tv_usec = (rus.tms_stime * 1000000) / CLOCKS_PER_SEC;
+# else
     if (getrusage(RUSAGE_SELF, &start) < 0) {
         OPENSSL_free(contents);
         perror("start");
         exit(EXIT_FAILURE);
     }
+# endif
     for (i = count; i > 0; i--) {
         switch (what) {
         case 'c':
@@ -192,22 +209,40 @@ int main(int ac, char **av)
             break;
         }
     }
+# if !defined(RUSAGE_SELF)
+    times(&rus);
+    u_end.tv_sec = rus.tms_utime / CLOCKS_PER_SEC;
+    u_end.tv_usec = (rus.tms_utime * 1000000) / CLOCKS_PER_SEC;
+    s_end.tv_sec = rus.tms_stime / CLOCKS_PER_SEC;
+    s_end.tv_usec = (rus.tms_stime * 1000000) / CLOCKS_PER_SEC;
+# else
     if (getrusage(RUSAGE_SELF, &end) < 0) {
         OPENSSL_free(contents);
         perror("getrusage");
         exit(EXIT_FAILURE);
     }
+# endif
     if (gettimeofday(&e_end, NULL) < 0) {
         OPENSSL_free(contents);
         perror("gettimeofday");
         exit(EXIT_FAILURE);
     }
 
+# if !defined(RUSAGE_SELF)
+    timersub(&u_end, &u_start, &u_elapsed);
+    timersub(&s_end, &s_start, &s_elapsed);
+# else
     timersub(&end.ru_utime, &start.ru_stime, &elapsed.ru_stime);
     timersub(&end.ru_utime, &start.ru_utime, &elapsed.ru_utime);
+# endif
     timersub(&e_end, &e_start, &e_elapsed);
+# if !defined(RUSAGE_SELF)
+    print_timeval("user     ", &u_elapsed);
+    print_timeval("sys      ", &s_elapsed);
+# else
     print_timeval("user     ", &elapsed.ru_utime);
     print_timeval("sys      ", &elapsed.ru_stime);
+# endif
     if (debug)
         print_timeval("elapsed??", &e_elapsed);
 
