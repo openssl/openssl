@@ -3023,6 +3023,10 @@ DEPEND[html/man3/X509_check_ca.html]=man3/X509_check_ca.pod
 GENERATE[html/man3/X509_check_ca.html]=man3/X509_check_ca.pod
 DEPEND[man/man3/X509_check_ca.3]=man3/X509_check_ca.pod
 GENERATE[man/man3/X509_check_ca.3]=man3/X509_check_ca.pod
+DEPEND[html/man3/X509_check_certificate_times.html]=man3/X509_check_certificate_times.pod
+GENERATE[html/man3/X509_check_certificate_times.html]=man3/X509_check_certificate_times.pod
+DEPEND[man/man3/X509_check_certificate_times.3]=man3/X509_check_certificate_times.pod
+GENERATE[man/man3/X509_check_certificate_times.3]=man3/X509_check_certificate_times.pod
 DEPEND[html/man3/X509_check_host.html]=man3/X509_check_host.pod
 GENERATE[html/man3/X509_check_host.html]=man3/X509_check_host.pod
 DEPEND[man/man3/X509_check_host.3]=man3/X509_check_host.pod
@@ -3043,10 +3047,6 @@ DEPEND[html/man3/X509_cmp.html]=man3/X509_cmp.pod
 GENERATE[html/man3/X509_cmp.html]=man3/X509_cmp.pod
 DEPEND[man/man3/X509_cmp.3]=man3/X509_cmp.pod
 GENERATE[man/man3/X509_cmp.3]=man3/X509_cmp.pod
-DEPEND[html/man3/X509_cmp_time.html]=man3/X509_cmp_time.pod
-GENERATE[html/man3/X509_cmp_time.html]=man3/X509_cmp_time.pod
-DEPEND[man/man3/X509_cmp_time.3]=man3/X509_cmp_time.pod
-GENERATE[man/man3/X509_cmp_time.3]=man3/X509_cmp_time.pod
 DEPEND[html/man3/X509_digest.html]=man3/X509_digest.pod
 GENERATE[html/man3/X509_digest.html]=man3/X509_digest.pod
 DEPEND[man/man3/X509_digest.3]=man3/X509_digest.pod
@@ -3801,12 +3801,12 @@ html/man3/X509_STORE_set_verify_cb_func.html \
 html/man3/X509_VERIFY_PARAM_set_flags.html \
 html/man3/X509_add_cert.html \
 html/man3/X509_check_ca.html \
+html/man3/X509_check_certificate_times.html \
 html/man3/X509_check_host.html \
 html/man3/X509_check_issued.html \
 html/man3/X509_check_private_key.html \
 html/man3/X509_check_purpose.html \
 html/man3/X509_cmp.html \
-html/man3/X509_cmp_time.html \
 html/man3/X509_digest.html \
 html/man3/X509_dup.html \
 html/man3/X509_get0_distinguishing_id.html \
@@ -4473,12 +4473,12 @@ man/man3/X509_STORE_set_verify_cb_func.3 \
 man/man3/X509_VERIFY_PARAM_set_flags.3 \
 man/man3/X509_add_cert.3 \
 man/man3/X509_check_ca.3 \
+man/man3/X509_check_certificate_times.3 \
 man/man3/X509_check_host.3 \
 man/man3/X509_check_issued.3 \
 man/man3/X509_check_private_key.3 \
 man/man3/X509_check_purpose.3 \
 man/man3/X509_cmp.3 \
-man/man3/X509_cmp_time.3 \
 man/man3/X509_digest.3 \
 man/man3/X509_dup.3 \
 man/man3/X509_get0_distinguishing_id.3 \
