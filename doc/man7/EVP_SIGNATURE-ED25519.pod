@@ -134,6 +134,9 @@ since version 1.1.1.
 Valid algorithm names are B<ed25519>, B<ed448> and B<eddsa>. If B<eddsa> is
 specified, then both Ed25519 and Ed448 are benchmarked.
 
+Since Ed25519ctx is not included in FIPS 186-5, it is not present
+in the FIPS provider.
+
 =head1 EXAMPLES
 
 To sign a message using an ED25519 EVP_PKEY structure:
