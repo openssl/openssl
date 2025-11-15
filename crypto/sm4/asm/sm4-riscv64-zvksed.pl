@@ -59,6 +59,524 @@ my $code=<<___;
 .text
 ___
 
+my ($V0, $V1, $V2, $V3, $V4, $V5, $V6, $V7,
+    $V8, $V9, $V10, $V11, $V12, $V13, $V14, $V15,
+    $V16, $V17, $V18, $V19, $V20, $V21, $V22, $V23,
+    $V24, $V25, $V26, $V27, $V28, $V29, $V30, $V31,
+) = map("v$_",(0..31));
+
+# Load 32 round keys to v1-v8 registers.
+sub enc_load_key {
+    my $keys = shift;
+
+    my $code=<<___;
+    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]} 
+    @{[vle32_v $V16, $keys]} # rk[0:3]  
+    addi $keys, $keys, 16
+    @{[vle32_v $V17, $keys]} # rk[4:7]
+    addi $keys, $keys, 16
+    @{[vle32_v $V18, $keys]} # rk[8:11]
+    addi $keys, $keys, 16
+    @{[vle32_v $V19, $keys]} # rk[12:15]
+    addi $keys, $keys, 16
+    @{[vle32_v $V20, $keys]} # rk[16:19]
+    addi $keys, $keys, 16
+    @{[vle32_v $V21, $keys]} # rk[20:23]
+    addi $keys, $keys, 16
+    @{[vle32_v $V22, $keys]} # rk[24:27]
+    addi $keys, $keys, 16
+    @{[vle32_v $V23, $keys]} # rk[28:31]    
+___
+
+    return $code;
+}
+
+sub dec_load_key {
+    my $keys = shift;
+
+    my $code=<<___;
+    @{[vle32_v $V23, $keys]} # rk[31:28]
+    addi $keys, $keys, 16
+    @{[vle32_v $V22, $keys]} # rk[27:24]
+    addi $keys, $keys, 16
+    @{[vle32_v $V21, $keys]} # rk[23:20]
+    addi $keys, $keys, 16
+    @{[vle32_v $V20, $keys]} # rk[19:16]
+    addi $keys, $keys, 16
+    @{[vle32_v $V19, $keys]} # rk[15:12]
+    addi $keys, $keys, 16
+    @{[vle32_v $V18, $keys]} # rk[11:8]
+    addi $keys, $keys, 16
+    @{[vle32_v $V17, $keys]} # rk[7:4]
+    addi $keys, $keys, 16
+    @{[vle32_v $V16, $keys]} # rk[3:0]   
+___
+
+    return $code;
+}
+
+# sm4 encryption with round keys v1-v8
+sub enc_blk {
+    my $data = shift;
+
+    my $code=<<___;
+    @{[vrev8_v $data, $data]}
+    @{[vsm4r_vs $data, $V16]}
+    @{[vsm4r_vs $data, $V17]}
+    @{[vsm4r_vs $data, $V18]}
+    @{[vsm4r_vs $data, $V19]}
+    @{[vsm4r_vs $data, $V20]}
+    @{[vsm4r_vs $data, $V21]}
+    @{[vsm4r_vs $data, $V22]}
+    @{[vsm4r_vs $data, $V23]}
+    @{[vrev8_v $data, $data]}
+___
+
+    return $code;
+}
+
+# sm4 decryption with round keys v1-v8
+sub dec_blk {
+    my $data = shift;
+
+    my $code=<<___;
+    @{[vrev8_v $data, $data]}
+    @{[vsm4r_vs $data, $V23]}
+    @{[vsm4r_vs $data, $V22]}
+    @{[vsm4r_vs $data, $V21]}
+    @{[vsm4r_vs $data, $V20]}
+    @{[vsm4r_vs $data, $V19]}
+    @{[vsm4r_vs $data, $V18]}
+    @{[vsm4r_vs $data, $V17]}
+    @{[vsm4r_vs $data, $V16]}
+    @{[vrev8_v $data, $data]}
+___
+
+    return $code;
+}
+
+sub dec_4blks {
+    my $data0 = shift;
+    my $data1 = shift;
+    my $data2 = shift;
+    my $data3 = shift;
+
+    my $code=<<___;
+    @{[vsm4r_vs $data0, $V23]}
+    @{[vsm4r_vs $data1, $V23]}
+    @{[vsm4r_vs $data2, $V23]}
+    @{[vsm4r_vs $data3, $V23]}
+
+    @{[vsm4r_vs $data0, $V22]}
+    @{[vsm4r_vs $data1, $V22]}
+    @{[vsm4r_vs $data2, $V22]}
+    @{[vsm4r_vs $data3, $V22]}
+
+    @{[vsm4r_vs $data0, $V21]}
+    @{[vsm4r_vs $data1, $V21]}
+    @{[vsm4r_vs $data2, $V21]}
+    @{[vsm4r_vs $data3, $V21]}
+
+    @{[vsm4r_vs $data0, $V20]}
+    @{[vsm4r_vs $data1, $V20]}
+    @{[vsm4r_vs $data2, $V20]}
+    @{[vsm4r_vs $data3, $V20]}
+
+    @{[vsm4r_vs $data0, $V19]}
+    @{[vsm4r_vs $data1, $V19]}
+    @{[vsm4r_vs $data2, $V19]}
+    @{[vsm4r_vs $data3, $V19]}
+
+    @{[vsm4r_vs $data0, $V18]}
+    @{[vsm4r_vs $data1, $V18]}
+    @{[vsm4r_vs $data2, $V18]}
+    @{[vsm4r_vs $data3, $V18]}
+
+    @{[vsm4r_vs $data0, $V17]}
+    @{[vsm4r_vs $data1, $V17]}
+    @{[vsm4r_vs $data2, $V17]}
+    @{[vsm4r_vs $data3, $V17]}  
+
+    @{[vsm4r_vs $data0, $V16]}
+    @{[vsm4r_vs $data1, $V16]}
+    @{[vsm4r_vs $data2, $V16]}
+    @{[vsm4r_vs $data3, $V16]}  
+___
+
+    return $code;
+}
+
+####
+# void rv64i_zvksed_sm4_cbc_encrypt(const unsigned char *in, unsigned char *out,
+#                                   size_t len, const SM4_KEY *key,
+#                                   unsigned char *iv, const int enc);
+#
+{
+my ($in,$out,$len,$keys,$ivp)=("a0","a1","a2","a3","a4");
+my ($tmp,$stride,$base)=("t0","t1","t2");
+
+$code .= <<___;
+.p2align 3
+.globl rv64i_zvksed_sm4_cbc_encrypt
+.type rv64i_zvksed_sm4_cbc_encrypt,\@function
+rv64i_zvksed_sm4_cbc_encrypt:
+    # check whether the length is a multiple of 16 and >= 16
+    li $tmp, 16
+    bltu $len, $tmp, .Lcbc_enc_end  
+    andi $tmp, $len, 15          
+    bnez $tmp, .Lcbc_enc_end          
+
+    # Load 32 round keys to v1-v8 registers.
+    @{[enc_load_key $keys]}   
+
+    # Load IV
+    @{[vle32_v $V8, $ivp]}
+
+.Lcbc_enc_loop:
+    li $tmp, 64
+    bltu $len, $tmp, .Lcbc_enc_single 
+    # Load input data0-data3
+    @{[vle32_v $V1, $in]}
+    addi $in, $in, 16
+    @{[vle32_v $V2, $in]}
+    addi $in, $in, 16
+    @{[vle32_v $V3, $in]}
+    addi $in, $in, 16
+    @{[vle32_v $V4, $in]}
+    addi $in, $in, 16
+    #XOR with IV                             
+    @{[vxor_vv $V1, $V1, $V8]}  
+
+    @{[enc_blk $V1]}
+
+    li $stride, -4
+    addi $base, $out, 12
+    @{[vsse32_v $V1, $base, $stride]}
+    #Update IV to ciphertext block 0
+    @{[vle32_v $V8, $out]}  
+    addi $out, $out, 16 
+
+    @{[vxor_vv $V2, $V2, $V8]}
+
+    @{[enc_blk $V2]}
+
+    addi $base, $out, 12
+    @{[vsse32_v $V2, $base, $stride]}
+    #Update IV to ciphertext block 1
+    @{[vle32_v $V8, $out]}  
+    addi $out, $out, 16 
+
+    @{[vxor_vv $V3, $V3, $V8]}
+
+    @{[enc_blk $V3]}
+
+    addi $base, $out, 12
+    @{[vsse32_v $V3, $base, $stride]}
+    #Update IV to ciphertext block 2
+    @{[vle32_v $V8, $out]}   
+    addi $out, $out, 16 
+
+    @{[vxor_vv $V4, $V4, $V8]}
+
+    @{[enc_blk $V4]}
+
+    addi $base, $out, 12
+    @{[vsse32_v $V4, $base, $stride]}
+    #Update IV to ciphertext block 3
+    @{[vle32_v $V8, $out]} 
+    addi $out, $out, 16  
+
+    addi $len, $len, -64
+    bnez $len, .Lcbc_enc_loop
+    #Save the final IV
+    @{[vse32_v $V8, $ivp]}
+    ret
+
+.Lcbc_enc_single:
+    # Load input data0
+    @{[vle32_v $V1, $in]}  
+    addi $in, $in, 16
+    # XOR with IV                                                      
+    @{[vxor_vv $V1, $V1, $V8]}  
+    
+    # Encrypt with all keys    
+    @{[enc_blk $V1]}
+
+    # Save the ciphertext (in reverse element order)
+    li $stride, -4     
+    addi $base, $out, 12
+    @{[vsse32_v $V1, $base, $stride]}  
+
+    # Update IV to ciphertext block 0
+    @{[vle32_v $V8, $out]}  
+    addi $out, $out, 16
+    addi $len, $len, -16
+
+    li $tmp, 16
+    bgeu $len, $tmp, .Lcbc_enc_single  
+    # Save the final IV
+    @{[vse32_v $V8, $ivp]}
+.Lcbc_enc_end:
+    ret
+.size rv64i_zvksed_sm4_cbc_encrypt,.-rv64i_zvksed_sm4_cbc_encrypt
+___
+
+####
+# void rv64i_zvksed_sm4_cbc_decrypt(const unsigned char *in, unsigned char *out,
+#                                   size_t len, const SM4_KEY *key,
+#                                   unsigned char *iv, const int enc); 
+#
+$code .= <<___;
+.p2align 3
+.globl rv64i_zvksed_sm4_cbc_decrypt
+.type rv64i_zvksed_sm4_cbc_decrypt,\@function
+rv64i_zvksed_sm4_cbc_decrypt:
+    # check whether the length is a multiple of 16 and >= 16
+    li $tmp, 16
+    bltu $len, $tmp, .Lcbc_dec_end 
+    andi $tmp, $len, 15          
+    bnez $tmp, .Lcbc_dec_end          
+
+    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    # Load IV (in reverse element order)
+    li $stride, -4   
+    addi $base, $ivp, 12
+    @{[vlse32_v $V8, $base, $stride]}  
+
+    # Load 32 round keys 
+    @{[dec_load_key $keys]}
+
+.Lcbc_dec_loop:
+    li $tmp, 128
+    bltu $len, $tmp, .Lcbc_check_64 
+    # Load input data0-data7
+    @{[vle32_v $V1, $in]}
+    addi $in, $in, 16
+    @{[vle32_v $V2, $in]}
+    addi $in, $in, 16
+    @{[vle32_v $V3, $in]}
+    addi $in, $in, 16
+    @{[vle32_v $V4, $in]}
+    addi $in, $in, 16
+    @{[vle32_v $V5, $in]}
+    addi $in, $in, 16
+    @{[vle32_v $V6, $in]}
+    addi $in, $in, 16
+    @{[vle32_v $V7, $in]}
+    addi $in, $in, 16
+    @{[vle32_v $V24, $in]}
+    addi $in, $in, 16
+
+    @{[vrev8_v $V1, $V1]}
+    @{[vrev8_v $V2, $V2]}
+    @{[vrev8_v $V3, $V3]}
+    @{[vrev8_v $V4, $V4]}
+    @{[vrev8_v $V5, $V5]}
+    @{[vrev8_v $V6, $V6]}
+    @{[vrev8_v $V7, $V7]}
+    @{[vrev8_v $V24, $V24]}
+
+    # Decrypt 8 data blocks
+    @{[dec_4blks $V1,$V2,$V3,$V4]}
+    @{[dec_4blks $V5,$V6,$V7,$V24]}
+   
+    @{[vrev8_v $V1, $V1]}
+    @{[vrev8_v $V2, $V2]}
+    @{[vrev8_v $V3, $V3]}
+    @{[vrev8_v $V4, $V4]}
+    @{[vrev8_v $V5, $V5]}
+    @{[vrev8_v $V6, $V6]}
+    @{[vrev8_v $V7, $V7]}
+    @{[vrev8_v $V24, $V24]}
+    
+    @{[vxor_vv $V1, $V1, $V8]}  
+
+    # Update ciphertext to IV (in reverse element order)
+    addi $base, $in, -128   
+    addi $base, $base, 12  
+    @{[vlse32_v $V8, $base, $stride]}  
+    # Save the plaintext (in reverse element order)  
+    addi $base, $out, 12
+    @{[vsse32_v $V1, $base, $stride]}    
+    addi $out, $out, 16
+
+    @{[vxor_vv $V2, $V2, $V8]} 
+
+    addi $base, $in, -112  
+    addi $base, $base, 12  
+    @{[vlse32_v $V8, $base, $stride]}     
+    addi $base, $out, 12
+    @{[vsse32_v $V2, $base, $stride]}   
+    addi $out, $out, 16    
+
+    @{[vxor_vv $V3, $V3, $V8]} 
+
+    addi $base, $in, -96  
+    addi $base, $base, 12  
+    @{[vlse32_v $V8, $base, $stride]}     
+    addi $base, $out, 12
+    @{[vsse32_v $V3, $base, $stride]}  
+    addi $out, $out, 16    
+
+    @{[vxor_vv $V4, $V4, $V8]} 
+
+    addi $base, $in, -80 
+    addi $base, $base, 12  
+    @{[vlse32_v $V8, $base, $stride]}     
+    addi $base, $out, 12
+    @{[vsse32_v $V4, $base, $stride]}   
+    addi $out, $out, 16    
+
+    @{[vxor_vv $V5, $V5, $V8]} 
+
+    addi $base, $in, -64  
+    addi $base, $base, 12  
+    @{[vlse32_v $V8, $base, $stride]}    
+    addi $base, $out, 12
+    @{[vsse32_v $V5, $base, $stride]}   
+    addi $out, $out, 16   
+
+    @{[vxor_vv $V6, $V6, $V8]} 
+
+    addi $base, $in, -48  
+    addi $base, $base, 12  
+    @{[vlse32_v $V8, $base, $stride]}     
+    addi $base, $out, 12
+    @{[vsse32_v $V6, $base, $stride]}  
+    addi $out, $out, 16   
+
+    @{[vxor_vv $V7, $V7, $V8]} 
+
+    addi $base, $in, -32   
+    addi $base, $base, 12  
+    @{[vlse32_v $V8, $base, $stride]}    
+    addi $base, $out, 12
+    @{[vsse32_v $V7, $base, $stride]}   
+    addi $out, $out, 16   
+
+    @{[vxor_vv $V24, $V24, $V8]} 
+
+    addi $base, $in, -16   
+    addi $base, $base, 12  
+    @{[vlse32_v $V8, $base, $stride]}     
+    addi $base, $out, 12
+    @{[vsse32_v $V24, $base, $stride]}  
+    addi $out, $out, 16   
+
+    addi $len, $len, -128
+    bnez $len, .Lcbc_dec_loop
+    #Save the final IV (in reverse element order)
+    addi $base, $ivp, 12
+    @{[vsse32_v $V8, $base, $stride]}
+    ret
+
+.Lcbc_check_64:
+    li $tmp, 64
+    bltu $len, $tmp, .Lcbc_dec_single  
+    # Load input data0-data3
+    @{[vle32_v $V1, $in]}
+    addi $in, $in, 16
+    @{[vle32_v $V2, $in]}
+    addi $in, $in, 16
+    @{[vle32_v $V3, $in]}
+    addi $in, $in, 16
+    @{[vle32_v $V4, $in]}
+    addi $in, $in, 16
+
+    @{[vrev8_v $V1, $V1]}
+    @{[vrev8_v $V2, $V2]}
+    @{[vrev8_v $V3, $V3]}
+    @{[vrev8_v $V4, $V4]}
+
+    # Decrypt 4 data blocks
+    @{[dec_4blks $V1,$V2,$V3,$V4]}  
+    
+    @{[vrev8_v $V1, $V1]}
+    @{[vrev8_v $V2, $V2]}
+    @{[vrev8_v $V3, $V3]}
+    @{[vrev8_v $V4, $V4]}
+
+    @{[vxor_vv $V1, $V1, $V8]} 
+
+    # Update ciphertext to IV (in reverse element order)
+    addi $base, $in, -64  
+    addi $base, $base, 12  
+    @{[vlse32_v $V8, $base, $stride]}  
+    # Save the plaintext (in reverse element order) 
+    addi $base, $out, 12
+    @{[vsse32_v $V1, $base, $stride]}   
+    addi $out, $out, 16   
+
+    @{[vxor_vv $V2, $V2, $V8]} 
+
+    addi $base, $in, -48  
+    addi $base, $base, 12  
+    @{[vlse32_v $V8, $base, $stride]}   
+    addi $base, $out, 12
+    @{[vsse32_v $V2, $base, $stride]}   
+    addi $out, $out, 16   
+
+    @{[vxor_vv $V3, $V3, $V8]} 
+
+    addi $base, $in, -32   
+    addi $base, $base, 12  
+    @{[vlse32_v $V8, $base, $stride]}      
+    addi $base, $out, 12
+    @{[vsse32_v $V3, $base, $stride]}   
+    addi $out, $out, 16   
+
+    @{[vxor_vv $V4, $V4, $V8]} 
+
+    addi $base, $in, -16   
+    addi $base, $base, 12  
+    @{[vlse32_v $V8, $base, $stride]}     
+    addi $base, $out, 12
+    @{[vsse32_v $V4, $base, $stride]}   
+    addi $out, $out, 16   
+
+    addi $len, $len, -64
+    bnez $len, .Lcbc_check_64
+    #Save the final IV (in reverse element order)
+    addi $base, $ivp, 12
+    @{[vsse32_v $V8, $base, $stride]}
+    ret
+
+.Lcbc_dec_single:
+    # Load input data0
+    @{[vle32_v $V1, $in]}  
+    addi $in, $in, 16
+
+    # Decrypt with all keys   
+    @{[dec_blk $V1]}
+
+    #XOR with IV
+    @{[vxor_vv $V1, $V1, $V8]}  
+
+    # Update ciphertext to IV (in reverse element order)
+    li $stride, -4
+    addi $base, $in, -16   
+    addi $base, $base, 12   
+    @{[vlse32_v $V8, $base, $stride]} 
+
+    # Save the plaintext (in reverse element order) 
+    li $stride, -4
+    addi $base, $out, 12
+    @{[vsse32_v $V1, $base, $stride]}   
+    addi $out, $out, 16
+    addi $len, $len, -16
+
+    li $tmp, 16
+    bgeu $len, $tmp, .Lcbc_dec_single  
+    #Save the final IV (in reverse element order)
+    li $stride, -4
+    addi $base, $ivp, 12
+    @{[vsse32_v $V8, $base, $stride]}
+.Lcbc_dec_end:
+    ret
+.size rv64i_zvksed_sm4_cbc_decrypt,.-rv64i_zvksed_sm4_cbc_decrypt
+___
+}
+
 ####
 # int rv64i_zvksed_sm4_set_encrypt_key(const unsigned char *userKey,
 #                                      SM4_KEY *key);
