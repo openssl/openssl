@@ -352,8 +352,12 @@ contained in the input.
 
 =item B<-checkend> I<arg>
 
-Checks if the certificate expires within the next I<arg> seconds and exits
-nonzero if yes it will expire or zero if not.
+Without B<-multi> checks if the certificate expires within the next
+I<arg> seconds and exits nonzero if it will expire or zero if not.
+
+With B<-multi> checks if any certificate in the input will expire
+within the next I<arg> seconds and exits nonzero if any will expire
+or zero if none will.
 
 =item B<-checkhost> I<host>
 
@@ -791,6 +795,12 @@ Set a certificate to be trusted for SSL client use and change set its alias to
 
  openssl x509 -in cert.pem -addtrust clientAuth \
         -setalias "Steve's Class 1 CA" -out trust.pem
+
+Check if any certificates in a chain are due to expire within the next 30 days
+(returns zero if none will expire, nonzero if any will expire):
+
+ openssl x509 -in chain.pem -multi -checkend $[3600*24*30] \
+        && echo 'perform renewal' || echo 'renewal unnecessary'
 
 =head1 NOTES
 
