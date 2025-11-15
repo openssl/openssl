@@ -897,8 +897,8 @@ int dtls1_query_mtu(SSL_CONNECTION *s)
             if (s->d1->mtu < dtls1_min_mtu(s)) {
                 /* Set to min mtu */
                 s->d1->mtu = dtls1_min_mtu(s);
-                BIO_ctrl(SSL_get_wbio(ssl), BIO_CTRL_DGRAM_SET_MTU,
-                         (long)s->d1->mtu, NULL);
+                (void)BIO_ctrl(SSL_get_wbio(ssl), BIO_CTRL_DGRAM_SET_MTU,
+                               (long)s->d1->mtu, NULL);
             }
         } else
             return 0;
