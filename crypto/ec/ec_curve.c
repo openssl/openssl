@@ -3451,7 +3451,7 @@ int ossl_ec_curve_nid_from_params(const EC_GROUP *group, BN_CTX *ctx)
             && param_len == data->param_len
             && (nid <= 0 || nid == curve.nid)
             /* check the optional cofactor (ignore if its zero) */
-            && (BN_is_zero(cofactor)
+            && (cofactor == NULL || BN_is_zero(cofactor)
                 || BN_is_word(cofactor, (const BN_ULONG)curve.data->cofactor))
             /* Check the optional seed (ignore if its not set) */
             && (data->seed_len == 0 || seed_len == 0
