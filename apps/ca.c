@@ -1698,6 +1698,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
             BIO_printf(bio_err,
                        "Warning: Signature key and public key of cert do not match\n");
     }
+    if (!add_X509_default_keyids(ret, pkey, &ext_ctx))
+        goto end;
 
     /* Lets add the extensions, if there are any */
     if (ext_sect) {

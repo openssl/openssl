@@ -2334,28 +2334,24 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
 }
 
 static int adapt_keyid_ext(X509 *cert, X509V3_CTX *ext_ctx,
-                           const char *name, const char *value, int add_default)
+                           const char *name, const char *value)
 {
     const STACK_OF(X509_EXTENSION) *exts = X509_get0_extensions(cert);
     X509_EXTENSION *new_ext = X509V3_EXT_nconf(NULL, ext_ctx, name, value);
-    int idx, rv = 0;
+    ASN1_OCTET_STRING *encoded;
+    int disabled, idx, rv = 0;
 
     if (new_ext == NULL)
         return rv;
 
     idx = X509v3_get_ext_by_OBJ(exts, X509_EXTENSION_get_object(new_ext), -1);
     if (idx >= 0) {
-        X509_EXTENSION *found_ext = X509v3_get_ext(exts, idx);
-        ASN1_OCTET_STRING *encoded = X509_EXTENSION_get_data(found_ext);
-        int disabled = ASN1_STRING_length(encoded) <= 2; /* indicating "none" */
-
-        if (disabled) {
-            X509_delete_ext(cert, idx);
-            X509_EXTENSION_free(found_ext);
-        } /* else keep existing key identifier, which might be outdated */
+        /* keep existing key identifier, which might be outdated */
         rv = 1;
     } else {
-        rv = !add_default || X509_add_ext(cert, new_ext, -1);
+        encoded = X509_EXTENSION_get_data(new_ext);
+        disabled = ASN1_STRING_length(encoded) <= 2; /* indicating "none" */
+        rv = disabled || X509_add_ext(cert, new_ext, -1);
     }
     X509_EXTENSION_free(new_ext);
     return rv;
@@ -2371,29 +2367,39 @@ int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey)
     return match;
 }
 
-/* Ensure RFC 5280 compliance, adapt keyIDs as needed, and sign the cert info */
+/* Add default keyIDs as needed */
+int add_X509_default_keyids(X509 *cert, EVP_PKEY *pkey, X509V3_CTX *ext_ctx)
+{
+    int self_sign = 0;
+    int rv = 0;
+
+    /*
+     * Add default SKID before AKID such that AKID can make use of it
+     * in case the certificate is self-signed
+     */
+    if (X509_get_extension_flags(cert) & EXFLAG_SI)
+        self_sign = cert_matches_key(cert, pkey);
+    /* Prevent X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER */
+    if (!adapt_keyid_ext(cert, ext_ctx, "subjectKeyIdentifier", "hash"))
+        goto end;
+    /* Prevent X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER */
+    if (!adapt_keyid_ext(cert, ext_ctx, "authorityKeyIdentifier",
+                         self_sign ? "none" : "keyid, issuer"))
+        goto end;
+    rv = 1;
+ end:
+    return rv;
+}
+
+/* Ensure RFC 5280 compliance, and sign the cert info */
 int do_X509_sign(X509 *cert, int force_v1, EVP_PKEY *pkey, const char *md,
                  STACK_OF(OPENSSL_STRING) *sigopts, X509V3_CTX *ext_ctx)
 {
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
-    int self_sign;
     int rv = 0;
 
     if (!force_v1) {
         if (!X509_set_version(cert, X509_VERSION_3))
-            goto end;
-
-        /*
-         * Add default SKID before AKID such that AKID can make use of it
-         * in case the certificate is self-signed
-         */
-        /* Prevent X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER */
-        if (!adapt_keyid_ext(cert, ext_ctx, "subjectKeyIdentifier", "hash", 1))
-            goto end;
-        /* Prevent X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER */
-        self_sign = cert_matches_key(cert, pkey);
-        if (!adapt_keyid_ext(cert, ext_ctx, "authorityKeyIdentifier",
-                             "keyid, issuer", !self_sign))
             goto end;
     }
     /* May add further measures for ensuring RFC 5280 compliance, see #19805 */

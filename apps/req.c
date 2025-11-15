@@ -854,6 +854,8 @@ int req_main(int argc, char **argv)
                     BIO_printf(bio_err,
                                "Warning: Signature key and public key of cert do not match\n");
             }
+            if (!x509v1 && !add_X509_default_keyids(new_x509, issuer_key, &ext_ctx))
+                goto end;
             X509V3_set_nconf(&ext_ctx, req_conf);
 
             /* Add extensions */
