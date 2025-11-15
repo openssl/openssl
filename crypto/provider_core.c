@@ -1444,7 +1444,6 @@ void *ossl_provider_ctx(const OSSL_PROVIDER *prov)
 static int provider_activate_fallbacks(struct provider_store_st *store)
 {
     int use_fallbacks;
-    int activated_fallback_count = 0;
     int ret = 0;
     const OSSL_PROVIDER_INFO *p;
 
@@ -1507,13 +1506,11 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
             ossl_provider_free(prov);
             goto err;
         }
-        activated_fallback_count++;
     }
 
-    if (activated_fallback_count > 0) {
-        store->use_fallbacks = 0;
-        ret = 1;
-    }
+    store->use_fallbacks = 0;
+    ret = 1;
+
  err:
     CRYPTO_THREAD_unlock(store->lock);
     return ret;
