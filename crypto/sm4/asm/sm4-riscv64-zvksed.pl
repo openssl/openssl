@@ -252,7 +252,7 @@ rv64i_zvksed_sm4_decrypt:
     addi $keys, $keys, 16
     @{[vle32_v $vk4, $keys]} # rk[19:16]
     addi $keys, $keys, 16
-    @{[vle32_v $vk3, $keys]} # rk[15:11]
+    @{[vle32_v $vk3, $keys]} # rk[15:12]
     addi $keys, $keys, 16
     @{[vle32_v $vk2, $keys]} # rk[11:8]
     addi $keys, $keys, 16
@@ -264,7 +264,7 @@ rv64i_zvksed_sm4_decrypt:
     @{[vle32_v $vdata, $in]}
     @{[vrev8_v $vdata, $vdata]}
 
-    # Encrypt with all keys
+    # Decrypt with all keys
     @{[vsm4r_vs $vdata, $vk7]}
     @{[vsm4r_vs $vdata, $vk6]}
     @{[vsm4r_vs $vdata, $vk5]}
@@ -274,7 +274,7 @@ rv64i_zvksed_sm4_decrypt:
     @{[vsm4r_vs $vdata, $vk1]}
     @{[vsm4r_vs $vdata, $vk0]}
 
-    # Save the ciphertext (in reverse element order)
+    # Save the plaintext (in reverse element order)
     @{[vrev8_v $vdata, $vdata]}
     li $stride, -4
     addi $out, $out, 12
