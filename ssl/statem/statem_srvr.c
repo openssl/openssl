@@ -474,7 +474,7 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, int chainidx)
     OCSP_CERTID *cid = NULL;
     OCSP_CERTID *sr_cert_id = NULL;
     ASN1_OBJECT *cert_id_md_oid;
-    const EVP_MD *cert_id_md;
+    EVP_MD *cert_id_md;
     ASN1_INTEGER *respSerial;
     ASN1_OCTET_STRING *respIssuerNameHash;
     ASN1_OCTET_STRING *certIssuerNameHash;
@@ -528,14 +528,13 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, int chainidx)
                 /* use the first single response to get the algorithm used */
                 cid = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
 
-                EVP_set_default_properties(sctx->libctx, sctx->propq);
-
                 /* determine the md algorithm which was used to create cert id */
                 OCSP_id_get0_info(&respIssuerNameHash, &cert_id_md_oid, NULL, &respSerial, cid);
                 if (cert_id_md_oid != NULL)
-                    cert_id_md = EVP_get_digestbyobj(cert_id_md_oid);
+                    cert_id_md = EVP_MD_fetch(sctx->libctx,
+                                              OBJ_nid2sn(OBJ_obj2nid(cert_id_md_oid)), sctx->propq);
                 else
-                    cert_id_md = EVP_sha1();
+                    cert_id_md = EVP_MD_fetch(sctx->libctx, SN_sha1, sctx->propq);
 
                 /* get serial number and issuer name hash of the certificate from the chain */
                 certSerial = X509_get0_serialNumber(x);
@@ -545,6 +544,7 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, int chainidx)
                     !(ASN1_OCTET_STRING_set(certIssuerNameHash, md, len))) {
                     ASN1_OCTET_STRING_free(certIssuerNameHash);
                     OCSP_BASICRESP_free(bs);
+                    EVP_MD_free(cert_id_md);
                     ERR_clear_last_mark();
                     return NULL;
                 }
@@ -568,6 +568,7 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, int chainidx)
 
                 ASN1_OCTET_STRING_free(certIssuerNameHash);
                 OCSP_BASICRESP_free(bs);
+                EVP_MD_free(cert_id_md);
 
                 /*
                  * if we did not find the right single response we return NULL here
