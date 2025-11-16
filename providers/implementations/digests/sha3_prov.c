@@ -20,6 +20,7 @@
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 #include "internal/common.h"
+#include "internal/packet.h"
 #include "providers/implementations/digests/sha3_prov.inc"
 
 #define SHA3_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
@@ -46,6 +47,8 @@ static OSSL_FUNC_digest_settable_ctx_params_fn shake_settable_ctx_params;
 static sha3_absorb_fn generic_sha3_absorb;
 static sha3_final_fn generic_sha3_final;
 static sha3_squeeze_fn generic_sha3_squeeze;
+static OSSL_FUNC_digest_serialize_fn keccak_serialize;
+static OSSL_FUNC_digest_deserialize_fn keccak_deserialize;
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__s390__) && defined(KECCAK1600_ASM)
 /*
@@ -58,6 +61,77 @@ static sha3_squeeze_fn generic_sha3_squeeze;
      (OPENSSL_s390xcap_P.klmd[0] & S390X_CAPBIT(S390X_##name)))
 
 #endif
+
+static const uint32_t keccak_serialize_version = 1;
+
+static int keccak_serialize(void *vctx, unsigned char *out, size_t *outlen)
+{
+    int i, j, ret = 0;
+    KECCAK1600_CTX *ctx = vctx;
+    WPACKET pkt;
+
+    if (outlen == NULL)
+        return 0;
+    if (out == NULL) {
+        if (!WPACKET_init_null(&pkt, 0))
+            goto end;
+    } else {
+        if (!WPACKET_init_static_len(&pkt, out, *outlen, 0))
+            goto end;
+    }
+
+    if (!WPACKET_put_bytes_u32(&pkt, keccak_serialize_version)
+            || !WPACKET_put_bytes_u64(&pkt, ctx->xof_state)
+            || !WPACKET_put_bytes_u64(&pkt, ctx->md_size)
+            || !WPACKET_put_bytes_u64(&pkt, ctx->bufsz)
+            || (ctx->bufsz != 0
+                    && !WPACKET_memcpy(&pkt, ctx->buf, ctx->bufsz)))
+        goto end;
+    for (i = 0; i < 5; ++i) {
+        for (j = 0; j < 5; ++j) {
+            if (!WPACKET_put_bytes_u64(&pkt, ctx->A[i][j]))
+                goto end;
+        }
+    }
+    if (!WPACKET_get_total_written(&pkt, outlen)
+            || !WPACKET_finish(&pkt))
+        goto end;
+    ret = 1;
+end:
+    WPACKET_close(&pkt);
+    return ret;
+}
+
+static int keccak_deserialize(void *vctx, const unsigned char *in, size_t inlen)
+{
+    KECCAK1600_CTX *ctx = vctx;
+    PACKET pkt;
+    int i, j;
+    uint32_t rversion;
+    int ret = 0;
+    size_t xof_state = 0;
+
+    if (!PACKET_buf_init(&pkt, in, inlen)
+            || !PACKET_get_net_4_len_u32(&pkt, &rversion)
+            || rversion != keccak_serialize_version
+            || !PACKET_get_net_8_len(&pkt, &xof_state)
+            || !PACKET_get_net_8_len(&pkt, &ctx->md_size)
+            || !PACKET_get_net_8_len(&pkt, &ctx->bufsz)
+            || ctx->xof_state > XOF_STATE_SQUEEZE
+            || ctx->bufsz >= sizeof(ctx->buf))
+        goto end;
+    ctx->xof_state = (int)xof_state;
+    if (ctx->bufsz > 0
+            && !PACKET_copy_bytes(&pkt, ctx->buf, ctx->bufsz))
+        goto end;
+    for (i = 0; i < 5; ++i)
+        for (j = 0; j < 5; ++j)
+            if (!PACKET_get_net_8(&pkt, &ctx->A[i][j]))
+                goto end;
+    ret = (PACKET_remaining(&pkt) == 0);
+end:
+    return ret;
+}
 
 static int keccak_init(void *vctx, ossl_unused const OSSL_PARAM params[])
 {
@@ -539,6 +613,8 @@ const OSSL_DISPATCH ossl_##name##_functions[] = {                              \
     { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))keccak_freectx },              \
     { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))keccak_dupctx },                \
     { OSSL_FUNC_DIGEST_COPYCTX, (void (*)(void))keccak_copyctx },              \
+    { OSSL_FUNC_DIGEST_SERIALIZE, (void (*)(void))keccak_serialize },          \
+    { OSSL_FUNC_DIGEST_DESERIALIZE, (void (*)(void))keccak_deserialize },      \
     PROV_DISPATCH_FUNC_DIGEST_GET_PARAMS(name)
 
 #define PROV_FUNC_SHA3_DIGEST(name, bitlen, blksize, dgstsize, flags)          \

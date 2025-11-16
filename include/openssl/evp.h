@@ -765,6 +765,10 @@ __owur int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *out,
                               size_t outlen);
 __owur int EVP_DigestSqueeze(EVP_MD_CTX *ctx, unsigned char *out,
                              size_t outlen);
+__owur int EVP_DigestSerialize(EVP_MD_CTX *ctx,
+                               unsigned char *out, size_t *outlen);
+__owur int EVP_DigestDeserialize(EVP_MD_CTX *ctx,
+                                 const unsigned char *in, size_t inlen);
 
 __owur EVP_MD *EVP_MD_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                             const char *properties);
