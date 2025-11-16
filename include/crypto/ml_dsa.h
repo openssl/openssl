@@ -50,9 +50,9 @@
 # define ML_DSA_KEY_PROV_FLAGS_DEFAULT \
     (ML_DSA_KEY_PREFER_SEED | ML_DSA_KEY_RETAIN_SEED)
 
-/* ML-DSA has 2 signing modes.. either PURE or HASH */
-#define ML_DSA_SIG_MODE_PURE   NID_undef
-#define ML_DSA_SIG_MODE_SHA512 NID_sha512
+# define ML_DSA_MESSAGE_ENCODE_RAW 0
+# define ML_DSA_MESSAGE_ENCODE     1
+
 /*
  * Refer to FIPS 204 Section 4 Parameter sets.
  * Fields that are shared between all algorithms (such as q & d) have been omitted.
@@ -113,17 +113,19 @@ __owur int ossl_ml_dsa_pk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_l
 __owur int ossl_ml_dsa_sk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len);
 
 EVP_MD_CTX *ossl_ml_dsa_mu_init(const ML_DSA_KEY *key, int encode,
-                                const uint8_t *ctx, size_t ctx_len);
+                                const uint8_t *ctx, size_t ctx_len, int hash);
 __owur int ossl_ml_dsa_mu_update(EVP_MD_CTX *md_ctx, const uint8_t *msg, size_t msg_len);
 __owur int ossl_ml_dsa_mu_finalize(EVP_MD_CTX *md_ctx, uint8_t *mu, size_t mu_len);
 
 __owur int ossl_ml_dsa_sign(const ML_DSA_KEY *priv, int msg_is_mu,
                             const uint8_t *msg, size_t msg_len,
+                            const uint8_t *oid, size_t oid_len,
                             const uint8_t *context, size_t context_len,
                             const uint8_t *rand, size_t rand_len, int encode,
                             unsigned char *sig, size_t *siglen, size_t sigsize);
 __owur int ossl_ml_dsa_verify(const ML_DSA_KEY *pub, int msg_is_mu,
                               const uint8_t *msg, size_t msg_len,
+                              const uint8_t *oid, size_t oid_len,
                               const uint8_t *context, size_t context_len,
                               int encode, const uint8_t *sig, size_t sig_len);
 

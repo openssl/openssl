@@ -13,3 +13,7 @@ sigAlgs OBJECT IDENTIFIER ::= { 2 16 840 1 101 3 4 3 }
 id-ml-dsa-44 OBJECT IDENTIFIER ::= { sigAlgs 17 }
 id-ml-dsa-65 OBJECT IDENTIFIER ::= { sigAlgs 18 }
 id-ml-dsa-87 OBJECT IDENTIFIER ::= { sigAlgs 19 }
+
+id-hash-ml-dsa-44-with-sha512 OBJECT IDENTIFIER ::= { sigAlgs 32 }
+id-hash-ml-dsa-65-with-sha512 OBJECT IDENTIFIER ::= { sigAlgs 33 }
+id-hash-ml-dsa-87-with-sha512 OBJECT IDENTIFIER ::= { sigAlgs 34 }

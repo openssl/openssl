@@ -8,35 +8,68 @@ EVP_SIGNATURE-ML-DSA-44, EVP_SIGNATURE-ML-DSA-65, EVP_SIGNATURE-ML-DSA-87,
 
 =head1 DESCRIPTION
 
-The B<ML-DSA-44>, B<ML-DSA-65> and B<ML-DSA-87> EVP_PKEY implementations
-support key generation, and one-shot sign and verify using the ML-DSA
-signature schemes described in L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final>.
+ML-DSA signature schemes are described in L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final>.
+There are 2 types:
+
+=over 4
+
+=item Pure ML-DSA B<ML-DSA>
+
+L<EVP_SIGNATURE_fetch(3)> can be used to explicitly fetch one of
+"ML-DSA-44", "ML-DSA-65" or "ML-DSA-87".
+
+Pure signature operations use
+L<EVP_PKEY_sign_message_init(3)> and L<EVP_PKEY_sign(3)> or
+L<EVP_PKEY_verify_message_init(3)> and L<EVP_PKEY_verify(3)> to perform
+one-shot message signing or signature verification.
+
+Pure B<ML-DSA> Signature Generation encodes the message internally as
+0x00 || len(ctx) || ctx || message.
+where B<ctx> is some optional value of size 0x00..0xFF.  This process is
+defined in L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final> Algorithm 2
+step 10 and Algorithm 3 step 5.
+OpenSSL also allows the message to not be encoded which is required for
+testing.
+
+=item Prehash ML-DSA B<HASHML-DSA>
+
+This variant passes a hash of the message to the sign/verify operations.
+
+L<EVP_SIGNATURE_fetch(3)> can be used to explicitly fetch one of
+"HASHML-DSA-44-SHA256", "HASHML-DSA-65-SHA256", "HASHML-DSA-87-SHA256",
+"HASHML-DSA-44-SHA512", "HASHML-DSA-65-SHA512", "HASHML-DSA-87-SHA512",
+"HASHML-DSA-44-SHA3-256", "HASHML-DSA-65-SHA3-256", "HASHML-DSA-87-SHA3-256",
+"HASHML-DSA-44-SHA3-512", "HASHML-DSA-65-SHA3-512", "HASHML-DSA-87-SHA3-512",
+"HASHML-DSA-44-SHAKE128", "HASHML-DSA-65-SHAKE128", "HASHML-DSA-87-SHAKE128",
+"HASHML-DSA-44-SHAKE256", "HASHML-DSA-65-SHAKE256" or "HASHML-DSA-87-SHAKE256",
+
+The digest used to hash the message must match the fetched signature name digest
+e.g. B<SHA256> for B<ML-DSA-44-SHA256>.
+
+Prehash signature operations use L<EVP_PKEY_sign_init(3)> and L<EVP_PKEY_sign(3)>,
+or L<EVP_PKEY_verify_init(3)> and L<EVP_PKEY_verify(3)> to perform
+one-shot message signing or signature verification.
+
+Prehash B<HashML-DSA> Signature Generation encodes the digest of the message as,
+0x01 || len(ctx) || ctx || digest_OID || digested_message.
+
+=back
+
+There 3 EVP_PKEY types B<ML-DSA-44>, B<ML-DSA-65> and B<ML-DSA-87> are used
+for the above signature schemes. A single ML-DSA keypair should only be used
+for either B<ML-DSA> OR B<HashML-DSA> signature operations.
 
 The different algorithms names correspond to the parameter sets defined in
 L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final> Section 4 Table 1.
 (The signatures range in size from ~2.5K to ~4.5K depending on the type chosen).
 There are 3 different security categories also depending on the type.
 
-L<EVP_SIGNATURE_fetch(3)> can be used to explicitly fetch one of the 3
-algorithms which can then be used with L<EVP_PKEY_sign_message_init(3)>,
-L<EVP_PKEY_sign(3)>, L<EVP_PKEY_verify_message_init(3)>, and
-L<EVP_PKEY_verify(3)> to perform one-shot message signing or signature verification.
-
-The normal signing process (called Pure ML-DSA Signature Generation)
-encodes the message internally as 0x00 || len(ctx) || ctx || message.
-where B<ctx> is some optional value of size 0x00..0xFF.  This process is
-defined in L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final> Algorithm 2
-step 10 and Algorithm 3 step 5.
-OpenSSL also allows the message to not be encoded which is required for
-testing. OpenSSL does not support Pre Hash ML-DSA Signature Generation, but this
-may be done by the user by doing Pre hash encoding externally and then choosing
-the option to not encode the message.
-
 =head2 ML-DSA Signature Parameters
 
 The following parameter can be used for both signing and verification.
-it may be set by passing an OSSL_PARAM array to L<EVP_PKEY_sign_message_init(3)>
-or L<EVP_PKEY_verify_message_init(3)>
+it may be set by passing an OSSL_PARAM array to L<EVP_PKEY_sign_message_init(3)>,
+L<EVP_PKEY_verify_message_init(3)>, L<EVP_PKEY_sign_init(3)> or
+L<EVP_PKEY_verify_init(3)>
 
 =over 4
 
@@ -46,8 +79,29 @@ A string of octets with length at most 255. By default it is the empty string.
 
 =back
 
-The following parameters can be used when signing:
-They can be set by passing an OSSL_PARAM array to L<EVP_PKEY_sign_init_ex2(3)>.
+The following parameters can be used by both B<ML-DSA> and B<HashML-DSA>:
+They can be set by passing an OSSL_PARAM array to either
+L<EVP_PKEY_sign_message_init(3)>, L<EVP_PKEY_verify_message_init(3)> for B<ML-DSA>,
+or by L<EVP_PKEY_sign_init_ex2(3)>, L<EVP_PKEY_verify_init_ex2(3)> for B<HashML-DSA>,
+
+=over 4
+
+=item "test-entropy" (B<OSSL_SIGNATURE_PARAM_TEST_ENTROPY>) <octet string>
+
+Used for testing to pass an optional deterministic per message random value.
+If set the size must be 32 bytes.
+
+=item "deterministic" (B<OSSL_SIGNATURE_PARAM_DETERMINISTIC>) <integer>
+
+=back
+
+The default value of 0 causes the per message randomness to be randomly
+generated using a DRBG. Setting this to 1 causes the per message randomness
+to be set to 32 bytes of zeros. This value is ignored if "test-entropy" is set.
+
+The following parameters can be used only for Pure ML-DSA signing:
+They can be set by passing an OSSL_PARAM array to either
+L<EVP_PKEY_sign_message_init(3)> or L<EVP_PKEY_verify_message_init(3)>.
 
 =over 4
 
@@ -58,17 +112,6 @@ above. Setting it to 0 does not encode the message, which is used for testing.
 The message encoding steps are defined in
 L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final> Algorithm 2 step 10 and
 Algorithm 3 step 5.
-
-=item "test-entropy" (B<OSSL_SIGNATURE_PARAM_TEST_ENTROPY>) <octet string>
-
-Used for testing to pass an optional deterministic per message random value.
-If set the size must be 32 bytes.
-
-=item "deterministic" (B<OSSL_SIGNATURE_PARAM_DETERMINISTIC>) <integer>
-
-The default value of 0 causes the per message randomness to be randomly
-generated using a DRBG. Setting this to 1 causes the per message randomness
-to be set to 32 bytes of zeros. This value is ignored if "test-entropy" is set.
 
 =item "mu" (B<OSSL_SIGNATURE_PARAM_MU>) <integer>
 
@@ -127,7 +170,8 @@ L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final>
 
 =head1 HISTORY
 
-This functionality was added in OpenSSL 3.5.
+<ML-DSA> signature support was added in OpenSSL 3.5.
+<HashML-DSA> signature support was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

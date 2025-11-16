@@ -22,6 +22,21 @@
 import json
 import argparse
 import datetime
+import hashlib
+
+accepted_hashes = ["SHAKE-256", "SHAKE-128", "SHA3-512", "SHA3-256", "SHA2-512", "SHA2-256"]
+
+def do_hash(hashalg, hexstr): 
+    h = hashlib.new(hashalg)
+    h.update(bytes.fromhex(hexstr))
+    if hashalg.startswith('SHAKE'):
+        if hashalg.endswith('128'):
+            l = 32
+        else:
+            l = 64
+        return h.hexdigest(l)
+    else:
+        return h.hexdigest()
 
 def print_label(label, value):
     print(label + " = " + value)
@@ -49,27 +64,38 @@ def parse_ml_dsa_sig_gen(groups):
         signPure = (grp['preHash'] == "pure")
         includeMu = True # Flag flips to only include the Ctrl mu:0 half the time
 
-        if signPreHash:
-            continue
-        if not externalMu and not signPure:
-            continue
+        #if not signPreHash:
+        #    continue
+        #if not externalMu and not signPure:
+        #    continue
 
+        print("# Group=" + str(grp['tgId']))
         name = grp['parameterSet'].replace('-', '_')
         for tst in grp['tests']:
+            if signPreHash:
+                if not tst['hashAlg'] in accepted_hashes:
+                    continue
             testname = name + "_" + str(tst['tcId'])
             print("");
             print_label("PrivateKeyRaw", testname + ":" + grp['parameterSet'] + ":" + tst['sk'])
             print("");
-            print_label("FIPSversion", ">=3.5.0")
-            print_label("Sign-Message", grp['parameterSet'] + ":" + testname)
-            print_label("Input", tst['mu' if externalMu else 'message'])
-            print_label("Output", tst['signature'])
-            print_label("Ctrl", "message-encoding:1")
-            if not externalMu:
+            if signPreHash:
+                print_label("FIPSversion", ">=4.0.0")
+                print_label("Sign", "HASH" + grp['parameterSet'] + "-" + tst['hashAlg'] + ":" + testname)
+                print_label("Input", do_hash(tst['hashAlg'], tst['message']))
                 print_label("Ctrl", "hexcontext-string:" + tst["context"])
-                includeMu = not includeMu
-            if externalMu or includeMu:
-                print_label("Ctrl", "mu:" + ("1" if externalMu else "0"))
+            else:
+                print_label("FIPSversion", ">=3.5.0")
+                print_label("Sign-Message", grp['parameterSet'] + ":" + testname)
+                print_label("Input", tst['mu' if externalMu else 'message'])
+                print_label("Ctrl", "message-encoding:1")
+                if not externalMu:
+                    if "context" in tst:
+                        print_label("Ctrl", "hexcontext-string:" + tst["context"])
+                    includeMu = not includeMu
+                if externalMu or includeMu:
+                    print_label("Ctrl", "mu:" + ("1" if externalMu else "0"))
+            print_label("Output", tst['signature'])
             print_label("Ctrl", "deterministic:" + ("1" if deter else "0"))
             if not deter:
                 print_label("Ctrl", "hextest-entropy:" + tst["rnd"])

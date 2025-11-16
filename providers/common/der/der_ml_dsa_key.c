@@ -13,48 +13,17 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/obj_mac.h>
 #include "internal/packet.h"
 #include "prov/der_ml_dsa.h"
+#include "crypto/ml_dsa.h"
 
-int ossl_DER_w_algorithmIdentifier_ML_DSA(WPACKET *pkt, int tag, ML_DSA_KEY *key,
-                                          int sig_hash_mode)
+int ossl_DER_w_algorithmIdentifier_ML_DSA(WPACKET *pkt, int tag,
+                                          const uint8_t *sigalg_oid,
+                                          size_t sigalg_oid_len)
 {
-    const uint8_t *alg;
-    size_t len;
-    const char *name = ossl_ml_dsa_key_get_name(key);
-
-    switch (sig_hash_mode) {
-    case ML_DSA_SIG_MODE_PURE:
-        if (OPENSSL_strcasecmp(name, "ML-DSA-44") == 0) {
-            alg = ossl_der_oid_id_ml_dsa_44;
-            len = sizeof(ossl_der_oid_id_ml_dsa_44);
-        } else if (OPENSSL_strcasecmp(name, "ML-DSA-65") == 0) {
-            alg = ossl_der_oid_id_ml_dsa_65;
-            len = sizeof(ossl_der_oid_id_ml_dsa_65);
-        } else if (OPENSSL_strcasecmp(name, "ML-DSA-87") == 0) {
-            alg = ossl_der_oid_id_ml_dsa_87;
-            len = sizeof(ossl_der_oid_id_ml_dsa_87);
-        } else {
-            return 0;
-        }
-        break;
-    case ML_DSA_SIG_MODE_SHA512:
-        if (OPENSSL_strcasecmp(name, "ML-DSA-44") == 0) {
-            alg = ossl_der_oid_id_ml_dsa_44_sha512;
-            len = sizeof(ossl_der_oid_id_ml_dsa_44_sha512);
-        } else if (OPENSSL_strcasecmp(name, "ML-DSA-65") == 0) {
-            alg = ossl_der_oid_id_ml_dsa_65_sha512;
-            len = sizeof(ossl_der_oid_id_ml_dsa_65_sha512);
-        } else if (OPENSSL_strcasecmp(name, "ML-DSA-87") == 0) {
-            alg = ossl_der_oid_id_ml_dsa_87_sha512;
-            len = sizeof(ossl_der_oid_id_ml_dsa_87_sha512);
-        } else {
-            return 0;
-        }
-        break;
-    }
     return ossl_DER_w_begin_sequence(pkt, tag)
         /* No parameters */
-        && ossl_DER_w_precompiled(pkt, -1, alg, len)
+        && ossl_DER_w_precompiled(pkt, -1, sigalg_oid, sigalg_oid_len)
         && ossl_DER_w_end_sequence(pkt, tag);
 }
