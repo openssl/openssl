@@ -373,7 +373,7 @@ int tls13_setup_key_block(SSL_CONNECTION *s)
 {
     const EVP_CIPHER *c;
     const EVP_CIPHER *snc = NULL, **p_snc = SSL_CONNECTION_IS_DTLS(s) ? &snc : NULL;
-    size_t snoffs;
+    size_t snoffs = 0;
     const EVP_MD *hash;
     int mac_type = NID_undef;
     size_t mac_secret_size = 0;
