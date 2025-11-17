@@ -4739,6 +4739,8 @@ static int early_data_skip_helper(int testdtls, int testtype, int cipher, int id
             const unsigned char bad_early_data[] = {
                 0x17, 0x03, 0x03, 0x00, 0x01, 0x00
             };
+
+            /* A record with the DTLS1.3 Unified Header */
             const unsigned char bad_early_data_dtls[] = {
                 0x2D, 0x00, 0x00, 0x00, 0x01, 0x00
             };
