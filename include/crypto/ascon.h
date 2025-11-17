@@ -1,5 +1,5 @@
-#ifndef SP800232_RIT_H
-#define SP800232_RIT_H
+#ifndef ASCON_H
+#define ASCON_H
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -71,4 +71,4 @@ size_t ossl_ascon_aead128_decrypt_final(ascon_aead_ctx_t *ctx, unsigned char *ou
 void ossl_ascon_aead_cleanup(ascon_aead_ctx_t *ctx);
 #endif
 
-#endif /* SP800232_RIT_H */
+#endif /* ASCON_H */
