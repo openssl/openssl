@@ -391,6 +391,9 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
 {
     size_t rlen;
     size_t max_frag_len = rl->max_frag_len;
+    int isdtls = rl->isdtls;
+    size_t mac_size = 0;
+    size_t taglen = rl->taglen;
 
     /* Nothing to be done in the case of a plaintext alert */
     if (rl->allow_plain_alerts && thistempl->type != SSL3_RT_ALERT)
@@ -457,6 +460,19 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
                     padding = bp - remainder;
             }
         }
+
+        /*
+         * DTLS1.3 RFC 9147 Section 4.2.3 says records should be padded
+         * if the ciphertext is less than 16 bytes.
+         */
+        if (isdtls) {
+            if (rl->mac_ctx != NULL)
+                mac_size = EVP_MAC_CTX_get_mac_size(rl->mac_ctx);
+
+            if (padding + rlen + taglen + mac_size < DTLS13_CIPHERTEXT_MINSIZE)
+                padding += DTLS13_CIPHERTEXT_MINSIZE - (padding + rlen + taglen + mac_size);
+        }
+
         if (padding > 0) {
             /* do not allow the record to exceed max plaintext length */
             if (padding > max_padding)
