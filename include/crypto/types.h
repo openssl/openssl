@@ -15,6 +15,7 @@
 
 /* At some point in the future, this may move to include/openssl/types.h */
 typedef struct ossl_fn_st OSSL_FN;
+typedef struct ossl_fn_ctx_st OSSL_FN_CTX;
 
 #ifdef OPENSSL_NO_DEPRECATED_3_0
 typedef struct rsa_st RSA;
