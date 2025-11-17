@@ -16,23 +16,9 @@
 
 static OSSL_FN *ossl_fn_new_internal(size_t limbs, bool securely)
 {
-    /*
-     * Since the number of limbs is represented as an 'int' in OSSL_FN,
-     * we must ensure that the desired size isn't larger than can be
-     * represented.
-     */
-    if (ossl_unlikely(limbs >= INT_MAX))
-        return NULL;
-
     /* Total size of the whole OSSL_FN, in bytes */
-    size_t totalsize = sizeof(OSSL_FN) + limbs * sizeof(OSSL_FN_ULONG);
-
-    /*
-     * If the size ends up being smaller than the bookkeeping struct,
-     * we know that the size calculation has wrapped around and is
-     * therefore invalid.  Also, we don't allow zero byte numbers.
-     */
-    if (totalsize <= sizeof(OSSL_FN))
+    size_t totalsize = ossl_fn_totalsize(limbs);
+    if (totalsize == 0)
         return NULL;
 
     OSSL_FN *ret = NULL;
@@ -80,34 +66,24 @@ OSSL_FN *OSSL_FN_secure_new_limbs(size_t size)
     return ossl_fn_new_internal(size, true);
 }
 
-static size_t bytes_to_limbs(size_t size)
-{
-    return (size + sizeof(OSSL_FN_ULONG) - 1) / sizeof(OSSL_FN_ULONG);
-}
-
 OSSL_FN *OSSL_FN_new_bytes(size_t size)
 {
-    return OSSL_FN_new_limbs(bytes_to_limbs(size));
+    return OSSL_FN_new_limbs(ossl_fn_bytes_to_limbs(size));
 }
 
 OSSL_FN *OSSL_FN_secure_new_bytes(size_t size)
 {
-    return OSSL_FN_secure_new_limbs(bytes_to_limbs(size));
-}
-
-static size_t bits_to_bytes(size_t size)
-{
-    return (size + 7) / 8;
+    return OSSL_FN_secure_new_limbs(ossl_fn_bytes_to_limbs(size));
 }
 
 OSSL_FN *OSSL_FN_new_bits(size_t size)
 {
-    return OSSL_FN_new_bytes(bits_to_bytes(size));
+    return OSSL_FN_new_bytes(ossl_fn_bits_to_bytes(size));
 }
 
 OSSL_FN *OSSL_FN_secure_new_bits(size_t size)
 {
-    return OSSL_FN_secure_new_bytes(bits_to_bytes(size));
+    return OSSL_FN_secure_new_bytes(ossl_fn_bits_to_bytes(size));
 }
 
 void OSSL_FN_free(OSSL_FN *f)
