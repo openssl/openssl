@@ -18,9 +18,10 @@ B<SSL> structure using the configuration B<name>.
 
 By calling SSL_CTX_config() or SSL_config() an application can perform many
 complex tasks based on the contents of the configuration file: greatly
-simplifying application configuration code. A degree of future proofing
-can also be achieved: an application can support configuration features
-in newer versions of OpenSSL automatically.
+simplifying application configuration code.
+Some future-proofing can be attained this way: the specified configuration
+section can specify settings supported by the run-time version of OpenSSL that
+were not known at the time the application code was written.
 
 A configuration file must have been previously loaded, for example using
 CONF_modules_load_file(). See L<config(5)> for details of the configuration
