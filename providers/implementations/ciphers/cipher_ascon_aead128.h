@@ -13,7 +13,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <openssl/core.h>
+#define OSSL_INCLUDE_PROVIDER 1
 #include "crypto/ascon.h"  /* ASCON algorithm header */
+#undef OSSL_INCLUDE_PROVIDER
 
 /*********************************************************************
  *
