@@ -42,3 +42,15 @@ In case of TLS protocol IVs should also be returned as EVP_SKEY objects for API
 clarity.  It means that we either need to extend EVP_CIPHER API to accept
 EVP_SKEY objects for IV or providers should ensure that IV bytes are always
 exportable.
+
+An alternative approach
+-----------------------
+
+In theory, as all the objects are derived in one transaction, the other
+approach is possible.  We can return a single EVP_SKEY object keeping all the
+keys inside, and modify the API for setting a particular object internally.
+Until it doesn't imply export-import dance (that means that a KDF and
+cipher/MAC should come from the same provider), it can be manageable.
+
+However, this will require extending the API on the libcrypto/libssl side and
+complications on a provider side.
