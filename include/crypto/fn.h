@@ -14,6 +14,7 @@
 # include <stddef.h>
 # include <openssl/opensslconf.h>
 # include <openssl/bn_limbs.h>
+# include <openssl/types.h>
 # include "crypto/types.h"
 
 # ifdef  __cplusplus
@@ -127,6 +128,84 @@ void OSSL_FN_clear_free(OSSL_FN *f);
  * @param[in]   f       The OSSL_FN instance to be cleared.
  */
 void OSSL_FN_clear(OSSL_FN *f);
+
+/**
+ * Allocate a new OSSL_FN_CTX, given a set of input numbers.
+ *
+ * @param[in]   libctx          OpenSSL library context (currently unused)
+ * @param[in]   max_n_frames    Maximum number of simultaneously active frames.
+ *                              This indicates the expected depth of call stack
+ *                              that the resulting OSSL_FN_CTX will be used in.
+ * @param[in]   max_n_numbers   Maximum number of simultaneously active OSSL_FN.
+ * @param[in]   max_n_limbs     Maximum number of simultaneously active OSSL_FN
+ *                              limbs.
+ * @returns     An allocated OSSL_FN_CTX, or NULL on error.
+ **/
+OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
+                             size_t max_n_numbers, size_t max_n_limbs);
+/**
+ * Allocate a new OSSL_FN_CTX in secure memory, given a set of input numbers.
+ * Other than allocating in secure memory, this function does exactly the same
+ * thing as OSSL_FN_CTX_new().
+ **/
+OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
+                                    size_t max_n_numbers, size_t max_n_limbs);
+/**
+ * Free an OSSL_FN_CTX.
+ *
+ * @param[in]   ctx     The OSSL_FN_CTX to be freed.  This may be NULL.
+ */
+void OSSL_FN_CTX_free(OSSL_FN_CTX *ctx);
+
+/**
+ * Start a new OSSL_FN_CTX frame.  This *must* be called by any function
+ * that wants to get a temporary OSSL_FN from the OSSL_FN_CTX.  The function
+ * call this must also clean up with a OSSL_FN_CTX_end() call.
+ *
+ * @param[in]   ctx     The OSSL_FN_CTX to start the frame in.
+ * @returns     1 on success, 0 on error.
+ */
+int OSSL_FN_CTX_start(OSSL_FN_CTX *ctx);
+
+/**
+ * End the last OSSL_FN_CTX frame, resetting back to the previous
+ * frame.  If a function called OSSL_FN_CTX_start(), it *must* call
+ * this function before returning.
+ *
+ * @param[in]   ctx     The OSSL_FN_CTX to start the frame in.
+ * @returns     1 on success, 0 on error.
+ */
+int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx);
+
+/**
+ * Get a suitably sized OSSL_FN from an OSSL_FN_CTX.
+ *
+ * @param[in]   ctx     The OSSL_FN_CTX
+ * @param[in]   limbs   The desired size of the resulting OSSL_FN,
+ *                      in number of limbs.
+ * @returns     an OSSL_FN pointer on success, NULL on error.
+ */
+OSSL_FN *OSSL_FN_CTX_get_limbs(OSSL_FN_CTX *ctx, size_t limbs);
+
+/**
+ * Get a suitably sized OSSL_FN from an OSSL_FN_CTX.
+ *
+ * @param[in]   ctx     The OSSL_FN_CTX
+ * @param[in]   limbs   The desired size of the resulting OSSL_FN,
+ *                      in number of bytes.
+ * @returns     an OSSL_FN pointer on success, NULL on error.
+ */
+OSSL_FN *OSSL_FN_CTX_get_bytes(OSSL_FN_CTX *ctx, size_t bytes);
+
+/**
+ * Get a suitably sized OSSL_FN from an OSSL_FN_CTX.
+ *
+ * @param[in]   ctx     The OSSL_FN_CTX
+ * @param[in]   limbs   The desired size of the resulting OSSL_FN,
+ *                      in number of bits.
+ * @returns     an OSSL_FN pointer on success, NULL on error.
+ */
+OSSL_FN *OSSL_FN_CTX_get_bits(OSSL_FN_CTX *ctx, size_t bits);
 
 /*
  * Arithmetic functions treat the OSSL_FN 'd' array as a large 2's complement
