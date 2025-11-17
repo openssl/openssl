@@ -63,6 +63,38 @@ struct ossl_fn_st {
     OSSL_FN_ULONG d[];
 };
 
+static ossl_inline size_t ossl_fn_totalsize(size_t limbs)
+{
+    /*
+     * TODO(FIXNUM): Since the number of limbs is currently represented
+     * as an 'int' in OSSL_FN, we must ensure that the desired size isn't
+     * larger than can be represented.
+     */
+    if (ossl_unlikely(limbs >= INT_MAX))
+        return 0;
+
+    /*
+     *    sizeof(OSSL_FN) + limbs * sizeof(OSSL_FN_ULONG) > SIZE_MAX
+     * => limbs * sizeof(OSSL_FN_ULONG) > SIZE_MAX - sizeof(OSSL_FN)
+     * => limbs > (SIZE_MAX - sizeof(OSSL_FN)) / sizeof(OSSL_FN_ULONG)
+     */
+    if (ossl_unlikely(limbs > (SIZE_MAX - sizeof(OSSL_FN)) / sizeof(OSSL_FN_ULONG)))
+        return 0;
+    return sizeof(OSSL_FN) + limbs * sizeof(OSSL_FN_ULONG);
+}
+
+static ossl_inline size_t ossl_fn_bytes_to_limbs(size_t size)
+{
+    return (size + sizeof(OSSL_FN_ULONG) - 1) / sizeof(OSSL_FN_ULONG);
+}
+
+static ossl_inline size_t ossl_fn_bits_to_bytes(size_t size)
+{
+    return (size + 7) / 8;
+}
+
+
+
 /*
  * Internal functions to support BIGNUM's bn_expand_internal, BN_copy, and
  * similar.
