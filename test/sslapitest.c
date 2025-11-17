@@ -5144,17 +5144,6 @@ static int test_early_data_skip(int idx)
 
     if (testdtls) {
         idx -= OSSL_NELEM(ciphersuites) * 3;
-        if (idx % OSSL_NELEM(ciphersuites) == 0 || idx % OSSL_NELEM(ciphersuites) == 5
-            || idx % OSSL_NELEM(ciphersuites) == 6) {
-            /*
-             * TODO(DTLSv1.3): testing with DTLS fails for DTLS1.3 Padding
-             * needs to be implemented https://github.com/openssl/project/issues/1700
-             *
-             * TODO(DTLSv1.3): Testing DTLS1.3 with Integrity only ciphersuits fails
-             * https://github.com/openssl/project/issues/1702
-             */
-            return TEST_skip("Tests fails with DTLS1.3 for ciphers are not supported");
-        }
 #if defined(OSSL_NO_USABLE_DTLS1_3)
         return TEST_skip("No usable DTLSv1.3");
 #endif
@@ -5179,17 +5168,6 @@ static int test_early_data_skip_hrr(int idx)
 
     if (testdtls) {
         idx -= OSSL_NELEM(ciphersuites) * 3;
-        if (idx % OSSL_NELEM(ciphersuites) == 0 || idx % OSSL_NELEM(ciphersuites) == 5
-            || idx % OSSL_NELEM(ciphersuites) == 6) {
-            /*
-             * TODO(DTLSv1.3): testing with DTLS fails for DTLS1.3 Padding
-             * needs to be implemented https://github.com/openssl/project/issues/1700
-             *
-             * TODO(DTLSv1.3): Testing DTLS1.3 with Integrity only ciphersuits fails
-             * https://github.com/openssl/project/issues/1702
-             */
-            return TEST_skip("Tests fails with DTLS1.3 for ciphers are not supported");
-        }
 #if defined(OSSL_NO_USABLE_DTLS1_3)
         return TEST_skip("No usable DTLSv1.3");
 #endif
@@ -5215,17 +5193,6 @@ static int test_early_data_skip_hrr_fail(int idx)
 
     if (testdtls) {
         idx -= OSSL_NELEM(ciphersuites) * 3;
-        if (idx % OSSL_NELEM(ciphersuites) == 0 || idx % OSSL_NELEM(ciphersuites) == 5
-            || idx % OSSL_NELEM(ciphersuites) == 6) {
-            /*
-             * TODO(DTLSv1.3): testing with DTLS fails for DTLS1.3 Padding
-             * needs to be implemented https://github.com/openssl/project/issues/1700
-             *
-             * TODO(DTLSv1.3): Testing DTLS1.3 with Integrity only ciphersuits fails
-             * https://github.com/openssl/project/issues/1702
-             */
-            return TEST_skip("Tests fails with DTLS1.3 for ciphers are not supported");
-        }
 #if defined(OSSL_NO_USABLE_DTLS1_3)
         return TEST_skip("No usable DTLSv1.3");
 #endif
@@ -5250,17 +5217,6 @@ static int test_early_data_skip_abort(int idx)
 
     if (testdtls) {
         idx -= OSSL_NELEM(ciphersuites) * 3;
-        if (idx % OSSL_NELEM(ciphersuites) == 0 || idx % OSSL_NELEM(ciphersuites) == 5
-            || idx % OSSL_NELEM(ciphersuites) == 6) {
-            /*
-             * TODO(DTLSv1.3): testing with DTLS fails for DTLS1.3 Padding
-             * needs to be implemented https://github.com/openssl/project/issues/1700
-             *
-             * TODO(DTLSv1.3): Testing DTLS1.3 with Integrity only ciphersuits fails
-             * https://github.com/openssl/project/issues/1702
-             */
-            return TEST_skip("Tests fails with DTLS1.3 for ciphers are not supported");
-        }
 #if defined(OSSL_NO_USABLE_DTLS1_3)
         return TEST_skip("No usable DTLSv1.3");
 #endif
@@ -5663,15 +5619,6 @@ static int test_early_data_psk_with_all_ciphers(int idx)
 
     if (testdtls) {
         idx -= 7;
-        /*
-         * TODO(DTLSv1.3): testing with DTLS fails for DTLS1.3 Padding
-         * needs to be implemented https://github.com/openssl/project/issues/1700
-         *
-         * TODO(DTLSv1.3): Testing DTLS1.3 with Integrity only ciphersuits fails
-         * https://github.com/openssl/project/issues/1702
-         */
-        if (idx >= 3)
-            return TEST_skip("Tests fails with DTLS1.3 for ciphers are not supported");
 #if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
@@ -9010,7 +8957,7 @@ static int test_key_update_local_in_write(int idx)
     tmp = NULL;
 
     /*
-     * For DTLS1.3 the key udpate will succeed for it would
+     * For DTLS1.3 the key update will succeed for it would
      * have just dropped the packet above
      */
     if (!testdtls)
@@ -9088,7 +9035,9 @@ end:
 
     return testresult;
 }
+#endif /* OSSL_NO_USABLE_TLS1_3 | OSSL_NO_USABLE_DTLS1_3 */
 
+#if !defined(OSSL_NO_USABLE_TLS1_3)
 /*
  * Test we can handle a KeyUpdate (update requested) message while
  * local read data is pending(the msg header had been read 5 bytes).
@@ -14175,7 +14124,7 @@ end:
 #endif
 }
 
-#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
+#if !defined(OSSL_NO_USABLE_TLS1_3)
 /*
  * Test that read_ahead works across a key change
  * Test 0: Test with TLS
@@ -14243,7 +14192,9 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+#endif
 
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
 static size_t record_pad_cb(SSL *s, int type, size_t len, void *arg)
 {
     int *called = arg;
@@ -16920,6 +16871,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_key_update_peer_in_write, 4);
     ADD_ALL_TESTS(test_key_update_peer_in_read, 4);
     ADD_ALL_TESTS(test_key_update_local_in_write, 4);
+#endif
+#if !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_key_update_local_in_read, 2);
 #endif
     ADD_ALL_TESTS(test_ssl_clear, 8);
@@ -16990,11 +16943,11 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_load_dhfile);
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
-    ADD_TEST(test_read_ahead_key_change);
     ADD_ALL_TESTS(test_tls13_record_padding, 12);
 #endif
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_TEST(test_tls13_unknown_extension);
+    ADD_TEST(test_read_ahead_key_change);
 #endif
 #if (!defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)) \
     || (!defined(OPENSSL_NO_DTLS1_2) && !defined(OSSL_NO_USABLE_DTLS1_3))
