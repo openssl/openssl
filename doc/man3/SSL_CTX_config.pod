@@ -52,8 +52,8 @@ If, for example, the loaded configuration file contains the following:
 
  [ssl_init]
  system_default = default_ssl_settings
- tls12 = tls12_settings
- tls13 = tls13_settings
+ tweaks_for_tls12 = tls12_custom_settings
+ tweaks_for_tls13 = tls13_custom_settings
 
  [default_ssl_settings]
  MinProtocol = TLSv1.2
@@ -63,12 +63,12 @@ If, for example, the loaded configuration file contains the following:
  Groups = ...
  SignatureAlgorithms = ...
 
- [tls12_settings]
+ [tls12_custom_settings]
  # Defaults are typically the wisest choice, override only with good cause.
  MaxProtocol = TLSv1.2
  ...
 
- [tls13_settings]
+ [tls13_custom_settings]
  # Defaults are typically the wisest choice, override only with good cause.
  MinProtocol = TLSv1.3
  ...
@@ -82,19 +82,20 @@ An application that wants to only use "TLS 1.2" might call:
  }
 
  /*
-  * Futher tweaks per the "ssl" module "tls12" setting, i.e. the
-  * configuration file's "tls12_settings" section.
+  * Further tweaks per the "ssl" module "tweaks_for_tls12" setting, i.e. the
+  * configuration file's "tls12_custom_settings" section.
   */
- if (SSL_CTX_config(ctx, "tls12") == 0) {
-     fprintf(stderr, "Error applying 'tls12' context configuration.\n");
+ if (SSL_CTX_config(ctx, "tweaks_for_tls12") == 0) {
+     fprintf(stderr, "Error applying 'tweaks_for_tls12' context configuration.\n");
      goto err;
  }
 
 The setting of the protocol version ceiling and any other settings relevant to
 TLS 1.2 are in the configuration file, and don't need to be hard-coded in the
 application.
-Similarly, using C<tls13> as the configuration B<name> applies the corresponding
-settings from the "tls13_settings" section (per the C<tls13> SSL module parameter).
+Similarly, using C<tweaks_for_tls13> as the configuration B<name> applies the
+corresponding settings from the "tls13_custom_settings" section (per the SSL
+module C<tweaks_for_tls13> parameter).
 
 =head1 SEE ALSO
 
