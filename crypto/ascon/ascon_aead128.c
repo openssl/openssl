@@ -1,30 +1,72 @@
-/*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
- * this file except in compliance with the License.  You can obtain a copy
- * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
- */
-
-/*
- * Cleanroom implementation of Ascon-AEAD128 (NIST SP 800-232).
- *
- * This is a cleanroom implementation based on the NIST SP 800-232 specification.
- */
-
-#include "crypto/ascon.h"
-#include <openssl/crypto.h>
+#include "ascon.h"
 #include <string.h>
+#ifdef OPENSSL_BUILDING_OPENSSL
+#include "internal/cryptlib.h"
 #include <stdbool.h>
-#include "internal/numbers.h"
-#include "internal/common.h"
+#endif
 
-/* Rotate right 64-bit value */
+#if defined(B_ENDIAN) || defined(__BIG_ENDIAN__) || defined(_BIG_ENDIAN)
+/* BE */
+#define GETU64(v, p)                       \
+    do {                                   \
+        (v) = ((uint64_t)*(p + 0));        \
+        (v) |= ((uint64_t)*(p + 1) << 8);  \
+        (v) |= ((uint64_t)*(p + 2) << 16); \
+        (v) |= ((uint64_t)*(p + 3) << 24); \
+        (v) |= ((uint64_t)*(p + 4) << 32); \
+        (v) |= ((uint64_t)*(p + 5) << 40); \
+        (v) |= ((uint64_t)*(p + 6) << 48); \
+        (v) |= ((uint64_t)*(p + 7) << 56); \
+    } while (0)
+
+#define PUTU64(p, v)                           \
+    do {                                       \
+        *(p + 0) = (unsigned char)(v);         \
+        *(p + 1) = (unsigned char)((v) >> 8);  \
+        *(p + 2) = (unsigned char)((v) >> 16); \
+        *(p + 3) = (unsigned char)((v) >> 24); \
+        *(p + 4) = (unsigned char)((v) >> 32); \
+        *(p + 5) = (unsigned char)((v) >> 40); \
+        *(p + 6) = (unsigned char)((v) >> 48); \
+        *(p + 7) = (unsigned char)((v) >> 56); \
+    } while (0)
+
+#else
+/* LE */
+#define GETU64(v, p)          \
+    do {                      \
+        memcpy(&(v), (p), 8); \
+    } while (0)
+
+#define PUTU64(p, v)          \
+    do {                      \
+        uint64_t _q0 = (v);   \
+        memcpy((p), &_q0, 8); \
+    } while (0)
+
+#endif
+
+/* semi-portable inline declaration */
+#ifdef OPENSSL_BUILDING_OPENSSL
+#define ASCON_INLINE ossl_inline /* use the openssl one if we can */
+#elif defined(__OPTIMIZE__)
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#define ASCON_INLINE __forceinline
+#elif defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER) || defined(__ICC)
+#define ASCON_INLINE __attribute__((always_inline)) inline
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#define ASCON_INLINE inline /* C99? */
+#else
+#define ASCON_INLINE
+#endif
+#else
+#define ASCON_INLINE
+#endif
+
 #define ROR64(x, i) ((x << (64 - i)) | (x >> i))
 
 /**
- * Constant addition layer, NIST SP 800-232 Table 5
+ * constant addition layer, NIST SP 800-232 Table 5
  * 3c 2d 1e 0f f0 e1 d2 c3 b4 a5 96 87 78 69 5a 4b
  */
 #define ASCONPC(x0, x1, x2, x3, x4, rcon) \
@@ -33,7 +75,7 @@
     } while (0)
 
 /**
- * Nonlinear layer, lifted from p43 of
+ * nonlinear layer, lifted from p43 of
  * https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/ascon-spec-final.pdf
  */
 #define ASCONPS(x0, x1, x2, x3, x4) \
@@ -58,7 +100,7 @@
         x2 = ~x2;                   \
     } while (0)
 
-/* Linear layer, NIST SP 800-232 Figure 3 */
+/* linear layer, NIST SP 800-232 Figure 3 */
 #define ASCONPL(x0, x1, x2, x3, x4)          \
     do {                                     \
         x0 ^= ROR64(x0, 19) ^ ROR64(x0, 28); \
@@ -68,7 +110,7 @@
         x4 ^= ROR64(x4, 7) ^ ROR64(x4, 41);  \
     } while (0)
 
-/* One round */
+/* one round */
 #define ASCONP1(x0, x1, x2, x3, x4, rcon)  \
     do {                                   \
         ASCONPC(x0, x1, x2, x3, x4, rcon); \
@@ -99,31 +141,38 @@
         ASCONP8(x0, x1, x2, x3, x4);          \
     } while (0)
 
-/* Internal flags for tracking state - stored in flags */
+/* misc ascon flags for the context */
 #define ASCONFLG_AAD 0x0000000000000001ULL /* has AAD inputs? */
 #define ASCONFLG_DEC 0x0000000000000002ULL /* in decrypt mode? */
 #define ASCONFLG_DOMAINSEP 0x8000000000000000ULL /* ready to absorb non-AAD? */
-#define ASCONFLG_CLEANED 0xFFFFFFFFFFFFFFFFULL /* context cleaned? */
 
-/* Internal update function */
-static ossl_inline void
-ascon_aead128_update_internal(ascon_aead_ctx_t* ctx, unsigned char* out,
-                              const unsigned char* in, size_t len)
+/* omit test harness if this is openssl-internal */
+#ifndef OPENSSL_BUILDING_OPENSSL
+#include <stdio.h>
+
+void ascon_test_state()
 {
-    uint64_t s0, s1, s2, s3, s4;
-    unsigned char pad = 0x01;
-    size_t offset = ctx->offset;
-    uint64_t flags = ctx->flags;
+    uint64_t s0 = 0, s1 = 0, s2 = 0, s3 = 0, s4 = 0;
+    s4 = 0x0000080100CC0002ULL;
+    ASCONP12(s0, s1, s2, s3, s4);
+    printf("%lx%lx%lx%lx%lx\n", s0, s1, s2, s3, s4);
+}
 
-    /* Handle domain separation if needed */
-    if (flags & ASCONFLG_DOMAINSEP) {
+#endif
+
+static ASCON_INLINE void ascon_aead128_update(ascon_aead128_ctx* ctx, unsigned char* out, const unsigned char* in, size_t len)
+{
+    uint64_t s0, s1, s2, s3, s4, flags;
+    unsigned char pad = 0x01;
+
+    if (ctx->flags & ASCONFLG_DOMAINSEP) {
+        flags = ctx->flags;
         if (flags & ASCONFLG_AAD) {
-            /* Finalize AAD processing */
             ctx->flags = 0;
-            ascon_aead128_update_internal(ctx, NULL, &pad, 1);
+            ascon_aead128_update(ctx, NULL, &pad, 1);
             ASCONP8(ctx->state[0], ctx->state[1], ctx->state[2], ctx->state[3], ctx->state[4]);
             flags ^= ASCONFLG_AAD;
-            offset = 0;
+            ctx->offset = 0;
         }
         ctx->state[4] ^= ASCONFLG_DOMAINSEP;
         flags ^= ASCONFLG_DOMAINSEP;
@@ -138,33 +187,33 @@ ascon_aead128_update_internal(ascon_aead_ctx_t* ctx, unsigned char* out,
 
     while (len--) {
         unsigned char ob, ib = *in++;
-
-        if (offset >= 16) {
+        if (ctx->offset >= 16) {
             ASCONP8(s0, s1, s2, s3, s4);
-            offset = 0;
+            ctx->offset = 0;
         }
 
-        if (flags & ASCONFLG_DEC) {
-            if (offset >= 8) {
-                ob = (unsigned char)(s1 >> 8 * (offset & 0x7)) ^ ib;
-                s1 ^= (uint64_t)(ob) << 8 * (offset & 0x7);
+        if (ctx->flags & ASCONFLG_DEC) {
+            if (ctx->offset >= 8) {
+                ob = (unsigned char)(s1 >> 8 * (ctx->offset & 0x7)) ^ ib;
+                s1 ^= (uint64_t)(ob) << 8 * (ctx->offset & 0x7);
             } else {
-                ob = (unsigned char)(s0 >> 8 * offset) ^ ib;
-                s0 ^= (uint64_t)(ob) << 8 * offset;
+                ob = (unsigned char)(s0 >> 8 * ctx->offset) ^ ib;
+                s0 ^= (uint64_t)(ob) << 8 * ctx->offset;
             }
         } else {
-            if (offset >= 8) {
-                s1 ^= (uint64_t)(ib) << 8 * (offset & 0x7);
-                ob = (unsigned char)(s1 >> 8 * (offset & 0x7));
+            if (ctx->offset >= 8) {
+                s1 ^= (uint64_t)(ib) << 8 * (ctx->offset & 0x7);
+                ob = (unsigned char)(s1 >> 8 * (ctx->offset & 0x7));
             } else {
-                s0 ^= (uint64_t)(ib) << 8 * offset;
-                ob = (unsigned char)(s0 >> 8 * offset);
+                s0 ^= (uint64_t)(ib) << 8 * ctx->offset;
+                ob = (unsigned char)(s0 >> 8 * ctx->offset);
             }
         }
 
         if (out != NULL)
             *out++ = ob;
-        offset++;
+
+        ctx->offset++;
     }
 
     ctx->state[0] = s0;
@@ -172,90 +221,33 @@ ascon_aead128_update_internal(ascon_aead_ctx_t* ctx, unsigned char* out,
     ctx->state[2] = s2;
     ctx->state[3] = s3;
     ctx->state[4] = s4;
-    ctx->offset = offset;
 }
 
-/* One-shot encryption */
-void
-ascon_aead128_encrypt(uint8_t* ciphertext, uint8_t* tag,
-                      const uint8_t key[ASCON_AEAD128_KEY_LEN],
-                      const uint8_t nonce[ASCON_AEAD_NONCE_LEN],
-                      const uint8_t* assoc_data, const uint8_t* plaintext,
-                      size_t assoc_data_len, size_t plaintext_len,
-                      size_t tag_len)
+void ascon_aead128_encrypt_update(ascon_aead128_ctx* ctx, unsigned char* ct, const unsigned char* pt, size_t len)
 {
-    ossl_assert(plaintext_len == 0 || ciphertext != NULL);
-    ossl_assert(tag_len != 0 || tag != NULL);
-    ossl_assert(key != NULL);
-    ossl_assert(nonce != NULL);
-    ossl_assert(assoc_data_len == 0 || assoc_data != NULL);
-    ossl_assert(plaintext_len == 0 || plaintext != NULL);
-    ascon_aead_ctx_t ctx;
-    ascon_aead128_init(&ctx, key, nonce);
-    ascon_aead128_assoc_data_update(&ctx, assoc_data, assoc_data_len);
-    const size_t new_ct_bytes = ascon_aead128_encrypt_update(&ctx, ciphertext,
-                                                              plaintext,
-                                                              plaintext_len);
-    ascon_aead128_encrypt_final(&ctx, ciphertext + new_ct_bytes,
-                                 tag, tag_len);
+    ascon_aead128_update(ctx, ct, pt, len);
 }
 
-/* One-shot decryption */
-bool
-ascon_aead128_decrypt(uint8_t* plaintext,
-                      const uint8_t key[ASCON_AEAD128_KEY_LEN],
-                      const uint8_t nonce[ASCON_AEAD_NONCE_LEN],
-                      const uint8_t* assoc_data, const uint8_t* ciphertext,
-                      const uint8_t* expected_tag, size_t assoc_data_len,
-                      size_t ciphertext_len, size_t expected_tag_len)
+void ascon_aead128_decrypt_update(ascon_aead128_ctx* ctx, unsigned char* pt, const unsigned char* ct, size_t len)
 {
-    ossl_assert(ciphertext_len == 0 || plaintext != NULL);
-    ossl_assert(key != NULL);
-    ossl_assert(nonce != NULL);
-    ossl_assert(assoc_data_len == 0 || assoc_data != NULL);
-    ossl_assert(ciphertext_len == 0 || ciphertext != NULL);
-    ossl_assert(expected_tag_len != 0 || expected_tag != NULL);
-    ascon_aead_ctx_t ctx;
-    bool is_tag_valid;
-    ascon_aead128_init(&ctx, key, nonce);
-    ascon_aead128_assoc_data_update(&ctx, assoc_data, assoc_data_len);
-    const size_t new_pt_bytes = ascon_aead128_decrypt_update(&ctx,
-                                                              plaintext,
-                                                              ciphertext,
-                                                              ciphertext_len);
-    ascon_aead128_decrypt_final(&ctx, plaintext + new_pt_bytes,
-                                 &is_tag_valid, expected_tag, expected_tag_len);
-    return is_tag_valid;
+    ctx->flags |= ASCONFLG_DEC;
+    ascon_aead128_update(ctx, pt, ct, len);
 }
 
-/* Initialize context */
-void
-ascon_aead128_init(ascon_aead_ctx_t* const ctx,
-                    const uint8_t key[ASCON_AEAD128_KEY_LEN],
-                    const uint8_t nonce[ASCON_AEAD_NONCE_LEN])
+void ascon_aead128_init(ascon_aead128_ctx* ctx, const unsigned char* k, const unsigned char* n)
 {
-    /* Input validation */
-    if (ctx == NULL || key == NULL || nonce == NULL)
-        return;
-
     uint64_t s0, s1, s2, s3, s4, k0, k1;
 
-    /* Load key and nonce */
-    memcpy(&s1, key, 8);
-    memcpy(&s2, key + 8, 8);
-    memcpy(&s3, nonce, 8);
-    memcpy(&s4, nonce + 8, 8);
-
-    /* Store key for final step */
+    GETU64(s1, k);
+    GETU64(s2, k + 8);
+    GETU64(s3, n);
+    GETU64(s4, n + 8);
     ctx->key[0] = k0 = s1;
     ctx->key[1] = k1 = s2;
-
-    /* Initialization vector for ASCON-AEAD128a */
-    s0 = 0x80800c0800000000ULL;
+    s0 = 0x00001000808C0001ULL;
     ASCONP12(s0, s1, s2, s3, s4);
     s3 ^= k0;
     s4 ^= k1;
-
     ctx->state[0] = s0;
     ctx->state[1] = s1;
     ctx->state[2] = s2;
@@ -265,230 +257,144 @@ ascon_aead128_init(ascon_aead_ctx_t* const ctx,
     ctx->flags = ASCONFLG_DOMAINSEP;
 }
 
-/* Update associated data */
-void
-ascon_aead128_assoc_data_update(ascon_aead_ctx_t* const ctx,
-                                 const uint8_t* assoc_data,
-                                 size_t assoc_data_len)
+void ascon_aead128_aad_update(ascon_aead128_ctx* ctx, const unsigned char* in, size_t len)
 {
-    /* Input validation */
-    if (ctx == NULL)
-        return;
-    if (assoc_data_len > 0 && assoc_data == NULL)
-        return;
+    uint64_t flags;
 
-    uint64_t flags = ctx->flags;
-
-    /* Set AAD flag */
-    if (assoc_data_len > 0)
-        flags |= ASCONFLG_AAD;
-
-    ctx->flags = flags;
-
-    /* Process AAD */
-    if (assoc_data_len > 0) {
-        while (assoc_data_len--) {
-            unsigned char ib = *assoc_data++;
-            ascon_aead128_update_internal(ctx, NULL, &ib, 1);
-        }
-    }
+    flags = ctx->flags;
+    ctx->flags = 0;
+    ascon_aead128_update(ctx, NULL, in, len);
+    ctx->flags = (len > 0) ? flags |= ASCONFLG_AAD : flags;
 }
 
-/* Encrypt update */
-size_t
-ascon_aead128_encrypt_update(ascon_aead_ctx_t* const ctx,
-                              uint8_t* ciphertext,
-                              const uint8_t* plaintext,
-                              size_t plaintext_len)
+void ascon_aead128_encrypt_final(ascon_aead128_ctx* ctx, unsigned char* tag)
 {
-    /* Input validation */
-    if (ctx == NULL)
-        return 0;
-    if (plaintext_len > 0 && (plaintext == NULL || ciphertext == NULL))
-        return 0;
-
-    size_t processed = plaintext_len;
-    ascon_aead128_update_internal(ctx, ciphertext, plaintext, plaintext_len);
-    return processed;
-}
-
-/* Encrypt final */
-size_t
-ascon_aead128_encrypt_final(ascon_aead_ctx_t* const ctx,
-                             uint8_t* const ciphertext,
-                             uint8_t* tag,
-                             size_t tag_len)
-{
-    /* Input validation */
-    if (ctx == NULL || ciphertext == NULL)
-        return 0;
-    if (tag_len > 0 && tag == NULL)
-        return 0;
-
     uint64_t s0, s1, s2, s3, s4, k0, k1;
     unsigned char pad = 0x01;
 
-    /* Finalize any remaining data */
-    ascon_aead128_update_internal(ctx, NULL, NULL, 0);
+    ascon_aead128_update(ctx, NULL, NULL, 0);
     ctx->flags = 0;
-    ascon_aead128_update_internal(ctx, NULL, &pad, 1);
+    ascon_aead128_update(ctx, NULL, &pad, 1);
 
     k0 = ctx->key[0];
     k1 = ctx->key[1];
     s0 = ctx->state[0];
     s1 = ctx->state[1];
-    s2 = ctx->state[2];
-    s3 = ctx->state[3];
+    s2 = ctx->state[2] ^ k0;
+    s3 = ctx->state[3] ^ k1;
     s4 = ctx->state[4];
-
-    /* Finalize and generate tag */
-    s2 ^= k0;
-    s3 ^= k1;
     ASCONP12(s0, s1, s2, s3, s4);
     s3 ^= k0;
     s4 ^= k1;
-
-    /* Generate tag */
-    if (tag_len >= 8) {
-        memcpy(tag, &s3, 8);
-        if (tag_len >= 16) {
-            memcpy(tag + 8, &s4, 8);
-        }
-    }
-
-    /* Secure cleanup of sensitive local state */
-    OPENSSL_cleanse(&s0, sizeof(s0));
-    OPENSSL_cleanse(&s1, sizeof(s1));
-    OPENSSL_cleanse(&s2, sizeof(s2));
-    OPENSSL_cleanse(&s3, sizeof(s3));
-    OPENSSL_cleanse(&s4, sizeof(s4));
-    OPENSSL_cleanse(&k0, sizeof(k0));
-    OPENSSL_cleanse(&k1, sizeof(k1));
-
-    /* Cleanup context structure */
-    ascon_aead_cleanup(ctx);
-
-    return 0;
+    PUTU64(tag, s3);
+    PUTU64(tag + 8, s4);
 }
 
-/* Decrypt update */
-size_t
-ascon_aead128_decrypt_update(ascon_aead_ctx_t* const ctx,
-                              uint8_t* plaintext,
-                              const uint8_t* ciphertext,
-                              size_t ciphertext_len)
+void ascon_hash256_init(ascon_hash256_ctx* ctx)
 {
-    /* Input validation */
-    if (ctx == NULL)
-        return 0;
-    if (ciphertext_len > 0 && (ciphertext == NULL || plaintext == NULL))
-        return 0;
-
-    uint64_t flags = ctx->flags;
-    flags |= ASCONFLG_DEC;
-    ctx->flags = flags;
-
-    size_t processed = ciphertext_len;
-    ascon_aead128_update_internal(ctx, plaintext, ciphertext, ciphertext_len);
-    return processed;
-}
-
-/* Decrypt final with tag verification */
-size_t
-ascon_aead128_decrypt_final(ascon_aead_ctx_t* const ctx,
-                             uint8_t* plaintext,
-                             bool* const is_tag_valid,
-                             const uint8_t* const expected_tag,
-                             const size_t expected_tag_len)
-{
-    /* Input validation */
-    if (ctx == NULL || plaintext == NULL || is_tag_valid == NULL)
-        return 0;
-    if (expected_tag_len > 0 && expected_tag == NULL)
-        return 0;
-
-    uint64_t s0, s1, s2, s3, s4, k0, k1;
-    unsigned char pad = 0x01;
-    uint64_t computed_tag[2];
-    uint64_t expected_tag_val[2];
-    unsigned char diff = 0;
-    size_t i;
-
-    /* Finalize any remaining data */
-    ascon_aead128_update_internal(ctx, NULL, NULL, 0);
-    ctx->flags = 0;
-    ascon_aead128_update_internal(ctx, NULL, &pad, 1);
-
-    k0 = ctx->key[0];
-    k1 = ctx->key[1];
-    s0 = ctx->state[0];
-    s1 = ctx->state[1];
-    s2 = ctx->state[2];
-    s3 = ctx->state[3];
-    s4 = ctx->state[4];
-
-    /* Finalize and generate tag */
-    s2 ^= k0;
-    s3 ^= k1;
-    ASCONP12(s0, s1, s2, s3, s4);
-    s3 ^= k0;
-    s4 ^= k1;
-
-    /* Generate tag for comparison */
-    memcpy(computed_tag, &s3, 8);
-    memcpy(computed_tag + 1, &s4, 8);
-    
-    /* Validate expected tag length */
-    if (expected_tag_len != 16) {
-        *is_tag_valid = false;
-        OPENSSL_cleanse(computed_tag, sizeof(computed_tag));
-        OPENSSL_cleanse(expected_tag_val, sizeof(expected_tag_val));
-        OPENSSL_cleanse(&s0, sizeof(s0));
-        OPENSSL_cleanse(&s1, sizeof(s1));
-        OPENSSL_cleanse(&s2, sizeof(s2));
-        OPENSSL_cleanse(&s3, sizeof(s3));
-        OPENSSL_cleanse(&s4, sizeof(s4));
-        OPENSSL_cleanse(&k0, sizeof(k0));
-        OPENSSL_cleanse(&k1, sizeof(k1));
-        ascon_aead_cleanup(ctx);
-        return 0;
-    }
-
-    memcpy(expected_tag_val, expected_tag, 8);
-    memcpy(expected_tag_val + 1, expected_tag + 8, 8);
-
-    /* Constant-time tag comparison */
-    for (i = 0; i < 16; i++) {
-        diff |= ((unsigned char*)computed_tag)[i] ^ expected_tag[i];
-    }
-    *is_tag_valid = (diff == 0);
-
-    /* Secure cleanup of sensitive local data */
-    OPENSSL_cleanse(computed_tag, sizeof(computed_tag));
-    OPENSSL_cleanse(expected_tag_val, sizeof(expected_tag_val));
-    OPENSSL_cleanse(&s0, sizeof(s0));
-    OPENSSL_cleanse(&s1, sizeof(s1));
-    OPENSSL_cleanse(&s2, sizeof(s2));
-    OPENSSL_cleanse(&s3, sizeof(s3));
-    OPENSSL_cleanse(&s4, sizeof(s4));
-    OPENSSL_cleanse(&k0, sizeof(k0));
-    OPENSSL_cleanse(&k1, sizeof(k1));
-
-    /* Cleanup context structure */
-    ascon_aead_cleanup(ctx);
-
-    return 0;
-}
-
-/* Cleanup function */
-void
-ascon_aead_cleanup(ascon_aead_ctx_t* const ctx)
-{
-    if (ctx == NULL)
-        return;
-
-    OPENSSL_cleanse(ctx->state, sizeof(ctx->state));
-    OPENSSL_cleanse(ctx->key, sizeof(ctx->key));
+    /* precomputed state lifted from NIST SP 800-232 Sec. A.3 p39 */
+    ctx->state[0] = 0X9B1E5494E934D681ULL;
+    ctx->state[1] = 0X4BC3A01E333751D2ULL;
+    ctx->state[2] = 0XAE65396C6B34B81AULL;
+    ctx->state[3] = 0X3C7FD4A4D56A4DB3ULL;
+    ctx->state[4] = 0X1A5C464906C5976DULL;
     ctx->offset = 0;
-    ctx->flags = ASCONFLG_CLEANED;
 }
+
+void ascon_hash256_update(ascon_hash256_ctx* ctx, const unsigned char* m, size_t len)
+{
+    while (len--) {
+        if (ctx->offset >= 8) {
+            /* sponge: compression function */
+            ASCONP12(ctx->state[0], ctx->state[1], ctx->state[2], ctx->state[3], ctx->state[4]);
+            ctx->offset = 0;
+        }
+        /* sponge: absorb a message byte*/
+        ctx->state[0] ^= (uint64_t)(*m++) << 8 * ctx->offset++;
+    }
+}
+
+void ascon_hash256_final(ascon_hash256_ctx* ctx, unsigned char* digest)
+{
+    uint64_t s0, s1, s2, s3, s4;
+    unsigned char pad = 0x01;
+
+    /* message termination */
+    ascon_hash256_update(ctx, &pad, 1);
+
+    s0 = ctx->state[0];
+    s1 = ctx->state[1];
+    s2 = ctx->state[2];
+    s3 = ctx->state[3];
+    s4 = ctx->state[4];
+
+    /* sponge: squeeze out four words for the hash */
+    ASCONP12(s0, s1, s2, s3, s4);
+    PUTU64(digest, s0);
+    ASCONP12(s0, s1, s2, s3, s4);
+    PUTU64(digest + 8, s0);
+    ASCONP12(s0, s1, s2, s3, s4);
+    PUTU64(digest + 16, s0);
+    ASCONP12(s0, s1, s2, s3, s4);
+    PUTU64(digest + 24, s0);
+}
+
+#ifdef OPENSSL_BUILDING_OPENSSL
+/* Provider compatibility wrapper functions */
+void ossl_ascon_aead128_init(ascon_aead_ctx_t *ctx, const unsigned char *k, const unsigned char *n)
+{
+    ascon_aead128_init(ctx, k, n);
+}
+
+void ossl_ascon_aead128_assoc_data_update(ascon_aead_ctx_t *ctx, const unsigned char *in, size_t inl)
+{
+    ascon_aead128_aad_update(ctx, in, inl);
+}
+
+size_t ossl_ascon_aead128_encrypt_update(ascon_aead_ctx_t *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+    ascon_aead128_encrypt_update(ctx, out, in, inl);
+    return inl;
+}
+
+size_t ossl_ascon_aead128_decrypt_update(ascon_aead_ctx_t *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+    ascon_aead128_decrypt_update(ctx, out, in, inl);
+    return inl;
+}
+
+size_t ossl_ascon_aead128_encrypt_final(ascon_aead_ctx_t *ctx, unsigned char *out, unsigned char *tag, size_t tag_len)
+{
+    unsigned char computed_tag[16];
+    ascon_aead128_final(ctx, computed_tag);
+    if (tag != NULL && tag_len >= 16) {
+        memcpy(tag, computed_tag, 16);
+    }
+    if (out != NULL) {
+        /* No additional output for final */
+    }
+    return 0;
+}
+
+size_t ossl_ascon_aead128_decrypt_final(ascon_aead_ctx_t *ctx, unsigned char *out, bool *is_tag_valid, const unsigned char *tag, size_t tag_len)
+{
+    unsigned char computed_tag[16];
+    ascon_aead128_final(ctx, computed_tag);
+    if (is_tag_valid != NULL && tag != NULL && tag_len >= 16) {
+        *is_tag_valid = (memcmp(computed_tag, tag, 16) == 0);
+    } else if (is_tag_valid != NULL) {
+        *is_tag_valid = false;
+    }
+    if (out != NULL) {
+        /* No additional output for final */
+    }
+    return 0;
+}
+
+void ossl_ascon_aead_cleanup(ascon_aead_ctx_t *ctx)
+{
+    if (ctx != NULL) {
+        OPENSSL_cleanse(ctx, sizeof(ascon_aead_ctx_t));
+    }
+}
+#endif
