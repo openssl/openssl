@@ -234,9 +234,9 @@ OPENSSL_thread_stop() is the same as OPENSSL_thread_stop_ex() except that the
 default OSSL_LIB_CTX is always used.
 
 The B<OPENSSL_INIT_LOAD_CONFIG> flag will load a configuration file, as with
-L<CONF_modules_load_file(3)> with NULL filename and application name and the
-B<CONF_MFLAGS_IGNORE_MISSING_FILE>, B<CONF_MFLAGS_IGNORE_RETURN_CODES>  and
-B<CONF_MFLAGS_DEFAULT_SECTION> flags.
+L<CONF_modules_load_file(3)> with, by default, NULL filename and application
+name and the B<CONF_MFLAGS_IGNORE_MISSING_FILE>,
+B<CONF_MFLAGS_IGNORE_RETURN_CODES> and B<CONF_MFLAGS_DEFAULT_SECTION> flags.
 The filename, application name, and flags can be customized by providing a
 non-null B<OPENSSL_INIT_SETTINGS> object.
 The object can be allocated via B<OPENSSL_INIT_new()>.

@@ -162,11 +162,18 @@ I<FIPS module>, for example.
 
 The OpenSSL configuration looks up the value of B<openssl_conf>
 in the default section and takes that as the name of a section that specifies
-how to configure any modules in the library. It is not an error to leave
-any module in its default configuration. An application can specify a
-different name by calling CONF_modules_load_file(), for example, directly.
+how to configure any modules in the library.
+It is not an error to leave any module in its default configuration.
+An application can specify a name other than B<openssl_conf> by, for example,
+directly calling L<CONF_modules_load_file(3)>.
+The same can also be achieved by calling L<OPENSSL_INIT_set_config_appname(3)>
+to set a nondefault application name for use with L<OPENSSL_init_crypto(3)> or
+L<OPENSSL_init_ssl(3)>, sufficiently early in the main program, before implicit
+OpenSSL library initialisation has taken place as a side-effect of other
+OpenSSL function calls.
 
-OpenSSL also looks up the value of B<config_diagnostics>.
+OpenSSL also looks up the value of the default section's B<config_diagnostics>
+parameter.
 If this exists and has a nonzero numeric value, any error suppressing flags
 passed to CONF_modules_load() will be ignored.
 This is useful for diagnosing misconfigurations but its use in
@@ -587,6 +594,9 @@ L<ASN1_generate_nconf(3)>,
 L<EVP_set_default_properties(3)>,
 L<CONF_modules_load(3)>,
 L<CONF_modules_load_file(3)>,
+L<OPENSSL_INIT_set_config_appname(3)>,
+L<OPENSSL_init_crypto(3)>,
+L<OPENSSL_init_ssl(3)>,
 L<RAND_bytes(3)>,
 L<fips_config(5)>, and
 L<x509v3_config(5)>.
