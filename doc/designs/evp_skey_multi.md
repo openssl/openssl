@@ -30,14 +30,15 @@ EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
                               size_t keylen, const OSSL_PARAM params[]);
 ```
 
-The new function returns a pointer to a stack of EVP_SKEY objects. The order of
-objects in the stack is specific for a particular KDF and is documented. The
-amount of objects in stack can be different depending on purpose.
+The new function returns a pointer to a stack of EVP_SKEY objects or NULL on
+error. The order of objects in the stack is specific for a particular KDF and
+is documented. The number of objects in stack can be different depending on
+purpose.
 
 TLS mechanisms
 --------------
 
 In case of TLS protocol IVs should also be returned as EVP_SKEY objects for API
 clarity.  It means that we either need to extend EVP_CIPHER API to accept
-EVP_SKEY objects for IV or ensure that IV bytes are always exportable.
-
+EVP_SKEY objects for IV or providers should ensure that IV bytes are always
+exportable.
