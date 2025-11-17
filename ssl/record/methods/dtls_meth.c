@@ -662,13 +662,14 @@ again:
      */
     if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)
         && rl->version == DTLS1_3_VERSION
-        && rl->sn_enc_ctx != NULL
         && ((rl->packet_length < rechdrlen + DTLS13_CIPHERTEXT_MINSIZE)
-            || !dtls_crypt_sequence_number(rl->sn_enc_ctx,
-                recseqnum + recseqnumoffs,
-                recseqnumlen,
-                rl->packet + rechdrlen,
-                rl->sn_enc_offs))) {
+            || (rl->sn_enc_ctx == NULL && rl->mac_ctx == NULL)
+            || (rl->sn_enc_ctx != NULL
+                && !dtls_crypt_sequence_number(rl->sn_enc_ctx,
+                    recseqnum + recseqnumoffs,
+                    recseqnumlen,
+                    rl->packet + rechdrlen,
+                    rl->sn_enc_offs)))) {
         /* sequence number encryption failed dump record */
         rr->length = 0;
         rl->packet_length = 0;
