@@ -48,7 +48,6 @@ purpose.
 If the number of keys or number of IVs doesn't match the provider
 implementation, the function returns NULL.
 
-
 An alternative approach
 -----------------------
 
