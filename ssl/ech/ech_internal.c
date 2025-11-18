@@ -1674,7 +1674,7 @@ static int ech_decode_inner(SSL_CONNECTION *s, const unsigned char *ob,
     memset(outers, -1, sizeof(outers)); /* fill with known values for debug */
 # endif
 
-    /* 1. check for outers and make inital checks of those */
+    /* 1. check for outers and make initial checks of those */
     if (ech_find_outers(s, &ei, outers, &n_outers) != 1)
         goto err; /* SSLfatal called already */
 

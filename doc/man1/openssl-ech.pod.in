@@ -58,7 +58,7 @@ values with public keys from the inputs, and no private key(s).
 
 =item B<-text>
 
-Provide human-readable text ouput.
+Provide human-readable text output.
 
 =item B<-public_name> I<name>
 
