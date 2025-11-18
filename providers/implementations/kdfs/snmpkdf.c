@@ -160,9 +160,9 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (ctx == NULL || !snmp_set_ctx_params_decoder(params, &p))
         return 0;
 
-    if (p.propq != NULL)
-        propq = (const char *)(p.propq)->data;
     if (p.digest != NULL) {
+        if (p.propq != NULL)
+            propq = (const char *)(p.propq)->data;
         mdname = (const char *)(p.digest)->data;
         md = EVP_MD_fetch(provctx, mdname, propq);
         if (md == NULL)
