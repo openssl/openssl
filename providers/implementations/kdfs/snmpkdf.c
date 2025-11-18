@@ -45,6 +45,7 @@ static int SNMPKDF(const EVP_MD *evp_md,
                    unsigned char *key, size_t keylen);
 
 typedef struct {
+    /* Warning: Any changes to this structure may require you to update kdf_snmpkdf_dup */
     void *provctx;
     PROV_DIGEST digest;
     unsigned char *eid;
