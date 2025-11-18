@@ -462,7 +462,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     if (!(flags & CMS_NO_CONTENT_VERIFY)) {
         for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
-            if (CMS_SignerInfo_verify_content(si, cmsbio) <= 0) {
+            if (CMS_SignerInfo_verify_ex(si, cmsbio, tmpin) <= 0) {
                 ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_VERIFY_ERROR);
                 goto err;
             }
@@ -922,7 +922,7 @@ int CMS_final(CMS_ContentInfo *cms, BIO *data, BIO *dcont, unsigned int flags)
 
     (void)BIO_flush(cmsbio);
 
-    if (!CMS_dataFinal(cms, cmsbio)) {
+    if (!CMS_dataFinal_ex(cms, cmsbio, data)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_CMS_DATAFINAL_ERROR);
         goto err;
     }
@@ -950,7 +950,7 @@ int CMS_final_digest(CMS_ContentInfo *cms,
 
     (void)BIO_flush(cmsbio);
 
-    if (!ossl_cms_DataFinal(cms, cmsbio, md, mdlen)) {
+    if (!ossl_cms_DataFinal(cms, cmsbio, NULL, md, mdlen)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_CMS_DATAFINAL_ERROR);
         goto err;
     }

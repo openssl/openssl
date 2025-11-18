@@ -5943,3 +5943,10 @@ OPENSSL_posix_to_tm                     ?	4_0_0	EXIST::FUNCTION:
 OPENSSL_tm_to_posix                     ?	4_0_0	EXIST::FUNCTION:
 OPENSSL_timegm                          ?	4_0_0	EXIST::FUNCTION:
 OSSL_PARAM_clear_free                   ?	4_0_0	EXIST::FUNCTION:
+CMS_dataFinal_ex                        ?	4_0_0	EXIST::FUNCTION:CMS
+CMS_SignerInfo_verify_ex                ?	4_0_0	EXIST::FUNCTION:CMS
+EVP_SIGNATURE_has_message_update        ?	4_0_0	EXIST::FUNCTION:
+OSSL_DECODER_CTX_set_finalized          ?	4_0_0	EXIST::FUNCTION:
+OSSL_DECODER_CTX_get_finalized          ?	4_0_0	EXIST::FUNCTION:
+OSSL_ENCODER_CTX_set_finalized          ?	4_0_0	EXIST::FUNCTION:
+OSSL_ENCODER_CTX_get_finalized          ?	4_0_0	EXIST::FUNCTION:

@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-CMS_final, CMS_final_digest - finalise a CMS_ContentInfo structure
+CMS_final, CMS_final_digest, CMS_dataFinal, CMS_dataFinal_ex
+- finalise a CMS_ContentInfo structure
 
 =head1 SYNOPSIS
 
@@ -11,6 +12,8 @@ CMS_final, CMS_final_digest - finalise a CMS_ContentInfo structure
  int CMS_final(CMS_ContentInfo *cms, BIO *data, BIO *dcont, unsigned int flags);
  int CMS_final_digest(CMS_ContentInfo *cms, const unsigned char *md,
                       unsigned int mdlen, BIO *dcont, unsigned int flags);
+ int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio);
+ int CMS_dataFinal_ex(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data);
 
 =head1 DESCRIPTION
 
@@ -23,6 +26,17 @@ NULL.
 
 CMS_final_digest() finalises the structure B<cms> using a pre-computed digest,
 rather than computing the digest from the original data.
+
+CMS_dataFinal() finalises the structure B<cms> using the data provided by
+the B<cmsbio> BIO for hash-based signing schemes. This BIO can be set up using
+CMS_dataInit() and SMIME_ctrl_copy().
+
+CMS_dataFinal_ex() finalises the structure B<cms>. This function must
+be used if hash-less signing schemes, such as ML-DSA, SLH-DSA, or EdDSA, are
+used since they require access to the raw (non-hashed) data. The raw data must
+be provided by the B<data> BIO. Note that this BIO must support the seek()
+function so that its data stream can be read multiple times, once for each
+signature created by a hash-less signing scheme.
 
 =head1 NOTES
 
@@ -38,7 +52,8 @@ computation from the original message being trusted.
 
 =head1 RETURN VALUES
 
-CMS_final() and CMS_final_digest() return 1 for success or 0 for failure.
+CMS_final(), CMS_final_digest(), CMS_dataFinal(), and
+CMS_dataFinal_ex() return 1 for success or 0 for failure.
 
 =head1 SEE ALSO
 

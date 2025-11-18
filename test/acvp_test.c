@@ -1310,6 +1310,16 @@ static int rsa_keygen_test(int id)
     OSSL_PARAM *params = NULL;
     const struct rsa_keygen_st *tst = &rsa_keygen_data[id];
 
+    /*
+     * RSA key generation parameters "a" and "b" were added in OpenSSL 4.0,
+     * So skip the test if the FIPS provider is older.
+     */
+    if ((tst->a > 0 || tst->b > 0)
+            && fips_provider_version_lt(libctx, 4, 0, 0)) {
+        TEST_note("ACVP rsa_keygen_test %d test skipped", id);
+        return 1;
+    }
+
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
         || !TEST_ptr(xp1_bn = BN_bin2bn(tst->xp1, (int)tst->xp1_len, NULL))
         || !TEST_ptr(xp2_bn = BN_bin2bn(tst->xp2, (int)tst->xp2_len, NULL))

@@ -759,8 +759,19 @@ static long bio_zstd_ctrl(BIO *b, int cmd, long num, void *ptr)
     switch (cmd) {
 
     case BIO_CTRL_RESET:
+        /* reset decompressor */
+        ctx->decompress.inbuf.size = 0;
+        ctx->decompress.inbuf.pos = 0;
+        if (ctx->decompress.state != NULL)
+            ZSTD_initDStream(ctx->decompress.state);
+
+        /* reset compressor */
         ctx->compress.write_pos = 0;
-        ctx->compress.bufsize = 0;
+        ctx->compress.outbuf.pos = 0;
+        if (ctx->compress.state != NULL)
+            ZSTD_initCStream(ctx->compress.state, ZSTD_CLEVEL_DEFAULT);
+
+        /* keep existing bufsize, do not set it to 0 */
         ret = 1;
         break;
 

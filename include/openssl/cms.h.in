@@ -105,6 +105,7 @@ const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms);
 
 BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont);
 int CMS_dataFinal(CMS_ContentInfo *cms, BIO *bio);
+int CMS_dataFinal_ex(CMS_ContentInfo *cms, BIO *bio, BIO *data);
 
 ASN1_OCTET_STRING **CMS_get0_content(CMS_ContentInfo *cms);
 int CMS_is_detached(CMS_ContentInfo *cms);
@@ -301,6 +302,7 @@ ASN1_OCTET_STRING *CMS_SignerInfo_get0_signature(CMS_SignerInfo *si);
 int CMS_SignerInfo_sign(CMS_SignerInfo *si);
 int CMS_SignerInfo_verify(CMS_SignerInfo *si);
 int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain);
+int CMS_SignerInfo_verify_ex(CMS_SignerInfo *si, BIO *chain, BIO *data);
 BIO *CMS_SignedData_verify(CMS_SignedData *sd, BIO *detached_data,
                            STACK_OF(X509) *scerts, X509_STORE *store,
                            STACK_OF(X509) *extra, STACK_OF(X509_CRL) *crls,
