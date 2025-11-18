@@ -35,13 +35,13 @@
  * won't affect the outer CH size, due to padding, but might for some
  * larger extensions.
  *
- * Note there is a co-dependency with test/recipies/75-test_quicapi.t:
+ * Note there is a co-dependency with test/recipes/75-test_quicapi.t:
  * If you change an |ech_handling| value, that may well affect the order
  * of extensions in a ClientHello, which is reflected in the test data
- * in test/recipies/75-test_quicapi_data/\*.txt files. To fix, you need
+ * in test/recipes/75-test_quicapi_data/\*.txt files. To fix, you need
  * to look in test-runs/test_quicapi for the "new" files and then edit
  * (replacing actual octets with "?" in relevant places), and copy the
- * result back over to test/recipies/75-test_quicapi_data/. The reason
+ * result back over to test/recipes/75-test_quicapi_data/. The reason
  * this happens is the ECH COMPRESS'd extensions need to be contiguous
  * in the ClientHello, so changes to/from COMPRESS affect extension
  * order, in inner and outer CH. There doesn't seem to be an easy,
@@ -306,7 +306,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
          * If you want to demonstrate/exercise duplicate, then
          * this does that and has no effect on sizes, but it
          * will break the quicapi test (see above). Probably
-         * best done in local tests and not comitted to any
+         * best done in local tests and not committed to any
          * upstream.
          * OSSL_ECH_HANDLING_DUPLICATE,
          */

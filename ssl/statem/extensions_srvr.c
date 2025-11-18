@@ -2492,7 +2492,7 @@ int tls_parse_ctos_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
     /* yay - we're ok with this */
     OSSL_TRACE_BEGIN(TLS) {
-        BIO_printf(trc_out, "ECH seen in inner as exptected.\n");
+        BIO_printf(trc_out, "ECH seen in inner as expected.\n");
     } OSSL_TRACE_END(TLS);
     return 1;
 }

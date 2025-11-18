@@ -2594,7 +2594,7 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
             }
             return EXT_RETURN_SENT;
         }
-        /* if nobody set a type, use the defaulf */
+        /* if nobody set a type, use the default */
         if (s->ext.ech.attempted_type == OSSL_ECH_type_unknown)
             s->ext.ech.attempted_type = TLSEXT_TYPE_ech;
         if (ossl_ech_send_grease(s, pkt) != 1) {
@@ -2776,7 +2776,7 @@ int tls_parse_stoc_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                OSSL_ECH_SIGNAL_LEN);
         return 1;
     }
-    /* othewise we expect retry-configs */
+    /* otherwise we expect retry-configs */
     if (!PACKET_get_length_prefixed_2(pkt, &rcfgs_pkt)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         return 0;

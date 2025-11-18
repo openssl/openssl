@@ -1855,7 +1855,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         /* check the ECH accept signal */
         if (ossl_ech_calc_confirm(s, hrr, c_signal, shlen) != 1) {
             /* SSLfatal() already called */
-            OSSL_TRACE(TLS, "ECH calc confim failed\n");
+            OSSL_TRACE(TLS, "ECH calc confirm failed\n");
             goto err;
         }
         if (ossl_ech_find_confirm(s, hrr, s_signal) != 1
