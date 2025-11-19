@@ -2980,7 +2980,7 @@ __owur int srp_verify_server_param(SSL_CONNECTION *s);
 
 __owur int send_certificate_request(SSL_CONNECTION *s);
 
-OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, int chainidx);
+OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx);
 
 /* statem/extensions_cust.c */
 

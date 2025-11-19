@@ -772,7 +772,6 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
         *sk_resp = NULL;
     }
 
-    SSL_get0_chain_certs(s, &server_chain);
     ssl_ctx = SSL_get_SSL_CTX(s);
     SSL_CTX_get0_chain_certs(ssl_ctx, &server_chain);
     /*

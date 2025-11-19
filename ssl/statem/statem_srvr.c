@@ -17,6 +17,7 @@
 #include "internal/constant_time.h"
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/sizes.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
@@ -460,7 +461,7 @@ int send_certificate_request(SSL_CONNECTION *s)
  * chainidx.
  * If no OCSP response could be found NULL is returned.
  */
-OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, int chainidx)
+OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx)
 {
     OCSP_RESPONSE *resp = NULL;
 #ifndef OPENSSL_NO_OCSP
@@ -474,10 +475,11 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, int chainidx)
     OCSP_CERTID *cid = NULL;
     OCSP_CERTID *sr_cert_id = NULL;
     ASN1_OBJECT *cert_id_md_oid;
+    char cert_id_md_txt[OSSL_MAX_NAME_SIZE];
     EVP_MD *cert_id_md;
     ASN1_INTEGER *respSerial;
-    ASN1_OCTET_STRING *respIssuerNameHash;
-    ASN1_OCTET_STRING *certIssuerNameHash;
+    ASN1_OCTET_STRING *respIssuerNameHash = NULL;
+    ASN1_OCTET_STRING *certIssuerNameHash = NULL;
     const X509_NAME *certIssuerName;
     unsigned char md[EVP_MAX_MD_SIZE];
     const ASN1_INTEGER *certSerial;
@@ -530,11 +532,17 @@ OCSP_RESPONSE *get_ocsp_response(SSL_CONNECTION *s, int chainidx)
 
                 /* determine the md algorithm which was used to create cert id */
                 OCSP_id_get0_info(&respIssuerNameHash, &cert_id_md_oid, NULL, &respSerial, cid);
-                if (cert_id_md_oid != NULL)
-                    cert_id_md = EVP_MD_fetch(sctx->libctx,
-                                              OBJ_nid2sn(OBJ_obj2nid(cert_id_md_oid)), sctx->propq);
-                else
+                if (cert_id_md_oid != NULL) {
+                    OBJ_obj2txt(cert_id_md_txt, sizeof(cert_id_md_txt), cert_id_md_oid, 0);
+                    cert_id_md = EVP_MD_fetch(sctx->libctx, cert_id_md_txt, sctx->propq);
+                 } else
                     cert_id_md = EVP_MD_fetch(sctx->libctx, SN_sha1, sctx->propq);
+
+                if (cert_id_md == NULL) {
+                    OCSP_BASICRESP_free(bs);
+                    ERR_clear_last_mark();
+                    return NULL;
+                }
 
                 /* get serial number and issuer name hash of the certificate from the chain */
                 certSerial = X509_get0_serialNumber(x);
@@ -4493,7 +4501,7 @@ CON_FUNC_RETURN tls_construct_cert_status(SSL_CONNECTION *s, WPACKET *pkt)
 {
     OCSP_RESPONSE *resp;
 
-    resp = get_ocsp_response(s, 0);
+    resp = ossl_get_ocsp_response(s, 0);
 
     if (resp == NULL)
         return CON_FUNC_DONT_SEND;
