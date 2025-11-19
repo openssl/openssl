@@ -49,7 +49,7 @@ EVP_SKEY *EVP_KDF_CTX_get1_SKEY(EVP_KDF_CTX *ctx, const char *purpose);
 Provider API
 ------------
 
-We extend the EVP_KDF structure with the following callbacks:
+We extend the EVP_KDF structure with the following member functions:
 
 ```C
 OSSL_CORE_MAKE_FUNC(int, kdf_derive_multi, (void *kctx,
