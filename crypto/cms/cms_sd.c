@@ -373,7 +373,7 @@ static const char *cms_mdless_signing(EVP_PKEY *pkey)
 {
     unsigned int i;
 
-    for (i = 0; key2data[i].name; i++) {
+    for (i = 0; key2data[i].name != NULL; i++) {
         if (EVP_PKEY_is_a(pkey, key2data[i].name))
             return key2data[i].name;
     }
@@ -388,7 +388,7 @@ static const EVP_MD *ossl_cms_get_default_md(EVP_PKEY *pk, int *md_a_must)
 
     *md_a_must = 0;
 
-    for (i = 0; key2data[i].name; i++) {
+    for (i = 0; key2data[i].name != NULL; i++) {
         if (EVP_PKEY_is_a(pk, key2data[i].name)) {
             def_nid = key2data[i].md_nid;
             *md_a_must = key2data[i].md_a_must;
@@ -413,7 +413,7 @@ static const EVP_MD *ossl_cms_get_noattr_md(EVP_PKEY *pk, int *noattr_md_a_must)
 {
     unsigned int i;
 
-    for (i = 0; key2data[i].name; i++) {
+    for (i = 0; key2data[i].name != NULL; i++) {
         if (EVP_PKEY_is_a(pk, key2data[i].name)) {
             *noattr_md_a_must = key2data[i].noattr_md_a_must;
             return EVP_get_digestbynid(key2data[i].noattr_md_nid);
@@ -436,7 +436,7 @@ static int ossl_cms_adjust_md(EVP_PKEY *pk, const EVP_MD **md, unsigned int flag
         int noattr_md_a_must = 0;
 
         tmp_md = ossl_cms_get_noattr_md(pk, &noattr_md_a_must);
-        if (!tmp_md)
+        if (tmp_md == NULL)
             break; /* key type not listed - use the default */
 
         if (noattr_md_a_must)
@@ -473,10 +473,10 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
         return NULL;
     }
     sd = cms_signed_data_init(cms);
-    if (!sd)
+    if (sd == NULL)
         goto err;
     si = M_ASN1_new_of(CMS_SignerInfo);
-    if (!si) {
+    if (si == NULL) {
         ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
         goto err;
     }
@@ -585,7 +585,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             ESS_SIGNING_CERT_V2 *sc2 = NULL;
             int add_sc;
 
-            if (md == NULL || EVP_MD_is_a(md, SN_sha1)) {
+            if (EVP_MD_is_a(md, SN_sha1)) {
                 if ((sc = OSSL_ESS_signing_cert_new_init(signer,
                                                          NULL, 1)) == NULL)
                     goto err;
