@@ -35,7 +35,7 @@ int *EVP_KDF_derive_SKEYs(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
 ```
 
 This function doesn't return the opaque objects directly but stores all of them
-in the EVP_KDF_CTX object.
+in the provider context (`algctx`) of the EVP_KDF_CTX object.
 
 To access the individual values, we introduce the functions
 
