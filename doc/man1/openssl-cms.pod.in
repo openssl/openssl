@@ -448,7 +448,7 @@ with caution: see the notes section below.
 =item B<-md> I<digest>
 
 Digest algorithm to use when signing or resigning. If not present then the
-default digest algorithm for the signing key will be used (usually SHA1).
+default digest algorithm for the signing key will be used (usually SHA-256).
 
 =item B<-signer> I<file>
 
