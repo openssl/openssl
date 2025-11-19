@@ -4761,7 +4761,7 @@ static int early_data_skip_helper(int testdtls, int testtype, int cipher, int id
             if (testdtls) {
                 /*
                  * Injecting bad DTLS data, but since the sequence number needs
-                 * to be encrypted the SSL_Read below will result in a different
+                 * to be encrypted the SSL_read() below will result in a different
                  * error message. This is cause the packet gets dropped.
                  */
                 if (!TEST_true(BIO_write_ex(wbio, bad_early_data_dtls,
@@ -7065,7 +7065,7 @@ static int verify_stateless_cookie_callback(SSL *ssl, const unsigned char *cooki
 
 /*
  * DTLS does not need to be tested here. Since DTLS has a Sequence number
- * it cannot use SSL_Stateless. If you want to use stateless DTLS
+ * it cannot use SSL_stateless(). If you want to use stateless DTLS
  * use DTLSv1_listen instead. This test is already covered in
  * dtlsv1listentest.c
  */
