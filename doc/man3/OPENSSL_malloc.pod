@@ -139,7 +139,8 @@ OPENSSL_clear_realloc() and OPENSSL_clear_free() should be used
 when the buffer at B<addr> holds sensitive information.
 The old buffer is filled with zero's by calling OPENSSL_cleanse()
 before ultimately calling OPENSSL_free(). If the argument to OPENSSL_free() is
-NULL, nothing is done.
+NULL, nothing is done. These functions should be used preferentially
+to calling any other function to clear memory before freeing it. 
 
 OPENSSL_malloc_array(), OPENSSL_calloc(), OPENSSL_aligned_alloc_array(),
 OPENSSL_realloc_array(), and OPENSSL_clear_realloc_array() are variants
@@ -151,12 +152,17 @@ these functions return an error if multiplication of B<num> and B<size>
 leads to an integer overflow, thus preventing allocations of an incorrect size.
 
 OPENSSL_cleanse() fills B<ptr> of size B<len> with a string of 0's.
+OPENSSL_cleanse() is intended to clear memory in a way that will not
+be affected by compiler optimizations, The preferred paragidm for
+clearning memory before free'ing memory is OPENSSL_clear_free() or
+OPENSSL_clear_realloc(). For other uses involving sensitive data,
+OPENSSL_clense() should be used in preference to memset() or bzero();
 Use OPENSSL_cleanse() with care if the memory is a mapping of a file.
 If the storage controller uses write compression, then it's possible
-that sensitive tail bytes will survive zeroization because the block of
-zeros will be compressed. If the storage controller uses wear leveling,
-then the old sensitive data will not be overwritten; rather, a block of
-0's will be written at a new physical location.
+that sensitive tail bytes will survive zeroization because the block
+of zeros will be compressed. If the storage controller uses wear
+leveling, then the old sensitive data will not be overwritten; rather,
+a block of 0's will be written at a new physical location.
 
 OPENSSL_strdup(), OPENSSL_strndup() and OPENSSL_memdup() are like the
 equivalent C functions, except that memory is allocated by calling the
