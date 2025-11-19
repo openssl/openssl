@@ -369,7 +369,7 @@ longer allowed.
 
 =item B<-self_test_oninstall>
 
-The converse of B<-self_test_oninstall>.  The two fields related to the
+The converse of B<-self_test_onload>.  The two fields related to the
 "test status indicator" and "MAC status indicator" are written to the
 output configuration file.
 This field is not relevant for an OpenSSL FIPS 140-3 provider, since this is no
