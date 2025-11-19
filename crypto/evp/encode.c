@@ -164,7 +164,6 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
         memcpy(&(ctx->enc_data[ctx->num]), in, i);
         in += i;
         inl -= i;
-        /* ending newline is handled inside evp_encodeblock_int */
         int wrap_cnt = 0;
         j = evp_encodeblock_int(ctx, out, ctx->enc_data, ctx->length,
                                 &wrap_cnt);
