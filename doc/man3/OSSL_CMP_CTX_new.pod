@@ -287,19 +287,19 @@ is provided as the newPkey or client's pkey component of the CMP context.
 
 =item B<OSSL_CMP_OPT_DIGEST_ALGNID>
 
-The NID of the digest algorithm to be used in RFC 4210's MSG_SIG_ALG
+The NID of the digest algorithm to be used in RFC 9810's MSG_SIG_ALG
 for signature-based message protection and Proof-of-Possession (POPO).
 Default is SHA256.
 
 =item B<OSSL_CMP_OPT_OWF_ALGNID>
 The NID of the digest algorithm to be used as one-way function (OWF)
 for MAC-based message protection with password-based MAC (PBM).
-See RFC 4210 section 5.1.3.1 for details.
+See RFC 9810 section 5.1.3.1 for details.
 Default is SHA256.
 
 =item B<OSSL_CMP_OPT_MAC_ALGNID>
 The NID of the MAC algorithm to be used for message protection with PBM.
-Default is HMAC-SHA1 as per RFC 4210.
+Default is HMAC-SHA1, for backward compatibility with RFC 4210.
 
 =item B<OSSL_CMP_OPT_REVOCATION_REASON>
 
@@ -319,7 +319,7 @@ Do not confirm enrolled certificates, to cope with broken servers
 not supporting implicit confirmation correctly.
 B<WARNING:> This setting leads to unspecified behavior and it is meant
 exclusively to allow interoperability with server implementations violating
-RFC 4210.
+RFC 9810.
 
 =item B<OSSL_CMP_OPT_UNPROTECTED_SEND>
 
@@ -333,7 +333,7 @@ error messages as well as certificate responses (IP/CP/KUP) and
 revocation responses (RP) with rejection.
 B<WARNING:> This setting leads to unspecified behavior and it is meant
 exclusively to allow interoperability with server implementations violating
-RFC 4210.
+RFC 9810.
 
 =item B<OSSL_CMP_OPT_IGNORE_KEYUSAGE>
 
@@ -543,7 +543,7 @@ messages that have MAC-based protection (protectionAlg = C<MSG_MAC_ALG>).
 
 OSSL_CMP_CTX_set1_referenceValue() sets the given referenceValue I<ref> with
 length I<len> in the given I<ctx> or clears it if the I<ref> argument is NULL.
-According to RFC 4210 section 5.1.1, if no value for the sender field in
+According to RFC 9810 section 5.1.1, if no value for the sender field in
 CMP message headers can be determined (i.e., no CMP signer certificate
 and no subject DN is set via OSSL_CMP_CTX_set1_subjectName()
 then the sender field will contain the NULL-DN
@@ -756,7 +756,7 @@ the I<ctx>. This will be used to validate the recipNonce in incoming messages.
 
 =head1 NOTES
 
-CMP is defined in RFC 4210 (and CRMF in RFC 4211).
+CMP is defined in RFC 9810 (and CRMF in RFC 4211).
 
 =head1 RETURN VALUES
 

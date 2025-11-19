@@ -1143,7 +1143,7 @@ X509 *ossl_cmp_certresponse_get1_cert(const OSSL_CMP_CTX *ctx, const OSSL_CMP_CE
             crt = X509_dup(coec->value.certificate);
             break;
         case OSSL_CMP_CERTORENCCERT_ENCRYPTEDCERT:
-            /* cert encrypted for indirect PoP; RFC 4210, 5.2.8.2 */
+            /* cert encrypted for indirect PoP; RFC 9810, 5.2.8.3.2 */
             pkey = OSSL_CMP_CTX_get0_newPkey(ctx, 1);
             /* pkey is ctx->newPkey (if private, else NULL) or ctx->pkey */
             if (pkey == NULL) {

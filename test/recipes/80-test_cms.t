@@ -54,7 +54,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 33;
+plan tests => 34;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -1423,18 +1423,15 @@ subtest "encrypt to three recipients with RSA-OAEP, key only decrypt" => sub {
 };
 
 subtest "EdDSA tests for CMS" => sub {
-    plan tests => 6;
+    plan tests => 2;
 
     SKIP: {
-        skip "ECX (EdDSA) is not supported in this build", 6
+        skip "ECX (EdDSA) is not supported in this build", 2
             if disabled("ecx");
 
         my $crt1 = srctop_file("test", "certs", "root-ed25519.pem");
         my $key1 = srctop_file("test", "certs", "root-ed25519.privkey.pem");
         my $sig1 = "sig1.cms";
-        my $crt2 = srctop_file("test", "certs", "root-ed448-cert.pem");
-        my $key2 = srctop_file("test", "certs", "root-ed448-key.pem");
-        my $sig2 = "sig2.cms";
 
         ok(run(app(["openssl", "cms", @prov, "-sign", "-md", "sha512", "-in", $smcont,
                     "-signer", $crt1, "-inkey", $key1, "-out", $sig1])),
@@ -1443,6 +1440,24 @@ subtest "EdDSA tests for CMS" => sub {
         ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig1,
                     "-CAfile", $crt1, "-content", $smcont])),
            "accept CMS verify with Ed25519");
+    }
+};
+
+subtest "EdDSA -noattr tests for CMS" => sub {
+    plan tests => 4;
+
+    SKIP: {
+        skip "ECX (EdDSA) is not supported in this build", 4
+            if disabled("ecx");
+        skip "ECX (EdDSA) -noattr is not supported with old FIPS providers", 4
+            if $old_fips;
+
+        my $crt1 = srctop_file("test", "certs", "root-ed25519.pem");
+        my $key1 = srctop_file("test", "certs", "root-ed25519.privkey.pem");
+        my $sig1 = "sig1.cms";
+        my $crt2 = srctop_file("test", "certs", "root-ed448-cert.pem");
+        my $key2 = srctop_file("test", "certs", "root-ed448-key.pem");
+        my $sig2 = "sig2.cms";
 
         ok(run(app(["openssl", "cms", @prov, "-sign", "-in", $smcont,
                     "-outform", "DER", "-certfile", $smroot, "-noattr",

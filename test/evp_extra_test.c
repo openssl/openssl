@@ -6396,8 +6396,8 @@ static int aes_gcm_encrypt(const unsigned char *gcm_key, size_t gcm_key_s,
     int outlen, tmplen;
     unsigned char outbuf[1024];
     unsigned char outtag[16];
-    OSSL_PARAM params[2] = {
-        OSSL_PARAM_END, OSSL_PARAM_END
+    OSSL_PARAM params[4] = {
+        OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END
     };
 
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
@@ -6423,6 +6423,18 @@ static int aes_gcm_encrypt(const unsigned char *gcm_key, size_t gcm_key_s,
             || !TEST_mem_eq(outbuf, outlen, gcm_ct, gcm_ct_s)
             || !TEST_mem_eq(outtag, gcm_tag_s, gcm_tag, gcm_tag_s))
         goto err;
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV,
+                                                  NULL, 0);
+    params[1] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV,
+                                                  NULL, 0);
+    params[2] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+                                                  NULL, 0);
+    params[3] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+            || !TEST_size_t_eq(params[0].return_size, gcm_ivlen)
+            || !TEST_size_t_eq(params[1].return_size, gcm_ivlen)
+            || !TEST_size_t_eq(params[2].return_size, sizeof(outtag)))
 
     ret = 1;
 err:

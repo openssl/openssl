@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-cmp - Certificate Management Protocol (CMP, RFC 4210) application
+openssl-cmp - Certificate Management Protocol (CMP, RFCs 9810 and 9811) application
 
 =head1 SYNOPSIS
 
@@ -171,7 +171,8 @@ Certificate verification options, for both CMP and TLS:
 =head1 DESCRIPTION
 
 The B<cmp> command is a client implementation for the Certificate
-Management Protocol (CMP) as defined in RFC4210.
+Management Protocol (CMP) as defined in RFCs 9810 and
+its HTTP(S) transfer as defined in RFC 9811.
 It can be used to request certificates from a CA server,
 update their certificates,
 request certificates to be revoked, and perform other types of CMP requests.
@@ -439,7 +440,7 @@ Request implicit confirmation of newly enrolled certificates.
 Do not send certificate confirmation message for newly enrolled certificate
 without requesting implicit confirmation
 to cope with broken servers not supporting implicit confirmation correctly.
-B<WARNING:> This leads to behavior violating RFC 4210.
+B<WARNING:> This leads to behavior violating RFC 9810.
 
 =item B<-certout> I<filename>
 
@@ -697,7 +698,7 @@ This applies to the following message types and contents:
 
 B<WARNING:> This setting leads to unspecified behavior and it is meant
 exclusively to allow interoperability with server implementations violating
-RFC 4210, e.g.:
+RFC 9810, e.g.:
 
 =over 4
 
@@ -813,7 +814,7 @@ This takes precedence over the B<-cert> and B<-key> options.
 The secret is used for creating MAC-based protection of outgoing messages
 and for validating incoming messages that have MAC-based protection.
 The algorithm used by default is Password-Based Message Authentication Code (PBM)
-as defined in RFC 4210 section 5.1.3.1.
+as defined in RFC 9810 section 5.1.3.1.
 
 For more information about the format of I<arg> see
 L<openssl-passphrase-options(1)>.
@@ -837,7 +838,7 @@ this "protection certificate", also called "signer certificate",
 will be included first in the extraCerts field of outgoing messages
 and the signature is done with the corresponding key.
 In Initialization Request (IR) messages this can be used for authenticating
-using an external entity certificate as defined in appendix E.7 of RFC 4210.
+using an external entity certificate as defined in appendix D.7 of RFC 9810.
 
 For Key Update Request (KUR) messages this is also used as
 the certificate to be updated if the B<-oldcert> option is not given.
@@ -880,7 +881,7 @@ L<openssl-passphrase-options(1)>.
 
 =item B<-digest> I<name>
 
-Specifies name of supported digest to use in RFC 4210's MSG_SIG_ALG
+Specifies name of supported digest to use in RFC 9810's MSG_SIG_ALG
 and as the one-way function (OWF) in C<MSG_MAC_ALG>.
 If applicable, this is used for message protection and
 proof-of-possession (POPO) signatures.
@@ -893,7 +894,7 @@ Specifies the name of the MAC algorithm in C<MSG_MAC_ALG>.
 To get the names of supported MAC algorithms use C<openssl list -mac-algorithms>
 and possibly combine such a name with the name of a supported digest algorithm,
 e.g., hmacWithSHA256.
-Defaults to C<hmac-sha1> as per RFC 4210.
+Defaults to C<hmac-sha1>, for backward compatibility with RFC 4210.
 
 =item B<-extracerts> I<filenames>|I<uris>
 
@@ -1284,7 +1285,7 @@ Send response messages without CMP-level protection.
 
 In case of negative responses, server shall send unprotected error messages,
 certificate responses (IP/CP/KUP), and revocation responses (RP).
-WARNING: This setting leads to behavior violating RFC 4210.
+WARNING: This setting leads to behavior violating RFC 9810.
 
 =item B<-accept_unprotected>
 

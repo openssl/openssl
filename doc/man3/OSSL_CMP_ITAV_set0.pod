@@ -29,7 +29,7 @@ OSSL_CMP_ITAV_get0_certProfile
 
 =head1 DESCRIPTION
 
-ITAV is short for InfoTypeAndValue. This type is defined in RFC 4210
+ITAV is short for InfoTypeAndValue. This type is defined in RFC 9810
 section 5.3.19 and Appendix F. It is used at various places in CMP messages,
 e.g., in the generalInfo PKIHeader field, to hold a key-value pair.
 
@@ -61,7 +61,7 @@ It is an error if the infoType of I<itav> is not B<certProfile>.
 
 =head1 NOTES
 
-CMP is defined in RFC 4210 and RFC 9480 (and CRMF in RFC 4211).
+CMP is defined in RFC 9810.
 
 OIDs to use as types in B<OSSL_CMP_ITAV> can be found at
 L<https://datatracker.ietf.org/doc/html/rfc9480#section-4.2.2>.

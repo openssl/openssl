@@ -593,7 +593,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
         }
         if (verify_PBMAC(ctx, msg)) {
             /*
-             * RFC 4210, 5.3.2: 'Note that if the PKI Message Protection is
+             * RFC 9810, 5.3.2: 'Note that if the PKI message protection is
              * "shared secret information", then any certificate transported in
              * the caPubs field may be directly trusted as a root CA
              * certificate by the initiator.'
@@ -849,7 +849,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         return 0;
 
     /*
-     * RFC 4210 section 5.1.1 states: the recipNonce is copied from
+     * RFC 9810 section 5.1.1 states: the recipNonce is copied from
      * the senderNonce of the previous message in the transaction.
      * --> Store for setting in next message
      */
@@ -858,7 +858,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 
     if (ossl_cmp_hdr_get_protection_nid(hdr) == NID_id_PasswordBasedMAC) {
         /*
-         * RFC 4210, 5.3.2: 'Note that if the PKI Message Protection is
+         * RFC 9810, 5.3.2: 'Note that if the PKI message protection is
          * "shared secret information", then any certificate transported in
          * the caPubs field may be directly trusted as a root CA
          * certificate by the initiator.'
