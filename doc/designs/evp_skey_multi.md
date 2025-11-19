@@ -65,39 +65,3 @@ OSSL_CORE_MAKE_FUNC(int, kdf_get_skey,
 The API is designed from the perspective of being a transparent wrapper for
 PKCS#11 mechanisms for simultaneous key generation and avoid the extra calls to
 token API from the provider.
-
-An alternative approach
------------------------
-
-Proposed function
-
-```C
-STACK_OF(EVP_SKEY *) *EVP_KDF_derive_SKEYs(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
-                                           const char **key_types,
-                                           const size_t *keylengths, size_t keynum,
-                                           char **ivptrs,
-                                           const size_t *ivlengths, size_t ivnum,
-                                           const char *propquery, const OSSL_PARAM params[]);
-```
-
-is insipred by the existing one
-
-```C
-EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
-                              const char *key_type, const char *propquery,
-                              size_t keylen, const OSSL_PARAM params[]);
-```
-
-For keys we specify the list of algorithms for which the keys would be used,
-the lengths of the required keys, and the total amount of generated keys.
-
-For IVs we specify the pointers to the byte arrays to befreed after use, the
-expected lengths, and the amount of IVs to be derived.
-
-The new function returns a pointer to a stack of EVP_SKEY objects or NULL on
-error. The order of objects in the stack is specific for a particular KDF and
-is documented. The number of objects in stack can be different depending on
-purpose.
-
-If the number of keys or number of IVs doesn't match the provider
-implementation, the function returns NULL.
