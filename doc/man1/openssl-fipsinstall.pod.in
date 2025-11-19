@@ -204,7 +204,7 @@ This is the default.
 
 =item B<-self_test_oninstall>
 
-The converse of B<-self_test_oninstall>.  The two fields related to the
+The converse of B<-self_test_onload>.  The two fields related to the
 "test status indicator" and "MAC status indicator" are written to the
 output configuration file.
 
