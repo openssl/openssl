@@ -537,7 +537,6 @@ static int x963kdf_derive(void *vctx, unsigned char *key, size_t keylen,
 struct sskdf_all_set_ctx_params_st {
     OSSL_PARAM *secret;
     OSSL_PARAM *propq;
-    OSSL_PARAM *engine;
     OSSL_PARAM *digest;
     OSSL_PARAM *mac;
     OSSL_PARAM *salt;

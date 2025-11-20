@@ -19,7 +19,6 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 {- produce_param_decoder('cmac_import',
                          (['OSSL_PKEY_PARAM_PRIV_KEY',   'key',    'octet_string'],
                           ['OSSL_PKEY_PARAM_CIPHER',     'cipher', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
                           ['OSSL_PKEY_PARAM_PROPERTIES', 'propq',  'utf8_string'],
                          )); -}
 
@@ -30,7 +29,6 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 {- produce_param_decoder('cmac_get_params',
                          (['OSSL_PKEY_PARAM_PRIV_KEY', 'key',    'octet_string'],
                           ['OSSL_PKEY_PARAM_CIPHER',   'cipher', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_ENGINE',   'engine', 'utf8_string', 'hidden'],
                         )); -}
 
 {- produce_param_decoder('mac_set_params',
@@ -45,5 +43,4 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                          (['OSSL_PKEY_PARAM_PRIV_KEY',   'key',    'octet_string'],
                           ['OSSL_PKEY_PARAM_CIPHER',     'cipher', 'utf8_string'],
                           ['OSSL_PKEY_PARAM_PROPERTIES', 'propq',  'utf8_string'],
-                          ['OSSL_PKEY_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
                          )); -}

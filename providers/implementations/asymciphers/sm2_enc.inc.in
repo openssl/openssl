@@ -18,5 +18,4 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 {- produce_param_decoder('sm2_set_ctx_params',
                          (['OSSL_ASYM_CIPHER_PARAM_DIGEST',     'digest', 'utf8_string'],
                           ['OSSL_ASYM_CIPHER_PARAM_PROPERTIES', 'propq',  'utf8_string'],
-                          ['OSSL_ASYM_CIPHER_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
                          )); -}

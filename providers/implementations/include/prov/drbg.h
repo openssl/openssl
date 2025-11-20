@@ -242,7 +242,6 @@ int ossl_drbg_get_ctx_params_no_lock(PROV_DRBG *drbg,
 
 struct drbg_set_ctx_params_st {
     OSSL_PARAM *propq;
-    OSSL_PARAM *engine;
     OSSL_PARAM *cipher;     /* CTR DRBG */
     OSSL_PARAM *df;         /* CTR DRBG */
     OSSL_PARAM *digest;     /* HASH and HMAC DRBG */
