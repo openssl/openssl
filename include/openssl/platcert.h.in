@@ -119,8 +119,10 @@ typedef struct OSSL_HASHED_CERTIFICATE_IDENTIFIER_st {
 
 DECLARE_ASN1_FUNCTIONS(OSSL_HASHED_CERTIFICATE_IDENTIFIER)
 
-/* This has the same syntax as the CertificateIdentifier from the version 1
-specification of Platform Certificates, just different field names. */
+/*
+ * This has the same syntax as the CertificateIdentifier from the version 1
+ * specification of Platform Certificates, just different field names.
+ */
 typedef struct OSSL_PCV2_CERTIFICATE_IDENTIFIER_st {
     OSSL_HASHED_CERTIFICATE_IDENTIFIER *hashedCertIdentifier;
     OSSL_ISSUER_SERIAL *genericCertIdentifier;

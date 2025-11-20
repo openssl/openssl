@@ -19,7 +19,7 @@
 #include <crypto/platcert.h>
 #include <crypto/x509/x509_acert.h>
 
-#define ARRAY_LEN(x) (sizeof(x)/sizeof((x)[0]))
+#define ARRAY_LEN(x) (sizeof(x) / sizeof((x)[0]))
 
 ASN1_SEQUENCE(OSSL_URI_REFERENCE) = {
     ASN1_SIMPLE(OSSL_URI_REFERENCE, uniformResourceIdentifier, ASN1_IA5STRING),

@@ -116,6 +116,8 @@ static int print_pubkey(BIO *out, X509_PUBKEY *pubkey, int indent)
 
 #define TRY_PRINT_SEQ(local, type, name) TRY_PRINT_SEQ_FUNC(local, type, name, type##_print)
 
+#define PRINT_STR(s, out, indent) BIO_printf(out, "%*s%.*s", indent, "", s->length, s->data) >= 0
+
 int ossl_print_attribute_value(BIO *out,
     int obj_nid,
     const ASN1_TYPE *av,
@@ -194,19 +196,13 @@ int ossl_print_attribute_value(BIO *out,
     case V_ASN1_GENERALSTRING:
     case V_ASN1_GRAPHICSTRING:
     case V_ASN1_OBJECT_DESCRIPTOR:
-        return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.generalstring->length,
-                   av->value.generalstring->data)
-            >= 0;
+        return PRINT_STR(av->value.generalstring, out, indent);
 
         /* EXTERNAL would go here. */
         /* EMBEDDED PDV would go here. */
 
     case V_ASN1_UTF8STRING:
-        return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.utf8string->length,
-                   av->value.utf8string->data)
-            >= 0;
+        return PRINT_STR(av->value.utf8string, out, indent);
 
     case V_ASN1_REAL:
         return BIO_printf(out, "%*sREAL", indent, "") >= 4;
@@ -257,7 +253,7 @@ int ossl_print_attribute_value(BIO *out,
                 return 0;
             value = av->value.sequence->data;
             if ((ps = d2i_OSSL_TCG_PLATFORM_SPEC(NULL,
-                                                 (const unsigned char**)&value,
+                                                 (const unsigned char **)&value,
                                                  av->value.sequence->length)) == NULL) {
                 BIO_puts(out, "(COULD NOT DECODE TCG Platform Specification)\n");
                 return 0;
@@ -322,28 +318,13 @@ int ossl_print_attribute_value(BIO *out,
     case V_ASN1_UTCTIME:
     case V_ASN1_GENERALIZEDTIME:
     case V_ASN1_NUMERICSTRING:
-        return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.visiblestring->length,
-                   av->value.visiblestring->data)
-            >= 0;
-
+        return PRINT_STR(av->value.visiblestring, out, indent);
     case V_ASN1_PRINTABLESTRING:
-        return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.printablestring->length,
-                   av->value.printablestring->data)
-            >= 0;
-
+        return PRINT_STR(av->value.printablestring, out, indent);
     case V_ASN1_T61STRING:
-        return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.t61string->length,
-                   av->value.t61string->data)
-            >= 0;
-
+        return PRINT_STR(av->value.t61string, out, indent);
     case V_ASN1_IA5STRING:
-        return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.ia5string->length,
-                   av->value.ia5string->data)
-            >= 0;
+        return PRINT_STR(av->value.ia5string, out, indent);
 
     /* UniversalString would go here. */
     /* CHARACTER STRING would go here. */
