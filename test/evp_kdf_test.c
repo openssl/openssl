@@ -2199,9 +2199,7 @@ static int test_kdf_hmac_drbg_settables(void)
          * the digest is also set
          */
         if (OPENSSL_strcasecmp(settableparams[i].key,
-                               OSSL_KDF_PARAM_PROPERTIES) != 0
-                && OPENSSL_strcasecmp(settableparams[i].key,
-                               OSSL_ALG_PARAM_ENGINE) != 0) {
+                               OSSL_KDF_PARAM_PROPERTIES) != 0) {
             TEST_note("Testing set int into %s fails", settableparams[i].key);
             params[0] = OSSL_PARAM_construct_int(settableparams[i].key, &j);
             if (!TEST_int_le(EVP_KDF_CTX_set_params(kctx, params), 0))
