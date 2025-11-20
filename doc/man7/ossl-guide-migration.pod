@@ -12,10 +12,59 @@ See the individual manual pages for details.
 =head1 DESCRIPTION
 
 This guide details the changes required to migrate to new versions of OpenSSL.
-Currently this covers OpenSSL 3.0 & 3.1. For earlier versions refer to
-L<https://github.com/openssl/openssl/blob/master/CHANGES.md>.
+Currently this covers OpenSSL migration to OpenSSL 3.X and 4.0. For earlier
+versions refer to L<https://github.com/openssl/openssl/blob/master/CHANGES.md>.
 For an overview of some of the key concepts introduced in OpenSSL 3.0 see
 L<crypto(7)>.
+
+=head1 OPENSSL 4.0
+
+=head2 Main Changes from OpenSSL 3.6
+
+=head3 ENGINE functionality has been removed in 4.0
+
+ENGINE functionality, which was deprecated in 3.0, has been removed in 4.0, in
+favor of the provider interface for enabling extended functionality.  The
+impact of this removal is significant and may require updating of applications
+which make use of ENGINES.
+
+Notable impacts from this removal:
+
+=over 4
+
+=item ENGINES will no longer be loaded
+
+Previously built-in engines no longer exist, and dynamically loadable engines
+will no longer be recognized or loaded.  Users of any ENGINES must either use
+the built-in functionality for a given algorithm as provided by OpenSSL, or must
+convert their engine implementation to use the provider interface that was
+introduced in the 3.X release series. For information on how the provider
+interface works, and how to implement a provider, please see L<provider(7)>
+
+=item The ENGINE API will no longer be present
+
+The OpenSSL library contained an api to manipulate and manage engine instances,
+see L<ENGINE_add(3)> in OpenSSL documentation for the 3.X series.  This API has
+been removed, which may result in build breakage for applications that make use
+of it.  Applications which made use of this set of APIs must be updated to no
+longer make these calls.  Many of these calls are specific to engine
+implementations, and can largely be ignored, but some may be used from
+applications.
+
+=item Other APIs with an ENGINE parameter will continue to have that parameter present, but will be unused
+
+The OpenSSL library contains several apis which accept an B<ENGINE *>
+parameter.  For backwards compatibiilty, those apis will continue to have this
+parameter present, but it is vestigial, and will not be used internally by the
+implementation.  Callers of such apis should set the noted B<ENGINE *>
+parameter to NULL.
+
+=item ENGINE sections in the configuration file will be ignored
+
+If a user of OpenSSL makes use of a configuration file which contains an engine
+section to auto-load and setup engines, that section and its subordonates will now be ignored.
+
+=back
 
 =head1 OPENSSL 3.6
 
