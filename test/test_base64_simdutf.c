@@ -15,68 +15,7 @@
 #include "evp_local.h"
 
 #define MAX_INPUT_LEN 3000
-#define RED_TEXT(str) "\033[31m" str "\033[0m"
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
-#define ASSERT_EQUAL_INT(actual, expected)                                   \
-    do {                                                                     \
-        if ((actual) != (expected)) {                                        \
-            TEST_error(RED_TEXT("Assertion failed: %s != %s, got %d, "       \
-                                "expected %d"),                              \
-                       STR(actual), STR(expected),                           \
-                       (int)(actual), (int)(expected));                      \
-            return 0;                                                        \
-        }                                                                    \
-    } while (0)
-#define ASSERT_MEM_EQUAL(expected, actual, len)                                          \
-    do {                                                                                 \
-        const unsigned char *_exp = (const unsigned char *)(expected);                   \
-        const unsigned char *_act = (const unsigned char *)(actual);                     \
-        size_t _n = (size_t)(((len) < 0) ? 0 : (len));                                   \
-        size_t _i, _mismatch_index = (size_t)-1;                                         \
-                                                                                         \
-        if (memcmp(_exp, _act, _n) != 0) {                                               \
-            for (_i = 0; _i < _n; _i++) {                                                \
-                if (_exp[_i] != _act[_i]) {                                              \
-                    _mismatch_index = _i;                                                \
-                    break;                                                               \
-                }                                                                        \
-            }                                                                            \
-            printf("Memory mismatch detected:\n");                                       \
-            printf("Expected buffer:\n");                                                \
-            for (_i = 0; _i < _n; _i++) {                                                \
-                if (_i == _mismatch_index)                                               \
-                    printf("\033[31m%02x\033[0m ", (unsigned)_exp[_i]);                  \
-                else                                                                     \
-                    printf("%02x ", (unsigned)_exp[_i]);                                 \
-                if ((_i + 1) % 16 == 0)                                                  \
-                    printf("\n");                                                        \
-            }                                                                            \
-            if (_n % 16)                                                                 \
-                printf("\n");                                                            \
-                                                                                         \
-            printf("*************************************\n");                           \
-            printf("Actual buffer:\n");                                                  \
-            for (_i = 0; _i < _n; _i++) {                                                \
-                if (_i == _mismatch_index)                                               \
-                    printf("\033[31m%02x\033[0m ", (unsigned)_act[_i]);                  \
-                else                                                                     \
-                    printf("%02x ", (unsigned)_act[_i]);                                 \
-                if ((_i + 1) % 16 == 0)                                                  \
-                    printf("\n");                                                        \
-            }                                                                            \
-            if (_n % 16)                                                                 \
-                printf("\n");                                                            \
-                                                                                         \
-            if (_mismatch_index != (size_t)-1) {                                         \
-                printf("Mismatch at index %zu: got \033[31m%02x\033[0m, "                \
-                       "expected \033[31m%02x\033[0m\n",                                  \
-                       _mismatch_index, (unsigned)_act[_mismatch_index],                 \
-                       (unsigned)_exp[_mismatch_index]);                                  \
-            }                                                                            \
-            return 0; \
-        }                                                                                \
-    } while (0)
+
 static void fuzz_fill_encode_ctx(EVP_ENCODE_CTX *ctx, int max_fill)
 {
     static int seeded = 0;
@@ -287,9 +226,9 @@ static int test_encode_line_lengths_reinforced(void)
                         evp_encodeupdate_old(ctx_ref, out_ref, &outlen_ref,
                                              input, (int)inl);
 
-                    ASSERT_EQUAL_INT(ret_simd, ret_ref);
-                    ASSERT_MEM_EQUAL(out_ref, out_simd, outlen_ref);
-                    ASSERT_EQUAL_INT(outlen_simd, outlen_ref);
+                    TEST_int_eq(ret_simd, ret_ref);
+                    TEST_mem_eq(out_ref,outlen_ref, out_simd, outlen_simd);
+                    TEST_int_eq(outlen_simd, outlen_ref);
 
                     EVP_EncodeFinal(ctx_simd, out_simd + outlen_simd,
                                     &finlen_simd);
@@ -297,9 +236,10 @@ static int test_encode_line_lengths_reinforced(void)
                                         &finlen_ref);
 
                     int total_ref = outlen_ref + finlen_ref;
+                    int total_simd = outlen_simd + finlen_simd;
 
-                    ASSERT_EQUAL_INT(finlen_simd, finlen_ref);
-                    ASSERT_MEM_EQUAL(out_ref, out_simd, total_ref);
+                    TEST_int_eq(finlen_simd, finlen_ref);
+                    TEST_mem_eq(out_ref, total_ref, out_simd, total_simd);
                 }
 
                 EVP_ENCODE_CTX_free(ctx_simd);
