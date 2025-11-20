@@ -84,14 +84,13 @@ my %params = (
     'OSSL_OBJECT_PARAM_INPUT_TYPE' =>        "input-type", # UTF8_STRING
 
 # Algorithm parameters
-# If "engine",or "properties",are specified, they should always be paired
+# If "properties" is specified, they should always be paired
 # with the algorithm type.
 # Note these are common names that are shared by many types (such as kdf, mac,
 # and pkey) e.g: see MAC_PARAM_DIGEST below.
 
     'OSSL_ALG_PARAM_DIGEST' =>       "digest",       # utf8_string
     'OSSL_ALG_PARAM_CIPHER' =>       "cipher",       # utf8_string
-    'OSSL_ALG_PARAM_ENGINE' =>       "engine",       # utf8_string
     'OSSL_ALG_PARAM_MAC' =>          "mac",          # utf8_string
     'OSSL_ALG_PARAM_PROPERTIES' =>   "properties",   # utf8_string
     'OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR' => 'fips-indicator',   # int, -1, 0 or 1
@@ -185,7 +184,7 @@ my %params = (
     'OSSL_MAC_PARAM_C_ROUNDS' =>       "c-rounds",      # unsigned int
     'OSSL_MAC_PARAM_D_ROUNDS' =>       "d-rounds",      # unsigned int
 
-# If "engine",or "properties",are specified, they should always be paired
+# If "properties" is specified, they should always be paired
 # with "cipher",or "digest".
 
     'OSSL_MAC_PARAM_CIPHER' =>           '*OSSL_ALG_PARAM_CIPHER',        # utf8 string
@@ -295,7 +294,6 @@ my %params = (
     'OSSL_PKEY_PARAM_SECURITY_CATEGORY' =>   '*OSSL_ALG_PARAM_SECURITY_CATEGORY',
     'OSSL_PKEY_PARAM_DIGEST' =>              '*OSSL_ALG_PARAM_DIGEST',
     'OSSL_PKEY_PARAM_CIPHER' =>              '*OSSL_ALG_PARAM_CIPHER', # utf8 string
-    'OSSL_PKEY_PARAM_ENGINE' =>              '*OSSL_ALG_PARAM_ENGINE', # utf8 string
     'OSSL_PKEY_PARAM_PROPERTIES' =>          '*OSSL_ALG_PARAM_PROPERTIES',
     'OSSL_PKEY_PARAM_DEFAULT_DIGEST' =>      "default-digest",# utf8 string
     'OSSL_PKEY_PARAM_MANDATORY_DIGEST' =>    "mandatory-digest",# utf8 string
@@ -501,7 +499,6 @@ my %params = (
 # Asym cipher parameters
     'OSSL_ASYM_CIPHER_PARAM_DIGEST' =>                   '*OSSL_PKEY_PARAM_DIGEST',
     'OSSL_ASYM_CIPHER_PARAM_PROPERTIES' =>               '*OSSL_PKEY_PARAM_PROPERTIES',
-    'OSSL_ASYM_CIPHER_PARAM_ENGINE' =>                   '*OSSL_PKEY_PARAM_ENGINE',
     'OSSL_ASYM_CIPHER_PARAM_PAD_MODE' =>                 '*OSSL_PKEY_PARAM_PAD_MODE',
     'OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST' =>              '*OSSL_PKEY_PARAM_MGF1_DIGEST',
     'OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST_PROPS' =>        '*OSSL_PKEY_PARAM_MGF1_PROPERTIES',
