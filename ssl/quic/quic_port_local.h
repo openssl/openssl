@@ -115,7 +115,7 @@ struct quic_port_st {
     unsigned int                    bio_changed                     : 1;
 
     /* Are we using SSL_listen_ex to peeloff connections */
-    int                             using_peeloff;
+    int                             peeloff_mode;
 
     /* AES-256 GCM context for token encryption */
     EVP_CIPHER_CTX *token_ctx;
