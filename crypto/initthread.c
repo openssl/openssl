@@ -236,12 +236,27 @@ static void init_thread_destructor(void *hands)
     OPENSSL_free(hands);
 }
 
-int ossl_init_thread(void)
+static CRYPTO_ONCE ossl_init_thread_runonce = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_THREAD_ID recursion_guard = (CRYPTO_THREAD_ID)-1;
+
+DEFINE_RUN_ONCE_STATIC(ossl_init_thread_once)
 {
+    recursion_guard = CRYPTO_THREAD_get_current_id();
     if (!CRYPTO_THREAD_init_local(&destructor_key.value,
                                   init_thread_destructor))
         return 0;
 
+    recursion_guard = (CRYPTO_THREAD_ID)0;
+    return 1;
+}
+
+int ossl_init_thread(void)
+{
+    if (CRYPTO_THREAD_compare_id(recursion_guard,
+                                 CRYPTO_THREAD_get_current_id()))
+        return 1;
+    if (!RUN_ONCE(&ossl_init_thread_runonce, ossl_init_thread_once))
+        return 0;
     return 1;
 }
 
