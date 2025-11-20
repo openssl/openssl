@@ -4652,15 +4652,20 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
 
     qctx_lock_for_io(&lctx);
 
-    if (!ossl_quic_port_set_using_peeloff(lctx.ql->port, PEELOFF_LISTEN)) {
+    if (!ossl_quic_port_test_and_set_peeloff(lctx.ql->port, PEELOFF_LISTEN)) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
                                     "This listener is using SSL_accept_connection");
         ret = -1;
         goto out;
     }
-    
+
     new_ch = ossl_quic_port_pop_incoming(lctx.ql->port);
     if (new_ch != NULL) {
+        tls = ossl_ssl_connection_new_int(ossl_quic_port_get_channel_ctx(lctx.ql->port),
+                                          new_conn, TLS_method());
+        if (tls == NULL)
+            goto out;
+
         qc = cctx.qc;
         ql = lctx.ql;
         ossl_quic_channel_free(qc->ch);
@@ -4675,10 +4680,6 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
         qc->mutex = ql->mutex;
 #endif
         qc->ch = new_ch;
-        tls = ossl_ssl_connection_new_int(ossl_quic_port_get_channel_ctx(lctx.ql->port),
-                                          new_conn, TLS_method());
-        if (tls == NULL)
-            goto out;
         SSL_free(qc->tls);
         ossl_quic_channel_set0_tls(new_ch, tls);
         qc->tls = tls;
@@ -4734,11 +4735,10 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
     if (!ql_listen(ctx.ql))
         goto out;
 
-    if (!ossl_quic_port_set_using_peeloff(ctx.ql->port, PEELOFF_ACCEPT)) {
+    if (!ossl_quic_port_test_and_set_peeloff(ctx.ql->port, PEELOFF_ACCEPT)) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
                                     "This listener is using SSL_listen_ex");
         goto out;
-   
     }
 
     /* Wait for an incoming connection if needed. */

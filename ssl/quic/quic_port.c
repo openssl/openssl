@@ -536,11 +536,15 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
     if (tls != NULL) {
         ch->tls = tls;
     } else {
-        if (ossl_quic_port_set_using_peeloff(port, PEELOFF_ACCEPT)) {
+        if (ossl_quic_port_test_and_set_peeloff(port, PEELOFF_ACCEPT)) {
             /*
              * We're using the normal SSL_accept_connection_path
              */
             ch->tls = port_new_handshake_layer(port, ch);
+            if (ch->tls == NULL) {
+                ossl_quic_channel_free(ch);
+                return NULL;
+            }
         } else {
             /*
              * We're deferring user ssl creation until SSL_listen_ex is called
@@ -653,7 +657,7 @@ void ossl_quic_port_set_allow_incoming(QUIC_PORT *port, int allow_incoming)
     port->allow_incoming = allow_incoming;
 }
 
-int ossl_quic_port_set_using_peeloff(QUIC_PORT *port, int using_peeloff)
+int ossl_quic_port_test_and_set_peeloff(QUIC_PORT *port, int using_peeloff)
 {
 
     /*
@@ -668,9 +672,9 @@ int ossl_quic_port_set_using_peeloff(QUIC_PORT *port, int using_peeloff)
      * i.e. this is a trapdoor, once we set using_peeloff to LISTEN or ACCEPT
      * Then the only thing we can set that port too in the future is the same value.
      */
-    if (port->using_peeloff != using_peeloff && port->using_peeloff != PEELOFF_UNSET)
+    if (port->peeloff_mode != using_peeloff && port->peeloff_mode != PEELOFF_UNSET)
         return 0;
-    port->using_peeloff = using_peeloff;
+    port->peeloff_mode = using_peeloff;
     return 1;
 }
 

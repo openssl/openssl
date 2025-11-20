@@ -567,11 +567,13 @@ void ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl)
     ch->tls = ssl;
 #ifndef OPENSSL_NO_QLOG
     /*
-     * If we're using qlog, make sure the tls get further configured properly
+     * If we're using qlog, make sure the tls gets further configured properly
      */
     ch->use_qlog = 1;
-    if (ch->tls->ctx->qlog_title != NULL)
+    if (ch->tls->ctx->qlog_title != NULL) {
+        OPENSSL_free(ch->qlog_title);
         ch->qlog_title = OPENSSL_strdup(ch->tls->ctx->qlog_title);
+    }
 #endif
 
 }
