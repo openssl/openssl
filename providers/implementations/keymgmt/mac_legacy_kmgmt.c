@@ -7,9 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use some engine deprecated APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <string.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -18,9 +15,6 @@
 #include <openssl/evp.h>
 #include <openssl/proverr.h>
 #include <openssl/param_build.h>
-#ifndef FIPS_MODULE
-# include <openssl/engine.h>
-#endif
 #include "internal/param_build_set.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
