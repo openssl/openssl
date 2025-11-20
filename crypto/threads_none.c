@@ -10,6 +10,7 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include "internal/rcu.h"
+#include "crypto/cryptlib.h"
 #include "rcu_internal.h"
 
 #if !defined(OPENSSL_THREADS) || defined(CRYPTO_TDEBUG)
@@ -163,6 +164,11 @@ static struct thread_local_storage_entry thread_local_storage[OPENSSL_CRYPTO_THR
 int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))
 {
     int entry_idx = 0;
+
+#ifndef FIPS_MODULE
+    if (!ossl_init_thread())
+        return 0;
+#endif
 
     for (entry_idx = 0; entry_idx < OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX; entry_idx++) {
         if (!thread_local_storage[entry_idx].used)
