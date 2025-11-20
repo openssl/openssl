@@ -677,6 +677,12 @@ int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
 
 int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))
 {
+
+# ifndef FIPS_MODULE
+    if (!ossl_init_thread())
+        return 0;
+# endif
+
     if (pthread_key_create(key, cleanup) != 0)
         return 0;
 
