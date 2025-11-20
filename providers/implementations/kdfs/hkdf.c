@@ -264,7 +264,6 @@ static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen,
 struct hkdf_all_set_ctx_params_st {
     OSSL_PARAM *mode;
     OSSL_PARAM *propq;
-    OSSL_PARAM *engine;
     OSSL_PARAM *digest;
     OSSL_PARAM *key;
     OSSL_PARAM *salt;

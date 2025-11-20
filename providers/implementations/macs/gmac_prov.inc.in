@@ -17,7 +17,6 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 
 {- produce_param_decoder('gmac_set_ctx_params',
                          (['OSSL_MAC_PARAM_CIPHER',     'cipher', 'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
                           ['OSSL_MAC_PARAM_PROPERTIES', 'propq',  'utf8_string'],
                           ['OSSL_MAC_PARAM_KEY',        'key',    'octet_string'],
                           ['OSSL_MAC_PARAM_IV',         'iv',     'octet_string'],
