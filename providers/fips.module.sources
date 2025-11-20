@@ -543,8 +543,6 @@ include/openssl/ec.h
 include/openssl/ecerr.h
 include/openssl/encoder.h
 include/openssl/encodererr.h
-include/openssl/engine.h
-include/openssl/engineerr.h
 include/openssl/err.h.in
 include/openssl/evp.h
 include/openssl/evperr.h
