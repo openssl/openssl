@@ -39,6 +39,7 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
         "command not supported" },
     { ERR_PACK(ERR_LIB_EVP, 0, EVP_R_CONFLICTING_ALGORITHM_NAME),
         "conflicting algorithm name" },
+    { ERR_PACK(ERR_LIB_EVP, 0, EVP_R_CONTEXT_FINALIZED), "context finalized" },
     { ERR_PACK(ERR_LIB_EVP, 0, EVP_R_COPY_ERROR), "copy error" },
     { ERR_PACK(ERR_LIB_EVP, 0, EVP_R_CTRL_NOT_IMPLEMENTED),
         "ctrl not implemented" },

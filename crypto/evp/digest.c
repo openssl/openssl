@@ -494,6 +494,57 @@ int EVP_DigestSqueeze(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
     return ctx->digest->dsqueeze(ctx->algctx, md, &size, size);
 }
 
+int EVP_MD_CTX_serialize(EVP_MD_CTX *ctx, unsigned char *out, size_t *outlen)
+{
+    if (ctx->digest == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
+        return 0;
+    }
+
+    if (ctx->digest->prov == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+        return 0;
+    }
+
+    if (ctx->digest->serialize == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_METHOD_NOT_SUPPORTED);
+        return 0;
+    }
+
+    if (ossl_unlikely((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_CONTEXT_FINALIZED);
+        return 0;
+    }
+
+    return ctx->digest->serialize(ctx->algctx, out, outlen);
+}
+
+int EVP_MD_CTX_deserialize(EVP_MD_CTX *ctx, const unsigned char *in,
+    size_t inlen)
+{
+    if (ctx->digest == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
+        return 0;
+    }
+
+    if (ctx->digest->prov == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+        return 0;
+    }
+
+    if (ctx->digest->deserialize == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_METHOD_NOT_SUPPORTED);
+        return 0;
+    }
+
+    if (ossl_unlikely((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_CONTEXT_FINALIZED);
+        return 0;
+    }
+
+    return ctx->digest->deserialize(ctx->algctx, in, inlen);
+}
+
 EVP_MD_CTX *EVP_MD_CTX_dup(const EVP_MD_CTX *in)
 {
     EVP_MD_CTX *out = EVP_MD_CTX_new();
@@ -1034,6 +1085,14 @@ static void *evp_md_from_algorithm(int name_id,
         case OSSL_FUNC_DIGEST_COPYCTX:
             if (md->copyctx == NULL)
                 md->copyctx = OSSL_FUNC_digest_copyctx(fns);
+            break;
+        case OSSL_FUNC_DIGEST_SERIALIZE:
+            if (md->serialize == NULL)
+                md->serialize = OSSL_FUNC_digest_serialize(fns);
+            break;
+        case OSSL_FUNC_DIGEST_DESERIALIZE:
+            if (md->deserialize == NULL)
+                md->deserialize = OSSL_FUNC_digest_deserialize(fns);
             break;
         }
     }

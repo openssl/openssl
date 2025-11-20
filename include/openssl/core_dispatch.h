@@ -315,6 +315,8 @@ OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_alert,
 #define OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS 13
 #define OSSL_FUNC_DIGEST_SQUEEZE 14
 #define OSSL_FUNC_DIGEST_COPYCTX 15
+#define OSSL_FUNC_DIGEST_SERIALIZE 16
+#define OSSL_FUNC_DIGEST_DESERIALIZE 17
 
 OSSL_CORE_MAKE_FUNC(void *, digest_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, digest_init, (void *dctx, const OSSL_PARAM params[]))
@@ -345,6 +347,10 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, digest_settable_ctx_params,
     (void *dctx, void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, digest_gettable_ctx_params,
     (void *dctx, void *provctx))
+OSSL_CORE_MAKE_FUNC(int, digest_serialize,
+    (void *dctx, unsigned char *out, size_t *outl))
+OSSL_CORE_MAKE_FUNC(int, digest_deserialize,
+    (void *dctx, const unsigned char *in, size_t inl))
 
 /* Symmetric Ciphers */
 
