@@ -456,7 +456,7 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
     if (md_ctx == NULL)
         goto err;
 
-    if (EVP_DigestInit_ex(md_ctx, md, NULL /* engine */) <= 0)
+    if (EVP_DigestInit_ex(md_ctx, md, NULL) <= 0)
         goto err;
     if (is_sslv3) {
         /* We repurpose |hmac_pad| to contain the SSLv3 pad2 block. */

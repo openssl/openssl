@@ -18,7 +18,6 @@
 #include <ctype.h>
 #include <openssl/objects.h>
 #include <openssl/comp.h>
-#include <openssl/engine.h>
 #include <openssl/crypto.h>
 #include <openssl/conf.h>
 #include <openssl/trace.h>
@@ -125,11 +124,6 @@ static int ssl_cipher_info_find(const ssl_cipher_table *table,
 #define ssl_cipher_info_lookup(table, x) \
     ssl_cipher_info_find(table, OSSL_NELEM(table), x)
 
-/*
- * PKEY_TYPE for GOST89MAC is known in advance, but, because implementation
- * is engine-provided, we'll fill it only if corresponding EVP_PKEY_METHOD is
- * found
- */
 static const int default_mac_pkey_id[SSL_MD_NUM_IDX] = {
     /* MD5, SHA, GOST94, MAC89 */
     EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, NID_undef,
@@ -442,9 +436,8 @@ int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     } else {
         if (i == SSL_ENC_NULL_IDX) {
             /*
-             * We assume we don't care about this coming from an ENGINE so
-             * just do a normal EVP_CIPHER_fetch instead of
-             * ssl_evp_cipher_fetch()
+             * This does not need any special handling. Use EVP_CIPHER_fetch()
+             * directly.
              */
             *enc = EVP_CIPHER_fetch(ctx->libctx, "NULL", ctx->propq);
             if (*enc == NULL)
