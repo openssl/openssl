@@ -36,6 +36,15 @@ is a C<SET> or C<SEQUENCE> will be printed on multiple lines, for instance. Not
 all ASN.1 syntaxes are currently supported, and there is no guarantee for what
 printed values will look like in future versions.
 
+=head1 NOTES
+
+This function is capable of printing the attributes of a platform certificate
+as defined by the Trusted Computing Group
+(L<https://trustedcomputinggroup.org/>) in the specification titled
+I<TCG Platform Certificate Profile> (L<https://trustedcomputinggroup.org/resource/tcg-platform-certificate-profile/>).
+It is capable of printing the attributes defined in version 1 and the attributes
+and all traits defined in version 2.0.
+
 =head1 RETURN VALUES
 
 Returns 1 if it succeeds in printing, and 0 if it failed.
