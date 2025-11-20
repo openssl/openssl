@@ -700,6 +700,7 @@ EVP_R_CIPHER_NOT_GCM_MODE:184:cipher not gcm mode
 EVP_R_CIPHER_PARAMETER_ERROR:122:cipher parameter error
 EVP_R_COMMAND_NOT_SUPPORTED:147:command not supported
 EVP_R_CONFLICTING_ALGORITHM_NAME:201:conflicting algorithm name
+EVP_R_CONTEXT_FINALIZED:239:context finalized
 EVP_R_COPY_ERROR:173:copy error
 EVP_R_CTRL_NOT_IMPLEMENTED:132:ctrl not implemented
 EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED:133:ctrl operation not implemented
