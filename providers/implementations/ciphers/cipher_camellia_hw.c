@@ -17,6 +17,21 @@
 #include <openssl/proverr.h>
 #include "cipher_camellia.h"
 
+#ifdef CMLL_AES_CAPABLE
+void camellia_encrypt_armv8_wrapper(const unsigned char *in, unsigned char *out, 
+                                   const CAMELLIA_KEY *key) 
+{
+    /*Treating key memory block as an optimized SIMD context, not the standard key struct.*/
+    camellia_encrypt_1blk_armv8((struct camellia_simd_ctx *)key, out, in);
+}
+void camellia_decrypt_armv8_wrapper(const unsigned char *in, unsigned char *out, 
+                                   const CAMELLIA_KEY *key) 
+{
+    /*Treating key memory block as an optimized SIMD context, not the standard key struct.*/
+    camellia_decrypt_1blk_armv8((struct camellia_simd_ctx *)key, out, in);
+}
+#endif
+
 static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
                                       const unsigned char *key, size_t keylen)
 {
@@ -25,6 +40,16 @@ static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
     CAMELLIA_KEY *ks = &adat->ks.ks;
 
     dat->ks = ks;
+#ifdef CMLL_AES_CAPABLE
+    camellia_keysetup_neon((struct camellia_simd_ctx *)ks, key, keylen);
+    if (dat->enc || (mode != EVP_CIPH_ECB_MODE && mode != EVP_CIPH_CBC_MODE)) {
+        dat->block = (block128_f) camellia_encrypt_armv8_wrapper;
+        dat->stream.cbc = NULL; 
+    } else {
+        dat->block = (block128_f) camellia_decrypt_armv8_wrapper;
+        dat->stream.cbc = NULL; 
+    }
+#else
     ret = Camellia_set_key(key, (int)(keylen * 8), ks);
     if (ret < 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SETUP_FAILED);
@@ -39,6 +64,7 @@ static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
         dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
             (cbc128_f) Camellia_cbc_encrypt : NULL;
     }
+#endif
     return 1;
 }
 

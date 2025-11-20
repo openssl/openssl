@@ -5,6 +5,7 @@ IF[{- !$disabled{asm} -}]
   $CMLLASM_x86=cmll-x86.S
   $CMLLASM_x86_64=cmll-x86_64.s cmll_misc.c
   $CMLLASM_sparcv9=camellia.c cmll_misc.c cmll_cbc.c cmllt4-sparcv9.S
+  $CMLLASM_aarch64=cmll-armv8.s cmll_misc.c cmll_cbc.c camellia.c
 
   # Now that we have defined all the arch specific variables, use the
   # appropriate one
@@ -23,3 +24,5 @@ GENERATE[cmll-x86_64.s]=asm/cmll-x86_64.pl
 GENERATE[cmllt4-sparcv9.S]=asm/cmllt4-sparcv9.pl
 INCLUDE[cmllt4-sparcv9.o]=..
 DEPEND[cmllt4-sparcv9.S]=../perlasm/sparcv9_modes.pl
+GENERATE[cmll-armv8.s]=asm/cmll-armv8.pl
+INCLUDE[cmll-armv8.o]=..
