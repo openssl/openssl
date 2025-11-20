@@ -130,10 +130,6 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-    /*
-     * The cipher we actually ended up using in the EVP_CIPHER_CTX may be
-     * different to that in ciph if we have an ENGINE in use
-     */
     if (EVP_CIPHER_get0_provider(EVP_CIPHER_CTX_get0_cipher(ciph_ctx)) != NULL
             && !ossl_set_tls_provider_parameters(rl, ciph_ctx, ciph, md)) {
         /* ERR_raise already called */
