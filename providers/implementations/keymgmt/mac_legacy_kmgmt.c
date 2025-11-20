@@ -186,7 +186,6 @@ struct mac_common_params_st {
     OSSL_PARAM *key;
     OSSL_PARAM *cipher; /* CMAC */
     OSSL_PARAM *propq;
-    OSSL_PARAM *engine;
 };
 
 #define mac_import_st mac_common_params_st
