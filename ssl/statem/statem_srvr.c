@@ -535,8 +535,9 @@ OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx)
                 if (cert_id_md_oid != NULL) {
                     OBJ_obj2txt(cert_id_md_txt, sizeof(cert_id_md_txt), cert_id_md_oid, 0);
                     cert_id_md = EVP_MD_fetch(sctx->libctx, cert_id_md_txt, sctx->propq);
-                 } else
+                } else {
                     cert_id_md = EVP_MD_fetch(sctx->libctx, SN_sha1, sctx->propq);
+                }
 
                 if (cert_id_md == NULL) {
                     OCSP_BASICRESP_free(bs);

@@ -762,7 +762,6 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
                                         STACK_OF(OCSP_RESPONSE) **sk_resp)
 {
     X509 *ssl_cert = NULL;
-    SSL_CTX *ssl_ctx;
     int i, num = 0;
     STACK_OF(X509) *server_chain = NULL;
     OCSP_RESPONSE *resp = NULL;
@@ -772,8 +771,8 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
         *sk_resp = NULL;
     }
 
-    ssl_ctx = SSL_get_SSL_CTX(s);
-    SSL_CTX_get0_chain_certs(ssl_ctx, &server_chain);
+    SSL_get0_chain_certs(s, &server_chain);
+
     /*
      * TODO(DTLS-1.3): in future DTLS should also be considered
      */
