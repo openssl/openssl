@@ -267,7 +267,6 @@ static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen,
 struct hkdf_all_set_ctx_params_st {
     OSSL_PARAM *mode;
     OSSL_PARAM *propq;
-    OSSL_PARAM *engine;
     OSSL_PARAM *digest;
     OSSL_PARAM *key;
     OSSL_PARAM *salt;
@@ -357,7 +356,6 @@ static int hkdf_common_set_ctx_params
                          (['OSSL_KDF_PARAM_MODE',           'mode',   'utf8_string'],
                           ['OSSL_KDF_PARAM_MODE',           'mode',   'int'],
                           ['OSSL_KDF_PARAM_PROPERTIES',     'propq',  'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',         'engine', 'utf8_string', 'hidden'],
                           ['OSSL_KDF_PARAM_DIGEST',         'digest', 'utf8_string'],
                           ['OSSL_KDF_PARAM_KEY',            'key',    'octet_string'],
                           ['OSSL_KDF_PARAM_SALT',           'salt',   'octet_string'],
@@ -1010,7 +1008,6 @@ static int kdf_tls1_3_derive(void *vctx, unsigned char *key, size_t keylen,
                          (['OSSL_KDF_PARAM_MODE',              'mode',   'utf8_string'],
                           ['OSSL_KDF_PARAM_MODE',              'mode',   'int'],
                           ['OSSL_KDF_PARAM_PROPERTIES',        'propq',  'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',            'engine', 'utf8_string', 'hidden'],
                           ['OSSL_KDF_PARAM_DIGEST',            'digest', 'utf8_string'],
                           ['OSSL_KDF_PARAM_KEY',               'key',    'octet_string'],
                           ['OSSL_KDF_PARAM_SALT',              'salt',   'octet_string'],

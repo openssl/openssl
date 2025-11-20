@@ -189,7 +189,6 @@ struct mac_common_params_st {
     OSSL_PARAM *key;
     OSSL_PARAM *cipher; /* CMAC */
     OSSL_PARAM *propq;
-    OSSL_PARAM *engine;
 };
 
 static int mac_key_fromdata(MAC_KEY *key, const struct mac_common_params_st *p)
@@ -265,7 +264,6 @@ static const OSSL_PARAM *mac_imexport_types(int selection)
 {- produce_param_decoder('cmac_import',
                          (['OSSL_PKEY_PARAM_PRIV_KEY',   'key',    'octet_string'],
                           ['OSSL_PKEY_PARAM_CIPHER',     'cipher', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
                           ['OSSL_PKEY_PARAM_PROPERTIES', 'propq',  'utf8_string'],
                          )); -}
 
@@ -372,7 +370,6 @@ static const OSSL_PARAM *mac_gettable_params(void *provctx)
 {- produce_param_decoder('cmac_get_params',
                          (['OSSL_PKEY_PARAM_PRIV_KEY', 'key',    'octet_string'],
                           ['OSSL_PKEY_PARAM_CIPHER',   'cipher', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_ENGINE',   'engine', 'utf8_string', 'hidden'],
                         )); -}
 
 static int cmac_get_params(void *keydata, OSSL_PARAM params[])
@@ -497,7 +494,6 @@ static int mac_gen_set_params(void *genctx, const OSSL_PARAM params[])
                          (['OSSL_PKEY_PARAM_PRIV_KEY',   'key',    'octet_string'],
                           ['OSSL_PKEY_PARAM_CIPHER',     'cipher', 'utf8_string'],
                           ['OSSL_PKEY_PARAM_PROPERTIES', 'propq',  'utf8_string'],
-                          ['OSSL_PKEY_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
                          )); -}
 
 static int cmac_gen_set_params(void *genctx, const OSSL_PARAM params[])

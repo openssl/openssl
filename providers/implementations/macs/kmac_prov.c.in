@@ -194,7 +194,6 @@ static struct kmac_data_st *kmac_new(void *provctx)
 {- produce_param_decoder('kmac_new',
                          (['OSSL_MAC_PARAM_DIGEST',     'digest', 'utf8_string'],
                           ['OSSL_MAC_PARAM_PROPERTIES', 'propq',  'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
                          )); -}
 
 static void *kmac_fetch_new(void *provctx, const OSSL_PARAM *params)

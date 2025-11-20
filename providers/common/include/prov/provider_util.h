@@ -99,7 +99,7 @@ int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
  * Load an EVP_MAC_CTX* from the specified parameters with the specified
  * library context.
  * The params "mac" and "properties" are used to determine the implementation
- * used, and the parameters "digest", "cipher", "engine" and "properties" are
+ * used, and the parameters "digest", "cipher", and "properties" are
  * passed to the MAC via the created MAC context if they are given.
  * If there is already a created MAC context, it will be replaced if the "mac"
  * parameter is found, otherwise it will simply be used as is, and passed the

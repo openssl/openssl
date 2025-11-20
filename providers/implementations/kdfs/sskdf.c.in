@@ -540,7 +540,6 @@ static int x963kdf_derive(void *vctx, unsigned char *key, size_t keylen,
 struct sskdf_all_set_ctx_params_st {
     OSSL_PARAM *secret;
     OSSL_PARAM *propq;
-    OSSL_PARAM *engine;
     OSSL_PARAM *digest;
     OSSL_PARAM *mac;
     OSSL_PARAM *salt;
@@ -614,7 +613,6 @@ static int sskdf_common_set_ctx_params
                           ['OSSL_KDF_PARAM_KEY',            'secret', 'octet_string'],
                           ['OSSL_KDF_PARAM_INFO',           'info',   'octet_string', SSKDF_MAX_INFOS],
                           ['OSSL_KDF_PARAM_PROPERTIES',     'propq',  'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',         'engine', 'utf8_string', 'hidden'],
                           ['OSSL_KDF_PARAM_DIGEST',         'digest', 'utf8_string'],
                           ['OSSL_KDF_PARAM_MAC',            'mac',    'utf8_string'],
                           ['OSSL_KDF_PARAM_SALT',           'salt',   'octet_string'],
@@ -688,7 +686,6 @@ static const OSSL_PARAM *sskdf_common_gettable_ctx_params
                           ['OSSL_KDF_PARAM_KEY',               'secret', 'octet_string'],
                           ['OSSL_KDF_PARAM_INFO',              'info',   'octet_string', SSKDF_MAX_INFOS],
                           ['OSSL_KDF_PARAM_PROPERTIES',        'propq',  'utf8_string'],
-                          ['OSSL_ALG_PARAM_ENGINE',            'engine', 'utf8_string', 'hidden'],
                           ['OSSL_KDF_PARAM_DIGEST',            'digest', 'utf8_string'],
                           ['OSSL_KDF_PARAM_MAC',               'mac',    'utf8_string'],
                           ['OSSL_KDF_PARAM_SALT',              'salt',   'octet_string'],
