@@ -512,10 +512,6 @@ int bn_mul_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 #if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
     int i;
 #endif
-#ifdef BN_RECURSION
-    BIGNUM *t = NULL;
-    int j = 0, k;
-#endif
 
     bn_check_top(a);
     bn_check_top(b);
@@ -547,7 +543,7 @@ int bn_mul_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
             if (bn_wexpand(rr, 8) == NULL)
                 goto err;
             rr->flags |= BN_FLG_FIXED_TOP;
-            rr->top = 8;
+            bn_set_top(rr, 8);
             bn_mul_comba4(rr->d, a->d, b->d);
             goto end;
         }
@@ -556,7 +552,7 @@ int bn_mul_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
             if (bn_wexpand(rr, 16) == NULL)
                 goto err;
             rr->flags |= BN_FLG_FIXED_TOP;
-            rr->top = 16;
+            bn_set_top(rr, 16);
             bn_mul_comba8(rr->d, a->d, b->d);
             goto end;
         }
@@ -565,6 +561,9 @@ int bn_mul_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 #ifdef BN_RECURSION
     if ((al >= BN_MULL_SIZE_NORMAL) && (bl >= BN_MULL_SIZE_NORMAL)) {
         if (i >= -1 && i <= 1) {
+            BIGNUM *t = NULL;
+            int j = 0, k;
+
             /*
              * Find out the power of two lower or equal to the longest of the
              * two numbers
@@ -588,19 +587,18 @@ int bn_mul_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
                 t->flags |= BN_FLG_FIXED_TOP;
                 if (bn_wexpand(rr, k * 4) == NULL)
                     goto err;
-                rr->top = k * 4;
+                bn_set_top(rr, k * 4);
                 rr->flags |= BN_FLG_FIXED_TOP;
                 bn_mul_part_recursive(rr->d, a->d, b->d,
                                       j, al - j, bl - j, t->d);
             } else {            /* al <= j || bl <= j */
-
                 if (bn_wexpand(t, k * 2) == NULL)
                     goto err;
                 t->top = k * 2;
                 t->flags |= BN_FLG_FIXED_TOP;
                 if (bn_wexpand(rr, k * 2) == NULL)
                     goto err;
-                rr->top = k * 2;
+                bn_set_top(rr, k * 2);
                 rr->flags |= BN_FLG_FIXED_TOP;
                 bn_mul_recursive(rr->d, a->d, b->d, j, al - j, bl - j, t->d);
             }
