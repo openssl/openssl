@@ -235,8 +235,22 @@ sub get_messages
                 if (length($payload) + $record->decrypt_len >= $messlen) {
                     #We can complete the message with this record
                     $recoffset = $messlen - length($payload);
-                    $payload .= substr($record->decrypt_data, 0, $recoffset);
-                    push @message_frag_lens, $recoffset;
+
+                    if ($isdtls) {
+                        # For fragmented messages to be parsed correctly we need to
+                        # skip the handshake header
+                        $payload .= substr($record->decrypt_data, DTLS_MESSAGE_HEADER_LENGTH, $recoffset);
+                        push @message_frag_lens, $recoffset;
+
+                        # We skipped the handshake header above and we need to
+                        # update recoffset accordingly
+                        $recoffset += DTLS_MESSAGE_HEADER_LENGTH;
+                    } else {
+                        $payload .= substr($record->decrypt_data, 0, $recoffset);
+                        push @message_frag_lens, $recoffset;
+                    }
+
+
                     $message = create_message($server, $mt,
                         $messseq, $messfraglen, $messfragoffs,
                         $payload, $startoffset, $isdtls);

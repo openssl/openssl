@@ -4090,7 +4090,7 @@ CON_FUNC_RETURN tls_construct_client_compressed_certificate(SSL_CONNECTION *sc,
         && (sc->early_data_state != SSL_EARLY_DATA_NONE
             || (sc->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
         && (!ssl->method->ssl3_enc->change_cipher_state(sc,
-            SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {
+            SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE | SSL3_CC_COMP_CERT))) {
         /*
          * This is a fatal error, which leaves sc->enc_write_ctx in an
          * inconsistent state and thus ssl3_send_alert may crash.
