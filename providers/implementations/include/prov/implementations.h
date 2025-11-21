@@ -290,6 +290,7 @@ extern const OSSL_DISPATCH ossl_kdf_hkdf_sha256_functions[];
 extern const OSSL_DISPATCH ossl_kdf_hkdf_sha384_functions[];
 extern const OSSL_DISPATCH ossl_kdf_hkdf_sha512_functions[];
 extern const OSSL_DISPATCH ossl_kdf_tls1_3_kdf_functions[];
+extern const OSSL_DISPATCH ossl_kdf_snmpkdf_functions[];
 extern const OSSL_DISPATCH ossl_kdf_sshkdf_functions[];
 extern const OSSL_DISPATCH ossl_kdf_sskdf_functions[];
 extern const OSSL_DISPATCH ossl_kdf_x963_kdf_functions[];

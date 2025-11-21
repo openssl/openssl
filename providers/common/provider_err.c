@@ -142,6 +142,7 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_CONFIG_DATA),
         "missing config data" },
     { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_CONSTANT), "missing constant" },
+    { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_EID), "missing eid" },
     { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_KEY), "missing key" },
     { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_MAC), "missing mac" },
     { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_MESSAGE_DIGEST),
