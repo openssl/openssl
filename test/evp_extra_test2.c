@@ -1407,6 +1407,7 @@ static int test_evp_md_ctx_serialize(int tstid)
     EVP_MD *md = NULL;
     unsigned char *buf = NULL;
     size_t buflen;
+    size_t tmplen;
     unsigned char d1[EVP_MAX_MD_SIZE], d2[EVP_MAX_MD_SIZE];
     unsigned int d1_len, d2_len;
     int ret = 0;
@@ -1459,6 +1460,12 @@ static int test_evp_md_ctx_serialize(int tstid)
         goto end;
 
     if (!TEST_mem_eq(d1, d1_len, d2, d2_len))
+        goto end;
+
+    /* check that serialization fials on finalized contexts */
+    if (!TEST_false(EVP_MD_CTX_serialize(mdctx1, NULL, &tmplen)))
+        goto end;
+    if (!TEST_false(EVP_MD_CTX_deserialize(mdctx1, buf, buflen)))
         goto end;
 
     ret = 1;
