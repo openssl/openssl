@@ -119,55 +119,6 @@ option.
 With this option the library with automatically initialise the libcrypto async
 sub-library (see L<ASYNC_start_job(3)>). This is a default option.
 
-=item OPENSSL_INIT_ENGINE_RDRAND
-
-With this option the library will automatically load and initialise the
-RDRAND engine (if available). This not a default option and is deprecated
-in OpenSSL 3.0.
-
-=item OPENSSL_INIT_ENGINE_DYNAMIC
-
-With this option the library will automatically load and initialise the
-dynamic engine. This not a default option and is deprecated
-in OpenSSL 3.0.
-
-=item OPENSSL_INIT_ENGINE_OPENSSL
-
-With this option the library will automatically load and initialise the
-openssl engine. This not a default option and is deprecated
-in OpenSSL 3.0.
-
-=item OPENSSL_INIT_ENGINE_CRYPTODEV
-
-With this option the library will automatically load and initialise the
-cryptodev engine (if available). This not a default option and is deprecated
-in OpenSSL 3.0.
-
-=item OPENSSL_INIT_ENGINE_CAPI
-
-With this option the library will automatically load and initialise the
-CAPI engine (if available). This not a default option and is deprecated
-in OpenSSL 3.0.
-
-=item OPENSSL_INIT_ENGINE_PADLOCK
-
-With this option the library will automatically load and initialise the
-padlock engine (if available). This not a default option and is deprecated
-in OpenSSL 3.0.
-
-=item OPENSSL_INIT_ENGINE_AFALG
-
-With this option the library will automatically load and initialise the
-AFALG engine. This not a default option and is deprecated
-in OpenSSL 3.0.
-
-=item OPENSSL_INIT_ENGINE_ALL_BUILTIN
-
-With this option the library will automatically load and initialise all the
-built in engines listed above with the exception of the openssl and afalg
-engines. This not a default option and is deprecated
-in OpenSSL 3.0.
-
 =item OPENSSL_INIT_ATFORK
 
 With this option the library will register its fork handlers.

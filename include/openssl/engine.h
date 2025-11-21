@@ -417,22 +417,15 @@ ENGINE_FUNC(ENGINE *, ENGINE_by_id, (const char *id), (id), NULL)
 #  endif
 
 #  ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#   define ENGINE_load_openssl() \
-        OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_OPENSSL, NULL)
-#   define ENGINE_load_dynamic() \
-        OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_DYNAMIC, NULL)
+ENGINE_FUNC_NOARGS(int, ENGINE_load_openssl, 0)
+ENGINE_FUNC_NOARGS(int, ENGINE_load_dynamic, 0)
+ENGINE_FUNC_NOARGS(int, ENGINE_load_cryptodev, 0)
+ENGINE_FUNC_NOARGS(int, ENGINE_load_rdrand, 0)
 #   ifndef OPENSSL_NO_STATIC_ENGINE
-#    define ENGINE_load_padlock() \
-        OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_PADLOCK, NULL)
-#    define ENGINE_load_capi() \
-        OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_CAPI, NULL)
-#    define ENGINE_load_afalg() \
-        OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_AFALG, NULL)
+ENGINE_FUNC_NOARGS(int, ENGINE_load_padlock, 0)
+ENGINE_FUNC_NOARGS(int, ENGINE_load_capi, 0)
+ENGINE_FUNC_NOARGS(int, ENGINE_load_afalg, 0)
 #   endif
-#   define ENGINE_load_cryptodev() \
-        OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_CRYPTODEV, NULL)
-#   define ENGINE_load_rdrand() \
-        OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_RDRAND, NULL)
 #  endif
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 /* OSSL_DEPRECATEDIN_3_0 void ENGINE_load_builtin_engines(void); */
