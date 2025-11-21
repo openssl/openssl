@@ -31,8 +31,8 @@ static int ssl3_generate_key_block(SSL_CONNECTION *s, unsigned char *km, int num
     c = os_toascii[c];          /* 'A' in ASCII */
 #endif
     k = 0;
-    md5 = ssl_evp_md_fetch(sctx->libctx, NID_md5, sctx->propq);
-    sha1 = ssl_evp_md_fetch(sctx->libctx, NID_sha1, sctx->propq);
+    md5 = EVP_MD_fetch(sctx->libctx, "MD5", sctx->propq);
+    sha1 = EVP_MD_fetch(sctx->libctx, "SHA1", sctx->propq);
     m5 = EVP_MD_CTX_new();
     s1 = EVP_MD_CTX_new();
     if (md5 == NULL || sha1 == NULL || m5 == NULL || s1 == NULL) {
