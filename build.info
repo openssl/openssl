@@ -67,6 +67,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/kdfs/pkcs12kdf.inc \
          providers/implementations/kdfs/pvkkdf.inc \
          providers/implementations/kdfs/scrypt.inc \
+         providers/implementations/kdfs/snmpkdf.inc \
          providers/implementations/kdfs/sshkdf.inc \
          providers/implementations/kdfs/sskdf.inc \
          providers/implementations/kdfs/tls1_prf.inc \
@@ -184,6 +185,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/kdfs/pkcs12kdf.inc \
        providers/implementations/kdfs/pvkkdf.inc \
        providers/implementations/kdfs/scrypt.inc \
+       providers/implementations/kdfs/snmpkdf.inc \
        providers/implementations/kdfs/sshkdf.inc \
        providers/implementations/kdfs/sskdf.inc \
        providers/implementations/kdfs/tls1_prf.inc \
@@ -291,6 +293,8 @@ GENERATE[providers/implementations/kdfs/pvkkdf.inc]=\
     providers/implementations/kdfs/pvkkdf.inc.in
 GENERATE[providers/implementations/kdfs/scrypt.inc]=\
     providers/implementations/kdfs/scrypt.inc.in
+GENERATE[providers/implementations/kdfs/snmpkdf.inc]=\
+    providers/implementations/kdfs/snmpkdf.inc.in
 GENERATE[providers/implementations/kdfs/sshkdf.inc]=\
     providers/implementations/kdfs/sshkdf.inc.in
 GENERATE[providers/implementations/kdfs/sskdf.inc]=\

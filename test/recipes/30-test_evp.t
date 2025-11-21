@@ -56,6 +56,7 @@ my @files = qw(
                 evpkdf_kbkdf_kmac.txt
                 evpkdf_pbkdf1.txt
                 evpkdf_pbkdf2.txt
+                evpkdf_snmp.txt
                 evpkdf_ss.txt
                 evpkdf_ssh.txt
                 evpkdf_tls12_prf.txt
