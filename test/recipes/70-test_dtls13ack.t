@@ -11,6 +11,7 @@ use feature 'state';
 
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
+use File::Temp qw(tempfile);
 use TLSProxy::Proxy;
 use TLSProxy::Message;
 use Cwd qw(abs_path);
@@ -45,10 +46,12 @@ my $proxy = TLSProxy::Proxy->new_dtls(
 my $testcount = 3;
 
 plan tests => $testcount;
+(undef, my $session) = tempfile();
 
 #Test 1: Check that records are acked during an uninterrupted handshake
 $proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
 $proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256");
+$proxy->sessionfile($session);
 TLSProxy::Message->successondata(1);
 skip "TLSProxy could not start", $testcount if !$proxy->start();
 
@@ -58,7 +61,7 @@ my @missing = record_numbers_missing(\@expected, \@actual);
 my $expected_count = @expected;
 my $missing_count = @missing;
 
-ok($missing_count == 0 && $expected_count == 1,
+ok($missing_count == 0 && $expected_count == 3,
     "Check that all record numbers are acked");
 
 # Test 2: Check that records that are missing are not acked during a handshake
@@ -66,6 +69,7 @@ $proxy->clear();
 my $found_first_client_finish_msg = 0;
 $proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
 $proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256");
+$proxy->sessionfile($session);
 $proxy->filter(\&drop_first_client_finish_filter);
 TLSProxy::Message->successondata(1);
 $proxy->start();
@@ -76,33 +80,30 @@ $proxy->start();
 $expected_count = @expected;
 $missing_count = @missing;
 
-ok($missing_count == 1 && $expected_count == 2,
+ok($missing_count == 1 && $expected_count == 4,
    "Check that all record numbers except one are acked");
 
-SKIP: {
-    skip "TODO(DTLSv1.3): This test fails because the client does not properly
-          handle when the last flight is dropped when it includes a
-          CompressedCertificate.", 1
-        if !disabled("zlib") || !disabled("zstd") || !disabled("brotli");
-    # Test 3: Check that client cert and verify messages are also acked
-    $proxy->clear();
-    $proxy->filter(undef);
-    $found_first_client_finish_msg = 0;
-    $proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -Verify 1");
-    $proxy->clientflags("-mtu 2000 -min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256"
-                        ." -cert ".srctop_file("apps", "server.pem"));
-    TLSProxy::Message->successondata(1);
-    $proxy->start();
+# Test 3: Check that client cert and verify messages are also acked
+$proxy->clear();
+$proxy->filter(undef);
+$found_first_client_finish_msg = 0;
+$proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -Verify 1");
+$proxy->clientflags("-mtu 2000 -min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256"
+                    ." -cert ".srctop_file("apps", "server.pem"));
+$proxy->sessionfile($session);
+TLSProxy::Message->successondata(1);
+$proxy->start();
 
-    @expected = get_expected_ack_record_numbers();
-    @actual = get_actual_acked_record_numbers();
-    @missing = record_numbers_missing(\@expected, \@actual);
-    $expected_count = @expected;
-    $missing_count = @missing;
+@expected = get_expected_ack_record_numbers();
+@actual = get_actual_acked_record_numbers();
+@missing = record_numbers_missing(\@expected, \@actual);
+$expected_count = @expected;
+$missing_count = @missing;
 
-    ok($missing_count == 0 && $expected_count == 3,
-        "Check that all record numbers are acked");
-}
+ok($missing_count == 0 && $expected_count == 5,
+    "Check that all record numbers are acked");
+
+unlink $session;
 
 sub get_expected_ack_record_numbers
 {
@@ -130,10 +131,8 @@ sub get_expected_ack_record_numbers
                         || $message->mt == TLSProxy::Message::MT_CERTIFICATE
                         || $message->mt == TLSProxy::Message::MT_COMPRESSED_CERTIFICATE
                         || $message->mt == TLSProxy::Message::MT_CERTIFICATE_VERIFY)
-                # TODO(DTLSv1.3): The ACK of the following messages are never processed
-                # by the proxy because s_client is closed too early send it:
-                #        || $message->mt == TLSProxy::Message::MT_KEY_UPDATE
-                #        || $message->mt == TLSProxy::Message::MT_NEW_SESSION_TICKET
+                        || $message->mt == TLSProxy::Message::MT_KEY_UPDATE
+                        || $message->mt == TLSProxy::Message::MT_NEW_SESSION_TICKET
                 ) {
                     $record_should_be_acked = 1;
                 }
@@ -154,27 +153,7 @@ sub get_actual_acked_record_numbers
     foreach (@records) {
         my $record = $_;
 
-        if ($record->content_type == TLSProxy::Record::RT_ACK) {
-            my $recnum_count = unpack('n', $record->decrypt_data) / 16;
-            my $ptr = 2;
-
-            for (my $idx = 0; $idx < $recnum_count; $idx++) {
-                my $epoch_lo;
-                my $epoch_hi;
-                my $msgseq_lo;
-                my $msgseq_hi;
-
-                ($epoch_hi, $epoch_lo, $msgseq_hi, $msgseq_lo)
-                    = unpack('NNNN', substr($record->decrypt_data, $ptr));
-                $ptr = $ptr + 16;
-
-                my $epoch = ($epoch_hi << 32) | $epoch_lo;
-                my $msgseq = ($msgseq_hi << 32) | $msgseq_lo;
-                my $recnum = TLSProxy::RecordNumber->new($epoch, $msgseq);
-
-                push(@record_numbers, $recnum);
-            }
-        }
+        $record->get_actual_acked_record_numbers(\@record_numbers);
     }
     return @record_numbers;
 }
