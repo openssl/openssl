@@ -234,7 +234,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     ptmp->check_purpose = ck;
     ptmp->usr_data = arg;
 
-    /* If its a new entry manage the dynamic table */
+    /* If it's a new entry manage the dynamic table */
     if (idx == -1) {
         if (xptable == NULL
             && (xptable = sk_X509_PURPOSE_new(xp_cmp)) == NULL) {

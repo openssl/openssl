@@ -11,7 +11,8 @@
  * This is an implementation of the ASN1 Time structure which is:
  *    Time ::= CHOICE {
  *      utcTime        UTCTime,
- *      generalTime    GeneralizedTime }
+ *      generalTime    GeneralizedTime
+ *    }
  */
 
 #include <stdio.h>
