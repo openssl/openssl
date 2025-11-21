@@ -220,8 +220,6 @@ SKIP: {
 }
 
 SKIP: {
-    # TODO(DTLSv1.3): This test currently does not work for DTLS.
-    skip "Test does not work correctly currently", $testcount;
     skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
     skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
     run_tests(1);
@@ -284,30 +282,26 @@ sub run_tests
             | checkhandshake::CERT_COMP_SRV_EXTENSION,
         "Both support certificate compression, but no client auth");
 
-    SKIP: {
-        skip "TODO(DTLSv1.3): Server hangs on client certificate + finish", 2
-            if $run_test_as_dtls == 1;
-        #Test 4: Both send cert comp, with client auth
-        $proxy->clear();
-        $proxy->clientflags("-cert " . srctop_file("apps", "server.pem"));
-        $proxy->serverflags("-Verify 5 -cert_comp");
-        $proxy->start();
-        checkhandshake($proxy, checkhandshake::CERT_COMP_BOTH_HANDSHAKE,
-            checkhandshake::DEFAULT_EXTENSIONS
-                | checkhandshake::CERT_COMP_CLI_EXTENSION
-                | checkhandshake::CERT_COMP_SRV_EXTENSION,
-            "Both support certificate compression, with client auth");
+    #Test 4: Both send cert comp, with client auth
+    $proxy->clear();
+    $proxy->clientflags("-cert " . srctop_file("apps", "server.pem"));
+    $proxy->serverflags("-Verify 5 -cert_comp");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::CERT_COMP_BOTH_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::CERT_COMP_CLI_EXTENSION
+            | checkhandshake::CERT_COMP_SRV_EXTENSION,
+        "Both support certificate compression, with client auth");
 
-        #Test 5: Client-to-server-only certificate compression, with client auth
-        $proxy->clear();
-        $proxy->clientflags("-no_rx_cert_comp -cert " . srctop_file("apps", "server.pem"));
-        $proxy->serverflags("-no_tx_cert_comp -Verify 5 -cert_comp");
-        $proxy->start();
-        checkhandshake($proxy, checkhandshake::CERT_COMP_CLI_HANDSHAKE,
-            checkhandshake::DEFAULT_EXTENSIONS
-                | checkhandshake::CERT_COMP_SRV_EXTENSION,
-            "Client-to-server-only certificate compression, with client auth");
-    }
+    #Test 5: Client-to-server-only certificate compression, with client auth
+    $proxy->clear();
+    $proxy->clientflags("-no_rx_cert_comp -cert " . srctop_file("apps", "server.pem"));
+    $proxy->serverflags("-no_tx_cert_comp -Verify 5 -cert_comp");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::CERT_COMP_CLI_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::CERT_COMP_SRV_EXTENSION,
+        "Client-to-server-only certificate compression, with client auth");
 
     #Test 6: Server-to-client-only certificate compression
     $proxy->clear();
