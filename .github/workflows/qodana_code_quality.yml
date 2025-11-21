@@ -22,6 +22,9 @@ jobs:
       - name: 'Qodana Scan'
         uses: JetBrains/qodana-action@v2025.2
         with:
+          args: |
+              --image,jetbrains/qodana-clang:2025.2-eap,
+              #--compile-commands,<path-to-compile_commands.json>
           pr-mode: false
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_1304135027 }}
