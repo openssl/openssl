@@ -52,6 +52,10 @@ OpenSSL 4.0
 
    *Igor Ustinov*
 
+ * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
+
+   *Barry Fussell*, *Helen Zhang*
+
 OpenSSL 3.6
 -----------
 

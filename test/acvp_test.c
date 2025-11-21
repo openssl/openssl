@@ -22,6 +22,7 @@
 #include <openssl/dh.h>
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
+#include <openssl/kdf.h>
 #include <openssl/param_build.h>
 #include <openssl/provider.h>
 #include <openssl/self_test.h>
@@ -54,6 +55,20 @@ static int dsasign_allowed = 1;
 #ifndef OPENSSL_NO_EC
 static int ec_cofactors = 1;
 #endif
+
+static EVP_KDF_CTX *get_kdfbyname_libctx(OSSL_LIB_CTX *libctx, const char *name)
+{
+    EVP_KDF *kdf = EVP_KDF_fetch(libctx, name, NULL);
+    EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
+
+    EVP_KDF_free(kdf);
+    return kctx;
+}
+
+static EVP_KDF_CTX *get_kdfbyname(const char *name)
+{
+    return get_kdfbyname_libctx(libctx, name);
+}
 
 const OPTIONS *test_get_options(void)
 {
@@ -1703,6 +1718,54 @@ err:
     return ret;
 }
 
+static
+OSSL_PARAM *construct_snmpkdf_params(char *digest, unsigned char *eid, size_t eid_len,
+                                     unsigned char *password, size_t password_len)
+
+{
+    OSSL_PARAM *p = OPENSSL_malloc(sizeof(OSSL_PARAM) * 4);
+    OSSL_PARAM *p_ret = p;
+
+    if (p == NULL)
+        return NULL;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, digest, 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SNMPKDF_EID,
+                                             eid, eid_len);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD, password,
+                                             password_len);
+    *p = OSSL_PARAM_construct_end();
+
+    return p_ret;
+}
+
+static int test_kdf_snmpkdf(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM *params = NULL;
+    unsigned char out[SHA_DIGEST_LENGTH];
+    static unsigned char EID1[] = {
+        0x00, 0x00, 0x02, 0xb8, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00 };
+    static unsigned char expected1[] = {
+        0x62, 0x98, 0x10, 0xa3, 0x1a, 0xdc, 0x31, 0x76, 0x9d, 0xfe, 0xbf, 0x9b,
+        0xac, 0xba, 0x06, 0xa3, 0xff, 0xd9, 0xc4, 0x9f };
+    static unsigned char password1[] = {'L', 'P', 'U', 'Q', 'D', 'L', 's', 'K' };
+
+    params = construct_snmpkdf_params("sha1", EID1, sizeof(EID1),
+                                      (unsigned char *)password1, sizeof(password1));
+
+    ret = TEST_ptr(params)
+        && TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SNMPKDF))
+        && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out), params), 0)
+        && TEST_mem_eq(out, sizeof(out), expected1, sizeof(expected1));
+
+    test_output_memory("SNMPKDF", out, sizeof(out));
+    EVP_KDF_CTX_free(kctx);
+    OPENSSL_free(params);
+    return ret;
+}
+
 int setup_tests(void)
 {
     char *config_file = NULL;
@@ -1775,6 +1838,8 @@ int setup_tests(void)
     }
 #endif
     ADD_ALL_TESTS(drbg_test, OSSL_NELEM(drbg_data));
+
+    ADD_TEST(test_kdf_snmpkdf);
     return 1;
 }
 
