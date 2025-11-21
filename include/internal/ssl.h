@@ -18,6 +18,13 @@ typedef void (*ossl_msg_cb)(int write_p, int version, int content_type,
 
 int ossl_ssl_get_error(const SSL *s, int i, int check_err);
 
+/*
+ * Test to see if an SSL_CTX is using a QUIC method
+ * This is public in the master branch
+ * but made private for current stable branches
+ */
+int SSL_CTX_is_quic(const SSL_CTX *c);
+
 /* Set if this is the QUIC handshake layer */
 # define TLS1_FLAGS_QUIC                         0x2000
 /* Set if this is our QUIC handshake layer */
