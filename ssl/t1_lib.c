@@ -1129,7 +1129,13 @@ int tls1_set_groups(uint16_t **grpext, size_t *grpextlen,
     OPENSSL_free(*tplext);
     *grpext = glist;
     *grpextlen = ngroups;
-    kslist[0] = glist[0];
+    /*
+     * No * prefix was used, let tls_construct_ctos_key_share choose a key
+     * share. This has the advantage that it will filter unsupported groups
+     * before choosing one, which this function does not do. See also the
+     * comment for tls1_get_requested_keyshare_groups.
+     */
+    kslist[0] = 0;
     *ksext = kslist;
     *ksextlen = 1;
     tpllist[0] = ngroups;
