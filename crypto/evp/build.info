@@ -9,7 +9,6 @@ $COMMON=digest.c evp_enc.c evp_lib.c evp_fetch.c evp_utils.c \
 SOURCE[../../libcrypto]=$COMMON\
         encode.c evp_key.c evp_cnf.c \
         enc_b64_scalar.c \
-        enc_b64_avx2.c \
         e_des.c e_bf.c e_idea.c e_des3.c \
         e_rc4.c e_aes.c names.c e_aria.c e_sm4.c \
         e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c m_null.c \
@@ -21,6 +20,10 @@ SOURCE[../../libcrypto]=$COMMON\
         e_chacha20_poly1305.c \
         legacy_sha.c ctrl_params_translate.c \
         cmeth_lib.c m_sigver.c
+
+IF[{- !$disabled{asm} && $target{asm_arch} =~ m/^x86_64/ -}]
+  SOURCE[../../libcrypto]=enc_b64_avx2.c
+ENDIF
 
 # Diverse type specific ctrl functions.  They are kinda sorta legacy, kinda
 # sorta not.
