@@ -46,10 +46,6 @@ OpenSSL 4.0
 
    *Ryan Hooper*
 
- * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
-
-   *Barry Fussell and Helen Zhang*
- 
  * Added `OSSL_[EN|DE]CODER_CTX_[set|get]_finalized()` functions.
    `OSSL_[EN|DE]CODER_CTX_set_*()` and `OSSL_[EN|DE]CODER_CTX_add_*()`
    functions return 0 if the context is already finalised.
