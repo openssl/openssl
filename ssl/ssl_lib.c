@@ -7480,13 +7480,13 @@ void SSL_set_allow_early_data_cb(SSL *s,
 }
 
 const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
-                                       int nid,
+                                       const char *name,
                                        const char *properties)
 {
     const EVP_CIPHER *ciph;
 
     ERR_set_mark();
-    ciph = EVP_CIPHER_fetch(libctx, OBJ_nid2sn(nid), properties);
+    ciph = EVP_CIPHER_fetch(libctx, name, properties);
     if (ciph != NULL) {
         OSSL_PARAM params[2];
         int decrypt_only = 0;

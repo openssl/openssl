@@ -3008,7 +3008,7 @@ void custom_exts_free(custom_ext_methods *exts);
 int ssl_ctx_system_config(SSL_CTX *ctx);
 
 const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
-                                       int nid,
+                                       const char *name,
                                        const char *properties);
 int ssl_evp_cipher_up_ref(const EVP_CIPHER *cipher);
 void ssl_evp_cipher_free(const EVP_CIPHER *cipher);

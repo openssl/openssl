@@ -308,8 +308,9 @@ int ssl_load_ciphers(SSL_CTX *ctx)
     ctx->disabled_enc_mask = 0;
     for (i = 0, t = ssl_cipher_table_cipher; i < SSL_ENC_NUM_IDX; i++, t++) {
         if (t->nid != NID_undef) {
-            const EVP_CIPHER *cipher
-                = ssl_evp_cipher_fetch(ctx->libctx, t->nid, ctx->propq);
+            const EVP_CIPHER *cipher = ssl_evp_cipher_fetch(ctx->libctx,
+                                                            OBJ_nid2sn(t->nid),
+                                                            ctx->propq);
 
             ctx->ssl_cipher_methods[i] = cipher;
             if (cipher == NULL)
@@ -535,27 +536,28 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
 
         if (c->algorithm_enc == SSL_RC4
                 && c->algorithm_mac == SSL_MD5)
-            evp = ssl_evp_cipher_fetch(ctx->libctx, NID_rc4_hmac_md5,
+            evp = ssl_evp_cipher_fetch(ctx->libctx,
+                                       "RC4-HMAC-MD5",
                                        ctx->propq);
         else if (c->algorithm_enc == SSL_AES128
                     && c->algorithm_mac == SSL_SHA1)
             evp = ssl_evp_cipher_fetch(ctx->libctx,
-                                       NID_aes_128_cbc_hmac_sha1,
+                                       "AES-128-CBC-HMAC-SHA1",
                                        ctx->propq);
         else if (c->algorithm_enc == SSL_AES256
                     && c->algorithm_mac == SSL_SHA1)
              evp = ssl_evp_cipher_fetch(ctx->libctx,
-                                        NID_aes_256_cbc_hmac_sha1,
+                                        "AES-256-CBC-HMAC-SHA1",
                                         ctx->propq);
         else if (c->algorithm_enc == SSL_AES128
                     && c->algorithm_mac == SSL_SHA256)
             evp = ssl_evp_cipher_fetch(ctx->libctx,
-                                       NID_aes_128_cbc_hmac_sha256,
+                                       "AES-128-CBC-HMAC-SHA256",
                                        ctx->propq);
         else if (c->algorithm_enc == SSL_AES256
                     && c->algorithm_mac == SSL_SHA256)
             evp = ssl_evp_cipher_fetch(ctx->libctx,
-                                       NID_aes_256_cbc_hmac_sha256,
+                                       "AES-256-CBC-HMAC-SHA256",
                                        ctx->propq);
 
         if (evp != NULL) {
