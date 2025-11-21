@@ -1146,7 +1146,879 @@ $code.=<<___;
 ___
 }
 
+#
+#   16-block encryption/decryption macroses
+#
+
+#
+# IN:
+#  v0..v7: byte-sliced AB state
+#  mem_cd: register pointer storing CD state
+#  key: index for key material
+# OUT:
+#  v0..v7: new byte-sliced CD state
+# Clobbers:
+#  x5 - key value
+#  v8..v15: broadcasted key values
+#  v16: mask_0f
+#  v17: inv_shift_row
+#  v18..v27: pre- and post-filters
+#
+# define roundsm16(v0, v1, v2, v3, v4, v5, v6, v7, mem_cd, key)
+sub roundsm16(){
+    my ($v0, $v1, $v2, $v3, $v4, $v5, $v6, $v7, $mem_cd, $key) = @_;
 $code.=<<___;
+    /* Load 64-bit round key */
+    ldr     x5,[$key]
+
+    /* S-FUNCTION (PRE-AES) */
+
+    /* Inverse Shift Rows (pre-compensation) */
+    tbl     $v0.16b,{$v0.16b},v17.16b
+    tbl     $v7.16b,{$v7.16b},v17.16b
+    tbl     $v1.16b,{$v1.16b},v17.16b
+    tbl     $v4.16b,{$v4.16b},v17.16b
+    tbl     $v2.16b,{$v2.16b},v17.16b
+    tbl     $v5.16b,{$v5.16b},v17.16b
+    tbl     $v3.16b,{$v3.16b},v17.16b
+    tbl     $v6.16b,{$v6.16b},v17.16b
+
+    /* Pre-Filter */
+___
+    &filter_8bit_neon($v0,"v18","v19","v16","v28");
+    &filter_8bit_neon($v7,"v18","v19","v16","v28");
+    &filter_8bit_neon($v1,"v18","v19","v16","v28");
+    &filter_8bit_neon($v4,"v18","v19","v16","v28");
+    &filter_8bit_neon($v2,"v18","v19","v16","v28");
+    &filter_8bit_neon($v5,"v18","v19","v16","v28");
+$code.=<<___;
+    eor  v31.16b, v31.16b, v31.16b
+___
+    &filter_8bit_neon($v3,"v20","v21","v16","v28");
+    &filter_8bit_neon($v6,"v20","v21","v16","v28");
+$code.=<<___;
+
+    /* AES CORE */
+    aese $v0.16b,v31.16b
+    aese $v7.16b,v31.16b
+    aese $v1.16b,v31.16b
+    aese $v4.16b,v31.16b
+    aese $v2.16b,v31.16b
+    aese $v5.16b,v31.16b
+    aese $v3.16b,v31.16b
+    aese $v6.16b,v31.16b
+
+    /* Post-Filter */
+___
+    &filter_8bit_neon($v0,"v22","v23","v16","v28");
+    &filter_8bit_neon($v7,"v22","v23","v16","v28");
+    &filter_8bit_neon($v3,"v22","v23","v16","v28");
+    &filter_8bit_neon($v6,"v22","v23","v16","v28");
+    &filter_8bit_neon($v2,"v26","v27","v16","v28");
+    &filter_8bit_neon($v5,"v26","v27","v16","v28");
+    &filter_8bit_neon($v1,"v24","v25","v16","v28");
+    &filter_8bit_neon($v4,"v24","v25","v16","v28");
+$code.=<<___;
+
+    /* Interleaved P-function and key broadcasting */
+    fmov    d31,x5
+
+    eor     $v0.16b,$v0.16b,$v5.16b
+    movi    v29.16b,#3
+    eor     $v1.16b,$v1.16b,$v6.16b
+    movi    v30.16b,#2
+    eor     $v2.16b,$v2.16b,$v7.16b
+    eor     $v3.16b,$v3.16b,$v4.16b
+
+    tbl     v11.16b,{v31.16b},v29.16b   // threes
+    tbl     v10.16b,{v31.16b},v30.16b   // twos
+
+    eor     $v4.16b,$v4.16b,$v2.16b
+    movi    v29.16b,#1
+    eor     $v5.16b,$v5.16b,$v3.16b
+    movi    v30.16b,#7
+    eor     $v6.16b,$v6.16b,$v0.16b
+    eor     $v7.16b,$v7.16b,$v1.16b
+
+    tbl     v9.16b,{v31.16b},v29.16b   // ones
+    tbl     v15.16b,{v31.16b},v30.16b   // sevens
+
+    eor     $v0.16b,$v0.16b,$v7.16b
+    movi    v29.16b,#6
+    eor     $v1.16b,$v1.16b,$v4.16b
+    movi    v30.16b,#5
+    eor     $v2.16b,$v2.16b,$v5.16b
+    eor     $v3.16b,$v3.16b,$v6.16b
+
+    tbl     v14.16b,{v31.16b},v29.16b   // sixs
+    tbl     v13.16b,{v31.16b},v30.16b   // fives
+
+    eor     $v4.16b,$v4.16b,$v3.16b
+    movi    v29.16b,#4
+    eor     $v5.16b,$v5.16b,$v0.16b
+    eor     v30.16b,v30.16b,v30.16b
+    eor     $v6.16b,$v6.16b,$v1.16b
+    eor     $v7.16b,$v7.16b,$v2.16b     // Now the high snd low parts are swapped
+
+    ldr     q28,[$mem_cd]
+
+    tbl     v12.16b,{v31.16b},v29.16b   // fours
+    tbl     v8.16b,{v31.16b},v30.16b    // zeros
+
+    /* Final XOR's (w. broadcasted KEY & CD state) */
+    ldr     q29,[$mem_cd,#16]
+    ldr     q30,[$mem_cd,#32]
+    ldr     q31,[$mem_cd,#48]
+
+    eor     $v4.16b,$v4.16b,v11.16b
+    eor     $v4.16b,$v4.16b,v28.16b
+
+    eor     $v5.16b,$v5.16b,v10.16b
+    eor     $v5.16b,$v5.16b,v29.16b
+
+    ldr     q28,[$mem_cd,#64]
+
+    eor     $v6.16b,$v6.16b,v9.16b
+    eor     $v6.16b,$v6.16b,v30.16b
+
+    ldr     q29,[$mem_cd,#80]
+
+    eor     $v7.16b,$v7.16b,v8.16b
+    eor     $v7.16b,$v7.16b,v31.16b
+
+    ldr     q30,[$mem_cd,#96]
+
+    eor     $v0.16b,$v0.16b,v15.16b
+    eor     $v0.16b,$v0.16b,v28.16b
+
+    ldr     q31,[$mem_cd,#112]
+
+    eor     $v1.16b,$v1.16b,v14.16b
+    eor     $v1.16b,$v1.16b,v29.16b
+
+    eor     $v2.16b,$v2.16b,v13.16b
+    eor     $v2.16b,$v2.16b,v30.16b
+
+    eor     $v3.16b,$v3.16b,v12.16b
+    eor     $v3.16b,$v3.16b,v31.16b
+___
+}
+
+# define dummy_store(v0, v1, v2, v3, v4, v5, v6, v7, mem_ab)
+# does nothing
+sub dummy_store(){}
+
+# define store_ab_state(v0, v1, v2, v3, v4, v5, v6, v7, mem_ab)
+# Here I only pass one argument!
+sub store_ab_state(){
+    my ($mem_ab) = @_;
+$code.=<<___;
+	/* Store new AB state */ \
+    stp     q0,q1,[$mem_ab]
+    stp     q2,q3,[$mem_ab,#32]
+    stp     q4,q5,[$mem_ab,#64]
+    stp     q6,q7,[$mem_ab,#96]
+___
+}
+
+#
+# IN/OUT:
+#  v0..v7: byte-sliced AB state preloaded
+#  mem_ab: byte-sliced AB state in memory
+#  mem_cd: byte-sliced CD state in memory
+#  first_key_ptr: ptr to access first key
+#  store_ab: function to store state
+# Clobbers:
+#  x5 - second key pointer value
+#
+# define two_roundsm16(v0, v1, v2, v3, v4, v5, v6, v7, mem_ab, mem_cd, first_key_ptr, store_ab)
+# Don't actually need to pass v0-v7!
+sub two_roundsm16(){
+    my ($v0, $v1, $v2, $v3, $v4, $v5, $v6, $v7, $mem_ab, $mem_cd, $first_key_ptr, $store_ab) = @_;
+
+    &roundsm16($v0, $v1, $v2, $v3, $v4, $v5, $v6, $v7, $mem_cd, $first_key_ptr);
+$code.=<<___;
+
+    stp     q4,q5,[$mem_cd]
+    stp     q6,q7,[$mem_cd,#32]
+    stp     q0,q1,[$mem_cd,#64]
+    stp     q2,q3,[$mem_cd,#96]
+
+    add     x4,$first_key_ptr,#8
+___
+    &roundsm16($v4, $v5, $v6, $v7, $v0, $v1, $v2, $v3, $mem_ab, "x4");
+
+    &$store_ab($mem_ab);
+}
+
+# Differs from above by decrementing instead of incrementing key ptr.
+sub two_roundsm16_dec(){
+    my ($v0, $v1, $v2, $v3, $v4, $v5, $v6, $v7, $mem_ab, $mem_cd, $first_key_ptr, $store_ab) = @_;
+
+    &roundsm16($v0, $v1, $v2, $v3, $v4, $v5, $v6, $v7, $mem_cd, $first_key_ptr);
+$code.=<<___;
+
+    stp     q4,q5,[$mem_cd]
+    stp     q6,q7,[$mem_cd,#32]
+    stp     q0,q1,[$mem_cd,#64]
+    stp     q2,q3,[$mem_cd,#96]
+
+    sub     x4,$first_key_ptr,#8
+___
+    &roundsm16($v4, $v5, $v6, $v7, $v0, $v1, $v2, $v3, $mem_ab, "x4");
+
+    &$store_ab($mem_ab);
+}
+
+#
+# IN:
+#  v0..3: byte-sliced 32-bit integers
+# OUT:
+#  v0..3: (IN <<< 1)
+#
+# define rol32_1_16(v0, v1, v2, v3, t0, t1, t2)
+sub rol32_1_16(){
+    my ($v0, $v1, $v2, $v3, $t0, $t1, $t2) = @_;
+$code.=<<___;
+    ushr    $t0.16b,$v0.16b,#7
+    add     $v0.16b,$v0.16b,$v0.16b
+    ushr    $t1.16b,$v1.16b,#7
+    add     $v1.16b,$v1.16b,$v1.16b
+    ushr    $t2.16b,$v2.16b,#7
+    add     $v2.16b,$v2.16b,$v2.16b
+    orr     $v1.16b,$t0.16b,$v1.16b
+    ushr    $t0.16b,$v3.16b,#7
+    add     $v3.16b,$v3.16b,$v3.16b
+    orr     $v2.16b,$t1.16b,$v2.16b
+    orr     $v3.16b,$t2.16b,$v3.16b
+    orr     $v0.16b,$t0.16b,$v0.16b
+___
+}
+
+#
+# IN:
+#   v0..v7: byte-sliced AB state in registers
+#   r: byte-sliced AB state in memory
+#   l: byte-sliced CD state in memory
+#   keys_ptr: pointer to keys
+# OUT:
+#   v0..v7: new byte-sliced CD state
+# Clobbers:
+#  x5-x7: storage for keys
+#  v8-v15,v16-19,v28-v31: temporary vectors
+#
+# define fls16(v0, v1, v2, v3, v4, v5, v6, v7, mem_l, mem_r, key_a_ptr, key_b_ptr)
+# Here I am not passing v0-v7 as arguments!
+sub fls16(){
+    my ($mem_l, $mem_r, $key_a_ptr, $key_b_ptr) = @_;
+$code.=<<___;
+    ldr     x5,[$key_a_ptr]         //x5={klr,kll}
+    ldr     x6,[$key_b_ptr]         //x6={krr,krl}
+	/*
+	 * t0 = kll
+	 * t0 &= ll
+	 * lr ^= rol32(t0, 1)
+	 */
+    eor     v19.16b,v19.16b,v19.16b
+    movi    v18.16b,#1
+    fmov    s31, w5                 // v31 lower = kll
+    movi    v17.16b,#2
+    movi    v16.16b,#3
+    tbl     v19.16b,{v31.16b},v19.16b
+    tbl     v18.16b,{v31.16b},v18.16b
+    tbl     v17.16b,{v31.16b},v17.16b
+    tbl     v16.16b,{v31.16b},v16.16b
+
+    ldp     q12,q13,[$mem_r,#64]    // pre-load right-hand state parts
+    and     v16.16b,v0.16b,v16.16b
+    and     v17.16b,v1.16b,v17.16b
+    ldp     q14,q15,[$mem_r,#96]    // pre-load right-hand state parts
+    and     v18.16b,v2.16b,v18.16b
+    and     v19.16b,v3.16b,v19.16b
+
+___
+    &rol32_1_16("v19","v18","v17","v16","v28","v29","v30");
+$code.=<<___;
+
+    eor     v4.16b,v16.16b,v4.16b
+    eor     v5.16b,v17.16b,v5.16b
+    eor     v6.16b,v18.16b,v6.16b
+    eor     v7.16b,v19.16b,v7.16b
+    stp     q4,q5,[$mem_l,#64]
+    stp     q6,q7,[$mem_l,#96]
+
+	/*
+	 * t2 = krr
+	 * t2 |= rr
+	 * rl ^= t2
+	 */
+
+    lsr     x7,x6,#32
+    eor     v19.16b,v19.16b,v19.16b
+    ldp     q8,q9,[$mem_r]               // pre-load right-hand state parts
+    movi    v18.16b,#1
+    fmov    s31,w7
+    movi    v17.16b,#2
+    movi    v16.16b,#3
+    ldp     q10,q11,[$mem_r,#32]        // pre-load right-hand state parts
+    tbl     v19.16b,{v31.16b},v19.16b
+    tbl     v18.16b,{v31.16b},v18.16b
+    tbl     v17.16b,{v31.16b},v17.16b
+    tbl     v16.16b,{v31.16b},v16.16b
+
+    orr     v16.16b,v12.16b,v16.16b
+    orr     v17.16b,v13.16b,v17.16b
+    orr     v18.16b,v14.16b,v18.16b
+    orr     v19.16b,v15.16b,v19.16b
+
+    eor     v8.16b,v8.16b,v16.16b
+    eor     v9.16b,v9.16b,v17.16b
+    eor     v10.16b,v10.16b,v18.16b
+    eor     v11.16b,v11.16b,v19.16b
+
+    stp     q8,q9,[$mem_r]               // Note, updated values stay in v8-v11
+    stp     q10,q11,[$mem_r,#32]
+
+	/*
+	 * t2 = krl
+	 * t2 &= rl
+	 * rr ^= rol32(t2, 1)
+	 */
+
+    eor     v19.16b,v19.16b,v19.16b
+    movi    v18.16b,#1
+    fmov    s31,w6
+    movi    v17.16b,#2
+    movi    v16.16b,#3
+    tbl     v19.16b,{v31.16b},v19.16b
+    tbl     v18.16b,{v31.16b},v18.16b
+    tbl     v17.16b,{v31.16b},v17.16b
+    tbl     v16.16b,{v31.16b},v16.16b
+
+    and     v16.16b,v8.16b,v16.16b      // Re-use updated right state values
+    and     v17.16b,v9.16b,v17.16b
+    and     v18.16b,v10.16b,v18.16b
+    and     v19.16b,v11.16b,v19.16b
+
+___
+    &rol32_1_16("v19","v18","v17","v16","v28","v29","v30");
+$code.=<<___;
+
+    eor     v12.16b,v16.16b,v12.16b
+    eor     v13.16b,v17.16b,v13.16b
+    eor     v14.16b,v18.16b,v14.16b
+    eor     v15.16b,v19.16b,v15.16b
+    stp     q12,q13,[$mem_r,#64]
+    stp     q14,q15,[$mem_r,#96]
+
+	/*
+	 * t0 = klr
+	 * t0 |= lr
+	 * ll ^= t0
+	 */
+
+    lsr     x7,x5,#32
+    eor     v19.16b,v19.16b,v19.16b
+    movi    v18.16b,#1
+    fmov    s31,w7
+    movi    v17.16b,#2
+    movi    v16.16b,#3
+    tbl     v19.16b,{v31.16b},v19.16b
+    tbl     v18.16b,{v31.16b},v18.16b
+    tbl     v17.16b,{v31.16b},v17.16b
+    tbl     v16.16b,{v31.16b},v16.16b
+
+    orr     v16.16b,v4.16b,v16.16b
+    orr     v17.16b,v5.16b,v17.16b
+    orr     v18.16b,v6.16b,v18.16b
+    orr     v19.16b,v7.16b,v19.16b
+
+    eor     v0.16b,v0.16b,v16.16b
+    eor     v1.16b,v1.16b,v17.16b
+    eor     v2.16b,v2.16b,v18.16b
+    eor     v3.16b,v3.16b,v19.16b
+
+    stp     q0,q1,[$mem_l]
+    stp     q2,q3,[$mem_l,#32]
+___
+}
+
+#define transpose_4x4(v0, v1, v2, v3, t1, t2)
+sub transpose_4x4(){
+    my ($v0, $v1, $v2, $v3, $t1, $t2) = @_;
+$code.=<<___;
+    zip2    $t2.4s,$v0.4s,$v1.4s
+    zip1    $v0.4s,$v0.4s,$v1.4s
+
+    zip1    $t1.4s,$v2.4s,$v3.4s
+    zip2    $v2.4s,$v2.4s,$v3.4s
+    
+    zip2    $v1.2d,$v0.2d,$t1.2d
+    zip1    $v0.2d,$v0.2d,$t1.2d
+    
+    zip2    $v3.2d,$t2.2d,$v2.2d
+    zip1    $v2.2d,$t2.2d,$v2.2d
+___
+}
+
+# 
+# IN: 
+#  a0-a3, b0-b3, c0-c3, d0-d3 (vector registers)
+# OUT:
+#  a0-a3, b0-b3, c0-c3, d0-d3 (transposed, in registers)
+# Clobbers:
+#  t0 (v16), t1 (v17) (vector registers), tmp (GPR for constant address)
+#
+#define byteslice_16x16b_fast(a0, b0, c0, d0, a1, b1, c1, d1, a2, b2, c2, d2, \
+#                             a3, b3, c3, d3, t0, t1, tmp)
+sub byteslice_16x16b_fast(){
+    my ($a0, $b0, $c0, $d0, $a1, $b1, $c1, $d1, $a2, $b2, $c2, $d2, $a3, $b3, $c3, $d3, $t0, $t1, $tmp) = @_;
+
+    &transpose_4x4($a0, $a1, $a2, $a3, $t0, $t1);
+    &transpose_4x4($b0, $b1, $b2, $b3, $t0, $t1);
+
+    &transpose_4x4($c0, $c1, $c2, $c3, $t0, $t1);
+    &transpose_4x4($d0, $d1, $d2, $d3, $t0, $t1);
+$code.=<<___;
+
+    adrp    $tmp,.Lshufb_16x16b
+    add     $tmp,$tmp,:lo12:.Lshufb_16x16b
+    ldr     q16,[$tmp]
+
+    tbl     $a0.16b,{$a0.16b},$t0.16b
+    tbl     $a1.16b,{$a1.16b},$t0.16b
+    tbl     $a2.16b,{$a2.16b},$t0.16b
+    tbl     $a3.16b,{$a3.16b},$t0.16b
+    tbl     $b0.16b,{$b0.16b},$t0.16b
+    tbl     $b1.16b,{$b1.16b},$t0.16b
+    tbl     $b2.16b,{$b2.16b},$t0.16b
+    tbl     $b3.16b,{$b3.16b},$t0.16b
+    tbl     $c0.16b,{$c0.16b},$t0.16b
+    tbl     $c1.16b,{$c1.16b},$t0.16b
+    tbl     $c2.16b,{$c2.16b},$t0.16b
+    tbl     $c3.16b,{$c3.16b},$t0.16b
+    tbl     $d0.16b,{$d0.16b},$t0.16b
+    tbl     $d1.16b,{$d1.16b},$t0.16b
+    tbl     $d2.16b,{$d2.16b},$t0.16b
+    tbl     $d3.16b,{$d3.16b},$t0.16b
+___
+
+    &transpose_4x4($a0, $b0, $c0, $d0, $t0, $t1);
+    &transpose_4x4($a1, $b1, $c1, $d1, $t0, $t1);
+
+    &transpose_4x4($a2, $b2, $c2, $d2, $t0, $t1);
+    &transpose_4x4($a3, $b3, $c3, $d3, $t0, $t1);
+}
+
+#
+# IN:
+#  key_ptr (GPR), rio_ptr (GPR)
+# OUT:
+#  v0-v15 (whitened plaintext)
+# Clobbers:
+#  tmp_key (v16, vector), tmp_gpr (GPR for addr), v17, v18
+#
+# define inpack16_pre(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, \
+#                     rio_ptr, key_ptr, tmp_key, tmp_gpr)
+# I am not passing v0-v15 here as they are hard-coded!
+sub inpack16_pre(){
+    my ($rio_ptr, $key_ptr, $tmp_key, $tmp_gpr) = @_;
+$code.=<<___;
+    /* Load and prepare key */
+    ldr     $tmp_gpr,[$key_ptr]
+    fmov    d16,$tmp_gpr
+    adrp    $tmp_gpr,.Lpack_bswap
+    add     $tmp_gpr,$tmp_gpr,:lo12:.Lpack_bswap
+    ldr     q17,[$tmp_gpr]                          // Load constant into a temporary
+    tbl     $tmp_key.16b,{$tmp_key.16b},v17.16b
+ 
+    /* Load plaintext blocks and XOR with key; TODO: interleave a bit with above? */
+    ldr     q18,[$rio_ptr,#(0*16)]
+    eor     v15.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(1*16)]
+    eor     v14.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(2*16)]
+    eor     v13.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(3*16)]
+    eor     v12.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(4*16)]
+    eor     v11.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(5*16)]
+    eor     v10.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(6*16)]
+    eor     v9.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(7*16)]
+    eor     v8.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(8*16)]
+    eor     v7.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(9*16)]
+    eor     v6.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(10*16)]
+    eor     v5.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(11*16)]
+    eor     v4.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(12*16)]
+    eor     v3.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(13*16)]
+    eor     v2.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(14*16)]
+    eor     v1.16b,v18.16b,$tmp_key.16b
+    ldr     q18,[$rio_ptr,#(15*16)]
+    eor     v0.16b,v18.16b,$tmp_key.16b
+___
+}
+
+#
+# IN:
+#  v0-v15 (whitened plaintext)
+#  mem_ab, mem_cd (GPRs)
+# OUT:
+#  Writes byte-sliced state to memory buffers.
+# Clobbers:
+#  v0-v15 (become byte-sliced), st0, st1 (vector temps - v16,v17), tmp (GPR temp)
+#
+# define inpack16_post(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, \
+#                            mem_ab, mem_cd, st0, st1, tmp) \
+# Same thing - not passing v0-v15
+sub inpack16_post(){
+    my ($mem_ab, $mem_cd, $st0, $st1, $tmp) = @_;
+$code.=<<___;
+    /* Perform the byte-slice transpose in-place on v0-v15 */
+___
+    &byteslice_16x16b_fast("v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", $st0, $st1, $tmp);
+
+$code.=<<___;
+    /* Store the results */
+    stp     q0,q1,[$mem_ab]
+    stp     q2,q3,[$mem_ab,#32]
+    stp     q4,q5,[$mem_ab,#64]
+    stp     q6,q7,[$mem_ab,#96]
+    stp     q8,q9,[$mem_cd]
+    stp     q10,q11,[$mem_cd,#32]
+    stp     q12,q13,[$mem_cd,#64]
+    stp     q14,q15,[$mem_cd,#96]
+___
+}
+
+# 
+# IN:
+#  v0-v15 (byte-sliced ciphertext), key_ptr (GPR)
+# OUT:
+#  v0-v15 (block-oriented, whitened ciphertext)
+# Clobbers:
+#  tmp_v0, tmp_v1, tmp_key (vector temps - v16:v18),
+#  tmp_gpr (GPR temp)
+#
+#define outunpack16(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, \
+#                   key_ptr, tmp_v0, tmp_v1, tmp_key, tmp_gpr)
+# Same thing as above, not passing v0-v15
+sub outunpack16(){
+    my ($key_ptr, $tmp_v0, $tmp_v1, $tmp_key, $tmp_gpr) = @_;
+$code.=<<___;
+    /* Perform inverse byte-slice (transpose) in-place */
+___
+    &byteslice_16x16b_fast("v8", "v12", "v0", "v4", "v9", "v13", "v1", "v5", "v10", "v14", "v2", "v6", "v11", "v15", "v3", "v7", $tmp_v0, $tmp_v1, $tmp_gpr);
+$code.=<<___;
+
+    /* Load and prepare final key */
+    ldr     $tmp_gpr,[$key_ptr]
+    fmov    d18,$tmp_gpr
+    adrp    $tmp_gpr,.Lpack_bswap
+    add     $tmp_gpr,$tmp_gpr,:lo12:.Lpack_bswap
+    ldr     q16,[$tmp_gpr]                              // Load constant into a temporary
+    tbl     $tmp_key.16b,{$tmp_key.16b},$tmp_v0.16b
+
+    /* XOR with final key */
+    eor     v0.16b,v0.16b,$tmp_key.16b
+    eor     v1.16b,v1.16b,$tmp_key.16b
+    eor     v2.16b,v2.16b,$tmp_key.16b
+    eor     v3.16b,v3.16b,$tmp_key.16b
+    eor     v4.16b,v4.16b,$tmp_key.16b
+    eor     v5.16b,v5.16b,$tmp_key.16b
+    eor     v6.16b,v6.16b,$tmp_key.16b
+    eor     v7.16b,v7.16b,$tmp_key.16b
+    eor     v8.16b,v8.16b,$tmp_key.16b
+    eor     v9.16b,v9.16b,$tmp_key.16b
+    eor     v10.16b,v10.16b,$tmp_key.16b
+    eor     v11.16b,v11.16b,$tmp_key.16b
+    eor     v12.16b,v12.16b,$tmp_key.16b
+    eor     v13.16b,v13.16b,$tmp_key.16b
+    eor     v14.16b,v14.16b,$tmp_key.16b
+    eor     v15.16b,v15.16b,$tmp_key.16b
+___
+}
+
+#
+# Inputs:
+#  v0-v15 (final block-oriented ciphertext), rio_ptr (GPR)
+#
+#define write_output(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, rio_ptr)
+# Again, not passing v0-v15
+sub write_output(){
+    my ($rio_ptr) = @_;
+$code.=<<___;
+    /* TODO: check the order! */
+    stp     q7,q6,[$rio_ptr]
+    stp     q5,q4,[$rio_ptr,#32]
+    stp     q3,q2,[$rio_ptr,#64]
+    stp     q1,q0,[$rio_ptr,#96]
+    stp     q15,q14,[$rio_ptr,#128]
+    stp     q13,q12,[$rio_ptr,#160]
+    stp     q11,q10,[$rio_ptr,#192]
+    stp     q9,q8,[$rio_ptr,#224]
+___
+}
+
+$code.=<<___;
+/*
+    16-block byte-sliced encryption/decryption
+*/
+
+.globl  camellia_encrypt_16blks_neon
+.type   camellia_encrypt_16blks_neon,%function
+.align  5
+camellia_encrypt_16blks_neon:
+    // === PROLOGUE ===
+    stp     x29,x30,[sp,#-144]!
+    mov     x29,sp
+    
+    stp     q8,q9,[sp,#16]
+    stp     q10,q11,[sp,#48]
+    stp     q12,q13,[sp,#80]
+    stp     q14,q15,[sp,#112]
+
+    // === SETUP ===
+    // Determine lastk
+    ldr     w9,[x0,#272]
+    mov     w8,#32
+    mov     w10,#24
+    cmp     w9,#16
+    csel    w8,w10,w8,le         // x8 -> lastk: if key_length <= 16 then 24, else - 32 
+
+    // === INPUT PROCESSING ===
+    // Call inpack16_pre: reads vin(x2), key[0](=ctx_ptr: x0), writes v0-v15
+    // clobbers: v16-v18 and x4
+___
+    &inpack16_pre("x2", "x0", "v16", "x4");
+$code.=<<___;
+
+    // Set up temp buffer pointers using vout_ptr (x1)
+    mov     x10,x1          // x10 -> vout
+    add     x11,x1,#128     // x11 -> vout + 128
+
+    // Call inpack16_post: byte-slices v0-v15, stores to mem_ab(x10), mem_cd(x11)
+    // Clobbers: v16, v17 and x4
+___
+    &inpack16_post("x10", "x11", "v16", "v17", "x4");
+$code.=<<___;
+
+    // Load Constants into v16-v27
+    adrp    x15,camellia_neon_consts
+    add     x15,x15,:lo12:camellia_neon_consts
+    ldp     q18,q19,[x15],#32    // pre_tf_lo/hi_s1
+    ldp     q20,q21,[x15],#32    // pre_tf_lo/hi_s4
+    ldp     q22,q23,[x15],#32    // post_tf_lo/hi_s1
+    ldp     q24,q25,[x15],#32    // post_tf_lo/hi_s2
+    ldp     q26,q27,[x15],#32    // post_tf_lo/hi_s3
+    ldr     q17,[x15],#16        // inv_shift_row
+    ldr     q16,[x15],#-176        // mask_0f
+
+    // === MAIN ROUND LOOP ===
+    mov     x12,#0      // x12 -> k = 0
+    sub     x14,x8,#8   // x14 -> lastk - 8
+.Lenc_loop:
+    // Calculate base key pointer for this block: &key_table[k]
+    lsl     x13,x12,#3  // x13 -> key_base_idx = k * 8
+    add     x13,x0,x13  // x13 = &key_table[k] - assuming here key_table_base = ctx[0] -> x0
+
+    // Round 1 (keys k+2, k+3)
+    add     x4,x13,#16  // &key_table[k+2]
+___
+    &two_roundsm16("v0","v1","v2","v3","v4","v5","v6","v7","x10","x11","x4","store_ab_state");
+$code.=<<___;
+
+    // Round 2 (keys k+4, k+5)
+    add     x4,x13,#32  // &key_table[k+4]
+___
+    &two_roundsm16("v0","v1","v2","v3","v4","v5","v6","v7","x10","x11","x4","store_ab_state");
+$code.=<<___;
+
+    // Round 3 (keys k+6, k+7)
+    add     x4,x13,#48  // &key_table[k+6]
+___
+    &two_roundsm16("v0","v1","v2","v3","v4","v5","v6","v7","x10","x11","x4","dummy_store");
+$code.=<<___;
+
+    // Check loop condition
+    cmp     x12,x14
+    b.eq    .Lenc_done
+
+    // x4 -> key pointer: &key_table[k+8]
+    add     x4,x13,#64
+    add     x3,x13,#72
+___
+    &fls16("x10", "x11", "x4", "x3"); # uses x5-x7 and v16-v19 as clobbers, writes to v0-v7
+$code.=<<___;
+
+    // Increment k
+    add     x12,x12,#8
+
+    ldp     q18,q19,[x15],#160    // pre_tf_lo/hi_s1
+    ldr     q17,[x15],#16           // inv_shift_row
+    ldr     q16,[x15],#-176        // mask_0f
+    b       .Lenc_loop
+
+.Lenc_done:
+    // Load final CD state from mem_cd(x11) into v8-v15
+    ldp     q8,q9,[x11]
+    ldp     q10,q11,[x11,#32]
+    ldp     q12,q13,[x11,#64]
+    ldp     q14,q15,[x11,#96]
+
+    // Calculate final key pointer: &key_table[lastk] (lastk is in x8)
+    lsl     x4,x8,#3    // lastk * 8
+    add     x4,x0,x4    // &key_table[lastk]
+
+    // Call outunpack16: Operates in-place on v0-v15
+___
+    &outunpack16("x4", "v16", "v17", "v18", "x5");
+
+    &write_output("x1");
+$code.=<<___;
+
+    // === EPILOGUE ===
+    ldp     q8,q9,[sp,#16]
+    ldp     q10,q11,[sp,#48]
+    ldp     q12,q13,[sp,#80]
+    ldp     q14,q15,[sp,#112]
+
+    ldp     x29,x30,[sp],#144
+    ret
+.size   camellia_encrypt_16blks_neon,.-camellia_encrypt_16blks_neon
+
+.globl  camellia_decrypt_16blks_neon
+.type   camellia_decrypt_16blks_neon,%function
+.align  5
+camellia_decrypt_16blks_neon:
+    // === PROLOGUE ===
+    stp     x29,x30,[sp,#-144]!
+    mov     x29,sp
+    
+    stp     q8,q9,[sp,#16]
+    stp     q10,q11,[sp,#48]
+    stp     q12,q13,[sp,#80]
+    stp     q14,q15,[sp,#112]
+
+    // === SETUP ===
+    // Determine lastk
+    ldr     w9,[x0,#272]
+    mov     w8,#32
+    mov     w10,#24
+    cmp     w9,#16
+    csel    w8,w10,w8,le         // x8 -> lastk: if key_length <= 16 then 24, else - 32 
+
+    // === INPUT PROCESSING ===
+    // Call inpack16_pre: reads vin(x2), key[0](=ctx_ptr: x0), writes v0-v15
+    // clobbers: v16-v18 and x5
+    lsl     x4,x8,#3
+    add     x4,x0,x4
+___
+    &inpack16_pre("x2", "x4", "v16", "x5");
+$code.=<<___;
+
+    // Set up temp buffer pointers using vout_ptr (x1)
+    mov     x10,x1          // x10 -> vout
+    add     x11,x1,#128     // x11 -> vout + 128
+
+    // Call inpack16_post: byte-slices v0-v15, stores to mem_ab(x10), mem_cd(x11)
+    // Clobbers: v16, v17 and x4
+___
+    &inpack16_post("x10", "x11", "v16", "v17", "x4");
+$code.=<<___;
+
+    // Load Constants into v16-v27
+    adrp    x15,camellia_neon_consts
+    add     x15,x15,:lo12:camellia_neon_consts
+    ldp     q18,q19,[x15],#32    // pre_tf_lo/hi_s1
+    ldp     q20,q21,[x15],#32    // pre_tf_lo/hi_s4
+    ldp     q22,q23,[x15],#32    // post_tf_lo/hi_s1
+    ldp     q24,q25,[x15],#32    // post_tf_lo/hi_s2
+    ldp     q26,q27,[x15],#32    // post_tf_lo/hi_s3
+    ldr     q17,[x15],#16        // inv_shift_row
+    ldr     q16,[x15],#-176        // mask_0f
+
+    // === MAIN ROUND LOOP ===
+    sub     x12,x8,#8   // x14 -> lastk - 8
+.Ldec_loop:
+    // Calculate base key pointer for this block: &key_table[k]
+    lsl     x13,x12,#3  // x13 -> key_base_idx = k * 8
+    add     x13,x0,x13  // x13 = &key_table[k] - assuming here key_table_base = ctx[0] -> x0
+
+    // Round 1 (keys k+6, k+7)
+    add     x4,x13,#56  // &key_table[k+7]
+___
+    &two_roundsm16_dec("v0","v1","v2","v3","v4","v5","v6","v7","x10","x11","x4","store_ab_state");
+$code.=<<___;
+
+    // Round 2 (keys k+4, k+5)
+    add     x4,x13,#40  // &key_table[k+5]
+___
+    &two_roundsm16_dec("v0","v1","v2","v3","v4","v5","v6","v7","x10","x11","x4","store_ab_state");
+$code.=<<___;
+
+    // Round 3 (keys k+2, k+3)
+    add     x4,x13,#24  // &key_table[k+3]
+___
+    &two_roundsm16_dec("v0","v1","v2","v3","v4","v5","v6","v7","x10","x11","x4","dummy_store");
+$code.=<<___;
+
+    // Check loop condition
+    //cmp     x12,x14
+    cbz     x12,.Ldec_done
+
+    // x4 -> key pointer: &key_table[k+8]
+    add     x3,x13,#0
+    add     x4,x13,#8
+___
+    &fls16("x10", "x11", "x4", "x3"); # uses x5-x7 and v16-v19 as clobbers, writes to v0-v7
+$code.=<<___;
+
+    // Decrement k
+    sub     x12,x12,#8
+
+    ldp     q18,q19,[x15],#160    // pre_tf_lo/hi_s1
+    ldr     q17,[x15],#16           // inv_shift_row
+    ldr     q16,[x15],#-176        // mask_0f
+    b       .Ldec_loop
+
+.Ldec_done:
+    // Load final CD state from mem_cd(x11) into v8-v15
+    ldp     q8,q9,[x11]
+    ldp     q10,q11,[x11,#32]
+    ldp     q12,q13,[x11,#64]
+    ldp     q14,q15,[x11,#96]
+
+    // Calculate final key pointer: &key_table[lastk] (lastk is in x8)
+    //lsl     x4,x8,#3    // lastk * 8
+    //add     x4,x0,x4    // &key_table[lastk]
+
+    // Call outunpack16: Operates in-place on v0-v15
+___
+    &outunpack16("x0", "v16", "v17", "v18", "x5");
+
+    &write_output("x1");
+$code.=<<___;
+
+    // === EPILOGUE ===
+    ldp     q8,q9,[sp,#16]
+    ldp     q10,q11,[sp,#48]
+    ldp     q12,q13,[sp,#80]
+    ldp     q14,q15,[sp,#112]
+
+    ldp     x29,x30,[sp],#144
+    ret
+.size   camellia_decrypt_16blks_neon,.-camellia_decrypt_16blks_neon
+
 /*
    "Optimised" key setup 
 */
