@@ -3451,8 +3451,7 @@ int ossl_gost_ukm(const SSL_CONNECTION *s, unsigned char *dgst_buf)
     EVP_MD_CTX *hash = NULL;
     unsigned int md_len;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-    const EVP_MD *md = ssl_evp_md_fetch(sctx->libctx, NID_id_GostR3411_2012_256,
-                                        sctx->propq);
+    const EVP_MD *md = EVP_MD_fetch(sctx->libctx, "md_gost12_256", sctx->propq);
 
     if (md == NULL)
         return 0;

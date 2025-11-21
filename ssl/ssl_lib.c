@@ -13,6 +13,7 @@
 #include "internal/e_winsock.h"
 #include "ssl_local.h"
 
+#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
@@ -4158,8 +4159,10 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
      * If these aren't available from the provider we'll get NULL returns.
      * That's fine but will cause errors later if SSLv3 is negotiated
      */
-    ret->md5 = ssl_evp_md_fetch(libctx, NID_md5, propq);
-    ret->sha1 = ssl_evp_md_fetch(libctx, NID_sha1, propq);
+    ERR_set_mark();
+    ret->md5 = EVP_MD_fetch(libctx, "MD5", propq);
+    ret->sha1 = EVP_MD_fetch(libctx, "SHA1", propq);
+    ERR_pop_to_mark();
 
     if ((ret->ca_names = sk_X509_NAME_new_null()) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
@@ -7531,18 +7534,6 @@ void ssl_evp_cipher_free(const EVP_CIPHER *cipher)
          */
         EVP_CIPHER_free((EVP_CIPHER *)cipher);
     }
-}
-
-const EVP_MD *ssl_evp_md_fetch(OSSL_LIB_CTX *libctx,
-                               int nid,
-                               const char *properties)
-{
-    const EVP_MD *md;
-
-    ERR_set_mark();
-    md = EVP_MD_fetch(libctx, OBJ_nid2sn(nid), properties);
-    ERR_pop_to_mark();
-    return md;
 }
 
 int ssl_evp_md_up_ref(const EVP_MD *md)
