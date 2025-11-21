@@ -319,8 +319,15 @@ int ssl_load_ciphers(SSL_CTX *ctx)
     }
     ctx->disabled_mac_mask = 0;
     for (i = 0, t = ssl_cipher_table_mac; i < SSL_MD_NUM_IDX; i++, t++) {
-        const EVP_MD *md
-            = ssl_evp_md_fetch(ctx->libctx, t->nid, ctx->propq);
+        /*
+         * We ignore any errors from the fetch below. It is expected to fail
+         * if these algorithms are not available.
+         */
+        ERR_set_mark();
+        const EVP_MD *md = EVP_MD_fetch(ctx->libctx,
+                                        OBJ_nid2sn(t->nid),
+                                        ctx->propq);
+        ERR_pop_to_mark();
 
         ctx->ssl_digest_methods[i] = md;
         if (md == NULL) {
