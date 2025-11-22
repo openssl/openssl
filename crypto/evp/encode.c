@@ -14,7 +14,16 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-#ifdef __AVX2__
+#if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && \
+    (defined(__i386)   || defined(__i386__)   || defined(_M_IX86)  || \
+     defined(__x86_64) || defined(__x86_64__) || \
+     defined(_M_AMD64) || defined(_M_X64))
+
+# define EVP_ENCODE_USE_AVX2
+#endif
+
+
+#ifdef EVP_ENCODE_USE_AVX2
 # include "enc_b64_avx2.h"
 #else
 # include "enc_b64_scalar.h"
@@ -177,6 +186,7 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
         j = evp_encodeblock_int(ctx, out, in, inl - (inl % ctx->length),
                                 &wrap_cnt);
     } else {
+#ifdef EVP_ENCODE_USE_AVX2
         if ((OPENSSL_ia32cap_P[2] & (1u << 5)) != 0){
             const int newlines =
                 !(ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) ? ctx->length : 0;
@@ -189,6 +199,10 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
             j = evp_encodeblock_int(ctx, out, in, inl - (inl % ctx->length),
                                     &wrap_cnt);
         }
+#else
+        j = evp_encodeblock_int(ctx, out, in, inl - (inl % ctx->length),
+                                &wrap_cnt);
+#endif
     }
     in += inl - (inl % ctx->length);
     inl -= inl - (inl % ctx->length);
@@ -232,10 +246,14 @@ int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
 {
     int wrap_cnt = 0;
 
+#ifdef EVP_ENCODE_USE_AVX2
     if ((OPENSSL_ia32cap_P[2] & (1u << 5)) != 0)
         return encode_base64_avx2(NULL, t, f, dlen, 0, &wrap_cnt);
     else
         return evp_encodeblock_int(NULL, t, f, dlen, &wrap_cnt);
+#else
+    return evp_encodeblock_int(NULL, t, f, dlen, &wrap_cnt);
+#endif
 }
 
 void EVP_DecodeInit(EVP_ENCODE_CTX *ctx)
