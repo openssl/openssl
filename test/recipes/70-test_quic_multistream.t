@@ -16,6 +16,9 @@ setup("test_quic_multistream");
 plan skip_all => "QUIC protocol is not supported by this OpenSSL build"
     if disabled('quic');
 
+plan skip_all => "$test_name needs EC or DH enabled"
+    if disabled("ec") && disabled("dh");
+
 plan tests => 2;
 
 my $qlog_output;
