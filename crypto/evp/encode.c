@@ -186,8 +186,8 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
                                 (const unsigned char *)in,
                                 inl - (inl % ctx->length), newlines, &wrap_cnt);
         } else {
-        j = evp_encodeblock_int(ctx, out, in, inl - (inl % ctx->length),
-                                &wrap_cnt);
+            j = evp_encodeblock_int(ctx, out, in, inl - (inl % ctx->length),
+                                    &wrap_cnt);
         }
     }
     in += inl - (inl % ctx->length);
