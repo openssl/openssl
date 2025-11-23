@@ -222,7 +222,11 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                 OSSL_TRACE_END(TLS);
             }
             if (s->ext.ech.ch_depth == 0) {
-                /* TODO(ECH): we need a better way to handle indexing exts */
+                /*
+                 * We store/access the index of the extension handler in
+                 * s->ext.ech.ext_ind, as we'd otherwise not know it here.
+                 * Be nice were there a better way to handle that.
+                 */
                 /* copy over the extension octets (if any) to outer */
                 int j, tind = -1;
                 RAW_EXTENSION *raws = NULL;

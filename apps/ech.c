@@ -187,9 +187,13 @@ int ech_main(int argc, char **argv)
     if (es == NULL)
         goto end;
     if (mode == OSSL_ECH_KEYGEN_MODE) {
+        if (public_name == NULL) {
+            BIO_printf(bio_err, "public_name required\n");
+            goto end;
+        }
         if (verbose)
             BIO_printf(bio_err, "Calling OSSL_ECHSTORE_new_config\n");
-        if ((ecf = BIO_new_file(outfile, "w")) == NULL
+        if ((ecf = bio_open_owner(outfile, FORMAT_PEM, 1)) == NULL
             || OSSL_ECHSTORE_new_config(es, ech_version, max_name_length,
                    public_name, hpke_suite)
                 != 1
@@ -207,10 +211,8 @@ int ech_main(int argc, char **argv)
         for (i = 0; i != numinfiles; i++) {
             if ((ecf = BIO_new_file(infiles[i], "r")) == NULL
                 || OSSL_ECHSTORE_read_pem(es, ecf, OSSL_ECH_FOR_RETRY) != 1) {
-                if (verbose)
-                    BIO_printf(bio_err, "OSSL_ECHSTORE_read_pem error for %s\n",
-                        infiles[i]);
-                /* try read it as an ECHConfigList */
+                BIO_printf(bio_err, "OSSL_ECHSTORE_read_pem error: %s\n",
+                    infiles[i]);
                 goto end;
             }
             BIO_free(ecf);
@@ -226,7 +228,8 @@ int ech_main(int argc, char **argv)
                 BIO_printf(bio_err, "Selected entry: %d\n", select);
             if ((ecf = BIO_new_file(outfile, "w")) == NULL
                 || OSSL_ECHSTORE_write_pem(es, select, ecf) != 1) {
-                BIO_printf(bio_err, "OSSL_ECHSTORE_write_pem error\n");
+                BIO_printf(bio_err, "OSSL_ECHSTORE_write_pem error: %s\n",
+                    outfile);
                 goto end;
             }
             if (verbose)
@@ -240,7 +243,7 @@ int ech_main(int argc, char **argv)
         if (OSSL_ECHSTORE_num_entries(es, &oi_cnt) != 1)
             goto end;
         if (verbose)
-            BIO_printf(bio_err, "Printing %d ECHConfigList\n", oi_cnt);
+            BIO_printf(bio_err, "Printing %d ECHConfig values\n", oi_cnt);
         for (oi_ind = 0; oi_ind != oi_cnt; oi_ind++) {
             time_t secs = 0;
             char *pn = NULL, *ec = NULL;
@@ -253,9 +256,10 @@ int ech_main(int argc, char **argv)
                 OPENSSL_free(ec);
                 goto end;
             }
-            BIO_printf(bio_err, "ECH entry: %d public_name: %s age: %lld%s\n",
+            BIO_printf(bio_err, "ECH entry: %d public_name: %s age: %lld%s%s\n",
                 oi_ind, pn, (long long)secs,
-                has_priv ? " (has private key)" : "");
+                has_priv ? " (has private key)" : "",
+                for_retry ? " (will be sent in retry-configs)" : "");
             BIO_printf(bio_err, "\t%s\n", ec);
             OPENSSL_free(pn);
             OPENSSL_free(ec);
