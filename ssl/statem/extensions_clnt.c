@@ -1430,7 +1430,6 @@ dopsksess:
      * with random values of the same length.
      */
     if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 0) {
-        /* TODO(ECH): changes here need testing with server-side code PR */
         unsigned char *rndbuf = NULL, *rndbufp = NULL;
         size_t totalrndsize = 0;
 
@@ -2577,8 +2576,9 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
     size_t cipherlen = 0, aad_len = 0, lenclen = 0, mypub_len = 0;
     size_t info_len = OSSL_ECH_MAX_INFO_LEN, clear_len = 0, encoded_len = 0;
     /* whether or not we've been asked to GREASE, one way or another */
-    int grease_opt_set = ((s->ext.ech.grease == OSSL_ECH_IS_GREASE)
-                          || ((s->options & SSL_OP_ECH_GREASE) != 0));
+    int grease_opt_set = (s->ext.ech.attempted != 1
+                          && ((s->ext.ech.grease == OSSL_ECH_IS_GREASE)
+                              || ((s->options & SSL_OP_ECH_GREASE) != 0)));
 
     /* if we're not doing real ECH and not GREASEing then exit */
     if (s->ext.ech.attempted_type != TLSEXT_TYPE_ech && grease_opt_set == 0)

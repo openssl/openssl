@@ -19,6 +19,8 @@ Header:
           000f - 01 02 04 04 80 0c 00 00-05 04 80 08 00 00 06   ...............
           001e - 04 80 08 00 00 07 04 80-08 00 00 08 02 40 64   .............@d
           002d - 09 02 40 64                                    ..@d
+        extension_type=ec_point_formats(11), length=2
+          uncompressed (0)
         extension_type=supported_groups(10), length=18
           X25519MLKEM768 (4588)
           ecdh_x25519 (29)
@@ -29,8 +31,6 @@ Header:
           ffdhe2048 (256)
           ffdhe3072 (257)
         extension_type=session_ticket(35), length=0
-        extension_type=application_layer_protocol_negotiation(16), length=11
-          ossltest
         extension_type=encrypt_then_mac(22), length=0
         extension_type=extended_master_secret(23), length=0
         extension_type=signature_algorithms(13), length=?
@@ -63,8 +63,8 @@ Header:
             key_exchange:  (len=1216): ?
             NamedGroup: ecdh_x25519 (29)
             key_exchange:  (len=32): ?
-        extension_type=compress_certificate(27), length=3
-          zlib (1)
+        extension_type=application_layer_protocol_negotiation(16), length=11
+          ossltest
 
 Sent Frame: Crypto
     Offset: 0
@@ -268,22 +268,24 @@ Certificate:
             Public Key Algorithm: rsaEncryption
                 Public-Key: (2048 bit)
                 Modulus:
-                    d5:5d:60:6a:df:fc:61:ee:48:aa:8c:11:48:43:a5:6d:
-                    b6:52:5d:aa:98:49:b1:61:92:35:b1:fc:3a:04:25:0c:
-                    6d:79:ff:b4:d5:c9:e9:5c:1c:3b:e0:ab:b3:b8:7d:a3:
-                    de:6d:bd:e0:dd:d7:5a:bf:14:47:11:42:5e:a6:82:d0:
-                    61:c1:7f:dd:13:46:e6:09:85:07:0e:f2:d4:fc:1a:64:
-                    d2:0a:ad:20:ab:20:6b:96:f0:ad:cc:c4:19:53:55:dc:
-                    01:1d:a4:b3:ef:8a:b4:49:53:5d:8a:05:1c:f1:dc:e1:
-                    44:bf:c5:d7:e2:77:19:57:5c:97:0b:75:ee:88:43:71:
-                    0f:ca:6c:c1:b4:b2:50:a7:77:46:6c:58:0f:11:bf:f1:
-                    76:24:5a:ae:39:42:b7:51:67:29:e1:d0:55:30:6f:17:
-                    e4:91:ea:ad:f8:28:c2:43:6f:a2:64:a9:fb:9d:98:92:
-                    62:48:3e:eb:0d:4f:82:4a:8a:ff:3f:72:ee:96:b5:ae:
-                    a1:c1:98:ba:ef:7d:90:75:6d:ff:5a:52:9e:ab:f5:c0:
-                    7e:d0:87:43:db:85:07:07:0f:7d:38:7a:fd:d1:d3:ee:
-                    65:1d:d3:ea:39:6a:87:37:ee:4a:d3:e0:0d:6e:f5:70:
-                    ac:c2:bd:f1:6e:f3:92:95:5e:a9:f0:a1:65:95:93:8d
+                    00:d5:5d:60:6a:df:fc:61:ee:48:aa:8c:11:48:43:
+                    a5:6d:b6:52:5d:aa:98:49:b1:61:92:35:b1:fc:3a:
+                    04:25:0c:6d:79:ff:b4:d5:c9:e9:5c:1c:3b:e0:ab:
+                    b3:b8:7d:a3:de:6d:bd:e0:dd:d7:5a:bf:14:47:11:
+                    42:5e:a6:82:d0:61:c1:7f:dd:13:46:e6:09:85:07:
+                    0e:f2:d4:fc:1a:64:d2:0a:ad:20:ab:20:6b:96:f0:
+                    ad:cc:c4:19:53:55:dc:01:1d:a4:b3:ef:8a:b4:49:
+                    53:5d:8a:05:1c:f1:dc:e1:44:bf:c5:d7:e2:77:19:
+                    57:5c:97:0b:75:ee:88:43:71:0f:ca:6c:c1:b4:b2:
+                    50:a7:77:46:6c:58:0f:11:bf:f1:76:24:5a:ae:39:
+                    42:b7:51:67:29:e1:d0:55:30:6f:17:e4:91:ea:ad:
+                    f8:28:c2:43:6f:a2:64:a9:fb:9d:98:92:62:48:3e:
+                    eb:0d:4f:82:4a:8a:ff:3f:72:ee:96:b5:ae:a1:c1:
+                    98:ba:ef:7d:90:75:6d:ff:5a:52:9e:ab:f5:c0:7e:
+                    d0:87:43:db:85:07:07:0f:7d:38:7a:fd:d1:d3:ee:
+                    65:1d:d3:ea:39:6a:87:37:ee:4a:d3:e0:0d:6e:f5:
+                    70:ac:c2:bd:f1:6e:f3:92:95:5e:a9:f0:a1:65:95:
+                    93:8d
                 Exponent: 65537 (0x10001)
         X509v3 extensions:
             X509v3 Subject Key Identifier: 
@@ -298,17 +300,21 @@ Certificate:
                 DNS:server.example
     Signature Algorithm: sha256WithRSAEncryption
     Signature Value:
-        7b:d3:04:43:75:8a:0f:11:ae:c4:fb:d7:a1:a2:9e:fe:20:18:d5:f4:2f:31:88:46:
-        b6:75:8c:ee:e5:9b:97:a6:b9:a3:cd:60:9a:46:c3:48:97:e5:97:68:f7:5a:86:35:
-        73:d9:69:9e:f9:5f:74:b9:e6:94:13:01:cb:6a:dc:e3:c4:04:e9:65:da:9c:a4:8b:
-        28:f3:f9:9a:7f:bf:97:1f:45:92:e5:05:b1:56:e6:0b:f6:47:de:1e:89:b6:2b:e1:
-        4d:df:4a:7e:01:d3:23:dc:97:8c:47:fe:5f:c7:cc:98:46:0e:c4:83:5b:ca:8a:f1:
-        52:09:be:6b:ec:3f:09:8b:d0:93:02:bf:e1:51:e7:d1:7e:34:56:19:74:d0:ff:28:
-        25:de:b7:9f:56:52:91:7d:20:29:85:0a:80:44:5f:71:32:25:71:0f:c2:16:e2:5f:
-        6b:1d:3f:32:5b:0a:3c:74:1c:b9:62:f1:ed:07:50:a3:6d:b4:b4:31:0a:c0:53:44:
-        6a:3a:88:84:8b:2d:a9:b0:37:8e:e6:18:36:bd:9a:20:40:0f:01:92:8b:3d:aa:61:
-        e7:ae:2c:ed:36:cd:3a:07:86:74:3a:29:b3:d7:3a:b4:00:a9:c2:f5:92:78:0e:e2:
-        0f:a3:fe:bb:be:e0:06:53:84:59:1d:90:69:e5:b6:f9
+        7b:d3:04:43:75:8a:0f:11:ae:c4:fb:d7:a1:a2:9e:fe:20:18:
+        d5:f4:2f:31:88:46:b6:75:8c:ee:e5:9b:97:a6:b9:a3:cd:60:
+        9a:46:c3:48:97:e5:97:68:f7:5a:86:35:73:d9:69:9e:f9:5f:
+        74:b9:e6:94:13:01:cb:6a:dc:e3:c4:04:e9:65:da:9c:a4:8b:
+        28:f3:f9:9a:7f:bf:97:1f:45:92:e5:05:b1:56:e6:0b:f6:47:
+        de:1e:89:b6:2b:e1:4d:df:4a:7e:01:d3:23:dc:97:8c:47:fe:
+        5f:c7:cc:98:46:0e:c4:83:5b:ca:8a:f1:52:09:be:6b:ec:3f:
+        09:8b:d0:93:02:bf:e1:51:e7:d1:7e:34:56:19:74:d0:ff:28:
+        25:de:b7:9f:56:52:91:7d:20:29:85:0a:80:44:5f:71:32:25:
+        71:0f:c2:16:e2:5f:6b:1d:3f:32:5b:0a:3c:74:1c:b9:62:f1:
+        ed:07:50:a3:6d:b4:b4:31:0a:c0:53:44:6a:3a:88:84:8b:2d:
+        a9:b0:37:8e:e6:18:36:bd:9a:20:40:0f:01:92:8b:3d:aa:61:
+        e7:ae:2c:ed:36:cd:3a:07:86:74:3a:29:b3:d7:3a:b4:00:a9:
+        c2:f5:92:78:0e:e2:0f:a3:fe:bb:be:e0:06:53:84:59:1d:90:
+        69:e5:b6:f9
 -----BEGIN CERTIFICATE-----
 MIIDJTCCAg2gAwIBAgIBAjANBgkqhkiG9w0BAQsFADASMRAwDgYDVQQDDAdSb290
 IENBMCAXDTE2MDExNDIyMjk0NloYDzIxMTYwMTE1MjIyOTQ2WjAZMRcwFQYDVQQD

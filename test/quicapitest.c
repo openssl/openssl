@@ -469,11 +469,29 @@ static int test_ssl_trace(void)
             goto err;
     } else {
 
-#ifdef OPENSSL_NO_ZLIB
+# ifndef OPENSSL_NO_ECH
+  /*
+   * When we support ECH, the ECH compression scheme affects the ordering
+   * of extensions in the ClientHello as the set of compressed extensions
+   * need to be contiguous in the outer ClientHello. So we need different
+   * trace files to compare against for this test in ECH builds vs. 'no-ech'
+   * buiids.
+   * Note that that ordering will be affected if the ECH compression
+   * choices are changed - see the comments in ssl/statem/extensions.s
+   * where those choices are embedded in the ext_defs table.
+   */ 
+#  ifdef OPENSSL_NO_ZLIB
+        reffile = test_mk_file_path(datadir, "ssltraceref-ech.txt");
+#  else
+        reffile = test_mk_file_path(datadir, "ssltraceref-ech-zlib.txt");
+#  endif
+# else
+#  ifdef OPENSSL_NO_ZLIB
         reffile = test_mk_file_path(datadir, "ssltraceref.txt");
-#else
+#  else
         reffile = test_mk_file_path(datadir, "ssltraceref-zlib.txt");
-#endif
+#  endif
+# endif
         if (!TEST_true(compare_with_reference_file(bio, reffile)))
             goto err;
     }

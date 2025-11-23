@@ -1575,6 +1575,13 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
     BIO *in = NULL;
     int loaded = 0;
 
+    /*
+     * If you change the output to bio_s_out here you may
+     * also need to change test/recipies/82-test_ech_client_server.t
+     * as that test checks the server's stdout to decide if the
+     * server started ok or not. Text sent to stderr won't affect
+     * that test.
+     */
     if ((elen + 7) >= PATH_MAX) { /* too long, go away */
         BIO_printf(bio_err, "'%s' too long - exiting\n", thedir);
         return 0;
@@ -1598,11 +1605,14 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
 #  else
         r = BIO_snprintf(filepath, sizeof(filepath), "%s/%s", thedir, thisfile);
 #  endif
+        if (app_isdir(filepath) > 0) {
+            BIO_printf(bio_err, "Skipping directory: %s\n", filepath);
+            continue;
+        }
         if (r < 0
-            || app_isdir(filepath) > 0
             || (in = BIO_new_file(filepath, "r")) == NULL
             || OSSL_ECHSTORE_read_pem(es, in, for_retry) != 1) {
-            BIO_printf(bio_err, "Failed reading from: %s\n", thisfile);
+            BIO_printf(bio_err, "Failed reading from: %s\n", filepath);
             continue;
         }
         BIO_free_all(in);
