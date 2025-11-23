@@ -219,7 +219,7 @@ int OCSP_request_sign(OCSP_REQUEST *req,
                       X509 *signer,
                       EVP_PKEY *key,
                       const EVP_MD *dgst,
-                      STACK_OF(X509) *certs, unsigned long flags);
+                      const STACK_OF(X509) *certs, unsigned long flags);
 
 int OCSP_response_status(OCSP_RESPONSE *resp);
 OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp);
@@ -228,7 +228,7 @@ const ASN1_OCTET_STRING *OCSP_resp_get0_signature(const OCSP_BASICRESP *bs);
 const X509_ALGOR *OCSP_resp_get0_tbs_sigalg(const OCSP_BASICRESP *bs);
 const OCSP_RESPDATA *OCSP_resp_get0_respdata(const OCSP_BASICRESP *bs);
 int OCSP_resp_get0_signer(OCSP_BASICRESP *bs, X509 **signer,
-                          STACK_OF(X509) *extra_certs);
+                          const STACK_OF(X509) *extra_certs);
 
 int OCSP_resp_count(OCSP_BASICRESP *bs);
 OCSP_SINGLERESP *OCSP_resp_get0(OCSP_BASICRESP *bs, int idx);
@@ -254,7 +254,7 @@ int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
 int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
                         ASN1_GENERALIZEDTIME *nextupd, long sec, long maxsec);
 
-int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
+int OCSP_request_verify(OCSP_REQUEST *req, const STACK_OF(X509) *certs,
                         X509_STORE *store, unsigned long flags);
 
 #  define OCSP_parse_url(url, host, port, path, ssl) \
@@ -280,10 +280,10 @@ OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
 int OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert);
 int OCSP_basic_sign(OCSP_BASICRESP *brsp,
                     X509 *signer, EVP_PKEY *key, const EVP_MD *dgst,
-                    STACK_OF(X509) *certs, unsigned long flags);
+                    const STACK_OF(X509) *certs, unsigned long flags);
 int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
                         X509 *signer, EVP_MD_CTX *ctx,
-                        STACK_OF(X509) *certs, unsigned long flags);
+                        const STACK_OF(X509) *certs, unsigned long flags);
 int OCSP_RESPID_set_by_name(OCSP_RESPID *respid, X509 *cert);
 int OCSP_RESPID_set_by_key_ex(OCSP_RESPID *respid, X509 *cert,
                               OSSL_LIB_CTX *libctx, const char *propq);
@@ -376,7 +376,7 @@ const char *OCSP_crl_reason_str(long s);
 int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST *a, unsigned long flags);
 int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE *o, unsigned long flags);
 
-int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
+int OCSP_basic_verify(OCSP_BASICRESP *bs, const STACK_OF(X509) *certs,
                       X509_STORE *st, unsigned long flags);
 
 

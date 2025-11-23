@@ -85,7 +85,7 @@ static struct {
  *      - Verify the signature value.
  *      - Returns the signer certificate in 'signer', if 'signer' is not NULL.
  */
-int TS_RESP_verify_signature(PKCS7 *token, STACK_OF(X509) *certs,
+int TS_RESP_verify_signature(PKCS7 *token, const STACK_OF(X509) *certs,
                              X509_STORE *store, X509 **signer_out)
 {
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos = NULL;
