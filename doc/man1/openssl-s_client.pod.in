@@ -623,7 +623,7 @@ normal verbose output.
 Send the protocol-specific message(s) to switch to TLS for communication.
 I<protocol> is a keyword for the intended protocol.  Currently, the only
 supported keywords are "smtp", "pop3", "imap", "ftp", "xmpp", "xmpp-server",
-"irc", "postgres", "mysql", "lmtp", "nntp", "sieve" and "ldap".
+"irc", "postgres", "mysql", "lmtp", "nntp", "sieve", "ldap", and "rpc".
 
 =item B<-xmpphost> I<hostname>
 
