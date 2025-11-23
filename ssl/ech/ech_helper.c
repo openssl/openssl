@@ -95,7 +95,7 @@ int ossl_ech_helper_get_ch_offsets(const unsigned char *ch, size_t ch_len,
     if (!PACKET_get_net_2(&pkt, &pi_tmp))
         return 0;
     /* if we're not TLSv1.2+ then we can bail, but it's not an error */
-    if (pi_tmp != TLS1_2_VERSION && pi_tmp != TLS1_3_VERSION)
+    if (pi_tmp != TLS1_2_VERSION)
         return 1;
     /* chew up the packet to extensions */
     if (!PACKET_get_bytes(&pkt, &pp_tmp, SSL3_RANDOM_SIZE)
