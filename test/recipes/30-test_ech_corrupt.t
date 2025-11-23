@@ -11,11 +11,15 @@ use strict;
 use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file/;
 
-setup("test_ech");
+setup("test_ech_corrupt");
 
+# Seeing tls1_2 below may be unexpected but we include a test case 
+# where the inner CH is TLSv1.2 and the outer is TLSv1.3, but we
+# don't get the expected error in builds where TLSv1.2 is not supported
+# so we'll skip those
 plan skip_all => "ECH tests not supported in this build"
-    if disabled("ech") || disabled("tls1_3") || disabled("ec") || disabled("ecx");
+    if disabled("ech") || disabled("tls1_2") || disabled("tls1_3") || disabled("ec") || disabled("ecx");
 
 plan tests => 1;
 
-ok(run(test(["ech_test", srctop_dir("test", "certs")])))
+ok(run(test(["ech_corrupt_test", srctop_dir("test", "certs")])))

@@ -3391,11 +3391,6 @@ int tls_process_initial_server_flight(SSL_CONNECTION *s)
 
 #ifndef OPENSSL_NO_ECH
     /* check result of ech and return error if needed */
-    /*
-     * TODO(ECH): check that we never get here in a server
-     * during split-mode or test cases - there used be a
-     * check of !s->server added to the below.
-     */
     if (s->ext.ech.es != NULL
         && s->ext.ech.attempted == 1
         && s->ext.ech.success != 1
