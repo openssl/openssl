@@ -103,7 +103,7 @@ L<SSL_set1_echstore(3)>
 
 =head1 HISTORY
 
-This functionality described here was added in OpenSSL 3.5.
+This functionality described here was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
