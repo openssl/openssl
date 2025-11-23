@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 151;
+plan tests => 150;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -637,13 +637,11 @@ SKIP: {
 my $c_early = "c-early.pem";
 my $c_late = "c-late.pem";
 my $c_chain = "c-chain.pem";
-my $c_bad = srctop_file('test', 'certs', 'ca-key.pem');
-ok(run(app(["openssl", "x509", "-text",
-             "-in", srctop_file('test', 'certs', 'ca-cert.pem'),
-             "-out", $c_early])));
-ok(run(app(["openssl", "x509", "-text",
-             "-in", srctop_file('test', 'certs', 'rootCA.pem'),
-             "-out", $c_late])));
+my $c_key = srctop_file(@certs, 'ca-key.pem');
+ok(run(app(["openssl", "x509", "-new", "-key", $c_key, "-subj", "/CN=EARLY",
+            "-extfile", $extfile, "-days", "100", "-text", "-out", $c_early]))
+&& run(app(["openssl", "x509", "-new", "-key", $c_key, "-subj", "/CN=LATE",
+            "-extfile", $extfile, "-days", "200", "-text", "-out", $c_late])));
 my $c_time = Time::Piece->gmtime->epoch;
 my $delta_early = Time::Piece->strptime(
                     get_field($c_early, "Not After "),
@@ -702,5 +700,5 @@ ok(!run(app(["openssl", "x509", "-multi", "-checkend",
              $delta_late + 3600, "-in", $c_chain])),
     "Multi cert + all expiring in -checkend window");
 # Bad parse still returns non-zero
-ok(!run(app(["openssl", "x509", "-checkend", "60", "-in", $c_bad])),
+ok(!run(app(["openssl", "x509", "-checkend", "60", "-in", $c_key])),
     "Bad parse with -checkend returns non-zero");
