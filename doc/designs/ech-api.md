@@ -1,17 +1,11 @@
 Encrypted ClientHello (ECH) APIs
 ================================
 
-TODO(ECH): replace references/links to the [sftcd
-ECH-draft-13c](https://github.com/sftcd/openssl/tree/ECH-draft-13c) (the branch
-that has good integration and interop) with relative links as files are
-migrated into (PRs for) the feature branch.
+The ECH [feature branch](https://github.com/openssl/openssl/tree/feature/ech).
+has an implementation of Encrypted Client Hello (ECH) and these are design
+notes for the APIs implemented there.
 
-The `OSSL_ECHSTORE` related text here matches the ECH
-[feature branch](https://github.com/openssl/openssl/tree/feature/ech).
-
-There is an [OpenSSL fork](https://github.com/sftcd/openssl/tree/ECH-draft-13c)
-that has an implementation of Encrypted Client Hello (ECH) and these are design
-notes taking the APIs implemented there as a starting point.
+This text was last updated on 2025-11-20.
 
 The ECH Protocol
 ----------------
@@ -27,8 +21,8 @@ ECH makes use of [HPKE](https://datatracker.ietf.org/doc/rfc9180/) for the
 encryption of the inner CH. HPKE code was merged to the master branch in
 November 2022.
 
-The ECH APIs are also documented
-[here](https://github.com/sftcd/openssl/blob/ECH-draft-13c/doc/man3/SSL_ech_set1_echconfig.pod).
+The ECH APIs are documented
+[here](../../doc/man3/SSL_set1_echstore.pod)
 The descriptions here are less formal and provide some justification for the
 API design.
 
@@ -37,40 +31,38 @@ error. All APIs call `SSLfatal` or `ERR_raise` macros as appropriate before
 returning an error.
 
 Prototypes are mostly in
-[`include/openssl/ech.h`](https://github.com/sftcd/openssl/blob/ECH-draft-13c/include/openssl/ech.h)
-for now.
+[`include/openssl/ech.h`](../../include/openssl/ech.h).
 
 General Approach
 ----------------
 
-This ECH implementation has been prototyped via integrations with curl, apache2,
-lighttpd, nginx and haproxy. The implementation interoperates with all other
+This ECH implementation was prototyped via integrations with curl, apache2,
+lighttpd, nginx, freenginx and haproxy. The implementation interoperates with all other
 known ECH implementations, including browsers, the libraries they use
 (NSS/BoringSSL), a closed-source server implementation (Cloudflare's test
-server) and with wolfssl and (reportedly) a rusttls client.
+server) and with wolfssl and rusttls.
 
-To date, the approach taken has been to minimise the application layer code
+The approach taken has been to minimise the application layer code
 changes required to ECH-enable those applications. There is of course a tension
 between that minimisation goal and providing generic and future-proof
 interfaces.
 
-In terms of implementation, it is expected (and welcome) that many details of
-the current ECH implementation will change during review.
-
-Specification
--------------
+ECH Specification
+-----------------
 
 ECH is an IETF TLS WG specification. It has been stable since
 [draft-13](https://datatracker.ietf.org/doc/draft-ietf-tls-esni/13/), published
 in August 2021.  The latest draft can be found
 [here](https://datatracker.ietf.org/doc/draft-ietf-tls-esni/).
+The specification is currently in the RFC editor's queue and is
+part of a [cluster](https://www.rfc-editor.org/cluster_info.php?cid=C430)
+of related drafts that will be published together.
 
-Once browsers and others have done sufficient testing the plan is to
-proceed to publishing ECH as an RFC.
-
-The only current ECHConfig version supported is 0xfe0d which will be the
+The only current ECHConfig version defined is 0xfe0d which will be the
 value to be used in the eventual RFC when that issues. (We'll replace the
 XXXX with the relevant RFC number once that's known.)
+TODO(ECH): Update XXXX when RFC published, and check other occurrences
+of XXXX throughout the source tree.
 
 ```c
 /* version from RFC XXXX */
@@ -88,11 +80,23 @@ Note that 0xfe0d is also the value of the ECH extension codepoint:
 The uses of those should be correctly differentiated in the implementation, to
 more easily avoid problems if/when new versions are defined.
 
-Minimal Sample Code
+ECH PEM file format
 -------------------
 
-TODO(ECH): This sample code has only been compiled. The `OSSL_ECHSTORE` stuff
-doesn't work yet.
+Servers supporting ECH need to read a set of ECH private keys and
+ECHConfigLists from storage. There is a specification for a
+[PEM file format for ECH](https://datatracker.ietf.org/doc/draft-farrell-tls-pemesni/)
+that is supported by the library. That specification is being
+processed within the IETF as an area-director sponsored draft,
+so is not a TLS WG work item, but will be an IETF stream
+RFC when completed.
+
+This PEM file format is supported by code for a number of TLS servers,
+including (at the time of writing) lighttpd, freenginx, apache2 and haproxy.
+ECH support in those servers is currently an experimental feature or similar.
+
+Minimal Sample Code
+-------------------
 
 OpenSSL includes code for an [`sslecho`](../../demos/sslecho) demo.  We've
 added a minimal [`echecho`](../../demos/sslecho/echecho.c) that shows how to
@@ -122,7 +126,7 @@ packets. Some TLS handshake messages can however reduce the size of the
 anonymity-set due to message-sizes. In particular the Certificate message size
 will depend on the name of the SNI from the inner ClientHello. TLS however does
 allow for record layer padding which can reduce the impact of underlying
-message sizes on the size of the anonymity set. The recently added
+message sizes on the size of the anonymity set. The
 `SSL_CTX_record_padding_ex()` and `SSL_record_padding_ex()` APIs allow for
 setting separate padding sizes for the handshake messages, (that most affect
 ECH), and application data messages (where padding may affect efficiency more).
@@ -131,7 +135,7 @@ ECHConfig Extensions
 --------------------
 
 The ECH protocol supports extensibility [within the ECHConfig
-structure](https://www.ietf.org/archive/id/draft-ietf-tls-esni-18.html#section-4.2)
+structure](https://www.ietf.org/archive/id/draft-ietf-tls-esni-25.html#name-configuration-extensions)
 via a typical TLS type, length, value scheme.  However, to date, there are no
 extensions defined, nor do other implementations provide APIs for adding or
 manipulating ECHConfig extensions. We therefore take the same approach here.
@@ -149,17 +153,14 @@ no API support for generating such, and the library has no support for any
 specific ECHConfig extension type.  (Other than skipping over or failing as
 described above.)
 
-In general, the ECHConfig extensibility mechanism seems to have no proven
+In general, the ECHConfig extensibility mechanism seems to have little proven
 utility. (If new fields for an ECHConfig are required, a new ECHConfig version
-with the proposed changes can just as easily be developed/deployed.)
+with the proposed changes could just as easily be developed/deployed.)
 
 The theory for ECHConfig extensions is that such values might be used to
 control the outer ClientHello - controls to affect the inner ClientHello, when
 ECH is used, are envisaged to be published as SvcParamKey values in SVCB/HTTP
 resource records in the DNS.
-
-To repeat though: after a number of years of the development of ECH, no such
-ECHConfig extensions have been proposed.
 
 Should some useful ECHConfig extensions be defined in future, then the
 `OSSL_ECHSTORE` APIs could be extended to enable management of such, or, new
@@ -186,13 +187,22 @@ used to authenticate servers. Notably:
 
 - In particular, the above means that we do not see any need to repeatedly
   parse or process related ECHConfigList structures - each can be processed
-  independently for all practical purposes.
+  independently for all practical purposes, and there is no equivalent to
+  X.509 path processing.
 
 - There are all the usual algorithm variations, and those will likely result in
   the same x25519 versus p256 combinatorics. How that plays out has yet to be
   seen as FIPS compliance for ECH is not (yet) a thing. For OpenSSL, it seems
   wise to be agnostic and support all relevant combinations. (And doing so is not
   that hard.)
+
+- At the time of writing there is work ongoing to specify use of post-quantum
+  KEMs with HPKE. Once that work matures, and the relevant (hybrid) KEMs are
+  supported by OpenSSL, then they should be usable with ECH. It is quite likely
+  at least some test code will need changes due to the increase in the size
+  of the ECH extension. For now, there is no support for e.g. use of an
+  equivalent to X25519MLKEM768 for ECH encryption. ECH does work fine if
+  X25519MLKEM768 is used for the TLS key exchange.
 
 ECH Store APIs
 --------------
@@ -236,8 +246,7 @@ int OSSL_ECHSTORE_flush_keys(OSSL_ECHSTORE *es, time_t age);
 `OSSL_ECHSTORE_new_config()` allows the caller to create a new private key
 value and the related "singleton" ECHConfigList structure.
 `OSSL_ECHSTORE_write_pem()` allows the caller to produce a "PEM" data
-structure (conforming to the [PEMECH
-specification](https://datatracker.ietf.org/doc/draft-farrell-tls-pemesni/))
+structure (conforming to the ECH PEM file format)
 from the `OSSL_ECHSTORE` entry identified by the `index`. (An `index` of
 `OSSL_ECHSTORE_LAST` will select the last entry. An `index` of
 `OSSL_ECHSTORE_ALL` will output all public values, and no private values.)
@@ -282,9 +291,10 @@ when these functions succeed. Any previously associated `OSSL_ECHSTORE`
 will be `OSSL_ECHSTORE_free()`ed.
 
 There is also an API that allows setting an ECHConfigList for an SSL
-connection, that is compatible with BoringSSL. Note that the input
-`ecl` here can be either base64 or binary encoded, but for
-BoringSSL it must be binary encoded.
+connection, that is compatible with BoringSSL, leading to smaller code changes
+for clients that support OpenSSL or BoringSSL. Note that the input `ecl` here
+for OpenSSL can be either base64 or binary encoded, but for BoringSSL it must
+be binary encoded.
 
 ```c
 int SSL_set1_ech_config_list(SSL *ssl, const uint8_t *ecl, size_t ecl_len);
@@ -316,7 +326,7 @@ typedef struct ossl_echext_st {
 DEFINE_STACK_OF(OSSL_ECHEXT)
 
 typedef struct ossl_echstore_entry_st {
-    uint16_t version; /* 0xff0d for draft-13 */
+    uint16_t version; /* 0xfe0d for RFC XXXX */
     char *public_name;
     size_t pub_len;
     unsigned char *pub;
@@ -377,17 +387,17 @@ In addition to the obvious fields from each ECHConfig, we also store:
 - The `EVP_PKEY` pointer to the private key value associated with the
   relevant ECHConfig, for use by servers.
 
-- The PEM filename and file modification time from which a private key value
-  and ECHConfigList were loaded. If those values are loaded from memory,
-  the filename value is the SHA-256 hash of the encoded ECHConfigList and
-  the load time is the time of loading. These values assist when servers
-  periodically re-load sets of files or PEM structures from memory.
+- The time at which a private key value and/or ECHConfigList were loaded.
+  This value is useful when servers periodically re-load sets of files
+  or PEM structures from memory, e.g. for the haproxy server.
 
 Split-mode handling
 -------------------
 
 TODO(ECH): This ECH split-mode API should be considered tentative. It's design
-will be revisited as we get to considering the internals.
+should be revisited now, and either omitted from the initial release that'd
+only support shared-mode ECH, or else (better:-), agreed and included in the
+same time frame.
 
 ECH split-mode involves a front-end server that only does ECH decryption and
 then passes on the decrypted inner CH to a back-end TLS server that negotiates
@@ -541,105 +551,166 @@ The following options are defined for ECH and may be set via
 `SSL_set_options()`:
 
 ```c
-/* set this to tell client to emit greased ECH values when not doing
- * "real" ECH */
-#define SSL_OP_ECH_GREASE                               SSL_OP_BIT(36)
-/* If this is set then the server side will attempt trial decryption */
-/* of ECHs even if there is no matching record_digest. That's a bit  */
-/* inefficient, but more privacy friendly */
-#define SSL_OP_ECH_TRIALDECRYPT                         SSL_OP_BIT(37)
-/* If set, clients will ignore the supplied ECH config_id and replace
- * that with a random value */
-#define SSL_OP_ECH_IGNORE_CID                           SSL_OP_BIT(38)
-/* If set, servers will add GREASEy ECHConfig values to those sent
- * in retry_configs */
-#define SSL_OP_ECH_GREASE_RETRY_CONFIG                  SSL_OP_BIT(39)
+/* Set this to tell client to emit greased ECH values */
+# define SSL_OP_ECH_GREASE                               SSL_OP_BIT(37)
+/*
+ * If this is set then the server side will attempt trial decryption
+ * of ECHs even if there is no matching ECH config_id. That's a bit
+ * inefficient, but more privacy friendly.
+ */
+# define SSL_OP_ECH_TRIALDECRYPT                         SSL_OP_BIT(38)
+/*
+ * If set, clients will ignore the supplied ECH config_id and replace
+ * that with a random value.
+ */
+# define SSL_OP_ECH_IGNORE_CID                           SSL_OP_BIT(39)
+/*
+ * If set, servers will add GREASEy ECHConfig values to those sent
+ * in retry_configs.
+ */
+# define SSL_OP_ECH_GREASE_RETRY_CONFIG                  SSL_OP_BIT(40)
 ```
 
 Build Options
 -------------
 
-All ECH code is protected via `#ifndef OPENSSL_NO_ECH` and there is
-a `no-ech` option to build without this code.
+Almost all ECH code is protected via `#ifndef OPENSSL_NO_ECH` and there is a
+`no-ech` option to build without this code.
 
-BoringSSL APIs
---------------
+Applications using ECH may choose to detect the availability of ECH in
+the library by checking that `SSL_OP_ECH_GREASE` is defined. This is
+used by some server applications today.
 
-Brief descriptions of BoringSSL APIs are below together with initial comments
-comparing those to the above. (It may be useful to consider the extent to
-which it is useful to make OpenSSL and BoringSSL APIs resemble one another.)
+ECH Tests
+---------
 
-Just as our implementation is under development, BoringSSL's
-`include/openssl/ssl.h` says: "ECH support in BoringSSL is still experimental
-and under development."
+The following tests are included in the `make test` target:
 
-### GREASE
+- [`test_app_ech`](../../test/recipes/20-test_app_ech.t)
+- [`test_ech`](../../test/ech_test.c)
+- [`test_ech_corrupt`](../../test/ech_corrupt_test.c)
+- [`test_ech_client_server`](../../test/recipes/82-test_ech_client_server.t)
 
-BoringSSL uses an API to enable GREASEing rather than an option.
+There are also two external tests to check interoperability
+with the NSS and BoringSSL libraries:
 
-```c
-OPENSSL_EXPORT void SSL_set_enable_ech_grease(SSL *ssl, int enable);
+- [`test_external_ech_nss`](../../test/recipes/95-test_external_ech_nss.t)
+- [`test_external_ech_bssl`](../../test/recipes/95-test_external_ech_bssl.t)
+
+The `test_app_ech` test excercises the `openssl ech` command line utility that
+can be used to generate and manipulate ECH keys and configurations.
+
+The `test_ech` test exercises ECH APIs, including round-trip tests that use ECH
+in TLS sessions. The code for this includes many valid and invalid test vectors
+and is designed to be relatively easily extended with additional tests.
+
+`test_ech_corrupt` is modelled on [sslcorruptetst.c](../../test/sslcorrupttest.c)
+and mainly includes tests where variously incorrectly encoded inner ClientHello
+test vectors are encrypted using HPKE and then successfully decrypted by a
+server that then rejects the connection returning the expected error code.
+
+`test_ech_client_server` exercises the various ECH command line
+options for the OpenSSL `s_client` and `s_server` commands. Changes to
+the output from those command may require changes to these tests as
+they use pattern matching on the outputs to detect expected successes
+or failures.
+
+The external tests check that the library correctly interoperates,
+as a client or server, with NSS or BoringSSL. These require a build
+configured with `enable-external-tests` and are quite time consuming
+when first run, as they need to download and build the relevant
+NSS or BoringSSL library. The client/server tests here are not very
+extensive and just check that a basic configuration interoperates.
+
+How to measure coverage of ECH tests
+------------------------------------
+
+There are likely many ways to do this, but the following is the
+recipe used during ECH development:
+
+```bash
+./config --debug enable-external-tests --coverage no-asm no-afalgeng no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+make -s -j12
+make test TESTS='test_ech test_ech_corrupt test_app_ech test_ech_client_server test_external_ech_bssl test_external_ech_nss'
+# next line failed, was replaced the the one following
+# lcov -d . -c -o ./lcov.info
+/usr/bin/geninfo . --output-filename ./lcov.info --memory 0 --ignore-errors mismatch
+genhtml ./lcov.info --output-directory $HOME/tmp/myco
 ```
 
-This could work as well for our implementation, or BoringSSL could probably
-change to use an option, unless there's some reason to prefer not adding new
-options.
+To clean away the coverage files:
 
-### Verifying the outer CH rather than inner
-
-BoringSSL seems to use this API to change the DNS name being verified in order
-to validate a `retry_config`.
-
-```c
-OPENSSL_EXPORT void SSL_get0_ech_name_override(const SSL *ssl,
-                                               const char **out_name,
-                                               size_t *out_name_len);
+```bash
+find . -name '*.gcda'  -exec rm {} \;
+find . -name '*.gcno'  -exec rm {} \;
+rm lcov.info
+make clean
+make -j12
 ```
 
-I'm not sure how this compares. Need to investigate.
+Checking memory errors
+----------------------
 
-### Create an ECHConfigList
+As is typical with the library there is a good bit of code that handles error
+cases that are hard to test. Causing memory allocation failures though allows
+us to get at most of those code fragments.
 
-The first function below outputs an ECHConfig, the second adds one of those to
-an `SSL_ECH_KEYS` structure, the last emits an ECHConfigList from that
-structure. There are other APIs for managing memory for `SSL_ECH_KEYS`
+To get to those error handling lines of code, one can use an exhaustive script
+that incrementally allows more and more memory allocations to work before
+triggering failures such as:
 
-These APIs also expose HPKE to the application via `EVP_HPKE_KEY` which is
-defined in `include/openssl/hpke.h`. HPKE handling differs quite a bit from
-the HPKE APIs merged to OpenSSL.
+```bash
+#!/bin/bash
+#
+# run 16k tests
 
-```c
-OPENSSL_EXPORT int SSL_marshal_ech_config(uint8_t **out, size_t *out_len,
-                                          uint8_t config_id,
-                                          const EVP_HPKE_KEY *key,
-                                          const char *public_name,
-                                          size_t max_name_len);
-OPENSSL_EXPORT int SSL_ECH_KEYS_add(SSL_ECH_KEYS *keys, int is_retry_config,
-                                    const uint8_t *ech_config,
-                                    size_t ech_config_len,
-                                    const EVP_HPKE_KEY *key);
-OPENSSL_EXPORT int SSL_ECH_KEYS_marshal_retry_configs(const SSL_ECH_KEYS *keys,
-                                                      uint8_t **out,
-                                                      size_t *out_len);
+# if you want tracing
+# export OPENSSL_TRACE="TLS"
+logfile=loads.log
+iter=0
+
+function whenisitagain()
+{
+    /bin/date -u +%Y%m%d-%H%M%S
+}
+NOW=$(whenisitagain)
+echo "==================================" >>$logfile
+echo "Started at $NOW" >>$logfile
+
+# 16,000 calls without failures should be enough for the
+# test to pass - gprof says we have 15,558 calls to
+# CRYPTO_malloc for the test below
+while ((iter < 16000))
+do
+    echo "Doing $iter" >>$logfile
+    iter=$((iter+1))
+    export OPENSSL_MALLOC_FAILURES="$iter@0;0@99;"
+    ./test/ech_test -test 6 -iter 1 >>$logfile 2>&1
+    echo "Done $iter"
+    echo "Done $iter" >>$logfile
+    echo "" >>$logfile
+    echo "" >>$logfile
+done
+
+NOW=$(whenisitagain)
+echo "Ended at $NOW" >>$logfile
+echo "==================================" >>$logfile
 ```
 
-Collectively these are similar to `OSSL_ECH_make_echconfig()`.
+An `OPENSSL_MALLOC_FAILURES` value of `100@0;0@99` means to allow the first 100
+memory allocations to work, and to then switch to a mode where there's a 99%
+chance of memory allocation failing. By using `$iter` we just keep incrementing
+how far into the run we allow nominal memory allocation before we break things,
+which should result in (eventually:-) hitting every possible memory allocation
+failure handling line of code.
 
-### Setting ECH keys on a server
+You need to build with the `crypto-mdebug` option to get the memory allocation
+failure, so that'd be something like:
 
-Again using the `SSL_ECH_KEYS` type and APIs, servers can build up a set of
-ECH keys using:
-
-```c
-OPENSSL_EXPORT int SSL_CTX_set1_ech_keys(SSL_CTX *ctx, SSL_ECH_KEYS *keys);
+```bash
+./config --debug enable-external-tests enable-crypto-mdebug --coverage no-asm no-afalgeng no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 ```
 
-### Getting status
-
-BoringSSL has:
-
-```c
-OPENSSL_EXPORT int SSL_ech_accepted(const SSL *ssl);
-```
-
-That seems to be a subset of `SSL_ech_get1_status()`.
+The script above gets us from 75% lines of code covered based on normal tests
+to 85.6% for the `ech_internal.c` file, which is our least well covered by
+normal tests. The script takes about 20 minutes to run on a developer laptop.

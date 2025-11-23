@@ -279,8 +279,8 @@ err:
 /*
  * Send a random value that looks like a real ECH.
  *
- * TODO(ECH): the "best" thing to do here is not yet known. For now, we do
- * GREASEing as currently (20241102) done by chrome:
+ * The "best" thing to do here is not yet known. For now, we do GREASEing as
+ * currently (20241102) done by chrome:
  *   - always HKDF-SHA256
  *   - always AES-128-GCM
  *   - random config ID, even for requests to same server in same session
@@ -643,9 +643,9 @@ size_t ossl_ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
     /*
      * Finally - make sure final result is longer than padding target
      * and a multiple of our padding increment.
-     * TODO(ECH): This is a local addition - we might take it out if
-     * it makes us stick out; or if we take out the above more (uselessly:-)
-     * complicated scheme, we may only need this in the end.
+     * This is a local addition - we might want to take it out if it makes
+     * us stick out; or if we take out the above more (uselessly:-)
+     * complicated scheme above, we may only need this in the end.
      */
     if ((length_with_padding % OSSL_ECH_PADDING_INCREMENT) != 0)
         length_with_padding += OSSL_ECH_PADDING_INCREMENT
@@ -1360,7 +1360,7 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
-    if (pval_tmp > PACKET_remaining(pkt)) {
+    if (pval_tmp == 0 || pval_tmp > PACKET_remaining(pkt)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
@@ -1654,7 +1654,7 @@ static int ech_decode_inner(SSL_CONNECTION *s, const unsigned char *ob,
     BUF_MEM *di_mem = NULL;
     uint16_t outers[OSSL_ECH_OUTERS_MAX]; /* compressed extension types */
     size_t n_outers = 0;
-    WPACKET di;
+    WPACKET di = { 0 }; /* "fake" pkt for inner */
 
     if (encoded_inner == NULL || ob == NULL || ob_len == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -2081,6 +2081,7 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
         goto err;
     }
     OPENSSL_free(clear);
+    clear = NULL;
 # ifdef OSSL_ECH_SUPERVERBOSE
     ossl_ech_pbuf("Inner CH (decoded)", s->ext.ech.innerch,
                   s->ext.ech.innerch_len);

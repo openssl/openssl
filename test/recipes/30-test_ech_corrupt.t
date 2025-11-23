@@ -11,11 +11,11 @@ use strict;
 use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file/;
 
-setup("test_ech");
+setup("test_ech_corrupt");
 
 plan skip_all => "ECH tests not supported in this build"
     if disabled("ech") || disabled("tls1_3") || disabled("ec") || disabled("ecx");
 
 plan tests => 1;
 
-ok(run(test(["ech_test", srctop_dir("test", "certs")])))
+ok(run(test(["ech_corrupt_test", srctop_dir("test", "certs")])))
