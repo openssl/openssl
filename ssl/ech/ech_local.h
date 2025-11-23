@@ -155,8 +155,13 @@ struct ossl_echstore_st {
 
 /* ECH details associated with an SSL_CTX */
 typedef struct ossl_ech_ctx_st {
-    /* TODO(ECH): consider making es ref-counted */
-    OSSL_ECHSTORE *es;
+    /*
+     * We could make es ref-counted, but that seems like a premature
+     * optimisation, given we don't currently expect many applications
+     * to have many SSL_CTX/SSL structures using many ECH configurations.
+     * Could fairly easily be done if experience warrants.
+     */
+    OSSL_ECHSTORE *es; /* ECHConfigList details */
     unsigned char *alpn_outer;
     size_t alpn_outer_len;
     SSL_ech_cb_func cb; /* callback function for when ECH "done" */
@@ -164,7 +169,12 @@ typedef struct ossl_ech_ctx_st {
 
 /* ECH details associated with an SSL_CONNECTION */
 typedef struct ossl_ech_conn_st {
-    /* TODO(ECH): consider making es ref-counted */
+    /*
+     * We could make es ref-counted, but that seems like a premature
+     * optimisation, given we don't currently expect many applications
+     * to have many SSL_CTX/SSL structures using many ECH configurations.
+     * Could fairly easily be done if experience warrants.
+     */
     OSSL_ECHSTORE *es; /* ECHConfigList details */
     int no_outer; /* set to 1 if we should send no outer SNI at all */
     char *outer_hostname;
@@ -203,9 +213,11 @@ typedef struct ossl_ech_conn_st {
     uint16_t outer_only[OSSL_ECH_OUTERS_MAX];
     size_t n_outer_only; /* the number of outer_only extensions so far */
     /*
+     * We store/access the index of the extenstion handler in
+     * s->ext.ech.ext_ind, as we'd otherwise not know it here.
+     * Be nice were there a better way to handle that.
      * Index of the current extension's entry in ext_defs - this is
      * to avoid the need to change a couple of extension APIs.
-     * TODO(ECH): check if there's another way to get that value
      */
     int ext_ind;
     /* ECH status vars */
