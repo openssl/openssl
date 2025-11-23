@@ -1353,10 +1353,22 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
         unsigned int last_reasons = ctx->current_reasons;
 
         /* Try to retrieve relevant CRL */
-        if (ctx->get_crl != NULL)
+        if (ctx->get_crl != NULL) {
+            X509 *crl_issuer = NULL;
+            unsigned int reasons = 0;
+            
             ok = ctx->get_crl(ctx, &crl, x);
-        else
+            if (crl != NULL) {
+                ctx->current_crl_score = get_crl_score(ctx, &crl_issuer,
+                                                       &reasons, crl, x);
+            } else {
+                goto done;
+            }
+            ctx->current_issuer = crl_issuer;
+            ctx->current_reasons = reasons;
+        } else {
             ok = get_crl_delta(ctx, &crl, &dcrl, x);
+        }
         /* If error looking up CRL, nothing we can do except notify callback */
         if (!ok) {
             ok = verify_cb_crl(ctx, X509_V_ERR_UNABLE_TO_GET_CRL);
