@@ -348,7 +348,11 @@ static int CreateSocketPair (int SocketFamily,
     /*
     ** Setup a listen for the socket
     */
-    listen (SockDesc1, 5);
+    if (listen (SockDesc1, 5) < 0) {
+        LogMessage ("CreateSocketPair: listen () - %d", errno);
+        close (SockDesc1);
+        return -1;
+    }
 
     /*
     ** Get the binary (64-bit) time of the specified timeout value
