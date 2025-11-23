@@ -425,3 +425,10 @@ doc-nits
 # LSP (Language Server Protocol) support
 .cache/
 compile_commands.json
+
+# coverage files
+*.gcda
+*.gcno
+lcov.info
+run_tests
+depend

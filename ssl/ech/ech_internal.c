@@ -281,8 +281,7 @@ err:
 /*
  * Send a random value that looks like a real ECH.
  *
- * TODO(ECH): the "best" thing to do here is not yet known. For now, we do
- * GREASEing as currently (20241102) done by chrome:
+ * We do GREASEing as follows:
  *   - always HKDF-SHA256
  *   - always AES-128-GCM
  *   - random config ID, even for requests to same server in same session
@@ -648,9 +647,9 @@ size_t ossl_ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
     /*
      * Finally - make sure final result is longer than padding target
      * and a multiple of our padding increment.
-     * TODO(ECH): This is a local addition - we might take it out if
-     * it makes us stick out; or if we take out the above more (uselessly:-)
-     * complicated scheme, we may only need this in the end.
+     * This is a local addition - we might want to take it out if it makes
+     * us stick out; or if we take out the above more (uselessly:-)
+     * complicated scheme above, we may only need this in the end.
      */
     if ((length_with_padding % OSSL_ECH_PADDING_INCREMENT) != 0)
         length_with_padding += OSSL_ECH_PADDING_INCREMENT
@@ -1091,10 +1090,7 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
     ossl_ech_pbuf("cx: result", acbuf, OSSL_ECH_SIGNAL_LEN);
 #endif
     /* put confirm value back into transcript */
-    if (s->ext.ech.hrrsignal_p == NULL)
-        memcpy(conf_loc, acbuf, OSSL_ECH_SIGNAL_LEN);
-    else
-        memcpy(conf_loc, s->ext.ech.hrrsignal, OSSL_ECH_SIGNAL_LEN);
+    memcpy(conf_loc, acbuf, OSSL_ECH_SIGNAL_LEN);
     /* on a server, we need to reset the hs buffer now */
     if (s->server && s->hello_retry_request == SSL_HRR_NONE)
         ossl_ech_reset_hs_buffer(s, s->ext.ech.innerch, s->ext.ech.innerch_len);
@@ -1373,7 +1369,7 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
-    if (pval_tmp > PACKET_remaining(pkt)) {
+    if (pval_tmp == 0 || pval_tmp > PACKET_remaining(pkt)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
@@ -1668,7 +1664,7 @@ static int ech_decode_inner(SSL_CONNECTION *s, const unsigned char *ob,
     BUF_MEM *di_mem = NULL;
     uint16_t outers[OSSL_ECH_OUTERS_MAX]; /* compressed extension types */
     size_t n_outers = 0;
-    WPACKET di;
+    WPACKET di = { 0 }; /* "fake" pkt for inner */
 
     if (encoded_inner == NULL || ob == NULL || ob_len == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -2066,8 +2062,7 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     OPENSSL_free(aad);
     aad = NULL;
     s->ext.ech.done = 1; /* decrypting worked or not, but we're done now */
-    /* 3. if decrypt fails tee-up GREASE */
-    s->ext.ech.grease = OSSL_ECH_IS_GREASE;
+    s->ext.ech.grease = OSSL_ECH_IS_GREASE; /* if decrypt fails tee-up GREASE */
     s->ext.ech.success = 0;
     if (clear != NULL) {
         s->ext.ech.grease = OSSL_ECH_NOT_GREASE;
@@ -2103,6 +2098,7 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
         goto err;
     }
     OPENSSL_free(clear);
+    clear = NULL;
 #ifdef OSSL_ECH_SUPERVERBOSE
     ossl_ech_pbuf("Inner CH (decoded)", s->ext.ech.innerch,
         s->ext.ech.innerch_len);

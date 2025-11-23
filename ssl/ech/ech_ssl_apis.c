@@ -248,10 +248,16 @@ int SSL_ech_get1_status(SSL *ssl, char **inner_sni, char **outer_sni)
 int SSL_ech_set1_grease_suite(SSL *ssl, const char *suite)
 {
     SSL_CONNECTION *s;
+    OSSL_HPKE_SUITE hpke_suite_in = OSSL_HPKE_SUITE_DEFAULT;
 
     s = SSL_CONNECTION_FROM_SSL(ssl);
     if (s == NULL)
         return 0;
+    /* check suite makes sense */
+    if (OSSL_HPKE_str2suite(suite, &hpke_suite_in) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
     OPENSSL_free(s->ext.ech.grease_suite);
     s->ext.ech.grease_suite = NULL;
     if (suite == NULL)
@@ -259,7 +265,6 @@ int SSL_ech_set1_grease_suite(SSL *ssl, const char *suite)
     s->ext.ech.grease_suite = OPENSSL_strdup(suite);
     if (s->ext.ech.grease_suite == NULL)
         return 0;
-    s->ext.ech.attempted = 1;
     s->ext.ech.grease = OSSL_ECH_IS_GREASE;
     return 1;
 }
@@ -272,7 +277,6 @@ int SSL_ech_set_grease_type(SSL *ssl, uint16_t type)
     if (s == NULL)
         return 0;
     s->ext.ech.attempted_type = type;
-    s->ext.ech.attempted = 1;
     s->ext.ech.grease = OSSL_ECH_IS_GREASE;
     return 1;
 }
@@ -368,27 +372,6 @@ int SSL_CTX_ech_set1_outer_alpn_protos(SSL_CTX *ctx,
         return 0;
     ctx->ext.ech.alpn_outer_len = protos_len;
     return 1;
-}
-
-int SSL_CTX_ech_raw_decrypt(SSL_CTX *ctx,
-    int *decrypted_ok,
-    char **inner_sni, char **outer_sni,
-    unsigned char *outer_ch, size_t outer_len,
-    unsigned char *inner_ch, size_t *inner_len,
-    unsigned char **hrrtok, size_t *toklen)
-{
-    if (ctx == NULL) {
-        /*
-         * TODO(ECH): this is a bit of a bogus error, just so as
-         * to get the `make update` command to add the required
-         * error number. We don't need it yet, but it's involved
-         * in some of the build artefacts, so may as well jump
-         * the gun a bit on it.
-         */
-        ERR_raise(ERR_LIB_SSL, SSL_R_ECH_REQUIRED);
-        return 0;
-    }
-    return 0;
 }
 
 void SSL_CTX_ech_set_callback(SSL_CTX *ctx, SSL_ech_cb_func f)

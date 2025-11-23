@@ -19,7 +19,7 @@ plan skip_all => "ECH tests not supported in this build"
     if disabled("ech") || disabled("tls1_3")
        || disabled("ec") || disabled("ecx");
 
-plan tests => 13;
+plan tests => 16;
 
 ok(run(app(["openssl", "ech", "-help"])),
    "Run openssl ech with help");
@@ -90,4 +90,17 @@ with({ exit_checker => sub { return shift == 1; } },
 		                "-in", "eg3.pem",
 		                "-in", "eg4.pem"])),
 		   "Too many input files");
+		ok(run(app(["openssl", "ech" ])),
+		   "No input files");
+		ok(run(app(["openssl", "ech",
+		                "-public_name", "example.com",
+                        "-out", ""
+		                ])),
+		   "(Fail to) Generate an ECH key pair to empty output file name");
+        ok(run(app(["openssl", "ech",
+                        "-in", "eg1.pem",
+                        "-in", "eg2.pem",
+                        "-out", "",
+                        "-verbose"])),
+           "Fail to catenate due to empty output file name");
 });
