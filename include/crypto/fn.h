@@ -130,6 +130,15 @@ void OSSL_FN_clear_free(OSSL_FN *f);
 void OSSL_FN_clear(OSSL_FN *f);
 
 /**
+ * Copy the contents of one OSSL_FN instance to another.
+ *
+ * @param[out]  a       The destination OSSL_FN
+ * @param[in]   b       The source OSSL_FN
+ * @returns     1 on success, 0 on error.
+ */
+OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b);
+
+/**
  * Allocate a new OSSL_FN_CTX, given a set of input numbers.
  *
  * @param[in]   libctx          OpenSSL library context (currently unused)
@@ -251,6 +260,23 @@ int OSSL_FN_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b);
  * @returns             1 on success, 0 on error
  */
 int OSSL_FN_sub_word(OSSL_FN *a, const OSSL_FN_ULONG *w);
+
+/**
+ * Multiply two OSSL_FN numbers.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for one temporary OSSL_FN with res->dsize limbs, plus one frame
+ * (currently 32 bytes).
+ */
+int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    OSSL_FN_CTX *ctx);
 
 #ifdef __cplusplus
 }
