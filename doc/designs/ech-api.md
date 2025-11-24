@@ -597,7 +597,7 @@ with the NSS and BoringSSL libraries:
 - [`test_external_ech_nss`](../../test/recipes/95-test_external_ech_nss.t)
 - [`test_external_ech_bssl`](../../test/recipes/95-test_external_ech_bssl.t)
 
-The `test_app_ech` test excercises the `openssl ech` command line utility that
+The `test_app_ech` test exercises the `openssl ech` command line utility that
 can be used to generate and manipulate ECH keys and configurations.
 
 The `test_ech` test exercises ECH APIs, including round-trip tests that use ECH
