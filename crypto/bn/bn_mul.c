@@ -13,11 +13,37 @@
 
 int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
-    int ret = bn_mul_fixed_top(r, a, b, ctx);
+    /* TODO(FIXNUM): TO BE REMOVED */
+    if (r->data == NULL || a->data == NULL || b->data == NULL) {
+        int ret = bn_mul_fixed_top(r, a, b, ctx);
 
-    bn_correct_top(r);
+        bn_correct_top(r);
+        bn_check_top(r);
+
+        return ret;
+    }
+
+    bn_check_top(a);
+    bn_check_top(b);
     bn_check_top(r);
 
+    size_t top = a->top + b->top;
+    size_t max = a->dmax + b->dmax;
+
+    /*
+     * Unfortunately, OSSL_FN_CTX and BN_CTX are too wildly different to
+     * be interchangeable.  We must therefore create an OSSL_FN_CTX here.
+     * (OSSL_FN_CTX is only really useful within OSSL_FN functionality)
+     */
+    OSSL_FN_CTX *fnctx = OSSL_FN_CTX_new(NULL, 1, 1, max);
+    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
+    int ret = OSSL_FN_mul(rf, a->data, b->data, fnctx);
+    bn_release(r, (int)top);
+
+    if (ret && !BN_is_zero(r))
+        r->neg = a->neg ^ b->neg;
+
+    OSSL_FN_CTX_free(fnctx);
     return ret;
 }
 
