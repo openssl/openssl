@@ -11,7 +11,9 @@
 #include <limits.h>
 #include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include "internal/common.h"
+#include "crypto/fnerr.h"
 #include "fn_local.h"
 
 static OSSL_FN *ossl_fn_new_internal(size_t limbs, bool securely)
@@ -101,4 +103,27 @@ void OSSL_FN_clear(OSSL_FN *f)
     size_t limbssize = f->dsize * sizeof(OSSL_FN_ULONG);
 
     OPENSSL_cleanse(f->d, limbssize);
+}
+
+OSSL_FN * OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
+{
+    if (ossl_unlikely(a == b))
+        return a;
+
+    size_t al = a->dsize;
+    size_t bl = b->dsize;
+
+    if (al < bl) {
+        ERR_raise_data(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL,
+                       "Needs to be at least %d, but is only %d",
+                       bl, al);
+        return 0;
+    }
+
+    size_t t = ossl_fn_totalsize(bl);
+
+    memcpy(a, b, t);
+    a->dsize = (int)al;          /* Restore to its original size */
+    memset(&a->d[a->dsize], 0, sizeof(OSSL_FN_ULONG) * (a->dsize - b->dsize));
+    return a;
 }
