@@ -154,7 +154,7 @@ I<no_outer> input allows a client to emit an outer ClientHello with no SNI at
 all. Providing a B<NULL> for the I<outer_name> means to send the I<public_name>
 provided from the ECHConfigList.
 
-If a client has called L<SSL_CTX_set_alpn_protos> or L<SSL_set_alpn_protos>
+If a client has called L<SSL_CTX_set_alpn_protos(3)> or L<SSL_set_alpn_protos(3)>
 then the ALPN value will be the same in the inner and outer ClientHello
 messages.
 SSL_ech_set1_outer_alpn_protos() and SSL_CTX_ech_set1_outer_alpn_protos()
