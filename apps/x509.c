@@ -896,23 +896,6 @@ int x509_main(int argc, char **argv)
         }
     }
 
-    X509V3_set_ctx(&ext_ctx, issuer_cert, x, NULL, NULL, X509V3_CTX_REPLACE);
-    /* prepare fallback for AKID, but only if issuer cert equals subject cert */
-    if (CAfile == NULL) {
-        if (!X509V3_set_issuer_pkey(&ext_ctx, privkey))
-            goto err;
-    }
-    if (extconf != NULL && !x509toreq) {
-        X509V3_set_nconf(&ext_ctx, extconf);
-        if (!X509V3_EXT_add_nconf(extconf, &ext_ctx, extsect, x)) {
-            BIO_printf(bio_err,
-                       "Error adding extensions from section %s\n", extsect);
-            goto err;
-        }
-    }
-
-    /* At this point the contents of the certificate x have been finished. */
-
     pkey = X509_get0_pubkey(x);
     if ((print_pubkey != 0 || modulus != 0) && pkey == NULL) {
         BIO_printf(bio_err, "Error getting public key\n");
@@ -930,6 +913,7 @@ int x509_main(int argc, char **argv)
         }
         if ((rq = x509_to_req(x, ext_copy, ext_names)) == NULL)
             goto err;
+        X509V3_set_ctx(&ext_ctx, NULL, NULL, rq, NULL, X509V3_CTX_REPLACE);
         if (extconf != NULL) {
             X509V3_set_nconf(&ext_ctx, extconf);
             if (!X509V3_EXT_REQ_add_nconf(extconf, &ext_ctx, extsect, rq)) {
@@ -964,9 +948,34 @@ int x509_main(int argc, char **argv)
             goto err;
         }
 
+        X509V3_set_ctx(&ext_ctx, xca, x, NULL, NULL, X509V3_CTX_REPLACE);
+        if (!add_X509_default_keyids(x, CAkey, &ext_ctx))
+            goto err;
+        if (extconf != NULL) {
+            X509V3_set_nconf(&ext_ctx, extconf);
+            if (!X509V3_EXT_add_nconf(extconf, &ext_ctx, extsect, x)) {
+                BIO_printf(bio_err,
+                           "Error adding extensions from section %s\n", extsect);
+                goto err;
+            }
+        }
         if (!do_X509_sign(x, 0, CAkey, digest, sigopts, &ext_ctx))
             goto err;
     } else if (privkey != NULL) {
+        X509V3_set_ctx(&ext_ctx, x, x, NULL, NULL, X509V3_CTX_REPLACE);
+        /* prepare fallback for AKID, but only if issuer cert equals subject cert */
+        if (!X509V3_set_issuer_pkey(&ext_ctx, privkey))
+            goto err;
+        if (!add_X509_default_keyids(x, privkey, &ext_ctx))
+            goto err;
+        if (extconf != NULL) {
+            X509V3_set_nconf(&ext_ctx, extconf);
+            if (!X509V3_EXT_add_nconf(extconf, &ext_ctx, extsect, x)) {
+                BIO_printf(bio_err,
+                           "Error adding extensions from section %s\n", extsect);
+                goto err;
+            }
+        }
         if (!do_X509_sign(x, 0, privkey, digest, sigopts, &ext_ctx))
             goto err;
     }
