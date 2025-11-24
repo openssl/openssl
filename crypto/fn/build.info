@@ -2,7 +2,7 @@ $LIBCRYPTO=../../libcrypto
 $LIBFIPS=../../providers/libfips.a
 LIBS=$LIBCRYPTO
 
-$COMMON=fn_err.c fn_lib.c fn_ctx.c fn_intern.c fn_addsub.c
+$COMMON=fn_err.c fn_lib.c fn_ctx.c fn_intern.c fn_addsub.c fn_mul.c
 
 SOURCE[$LIBCRYPTO]=$COMMON
 SOURCE[$LIBFIPS]=$COMMON
