@@ -261,7 +261,7 @@ BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 #else
 /* Simics 1.4<7 has buggy sbbq:-( */
 #define BN_MASK2 0xffffffffffffffffL
-BN_ULONG bn_sub_words(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
+BN_ULONG bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 {
     BN_ULONG t1, t2;
     int c = 0;
@@ -408,7 +408,7 @@ BN_ULONG bn_sub_words(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
 #define sqr_add_c2(a, i, j, c0, c1, c2) \
     mul_add_c2((a)[i], (a)[j], c0, c1, c2)
 
-void bn_mul_comba8(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
+void bn_mul_comba8(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b)
 {
     BN_ULONG c1, c2, c3;
 
@@ -511,7 +511,7 @@ void bn_mul_comba8(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
     r[15] = c1;
 }
 
-void bn_mul_comba4(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
+void bn_mul_comba4(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b)
 {
     BN_ULONG c1, c2, c3;
 
