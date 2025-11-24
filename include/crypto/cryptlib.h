@@ -36,4 +36,6 @@ void ossl_malloc_setup_failures(void);
 int ossl_crypto_alloc_ex_data_intern(int class_index, void *obj,
                                      CRYPTO_EX_DATA *ad, int idx);
 
+size_t ossl_num_bits(size_t value);
+
 #endif  /* OSSL_CRYPTO_CRYPTLIB_H */
