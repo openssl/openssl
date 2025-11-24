@@ -34,7 +34,6 @@ typedef enum test_types_en {
     SSL_FIRST,
     JUST_CRYPTO,
     DSO_REFTEST,
-    NO_ATEXIT
 } TEST_TYPE;
 
 static TEST_TYPE test_type;
@@ -80,7 +79,6 @@ static int test_lib(void)
     switch (test_type) {
     case JUST_CRYPTO:
     case DSO_REFTEST:
-    case NO_ATEXIT:
     case CRYPTO_FIRST:
         if (!sd_load(path_crypto, &cryptolib, SD_SHLIB)) {
             fprintf(stderr, "Failed to load libcrypto\n");
@@ -104,23 +102,8 @@ static int test_lib(void)
         break;
     }
 
-    if (test_type == NO_ATEXIT) {
-        OPENSSL_init_crypto_t myOPENSSL_init_crypto;
-
-        if (!sd_sym(cryptolib, "OPENSSL_init_crypto", &symbols[0].sym)) {
-            fprintf(stderr, "Failed to load OPENSSL_init_crypto symbol\n");
-            goto end;
-        }
-        myOPENSSL_init_crypto = (OPENSSL_init_crypto_t)symbols[0].func;
-        if (!myOPENSSL_init_crypto(OPENSSL_INIT_NO_ATEXIT, NULL)) {
-            fprintf(stderr, "Failed to initialise libcrypto\n");
-            goto end;
-        }
-    }
-
     if (test_type != JUST_CRYPTO
-        && test_type != DSO_REFTEST
-        && test_type != NO_ATEXIT) {
+        && test_type != DSO_REFTEST) {
         if (!sd_sym(ssllib, "TLS_method", &symbols[0].sym)
             || !sd_sym(ssllib, "SSL_CTX_new", &symbols[1].sym)
             || !sd_sym(ssllib, "SSL_CTX_free", &symbols[2].sym)) {
@@ -228,7 +211,7 @@ static int test_lib(void)
      * running atexit() on so unload. If not we might crash. We know this is
      * true on linux since glibc 2.2.3
      */
-    if (test_type != NO_ATEXIT && atexit_handler_done != 1) {
+    if (atexit_handler_done != 1) {
         fprintf(stderr, "atexit() handler did not run\n");
         goto end;
     }
@@ -269,8 +252,6 @@ int main(int argc, char *argv[])
         test_type = JUST_CRYPTO;
     } else if (strcmp(p, "-dso_ref") == 0) {
         test_type = DSO_REFTEST;
-    } else if (strcmp(p, "-no_atexit") == 0) {
-        test_type = NO_ATEXIT;
     } else {
         fprintf(stderr, "Unrecognised argument\n");
         return 1;
