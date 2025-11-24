@@ -79,6 +79,10 @@ sub check_identical {
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
+if ($no_fips == 0) {
+    $ENV{OPENSSL_ATEXIT_CLEANUP}=1;
+}
+
 subtest "Check loading valid parameters by ecparam with -check" => sub {
     plan tests => scalar(@valid);
     checkload(\@valid, 1, "ecparam", "-check");

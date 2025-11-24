@@ -33,6 +33,9 @@ check_skey_manager_list("default");
 
 SKIP: {
     my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+    if ($no_fips == 0) {
+        $ENV{OPENSSL_ATEXIT_CLEANUP}=1;
+    }
     skip "FIPS provider disabled or not installed", 2
         if $no_fips;
 

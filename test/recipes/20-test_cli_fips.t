@@ -35,6 +35,7 @@ my $tbs_data = $fipsmodule;
 my $bogus_data = $fipsconf;
 
 $ENV{OPENSSL_CONF} = $fipsconf;
+$ENV{OPENSSL_ATEXIT_CLEANUP}=1;
 
 run(test(["fips_version_test", "-config", $fipsconf, "<3.4.0"]),
           capture => 1, statusvar => \my $dsasignpass);

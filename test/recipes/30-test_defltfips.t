@@ -26,6 +26,10 @@ plan skip_all => "Configuration loading is turned off"
 
 my $no_fips = disabled('fips') || disabled('fips-post') || ($ENV{NO_FIPS} // 0);
 
+if ($no_fips == 0) {
+    $ENV{OPENSSL_ATEXIT_CLEANUP}=1;
+}
+
 plan tests =>
     ($no_fips ? 1 : 5);
 

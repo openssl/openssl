@@ -56,6 +56,10 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
+if ($no_fips == 0) {
+    $ENV{OPENSSL_ATEXIT_CLEANUP}=1;
+}
+
 plan tests => $no_fips ? 47 : 53;
 
 # Test different PKCS#12 formats

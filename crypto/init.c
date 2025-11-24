@@ -35,13 +35,6 @@
 static int stopped = 0;
 static uint64_t optsdone = 0;
 
-typedef struct ossl_init_stop_st OPENSSL_INIT_STOP;
-struct ossl_init_stop_st {
-    void (*handler)(void);
-    OPENSSL_INIT_STOP *next;
-};
-
-static OPENSSL_INIT_STOP *stop_handlers = NULL;
 /* Guards access to the optsdone variable on platforms without atomics */
 static CRYPTO_RWLOCK *optsdone_lock = NULL;
 /* Guards simultaneous INIT_LOAD_CONFIG calls with non-NULL settings */
@@ -95,6 +88,9 @@ static int win32atexit(void)
 
 DEFINE_RUN_ONCE_STATIC(ossl_init_register_atexit)
 {
+    if (ossl_safe_getenv("OPENSSL_ATEXIT_CLEANUP") == NULL)
+        return 1;
+
 #ifndef OPENSSL_NO_ATEXIT
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_register_atexit()\n");
@@ -111,16 +107,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_register_atexit)
 #endif
 #endif
 
-    return 1;
-}
-
-DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_register_atexit,
-    ossl_init_register_atexit)
-{
-#ifdef OPENSSL_INIT_DEBUG
-    fprintf(stderr, "OPENSSL_INIT: ossl_init_no_register_atexit ok!\n");
-#endif
-    /* Do nothing in this case */
     return 1;
 }
 
@@ -308,8 +294,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_async)
 
 void OPENSSL_cleanup(void)
 {
-    OPENSSL_INIT_STOP *currhandler, *lasthandler;
-
     /*
      * At some point we should consider looking at this function with a view to
      * moving most/all of this into onfree handlers in OSSL_LIB_CTX.
@@ -329,15 +313,6 @@ void OPENSSL_cleanup(void)
      * the very last thread in some situations, so call it directly.
      */
     OPENSSL_thread_stop();
-
-    currhandler = stop_handlers;
-    while (currhandler != NULL) {
-        currhandler->handler();
-        lasthandler = currhandler;
-        currhandler = currhandler->next;
-        OPENSSL_free(lasthandler);
-    }
-    stop_handlers = NULL;
 
     CRYPTO_THREAD_lock_free(optsdone_lock);
     optsdone_lock = NULL;
@@ -487,18 +462,10 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     }
 
     /*
-     * Now we don't always set up exit handlers, the INIT_BASE_ONLY calls
-     * should not have the side-effect of setting up exit handlers, and
-     * therefore, this code block is below the INIT_BASE_ONLY-conditioned early
-     * return above.
+     * We just attempt to initialize atexit() one time. Error is considered
+     * as non-fatal.
      */
-    if ((opts & OPENSSL_INIT_NO_ATEXIT) != 0) {
-        if (!RUN_ONCE_ALT(&register_atexit, ossl_init_no_register_atexit,
-                ossl_init_register_atexit))
-            return 0;
-    } else if (!RUN_ONCE(&register_atexit, ossl_init_register_atexit)) {
-        return 0;
-    }
+    RUN_ONCE(&register_atexit, ossl_init_register_atexit);
 
     if (!RUN_ONCE(&load_crypto_nodelete, ossl_init_load_crypto_nodelete))
         return 0;
@@ -586,64 +553,9 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
 int OPENSSL_atexit(void (*handler)(void))
 {
-    OPENSSL_INIT_STOP *newhand;
-
-#if !defined(OPENSSL_USE_NODELETE) \
-    && !defined(OPENSSL_NO_PINSHARED)
-    {
-#if defined(DSO_WIN32) && !defined(_WIN32_WCE)
-        HMODULE handle = NULL;
-        BOOL ret;
-        union {
-            void *sym;
-            void (*func)(void);
-        } handlersym;
-
-        handlersym.func = handler;
-
-        /*
-         * We don't use the DSO route for WIN32 because there is a better
-         * way
-         */
-        ret = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
-                | GET_MODULE_HANDLE_EX_FLAG_PIN,
-            handlersym.sym, &handle);
-
-        if (!ret)
-            return 0;
-#elif !defined(DSO_NONE)
-        /*
-         * Deliberately leak a reference to the handler. This will force the
-         * library/code containing the handler to remain loaded until we run the
-         * atexit handler. If -znodelete has been used then this is
-         * unnecessary.
-         */
-        DSO *dso = NULL;
-        union {
-            void *sym;
-            void (*func)(void);
-        } handlersym;
-
-        handlersym.func = handler;
-
-        ERR_set_mark();
-        dso = DSO_dsobyaddr(handlersym.sym, DSO_FLAG_NO_UNLOAD_ON_FREE);
-        /* See same code above in ossl_init_base() for an explanation. */
-        OSSL_TRACE1(INIT,
-            "atexit: obtained DSO reference? %s\n",
-            (dso == NULL ? "No!" : "Yes."));
-        DSO_free(dso);
-        ERR_pop_to_mark();
+#if defined(__TANDEM)
+    return 0;
+#else
+    return atexit(handler) == 0;
 #endif
-    }
-#endif
-
-    if ((newhand = OPENSSL_malloc(sizeof(*newhand))) == NULL)
-        return 0;
-
-    newhand->handler = handler;
-    newhand->next = stop_handlers;
-    stop_handlers = newhand;
-
-    return 1;
 }

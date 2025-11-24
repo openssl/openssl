@@ -32,6 +32,15 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * libcrypto no longer arms OPENSSL_cleanup() as atexit(3) handler by default.
+   Memory leak detectors now report there is allocated and reachable memory
+   at application exit. To suppress this report add OPENSSL_ATEXIT_CLEANUP
+   environment vairable. The variable makes libcrypto to arm OPENSSL_cleanup()
+   as atexit(3) handler so the memory gets freed upon application exit. Another
+   option is to call OPENSSL_cleanup() explicitly before main() exits.
+
+   *Alexandr Nedvedicky*
+
  * Removed extra leading '00:' when printing key data such as an RSA modulus
    in hexadecimal format where the first (most significant) byte is >= 0x80.
    This had been added artificially to resemble ASN.1 DER encoding internals.

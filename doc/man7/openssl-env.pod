@@ -52,6 +52,17 @@ and by the B<CA.pl> script (see L<CA.pl(1)/NOTES>
 
 This variable is not considered security-sensitive.
 
+=item B<OPENSSL_ATEXIT_CLEANUP>
+
+When defined tells libcrypto to call OPENSSL_cleanup() function
+before process exists. The library uses atexit(3) from libc to that.
+If there is not atexit(3) provided by platform's libc, then presence
+of OPENSSL_ATEXIT_CLEANUP env. variable has no effect.
+
+Setting the OPENSSL_ATEXIT_CLEANUP env. variable should stop memory
+leak detectors complaining about allocated reachable memory when
+application exits.
+
 =item B<OPENSSL_CONF>, B<OPENSSL_CONF_INCLUDE>
 
 Specifies the path to a configuration file and the directory for

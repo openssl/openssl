@@ -29,6 +29,7 @@ my $fipsmoduleconf = bldtop_file('test', 'fipsmodule.cnf');
 
 plan tests => 1;
 
+$ENV{OPENSSL_ATEXIT_CLEANUP}=1;
 # Create the $fipsmoduleconf file
 ok(run(app(['openssl', 'fipsinstall', '-pedantic',
             '-module', $fipsmodule, '-provider_name', 'fips',

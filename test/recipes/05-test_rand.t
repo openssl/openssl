@@ -21,6 +21,7 @@ ok(run(test(["rand_test", srctop_file("test", "default.cnf")])));
 SKIP: {
     skip "Skipping FIPS test in this build", 1 if disabled('fips');
 
+    $ENV{OPENSSL_ATEXIT_CLEANUP}=1;
     ok(run(test(["rand_test", srctop_file("test", "fips.cnf")])));
 }
 
