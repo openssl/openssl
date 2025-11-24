@@ -1420,12 +1420,7 @@ int genkey(const uint8_t seed[ML_KEM_SEED_BYTES],
 
     /* Optionally save the |d| portion of the seed */
     key->d = key->z + ML_KEM_RANDOM_BYTES;
-    if (key->prov_flags & ML_KEM_KEY_RETAIN_SEED) {
-        memcpy(key->d, seed, ML_KEM_RANDOM_BYTES);
-    } else {
-        OPENSSL_cleanse(key->d, ML_KEM_RANDOM_BYTES);
-        key->d = NULL;
-    }
+    memcpy(key->d, seed, ML_KEM_RANDOM_BYTES);
 
     ret = 1;
  end:

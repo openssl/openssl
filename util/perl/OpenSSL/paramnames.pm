@@ -309,6 +309,7 @@ my %params = (
     'OSSL_PKEY_PARAM_DIST_ID' =>             "distid",
     'OSSL_PKEY_PARAM_PUB_KEY' =>             "pub",
     'OSSL_PKEY_PARAM_PRIV_KEY' =>            "priv",
+    'OSSL_PKEY_PARAM_SEED_ONLY' =>           "seed-only",
     # PKEY_PARAM_IMPLICIT_REJECTION isn't actually used, or meaningful.  We keep
     # it for API stability, but please use ASYM_CIPHER_PARAM_IMPLICIT_REJECTION
     # instead.

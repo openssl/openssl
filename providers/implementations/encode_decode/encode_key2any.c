@@ -59,6 +59,9 @@ typedef struct key2any_ctx_st {
     EVP_CIPHER *cipher;
 
     struct ossl_passphrase_data_st pwdata;
+
+    /* Optional ML-KEM and ML-DSA seed-only form output */
+    unsigned int seed_only : 1;
 } KEY2ANY_CTX;
 
 typedef int check_key_type_fn(const void *key, int nid);
@@ -864,7 +867,7 @@ static int ml_dsa_pki_priv_to_der(const void *vkey, unsigned char **pder,
 {
     KEY2ANY_CTX *ctx = vctx;
 
-    return ossl_ml_dsa_i2d_prvkey(vkey, pder, ctx->provctx);
+    return ossl_ml_dsa_i2d_prvkey(vkey, pder, ctx->provctx, ctx->seed_only);
 }
 
 # define ml_dsa_epki_priv_to_der ml_dsa_pki_priv_to_der
@@ -894,7 +897,7 @@ static int ml_kem_pki_priv_to_der(const void *vkey, unsigned char **pder,
 {
     KEY2ANY_CTX *ctx = vctx;
 
-    return ossl_ml_kem_i2d_prvkey(vkey, pder, ctx->provctx);
+    return ossl_ml_kem_i2d_prvkey(vkey, pder, ctx->provctx, ctx->seed_only);
 }
 
 # define ml_kem_epki_priv_to_der ml_kem_pki_priv_to_der
@@ -1168,6 +1171,25 @@ static int key2any_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (p.svprm != NULL && !OSSL_PARAM_get_int(p.svprm, &ctx->save_parameters))
         return 0;
+
+    if (p.seed_only != NULL) {
+        unsigned int val;
+
+        if (!OSSL_PARAM_get_uint(p.seed_only, &val))
+            return 0;
+        switch (val) {
+        case 1:
+            ctx->seed_only = val;
+            break;
+        case 0:
+            break;
+        default:
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_VALUE_ERROR,
+                           "Unsupported %s setting: %u",
+                           OSSL_PKEY_PARAM_SEED_ONLY, val);
+            return 0;
+        }
+    }
 
     return 1;
 }
