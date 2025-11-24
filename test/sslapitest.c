@@ -13354,7 +13354,7 @@ static int test_ssl_trace(void)
  * Test that SSL_CTX_set1_groups() when called with a list where the first
  * entry is unsupported, will send a key_share that uses the next usable entry.
  */
-static int test_ssl_set_groups_unsupported_keyshare(void)
+static int test_ssl_set_groups_unsupported_keyshare(int idx)
 {
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     int testresult = 0;
@@ -13366,6 +13366,16 @@ static int test_ssl_set_groups_unsupported_keyshare(void)
         NID_secp384r1,
         NID_ffdhe2048,
     };
+
+    switch (idx) {
+    case 1:
+        client_groups[0] = NID_id_tc26_gost_3410_2012_512_paramSetC;
+        if (sizeof(unsigned long) == 4) {
+            return TEST_skip("SSL_CTX_set1_groups() is broken on 32-bit systems with TLS"
+                             " group IDs > 0x20, see https://github.com/openssl/openssl/issues/29196");
+        }
+        break;
+    }
 
     if (!TEST_true(create_ssl_ctx_pair(libctx,
                                        TLS_server_method(),
@@ -13737,7 +13747,7 @@ int setup_tests(void)
     if (datadir != NULL)
         ADD_TEST(test_ssl_trace);
 #endif
-    ADD_TEST(test_ssl_set_groups_unsupported_keyshare);
+    ADD_ALL_TESTS(test_ssl_set_groups_unsupported_keyshare, 2);
     return 1;
 
  err:
