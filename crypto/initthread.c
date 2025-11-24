@@ -326,7 +326,12 @@ err:
 
 void ossl_thread_event_ctx_free(OSSL_LIB_CTX *ctx)
 {
+    THREAD_EVENT_HANDLER **hands;
+
+    hands = (THREAD_EVENT_HANDLER **)CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_TEVENT_KEY, ctx);
     CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_TEVENT_KEY, ctx, NULL);
+
+    OPENSSL_free(hands);
 }
 
 static void ossl_arg_thread_stop(void *arg)

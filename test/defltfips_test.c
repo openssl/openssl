@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/provider.h>
 #include "testutil.h"
@@ -66,6 +67,11 @@ static int test_is_fips_enabled(void)
         return 0;
 
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    OPENSSL_cleanup();
 }
 
 int setup_tests(void)
