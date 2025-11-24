@@ -454,10 +454,6 @@ static int keygen_internal(ML_DSA_KEY *out)
         && ossl_ml_dsa_sk_encode(out);
 
 err:
-    if (out->seed != NULL && (out->prov_flags & ML_DSA_KEY_RETAIN_SEED) == 0) {
-        OPENSSL_clear_free(out->seed, ML_DSA_SEED_BYTES);
-        out->seed = NULL;
-    }
     EVP_MD_CTX_free(md_ctx);
     OPENSSL_cleanse(augmented_seed, sizeof(augmented_seed));
     OPENSSL_cleanse(expanded_seed, sizeof(expanded_seed));

@@ -302,15 +302,15 @@ int ossl_ml_kem_i2d_pubkey(const ML_KEM_KEY *key, unsigned char **out)
 
 /* Allocate and encode PKCS#8 private key payload. */
 int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
-                           PROV_CTX *provctx)
+                           PROV_CTX *provctx, const char *formats)
 {
     const ML_KEM_VINFO *v = key->vinfo;
     const ML_COMMON_CODEC *codec;
     ML_COMMON_PKCS8_FMT_PREF *fmt_slots, *slot;
     const ML_COMMON_PKCS8_FMT *p8fmt;
     uint8_t *buf = NULL, *pos;
-    const char *formats;
     int len = ML_KEM_SEED_BYTES;
+    int have_seed = ossl_ml_kem_have_seed(key);
     int ret = 0;
 
     /* Not ours to handle */
@@ -324,8 +324,13 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
         return 0;
     }
 
-    formats = ossl_prov_ctx_get_param(
-        provctx, OSSL_PKEY_PARAM_ML_KEM_OUTPUT_FORMATS, NULL);
+    if (formats == NULL) {
+        if ((key->prov_flags & ML_KEM_KEY_RETAIN_SEED) == 0)
+            have_seed = 0;
+        formats = ossl_prov_ctx_get_param(provctx,
+                                          OSSL_PKEY_PARAM_ML_KEM_OUTPUT_FORMATS,
+                                          NULL);
+    }
     fmt_slots = ossl_ml_common_pkcs8_fmt_order(v->algorithm_name, codec->p8fmt,
                                                "output", formats);
     if (fmt_slots == NULL)
@@ -333,7 +338,7 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
 
     /* If we don't have a seed, skip seedful entries */
     for (slot = fmt_slots; (p8fmt = slot->fmt) != NULL; ++slot)
-        if (ossl_ml_kem_have_seed(key) || p8fmt->seed_length == 0)
+        if (have_seed || p8fmt->seed_length == 0)
             break;
     /* No matching table entries, give up */
     if (p8fmt == NULL
