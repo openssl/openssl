@@ -10,6 +10,7 @@ openssl-rehash, c_rehash - Create symbolic links to files named by the hash
 values
 
 =head1 SYNOPSIS
+
 =for openssl duplicate options
 
 B<openssl>
