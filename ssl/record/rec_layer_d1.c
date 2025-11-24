@@ -563,9 +563,8 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
 
         /*
          * To get here we must be trying to read app data but found handshake
-         * data. But if we're trying to read app data, and we're not in init
-         * (which is tested for at the top of this function) then init must be
-         * finished
+         * data. This can be because we are in early data and receive the rest
+         * of the handshake.
          */
 
         /* We found handshake data, so we're going back into init */
