@@ -53,7 +53,6 @@
 #endif
 
 #ifndef OPENSSL_SMALL_FOOTPRINT
-#define BN_MUL_COMBA
 #define BN_SQR_COMBA
 #define BN_RECURSION
 #endif
