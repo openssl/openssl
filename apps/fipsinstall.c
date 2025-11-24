@@ -967,6 +967,7 @@ cleanup:
     EVP_MAC_CTX_free(ctx);
     OPENSSL_free(read_buffer);
     free_config_and_unload(conf);
+    OPENSSL_cleanup();
     return ret;
 }
 
