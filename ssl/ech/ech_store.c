@@ -47,9 +47,9 @@ static const char B64_alphabet[] =
 
 #ifndef TLSEXT_MINLEN_host_name
 /*
- * TODO(ECH): shortest DNS name we allow, e.g. "a.bc" - maybe that should
- * be defined elsewhere, or should the check be skipped in case there's
- * a local deployment that uses shorter names?
+ * TODO(ECH): Decide this. The shortest DNS name we allow, e.g. "a.bc" - maybe
+ * that should be defined elsewhere, or should the check be skipped in case
+ * there's a local deployment that uses shorter names?
  */
 # define TLSEXT_MINLEN_host_name 4
 #endif
@@ -107,7 +107,7 @@ void ossl_echstore_entry_free(OSSL_ECHSTORE_ENTRY *ee)
  *
  * This is intended for small inputs, either files or buffers and
  * not other kinds of BIO.
- * TODO(ECH): how to check for oddball input BIOs?
+ * TODO(ECH): is there really a way to check for oddball input BIOs?
  */
 static int ech_bio2buf(BIO *in, unsigned char **buf, size_t *len)
 {
@@ -770,6 +770,7 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     ee->max_name_length = max_name_length;
     ee->config_id = config_id;
     ee->keyshare = privp;
+    privp = NULL; /* don't free twice */
     /* "steal" the encoding from the memory */
     ee->encoded = (unsigned char *)epkt_mem->data;
     ee->encoded_len = bblen;
