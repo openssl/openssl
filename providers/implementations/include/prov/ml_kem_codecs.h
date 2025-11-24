@@ -33,7 +33,7 @@ int ossl_ml_kem_i2d_pubkey(const ML_KEM_KEY *key, unsigned char **out);
 __owur
 __owur
 int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, unsigned char **out,
-                           PROV_CTX *provctx);
+                           PROV_CTX *provctx, const char *formats);
 
 # endif  /* OPENSSL_NO_ML_KEM */
 #endif  /* PROV_ML_KEM_CODECS_H */

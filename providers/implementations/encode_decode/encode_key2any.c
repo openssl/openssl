@@ -59,6 +59,9 @@ typedef struct key2any_ctx_st {
     EVP_CIPHER *cipher;
 
     struct ossl_passphrase_data_st pwdata;
+
+    /* Just-in-time ML-KEM and ML-DSA output format override */
+    char *output_formats;
 } KEY2ANY_CTX;
 
 typedef int check_key_type_fn(const void *key, int nid);
@@ -864,7 +867,8 @@ static int ml_dsa_pki_priv_to_der(const void *vkey, unsigned char **pder,
 {
     KEY2ANY_CTX *ctx = vctx;
 
-    return ossl_ml_dsa_i2d_prvkey(vkey, pder, ctx->provctx);
+    return ossl_ml_dsa_i2d_prvkey(vkey, pder,
+                                  ctx->provctx, ctx->output_formats);
 }
 
 # define ml_dsa_epki_priv_to_der ml_dsa_pki_priv_to_der
@@ -894,7 +898,8 @@ static int ml_kem_pki_priv_to_der(const void *vkey, unsigned char **pder,
 {
     KEY2ANY_CTX *ctx = vctx;
 
-    return ossl_ml_kem_i2d_prvkey(vkey, pder, ctx->provctx);
+    return ossl_ml_kem_i2d_prvkey(vkey, pder,
+                                  ctx->provctx, ctx->output_formats);
 }
 
 # define ml_kem_epki_priv_to_der ml_kem_pki_priv_to_der
@@ -1130,6 +1135,7 @@ static void key2any_freectx(void *vctx)
 
     ossl_pw_clear_passphrase_data(&ctx->pwdata);
     EVP_CIPHER_free(ctx->cipher);
+    OPENSSL_free(ctx->output_formats);
     OPENSSL_free(ctx);
 }
 
@@ -1168,6 +1174,15 @@ static int key2any_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (p.svprm != NULL && !OSSL_PARAM_get_int(p.svprm, &ctx->save_parameters))
         return 0;
+
+    if (p.output_formats != NULL) {
+        char *val = NULL;
+
+        if (!OSSL_PARAM_get_utf8_string(p.output_formats, &val, 0))
+            return 0;
+        OPENSSL_free(ctx->output_formats);
+        ctx->output_formats = *val != '\0' ? val : NULL;
+    }
 
     return 1;
 }
