@@ -578,7 +578,7 @@ int ossl_ech_same_ext(SSL_CONNECTION *s, WPACKET *pkt)
     if (s == NULL || s->ext.ech.es == NULL)
         return OSSL_ECH_SAME_EXT_CONTINUE; /* nothing to do */
     /*
-     * We store/access the index of the extenstion handler in
+     * We store/access the index of the extension handler in
      * s->ext.ech.ext_ind, as we'd otherwise not know it here.
      * Be nice were there a better way to handle that.
      */

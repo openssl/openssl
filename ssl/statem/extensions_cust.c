@@ -219,7 +219,7 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
             }
             if (s->ext.ech.ch_depth == 0) {
                 /*
-                 * We store/access the index of the extenstion handler in
+                 * We store/access the index of the extension handler in
                  * s->ext.ech.ext_ind, as we'd otherwise not know it here.
                  * Be nice were there a better way to handle that.
                  */

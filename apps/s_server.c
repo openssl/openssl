@@ -1577,7 +1577,7 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
 
     /*
      * If you change the output to bio_s_out here you may
-     * also need to change test/recipies/82-test_ech_client_server.t
+     * also need to change test/recipes/82-test_ech_client_server.t
      * as that test checks the server's stdout to decide if the
      * server started ok or not. Text sent to stderr won't affect
      * that test.
