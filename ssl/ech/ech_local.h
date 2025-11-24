@@ -213,7 +213,7 @@ typedef struct ossl_ech_conn_st {
     uint16_t outer_only[OSSL_ECH_OUTERS_MAX];
     size_t n_outer_only; /* the number of outer_only extensions so far */
     /*
-     * We store/access the index of the extenstion handler in
+     * We store/access the index of the extension handler in
      * s->ext.ech.ext_ind, as we'd otherwise not know it here.
      * Be nice were there a better way to handle that.
      * Index of the current extension's entry in ext_defs - this is
