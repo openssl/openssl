@@ -30,7 +30,7 @@ static int ch_test_cb_ok = 0;
 static unsigned int ech_test_cb(SSL *s, const char *str)
 {
     if (verbose)
-        TEST_info("ech_test_cb called: str=\n%s",str);
+        TEST_info("ech_test_cb called: str=\n%s", str);
     return 1;
 }
 
@@ -1503,106 +1503,90 @@ static int ech_v12_test(int idx)
     return test_ech_roundtrip_helper(idx, OSSL_ECH_TEST_V12);
 }
 
-/* Test roundtrip with SNI/ALPN variations */
+/*
+ * Test roundtrip with SNI/ALPN variations.
+ * Inner and outer names can be supplied to SSL_CTX or SSL
+ * connection via ECH APIs, and inner can be supplied via
+ * the existing non-ECH API. We can specify that no outer
+ * SNI at all be sent if we want. If an outer SNI value is
+ * supplied via the ECH API then that over-rides the
+ * public_name field from the ECHConfig, which in this
+ * cases will be example.com. We have the option of setting
+ * both inner, outer and no_outer setting via eiher:
+ *
+ * int SSL_ech_set1_server_names(SSL *s, const char *inner_name,
+ *                               const char *outer_name, int no_outer);
+ * int SSL_ech_set1_outer_server_name(SSL *s, const char *outer_name,
+ *                                    int no_outer);
+ *
+ * So there's a bunch of cases to test, as usual we pick
+ * between 'em using the idx parameter.
+ *
+ * idx : case
+ * 0   : set no names via ECH APIs;
+ *       set inner to inner.example.com non-ECH API
+ *       expect public_name as outer
+ * 1   : as for 0, but additionally:
+ *       set NULL and "no_outer" via set_outer API
+ * 2   : as for 1, but additionally:
+ *       set non-NULL outer and "no_outer" via set_outer API
+ * 3   : override outer via ECH API
+ * 4   : like 1, but using set_server_names API
+ * 5   : like 2, but using set_server_names API
+ * 6   : like 3, but using set_server_names API
+ * 7   : like 4, but overriding previous call to non-ECH SNI
+ * 8   : like 5, but overriding previous call to non-ECH SNI
+ * 9   : like 6, but overriding previous call to non-ECH SNI
+ * 10  : like 7, but reversing call order
+ * 11  : like 8, but reversing call order
+ * 12  : like 9, but reversing call order
+ * 13  : like 1, but with a NULL outer input to API
+ *       that's a bit pointless as it's more or less a NO-OP
+ *       but worth checking
+ */
 static int ech_in_out_test(int idx)
 {
-    int res = 0;
+    int res = 0, cres = 0, sres = 0, clientstatus, serverstatus;
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
-    int clientstatus, serverstatus;
     char *non_ech_sni = "trad.server.example"; /* SNI set via non-ECH API */
     char *supplied_inner = "inner.server.example"; /* inner set via ECH API */
     char *supplied_outer = "outer.server.example"; /* outer set via ECH API */
     char *public_name = "front.server.example"; /* we know that's inside pem_kp2 */
-    /* inner, outer as provided via ECH status API */
     char *cinner = NULL, *couter = NULL, *sinner = NULL, *souter = NULL;
-    /* value below is "inner, secret, http/1.1" */
-    unsigned char alpn_inner[] = {
+    unsigned char alpn_inner[] = { /* "inner, secret, http/1.1" */
         0x05, 0x69, 0x6e, 0x6e, 0x65, 0x72,
         0x06, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74,
         0x08, 0x68, 0x74, 0x74, 0x70, 0x2f, 0x31, 0x2e, 0x31};
     size_t alpn_inner_len = sizeof(alpn_inner);
-    /* value below is "outer, public, h2" */
-    unsigned char alpn_outer[] = {
-        0x05, 0x6f, 0x75, 0x74, 0x65, 0x72,
-        0x06, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63,
-        0x02, 0x68, 0x32};
+    unsigned char alpn_outer[] = { /* "outer, public, h2" */
+        0x05, 0x6f, 0x75, 0x74, 0x65, 0x72, 0x06, 0x70,
+        0x75, 0x62, 0x6c, 0x69, 0x63, 0x02, 0x68, 0x32};
     size_t alpn_outer_len = sizeof(alpn_outer);
-    /* what we expect to see on both sides after (depends on idx) */
     char *expected_inner = NULL, *expected_outer = NULL;
-    int cres = 0, sres = 0;
     BIO *in = NULL;
     OSSL_ECHSTORE *es = NULL;
-
-    /*
-     * Inner and outer names can be supplied to SSL_CTX or SSL
-     * connection via ECH APIs, and inner can be supplied via
-     * the existing non-ECH API. We can specify that no outer
-     * SNI at all be sent if we want. If an outer SNI value is
-     * supplied via the ECH API then that over-rides the
-     * public_name field from the ECHConfig, which in this
-     * cases will be example.com. We have the option of setting
-     * both inner, outer and no_outer setting via eiher:
-     *
-     * int SSL_ech_set1_server_names(SSL *s, const char *inner_name,
-     *                               const char *outer_name, int no_outer);
-     * int SSL_ech_set1_outer_server_name(SSL *s, const char *outer_name,
-     *                                    int no_outer);
-     *
-     * So there's a bunch of cases to test, as usual we pick
-     * between 'em using the idx parameter.
-     *
-     * idx : case
-     * 0   : set no names via ECH APIs;
-     *       set inner to inner.example.com non-ECH API
-     *       expect public_name as outer
-     * 1   : as for 0, but additionally:
-     *       set NULL and "no_outer" via set_outer API
-     * 2   : as for 1, but additionally:
-     *       set non-NULL outer and "no_outer" via set_outer API
-     * 3   : override outer via ECH API
-     * 4   : like 1, but using set_server_names API
-     * 5   : like 2, but using set_server_names API
-     * 6   : like 3, but using set_server_names API
-     * 7   : like 4, but overriding previous call to non-ECH SNI
-     * 8   : like 5, but overriding previous call to non-ECH SNI
-     * 9   : like 6, but overriding previous call to non-ECH SNI
-     * 10  : like 7, but reversing call order
-     * 11  : like 8, but reversing call order
-     * 12  : like 9, but reversing call order
-     * 13  : like 1, but with a NULL outer input to API
-     *       that's a bit pointless as it's more or less a NO-OP
-     *       but worth checking
-     */
 
     /* make an OSSL_ECHSTORE for pem_kp2 */
     if ((in = BIO_new(BIO_s_mem())) == NULL
         || BIO_write(in, pem_kp2, (int)strlen(pem_kp2)) <= 0
         || !TEST_ptr(es = OSSL_ECHSTORE_new(libctx, propq))
-        || !TEST_true(OSSL_ECHSTORE_read_pem(es, in, OSSL_ECH_FOR_RETRY)))
+        || !TEST_true(OSSL_ECHSTORE_read_pem(es, in, OSSL_ECH_FOR_RETRY))
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                          TLS_client_method(),
+                                          TLS1_3_VERSION, TLS1_3_VERSION,
+                                          &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set1_echstore(sctx, es))
+        || !TEST_false(SSL_CTX_set_alpn_protos(cctx, alpn_inner,
+                                               (unsigned int)alpn_inner_len))
+        || !TEST_true(SSL_CTX_ech_set1_outer_alpn_protos(cctx, alpn_outer,
+                                                         alpn_outer_len))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                         &clientssl, NULL, NULL))
+        || !TEST_true(SSL_set1_ech_config_list(clientssl,
+                                               (unsigned char *)ec_kp2,
+                                               ec_kp2len)))
         goto end;
-
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(),
-                                       TLS1_3_VERSION, TLS1_3_VERSION,
-                                       &sctx, &cctx, cert, privkey)))
-        goto end;
-    if (!TEST_true(SSL_CTX_set1_echstore(sctx, es)))
-        goto end;
-    /* next one returns zero for success for some reason? */
-    if (!TEST_false(SSL_CTX_set_alpn_protos(cctx, alpn_inner,
-                                            (unsigned int)alpn_inner_len)))
-        goto end;
-    if (!TEST_true(SSL_CTX_ech_set1_outer_alpn_protos(cctx, alpn_outer,
-                                                      alpn_outer_len)))
-        goto end;
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
-                                      &clientssl, NULL, NULL)))
-        goto end;
-    if (!TEST_true(SSL_set1_ech_config_list(clientssl, (unsigned char *)ec_kp2,
-                                            ec_kp2len)))
-        goto end;
-    /* setup specific SSL * tests as per comment above */
     if (idx == 0) {
         if (!TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni)))
             goto end;
@@ -1610,28 +1594,24 @@ static int ech_in_out_test(int idx)
         expected_outer = public_name;
     }
     if (idx == 1) {
-        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni)))
-            goto end;
-        if (!TEST_true(SSL_ech_set1_outer_server_name(clientssl, NULL, 1)))
+        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni))
+            || !TEST_true(SSL_ech_set1_outer_server_name(clientssl, NULL, 1)))
             goto end;
         expected_inner = non_ech_sni;
         expected_outer = NULL;
     }
     if (idx == 2) {
-        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni)))
-            goto end;
-        if (!TEST_true(SSL_ech_set1_outer_server_name(clientssl, "blah", 1)))
+        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni))
+            || !TEST_true(SSL_ech_set1_outer_server_name(clientssl, "blah", 1)))
             goto end;
         expected_inner = non_ech_sni;
         expected_outer = NULL;
     }
     if (idx == 3) {
-        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni)))
-            goto end;
-        if (!TEST_true(SSL_ech_set1_outer_server_name(clientssl,
-                                                      supplied_outer, 0)))
-            goto end;
-        if (!TEST_true(SSL_ech_set1_outer_alpn_protos(clientssl, alpn_outer,
+        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni))
+            || !TEST_true(SSL_ech_set1_outer_server_name(clientssl,
+                                                         supplied_outer, 0))
+            || !TEST_true(SSL_ech_set1_outer_alpn_protos(clientssl, alpn_outer,
                                                          alpn_outer_len)))
             goto end;
         expected_inner = non_ech_sni;
@@ -1659,86 +1639,68 @@ static int ech_in_out_test(int idx)
         expected_outer = supplied_outer;
     }
     if (idx == 7) {
-        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "blah")))
-            goto end;
-        if (!TEST_true(SSL_ech_set1_server_names(clientssl,
-                                                 supplied_inner, NULL, 0)))
+        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "blah"))
+            || !TEST_true(SSL_ech_set1_server_names(clientssl, supplied_inner,
+                                                    NULL, 0)))
             goto end;
         expected_inner = supplied_inner;
         expected_outer = public_name;
     }
     if (idx == 8) {
-        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "blah")))
-            goto end;
-        if (!TEST_true(SSL_ech_set1_server_names(clientssl, supplied_inner,
-                                                 "blah", 1)))
+        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "blah"))
+            || !TEST_true(SSL_ech_set1_server_names(clientssl, supplied_inner,
+                                                    "blah", 1)))
             goto end;
         expected_inner = supplied_inner;
         expected_outer = NULL;
     }
     if (idx == 9) {
-        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "blah")))
-            goto end;
-        if (!TEST_true(SSL_ech_set1_server_names(clientssl, supplied_inner,
-                                                 supplied_outer, 0)))
+        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "blah"))
+            || !TEST_true(SSL_ech_set1_server_names(clientssl, supplied_inner,
+                                                    supplied_outer, 0)))
             goto end;
         expected_inner = supplied_inner;
         expected_outer = supplied_outer;
     }
     if (idx == 10) {
         if (!TEST_true(SSL_ech_set1_server_names(clientssl,
-                                                 supplied_inner, NULL, 0)))
-            goto end;
-        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni)))
+                                                 supplied_inner, NULL, 0))
+            || !TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni)))
             goto end;
         expected_inner = non_ech_sni;
         expected_outer = public_name;
     }
     if (idx == 11) {
         if (!TEST_true(SSL_ech_set1_server_names(clientssl, supplied_inner,
-                                                 "blah", 1)))
-            goto end;
-        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni)))
+                                                 "blah", 1))
+            || !TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni)))
             goto end;
         expected_inner = non_ech_sni;
         expected_outer = NULL;
     }
     if (idx == 12) {
         if (!TEST_true(SSL_ech_set1_server_names(clientssl, supplied_inner,
-                                                 supplied_outer, 0)))
-            goto end;
-        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni)))
+                                                 supplied_outer, 0))
+            || !TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni)))
             goto end;
         expected_inner = non_ech_sni;
         expected_outer = supplied_outer;
     }
     if (idx == 13) {
-        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni)))
-            goto end;
-        if (!TEST_true(SSL_ech_set1_outer_server_name(clientssl,
-                                                     NULL, 0)))
+        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, non_ech_sni))
+            || !TEST_true(SSL_ech_set1_outer_server_name(clientssl, NULL, 0)))
             goto end;
         expected_inner = non_ech_sni;
         expected_outer = public_name;
     }
-    if (verbose)
-        TEST_info("ech_in_out_test: expected I: %s, O: %s",
-                  expected_inner, expected_outer);
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
                                          SSL_ERROR_NONE)))
         goto end;
     serverstatus = SSL_ech_get1_status(serverssl, &sinner, &souter);
-    if (verbose)
-        TEST_info("ech_in_out_test: server status %d, I: %s, O: %s",
-                  serverstatus, sinner, souter);
     if (!TEST_int_eq(serverstatus, SSL_ECH_STATUS_SUCCESS))
         goto end;
-    /* override cert verification */
-    SSL_set_verify_result(clientssl, X509_V_OK);
+    SSL_set_verify_result(clientssl, X509_V_OK); /* override cert check */
     clientstatus = SSL_ech_get1_status(clientssl, &cinner, &couter);
-    if (verbose)
-        TEST_info("ech_in_out_test: client status %d, I: %s, O: %s",
-                  clientstatus, cinner, couter);
     if (!TEST_int_eq(clientstatus, SSL_ECH_STATUS_SUCCESS))
         goto end;
     cres = sres = 0; /* check result vs. expected */
@@ -1771,8 +1733,7 @@ static int ech_in_out_test(int idx)
         sres = 1;
     if (!TEST_int_eq(sres, 1))
         goto end;
-    /* all good */
-    res = 1;
+    res = 1; /* all good */
 end:
     OSSL_ECHSTORE_free(es);
     BIO_free_all(in);
@@ -1809,7 +1770,7 @@ static int ech_grease_test(int idx)
     if (idx == 2) {
         /*
          * In our last test iteration set various other ECH configs, to make
-         * for a bigger retry-config. (It's ok that we set the same key pair 
+         * for a bigger retry-config. (It's ok that we set the same key pair
          * a few times here.)
          */
         BIO_free_all(in);
