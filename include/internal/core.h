@@ -11,6 +11,8 @@
 # define OSSL_INTERNAL_CORE_H
 # pragma once
 
+# include <openssl/conf.h>
+
 /*
  * namespaces:
  *
@@ -68,4 +70,7 @@ __owur int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx);
 __owur int ossl_lib_ctx_read_lock(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_unlock(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_child(OSSL_LIB_CTX *ctx);
+int ossl_lib_ctx_attach_ssl_conf_imodule(OSSL_LIB_CTX *ctx, CONF_IMODULE *md);
+int ossl_lib_ctx_detach_ssl_conf_imodule(OSSL_LIB_CTX *ctx, CONF_IMODULE *md);
+
 #endif
