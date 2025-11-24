@@ -383,7 +383,7 @@ int SSL_CTX_ech_raw_decrypt(SSL_CTX *ctx,
 {
     if (ctx == NULL) {
         /*
-         * TODO(ECH): decide whether to populate this or to 
+         * TODO(ECH): decide whether to populate this or to
          * punt on split-more 'till after the first ECH-enabled
          * release.
          */

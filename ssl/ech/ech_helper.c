@@ -172,11 +172,11 @@ int ossl_ech_helper_get_sh_offsets(const unsigned char *sh, size_t sh_len,
     PACKET pkt;
     size_t extlens = 0;
     int done = 0;
-# ifdef OSSL_ECH_SUPERVERBOSE
+#ifdef OSSL_ECH_SUPERVERBOSE
     size_t echlen = 0; /* length of ECH, including type & ECH-internal length */
     size_t sessid_offset = 0;
     size_t sessid_len = 0;
-# endif
+#endif
 
     if (sh == NULL || sh_len == 0 || exts == NULL || echoffset == NULL
         || echtype == NULL)
@@ -191,13 +191,13 @@ int ossl_ech_helper_get_sh_offsets(const unsigned char *sh, size_t sh_len,
     if (pi_tmp != TLS1_2_VERSION && pi_tmp != TLS1_3_VERSION)
         return 1;
     if (!PACKET_get_bytes(&pkt, &pp_tmp, SSL3_RANDOM_SIZE)
-# ifdef OSSL_ECH_SUPERVERBOSE
+#ifdef OSSL_ECH_SUPERVERBOSE
         || (sessid_offset = PACKET_data(&pkt) - shstart) == 0
-# endif
+#endif
         || !PACKET_get_1(&pkt, &pi_tmp) /* sessid len */
-# ifdef OSSL_ECH_SUPERVERBOSE
+#ifdef OSSL_ECH_SUPERVERBOSE
         || (sessid_len = (size_t)pi_tmp) == 0
-# endif
+#endif
         || !PACKET_get_bytes(&pkt, &pp_tmp, pi_tmp) /* sessid */
         || !PACKET_get_net_2(&pkt, &pi_tmp) /* ciphersuite */
         || !PACKET_get_1(&pkt, &pi_tmp) /* compression */
@@ -219,15 +219,15 @@ int ossl_ech_helper_get_sh_offsets(const unsigned char *sh, size_t sh_len,
                 return 0;
             *echoffset = PACKET_data(&pkt) - shstart - 4;
             *echtype = etype;
-# ifdef OSSL_ECH_SUPERVERBOSE
+#ifdef OSSL_ECH_SUPERVERBOSE
             echlen = elen + 4; /* type and length included */
-# endif
+#endif
             done++;
         }
         if (!PACKET_get_bytes(&pkt, &pp_tmp, elen))
             return 0;
     }
-# ifdef OSSL_ECH_SUPERVERBOSE
+#ifdef OSSL_ECH_SUPERVERBOSE
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "orig SH/ECH type: %4x\n", *echtype);
     } OSSL_TRACE_END(TLS);
@@ -236,6 +236,6 @@ int ossl_ech_helper_get_sh_offsets(const unsigned char *sh, size_t sh_len,
                   sessid_len);
     ossl_ech_pbuf("orig SH exts", (unsigned char *)sh + *exts, extlens);
     ossl_ech_pbuf("orig SH/ECH ", (unsigned char *)sh + *echoffset, echlen);
-# endif
+#endif
     return 1;
 }

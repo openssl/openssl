@@ -2046,8 +2046,7 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     OPENSSL_free(aad);
     aad = NULL;
     s->ext.ech.done = 1; /* decrypting worked or not, but we're done now */
-    /* 3. if decrypt fails tee-up GREASE */
-    s->ext.ech.grease = OSSL_ECH_IS_GREASE;
+    s->ext.ech.grease = OSSL_ECH_IS_GREASE; /* if decrypt fails tee-up GREASE */
     s->ext.ech.success = 0;
     if (clear != NULL) {
         s->ext.ech.grease = OSSL_ECH_NOT_GREASE;
