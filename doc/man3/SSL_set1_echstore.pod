@@ -79,7 +79,7 @@ The externally opaque type B<OSSL_ECHSTORE> allows applications to create and
 manage ECHConfigList values, ECH private keys and associated meta-data. The
 external APIs using B<OSSL_ECHSTORE> are:
 
-OSSL_ECHSTORE_new() and OSSL_ECHSTORE_free() create and free the 
+OSSL_ECHSTORE_new() and OSSL_ECHSTORE_free() create and free the
 internal storage required.
 
 OSSL_ECHSTORE_new_config() allows the caller to create a new private key
@@ -103,12 +103,18 @@ content of the store for logging or for display, e.g. in a command line tool.
 OSSL_ECHSTORE_downselect() API gives the client a way to select one
 particular ECHConfig value from the set stored (discarding the rest).
 
-OSSL_ECHSTORE_set1_key_and_read_pem() and OSSL_ECHSTORE_read_pem() can be
-used to load a private key value and associated "singleton" ECHConfigList.
-Those can be used (by servers) to enable ECH for an B<SSL_CTX> or B<SSL>
-connection. In addition to loading those values, the application can also
-indicate via I<for_retry> which ECHConfig values are to be included in the
-I<retry_configs> fallback scheme defined by the ECH protocol.
+OSSL_ECHSTORE_set1_key_and_read_pem() and OSSL_ECHSTORE_read_pem() can be used
+to load a private key value and associated ECHConfigList into an
+B<OSSL_ECHSTORE> structure.  Those can be used (by servers) to enable ECH for
+an B<SSL_CTX> or B<SSL> connection. In addition to loading those values, the
+application can also indicate via I<for_retry> which ECHConfig values are to be
+included in the I<retry_configs> fallback scheme defined by the ECH protocol.
+An ECH PEM file may contain a private key and an ECHConfigList with more than
+one ECHConfig, for example if different public keys, I<public_name> values, or
+AEAD/KDF settings are to be supported. In such cases the resulting
+B<OSSL_ECHSTORE> will contain one entry for each ECHConfig, so will be a set of
+"singleton" ECHConfig values, with the private key associated with each
+matching public key value.
 
 OSSL_ECHSTORE_num_entries() and OSSL_ECHSTORE_num_keys() allow an
 application  to see how many usable ECH configs and private keys are currently
@@ -119,9 +125,8 @@ of keys, e.g.  hourly, and also discards the keys that are too old, e.g. more
 than 3 hours old. This allows for more robust private key management even if
 public key distribution suffers temporary failures.
 
-
-SSL_CTX_set1_echstore() and SSL_set1_echstore() 
-allow clients and servers can use to associate an B<OSSL_ECHSTORE>
+SSL_CTX_set1_echstore() and SSL_set1_echstore()
+allow clients and servers to associate an B<OSSL_ECHSTORE>
 with an B<SSL_CTX> or B<SSL> structure.
 ECH will be enabled for the relevant B<SSL_CTX> or B<SSL> connection
 when these functions succeed. Any previously associated B<OSSL_ECHSTORE>
@@ -149,10 +154,14 @@ I<no_outer> input allows a client to emit an outer ClientHello with no SNI at
 all. Providing a B<NULL> for the I<outer_name> means to send the I<public_name>
 provided from the ECHConfigList.
 
+If a client has called L<SSL_CTX_set_alpn_protos> or L<SSL_set_alpn_protos>
+then the ALPN value will be the same in the inner and outer ClientHello
+messages.
 SSL_ech_set1_outer_alpn_protos() and SSL_CTX_ech_set1_outer_alpn_protos()
-provide similar control over inner and outer ALPN values.
+allow clients to set a specific value for the ALPN sent in the outer
+ClientHello
 
-If a client attempts ECH but that fails, or sends an ECH-GREASEd CH, to an
+If a client attempts ECH but that fails, or sends an ECH-GREASEd ClientHello, to an
 ECH-supporting server, then that server may return an ECH I<retry-config> value
 that the client could choose to use in a subsequent connection. The client can
 detect this situation via the SSL_ech_get1_status() API and can access the
@@ -169,7 +178,7 @@ Clients and servers can query the status of ECH for a TLS session using the
 SSL_ech_get1_status() function. As SNI handling is core to ECH this will return
 the I<inner_sni> and I<outer_sni> values to be used or that were used as well
 as a status code as the return value. (These must be freed by the caller.)
-The various status values are as shown in L</Constants>. 
+The various status values are as shown in L</Constants>.
 
 =head2 Callback Functions
 
@@ -329,7 +338,7 @@ is in contrast to SSL_CTX_set1_alpn_protos() and SSL_set1_alpn_protos() which
 
 =over 4
 
-=item Encrypted ClientHello specification: L<https://datatracker.ietf.org/doc/draft-ietf-tls-esni/> 
+=item Encrypted ClientHello specification: L<https://datatracker.ietf.org/doc/draft-ietf-tls-esni/>
 
 =item ECH PEM file format specification: L<https://datatracker.ietf.org/doc/draft-farrell-tls-pemesni/>
 

@@ -70,7 +70,7 @@ static unsigned char bin_echconfig[] =
         0x41, 0x7f, 0x8b, 0xf3, 0x6c, 0xb8, 0x40, 0x00,
         0xbd, 0x90, 0x0b, 0x00, 0x04, 0x00, 0x01, 0x00,
         0x01, 0x00, 0x0b, 0x65, 0x78, 0x61, 0x6d, 0x70,
-        0x6c, 0x65, 0x2e, 0x63, 0x6f, 0x6d, 0x00, 0x00 
+        0x6c, 0x65, 0x2e, 0x63, 0x6f, 0x6d, 0x00, 0x00
     };
 static size_t bin_echconfiglen = sizeof(bin_echconfig);
 
@@ -350,7 +350,6 @@ static const unsigned char short_encoded_inner[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-
 /*
  * too many outer extensions - max is 20 (decimal)
  * defined as OSSL_ECH_OUTERS_MAX
@@ -365,7 +364,7 @@ static const unsigned char too_many_outers[] = {
     0x4c, /* extslen, incl. our added outers */
     0xfd, 0x00, /* outers */
     0x00, 0x2b, /* len of outers */
-    0x2a, /* above minus one (42) 21 outers*/
+    0x2a, /* above minus one (42) 21 outers */
     0x00, 0x0b, /* the 9 'normal' outers */
     0x00, 0x0a,
     0x00, 0x23,
@@ -505,8 +504,8 @@ static TEST_ECHINNER test_inners[] = {
       NULL, 0,
       0, /* expected result */
       SSL_R_BAD_EXTENSION},
-    /* 19. include key-share twice in outers as well as both inner and outer */
-    /* 
+    /*
+     * 19. include key-share twice in outers as well as both inner and outer.
      * There was a change with this one recently that can/does cause a
      * different error message (used to be SSL_R_BAD_EXTENSION, but now
      * mostly ERR_R_INTERNAL_ERROR). The issue is that this test repeats the
@@ -619,8 +618,7 @@ static TEST_SH test_shs[] = {
  */
 
 /* an entire correctly encoded ECH (len = 190) */
-static unsigned char entire_encoded_ech[] =
-{
+static unsigned char entire_encoded_ech[] = {
     0xfe, 0x0d, 0x00, 0xba, /* ext type & length */
     0x00, /* outer ECH */
     0x00, 0x01, 0x00, 0x01, /* cipher suite KDF, AEAD */
@@ -652,50 +650,43 @@ static unsigned char entire_encoded_ech[] =
 };
 
 /* overall length too much */
-static unsigned char too_long_ech[] =
-{
+static unsigned char too_long_ech[] = {
     0xfe, 0x0d, 0xFF, 0xba, /* ext type & length */
 };
 
 /* overall length too short */
-static unsigned char too_short_ech[] =
-{
+static unsigned char too_short_ech[] = {
     0xfe, 0x0d, 0x00, 0x00, /* ext type & length */
 };
 
 /* no inner/outer value */
-static unsigned char no_innerouter_ech[] =
-{
+static unsigned char no_innerouter_ech[] = {
     0xfe, 0x0d, 0x00, 0x00, /* ext type & length */
     0x00,
 };
 
 /* ECH inner/outer bad value */
-static unsigned char bad_innerouter_ech[] =
-{
+static unsigned char bad_innerouter_ech[] = {
     0xfe, 0x0d, 0x00, 0xba, /* ext type & length */
     0xFF,
 };
 
 /* too short to get to KDF */
-static unsigned char too_short_kdf[] =
-{
+static unsigned char too_short_kdf[] = {
     0xfe, 0x0d, 0x00, 0x02, /* ext type & length */
     0x00,
     0x00, 0x01, 0x00, 0x01, /* cipher suite KDF, AEAD */
 };
 
 /* too short to get to AEAD */
-static unsigned char too_short_aead[] =
-{
+static unsigned char too_short_aead[] = {
     0xfe, 0x0d, 0x00, 0x04, /* ext type & length */
     0x00,
     0x00, 0x01, 0x00, 0x01, /* cipher suite KDF, AEAD */
 };
 
 /* too short to get to config_id */
-static unsigned char too_short_cid[] =
-{
+static unsigned char too_short_cid[] = {
     0xfe, 0x0d, 0x00, 0x05, /* ext type & length */
     0x00,
     0x00, 0x01, 0x00, 0x01, /* cipher suite KDF, AEAD */
@@ -703,8 +694,7 @@ static unsigned char too_short_cid[] =
 };
 
 /* zero length encap (only ok in HRR) */
-static unsigned char zero_encap_len[] =
-{
+static unsigned char zero_encap_len[] = {
     0xfe, 0x0d, 0x00, 0xba, /* ext type & length */
     0x00,
     0x00, 0x01, 0x00, 0x01, /* cipher suite KDF, AEAD */
@@ -713,8 +703,7 @@ static unsigned char zero_encap_len[] =
 };
 
 /* too short to get to encap_len  */
-static unsigned char too_short_encap_len[] =
-{
+static unsigned char too_short_encap_len[] = {
     0xfe, 0x0d, 0x00, 0x07, /* ext type & length */
     0x00,
     0x00, 0x01, 0x00, 0x01, /* cipher suite KDF, AEAD */
@@ -723,8 +712,7 @@ static unsigned char too_short_encap_len[] =
 };
 
 /* too long encap len */
-static unsigned char too_long_encap_len[] =
-{
+static unsigned char too_long_encap_len[] = {
     0xfe, 0x0d, 0x00, 0xba, /* ext type & length */
     0x00,
     0x00, 0x01, 0x00, 0x01, /* cipher suite KDF, AEAD */
@@ -733,8 +721,7 @@ static unsigned char too_long_encap_len[] =
 };
 
 /* bit long encap len (more than extension) */
-static unsigned char bit_long_encap_len[] =
-{
+static unsigned char bit_long_encap_len[] = {
     0xfe, 0x0d, 0x00, 0xba, /* ext type & length */
     0x00,
     0x00, 0x01, 0x00, 0x01, /* cipher suite KDF, AEAD */
@@ -743,8 +730,7 @@ static unsigned char bit_long_encap_len[] =
 };
 
 /* bit longer encap len (more than extension) */
-static unsigned char bit_longer_encap_len[] =
-{
+static unsigned char bit_longer_encap_len[] = {
     0xfe, 0x0d, 0x00, 0xba, /* ext type & length */
     0x00,
     0x00, 0x01, 0x00, 0x01, /* cipher suite KDF, AEAD */
@@ -753,8 +739,7 @@ static unsigned char bit_longer_encap_len[] =
 };
 
 /* too short to get to payload_len */
-static unsigned char too_short_payload_len[] =
-{
+static unsigned char too_short_payload_len[] = {
     0xfe, 0x0d, 0x00, 0x29, /* ext type & length */
     0x00,
     0x00, 0x01, 0x00, 0x01, /* cipher suite KDF, AEAD */
@@ -768,8 +753,7 @@ static unsigned char too_short_payload_len[] =
 };
 
 /* bit long payload_len */
-static unsigned char bit_long_payload_len[] =
-{
+static unsigned char bit_long_payload_len[] = {
     0xfe, 0x0d, 0x00, 0xba, /* ext type & length */
     0x00,
     0x00, 0x01, 0x00, 0x01, /* cipher suite KDF, AEAD */
@@ -783,8 +767,7 @@ static unsigned char bit_long_payload_len[] =
 };
 
 /* zero payload_len */
-static unsigned char zero_payload_len[] =
-{
+static unsigned char zero_payload_len[] = {
     0xfe, 0x0d, 0x00, 0xba, /* ext type & length */
     0x00,
     0x00, 0x01, 0x00, 0x01, /* cipher suite KDF, AEAD */
@@ -1058,7 +1041,7 @@ static int corrupt_or_copy(const char *msg, const int msglen,
             return 0;
         *msgoutlen = msglen;
         /*
-         * overwrite (some of) the outer ECH, in contrast to 
+         * overwrite (some of) the outer ECH, in contrast to
          * the above case, here we're overwriting the ECH
          * ext type and length as well, the +9 is for record
          * layer framing as before
@@ -1109,9 +1092,8 @@ static int corrupt_or_copy(const char *msg, const int msglen,
                                                 &exts, &echoffset, &echtype);
             if (!TEST_int_eq(rv, 1))
                 return 0;
-            if (echoffset > 0) {
+            if (echoffset > 0)
                 memcpy(&((*msgout)[9 + echoffset]), ts->bork, ts->blen);
-            }
             *msgoutlen = msglen;
             return 1;
         }
@@ -1522,8 +1504,8 @@ int setup_tests(void)
         goto err;
     /* +/- 2 is to drop the ECHConfigList length at the start */
     if (!TEST_true(ossl_ech_make_enc_info((unsigned char *)bin_echconfig + 2,
-                                           bin_echconfiglen - 2,
-                                           hpke_info, &hpke_infolen)))
+                                          bin_echconfiglen - 2,
+                                          hpke_info, &hpke_infolen)))
         goto err;
     ADD_ALL_TESTS(test_ch_corrupt, OSSL_NELEM(test_inners));
     ADD_ALL_TESTS(test_sh_corrupt, OSSL_NELEM(test_shs));
