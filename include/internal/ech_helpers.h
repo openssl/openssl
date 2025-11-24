@@ -54,7 +54,6 @@ int ossl_ech_helper_get_ch_offsets(const unsigned char *ch, size_t ch_len,
                                    size_t *ech_len, size_t *sni_off,
                                    size_t *sni_len, int *inner);
 
-
 /*
  * Given a SH (or HRR) find the offsets of the ECH (if any)
  * sh is the SH buffer

@@ -479,7 +479,7 @@ static int test_ssl_trace(void)
    * Note that that ordering will be affected if the ECH compression
    * choices are changed - see the comments in ssl/statem/extensions.s
    * where those choices are embedded in the ext_defs table.
-   */ 
+   */
 #  ifdef OPENSSL_NO_ZLIB
         reffile = test_mk_file_path(datadir, "ssltraceref-ech.txt");
 #  else
