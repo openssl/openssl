@@ -372,6 +372,7 @@ end:
 #ifndef OPENSSL_NO_SECURE_MEMORY
     CRYPTO_secure_malloc_done();
 #endif
+    OPENSSL_cleanup();
     EXIT(ret);
 }
 

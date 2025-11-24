@@ -32,10 +32,18 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * libcrypto no longer arms OPENSSL_cleanup() as atexit(3) handler by default.
+   Memory leak detectors now report there is allocated and reachable memory
+   at application exit. To avoid such leak detection the application must
+   call OPENSSL_cleanup() before main() exits.
+
+   *Alexandr Nedvedicky*
+
  * The crypto-mdebug-backtrace configuration option has been entirely removed.
    The option has been a no-op since 1.0.2.
 
    *Neil Horman*
+
 
  * Removed extra leading '00:' when printing key data such as an RSA modulus
    in hexadecimal format where the first (most significant) byte is >= 0x80.

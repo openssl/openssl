@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/bio.h>
@@ -273,6 +274,11 @@ static int test_rand_get0_primary(void)
 err:
     OSSL_LIB_CTX_free(ctx);
     return res;
+}
+
+void cleanup_tests(void)
+{
+    OPENSSL_cleanup();
 }
 
 int setup_tests(void)
