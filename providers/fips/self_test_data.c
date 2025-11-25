@@ -18,9 +18,12 @@
 
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
-#include "self_test.h"
 #include "crypto/ml_kem.h"
 #include "internal/nelem.h"
+#include "self_test.h"
+
+#define NO_DEFERRED_EXTERN 1
+#include "internal/fips.h"
 
 /* Macros to build Self test data */
 #define ITM(x) ((void *)&x), sizeof(x)
@@ -3158,6 +3161,23 @@ static const unsigned char sig_kat_persstr[] = {
 };
 int st_kat_sign_tests_size = OSSL_NELEM(st_kat_sign_tests);
 
+#ifndef OPENSSL_NO_SLH_DSA
+FIPS_DEFERRED_TEST slh_dsa_shake_deferred_test = {
+    "SLH-DSA-SHAKE-128f",
+    FIPS_DEFERRED_KAT_SIGNATURE,
+    FIPS_DEFERRED_TEST_INIT,
+    NULL,
+    NULL
+};
+FIPS_DEFERRED_TEST slh_dsa_sha2_deferred_test = {
+    "SLH-DSA-SHA2-128f",
+    FIPS_DEFERRED_KAT_SIGNATURE,
+    FIPS_DEFERRED_TEST_INIT,
+    NULL,
+    NULL
+};
+#endif /* OPENSSL_NO_SLH_DSA */
+
 #if !defined(OPENSSL_NO_ML_DSA)
 static const ST_KAT_PARAM ml_dsa_keygen_params[] = {
     ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_ML_DSA_SEED, sig_kat_entropyin),
@@ -3572,6 +3592,16 @@ const ST_KAT_ASYM_KEYGEN st_kat_asym_keygen_tests[] = {
 };
 int st_kat_asym_keygen_tests_size = OSSL_NELEM(st_kat_asym_keygen_tests);
 #endif /* !OPENSSL_NO_ML_DSA || !OPENSSL_NO_SLH_DSA */
+
+#ifndef OPENSSL_NO_SLH_DSA
+FIPS_DEFERRED_TEST slh_key_gen_deferred_test = {
+    "SLH-DSA-SHA2-128f",
+    FIPS_DEFERRED_KAT_ASYM_KEYGEN,
+    FIPS_DEFERRED_TEST_INIT,
+    NULL,
+    NULL
+};
+#endif
 
 const ST_KAT_ASYM_CIPHER st_kat_asym_cipher_tests[] = {
     {

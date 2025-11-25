@@ -41,6 +41,8 @@ struct fips_deferred_test_st {
     const char *algorithm;
     int category;
     int state;
+    struct fips_deferred_test_st **also_satisfies;
+    struct fips_deferred_test_st **depends_on;
 };
 
 #  define FIPS_DEFERRED_TEST_INIT 0
@@ -50,7 +52,15 @@ struct fips_deferred_test_st {
 
 typedef struct fips_deferred_test_st FIPS_DEFERRED_TEST;
 
-int FIPS_deferred_self_tests(OSSL_LIB_CTX *libctx, FIPS_DEFERRED_TEST tests[]);
+int FIPS_deferred_self_test(OSSL_LIB_CTX *libctx, FIPS_DEFERRED_TEST *test);
+
+#ifndef NO_DEFERRED_EXTERN
+# ifndef OPENSSL_NO_SLH_DSA
+extern FIPS_DEFERRED_TEST slh_dsa_shake_deferred_test;
+extern FIPS_DEFERRED_TEST slh_dsa_sha2_deferred_test;
+extern FIPS_DEFERRED_TEST slh_key_gen_deferred_test;
+# endif
+#endif
 
 # endif /* FIPS_MODULE */
 
