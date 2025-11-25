@@ -42,6 +42,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       run: |
-        VERSION="$(echo "$GITHUB_REF_NAME" | cut -d '-' -f 2-)"
+        VERSION=$(echo "$GITHUB_REF_NAME" | cut -d "-" -f 2-)
         PRE_RELEASE=$([[ "$GITHUB_REF_NAME" =~ alpha|beta ]] && echo "-p" || echo "")
-        gh release create "$GITHUB_REF_NAME" $PRE_RELEASE -t "OpenSSL $VERSION" -d --notes " " -R "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME/assets/"*
+        NOTES=$(curl -s "https://api.openssl.org/release-metadata/news/?version=$VERSION&capture_title=False")
+        gh release create "$GITHUB_REF_NAME" $PRE_RELEASE -t "OpenSSL $VERSION" -d --notes "$NOTES" -R "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME/assets/"*
