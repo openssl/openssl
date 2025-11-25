@@ -75,6 +75,11 @@ echo ""
 run_test_suite "$SCRIPT_DIR/test-profiles.sh" "Security Profile Tests"
 echo ""
 
+# Test Suite 4: Event Telemetry (Phase 3)
+echo ""
+run_test_suite "$SCRIPT_DIR/test-event-telemetry.sh" "Event Telemetry Tests (Phase 3)"
+echo ""
+
 # Summary
 echo ""
 echo -e "${BLUE}========================================${NC}"

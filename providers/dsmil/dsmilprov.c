@@ -20,6 +20,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "policy.h"
+#include "events.h"
 
 /*
  * Forward declarations
@@ -37,8 +38,7 @@ static OSSL_FUNC_core_get_params_fn *c_get_params = NULL;
 typedef struct dsmil_prov_ctx_st {
     const OSSL_CORE_HANDLE *handle;
     DSMIL_POLICY_CTX *policy_ctx;
-    /* Event telemetry will be added in Phase 3 */
-    /* EVENT_CTX *event_ctx; */
+    DSMIL_EVENT_CTX *event_ctx;  /* Phase 3: Event telemetry */
 } DSMIL_PROV_CTX;
 
 /* Parameters we provide to the core */
@@ -117,9 +117,9 @@ static void dsmil_teardown(void *provctx)
     if (ctx->policy_ctx != NULL)
         dsmil_policy_ctx_free(ctx->policy_ctx);
 
-    /* Future: Cleanup event context */
-    /* if (ctx->event_ctx != NULL)
-        dsmil_event_ctx_free(ctx->event_ctx); */
+    /* Cleanup event context */
+    if (ctx->event_ctx != NULL)
+        dsmil_event_ctx_free(ctx->event_ctx);
 
     OPENSSL_free(ctx);
 }
@@ -166,19 +166,39 @@ static int dsmil_init(const OSSL_CORE_HANDLE *handle,
 
     /* Initialize policy context */
     ctx->policy_ctx = dsmil_policy_ctx_new(c_get_libctx(handle));
-    if (ctx->policy_ctx == NULL) {
+    if (ctx->policy_ctx != NULL) {
+        /* Initialize event telemetry (Phase 3) */
+        const char *socket_path = getenv("DSMIL_EVENT_SOCKET");
+        if (socket_path == NULL)
+            socket_path = "/run/crypto-events.sock";
+
+        ctx->event_ctx = dsmil_event_ctx_new(socket_path);
+
+        /* Link event context to policy context */
+        dsmil_policy_set_event_ctx(ctx->policy_ctx, ctx->event_ctx);
+    } else {
         OPENSSL_free(ctx);
         return 0;
     }
-
-    /* Future (Phase 3): Initialize event telemetry */
-    /* ctx->event_ctx = dsmil_event_ctx_new(); */
 
     *provctx = ctx;
     *out = NULL;  /* No dispatch table yet */
 
     fprintf(stderr, "DSMIL Policy Provider initialized (profile: %s)\n",
             dsmil_policy_get_profile_name(ctx->policy_ctx));
+
+    /* Emit provider initialization event */
+    if (ctx->event_ctx != NULL) {
+        char *json = dsmil_event_create_json(
+            DSMIL_EVENT_HANDSHAKE_START,
+            dsmil_policy_get_profile(ctx->policy_ctx),
+            "PROVIDER",
+            "\"status\":\"initialized\"");
+        if (json != NULL) {
+            dsmil_event_emit_json(ctx->event_ctx, DSMIL_EVENT_HANDSHAKE_START, json);
+            dsmil_event_free_json(json);
+        }
+    }
 
     return 1;
 }

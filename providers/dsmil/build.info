@@ -2,25 +2,21 @@
 #
 # This provider enforces DSMIL security profiles and emits telemetry events.
 #
-# Phase 1: Basic skeleton (current)
-# Phase 2: Full policy enforcement
-# Phase 3: Event telemetry
+# Phase 1: Basic skeleton (complete)
+# Phase 2: Full policy enforcement (complete)
+# Phase 3: Event telemetry (complete)
 
 # Provider library goal
 $DSMIL_GOAL=../../libdsmil.a
 
-# Source files
-SOURCE[$DSMIL_GOAL]=dsmilprov.c policy.c
-
-# Future (Phase 3): Add event telemetry
-# SOURCE[$DSMIL_GOAL]=events.c
+# Source files (Phases 1-3 complete)
+SOURCE[$DSMIL_GOAL]=dsmilprov.c policy.c policy_enhanced.c events.c
 
 # Include paths
 INCLUDE[$DSMIL_GOAL]=../common/include ../implementations/include
 
 # Dependencies
-DEPEND[dsmilprov.o]=policy.h
+DEPEND[dsmilprov.o]=policy.h policy_enhanced.h events.h
 DEPEND[policy.o]=policy.h
-
-# Future dependencies
-# DEPEND[events.o]=events.h policy.h
+DEPEND[policy_enhanced.o]=policy.h policy_enhanced.h events.h
+DEPEND[events.o]=events.h policy.h
