@@ -173,15 +173,6 @@ int OSSL_FN_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b);
  */
 int OSSL_FN_sub_word(OSSL_FN *a, const OSSL_FN_ULONG *w);
 
-/**
- * Compare two OSSL_FN numbers.
- *
- * @param[in]           a       The first operand
- * @param[in]           b       The second operand
- * @returns             -1 if a < b, 0 if a == b, and 1 if a > b
- */
-int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b);
-
 # ifdef  __cplusplus
 }
 # endif

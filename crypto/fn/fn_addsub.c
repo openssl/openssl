@@ -32,13 +32,12 @@ int OSSL_FN_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
     /* At this point, we know that a->dsize >= b->dsize */
     size_t max = a->dsize;
     size_t min = b->dsize;
+    size_t rs = r->dsize;
 
     /*
      * 'r' must be able to contain the result.  This is on the caller.
-     * TODO(FIXNUM): we might want to use 'assert()' instead, if it turns out
-     * that using 'ossl_unlikely()' leaks undue information.
      */
-    if (ossl_unlikely(max > (size_t)r->dsize)) {
+    if (!ossl_assert(max <= rs)) {
         ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
         return 0;
     }
@@ -48,11 +47,6 @@ int OSSL_FN_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
 
     OSSL_FN_ULONG *rp = r->d;
     OSSL_FN_ULONG carry = bn_add_words(rp, ap, bp, (int)min);
-
-    /*
-     * TODO(FIXNUM): everything following isn't strictly constant-time,
-     * and could use improvement in that regard.
-     */
 
     rp += min;
     ap += min;
@@ -85,10 +79,8 @@ int OSSL_FN_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
 
     /*
      * 'r' must be able to contain the result.  This is on the caller.
-     * TODO(FIXNUM): we might want to use 'assert()' instead, if it turns out
-     * that using 'ossl_unlikely()' leaks undue information.
      */
-    if (ossl_unlikely(max > rs)) {
+    if (!ossl_assert(max <= rs)) {
         ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
         return 0;
     }
