@@ -761,12 +761,6 @@ Don't build and install documentation, i.e. manual pages in various forms.
 
 Don't build support for loading Dynamic Shared Objects (DSO)
 
-### no-dynamic-engine
-
-Don't build the dynamically loaded engines.
-
-This only has an effect in a shared build.
-
 ### no-ec
 
 Don't build support for Elliptic Curves.
@@ -797,10 +791,6 @@ This option is only supported on platforms:
 ### enable-egd
 
 Build support for gathering entropy from the Entropy Gathering Daemon (EGD).
-
-### no-engine
-
-Don't build support for loading engines.
 
 ### no-err
 
@@ -903,9 +893,7 @@ support.  ML-KEM is based on CRYSTALS-KYBER. See [FIPS 203].
 
 ### no-module
 
-Don't build any dynamically loadable engines.
-
-This also implies `no-dynamic-engine`.
+Don't build any dynamically loadable modules.
 
 ### no-multiblock
 
@@ -1026,12 +1014,6 @@ This removes the `-trace` option from `s_client` and `s_server`, and omits the
 `SSL_trace()` function from libssl.
 
 Disabling `ssl-trace` may provide a small reduction in libssl binary size.
-
-### no-static-engine
-
-Don't build the statically linked engines.
-
-This only has an impact when not built "shared".
 
 ### no-stdio
 
@@ -1521,7 +1503,6 @@ its default):
                    to build your own programs that use libcrypto
                    or libssl.
     lib            Contains the OpenSSL library files.
-    lib/engines    Contains the OpenSSL dynamically loadable engines.
 
     share/man/man1 Contains the OpenSSL command line man-pages.
     share/man/man3 Contains the OpenSSL library calls man-pages.
@@ -1547,8 +1528,6 @@ its default):
                    to build your own programs that use libcrypto
                    or libssl.
     [.LIB.'arch']  Contains the OpenSSL library files.
-    [.ENGINES'sover''pz'.'arch']
-                   Contains the OpenSSL dynamically loadable engines.
     [.SYS$STARTUP] Contains startup, login and shutdown scripts.
                    These define appropriate logical names and
                    command symbols.
@@ -1569,7 +1548,7 @@ for you convenience:
 
 The installation directory should be appropriately protected to ensure
 unprivileged users cannot make changes to OpenSSL binaries or files, or
-install engines.  If you already have a pre-installed version of OpenSSL as
+install providers.  If you already have a pre-installed version of OpenSSL as
 part of your Operating System it is recommended that you do not overwrite
 the system version and instead install to somewhere else.
 
