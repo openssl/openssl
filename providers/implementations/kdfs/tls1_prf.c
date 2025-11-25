@@ -69,6 +69,7 @@
 #include "prov/provider_util.h"
 #include "prov/securitycheck.h"
 #include "internal/e_os.h"
+#include "internal/fips.h"
 #include "internal/params.h"
 #include "internal/safe_math.h"
 
@@ -121,6 +122,12 @@ static void *kdf_tls1_prf_new(void *provctx)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KDF_TLS12_PRF))
+        return NULL;
+#endif
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL) {
         ctx->provctx = provctx;

@@ -11,6 +11,8 @@
 #define OSSL_INTERNAL_FIPS_H
 #pragma once
 
+#include <openssl/types.h>
+
 #ifdef FIPS_MODULE
 
 /* Return 1 if the FIPS self tests are running and 0 otherwise */
@@ -23,6 +25,7 @@ int ossl_fips_self_testing(void);
  */
 typedef enum {
     ST_ID_DIGEST_SHA1,
+    ST_ID_DIGEST_SHA256,
     ST_ID_DIGEST_SHA512,
     ST_ID_DIGEST_SHA3_256,
     ST_ID_CIPHER_AES_256_GCM,
@@ -110,6 +113,22 @@ typedef enum {
 
 int ossl_deferred_self_test(OSSL_LIB_CTX *libctx, self_test_id_t id);
 int ossl_self_test_in_progress(self_test_id_t id);
+
+/* Helper definitions to keep some of the ciphercommon.h macros simple */
+#define ST_ID_CIPHER_aes ST_ID_CIPHER_AES_128_ECB
+#define ST_ID_CIPHER_AES_128_CCM ST_ID_CIPHER_AES_128_ECB
+#define ST_ID_CIPHER_AES_128_OCB ST_ID_CIPHER_AES_128_ECB
+#define ST_ID_CIPHER_AES_128_WRP ST_ID_CIPHER_AES_128_ECB
+#define ST_ID_CIPHER_AES_128_XTS ST_ID_CIPHER_AES_128_ECB
+/* Helper definitions to keep some of the digestcommon.h macros simple */
+#define ST_ID_DIGEST_sha1 ST_ID_DIGEST_SHA1
+#define ST_ID_DIGEST_sha224 ST_ID_DIGEST_SHA256
+#define ST_ID_DIGEST_sha256 ST_ID_DIGEST_SHA256
+#define ST_ID_DIGEST_sha256_192_internal ST_ID_DIGEST_SHA256
+#define ST_ID_DIGEST_sha384 ST_ID_DIGEST_SHA512
+#define ST_ID_DIGEST_sha512 ST_ID_DIGEST_SHA512
+#define ST_ID_DIGEST_sha512_224 ST_ID_DIGEST_SHA512
+#define ST_ID_DIGEST_sha512_256 ST_ID_DIGEST_SHA512
 
 #endif /* FIPS_MODULE */
 

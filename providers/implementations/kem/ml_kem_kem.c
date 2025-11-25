@@ -17,6 +17,7 @@
 #include <openssl/proverr.h>
 #include "crypto/ml_kem.h"
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
@@ -45,6 +46,12 @@ static void *ml_kem_newctx(void *provctx)
 
     if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL)
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KEM_ML_KEM))
+        return NULL;
+#endif
 
     ctx->key = NULL;
     ctx->entropy = NULL;

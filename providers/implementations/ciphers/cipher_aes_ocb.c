@@ -307,9 +307,7 @@ static void *aes_ocb_newctx(void *provctx, size_t kbits, size_t blkbits,
 {
     PROV_AES_OCB_CTX *ctx;
 
-    if (!ossl_prov_is_running())
-        return NULL;
-
+    CIPHER_PROV_CHECK(provctx, AES_128_OCB);
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL) {
         ossl_cipher_generic_initkey(ctx, kbits, blkbits, ivbits, mode, flags,

@@ -23,6 +23,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/der_ecx.h"
 #include "crypto/ecx.h"
+#include "internal/fips.h"
 
 #define eddsa_set_variant_ctx_params_st eddsa_set_ctx_params_st
 
@@ -67,7 +68,8 @@ enum ID_EdDSA_INSTANCE {
 #define EDDSA_MAX_CONTEXT_STRING_LEN 255
 #define EDDSA_PREHASH_OUTPUT_LEN 64
 
-static OSSL_FUNC_signature_newctx_fn eddsa_newctx;
+static OSSL_FUNC_signature_newctx_fn ed25519_newctx;
+static OSSL_FUNC_signature_newctx_fn ed448_newctx;
 static OSSL_FUNC_signature_sign_message_init_fn ed25519_signverify_message_init;
 static OSSL_FUNC_signature_sign_message_init_fn ed25519ph_signverify_message_init;
 static OSSL_FUNC_signature_sign_message_init_fn ed25519ctx_signverify_message_init;
@@ -167,12 +169,9 @@ typedef struct {
 
 } PROV_EDDSA_CTX;
 
-static void *eddsa_newctx(void *provctx, const char *propq_unused)
+static void *eddsa_newctx(void *provctx)
 {
     PROV_EDDSA_CTX *peddsactx;
-
-    if (!ossl_prov_is_running())
-        return NULL;
 
     peddsactx = OPENSSL_zalloc(sizeof(PROV_EDDSA_CTX));
     if (peddsactx == NULL)
@@ -181,6 +180,34 @@ static void *eddsa_newctx(void *provctx, const char *propq_unused)
     peddsactx->libctx = PROV_LIBCTX_OF(provctx);
 
     return peddsactx;
+}
+
+static void *ed448_newctx(void *provctx, const char *propq_unused)
+{
+    if (!ossl_prov_is_running())
+        return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_SIG_ED448))
+        return NULL;
+#endif
+
+    return eddsa_newctx(provctx);
+}
+
+static void *ed25519_newctx(void *provctx, const char *propq_unused)
+{
+    if (!ossl_prov_is_running())
+        return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_SIG_ED25519))
+        return NULL;
+#endif
+
+    return eddsa_newctx(provctx);
 }
 
 static int eddsa_setup_instance(void *vpeddsactx, int instance_id,
@@ -1029,7 +1056,7 @@ static int eddsa_set_variant_ctx_params(void *vpeddsactx,
 /* vn = variant name, bn = base name */
 #define IMPL_EDDSA_DISPATCH(vn, bn)                                     \
     const OSSL_DISPATCH ossl_##vn##_signature_functions[] = {           \
-        { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))eddsa_newctx },   \
+        { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))bn##_newctx },    \
         { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_INIT,                        \
             (void (*)(void))vn##_signverify_message_init },             \
         { OSSL_FUNC_SIGNATURE_SIGN,                                     \

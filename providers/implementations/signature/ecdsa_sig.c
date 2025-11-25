@@ -32,6 +32,7 @@
 #include "prov/securitycheck.h"
 #include "prov/der_ec.h"
 #include "crypto/ec.h"
+#include "internal/fips.h"
 
 struct ecdsa_all_set_ctx_params_st {
     OSSL_PARAM *digest; /* ecdsa_set_ctx_params */
@@ -165,6 +166,12 @@ static void *ecdsa_newctx(void *provctx, const char *propq)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_SIG_ECDSA_SHA256))
+        return NULL;
+#endif
 
     ctx = OPENSSL_zalloc(sizeof(PROV_ECDSA_CTX));
     if (ctx == NULL)

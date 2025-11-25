@@ -126,9 +126,7 @@ static void *aes_xts_newctx(void *provctx, unsigned int mode, uint64_t flags,
 {
     PROV_AES_XTS_CTX *ctx;
 
-    if (!ossl_prov_is_running())
-        return NULL;
-
+    CIPHER_PROV_CHECK(provctx, AES_128_XTS);
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL) {
         ossl_cipher_generic_initkey(&ctx->base, kbits, blkbits, ivbits, mode,

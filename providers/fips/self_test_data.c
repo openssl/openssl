@@ -49,6 +49,13 @@ static const unsigned char sha1_digest[] = {
     0xBA, 0x3E, 0x25, 0x71, 0x78, 0x50, 0xC2, 0x6C,
     0x9C, 0xD0, 0xD8, 0x9D
 };
+static const unsigned char sha256_pt[] = "abc";
+static const unsigned char sha256_digest[] = {
+    0xBA, 0x78, 0x16, 0xBF, 0x8F, 0x01, 0xCF, 0xEA,
+    0x41, 0x41, 0x40, 0xDE, 0x5D, 0xAE, 0x22, 0x23,
+    0xB0, 0x03, 0x61, 0xA3, 0x96, 0x17, 0x7A, 0x9C,
+    0xB4, 0x10, 0xFF, 0x61, 0xF2, 0x00, 0x15, 0xAD
+};
 static const unsigned char sha512_pt[] = "abc";
 static const unsigned char sha512_digest[] = {
     0xDD, 0xAF, 0x35, 0xA1, 0x93, 0x61, 0x7A, 0xBA, 0xCC, 0x41, 0x73, 0x49,
@@ -568,6 +575,12 @@ static const ST_KAT_PARAM kbkdf_kmac_params[] = {
 };
 #endif /* OPENSSL_NO_KBKDF */
 
+static const self_test_id_t kbkdf_depends_on[] = {
+    ST_ID_KDF_KBKDF,
+    ST_ID_KDF_KBKDF_KMAC,
+    ST_ID_MAX
+};
+
 static const char tls13_kdf_digest[] = "SHA256";
 static int tls13_kdf_extract_mode = EVP_KDF_HKDF_MODE_EXTRACT_ONLY;
 static int tls13_kdf_expand_mode = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
@@ -621,10 +634,15 @@ static const ST_KAT_PARAM tls13_kdf_client_early_secret_params[] = {
 };
 
 /*
- * NOTES:
- * According to FIPS 140-3 10.3.A Note18: SSH KDF is not required, since it is
- * sufficient to self-test the underlying SHA hash functions.
+ * When calling the HKDF newctx function we do not necessarily know which of
+ * the variants will be used, so we just test them all at once
  */
+static const self_test_id_t hkdf_depends_on[] = {
+    ST_ID_KDF_KBKDF,
+    ST_ID_KDF_TLS13_EXTRACT,
+    ST_ID_KDF_TLS13_EXPAND,
+    ST_ID_MAX
+};
 
 /*-
  * DRBG test vectors are a small subset of
@@ -1276,6 +1294,13 @@ static const unsigned char rsa_asym_expected_encrypt[256] = {
     0x05, 0x52, 0x55, 0xc1, 0xc6, 0x06, 0x90, 0xab
 };
 
+static const self_test_id_t rsaenc_depends_on[] = {
+    ST_ID_ASYM_CIPHER_RSA_ENC,
+    ST_ID_ASYM_CIPHER_RSA_DEC,
+    ST_ID_ASYM_CIPHER_RSA_DEC_CRT,
+    ST_ID_MAX
+};
+
 #ifndef OPENSSL_NO_EC
 /* ECDSA key data */
 static const char ecd_prime_curve_name[] = "prime256v1";
@@ -1373,6 +1398,18 @@ static const ST_KAT_PARAM ecdsa_bin_key[] = {
     ST_KAT_PARAM_END()
 };
 #endif /* OPENSSL_NO_EC2M */
+
+/*
+ * ECDSA has 3 tests to run, so we use dependencies to cause
+ * all of them to be run if needed by simply calling one of them
+ */
+static const self_test_id_t ecdsa_depends_on[] = {
+    ST_ID_SIG_DET_ECDSA_SHA256,
+#ifndef OPENSSL_NO_EC2M
+    ST_ID_SIG_E2CM_ECDSA_SHA256,
+#endif
+    ST_ID_MAX
+};
 
 #ifndef OPENSSL_NO_ECX
 static const unsigned char ecx_sig_msg[] = {
@@ -3266,16 +3303,25 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "SHA1",
         OSSL_SELF_TEST_DESC_MD_SHA1,
         SELF_TEST_KAT_DIGEST,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF_STR(sha1_pt),
         ITM_BUF(sha1_digest),
     },
     {
+        "SHA256",
+        OSSL_SELF_TEST_DESC_MD_SHA2,
+        SELF_TEST_KAT_DIGEST,
+        SELF_TEST_DEFERRED,
+        SELF_TEST_STATE_INIT,
+        ITM_BUF_STR(sha256_pt),
+        ITM_BUF(sha256_digest),
+    },
+    {
         "SHA512",
         OSSL_SELF_TEST_DESC_MD_SHA2,
         SELF_TEST_KAT_DIGEST,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF_STR(sha512_pt),
         ITM_BUF(sha512_digest),
@@ -3284,7 +3330,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "SHA3-256",
         OSSL_SELF_TEST_DESC_MD_SHA3,
         SELF_TEST_KAT_DIGEST,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(sha3_256_pt),
         ITM_BUF(sha3_256_digest),
@@ -3292,7 +3338,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
     { "AES-256-GCM",
         OSSL_SELF_TEST_DESC_CIPHER_AES_GCM,
         SELF_TEST_KAT_CIPHER,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(aes_256_gcm_pt),
         ITM_BUF(aes_256_gcm_ct),
@@ -3306,7 +3352,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "AES-128-ECB",
         OSSL_SELF_TEST_DESC_CIPHER_AES_ECB,
         SELF_TEST_KAT_CIPHER,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(aes_128_ecb_pt),
         ITM_BUF(aes_128_ecb_ct),
@@ -3320,7 +3366,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "DES-EDE3-ECB",
         OSSL_SELF_TEST_DESC_CIPHER_TDES,
         SELF_TEST_KAT_CIPHER,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(tdes_pt),
         ITM_BUF(tdes_ct),
@@ -3334,7 +3380,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "RSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_RSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF_STR(rsa_sig_msg),
         ITM_BUF(rsa_expected_sig),
@@ -3352,7 +3398,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ECDSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF_STR(rsa_sig_msg),
         ITM_BUF(ecdsa_prime_expected_sig),
@@ -3364,13 +3410,14 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
             ITM_BUF(sig_kat_nonce),
             ITM_BUF(sig_kat_persstr),
         },
+        .depends_on = ecdsa_depends_on,
     },
 #ifndef OPENSSL_NO_HMAC_DRBG_KDF
     {
         "ECDSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_DetECDSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF_STR(rsa_sig_msg),
         ITM_BUF(ecdsa_prime_expected_detsig),
@@ -3387,7 +3434,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ECDSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF_STR(rsa_sig_msg),
         ITM_BUF(ecdsa_bin_expected_sig),
@@ -3406,7 +3453,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ED448",
         OSSL_SELF_TEST_DESC_SIGN_EDDSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(ecx_sig_msg),
         ITM_BUF(ed448_expected_sig),
@@ -3420,7 +3467,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ED25519",
         OSSL_SELF_TEST_DESC_SIGN_EDDSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(ecx_sig_msg),
         ITM_BUF(ed25519_expected_sig),
@@ -3437,7 +3484,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "DSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_DSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF_STR(rsa_sig_msg),
         ITM_BUF(dsa_expected_sig),
@@ -3456,7 +3503,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ML-DSA-65",
         OSSL_SELF_TEST_DESC_SIGN_ML_DSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(ml_dsa_65_msg),
         ITM_BUF(ml_dsa_65_sig),
@@ -3527,7 +3574,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "LMS",
         OSSL_SELF_TEST_DESC_SIGN_LMS,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(sha256_192_msg),
         ITM_BUF(sha256_192_sig),
@@ -3542,29 +3589,31 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         OSSL_KDF_NAME_TLS1_3_KDF,
         OSSL_SELF_TEST_DESC_KDF_TLS13_EXTRACT,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(tls13_kdf_early_secret),
         .u.kdf = {
             tls13_kdf_early_secret_params,
         },
+        .depends_on = hkdf_depends_on,
     },
     {
         OSSL_KDF_NAME_TLS1_3_KDF,
         OSSL_SELF_TEST_DESC_KDF_TLS13_EXPAND,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(tls13_kdf_client_early_traffic_secret),
         .u.kdf = {
             tls13_kdf_client_early_secret_params,
         },
+        .depends_on = hkdf_depends_on,
     },
     {
         OSSL_KDF_NAME_TLS1_PRF,
         OSSL_SELF_TEST_DESC_KDF_TLS12_PRF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(tls12prf_expected),
         .u.kdf = {
@@ -3575,7 +3624,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         OSSL_KDF_NAME_PBKDF2,
         OSSL_SELF_TEST_DESC_KDF_PBKDF2,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(pbkdf2_expected),
         .u.kdf = {
@@ -3587,42 +3636,45 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         OSSL_KDF_NAME_KBKDF,
         OSSL_SELF_TEST_DESC_KDF_KBKDF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(kbkdf_expected),
         .u.kdf = {
             kbkdf_params,
         },
+        .depends_on = kbkdf_depends_on,
     },
     {
         OSSL_KDF_NAME_KBKDF,
         OSSL_SELF_TEST_DESC_KDF_KBKDF_KMAC,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(kbkdf_kmac_expected),
         .u.kdf = {
             kbkdf_kmac_params,
         },
+        .depends_on = kbkdf_depends_on,
     },
 #endif
     {
         OSSL_KDF_NAME_HKDF,
         OSSL_SELF_TEST_DESC_KDF_HKDF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(hkdf_expected),
         .u.kdf = {
             hkdf_params,
         },
+        .depends_on = hkdf_depends_on,
     },
 #ifndef OPENSSL_NO_SNMPKDF
     {
         OSSL_KDF_NAME_SNMPKDF,
         OSSL_SELF_TEST_DESC_KDF_SNMPKDF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(snmpkdf_expected),
         .u.kdf = {
@@ -3635,7 +3687,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         OSSL_KDF_NAME_SRTPKDF,
         OSSL_SELF_TEST_DESC_KDF_SRTPKDF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(srtpkdf_expected),
         .u.kdf = {
@@ -3648,12 +3700,10 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         OSSL_KDF_NAME_SSKDF,
         OSSL_SELF_TEST_DESC_KDF_SSKDF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(sskdf_expected),
-        .u.kdf = {
-            sskdf_params,
-        },
+        .u.kdf = { sskdf_params },
     },
 #endif
 #ifndef OPENSSL_NO_X963KDF
@@ -3661,12 +3711,10 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         OSSL_KDF_NAME_X963KDF,
         OSSL_SELF_TEST_DESC_KDF_X963KDF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(x963kdf_expected),
-        .u.kdf = {
-            x963kdf_params,
-        },
+        .u.kdf = { x963kdf_params },
     },
 #endif
 #ifndef OPENSSL_NO_X942KDF
@@ -3674,7 +3722,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         OSSL_KDF_NAME_X942KDF_ASN1,
         OSSL_SELF_TEST_DESC_KDF_X942KDF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(x942kdf_expected),
         .u.kdf = {
@@ -3686,7 +3734,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "HASH-DRBG",
         OSSL_SELF_TEST_DESC_DRBG_HASH,
         SELF_TEST_DRBG,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(drbg_hash_sha256_pr_expected),
         .u.drbg = {
@@ -3705,7 +3753,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "CTR-DRBG",
         OSSL_SELF_TEST_DESC_DRBG_CTR,
         SELF_TEST_DRBG,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(drbg_ctr_aes128_pr_df_expected),
         .u.drbg = {
@@ -3724,7 +3772,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "HMAC-DRBG",
         OSSL_SELF_TEST_DESC_DRBG_HMAC,
         SELF_TEST_DRBG,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(drbg_hmac_sha2_pr_expected),
         .u.drbg = {
@@ -3744,7 +3792,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "DH",
         OSSL_SELF_TEST_DESC_KA_DH,
         SELF_TEST_KAT_KAS,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(dh_secret_expected),
         .u.kas = {
@@ -3759,7 +3807,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "EC",
         OSSL_SELF_TEST_DESC_KA_ECDH,
         SELF_TEST_KAT_KAS,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(ecdh_secret_expected),
         .u.kas = {
@@ -3778,7 +3826,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ML-KEM-512",
         OSSL_SELF_TEST_DESC_KEYGEN_ML_KEM,
         SELF_TEST_KAT_ASYM_KEYGEN,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .u.akgen = {
             ml_kem_keygen_params,
@@ -3791,7 +3839,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ML-DSA-65",
         OSSL_SELF_TEST_DESC_KEYGEN_ML_DSA,
         SELF_TEST_KAT_ASYM_KEYGEN,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .u.akgen = {
             ml_dsa_keygen_params,
@@ -3817,7 +3865,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ML-KEM-512",
         OSSL_SELF_TEST_DESC_KEM,
         SELF_TEST_KAT_KEM,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .u.kem = {
             ml_kem_key,
@@ -3832,7 +3880,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "RSA",
         OSSL_SELF_TEST_DESC_ASYM_RSA_ENC,
         SELF_TEST_KAT_ASYM_CIPHER,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(rsa_asym_plaintext_encrypt),
         ITM_BUF(rsa_asym_expected_encrypt),
@@ -3841,12 +3889,13 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
             rsa_pub_key,
             rsa_enc_params,
         },
+        .depends_on = rsaenc_depends_on,
     },
     {
         "RSA",
         OSSL_SELF_TEST_DESC_ASYM_RSA_DEC,
         SELF_TEST_KAT_ASYM_CIPHER,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(rsa_asym_expected_encrypt),
         ITM_BUF(rsa_asym_plaintext_encrypt),
@@ -3855,12 +3904,13 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
             rsa_priv_key,
             rsa_enc_params,
         },
+        .depends_on = rsaenc_depends_on,
     },
     {
         "RSA",
         OSSL_SELF_TEST_DESC_ASYM_RSA_DEC,
         SELF_TEST_KAT_ASYM_CIPHER,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(rsa_asym_expected_encrypt),
         ITM_BUF(rsa_asym_plaintext_encrypt),
@@ -3869,5 +3919,6 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
             rsa_crt_key,
             rsa_enc_params,
         },
+        .depends_on = rsaenc_depends_on,
     },
 };
