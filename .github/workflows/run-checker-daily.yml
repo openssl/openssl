@@ -24,7 +24,6 @@ jobs:
       matrix:
         opt: [
           386,
-          no-afalgeng,
           no-apps,
           no-argon2,
           no-aria,
@@ -41,7 +40,6 @@ jobs:
           no-bulk,
           no-cached-fetch,
           no-camellia,
-          no-capieng,
           no-cast,
           no-chacha,
           no-cmac,
@@ -52,7 +50,6 @@ jobs:
           enable-demos,
           no-deprecated,
           no-des,
-#          enable-devcryptoeng,  # Cannot work on Linux
           no-docs,
           no-dsa,
           no-dtls1,
@@ -63,7 +60,6 @@ jobs:
           no-ecdsa,
           enable-ec_nistp_64_gcc_128,
           enable-egd,
-          no-engine,
 #          enable-external-tests,  # Requires extra setup
           enable-fips,
           enable-fips enable-acvp-tests,
@@ -76,7 +72,6 @@ jobs:
           enable-heartbeats,
           enable-hqinterop,
           no-hw,
-          no-hw-padlock,
           no-idea,
           enable-lms,
           no-makedepend,
@@ -87,7 +82,6 @@ jobs:
           no-multiblock,
           no-nextprotoneg,
           no-ocb,
-          no-padlockeng,
           no-pic,
           no-poly1305,
           no-posix-io,
@@ -114,7 +108,7 @@ jobs:
           enable-ssl3,
           enable-ssl3-method,
           enable-sslkeylog,
-          no-static-engine no-shared,
+          no-shared,
           no-tests,
           enable-tfo,
           no-tls1,

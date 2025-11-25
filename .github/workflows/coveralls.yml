@@ -68,7 +68,7 @@ jobs:
               "extra_config": "no-afalgeng enable-fips"
             }, {
               "branch": "master",
-              "extra_config": "no-afalgeng enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-allocfail-tests"
+              "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-allocfail-tests"
           }]
           EOF
           )
