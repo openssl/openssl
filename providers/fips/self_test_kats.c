@@ -16,10 +16,8 @@
 #include "crypto/ml_dsa.h"
 #include "crypto/rand.h"
 #include "internal/cryptlib.h"
-#include "internal/nelem.h"
 #include "self_test.h"
-#include "crypto/ml_kem.h"
-#include "self_test_data.inc"
+#include "self_test_data.h"
 #include "internal/fips.h"
 
 static int set_kat_drbg(OSSL_LIB_CTX *ctx,
@@ -945,6 +943,9 @@ err:
     return ret;
 }
 
+#define RUN_TEST(test) \
+    ((test.deferred != SELF_TEST_DEFERRED) || do_deferred)
+
 /*
  * Test a data driven list of KAT's for digest algorithms.
  * All tests are run regardless of if they fail or not.
@@ -955,11 +956,10 @@ static int self_test_digests(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 {
     int i, ret = 1;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_digest_tests); ++i) {
-        if (st_kat_digest_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_digest(&st_kat_digest_tests[i], st, libctx))
-            ret = 0;
+    for (i = 0; i < st_kat_digest_tests_size; ++i) {
+        if (RUN_TEST(st_kat_digest_tests[i]))
+            if (!self_test_digest(&st_kat_digest_tests[i], st, libctx))
+                ret = 0;
     }
     return ret;
 }
@@ -969,11 +969,10 @@ static int self_test_ciphers(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 {
     int i, ret = 1;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_cipher_tests); ++i) {
-        if (st_kat_cipher_tests[i].base.deferred && !do_deferred)
-            continue;
-        if (!self_test_cipher(&st_kat_cipher_tests[i], st, libctx))
-            ret = 0;
+    for (i = 0; i < st_kat_cipher_tests_size; ++i) {
+        if (RUN_TEST(st_kat_cipher_tests[i].base))
+            if (!self_test_cipher(&st_kat_cipher_tests[i], st, libctx))
+                ret = 0;
     }
     return ret;
 }
@@ -985,11 +984,10 @@ static int self_test_kems(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 #ifndef OPENSSL_NO_ML_KEM
     int i;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_kem_tests); ++i) {
-        if (st_kat_kem_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_kem(&st_kat_kem_tests[i], st, libctx))
-            ret = 0;
+    for (i = 0; i < st_kat_kem_tests_size; ++i) {
+        if (RUN_TEST(st_kat_kem_tests[i]))
+            if (!self_test_kem(&st_kat_kem_tests[i], st, libctx))
+                ret = 0;
     }
 #endif
     return ret;
@@ -1000,11 +998,10 @@ static int self_test_asym_ciphers(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 {
     int i, ret = 1;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_cipher_tests); ++i) {
-        if (st_kat_asym_cipher_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_asym_cipher(&st_kat_asym_cipher_tests[i], st, libctx))
-            ret = 0;
+    for (i = 0; i < st_kat_asym_cipher_tests_size; ++i) {
+        if (RUN_TEST(st_kat_asym_cipher_tests[i]))
+            if (!self_test_asym_cipher(&st_kat_asym_cipher_tests[i], st, libctx))
+                ret = 0;
     }
     return ret;
 }
@@ -1014,11 +1011,10 @@ static int self_test_kdfs(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 {
     int i, ret = 1;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_kdf_tests); ++i) {
-        if (st_kat_kdf_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_kdf(&st_kat_kdf_tests[i], st, libctx))
-            ret = 0;
+    for (i = 0; i < st_kat_kdf_tests_size; ++i) {
+        if (RUN_TEST(st_kat_kdf_tests[i]))
+            if (!self_test_kdf(&st_kat_kdf_tests[i], st, libctx))
+                ret = 0;
     }
     return ret;
 }
@@ -1028,11 +1024,10 @@ static int self_test_drbgs(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 {
     int i, ret = 1;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_drbg_tests); ++i) {
-        if (st_kat_drbg_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_drbg(&st_kat_drbg_tests[i], st, libctx))
-            ret = 0;
+    for (i = 0; i < st_kat_drbg_tests_size; ++i) {
+        if (RUN_TEST(st_kat_drbg_tests[i]))
+            if (!self_test_drbg(&st_kat_drbg_tests[i], st, libctx))
+                ret = 0;
     }
     return ret;
 }
@@ -1044,11 +1039,10 @@ static int self_test_kas(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
     int i;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_kas_tests); ++i) {
-        if (st_kat_kas_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_ka(&st_kat_kas_tests[i], st, libctx))
-            ret = 0;
+    for (i = 0; i < st_kat_kas_tests_size; ++i) {
+        if (RUN_TEST(st_kat_kas_tests[i]))
+            if (!self_test_ka(&st_kat_kas_tests[i], st, libctx))
+                ret = 0;
     }
 #endif
 
@@ -1060,11 +1054,10 @@ static int self_test_signatures(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 {
     int i, ret = 1;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_sign_tests); ++i) {
-        if (st_kat_sign_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_digest_sign(&st_kat_sign_tests[i], st, libctx))
-            ret = 0;
+    for (i = 0; i < st_kat_sign_tests_size; ++i) {
+        if (RUN_TEST(st_kat_sign_tests[i]))
+            if (!self_test_digest_sign(&st_kat_sign_tests[i], st, libctx))
+                ret = 0;
     }
     return ret;
 }
@@ -1215,8 +1208,8 @@ static int self_test_asym_keygens(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 #if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
     int i, ret = 1;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_keygen_tests); ++i) {
-        if (st_kat_asym_keygen_tests[i].deferred && !do_deferred)
+    for (i = 0; i < st_kat_asym_keygen_tests_size; ++i) {
+        if (RUN_TEST(st_kat_asym_keygen_tests[i]))
             continue;
         if (!self_test_asym_keygen(&st_kat_asym_keygen_tests[i], st, libctx))
             ret = 0;
@@ -1306,7 +1299,7 @@ int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 
     switch (type) {
     case FIPS_DEFERRED_KAT_DIGEST:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_digest_tests); ++i) {
+        for (i = 0; i < st_kat_digest_tests_size; ++i) {
             if (strcmp(st_kat_digest_tests[i].algorithm, alg_name) == 0) {
                 found = 1;
                 if (!self_test_digest(&st_kat_digest_tests[i], st, libctx)) {
@@ -1318,7 +1311,7 @@ int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
         break;
 
     case FIPS_DEFERRED_KAT_CIPHER:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_cipher_tests); ++i) {
+        for (i = 0; i < st_kat_cipher_tests_size; ++i) {
             if (strcmp(st_kat_cipher_tests[i].base.algorithm, alg_name) == 0) {
                 found = 1;
                 if (!self_test_cipher(&st_kat_cipher_tests[i], st, libctx)) {
@@ -1342,7 +1335,7 @@ int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
         }
 #endif /* OPENSSL_NO_LMS */
 
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_sign_tests); ++i) {
+        for (i = 0; i < st_kat_sign_tests_size; ++i) {
             if (strcmp(st_kat_sign_tests[i].sigalgorithm, alg_name) == 0
                 || strcmp(st_kat_sign_tests[i].keytype, alg_name) == 0) {
                 found = 1;
@@ -1355,7 +1348,7 @@ int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
         break;
 
     case FIPS_DEFERRED_KAT_KDF:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_kdf_tests); ++i) {
+        for (i = 0; i < st_kat_kdf_tests_size; ++i) {
             if (strcmp(st_kat_kdf_tests[i].algorithm, alg_name) == 0) {
                 found = 1;
                 if (!self_test_kdf(&st_kat_kdf_tests[i], st, libctx)) {
@@ -1368,7 +1361,7 @@ int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
     case FIPS_DEFERRED_KAT_KA:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_kas_tests); ++i) {
+        for (i = 0; i < st_kat_kas_tests_size; ++i) {
             if (strcmp(st_kat_kas_tests[i].algorithm, alg_name) == 0) {
                 found = 1;
                 if (!self_test_ka(&st_kat_kas_tests[i], st, libctx)) {
@@ -1382,7 +1375,7 @@ int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 
 #if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
     case FIPS_DEFERRED_KAT_ASYM_KEYGEN:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_keygen_tests); ++i) {
+        for (i = 0; i < st_kat_asym_keygen_tests_size; ++i) {
             if (strcmp(st_kat_asym_keygen_tests[i].algorithm, alg_name) == 0) {
                 found = 1;
                 if (!self_test_asym_keygen(&st_kat_asym_keygen_tests[i], st, libctx)) {
@@ -1396,7 +1389,7 @@ int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 
 #ifndef OPENSSL_NO_ML_KEM
     case FIPS_DEFERRED_KAT_KEM:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_kem_tests); ++i) {
+        for (i = 0; i < st_kat_kem_tests_size; ++i) {
             if (strcmp(st_kat_kem_tests[i].algorithm, alg_name) == 0) {
                 found = 1;
                 if (!self_test_kem(&st_kat_kem_tests[i], st, libctx)) {
@@ -1409,7 +1402,7 @@ int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 #endif
 
     case FIPS_DEFERRED_KAT_ASYM_CIPHER:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_cipher_tests); ++i) {
+        for (i = 0; i < st_kat_asym_cipher_tests_size; ++i) {
             if (strcmp(st_kat_asym_cipher_tests[i].algorithm, alg_name) == 0) {
                 found = 1;
                 if (!self_test_asym_cipher(&st_kat_asym_cipher_tests[i], st, libctx)) {
@@ -1421,7 +1414,7 @@ int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
         break;
 
     case FIPS_DEFERRED_DRBG:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_drbg_tests); ++i) {
+        for (i = 0; i < st_kat_drbg_tests_size; ++i) {
             if (strcmp(st_kat_drbg_tests[i].algorithm, alg_name) == 0) {
                 found = 1;
                 if (!self_test_drbg(&st_kat_drbg_tests[i], st, libctx)) {
