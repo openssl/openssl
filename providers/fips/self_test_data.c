@@ -48,6 +48,13 @@ static const unsigned char sha1_digest[] = {
     0xBA, 0x3E, 0x25, 0x71, 0x78, 0x50, 0xC2, 0x6C,
     0x9C, 0xD0, 0xD8, 0x9D
 };
+static const unsigned char sha256_pt[] = "abc";
+static const unsigned char sha256_digest[] = {
+    0xBA, 0X78, 0X16, 0XBF, 0X8F, 0X01, 0XCF, 0XEA,
+    0x41, 0X41, 0X40, 0XDE, 0X5D, 0XAE, 0X22, 0X23,
+    0xB0, 0X03, 0X61, 0XA3, 0X96, 0X17, 0X7A, 0X9C,
+    0xB4, 0X10, 0XFF, 0X61, 0XF2, 0X00, 0X15, 0XAD,
+};
 static const unsigned char sha512_pt[] = "abc";
 static const unsigned char sha512_digest[] = {
     0xDD, 0xAF, 0x35, 0xA1, 0x93, 0x61, 0x7A, 0xBA, 0xCC, 0x41, 0x73, 0x49,
@@ -66,34 +73,51 @@ static const unsigned char sha3_256_digest[] = {
 
 /*
  * Note:
- *  SHA256 is tested by higher level algorithms so a
- *  CAST is not needed.
+ *  SHA256 is tested by higher level algorithms so the
+ *  CAST is rarely used.
  */
 const ST_KAT_DIGEST st_kat_digest_tests[] =
 {
     {
          OSSL_SELF_TEST_DESC_MD_SHA1,
          "SHA1",
-         SELF_TEST_ONLOAD,
+         SELF_TEST_DEFERRED,
          ITM_STR(sha1_pt),
          ITM(sha1_digest),
     },
     {
          OSSL_SELF_TEST_DESC_MD_SHA2,
+         "SHA256",
+         SELF_TEST_DEFERRED,
+         ITM_STR(sha256_pt),
+         ITM(sha256_digest),
+    },
+    {
+         OSSL_SELF_TEST_DESC_MD_SHA2,
          "SHA512",
-         SELF_TEST_ONLOAD,
+         SELF_TEST_DEFERRED,
          ITM_STR(sha512_pt),
          ITM(sha512_digest),
     },
     {
          OSSL_SELF_TEST_DESC_MD_SHA3,
          "SHA3-256",
-         SELF_TEST_ONLOAD,
+         SELF_TEST_DEFERRED,
          ITM(sha3_256_pt),
          ITM(sha3_256_digest),
     },
 };
 int st_kat_digest_tests_size = OSSL_NELEM(st_kat_digest_tests);
+
+#define DIGEST_DEFERRED_TEST(name, desc)                                     \
+    FIPS_DEFERRED_TEST name##_kat_deferred_test = {                          \
+        desc, FIPS_DEFERRED_KAT_DIGEST, FIPS_DEFERRED_TEST_INIT, NULL, NULL  \
+    }
+
+DIGEST_DEFERRED_TEST(sha1, "SHA1");
+DIGEST_DEFERRED_TEST(sha256, "SHA256");
+DIGEST_DEFERRED_TEST(sha512, "SHA512");
+DIGEST_DEFERRED_TEST(sha3, "SHA3_256");
 
 /*- CIPHER TEST DATA */
 

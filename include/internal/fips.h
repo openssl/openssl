@@ -55,6 +55,10 @@ typedef struct fips_deferred_test_st FIPS_DEFERRED_TEST;
 int FIPS_deferred_self_test(OSSL_LIB_CTX *libctx, FIPS_DEFERRED_TEST *test);
 
 #ifndef NO_DEFERRED_EXTERN
+extern FIPS_DEFERRED_TEST sha1_kat_deferred_test;
+extern FIPS_DEFERRED_TEST sha256_kat_deferred_test;
+extern FIPS_DEFERRED_TEST sha512_kat_deferred_test;
+extern FIPS_DEFERRED_TEST sha3_kat_deferred_test;
 # ifndef OPENSSL_NO_SLH_DSA
 extern FIPS_DEFERRED_TEST slh_dsa_shake_deferred_test;
 extern FIPS_DEFERRED_TEST slh_dsa_sha2_deferred_test;

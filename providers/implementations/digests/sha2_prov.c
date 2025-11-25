@@ -19,9 +19,15 @@
 #include <openssl/sha.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
-#include "prov/digestcommon.h"
 #include "prov/implementations.h"
 #include "crypto/sha.h"
+
+#ifdef FIPS_MODULE
+#include "internal/fips.h"
+#include "prov/provider_ctx.h"
+#define DIGEST_IS_FIPS 1
+#endif
+#include "prov/digestcommon.h"
 
 #define SHA2_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 
@@ -55,6 +61,15 @@ static int sha1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                               (int)p->data_size, p->data);
     return 1;
 }
+
+#ifdef FIPS_MODULE
+#define sha224_kat_deferred_test sha256_kat_deferred_test
+#define sha256_192_internal_kat_deferred_test sha256_kat_deferred_test
+#define sha384_kat_deferred_test sha512_kat_deferred_test
+#define sha384_kat_deferred_test sha512_kat_deferred_test
+#define sha512_224_kat_deferred_test sha512_kat_deferred_test
+#define sha512_256_kat_deferred_test sha512_kat_deferred_test
+#endif
 
 /* ossl_sha1_functions */
 IMPLEMENT_digest_functions_with_settable_ctx(
