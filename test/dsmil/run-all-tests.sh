@@ -80,6 +80,16 @@ echo ""
 run_test_suite "$SCRIPT_DIR/test-event-telemetry.sh" "Event Telemetry Tests (Phase 3)"
 echo ""
 
+# Test Suite 5: Timing Variance & Side-Channel Hardening (Phase 6)
+echo ""
+run_test_suite "$SCRIPT_DIR/test-timing-variance.sh" "Timing Variance Tests (Phase 6)"
+echo ""
+
+# Test Suite 6: TPM Integration (Phase 7)
+echo ""
+run_test_suite "$SCRIPT_DIR/test-tpm-integration.sh" "TPM Integration Tests (Phase 7)"
+echo ""
+
 # Summary
 echo ""
 echo -e "${BLUE}========================================${NC}"
