@@ -30,7 +30,7 @@ int ossl_fn_set_words(OSSL_FN *f, const OSSL_FN_ULONG *words, size_t limbs)
     return 1;
 }
 
-const OSSL_FN_ULONG *ossl_fn_get_words(OSSL_FN *f)
+const OSSL_FN_ULONG *ossl_fn_get_words(const OSSL_FN *f)
 {
     if (ossl_unlikely(f == NULL)) {
         ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
@@ -40,17 +40,17 @@ const OSSL_FN_ULONG *ossl_fn_get_words(OSSL_FN *f)
     return f->d;
 }
 
-size_t ossl_fn_get_dsize(OSSL_FN *f)
+size_t ossl_fn_get_dsize(const OSSL_FN *f)
 {
     return f->dsize;
 }
 
-bool ossl_fn_is_dynamically_allocated(OSSL_FN *f)
+bool ossl_fn_is_dynamically_allocated(const OSSL_FN *f)
 {
     return f->is_dynamically_allocated;
 }
 
-bool ossl_fn_is_securely_allocated(OSSL_FN *f)
+bool ossl_fn_is_securely_allocated(const OSSL_FN *f)
 {
     return f->is_securely_allocated;
 }
