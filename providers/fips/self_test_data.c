@@ -3633,11 +3633,15 @@ int st_kat_asym_keygen_tests_size = OSSL_NELEM(st_kat_asym_keygen_tests);
 #endif /* !OPENSSL_NO_ML_DSA || !OPENSSL_NO_SLH_DSA */
 
 #ifndef OPENSSL_NO_SLH_DSA
+FIPS_DEFERRED_TEST *satisfies_sha256[] = {
+    &sha256_kat_deferred_test, NULL
+};
+
 FIPS_DEFERRED_TEST slh_key_gen_deferred_test = {
     "SLH-DSA-SHA2-128f",
     FIPS_DEFERRED_KAT_ASYM_KEYGEN,
     FIPS_DEFERRED_TEST_INIT,
-    NULL,
+    satisfies_sha256,
     NULL
 };
 #endif
