@@ -66,8 +66,17 @@ struct ossl_fn_ctx_frame_st {
     unsigned char memory[];
 };
 
-OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t arena_size)
+static size_t calculate_arena_size(size_t max_n_frames, size_t max_n_numbers, size_t max_n_limbs)
 {
+    return max_n_frames * sizeof(struct ossl_fn_ctx_frame_st)
+        + max_n_numbers * sizeof(OSSL_FN)
+        + max_n_limbs * OSSL_FN_BYTES;
+}
+
+OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
+                             size_t max_n_numbers, size_t max_n_limbs)
+{
+    size_t arena_size = calculate_arena_size(max_n_frames, max_n_numbers, max_n_limbs);
     OSSL_FN_CTX *ctx = OPENSSL_zalloc(sizeof(OSSL_FN_CTX) + arena_size);
 
     if (ctx != NULL)
@@ -76,8 +85,10 @@ OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t arena_size)
     return ctx;
 }
 
-OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t arena_size)
+OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
+                                    size_t max_n_numbers, size_t max_n_limbs)
 {
+    size_t arena_size = calculate_arena_size(max_n_frames, max_n_numbers, max_n_limbs);
     OSSL_FN_CTX *ctx = OPENSSL_secure_zalloc(sizeof(OSSL_FN_CTX) + arena_size);
 
     if (ctx != NULL) {

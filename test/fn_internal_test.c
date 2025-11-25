@@ -104,7 +104,7 @@ static int test_ctx(void)
      * Note that OSSL_FN_CTX_new() takes a size in bytes, so we must ensure that
      * we get that number right.
      */
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 512 + 128))) {
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 1, 2, 4096 / 8 / OSSL_FN_BYTES))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
@@ -175,7 +175,7 @@ static int test_secure_ctx(void)
      * Note that OSSL_FN_CTX_new() takes a size in bytes, so we must ensure that
      * we get that number right.
      */
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_secure_new(NULL, 256 + 128)) {
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_secure_new(NULL, 1, 2, 2048 / 8 / OSSL_FN_BYTES))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;

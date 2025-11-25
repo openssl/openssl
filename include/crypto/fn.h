@@ -133,22 +133,23 @@ void OSSL_FN_clear(OSSL_FN *f);
  * Allocate a new OSSL_FN_CTX, given a set of input numbers.
  *
  * @param[in]   libctx          OpenSSL library context (currently unused)
- * @param[in]   arena_size      Maximum number of bytes consumed in the arena.
- *                              This must have enough space for the maximum
- *                              number of simultaneously active frames, active
- *                              OSSL_FNs, as well as the maximum total number
- *                              of active OSSL_FN limbs.
+ * @param[in]   max_n_frames    Maximum number of simultaneously active frames.
+ *                              This indicates the expected depth of call stack
+ *                              that the resulting OSSL_FN_CTX will be used in.
+ * @param[in]   max_n_numbers   Maximum number of simultaneously active OSSL_FN.
+ * @param[in]   max_n_limbs     Maximum number of simultaneously active OSSL_FN
+ *                              limbs.
  * @returns     An allocated OSSL_FN_CTX, or NULL on error.
  **/
-OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t arena_size);
-
+OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
+                             size_t max_n_numbers, size_t max_n_limbs);
 /**
  * Allocate a new OSSL_FN_CTX in secure memory, given a set of input numbers.
  * Other than allocating in secure memory, this function does exactly the same
  * thing as OSSL_FN_CTX_new().
  **/
-OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t arena_size);
-
+OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
+                                    size_t max_n_numbers, size_t max_n_limbs);
 /**
  * Free an OSSL_FN_CTX.
  *
