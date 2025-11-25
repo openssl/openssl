@@ -27,9 +27,6 @@
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include <openssl/cmac.h>
-#ifndef FIPS_MODULE
-# include <openssl/engine.h>
-#endif
 #include <openssl/params.h>
 #include <openssl/param_build.h>
 #include <openssl/encoder.h>
