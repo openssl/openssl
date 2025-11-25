@@ -584,12 +584,6 @@ In the following list, always the non-default variant is documented: if
 feature `xxxx` is disabled by default then `enable-xxxx` is documented and
 if feature `xxxx` is enabled by default then `no-xxxx` is documented.
 
-### no-afalgeng
-
-Don't build the AFALG engine.
-
-This option will be forced on a platform that does not support AFALG.
-
 ### enable-ktls
 
 Build with Kernel TLS support.
@@ -715,12 +709,6 @@ this option will reduce run-time memory usage but it also introduces a
 significant performance penalty.  This option is primarily designed to help
 with detecting incorrect reference counting.
 
-### no-capieng
-
-Don't build the CAPI engine.
-
-This option will be forced if on a platform that does not support CAPI.
-
 ### no-cmp
 
 Don't build support for Certificate Management Protocol (CMP)
@@ -772,13 +760,6 @@ Don't build and install documentation, i.e. manual pages in various forms.
 ### no-dso
 
 Don't build support for loading Dynamic Shared Objects (DSO)
-
-### enable-devcryptoeng
-
-Build the `/dev/crypto` engine.
-
-This option is automatically selected on the BSD platform, in which case it can
-be disabled with `no-devcryptoeng`.
 
 ### no-dynamic-engine
 
@@ -939,14 +920,6 @@ Don't build support for the Next Protocol Negotiation (NPN) TLS extension.
 ### no-ocsp
 
 Don't build support for Online Certificate Status Protocol (OCSP).
-
-### no-padlockeng
-
-Don't build the padlock engine.
-
-### no-hw-padlock
-
-As synonym for `no-padlockeng`.  Deprecated and should not be used.
 
 ### no-pic
 
