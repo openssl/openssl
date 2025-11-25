@@ -27,7 +27,6 @@
 # include <openssl/x509.h>
 # include <openssl/conf.h>
 # include <openssl/txt_db.h>
-# include <openssl/engine.h>
 # include <openssl/ocsp.h>
 # include <openssl/http.h>
 # include <signal.h>
@@ -175,10 +174,6 @@ __owur int ctx_set_verify_locations(SSL_CTX *ctx,
  */
 __owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
 
-# endif
-
-# ifndef OPENSSL_NO_DEPRECATED_3_6
-int get_legacy_pkey_id(OSSL_LIB_CTX *libctx, const char *algname, ENGINE *e);
 # endif
 
 # ifndef OPENSSL_NO_OCSP
