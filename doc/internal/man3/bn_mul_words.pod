@@ -4,7 +4,7 @@
 
 bn_mul_words, bn_mul_add_words, bn_sqr_words, bn_div_words,
 bn_add_words, bn_sub_words, bn_mul_comba4, bn_mul_comba8,
-bn_sqr_comba4, bn_sqr_comba8, bn_cmp_words, bn_mul_normal,
+bn_sqr_comba4, bn_sqr_comba8, bn_cmp_words, bn_mul_truncated, bn_mul_normal,
 bn_mul_low_normal, bn_mul_recursive, bn_mul_part_recursive,
 bn_mul_low_recursive, bn_sqr_normal, bn_sqr_recursive,
 bn_expand, bn_wexpand, bn_expand2, bn_fix_top, bn_check_top,
@@ -32,6 +32,8 @@ library internal functions
 
  int bn_cmp_words(BN_ULONG *a, BN_ULONG *b, int n);
 
+ void bn_mul_truncated(BN_ULONG *r, int rn, BN_ULONG *a, int na,
+   BN_ULONG *b, int nb);
  void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b,
    int nb);
  void bn_mul_low_normal(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n);
@@ -150,6 +152,11 @@ The following functions are implemented in C:
 bn_cmp_words(B<a>, B<b>, B<n>) operates on the B<n> word arrays B<a>
 and B<b>.  It returns 1, 0 and -1 if B<a> is greater than, equal and
 less than B<b>.
+
+bn_mul_truncated(B<r>, B<nr>, B<a>, B<na>, B<b>, B<nb>) operates on the
+B<na> word array B<a>, the B<nb> word array B<b> and the B<nr> word array
+B<r>.  It computes B<a>*B<b> and places the result in B<r>, truncated to
+B<nr> words.
 
 bn_mul_normal(B<r>, B<a>, B<na>, B<b>, B<nb>) operates on the B<na>
 word array B<a>, the B<nb> word array B<b> and the B<na>+B<nb> word
