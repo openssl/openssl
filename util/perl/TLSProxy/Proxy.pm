@@ -477,7 +477,7 @@ sub clientstart
         $self->{clientpid} = $pid;
 
         # queue [magic] input
-        print $self->reneg ? "R" : "test2";
+        print $self->reneg ? "R" : "test";
 
         # this closes client's stdin without waiting for its pid
         open(STDOUT, ">&", $savedout);
