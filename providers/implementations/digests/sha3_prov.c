@@ -478,18 +478,18 @@ static PROV_SHA3_METHOD shake_ARMSHA3_md = {
 #define SHAKE_SET_MD(uname, typ) ctx->meth = shake_generic_md;
 #endif /* S390_SHA3 */
 
-#define SHA3_newctx(typ, uname, name, bitlen, pad)                                  \
-    static OSSL_FUNC_digest_newctx_fn name##_newctx;                                \
-    static void *name##_newctx(void *provctx)                                       \
-    {                                                                               \
-        KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) \
-                                                     : NULL;                        \
-                                                                                    \
-        if (ctx == NULL)                                                            \
-            return NULL;                                                            \
-        ossl_sha3_init(ctx, pad, bitlen);                                           \
-        SHA3_SET_MD(uname, typ)                                                     \
-        return ctx;                                                                 \
+#define SHA3_newctx(typ, uname, name, bitlen, pad)        \
+    static OSSL_FUNC_digest_newctx_fn name##_newctx;      \
+    static void *name##_newctx(void *provctx)             \
+    {                                                     \
+        KECCAK1600_CTX *ctx;                              \
+                                                          \
+        DIGEST_PROV_CHECK(provctx, SHA3_256);             \
+        if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) \
+            return NULL;                                  \
+        ossl_sha3_init(ctx, pad, bitlen);                 \
+        SHA3_SET_MD(uname, typ)                           \
+        return ctx;                                       \
     }
 
 #define SHAKE_newctx(typ, uname, name, bitlen, mdlen, pad)                          \
