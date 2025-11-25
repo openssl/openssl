@@ -1019,6 +1019,7 @@ static int test_kdf_pbkdf2_small_salt(void)
     unsigned int iterations = 4096;
     int mode = 0;
     OSSL_PARAM *params;
+    unsigned char out[25];
 
     params = construct_pbkdf2_params("passwordPASSWORDpassword", "sha256",
                                      "saltSALT",
@@ -1027,7 +1028,7 @@ static int test_kdf_pbkdf2_small_salt(void)
     if (!TEST_ptr(params)
         || !TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_PBKDF2))
         /* A salt that is too small should fail */
-        || !TEST_false(EVP_KDF_CTX_set_params(kctx, params)))
+        || !TEST_int_eq(EVP_KDF_derive(kctx, out, sizeof(out), params), 0))
         goto err;
 
     ret = 1;
@@ -1044,6 +1045,7 @@ static int test_kdf_pbkdf2_small_iterations(void)
     unsigned int iterations = 1;
     int mode = 0;
     OSSL_PARAM *params;
+    unsigned char out[25];
 
     params = construct_pbkdf2_params("passwordPASSWORDpassword", "sha256",
                                      "saltSALTsaltSALTsaltSALTsaltSALTsalt",
@@ -1052,7 +1054,7 @@ static int test_kdf_pbkdf2_small_iterations(void)
     if (!TEST_ptr(params)
         || !TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_PBKDF2))
         /* An iteration count that is too small should fail */
-        || !TEST_false(EVP_KDF_CTX_set_params(kctx, params)))
+        || !TEST_int_eq(EVP_KDF_derive(kctx, out, sizeof(out), params), 0))
         goto err;
 
     ret = 1;
@@ -1088,8 +1090,7 @@ static int test_kdf_pbkdf2_small_salt_pkcs5(void)
     mode_params[1] = OSSL_PARAM_construct_end();
 
     /* If the "pkcs5" mode is disabled then the derive will now fail */
-    if (!TEST_true(EVP_KDF_CTX_set_params(kctx, mode_params))
-        || !TEST_int_eq(EVP_KDF_derive(kctx, out, sizeof(out), NULL), 0))
+    if (!TEST_int_eq(EVP_KDF_derive(kctx, out, sizeof(out), mode_params), 0))
         goto err;
 
     ret = 1;
@@ -1116,8 +1117,7 @@ static int test_kdf_pbkdf2_small_iterations_pkcs5(void)
     if (!TEST_ptr(params)
         || !TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_PBKDF2))
         /* An iteration count that is too small will pass in pkcs5 mode */
-        || !TEST_true(EVP_KDF_CTX_set_params(kctx, params))
-        || !TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out), NULL), 0))
+        || !TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out), params), 0))
         goto err;
 
     mode = 0;
@@ -1125,8 +1125,7 @@ static int test_kdf_pbkdf2_small_iterations_pkcs5(void)
     mode_params[1] = OSSL_PARAM_construct_end();
 
     /* If the "pkcs5" mode is disabled then the derive will now fail */
-    if (!TEST_true(EVP_KDF_CTX_set_params(kctx, mode_params))
-        || !TEST_int_eq(EVP_KDF_derive(kctx, out, sizeof(out), NULL), 0))
+    if (!TEST_int_eq(EVP_KDF_derive(kctx, out, sizeof(out), mode_params), 0))
         goto err;
 
     ret = 1;
