@@ -350,10 +350,11 @@ void bn_mul_low_recursive(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
 }
 #endif                          /* BN_RECURSION */
 
-void bn_mul_normal(BN_ULONG *r, const BN_ULONG *a, int na, const BN_ULONG *b,
-                   int nb)
+void bn_mul_truncated(BN_ULONG *r, int nr, const BN_ULONG *a, int na,
+                      const BN_ULONG *b, int nb)
 {
-    BN_ULONG *rr;
+    BN_ULONG tmp, *carryp = NULL;
+    int n;            /* Number of words to use in the current iteration */
 
     if (na < nb) {
         int itmp;
@@ -365,32 +366,28 @@ void bn_mul_normal(BN_ULONG *r, const BN_ULONG *a, int na, const BN_ULONG *b,
         ltmp = a;
         a = b;
         b = ltmp;
-
     }
-    rr = &(r[na]);
+    n = (na < nr) ? na : nr;
     if (nb <= 0) {
-        (void)bn_mul_words(r, a, na, 0);
+        (void)bn_mul_words(r, a, n, 0);
         return;
-    } else
-        rr[0] = bn_mul_words(r, a, na, b[0]);
-
-    for (;;) {
-        if (--nb <= 0)
-            return;
-        rr[1] = bn_mul_add_words(&(r[1]), a, na, b[1]);
-        if (--nb <= 0)
-            return;
-        rr[2] = bn_mul_add_words(&(r[2]), a, na, b[2]);
-        if (--nb <= 0)
-            return;
-        rr[3] = bn_mul_add_words(&(r[3]), a, na, b[3]);
-        if (--nb <= 0)
-            return;
-        rr[4] = bn_mul_add_words(&(r[4]), a, na, b[4]);
-        rr += 4;
-        r += 4;
-        b += 4;
+    } else {
+        carryp = (na < nr) ? &r[na] : &tmp;
+        *carryp = bn_mul_words(r, a, n, b[0]);
     }
+
+    for (int i = 1; i < nb && i < nr; i++) {
+        int rspace = nr - i;
+        n = (na < rspace) ? na : rspace;
+        carryp = (na < rspace) ? &r[i + na] : &tmp;
+        *carryp = bn_mul_add_words(&(r[i]), a, n, b[i]);
+    }
+}
+
+void bn_mul_normal(BN_ULONG *r, const BN_ULONG *a, int na, const BN_ULONG *b,
+                   int nb)
+{
+    bn_mul_truncated(r, na + nb, a, na, b, nb);
 }
 
 void bn_mul_low_normal(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
