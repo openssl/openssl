@@ -16,6 +16,11 @@
 
 /* Dispatch functions for AES CCM mode */
 
+#ifdef FIPS_MODULE
+#include "internal/fips.h"
+#include "prov/provider_ctx.h"
+#define CIPHER_IS_FIPS 1
+#endif
 #include "cipher_aes_ccm.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -24,8 +29,7 @@ static void *aes_ccm_newctx(void *provctx, size_t keybits)
 {
     PROV_AES_CCM_CTX *ctx;
 
-    if (!ossl_prov_is_running())
-        return NULL;
+    CIPHER_PROV_CHECK(provctx, aes);
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)

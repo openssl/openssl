@@ -187,7 +187,7 @@ const ST_KAT_CIPHER st_kat_cipher_tests[] = {
         {
             OSSL_SELF_TEST_DESC_CIPHER_AES_GCM,
             "AES-256-GCM",
-            SELF_TEST_ONLOAD,
+            SELF_TEST_DEFERRED,
             ITM(aes_256_gcm_pt),
             ITM(aes_256_gcm_ct)
         },
@@ -201,7 +201,7 @@ const ST_KAT_CIPHER st_kat_cipher_tests[] = {
         {
             OSSL_SELF_TEST_DESC_CIPHER_AES_ECB,
             "AES-128-ECB",
-            SELF_TEST_ONLOAD,
+            SELF_TEST_DEFERRED,
             ITM(aes_128_ecb_pt),
             ITM(aes_128_ecb_ct)
         },
@@ -223,6 +223,21 @@ const ST_KAT_CIPHER st_kat_cipher_tests[] = {
 #endif
 };
 int st_kat_cipher_tests_size = OSSL_NELEM(st_kat_cipher_tests);
+
+FIPS_DEFERRED_TEST aes_gcm_kat_deferred_test = {
+    "AES-256-GCM",
+    FIPS_DEFERRED_KAT_CIPHER,
+    FIPS_DEFERRED_TEST_INIT,
+    NULL,
+    NULL,
+};
+FIPS_DEFERRED_TEST aes_kat_deferred_test = {
+    "AES-128-ECB",
+    FIPS_DEFERRED_KAT_CIPHER,
+    FIPS_DEFERRED_TEST_INIT,
+    NULL,
+    NULL,
+};
 
 #ifndef OPENSSL_NO_LMS
 /*

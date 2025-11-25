@@ -191,6 +191,18 @@ const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_functions[] = {                \
     OSSL_DISPATCH_END                                                          \
 };
 
+# if defined(FIPS_MODULE) && defined(CIPHER_IS_FIPS)
+# define CIPHER_PROV_CHECK(provctx, name)                                      \
+    if (!ossl_prov_is_running())                                               \
+        return NULL;                                                           \
+    if (!FIPS_deferred_self_test(PROV_LIBCTX_OF(provctx),                      \
+                                 &name##_kat_deferred_test))                   \
+        return NULL
+# else
+# define CIPHER_PROV_CHECK(provctx, name)                                      \
+    if (!ossl_prov_is_running())                                               \
+        return NULL
+# endif /* FIPS_MODULE && CIPHER_IS_FIPS */
 
 # define IMPLEMENT_generic_cipher_genfn(alg, UCALG, lcmode, UCMODE, flags,      \
                                        kbits, blkbits, ivbits, typ)            \
@@ -203,8 +215,9 @@ static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])          \
 static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;           \
 static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
 {                                                                              \
-     PROV_##UCALG##_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx))\
-                                                     : NULL;                   \
+     PROV_##UCALG##_CTX *ctx;                                                  \
+     CIPHER_PROV_CHECK(provctx, alg);                                          \
+     ctx = OPENSSL_zalloc(sizeof(*ctx));                                       \
      if (ctx != NULL) {                                                        \
          ossl_cipher_generic_initkey(ctx, kbits, blkbits, ivbits,              \
                                      EVP_CIPH_##UCMODE##_MODE, flags,          \

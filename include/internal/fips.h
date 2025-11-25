@@ -11,6 +11,8 @@
 # define OSSL_INTERNAL_FIPS_H
 # pragma once
 
+#include <openssl/types.h>
+
 # ifdef FIPS_MODULE
 
 /* Return 1 if the FIPS self tests are running and 0 otherwise */
@@ -59,6 +61,8 @@ extern FIPS_DEFERRED_TEST sha1_kat_deferred_test;
 extern FIPS_DEFERRED_TEST sha256_kat_deferred_test;
 extern FIPS_DEFERRED_TEST sha512_kat_deferred_test;
 extern FIPS_DEFERRED_TEST sha3_kat_deferred_test;
+extern FIPS_DEFERRED_TEST aes_kat_deferred_test;
+extern FIPS_DEFERRED_TEST aes_gcm_kat_deferred_test;
 # ifndef OPENSSL_NO_SLH_DSA
 extern FIPS_DEFERRED_TEST slh_dsa_shake_deferred_test;
 extern FIPS_DEFERRED_TEST slh_dsa_sha2_deferred_test;

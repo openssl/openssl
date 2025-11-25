@@ -16,6 +16,11 @@
 
 /* Dispatch functions for AES cipher modes ecb, cbc, ofb, cfb, ctr */
 
+#ifdef FIPS_MODULE
+#include "internal/fips.h"
+#include "prov/provider_ctx.h"
+#define CIPHER_IS_FIPS 1
+#endif
 #include "cipher_aes.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"

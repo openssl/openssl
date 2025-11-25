@@ -15,6 +15,11 @@
 #include "internal/deprecated.h"
 
 #include <openssl/proverr.h>
+#ifdef FIPS_MODULE
+#include "internal/fips.h"
+#include "prov/provider_ctx.h"
+#define CIPHER_IS_FIPS 1
+#endif
 #include "cipher_aes_ocb.h"
 #include "prov/providercommon.h"
 #include "prov/ciphercommon_aead.h"
@@ -309,8 +314,7 @@ static void *aes_ocb_newctx(void *provctx, size_t kbits, size_t blkbits,
 {
     PROV_AES_OCB_CTX *ctx;
 
-    if (!ossl_prov_is_running())
-        return NULL;
+    CIPHER_PROV_CHECK(provctx, aes);
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL) {
