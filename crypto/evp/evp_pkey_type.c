@@ -13,7 +13,6 @@
 #include <openssl/core_names.h>
 #include <openssl/macros.h>
 #ifndef OPENSSL_NO_DEPRECATED_3_6
-# include <openssl/engine.h>
 # include "crypto/asn1.h"
 #include <openssl/types.h>
 #else

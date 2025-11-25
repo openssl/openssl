@@ -8,7 +8,7 @@
  */
 
 /*
- * We need to use some engine deprecated APIs
+ * We need to use some EVP_PKEY_asn1 deprecated APIs
  */
 #include "internal/deprecated.h"
 
@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include <openssl/engine.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
