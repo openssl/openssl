@@ -24,14 +24,6 @@ use OpenSSL::config;
 
 # see INSTALL.md for instructions.
 
-# Set this variable to 1 if you want to skip all the Engine related tests
-# Re-enable with 0. (and you also should add back 'afalgeng' in
-# Configurations/10-main.conf to the enable array at (possible) line 697
-# (targets/linux_generic32)
-# This is needed for engine removal process, because we can't do it in one big
-# bulk and otherwise there will be failing tests and we want the CI to be happy.
-my $disable_engine_removal = 1;
-
 my $orig_death_handler = $SIG{__DIE__};
 $SIG{__DIE__} = \&death_handler;
 
@@ -430,7 +422,6 @@ my @dtls = qw(dtls1 dtls1_2);
 
 my @disablables = (
     "acvp-tests",
-    "afalgeng",
     "apps",
     "argon2",
     "aria",
@@ -449,7 +440,6 @@ my @disablables = (
     "bulk",
     "cached-fetch",
     "camellia",
-    "capieng",
     "winstore",
     "cast",
     "chacha",
@@ -466,7 +456,6 @@ my @disablables = (
     "hqinterop",
     "deprecated",
     "des",
-    "devcryptoeng",
     "dgram",
     "dh",
     "docs",
@@ -498,7 +487,6 @@ my @disablables = (
     "ktls",
     "legacy",
     "lms",
-    "loadereng",
     "makedepend",
     "md2",
     "md4",
@@ -511,7 +499,6 @@ my @disablables = (
     "nextprotoneg",
     "ocb",
     "ocsp",
-    "padlockeng",
     "pic",
     "pie",
     "pinshared",
@@ -591,8 +578,8 @@ my %deprecated_disablables = (
     "ssl2" => undef,
     "buf-freelists" => undef,
     "crypto-mdebug-backtrace" => undef,
-    "hw" => "hw",               # causes cascade, but no macro
-    "hw-padlock" => "padlockeng",
+    "hw" => undef,
+    "hw-padlock" => undef,
     "ripemd" => "rmd160",
     "ui" => "ui-console",
     "heartbeats" => undef,
@@ -696,12 +683,11 @@ my @disable_cascades = (
     "pic"               => [ "shared", "module" ],
 
     "engine"            => [ grep(/eng$/, @disablables) ],
-    "hw"                => [ "padlockeng" ],
 
     # no-autoalginit is only useful when building non-shared
     "autoalginit"       => [ "shared", "apps", "fips" ],
 
-    "stdio"             => [ "apps", "capieng", "egd" ],
+    "stdio"             => [ "apps", "egd" ],
     "apps"              => [ "tests" ],
     "tests"             => [ "external-tests" ],
     "comp"              => [ "zlib", "brotli", "zstd" ],
@@ -1816,38 +1802,6 @@ $config{CFLAGS} = [ map { $_ eq '--ossl-strict-warnings'
                               ? @strict_warnings_collection
                               : ( $_ ) }
                     @{$config{CFLAGS}} ];
-
-if ($disable_engine_removal == 1) {
-    disable("engine-removal", "engine");
-    disable("engine-removal", "afalgeng");
-    disable("engine-removal", "capieng");
-    disable("engine-removal", "loadereng");
-    disable("engine-removal", "padlockeng");
-}
-
-unless ($disabled{afalgeng}) {
-    $config{afalgeng}="";
-    if (grep { $_ eq 'afalgeng' } @{$target{enable}}) {
-        push @{$config{engdirs}}, "afalg";
-    } else {
-        disable('not-linux', 'afalgeng');
-    }
-}
-
-unless ($disabled{devcryptoeng}) {
-    if ($target =~ m/^BSD/) {
-        my $maxver = 5*100 + 7;
-        my $sysstr = `uname -s`;
-        my $verstr = `uname -r`;
-        $sysstr =~ s|\R$||;
-        $verstr =~ s|\R$||;
-        my ($ma, $mi, @rest) = split m|\.|, $verstr;
-        my $ver = $ma*100 + $mi;
-        if ($sysstr eq 'OpenBSD' && $ver >= $maxver) {
-            disable('too-new-kernel', 'devcryptoeng');
-        }
-    }
-}
 
 unless ($disabled{ktls}) {
     $config{ktls}="";
