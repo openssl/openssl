@@ -668,6 +668,7 @@ void bn_correct_top_consttime(BIGNUM *a);
 BIGNUM *int_bn_mod_inverse(BIGNUM *in,
                            const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx,
                            int *noinv);
+void bn_mul_truncated(BN_ULONG *r, int nr, const BN_ULONG *a, int na, const BN_ULONG *b, int nb);
 
 static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
 {
