@@ -469,7 +469,6 @@ my @disablables = (
     "ecdsa",
     "ecx",
     "egd",
-    "engine",
     "err",
     "external-tests",
     "filenames",
@@ -602,6 +601,7 @@ our %disabled = ( # "what"         => "comment"
                   "hqinterop"           => "default",
                   "ec_nistp_64_gcc_128" => "default",
                   "egd"                 => "default",
+                  "engine"              => "default",
                   "external-tests"      => "default",
                   "fuzz-afl"            => "default",
                   "fuzz-libfuzzer"      => "default",
@@ -635,7 +635,7 @@ my @disable_cascades = (
                              "blake2", "bf", "camellia", "cast", "chacha",
                              "cmac", "cms", "cmp", "comp", "ct",
                              "des", "dgram", "dh", "dsa",
-                             "ec", "engine",
+                             "ec",
                              "filenames",
                              "idea", "ktls", "lms",
                              "md4", "ml-dsa", "ml-kem", "multiblock",
@@ -682,7 +682,7 @@ my @disable_cascades = (
     # or modules.
     "pic"               => [ "shared", "module" ],
 
-    "engine"            => [ grep(/eng$/, @disablables) ],
+    "engine"            => [ "static-engine", "dynamic-engine" ],
 
     # no-autoalginit is only useful when building non-shared
     "autoalginit"       => [ "shared", "apps", "fips" ],
@@ -709,7 +709,7 @@ my @disable_cascades = (
 
     "blake2"            => [ "argon2" ],
 
-    "deprecated-3.0"    => [ "engine", "srp" ],
+    "deprecated-3.0"    => [ "srp" ],
 
     "http"              => [ "ocsp" ]
     );
