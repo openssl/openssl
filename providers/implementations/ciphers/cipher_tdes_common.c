@@ -25,8 +25,7 @@ void *ossl_tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
 {
     PROV_TDES_CTX *tctx;
 
-    if (!ossl_prov_is_running())
-        return NULL;
+    CIPHER_PROV_CHECK(provctx, DES_EDE3_ECB);
 
     tctx = OPENSSL_zalloc(sizeof(*tctx));
     if (tctx != NULL) {

@@ -163,7 +163,7 @@ typedef struct self_test_st {
         ST_KAT_KAS kas;
         ST_KAT_DRBG drbg;
     } u;
-    self_test_id_t *depends_on;
+    const self_test_id_t *depends_on;
 } ST_DEFINITION;
 
 extern ST_DEFINITION st_all_tests[ST_ID_MAX];

@@ -22,6 +22,7 @@
 #include <openssl/core_names.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
@@ -96,6 +97,12 @@ static void *kdf_pbkdf2_new_no_init(void *provctx)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KDF_PBKDF2))
+        return NULL;
+#endif
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
