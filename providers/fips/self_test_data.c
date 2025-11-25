@@ -49,6 +49,13 @@ static const unsigned char sha1_digest[] = {
     0xBA, 0x3E, 0x25, 0x71, 0x78, 0x50, 0xC2, 0x6C,
     0x9C, 0xD0, 0xD8, 0x9D
 };
+static const unsigned char sha256_pt[] = "abc";
+static const unsigned char sha256_digest[] = {
+    0xBA, 0X78, 0X16, 0XBF, 0X8F, 0X01, 0XCF, 0XEA,
+    0x41, 0X41, 0X40, 0XDE, 0X5D, 0XAE, 0X22, 0X23,
+    0xB0, 0X03, 0X61, 0XA3, 0X96, 0X17, 0X7A, 0X9C,
+    0xB4, 0X10, 0XFF, 0X61, 0XF2, 0X00, 0X15, 0XAD,
+};
 static const unsigned char sha512_pt[] = "abc";
 static const unsigned char sha512_digest[] = {
     0xDD, 0xAF, 0x35, 0xA1, 0x93, 0x61, 0x7A, 0xBA, 0xCC, 0x41, 0x73, 0x49,
@@ -3189,16 +3196,25 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "SHA1",
         OSSL_SELF_TEST_DESC_MD_SHA1,
         SELF_TEST_KAT_DIGEST,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF_STR(sha1_pt),
         ITM_BUF(sha1_digest),
     },
     {
+        "SHA256",
+        OSSL_SELF_TEST_DESC_MD_SHA2,
+        SELF_TEST_KAT_DIGEST,
+        SELF_TEST_DEFERRED,
+        SELF_TEST_STATE_INIT,
+        ITM_BUF_STR(sha256_pt),
+        ITM_BUF(sha256_digest),
+    },
+    {
         "SHA512",
         OSSL_SELF_TEST_DESC_MD_SHA2,
         SELF_TEST_KAT_DIGEST,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF_STR(sha512_pt),
         ITM_BUF(sha512_digest),
@@ -3207,7 +3223,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "SHA3-256",
         OSSL_SELF_TEST_DESC_MD_SHA3,
         SELF_TEST_KAT_DIGEST,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(sha3_256_pt),
         ITM_BUF(sha3_256_digest),
