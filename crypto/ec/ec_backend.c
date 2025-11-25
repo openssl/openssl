@@ -18,7 +18,6 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #ifndef FIPS_MODULE
-# include <openssl/engine.h>
 # include <openssl/x509.h>
 #endif
 #include "crypto/bn.h"

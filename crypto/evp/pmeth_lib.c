@@ -15,9 +15,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef FIPS_MODULE
-# include <openssl/engine.h>
-#endif
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include <openssl/dh.h>
