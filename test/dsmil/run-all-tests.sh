@@ -90,6 +90,11 @@ echo ""
 run_test_suite "$SCRIPT_DIR/test-tpm-integration.sh" "TPM Integration Tests (Phase 7)"
 echo ""
 
+# Test Suite 7: Security Validation (Phase 8)
+echo ""
+run_test_suite "$SCRIPT_DIR/test-security-validation.sh" "Security Validation (Phase 8)"
+echo ""
+
 # Summary
 echo ""
 echo -e "${BLUE}========================================${NC}"
