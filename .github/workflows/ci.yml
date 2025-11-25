@@ -588,7 +588,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --strict-warnings --banner=Configured --debug no-afalgeng enable-demos enable-h3demo no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-fips && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug enable-demos enable-h3demo no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -711,7 +711,7 @@ jobs:
     - name: setup hostname workaround
       run: sudo hostname localhost
     - name: config
-      run: ./config --strict-warnings --banner=Configured --debug no-afalgeng enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331
