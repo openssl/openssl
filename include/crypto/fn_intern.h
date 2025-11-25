@@ -36,15 +36,15 @@ extern "C" {
 #endif
 
 int ossl_fn_set_words(OSSL_FN *f, const OSSL_FN_ULONG *words, size_t limbs);
-const OSSL_FN_ULONG *ossl_fn_get_words(OSSL_FN *f);
+const OSSL_FN_ULONG *ossl_fn_get_words(const OSSL_FN *f);
 
-size_t ossl_fn_get_dsize(OSSL_FN *f);
+size_t ossl_fn_get_dsize(const OSSL_FN *f);
 
 void ossl_fn_set_negative(OSSL_FN *f, bool neg);
 
-bool ossl_fn_is_negative(OSSL_FN *f);
-bool ossl_fn_is_dynamically_allocated(OSSL_FN *f);
-bool ossl_fn_is_securely_allocated(OSSL_FN *f);
+bool ossl_fn_is_negative(const OSSL_FN *f);
+bool ossl_fn_is_dynamically_allocated(const OSSL_FN *f);
+bool ossl_fn_is_securely_allocated(const OSSL_FN *f);
 
 #ifdef __cplusplus
 }
