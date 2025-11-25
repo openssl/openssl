@@ -1,0 +1,26 @@
+# DSMIL Policy Provider Build Configuration
+#
+# This provider enforces DSMIL security profiles and emits telemetry events.
+#
+# Phase 1: Basic skeleton (current)
+# Phase 2: Full policy enforcement
+# Phase 3: Event telemetry
+
+# Provider library goal
+$DSMIL_GOAL=../../libdsmil.a
+
+# Source files
+SOURCE[$DSMIL_GOAL]=dsmilprov.c policy.c
+
+# Future (Phase 3): Add event telemetry
+# SOURCE[$DSMIL_GOAL]=events.c
+
+# Include paths
+INCLUDE[$DSMIL_GOAL]=../common/include ../implementations/include
+
+# Dependencies
+DEPEND[dsmilprov.o]=policy.h
+DEPEND[policy.o]=policy.h
+
+# Future dependencies
+# DEPEND[events.o]=events.h policy.h

@@ -1,0 +1,146 @@
+#
+# OpenSSL Configuration - DSMIL_SECURE Profile
+#
+# This configuration is for the DSMIL_SECURE security profile.
+# Use this for internal DSMIL infrastructure and trusted ally communications.
+#
+# Security Level: Very High
+# PQC Mode: Mandatory Hybrid (connection fails if hybrid cannot be negotiated)
+# TLS Version: 1.3 only
+#
+# See: OPENSSL_SECURE_SPEC.md Section 3.3 and Section 11
+#
+
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = provider_sect
+alg_section = algorithm_sect
+
+#
+# Provider Configuration
+#
+[provider_sect]
+default = default_sect
+base = base_sect
+# PQC provider is MANDATORY for DSMIL_SECURE
+pqc = pqc_sect
+# Policy provider enforces hybrid requirements
+dsmil-policy = dsmil_policy_sect
+
+[default_sect]
+activate = 1
+
+[base_sect]
+activate = 1
+
+[pqc_sect]
+activate = 1
+# Built-in ML-KEM and ML-DSA implementations
+# No external module needed (compiled into libcrypto)
+
+[dsmil_policy_sect]
+activate = 1
+module = /opt/openssl-dsmil/lib64/ossl-modules/dsmil-policy.so
+profile = DSMIL_SECURE
+event_socket = /run/crypto-events.sock
+threatcon_env = THREATCON_LEVEL
+# Enforce hybrid KEX requirement
+require_hybrid_kex = true
+# Minimum security level ~192-bit equivalent
+min_security_bits = 192
+
+#
+# Algorithm Configuration
+#
+[algorithm_sect]
+default_properties = profile=DSMIL_SECURE, require=pqc, security-level=very-high
+
+#
+# TLS Configuration
+#
+# Strict TLS 1.3 only - no fallback
+MinProtocol = TLSv1.3
+MaxProtocol = TLSv1.3
+
+# Cipher Suite Configuration (DSMIL_SECURE)
+# Per spec Section 3.3: AES-256-GCM primary, ChaCha20 allowed
+Ciphersuites = TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+
+# Key Exchange Groups (Hybrid MANDATORY)
+# Format: X25519+ML-KEM-768, P-256+ML-KEM-768
+# Policy provider will enforce hybrid negotiation
+# If hybrid fails, connection is rejected
+Groups = X25519+MLKEM768:P-256+MLKEM768:X25519:P-256
+
+# Signature Algorithms (Hybrid preferred)
+# Format: ECDSA+ML-DSA-65, Ed25519+ML-DSA-65
+SignatureAlgorithms = ECDSA+SHA256+MLDSA65:ed25519+MLDSA65:ECDSA+SHA256:ed25519
+
+#
+# Security Settings
+#
+[default]
+# Security level 3 = 128-bit security minimum
+# This ensures strong algorithms only
+MinProtocol = TLSv1.3
+CipherString = DEFAULT:@SECLEVEL=3
+
+# Disable CBC modes entirely
+Options = -SSL_OP_CIPHER_SERVER_PREFERENCE
+
+#
+# Certificate Verification
+#
+[verify]
+# Enhanced verification for internal PKI
+# Expect hybrid or PQC-aware certificates
+verify_depth = 5
+# Prefer certificates with PQC signatures
+prefer_pqc_certs = true
+
+#
+# Event Telemetry
+#
+[telemetry]
+# Events sent to DEFRAMEWORK via Unix socket
+enabled = true
+socket_path = /run/crypto-events.sock
+format = json
+# Event types to emit
+events = handshake_start,handshake_complete,handshake_failed,policy_violation,downgrade_detected
+
+#
+# Random Number Generation
+#
+[rand]
+# Use hardware RNG preferentially
+# RDSEED -> RDRAND -> /dev/random
+seed_sources = rdcpu,rdseed,devrandom
+
+#
+# Profile-Specific Notes
+#
+# DSMIL_SECURE Profile Characteristics:
+#  - TLS 1.3 only, no fallback
+#  - Hybrid KEX MANDATORY (X25519+ML-KEM-768 or P-256+ML-KEM-768)
+#  - Connection fails if hybrid cannot be negotiated
+#  - Hybrid signatures preferred (ECDSA+ML-DSA-65)
+#  - Minimum 192-bit equivalent security
+#  - AES-256-GCM primary cipher
+#  - Event telemetry to DEFRAMEWORK
+#  - Suitable for: Internal services, trusted allies, DSMIL infrastructure
+#
+# Internal PKI certificates should have:
+#  - Classical keypair (ECDSA P-256) for baseline compatibility
+#  - PQC keypair or hybrid signature for enhanced security
+#
+# To use this profile:
+#  export OPENSSL_CONF=/opt/openssl-dsmil/ssl/dsmil-secure.cnf
+#  export THREATCON_LEVEL=NORMAL
+#
+# THREATCON Levels:
+#  NORMAL  - Standard hybrid enforcement
+#  ELEVATED - Additional validation, logging
+#  HIGH - Reject any classical-only handshakes
+#  SEVERE - Maximum security, performance secondary

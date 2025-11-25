@@ -1,0 +1,116 @@
+#
+# OpenSSL Configuration - WORLD_COMPAT Profile
+#
+# This configuration is for the WORLD_COMPAT security profile.
+# Use this for internet-facing services that need to maintain compatibility
+# with standard browsers, clients, and public infrastructure.
+#
+# Security Level: High (but backwards compatible)
+# PQC Mode: Opportunistic (offered if supported by peer)
+# TLS Version: 1.3 preferred, 1.2 allowed outbound
+#
+# See: OPENSSL_SECURE_SPEC.md Section 3.3 and Section 11
+#
+
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = provider_sect
+alg_section = algorithm_sect
+
+#
+# Provider Configuration
+#
+[provider_sect]
+default = default_sect
+base = base_sect
+# PQC provider is loaded but optional for WORLD_COMPAT
+# Uncomment to enable opportunistic PQC:
+# pqc = pqc_sect
+# Policy provider will be added in Phase 2
+# dsmil-policy = dsmil_policy_sect
+
+[default_sect]
+activate = 1
+
+[base_sect]
+activate = 1
+
+# Uncomment to enable PQC provider
+# [pqc_sect]
+# activate = 1
+# module = /opt/openssl-world/lib64/ossl-modules/pqc-provider.so
+
+# [dsmil_policy_sect]
+# activate = 1
+# module = /opt/openssl-world/lib64/ossl-modules/dsmil-policy.so
+# profile = WORLD_COMPAT
+# event_socket = /run/crypto-events.sock
+# threatcon_env = THREATCON_LEVEL
+
+#
+# Algorithm Configuration
+#
+[algorithm_sect]
+default_properties = profile=WORLD_COMPAT, security-level=high
+
+#
+# TLS Configuration
+#
+# Minimum TLS version
+MinProtocol = TLSv1.3
+
+# Allow TLS 1.2 for outbound connections only (legacy support)
+# Uncomment if needed:
+# MinProtocol = TLSv1.2
+
+# Cipher Suite Configuration (WORLD_COMPAT)
+# Per spec Section 3.3: TLS_AES_256_GCM_SHA384 and TLS_CHACHA20_POLY1305_SHA256
+CipherString = DEFAULT:@SECLEVEL=2
+Ciphersuites = TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+
+# Key Exchange Groups (Classical + Opportunistic PQC)
+# Prefer X25519, allow P-256
+# If PQC provider is loaded, hybrid groups will be offered
+Groups = X25519:P-256
+
+# Signature Algorithms (Classical)
+SignatureAlgorithms = ECDSA+SHA256:ed25519
+
+#
+# Security Settings
+#
+[default]
+# Security level 2 = 112-bit security (allows 2048-bit RSA, 256-bit ECC)
+# This is reasonable for WORLD_COMPAT
+MinProtocol = TLSv1.3
+CipherString = DEFAULT:@SECLEVEL=2
+
+#
+# Certificate Verification
+#
+[verify]
+# Standard verification for public internet
+# Verify certificate chain
+verify_depth = 10
+
+#
+# Random Number Generation
+#
+[rand]
+# Use hardware RNG where available (RDSEED, RDRAND on Intel)
+# Configured via --with-rand-seed=rdcpu,rdseed,devrandom
+
+#
+# Profile-Specific Notes
+#
+# WORLD_COMPAT Profile Characteristics:
+#  - TLS 1.3 mandatory (TLS 1.2 optional for legacy)
+#  - Classical crypto baseline (ECDHE, ECDSA, Ed25519)
+#  - PQC/Hybrid offered opportunistically if provider loaded
+#  - AES-256-GCM primary, ChaCha20-Poly1305 fallback
+#  - Compatible with major browsers and standard TLS stacks
+#  - Suitable for: Web servers, API endpoints, public services
+#
+# To switch profiles:
+#  export OPENSSL_CONF=/opt/openssl-world/ssl/dsmil-secure.cnf

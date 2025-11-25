@@ -1,0 +1,201 @@
+#
+# OpenSSL Configuration - ATOMAL Profile
+#
+# This configuration is for the ATOMAL (highest tier) security profile.
+# Use this for maximum security internal communications where compatibility
+# is not a concern and performance is secondary to security.
+#
+# Security Level: Maximum
+# PQC Mode: Hybrid-only or PQC-only (no pure classical allowed)
+# TLS Version: 1.3 only (strict)
+#
+# See: OPENSSL_SECURE_SPEC.md Section 3.3 and Section 11
+#
+
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = provider_sect
+alg_section = algorithm_sect
+
+#
+# Provider Configuration
+#
+[provider_sect]
+default = default_sect
+base = base_sect
+# PQC provider is MANDATORY
+pqc = pqc_sect
+# Policy provider enforces ATOMAL requirements
+dsmil-policy = dsmil_policy_sect
+
+[default_sect]
+activate = 1
+
+[base_sect]
+activate = 1
+
+[pqc_sect]
+activate = 1
+# Built-in ML-KEM and ML-DSA implementations
+# ATOMAL uses ML-KEM-1024 and ML-DSA-87 for maximum security
+
+[dsmil_policy_sect]
+activate = 1
+module = /opt/openssl-dsmil/lib64/ossl-modules/dsmil-policy.so
+profile = ATOMAL
+event_socket = /run/crypto-events.sock
+threatcon_env = THREATCON_LEVEL
+# STRICT: Only hybrid or PQC-only paths allowed
+require_hybrid_kex = true
+allow_classical_fallback = false
+# No pure classical handshakes permitted
+block_classical_only = true
+# Minimum 256-bit equivalent security
+min_security_bits = 256
+# Constant-time enforcement
+require_constant_time = true
+
+#
+# Algorithm Configuration
+#
+[algorithm_sect]
+default_properties = profile=ATOMAL, require=pqc-hybrid, sidechannel=locked
+
+#
+# TLS Configuration
+#
+# Strict TLS 1.3 only - absolutely no fallback
+MinProtocol = TLSv1.3
+MaxProtocol = TLSv1.3
+
+# Cipher Suite Configuration (ATOMAL)
+# Per spec Section 3.3: AES-256-GCM ONLY (no ChaCha20)
+# This ensures hardware AES-NI is used (constant-time, fast)
+Ciphersuites = TLS_AES_256_GCM_SHA384
+
+# Key Exchange Groups (Hybrid with ML-KEM-1024 preferred)
+# ATOMAL prefers ML-KEM-1024 for maximum security
+# Classical-only fallback only at perimeter gateways (not here)
+Groups = X25519+MLKEM1024:MLKEM1024
+
+# Signature Algorithms (Hybrid with ML-DSA-87 preferred)
+# ATOMAL uses ML-DSA-87 for maximum security
+SignatureAlgorithms = ECDSA+SHA256+MLDSA87:MLDSA87
+
+#
+# Security Settings
+#
+[default]
+# Security level 4 = 192-bit security minimum
+# But we enforce even higher via policy provider
+MinProtocol = TLSv1.3
+CipherString = DEFAULT:@SECLEVEL=4
+
+# Strict security options
+Options = -SSL_OP_CIPHER_SERVER_PREFERENCE,-SSL_OP_NO_RENEGOTIATION
+
+# Disable all legacy/weak crypto
+Options = SSL_OP_NO_SSLv2,SSL_OP_NO_SSLv3,SSL_OP_NO_TLSv1,SSL_OP_NO_TLSv1_1,SSL_OP_NO_TLSv1_2
+
+#
+# Certificate Verification
+#
+[verify]
+# Maximum verification for ATOMAL
+# Expect PQC-only or hybrid certificates
+verify_depth = 3
+# REQUIRE PQC certificates for ATOMAL
+require_pqc_certs = true
+# No classical-only chains accepted
+allow_classical_only_chain = false
+
+#
+# Event Telemetry
+#
+[telemetry]
+# Full event telemetry for ATOMAL
+enabled = true
+socket_path = /run/crypto-events.sock
+format = json
+# Emit all event types
+events = all
+# Include detailed metadata
+include_metadata = true
+# Alert on any policy violation
+alert_on_violation = true
+
+#
+# Random Number Generation
+#
+[rand]
+# Hardware RNG only for ATOMAL
+# Do not fall back to /dev/urandom
+seed_sources = rdcpu,rdseed
+
+#
+# Side-Channel Protections
+#
+[sidechannel]
+# Enforce constant-time operations
+enforce_constant_time = true
+# Disable variable-time code paths
+disable_variable_time = true
+# CPU-specific optimizations (Meteor Lake)
+use_hardware_aes = true
+use_hardware_pclmul = true
+
+#
+# Profile-Specific Notes
+#
+# ATOMAL Profile Characteristics:
+#  - TLS 1.3 only, absolutely no fallback
+#  - Hybrid-only or PQC-only (no pure classical)
+#  - ML-KEM-1024 + ML-DSA-87 preferred
+#  - AES-256-GCM only (no ChaCha20, ensures AES-NI usage)
+#  - Connection fails if hybrid cannot be negotiated
+#  - No classical fallback except at perimeter gateways
+#  - Maximum side-channel protections
+#  - Constant-time enforcement
+#  - Hardware RNG only
+#  - Full event telemetry and alerting
+#  - Suitable for: Highest security internal comms, classified data, critical infrastructure
+#
+# ATOMAL Trust Model:
+#  - classical-only: REJECTED
+#  - hybrid (ECDHE+ML-KEM-768, ECDSA+ML-DSA-65): Allowed but logged
+#  - hybrid (X25519+ML-KEM-1024, ECDSA+ML-DSA-87): Preferred
+#  - PQC-only (ML-KEM-1024, ML-DSA-87): Highest trust, internal-only
+#
+# Certificate Requirements:
+#  - MUST have PQC component (ML-DSA-87)
+#  - MAY have classical component for compatibility at edges
+#  - Internal-only certs should be PQC-only
+#
+# Perimeter Gateway Strategy:
+#  - External leg: WORLD_COMPAT (classical + opportunistic PQC)
+#  - Internal leg: ATOMAL (hybrid or PQC-only)
+#  - Gateway terminates classical, enforces PQC internally
+#
+# To use this profile:
+#  export OPENSSL_CONF=/opt/openssl-dsmil/ssl/atomal.cnf
+#  export THREATCON_LEVEL=HIGH
+#
+# THREATCON Levels (ATOMAL interpretation):
+#  NORMAL - Hybrid mandatory (ML-KEM-1024 preferred)
+#  ELEVATED - PQC-only preferred, enhanced logging
+#  HIGH - PQC-only required where possible
+#  SEVERE - Maximum security, reject any classical components
+#
+# Performance Notes:
+#  - ATOMAL prioritizes security over performance
+#  - AES-NI hardware acceleration still provides good performance
+#  - ML-KEM-1024 and ML-DSA-87 are slower than smaller variants
+#  - Expected handshake overhead: ~2-3x vs classical
+#  - Use connection pooling/reuse to amortize handshake cost
+#
+# Integration with DEFRAMEWORK:
+#  - All crypto decisions logged
+#  - Policy violations trigger alerts
+#  - THREATCON changes can dynamically adjust policy
+#  - Anomaly detection for unusual algorithm negotiations
