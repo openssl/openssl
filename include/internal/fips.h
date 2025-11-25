@@ -11,6 +11,8 @@
 #define OSSL_INTERNAL_FIPS_H
 #pragma once
 
+#include <openssl/types.h>
+
 #ifdef FIPS_MODULE
 
 /* Return 1 if the FIPS self tests are running and 0 otherwise */
@@ -110,6 +112,13 @@ typedef enum {
 
 int ossl_deferred_self_test(OSSL_LIB_CTX *libctx, self_test_id_t id);
 int ossl_self_test_in_progress(self_test_id_t id);
+
+/* Helper definitions to keep some of the ciphercommon.h macros simple */
+#define ST_ID_CIPHER_aes ST_ID_CIPHER_AES_128_ECB
+#define ST_ID_CIPHER_AES_128_CCM ST_ID_CIPHER_AES_128_ECB
+#define ST_ID_CIPHER_AES_128_OCB ST_ID_CIPHER_AES_128_ECB
+#define ST_ID_CIPHER_AES_128_WRP ST_ID_CIPHER_AES_128_ECB
+#define ST_ID_CIPHER_AES_128_XTS ST_ID_CIPHER_AES_128_ECB
 
 #endif /* FIPS_MODULE */
 
