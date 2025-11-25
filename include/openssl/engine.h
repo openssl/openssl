@@ -1101,37 +1101,27 @@ typedef struct st_dynamic_fns {
 } dynamic_fns;
 
 /*
- * The version checking function should be of this prototype. NB: The
- * ossl_version value passed in is the OSSL_DYNAMIC_VERSION of the loading
- * code. If this function returns zero, it indicates a (potential) version
+ * The version checking function should be of this prototype.
+ * As a stub, this function returns zero, it indicates a (potential) version
  * incompatibility and the loaded library doesn't believe it can proceed.
- * Otherwise, the returned value is the (latest) version supported by the
- * loading library. The loader may still decide that the loaded code's
- * version is unsatisfactory and could veto the load. The function is
- * expected to be implemented with the symbol name "v_check", and a default
- * implementation can be fully instantiated with
+ * The function is expected to be implemented with the symbol name "v_check",
+ * and a default implementation can be fully instantiated with
  * IMPLEMENT_DYNAMIC_CHECK_FN().
  */
 typedef unsigned long (*dynamic_v_check_fn) (unsigned long ossl_version);
 #  define IMPLEMENT_DYNAMIC_CHECK_FN() \
-        OPENSSL_EXPORT unsigned long v_check(unsigned long v); \
-        OPENSSL_EXPORT unsigned long v_check(unsigned long v) { \
-                if (v >= OSSL_DYNAMIC_OLDEST) return OSSL_DYNAMIC_VERSION; \
-                return 0; }
+    OPENSSL_EXPORT unsigned long v_check(unsigned long v); \
+    OPENSSL_EXPORT unsigned long v_check(unsigned long v) \
+    { \
+        return 0; \
+    }
 
 /*
  * This function is passed the ENGINE structure to initialise with its own
  * function and command settings. It should not adjust the structural or
- * functional reference counts. If this function returns zero, (a) the load
- * will be aborted, (b) the previous ENGINE state will be memcpy'd back onto
- * the structure, and (c) the shared library will be unloaded. So
- * implementations should do their own internal cleanup in failure
- * circumstances otherwise they could leak. The 'id' parameter, if non-NULL,
- * represents the ENGINE id that the loader is looking for. If this is NULL,
- * the shared library can choose to return failure or to initialise a
- * 'default' ENGINE. If non-NULL, the shared library must initialise only an
- * ENGINE matching the passed 'id'. The function is expected to be
- * implemented with the symbol name "bind_engine". A standard implementation
+ * functional reference counts. As a stub, this function returns zero, the load
+ * will be aborted. The function is expected to be implemented with the symbol
+ * name "bind_engine". A standard implementation
  * can be instantiated with IMPLEMENT_DYNAMIC_BIND_FN(fn) where the parameter
  * 'fn' is a callback function that populates the ENGINE structure and
  * returns an int value (zero for failure). 'fn' should have prototype;
@@ -1140,18 +1130,13 @@ typedef unsigned long (*dynamic_v_check_fn) (unsigned long ossl_version);
 typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
                                     const dynamic_fns *fns);
 #  define IMPLEMENT_DYNAMIC_BIND_FN(fn) \
-        OPENSSL_EXPORT \
-        int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns); \
-        OPENSSL_EXPORT \
-        int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { \
-            if (ENGINE_get_static_state() == fns->static_state) goto skip_cbs; \
-            CRYPTO_set_mem_functions(fns->mem_fns.malloc_fn, \
-                                     fns->mem_fns.realloc_fn, \
-                                     fns->mem_fns.free_fn); \
-            OPENSSL_init_crypto(OPENSSL_INIT_NO_ATEXIT, NULL); \
-        skip_cbs: \
-            if (!fn(e, id)) return 0; \
-            return 1; }
+    OPENSSL_EXPORT \
+    int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns); \
+    OPENSSL_EXPORT \
+    int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) \
+    { \
+        return 0; \
+    }
 
 /*
  * If the loading application (or library) and the loaded ENGINE library
