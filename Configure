@@ -984,6 +984,10 @@ while (@argvcopy)
                         delete $disabled{"fips"};
                         delete $disabled{"jitter"};
                         }
+                elsif (exists $deprecated_disablables{$1})
+                        {
+                        $deprecated_options{$_} = 1;
+                        }
                 my $algo = $1;
                 delete $disabled{$algo};
 
