@@ -3,6 +3,7 @@
 #include <string.h>
 #include <openssl/opensslconf.h>
 #include <openssl/camellia.h> // Includes CAMELLIA_KEY definition
+#include <openssl/modes.h>
 #define CMLL_ASM
 #include "crypto/cmll_platform.h"
 #include "testutil.h"
@@ -23,7 +24,7 @@ void print_key_schedule(const CAMELLIA_KEY *ctx, int key_bits)
     for (int i = 0; i < num_pairs; ++i) {
         // Print the raw 64-bit value, which represents a pair of 32-bit subkeys (subr|subl).
         // The first 26 are the most important for 128-bit check.
-        printf(" %04d | %016llX\n", i, keys[i]);
+        printf(" %04d | %016lX\n", i, keys[i]);
     }
 
     // Optional: Print the metadata integer (key_length) at offset 272
@@ -161,7 +162,7 @@ static int test_camellia_1blk_key128_armv8(void)
     return 1;
 }
 
-static int test_camellia_16blk_key128_armv8(void)
+static int test_camellia_16blk_key128_neon(void)
 {
     static const uint8_t k[CAMELLIA_BLOCK_SIZE] = {
         0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
@@ -242,7 +243,7 @@ static int test_camellia_1blk_key192_armv8(void)
     return 1;
 }
 
-static int test_camellia_16blk_key192_armv8(void)
+static int test_camellia_16blk_key192_neon(void)
 {
     static const uint8_t k[24] = {
         0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef,
@@ -325,7 +326,7 @@ static int test_camellia_1blk_key256_armv8(void)
     return 1;
 }
 
-static int test_camellia_16blk_key256_armv8(void)
+static int test_camellia_16blk_key256_neon(void)
 {
     static const uint8_t k[32] = {
         0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef,
@@ -366,6 +367,88 @@ static int test_camellia_16blk_key256_armv8(void)
     }
     return 1;
 }
+
+static int test_camellia_cbc_neon(void)
+{
+    /* --- COMMON SETUP --- */
+    
+    /* Standard Camellia 128-bit Key (RFC 3713) */
+    static const uint8_t k[16] = { 
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
+        0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+
+    /* Standard Input Block */
+    static const uint8_t input_std[16] = {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
+        0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+
+    const size_t NUM_BLOCKS = 95;
+    const size_t LEN = NUM_BLOCKS * 16;
+    CAMELLIA_KEY ctx;
+    uint8_t input_full[LEN];
+    uint8_t iv_asm[16];
+    uint8_t iv_ref[16];
+    uint8_t iv_dec[16];
+    uint8_t ref[LEN];
+    uint8_t ciphertext[LEN];
+    uint8_t plaintext_out[LEN];
+
+    /* Initialize Key Schedule (Optimized) */
+    /* We cast here to tell the setup function to write the SIMD layout */
+    camellia_keysetup_neon((struct camellia_simd_ctx *)&ctx, k, 128 / 8);
+
+    /* --- TEST 1: ENCRYPTION CHECK --- */
+
+    fill_blks(input_full, input_std, NUM_BLOCKS);
+
+    // Arbitrary IV
+    static const uint8_t iv_random[16] = { 
+        0xAA, 0xBB, 0xCC, 0xDD, 0x11, 0x22, 0x33, 0x44, 
+        0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22 
+    };
+
+    memcpy(iv_asm, iv_random, 16);
+    memcpy(iv_ref, iv_random, 16);
+    memcpy(iv_dec, iv_random, 16);
+
+    // 1. Run REFERENCE (OpenSSL Generic Logic using 1-block encryption routine)
+    CRYPTO_cbc128_encrypt(input_full, ref, LEN, &ctx, iv_ref, 
+                          (block128_f)camellia_encrypt_armv8_wrapper);
+
+    //printf("-----------------Reference 4-block CBC run complete-----------------\n");
+
+    // 2. Run CANDIDATE (Your ASM CBC)
+    camellia_cbc_encrypt_neon(input_full, ciphertext, LEN, (struct camellia_simd_ctx *)&ctx, iv_asm);
+
+    // 3. Compare Outputs
+    if (!TEST_mem_eq(ciphertext, LEN, ref, LEN)) {
+        TEST_error("CBC Encryption Test : ASM output differs from Reference Logic");
+        return 0;
+    }
+
+    // 4. Compare IV Updates
+    // The IV pointer should now contain the last ciphertext block
+    if (!TEST_mem_eq(iv_asm, 16, iv_ref, 16)) {
+        TEST_error("CBC Encryption Test: IV update differs from Reference Logic");
+        return 0;
+    }
+
+    camellia_cbc_decrypt_neon(ciphertext, plaintext_out, LEN, (struct camellia_simd_ctx *)&ctx, iv_dec);
+
+    if (!TEST_mem_eq(plaintext_out, LEN, input_full, LEN)) {
+        TEST_error("CBC Decryption Test: Decrypted text mismatch");
+        return 0;
+    }
+
+    if (!TEST_mem_eq(iv_dec, 16, iv_asm, 16)) {
+        TEST_error("CBC Decryption Test: Decryption did not update IV correctly");
+        return 0;
+    }
+
+    return 1;
+}
 #endif
 
 int setup_tests(void)
@@ -373,11 +456,12 @@ int setup_tests(void)
     ADD_TEST(test_camellia_128_ref);
 #ifdef CMLL_AES_CAPABLE
     ADD_TEST(test_camellia_1blk_key128_armv8);
-    ADD_TEST(test_camellia_16blk_key128_armv8);
+    ADD_TEST(test_camellia_16blk_key128_neon);
     ADD_TEST(test_camellia_1blk_key192_armv8);
-    ADD_TEST(test_camellia_16blk_key192_armv8);
+    ADD_TEST(test_camellia_16blk_key192_neon);
     ADD_TEST(test_camellia_1blk_key256_armv8);
-    ADD_TEST(test_camellia_16blk_key256_armv8);
+    ADD_TEST(test_camellia_16blk_key256_neon);
+    ADD_TEST(test_camellia_cbc_neon);
 #endif
     return 1;
 }

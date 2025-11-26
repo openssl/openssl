@@ -1757,7 +1757,6 @@ ___
 sub write_output(){
     my ($rio_ptr) = @_;
 $code.=<<___;
-    /* TODO: check the order! */
     stp     q7,q6,[$rio_ptr]
     stp     q5,q4,[$rio_ptr,#32]
     stp     q3,q2,[$rio_ptr,#64]
@@ -1896,35 +1895,9 @@ $code.=<<___;
     ret
 .size   camellia_encrypt_16blks_neon,.-camellia_encrypt_16blks_neon
 
-.globl  camellia_decrypt_16blks_neon
-.type   camellia_decrypt_16blks_neon,%function
-.align  5
-camellia_decrypt_16blks_neon:
-    // === PROLOGUE ===
-    stp     x29,x30,[sp,#-144]!
-    mov     x29,sp
-    
-    stp     q8,q9,[sp,#16]
-    stp     q10,q11,[sp,#48]
-    stp     q12,q13,[sp,#80]
-    stp     q14,q15,[sp,#112]
-
-    // === SETUP ===
-    // Determine lastk
-    ldr     w9,[x0,#272]
-    mov     w8,#32
-    mov     w10,#24
-    cmp     w9,#16
-    csel    w8,w10,w8,le         // x8 -> lastk: if key_length <= 16 then 24, else - 32 
-
-    // === INPUT PROCESSING ===
-    // Call inpack16_pre: reads vin(x2), key[0](=ctx_ptr: x0), writes v0-v15
-    // clobbers: v16-v18 and x5
-    lsl     x4,x8,#3
-    add     x4,x0,x4
-___
-    &inpack16_pre("x2", "x4", "v16", "x5");
-$code.=<<___;
+.align 5
+.L16_dec_core:
+    // Core decryption algorithm (factored out of the main routine for the sake of CBC and CTR modes).
 
     // Set up temp buffer pointers using vout_ptr (x1)
     mov     x10,x1          // x10 -> vout
@@ -1998,13 +1971,45 @@ $code.=<<___;
     ldp     q12,q13,[x11,#64]
     ldp     q14,q15,[x11,#96]
 
-    // Calculate final key pointer: &key_table[lastk] (lastk is in x8)
-    //lsl     x4,x8,#3    // lastk * 8
-    //add     x4,x0,x4    // &key_table[lastk]
-
     // Call outunpack16: Operates in-place on v0-v15
 ___
     &outunpack16("x0", "v16", "v17", "v18", "x5");
+$code.=<<___;
+
+    ret
+
+.globl  camellia_decrypt_16blks_neon
+.type   camellia_decrypt_16blks_neon,%function
+.align  5
+camellia_decrypt_16blks_neon:
+    // === PROLOGUE ===
+    stp     x29,x30,[sp,#-144]!
+    mov     x29,sp
+    
+    stp     q8,q9,[sp,#16]
+    stp     q10,q11,[sp,#48]
+    stp     q12,q13,[sp,#80]
+    stp     q14,q15,[sp,#112]
+
+    // === SETUP ===
+    // Determine lastk
+    ldr     w9,[x0,#272]
+    mov     w8,#32
+    mov     w10,#24
+    cmp     w9,#16
+    csel    w8,w10,w8,le         // x8 -> lastk: if key_length <= 16 then 24, else - 32 
+
+    // === INPUT PROCESSING ===
+    // Call inpack16_pre: reads vin(x2), key[0](=ctx_ptr: x0), writes v0-v15
+    // clobbers: v16-v18 and x5
+    lsl     x4,x8,#3
+    add     x4,x0,x4
+___
+    &inpack16_pre("x2", "x4", "v16", "x5");
+$code.=<<___;
+
+    bl      .L16_dec_core
+___
 
     &write_output("x1");
 $code.=<<___;
@@ -2018,6 +2023,246 @@ $code.=<<___;
     ldp     x29,x30,[sp],#144
     ret
 .size   camellia_decrypt_16blks_neon,.-camellia_decrypt_16blks_neon
+
+/*
+    Encryption modes
+*/
+
+.text
+.global camellia_cbc_encrypt_neon
+.type   camellia_cbc_encrypt_neon, %function
+.align  5
+camellia_cbc_encrypt_neon:
+    // Arguments (AAPCS64): x0=in, x1=out, x2=len, x3=key, x4=ivec
+
+    // Prologue
+    stp     x29,x30,[sp,#-64]!
+    mov     x29,sp
+    stp     x19,x20,[sp,#16]
+    stp     x21,x22,[sp,#32]
+    str     x23,[sp,#48]
+    
+    // Check length (must be >= 16 for at least one loop)
+    cmp     x2, #16
+    b.lo    .Lcbc_abort_exit    // !Assume there are no half-empty blocks!
+    
+    and     x19,x2,#-16         // x19 = len & ~15 (Full block length in bytes)
+    add     x19,x0,x19          // x19 = ENDP = INP + full_len
+
+    // Back up some reg-s
+    mov     x20,x0              // Input
+    mov     x21,x1              // Output
+    mov     x22,x3              // Key (CTX)
+    mov     x23,x4              // IV
+    
+    ldp     x6,x7,[x23]         // Load the 128-bit IV into v6 and v7 (C_0)
+
+.Lcbc_enc_loop:
+    ldp     x0,x1,[x20],#16         // Load P_i into v0
+
+    // P_i ^ IV
+    eor     x0,x0,x6
+    eor     x1,x1,x7
+
+    stp     x0,x1,[x21]             // Store in OUTP!
+
+    mov     x0,x22                  // CTX
+    mov     x1,x21                  // OUTP
+    mov     x2,x21                  // INP is OUTP!
+    
+    bl      camellia_encrypt_1blk_armv8     // TODO: Factor out write_output?
+    
+    ldp     x6,x7,[x21]             // Load output
+
+    add     x21,x21,#16         // OUTP++
+
+    cmp     x20,x19
+    b.lo    .Lcbc_enc_loop
+
+    stp     x6,x7,[x23]
+
+.Lcbc_abort_exit:
+    // Epilogue
+    ldp     x19,x20,[sp,#16]
+    ldp     x21,x22,[sp,#32]
+    ldr     x23,[sp,#48]
+    ldp     x29,x30,[sp],#64
+    ret
+.size camellia_cbc_encrypt_neon,.-camellia_cbc_encrypt_neon
+
+# ====================================================================
+# CBC DECRYPTION ROUTINE (Full implementation: Bulk + Tail)
+#
+# void camellia_cbc_decrypt_neon(const unsigned char *in, 
+#                                unsigned char *out, 
+#                                size_t len, 
+#                                const void *key, 
+#                                unsigned char *ivec)
+# ====================================================================
+.globl  camellia_cbc_decrypt_neon
+.type   camellia_cbc_decrypt_neon,%function
+.align  5
+camellia_cbc_decrypt_neon:
+    // Arguments: x0=in, x1=out, x2=len, x3=key, x4=iv
+
+    // === PROLOGUE ===
+    // Stack alloc: 144 (for vector saves as per core requirement) + 64 (for GPR saves, aligned) + 256 "scratch space" = 464
+    stp     x29,x30,[sp,#-464]!
+    mov     x29,sp
+
+    stp     q8,q9,[sp,#16]
+    stp     q10,q11,[sp,#48]
+    stp     q12,q13,[sp,#80]
+    stp     q14,q15,[sp,#112]
+
+    stp     x19,x20,[sp,#144]
+    stp     x21,x22,[sp,#160]
+    stp     x23,x24,[sp,#176]
+    str     x25,[sp,#192]
+
+    // Move Arguments to preserved registers
+    mov     x19,x0      // In
+    mov     x20,x1      // Out
+    mov     x21,x2      // Len
+    mov     x22,x3      // Key
+    mov     x23,x4      // IV Ptr
+
+    // === KEY SETUP ===
+    // Determine lastk (x8) required by Core
+    ldr     w9,[x22,#272]
+    mov     w8,#32
+    mov     w10,#24
+    cmp     w9,#16
+    csel    w8,w10,w8,le    // x8 = lastk
+
+    lsl     x24,x8,#3
+    add     x24,x22,x24     // x24 = &key_table[lastk]
+
+.Lcbc_dec_bulk_loop:
+    cmp     x21,#256
+    b.lt    .Lcbc_dec_tail
+
+    // === PREPARE CORE CALL ===
+    // .L16_dec_core expects:
+    //   x0 = Context (Key)
+    //   x1 = Output/Scratch
+    //   x2 = Input Pointer
+    //   x8 = lastk
+    mov     x0,x22
+    add     x1,sp,#208  // let core routine use stack as scratch
+    mov     x2,x19
+
+    // inpack16_pre: reads vin(x2), key[0](=ctx_ptr: x0), writes v0-v15
+    // clobbers: v16-v18 and x5
+___
+    &inpack16_pre("x19", "x24", "v16", "x5");
+$code.=<<___;
+    
+    // Call the factored-out core
+    // Returns decrypted blocks in v0-v15
+    bl      .L16_dec_core
+
+    // === CBC XOR LOGIC ===
+    // Mapping: v7=Block0 ... v0=Block7 ... v15=Block8 ... v8=Block15
+    // P_0  = Dec(C_0) ^ IV
+    // P_i  = Dec(C_i) ^ C_{i-1}
+    
+    // Load IV (Current IV state) into v31, start pre-loading Input Ciphertext
+    ldr     q31,[x23]
+    ld1     {v16.16b-v19.16b}, [x19], #64   // Load C0-C3
+    
+    // XOR Block 0 (v7) with IV
+    eor     v7.16b,v7.16b,v31.16b
+
+    // XOR remaining blocks with Input Ciphertext
+    eor     v6.16b,v6.16b,v16.16b 
+    eor     v5.16b,v5.16b,v17.16b 
+    ld1     {v20.16b-v23.16b},[x19],#64   // Load C4-C7
+    eor     v4.16b,v4.16b,v18.16b
+    eor     v3.16b,v3.16b,v19.16b
+    ld1     {v24.16b-v27.16b},[x19],#64   // Load C8-C11
+    eor     v2.16b,v2.16b,v20.16b
+    eor     v1.16b,v1.16b,v21.16b
+    ld1     {v28.16b-v31.16b}, [x19], #64   // Load C12-C15
+    eor     v0.16b,v0.16b,v22.16b
+    eor     v15.16b,v15.16b,v23.16b
+    eor     v14.16b,v14.16b,v24.16b
+    eor     v13.16b,v13.16b,v25.16b
+    eor     v12.16b,v12.16b,v26.16b
+    eor     v11.16b,v11.16b,v27.16b
+    eor     v10.16b,v10.16b,v28.16b
+    eor     v9.16b,v9.16b,v29.16b
+    eor     v8.16b,v8.16b,v30.16b
+
+    // === WRITE OUTPUT ===
+___
+    &write_output("x20");
+$code.=<<___;
+
+    // === UPDATE IV ===
+    // The new IV for the next batch is the LAST block of the CURRENT Input (Ciphertext).
+    // Input[240] is C_15 (already loaded).
+    str     q31,[x23]
+
+    // === ADVANCE POINTERS ===
+    add     x20,x20,#256
+    sub     x21,x21,#256
+    b       .Lcbc_dec_bulk_loop
+
+.Lcbc_dec_tail:
+    cbz     x21,.Lcbc_dec_done
+
+    ldp     x24,x25,[x23]        // IV (Low/High)
+    
+.Lcbc_tail_loop:
+    // Load Ciphertext (C_i)
+    ldp     x6,x7,[x19]         // x6/x7 = C_i
+    
+    // Save C_i (It becomes IV for i+1)
+    stp     x6,x7,[sp,#208]     // use "scratch space"
+
+    // Call Decrypt 1-Block
+    mov     x0, x22
+    mov     x1, x20
+    mov     x2, x19
+    
+    bl      camellia_decrypt_1blk_armv8     // TODO: factor write_out out
+    
+    // XOR Result with Previous IV
+    ldp     x0,x1,[x20]     // Load Dec(C_i)
+    
+    eor     x0,x0,x24
+    eor     x1,x1,x25
+    
+    stp     x0,x1,[x20]     // Store P_i
+
+    // Update IV
+    ldp     x24,x25,[sp,#208]
+
+    // Advance
+    add     x19,x19,#16
+    add     x20,x20,#16
+    subs    x21,x21,#16
+    b.gt    .Lcbc_tail_loop
+
+    // Store Final IV back to memory
+    stp     x24,x25,[x23]
+
+.Lcbc_dec_done:
+    // === EPILOGUE ===
+    ldr     x25,[sp,#192]
+    ldp     x23,x24,[sp,#176]
+    ldp     x21,x22,[sp,#160]
+    ldp     x19,x20,[sp,#144]
+
+    ldp     q8,q9,[sp,#16]
+    ldp     q10,q11,[sp,#48]
+    ldp     q12,q13,[sp,#80]
+    ldp     q14,q15,[sp,#112]
+
+    ldp     x29,x30,[sp],#464
+    ret
+.size   camellia_cbc_decrypt_neon,.-camellia_cbc_decrypt_neon
 
 /*
    "Optimised" key setup 
