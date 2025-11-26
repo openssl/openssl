@@ -418,6 +418,7 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
         acpt_close_socket(b);
         BIO_ADDRINFO_free(data->addr_first);
         data->addr_first = NULL;
+        data->addr_iter = NULL;
         b->flags = 0;
         break;
     case BIO_C_DO_STATE_MACHINE:
