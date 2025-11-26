@@ -100,6 +100,10 @@ DEPEND[man/man1/openssl-enc.1]=man1/openssl-enc.pod
 GENERATE[man/man1/openssl-enc.1]=man1/openssl-enc.pod
 DEPEND[man1/openssl-enc.pod]{pod}=man1/openssl-enc.pod.in
 GENERATE[man1/openssl-enc.pod]=man1/openssl-enc.pod.in
+DEPEND[html/man1/openssl-engine.html]=man1/openssl-engine.pod
+GENERATE[html/man1/openssl-engine.html]=man1/openssl-engine.pod
+DEPEND[man/man1/openssl-engine.1]=man1/openssl-engine.pod
+GENERATE[man/man1/openssl-engine.1]=man1/openssl-engine.pod
 DEPEND[html/man1/openssl-errstr.html]=man1/openssl-errstr.pod
 GENERATE[html/man1/openssl-errstr.html]=man1/openssl-errstr.pod
 DEPEND[man/man1/openssl-errstr.1]=man1/openssl-errstr.pod
@@ -370,6 +374,7 @@ html/man1/openssl-dsaparam.html \
 html/man1/openssl-ec.html \
 html/man1/openssl-ecparam.html \
 html/man1/openssl-enc.html \
+html/man1/openssl-engine.html \
 html/man1/openssl-errstr.html \
 html/man1/openssl-fipsinstall.html \
 html/man1/openssl-format-options.html \
@@ -431,6 +436,7 @@ man/man1/openssl-dsaparam.1 \
 man/man1/openssl-ec.1 \
 man/man1/openssl-ecparam.1 \
 man/man1/openssl-enc.1 \
+man/man1/openssl-engine.1 \
 man/man1/openssl-errstr.1 \
 man/man1/openssl-fipsinstall.1 \
 man/man1/openssl-format-options.1 \
@@ -4731,6 +4737,10 @@ DEPEND[html/man7/EVP_MD-BLAKE2.html]=man7/EVP_MD-BLAKE2.pod
 GENERATE[html/man7/EVP_MD-BLAKE2.html]=man7/EVP_MD-BLAKE2.pod
 DEPEND[man/man7/EVP_MD-BLAKE2.7]=man7/EVP_MD-BLAKE2.pod
 GENERATE[man/man7/EVP_MD-BLAKE2.7]=man7/EVP_MD-BLAKE2.pod
+DEPEND[html/man7/EVP_MD-EXTERNAL-MU-ML-DSA.html]=man7/EVP_MD-EXTERNAL-MU-ML-DSA.pod
+GENERATE[html/man7/EVP_MD-EXTERNAL-MU-ML-DSA.html]=man7/EVP_MD-EXTERNAL-MU-ML-DSA.pod
+DEPEND[man/man7/EVP_MD-EXTERNAL-MU-ML-DSA.7]=man7/EVP_MD-EXTERNAL-MU-ML-DSA.pod
+GENERATE[man/man7/EVP_MD-EXTERNAL-MU-ML-DSA.7]=man7/EVP_MD-EXTERNAL-MU-ML-DSA.pod
 DEPEND[html/man7/EVP_MD-KECCAK.html]=man7/EVP_MD-KECCAK.pod
 GENERATE[html/man7/EVP_MD-KECCAK.html]=man7/EVP_MD-KECCAK.pod
 DEPEND[man/man7/EVP_MD-KECCAK.7]=man7/EVP_MD-KECCAK.pod
@@ -5235,6 +5245,7 @@ html/man7/EVP_MAC-KMAC.html \
 html/man7/EVP_MAC-Poly1305.html \
 html/man7/EVP_MAC-Siphash.html \
 html/man7/EVP_MD-BLAKE2.html \
+html/man7/EVP_MD-EXTERNAL-MU-ML-DSA.html \
 html/man7/EVP_MD-KECCAK.html \
 html/man7/EVP_MD-MD2.html \
 html/man7/EVP_MD-MD4.html \
@@ -5395,6 +5406,7 @@ man/man7/EVP_MAC-KMAC.7 \
 man/man7/EVP_MAC-Poly1305.7 \
 man/man7/EVP_MAC-Siphash.7 \
 man/man7/EVP_MD-BLAKE2.7 \
+man/man7/EVP_MD-EXTERNAL-MU-ML-DSA.7 \
 man/man7/EVP_MD-KECCAK.7 \
 man/man7/EVP_MD-MD2.7 \
 man/man7/EVP_MD-MD4.7 \

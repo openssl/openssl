@@ -12,9 +12,19 @@
  * internal use.
  */
 #include "internal/deprecated.h"
-
+#include <openssl/obj_mac.h>
+#include <openssl/evp.h>
 #include "internal/packet.h"
 #include "prov/der_ml_dsa.h"
+#include "prov/der_pq_dsa.h"
+#include "prov/der_digests.h"
+
+#define IS_MD(algname, name, hashsz)                                           \
+(EVP_MD_is_a(md, algname)) {                                                   \
+    *oid = ossl_der_oid_id_##name;                                             \
+    *oidlen = sizeof(ossl_der_oid_id_##name);                                  \
+    *sz = hashsz;                                                              \
+}
 
 int ossl_DER_w_algorithmIdentifier_ML_DSA(WPACKET *pkt, int tag, ML_DSA_KEY *key)
 {
@@ -38,4 +48,23 @@ int ossl_DER_w_algorithmIdentifier_ML_DSA(WPACKET *pkt, int tag, ML_DSA_KEY *key
         /* No parameters */
         && ossl_DER_w_precompiled(pkt, -1, alg, len)
         && ossl_DER_w_end_sequence(pkt, tag);
+}
+
+int ossl_der_oid_pq_dsa_prehash_digest(const EVP_MD *md,
+                                       const uint8_t **oid, size_t *oidlen,
+                                       size_t *sz)
+{
+    if IS_MD("SHAKE-256", shake256, 64)
+    else if IS_MD("SHAKE-128", shake128, 32)
+    else if IS_MD("SHA2-224", sha224, 28)
+    else if IS_MD("SHA2-256", sha256, 32)
+    else if IS_MD("SHA2-384", sha384, 48)
+    else if IS_MD("SHA2-512", sha512, 64)
+    else if IS_MD("SHA3-224", sha3_224, 28)
+    else if IS_MD("SHA3-256", sha3_256, 32)
+    else if IS_MD("SHA3-384", sha3_384, 48)
+    else if IS_MD("SHA3-512", sha3_512, 64)
+    else
+        return 0;
+    return 1;
 }
