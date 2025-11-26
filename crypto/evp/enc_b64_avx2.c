@@ -1,15 +1,53 @@
-#include <string.h>
+#include <openssl/evp.h>
+#include "enc_b64_scalar.h"
+#include "enc_b64_avx2.h"
+#include "internal/cryptlib.h"
+#include "crypto/evp.h"
+#include "evp_local.h"
 
-#ifdef __AVX2__
+#if defined(__x86_64) || defined(__x86_64__) || \
+    defined(_M_AMD64) || defined(_M_X64)
+# define STRINGIFY_IMPLEMENTATION_(a) #a
+# define STRINGIFY(a) STRINGIFY_IMPLEMENTATION_(a)
+
+# ifdef __clang__
+/*
+ * clang does not have GCC push pop
+ * warning: clang attribute push can't be used within a namespace in clang up
+ * til 8.0 so OPENSSL_TARGET_REGION and OPENSSL_UNTARGET_REGION must be
+ * outside* of a namespace.
+ */
+#  define OPENSSL_TARGET_REGION(T)                                      \
+    _Pragma(STRINGIFY(clang attribute push(__attribute__((target(T))), \
+                                           apply_to = function)))
+#  define OPENSSL_UNTARGET_REGION _Pragma("clang attribute pop")
+# elif defined(__GNUC__)
+#  define OPENSSL_TARGET_REGION(T) \
+    _Pragma("GCC push_options") _Pragma(STRINGIFY(GCC target(T)))
+#  define OPENSSL_UNTARGET_REGION _Pragma("GCC pop_options")
+# endif  /* clang then gcc */
+
+/* Default target region macros don't do anything. */
+# ifndef OPENSSL_TARGET_REGION
+#  define OPENSSL_TARGET_REGION(T)
+#  define OPENSSL_UNTARGET_REGION
+# endif
+
+# define OPENSSL_TARGET_AVX2 \
+    OPENSSL_TARGET_REGION("avx2")
+# define OPENSSL_UNTARGET_AVX2 OPENSSL_UNTARGET_REGION
+
+/*
+ * Ensure this whole block is compiled with AVX2 enabled on GCC.
+ * Clang/MSVC will just ignore these pragmas.
+ */
+
+# include <string.h>
 # include <immintrin.h>
-# include <openssl/evp.h>
 # include <stddef.h>
 # include <stdint.h>
-# include "enc_b64_scalar.h"
-# include "enc_b64_avx2.h"
-# include "internal/cryptlib.h"
-# include "crypto/evp.h"
-# include "evp_local.h"
+
+OPENSSL_TARGET_AVX2
 static __m256i lookup_pshufb_std(__m256i input)
 {
     __m256i result = _mm256_subs_epu8(input, _mm256_set1_epi8(51));
@@ -30,7 +68,9 @@ static __m256i lookup_pshufb_std(__m256i input)
     result = _mm256_shuffle_epi8(shift_LUT, result);
     return _mm256_add_epi8(result, input);
 }
+OPENSSL_UNTARGET_AVX2
 
+OPENSSL_TARGET_AVX2
 static inline __m256i lookup_pshufb_srp(__m256i input)
 {
     const __m256i zero = _mm256_setzero_si256();
@@ -63,7 +103,9 @@ static inline __m256i lookup_pshufb_srp(__m256i input)
     __m256i ascii = _mm256_add_epi8(shift, input);
     return ascii;
 }
+OPENSSL_UNTARGET_AVX2
 
+OPENSSL_TARGET_AVX2
 static inline __m256i shift_right_zeros(__m256i v, int n)
 {
     switch (n) {
@@ -103,7 +145,9 @@ static inline __m256i shift_right_zeros(__m256i v, int n)
         return _mm256_setzero_si256();
     }
 }
+OPENSSL_UNTARGET_AVX2
 
+OPENSSL_TARGET_AVX2
 static inline __m256i shift_left_zeros(__m256i v, int n)
 {
     switch (n) {
@@ -145,6 +189,7 @@ static inline __m256i shift_left_zeros(__m256i v, int n)
         return _mm256_setzero_si256();
     }
 }
+OPENSSL_UNTARGET_AVX2
 
 static const uint8_t shuffle_masks[16][16] = {
     {0x80, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
@@ -168,6 +213,7 @@ static const uint8_t shuffle_masks[16][16] = {
 /**
  * Insert a line feed character in the 64-byte input at index K in [0,32).
  */
+OPENSSL_TARGET_AVX2
 static inline __m256i insert_line_feed32(__m256i input, int K)
 {
     __m256i line_feed_vector = _mm256_set1_epi8('\n');
@@ -177,7 +223,7 @@ static inline __m256i insert_line_feed32(__m256i input, int K)
     if (K >= 16) {
         __m128i maskhi = _mm_loadu_si128((__m128i *) shuffle_masks[K - 16]);
         __m256i mask = _mm256_set_m128i(maskhi, identity);
-        __m256i lf_pos = _mm256_cmpeq_epi8(mask, _mm256_set1_epi8(0x80));
+        __m256i lf_pos = _mm256_cmpeq_epi8(mask, _mm256_set1_epi8((char)0x80));
         __m256i shuffled = _mm256_shuffle_epi8(input, mask);
         __m256i result = _mm256_blendv_epi8(shuffled, line_feed_vector, lf_pos);
 
@@ -190,12 +236,14 @@ static inline __m256i insert_line_feed32(__m256i input, int K)
     input = _mm256_blend_epi32(input, shift, 0xF0);
     __m128i masklo = _mm_loadu_si128((__m128i *) shuffle_masks[K]);
     __m256i mask = _mm256_set_m128i(identity, masklo);
-    __m256i lf_pos = _mm256_cmpeq_epi8(mask, _mm256_set1_epi8(0x80));
+    __m256i lf_pos = _mm256_cmpeq_epi8(mask, _mm256_set1_epi8((char)0x80));
     __m256i shuffled = _mm256_shuffle_epi8(input, mask);
     __m256i result = _mm256_blendv_epi8(shuffled, line_feed_vector, lf_pos);
     return result;
 }
+OPENSSL_UNTARGET_AVX2
 
+OPENSSL_TARGET_AVX2
 static inline size_t ins_nl_gt32(__m256i v, uint8_t *out, int stride,
                                  int *wrap_cnt)
 {
@@ -224,7 +272,9 @@ static inline size_t ins_nl_gt32(__m256i v, uint8_t *out, int stride,
     *wrap_cnt = 32 - until_nl;
     return 33;
 }
+OPENSSL_UNTARGET_AVX2
 
+OPENSSL_TARGET_AVX2
 static inline size_t insert_nl_gt16(const __m256i v0,
                                     uint8_t *output,
                                     int wrap_max, int *wrap_cnt)
@@ -242,10 +292,10 @@ static inline size_t insert_nl_gt16(const __m256i v0,
 
     __m256i mask_second_lane = _mm256_setr_epi8(0, 0, 0, 0, 0, 0, 0, 0,
                                                 0, 0, 0, 0, 0, 0, 0, 0,
-                                                0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-                                                0xFF, 0xFF, 0xFF,
-                                                0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-                                                0xFF, 0xFF, 0xFF);
+                                                (char)0xFF, (char)0xFF, (char)0xFF, (char)0xFF,
+                                                (char)0xFF, (char)0xFF, (char)0xFF, (char)0xFF,
+                                                (char)0xFF, (char)0xFF, (char)0xFF, (char)0xFF,
+                                                (char)0xFF, (char)0xFF, (char)0xFF, (char)0xFF);
 
     __m256i blended_0L = v0;
     int surplus_0 = wrap_rem < 16 ? 1 : 0;
@@ -279,7 +329,7 @@ static inline size_t insert_nl_gt16(const __m256i v0,
         _mm256_storeu_si256((__m256i *) (output), blended_1L);
 
         output[wrap_rem + surplus_0] = '\n';
-        output[31 + surplus_0] = sec_last_of_1L;
+        output[31 + surplus_0] = (uint8_t)sec_last_of_1L;
         output[31 + surplus_0 + surplus_1] = last_of_1L;
 
     }
@@ -304,16 +354,18 @@ static inline size_t insert_nl_gt16(const __m256i v0,
 
     return written;
 }
+OPENSSL_UNTARGET_AVX2
 
+OPENSSL_TARGET_AVX2
 static inline size_t insert_nl_2nd_vec_stride_12(const __m256i v0,
                                                  uint8_t *output,
                                                  int dummy_stride,
                                                  int *wrap_cnt)
 {
     __m256i shuffling_mask =
-        _mm256_setr_epi8(0, 1, 2, 3, 0xFF, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-                         0xFF,
-                         0xFF, 0xFF, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0xFF,
+        _mm256_setr_epi8(0, 1, 2, 3, (char)0xFF, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+                         (char)0xFF,
+                         (char)0xFF, (char)0xFF, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, (char)0xFF,
                          12);
     __m256i shuffled = _mm256_shuffle_epi8(v0, shuffling_mask);
 
@@ -337,7 +389,9 @@ static inline size_t insert_nl_2nd_vec_stride_12(const __m256i v0,
     size_t written = (out - output);
     return written;
 }
+OPENSSL_UNTARGET_AVX2
 
+OPENSSL_TARGET_AVX2
 static inline __m256i insert_newlines_by_mask(__m256i data, __m256i mask)
 {
     __m256i newline = _mm256_set1_epi8('\n');
@@ -345,15 +399,16 @@ static inline __m256i insert_newlines_by_mask(__m256i data, __m256i mask)
     return _mm256_or_si256(_mm256_and_si256(mask, newline),
                            _mm256_andnot_si256(mask, data));
 }
+OPENSSL_UNTARGET_AVX2
 
+OPENSSL_TARGET_AVX2
 static inline size_t insert_nl_str4(const __m256i v0, uint8_t *output)
 {
     __m256i shuffling_mask =
-        _mm256_setr_epi8(0, 1, 2, 3, 0xFF, 4, 5, 6, 7, 0xFF,
-                         8, 9, 10, 11, 0xFF, 12,
-                         0xFF, 0xFF, 0xFF, 0xFF, 0, 1, 2, 3, 0xFF, 4, 5, 6, 7,
-                         0xFF,
-                         8, 9);
+        _mm256_setr_epi8(0, 1, 2, 3, (char)0xFF, 4, 5, 6,
+                         7, (char)0xFF, 8, 9, 10, 11, (char)0xFF, 12,
+                         (char)0xFF, (char)0xFF, (char)0xFF, (char)0xFF, 0, 1, 2, 3,
+                         (char)0xFF, 4, 5, 6, 7, (char)0xFF, 8, 9);
     __m256i mask_5_bytes =
         _mm256_setr_epi8(0, 0, 0, 0, (char)0xFF, 0, 0, 0, 0, (char)0xFF,
                          0, 0, 0, 0, (char)0xFF, 0, 0, 0, 0, (char)0xFF,
@@ -408,13 +463,15 @@ static inline size_t insert_nl_str4(const __m256i v0, uint8_t *output)
     size_t written = (out - output);
     return written;
 }
+OPENSSL_UNTARGET_AVX2
 
+OPENSSL_TARGET_AVX2
 static inline size_t insert_nl_str8(const __m256i v0, uint8_t *output)
 {
-    __m256i shuffling_mask = _mm256_setr_epi8(0, 1, 2, 3, 4, 5, 6, 7, 0xFF,
+    __m256i shuffling_mask = _mm256_setr_epi8(0, 1, 2, 3, 4, 5, 6, 7, (char)0xFF,
                                               8, 9, 10, 11, 12, 13, 14,
-                                              0xFF, 0xFF, 0, 1, 2, 3, 4, 5, 6,
-                                              7, 0xFF, 8, 9, 10, 11, 12);
+                                              (char)0xFF, (char)0xFF, 0, 1, 2, 3, 4, 5, 6,
+                                              7, (char)0xFF, 8, 9, 10, 11, 12);
     __m256i shuffled_4_bytes = _mm256_shuffle_epi8(v0, shuffling_mask);
     _mm256_storeu_si256((__m256i *) (output), shuffled_4_bytes);
     int8_t rem_1_L = _mm256_extract_epi8(v0, 15);
@@ -436,7 +493,9 @@ static inline size_t insert_nl_str8(const __m256i v0, uint8_t *output)
     size_t written = (out - output);
     return written;
 }
+OPENSSL_UNTARGET_AVX2
 
+OPENSSL_TARGET_AVX2
 int encode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
                        const unsigned char *src, int srclen, int ctx_length,
                        int *final_wrap_cnt)
@@ -539,10 +598,10 @@ int encode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
         } else if (stride == 4) {
             int out_idx = 0;
 
-            out_idx += insert_nl_str4(vec0, out + out_idx);
-            out_idx += insert_nl_str4(vec1, out + out_idx);
-            out_idx += insert_nl_str4(vec2, out + out_idx);
-            out_idx += insert_nl_str4(vec3, out + out_idx);
+            out_idx += (int)insert_nl_str4(vec0, out + out_idx);
+            out_idx += (int)insert_nl_str4(vec1, out + out_idx);
+            out_idx += (int)insert_nl_str4(vec2, out + out_idx);
+            out_idx += (int)insert_nl_str4(vec3, out + out_idx);
 
             out += out_idx;
         } else if (stride == 8) {
@@ -627,8 +686,8 @@ int encode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
         *out++ = '\n';
     }
 
-    return (size_t)(out - (uint8_t *)dst) +
+    return (int)(out - (uint8_t *)dst) +
         +evp_encodeblock_int(ctx, out, src + i, srclen - i, final_wrap_cnt);
 }
-
+OPENSSL_UNTARGET_AVX2
 #endif
