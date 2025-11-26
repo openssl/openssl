@@ -10,6 +10,7 @@ $BLAKE2_GOAL=../../libdefault.a
 $SM3_GOAL=../../libdefault.a
 $MD5_GOAL=../../libdefault.a
 $NULL_GOAL=../../libdefault.a
+$ML_DSA_MU_GOAL=../../libdefault.a ../../libfips.a
 
 $MD2_GOAL=../../liblegacy.a
 $MD4_GOAL=../../liblegacy.a
@@ -59,4 +60,8 @@ ENDIF
 
 IF[{- !$disabled{rmd160} -}]
   SOURCE[$RIPEMD_GOAL]=ripemd_prov.c
+ENDIF
+
+IF[{- !$disabled{'ml-dsa'} -}]
+  SOURCE[$ML_DSA_MU_GOAL]=ml_dsa_mu_prov.c
 ENDIF

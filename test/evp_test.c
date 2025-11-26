@@ -2577,6 +2577,7 @@ typedef struct pkey_data_st {
     size_t output_len;
     STACK_OF(OPENSSL_STRING) *init_controls; /* collection of controls */
     STACK_OF(OPENSSL_STRING) *controls; /* collection of controls */
+    STACK_OF(OPENSSL_STRING) *mu_controls; /* collection of controls */
     EVP_PKEY *peer;
     int validate;
 } PKEY_DATA;
@@ -2635,6 +2636,7 @@ static int pkey_test_init(EVP_TEST *t, const char *name,
     kdata->keyop = keyop;
     kdata->init_controls = sk_OPENSSL_STRING_new_null();
     kdata->controls = sk_OPENSSL_STRING_new_null();
+    kdata->mu_controls = sk_OPENSSL_STRING_new_null();
     return 1;
 }
 
@@ -2679,6 +2681,7 @@ static int pkey_test_init_ex2(EVP_TEST *t, const char *name,
     }
     kdata->init_controls = sk_OPENSSL_STRING_new_null();
     kdata->controls = sk_OPENSSL_STRING_new_null();
+    kdata->mu_controls = sk_OPENSSL_STRING_new_null();
     return 1;
 }
 
@@ -2686,6 +2689,7 @@ static void pkey_test_cleanup(EVP_TEST *t)
 {
     PKEY_DATA *kdata = t->data;
 
+    ctrlfree(kdata->mu_controls);
     ctrlfree(kdata->init_controls);
     ctrlfree(kdata->controls);
     OPENSSL_free(kdata->input);
@@ -2757,6 +2761,8 @@ static int pkey_test_parse(EVP_TEST *t,
         return ctrladd(kdata->init_controls, value);
     if (strcmp(keyword, "Ctrl") == 0)
         return pkey_add_control(t, kdata->controls, value);
+    if (strcmp(keyword, "CtrlMu") == 0)
+        return ctrladd(kdata->mu_controls, value);
     return 0;
 }
 
@@ -2805,15 +2811,159 @@ err:
     return ret;
 }
 
+/* Calculate ML-DSA-MU.prehash() */
+static int calculate_mu(const uint8_t *pub, size_t publen,
+    const uint8_t *ctx, size_t ctxlen, const uint8_t *msg, size_t msglen,
+    const char *digestname, uint8_t *out, size_t outlen)
+{
+    EVP_MD_CTX *mdctx = NULL;
+    EVP_MD *md = NULL;
+    OSSL_PARAM params[4], *p = params;
+    int ret = 0;
+    size_t len;
+
+    if (pub == NULL || publen == 0)
+        return 0;
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_MU_PUB_KEY, (uint8_t *)pub, publen);
+    if (ctx != NULL && ctxlen > 0)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_MU_CONTEXT_STRING,
+            (uint8_t *)ctx, ctxlen);
+    if (digestname != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MU_DIGEST, (char *)digestname, 0);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(mdctx = EVP_MD_CTX_new())
+        || !TEST_ptr(md = EVP_MD_fetch(libctx, "ML-DSA-MU", NULL))
+        || !TEST_true(EVP_DigestInit_ex2(mdctx, md, params)))
+        goto err;
+    /* stream the message */
+    while (msglen > 0) {
+        len = (msglen >= 15 ? 15 : msglen);
+        if (!TEST_true(EVP_DigestUpdate(mdctx, msg, len)))
+            goto err;
+        msg += len;
+        msglen -= len;
+    }
+    if (!TEST_true(EVP_DigestFinalXOF(mdctx, out, outlen)))
+        goto err;
+    ret = 1;
+err:
+    EVP_MD_free(md);
+    EVP_MD_CTX_free(mdctx);
+    return ret;
+}
+
+static int pkey_calculate_mu(EVP_TEST *t, uint8_t *mu, size_t *mulen)
+{
+    int ret = 0;
+    OSSL_PARAM *p = NULL;
+    static const OSSL_PARAM mu_digest_settable_ctx_params[] = {
+        OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_ALG_PARAM_DIGEST, NULL, 0),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM params[3] = {
+        OSSL_PARAM_END,
+        OSSL_PARAM_END,
+        OSSL_PARAM_END,
+    };
+    size_t params_n = 0;
+    uint8_t pub[3 * 1024];
+    size_t publen = 0;
+    uint8_t *ctx = NULL;
+    size_t ctxlen = 0;
+    const char *digestname = NULL;
+    PKEY_DATA *kdata = t->data;
+    EVP_PKEY *key = EVP_PKEY_CTX_get0_pkey(kdata->ctx);
+    uint8_t *in = kdata->input;
+    size_t inlen = kdata->input_len;
+    uint8_t digest[64];
+    EVP_MD_CTX *mdctx = NULL;
+    EVP_MD *md = NULL;
+
+    if (sk_OPENSSL_STRING_num(kdata->mu_controls) > 0) {
+        if (!ctrl2params(t, kdata->mu_controls, mu_digest_settable_ctx_params,
+                params, OSSL_NELEM(params), &params_n))
+            goto err;
+    }
+    p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_MU_CONTEXT_STRING);
+    if (p != NULL) {
+        ctx = p->data;
+        ctxlen = p->data_size;
+    }
+    p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_MU_DIGEST);
+    if (p != NULL && p->data != NULL) {
+        /*
+         * If we are prehashing then calculate the hash of the kdata->input and
+         * set this as the new input
+         */
+        size_t xoflen = 0;
+        unsigned int len = 0;
+
+        digestname = p->data;
+        mdctx = EVP_MD_CTX_new();
+        if (mdctx == NULL)
+            goto err;
+        md = EVP_MD_fetch(libctx, digestname, NULL);
+        if (md == NULL)
+            goto err;
+        if (!EVP_DigestInit(mdctx, md)
+            || !EVP_DigestUpdate(mdctx, in, inlen))
+            goto err;
+        /* Deal with the SHAKE algorithm not setting a default xoflen */
+        if (EVP_MD_is_a(md, "SHAKE128"))
+            xoflen = 32;
+        else if (EVP_MD_is_a(md, "SHAKE256"))
+            xoflen = 64;
+        if (xoflen != 0) {
+            len = (unsigned int)xoflen;
+            if (!EVP_DigestFinalXOF(mdctx, digest, xoflen))
+                goto err;
+        } else {
+            if (!EVP_DigestFinal(mdctx, digest, &len))
+                goto err;
+        }
+        in = digest;
+        inlen = len;
+    }
+
+    if (!TEST_true(EVP_PKEY_get_octet_string_param(key, OSSL_PKEY_PARAM_PUB_KEY,
+            pub, sizeof(pub), &publen)))
+        goto err;
+
+    if (!TEST_true(calculate_mu(pub, publen, ctx, ctxlen, in, inlen,
+            digestname, mu, *mulen)))
+        goto err;
+    ret = 1;
+err:
+    EVP_MD_free(md);
+    EVP_MD_CTX_free(mdctx);
+    ctrl2params_free(params, params_n, 0);
+    return ret;
+}
+
 static int pkey_test_run(EVP_TEST *t)
 {
     PKEY_DATA *expected = t->data;
     unsigned char *got = NULL;
     size_t got_len;
     EVP_PKEY_CTX *copy = NULL;
+    uint8_t mu[64];
+    size_t mulen = sizeof(mu);
+    const uint8_t *in = expected->input;
+    size_t inlen = expected->input_len;
 
     if (!pkey_test_run_init(t))
         goto err;
+
+    if (sk_OPENSSL_STRING_num(expected->mu_controls) > 0) {
+        if (!pkey_calculate_mu(t, mu, &mulen)) {
+            t->err = "KEYOP_MU_ERROR";
+            goto err;
+        }
+        in = mu;
+        inlen = mulen;
+    }
 
     if (!pkey_check_security_category(t, EVP_PKEY_CTX_get0_pkey(expected->ctx)))
         goto err;
@@ -2824,16 +2974,12 @@ static int pkey_test_run(EVP_TEST *t)
         goto err;
     }
 
-    if (expected->keyop(expected->ctx, NULL, &got_len,
-            expected->input, expected->input_len)
-            <= 0
+    if (expected->keyop(expected->ctx, NULL, &got_len, in, inlen) <= 0
         || !TEST_ptr(got = OPENSSL_malloc(got_len))) {
         t->err = "KEYOP_LENGTH_ERROR";
         goto err;
     }
-    if (expected->keyop(expected->ctx, got, &got_len,
-            expected->input, expected->input_len)
-        <= 0) {
+    if (expected->keyop(expected->ctx, got, &got_len, in, inlen) <= 0) {
         t->err = "KEYOP_ERROR";
         goto err;
     }
@@ -2848,16 +2994,12 @@ static int pkey_test_run(EVP_TEST *t)
     got = NULL;
 
     /* Repeat the test on the EVP_PKEY context copy. */
-    if (expected->keyop(copy, NULL, &got_len, expected->input,
-            expected->input_len)
-            <= 0
+    if (expected->keyop(copy, NULL, &got_len, in, inlen) <= 0
         || !TEST_ptr(got = OPENSSL_malloc(got_len))) {
         t->err = "KEYOP_LENGTH_ERROR";
         goto err;
     }
-    if (expected->keyop(copy, got, &got_len, expected->input,
-            expected->input_len)
-        <= 0) {
+    if (expected->keyop(copy, got, &got_len, in, inlen) <= 0) {
         t->err = "KEYOP_ERROR";
         goto err;
     }

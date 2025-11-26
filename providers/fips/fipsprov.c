@@ -49,8 +49,10 @@ static OSSL_FUNC_provider_query_operation_fn fips_query;
 static OSSL_FUNC_provider_query_operation_fn fips_query_internal;
 static OSSL_FUNC_provider_random_bytes_fn fips_random_bytes;
 
-#define ALGC(NAMES, FUNC, CHECK) \
-    { { NAMES, FIPS_DEFAULT_PROPERTIES, FUNC }, CHECK }
+#define ALGC(NAMES, FUNC, CHECK)                        \
+    {                                                   \
+        { NAMES, FIPS_DEFAULT_PROPERTIES, FUNC }, CHECK \
+    }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
 
 extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
@@ -300,6 +302,9 @@ static int fips_self_test(void *provctx)
 
 static const OSSL_ALGORITHM fips_digests[] = {
     FIPS_DIGESTS_COMMON(),
+#ifndef OPENSSL_NO_ML_DSA
+    { PROV_NAMES_ML_DSA_MU, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_mu_functions },
+#endif
     { NULL, NULL, NULL }
 };
 static const OSSL_ALGORITHM fips_digests_internal[] = {

@@ -1,0 +1,150 @@
+=pod
+
+=head1 NAME
+
+EVP_MD-ML-DSA-MU - The ML-DSA-MU EVP_MD implementation
+
+=head1 DESCRIPTION
+
+Support for computing the value of external mu for ML-DSA using the B<EVP_MD> API.
+
+Normally the value of C<mu> is calculated internally as part of an ML-DSA
+sign or verify operation. C<mu> is defined as:
+    mu = SHAKE256(tr || M', 64)
+
+Where B<tr> is the hash of the encoded public key, and, for Pure (ML-DSA):
+    M' = 0x00 || ctx_len || ctx || message
+
+In cases where prehashing the message is required, FIPS 204 allows
+the C<mu> calculation to be done externally and then C<mu> can be passed to
+ML-DSA sign or verify operations.
+
+PreHash (HASH-ML-DSA) is also supported and uses:
+    M' = 0x01 || ctx_len || ctx || OID || HashedMessage
+
+The output C<mu> value can then be supplied as an input to L<EVP_SIGNATURE-ML-DSA(7)>
+using the ML-DSA Signature Parameter B<OSSL_SIGNATURE_PARAM_MU> (i.e. C<mu>).
+This allows larger messages to be hashed (or hidden) before they are passed to
+pure ML-DSA sign or verify operations.
+
+=head2 Identities
+
+This implementation is available with the FIPS provider as well as the
+default provider, and is identified with the name "ML-DSA-MU".
+
+=head2 Parameters
+
+This implementation supports the following settable L<OSSL_PARAM(3)> parameters:
+
+=over 4
+
+=item "pub" (B<OSSL_DIGEST_PARAM_MU_PUB_KEY>) <octet string>
+
+A B<ML-DSA> encoded public key value of size 1312, 1952 or 2592 bytes
+depending on the respective key type of B<ML-DSA-44>, B<ML-DSA-65> or B<ML-DSA-87>.
+This can be retrieved from a L<EVP_PKEY-ML-DSA(7)> key by calling
+EVP_PKEY_get_octet_string_param(key, OSSL_PKEY_PARAM_PUB_KEY, pub, sizeof(pub), &publen)
+This parameter MUST be set or an error will occur.
+
+=item "context-string" (B<OSSL_DIGEST_PARAM_MU_CONTEXT_STRING>) <octet string>
+
+An optional string of octets with length at most 255. By default it is the empty string.
+
+=item "digest" (B<OSSL_DIGEST_PARAM_MU_DIGEST>) <utf8 string>
+
+An optional parameter related to "HASH-ML-DSA". If used it determines the OID in
+the definition of PreHash M' above.
+
+When this parameter is not specified, pure ML-DSA C<mu> is computed, and the
+input data is expected to be the full message, otherwise the input data must
+be the result of prehashing the message with the corresponding digest algorithm.
+
+The HASH-ML-DSA variant is available to enable specialised use-cases,
+in which signing the full message with pure ML-DSA is not practical, and
+the external-mu API is a viable alternative.
+HASH-ML-DSA is not used in protocols such as X509 & CMS (See RFC 9981 and 9982),
+and is not presently implemented as an independent OpenSSL signature algorithm.
+
+OpenSSL accepts the following digest names: "SHAKE-256", "SHAKE-128", "SHA-224",
+"SHA-256", "SHA-384", "SHA-512", "SHA3-224", "SHA3-256", "SHA3-384" and "SHA3-512".
+The total size of the C<HashedMessage> passed to EVP_DigestUpdate() MUST match
+the size of the digest. For SHAKE-128 and SHAKE-256 the expected XOF digest
+lengths are 32 and 64 respectively.
+
+=item "properties" (B<OSSL_DIGEST_PARAM_MU_PROPERTIES>) <utf8 string>
+
+Sets the properties to be queried when trying to fetch the underlying digest.
+
+=back
+
+=head2 Gettable Parameters
+
+This implementation supports the common gettable parameters described
+in L<EVP_MD-common(7)>.
+
+=head1 CONFORMING TO
+
+FIPS 204 and
+https://csrc.nist.gov/csrc/media/Projects/post-quantum-cryptography/documents/faq/fips204-sec6-03192025.pdf
+
+=head1 EXAMPLES
+
+To generate external 'mu' given an existing ML-DSA key and a large message:
+
+    calculate_mu(EVP_PKEY *pkey, const unsigned char *msg, size_t msglen,
+                 const unsigned char *ctx, size_t ctxlen, unsigned char mu[64])
+    {
+        unsigned char pub[2592];
+        size_t publen = 0, chunk;
+        OSSL_PARAM params[4], *p = params;
+
+        /* Retrieve the ML-DSA encoded public key */
+        EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
+                                        pub, sizeof(pub), &publen);
+
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_MU_PUB_KEY, pub, publen);
+        /* This is an optional parameter */
+        if (ctx != NULL && ctxlen != 0)
+            *p++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_MU_CONTEXT_STRING, ctx, ctxlen);
+        /*
+         * Optionally we could also set the digest name for HASH-ML-DSA
+         * *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MU_DIGEST, "SHA-512", 0);
+         */
+        *p = OSSL_PARAM_construct_end();
+
+        mdctx = EVP_MD_CTX_new();
+        md = EVP_MD_fetch(libctx, "ML-DSA-MU", NULL);
+        EVP_DigestInit_ex2(mdctx, md, params);
+        /* Call EVP_DigestUpdate() multiple times to stream the message */
+        while (msglen != 0) {
+            /* Account for the last chunk being less than 64 */
+            chunk = (msglen >= 64) ? 64 : msglen;
+            EVP_DigestUpdate(mdctx, msg, chunk);
+            msg += chunk;
+            msglen -= chunk;
+        }
+        EVP_DigestFinalXOF(mdctx, mu, sizeof(mu))
+    }
+
+=head1 SEE ALSO
+
+L<EVP_SIGNATURE-ML-DSA(7)>,
+L<EVP_PKEY-ML-DSA(7)>,
+L<provider-digest(7)>,
+L<OSSL_PROVIDER-FIPS(7)>,
+L<OSSL_PROVIDER-default(7)>
+
+=head1 HISTORY
+
+EVP_MD-ML-DSA-MU was added in OpenSSL 4.0.0.
+
+=head1 COPYRIGHT
+
+Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

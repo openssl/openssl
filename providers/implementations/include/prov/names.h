@@ -271,6 +271,12 @@
 #define PROV_NAMES_MDC2 "MDC2:2.5.8.3.101"
 #define PROV_NAMES_WHIRLPOOL "WHIRLPOOL:1.0.10118.3.0.55"
 #define PROV_NAMES_RIPEMD_160 "RIPEMD-160:RIPEMD160:RIPEMD:RMD160:1.3.36.3.2.1"
+/*
+ * Name taken from
+ * https://csrc.nist.gov/csrc/media/Projects/post-quantum-cryptography/documents/faq/fips204-sec6-03192025.pdf
+ * See ExternalMu-ML-DSA.Prehash
+ */
+#define PROV_NAMES_ML_DSA_MU "ML-DSA-MU"
 
 /*-
  * KDFs / PRFs

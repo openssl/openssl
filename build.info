@@ -117,6 +117,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/digests/mdc2_prov.inc \
          providers/implementations/digests/sha2_prov.inc \
          providers/implementations/digests/sha3_prov.inc \
+         providers/implementations/digests/ml_dsa_mu_prov.inc \
          providers/implementations/include/prov/blake2_params.inc \
          providers/implementations/macs/cmac_prov.inc \
          providers/implementations/macs/gmac_prov.inc \
@@ -232,6 +233,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/ciphers/cipher_rc4_hmac_md5.inc \
        providers/implementations/ciphers/cipher_sm4_xts.inc \
        providers/implementations/digests/blake2_prov.inc \
+       providers/implementations/digests/ml_dsa_mu_prov.inc \
        providers/implementations/digests/digestcommon.inc \
        providers/implementations/digests/mdc2_prov.inc \
        providers/implementations/digests/sha2_prov.inc \
@@ -397,6 +399,8 @@ GENERATE[providers/implementations/digests/sha3_prov.inc]=\
     providers/implementations/digests/sha3_prov.inc.in
 GENERATE[providers/implementations/include/prov/blake2_params.inc]=\
     providers/implementations/include/prov/blake2_params.inc.in
+GENERATE[providers/implementations/digests/ml_dsa_mu_prov.inc]=\
+    providers/implementations/digests/ml_dsa_mu_prov.inc.in
 GENERATE[providers/implementations/macs/cmac_prov.inc]=\
     providers/implementations/macs/cmac_prov.inc.in
 GENERATE[providers/implementations/macs/gmac_prov.inc]=\
