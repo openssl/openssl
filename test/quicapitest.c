@@ -2687,6 +2687,73 @@ static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
     return ret;
 }
 
+static int test_ssl_client_as_ossl_quic_method(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    SSL *testssl = NULL;
+    int testresult = 0;
+    int ret, i;
+
+    if (!TEST_ptr(sctx = create_server_ctx())
+        || !TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_method())))
+        goto err;
+
+    if (!create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl))
+        goto err;
+
+    /* Calling SSL_accept() on a listener is expected to fail */
+    ret = SSL_accept(qlistener);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(qlistener, ret), SSL_ERROR_SSL))
+        goto err;
+
+    /* Send ClientHello and server retry */
+    for (i = 0; i < 2; i++) {
+        ret = SSL_connect(clientssl);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+            goto err;
+        SSL_handle_events(qlistener);
+    }
+
+    /* We expect a server SSL object which has not yet completed its handshake */
+    serverssl = SSL_accept_connection(qlistener, 0);
+    if (!TEST_ptr(serverssl) || !TEST_false(SSL_is_init_finished(serverssl)))
+        goto err;
+
+    /* Call SSL_accept() and SSL_connect() until we are connected */
+    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+                                              SSL_ERROR_NONE, 0, 0)))
+        goto err;
+
+    /*
+     * Now that we have used SSL_accept_connection, make sure that SSL_listen_ex
+     * returns an error to us
+     */
+    testssl = SSL_new(cctx); 
+    if (!TEST_ptr(testssl))
+        goto err;
+    if (!TEST_int_eq(SSL_listen_ex(qlistener, testssl), -1))
+        goto err;
+    if (!TEST_true((ERR_GET_REASON(ERR_get_error())) ==
+                    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED))
+        goto err;
+    ERR_clear_error();
+
+    testresult = 1;
+
+ err:
+    SSL_free(serverssl);
+    SSL_free(testssl);
+    SSL_free(clientssl);
+    SSL_free(qlistener);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 static int test_ssl_listen_ex(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL, *qmctx = NULL;
@@ -3336,6 +3403,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_quic_set_fd, 3);
     ADD_TEST(test_bio_ssl);
     ADD_TEST(test_ssl_listen_ex);
+    ADD_TEST(test_ssl_client_as_ossl_quic_method);
     ADD_TEST(test_back_pressure);
     ADD_TEST(test_multiple_dgrams);
     ADD_ALL_TESTS(test_non_io_retry, 2);
