@@ -4658,14 +4658,14 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
         ret = -1;
         goto out;
     }
-    
+
     new_ch = ossl_quic_port_pop_incoming(lctx.ql->port);
     if (new_ch != NULL) {
         tls = ossl_ssl_connection_new_int(ossl_quic_port_get_channel_ctx(lctx.ql->port),
                                           new_conn, TLS_method());
         if (tls == NULL)
             goto out;
-       
+
         qc = cctx.qc;
         ql = lctx.ql;
         ossl_quic_channel_free(qc->ch);
@@ -4739,7 +4739,6 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
                                     "This listener is using SSL_listen_ex");
         goto out;
-   
     }
 
     /* Wait for an incoming connection if needed. */
