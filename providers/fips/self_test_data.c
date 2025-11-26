@@ -1392,6 +1392,18 @@ static const ST_KAT_PARAM ecdsa_bin_key[] = {
 };
 #endif /* OPENSSL_NO_EC2M */
 
+/*
+ * ECDSA has 3 tests to run, so we use dependencies to cause
+ * all of them to be run if needed by simply calling one of them
+ */
+static const self_test_id_t ecdsa_depends_on[] = {
+    ST_ID_SIG_DET_ECDSA_SHA256,
+#ifndef OPENSSL_NO_EC2M
+    ST_ID_SIG_NO_E2CM_ECDSA_SHA256,
+#endif
+    ST_ID_MAX
+};
+
 #ifndef OPENSSL_NO_ECX
 static const unsigned char ecx_sig_msg[] = {
     0x64, 0xa6, 0x5f, 0x3c, 0xde, 0xdc, 0xdd, 0x66,
@@ -3361,7 +3373,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "RSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_RSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF_STR(rsa_sig_msg),
         ITM_BUF(rsa_expected_sig),
@@ -3379,7 +3391,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ECDSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF_STR(rsa_sig_msg),
         ITM_BUF(ecdsa_prime_expected_sig),
@@ -3391,13 +3403,14 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
             ITM_BUF(sig_kat_nonce),
             ITM_BUF(sig_kat_persstr),
         },
+        .depends_on = ecdsa_depends_on,
     },
 #ifndef OPENSSL_NO_HMAC_DRBG_KDF
     {
         "ECDSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_DetECDSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF_STR(rsa_sig_msg),
         ITM_BUF(ecdsa_prime_expected_detsig),
@@ -3414,7 +3427,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ECDSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF_STR(rsa_sig_msg),
         ITM_BUF(ecdsa_bin_expected_sig),
@@ -3433,7 +3446,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ED448",
         OSSL_SELF_TEST_DESC_SIGN_EDDSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(ecx_sig_msg),
         ITM_BUF(ed448_expected_sig),
@@ -3447,7 +3460,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ED25519",
         OSSL_SELF_TEST_DESC_SIGN_EDDSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(ecx_sig_msg),
         ITM_BUF(ed25519_expected_sig),
@@ -3464,7 +3477,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "DSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_DSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF_STR(rsa_sig_msg),
         ITM_BUF(dsa_expected_sig),
@@ -3483,7 +3496,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ML-DSA-65",
         OSSL_SELF_TEST_DESC_SIGN_ML_DSA,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(ml_dsa_65_msg),
         ITM_BUF(ml_dsa_65_sig),
@@ -3554,7 +3567,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "LMS",
         OSSL_SELF_TEST_DESC_SIGN_LMS,
         SELF_TEST_KAT_SIGNATURE,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(sha256_192_msg),
         ITM_BUF(sha256_192_sig),
