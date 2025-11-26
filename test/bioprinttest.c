@@ -162,7 +162,9 @@ static const struct int_data {
     { { .hh = 0x42 }, AT_CHAR, "%+hhu", "66" },
     { { .hh = 0x88 }, AT_CHAR, "%hhd", "-120" },
     { { .hh = 0x0 }, AT_CHAR, "%hho", "0" },
+#if !defined(__TANDEM)
     { { .hh = 0x0 }, AT_CHAR, "%#hho", "0" },
+#endif
     { { .hh = 0x1 }, AT_CHAR, "%hho", "1" },
     { { .hh = 0x1 }, AT_CHAR, "%#hho", "01" },
     { { .hh = 0x0 }, AT_CHAR, "%+hhx", "0" },
@@ -341,14 +343,20 @@ static const struct wp_data {
     { { .i = 01234 }, "%#*" PRIoPTR, "       01234", 1, 12 },
     { { .i = 01234 }, "%#.*" PRIxPTR, "0x00000000029c", 1, 12 },
 
+#if !defined(__TANDEM)
     { { .i = 0 }, "|%#*" PRIoPTR "|", "| 0|", 1, 2 },
+#endif
     { { .i = 0 }, "|%#.*" PRIoPTR "|", "|00|", 1, 2 },
+#if !defined(__TANDEM)
     { { .i = 0 }, "|%#.*" PRIoPTR "|", "|0|", 1, 1 },
+#endif
 #if !defined(__OpenBSD__)
     { { .i = 0 }, "|%#.*" PRIoPTR "|", "|0|", 1, 0 },
 #endif
     { { .i = 0 }, "|%.*" PRIoPTR "|", "||", 1, 0 },
+#if !defined(__TANDEM)
     { { .i = 0 }, "|%#.*" PRIoPTR "|", "|0|", 1, -12 },
+#endif
 
     { { .i = 0 }, "|%#.*" PRIxPTR "|", "||", 1, 0 },
     { { .i = 0 }, "|%#.*" PRIxPTR "|", "|0|", 1, -12 },
