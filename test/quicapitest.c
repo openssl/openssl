@@ -2731,6 +2731,18 @@ static int test_ssl_listen_ex(void)
     if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
                                               SSL_ERROR_NONE, 0, 0)))
 
+    /*
+     * Ensure that, now that we have used SSL_listen_ex, SSL_accept_connection
+     * produces an error
+     */
+    if (!TEST_ptr_null(SSL_accept_connection(qlistener, 0)))
+        goto err;
+
+    if (!TEST_true((ERR_GET_REASON(ERR_get_error())) ==
+                    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED))
+        goto err;
+
+    ERR_clear_error();
     testresult = 1;
 
  err:
