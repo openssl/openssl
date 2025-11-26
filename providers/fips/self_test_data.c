@@ -119,6 +119,12 @@ DIGEST_DEFERRED_TEST(sha256, "SHA256");
 DIGEST_DEFERRED_TEST(sha512, "SHA512");
 DIGEST_DEFERRED_TEST(sha3, "SHA3_256");
 
+#if !defined(OPENSSL_NO_SLH_DSA) || !defined(OPENSSL_NO_LMS)
+FIPS_DEFERRED_TEST *satisfies_sha256[] = {
+    &sha256_kat_deferred_test, NULL
+};
+#endif
+
 /*- CIPHER TEST DATA */
 
 /* AES-256 GCM test data */
@@ -366,10 +372,18 @@ static const unsigned char sha256_192_sig[] = {
 };
 
 const ST_KAT_LMS st_kat_lms_test = {
-    SELF_TEST_ONLOAD,
+    SELF_TEST_DEFERRED,
     ITM(sha256_192_pub),
     ITM(sha256_192_msg),
     ITM(sha256_192_sig)
+};
+
+FIPS_DEFERRED_TEST lms_sig_deferred_test = {
+    "LMS",
+    FIPS_DEFERRED_KAT_SIGNATURE,
+    FIPS_DEFERRED_TEST_INIT,
+    satisfies_sha256,
+    NULL,
 };
 #endif  /* OPENSSL_NO_LMS */
 
@@ -3633,10 +3647,6 @@ int st_kat_asym_keygen_tests_size = OSSL_NELEM(st_kat_asym_keygen_tests);
 #endif /* !OPENSSL_NO_ML_DSA || !OPENSSL_NO_SLH_DSA */
 
 #ifndef OPENSSL_NO_SLH_DSA
-FIPS_DEFERRED_TEST *satisfies_sha256[] = {
-    &sha256_kat_deferred_test, NULL
-};
-
 FIPS_DEFERRED_TEST slh_key_gen_deferred_test = {
     "SLH-DSA-SHA2-128f",
     FIPS_DEFERRED_KAT_ASYM_KEYGEN,
