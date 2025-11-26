@@ -119,11 +119,9 @@ DIGEST_DEFERRED_TEST(sha256, "SHA256");
 DIGEST_DEFERRED_TEST(sha512, "SHA512");
 DIGEST_DEFERRED_TEST(sha3, "SHA3_256");
 
-#if !defined(OPENSSL_NO_SLH_DSA) || !defined(OPENSSL_NO_LMS)
 FIPS_DEFERRED_TEST *satisfies_sha256[] = {
     &sha256_kat_deferred_test, NULL
 };
-#endif
 
 /*- CIPHER TEST DATA */
 
@@ -3093,7 +3091,7 @@ static const unsigned char sig_kat_persstr[] = {
  const ST_KAT_SIGN st_kat_sign_tests[] = {
     {
         OSSL_SELF_TEST_DESC_SIGN_RSA,
-        "RSA", "RSA-SHA256", SELF_TEST_ONLOAD, 0,
+        "RSA", "RSA-SHA256", SELF_TEST_DEFERRED, 0,
         rsa_crt_key,
         ITM_STR(rsa_sig_msg),
         ITM(sig_kat_entropyin),
@@ -3213,6 +3211,14 @@ static const unsigned char sig_kat_persstr[] = {
 #endif /* OPENSSL_NO_SLH_DSA */
 };
 int st_kat_sign_tests_size = OSSL_NELEM(st_kat_sign_tests);
+
+FIPS_DEFERRED_TEST rsa_sig_deferred_test = {
+    "RSA",
+    FIPS_DEFERRED_KAT_SIGNATURE,
+    FIPS_DEFERRED_TEST_INIT,
+    satisfies_sha256,
+    NULL,
+};
 
 #ifndef OPENSSL_NO_SLH_DSA
 FIPS_DEFERRED_TEST slh_dsa_shake_deferred_test = {
