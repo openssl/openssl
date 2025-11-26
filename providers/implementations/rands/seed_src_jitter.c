@@ -102,10 +102,8 @@ static size_t get_jitter_random_value(PROV_JITTER *s,
          * Permanent Failure
          * https://github.com/smuellerDD/jitterentropy-library/blob/master/doc/jitterentropy.3#L234
          */
-        if (result < -5) {
-            ossl_set_error_state(OSSL_SELF_TEST_TYPE_CRNG);
+        if (result < -5)
             break;
-        }
 
         /* Success */
         if (result >= 0 && (size_t)result == len)
@@ -114,6 +112,7 @@ static size_t get_jitter_random_value(PROV_JITTER *s,
 
     /* Permanent failure or too many intermittent failures */
     s->state = EVP_RAND_STATE_ERROR;
+    ossl_set_error_state(OSSL_SELF_TEST_TYPE_CRNG);
     ERR_raise_data(ERR_LIB_RAND, RAND_R_ERROR_RETRIEVING_ENTROPY,
                    "jent_read_entropy (%d)", result);
     return 0;
@@ -156,6 +155,7 @@ static int jitter_instantiate(void *vseed, unsigned int strength,
         ERR_raise_data(ERR_LIB_RAND, RAND_R_ERROR_RETRIEVING_ENTROPY,
                        "jent_entropy_init_ex (%d)", ret);
         s->state = EVP_RAND_STATE_ERROR;
+        ossl_set_error_state(OSSL_SELF_TEST_TYPE_CRNG);
         return 0;
     }
 
