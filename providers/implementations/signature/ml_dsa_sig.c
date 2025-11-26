@@ -23,6 +23,7 @@
 #include "internal/common.h"
 #include "internal/packet.h"
 #include "internal/sizes.h"
+#include "internal/fips.h"
 
 #define ml_dsa_set_ctx_params_st ml_dsa_verifymsg_set_ctx_params_st
 #define ml_dsa_set_ctx_params_decoder ml_dsa_verifymsg_set_ctx_params_decoder
@@ -87,6 +88,12 @@ static void *ml_dsa_newctx(void *provctx, int evp_type, const char *propq)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_SIG_ML_DSA_65))
+        return NULL;
+#endif
 
     ctx = OPENSSL_zalloc(sizeof(PROV_ML_DSA_CTX));
     if (ctx == NULL)

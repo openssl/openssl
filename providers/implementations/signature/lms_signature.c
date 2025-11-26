@@ -18,6 +18,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
 #include "crypto/lms_sig.h"
+#include "internal/fips.h"
 
 static OSSL_FUNC_signature_newctx_fn lms_newctx;
 static OSSL_FUNC_signature_freectx_fn lms_freectx;
@@ -37,6 +38,12 @@ static void *lms_newctx(void *provctx, const char *propq)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_SIG_LMS))
+        return NULL;
+#endif
 
     ctx = OPENSSL_zalloc(sizeof(PROV_LMS_CTX));
     if (ctx == NULL)
