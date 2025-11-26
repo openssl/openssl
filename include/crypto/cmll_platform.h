@@ -69,6 +69,12 @@ extern void camellia_encrypt_16blks_neon(struct camellia_simd_ctx *ctx,
                                        void *vout, const void *vin);
 extern void camellia_decrypt_16blks_neon(struct camellia_simd_ctx *ctx, 
                                        void *vout, const void *vin);
+extern void camellia_cbc_encrypt_neon(const unsigned char *in, unsigned char *out,
+                                      size_t len, const struct camellia_simd_ctx *ctx,
+                                      unsigned char *ivec);
+extern void camellia_cbc_decrypt_neon(const unsigned char *in, unsigned char *out,
+                                      size_t len, const struct camellia_simd_ctx *ctx,
+                                      unsigned char *ivec);
 #  endif /* OPENSSL_NO_CAMELLIA */
 # endif /* CMLL_ASM && AARCH64*/
 
