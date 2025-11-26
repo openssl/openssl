@@ -4717,6 +4717,10 @@ DEPEND[html/man7/EVP_MD-BLAKE2.html]=man7/EVP_MD-BLAKE2.pod
 GENERATE[html/man7/EVP_MD-BLAKE2.html]=man7/EVP_MD-BLAKE2.pod
 DEPEND[man/man7/EVP_MD-BLAKE2.7]=man7/EVP_MD-BLAKE2.pod
 GENERATE[man/man7/EVP_MD-BLAKE2.7]=man7/EVP_MD-BLAKE2.pod
+DEPEND[html/man7/EVP_MD-EXTERNAL-MU-ML-DSA.html]=man7/EVP_MD-EXTERNAL-MU-ML-DSA.pod
+GENERATE[html/man7/EVP_MD-EXTERNAL-MU-ML-DSA.html]=man7/EVP_MD-EXTERNAL-MU-ML-DSA.pod
+DEPEND[man/man7/EVP_MD-EXTERNAL-MU-ML-DSA.7]=man7/EVP_MD-EXTERNAL-MU-ML-DSA.pod
+GENERATE[man/man7/EVP_MD-EXTERNAL-MU-ML-DSA.7]=man7/EVP_MD-EXTERNAL-MU-ML-DSA.pod
 DEPEND[html/man7/EVP_MD-KECCAK.html]=man7/EVP_MD-KECCAK.pod
 GENERATE[html/man7/EVP_MD-KECCAK.html]=man7/EVP_MD-KECCAK.pod
 DEPEND[man/man7/EVP_MD-KECCAK.7]=man7/EVP_MD-KECCAK.pod
@@ -5222,6 +5226,7 @@ html/man7/EVP_MAC-KMAC.html \
 html/man7/EVP_MAC-Poly1305.html \
 html/man7/EVP_MAC-Siphash.html \
 html/man7/EVP_MD-BLAKE2.html \
+html/man7/EVP_MD-EXTERNAL-MU-ML-DSA.html \
 html/man7/EVP_MD-KECCAK.html \
 html/man7/EVP_MD-MD2.html \
 html/man7/EVP_MD-MD4.html \
@@ -5383,6 +5388,7 @@ man/man7/EVP_MAC-KMAC.7 \
 man/man7/EVP_MAC-Poly1305.7 \
 man/man7/EVP_MAC-Siphash.7 \
 man/man7/EVP_MD-BLAKE2.7 \
+man/man7/EVP_MD-EXTERNAL-MU-ML-DSA.7 \
 man/man7/EVP_MD-KECCAK.7 \
 man/man7/EVP_MD-MD2.7 \
 man/man7/EVP_MD-MD4.7 \
