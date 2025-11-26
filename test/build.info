@@ -311,7 +311,8 @@ IF[{- !$disabled{tests} -}]
   IF[{- !$disabled{'ml-dsa'} -}]
     PROGRAMS{noinst}=ml_dsa_test
     SOURCE[ml_dsa_test]=ml_dsa_test.c
-    INCLUDE[ml_dsa_test]=../include ../apps/include
+    INCLUDE[ml_dsa_test]=../include ../apps/include ../providers/common/include
+    
     DEPEND[ml_dsa_test]=../libcrypto.a libtestutil.a
   ENDIF
 

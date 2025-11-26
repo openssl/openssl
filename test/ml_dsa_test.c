@@ -625,6 +625,154 @@ static int ml_dsa_priv_pub_bad_t0_test(void)
     return ret;
 }
 
+#include "prov/der_digests.h"
+
+#define CASE_MD(name, hashsz)                                                  \
+case NID_##name:                                                               \
+    oid = ossl_der_oid_id_##name;                                              \
+    oidlen = sizeof(ossl_der_oid_id_##name);                                   \
+    sz = hashsz;                                                               \
+    break
+
+/*
+ * @brief A helper function that can be used by either ML-DSA or SLH-DSA to manually
+ * encode an input message.
+ *
+ * The returned output in |out| will be either:
+ *  00 || ctxlen || ctx || in
+ * OR
+ *  01 || ctxlen || ctx || OID(md) || in
+ *
+ * hash |md|, (Note for SHAKE128 and SHAKE256 the |inlen| must be 32 or 64 respectively).
+ *
+ * @param in The input message or prehashed message to encode.
+ * @param inlen The size of |in|. For a prehashed message this is |md| hash size.
+ *              When |md| is SHAKE128 or SHAKE256 this value should be 32 or 64
+ *              respectively.
+ * @param ctx An optional input context string
+ * @param ctxlen The size of |ctx| with a range of 0..255.
+ * @param md The optional prehash digest object. For a prehashed message it must
+ *           match the digest used by |in|. For a normal message it must be NULL.
+ * @param out The returned encoded message
+ * @param outlen Returns the size of the encoded message |out|.
+ * @param outsz The maximum size of the |out| buffer.
+ * @returns 1 if |in| was encoded, or 0 on error
+ * @notes This encoded message can be passed into a signature operation
+ *        if the OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING parameter is set to 0.
+ */
+static int EVP_SIGNATURE_encode_message(const uint8_t *in, size_t inlen,
+                                        const uint8_t *ctx, size_t ctxlen,
+                                        EVP_MD *md,
+                                        uint8_t *out, size_t *outlen, size_t outsz)
+{
+    int ret = 0;
+    const uint8_t *oid = NULL;
+    size_t oidlen = 0;
+    size_t sz = inlen;
+
+    if (outlen == NULL)
+        return 0;
+    if (ctxlen > 255)
+        return 0;
+
+    if (md != NULL) {
+        switch (EVP_MD_get_type(md)) {
+        CASE_MD(shake256, 64);
+        CASE_MD(shake128, 32);
+        CASE_MD(sha224, 28);
+        CASE_MD(sha256, 32);
+        CASE_MD(sha384, 48);
+        CASE_MD(sha512, 64);
+        CASE_MD(sha3_224, 28);
+        CASE_MD(sha3_256, 32);
+        CASE_MD(sha3_512, 64);
+        default:
+            goto end;
+        }
+        if (inlen != sz)
+            goto end;
+    }
+    sz += 2;
+    if (ctx != NULL)
+        sz += ctxlen;
+    if (oid != NULL)
+        sz += oidlen;
+    *outlen = sz;
+    if (out != NULL) {
+        if (sz > outsz)
+            goto end;
+        *out++ = (md == NULL ? 0x00 : 0x01);
+        *out++ = (uint8_t)ctxlen;
+        if (ctx != NULL) {
+            memcpy(out, ctx, ctxlen);
+            out += ctxlen;
+        }
+        if (oid != NULL) {
+            memcpy(out, oid, oidlen);
+            out += oidlen;
+        }
+        memcpy(out, in, inlen);
+    }
+    ret = 1;
+end:
+    return ret;
+}
+
+static int ml_dsa_prehash_mu_test(void)
+{
+    int ret = 0;
+    EVP_PKEY_CTX *sctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_SIGNATURE *sigalg = NULL;
+    OSSL_PARAM params[3], *p = params;
+    uint8_t *sig = NULL;
+    size_t siglen = 0;
+    int deterministic = 1;
+    int encode = 0;
+    uint8_t digest[64];
+    size_t digestlen = sizeof(digest);
+    uint8_t encoded[1024];
+    size_t encodedlen = sizeof(encoded);
+    ML_DSA_SIG_GEN_TEST_DATA *td = &ml_dsa_prehash_siggen_testdata[0];
+    EVP_MD *md = EVP_MD_fetch(lib_ctx, td->digest, NULL);
+
+    if (!TEST_ptr(md))
+        return 0;
+    if (!EVP_SIGNATURE_encode_message(td->msg, td->msg_len, td->ctx, td->ctx_len, md,
+                                      encoded, &encodedlen, sizeof(encoded)))
+        return 0;
+
+    if (!TEST_true(ml_dsa_create_keypair(&pkey, "ML-DSA-44", td->priv, td->priv_len,
+                                         NULL, 0, 1)))
+        return 0;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC, &deterministic);
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, &encode);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL))
+            || !TEST_ptr(sigalg = EVP_SIGNATURE_fetch(lib_ctx, "ML-DSA-44", NULL))
+            || !TEST_int_eq(EVP_PKEY_sign_message_init(sctx, sigalg, params), 1)
+            || !TEST_true(EVP_PKEY_get_size_t_param(pkey, OSSL_PKEY_PARAM_MAX_SIZE,
+                                                    &siglen))
+            || !TEST_ptr(sig = OPENSSL_zalloc(siglen))
+            || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &siglen,
+                                          encoded, encodedlen), 1)
+            || !TEST_int_eq(EVP_Q_digest(lib_ctx, "SHA256", NULL, sig, siglen,
+                                         digest, &digestlen), 1)
+            || !TEST_mem_eq(digest, digestlen, td->sig_digest, td->sig_digest_len))
+        goto err;
+    ret = 1;
+
+err:
+    EVP_MD_free(md);
+    OPENSSL_free(sig);
+    EVP_SIGNATURE_free(sigalg);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(sctx);
+    return ret;
+}
+
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS options[] = {
@@ -673,6 +821,7 @@ int setup_tests(void)
     ADD_TEST(from_data_bad_input_test);
     ADD_TEST(ml_dsa_digest_sign_verify_test);
     ADD_TEST(ml_dsa_priv_pub_bad_t0_test);
+    ADD_TEST(ml_dsa_prehash_mu_test);
     return 1;
 }
 
