@@ -32,6 +32,7 @@ my $no_ec2m = disabled("ec2m");
 my $no_sm2 = disabled("sm2");
 my $no_siv = disabled("siv");
 my $no_argon2 = disabled("argon2");
+my $no_ascon128 = disabled("ascon128");
 my $no_ml_dsa = disabled("ml-dsa");
 my $no_ml_kem = disabled("ml-kem");
 my $no_lms = disabled("lms");
@@ -176,6 +177,7 @@ push @defltfiles, qw(evppkey_dsa_rfc6979.txt) unless $no_dsa;
 push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
 push @defltfiles, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;
+push @defltfiles, qw(evpciph_ascon_aead128.txt) unless $no_ascon128;
 push @defltfiles, qw(evpkdf_argon2.txt) unless $no_argon2;
 
 plan tests =>

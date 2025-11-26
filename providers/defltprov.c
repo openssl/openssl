@@ -203,6 +203,7 @@ static const OSSL_ALGORITHM_CAPABLE deflt_ciphers[] = {
     ALG(PROV_NAMES_AES_192_GCM_SIV, ossl_aes192gcm_siv_functions),
     ALG(PROV_NAMES_AES_256_GCM_SIV, ossl_aes256gcm_siv_functions),
 #endif /* OPENSSL_NO_SIV */
+    ALG(PROV_NAMES_ASCON_AEAD128, ossl_ascon_aead128_functions),
     ALG(PROV_NAMES_AES_256_GCM, ossl_aes256gcm_functions),
     ALG(PROV_NAMES_AES_192_GCM, ossl_aes192gcm_functions),
     ALG(PROV_NAMES_AES_128_GCM, ossl_aes128gcm_functions),
