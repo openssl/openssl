@@ -20,6 +20,7 @@
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include <openssl/trace.h>
+#include "internal/conf.h"
 #include "internal/thread_once.h"
 #include "crypto/lhash.h"
 #include "crypto/sparse_array.h"
@@ -130,9 +131,17 @@ OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *libctx,
                                                 ossl_unused int loadconfig)
 {
     OSSL_GLOBAL_PROPERTIES *globp;
+    OPENSSL_INIT_SETTINGS settings;
+
+    memset(&settings, 0, sizeof(settings));
+    /*
+     * In diagnostic mode, keep going and report success, even if provider
+     * activation fails.
+     */
+    settings.flags = DEFAULT_CONF_MFLAGS | CONF_MFLAGS_SILENT_ACTIVATION;
 
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_AUTOLOAD_CONFIG)
-    if (loadconfig && !OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL))
+    if (loadconfig && !OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, &settings))
         return NULL;
 #endif
     globp = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_GLOBAL_PROPERTIES);
