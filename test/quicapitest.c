@@ -2731,13 +2731,13 @@ static int test_ssl_client_as_ossl_quic_method(void)
      * Now that we have used SSL_accept_connection, make sure that SSL_listen_ex
      * returns an error to us
      */
-    testssl = SSL_new(cctx); 
+    testssl = SSL_new(cctx);
     if (!TEST_ptr(testssl))
         goto err;
     if (!TEST_int_eq(SSL_listen_ex(qlistener, testssl), -1))
         goto err;
     if (!TEST_true((ERR_GET_REASON(ERR_get_error())) ==
-                    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED))
+                   ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED))
         goto err;
     ERR_clear_error();
 
@@ -2806,7 +2806,7 @@ static int test_ssl_listen_ex(void)
         goto err;
 
     if (!TEST_true((ERR_GET_REASON(ERR_get_error())) ==
-                    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED))
+                   ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED))
         goto err;
 
     ERR_clear_error();
