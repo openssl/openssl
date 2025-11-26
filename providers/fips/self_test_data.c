@@ -123,6 +123,10 @@ FIPS_DEFERRED_TEST *satisfies_sha256[] = {
     &sha256_kat_deferred_test, NULL
 };
 
+FIPS_DEFERRED_TEST *satisfies_sha512[] = {
+    &sha512_kat_deferred_test, NULL
+};
+
 /*- CIPHER TEST DATA */
 
 /* AES-256 GCM test data */
@@ -3102,7 +3106,7 @@ static const unsigned char sig_kat_persstr[] = {
 #ifndef OPENSSL_NO_EC
     {
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
-        "EC", "ECDSA-SHA256", SELF_TEST_ONLOAD, 0,
+        "EC", "ECDSA-SHA256", SELF_TEST_DEFERRED, 0,
         ecdsa_prime_key,
         ITM_STR(rsa_sig_msg),
         ITM(sig_kat_entropyin),
@@ -3112,7 +3116,7 @@ static const unsigned char sig_kat_persstr[] = {
     },
     {
         OSSL_SELF_TEST_DESC_SIGN_DetECDSA,
-        "EC", "ECDSA-SHA256", SELF_TEST_ONLOAD, 0,
+        "EC", "ECDSA-SHA256", SELF_TEST_DEFERRED, 0,
         ecdsa_prime_key,
         ITM_STR(rsa_sig_msg),
         NULL, 0, NULL, 0, NULL, 0,
@@ -3122,7 +3126,7 @@ static const unsigned char sig_kat_persstr[] = {
 # ifndef OPENSSL_NO_EC2M
     {
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
-        "EC", "ECDSA-SHA256", SELF_TEST_ONLOAD, 0,
+        "EC", "ECDSA-SHA256", SELF_TEST_DEFERRED, 0,
         ecdsa_bin_key,
         ITM_STR(rsa_sig_msg),
         ITM(sig_kat_entropyin),
@@ -3134,7 +3138,7 @@ static const unsigned char sig_kat_persstr[] = {
 # ifndef OPENSSL_NO_ECX
     {
         OSSL_SELF_TEST_DESC_SIGN_EDDSA,
-        "ED448", "ED448", SELF_TEST_ONLOAD, 0,
+        "ED448", "ED448", SELF_TEST_DEFERRED, 0,
         ed448_key,
         ITM(ecx_sig_msg),
         NULL, 0, NULL, 0, NULL, 0,
@@ -3142,7 +3146,7 @@ static const unsigned char sig_kat_persstr[] = {
     },
     {
         OSSL_SELF_TEST_DESC_SIGN_EDDSA,
-        "ED25519", "ED25519", SELF_TEST_ONLOAD, 0,
+        "ED25519", "ED25519", SELF_TEST_DEFERRED, 0,
         ed25519_key,
         ITM(ecx_sig_msg),
         NULL, 0, NULL, 0, NULL, 0,
@@ -3219,6 +3223,33 @@ FIPS_DEFERRED_TEST rsa_sig_deferred_test = {
     satisfies_sha256,
     NULL,
 };
+
+#ifndef OPENSSL_NO_EC
+/* Note this will run three tests all called "EC" */
+FIPS_DEFERRED_TEST ecdsa_sig_deferred_test = {
+    "EC",
+    FIPS_DEFERRED_KAT_SIGNATURE,
+    FIPS_DEFERRED_TEST_INIT,
+    satisfies_sha256,
+    NULL,
+};
+# ifndef OPENSSL_NO_ECX
+FIPS_DEFERRED_TEST ed448_sig_deferred_test = {
+    "ED448",
+    FIPS_DEFERRED_KAT_SIGNATURE,
+    FIPS_DEFERRED_TEST_INIT,
+    NULL,
+    NULL,
+};
+FIPS_DEFERRED_TEST ed25519_sig_deferred_test = {
+    "ED25519",
+    FIPS_DEFERRED_KAT_SIGNATURE,
+    FIPS_DEFERRED_TEST_INIT,
+    satisfies_sha512,
+    NULL,
+};
+# endif
+#endif
 
 #ifndef OPENSSL_NO_SLH_DSA
 FIPS_DEFERRED_TEST slh_dsa_shake_deferred_test = {

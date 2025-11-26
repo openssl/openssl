@@ -72,6 +72,13 @@ extern FIPS_DEFERRED_TEST slh_key_gen_deferred_test;
 extern FIPS_DEFERRED_TEST lms_sig_deferred_test;
 # endif
 extern FIPS_DEFERRED_TEST rsa_sig_deferred_test;
+# ifndef OPENSSL_NO_EC
+extern FIPS_DEFERRED_TEST ecdsa_sig_deferred_test;
+#  ifndef OPENSSL_NO_ECX
+extern FIPS_DEFERRED_TEST ed448_sig_deferred_test;
+extern FIPS_DEFERRED_TEST ed25519_sig_deferred_test;
+#  endif
+# endif
 #endif
 
 # endif /* FIPS_MODULE */
