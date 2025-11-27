@@ -101,8 +101,6 @@ int hpns_socket(int family,
 
 /*#define socket(a,b,c,...) hpns_socket(a,b,c,__VA_ARGS__) */
 
-static int hpns_connect_attempt = 0;
-
 # endif /* defined(OPENSSL_SYS_HPNS) */
 
 
@@ -112,6 +110,10 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
     struct sockaddr_un addr;
     int mybuffer, ret = -1, i, numbytes, fd;
     unsigned char tempbuf[255];
+
+#if defined(OPENSSL_SYS_TANDEM)
+    int hpns_connect_attempt = 0;
+#endif
 
     if (bytes > (int)sizeof(tempbuf))
         return -1;
