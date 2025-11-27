@@ -27,17 +27,21 @@ void camellia_encrypt_armv8_wrapper(const unsigned char *in, unsigned char *out,
 void camellia_decrypt_armv8_wrapper(const unsigned char *in, unsigned char *out, 
                                    const CAMELLIA_KEY *key) 
 {
-    /*Treating key memory block as an optimized SIMD context, not the standard key struct.*/
     camellia_decrypt_1blk_armv8((struct camellia_simd_ctx *)key, out, in);
 }
-void camellia_cbc_encrypt_neon_wrapper(const unsigned char *in, unsigned char *out,
+void camellia_cbc_neon_wrapper(const unsigned char *in, unsigned char *out,
                                        size_t len, const CAMELLIA_KEY *key,
                                        unsigned char *ivec, const int enc)
 {
-    /* Explicitly cast the key to your SIMD context */
-    camellia_cbc_encrypt_neon(in, out, len, 
-                              (const struct camellia_simd_ctx *)key, 
-                              ivec);
+    if (enc) {
+        camellia_cbc_encrypt_neon(in, out, len, 
+                                (const struct camellia_simd_ctx *)key, 
+                                ivec);
+    } else {
+        camellia_cbc_decrypt_neon(in, out, len, 
+                                (const struct camellia_simd_ctx *)key, 
+                                ivec);
+    }
 }
 #endif
 
@@ -53,10 +57,16 @@ static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
     camellia_keysetup_neon((struct camellia_simd_ctx *)ks, key, keylen);
     if (dat->enc || (mode != EVP_CIPH_ECB_MODE && mode != EVP_CIPH_CBC_MODE)) {
         dat->block = (block128_f) camellia_encrypt_armv8_wrapper;
-        dat->stream.cbc = NULL; 
+        dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
+            (cbc128_f) camellia_cbc_neon_wrapper : NULL;
+        dat->stream.ctr = mode == EVP_CIPH_CTR_MODE ?
+            (ctr128_f) camellia_ctr_encrypt_blocks_neon : NULL;
     } else {
         dat->block = (block128_f) camellia_decrypt_armv8_wrapper;
-        dat->stream.cbc = NULL; 
+        dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
+            (cbc128_f) camellia_cbc_neon_wrapper : NULL;
+        dat->stream.ctr = mode == EVP_CIPH_CTR_MODE ?
+            (ctr128_f) camellia_ctr_encrypt_blocks_neon : NULL;
     }
 #else
     ret = Camellia_set_key(key, (int)(keylen * 8), ks);

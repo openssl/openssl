@@ -76,7 +76,7 @@ extern void camellia_cbc_decrypt_neon(const unsigned char *in, unsigned char *ou
                                       size_t len, const struct camellia_simd_ctx *ctx,
                                       unsigned char *ivec);
 extern void camellia_ctr32_encrypt_blocks_neon(const unsigned char *in, unsigned char *out,
-                                      size_t len, const struct camellia_simd_ctx *ctx,
+                                      size_t blocks, const struct camellia_simd_ctx *ctx,
                                       unsigned char *ivec);
 #  endif /* OPENSSL_NO_CAMELLIA */
 # endif /* CMLL_ASM && AARCH64*/
