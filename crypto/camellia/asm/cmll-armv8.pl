@@ -206,10 +206,8 @@ ___
 }
 
 # In: x4, x5, x0, max(w30), x1(dst). Out: [x1]. Clobbers: x8, x9
-# TODO: $max not used!
 # define dec_outunpack(max) \
 sub dec_outunpack(){
-    #my ($max) = @_;
 $code.=<<___;
     add     x9,x0,#0        // Assume key_table == 0
     ldr     x8,[x9]         // Load key[0] into x8
@@ -1618,53 +1616,42 @@ ___
 # Clobbers:
 #  tmp_key (v16, vector), tmp_gpr (GPR for addr), v17, v18
 #
-# define inpack16_pre(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, \
-#                     rio_ptr, key_ptr, tmp_key, tmp_gpr)
-# I am not passing v0-v15 here as they are hard-coded!
 sub inpack16_pre(){
     my ($rio_ptr, $key_ptr, $tmp_key, $tmp_gpr) = @_;
 $code.=<<___;
     /* Load and prepare key */
     ldr     $tmp_gpr,[$key_ptr]
     fmov    d16,$tmp_gpr
+    ldp     q18,q19,[$rio_ptr]                      // Pre-load some input
     adrp    $tmp_gpr,.Lpack_bswap
     add     $tmp_gpr,$tmp_gpr,:lo12:.Lpack_bswap
     ldr     q17,[$tmp_gpr]                          // Load constant into a temporary
+    ldp     q20,q21,[$rio_ptr,#32]                  // Pre-load some more input
     tbl     $tmp_key.16b,{$tmp_key.16b},v17.16b
  
-    /* Load plaintext blocks and XOR with key; TODO: interleave a bit with above? */
-    ldr     q18,[$rio_ptr,#(0*16)]
+    /* Load plaintext blocks and XOR with key */
+    ldp     q22,q23,[$rio_ptr,#64]
     eor     v15.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(1*16)]
-    eor     v14.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(2*16)]
-    eor     v13.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(3*16)]
-    eor     v12.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(4*16)]
-    eor     v11.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(5*16)]
-    eor     v10.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(6*16)]
-    eor     v9.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(7*16)]
-    eor     v8.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(8*16)]
-    eor     v7.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(9*16)]
-    eor     v6.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(10*16)]
-    eor     v5.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(11*16)]
-    eor     v4.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(12*16)]
-    eor     v3.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(13*16)]
-    eor     v2.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(14*16)]
+    eor     v14.16b,v19.16b,$tmp_key.16b
+    ldp     q24,q25,[$rio_ptr,#96]
+    eor     v13.16b,v20.16b,$tmp_key.16b
+    eor     v12.16b,v21.16b,$tmp_key.16b
+    ldp     q26,q27,[$rio_ptr,#128]
+    eor     v11.16b,v22.16b,$tmp_key.16b
+    eor     v10.16b,v23.16b,$tmp_key.16b
+    ldp     q28,q29,[$rio_ptr,#160]
+    eor     v9.16b,v24.16b,$tmp_key.16b
+    eor     v8.16b,v25.16b,$tmp_key.16b
+    ldp     q30,q31,[$rio_ptr,#192]
+    eor     v7.16b,v26.16b,$tmp_key.16b
+    eor     v6.16b,v27.16b,$tmp_key.16b
+    ldp     q18,q19,[$rio_ptr,#224]
+    eor     v5.16b,v28.16b,$tmp_key.16b
+    eor     v4.16b,v29.16b,$tmp_key.16b
+    eor     v3.16b,v30.16b,$tmp_key.16b
+    eor     v2.16b,v31.16b,$tmp_key.16b
     eor     v1.16b,v18.16b,$tmp_key.16b
-    ldr     q18,[$rio_ptr,#(15*16)]
-    eor     v0.16b,v18.16b,$tmp_key.16b
+    eor     v0.16b,v19.16b,$tmp_key.16b
 ___
 }
 
@@ -2637,7 +2624,7 @@ $code.=<<___;
 
     // === GENERATE ROTATED SUBKEYS ===
     add     x1,$CTX,#192                // Get address for subkey 24
-    str     q2,[x1]                     // Store KA128 early - TODO: do I need to?
+    str     q2,[x1]                     // Store KA128 early
 
 ___
     &vec_rol128($KL128, "v3", 15, "v15");     # v3 = KL <<< 15
