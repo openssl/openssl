@@ -11,6 +11,10 @@
  * Camellia low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#ifndef CMLL_ASM
+# define CMLL_ASM
+#endif
+
 #include "internal/deprecated.h"
 
 #include <openssl/camellia.h>
@@ -48,7 +52,7 @@ void camellia_cbc_neon_wrapper(const unsigned char *in, unsigned char *out,
 static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
                                       const unsigned char *key, size_t keylen)
 {
-    int ret, mode = dat->mode;
+    int mode = dat->mode;
     PROV_CAMELLIA_CTX *adat = (PROV_CAMELLIA_CTX *)dat;
     CAMELLIA_KEY *ks = &adat->ks.ks;
 
@@ -60,15 +64,16 @@ static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
         dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
             (cbc128_f) camellia_cbc_neon_wrapper : NULL;
         dat->stream.ctr = mode == EVP_CIPH_CTR_MODE ?
-            (ctr128_f) camellia_ctr_encrypt_blocks_neon : NULL;
+            (ctr128_f) camellia_ctr32_encrypt_blocks_neon : NULL;
     } else {
         dat->block = (block128_f) camellia_decrypt_armv8_wrapper;
         dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
             (cbc128_f) camellia_cbc_neon_wrapper : NULL;
         dat->stream.ctr = mode == EVP_CIPH_CTR_MODE ?
-            (ctr128_f) camellia_ctr_encrypt_blocks_neon : NULL;
+            (ctr128_f) camellia_ctr32_encrypt_blocks_neon : NULL;
     }
 #else
+    int ret;
     ret = Camellia_set_key(key, (int)(keylen * 8), ks);
     if (ret < 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SETUP_FAILED);
