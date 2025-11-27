@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 /*
  * Low level APIs are deprecated for public use, but still ok for internal use.
@@ -1137,11 +1139,13 @@ static void key2any_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
+/* clang-format off */
 {- produce_param_decoder('key2any_set_ctx_params',
                          (['OSSL_ENCODER_PARAM_CIPHER',          'cipher', 'utf8_string'],
                           ['OSSL_ENCODER_PARAM_PROPERTIES',      'propq',  'utf8_string'],
                           ['OSSL_ENCODER_PARAM_SAVE_PARAMETERS', 'svprm',  'int'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *key2any_settable_ctx_params(ossl_unused void *provctx)
 {

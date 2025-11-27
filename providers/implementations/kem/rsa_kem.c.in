@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 /*
  * RSA low level APIs are deprecated for public use, but still ok for
@@ -176,9 +178,11 @@ static int rsakem_decapsulate_init(void *vprsactx, void *vrsa,
                        "RSA Decapsulate Init");
 }
 
+/* clang-format off */
 {- produce_param_decoder('rsakem_get_ctx_params',
                          (['OSSL_KEM_PARAM_FIPS_APPROVED_INDICATOR', 'ind', 'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static int rsakem_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
 {
@@ -199,10 +203,12 @@ static const OSSL_PARAM *rsakem_gettable_ctx_params(ossl_unused void *vprsactx,
     return rsakem_get_ctx_params_list;
 }
 
+/* clang-format off */
 {- produce_param_decoder('rsakem_set_ctx_params',
                          (['OSSL_KEM_PARAM_OPERATION',       'op',    'utf8_string'],
                           ['OSSL_KEM_PARAM_FIPS_KEY_CHECK',  'ind_k', 'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static int rsakem_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 {

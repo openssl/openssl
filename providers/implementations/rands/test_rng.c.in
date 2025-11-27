@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <string.h>
 #include <stdlib.h>
@@ -185,6 +187,7 @@ static size_t test_rng_nonce(void *vtest, unsigned char *out,
     return i;
 }
 
+/* clang-format off */
 {- produce_param_decoder('test_rng_get_ctx_params',
                          (['OSSL_RAND_PARAM_STATE',                   'state',  'int'],
                           ['OSSL_RAND_PARAM_STRENGTH',                'str',    'uint'],
@@ -192,6 +195,7 @@ static size_t test_rng_nonce(void *vtest, unsigned char *out,
                           ['OSSL_RAND_PARAM_GENERATE',                'gen',    'uint'],
                           ['OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static int test_rng_get_ctx_params(void *vtest, OSSL_PARAM params[])
 {
@@ -227,6 +231,7 @@ static const OSSL_PARAM *test_rng_gettable_ctx_params(ossl_unused void *vtest,
     return test_rng_get_ctx_params_list;
 }
 
+/* clang-format off */
 {- produce_param_decoder('test_rng_set_ctx_params',
                          (['OSSL_RAND_PARAM_TEST_ENTROPY',   'ent',    'octet_string'],
                           ['OSSL_RAND_PARAM_TEST_NONCE',     'nonce',  'octet_string'],
@@ -234,6 +239,7 @@ static const OSSL_PARAM *test_rng_gettable_ctx_params(ossl_unused void *vtest,
                           ['OSSL_RAND_PARAM_MAX_REQUEST',    'maxreq', 'size_t'],
                           ['OSSL_RAND_PARAM_GENERATE',       'gen',    'uint'],
                          )); -}
+/* clang-format on */
 
 static int test_rng_set_ctx_params(void *vtest, const OSSL_PARAM params[])
 {

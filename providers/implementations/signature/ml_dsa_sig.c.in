@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include "internal/deprecated.h"
 
@@ -368,6 +370,7 @@ static int ml_dsa_digest_verify(void *vctx,
 #define ml_dsa_set_ctx_params_st        ml_dsa_verifymsg_set_ctx_params_st
 #define ml_dsa_set_ctx_params_decoder   ml_dsa_verifymsg_set_ctx_params_decoder
 
+/* clang-format off */
 {- produce_param_decoder('ml_dsa_set_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_CONTEXT_STRING',   'ctx',    'octet_string'],
                           ['OSSL_SIGNATURE_PARAM_TEST_ENTROPY',     'ent',    'octet_string'],
@@ -375,7 +378,9 @@ static int ml_dsa_digest_verify(void *vctx,
                           ['OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING', 'msgenc', 'int'],
                           ['OSSL_SIGNATURE_PARAM_MU',               'mu',     'int'],
                          )); -}
+/* clang-format on */
 
+/* clang-format off */
 {- produce_param_decoder('ml_dsa_verifymsg_set_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_CONTEXT_STRING',   'ctx',    'octet_string'],
                           ['OSSL_SIGNATURE_PARAM_TEST_ENTROPY',     'ent',    'octet_string'],
@@ -384,6 +389,7 @@ static int ml_dsa_digest_verify(void *vctx,
                           ['OSSL_SIGNATURE_PARAM_MU',               'mu',     'int'],
                           ['OSSL_SIGNATURE_PARAM_SIGNATURE',        'sig',    'octet_string'],
                          )); -}
+/* clang-format on */
 
 static int ml_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
@@ -449,9 +455,11 @@ static const OSSL_PARAM *ml_dsa_settable_ctx_params(void *vctx,
         return ml_dsa_set_ctx_params_list;
 }
 
+/* clang-format off */
 {- produce_param_decoder('ml_dsa_get_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID', 'id', 'octet_string'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *ml_dsa_gettable_ctx_params(ossl_unused void *vctx,
                                                     ossl_unused void *provctx)

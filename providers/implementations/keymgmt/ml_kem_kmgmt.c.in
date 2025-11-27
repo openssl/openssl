@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -332,11 +334,13 @@ err:
     return ret;
 }
 
+/* clang-format off */
 {- produce_param_decoder('ml_kem_key_type_params',
                          (['OSSL_PKEY_PARAM_ML_KEM_SEED', 'seed',    'octet_string'],
                           ['OSSL_PKEY_PARAM_PRIV_KEY',    'privkey', 'octet_string'],
                           ['OSSL_PKEY_PARAM_PUB_KEY',     'pubkey',  'octet_string'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *ml_kem_imexport_types(int selection)
 {
@@ -490,6 +494,7 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
     return res;
 }
 
+/* clang-format off */
 {- produce_param_decoder('ml_kem_get_params',
                          (['OSSL_PKEY_PARAM_BITS',               'bits',      'int'],
                           ['OSSL_PKEY_PARAM_SECURITY_BITS',      'secbits',   'int'],
@@ -502,6 +507,7 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
                           ['OSSL_PKEY_PARAM_CMS_RI_TYPE',        'ri_type',   'int'],
                           ['OSSL_PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM', 'kemri_kdf_alg', 'octet_string'],
                           )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *ml_kem_gettable_params(void *provctx)
 {
@@ -657,9 +663,11 @@ static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
     return 1;
 }
 
+/* clang-format off */
 {- produce_param_decoder('ml_kem_set_params',
                          (['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY', 'pub', 'octet_string'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *ml_kem_settable_params(void *provctx)
 {
@@ -698,10 +706,12 @@ static int ml_kem_set_params(void *vkey, const OSSL_PARAM params[])
     return ossl_ml_kem_parse_public_key(pubenc, publen, key);
 }
 
+/* clang-format off */
 {- produce_param_decoder('ml_kem_gen_set_params',
                          (['OSSL_PKEY_PARAM_ML_DSA_SEED', 'seed',  'octet_string'],
                           ['OSSL_PKEY_PARAM_PROPERTIES',  'propq', 'utf8_string'],
                          )); -}
+/* clang-format on */
 
 static int ml_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
 {

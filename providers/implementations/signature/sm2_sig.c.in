@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 /*
  * ECDSA low level APIs are deprecated for public use, but still ok for
@@ -399,11 +401,13 @@ static void *sm2sig_dupctx(void *vpsm2ctx)
     return NULL;
 }
 
+/* clang-format off */
 {- produce_param_decoder('sm2sig_get_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID', 'algid',  'octet_string'],
                           ['OSSL_SIGNATURE_PARAM_DIGEST_SIZE',  'size',   'size_t'],
                           ['OSSL_SIGNATURE_PARAM_DIGEST',       'digest', 'utf8_string'],
                          )); -}
+/* clang-format on */
 
 static int sm2sig_get_ctx_params(void *vpsm2ctx, OSSL_PARAM *params)
 {
@@ -437,11 +441,13 @@ static const OSSL_PARAM *sm2sig_gettable_ctx_params(ossl_unused void *vpsm2ctx,
     return sm2sig_get_ctx_params_list;
 }
 
+/* clang-format off */
 {- produce_param_decoder('sm2sig_set_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_DIGEST_SIZE', 'size',   'size_t'],
                           ['OSSL_SIGNATURE_PARAM_DIGEST',      'digest', 'utf8_string'],
                           ['OSSL_PKEY_PARAM_DIST_ID',          'distid', 'octet_string'],
                          )); -}
+/* clang-format on */
 
 static int sm2sig_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
 {

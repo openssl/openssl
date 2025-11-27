@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
@@ -58,9 +60,11 @@ static void epki2pki_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
+/* clang-format off */
 {- produce_param_decoder('epki2pki_set_ctx_params',
                          (['OSSL_DECODER_PARAM_PROPERTIES', 'propq', 'utf8_string'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *epki2pki_settable_ctx_params(ossl_unused void *provctx)
 {

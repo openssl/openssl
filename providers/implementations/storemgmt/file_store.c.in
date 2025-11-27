@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 /* This file has quite some overlap with engines/e_loader_attic.c */
 
@@ -293,12 +295,14 @@ void *file_attach(void *provctx, OSSL_CORE_BIO *cin)
  *  ------------------
  */
 
+/* clang-format off */
 {- produce_param_decoder('file_set_ctx_params',
                          (['OSSL_STORE_PARAM_PROPERTIES', 'propq',  'utf8_string'],
                           ['OSSL_STORE_PARAM_EXPECT',     'expect', 'int'],
                           ['OSSL_STORE_PARAM_SUBJECT',    'sub',    'octet_string'],
                           ['OSSL_STORE_PARAM_INPUT_TYPE', 'type',   'utf8_string'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *file_settable_ctx_params(void *provctx)
 {

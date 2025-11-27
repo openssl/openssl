@@ -9,9 +9,11 @@
  * RFC 9106 Argon2 (see https://www.rfc-editor.org/rfc/rfc9106.txt)
  *
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -1394,6 +1396,7 @@ static int set_property_query(KDF_ARGON2 *ctx, const char *propq)
     return 1;
 }
 
+/* clang-format off */
 {- produce_param_decoder('argon2_set_ctx_params',
                          (['OSSL_KDF_PARAM_PASSWORD',       'pw',     'octet_string'],
                           ['OSSL_KDF_PARAM_SALT',           'salt',   'octet_string'],
@@ -1408,6 +1411,7 @@ static int set_property_query(KDF_ARGON2 *ctx, const char *propq)
                           ['OSSL_KDF_PARAM_ARGON2_VERSION', 'vers',   'uint32'],
                           ['OSSL_KDF_PARAM_PROPERTIES',     'propq',  'utf8_string'],
                          )); -}
+/* clang-format on */
 
 static int argon2_set_ctx_params(KDF_ARGON2 *ctx, const OSSL_PARAM params[],
                                  OSSL_PARAM **size_param_ptr)
@@ -1501,9 +1505,11 @@ static const OSSL_PARAM *kdf_argon2_settable_ctx_params(ossl_unused void *ctx,
     return argon2_set_ctx_params_list;
 }
 
+/* clang-format off */
 {- produce_param_decoder('argon2_get_ctx_params',
                          (['OSSL_KDF_PARAM_SIZE',                    'size', 'size_t'],
                          )); -}
+/* clang-format on */
 
 static int kdf_argon2_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {

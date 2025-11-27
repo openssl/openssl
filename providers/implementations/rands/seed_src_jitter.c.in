@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <string.h>
 #include <openssl/rand.h>
@@ -231,11 +233,13 @@ static int jitter_reseed(void *vseed,
     return 1;
 }
 
+/* clang-format off */
 {- produce_param_decoder('jitter_get_ctx_params',
                          (['OSSL_RAND_PARAM_STATE',                   'state',  'int'],
                           ['OSSL_RAND_PARAM_STRENGTH',                'str',    'uint'],
                           ['OSSL_RAND_PARAM_MAX_REQUEST',             'maxreq', 'size_t'],
                         )); -}
+/* clang-format on */
 
 static int jitter_get_ctx_params(void *vseed, OSSL_PARAM params[])
 {

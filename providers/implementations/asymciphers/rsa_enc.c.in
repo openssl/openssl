@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 /*
  * RSA low level APIs are deprecated for public use, but still ok for
@@ -368,6 +370,7 @@ static void *rsa_dupctx(void *vprsactx)
     return dstctx;
 }
 
+/* clang-format off */
 {- produce_param_decoder('rsa_get_ctx_params',
                          (['OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST',             'oaep',   'utf8_string'],
                           ['OSSL_ASYM_CIPHER_PARAM_PAD_MODE',                'pad',    'utf8_string'],
@@ -379,6 +382,7 @@ static void *rsa_dupctx(void *vprsactx)
                           ['OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION',      'imrej',  'uint'],
                           ['OSSL_ASYM_CIPHER_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
 {
@@ -458,6 +462,7 @@ static const OSSL_PARAM *rsa_gettable_ctx_params(ossl_unused void *vprsactx,
     return rsa_get_ctx_params_list;
 }
 
+/* clang-format off */
 {- produce_param_decoder('rsa_set_ctx_params',
                          (['OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST',                  'oaep',    'utf8_string'],
                           ['OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS',            'oaep_pq', 'utf8_string'],
@@ -472,6 +477,7 @@ static const OSSL_PARAM *rsa_gettable_ctx_params(ossl_unused void *vprsactx,
                           ['OSSL_ASYM_CIPHER_PARAM_FIPS_KEY_CHECK',               'ind_k',   'int', 'fips'],
                           ['OSSL_ASYM_CIPHER_PARAM_FIPS_RSA_PKCS15_PAD_DISABLED', 'ind_pad', 'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 {
