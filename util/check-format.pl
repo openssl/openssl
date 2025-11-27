@@ -677,7 +677,7 @@ while (<>) { # loop over all lines of all input files
     # while allowing trailing (also multi-line) string literals to go past $max_length
     my $len = length; # total line length (without trailing '\n')
     if ($len > $max_length &&
-        !(m/^(.*)"[^"]*"\s*[\)\}\]]*[,;]?\s*$/ # string literal terminated by '"' (or '\'), then maybe )}],;
+        !(m/^(.*)"[^"]*"\s*[\)\s\{\}\]]*[,;]?\s*$/ # string literal terminated by '"', then maybe ){}],;
           && length($1) < $max_length)
         # this allows over-long trailing string literals with beginning col before $max_length
         ) {
