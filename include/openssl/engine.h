@@ -1173,6 +1173,22 @@ ENGINE_FUNC(int, EVP_PKEY_set1_engine, (EVP_PKEY *pkey, ENGINE *e), (pkey, e), 0
 /* ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey); */
 ENGINE_FUNC(ENGINE *, EVP_PKEY_get0_engine, (const EVP_PKEY *pkey), (pkey), NULL)
 
+/* ENGINE *DH_get0_engine(DH *d); */
+ENGINE_FUNC(ENGINE *, DH_get0_engine, (DH *d), (d), NULL)
+
+/* ENGINE *RSA_get0_engine(const RSA *r); */
+ENGINE_FUNC(ENGINE *, RSA_get0_engine, (const RSA *r), (r), NULL)
+
+/* ENGINE *DSA_get0_engine(DSA *d); */
+ENGINE_FUNC(ENGINE *, DSA_get0_engine, (DSA *d), (d), NULL)
+
+/* ENGINE *EC_KEY_get0_engine(const EC_KEY *eckey); */
+ENGINE_FUNC(ENGINE *, EC_KEY_get0_engine, (const EC_KEY *eckey), (eckey), NULL)
+
+/* const ENGINE *OSSL_STORE_LOADER_get0_engine(const OSSL_STORE_LOADER *loader); */
+ENGINE_FUNC(const ENGINE *, OSSL_STORE_LOADER_get0_engine, (const OSSL_STORE_LOADER *loader),
+            (loader), NULL)
+
 /* int RAND_set_rand_engine(ENGINE *engine); */
 ENGINE_FUNC(int, RAND_set_rand_engine, (ENGINE *engine), (engine), 0)
 

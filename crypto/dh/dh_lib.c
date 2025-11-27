@@ -15,9 +15,6 @@
 
 #include <stdio.h>
 #include <openssl/bn.h>
-#ifndef FIPS_MODULE
-# include <openssl/engine.h>
-#endif
 #include <openssl/obj_mac.h>
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
@@ -292,13 +289,6 @@ void DH_set_flags(DH *dh, int flags)
 {
     dh->flags |= flags;
 }
-
-#ifndef FIPS_MODULE
-ENGINE *DH_get0_engine(DH *dh)
-{
-    return NULL;
-}
-#endif /*FIPS_MODULE */
 
 FFC_PARAMS *ossl_dh_get0_params(DH *dh)
 {
