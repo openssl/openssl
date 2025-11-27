@@ -1,0 +1,107 @@
+#
+# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Tests start with one of these keywords
+#       Cipher Decrypt Derive Digest Encoding KDF MAC PBE
+#       PrivPubKeyPair Sign Verify VerifyRecover
+# and continue until a blank line. Lines starting with a pound sign are ignored.
+
+Title = SNMPKDF tests (from NIST ACVP 1.0 test vectors)
+
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:800002b805123456789abcdef0123456789abcdef0123456789abcdef0123456
+Ctrl.pass = pass:IFUcNbMl
+Output = 6ab11fc4cada4ce96f4cc5cf8f37acfb18c1d992
+
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:800002b805123456789abcdef0123456789abcdef0123456789abcdef0123456
+Ctrl.pass = pass:bAuDCHTs
+Output = 907a086a6c038749fef2cbdadc1108bba649c02f
+
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:800002b805123456789abcdef0123456789abcdef0123456789abcdef0123456
+Ctrl.pass = pass:jXCaBOBTSnQkYseOecvUCyAiMOMjNuZx
+Output = 8db38c0266e1cf1edd724e1c7fe9de73dca8acb6
+
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:800002b805123456789abcdef0123456789abcdef0123456789abcdef0123456
+Ctrl.pass = pass:WgXMvXGNpSoaeEmIqBCbSzsfygkxzdMK
+Output = cf50fac5db4f84281ce4a0569ded11beeefc2596
+
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:000002b87766554433221100
+Ctrl.pass = pass:nozniMRj
+Output = 90e6cd5df0618e117df1fde6f01e22e010489311
+
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:000002b87766554433221100
+Ctrl.pass = pass:WmSlorrf
+Output = a13096b909ae1c6034337d203eca7ab53d3da47e
+
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:000002B87766554433221100
+Ctrl.pass = pass:DnlIshNwRflhNzGYiNUOHSktxjntPiOB
+Output = e1c4636f8fe00a90012489312a0f778ab001f3ff
+
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:000002B87766554433221100
+Ctrl.pass = pass:gdRkZksOndMLQCLmDdrWCMFBZQrerfTX
+Output = BB1640B442255E9C1C6357F64230506B011DCD0D
+
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.eid = hexeid:000002B87766554433221100
+Ctrl.pass = pass:gdRkZksOndMLQCLmDdrWCMFBZQrerfTX
+Output = BB1640B442255E9C1C6357F64230506B011DCD0D
+Result = KDF_DERIVE_ERROR
+
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.pass = pass:gdRkZksOndMLQCLmDdrWCMFBZQrerfTX
+Output = BB1640B442255E9C1C6357F64230506B011DCD0D
+Result = KDF_DERIVE_ERROR
+
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:000002B87766554433221100
+Output = BB1640B442255E9C1C6357F64230506B011DCD0D
+Result = KDF_DERIVE_ERROR
+
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:FAIL
+Ctrl.eid = hexeid:000002B87766554433221100
+Ctrl.pass = pass:gdRkZksOndMLQCLmDdrWCMFBZQrerfTX
+Output = BB1640B442255E9C1C6357F64230506B011DCD0D
+Result = KDF_CTRL_ERROR
+
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:800002b805123456789abcdef0123456789abcdef0123456789abcdef0123456
+Ctrl.pass = pass:IFUcNbM
+Output = 6ab11fc4cada4ce96f4cc5cf8f37acfb18c1d992
+Result = KDF_CTRL_ERROR

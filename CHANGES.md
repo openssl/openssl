@@ -76,6 +76,10 @@ OpenSSL 4.0
 
    *Daniel Kubec*
 
+ * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
+
+   *Barry Fussell and Helen Zhang*
+
 OpenSSL 3.6
 -----------
 

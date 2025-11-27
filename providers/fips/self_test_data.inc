@@ -512,6 +512,25 @@ static const ST_KAT_PARAM hkdf_params[] = {
     ST_KAT_PARAM_END()
 };
 
+static const char snmpkdf_digest[] = "SHA1";
+static const unsigned char snmpkdf_eid[] = {
+    0x80, 0x00, 0x02, 0xb8, 0x05, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde,
+    0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56,
+    0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56
+};
+static const unsigned char snmpkdf_password[] = { 0x74, 0x63, 0x6f, 0x54, 0x49, 0x48, 0x6d, 0x77,
+                                                  0x63, 0x46, 0x6c, 0x50, 0x52, 0x65, 0x52, 0x4a };
+static const unsigned char snmpkdf_expected[] = {
+    0x3c, 0xd1, 0x21, 0xcb, 0xf3, 0xe8, 0xbf, 0x9e, 0x6d, 0x80, 0xf5, 0xf0,
+    0x53, 0x83, 0x5b, 0x3c, 0x24, 0x1c, 0xd2, 0x1e
+};
+static const ST_KAT_PARAM snmpkdf_params[] = {
+    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_DIGEST, snmpkdf_digest),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SNMPKDF_EID, snmpkdf_eid),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_PASSWORD, snmpkdf_password),
+    ST_KAT_PARAM_END()
+};
+
 static const char sskdf_digest[] = "SHA256";
 static const unsigned char sskdf_secret[] = {
     0x6d, 0xbd, 0xc2, 0x3f, 0x04, 0x54, 0x88, 0xe4,
@@ -823,6 +842,13 @@ static const ST_KAT_KDF st_kat_kdf_tests[] =
         0,
         hkdf_params,
         ITM(hkdf_expected)
+    },
+    {
+        OSSL_SELF_TEST_DESC_KDF_SNMPKDF,
+        OSSL_KDF_NAME_SNMPKDF,
+        0,
+        snmpkdf_params,
+        ITM(snmpkdf_expected)
     },
     {
         OSSL_SELF_TEST_DESC_KDF_SSKDF,
