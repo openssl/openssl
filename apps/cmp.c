@@ -87,6 +87,8 @@ static char *opt_srvcert = NULL;
 static char *opt_expect_sender = NULL;
 static int opt_ignore_keyusage = 0;
 static int opt_unprotected_errors = 0;
+static int opt_nonmatched_error_nonces = 0;
+
 static int opt_no_cache_extracerts = 0;
 static char *opt_srvcertout = NULL;
 static char *opt_extracertsout = NULL;
@@ -253,8 +255,8 @@ typedef enum OPTION_choice {
 
     OPT_TRUSTED, OPT_UNTRUSTED, OPT_SRVCERT,
     OPT_EXPECT_SENDER,
-    OPT_IGNORE_KEYUSAGE, OPT_UNPROTECTED_ERRORS, OPT_NO_CACHE_EXTRACERTS,
-    OPT_SRVCERTOUT, OPT_EXTRACERTSOUT, OPT_CACERTSOUT,
+    OPT_IGNORE_KEYUSAGE, OPT_UNPROTECTED_ERRORS, OPT_NONMATCHED_ERROR_NONCES,
+    OPT_NO_CACHE_EXTRACERTS, OPT_SRVCERTOUT, OPT_EXTRACERTSOUT, OPT_CACERTSOUT,
     OPT_OLDWITHOLD, OPT_NEWWITHNEW, OPT_NEWWITHOLD, OPT_OLDWITHNEW,
     OPT_CRLCERT, OPT_OLDCRL, OPT_CRLOUT,
 
@@ -437,6 +439,8 @@ const OPTIONS cmp_options[] = {
      "Ignore CMP signer cert key usage, else 'digitalSignature' must be allowed"},
     {"unprotected_errors", OPT_UNPROTECTED_ERRORS, '-',
      "Accept missing or invalid protection of regular error messages and negative"},
+    {"nonmatched_error_nonces", OPT_NONMATCHED_ERROR_NONCES, '-',
+     "Accept missing or non-matching transactionID or recipNonce in error messages"},
     {OPT_MORE_STR, 0, 0,
      "certificate responses (ip/cp/kup), revocation responses (rp), and PKIConf"},
     {OPT_MORE_STR, 0, 0,
@@ -666,6 +670,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {&opt_trusted}, {&opt_untrusted}, {&opt_srvcert},
     {&opt_expect_sender},
     {(char **)&opt_ignore_keyusage}, {(char **)&opt_unprotected_errors},
+    {(char **)&opt_nonmatched_error_nonces},
     {(char **)&opt_no_cache_extracerts},
     {&opt_srvcertout}, {&opt_extracertsout}, {&opt_cacertsout},
     {&opt_oldwithold}, {&opt_newwithnew}, {&opt_newwithold}, {&opt_oldwithnew},
@@ -1340,6 +1345,8 @@ static int setup_verification_ctx(OSSL_CMP_CTX *ctx)
 
     if (opt_unprotected_errors)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_UNPROTECTED_ERRORS, 1);
+    if (opt_nonmatched_error_nonces)
+        (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES, 1);
 
     if (opt_out_trusted != NULL) { /* for use in OSSL_CMP_certConf_cb() */
         X509_VERIFY_PARAM *out_vpm = NULL;
@@ -2920,6 +2927,9 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_UNPROTECTED_ERRORS:
             opt_unprotected_errors = 1;
+            break;
+        case OPT_NONMATCHED_ERROR_NONCES:
+            opt_nonmatched_error_nonces = 1;
             break;
         case OPT_NO_CACHE_EXTRACERTS:
             opt_no_cache_extracerts = 1;
