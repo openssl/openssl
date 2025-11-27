@@ -449,6 +449,106 @@ static int test_camellia_cbc_neon(void)
 
     return 1;
 }
+
+static int test_camellia_ctr_neon(void)
+{
+    /* --- SETUP --- */
+    /* Use enough blocks to trigger bulk loop (16+) and tail loop */
+    #define CTR_TEST_BLKS 95
+    #define CTR_TEST_LEN  (CTR_TEST_BLKS * 16)
+
+    static const uint8_t k[16] = { 
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
+        0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+
+    static const uint8_t input_std[16] = {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
+        0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+
+    /* Arbitrary IV (Nonce + Counter) */
+    static const uint8_t iv_original[16] = { 
+        0xFF, 0xEE, 0xDD, 0xCC, 0xBB, 0xAA, 0x99, 0x88, /* Nonce */
+        0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xF0  /* Counter near overflow */
+    };
+
+    uint8_t input_full[CTR_TEST_LEN];
+    uint8_t ref_out[CTR_TEST_LEN];
+    uint8_t asm_out[CTR_TEST_LEN];
+    
+    uint8_t iv_ref[16];
+    uint8_t iv_asm[16];
+    
+    /* Stream State Buffers */
+    unsigned char ecount_buf_ref[16];
+    unsigned int num_ref = 0;
+    
+    unsigned char ecount_buf_asm[16];
+    unsigned int num_asm = 0;
+
+    CAMELLIA_KEY ctx;
+
+    /* Initialize Input */
+    fill_blks(input_full, input_std, CTR_TEST_BLKS);
+
+    /* Initialize Key Schedule */
+    camellia_keysetup_neon((struct camellia_simd_ctx *)&ctx, k, 128 / 8);
+
+    /* --- 1. RUN REFERENCE (Generic C + 1-block ASM) --- */
+    
+    memcpy(iv_ref, iv_original, 16);
+    memset(ecount_buf_ref, 0, 16);
+    num_ref = 0;
+
+    CRYPTO_ctr128_encrypt(input_full, ref_out, CTR_TEST_LEN, 
+                          &ctx, iv_ref, 
+                          ecount_buf_ref, &num_ref, 
+                          (block128_f)camellia_encrypt_armv8_wrapper);
+    
+    memcpy(iv_asm, iv_original, 16);
+    memset(ecount_buf_asm, 0, 16);
+    num_asm = 0;
+
+    CRYPTO_ctr128_encrypt_ctr32(input_full, asm_out, CTR_TEST_LEN, 
+                                &ctx, iv_asm, 
+                                ecount_buf_asm, &num_asm, 
+                                (ctr128_f)camellia_ctr32_encrypt_blocks_neon);
+
+    if (!TEST_mem_eq(asm_out, CTR_TEST_LEN, ref_out, CTR_TEST_LEN)) {
+        TEST_error("CTR Test: ASM output mismatches Reference");
+        return 0;
+    }
+
+    /* Verify IV State */
+    if (!TEST_mem_eq(iv_asm, 16, iv_ref, 16)) {
+        TEST_error("CTR Test: IV (Counter) update mismatch");
+        return 0;
+    }
+
+    uint8_t roundtrip_out[CTR_TEST_LEN];
+    
+    memcpy(iv_asm, iv_original, 16);
+    memset(ecount_buf_asm, 0, 16);
+    num_asm = 0;
+
+    CRYPTO_ctr128_encrypt_ctr32(asm_out, roundtrip_out, CTR_TEST_LEN, 
+                                &ctx, iv_asm, 
+                                ecount_buf_asm, &num_asm, 
+                                (ctr128_f)camellia_ctr32_encrypt_blocks_neon);
+
+    if (!TEST_mem_eq(roundtrip_out, CTR_TEST_LEN, input_full, CTR_TEST_LEN)) {
+        TEST_error("CTR Round Trip: Decryption failed to recover plaintext");
+        return 0;
+    }
+
+    if (!TEST_mem_eq(iv_asm, 16, iv_ref, 16)) {
+        TEST_error("CTR Round Trip: IV state inconsistent after decryption");
+        return 0;
+    }
+
+    return 1;
+}
 #endif
 
 int setup_tests(void)
@@ -462,6 +562,7 @@ int setup_tests(void)
     ADD_TEST(test_camellia_1blk_key256_armv8);
     ADD_TEST(test_camellia_16blk_key256_neon);
     ADD_TEST(test_camellia_cbc_neon);
+    ADD_TEST(test_camellia_ctr_neon);
 #endif
     return 1;
 }
