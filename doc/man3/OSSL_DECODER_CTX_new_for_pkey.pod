@@ -68,12 +68,15 @@ If no suitable decoder implementation is found,
 OSSL_DECODER_CTX_new_for_pkey() still creates a B<OSSL_DECODER_CTX>, but
 with no associated decoder (L<OSSL_DECODER_CTX_get_num_decoders(3)> returns
 zero).  This helps the caller to distinguish between an error when creating
-the B<OSSL_ENCODER_CTX> and missing encoder implementation, and allows it to
+the B<OSSL_DECODER_CTX> and missing decoder implementation, and allows it to
 act accordingly.
 
-Note that OSSL_DECODER_CTX_new_for_pkey() finalises the OSSL_DECODER_CTX;
-after that the B<OSSL_DECODER_CTX_set_*()> and B<OSSL_DECODER_CTX_add_*()>
-functions described in L<OSSL_DECODER_CTX(3)> shouldn't be called.
+Note that OSSL_DECODER_CTX_new_for_pkey() finalizes the OSSL_DECODER_CTX; after
+that most of the B<OSSL_DECODER_CTX_set_*()> and B<OSSL_DECODER_CTX_add_*()>
+functions described in L<OSSL_DECODER_CTX(3)> are no longer available (return
+an error if called) as described in L<OSSL_DECODER_CTX_set_finalized(3)>.
+L<OSSL_DECODER_CTX_set_params(3)>, however, is still available to set decoder
+parameters.
 
 OSSL_DECODER_CTX_set_passphrase() gives the implementation a pass phrase to
 use when decrypting the encoded private key. Alternatively, a pass phrase
@@ -131,7 +134,11 @@ failure.
 
 =head1 SEE ALSO
 
-L<provider(7)>, L<OSSL_DECODER(3)>, L<OSSL_DECODER_CTX(3)>
+L<provider(7)>,
+L<OSSL_DECODER(3)>,
+L<OSSL_DECODER_CTX(3)>,
+L<OSSL_DECODER_CTX_set_finalized(3)>,
+L<OSSL_DECODER_CTX_set_params(3)>.
 
 =head1 HISTORY
 
