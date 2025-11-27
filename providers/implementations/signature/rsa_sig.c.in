@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 /*
  * RSA low level APIs are deprecated for public use, but still ok for
@@ -1385,6 +1387,7 @@ static void *rsa_dupctx(void *vprsactx)
     return NULL;
 }
 
+/* clang-format off */
 {- produce_param_decoder('rsa_get_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID',            'algid',  'octet_string'],
                           ['OSSL_SIGNATURE_PARAM_PAD_MODE',                'pad',    'utf8_string'],
@@ -1396,6 +1399,7 @@ static void *rsa_dupctx(void *vprsactx)
                           ['OSSL_SIGNATURE_PARAM_FIPS_VERIFY_MESSAGE',     'verify', 'uint', 'fips'],
                           ['OSSL_SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
 {
@@ -1518,6 +1522,7 @@ static int rsa_x931_padding_allowed(PROV_RSA_CTX *ctx)
 }
 #endif
 
+/* clang-format off */
 {- produce_param_decoder('rsa_set_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_DIGEST',                     'digest',   'utf8_string'],
                           ['OSSL_SIGNATURE_PARAM_PROPERTIES',                 'propq',    'utf8_string'],
@@ -1532,9 +1537,11 @@ static int rsa_x931_padding_allowed(PROV_RSA_CTX *ctx)
                           ['OSSL_SIGNATURE_PARAM_FIPS_RSA_PSS_SALTLEN_CHECK', 'ind_slen', 'int', 'fips'],
                           ['OSSL_SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK',   'ind_xpad', 'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 #define rsa_set_ctx_params_no_digest_st  rsa_set_ctx_params_st
 
+/* clang-format off */
 {- produce_param_decoder('rsa_set_ctx_params_no_digest',
                          (['OSSL_SIGNATURE_PARAM_PAD_MODE',                   'pad',      'utf8_string'],
                           ['OSSL_SIGNATURE_PARAM_PAD_MODE',                   'pad',      'int'],
@@ -1547,6 +1554,7 @@ static int rsa_x931_padding_allowed(PROV_RSA_CTX *ctx)
                           ['OSSL_SIGNATURE_PARAM_FIPS_RSA_PSS_SALTLEN_CHECK', 'ind_slen', 'int', 'fips'],
                           ['OSSL_SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK',   'ind_xpad', 'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 {
@@ -1948,9 +1956,11 @@ static const char **rsa_sigalg_query_key_types(void)
     return keytypes;
 }
 
+/* clang-format off */
 {- produce_param_decoder('rsa_sigalg_set_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_SIGNATURE', 'sig', 'octet_string'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *rsa_sigalg_settable_ctx_params(void *vprsactx,
                                                         ossl_unused void *provctx)

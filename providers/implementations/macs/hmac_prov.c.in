@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 /*
  * HMAC low level APIs are deprecated for public use, but still ok for internal
@@ -271,11 +273,13 @@ static int hmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
+/* clang-format off */
 {- produce_param_decoder('hmac_get_ctx_params',
                          (['OSSL_MAC_PARAM_SIZE',                    'size',   'size_t'],
                           ['OSSL_MAC_PARAM_BLOCK_SIZE',              'bsize',  'size_t'],
                           ['OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *hmac_gettable_ctx_params(ossl_unused void *ctx,
                                                   ossl_unused void *provctx)
@@ -310,6 +314,7 @@ static int hmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
     return 1;
 }
 
+/* clang-format off */
 {- produce_param_decoder('hmac_set_ctx_params',
                          (['OSSL_MAC_PARAM_DIGEST',         'digest',  'utf8_string'],
                           ['OSSL_ALG_PARAM_ENGINE',         'engine',  'utf8_string', 'hidden'],
@@ -318,6 +323,7 @@ static int hmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
                           ['OSSL_MAC_PARAM_TLS_DATA_SIZE',  'tlssize', 'size_t'],
                           ['OSSL_MAC_PARAM_FIPS_KEY_CHECK', 'ind_k',   'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *hmac_settable_ctx_params(ossl_unused void *ctx,
                                                   ossl_unused void *provctx)

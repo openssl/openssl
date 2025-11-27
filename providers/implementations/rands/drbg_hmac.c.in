@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <stdlib.h>
 #include <string.h>
@@ -368,6 +370,7 @@ static void drbg_hmac_free(void *vdrbg)
 
 #define drbg_hmac_get_ctx_params_st  drbg_get_ctx_params_st
 
+/* clang-format off */
 {- produce_param_decoder('drbg_hmac_get_ctx_params',
                          (['OSSL_DRBG_PARAM_MAC',                    'mac',         'utf8_string'],
                           ['OSSL_DRBG_PARAM_DIGEST',                 'digest',      'utf8_string'],
@@ -386,6 +389,7 @@ static void drbg_hmac_free(void *vdrbg)
                           ['OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL',   'reseed_int',  'uint64'],
                           ['OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',         'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static int drbg_hmac_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 {
@@ -549,6 +553,7 @@ static int drbg_hmac_set_ctx_params_locked
 
 #define drbg_hmac_set_ctx_params_st  drbg_set_ctx_params_st
 
+/* clang-format off */
 {- produce_param_decoder('drbg_hmac_set_ctx_params',
                          (['OSSL_DRBG_PARAM_PROPERTIES',           'propq',       'utf8_string'],
                           ['OSSL_ALG_PARAM_ENGINE',                'engine',      'utf8_string', 'hidden'],
@@ -559,6 +564,7 @@ static int drbg_hmac_set_ctx_params_locked
                           ['OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL', 'reseed_time', 'uint64'],
                           ['OSSL_KDF_PARAM_FIPS_DIGEST_CHECK',     'ind_d',       'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static int drbg_hmac_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {

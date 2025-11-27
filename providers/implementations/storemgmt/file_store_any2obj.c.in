@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 /*
  * This is a decoder that's completely internal to the 'file:' store
@@ -70,9 +72,11 @@ static void any2obj_freectx(void *ctx)
     OPENSSL_free(ctx);
 }
 
+/* clang-format off */
 {- produce_param_decoder('any2obj_set_ctx_params',
                          (['OSSL_OBJECT_PARAM_DATA_STRUCTURE', 'datastruct', 'utf8_string'],
                          )); -}
+/* clang-format on */
 
 static int any2obj_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {

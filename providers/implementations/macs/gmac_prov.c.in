@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <stdlib.h>
 #include <string.h>
@@ -170,9 +172,11 @@ static int gmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
+/* clang-format off */
 {- produce_param_decoder('gmac_get_params',
                          (['OSSL_MAC_PARAM_SIZE',    'size', 'size_t'],
                         )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *gmac_gettable_params(void *provctx)
 {
@@ -192,6 +196,7 @@ static int gmac_get_params(OSSL_PARAM params[])
     return 1;
 }
 
+/* clang-format off */
 {- produce_param_decoder('gmac_set_ctx_params',
                          (['OSSL_MAC_PARAM_CIPHER',     'cipher', 'utf8_string'],
                           ['OSSL_ALG_PARAM_ENGINE',     'engine', 'utf8_string', 'hidden'],
@@ -199,6 +204,7 @@ static int gmac_get_params(OSSL_PARAM params[])
                           ['OSSL_MAC_PARAM_KEY',        'key',    'octet_string'],
                           ['OSSL_MAC_PARAM_IV',         'iv',     'octet_string'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *gmac_settable_ctx_params(ossl_unused void *ctx,
                                                   ossl_unused void *provctx)

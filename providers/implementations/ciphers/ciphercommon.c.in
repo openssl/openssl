@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 /*
  * Generic dispatch table functions for ciphers.
@@ -28,6 +30,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 /*-
  * Generic cipher functions for OSSL_PARAM gettables and settables
  */
+/* clang-format off */
 {- produce_param_decoder('ossl_cipher_generic_get_params',
                          (['OSSL_CIPHER_PARAM_MODE',             'mode',   'uint'],
                           ['OSSL_CIPHER_PARAM_KEYLEN',           'keylen', 'size_t'],
@@ -40,6 +43,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                           ['OSSL_CIPHER_PARAM_HAS_RAND_KEY',     'rand',   'int' ],
                           ['OSSL_CIPHER_PARAM_ENCRYPT_THEN_MAC', 'etm',    'int' ],
                          )); -}
+/* clang-format on */
 
 const OSSL_PARAM *ossl_cipher_generic_gettable_params(ossl_unused void *provctx)
 {
@@ -106,6 +110,7 @@ int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
 
 #define cipher_generic_get_ctx_params_st    ossl_cipher_get_ctx_param_list_st
 
+/* clang-format off */
 {- produce_param_decoder('cipher_generic_get_ctx_params',
                          (['OSSL_CIPHER_PARAM_KEYLEN',     'keylen', 'size_t'],
                           ['OSSL_CIPHER_PARAM_IVLEN',      'ivlen',  'size_t'],
@@ -115,6 +120,7 @@ int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                           ['OSSL_CIPHER_PARAM_UPDATED_IV', 'updiv',  'octet_string' ],
                           ['OSSL_CIPHER_PARAM_TLS_MAC',    'tlsmac', 'octet_string' ],
                          )); -}
+/* clang-format on */
 
 const OSSL_PARAM *ossl_cipher_generic_gettable_ctx_params
         (ossl_unused void *cctx, ossl_unused void *provctx)
@@ -124,6 +130,7 @@ const OSSL_PARAM *ossl_cipher_generic_gettable_ctx_params
 
 #define cipher_generic_set_ctx_params_st    ossl_cipher_set_ctx_param_list_st
 
+/* clang-format off */
 {- produce_param_decoder('cipher_generic_set_ctx_params',
                          (['OSSL_CIPHER_PARAM_PADDING',      'pad',         'uint'],
                           ['OSSL_CIPHER_PARAM_NUM',          'num',         'uint'],
@@ -131,6 +138,7 @@ const OSSL_PARAM *ossl_cipher_generic_gettable_ctx_params
                           ['OSSL_CIPHER_PARAM_TLS_VERSION',  'tlsvers',     'uint'],
                           ['OSSL_CIPHER_PARAM_TLS_MAC_SIZE', 'tlsmacsize',  'size_t'],
                          )); -}
+/* clang-format on */
 
 const OSSL_PARAM *ossl_cipher_generic_settable_ctx_params
         (ossl_unused void *cctx, ossl_unused void *provctx)
@@ -143,6 +151,7 @@ const OSSL_PARAM *ossl_cipher_generic_settable_ctx_params
  */
 #define cipher_var_keylen_set_ctx_params_st ossl_cipher_set_ctx_param_list_st
 
+/* clang-format off */
 {- produce_param_decoder('cipher_var_keylen_set_ctx_params',
                          (['OSSL_CIPHER_PARAM_PADDING',      'pad',         'uint'],
                           ['OSSL_CIPHER_PARAM_NUM',          'num',         'uint'],
@@ -151,6 +160,7 @@ const OSSL_PARAM *ossl_cipher_generic_settable_ctx_params
                           ['OSSL_CIPHER_PARAM_TLS_MAC_SIZE', 'tlsmacsize',  'size_t'],
                           ['OSSL_CIPHER_PARAM_KEYLEN',       'keylen',      'size_t'],
                          )); -}
+/* clang-format on */
 
 const OSSL_PARAM *ossl_cipher_var_keylen_settable_ctx_params
         (ossl_unused void *cctx, ossl_unused void *provctx)

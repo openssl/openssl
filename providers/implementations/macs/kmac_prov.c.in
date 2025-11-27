@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 /*
  * See SP800-185 "Appendix A - KMAC, .... in Terms of Keccak[c]"
@@ -392,11 +394,13 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     return ok;
 }
 
+/* clang-format off */
 {- produce_param_decoder('kmac_get_ctx_params',
                          (['OSSL_MAC_PARAM_SIZE',                    'size',   'size_t'],
                           ['OSSL_MAC_PARAM_BLOCK_SIZE',              'bsize',  'size_t'],
                           ['OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *kmac_gettable_ctx_params(ossl_unused void *ctx,
                                                   ossl_unused void *provctx)
@@ -428,6 +432,7 @@ static int kmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
     return 1;
 }
 
+/* clang-format off */
 {- produce_param_decoder('kmac_set_ctx_params',
                          (['OSSL_MAC_PARAM_XOF',               'xof',     'int'],
                           ['OSSL_MAC_PARAM_SIZE',              'size',    'size_t'],
@@ -436,6 +441,7 @@ static int kmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
                           ['OSSL_MAC_PARAM_FIPS_KEY_CHECK',    'ind_k',   'int', 'fips'],
                           ['OSSL_MAC_PARAM_FIPS_NO_SHORT_MAC', 'ind_sht', 'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *kmac_settable_ctx_params(ossl_unused void *ctx,
                                                   ossl_unused void *provctx)

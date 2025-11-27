@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <stdlib.h>
 #include <string.h>
@@ -673,6 +675,7 @@ static void drbg_ctr_free(void *vdrbg)
 
 #define drbg_ctr_get_ctx_params_st  drbg_get_ctx_params_st
 
+/* clang-format off */
 {- produce_param_decoder('drbg_ctr_get_ctx_params',
                          (['OSSL_DRBG_PARAM_CIPHER',                 'cipher',      'utf8_string'],
                           ['OSSL_DRBG_PARAM_USE_DF',                 'df',          'int'],
@@ -691,6 +694,7 @@ static void drbg_ctr_free(void *vdrbg)
                           ['OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL',   'reseed_int',  'uint64'],
                           ['OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',         'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static int drbg_ctr_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 {
@@ -827,6 +831,7 @@ static int drbg_ctr_set_ctx_params_locked(PROV_DRBG *ctx,
 
 #define drbg_ctr_set_ctx_params_st  drbg_set_ctx_params_st
 
+/* clang-format off */
 {- produce_param_decoder('drbg_ctr_set_ctx_params',
                          (['OSSL_DRBG_PARAM_PROPERTIES',           'propq',       'utf8_string'],
                           ['OSSL_DRBG_PARAM_CIPHER',               'cipher',      'utf8_string'],
@@ -835,6 +840,7 @@ static int drbg_ctr_set_ctx_params_locked(PROV_DRBG *ctx,
                           ['OSSL_DRBG_PARAM_RESEED_REQUESTS',      'reseed_req',  'uint'],
                           ['OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL', 'reseed_time', 'uint64'],
                          )); -}
+/* clang-format on */
 
 static int drbg_ctr_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {

@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -147,10 +149,12 @@ static int mlx_kem_match(const void *vkey1, const void *vkey2, int selection)
         && EVP_PKEY_eq(key1->xkey, key2->xkey);
 }
 
+/* clang-format off */
 {- produce_param_decoder('ml_kem_import_export',
                          (['OSSL_PKEY_PARAM_PRIV_KEY', 'privkey', 'octet_string'],
                           ['OSSL_PKEY_PARAM_PUB_KEY',  'pubkey',  'octet_string'],
                          )); -}
+/* clang-format on */
 
 typedef struct export_cb_arg_st {
     const char *algorithm_name;
@@ -475,6 +479,7 @@ static int mlx_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
     return mlx_kem_key_fromdata(key, params, include_private);
 }
 
+/* clang-format off */
 {- produce_param_decoder('mlx_get_params',
                          (['OSSL_PKEY_PARAM_BITS',               'bits',     'int'],
                           ['OSSL_PKEY_PARAM_SECURITY_BITS',      'secbits',  'int'],
@@ -483,6 +488,7 @@ static int mlx_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
                           ['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY', 'pub',      'octet_string'],
                           ['OSSL_PKEY_PARAM_PRIV_KEY',           'priv',     'octet_string'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *mlx_kem_gettable_params(void *provctx)
 {
@@ -584,10 +590,12 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     return 1;
 }
 
+/* clang-format off */
 {- produce_param_decoder('mlx_set_params',
                          (['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY', 'pub',   'octet_string'],
                           ['OSSL_PKEY_PARAM_PROPERTIES',         'propq', 'utf8_string'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *mlx_kem_settable_params(void *provctx)
 {
@@ -633,9 +641,11 @@ static int mlx_kem_set_params(void *vkey, const OSSL_PARAM params[])
     return load_keys(key, pubenc, publen, NULL, 0);
 }
 
+/* clang-format off */
 {- produce_param_decoder('mlx_gen_set_params',
                          (['OSSL_PKEY_PARAM_PROPERTIES', 'propq', 'utf8_string'],
                          )); -}
+/* clang-format on */
 
 static int mlx_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
 {

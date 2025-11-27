@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <string.h>
 #include <openssl/core_dispatch.h>
@@ -33,9 +35,11 @@ void generic_free(void *keydata)
     OPENSSL_free(generic);
 }
 
+/* clang-format off */
 {- produce_param_decoder('generic_skey_import',
                          (['OSSL_SKEY_PARAM_RAW_BYTES',  'raw_bytes',    'octet_string'],
                          )); -}
+/* clang-format on */
 
 void *generic_import(void *provctx, int selection, const OSSL_PARAM params[])
 {

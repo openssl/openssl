@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <string.h>
 #include <openssl/core_names.h>
@@ -586,10 +588,12 @@ static void *keccak_dupctx(void *ctx)
     return ret;
 }
 
+/* clang-format off */
 {- produce_param_decoder('shake_get_ctx_params',
                          (['OSSL_DIGEST_PARAM_XOFLEN',   'xoflen',   'size_t'],
                           ['OSSL_DIGEST_PARAM_SIZE',     'size',     'size_t'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *shake_gettable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *provctx)
@@ -617,10 +621,12 @@ static int shake_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return 1;
 }
 
+/* clang-format off */
 {- produce_param_decoder('shake_set_ctx_params',
                          (['OSSL_DIGEST_PARAM_XOFLEN',   'xoflen',   'size_t'],
                           ['OSSL_DIGEST_PARAM_SIZE',     'xoflen',   'size_t'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *shake_settable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *provctx)
