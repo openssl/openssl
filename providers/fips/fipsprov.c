@@ -519,8 +519,6 @@ static const OSSL_ALGORITHM fips_signature[] = {
       ossl_ed25519_signature_functions },
     { PROV_NAMES_ED25519ph, FIPS_DEFAULT_PROPERTIES,
       ossl_ed25519ph_signature_functions },
-    { PROV_NAMES_ED25519ctx, FIPS_DEFAULT_PROPERTIES,
-      ossl_ed25519ctx_signature_functions },
     { PROV_NAMES_ED448, FIPS_DEFAULT_PROPERTIES,
       ossl_ed448_signature_functions },
     { PROV_NAMES_ED448ph, FIPS_DEFAULT_PROPERTIES,

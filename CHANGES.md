@@ -32,6 +32,17 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Removed extra leading '00:' when printing key data such as an RSA modulus
+   in hexadecimal format where the first (most significant) byte is >= 0x80.
+   This had been added artificially to resemble ASN.1 DER encoding internals.
+   Fixing this also makes sure that key output always has the expected length.
+
+   *David von Oheimb*
+
+ * The deprecated function ASN1_STRING_data has been removed.
+
+   *Bob Beck*
+
  * various function parameters have been constified,
    in particular for X509-related functions.
 
@@ -45,6 +56,14 @@ OpenSSL 4.0
    verify_return_error is enabled.
 
    *Ryan Hooper*
+
+ * Fixed CRLs with invalid ASN1_TIME in invalidityDate extensions,
+   where verification incorrectly succeeded. Enforced proper
+   handling of ASN1_TIME validation results so that any CRL
+   containing invalid time fields is rejected immediately,
+   preventing the error from propagating to verification.
+
+   *Daniel Kubec*
 
  * Added `OSSL_[EN|DE]CODER_CTX_[set|get]_finalized()` functions.
    `OSSL_[EN|DE]CODER_CTX_set_*()` and `OSSL_[EN|DE]CODER_CTX_add_*()`
@@ -2586,6 +2605,24 @@ breaking changes, and mappings for the large list of deprecated functions.
    *Tomáš Mráz*
 
 ### Changes between 3.0.0 and 3.0.1 [14 Dec 2021]
+
+ * Fixed carry bug in BN_mod_exp which may produce incorrect results on MIPS
+   squaring procedure. Many EC algorithms are affected, including some of the
+   TLS 1.3 default curves. Impact was not analyzed in detail, because the
+   pre-requisites for attack are considered unlikely and include reusing
+   private keys. Analysis suggests that attacks against RSA and DSA as a result
+   of this defect would be very difficult to perform and are not believed
+   likely. Attacks against DH are considered just feasible (although very
+   difficult) because most of the work necessary to deduce information about
+   a private key may be performed offline.
+   The amount of resources required for such an attack would be significant.
+   However, for an attack on TLS to be meaningful, the server would have
+   to share the DH private key among multiple clients, which is no longer
+   an option since CVE-2016-0701.
+   The issue only affects OpenSSL on MIPS platforms.
+   ([CVE-2021-4160])
+
+   *Bernd Edlinger*
 
  * Fixed invalid handling of X509_verify_cert() internal errors in libssl
    Internally libssl in OpenSSL calls X509_verify_cert() on the client side to

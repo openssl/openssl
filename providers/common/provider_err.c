@@ -188,6 +188,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
      "parent locking not enabled"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_PARENT_STRENGTH_TOO_WEAK),
      "parent strength too weak"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_PASSWORD_STRENGTH_TOO_WEAK),
+     "password strength too weak"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_PATH_MUST_BE_ABSOLUTE),
      "path must be absolute"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_PERSONALISATION_STRING_TOO_LONG),

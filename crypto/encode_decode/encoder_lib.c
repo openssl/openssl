@@ -814,13 +814,6 @@ int ossl_bio_print_labeled_bignum(BIO *out, const char *label, const BIGNUM *bn)
     if (BIO_printf(out, "%s", spaces) <= 0)
         goto err;
 
-    /* Add a leading 00 if the top bit is set */
-    if (*p >= '8') {
-        if (BIO_printf(out, "%02x", 0) <= 0)
-            goto err;
-        ++bytes;
-        use_sep = 1;
-    }
     while (*p != '\0') {
         /* Do a newline after every 15 hex bytes + add the space indent */
         if ((bytes % 15) == 0 && bytes > 0) {

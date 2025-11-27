@@ -131,6 +131,7 @@
 # define PROV_R_PARENT_CANNOT_SUPPLY_ENTROPY_SEED         187
 # define PROV_R_PARENT_LOCKING_NOT_ENABLED                182
 # define PROV_R_PARENT_STRENGTH_TOO_WEAK                  194
+# define PROV_R_PASSWORD_STRENGTH_TOO_WEAK                254
 # define PROV_R_PATH_MUST_BE_ABSOLUTE                     219
 # define PROV_R_PERSONALISATION_STRING_TOO_LONG           195
 # define PROV_R_PSS_SALTLEN_TOO_SMALL                     172
