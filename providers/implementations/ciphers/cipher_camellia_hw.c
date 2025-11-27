@@ -61,16 +61,22 @@ static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
     camellia_keysetup_neon((struct camellia_simd_ctx *)ks, key, keylen);
     if (dat->enc || (mode != EVP_CIPH_ECB_MODE && mode != EVP_CIPH_CBC_MODE)) {
         dat->block = (block128_f) camellia_encrypt_armv8_wrapper;
-        dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
-            (cbc128_f) camellia_cbc_neon_wrapper : NULL;
-        dat->stream.ctr = mode == EVP_CIPH_CTR_MODE ?
-            (ctr128_f) camellia_ctr32_encrypt_blocks_neon : NULL;
+        if (mode == EVP_CIPH_CBC_MODE) {
+            dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
+                (cbc128_f) camellia_cbc_neon_wrapper : NULL;
+        } else if (mode == EVP_CIPH_CTR_MODE) {
+            dat->stream.ctr = mode == EVP_CIPH_CTR_MODE ?
+                (ctr128_f) camellia_ctr32_encrypt_blocks_neon : NULL;
+        }
     } else {
         dat->block = (block128_f) camellia_decrypt_armv8_wrapper;
-        dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
-            (cbc128_f) camellia_cbc_neon_wrapper : NULL;
-        dat->stream.ctr = mode == EVP_CIPH_CTR_MODE ?
-            (ctr128_f) camellia_ctr32_encrypt_blocks_neon : NULL;
+        if (mode == EVP_CIPH_CBC_MODE) {
+            dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
+                (cbc128_f) camellia_cbc_neon_wrapper : NULL;
+        } else if (mode == EVP_CIPH_CTR_MODE) {
+            dat->stream.ctr = mode == EVP_CIPH_CTR_MODE ?
+                (ctr128_f) camellia_ctr32_encrypt_blocks_neon : NULL;
+        }
     }
 #else
     int ret;
