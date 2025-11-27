@@ -259,8 +259,6 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search);
  *  ---------------------------------------------------
  */
 
-typedef struct ossl_store_loader_st OSSL_STORE_LOADER;
-
 OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(OSSL_LIB_CTX *libctx,
                                            const char *scheme,
                                            const char *properties);
@@ -352,8 +350,6 @@ int OSSL_STORE_LOADER_set_error(OSSL_STORE_LOADER *loader,
 OSSL_DEPRECATEDIN_3_0
 int OSSL_STORE_LOADER_set_close(OSSL_STORE_LOADER *loader,
                                 OSSL_STORE_close_fn close_function);
-OSSL_DEPRECATEDIN_3_0
-const ENGINE *OSSL_STORE_LOADER_get0_engine(const OSSL_STORE_LOADER *loader);
 OSSL_DEPRECATEDIN_3_0
 const char *OSSL_STORE_LOADER_get0_scheme(const OSSL_STORE_LOADER *loader);
 OSSL_DEPRECATEDIN_3_0
