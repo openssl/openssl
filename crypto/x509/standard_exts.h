@@ -34,9 +34,7 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
     &ossl_v3_ext_ku,
     &ossl_v3_delta_crl,
     &ossl_v3_crl_reason,
-#ifndef OPENSSL_NO_OCSP
     &ossl_v3_crl_invdate,
-#endif
     &ossl_v3_sxnet,
     &ossl_v3_info,
 #ifndef OPENSSL_NO_RFC3779
@@ -54,9 +52,7 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
     &ossl_v3_sinfo,
     &ossl_v3_policy_constraints,
     &ossl_v3_no_rev_avail,
-#ifndef OPENSSL_NO_OCSP
     &ossl_v3_crl_hold,
-#endif
     &ossl_v3_pci,
     &ossl_v3_name_constraints,
     &ossl_v3_policy_mappings,
