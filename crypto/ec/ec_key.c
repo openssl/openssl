@@ -19,9 +19,6 @@
 #include "ec_local.h"
 #include "internal/refcount.h"
 #include <openssl/err.h>
-#ifndef FIPS_MODULE
-# include <openssl/engine.h>
-#endif
 #include <openssl/self_test.h>
 #include "prov/providercommon.h"
 #include "prov/ecx.h"
@@ -186,11 +183,6 @@ int EC_KEY_up_ref(EC_KEY *r)
     REF_PRINT_COUNT("EC_KEY", i, r);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
-}
-
-ENGINE *EC_KEY_get0_engine(const EC_KEY *eckey)
-{
-    return NULL;
 }
 
 int EC_KEY_generate_key(EC_KEY *eckey)
