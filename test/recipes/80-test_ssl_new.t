@@ -95,7 +95,7 @@ my %conf_dependent_tests = (
   "27-ticket-appdata.cnf" => !$is_default_tls,
   "28-seclevel.cnf" => disabled("tls1_2") || $no_ecx,
   "30-extended-master-secret.cnf" => disabled("tls1_2"),
-  "32-compressed-certificate.cnf" => disabled("comp") || disabled("tls1_3"),
+  "32-compressed-certificate.cnf" => disabled("comp") || disabled("tls1_3") || ($no_ec && $no_dh),
 );
 
 # Add your test here if it should be skipped for some compile-time
@@ -130,7 +130,7 @@ my %skip = (
   "25-cipher.cnf" => disabled("ec") || disabled("tls1_2"),
   "26-tls13_client_auth.cnf" => disabled("tls1_3") || ($no_ec && $no_dh),
   "29-dtls-sctp-label-bug.cnf" => disabled("sctp") || disabled("sock"),
-  "32-compressed-certificate.cnf" => disabled("comp") || disabled("tls1_3"),
+  "32-compressed-certificate.cnf" => disabled("comp") || disabled("tls1_3") || ($no_ec && $no_dh),
 );
 
 foreach my $conf (@conf_files) {

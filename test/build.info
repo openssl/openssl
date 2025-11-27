@@ -85,8 +85,11 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   IF[{- !$disabled{quic} -}]
-    PROGRAMS{noinst}=priority_queue_test quicfaultstest quicapitest \
-                     quic_newcid_test quic_srt_gen_test
+    PROGRAMS{noinst}=priority_queue_test quicapitest quic_srt_gen_test
+
+    IF[{- !$disabled{ec} || !$disabled{dh} -}]
+      PROGRAMS{noinst}=quicfaultstest quic_newcid_test
+    ENDIF
   ENDIF
 
   IF[{- !$disabled{qlog} -}]
@@ -944,21 +947,23 @@ IF[{- !$disabled{tests} -}]
       INCLUDE[priority_queue_test]=../include ../apps/include
       DEPEND[priority_queue_test]=../libcrypto ../libssl.a libtestutil.a
 
-      SOURCE[quicfaultstest]=quicfaultstest.c helpers/ssltestlib.c $QUICTESTHELPERS
-      INCLUDE[quicfaultstest]=../include ../apps/include ..
-      DEPEND[quicfaultstest]=../libcrypto.a ../libssl.a libtestutil.a
-
       SOURCE[quicapitest]=quicapitest.c helpers/ssltestlib.c $QUICTESTHELPERS
       INCLUDE[quicapitest]=../include ../apps/include
       DEPEND[quicapitest]=../libcrypto.a ../libssl.a libtestutil.a
 
-      SOURCE[quic_newcid_test]=quic_newcid_test.c helpers/ssltestlib.c $QUICTESTHELPERS
-      INCLUDE[quic_newcid_test]=../include ../apps/include ..
-      DEPEND[quic_newcid_test]=../libcrypto.a ../libssl.a libtestutil.a
-
       SOURCE[quic_srt_gen_test]=quic_srt_gen_test.c helpers/ssltestlib.c $QUICTESTHELPERS
       INCLUDE[quic_srt_gen_test]=../include ../apps/include ..
       DEPEND[quic_srt_gen_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+      IF[{- !$disabled{ec} || !$disabled{dh} -}]
+        SOURCE[quicfaultstest]=quicfaultstest.c helpers/ssltestlib.c $QUICTESTHELPERS
+        INCLUDE[quicfaultstest]=../include ../apps/include ..
+        DEPEND[quicfaultstest]=../libcrypto.a ../libssl.a libtestutil.a
+
+        SOURCE[quic_newcid_test]=quic_newcid_test.c helpers/ssltestlib.c $QUICTESTHELPERS
+        INCLUDE[quic_newcid_test]=../include ../apps/include ..
+        DEPEND[quic_newcid_test]=../libcrypto.a ../libssl.a libtestutil.a
+      ENDIF
     ENDIF
 
     IF[{- !$disabled{qlog} -}]

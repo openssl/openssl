@@ -73,7 +73,9 @@ struct qtest_fault {
 };
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+#if !(defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH))
 static int client_ready = 0;
+#endif
 static CRYPTO_CONDVAR *client_ready_cond = NULL;
 static CRYPTO_MUTEX *client_ready_mutex = NULL;
 #endif
@@ -452,7 +454,8 @@ int qtest_supports_blocking(void)
 
 #define MAXLOOPS    1000
 
-#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) \
+    && !(defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH))
 static int globserverret = 0;
 static TSAN_QUALIFIER int abortserverthread = 0;
 static QUIC_TSERVER *globtserv;
@@ -512,6 +515,7 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
     return 1;
 }
 
+#if !(defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH))
 int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
                                     int wanterr)
 {
@@ -740,6 +744,7 @@ int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
 
     return ret;
 }
+#endif
 
 int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code)
 {
