@@ -474,7 +474,6 @@ DH_get0_pub_key                         ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 DH_clear_flags                          ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_test_flags                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_set_flags                            ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
-DH_get0_engine                          ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_get_length                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_set_length                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_meth_new                             ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
@@ -558,7 +557,6 @@ DSA_get0_priv_key                       ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 DSA_clear_flags                         ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 DSA_test_flags                          ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 DSA_set_flags                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
-DSA_get0_engine                         ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 DSA_meth_new                            ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 DSA_meth_free                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 DSA_meth_dup                            ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
@@ -718,7 +716,6 @@ EC_KEY_free                             ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EC_KEY_copy                             ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 EC_KEY_dup                              ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 EC_KEY_up_ref                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
-EC_KEY_get0_engine                      ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 EC_KEY_get0_group                       ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 EC_KEY_set_group                        ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 EC_KEY_get0_private_key                 ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
@@ -2217,7 +2214,6 @@ RSA_clear_flags                         ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 RSA_test_flags                          ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 RSA_set_flags                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 RSA_get_version                         ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-RSA_get0_engine                         ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 RSA_generate_key                        ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_0_9_8
 RSA_generate_key_ex                     ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 RSA_generate_multi_prime_key            ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
@@ -2454,7 +2450,6 @@ OSSL_STORE_LOADER_set_load              ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OSSL_STORE_LOADER_set_eof               ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OSSL_STORE_LOADER_set_error             ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OSSL_STORE_LOADER_set_close             ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-OSSL_STORE_LOADER_get0_engine           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OSSL_STORE_LOADER_get0_scheme           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OSSL_STORE_register_loader              ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OSSL_STORE_unregister_loader            ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
