@@ -458,6 +458,7 @@ void OPENSSL_cpuid_setup(void)
         OPENSSL_armcap_P |= ARMV8_HAVE_SHA3_AND_WORTH_USING;
     if (OPENSSL_armcap_P & ARMV9_SVE2) {
         uint64_t vl_bytes = _armv8_sve_get_vl_bytes();
+
         if (vl_bytes > 16 && (vl_bytes & (vl_bytes - 1)) == 0) {
             /*
              * This implementation faster if vector length > 128 bits
