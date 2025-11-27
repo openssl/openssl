@@ -218,7 +218,6 @@ OSSL_DEPRECATEDIN_3_0 const BIGNUM *DSA_get0_priv_key(const DSA *d);
 OSSL_DEPRECATEDIN_3_0 void DSA_clear_flags(DSA *d, int flags);
 OSSL_DEPRECATEDIN_3_0 int DSA_test_flags(const DSA *d, int flags);
 OSSL_DEPRECATEDIN_3_0 void DSA_set_flags(DSA *d, int flags);
-OSSL_DEPRECATEDIN_3_0 ENGINE *DSA_get0_engine(DSA *d);
 
 OSSL_DEPRECATEDIN_3_0 DSA_METHOD *DSA_meth_new(const char *name, int flags);
 OSSL_DEPRECATEDIN_3_0 void DSA_meth_free(DSA_METHOD *dsam);

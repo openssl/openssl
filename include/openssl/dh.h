@@ -275,7 +275,6 @@ OSSL_DEPRECATEDIN_3_0 const BIGNUM *DH_get0_pub_key(const DH *dh);
 OSSL_DEPRECATEDIN_3_0 void DH_clear_flags(DH *dh, int flags);
 OSSL_DEPRECATEDIN_3_0 int DH_test_flags(const DH *dh, int flags);
 OSSL_DEPRECATEDIN_3_0 void DH_set_flags(DH *dh, int flags);
-OSSL_DEPRECATEDIN_3_0 ENGINE *DH_get0_engine(DH *d);
 OSSL_DEPRECATEDIN_3_0 long DH_get_length(const DH *dh);
 OSSL_DEPRECATEDIN_3_0 int DH_set_length(DH *dh, long length);
 

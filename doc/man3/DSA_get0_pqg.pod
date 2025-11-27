@@ -5,9 +5,8 @@
 DSA_get0_pqg, DSA_set0_pqg, DSA_get0_key, DSA_set0_key,
 DSA_get0_p, DSA_get0_q, DSA_get0_g,
 DSA_get0_pub_key, DSA_get0_priv_key,
-DSA_clear_flags, DSA_test_flags, DSA_set_flags,
-DSA_get0_engine - Routines for getting and
-setting data in a DSA object
+DSA_clear_flags, DSA_test_flags, DSA_set_flags
+- Routines for getting and setting data in a DSA object
 
 =head1 SYNOPSIS
 
@@ -31,7 +30,6 @@ see L<openssl_user_macros(7)>:
  void DSA_clear_flags(DSA *d, int flags);
  int DSA_test_flags(const DSA *d, int flags);
  void DSA_set_flags(DSA *d, int flags);
- ENGINE *DSA_get0_engine(DSA *d);
 
 =head1 DESCRIPTION
 
@@ -80,9 +78,6 @@ flags can be tested in one go. All flags that are currently set are returned, or
 zero if none of the flags are set. DSA_clear_flags() clears the specified flags
 within the DSA object.
 
-DSA_get0_engine() returns a handle to the ENGINE that has been set for this DSA
-object, or NULL if no such ENGINE has been set.
-
 =head1 NOTES
 
 Values retrieved with DSA_get0_key() are owned by the DSA object used
@@ -96,9 +91,6 @@ DSA_set0_pqg() and DSA_set0_key() return 1 on success or 0 on failure.
 
 DSA_test_flags() returns the current state of the flags in the DSA object.
 
-DSA_get0_engine() returns the ENGINE set for the DSA object or NULL if no ENGINE
-has been set.
-
 =head1 SEE ALSO
 
 L<EVP_PKEY_get_bn_param(3)>,
@@ -110,6 +102,8 @@ L<DSA_sign(3)>, L<DSA_size(3)>, L<DSA_meth_new(3)>
 
 The functions described here were added in OpenSSL 1.1.0 and deprecated in
 OpenSSL 3.0.
+
+The DSA_get0_engine() was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

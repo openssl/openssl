@@ -3774,7 +3774,6 @@ DSA_get_method                          3986	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 DSA_meth_new                            3987	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 DSA_meth_set_flags                      3988	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 DSA_meth_get_sign_setup                 3989	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
-DSA_get0_engine                         3990	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 X509_VERIFY_PARAM_set_auth_level        3991	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get_auth_level        3992	4_0_0	EXIST::FUNCTION:
 X509_REQ_get0_pubkey                    3993	4_0_0	EXIST::FUNCTION:
@@ -3798,7 +3797,6 @@ RSA_meth_set_keygen                     4010	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 RSA_meth_set_pub_dec                    4011	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 RSA_meth_get_finish                     4012	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 RSA_get0_key                            4013	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-RSA_get0_engine                         4014	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 RSA_meth_set_priv_enc                   4015	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 RSA_meth_set_verify                     4016	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 RSA_get0_factors                        4017	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
@@ -3822,7 +3820,6 @@ RSA_get0_crt_params                     4038	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 DH_set0_pqg                             4039	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_clear_flags                          4041	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_get0_key                             4042	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
-DH_get0_engine                          4043	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_set0_key                             4044	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_set_length                           4045	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_test_flags                           4046	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
@@ -3986,7 +3983,6 @@ EVP_aria_256_ctr                        4203	4_0_0	EXIST::FUNCTION:ARIA
 EVP_aria_128_ctr                        4204	4_0_0	EXIST::FUNCTION:ARIA
 EVP_aria_192_ctr                        4205	4_0_0	EXIST::FUNCTION:ARIA
 UI_null                                 4206	4_0_0	EXIST::FUNCTION:
-EC_KEY_get0_engine                      4207	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 INT32_it                                4208	4_0_0	EXIST::FUNCTION:
 UINT64_it                               4209	4_0_0	EXIST::FUNCTION:
 ZINT32_it                               4210	4_0_0	EXIST::FUNCTION:
@@ -4065,7 +4061,6 @@ OSSL_STORE_INFO_get0_NAME_description   4283	4_0_0	EXIST::FUNCTION:
 OSSL_STORE_INFO_set0_NAME_description   4284	4_0_0	EXIST::FUNCTION:
 OSSL_STORE_INFO_get1_NAME_description   4285	4_0_0	EXIST::FUNCTION:
 OSSL_STORE_do_all_loaders               4286	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-OSSL_STORE_LOADER_get0_engine           4287	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OPENSSL_fork_prepare                    4288	4_0_0	EXIST:UNIX:FUNCTION:DEPRECATEDIN_3_0
 OPENSSL_fork_parent                     4289	4_0_0	EXIST:UNIX:FUNCTION:DEPRECATEDIN_3_0
 OPENSSL_fork_child                      4290	4_0_0	EXIST:UNIX:FUNCTION:DEPRECATEDIN_3_0
