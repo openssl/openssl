@@ -481,6 +481,49 @@ static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
     return 1;
 }
 
+static int i2r_crl_invdate(const X509V3_EXT_METHOD *method, void *date,
+                           BIO *out, int indent);
+static int i2r_object(const X509V3_EXT_METHOD *method, void *obj, BIO *out,
+                      int indent);
+
+const X509V3_EXT_METHOD ossl_v3_crl_invdate = {
+    NID_invalidity_date, 0, ASN1_ITEM_ref(ASN1_GENERALIZEDTIME),
+    0, 0, 0, 0,
+    0, 0,
+    0, 0,
+    i2r_crl_invdate, 0,
+    NULL
+};
+
+const X509V3_EXT_METHOD ossl_v3_crl_hold = {
+    NID_hold_instruction_code, 0, ASN1_ITEM_ref(ASN1_OBJECT),
+    0, 0, 0, 0,
+    0, 0,
+    0, 0,
+    i2r_object, 0,
+    NULL
+};
+
+static int i2r_crl_invdate(const X509V3_EXT_METHOD *method, void *date,
+                           BIO *bp, int ind)
+{
+    if (BIO_printf(bp, "%*s", ind, "") <= 0)
+        return 0;
+    if (!ASN1_GENERALIZEDTIME_print(bp, date))
+        return 0;
+    return 1;
+}
+
+static int i2r_object(const X509V3_EXT_METHOD *method, void *oid, BIO *bp,
+                      int ind)
+{
+    if (BIO_printf(bp, "%*s", ind, "") <= 0)
+        return 0;
+    if (i2a_ASN1_OBJECT(bp, oid) <= 0)
+        return 0;
+    return 1;
+}
+
 /* Append any nameRelativeToCRLIssuer in dpn to iname, set in dpn->dpname */
 int DIST_POINT_set_dpname(DIST_POINT_NAME *dpn, const X509_NAME *iname)
 {
