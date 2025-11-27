@@ -1773,33 +1773,9 @@ $code.=<<___;
     16-block byte-sliced encryption/decryption
 */
 
-.globl  camellia_encrypt_16blks_neon
-.type   camellia_encrypt_16blks_neon,%function
-.align  5
-camellia_encrypt_16blks_neon:
-    // === PROLOGUE ===
-    stp     x29,x30,[sp,#-144]!
-    mov     x29,sp
-    
-    stp     q8,q9,[sp,#16]
-    stp     q10,q11,[sp,#48]
-    stp     q12,q13,[sp,#80]
-    stp     q14,q15,[sp,#112]
-
-    // === SETUP ===
-    // Determine lastk
-    ldr     w9,[x0,#272]
-    mov     w8,#32
-    mov     w10,#24
-    cmp     w9,#16
-    csel    w8,w10,w8,le         // x8 -> lastk: if key_length <= 16 then 24, else - 32 
-
-    // === INPUT PROCESSING ===
-    // Call inpack16_pre: reads vin(x2), key[0](=ctx_ptr: x0), writes v0-v15
-    // clobbers: v16-v18 and x4
-___
-    &inpack16_pre("x2", "x0", "v16", "x4");
-$code.=<<___;
+.align 5
+.L16_enc_core:
+    // Core encryption algorithm (factored out of the main routine for the sake of CTR mode).
 
     // Set up temp buffer pointers using vout_ptr (x1)
     mov     x10,x1          // x10 -> vout
@@ -1881,6 +1857,40 @@ $code.=<<___;
     // Call outunpack16: Operates in-place on v0-v15
 ___
     &outunpack16("x4", "v16", "v17", "v18", "x5");
+$code.=<<___;
+
+    ret
+
+.globl  camellia_encrypt_16blks_neon
+.type   camellia_encrypt_16blks_neon,%function
+.align  5
+camellia_encrypt_16blks_neon:
+    // === PROLOGUE ===
+    stp     x29,x30,[sp,#-144]!
+    mov     x29,sp
+    
+    stp     q8,q9,[sp,#16]
+    stp     q10,q11,[sp,#48]
+    stp     q12,q13,[sp,#80]
+    stp     q14,q15,[sp,#112]
+
+    // === SETUP ===
+    // Determine lastk
+    ldr     w9,[x0,#272]
+    mov     w8,#32
+    mov     w10,#24
+    cmp     w9,#16
+    csel    w8,w10,w8,le         // x8 -> lastk: if key_length <= 16 then 24, else - 32 
+
+    // === INPUT PROCESSING ===
+    // Call inpack16_pre: reads vin(x2), key[0](=ctx_ptr: x0), writes v0-v15
+    // clobbers: v16-v18 and x4
+___
+    &inpack16_pre("x2", "x0", "v16", "x4");
+$code.=<<___;
+
+    bl      .L16_enc_core
+___
 
     &write_output("x1");
 $code.=<<___;
@@ -2169,7 +2179,7 @@ $code.=<<___;
     
     // Load IV (Current IV state) into v31, start pre-loading Input Ciphertext
     ldr     q31,[x23]
-    ld1     {v16.16b-v19.16b}, [x19], #64   // Load C0-C3
+    ld1     {v16.16b-v19.16b},[x19],#64   // Load C0-C3
     
     // XOR Block 0 (v7) with IV
     eor     v7.16b,v7.16b,v31.16b
@@ -2263,6 +2273,176 @@ $code.=<<___;
     ldp     x29,x30,[sp],#464
     ret
 .size   camellia_cbc_decrypt_neon,.-camellia_cbc_decrypt_neon
+
+# ====================================================================
+# CTR MODE (32-bit Counter)
+# ====================================================================
+.globl  camellia_ctr32_encrypt_blocks_neon
+.type   camellia_ctr32_encrypt_blocks_neon,%function
+.align  5
+camellia_ctr32_encrypt_blocks_neon:
+    // Arguments: x0=in, x1=out, x2=nblocks, x3=key, x4=iv
+
+    // === PROLOGUE ===
+    // Stack: 
+    //   208 (Regs) 
+    // + 256 (Scratch for Core: mem_ab/mem_cd)
+    // + 32  (Storage for Generator State: v28/v29)
+    // = 496 bytes
+    stp     x29,x30,[sp,#-496]!
+    mov     x29,sp
+    
+    stp     q8,q9,[sp,#16]
+    stp     q10,q11,[sp,#48]
+    stp     q12,q13,[sp,#80]
+    stp     q14,q15,[sp,#112]
+
+    stp     x19,x20,[sp,#144]
+    stp     x21,x22,[sp,#160]
+    stp     x23,x24,[sp,#176]
+    str     x25,[sp,#192]
+
+    mov     x19,x0      // In
+    mov     x20,x1      // Out
+    mov     x21,x2      // Blocks
+    mov     x22,x3      // Key
+    mov     x23,x4      // IV Ptr
+
+    // === KEY SETUP ===
+    ldr     w9,[x22,#272]
+    mov     w8,#32
+    mov     w10,#24
+    cmp     w9,#16
+    csel    w8,w10,w8,le    // x8 = lastk
+
+    // Prepare Whitening Key (as done in inpack16_pre)
+    ldr     x5,[x22]
+    fmov    d29,x5
+    adrp    x6,.Lpack_bswap
+    add     x6,x6,:lo12:.Lpack_bswap
+    ldr     q17,[x6]
+    tbl     v29.16b,{v29.16b},v17.16b 
+
+    // 2. Prepare Counter (v28, w24)
+    ldr     q28,[x23]
+    rev32   v28.16b,v28.16b        // To LE
+    mov     w24,v28.s[3]           // Extract Counter
+
+    stp     q28,q29,[sp,#464]       // Backup generator state
+
+.Lctr_bulk_loop:
+    cmp     x21,#16
+    b.lt    .Lctr_tail
+
+    ldp     q28,q29,[sp,#464]       // Restore generator state
+
+    // === COUNTER GENERATION ===
+    // Generate 16 counters in v0-v15 using Hybrid approach
+___
+    for($i=15; $i>=0; $i--) {
+$code.=<<___;
+        mov     v$i.16b,v28.16b         // Copy Base
+        mov     v$i.s[3],w24            // Insert Counter
+        add     w24,w24,#1              // Increment
+        rev32   v$i.16b,v$i.16b         // To BE
+        eor     v$i.16b,v$i.16b,v29.16b // Whiten
+___
+    }
+$code.=<<___;
+
+    // === ENCRYPT ===
+    mov     x0,x22         // Key
+    add     x1,sp,#208    // Scratch Space
+    bl      .L16_enc_core
+
+    // === XOR WITH INPUT ===
+    // We load Input into v16-v31 (Scratch regs)
+    // Post-increment x19 by 64*4 = 256 total
+    
+    ld1     {v16.16b-v19.16b},[x19],#64   // Load In[0-3]
+    eor     v7.16b,v7.16b,v16.16b         // Out[0] = KeyStream(v7) ^ In[0]
+    eor     v6.16b,v6.16b,v17.16b         // Out[1] = KeyStream(v6) ^ In[1]
+    ld1     {v20.16b-v23.16b},[x19],#64
+    eor     v5.16b,v5.16b,v18.16b
+    eor     v4.16b,v4.16b,v19.16b
+    ld1     {v24.16b-v27.16b},[x19],#64
+    eor     v3.16b,v3.16b,v20.16b
+    eor     v2.16b,v2.16b,v21.16b
+    eor     v1.16b,v1.16b,v22.16b
+    eor     v0.16b,v0.16b,v23.16b
+    ld1     {v16.16b-v19.16b},[x19],#64
+    eor     v15.16b,v15.16b,v24.16b
+    eor     v14.16b,v14.16b,v25.16b
+    eor     v13.16b,v13.16b,v26.16b
+    eor     v12.16b,v12.16b,v27.16b
+    eor     v11.16b,v11.16b,v16.16b
+    eor     v10.16b,v10.16b,v17.16b
+    eor     v9.16b,v9.16b,v18.16b
+    eor     v8.16b,v8.16b,v19.16b
+
+    // === STORE OUTPUT ===
+___
+    &write_output("x20");
+$code.=<<___;
+
+    // Advance Output Pointer
+    add     x20,x20,#256
+    sub     x21,x21,#16
+    b       .Lctr_bulk_loop
+
+.Lctr_tail:
+    cbz     x21,.Lctr_done
+
+    ldr     q28,[sp,#464]       // Load base IV
+
+.Lctr_tail_loop:
+    mov     v28.s[3],w24        // Update counter in vector
+
+    rev32   v30.16b, v28.16b    // Use v30 as temp to keep v28 LE
+    str     q30,[sp,#208]       // Store to stack to use as Inp
+
+    mov     x0,x22              // Key
+    add     x1,sp,#224          // Output Scratch
+    add     x2,sp,#208          // Input (Counter)
+    
+    bl      camellia_encrypt_1blk_armv8
+    
+    // XOR & Store
+    ldp     x6,x7,[sp,#224]     // Keystream
+    ldp     x4,x5,[x19]       // Input
+    eor     x4,x4,x6
+    eor     x5,x5,x7
+    stp     x4,x5,[x20]       // Output
+    
+    // Increment counter
+    add     w24,w24,#1
+    
+    add     x19,x19,#16
+    add     x20,x20,#16
+    subs    x21,x21,#1
+    b.gt    .Lctr_tail_loop
+
+.Lctr_done:
+    // Save IV
+    ldr     q28,[sp,#464]
+    mov     v28.s[3],w24       
+    rev32   v28.16b,v28.16b    
+    str     q28,[x23]    
+
+    // Epilogue
+    ldr     x25,[sp,#192]
+    ldp     x23,x24,[sp,#176]
+    ldp     x21,x22,[sp,#160]
+    ldp     x19,x20,[sp,#144]
+
+    ldp     q14,q15,[sp,#112]
+    ldp     q12,q13,[sp,#80]
+    ldp     q10,q11,[sp,#48]
+    ldp     q8,q9,[sp,#16]
+
+    ldp     x29,x30,[sp],#496
+    ret
+.size   camellia_ctr32_encrypt_blocks_neon,.-camellia_ctr32_encrypt_blocks_neon
 
 /*
    "Optimised" key setup 
