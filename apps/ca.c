@@ -1691,13 +1691,14 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                    ret, NULL /* no need to give req, needed info is in ret */,
                    NULL, X509V3_CTX_REPLACE);
     /* prepare fallback for AKID, but only if issuer cert equals subject cert */
-    if (selfsign) {
+    if (selfsign && !cert_matches_key(ret, pkey)) {
         if (!X509V3_set_issuer_pkey(&ext_ctx, pkey))
             goto end;
-        if (!cert_matches_key(ret, pkey))
-            BIO_printf(bio_err,
-                       "Warning: Signature key and public key of cert do not match\n");
+        BIO_printf(bio_err,
+                   "Warning: Signature key and public key of cert do not match\n");
     }
+    if (!add_X509_default_keyids(ret, pkey, &ext_ctx))
+        goto end;
 
     /* Lets add the extensions, if there are any */
     if (ext_sect) {

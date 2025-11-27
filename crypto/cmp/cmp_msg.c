@@ -127,6 +127,7 @@ X509_PUBKEY *OSSL_CMP_MSG_get0_certreq_publickey(const OSSL_CMP_MSG *msg)
 static int add1_extension(X509_EXTENSIONS **pexts, int nid, int crit, void *ex)
 {
     X509_EXTENSION *ext;
+    int idx;
     int res;
 
     if (!ossl_assert(pexts != NULL)) /* pointer to var must not be NULL */
@@ -134,6 +135,9 @@ static int add1_extension(X509_EXTENSIONS **pexts, int nid, int crit, void *ex)
 
     if ((ext = X509V3_EXT_i2d(nid, crit, ex)) == NULL)
         return 0;
+
+    while ((idx = X509v3_get_ext_by_NID(*pexts, nid, -1)) >= 0)
+        X509_EXTENSION_free(X509v3_delete_ext(*pexts, idx));
 
     res = X509v3_add_ext(pexts, ext, 0) != NULL;
     X509_EXTENSION_free(ext);
@@ -334,7 +338,8 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
             && !add1_extension(&exts, NID_subject_alt_name, crit, default_sans))
         goto err;
     if (sk_X509_EXTENSION_num(ctx->reqExtensions) > 0 /* augment/override existing ones */
-            && X509v3_add_extensions(&exts, ctx->reqExtensions) == NULL)
+            && ((exts == NULL && (exts = sk_X509_EXTENSION_new_null()) == NULL)
+                || X509v3_add_extensions(&exts, ctx->reqExtensions) == NULL))
         goto err;
     if (sk_GENERAL_NAME_num(ctx->subjectAltNames) > 0
             && !add1_extension(&exts, NID_subject_alt_name,
