@@ -11,8 +11,8 @@
  */
 
 #ifndef OSSL_CRYPTO_BN_CONF_H
-# define OSSL_CRYPTO_BN_CONF_H
-# pragma once
+#define OSSL_CRYPTO_BN_CONF_H
+#pragma once
 
 /*
  * The contents of this file are not used in the UEFI build, as
@@ -25,11 +25,11 @@
 /* Only one for the following should be defined */
 /* clang-format off */
 {- $config{b64l} ? "#define" : "#undef" -} SIXTY_FOUR_BIT_LONG
-/* clang-format on */
-/* clang-format off */
+    /* clang-format on */
+    /* clang-format off */
 {- $config{b64}  ? "#define" : "#undef" -} SIXTY_FOUR_BIT
-/* clang-format on */
-/* clang-format off */
+    /* clang-format on */
+    /* clang-format off */
 {- $config{b32}  ? "#define" : "#undef" -} THIRTY_TWO_BIT
 /* clang-format on */
 

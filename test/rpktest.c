@@ -19,7 +19,7 @@
  * If we don't have ec or dh then there are no built-in groups that are usable
  * with TLSv1.3
  */
-# define OSSL_NO_USABLE_TLS1_3
+#define OSSL_NO_USABLE_TLS1_3
 #endif
 
 static char *certsdir = NULL;
@@ -96,8 +96,8 @@ static int rpk_verify_server_cb(int ok, X509_STORE_CTX *ctx)
  */
 static int test_rpk(int idx)
 {
-# define RPK_TESTS 18
-# define RPK_DIMS (2 * 4 * 2 * 2 * 2 * 2)
+#define RPK_TESTS 18
+#define RPK_DIMS (2 * 4 * 2 * 2 * 2 * 2)
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     EVP_PKEY *pkey = NULL, *other_pkey = NULL, *root_pkey = NULL;
@@ -146,37 +146,37 @@ static int test_rpk(int idx)
         goto end;
 
     switch (idx_cert) {
-        case 0:
-            /* use RSA */
-            cert_file = cert;
-            privkey_file = privkey;
-            other_cert_file = cert2;
-            break;
+    case 0:
+        /* use RSA */
+        cert_file = cert;
+        privkey_file = privkey;
+        other_cert_file = cert2;
+        break;
 #ifndef OPENSSL_NO_ECDSA
-        case 1:
-            /* use ECDSA */
-            cert_file = cert2;
-            privkey_file = privkey2;
-            other_cert_file = cert;
-            break;
-# ifndef OPENSSL_NO_ECX
-        case 2:
-            /* use Ed448 */
-            cert_file = cert448;
-            privkey_file = privkey448;
-            other_cert_file = cert;
-            break;
-        case 3:
-            /* use Ed25519 */
-            cert_file = cert25519;
-            privkey_file = privkey25519;
-            other_cert_file = cert;
-            break;
-# endif
+    case 1:
+        /* use ECDSA */
+        cert_file = cert2;
+        privkey_file = privkey2;
+        other_cert_file = cert;
+        break;
+#ifndef OPENSSL_NO_ECX
+    case 2:
+        /* use Ed448 */
+        cert_file = cert448;
+        privkey_file = privkey448;
+        other_cert_file = cert;
+        break;
+    case 3:
+        /* use Ed25519 */
+        cert_file = cert25519;
+        privkey_file = privkey25519;
+        other_cert_file = cert;
+        break;
 #endif
-        default:
-            testresult = TEST_skip("EDCSA disabled");
-            goto end;
+#endif
+    default:
+        testresult = TEST_skip("EDCSA disabled");
+        goto end;
     }
     /* Load primary cert */
     x509 = load_cert_pem(cert_file, NULL);
@@ -225,9 +225,9 @@ static int test_rpk(int idx)
             goto end;
     }
     if (!TEST_true(create_ssl_ctx_pair(test_libctx,
-                                       TLS_server_method(), TLS_client_method(),
-                                       tls_version, tls_version,
-                                       &sctx, &cctx, NULL, NULL)))
+            TLS_server_method(), TLS_client_method(),
+            tls_version, tls_version,
+            &sctx, &cctx, NULL, NULL)))
         goto end;
 
     if (idx_server_server_rpk)
@@ -256,7 +256,7 @@ static int test_rpk(int idx)
     SSL_CTX_set_verify(cctx, SSL_VERIFY_PEER, rpk_verify_client_cb);
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                      NULL, NULL)))
+            NULL, NULL)))
         goto end;
 
     if (!TEST_int_gt(SSL_dane_enable(serverssl, NULL), 0))
@@ -546,12 +546,12 @@ static int test_rpk(int idx)
         EVP_PKEY *server_pkey = NULL;
 
         if (!TEST_ptr((client_sess = SSL_get1_session(clientssl)))
-                || !TEST_ptr((client_pkey = SSL_SESSION_get0_peer_rpk(client_sess))))
+            || !TEST_ptr((client_pkey = SSL_SESSION_get0_peer_rpk(client_sess))))
             goto end;
         if (client_auth) {
             if (!TEST_ptr((server_sess = SSL_get1_session(serverssl)))
                 || !TEST_ptr((server_pkey = SSL_SESSION_get0_peer_rpk(server_sess))))
-            goto end;
+                goto end;
         }
         SSL_shutdown(clientssl);
         SSL_shutdown(serverssl);
@@ -560,8 +560,8 @@ static int test_rpk(int idx)
         serverssl = clientssl = NULL;
 
         if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                          NULL, NULL))
-                || !TEST_true(SSL_set_session(clientssl, client_sess)))
+                NULL, NULL))
+            || !TEST_true(SSL_set_session(clientssl, client_sess)))
             goto end;
 
         /* Set private key (and maybe certificate) */
@@ -649,7 +649,7 @@ static int test_rpk(int idx)
 
     testresult = 1;
 
- end:
+end:
     OSSL_PROVIDER_unload(defctxnull);
     defctxnull = NULL;
     SSL_SESSION_free(client_sess);
@@ -664,9 +664,9 @@ static int test_rpk(int idx)
 
     if (testresult == 0) {
         TEST_info("idx_ss_rpk=%d, idx_sc_rpk=%d, idx_cs_rpk=%d, idx_cc_rpk=%d, idx_cert=%d, idx_prot=%d, idx=%d",
-                  idx_server_server_rpk, idx_server_client_rpk,
-                  idx_client_server_rpk, idx_client_client_rpk,
-                  idx_cert, idx_prot, idx);
+            idx_server_server_rpk, idx_server_client_rpk,
+            idx_client_server_rpk, idx_client_client_rpk,
+            idx_cert, idx_prot, idx);
     }
     return testresult;
 }
@@ -676,21 +676,21 @@ static int test_rpk_api(void)
     int ret = 0;
     SSL_CTX *cctx = NULL, *sctx = NULL;
     unsigned char cert_type_dups[] = { TLSEXT_cert_type_rpk,
-                                       TLSEXT_cert_type_x509,
-                                       TLSEXT_cert_type_x509 };
+        TLSEXT_cert_type_x509,
+        TLSEXT_cert_type_x509 };
     unsigned char cert_type_bad[] = { 0xFF };
     unsigned char cert_type_extra[] = { TLSEXT_cert_type_rpk,
-                                        TLSEXT_cert_type_x509,
-                                        0xFF };
+        TLSEXT_cert_type_x509,
+        0xFF };
     unsigned char cert_type_unsup[] = { TLSEXT_cert_type_pgp,
-                                        TLSEXT_cert_type_1609dot2 };
+        TLSEXT_cert_type_1609dot2 };
     unsigned char cert_type_just_x509[] = { TLSEXT_cert_type_x509 };
     unsigned char cert_type_just_rpk[] = { TLSEXT_cert_type_rpk };
 
     if (!TEST_true(create_ssl_ctx_pair(NULL,
-                                       TLS_server_method(), TLS_client_method(),
-                                       TLS1_2_VERSION, TLS1_2_VERSION,
-                                       &sctx, &cctx, NULL, NULL)))
+            TLS_server_method(), TLS_client_method(),
+            TLS1_2_VERSION, TLS1_2_VERSION,
+            &sctx, &cctx, NULL, NULL)))
         goto end;
 
     if (!TEST_false(SSL_CTX_set1_server_cert_type(sctx, cert_type_dups, sizeof(cert_type_dups))))
@@ -712,7 +712,7 @@ static int test_rpk_api(void)
         goto end;
 
     ret = 1;
- end:
+end:
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     return ret;
@@ -773,7 +773,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rpk, RPK_TESTS * RPK_DIMS);
     return 1;
 
- err:
+err:
     return 0;
 }
 
@@ -789,4 +789,4 @@ void cleanup_tests(void)
     OPENSSL_free(cert25519);
     OPENSSL_free(privkey25519);
     OSSL_LIB_CTX_free(libctx);
- }
+}
