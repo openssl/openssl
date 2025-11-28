@@ -50,6 +50,12 @@ void rv64i_zvksed_sm4_encrypt(const unsigned char *in, unsigned char *out,
                               const SM4_KEY *key);
 void rv64i_zvksed_sm4_decrypt(const unsigned char *in, unsigned char *out,
                               const SM4_KEY *key);
+void rv64i_zvksed_sm4_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                                  size_t len, const SM4_KEY *key,
+                                  unsigned char *iv, int enc);
+void rv64i_zvksed_sm4_cbc_decrypt(const unsigned char *in, unsigned char *out,
+                                  size_t len, const SM4_KEY *key,
+                                  unsigned char *iv, int enc);
 #  elif (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 /* Intel x86_64 support */
 #   include "internal/cryptlib.h"
