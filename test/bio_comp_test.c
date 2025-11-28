@@ -17,11 +17,11 @@
 #include "testutil/output.h"
 #include "testutil/tu_local.h"
 
-#define COMPRESS  1
-#define EXPAND    0
+#define COMPRESS 1
+#define EXPAND 0
 
-#define BUFFER_SIZE    32 * 1024
-#define NUM_SIZES      4
+#define BUFFER_SIZE 32 * 1024
+#define NUM_SIZES 4
 static int sizes[NUM_SIZES] = { 64, 512, 2048, 16 * 1024 };
 
 /* using global buffers */
@@ -69,7 +69,7 @@ static int do_bio_comp_test(const BIO_METHOD *meth, size_t size)
         goto err;
 
     ret = 1;
- err:
+err:
     BIO_free(bexp);
     BIO_free(bcomp);
     BIO_free(bmem);
@@ -115,7 +115,7 @@ static int do_bio_comp(const BIO_METHOD *meth, int n)
     if (!TEST_true(do_bio_comp_test(meth, size)))
         goto err;
     success = 1;
- err:
+err:
     OPENSSL_free(original);
     OPENSSL_free(result);
     return success;
