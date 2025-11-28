@@ -440,26 +440,42 @@ static int test_xalloc(const bool secure, const bool array, const bool zero,
         if (secure) {
             if (array) {
                 if (zero)
+                    /* clang-format off */
                     ln = OPENSSL_LINE, ret = OPENSSL_secure_calloc(td->nmemb, td->size);
+                    /* clang-format on */
                 else
+                    /* clang-format off */
                     ln = OPENSSL_LINE, ret = OPENSSL_secure_malloc_array(td->nmemb, td->size);
+                    /* clang-format on */
             } else {
                 if (zero)
+                    /* clang-format off */
                     ln = OPENSSL_LINE, ret = OPENSSL_secure_zalloc(sz);
+                    /* clang-format on */
                 else
+                    /* clang-format off */
                     ln = OPENSSL_LINE, ret = OPENSSL_secure_malloc(sz);
+                    /* clang-format on */
             }
         } else {
             if (array) {
                 if (zero)
+                    /* clang-format off */
                     ln = OPENSSL_LINE, ret = OPENSSL_calloc(td->nmemb, td->size);
+                    /* clang-format on */
                 else
+                    /* clang-format off */
                     ln = OPENSSL_LINE, ret = OPENSSL_malloc_array(td->nmemb, td->size);
+                    /* clang-format on */
             } else {
                 if (zero)
+                    /* clang-format off*/
                     ln = OPENSSL_LINE, ret = OPENSSL_zalloc(sz);
+                    /* clang-format on */
                 else
+                    /* clang-format off*/
                     ln = OPENSSL_LINE, ret = OPENSSL_malloc(sz);
+                    /* clang-format on */
             }
         }
     } else {
@@ -556,14 +572,22 @@ static int test_xrealloc(const bool clear, const bool array, const bool macro,
         if (macro) {
             if (array) {
                 if (clear)
+                    /* clang-format off */
                     ln = OPENSSL_LINE, ret = OPENSSL_clear_realloc_array(ret, old_nmemb, nmemb, td->size);
+                    /* clang-format on */
                 else
+                    /* clang-format off */
                     ln = OPENSSL_LINE, ret = OPENSSL_realloc_array(ret, nmemb, td->size);
+                    /* clang-format on*/
             } else {
                 if (clear)
+                    /* clang-format off */
                     ln = OPENSSL_LINE, ret = OPENSSL_clear_realloc(ret, old_sz, sz);
+                    /* clang-format on */
                 else
+                    /* clang-format off */
                     ln = OPENSSL_LINE, ret = OPENSSL_realloc(ret, sz);
+                    /* clang-format on */
             }
         } else {
             if (array) {
@@ -654,9 +678,14 @@ static int test_xaligned_alloc(const bool array, const bool macro,
 
     if (macro) {
         if (array) {
+            /* clang-format off */
             ln = OPENSSL_LINE, ret = OPENSSL_aligned_alloc_array(td->nmemb, td->size, td->align, &freeptr);
+            /* clang-format on */
+
         } else {
+            /* clang-format off */
             ln = OPENSSL_LINE, ret = OPENSSL_aligned_alloc(sz, td->align, &freeptr);
+            /* clang-format on */
         }
     } else {
         if (array)
