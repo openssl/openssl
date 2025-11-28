@@ -1,10 +1,81 @@
-#! /usr/bin/env perl
-# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
+
+##############################################################################
+#
+# Copyright (c) 2025, Iakov Polyak <iakov.polyak@linaro.org>
+#
+# This file is an implementation of Camellia cipher algorithm.
+# It includes both scalar 1-block and parallel byte-sliced (Neon/AES)
+# 16-block implementations, both ported from x86_64 and intrinsics
+# versions from Jussi Kivilinna's repos, as described in his masters thesis.
+# It also contains CBC and CTR modes, benefiting from byte-sliced
+# implementation.
+#
+##############################################################################
+#
+# Copyright 2020-2023 Jussi Kivilinna
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+# of the Software, and to permit persons to whom the Software is furnished to do
+# so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+#
+##############################################################################
+#
+# camellia_asm.S ver 1.1
+#
+# Copyright © 2012-2013 Jussi Kivilinna <jussi.kivilinna@iki.fi>
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+#
+##############################################################################
+#
+# September 2025
+#
+# This is a 100% vector length agnostic implementation and has
+# been tested with QEMU for the vector length of up to 2048 bits.
+#
+# On Graviton4, with the vector register length of 128 bits,
+# it is less efficient than the Neon implementation by only 6%.
+# This number has been obtained by running
+# `openssl speed -evp ChaCha20-POLY1305` and
+# `openssl speed -evp ChaCha20`, pinned to a single CPU,
+# converting the 8192-byte result to cycles per byte
+# using actual average runtime CPU frequency from `perf stat`,
+# and taking the difference. On Graviton 4, this results in 
+# 0.62 cpb for Neon and 0.66 for SVE2.
+# 
+# While Neon should probably be the default choice on a 128-bit architecture,
+# speed-up is clearly expected with 256-bit and larger vector registers
+# in the future.
 
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
@@ -21,7 +92,7 @@ open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
 *STDOUT=*OUT;
 
 $code=<<___;
-#include "arm_arch.h"
+#include "crypto/arm_arch.h"
 
 .text
 
