@@ -11,7 +11,7 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #if defined(_WIN32)
-# include <windows.h>
+#include <windows.h>
 #endif
 
 #include <string.h>
@@ -23,10 +23,10 @@
 #include "threadstest.h"
 
 /* Limit the maximum number of threads */
-#define MAXIMUM_THREADS     10
+#define MAXIMUM_THREADS 10
 
 /* Limit the maximum number of providers loaded into a library context */
-#define MAXIMUM_PROVIDERS   4
+#define MAXIMUM_PROVIDERS 4
 
 static int do_fips = 0;
 static char *privkey;
@@ -41,9 +41,9 @@ static int test_lock(void)
     int res;
 
     res = TEST_true(CRYPTO_THREAD_read_lock(lock))
-          && TEST_true(CRYPTO_THREAD_unlock(lock))
-          && TEST_true(CRYPTO_THREAD_write_lock(lock))
-          && TEST_true(CRYPTO_THREAD_unlock(lock));
+        && TEST_true(CRYPTO_THREAD_unlock(lock))
+        && TEST_true(CRYPTO_THREAD_write_lock(lock))
+        && TEST_true(CRYPTO_THREAD_unlock(lock));
 
     CRYPTO_THREAD_lock_free(lock);
 
@@ -98,7 +98,7 @@ static void thread_local_thread_cb(void)
     ptr = CRYPTO_THREAD_get_local(&thread_local_key);
     if (!TEST_ptr_null(ptr)
         || !TEST_true(CRYPTO_THREAD_set_local(&thread_local_key,
-                                              &destructor_run_count)))
+            &destructor_run_count)))
         return;
 
     ptr = CRYPTO_THREAD_get_local(&thread_local_key);
@@ -114,7 +114,7 @@ static int test_thread_local(void)
     void *ptr = NULL;
 
     if (!TEST_true(CRYPTO_THREAD_init_local(&thread_local_key,
-                                            thread_local_destructor)))
+            thread_local_destructor)))
         return 0;
 
     ptr = CRYPTO_THREAD_get_local(&thread_local_key);
@@ -130,10 +130,10 @@ static int test_thread_local(void)
     if (!TEST_ptr_null(ptr))
         return 0;
 
-# if !defined(OPENSSL_SYS_WINDOWS)
+#if !defined(OPENSSL_SYS_WINDOWS)
     if (!TEST_int_eq(destructor_run_count, 1))
         return 0;
-# endif
+#endif
 #endif
 
     if (!TEST_true(CRYPTO_THREAD_cleanup_local(&thread_local_key)))
@@ -170,12 +170,12 @@ static int test_atomic(void)
     if (CRYPTO_atomic_or(&val64, 2, &ret64, NULL)) {
         /* This succeeds therefore we're on a platform with lockless atomics */
         if (!TEST_uint_eq((unsigned int)val64, 3)
-                || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
             goto err;
     } else {
         /* This failed therefore we're on a platform without lockless atomics */
         if (!TEST_uint_eq((unsigned int)val64, 1)
-                || !TEST_int_eq((unsigned int)ret64, 0))
+            || !TEST_int_eq((unsigned int)ret64, 0))
             goto err;
     }
     val64 = 1;
@@ -185,19 +185,19 @@ static int test_atomic(void)
         goto err;
 
     if (!TEST_uint_eq((unsigned int)val64, 3)
-            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+        || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
         goto err;
 
     ret64 = 0;
     if (CRYPTO_atomic_load(&val64, &ret64, NULL)) {
         /* This succeeds therefore we're on a platform with lockless atomics */
         if (!TEST_uint_eq((unsigned int)val64, 3)
-                || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
             goto err;
     } else {
         /* This failed therefore we're on a platform without lockless atomics */
         if (!TEST_uint_eq((unsigned int)val64, 3)
-                || !TEST_int_eq((unsigned int)ret64, 0))
+            || !TEST_int_eq((unsigned int)ret64, 0))
             goto err;
     }
 
@@ -206,11 +206,11 @@ static int test_atomic(void)
         goto err;
 
     if (!TEST_uint_eq((unsigned int)val64, 3)
-            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+        || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
         goto err;
 
     testresult = 1;
- err:
+err:
     CRYPTO_THREAD_lock_free(lock);
     return testresult;
 }
@@ -244,15 +244,14 @@ static int thread_setup_libctx(int libctx, const char *providers[])
 {
     size_t n;
 
-    if (libctx && !TEST_true(test_get_libctx(&multi_libctx, NULL, config_file,
-                                             NULL, NULL)))
+    if (libctx && !TEST_true(test_get_libctx(&multi_libctx, NULL, config_file, NULL, NULL)))
         return 0;
 
     if (providers != NULL)
         for (n = 0; providers[n] != NULL; n++)
             if (!TEST_size_t_lt(n, MAXIMUM_PROVIDERS)
                 || !TEST_ptr(multi_provider[n] = OSSL_PROVIDER_load(multi_libctx,
-                                                                    providers[n]))) {
+                                 providers[n]))) {
                 thead_teardown_libctx();
                 return 0;
             }
@@ -276,7 +275,7 @@ static int start_threads(size_t n, void (*thread_func)(void))
     if (!TEST_size_t_le(multi_num_threads + n, MAXIMUM_THREADS))
         return 0;
 
-    for (i = 0 ; i < n; i++)
+    for (i = 0; i < n; i++)
         if (!TEST_true(run_thread(multi_threads + multi_num_threads++, thread_func)))
             return 0;
     return 1;
@@ -284,24 +283,24 @@ static int start_threads(size_t n, void (*thread_func)(void))
 
 /* Template multi-threaded test function */
 static int thread_run_test(void (*main_func)(void),
-                           size_t num_threads, void (*thread_func)(void),
-                           int libctx, const char *providers[])
+    size_t num_threads, void (*thread_func)(void),
+    int libctx, const char *providers[])
 {
     int testresult = 0;
 
     multi_intialise();
     if (!thread_setup_libctx(libctx, providers)
-            || !start_threads(num_threads, thread_func))
+        || !start_threads(num_threads, thread_func))
         goto err;
 
     if (main_func != NULL)
         main_func();
 
     if (!teardown_threads()
-            || !TEST_true(multi_success))
+        || !TEST_true(multi_success))
         goto err;
     testresult = 1;
- err:
+err:
     thead_teardown_libctx();
     return testresult;
 }
@@ -333,24 +332,24 @@ static void thread_general_worker(void)
     isfips = OSSL_PROVIDER_available(multi_libctx, "fips");
 
     if (!TEST_ptr(mdctx)
-            || !TEST_ptr(md)
-            || !TEST_ptr(cipherctx)
-            || !TEST_ptr(ciph))
+        || !TEST_ptr(md)
+        || !TEST_ptr(cipherctx)
+        || !TEST_ptr(ciph))
         goto err;
 
     /* Do some work */
     for (i = 0; i < 5; i++) {
         if (!TEST_true(EVP_DigestInit_ex(mdctx, md, NULL))
-                || !TEST_true(EVP_DigestUpdate(mdctx, message, messlen))
-                || !TEST_true(EVP_DigestFinal(mdctx, out, &mdoutl)))
+            || !TEST_true(EVP_DigestUpdate(mdctx, message, messlen))
+            || !TEST_true(EVP_DigestFinal(mdctx, out, &mdoutl)))
             goto err;
     }
     for (i = 0; i < 5; i++) {
         if (!TEST_true(EVP_EncryptInit_ex(cipherctx, ciph, NULL, key, iv))
-                || !TEST_true(EVP_EncryptUpdate(cipherctx, out, &ciphoutl,
-                                                (unsigned char *)message,
-                                                messlen))
-                || !TEST_true(EVP_EncryptFinal(cipherctx, out, &ciphoutl)))
+            || !TEST_true(EVP_EncryptUpdate(cipherctx, out, &ciphoutl,
+                (unsigned char *)message,
+                messlen))
+            || !TEST_true(EVP_EncryptFinal(cipherctx, out, &ciphoutl)))
             goto err;
     }
 
@@ -364,7 +363,7 @@ static void thread_general_worker(void)
         goto err;
 
     testresult = 1;
- err:
+err:
     EVP_MD_CTX_free(mdctx);
     EVP_MD_free(md);
     EVP_CIPHER_CTX_free(cipherctx);
@@ -400,15 +399,15 @@ static void thread_shared_evp_pkey(void)
         if (i > 0)
             EVP_PKEY_CTX_free(ctx);
         ctx = EVP_PKEY_CTX_new_from_pkey(multi_libctx, shared_evp_pkey,
-                                         i == 0 ? "provider=default"
-                                                : "provider=fips");
+            i == 0 ? "provider=default"
+                   : "provider=fips");
         if (!TEST_ptr(ctx))
             goto err;
 
         if (!TEST_int_ge(EVP_PKEY_encrypt_init(ctx), 0)
-                || !TEST_int_ge(EVP_PKEY_encrypt(ctx, ctbuf, &ctlen,
-                                                (unsigned char *)msg, strlen(msg)),
-                                                0))
+            || !TEST_int_ge(EVP_PKEY_encrypt(ctx, ctbuf, &ctlen,
+                                (unsigned char *)msg, strlen(msg)),
+                0))
             goto err;
 
         EVP_PKEY_CTX_free(ctx);
@@ -419,15 +418,15 @@ static void thread_shared_evp_pkey(void)
 
         ptlen = sizeof(ptbuf);
         if (!TEST_int_ge(EVP_PKEY_decrypt_init(ctx), 0)
-                || !TEST_int_gt(EVP_PKEY_decrypt(ctx, ptbuf, &ptlen, ctbuf, ctlen),
-                                                0)
-                || !TEST_mem_eq(msg, strlen(msg), ptbuf, ptlen))
+            || !TEST_int_gt(EVP_PKEY_decrypt(ctx, ptbuf, &ptlen, ctbuf, ctlen),
+                0)
+            || !TEST_mem_eq(msg, strlen(msg), ptbuf, ptlen))
             goto err;
     }
 
     success = 1;
 
- err:
+err:
     EVP_PKEY_CTX_free(ctx);
     if (!success)
         multi_success = 0;
@@ -453,7 +452,7 @@ static void thread_provider_load_unload(void)
     OSSL_PROVIDER *deflt = OSSL_PROVIDER_load(multi_libctx, "default");
 
     if (!TEST_ptr(deflt)
-            || !TEST_true(OSSL_PROVIDER_available(multi_libctx, "default")))
+        || !TEST_true(OSSL_PROVIDER_available(multi_libctx, "default")))
         multi_success = 0;
 
     OSSL_PROVIDER_unload(deflt);
@@ -487,7 +486,7 @@ static int test_multi(int idx)
 
     multi_success = 1;
     if (!TEST_true(test_get_libctx(&multi_libctx, NULL, config_file,
-                                   NULL, NULL)))
+            NULL, NULL)))
         return 0;
 
     prov = OSSL_PROVIDER_load(multi_libctx, (idx == 1) ? "fips" : "default");
@@ -511,7 +510,7 @@ static int test_multi(int idx)
          * test
          */
         if (do_fips
-                && !TEST_ptr(prov2 = OSSL_PROVIDER_load(multi_libctx, "fips")))
+            && !TEST_ptr(prov2 = OSSL_PROVIDER_load(multi_libctx, "fips")))
             goto err;
         if (!TEST_ptr(shared_evp_pkey = load_pkey_pem(privkey, multi_libctx)))
             goto err;
@@ -536,7 +535,7 @@ static int test_multi(int idx)
         worker2 = worker;
 
     if (!TEST_true(run_thread(&thread1, worker))
-            || !TEST_true(run_thread(&thread2, worker2)))
+        || !TEST_true(run_thread(&thread2, worker2)))
         goto err;
 
     worker();
@@ -552,7 +551,7 @@ static int test_multi(int idx)
     if (!TEST_true(multi_success))
         testresult = 0;
 
- err:
+err:
     EVP_MD_free(sha256);
     OSSL_PROVIDER_unload(prov);
     OSSL_PROVIDER_unload(prov2);
@@ -575,7 +574,7 @@ static void test_multi_load_worker(void)
     OSSL_PROVIDER *prov;
 
     if (!TEST_ptr(prov = OSSL_PROVIDER_load(NULL, multi_load_provider))
-            || !TEST_true(OSSL_PROVIDER_unload(prov)))
+        || !TEST_true(OSSL_PROVIDER_unload(prov)))
         multi_success = 0;
 }
 
@@ -595,19 +594,19 @@ static int test_multi_default(void)
     multi_libctx = NULL;
 
     if (!TEST_true(run_thread(&thread1, thread_multi_simple_fetch))
-            || !TEST_true(run_thread(&thread2, thread_multi_simple_fetch)))
+        || !TEST_true(run_thread(&thread2, thread_multi_simple_fetch)))
         goto err;
 
     thread_multi_simple_fetch();
 
     if (!TEST_true(wait_for_thread(thread1))
-            || !TEST_true(wait_for_thread(thread2))
-            || !TEST_true(multi_success))
+        || !TEST_true(wait_for_thread(thread2))
+        || !TEST_true(multi_success))
         goto err;
 
     testresult = 1;
 
- err:
+err:
     return testresult;
 }
 
@@ -655,8 +654,8 @@ static void test_lib_ctx_load_config_worker(void)
 static int test_lib_ctx_load_config(void)
 {
     return thread_run_test(&test_lib_ctx_load_config_worker,
-                           MAXIMUM_THREADS, &test_lib_ctx_load_config_worker,
-                           1, default_provider);
+        MAXIMUM_THREADS, &test_lib_ctx_load_config_worker,
+        1, default_provider);
 }
 
 static X509_STORE *store = NULL;
@@ -679,15 +678,15 @@ static void test_x509_store_by_subject(void)
     if (!TEST_ptr(name))
         goto err;
     if (!TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
-                                              (unsigned char *)"Root CA",
-                                              -1, -1, 0)))
+            (unsigned char *)"Root CA",
+            -1, -1, 0)))
         goto err;
     obj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509, name);
     if (!TEST_ptr(obj))
         goto err;
 
     success = 1;
- err:
+err:
     X509_OBJECT_free(obj);
     X509_STORE_CTX_free(ctx);
     X509_NAME_free(name);
@@ -707,9 +706,9 @@ static int test_x509_store(void)
         goto err;
 
     ret = thread_run_test(&test_x509_store_by_subject, MAXIMUM_THREADS,
-                          &test_x509_store_by_subject, 0, NULL);
+        &test_x509_store_by_subject, 0, NULL);
 
- err:
+err:
     X509_STORE_free(store);
     store = NULL;
     return ret;
@@ -718,7 +717,8 @@ static int test_x509_store(void)
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
-    OPT_FIPS, OPT_CONFIG_FILE,
+    OPT_FIPS,
+    OPT_CONFIG_FILE,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -728,7 +728,7 @@ const OPTIONS *test_get_options(void)
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "fips", OPT_FIPS, '-', "Test the FIPS provider" },
         { "config", OPT_CONFIG_FILE, '<',
-          "The configuration file to use for the libctx" },
+            "The configuration file to use for the libctx" },
         { NULL }
     };
     return options;
