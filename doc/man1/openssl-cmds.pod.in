@@ -19,7 +19,6 @@ dsaparam,
 ec,
 ecparam,
 enc,
-engine,
 errstr,
 gendsa,
 genpkey,
@@ -148,6 +147,8 @@ the L<apropos(1)> command or the shell's tab completion.
 In order to reduce cluttering of the global manual page namespace,
 the manual page entries without the 'openssl-' prefix have been
 deprecated in OpenSSL 3.0 and will be removed in OpenSSL 4.0.
+
+The B<engine> command was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

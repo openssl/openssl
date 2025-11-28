@@ -82,7 +82,7 @@ algorithm with a 128-bit key in CBC mode.
 
 Public key algorithm to use such as RSA, DSA, DH or DHX. If used this option must
 precede any B<-pkeyopt> options. The options B<-paramfile> and B<-algorithm>
-are mutually exclusive. Engines or providers may add algorithms in addition to
+are mutually exclusive. Providers may add algorithms in addition to
 the standard built-in ones.
 
 Valid built-in algorithm names for private key generation are RSA, RSA-PSS, EC,

@@ -26,26 +26,26 @@ SSL_async_callback_fn
 =head1 DESCRIPTION
 
 SSL_CTX_set_async_callback() sets an asynchronous callback function. All B<SSL>
-objects generated based on this B<SSL_CTX> will get this callback. If an engine
-supports the callback mechanism, it will be automatically called if
-B<SSL_MODE_ASYNC> has been set and an asynchronous capable engine completes a
-cryptography operation to notify the application to resume the paused work flow.
+objects generated based on this B<SSL_CTX> will get this callback.  If a
+provider supports the callback mechanism, it will be automatically called if
+B<SSL_MODE_ASYNC> has been set and the provider completes a cryptography
+operation to notify the application to resume the paused work flow.
 
 SSL_CTX_set_async_callback_arg() sets the callback argument.
 
 SSL_set_async_callback() allows an application to set a callback in an
-asynchronous B<SSL> object, so that when an engine completes a cryptography
+asynchronous B<SSL> object, so that when an provider completes a cryptography
 operation, the callback will be called to notify the application to resume the
 paused work flow.
 
 SSL_set_async_callback_arg() sets an argument for the B<SSL> object when the
 above callback is called.
 
-SSL_get_async_status() returns the engine status. This function facilitates the
-communication from the engine to the application. During an SSL session,
-cryptographic operations are dispatched to an engine. The engine status is very
-useful for an application to know if the operation has been successfully
-dispatched. If the engine does not support this additional callback method,
+SSL_get_async_status() returns the provider status. This function facilitates
+the communication from the provider to the application. During an SSL session,
+cryptographic operations are dispatched to a provider. The provider status is
+very useful for an application to know if the operation has been successfully
+dispatched. If the provider does not support this additional callback method,
 B<ASYNC_STATUS_UNSUPPORTED> will be returned. See ASYNC_WAIT_CTX_set_status()
 for a description of all of the status values.
 
@@ -60,28 +60,28 @@ by calling SSL_set_async_callback().
 
 =item 2.
 
-Application sets B<SSL_MODE_ASYNC> and makes an asynchronous SSL call
+Application sets B<SSL_MODE_ASYNC> and makes an asynchronous SSL call.
 
 =item 3.
 
-OpenSSL submits the asynchronous request to the engine. If a retry occurs at
+OpenSSL submits the asynchronous request to the provider. If a retry occurs at
 this point then the status within the B<ASYNC_WAIT_CTX> would be set and the
 async callback function would be called (goto Step 7).
 
 =item 4.
 
-The OpenSSL engine pauses the current job and returns, so that the
+The OpenSSL provider pauses the current job and returns, so that the
 application can continue processing other connections.
 
 =item 5.
 
 At a future point in time (probably via a polling mechanism or via an
-interrupt) the engine will become aware that the asynchronous request has
+interrupt) the provider will become aware that the asynchronous request has
 finished processing.
 
 =item 6.
 
-The engine will call the application's callback passing the callback data as
+The provider will call the application's callback passing the callback data as
 a parameter.
 
 =item 7.
@@ -121,7 +121,7 @@ SSL_get_async_status() were first added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

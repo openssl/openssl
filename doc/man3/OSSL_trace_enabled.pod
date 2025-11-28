@@ -53,8 +53,7 @@ OSSL_TRACE_ENABLED
 =head1 DESCRIPTION
 
 The functions described here are mainly interesting for those who provide
-OpenSSL functionality, either in OpenSSL itself or in engine modules
-or similar.
+OpenSSL functionality, either in OpenSSL itself or in a provider or similar.
 
 If the tracing facility is enabled (see L</Configure Tracing> below),
 these functions are used to generate free text tracing output.

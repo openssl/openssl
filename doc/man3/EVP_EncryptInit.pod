@@ -395,9 +395,8 @@ specified.
 
 =item EVP_EncryptInit_ex()
 
-This legacy function is similar to EVP_EncryptInit_ex2() when I<impl> is NULL.
-The implementation of the I<type> from the I<impl> engine will be used if it
-exists.
+This legacy function is the same as EVP_EncryptInit_ex2() except B<params> will
+be NULL. I<impl> B<must> be NULL.
 
 =item EVP_EncryptUpdate()
 

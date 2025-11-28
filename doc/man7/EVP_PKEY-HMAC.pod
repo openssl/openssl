@@ -46,10 +46,6 @@ supports the following parameters.
 
 The name of a cipher to be used when generating the MAC.
 
-=item "engine" (B<OSSL_PKEY_PARAM_ENGINE>) <UTF8 string>
-
-The name of an engine to be used for the specified cipher (if any).
-
 =back
 
 =head2 Common MAC key generation parameters
@@ -83,9 +79,14 @@ The name of a cipher to be used when generating the MAC.
 
 L<EVP_KEYMGMT(3)>, L<EVP_PKEY(3)>, L<provider-keymgmt(7)>
 
+=head1 HISTORY
+
+The CMAC parameter I<engine> (B<OSSL_PKEY_PARAM_ENGINE>) was removed in
+OpenSSL 4.0.
+
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

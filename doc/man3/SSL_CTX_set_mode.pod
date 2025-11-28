@@ -105,7 +105,7 @@ in draft-ietf-tls-downgrade-scsv-00.
 =item SSL_MODE_ASYNC
 
 Enable asynchronous processing. TLS I/O operations may indicate a retry with
-SSL_ERROR_WANT_ASYNC with this mode set if an asynchronous capable engine is
+SSL_ERROR_WANT_ASYNC with this mode set if an asynchronous capable provider is
 used to perform cryptographic operations. See L<SSL_get_error(3)>.
 
 =item SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG

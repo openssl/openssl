@@ -25,7 +25,7 @@ The EVP signature routines are a high-level interface to digital
 signatures.
 
 EVP_SignInit_ex() sets up signing context I<ctx> to use digest
-I<type> from B<ENGINE> I<impl>. I<ctx> must be created with
+I<type>. I<impl> B<must> be NULL. I<ctx> must be created with
 EVP_MD_CTX_new() before calling this function.
 
 EVP_SignUpdate() hashes I<cnt> bytes of data at I<d> into the

@@ -95,9 +95,9 @@ stored in memory:
 HMAC_Init_ex() initializes or reuses a B<HMAC_CTX> structure to use the hash
 function I<evp_md> and key I<key>. If both are NULL, or if I<key> is NULL
 and I<evp_md> is the same as the previous call, then the
-existing key is
-reused. I<ctx> must have been created with HMAC_CTX_new() before the first use
-of an B<HMAC_CTX> in this function.
+existing key is reused. I<ctx> must have been created with HMAC_CTX_new()
+before the first use of an B<HMAC_CTX> in this function. I<impl> B<must>
+be NULL.
 
 If HMAC_Init_ex() is called with I<key> NULL and I<evp_md> is not the
 same as the previous digest used by I<ctx> then an error is returned
