@@ -313,6 +313,12 @@ under test output with the output for the TAP consumer.
 
 This variable was not considered security-sensitive.
 
+=item B<OPENSSL_ENGINES>
+
+Specifies the directory from which dynamic engines are loaded.
+
+This variable is considered a security-sensitive environment variable.
+
 =back
 
 =head1 COPYRIGHT

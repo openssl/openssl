@@ -43,7 +43,12 @@ as other OpenSSL functions.
 
 DH_get_default_method() returns a pointer to the current default DH_METHOD.
 
-DH_set_method() selects B<meth> to perform all operations using the key B<dh>.
+DH_set_method() selects B<meth> to perform all operations using the key
+B<dh>. This will replace the DH_METHOD used by the DH key.
+It is possible to have DH keys that only work with certain DH_METHOD
+implementations, and in such cases attempting to change the DH_METHOD for the
+key can have unexpected results. See L<DH_meth_new(3)> for information on
+constructing custom DH_METHOD objects.
 
 DH_new_method() allocates and initializes a DH structure. B<engine> must
 be NULL and the DH_METHOD controlled by DH_set_default_method() is used.

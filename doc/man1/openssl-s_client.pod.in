@@ -559,7 +559,7 @@ Send TLS_FALLBACK_SCSV in the ClientHello.
 
 Switch on asynchronous mode. Cryptographic operations will be performed
 asynchronously. This will only have an effect if an asynchronous capable
-provider is also used via the B<-provider> option.
+provider is also used.
 
 =item B<-maxfraglen> I<len>
 

@@ -26,8 +26,8 @@ The EVP signature verification routines are a high-level interface to digital
 signatures.
 
 EVP_VerifyInit_ex() sets up verification context I<ctx> to use digest
-I<type>. I<ctx> must be created by calling EVP_MD_CTX_new() before calling
-this function. I<impl> must be NULL.
+I<type>. I<ctx> B<must> be created by calling EVP_MD_CTX_new() before calling
+this function. I<impl> B<must> be NULL.
 
 EVP_VerifyUpdate() hashes I<cnt> bytes of data at I<d> into the
 verification context I<ctx>. This function can be called several times on the

@@ -114,10 +114,10 @@ algorithm type).
 
 EVP_PKEY_new_raw_private_key() does the same as
 EVP_PKEY_new_raw_private_key_ex() except that the default library context and
-default property query are used instead. The I<type> argument
-indicates what kind of key this is. The value should be a NID for a public key
-algorithm that supports raw private keys, i.e. one of B<EVP_PKEY_X25519>,
-B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>.
+default property query are used instead. I<e> B<must> be NULL. The I<type>
+argument indicates what kind of key this is. The value should be a NID for a
+public key algorithm that supports raw private keys, i.e. one of
+B<EVP_PKEY_X25519>, B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>.
 
 EVP_PKEY_new_raw_private_key_ex() and EVP_PKEY_new_raw_private_key() may also
 be used with most MACs implemented as public key algorithms, so key types such

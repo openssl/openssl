@@ -37,12 +37,12 @@ no support for this in OpenSSL 4.0. In previous versions some engines were
 able to process multiple simultaneous crypto operations. This
 capability could be utilised to parallelise the processing of a single
 connection. For example a single write can be split into multiple records and
-each one encrypted independently and in parallel. Note: this will only work in
+each one encrypted independently and in parallel. Note: this would only work in
 TLS1.1+. There was no support in SSLv3, TLSv1.0 or DTLS (any version). This
 capability is known as "pipelining" within OpenSSL.
 
-In order to benefit from the pipelining capability. You need to have an engine
-that provides ciphers that support this. Since OpenSSL 4.0 engines are no
+In order to benefit from the pipelining capability, you would need to have an
+engine that provides ciphers that support this. Since OpenSSL 4.0 engines are no
 longer supported and therefore pipelining is not supported either. In some
 future version it may be that this capability is added back via the provider
 mechanism.

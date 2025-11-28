@@ -166,12 +166,11 @@ removed from any source code.
 
 =head1 DESCRIPTION
 
-All of these functions were removed since OpenSSL 4.0.  Please remove them from
-your source code as soon as possible.  If you are not able to remove the symbols
-easily and still want to be able to compile your code (with empty and broken
-ENGINE), you are able to do so by defining B<OPENSSL_ENGINE_STUB> macro in
-your source files before the inclusion of the C<openssl/engine.h> header.
-Please use provider API instead of ENGINEs.
+All of these functions were removed since OpenSSL 4.0.  If there is still a need
+for these definitions to present (despite the support for engines being absent),
+it is possible to define the B<OPENSSL_ENGINE_STUB> macro (before the inclusion
+of the C<openssl/engine.h> header) to get stub definitions of the
+aforementioned functions.
 
 =head1 ENVIRONMENT
 

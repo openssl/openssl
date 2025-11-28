@@ -242,18 +242,18 @@ L<crypto(7)>
 
 =head1 HISTORY
 
-The B<OPENSSL_ENGINES_DIR> and B<OPENSSL_INFO_ENGINES_DIR> strings
-were removed since OpenSSL 4.0.
-
-The B<ENGINESDIR> setting of the library is no longer supported
-since OpenSSL 4.0.
-
 The macros and functions described here were added in OpenSSL 3.0,
 except for OPENSSL_VERSION_NUMBER and OpenSSL_version_num().
 
 The B<OPENSSL_ENGINES_DIR> and B<OPENSSL_INFO_ENGINES_DIR> strings
 are no longer supported and, for compatibility reasons, will always
 return values indicating that engine support was disabled.
+
+The B<OPENSSL_ENGINES_DIR> and B<OPENSSL_INFO_ENGINES_DIR> strings
+were removed since OpenSSL 4.0.
+
+The B<ENGINESDIR> setting of the library is no longer supported
+since OpenSSL 4.0.
 
 =head1 BUGS
 

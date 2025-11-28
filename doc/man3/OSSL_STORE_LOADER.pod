@@ -273,9 +273,8 @@ It returns 1 on success and 0 on error.
 
 OSSL_STORE_LOADER_new() creates a new B<OSSL_STORE_LOADER>.
 It takes  a string I<scheme>. I<scheme> must I<always> be set.
-B<ENGINE> must be NULL.
-I<scheme> is used as is and must therefore be alive as
-long as the created loader is.
+I<e> B<must> be NULL. I<scheme> is used as is and must therefore be alive
+as long as the created loader is.
 
 OSSL_STORE_LOADER_get0_scheme() returns the scheme of the I<store_loader>.
 

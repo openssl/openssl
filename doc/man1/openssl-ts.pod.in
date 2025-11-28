@@ -632,7 +632,7 @@ seeding mechanism. The new seeding mechanism makes it unnecessary to
 define a RANDFILE for saving and restoring randomness. This option is
 retained mainly for compatibility reasons.
 
-The B<-engine> option and B<crypto_device> configuration option was removed in
+The B<-engine> option and B<crypto_device> configuration option were removed in
 OpenSSL 4.0.
 
 =head1 SEE ALSO

@@ -444,6 +444,8 @@ and comments began with a semi-colon.
 This function was deprecated in OpenSSL 3.0; applications with
 configuration files using that syntax will have to be modified.
 
+The I<engines> parameter was removed in OpenSSL 4.0.
+
 =head1 SEE ALSO
 
 L<openssl-x509(1)>, L<openssl-req(1)>, L<openssl-ca(1)>,

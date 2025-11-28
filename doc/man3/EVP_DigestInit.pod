@@ -256,10 +256,12 @@ if the pointer is not NULL. At most B<EVP_MAX_MD_SIZE> bytes will be written.
 
 =item EVP_Digest()
 
-A wrapper around the Digest Init_ex, Update and Final_ex functions.
+A wrapper around the EVP_DigestInit_ex(), EVP_DigestUpdate() and
+EVP_DigestFinal_ex() functions.
 Hashes I<count> bytes of data at I<data>. The digest value is placed in I<md>
 and its length is written at I<size> if the pointer is not NULL. At most
-B<EVP_MAX_MD_SIZE> bytes will be written. I<impl> must be NULL.
+B<EVP_MAX_MD_SIZE> bytes will be written. I<impl> B<must> be NULL and the
+default implementation of digest I<type> is used.
 
 =item EVP_DigestInit_ex2()
 
