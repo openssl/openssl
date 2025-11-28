@@ -3835,7 +3835,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     case SSL_CTRL_GET_SHARED_GROUP:
         {
-            uint16_t id = tls1_shared_group(sc, larg);
+            uint16_t id = tls1_shared_group(sc, larg, TLS1_GROUPS_ALL_GROUPS);
 
             if (larg != -1)
                 return tls1_group_id2nid(id, 1);
@@ -4531,6 +4531,13 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
             OSSL_TRACE7(TLS_CIPHER,
                         "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n",
                         ok, alg_k, alg_a, mask_k, mask_a, (void *)c, c->name);
+
+            /*
+             * if we are considering a DHE cipher suite that uses an ephemeral
+             * FFDHE key check it
+             */
+            if (alg_k & SSL_kDHE)
+                ok = ok && tls1_check_ffdhe_tmp_key(s, c->id);
 
             /*
              * if we are considering an ECC cipher suite that uses an ephemeral
