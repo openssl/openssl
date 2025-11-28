@@ -65,32 +65,30 @@ static void signature_init(ML_DSA_SIG *sig,
  * @param ctx_len The size of |ctx|. It must be in the range 0..255
  * @returns an EVP_MD_CTX if the operation is successful, NULL otherwise.
  */
-
-EVP_MD_CTX *ossl_ml_dsa_mu_init(const ML_DSA_KEY *key, int encode,
-                                const uint8_t *ctx, size_t ctx_len)
+EVP_MD_CTX *ossl_ml_dsa_mu_init_int(EVP_MD *shake256_md,
+                                    const uint8_t *tr, size_t tr_len,
+                                    int encode, int prehash,
+                                    const uint8_t *ctx, size_t ctx_len)
 {
     EVP_MD_CTX *md_ctx;
     uint8_t itb[2];
-
-    if (key == NULL)
-        return NULL;
 
     md_ctx = EVP_MD_CTX_new();
     if (md_ctx == NULL)
         return NULL;
 
     /* H(.. */
-    if (!EVP_DigestInit_ex2(md_ctx, key->shake256_md, NULL))
+    if (!EVP_DigestInit_ex2(md_ctx, shake256_md, NULL))
         goto err;
     /* ..pk (= key->tr) */
-    if (!EVP_DigestUpdate(md_ctx, key->tr, sizeof(key->tr)))
+    if (!EVP_DigestUpdate(md_ctx, tr, tr_len))
         goto err;
     /* M' = .. */
     if (encode) {
         if (ctx_len > ML_DSA_MAX_CONTEXT_STRING_LEN)
             goto err;
         /* IntegerToBytes(0, 1) .. */
-        itb[0] = 0;
+        itb[0] = prehash ? 1 : 0;
         /* || IntegerToBytes(|ctx|, 1) || .. */
         itb[1] = (uint8_t)ctx_len;
         if (!EVP_DigestUpdate(md_ctx, itb, 2))
@@ -106,6 +104,15 @@ EVP_MD_CTX *ossl_ml_dsa_mu_init(const ML_DSA_KEY *key, int encode,
 err:
     EVP_MD_CTX_free(md_ctx);
     return NULL;
+}
+
+EVP_MD_CTX *ossl_ml_dsa_mu_init(const ML_DSA_KEY *key, int encode,
+                                const uint8_t *ctx, size_t ctx_len)
+{
+    if (key == NULL)
+        return NULL;
+    return ossl_ml_dsa_mu_init_int(key->shake256_md, key->tr, sizeof(key->tr),
+                                   encode, 0, ctx, ctx_len);
 }
 
 /*

@@ -12,9 +12,18 @@
  * internal use.
  */
 #include "internal/deprecated.h"
-
+#include <openssl/obj_mac.h>
 #include "internal/packet.h"
 #include "prov/der_ml_dsa.h"
+#include "prov/der_pq_dsa.h"
+#include "prov/der_digests.h"
+
+#define CASE_MD(name, hashsz)                                                  \
+case NID_##name:                                                               \
+    *oid = ossl_der_oid_id_##name;                                             \
+    *oidlen = sizeof(ossl_der_oid_id_##name);                                  \
+    *sz = hashsz;                                                              \
+    break
 
 int ossl_DER_w_algorithmIdentifier_ML_DSA(WPACKET *pkt, int tag, ML_DSA_KEY *key)
 {
@@ -38,4 +47,25 @@ int ossl_DER_w_algorithmIdentifier_ML_DSA(WPACKET *pkt, int tag, ML_DSA_KEY *key
         /* No parameters */
         && ossl_DER_w_precompiled(pkt, -1, alg, len)
         && ossl_DER_w_end_sequence(pkt, tag);
+}
+
+int ossl_der_oid_pq_dsa_prehash_digest(int nid,
+                                       const uint8_t **oid, size_t *oidlen,
+                                       size_t *sz)
+{
+    switch(nid) {
+    CASE_MD(shake256, 64);
+    CASE_MD(shake128, 32);
+    CASE_MD(sha224, 28);
+    CASE_MD(sha256, 32);
+    CASE_MD(sha384, 48);
+    CASE_MD(sha512, 64);
+    CASE_MD(sha3_224, 28);
+    CASE_MD(sha3_256, 32);
+    CASE_MD(sha3_384, 48);
+    CASE_MD(sha3_512, 64);
+    default:
+        return 0;
+    }
+    return 1;
 }
