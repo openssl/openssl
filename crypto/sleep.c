@@ -14,32 +14,32 @@
 /* system-specific variants defining OSSL_sleep() */
 #if (defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)) \
     && !defined(OPENSSL_USE_SLEEP_BUSYLOOP)
-# include <unistd.h>
+#include <unistd.h>
 
 static void ossl_sleep_millis(uint64_t millis)
 {
-# ifdef OPENSSL_SYS_VXWORKS
+#ifdef OPENSSL_SYS_VXWORKS
     struct timespec ts;
 
-    ts.tv_sec = (long int) (millis / 1000);
-    ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
+    ts.tv_sec = (long int)(millis / 1000);
+    ts.tv_nsec = (long int)(millis % 1000) * 1000000ul;
     nanosleep(&ts, NULL);
-# elif defined(__TANDEM) && !defined(_REENTRANT)
-#   include <cextdecs.h(PROCESS_DELAY_)>
+#elif defined(__TANDEM) && !defined(_REENTRANT)
+#include <cextdecs.h(PROCESS_DELAY_)>
 
     /* HPNS does not support usleep for non threaded apps */
     PROCESS_DELAY_(millis * 1000);
-# else
+#else
     unsigned int s = (unsigned int)(millis / 1000);
     unsigned int us = (unsigned int)((millis % 1000) * 1000);
 
     if (s > 0)
         sleep(s);
     usleep(us);
-# endif
+#endif
 }
 #elif defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
-# include <windows.h>
+#include <windows.h>
 
 static void ossl_sleep_millis(uint64_t millis)
 {
@@ -56,7 +56,7 @@ static void ossl_sleep_millis(uint64_t millis)
 
 #else
 /* Fallback to a busy wait */
-# define USE_SLEEP_SECS
+#define USE_SLEEP_SECS
 
 static void ossl_sleep_secs(uint64_t secs)
 {
@@ -78,7 +78,7 @@ static void ossl_sleep_millis(uint64_t millis)
         = ossl_time_add(ossl_time_now(), ossl_ms2time(millis));
 
     while (ossl_time_compare(ossl_time_now(), finish) < 0)
-        /* busy wait */ ;
+        /* busy wait */;
 }
 #endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
 

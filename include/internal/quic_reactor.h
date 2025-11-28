@@ -7,15 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 #ifndef OSSL_QUIC_REACTOR_H
-# define OSSL_QUIC_REACTOR_H
+#define OSSL_QUIC_REACTOR_H
 
-# include "internal/time.h"
-# include "internal/sockets.h"
-# include "internal/quic_predef.h"
-# include "internal/thread_arch.h"
-# include <openssl/bio.h>
+#include "internal/time.h"
+#include "internal/sockets.h"
+#include "internal/quic_predef.h"
+#include "internal/thread_arch.h"
+#include <openssl/bio.h>
 
-# ifndef OPENSSL_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
 
 /*
  * Core I/O Reactor Framework
@@ -70,18 +70,18 @@
  * the reactor interface.
  */
 struct quic_tick_result_st {
-    char        net_read_desired;
-    char        net_write_desired;
-    OSSL_TIME   tick_deadline;
+    char net_read_desired;
+    char net_write_desired;
+    OSSL_TIME tick_deadline;
 };
 
 static ossl_inline ossl_unused void
 ossl_quic_tick_result_merge_into(QUIC_TICK_RESULT *r,
-                                 const QUIC_TICK_RESULT *src)
+    const QUIC_TICK_RESULT *src)
 {
-    r->net_read_desired  = r->net_read_desired  || src->net_read_desired;
+    r->net_read_desired = r->net_read_desired || src->net_read_desired;
     r->net_write_desired = r->net_write_desired || src->net_write_desired;
-    r->tick_deadline     = ossl_time_min(r->tick_deadline, src->tick_deadline);
+    r->tick_deadline = ossl_time_min(r->tick_deadline, src->tick_deadline);
 }
 
 struct quic_reactor_st {
@@ -103,8 +103,8 @@ struct quic_reactor_st {
      * These are true if we would like to know when we can read or write from
      * the network respectively.
      */
-    unsigned int net_read_desired   : 1;
-    unsigned int net_write_desired  : 1;
+    unsigned int net_read_desired : 1;
+    unsigned int net_write_desired : 1;
 
     /*
      * Are the read and write poll descriptors we are currently configured with
@@ -115,16 +115,16 @@ struct quic_reactor_st {
 };
 
 void ossl_quic_reactor_init(QUIC_REACTOR *rtor,
-                            void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
-                                            uint32_t flags),
-                            void *tick_cb_arg,
-                            OSSL_TIME initial_tick_deadline);
+    void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
+        uint32_t flags),
+    void *tick_cb_arg,
+    OSSL_TIME initial_tick_deadline);
 
 void ossl_quic_reactor_set_poll_r(QUIC_REACTOR *rtor,
-                                  const BIO_POLL_DESCRIPTOR *r);
+    const BIO_POLL_DESCRIPTOR *r);
 
 void ossl_quic_reactor_set_poll_w(QUIC_REACTOR *rtor,
-                                  const BIO_POLL_DESCRIPTOR *w);
+    const BIO_POLL_DESCRIPTOR *w);
 
 const BIO_POLL_DESCRIPTOR *ossl_quic_reactor_get_poll_r(const QUIC_REACTOR *rtor);
 const BIO_POLL_DESCRIPTOR *ossl_quic_reactor_get_poll_w(const QUIC_REACTOR *rtor);
@@ -133,7 +133,7 @@ int ossl_quic_reactor_can_poll_r(const QUIC_REACTOR *rtor);
 int ossl_quic_reactor_can_poll_w(const QUIC_REACTOR *rtor);
 
 int ossl_quic_reactor_can_support_poll_descriptor(const QUIC_REACTOR *rtor,
-                                                  const BIO_POLL_DESCRIPTOR *d);
+    const BIO_POLL_DESCRIPTOR *d);
 
 int ossl_quic_reactor_net_read_desired(QUIC_REACTOR *rtor);
 int ossl_quic_reactor_net_write_desired(QUIC_REACTOR *rtor);
@@ -148,7 +148,7 @@ OSSL_TIME ossl_quic_reactor_get_tick_deadline(QUIC_REACTOR *rtor);
  * If the CHANNEL_ONLY flag is set, this indicates that we should only
  * touch state which is synchronised by the channel mutex.
  */
-#define QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY  (1U << 0)
+#define QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY (1U << 0)
 
 int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags);
 
@@ -187,13 +187,13 @@ int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags);
  * Postcondition:  mutex is NULL or is held for write (unless
  *                   CRYPTO_THREAD_write_lock fails)
  */
-#define SKIP_FIRST_TICK     (1U << 0)
+#define SKIP_FIRST_TICK (1U << 0)
 
 int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
-                                       int (*pred)(void *arg), void *pred_arg,
-                                       uint32_t flags,
-                                       CRYPTO_MUTEX *mutex);
+    int (*pred)(void *arg), void *pred_arg,
+    uint32_t flags,
+    CRYPTO_MUTEX *mutex);
 
-# endif
+#endif
 
 #endif

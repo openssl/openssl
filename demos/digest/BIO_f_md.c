@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
     /*
      * Fetch a message digest by name
-     * The algorithm name is case insensitive. 
+     * The algorithm name is case insensitive.
      * See providers(7) for details about algorithm fetching
      */
     md = EVP_MD_fetch(library_context, "SHA3-512", NULL);
@@ -86,8 +86,8 @@ int main(int argc, char *argv[])
     }
     /* set our bio_digest BIO to digest data */
     if (BIO_set_md(bio_digest, md) != 1) {
-           fprintf(stderr, "BIO_set_md failed.\n");
-           goto cleanup;
+        fprintf(stderr, "BIO_set_md failed.\n");
+        goto cleanup;
     }
     /*-
      * We will use BIO chaining so that as we read, the digest gets updated

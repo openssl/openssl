@@ -15,10 +15,10 @@
 /* On machines that dont support <inttypes.h> just disable the tests */
 #if !defined(OPENSSL_NO_INTTYPES_H)
 
-# ifdef OPENSSL_SYS_VMS
-#  define strtoumax strtoull
-#  define strtoimax strtoll
-# endif
+#ifdef OPENSSL_SYS_VMS
+#define strtoumax strtoull
+#define strtoimax strtoll
+#endif
 
 typedef struct {
     OSSL_PARAM *param;
@@ -41,8 +41,8 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
     static uint64_t datum_u64, ref_u64;
     static double datum_d, ref_d;
     static OSSL_PARAM params[] = {
-        OSSL_PARAM_int32("int32",   &datum_i32),
-        OSSL_PARAM_int64("int64",   &datum_i64),
+        OSSL_PARAM_int32("int32", &datum_i32),
+        OSSL_PARAM_int64("int64", &datum_i64),
         OSSL_PARAM_uint32("uint32", &datum_u32),
         OSSL_PARAM_uint64("uint64", &datum_u64),
         OSSL_PARAM_double("double", &datum_d),
@@ -119,7 +119,7 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
         }
         if (*p != '\0') {
             TEST_info("Line %d: extra characters at end '%s' for %s",
-                      s->curr, p, pp->key);
+                s->curr, p, pp->key);
             return 0;
         }
     }
@@ -191,7 +191,7 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
 
     if (!pc->valid_i32) {
         if (!TEST_false(OSSL_PARAM_get_int32(pc->param, &i32))
-                || !TEST_ulong_ne(ERR_get_error(), 0)) {
+            || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to int32 on line %d", line);
             return 0;
         }
@@ -205,14 +205,14 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
         if (!TEST_true(OSSL_PARAM_set_int32(pc->param, i32))
             || !TEST_mem_eq(pc->datum, pc->size, pc->ref, pc->size)) {
             TEST_note("unexpected valid conversion from int32 on line %d",
-                      line);
+                line);
             return 0;
         }
     }
 
     if (!pc->valid_i64) {
         if (!TEST_false(OSSL_PARAM_get_int64(pc->param, &i64))
-                || !TEST_ulong_ne(ERR_get_error(), 0)) {
+            || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to int64 on line %d", line);
             return 0;
         }
@@ -226,14 +226,14 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
         if (!TEST_true(OSSL_PARAM_set_int64(pc->param, i64))
             || !TEST_mem_eq(pc->datum, pc->size, pc->ref, pc->size)) {
             TEST_note("unexpected valid conversion from int64 on line %d",
-                      line);
+                line);
             return 0;
         }
     }
 
     if (!pc->valid_u32) {
         if (!TEST_false(OSSL_PARAM_get_uint32(pc->param, &u32))
-                || !TEST_ulong_ne(ERR_get_error(), 0)) {
+            || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to uint32 on line %d", line);
             return 0;
         }
@@ -247,14 +247,14 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
         if (!TEST_true(OSSL_PARAM_set_uint32(pc->param, u32))
             || !TEST_mem_eq(pc->datum, pc->size, pc->ref, pc->size)) {
             TEST_note("unexpected valid conversion from uint32 on line %d",
-                      line);
+                line);
             return 0;
         }
     }
 
     if (!pc->valid_u64) {
         if (!TEST_false(OSSL_PARAM_get_uint64(pc->param, &u64))
-                || !TEST_ulong_ne(ERR_get_error(), 0)) {
+            || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to uint64 on line %d", line);
             return 0;
         }
@@ -268,14 +268,14 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
         if (!TEST_true(OSSL_PARAM_set_uint64(pc->param, u64))
             || !TEST_mem_eq(pc->datum, pc->size, pc->ref, pc->size)) {
             TEST_note("unexpected valid conversion from uint64 on line %d",
-                      line);
+                line);
             return 0;
         }
     }
 
     if (!pc->valid_d) {
         if (!TEST_false(OSSL_PARAM_get_double(pc->param, &d))
-                || !TEST_ulong_ne(ERR_get_error(), 0)) {
+            || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to double on line %d", line);
             return 0;
         }
@@ -309,7 +309,7 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
         if (!TEST_true(OSSL_PARAM_set_double(pc->param, d))
             || !TEST_mem_eq(pc->datum, pc->size, pc->ref, pc->size)) {
             TEST_note("unexpected valid conversion from double on line %d",
-                      line);
+                line);
             return 0;
         }
     }
