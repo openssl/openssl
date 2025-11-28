@@ -92,7 +92,6 @@ open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
 *STDOUT=*OUT;
 
 $code=<<___;
-#include "crypto/arm_arch.h"
 
 .text
 
