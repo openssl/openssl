@@ -11,6 +11,8 @@
 # define OSSL_INTERNAL_FIPS_H
 # pragma once
 
+#include <openssl/types.h>
+
 # ifdef FIPS_MODULE
 
 /* Return 1 if the FIPS self tests are running and 0 otherwise */
@@ -41,6 +43,8 @@ struct fips_deferred_test_st {
     const char *algorithm;
     int category;
     int state;
+    struct fips_deferred_test_st **also_satisfies;
+    struct fips_deferred_test_st **depends_on;
 };
 
 #  define FIPS_DEFERRED_TEST_INIT 0
@@ -50,7 +54,32 @@ struct fips_deferred_test_st {
 
 typedef struct fips_deferred_test_st FIPS_DEFERRED_TEST;
 
-int FIPS_deferred_self_tests(OSSL_LIB_CTX *libctx, FIPS_DEFERRED_TEST tests[]);
+int FIPS_deferred_self_test(OSSL_LIB_CTX *libctx, FIPS_DEFERRED_TEST *test);
+
+#ifndef NO_DEFERRED_EXTERN
+extern FIPS_DEFERRED_TEST sha1_kat_deferred_test;
+extern FIPS_DEFERRED_TEST sha256_kat_deferred_test;
+extern FIPS_DEFERRED_TEST sha512_kat_deferred_test;
+extern FIPS_DEFERRED_TEST sha3_kat_deferred_test;
+extern FIPS_DEFERRED_TEST aes_kat_deferred_test;
+extern FIPS_DEFERRED_TEST aes_gcm_kat_deferred_test;
+# ifndef OPENSSL_NO_SLH_DSA
+extern FIPS_DEFERRED_TEST slh_dsa_shake_deferred_test;
+extern FIPS_DEFERRED_TEST slh_dsa_sha2_deferred_test;
+extern FIPS_DEFERRED_TEST slh_key_gen_deferred_test;
+# endif
+# ifndef OPENSSL_NO_LMS
+extern FIPS_DEFERRED_TEST lms_sig_deferred_test;
+# endif
+extern FIPS_DEFERRED_TEST rsa_sig_deferred_test;
+# ifndef OPENSSL_NO_EC
+extern FIPS_DEFERRED_TEST ecdsa_sig_deferred_test;
+#  ifndef OPENSSL_NO_ECX
+extern FIPS_DEFERRED_TEST ed448_sig_deferred_test;
+extern FIPS_DEFERRED_TEST ed25519_sig_deferred_test;
+#  endif
+# endif
+#endif
 
 # endif /* FIPS_MODULE */
 

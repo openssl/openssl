@@ -17,10 +17,16 @@
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "internal/sha3.h"
-#include "prov/digestcommon.h"
 #include "prov/implementations.h"
 #include "internal/common.h"
 #include "providers/implementations/digests/sha3_prov.inc"
+
+#ifdef FIPS_MODULE
+#include "internal/fips.h"
+#include "prov/provider_ctx.h"
+#define DIGEST_IS_FIPS 1
+#endif
+#include "prov/digestcommon.h"
 
 #define SHA3_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 #define SHAKE_FLAGS (PROV_DIGEST_FLAG_XOF | PROV_DIGEST_FLAG_ALGID_ABSENT)
@@ -490,10 +496,9 @@ static PROV_SHA3_METHOD shake_ARMSHA3_md =
 static OSSL_FUNC_digest_newctx_fn name##_newctx;                               \
 static void *name##_newctx(void *provctx)                                      \
 {                                                                              \
-    KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) \
-                                                : NULL;                        \
-                                                                               \
-    if (ctx == NULL)                                                           \
+    KECCAK1600_CTX *ctx;                                                       \
+    DIGEST_PROV_CHECK(provctx, sha3);                                          \
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)                          \
         return NULL;                                                           \
     ossl_sha3_init(ctx, pad, bitlen);                                          \
     SHA3_SET_MD(uname, typ)                                                    \

@@ -1264,6 +1264,60 @@ static void deferred_deinit(void)
     }
 }
 
+/* Should only ever be called by itself or FIPS_kat_deferred */
+static int FIPS_kat_deferred_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+                                     FIPS_DEFERRED_TEST *test)
+{
+    int ret = FIPS_DEFERRED_TEST_FAILED;
+
+    /* dependency chains may cause a test to be referenced multiple times
+     * immediately return if any state is present */
+    if (test->state != FIPS_DEFERRED_TEST_INIT) {
+        return test->state;
+    }
+
+    /* Mark test as in progress */
+    test->state = FIPS_DEFERRED_TEST_IN_PROGRESS;
+
+    /* check if there are dependent tests to run */
+    if (test->depends_on) {
+        for (int i = 0; test->depends_on[i] != NULL; i++) {
+            FIPS_kat_deferred_execute(st, libctx, test->depends_on[i]);
+            switch (test->depends_on[i]->state) {
+            case FIPS_DEFERRED_TEST_PASSED:
+            case FIPS_DEFERRED_TEST_IN_PROGRESS:
+                continue;
+            default:
+                goto done;
+            }
+        }
+    }
+
+    /* another test may also satisfy this, so recheck before executing */
+    if (test->state == FIPS_DEFERRED_TEST_IN_PROGRESS) {
+        /* execute test */
+        if (SELF_TEST_kats_single(st, libctx, test->category, test->algorithm))
+            ret = FIPS_DEFERRED_TEST_PASSED;
+        else
+            goto done;
+
+        /*
+         * check if we need to mark also_satisfies tests, we can only do
+         * this if this test was explicitly executed, not if it was marked
+         * as satisfied by another test, as this property is not transitive
+         */
+        if (test->also_satisfies) {
+            for (int i = 0; test->also_satisfies[i] != NULL; i++)
+                test->also_satisfies[i]->state = FIPS_DEFERRED_TEST_PASSED;
+        }
+    }
+
+done:
+    /* Mark test as pass or fail */
+    test->state = ret;
+    return ret;
+}
+
 static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, FIPS_DEFERRED_TEST *test)
 {
     int ret = FIPS_DEFERRED_TEST_FAILED;
@@ -1283,7 +1337,7 @@ static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, FIPS_DEFERRED_TEST *test)
         return FIPS_DEFERRED_TEST_IN_PROGRESS;
 
     if (CRYPTO_THREAD_write_lock(deferred_lock)) {
-        OSSL_SELF_TEST *ev = NULL;
+        OSSL_SELF_TEST *st = NULL;
         bool unset_key = false;
         OSSL_CALLBACK *cb = NULL;
         void *cb_arg = NULL;
@@ -1310,22 +1364,15 @@ static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, FIPS_DEFERRED_TEST *test)
         if (c_stcbfn != NULL && c_get_libctx != NULL)
             c_stcbfn(c_get_libctx(FIPS_get_core_handle(libctx)), &cb, &cb_arg);
 
-        if ((ev = OSSL_SELF_TEST_new(cb, cb_arg)) == NULL)
+        if ((st = OSSL_SELF_TEST_new(cb, cb_arg)) == NULL)
             goto done;
 
-        /* Mark test as in progress */
-        test->state = FIPS_DEFERRED_TEST_IN_PROGRESS;
-
-        /* execute test */
-        if (SELF_TEST_kats_single(ev, libctx, test->category, test->algorithm))
-            ret = FIPS_DEFERRED_TEST_PASSED;
+        /* Handles dependencies via recursion */
+        ret = FIPS_kat_deferred_execute(st, libctx, test);
 
     done:
-        /* Mark test as pass or fail */
-        test->state = ret;
-
-        if (ev)
-            OSSL_SELF_TEST_free(ev);
+        if (st)
+            OSSL_SELF_TEST_free(st);
         if (unset_key)
             CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_FIPS_DEFERRED_KEY,
                                        libctx, NULL);
@@ -1370,38 +1417,34 @@ static void deferred_test_error(int category)
     ossl_set_error_state(category_name);
 }
 
-int FIPS_deferred_self_tests(OSSL_LIB_CTX *libctx, FIPS_DEFERRED_TEST tests[])
+int FIPS_deferred_self_test(OSSL_LIB_CTX *libctx, FIPS_DEFERRED_TEST *test)
 {
-    int i;
-
     /*
      * NOTE: that the order in which we check the 'state' here is not important,
      * if multiple threads are racing to check it the worst case scenario is
-     * that they will all try to run the tests. Proper locking for preventing
+     * that they will all try to run the test. Proper locking for preventing
      * concurrent tests runs and saving state from multiple threads is handled
      * in FIPS_kat_deferred() so this race is of no real consequence.
      */
-    for (i = 0; tests[i].algorithm != NULL; i++) {
-        if (tests[i].state != FIPS_DEFERRED_TEST_PASSED) {
-            int state;
+    if (test->state != FIPS_DEFERRED_TEST_PASSED) {
+        int state;
 
-            /* any other threads that request a self test will lock and wait */
-            state = FIPS_kat_deferred(libctx, &tests[i]);
-            switch (state) {
-            case FIPS_DEFERRED_TEST_IN_PROGRESS:
-                /*
-                 * A self test is in progress for this thread so we let this
-                 * thread continue and perform the test while all other
-                 * threads wait for it to complete.
-                 */
-                return 1;
-            case FIPS_DEFERRED_TEST_PASSED:
-                /* success, move on to the next */
-                break;
-            default:
-                deferred_test_error(tests[i].category);
-                return 0;
-            }
+        /* any other threads that request a self test will lock and wait */
+        state = FIPS_kat_deferred(libctx, test);
+        switch (state) {
+        case FIPS_DEFERRED_TEST_IN_PROGRESS:
+            /*
+             * A self test is in progress for this thread so we let this
+             * thread continue and perform the test while all other
+             * threads wait for it to complete.
+             */
+            return 1;
+        case FIPS_DEFERRED_TEST_PASSED:
+            /* success, move on to the next */
+            break;
+        default:
+            deferred_test_error(test->category);
+            return 0;
         }
     }
 

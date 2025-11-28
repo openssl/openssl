@@ -16,6 +16,15 @@
  * they are tested as part of a higher level algorithm (such as HMAC).
  */
 
+#include <openssl/kdf.h>
+#include <openssl/core_names.h>
+#include "crypto/ml_kem.h"
+#include "internal/nelem.h"
+#include "self_test.h"
+
+#define NO_DEFERRED_EXTERN 1
+#include "internal/fips.h"
+
 /* Macros to build Self test data */
 #define ITM(x) ((void *)&x), sizeof(x)
 #define ITM_STR(x) ((void *)&x), (sizeof(x) - 1)
@@ -32,156 +41,19 @@
 #define ST_KAT_PARAM_INT(name, i)                                              \
     { name, OSSL_PARAM_INTEGER, ITM(i) }
 
-/* used to store raw parameters for keys and algorithms */
-typedef struct st_kat_param_st {
-    const char *name;  /* an OSSL_PARAM name */
-    size_t type;       /* the type associated with the data */
-    const void *data;  /* unsigned char [], or char [] depending on the type */
-    size_t data_len;   /* the length of the data */
-} ST_KAT_PARAM;
-
-typedef struct st_kat_st {
-    const char *desc;
-    const char *algorithm;
-    int deferred;
-    const unsigned char *pt;
-    size_t pt_len;
-    const unsigned char *expected;
-    size_t expected_len;
-} ST_KAT;
-
-#define CIPHER_MODE_ENCRYPT 1
-#define CIPHER_MODE_DECRYPT 2
-#define CIPHER_MODE_ALL     (CIPHER_MODE_ENCRYPT | CIPHER_MODE_DECRYPT)
-
-/* FIPS 140-3 only allows DSA verification for legacy purposes */
-#define SIGNATURE_MODE_VERIFY_ONLY  1
-#define SIGNATURE_MODE_SIGN_ONLY    2
-#define SIGNATURE_MODE_DIGESTED     4
-#define SIGNATURE_MODE_SIG_DIGESTED 8
-
-typedef ST_KAT ST_KAT_DIGEST;
-typedef struct st_kat_cipher_st {
-    ST_KAT base;
-    int mode;
-    const unsigned char *key;
-    size_t key_len;
-    const unsigned char *iv;
-    size_t iv_len;
-    const unsigned char *aad;
-    size_t aad_len;
-    const unsigned char *tag;
-    size_t tag_len;
-} ST_KAT_CIPHER;
-
-typedef struct st_kat_kdf_st {
-    const char *desc;
-    const char *algorithm;
-    int deferred;
-    const ST_KAT_PARAM *params;
-    const unsigned char *expected;
-    size_t expected_len;
-} ST_KAT_KDF;
-
-typedef struct st_kat_drbg_st {
-    const char *desc;
-    const char *algorithm;
-    int deferred;
-    const char *param_name;
-    char *param_value;
-    const unsigned char *entropyin;
-    size_t entropyinlen;
-    const unsigned char *nonce;
-    size_t noncelen;
-    const unsigned char *persstr;
-    size_t persstrlen;
-    const unsigned char *entropyinpr1;
-    size_t entropyinpr1len;
-    const unsigned char *entropyinpr2;
-    size_t entropyinpr2len;
-    const unsigned char *entropyaddin1;
-    size_t entropyaddin1len;
-    const unsigned char *entropyaddin2;
-    size_t entropyaddin2len;
-    const unsigned char *expected;
-    size_t expectedlen;
-} ST_KAT_DRBG;
-
-typedef struct st_kat_kas_st {
-    const char *desc;
-    const char *algorithm;
-    int deferred;
-
-    const ST_KAT_PARAM *key_group;
-    const ST_KAT_PARAM *key_host_data;
-    const ST_KAT_PARAM *key_peer_data;
-
-    const unsigned char *expected;
-    size_t expected_len;
-} ST_KAT_KAS;
-
-typedef struct st_kat_sign_st {
-    const char *desc;
-    const char *keytype;
-    const char *sigalgorithm;
-    int deferred;
-    int mode;
-    const ST_KAT_PARAM *key;
-    const unsigned char *msg;
-    size_t msg_len;
-    const unsigned char *entropy;
-    size_t entropy_len;
-    const unsigned char *nonce;
-    size_t nonce_len;
-    const unsigned char *persstr;
-    size_t persstr_len;
-    const unsigned char *sig_expected; /* Set to NULL if this value changes */
-    size_t sig_expected_len;
-    const ST_KAT_PARAM *init;
-    const ST_KAT_PARAM *verify;
-} ST_KAT_SIGN;
-
-typedef struct st_kat_asym_cipher_st {
-    const char *desc;
-    const char *algorithm;
-    int deferred;
-    int encrypt;
-    const ST_KAT_PARAM *key;
-    const ST_KAT_PARAM *postinit;
-    const unsigned char *in;
-    size_t in_len;
-    const unsigned char *expected;
-    size_t expected_len;
-} ST_KAT_ASYM_CIPHER;
-
-typedef struct st_kat_keygen_st {
-    const char *desc;
-    const char *algorithm;
-    int deferred;
-    const ST_KAT_PARAM *keygen_params;
-    const ST_KAT_PARAM *expected_params;
-} ST_KAT_ASYM_KEYGEN;
-
-typedef struct st_kat_kem_st {
-    const char *desc;
-    const char *algorithm;
-    int deferred;
-    const ST_KAT_PARAM *key;
-    const unsigned char *cipher_text;
-    size_t cipher_text_len;
-    const unsigned char *entropy;
-    size_t entropy_len;
-    const unsigned char *secret;
-    size_t secret_len;
-    const unsigned char *reject_secret;
-} ST_KAT_KEM;
-
 /*- DIGEST SELF TEST DATA */
 static const unsigned char sha1_pt[] = "abc";
 static const unsigned char sha1_digest[] = {
     0xA9, 0x99, 0x3E, 0x36, 0x47, 0x06, 0x81, 0x6A,
     0xBA, 0x3E, 0x25, 0x71, 0x78, 0x50, 0xC2, 0x6C,
     0x9C, 0xD0, 0xD8, 0x9D
+};
+static const unsigned char sha256_pt[] = "abc";
+static const unsigned char sha256_digest[] = {
+    0xBA, 0X78, 0X16, 0XBF, 0X8F, 0X01, 0XCF, 0XEA,
+    0x41, 0X41, 0X40, 0XDE, 0X5D, 0XAE, 0X22, 0X23,
+    0xB0, 0X03, 0X61, 0XA3, 0X96, 0X17, 0X7A, 0X9C,
+    0xB4, 0X10, 0XFF, 0X61, 0XF2, 0X00, 0X15, 0XAD,
 };
 static const unsigned char sha512_pt[] = "abc";
 static const unsigned char sha512_digest[] = {
@@ -201,32 +73,58 @@ static const unsigned char sha3_256_digest[] = {
 
 /*
  * Note:
- *  SHA256 is tested by higher level algorithms so a
- *  CAST is not needed.
+ *  SHA256 is tested by higher level algorithms so the
+ *  CAST is rarely used.
  */
-static const ST_KAT_DIGEST st_kat_digest_tests[] =
+const ST_KAT_DIGEST st_kat_digest_tests[] =
 {
     {
          OSSL_SELF_TEST_DESC_MD_SHA1,
          "SHA1",
-         0,
+         SELF_TEST_DEFERRED,
          ITM_STR(sha1_pt),
          ITM(sha1_digest),
     },
     {
          OSSL_SELF_TEST_DESC_MD_SHA2,
+         "SHA256",
+         SELF_TEST_DEFERRED,
+         ITM_STR(sha256_pt),
+         ITM(sha256_digest),
+    },
+    {
+         OSSL_SELF_TEST_DESC_MD_SHA2,
          "SHA512",
-         0,
+         SELF_TEST_DEFERRED,
          ITM_STR(sha512_pt),
          ITM(sha512_digest),
     },
     {
          OSSL_SELF_TEST_DESC_MD_SHA3,
          "SHA3-256",
-         0,
+         SELF_TEST_DEFERRED,
          ITM(sha3_256_pt),
          ITM(sha3_256_digest),
     },
+};
+int st_kat_digest_tests_size = OSSL_NELEM(st_kat_digest_tests);
+
+#define DIGEST_DEFERRED_TEST(name, desc)                                     \
+    FIPS_DEFERRED_TEST name##_kat_deferred_test = {                          \
+        desc, FIPS_DEFERRED_KAT_DIGEST, FIPS_DEFERRED_TEST_INIT, NULL, NULL  \
+    }
+
+DIGEST_DEFERRED_TEST(sha1, "SHA1");
+DIGEST_DEFERRED_TEST(sha256, "SHA256");
+DIGEST_DEFERRED_TEST(sha512, "SHA512");
+DIGEST_DEFERRED_TEST(sha3, "SHA3_256");
+
+FIPS_DEFERRED_TEST *satisfies_sha256[] = {
+    &sha256_kat_deferred_test, NULL
+};
+
+FIPS_DEFERRED_TEST *satisfies_sha512[] = {
+    &sha512_kat_deferred_test, NULL
 };
 
 /*- CIPHER TEST DATA */
@@ -292,12 +190,12 @@ static const unsigned char tdes_pt[] = {
 };
 #endif
 
-static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
+const ST_KAT_CIPHER st_kat_cipher_tests[] = {
     {
         {
             OSSL_SELF_TEST_DESC_CIPHER_AES_GCM,
             "AES-256-GCM",
-            0,
+            SELF_TEST_DEFERRED,
             ITM(aes_256_gcm_pt),
             ITM(aes_256_gcm_ct)
         },
@@ -311,7 +209,7 @@ static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
         {
             OSSL_SELF_TEST_DESC_CIPHER_AES_ECB,
             "AES-128-ECB",
-            0,
+            SELF_TEST_DEFERRED,
             ITM(aes_128_ecb_pt),
             ITM(aes_128_ecb_ct)
         },
@@ -323,7 +221,7 @@ static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
         {
             OSSL_SELF_TEST_DESC_CIPHER_TDES,
             "DES-EDE3-ECB",
-            0,
+            SELF_TEST_ONLOAD,
             ITM(tdes_pt),
             ITM(tdes_ct)
         },
@@ -332,18 +230,24 @@ static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
     }
 #endif
 };
+int st_kat_cipher_tests_size = OSSL_NELEM(st_kat_cipher_tests);
+
+FIPS_DEFERRED_TEST aes_gcm_kat_deferred_test = {
+    "AES-256-GCM",
+    FIPS_DEFERRED_KAT_CIPHER,
+    FIPS_DEFERRED_TEST_INIT,
+    NULL,
+    NULL,
+};
+FIPS_DEFERRED_TEST aes_kat_deferred_test = {
+    "AES-128-ECB",
+    FIPS_DEFERRED_KAT_CIPHER,
+    FIPS_DEFERRED_TEST_INIT,
+    NULL,
+    NULL,
+};
 
 #ifndef OPENSSL_NO_LMS
-typedef struct st_kat_lms_s {
-    int deferred;
-    const unsigned char *pub;
-    size_t publen;
-    const unsigned char *msg;
-    size_t msglen;
-    const unsigned char *sig;
-    size_t siglen;
-} ST_KAT_LMS;
-
 /*
  * Test vector from
  * https://datatracker.ietf.org/doc/html/draft-fluhrer-lms-more-parm-sets-15#name-test-cases
@@ -469,11 +373,19 @@ static const unsigned char sha256_192_sig[] = {
     0xd3, 0x4b, 0x40, 0xb6, 0x9d, 0xd9, 0xf3, 0xc1
 };
 
-static const ST_KAT_LMS st_kat_lms_test = {
-    0,
+const ST_KAT_LMS st_kat_lms_test = {
+    SELF_TEST_DEFERRED,
     ITM(sha256_192_pub),
     ITM(sha256_192_msg),
     ITM(sha256_192_sig)
+};
+
+FIPS_DEFERRED_TEST lms_sig_deferred_test = {
+    "LMS",
+    FIPS_DEFERRED_KAT_SIGNATURE,
+    FIPS_DEFERRED_TEST_INIT,
+    satisfies_sha256,
+    NULL,
 };
 #endif  /* OPENSSL_NO_LMS */
 
@@ -773,79 +685,80 @@ static const ST_KAT_PARAM tls13_kdf_client_early_secret_params[] = {
  * According to FIPS 140-3 10.3.A Note18: SSH KDF is not required, since it is
  * sufficient to self-test the underlying SHA hash functions.
  */
-static const ST_KAT_KDF st_kat_kdf_tests[] =
+const ST_KAT_KDF st_kat_kdf_tests[] =
 {
     {
         OSSL_SELF_TEST_DESC_KDF_TLS13_EXTRACT,
         OSSL_KDF_NAME_TLS1_3_KDF,
-        0,
+        SELF_TEST_ONLOAD,
         tls13_kdf_early_secret_params,
         ITM(tls13_kdf_early_secret)
     },
     {
         OSSL_SELF_TEST_DESC_KDF_TLS13_EXPAND,
         OSSL_KDF_NAME_TLS1_3_KDF,
-        0,
+        SELF_TEST_ONLOAD,
         tls13_kdf_client_early_secret_params,
         ITM(tls13_kdf_client_early_traffic_secret)
     },
     {
         OSSL_SELF_TEST_DESC_KDF_TLS12_PRF,
         OSSL_KDF_NAME_TLS1_PRF,
-        0,
+        SELF_TEST_ONLOAD,
         tls12prf_params,
         ITM(tls12prf_expected)
     },
     {
         OSSL_SELF_TEST_DESC_KDF_PBKDF2,
         OSSL_KDF_NAME_PBKDF2,
-        0,
+        SELF_TEST_ONLOAD,
         pbkdf2_params,
         ITM(pbkdf2_expected)
     },
     {
         OSSL_SELF_TEST_DESC_KDF_KBKDF,
         OSSL_KDF_NAME_KBKDF,
-        0,
+        SELF_TEST_ONLOAD,
         kbkdf_params,
         ITM(kbkdf_expected)
     },
     {
         OSSL_SELF_TEST_DESC_KDF_KBKDF_KMAC,
         OSSL_KDF_NAME_KBKDF,
-        0,
+        SELF_TEST_ONLOAD,
         kbkdf_kmac_params,
         ITM(kbkdf_kmac_expected)
     },
     {
         OSSL_SELF_TEST_DESC_KDF_HKDF,
         OSSL_KDF_NAME_HKDF,
-        0,
+        SELF_TEST_ONLOAD,
         hkdf_params,
         ITM(hkdf_expected)
     },
     {
         OSSL_SELF_TEST_DESC_KDF_SSKDF,
         OSSL_KDF_NAME_SSKDF,
-        0,
+        SELF_TEST_ONLOAD,
         sskdf_params,
         ITM(sskdf_expected)
     },
     {
         OSSL_SELF_TEST_DESC_KDF_X963KDF,
         OSSL_KDF_NAME_X963KDF,
-        0,
+        SELF_TEST_ONLOAD,
         x963kdf_params,
         ITM(x963kdf_expected)
     },
     {
         OSSL_SELF_TEST_DESC_KDF_X942KDF,
         OSSL_KDF_NAME_X942KDF_ASN1,
-        0,
+        SELF_TEST_ONLOAD,
         x942kdf_params,
         ITM(x942kdf_expected)
     },
 };
+int st_kat_kdf_tests_size = OSSL_NELEM(st_kat_kdf_tests);
 
 /*-
 * DRBG test vectors are a small subset of
@@ -1036,12 +949,12 @@ static const unsigned char drbg_hmac_sha2_pr_expected[] = {
     0x8e, 0x30, 0x05, 0x0e, 0x04, 0x97, 0xfb, 0x0a
 };
 
-static const ST_KAT_DRBG st_kat_drbg_tests[] =
+const ST_KAT_DRBG st_kat_drbg_tests[] =
 {
     {
         OSSL_SELF_TEST_DESC_DRBG_HASH,
         "HASH-DRBG",
-        0,
+        SELF_TEST_ONLOAD,
         "digest", "SHA256",
         ITM(drbg_hash_sha256_pr_entropyin),
         ITM(drbg_hash_sha256_pr_nonce),
@@ -1055,7 +968,7 @@ static const ST_KAT_DRBG st_kat_drbg_tests[] =
     {
         OSSL_SELF_TEST_DESC_DRBG_CTR,
         "CTR-DRBG",
-        0,
+        SELF_TEST_ONLOAD,
         "cipher", "AES-128-CTR",
         ITM(drbg_ctr_aes128_pr_df_entropyin),
         ITM(drbg_ctr_aes128_pr_df_nonce),
@@ -1069,7 +982,7 @@ static const ST_KAT_DRBG st_kat_drbg_tests[] =
     {
         OSSL_SELF_TEST_DESC_DRBG_HMAC,
         "HMAC-DRBG",
-        0,
+        SELF_TEST_ONLOAD,
         "digest", "SHA256",
         ITM(drbg_hmac_sha2_pr_entropyin),
         ITM(drbg_hmac_sha2_pr_nonce),
@@ -1081,6 +994,7 @@ static const ST_KAT_DRBG st_kat_drbg_tests[] =
         ITM(drbg_hmac_sha2_pr_expected)
     }
 };
+int st_kat_drbg_tests_size = OSSL_NELEM(st_kat_drbg_tests);
 
 /* KEY EXCHANGE TEST DATA */
 
@@ -1271,13 +1185,13 @@ static const unsigned char ecdh_secret_expected[] = {
 #endif /* OPENSSL_NO_EC */
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-static const ST_KAT_KAS st_kat_kas_tests[] =
+const ST_KAT_KAS st_kat_kas_tests[] =
 {
 # ifndef OPENSSL_NO_DH
     {
         OSSL_SELF_TEST_DESC_KA_DH,
         "DH",
-        0,
+        SELF_TEST_ONLOAD,
         dh_group,
         dh_host_key,
         dh_peer_key,
@@ -1288,7 +1202,7 @@ static const ST_KAT_KAS st_kat_kas_tests[] =
     {
         OSSL_SELF_TEST_DESC_KA_ECDH,
         "EC",
-        0,
+        SELF_TEST_ONLOAD,
         ecdh_group,
         ecdh_host_key,
         ecdh_peer_key,
@@ -1296,6 +1210,7 @@ static const ST_KAT_KAS st_kat_kas_tests[] =
     },
 # endif /* OPENSSL_NO_EC */
 };
+int st_kat_kas_tests_size = OSSL_NELEM(st_kat_kas_tests);
 #endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
 
 /* RSA key data */
@@ -3177,10 +3092,10 @@ static const unsigned char sig_kat_persstr[] = {
     0xac, 0x54, 0x4f, 0xce, 0x57, 0xf1, 0x5e, 0x11
 };
 
-static const ST_KAT_SIGN st_kat_sign_tests[] = {
+ const ST_KAT_SIGN st_kat_sign_tests[] = {
     {
         OSSL_SELF_TEST_DESC_SIGN_RSA,
-        "RSA", "RSA-SHA256", 0, 0,
+        "RSA", "RSA-SHA256", SELF_TEST_DEFERRED, 0,
         rsa_crt_key,
         ITM_STR(rsa_sig_msg),
         ITM(sig_kat_entropyin),
@@ -3191,7 +3106,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
 #ifndef OPENSSL_NO_EC
     {
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
-        "EC", "ECDSA-SHA256", 0, 0,
+        "EC", "ECDSA-SHA256", SELF_TEST_DEFERRED, 0,
         ecdsa_prime_key,
         ITM_STR(rsa_sig_msg),
         ITM(sig_kat_entropyin),
@@ -3201,7 +3116,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
     },
     {
         OSSL_SELF_TEST_DESC_SIGN_DetECDSA,
-        "EC", "ECDSA-SHA256", 0, 0,
+        "EC", "ECDSA-SHA256", SELF_TEST_DEFERRED, 0,
         ecdsa_prime_key,
         ITM_STR(rsa_sig_msg),
         NULL, 0, NULL, 0, NULL, 0,
@@ -3211,7 +3126,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
 # ifndef OPENSSL_NO_EC2M
     {
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
-        "EC", "ECDSA-SHA256", 0, 0,
+        "EC", "ECDSA-SHA256", SELF_TEST_DEFERRED, 0,
         ecdsa_bin_key,
         ITM_STR(rsa_sig_msg),
         ITM(sig_kat_entropyin),
@@ -3223,7 +3138,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
 # ifndef OPENSSL_NO_ECX
     {
         OSSL_SELF_TEST_DESC_SIGN_EDDSA,
-        "ED448", "ED448", 0, 0,
+        "ED448", "ED448", SELF_TEST_DEFERRED, 0,
         ed448_key,
         ITM(ecx_sig_msg),
         NULL, 0, NULL, 0, NULL, 0,
@@ -3231,7 +3146,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
     },
     {
         OSSL_SELF_TEST_DESC_SIGN_EDDSA,
-        "ED25519", "ED25519", 0, 0,
+        "ED25519", "ED25519", SELF_TEST_DEFERRED, 0,
         ed25519_key,
         ITM(ecx_sig_msg),
         NULL, 0, NULL, 0, NULL, 0,
@@ -3242,7 +3157,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
 #ifndef OPENSSL_NO_DSA
     {
         OSSL_SELF_TEST_DESC_SIGN_DSA,
-        "DSA", "DSA-SHA256", 0, SIGNATURE_MODE_VERIFY_ONLY,
+        "DSA", "DSA-SHA256", SELF_TEST_ONLOAD, SIGNATURE_MODE_VERIFY_ONLY,
         dsa_key,
         ITM_STR(rsa_sig_msg),
         ITM(sig_kat_entropyin),
@@ -3255,7 +3170,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
 #ifndef OPENSSL_NO_ML_DSA
     {
         OSSL_SELF_TEST_DESC_SIGN_ML_DSA,
-        "ML-DSA-65", "ML-DSA-65", 0, 0,
+        "ML-DSA-65", "ML-DSA-65", SELF_TEST_ONLOAD, 0,
         ml_dsa_key,
         ITM(ml_dsa_65_msg),
         NULL, 0,
@@ -3280,7 +3195,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
     {
         OSSL_SELF_TEST_DESC_SIGN_SLH_DSA,
         "SLH-DSA-SHA2-128f", "SLH-DSA-SHA2-128f",
-        1, SIGNATURE_MODE_SIG_DIGESTED,
+        SELF_TEST_DEFERRED, SIGNATURE_MODE_SIG_DIGESTED,
         slh_dsa_sha2_128f_key_params,
         ITM(slh_dsa_sha2_sig_msg),
         NULL, 0, NULL, 0, NULL, 0,
@@ -3290,7 +3205,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
     {
         OSSL_SELF_TEST_DESC_SIGN_SLH_DSA,
         "SLH-DSA-SHAKE-128f", "SLH-DSA-SHAKE-128f",
-        1, SIGNATURE_MODE_SIG_DIGESTED,
+        SELF_TEST_DEFERRED, SIGNATURE_MODE_SIG_DIGESTED,
         slh_dsa_shake_128f_key_params,
         ITM(slh_dsa_shake_sig_msg),
         NULL, 0, NULL, 0, NULL, 0,
@@ -3299,6 +3214,59 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
     },
 #endif /* OPENSSL_NO_SLH_DSA */
 };
+int st_kat_sign_tests_size = OSSL_NELEM(st_kat_sign_tests);
+
+FIPS_DEFERRED_TEST rsa_sig_deferred_test = {
+    "RSA",
+    FIPS_DEFERRED_KAT_SIGNATURE,
+    FIPS_DEFERRED_TEST_INIT,
+    satisfies_sha256,
+    NULL,
+};
+
+#ifndef OPENSSL_NO_EC
+/* Note this will run three tests all called "EC" */
+FIPS_DEFERRED_TEST ecdsa_sig_deferred_test = {
+    "EC",
+    FIPS_DEFERRED_KAT_SIGNATURE,
+    FIPS_DEFERRED_TEST_INIT,
+    satisfies_sha256,
+    NULL,
+};
+# ifndef OPENSSL_NO_ECX
+FIPS_DEFERRED_TEST ed448_sig_deferred_test = {
+    "ED448",
+    FIPS_DEFERRED_KAT_SIGNATURE,
+    FIPS_DEFERRED_TEST_INIT,
+    NULL,
+    NULL,
+};
+FIPS_DEFERRED_TEST ed25519_sig_deferred_test = {
+    "ED25519",
+    FIPS_DEFERRED_KAT_SIGNATURE,
+    FIPS_DEFERRED_TEST_INIT,
+    satisfies_sha512,
+    NULL,
+};
+# endif
+#endif
+
+#ifndef OPENSSL_NO_SLH_DSA
+FIPS_DEFERRED_TEST slh_dsa_shake_deferred_test = {
+    "SLH-DSA-SHAKE-128f",
+    FIPS_DEFERRED_KAT_SIGNATURE,
+    FIPS_DEFERRED_TEST_INIT,
+    NULL,
+    NULL
+};
+FIPS_DEFERRED_TEST slh_dsa_sha2_deferred_test = {
+    "SLH-DSA-SHA2-128f",
+    FIPS_DEFERRED_KAT_SIGNATURE,
+    FIPS_DEFERRED_TEST_INIT,
+    NULL,
+    NULL
+};
+#endif /* OPENSSL_NO_SLH_DSA */
 
 #if !defined(OPENSSL_NO_ML_DSA)
 static const ST_KAT_PARAM ml_dsa_keygen_params[] = {
@@ -3667,10 +3635,10 @@ static const ST_KAT_PARAM ml_kem_key[] = {
     ST_KAT_PARAM_END()
 };
 
-static const ST_KAT_KEM st_kat_kem_tests[] = {
+const ST_KAT_KEM st_kat_kem_tests[] = {
     {
         OSSL_SELF_TEST_DESC_KEM,
-        "ML-KEM-512", 0,
+        "ML-KEM-512", SELF_TEST_ONLOAD,
         ml_kem_key,
         ITM(ml_kem_512_cipher_text),
         ITM(ml_kem_512_entropy),
@@ -3678,10 +3646,11 @@ static const ST_KAT_KEM st_kat_kem_tests[] = {
         ml_kem_512_reject_secret    /* No length because same as _secret's */
     },
 };
+int st_kat_kem_tests_size = OSSL_NELEM(st_kat_kem_tests);
 #endif /* OPENSSL_NO_ML_KEM */
 
 #if !defined(OPENSSL_NO_ML_KEM) || !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
-static const ST_KAT_ASYM_KEYGEN st_kat_asym_keygen_tests[] = {
+const ST_KAT_ASYM_KEYGEN st_kat_asym_keygen_tests[] = {
 # if !defined(OPENSSL_NO_ML_KEM)
     /*
      * FIPS 140-3 IG 10.3.A resolution 14 mandates a CAST for ML-KEM
@@ -3689,7 +3658,7 @@ static const ST_KAT_ASYM_KEYGEN st_kat_asym_keygen_tests[] = {
      */
     {
         OSSL_SELF_TEST_DESC_KEYGEN_ML_KEM,
-        "ML-KEM-512", 0,
+        "ML-KEM-512", SELF_TEST_ONLOAD,
         ml_kem_keygen_params,
         ml_kem_key
     },
@@ -3697,7 +3666,7 @@ static const ST_KAT_ASYM_KEYGEN st_kat_asym_keygen_tests[] = {
 # if !defined(OPENSSL_NO_ML_DSA)
     {
         OSSL_SELF_TEST_DESC_KEYGEN_ML_DSA,
-        "ML-DSA-65", 0,
+        "ML-DSA-65", SELF_TEST_ONLOAD,
         ml_dsa_keygen_params,
         ml_dsa_key
     },
@@ -3705,18 +3674,29 @@ static const ST_KAT_ASYM_KEYGEN st_kat_asym_keygen_tests[] = {
 # if !defined(OPENSSL_NO_SLH_DSA)
     {
         OSSL_SELF_TEST_DESC_KEYGEN_SLH_DSA,
-        "SLH-DSA-SHA2-128f", 1,
+        "SLH-DSA-SHA2-128f", SELF_TEST_DEFERRED,
         slh_dsa_sha2_128f_keygen_init_params,
         slh_dsa_128f_keygen_expected_params
     },
 # endif
 };
+int st_kat_asym_keygen_tests_size = OSSL_NELEM(st_kat_asym_keygen_tests);
 #endif /* !OPENSSL_NO_ML_DSA || !OPENSSL_NO_SLH_DSA */
 
-static const ST_KAT_ASYM_CIPHER st_kat_asym_cipher_tests[] = {
+#ifndef OPENSSL_NO_SLH_DSA
+FIPS_DEFERRED_TEST slh_key_gen_deferred_test = {
+    "SLH-DSA-SHA2-128f",
+    FIPS_DEFERRED_KAT_ASYM_KEYGEN,
+    FIPS_DEFERRED_TEST_INIT,
+    satisfies_sha256,
+    NULL
+};
+#endif
+
+const ST_KAT_ASYM_CIPHER st_kat_asym_cipher_tests[] = {
     {
         OSSL_SELF_TEST_DESC_ASYM_RSA_ENC,
-        "RSA", 0,
+        "RSA", SELF_TEST_ONLOAD,
         1,
         rsa_pub_key,
         rsa_enc_params,
@@ -3725,7 +3705,7 @@ static const ST_KAT_ASYM_CIPHER st_kat_asym_cipher_tests[] = {
     },
     {
         OSSL_SELF_TEST_DESC_ASYM_RSA_DEC,
-        "RSA", 0,
+        "RSA", SELF_TEST_ONLOAD,
         0,
         rsa_priv_key,
         rsa_enc_params,
@@ -3734,7 +3714,7 @@ static const ST_KAT_ASYM_CIPHER st_kat_asym_cipher_tests[] = {
     },
     {
         OSSL_SELF_TEST_DESC_ASYM_RSA_DEC,
-        "RSA", 0,
+        "RSA", SELF_TEST_ONLOAD,
         0,
         rsa_crt_key,
         rsa_enc_params,
@@ -3742,3 +3722,4 @@ static const ST_KAT_ASYM_CIPHER st_kat_asym_cipher_tests[] = {
         ITM(rsa_asym_plaintext_encrypt),
     },
 };
+int st_kat_asym_cipher_tests_size = OSSL_NELEM(st_kat_asym_cipher_tests);
