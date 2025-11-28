@@ -58,7 +58,7 @@ static const char *ts_status_text[] = {
 
 #define TS_STATUS_TEXT_SIZE     OSSL_NELEM(ts_status_text)
 
-static struct {
+static const struct {
     int code;
     const char *text;
 } ts_failure_info[] = {
