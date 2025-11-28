@@ -1946,12 +1946,11 @@ static int ocsp_server_cb_single(SSL *s, void *arg)
     resplen = i2d_OCSP_RESPONSE(ocsp_resp, &ocsp_resp_der);
     OCSP_RESPONSE_free(ocsp_resp);
 
+    /* This is a set0 kind of function. The ownership is transferred. */
     if (!TEST_true(SSL_set_tlsext_status_ocsp_resp(s, ocsp_resp_der, resplen))) {
         OPENSSL_free(ocsp_resp_der);
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
-    OPENSSL_free(ocsp_resp_der);
-
     ocsp_server_called = 1;
     return SSL_TLSEXT_ERR_OK;
 }
