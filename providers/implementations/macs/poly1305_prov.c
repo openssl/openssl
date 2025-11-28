@@ -42,7 +42,7 @@ static OSSL_FUNC_mac_final_fn poly1305_final;
 struct poly1305_data_st {
     void *provctx;
     int updated;
-    POLY1305 poly1305;           /* Poly1305 data */
+    POLY1305 poly1305; /* Poly1305 data */
 };
 
 static void *poly1305_new(void *provctx)
@@ -83,7 +83,7 @@ static size_t poly1305_size(void)
 }
 
 static int poly1305_setkey(struct poly1305_data_st *ctx,
-                           const unsigned char *key, size_t keylen)
+    const unsigned char *key, size_t keylen)
 {
     if (keylen != POLY1305_KEY_SIZE) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
@@ -95,7 +95,7 @@ static int poly1305_setkey(struct poly1305_data_st *ctx,
 }
 
 static int poly1305_init(void *vmacctx, const unsigned char *key,
-                         size_t keylen, const OSSL_PARAM params[])
+    size_t keylen, const OSSL_PARAM params[])
 {
     struct poly1305_data_st *ctx = vmacctx;
 
@@ -109,7 +109,7 @@ static int poly1305_init(void *vmacctx, const unsigned char *key,
 }
 
 static int poly1305_update(void *vmacctx, const unsigned char *data,
-                       size_t datalen)
+    size_t datalen)
 {
     struct poly1305_data_st *ctx = vmacctx;
 
@@ -123,7 +123,7 @@ static int poly1305_update(void *vmacctx, const unsigned char *data,
 }
 
 static int poly1305_final(void *vmacctx, unsigned char *out, size_t *outl,
-                          size_t outsize)
+    size_t outsize)
 {
     struct poly1305_data_st *ctx = vmacctx;
 
@@ -154,7 +154,7 @@ static int poly1305_get_params(OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM *poly1305_settable_ctx_params(ossl_unused void *ctx,
-                                                      ossl_unused void *provctx)
+    ossl_unused void *provctx)
 {
     return poly1305_set_ctx_params_list;
 }
@@ -169,7 +169,7 @@ static int poly1305_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
 
     if (p.key != NULL)
         if (p.key->data_type != OSSL_PARAM_OCTET_STRING
-                || !poly1305_setkey(ctx, p.key->data, p.key->data_size))
+            || !poly1305_setkey(ctx, p.key->data, p.key->data_size))
             return 0;
     return 1;
 }
@@ -184,7 +184,7 @@ const OSSL_DISPATCH ossl_poly1305_functions[] = {
     { OSSL_FUNC_MAC_GETTABLE_PARAMS, (void (*)(void))poly1305_gettable_params },
     { OSSL_FUNC_MAC_GET_PARAMS, (void (*)(void))poly1305_get_params },
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
-      (void (*)(void))poly1305_settable_ctx_params },
+        (void (*)(void))poly1305_settable_ctx_params },
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))poly1305_set_ctx_params },
     OSSL_DISPATCH_END
 };
