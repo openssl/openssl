@@ -192,7 +192,7 @@ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     return evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
         evp_keyexch_from_algorithm,
         evp_keyexch_up_ref,
-        evp_keyexch_free);
+        evp_keyexch_free, NULL, NULL);
 }
 
 EVP_KEYEXCH *evp_keyexch_fetch_from_prov(OSSL_PROVIDER *prov,

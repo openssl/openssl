@@ -392,7 +392,7 @@ static int test_register_deregister(void)
     for (i = 0; i < OSSL_NELEM(impls); i++)
         if (!TEST_true(ossl_method_store_add(store, &prov, impls[i].nid,
                 impls[i].prop, impls[i].impl,
-                &up_ref, &down_ref))) {
+                &up_ref, &down_ref, NULL, NULL))) {
             TEST_note("iteration %zd", i + 1);
             goto err;
         }
@@ -412,6 +412,41 @@ static int test_register_deregister(void)
 
     if (TEST_false(ossl_method_store_remove(store, impls[0].nid, impls[0].impl)))
         ret = 1;
+err:
+    ossl_method_store_free(store);
+    return ret;
+}
+
+static int test_freeze_flag(void)
+{
+    int ret = 0, nid = 6;
+    const char *prop = "position=1", *prop2 = "position=2";
+    char *impl = "a", *impl2 = "b";
+    OSSL_METHOD_STORE *store;
+    OSSL_PROVIDER prov = { 1 };
+    const OSSL_PROVIDER *fetched_prov = NULL;
+    void *fetched_meth = NULL;
+
+    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+        || !TEST_true(add_property_names("position", NULL))
+        || !TEST_true(ossl_method_store_add(store, &prov, nid, prop, impl, &up_ref, &down_ref, NULL, NULL))
+        || !TEST_true(ossl_method_store_fetch(store, nid, prop, &fetched_prov, &fetched_meth))
+        || !TEST_ptr_eq(&prov, fetched_prov)
+        || !TEST_str_eq((char *)fetched_meth, impl)
+        || !TEST_true(ossl_method_store_freeze_cache(store, NULL))
+        || !TEST_false(ossl_method_store_remove(store, nid, impl))
+        || !TEST_true(ossl_method_store_fetch(store, nid, prop, &fetched_prov, &fetched_meth))
+        || !TEST_ptr_eq(&prov, fetched_prov)
+        || !TEST_str_eq((char *)fetched_meth, impl)
+        || !TEST_false(ossl_method_store_remove_all_provided(store, fetched_prov))
+        || !TEST_true(ossl_method_store_fetch(store, nid, prop, &fetched_prov, &fetched_meth))
+        || !TEST_ptr_eq(&prov, fetched_prov)
+        || !TEST_str_eq((char *)fetched_meth, impl)
+        || !TEST_false(ossl_method_store_add(store, &prov, nid, prop2, impl2, &up_ref, &down_ref, NULL, NULL))
+        || !TEST_false(ossl_method_store_freeze_cache(store, NULL)))
+        goto err;
+
+    ret = 1;
 err:
     ossl_method_store_free(store);
     return ret;
@@ -467,7 +502,7 @@ static int test_property(void)
         if (!TEST_true(ossl_method_store_add(store, *impls[i].prov,
                 impls[i].nid, impls[i].prop,
                 impls[i].impl,
-                &up_ref, &down_ref))) {
+                &up_ref, &down_ref, NULL, NULL))) {
             TEST_note("iteration %zd", i + 1);
             goto err;
         }
@@ -578,13 +613,13 @@ static int test_query_cache_stochastic(void)
         v[i] = 2 * i;
         BIO_snprintf(buf, sizeof(buf), "n=%d\n", i);
         if (!TEST_true(ossl_method_store_add(store, &prov, i, buf, "abc",
-                &up_ref, &down_ref))
+                &up_ref, &down_ref, NULL, NULL))
             || !TEST_true(ossl_method_store_cache_set(store, &prov, i,
                 buf, v + i,
-                &up_ref, &down_ref))
+                &up_ref, &down_ref, NULL, NULL))
             || !TEST_true(ossl_method_store_cache_set(store, &prov, i,
                 "n=1234", "miss",
-                &up_ref, &down_ref))) {
+                &up_ref, &down_ref, NULL, NULL))) {
             TEST_note("iteration %d", i);
             goto err;
         }
@@ -713,6 +748,7 @@ int setup_tests(void)
     ADD_TEST(test_property_defn_cache);
     ADD_ALL_TESTS(test_definition_compares, OSSL_NELEM(definition_tests));
     ADD_TEST(test_register_deregister);
+    ADD_TEST(test_freeze_flag);
     ADD_TEST(test_property);
     ADD_TEST(test_query_cache_stochastic);
     ADD_TEST(test_fips_mode);

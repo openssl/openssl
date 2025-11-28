@@ -14,13 +14,18 @@
 #include <openssl/crypto.h>
 #include "internal/property.h"
 #include "internal/provider.h"
+#include "internal/core.h"
 #include "internal/tsan_assist.h"
+#include "internal/hashtable.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include <openssl/trace.h>
 #include "crypto/sparse_array.h"
 #include "property_local.h"
 #include "crypto/context.h"
+#include "crypto/evp.h"
+#include "crypto/evp/evp_local.h"
+#include "internal/namemap.h"
 
 /*
  * The shard count was determined through performance testing with the evp_fetch
@@ -47,6 +52,8 @@ typedef struct {
     void *method;
     int (*up_ref)(void *);
     void (*free)(void *);
+    void *(*dup)(void *);
+    void (*free_dup)(void *);
 } METHOD;
 
 typedef struct {
@@ -94,6 +101,10 @@ typedef struct {
 struct ossl_method_store_st {
     OSSL_LIB_CTX *ctx;
     STORED_ALGORITHMS *algs;
+
+    /* (nid, propq) -> method  */
+    HT *frozen_algs;
+
     /*
      * Lock to reserve the whole store.  This is used when fetching a set
      * of algorithms, via these functions, found in crypto/core_fetch.c:
@@ -101,6 +112,12 @@ struct ossl_method_store_st {
      * ossl_method_construct_unreserve_store()
      */
     CRYPTO_RWLOCK *biglock;
+
+    /* Flag: 1 if method store is frozen */
+    int frozen;
+
+    /* Property query associated with frozen state */
+    char *frozen_propq;
 };
 
 typedef struct {
@@ -113,6 +130,12 @@ typedef struct {
 DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
 
 DEFINE_STACK_OF(ALGORITHM)
+
+HT_START_KEY_DEFN(frozen_cache_key)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+/* TODO(FREEZE): allow variable length propq */
+HT_DEF_KEY_FIELD_CHAR_ARRAY(propq, 64)
+HT_END_KEY_DEFN(FROZEN_CACHE_KEY)
 
 typedef struct ossl_global_properties_st {
     OSSL_PROPERTY_LIST *list;
@@ -184,6 +207,30 @@ static int ossl_method_up_ref(METHOD *method)
 static void ossl_method_free(METHOD *method)
 {
     (*method->free)(method->method);
+}
+
+static void ossl_method_free_frozen(METHOD *method)
+{
+    (*method->free_dup)(method->method);
+}
+
+static METHOD *ossl_method_dup(METHOD *method)
+{
+    METHOD *dup;
+
+    dup = OPENSSL_zalloc(sizeof(*dup));
+    if (dup == NULL)
+        return NULL;
+
+    memcpy(dup, method, sizeof(*dup));
+
+    dup->method = (*method->dup)(method->method);
+    if (dup->method == NULL) {
+        OPENSSL_free(dup);
+        return NULL;
+    }
+
+    return dup;
 }
 
 static __owur int ossl_property_read_lock(STORED_ALGORITHMS *p)
@@ -320,6 +367,9 @@ void ossl_method_store_free(OSSL_METHOD_STORE *store)
 
     stored_algs_free(store->algs);
     CRYPTO_THREAD_lock_free(store->biglock);
+    if (store->frozen_algs != NULL)
+        ossl_ht_free(store->frozen_algs);
+    OPENSSL_free(store->frozen_propq);
     OPENSSL_free(store);
 }
 
@@ -371,7 +421,9 @@ static int ossl_method_store_insert(STORED_ALGORITHMS *sa, ALGORITHM *alg)
 int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     int nid, const char *properties, void *method,
     int (*method_up_ref)(void *),
-    void (*method_destruct)(void *))
+    void (*method_destruct)(void *),
+    void *(*method_dup)(void *),
+    void (*free_frozen)(void *))
 {
     STORED_ALGORITHMS *sa;
     ALGORITHM *alg = NULL;
@@ -379,7 +431,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     int ret = 0;
     int i;
 
-    if (nid <= 0 || method == NULL || store == NULL)
+    if (nid <= 0 || method == NULL || store == NULL || store->frozen == 1)
         return 0;
 
     if (properties == NULL)
@@ -395,6 +447,8 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     impl->method.method = method;
     impl->method.up_ref = method_up_ref;
     impl->method.free = method_destruct;
+    impl->method.dup = method_dup;
+    impl->method.free_dup = free_frozen;
     if (!ossl_method_up_ref(&impl->method)) {
         OPENSSL_free(impl);
         return 0;
@@ -497,7 +551,7 @@ int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
     STORED_ALGORITHMS *sa;
     int i;
 
-    if (nid <= 0 || method == NULL || store == NULL)
+    if (nid <= 0 || method == NULL || store == NULL || store->frozen == 1)
         return 0;
 
     sa = stored_algs_shard(store, nid);
@@ -600,6 +654,9 @@ int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
 {
     struct alg_cleanup_by_provider_data_st data;
 
+    if (store == NULL || store->frozen == 1)
+        return 0;
+
     for (int k = 0; k < NUM_SHARDS; ++k) {
         STORED_ALGORITHMS *sa = &store->algs[k];
 
@@ -677,32 +734,9 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
     }
 }
 
-/**
- * @brief Fetches a method from the method store matching the given properties.
- *
- * This function searches the method store for an implementation of a specified
- * method, identified by its id (nid), and matching the given property query. If
- * successful, it returns the method and its associated provider.
- *
- * @param store Pointer to the OSSL_METHOD_STORE from which to fetch the method.
- *              Must be non-null.
- * @param nid (identifier) of the method to be fetched. Must be > 0
- * @param prop_query String containing the property query to match against.
- * @param prov_rw Pointer to the OSSL_PROVIDER to restrict the search to, or
- *                to receive the matched provider.
- * @param method Pointer to receive the fetched method. Must be non-null.
- *
- * @return 1 if the method is successfully fetched, 0 on failure.
- *
- * If tracing is enabled, a message is printed indicating the property query and
- * the resolved provider.
- *
- * NOTE: The nid parameter here is _not_ a NID in the sense of the NID_* macros.
- * It is a unique internal identifier value.
- */
-int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
+static int ossl_method_store_fetch_best_impl(OSSL_METHOD_STORE *store,
     int nid, const char *prop_query,
-    const OSSL_PROVIDER **prov_rw, void **method)
+    const OSSL_PROVIDER **prov_rw, IMPLEMENTATION **rbest_impl)
 {
     OSSL_PROPERTY_LIST **plp;
     ALGORITHM *alg;
@@ -713,7 +747,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     int j, best = -1, score, optional;
     STORED_ALGORITHMS *sa;
 
-    if (nid <= 0 || method == NULL || store == NULL)
+    if (nid <= 0 || store == NULL || rbest_impl == NULL)
         return 0;
 
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_AUTOLOAD_CONFIG)
@@ -805,8 +839,8 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
         }
     }
 fin:
-    if (ret && ossl_method_up_ref(&best_impl->method)) {
-        *method = best_impl->method.method;
+    if (ret) {
+        *rbest_impl = best_impl;
         if (prov_rw != NULL)
             *prov_rw = best_impl->provider;
     } else {
@@ -833,6 +867,48 @@ fin:
     return ret;
 }
 
+/**
+ * @brief Fetches a method from the method store matching the given properties.
+ *
+ * This function searches the method store for an implementation of a specified
+ * method, identified by its id (nid), and matching the given property query. If
+ * successful, it returns the method and its associated provider.
+ *
+ * @param store Pointer to the OSSL_METHOD_STORE from which to fetch the method.
+ *              Must be non-null.
+ * @param nid (identifier) of the method to be fetched. Must be > 0
+ * @param prop_query String containing the property query to match against.
+ * @param prov_rw Pointer to the OSSL_PROVIDER to restrict the search to, or
+ *                to receive the matched provider.
+ * @param method Pointer to receive the fetched method. Must be non-null.
+ *
+ * @return 1 if the method is successfully fetched, 0 on failure.
+ *
+ * If tracing is enabled, a message is printed indicating the property query and
+ * the resolved provider.
+ *
+ * NOTE: The nid parameter here is _not_ a NID in the sense of the NID_* macros.
+ * It is a unique internal identifier value.
+ */
+int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
+    int nid, const char *prop_query,
+    const OSSL_PROVIDER **prov_rw, void **method)
+{
+    IMPLEMENTATION *best_impl = NULL;
+    int ret = 0;
+
+    if (nid <= 0 || store == NULL || method == NULL)
+        return 0;
+
+    ret = ossl_method_store_fetch_best_impl(store, nid, prop_query, prov_rw, &best_impl);
+    if (ret && ossl_method_up_ref(&best_impl->method))
+        *method = best_impl->method.method;
+    else
+        ret = 0;
+
+    return ret;
+}
+
 static void ossl_method_cache_flush_alg(STORED_ALGORITHMS *sa,
     ALGORITHM *alg)
 {
@@ -850,6 +926,9 @@ static void ossl_method_cache_flush(STORED_ALGORITHMS *sa, int nid)
 
 int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 {
+    if (store == NULL || store->frozen == 1)
+        return 0;
+
     for (int i = 0; i < NUM_SHARDS; ++i) {
         STORED_ALGORITHMS *sa = &store->algs[i];
 
@@ -974,7 +1053,9 @@ err:
 int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, void *method,
     int (*method_up_ref)(void *),
-    void (*method_destruct)(void *))
+    void (*method_destruct)(void *),
+    void *(*method_dup)(void *),
+    void (*free_dup)(void *))
 {
     QUERY elem, *old, *p = NULL;
     ALGORITHM *alg;
@@ -1013,6 +1094,8 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         p->method.method = method;
         p->method.up_ref = method_up_ref;
         p->method.free = method_destruct;
+        p->method.dup = method_dup;
+        p->method.free_dup = free_dup;
         if (!ossl_method_up_ref(&p->method))
             goto err;
         memcpy((char *)p->query, prop_query, len + 1);
@@ -1033,4 +1116,183 @@ err:
 end:
     ossl_property_unlock(sa);
     return res;
+}
+
+int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
+    const char *alg_name, const char *prop_query, void **method)
+{
+    FROZEN_CACHE_KEY key;
+    HT_VALUE *val;
+
+    if (store == NULL
+        || alg_name == NULL
+        || prop_query == NULL
+        || store->frozen_algs == NULL)
+        return 0;
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING_CASE(&key, name, alg_name);
+    HT_SET_KEY_STRING(&key, propq, prop_query);
+
+    val = ossl_ht_get(store->frozen_algs, TO_HT_KEY(&key));
+    if (val == NULL)
+        return 1;
+    *method = ((METHOD *)val->value)->method;
+
+    return 1;
+}
+
+struct alg_freeze_st {
+    OSSL_METHOD_STORE *store;
+    int nid;
+
+    int ret;
+};
+
+static void frozen_cache_free(HT_VALUE *val)
+{
+    METHOD *method = (METHOD *)val->value;
+    if (method == NULL || method->free_dup == NULL)
+        return;
+    ossl_method_free_frozen(method);
+
+    OPENSSL_free(method);
+}
+
+static int freeze_alg(OSSL_METHOD_STORE *store, ALGORITHM *alg,
+    const char *propq, const char *alg_name)
+{
+    int ret = 0;
+    IMPLEMENTATION *best_impl = NULL;
+    FROZEN_CACHE_KEY key;
+    HT_VALUE val = { 0 };
+    const OSSL_PROVIDER *prov = NULL;
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING_CASE(&key, name, alg_name);
+    HT_SET_KEY_STRING(&key, propq, propq);
+
+    if (ossl_ht_get(store->frozen_algs, TO_HT_KEY(&key)) != NULL)
+        return 1;
+
+    ret = ossl_method_store_fetch_best_impl(store,
+        alg->nid, propq, &prov, &best_impl);
+    if (ret == 0 || best_impl == NULL
+        || best_impl->method.dup == NULL
+        || best_impl->method.free_dup == NULL)
+        return 1;
+
+    val.value = ossl_method_dup(&best_impl->method);
+    if (val.value == NULL)
+        return ret;
+
+    ret = ossl_ht_insert(store->frozen_algs, TO_HT_KEY(&key), &val, NULL);
+    if (ret <= 0) {
+        frozen_cache_free(&val);
+        return 0;
+    }
+
+    return 1;
+}
+
+static void alg_freeze(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
+{
+    struct alg_freeze_st *af = arg;
+    OSSL_NAMEMAP *nm = ossl_namemap_stored(af->store->ctx);
+    int name_id;
+    const char *name;
+    int i = 0;
+
+    if (alg == NULL
+        || !evp_method_id2name_id_op_id(alg->nid, &name_id, NULL)) {
+        af->ret = 0;
+        return;
+    }
+
+    for (;;) {
+        name = ossl_namemap_num2name(nm, name_id, i++);
+        if (name == NULL)
+            break;
+        if (*af->store->frozen_propq != '\0') {
+            af->ret = freeze_alg(af->store, alg, af->store->frozen_propq, name);
+            if (!af->ret)
+                return;
+        }
+        af->ret = freeze_alg(af->store, alg, "", name);
+        if (!af->ret)
+            return;
+    }
+}
+
+/**
+ * @brief Freezes the method store's cache into a hash table.
+ *
+ * This function creates a frozen copy of the method store's cache, storing it
+ * in a hash table for efficient retrieval. Each entry in the cache is duplicated
+ * to ensure that the frozen cache is independent of the original store.
+ *
+ * @param store Pointer to the OSSL_METHOD_STORE to be frozen.
+ *
+ * @return 1 on success, 0 on failure.
+ *
+ * If the store is NULL or if any duplication fails, the function returns 0.
+ * On success, it returns 1 after populating the frozen cache.
+ */
+int ossl_method_store_freeze_cache(OSSL_METHOD_STORE *store, const char *propq)
+{
+    HT_CONFIG ht_conf = {
+        .ht_free_fn = frozen_cache_free,
+        .init_neighborhoods = store->algs->cache_nelem,
+        .collision_check = 1,
+        .no_rcu = 1,
+    };
+    struct alg_freeze_st af = {
+        .store = store,
+        .ret = 1,
+    };
+    propq = propq != NULL ? propq : "";
+
+    if (store == NULL || store->frozen == 1)
+        return 0;
+
+    store->frozen_propq = OPENSSL_strdup(propq);
+    if (store->frozen_propq == NULL)
+        goto err;
+
+    store->frozen_algs = ossl_ht_new(&ht_conf);
+    if (store->frozen_algs == NULL)
+        goto err;
+
+    if (evp_md_fetch_all(store->ctx) <= 0)
+        goto err;
+
+    for (int i = 0; i < NUM_SHARDS; ++i) {
+        ossl_sa_ALGORITHM_doall_arg(store->algs[i].algs, &alg_freeze, &af);
+        if (af.ret <= 0)
+            goto err;
+    }
+
+    store->frozen = 1;
+
+    return 1;
+
+err:
+    OPENSSL_free(store->frozen_propq);
+    ossl_ht_free(store->frozen_algs);
+    store->frozen_algs = NULL;
+    store->frozen_propq = NULL;
+
+    return 0;
+}
+
+int ossl_method_store_is_frozen(OSSL_METHOD_STORE *store)
+{
+    return store != NULL && store->frozen == 1;
+}
+
+const char *ossl_method_store_frozen_propq(OSSL_METHOD_STORE *store)
+{
+    if (store == NULL)
+        return NULL;
+    return store->frozen_propq;
 }

@@ -171,7 +171,7 @@ EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
 {
     return evp_generic_fetch(libctx, OSSL_OP_KDF, algorithm, properties,
         evp_kdf_from_algorithm, evp_kdf_up_ref,
-        evp_kdf_free);
+        evp_kdf_free, NULL, NULL);
 }
 
 int EVP_KDF_up_ref(EVP_KDF *kdf)

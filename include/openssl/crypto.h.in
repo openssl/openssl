@@ -586,6 +586,7 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void);
 OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx);
 int OSSL_LIB_CTX_get_conf_diagnostics(OSSL_LIB_CTX *ctx);
 void OSSL_LIB_CTX_set_conf_diagnostics(OSSL_LIB_CTX *ctx, int value);
+int OSSL_LIB_CTX_freeze(OSSL_LIB_CTX *ctx, const char *propq);
 
 void OSSL_sleep(uint64_t millis);
 
