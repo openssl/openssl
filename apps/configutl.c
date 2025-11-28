@@ -93,12 +93,12 @@ typedef enum OPTION_choice {
 
 const OPTIONS configutl_options[] = {
     OPT_SECTION("General"),
-    {"help", OPT_HELP, '-', "Display this summary"},
-    {"config", OPT_CONFIG, 's', "Config file to deal with (the default one if omitted)"},
+    { "help", OPT_HELP, '-', "Display this summary" },
+    { "config", OPT_CONFIG, 's', "Config file to deal with (the default one if omitted)" },
     OPT_SECTION("Output"),
-    {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
-    {"noheader", OPT_NOHEADER, '-', "Don't print the information about original config"},
-    {NULL}
+    { "out", OPT_OUT, '>', "Output to filename rather than stdout" },
+    { "noheader", OPT_NOHEADER, '-', "Don't print the information about original config" },
+    { NULL }
 };
 
 /**
@@ -174,7 +174,7 @@ int configutl_main(int argc, char *argv[])
 
     if (no_header == 0)
         BIO_printf(out, "# This configuration file was linearized and expanded from %s\n",
-                   configfile);
+            configfile);
 
     default_section_idx = sk_OPENSSL_CSTRING_find(sections, "default");
     if (default_section_idx != -1)
