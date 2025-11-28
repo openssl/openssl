@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_COMP_H
 # define OPENSSL_COMP_H
@@ -65,9 +67,11 @@ const BIO_METHOD *BIO_f_zstd(void);
 
 typedef struct ssl_comp_st SSL_COMP;
 
+/* clang-format off */
 {-
     generate_stack_macros("SSL_COMP");
 -}
+/* clang-format on */
 
 
 # ifdef  __cplusplus
