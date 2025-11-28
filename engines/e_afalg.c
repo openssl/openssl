@@ -48,8 +48,10 @@ void engine_load_afalg_int(void)
 # include <sys/syscall.h>
 # include <errno.h>
 
+/* clang-format off */
 # include "e_afalg.h"
 # include "e_afalg_err.c"
+/* clang-format on */
 
 # ifndef SOL_ALG
 #  define SOL_ALG 279
