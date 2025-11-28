@@ -141,30 +141,21 @@ static int vdata_appends(void)
 
 static int raised_error(void)
 {
-    const char *f, *data;
-    int l;
+    int l, start_line = -1, end_line = -1;
+    const char *f, *data, *file = NULL;
     unsigned long e;
 
-    /*
-     * When OPENSSL_NO_ERR or OPENSSL_NO_FILENAMES, no file name or line
-     * number is saved, so no point checking them.
-     */
-#if !defined(OPENSSL_NO_FILENAMES) && !defined(OPENSSL_NO_ERR)
-    const char *file;
-    int line;
-
     file = __FILE__;
-    line = __LINE__ + 2; /* The error is generated on the ERR_raise_data line */
-#endif
+
+    start_line = __LINE__ + 1;
     ERR_raise_data(ERR_LIB_NONE, ERR_R_INTERNAL_ERROR,
                    "calling exit()");
+    end_line = __LINE__ - 1;
     if (!TEST_ulong_ne(e = ERR_get_error_all(&f, &l, NULL, &data, NULL), 0)
-            || !TEST_int_eq(ERR_GET_REASON(e), ERR_R_INTERNAL_ERROR)
-#if !defined(OPENSSL_NO_FILENAMES) && !defined(OPENSSL_NO_ERR)
-            || !TEST_int_eq(l, line)
-            || !TEST_str_eq(f, file)
-#endif
-            || !TEST_str_eq(data, "calling exit()"))
+        || !TEST_int_eq(ERR_GET_REASON(e), ERR_R_INTERNAL_ERROR)
+        || (l > 0 && !(TEST_int_eq(l, start_line) || TEST_int_eq(l, end_line)))
+        || (strlen(f) != 0 && !TEST_str_eq(f, file))
+        || !TEST_str_eq(data, "calling exit()"))
         return 0;
     return 1;
 }
