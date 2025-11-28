@@ -9,9 +9,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_ASN1T_H
 # define OPENSSL_ASN1T_H
@@ -895,9 +897,11 @@ DECLARE_ASN1_ITEM(LONG)
 DECLARE_ASN1_ITEM(ZLONG)
 # endif
 
+/* clang-format off */
 {-
     generate_stack_macros("ASN1_VALUE");
 -}
+/* clang-format on */
 
 
 /* Functions used internally by the ASN1 code */
