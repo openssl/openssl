@@ -104,10 +104,8 @@ static size_t get_jitter_random_value(PROV_JITTER *s,
          * Permanent Failure
          * https://github.com/smuellerDD/jitterentropy-library/blob/master/doc/jitterentropy.3#L234
          */
-        if (result < -5) {
-            ossl_set_error_state(OSSL_SELF_TEST_TYPE_CRNG);
+        if (result < -5)
             break;
-        }
 
         /* Success */
         if (result >= 0 && (size_t)result == len)
