@@ -278,14 +278,13 @@ static int server_ocsp_cb(SSL *s, void *arg)
     resplen = i2d_OCSP_RESPONSE(arg, &respder);
 
     /*
-     * For the purposes of testing we just send back a dummy OCSP response
+     * For the purposes of testing we just send back a dummy OCSP response.
+     * This is a set0 kind of function. The ownership is transferred.
      */
     if (!SSL_set_tlsext_status_ocsp_resp(s, respder, resplen)) {
         OPENSSL_free(respder);
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
-
-    OPENSSL_free(respder);
 
     return SSL_TLSEXT_ERR_OK;
 }
@@ -677,7 +676,7 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
 
             SSL_CTX_set_tlsext_status_cb(client_ctx, client_ocsp_cb);
             SSL_CTX_set_tlsext_status_cb(server_ctx, server_ocsp_cb);
-            SSL_CTX_set_tlsext_status_arg(server_ctx, &dummy_ocsp_resp);
+            SSL_CTX_set_tlsext_status_arg(server_ctx, dummy_ocsp_resp);
 
             break;
         }

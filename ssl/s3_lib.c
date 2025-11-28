@@ -3694,14 +3694,13 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         ret = 1;
 #ifndef OPENSSL_NO_OCSP
         /*
-         * cleanup single values, which might be set somewhere else
-         * we only use the extended values
+         * In case of success keep the single value so we do not need to
+         * free it immediately.
+         * However in the handshake code we only use the extended values.
          */
-        if (sc->ext.ocsp.resp != NULL) {
-            OPENSSL_free(sc->ext.ocsp.resp);
-            sc->ext.ocsp.resp = NULL;
-            sc->ext.ocsp.resp_len = 0;
-        }
+        OPENSSL_free(sc->ext.ocsp.resp);
+        sc->ext.ocsp.resp = NULL;
+        sc->ext.ocsp.resp_len = 0;
 
         sk_OCSP_RESPONSE_pop_free(sc->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
         sc->ext.ocsp.resp_ex = NULL;
@@ -3715,6 +3714,9 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             resp = d2i_OCSP_RESPONSE(NULL, (const unsigned char **)&p, larg);
             if (resp != NULL)
                 sk_OCSP_RESPONSE_push(sc->ext.ocsp.resp_ex, resp);
+
+            sc->ext.ocsp.resp = parg;
+            sc->ext.ocsp.resp_len = larg;
         }
 #endif
         break;
