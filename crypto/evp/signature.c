@@ -941,6 +941,8 @@ int EVP_PKEY_sign_message_update(EVP_PKEY_CTX *ctx,
     const char *desc;
     int ret;
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
@@ -972,6 +974,8 @@ int EVP_PKEY_sign_message_final(EVP_PKEY_CTX *ctx,
     EVP_SIGNATURE *signature;
     const char *desc;
     int ret;
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
@@ -1006,6 +1010,8 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
     EVP_SIGNATURE *signature;
     const char *desc;
     int ret;
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
@@ -1095,6 +1101,8 @@ int EVP_PKEY_verify_message_update(EVP_PKEY_CTX *ctx,
     EVP_SIGNATURE *signature;
     const char *desc;
     int ret;
+
+    /* OSSL_ENABLE_DIT_FOR_SCOPE explicitly omitted on verify */
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
