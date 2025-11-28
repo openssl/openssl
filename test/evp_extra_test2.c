@@ -1394,6 +1394,91 @@ end:
     return ret;
 }
 
+static int test_evp_md_ctx_serialize(int tstid)
+{
+    static const char *algs[] = {
+        "SHA224", "SHA256", "SHA256-192",
+        "SHA384", "SHA512", "SHA512-224", "SHA512-256",
+        "SHA3-224", "SHA3-256", "SHA3-384", "SHA3-512",
+        "KECCAK-KMAC-128", "KECCAK-KMAC-256"
+    };
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_MD_CTX *mdctx1 = NULL, *mdctx2 = NULL;
+    EVP_MD *md = NULL;
+    unsigned char *buf = NULL;
+    size_t buflen;
+    size_t tmplen;
+    unsigned char d1[EVP_MAX_MD_SIZE], d2[EVP_MAX_MD_SIZE];
+    unsigned int d1_len, d2_len;
+    int ret = 0;
+    const char *data1 = "some data";
+    const char *data2 = "some more data";
+
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new())
+            || !TEST_ptr(md = EVP_MD_fetch(ctx, algs[tstid], NULL)))
+        goto end;
+
+    mdctx1 = EVP_MD_CTX_new();
+    mdctx2 = EVP_MD_CTX_new();
+    if (!TEST_ptr(mdctx2) || !TEST_ptr(mdctx1))
+        goto end;
+
+    if (!TEST_true(EVP_DigestInit_ex2(mdctx1, md, NULL)))
+        goto end;
+
+    if (!TEST_true(EVP_DigestUpdate(mdctx1, data1, strlen(data1))))
+        goto end;
+
+    /* Get required buffer size */
+    if (!TEST_true(EVP_MD_CTX_serialize(mdctx1, NULL, &buflen)))
+        goto end;
+
+    if (!TEST_ptr(buf = OPENSSL_malloc(buflen)))
+        goto end;
+
+    /* Serialize */
+    if (!TEST_true(EVP_MD_CTX_serialize(mdctx1, buf, &buflen)))
+        goto end;
+
+    if (!TEST_true(EVP_DigestInit_ex2(mdctx2, md, NULL)))
+        goto end;
+    /* Deserialize */
+    if (!TEST_true(EVP_MD_CTX_deserialize(mdctx2, buf, buflen)))
+        goto end;
+
+    if (!TEST_true(EVP_DigestUpdate(mdctx1, data2, strlen(data2))))
+        goto end;
+    if (!TEST_true(EVP_DigestUpdate(mdctx2, data2, strlen(data2))))
+        goto end;
+
+    if (!TEST_true(EVP_DigestFinal_ex(mdctx1, d1, &d1_len)))
+        goto end;
+    if (!TEST_true(EVP_DigestFinal_ex(mdctx2, d2, &d2_len)))
+        goto end;
+
+    if (!TEST_uint_eq(d1_len, d2_len))
+        goto end;
+
+    if (!TEST_mem_eq(d1, d1_len, d2, d2_len))
+        goto end;
+
+    /* check that serialization fials on finalized contexts */
+    if (!TEST_false(EVP_MD_CTX_serialize(mdctx1, NULL, &tmplen)))
+        goto end;
+    if (!TEST_false(EVP_MD_CTX_deserialize(mdctx1, buf, buflen)))
+        goto end;
+
+    ret = 1;
+
+end:
+    OPENSSL_free(buf);
+    EVP_MD_CTX_free(mdctx1);
+    EVP_MD_CTX_free(mdctx2);
+    EVP_MD_free(md);
+    OSSL_LIB_CTX_free(ctx);
+    return ret;
+}
+
 #if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
 static int test_evp_pbe_alg_add(void)
 {
@@ -1489,6 +1574,7 @@ int setup_tests(void)
     ADD_TEST(test_evp_md_ctx_dup);
     ADD_TEST(test_evp_md_ctx_copy);
     ADD_TEST(test_evp_md_ctx_copy2);
+    ADD_ALL_TESTS(test_evp_md_ctx_serialize, 13);
     ADD_ALL_TESTS(test_provider_unload_effective, 2);
 #if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
     ADD_TEST(test_evp_pbe_alg_add);

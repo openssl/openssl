@@ -76,6 +76,14 @@ OpenSSL 4.0
 
    *Daniel Kubec*
 
+ * Added `EVP_MD_CTX_[s|des]erialize()` functions. These functions
+   allow to export the internal state of a Digest and re-import it
+   later to continue a computation from a specific checkpoint.
+   Only SHA-2 and the SHA-3 family (Keccak, SHAKE, SHA-3) of
+   functions currently support this functionality
+
+   *Simo Sorce*
+
 OpenSSL 3.6
 -----------
 
