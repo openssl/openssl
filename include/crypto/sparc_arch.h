@@ -54,6 +54,7 @@
 #  define __arch64__
 # endif
 
+/* clang-format off */
 # define SPARC_PIC_THUNK(reg)    \
         .align  32;             \
 .Lpic_thunk:                    \
@@ -74,6 +75,7 @@
         or      reg,%lo(_GLOBAL_OFFSET_TABLE_+4), reg;  \
         add     %o7, reg, reg
 # endif
+/* clang-format on */
 
 # if defined(__arch64__)
 
@@ -98,6 +100,7 @@
 
 # endif
 
+/* clang-format off */
 # ifdef __PIC__
 #  undef SPARC_LOAD_ADDRESS
 #  undef SPARC_LOAD_ADDRESS_LEAF
@@ -114,6 +117,7 @@
         SPARC_LOAD_ADDRESS(SYM, reg)            \
         mov     tmp, %o7;
 # endif
+/* clang-format on */
 
 # ifndef __ASSEMBLER__
 extern unsigned int OPENSSL_sparcv9cap_P[2];

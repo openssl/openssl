@@ -41,7 +41,9 @@
 #include <openssl/pem.h>
 #include <crypto/evp.h>
 
+/* clang-format off */
 #include "e_ossltest_err.c"
+/* clang-format on */
 
 /* Engine Id and Name */
 static const char *engine_ossltest_id = "ossltest";
