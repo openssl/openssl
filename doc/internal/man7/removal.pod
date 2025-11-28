@@ -33,7 +33,7 @@ Once that is done, you should prepare your PR that removes the
 function, internal uses, and documentation.
 
 Your PR removing functions should include adding the function to the
-list in L<ossl-ex-api(7)> with an appropriate entry. Keep it short and
+list in L<ossl-removed-api(7)> with an appropriate entry. Keep it short and
 simple. Each entry in the list for a version can include a quick link
 to the usual replacement such as:
 

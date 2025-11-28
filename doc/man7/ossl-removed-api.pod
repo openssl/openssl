@@ -3,7 +3,7 @@
 =head1 NAME
 
 ASN1_STRING_data,
-ossl-norwegian-blue, ossl-pining-for-the-fjords, ossl-ex-api -
+ossl-removed-api
 API that has been removed from OpenSSL
 
 =head1 SYNOPSIS
@@ -12,7 +12,7 @@ This page lists API that has been removed from OpenSSL, and when it was removed.
 
 =head1 DESCRIPTION
 
-This page documents a list of API that was removed from
+This page documents a list of API that has been removed from
 OpenSSL. Functions are not removed until they have been deprecated for
 some time (Normally at least one major OpenSSL release, if not
 more). This means that during at least one previous major release of
