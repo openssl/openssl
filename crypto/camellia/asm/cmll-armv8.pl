@@ -58,24 +58,15 @@
 #
 ##############################################################################
 #
-# September 2025
+# November 2025
 #
-# This is a 100% vector length agnostic implementation and has
-# been tested with QEMU for the vector length of up to 2048 bits.
+# Performance (and speedup wrt C-implementation) for CBC decryption and CTR.
+# (`openssl speed -evp (-decrypt) camellia-128-xxx; 8192-byte message)
 #
-# On Graviton4, with the vector register length of 128 bits,
-# it is less efficient than the Neon implementation by only 6%.
-# This number has been obtained by running
-# `openssl speed -evp ChaCha20-POLY1305` and
-# `openssl speed -evp ChaCha20`, pinned to a single CPU,
-# converting the 8192-byte result to cycles per byte
-# using actual average runtime CPU frequency from `perf stat`,
-# and taking the difference. On Graviton 4, this results in 
-# 0.62 cpb for Neon and 0.66 for SVE2.
-# 
-# While Neon should probably be the default choice on a 128-bit architecture,
-# speed-up is clearly expected with 256-bit and larger vector registers
-# in the future.
+#                       ThX2            Graviton4
+# CBC (decryption)  7.9 cpb (3.7x)      4 cpb (5x)
+# CTR               8 cpb (4.25x)       4 cpb (4x)
+#
 
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
@@ -102,9 +93,6 @@ $code=<<___;
 */
 ___
 
-#$X_CTX = "x0"; // Context Pointer
-#$X_RIO = "x2"; // Source Pointer (RIO)
-
 $xab = "x4"; # State Left Half
 $xcd = "x5"; # State Right Half
 
@@ -115,7 +103,6 @@ $xt2 = "x8"; # Temp 3
 # Port of xor2ror16. Assumes table base addresses are in GPRs.
 # In: x_ab (data), x_dst (accum), x_tbl0, x_tbl1, x_tmp1, x_tmp2
 # Out: x_ab (rotated), x_dst (updated)
-# define xor2ror16(x_ab, x_dst, x_tbl0, x_tbl1, x_tmp1, x_tmp2) \
 sub xor2ror16 {
     my ($x_ab, $x_dst, $x_tbl0, $x_tbl1, $x_tmp1, $x_tmp2) = @_;
 $code.=<<___;
@@ -132,8 +119,7 @@ ___
 # Port of roundsm.
 # In: x_ab, x_cd, x_rt2, x_rt0, x_rt1 (temps)
 #     sp0044, sp0330, sp2200, sp1001, sp1110, sp4404, sp3033, sp0222 (table addrs)
-# Out: x_ab (clobbered), x_cd (updated)
-# define roundsm_tbl(x_ab, x_cd, x_rt2, x_rt0, x_rt1, sp0044, sp0330, sp2200, sp1001, sp1110, sp4404, sp3033, sp0222) \
+# Out: x_ab, x_cd (updated)
 sub roundsm_tbl{
     my ($x_ab, $x_cd, $x_rt2, $x_rt0, $x_rt1, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222) = @_;
     &xor2ror16($x_ab, $x_cd, $sp0044, $sp0330, $x_rt0, $x_rt1);
@@ -149,7 +135,6 @@ ___
 # In: x_L (assumes x4, [lr|ll]), x_R (assumes x5, [rr|rl]), x_CTX, kl_idx, kr_idx
 # Out: x_L, x_R (updated)
 # Clobbers: x6-x9
-# define fls(x_L, x_R, x_CTX, kl_idx, kr_idx) \
 sub fls{
     my ($x_L, $x_R, $x_CTX, $kl_idx, $kr_idx) = @_;
     my $kl_offset = $kl_idx * 8;
@@ -180,7 +165,6 @@ ___
 }
 
 # In: x2(src), x0(CTX). Out: x4, x5. Clobbers: x8, x9
-# define enc_inpack() \
 sub enc_inpack(){
 $code.=<<___;
     ldp     x4,x5,[x2]          // Load [lr|ll] and [rr|rl] big endian
@@ -195,7 +179,6 @@ ___
 }
 
 # In: x2(src), x0(CTX). Out: x4, x5. Clobbers: x8, x9
-# define dec_inpack(max) \
 sub dec_inpack(){
     my ($max) = @_;
 $code.=<<___;
@@ -212,7 +195,6 @@ ___
 }
 
 # In: x0, subkey_idx. Out: x8(key). Clobbers: x9
-# define load_key_to_x8(subkey_idx) \
 sub load_key_to_x8(){
     my ($subkey_idx) = @_;
     my $subkey_offset = $subkey_idx * 8;
@@ -222,21 +204,18 @@ $code.=<<___;
 ___
 }
 
-# define roundsm_ab_to_cd(subkey_idx, sp0044, sp0330, sp2200, sp1001, sp1110, sp4404, sp3033, sp0222) \
 sub roundsm_ab_to_cd(){
     my ($subkey_idx, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222) = @_;
     &load_key_to_x8($subkey_idx);
     &roundsm_tbl($xab, $xcd, $xt2, $xt0, $xt1, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222); # (ab=x4, cd=x5, rt2=x8, rt0=x6, rt1=x7)
 }
 
-# define roundsm_cd_to_ab(subkey_idx, sp0044, sp0330, sp2200, sp1001, sp1110, sp4404, sp3033, sp0222) \
 sub roundsm_cd_to_ab(){
     my ($subkey_idx, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222) = @_;
     &load_key_to_x8($subkey_idx);
     &roundsm_tbl($xcd, $xab, $xt2, $xt0, $xt1, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222); # (ab=x5, cd=x4, rt2=x8, rt0=x6, rt1=x7)
 }
 
-# define enc_rounds(i, sp0044, sp0330, sp2200, sp1001, sp1110, sp4404, sp3033, sp0222) \
 sub enc_rounds(){
     my ($i, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222) = @_;
     &roundsm_ab_to_cd($i+2, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222); 
@@ -247,7 +226,6 @@ sub enc_rounds(){
     &roundsm_cd_to_ab($i+7, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222);
 }
 
-#define dec_rounds(i, sp0044, sp0330, sp2200, sp1001, sp1110, sp4404, sp3033, sp0222) \
 sub dec_rounds(){
     my ($i, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222) = @_;
     &roundsm_ab_to_cd($i+7, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222);
@@ -259,7 +237,6 @@ sub dec_rounds(){
 }
 
 # In: x4, x5, x0, max(w30), x1(dst). Out: [x1]. Clobbers: x8, x9
-# define enc_outunpack(max) \
 sub enc_outunpack(){
     my ($max) = @_;
 $code.=<<___;
@@ -275,8 +252,7 @@ $code.=<<___;
 ___
 }
 
-# In: x4, x5, x0, max(w30), x1(dst). Out: [x1]. Clobbers: x8, x9
-# define dec_outunpack(max) \
+# In: x4, x5, x0, x1(dst). Out: [x1]. Clobbers: x8, x9
 sub dec_outunpack(){
 $code.=<<___;
     add     x9,x0,#0        // Assume key_table == 0
@@ -295,7 +271,6 @@ $code.=<<___;
 .type   camellia_encrypt_1blk_armv8,%function
 .align  5
 camellia_encrypt_1blk_armv8:
-    // === PROLOGUE ===
     stp     x29, x30, [sp, -16]!
     mov     x29, sp
 
@@ -317,7 +292,6 @@ camellia_encrypt_1blk_armv8:
     adrp    x17,.Lcamellia_sp11101110
     add     x17,x17,:lo12:.Lcamellia_sp11101110
 
-    // === MAIN BODY ===
 ___
     &enc_inpack();
 
@@ -344,7 +318,6 @@ ___
     &enc_outunpack("w30");
 $code.=<<___;
 
-    // === EPILOGUE ===
     ldp     x29, x30, [sp], #16
     ret
 .size   camellia_encrypt_1blk_armv8,.-camellia_encrypt_1blk_armv8
@@ -353,7 +326,6 @@ $code.=<<___;
 .type   camellia_decrypt_1blk_armv8,%function
 .align  5
 camellia_decrypt_1blk_armv8:
-    // === PROLOGUE ===
     stp     x29, x30, [sp, -16]!
     mov     x29, sp
 
@@ -381,7 +353,6 @@ camellia_decrypt_1blk_armv8:
     adrp    x17,.Lcamellia_sp11101110
     add     x17,x17,:lo12:.Lcamellia_sp11101110
 
-    // === MAIN BODY ===
 ___
     &dec_inpack("w30");
 $code.=<<___;
@@ -406,7 +377,6 @@ ___
     &dec_outunpack();
 $code.=<<___;
 
-    // === EPILOGUE ===
     ldp     x29, x30, [sp], #16
     ret
 .size   camellia_decrypt_1blk_armv8,.-camellia_decrypt_1blk_armv8
@@ -415,7 +385,7 @@ $code.=<<___;
     Camellia constants (for both 1- and 16-block routines).
 */
 
-.section .rodata
+.rodata
 .type   camellia_neon_consts,%object
 .align  7
 camellia_neon_consts:
@@ -499,6 +469,7 @@ camellia_neon_consts:
 	.long 0xDE682D1D, 0x10E527FA;
 .Lsigma6:
 	.long 0xB3E6C1FD, 0xB05688C2;
+// === Precomputed SP-tables for 1-block implementation ===
 .Lcamellia_sp10011110:
     .quad   0x7000007070707000, 0x8200008282828200, 0x2c00002c2c2c2c00
     .quad   0xec0000ecececec00, 0xb30000b3b3b3b300, 0x2700002727272700
@@ -1202,7 +1173,6 @@ ___
 #    General macroses
 #
 
-# define filter_8bit_neon(x,lo_t,hi_t,mask,tmp) \
 sub filter_8bit_neon(){
     my ($x,$lo_t,$hi_t,$mask,$tmp) = @_;
 $code.=<<___;
@@ -1231,8 +1201,8 @@ ___
 #  v16: mask_0f
 #  v17: inv_shift_row
 #  v18..v27: pre- and post-filters
+#  v28-v31 - tmps
 #
-# define roundsm16(v0, v1, v2, v3, v4, v5, v6, v7, mem_cd, key)
 sub roundsm16(){
     my ($v0, $v1, $v2, $v3, $v4, $v5, $v6, $v7, $mem_cd, $key) = @_;
 $code.=<<___;
@@ -1372,12 +1342,9 @@ $code.=<<___;
 ___
 }
 
-# define dummy_store(v0, v1, v2, v3, v4, v5, v6, v7, mem_ab)
 # does nothing
 sub dummy_store(){}
 
-# define store_ab_state(v0, v1, v2, v3, v4, v5, v6, v7, mem_ab)
-# Here I only pass one argument!
 sub store_ab_state(){
     my ($mem_ab) = @_;
 $code.=<<___;
@@ -1397,9 +1364,8 @@ ___
 #  first_key_ptr: ptr to access first key
 #  store_ab: function to store state
 # Clobbers:
-#  x5 - second key pointer value
+#  x4 - second key pointer value
 #
-# define two_roundsm16(v0, v1, v2, v3, v4, v5, v6, v7, mem_ab, mem_cd, first_key_ptr, store_ab)
 # Don't actually need to pass v0-v7!
 sub two_roundsm16(){
     my ($v0, $v1, $v2, $v3, $v4, $v5, $v6, $v7, $mem_ab, $mem_cd, $first_key_ptr, $store_ab) = @_;
@@ -1441,10 +1407,10 @@ ___
 #
 # IN:
 #  v0..3: byte-sliced 32-bit integers
+#  t0-t2: vector clobbers
 # OUT:
 #  v0..3: (IN <<< 1)
 #
-# define rol32_1_16(v0, v1, v2, v3, t0, t1, t2)
 sub rol32_1_16(){
     my ($v0, $v1, $v2, $v3, $t0, $t1, $t2) = @_;
 $code.=<<___;
@@ -1466,17 +1432,16 @@ ___
 #
 # IN:
 #   v0..v7: byte-sliced AB state in registers
-#   r: byte-sliced AB state in memory
-#   l: byte-sliced CD state in memory
-#   keys_ptr: pointer to keys
+#   mem_l: byte-sliced AB state in memory
+#   mem_r: byte-sliced CD state in memory
+#   key_a_ptr, key_b_ptr: pointer to keys
 # OUT:
-#   v0..v7: new byte-sliced CD state
+#   v0..v7: new byte-sliced AB state
+#   Updated AB nd CD states written to memory
 # Clobbers:
 #  x5-x7: storage for keys
 #  v8-v15,v16-19,v28-v31: temporary vectors
 #
-# define fls16(v0, v1, v2, v3, v4, v5, v6, v7, mem_l, mem_r, key_a_ptr, key_b_ptr)
-# Here I am not passing v0-v7 as arguments!
 sub fls16(){
     my ($mem_l, $mem_r, $key_a_ptr, $key_b_ptr) = @_;
 $code.=<<___;
@@ -1611,7 +1576,6 @@ $code.=<<___;
 ___
 }
 
-#define transpose_4x4(v0, v1, v2, v3, t1, t2)
 sub transpose_4x4(){
     my ($v0, $v1, $v2, $v3, $t1, $t2) = @_;
 $code.=<<___;
@@ -1637,8 +1601,6 @@ ___
 # Clobbers:
 #  t0 (v16), t1 (v17) (vector registers), tmp (GPR for constant address)
 #
-#define byteslice_16x16b_fast(a0, b0, c0, d0, a1, b1, c1, d1, a2, b2, c2, d2, \
-#                             a3, b3, c3, d3, t0, t1, tmp)
 sub byteslice_16x16b_fast(){
     my ($a0, $b0, $c0, $d0, $a1, $b1, $c1, $d1, $a2, $b2, $c2, $d2, $a3, $b3, $c3, $d3, $t0, $t1, $tmp) = @_;
 
@@ -1684,7 +1646,7 @@ ___
 # OUT:
 #  v0-v15 (whitened plaintext)
 # Clobbers:
-#  tmp_key (v16, vector), tmp_gpr (GPR for addr), v17, v18
+#  tmp_key (v16, vector), tmp_gpr (GPR for addr), v17-v31
 #
 sub inpack16_pre(){
     my ($rio_ptr, $key_ptr, $tmp_key, $tmp_gpr) = @_;
@@ -1734,9 +1696,6 @@ ___
 # Clobbers:
 #  v0-v15 (become byte-sliced), st0, st1 (vector temps - v16,v17), tmp (GPR temp)
 #
-# define inpack16_post(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, \
-#                            mem_ab, mem_cd, st0, st1, tmp) \
-# Same thing - not passing v0-v15
 sub inpack16_post(){
     my ($mem_ab, $mem_cd, $st0, $st1, $tmp) = @_;
 $code.=<<___;
@@ -1759,16 +1718,13 @@ ___
 
 # 
 # IN:
-#  v0-v15 (byte-sliced ciphertext), key_ptr (GPR)
+#  v0-v15 (byte-sliced ciphertext, implicit), key_ptr (GPR)
 # OUT:
 #  v0-v15 (block-oriented, whitened ciphertext)
 # Clobbers:
 #  tmp_v0, tmp_v1, tmp_key (vector temps - v16:v18),
 #  tmp_gpr (GPR temp)
 #
-#define outunpack16(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, \
-#                   key_ptr, tmp_v0, tmp_v1, tmp_key, tmp_gpr)
-# Same thing as above, not passing v0-v15
 sub outunpack16(){
     my ($key_ptr, $tmp_v0, $tmp_v1, $tmp_key, $tmp_gpr) = @_;
 $code.=<<___;
@@ -1809,8 +1765,6 @@ ___
 # Inputs:
 #  v0-v15 (final block-oriented ciphertext), rio_ptr (GPR)
 #
-#define write_output(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, rio_ptr)
-# Again, not passing v0-v15
 sub write_output(){
     my ($rio_ptr) = @_;
 $code.=<<___;
@@ -1941,7 +1895,7 @@ camellia_encrypt_16blks_neon:
 
     // === INPUT PROCESSING ===
     // Call inpack16_pre: reads vin(x2), key[0](=ctx_ptr: x0), writes v0-v15
-    // clobbers: v16-v18 and x4
+    // clobbers: v16-v31 and x4
 ___
     &inpack16_pre("x2", "x0", "v16", "x4");
 $code.=<<___;
@@ -2013,7 +1967,6 @@ ___
 $code.=<<___;
 
     // Check loop condition
-    //cmp     x12,x14
     cbz     x12,.Ldec_done
 
     // x4 -> key pointer: &key_table[k+8]
@@ -2068,7 +2021,7 @@ camellia_decrypt_16blks_neon:
 
     // === INPUT PROCESSING ===
     // Call inpack16_pre: reads vin(x2), key[0](=ctx_ptr: x0), writes v0-v15
-    // clobbers: v16-v18 and x5
+    // clobbers: v16-v31 and x5
     lsl     x4,x8,#3
     add     x4,x0,x4
 ___
@@ -2096,6 +2049,15 @@ $code.=<<___;
 */
 
 .text
+# ====================================================================
+# CBC ENCRYPTION
+#
+# void camellia_cbc_encrypt_neon(const unsigned char *in, 
+#                                unsigned char *out, 
+#                                size_t len, 
+#                                const void *key, 
+#                                unsigned char *ivec)
+# ====================================================================
 .global camellia_cbc_encrypt_neon
 .type   camellia_cbc_encrypt_neon, %function
 .align  5
@@ -2137,7 +2099,7 @@ camellia_cbc_encrypt_neon:
     mov     x1,x21                  // OUTP
     mov     x2,x21                  // INP is OUTP!
     
-    bl      camellia_encrypt_1blk_armv8     // TODO: Factor out write_output?
+    bl      camellia_encrypt_1blk_armv8     // Factor out write_output?
     
     ldp     x6,x7,[x21]             // Load output
 
@@ -2220,7 +2182,7 @@ camellia_cbc_decrypt_neon:
     mov     x2,x19
 
     // inpack16_pre: reads vin(x2), key[0](=ctx_ptr: x0), writes v0-v15
-    // clobbers: v16-v18 and x5
+    // clobbers: v16-v31 and x5
 ___
     &inpack16_pre("x19", "x24", "v16", "x5");
 $code.=<<___;
@@ -2267,8 +2229,6 @@ ___
 $code.=<<___;
 
     // === UPDATE IV ===
-    // The new IV for the next batch is the LAST block of the CURRENT Input (Ciphertext).
-    // Input[240] is C_15 (already loaded).
     str     q31,[x23]
 
     // === ADVANCE POINTERS ===
@@ -2293,7 +2253,7 @@ $code.=<<___;
     mov     x1, x20
     mov     x2, x19
     
-    bl      camellia_decrypt_1blk_armv8     // TODO: factor write_out out
+    bl      camellia_decrypt_1blk_armv8     // Factor write_out out?
     
     // XOR Result with Previous IV
     ldp     x0,x1,[x20]     // Load Dec(C_i)
@@ -2394,7 +2354,7 @@ camellia_ctr32_encrypt_blocks_neon:
     ldp     q28,q29,[sp,#464]       // Restore generator state
 
     // === COUNTER GENERATION ===
-    // Generate 16 counters in v0-v15 using Hybrid approach
+    // Generate 16 counters in v0-v15
 ___
     for($i=15; $i>=0; $i--) {
 $code.=<<___;
@@ -2413,9 +2373,6 @@ $code.=<<___;
     bl      .L16_enc_core
 
     // === XOR WITH INPUT ===
-    // We load Input into v16-v31 (Scratch regs)
-    // Post-increment x19 by 64*4 = 256 total
-    
     ld1     {v16.16b-v19.16b},[x19],#64   // Load In[0-3]
     eor     v7.16b,v7.16b,v16.16b         // Out[0] = KeyStream(v7) ^ In[0]
     eor     v6.16b,v6.16b,v17.16b         // Out[1] = KeyStream(v6) ^ In[1]
@@ -2455,7 +2412,7 @@ $code.=<<___;
 .Lctr_tail_loop:
     mov     v28.s[3],w24        // Update counter in vector
 
-    rev32   v30.16b, v28.16b    // Use v30 as temp to keep v28 LE
+    rev32   v30.16b,v28.16b     // Use v30 as temp to keep v28 LE
     str     q30,[sp,#208]       // Store to stack to use as Inp
 
     mov     x0,x22              // Key
@@ -2525,9 +2482,7 @@ ___
 #  x_tmp:  Temporary GPR (e.g., x5)
 # Output:
 #   Lower 64 bits of v_x contain the result.
-#define camellia_f(v_ab, v_x, v_t0, v_t1, v_t2, v_t3, v_t4, v_zero, \
-#                    inv_shift_row, sbox4mask, _0f0f0f0fmask, pre_s1lo_mask, pre_s1hi_mask, \
-#                    post_s1lo_mask, post_s1hi_mask, sp0044, sp1110, sp0222, sp3033, key, x_tmp) \
+#
 sub camellia_f(){
     my ($v_ab, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $inv_shift_row, $sbox4mask, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key, $x_tmp) = @_;
 $code.=<<___;
@@ -2584,7 +2539,6 @@ $code.=<<___;
 ___
 }
 
-#define vec_rol128(in, out, nrol, t0)
 sub vec_rol128(){
     my ($in, $out, $nrol, $t0) = @_;
     my $rem_nrol = 64 - $nrol;
@@ -2596,7 +2550,6 @@ $code.=<<___;
 ___
 }
 
-#define vec_ror128(in, out, nror, t0)
 sub vec_ror128(){
     my ($in, $out, $nror, $t0) = @_;
     my $rem_nror = 64 - $nror;
@@ -2612,12 +2565,6 @@ ___
 $CTX = "x0";             # Context pointer passed in x0
 $KL128 = "v0";           # Input key in v0
 $KA128 = "v2";           # Intermediate key KA generated in v2
-#$KEY_TABLE_BASE = 0     # Offset of key_table within CTX struct
-
-# Helper macro to get subkey address
-# !INLINED - assumed KEY_TABLE_BASE == 0!
-#define cmll_sub_addr(n, ctx_reg, tmp_reg) \
-#    add     tmp_reg,ctx_reg,#((n) * 8 + KEY_TABLE_BASE); \
 
 $code.=<<___;
 .text
@@ -2659,7 +2606,6 @@ __camellia_setup128_neon:
     mov     v3.d[1],xzr
 
     // Get addresses of sigma constants
-    // TODO: load all sigmas instead here and pass by value?
     adrp    x1,.Lsigma1
     add     x1,x1,:lo12:.Lsigma1 // x1 -> sigma1
     add     x2,x1,#8             // x2 -> sigma2
@@ -2709,8 +2655,8 @@ $code.=<<___;
 
     // === ABSORB KW2 ===
     // Calculate kw2 (upper 64 of KL128) into v15
-    mov     v15.d[0], $KL128.d[0]    // is it faster than 2 ext?
-    mov     v15.d[1], xzr
+    mov     v15.d[0],$KL128.d[0]
+    mov     v15.d[1],xzr
     // XOR kw2 into intermediates
     eor     $KA128.16b,$KA128.16b,v15.16b    // KA128 ^= kw2
     eor     v3.16b,v3.16b,v15.16b          // v3 ^= kw2
@@ -2749,8 +2695,7 @@ $code.=<<___;
     ext     v14.16b,v14.16b,v31.16b,#12
     eor     v15.16b,v14.16b,v15.16b
 
-    // === FINAL SHUFFLES & STORES (Part 1) ===
-    // TODO:group ext's together?
+    // Group ext's together?
     ext     v11.16b,$KL128.16b,$KL128.16b,#8
     rev64   $KL128.4s,v11.4s
     ext     v12.16b,$KA128.16b,$KA128.16b,#8
@@ -2825,7 +2770,6 @@ $code.=<<___;
     eor     v3.16b,v3.16b,v15.16b
 
     // subl(25) ^= subr(25) & ~subr(16)
-    // Using v15(kw4 derived), v10(sub(16) loaded below), v11-v14 temps
     add     x1,$CTX,#128;
     ldr     q10,[x1]
     ext     v11.16b,v10.16b,v10.16b,#8
@@ -2845,7 +2789,6 @@ $code.=<<___;
     eor     v15.16b,v14.16b, v15.16b; // v15 ^= rotated RL1(dw)
     // v15 holds final absorb value for kw4 stage
 
-    // === FINAL SHUFFLES & STORES (Part 2) ===
     ext     v11.16b,v3.16b,v3.16b,#8
     rev64   v3.4s,v11.4s
     ext     v12.16b,v4.16b,v4.16b,#8
@@ -2864,8 +2807,6 @@ $code.=<<___;
     add     x4,$CTX,#192
     str     q6,[x4]
 
-    // === FINAL SHUFFLES & STORES (Part 3) ===
-    // Load, absorb, shuffle, store back (14, 12, 10, 8)
     add     x1,$CTX,#112
     ldr     q3,[x1]
     ext     v11.16b,v3.16b,v3.16b,#8
@@ -2914,7 +2855,6 @@ $code.=<<___;
     add     x3,$CTX,#80
     str     q5,[x3]
 
-    // === FINAL SHUFFLES & STORES (Part 4) ===
     add     x1,$CTX,#48
     ldr     q6,[x1]
     ext     v11.16b,v6.16b,v6.16b,#8
@@ -2949,8 +2889,6 @@ $code.=<<___;
     ext     v3.16b,v2.16b,v31.16b,#8
     ext     v5.16b,v4.16b,v31.16b,#8
     ext     v7.16b,v6.16b,v31.16b,#8
-
-    // key XOR is end of F-function.
 
     eor     v0.16b,v2.16b,v0.16b
     eor     v2.16b,v4.16b,v2.16b
@@ -3026,13 +2964,13 @@ $code.=<<___;
     add     x1,$CTX,#80
     str     d0,[x1]
     add     x2,$CTX,#88
-    str     d10,[x2];
+    str     d10,[x2]
     add     x3,$CTX,#96
-    str     d11,[x3];
+    str     d11,[x3]
     add     x4,$CTX,#104
-    str     d12,[x4];
+    str     d12,[x4]
     add     x5,$CTX,#112
-    str     d13,[x5];
+    str     d13,[x5]
 
     add     x1,$CTX,#128
     ldr     d6,[x1]
@@ -3123,7 +3061,7 @@ $code.=<<___;
 .size __camellia_setup128_neon, .-__camellia_setup128_neon
 ___
 
-$KR128 = "v1";    # Input key in v1
+$KR128 = "v1";
 $KB128 = "v3";
 
 $code.=<<___;
@@ -3168,7 +3106,6 @@ __camellia_setup256_neon:
     ext     v3.16b,v3.16b,v31.16b,#8
 
     // Get addresses of sigma constants
-    // TODO: load all sigmas instead here and pass by value?
     adrp    x1,.Lsigma1
     add     x1,x1,:lo12:.Lsigma1 // x1 -> sigma1
     add     x2,x1,#8             // x2 -> sigma2
