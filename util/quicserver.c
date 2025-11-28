@@ -52,7 +52,7 @@ static void wait_for_activity(QUIC_TSERVER *qtserv)
 
     if (!ossl_time_is_infinite(deadline)) {
         timeout = ossl_time_to_timeval(ossl_time_subtract(deadline,
-                                                          ossl_time_now()));
+            ossl_time_now()));
         timeoutp = &timeout;
     }
 
@@ -79,7 +79,7 @@ static BIO *create_dgram_bio(int family, const char *hostname, const char *port)
      * Lookup IP address info for the server.
      */
     if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_SERVER, family, SOCK_DGRAM,
-                       0, &res))
+            0, &res))
         return NULL;
 
     /*
@@ -140,7 +140,7 @@ static void usage(void)
 
 int main(int argc, char *argv[])
 {
-    QUIC_TSERVER_ARGS tserver_args = {0};
+    QUIC_TSERVER_ARGS tserver_args = { 0 };
     QUIC_TSERVER *qtserv = NULL;
     int ipv6 = 0, trace = 0;
     int argnext = 1;
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
             break;
         if (strcmp(argv[argnext], "-6") == 0) {
             ipv6 = 1;
-        } else if(strcmp(argv[argnext], "-trace") == 0) {
+        } else if (strcmp(argv[argnext], "-trace") == 0) {
             trace = 1;
         } else {
             BIO_printf(bio_err, "Unrecognised argument %s\n", argv[argnext]);
@@ -212,9 +212,9 @@ int main(int argc, char *argv[])
 
     BIO_printf(bio_err, "Starting quicserver\n");
     BIO_printf(bio_err,
-               "Note that this utility will be removed in a future OpenSSL version.\n");
+        "Note that this utility will be removed in a future OpenSSL version.\n");
     BIO_printf(bio_err,
-               "For test purposes only. Not for use in a production environment.\n");
+        "For test purposes only. Not for use in a production environment.\n");
 
     /* Ownership of the BIO is passed to qtserv */
     bio = NULL;
@@ -224,12 +224,12 @@ int main(int argc, char *argv[])
         ossl_quic_tserver_set_msg_callback(qtserv, SSL_trace, bio_err);
 #else
         BIO_printf(bio_err,
-                   "Warning: -trace specified but no SSL tracing support present\n");
+            "Warning: -trace specified but no SSL tracing support present\n");
 #endif
 
     /* Wait for handshake to complete */
     ossl_quic_tserver_tick(qtserv);
-    while(!ossl_quic_tserver_is_handshake_confirmed(qtserv)) {
+    while (!ossl_quic_tserver_is_handshake_confirmed(qtserv)) {
         wait_for_activity(qtserv);
         ossl_quic_tserver_tick(qtserv);
         if (ossl_quic_tserver_is_terminated(qtserv)) {
@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
                 ret = EXIT_SUCCESS;
                 goto end;
             }
-        } while(streamid == UINT64_MAX);
+        } while (streamid == UINT64_MAX);
 
         /* Read the request */
         do {
@@ -270,21 +270,22 @@ int main(int argc, char *argv[])
             }
 
             if (ossl_quic_tserver_read(qtserv, streamid, reqbuf + reqbytes,
-                                    sizeof(reqbuf) - reqbytes,
-                                    &numbytes)) {
+                    sizeof(reqbuf) - reqbytes,
+                    &numbytes)) {
                 if (numbytes > 0)
                     fwrite(reqbuf + reqbytes, 1, numbytes, stdout);
                 reqbytes += numbytes;
             }
         } while (reqbytes < sizeof(reqterm)
-                || memcmp(reqbuf + reqbytes - sizeof(reqterm), reqterm,
-                        sizeof(reqterm)) != 0);
+            || memcmp(reqbuf + reqbytes - sizeof(reqterm), reqterm,
+                   sizeof(reqterm))
+                != 0);
 
         if ((streamid & QUIC_STREAM_DIR_UNI) != 0) {
             /*
-            * Incoming stream was uni-directional. Create a server initiated
-            * uni-directional stream for the response.
-            */
+             * Incoming stream was uni-directional. Create a server initiated
+             * uni-directional stream for the response.
+             */
             if (!ossl_quic_tserver_stream_new(qtserv, 1, &streamid)) {
                 BIO_printf(bio_err, "Failed creating response stream\n");
                 goto end;
@@ -295,18 +296,18 @@ int main(int argc, char *argv[])
 
         ossl_quic_tserver_tick(qtserv);
         if (!ossl_quic_tserver_write(qtserv, streamid,
-                                    (unsigned char *)response[respnum],
-                                    strlen(response[respnum]), &numbytes))
+                (unsigned char *)response[respnum],
+                strlen(response[respnum]), &numbytes))
             goto end;
 
         if (!ossl_quic_tserver_conclude(qtserv, streamid))
             goto end;
     }
 
- end:
+end:
     /* Free twice because we did an up-ref */
     BIO_free(bio);
- end2:
+end2:
     BIO_free(bio);
     ossl_quic_tserver_free(qtserv);
     BIO_free(bio_err);

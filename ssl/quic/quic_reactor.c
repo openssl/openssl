@@ -15,21 +15,21 @@
  * ==========================
  */
 void ossl_quic_reactor_init(QUIC_REACTOR *rtor,
-                            void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
-                                            uint32_t flags),
-                            void *tick_cb_arg,
-                            OSSL_TIME initial_tick_deadline)
+    void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
+        uint32_t flags),
+    void *tick_cb_arg,
+    OSSL_TIME initial_tick_deadline)
 {
-    rtor->poll_r.type       = BIO_POLL_DESCRIPTOR_TYPE_NONE;
-    rtor->poll_w.type       = BIO_POLL_DESCRIPTOR_TYPE_NONE;
-    rtor->net_read_desired  = 0;
+    rtor->poll_r.type = BIO_POLL_DESCRIPTOR_TYPE_NONE;
+    rtor->poll_w.type = BIO_POLL_DESCRIPTOR_TYPE_NONE;
+    rtor->net_read_desired = 0;
     rtor->net_write_desired = 0;
-    rtor->can_poll_r        = 0;
-    rtor->can_poll_w        = 0;
-    rtor->tick_deadline     = initial_tick_deadline;
+    rtor->can_poll_r = 0;
+    rtor->can_poll_w = 0;
+    rtor->tick_deadline = initial_tick_deadline;
 
-    rtor->tick_cb           = tick_cb;
-    rtor->tick_cb_arg       = tick_cb_arg;
+    rtor->tick_cb = tick_cb;
+    rtor->tick_cb_arg = tick_cb_arg;
 }
 
 void ossl_quic_reactor_set_poll_r(QUIC_REACTOR *rtor, const BIO_POLL_DESCRIPTOR *r)
@@ -65,7 +65,7 @@ const BIO_POLL_DESCRIPTOR *ossl_quic_reactor_get_poll_w(const QUIC_REACTOR *rtor
 }
 
 int ossl_quic_reactor_can_support_poll_descriptor(const QUIC_REACTOR *rtor,
-                                                  const BIO_POLL_DESCRIPTOR *d)
+    const BIO_POLL_DESCRIPTOR *d)
 {
     return d->type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD;
 }
@@ -97,7 +97,7 @@ OSSL_TIME ossl_quic_reactor_get_tick_deadline(QUIC_REACTOR *rtor)
 
 int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags)
 {
-    QUIC_TICK_RESULT res = {0};
+    QUIC_TICK_RESULT res = { 0 };
 
     /*
      * Note that the tick callback cannot fail; this is intentional. Arguably it
@@ -108,9 +108,9 @@ int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags)
      */
     rtor->tick_cb(&res, rtor->tick_cb_arg, flags);
 
-    rtor->net_read_desired  = res.net_read_desired;
+    rtor->net_read_desired = res.net_read_desired;
     rtor->net_write_desired = res.net_write_desired;
-    rtor->tick_deadline     = res.tick_deadline;
+    rtor->tick_deadline = res.tick_deadline;
     return 1;
 }
 
@@ -162,9 +162,9 @@ int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags)
  *                   CRYPTO_THREAD_write_lock fails)
  */
 static int poll_two_fds(int rfd, int rfd_want_read,
-                        int wfd, int wfd_want_write,
-                        OSSL_TIME deadline,
-                        CRYPTO_MUTEX *mutex)
+    int wfd, int wfd_want_write,
+    OSSL_TIME deadline,
+    CRYPTO_MUTEX *mutex)
 {
 #if defined(OPENSSL_SYS_WINDOWS) || !defined(POLLIN)
     fd_set rfd_set, wfd_set, efd_set;
@@ -172,14 +172,14 @@ static int poll_two_fds(int rfd, int rfd_want_read,
     struct timeval tv, *ptv;
     int maxfd, pres;
 
-# ifndef OPENSSL_SYS_WINDOWS
+#ifndef OPENSSL_SYS_WINDOWS
     /*
      * On Windows there is no relevant limit to the magnitude of a fd value (see
      * above). On *NIX the fd_set uses a bitmap and we must check the limit.
      */
     if (rfd >= FD_SETSIZE || wfd >= FD_SETSIZE)
         return 0;
-# endif
+#endif
 
     FD_ZERO(&rfd_set);
     FD_ZERO(&wfd_set);
@@ -201,14 +201,14 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         maxfd = wfd;
 
     if (!ossl_assert(rfd != -1 || wfd != -1
-                     || !ossl_time_is_infinite(deadline)))
+            || !ossl_time_is_infinite(deadline)))
         /* Do not block forever; should not happen. */
         return 0;
 
-# if defined(OPENSSL_THREADS)
+#if defined(OPENSSL_THREADS)
     if (mutex != NULL)
         ossl_crypto_mutex_unlock(mutex);
-# endif
+#endif
 
     do {
         /*
@@ -225,38 +225,38 @@ static int poll_two_fds(int rfd, int rfd_want_read,
              * now > deadline.
              */
             timeout = ossl_time_subtract(deadline, now);
-            tv      = ossl_time_to_timeval(timeout);
-            ptv     = &tv;
+            tv = ossl_time_to_timeval(timeout);
+            ptv = &tv;
         }
 
         pres = select(maxfd + 1, &rfd_set, &wfd_set, &efd_set, ptv);
     } while (pres == -1 && get_last_socket_error_is_eintr());
 
-# if defined(OPENSSL_THREADS)
+#if defined(OPENSSL_THREADS)
     if (mutex != NULL)
         ossl_crypto_mutex_lock(mutex);
-# endif
+#endif
 
     return pres < 0 ? 0 : 1;
 #else
     int pres, timeout_ms;
     OSSL_TIME now, timeout;
-    struct pollfd pfds[2] = {0};
+    struct pollfd pfds[2] = { 0 };
     size_t npfd = 0;
 
     if (rfd == wfd) {
         pfds[npfd].fd = rfd;
-        pfds[npfd].events = (rfd_want_read  ? POLLIN  : 0)
-                          | (wfd_want_write ? POLLOUT : 0);
+        pfds[npfd].events = (rfd_want_read ? POLLIN : 0)
+            | (wfd_want_write ? POLLOUT : 0);
         if (rfd >= 0 && pfds[npfd].events != 0)
             ++npfd;
     } else {
-        pfds[npfd].fd     = rfd;
+        pfds[npfd].fd = rfd;
         pfds[npfd].events = (rfd_want_read ? POLLIN : 0);
         if (rfd >= 0 && pfds[npfd].events != 0)
             ++npfd;
 
-        pfds[npfd].fd     = wfd;
+        pfds[npfd].fd = wfd;
         pfds[npfd].events = (wfd_want_write ? POLLOUT : 0);
         if (wfd >= 0 && pfds[npfd].events != 0)
             ++npfd;
@@ -266,27 +266,27 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         /* Do not block forever; should not happen. */
         return 0;
 
-# if defined(OPENSSL_THREADS)
+#if defined(OPENSSL_THREADS)
     if (mutex != NULL)
         ossl_crypto_mutex_unlock(mutex);
-# endif
+#endif
 
     do {
         if (ossl_time_is_infinite(deadline)) {
             timeout_ms = -1;
         } else {
-            now         = ossl_time_now();
-            timeout     = ossl_time_subtract(deadline, now);
-            timeout_ms  = ossl_time2ms(timeout);
+            now = ossl_time_now();
+            timeout = ossl_time_subtract(deadline, now);
+            timeout_ms = ossl_time2ms(timeout);
         }
 
         pres = poll(pfds, npfd, timeout_ms);
     } while (pres == -1 && get_last_socket_error_is_eintr());
 
-# if defined(OPENSSL_THREADS)
+#if defined(OPENSSL_THREADS)
     if (mutex != NULL)
         ossl_crypto_mutex_lock(mutex);
-# endif
+#endif
 
     return pres < 0 ? 0 : 1;
 #endif
@@ -300,7 +300,7 @@ static int poll_descriptor_to_fd(const BIO_POLL_DESCRIPTOR *d, int *fd)
     }
 
     if (d->type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD
-            || d->value.fd == INVALID_SOCKET)
+        || d->value.fd == INVALID_SOCKET)
         return 0;
 
     *fd = d->value.fd;
@@ -319,9 +319,9 @@ static int poll_descriptor_to_fd(const BIO_POLL_DESCRIPTOR *d, int *fd)
  *                   CRYPTO_THREAD_write_lock fails)
  */
 static int poll_two_descriptors(const BIO_POLL_DESCRIPTOR *r, int r_want_read,
-                                const BIO_POLL_DESCRIPTOR *w, int w_want_write,
-                                OSSL_TIME deadline,
-                                CRYPTO_MUTEX *mutex)
+    const BIO_POLL_DESCRIPTOR *w, int w_want_write,
+    OSSL_TIME deadline,
+    CRYPTO_MUTEX *mutex)
 {
     int rfd, wfd;
 
@@ -344,9 +344,9 @@ static int poll_two_descriptors(const BIO_POLL_DESCRIPTOR *r, int r_want_read,
  *                   CRYPTO_THREAD_write_lock fails)
  */
 int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
-                                       int (*pred)(void *arg), void *pred_arg,
-                                       uint32_t flags,
-                                       CRYPTO_MUTEX *mutex)
+    int (*pred)(void *arg), void *pred_arg,
+    uint32_t flags,
+    CRYPTO_MUTEX *mutex)
 {
     int res;
 
@@ -361,11 +361,11 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
             return res;
 
         if (!poll_two_descriptors(ossl_quic_reactor_get_poll_r(rtor),
-                                  ossl_quic_reactor_net_read_desired(rtor),
-                                  ossl_quic_reactor_get_poll_w(rtor),
-                                  ossl_quic_reactor_net_write_desired(rtor),
-                                  ossl_quic_reactor_get_tick_deadline(rtor),
-                                  mutex))
+                ossl_quic_reactor_net_read_desired(rtor),
+                ossl_quic_reactor_get_poll_w(rtor),
+                ossl_quic_reactor_net_write_desired(rtor),
+                ossl_quic_reactor_get_tick_deadline(rtor),
+                mutex))
             /*
              * We don't actually care why the call succeeded (timeout, FD
              * readiness), we just call reactor_tick and start trying to do I/O

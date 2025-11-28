@@ -65,7 +65,7 @@ static void *x448_newctx(void *provctx)
 }
 
 static int ecx_init(void *vecxctx, void *vkey,
-                    ossl_unused const OSSL_PARAM params[])
+    ossl_unused const OSSL_PARAM params[])
 {
     PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
     ECX_KEY *key = vkey;
@@ -74,9 +74,9 @@ static int ecx_init(void *vecxctx, void *vkey,
         return 0;
 
     if (ecxctx == NULL
-            || key == NULL
-            || key->keylen != ecxctx->keylen
-            || !ossl_ecx_key_up_ref(key)) {
+        || key == NULL
+        || key->keylen != ecxctx->keylen
+        || !ossl_ecx_key_up_ref(key)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -96,9 +96,9 @@ static int ecx_set_peer(void *vecxctx, void *vkey)
         return 0;
 
     if (ecxctx == NULL
-            || key == NULL
-            || key->keylen != ecxctx->keylen
-            || !ossl_ecx_key_up_ref(key)) {
+        || key == NULL
+        || key->keylen != ecxctx->keylen
+        || !ossl_ecx_key_up_ref(key)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -109,14 +109,14 @@ static int ecx_set_peer(void *vecxctx, void *vkey)
 }
 
 static int ecx_derive(void *vecxctx, unsigned char *secret, size_t *secretlen,
-                      size_t outlen)
+    size_t outlen)
 {
     PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
 
     if (!ossl_prov_is_running())
         return 0;
     return ossl_ecx_compute_key(ecxctx->peerkey, ecxctx->key, ecxctx->keylen,
-                                secret, secretlen, outlen);
+        secret, secretlen, outlen);
 }
 
 static void ecx_freectx(void *vecxctx)

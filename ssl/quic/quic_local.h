@@ -8,23 +8,23 @@
  */
 
 #ifndef OSSL_QUIC_LOCAL_H
-# define OSSL_QUIC_LOCAL_H
+#define OSSL_QUIC_LOCAL_H
 
-# include <openssl/ssl.h>
-# include "internal/quic_ssl.h"       /* QUIC_CONNECTION */
-# include "internal/quic_txp.h"
-# include "internal/quic_statm.h"
-# include "internal/quic_demux.h"
-# include "internal/quic_record_rx.h"
-# include "internal/quic_tls.h"
-# include "internal/quic_fc.h"
-# include "internal/quic_stream.h"
-# include "internal/quic_channel.h"
-# include "internal/quic_reactor.h"
-# include "internal/quic_thread_assist.h"
-# include "../ssl_local.h"
+#include <openssl/ssl.h>
+#include "internal/quic_ssl.h" /* QUIC_CONNECTION */
+#include "internal/quic_txp.h"
+#include "internal/quic_statm.h"
+#include "internal/quic_demux.h"
+#include "internal/quic_record_rx.h"
+#include "internal/quic_tls.h"
+#include "internal/quic_fc.h"
+#include "internal/quic_stream.h"
+#include "internal/quic_channel.h"
+#include "internal/quic_reactor.h"
+#include "internal/quic_thread_assist.h"
+#include "../ssl_local.h"
 
-# ifndef OPENSSL_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
 
 /*
  * QUIC stream SSL object (QSSO) type. This implements the API personality layer
@@ -33,35 +33,35 @@
  */
 struct quic_xso_st {
     /* SSL object common header. */
-    struct ssl_st                   ssl;
+    struct ssl_st ssl;
 
     /* The connection this stream is associated with. Always non-NULL. */
-    QUIC_CONNECTION                 *conn;
+    QUIC_CONNECTION *conn;
 
     /* The stream object. Always non-NULL for as long as the XSO exists. */
-    QUIC_STREAM                     *stream;
+    QUIC_STREAM *stream;
 
     /*
      * Has this stream been logically configured into blocking mode? Only
      * meaningful if desires_blocking_set is 1. Ignored if blocking is not
      * currently possible given QUIC_CONNECTION configuration.
      */
-    unsigned int                    desires_blocking        : 1;
+    unsigned int desires_blocking : 1;
 
     /*
      * Has SSL_set_blocking_mode been called on this stream? If not set, we
      * inherit from the QUIC_CONNECTION blocking state.
      */
-    unsigned int                    desires_blocking_set    : 1;
+    unsigned int desires_blocking_set : 1;
 
     /* The application has retired a FIN (i.e. SSL_ERROR_ZERO_RETURN). */
-    unsigned int                    retired_fin             : 1;
+    unsigned int retired_fin : 1;
 
     /*
      * The application has requested a reset. Not set for reflexive
      * STREAM_RESETs caused by peer STOP_SENDING.
      */
-    unsigned int                    requested_reset         : 1;
+    unsigned int requested_reset : 1;
 
     /*
      * This state tracks SSL_write all-or-nothing (AON) write semantics
@@ -82,10 +82,10 @@ struct quic_xso_st {
      *
      */
     /* Is an AON write in progress? */
-    unsigned int                    aon_write_in_progress   : 1;
+    unsigned int aon_write_in_progress : 1;
 
     /* Event handling mode. One of SSL_QUIC_VALUE_EVENT_HANDLING. */
-    unsigned int                    event_handling_mode     : 2;
+    unsigned int event_handling_mode : 2;
 
     /*
      * The base buffer pointer the caller passed us for the initial AON write
@@ -96,27 +96,27 @@ struct quic_xso_st {
      * (but identical) buffer if using ACCEPT_MOVING_WRITE_BUFFER. It is for
      * validation by pointer comparison only.
      */
-    const unsigned char             *aon_buf_base;
+    const unsigned char *aon_buf_base;
     /* The total length of the AON buffer being sent, in bytes. */
-    size_t                          aon_buf_len;
+    size_t aon_buf_len;
     /*
      * The position in the AON buffer up to which we have successfully sent data
      * so far.
      */
-    size_t                          aon_buf_pos;
+    size_t aon_buf_pos;
 
     /* SSL_set_mode */
-    uint32_t                        ssl_mode;
+    uint32_t ssl_mode;
 
     /* SSL_set_options */
-    uint64_t                        ssl_options;
+    uint64_t ssl_options;
 
     /*
      * Last 'normal' error during an app-level I/O operation, used by
      * SSL_get_error(); used to track data-path errors like SSL_ERROR_WANT_READ
      * and SSL_ERROR_WANT_WRITE.
      */
-    int                             last_error;
+    int last_error;
 };
 
 struct quic_conn_st {
@@ -127,15 +127,15 @@ struct quic_conn_st {
      *
      * Note: This must come first in the QUIC_CONNECTION structure.
      */
-    struct ssl_st                   ssl;
+    struct ssl_st ssl;
 
-    SSL                             *tls;
+    SSL *tls;
 
     /* The QUIC engine representing the QUIC event domain. */
-    QUIC_ENGINE                     *engine;
+    QUIC_ENGINE *engine;
 
     /* The QUIC port representing the QUIC listener and socket. */
-    QUIC_PORT                       *port;
+    QUIC_PORT *port;
 
     /*
      * The QUIC channel providing the core QUIC connection implementation. Note
@@ -148,101 +148,101 @@ struct quic_conn_st {
      * The channel remains available after connection termination until the SSL
      * object is freed, thus (ch != NULL) iff (started == 1).
      */
-    QUIC_CHANNEL                    *ch;
+    QUIC_CHANNEL *ch;
 
     /*
      * The mutex used to synchronise access to the QUIC_CHANNEL. We own this but
      * provide it to the channel.
      */
-    CRYPTO_MUTEX                    *mutex;
+    CRYPTO_MUTEX *mutex;
 
     /*
      * If we have a default stream attached, this is the internal XSO
      * object. If there is no default stream, this is NULL.
      */
-    QUIC_XSO                        *default_xso;
+    QUIC_XSO *default_xso;
 
     /* The network read and write BIOs. */
-    BIO                             *net_rbio, *net_wbio;
+    BIO *net_rbio, *net_wbio;
 
     /* Initial peer L4 address. */
-    BIO_ADDR                        init_peer_addr;
+    BIO_ADDR init_peer_addr;
 
-#  ifndef OPENSSL_NO_QUIC_THREAD_ASSIST
+#ifndef OPENSSL_NO_QUIC_THREAD_ASSIST
     /* Manages thread for QUIC thread assisted mode. */
-    QUIC_THREAD_ASSIST              thread_assist;
-#  endif
+    QUIC_THREAD_ASSIST thread_assist;
+#endif
 
     /* If non-NULL, used instead of ossl_time_now(). Used for testing. */
-    OSSL_TIME                       (*override_now_cb)(void *arg);
-    void                            *override_now_cb_arg;
+    OSSL_TIME (*override_now_cb)(void *arg);
+    void *override_now_cb_arg;
 
     /* Number of XSOs allocated. Includes the default XSO, if any. */
-    size_t                          num_xso;
+    size_t num_xso;
 
     /* Have we started? */
-    unsigned int                    started                 : 1;
+    unsigned int started : 1;
 
     /*
      * This is 1 if we were instantiated using a QUIC server method
      * (for future use).
      */
-    unsigned int                    as_server               : 1;
+    unsigned int as_server : 1;
 
     /*
      * Has the application called SSL_set_accept_state? We require this to be
      * congruent with the value of as_server.
      */
-    unsigned int                    as_server_state         : 1;
+    unsigned int as_server_state : 1;
 
     /* Are we using thread assisted mode? Never changes after init. */
-    unsigned int                    is_thread_assisted      : 1;
+    unsigned int is_thread_assisted : 1;
 
     /* Do connection-level operations (e.g. handshakes) run in blocking mode? */
-    unsigned int                    blocking                : 1;
+    unsigned int blocking : 1;
 
     /* Does the application want blocking mode? */
-    unsigned int                    desires_blocking        : 1;
+    unsigned int desires_blocking : 1;
 
     /* Have we created a default XSO yet? */
-    unsigned int                    default_xso_created     : 1;
+    unsigned int default_xso_created : 1;
 
     /*
      * Pre-TERMINATING shutdown phase in which we are flushing streams.
      * Monotonically transitions to 1.
      * New streams cannot be created in this state.
      */
-    unsigned int                    shutting_down           : 1;
+    unsigned int shutting_down : 1;
 
     /* Have we probed the BIOs for addressing support? */
-    unsigned int                    addressing_probe_done   : 1;
+    unsigned int addressing_probe_done : 1;
 
     /* Are we using addressed mode (BIO_sendmmsg with non-NULL peer)? */
-    unsigned int                    addressed_mode_w        : 1;
-    unsigned int                    addressed_mode_r        : 1;
+    unsigned int addressed_mode_w : 1;
+    unsigned int addressed_mode_r : 1;
 
     /* Event handling mode. One of SSL_QUIC_VALUE_EVENT_HANDLING. */
-    unsigned int                    event_handling_mode     : 2;
+    unsigned int event_handling_mode : 2;
 
     /* Default stream type. Defaults to SSL_DEFAULT_STREAM_MODE_AUTO_BIDI. */
-    uint32_t                        default_stream_mode;
+    uint32_t default_stream_mode;
 
     /* SSL_set_mode. This is not used directly but inherited by new XSOs. */
-    uint32_t                        default_ssl_mode;
+    uint32_t default_ssl_mode;
 
     /* SSL_set_options. This is not used directly but inherited by new XSOs. */
-    uint64_t                        default_ssl_options;
+    uint64_t default_ssl_options;
 
     /* SSL_set_incoming_stream_policy. */
-    int                             incoming_stream_policy;
-    uint64_t                        incoming_stream_aec;
+    int incoming_stream_policy;
+    uint64_t incoming_stream_aec;
 
     /*
      * Last 'normal' error during an app-level I/O operation, used by
      * SSL_get_error(); used to track data-path errors like SSL_ERROR_WANT_READ
      * and SSL_ERROR_WANT_WRITE.
      */
-    int                             last_error;
+    int last_error;
 };
 
 /* Internal calls to the QUIC CSM which come from various places. */
@@ -255,107 +255,106 @@ int ossl_quic_conn_on_handshake_confirmed(QUIC_CONNECTION *qc);
  * applicable.
  */
 void ossl_quic_conn_raise_protocol_error(QUIC_CONNECTION *qc,
-                                         uint64_t error_code,
-                                         uint64_t frame_type,
-                                         const char *reason);
+    uint64_t error_code,
+    uint64_t frame_type,
+    const char *reason);
 
 void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
-                                         OSSL_QUIC_FRAME_CONN_CLOSE *f);
+    OSSL_QUIC_FRAME_CONN_CLOSE *f);
 
 int ossl_quic_trace(int write_p, int version, int content_type,
-                    const void *buf, size_t msglen, SSL *ssl, void *arg);
+    const void *buf, size_t msglen, SSL *ssl, void *arg);
 
-#  define OSSL_QUIC_ANY_VERSION 0xFFFFF
-#  define IS_QUIC_METHOD(m) \
-    ((m) == OSSL_QUIC_client_method() || \
-     (m) == OSSL_QUIC_client_thread_method())
-#  define IS_QUIC_CTX(ctx)          IS_QUIC_METHOD((ctx)->method)
+#define OSSL_QUIC_ANY_VERSION 0xFFFFF
+#define IS_QUIC_METHOD(m) \
+    ((m) == OSSL_QUIC_client_method() || (m) == OSSL_QUIC_client_thread_method())
+#define IS_QUIC_CTX(ctx) IS_QUIC_METHOD((ctx)->method)
 
-#  define QUIC_CONNECTION_FROM_SSL_int(ssl, c)   \
-     ((ssl) == NULL ? NULL                       \
-      : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION \
-         ? (c QUIC_CONNECTION *)(ssl)            \
-         : NULL))
+#define QUIC_CONNECTION_FROM_SSL_int(ssl, c)                  \
+    ((ssl) == NULL ? NULL                                     \
+                   : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION \
+                             ? (c QUIC_CONNECTION *)(ssl)     \
+                             : NULL))
 
-#  define QUIC_XSO_FROM_SSL_int(ssl, c)                             \
-    ((ssl) == NULL                                                  \
-     ? NULL                                                         \
-     : (((ssl)->type == SSL_TYPE_QUIC_XSO                           \
-        ? (c QUIC_XSO *)(ssl)                                       \
-        : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION                  \
-           ? (c QUIC_XSO *)((QUIC_CONNECTION *)(ssl))->default_xso  \
-           : NULL))))
+#define QUIC_XSO_FROM_SSL_int(ssl, c)                                                   \
+    ((ssl) == NULL                                                                      \
+            ? NULL                                                                      \
+            : (((ssl)->type == SSL_TYPE_QUIC_XSO                                        \
+                      ? (c QUIC_XSO *)(ssl)                                             \
+                      : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION                        \
+                                ? (c QUIC_XSO *)((QUIC_CONNECTION *)(ssl))->default_xso \
+                                : NULL))))
 
-#  define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c)               \
-     ((ssl) == NULL ? NULL                                       \
-      : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION                 \
-         ? (c SSL_CONNECTION *)((c QUIC_CONNECTION *)(ssl))->tls \
-         : NULL))
+#define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c)                                     \
+    ((ssl) == NULL ? NULL                                                            \
+                   : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION                        \
+                             ? (c SSL_CONNECTION *)((c QUIC_CONNECTION *)(ssl))->tls \
+                             : NULL))
 
-#  define IS_QUIC(ssl) ((ssl) != NULL                                   \
-                        && ((ssl)->type == SSL_TYPE_QUIC_CONNECTION     \
-                            || (ssl)->type == SSL_TYPE_QUIC_XSO))
-# else
-#  define QUIC_CONNECTION_FROM_SSL_int(ssl, c) NULL
-#  define QUIC_XSO_FROM_SSL_int(ssl, c) NULL
-#  define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c) NULL
-#  define IS_QUIC(ssl) 0
-#  define IS_QUIC_CTX(ctx) 0
-#  define IS_QUIC_METHOD(m) 0
-# endif
+#define IS_QUIC(ssl) ((ssl) != NULL             \
+    && ((ssl)->type == SSL_TYPE_QUIC_CONNECTION \
+        || (ssl)->type == SSL_TYPE_QUIC_XSO))
+#else
+#define QUIC_CONNECTION_FROM_SSL_int(ssl, c) NULL
+#define QUIC_XSO_FROM_SSL_int(ssl, c) NULL
+#define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c) NULL
+#define IS_QUIC(ssl) 0
+#define IS_QUIC_CTX(ctx) 0
+#define IS_QUIC_METHOD(m) 0
+#endif
 
-# define QUIC_CONNECTION_FROM_SSL(ssl) \
+#define QUIC_CONNECTION_FROM_SSL(ssl) \
     QUIC_CONNECTION_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
-# define QUIC_CONNECTION_FROM_CONST_SSL(ssl) \
+#define QUIC_CONNECTION_FROM_CONST_SSL(ssl) \
     QUIC_CONNECTION_FROM_SSL_int(ssl, const)
-# define QUIC_XSO_FROM_SSL(ssl) \
+#define QUIC_XSO_FROM_SSL(ssl) \
     QUIC_XSO_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
-# define QUIC_XSO_FROM_CONST_SSL(ssl) \
+#define QUIC_XSO_FROM_CONST_SSL(ssl) \
     QUIC_XSO_FROM_SSL_int(ssl, const)
-# define SSL_CONNECTION_FROM_QUIC_SSL(ssl) \
+#define SSL_CONNECTION_FROM_QUIC_SSL(ssl) \
     SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
-# define SSL_CONNECTION_FROM_CONST_QUIC_SSL(ssl) \
+#define SSL_CONNECTION_FROM_CONST_QUIC_SSL(ssl) \
     SSL_CONNECTION_FROM_CONST_QUIC_SSL_int(ssl, const)
 
-# define IMPLEMENT_quic_meth_func(version, func_name, q_accept, \
-                                 q_connect, enc_data) \
-const SSL_METHOD *func_name(void)  \
-        { \
-        static const SSL_METHOD func_name##_data= { \
-                version, \
-                0, \
-                0, \
-                ossl_quic_new, \
-                ossl_quic_free, \
-                ossl_quic_reset, \
-                ossl_quic_init, \
-                NULL /* clear */, \
-                ossl_quic_deinit, \
-                q_accept, \
-                q_connect, \
-                ossl_quic_read, \
-                ossl_quic_peek, \
-                ossl_quic_write, \
-                NULL /* shutdown */, \
-                NULL /* renegotiate */, \
-                ossl_quic_renegotiate_check, \
-                NULL /* read_bytes */, \
-                NULL /* write_bytes */, \
-                NULL /* dispatch_alert */, \
-                ossl_quic_ctrl, \
-                ossl_quic_ctx_ctrl, \
-                ossl_quic_get_cipher_by_char, \
-                NULL /* put_cipher_by_char */, \
-                ossl_quic_pending, \
-                ossl_quic_num_ciphers, \
-                ossl_quic_get_cipher, \
-                tls1_default_timeout, \
-                &enc_data, \
-                ssl_undefined_void_function, \
-                ossl_quic_callback_ctrl, \
-                ossl_quic_ctx_callback_ctrl, \
-        }; \
-        return &func_name##_data; \
-        }
+#define IMPLEMENT_quic_meth_func(version, func_name, q_accept, \
+    q_connect, enc_data)                                       \
+    const SSL_METHOD *func_name(void)                          \
+    {                                                          \
+        static const SSL_METHOD func_name##_data = {           \
+            version,                                           \
+            0,                                                 \
+            0,                                                 \
+            ossl_quic_new,                                     \
+            ossl_quic_free,                                    \
+            ossl_quic_reset,                                   \
+            ossl_quic_init,                                    \
+            NULL /* clear */,                                  \
+            ossl_quic_deinit,                                  \
+            q_accept,                                          \
+            q_connect,                                         \
+            ossl_quic_read,                                    \
+            ossl_quic_peek,                                    \
+            ossl_quic_write,                                   \
+            NULL /* shutdown */,                               \
+            NULL /* renegotiate */,                            \
+            ossl_quic_renegotiate_check,                       \
+            NULL /* read_bytes */,                             \
+            NULL /* write_bytes */,                            \
+            NULL /* dispatch_alert */,                         \
+            ossl_quic_ctrl,                                    \
+            ossl_quic_ctx_ctrl,                                \
+            ossl_quic_get_cipher_by_char,                      \
+            NULL /* put_cipher_by_char */,                     \
+            ossl_quic_pending,                                 \
+            ossl_quic_num_ciphers,                             \
+            ossl_quic_get_cipher,                              \
+            tls1_default_timeout,                              \
+            &enc_data,                                         \
+            ssl_undefined_void_function,                       \
+            ossl_quic_callback_ctrl,                           \
+            ossl_quic_ctx_callback_ctrl,                       \
+        };                                                     \
+        return &func_name##_data;                              \
+    }
 
 #endif
