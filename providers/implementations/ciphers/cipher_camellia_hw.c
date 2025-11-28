@@ -22,18 +22,18 @@
 #include "cipher_camellia.h"
 
 #ifdef CMLL_AES_CAPABLE
-void camellia_encrypt_armv8_wrapper(const unsigned char *in, unsigned char *out, 
+static void camellia_encrypt_armv8_wrapper(const unsigned char *in, unsigned char *out, 
                                    const CAMELLIA_KEY *key) 
 {
     /*Treating key memory block as an optimized SIMD context, not the standard key struct.*/
     camellia_encrypt_1blk_armv8((struct camellia_simd_ctx *)key, out, in);
 }
-void camellia_decrypt_armv8_wrapper(const unsigned char *in, unsigned char *out, 
+static void camellia_decrypt_armv8_wrapper(const unsigned char *in, unsigned char *out, 
                                    const CAMELLIA_KEY *key) 
 {
     camellia_decrypt_1blk_armv8((struct camellia_simd_ctx *)key, out, in);
 }
-void camellia_cbc_neon_wrapper(const unsigned char *in, unsigned char *out,
+static void camellia_cbc_neon_wrapper(const unsigned char *in, unsigned char *out,
                                        size_t len, const CAMELLIA_KEY *key,
                                        unsigned char *ivec, const int enc)
 {
