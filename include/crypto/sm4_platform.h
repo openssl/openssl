@@ -13,18 +13,15 @@
 
 # if defined(OPENSSL_CPUID_OBJ)
 #  if defined(__aarch64__) ||  defined (_M_ARM64)
-#   include "arm_arch.h"
+#   include "crypto/arm_arch.h"
 extern unsigned int OPENSSL_arm_midr;
 static inline int vpsm4_capable(void)
 {
-    return (OPENSSL_armcap_P & ARMV8_CPUID) &&
-            (MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V1) ||
-             MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N1));
+    return (OPENSSL_armcap_P & ARMV7_NEON);
 }
 static inline int vpsm4_ex_capable(void)
 {
-    return (OPENSSL_armcap_P & ARMV8_CPUID) &&
-            (MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, HISI_CPU_IMP, HISI_CPU_PART_KP920));
+    return (OPENSSL_armcap_P & (ARMV7_NEON | ARMV8_AES));
 }
 #   if defined(VPSM4_ASM)
 #    define VPSM4_CAPABLE vpsm4_capable()
