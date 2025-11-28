@@ -14,38 +14,42 @@
 
 static OSSL_TIME cur_time;
 
-static OSSL_TIME fake_now(void *arg) {
+static OSSL_TIME fake_now(void *arg)
+{
     return cur_time;
 }
 
-static void step_time(uint64_t ms) {
+static void step_time(uint64_t ms)
+{
     cur_time = ossl_time_add(cur_time, ossl_ms2time(ms));
 }
 
 static QUIC_SSTREAM *(*get_sstream_by_id_p)(uint64_t stream_id, uint32_t pn_space,
-                                            void *arg);
+    void *arg);
 
 static QUIC_SSTREAM *get_sstream_by_id(uint64_t stream_id, uint32_t pn_space,
-                                       void *arg)
+    void *arg)
 {
     return get_sstream_by_id_p(stream_id, pn_space, arg);
 }
 
 static void (*regen_frame_p)(uint64_t frame_type, uint64_t stream_id,
-                             QUIC_TXPIM_PKT *pkt, void *arg);
+    QUIC_TXPIM_PKT *pkt, void *arg);
 
 static void regen_frame(uint64_t frame_type, uint64_t stream_id,
-                        QUIC_TXPIM_PKT *pkt, void *arg)
+    QUIC_TXPIM_PKT *pkt, void *arg)
 {
     regen_frame_p(frame_type, stream_id, pkt, arg);
 }
 
 static void confirm_frame(uint64_t frame_type, uint64_t stream_id,
-                          QUIC_TXPIM_PKT *pkt, void *arg)
-{}
+    QUIC_TXPIM_PKT *pkt, void *arg)
+{
+}
 
 static void sstream_updated(uint64_t stream_id, void *arg)
-{}
+{
+}
 
 typedef struct info_st {
     QUIC_FIFD fifd;
@@ -69,7 +73,7 @@ static int cfq_freed;
  *    Test that a submitted packet, on ack, releases the TXPIM packet
  */
 static QUIC_SSTREAM *sstream_expect(uint64_t stream_id, uint32_t pn_space,
-                                    void *arg)
+    void *arg)
 {
     if (stream_id == 42 || stream_id == 43)
         return cur_info->sstream[stream_id - 42];
@@ -83,7 +87,7 @@ static uint64_t regen_stream_id[16];
 static size_t regen_count;
 
 static void regen_expect(uint64_t frame_type, uint64_t stream_id,
-                         QUIC_TXPIM_PKT *pkt, void *arg)
+    QUIC_TXPIM_PKT *pkt, void *arg)
 {
     regen_frame_type[regen_count] = frame_type;
     regen_stream_id[regen_count] = stream_id;
@@ -98,31 +102,32 @@ static void cfq_free_cb_(unsigned char *buf, size_t buf_len, void *arg)
         cfq_freed = 1;
 }
 
-#define TEST_KIND_ACK       0
-#define TEST_KIND_LOSS      1
-#define TEST_KIND_DISCARD   2
-#define TEST_KIND_NUM       3
+#define TEST_KIND_ACK 0
+#define TEST_KIND_LOSS 1
+#define TEST_KIND_DISCARD 2
+#define TEST_KIND_NUM 3
 
 static int test_generic(INFO *info, int kind)
 {
     int testresult = 0;
     size_t i, consumed = 0;
     QUIC_TXPIM_PKT *pkt = NULL, *pkt2 = NULL;
-    OSSL_QUIC_FRAME_STREAM hdr = {0};
+    OSSL_QUIC_FRAME_STREAM hdr = { 0 };
     OSSL_QTX_IOVEC iov[2];
     size_t num_iov;
-    QUIC_TXPIM_CHUNK chunk = {42, 0, 11, 0};
-    OSSL_QUIC_FRAME_ACK ack = {0};
-    OSSL_QUIC_ACK_RANGE ack_ranges[1] = {0};
+    QUIC_TXPIM_CHUNK chunk = { 42, 0, 11, 0 };
+    OSSL_QUIC_FRAME_ACK ack = { 0 };
+    OSSL_QUIC_ACK_RANGE ack_ranges[1] = { 0 };
     QUIC_CFQ_ITEM *cfq_item = NULL;
     uint32_t pn_space = (kind == TEST_KIND_DISCARD)
-        ? QUIC_PN_SPACE_HANDSHAKE : QUIC_PN_SPACE_APP;
+        ? QUIC_PN_SPACE_HANDSHAKE
+        : QUIC_PN_SPACE_APP;
 
-    cur_time            = ossl_seconds2time(1000);
-    regen_count         = 0;
+    cur_time = ossl_seconds2time(1000);
+    regen_count = 0;
 
     get_sstream_by_id_p = sstream_expect;
-    regen_frame_p       = regen_expect;
+    regen_frame_p = regen_expect;
 
     if (!TEST_ptr(pkt = ossl_quic_txpim_pkt_alloc(info->txpim)))
         goto err;
@@ -130,8 +135,8 @@ static int test_generic(INFO *info, int kind)
     for (i = 0; i < 2; ++i) {
         num_iov = OSSL_NELEM(iov);
         if (!TEST_true(ossl_quic_sstream_append(info->sstream[i],
-                                                (unsigned char *)"Test message",
-                                                12, &consumed))
+                (unsigned char *)"Test message",
+                12, &consumed))
             || !TEST_size_t_eq(consumed, 12))
             goto err;
 
@@ -139,21 +144,20 @@ static int test_generic(INFO *info, int kind)
             ossl_quic_sstream_fin(info->sstream[i]);
 
         if (!TEST_true(ossl_quic_sstream_get_stream_frame(info->sstream[i], 0,
-                                                          &hdr, iov, &num_iov))
+                &hdr, iov, &num_iov))
             || !TEST_int_eq(hdr.is_fin, i == 1)
             || !TEST_uint64_t_eq(hdr.offset, 0)
             || !TEST_uint64_t_eq(hdr.len, 12)
             || !TEST_size_t_eq(ossl_quic_sstream_get_buffer_used(info->sstream[i]), 12)
             || !TEST_true(ossl_quic_sstream_mark_transmitted(info->sstream[i],
-                                                             hdr.offset,
-                                                             hdr.offset + hdr.len - 1)))
+                hdr.offset,
+                hdr.offset + hdr.len - 1)))
             goto err;
 
-        if (i == 1 && !TEST_true(ossl_quic_sstream_mark_transmitted_fin(info->sstream[i],
-                                                                        hdr.offset + hdr.len)))
+        if (i == 1 && !TEST_true(ossl_quic_sstream_mark_transmitted_fin(info->sstream[i], hdr.offset + hdr.len)))
             goto err;
 
-        chunk.has_fin   = hdr.is_fin;
+        chunk.has_fin = hdr.is_fin;
         chunk.stream_id = 42 + i;
         if (!TEST_true(ossl_quic_txpim_pkt_append_chunk(pkt, &chunk)))
             goto err;
@@ -161,35 +165,35 @@ static int test_generic(INFO *info, int kind)
 
     cfq_freed = 0;
     if (!TEST_ptr(cfq_item = ossl_quic_cfq_add_frame(info->cfq, 10,
-                                                     pn_space,
-                                                     OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID, 0,
-                                                     placeholder_data,
-                                                     sizeof(placeholder_data),
-                                                     cfq_free_cb_, NULL))
+                      pn_space,
+                      OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID, 0,
+                      placeholder_data,
+                      sizeof(placeholder_data),
+                      cfq_free_cb_, NULL))
         || !TEST_ptr_eq(cfq_item, ossl_quic_cfq_get_priority_head(info->cfq, pn_space)))
         goto err;
 
     ossl_quic_txpim_pkt_add_cfq_item(pkt, cfq_item);
 
-    pkt->ackm_pkt.pkt_num           = 0;
-    pkt->ackm_pkt.pkt_space         = pn_space;
-    pkt->ackm_pkt.largest_acked     = QUIC_PN_INVALID;
-    pkt->ackm_pkt.num_bytes         = 50;
-    pkt->ackm_pkt.time              = cur_time;
-    pkt->ackm_pkt.is_inflight       = 1;
-    pkt->ackm_pkt.is_ack_eliciting  = 1;
+    pkt->ackm_pkt.pkt_num = 0;
+    pkt->ackm_pkt.pkt_space = pn_space;
+    pkt->ackm_pkt.largest_acked = QUIC_PN_INVALID;
+    pkt->ackm_pkt.num_bytes = 50;
+    pkt->ackm_pkt.time = cur_time;
+    pkt->ackm_pkt.is_inflight = 1;
+    pkt->ackm_pkt.is_ack_eliciting = 1;
     if (kind == TEST_KIND_LOSS) {
-        pkt->had_handshake_done_frame   = 1;
-        pkt->had_max_data_frame         = 1;
+        pkt->had_handshake_done_frame = 1;
+        pkt->had_max_data_frame = 1;
         pkt->had_max_streams_bidi_frame = 1;
-        pkt->had_max_streams_uni_frame  = 1;
-        pkt->had_ack_frame              = 1;
+        pkt->had_max_streams_uni_frame = 1;
+        pkt->had_ack_frame = 1;
     }
 
     ack_ranges[0].start = 0;
-    ack_ranges[0].end   = 0;
-    ack.ack_ranges      = ack_ranges;
-    ack.num_ack_ranges  = 1;
+    ack_ranges[0].end = 0;
+    ack.ack_ranges = ack_ranges;
+    ack.num_ack_ranges = 1;
 
     if (!TEST_true(ossl_quic_fifd_pkt_commit(&info->fifd, pkt)))
         goto err;
@@ -201,8 +205,8 @@ static int test_generic(INFO *info, int kind)
     switch (kind) {
     case TEST_KIND_ACK:
         if (!TEST_true(ossl_ackm_on_rx_ack_frame(info->ackm, &ack,
-                                                 pn_space,
-                                                 cur_time)))
+                pn_space,
+                cur_time)))
             goto err;
 
         for (i = 0; i < 2; ++i)
@@ -229,22 +233,22 @@ static int test_generic(INFO *info, int kind)
             goto err;
 
         step_time(10000);
-        pkt2->ackm_pkt.pkt_num          = 50;
-        pkt2->ackm_pkt.pkt_space        = pn_space;
-        pkt2->ackm_pkt.largest_acked    = QUIC_PN_INVALID;
-        pkt2->ackm_pkt.num_bytes        = 50;
-        pkt2->ackm_pkt.time             = cur_time;
-        pkt2->ackm_pkt.is_inflight      = 1;
+        pkt2->ackm_pkt.pkt_num = 50;
+        pkt2->ackm_pkt.pkt_space = pn_space;
+        pkt2->ackm_pkt.largest_acked = QUIC_PN_INVALID;
+        pkt2->ackm_pkt.num_bytes = 50;
+        pkt2->ackm_pkt.time = cur_time;
+        pkt2->ackm_pkt.is_inflight = 1;
         pkt2->ackm_pkt.is_ack_eliciting = 1;
 
         ack_ranges[0].start = 50;
-        ack_ranges[0].end   = 50;
-        ack.ack_ranges      = ack_ranges;
-        ack.num_ack_ranges  = 1;
+        ack_ranges[0].end = 50;
+        ack.ack_ranges = ack_ranges;
+        ack.num_ack_ranges = 1;
 
         if (!TEST_true(ossl_quic_fifd_pkt_commit(&info->fifd, pkt2))
             || !TEST_true(ossl_ackm_on_rx_ack_frame(info->ackm, &ack,
-                                                    pn_space, cur_time)))
+                pn_space, cur_time)))
             goto err;
 
         for (i = 0; i < 2; ++i) {
@@ -254,7 +258,7 @@ static int test_generic(INFO *info, int kind)
              * ensuring it is returned again
              */
             if (!TEST_true(ossl_quic_sstream_get_stream_frame(info->sstream[i], 0,
-                                                              &hdr, iov, &num_iov))
+                    &hdr, iov, &num_iov))
                 || !TEST_uint64_t_eq(hdr.offset, 0)
                 || !TEST_uint64_t_eq(hdr.len, 12))
                 goto err;
@@ -285,7 +289,7 @@ static int test_generic(INFO *info, int kind)
         /* FIN should have been marked as lost */
         num_iov = OSSL_NELEM(iov);
         if (!TEST_true(ossl_quic_sstream_get_stream_frame(info->sstream[1], 1,
-                                                          &hdr, iov, &num_iov))
+                &hdr, iov, &num_iov))
             || !TEST_true(hdr.is_fin)
             || !TEST_uint64_t_eq(hdr.len, 0))
             goto err;
@@ -318,7 +322,7 @@ err:
 static int test_fifd(int idx)
 {
     int testresult = 0;
-    INFO info = {0};
+    INFO info = { 0 };
     size_t i;
 
     cur_info = &info;
@@ -327,20 +331,20 @@ static int test_fifd(int idx)
     if (!TEST_true(ossl_statm_init(&info.statm))
         || !TEST_ptr(info.ccdata = ossl_cc_dummy_method.new(fake_now, NULL))
         || !TEST_ptr(info.ackm = ossl_ackm_new(fake_now, NULL,
-                                               &info.statm,
-                                               &ossl_cc_dummy_method,
-                                               info.ccdata,
-                                               /* is_server */0))
+                         &info.statm,
+                         &ossl_cc_dummy_method,
+                         info.ccdata,
+                         /* is_server */ 0))
         || !TEST_true(ossl_ackm_on_handshake_confirmed(info.ackm))
         || !TEST_ptr(info.cfq = ossl_quic_cfq_new())
         || !TEST_ptr(info.txpim = ossl_quic_txpim_new())
         || !TEST_true(ossl_quic_fifd_init(&info.fifd, info.cfq, info.ackm,
-                                          info.txpim,
-                                          get_sstream_by_id, NULL,
-                                          regen_frame, NULL,
-                                          confirm_frame, NULL,
-                                          sstream_updated, NULL,
-                                          NULL, NULL)))
+            info.txpim,
+            get_sstream_by_id, NULL,
+            regen_frame, NULL,
+            confirm_frame, NULL,
+            sstream_updated, NULL,
+            NULL, NULL)))
         goto err;
 
     for (i = 0; i < OSSL_NELEM(info.sstream); ++i)
