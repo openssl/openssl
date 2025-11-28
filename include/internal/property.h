@@ -70,6 +70,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     const OSSL_PROVIDER **prov, void **method);
 int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
     const OSSL_PROVIDER *prov);
+int ossl_method_store_freeze(OSSL_METHOD_STORE *store, const char *prop_query);
 
 /* Get the global properties associate with the specified library context */
 OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *ctx,

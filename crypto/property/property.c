@@ -86,6 +86,12 @@ struct ossl_method_store_st {
 
     /* Flag: 1 if query cache entries for all algs need flushing */
     int cache_need_flush;
+
+    /* Flag: 1 if method store is frozen */
+    int frozen;
+
+    /* Property query associated with frozen state */
+    char *frozen_propq;
 };
 
 typedef struct {
@@ -265,6 +271,7 @@ void ossl_method_store_free(OSSL_METHOD_STORE *store)
         ossl_sa_ALGORITHM_free(store->algs);
         CRYPTO_THREAD_lock_free(store->lock);
         CRYPTO_THREAD_lock_free(store->biglock);
+        OPENSSL_free(store->frozen_propq);
         OPENSSL_free(store);
     }
 }
@@ -324,7 +331,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     int ret = 0;
     int i;
 
-    if (nid <= 0 || method == NULL || store == NULL)
+    if (nid <= 0 || method == NULL || store == NULL || store->frozen == 1)
         return 0;
 
     if (properties == NULL)
@@ -438,7 +445,7 @@ int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
     ALGORITHM *alg = NULL;
     int i;
 
-    if (nid <= 0 || method == NULL || store == NULL)
+    if (nid <= 0 || method == NULL || store == NULL || store->frozen == 1)
         return 0;
 
     if (!ossl_property_write_lock(store))
@@ -540,12 +547,23 @@ int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
 {
     struct alg_cleanup_by_provider_data_st data;
 
-    if (!ossl_property_write_lock(store))
+    if (store == NULL || store->frozen == 1 || !ossl_property_write_lock(store))
         return 0;
     data.prov = prov;
     data.store = store;
     ossl_sa_ALGORITHM_doall_arg(store->algs, &alg_cleanup_by_provider, &data);
     ossl_property_unlock(store);
+    return 1;
+}
+
+int ossl_method_store_freeze(OSSL_METHOD_STORE *store, const char *prop_query)
+{
+    if (store == NULL || store->frozen == 1)
+        return 0;
+    /* TODO: FREEZE: Create frozen caches */
+    store->frozen = 1;
+    if (prop_query != NULL)
+        store->frozen_propq = OPENSSL_strndup(prop_query, strlen(prop_query));
     return 1;
 }
 
@@ -774,7 +792,7 @@ static void ossl_method_cache_flush(OSSL_METHOD_STORE *store, int nid)
 
 int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 {
-    if (!ossl_property_write_lock(store))
+    if (store == NULL || store->frozen == 1 || !ossl_property_write_lock(store))
         return 0;
     ossl_sa_ALGORITHM_doall(store->algs, &impl_cache_flush_alg);
     store->cache_nelem = 0;
@@ -896,7 +914,7 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     size_t len;
     int res = 1;
 
-    if (nid <= 0 || store == NULL || prop_query == NULL)
+    if (nid <= 0 || store == NULL || prop_query == NULL || store->frozen == 1)
         return 0;
 
     if (!ossl_assert(prov != NULL))
