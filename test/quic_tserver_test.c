@@ -58,11 +58,11 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
     BIO *s_net_bio = NULL, *s_net_bio_own = NULL;
     BIO *c_net_bio = NULL, *c_net_bio_own = NULL;
     BIO *c_pair_own = NULL, *s_pair_own = NULL;
-    QUIC_TSERVER_ARGS tserver_args = {0};
+    QUIC_TSERVER_ARGS tserver_args = { 0 };
     QUIC_TSERVER *tserver = NULL;
     BIO_ADDR *s_addr_ = NULL;
-    struct in_addr ina = {0};
-    union BIO_sock_info_u s_info = {0};
+    struct in_addr ina = { 0 };
+    union BIO_sock_info_u s_info = { 0 };
     SSL_CTX *c_ctx = NULL;
     SSL *c_ssl = NULL;
     int c_connected = 0, c_write_done = 0, c_begin_read = 0, s_read_done = 0;
@@ -124,7 +124,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
         tserver_args.now_cb = fake_now;
 
     if (!TEST_ptr(tserver = ossl_quic_tserver_new(&tserver_args, certfile,
-                                                  keyfile))) {
+                      keyfile))) {
         BIO_free(s_net_bio);
         goto err;
     }
@@ -139,7 +139,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
          * datagrams.
          */
         if (!TEST_true(BIO_new_bio_dgram_pair(&c_pair_own, 5000,
-                                              &s_pair_own, 5000)))
+                &s_pair_own, 5000)))
             goto err;
     }
 
@@ -158,8 +158,8 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
         goto err;
 
     if (!TEST_ptr(c_ctx = SSL_CTX_new(use_thread_assist
-                                      ? OSSL_QUIC_client_thread_method()
-                                      : OSSL_QUIC_client_method())))
+                          ? OSSL_QUIC_client_thread_method()
+                          : OSSL_QUIC_client_method())))
         goto err;
 
     if (!TEST_ptr(c_ssl = SSL_new(c_ctx)))
@@ -201,7 +201,8 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
 
     for (;;) {
         if (ossl_time_compare(ossl_time_subtract(real_now(NULL), start_time),
-                              ossl_ms2time(limit_ms)) >= 0) {
+                ossl_ms2time(limit_ms))
+            >= 0) {
             TEST_error("timeout while attempting QUIC server test");
             goto err;
         }
@@ -230,7 +231,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
 
         if (c_connected && !c_write_done) {
             if (!TEST_int_eq(SSL_write(c_ssl, msg1, sizeof(msg1) - 1),
-                             (int)sizeof(msg1) - 1))
+                    (int)sizeof(msg1) - 1))
                 goto err;
 
             if (!TEST_true(SSL_stream_conclude(c_ssl, 0)))
@@ -241,8 +242,8 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
 
         if (c_connected && c_write_done && !s_read_done) {
             if (!ossl_quic_tserver_read(tserver, 0,
-                                        (unsigned char *)msg2 + s_total_read,
-                                        sizeof(msg2) - s_total_read, &l)) {
+                    (unsigned char *)msg2 + s_total_read,
+                    sizeof(msg2) - s_total_read, &l)) {
                 if (!TEST_true(ossl_quic_tserver_has_read_ended(tserver, 0)))
                     goto err;
 
@@ -250,7 +251,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
                     goto err;
 
                 s_begin_write = 1;
-                s_read_done   = 1;
+                s_read_done = 1;
             } else {
                 s_total_read += l;
                 if (!TEST_size_t_le(s_total_read, sizeof(msg1) - 1))
@@ -260,8 +261,8 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
 
         if (s_begin_write && s_total_written < sizeof(msg1) - 1) {
             if (!TEST_true(ossl_quic_tserver_write(tserver, 0,
-                                                   (unsigned char *)msg2 + s_total_written,
-                                                   sizeof(msg1) - 1 - s_total_written, &l)))
+                    (unsigned char *)msg2 + s_total_written,
+                    sizeof(msg1) - 1 - s_total_written, &l)))
                 goto err;
 
             s_total_written += l;
@@ -274,7 +275,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
 
         if (c_begin_read && c_total_read < sizeof(msg1) - 1) {
             ret = SSL_read_ex(c_ssl, msg3 + c_total_read,
-                              sizeof(msg1) - 1 - c_total_read, &l);
+                sizeof(msg1) - 1 - c_total_read, &l);
             if (!TEST_true(ret == 1 || is_want(c_ssl, ret)))
                 goto err;
 
@@ -282,7 +283,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
 
             if (c_total_read == sizeof(msg1) - 1) {
                 if (!TEST_mem_eq(msg1, sizeof(msg1) - 1,
-                                 msg3, c_total_read))
+                        msg3, c_total_read))
                     goto err;
 
                 c_wait_eos = 1;
@@ -302,7 +303,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
              */
             if (SSL_get_error(c_ssl, ret) != SSL_ERROR_WANT_READ) {
                 if (!TEST_int_eq(SSL_get_error(c_ssl, ret),
-                                 SSL_ERROR_ZERO_RETURN))
+                        SSL_ERROR_ZERO_RETURN))
                     goto err;
 
                 c_done_eos = 1;
@@ -338,8 +339,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
                  */
                 if (!TEST_true(SSL_get_event_timeout(c_ssl, &tv, &isinf)))
                     goto err;
-                if (!isinf && ossl_time_compare(ossl_time_zero(),
-                                                ossl_time_from_timeval(tv)) >= 0)
+                if (!isinf && ossl_time_compare(ossl_time_zero(), ossl_time_from_timeval(tv)) >= 0)
                     OSSL_sleep(100); /* Ensure CPU scheduling for test purposes */
             } else {
                 c_done_idle_test = 1;
@@ -370,7 +370,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
         ossl_quic_tserver_tick(tserver);
 
         if (use_inject) {
-            BIO_MSG rmsg = {0};
+            BIO_MSG rmsg = { 0 };
             size_t msgs_processed = 0;
 
             for (;;) {
@@ -379,15 +379,15 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
                  * into QUIC via the injection interface, thereby testing the
                  * injection interface.
                  */
-                rmsg.data       = scratch_buf;
-                rmsg.data_len   = sizeof(scratch_buf);
+                rmsg.data = scratch_buf;
+                rmsg.data_len = sizeof(scratch_buf);
 
                 if (!BIO_recvmmsg(c_net_bio, &rmsg, sizeof(rmsg), 1, 0, &msgs_processed)
                     || msgs_processed == 0 || rmsg.data_len == 0)
                     break;
 
                 if (!TEST_true(SSL_inject_net_dgram(c_ssl, rmsg.data, rmsg.data_len,
-                                                    NULL, NULL)))
+                        NULL, NULL)))
                     goto err;
             }
         }
@@ -438,7 +438,7 @@ int setup_tests(void)
     }
 
     if (!TEST_ptr(certfile = test_get_argument(0))
-            || !TEST_ptr(keyfile = test_get_argument(1)))
+        || !TEST_ptr(keyfile = test_get_argument(1)))
         return 0;
 
     if ((fake_time_lock = CRYPTO_THREAD_lock_new()) == NULL)
