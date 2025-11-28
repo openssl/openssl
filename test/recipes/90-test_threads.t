@@ -23,7 +23,7 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $config_path = abs_path(srctop_file("test", $no_fips ? "default.cnf"
                                                         : "default-and-fips.cnf"));
 
-plan tests => 3;
+plan tests => 4;
 
 if ($no_fips) {
     ok(run(test(["threadstest", "-config", $config_path, data_dir()])),
@@ -34,6 +34,8 @@ if ($no_fips) {
 }
 
 ok(run(test(["threadpool_test"])), "running threadpool_test");
+
+ok(run(test(["threadstest_ssl"])), "running threadstest_ssl");
 
 # Merge the configuration files into one filtering the contents so the failure
 # condition is reproducible.  A working FIPS configuration without the install
