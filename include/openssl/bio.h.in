@@ -8,9 +8,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_BIO_H
 # define OPENSSL_BIO_H
@@ -302,9 +304,11 @@ int BIO_method_type(const BIO *b);
 typedef int BIO_info_cb(BIO *, int, int);
 typedef BIO_info_cb bio_info_cb;  /* backward compatibility */
 
+/* clang-format off */
 {-
     generate_stack_macros("BIO");
 -}
+/* clang-format on */
 
 
 /* Prefix and suffix callback in ASN1 BIO */

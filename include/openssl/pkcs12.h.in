@@ -9,9 +9,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_PKCS12_H
 # define OPENSSL_PKCS12_H
@@ -59,9 +61,11 @@ typedef struct PKCS12_st PKCS12;
 
 typedef struct PKCS12_SAFEBAG_st PKCS12_SAFEBAG;
 
+/* clang-format off */
 {-
     generate_stack_macros("PKCS12_SAFEBAG");
 -}
+/* clang-format on */
 
 typedef struct pkcs12_bag_st PKCS12_BAGS;
 

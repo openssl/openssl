@@ -9,9 +9,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros generate_lhash_macros);
 -}
+/* clang-format on */
 
 #ifndef  OPENSSL_CONF_H
 # define OPENSSL_CONF_H
@@ -39,10 +41,12 @@ typedef struct {
     char *value;
 } CONF_VALUE;
 
+/* clang-format off */
 {-
     generate_stack_macros("CONF_VALUE")
     .generate_lhash_macros("CONF_VALUE");
 -}
+/* clang-format on */
 
 struct conf_st;
 struct conf_method_st;

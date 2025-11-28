@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_lhash_macros);
 -}
+/* clang-format on */
 
 /*
  * Header for dynamic hash table routines Author - Eric Young
@@ -251,10 +253,12 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
     } \
     LHASH_OF(type)
 
+/* clang-format off */
 {-
     generate_lhash_macros("OPENSSL_STRING")
     .generate_lhash_macros("OPENSSL_CSTRING");
 -}
+/* clang-format on */
 
 #ifdef  __cplusplus
 }
