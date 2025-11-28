@@ -1170,7 +1170,7 @@ camellia_neon_consts:
 .previous
 ___
 #
-#    General macroses
+#    General macros
 #
 
 sub filter_8bit_neon(){
@@ -1185,7 +1185,7 @@ ___
 }
 
 #
-#   16-block encryption/decryption macroses
+#   16-block encryption/decryption macros
 #
 
 #
