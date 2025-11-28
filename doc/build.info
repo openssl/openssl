@@ -5033,10 +5033,6 @@ DEPEND[man/man7/openssl_user_macros.7]=man7/openssl_user_macros.pod
 GENERATE[man/man7/openssl_user_macros.7]=man7/openssl_user_macros.pod
 DEPEND[man7/openssl_user_macros.pod]{pod}=man7/openssl_user_macros.pod.in
 GENERATE[man7/openssl_user_macros.pod]=man7/openssl_user_macros.pod.in
-DEPEND[html/man7/ossl-ex-api.html]=man7/ossl-ex-api.pod
-GENERATE[html/man7/ossl-ex-api.html]=man7/ossl-ex-api.pod
-DEPEND[man/man7/ossl-ex-api.7]=man7/ossl-ex-api.pod
-GENERATE[man/man7/ossl-ex-api.7]=man7/ossl-ex-api.pod
 DEPEND[html/man7/ossl-guide-introduction.html]=man7/ossl-guide-introduction.pod
 GENERATE[html/man7/ossl-guide-introduction.html]=man7/ossl-guide-introduction.pod
 DEPEND[man/man7/ossl-guide-introduction.7]=man7/ossl-guide-introduction.pod
@@ -5097,6 +5093,10 @@ DEPEND[html/man7/ossl-guide-tls-server-block.html]=man7/ossl-guide-tls-server-bl
 GENERATE[html/man7/ossl-guide-tls-server-block.html]=man7/ossl-guide-tls-server-block.pod
 DEPEND[man/man7/ossl-guide-tls-server-block.7]=man7/ossl-guide-tls-server-block.pod
 GENERATE[man/man7/ossl-guide-tls-server-block.7]=man7/ossl-guide-tls-server-block.pod
+DEPEND[html/man7/ossl-removed-api.html]=man7/ossl-removed-api.pod
+GENERATE[html/man7/ossl-removed-api.html]=man7/ossl-removed-api.pod
+DEPEND[man/man7/ossl-removed-api.7]=man7/ossl-removed-api.pod
+GENERATE[man/man7/ossl-removed-api.7]=man7/ossl-removed-api.pod
 DEPEND[html/man7/ossl_store-file.html]=man7/ossl_store-file.pod
 GENERATE[html/man7/ossl_store-file.html]=man7/ossl_store-file.pod
 DEPEND[man/man7/ossl_store-file.7]=man7/ossl_store-file.pod
@@ -5316,7 +5316,6 @@ html/man7/openssl-quic-concurrency.html \
 html/man7/openssl-quic.html \
 html/man7/openssl-threads.html \
 html/man7/openssl_user_macros.html \
-html/man7/ossl-ex-api.html \
 html/man7/ossl-guide-introduction.html \
 html/man7/ossl-guide-libcrypto-introduction.html \
 html/man7/ossl-guide-libraries-introduction.html \
@@ -5332,6 +5331,7 @@ html/man7/ossl-guide-tls-client-block.html \
 html/man7/ossl-guide-tls-client-non-block.html \
 html/man7/ossl-guide-tls-introduction.html \
 html/man7/ossl-guide-tls-server-block.html \
+html/man7/ossl-removed-api.html \
 html/man7/ossl_store-file.html \
 html/man7/ossl_store.html \
 html/man7/passphrase-encoding.html \
@@ -5476,7 +5476,6 @@ man/man7/openssl-quic-concurrency.7 \
 man/man7/openssl-quic.7 \
 man/man7/openssl-threads.7 \
 man/man7/openssl_user_macros.7 \
-man/man7/ossl-ex-api.7 \
 man/man7/ossl-guide-introduction.7 \
 man/man7/ossl-guide-libcrypto-introduction.7 \
 man/man7/ossl-guide-libraries-introduction.7 \
@@ -5492,6 +5491,7 @@ man/man7/ossl-guide-tls-client-block.7 \
 man/man7/ossl-guide-tls-client-non-block.7 \
 man/man7/ossl-guide-tls-introduction.7 \
 man/man7/ossl-guide-tls-server-block.7 \
+man/man7/ossl-removed-api.7 \
 man/man7/ossl_store-file.7 \
 man/man7/ossl_store.7 \
 man/man7/passphrase-encoding.7 \
