@@ -32,4 +32,3 @@
 /* clang-format off */
 #include "blake2_mac_impl.c"
 /* clang-format on */
-

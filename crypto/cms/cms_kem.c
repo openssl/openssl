@@ -103,7 +103,7 @@ static int kem_cms_encrypt(CMS_RecipientInfo *ri)
          * for a default KDF.
          */
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM,
-                                                      kemri_x509_algor, sizeof(kemri_x509_algor));
+            kemri_x509_algor, sizeof(kemri_x509_algor));
         params[1] = OSSL_PARAM_construct_end();
         if (!EVP_PKEY_get_params(pkey, params))
             goto err;

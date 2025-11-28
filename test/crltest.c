@@ -336,7 +336,7 @@ static X509 *X509_from_strings(const char **pem)
  * Returns a value from X509_V_ERR_xxx or X509_V_OK.
  */
 static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
-                  unsigned long flags, time_t verification_time)
+    unsigned long flags, time_t verification_time)
 {
     X509_STORE_CTX *ctx = X509_STORE_CTX_new();
     X509_STORE *store = X509_STORE_new();
@@ -426,11 +426,13 @@ static int test_basic_crl(void)
     r = TEST_ptr(basic_crl)
         && TEST_ptr(revoked_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(basic_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME), X509_V_OK)
+                           make_CRL_stack(basic_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_OK)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(basic_crl, revoked_crl),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME), X509_V_ERR_CERT_REVOKED);
+                           make_CRL_stack(basic_crl, revoked_crl),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_ERR_CERT_REVOKED);
     if (r) {
         X509_CRL_get0_signature(basic_crl, NULL, &alg);
         tbsalg = X509_CRL_get0_tbs_sigalg(basic_crl);
@@ -447,8 +449,8 @@ static int test_basic_crl(void)
 static int test_no_crl(void)
 {
     return TEST_int_eq(verify(test_leaf, test_root, NULL,
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME),
-                       X509_V_ERR_UNABLE_TO_GET_CRL);
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+        X509_V_ERR_UNABLE_TO_GET_CRL);
 }
 
 static int test_bad_issuer_crl(void)
@@ -458,9 +460,9 @@ static int test_bad_issuer_crl(void)
 
     r = TEST_ptr(bad_issuer_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(bad_issuer_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME),
-                       X509_V_ERR_UNABLE_TO_GET_CRL);
+                           make_CRL_stack(bad_issuer_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_ERR_UNABLE_TO_GET_CRL);
     X509_CRL_free(bad_issuer_crl);
     return r;
 }
@@ -472,9 +474,9 @@ static int test_crl_empty_idp(void)
 
     r = TEST_ptr(empty_idp_crl)
         && TEST_int_eq(verify(test_leaf2, test_root2,
-                              make_CRL_stack(empty_idp_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME2),
-                       X509_V_ERR_UNABLE_TO_GET_CRL);
+                           make_CRL_stack(empty_idp_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME2),
+            X509_V_ERR_UNABLE_TO_GET_CRL);
     X509_CRL_free(empty_idp_crl);
     return r;
 }
@@ -486,8 +488,9 @@ static int test_known_critical_crl(void)
 
     r = TEST_ptr(known_critical_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(known_critical_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME), X509_V_OK);
+                           make_CRL_stack(known_critical_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_OK);
     X509_CRL_free(known_critical_crl);
     return r;
 }
@@ -499,9 +502,9 @@ static int test_unknown_critical_crl(int n)
 
     r = TEST_ptr(unknown_critical_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(unknown_critical_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME),
-                       X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION);
+                           make_CRL_stack(unknown_critical_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION);
     X509_CRL_free(unknown_critical_crl);
     return r;
 }
@@ -534,25 +537,25 @@ static int test_reuse_crl(int idx)
     switch (idx) {
     case 0: /* valid PEM + invalid DER */
         if (!TEST_ptr_null(result)
-                || !TEST_ptr_null(reused_crl))
+            || !TEST_ptr_null(reused_crl))
             goto err;
         break;
     case 1: /* invalid PEM */
         if (!TEST_ptr_null(result)
-                || !TEST_ptr(reused_crl))
+            || !TEST_ptr(reused_crl))
             goto err;
         break;
     case 2:
         if (!TEST_ptr(result)
-                || !TEST_ptr(reused_crl)
-                || !TEST_ptr_eq(result, reused_crl))
+            || !TEST_ptr(reused_crl)
+            || !TEST_ptr_eq(result, reused_crl))
             goto err;
         break;
     }
 
     r = 1;
 
- err:
+err:
     OPENSSL_free(p);
     BIO_free(b);
     X509_CRL_free(reused_crl);
