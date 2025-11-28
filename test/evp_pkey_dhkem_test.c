@@ -14,16 +14,16 @@
 #include "internal/nelem.h"
 #include "testutil.h"
 
-#define TEST_KEM_ENCAP       0
-#define TEST_KEM_DECAP       1
+#define TEST_KEM_ENCAP 0
+#define TEST_KEM_DECAP 1
 #define TEST_KEM_ENCAP_DECAP 2
 
-#define TEST_TYPE_AUTH        0
-#define TEST_TYPE_NOAUTH      1
+#define TEST_TYPE_AUTH 0
+#define TEST_TYPE_NOAUTH 1
 #define TEST_TYPE_AUTH_NOAUTH 2
 
-#define TEST_KEYTYPE_P256         0
-#define TEST_KEYTYPE_X25519       1
+#define TEST_KEYTYPE_P256 0
+#define TEST_KEYTYPE_X25519 1
 #define TEST_KEYTYPES_P256_X25519 2
 
 static OSSL_LIB_CTX *libctx = NULL;
@@ -43,15 +43,15 @@ static int test_dhkem_encapsulate(int tstid)
     const TEST_ENCAPDATA *t = &ec_encapdata[tstid];
 
     TEST_note("Test %s %s Decapsulate", t->curve,
-              t->spriv != NULL ? "Auth" : "");
+        t->spriv != NULL ? "Auth" : "");
 
     if (!TEST_ptr(rpub = new_raw_public_key(t->curve, t->rpub, t->rpublen)))
         goto err;
 
     if (t->spriv != NULL) {
         if (!TEST_ptr(spriv = new_raw_private_key(t->curve,
-                                                  t->spriv, t->sprivlen,
-                                                  t->spub, t->spublen)))
+                          t->spriv, t->sprivlen,
+                          t->spub, t->spublen)))
             goto err;
     }
     ret = do_encap(t, rpub, spriv);
@@ -71,7 +71,7 @@ static int test_dhkem_decapsulate(int tstid)
     TEST_note("Test %s %s Decapsulate", t->curve, t->spub != NULL ? "Auth" : "");
 
     if (!TEST_ptr(rpriv = new_raw_private_key(t->curve, t->rpriv, t->rprivlen,
-                                              t->rpub, t->rpublen)))
+                      t->rpub, t->rpublen)))
         goto err;
     if (t->spub != NULL) {
         if (!TEST_ptr(spub = new_raw_public_key(t->curve, t->spub, t->spublen)))
@@ -92,13 +92,13 @@ static int test_settables(int tstid)
     const OSSL_PARAM *p;
 
     return TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 1)
-           && TEST_ptr(settableparams = EVP_PKEY_CTX_settable_params(ctx))
-           && TEST_ptr(p = OSSL_PARAM_locate_const(settableparams,
-                                                   OSSL_KEM_PARAM_OPERATION))
-           && TEST_uint_eq(p->data_type, OSSL_PARAM_UTF8_STRING)
-           && TEST_ptr(p = OSSL_PARAM_locate_const(settableparams,
-                                                   OSSL_KEM_PARAM_IKME))
-          && TEST_uint_eq(p->data_type, OSSL_PARAM_OCTET_STRING);
+        && TEST_ptr(settableparams = EVP_PKEY_CTX_settable_params(ctx))
+        && TEST_ptr(p = OSSL_PARAM_locate_const(settableparams,
+                        OSSL_KEM_PARAM_OPERATION))
+        && TEST_uint_eq(p->data_type, OSSL_PARAM_UTF8_STRING)
+        && TEST_ptr(p = OSSL_PARAM_locate_const(settableparams,
+                        OSSL_KEM_PARAM_IKME))
+        && TEST_uint_eq(p->data_type, OSSL_PARAM_OCTET_STRING);
 }
 
 /* Test initing multiple times passes */
@@ -107,9 +107,9 @@ static int test_init_multiple(int tstid)
     EVP_PKEY_CTX *ctx = rctx[tstid];
 
     return TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 1)
-           && TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 1)
-           && TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1)
-           && TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1);
+        && TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 1)
+        && TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1)
+        && TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1);
 }
 
 /* Fail is various bad inputs are passed to the derivekey (keygen) operation */
@@ -124,22 +124,22 @@ static int test_ec_dhkem_derivekey_fail(void)
 
     /* Check non nist curve fails */
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-                                                 "secp256k1", 0);
+        "secp256k1", 0);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
-                                                  (char *)t->ikm, t->ikmlen);
+        (char *)t->ikm, t->ikmlen);
     params[2] = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", NULL))
         || !TEST_int_eq(EVP_PKEY_keygen_init(genctx), 1)
         || !TEST_int_eq(EVP_PKEY_CTX_set_params(genctx, params), 1)
-        || !TEST_int_eq(EVP_PKEY_generate(genctx, &pkey),0))
+        || !TEST_int_eq(EVP_PKEY_generate(genctx, &pkey), 0))
         goto err;
 
     /* Fail if curve is not one of P-256, P-384 or P-521 */
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-                                                 "P-224", 0);
+        "P-224", 0);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
-                                                  (char *)t->ikm, t->ikmlen);
+        (char *)t->ikm, t->ikmlen);
     params[2] = OSSL_PARAM_construct_end();
     if (!TEST_int_eq(EVP_PKEY_keygen_init(genctx), 1)
         || !TEST_int_eq(EVP_PKEY_CTX_set_params(genctx, params), 1)
@@ -148,9 +148,9 @@ static int test_ec_dhkem_derivekey_fail(void)
 
     /* Fail if ikm len is too small*/
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-                                                 "P-256", 0);
+        "P-256", 0);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
-                                                  (char *)t->ikm, t->ikmlen - 1);
+        (char *)t->ikm, t->ikmlen - 1);
     params[2] = OSSL_PARAM_construct_end();
     if (!TEST_int_eq(EVP_PKEY_CTX_set_params(genctx, params), 1)
         || !TEST_int_eq(EVP_PKEY_generate(genctx, &pkey), 0))
@@ -172,11 +172,12 @@ static int test_no_operation_set(int tstid)
     size_t len = 0;
 
     return TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 1)
-           && TEST_int_eq(EVP_PKEY_encapsulate(ctx, NULL, &len, NULL, NULL), 1)
-           && TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1)
-           && TEST_int_eq(EVP_PKEY_decapsulate(ctx, NULL, &len,
-                                               t->expected_enc,
-                                               t->expected_enclen), 1);
+        && TEST_int_eq(EVP_PKEY_encapsulate(ctx, NULL, &len, NULL, NULL), 1)
+        && TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1)
+        && TEST_int_eq(EVP_PKEY_decapsulate(ctx, NULL, &len,
+                           t->expected_enc,
+                           t->expected_enclen),
+            1);
 }
 
 /* Fail if the ikm is too small */
@@ -191,15 +192,16 @@ static int test_ikm_small(int tstid)
     EVP_PKEY_CTX *ctx = rctx[tstid];
 
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KEM_PARAM_OPERATION,
-                                                 OSSL_KEM_PARAM_OPERATION_DHKEM,
-                                                 0);
+        OSSL_KEM_PARAM_OPERATION_DHKEM,
+        0);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME,
-                                                  tmp, sizeof(tmp));
+        tmp, sizeof(tmp));
     params[2] = OSSL_PARAM_construct_end();
 
     return TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, params), 1)
-           && TEST_int_eq(EVP_PKEY_encapsulate(ctx, enc, &enclen,
-                                               secret, &secretlen), 0);
+        && TEST_int_eq(EVP_PKEY_encapsulate(ctx, enc, &enclen,
+                           secret, &secretlen),
+            0);
 }
 
 /* Fail if buffers lengths are too small to hold returned data */
@@ -214,13 +216,14 @@ static int test_input_size_small(int tstid)
 
     if (!TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, opparam), 1)
         || !TEST_int_eq(EVP_PKEY_encapsulate(ctx, NULL, &enclen,
-                                             NULL, &seclen), 1))
-    goto err;
+                            NULL, &seclen),
+            1))
+        goto err;
 
     /* buffer too small for enc */
     enclen--;
     if (!TEST_int_eq(EVP_PKEY_encapsulate(ctx, enc, &enclen, sec, &seclen),
-                     0))
+            0))
         goto err;
     enclen++;
     /* buffer too small for secret */
@@ -230,12 +233,12 @@ static int test_input_size_small(int tstid)
     seclen++;
     if (!TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, opparam), 1))
         goto err;
-     /* buffer too small for decapsulate secret */
+    /* buffer too small for decapsulate secret */
     seclen--;
     if (!TEST_int_eq(EVP_PKEY_decapsulate(ctx, sec, &seclen, enc, enclen), 0))
         goto err;
     seclen++;
-     /* incorrect enclen passed to decap  */
+    /* incorrect enclen passed to decap  */
     enclen--;
     ret = TEST_int_eq(EVP_PKEY_decapsulate(ctx, sec, &seclen, enc, enclen), 0);
 err:
@@ -263,7 +266,8 @@ static int test_auth_key_type_mismatch(int tstid)
     int id2 = !tstid;
 
     return TEST_int_eq(EVP_PKEY_auth_encapsulate_init(rctx[id1],
-                                                      rkey[id2], opparam), 0);
+                           rkey[id2], opparam),
+        0);
 }
 
 static int test_ec_invalid_private_key(void)
@@ -279,9 +283,9 @@ static int test_ec_invalid_private_key(void)
     };
 
     ret = TEST_ptr(priv = new_raw_private_key("P-256", order, sizeof(order),
-                                              t->rpub, t->rpublen))
-          && TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, priv, NULL))
-          && TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 0);
+                       t->rpub, t->rpublen))
+        && TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, priv, NULL))
+        && TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 0);
     EVP_PKEY_free(priv);
     EVP_PKEY_CTX_free(ctx);
     return ret;
@@ -301,19 +305,20 @@ static int test_ec_public_key_infinity(void)
     const TEST_ENCAPDATA *t = &ec_encapdata[0];
 
     ret = TEST_ptr(key = new_raw_private_key(t->curve, t->rpriv, t->rprivlen,
-                                                tmp, sizeof(tmp)))
-          && TEST_ptr(keyctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, NULL))
-          /* Fail if the recipient public key is invalid */
-          && TEST_int_eq(EVP_PKEY_encapsulate_init(keyctx, opparam), 1)
-          && TEST_int_eq(EVP_PKEY_encapsulate(keyctx, e, &elen, s, &slen), 0)
-          /* Fail the decap if the recipient public key is invalid */
-          && TEST_int_eq(EVP_PKEY_decapsulate_init(keyctx, opparam), 1)
-          && TEST_int_eq(EVP_PKEY_decapsulate(keyctx, s, &slen,
-                                              t->expected_enc,
-                                              t->expected_enclen), 0)
-          /* Fail if the auth key has a bad public key */
-          && TEST_int_eq(EVP_PKEY_auth_encapsulate_init(ctx, key, opparam), 1)
-          && TEST_int_eq(EVP_PKEY_encapsulate(ctx, e, &elen, s, &slen), 0);
+                       tmp, sizeof(tmp)))
+        && TEST_ptr(keyctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, NULL))
+        /* Fail if the recipient public key is invalid */
+        && TEST_int_eq(EVP_PKEY_encapsulate_init(keyctx, opparam), 1)
+        && TEST_int_eq(EVP_PKEY_encapsulate(keyctx, e, &elen, s, &slen), 0)
+        /* Fail the decap if the recipient public key is invalid */
+        && TEST_int_eq(EVP_PKEY_decapsulate_init(keyctx, opparam), 1)
+        && TEST_int_eq(EVP_PKEY_decapsulate(keyctx, s, &slen,
+                           t->expected_enc,
+                           t->expected_enclen),
+            0)
+        /* Fail if the auth key has a bad public key */
+        && TEST_int_eq(EVP_PKEY_auth_encapsulate_init(ctx, key, opparam), 1)
+        && TEST_int_eq(EVP_PKEY_encapsulate(ctx, e, &elen, s, &slen), 0);
 
     EVP_PKEY_free(key);
     EVP_PKEY_CTX_free(keyctx);
@@ -328,16 +333,18 @@ static int test_null_params(int tstid)
 
     /* auth_encap/decap init must be passed a non NULL value */
     return TEST_int_eq(EVP_PKEY_auth_encapsulate_init(ctx, NULL, opparam), 0)
-           && TEST_int_eq(EVP_PKEY_auth_decapsulate_init(ctx, NULL, opparam), 0)
-           /* Check decap fails if NULL params are passed */
-           && TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, opparam), 1)
-           && TEST_int_eq(EVP_PKEY_decapsulate(ctx, NULL, NULL,
-                                               t->expected_enc,
-                                               t->expected_enclen), 0)
-           /* Check encap fails if NULL params are passed */
-           && TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, opparam), 1)
-           && TEST_int_eq(EVP_PKEY_encapsulate(ctx, NULL, NULL,
-                                               NULL, NULL), 0);
+        && TEST_int_eq(EVP_PKEY_auth_decapsulate_init(ctx, NULL, opparam), 0)
+        /* Check decap fails if NULL params are passed */
+        && TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, opparam), 1)
+        && TEST_int_eq(EVP_PKEY_decapsulate(ctx, NULL, NULL,
+                           t->expected_enc,
+                           t->expected_enclen),
+            0)
+        /* Check encap fails if NULL params are passed */
+        && TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, opparam), 1)
+        && TEST_int_eq(EVP_PKEY_encapsulate(ctx, NULL, NULL,
+                           NULL, NULL),
+            0);
 }
 
 static int test_set_params(int tstid)
@@ -354,14 +361,14 @@ static int test_set_params(int tstid)
         goto err;
     /* unknown string used for the operation param */
     badparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_KEM_PARAM_OPERATION,
-                                                    "unknown_op", 0);
+        "unknown_op", 0);
     badparams[1] = OSSL_PARAM_construct_end();
     if (!TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, badparams), 0))
         goto err;
 
     /* NULL string set for the operation param */
     badparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_KEM_PARAM_OPERATION,
-                                                    NULL, 0);
+        NULL, 0);
     badparams[1] = OSSL_PARAM_construct_end();
     if (!TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, badparams), 0))
         goto err;
@@ -402,7 +409,7 @@ static int test_nopublic(int tstid)
 
     TEST_note("%s %s", t->curve, encap ? "Encap" : "Decap");
     if (!TEST_ptr(priv = new_raw_private_key(t->curve, t->rpriv, t->rprivlen,
-                                             NULL, 0)))
+                      NULL, 0)))
         goto err;
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, priv, NULL)))
         goto err;
@@ -412,7 +419,7 @@ static int test_nopublic(int tstid)
             goto err;
     } else {
         if (!TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, opparam), expected))
-        goto err;
+            goto err;
     }
     if (expected == 0
         && !TEST_int_eq(ERR_GET_REASON(ERR_get_error()), PROV_R_NOT_A_PUBLIC_KEY))
@@ -437,21 +444,23 @@ static int test_noauthpublic(int tstid)
 
     TEST_note("%s %s", t->curve, encap ? "Encap" : "Decap");
     if (!TEST_ptr(auth = new_raw_private_key(t->curve, t->rpriv,
-                                             t->rprivlen, NULL, expected)))
+                      t->rprivlen, NULL, expected)))
         goto err;
 
     if (encap) {
         if (!TEST_int_eq(EVP_PKEY_auth_encapsulate_init(ctx, auth,
-                                                        opparam), expected))
+                             opparam),
+                expected))
             goto err;
     } else {
         if (!TEST_int_eq(EVP_PKEY_auth_decapsulate_init(ctx, auth,
-                                                        opparam), expected))
+                             opparam),
+                expected))
             goto err;
     }
     if (expected == 0
         && !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
-                        PROV_R_NOT_A_PUBLIC_KEY))
+            PROV_R_NOT_A_PUBLIC_KEY))
         goto err;
     ret = 1;
 err:
@@ -475,24 +484,24 @@ static int test_ec_dhkem_derivekey(int tstid)
     BIGNUM *priv = NULL;
 
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-                                                 (char *)t->curvename, 0);
+        (char *)t->curvename, 0);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
-                                                  (char *)t->ikm, t->ikmlen);
+        (char *)t->ikm, t->ikmlen);
     params[2] = OSSL_PARAM_construct_end();
 
     ret = TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", NULL))
-          && TEST_int_eq(EVP_PKEY_keygen_init(genctx), 1)
-          && TEST_int_eq(EVP_PKEY_CTX_set_params(genctx, params), 1)
-          && TEST_int_eq(EVP_PKEY_generate(genctx, &pkey), 1)
-          && TEST_true(EVP_PKEY_get_octet_string_param(pkey,
-                           OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
-                           pubkey, sizeof(pubkey), &pubkeylen))
-          && TEST_true(EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
-                                             &priv))
-          && TEST_int_gt(privkeylen = BN_bn2bin(priv, privkey), 0)
-          && TEST_int_le(privkeylen, sizeof(privkey))
-          && TEST_mem_eq(privkey, privkeylen, t->priv, t->privlen)
-          && TEST_mem_eq(pubkey, pubkeylen, t->pub, t->publen);
+        && TEST_int_eq(EVP_PKEY_keygen_init(genctx), 1)
+        && TEST_int_eq(EVP_PKEY_CTX_set_params(genctx, params), 1)
+        && TEST_int_eq(EVP_PKEY_generate(genctx, &pkey), 1)
+        && TEST_true(EVP_PKEY_get_octet_string_param(pkey,
+            OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+            pubkey, sizeof(pubkey), &pubkeylen))
+        && TEST_true(EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
+            &priv))
+        && TEST_int_gt(privkeylen = BN_bn2bin(priv, privkey), 0)
+        && TEST_int_le(privkeylen, sizeof(privkey))
+        && TEST_mem_eq(privkey, privkeylen, t->priv, t->privlen)
+        && TEST_mem_eq(pubkey, pubkeylen, t->pub, t->publen);
 
     BN_free(priv);
     EVP_PKEY_free(pkey);
@@ -526,41 +535,45 @@ static int test_ec_noikme(int tstid)
     }
     curve = dhkem_supported_curves[tstid];
     TEST_note("testing encap/decap of curve %s%s\n", curve,
-              auth ? " with auth" : "");
+        auth ? " with auth" : "");
 
     if (curve[0] == 'X') {
         if (!TEST_ptr(recip = EVP_PKEY_Q_keygen(libctx, NULL, curve))
-                || (auth
-                    && !TEST_ptr(sender_auth = EVP_PKEY_Q_keygen(libctx, NULL,
-                                                                 curve))))
+            || (auth
+                && !TEST_ptr(sender_auth = EVP_PKEY_Q_keygen(libctx, NULL,
+                                 curve))))
             goto err;
     } else {
         if (!TEST_ptr(recip = EVP_PKEY_Q_keygen(libctx, NULL, "EC", curve))
-                || (auth
-                    && !TEST_ptr(sender_auth = EVP_PKEY_Q_keygen(libctx, NULL,
-                                                                 "EC", curve))))
+            || (auth
+                && !TEST_ptr(sender_auth = EVP_PKEY_Q_keygen(libctx, NULL,
+                                 "EC", curve))))
             goto err;
     }
 
     ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, recip, NULL))
-          && (sender_auth == NULL
-              || TEST_int_eq(EVP_PKEY_auth_encapsulate_init(ctx, sender_auth,
-                                                            NULL), 1))
-          && (sender_auth != NULL
-              || TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 1))
-          && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(ctx, op), 1)
-          && TEST_int_eq(EVP_PKEY_encapsulate(ctx, sender_pub, &sender_publen,
-                                              sender_secret, &sender_secretlen), 1)
-          && (sender_auth == NULL
-              || TEST_int_eq(EVP_PKEY_auth_decapsulate_init(ctx, sender_auth,
-                                                            NULL), 1))
-          && (sender_auth != NULL
-              || TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1))
-          && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(ctx, op), 1)
-          && TEST_int_eq(EVP_PKEY_decapsulate(ctx, recip_secret, &recip_secretlen,
-                                             sender_pub, sender_publen), 1)
-          && TEST_mem_eq(recip_secret, recip_secretlen,
-                         sender_secret, sender_secretlen);
+        && (sender_auth == NULL
+            || TEST_int_eq(EVP_PKEY_auth_encapsulate_init(ctx, sender_auth,
+                               NULL),
+                1))
+        && (sender_auth != NULL
+            || TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 1))
+        && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(ctx, op), 1)
+        && TEST_int_eq(EVP_PKEY_encapsulate(ctx, sender_pub, &sender_publen,
+                           sender_secret, &sender_secretlen),
+            1)
+        && (sender_auth == NULL
+            || TEST_int_eq(EVP_PKEY_auth_decapsulate_init(ctx, sender_auth,
+                               NULL),
+                1))
+        && (sender_auth != NULL
+            || TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1))
+        && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(ctx, op), 1)
+        && TEST_int_eq(EVP_PKEY_decapsulate(ctx, recip_secret, &recip_secretlen,
+                           sender_pub, sender_publen),
+            1)
+        && TEST_mem_eq(recip_secret, recip_secretlen,
+            sender_secret, sender_secretlen);
 err:
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(sender_auth);
@@ -576,9 +589,9 @@ static int do_ec_curve_failtest(const char *curve)
     EVP_PKEY_CTX *ctx = NULL;
 
     ret = TEST_ptr(key = EVP_PKEY_Q_keygen(libctx, NULL, "EC", curve))
-          && TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, NULL))
-          && TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), -2)
-          && TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), -2);
+        && TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, NULL))
+        && TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), -2)
+        && TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), -2);
     EVP_PKEY_free(key);
     EVP_PKEY_CTX_free(ctx);
     return ret;
@@ -610,7 +623,7 @@ static int test_ec_badpublic(int tstid)
     /* Set the recipient public key to the point at infinity */
     pub[0] = 0;
     if (!TEST_ptr(recippriv = new_raw_private_key(t->curve, t->rpriv, t->rprivlen,
-                                                  pub, 1)))
+                      pub, 1)))
         goto err;
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, recippriv, NULL)))
@@ -622,16 +635,17 @@ static int test_ec_badpublic(int tstid)
 
         if (!TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, opparam), 1))
             goto err;
-        if (!TEST_int_eq(EVP_PKEY_encapsulate(ctx, enc , &enclen,
-                                              secret, &secretlen), 0 ))
+        if (!TEST_int_eq(EVP_PKEY_encapsulate(ctx, enc, &enclen,
+                             secret, &secretlen),
+                0))
             goto err;
     } else {
         if (!TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, opparam), 1))
             goto err;
         if (!TEST_int_eq(EVP_PKEY_decapsulate(ctx, secret, &secretlen,
-                                              t->expected_enc,
-                                              t->expected_enclen),
-                         0))
+                             t->expected_enc,
+                             t->expected_enclen),
+                0))
             goto err;
     }
     if (!TEST_int_eq(ERR_GET_REASON(ERR_get_error()), PROV_R_INVALID_KEY))
@@ -660,19 +674,22 @@ static int test_ec_badauth(int tstid)
     /* Set the auth public key to the point at infinity */
     pub[0] = 0;
     if (!TEST_ptr(auth = new_raw_private_key(t->curve, t->rpriv, t->rprivlen,
-                                             pub, 1)))
+                      pub, 1)))
         goto err;
     if (encap) {
         if (!TEST_int_eq(EVP_PKEY_auth_encapsulate_init(ctx, auth,
-                                                        opparam), 1)
+                             opparam),
+                1)
             || !TEST_int_eq(EVP_PKEY_encapsulate(ctx, enc, &enclen,
-                                                 secret, &secretlen), 0))
+                                secret, &secretlen),
+                0))
             goto err;
     } else {
         if (!TEST_int_eq(EVP_PKEY_auth_decapsulate_init(ctx, auth, opparam), 1)
             || !TEST_int_eq(EVP_PKEY_decapsulate(ctx, secret, &secretlen,
-                                                 t->expected_enc,
-                                                 t->expected_enclen), 0))
+                                t->expected_enc,
+                                t->expected_enclen),
+                0))
             goto err;
     }
     if (!TEST_int_eq(ERR_GET_REASON(ERR_get_error()), PROV_R_INVALID_KEY))
@@ -695,8 +712,9 @@ static int test_ec_invalid_decap_enc_buffer(void)
     enc[0] = 0xFF;
 
     return TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, opparam), 1)
-           && TEST_int_eq(EVP_PKEY_decapsulate(ctx, secret, &secretlen,
-                                               enc, t->expected_enclen), 0);
+        && TEST_int_eq(EVP_PKEY_decapsulate(ctx, secret, &secretlen,
+                           enc, t->expected_enclen),
+            0);
 }
 
 #ifndef OPENSSL_NO_ECX
@@ -730,21 +748,23 @@ static int test_ecx_dhkem_derivekey(int tstid)
     }
 
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
-                                                  (char *)t->ikm, t->ikmlen);
+        (char *)t->ikm, t->ikmlen);
     params[1] = OSSL_PARAM_construct_end();
 
     ret = TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, t->curvename, NULL))
-          && TEST_int_eq(EVP_PKEY_keygen_init(genctx), 1)
-          && TEST_int_eq(EVP_PKEY_CTX_set_params(genctx, params), 1)
-          && TEST_int_eq(EVP_PKEY_keygen(genctx, &pkey), 1)
-          && TEST_int_eq(EVP_PKEY_get_octet_string_param(pkey,
-                             OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
-                             pubkey, sizeof(pubkey), &pubkeylen), 1)
-          && TEST_int_eq(EVP_PKEY_get_octet_string_param(pkey,
-                             OSSL_PKEY_PARAM_PRIV_KEY,
-                             privkey, sizeof(privkey), &privkeylen), 1)
-          && TEST_mem_eq(t->pub, t->publen, pubkey, pubkeylen)
-          && TEST_mem_eq(masked_priv, t->privlen, privkey, privkeylen);
+        && TEST_int_eq(EVP_PKEY_keygen_init(genctx), 1)
+        && TEST_int_eq(EVP_PKEY_CTX_set_params(genctx, params), 1)
+        && TEST_int_eq(EVP_PKEY_keygen(genctx, &pkey), 1)
+        && TEST_int_eq(EVP_PKEY_get_octet_string_param(pkey,
+                           OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                           pubkey, sizeof(pubkey), &pubkeylen),
+            1)
+        && TEST_int_eq(EVP_PKEY_get_octet_string_param(pkey,
+                           OSSL_PKEY_PARAM_PRIV_KEY,
+                           privkey, sizeof(privkey), &privkeylen),
+            1)
+        && TEST_mem_eq(t->pub, t->publen, pubkey, pubkeylen)
+        && TEST_mem_eq(masked_priv, t->privlen, privkey, privkeylen);
 
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(genctx);
@@ -761,7 +781,8 @@ static int test_ecx_auth_key_curve_mismatch(void)
         return 0;
 
     ret = TEST_int_eq(EVP_PKEY_auth_encapsulate_init(rctx[TEST_KEYTYPE_X25519],
-                                                     auth, opparam), 0);
+                          auth, opparam),
+        0);
     EVP_PKEY_free(auth);
     return ret;
 }
@@ -774,9 +795,9 @@ static int test_ed_curve_unsupported(void)
     EVP_PKEY_CTX *ctx = NULL;
 
     ret = TEST_ptr(key = EVP_PKEY_Q_keygen(libctx, NULL, "ED448"))
-          && TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, NULL))
-          && TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), -2)
-          && TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), -2);
+        && TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, NULL))
+        && TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), -2)
+        && TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), -2);
     EVP_PKEY_free(key);
     EVP_PKEY_CTX_free(ctx);
     return ret;
@@ -792,27 +813,25 @@ int setup_tests(void)
     if (!test_get_libctx(&libctx, &nullprov, config_file, &libprov, prov_name))
         return 0;
     opparam[0] = OSSL_PARAM_construct_utf8_string(OSSL_KEM_PARAM_OPERATION,
-                                                  op, 0);
+        op, 0);
     opparam[1] = OSSL_PARAM_construct_end();
 
     /* Create P256 and X25519 keys and ctxs */
     if (!TEST_ptr(rkey[TEST_KEYTYPE_P256] = EVP_PKEY_Q_keygen(libctx, NULL,
-                                                              "EC", "P-256")))
+                      "EC", "P-256")))
         goto err;
 #ifndef OPENSSL_NO_ECX
     if (!TEST_ptr(rkey[TEST_KEYTYPE_X25519] = EVP_PKEY_Q_keygen(libctx, NULL,
-                                                                "X25519")))
+                      "X25519")))
         goto err;
 #endif
-    if (!TEST_ptr(rctx[TEST_KEYTYPE_P256] =
-                      EVP_PKEY_CTX_new_from_pkey(libctx,
-                                                 rkey[TEST_KEYTYPE_P256], NULL)))
-       goto err;
+    if (!TEST_ptr(rctx[TEST_KEYTYPE_P256] = EVP_PKEY_CTX_new_from_pkey(libctx,
+                      rkey[TEST_KEYTYPE_P256], NULL)))
+        goto err;
 #ifndef OPENSSL_NO_ECX
-    if (!TEST_ptr(rctx[TEST_KEYTYPE_X25519] =
-                      EVP_PKEY_CTX_new_from_pkey(libctx,
-                                                 rkey[TEST_KEYTYPE_X25519], NULL)))
-       goto err;
+    if (!TEST_ptr(rctx[TEST_KEYTYPE_X25519] = EVP_PKEY_CTX_new_from_pkey(libctx,
+                      rkey[TEST_KEYTYPE_X25519], NULL)))
+        goto err;
 #endif
 
     ADD_ALL_TESTS(test_dhkem_encapsulate, OSSL_NELEM(ec_encapdata));
@@ -828,9 +847,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_null_params, TEST_KEYTYPES_P256_X25519);
     ADD_ALL_TESTS(test_set_params, TEST_KEYTYPES_P256_X25519);
     ADD_ALL_TESTS(test_nopublic,
-                  TEST_KEM_ENCAP_DECAP * TEST_KEYTYPES_P256_X25519);
+        TEST_KEM_ENCAP_DECAP * TEST_KEYTYPES_P256_X25519);
     ADD_ALL_TESTS(test_noauthpublic,
-                  TEST_KEM_ENCAP_DECAP * TEST_KEYTYPES_P256_X25519);
+        TEST_KEM_ENCAP_DECAP * TEST_KEYTYPES_P256_X25519);
 #else
     ADD_ALL_TESTS(test_settables, TEST_KEYTYPE_P256);
     ADD_ALL_TESTS(test_init_multiple, TEST_KEYTYPE_P256);
@@ -842,14 +861,14 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_null_params, TEST_KEYTYPE_P256);
     ADD_ALL_TESTS(test_set_params, TEST_KEYTYPE_P256);
     ADD_ALL_TESTS(test_nopublic,
-                  TEST_KEM_ENCAP_DECAP * TEST_KEYTYPE_P256);
+        TEST_KEM_ENCAP_DECAP * TEST_KEYTYPE_P256);
     ADD_ALL_TESTS(test_noauthpublic,
-                  TEST_KEM_ENCAP_DECAP * TEST_KEYTYPE_P256);
+        TEST_KEM_ENCAP_DECAP * TEST_KEYTYPE_P256);
 #endif
     /* EC Specific tests */
     ADD_ALL_TESTS(test_ec_dhkem_derivekey, OSSL_NELEM(ec_derivekey_data));
     ADD_ALL_TESTS(test_ec_noikme,
-                  TEST_TYPE_AUTH_NOAUTH * OSSL_NELEM(dhkem_supported_curves));
+        TEST_TYPE_AUTH_NOAUTH * OSSL_NELEM(dhkem_supported_curves));
     ADD_TEST(test_ec_auth_key_curve_mismatch);
     ADD_TEST(test_ec_invalid_private_key);
     ADD_TEST(test_ec_dhkem_derivekey_fail);

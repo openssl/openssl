@@ -55,7 +55,7 @@ static int demonstrate_digest(BIO *input)
      * See providers(7) for details about algorithm fetching
      */
     message_digest = EVP_MD_fetch(library_context,
-                                  "SHA3-512", option_properties);
+        "SHA3-512", option_properties);
     if (message_digest == NULL) {
         fprintf(stderr, "EVP_MD_fetch could not find SHA3-512.");
         ERR_print_errors_fp(stderr);
@@ -104,7 +104,7 @@ static int demonstrate_digest(BIO *input)
         goto cleanup;
     }
     ret = 1;
-    for (ii=0; ii<digest_length; ii++) {
+    for (ii = 0; ii < digest_length; ii++) {
         fprintf(stdout, "%02x", digest_value[ii]);
     }
     fprintf(stdout, "\n");
