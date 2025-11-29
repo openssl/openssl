@@ -533,22 +533,31 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
     if (ch == NULL)
         return NULL;
 
-    /*
-     * Fixup the channel tls connection here before we init the channel
-     */
-    ch->tls = (tls != NULL) ? tls : port_new_handshake_layer(port, ch);
-
-    if (ch->tls == NULL) {
-        OPENSSL_free(ch);
-        return NULL;
+    if (tls != NULL) {
+        ch->tls = tls;
+    } else {
+        if (ossl_quic_port_test_and_set_peeloff(port, PEELOFF_ACCEPT)) {
+            /*
+             * We're using the normal SSL_accept_connection_path
+             */
+            ch->tls = port_new_handshake_layer(port, ch);
+            if (ch->tls == NULL) {
+                ossl_quic_channel_free(ch);
+                return NULL;
+            }
+        } else {
+            /*
+             * We're deferring user ssl creation until SSL_listen_ex is called
+             */
+            ch->tls = NULL;
+        }
     }
-
 #ifndef OPENSSL_NO_QLOG
     /*
      * If we're using qlog, make sure the tls get further configured properly
      */
     ch->use_qlog = 1;
-    if (ch->tls->ctx->qlog_title != NULL) {
+    if (ch->tls != NULL && ch->tls->ctx->qlog_title != NULL) {
         if ((ch->qlog_title = OPENSSL_strdup(ch->tls->ctx->qlog_title)) == NULL) {
             OPENSSL_free(ch);
             return NULL;
@@ -646,6 +655,27 @@ void ossl_quic_port_drop_incoming(QUIC_PORT *port)
 void ossl_quic_port_set_allow_incoming(QUIC_PORT *port, int allow_incoming)
 {
     port->allow_incoming = allow_incoming;
+}
+
+int ossl_quic_port_test_and_set_peeloff(QUIC_PORT *port, int using_peeloff)
+{
+
+    /*
+     * Peeloff state must be one of PEELOFF_LISTEN or PEELOFF_ACCEPT
+     */
+    if (using_peeloff != PEELOFF_LISTEN && using_peeloff != PEELOFF_ACCEPT)
+        return 0;
+
+    /*
+     * We can only set the peeloff state if its not already been set
+     * or if we're setting it to the already set value
+     * i.e. this is a trapdoor, once we set using_peeloff to LISTEN or ACCEPT
+     * Then the only thing we can set that port too in the future is the same value.
+     */
+    if (port->peeloff_mode != using_peeloff && port->peeloff_mode != PEELOFF_UNSET)
+        return 0;
+    port->peeloff_mode = using_peeloff;
+    return 1;
 }
 
 /*
