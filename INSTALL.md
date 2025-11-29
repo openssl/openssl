@@ -584,12 +584,6 @@ In the following list, always the non-default variant is documented: if
 feature `xxxx` is disabled by default then `enable-xxxx` is documented and
 if feature `xxxx` is enabled by default then `no-xxxx` is documented.
 
-### no-afalgeng
-
-Don't build the AFALG engine.
-
-This option will be forced on a platform that does not support AFALG.
-
 ### enable-ktls
 
 Build with Kernel TLS support.
@@ -715,12 +709,6 @@ this option will reduce run-time memory usage but it also introduces a
 significant performance penalty.  This option is primarily designed to help
 with detecting incorrect reference counting.
 
-### no-capieng
-
-Don't build the CAPI engine.
-
-This option will be forced if on a platform that does not support CAPI.
-
 ### no-cmp
 
 Don't build support for Certificate Management Protocol (CMP)
@@ -773,19 +761,6 @@ Don't build and install documentation, i.e. manual pages in various forms.
 
 Don't build support for loading Dynamic Shared Objects (DSO)
 
-### enable-devcryptoeng
-
-Build the `/dev/crypto` engine.
-
-This option is automatically selected on the BSD platform, in which case it can
-be disabled with `no-devcryptoeng`.
-
-### no-dynamic-engine
-
-Don't build the dynamically loaded engines.
-
-This only has an effect in a shared build.
-
 ### no-ec
 
 Don't build support for Elliptic Curves.
@@ -816,10 +791,6 @@ This option is only supported on platforms:
 ### enable-egd
 
 Build support for gathering entropy from the Entropy Gathering Daemon (EGD).
-
-### no-engine
-
-Don't build support for loading engines.
 
 ### no-err
 
@@ -922,9 +893,7 @@ support.  ML-KEM is based on CRYSTALS-KYBER. See [FIPS 203].
 
 ### no-module
 
-Don't build any dynamically loadable engines.
-
-This also implies `no-dynamic-engine`.
+Don't build any dynamically loadable modules.
 
 ### no-multiblock
 
@@ -939,14 +908,6 @@ Don't build support for the Next Protocol Negotiation (NPN) TLS extension.
 ### no-ocsp
 
 Don't build support for Online Certificate Status Protocol (OCSP).
-
-### no-padlockeng
-
-Don't build the padlock engine.
-
-### no-hw-padlock
-
-As synonym for `no-padlockeng`.  Deprecated and should not be used.
 
 ### no-pic
 
@@ -1053,12 +1014,6 @@ This removes the `-trace` option from `s_client` and `s_server`, and omits the
 `SSL_trace()` function from libssl.
 
 Disabling `ssl-trace` may provide a small reduction in libssl binary size.
-
-### no-static-engine
-
-Don't build the statically linked engines.
-
-This only has an impact when not built "shared".
 
 ### no-stdio
 
@@ -1548,7 +1503,6 @@ its default):
                    to build your own programs that use libcrypto
                    or libssl.
     lib            Contains the OpenSSL library files.
-    lib/engines    Contains the OpenSSL dynamically loadable engines.
 
     share/man/man1 Contains the OpenSSL command line man-pages.
     share/man/man3 Contains the OpenSSL library calls man-pages.
@@ -1574,8 +1528,6 @@ its default):
                    to build your own programs that use libcrypto
                    or libssl.
     [.LIB.'arch']  Contains the OpenSSL library files.
-    [.ENGINES'sover''pz'.'arch']
-                   Contains the OpenSSL dynamically loadable engines.
     [.SYS$STARTUP] Contains startup, login and shutdown scripts.
                    These define appropriate logical names and
                    command symbols.
@@ -1596,7 +1548,7 @@ for you convenience:
 
 The installation directory should be appropriately protected to ensure
 unprivileged users cannot make changes to OpenSSL binaries or files, or
-install engines.  If you already have a pre-installed version of OpenSSL as
+install providers.  If you already have a pre-installed version of OpenSSL as
 part of your Operating System it is recommended that you do not overwrite
 the system version and instead install to somewhere else.
 
