@@ -12,13 +12,9 @@
 
 static char ptrs[8];
 
-static const QUIC_STATELESS_RESET_TOKEN token_1 = {{
-    0x01, 0x02, 0x03, 0x04
-}};
+static const QUIC_STATELESS_RESET_TOKEN token_1 = { { 0x01, 0x02, 0x03, 0x04 } };
 
-static const QUIC_STATELESS_RESET_TOKEN token_2 = {{
-    0x01, 0x02, 0x03, 0x05
-}};
+static const QUIC_STATELESS_RESET_TOKEN token_2 = { { 0x01, 0x02, 0x03, 0x05 } };
 
 static int test_srtm(void)
 {
@@ -67,8 +63,7 @@ static int test_srtm(void)
         || !TEST_ptr_eq(opaque, ptrs + 2)
         || !TEST_uint64_t_eq(seq_num, 0)
         || !TEST_true(ossl_quic_srtm_remove(srtm, ptrs + 2, 0))
-        || !TEST_false(ossl_quic_srtm_lookup(srtm, &token_2, 0, &opaque, &seq_num))
-       )
+        || !TEST_false(ossl_quic_srtm_lookup(srtm, &token_2, 0, &opaque, &seq_num)))
         goto err;
 
     testresult = 1;

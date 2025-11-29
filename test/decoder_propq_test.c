@@ -30,9 +30,9 @@ const OPTIONS *test_get_options(void)
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("file\n"),
         { "config", OPT_CONFIG_FILE, '<',
-          "The configuration file to use for the libctx" },
+            "The configuration file to use for the libctx" },
         { "provider", OPT_PROVIDER_NAME, 's',
-          "The provider to load (The default value is 'default')" },
+            "The provider to load (The default value is 'default')" },
         { OPT_HELP_STR, 1, '-', "file\tFile to decode.\n" },
         { NULL }
     };
@@ -96,7 +96,7 @@ int setup_tests(void)
             config_file = opt_arg();
             break;
         case OPT_TEST_CASES:
-           break;
+            break;
         default:
         case OPT_ERR:
             return 0;
