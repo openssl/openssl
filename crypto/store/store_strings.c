@@ -11,7 +11,7 @@
 
 #include "internal/nelem.h"
 
-static char *type_strings[] = {
+static const char *const type_strings[] = {
     "Name",                      /* OSSL_STORE_INFO_NAME */
     "Parameters",                /* OSSL_STORE_INFO_PARAMS */
     "Public key",                /* OSSL_STORE_INFO_PUBKEY */
