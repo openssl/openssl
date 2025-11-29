@@ -46,7 +46,9 @@
 # define ASYNC_WIN
 #endif
 
+/* clang-format off */
 #include "e_dasync_err.c"
+/* clang-format on */
 
 /* Engine Id and Name */
 static const char *engine_dasync_id = "dasync";

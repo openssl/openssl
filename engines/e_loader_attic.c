@@ -40,7 +40,9 @@
 #include "crypto/ctype.h"        /* For ossl_isdigit */
 #include "crypto/pem.h"          /* For PVK and "blob" PEM headers */
 
+/* clang-format off */
 #include "e_loader_attic_err.c"
+/* clang-format on */
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)
 
