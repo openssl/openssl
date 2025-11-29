@@ -50,11 +50,6 @@ OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme)
     return res;
 }
 
-const ENGINE *OSSL_STORE_LOADER_get0_engine(const OSSL_STORE_LOADER *loader)
-{
-    return NULL;
-}
-
 const char *OSSL_STORE_LOADER_get0_scheme(const OSSL_STORE_LOADER *loader)
 {
     return loader->scheme;

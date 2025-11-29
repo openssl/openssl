@@ -14,9 +14,6 @@
 #include "internal/deprecated.h"
 
 #include <openssl/bn.h>
-#ifndef FIPS_MODULE
-# include <openssl/engine.h>
-#endif
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
 #include "crypto/dsa.h"
@@ -96,11 +93,6 @@ int DSA_test_flags(const DSA *d, int flags)
 void DSA_set_flags(DSA *d, int flags)
 {
     d->flags |= flags;
-}
-
-ENGINE *DSA_get0_engine(DSA *d)
-{
-    return NULL;
 }
 
 int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)

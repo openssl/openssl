@@ -6,7 +6,7 @@ EVP_EC_gen,
 EC_KEY_get_method, EC_KEY_set_method, EC_KEY_new_ex,
 EC_KEY_new, EC_KEY_get_flags, EC_KEY_set_flags, EC_KEY_clear_flags,
 EC_KEY_new_by_curve_name_ex, EC_KEY_new_by_curve_name, EC_KEY_free,
-EC_KEY_copy, EC_KEY_dup, EC_KEY_up_ref, EC_KEY_get0_engine,
+EC_KEY_copy, EC_KEY_dup, EC_KEY_up_ref,
 EC_KEY_get0_group, EC_KEY_set_group, EC_KEY_get0_private_key,
 EC_KEY_set_private_key, EC_KEY_get0_public_key, EC_KEY_set_public_key,
 EC_KEY_get_conv_form,
@@ -39,7 +39,6 @@ see L<openssl_user_macros(7)>:
  EC_KEY *EC_KEY_copy(EC_KEY *dst, const EC_KEY *src);
  EC_KEY *EC_KEY_dup(const EC_KEY *src);
  int EC_KEY_up_ref(EC_KEY *key);
- ENGINE *EC_KEY_get0_engine(const EC_KEY *eckey);
  const EC_GROUP *EC_KEY_get0_group(const EC_KEY *key);
  int EC_KEY_set_group(EC_KEY *key, const EC_GROUP *group);
  const BIGNUM *EC_KEY_get0_private_key(const EC_KEY *key);
@@ -113,9 +112,6 @@ EC_KEY_dup() creates a new EC_KEY object and copies I<ec_key> into it.
 
 EC_KEY_up_ref() increments the reference count associated with the EC_KEY
 object.
-
-EC_KEY_get0_engine() returns a handle to the ENGINE that has been set for
-this EC_KEY object.
 
 EC_KEY_generate_key() generates a new public and private key for the supplied
 I<eckey> object. I<eckey> must have an EC_GROUP object associated with it
@@ -197,8 +193,6 @@ integer.
 
 EC_KEY_copy() returns a pointer to the destination key, or NULL on error.
 
-EC_KEY_get0_engine() returns a pointer to an ENGINE, or NULL if it wasn't set.
-
 EC_KEY_up_ref(), EC_KEY_set_group(), EC_KEY_set_public_key(),
 EC_KEY_precompute_mult(), EC_KEY_generate_key(), EC_KEY_check_key(),
 EC_KEY_set_public_key_affine_coordinates(), EC_KEY_oct2key() and
@@ -232,6 +226,8 @@ L<OSSL_LIB_CTX(3)>
 EVP_EC_gen() was added in OpenSSL 3.0.
 All other functions described here were deprecated in OpenSSL 3.0.
 For replacement see L<EVP_PKEY-EC(7)>.
+
+The EC_KEY_get0_engine() was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

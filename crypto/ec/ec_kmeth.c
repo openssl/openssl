@@ -15,12 +15,8 @@
 
 #include <string.h>
 #include <openssl/ec.h>
-#ifndef FIPS_MODULE
-# include <openssl/engine.h>
-#endif
 #include <openssl/err.h>
 #include "ec_local.h"
-
 
 static const EC_KEY_METHOD openssl_ec_key_method = {
     "OpenSSL EC_KEY method",

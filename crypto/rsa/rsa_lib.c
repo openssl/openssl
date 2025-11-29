@@ -15,9 +15,6 @@
 
 #include <openssl/crypto.h>
 #include <openssl/core_names.h>
-#ifndef FIPS_MODULE
-# include <openssl/engine.h>
-#endif
 #include <openssl/evp.h>
 #include <openssl/param_build.h>
 #include "internal/cryptlib.h"
@@ -708,11 +705,6 @@ int RSA_get_version(RSA *r)
 }
 
 #ifndef FIPS_MODULE
-ENGINE *RSA_get0_engine(const RSA *r)
-{
-    return NULL;
-}
-
 int RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2)
 {
     /* If key type not RSA or RSA-PSS return error */

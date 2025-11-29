@@ -7,9 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use some engine deprecated APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include "internal/e_os.h"
 #include "crypto/cryptlib.h"
 #include <openssl/err.h>
@@ -19,7 +16,6 @@
 #include "crypto/evp.h"
 #include "internal/conf.h"
 #include "crypto/async.h"
-#include "crypto/engine.h"
 #include "internal/comp.h"
 #include "internal/err.h"
 #include "crypto/err.h"
