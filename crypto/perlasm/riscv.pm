@@ -579,6 +579,16 @@ sub vluxei8_v {
     return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
 }
 
+sub vluxei32_v {
+    # vluxei32.v vd, (rs1), vs2, vm
+    my $template = 0b000001_0_00000_00000_110_00000_0000111;
+    my $vd = read_vreg shift;
+    my $rs1 = read_reg shift;
+    my $vs2 = read_vreg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
+}
+
 sub vmerge_vim {
     # vmerge.vim vd, vs2, imm, v0
     my $template = 0b0101110_00000_00000_011_00000_1010111;
@@ -1094,6 +1104,15 @@ sub vsm3c_vi {
 sub vsm3me_vv {
     # vsm3me.vv vd, vs2, vs1
     my $template = 0b1000001_00000_00000_010_00000_1110111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $vs1 = read_vreg shift;
+    return ".word ".($template | ($vs2 << 20) | ($vs1 << 15 ) | ($vd << 7));
+}
+
+sub vrgather_vv{
+    # vrgather.vv vd, vs2, vs1
+    my $template = 0b11001_00000_00000_000_00000_1010111;
     my $vd = read_vreg shift;
     my $vs2 = read_vreg shift;
     my $vs1 = read_vreg shift;
