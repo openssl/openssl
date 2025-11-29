@@ -32,6 +32,8 @@ OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme)
 {
     OSSL_STORE_LOADER *res = NULL;
 
+    if (e != NULL)
+        return NULL;
     /*
      * We usually don't check NULL arguments.  For loaders, though, the
      * scheme is crucial and must never be NULL, or the user will get
@@ -50,7 +52,7 @@ OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme)
     return res;
 }
 
-const ENGINE *OSSL_STORE_LOADER_get0_engine(const OSSL_STORE_LOADER *loader)
+const ENGINE *OSSL_STORE_LOADER_get0_engine(ossl_unused const OSSL_STORE_LOADER *loader)
 {
     return NULL;
 }
