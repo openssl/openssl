@@ -60,9 +60,12 @@ zero).  This helps the caller to distinguish between an error when creating
 the B<OSSL_ENCODER_CTX> and missing encoder implementation, and allows it to
 act accordingly.
 
-Note that OSSL_ENCODER_CTX_new_for_pkey() finalises the OSSL_ENCODER_CTX;
-after that the B<OSSL_ENCODER_CTX_set_*()> and B<OSSL_ENCODER_CTX_add_*()>
-functions described in L<OSSL_ENCODER_CTX(3)> shouldn't be called.
+Note that OSSL_ENCODER_CTX_new_for_pkey() finalizes the OSSL_ENCODER_CTX; after
+that most of the B<OSSL_ENCODER_CTX_set_*()> and B<OSSL_ENCODER_CTX_add_*()>
+functions described in L<OSSL_ENCODER_CTX(3)> are no longer available (return
+an error if called) as described in L<OSSL_ENCODER_CTX_set_finalized(3)>.
+L<OSSL_ENCODER_CTX_set_params(3)>, however, is still available to set encoder
+parameters.
 
 OSSL_ENCODER_CTX_set_cipher() tells the implementation what cipher
 should be used to encrypt encoded keys.  The cipher is given by
@@ -132,7 +135,11 @@ failure.
 
 =head1 SEE ALSO
 
-L<provider(7)>, L<OSSL_ENCODER(3)>, L<OSSL_ENCODER_CTX(3)>
+L<provider(7)>,
+L<OSSL_ENCODER(3)>,
+L<OSSL_ENCODER_CTX(3)>,
+L<OSSL_ENCODER_CTX_set_finalized(3)>,
+L<OSSL_ENCODER_CTX_set_params(3)>.
 
 =head1 HISTORY
 

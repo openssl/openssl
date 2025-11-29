@@ -29,6 +29,7 @@
 #include <openssl/dh.h>
 #include <openssl/aes.h>
 #include <openssl/decoder.h>
+#include <openssl/encoder.h>
 #include <openssl/rsa.h>
 #include <openssl/engine.h>
 #include <openssl/proverr.h>
@@ -738,6 +739,49 @@ static const unsigned char kExampleDHKeyDER[] = {
 # endif
 #endif
 
+#ifndef OPENSSL_NO_ML_KEM
+/*
+ * openssl genpkey -provparam ml-kem.output_formats=seed-only \
+ *   -algorithm ml-kem-512 -outform DER |
+ *   xxd -i
+ */
+static const unsigned char kMLKEMSeedOnlyDER[] = {
+    0x30, 0x54, 0x02, 0x01, 0x00, 0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48,
+    0x01, 0x65, 0x03, 0x04, 0x04, 0x01, 0x04, 0x42, 0x80, 0x40, 0x21, 0xe4,
+    0x30, 0x56, 0x08, 0x64, 0xd3, 0xd4, 0x37, 0x33, 0x1c, 0xe5, 0xc9, 0xd8,
+    0x26, 0x10, 0x9b, 0x4d, 0x58, 0xb4, 0xe2, 0x57, 0x70, 0x0f, 0x28, 0xe2,
+    0xd2, 0xa8, 0x6b, 0xb6, 0x2b, 0x85, 0x1b, 0x25, 0x39, 0x29, 0xca, 0x6d,
+    0x9a, 0xf0, 0x11, 0x5d, 0xca, 0xf4, 0xf7, 0x9a, 0x50, 0x39, 0xa7, 0x52,
+    0x39, 0x5d, 0x84, 0xa9, 0xb9, 0x84, 0x4c, 0xa2, 0xe5, 0x49, 0xd7, 0x81,
+    0xd1, 0x6d
+};
+static const unsigned char kMLKEMSeedOnlyPEM[] =
+    "-----BEGIN PRIVATE KEY-----\n"
+    "MFQCAQAwCwYJYIZIAWUDBAQBBEKAQCHkMFYIZNPUNzMc5cnYJhCbTVi04ldwDyji\n"
+    "0qhrtiuFGyU5KcptmvARXcr095pQOadSOV2EqbmETKLlSdeB0W0=\n"
+    "-----END PRIVATE KEY-----\n";
+#endif
+
+#ifndef OPENSSL_NO_ML_DSA
+/*
+ * openssl genpkey -provparam ml-dsa.output_formats=seed-only \
+ *   -algorithm ml-dsa-44 -outform DER |
+ *   xxd -i
+ */
+static const unsigned char kMLDSASeedOnlyDER[] = {
+    0x30, 0x34, 0x02, 0x01, 0x00, 0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48,
+    0x01, 0x65, 0x03, 0x04, 0x03, 0x11, 0x04, 0x22, 0x80, 0x20, 0xc5, 0xbb,
+    0x12, 0x9c, 0x76, 0xac, 0x6f, 0x03, 0x6c, 0x56, 0x32, 0xf4, 0x66, 0xb8,
+    0x8c, 0x77, 0x4b, 0xe0, 0xaa, 0x4a, 0xd6, 0xa0, 0x96, 0x12, 0xc3, 0x8c,
+    0xe7, 0x71, 0xbe, 0xf8, 0xba, 0xbe
+};
+static const unsigned char kMLDSASeedOnlyPEM[] =
+    "-----BEGIN PRIVATE KEY-----\n"
+    "MDQCAQAwCwYJYIZIAWUDBAMRBCKAIMW7Epx2rG8DbFYy9Ga4jHdL4KpK1qCWEsOM\n"
+    "53G++Lq+\n"
+    "-----END PRIVATE KEY-----\n";
+#endif
+
 static const unsigned char kCFBDefaultKey[] = {
     0x2B, 0x7E, 0x15, 0x16, 0x28, 0xAE, 0xD2, 0xA6, 0xAB, 0xF7, 0x15, 0x88,
     0x09, 0xCF, 0x4F, 0x3C
@@ -924,6 +968,144 @@ static EVP_PKEY *load_example_ec_key(void)
 {
     return load_example_key("EC", kExampleECKeyDER,
                             sizeof(kExampleECKeyDER));
+}
+#endif
+
+#if !defined(OPENSSL_NO_ML_KEM) || !defined(OPENSSL_NO_ML_DSA)
+static unsigned int one = 1;
+
+static EVP_PKEY *load_ml_key(const char *keytype, const char *input_type,
+                             const unsigned char *data, size_t data_len)
+{
+    const unsigned char **pdata = &data;
+    EVP_PKEY *pkey = NULL;
+    OSSL_DECODER_CTX *dctx =
+        OSSL_DECODER_CTX_new_for_pkey(&pkey, input_type, "PrivateKeyInfo",
+                                      keytype, 0, testctx, testpropq);
+
+    if (!TEST_ptr(dctx))
+        return NULL;
+    /* |pkey| will be NULL on error */
+    (void)OSSL_DECODER_from_data(dctx, pdata, &data_len);
+    OSSL_DECODER_CTX_free(dctx);
+    return pkey;
+}
+
+static int
+store_ml_key(EVP_PKEY *pkey, const char *input_type,
+             const unsigned char *expect, size_t expectlen,
+             unsigned char **out, size_t *outlen)
+{
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    OSSL_ENCODER_CTX *ectx = NULL;
+    unsigned char *buf = NULL;
+    size_t len = 0;
+    int ret = 0;
+
+    /* Just-in-time seed-only encoding */
+    ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, EVP_PKEY_KEYPAIR, input_type,
+                                         "PrivateKeyInfo", testpropq);
+    if (!TEST_ptr(ectx))
+        return 0;
+    params[0] = OSSL_PARAM_construct_uint(OSSL_PKEY_PARAM_SEED_ONLY, &one);
+    if (!TEST_true(OSSL_ENCODER_CTX_set_params(ectx, params)))
+        goto err;
+    if (!TEST_true(OSSL_ENCODER_to_data(ectx, &buf, &len))
+        || (expect != NULL
+            && !TEST_mem_eq(buf, len, expect, expectlen)))
+        goto err;
+
+    ret = 1;
+ err:
+    OSSL_ENCODER_CTX_free(ectx);
+    if (ret && out != NULL) {
+        *out = buf;
+        *outlen = len;
+        return ret;
+    }
+    OPENSSL_free(buf);
+    return ret;
+}
+
+static int test_ml_seed_only(int idx)
+{
+    const char *alg;
+    const unsigned char *pemonly, *deronly;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    OSSL_PARAM *params = NULL;
+    unsigned char *buf = NULL;
+    size_t pemonlysz, deronlysz;
+    int ret = 0;
+
+    /* Test just-in-time seed-only encoding. */
+# define CHECK_SEED_ONLY_ENCODING()                         \
+    if (idx & 1) {                                          \
+        if (!store_ml_key(pkey, "DER", deronly, deronlysz,  \
+                          NULL, NULL))                      \
+            goto err;                                       \
+    } else {                                                \
+        if (!store_ml_key(pkey, "PEM", pemonly, pemonlysz,  \
+                          NULL, NULL))                      \
+            goto err;                                       \
+    }                                                       \
+    EVP_PKEY_CTX_free(ctx);                                 \
+    ctx = NULL;                                             \
+    EVP_PKEY_free(pkey);                                    \
+    pkey = NULL;
+
+    if (idx & 2) {
+# ifndef OPENSSL_NO_ML_DSA
+        alg = "ML-DSA-44";
+        pemonly = kMLDSASeedOnlyPEM;
+        deronly = kMLDSASeedOnlyDER;
+        pemonlysz = sizeof(kMLDSASeedOnlyPEM) - 1;
+        deronlysz = sizeof(kMLDSASeedOnlyDER);
+# else
+        return 0;
+# endif
+    } else {
+# ifndef OPENSSL_NO_ML_KEM
+        alg = "ML-KEM-512";
+        pemonly = kMLKEMSeedOnlyPEM;
+        deronly = kMLKEMSeedOnlyDER;
+        pemonlysz = sizeof(kMLKEMSeedOnlyPEM) - 1;
+        deronlysz = sizeof(kMLKEMSeedOnlyDER);
+# else
+        return 0;
+# endif
+    }
+
+    /* Decode a PEM or DER key. */
+    pkey = (idx & 1) ?
+        load_ml_key(alg, "DER", deronly, deronlysz) :
+        load_ml_key(alg, "PEM", pemonly, pemonlysz);
+    if (!TEST_ptr(pkey))
+        return 0;
+
+    /* Sanity check the exported parameters */
+    CHECK_SEED_ONLY_ENCODING();
+
+    ret = 1;
+ err:
+    OPENSSL_free(buf);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    OSSL_PARAM_free(params);
+    return ret;
+}
+#endif
+
+#ifndef OPENSSL_NO_ML_KEM
+static int test_ml_kem_seed_only(int idx)
+{
+    return test_ml_seed_only(idx);
+}
+#endif
+#ifndef OPENSSL_NO_ML_DSA
+static int test_ml_dsa_seed_only(int idx)
+{
+    return test_ml_seed_only(idx + 2);
 }
 #endif
 
@@ -7068,6 +7250,13 @@ int setup_tests(void)
     ADD_TEST(test_invalid_ctx_for_digest);
 
     ADD_TEST(test_evp_cipher_pipeline);
+
+#ifndef OPENSSL_NO_ML_KEM
+    ADD_ALL_TESTS(test_ml_kem_seed_only, 2);
+#endif
+#ifndef OPENSSL_NO_ML_DSA
+    ADD_ALL_TESTS(test_ml_dsa_seed_only, 2);
+#endif
 
     return 1;
 }
