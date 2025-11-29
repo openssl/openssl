@@ -1699,6 +1699,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                        "Warning: Signature key and public key of cert do not match\n");
     }
 
+    if (!keyid_defaults(ret, 0, pkey, &ext_ctx))
+        goto end;
     /* Lets add the extensions, if there are any */
     if (ext_sect) {
         if (extfile_conf != NULL) {

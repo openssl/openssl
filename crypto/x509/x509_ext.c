@@ -108,7 +108,18 @@ X509_EXTENSION *X509_delete_ext(X509 *x, int loc)
 
 int X509_add_ext(X509 *x, X509_EXTENSION *ex, int loc)
 {
-    return (X509v3_add_ext(&(x->cert_info.extensions), ex, loc) != NULL);
+    STACK_OF(X509_EXTENSION) *exts = x->cert_info.extensions;
+
+    if (X509v3_add_ext(&exts, ex, loc) == NULL)
+        return 0;
+    if (sk_X509_EXTENSION_num(exts) != 0) {
+        x->cert_info.extensions = exts;
+        return 1;
+    }
+    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+    sk_X509_EXTENSION_pop_free(x->cert_info.extensions, X509_EXTENSION_free);
+    x->cert_info.extensions = NULL;
+    return 1;
 }
 
 void *X509_get_ext_d2i(const X509 *x, int nid, int *crit, int *idx)

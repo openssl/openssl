@@ -903,6 +903,8 @@ int x509_main(int argc, char **argv)
             goto err;
     }
     if (extconf != NULL && !x509toreq) {
+        if (!keyid_defaults(x, 0, privkey, &ext_ctx))
+            goto err;
         X509V3_set_nconf(&ext_ctx, extconf);
         if (!X509V3_EXT_add_nconf(extconf, &ext_ctx, extsect, x)) {
             BIO_printf(bio_err,
@@ -931,6 +933,8 @@ int x509_main(int argc, char **argv)
         if ((rq = x509_to_req(x, ext_copy, ext_names)) == NULL)
             goto err;
         if (extconf != NULL) {
+            if (!keyid_defaults(x, 0, privkey, &ext_ctx))
+                goto err;
             X509V3_set_nconf(&ext_ctx, extconf);
             if (!X509V3_EXT_REQ_add_nconf(extconf, &ext_ctx, extsect, rq)) {
                 BIO_printf(bio_err,
@@ -964,9 +968,13 @@ int x509_main(int argc, char **argv)
             goto err;
         }
 
+        if (!keyid_defaults(x, 0, privkey, &ext_ctx))
+            goto err;
         if (!do_X509_sign(x, 0, CAkey, digest, sigopts, &ext_ctx))
             goto err;
     } else if (privkey != NULL) {
+        if (!keyid_defaults(x, 0, privkey, &ext_ctx))
+            goto err;
         if (!do_X509_sign(x, 0, privkey, digest, sigopts, &ext_ctx))
             goto err;
     }
