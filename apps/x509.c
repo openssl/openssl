@@ -1098,13 +1098,22 @@ int x509_main(int argc, char **argv)
 
     if (checkend) {
         time_t tcheck = time(NULL) + checkoffset;
+        int expired = X509_cmp_time(X509_get0_notAfter(x), &tcheck) < 0;
 
-        ret = X509_cmp_time(X509_get0_notAfter(x), &tcheck) < 0;
-        if (ret)
+        if (expired)
             BIO_printf(out, "Certificate will expire\n");
         else
             BIO_printf(out, "Certificate will not expire\n");
-        goto end_cert_loop;
+
+        if (multi && k > 0)
+            ret |= expired;
+        else
+            ret = expired;
+
+        if (multi && k < sk_X509_num(certs) - 1)
+            goto end_cert_loop;
+        else
+            goto end;
     }
 
     if (!check_cert_attributes(out, x, checkhost, checkemail, checkip, 1))
