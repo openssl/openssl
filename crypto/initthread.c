@@ -213,14 +213,15 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_thread_once)
     return 1;
 }
 
-int ossl_init_thread(void) {
-    if (CRYPTO_THREAD_compare_id(recursion_guard, CRYPTO_THREAD_get_current_id()))
+int ossl_init_thread(void)
+{
+    if (CRYPTO_THREAD_compare_id(recursion_guard,
+                                 CRYPTO_THREAD_get_current_id()))
         return 1;
     if (!RUN_ONCE(&ossl_init_thread_runonce, ossl_init_thread_once))
         return 0;
     return 1;
 }
-
 
 void ossl_cleanup_thread(void)
 {

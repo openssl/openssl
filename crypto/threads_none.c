@@ -165,10 +165,10 @@ int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))
 {
     int entry_idx = 0;
 
-#ifndef FIPS_MODULE
+# ifndef FIPS_MODULE
     if (!ossl_init_thread())
         return 0;
-#endif
+# endif
 
     for (entry_idx = 0; entry_idx < OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX; entry_idx++) {
         if (!thread_local_storage[entry_idx].used)
