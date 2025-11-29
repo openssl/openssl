@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
 #include "internal/deprecated.h"
 
 #include <stdio.h>
@@ -2129,10 +2130,14 @@ static int check_policy(X509_STORE_CTX *ctx)
 /*-
  * Check certificate validity times.
  *
- * Return 1 on success, 0 otherwise.
+ * Returns 1 if the certificate |x| is temporally valid at the
+ * verification time requested by |vpm|, or 0 otherwise. if |error| is
+ * non-NULL, |*error| will be set to 0 when the certificate is
+ * temporally valid, otherwise it will be set to a non-zero error
+ * code.
  */
-int ossl_x509_check_certificate_times(const X509_VERIFY_PARAM *vpm, X509 *x,
-                                      int *error)
+int X509_check_certificate_times(const X509_VERIFY_PARAM *vpm, const X509 *x,
+                                 int *error)
 {
     int ret = 0, err = 0;
     int64_t notafter_seconds, notbefore_seconds, verification_time;
@@ -2354,6 +2359,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
     return 1;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_0)
 int X509_cmp_current_time(const ASN1_TIME *ctm)
 {
     return X509_cmp_time(ctm, NULL);
@@ -2424,6 +2430,7 @@ int X509_cmp_timeframe(const X509_VERIFY_PARAM *vpm,
         return -1;
     return 0;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_0) */
 
 ASN1_TIME *X509_gmtime_adj(ASN1_TIME *s, long adj)
 {
