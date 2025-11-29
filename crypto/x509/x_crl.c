@@ -83,7 +83,7 @@ static int crl_set_issuers(X509_CRL *crl)
 {
 
     int i, j;
-    GENERAL_NAMES *gens, *gtmp;
+    GENERAL_NAMES *most_recent_issuer, *gtmp;
     STACK_OF(X509_REVOKED) *revoked;
 
     /*
@@ -97,7 +97,15 @@ static int crl_set_issuers(X509_CRL *crl)
 
     revoked = X509_CRL_get_REVOKED(crl);
 
-    gens = NULL;
+    /*
+     * If this extension is not present on the first entry in an indirect CRL,
+     * the certificate issuer defaults to the CRL issuer. Subsequent entries in
+     * an indirect CRL, if this extension is not present, the certificate issuer
+     * for the entry is the same as that for the preceding entry.
+     * https://datatracker.ietf.org/doc/html/rfc5280#section-5.3.3
+     */
+    most_recent_issuer = NULL;
+
     for (i = 0; i < sk_X509_REVOKED_num(revoked); i++) {
         X509_REVOKED *rev = sk_X509_REVOKED_value(revoked, i);
         STACK_OF(X509_EXTENSION) *exts;
@@ -117,8 +125,7 @@ static int crl_set_issuers(X509_CRL *crl)
             return 0;
         }
 
-        gtmp = X509_REVOKED_get_ext_d2i(rev,
-                                        NID_certificate_issuer, &j, NULL);
+        gtmp = X509_REVOKED_get_ext_d2i(rev, NID_certificate_issuer, &j, NULL);
         if (gtmp == NULL && j != -1) {
             crl->flags |= EXFLAG_INVALID;
             return 1;
@@ -129,7 +136,7 @@ static int crl_set_issuers(X509_CRL *crl)
              * Validation to ensure Certificate Issuer extensions in CRL
              * entries only appear when the Indirect CRL flag is TRUE in the
              * Issuing Distribution Point (IDP) extension, as required by
-             * RFC 5280 section 5.3.3.
+             * https://datatracker.ietf.org/doc/html/rfc5280#section-5.3.3
              */
             if (crl->idp == NULL || !crl->idp->indirectCRL) {
                 crl->flags |= EXFLAG_INVALID;
@@ -148,9 +155,9 @@ static int crl_set_issuers(X509_CRL *crl)
                 GENERAL_NAMES_free(gtmp);
                 return 0;
             }
-            gens = gtmp;
+            most_recent_issuer = gtmp;
         }
-        rev->issuer = gens;
+        rev->issuer = most_recent_issuer;
 
         reason = X509_REVOKED_get_ext_d2i(rev, NID_crl_reason, &j, NULL);
         if (reason == NULL && j != -1) {
