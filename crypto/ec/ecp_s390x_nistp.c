@@ -44,6 +44,8 @@
 #define S390X_OFF_RN(n)                 (4 * n)
 #define S390X_OFF_Y(n)                  (4 * n)
 
+#define S390X_PAD(n)                    (n == 80 ? 14 : 0)
+
 static int ec_GFp_s390x_nistp_mul(const EC_GROUP *group, EC_POINT *r,
                                   const BIGNUM *scalar,
                                   size_t num, const EC_POINT *points[],
@@ -270,17 +272,29 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
     off = len - (dgstlen > len ? len : dgstlen);
     memcpy(param + S390X_OFF_H(len) + off, dgst, len - off);
 
+    /* Check for invalid malformed signatures (r/s negative or too large) */
+    if (BN_is_negative(sig->r) || BN_is_negative(sig->s)
+        || BN_bn2binpad(sig->r, param + S390X_OFF_R(len) + S390X_PAD(len),
+                        len - S390X_PAD(len)) == -1
+        || BN_bn2binpad(sig->s, param + S390X_OFF_S(len) + S390X_PAD(len),
+                        len - S390X_PAD(len)) == -1) {
+        ERR_raise(ERR_LIB_EC, EC_R_BAD_SIGNATURE);
+        rc = 0;
+        goto ret;
+    }
+
     if (group->meth->point_get_affine_coordinates(group, pubkey,
                                                   x, y, ctx) != 1
-        || BN_bn2binpad(sig->r, param + S390X_OFF_R(len), len) == -1
-        || BN_bn2binpad(sig->s, param + S390X_OFF_S(len), len) == -1
         || BN_bn2binpad(x, param + S390X_OFF_X(len), len) == -1
         || BN_bn2binpad(y, param + S390X_OFF_Y(len), len) == -1) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto ret;
     }
 
-    rc = s390x_kdsa(fc, param, NULL, 0) == 0 ? 1 : 0;
+    rc = s390x_kdsa(fc, param, NULL, 0);
+    if (rc == 2)
+        ERR_raise(ERR_LIB_EC, EC_R_BAD_SIGNATURE);
+    rc = rc == 0 ? 1 : 0;
 ret:
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
