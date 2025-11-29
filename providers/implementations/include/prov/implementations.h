@@ -341,6 +341,7 @@ extern const OSSL_DISPATCH ossl_lms_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_44_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_65_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_87_keymgmt_functions[];
+
 #ifndef OPENSSL_NO_ML_KEM
 extern const OSSL_DISPATCH ossl_ml_kem_512_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_ml_kem_768_keymgmt_functions[];
@@ -441,6 +442,25 @@ extern const OSSL_DISPATCH ossl_lms_signature_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_44_signature_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_65_signature_functions[];
 extern const OSSL_DISPATCH ossl_ml_dsa_87_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_44_sha256_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_65_sha256_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_87_sha256_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_44_sha512_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_65_sha512_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_87_sha512_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_44_sha3_256_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_65_sha3_256_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_87_sha3_256_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_44_sha3_512_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_65_sha3_512_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_87_sha3_512_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_44_shake128_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_65_shake128_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_87_shake128_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_44_shake256_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_65_shake256_signature_functions[];
+extern const OSSL_DISPATCH ossl_hash_ml_dsa_87_shake256_signature_functions[];
+
 #ifndef OPENSSL_NO_SLH_DSA
 extern const OSSL_DISPATCH ossl_slh_dsa_sha2_128s_signature_functions[];
 extern const OSSL_DISPATCH ossl_slh_dsa_sha2_128f_signature_functions[];

@@ -15,10 +15,12 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
+#include <openssl/evp.h>
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_ml_dsa.h"
+#include "prov/der_digests.h"
 #include "crypto/ml_dsa.h"
 #include "internal/common.h"
 #include "internal/packet.h"
@@ -26,44 +28,83 @@
 
 #define ml_dsa_set_ctx_params_st        ml_dsa_verifymsg_set_ctx_params_st
 #define ml_dsa_set_ctx_params_decoder   ml_dsa_verifymsg_set_ctx_params_decoder
+#define hash_ml_dsa_set_ctx_params_st      ml_dsa_verifymsg_set_ctx_params_st
+#define hash_ml_dsa_set_ctx_params_decoder ml_dsa_verifymsg_set_ctx_params_decoder
 
 #include "providers/implementations/signature/ml_dsa_sig.inc"
-
-#define ML_DSA_MESSAGE_ENCODE_RAW  0
-#define ML_DSA_MESSAGE_ENCODE_PURE 1
 
 static OSSL_FUNC_signature_sign_message_init_fn ml_dsa_sign_msg_init;
 static OSSL_FUNC_signature_sign_message_update_fn ml_dsa_signverify_msg_update;
 static OSSL_FUNC_signature_sign_message_final_fn ml_dsa_sign_msg_final;
-static OSSL_FUNC_signature_sign_fn ml_dsa_sign;
 static OSSL_FUNC_signature_verify_message_init_fn ml_dsa_verify_msg_init;
 static OSSL_FUNC_signature_verify_message_update_fn ml_dsa_signverify_msg_update;
 static OSSL_FUNC_signature_verify_message_final_fn ml_dsa_verify_msg_final;
-static OSSL_FUNC_signature_verify_fn ml_dsa_verify;
-static OSSL_FUNC_signature_digest_sign_init_fn ml_dsa_digest_signverify_init;
-static OSSL_FUNC_signature_digest_sign_fn ml_dsa_digest_sign;
-static OSSL_FUNC_signature_digest_verify_fn ml_dsa_digest_verify;
+static OSSL_FUNC_signature_digest_sign_init_fn ml_dsa_digest_sign_init;
+static OSSL_FUNC_signature_digest_sign_fn ml_dsa_sign;
+static OSSL_FUNC_signature_digest_verify_init_fn ml_dsa_digest_verify_init;
+static OSSL_FUNC_signature_digest_verify_fn ml_dsa_verify;
 static OSSL_FUNC_signature_freectx_fn ml_dsa_freectx;
 static OSSL_FUNC_signature_set_ctx_params_fn ml_dsa_set_ctx_params;
 static OSSL_FUNC_signature_settable_ctx_params_fn ml_dsa_settable_ctx_params;
 static OSSL_FUNC_signature_get_ctx_params_fn ml_dsa_get_ctx_params;
 static OSSL_FUNC_signature_gettable_ctx_params_fn ml_dsa_gettable_ctx_params;
 static OSSL_FUNC_signature_dupctx_fn ml_dsa_dupctx;
+static OSSL_FUNC_signature_sign_init_fn ml_dsa_sign_init;
+static OSSL_FUNC_signature_verify_init_fn ml_dsa_verify_init;
+static OSSL_FUNC_signature_sign_fn ml_dsa_sign;
+static OSSL_FUNC_signature_verify_fn ml_dsa_verify;
+static OSSL_FUNC_signature_query_key_types_fn hash_ml_dsa_44_sigalg_query_key_types;
+static OSSL_FUNC_signature_query_key_types_fn hash_ml_dsa_65_sigalg_query_key_types;
+static OSSL_FUNC_signature_query_key_types_fn hash_ml_dsa_87_sigalg_query_key_types;
+
+#define ML_DSA_SIGINFO_PURE(n)                                                 \
+static const ML_DSA_SIGINFO ml_dsa_##n##_siginfo = {                           \
+    EVP_PKEY_ML_DSA_##n,                                                       \
+    ossl_der_oid_id_ml_dsa_##n, sizeof(ossl_der_oid_id_ml_dsa_##n),            \
+    NULL, 0, 0                                                                 \
+}
+
+#define ML_DSA_SIGINFO_HASH(n, dig, hashsz)                                    \
+static const ML_DSA_SIGINFO hash_ml_dsa_##n##_##dig##_siginfo = {              \
+    EVP_PKEY_ML_DSA_##n,                                                       \
+    ossl_der_oid_id_hash_ml_dsa_##n##_with_##dig,                              \
+    sizeof(ossl_der_oid_id_hash_ml_dsa_##n##_with_##dig),                      \
+    ossl_der_oid_id_##dig, sizeof(ossl_der_oid_id_##dig), hashsz               \
+}
+
+#define ML_DSA_SIGINFO_HASH_NO_SIG_OID(n, dig, hashsz)                         \
+static const ML_DSA_SIGINFO hash_ml_dsa_##n##_##dig##_siginfo = {              \
+    EVP_PKEY_ML_DSA_##n,                                                       \
+    NULL, 0,                                                                   \
+    ossl_der_oid_id_##dig, sizeof(ossl_der_oid_id_##dig), hashsz               \
+}
+
+/* Constants that are defined per signature algorithm */
+typedef struct ml_dsa_siginfo_st {
+    int key_type;
+    /* The signature OID, most prehash ones do not have an OID */
+    const uint8_t *sigalg_oid;
+    size_t sigalg_oid_len;
+    /* Used by prehash for the hash algorithm, NULL for pure mode */
+    const uint8_t *hash_oid;
+    size_t hash_oid_len;
+    size_t hashlen; /* blocksize of a hash, or 0 for pure mode */
+} ML_DSA_SIGINFO;
 
 typedef struct {
     ML_DSA_KEY *key;
     OSSL_LIB_CTX *libctx;
+    const ML_DSA_SIGINFO *siginfo;
     uint8_t context_string[ML_DSA_MAX_CONTEXT_STRING_LEN];
     size_t context_string_len;
     uint8_t test_entropy[ML_DSA_ENTROPY_LEN];
     size_t test_entropy_len;
     int msg_encode;
     int deterministic;
-    int evp_type;
     /* The Algorithm Identifier of the signature algorithm */
     uint8_t aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
     size_t  aid_len;
-    int mu;     /* Flag indicating we should begin from \mu, not the message */
+    int mu;     /* Flag indicating we should begin from mu, not the message */
 
     int operation;
     EVP_MD_CTX *md_ctx; /* Ctx for msg_init/update/final interface */
@@ -81,7 +122,8 @@ static void ml_dsa_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static void *ml_dsa_newctx(void *provctx, int evp_type, const char *propq)
+static void *ml_dsa_newctx(void *provctx, const ML_DSA_SIGINFO *inf,
+                           const char *propq)
 {
     PROV_ML_DSA_CTX *ctx;
 
@@ -93,8 +135,8 @@ static void *ml_dsa_newctx(void *provctx, int evp_type, const char *propq)
         return NULL;
 
     ctx->libctx = PROV_LIBCTX_OF(provctx);
-    ctx->msg_encode = ML_DSA_MESSAGE_ENCODE_PURE;
-    ctx->evp_type = evp_type;
+    ctx->msg_encode = ML_DSA_MESSAGE_ENCODE;
+    ctx->siginfo = inf;
     return ctx;
 }
 
@@ -114,6 +156,8 @@ static void *ml_dsa_dupctx(void *vctx)
 
     if (dstctx == NULL)
         return NULL;
+    dstctx->sig = NULL;
+    dstctx->md_ctx = NULL;
 
     if (srcctx->sig != NULL) {
         dstctx->sig = OPENSSL_memdup(srcctx->sig, srcctx->siglen);
@@ -152,8 +196,14 @@ static int set_alg_id_buffer(PROV_ML_DSA_CTX *ctx)
      * anything that needs an AlgorithmIdentifier.
      */
     ctx->aid_len = 0;
+    if (ctx->siginfo->sigalg_oid == NULL)
+        return 1;
     ret = WPACKET_init_der(&pkt, ctx->aid_buf, sizeof(ctx->aid_buf));
-    ret = ret && ossl_DER_w_algorithmIdentifier_ML_DSA(&pkt, -1, ctx->key);
+    if (!ret)
+        return 0;
+    ret = ossl_DER_w_algorithmIdentifier_ML_DSA(&pkt, -1,
+                                                ctx->siginfo->sigalg_oid,
+                                                ctx->siginfo->sigalg_oid_len);
     if (ret && WPACKET_finish(&pkt)) {
         WPACKET_get_total_written(&pkt, &ctx->aid_len);
         aid = WPACKET_get_curr(&pkt);
@@ -164,9 +214,8 @@ static int set_alg_id_buffer(PROV_ML_DSA_CTX *ctx)
     return 1;
 }
 
-static int ml_dsa_signverify_msg_init(void *vctx, void *vkey,
-                                      const OSSL_PARAM params[], int operation,
-                                      const char *desc)
+static int ml_dsa_signverify_init(void *vctx, void *vkey,
+                                  const OSSL_PARAM params[], int operation)
 {
     PROV_ML_DSA_CTX *ctx = (PROV_ML_DSA_CTX *)vctx;
     ML_DSA_KEY *key = vkey;
@@ -182,7 +231,7 @@ static int ml_dsa_signverify_msg_init(void *vctx, void *vkey,
 
     if (key != NULL)
         ctx->key = vkey;
-    if (!ossl_ml_dsa_key_matches(ctx->key, ctx->evp_type))
+    if (!ossl_ml_dsa_key_matches(ctx->key, ctx->siginfo->key_type))
         return 0;
 
     set_alg_id_buffer(ctx);
@@ -194,12 +243,27 @@ static int ml_dsa_signverify_msg_init(void *vctx, void *vkey,
 
 static int ml_dsa_sign_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
 {
-    return ml_dsa_signverify_msg_init(vctx, vkey, params,
-                                      EVP_PKEY_OP_SIGNMSG, "ML_DSA Sign Init");
+    return ml_dsa_signverify_init(vctx, vkey, params, EVP_PKEY_OP_SIGNMSG);
+}
+
+static int ml_dsa_verify_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
+{
+    return ml_dsa_signverify_init(vctx, vkey, params, EVP_PKEY_OP_VERIFYMSG);
+}
+
+static int ml_dsa_sign_init(void *vctx, void *vkey, const OSSL_PARAM params[])
+{
+    return ml_dsa_signverify_init(vctx, vkey, params, EVP_PKEY_OP_SIGN);
+}
+
+static int ml_dsa_verify_init(void *vctx, void *vkey, const OSSL_PARAM params[])
+{
+    return ml_dsa_signverify_init(vctx, vkey, params, EVP_PKEY_OP_VERIFY);
 }
 
 static int ml_dsa_digest_signverify_init(void *vctx, const char *mdname,
-                                         void *vkey, const OSSL_PARAM params[])
+                                         void *vkey,
+                                         const OSSL_PARAM params[], int op)
 {
     PROV_ML_DSA_CTX *ctx = (PROV_ML_DSA_CTX *)vctx;
 
@@ -214,8 +278,19 @@ static int ml_dsa_digest_signverify_init(void *vctx, const char *mdname,
     if (vkey == NULL && ctx->key != NULL)
         return ml_dsa_set_ctx_params(ctx, params);
 
-    return ml_dsa_signverify_msg_init(vctx, vkey, params,
-                                      EVP_PKEY_OP_SIGN, "ML_DSA Sign Init");
+    return ml_dsa_signverify_init(vctx, vkey, params, op);
+}
+
+static int ml_dsa_digest_sign_init(void *vctx, const char *mdname,
+                                   void *vkey, const OSSL_PARAM params[])
+{
+    return ml_dsa_digest_signverify_init(vctx, mdname, vkey, params, EVP_PKEY_OP_SIGN);
+}
+
+static int ml_dsa_digest_verify_init(void *vctx, const char *mdname,
+                                     void *vkey, const OSSL_PARAM params[])
+{
+    return ml_dsa_digest_signverify_init(vctx, mdname, vkey, params, EVP_PKEY_OP_VERIFY);
 }
 
 static int ml_dsa_signverify_msg_update(void *vctx,
@@ -236,7 +311,7 @@ static int ml_dsa_signverify_msg_update(void *vctx,
     if (ctx->md_ctx == NULL) {
         ctx->md_ctx = ossl_ml_dsa_mu_init(ctx->key, ctx->msg_encode,
                                           ctx->context_string,
-                                          ctx->context_string_len);
+                                          ctx->context_string_len, 0);
         if (ctx->md_ctx == NULL)
             return 0;
     }
@@ -277,8 +352,9 @@ static int ml_dsa_sign_msg_final(void *vctx, unsigned char *sig,
             return 0;
     }
 
-    ret = ossl_ml_dsa_sign(ctx->key, 1, mu, sizeof(mu), NULL, 0, rnd,
-                           sizeof(rand_tmp), 0, sig, siglen, sigsize);
+    ret = ossl_ml_dsa_sign(ctx->key, 1, mu, sizeof(mu),
+                           NULL, 0, NULL, 0,
+                           rnd, sizeof(rand_tmp), 0, sig, siglen, sigsize);
     if (rnd != ctx->test_entropy)
         OPENSSL_cleanse(rand_tmp, sizeof(rand_tmp));
     return ret;
@@ -293,7 +369,9 @@ static int ml_dsa_sign(void *vctx, uint8_t *sig, size_t *siglen, size_t sigsize,
 
     if (!ossl_prov_is_running())
         return 0;
-
+    /* For the prehash case the message input should match the hash blocksize */
+    if (ctx->siginfo->hashlen != 0 && ctx->siginfo->hashlen != msg_len)
+        return 0;
     if (sig != NULL) {
         if (ctx->test_entropy_len != 0) {
             rnd = ctx->test_entropy;
@@ -307,6 +385,7 @@ static int ml_dsa_sign(void *vctx, uint8_t *sig, size_t *siglen, size_t sigsize,
         }
     }
     ret = ossl_ml_dsa_sign(ctx->key, ctx->mu, msg, msg_len,
+                           ctx->siginfo->hash_oid, ctx->siginfo->hash_oid_len,
                            ctx->context_string, ctx->context_string_len,
                            rnd, sizeof(rand_tmp), ctx->msg_encode,
                            sig, siglen, sigsize);
@@ -319,12 +398,6 @@ static int ml_dsa_digest_sign(void *vctx, uint8_t *sig, size_t *siglen, size_t s
                               const uint8_t *tbs, size_t tbslen)
 {
     return ml_dsa_sign(vctx, sig, siglen, sigsize, tbs, tbslen);
-}
-
-static int ml_dsa_verify_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
-{
-    return ml_dsa_signverify_msg_init(vctx, vkey, params, EVP_PKEY_OP_VERIFYMSG,
-                                      "ML_DSA Verify Init");
 }
 
 static int ml_dsa_verify_msg_final(void *vctx)
@@ -341,7 +414,7 @@ static int ml_dsa_verify_msg_final(void *vctx)
     if (!ossl_ml_dsa_mu_finalize(ctx->md_ctx, mu, sizeof(mu)))
         return 0;
 
-    return ossl_ml_dsa_verify(ctx->key, 1, mu, sizeof(mu), NULL, 0, 0,
+    return ossl_ml_dsa_verify(ctx->key, 1, mu, sizeof(mu), NULL, 0, NULL, 0, 0,
                               ctx->sig, ctx->siglen);
 }
 
@@ -352,7 +425,11 @@ static int ml_dsa_verify(void *vctx, const uint8_t *sig, size_t siglen,
 
     if (!ossl_prov_is_running())
         return 0;
+    /* For the prehash case the message input should match the hash blocksize */
+    if (ctx->siginfo->hashlen != 0 && ctx->siginfo->hashlen != msg_len)
+        return 0;
     return ossl_ml_dsa_verify(ctx->key, ctx->mu, msg, msg_len,
+                              ctx->siginfo->hash_oid, ctx->siginfo->hash_oid_len,
                               ctx->context_string, ctx->context_string_len,
                               ctx->msg_encode, sig, siglen);
 }
@@ -403,21 +480,23 @@ static int ml_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p.det != NULL && !OSSL_PARAM_get_int(p.det, &pctx->deterministic))
         return 0;
 
-    if (p.msgenc != NULL && !OSSL_PARAM_get_int(p.msgenc, &pctx->msg_encode))
-        return 0;
-
-    if (p.mu != NULL && !OSSL_PARAM_get_int(p.mu, &pctx->mu))
-        return 0;
-
-    if (p.sig != NULL && pctx->operation == EVP_PKEY_OP_VERIFYMSG) {
-        OPENSSL_free(pctx->sig);
-        pctx->sig = NULL;
-        pctx->siglen = 0;
-        if (!OSSL_PARAM_get_octet_string(p.sig, (void **)&pctx->sig,
-                                         0, &pctx->siglen))
+    /* The following parameters are skipped for HASHML-DSA signatures */
+    if (pctx->siginfo->hashlen == 0) {
+        if (p.msgenc != NULL && !OSSL_PARAM_get_int(p.msgenc, &pctx->msg_encode))
             return 0;
-    }
 
+        if (p.mu != NULL && !OSSL_PARAM_get_int(p.mu, &pctx->mu))
+            return 0;
+
+        if (p.sig != NULL && pctx->operation == EVP_PKEY_OP_VERIFYMSG) {
+            OPENSSL_free(pctx->sig);
+            pctx->sig = NULL;
+            pctx->siglen = 0;
+            if (!OSSL_PARAM_get_octet_string(p.sig, (void **)&pctx->sig,
+                                             0, &pctx->siglen))
+                return 0;
+        }
+    }
     return 1;
 }
 
@@ -426,10 +505,13 @@ static const OSSL_PARAM *ml_dsa_settable_ctx_params(void *vctx,
 {
     PROV_ML_DSA_CTX *pctx = (PROV_ML_DSA_CTX *)vctx;
 
-    if (pctx != NULL && pctx->operation == EVP_PKEY_OP_VERIFYMSG)
-        return ml_dsa_verifymsg_set_ctx_params_list;
-    else
-        return ml_dsa_set_ctx_params_list;
+    if (pctx != NULL) {
+        if (pctx->siginfo->hashlen != 0)
+            return hash_ml_dsa_set_ctx_params_list;
+        if (pctx->operation == EVP_PKEY_OP_VERIFYMSG)
+            return ml_dsa_verifymsg_set_ctx_params_list;
+    }
+    return ml_dsa_set_ctx_params_list;
 }
 
 static const OSSL_PARAM *ml_dsa_gettable_ctx_params(ossl_unused void *vctx,
@@ -455,14 +537,15 @@ static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
     return 1;
 }
 
-#define MAKE_SIGNATURE_FUNCTIONS(alg)                                          \
-    static OSSL_FUNC_signature_newctx_fn ml_dsa_##alg##_newctx;                \
-    static void *ml_dsa_##alg##_newctx(void *provctx, const char *propq)       \
+#define MAKE_SIGNATURE_FUNCTIONS(n)                                            \
+    ML_DSA_SIGINFO_PURE(n);                                                    \
+    static OSSL_FUNC_signature_newctx_fn ml_dsa_##n##_newctx;                  \
+    static void *ml_dsa_##n##_newctx(void *provctx, const char *propq)         \
     {                                                                          \
-        return ml_dsa_newctx(provctx, EVP_PKEY_ML_DSA_##alg, propq);           \
+        return ml_dsa_newctx(provctx, &ml_dsa_##n##_siginfo, propq);           \
     }                                                                          \
-    const OSSL_DISPATCH ossl_ml_dsa_##alg##_signature_functions[] = {          \
-        { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))ml_dsa_##alg##_newctx }, \
+    const OSSL_DISPATCH ossl_ml_dsa_##n##_signature_functions[] = {            \
+        { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))ml_dsa_##n##_newctx },   \
         { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_INIT,                               \
           (void (*)(void))ml_dsa_sign_msg_init },                              \
         { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_UPDATE,                             \
@@ -478,13 +561,13 @@ static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
           (void (*)(void))ml_dsa_verify_msg_final },                           \
         { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))ml_dsa_verify },         \
         { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,                                \
-          (void (*)(void))ml_dsa_digest_signverify_init },                     \
+          (void (*)(void))ml_dsa_digest_sign_init },                           \
         { OSSL_FUNC_SIGNATURE_DIGEST_SIGN,                                     \
-          (void (*)(void))ml_dsa_digest_sign },                                \
+          (void (*)(void))ml_dsa_sign },                                       \
         { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,                              \
-          (void (*)(void))ml_dsa_digest_signverify_init },                     \
+          (void (*)(void))ml_dsa_digest_verify_init },                         \
         { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,                                   \
-          (void (*)(void))ml_dsa_digest_verify },                              \
+          (void (*)(void))ml_dsa_verify },                                     \
         { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))ml_dsa_freectx },       \
         { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS,                                  \
           (void (*)(void))ml_dsa_set_ctx_params },                             \
@@ -498,6 +581,95 @@ static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
         OSSL_DISPATCH_END                                                      \
     }
 
+/* Map HASHML-DSA signature names back to the ML-DSA key types */
+static const char **hash_ml_dsa_44_sigalg_query_key_types(void)
+{
+    static const char *keytypes[] = { "ML-DSA-44", NULL };
+
+    return keytypes;
+}
+static const char **hash_ml_dsa_65_sigalg_query_key_types(void)
+{
+    static const char *keytypes[] = { "ML-DSA-65", NULL };
+
+    return keytypes;
+}
+static const char **hash_ml_dsa_87_sigalg_query_key_types(void)
+{
+    static const char *keytypes[] = { "ML-DSA-87", NULL };
+
+    return keytypes;
+}
+
+#define MAKE_SIGNATURE_HASH_COMMON(n, dig)                                     \
+static OSSL_FUNC_signature_newctx_fn hash_ml_dsa_##n##_##dig##_newctx;         \
+static void *hash_ml_dsa_##n##_##dig##_newctx(void *provctx, const char *propq)\
+{                                                                              \
+    return ml_dsa_newctx(provctx, &hash_ml_dsa_##n##_##dig##_siginfo, propq);  \
+}                                                                              \
+const OSSL_DISPATCH ossl_hash_ml_dsa_##n##_##dig##_signature_functions[] = {   \
+    { OSSL_FUNC_SIGNATURE_NEWCTX,                                              \
+      (void (*)(void))hash_ml_dsa_##n##_##dig##_newctx },                      \
+    { OSSL_FUNC_SIGNATURE_QUERY_KEY_TYPES,                                     \
+      (void (*)(void))hash_ml_dsa_##n##_sigalg_query_key_types },              \
+    { OSSL_FUNC_SIGNATURE_SIGN_INIT,                                           \
+      (void (*)(void))ml_dsa_sign_init },                                      \
+    { OSSL_FUNC_SIGNATURE_VERIFY_INIT,                                         \
+      (void (*)(void))ml_dsa_verify_init },                                    \
+    { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))ml_dsa_sign },                 \
+    { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))ml_dsa_verify },             \
+    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,                                    \
+      (void (*)(void))ml_dsa_digest_sign_init },                               \
+    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN,                                         \
+      (void (*)(void))ml_dsa_digest_sign },                                    \
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,                                  \
+      (void (*)(void))ml_dsa_digest_verify_init },                             \
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,                                       \
+      (void (*)(void))ml_dsa_digest_verify },                                  \
+    { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))ml_dsa_freectx },           \
+    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS,                                      \
+      (void (*)(void))ml_dsa_get_ctx_params },                                 \
+    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,                                 \
+      (void (*)(void))ml_dsa_gettable_ctx_params },                            \
+    { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS,                                      \
+      (void (*)(void))ml_dsa_set_ctx_params },                                 \
+    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,                                 \
+      (void (*)(void))ml_dsa_settable_ctx_params },                            \
+    { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))ml_dsa_dupctx },             \
+    OSSL_DISPATCH_END                                                          \
+}
+
+#define MAKE_SIGNATURE_HASH(n, dig, hashsz)                                    \
+    ML_DSA_SIGINFO_HASH(n, dig, hashsz);                                       \
+    MAKE_SIGNATURE_HASH_COMMON(n, dig)
+
+#define MAKE_SIGNATURE_HASH_NO_SIG_OID(n, dig, hashsz)                         \
+    ML_DSA_SIGINFO_HASH_NO_SIG_OID(n, dig, hashsz);                            \
+    MAKE_SIGNATURE_HASH_COMMON(n, dig)
+
 MAKE_SIGNATURE_FUNCTIONS(44);
 MAKE_SIGNATURE_FUNCTIONS(65);
 MAKE_SIGNATURE_FUNCTIONS(87);
+/*
+ * Currently these are the only 3 HASH-ML-DSA algorithms with associated OIDS
+ * (i.e. SHA512 only)
+ * https://csrc.nist.gov/projects/computer-security-objects-register/algorithm-registration#DSA
+ */
+MAKE_SIGNATURE_HASH(44, sha512, 64);
+MAKE_SIGNATURE_HASH(65, sha512, 64);
+MAKE_SIGNATURE_HASH(87, sha512, 64);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(44, sha256, 32);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(65, sha256, 32);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(87, sha256, 32);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(44, sha3_256, 32);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(65, sha3_256, 32);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(87, sha3_256, 32);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(44, sha3_512, 64);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(65, sha3_512, 64);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(87, sha3_512, 64);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(44, shake128, 32);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(65, shake128, 32);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(87, shake128, 32);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(44, shake256, 64);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(65, shake256, 64);
+MAKE_SIGNATURE_HASH_NO_SIG_OID(87, shake256, 64);

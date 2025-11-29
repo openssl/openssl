@@ -22,6 +22,22 @@
 import json
 import argparse
 import datetime
+import hashlib
+
+#Currently supported digests
+accepted_hashes = ["SHAKE-256", "SHAKE-128", "SHA3-512", "SHA3-256", "SHA2-512", "SHA2-256"]
+
+def do_hash(hashalg, hexstr): 
+    h = hashlib.new(hashalg)
+    h.update(bytes.fromhex(hexstr))
+    if hashalg.startswith('SHAKE'):
+        if hashalg.endswith('128'):
+            l = 32
+        else:
+            l = 64
+        return h.hexdigest(l)
+    else:
+        return h.hexdigest()
 
 def print_label(label, value):
     print(label + " = " + value)
@@ -47,32 +63,52 @@ def parse_ml_dsa_sig_gen(groups):
         signInterfaceExternal = (grp['signatureInterface'] == "External")
         signPreHash = (grp['preHash'] == "preHash")
         signPure = (grp['preHash'] == "pure")
-        includeMu = True # Flag flips to only include the Ctrl mu:0 half the time
+        # The following booleans just add unneeded Ctrls containing default
+        # values for coverage testing. They are toggled on and off whenever a
+        # default is detected.
+        defaultDeterm = True
+        defaultMu = True
+        defaultMsgEncoding = True
 
-        if signPreHash:
-            continue
-        if not externalMu and not signPure:
-            continue
-
+        print("# Group=" + str(grp['tgId']))
         name = grp['parameterSet'].replace('-', '_')
         for tst in grp['tests']:
+            if signPreHash and not tst['hashAlg'] in accepted_hashes:
+                continue
             testname = name + "_" + str(tst['tcId'])
             print("");
             print_label("PrivateKeyRaw", testname + ":" + grp['parameterSet'] + ":" + tst['sk'])
             print("");
-            print_label("FIPSversion", ">=3.5.0")
-            print_label("Sign-Message", grp['parameterSet'] + ":" + testname)
-            print_label("Input", tst['mu' if externalMu else 'message'])
-            print_label("Output", tst['signature'])
-            print_label("Ctrl", "message-encoding:1")
-            if not externalMu:
+            if signPreHash:
+                print_label("FIPSversion", ">=4.0.0")
+                print_label("Sign", "HASH" + grp['parameterSet'] + "-" + tst['hashAlg'] + ":" + testname)
+                print_label("Input", do_hash(tst['hashAlg'], tst['message']))
+            else:
+                print_label("FIPSversion", ">=3.5.0")
+                print_label("Sign-Message", grp['parameterSet'] + ":" + testname)
+                print_label("Input", tst['mu' if externalMu else 'message'])
+                if signPure:
+                    if defaultMsgEncoding:
+                        print_label("Ctrl", "message-encoding:1")
+                    defaultMsgEncoding = not defaultDeterm
+                else:
+                    print_label("Ctrl", "message-encoding:0")
+                if externalMu:
+                    print_label("Ctrl", "mu:1")
+                else:
+                    if defaultMu:
+                        print_label("Ctrl", "mu:0")
+                    defaultMu = not defaultMu
+            if "context" in tst:
                 print_label("Ctrl", "hexcontext-string:" + tst["context"])
-                includeMu = not includeMu
-            if externalMu or includeMu:
-                print_label("Ctrl", "mu:" + ("1" if externalMu else "0"))
-            print_label("Ctrl", "deterministic:" + ("1" if deter else "0"))
-            if not deter:
+            if deter:
+                print_label("Ctrl", "deterministic:1")
+            else:
+                if defaultDeterm:
+                    print_label("Ctrl", "deterministic:0")
+                defaultDeterm = not defaultDeterm
                 print_label("Ctrl", "hextest-entropy:" + tst["rnd"])
+            print_label("Output", tst['signature'])
 
 def parse_ml_dsa_sig_ver(groups):
     for grp in groups:
@@ -80,31 +116,32 @@ def parse_ml_dsa_sig_ver(groups):
         signInterfaceExternal = (grp['signatureInterface'] == "External")
         signPreHash = (grp['preHash'] == "preHash")
         signPure = (grp['preHash'] == "pure")
-        includeMu = True # Flag flips to only include the Ctrl mu:0 half the time
-
-        if signPreHash:
-            continue
-        if not externalMu and not signPure:
-            continue
 
         name = grp['parameterSet'].replace('-', '_')
         for tst in grp['tests']:
+            if signPreHash and not tst['hashAlg'] in accepted_hashes:
+                continue
             testname = name + "_" + str(tst['tcId'])
             print("");
             print_label("PublicKeyRaw", testname + ":" + grp['parameterSet'] + ":" + tst['pk'])
             print("");
             if "reason" in tst:
                 print("# " + tst['reason'])
-            print_label("FIPSversion", ">=3.5.0")
-            print_label("Verify-Message-Public", grp['parameterSet'] + ":" + testname)
-            print_label("Input", tst['mu' if externalMu else 'message'])
-            print_label("Output", tst['signature'])
-            print_label("Ctrl", "message-encoding:1")
-            if not externalMu:
+            if signPreHash:
+                print_label("FIPSversion", ">=4.0.0")
+                print_label("Verify", "HASH" + grp['parameterSet'] + "-" + tst['hashAlg'] + ":" + testname)
+                print_label("Input", do_hash(tst['hashAlg'], tst['message']))
+            else:
+                print_label("FIPSversion", ">=3.5.0")
+                print_label("Verify-Message-Public", grp['parameterSet'] + ":" + testname)
+                print_label("Input", tst['mu' if externalMu else 'message'])
+                if not signPure:
+                    print_label("Ctrl", "message-encoding:0")
+            if externalMu:
+                print_label("Ctrl", "mu:1")
+            if "context" in tst:
                 print_label("Ctrl", "hexcontext-string:" + tst["context"])
-                includeMu = not includeMu
-            if externalMu or includeMu:
-                print_label("Ctrl", "mu:" + ("1" if externalMu else "0"))
+            print_label("Output", tst['signature'])
             if not tst['testPassed']:
                 print_label("Result", "VERIFY_ERROR")
 

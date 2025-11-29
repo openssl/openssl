@@ -19,4 +19,6 @@
                                        filter => \&oids_to_c::filter_to_H });
 -}
 
-int ossl_DER_w_algorithmIdentifier_ML_DSA(WPACKET *pkt, int tag, ML_DSA_KEY *key);
+int ossl_DER_w_algorithmIdentifier_ML_DSA(WPACKET *pkt, int tag,
+                                          const uint8_t *sigalg_oid,
+                                          size_t sigalg_oid_len);
