@@ -72,7 +72,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     if (client == NULL)
         goto end;
     OPENSSL_assert(SSL_set_min_proto_version(client, 0) == 1);
-    OPENSSL_assert(SSL_set_cipher_list(client, "ALL:eNULL:@SECLEVEL=0") == 1);
+    if (SSL_set_cipher_list(client, "ALL:eNULL:@SECLEVEL=0") != 1)
+        goto end;
     SSL_set_tlsext_host_name(client, "localhost");
     in = BIO_new(BIO_s_mem());
     if (in == NULL)
@@ -84,7 +85,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     }
     SSL_set_bio(client, in, out);
     SSL_set_connect_state(client);
-    OPENSSL_assert((size_t)BIO_write(in, buf, len) == len);
+    if ((size_t)BIO_write(in, buf, len) != len)
+        goto end;
     if (SSL_do_handshake(client) == 1) {
         /* Keep reading application data until error or EOF. */
         uint8_t tmp[1024];
