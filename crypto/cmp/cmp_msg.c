@@ -132,6 +132,7 @@ X509_PUBKEY *OSSL_CMP_MSG_get0_certreq_publickey(const OSSL_CMP_MSG *msg)
 static int add1_extension(X509_EXTENSIONS **pexts, int nid, int crit, void *ex)
 {
     X509_EXTENSION *ext;
+    int idx;
     int res;
 
     if (!ossl_assert(pexts != NULL)) /* pointer to var must not be NULL */
@@ -139,6 +140,9 @@ static int add1_extension(X509_EXTENSIONS **pexts, int nid, int crit, void *ex)
 
     if ((ext = X509V3_EXT_i2d(nid, crit, ex)) == NULL)
         return 0;
+
+    while ((idx = X509v3_get_ext_by_NID(*pexts, nid, -1)) >= 0)
+        X509_EXTENSION_free(X509v3_delete_ext(*pexts, idx));
 
     res = X509v3_add_ext(pexts, ext, 0) != NULL;
     X509_EXTENSION_free(ext);
@@ -157,6 +161,7 @@ static int add_extensions(STACK_OF(X509_EXTENSION) **target,
     for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
         X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
         ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
+        ASN1_OCTET_STRING *encoded = X509_EXTENSION_get_data(ext);
         int idx = X509v3_get_ext_by_OBJ(*target, obj, -1);
 
         /* Does extension exist in target? */
@@ -166,6 +171,15 @@ static int add_extensions(STACK_OF(X509_EXTENSION) **target,
                 X509_EXTENSION_free(sk_X509_EXTENSION_delete(*target, idx));
                 idx = X509v3_get_ext_by_OBJ(*target, obj, -1);
             } while (idx != -1);
+        }
+        switch (OBJ_obj2nid(obj)) {
+        case NID_subject_key_identifier:
+        case NID_authority_key_identifier:
+            if (ASN1_STRING_length(encoded) <= 2) /* indicating "none" */
+                continue;
+            break;
+        default:
+            break;
         }
         if (!X509v3_add_ext(target, ext, -1))
             return 0;
