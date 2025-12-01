@@ -75,17 +75,17 @@ guidelines:
     often. We do not accept merge commits, you will have to remove them
     (usually by rebasing) before it will be acceptable.
 
- 4. Code provided should follow our [coding style] and [documentation policy]
+ 4. Code provided should follow our [coding style](STYLE.md) and [documentation policy]
     and compile without warnings.
-    There is a [Perl tool](util/check-format.pl) that helps
-    finding code formatting mistakes and other coding style nits.
-    Where `gcc` or `clang` is available, you should use the
+    There is a configuration for [clang-format](.clang-format) that will ensure
+    code is compliant with the formatting portions of the coding style guide. You should
+    configure modern tooling to make use of it and consider checking your PR's with
+    clang-format before submitting them. Where `gcc` or `clang` is available, you should use the
     `--strict-warnings` `Configure` option.  OpenSSL compiles on many varied
     platforms: try to ensure you only use portable features.
     Clean builds via GitHub Actions are required. They are started automatically
     whenever a PR is created or updated by committers.
 
-    [coding style]: https://openssl-library.org/policies/technical/coding-style/
     [documentation policy]: https://openssl-library.org/policies/technical/documentation-policy/
 
  5. When at all possible, code contributions should include tests. These can
