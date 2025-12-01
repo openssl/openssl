@@ -847,13 +847,14 @@ int req_main(int argc, char **argv)
             X509V3_set_ctx(&ext_ctx, CAcert != NULL ? CAcert : new_x509,
                            new_x509, NULL, NULL, X509V3_CTX_REPLACE);
             /* prepare fallback for AKID, but only if issuer cert == new_x509 */
-            if (CAcert == NULL) {
+            if (CAcert == NULL && !cert_matches_key(new_x509, issuer_key)) {
                 if (!X509V3_set_issuer_pkey(&ext_ctx, issuer_key))
                     goto end;
-                if (!cert_matches_key(new_x509, issuer_key))
-                    BIO_printf(bio_err,
-                               "Warning: Signature key and public key of cert do not match\n");
+                BIO_printf(bio_err,
+                           "Warning: Signature key and public key of cert do not match\n");
             }
+            if (!x509v1 && !add_X509_default_keyids(new_x509, issuer_key, &ext_ctx))
+                goto end;
             X509V3_set_nconf(&ext_ctx, req_conf);
 
             /* Add extensions */
