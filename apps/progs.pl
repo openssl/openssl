@@ -19,7 +19,7 @@ die "Unrecognised option, must be -C or -H\n"
     unless ($opt eq '-H' || $opt eq '-C');
 
 my %commands     = ();
-# XXX beck I think it is best reconsidered in favour of just a table
+# I think it is best reconsidered in favour of just a table
 # of commands instead of this fragile regex. There really are not that
 # many commands.
 my $cmdre        = qr/^\s*(int\s+|)\s*([a-z_][a-z0-9_]*)_main\s*\(\s*int\s+argc\s*,/;
