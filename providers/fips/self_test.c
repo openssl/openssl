@@ -325,12 +325,24 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         goto end;
     }
 
-    if (on_demand_test)
-        /* ensure all states are cleared so all tests are repeated */
-        for (int i = 0; i < ST_ID_MAX; i++)
-            st_all_tests[i].state = SELF_TEST_STATE_INIT;
+    if ((st->defer_tests != NULL)
+        && strcmp(st->defer_tests, "1") == 0) {
+        /* Mark all non executed tests as deferred */
+        for (int i = 0; i < ST_ID_MAX; i++) {
+            if (st_all_tests[i].state == SELF_TEST_STATE_INIT)
+                st_all_tests[i].state = SELF_TEST_STATE_DEFER;
+        }
+    }
 
-    if (on_demand_test && !SELF_TEST_kats(ev, st->libctx)) {
+    if (on_demand_test) {
+        /* ensure all states are cleared so all tests are forcibly
+         * repeated */
+        for (int i = 0; i < ST_ID_MAX; i++) {
+            st_all_tests[i].state = SELF_TEST_STATE_INIT;
+        }
+    }
+
+    if (!SELF_TEST_kats(ev, st->libctx)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
         goto end;
     }

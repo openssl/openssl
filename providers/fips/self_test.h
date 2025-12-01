@@ -20,6 +20,9 @@ typedef struct self_test_post_params_st {
     /* Used for continuous tests */
     const char *conditional_error_check;
 
+    /* Used to decide whether to defer tests or not */
+    const char *defer_tests;
+
     /* BIO callbacks supplied to the FIPS provider */
     OSSL_FUNC_BIO_new_file_fn *bio_new_file_cb;
     OSSL_FUNC_BIO_new_membuf_fn *bio_new_buffer_cb;
@@ -54,11 +57,12 @@ enum st_test_category {
 };
 
 enum st_test_state {
-    SELF_TEST_STATE_INIT = 0,
-    SELF_TEST_STATE_IN_PROGRESS,
-    SELF_TEST_STATE_PASSED,
-    SELF_TEST_STATE_FAILED,
-    SELF_TEST_STATE_IMPLICIT,
+    SELF_TEST_STATE_INIT = 0, /* Test has not been execute yet */
+    SELF_TEST_STATE_IN_PROGRESS, /* Test is currently being executed */
+    SELF_TEST_STATE_PASSED, /* Test is marked as passed */
+    SELF_TEST_STATE_FAILED, /* Test failed */
+    SELF_TEST_STATE_IMPLICIT, /* Marks test as implicitly handled */
+    SELF_TEST_STATE_DEFER, /* Like INIT, but mark test as deferred */
 };
 
 /* used to store raw parameters for keys and algorithms */

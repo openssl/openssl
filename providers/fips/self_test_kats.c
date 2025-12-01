@@ -1175,6 +1175,7 @@ int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
      */
     switch (st_all_tests[id].state) {
     case SELF_TEST_STATE_INIT:
+    case SELF_TEST_STATE_DEFER:
         break;
     case SELF_TEST_STATE_FAILED:
         return 0;
@@ -1277,8 +1278,9 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     }
 
     for (i = 0; i < ST_ID_MAX; i++)
-        if (!SELF_TEST_kats_execute(st, libctx, i, 0))
-            ret = 0;
+        if (st_all_tests[i].state == SELF_TEST_STATE_INIT)
+            if (!SELF_TEST_kats_execute(st, libctx, i, 0))
+                ret = 0;
 
     RAND_set0_private(libctx, saved_rand);
     /* The above call will cause main_rand to be freed */

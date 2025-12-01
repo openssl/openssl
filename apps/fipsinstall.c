@@ -77,7 +77,8 @@ typedef enum OPTION_choice {
     OPT_NO_PBKDF2_LOWER_BOUND_CHECK,
     OPT_ECDH_COFACTOR_CHECK,
     OPT_SELF_TEST_ONLOAD,
-    OPT_SELF_TEST_ONINSTALL
+    OPT_SELF_TEST_ONINSTALL,
+    OPT_DEFER_TESTS
 } OPTION_CHOICE;
 
 const OPTIONS fipsinstall_options[] = {
@@ -150,6 +151,7 @@ const OPTIONS fipsinstall_options[] = {
         "Disable lower bound check for PBKDF2" },
     { "ecdh_cofactor_check", OPT_ECDH_COFACTOR_CHECK, '-',
         "Enable Cofactor check for ECDH" },
+    { "defer_tests", OPT_DEFER_TESTS, '-', "Enables test deferral" },
     OPT_SECTION("Input"),
     { "in", OPT_IN, '<', "Input config file, used when verifying" },
 
@@ -197,6 +199,7 @@ typedef struct {
     unsigned int x942kdf_key_check : 1;
     unsigned int pbkdf2_lower_bound_check : 1;
     unsigned int ecdh_cofactor_check : 1;
+    unsigned int defer_tests : 1;
 } FIPS_OPTS;
 
 /* Pedantic FIPS compliance */
@@ -231,6 +234,7 @@ static const FIPS_OPTS pedantic_opts = {
     1, /* x942kdf_key_check */
     1, /* pbkdf2_lower_bound_check */
     1, /* ecdh_cofactor_check */
+    0, /* defer_tests */
 };
 
 /* Default FIPS settings for backward compatibility */
@@ -265,6 +269,7 @@ static FIPS_OPTS fips_opts = {
     0, /* x942kdf_key_check */
     1, /* pbkdf2_lower_bound_check */
     0, /* ecdh_cofactor_check */
+    0, /* defer_tests */
 };
 
 static int check_non_pedantic_fips(int pedantic, const char *name)
@@ -488,7 +493,10 @@ static int write_config_fips_section(BIO *out, const char *section,
                opts->ecdh_cofactor_check ? "1" : "0")
             <= 0
         || !print_mac(out, OSSL_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
-            module_mac_len))
+            module_mac_len)
+        || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_DEFER_TESTS,
+               opts->defer_tests ? "1" : "0")
+            <= 0)
         goto end;
 
     if (install_mac != NULL
@@ -801,6 +809,9 @@ int fipsinstall_main(int argc, char **argv)
                 goto end;
             set_selftest_onload_option = 1;
             fips_opts.self_test_onload = 0;
+            break;
+        case OPT_DEFER_TESTS:
+            fips_opts.defer_tests = 1;
             break;
         }
     }
