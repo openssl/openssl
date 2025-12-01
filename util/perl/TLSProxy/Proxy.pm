@@ -760,7 +760,6 @@ sub handshake_complete
     my $res = 0;
 
     if ($self->{isdtls} && $self->is_tls13() && defined($self->{sessionfile})) {
-    # if ($self->{isdtls} && $self->is_tls13()) {
         if ($self->{saw_session_ticket_ack}) {
             $res = 1;
         }

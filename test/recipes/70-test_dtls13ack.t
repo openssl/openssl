@@ -153,27 +153,7 @@ sub get_actual_acked_record_numbers
     foreach (@records) {
         my $record = $_;
 
-        if ($record->content_type == TLSProxy::Record::RT_ACK) {
-            my $recnum_count = unpack('n', $record->decrypt_data) / 16;
-            my $ptr = 2;
-
-            for (my $idx = 0; $idx < $recnum_count; $idx++) {
-                my $epoch_lo;
-                my $epoch_hi;
-                my $msgseq_lo;
-                my $msgseq_hi;
-
-                ($epoch_hi, $epoch_lo, $msgseq_hi, $msgseq_lo)
-                    = unpack('NNNN', substr($record->decrypt_data, $ptr));
-                $ptr = $ptr + 16;
-
-                my $epoch = ($epoch_hi << 32) | $epoch_lo;
-                my $msgseq = ($msgseq_hi << 32) | $msgseq_lo;
-                my $recnum = TLSProxy::RecordNumber->new($epoch, $msgseq);
-
-                push(@record_numbers, $recnum);
-            }
-        }
+        $record->get_actual_acked_record_numbers(\@record_numbers);
     }
     return @record_numbers;
 }
