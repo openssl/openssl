@@ -13,6 +13,7 @@
 
 #include <openssl/err.h>
 #include <openssl/lhash.h>
+#include "internal/common.h"
 #include "store_local.h"
 
 static CRYPTO_RWLOCK *registry_lock;
@@ -32,7 +33,7 @@ OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme)
 {
     OSSL_STORE_LOADER *res = NULL;
 
-    if (e != NULL)
+    if (!ossl_assert(e == NULL))
         return NULL;
     /*
      * We usually don't check NULL arguments.  For loaders, though, the

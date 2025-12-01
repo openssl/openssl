@@ -30,6 +30,7 @@
 #include "internal/ffc.h"
 #include "internal/numbers.h"
 #include "internal/provider.h"
+#include "internal/common.h"
 #include "evp_local.h"
 
 #ifndef FIPS_MODULE
@@ -395,14 +396,14 @@ void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth)
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e)
 {
-    if (e != NULL)
+    if (!ossl_assert(e == NULL))
         return NULL;
     return int_ctx_new(NULL, pkey, NULL, NULL, -1);
 }
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e)
 {
-    if (e != NULL)
+    if (!ossl_assert(e == NULL))
         return NULL;
     return int_ctx_new(NULL, NULL, NULL, NULL, id);
 }

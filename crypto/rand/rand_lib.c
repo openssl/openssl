@@ -23,6 +23,7 @@
 #include "rand_local.h"
 #include "crypto/context.h"
 #include "internal/provider.h"
+#include "internal/common.h"
 
 #ifndef OPENSSL_DEFAULT_SEED_SRC
 # define OPENSSL_DEFAULT_SEED_SRC SEED-SRC
@@ -224,7 +225,7 @@ int RAND_poll(void)
 static int rand_set_rand_method_internal(const RAND_METHOD *meth,
                                          ENGINE *e)
 {
-    if (e != NULL)
+    if (!ossl_assert(e == NULL))
         return 0;
     if (!RUN_ONCE(&rand_init, do_rand_init))
         return 0;

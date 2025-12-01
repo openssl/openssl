@@ -19,6 +19,7 @@
 #include <openssl/param_build.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
+#include "internal/common.h"
 #include "crypto/bn.h"
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
@@ -57,7 +58,7 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth)
 
 RSA *RSA_new_method(ENGINE *engine)
 {
-    if (engine != NULL)
+    if (!ossl_assert(engine == NULL))
         return NULL;
     return rsa_new_intern(NULL);
 }

@@ -14,6 +14,7 @@
 #include "crypto/evp.h"
 #include "internal/provider.h"
 #include "internal/numbers.h"   /* includes SIZE_MAX */
+#include "internal/common.h"
 #include "evp_local.h"
 
 static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
@@ -379,7 +380,7 @@ int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                        const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
-    if (e != NULL)
+    if (!ossl_assert(e == NULL))
         return 0;
     return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, pkey, 0,
                           NULL);
@@ -397,7 +398,7 @@ int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                          const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
-    if (e != NULL)
+    if (!ossl_assert(e == NULL))
         return 0;
     return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, pkey, 1,
                           NULL);

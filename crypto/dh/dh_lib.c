@@ -19,6 +19,7 @@
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
+#include "internal/common.h"
 #include "crypto/evp.h"
 #include "crypto/dh.h"
 #include "dh_local.h"
@@ -55,7 +56,7 @@ DH *DH_new(void)
 
 DH *DH_new_method(ENGINE *engine)
 {
-    if (engine != NULL)
+    if (!ossl_assert(engine == NULL))
         return NULL;
     return dh_new_intern(NULL);
 }

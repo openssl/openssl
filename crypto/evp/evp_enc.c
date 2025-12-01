@@ -18,6 +18,7 @@
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/core.h"
+#include "internal/common.h"
 #include "internal/safe_math.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
@@ -579,7 +580,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                       ENGINE *impl, const unsigned char *key,
                       const unsigned char *iv, int enc)
 {
-    if (impl != NULL)
+    if (!ossl_assert(impl == NULL))
         return 0;
     return evp_cipher_init_internal(ctx, cipher, key, iv, enc, 0, NULL);
 }
@@ -747,7 +748,7 @@ int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                        ENGINE *impl, const unsigned char *key,
                        const unsigned char *iv)
 {
-    if (impl != NULL)
+    if (!ossl_assert(impl == NULL))
         return 0;
     return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 1);
 }
@@ -769,7 +770,7 @@ int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                        ENGINE *impl, const unsigned char *key,
                        const unsigned char *iv)
 {
-    if (impl != NULL)
+    if (!ossl_assert(impl == NULL))
         return 0;
     return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 0);
 }

@@ -17,6 +17,7 @@
 #include "internal/nelem.h"
 #include "internal/provider.h"
 #include "internal/core.h"
+#include "internal/common.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
 
@@ -298,7 +299,7 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 
 int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 {
-    if (impl != NULL)
+    if (!ossl_assert(impl == NULL))
         return 0;
     return evp_md_init_internal(ctx, type, NULL);
 }
@@ -644,7 +645,7 @@ int EVP_Digest(const void *data, size_t count,
     EVP_MD_CTX *ctx;
     int ret;
 
-    if (impl != NULL)
+    if (!ossl_assert(impl == NULL))
         return 0;
 
     ctx = EVP_MD_CTX_new();

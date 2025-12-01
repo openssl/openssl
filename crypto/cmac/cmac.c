@@ -20,6 +20,7 @@
 #include <openssl/cmac.h>
 #include <openssl/err.h>
 #include "crypto/cmac.h"
+#include "internal/common.h"
 
 #define LOCAL_BUF_SIZE 2048
 struct CMAC_CTX_st {
@@ -168,7 +169,7 @@ int ossl_cmac_init(CMAC_CTX *ctx, const void *key, size_t keylen,
 int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
               const EVP_CIPHER *cipher, ENGINE *impl)
 {
-    if (impl != NULL)
+    if (!ossl_assert(impl == NULL))
         return 0;
     return ossl_cmac_init(ctx, key, keylen, cipher, NULL);
 }
