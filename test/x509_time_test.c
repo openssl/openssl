@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-
-/* Tests for X509 time functions */
-
 #include <string.h>
 #include <time.h>
 
@@ -134,6 +131,13 @@ static TESTDATA_FORMAT x509_format_tests[] = {
     },
 };
 
+#ifdef OPENSSL_NO_DEPRECATED
+#ifndef OPENSSL_NO_DEPRECATED_4_0
+#error "WTAF"
+#endif
+#endif
+
+#ifndef OPENSSL_NO_DEPRECATED_4_0
 static TESTDATA x509_cmp_tests[] = {
     {
         "20170217180154Z", V_ASN1_GENERALIZEDTIME,
@@ -264,7 +268,9 @@ static int test_x509_cmp_time(int idx)
     t.length = (int)strlen(x509_cmp_tests[idx].data);
     t.flags = 0;
 
+    OSSL_BEGIN_ALLOW_DEPRECATED
     result = X509_cmp_time(&t, &x509_cmp_tests[idx].cmp_time);
+    OSSL_END_ALLOW_DEPRECATED
     if (!TEST_int_eq(result, x509_cmp_tests[idx].expected)) {
         TEST_info("test_x509_cmp_time(%d) failed: expected %d, got %d\n",
                 idx, x509_cmp_tests[idx].expected, result);
@@ -285,6 +291,7 @@ static int test_x509_cmp_time_current(void)
     asn1_now = ASN1_TIME_adj(NULL, now, 0, 0);
 
     /* X509_cmp_time is expected to return -1 for equal */
+    OSSL_BEGIN_ALLOW_DEPRECATED
     cmp_result = X509_cmp_time(asn1_now, &now);
     if (!TEST_int_eq(cmp_result, -1))
         failed = 1;
@@ -296,6 +303,7 @@ static int test_x509_cmp_time_current(void)
     cmp_result = X509_cmp_time(asn1_after, &now);
     if (!TEST_int_eq(cmp_result, 1))
         failed = 1;
+    OSSL_END_ALLOW_DEPRECATED
 
     ASN1_TIME_free(asn1_before);
     ASN1_TIME_free(asn1_after);
@@ -313,6 +321,7 @@ static int test_X509_cmp_timeframe_vpm(const X509_VERIFY_PARAM *vpm,
         && (X509_VERIFY_PARAM_get_flags(vpm) & X509_V_FLAG_USE_CHECK_TIME) == 0
         && (X509_VERIFY_PARAM_get_flags(vpm) & X509_V_FLAG_NO_CHECK_TIME) != 0;
 
+    OSSL_BEGIN_ALLOW_DEPRECATED
     return asn1_before != NULL && asn1_mid != NULL && asn1_after != NULL
         && TEST_int_eq(X509_cmp_timeframe(vpm, asn1_before, asn1_after), 0)
         && TEST_int_eq(X509_cmp_timeframe(vpm, asn1_before, NULL), 0)
@@ -324,6 +333,7 @@ static int test_X509_cmp_timeframe_vpm(const X509_VERIFY_PARAM *vpm,
                        always_0 ? 0 : 1)
         && TEST_int_eq(X509_cmp_timeframe(vpm, asn1_after, asn1_before),
                        always_0 ? 0 : 1);
+    OSSL_END_ALLOW_DEPRECATED
 }
 
 static int test_X509_cmp_timeframe(void)
@@ -338,6 +348,7 @@ static int test_X509_cmp_timeframe(void)
 
     if (vpm == NULL)
         goto finish;
+    OSSL_BEGIN_ALLOW_DEPRECATED
     res = test_X509_cmp_timeframe_vpm(NULL, asn1_before, asn1_mid, asn1_after)
         && test_X509_cmp_timeframe_vpm(vpm, asn1_before, asn1_mid, asn1_after);
 
@@ -346,6 +357,7 @@ static int test_X509_cmp_timeframe(void)
         && test_X509_cmp_timeframe_vpm(vpm, asn1_before, asn1_mid, asn1_after)
         && X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_NO_CHECK_TIME)
         && test_X509_cmp_timeframe_vpm(vpm, asn1_before, asn1_mid, asn1_after);
+    OSSL_END_ALLOW_DEPRECATED
 
     X509_VERIFY_PARAM_free(vpm);
 finish:
@@ -355,6 +367,8 @@ finish:
 
     return res;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_0) */
+
 
 static int test_x509_time(int idx)
 {
@@ -600,9 +614,11 @@ static int test_x509_time_print_iso_8601(int idx)
 
 int setup_tests(void)
 {
+#ifndef OPENSSL_NO_DEPRECATED_4_0
     ADD_TEST(test_x509_cmp_time_current);
     ADD_TEST(test_X509_cmp_timeframe);
     ADD_ALL_TESTS(test_x509_cmp_time, OSSL_NELEM(x509_cmp_tests));
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_0) */
     ADD_ALL_TESTS(test_x509_time, OSSL_NELEM(x509_format_tests));
     ADD_ALL_TESTS(test_days, OSSL_NELEM(day_of_week_tests));
     ADD_ALL_TESTS(test_x509_time_print_rfc_822, OSSL_NELEM(x509_print_tests_rfc_822));
