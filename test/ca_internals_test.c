@@ -90,4 +90,3 @@ int setup_tests(void)
     TEST_error("%s: command '%s' is not supported for testing\n", binname, command);
     return 0;
 }
-

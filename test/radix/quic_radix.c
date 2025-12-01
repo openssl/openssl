@@ -6,8 +6,10 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 #include "terp.c"
 #include "quic_bindings.c"
 #include "quic_ops.c"
 #include "quic_tests.c"
 #include "main.c"
+/* clang-format on */

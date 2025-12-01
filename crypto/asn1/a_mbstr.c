@@ -14,8 +14,8 @@
 #include <openssl/asn1.h>
 
 static int traverse_string(const unsigned char *p, int len, int inform,
-                           int (*rfunc) (unsigned long value, void *in),
-                           void *arg);
+    int (*rfunc)(unsigned long value, void *in),
+    void *arg);
 static int in_utf8(unsigned long value, void *arg);
 static int out_utf8(unsigned long value, void *arg);
 static int type_str(unsigned long value, void *arg);
@@ -34,14 +34,14 @@ static int cpy_utf8(unsigned long value, void *arg);
  */
 
 int ASN1_mbstring_copy(ASN1_STRING **out, const unsigned char *in, int len,
-                       int inform, unsigned long mask)
+    int inform, unsigned long mask)
 {
     return ASN1_mbstring_ncopy(out, in, len, inform, mask, 0, 0);
 }
 
 int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
-                        int inform, unsigned long mask,
-                        long minsize, long maxsize)
+    int inform, unsigned long mask,
+    long minsize, long maxsize)
 {
     int str_type;
     int ret;
@@ -50,7 +50,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     ASN1_STRING *dest;
     unsigned char *p;
     int nchar;
-    int (*cpyfunc) (unsigned long, void *) = NULL;
+    int (*cpyfunc)(unsigned long, void *) = NULL;
     if (len == -1)
         len = strlen((const char *)in);
     if (!mask)
@@ -98,13 +98,13 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 
     if ((minsize > 0) && (nchar < minsize)) {
         ERR_raise_data(ERR_LIB_ASN1, ASN1_R_STRING_TOO_SHORT,
-                       "minsize=%ld", minsize);
+            "minsize=%ld", minsize);
         return -1;
     }
 
     if ((maxsize > 0) && (nchar > maxsize)) {
         ERR_raise_data(ERR_LIB_ASN1, ASN1_R_STRING_TOO_LONG,
-                       "maxsize=%ld", maxsize);
+            "maxsize=%ld", maxsize);
         return -1;
     }
 
@@ -206,8 +206,8 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
  */
 
 static int traverse_string(const unsigned char *p, int len, int inform,
-                           int (*rfunc) (unsigned long value, void *in),
-                           void *arg)
+    int (*rfunc)(unsigned long value, void *in),
+    void *arg)
 {
     unsigned long value;
     int ret;
@@ -280,8 +280,7 @@ static int type_str(unsigned long value, void *arg)
     unsigned long types = *((unsigned long *)arg);
     const int native = value > INT_MAX ? INT_MAX : ossl_fromascii(value);
 
-    if ((types & B_ASN1_NUMERICSTRING) && !(ossl_isdigit(native)
-                                            || native == ' '))
+    if ((types & B_ASN1_NUMERICSTRING) && !(ossl_isdigit(native) || native == ' '))
         types &= ~B_ASN1_NUMERICSTRING;
     if ((types & B_ASN1_PRINTABLESTRING) && !ossl_isasn1print(native))
         types &= ~B_ASN1_PRINTABLESTRING;
