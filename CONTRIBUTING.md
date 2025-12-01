@@ -97,8 +97,9 @@ guidelines:
     often. We do not accept merge commits, you will have to remove them
     (usually by rebasing) before it will be acceptable.
 
- 4. Code provided should follow our [coding style] and [documentation policy]
+ 4. Code provided should follow our [coding style](STYLE.md) and [documentation policy]
     and compile without warnings.
+
     Consistent formatting is enforced by using `clang-format` with configuration
     stored in [.clang-format](.clang-format). OpenSSL uses `WebKit` style.
     You can configure git pre-commit to automatically reformat your code with
@@ -112,7 +113,6 @@ guidelines:
     Clean builds via GitHub Actions are required. They are started automatically
     whenever a PR is created or updated by committers.
 
-    [coding style]: https://openssl-library.org/policies/technical/coding-style/
     [documentation policy]: https://openssl-library.org/policies/technical/documentation-policy/
 
  5. When at all possible, code contributions should include tests. These can
@@ -165,7 +165,8 @@ guidelines:
     the commit should include the line:
 
     ```
-        Fixes #XXXXX
+        Fixes: LINK
     ```
 
-    where XXXXX is the issue number.
+    where LINK is the https link to the issue in github.
+
