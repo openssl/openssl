@@ -68,6 +68,7 @@ BIO_METHOD *qtest_get_bio_method(void);
  */
 void qtest_fault_free(QTEST_FAULT *fault);
 
+#if !(defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH))
 /* Returns 1 if the quictestlib supports blocking tests */
 int qtest_supports_blocking(void);
 
@@ -94,6 +95,7 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
  * Shutdown the client SSL object gracefully
  */
 int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl);
+#endif
 
 /*
  * Confirm that the server has received the given transport error code.

@@ -69,12 +69,12 @@ static void *thread_run(void *arg)
     return NULL;
 }
 
-static int run_thread(thread_t *t, void (*f)(void))
+static ossl_unused int run_thread(thread_t *t, void (*f)(void))
 {
     return pthread_create(t, NULL, thread_run, *(void **) &f) == 0;
 }
 
-static int wait_for_thread(thread_t thread)
+static ossl_unused int wait_for_thread(thread_t thread)
 {
     return pthread_join(thread, NULL) == 0;
 }

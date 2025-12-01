@@ -22,6 +22,7 @@
  * ============================================================================
  */
 
+#if !(defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH))
 /*
  * Test: simple_conn
  * -----------------
@@ -66,6 +67,7 @@ DEF_SCRIPT(simple_thread,
     for (i = 0; i < 2; ++i)
         OP_SPAWN_THREAD(simple_thread_child);
 }
+#endif
 
 /*
  * Test: ssl_poll
@@ -299,8 +301,10 @@ DEF_SCRIPT(check_cwm, "check stream obeys cwm")
  * ============================================================================
  */
 static SCRIPT_INFO *const scripts[] = {
+#if !(defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH))
     USE(simple_conn)
     USE(simple_thread)
+#endif
     USE(ssl_poll)
     USE(check_cwm)
 };

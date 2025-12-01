@@ -34,6 +34,9 @@ my $provconfnew = result_file("fips-and-base-temp.cnf");
 plan skip_all => "No TLS/SSL protocols are supported by this OpenSSL build"
     if alldisabled(grep { $_ ne "ssl3" } available_protocols("tls"));
 
+plan skip_all => "$test_name needs EC or DH enabled"
+    if disabled("ec") && disabled("dh");
+
 plan tests => 4;
 
 (undef, my $tmpfilename) = tempfile();

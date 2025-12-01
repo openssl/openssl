@@ -41,6 +41,7 @@ static int is_fips = 0;
 # define DO_SSL_TRACE_TEST
 #endif
 
+#if !(defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH))
 /*
  * Test that we read what we've written.
  * Test 0: Non-blocking
@@ -281,6 +282,7 @@ static int test_fin_only_blocking(void)
 
     return ret;
 }
+#endif
 
 /* Test that a vanilla QUIC SSL object has the expected ciphersuites available */
 static int test_ciphersuites(void)
@@ -389,6 +391,7 @@ static int test_cipher_find(void)
     return testresult;
 }
 
+#if !(defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH))
 /*
  * Test that SSL_version, SSL_get_version, SSL_is_quic, SSL_is_tls and
  * SSL_is_dtls return the expected results for a QUIC connection. Compare with
@@ -621,6 +624,7 @@ static int test_new_token(void)
 
     return testresult;
 }
+#endif
 #endif
 
 static int ensure_valid_ciphers(const STACK_OF(SSL_CIPHER) *ciphers)
@@ -1035,6 +1039,7 @@ static int test_bio_ssl(void)
     return testresult;
 }
 
+#if !(defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH))
 #define BACK_PRESSURE_NUM_LOOPS 10000
 /*
  * Test that sending data from the client to the server faster than the server
@@ -2322,6 +2327,7 @@ static int test_session_cb(void)
 
     return testresult;
 }
+#endif
 
 static int test_domain_flags(void)
 {
@@ -2365,6 +2371,7 @@ err:
     return testresult;
 }
 
+#if !(defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH))
 /*
  * Test that calling SSL_handle_events() early behaves as expected
  */
@@ -2414,6 +2421,7 @@ static int test_early_ticks(void)
     ossl_quic_tserver_free(qtserv);
     return testresult;
 }
+#endif
 
 static int select_alpn(SSL *ssl, const unsigned char **out,
                        unsigned char *out_len, const unsigned char *in,
@@ -3247,19 +3255,24 @@ int setup_tests(void)
     if (privkey == NULL)
         goto err;
 
+#if !(defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH))
     ADD_ALL_TESTS(test_quic_write_read, 3);
     ADD_TEST(test_fin_only_blocking);
+#endif
     ADD_TEST(test_ciphersuites);
     ADD_TEST(test_cipher_find);
+#if !(defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH))
     ADD_TEST(test_version);
 #if defined(DO_SSL_TRACE_TEST)
     ADD_TEST(test_ssl_trace);
+#endif
 #endif
     ADD_TEST(test_quic_forbidden_apis_ctx);
     ADD_TEST(test_quic_forbidden_apis);
     ADD_TEST(test_quic_forbidden_options);
     ADD_ALL_TESTS(test_quic_set_fd, 3);
     ADD_TEST(test_bio_ssl);
+#if !(defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH))
     ADD_TEST(test_back_pressure);
     ADD_TEST(test_multiple_dgrams);
     ADD_ALL_TESTS(test_non_io_retry, 2);
@@ -3271,10 +3284,13 @@ int setup_tests(void)
     ADD_TEST(test_get_shutdown);
     ADD_ALL_TESTS(test_tparam, OSSL_NELEM(tparam_tests));
     ADD_TEST(test_session_cb);
+#endif
     ADD_TEST(test_domain_flags);
+#if !(defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH))
     ADD_TEST(test_early_ticks);
+#endif
     ADD_TEST(test_ssl_new_from_listener);
-#ifndef OPENSSL_NO_SSL_TRACE
+#if !defined(OPENSSL_NO_SSL_TRACE) && !((defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_DH)))
     ADD_TEST(test_new_token);
 #endif
     ADD_TEST(test_server_method_with_ssl_new);
