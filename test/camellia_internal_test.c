@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -36,12 +36,15 @@ static void fill_blks(uint8_t *fill, const uint8_t *blk, unsigned int nblks)
 static void camellia_encrypt_armv8_wrapper(const unsigned char *in, unsigned char *out,
                                    const CAMELLIA_KEY *key)
 {
+
     /*Treating key memory block as an optimized SIMD context, not the standard key struct.*/
+    
     camellia_encrypt_1blk_armv8((struct camellia_simd_ctx *)key, out, in);
 }
 #endif
 
-// Internal API deprecated and causes compilation warning
+/* Internal API deprecated and causes compilation warning */
+
 /*static int test_camellia_128_ref(void)
 {
     static const uint8_t k[CAMELLIA_BLOCK_SIZE] = {
@@ -84,7 +87,9 @@ static void camellia_encrypt_armv8_wrapper(const unsigned char *in, unsigned cha
 #ifdef CMLL_AES_CAPABLE
 static int test_camellia_1blk_key128_armv8(void)
 {
-    // Test Vectors (Standard Camellia KAT)
+
+    /* Test Vectors (Standard Camellia KAT) */
+
     static const uint8_t k[CAMELLIA_BLOCK_SIZE] = {
         0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
         0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
@@ -95,13 +100,16 @@ static int test_camellia_1blk_key128_armv8(void)
         0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
     };
 
-    // Expected Ciphertext after 1 round
+    /* Expected Ciphertext after 1 round */
+
     static const uint8_t expected_1rnd[CAMELLIA_BLOCK_SIZE] = {
         0x67, 0x67, 0x31, 0x38, 0x54, 0x96, 0x69, 0x73,
         0x08, 0x57, 0x06, 0x56, 0x48, 0xEA, 0xBE, 0x43
     };
 
-    CAMELLIA_KEY ctx; // Use the standard C context struct
+    /* Use the standard C context struct */
+
+    CAMELLIA_KEY ctx;
     uint8_t block[CAMELLIA_BLOCK_SIZE];
 
     camellia_keysetup_neon((struct camellia_simd_ctx *)&ctx, k, 128 / 8);
@@ -139,7 +147,7 @@ static int test_camellia_16blk_key128_neon(void)
         0x08, 0x57, 0x06, 0x56, 0x48, 0xEA, 0xBE, 0x43
     };
 
-    CAMELLIA_KEY ctx; // Use the standard C context struct
+    CAMELLIA_KEY ctx;
     uint8_t input_simd[32 * 16];
     uint8_t tmp[32 * 16];
 
@@ -163,7 +171,6 @@ static int test_camellia_16blk_key128_neon(void)
 
 static int test_camellia_1blk_key192_armv8(void)
 {
-    // Test Vectors (Standard Camellia KAT)
     static const uint8_t k[24] = {
         0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef,
         0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10,
@@ -175,13 +182,12 @@ static int test_camellia_1blk_key192_armv8(void)
         0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
     };
 
-    // Expected Ciphertext after 1 round
     static const uint8_t expected_1rnd[CAMELLIA_BLOCK_SIZE] = {
         0xb4,0x99,0x34,0x01,0xb3,0xe9,0x96,0xf8,
         0x4e,0xe5,0xce,0xe7,0xd7,0x9b,0x09,0xb9
     };
 
-    CAMELLIA_KEY ctx; // Use the standard C context struct
+    CAMELLIA_KEY ctx;
     uint8_t block[CAMELLIA_BLOCK_SIZE];
 
     camellia_keysetup_neon((struct camellia_simd_ctx *)&ctx, k, 192 / 8);
@@ -220,7 +226,7 @@ static int test_camellia_16blk_key192_neon(void)
         0x4e,0xe5,0xce,0xe7,0xd7,0x9b,0x09,0xb9
     };
 
-    CAMELLIA_KEY ctx; // Use the standard C context struct
+    CAMELLIA_KEY ctx;
     uint8_t input_simd[32 * 16];
     uint8_t tmp[32 * 16];
 
@@ -244,7 +250,6 @@ static int test_camellia_16blk_key192_neon(void)
 
 static int test_camellia_1blk_key256_armv8(void)
 {
-    // Test Vectors (Standard Camellia KAT)
     static const uint8_t k[32] = {
         0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef,
         0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10,
@@ -257,13 +262,12 @@ static int test_camellia_1blk_key256_armv8(void)
         0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
     };
 
-    // Expected Ciphertext after 1 round
     static const uint8_t expected_1rnd[CAMELLIA_BLOCK_SIZE] = {
         0x9a,0xcc,0x23,0x7d,0xff,0x16,0xd7,0x6c,
         0x20,0xef,0x7c,0x91,0x9e,0x3a,0x75,0x09
     };
 
-    CAMELLIA_KEY ctx; // Use the standard C context struct
+    CAMELLIA_KEY ctx;
     uint8_t block[CAMELLIA_BLOCK_SIZE];
 
     camellia_keysetup_neon((struct camellia_simd_ctx *)&ctx, k, 256 / 8);
@@ -298,13 +302,12 @@ static int test_camellia_16blk_key256_neon(void)
         0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
     };
 
-    // Expected Ciphertext after 1 round
     static const uint8_t expected_1rnd[CAMELLIA_BLOCK_SIZE] = {
         0x9a,0xcc,0x23,0x7d,0xff,0x16,0xd7,0x6c,
         0x20,0xef,0x7c,0x91,0x9e,0x3a,0x75,0x09
     };
 
-    CAMELLIA_KEY ctx; // Use the standard C context struct
+    CAMELLIA_KEY ctx;
     uint8_t input_simd[32 * 16];
     uint8_t tmp[32 * 16];
 
@@ -328,15 +331,11 @@ static int test_camellia_16blk_key256_neon(void)
 
 static int test_camellia_cbc_neon(void)
 {
-    /* --- COMMON SETUP --- */
-    
-    /* Standard Camellia 128-bit Key (RFC 3713) */
     static const uint8_t k[16] = { 
         0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
         0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
     };
 
-    /* Standard Input Block */
     static const uint8_t input_std[16] = {
         0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
         0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
@@ -353,15 +352,12 @@ static int test_camellia_cbc_neon(void)
     uint8_t ciphertext[LEN];
     uint8_t plaintext_out[LEN];
 
-    /* Initialize Key Schedule (Optimized) */
-    /* We cast here to tell the setup function to write the SIMD layout */
     camellia_keysetup_neon((struct camellia_simd_ctx *)&ctx, k, 128 / 8);
-
-    /* --- TEST 1: ENCRYPTION CHECK --- */
 
     fill_blks(input_full, input_std, NUM_BLOCKS);
 
-    // Arbitrary IV
+    /* Arbitrary IV */
+
     static const uint8_t iv_random[16] = { 
         0xAA, 0xBB, 0xCC, 0xDD, 0x11, 0x22, 0x33, 0x44, 
         0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22 
@@ -371,27 +367,30 @@ static int test_camellia_cbc_neon(void)
     memcpy(iv_ref, iv_random, 16);
     memcpy(iv_dec, iv_random, 16);
 
-    // 1. Run REFERENCE (OpenSSL Generic Logic using 1-block encryption routine)
+    /* Run reference (OpenSSL Generic Logic using 1-block encryption routine) */
+
     CRYPTO_cbc128_encrypt(input_full, ref, LEN, &ctx, iv_ref, 
                           (block128_f)camellia_encrypt_armv8_wrapper);
 
-    //printf("-----------------Reference 4-block CBC run complete-----------------\n");
+    /* Run candidate (ASM CBC) */
 
-    // 2. Run CANDIDATE (Your ASM CBC)
     camellia_cbc_encrypt_neon(input_full, ciphertext, LEN, (struct camellia_simd_ctx *)&ctx, iv_asm);
 
-    // 3. Compare Outputs
+    /* Compare outputs */
+
     if (!TEST_mem_eq(ciphertext, LEN, ref, LEN)) {
         TEST_error("CBC Encryption Test : ASM output differs from Reference Logic");
         return 0;
     }
 
-    // 4. Compare IV Updates
-    // The IV pointer should now contain the last ciphertext block
+    /* Compare IV updates. The IV pointer should now contain the last ciphertext block */
+
     if (!TEST_mem_eq(iv_asm, 16, iv_ref, 16)) {
         TEST_error("CBC Encryption Test: IV update differs from Reference Logic");
         return 0;
     }
+
+    /* Test decryption */
 
     camellia_cbc_decrypt_neon(ciphertext, plaintext_out, LEN, (struct camellia_simd_ctx *)&ctx, iv_dec);
 
@@ -410,8 +409,8 @@ static int test_camellia_cbc_neon(void)
 
 static int test_camellia_ctr_neon(void)
 {
-    /* --- SETUP --- */
-    /* Use enough blocks to trigger bulk loop (16+) and tail loop */
+    /* Use enough blocks to trigger several iterations of the bulk loop and tail loop */
+
     #define CTR_TEST_BLKS 95
     #define CTR_TEST_LEN  (CTR_TEST_BLKS * 16)
 
@@ -426,6 +425,7 @@ static int test_camellia_ctr_neon(void)
     };
 
     /* Arbitrary IV (Nonce + Counter) */
+
     static const uint8_t iv_original[16] = { 
         0xFF, 0xEE, 0xDD, 0xCC, 0xBB, 0xAA, 0x99, 0x88, /* Nonce */
         0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xF0  /* Counter near overflow */
@@ -439,6 +439,7 @@ static int test_camellia_ctr_neon(void)
     uint8_t iv_asm[16];
     
     /* Stream State Buffers */
+
     unsigned char ecount_buf_ref[16];
     unsigned int num_ref = 0;
     
@@ -448,12 +449,12 @@ static int test_camellia_ctr_neon(void)
     CAMELLIA_KEY ctx;
 
     /* Initialize Input */
+
     fill_blks(input_full, input_std, CTR_TEST_BLKS);
 
-    /* Initialize Key Schedule */
     camellia_keysetup_neon((struct camellia_simd_ctx *)&ctx, k, 128 / 8);
 
-    /* --- 1. RUN REFERENCE (Generic C + 1-block ASM) --- */
+    /* Run reference (generic C + 1-block ASM) */
     
     memcpy(iv_ref, iv_original, 16);
     memset(ecount_buf_ref, 0, 16);
@@ -467,6 +468,8 @@ static int test_camellia_ctr_neon(void)
     memcpy(iv_asm, iv_original, 16);
     memset(ecount_buf_asm, 0, 16);
     num_asm = 0;
+
+    /* Run target (parallel ASM)*/
 
     CRYPTO_ctr128_encrypt_ctr32(input_full, asm_out, CTR_TEST_LEN, 
                                 &ctx, iv_asm, 
@@ -483,6 +486,8 @@ static int test_camellia_ctr_neon(void)
         TEST_error("CTR Test: IV (Counter) update mismatch");
         return 0;
     }
+
+    /* Run decryption (round trip) */
 
     uint8_t roundtrip_out[CTR_TEST_LEN];
     
@@ -511,7 +516,7 @@ static int test_camellia_ctr_neon(void)
 
 int setup_tests(void)
 {
-    //ADD_TEST(test_camellia_128_ref);
+    /*ADD_TEST(test_camellia_128_ref);*/
 #ifdef CMLL_AES_CAPABLE
     ADD_TEST(test_camellia_1blk_key128_armv8);
     ADD_TEST(test_camellia_16blk_key128_neon);
