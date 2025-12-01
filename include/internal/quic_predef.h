@@ -8,9 +8,9 @@
  */
 
 #ifndef OSSL_QUIC_PREDEF_H
-# define OSSL_QUIC_PREDEF_H
+#define OSSL_QUIC_PREDEF_H
 
-# ifndef OPENSSL_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
 
 typedef struct quic_port_st QUIC_PORT;
 typedef struct quic_channel_st QUIC_CHANNEL;
@@ -38,6 +38,6 @@ typedef struct quic_lcidm_st QUIC_LCIDM;
 typedef struct quic_urxe_st QUIC_URXE;
 typedef struct quic_engine_st QUIC_ENGINE;
 
-# endif
+#endif
 
 #endif

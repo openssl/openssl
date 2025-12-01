@@ -7,16 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 #ifndef OSSL_QUIC_PORT_H
-# define OSSL_QUIC_PORT_H
+#define OSSL_QUIC_PORT_H
 
-# include <openssl/ssl.h>
-# include "internal/quic_types.h"
-# include "internal/quic_reactor.h"
-# include "internal/quic_demux.h"
-# include "internal/quic_predef.h"
-# include "internal/thread_arch.h"
+#include <openssl/ssl.h>
+#include "internal/quic_types.h"
+#include "internal/quic_reactor.h"
+#include "internal/quic_demux.h"
+#include "internal/quic_predef.h"
+#include "internal/thread_arch.h"
 
-# ifndef OPENSSL_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
 
 /*
  * QUIC Port
@@ -40,20 +40,20 @@
  */
 typedef struct quic_port_args_st {
     /* The engine which the QUIC port is to be a child of. */
-    QUIC_ENGINE     *engine;
+    QUIC_ENGINE *engine;
 
     /*
      * This SSL_CTX will be used when constructing the handshake layer object
      * inside newly created channels.
      */
-    SSL_CTX         *channel_ctx;
+    SSL_CTX *channel_ctx;
 
     /*
      * If 1, this port is to be used for multiple connections, so
      * non-zero-length CIDs should be used. If 0, this port will only be used
      * for a single connection, so a zero-length local CID can be used.
      */
-    int             is_multi_conn;
+    int is_multi_conn;
 } QUIC_PORT_ARGS;
 
 /* Only QUIC_ENGINE should use this function. */
@@ -122,7 +122,7 @@ void ossl_quic_port_restore_err_state(const QUIC_PORT *port);
 
 /* For use by QUIC_ENGINE. You should not need to call this directly. */
 void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *r,
-                            uint32_t flags);
+    uint32_t flags);
 
 /*
  * Events
@@ -135,8 +135,8 @@ void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *r,
  * a channel which encountered the network error.
  */
 void ossl_quic_port_raise_net_error(QUIC_PORT *port,
-                                    QUIC_CHANNEL *triggering_ch);
+    QUIC_CHANNEL *triggering_ch);
 
-# endif
+#endif
 
 #endif

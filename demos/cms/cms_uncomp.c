@@ -43,7 +43,7 @@ int main(int argc, char **argv)
         goto err;
 
     ret = EXIT_SUCCESS;
- err:
+err:
     if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Uncompressing Data\n");
         ERR_print_errors_fp(stderr);
