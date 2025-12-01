@@ -943,7 +943,8 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
     }
 
     if (frag_len > 0) {
-        p += DTLS1_HM_HEADER_LENGTH;
+        /* dtls1_preprocess_fragment() above could reallocate init_buf */
+        p = (unsigned char *)s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
 
         i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL,
                                         &p[frag_off], frag_len, 0, &readbytes);
