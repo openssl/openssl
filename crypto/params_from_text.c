@@ -22,10 +22,10 @@
  */
 
 static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
-                             const char *value, size_t value_n,
-                             /* Output parameters */
-                             const OSSL_PARAM **paramdef, int *ishex,
-                             size_t *buf_n, BIGNUM **tmpbn, int *found)
+    const char *value, size_t value_n,
+    /* Output parameters */
+    const OSSL_PARAM **paramdef, int *ishex,
+    size_t *buf_n, BIGNUM **tmpbn, int *found)
 {
     const OSSL_PARAM *p;
     size_t buf_bits;
@@ -132,8 +132,8 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
 }
 
 static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
-                               const char *value, size_t value_n, int ishex,
-                               void *buf, size_t buf_n, BIGNUM *tmpbn)
+    const char *value, size_t value_n, int ishex,
+    void *buf, size_t buf_n, BIGNUM *tmpbn)
 {
     if (buf == NULL)
         return 0;
@@ -198,9 +198,9 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
 }
 
 int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
-                                  const OSSL_PARAM *paramdefs,
-                                  const char *key, const char *value,
-                                  size_t value_n, int *found)
+    const OSSL_PARAM *paramdefs,
+    const char *key, const char *value,
+    size_t value_n, int *found)
 {
     const OSSL_PARAM *paramdef = NULL;
     int ishex = 0;
@@ -213,19 +213,19 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
         return 0;
 
     if (!prepare_from_text(paramdefs, key, value, value_n,
-                           &paramdef, &ishex, &buf_n, &tmpbn, found))
+            &paramdef, &ishex, &buf_n, &tmpbn, found))
         goto err;
 
     if ((buf = OPENSSL_zalloc(buf_n > 0 ? buf_n : 1)) == NULL)
         goto err;
 
     ok = construct_from_text(to, paramdef, value, value_n, ishex,
-                             buf, buf_n, tmpbn);
+        buf, buf_n, tmpbn);
     BN_free(tmpbn);
     if (!ok)
         OPENSSL_free(buf);
     return ok;
- err:
+err:
     BN_free(tmpbn);
     return 0;
 }

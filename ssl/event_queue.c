@@ -12,8 +12,8 @@
 #include "ssl_local.h"
 
 struct ossl_event_queue_st {
-    PRIORITY_QUEUE_OF(OSSL_EVENT) *timed_events;
-    PRIORITY_QUEUE_OF(OSSL_EVENT) *now_events;
+    PRIORITY_QUEUE_OF(OSSL_EVENT) * timed_events;
+    PRIORITY_QUEUE_OF(OSSL_EVENT) * now_events;
 };
 
 static int event_compare_times(const OSSL_EVENT *a, const OSSL_EVENT *b)
@@ -55,7 +55,7 @@ void ossl_event_free(OSSL_EVENT *event)
     }
 }
 
-static void event_queue_free(PRIORITY_QUEUE_OF(OSSL_EVENT) *queue)
+static void event_queue_free(PRIORITY_QUEUE_OF(OSSL_EVENT) * queue)
 {
     OSSL_EVENT *e;
 
@@ -75,13 +75,11 @@ void ossl_event_queue_free(OSSL_EVENT_QUEUE *queue)
     }
 }
 
-static ossl_inline
-int event_queue_add(OSSL_EVENT_QUEUE *queue, OSSL_EVENT *event)
+static ossl_inline int event_queue_add(OSSL_EVENT_QUEUE *queue, OSSL_EVENT *event)
 {
-    PRIORITY_QUEUE_OF(OSSL_EVENT) *pq =
-            ossl_time_compare(event->when, ossl_time_now()) <= 0
-            ? queue->now_events
-            : queue->timed_events;
+    PRIORITY_QUEUE_OF(OSSL_EVENT) *pq = ossl_time_compare(event->when, ossl_time_now()) <= 0
+        ? queue->now_events
+        : queue->timed_events;
 
     if (ossl_pqueue_OSSL_EVENT_push(pq, event, &event->ref)) {
         event->queue = pq;
@@ -90,10 +88,9 @@ int event_queue_add(OSSL_EVENT_QUEUE *queue, OSSL_EVENT *event)
     return 0;
 }
 
-static ossl_inline
-void ossl_event_set(OSSL_EVENT *event, uint32_t type, uint32_t priority,
-                    OSSL_TIME when, void *ctx,
-                    void *payload, size_t payload_size)
+static ossl_inline void ossl_event_set(OSSL_EVENT *event, uint32_t type, uint32_t priority,
+    OSSL_TIME when, void *ctx,
+    void *payload, size_t payload_size)
 {
     event->type = type;
     event->priority = priority;
@@ -103,10 +100,10 @@ void ossl_event_set(OSSL_EVENT *event, uint32_t type, uint32_t priority,
     event->payload_size = payload_size;
 }
 
-OSSL_EVENT *ossl_event_queue_add_new(OSSL_EVENT_QUEUE *queue, 
-                                     uint32_t type, uint32_t priority,
-                                     OSSL_TIME when, void *ctx,
-                                     void *payload, size_t payload_size)
+OSSL_EVENT *ossl_event_queue_add_new(OSSL_EVENT_QUEUE *queue,
+    uint32_t type, uint32_t priority,
+    OSSL_TIME when, void *ctx,
+    void *payload, size_t payload_size)
 {
     OSSL_EVENT *e = OPENSSL_malloc(sizeof(*e));
 
@@ -124,9 +121,9 @@ OSSL_EVENT *ossl_event_queue_add_new(OSSL_EVENT_QUEUE *queue,
 }
 
 int ossl_event_queue_add(OSSL_EVENT_QUEUE *queue, OSSL_EVENT *event,
-                         uint32_t type, uint32_t priority,
-                         OSSL_TIME when, void *ctx,
-                         void *payload, size_t payload_size)
+    uint32_t type, uint32_t priority,
+    OSSL_TIME when, void *ctx,
+    void *payload, size_t payload_size)
 {
     if (event == NULL || queue == NULL)
         return 0;
@@ -161,8 +158,8 @@ OSSL_TIME ossl_event_queue_time_until_next(const OSSL_EVENT_QUEUE *queue)
 }
 
 int ossl_event_queue_postpone_until(OSSL_EVENT_QUEUE *queue,
-                                    OSSL_EVENT *event,
-                                    OSSL_TIME when)
+    OSSL_EVENT *event,
+    OSSL_TIME when)
 {
     if (ossl_event_queue_remove(queue, event)) {
         event->when = when;
@@ -172,14 +169,14 @@ int ossl_event_queue_postpone_until(OSSL_EVENT_QUEUE *queue,
 }
 
 int ossl_event_queue_get1_next_event(OSSL_EVENT_QUEUE *queue,
-                                     OSSL_EVENT **event)
+    OSSL_EVENT **event)
 {
     OSSL_TIME now = ossl_time_now();
     OSSL_EVENT *e;
 
     /* Check for expired timer based events and convert them to now events */
     while ((e = ossl_pqueue_OSSL_EVENT_peek(queue->timed_events)) != NULL
-           && ossl_time_compare(e->when, now) <= 0) {
+        && ossl_time_compare(e->when, now) <= 0) {
         e = ossl_pqueue_OSSL_EVENT_pop(queue->timed_events);
         if (!ossl_pqueue_OSSL_EVENT_push(queue->now_events, e, &e->ref)) {
             e->queue = NULL;

@@ -8,29 +8,33 @@
  */
 
 #ifndef OSSL_CRYPTO_RISCV_ARCH_H
-# define OSSL_CRYPTO_RISCV_ARCH_H
+#define OSSL_CRYPTO_RISCV_ARCH_H
 
-# include <ctype.h>
-# include <stdint.h>
+#include <ctype.h>
+#include <stdint.h>
 
-# define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) +1
-extern uint32_t OPENSSL_riscvcap_P[ ((
-# include "riscv_arch.def"
-) + sizeof(uint32_t) - 1) / sizeof(uint32_t) ];
+#define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) +1
+extern uint32_t OPENSSL_riscvcap_P[((
+#include "riscv_arch.def"
+                                        )
+                                       + sizeof(uint32_t) - 1)
+    / sizeof(uint32_t)];
 
-# ifdef OPENSSL_RISCVCAP_IMPL
-#  define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) +1
-uint32_t OPENSSL_riscvcap_P[ ((
-#  include "riscv_arch.def"
-) + sizeof(uint32_t) - 1) / sizeof(uint32_t) ];
-# endif
+#ifdef OPENSSL_RISCVCAP_IMPL
+#define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) +1
+uint32_t OPENSSL_riscvcap_P[((
+#include "riscv_arch.def"
+                                 )
+                                + sizeof(uint32_t) - 1)
+    / sizeof(uint32_t)];
+#endif
 
-# define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX)                   \
+#define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX)                    \
     static inline int RISCV_HAS_##NAME(void)                        \
     {                                                               \
         return (OPENSSL_riscvcap_P[INDEX] & (1 << BIT_INDEX)) != 0; \
     }
-# include "riscv_arch.def"
+#include "riscv_arch.def"
 
 struct RISCV_capability_s {
     const char *name;
@@ -38,23 +42,23 @@ struct RISCV_capability_s {
     size_t bit_offset;
 };
 
-# define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) +1
+#define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) +1
 extern const struct RISCV_capability_s RISCV_capabilities[
-# include "riscv_arch.def"
+#include "riscv_arch.def"
 ];
 
-# ifdef OPENSSL_RISCVCAP_IMPL
-#  define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) \
+#ifdef OPENSSL_RISCVCAP_IMPL
+#define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) \
     { #NAME, INDEX, BIT_INDEX },
 const struct RISCV_capability_s RISCV_capabilities[] = {
-#  include "riscv_arch.def"
+#include "riscv_arch.def"
 };
-# endif
+#endif
 
-# define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) +1
+#define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) +1
 static const size_t kRISCVNumCaps =
-# include "riscv_arch.def"
-;
+#include "riscv_arch.def"
+    ;
 
 /* Extension combination tests. */
 #define RISCV_HAS_ZBB_AND_ZBC() (RISCV_HAS_ZBB() && RISCV_HAS_ZBC())

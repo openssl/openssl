@@ -35,7 +35,7 @@ void X509_LOOKUP_free(X509_LOOKUP *ctx)
     if (ctx == NULL)
         return;
     if ((ctx->method != NULL) && (ctx->method->free != NULL))
-        (*ctx->method->free) (ctx);
+        (*ctx->method->free)(ctx);
     OPENSSL_free(ctx);
 }
 
@@ -75,7 +75,7 @@ int X509_LOOKUP_shutdown(X509_LOOKUP *ctx)
 }
 
 int X509_LOOKUP_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
-                        char **ret, OSSL_LIB_CTX *libctx, const char *propq)
+    char **ret, OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (ctx->method == NULL)
         return -1;
@@ -87,14 +87,14 @@ int X509_LOOKUP_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
 }
 
 int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
-                     char **ret)
+    char **ret)
 {
     return X509_LOOKUP_ctrl_ex(ctx, cmd, argc, argl, ret, NULL, NULL);
 }
 
 int X509_LOOKUP_by_subject_ex(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                              const X509_NAME *name, X509_OBJECT *ret,
-                              OSSL_LIB_CTX *libctx, const char *propq)
+    const X509_NAME *name, X509_OBJECT *ret,
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (ctx->skip
         || ctx->method == NULL
@@ -103,21 +103,21 @@ int X509_LOOKUP_by_subject_ex(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
         return 0;
     if (ctx->method->get_by_subject_ex != NULL)
         return ctx->method->get_by_subject_ex(ctx, type, name, ret, libctx,
-                                              propq);
+            propq);
     else
         return ctx->method->get_by_subject(ctx, type, name, ret);
 }
 
 int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                           const X509_NAME *name, X509_OBJECT *ret)
+    const X509_NAME *name, X509_OBJECT *ret)
 {
     return X509_LOOKUP_by_subject_ex(ctx, type, name, ret, NULL, NULL);
 }
 
 int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                                 const X509_NAME *name,
-                                 const ASN1_INTEGER *serial,
-                                 X509_OBJECT *ret)
+    const X509_NAME *name,
+    const ASN1_INTEGER *serial,
+    X509_OBJECT *ret)
 {
     if ((ctx->method == NULL) || (ctx->method->get_by_issuer_serial == NULL))
         return 0;
@@ -125,8 +125,8 @@ int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
 }
 
 int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                               const unsigned char *bytes, int len,
-                               X509_OBJECT *ret)
+    const unsigned char *bytes, int len,
+    X509_OBJECT *ret)
 {
     if ((ctx->method == NULL) || (ctx->method->get_by_fingerprint == NULL))
         return 0;
@@ -134,7 +134,7 @@ int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
 }
 
 int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                         const char *str, int len, X509_OBJECT *ret)
+    const char *str, int len, X509_OBJECT *ret)
 {
     if ((ctx->method == NULL) || (ctx->method->get_by_alias == NULL))
         return 0;
@@ -158,7 +158,7 @@ X509_STORE *X509_LOOKUP_get_store(const X509_LOOKUP *ctx)
 }
 
 static int x509_object_cmp(const X509_OBJECT *const *a,
-                           const X509_OBJECT *const *b)
+    const X509_OBJECT *const *b)
 {
     int ret;
 
@@ -296,8 +296,8 @@ X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *xs, X509_LOOKUP_METHOD *m)
 
 /* Also fill the cache (ctx->store->objs) with all matching certificates. */
 X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *ctx,
-                                               X509_LOOKUP_TYPE type,
-                                               const X509_NAME *name)
+    X509_LOOKUP_TYPE type,
+    const X509_NAME *name)
 {
     X509_OBJECT *ret = X509_OBJECT_new();
 
@@ -318,9 +318,9 @@ X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *ctx,
  * -1 on failure
  */
 static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx,
-                                              X509_LOOKUP_TYPE type,
-                                              const X509_NAME *name,
-                                              X509_OBJECT *ret)
+    X509_LOOKUP_TYPE type,
+    const X509_NAME *name,
+    X509_OBJECT *ret)
 {
     X509_STORE *store = ctx->store;
     X509_LOOKUP *lu;
@@ -358,7 +358,7 @@ static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx,
             if (lu->method == NULL)
                 return -1;
             j = X509_LOOKUP_by_subject_ex(lu, type, name, &stmp,
-                                          ctx->libctx, ctx->propq);
+                ctx->libctx, ctx->propq);
             if (j != 0) { /* non-zero value is considered success here */
                 tmp = &stmp;
                 break;
@@ -377,8 +377,8 @@ static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx,
 
 /* Also fill the cache |ctx->store->objs| with all matching certificates. */
 int X509_STORE_CTX_get_by_subject(const X509_STORE_CTX *ctx,
-                                  X509_LOOKUP_TYPE type,
-                                  const X509_NAME *name, X509_OBJECT *ret)
+    X509_LOOKUP_TYPE type,
+    const X509_NAME *name, X509_OBJECT *ret)
 {
     return ossl_x509_store_ctx_get_by_subject(ctx, type, name, ret) > 0;
 }
@@ -420,7 +420,7 @@ static int x509_store_add(X509_STORE *store, void *x, int crl)
     }
     X509_STORE_unlock(store);
 
-    if (added == 0)             /* obj not pushed */
+    if (added == 0) /* obj not pushed */
         X509_OBJECT_free(obj);
 
     return ret;
@@ -532,7 +532,7 @@ void X509_OBJECT_free(X509_OBJECT *a)
 
 /* Returns -1 if not found, but also on error */
 static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
-                               const X509_NAME *name, int *pnmatch)
+    const X509_NAME *name, int *pnmatch)
 {
     X509_OBJECT stmp;
     X509 x509_s;
@@ -560,15 +560,15 @@ static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
 
 /* Assumes h is locked for read if applicable */
 int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
-                               const X509_NAME *name)
+    const X509_NAME *name)
 {
     return x509_object_idx_cnt(h, type, name, NULL);
 }
 
 /* Assumes h is locked for read if applicable */
 X509_OBJECT *X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h,
-                                             X509_LOOKUP_TYPE type,
-                                             const X509_NAME *name)
+    X509_LOOKUP_TYPE type,
+    const X509_NAME *name)
 {
     int idx = X509_OBJECT_idx_by_subject(h, type, name);
 
@@ -607,7 +607,7 @@ STACK_OF(X509_OBJECT) *X509_STORE_get1_objects(X509_STORE *store)
         return NULL;
 
     objs = sk_X509_OBJECT_deep_copy(store->objs, x509_object_dup,
-                                    X509_OBJECT_free);
+        X509_OBJECT_free);
     X509_STORE_unlock(store);
     return objs;
 }
@@ -639,16 +639,16 @@ STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *store)
     X509_STORE_unlock(store);
     return sk;
 
- err:
+err:
     X509_STORE_unlock(store);
- out_free:
+out_free:
     OSSL_STACK_OF_X509_free(sk);
     return NULL;
 }
 
 /* Returns NULL on internal/fatal error, empty stack if not found */
 STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
-                                          const X509_NAME *nm)
+    const X509_NAME *nm)
 {
     int i, idx, cnt;
     STACK_OF(X509) *sk = NULL;
@@ -702,14 +702,14 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
             return NULL;
         }
     }
- end:
+end:
     X509_STORE_unlock(store);
     return sk;
 }
 
 /* Returns NULL on internal/fatal error, empty stack if not found */
 STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
-                                             const X509_NAME *nm)
+    const X509_NAME *nm)
 {
     int i = 1, idx, cnt;
     STACK_OF(X509_CRL) *sk = sk_X509_CRL_new_null();
@@ -721,7 +721,8 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
     if (sk == NULL
         || xobj == NULL
         || (i = ossl_x509_store_ctx_get_by_subject(ctx, X509_LU_CRL,
-                                                   nm, xobj)) < 0) {
+                nm, xobj))
+            < 0) {
         X509_OBJECT_free(xobj);
         sk_X509_CRL_free(sk);
         return NULL;
@@ -760,7 +761,7 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
 }
 
 X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
-                                        X509_OBJECT *x)
+    X509_OBJECT *x)
 {
     int idx, i, num;
     X509_OBJECT *obj;
@@ -773,7 +774,7 @@ X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
     for (i = idx, num = sk_X509_OBJECT_num(h); i < num; i++) {
         obj = sk_X509_OBJECT_value(h, i);
         if (x509_object_cmp((const X509_OBJECT **)&obj,
-                            (const X509_OBJECT **)&x))
+                (const X509_OBJECT **)&x))
             return NULL;
         if (x->type == X509_LU_X509) {
             if (!X509_cmp(obj->data.x509, x->data.x509))
@@ -860,7 +861,8 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
                  */
                 if (*issuer == NULL
                     || ASN1_TIME_compare(X509_get0_notAfter(pobj->data.x509),
-                                         X509_get0_notAfter(*issuer)) > 0)
+                           X509_get0_notAfter(*issuer))
+                        > 0)
                     *issuer = pobj->data.x509;
             }
         }
@@ -915,7 +917,7 @@ X509_STORE_CTX_verify_fn X509_STORE_get_verify(const X509_STORE *xs)
 }
 
 void X509_STORE_set_verify_cb(X509_STORE *xs,
-                              X509_STORE_CTX_verify_cb verify_cb)
+    X509_STORE_CTX_verify_cb verify_cb)
 {
     xs->verify_cb = verify_cb;
 }
@@ -926,7 +928,7 @@ X509_STORE_CTX_verify_cb X509_STORE_get_verify_cb(const X509_STORE *xs)
 }
 
 void X509_STORE_set_get_issuer(X509_STORE *xs,
-                               X509_STORE_CTX_get_issuer_fn get_issuer)
+    X509_STORE_CTX_get_issuer_fn get_issuer)
 {
     xs->get_issuer = get_issuer;
 }
@@ -937,7 +939,7 @@ X509_STORE_CTX_get_issuer_fn X509_STORE_get_get_issuer(const X509_STORE *xs)
 }
 
 void X509_STORE_set_check_issued(X509_STORE *xs,
-                                 X509_STORE_CTX_check_issued_fn check_issued)
+    X509_STORE_CTX_check_issued_fn check_issued)
 {
     xs->check_issued = check_issued;
 }
@@ -948,7 +950,7 @@ X509_STORE_CTX_check_issued_fn X509_STORE_get_check_issued(const X509_STORE *xs)
 }
 
 void X509_STORE_set_check_revocation(X509_STORE *xs,
-                                     X509_STORE_CTX_check_revocation_fn cb)
+    X509_STORE_CTX_check_revocation_fn cb)
 {
     xs->check_revocation = cb;
 }
@@ -959,7 +961,7 @@ X509_STORE_CTX_check_revocation_fn X509_STORE_get_check_revocation(const X509_ST
 }
 
 void X509_STORE_set_get_crl(X509_STORE *xs,
-                            X509_STORE_CTX_get_crl_fn get_crl)
+    X509_STORE_CTX_get_crl_fn get_crl)
 {
     xs->get_crl = get_crl;
 }
@@ -970,7 +972,7 @@ X509_STORE_CTX_get_crl_fn X509_STORE_get_get_crl(const X509_STORE *xs)
 }
 
 void X509_STORE_set_check_crl(X509_STORE *xs,
-                              X509_STORE_CTX_check_crl_fn check_crl)
+    X509_STORE_CTX_check_crl_fn check_crl)
 {
     xs->check_crl = check_crl;
 }
@@ -981,7 +983,7 @@ X509_STORE_CTX_check_crl_fn X509_STORE_get_check_crl(const X509_STORE *xs)
 }
 
 void X509_STORE_set_cert_crl(X509_STORE *xs,
-                             X509_STORE_CTX_cert_crl_fn cert_crl)
+    X509_STORE_CTX_cert_crl_fn cert_crl)
 {
     xs->cert_crl = cert_crl;
 }
@@ -992,7 +994,7 @@ X509_STORE_CTX_cert_crl_fn X509_STORE_get_cert_crl(const X509_STORE *xs)
 }
 
 void X509_STORE_set_check_policy(X509_STORE *xs,
-                                 X509_STORE_CTX_check_policy_fn check_policy)
+    X509_STORE_CTX_check_policy_fn check_policy)
 {
     xs->check_policy = check_policy;
 }
@@ -1003,7 +1005,7 @@ X509_STORE_CTX_check_policy_fn X509_STORE_get_check_policy(const X509_STORE *xs)
 }
 
 void X509_STORE_set_lookup_certs(X509_STORE *xs,
-                                 X509_STORE_CTX_lookup_certs_fn lookup_certs)
+    X509_STORE_CTX_lookup_certs_fn lookup_certs)
 {
     xs->lookup_certs = lookup_certs;
 }
@@ -1014,7 +1016,7 @@ X509_STORE_CTX_lookup_certs_fn X509_STORE_get_lookup_certs(const X509_STORE *xs)
 }
 
 void X509_STORE_set_lookup_crls(X509_STORE *xs,
-                                X509_STORE_CTX_lookup_crls_fn lookup_crls)
+    X509_STORE_CTX_lookup_crls_fn lookup_crls)
 {
     xs->lookup_crls = lookup_crls;
 }
@@ -1025,7 +1027,7 @@ X509_STORE_CTX_lookup_crls_fn X509_STORE_get_lookup_crls(const X509_STORE *xs)
 }
 
 void X509_STORE_set_cleanup(X509_STORE *xs,
-                            X509_STORE_CTX_cleanup_fn cleanup)
+    X509_STORE_CTX_cleanup_fn cleanup)
 {
     xs->cleanup = cleanup;
 }
