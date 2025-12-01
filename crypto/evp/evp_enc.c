@@ -978,7 +978,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
                       const unsigned char *in, int inl)
 {
     int ret;
-    size_t soutl, inl_ = (size_t)inl;
+    size_t soutl = 0, inl_ = (size_t)inl;
     int blocksize;
 
     if (ossl_likely(outl != NULL)) {
@@ -1040,7 +1040,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
     int n, ret;
     unsigned int i, b, bl;
-    size_t soutl;
+    size_t soutl = 0;
     int blocksize;
 
     if (outl != NULL) {
