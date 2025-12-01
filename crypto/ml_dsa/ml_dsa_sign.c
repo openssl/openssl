@@ -421,24 +421,27 @@ int ossl_ml_dsa_sign(const ML_DSA_KEY *priv, int msg_is_mu,
                      const uint8_t *msg, size_t msg_len,
                      const uint8_t *context, size_t context_len,
                      const uint8_t *rand, size_t rand_len, int encode,
-                     unsigned char *sig, size_t *sig_len, size_t sig_size)
+                     unsigned char *sig, size_t *sig_len, size_t sig_size,
+                     int sig_is_mu)
 {
     EVP_MD_CTX *md_ctx = NULL;
     uint8_t mu[ML_DSA_MU_BYTES];
     const uint8_t *mu_ptr = mu;
     size_t mu_len = sizeof(mu);
+    size_t out_len = 0;
     int ret = 0;
 
     if (ossl_ml_dsa_key_get_priv(priv) == NULL)
         return 0;
+    out_len = sig_is_mu ? mu_len : priv->params->sig_len;
 
     if (sig_len != NULL)
-        *sig_len = priv->params->sig_len;
+        *sig_len = out_len;
 
     if (sig == NULL)
         return (sig_len != NULL) ? 1 : 0;
 
-    if (sig_size < priv->params->sig_len)
+    if (sig_size < out_len)
         return 0;
 
     if (msg_is_mu) {
@@ -455,9 +458,12 @@ int ossl_ml_dsa_sign(const ML_DSA_KEY *priv, int msg_is_mu,
         if (!ossl_ml_dsa_mu_finalize(md_ctx, mu, mu_len))
             goto err;
     }
-
-    ret = ml_dsa_sign_internal(priv, mu_ptr, mu_len, rand, rand_len, sig);
-
+    if (sig_is_mu) {
+        memcpy(sig, mu_ptr, mu_len);
+        ret = 1;
+    } else {
+        ret = ml_dsa_sign_internal(priv, mu_ptr, mu_len, rand, rand_len, sig);
+    }
 err:
     EVP_MD_CTX_free(md_ctx);
     return ret;

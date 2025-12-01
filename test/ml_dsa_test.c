@@ -625,6 +625,156 @@ static int ml_dsa_priv_pub_bad_t0_test(void)
     return ret;
 }
 
+static int do_calculate_mu(const ML_DSA_SIG_GEN_TEST_DATA *td,
+                           EVP_PKEY *pkey, uint8_t *mu, int digestsign)
+{
+    int ret = 0;
+    int mu_only = 1;
+    size_t mu_len = 0;
+    OSSL_PARAM params[3], *p = params;
+    EVP_PKEY_CTX *sctx = NULL;
+    EVP_SIGNATURE *sig_alg = NULL;
+    EVP_MD_CTX *mdctx = NULL;
+    const uint8_t *msg = td->msg;
+    size_t len, msg_len = td->msg_len;
+
+    *p++ = OSSL_PARAM_construct_int("mu-only", &mu_only);
+    if (td->ctx != NULL)
+        *p++ = OSSL_PARAM_construct_octet_string("context-string",
+            (unsigned char *)td->ctx, td->ctx_len);
+    *p = OSSL_PARAM_construct_end();
+
+    if (digestsign) {
+        if (!TEST_ptr(mdctx = EVP_MD_CTX_new())
+                || !TEST_int_eq(EVP_DigestSignInit_ex(mdctx, NULL, NULL, lib_ctx, NULL, pkey, params), 1)
+                || !TEST_int_eq(EVP_DigestSign(mdctx, NULL, &mu_len, td->msg, td->msg_len), 1)
+                || !TEST_size_t_eq(mu_len, 64)
+                || !TEST_int_eq(EVP_DigestSign(mdctx, mu, &mu_len, td->msg, td->msg_len), 1)
+                || !TEST_size_t_eq(mu_len, 64))
+            goto err;
+    } else {
+        sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL);
+        sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL);
+        if (!TEST_ptr(sctx)
+                || !TEST_ptr(sig_alg)
+                || !TEST_int_eq(EVP_PKEY_sign_message_init(sctx, sig_alg, params), 1)
+                || !TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &mu_len,
+                                              td->msg, td->msg_len), 1)
+                || !TEST_size_t_eq(mu_len, 64))
+            goto err;
+        while (msg_len != 0) {
+            len = msg_len >= 64 ? 64 : msg_len;
+            if (!TEST_int_eq(EVP_PKEY_sign_message_update(sctx, msg, len), 1))
+                    goto err;
+            msg += len;
+            msg_len -= len;
+        }
+        if (!TEST_int_eq(EVP_PKEY_sign_message_final(sctx, mu, &mu_len), 1)
+                || !TEST_size_t_eq(mu_len, 64))
+            goto err;
+    }
+    ret = 1;
+err:
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_CTX_free(sctx);
+    EVP_MD_CTX_free(mdctx);
+    return ret;
+}
+
+static int test_digestsign_verify_external_mu(int tstid)
+{
+    int ret = 0, mu = 1, deterministic = 1;
+    ML_DSA_SIG_GEN_TEST_DATA *td = &ml_dsa_siggen_mu_testdata[tstid];
+    EVP_PKEY *pkey = NULL;
+    EVP_MD_CTX *mdctx = NULL;
+    uint8_t mu_buf[64];
+    uint8_t digest[32];
+    size_t digest_len = sizeof(digest);
+    uint8_t *sig = NULL;
+    size_t sig_len = 0;
+    OSSL_PARAM params[4], *p = params;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MU, &mu);
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC, &deterministic);
+    if (td->add_random_len > 0)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_TEST_ENTROPY,
+                                                 (char *)td->add_random,
+                                                 td->add_random_len);
+    *p = OSSL_PARAM_construct_end();
+    if (!TEST_true(ml_dsa_create_keypair(&pkey, td->alg, td->priv, td->priv_len,
+                                         NULL, 0, 1))
+            || !TEST_true(do_calculate_mu(td, pkey, mu_buf, 1))
+
+            || !TEST_ptr(mdctx = EVP_MD_CTX_new())
+            || !TEST_int_eq(EVP_DigestSignInit_ex(mdctx, NULL, NULL, lib_ctx, NULL, pkey, params), 1)
+            || !TEST_int_eq(EVP_DigestSign(mdctx, NULL, &sig_len, mu_buf, sizeof(mu_buf)), 1)
+            || !TEST_ptr(sig = OPENSSL_zalloc(sig_len))
+            || !TEST_int_eq(EVP_DigestSign(mdctx, sig, &sig_len, mu_buf, sizeof(mu_buf)), 1)
+            || !TEST_int_eq(EVP_Q_digest(lib_ctx, "SHA256", NULL, sig, sig_len,
+                                         digest, &digest_len), 1)
+            || !TEST_mem_eq(digest, digest_len, td->sig_digest, td->sig_digest_len)
+            || !TEST_int_eq(EVP_DigestVerifyInit_ex(mdctx, NULL, NULL, lib_ctx, NULL,
+                                                    pkey, params), 1)
+            || !TEST_int_eq(EVP_DigestVerify(mdctx, sig, sig_len, mu_buf, sizeof(mu_buf)), 1))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(sig);
+    EVP_PKEY_free(pkey);
+    EVP_MD_CTX_free(mdctx);
+    return ret;
+}
+
+static int test_sign_verify_external_mu(int tstid)
+{
+    int ret = 0, mu = 1, deterministic = 1;
+    ML_DSA_SIG_GEN_TEST_DATA *td = &ml_dsa_siggen_mu_testdata[tstid];
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *sctx = NULL;
+    EVP_SIGNATURE *sig_alg = NULL;
+    uint8_t mu_buf[64];
+    uint8_t digest[32];
+    size_t digest_len = sizeof(digest);
+    uint8_t *sig = NULL;
+    size_t sig_len = 0;
+    OSSL_PARAM params[4], *p = params;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MU, &mu);
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC, &deterministic);
+    if (td->add_random_len > 0)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_TEST_ENTROPY,
+                                                 (char *)td->add_random,
+                                                 td->add_random_len);
+    *p = OSSL_PARAM_construct_end();
+    if (!TEST_true(ml_dsa_create_keypair(&pkey, td->alg, td->priv, td->priv_len,
+                                         NULL, 0, 1))
+            || !TEST_true(do_calculate_mu(td, pkey, mu_buf, 0))
+
+            || !TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL))
+            || !TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL))
+            || !TEST_int_eq(EVP_PKEY_sign_message_init(sctx, sig_alg, params), 1)
+            || !TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &sig_len, mu_buf, sizeof(mu_buf)), 1)
+            || !TEST_ptr(sig = OPENSSL_zalloc(sig_len))
+            || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &sig_len, mu_buf, sizeof(mu_buf)), 1)
+            || !TEST_int_eq(EVP_Q_digest(lib_ctx, "SHA256", NULL, sig, sig_len,
+                                         digest, &digest_len), 1)
+            || !TEST_mem_eq(digest, digest_len, td->sig_digest, td->sig_digest_len))
+        goto err;
+
+    if (!TEST_int_eq(EVP_PKEY_verify_message_init(sctx, sig_alg, params), 1)
+            || !TEST_int_eq(EVP_PKEY_verify(sctx, sig, sig_len,
+                                            mu_buf, sizeof(mu_buf)), 1))
+        goto err;
+    ret = 1;
+err:
+    OPENSSL_free(sig);
+    EVP_PKEY_free(pkey);
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_CTX_free(sctx);
+    return ret;
+}
+
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS options[] = {
@@ -673,6 +823,8 @@ int setup_tests(void)
     ADD_TEST(from_data_bad_input_test);
     ADD_TEST(ml_dsa_digest_sign_verify_test);
     ADD_TEST(ml_dsa_priv_pub_bad_t0_test);
+    ADD_ALL_TESTS(test_sign_verify_external_mu, OSSL_NELEM(ml_dsa_siggen_mu_testdata));
+    ADD_ALL_TESTS(test_digestsign_verify_external_mu, OSSL_NELEM(ml_dsa_siggen_mu_testdata));
     return 1;
 }
 

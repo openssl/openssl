@@ -63,8 +63,8 @@ typedef struct {
     /* The Algorithm Identifier of the signature algorithm */
     uint8_t aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
     size_t  aid_len;
-    int mu;     /* Flag indicating we should begin from \mu, not the message */
-
+    int mu;     /* Flag indicating that the input is mu, not the message */
+    int muonly; /* Flag indicating that the sign final() operation returns mu */
     int operation;
     EVP_MD_CTX *md_ctx; /* Ctx for msg_init/update/final interface */
     unsigned char *sig; /* Signature, for verification */
@@ -262,24 +262,24 @@ static int ml_dsa_sign_msg_final(void *vctx, unsigned char *sig,
         return 0;
 
     if (sig != NULL) {
-        if (ctx->test_entropy_len != 0) {
-            rnd = ctx->test_entropy;
-        } else {
-            rnd = rand_tmp;
+        if (!ctx->muonly) {
+            if (ctx->test_entropy_len != 0) {
+                rnd = ctx->test_entropy;
+            } else {
+                rnd = rand_tmp;
 
-            if (ctx->deterministic == 1)
-                memset(rnd, 0, sizeof(rand_tmp));
-            else if (RAND_priv_bytes_ex(ctx->libctx, rnd, sizeof(rand_tmp), 0) <= 0)
-                return 0;
+                if (ctx->deterministic == 1)
+                    memset(rnd, 0, sizeof(rand_tmp));
+                else if (RAND_priv_bytes_ex(ctx->libctx, rnd, sizeof(rand_tmp), 0) <= 0)
+                    return 0;
+            }
         }
-
         if (!ossl_ml_dsa_mu_finalize(ctx->md_ctx, mu, sizeof(mu)))
             return 0;
     }
-
     ret = ossl_ml_dsa_sign(ctx->key, 1, mu, sizeof(mu), NULL, 0, rnd,
-                           sizeof(rand_tmp), 0, sig, siglen, sigsize);
-    if (rnd != ctx->test_entropy)
+                           sizeof(rand_tmp), 0, sig, siglen, sigsize, ctx->muonly);
+    if (!ctx->muonly && rnd != ctx->test_entropy)
         OPENSSL_cleanse(rand_tmp, sizeof(rand_tmp));
     return ret;
 }
@@ -309,7 +309,7 @@ static int ml_dsa_sign(void *vctx, uint8_t *sig, size_t *siglen, size_t sigsize,
     ret = ossl_ml_dsa_sign(ctx->key, ctx->mu, msg, msg_len,
                            ctx->context_string, ctx->context_string_len,
                            rnd, sizeof(rand_tmp), ctx->msg_encode,
-                           sig, siglen, sigsize);
+                           sig, siglen, sigsize, ctx->muonly);
     if (rnd != ctx->test_entropy)
         OPENSSL_cleanse(rand_tmp, sizeof(rand_tmp));
     return ret;
@@ -407,6 +407,8 @@ static int ml_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
 
     if (p.mu != NULL && !OSSL_PARAM_get_int(p.mu, &pctx->mu))
+        return 0;
+    if (p.muonly != NULL && !OSSL_PARAM_get_int(p.muonly, &pctx->muonly))
         return 0;
 
     if (p.sig != NULL && pctx->operation == EVP_PKEY_OP_VERIFYMSG) {
