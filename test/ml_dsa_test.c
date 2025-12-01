@@ -646,10 +646,13 @@ static int do_calculate_mu(const ML_DSA_SIG_GEN_TEST_DATA *td,
 
     if (digestsign) {
         if (!TEST_ptr(mdctx = EVP_MD_CTX_new())
-                || !TEST_int_eq(EVP_DigestSignInit_ex(mdctx, NULL, NULL, lib_ctx, NULL, pkey, params), 1)
-                || !TEST_int_eq(EVP_DigestSign(mdctx, NULL, &mu_len, td->msg, td->msg_len), 1)
+                || !TEST_int_eq(EVP_DigestSignInit_ex(mdctx, NULL, NULL, lib_ctx,
+                        NULL, pkey, params), 1)
+                || !TEST_int_eq(EVP_DigestSign(mdctx, NULL, &mu_len,
+                        td->msg, td->msg_len), 1)
                 || !TEST_size_t_eq(mu_len, 64)
-                || !TEST_int_eq(EVP_DigestSign(mdctx, mu, &mu_len, td->msg, td->msg_len), 1)
+                || !TEST_int_eq(EVP_DigestSign(mdctx, mu, &mu_len,
+                        td->msg, td->msg_len), 1)
                 || !TEST_size_t_eq(mu_len, 64))
             goto err;
     } else {
@@ -704,18 +707,21 @@ static int test_digestsign_verify_external_mu(int tstid)
     if (!TEST_true(ml_dsa_create_keypair(&pkey, td->alg, td->priv, td->priv_len,
                                          NULL, 0, 1))
             || !TEST_true(do_calculate_mu(td, pkey, mu_buf, 1))
-
             || !TEST_ptr(mdctx = EVP_MD_CTX_new())
-            || !TEST_int_eq(EVP_DigestSignInit_ex(mdctx, NULL, NULL, lib_ctx, NULL, pkey, params), 1)
-            || !TEST_int_eq(EVP_DigestSign(mdctx, NULL, &sig_len, mu_buf, sizeof(mu_buf)), 1)
+            || !TEST_int_eq(EVP_DigestSignInit_ex(mdctx, NULL, NULL,
+                    lib_ctx, NULL, pkey, params), 1)
+            || !TEST_int_eq(EVP_DigestSign(mdctx, NULL, &sig_len,
+                    mu_buf, sizeof(mu_buf)), 1)
             || !TEST_ptr(sig = OPENSSL_zalloc(sig_len))
-            || !TEST_int_eq(EVP_DigestSign(mdctx, sig, &sig_len, mu_buf, sizeof(mu_buf)), 1)
+            || !TEST_int_eq(EVP_DigestSign(mdctx, sig, &sig_len,
+                    mu_buf, sizeof(mu_buf)), 1)
             || !TEST_int_eq(EVP_Q_digest(lib_ctx, "SHA256", NULL, sig, sig_len,
                                          digest, &digest_len), 1)
             || !TEST_mem_eq(digest, digest_len, td->sig_digest, td->sig_digest_len)
             || !TEST_int_eq(EVP_DigestVerifyInit_ex(mdctx, NULL, NULL, lib_ctx, NULL,
                                                     pkey, params), 1)
-            || !TEST_int_eq(EVP_DigestVerify(mdctx, sig, sig_len, mu_buf, sizeof(mu_buf)), 1))
+            || !TEST_int_eq(EVP_DigestVerify(mdctx, sig, sig_len,
+                    mu_buf, sizeof(mu_buf)), 1))
         goto err;
 
     ret = 1;
@@ -823,8 +829,12 @@ int setup_tests(void)
     ADD_TEST(from_data_bad_input_test);
     ADD_TEST(ml_dsa_digest_sign_verify_test);
     ADD_TEST(ml_dsa_priv_pub_bad_t0_test);
-    ADD_ALL_TESTS(test_sign_verify_external_mu, OSSL_NELEM(ml_dsa_siggen_mu_testdata));
-    ADD_ALL_TESTS(test_digestsign_verify_external_mu, OSSL_NELEM(ml_dsa_siggen_mu_testdata));
+    if (fips_provider_version_ge(lib_ctx, 4, 0, 0)) {
+        ADD_ALL_TESTS(test_sign_verify_external_mu,
+            OSSL_NELEM(ml_dsa_siggen_mu_testdata));
+        ADD_ALL_TESTS(test_digestsign_verify_external_mu,
+            OSSL_NELEM(ml_dsa_siggen_mu_testdata));
+    }
     return 1;
 }
 
