@@ -54,6 +54,7 @@ B<openssl fipsinstall>
 [B<-corrupt_desc> I<selftest_description>]
 [B<-corrupt_type> I<selftest_type>]
 [B<-config> I<parent_config>]
+[B<-defer_tests>]
 
 =head1 DESCRIPTION
 
@@ -395,6 +396,12 @@ A previous call to this application needs to generate the extra configuration
 data that is included by the base C<parent_config> configuration file.
 See L<config(5)> for further information on how to set up a provider section.
 All other options are ignored if '-config' is used.
+
+=item B<-defer_tests>
+
+Configure the module to not run all self-tests at startup and allow tests
+execution to be deferred to the first time the algorithm to be tested is
+invoked.
 
 =back
 

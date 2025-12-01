@@ -157,7 +157,7 @@ static int fips_random_bytes(ossl_unused void *vprov, int which,
  */
 static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
 {
-    OSSL_PARAM core_params[32], *p = core_params;
+    OSSL_PARAM core_params[33], *p = core_params;
 
 #define OSSL_FIPS_PARAM(structname, paramname)                 \
     *p++ = OSSL_PARAM_construct_utf8_ptr(                      \
@@ -1326,7 +1326,7 @@ static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, self_test_id_t id)
          * record this test as invoked by the original test, for marking
          * it later as also satisfied
          */
-        if (st_all_tests[id].state == SELF_TEST_STATE_INIT)
+        if (st_all_tests[id].state == SELF_TEST_STATE_DEFER)
             st_all_tests[id].state = SELF_TEST_STATE_IMPLICIT;
         /*
          * A self test is in progress for this thread so we let this
@@ -1347,7 +1347,7 @@ static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, self_test_id_t id)
          * test and marked it as passed
          */
         switch (st_all_tests[id].state) {
-        case SELF_TEST_STATE_INIT:
+        case SELF_TEST_STATE_DEFER:
             break;
         case SELF_TEST_STATE_PASSED:
             ret = 1;
@@ -1438,7 +1438,7 @@ int ossl_deferred_self_test(OSSL_LIB_CTX *libctx, self_test_id_t id)
      * Immediately mark it and return.
      */
     if (ossl_fips_self_testing()) {
-        if (st_all_tests[id].state == SELF_TEST_STATE_INIT)
+        if (st_all_tests[id].state == SELF_TEST_STATE_DEFER)
             st_all_tests[id].state = SELF_TEST_STATE_IMPLICIT;
         return 1;
     }
