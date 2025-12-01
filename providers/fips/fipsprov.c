@@ -152,7 +152,7 @@ static int fips_random_bytes(ossl_unused void *vprov, int which,
  */
 static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
 {
-    OSSL_PARAM core_params[32], *p = core_params;
+    OSSL_PARAM core_params[33], *p = core_params;
 
 #define OSSL_FIPS_PARAM(structname, paramname)                 \
     *p++ = OSSL_PARAM_construct_utf8_ptr(                      \
