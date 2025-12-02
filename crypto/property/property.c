@@ -68,7 +68,7 @@ typedef struct {
     SPARSE_ARRAY_OF(ALGORITHM) *algs;
 
     /*
-     * Lock to protect the cached algorithms |algs| from concurrent writing,
+     * Lock to protect each shard of |algs| from concurrent writing,
      * when individual implementations or queries are inserted.  This is used
      * by the appropriate functions here.
      */
@@ -443,7 +443,10 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
         alg->nid = nid;
         if (!ossl_method_store_insert(sa, alg))
             goto err;
-        OSSL_TRACE2(QUERY, "Inserted an alg with nid %d into the store %p\n", nid, (void *)sa);
+        OSSL_TRACE2(QUERY,
+                    "Inserted an alg with nid %d into the "
+                    "stored algorithms %p\n", nid, (void *)sa);
+
     }
 
     /* Push onto stack if there isn't one there already */
@@ -717,14 +720,19 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     if (!ossl_property_read_lock(sa))
         return 0;
 
-    OSSL_TRACE2(QUERY, "Retrieving by nid %d from store %p\n", nid, (void *)sa);
+    OSSL_TRACE2(QUERY, "Retrieving by nid %d from stored algorithms %p\n",
+                nid, (void *)sa);
     alg = ossl_method_store_retrieve(sa, nid);
     if (alg == NULL) {
         ossl_property_unlock(sa);
-        OSSL_TRACE2(QUERY, "Failed to retrieve by nid %d from store %p\n", nid, (void *)sa);
+        OSSL_TRACE2(QUERY,
+                    "Failed to retrieve by nid %d from stored algorithms %p\n",
+                    nid, (void *)sa);
         return 0;
     }
-    OSSL_TRACE2(QUERY, "Retrieved by nid %d from store %p\n", nid, (void *)sa);
+    OSSL_TRACE2(QUERY,
+                "Retrieved by nid %d from stored algorithms %p\n",
+                nid, (void *)sa);
 
     /*
      * If a property query string is provided, convert it to an
