@@ -107,12 +107,12 @@ sha512_block_data_order_zvkb_zvknhb:
     @{[vmv_v_i $V0, 0x01]}
     csrr t0, vlenb
     addi t1, t0, -64
-    beqz t1, sha512_block_data_order_zvkb_zvknhb_rvv512
+    beqz t1, sha512_block_data_order_zvkb_zvknhb_zvl512
     addi t1, t0, -32
-    beqz t1, sha512_block_data_order_zvkb_zvknhb_rvv256
-    j sha512_block_data_order_zvkb_zvknhb_rvv128
-sha512_block_data_order_zvkb_zvknhb_rvv512:
-sha512_block_data_order_zvkb_zvknhb_rvv256:
+    beqz t1, sha512_block_data_order_zvkb_zvknhb_zvl256
+    j sha512_block_data_order_zvkb_zvknhb_zvl128
+sha512_block_data_order_zvkb_zvknhb_zvl512:
+sha512_block_data_order_zvkb_zvknhb_zvl256:
     @{[vsetivli "zero", 4, "e64", "m1", "ta", "ma"]}
     # j L_round_loop
     # Load round constants K512
@@ -325,7 +325,7 @@ L_round_loop_other:
     @{[vsuxei8_v $V24, ($H2), $V1]}
 
     ret
-sha512_block_data_order_zvkb_zvknhb_rvv128:
+sha512_block_data_order_zvkb_zvknhb_zvl128:
     @{[vsetivli $T0, 4, "e64", "m2", "ta", "ma"]}
     li $T1, 4
     bne $T0, $T1, L_round_loop_256_512
