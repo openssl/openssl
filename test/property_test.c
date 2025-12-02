@@ -420,8 +420,8 @@ err:
 static int test_freeze_flag(void)
 {
     int ret = 0, nid = 6;
-    const char *prop = "position=1";
-    char *impl = "a";
+    const char *prop = "position=1", *prop2 = "position=2";
+    char *impl = "a", *impl2 = "b";
     OSSL_METHOD_STORE *store;
     OSSL_PROVIDER prov = { 1 };
     const OSSL_PROVIDER *fetched_prov = NULL;
@@ -442,6 +442,7 @@ static int test_freeze_flag(void)
         || !TEST_true(ossl_method_store_fetch(store, nid, prop, &fetched_prov, &fetched_meth))
         || !TEST_ptr_eq(&prov, fetched_prov)
         || !TEST_str_eq((char *)fetched_meth, impl)
+        || !TEST_false(ossl_method_store_add(store, &prov, nid, prop2, impl2, &up_ref, &down_ref))
         || !TEST_false(ossl_method_store_freeze(store, NULL)))
         goto err;
 
