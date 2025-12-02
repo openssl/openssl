@@ -72,44 +72,33 @@ my ($V0, $V1, $V2, $V3, $V4, $V5, $V6, $V7,
 
 $code .= <<___;
 .text
-
-.p2align 3
-ORDER_BY_RVV512_DATA:
-    .word 0, 4, 8, 12, 16, 20, 24, 28, 64, 68, 72, 76, 80, 84, 88, 92, 32, 36, 40, 44, 48, 52, 56, 60, 96, 100, 104, 108, 112, 116, 120, 124
-.size ORDER_BY_RVV512_DATA, .-ORDER_BY_RVV512_DATA
-
-.p2align 3
-ORDER_BY_RVV512_EXP:
-    .word 2, 3, 4, 5, 6, 7, 255, 255, 10, 11, 12, 13, 14, 15, 255, 255, 255, 255, 255, 255, 0, 1, 2, 3, 255, 255, 255, 255, 8, 9, 10, 11
-.size ORDER_BY_RVV512_EXP, .-ORDER_BY_RVV512_EXP
-
 .p2align 3
 .globl ossl_hwsm3_block_data_order_zvksh
 .type ossl_hwsm3_block_data_order_zvksh,\@function
 ossl_hwsm3_block_data_order_zvksh:
     csrr t0, vlenb
     addi t1, t0, -64
-    beqz t1, ossl_hwsm3_block_data_order_zvksh_rvv512
+    beqz t1, ossl_hwsm3_block_data_order_zvksh_zvl512
     addi t1, t0, -32
-    beqz t1, ossl_hwsm3_block_data_order_zvksh_rvv256
-    j sossl_hwsm3_block_data_order_zvksh_rvv128
-ossl_hwsm3_block_data_order_zvksh_rvv512:
+    beqz t1, ossl_hwsm3_block_data_order_zvksh_zvl256
+    j sossl_hwsm3_block_data_order_zvksh_zvl128
+ossl_hwsm3_block_data_order_zvksh_zvl512:
     @{[vsetivli "zero", 8, "e32", "m1", "tu", "mu"]}
     @{[vle32_v $V26, $CTX]}
     @{[vrev8_v $V26, $V26]}
     @{[vsetivli "zero", 16, "e32", "m1", "ta", "ma"]}
-    la $TMP2, ORDER_BY_RVV512_DATA
+    la $TMP2, ORDER_BY_ZVL512_DATA
     @{[vle32_v $V30, $TMP2]}
     addi $TMP2, $TMP2, 64
     @{[vle32_v $V31, $TMP2]}
-    la $TMP2, ORDER_BY_RVV512_EXP
+    la $TMP2, ORDER_BY_ZVL512_EXP
     @{[vle32_v $V29, $TMP2]}
     addi $TMP2, $TMP2, 64
     @{[vle32_v $V28, $TMP2]}
     srli $TMP1, $NUM, 1
     andi $NUM, $NUM, 1
-    beqz $TMP1, ossl_hwsm3_block_data_order_zvksh_rvv256
-L_sm3_loop_rvv512:
+    beqz $TMP1, ossl_hwsm3_block_data_order_zvksh_zvl256
+L_sm3_loop_zvl512:
     @{[vluxei32_v $V0, $INPUT, $V30]}
     @{[vluxei32_v $V1, $INPUT, $V31]}
     @{[vrgather_vv $V9, $V0, $V29]}
@@ -245,16 +234,16 @@ L_sm3_loop_rvv512:
     @{[vmv_v_v $V26, $V27]}
     addi $TMP1, $TMP1, -1
     addi $INPUT, $INPUT, 128
-    bnez $TMP1, L_sm3_loop_rvv512
+    bnez $TMP1, L_sm3_loop_zvl512
     @{[vsetivli "zero", 8, "e32", "m1", "ta", "ma"]}
     @{[vrev8_v $V26, $V26]}
     @{[vse32_v $V26, $CTX]}
-    bnez $NUM, ossl_hwsm3_block_data_order_zvksh_rvv256
+    bnez $NUM, ossl_hwsm3_block_data_order_zvksh_zvl256
     ret
-ossl_hwsm3_block_data_order_zvksh_rvv256:
+ossl_hwsm3_block_data_order_zvksh_zvl256:
     @{[vsetivli "zero", 8, "e32", "m1", "ta", "ma"]}
     j ossl_hwsm3_block_data_order_zvksh_next
-sossl_hwsm3_block_data_order_zvksh_rvv128:
+sossl_hwsm3_block_data_order_zvksh_zvl128:
     @{[vsetivli "zero", 8, "e32", "m2", "ta", "ma"]}
 ossl_hwsm3_block_data_order_zvksh_next:
     # Load initial state of hash context (c->A-H).
@@ -399,6 +388,19 @@ L_sm3_end:
     ret
 
 .size ossl_hwsm3_block_data_order_zvksh,.-ossl_hwsm3_block_data_order_zvksh
+
+.section .rodata
+.p2align 3
+.type ORDER_BY_ZVL512_EXP,\@object
+ORDER_BY_ZVL512_DATA:
+    .word 0, 4, 8, 12, 16, 20, 24, 28, 64, 68, 72, 76, 80, 84, 88, 92, 32, 36, 40, 44, 48, 52, 56, 60, 96, 100, 104, 108, 112, 116, 120, 124
+.size ORDER_BY_ZVL512_DATA, .-ORDER_BY_ZVL512_DATA
+
+.p2align 3
+.type ORDER_BY_ZVL512_EXP,\@object
+ORDER_BY_ZVL512_EXP:
+    .word 2, 3, 4, 5, 6, 7, 255, 255, 10, 11, 12, 13, 14, 15, 255, 255, 255, 255, 255, 255, 0, 1, 2, 3, 255, 255, 255, 255, 8, 9, 10, 11
+.size ORDER_BY_ZVL512_EXP, .-ORDER_BY_ZVL512_EXP
 ___
 }
 
