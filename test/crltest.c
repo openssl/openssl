@@ -691,7 +691,6 @@ static int test_get_crl_fn_score(void)
     X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_new();
     STACK_OF(X509) *roots = sk_X509_new_null();
 
-    
     int status = X509_V_ERR_UNSPECIFIED;
 
     if (!TEST_ptr(ctx)
@@ -726,7 +725,7 @@ static int test_get_crl_fn_score(void)
                                         : X509_STORE_CTX_get_error(ctx);
 
     TEST_int_eq(status, X509_V_OK);
-    
+
 err:
     OSSL_STACK_OF_X509_free(roots);
     X509_VERIFY_PARAM_free(param);
@@ -734,8 +733,6 @@ err:
     X509_STORE_free(store);
     return status == X509_V_OK;
 }
-
-
 
 int setup_tests(void)
 {

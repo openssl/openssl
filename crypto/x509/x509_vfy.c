@@ -1356,7 +1356,7 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
         if (ctx->get_crl != NULL) {
             X509 *crl_issuer = NULL;
             unsigned int reasons = 0;
-            
+
             ok = ctx->get_crl(ctx, &crl, x);
             if (crl != NULL) {
                 ctx->current_crl_score = get_crl_score(ctx, &crl_issuer,
