@@ -221,8 +221,7 @@ int ssl_srp_server_param_with_username_intern(SSL_CONNECTION *s, int *ad)
     /* Calculate:  B = (kv + g^b) % N  */
     s->srp_ctx.B = SRP_Calc_B_ex(s->srp_ctx.b, s->srp_ctx.N, s->srp_ctx.g,
                                  s->srp_ctx.v, sctx->libctx, sctx->propq);
-    if( s->srp_ctx.B == NULL)
-    {
+    if (s->srp_ctx.B == NULL) {
         BN_free(s->srp_ctx.b);
         return SSL3_AL_FATAL;
     }
