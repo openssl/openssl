@@ -54,16 +54,16 @@ static int do_handshake(OSSL_LIB_CTX *libctx)
     int testresult = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(),
-                                       TLS1_VERSION, 0,
-                                       &sctx, &cctx, cert, privkey)))
+            TLS_client_method(),
+            TLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
         return 0;
 
     /* Now do a handshake */
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
-                                      &clientssl, NULL, NULL))
-            || !TEST_true(create_ssl_connection(serverssl, clientssl,
-                                                SSL_ERROR_NONE)))
+            &clientssl, NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
         goto end;
 
     testresult = 1;
@@ -175,7 +175,7 @@ int setup_tests(void)
     }
     return 1;
 
- err:
+err:
     OPENSSL_free(cert);
     OPENSSL_free(privkey);
     return 0;
