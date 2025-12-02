@@ -470,7 +470,7 @@ static int cmd_VerifyMode(SSL_CONF_CTX *cctx, const char *value)
     return CONF_parse_list(value, ',', 1, ssl_set_option_list, cctx);
 }
 
-static int cmd_CertValidation(SSL_CONF_CTX *cctx, const char *value)
+static int cmd_SetCertificateFlags(SSL_CONF_CTX *cctx, const char *value)
 {
     static const ssl_flag_tbl ssl_certval_list[] = {
         SSL_FLAG_CERTVAL("UseCheckTime", X509_V_FLAG_USE_CHECK_TIME),
@@ -501,7 +501,7 @@ static int cmd_CertValidation(SSL_CONF_CTX *cctx, const char *value)
     return CONF_parse_list(value, ',', 1, ssl_set_option_list, cctx);
 }
 
-static int cmd_SetValidHost(SSL_CONF_CTX *cctx, const char *value)
+static int cmd_SetExpectedDNSName(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 0;
     X509_VERIFY_PARAM *param = NULL;
@@ -520,7 +520,7 @@ static int cmd_SetValidHost(SSL_CONF_CTX *cctx, const char *value)
     return rv > 0;
 }
 
-static int cmd_AddValidHost(SSL_CONF_CTX *cctx, const char *value)
+static int cmd_AddExpectedDNSName(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 0;
     X509_VERIFY_PARAM *param = NULL;
@@ -539,7 +539,7 @@ static int cmd_AddValidHost(SSL_CONF_CTX *cctx, const char *value)
     return rv > 0;
 }
 
-static int cmd_SetValidIP(SSL_CONF_CTX *cctx, const char *value)
+static int cmd_SetExpectedIPAddress(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 0;
     X509_VERIFY_PARAM *param = NULL;
@@ -558,7 +558,7 @@ static int cmd_SetValidIP(SSL_CONF_CTX *cctx, const char *value)
     return rv > 0;
 }
 
-static int cmd_SetValidFlags(SSL_CONF_CTX *cctx, const char *value)
+static int cmd_SetHostFlags(SSL_CONF_CTX *cctx, const char *value)
 {
     static const ssl_flag_tbl ssl_host_flags_list[] = {
         SSL_FLAG_HOSTVER("AlwaysCheckSubject", X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT),
@@ -981,11 +981,11 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_STRING(MaxProtocol, "max_protocol", 0),
     SSL_CONF_CMD_STRING(Options, NULL, 0),
     SSL_CONF_CMD_STRING(VerifyMode, NULL, 0),
-    SSL_CONF_CMD_STRING(CertValidation, NULL, 0),
-    SSL_CONF_CMD_STRING(SetValidFlags, NULL, SSL_CONF_FLAG_CERTIFICATE),
-    SSL_CONF_CMD_STRING(SetValidHost, NULL, SSL_CONF_FLAG_CERTIFICATE),
-    SSL_CONF_CMD_STRING(AddValidHost, NULL, SSL_CONF_FLAG_CERTIFICATE),
-    SSL_CONF_CMD_STRING(SetValidIP, NULL, SSL_CONF_FLAG_CERTIFICATE),
+    SSL_CONF_CMD_STRING(SetCertificateFlags, NULL, 0),
+    SSL_CONF_CMD_STRING(SetHostFlags, NULL, SSL_CONF_FLAG_CERTIFICATE),
+    SSL_CONF_CMD_STRING(SetExpectedDNSName, NULL, SSL_CONF_FLAG_CERTIFICATE),
+    SSL_CONF_CMD_STRING(AddExpectedDNSName, NULL, SSL_CONF_FLAG_CERTIFICATE),
+    SSL_CONF_CMD_STRING(SetExpectedIPAddress, NULL, SSL_CONF_FLAG_CERTIFICATE),
     SSL_CONF_CMD(AddCAPath, "addCApath", SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_DIR),
     SSL_CONF_CMD(AddCAFile, "addCAfile", SSL_CONF_FLAG_CERTIFICATE,
