@@ -20,14 +20,19 @@
 # include <openssl/opensslconf.h>
 
 /*
- * There is no OPENSSL_NO_NO_ENGINE, Engines are permanently disabled
- * and OPENSSL_NO_ENGINE must be defined
+ * Engine support is gone. Definitions here are provided for the source code
+ * compatibility only. They are meant to keep compilation working for legacy
+ * projects that, for whatever reason, cannot remove/disable old legacy code.
  *
- * This header now generates compatible definitions according
- * to OPENSSL_ENGINE_STUBS define.
- * Note we have to use compile-time message to warn only if API is really used.
- * To avoid complicated macros we kind-of abuse existing OSSL_DEPRACATED macros.
+ * We deliberately keep the OPENSSL_NO_ENGINE macro around as it is supplied
+ * when the build is configured with the `no-engine` option. OpenSSL 4.0 keeps
+ * the `no-engine` option around.
+ *
+ * Note, we have to use a compile-time message to warn only if the API is really
+ * used. To avoid complex macros, we kind of abuse the existing OSSL_DEPRECATED
+ * macros.
  */
+
 # ifdef OPENSSL_ENGINE_STUBS
 #  define ENGINE_INFO_MSG \
     " API symbol is replaced with stub to avoid linker error."
