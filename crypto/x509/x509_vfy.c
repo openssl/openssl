@@ -1361,12 +1361,9 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
             if (crl != NULL) {
                 ctx->current_crl_score = get_crl_score(ctx, &crl_issuer,
                                                        &reasons, crl, x);
-            } else {
-                ok = verify_cb_crl(ctx, X509_V_ERR_UNABLE_TO_GET_CRL);
-                goto done;
+                ctx->current_issuer = crl_issuer;
+                ctx->current_reasons = reasons;
             }
-            ctx->current_issuer = crl_issuer;
-            ctx->current_reasons = reasons;
         } else {
             ok = get_crl_delta(ctx, &crl, &dcrl, x);
         }
