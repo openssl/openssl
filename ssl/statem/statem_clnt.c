@@ -2947,9 +2947,9 @@ int tls_process_cert_status_body(SSL_CONNECTION *s, size_t chainidx, PACKET *pkt
             return 0;
         }
 
-        respder = OPENSSL_malloc(resplen);
+        ;
 
-        if (respder == NULL) {
+        if ((respder = OPENSSL_malloc(resplen)) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             return 0;
         }
