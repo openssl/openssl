@@ -1,0 +1,252 @@
+[
+  {
+    "title": "Overview",
+    "description": "Explains the purpose of the Cryptographic Message Syntax (CMS), its role in secure messaging (like S/MIME), and the high-level architecture of the OpenSSL CMS library.",
+    "path": "/overview",
+    "parentId": "null",
+    "sourceIds": [
+      "include/openssl/cms.h.in",
+      "doc/man1/openssl-cms.pod.in",
+      "apps/cms.c"
+    ],
+    "icon": "lucide:library"
+  },
+  {
+    "title": "Quick Start",
+    "description": "Provides a fast, hands-on guide for developers to quickly sign, encrypt, decrypt, and verify messages using the OpenSSL CMS API with minimal theory.",
+    "path": "/quick-start",
+    "parentId": "null",
+    "sourceIds": [
+      "demos/cms/cms_sign.c",
+      "demos/cms/cms_ver.c",
+      "demos/cms/cms_enc.c",
+      "demos/cms/cms_dec.c",
+      "apps/cms.c"
+    ],
+    "icon": "lucide:rocket"
+  },
+  {
+    "title": "Core Concepts",
+    "description": "Delves into the architectural blueprint of CMS, explaining the fundamental components and their interactions to provide a solid conceptual foundation.",
+    "path": "/concepts",
+    "parentId": "null",
+    "sourceIds": [
+      "include/openssl/cms.h.in",
+      "crypto/cms/cms_asn1.c",
+      "doc/man1/openssl-cms.pod.in"
+    ],
+    "icon": "lucide:milestone"
+  },
+  {
+    "title": "Content Types",
+    "description": "Details the six primary CMS content types (SignedData, EnvelopedData, DigestedData, EncryptedData, AuthEnvelopedData, Data), explaining the purpose and structure of each.",
+    "path": "/concepts/content-types",
+    "parentId": "/concepts",
+    "sourceIds": [
+      "include/openssl/cms.h.in",
+      "crypto/cms/cms_asn1.c",
+      "crypto/cms/cms_sd.c",
+      "crypto/cms/cms_env.c",
+      "crypto/cms/cms_dd.c",
+      "crypto/cms/cms_enc.c",
+      "crypto/cms/cms_cd.c",
+      "doc/man1/openssl-cms.pod.in"
+    ]
+  },
+  {
+    "title": "Recipient Info Types",
+    "description": "Explains the different mechanisms for managing recipient keys, covering Key Transport (KTRI), Key Agreement (KARI), Key Encryption Key (KEKRI), Password (PWRI), Key Encapsulation (KEMRI), and Other (ORI).",
+    "path": "/concepts/recipient-info-types",
+    "parentId": "/concepts",
+    "sourceIds": [
+      "include/openssl/cms.h.in",
+      "crypto/cms/cms_env.c",
+      "crypto/cms/cms_kari.c",
+      "crypto/cms/cms_pwri.c",
+      "crypto/cms/cms_kemri.c",
+      "crypto/cms/cms_kem.c",
+      "crypto/cms/cms_asn1.c"
+    ]
+  },
+  {
+    "title": "CLI Tool (`openssl cms`)",
+    "description": "Provides a comprehensive reference for the 'openssl cms' command, mapping its flags and operations to the underlying library functions for a deeper understanding.",
+    "path": "/command-line",
+    "parentId": "null",
+    "sourceIds": [
+      "apps/cms.c",
+      "doc/man1/openssl-cms.pod.in"
+    ],
+    "icon": "lucide:terminal"
+  },
+  {
+    "title": "How-To Guides",
+    "description": "Presents step-by-step, task-oriented workflows for common use cases, such as creating multi-signer messages, handling detached signatures, and implementing signed receipts.",
+    "path": "/guides",
+    "parentId": "null",
+    "sourceIds": [
+      "demos/cms/cms_sign2.c",
+      "demos/cms/cms_denc.c",
+      "demos/cms/cms_ddec.c",
+      "demos/cms/cms_comp.c",
+      "demos/cms/cms_uncomp.c",
+      "doc/man3/CMS_sign_receipt.pod",
+      "doc/man1/openssl-cms.pod.in"
+    ],
+    "icon": "lucide:book-marked"
+  },
+  {
+    "title": "Signing and Verifying",
+    "description": "Covers detailed procedures for creating and verifying digital signatures, including multi-signer scenarios, detached content, and CAdES compliance.",
+    "path": "/guides/signing-verifying",
+    "parentId": "/guides",
+    "sourceIds": [
+      "demos/cms/cms_sign.c",
+      "demos/cms/cms_sign2.c",
+      "demos/cms/cms_ver.c",
+      "doc/man3/CMS_sign.pod",
+      "doc/man3/CMS_verify.pod",
+      "doc/man3/CMS_add1_signer.pod",
+      "crypto/cms/cms_sd.c",
+      "crypto/cms/cms_smime.c"
+    ]
+  },
+  {
+    "title": "Encryption & Decryption",
+    "description": "Provides workflows for encrypting and decrypting data for various recipient types, including certificate-based (KTRI, KARI) and symmetric-key-based (KEKRI) methods.",
+    "path": "/guides/encrypting-decrypting",
+    "parentId": "/guides",
+    "sourceIds": [
+      "demos/cms/cms_enc.c",
+      "demos/cms/cms_dec.c",
+      "demos/cms/cms_denc.c",
+      "demos/cms/cms_ddec.c",
+      "doc/man3/CMS_encrypt.pod",
+      "doc/man3/CMS_decrypt.pod",
+      "crypto/cms/cms_env.c"
+    ]
+  },
+  {
+    "title": "Signed Receipts",
+    "description": "Guides you through the process of requesting, generating, and verifying signed receipts to ensure message delivery confirmation.",
+    "path": "/guides/receipts",
+    "parentId": "/guides",
+    "sourceIds": [
+      "doc/man3/CMS_sign_receipt.pod",
+      "doc/man3/CMS_verify_receipt.pod",
+      "doc/man3/CMS_get1_ReceiptRequest.pod",
+      "crypto/cms/cms_ess.c",
+      "apps/cms.c"
+    ]
+  },
+  {
+    "title": "Compression",
+    "description": "Illustrates how to use the CompressedData content type to compress and uncompress message content, including required library support (zlib).",
+    "path": "/guides/compression",
+    "parentId": "/guides",
+    "sourceIds": [
+      "demos/cms/cms_comp.c",
+      "demos/cms/cms_uncomp.c",
+      "doc/man3/CMS_compress.pod",
+      "doc/man3/CMS_uncompress.pod",
+      "crypto/cms/cms_cd.c"
+    ]
+  },
+  {
+    "title": "API Reference",
+    "description": "Offers a comprehensive, searchable reference for all public functions in the OpenSSL CMS API, including detailed documentation for previously undocumented functions.",
+    "path": "/api",
+    "parentId": "null",
+    "sourceIds": [
+      "include/openssl/cms.h.in",
+      "crypto/cms/cms_lib.c",
+      "crypto/cms/cms_smime.c",
+      "crypto/cms/cms_sd.c",
+      "crypto/cms/cms_env.c",
+      "crypto/cms/cms_att.c",
+      "crypto/cms/cms_io.c",
+      "crypto/cms/cms_ess.c",
+      "crypto/cms/cms_pwri.c",
+      "crypto/cms/cms_kari.c",
+      "crypto/cms/cms_kem.c",
+      "crypto/cms/cms_kemri.c",
+      "crypto/cms/cms_rsa.c",
+      "crypto/cms/cms_ec.c",
+      "crypto/cms/cms_dh.c",
+      "crypto/cms/cms_dd.c",
+      "crypto/cms/cms_cd.c",
+      "crypto/cms/cms_enc.c"
+    ],
+    "icon": "lucide:book-text"
+  },
+  {
+    "title": "Main Functions",
+    "description": "Documents high-level functions for creating, parsing, and finalizing CMS structures, such as CMS_sign(), CMS_encrypt(), CMS_verify(), and CMS_decrypt().",
+    "path": "/api/main",
+    "parentId": "/api",
+    "sourceIds": [
+      "doc/man3/CMS_sign.pod",
+      "doc/man3/CMS_verify.pod",
+      "doc/man3/CMS_encrypt.pod",
+      "doc/man3/CMS_decrypt.pod",
+      "doc/man3/CMS_final.pod",
+      "crypto/cms/cms_smime.c",
+      "include/openssl/cms.h.in"
+    ]
+  },
+  {
+    "title": "SignerInfo Functions",
+    "description": "Reference for functions managing SignerInfo structures, including adding signers, managing attributes, and performing low-level signature verification.",
+    "path": "/api/signerinfo",
+    "parentId": "/api",
+    "sourceIds": [
+      "doc/man3/CMS_add1_signer.pod",
+      "doc/man3/CMS_get0_SignerInfos.pod",
+      "doc/man3/CMS_signed_get_attr.pod",
+      "crypto/cms/cms_sd.c",
+      "crypto/cms/cms_att.c",
+      "include/openssl/cms.h.in"
+    ]
+  },
+  {
+    "title": "RecipientInfo Functions",
+    "description": "Reference for functions that manage RecipientInfo structures, covering adding recipients, setting keys, and decrypting content encryption keys for all recipient types.",
+    "path": "/api/recipientinfo",
+    "parentId": "/api",
+    "sourceIds": [
+      "doc/man3/CMS_get0_RecipientInfos.pod",
+      "doc/man3/CMS_add1_recipient_cert.pod",
+      "crypto/cms/cms_env.c",
+      "crypto/cms/cms_kari.c",
+      "crypto/cms/cms_pwri.c",
+      "crypto/cms/cms_kemri.c",
+      "include/openssl/cms.h.in"
+    ]
+  },
+  {
+    "title": "Attribute & Cert API",
+    "description": "Documents functions for managing signed/unsigned attributes, certificates, and CRLs within a CMS structure.",
+    "path": "/api/attributes-certs",
+    "parentId": "/api",
+    "sourceIds": []
+  },
+  {
+    "title": "I/O and Data Functions",
+    "description": "Covers functions for data I/O, streaming, and managing specific content types like Data, DigestedData, EncryptedData, and CompressedData.",
+    "path": "/api/io-data",
+    "parentId": "/api",
+    "sourceIds": []
+  },
+  {
+    "title": "Troubleshooting",
+    "description": "Diagnoses common issues, explains error codes from cmserr.h, and provides solutions for problems encountered during CMS operations.",
+    "path": "/troubleshooting",
+    "parentId": "null",
+    "sourceIds": [
+      "include/openssl/cmserr.h",
+      "crypto/cms/cms_err.c",
+      "doc/man1/openssl-cms.pod.in"
+    ],
+    "icon": "lucide:wrench"
+  }
+]

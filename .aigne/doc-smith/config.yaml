@@ -1,0 +1,130 @@
+# Project information for documentation publishing
+projectName: OpenSSL CMS Guide
+projectDesc: Cryptographic Message Syntax (RFC 5652) Training Guide - OpenSSL CMS Implementation
+projectLogo: https://avatars.githubusercontent.com/u/3279138?v=4
+
+# AI Thinking Configuration
+thinking:
+  effort: pro  # Use deep reasoning for comprehensive training guide
+
+# =============================================================================
+# Documentation Configuration
+# =============================================================================
+
+# Purpose: Create an introductory training guide explaining how CMS works and how pieces fit together
+documentPurpose:
+  - understandSystem  # PRIMARY: Explain how CMS works and architecture
+  - getStarted        # Help users start using CMS functionality
+  - completeTasks     # Guide through common CMS workflows (sign, verify, encrypt, decrypt)
+  - findAnswers       # Reference for 31+ undocumented functions
+
+# Target Audience: Developers learning CMS
+targetAudienceTypes:
+  - developers        # PRIMARY: Engineers integrating CMS into their projects
+  - decisionMakers    # Architects evaluating CMS for secure messaging
+
+# Reader Knowledge Level: New to CMS but familiar with cryptography basics
+readerKnowledgeLevel: domainFamiliar  # Know cryptography concepts, new to CMS specifically
+
+# Documentation Depth: Comprehensive coverage including undocumented functions
+documentationDepth: comprehensive  # Cover all features, including the 31 undocumented functions
+
+# Custom Rules: Specific requirements for CMS training guide
+rules: |
+  1. INTRODUCTORY FOCUS:
+     - Explain what CMS (Cryptographic Message Syntax - RFC 5652) is and why it exists
+     - Cover the fundamental concepts and architecture
+     - Show how all the pieces (SignedData, EnvelopedData, DigestedData, etc.) fit together
+     - Provide clear conceptual flow before diving into API details
+
+  2. STRUCTURE & ORGANIZATION:
+     - Start with high-level overview of CMS capabilities
+     - Explain the 6 content types: Data, SignedData, EnvelopedData, DigestedData, EncryptedData, AuthEnvelopedData
+     - Cover the 6 recipient types: Trans, Agree, KEK, Pass, Other, KEM
+     - Show relationships between command-line tool and library functions
+
+  3. PRACTICAL EXAMPLES:
+     - Use demos/cms/*.c examples to illustrate real-world usage
+     - Show complete workflows: sign → verify, encrypt → decrypt, compress → uncompress
+     - Include command-line examples from openssl cms tool
+     - Demonstrate common patterns and best practices
+
+  4. UNDOCUMENTED FUNCTIONS:
+     - Explicitly document the 31+ functions that lack reference documentation
+     - Extract function signatures, parameters, return values from cms.h.in
+     - Infer usage from implementation in crypto/cms/*.c files
+     - Note which functions are public API vs internal
+
+  5. BRIDGE EXISTING DOCS:
+     - Reference existing doc/man3/CMS_*.pod documentation where it exists
+     - Fill gaps for undocumented functionality
+     - Connect command-line flags to underlying API functions
+
+  6. VISUAL AIDS:
+     - Create diagrams showing CMS message structure
+     - Illustrate signing/verification flow
+     - Show encryption/decryption with different recipient types
+     - Map command-line operations to library function calls
+
+  7. TROUBLESHOOTING:
+     - Common errors and solutions
+     - Flag combinations and their effects
+     - Certificate/key requirements for each operation
+
+# Target Audience Details
+targetAudience: |
+  Developers and engineers who need to:
+  - Implement secure message signing and encryption using OpenSSL CMS
+  - Understand how CMS works conceptually before using the API
+  - Learn the relationships between different CMS components
+  - Find documentation for currently undocumented functions
+  - Transition from command-line tool usage to programmatic API usage
+
+  Assumes basic knowledge of:
+  - Cryptographic concepts (signatures, encryption, certificates)
+  - C programming for API usage
+  - Command-line tools for practical examples
+
+# Glossary for CMS-specific terms
+glossary: |
+  **CMS**: Cryptographic Message Syntax (RFC 5652) - Standard for cryptographically protecting messages
+  **SignedData**: CMS content type for digitally signed messages
+  **EnvelopedData**: CMS content type for encrypted messages with recipient info
+  **AuthEnvelopedData**: Authenticated encryption with associated data
+  **DigestedData**: CMS content type containing a message digest
+  **EncryptedData**: Simple symmetric encryption without recipient info
+  **RecipientInfo**: Information about message recipients (6 types: KTRI, KARI, KEKRI, PWRI, ORI, KEMRI)
+  **SignerInfo**: Information about message signers
+  **S/MIME**: Secure/Multipurpose Internet Mail Extensions using CMS
+  **KTRI**: Key Transport Recipient Info (RSA-based)
+  **KARI**: Key Agreement Recipient Info (DH/ECDH-based)
+  **KEKRI**: Key Encryption Key Recipient Info (symmetric key wrap)
+  **PWRI**: Password Recipient Info (password-based encryption)
+  **KEMRI**: KEM Recipient Info (Key Encapsulation Mechanism - quantum-resistant)
+  **ORI**: Other Recipient Info (custom/future recipient types)
+
+locale: en
+
+docsDir: .aigne/doc-smith/docs
+
+# Source files prioritized for training guide generation
+sourcesPath:
+  # TIER 1: Core API and practical examples (ESSENTIAL)
+  - include/openssl/cms.h.in           # Main public API - 120+ functions
+  - apps/cms.c                         # Command-line tool - real-world usage patterns
+  - demos/cms/cms_*.c                  # All CMS demo files
+  - crypto/cms/cms_*.c                 # All CMS implementation files
+  - doc/man1/openssl-cms.pod.in        # Command-line reference
+  - doc/man3/CMS_*.pod                 # All existing reference docs
+  - include/openssl/cmserr.h           # Error codes
+  - include/internal/cms.h             # Internal interfaces
+  - test/cmsapitest.c                  # API test examples
+
+media:
+  minImageWidth: 800
+lastGitHead: 2657697b6d29ea1d62161bdd96f4b06bb8e532b2
+boardId: openssl-cms-guide
+# Checkout ID for document deployment service
+checkoutId: ""
+# Should sync branding for documentation
+shouldSyncBranding: ""
