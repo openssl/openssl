@@ -9,9 +9,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_CT_H
 # define OPENSSL_CT_H
@@ -40,10 +42,12 @@ extern "C" {
 /* All hashes are SHA256 in v1 of Certificate Transparency */
 # define CT_V1_HASHLEN SHA256_DIGEST_LENGTH
 
+/* clang-format off */
 {-
     generate_stack_macros("SCT")
     .generate_stack_macros("CTLOG");
 -}
+/* clang-format on */
 
 
 typedef enum {
