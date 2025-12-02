@@ -359,7 +359,7 @@ Cipher suites using SHA256 or SHA384.
 =item B<aGOST>
 
 Cipher suites using GOST R 34.10 (either 2001 or 94) for authentication
-(needs a provider supporting GOST algorithms).
+(needs a provider that supports GOST algorithms).
 
 =item B<aGOST01>
 
@@ -512,8 +512,9 @@ is used.
 
 =head2 GOST cipher suites from draft-chudov-cryptopro-cptls, extending TLS v1.0
 
-Note: these ciphers require a GOST provider which isn't part of OpenSSL and a
-3rd party implementation is a work in progress.
+Note: these ciphers require a provider that supports GOST cryptographic
+algorithms, such as the B<gostprov> provider, which isn't part of the OpenSSL
+distribution.
 
  TLS_GOSTR341094_WITH_28147_CNT_IMIT GOST94-GOST89-GOST89
  TLS_GOSTR341001_WITH_28147_CNT_IMIT GOST2001-GOST89-GOST89
@@ -522,8 +523,9 @@ Note: these ciphers require a GOST provider which isn't part of OpenSSL and a
 
 =head2 GOST cipher suites, extending TLS v1.2
 
-Note: these ciphers require a GOST provider which isn't part of OpenSSL and a
-3rd party implementation is a work in progress.
+Note: these ciphers require a provider that supports GOST cryptographic
+algorithms, such as the B<gostprov> provider, which isn't part of the OpenSSL
+distribution.
 
  TLS_GOSTR341112_256_WITH_28147_CNT_IMIT GOST2012-GOST8912-GOST8912
  TLS_GOSTR341112_256_WITH_NULL_GOSTR3411 GOST2012-NULL-GOST12
