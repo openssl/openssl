@@ -162,17 +162,7 @@ jobs:
             opensslcapsname: riscvcap, # OPENSSL_riscvcap
             opensslcaps: "rv64gc_zba_zbb_zbc_zbs_zbkb_zbkc_zbkx_zknd_zkne_zknh_zksed_zksh_zkr_zkt_v_zvbb_zvbc_zvkb_zvkg_zvkned_zvknha_zvknhb_zvksed_zvksh"
           }, {
-            # RV64GC with all currently OpenSSL-supported extensions
-            #   crypto/chacha/chacha_riscv.c (with ZVKB)
-            #   crypto/modes/gcm128.c (with ZVKG/ZVKB)
-            #   crypto/sm3/asm/sm3-riscv64-zvksh.pl
-            #   crypto/sm4/asm/sm4-riscv64-zvksed.pl
-            #   crypto/aes/asm/aes-riscv64-zvbb-zvkg-zvkned.pl
-            #   crypto/aes/asm/aes-riscv64-zvkb-zvkned.pl
-            #   crypto/modes/asm/ghash-riscv64-zvkg.pl
-            #   crypto/modes/asm/aes-gcm-riscv64-zvkb-zvkg-zvkned.pl
-            #   crypto/modes/asm/ghash-riscv64-zvkb-zvbc.pl
-            #   crypto/sha/asm/sha256-riscv64-zvkb-zvknha_or_zvknhb.pl
+            # RV64GC with all currently OpenSSL-supported extensions, with zvl256
             #   crypto/sha/asm/sha512-riscv64-zvkb-zvknhb.pl
             arch: riscv64-linux-gnu,
             libs: libc6-dev-riscv64-cross,
@@ -182,17 +172,7 @@ jobs:
             opensslcapsname: riscvcap, # OPENSSL_riscvcap
             opensslcaps: "rv64gc_zba_zbb_zbc_zbs_zbkb_zbkc_zbkx_zknd_zkne_zknh_zksed_zksh_zkr_zkt_v_zvbb_zvbc_zvkb_zvkg_zvkned_zvknha_zvknhb_zvksed_zvksh"
           }, {
-            # RV64GC with all currently OpenSSL-supported extensions
-            #   crypto/chacha/chacha_riscv.c (with ZVKB)
-            #   crypto/modes/gcm128.c (with ZVKG/ZVKB)
-            #   crypto/sm3/asm/sm3-riscv64-zvksh.pl
-            #   crypto/sm4/asm/sm4-riscv64-zvksed.pl
-            #   crypto/aes/asm/aes-riscv64-zvbb-zvkg-zvkned.pl
-            #   crypto/aes/asm/aes-riscv64-zvkb-zvkned.pl
-            #   crypto/modes/asm/ghash-riscv64-zvkg.pl
-            #   crypto/modes/asm/aes-gcm-riscv64-zvkb-zvkg-zvkned.pl
-            #   crypto/modes/asm/ghash-riscv64-zvkb-zvbc.pl
-            #   crypto/sha/asm/sha256-riscv64-zvkb-zvknha_or_zvknhb.pl
+            # RV64GC with all currently OpenSSL-supported extensions, with zvl512
             #   crypto/sha/asm/sha512-riscv64-zvkb-zvknhb.pl
             arch: riscv64-linux-gnu,
             libs: libc6-dev-riscv64-cross,
