@@ -42,6 +42,7 @@ static void ascon_aead128_cleanctx(void *vctx)
         ossl_ascon_aead_cleanup(ctx->internal_ctx);
     OPENSSL_cleanse(ctx->tag, sizeof(ctx->tag));
     OPENSSL_cleanse(ctx->iv, sizeof(ctx->iv));
+    /* Note: key is not cleared here to allow reinitialization with NULL key */
 }
 
 static void *ascon_aead128_newctx(void *provctx)
@@ -62,6 +63,7 @@ static void *ascon_aead128_newctx(void *provctx)
     ctx->assoc_data_processed = false;
     ctx->tag_len = FIXED_TAG_LENGTH;  /* default tag length */
     ctx->iv_set = false;
+    ctx->key_set = false;
 
     intctx = OPENSSL_zalloc(sizeof(*intctx));
     if (intctx == NULL) {
@@ -111,6 +113,7 @@ static void ascon_aead128_freectx(void *vctx)
 
     ctx->provctx = NULL;
     ascon_aead128_cleanctx(ctx);
+    OPENSSL_cleanse(ctx->key, sizeof(ctx->key));
     OPENSSL_free(ctx->internal_ctx);
     OPENSSL_free(ctx);
 }
@@ -144,6 +147,34 @@ static int ascon_aead128_internal_init(void *vctx, direction_t direction,
         }
     }
 
+    /* Handle reinitialization with NULL key but new IV */
+    if (key == NULL && iv != NULL && ctx->key_set) {
+        /* Preserve tag for decryption - it may have been set before reinitialization */
+        uint8_t saved_tag[FIXED_TAG_LENGTH];
+        int tag_was_set = ctx->is_tag_set;
+
+        if (tag_was_set && direction == DECRYPTION) {
+            memcpy(saved_tag, ctx->tag, FIXED_TAG_LENGTH);
+        }
+
+        ascon_aead128_cleanctx(ctx);
+        ctx->direction = direction;
+        /* Use stored key for reinitialization */
+        ossl_ascon_aead128_init(ctx->internal_ctx, ctx->key, iv);
+        /* Store the IV for get_updated_iv */
+        memcpy(ctx->iv, iv, ASCON_AEAD_NONCE_LEN);
+        ctx->iv_set = true;
+        ctx->is_ongoing = true;
+
+        /* Restore tag for decryption if it was set before reinitialization */
+        if (tag_was_set && direction == DECRYPTION) {
+            memcpy(ctx->tag, saved_tag, FIXED_TAG_LENGTH);
+            ctx->is_tag_set = true;
+        }
+
+        return OSSL_RV_SUCCESS;
+    }
+
     /* Only clean and initialize if both key and IV are provided */
     if (key != NULL && iv != NULL) {
         /* Preserve tag for decryption - it may have been set before reinitialization */
@@ -157,7 +188,9 @@ static int ascon_aead128_internal_init(void *vctx, direction_t direction,
         ascon_aead128_cleanctx(ctx);
         ctx->direction = direction;
         ossl_ascon_aead128_init(ctx->internal_ctx, key, iv);
-        /* Store the IV for get_updated_iv */
+        /* Store the key and IV for reinitialization */
+        memcpy(ctx->key, key, ASCON_AEAD128_KEY_LEN);
+        ctx->key_set = true;
         memcpy(ctx->iv, iv, ASCON_AEAD_NONCE_LEN);
         ctx->iv_set = true;
         ctx->is_ongoing = true;

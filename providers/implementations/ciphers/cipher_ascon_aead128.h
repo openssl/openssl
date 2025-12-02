@@ -42,6 +42,7 @@ struct ascon_aead128_ctx_st
 
     uint8_t tag[FIXED_TAG_LENGTH]; /* storing the tag with fixed length */
     uint8_t iv[ASCON_AEAD_NONCE_LEN]; /* storing the IV (nonce) for get_updated_iv */
+    uint8_t key[ASCON_AEAD128_KEY_LEN]; /* storing the key for reinitialization */
 
     size_t tag_len;          /* tag length being used */
 
@@ -50,6 +51,7 @@ struct ascon_aead128_ctx_st
     bool is_ongoing;        /* true = operation has started */
     bool assoc_data_processed;  /* whether associated data has been processed */
     bool iv_set;             /* whether the IV has been set */
+    bool key_set;             /* whether the key has been set */
 };
 
 /*********************************************************************
