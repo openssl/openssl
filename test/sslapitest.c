@@ -14359,78 +14359,6 @@ end:
     return ret;
 }
 
-static int test_ssl_conf_SetValidHostOrIP(SSL_CONF_CTX *confctx,
-                                          SSL_CTX *ssl_ctx,
-                                          SSL *ssl)
-{
-    static const char *first_hostname = "host4.openssl.org";
-    static const char *second_hostname = "host5.openssl.org";
-    static const char *third_hostname = "host6.openssl.org";
-    static const char *first_ip = "192.168.58.5";
-    static const char *second_ip = "10.11.12.13";
-    int ret = 0;
-    X509_VERIFY_PARAM *param;
-    char *host;
-    char *ip_str = NULL;
-
-    if (ssl_ctx != NULL) {
-        param = SSL_CTX_get0_param(ssl_ctx);
-    } else if (ssl != NULL) {
-        param = SSL_get0_param(ssl);
-    } else {
-        goto end;
-    }
-
-    /* Set up some starting values */
-    if (X509_VERIFY_PARAM_set1_host(param, first_hostname, 0) != 1)
-        goto end;
-    if (X509_VERIFY_PARAM_add1_host(param, second_hostname, 0) != 1)
-        goto end;
-    if (X509_VERIFY_PARAM_set1_ip_asc(param, first_ip) != 1)
-        goto end;
-
-    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidHostOrIP", third_hostname), 2))
-        goto end;
-
-    /* There should now be 1 valid hostname, "host6", and the IP should still be "192.168..." */
-    host = X509_VERIFY_PARAM_get0_host(param, 0);
-    if (!TEST_str_eq(host, third_hostname))
-        goto end;
-    host = X509_VERIFY_PARAM_get0_host(param, 1);
-    if (!TEST_str_eq(host, NULL))
-        goto end;
-    ip_str = X509_VERIFY_PARAM_get1_ip_asc(param);
-    if (!TEST_str_eq(ip_str, first_ip))
-        goto end;
-    OPENSSL_free(ip_str);
-    ip_str = NULL;
-
-    /* Reset hostnames */
-    if (X509_VERIFY_PARAM_set1_host(param, first_hostname, 0) != 1)
-        goto end;
-    if (X509_VERIFY_PARAM_add1_host(param, second_hostname, 0) != 1)
-        goto end;
-
-    if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetValidHostOrIP", second_ip), 2))
-        goto end;
-
-    /* There should still be 2 valid hostnames, and the IP should now be "10.11..." */
-    host = X509_VERIFY_PARAM_get0_host(param, 0);
-    if (!TEST_str_eq(host, first_hostname))
-        goto end;
-    host = X509_VERIFY_PARAM_get0_host(param, 1);
-    if (!TEST_str_eq(host, second_hostname))
-        goto end;
-    ip_str = X509_VERIFY_PARAM_get1_ip_asc(param);
-    if (!TEST_str_eq(ip_str, second_ip))
-        goto end;
-
-    ret = 1;
-end:
-    OPENSSL_free(ip_str);
-    return ret;
-}
-
 static int test_ssl_conf(void)
 {
     int ret = 0;
@@ -14460,9 +14388,6 @@ static int test_ssl_conf(void)
     if (!test_ssl_conf_SetValidIP(confctx, ssl_ctx, NULL))
         goto end;
 
-    if (!test_ssl_conf_SetValidHostOrIP(confctx, ssl_ctx, NULL))
-        goto end;
-
     SSL_CONF_CTX_free(confctx);
     confctx = NULL;
     SSL_CTX_free(ssl_ctx);
@@ -14490,9 +14415,6 @@ static int test_ssl_conf(void)
         goto end;
 
     if (!test_ssl_conf_SetValidIP(confctx, NULL, ssl))
-        goto end;
-
-    if (!test_ssl_conf_SetValidHostOrIP(confctx, NULL, ssl))
         goto end;
 
     ret = 1;

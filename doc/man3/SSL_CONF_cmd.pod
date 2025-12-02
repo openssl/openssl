@@ -812,13 +812,6 @@ verification, in addition to any previously set value.
 The B<value> argument is the expected IPv4 or IPv6 address to use for
 certificate verification.  Any previous value is cleared.
 
-=item B<SetValidHostOrIP>
-
-The B<value> argument is the expected DNS hostname, IPv4 address, or IPv6
-address to use for certificate verification.  If it is a hostname, any
-previous hostname is cleared.  If it is an IP address, any previous IP
-address is cleared.
-
 =back
 
 =head1 SUPPORTED COMMAND TYPES

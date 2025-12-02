@@ -558,28 +558,6 @@ static int cmd_SetValidIP(SSL_CONF_CTX *cctx, const char *value)
     return rv > 0;
 }
 
-static int cmd_SetValidHostOrIP(SSL_CONF_CTX *cctx, const char *value)
-{
-    int rv = 0;
-    X509_VERIFY_PARAM *param = NULL;
-
-    if (cctx->ssl) {
-        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
-
-        if (sc == NULL)
-            return 0;
-        param = sc->param;
-    } else if (cctx->ctx) {
-        param = cctx->ctx->param;
-    }
-    if (param != NULL) {
-        rv = X509_VERIFY_PARAM_set1_ip_asc(param, value);
-        if (rv == 0)
-            rv = X509_VERIFY_PARAM_set1_host(param, value, 0);
-    }
-    return rv > 0;
-}
-
 static int cmd_SetValidFlags(SSL_CONF_CTX *cctx, const char *value)
 {
     static const ssl_flag_tbl ssl_host_flags_list[] = {
@@ -1008,7 +986,6 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_STRING(SetValidHost, NULL, SSL_CONF_FLAG_CERTIFICATE),
     SSL_CONF_CMD_STRING(AddValidHost, NULL, SSL_CONF_FLAG_CERTIFICATE),
     SSL_CONF_CMD_STRING(SetValidIP, NULL, SSL_CONF_FLAG_CERTIFICATE),
-    SSL_CONF_CMD_STRING(SetValidHostOrIP, NULL, SSL_CONF_FLAG_CERTIFICATE),
     SSL_CONF_CMD(AddCAPath, "addCApath", SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_DIR),
     SSL_CONF_CMD(AddCAFile, "addCAfile", SSL_CONF_FLAG_CERTIFICATE,
