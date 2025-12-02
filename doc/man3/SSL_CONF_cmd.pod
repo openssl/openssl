@@ -698,7 +698,7 @@ A file or directory of certificates in PEM format whose names are used as the
 set of acceptable names for client CAs. Servers only. This option is only
 supported if certificate operations are permitted.
 
-=item B<CertValidation>
+=item B<SetCertificateFlags>
 
 The B<value> argument is a comma separated list of certificate validation
 flags to set.  If a flag string is preceded by B<-> that flag is disabled.
@@ -762,7 +762,7 @@ B<X509_V_FLAG_PARTIAL_CHAIN>.
 B<NoCheckTime> suppresses checking the validity period of certificate
 and CRLs.  Equivalent to B<X509_V_FLAG_NO_CHECK_TIME>.
 
-=item B<SetValidFlags>
+=item B<SetHostFlags>
 
 The B<value> argument is a comma separated list of host validation flags
 to set.  If a flag string is preceded by B<-> that flag is disabled.
@@ -797,17 +797,17 @@ B<NeverCheckSubject> causes certificate hostname verification to
 never consider the subject DN.  Equivalent to
 B<X509_CHECK_FLAG_NEVER_CHECK_SUBJECT>.
 
-=item B<SetValidHost>
+=item B<SetExpectedDNSName>
 
 The B<value> argument is the expected DNS hostname to use for certificate
 verification.  Any previous value is cleared.
 
-=item B<AddValidHost>
+=item B<AddExpectedDNSName>
 
 The B<value> argument is an expected DNS hostname to use for certificate
 verification, in addition to any previously set value.
 
-=item B<SetValidIP>
+=item B<SetExpectedIPAddress>
 
 The B<value> argument is the expected IPv4 or IPv6 address to use for
 certificate verification.  Any previous value is cleared.
