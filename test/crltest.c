@@ -560,6 +560,67 @@ static int test_reuse_crl(int idx)
     return r;
 }
 
+/*
+ * Test to make sure X509_verify_cert sets the issuer, reasons, and
+ * CRL score of the CRLs it gets from X509_STORE_CTX->get_crl
+ */
+
+static int get_crl_fn(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x)
+{
+    *crl = CRL_from_strings(kBasicCRL);
+    return 1;
+}
+
+static int test_get_crl_fn_score(void)
+{
+    X509_STORE_CTX *ctx = X509_STORE_CTX_new();
+    X509_STORE *store = X509_STORE_new();
+    X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_new();
+    STACK_OF(X509) *roots = sk_X509_new_null();
+
+    int status = X509_V_ERR_UNSPECIFIED;
+
+    if (!TEST_ptr(ctx)
+        || !TEST_ptr(store)
+        || !TEST_ptr(param)
+        || !TEST_ptr(roots))
+        goto err;
+
+    /* Create a stack; upref the cert because we free it below. */
+    if (!TEST_true(X509_up_ref(test_root)))
+        goto err;
+    if (!TEST_true(sk_X509_push(roots, test_root))) {
+        X509_free(test_root);
+        goto err;
+    }
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, test_leaf, NULL)))
+        goto err;
+
+    X509_STORE_CTX_set0_trusted_stack(ctx, roots);
+    X509_STORE_CTX_set_get_crl(ctx, &get_crl_fn);
+    X509_VERIFY_PARAM_set_time(param, PARAM_TIME);
+    if (!TEST_long_eq((long)X509_VERIFY_PARAM_get_time(param),
+                      (long)PARAM_TIME))
+        goto err;
+    X509_VERIFY_PARAM_set_depth(param, 16);
+    X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK);
+    X509_STORE_CTX_set0_param(ctx, param);
+    param = NULL;
+
+    ERR_clear_error();
+    status = X509_verify_cert(ctx) == 1 ? X509_V_OK
+                                        : X509_STORE_CTX_get_error(ctx);
+
+    TEST_int_eq(status, X509_V_OK);
+
+err:
+    OSSL_STACK_OF_X509_free(roots);
+    X509_VERIFY_PARAM_free(param);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    return status == X509_V_OK;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(test_root = X509_from_strings(kCRLTestRoot))
@@ -573,6 +634,7 @@ int setup_tests(void)
     ADD_TEST(test_bad_issuer_crl);
     ADD_TEST(test_crl_empty_idp);
     ADD_TEST(test_known_critical_crl);
+    ADD_TEST(test_get_crl_fn_score);
     ADD_ALL_TESTS(test_unknown_critical_crl, OSSL_NELEM(unknown_critical_crls));
     ADD_ALL_TESTS(test_reuse_crl, 6);
     return 1;
