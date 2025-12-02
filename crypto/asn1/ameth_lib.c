@@ -74,11 +74,10 @@ static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
 }
 
 /*
- * Return ANS1 method for desired `type`, returns NULL if no method is found for
+ * Return ASN1 method for desired `type`, returns NULL if no method is found for
  * `type`. If pe is not NULL, the function will set *pe to NULL to indicate no
  * engine is used.
  */
-
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type)
 {
     const EVP_PKEY_ASN1_METHOD *t;
