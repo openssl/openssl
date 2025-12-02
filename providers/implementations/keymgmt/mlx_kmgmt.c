@@ -755,6 +755,7 @@ static void *mlx_kem_dup(const void *vkey, int selection)
     switch (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) {
     case 0:
         ret->xkey = ret->mkey = NULL;
+        ret->state = MLX_HAVE_NOKEYS;
         return ret;
     case OSSL_KEYMGMT_SELECT_KEYPAIR:
         ret->mkey = EVP_PKEY_dup(key->mkey);
