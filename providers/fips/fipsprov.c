@@ -126,12 +126,8 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     return fgbl;
 }
 
-static void deferred_deinit(void);
-
 void ossl_fips_prov_ossl_ctx_free(void *fgbl)
 {
-    /* Also free deferred variables when the FIPS Global context is killed */
-    deferred_deinit();
     OPENSSL_free(fgbl);
 }
 
@@ -812,8 +808,12 @@ static const OSSL_ALGORITHM *fips_query_internal(void *provctx, int operation_id
     return fips_query(provctx, operation_id, no_cache);
 }
 
+static void deferred_deinit(void);
+
 static void fips_teardown(void *provctx)
 {
+    /* Also free deferred variables when the FIPS Global context is killed */
+    deferred_deinit();
     OSSL_LIB_CTX_free(PROV_LIBCTX_OF(provctx));
     ossl_prov_ctx_free(provctx);
 }
@@ -1425,6 +1425,13 @@ static void deferred_test_error(int category)
 int FIPS_deferred_self_tests(OSSL_LIB_CTX *libctx, FIPS_DEFERRED_TEST tests[])
 {
     int i;
+
+    /*
+     * During the initial selftest we do not try to self-test individual
+     * algorithms, or we end up in loops.
+     */
+    if (ossl_fips_self_testing())
+        return 1;
 
     /*
      * NOTE: that the order in which we check the 'state' here is not important,
