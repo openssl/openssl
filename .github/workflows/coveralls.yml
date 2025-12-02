@@ -7,18 +7,18 @@
 
 name: Coverage
 
-on:
-  schedule:
-    - cron: '15 02 * * *'
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: Branch to measure coverage
-        required: true
-        default: master
-      extra_config:
-        description: Extra options for configuration script
-        default: ""
+on: [pull_request]
+  #schedule:
+  #  - cron: '15 02 * * *'
+  #workflow_dispatch:
+  #  inputs:
+  #    branch:
+  #      description: Branch to measure coverage
+  #      required: true
+  #      default: master
+  #    extra_config:
+  #      description: Extra options for configuration script
+  #      default: ""
 
 permissions:
   contents: read

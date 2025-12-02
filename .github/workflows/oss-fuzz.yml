@@ -6,10 +6,10 @@
 # https://www.openssl.org/source/license.html
 
 name: CIFuzz
-on:
-  schedule:
-    - cron: '50 01 * * *'
-  workflow_dispatch:
+on: [pull_request]
+  #schedule:
+  #  - cron: '50 01 * * *'
+  #workflow_dispatch:
 permissions:
   contents: read
 

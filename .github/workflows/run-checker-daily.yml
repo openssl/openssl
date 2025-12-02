@@ -8,10 +8,10 @@
 name: Run-checker daily
 # Jobs run daily
 
-on:
-  schedule:
-    - cron: '30 02 * * *'
-  workflow_dispatch:
+on: [pull_request]
+  #schedule:
+  #  - cron: '30 02 * * *'
+  #workflow_dispatch:
 
 permissions:
   contents: read

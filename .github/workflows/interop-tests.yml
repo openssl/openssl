@@ -4,10 +4,10 @@
 # this job involving file system paths should be made prefixed with, or relative
 # to that directory
 name: Interoperability tests with GnuTLS, NSS and OpenSSH
-on:
-  schedule:
-    - cron: '55 02 * * *'
-  workflow_dispatch:
+on: [pull_request]
+  #schedule:
+  #  - cron: '55 02 * * *'
+  #workflow_dispatch:
 
 permissions: {}
 

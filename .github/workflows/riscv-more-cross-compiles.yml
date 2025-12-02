@@ -7,13 +7,13 @@
 
 name: Cross Compile for RISC-V Extensions
 
-on:
-  pull_request:
-    types: [opened, reopened, edited, synchronize]
-  push:
-  schedule:
-    - cron: '35 02 * * *'
-  workflow_dispatch:
+on: [pull_request]
+  #pull_request:
+  #  types: [opened, reopened, edited, synchronize]
+  #push:
+  #schedule:
+  #  - cron: '35 02 * * *'
+  #workflow_dispatch:
 
 permissions:
   contents: read
