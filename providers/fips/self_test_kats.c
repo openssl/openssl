@@ -1196,6 +1196,8 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int do_deferred)
         /* Decrement saved_rand reference counter */
         EVP_RAND_CTX_free(saved_rand);
         EVP_RAND_CTX_free(main_rand);
+        /* Ensure this global variable does not reference freed memory */
+        main_rand = NULL;
         return 0;
     }
 
@@ -1219,6 +1221,8 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int do_deferred)
         ret = 0;
 
     RAND_set0_private(libctx, saved_rand);
+    /* The above call will cause main_rand to be freed */
+    main_rand = NULL;
     return ret;
 }
 
@@ -1236,11 +1240,22 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int do_deferred)
 int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
     int type, const char *alg_name)
 {
+    EVP_RAND_CTX *saved_rand = ossl_rand_get0_private_noncreating(libctx);
     int ret = 1;
     int i, found = 0;
 
     if (alg_name == NULL)
         return 0;
+
+    if (saved_rand != NULL && !EVP_RAND_CTX_up_ref(saved_rand))
+        return 0;
+    if (!setup_main_random(libctx)
+        || !RAND_set0_private(libctx, main_rand)) {
+        /* Decrement saved_rand reference counter */
+        EVP_RAND_CTX_free(saved_rand);
+        EVP_RAND_CTX_free(main_rand);
+        return 0;
+    }
 
     switch (type) {
     case FIPS_DEFERRED_KAT_DIGEST:
@@ -1364,6 +1379,7 @@ int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
     }
 
 done:
+    RAND_set0_private(libctx, saved_rand);
     /* If no test was found for alg_name, it is considered a failure */
     return ret && found;
 }
