@@ -24,10 +24,17 @@
 #include <unistd.h>
 #endif
 #include "arm_arch.h"
+#ifdef __aarch64__
+#include <stdint.h>
+#endif
 
 unsigned int OPENSSL_armcap_P = 0;
 unsigned int OPENSSL_arm_midr = 0;
 unsigned int OPENSSL_armv8_rsa_neonized = 0;
+
+#ifdef __aarch64__
+uint64_t _armv8_sve_get_vl_bytes(void);
+#endif
 
 #ifdef _WIN32
 void OPENSSL_cpuid_setup(void)
@@ -346,7 +353,7 @@ void OPENSSL_cpuid_setup(void)
             OPENSSL_armcap_P |= ARMV8_SVE;
 
         if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_SVE2)
-            OPENSSL_armcap_P |= ARMV8_SVE2;
+            OPENSSL_armcap_P |= ARMV9_SVE2;
 
         if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_RNG)
             OPENSSL_armcap_P |= ARMV8_RNG;
@@ -391,7 +398,7 @@ void OPENSSL_cpuid_setup(void)
     }
 #  ifdef __aarch64__
     OPENSSL_armcap_P |= arm_probe_for(_armv8_sve_probe, ARMV8_SVE);
-    OPENSSL_armcap_P |= arm_probe_for(_armv8_sve2_probe, ARMV8_SVE2);
+    OPENSSL_armcap_P |= arm_probe_for(_armv8_sve2_probe, ARMV9_SVE2);
     OPENSSL_armcap_P |= arm_probe_for(_armv8_rng_probe, ARMV8_RNG);
 #  endif
 
@@ -450,6 +457,17 @@ void OPENSSL_cpuid_setup(void)
          MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_QCOMM, QCOM_CPU_PART_ORYON_X1)) &&
         (OPENSSL_armcap_P & ARMV8_SHA3))
         OPENSSL_armcap_P |= ARMV8_HAVE_SHA3_AND_WORTH_USING;
+    if (OPENSSL_armcap_P & ARMV9_SVE2) {
+        uint64_t vl_bytes = _armv8_sve_get_vl_bytes();
+
+        if (vl_bytes > 16 && (vl_bytes & (vl_bytes - 1)) == 0) {
+            /*
+             * This implementation faster if vector length > 128 bits
+             * But vector length must be a power of 2 (e.g. 256, 512 bits)
+             */
+            OPENSSL_armcap_P |= ARMV9_SVE2_POLY1305;
+        }
+    }
 # endif
 }
 #endif /* _WIN32, __ARM_MAX_ARCH__ >= 7 */

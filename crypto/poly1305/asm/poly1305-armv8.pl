@@ -69,6 +69,8 @@ $code.=<<___;
 .globl	poly1305_emit
 .hidden	poly1305_emit
 
+.extern poly1305_blocks_sve2
+
 .type	poly1305_init,%function
 .align	5
 poly1305_init:
@@ -108,6 +110,13 @@ poly1305_init:
 
 	csel	$d0,$d0,$r0,eq
 	csel	$d1,$d1,$r1,eq
+
+	tst	w17, #ARMV9_SVE2_POLY1305
+
+	adrp	$r0,poly1305_blocks_sve2
+	add	$r0,$r0,#:lo12:poly1305_blocks_sve2
+
+	csel	$d0,$d0,$r0,eq
 
 #ifdef	__ILP32__
 	stp	w12,w13,[$len]
