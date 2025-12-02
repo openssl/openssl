@@ -32,11 +32,11 @@ typedef struct qtest_fault_encrypted_extensions {
 /* Flags for use with qtest_create_quic_objects() */
 
 /* Indicates whether we are using blocking mode or not */
-#define QTEST_FLAG_BLOCK        (1 << 0)
+#define QTEST_FLAG_BLOCK (1 << 0)
 /* Use fake time rather than real time */
-#define QTEST_FLAG_FAKE_TIME    (1 << 1)
+#define QTEST_FLAG_FAKE_TIME (1 << 1)
 /* Introduce noise in the BIO */
-#define QTEST_FLAG_NOISE        (1 << 2)
+#define QTEST_FLAG_NOISE (1 << 2)
 /* Split datagrams such that each datagram contains one packet */
 #define QTEST_FLAG_PACKET_SPLIT (1 << 3)
 /* Turn on client side tracing */
@@ -47,9 +47,9 @@ typedef struct qtest_fault_encrypted_extensions {
  * instance. |flags| is the logical or of flags defined above, or 0 if none.
  */
 int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
-                              SSL_CTX *serverctx, char *certfile, char *keyfile,
-                              int flags, QUIC_TSERVER **qtserv, SSL **cssl,
-                              QTEST_FAULT **fault, BIO **tracebio);
+    SSL_CTX *serverctx, char *certfile, char *keyfile,
+    int flags, QUIC_TSERVER **qtserv, SSL **cssl,
+    QTEST_FAULT **fault, BIO **tracebio);
 
 /* Where QTEST_FLAG_FAKE_TIME is used, add millis to the current time */
 void qtest_add_time(uint64_t millis);
@@ -88,7 +88,7 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv);
  * clientssl indicates SSL_ERROR_WANT_XXX as specified by |wanterr|
  */
 int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
-                                    int wanterr);
+    int wanterr);
 
 /*
  * Shutdown the client SSL object gracefully
@@ -116,15 +116,14 @@ int qtest_check_server_frame_encoding_err(QUIC_TSERVER *qtserv);
  * Enable tests to listen for pre-encryption QUIC packets being sent
  */
 typedef int (*qtest_fault_on_packet_plain_cb)(QTEST_FAULT *fault,
-                                              QUIC_PKT_HDR *hdr,
-                                              unsigned char *buf,
-                                              size_t len,
-                                              void *cbarg);
+    QUIC_PKT_HDR *hdr,
+    unsigned char *buf,
+    size_t len,
+    void *cbarg);
 
 int qtest_fault_set_packet_plain_listener(QTEST_FAULT *fault,
-                                          qtest_fault_on_packet_plain_cb pplaincb,
-                                          void *pplaincbarg);
-
+    qtest_fault_on_packet_plain_cb pplaincb,
+    void *pplaincbarg);
 
 /*
  * Helper function to be called from a packet_plain_listener callback if it
@@ -141,20 +140,20 @@ int qtest_fault_resize_plain_packet(QTEST_FAULT *fault, size_t newlen);
  * callback
  */
 int qtest_fault_prepend_frame(QTEST_FAULT *fault, const unsigned char *frame,
-                              size_t frame_len);
+    size_t frame_len);
 
 /*
  * The general handshake message listener is sent the entire handshake message
  * data block, including the handshake header itself
  */
 typedef int (*qtest_fault_on_handshake_cb)(QTEST_FAULT *fault,
-                                           unsigned char *msg,
-                                           size_t msglen,
-                                           void *handshakecbarg);
+    unsigned char *msg,
+    size_t msglen,
+    void *handshakecbarg);
 
 int qtest_fault_set_handshake_listener(QTEST_FAULT *fault,
-                                       qtest_fault_on_handshake_cb handshakecb,
-                                       void *handshakecbarg);
+    qtest_fault_on_handshake_cb handshakecb,
+    void *handshakecbarg);
 
 /*
  * Helper function to be called from a handshake_listener callback if it wants
@@ -179,16 +178,15 @@ int qtest_fault_resize_handshake(QTEST_FAULT *fault, size_t newlen);
  * data and exclude the handshake header
  */
 typedef int (*qtest_fault_on_enc_ext_cb)(QTEST_FAULT *fault,
-                                         QTEST_ENCRYPTED_EXTENSIONS *ee,
-                                         size_t eelen,
-                                         void *encextcbarg);
+    QTEST_ENCRYPTED_EXTENSIONS *ee,
+    size_t eelen,
+    void *encextcbarg);
 
 int qtest_fault_set_hand_enc_ext_listener(QTEST_FAULT *fault,
-                                          qtest_fault_on_enc_ext_cb encextcb,
-                                          void *encextcbarg);
+    qtest_fault_on_enc_ext_cb encextcb,
+    void *encextcbarg);
 
 /* Add listeners for other types of handshake message here */
-
 
 /*
  * Helper function to be called from message specific listener callbacks. newlen
@@ -208,9 +206,9 @@ int qtest_fault_resize_message(QTEST_FAULT *fault, size_t newlen);
  * is appended to the given BUF_MEM.
  */
 int qtest_fault_delete_extension(QTEST_FAULT *fault,
-                                 unsigned int exttype, unsigned char *ext,
-                                 size_t *extlen,
-                                 BUF_MEM *old_ext);
+    unsigned int exttype, unsigned char *ext,
+    size_t *extlen,
+    BUF_MEM *old_ext);
 
 /*
  * Add additional helper functions for querying extensions here (e.g.
@@ -222,29 +220,29 @@ int qtest_fault_delete_extension(QTEST_FAULT *fault,
  * Enable tests to listen for post-encryption QUIC packets being sent
  */
 typedef int (*qtest_fault_on_packet_cipher_cb)(QTEST_FAULT *fault,
-                                               /* The parsed packet header */
-                                               QUIC_PKT_HDR *hdr,
-                                               /* The packet payload data */
-                                               unsigned char *buf,
-                                               /* Length of the payload */
-                                               size_t len,
-                                               void *cbarg);
+    /* The parsed packet header */
+    QUIC_PKT_HDR *hdr,
+    /* The packet payload data */
+    unsigned char *buf,
+    /* Length of the payload */
+    size_t len,
+    void *cbarg);
 
 int qtest_fault_set_packet_cipher_listener(QTEST_FAULT *fault,
-                                           qtest_fault_on_packet_cipher_cb pciphercb,
-                                           void *picphercbarg);
+    qtest_fault_on_packet_cipher_cb pciphercb,
+    void *picphercbarg);
 
 /*
  * Enable tests to listen for datagrams being sent
  */
 typedef int (*qtest_fault_on_datagram_cb)(QTEST_FAULT *fault,
-                                          BIO_MSG *m,
-                                          size_t stride,
-                                          void *cbarg);
+    BIO_MSG *m,
+    size_t stride,
+    void *cbarg);
 
 int qtest_fault_set_datagram_listener(QTEST_FAULT *fault,
-                                      qtest_fault_on_datagram_cb datagramcb,
-                                      void *datagramcbarg);
+    qtest_fault_on_datagram_cb datagramcb,
+    void *datagramcbarg);
 
 /*
  * To be called from a datagram_listener callback. The datagram buffer is over
@@ -260,17 +258,17 @@ int qtest_fault_resize_datagram(QTEST_FAULT *fault, size_t newlen);
  */
 
 int qtest_fault_set_bw_limit(QTEST_FAULT *fault,
-                             size_t ctos_bw, size_t stoc_bw,
-                             int noise_rate);
+    size_t ctos_bw, size_t stoc_bw,
+    int noise_rate);
 
 /* Copy a BIO_MSG */
 int bio_msg_copy(BIO_MSG *dst, BIO_MSG *src);
 
-#define BIO_CTRL_NOISE_BACK_OFF       1001
-#define BIO_CTRL_NOISE_RATE           1002
+#define BIO_CTRL_NOISE_BACK_OFF 1001
+#define BIO_CTRL_NOISE_RATE 1002
 #define BIO_CTRL_NOISE_RECV_BANDWIDTH 1003
 #define BIO_CTRL_NOISE_SEND_BANDWIDTH 1004
-#define BIO_CTRL_NOISE_SET_NOW_CB     1005
+#define BIO_CTRL_NOISE_SET_NOW_CB 1005
 
 struct bio_noise_now_cb_st {
     OSSL_TIME (*now_cb)(void *);

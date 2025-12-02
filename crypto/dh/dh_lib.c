@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <openssl/bn.h>
 #ifndef FIPS_MODULE
-# include <openssl/engine.h>
+#include <openssl/engine.h>
 #endif
 #include <openssl/obj_mac.h>
 #include <openssl/core_names.h>
@@ -49,12 +49,12 @@ const DH_METHOD *ossl_dh_get_method(const DH *dh)
 {
     return dh->meth;
 }
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 DH *DH_new(void)
 {
     return dh_new_intern(NULL, NULL);
 }
-# endif
+#endif
 
 DH *DH_new_method(ENGINE *engine)
 {
@@ -105,7 +105,7 @@ static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 
     return ret;
 
- err:
+err:
     DH_free(ret);
     return NULL;
 }
@@ -197,7 +197,7 @@ int DH_security_bits(const DH *dh)
 }
 
 void DH_get0_pqg(const DH *dh,
-                 const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
+    const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 {
     ossl_ffc_params_get0_pqg(&dh->params, p, q, g);
 }
