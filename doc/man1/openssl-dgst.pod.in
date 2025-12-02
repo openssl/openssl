@@ -190,8 +190,9 @@ option.
 
 Create MAC (keyed Message Authentication Code). The most popular MAC
 algorithm is HMAC (hash-based MAC), but there are other MAC algorithms
-which are not based on hash. MAC keys and other options should be set
-via B<-macopt> parameter.
+which are not based on a digest algorithm, for instance the B<gost-mac>
+algorithm, supported by the B<gostprov> provider. MAC keys and other options
+should be set via B<-macopt> parameter.
 
 Cannot be used together with -hmac, -hmac-env and -hmac-stdin.
 
