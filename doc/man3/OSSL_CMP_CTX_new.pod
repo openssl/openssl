@@ -335,6 +335,12 @@ B<WARNING:> This setting leads to unspecified behavior and it is meant
 exclusively to allow interoperability with server implementations violating
 RFC 9810.
 
+=item B<OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES>
+
+        Accept missing or non-matching transactionID or recipNonce in error messages.
+        This can be helpful in case the server cannot provide a proper error message,
+        for instance if was unable to parse the ASN.1 encoding of a request message.
+
 =item B<OSSL_CMP_OPT_IGNORE_KEYUSAGE>
 
 Ignore key usage restrictions in the signer's certificate when
