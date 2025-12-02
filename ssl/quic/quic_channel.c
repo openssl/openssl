@@ -97,8 +97,6 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
                                  int force_immediate);
 static void ch_on_txp_ack_tx(const OSSL_QUIC_FRAME_ACK *ack, uint32_t pn_space,
                              void *arg);
-static void ch_rx_handle_version_neg(QUIC_CHANNEL *ch, OSSL_QRX_PKT *pkt);
-static void ch_raise_version_neg_failure(QUIC_CHANNEL *ch);
 static void ch_record_state_transition(QUIC_CHANNEL *ch, uint32_t new_state);
 
 DEFINE_LHASH_OF_EX(QUIC_SRT_ELEM);
@@ -2647,62 +2645,11 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
 
         break;
 
-    case QUIC_PKT_TYPE_VERSION_NEG:
-        /*
-         * "A client MUST discard any Version Negotiation packet if it has
-         * received and successfully processed any other packet."
-         */
-        if (!old_have_processed_any_pkt)
-            ch_rx_handle_version_neg(ch, ch->qrx_pkt);
-
-        break;
-
     default:
         assert(0);
         break;
     }
 
-}
-
-static void ch_rx_handle_version_neg(QUIC_CHANNEL *ch, OSSL_QRX_PKT *pkt)
-{
-    /*
-     * We do not support version negotiation at this time. As per RFC 9000 s.
-     * 6.2., we MUST abandon the connection attempt if we receive a Version
-     * Negotiation packet, unless we have already successfully processed another
-     * incoming packet, or the packet lists the QUIC version we want to use.
-     */
-    PACKET vpkt;
-    unsigned long v;
-
-    if (!PACKET_buf_init(&vpkt, pkt->hdr->data, pkt->hdr->len))
-        return;
-
-    while (PACKET_remaining(&vpkt) > 0) {
-        if (!PACKET_get_net_4(&vpkt, &v))
-            break;
-
-        if ((uint32_t)v == QUIC_VERSION_1)
-            return;
-    }
-
-    /* No match, this is a failure case. */
-    ch_raise_version_neg_failure(ch);
-}
-
-static void ch_raise_version_neg_failure(QUIC_CHANNEL *ch)
-{
-    QUIC_TERMINATE_CAUSE tcause = {0};
-
-    tcause.error_code = OSSL_QUIC_ERR_CONNECTION_REFUSED;
-    tcause.reason     = "version negotiation failure";
-    tcause.reason_len = strlen(tcause.reason);
-
-    /*
-     * Skip TERMINATING state; this is not considered a protocol error and we do
-     * not send CONNECTION_CLOSE.
-     */
-    ch_start_terminating(ch, &tcause, 1);
 }
 
 /* Try to generate packets and if possible, flush them to the network. */
