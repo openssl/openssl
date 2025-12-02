@@ -57,10 +57,10 @@ int RECORD_LAYER_clear(RECORD_LAYER *rl)
         rl->rrlmethod->free(rl->rrl); /* Ignore return value */
     if (rl->wrlmethod != NULL)
         rl->wrlmethod->free(rl->wrl); /* Ignore return value */
-    BIO_free(rl->rrlnext);
+
     rl->rrlmethod = NULL;
     rl->wrlmethod = NULL;
-    rl->rrlnext = NULL;
+
     rl->rrl = NULL;
     rl->wrl = NULL;
 
