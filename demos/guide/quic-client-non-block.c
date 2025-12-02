@@ -16,10 +16,10 @@
 
 /* Include the appropriate header file for SOCK_DGRAM */
 #ifdef _WIN32 /* Windows */
-# include <winsock2.h>
+#include <winsock2.h>
 #else /* Linux/Unix */
-# include <sys/socket.h>
-# include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/select.h>
 #endif
 
 #include <openssl/bio.h>
@@ -28,7 +28,7 @@
 
 /* Helper function to create a BIO connected to the server */
 static BIO *create_socket_bio(const char *hostname, const char *port,
-                              int family, BIO_ADDR **peer_addr)
+    int family, BIO_ADDR **peer_addr)
 {
     int sock = -1;
     BIO_ADDRINFO *res;
@@ -39,7 +39,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
      * Lookup IP address info for the server.
      */
     if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_CLIENT, family, SOCK_DGRAM, 0,
-                       &res))
+            &res))
         return NULL;
 
     /*
@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
      * connection.
      */
     bio = create_socket_bio(hostname, port, ipv6 ? AF_INET6 : AF_INET,
-                            &peer_addr);
+        &peer_addr);
     if (bio == NULL) {
         printf("Failed to crete the BIO\n");
         goto end;
@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
         goto end; /* Cannot retry: error */
     }
     while (!SSL_write_ex2(ssl, request_end, strlen(request_end),
-                          SSL_WRITE_FLAG_CONCLUDE, &written)) {
+        SSL_WRITE_FLAG_CONCLUDE, &written)) {
         if (handle_io_failure(ssl, 0) == 1)
             continue; /* Retry */
         printf("Failed to write end of HTTP request\n");
@@ -411,7 +411,7 @@ int main(int argc, char *argv[])
 
     /* Success! */
     res = EXIT_SUCCESS;
- end:
+end:
     /*
      * If something bad happened then we will dump the contents of the
      * OpenSSL error stack to stderr. There might be some useful diagnostic

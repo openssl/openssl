@@ -22,35 +22,44 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_NOOUT, OPT_PUBKEY, OPT_VERIFY, OPT_IN, OPT_OUT,
-    OPT_KEY, OPT_CHALLENGE, OPT_PASSIN, OPT_SPKAC,
-    OPT_SPKSECT, OPT_KEYFORM, OPT_DIGEST,
+    OPT_NOOUT,
+    OPT_PUBKEY,
+    OPT_VERIFY,
+    OPT_IN,
+    OPT_OUT,
+    OPT_KEY,
+    OPT_CHALLENGE,
+    OPT_PASSIN,
+    OPT_SPKAC,
+    OPT_SPKSECT,
+    OPT_KEYFORM,
+    OPT_DIGEST,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS spkac_options[] = {
     OPT_SECTION("General"),
-    {"help", OPT_HELP, '-', "Display this summary"},
-    {"spksect", OPT_SPKSECT, 's',
-     "Specify the name of an SPKAC-dedicated section of configuration"},
+    { "help", OPT_HELP, '-', "Display this summary" },
+    { "spksect", OPT_SPKSECT, 's',
+        "Specify the name of an SPKAC-dedicated section of configuration" },
 
     OPT_SECTION("Input"),
-    {"in", OPT_IN, '<', "Input file"},
-    {"key", OPT_KEY, '<', "Create SPKAC using private key"},
-    {"keyform", OPT_KEYFORM, 'f', "Private key file format (DER/PEM)"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"challenge", OPT_CHALLENGE, 's', "Challenge string"},
-    {"spkac", OPT_SPKAC, 's', "Alternative SPKAC name"},
+    { "in", OPT_IN, '<', "Input file" },
+    { "key", OPT_KEY, '<', "Create SPKAC using private key" },
+    { "keyform", OPT_KEYFORM, 'f', "Private key file format (DER/PEM)" },
+    { "passin", OPT_PASSIN, 's', "Input file pass phrase source" },
+    { "challenge", OPT_CHALLENGE, 's', "Challenge string" },
+    { "spkac", OPT_SPKAC, 's', "Alternative SPKAC name" },
 
     OPT_SECTION("Output"),
-    {"digest", OPT_DIGEST, 's', "Sign new SPKAC with the specified digest (default: MD5)" },
-    {"out", OPT_OUT, '>', "Output file"},
-    {"noout", OPT_NOOUT, '-', "Don't print SPKAC"},
-    {"pubkey", OPT_PUBKEY, '-', "Output public key"},
-    {"verify", OPT_VERIFY, '-', "Verify SPKAC signature"},
+    { "digest", OPT_DIGEST, 's', "Sign new SPKAC with the specified digest (default: MD5)" },
+    { "out", OPT_OUT, '>', "Output file" },
+    { "noout", OPT_NOOUT, '-', "Don't print SPKAC" },
+    { "pubkey", OPT_PUBKEY, '-', "Output public key" },
+    { "verify", OPT_VERIFY, '-', "Verify SPKAC signature" },
 
     OPT_PROV_OPTIONS,
-    {NULL}
+    { NULL }
 };
 
 int spkac_main(int argc, char **argv)
@@ -74,7 +83,7 @@ int spkac_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
- opthelp:
+        opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         case OPT_HELP:
@@ -139,7 +148,7 @@ int spkac_main(int argc, char **argv)
             goto end;
 
         pkey = load_key(strcmp(keyfile, "-") ? keyfile : NULL,
-                        keyformat, 1, passin, "private key");
+            keyformat, 1, passin, "private key");
         if (pkey == NULL)
             goto end;
         spki = NETSCAPE_SPKI_new();
@@ -147,7 +156,7 @@ int spkac_main(int argc, char **argv)
             goto end;
         if (challenge != NULL
             && !ASN1_STRING_set(spki->spkac->challenge,
-                                challenge, (int)strlen(challenge)))
+                challenge, (int)strlen(challenge)))
             goto end;
         if (!NETSCAPE_SPKI_set_pubkey(spki, pkey)) {
             BIO_printf(bio_err, "Error setting public key\n");
@@ -214,7 +223,7 @@ int spkac_main(int argc, char **argv)
 
     ret = 0;
 
- end:
+end:
     EVP_MD_free(md);
     NCONF_free(conf);
     NETSCAPE_SPKI_free(spki);

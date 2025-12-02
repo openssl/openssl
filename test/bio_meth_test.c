@@ -22,7 +22,7 @@ static int test_bio_meth(void)
 
     if (!TEST_ptr(meth1 = BIO_meth_new(id, "Method1"))
         || !TEST_ptr(meth2 = BIO_meth_new(BIO_TYPE_NONE, "Method2"))
-        || !TEST_ptr(meth3 = BIO_meth_new(BIO_TYPE_NONE|BIO_TYPE_FILTER, "Method3"))
+        || !TEST_ptr(meth3 = BIO_meth_new(BIO_TYPE_NONE | BIO_TYPE_FILTER, "Method3"))
         || !TEST_ptr(bio1 = BIO_new(meth1))
         || !TEST_ptr(bio2 = BIO_new(meth2))
         || !TEST_ptr(bio3 = BIO_new(meth3))

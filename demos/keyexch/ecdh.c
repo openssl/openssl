@@ -25,11 +25,11 @@
 
 /* Object used to store information for a single Peer */
 typedef struct peer_data_st {
-    const char *name;               /* name of peer */
-    const char *curvename;          /* The shared curve name */
-    EVP_PKEY *priv;                 /* private keypair */
-    EVP_PKEY *pub;                  /* public key to send to other peer */
-    unsigned char *secret;          /* allocated shared secret buffer */
+    const char *name; /* name of peer */
+    const char *curvename; /* The shared curve name */
+    EVP_PKEY *priv; /* private keypair */
+    EVP_PKEY *pub; /* public key to send to other peer */
+    unsigned char *secret; /* allocated shared secret buffer */
     size_t secretlen;
 } PEER_DATA;
 
@@ -48,8 +48,8 @@ static int get_peer_public_key(PEER_DATA *peer, OSSL_LIB_CTX *libctx)
 
     /* Get the EC encoded public key data from the peers private key */
     if (!EVP_PKEY_get_octet_string_param(peer->priv, OSSL_PKEY_PARAM_PUB_KEY,
-                                         pubkeydata, sizeof(pubkeydata),
-                                         &pubkeylen))
+            pubkeydata, sizeof(pubkeydata),
+            &pubkeylen))
         return 0;
 
     /* Create a EC public key from the public key data */
@@ -57,13 +57,14 @@ static int get_peer_public_key(PEER_DATA *peer, OSSL_LIB_CTX *libctx)
     if (ctx == NULL)
         return 0;
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-                                                 (char *)peer->curvename, 0);
+        (char *)peer->curvename, 0);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
-                                                  pubkeydata, pubkeylen);
+        pubkeydata, pubkeylen);
     params[2] = OSSL_PARAM_construct_end();
     ret = EVP_PKEY_fromdata_init(ctx) > 0
-          && (EVP_PKEY_fromdata(ctx, &peer->pub, EVP_PKEY_PUBLIC_KEY,
-                                params) > 0);
+        && (EVP_PKEY_fromdata(ctx, &peer->pub, EVP_PKEY_PUBLIC_KEY,
+                params)
+            > 0);
     EVP_PKEY_CTX_free(ctx);
     return ret;
 }
@@ -75,7 +76,7 @@ static int create_peer(PEER_DATA *peer, OSSL_LIB_CTX *libctx)
     OSSL_PARAM params[2];
 
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-                                                 (char *)peer->curvename, 0);
+        (char *)peer->curvename, 0);
     params[1] = OSSL_PARAM_construct_end();
 
     ctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", NULL);
@@ -83,9 +84,9 @@ static int create_peer(PEER_DATA *peer, OSSL_LIB_CTX *libctx)
         return 0;
 
     if (EVP_PKEY_keygen_init(ctx) <= 0
-            || !EVP_PKEY_CTX_set_params(ctx, params)
-            || EVP_PKEY_generate(ctx, &peer->priv) <= 0
-            || !get_peer_public_key(peer, libctx)) {
+        || !EVP_PKEY_CTX_set_params(ctx, params)
+        || EVP_PKEY_generate(ctx, &peer->priv) <= 0
+        || !get_peer_public_key(peer, libctx)) {
         EVP_PKEY_free(peer->priv);
         peer->priv = NULL;
         goto err;
@@ -103,7 +104,7 @@ static void destroy_peer(PEER_DATA *peer)
 }
 
 static int generate_secret(PEER_DATA *peerA, EVP_PKEY *peerBpub,
-                           OSSL_LIB_CTX *libctx)
+    OSSL_LIB_CTX *libctx)
 {
     unsigned char *secret = NULL;
     size_t secretlen = 0;
@@ -177,8 +178,8 @@ int main(void)
 {
     int ret = EXIT_FAILURE;
     /* Initialise the 2 peers that will share a secret */
-    PEER_DATA peer1 = {"peer 1", "P-256"};
-    PEER_DATA peer2 = {"peer 2", "P-256"};
+    PEER_DATA peer1 = { "peer 1", "P-256" };
+    PEER_DATA peer2 = { "peer 2", "P-256" };
     /*
      * Setting libctx to NULL uses the default library context
      * Use OSSL_LIB_CTX_new() to create a non default library context
@@ -187,7 +188,7 @@ int main(void)
 
     /* Each peer creates a (Ephemeral) keypair */
     if (!create_peer(&peer1, libctx)
-            || !create_peer(&peer2, libctx)) {
+        || !create_peer(&peer2, libctx)) {
         fprintf(stderr, "Create peer failed\n");
         goto cleanup;
     }
@@ -197,14 +198,14 @@ int main(void)
      * derive a shared secret
      */
     if (!generate_secret(&peer1, peer2.pub, libctx)
-            || !generate_secret(&peer2, peer1.pub, libctx)) {
+        || !generate_secret(&peer2, peer1.pub, libctx)) {
         fprintf(stderr, "Generate secrets failed\n");
         goto cleanup;
     }
 
     /* For illustrative purposes demonstrate that the derived secrets are equal */
     if (peer1.secretlen != peer2.secretlen
-            || CRYPTO_memcmp(peer1.secret, peer2.secret, peer1.secretlen) != 0) {
+        || CRYPTO_memcmp(peer1.secret, peer2.secret, peer1.secretlen) != 0) {
         fprintf(stderr, "Derived secrets do not match\n");
         goto cleanup;
     } else {

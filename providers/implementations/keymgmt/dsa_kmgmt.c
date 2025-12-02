@@ -50,7 +50,7 @@ static OSSL_FUNC_keymgmt_export_types_fn dsa_export_types;
 static OSSL_FUNC_keymgmt_dup_fn dsa_dup;
 
 #define DSA_DEFAULT_MD "SHA256"
-#define DSA_POSSIBLE_SELECTIONS                                                \
+#define DSA_POSSIBLE_SELECTIONS \
     (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)
 
 struct dsa_gen_ctx {
@@ -73,7 +73,7 @@ struct dsa_gen_ctx {
     void *cbarg;
     OSSL_FIPS_IND_DECLARE
 };
-typedef struct dh_name2id_st{
+typedef struct dh_name2id_st {
     const char *name;
     int id;
 } DSA_GENTYPE_NAME2ID;
@@ -100,7 +100,7 @@ static int dsa_gen_type_name2id(const char *name)
 }
 
 static int dsa_key_todata(DSA *dsa, OSSL_PARAM_BLD *bld, OSSL_PARAM *pubkey,
-                          OSSL_PARAM *privkey, int include_private)
+    OSSL_PARAM *privkey, int include_private)
 {
     const BIGNUM *priv = NULL, *pub = NULL;
 
@@ -207,8 +207,7 @@ static int dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
     ok = ok && ossl_dsa_ffc_params_fromdata(dsa, params);
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
-        int include_private =
-            selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
+        int include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
 
         ok = ok && ossl_dsa_key_fromdata(dsa, params, include_private);
     }
@@ -217,7 +216,7 @@ static int dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
 }
 
 static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
-                      void *cbarg)
+    void *cbarg)
 {
     DSA *dsa = keydata;
     OSSL_PARAM_BLD *tmpl;
@@ -237,8 +236,7 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
         ok = ok && ossl_ffc_params_todata(ossl_dsa_get0_params(dsa), tmpl, NULL);
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
-        int include_private =
-            selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
+        int include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
 
         ok = ok && dsa_key_todata(dsa, tmpl, NULL, NULL, include_private);
     }
@@ -257,18 +255,18 @@ err:
 
 /* IMEXPORT = IMPORT + EXPORT */
 
-# define DSA_IMEXPORTABLE_PARAMETERS                                           \
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_P, NULL, 0),                             \
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_Q, NULL, 0),                             \
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_G, NULL, 0),                             \
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_COFACTOR, NULL, 0),                      \
-    OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_GINDEX, NULL),                          \
-    OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_PCOUNTER, NULL),                        \
-    OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_H, NULL),                               \
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_FFC_SEED, NULL, 0)
-# define DSA_IMEXPORTABLE_PUBLIC_KEY                    \
+#define DSA_IMEXPORTABLE_PARAMETERS                           \
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_P, NULL, 0),            \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_Q, NULL, 0),        \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_G, NULL, 0),        \
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_COFACTOR, NULL, 0), \
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_GINDEX, NULL),     \
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_PCOUNTER, NULL),   \
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_H, NULL),          \
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_FFC_SEED, NULL, 0)
+#define DSA_IMEXPORTABLE_PUBLIC_KEY \
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0)
-# define DSA_IMEXPORTABLE_PRIVATE_KEY                   \
+#define DSA_IMEXPORTABLE_PRIVATE_KEY \
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0)
 static const OSSL_PARAM dsa_all_types[] = {
     DSA_IMEXPORTABLE_PARAMETERS,
@@ -286,10 +284,10 @@ static const OSSL_PARAM dsa_key_types[] = {
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *dsa_types[] = {
-    NULL,                        /* Index 0 = none of them */
-    dsa_parameter_types,          /* Index 1 = parameter types */
-    dsa_key_types,                /* Index 2 = key types */
-    dsa_all_types                 /* Index 3 = 1 + 2 */
+    NULL, /* Index 0 = none of them */
+    dsa_parameter_types, /* Index 1 = parameter types */
+    dsa_key_types, /* Index 2 = key types */
+    dsa_all_types /* Index 3 = 1 + 2 */
 };
 
 static const OSSL_PARAM *dsa_imexport_types(int selection)
@@ -352,7 +350,7 @@ static ossl_inline int dsa_get_params(void *key, OSSL_PARAM params[])
         return 0;
 
     return ossl_ffc_params_todata(ossl_dsa_get0_params(dsa), NULL, &p.ffp)
-           && dsa_key_todata(dsa, NULL, p.pubkey, p.privkey, 1);
+        && dsa_key_todata(dsa, NULL, p.pubkey, p.privkey, 1);
 }
 
 static const OSSL_PARAM *dsa_gettable_params(void *provctx)
@@ -417,7 +415,7 @@ static int dsa_validate(const void *keydata, int selection, int checktype)
 }
 
 static void *dsa_gen_init(void *provctx, int selection,
-                          const OSSL_PARAM params[])
+    const OSSL_PARAM params[])
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct dsa_gen_ctx *gctx = NULL;
@@ -459,7 +457,7 @@ static int dsa_gen_set_template(void *genctx, void *templ)
 }
 
 static int dsa_set_gen_seed(struct dsa_gen_ctx *gctx, unsigned char *seed,
-                            size_t seedlen)
+    size_t seedlen)
 {
     OPENSSL_clear_free(gctx->seed, gctx->seedlen);
     gctx->seed = NULL;
@@ -483,7 +481,7 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
         return 0;
 
     if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(gctx, OSSL_FIPS_IND_SETTABLE0,
-                                          p.ind_sign))
+            p.ind_sign))
         return 0;
 
     if (p.type != NULL) {
@@ -514,7 +512,7 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     if (p.seed != NULL
         && (p.seed->data_type != OSSL_PARAM_OCTET_STRING
             || !dsa_set_gen_seed(gctx, p.seed->data, p.seed->data_size)))
-            return 0;
+        return 0;
 
     if (p.pbits != NULL && !OSSL_PARAM_get_size_t(p.pbits, &gctx->pbits))
         return 0;
@@ -543,7 +541,7 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM *dsa_gen_settable_params(ossl_unused void *genctx,
-                                                 ossl_unused void *provctx)
+    ossl_unused void *provctx)
 {
     return dsa_gen_set_params_list;
 }
@@ -562,7 +560,7 @@ static int dsa_gen_get_params(void *genctx, OSSL_PARAM *params)
 }
 
 static const OSSL_PARAM *dsa_gen_gettable_params(ossl_unused void *ctx,
-                                                 ossl_unused void *provctx)
+    ossl_unused void *provctx)
 {
     return dsa_gen_get_params_list;
 }
@@ -595,8 +593,8 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
      * need for DSA keygen either.
      */
     if (!OSSL_FIPS_IND_ON_UNAPPROVED(gctx, OSSL_FIPS_IND_SETTABLE0,
-                                     gctx->libctx, "DSA", "Keygen",
-                                     ossl_fips_config_dsa_sign_disallowed))
+            gctx->libctx, "DSA", "Keygen",
+            ossl_fips_config_dsa_sign_disallowed))
         return 0;
 #endif
 
@@ -605,8 +603,7 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return NULL;
 
     if (gctx->gen_type == DSA_PARAMGEN_TYPE_FIPS_DEFAULT)
-        gctx->gen_type = (gctx->pbits >= 2048 ? DSA_PARAMGEN_TYPE_FIPS_186_4 :
-                                                DSA_PARAMGEN_TYPE_FIPS_186_2);
+        gctx->gen_type = (gctx->pbits >= 2048 ? DSA_PARAMGEN_TYPE_FIPS_186_4 : DSA_PARAMGEN_TYPE_FIPS_186_2);
 
     /*
      * Do a bounds check on context gen_type. Must be in range:
@@ -615,9 +612,9 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
      * added.
      */
     if (!ossl_assert((gctx->gen_type >= DSA_PARAMGEN_TYPE_FIPS_186_4)
-                    && (gctx->gen_type <= DSA_PARAMGEN_TYPE_FIPS_DEFAULT))) {
+            && (gctx->gen_type <= DSA_PARAMGEN_TYPE_FIPS_DEFAULT))) {
         ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
-                       "gen_type set to unsupported value %d", gctx->gen_type);
+            "gen_type set to unsupported value %d", gctx->gen_type);
         goto end;
     }
 
@@ -648,13 +645,14 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
 
-         if (ossl_dsa_generate_ffc_parameters(dsa, gctx->gen_type,
-                                              (int)gctx->pbits,
-                                              (int)gctx->qbits, gencb) <= 0)
-             goto end;
+        if (ossl_dsa_generate_ffc_parameters(dsa, gctx->gen_type,
+                (int)gctx->pbits,
+                (int)gctx->qbits, gencb)
+            <= 0)
+            goto end;
     }
     ossl_ffc_params_enable_flags(ffc, FFC_PARAM_FLAG_VALIDATE_LEGACY,
-                                 gctx->gen_type == DSA_PARAMGEN_TYPE_FIPS_186_2);
+        gctx->gen_type == DSA_PARAMGEN_TYPE_FIPS_186_2);
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         if (ffc->p == NULL
             || ffc->q == NULL
@@ -713,16 +711,16 @@ const OSSL_DISPATCH ossl_dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE, (void (*)(void))dsa_gen_set_template },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))dsa_gen_set_params },
     { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
-      (void (*)(void))dsa_gen_settable_params },
+        (void (*)(void))dsa_gen_settable_params },
     { OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS, (void (*)(void))dsa_gen_get_params },
     { OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS,
-      (void (*)(void))dsa_gen_gettable_params },
+        (void (*)(void))dsa_gen_gettable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))dsa_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))dsa_gen_cleanup },
     { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))dsa_load },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))dsa_freedata },
-    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))dsa_get_params },
-    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))dsa_gettable_params },
+    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))dsa_get_params },
+    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))dsa_gettable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))dsa_has },
     { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))dsa_match },
     { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))dsa_validate },

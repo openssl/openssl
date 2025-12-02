@@ -63,7 +63,7 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *bare_hostname)
     APP_CONN *conn;
     SSL *ssl;
 #ifdef USE_QUIC
-    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+    static const unsigned char alpn[] = { 5, 'd', 'u', 'm', 'm', 'y' };
 #endif
 
     conn = calloc(1, sizeof(APP_CONN));
@@ -125,8 +125,8 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *bare_hostname)
     }
 #endif
 
-    conn->ssl_bio   = ssl_bio;
-    conn->net_bio   = net_bio;
+    conn->ssl_bio = ssl_bio;
+    conn->net_bio = net_bio;
     return conn;
 }
 
@@ -144,13 +144,13 @@ int tx(APP_CONN *conn, const void *buf, int buf_len)
     if (l <= 0) {
         rc = SSL_get_error(conn->ssl, l);
         switch (rc) {
-            case SSL_ERROR_WANT_READ:
-                conn->tx_need_rx = 1;
-            case SSL_ERROR_WANT_CONNECT:
-            case SSL_ERROR_WANT_WRITE:
-                return -2;
-            default:
-                return -1;
+        case SSL_ERROR_WANT_READ:
+            conn->tx_need_rx = 1;
+        case SSL_ERROR_WANT_CONNECT:
+        case SSL_ERROR_WANT_WRITE:
+            return -2;
+        default:
+            return -1;
         }
     } else {
         conn->tx_need_rx = 0;
@@ -173,12 +173,12 @@ int rx(APP_CONN *conn, void *buf, int buf_len)
     if (l <= 0) {
         rc = SSL_get_error(conn->ssl, l);
         switch (rc) {
-            case SSL_ERROR_WANT_WRITE:
-                conn->rx_need_tx = 1;
-            case SSL_ERROR_WANT_READ:
-                return -2;
-            default:
-                return -1;
+        case SSL_ERROR_WANT_WRITE:
+            conn->rx_need_tx = 1;
+        case SSL_ERROR_WANT_READ:
+            return -2;
+        default:
+            return -1;
         }
     } else {
         conn->rx_need_tx = 0;
@@ -245,8 +245,8 @@ int get_conn_pending_tx(APP_CONN *conn)
 {
 #ifdef USE_QUIC
     return (SSL_net_read_desired(conn->ssl) ? POLLIN : 0)
-           | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
-           | POLLERR;
+        | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
+        | POLLERR;
 #else
     return (conn->tx_need_rx ? POLLIN : 0) | POLLOUT | POLLERR;
 #endif
@@ -299,7 +299,7 @@ static int pump(APP_CONN *conn, int fd, int events, int timeout)
     int l, l2;
     char buf[2048]; /* QUIC: would need to be changed if < 1472 */
     size_t wspace;
-    struct pollfd pfd = {0};
+    struct pollfd pfd = { 0 };
 
     pfd.fd = fd;
     pfd.events = (events & (POLLIN | POLLERR));
@@ -308,7 +308,7 @@ static int pump(APP_CONN *conn, int fd, int events, int timeout)
     if (net_tx_avail(conn) > 0)
         pfd.events |= POLLOUT;
 
-    if ((pfd.events & (POLLIN|POLLOUT)) == 0)
+    if ((pfd.events & (POLLIN | POLLOUT)) == 0)
         return 1;
 
     if (poll(&pfd, 1, timeout) == 0)
@@ -319,21 +319,22 @@ static int pump(APP_CONN *conn, int fd, int events, int timeout)
             l = read(fd, buf, wspace > sizeof(buf) ? sizeof(buf) : wspace);
             if (l <= 0) {
                 switch (errno) {
-                    case EAGAIN:
+                case EAGAIN:
+                    goto stop;
+                default:
+                    if (l == 0) /* EOF */
                         goto stop;
-                    default:
-                        if (l == 0) /* EOF */
-                            goto stop;
 
-                        fprintf(stderr, "error on read: %d\n", errno);
-                        return -1;
+                    fprintf(stderr, "error on read: %d\n", errno);
+                    return -1;
                 }
                 break;
             }
             l2 = write_net_rx(conn, buf, l);
             if (l2 < l)
                 fprintf(stderr, "short write %d %d\n", l2, l);
-        } stop:;
+        }
+    stop:;
     }
 
     if (pfd.revents & POLLOUT) {
@@ -359,7 +360,7 @@ int main(int argc, char **argv)
     int l, tx_len;
     int timeout = 2000 /* ms */;
     APP_CONN *conn = NULL;
-    struct addrinfo hints = {0}, *result = NULL;
+    struct addrinfo hints = { 0 }, *result = NULL;
     SSL_CTX *ctx = NULL;
 
     if (argc < 3) {
@@ -368,8 +369,8 @@ int main(int argc, char **argv)
     }
 
     tx_len = snprintf(tx_msg, sizeof(tx_msg),
-                      "GET / HTTP/1.0\r\nHost: %s\r\n\r\n",
-                      argv[1]);
+        "GET / HTTP/1.0\r\nHost: %s\r\n\r\n",
+        argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {
@@ -377,9 +378,9 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    hints.ai_family     = AF_INET;
-    hints.ai_socktype   = SOCK_STREAM;
-    hints.ai_flags      = AI_PASSIVE;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
     rc = getaddrinfo(argv[1], argv[2], &hints, &result);
     if (rc < 0) {
         fprintf(stderr, "cannot resolve\n");

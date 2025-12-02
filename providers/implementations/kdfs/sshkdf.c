@@ -36,10 +36,10 @@ static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_sshkdf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn kdf_sshkdf_get_ctx_params;
 
 static int SSHKDF(const EVP_MD *evp_md,
-                  const unsigned char *key, size_t key_len,
-                  const unsigned char *xcghash, size_t xcghash_len,
-                  const unsigned char *session_id, size_t session_id_len,
-                  char type, unsigned char *okey, size_t okey_len);
+    const unsigned char *key, size_t key_len,
+    const unsigned char *xcghash, size_t xcghash_len,
+    const unsigned char *session_id, size_t session_id_len,
+    char type, unsigned char *okey, size_t okey_len);
 
 typedef struct {
     void *provctx;
@@ -99,25 +99,25 @@ static void *kdf_sshkdf_dup(void *vctx)
     dest = kdf_sshkdf_new(src->provctx);
     if (dest != NULL) {
         if (!ossl_prov_memdup(src->key, src->key_len,
-                              &dest->key, &dest->key_len)
-                || !ossl_prov_memdup(src->xcghash, src->xcghash_len,
-                                     &dest->xcghash , &dest->xcghash_len)
-                || !ossl_prov_memdup(src->session_id, src->session_id_len,
-                                     &dest->session_id , &dest->session_id_len)
-                || !ossl_prov_digest_copy(&dest->digest, &src->digest))
+                &dest->key, &dest->key_len)
+            || !ossl_prov_memdup(src->xcghash, src->xcghash_len,
+                &dest->xcghash, &dest->xcghash_len)
+            || !ossl_prov_memdup(src->session_id, src->session_id_len,
+                &dest->session_id, &dest->session_id_len)
+            || !ossl_prov_digest_copy(&dest->digest, &src->digest))
             goto err;
         dest->type = src->type;
         OSSL_FIPS_IND_COPY(dest, src)
     }
     return dest;
 
- err:
+err:
     kdf_sshkdf_free(dest);
     return NULL;
 }
 
 static int sshkdf_set_membuf(unsigned char **dst, size_t *dst_len,
-                             const OSSL_PARAM *p)
+    const OSSL_PARAM *p)
 {
     OPENSSL_clear_free(*dst, *dst_len);
     *dst = NULL;
@@ -144,8 +144,8 @@ static int fips_digest_check_passed(KDF_SSHKDF *ctx, const EVP_MD *md)
 
     if (digest_unapproved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
-                                         libctx, "SSHKDF", "Digest",
-                                         ossl_fips_config_sshkdf_digest_check)) {
+                libctx, "SSHKDF", "Digest",
+                ossl_fips_config_sshkdf_digest_check)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
             return 0;
         }
@@ -160,8 +160,8 @@ static int fips_key_check_passed(KDF_SSHKDF *ctx)
 
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE1,
-                                         libctx, "SSHKDF", "Key size",
-                                         ossl_fips_config_sshkdf_key_check)) {
+                libctx, "SSHKDF", "Key size",
+                ossl_fips_config_sshkdf_key_check)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
@@ -171,7 +171,7 @@ static int fips_key_check_passed(KDF_SSHKDF *ctx)
 #endif
 
 static int kdf_sshkdf_derive(void *vctx, unsigned char *key, size_t keylen,
-                             const OSSL_PARAM params[])
+    const OSSL_PARAM params[])
 {
     KDF_SSHKDF *ctx = (KDF_SSHKDF *)vctx;
     const EVP_MD *md;
@@ -202,9 +202,9 @@ static int kdf_sshkdf_derive(void *vctx, unsigned char *key, size_t keylen,
     }
 
     return SSHKDF(md, ctx->key, ctx->key_len,
-                  ctx->xcghash, ctx->xcghash_len,
-                  ctx->session_id, ctx->session_id_len,
-                  ctx->type, key, keylen);
+        ctx->xcghash, ctx->xcghash_len,
+        ctx->session_id, ctx->session_id_len,
+        ctx->type, key, keylen);
 }
 
 static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
@@ -252,11 +252,11 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
 
     if (p.xcg != NULL
-            && !sshkdf_set_membuf(&ctx->xcghash, &ctx->xcghash_len, p.xcg))
+        && !sshkdf_set_membuf(&ctx->xcghash, &ctx->xcghash_len, p.xcg))
         return 0;
 
     if (p.sid != NULL
-            && !sshkdf_set_membuf(&ctx->session_id, &ctx->session_id_len, p.sid))
+        && !sshkdf_set_membuf(&ctx->session_id, &ctx->session_id_len, p.sid))
         return 0;
 
     if (p.type != NULL) {
@@ -277,7 +277,7 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM *kdf_sshkdf_settable_ctx_params(ossl_unused void *ctx,
-                                                        ossl_unused void *p_ctx)
+    ossl_unused void *p_ctx)
 {
     return sshkdf_set_ctx_params_list;
 }
@@ -299,31 +299,31 @@ static int kdf_sshkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM *kdf_sshkdf_gettable_ctx_params(ossl_unused void *ctx,
-                                                        ossl_unused void *p_ctx)
+    ossl_unused void *p_ctx)
 {
     return sshkdf_get_ctx_params_list;
 }
 
 const OSSL_DISPATCH ossl_kdf_sshkdf_functions[] = {
-    { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_sshkdf_new },
-    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))kdf_sshkdf_dup },
-    { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_sshkdf_free },
-    { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_sshkdf_reset },
-    { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_sshkdf_derive },
+    { OSSL_FUNC_KDF_NEWCTX, (void (*)(void))kdf_sshkdf_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void (*)(void))kdf_sshkdf_dup },
+    { OSSL_FUNC_KDF_FREECTX, (void (*)(void))kdf_sshkdf_free },
+    { OSSL_FUNC_KDF_RESET, (void (*)(void))kdf_sshkdf_reset },
+    { OSSL_FUNC_KDF_DERIVE, (void (*)(void))kdf_sshkdf_derive },
     { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS,
-      (void(*)(void))kdf_sshkdf_settable_ctx_params },
-    { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))kdf_sshkdf_set_ctx_params },
+        (void (*)(void))kdf_sshkdf_settable_ctx_params },
+    { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void (*)(void))kdf_sshkdf_set_ctx_params },
     { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
-      (void(*)(void))kdf_sshkdf_gettable_ctx_params },
-    { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_sshkdf_get_ctx_params },
+        (void (*)(void))kdf_sshkdf_gettable_ctx_params },
+    { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void (*)(void))kdf_sshkdf_get_ctx_params },
     OSSL_DISPATCH_END
 };
 
 static int SSHKDF(const EVP_MD *evp_md,
-                  const unsigned char *key, size_t key_len,
-                  const unsigned char *xcghash, size_t xcghash_len,
-                  const unsigned char *session_id, size_t session_id_len,
-                  char type, unsigned char *okey, size_t okey_len)
+    const unsigned char *key, size_t key_len,
+    const unsigned char *xcghash, size_t xcghash_len,
+    const unsigned char *session_id, size_t session_id_len,
+    char type, unsigned char *okey, size_t okey_len)
 {
     EVP_MD_CTX *md = NULL;
     unsigned char digest[EVP_MAX_MD_SIZE];

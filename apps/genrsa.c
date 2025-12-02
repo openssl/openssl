@@ -35,39 +35,46 @@ typedef enum OPTION_choice {
     OPT_3,
 #endif
     OPT_F4,
-    OPT_OUT, OPT_PASSOUT, OPT_CIPHER, OPT_PRIMES, OPT_VERBOSE, OPT_QUIET,
-    OPT_R_ENUM, OPT_PROV_ENUM, OPT_TRADITIONAL
+    OPT_OUT,
+    OPT_PASSOUT,
+    OPT_CIPHER,
+    OPT_PRIMES,
+    OPT_VERBOSE,
+    OPT_QUIET,
+    OPT_R_ENUM,
+    OPT_PROV_ENUM,
+    OPT_TRADITIONAL
 } OPTION_CHOICE;
 
 const OPTIONS genrsa_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] numbits\n"},
+    { OPT_HELP_STR, 1, '-', "Usage: %s [options] numbits\n" },
 
     OPT_SECTION("General"),
-    {"help", OPT_HELP, '-', "Display this summary"},
+    { "help", OPT_HELP, '-', "Display this summary" },
 
     OPT_SECTION("Input"),
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-    {"3", OPT_3, '-', "(deprecated) Use 3 for the E value"},
+    { "3", OPT_3, '-', "(deprecated) Use 3 for the E value" },
 #endif
-    {"F4", OPT_F4, '-', "Use the Fermat number F4 (0x10001) for the E value"},
-    {"f4", OPT_F4, '-', "Use the Fermat number F4 (0x10001) for the E value"},
+    { "F4", OPT_F4, '-', "Use the Fermat number F4 (0x10001) for the E value" },
+    { "f4", OPT_F4, '-', "Use the Fermat number F4 (0x10001) for the E value" },
 
     OPT_SECTION("Output"),
-    {"out", OPT_OUT, '>', "Output the key to specified file"},
-    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
-    {"primes", OPT_PRIMES, 'p', "Specify number of primes"},
-    {"verbose", OPT_VERBOSE, '-', "Verbose output"},
-    {"quiet", OPT_QUIET, '-', "Terse output"},
-    {"traditional", OPT_TRADITIONAL, '-',
-     "Use traditional format for private keys"},
-    {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
+    { "out", OPT_OUT, '>', "Output the key to specified file" },
+    { "passout", OPT_PASSOUT, 's', "Output file pass phrase source" },
+    { "primes", OPT_PRIMES, 'p', "Specify number of primes" },
+    { "verbose", OPT_VERBOSE, '-', "Verbose output" },
+    { "quiet", OPT_QUIET, '-', "Terse output" },
+    { "traditional", OPT_TRADITIONAL, '-',
+        "Use traditional format for private keys" },
+    { "", OPT_CIPHER, '-', "Encrypt the output with any supported cipher" },
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
-    {"numbits", 0, 0, "Size of key in bits"},
-    {NULL}
+    { "numbits", 0, 0, "Size of key in bits" },
+    { NULL }
 };
 
 int genrsa_main(int argc, char **argv)
@@ -94,7 +101,7 @@ int genrsa_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
-opthelp:
+        opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         case OPT_HELP:
@@ -150,9 +157,9 @@ opthelp:
             goto end;
         if (num > OPENSSL_RSA_MAX_MODULUS_BITS)
             BIO_printf(bio_err,
-                       "Warning: It is not recommended to use more than %d bit for RSA keys.\n"
-                       "         Your key size is %d! Larger key size may behave not as expected.\n",
-                       OPENSSL_RSA_MAX_MODULUS_BITS, num);
+                "Warning: It is not recommended to use more than %d bit for RSA keys.\n"
+                "         Your key size is %d! Larger key size may behave not as expected.\n",
+                OPENSSL_RSA_MAX_MODULUS_BITS, num);
     } else if (!opt_check_rest_arg(NULL)) {
         goto opthelp;
     }
@@ -173,7 +180,7 @@ opthelp:
         goto end;
 
     if (!init_gen_str(&ctx, "RSA", 0, app_get0_libctx(),
-                      app_get0_propq()))
+            app_get0_propq()))
         goto end;
 
     if (verbose)
@@ -220,7 +227,7 @@ opthelp:
     }
     if (traditional) {
         if (!PEM_write_bio_PrivateKey_traditional(out, pkey, enc, NULL, 0,
-                                                  NULL, passout))
+                NULL, passout))
             goto end;
     } else {
         if (!PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, passout))
@@ -228,7 +235,7 @@ opthelp:
     }
 
     ret = 0;
- end:
+end:
     BN_free(bn);
     BN_GENCB_free(cb);
     EVP_PKEY_CTX_free(ctx);
@@ -240,4 +247,3 @@ opthelp:
         ERR_print_errors(bio_err);
     return ret;
 }
-

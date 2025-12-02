@@ -37,7 +37,7 @@ static int test_func(void)
         }
     }
     ret = 1;
- err:
+err:
     SSL_CTX_free(ctx);
     return ret;
 }

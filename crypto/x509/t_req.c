@@ -71,7 +71,8 @@ int X509_REQ_print_ex(BIO *bp, const X509_REQ *x, unsigned long nmflags, unsigne
         if (BIO_printf(bp, "        Subject:%c", mlch) <= 0)
             goto err;
         if (X509_NAME_print_ex(bp, X509_REQ_get_subject_name(x),
-            nmindent, nmflags) < printok)
+                nmindent, nmflags)
+            < printok)
             goto err;
         if (BIO_write(bp, "\n", 1) <= 0)
             goto err;
@@ -127,10 +128,10 @@ int X509_REQ_print_ex(BIO *bp, const X509_REQ *x, unsigned long nmflags, unsigne
                     ii = 0;
                     count = X509_ATTRIBUTE_count(a);
                     if (count == 0) {
-                      ERR_raise(ERR_LIB_X509, X509_R_INVALID_ATTRIBUTES);
-                      return 0;
+                        ERR_raise(ERR_LIB_X509, X509_R_INVALID_ATTRIBUTES);
+                        return 0;
                     }
- get_next:
+                get_next:
                     at = X509_ATTRIBUTE_get0_type(a, ii);
                     type = at->type;
                     bs = at->value.asn1_string;
@@ -147,7 +148,7 @@ int X509_REQ_print_ex(BIO *bp, const X509_REQ *x, unsigned long nmflags, unsigne
                 case V_ASN1_UTF8STRING:
                 case V_ASN1_IA5STRING:
                     if (BIO_write(bp, (char *)bs->data, bs->length)
-                            != bs->length)
+                        != bs->length)
                         goto err;
                     if (BIO_puts(bp, "\n") <= 0)
                         goto err;
@@ -183,7 +184,8 @@ int X509_REQ_print_ex(BIO *bp, const X509_REQ *x, unsigned long nmflags, unsigne
                 if (!X509V3_EXT_print(bp, ex, cflag, 20)) {
                     if (BIO_printf(bp, "%20s", "") <= 0
                         || ASN1_STRING_print(bp,
-                                             X509_EXTENSION_get_data(ex)) <= 0)
+                               X509_EXTENSION_get_data(ex))
+                            <= 0)
                         goto err;
                 }
                 if (BIO_write(bp, "\n", 1) <= 0)
@@ -203,7 +205,7 @@ int X509_REQ_print_ex(BIO *bp, const X509_REQ *x, unsigned long nmflags, unsigne
     }
 
     return 1;
- err:
+err:
     sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
     ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
     return 0;

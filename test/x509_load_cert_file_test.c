@@ -133,8 +133,8 @@ static int test_load_same_cn_certs(void)
 
     if (!TEST_ptr(nm = X509_NAME_new())
         || !TEST_true(X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC,
-                                                 (unsigned char *)"www.example.test",
-                                                 -1, -1, 0)))
+            (unsigned char *)"www.example.test",
+            -1, -1, 0)))
         goto err;
 
     if (!TEST_ptr(cert1 = X509_from_strings(cn_cert1))
@@ -146,7 +146,7 @@ static int test_load_same_cn_certs(void)
         || !TEST_true(X509_STORE_add_cert(store, cert1))
         || !TEST_true(X509_STORE_add_crl(store, crl2))
         || !TEST_true(X509_STORE_add_cert(store, cert2))
-        /* deliberately not taking lock in a single thread */
+    /* deliberately not taking lock in a single thread */
 #ifndef OPENSSL_NO_DEPRECATED_4_0
         || !TEST_ptr(objs = X509_STORE_get0_objects(store))
         || !TEST_int_eq(sk_X509_OBJECT_num(objs), 3)

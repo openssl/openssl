@@ -19,7 +19,7 @@
 #include "evp_local.h"
 
 int EVP_SKEY_export(const EVP_SKEY *skey, int selection,
-                    OSSL_CALLBACK *export_cb, void *export_cbarg)
+    OSSL_CALLBACK *export_cb, void *export_cbarg)
 {
     if (skey == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
@@ -54,7 +54,7 @@ EVP_SKEY *evp_skey_alloc(EVP_SKEYMGMT *skeymgmt)
         goto err;
     }
 
- err:
+err:
     CRYPTO_FREE_REF(&skey->references);
     CRYPTO_THREAD_lock_free(skey->lock);
     OPENSSL_free(skey);
@@ -62,8 +62,8 @@ EVP_SKEY *evp_skey_alloc(EVP_SKEYMGMT *skeymgmt)
 }
 
 static EVP_SKEY *evp_skey_alloc_fetch(OSSL_LIB_CTX *libctx,
-                                      const char *skeymgmtname,
-                                      const char *propquery)
+    const char *skeymgmtname,
+    const char *propquery)
 {
     EVP_SKEYMGMT *skeymgmt;
     EVP_SKEY *skey;
@@ -88,7 +88,7 @@ static EVP_SKEY *evp_skey_alloc_fetch(OSSL_LIB_CTX *libctx,
 }
 
 EVP_SKEY *EVP_SKEY_import(OSSL_LIB_CTX *libctx, const char *skeymgmtname, const char *propquery,
-                          int selection, const OSSL_PARAM *params)
+    int selection, const OSSL_PARAM *params)
 {
     EVP_SKEY *skey = evp_skey_alloc_fetch(libctx, skeymgmtname, propquery);
 
@@ -101,13 +101,13 @@ EVP_SKEY *EVP_SKEY_import(OSSL_LIB_CTX *libctx, const char *skeymgmtname, const 
 
     return skey;
 
- err:
+err:
     EVP_SKEY_free(skey);
     return NULL;
 }
 
 EVP_SKEY *EVP_SKEY_import_SKEYMGMT(OSSL_LIB_CTX *libctx, EVP_SKEYMGMT *skeymgmt,
-                                   int selection, const OSSL_PARAM *params)
+    int selection, const OSSL_PARAM *params)
 {
     EVP_SKEY *skey = evp_skey_alloc(skeymgmt);
 
@@ -120,13 +120,13 @@ EVP_SKEY *EVP_SKEY_import_SKEYMGMT(OSSL_LIB_CTX *libctx, EVP_SKEYMGMT *skeymgmt,
 
     return skey;
 
- err:
+err:
     EVP_SKEY_free(skey);
     return NULL;
 }
 
 EVP_SKEY *EVP_SKEY_generate(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
-                            const char *propquery, const OSSL_PARAM *params)
+    const char *propquery, const OSSL_PARAM *params)
 {
     EVP_SKEY *skey = evp_skey_alloc_fetch(libctx, skeymgmtname, propquery);
 
@@ -139,7 +139,7 @@ EVP_SKEY *EVP_SKEY_generate(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
 
     return skey;
 
- err:
+err:
     EVP_SKEY_free(skey);
     return NULL;
 }
@@ -161,7 +161,7 @@ static int get_secret_key(const OSSL_PARAM params[], void *arg)
 }
 
 int EVP_SKEY_get0_raw_key(const EVP_SKEY *skey, const unsigned char **key,
-                          size_t *len)
+    size_t *len)
 {
     struct raw_key_details_st raw_key;
 
@@ -174,22 +174,22 @@ int EVP_SKEY_get0_raw_key(const EVP_SKEY *skey, const unsigned char **key,
     raw_key.len = len;
 
     return evp_skeymgmt_export(skey->skeymgmt, skey->keydata,
-                               OSSL_SKEYMGMT_SELECT_SECRET_KEY,
-                               get_secret_key, &raw_key);
+        OSSL_SKEYMGMT_SELECT_SECRET_KEY,
+        get_secret_key, &raw_key);
 }
 
 EVP_SKEY *EVP_SKEY_import_raw_key(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
-                                  unsigned char *key, size_t keylen,
-                                  const char *propquery)
+    unsigned char *key, size_t keylen,
+    const char *propquery)
 {
     OSSL_PARAM params[2];
 
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
-                                                  (void *)key, keylen);
+        (void *)key, keylen);
     params[1] = OSSL_PARAM_construct_end();
 
     return EVP_SKEY_import(libctx, skeymgmtname, propquery,
-                           OSSL_SKEYMGMT_SELECT_SECRET_KEY, params);
+        OSSL_SKEYMGMT_SELECT_SECRET_KEY, params);
 }
 
 int EVP_SKEY_up_ref(EVP_SKEY *skey)
@@ -242,7 +242,6 @@ const char *EVP_SKEY_get0_skeymgmt_name(const EVP_SKEY *skey)
         return NULL;
 
     return skey->skeymgmt->type_name;
-
 }
 
 const char *EVP_SKEY_get0_provider_name(const EVP_SKEY *skey)
@@ -276,7 +275,7 @@ static int transfer_cb(const OSSL_PARAM params[], void *arg)
 }
 
 EVP_SKEY *EVP_SKEY_to_provider(EVP_SKEY *skey, OSSL_LIB_CTX *libctx,
-                               OSSL_PROVIDER *prov, const char *propquery)
+    OSSL_PROVIDER *prov, const char *propquery)
 {
     struct transfer_cb_ctx ctx = { 0 };
     EVP_SKEYMGMT *skeymgmt = NULL;
@@ -292,11 +291,11 @@ EVP_SKEY *EVP_SKEY_to_provider(EVP_SKEY *skey, OSSL_LIB_CTX *libctx,
             skeymgmt = skey->skeymgmt;
         else
             skeymgmt = evp_skeymgmt_fetch_from_prov(prov, skey->skeymgmt->type_name,
-                                                    propquery);
+                propquery);
     } else {
         /* If no provider, get the default skeymgmt */
         skeymgmt = EVP_SKEYMGMT_fetch(libctx, skey->skeymgmt->type_name,
-                                      propquery);
+            propquery);
     }
     if (skeymgmt == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
@@ -329,7 +328,7 @@ EVP_SKEY *EVP_SKEY_to_provider(EVP_SKEY *skey, OSSL_LIB_CTX *libctx,
 
     return ret;
 
- err:
+err:
     EVP_SKEYMGMT_free(skeymgmt);
     EVP_SKEY_free(ret);
     return NULL;
