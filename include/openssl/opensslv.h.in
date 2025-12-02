@@ -109,12 +109,14 @@ extern "C" {
 # define OPENSSL_VERSION_TEXT "OpenSSL {- "$config{full_version} $config{release_date}" -}"
 /* clang-format on */
 
+/* clang-format off */
 /* Synthesize OPENSSL_VERSION_NUMBER with the layout 0xMNN00PP0L */
 # define OPENSSL_VERSION_NUMBER          \
     ( (OPENSSL_VERSION_MAJOR<<28)        \
       |(OPENSSL_VERSION_MINOR<<20)       \
       |(OPENSSL_VERSION_PATCH<<4)        \
       |0x0L )
+/* clang-format on */
 
 # ifdef  __cplusplus
 }
