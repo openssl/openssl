@@ -10,6 +10,7 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/types.h>
 #include <openssl/self_test.h>
+#include "internal/fips.h"
 
 typedef struct self_test_post_params_st {
     /* FIPS module integrity check parameters */
@@ -32,30 +33,30 @@ typedef struct self_test_post_params_st {
 
 int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test);
 int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int do_deferred);
-int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
-    int type, const char *alg_name);
+int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int id);
 
 void SELF_TEST_disable_conditional_error_state(void);
 
 /* KAT tests categories */
 enum st_test_category {
     SELF_TEST_INTEGRITY = 0, /* currently unused */
-    SELF_TEST_KAT_CIPHER,
-    SELF_TEST_KAT_ASYM_CIPHER,
-    SELF_TEST_KAT_ASYM_KEYGEN,
-    SELF_TEST_KAT_KEM,
     SELF_TEST_KAT_DIGEST,
+    SELF_TEST_KAT_CIPHER,
     SELF_TEST_KAT_SIGNATURE,
     SELF_TEST_KAT_KDF,
+    SELF_TEST_DRBG,
     SELF_TEST_KAT_KAS,
+    SELF_TEST_KAT_ASYM_KEYGEN,
+    SELF_TEST_KAT_KEM,
+    SELF_TEST_KAT_ASYM_CIPHER,
     SELF_TEST_KAT_MAC, /* currently unused */
-    SELF_TEST_DRBG
 };
 
 enum st_test_state {
     SELF_TEST_STATE_INIT = 0,
     SELF_TEST_STATE_IN_PROGRESS,
     SELF_TEST_STATE_PASSED,
+    SELF_TEST_STATE_FAILED,
 };
 
 #define SELF_TEST_ONLOAD 0
@@ -163,3 +164,5 @@ typedef struct self_test_st {
         ST_KAT_DRBG drbg;
     } u;
 } ST_DEFINITION;
+
+extern ST_DEFINITION st_all_tests[ST_ID_MAX];
