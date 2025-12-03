@@ -3,8 +3,7 @@
 =head1 NAME
 
 ASN1_STRING_data,
-ossl-removed-api
-API that has been removed from OpenSSL
+ossl-removed-api - API that has been removed from OpenSSL
 
 =head1 SYNOPSIS
 

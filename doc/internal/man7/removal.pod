@@ -17,10 +17,9 @@ ensure one or more of the following things is true:
 =item There is a usually straightforward one-to-one replacement of the
 deleted function with a new function.
 
-=item The existing documentation for the function in the last release
-describes how to replace the function. If you feel this documentation
-is inadequate or incomplete, consider updating it if a maintenance
-release will happen.
+=item The previous release documents how to replace the function. If
+you feel this documentation is inadequate or incomplete, consider
+updating it if a maintenance release will happen.
 
 =item Details on how to replace the function are provided in
 L<ossl-guide-migration(7)>. If the replacement is complex and was
@@ -34,7 +33,7 @@ function, internal uses, and documentation.
 
 Your PR removing functions should include adding the function to the
 list in L<ossl-removed-api(7)> with an appropriate entry. Keep it short and
-simple. Each entry in the list for a version can include a quick link
+simple. Each entry in the list for a version may include a quick link
 to the usual replacement such as:
 
 =over 4
