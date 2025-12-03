@@ -1,5 +1,11 @@
 OpenSSL CMS Guide:
   en: OpenSSL CMS Guide
+  zh: OpenSSL CMS 指南
+  zh-TW: OpenSSL CMS 指南
+  ja: OpenSSL CMS ガイド
 Cryptographic Message Syntax (RFC 5652) Training Guide - OpenSSL CMS Implementation:
   en: Cryptographic Message Syntax (RFC 5652) Training Guide - OpenSSL CMS
     Implementation
+  zh: 密码消息语法 (RFC 5652) 培训指南 - OpenSSL CMS 实现
+  zh-TW: 密碼訊息語法 (RFC 5652) 訓練指南 - OpenSSL CMS 實作
+  ja: 暗号メッセージ構文 (RFC 5652) トレーニングガイド - OpenSSL CMS 実装

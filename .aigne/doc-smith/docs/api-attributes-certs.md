@@ -2,95 +2,11 @@
 
 This section provides a detailed reference for functions that manage attributes, certificates, and Certificate Revocation Lists (CRLs) within a Cryptographic Message Syntax (CMS) structure. These components are critical for building a verifiable trust chain, as they carry the metadata necessary for signature validation, including signer certificates and revocation status. Proper management of these elements is essential for creating compliant and secure messages.
 
-```d2
-direction: down
+The following diagram illustrates the relationship between the API functions and the CMS structure they manage:
 
-API-Functions: {
-  label: "API Functions"
-  shape: rectangle
-  style.fill: "#f0f4f8"
-
-  Signed-Attribute-Functions: {
-    label: "Signed Attribute Functions"
-    shape: rectangle
-    CMS_signed_get_attr_count: { label: "CMS_signed_get_attr_count()" }
-    CMS_signed_get_attr_by_NID: { label: "CMS_signed_get_attr_by_NID()" }
-    CMS_signed_get_attr_by_OBJ: { label: "CMS_signed_get_attr_by_OBJ()" }
-    CMS_signed_get_attr: { label: "CMS_signed_get_attr()" }
-    CMS_signed_add1_attr: { label: "CMS_signed_add1_attr()" }
-    CMS_signed_add1_attr_by_txt: { label: "CMS_signed_add1_attr_by_txt()" }
-  }
-
-  Unsigned-Attribute-Functions: {
-    label: "Unsigned Attribute Functions"
-    shape: rectangle
-    CMS_unsigned_get_attr_count: { label: "CMS_unsigned_get_attr_count()" }
-    CMS_unsigned_get_attr_by_NID: { label: "CMS_unsigned_get_attr_by_NID()" }
-    CMS_unsigned_get_attr_by_OBJ: { label: "CMS_unsigned_get_attr_by_OBJ()" }
-    CMS_unsigned_get_attr: { label: "CMS_unsigned_get_attr()" }
-    CMS_unsigned_add1_attr: { label: "CMS_unsigned_add1_attr()" }
-    CMS_unsigned_add1_attr_by_txt: { label: "CMS_unsigned_add1_attr_by_txt()" }
-  }
-
-  Certificate-Management: {
-    label: "Certificate Management"
-    shape: rectangle
-    CMS_add0_cert: { label: "CMS_add0_cert()" }
-    CMS_add1_cert: { label: "CMS_add1_cert()" }
-    CMS_get1_certs: { label: "CMS_get1_certs()" }
-  }
-
-  CRL-Management: {
-    label: "CRL Management"
-    shape: rectangle
-    CMS_add0_crl: { label: "CMS_add0_crl()" }
-    CMS_add1_crl: { label: "CMS_add1_crl()" }
-    CMS_get1_crls: { label: "CMS_get1_crls()" }
-  }
-}
-
-CMS-Structure: {
-  label: "CMS Structure"
-  shape: rectangle
-  style.fill: "#e6f7ff"
-
-  CMS-ContentInfo: {
-    label: "CMS_ContentInfo"
-    shape: rectangle
-
-    SignerInfo: {
-      label: "CMS_SignerInfo"
-      shape: rectangle
-
-      Signed-Attributes: {
-        label: "Signed Attributes"
-        style.fill: "#fffbe6"
-      }
-      Unsigned-Attributes: {
-        label: "Unsigned Attributes"
-        style.fill: "#feffe6"
-      }
-    }
-
-    Certificates: {
-      label: "Certificates\n(STACK_OF(X509))"
-      shape: rectangle
-      style.fill: "#f6ffed"
-    }
-
-    CRLs: {
-      label: "CRLs\n(STACK_OF(X509_CRL))"
-      shape: rectangle
-      style.fill: "#fff1f0"
-    }
-  }
-}
-
-API-Functions.Signed-Attribute-Functions -> CMS-Structure.CMS-ContentInfo.SignerInfo.Signed-Attributes: "Manage"
-API-Functions.Unsigned-Attribute-Functions -> CMS-Structure.CMS-ContentInfo.SignerInfo.Unsigned-Attributes: "Manage"
-API-Functions.Certificate-Management -> CMS-Structure.CMS-ContentInfo.Certificates: "Manage"
-API-Functions.CRL-Management -> CMS-Structure.CMS-ContentInfo.CRLs: "Manage"
-```
+<!-- DIAGRAM_IMAGE_START:architecture:16:9 -->
+![Attribute & Cert API](./assets/diagram/api-attributes-certs-diagram-0.jpg)
+<!-- DIAGRAM_IMAGE_END -->
 
 ## Attribute Management
 

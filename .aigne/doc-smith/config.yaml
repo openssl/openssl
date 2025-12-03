@@ -128,3 +128,7 @@ boardId: openssl-cms-guide
 checkoutId: ""
 # Should sync branding for documentation
 shouldSyncBranding: ""
+translateLanguages:
+  - zh
+  - zh-TW
+  - ja

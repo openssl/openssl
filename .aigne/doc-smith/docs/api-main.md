@@ -4,73 +4,9 @@ This section provides a detailed reference for the high-level functions used to 
 
 The following diagram illustrates the relationship between the main CMS functions for signing/verifying and encrypting/decrypting data flows.
 
-```d2
-direction: down
-
-Signing-Verification-Flow: {
-  label: "Signing & Verification Flow"
-  shape: rectangle
-
-  Data-In: { label: "Data\n(BIO)"; shape: cylinder }
-  Signer-Key: { label: "Signer's\nPrivate Key"; shape: cylinder }
-  Signer-Cert: { label: "Signer's\nCertificate"; shape: cylinder }
-
-  CMS-sign: { label: "CMS_sign()"; shape: rectangle }
-
-  CMS-SignedData: { label: "CMS_ContentInfo\n(SignedData)"; shape: rectangle }
-
-  Trusted-Store: { label: "Trusted\nCertificate Store"; shape: cylinder }
-  CMS-verify: { label: "CMS_verify()"; shape: rectangle }
-  Data-Out: { label: "Verified Data\n(BIO)"; shape: cylinder }
-
-  CMS-get0-signers: { label: "CMS_get0_signers()"; shape: rectangle }
-  Signer-Certs-Out: { label: "Signer Certificates"; shape: cylinder }
-}
-
-Encryption-Decryption-Flow: {
-  label: "Encryption & Decryption Flow"
-  shape: rectangle
-
-  Data-In: { label: "Data\n(BIO)"; shape: cylinder }
-  Recipient-Certs-In: { label: "Recipient\nCertificates"; shape: cylinder }
-  Symmetric-Cipher: { label: "Symmetric Cipher"; shape: cylinder }
-
-  CMS-encrypt: { label: "CMS_encrypt()"; shape: rectangle }
-
-  CMS-EnvelopedData: { label: "CMS_ContentInfo\n(EnvelopedData)"; shape: rectangle }
-
-  Recipient-Key: { label: "Recipient's\nPrivate Key"; shape: cylinder }
-  Recipient-Cert: { label: "Recipient's\nCertificate"; shape: cylinder }
-  CMS-decrypt: { label: "CMS_decrypt()"; shape: rectangle }
-  Data-Out: { label: "Decrypted Data\n(BIO)"; shape: cylinder }
-}
-
-Signing-Verification-Flow.Data-In -> Signing-Verification-Flow.CMS-sign
-Signing-Verification-Flow.Signer-Key -> Signing-Verification-Flow.CMS-sign
-Signing-Verification-Flow.Signer-Cert -> Signing-Verification-Flow.CMS-sign
-
-Signing-Verification-Flow.CMS-sign -> Signing-Verification-Flow.CMS-SignedData: "Creates"
-
-Signing-Verification-Flow.CMS-SignedData -> Signing-Verification-Flow.CMS-verify
-Signing-Verification-Flow.Trusted-Store -> Signing-Verification-Flow.CMS-verify
-
-Signing-Verification-Flow.CMS-verify -> Signing-Verification-Flow.Data-Out: "Outputs on success"
-
-Signing-Verification-Flow.CMS-SignedData -> Signing-Verification-Flow.CMS-get0-signers: "(Post-verification)"
-Signing-Verification-Flow.CMS-get0-signers -> Signing-Verification-Flow.Signer-Certs-Out: "Retrieves"
-
-Encryption-Decryption-Flow.Data-In -> Encryption-Decryption-Flow.CMS-encrypt
-Encryption-Decryption-Flow.Recipient-Certs-In -> Encryption-Decryption-Flow.CMS-encrypt
-Encryption-Decryption-Flow.Symmetric-Cipher -> Encryption-Decryption-Flow.CMS-encrypt
-
-Encryption-Decryption-Flow.CMS-encrypt -> Encryption-Decryption-Flow.CMS-EnvelopedData: "Creates"
-
-Encryption-Decryption-Flow.CMS-EnvelopedData -> Encryption-Decryption-Flow.CMS-decrypt
-Encryption-Decryption-Flow.Recipient-Key -> Encryption-Decryption-Flow.CMS-decrypt
-Encryption-Decryption-Flow.Recipient-Cert -> Encryption-Decryption-Flow.CMS-decrypt
-
-Encryption-Decryption-Flow.CMS-decrypt -> Encryption-Decryption-Flow.Data-Out: "Outputs on success"
-```
+<!-- DIAGRAM_IMAGE_START:flowchart:16:9 -->
+![Main Functions](./assets/diagram/api-main-diagram-0.jpg)
+<!-- DIAGRAM_IMAGE_END -->
 
 ## Signing and Verification
 

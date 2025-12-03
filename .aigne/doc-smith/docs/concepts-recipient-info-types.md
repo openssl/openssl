@@ -4,79 +4,9 @@ Within the Cryptographic Message Syntax, the `RecipientInfo` structure is the me
 
 In a CMS `EnvelopedData` structure, the message content is encrypted with a single, randomly generated symmetric key known as the Content Encryption Key (CEK). To ensure that only authorized recipients can access the content, the CEK itself must be securely distributed. This is accomplished by creating a `RecipientInfo` structure for each recipient. Each structure contains a copy of the CEK, encrypted in a way that is unique to and only decryptable by its intended recipient.
 
-The following diagram illustrates this process, showing how a single CEK is encrypted differently for multiple recipients:
-
-```d2
-direction: down
-
-CEK: {
-  label: "Content Encryption Key\n(CEK)"
-  shape: rectangle
-}
-
-Content: {
-  label: "Plaintext Content"
-  shape: rectangle
-}
-
-Encrypted-Content: {
-  label: "Encrypted Content"
-  shape: rectangle
-}
-
-CMS-EnvelopedData: {
-  label: "CMS EnvelopedData Structure"
-  shape: rectangle
-
-  Recipient-Infos: {
-    label: "RecipientInfo Collection"
-    shape: rectangle
-
-    Recipient-Info-A: {
-      label: "RecipientInfo A\n(CEK encrypted for A)"
-      shape: rectangle
-    }
-
-    Recipient-Info-B: {
-      label: "RecipientInfo B\n(CEK encrypted for B)"
-      shape: rectangle
-    }
-
-    Recipient-Info-C: {
-      label: "RecipientInfo C\n(CEK encrypted for C)"
-      shape: rectangle
-    }
-  }
-}
-
-Recipient-A-Key: {
-  label: "Recipient A's Key\n(e.g., Public Key)"
-  shape: rectangle
-}
-
-Recipient-B-Key: {
-  label: "Recipient B's Key\n(e.g., Public Key)"
-  shape: rectangle
-}
-
-Recipient-C-Key: {
-  label: "Recipient C's Key\n(e.g., Shared Key)"
-  shape: rectangle
-}
-
-Content -> Encrypted-Content: "1. Encrypt with CEK"
-
-CEK -> Recipient-A-Key: "2a. Encrypt CEK"
-CEK -> Recipient-B-Key: "2b. Encrypt CEK"
-CEK -> Recipient-C-Key: "2c. Encrypt CEK"
-
-Recipient-A-Key -> CMS-EnvelopedData.Recipient-Infos.Recipient-Info-A
-Recipient-B-Key -> CMS-EnvelopedData.Recipient-Infos.Recipient-Info-B
-Recipient-C-Key -> CMS-EnvelopedData.Recipient-Infos.Recipient-Info-C
-
-Encrypted-Content -> CMS-EnvelopedData: "3. Package into"
-
-```
+<!-- DIAGRAM_IMAGE_START:intro:16:9 -->
+![Recipient Info Types](./assets/diagram/concepts-recipient-info-types-diagram-0.jpg)
+<!-- DIAGRAM_IMAGE_END -->
 
 OpenSSL supports six distinct mechanisms for this key management, each identified by a unique type.
 
@@ -102,7 +32,7 @@ Key Agreement allows two or more parties to generate a shared secret over an ins
 
 *   **Type Identifier**: `CMS_RECIPINFO_AGREE`
 *   **Mechanism**: The sender generates an ephemeral key pair (e.g., Diffie-Hellman or Elliptic Curve Diffie-Hellman). Using their own private key and the recipient's public key, they derive a shared secret. This secret is used to derive a KEK that encrypts the CEK. The recipient performs the same derivation using their private key and the sender's ephemeral public key.
-*   **Use Case**: Suited for protocols based on Diffie-Hellman (DH) or Elliptic Curve Diffie-Hellman (ECDH), providing Perfect Forward Secrecy if ephemeral keys are used.
+*   **Use Case**: Suited for protocols based on Diffie-Hellman (DH) or Elliptic Curve Diffie-Hellman (ECDH), providing Perfect Forward Secy if ephemeral keys are used.
 *   **ASN.1 Structure**: `KeyAgreeRecipientInfo`
 
 This method is more complex than KTRI but offers advanced security properties.

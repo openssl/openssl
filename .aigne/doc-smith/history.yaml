@@ -1,0 +1,18 @@
+entries:
+  - timestamp: 2025-12-03T01:20:31.831Z
+    operation: document_update
+    feedback: update images
+    docPaths:
+      - /concepts
+      - /concepts/content-types
+      - /concepts/recipient-info-types
+      - /command-line
+      - /guides/encrypting-decrypting
+      - /api/main
+      - /api/attributes-certs
+  - timestamp: 2025-12-03T01:13:16.822Z
+    operation: document_update
+    feedback: update image
+    docPaths:
+      - /overview
+      - /quick-start

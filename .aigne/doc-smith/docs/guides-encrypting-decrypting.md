@@ -4,70 +4,9 @@ Securely transmitting sensitive information requires robust encryption, ensuring
 
 The procedures outlined here primarily involve the `EnvelopedData` content type, which encapsulates encrypted content and one or more recipient identifiers. Each recipient entry contains a content-encryption key that has been individually encrypted for that specific recipient, typically using their public key. The following diagram illustrates this general concept.
 
-```d2
-direction: down
-
-CEK: {
-  label: "Content-Encryption Key\n(CEK)"
-  shape: rectangle
-}
-
-Plaintext: {
-  label: "Plaintext Data"
-  shape: rectangle
-}
-
-Recipient-1-PublicKey: {
-  label: "Recipient 1\nPublic Key"
-  shape: rectangle
-}
-
-Recipient-2-PublicKey: {
-  label: "Recipient 2\nPublic Key"
-  shape: rectangle
-}
-
-EnvelopedData: {
-  label: "CMS EnvelopedData"
-  shape: rectangle
-
-  EncryptedContent: {
-    label: "Encrypted Content"
-    shape: rectangle
-  }
-
-  RecipientInfos: {
-    label: "Recipient Information"
-    shape: rectangle
-    grid-columns: 2
-
-    Recipient-1-Info: {
-      label: "Recipient 1 Info"
-      shape: rectangle
-      Encrypted-CEK-1: {
-        label: "Encrypted CEK"
-        shape: rectangle
-      }
-    }
-
-    Recipient-2-Info: {
-      label: "Recipient 2 Info"
-      shape: rectangle
-      Encrypted-CEK-2: {
-        label: "Encrypted CEK"
-        shape: rectangle
-      }
-    }
-  }
-}
-
-Plaintext -> EnvelopedData.EncryptedContent: "Encrypted with CEK"
-CEK -> EnvelopedData.EncryptedContent
-CEK -> EnvelopedData.RecipientInfos.Recipient-1-Info.Encrypted-CEK-1
-Recipient-1-PublicKey -> EnvelopedData.RecipientInfos.Recipient-1-Info.Encrypted-CEK-1: "Encrypts CEK"
-CEK -> EnvelopedData.RecipientInfos.Recipient-2-Info.Encrypted-CEK-2
-Recipient-2-PublicKey -> EnvelopedData.RecipientInfos.Recipient-2-Info.Encrypted-CEK-2: "Encrypts CEK"
-```
+<!-- DIAGRAM_IMAGE_START:flowchart:4:3 -->
+![Encryption & Decryption](./assets/diagram/guides-encrypting-decrypting-diagram-0.jpg)
+<!-- DIAGRAM_IMAGE_END -->
 
 For a more detailed explanation of the underlying structures, refer to the [Content Types](./concepts-content-types.md) and [Recipient Info Types](./concepts-recipient-info-types.md) documentation.
 

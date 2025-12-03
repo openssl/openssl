@@ -32,50 +32,9 @@ The OpenSSL CMS API is organized into several categories based on functionality.
 
 The entire CMS functionality revolves around a few central data structures. Understanding these is key to using the API effectively. The following diagram illustrates the relationship between these key structures.
 
-```d2
-direction: down
-
-CMS-ContentInfo: {
-  label: "CMS_ContentInfo\n(Top-Level Structure)"
-  shape: rectangle
-  style: {
-    fill: "#e6f7ff"
-    stroke: "#91d5ff"
-  }
-
-  Content: {
-    label: "Content\n(e.g., Data, SignedData, EnvelopedData)"
-    shape: rectangle
-  }
-
-  SignerInfos: {
-    label: "signerInfos [0..n]"
-    shape: rectangle
-
-    SignerInfo-instance: {
-      label: "CMS_SignerInfo"
-      shape: rectangle
-      style.fill: "#feffe6"
-    }
-    "..."
-  }
-
-  RecipientInfos: {
-    label: "recipientInfos [0..n]"
-    shape: rectangle
-
-    RecipientInfo-instance: {
-      label: "CMS_RecipientInfo"
-      shape: rectangle
-      style.fill: "#f6ffed"
-    }
-    "..."
-  }
-}
-
-CMS-ContentInfo.Content -> CMS-ContentInfo.SignerInfos: "If SignedData"
-CMS-ContentInfo.Content -> CMS-ContentInfo.RecipientInfos: "If EnvelopedData"
-```
+<!-- DIAGRAM_IMAGE_START:intro:1:1 -->
+![API Reference](assets/diagram/api-diagram-0.jpg)
+<!-- DIAGRAM_IMAGE_END -->
 
 *   **`CMS_ContentInfo`**: The top-level structure in CMS. It encapsulates the content type and the content itself. All CMS messages are parsed into or generated from this structure.
 *   **`CMS_SignerInfo`**: Contains all information related to a single signer, including their certificate identifier, signature algorithm, signature value, and any signed or unsigned attributes.

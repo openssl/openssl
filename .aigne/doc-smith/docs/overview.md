@@ -26,68 +26,9 @@ The power of CMS lies in its modular design, where different content types can b
 
 The following diagram illustrates the relationship between the `ContentInfo` container and its various content types:
 
-```d2
-direction: down
-
-ContentInfo: {
-  label: "ContentInfo (The CMS Wrapper)"
-  shape: rectangle
-  style: {
-    stroke: "#4a4a4a"
-    stroke-width: 2
-  }
-
-  ContentTypeOID: {
-    label: "Content Type OID\n(e.g., SignedData, EnvelopedData)"
-    shape: rectangle
-  }
-
-  Content: {
-    label: "Content\n(Structured according to Content Type)"
-    shape: rectangle
-    style: {
-      stroke: "#888"
-      stroke-width: 2
-      stroke-dash: 4
-    }
-  }
-}
-
-PossibleContentTypes: {
-  label: "Possible Content Types"
-  shape: rectangle
-  grid-columns: 3
-  grid-gap: 40
-
-  Data: "Data\n(Raw content)"
-  DigestedData: "DigestedData"
-  EncryptedData: "EncryptedData"
-  CompressedData: "CompressedData"
-
-  SignedData: {
-    label: "SignedData"
-    shape: rectangle
-
-    SignerInfo1: "SignerInfo"
-    dot1: "..."
-    SignerInfoN: "SignerInfo"
-  }
-
-  EnvelopedData: {
-    label: "EnvelopedData"
-    shape: rectangle
-
-    RecipientInfo1: "RecipientInfo"
-    dot2: "..."
-    RecipientInfoN: "RecipientInfo"
-  }
-
-  AuthEnvelopedData: "AuthEnvelopedData"
-}
-
-ContentInfo.ContentTypeOID -> ContentInfo.Content: "Defines structure of"
-ContentInfo.Content -> PossibleContentTypes: "Can be one of"
-```
+<!-- DIAGRAM_IMAGE_START:architecture:16:9 -->
+![This document explains the purpose of the Cryptographic Message Syntax (CMS), its role in secure ...](./assets/diagram/overview-diagram-0.jpg)
+<!-- DIAGRAM_IMAGE_END -->
 
 ### Core Content Types
 

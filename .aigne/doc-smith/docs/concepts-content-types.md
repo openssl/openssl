@@ -6,62 +6,9 @@ At the core of the Cryptographic Message Syntax is the `ContentInfo` structure, 
 
 The following diagram illustrates how these content types relate to one another, often with the `Data` type as the innermost content.
 
-```d2
-direction: down
-
-ContentInfo: {
-  label: "ContentInfo (CMS Container)"
-  shape: rectangle
-  style: {
-    stroke: "#888"
-    stroke-width: 2
-    stroke-dash: 4
-  }
-
-  Wrapper-Types: {
-    label: "Cryptographic Content Types"
-    shape: rectangle
-    grid-columns: 3
-
-    SignedData: {
-      label: "SignedData\n(Authentication, Integrity)"
-      shape: rectangle
-    }
-
-    EnvelopedData: {
-      label: "EnvelopedData\n(Confidentiality)"
-      shape: rectangle
-    }
-
-    DigestedData: {
-      label: "DigestedData\n(Integrity)"
-      shape: rectangle
-    }
-
-    EncryptedData: {
-      label: "EncryptedData\n(Confidentiality)"
-      shape: rectangle
-    }
-
-    AuthEnvelopedData: {
-      label: "AuthEnvelopedData\n(Confidentiality & Integrity)"
-      shape: rectangle
-    }
-  }
-
-  Data: {
-    label: "Data\n(Arbitrary Content)"
-    shape: rectangle
-    style.fill: "#f0f0f0"
-  }
-}
-
-ContentInfo.Wrapper-Types.SignedData -> ContentInfo.Data: "Protects"
-ContentInfo.Wrapper-Types.EnvelopedData -> ContentInfo.Data: "Protects"
-ContentInfo.Wrapper-Types.DigestedData -> ContentInfo.Data: "Protects"
-ContentInfo.Wrapper-Types.EncryptedData -> ContentInfo.Data: "Protects"
-ContentInfo.Wrapper-Types.AuthEnvelopedData -> ContentInfo.Data: "Protects"
-```
+<!-- DIAGRAM_IMAGE_START:architecture:16:9 -->
+![This section breaks down the six fundamental building blocks of the Cryptographic Message Syntax ...](./assets/diagram/content-types-diagram-0.jpg)
+<!-- DIAGRAM_IMAGE_END -->
 
 Understanding these six types is essential for effectively using the OpenSSL CMS library, as they form the foundation for all signing and encryption operations.
 

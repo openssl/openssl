@@ -13,80 +13,9 @@ At its core, every CMS message is a `ContentInfo` structure. This structure acts
 
 This layered design allows for nesting, where one CMS structure can be wrapped inside another. For example, a signed message (`SignedData`) can itself be encrypted, with the entire `SignedData` structure becoming the content of an `EnvelopedData` structure. The following diagram illustrates this hierarchical structure:
 
-```d2
-direction: down
-
-ContentInfo: {
-  label: "ContentInfo (The Universal Wrapper)"
-  shape: rectangle
-
-  contentType: {
-    label: "contentType: OID\n(e.g., SignedData, EnvelopedData)"
-    shape: rectangle
-  }
-
-  content: {
-    label: "content [SignedData]"
-    shape: rectangle
-
-    digestAlgorithms: {
-      label: "digestAlgorithms"
-      shape: rectangle
-    }
-
-    encapContentInfo: {
-      label: "encapContentInfo (Original Content)"
-      shape: rectangle
-
-      eContentType: {
-        label: "eContentType: OID (e.g., Data)"
-        shape: rectangle
-      }
-      eContent: {
-        label: "eContent: OCTET STRING\n(The actual message data)"
-        shape: rectangle
-      }
-    }
-
-    certificates: {
-      label: "certificates (Optional)"
-      shape: rectangle
-    }
-
-    signerInfos: {
-      label: "signerInfos (One per signer)"
-      shape: rectangle
-
-      SignerInfo: {
-        label: "SignerInfo"
-        shape: rectangle
-
-        sid: {
-          label: "Signer Identifier"
-          shape: rectangle
-        }
-        digestAlgorithm: {
-          label: "digestAlgorithm"
-          shape: rectangle
-        }
-        signedAttrs: {
-          label: "signedAttrs (Optional)"
-          shape: rectangle
-        }
-        signatureAlgorithm: {
-          label: "signatureAlgorithm"
-          shape: rectangle
-        }
-        signature: {
-          label: "signature"
-          shape: rectangle
-        }
-      }
-    }
-  }
-}
-
-```
+<!-- DIAGRAM_IMAGE_START:architecture:3:4 -->
+![Core Concepts](assets/diagram/concepts-diagram-0.jpg)
+<!-- DIAGRAM_IMAGE_END -->
 
 ## CMS Content Types
 
