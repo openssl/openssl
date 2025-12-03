@@ -154,6 +154,8 @@ my %params = (
     'OSSL_CIPHER_PARAM_XTS_STANDARD' =>         "xts_standard",# utf8_string
     'OSSL_CIPHER_PARAM_ENCRYPT_THEN_MAC' =>     "encrypt-then-mac",# int, 0 or 1
     'OSSL_CIPHER_HMAC_PARAM_MAC' =>             "*OSSL_CIPHER_PARAM_AEAD_TAG",
+    'OSSL_CIPHER_PARAM_TLSTREE' =>              "tlstree",             # octet_string
+    'OSSL_CIPHER_PARAM_TLSTREE_MODE' =>         "tlstree_mode",        # octet_string
 
     'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT' =>  "tls1multi_maxsndfrag",# uint
     'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE' =>        "tls1multi_maxbufsz",  # size_t

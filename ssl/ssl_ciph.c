@@ -60,8 +60,10 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_CHACHA20POLY1305, NID_chacha20_poly1305}, /* SSL_ENC_CHACHA_IDX 19 */
     {SSL_ARIA128GCM, NID_aria_128_gcm}, /* SSL_ENC_ARIA128GCM_IDX 20 */
     {SSL_ARIA256GCM, NID_aria_256_gcm}, /* SSL_ENC_ARIA256GCM_IDX 21 */
-    {SSL_MAGMA, NID_magma_ctr_acpkm}, /* SSL_ENC_MAGMA_IDX */
-    {SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm}, /* SSL_ENC_KUZNYECHIK_IDX */
+    {SSL_MAGMA, NID_magma_ctr_acpkm}, /* SSL_ENC_MAGMA_IDX 22 */
+    {SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm}, /* SSL_ENC_KUZNYECHIK_IDX 23 */
+    {SSL_MAGMA_MGM, NID_magma_mgm}, /* SSL_ENC_MAGMA_MGM_IDX 24 */
+    {SSL_KUZNYECHIK_MGM, NID_kuznyechik_mgm}, /* SSL_ENC_KUZNYECHIK_MGM_IDX 25 */
 };
 
 /* NB: make sure indices in this table matches values above */
@@ -323,6 +325,23 @@ static int get_optional_pkey_id(const char *pkey_name)
 }
 #endif
 
+/* Checks to see if algorithms are fetchable */
+#define IS_FETCHABLE(type, TYPE)                                         \
+    static int is_ ## type ## _fetchable(SSL_CTX *ctx, const char *name) \
+    {                                                                    \
+        TYPE *impl;                                                      \
+                                                                         \
+        ERR_set_mark();                                                  \
+        impl = TYPE ## _fetch(ctx->libctx, name, ctx->propq);            \
+        ERR_pop_to_mark();                                               \
+        if (impl == NULL)                                                \
+            return 0;                                                    \
+        TYPE ## _free(impl);                                             \
+        return 1;                                                        \
+    }
+
+IS_FETCHABLE(keymgmt, EVP_KEYMGMT)
+
 int ssl_load_ciphers(SSL_CTX *ctx)
 {
     size_t i;
@@ -431,11 +450,14 @@ int ssl_load_ciphers(SSL_CTX *ctx)
     else
         ctx->disabled_mac_mask |= SSL_KUZNYECHIKOMAC;
 
-    if (!get_optional_pkey_id(SN_id_GostR3410_2001))
+    if (!get_optional_pkey_id(SN_id_GostR3410_2001)
+        && !is_keymgmt_fetchable(ctx, SN_id_GostR3410_2001))
         ctx->disabled_auth_mask |= SSL_aGOST01 | SSL_aGOST12;
-    if (!get_optional_pkey_id(SN_id_GostR3410_2012_256))
+    if (!get_optional_pkey_id(SN_id_GostR3410_2012_256)
+        && !is_keymgmt_fetchable(ctx, SN_id_GostR3410_2012_256))
         ctx->disabled_auth_mask |= SSL_aGOST12;
-    if (!get_optional_pkey_id(SN_id_GostR3410_2012_512))
+    if (!get_optional_pkey_id(SN_id_GostR3410_2012_512)
+        && !is_keymgmt_fetchable(ctx, SN_id_GostR3410_2012_512))
         ctx->disabled_auth_mask |= SSL_aGOST12;
     /*
      * Disable GOST key exchange if no GOST signature algs are available *
@@ -1840,8 +1862,14 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     case SSL_MAGMA:
         enc = "MAGMA";
         break;
+    case SSL_MAGMA_MGM:
+        enc = "MAGMAMGM";
+        break;
     case SSL_KUZNYECHIK:
         enc = "KUZNYECHIK";
+        break;
+    case SSL_KUZNYECHIK_MGM:
+        enc = "KUZNYECHIKMGM";
         break;
     case SSL_CHACHA20POLY1305:
         enc = "CHACHA20/POLY1305(256)";

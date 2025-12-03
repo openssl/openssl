@@ -502,10 +502,10 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
 #ifndef OPENSSL_NO_GOST
     if (!SSL_USE_SIGALGS(s)
         && ((PACKET_remaining(pkt) == 64
-             && (EVP_PKEY_get_id(pkey) == NID_id_GostR3410_2001
-                 || EVP_PKEY_get_id(pkey) == NID_id_GostR3410_2012_256))
+             && (EVP_PKEY_is_a(pkey, SN_id_GostR3410_2001)
+                 || EVP_PKEY_is_a(pkey, SN_id_GostR3410_2012_256)))
             || (PACKET_remaining(pkt) == 128
-                && EVP_PKEY_get_id(pkey) == NID_id_GostR3410_2012_512))) {
+                && EVP_PKEY_is_a(pkey, SN_id_GostR3410_2012_512)))) {
         len = (unsigned int)PACKET_remaining(pkt);
     } else
 #endif
@@ -540,10 +540,9 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     }
 #ifndef OPENSSL_NO_GOST
     {
-        int pktype = EVP_PKEY_get_id(pkey);
-        if (pktype == NID_id_GostR3410_2001
-            || pktype == NID_id_GostR3410_2012_256
-            || pktype == NID_id_GostR3410_2012_512) {
+        if (EVP_PKEY_is_a(pkey, SN_id_GostR3410_2001)
+            || EVP_PKEY_is_a(pkey, SN_id_GostR3410_2012_256)
+            || EVP_PKEY_is_a(pkey, SN_id_GostR3410_2012_512)) {
             if ((gost_data = OPENSSL_malloc(len)) == NULL)
                 goto err;
             BUF_reverse(gost_data, data, len);
@@ -1947,8 +1946,6 @@ static int is_tls13_capable(const SSL_CONNECTION *s)
         switch (i) {
         case SSL_PKEY_DSA_SIGN:
         case SSL_PKEY_GOST01:
-        case SSL_PKEY_GOST12_256:
-        case SSL_PKEY_GOST12_512:
             continue;
         default:
             break;
@@ -1965,6 +1962,15 @@ static int is_tls13_capable(const SSL_CONNECTION *s)
         curve = ssl_get_EC_curve_nid(s->cert->pkeys[SSL_PKEY_ECC].privatekey);
         if (tls_check_sigalg_curve(s, curve))
             return 1;
+
+        /*
+         * TODO: There must be an opportunity to check that the sig algs are
+         * consistent with the keys in case if the sig algs are provider-based.
+         * For example, OSSL_FUNC_keymgmt_get_params could return the list of
+         * sig alg code points supported by the key, and this list could be
+         * checked against the sig algs code points stored in
+         * SSL_CTX.sigalg_lookup_cache
+         */
     }
 
     return 0;

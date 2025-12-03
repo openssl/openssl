@@ -460,6 +460,7 @@ OSSL_DEPRECATEDIN_3_0 int
 #define          EVP_CTRL_GET_WRAP_CIPHER                0x29
 /* TLSTREE key diversification */
 #define          EVP_CTRL_TLSTREE                        0x2A
+# define          EVP_CTRL_SET_TLSTREE_PARAMS             0x2B
 
 /* Padding modes */
 #define EVP_PADDING_PKCS7       1
@@ -497,6 +498,10 @@ typedef struct {
 # define EVP_CCM_TLS_TAG_LEN                             16
 /* Length of CCM8 tag for TLS */
 # define EVP_CCM8_TLS_TAG_LEN                            8
+
+/* GOST TLS 1.3 tag lengths */
+# define EVP_MAGMA_TLS_TAG_LEN                           8
+# define EVP_KUZNYECHIK_TLS_TAG_LEN                      16
 
 /* Length of tag for TLS */
 # define EVP_CHACHAPOLY_TLS_TAG_LEN                      16

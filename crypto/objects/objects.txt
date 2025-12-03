@@ -1528,9 +1528,11 @@ id-tc26-algorithms 5	: id-tc26-cipher
 id-tc26-cipher 1	:  id-tc26-cipher-gostr3412-2015-magma
 id-tc26-cipher-gostr3412-2015-magma 1	: magma-ctr-acpkm
 id-tc26-cipher-gostr3412-2015-magma 2	: magma-ctr-acpkm-omac
+id-tc26-cipher-gostr3412-2015-magma 3   : magma-mgm
 id-tc26-cipher 2	:  id-tc26-cipher-gostr3412-2015-kuznyechik
 id-tc26-cipher-gostr3412-2015-kuznyechik 1	: kuznyechik-ctr-acpkm
 id-tc26-cipher-gostr3412-2015-kuznyechik 2	: kuznyechik-ctr-acpkm-omac
+id-tc26-cipher-gostr3412-2015-kuznyechik 3  : kuznyechik-mgm
 
 id-tc26-algorithms 6	: id-tc26-agreement
 id-tc26-agreement 1	: id-tc26-agreement-gost-3410-2012-256

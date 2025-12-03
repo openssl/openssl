@@ -1255,7 +1255,8 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     BIO *thisbio;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     const OSSL_RECORD_METHOD *meth;
-    int use_etm, stream_mac = 0, tlstree = 0;
+    int use_etm, stream_mac = 0;
+    uint32_t algorithm2 = 0, tlstree = 0;
     unsigned int maxfrag = (direction == OSSL_RECORD_DIRECTION_WRITE)
                            ? ssl_get_max_send_fragment(s)
                            : SSL3_RT_MAX_PLAIN_LENGTH;
@@ -1318,6 +1319,14 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
             tlstree = 1;
     }
 
+    if (s->s3.tmp.new_cipher != NULL)
+        algorithm2 = s->s3.tmp.new_cipher->algorithm2;
+    else if (s->session != NULL && s->session->cipher != NULL)
+        algorithm2 = s->session->cipher->algorithm2;
+    else if (s->psksession != NULL && s->psksession->cipher != NULL)
+        algorithm2 = s->psksession->cipher->algorithm2;
+    tlstree |= (algorithm2 & TLS1_TLSTREE_L) | (algorithm2 & TLS1_TLSTREE_S);
+
     if (use_etm)
         *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_USE_ETM,
                                           &use_etm);
@@ -1327,8 +1336,8 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                                           &stream_mac);
 
     if (tlstree)
-        *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_TLSTREE,
-                                          &tlstree);
+        *set++ = OSSL_PARAM_construct_uint32(OSSL_LIBSSL_RECORD_LAYER_PARAM_TLSTREE,
+                                             &tlstree);
 
     /*
      * We only need to do this for the read side. The write side should already

@@ -151,6 +151,8 @@
 # define SSL_ARIA256GCM          0x00200000U
 # define SSL_MAGMA               0x00400000U
 # define SSL_KUZNYECHIK          0x00800000U
+# define SSL_MAGMA_MGM           0x01000000U
+# define SSL_KUZNYECHIK_MGM      0x02000000U
 
 # define SSL_AESGCM              (SSL_AES128GCM | SSL_AES256GCM)
 # define SSL_AESCCM              (SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8)
@@ -233,7 +235,9 @@
  * TLSTREE cipher/mac key derivation from draft-smyshlyaev-tls12-gost-suites
  * (currently this also  goes into algorithm2)
  */
-# define TLS1_TLSTREE 0x20000
+# define TLS1_TLSTREE    0x20000
+# define TLS1_TLSTREE_S  0x80000
+# define TLS1_TLSTREE_L  0x100000
 
 /* Ciphersuite supported in QUIC */
 # define SSL_QUIC                0x00040000U
@@ -328,31 +332,33 @@
 # define SSL_PKEY_ED448          8
 # define SSL_PKEY_NUM            9
 
-# define SSL_ENC_DES_IDX         0
-# define SSL_ENC_3DES_IDX        1
-# define SSL_ENC_RC4_IDX         2
-# define SSL_ENC_RC2_IDX         3
-# define SSL_ENC_IDEA_IDX        4
-# define SSL_ENC_NULL_IDX        5
-# define SSL_ENC_AES128_IDX      6
-# define SSL_ENC_AES256_IDX      7
-# define SSL_ENC_CAMELLIA128_IDX 8
-# define SSL_ENC_CAMELLIA256_IDX 9
-# define SSL_ENC_GOST89_IDX      10
-# define SSL_ENC_SEED_IDX        11
-# define SSL_ENC_AES128GCM_IDX   12
-# define SSL_ENC_AES256GCM_IDX   13
-# define SSL_ENC_AES128CCM_IDX   14
-# define SSL_ENC_AES256CCM_IDX   15
-# define SSL_ENC_AES128CCM8_IDX  16
-# define SSL_ENC_AES256CCM8_IDX  17
-# define SSL_ENC_GOST8912_IDX    18
-# define SSL_ENC_CHACHA_IDX      19
-# define SSL_ENC_ARIA128GCM_IDX  20
-# define SSL_ENC_ARIA256GCM_IDX  21
-# define SSL_ENC_MAGMA_IDX       22
-# define SSL_ENC_KUZNYECHIK_IDX  23
-# define SSL_ENC_NUM_IDX         24
+# define SSL_ENC_DES_IDX             0
+# define SSL_ENC_3DES_IDX            1
+# define SSL_ENC_RC4_IDX             2
+# define SSL_ENC_RC2_IDX             3
+# define SSL_ENC_IDEA_IDX            4
+# define SSL_ENC_NULL_IDX            5
+# define SSL_ENC_AES128_IDX          6
+# define SSL_ENC_AES256_IDX          7
+# define SSL_ENC_CAMELLIA128_IDX     8
+# define SSL_ENC_CAMELLIA256_IDX     9
+# define SSL_ENC_GOST89_IDX          10
+# define SSL_ENC_SEED_IDX            11
+# define SSL_ENC_AES128GCM_IDX       12
+# define SSL_ENC_AES256GCM_IDX       13
+# define SSL_ENC_AES128CCM_IDX       14
+# define SSL_ENC_AES256CCM_IDX       15
+# define SSL_ENC_AES128CCM8_IDX      16
+# define SSL_ENC_AES256CCM8_IDX      17
+# define SSL_ENC_GOST8912_IDX        18
+# define SSL_ENC_CHACHA_IDX          19
+# define SSL_ENC_ARIA128GCM_IDX      20
+# define SSL_ENC_ARIA256GCM_IDX      21
+# define SSL_ENC_MAGMA_IDX           22
+# define SSL_ENC_KUZNYECHIK_IDX      23
+# define SSL_ENC_MAGMA_MGM_IDX       24
+# define SSL_ENC_KUZNYECHIK_MGM_IDX  25
+# define SSL_ENC_NUM_IDX             26
 
 /*-
  * SSL_kRSA <- RSA_ENC

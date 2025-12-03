@@ -78,6 +78,18 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
     }
+
+    if (!rl->isdtls && rl->tlstree) {
+        int res = 0;
+
+        if (rl->tlstree & TLS1_TLSTREE_S)
+            res = EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_SET_TLSTREE_PARAMS, 0, "strong");
+        else if (rl->tlstree & TLS1_TLSTREE_L)
+            res = EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_SET_TLSTREE_PARAMS, 0, "light");
+
+        if (res <= 0)
+            return OSSL_RECORD_RETURN_FATAL;
+    }
  end:
     return OSSL_RECORD_RETURN_SUCCESS;
 }
@@ -161,6 +173,11 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     memcpy(nonce, staticiv, offset);
     for (loop = 0; loop < SEQ_NUM_SIZE; loop++)
         nonce[offset + loop] = staticiv[offset + loop] ^ seq[loop];
+
+    if (!rl->isdtls && rl->tlstree && EVP_CIPHER_CTX_ctrl(enc_ctx, EVP_CTRL_TLSTREE, 0, seq) <= 0) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
 
     if (!tls_increment_sequence_ctr(rl)) {
         /* RLAYERfatal already called */
