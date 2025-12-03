@@ -103,7 +103,7 @@ struct ossl_encoder_ctx_st {
     struct ossl_passphrase_data_st pwdata;
 
     /* Flag that the structure is ready for use */
-    int finalized;
+    int frozen;
 };
 
 struct ossl_decoder_instance_st {
@@ -167,7 +167,7 @@ struct ossl_decoder_ctx_st {
     int harderr;
 
     /* Flag that the structure is ready for use */
-    int finalized;
+    int frozen;
 };
 
 const OSSL_PROPERTY_LIST *

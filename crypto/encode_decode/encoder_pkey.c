@@ -388,11 +388,11 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_for_pkey(const EVP_PKEY *pkey,
             || OSSL_ENCODER_CTX_set_output_structure(ctx, output_struct))
         && OSSL_ENCODER_CTX_set_selection(ctx, selection)
         && ossl_encoder_ctx_setup_for_pkey(ctx, pkey, selection, propquery)
-        && OSSL_ENCODER_CTX_add_extra(ctx, libctx, propquery)
-        && OSSL_ENCODER_CTX_set_finalized(ctx)) {
+        && OSSL_ENCODER_CTX_add_extra(ctx, libctx, propquery)) {
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
         int save_parameters = pkey->save_parameters;
 
+        ctx->frozen = 1;
         params[0] = OSSL_PARAM_construct_int(OSSL_ENCODER_PARAM_SAVE_PARAMETERS,
                                              &save_parameters);
         /* ignoring error as this is only auxiliary parameter */

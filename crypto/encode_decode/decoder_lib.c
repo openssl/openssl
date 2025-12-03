@@ -170,7 +170,7 @@ int OSSL_DECODER_CTX_set_selection(OSSL_DECODER_CTX *ctx, int selection)
         return 0;
     }
 
-    if (ctx->finalized != 0) {
+    if (ctx->frozen != 0) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
@@ -191,7 +191,7 @@ int OSSL_DECODER_CTX_set_input_type(OSSL_DECODER_CTX *ctx,
         return 0;
     }
 
-    if (ctx->finalized != 0) {
+    if (ctx->frozen != 0) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
@@ -212,7 +212,7 @@ int OSSL_DECODER_CTX_set_input_structure(OSSL_DECODER_CTX *ctx,
         return 0;
     }
 
-    if (ctx->finalized != 0) {
+    if (ctx->frozen != 0) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
@@ -403,7 +403,7 @@ int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder)
         return 0;
     }
 
-    if (ctx->finalized != 0) {
+    if (ctx->frozen != 0) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
@@ -602,7 +602,7 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
         return 0;
     }
 
-    if (ctx->finalized != 0) {
+    if (ctx->frozen != 0) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
@@ -710,7 +710,7 @@ int OSSL_DECODER_CTX_set_construct(OSSL_DECODER_CTX *ctx,
         return 0;
     }
 
-    if (ctx->finalized != 0) {
+    if (ctx->frozen != 0) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
@@ -727,7 +727,7 @@ int OSSL_DECODER_CTX_set_construct_data(OSSL_DECODER_CTX *ctx,
         return 0;
     }
 
-    if (ctx->finalized != 0) {
+    if (ctx->frozen != 0) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
@@ -744,32 +744,13 @@ int OSSL_DECODER_CTX_set_cleanup(OSSL_DECODER_CTX *ctx,
         return 0;
     }
 
-    if (ctx->finalized != 0) {
+    if (ctx->frozen != 0) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
 
     ctx->cleanup = cleanup;
     return 1;
-}
-
-int OSSL_DECODER_CTX_set_finalized(OSSL_DECODER_CTX *ctx)
-{
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-
-    ctx->finalized = 1;
-    return 1;
-}
-
-int OSSL_DECODER_CTX_get_finalized(OSSL_DECODER_CTX *ctx)
-{
-    if (ctx == NULL)
-        return 0;
-
-    return ctx->finalized;
 }
 
 OSSL_DECODER_CONSTRUCT *
