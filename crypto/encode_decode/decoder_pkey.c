@@ -646,6 +646,7 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
         goto err;
     }
 
+    dest->frozen = src->frozen;
     return dest;
  err:
     decoder_clean_pkey_construct_arg(process_data_dest);
@@ -877,9 +878,9 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
             && OSSL_DECODER_CTX_set_selection(ctx, selection)
             && ossl_decoder_ctx_setup_for_pkey(ctx, keytype, libctx, propquery)
             && OSSL_DECODER_CTX_add_extra(ctx, libctx, propquery)
-            && OSSL_DECODER_CTX_set_finalized(ctx)
             && (propquery == NULL
                 || OSSL_DECODER_CTX_set_params(ctx, decoder_params))) {
+            ctx->frozen = 1;
             OSSL_TRACE_BEGIN(DECODER) {
                 BIO_printf(trc_out, "(ctx %p) Got %d decoders\n",
                         (void *)ctx, OSSL_DECODER_CTX_get_num_decoders(ctx));

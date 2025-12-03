@@ -70,12 +70,6 @@ OpenSSL 4.0
 
    *Daniel Kubec*
 
- * Added `OSSL_[EN|DE]CODER_CTX_[set|get]_finalized()` functions.
-   `OSSL_[EN|DE]CODER_CTX_set_*()` and `OSSL_[EN|DE]CODER_CTX_add_*()`
-   functions return 0 if the context is already finalised.
-
-   *Igor Ustinov*
-
  * Reject CRLs with a Certificate Issuer extension in a certificate revocation
    entry unless the Indirect flag is set to TRUE in the IDP extension of the CRL.
 

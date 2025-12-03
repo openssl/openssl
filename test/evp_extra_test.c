@@ -972,8 +972,16 @@ static EVP_PKEY *load_ml_key(const char *keytype, const char *input_type,
 
     if (!TEST_ptr(dctx))
         return NULL;
-    /* |pkey| will be NULL on error */
-    (void)OSSL_DECODER_from_data(dctx, pdata, &data_len);
+
+    /* Decode, but first check that the context is frozen as expected */
+    if (TEST_false(OSSL_DECODER_CTX_set_selection(dctx, EVP_PKEY_KEYPAIR))
+        && TEST_false(OSSL_DECODER_CTX_set_input_type(dctx, "DER"))
+        && TEST_false(OSSL_DECODER_CTX_set_input_structure(dctx, "PrivateKeyInfo"))
+        && TEST_false(OSSL_DECODER_CTX_add_extra(dctx, NULL, NULL))) {
+        /* |pkey| will be NULL on error */
+        (void)OSSL_DECODER_from_data(dctx, pdata, &data_len);
+    }
+
     OSSL_DECODER_CTX_free(dctx);
     return pkey;
 }
@@ -997,12 +1005,18 @@ store_ml_key(EVP_PKEY *pkey, const char *input_type, const char *fmts,
                                          "PrivateKeyInfo", testpropq);
     if (!TEST_ptr(ectx))
         return 0;
-    if (!TEST_true(OSSL_ENCODER_CTX_set_params(ectx, params))
+
+    /* Encode, but first check that the context is frozen as expected */
+    if (!TEST_false(OSSL_ENCODER_CTX_set_selection(ectx, EVP_PKEY_PUBLIC_KEY))
+        || !TEST_false(OSSL_ENCODER_CTX_set_output_type(ectx, "PEM"))
+        || !TEST_false(OSSL_ENCODER_CTX_set_output_structure(ectx, "PKCS8"))
+        || !TEST_false(OSSL_ENCODER_CTX_add_extra(ectx, NULL, NULL))
+        || !TEST_true(OSSL_ENCODER_CTX_set_params(ectx, params))
         || !TEST_true(OSSL_ENCODER_to_data(ectx, &buf, &len)))
         goto end;
 
     if (strcmp(input_type, "PEM") == 0) {
-        BIO *pembio = BIO_new_mem_buf(buf, len);
+        BIO *pembio = BIO_new_mem_buf(buf, (int) len);
         char *name = NULL, *header = NULL;
 
         if (!TEST_ptr(pembio))
@@ -1020,7 +1034,7 @@ store_ml_key(EVP_PKEY *pkey, const char *input_type, const char *fmts,
         }
     } else {
         der = buf;
-        derlen = len;
+        derlen = (long) len;
     }
     ret = expect != NULL ?
         TEST_mem_eq(der, (size_t) derlen, expect, expectlen) :
