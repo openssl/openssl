@@ -334,7 +334,7 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
     if (!valid) {
         ossl_cmp_warn(ctx,
                       "also exceptional 3GPP mode cert path validation failed");
-    } else {
+    } else if (OSSL_CMP_MSG_get_bodytype(msg) == OSSL_CMP_PKIBODY_IP) {
         /*
          * verify that the newly enrolled certificate (which assumed rid ==
          * OSSL_CMP_CERTREQID) can also be validated with the same trusted store
@@ -342,13 +342,11 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
         OSSL_CMP_CERTRESPONSE *crep =
             ossl_cmp_certrepmessage_get0_certresponse(msg->body->value.ip,
                                                       OSSL_CMP_CERTREQID);
-        X509 *newcrt = ossl_cmp_certresponse_get1_cert(ctx, crep);
+        X509 *newcrt = NULL;
 
-        /*
-         * maybe better use get_cert_status() from cmp_client.c, which catches
-         * errors
-         */
-        valid = OSSL_CMP_validate_cert_path(ctx, store, newcrt);
+        valid = crep != NULL
+            && (newcrt = ossl_cmp_certresponse_get1_cert(ctx, crep)) != NULL
+            && OSSL_CMP_validate_cert_path(ctx, store, newcrt);
         X509_free(newcrt);
     }
 
@@ -630,8 +628,9 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
                 return 0;
             }
             if (check_msg_find_cert(ctx, msg)) {
-                ossl_cmp_debug(ctx,
-                               "successfully validated signature-based CMP message protection using trust store");
+                ossl_cmp_log1(DEBUG, ctx,
+                              "successfully validated signature-based CMP message protection using trust store%s",
+                              ctx->permitTAInExtraCertsForIR ? " or 3GPP mode": "");
                 return 1;
             }
         } else { /* use pinned sender cert */
