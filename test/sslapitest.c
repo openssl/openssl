@@ -14190,8 +14190,8 @@ end:
 }
 
 static int test_ssl_conf_SetCertificateFlags(SSL_CONF_CTX *confctx,
-					     SSL_CTX *ssl_ctx,
-					     SSL *ssl)
+                                             SSL_CTX *ssl_ctx,
+                                             SSL *ssl)
 {
     int ret = 0;
     X509_VERIFY_PARAM *param;
@@ -14226,8 +14226,8 @@ end:
 }
 
 static int test_ssl_conf_SetHostFlags(SSL_CONF_CTX *confctx,
-				      SSL_CTX *ssl_ctx,
-				      SSL *ssl)
+                                      SSL_CTX *ssl_ctx,
+                                      SSL *ssl)
 {
     int ret = 0;
     X509_VERIFY_PARAM *param;
@@ -14262,8 +14262,8 @@ end:
 }
 
 static int test_ssl_conf_SetExpectedDNSName(SSL_CONF_CTX *confctx,
-					    SSL_CTX *ssl_ctx,
-					    SSL *ssl)
+                                            SSL_CTX *ssl_ctx,
+                                            SSL *ssl)
 {
     static const char *first_hostname = "host1.openssl.org";
     static const char *second_hostname = "host2.openssl.org";
@@ -14319,8 +14319,8 @@ end:
 }
 
 static int test_ssl_conf_SetExpectedIPAddress(SSL_CONF_CTX *confctx,
-					      SSL_CTX *ssl_ctx,
-					      SSL *ssl)
+                                              SSL_CTX *ssl_ctx,
+                                              SSL *ssl)
 {
     static const char *first_ip = "192.168.29.65";
     static const char *second_ip = "10.10.10.19";

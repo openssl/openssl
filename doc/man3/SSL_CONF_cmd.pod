@@ -748,12 +748,6 @@ B<CheckSelfSignedSign> enables checking the self-signature of the
 last certificate in a chain.  Equivalent to
 B<X509_V_FLAG_CHECK_SS_SIGNATURE>.
 
-B<SuiteB128Only> Equivalent to B<X509_V_FLAG_SUITEB_128_LOS_ONLY>.
-
-B<SuiteB192> Equivalent to B<X509_V_FLAG_SUITEB_192_LOS>.
-
-B<SuiteB128> Equivalent to B<X509_V_FLAG_SUITEB_128_LOS>.
-
 B<PartialChain> causes non-self-signed certificates in the trust
 store to be treated as trust anchors.  Equivalent to
 B<X509_V_FLAG_PARTIAL_CHAIN>.
