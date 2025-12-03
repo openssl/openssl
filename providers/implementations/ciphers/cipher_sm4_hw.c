@@ -91,7 +91,7 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
             ctx->stream.cbc = NULL;
             if (ctx->mode == EVP_CIPH_CBC_MODE)
                 ctx->stream.cbc = (cbc128_f)vpsm4_ex_cbc_encrypt;
-            if (ctx->mode == EVP_CIPH_ECB_MODE)
+            else if (ctx->mode == EVP_CIPH_ECB_MODE)
                 ctx->stream.ecb = (ecb128_f)vpsm4_ex_ecb_encrypt;
         } else
 #endif
@@ -102,7 +102,7 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
             ctx->stream.cbc = NULL;
             if (ctx->mode == EVP_CIPH_CBC_MODE)
                 ctx->stream.cbc = (cbc128_f)vpsm4_cbc_encrypt;
-            if (ctx->mode == EVP_CIPH_ECB_MODE)
+            else if (ctx->mode == EVP_CIPH_ECB_MODE)
                 ctx->stream.ecb = (ecb128_f)vpsm4_ecb_encrypt;
         } else
 #endif
