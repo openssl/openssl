@@ -254,7 +254,8 @@ static int test_CTX_reqExtensions_have_SAN(void)
     return result;
 }
 
-static int test_log_line;
+static int test_log_line_start;
+static int test_log_line_end;
 static int test_log_cb_res = 0;
 static int test_log_cb(const char *func, const char *file, int line,
                        OSSL_CMP_severity level, const char *msg)
@@ -266,7 +267,8 @@ static int test_log_cb(const char *func, const char *file, int line,
 #endif
         (TEST_str_eq(file, OPENSSL_FILE)
          || TEST_str_eq(file, "(no file)"))
-        && (TEST_int_eq(line, test_log_line) || TEST_int_eq(line, 0))
+         && (TEST_int_eq(line, test_log_line_start) || TEST_int_eq(line, 0)
+             || TEST_int_eq(line, test_log_line_end)) 
         && (TEST_int_eq(level, OSSL_CMP_LOG_INFO) || TEST_int_eq(level, -1))
         && TEST_str_eq(msg, "ok");
     return 1;
@@ -295,14 +297,16 @@ static int execute_cmp_ctx_log_cb_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
     if (!TEST_true(OSSL_CMP_CTX_set_log_cb(ctx, test_log_cb))) {
         res = 0;
     } else {
-        test_log_line = OPENSSL_LINE + 1;
+        test_log_line_start = OPENSSL_LINE + 1;
         ossl_cmp_log2(INFO, ctx, "%s%c", "o", 'k');
+        test_log_line_end = OPENSSL_LINE - 1;
         if (!TEST_int_eq(test_log_cb_res, 1))
             res = 0;
         OSSL_CMP_CTX_set_log_verbosity(ctx, OSSL_CMP_LOG_ERR);
         test_log_cb_res = -1; /* callback should not be called at all */
-        test_log_line = OPENSSL_LINE + 1;
+        test_log_line_start = OPENSSL_LINE + 1;
         ossl_cmp_log2(INFO, ctx, "%s%c", "o", 'k');
+        test_log_line_end = OPENSSL_LINE - 1;
         if (!TEST_int_eq(test_log_cb_res, -1))
             res = 0;
     }
