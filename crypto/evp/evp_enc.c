@@ -88,8 +88,6 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
     uint8_t is_pipeline,
     const OSSL_PARAM params[])
 {
-    int n;
-
     /*
      * enc == 1 means we are encrypting.
      * enc == 0 means we are decrypting.
@@ -108,35 +106,6 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         return 0;
     }
 
-    /* Code below to be removed when legacy support is dropped. */
-    if (is_pipeline)
-        goto nonlegacy;
-
-    /*
-     * If there are engines involved then we should use legacy handling for now.
-     */
-    if ((cipher != NULL && cipher->origin == EVP_ORIG_METH)
-        || (cipher == NULL && ctx->cipher != NULL
-            && ctx->cipher->origin == EVP_ORIG_METH)) {
-        if (ctx->cipher == ctx->fetched_cipher)
-            ctx->cipher = NULL;
-        EVP_CIPHER_free(ctx->fetched_cipher);
-        ctx->fetched_cipher = NULL;
-        goto legacy;
-    }
-    /*
-     * Ensure a context left lying around from last time is cleared
-     * (legacy code)
-     */
-    if (cipher != NULL && ctx->cipher != NULL) {
-        if (ctx->cipher->cleanup != NULL && !ctx->cipher->cleanup(ctx))
-            return 0;
-        OPENSSL_clear_free(ctx->cipher_data, ctx->cipher->ctx_size);
-        ctx->cipher_data = NULL;
-    }
-
-    /* Start of non-legacy code below */
-nonlegacy:
     /* Ensure a context left lying around from last time is cleared */
     if (cipher != NULL && ctx->cipher != NULL) {
         unsigned long flags = ctx->flags;
@@ -298,111 +267,6 @@ nonlegacy:
         iv == NULL ? 0
                    : EVP_CIPHER_CTX_get_iv_length(ctx),
         params);
-
-    /* Code below to be removed when legacy support is dropped. */
-legacy:
-
-    if (cipher != NULL) {
-        /*
-         * Ensure a context left lying around from last time is cleared (we
-         * previously attempted to avoid this if the same ENGINE and
-         * EVP_CIPHER could be used).
-         */
-        if (ctx->cipher) {
-            unsigned long flags = ctx->flags;
-            EVP_CIPHER_CTX_reset(ctx);
-            /* Restore encrypt and flags */
-            ctx->encrypt = enc;
-            ctx->flags = flags;
-        }
-
-        ctx->cipher = cipher;
-        if (ctx->cipher->ctx_size) {
-            ctx->cipher_data = OPENSSL_zalloc(ctx->cipher->ctx_size);
-            if (ctx->cipher_data == NULL) {
-                ctx->cipher = NULL;
-                return 0;
-            }
-        } else {
-            ctx->cipher_data = NULL;
-        }
-        ctx->key_len = cipher->key_len;
-        /* Preserve wrap enable flag, zero everything else */
-        ctx->flags &= EVP_CIPHER_CTX_FLAG_WRAP_ALLOW;
-        if (ctx->cipher->flags & EVP_CIPH_CTRL_INIT) {
-            if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL) <= 0) {
-                ctx->cipher = NULL;
-                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-                return 0;
-            }
-        }
-    }
-    if (ctx->cipher == NULL)
-        return 0;
-
-    /* we assume block size is a power of 2 in *cryptUpdate */
-    OPENSSL_assert(ctx->cipher->block_size == 1
-        || ctx->cipher->block_size == 8
-        || ctx->cipher->block_size == 16);
-
-    if (!(ctx->flags & EVP_CIPHER_CTX_FLAG_WRAP_ALLOW)
-        && EVP_CIPHER_CTX_get_mode(ctx) == EVP_CIPH_WRAP_MODE) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_WRAP_MODE_NOT_ALLOWED);
-        return 0;
-    }
-
-    if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ctx))
-            & EVP_CIPH_CUSTOM_IV)
-        == 0) {
-        switch (EVP_CIPHER_CTX_get_mode(ctx)) {
-
-        case EVP_CIPH_STREAM_CIPHER:
-        case EVP_CIPH_ECB_MODE:
-            break;
-
-        case EVP_CIPH_CFB_MODE:
-        case EVP_CIPH_OFB_MODE:
-
-            ctx->num = 0;
-            /* fall-through */
-
-        case EVP_CIPH_CBC_MODE:
-            n = EVP_CIPHER_CTX_get_iv_length(ctx);
-            if (n < 0 || n > (int)sizeof(ctx->iv)) {
-                ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_IV_LENGTH);
-                return 0;
-            }
-            if (iv != NULL)
-                memcpy(ctx->oiv, iv, n);
-            memcpy(ctx->iv, ctx->oiv, n);
-            break;
-
-        case EVP_CIPH_CTR_MODE:
-            ctx->num = 0;
-            /* Don't reuse IV for CTR mode */
-            if (iv != NULL) {
-                n = EVP_CIPHER_CTX_get_iv_length(ctx);
-                if (n <= 0 || n > (int)sizeof(ctx->iv)) {
-                    ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_IV_LENGTH);
-                    return 0;
-                }
-                memcpy(ctx->iv, iv, n);
-            }
-            break;
-
-        default:
-            return 0;
-        }
-    }
-
-    if (key != NULL || (ctx->cipher->flags & EVP_CIPH_ALWAYS_CALL_INIT)) {
-        if (!ctx->cipher->init(ctx, key, iv, enc))
-            return 0;
-    }
-    ctx->buf_len = 0;
-    ctx->final_used = 0;
-    ctx->block_mask = ctx->cipher->block_size - 1;
-    return 1;
 }
 
 /*
@@ -430,26 +294,6 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
     if (cipher == NULL && ctx->cipher == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
         return 0;
-    }
-
-    /*
-     * If there are engines involved then we throw an error
-     */
-    if ((cipher != NULL && cipher->origin == EVP_ORIG_METH)
-        || (cipher == NULL && ctx->cipher != NULL
-            && ctx->cipher->origin == EVP_ORIG_METH)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        return 0;
-    }
-    /*
-     * Ensure a context left lying around from last time is cleared
-     * (legacy code)
-     */
-    if (cipher != NULL && ctx->cipher != NULL) {
-        if (ctx->cipher->cleanup != NULL && !ctx->cipher->cleanup(ctx))
-            return 0;
-        OPENSSL_clear_free(ctx->cipher_data, ctx->cipher->ctx_size);
-        ctx->cipher_data = NULL;
     }
 
     /* Ensure a context left lying around from last time is cleared */
