@@ -1297,33 +1297,14 @@ sub check_env_vars {
     my @env_headers;
     my @env_macro;
 
-    # Add submodules to the except_dirs
-    my $git_ok = 0;
-    open my $gs_pipe, '-|', "git config get --all "
-                            . "--file \"$config{sourcedir}/.gitmodules\" "
-                            . "--regexp '.*.path\$'";
-    while (<$gs_pipe>) {
-        $git_ok = 1;
-        s/\R$//; # better chomp
-        print STDERR "DEBUG[check_env_vars]: adding \"$config{sourcedir}/$_\""
-                     . " to except_dirs\n"
-            if $debug;
-        push @except_dirs, "$config{sourcedir}/$_";
-    }
-    close $gs_pipe;
-    # git call has failed, trying to parse .gitmodules manually
-    if (!$git_ok) {
-        print STDERR "DEBUG[check_env_vars]: .gitmodules parsing fallback\n"
-            if $debug;
-        if (open my $gs_file, '<', "$config{sourcedir}/.gitmodules") {
-            while (<$gs_file>) {
-                s/\R$//; # better chomp
-                if ($_ =~ /\s*path\s*=\s*(.*)$/) {
-                    print STDERR "DEBUG[check_env_vars]: adding "
-                                 . "\"$config{sourcedir}/$1\" to except_dirs\n"
-                        if $debug;
-                    push @except_dirs, "$config{sourcedir}/$1";
-                }
+    if (open my $gs_file, '<', "$config{sourcedir}/.gitmodules") {
+        while (<$gs_file>) {
+            s/\R$//; # better chomp
+            if ($_ =~ /\s*path\s*=\s*(.*)$/) {
+                print STDERR "DEBUG[check_env_vars]: adding "
+                             . "\"$config{sourcedir}/$1\" to except_dirs\n"
+                    if $debug;
+                push @except_dirs, "$config{sourcedir}/$1";
             }
         }
     }
@@ -1338,7 +1319,7 @@ sub check_env_vars {
     @except_env_files = map { realpath($_) } @except_env_files;
 
     # look for source files
-    $git_ok = 0;
+    my $git_ok = 0;
     open my $glf_pipe, '-|', "git ls-files -- \"$config{sourcedir}\"";
     while (<$glf_pipe>) {
         $git_ok = 1;
