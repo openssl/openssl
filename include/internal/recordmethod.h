@@ -328,6 +328,11 @@ struct ossl_record_method_st {
     int (*get_epoch)(OSSL_RECORD_LAYER *rl, uint16_t *epoch);
 
     /*
+     * Set the current MTU length to be used for the record layer.
+     */
+    int (*set_curr_mtu)(OSSL_RECORD_LAYER *rl, size_t curr_mtu);
+
+    /*
      * Allocate read or write buffers. Does nothing if already allocated.
      * Assumes default buffer length and 1 pipeline.
      */

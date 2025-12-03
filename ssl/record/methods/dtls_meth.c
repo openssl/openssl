@@ -979,6 +979,12 @@ static int dtls_get_epoch(OSSL_RECORD_LAYER *rl, uint16_t *epoch)
     return 1;
 }
 
+static int dtls_set_curr_mtu(OSSL_RECORD_LAYER *rl, size_t mtu)
+{
+    rl->curr_mtu = mtu;
+    return 1;
+}
+
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     dtls_new_record_layer,
     dtls_free,
@@ -1006,6 +1012,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     dtls_get_sequence_number,
     dtls_set_sequence_number,
     dtls_get_epoch,
+    dtls_set_curr_mtu,
     tls_alloc_buffers,
     tls_free_buffers
 };

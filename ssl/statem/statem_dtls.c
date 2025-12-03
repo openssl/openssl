@@ -231,6 +231,13 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
         if (len > ssl_get_max_send_fragment(s))
             len = ssl_get_max_send_fragment(s);
 
+        /*
+         * For DTLS1.3 and padding lets update the max fragment size
+         * accordingly
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s))
+            s->rlayer.wrlmethod->set_curr_mtu(s->rlayer.wrl, curr_mtu);
+
         msgstart = (unsigned char *)&s->init_buf->data[s->init_off];
 
         if (recordtype == SSL3_RT_HANDSHAKE) {
@@ -293,10 +300,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
              * then the best thing to do is probably carry on regardless.
              */
             assert(s->s3.tmp.new_compression != NULL
-                   || BIO_wpending(s->wbio) <= (int)s->d1->mtu
-                   || s->rlayer.record_padding_cb != NULL
-                   || s->rlayer.hs_padding != 0
-                   || s->rlayer.block_padding != 0);
+                   || BIO_wpending(s->wbio) <= (int)s->d1->mtu);
 
             if (recordtype == SSL3_RT_HANDSHAKE && !s->d1->retransmitting
                     && s->init_off == 0) {
