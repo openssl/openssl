@@ -148,7 +148,7 @@ X509_VERIFY_PARAM_set1_host() sets in I<param> the expected
 DNS hostname to I<name>, clearing any previously specified hostname.
 If I<name> is NULL or the empty string, the list of hostnames is cleared
 and hostname checks are not performed on the peer certificate.
-If I<name> is NUL-terminated, I<namelen> may be zero,
+If I<namelen> is zero, I<name> must be NUL-terminated,
 otherwise I<namelen> must be set to the length of I<name>.
 
 When a hostname is specified,
@@ -197,8 +197,8 @@ X509_VERIFY_PARAM_get0_email() returns the expected RFC822 email address.
 
 X509_VERIFY_PARAM_set1_email() sets the expected RFC822 email address to
 I<email>.
-If I<email> is NULL or the empty string, email checking is disabled.
-If I<email> is NUL-terminated, I<emaillen> may be zero, otherwise
+If I<email> is NULL, email checking is disabled. Otherwise,
+if I<emaillen> is zero, I<email> must be NUL-terminated, otherwise
 I<emaillen> must be set to the length of I<email>.  When an email address
 is specified, certificate verification automatically invokes
 L<X509_check_email(3)>.
@@ -207,15 +207,14 @@ X509_VERIFY_PARAM_get1_ip_asc() returns the expected IP address as a string.
 The caller is responsible for freeing it.
 
 X509_VERIFY_PARAM_set1_ip() sets the expected IP address to I<ip>.
-If I<ip> is NULL or the empty string, IP address checking is disabled. Otherwise,
+If I<ip> is NULL, IP address checking is disabled. Otherwise,
 the I<ip> argument must be in binary format, in network byte-order and
 I<iplen> must be set to 4 for IPv4 and 16 for IPv6.  When an IP
 address is specified, certificate verification automatically invokes
 L<X509_check_ip(3)>.
 
-X509_VERIFY_PARAM_set1_ip_asc() sets the expected IP address to I<ipasc>.
-If I<ipasc> is NULL or the empty string, IP address checking is disabled.
-Otherwise, the I<ipasc> argument must be a NUL-terminated ASCII string:
+X509_VERIFY_PARAM_set1_ip_asc() sets the expected IP address to
+I<ipasc>.  The I<ipasc> argument must be a NUL-terminated ASCII string:
 dotted decimal quad for IPv4 and colon-separated hexadecimal for
 IPv6.  The condensed "::" notation is supported for IPv6 addresses.
 
