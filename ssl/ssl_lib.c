@@ -8111,10 +8111,11 @@ int SSL_listen_ex(SSL *listener, SSL *new_conn)
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(listener) && IS_QUIC(new_conn))
         return ossl_quic_peeloff_conn(listener, new_conn);
-    return 0;
-#else
-    return 0;
+    else
 #endif
+    ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "SSL_listen_ex only operates on QUIC SSL objects");
+    return 0;
 }
 
 int SSL_listen(SSL *ssl)
