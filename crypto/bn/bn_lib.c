@@ -475,7 +475,7 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
         s += len - 1;
     }
 
-    /* Take note of the signedness of the input bytes*/
+    /* Take note of the signedness of the input bytes. */
     if (signedness == SIGNED) {
         neg = !!(*s2 & 0x80);
         xor = neg ? 0xff : 0x00;
@@ -529,6 +529,11 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
      */
     bn_correct_top(ret);
     return ret;
+}
+
+int BN_bin2be_validate(const unsigned char *s, int len)
+{
+    return !((len == 0) || (*s & 0x80));
 }
 
 BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)

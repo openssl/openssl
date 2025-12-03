@@ -157,3 +157,19 @@ X509 *X509_from_strings(const char **pem)
     BIO_free(b);
     return x;
 }
+
+int err_chk(int lib, int reason)
+{
+#if defined(OPENSSL_NO_ERR) || defined(OPENSSL_SMALL_FOOTPRINT) || \
+    defined(OPENSSL_NO_DEPRECATED_3_0) || defined(OPENSSL_NO_HTTP)
+    return 1;
+#endif
+    unsigned long e;
+
+    while ((e = ERR_get_error_all(NULL, NULL, NULL, NULL, NULL))) {
+        if (ERR_GET_LIB(e) == lib && ERR_GET_REASON(e) == reason)
+            return 1;
+    }
+
+    return 0;
+}

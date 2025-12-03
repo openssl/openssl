@@ -116,6 +116,15 @@ static int bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 {
     BIGNUM *bn;
 
+    /*
+     * When the template requires a positive value, reject encodings that imply
+     * a negative number.
+     */
+    if (!BN_bin2be_validate(cont, len)) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_VALUE);
+        return 0;
+    }
+
     if (*pval == NULL && !bn_new(pval, it))
         return 0;
     bn = (BIGNUM *)*pval;

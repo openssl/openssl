@@ -638,27 +638,6 @@ static X509_CRL *crl_clear_err_parse(const char **pem)
     return CRL_from_strings(pem);
 }
 
-/*
- * Checks whether a specific error reason is present in the error stack.
- * This function iterates over the current thread's error queue using
- * ERR_get_error_all(), extracting all pending errors. If any of them match
- * the specified reason code (as returned by ERR_GET_REASON()), the function
- * returns 1 to indicate that the corresponding error was found.
- */
-static int err_chk(int lib, int reason)
-{
-#if defined(OPENSSL_NO_ERR) || defined(OPENSSL_SMALL_FOOTPRINT) || defined(OPENSSL_NO_DEPRECATED_3_0) || defined(OPENSSL_NO_HTTP)
-    return 1;
-#endif
-    unsigned long e;
-
-    while ((e = ERR_get_error_all(NULL, NULL, NULL, NULL, NULL)))
-        if (ERR_GET_LIB(e) == lib && ERR_GET_REASON(e) == reason)
-            return 1;
-
-    return 0;
-}
-
 static int test_crl_date_invalid(void)
 {
     X509_CRL *tmm = NULL, *tss = NULL, *utc = NULL;

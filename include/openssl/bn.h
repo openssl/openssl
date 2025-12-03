@@ -239,6 +239,7 @@ BIGNUM *BN_secure_new(void);
 void BN_clear_free(BIGNUM *a);
 BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);
 void BN_swap(BIGNUM *a, BIGNUM *b);
+int BN_bin2be_validate(const unsigned char *s, int len);
 BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret);
 BIGNUM *BN_signed_bin2bn(const unsigned char *s, int len, BIGNUM *ret);
 int BN_bn2bin(const BIGNUM *a, unsigned char *to);

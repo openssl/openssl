@@ -1082,6 +1082,11 @@ cert_loop:
             if (EVP_PKEY_is_a(pkey, "RSA") || EVP_PKEY_is_a(pkey, "RSA-PSS")) {
                 BIGNUM *n = NULL;
 
+                if (BN_is_negative(n) || BN_is_zero(n)) {
+                    ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
+                    goto err;
+                }
+
                 /* Every RSA key has an 'n' */
                 EVP_PKEY_get_bn_param(pkey, "n", &n);
                 BN_print(out, n);
