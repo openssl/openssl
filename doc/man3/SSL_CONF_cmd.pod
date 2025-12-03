@@ -381,8 +381,7 @@ if certificate operations are permitted.
 =item B<AddCAFile>, B<AddCAPath>
 
 These options indicate a file or directory containing trusted certificate
-authorities for validation. These options are only supported
-if certificate operations are permitted.
+authorities for validation.
 
 =item B<RequestCAFile>
 
