@@ -510,8 +510,8 @@ sub clientstart
     my $ctr = 0;
     local $SIG{PIPE} = "IGNORE";
     $self->{saw_session_ticket} = undef;
-    $self->{session_ticket_seq} = undef;
-    $self->{saw_session_ticket_ack} = undef;
+    $self->{session_ticket_seq} = [];
+    $self->{saw_session_ticket_ack} = 0;
     $self->{server_epoch} = 0;
     $self->{server_sequence_number} = 0;
 
@@ -698,8 +698,13 @@ sub process_packet
             # that contained the NewSessionTicket message
             if ($self->{isdtls} && $self->is_tls13()) {
                 foreach my $record (@{$message->{records}}) {
-                    if (!$self->{session_ticket_seq} || $record->seq > $self->{session_ticket_seq}->seqnum()) {
-                        $self->{session_ticket_seq} = TLSProxy::RecordNumber->new($record->epoch, $record->seq);
+                    if (@{$self->{session_ticket_seq}} == 0) {
+                        push @{$self->{session_ticket_seq}}, TLSProxy::RecordNumber->new($record->epoch, $record->seq);
+                    } elsif (scalar(@{$self->{session_ticket_seq}}) != 2) {
+                        my $match = $self->find_session_ticket_ack($record->epoch, $record->seq);
+                        if ($match == -1) {
+                            push @{$self->{session_ticket_seq}}, TLSProxy::RecordNumber->new($record->epoch, $record->seq);
+                        }
                     }
                 }
             }
@@ -737,21 +742,40 @@ sub seen_session_ticket_ack
     my $self = shift;
     my $record = shift;
 
-    if ($self->{saw_session_ticket} && !$self->{saw_session_ticket_ack}) {
+    if ($self->{saw_session_ticket} && $self->{saw_session_ticket_ack} != 2) {
         if ($record->content_type() == TLSProxy::Record::RT_ACK) {
             my @record_numbers = ();
 
             $record->get_actual_acked_record_numbers(\@record_numbers);
             foreach(@record_numbers) {
                 my $record_number = $_;
+                my $match = $self->find_session_ticket_ack($record_number->epoch(), $record_number->seqnum());
 
-                if ($self->{session_ticket_seq} && $record_number->epoch() == $self->{session_ticket_seq}->epoch() &&
-                    $record_number->seqnum() == $self->{session_ticket_seq}->seqnum()) {
-                    $self->{saw_session_ticket_ack} = 1;
+                if ($match != -1) {
+                    splice(@{$self->{session_ticket_seq}}, $match, 1);
+                    $self->{saw_session_ticket_ack} += 1;
                 }
             }
         }
     }
+}
+
+sub find_session_ticket_ack
+{
+    my $self = shift;
+    my $record_number_epoch = shift;
+    my $record_number_seqnum = shift;
+    my $match = -1;
+
+    for (my $i = 0; $i < scalar(@{$self->{session_ticket_seq}}); $i++) {
+        if ($record_number_epoch == $self->{session_ticket_seq}->[$i]->epoch() &&
+            $record_number_seqnum == $self->{session_ticket_seq}->[$i]->seqnum()) {
+            $match = $i;
+            last;
+        }
+    }
+
+    return $match;
 }
 
 sub handshake_complete
@@ -760,7 +784,8 @@ sub handshake_complete
     my $res = 0;
 
     if ($self->{isdtls} && $self->is_tls13() && defined($self->{sessionfile})) {
-        if ($self->{saw_session_ticket_ack}) {
+        # We need to wait for the second ack message for the handshake to be complete
+        if ($self->{saw_session_ticket_ack} == 2) {
             $res = 1;
         }
     } else {
