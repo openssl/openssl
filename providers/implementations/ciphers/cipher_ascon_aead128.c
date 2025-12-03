@@ -152,9 +152,8 @@ static int ascon_aead128_internal_init(void *vctx, direction_t direction,
         uint8_t saved_tag[FIXED_TAG_LENGTH];
         int tag_was_set = ctx->is_tag_set;
 
-        if (tag_was_set && direction == DECRYPTION) {
+        if (tag_was_set && direction == DECRYPTION)
             memcpy(saved_tag, ctx->tag, FIXED_TAG_LENGTH);
-        }
 
         ascon_aead128_cleanctx(ctx);
         ctx->direction = direction;
@@ -222,7 +221,7 @@ static int ascon_aead128_dinit(void *vctx, const unsigned char *key,
 }
 
 static int ascon_aead128_update(void *vctx, unsigned char *out, size_t *outl,
-                                 size_t outsize, const unsigned char *in, size_t inl)
+                                size_t outsize, const unsigned char *in, size_t inl)
 {
     struct ascon_aead128_ctx_st *ctx = vctx;
 
@@ -366,7 +365,7 @@ static int ascon_aead128_final(void *vctx, unsigned char *out, size_t *outl, siz
 
 /* Parameters that libcrypto can get from this implementation */
 static const OSSL_PARAM *ascon_aead128_gettable_params(ossl_unused void *cctx,
-                                                        ossl_unused void *provctx)
+                                                       ossl_unused void *provctx)
 {
     static const OSSL_PARAM table[] = {
         {"blocksize", OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0},
@@ -399,7 +398,7 @@ static int ascon_aead128_get_params(OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM *ascon_aead128_gettable_ctx_params(ossl_unused void *cctx,
-                                                             ossl_unused void *provctx)
+                                                           ossl_unused void *provctx)
 {
     static const OSSL_PARAM table[] = {
         {OSSL_CIPHER_PARAM_KEYLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0},
@@ -484,7 +483,7 @@ static int ascon_aead128_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
 /* Parameters that libcrypto can send to this implementation */
 static const OSSL_PARAM *ascon_aead128_settable_ctx_params(ossl_unused void *cctx,
-                                                            ossl_unused void *provctx)
+                                                           ossl_unused void *provctx)
 {
     static const OSSL_PARAM table[] = {
         {OSSL_CIPHER_PARAM_AEAD_TAG, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},

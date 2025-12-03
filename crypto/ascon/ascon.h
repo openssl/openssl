@@ -41,7 +41,7 @@ typedef struct {
 /* Original crypto function declarations - visible for external use and crypto implementation */
 # ifndef OPENSSL_BUILDING_OPENSSL
 void ascon_aead128_init(ascon_aead128_ctx *ctx, const unsigned char *k,
-                       const unsigned char *n);
+                        const unsigned char *n);
 void ascon_aead128_encrypt_update(ascon_aead128_ctx *ctx, unsigned char *ct,
                                   const unsigned char *pt, size_t len);
 void ascon_aead128_final(ascon_aead128_ctx *ctx, unsigned char *tag);
@@ -54,14 +54,14 @@ void ascon_aead128_decrypt_update(ascon_aead128_ctx *ctx, unsigned char *pt,
 
 void ascon_hash256_init(ascon_hash256_ctx *ctx);
 void ascon_hash256_update(ascon_hash256_ctx *ctx, const unsigned char *m,
-                         size_t len);
+                          size_t len);
 void ascon_hash256_final(ascon_hash256_ctx *ctx, unsigned char *digest);
 # else
 /* Forward declarations for crypto implementation - not visible to providers to avoid conflicts */
 /* These are only needed internally, providers use ossl_ prefixed functions */
 #  ifndef OSSL_INCLUDE_PROVIDER
 void ascon_aead128_init(ascon_aead128_ctx *ctx, const unsigned char *k,
-                       const unsigned char *n);
+                        const unsigned char *n);
 void ascon_aead128_encrypt_update(ascon_aead128_ctx *ctx, unsigned char *ct,
                                   const unsigned char *pt, size_t len);
 void ascon_aead128_final(ascon_aead128_ctx *ctx, unsigned char *tag);
@@ -74,7 +74,7 @@ void ascon_aead128_decrypt_update(ascon_aead128_ctx *ctx, unsigned char *pt,
 
 void ascon_hash256_init(ascon_hash256_ctx *ctx);
 void ascon_hash256_update(ascon_hash256_ctx *ctx, const unsigned char *m,
-                         size_t len);
+                          size_t len);
 void ascon_hash256_final(ascon_hash256_ctx *ctx, unsigned char *digest);
 #  endif
 # endif
