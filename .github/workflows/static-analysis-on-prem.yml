@@ -7,10 +7,10 @@
 
 name: Static Analysis On Prem
 
-on:
-  schedule:
-    - cron:  '25 02 * * *'
-  workflow_dispatch:
+on: [pull_request]
+  #schedule:
+  #  - cron:  '25 02 * * *'
+  #workflow_dispatch:
 
 permissions:
   contents: read
