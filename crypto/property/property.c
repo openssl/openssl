@@ -619,11 +619,11 @@ int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
     return 1;
 }
 
-int ossl_method_store_freeze(OSSL_METHOD_STORE *store, const char *prop_query)
+int ossl_method_store_freeze(OSSL_METHOD_STORE *store)
 {
     if (store == NULL || store->frozen == 1)
         return 0;
-    /* TODO: FREEZE: Create frozen caches & do something with prop_query */
+    /* TODO: FREEZE: Create frozen caches */
     store->frozen = 1;
     return 1;
 }
