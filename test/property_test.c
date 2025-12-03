@@ -433,7 +433,7 @@ static int test_freeze_flag(void)
         || !TEST_true(ossl_method_store_fetch(store, nid, prop, &fetched_prov, &fetched_meth))
         || !TEST_ptr_eq(&prov, fetched_prov)
         || !TEST_str_eq((char *)fetched_meth, impl)
-        || !TEST_true(ossl_method_store_freeze(store, NULL))
+        || !TEST_true(ossl_method_store_freeze(store))
         || !TEST_false(ossl_method_store_remove(store, nid, impl))
         || !TEST_true(ossl_method_store_fetch(store, nid, prop, &fetched_prov, &fetched_meth))
         || !TEST_ptr_eq(&prov, fetched_prov)
@@ -443,7 +443,7 @@ static int test_freeze_flag(void)
         || !TEST_ptr_eq(&prov, fetched_prov)
         || !TEST_str_eq((char *)fetched_meth, impl)
         || !TEST_false(ossl_method_store_add(store, &prov, nid, prop2, impl2, &up_ref, &down_ref))
-        || !TEST_false(ossl_method_store_freeze(store, NULL)))
+        || !TEST_false(ossl_method_store_freeze(store)))
         goto err;
 
     ret = 1;
