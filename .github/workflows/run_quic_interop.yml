@@ -101,7 +101,7 @@ jobs:
                               }}' ./implementations.json > ./implementations.tmp
           mv ./implementations.tmp implementations.json
       - name: Set up docker
-        uses: docker/setup-docker-action@efe9e3891a4f7307e689f2100b33a155b900a608 # v4.5.0
+        uses: docker/setup-docker-action@e61617a16c407a86262fb923c35a616ddbe070b3 # v4.6.0
         with:
           version: "28.1.1"
       - name: Set up docker compose
@@ -159,7 +159,7 @@ jobs:
                               }}' ./implementations.json > ./implementations.tmp
           mv ./implementations.tmp implementations.json
       - name: Set up docker
-        uses: docker/setup-docker-action@efe9e3891a4f7307e689f2100b33a155b900a608 # v4.5.0
+        uses: docker/setup-docker-action@e61617a16c407a86262fb923c35a616ddbe070b3 # v4.6.0
         with:
           version: "28.1.1"
       - name: Set up docker compose
