@@ -312,57 +312,6 @@ void ascon_aead128_encrypt_final(ascon_aead128_ctx *ctx, unsigned char *tag)
     PUTU64(tag + 8, s4);
 }
 
-void ascon_hash256_init(ascon_hash256_ctx *ctx)
-{
-    /* precomputed state lifted from NIST SP 800-232 Sec. A.3 p39 */
-    ctx->state[0] = 0X9B1E5494E934D681ULL;
-    ctx->state[1] = 0X4BC3A01E333751D2ULL;
-    ctx->state[2] = 0XAE65396C6B34B81AULL;
-    ctx->state[3] = 0X3C7FD4A4D56A4DB3ULL;
-    ctx->state[4] = 0X1A5C464906C5976DULL;
-    ctx->offset = 0;
-}
-
-void ascon_hash256_update(ascon_hash256_ctx *ctx, const unsigned char *m,
-                          size_t len)
-{
-    while (len--) {
-        if (ctx->offset >= 8) {
-            /* sponge: compression function */
-            ASCONP12(ctx->state[0], ctx->state[1], ctx->state[2], ctx->state[3],
-                     ctx->state[4]);
-            ctx->offset = 0;
-        }
-        /* sponge: absorb a message byte */
-        ctx->state[0] ^= (uint64_t)(*m++) << 8 * ctx->offset++;
-    }
-}
-
-void ascon_hash256_final(ascon_hash256_ctx *ctx, unsigned char *digest)
-{
-    uint64_t s0, s1, s2, s3, s4;
-    unsigned char pad = 0x01;
-
-    /* message termination */
-    ascon_hash256_update(ctx, &pad, 1);
-
-    s0 = ctx->state[0];
-    s1 = ctx->state[1];
-    s2 = ctx->state[2];
-    s3 = ctx->state[3];
-    s4 = ctx->state[4];
-
-    /* sponge: squeeze out four words for the hash */
-    ASCONP12(s0, s1, s2, s3, s4);
-    PUTU64(digest, s0);
-    ASCONP12(s0, s1, s2, s3, s4);
-    PUTU64(digest + 8, s0);
-    ASCONP12(s0, s1, s2, s3, s4);
-    PUTU64(digest + 16, s0);
-    ASCONP12(s0, s1, s2, s3, s4);
-    PUTU64(digest + 24, s0);
-}
-
 #ifdef OPENSSL_BUILDING_OPENSSL
 /* Provider compatibility wrapper functions */
 void ossl_ascon_aead128_init(ascon_aead_ctx_t *ctx, const unsigned char *k,

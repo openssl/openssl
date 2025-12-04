@@ -8,6 +8,7 @@ $SHA2_GOAL=../../libdefault.a ../../libfips.a
 $SHA3_GOAL=../../libdefault.a ../../libfips.a
 $BLAKE2_GOAL=../../libdefault.a
 $SM3_GOAL=../../libdefault.a
+$ASCON_HASH_GOAL=../../libdefault.a
 $MD5_GOAL=../../libdefault.a
 $NULL_GOAL=../../libdefault.a
 
@@ -35,6 +36,10 @@ ENDIF
 
 IF[{- !$disabled{sm3} -}]
   SOURCE[$SM3_GOAL]=sm3_prov.c
+ENDIF
+
+IF[{- !$disabled{ascon} -}]
+  SOURCE[$ASCON_HASH_GOAL]=ascon_hash_prov.c
 ENDIF
 
 IF[{- !$disabled{md5} -}]
