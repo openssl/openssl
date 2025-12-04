@@ -100,6 +100,12 @@ size_t ossl_ascon_aead128_decrypt_final(ascon_aead_ctx_t *ctx,
                                         const unsigned char *tag,
                                         size_t tag_len);
 void ossl_ascon_aead_cleanup(ascon_aead_ctx_t *ctx);
+
+void ossl_ascon_hash256_init(ascon_hash256_ctx *ctx);
+void ossl_ascon_hash256_update(ascon_hash256_ctx *ctx, const unsigned char *m,
+                                size_t len);
+void ossl_ascon_hash256_final(ascon_hash256_ctx *ctx, unsigned char *digest);
+void ossl_ascon_hash256_cleanup(ascon_hash256_ctx *ctx);
 #  endif
 
 #endif /* ASCON_H */
