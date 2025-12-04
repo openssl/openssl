@@ -37,15 +37,26 @@ int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 
 void SELF_TEST_disable_conditional_error_state(void);
 
-#define CIPHER_MODE_ENCRYPT 1
-#define CIPHER_MODE_DECRYPT 2
-#define CIPHER_MODE_ALL (CIPHER_MODE_ENCRYPT | CIPHER_MODE_DECRYPT)
+/* KAT tests categories */
+enum st_test_category {
+    SELF_TEST_INTEGRITY = 0, /* currently unused */
+    SELF_TEST_KAT_CIPHER,
+    SELF_TEST_KAT_ASYM_CIPHER,
+    SELF_TEST_KAT_ASYM_KEYGEN,
+    SELF_TEST_KAT_KEM,
+    SELF_TEST_KAT_DIGEST,
+    SELF_TEST_KAT_SIGNATURE,
+    SELF_TEST_KAT_KDF,
+    SELF_TEST_KAT_KAS,
+    SELF_TEST_KAT_MAC, /* currently unused */
+    SELF_TEST_DRBG
+};
 
-/* FIPS 140-3 only allows DSA verification for legacy purposes */
-#define SIGNATURE_MODE_VERIFY_ONLY 1
-#define SIGNATURE_MODE_SIGN_ONLY 2
-#define SIGNATURE_MODE_DIGESTED 4
-#define SIGNATURE_MODE_SIG_DIGESTED 8
+enum st_test_state {
+    SELF_TEST_STATE_INIT = 0,
+    SELF_TEST_STATE_IN_PROGRESS,
+    SELF_TEST_STATE_PASSED,
+};
 
 #define SELF_TEST_ONLOAD 0
 #define SELF_TEST_DEFERRED 1
@@ -58,140 +69,97 @@ typedef struct st_kat_param_st {
     size_t data_len; /* the length of the data */
 } ST_KAT_PARAM;
 
-typedef struct st_kat_st {
-    const char *desc;
-    const char *algorithm;
-    int deferred;
-    const unsigned char *pt;
-    size_t pt_len;
-    const unsigned char *expected;
-    size_t expected_len;
-} ST_KAT;
+typedef struct st_const_buffer_st {
+    const unsigned char *buf;
+    size_t len;
+} ST_BUFFER;
 
-typedef ST_KAT ST_KAT_DIGEST;
+#define CIPHER_MODE_ENCRYPT 1
+#define CIPHER_MODE_DECRYPT 2
+#define CIPHER_MODE_ALL (CIPHER_MODE_ENCRYPT | CIPHER_MODE_DECRYPT)
+
 typedef struct st_kat_cipher_st {
-    ST_KAT base;
     int mode;
-    const unsigned char *key;
-    size_t key_len;
-    const unsigned char *iv;
-    size_t iv_len;
-    const unsigned char *aad;
-    size_t aad_len;
-    const unsigned char *tag;
-    size_t tag_len;
+    ST_BUFFER key;
+    ST_BUFFER iv;
+    ST_BUFFER aad;
+    ST_BUFFER tag;
 } ST_KAT_CIPHER;
 
-typedef struct st_kat_kdf_st {
-    const char *desc;
-    const char *algorithm;
-    int deferred;
-    const ST_KAT_PARAM *params;
-    const unsigned char *expected;
-    size_t expected_len;
-} ST_KAT_KDF;
-
-typedef struct st_kat_drbg_st {
-    const char *desc;
-    const char *algorithm;
-    int deferred;
-    const char *param_name;
-    char *param_value;
-    const unsigned char *entropyin;
-    size_t entropyinlen;
-    const unsigned char *nonce;
-    size_t noncelen;
-    const unsigned char *persstr;
-    size_t persstrlen;
-    const unsigned char *entropyinpr1;
-    size_t entropyinpr1len;
-    const unsigned char *entropyinpr2;
-    size_t entropyinpr2len;
-    const unsigned char *entropyaddin1;
-    size_t entropyaddin1len;
-    const unsigned char *entropyaddin2;
-    size_t entropyaddin2len;
-    const unsigned char *expected;
-    size_t expectedlen;
-} ST_KAT_DRBG;
-
-typedef struct st_kat_kas_st {
-    const char *desc;
-    const char *algorithm;
-    int deferred;
-
-    const ST_KAT_PARAM *key_group;
-    const ST_KAT_PARAM *key_host_data;
-    const ST_KAT_PARAM *key_peer_data;
-
-    const unsigned char *expected;
-    size_t expected_len;
-} ST_KAT_KAS;
-
-typedef struct st_kat_sign_st {
-    const char *desc;
-    const char *keytype;
-    const char *sigalgorithm;
-    int deferred;
-    int mode;
-    const ST_KAT_PARAM *key;
-    const unsigned char *msg;
-    size_t msg_len;
-    const unsigned char *entropy;
-    size_t entropy_len;
-    const unsigned char *nonce;
-    size_t nonce_len;
-    const unsigned char *persstr;
-    size_t persstr_len;
-    const unsigned char *sig_expected; /* Set to NULL if this value changes */
-    size_t sig_expected_len;
-    const ST_KAT_PARAM *init;
-    const ST_KAT_PARAM *verify;
-} ST_KAT_SIGN;
-
 typedef struct st_kat_asym_cipher_st {
-    const char *desc;
-    const char *algorithm;
-    int deferred;
     int encrypt;
     const ST_KAT_PARAM *key;
     const ST_KAT_PARAM *postinit;
-    const unsigned char *in;
-    size_t in_len;
-    const unsigned char *expected;
-    size_t expected_len;
 } ST_KAT_ASYM_CIPHER;
 
 typedef struct st_kat_keygen_st {
-    const char *desc;
-    const char *algorithm;
-    int deferred;
     const ST_KAT_PARAM *keygen_params;
     const ST_KAT_PARAM *expected_params;
 } ST_KAT_ASYM_KEYGEN;
 
 typedef struct st_kat_kem_st {
-    const char *desc;
-    const char *algorithm;
-    int deferred;
     const ST_KAT_PARAM *key;
-    const unsigned char *cipher_text;
-    size_t cipher_text_len;
-    const unsigned char *entropy;
-    size_t entropy_len;
-    const unsigned char *secret;
-    size_t secret_len;
-    const unsigned char *reject_secret;
+    ST_BUFFER cipher_text;
+    ST_BUFFER entropy;
+    ST_BUFFER secret;
+    ST_BUFFER reject_secret;
 } ST_KAT_KEM;
 
-#ifndef OPENSSL_NO_LMS
-typedef struct st_kat_lms_s {
+/* FIPS 140-3 only allows DSA verification for legacy purposes */
+#define SIGNATURE_MODE_VERIFY_ONLY 1
+#define SIGNATURE_MODE_SIGN_ONLY 2
+#define SIGNATURE_MODE_DIGESTED 4
+#define SIGNATURE_MODE_SIG_DIGESTED 8
+
+typedef struct st_kat_sign_st {
+    const char *keytype;
+    int mode;
+    const ST_KAT_PARAM *key;
+    ST_BUFFER entropy;
+    ST_BUFFER nonce;
+    ST_BUFFER persstr;
+    const ST_KAT_PARAM *init;
+    const ST_KAT_PARAM *verify;
+} ST_KAT_SIGN;
+
+typedef struct st_kat_kdf_st {
+    const ST_KAT_PARAM *params;
+} ST_KAT_KDF;
+
+typedef struct st_kat_kas_st {
+    const ST_KAT_PARAM *key_group;
+    const ST_KAT_PARAM *key_host_data;
+    const ST_KAT_PARAM *key_peer_data;
+} ST_KAT_KAS;
+
+typedef struct st_kat_drbg_st {
+    const char *param_name;
+    const char *param_value;
+    ST_BUFFER entropyin;
+    ST_BUFFER nonce;
+    ST_BUFFER persstr;
+    ST_BUFFER entropyinpr1;
+    ST_BUFFER entropyinpr2;
+    ST_BUFFER entropyaddin1;
+    ST_BUFFER entropyaddin2;
+} ST_KAT_DRBG;
+
+typedef struct self_test_st {
+    const char *algorithm;
+    const char *desc;
+    enum st_test_category category;
     int deferred;
-    const unsigned char *pub;
-    size_t publen;
-    const unsigned char *msg;
-    size_t msglen;
-    const unsigned char *sig;
-    size_t siglen;
-} ST_KAT_LMS;
-#endif
+    enum st_test_state state;
+    ST_BUFFER pt;
+    ST_BUFFER expected; /* Set to NULL if this value changes */
+    union {
+        ST_KAT_CIPHER cipher;
+        ST_KAT_ASYM_CIPHER ac;
+        ST_KAT_ASYM_KEYGEN akgen;
+        ST_KAT_KEM kem;
+        ST_KAT_SIGN sig;
+        ST_KAT_KDF kdf;
+        ST_KAT_KAS kas;
+        ST_KAT_DRBG drbg;
+    } u;
+} ST_DEFINITION;
