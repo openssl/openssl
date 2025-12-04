@@ -4853,6 +4853,10 @@
 #define NID_magma_ctr_acpkm_omac                1175
 #define OBJ_magma_ctr_acpkm_omac                OBJ_id_tc26_cipher_gostr3412_2015_magma,2L
 
+#define SN_magma_mgm            "magma-mgm"
+#define NID_magma_mgm           1501
+#define OBJ_magma_mgm           OBJ_id_tc26_cipher_gostr3412_2015_magma,3L
+
 #define SN_id_tc26_cipher_gostr3412_2015_kuznyechik             "id-tc26-cipher-gostr3412-2015-kuznyechik"
 #define NID_id_tc26_cipher_gostr3412_2015_kuznyechik            1176
 #define OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik            OBJ_id_tc26_cipher,2L
@@ -4864,6 +4868,10 @@
 #define SN_kuznyechik_ctr_acpkm_omac            "kuznyechik-ctr-acpkm-omac"
 #define NID_kuznyechik_ctr_acpkm_omac           1178
 #define OBJ_kuznyechik_ctr_acpkm_omac           OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik,2L
+
+#define SN_kuznyechik_mgm               "kuznyechik-mgm"
+#define NID_kuznyechik_mgm              1502
+#define OBJ_kuznyechik_mgm              OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik,3L
 
 #define SN_id_tc26_agreement            "id-tc26-agreement"
 #define NID_id_tc26_agreement           991

@@ -332,7 +332,7 @@ struct ossl_record_layer_st {
 
     /* Flags for GOST ciphers */
     int stream_mac;
-    int tlstree;
+    uint32_t tlstree;
 
     /* TLSv1.3 fields */
     unsigned char *iv;     /* static IV */

@@ -51,4 +51,5 @@ export CTEST_OUTPUT_ON_FAILURE=1
 export OPENSSL_ENGINES="$PWD/bin"
 export OPENSSL_APP="$O_EXE/openssl"
 make test
-make tcl_tests
+make tcl_tests_engine
+make tcl_tests_provider
