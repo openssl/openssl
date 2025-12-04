@@ -1298,18 +1298,20 @@ sub check_env_vars {
 
     # Add submodules to the except_dirs
     my $git_ok = 0;
-    open my $gs_pipe, '-|', "git config get --all "
+    open my $gs_pipe, '-|', "git config "
                             . "--file \"$config{sourcedir}/.gitmodules\" "
-                            . "--regexp '.*.path\$' "
+                            . "--get-regexp '.*\.path\$' "
                             # avoid scaring off people by possible error output
                             . "2>/dev/null";
     while (<$gs_pipe>) {
         $git_ok = 1;
         s/\R$//; # better chomp
-        print STDERR "DEBUG[check_env_vars]: adding \"$config{sourcedir}/$_\""
-                     . " to except_dirs\n"
+        my @fields = split(" ", $_, 2);
+        next if @fields < 2;
+        print STDERR "DEBUG[check_env_vars]: adding"
+                     . " \"$config{sourcedir}/$fields[1]\" to except_dirs\n"
             if $debug;
-        push @except_dirs, "$config{sourcedir}/$_";
+        push @except_dirs, "$config{sourcedir}/$fields[1]";
     }
     close $gs_pipe;
     # git call has failed, trying to parse .gitmodules manually
