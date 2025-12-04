@@ -431,8 +431,15 @@ int ossl_ml_dsa_sign(const ML_DSA_KEY *priv, int msg_is_mu,
     size_t out_len = 0;
     int ret = 0;
 
-    if (ossl_ml_dsa_key_get_priv(priv) == NULL)
-        return 0;
+    if (ossl_ml_dsa_key_get_priv(priv) == NULL) {
+        if (sig_is_mu) {
+            /* If we generate external mu only the public key is required */
+            if (ossl_ml_dsa_key_get_pub(priv) == NULL)
+                return 0;
+        } else {
+            return 0;
+        }
+    }
     out_len = sig_is_mu ? mu_len : priv->params->sig_len;
 
     if (sig_len != NULL)

@@ -736,15 +736,18 @@ static int test_sign_verify_external_mu(int tstid)
 {
     int ret = 0, mu = 1, deterministic = 1;
     ML_DSA_SIG_GEN_TEST_DATA *td = &ml_dsa_siggen_mu_testdata[tstid];
-    EVP_PKEY *pkey = NULL;
+    EVP_PKEY *pkey = NULL, *pubkey = NULL;
     EVP_PKEY_CTX *sctx = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
     uint8_t mu_buf[64];
+    uint8_t mu_buf2[64];
     uint8_t digest[32];
     size_t digest_len = sizeof(digest);
     uint8_t *sig = NULL;
     size_t sig_len = 0;
     OSSL_PARAM params[4], *p = params;
+    uint8_t pub[2048];
+    size_t pub_len = 0;
 
     *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MU, &mu);
     *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC, &deterministic);
@@ -755,9 +758,17 @@ static int test_sign_verify_external_mu(int tstid)
     *p = OSSL_PARAM_construct_end();
     if (!TEST_true(ml_dsa_create_keypair(&pkey, td->alg, td->priv, td->priv_len,
                                          NULL, 0, 1))
-            || !TEST_true(do_calculate_mu(td, pkey, mu_buf, 0))
+            || !TEST_true(do_calculate_mu(td, pkey, mu_buf, 0)))
+        goto err;
+    if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
+                                                   pub, sizeof(pub), &pub_len))
+            || !TEST_true(ml_dsa_create_keypair(&pubkey, td->alg, NULL, 0,
+                                                pub, pub_len, 1))
+            || !TEST_true(do_calculate_mu(td, pubkey, mu_buf2, 0))
+            || !TEST_mem_eq(mu_buf2, sizeof(mu_buf2), mu_buf, sizeof(mu_buf)))
+        goto err;
 
-            || !TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL))
+    if (!TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL))
             || !TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL))
             || !TEST_int_eq(EVP_PKEY_sign_message_init(sctx, sig_alg, params), 1)
             || !TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &sig_len, mu_buf, sizeof(mu_buf)), 1)
@@ -775,6 +786,7 @@ static int test_sign_verify_external_mu(int tstid)
     ret = 1;
 err:
     OPENSSL_free(sig);
+    EVP_PKEY_free(pubkey);
     EVP_PKEY_free(pkey);
     EVP_SIGNATURE_free(sig_alg);
     EVP_PKEY_CTX_free(sctx);
