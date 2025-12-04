@@ -52,6 +52,17 @@ size_t ossl_ascon_aead128_decrypt_final(ASCON_AEAD_CTX *ctx,
     size_t tag_len);
 void ossl_ascon_aead_cleanup(ASCON_AEAD_CTX *ctx);
 
+typedef struct {
+    uint64_t state[5];
+    size_t offset;
+} ascon_hash256_ctx;
+
+void ossl_ascon_hash256_init(ascon_hash256_ctx *ctx);
+void ossl_ascon_hash256_update(ascon_hash256_ctx *ctx, const unsigned char *m,
+    size_t len);
+void ossl_ascon_hash256_final(ascon_hash256_ctx *ctx, unsigned char *digest);
+void ossl_ascon_hash256_cleanup(ascon_hash256_ctx *ctx);
+
 #endif /* OPENSSL_NO_ASCON128 */
 
 #endif /* OSSL_CRYPTO_ASCON_H */
