@@ -48,9 +48,6 @@
 #ifdef _WIN32
 static int WIN32_rename(const char *from, const char *to);
 # define rename(from, to) WIN32_rename((from), (to))
-/* for getaddrinfo() and freeaddrinfo(): */
-# include <winsock2.h>
-# include <ws2tcpip.h>
 #endif
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
@@ -2518,25 +2515,10 @@ void store_setup_crl_download(X509_STORE *st)
 #ifndef OPENSSL_NO_SOCK
 int host_is_ip_address(const char *host)
 {
-    size_t len;
-    struct addrinfo hints, *res;
-    int ret;
+    ASN1_OCTET_STRING *str = a2i_IPADDRESS(host);
 
-    if (host == NULL)
-        return 0;
-
-    /* presume IPv6 address literal if host has the form "[<other-chars>]" */
-    len = strlen(host);
-    if (len > 2 && *host == '[' && strchr(host + 1, '[') == NULL
-            && strchr(host + 1, ']') == host + len - 1)
-        return 1;
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_flags = AI_NUMERICHOST;
-    ret = getaddrinfo(host, NULL, &hints, &res);
-    if (res != NULL)
-        freeaddrinfo(res);
-    return ret == 0;
+    ASN1_OCTET_STRING_free(str);
+    return str != NULL;
 }
 #endif
 
