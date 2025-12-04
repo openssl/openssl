@@ -16,41 +16,100 @@
 /* Return 1 if the FIPS self tests are running and 0 otherwise */
 int ossl_fips_self_testing(void);
 
-/* Deferred KAT tests categories */
-
 /*
- * The Integrity category is used to run test that are required by the
- * integrity check and are a special category that can therefore never
- * really be deferred. Keep it commented here as a reminder.
- * #  define FIPS_DEFERRED_KAT_INTEGRITY 0
+ * Each enum here corresponds to a test in the st_all_tests array
+ * in self_test_data.c, any change done here requires tests to be
+ * adjusted accordingly.
  */
-#define FIPS_DEFERRED_KAT_CIPHER 1
-#define FIPS_DEFERRED_KAT_ASYM_CIPHER 2
-#define FIPS_DEFERRED_KAT_ASYM_KEYGEN 3
-#define FIPS_DEFERRED_KAT_KEM 4
-#define FIPS_DEFERRED_KAT_DIGEST 5
-#define FIPS_DEFERRED_KAT_SIGNATURE 6
-#define FIPS_DEFERRED_KAT_KDF 7
-#define FIPS_DEFERRED_KAT_KA 8
-/* Currently unused because all MAC tests are satisfied through other tests */
-#define FIPS_DEFERRED_KAT_MAC 9
-#define FIPS_DEFERRED_DRBG 10
-#define FIPS_DEFERRED_MAX 11
+typedef enum {
+    ST_ID_DIGEST_SHA1,
+    ST_ID_DIGEST_SHA512,
+    ST_ID_DIGEST_SHA3_256,
+    ST_ID_CIPHER_AES_256_GCM,
+    ST_ID_CIPHER_AES_128_ECB,
+#ifndef OPENSSL_NO_DES
+    ST_ID_CIPHER_DES_EDE3_ECB,
+#endif
+    ST_ID_SIG_RSA_SHA256,
+#ifndef OPENSSL_NO_EC
+    ST_ID_SIG_ECDSA_SHA256,
+#ifndef OPENSSL_NO_HMAC_DRBG_KDF
+    ST_ID_SIG_DET_ECDSA_SHA256,
+#endif
+#ifndef OPENSSL_NO_EC2M
+    ST_ID_SIG_E2CM_ECDSA_SHA256,
+#endif
+#ifndef OPENSSL_NO_ECX
+    ST_ID_SIG_ED448,
+    ST_ID_SIG_ED25519,
+#endif
+#endif
+#ifndef OPENSSL_NO_DSA
+    ST_ID_SIG_DSA_SHA256,
+#endif
+#ifndef OPENSSL_NO_ML_DSA
+    ST_ID_SIG_ML_DSA_65,
+#endif
+#ifndef OPENSSL_NO_SLH_DSA
+    ST_ID_SIG_SLH_DSA_SHA2_128F,
+    ST_ID_SIG_SLH_DSA_SHAKE_128F,
+#endif /* OPENSSL_NO_SLH_DSA */
+#ifndef OPENSSL_NO_LMS
+    ST_ID_SIG_LMS,
+#endif
+    ST_ID_KDF_TLS13_EXTRACT,
+    ST_ID_KDF_TLS13_EXPAND,
+    ST_ID_KDF_TLS12_PRF,
+    ST_ID_KDF_PBKDF2,
+#ifndef OPENSSL_NO_KBKDF
+    ST_ID_KDF_KBKDF,
+    ST_ID_KDF_KBKDF_KMAC,
+#endif
+    ST_ID_KDF_HKDF,
+#ifndef OPENSSL_NO_SNMPKDF
+    ST_ID_KDF_SNMPKDF,
+#endif
+#ifndef OPENSSL_NO_SRTPKDF
+    ST_ID_KDF_SRTPKDF,
+#endif
+#ifndef OPENSSL_NO_SSKDF
+    ST_ID_KDF_SSKDF,
+#endif
+#ifndef OPENSSL_NO_X963KDF
+    ST_ID_KDF_X963KDF,
+#endif
+#ifndef OPENSSL_NO_X942KDF
+    ST_ID_KDF_X942KDF,
+#endif
+    ST_ID_DRBG_HASH,
+    ST_ID_DRBG_CTR,
+    ST_ID_DRBG_HMAC,
+#ifndef OPENSSL_NO_DH
+    ST_ID_KA_DH,
+#endif
+#ifndef OPENSSL_NO_EC
+    ST_ID_KA_ECDH,
+#endif
+#ifndef OPENSSL_NO_ML_KEM
+    ST_ID_ASYM_KEYGEN_ML_KEM,
+#endif
+#ifndef OPENSSL_NO_ML_DSA
+    ST_ID_ASYM_KEYGEN_ML_DSA,
+#endif
+#ifndef OPENSSL_NO_SLH_DSA
+    ST_ID_ASYM_KEYGEN_SLH_DSA,
+#endif
+#ifndef OPENSSL_NO_ML_KEM
+    ST_ID_KEM_ML_KEM,
+#endif
+    ST_ID_ASYM_CIPHER_RSA_ENC,
+    ST_ID_ASYM_CIPHER_RSA_DEC,
+    ST_ID_ASYM_CIPHER_RSA_DEC_CRT,
+    ST_ID_MAX
+} self_test_id_t;
 
-struct fips_deferred_test_st {
-    const char *algorithm;
-    int category;
-    int state;
-};
-
-#define FIPS_DEFERRED_TEST_INIT 0
-#define FIPS_DEFERRED_TEST_IN_PROGRESS 1
-#define FIPS_DEFERRED_TEST_PASSED 2
-#define FIPS_DEFERRED_TEST_FAILED 3
-
-typedef struct fips_deferred_test_st FIPS_DEFERRED_TEST;
-
-int FIPS_deferred_self_tests(OSSL_LIB_CTX *libctx, FIPS_DEFERRED_TEST tests[]);
+int ossl_deferred_self_test(OSSL_LIB_CTX *libctx, self_test_id_t id);
+int ossl_self_test_in_progress(self_test_id_t id);
 
 #endif /* FIPS_MODULE */
 
