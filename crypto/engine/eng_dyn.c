@@ -436,8 +436,8 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
     }
     if (!int_load(ctx)) {
         ERR_raise(ERR_LIB_ENGINE, ENGINE_R_DSO_NOT_FOUND);
-        DSO_free(ctx->dynamic_dso);
-        ctx->dynamic_dso = NULL;
+        if (!DSO_free(ctx->dynamic_dso))
+            ctx->dynamic_dso = NULL;
         return 0;
     }
     /* We have to find a bind function otherwise it'll always end badly */
@@ -446,8 +446,8 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
          (dynamic_bind_engine) DSO_bind_func(ctx->dynamic_dso,
                                              ctx->DYNAMIC_F2))) {
         ctx->bind_engine = NULL;
-        DSO_free(ctx->dynamic_dso);
-        ctx->dynamic_dso = NULL;
+        if (!DSO_free(ctx->dynamic_dso))
+            ctx->dynamic_dso = NULL;
         ERR_raise(ERR_LIB_ENGINE, ENGINE_R_DSO_FAILURE);
         return 0;
     }
@@ -472,8 +472,8 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
             /* Fail */
             ctx->bind_engine = NULL;
             ctx->v_check = NULL;
-            DSO_free(ctx->dynamic_dso);
-            ctx->dynamic_dso = NULL;
+            if (!DSO_free(ctx->dynamic_dso))
+                ctx->dynamic_dso = NULL;
             ERR_raise(ERR_LIB_ENGINE, ENGINE_R_VERSION_INCOMPATIBILITY);
             return 0;
         }
@@ -505,8 +505,8 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
         engine_remove_dynamic_id(e, 1);
         ctx->bind_engine = NULL;
         ctx->v_check = NULL;
-        DSO_free(ctx->dynamic_dso);
-        ctx->dynamic_dso = NULL;
+        if (!DSO_free(ctx->dynamic_dso))
+            ctx->dynamic_dso = NULL;
         ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INIT_FAILED);
         /* Copy the original ENGINE structure back */
         memcpy(e, &cpy, sizeof(ENGINE));
