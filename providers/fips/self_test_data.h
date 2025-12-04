@@ -16,30 +16,30 @@
  * they are tested as part of a higher level algorithm (such as HMAC).
  */
 
-extern const ST_KAT_DIGEST st_kat_digest_tests[];
+extern const ST_DEFINITION st_kat_digest_tests[];
 extern int st_kat_digest_tests_size;
-extern const ST_KAT_CIPHER st_kat_cipher_tests[];
+extern const ST_DEFINITION st_kat_cipher_tests[];
 extern int st_kat_cipher_tests_size;
 #ifndef OPENSSL_NO_LMS
-extern const ST_KAT_LMS st_kat_lms_test;
+extern const ST_DEFINITION st_kat_lms_test;
 #endif
-extern const ST_KAT_KDF st_kat_kdf_tests[];
+extern const ST_DEFINITION st_kat_kdf_tests[];
 extern int st_kat_kdf_tests_size;
-extern const ST_KAT_DRBG st_kat_drbg_tests[];
+extern const ST_DEFINITION st_kat_drbg_tests[];
 extern int st_kat_drbg_tests_size;
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-extern const ST_KAT_KAS st_kat_kas_tests[];
+extern const ST_DEFINITION st_kat_kas_tests[];
 extern int st_kat_kas_tests_size;
 #endif
-extern const ST_KAT_SIGN st_kat_sign_tests[];
+extern const ST_DEFINITION st_kat_sign_tests[];
 extern int st_kat_sign_tests_size;
 #ifndef OPENSSL_NO_ML_KEM
-extern const ST_KAT_KEM st_kat_kem_tests[];
+extern const ST_DEFINITION st_kat_kem_tests[];
 extern int st_kat_kem_tests_size;
 #endif
 #if !defined(OPENSSL_NO_ML_KEM) || !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
-extern const ST_KAT_ASYM_KEYGEN st_kat_asym_keygen_tests[];
+extern const ST_DEFINITION st_kat_asym_keygen_tests[];
 extern int st_kat_asym_keygen_tests_size;
 #endif
-extern const ST_KAT_ASYM_CIPHER st_kat_asym_cipher_tests[];
+extern const ST_DEFINITION st_kat_asym_cipher_tests[];
 extern int st_kat_asym_cipher_tests_size;
