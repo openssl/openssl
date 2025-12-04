@@ -63,7 +63,7 @@ ___
 ################################################################################
 # ossl_hwsm3_block_data_order_zvksh(SM3_CTX *c, const void *p, size_t num);
 {
-my ($CTX, $INPUT, $NUM, $TMP1, $TMP2) = ("a0", "a1", "a2", "a6", "t0");
+my ($CTX, $INPUT, $NUM, $EVENNUM , $TMPADDR) = ("a0", "a1", "a2", "a6", "t0");
 my ($V0, $V1, $V2, $V3, $V4, $V5, $V6, $V7,
     $V8, $V9, $V10, $V11, $V12, $V13, $V14, $V15,
     $V16, $V17, $V18, $V19, $V20, $V21, $V22, $V23,
@@ -76,29 +76,32 @@ $code .= <<___;
 .globl ossl_hwsm3_block_data_order_zvksh
 .type ossl_hwsm3_block_data_order_zvksh,\@function
 ossl_hwsm3_block_data_order_zvksh:
+    # Obtain VLEN and select the corresponding branch
     csrr t0, vlenb
     addi t1, t0, -64
     beqz t1, ossl_hwsm3_block_data_order_zvksh_zvl512
     addi t1, t0, -32
     beqz t1, ossl_hwsm3_block_data_order_zvksh_zvl256
-    j sossl_hwsm3_block_data_order_zvksh_zvl128
+    j ossl_hwsm3_block_data_order_zvksh_zvl128
 ossl_hwsm3_block_data_order_zvksh_zvl512:
     @{[vsetivli "zero", 8, "e32", "m1", "tu", "mu"]}
     @{[vle32_v $V26, $CTX]}
     @{[vrev8_v $V26, $V26]}
     @{[vsetivli "zero", 16, "e32", "m1", "ta", "ma"]}
-    la $TMP2, ORDER_BY_ZVL512_DATA
-    @{[vle32_v $V30, $TMP2]}
-    addi $TMP2, $TMP2, 64
-    @{[vle32_v $V31, $TMP2]}
-    la $TMP2, ORDER_BY_ZVL512_EXP
-    @{[vle32_v $V29, $TMP2]}
-    addi $TMP2, $TMP2, 64
-    @{[vle32_v $V28, $TMP2]}
-    srli $TMP1, $NUM, 1
+    la $TMPADDR, ORDER_BY_ZVL512_DATA
+    @{[vle32_v $V30, $TMPADDR]}
+    addi $TMPADDR, $TMPADDR, 64
+    @{[vle32_v $V31, $TMPADDR]}
+    la $TMPADDR, ORDER_BY_ZVL512_EXP
+    @{[vle32_v $V29, $TMPADDR]}
+    addi $TMPADDR, $TMPADDR, 64
+    @{[vle32_v $V28, $TMPADDR]}
+    srli $EVENNUM , $NUM, 1
     andi $NUM, $NUM, 1
-    beqz $TMP1, ossl_hwsm3_block_data_order_zvksh_zvl256
+    beqz $EVENNUM , ossl_hwsm3_block_data_order_zvksh_zvl256
 L_sm3_loop_zvl512:
+    # Use indexed loads (ORDER_BY_RVV512_DATA) to load two blocks in the
+    # word order expected by the later vrgather/vsm3c stages.
     @{[vluxei32_v $V0, $INPUT, $V30]}
     @{[vluxei32_v $V1, $INPUT, $V31]}
     @{[vrgather_vv $V9, $V0, $V29]}
@@ -232,9 +235,9 @@ L_sm3_loop_zvl512:
     @{[vxor_vv $V26, $V26, $V27]}
     @{[vslidedown_vi $V27, $V26, 8]}
     @{[vmv_v_v $V26, $V27]}
-    addi $TMP1, $TMP1, -1
+    addi $EVENNUM , $EVENNUM , -1
     addi $INPUT, $INPUT, 128
-    bnez $TMP1, L_sm3_loop_zvl512
+    bnez $EVENNUM , L_sm3_loop_zvl512
     @{[vsetivli "zero", 8, "e32", "m1", "ta", "ma"]}
     @{[vrev8_v $V26, $V26]}
     @{[vse32_v $V26, $CTX]}
@@ -242,10 +245,10 @@ L_sm3_loop_zvl512:
     ret
 ossl_hwsm3_block_data_order_zvksh_zvl256:
     @{[vsetivli "zero", 8, "e32", "m1", "ta", "ma"]}
-    j ossl_hwsm3_block_data_order_zvksh_next
-sossl_hwsm3_block_data_order_zvksh_zvl128:
+    j ossl_hwsm3_block_data_order_zvksh_single
+ossl_hwsm3_block_data_order_zvksh_zvl128:
     @{[vsetivli "zero", 8, "e32", "m2", "ta", "ma"]}
-ossl_hwsm3_block_data_order_zvksh_next:
+ossl_hwsm3_block_data_order_zvksh_single:
     # Load initial state of hash context (c->A-H).
     @{[vle32_v $V0, $CTX]}
     @{[vrev8_v $V0, $V0]}
@@ -391,7 +394,7 @@ L_sm3_end:
 
 .section .rodata
 .p2align 3
-.type ORDER_BY_ZVL512_EXP,\@object
+.type ORDER_BY_ZVL512_DATA,\@object
 ORDER_BY_ZVL512_DATA:
     .word 0, 4, 8, 12, 16, 20, 24, 28, 64, 68, 72, 76, 80, 84, 88, 92, 32, 36, 40, 44, 48, 52, 56, 60, 96, 100, 104, 108, 112, 116, 120, 124
 .size ORDER_BY_ZVL512_DATA, .-ORDER_BY_ZVL512_DATA
