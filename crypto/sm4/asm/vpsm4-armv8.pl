@@ -249,35 +249,6 @@ $code.=<<___;
 ___
 }
 
-sub sbox_1word_gpr () {
-    my $word = shift;
-    my ($ptr, $byte0, $byte1, $byte2) = ("x7", "w9", "w16", "w17");
-
-$code.=<<___;
-    // Get the base address of the S-Box lookup table
-    adrp    $ptr, .Lsbox
-    add     $ptr, $ptr, #:lo12:.Lsbox
-
-    // Extract each byte from the 32-bit input word, look it up, and reassemble
-    and     $byte0, $word, #0xff
-	ubfx    $byte1, $word, #8, #8
-	ubfx    $byte2, $word, #16, #8
-    ldrb    $byte0, [$ptr, x9]
-    ldrb    $byte1, [$ptr, x16]
-    ldrb    $byte2, [$ptr, x17]
-    orr     $byte0, $byte0, $byte1, lsl #8
-    lsr     $byte1, $word, #24
-    orr     $byte0, $byte0, $byte2, lsl #16
-    ldrb    $byte1, [$ptr, x16]
-    orr     $byte0, $byte0, $byte1, lsl #24
-
-	eor	$word,$byte0,$byte0,ror #32-2
-	eor	$word,$word,$byte0,ror #32-10
-	eor	$word,$word,$byte0,ror #32-18
-	eor	$word,$word,$byte0,ror #32-24
-___
-}
-
 # sm4 for one block of data, in scalar registers word0/word1/word2/word3
 sub sm4_1blk () {
 	my $kptr = shift;
@@ -289,7 +260,7 @@ $code.=<<___;
 	eor	$wtmp2,$wtmp0,$word1
 	eor	$tmpw,$tmpw,$wtmp2
 ___
-	&sbox_1word_gpr($tmpw);
+	&sbox_1word($tmpw);
 $code.=<<___;
 	eor	$word0,$word0,$tmpw
 	// B1 ^= SBOX(B0 ^ B2 ^ B3 ^ RK1)
@@ -297,7 +268,7 @@ $code.=<<___;
 	eor	$wtmp2,$word0,$wtmp1
 	eor	$tmpw,$tmpw,$wtmp2
 ___
-	&sbox_1word_gpr($tmpw);
+	&sbox_1word($tmpw);
 $code.=<<___;
 	ldp	$wtmp0,$wtmp1,[$kptr],8
 	eor	$word1,$word1,$tmpw
@@ -306,7 +277,7 @@ $code.=<<___;
 	eor	$wtmp2,$wtmp0,$word3
 	eor	$tmpw,$tmpw,$wtmp2
 ___
-	&sbox_1word_gpr($tmpw);
+	&sbox_1word($tmpw);
 $code.=<<___;
 	eor	$word2,$word2,$tmpw
 	// B3 ^= SBOX(B0 ^ B1 ^ B2 ^ RK3)
@@ -314,7 +285,7 @@ $code.=<<___;
 	eor	$wtmp2,$word2,$wtmp1
 	eor	$tmpw,$tmpw,$wtmp2
 ___
-	&sbox_1word_gpr($tmpw);
+	&sbox_1word($tmpw);
 $code.=<<___;
 	eor	$word3,$word3,$tmpw
 ___
