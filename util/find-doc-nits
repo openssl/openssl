@@ -1300,7 +1300,9 @@ sub check_env_vars {
     my $git_ok = 0;
     open my $gs_pipe, '-|', "git config get --all "
                             . "--file \"$config{sourcedir}/.gitmodules\" "
-                            . "--regexp '.*.path\$'";
+                            . "--regexp '.*.path\$' "
+                            # avoid scaring off people by possible error output
+                            . "2>/dev/null";
     while (<$gs_pipe>) {
         $git_ok = 1;
         s/\R$//; # better chomp
