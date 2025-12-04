@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/params.h"
+
 #include <assert.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
@@ -232,10 +234,12 @@ static int rsa_cms_sign(CMS_SignerInfo *si)
         OSSL_SIGNATURE_PARAM_ALGORITHM_ID, aid, sizeof(aid));
     params[1] = OSSL_PARAM_construct_end();
 
-    if (EVP_PKEY_CTX_get_params(pkctx, params) <= 0)
+    if ((EVP_PKEY_CTX_get_params(pkctx, params) <= 0)
+        || !OSSL_PARAM_modified(params) || !ossl_param_has_content(params))
         return 0;
-    if ((aid_len = params[0].return_size) == 0)
-        return 0;
+
+    aid_len = params[0].return_size;
+
     if (d2i_X509_ALGOR(&alg, &pp, (long)aid_len) == NULL)
         return 0;
     return 1;
