@@ -458,6 +458,7 @@ static int test_get_crl_fn_score(void)
         || !TEST_ptr(roots))
         goto err;
 
+    X509_STORE_set_get_crl(store, &get_crl_fn);
     /* Create a stack; upref the cert because we free it below. */
     if (!TEST_true(X509_up_ref(test_root)))
         goto err;
@@ -469,7 +470,6 @@ static int test_get_crl_fn_score(void)
         goto err;
 
     X509_STORE_CTX_set0_trusted_stack(ctx, roots);
-    X509_STORE_CTX_set_get_crl(ctx, &get_crl_fn);
     X509_VERIFY_PARAM_set_time(param, PARAM_TIME);
     if (!TEST_long_eq((long)X509_VERIFY_PARAM_get_time(param),
                       (long)PARAM_TIME))
@@ -486,7 +486,7 @@ static int test_get_crl_fn_score(void)
     TEST_int_eq(status, X509_V_OK);
 
 err:
-    OSSL_STACK_OF_X509_free(roots);
+    sk_X509_pop_free(roots, X509_free);
     X509_VERIFY_PARAM_free(param);
     X509_STORE_CTX_free(ctx);
     X509_STORE_free(store);
