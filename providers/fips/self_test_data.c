@@ -25,6 +25,10 @@
 /* Macros to build Self test data */
 #define ITM(x) ((const void *)&x), sizeof(x)
 #define ITM_STR(x) ((const void *)&x), (sizeof(x) - 1)
+#define ITM_BUF(x) \
+    { ((const unsigned char *)&x), sizeof(x) }
+#define ITM_BUF_STR(x) \
+    { ((const unsigned char *)&x), (sizeof(x) - 1) }
 
 #define ST_KAT_PARAM_END() { "", 0, NULL, 0 }
 #define ST_KAT_PARAM_BIGNUM(name, data) \
@@ -66,27 +70,33 @@ static const unsigned char sha3_256_digest[] = {
  *  SHA256 is tested by higher level algorithms so a
  *  CAST is not needed.
  */
-const ST_KAT_DIGEST st_kat_digest_tests[] = {
+const ST_DEFINITION st_kat_digest_tests[] = {
     {
-        OSSL_SELF_TEST_DESC_MD_SHA1,
         "SHA1",
+        OSSL_SELF_TEST_DESC_MD_SHA1,
+        SELF_TEST_KAT_DIGEST,
         SELF_TEST_ONLOAD,
-        ITM_STR(sha1_pt),
-        ITM(sha1_digest),
+        SELF_TEST_STATE_INIT,
+        ITM_BUF_STR(sha1_pt),
+        ITM_BUF(sha1_digest),
     },
     {
-        OSSL_SELF_TEST_DESC_MD_SHA2,
         "SHA512",
+        OSSL_SELF_TEST_DESC_MD_SHA2,
+        SELF_TEST_KAT_DIGEST,
         SELF_TEST_ONLOAD,
-        ITM_STR(sha512_pt),
-        ITM(sha512_digest),
+        SELF_TEST_STATE_INIT,
+        ITM_BUF_STR(sha512_pt),
+        ITM_BUF(sha512_digest),
     },
     {
-        OSSL_SELF_TEST_DESC_MD_SHA3,
         "SHA3-256",
+        OSSL_SELF_TEST_DESC_MD_SHA3,
+        SELF_TEST_KAT_DIGEST,
         SELF_TEST_ONLOAD,
-        ITM(sha3_256_pt),
-        ITM(sha3_256_digest),
+        SELF_TEST_STATE_INIT,
+        ITM_BUF(sha3_256_pt),
+        ITM_BUF(sha3_256_digest),
     },
 };
 int st_kat_digest_tests_size = OSSL_NELEM(st_kat_digest_tests);
@@ -154,43 +164,49 @@ static const unsigned char tdes_pt[] = {
 };
 #endif
 
-const ST_KAT_CIPHER st_kat_cipher_tests[] = {
+const ST_DEFINITION st_kat_cipher_tests[] = {
     {
-        {
-            OSSL_SELF_TEST_DESC_CIPHER_AES_GCM,
-            "AES-256-GCM",
-            SELF_TEST_ONLOAD,
-            ITM(aes_256_gcm_pt),
-            ITM(aes_256_gcm_ct),
+        "AES-256-GCM",
+        OSSL_SELF_TEST_DESC_CIPHER_AES_GCM,
+        SELF_TEST_KAT_CIPHER,
+        SELF_TEST_ONLOAD,
+        SELF_TEST_STATE_INIT,
+        ITM_BUF(aes_256_gcm_pt),
+        ITM_BUF(aes_256_gcm_ct),
+        .u.cipher = {
+            CIPHER_MODE_ENCRYPT | CIPHER_MODE_DECRYPT,
+            ITM_BUF(aes_256_gcm_key),
+            ITM_BUF(aes_256_gcm_iv),
+            ITM_BUF(aes_256_gcm_aad),
+            ITM_BUF(aes_256_gcm_tag),
         },
-        CIPHER_MODE_ENCRYPT | CIPHER_MODE_DECRYPT,
-        ITM(aes_256_gcm_key),
-        ITM(aes_256_gcm_iv),
-        ITM(aes_256_gcm_aad),
-        ITM(aes_256_gcm_tag),
     },
     {
-        {
-            OSSL_SELF_TEST_DESC_CIPHER_AES_ECB,
-            "AES-128-ECB",
-            SELF_TEST_ONLOAD,
-            ITM(aes_128_ecb_pt),
-            ITM(aes_128_ecb_ct),
+        "AES-128-ECB",
+        OSSL_SELF_TEST_DESC_CIPHER_AES_ECB,
+        SELF_TEST_KAT_CIPHER,
+        SELF_TEST_ONLOAD,
+        SELF_TEST_STATE_INIT,
+        ITM_BUF(aes_128_ecb_pt),
+        ITM_BUF(aes_128_ecb_ct),
+        .u.cipher = {
+            CIPHER_MODE_DECRYPT,
+            ITM_BUF(aes_128_ecb_key),
         },
-        CIPHER_MODE_DECRYPT,
-        ITM(aes_128_ecb_key),
     },
 #ifndef OPENSSL_NO_DES
     {
-        {
-            OSSL_SELF_TEST_DESC_CIPHER_TDES,
-            "DES-EDE3-ECB",
-            SELF_TEST_ONLOAD,
-            ITM(tdes_pt),
-            ITM(tdes_ct),
+        "DES-EDE3-ECB",
+        OSSL_SELF_TEST_DESC_CIPHER_TDES,
+        SELF_TEST_KAT_CIPHER,
+        SELF_TEST_ONLOAD,
+        SELF_TEST_STATE_INIT,
+        ITM_BUF(tdes_pt),
+        ITM_BUF(tdes_ct),
+        .u.cipher = {
+            CIPHER_MODE_DECRYPT,
+            ITM_BUF(tdes_key),
         },
-        CIPHER_MODE_DECRYPT,
-        ITM(tdes_key),
     }
 #endif
 };
@@ -322,11 +338,33 @@ static const unsigned char sha256_192_sig[] = {
     0xd3, 0x4b, 0x40, 0xb6, 0x9d, 0xd9, 0xf3, 0xc1
 };
 
-const ST_KAT_LMS st_kat_lms_test = {
+static const ST_KAT_PARAM lms_key[] = {
+    ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_PUB_KEY, sha256_192_pub),
+    ST_KAT_PARAM_END()
+};
+
+/*
+ * FIPS 140-3 IG 10.3.A Note 5 mandates a CAST for LMS.
+ *
+ * It permits this to be omitted if HSS is also implemented and has
+ * the relevant self tests.  Once HSS is implemented, this test can be
+ * removed.  This IG permits the digest's CAST to be subsumed into this
+ * test, however, because this will be removed, the underlying digest
+ * test has been retained elsewhere lest it is accidentally omitted.
+ */
+const ST_DEFINITION st_kat_lms_test = {
+    "LMS",
+    OSSL_SELF_TEST_DESC_SIGN_LMS,
+    SELF_TEST_KAT_SIGNATURE,
     SELF_TEST_ONLOAD,
-    ITM(sha256_192_pub),
-    ITM(sha256_192_msg),
-    ITM(sha256_192_sig),
+    SELF_TEST_STATE_INIT,
+    ITM_BUF(sha256_192_msg),
+    ITM_BUF(sha256_192_sig),
+    .u.sig = {
+        "LMS",
+        SIGNATURE_MODE_VERIFY_ONLY,
+        lms_key,
+    }
 };
 #endif /* OPENSSL_NO_LMS */
 
@@ -695,65 +733,97 @@ static const ST_KAT_PARAM tls13_kdf_client_early_secret_params[] = {
  * According to FIPS 140-3 10.3.A Note18: SSH KDF is not required, since it is
  * sufficient to self-test the underlying SHA hash functions.
  */
-const ST_KAT_KDF st_kat_kdf_tests[] = {
+const ST_DEFINITION st_kat_kdf_tests[] = {
     {
+        OSSL_KDF_NAME_TLS1_3_KDF,
         OSSL_SELF_TEST_DESC_KDF_TLS13_EXTRACT,
-        OSSL_KDF_NAME_TLS1_3_KDF,
+        SELF_TEST_KAT_KDF,
         SELF_TEST_ONLOAD,
-        tls13_kdf_early_secret_params,
-        ITM(tls13_kdf_early_secret),
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(tls13_kdf_early_secret),
+        .u.kdf = {
+            tls13_kdf_early_secret_params,
+        },
     },
     {
+        OSSL_KDF_NAME_TLS1_3_KDF,
         OSSL_SELF_TEST_DESC_KDF_TLS13_EXPAND,
-        OSSL_KDF_NAME_TLS1_3_KDF,
+        SELF_TEST_KAT_KDF,
         SELF_TEST_ONLOAD,
-        tls13_kdf_client_early_secret_params,
-        ITM(tls13_kdf_client_early_traffic_secret),
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(tls13_kdf_client_early_traffic_secret),
+        .u.kdf = {
+            tls13_kdf_client_early_secret_params,
+        },
     },
     {
-        OSSL_SELF_TEST_DESC_KDF_TLS12_PRF,
         OSSL_KDF_NAME_TLS1_PRF,
+        OSSL_SELF_TEST_DESC_KDF_TLS12_PRF,
+        SELF_TEST_KAT_KDF,
         SELF_TEST_ONLOAD,
-        tls12prf_params,
-        ITM(tls12prf_expected),
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(tls12prf_expected),
+        .u.kdf = {
+            tls12prf_params,
+        },
     },
     {
-        OSSL_SELF_TEST_DESC_KDF_PBKDF2,
         OSSL_KDF_NAME_PBKDF2,
+        OSSL_SELF_TEST_DESC_KDF_PBKDF2,
+        SELF_TEST_KAT_KDF,
         SELF_TEST_ONLOAD,
-        pbkdf2_params,
-        ITM(pbkdf2_expected),
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(pbkdf2_expected),
+        .u.kdf = {
+            pbkdf2_params,
+        },
     },
 #ifndef OPENSSL_NO_KBKDF
     {
-        OSSL_SELF_TEST_DESC_KDF_KBKDF,
         OSSL_KDF_NAME_KBKDF,
+        OSSL_SELF_TEST_DESC_KDF_KBKDF,
+        SELF_TEST_KAT_KDF,
         SELF_TEST_ONLOAD,
-        kbkdf_params,
-        ITM(kbkdf_expected),
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(kbkdf_expected),
+        .u.kdf = {
+            kbkdf_params,
+        },
     },
     {
-        OSSL_SELF_TEST_DESC_KDF_KBKDF_KMAC,
         OSSL_KDF_NAME_KBKDF,
+        OSSL_SELF_TEST_DESC_KDF_KBKDF_KMAC,
+        SELF_TEST_KAT_KDF,
         SELF_TEST_ONLOAD,
-        kbkdf_kmac_params,
-        ITM(kbkdf_kmac_expected),
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(kbkdf_kmac_expected),
+        .u.kdf = {
+            kbkdf_kmac_params,
+        },
     },
 #endif
     {
-        OSSL_SELF_TEST_DESC_KDF_HKDF,
         OSSL_KDF_NAME_HKDF,
+        OSSL_SELF_TEST_DESC_KDF_HKDF,
+        SELF_TEST_KAT_KDF,
         SELF_TEST_ONLOAD,
-        hkdf_params,
-        ITM(hkdf_expected),
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(hkdf_expected),
+        .u.kdf = {
+            hkdf_params,
+        },
     },
 #ifndef OPENSSL_NO_SNMPKDF
     {
-        OSSL_SELF_TEST_DESC_KDF_SNMPKDF,
         OSSL_KDF_NAME_SNMPKDF,
-        0,
-        snmpkdf_params,
-        ITM(snmpkdf_expected)
+        OSSL_SELF_TEST_DESC_KDF_SNMPKDF,
+        SELF_TEST_KAT_KDF,
+        SELF_TEST_ONLOAD,
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(snmpkdf_expected),
+        .u.kdf = {
+            snmpkdf_params,
+        },
     },
 #endif
 #ifndef OPENSSL_NO_SRTPKDF
@@ -767,29 +837,41 @@ const ST_KAT_KDF st_kat_kdf_tests[] = {
 #endif
 #ifndef OPENSSL_NO_SSKDF
     {
-        OSSL_SELF_TEST_DESC_KDF_SSKDF,
         OSSL_KDF_NAME_SSKDF,
+        OSSL_SELF_TEST_DESC_KDF_SSKDF,
+        SELF_TEST_KAT_KDF,
         SELF_TEST_ONLOAD,
-        sskdf_params,
-        ITM(sskdf_expected),
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(sskdf_expected),
+        .u.kdf = {
+            sskdf_params,
+        },
     },
 #endif
 #ifndef OPENSSL_NO_X963KDF
     {
-        OSSL_SELF_TEST_DESC_KDF_X963KDF,
         OSSL_KDF_NAME_X963KDF,
+        OSSL_SELF_TEST_DESC_KDF_X963KDF,
+        SELF_TEST_KAT_KDF,
         SELF_TEST_ONLOAD,
-        x963kdf_params,
-        ITM(x963kdf_expected),
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(x963kdf_expected),
+        .u.kdf = {
+            x963kdf_params,
+        },
     },
 #endif
 #ifndef OPENSSL_NO_X942KDF
     {
-        OSSL_SELF_TEST_DESC_KDF_X942KDF,
         OSSL_KDF_NAME_X942KDF_ASN1,
+        OSSL_SELF_TEST_DESC_KDF_X942KDF,
+        SELF_TEST_KAT_KDF,
         SELF_TEST_ONLOAD,
-        x942kdf_params,
-        ITM(x942kdf_expected),
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(x942kdf_expected),
+        .u.kdf = {
+            x942kdf_params,
+        },
     },
 #endif
 };
@@ -984,51 +1066,63 @@ static const unsigned char drbg_hmac_sha2_pr_expected[] = {
     0x8e, 0x30, 0x05, 0x0e, 0x04, 0x97, 0xfb, 0x0a
 };
 
-const ST_KAT_DRBG st_kat_drbg_tests[] = {
+const ST_DEFINITION st_kat_drbg_tests[] = {
     {
-        OSSL_SELF_TEST_DESC_DRBG_HASH,
         "HASH-DRBG",
+        OSSL_SELF_TEST_DESC_DRBG_HASH,
+        SELF_TEST_DRBG,
         SELF_TEST_ONLOAD,
-        "digest",
-        "SHA256",
-        ITM(drbg_hash_sha256_pr_entropyin),
-        ITM(drbg_hash_sha256_pr_nonce),
-        ITM(drbg_hash_sha256_pr_persstr),
-        ITM(drbg_hash_sha256_pr_entropyinpr0),
-        ITM(drbg_hash_sha256_pr_entropyinpr1),
-        ITM(drbg_hash_sha256_pr_addin0),
-        ITM(drbg_hash_sha256_pr_addin1),
-        ITM(drbg_hash_sha256_pr_expected),
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(drbg_hash_sha256_pr_expected),
+        .u.drbg = {
+            "digest",
+            "SHA256",
+            ITM_BUF(drbg_hash_sha256_pr_entropyin),
+            ITM_BUF(drbg_hash_sha256_pr_nonce),
+            ITM_BUF(drbg_hash_sha256_pr_persstr),
+            ITM_BUF(drbg_hash_sha256_pr_entropyinpr0),
+            ITM_BUF(drbg_hash_sha256_pr_entropyinpr1),
+            ITM_BUF(drbg_hash_sha256_pr_addin0),
+            ITM_BUF(drbg_hash_sha256_pr_addin1),
+        },
     },
     {
-        OSSL_SELF_TEST_DESC_DRBG_CTR,
         "CTR-DRBG",
+        OSSL_SELF_TEST_DESC_DRBG_CTR,
+        SELF_TEST_DRBG,
         SELF_TEST_ONLOAD,
-        "cipher",
-        "AES-128-CTR",
-        ITM(drbg_ctr_aes128_pr_df_entropyin),
-        ITM(drbg_ctr_aes128_pr_df_nonce),
-        ITM(drbg_ctr_aes128_pr_df_persstr),
-        ITM(drbg_ctr_aes128_pr_df_entropyinpr0),
-        ITM(drbg_ctr_aes128_pr_df_entropyinpr1),
-        ITM(drbg_ctr_aes128_pr_df_addin0),
-        ITM(drbg_ctr_aes128_pr_df_addin1),
-        ITM(drbg_ctr_aes128_pr_df_expected),
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(drbg_ctr_aes128_pr_df_expected),
+        .u.drbg = {
+            "cipher",
+            "AES-128-CTR",
+            ITM_BUF(drbg_ctr_aes128_pr_df_entropyin),
+            ITM_BUF(drbg_ctr_aes128_pr_df_nonce),
+            ITM_BUF(drbg_ctr_aes128_pr_df_persstr),
+            ITM_BUF(drbg_ctr_aes128_pr_df_entropyinpr0),
+            ITM_BUF(drbg_ctr_aes128_pr_df_entropyinpr1),
+            ITM_BUF(drbg_ctr_aes128_pr_df_addin0),
+            ITM_BUF(drbg_ctr_aes128_pr_df_addin1),
+        },
     },
     {
-        OSSL_SELF_TEST_DESC_DRBG_HMAC,
         "HMAC-DRBG",
+        OSSL_SELF_TEST_DESC_DRBG_HMAC,
+        SELF_TEST_DRBG,
         SELF_TEST_ONLOAD,
-        "digest",
-        "SHA256",
-        ITM(drbg_hmac_sha2_pr_entropyin),
-        ITM(drbg_hmac_sha2_pr_nonce),
-        ITM(drbg_hmac_sha2_pr_persstr),
-        ITM(drbg_hmac_sha2_pr_entropyinpr0),
-        ITM(drbg_hmac_sha2_pr_entropyinpr1),
-        ITM(drbg_hmac_sha2_pr_addin0),
-        ITM(drbg_hmac_sha2_pr_addin1),
-        ITM(drbg_hmac_sha2_pr_expected),
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(drbg_hmac_sha2_pr_expected),
+        .u.drbg = {
+            "digest",
+            "SHA256",
+            ITM_BUF(drbg_hmac_sha2_pr_entropyin),
+            ITM_BUF(drbg_hmac_sha2_pr_nonce),
+            ITM_BUF(drbg_hmac_sha2_pr_persstr),
+            ITM_BUF(drbg_hmac_sha2_pr_entropyinpr0),
+            ITM_BUF(drbg_hmac_sha2_pr_entropyinpr1),
+            ITM_BUF(drbg_hmac_sha2_pr_addin0),
+            ITM_BUF(drbg_hmac_sha2_pr_addin1),
+        },
     }
 };
 int st_kat_drbg_tests_size = OSSL_NELEM(st_kat_drbg_tests);
@@ -1221,25 +1315,32 @@ static const unsigned char ecdh_secret_expected[] = {
 #endif /* OPENSSL_NO_EC */
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-const ST_KAT_KAS st_kat_kas_tests[] = {
+const ST_DEFINITION st_kat_kas_tests[] = {
 #ifndef OPENSSL_NO_DH
-    { OSSL_SELF_TEST_DESC_KA_DH,
-        "DH",
+    { "DH",
+        OSSL_SELF_TEST_DESC_KA_DH,
+        SELF_TEST_KAT_KAS,
         SELF_TEST_ONLOAD,
-        dh_group,
-        dh_host_key,
-        dh_peer_key,
-        ITM(dh_secret_expected) },
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(dh_secret_expected),
+        .u.kas = {
+            dh_group,
+            dh_host_key,
+            dh_peer_key } },
 #endif /* OPENSSL_NO_DH */
 #ifndef OPENSSL_NO_EC
     {
-        OSSL_SELF_TEST_DESC_KA_ECDH,
         "EC",
+        OSSL_SELF_TEST_DESC_KA_ECDH,
+        SELF_TEST_KAT_KAS,
         SELF_TEST_ONLOAD,
-        ecdh_group,
-        ecdh_host_key,
-        ecdh_peer_key,
-        ITM(ecdh_secret_expected),
+        SELF_TEST_STATE_INIT,
+        .expected = ITM_BUF(ecdh_secret_expected),
+        .u.kas = {
+            ecdh_group,
+            ecdh_host_key,
+            ecdh_peer_key,
+        },
     },
 #endif /* OPENSSL_NO_EC */
 };
@@ -3137,137 +3238,145 @@ static const unsigned char sig_kat_persstr[] = {
     0xac, 0x54, 0x4f, 0xce, 0x57, 0xf1, 0x5e, 0x11
 };
 
-const ST_KAT_SIGN st_kat_sign_tests[] = {
+const ST_DEFINITION st_kat_sign_tests[] = {
     {
-        OSSL_SELF_TEST_DESC_SIGN_RSA,
-        "RSA",
         "RSA-SHA256",
+        OSSL_SELF_TEST_DESC_SIGN_RSA,
+        SELF_TEST_KAT_SIGNATURE,
         SELF_TEST_ONLOAD,
-        0,
-        rsa_crt_key,
-        ITM_STR(rsa_sig_msg),
-        ITM(sig_kat_entropyin),
-        ITM(sig_kat_nonce),
-        ITM(sig_kat_persstr),
-        ITM(rsa_expected_sig),
+        SELF_TEST_STATE_INIT,
+        ITM_BUF_STR(rsa_sig_msg),
+        ITM_BUF(rsa_expected_sig),
+        .u.sig = {
+            "RSA",
+            0,
+            rsa_crt_key,
+            ITM_BUF(sig_kat_entropyin),
+            ITM_BUF(sig_kat_nonce),
+            ITM_BUF(sig_kat_persstr),
+        },
     },
 #ifndef OPENSSL_NO_EC
     {
-        OSSL_SELF_TEST_DESC_SIGN_ECDSA,
-        "EC",
         "ECDSA-SHA256",
+        OSSL_SELF_TEST_DESC_SIGN_ECDSA,
+        SELF_TEST_KAT_SIGNATURE,
         SELF_TEST_ONLOAD,
-        0,
-        ecdsa_prime_key,
-        ITM_STR(rsa_sig_msg),
-        ITM(sig_kat_entropyin),
-        ITM(sig_kat_nonce),
-        ITM(sig_kat_persstr),
-        ITM(ecdsa_prime_expected_sig),
+        SELF_TEST_STATE_INIT,
+        ITM_BUF_STR(rsa_sig_msg),
+        ITM_BUF(ecdsa_prime_expected_sig),
+        .u.sig = {
+            "EC",
+            0,
+            ecdsa_prime_key,
+            ITM_BUF(sig_kat_entropyin),
+            ITM_BUF(sig_kat_nonce),
+            ITM_BUF(sig_kat_persstr),
+        },
     },
 #ifndef OPENSSL_NO_HMAC_DRBG_KDF
     {
-        OSSL_SELF_TEST_DESC_SIGN_DetECDSA,
-        "EC",
         "ECDSA-SHA256",
+        OSSL_SELF_TEST_DESC_SIGN_DetECDSA,
+        SELF_TEST_KAT_SIGNATURE,
         SELF_TEST_ONLOAD,
-        0,
-        ecdsa_prime_key,
-        ITM_STR(rsa_sig_msg),
-        NULL,
-        0,
-        NULL,
-        0,
-        NULL,
-        0,
-        ITM(ecdsa_prime_expected_detsig),
-        ecdsa_sig_params,
+        SELF_TEST_STATE_INIT,
+        ITM_BUF_STR(rsa_sig_msg),
+        ITM_BUF(ecdsa_prime_expected_detsig),
+        .u.sig = {
+            "EC",
+            0,
+            ecdsa_prime_key,
+            .init = ecdsa_sig_params,
+        },
     },
 #endif
 #ifndef OPENSSL_NO_EC2M
     {
-        OSSL_SELF_TEST_DESC_SIGN_ECDSA,
-        "EC",
         "ECDSA-SHA256",
+        OSSL_SELF_TEST_DESC_SIGN_ECDSA,
+        SELF_TEST_KAT_SIGNATURE,
         SELF_TEST_ONLOAD,
-        0,
-        ecdsa_bin_key,
-        ITM_STR(rsa_sig_msg),
-        ITM(sig_kat_entropyin),
-        ITM(sig_kat_nonce),
-        ITM(sig_kat_persstr),
-        ITM(ecdsa_bin_expected_sig),
+        SELF_TEST_STATE_INIT,
+        ITM_BUF_STR(rsa_sig_msg),
+        ITM_BUF(ecdsa_bin_expected_sig),
+        .u.sig = {
+            "EC",
+            0,
+            ecdsa_bin_key,
+            ITM_BUF(sig_kat_entropyin),
+            ITM_BUF(sig_kat_nonce),
+            ITM_BUF(sig_kat_persstr),
+        },
     },
 #endif
 #ifndef OPENSSL_NO_ECX
     {
+        "ED448",
         OSSL_SELF_TEST_DESC_SIGN_EDDSA,
-        "ED448",
-        "ED448",
+        SELF_TEST_KAT_SIGNATURE,
         SELF_TEST_ONLOAD,
-        0,
-        ed448_key,
-        ITM(ecx_sig_msg),
-        NULL,
-        0,
-        NULL,
-        0,
-        NULL,
-        0,
-        ITM(ed448_expected_sig),
+        SELF_TEST_STATE_INIT,
+        ITM_BUF(ecx_sig_msg),
+        ITM_BUF(ed448_expected_sig),
+        .u.sig = {
+            "ED448",
+            0,
+            ed448_key,
+        },
     },
     {
+        "ED25519",
         OSSL_SELF_TEST_DESC_SIGN_EDDSA,
-        "ED25519",
-        "ED25519",
+        SELF_TEST_KAT_SIGNATURE,
         SELF_TEST_ONLOAD,
-        0,
-        ed25519_key,
-        ITM(ecx_sig_msg),
-        NULL,
-        0,
-        NULL,
-        0,
-        NULL,
-        0,
-        ITM(ed25519_expected_sig),
+        SELF_TEST_STATE_INIT,
+        ITM_BUF(ecx_sig_msg),
+        ITM_BUF(ed25519_expected_sig),
+        .u.sig = {
+            "ED25519",
+            0,
+            ed25519_key,
+        },
     },
 #endif /* OPENSSL_NO_ECX */
 #endif /* OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_DSA
     {
-        OSSL_SELF_TEST_DESC_SIGN_DSA,
-        "DSA",
         "DSA-SHA256",
+        OSSL_SELF_TEST_DESC_SIGN_DSA,
+        SELF_TEST_KAT_SIGNATURE,
         SELF_TEST_ONLOAD,
-        SIGNATURE_MODE_VERIFY_ONLY,
-        dsa_key,
-        ITM_STR(rsa_sig_msg),
-        ITM(sig_kat_entropyin),
-        ITM(sig_kat_nonce),
-        ITM(sig_kat_persstr),
-        ITM(dsa_expected_sig),
+        SELF_TEST_STATE_INIT,
+        ITM_BUF_STR(rsa_sig_msg),
+        ITM_BUF(dsa_expected_sig),
+        .u.sig = {
+            "DSA",
+            SIGNATURE_MODE_VERIFY_ONLY,
+            dsa_key,
+            ITM_BUF(sig_kat_entropyin),
+            ITM_BUF(sig_kat_nonce),
+            ITM_BUF(sig_kat_persstr),
+        },
     },
 #endif /* OPENSSL_NO_DSA */
 
 #ifndef OPENSSL_NO_ML_DSA
     {
+        "ML-DSA-65",
         OSSL_SELF_TEST_DESC_SIGN_ML_DSA,
-        "ML-DSA-65",
-        "ML-DSA-65",
+        SELF_TEST_KAT_SIGNATURE,
         SELF_TEST_ONLOAD,
-        0,
-        ml_dsa_key,
-        ITM(ml_dsa_65_msg),
-        NULL,
-        0,
-        NULL,
-        0,
-        NULL,
-        0,
-        ITM(ml_dsa_65_sig),
-        ml_dsa_sig_init,
-        ml_dsa_sig_init,
+        SELF_TEST_STATE_INIT,
+        ITM_BUF(ml_dsa_65_msg),
+        ITM_BUF(ml_dsa_65_sig),
+        .u.sig = {
+            "ML-DSA-65",
+            0,
+            ml_dsa_key,
+            .init = ml_dsa_sig_init,
+            .verify = ml_dsa_sig_init,
+        },
     },
 #endif /* OPENSSL_NO_ML_DSA */
 #ifndef OPENSSL_NO_SLH_DSA
@@ -3282,42 +3391,41 @@ const ST_KAT_SIGN st_kat_sign_tests[] = {
      * here.
      */
     {
+        "SLH-DSA-SHA2-128f",
         OSSL_SELF_TEST_DESC_SIGN_SLH_DSA,
-        "SLH-DSA-SHA2-128f",
-        "SLH-DSA-SHA2-128f",
+        SELF_TEST_KAT_SIGNATURE,
         SELF_TEST_DEFERRED,
-        SIGNATURE_MODE_SIG_DIGESTED,
-        slh_dsa_sha2_128f_key_params,
-        ITM(slh_dsa_sha2_sig_msg),
-        NULL,
-        0,
-        NULL,
-        0,
-        NULL,
-        0,
-        ITM(slh_dsa_sha2_128f_sig_digest),
-        slh_dsa_sig_params,
-        slh_dsa_sig_params,
+        SELF_TEST_STATE_INIT,
+        ITM_BUF(slh_dsa_sha2_sig_msg),
+        ITM_BUF(slh_dsa_sha2_128f_sig_digest),
+        .u.sig = {
+            "SLH-DSA-SHA2-128f",
+            SIGNATURE_MODE_SIG_DIGESTED,
+            slh_dsa_sha2_128f_key_params,
+            .init = slh_dsa_sig_params,
+            .verify = slh_dsa_sig_params,
+        },
     },
     {
+        "SLH-DSA-SHAKE-128f",
         OSSL_SELF_TEST_DESC_SIGN_SLH_DSA,
-        "SLH-DSA-SHAKE-128f",
-        "SLH-DSA-SHAKE-128f",
+        SELF_TEST_KAT_SIGNATURE,
         SELF_TEST_DEFERRED,
-        SIGNATURE_MODE_SIG_DIGESTED,
-        slh_dsa_shake_128f_key_params,
-        ITM(slh_dsa_shake_sig_msg),
-        NULL,
-        0,
-        NULL,
-        0,
-        NULL,
-        0,
-        ITM(slh_dsa_shake_128f_sig_digest),
-        slh_dsa_sig_params,
-        slh_dsa_sig_params,
+        SELF_TEST_STATE_INIT,
+        ITM_BUF(slh_dsa_shake_sig_msg),
+        ITM_BUF(slh_dsa_shake_128f_sig_digest),
+        .u.sig = {
+            "SLH-DSA-SHAKE-128f",
+            SIGNATURE_MODE_SIG_DIGESTED,
+            slh_dsa_shake_128f_key_params,
+            .init = slh_dsa_sig_params,
+            .verify = slh_dsa_sig_params,
+        },
     },
 #endif /* OPENSSL_NO_SLH_DSA */
+#ifndef OPENSSL_NO_LMS
+    st_kat_lms_test,
+#endif /* OPENSSL_NO_LMS */
 };
 int st_kat_sign_tests_size = OSSL_NELEM(st_kat_sign_tests);
 
@@ -3688,87 +3796,109 @@ static const ST_KAT_PARAM ml_kem_key[] = {
     ST_KAT_PARAM_END()
 };
 
-const ST_KAT_KEM st_kat_kem_tests[] = {
-    {
+const ST_DEFINITION st_kat_kem_tests[] = {
+    { "ML-KEM-512",
         OSSL_SELF_TEST_DESC_KEM,
-        "ML-KEM-512", SELF_TEST_ONLOAD,
-        ml_kem_key,
-        ITM(ml_kem_512_cipher_text),
-        ITM(ml_kem_512_entropy),
-        ITM(ml_kem_512_secret),
-        ml_kem_512_reject_secret, /* No length because same as _secret's */
-    },
+        SELF_TEST_KAT_KEM,
+        SELF_TEST_ONLOAD,
+        SELF_TEST_STATE_INIT,
+        .u.kem = {
+            ml_kem_key,
+            ITM_BUF(ml_kem_512_cipher_text),
+            ITM_BUF(ml_kem_512_entropy),
+            ITM_BUF(ml_kem_512_secret),
+            ITM_BUF(ml_kem_512_reject_secret) } },
 };
 int st_kat_kem_tests_size = OSSL_NELEM(st_kat_kem_tests);
 #endif /* OPENSSL_NO_ML_KEM */
 
 #if !defined(OPENSSL_NO_ML_KEM) || !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
-const ST_KAT_ASYM_KEYGEN st_kat_asym_keygen_tests[] = {
+const ST_DEFINITION st_kat_asym_keygen_tests[] = {
 #if !defined(OPENSSL_NO_ML_KEM)
     /*
      * FIPS 140-3 IG 10.3.A resolution 14 mandates a CAST for ML-KEM
      * key generation.
      */
     {
-        OSSL_SELF_TEST_DESC_KEYGEN_ML_KEM,
         "ML-KEM-512",
+        OSSL_SELF_TEST_DESC_KEYGEN_ML_KEM,
+        SELF_TEST_KAT_ASYM_CIPHER,
         SELF_TEST_ONLOAD,
-        ml_kem_keygen_params,
-        ml_kem_key,
-    },
+        SELF_TEST_STATE_INIT,
+        .u.akgen = {
+            ml_kem_keygen_params,
+            ml_kem_key } },
 #endif
 #if !defined(OPENSSL_NO_ML_DSA)
     {
-        OSSL_SELF_TEST_DESC_KEYGEN_ML_DSA,
         "ML-DSA-65",
+        OSSL_SELF_TEST_DESC_KEYGEN_ML_DSA,
+        SELF_TEST_KAT_ASYM_CIPHER,
         SELF_TEST_ONLOAD,
-        ml_dsa_keygen_params,
-        ml_dsa_key,
+        SELF_TEST_STATE_INIT,
+        .u.akgen = {
+            ml_dsa_keygen_params,
+            ml_dsa_key,
+        },
     },
 #endif
 #if !defined(OPENSSL_NO_SLH_DSA)
     {
-        OSSL_SELF_TEST_DESC_KEYGEN_SLH_DSA,
         "SLH-DSA-SHA2-128f",
+        OSSL_SELF_TEST_DESC_KEYGEN_SLH_DSA,
+        SELF_TEST_KAT_ASYM_CIPHER,
         SELF_TEST_DEFERRED,
-        slh_dsa_sha2_128f_keygen_init_params,
-        slh_dsa_128f_keygen_expected_params,
+        SELF_TEST_STATE_INIT,
+        .u.akgen = {
+            slh_dsa_sha2_128f_keygen_init_params,
+            slh_dsa_128f_keygen_expected_params,
+        },
     },
 #endif
 };
 int st_kat_asym_keygen_tests_size = OSSL_NELEM(st_kat_asym_keygen_tests);
 #endif /* !OPENSSL_NO_ML_DSA || !OPENSSL_NO_SLH_DSA */
 
-const ST_KAT_ASYM_CIPHER st_kat_asym_cipher_tests[] = {
-    {
+const ST_DEFINITION st_kat_asym_cipher_tests[] = {
+    { "RSA",
         OSSL_SELF_TEST_DESC_ASYM_RSA_ENC,
-        "RSA",
+        SELF_TEST_KAT_ASYM_CIPHER,
         SELF_TEST_ONLOAD,
-        1,
-        rsa_pub_key,
-        rsa_enc_params,
-        ITM(rsa_asym_plaintext_encrypt),
+        SELF_TEST_STATE_INIT,
+        ITM_BUF(rsa_asym_plaintext_encrypt),
+        ITM_BUF(rsa_asym_expected_encrypt),
+        .u.ac = {
+            1,
+            rsa_pub_key,
+            rsa_enc_params,
+        } },
+    {
+        "RSA",
+        OSSL_SELF_TEST_DESC_ASYM_RSA_DEC,
+        SELF_TEST_KAT_ASYM_CIPHER,
+        SELF_TEST_ONLOAD,
+        SELF_TEST_STATE_INIT,
         ITM(rsa_asym_expected_encrypt),
+        ITM(rsa_asym_plaintext_encrypt),
+        .u.ac = {
+            0,
+            rsa_priv_key,
+            rsa_enc_params,
+        },
     },
     {
-        OSSL_SELF_TEST_DESC_ASYM_RSA_DEC,
         "RSA",
+        OSSL_SELF_TEST_DESC_ASYM_RSA_DEC,
+        SELF_TEST_KAT_ASYM_CIPHER,
         SELF_TEST_ONLOAD,
-        0,
-        rsa_priv_key,
-        rsa_enc_params,
+        SELF_TEST_STATE_INIT,
         ITM(rsa_asym_expected_encrypt),
         ITM(rsa_asym_plaintext_encrypt),
-    },
-    {
-        OSSL_SELF_TEST_DESC_ASYM_RSA_DEC,
-        "RSA",
-        SELF_TEST_ONLOAD,
-        0,
-        rsa_crt_key,
-        rsa_enc_params,
-        ITM(rsa_asym_expected_encrypt),
-        ITM(rsa_asym_plaintext_encrypt),
+        .u.ac = {
+            0,
+            rsa_crt_key,
+            rsa_enc_params,
+        },
     },
 };
 int st_kat_asym_cipher_tests_size = OSSL_NELEM(st_kat_asym_cipher_tests);
