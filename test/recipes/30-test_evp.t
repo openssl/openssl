@@ -192,6 +192,8 @@ push @defltfiles, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_ascon_aead128.txt) unless $no_ascon128;
 push @defltfiles, qw(evpmd_ascon_hash256.txt) unless $no_ascon128;
+push @defltfiles, qw(evpmd_ascon_xof128.txt) unless $no_ascon128;
+push @defltfiles, qw(evpmd_ascon_cxof128.txt) unless $no_ascon128;
 push @defltfiles, qw(evpkdf_argon2.txt) unless $no_argon2;
 push @defltfiles, qw(evpkdf_hmac_drbg.txt) unless $no_determinstic_nonce;
 

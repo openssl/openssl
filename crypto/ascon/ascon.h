@@ -38,6 +38,18 @@ typedef struct {
     size_t offset;
 } ascon_hash256_ctx;
 
+typedef struct {
+    uint64_t state[5];
+    size_t offset;
+    uint64_t flags;
+} ascon_xof128_ctx;
+
+typedef struct {
+    uint64_t state[5];
+    size_t offset;
+    uint64_t flags;
+} ascon_cxof128_ctx;
+
 /* Original crypto function declarations - visible for external use and crypto implementation */
 # ifndef OPENSSL_BUILDING_OPENSSL
 void ascon_aead128_init(ascon_aead128_ctx *ctx, const unsigned char *k,
@@ -56,6 +68,17 @@ void ascon_hash256_init(ascon_hash256_ctx *ctx);
 void ascon_hash256_update(ascon_hash256_ctx *ctx, const unsigned char *m,
                           size_t len);
 void ascon_hash256_final(ascon_hash256_ctx *ctx, unsigned char *digest);
+
+void ascon_xof128_init(ascon_xof128_ctx *ctx);
+void ascon_xof128_update(ascon_xof128_ctx *ctx, const unsigned char *m,
+                         size_t len);
+void ascon_xof128_final(ascon_xof128_ctx *ctx, unsigned char *out, size_t len);
+
+void ascon_cxof128_init(ascon_cxof128_ctx *ctx, const unsigned char *in,
+                        size_t len);
+void ascon_cxof128_update(ascon_cxof128_ctx *ctx, const unsigned char *m,
+                          size_t len);
+void ascon_cxof128_final(ascon_cxof128_ctx *ctx, unsigned char *out, size_t len);
 # else
 /* Forward declarations for crypto implementation - not visible to providers to avoid conflicts */
 /* These are only needed internally, providers use ossl_ prefixed functions */
@@ -76,6 +99,17 @@ void ascon_hash256_init(ascon_hash256_ctx *ctx);
 void ascon_hash256_update(ascon_hash256_ctx *ctx, const unsigned char *m,
                           size_t len);
 void ascon_hash256_final(ascon_hash256_ctx *ctx, unsigned char *digest);
+
+void ascon_xof128_init(ascon_xof128_ctx *ctx);
+void ascon_xof128_update(ascon_xof128_ctx *ctx, const unsigned char *m,
+                         size_t len);
+void ascon_xof128_final(ascon_xof128_ctx *ctx, unsigned char *out, size_t len);
+
+void ascon_cxof128_init(ascon_cxof128_ctx *ctx, const unsigned char *in,
+                        size_t len);
+void ascon_cxof128_update(ascon_cxof128_ctx *ctx, const unsigned char *m,
+                          size_t len);
+void ascon_cxof128_final(ascon_cxof128_ctx *ctx, unsigned char *out, size_t len);
 #  endif
 # endif
 
@@ -106,6 +140,21 @@ void ossl_ascon_hash256_update(ascon_hash256_ctx *ctx, const unsigned char *m,
                                 size_t len);
 void ossl_ascon_hash256_final(ascon_hash256_ctx *ctx, unsigned char *digest);
 void ossl_ascon_hash256_cleanup(ascon_hash256_ctx *ctx);
+
+void ossl_ascon_xof128_init(ascon_xof128_ctx *ctx);
+void ossl_ascon_xof128_update(ascon_xof128_ctx *ctx, const unsigned char *m,
+                               size_t len);
+void ossl_ascon_xof128_final(ascon_xof128_ctx *ctx, unsigned char *out,
+                              size_t len);
+void ossl_ascon_xof128_cleanup(ascon_xof128_ctx *ctx);
+
+void ossl_ascon_cxof128_init(ascon_cxof128_ctx *ctx, const unsigned char *in,
+                              size_t len);
+void ossl_ascon_cxof128_update(ascon_cxof128_ctx *ctx, const unsigned char *m,
+                                size_t len);
+void ossl_ascon_cxof128_final(ascon_cxof128_ctx *ctx, unsigned char *out,
+                               size_t len);
+void ossl_ascon_cxof128_cleanup(ascon_cxof128_ctx *ctx);
 # endif
 
 #endif /* ASCON_H */

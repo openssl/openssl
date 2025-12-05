@@ -152,6 +152,9 @@
         ASCONP8(x0, x1, x2, x3, x4);          \
     } while (0)
 
+/* misc ascon flags for the context */
+#define ASCONFLG_XOF 0x0000000000000004ULL /* XOF needs termination? */
+
 void ascon_hash256_init(ascon_hash256_ctx *ctx)
 {
     /* precomputed state lifted from NIST SP 800-232 Sec. A.3 p39 */
@@ -225,6 +228,178 @@ void ossl_ascon_hash256_cleanup(ascon_hash256_ctx *ctx)
 {
     if (ctx != NULL)
         OPENSSL_cleanse(ctx, sizeof(ascon_hash256_ctx));
+}
+#endif
+
+/* XOF (eXtendable Output Function) implementation */
+
+void ascon_xof128_init(ascon_xof128_ctx *ctx)
+{
+    /* precomputed state lifted from NIST SP 800-232 Tbl 12 p40 */
+    ctx->state[0] = 0xDA82CE768D9447EBULL;
+    ctx->state[1] = 0xCC7CE6C75F1EF969ULL;
+    ctx->state[2] = 0xE7508FD780085631ULL;
+    ctx->state[3] = 0x0EE0EA53416B58CCULL;
+    ctx->state[4] = 0xE0547524DB6F0BDEULL;
+    ctx->offset = 0;
+    ctx->flags = ASCONFLG_XOF;
+}
+
+void ascon_xof128_update(ascon_xof128_ctx *ctx, const unsigned char *m,
+                         size_t len)
+{
+    while (len--) {
+        if (ctx->offset >= 8) {
+            /* sponge: compression function */
+            ASCONP12(ctx->state[0], ctx->state[1], ctx->state[2],
+                     ctx->state[3], ctx->state[4]);
+            ctx->offset = 0;
+        }
+        /* sponge: absorb a message byte */
+        ctx->state[0] ^= (uint64_t)(*m++) << 8 * ctx->offset++;
+    }
+}
+
+void ascon_xof128_final(ascon_xof128_ctx *ctx, unsigned char *out, size_t len)
+{
+    if (ctx->flags & ASCONFLG_XOF) {
+        /* message termination */
+        unsigned char pad = 0x01;
+        ascon_xof128_update(ctx, &pad, 1);
+        ASCONP12(ctx->state[0], ctx->state[1], ctx->state[2], ctx->state[3],
+                 ctx->state[4]);
+        ctx->offset = 0;
+        ctx->flags ^= ASCONFLG_XOF;
+    }
+
+    while (len--) {
+        if (ctx->offset >= 8) {
+            /* sponge: squeeze out a new word */
+            ASCONP12(ctx->state[0], ctx->state[1], ctx->state[2], ctx->state[3],
+                     ctx->state[4]);
+            ctx->offset = 0;
+        }
+        *out++ = (unsigned char)(ctx->state[0] >> 8 * ctx->offset++);
+    }
+}
+
+/* CXOF (Customizable eXtendable Output Function) implementation */
+
+void ascon_cxof128_init(ascon_cxof128_ctx *ctx, const unsigned char *in,
+                        size_t len)
+{
+    unsigned char pad = 0x01;
+
+    /* precomputed state lifted from NIST SP 800-232 Tbl 12 p40 */
+    ctx->state[0] = 0x675527C2A0E8DE03ULL;
+    ctx->state[1] = 0x43D12D7DC0377BBCULL;
+    ctx->state[2] = 0xE9901DEC426E81B5ULL;
+    ctx->state[3] = 0x2AB14907720780B6ULL;
+    ctx->state[4] = 0x8F3F1D02D432BC46ULL;
+    ctx->flags = ASCONFLG_XOF;
+
+    /* customization string has maxlen 256 bytes and the input here is bitlen */
+    ctx->state[0] ^= (uint64_t)(len << 3);
+    /* skip ahead, it's the bitlen of the customization string as a U64 */
+    ctx->offset = 8;
+
+    /* absorb the customization string */
+    ascon_cxof128_update(ctx, in, len);
+
+    /* terminate the customization string */
+    ascon_cxof128_update(ctx, &pad, 1);
+
+    /* compress all that */
+    ASCONP12(ctx->state[0], ctx->state[1], ctx->state[2], ctx->state[3],
+             ctx->state[4]);
+    ctx->offset = 0;
+}
+
+void ascon_cxof128_update(ascon_cxof128_ctx *ctx, const unsigned char *m,
+                           size_t len)
+{
+    while (len--) {
+        if (ctx->offset >= 8) {
+            /* sponge: compression function */
+            ASCONP12(ctx->state[0], ctx->state[1], ctx->state[2],
+                     ctx->state[3], ctx->state[4]);
+            ctx->offset = 0;
+        }
+        /* sponge: absorb a message byte */
+        ctx->state[0] ^= (uint64_t)(*m++) << 8 * ctx->offset++;
+    }
+}
+
+void ascon_cxof128_final(ascon_cxof128_ctx *ctx, unsigned char *out, size_t len)
+{
+    if (ctx->flags & ASCONFLG_XOF) {
+        /* message termination */
+        unsigned char pad = 0x01;
+        ascon_cxof128_update(ctx, &pad, 1);
+        ASCONP12(ctx->state[0], ctx->state[1], ctx->state[2], ctx->state[3],
+                 ctx->state[4]);
+        ctx->offset = 0;
+        ctx->flags ^= ASCONFLG_XOF;
+    }
+
+    while (len--) {
+        if (ctx->offset >= 8) {
+            /* sponge: squeeze out a new word */
+            ASCONP12(ctx->state[0], ctx->state[1], ctx->state[2], ctx->state[3],
+                     ctx->state[4]);
+            ctx->offset = 0;
+        }
+        *out++ = (unsigned char)(ctx->state[0] >> 8 * ctx->offset++);
+    }
+}
+
+#ifdef OPENSSL_BUILDING_OPENSSL
+/* Provider compatibility wrapper functions for XOF/CXOF */
+void ossl_ascon_xof128_init(ascon_xof128_ctx *ctx)
+{
+    ascon_xof128_init(ctx);
+}
+
+void ossl_ascon_xof128_update(ascon_xof128_ctx *ctx, const unsigned char *m,
+                               size_t len)
+{
+    ascon_xof128_update(ctx, m, len);
+}
+
+void ossl_ascon_xof128_final(ascon_xof128_ctx *ctx, unsigned char *out,
+                              size_t len)
+{
+    ascon_xof128_final(ctx, out, len);
+}
+
+void ossl_ascon_xof128_cleanup(ascon_xof128_ctx *ctx)
+{
+    if (ctx != NULL)
+        OPENSSL_cleanse(ctx, sizeof(ascon_xof128_ctx));
+}
+
+void ossl_ascon_cxof128_init(ascon_cxof128_ctx *ctx, const unsigned char *in,
+                              size_t len)
+{
+    ascon_cxof128_init(ctx, in, len);
+}
+
+void ossl_ascon_cxof128_update(ascon_cxof128_ctx *ctx, const unsigned char *m,
+                                size_t len)
+{
+    ascon_cxof128_update(ctx, m, len);
+}
+
+void ossl_ascon_cxof128_final(ascon_cxof128_ctx *ctx, unsigned char *out,
+                               size_t len)
+{
+    ascon_cxof128_final(ctx, out, len);
+}
+
+void ossl_ascon_cxof128_cleanup(ascon_cxof128_ctx *ctx)
+{
+    if (ctx != NULL)
+        OPENSSL_cleanse(ctx, sizeof(ascon_cxof128_ctx));
 }
 #endif
 
