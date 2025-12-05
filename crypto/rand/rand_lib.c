@@ -527,22 +527,30 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
     const char *propq;
     char *name;
     EVP_RAND_CTX *ctx = NULL;
+    int fallback = 0;
 #ifdef OPENSSL_NO_FIPS_JITTER
     RAND_GLOBAL *dgbl = rand_get_global(libctx);
 
     if (dgbl == NULL)
         return NULL;
     propq = dgbl->seed_propq;
-    name = dgbl->seed_name != NULL ? dgbl->seed_name
-                                   : OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC);
+    if (dgbl->seed_name != NULL) {
+        name = dgbl->seed_name;
+    } else {
+        fallback = 1;
+        name = OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC);
+    }
 #else /* !OPENSSL_NO_FIPS_JITTER */
     name = "JITTER";
     propq = "";
 #endif /* OPENSSL_NO_FIPS_JITTER */
 
+    ERR_set_mark();
     rand = EVP_RAND_fetch(libctx, name, propq);
+    ERR_pop_to_mark();
     if (rand == NULL) {
-        ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_FETCH_DRBG);
+        if (!fallback)
+            ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_FETCH_DRBG);
         goto err;
     }
     ctx = EVP_RAND_CTX_new(rand, NULL);
@@ -695,6 +703,11 @@ static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
     if (seed == NULL) {
         ERR_set_mark();
         seed = newseed = rand_new_seed(ctx);
+        if (ERR_count_to_mark() > 0) {
+            EVP_RAND_CTX_free(newseed);
+            ERR_clear_last_mark();
+            return NULL;
+        }
         ERR_pop_to_mark();
     }
 #endif /* !FIPS_MODULE || !OPENSSL_NO_FIPS_JITTER */
