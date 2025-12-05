@@ -254,8 +254,8 @@ int BIO_method_type(const BIO *b)
 }
 
 /*
- * This is essentially the same as BIO_read_ex() except that it allows
- * 0 or a negative value to indicate failure (retryable or not) in the return.
+ * This is essentially the same as BIO_read_ex() except that it returns 0 in
+ * case of EOF and a negative value to indicate failure (retryable or not).
  * This is for compatibility with the old style BIO_read(), where existing code
  * may make assumptions about the return value that it might get.
  */
@@ -287,6 +287,13 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
     if (ret > 0)
         b->num_read += (uint64_t)*readbytes;
 
+    /*
+     * If method->bread() returned 0, it can be either EOF or an error,
+     * and we should distinguish them
+     */
+    if (ret == 0 && BIO_eof(b) != 1)
+        ret = -1;
+
     if (HAS_CALLBACK(b))
         ret = (int)bio_call_callback(b, BIO_CB_READ | BIO_CB_RETURN, data,
                                      dlen, 0, 0L, ret, readbytes);
@@ -305,8 +312,10 @@ int BIO_read(BIO *b, void *data, int dlen)
     size_t readbytes;
     int ret;
 
-    if (dlen < 0)
-        return 0;
+    if (dlen < 0) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_INVALID_ARGUMENT);
+        return -1;
+    }
 
     ret = bio_read_intern(b, data, (size_t)dlen, &readbytes);
 

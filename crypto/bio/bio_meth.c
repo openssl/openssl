@@ -126,7 +126,13 @@ int bread_conv(BIO *bio, char *data, size_t datal, size_t *readbytes)
 
     ret = bio->method->bread_old(bio, data, (int)datal);
 
-    if (ret <= 0) {
+    if (ret == 0) {
+        bio->flags |= BIO_FLAGS_IN_EOF;
+        *readbytes = 0;
+        return 0;
+    }
+
+    if (ret < 0) {
         *readbytes = 0;
         return ret;
     }
