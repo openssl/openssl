@@ -24,6 +24,7 @@
 #include "crypto/evp/evp_local.h"
 #include "internal/provider.h"
 #include "internal/common.h"
+#include "internal/fips.h"
 
 #define drbg_ctr_get_ctx_params_st drbg_get_ctx_params_st
 #define drbg_ctr_set_ctx_params_st drbg_set_ctx_params_st
@@ -646,6 +647,12 @@ static int drbg_ctr_new(PROV_DRBG *drbg)
 static void *drbg_ctr_new_wrapper(void *provctx, void *parent,
     const OSSL_DISPATCH *parent_dispatch)
 {
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_DRBG_CTR))
+        return NULL;
+#endif
+
     return ossl_rand_drbg_new(provctx, parent, parent_dispatch,
         &drbg_ctr_new, &drbg_ctr_free,
         &drbg_ctr_instantiate, &drbg_ctr_uninstantiate,
