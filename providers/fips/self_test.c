@@ -323,6 +323,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     EVP_RAND *testrand = NULL;
     EVP_RAND_CTX *rng;
 #endif
+    int do_deferred = 0;
 
     if (!RUN_ONCE(&fips_self_test_init, do_fips_self_test_init))
         return 0;
@@ -381,7 +382,10 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         goto end;
     }
 
-    if (!SELF_TEST_kats(ev, st->libctx, on_demand_test)) {
+    if (on_demand_test || strcmp(st->do_not_defer_tests, "1") == 0)
+        do_deferred = 1;
+
+    if (!SELF_TEST_kats(ev, st->libctx, do_deferred)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
         goto end;
     }

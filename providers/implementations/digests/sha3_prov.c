@@ -490,10 +490,10 @@ static PROV_SHA3_METHOD shake_ARMSHA3_md =
 static OSSL_FUNC_digest_newctx_fn name##_newctx;                               \
 static void *name##_newctx(void *provctx)                                      \
 {                                                                              \
-    KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) \
-                                                : NULL;                        \
+    KECCAK1600_CTX *ctx;                                                       \
                                                                                \
-    if (ctx == NULL)                                                           \
+    DIGEST_PROV_CHECK(provctx, SHA3_256);                                      \
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)                          \
         return NULL;                                                           \
     ossl_sha3_init(ctx, pad, bitlen);                                          \
     SHA3_SET_MD(uname, typ)                                                    \

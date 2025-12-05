@@ -24,9 +24,7 @@ static void *aes_gcm_newctx(void *provctx, size_t keybits)
 {
     PROV_AES_GCM_CTX *ctx;
 
-    if (!ossl_prov_is_running())
-        return NULL;
-
+    CIPHER_PROV_CHECK(provctx, AES_256_GCM);
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         ossl_gcm_initctx(provctx, &ctx->base, keybits,
