@@ -176,7 +176,7 @@ All EVP_MD_meth_set_*() functions return 1.
 EVP_MD_get_input_blocksize(), EVP_MD_meth_get_result_size(),
 EVP_MD_meth_get_app_datasize() and EVP_MD_meth_get_flags() return the
 indicated sizes or flags.
-All other EVP_CIPHER_meth_get_*() functions return pointers to their
+All other EVP_MD_meth_get_*() functions return pointers to their
 respective B<md> function.
 
 =head1 SEE ALSO
