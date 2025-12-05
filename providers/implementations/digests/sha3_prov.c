@@ -76,39 +76,7 @@ static int keccak_init_params(void *vctx, const OSSL_PARAM params[])
 
 static int keccak_update(void *vctx, const unsigned char *inp, size_t len)
 {
-    KECCAK1600_CTX *ctx = vctx;
-    const size_t bsz = ctx->block_size;
-    size_t num, rem;
-
-    if (ossl_unlikely(len == 0))
-        return 1;
-
-    /* Is there anything in the buffer already ? */
-    if (ossl_likely((num = ctx->bufsz) != 0)) {
-        /* Calculate how much space is left in the buffer */
-        rem = bsz - num;
-        /* If the new input does not fill the buffer then just add it */
-        if (len < rem) {
-            memcpy(ctx->buf + num, inp, len);
-            ctx->bufsz += len;
-            return 1;
-        }
-        /* otherwise fill up the buffer and absorb the buffer */
-        memcpy(ctx->buf + num, inp, rem);
-        /* Update the input pointer */
-        inp += rem;
-        len -= rem;
-        ctx->meth.absorb(ctx, ctx->buf, bsz);
-        ctx->bufsz = 0;
-    }
-    /* Absorb the input - rem = leftover part of the input < blocksize) */
-    rem = ctx->meth.absorb(ctx, inp, len);
-    /* Copy the leftover bit of the input into the buffer */
-    if (ossl_likely(rem)) {
-        memcpy(ctx->buf, inp + len - rem, rem);
-        ctx->bufsz = rem;
-    }
-    return 1;
+    return ossl_sha3_absorb((KECCAK1600_CTX *)vctx, inp, len);
 }
 
 static int keccak_final(void *vctx, unsigned char *out, size_t *outl,
