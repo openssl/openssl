@@ -35,6 +35,6 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                          )); -}
 
 {- produce_param_decoder('ml_kem_gen_set_params',
-                         (['OSSL_PKEY_PARAM_ML_DSA_SEED', 'seed',  'octet_string'],
+                         (['OSSL_PKEY_PARAM_ML_KEM_SEED', 'seed',  'octet_string'],
                           ['OSSL_PKEY_PARAM_PROPERTIES',  'propq', 'utf8_string'],
                          )); -}
