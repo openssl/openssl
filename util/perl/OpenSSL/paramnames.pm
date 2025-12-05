@@ -222,6 +222,7 @@ my %params = (
     'OSSL_KDF_PARAM_SCRYPT_MAXMEM' => "maxmem_bytes",            # uint64_t
     'OSSL_KDF_PARAM_INFO' =>         "info",                     # octet string
     'OSSL_KDF_PARAM_SEED' =>         "seed",                     # octet string
+    'OSSL_KDF_PARAM_SNMPKDF_EID' =>  "eid",                      # octet string
     'OSSL_KDF_PARAM_SSHKDF_XCGHASH' => "xcghash",                # octet string
     'OSSL_KDF_PARAM_SSHKDF_SESSION_ID' => "session_id",          # octet string
     'OSSL_KDF_PARAM_SSHKDF_TYPE' =>  "type",                     # int
