@@ -143,6 +143,11 @@ An implementation with that input type decodes MSBLOB formatted data.
 
 An implementation with that input type decodes PVK formatted data.
 
+=item raw
+
+An implementation with that input type decodes the provided data as raw bytes.
+This is currently used for symmetric keys.
+
 =back
 
 =item structure
