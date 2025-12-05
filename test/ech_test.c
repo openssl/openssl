@@ -18,7 +18,7 @@
 # define DEF_CERTS_DIR "test/certs"
 
 static OSSL_LIB_CTX *libctx = NULL;
-static char *propq = "provider=default";
+static char *propq = NULL;
 static int verbose = 0;
 static char *certsdir = NULL;
 static char *cert = NULL;

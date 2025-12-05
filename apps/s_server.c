@@ -1504,7 +1504,8 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
         r = BIO_snprintf(filepath, sizeof(filepath), "%s/%s", thedir, thisfile);
 #  endif
         if (app_isdir(filepath) > 0) {
-            BIO_printf(bio_err, "Skipping directory: %s\n", filepath);
+            if (s_debug)
+                BIO_printf(bio_err, "Skipping directory: %s\n", filepath);
             continue;
         }
         if (r < 0
