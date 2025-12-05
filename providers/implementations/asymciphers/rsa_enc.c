@@ -25,6 +25,7 @@
 #include <openssl/prov_ssl.h>
 #include "internal/constant_time.h"
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "internal/sizes.h"
 #include "crypto/rsa.h"
 #include "prov/provider_ctx.h"
@@ -86,6 +87,13 @@ static void *rsa_newctx(void *provctx)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_ASYM_CIPHER_RSA_ENC))
+        return NULL;
+#endif
+
     prsactx = OPENSSL_zalloc(sizeof(PROV_RSA_CTX));
     if (prsactx == NULL)
         return NULL;
