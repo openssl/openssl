@@ -420,10 +420,10 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
 
     if (msg.msg_controllen > 0) {
         cmsg = CMSG_FIRSTHDR(&msg);
-        if (cmsg &&
-            cmsg->cmsg_level == SOL_TLS &&
-            cmsg->cmsg_type  == TLS_GET_RECORD_TYPE &&
-            cmsg->cmsg_len   == CMSG_LEN(sizeof(unsigned char))) {
+        if (cmsg != NULL
+            && cmsg->cmsg_level == SOL_TLS
+            && cmsg->cmsg_type  == TLS_GET_RECORD_TYPE
+            && cmsg->cmsg_len   == CMSG_LEN(sizeof(unsigned char))) {
             p[0] = *((unsigned char *)CMSG_DATA(cmsg));
             p[1] = TLS1_2_VERSION_MAJOR;
             p[2] = TLS1_2_VERSION_MINOR;
