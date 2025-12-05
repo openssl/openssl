@@ -220,7 +220,7 @@ static int test_add(int i)
     return test_add_common(test_add_cases[i]);
 }
 
-#define ADD_TRUNCATED_CASE(i, op1, op2, ex, exp)        \
+#define ADD_TRUNCATED_CASE(i, op1, op2, ex)             \
     {                                                   \
         /* op1, with size */ op1, LIMBSOF(op1),         \
         /* op2, with size */ op2, LIMBSOF(op2),         \
@@ -229,26 +229,26 @@ static int test_add(int i)
         /* op2_live_size */ LIMBSOF(op2) + 2,           \
         /* res_live_size */ LIMBSOF(ex) - 1,            \
         /* check_size */ LIMBSOF(ex) - 1,               \
-        /* extended_limb_value */ (exp),                \
+        /* extended_limb_value */ EXTENDED_LIMB_ZERO,   \
     }
 
 static struct test_case_st test_add_truncated_cases[] = {
-    ADD_TRUNCATED_CASE(1,  num0, num0, ex_add_num0_num0, EXTENDED_LIMB_ZERO),
-    ADD_TRUNCATED_CASE(2,  num0, num1, ex_add_num0_num1, EXTENDED_LIMB_ZERO),
-    ADD_TRUNCATED_CASE(3,  num0, num2, ex_add_num0_num2, EXTENDED_LIMB_ZERO),
-    ADD_TRUNCATED_CASE(4,  num0, num3, ex_add_num0_num3, EXTENDED_LIMB_MINUS_ONE),
-    ADD_TRUNCATED_CASE(5,  num1, num0, ex_add_num0_num1, EXTENDED_LIMB_MINUS_ONE), /* Commutativity check */
-    ADD_TRUNCATED_CASE(6,  num1, num1, ex_add_num1_num1, EXTENDED_LIMB_ZERO),
-    ADD_TRUNCATED_CASE(7,  num1, num2, ex_add_num1_num2, EXTENDED_LIMB_MINUS_ONE),
-    ADD_TRUNCATED_CASE(8,  num1, num3, ex_add_num1_num3, EXTENDED_LIMB_MINUS_ONE),
-    ADD_TRUNCATED_CASE(9,  num2, num0, ex_add_num0_num2, EXTENDED_LIMB_MINUS_ONE), /* Commutativity check */
-    ADD_TRUNCATED_CASE(10, num2, num1, ex_add_num1_num2, EXTENDED_LIMB_ZERO), /* Commutativity check */
-    ADD_TRUNCATED_CASE(11, num2, num2, ex_add_num2_num2, EXTENDED_LIMB_MINUS_ONE),
-    ADD_TRUNCATED_CASE(12, num2, num3, ex_add_num2_num3, EXTENDED_LIMB_MINUS_ONE),
-    ADD_TRUNCATED_CASE(13, num3, num0, ex_add_num0_num3, EXTENDED_LIMB_ZERO), /* Commutativity check */
-    ADD_TRUNCATED_CASE(14, num3, num1, ex_add_num1_num3, EXTENDED_LIMB_ZERO), /* Commutativity check */
-    ADD_TRUNCATED_CASE(15, num3, num2, ex_add_num2_num3, EXTENDED_LIMB_ZERO), /* Commutativity check */
-    ADD_TRUNCATED_CASE(16, num3, num3, ex_add_num3_num3, EXTENDED_LIMB_ZERO),
+    ADD_TRUNCATED_CASE(1,  num0, num0, ex_add_num0_num0),
+    ADD_TRUNCATED_CASE(2,  num0, num1, ex_add_num0_num1),
+    ADD_TRUNCATED_CASE(3,  num0, num2, ex_add_num0_num2),
+    ADD_TRUNCATED_CASE(4,  num0, num3, ex_add_num0_num3),
+    ADD_TRUNCATED_CASE(5,  num1, num0, ex_add_num0_num1), /* Commutativity check */
+    ADD_TRUNCATED_CASE(6,  num1, num1, ex_add_num1_num1),
+    ADD_TRUNCATED_CASE(7,  num1, num2, ex_add_num1_num2),
+    ADD_TRUNCATED_CASE(8,  num1, num3, ex_add_num1_num3),
+    ADD_TRUNCATED_CASE(9,  num2, num0, ex_add_num0_num2), /* Commutativity check */
+    ADD_TRUNCATED_CASE(10, num2, num1, ex_add_num1_num2), /* Commutativity check */
+    ADD_TRUNCATED_CASE(11, num2, num2, ex_add_num2_num2),
+    ADD_TRUNCATED_CASE(12, num2, num3, ex_add_num2_num3),
+    ADD_TRUNCATED_CASE(13, num3, num0, ex_add_num0_num3), /* Commutativity check */
+    ADD_TRUNCATED_CASE(14, num3, num1, ex_add_num1_num3), /* Commutativity check */
+    ADD_TRUNCATED_CASE(15, num3, num2, ex_add_num2_num3), /* Commutativity check */
+    ADD_TRUNCATED_CASE(16, num3, num3, ex_add_num3_num3),
 };
 
 static int test_add_truncated(int i)
