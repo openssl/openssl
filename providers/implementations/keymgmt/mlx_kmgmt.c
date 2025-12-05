@@ -724,6 +724,7 @@ static void *mlx_kem_dup(const void *vkey, int selection)
         if (ret->xkey == NULL)
             return ret;
         /* Fail if the source key is an inconsistent state */
+        OPENSSL_free(ret->propq);
         OPENSSL_free(ret);
         return NULL;
     }
