@@ -410,7 +410,7 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
     memset(p, 0, prepend_length);
 
     ret = recvmsg(fd, &msg, 0);
-    if (ret <= 0)
+    if (ret < 0)
         return ret;
 
     if ((msg.msg_flags & (MSG_EOR | MSG_CTRUNC)) != MSG_EOR) {
@@ -423,7 +423,7 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
         if (cmsg != NULL
             && cmsg->cmsg_level == SOL_TLS
             && cmsg->cmsg_type  == TLS_GET_RECORD_TYPE
-            && cmsg->cmsg_len   == CMSG_LEN(sizeof(unsigned char))) {
+            && cmsg->cmsg_len   >= CMSG_LEN(sizeof(unsigned char))) {
             p[0] = *((unsigned char *)CMSG_DATA(cmsg));
             p[1] = TLS1_2_VERSION_MAJOR;
             p[2] = TLS1_2_VERSION_MINOR;
