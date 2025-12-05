@@ -13,6 +13,7 @@ EVP_MD_CTX_set_flags, EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
 EVP_Q_digest, EVP_Digest, EVP_DigestInit_ex2, EVP_DigestInit_ex, EVP_DigestInit,
 EVP_DigestUpdate, EVP_DigestFinal_ex, EVP_DigestFinalXOF, EVP_DigestFinal,
 EVP_DigestSqueeze,
+EVP_MD_CTX_serialize, EVP_MD_CTX_deserialize,
 EVP_MD_is_a, EVP_MD_get0_name, EVP_MD_get0_description,
 EVP_MD_names_do_all, EVP_MD_get0_provider, EVP_MD_get_type,
 EVP_MD_get_pkey_type, EVP_MD_get_size, EVP_MD_get_block_size, EVP_MD_get_flags,
@@ -65,6 +66,8 @@ EVP_MD_CTX_type, EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_md_data
  int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s);
  int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *out, size_t outlen);
  int EVP_DigestSqueeze(EVP_MD_CTX *ctx, unsigned char *out, size_t outlen);
+ int EVP_MD_CTX_serialize(EVP_MD_CTX *ctx, unsigned char *out, size_t *outlen);
+ int EVP_MD_CTX_deserialize(EVP_MD_CTX *ctx, const unsigned char *in, size_t inlen);
 
  EVP_MD_CTX *EVP_MD_CTX_dup(const EVP_MD_CTX *in);
  int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
@@ -318,6 +321,24 @@ EVP_DigestFinalXOF() may only be called once
 Similar to EVP_DigestFinalXOF() but allows multiple calls to be made to
 squeeze variable length output data.
 EVP_DigestFinalXOF() should not be called after this.
+
+=item EVP_MD_CTX_serialize() and EVP_MD_CTX_deserialize()
+
+EVP_MD_CTX_serialize() serializes the state of the digest context I<ctx>
+and stores it in I<out>, unless I<out> is NULL.
+Otherwise the maximum necessary size of the output buffer is written to
+the I<outlen> parameter. If I<out> is not NULL then before the call the
+I<outlen> parameter must contain the length of the I<out> buffer. If the
+call is successful the data is written to I<out> and the amount of data
+written to I<outlen>.
+
+EVP_MD_CTX_deserialize() deserializes the data from I<in> of size I<inlen>
+into the digest context I<ctx>.
+
+These functions do not guarantee importability of state exported by a
+different OpenSSL version and does not guarantee interoperability between
+different providers. Some providers may not allow export/import across
+process boundaries.
 
 =item EVP_MD_CTX_dup()
 
@@ -632,7 +653,9 @@ EVP_DigestInit_ex(),
 EVP_DigestInit(),
 EVP_DigestUpdate(),
 EVP_DigestFinal_ex(),
-EVP_DigestFinalXOF(), and
+EVP_DigestFinalXOF(),
+EVP_MD_CTX_serialize(),
+EVP_MD_CTX_deserialize(), and
 EVP_DigestFinal()
 
 return 1 for
@@ -862,6 +885,9 @@ The macros EVP_MD_CTX_get_size() and EVP_MD_CTX_size were changed in OpenSSL 3.4
 to be aliases for EVP_MD_CTX_get_size_ex(), previously they were aliases for
 EVP_MD_get_size which returned a constant value. This is required for XOF
 digests since they do not have a fixed size.
+
+The EVP_MD_CTX_serialize() and EVP_MD_CTX_deserialize() functions were added in
+OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
