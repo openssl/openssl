@@ -59,8 +59,8 @@ static size_t g_free_len;
 
 static void free_cb(unsigned char *buf, size_t buf_len, void *arg)
 {
-    g_free      = buf;
-    g_free_len  = buf_len;
+    g_free = buf;
+    g_free_len = buf_len;
 }
 
 static int check(QUIC_CFQ *cfq)
@@ -72,7 +72,7 @@ static int check(QUIC_CFQ *cfq)
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space)
         for (i = 0, item = ossl_quic_cfq_get_priority_head(cfq, pn_space);;
-             ++i, item = ossl_quic_cfq_item_get_priority_next(item, pn_space)) {
+            ++i, item = ossl_quic_cfq_item_get_priority_next(item, pn_space)) {
 
             if (expect[pn_space][i] == UINT32_MAX) {
                 if (!TEST_ptr_null(item))
@@ -85,10 +85,10 @@ static int check(QUIC_CFQ *cfq)
 
             if (!TEST_ptr(item)
                 || !TEST_ptr_eq(ossl_quic_cfq_item_get_encoded(item),
-                                ref_buf + expect[pn_space][i])
+                    ref_buf + expect[pn_space][i])
                 || !TEST_int_eq(ossl_quic_cfq_item_get_pn_space(item), pn_space)
                 || !TEST_int_eq(ossl_quic_cfq_item_get_state(item),
-                                QUIC_CFQ_STATE_NEW))
+                    QUIC_CFQ_STATE_NEW))
                 goto err;
         }
 
@@ -108,27 +108,27 @@ static int test_cfq(void)
     if (!TEST_ptr(cfq = ossl_quic_cfq_new()))
         goto err;
 
-    g_free      = NULL;
-    g_free_len  = 0;
+    g_free = NULL;
+    g_free_len = 0;
 
     for (i = 0; i < OSSL_NELEM(ref_buf); ++i) {
         if (!TEST_ptr(item = ossl_quic_cfq_add_frame(cfq, ref_priority[i],
-                                                     ref_pn_space[i],
-                                                     ref_frame_type[i], 0,
-                                                     ref_buf + i,
-                                                     1,
-                                                     free_cb,
-                                                     NULL))
+                          ref_pn_space[i],
+                          ref_frame_type[i], 0,
+                          ref_buf + i,
+                          1,
+                          free_cb,
+                          NULL))
             || !TEST_int_eq(ossl_quic_cfq_item_get_state(item),
-                            QUIC_CFQ_STATE_NEW)
+                QUIC_CFQ_STATE_NEW)
             || !TEST_uint_eq(ossl_quic_cfq_item_get_pn_space(item),
-                             ref_pn_space[i])
+                ref_pn_space[i])
             || !TEST_uint64_t_eq(ossl_quic_cfq_item_get_frame_type(item),
-                                 ref_frame_type[i])
+                ref_frame_type[i])
             || !TEST_ptr_eq(ossl_quic_cfq_item_get_encoded(item),
-                            ref_buf + i)
+                ref_buf + i)
             || !TEST_size_t_eq(ossl_quic_cfq_item_get_encoded_len(item),
-                               1))
+                1))
             goto err;
     }
 
@@ -137,7 +137,7 @@ static int test_cfq(void)
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space)
         for (item = ossl_quic_cfq_get_priority_head(cfq, pn_space);
-             item != NULL; item = inext) {
+            item != NULL; item = inext) {
             inext = ossl_quic_cfq_item_get_priority_next(item, pn_space);
 
             ossl_quic_cfq_mark_tx(cfq, item);

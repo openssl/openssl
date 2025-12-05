@@ -14,8 +14,9 @@ static void strip_line_ends(char *str)
     size_t i;
 
     for (i = strlen(str);
-         i > 0 && (str[i - 1] == '\n' || str[i - 1] == '\r');
-         i--);
+        i > 0 && (str[i - 1] == '\n' || str[i - 1] == '\r');
+        i--)
+        ;
 
     str[i] = '\0';
 }
@@ -77,11 +78,11 @@ int compare_with_reference_file(BIO *membio, const char *reffile)
             goto err;
     }
     if (!TEST_true(BIO_eof(file))
-            || !TEST_true(BIO_eof(membio)))
+        || !TEST_true(BIO_eof(membio)))
         goto err;
 
     ret = 1;
- err:
+err:
     BIO_free(file);
     BIO_free(newfile);
     return ret;

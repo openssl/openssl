@@ -17,21 +17,21 @@
  * SSL_set_[accept|connect]_state
  */
 IMPLEMENT_quic_meth_func(OSSL_QUIC_ANY_VERSION,
-                         OSSL_QUIC_method,
-                         ssl_undefined_function,
-                         ossl_quic_connect, ssl3_undef_enc_method)
+    OSSL_QUIC_method,
+    ssl_undefined_function,
+    ossl_quic_connect, ssl3_undef_enc_method)
 
 IMPLEMENT_quic_meth_func(OSSL_QUIC_ANY_VERSION,
-                         OSSL_QUIC_client_method,
-                         ssl_undefined_function,
-                         ossl_quic_connect, ssl3_undef_enc_method)
+    OSSL_QUIC_client_method,
+    ssl_undefined_function,
+    ossl_quic_connect, ssl3_undef_enc_method)
 
 IMPLEMENT_quic_meth_func(OSSL_QUIC_ANY_VERSION,
-                         OSSL_QUIC_client_thread_method,
-                         ssl_undefined_function,
-                         ossl_quic_connect, ssl3_undef_enc_method)
+    OSSL_QUIC_client_thread_method,
+    ssl_undefined_function,
+    ossl_quic_connect, ssl3_undef_enc_method)
 
 IMPLEMENT_quic_meth_func(OSSL_QUIC_ANY_VERSION,
-                         OSSL_QUIC_server_method,
-                         ossl_quic_accept,
-                         ssl_undefined_function, ssl3_undef_enc_method)
+    OSSL_QUIC_server_method,
+    ossl_quic_accept,
+    ssl_undefined_function, ssl3_undef_enc_method)

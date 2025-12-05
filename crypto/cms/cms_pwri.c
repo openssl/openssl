@@ -20,7 +20,7 @@
 #include "cms_local.h"
 
 int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
-                                    unsigned char *pass, ossl_ssize_t passlen)
+    unsigned char *pass, ossl_ssize_t passlen)
 {
     CMS_PasswordRecipientInfo *pwri;
     if (ri->type != CMS_RECIPINFO_PASS) {
@@ -37,11 +37,11 @@ int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
 }
 
 CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
-                                               int iter, int wrap_nid,
-                                               int pbe_nid,
-                                               unsigned char *pass,
-                                               ossl_ssize_t passlen,
-                                               const EVP_CIPHER *kekciph)
+    int iter, int wrap_nid,
+    int pbe_nid,
+    unsigned char *pass,
+    ossl_ssize_t passlen,
+    const EVP_CIPHER *kekciph)
 {
     STACK_OF(CMS_RecipientInfo) *ris;
     CMS_RecipientInfo *ri = NULL;
@@ -157,8 +157,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     }
 
     if (!ASN1_item_pack(encalg, ASN1_ITEM_rptr(X509_ALGOR),
-                        &pwri->keyEncryptionAlgorithm->parameter->
-                        value.sequence)) {
+            &pwri->keyEncryptionAlgorithm->parameter->value.sequence)) {
         ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
         goto err;
     }
@@ -170,7 +169,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     /* Setup PBE algorithm */
 
     pwri->keyDerivationAlgorithm = PKCS5_pbkdf2_set_ex(iter, NULL, 0, -1, -1,
-                                                       cms_ctx->libctx);
+        cms_ctx->libctx);
 
     if (pwri->keyDerivationAlgorithm == NULL)
         goto err;
@@ -185,13 +184,12 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 
     return ri;
 
- err:
+err:
     EVP_CIPHER_CTX_free(ctx);
     if (ri)
         M_ASN1_free_of(ri, CMS_RecipientInfo);
     X509_ALGOR_free(encalg);
     return NULL;
-
 }
 
 /*
@@ -200,8 +198,8 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
  */
 
 static int kek_unwrap_key(unsigned char *out, size_t *outlen,
-                          const unsigned char *in, size_t inlen,
-                          EVP_CIPHER_CTX *ctx)
+    const unsigned char *in, size_t inlen,
+    EVP_CIPHER_CTX *ctx)
 {
     int blocklen = EVP_CIPHER_CTX_get_block_size(ctx);
     unsigned char *tmp;
@@ -222,14 +220,14 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
         return 0;
     /* setup IV by decrypting last two blocks */
     if (!EVP_DecryptUpdate(ctx, tmp + inlen - 2 * blocklen, &outl,
-                           in + inlen - 2 * blocklen, blocklen * 2)
+            in + inlen - 2 * blocklen, blocklen * 2)
         /*
          * Do a decrypt of last decrypted block to set IV to correct value
          * output it to start of buffer so we don't corrupt decrypted block
          * this works because buffer is at least two block lengths long.
          */
         || !EVP_DecryptUpdate(ctx, tmp, &outl,
-                              tmp + inlen - blocklen, blocklen)
+            tmp + inlen - blocklen, blocklen)
         /* Can now decrypt first n - 1 blocks */
         || !EVP_DecryptUpdate(ctx, tmp, &outl, in, (int)(inlen - blocklen))
 
@@ -250,15 +248,14 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
     *outlen = (size_t)tmp[0];
     memcpy(out, tmp + 4, *outlen);
     rv = 1;
- err:
+err:
     OPENSSL_clear_free(tmp, inlen);
     return rv;
-
 }
 
 static int kek_wrap_key(unsigned char *out, size_t *outlen,
-                        const unsigned char *in, size_t inlen,
-                        EVP_CIPHER_CTX *ctx, const CMS_CTX *cms_ctx)
+    const unsigned char *in, size_t inlen,
+    EVP_CIPHER_CTX *ctx, const CMS_CTX *cms_ctx)
 {
     size_t blocklen = EVP_CIPHER_CTX_get_block_size(ctx);
     size_t olen;
@@ -291,7 +288,8 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
         /* Add random padding to end */
         if (olen > inlen + 4
             && RAND_bytes_ex(ossl_cms_ctx_get0_libctx(cms_ctx), out + 4 + inlen,
-                             olen - 4 - inlen, 0) <= 0)
+                   olen - 4 - inlen, 0)
+                <= 0)
             return 0;
         /* Encrypt twice */
         if (!EVP_EncryptUpdate(ctx, out, &dummy, out, (int)olen)
@@ -307,7 +305,7 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
 /* Encrypt/Decrypt content key in PWRI recipient info */
 
 int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
-                                      CMS_RecipientInfo *ri, int en_de)
+    CMS_RecipientInfo *ri, int en_de)
 {
     CMS_EncryptedContentInfo *ec;
     CMS_PasswordRecipientInfo *pwri;
@@ -336,7 +334,7 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     }
 
     kekalg = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(X509_ALGOR),
-                                       algtmp->parameter);
+        algtmp->parameter);
 
     if (kekalg == NULL) {
         ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER);
@@ -345,7 +343,7 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
 
     OBJ_obj2txt(name, sizeof(name), kekalg->algorithm, 0);
     kekcipher = EVP_CIPHER_fetch(ossl_cms_ctx_get0_libctx(cms_ctx), name,
-                                 ossl_cms_ctx_get0_propq(cms_ctx));
+        ossl_cms_ctx_get0_propq(cms_ctx));
 
     if (kekcipher == NULL) {
         ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_CIPHER);
@@ -371,9 +369,9 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     /* Finish password based key derivation to setup key in "ctx" */
 
     if (!EVP_PBE_CipherInit_ex(algtmp->algorithm,
-                               (char *)pwri->pass, (int)pwri->passlen,
-                               algtmp->parameter, kekctx, en_de,
-                               cms_ctx->libctx, cms_ctx->propq)) {
+            (char *)pwri->pass, (int)pwri->passlen,
+            algtmp->parameter, kekctx, en_de,
+            cms_ctx->libctx, cms_ctx->propq)) {
         ERR_raise(ERR_LIB_CMS, ERR_R_EVP_LIB);
         goto err;
     }
@@ -399,8 +397,8 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
         if (key == NULL)
             goto err;
         if (!kek_unwrap_key(key, &keylen,
-                            pwri->encryptedKey->data,
-                            pwri->encryptedKey->length, kekctx)) {
+                pwri->encryptedKey->data,
+                pwri->encryptedKey->length, kekctx)) {
             ERR_raise(ERR_LIB_CMS, CMS_R_UNWRAP_FAILURE);
             goto err;
         }
@@ -408,12 +406,11 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
         OPENSSL_clear_free(ec->key, ec->keylen);
         ec->key = key;
         ec->keylen = keylen;
-
     }
 
     r = 1;
 
- err:
+err:
     EVP_CIPHER_free(kekcipher);
     EVP_CIPHER_CTX_free(kekctx);
 
@@ -422,5 +419,4 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     X509_ALGOR_free(kekalg);
 
     return r;
-
 }

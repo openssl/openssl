@@ -60,8 +60,7 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
     ssl_conf_section = CONF_imodule_get_value(md);
     cmd_lists = NCONF_get_section(cnf, ssl_conf_section);
     if (sk_CONF_VALUE_num(cmd_lists) <= 0) {
-        int rcode =
-            cmd_lists == NULL
+        int rcode = cmd_lists == NULL
             ? CONF_R_SSL_SECTION_NOT_FOUND
             : CONF_R_SSL_SECTION_EMPTY;
 
@@ -89,13 +88,12 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
         STACK_OF(CONF_VALUE) *cmds = NCONF_get_section(cnf, sect->value);
 
         if (sk_CONF_VALUE_num(cmds) <= 0) {
-            int rcode =
-                cmds == NULL
+            int rcode = cmds == NULL
                 ? CONF_R_SSL_COMMAND_SECTION_NOT_FOUND
                 : CONF_R_SSL_COMMAND_SECTION_EMPTY;
 
             ERR_raise_data(ERR_LIB_CONF, rcode,
-                           "name=%s, value=%s", sect->name, sect->value);
+                "name=%s, value=%s", sect->name, sect->value);
             goto err;
         }
         ssl_name->name = OPENSSL_strdup(sect->name);
@@ -122,10 +120,9 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
             if (cmd->cmd == NULL || cmd->arg == NULL)
                 goto err;
         }
-
     }
     rv = 1;
- err:
+err:
     if (rv == 0)
         ssl_module_free(md);
     return rv;
@@ -138,7 +135,7 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
  */
 const SSL_CONF_CMD *conf_ssl_get(CONF_IMODULE *md, size_t idx, const char **name, size_t *cnt)
 {
-    SSL_MODULE *ssl = md != NULL ? CONF_imodule_get_usr_data(md): NULL;
+    SSL_MODULE *ssl = md != NULL ? CONF_imodule_get_usr_data(md) : NULL;
 
     if (ssl == NULL || ssl->names == NULL)
         return NULL;
@@ -155,7 +152,7 @@ const SSL_CONF_CMD *conf_ssl_get(CONF_IMODULE *md, size_t idx, const char **name
  */
 int conf_ssl_name_find(CONF_IMODULE *md, const char *name, size_t *idx)
 {
-    SSL_MODULE *ssl = md != NULL ? CONF_imodule_get_usr_data(md): NULL;
+    SSL_MODULE *ssl = md != NULL ? CONF_imodule_get_usr_data(md) : NULL;
     const struct ssl_conf_name_st *nm;
     size_t i;
 
@@ -178,7 +175,7 @@ int conf_ssl_name_find(CONF_IMODULE *md, const char *name, size_t *idx)
  * argument is returned in |*arg|.
  */
 void conf_ssl_get_cmd(const SSL_CONF_CMD *cmd, size_t idx, char **cmdstr,
-                      char **arg)
+    char **arg)
 {
     *cmdstr = cmd[idx].cmd;
     *arg = cmd[idx].arg;
