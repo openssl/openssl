@@ -363,7 +363,7 @@
 #define SSL_IS_QUIC_INT_HANDSHAKE(s) (((s)->s3.flags & TLS1_FLAGS_QUIC_INTERNAL) != 0)
 
 /* no end of early data */
-#define SSL_NO_EOED(s) SSL_IS_QUIC_HANDSHAKE(s)
+#define SSL_NO_EOED(s) (SSL_IS_QUIC_HANDSHAKE(s) || SSL_CONNECTION_IS_DTLS13(s))
 
 /* alert_dispatch values */
 
