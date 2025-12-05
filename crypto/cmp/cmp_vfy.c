@@ -358,7 +358,7 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
     if (!valid) {
         ossl_cmp_warn(ctx,
                       "also exceptional 3GPP mode cert path validation failed");
-    } else if (OSSL_CMP_MSG_get_bodytype(msg) == OSSL_CMP_PKIBODY_IP) {
+    } else {
         /*
          * verify that the newly enrolled certificate (which assumed rid ==
          * OSSL_CMP_CERTREQID) can also be validated with the same trusted store
