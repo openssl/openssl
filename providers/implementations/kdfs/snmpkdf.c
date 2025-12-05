@@ -216,7 +216,7 @@ static int kdf_snmpkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p.size != NULL) {
         size_t sz = kdf_snmpkdf_size(ctx);
 
-	if (sz == 0)
+        if (sz == 0)
             return 0;
         if (!OSSL_PARAM_set_size_t(p.size, sz))
             return 0;
