@@ -609,6 +609,7 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     NULL,
     NULL,
     NULL,
+    NULL,
     ktls_alloc_buffers,
     tls_free_buffers
 };
