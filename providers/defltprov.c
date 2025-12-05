@@ -149,6 +149,8 @@ static const OSSL_ALGORITHM deflt_digests[] = {
 #endif /* OPENSSL_NO_SM3 */
 #ifndef OPENSSL_NO_ASCON128
     { PROV_NAMES_ASCON_HASH256, "provider=default", ossl_ascon_hash256_functions },
+    { PROV_NAMES_ASCON_XOF128, "provider=default", ossl_ascon_xof128_functions },
+    { PROV_NAMES_ASCON_CXOF128, "provider=default", ossl_ascon_cxof128_functions },
 #endif /* OPENSSL_NO_ASCON128 */
 
 #ifndef OPENSSL_NO_MD5
