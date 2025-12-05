@@ -12,7 +12,7 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #ifndef FIPS_MODULE
-# include "crypto/evp.h"
+#include "crypto/evp.h"
 #endif
 #include "prov/providercommon.h"
 #include "prov/provider_util.h"
@@ -45,7 +45,7 @@ static int set_propq(const OSSL_PARAM *propq, const char **propquery)
 }
 
 int ossl_prov_cipher_load(PROV_CIPHER *pc, const OSSL_PARAM *cipher,
-                          const OSSL_PARAM *propq, OSSL_LIB_CTX *ctx)
+    const OSSL_PARAM *propq, OSSL_LIB_CTX *ctx)
 {
     const char *propquery;
 
@@ -60,7 +60,7 @@ int ossl_prov_cipher_load(PROV_CIPHER *pc, const OSSL_PARAM *cipher,
     EVP_CIPHER_free(pc->alloc_cipher);
     ERR_set_mark();
     pc->cipher = pc->alloc_cipher = EVP_CIPHER_fetch(ctx, cipher->data,
-                                                     propquery);
+        propquery);
 #ifndef FIPS_MODULE /* Inside the FIPS module, we don't support legacy ciphers */
     if (pc->cipher == NULL) {
         const EVP_CIPHER *evp_cipher;
@@ -100,7 +100,7 @@ int ossl_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src)
 }
 
 const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OSSL_LIB_CTX *libctx,
-                                     const char *mdname, const char *propquery)
+    const char *mdname, const char *propquery)
 {
     EVP_MD_free(pd->alloc_md);
     pd->md = pd->alloc_md = EVP_MD_fetch(libctx, mdname, propquery);
@@ -109,7 +109,7 @@ const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OSSL_LIB_CTX *libctx,
 }
 
 int ossl_prov_digest_load(PROV_DIGEST *pd, const OSSL_PARAM *digest,
-                          const OSSL_PARAM *propq, OSSL_LIB_CTX *ctx)
+    const OSSL_PARAM *propq, OSSL_LIB_CTX *ctx)
 {
     const char *propquery;
 
@@ -152,10 +152,10 @@ const EVP_MD *ossl_prov_digest_md(const PROV_DIGEST *pd)
 }
 
 int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
-                         const char *ciphername,
-                         const char *mdname,
-                         const char *properties,
-                         const OSSL_PARAM param[])
+    const char *ciphername,
+    const char *mdname,
+    const char *properties,
+    const OSSL_PARAM param[])
 {
     OSSL_PARAM mac_params[5], *mp = mac_params, *mergep;
     int free_merge = 0;
@@ -163,13 +163,13 @@ int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
 
     if (mdname != NULL)
         *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                                 (char *)mdname, 0);
+            (char *)mdname, 0);
     if (ciphername != NULL)
         *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
-                                                 (char *)ciphername, 0);
+            (char *)ciphername, 0);
     if (properties != NULL)
         *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
-                                                 (char *)properties, 0);
+            (char *)properties, 0);
 
     *mp = OSSL_PARAM_construct_end();
 
@@ -199,10 +199,10 @@ int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
 }
 
 int ossl_prov_macctx_load(EVP_MAC_CTX **macctx,
-                          const OSSL_PARAM *pmac, const OSSL_PARAM *pcipher,
-                          const OSSL_PARAM *pdigest, const OSSL_PARAM *propq,
-                          const char *macname, const char *ciphername,
-                          const char *mdname, OSSL_LIB_CTX *libctx)
+    const OSSL_PARAM *pmac, const OSSL_PARAM *pcipher,
+    const OSSL_PARAM *pdigest, const OSSL_PARAM *propq,
+    const char *macname, const char *ciphername,
+    const char *mdname, OSSL_LIB_CTX *libctx)
 {
     const char *properties = NULL;
 
@@ -247,7 +247,7 @@ int ossl_prov_macctx_load(EVP_MAC_CTX **macctx,
 }
 
 void ossl_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE *in,
-                                         OSSL_ALGORITHM *out)
+    OSSL_ALGORITHM *out)
 {
     int i, j;
 
@@ -262,7 +262,7 @@ void ossl_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE *in,
 
 /* Duplicate a lump of memory safely */
 int ossl_prov_memdup(const void *src, size_t src_len,
-                     unsigned char **dest, size_t *dest_len)
+    unsigned char **dest, size_t *dest_len)
 {
     if (src != NULL) {
         if ((*dest = OPENSSL_memdup(src, src_len)) == NULL)

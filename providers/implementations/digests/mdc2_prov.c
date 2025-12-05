@@ -29,7 +29,7 @@ static OSSL_FUNC_digest_set_ctx_params_fn mdc2_set_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn mdc2_settable_ctx_params;
 
 static const OSSL_PARAM *mdc2_settable_ctx_params(ossl_unused void *ctx,
-                                                  ossl_unused void *provctx)
+    ossl_unused void *provctx)
 {
     return mdc2_set_ctx_params_list;
 }

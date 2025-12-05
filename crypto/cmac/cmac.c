@@ -110,7 +110,7 @@ int CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
 }
 
 int ossl_cmac_init(CMAC_CTX *ctx, const void *key, size_t keylen,
-                   const EVP_CIPHER *cipher, const OSSL_PARAM param[])
+    const EVP_CIPHER *cipher, const OSSL_PARAM param[])
 {
     static const unsigned char zero_iv[EVP_MAX_BLOCK_LENGTH] = { 0 };
     int block_len;
@@ -167,7 +167,7 @@ int ossl_cmac_init(CMAC_CTX *ctx, const void *key, size_t keylen,
 }
 
 int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
-              const EVP_CIPHER *cipher, ENGINE *impl)
+    const EVP_CIPHER *cipher, ENGINE *impl)
 {
     if (!ossl_assert(impl == NULL))
         return 0;
@@ -240,7 +240,6 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
     memcpy(ctx->last_block, data, dlen);
     ctx->nlast_block = (int)dlen;
     return 1;
-
 }
 
 int CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)

@@ -54,16 +54,16 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
 
     if (name == NULL) {
         ERR_raise_data(ERR_LIB_SSL, SSL_R_INVALID_CONFIGURATION_NAME,
-                       "name not specified (name == NULL)");
+            "name not specified (name == NULL)");
         goto err;
     }
 
-    libctx = s != NULL ? s->ctx->libctx: ctx->libctx;
+    libctx = s != NULL ? s->ctx->libctx : ctx->libctx;
     imod = ssl_do_lookup_module(libctx);
     if (!conf_ssl_name_find(imod, name, &idx)) {
         if (!system)
             ERR_raise_data(ERR_LIB_SSL, SSL_R_INVALID_CONFIGURATION_NAME,
-                           "name=%s", name);
+                "name=%s", name);
         goto err;
     }
 
@@ -110,7 +110,7 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
     }
     if (!SSL_CONF_CTX_finish(cctx))
         ++err;
- err:
+err:
     OSSL_LIB_CTX_set0_default(prev_libctx);
     SSL_CONF_CTX_free(cctx);
     return err == 0 || (system && !conf_diagnostics);
