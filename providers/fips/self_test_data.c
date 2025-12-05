@@ -3652,7 +3652,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "HASH-DRBG",
         OSSL_SELF_TEST_DESC_DRBG_HASH,
         SELF_TEST_DRBG,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(drbg_hash_sha256_pr_expected),
         .u.drbg = {
@@ -3671,7 +3671,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "CTR-DRBG",
         OSSL_SELF_TEST_DESC_DRBG_CTR,
         SELF_TEST_DRBG,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(drbg_ctr_aes128_pr_df_expected),
         .u.drbg = {
@@ -3690,7 +3690,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "HMAC-DRBG",
         OSSL_SELF_TEST_DESC_DRBG_HMAC,
         SELF_TEST_DRBG,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(drbg_hmac_sha2_pr_expected),
         .u.drbg = {

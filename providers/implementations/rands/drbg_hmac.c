@@ -22,6 +22,7 @@
 #include "prov/drbg.h"
 #include "crypto/evp.h"
 #include "crypto/evp/evp_local.h"
+#include "internal/fips.h"
 #include "internal/provider.h"
 
 #define drbg_hmac_get_ctx_params_st drbg_get_ctx_params_st
@@ -346,6 +347,12 @@ static int drbg_hmac_new(PROV_DRBG *drbg)
 static void *drbg_hmac_new_wrapper(void *provctx, void *parent,
     const OSSL_DISPATCH *parent_dispatch)
 {
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_DRBG_HMAC))
+        return NULL;
+#endif
+
     return ossl_rand_drbg_new(provctx, parent, parent_dispatch,
         &drbg_hmac_new, &drbg_hmac_free,
         &drbg_hmac_instantiate, &drbg_hmac_uninstantiate,
