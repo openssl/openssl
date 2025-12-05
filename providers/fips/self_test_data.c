@@ -1226,6 +1226,13 @@ static const unsigned char rsa_asym_expected_encrypt[256] = {
     0x05, 0x52, 0x55, 0xc1, 0xc6, 0x06, 0x90, 0xab,
 };
 
+static const self_test_id_t rsaenc_depends_on[] = {
+    ST_ID_ASYM_CIPHER_RSA_ENC,
+    ST_ID_ASYM_CIPHER_RSA_DEC,
+    ST_ID_ASYM_CIPHER_RSA_DEC_CRT,
+    ST_ID_MAX
+};
+
 #ifndef OPENSSL_NO_EC
 /* ECDSA key data */
 static const char ecd_prime_curve_name[] = "secp224r1";
@@ -3693,7 +3700,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ML-KEM-512",
         OSSL_SELF_TEST_DESC_KEYGEN_ML_KEM,
         SELF_TEST_KAT_ASYM_KEYGEN,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .u.akgen = {
             ml_kem_keygen_params,
@@ -3747,7 +3754,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "RSA",
         OSSL_SELF_TEST_DESC_ASYM_RSA_ENC,
         SELF_TEST_KAT_ASYM_CIPHER,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(rsa_asym_plaintext_encrypt),
         ITM_BUF(rsa_asym_expected_encrypt),
@@ -3755,13 +3762,14 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
             1,
             rsa_pub_key,
             rsa_enc_params,
-        }
+        },
+        .depends_on = rsaenc_depends_on
     },
     {
         "RSA",
         OSSL_SELF_TEST_DESC_ASYM_RSA_DEC,
         SELF_TEST_KAT_ASYM_CIPHER,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(rsa_asym_expected_encrypt),
         ITM_BUF(rsa_asym_plaintext_encrypt),
@@ -3769,13 +3777,14 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
             0,
             rsa_priv_key,
             rsa_enc_params,
-        }
+        },
+        .depends_on = rsaenc_depends_on
     },
     {
         "RSA",
         OSSL_SELF_TEST_DESC_ASYM_RSA_DEC,
         SELF_TEST_KAT_ASYM_CIPHER,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         ITM_BUF(rsa_asym_expected_encrypt),
         ITM_BUF(rsa_asym_plaintext_encrypt),
@@ -3783,6 +3792,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
             0,
             rsa_crt_key,
             rsa_enc_params,
-        }
+        },
+        .depends_on = rsaenc_depends_on
     },
 };
