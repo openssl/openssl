@@ -15,6 +15,7 @@
 #include <openssl/core_names.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
@@ -60,6 +61,16 @@ static void *kdf_sshkdf_new(void *provctx)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    /*
+     * According to FIPS 140-3 10.3.A Note18: SSH KDF is not required, since
+     * it is sufficient to self-test the underlying SHA hash functions.
+     */
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+                                 ST_ID_DIGEST_SHA256))
+        return NULL;
+#endif
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL) {
         ctx->provctx = provctx;
