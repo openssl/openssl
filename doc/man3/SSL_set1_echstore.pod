@@ -71,7 +71,7 @@ TODO(ECH): Replace XXXX with issued RFC number.
 
 The Encrypted Client Hello (ECH) APIs described here are built around
 the concept of an B<OSSL_ECHSTORE> which contains ECH configuration
-information relevant for the current B<SSL_CTX> or B<SSL> connection.
+information relevant for an B<SSL_CTX> or B<SSL> connection.
 
 =head2 OSSL_ECHSTORE APIs
 
@@ -93,14 +93,18 @@ last entry. An I<index> of B<OSSL_ECHSTORE_ALL> will output all public values,
 and no private values.) These two APIs will typically be used via the "openssl
 ech" command line tool.
 
-OSSL_ECHSTORE_read_echconfiglist() will typically be used by a client to
-ingest the "ech=" SvcParamKey value found in an SVCB or HTTPS RR retrieved from
+OSSL_ECHSTORE_read_echconfiglist() reads from the I<in> B<BIO> and parses
+the "ech=" SvcParamKey value found in an SVCB or HTTPS RR retrieved from
 the DNS. The resulting set of ECHConfig values can then be associated with an
-B<SSL_CTX> or B<SSL> structure for TLS connections.
+B<SSL_CTX> or B<SSL> structure for TLS client connections.
 
 OSSL_ECHSTORE_get1_info() presents the caller with information about the
 content of the store for logging or for display, e.g. in a command line tool.
-OSSL_ECHSTORE_downselect() API gives the client a way to select one
+The information is what is present in an ECHConfig as described in RFCXXXX,
+being the ECH version information, configuration-id, public-name, algorithms
+and the public key value.
+
+OSSL_ECHSTORE_downselect() gives the client a way to select one
 particular ECHConfig value from the set stored (discarding the rest).
 
 OSSL_ECHSTORE_set1_key_and_read_pem() and OSSL_ECHSTORE_read_pem() can be used
@@ -130,7 +134,9 @@ allow clients and servers to associate an B<OSSL_ECHSTORE>
 with an B<SSL_CTX> or B<SSL> structure.
 ECH will be enabled for the relevant B<SSL_CTX> or B<SSL> connection
 when these functions succeed. Any previously associated B<OSSL_ECHSTORE>
-will be freed via OSSL_ECHSTORE_free().
+will be freed via OSSL_ECHSTORE_free(). Internally, B<OSSL_ECHSTORE>
+values within an B<SSL_CTX> or B<SSL> connection are always copied,
+and are not refcounted.
 
 SSL_CTX_get1_echstore() and SSL_get1_echstore()
 provide access to the B<OSSL_ECHSTORE> associated with an B<SSL_CTX> or
@@ -151,7 +157,7 @@ more directly control the values to be used for inner and outer SNI values, for
 example allowing a client to override the I<public_name> present in an
 ECHConfigList that will otherwise be used for the outer ClientHello SNI. The
 I<no_outer> input allows a client to emit an outer ClientHello with no SNI at
-all. Providing a B<NULL> for the I<outer_name> means to send the I<public_name>
+all. Providing a NULL for the I<outer_name> means to send the I<public_name>
 provided from the ECHConfigList.
 
 If a client has called L<SSL_CTX_set_alpn_protos(3)> or L<SSL_set_alpn_protos(3)>
@@ -159,7 +165,7 @@ then the ALPN value will be the same in the inner and outer ClientHello
 messages.
 SSL_ech_set1_outer_alpn_protos() and SSL_CTX_ech_set1_outer_alpn_protos()
 allow clients to set a specific value for the ALPN sent in the outer
-ClientHello
+ClientHello.
 
 If a client attempts ECH but that fails, or sends an ECH-GREASEd ClientHello, to an
 ECH-supporting server, then that server may return an ECH I<retry-config> value
@@ -170,14 +176,15 @@ retry config value via SSL_ech_get1_retry_config().
 "GREASEing" (defined in RFC8701) is a mechanism
 intended to discourage protocol ossification that can be used for ECH.
 
-SSL_ech_set1_grease_suite() and SSL_ech_set_grease_type() allow a client to
-GREASE using  a specific HPKE suite or ECH version (represented by the TLS
-extension type code-point).
+SSL_ech_set1_grease_suite() allows a client to GREASE using a specific B
+<OSSL_HPKE_SUITE> (see L<OSSL_HPKE_get_grease_value,3>).
+SSL_ech_set_grease_type() allows a client to add a GREASE'd ECH with the
+specified ClientHello extension number.
 
 Clients and servers can query the status of ECH for a TLS session using the
 SSL_ech_get1_status() function. As SNI handling is core to ECH this will return
 the I<inner_sni> and I<outer_sni> values to be used or that were used as well
-as a status code as the return value. (These must be freed by the caller.)
+as a status code as the return value. These must be freed by the caller.
 The various status values are as shown in L</Constants>.
 
 =head2 Callback Functions
@@ -230,28 +237,27 @@ Some externally visible limits:
 
 =over 4
 
-=item B<OSSL_ECH_MAX_PAYLOAD_LEN> 1500, max ECH ciphertext to en/decode
+=item B<OSSL_ECH_MAX_PAYLOAD_LEN> 1500, maximum length of an ECH ciphertext to en/decode
 
-=item B<OSSL_ECH_MIN_ECHCONFIG_LEN> 32, min for all encodings
+=item B<OSSL_ECH_MIN_ECHCONFIG_LEN> 32, minimum length of an encoded ECHConfig
 
-=item B<OSSL_ECH_MAX_ECHCONFIG_LEN> 1500, max for all encodings
+=item B<OSSL_ECH_MAX_ECHCONFIG_LEN> 1500, maximum length of an encoded ECHConfig
 
-=item B<OSSL_ECH_MAX_ECHCONFIGEXT_LEN> 512, ECHConfig extension max
+=item B<OSSL_ECH_MAX_ECHCONFIGEXT_LEN> 512, maximum length of an ECHConfig extension
 
-=item B<OSSL_ECH_MAX_MAXNAMELEN> 255, ECHConfig max for max name length
+=item B<OSSL_ECH_MAX_MAXNAMELEN> 255, maximum for ECHConfig max name length
 
-=item B<OSSL_ECH_MAX_PUBLICNAME> 255, max ECHConfig public name length
+=item B<OSSL_ECH_MAX_PUBLICNAME> 255, maximum length of an ECHConfig public name
 
-=item B<OSSL_ECH_MAX_ALPN_LEN> 255, max alpn overall length
+=item B<OSSL_ECH_MAX_ALPN_LEN> 255, maximum overall length of an ALPN
 
-=item B< OSSL_ECH_OUTERS_MAX> 20, max extensions we compress via outer-exts
+=item B< OSSL_ECH_OUTERS_MAX> 20, maximum number of extensions compressed via outer-exts
 
-=item B< OSSL_ECH_ALLEXTS_MAX> 32, max total number of extension we allow
-
+=item B< OSSL_ECH_ALLEXTS_MAX> 32, maximum total number of extensions allowed
 
 =back
 
-ECH version - we only support version 0xfe0d as of now.
+ECH version - the only supported version is 0xfe0d currently.
 
 =over 4
 
@@ -325,7 +331,7 @@ SSL_ech_get_retry_config(), SSL_CTX_ech_set1_outer_alpn_protos() and
 SSL_CTX_ech_raw_decrypt() all return zero on error and one on success.
 
 SSL_ech_set_callback(), SSL_CTX_ech_set_callback(), OSSL_ECHSTORE_free() have
-no return.
+no return value.
 
 OSSL_ECHSTORE_new() returns a pointer to an B<OSSL_ECHSTORE>.
 
