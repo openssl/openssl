@@ -278,19 +278,54 @@ static int ascon_cxof128_prov_init(void *vctx, const OSSL_PARAM params[])
     ascon_cxof128_prov_ctx *ctx = (ascon_cxof128_prov_ctx *)vctx;
     const unsigned char *custom = NULL;
     size_t customlen = 0;
+    const OSSL_PARAM *p;
 
     if (!ossl_prov_is_running())
         return 0;
 
-    /* Use stored customization string if available, otherwise empty */
-    if (ctx->custom != NULL && ctx->custom_len > 0) {
+    /* Reset initialized flag to allow re-initialization */
+    ctx->initialized = 0;
+
+    /* Process params to extract customization string if provided */
+    if (params != NULL) {
+        p = OSSL_PARAM_locate_const(params, "custom");
+        if (p != NULL) {
+            if (p->data_type != OSSL_PARAM_OCTET_STRING)
+                return 0;
+
+            /* For OSSL_PARAM_OCTET_STRING, data is directly in p->data */
+            if (p->data != NULL && p->data_size > 0) {
+                custom = (const unsigned char *)p->data;
+                customlen = p->data_size;
+            } else {
+                custom = NULL;
+                customlen = 0;
+            }
+        }
+
+        /* Also process XOFLEN and SIZE parameters */
+        p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_XOFLEN);
+        if (p != NULL) {
+            if (!OSSL_PARAM_get_size_t(p, &ctx->xoflen))
+                return 0;
+        }
+
+        p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_SIZE);
+        if (p != NULL) {
+            if (!OSSL_PARAM_get_size_t(p, &ctx->xoflen))
+                return 0;
+        }
+    }
+
+    /* Use stored customization string if params didn't provide one */
+    if (custom == NULL && ctx->custom != NULL && ctx->custom_len > 0) {
         custom = ctx->custom;
         customlen = ctx->custom_len;
     }
 
     /* Initialize with customization string */
     ossl_ascon_cxof128_init(&ctx->cxof_ctx, custom, customlen);
-    ctx->xoflen = SIZE_MAX; /* Default: no fixed length */
+    /* xoflen is already initialized in newctx, or set from params above */
     ctx->initialized = 1;
     return 1;
 }
@@ -444,12 +479,7 @@ static int ascon_cxof128_prov_set_ctx_params(void *vctx, const OSSL_PARAM params
     if (ctx == NULL)
         return 0;
 
-    /* Customization string must be set before initialization */
-    if (ctx->initialized) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_STATE);
-        return 0;
-    }
-
+    /* Handle XOFLEN and SIZE parameters - these can be set after initialization */
     p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_XOFLEN);
     if (p != NULL) {
         if (!OSSL_PARAM_get_size_t(p, &ctx->xoflen))
@@ -467,6 +497,12 @@ static int ascon_cxof128_prov_set_ctx_params(void *vctx, const OSSL_PARAM params
     /* Note: "custom" is not a standard OSSL_DIGEST_PARAM, but needed for CXOF */
     p = OSSL_PARAM_locate_const(params, "custom");
     if (p != NULL) {
+        /* Customization string must be set before initialization */
+        if (ctx->initialized) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_STATE);
+            return 0;
+        }
+
         if (p->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
 
