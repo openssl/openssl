@@ -195,7 +195,7 @@ int ech_main(int argc, char **argv)
         }
         if (verbose)
             BIO_printf(bio_err, "Calling OSSL_ECHSTORE_new_config\n");
-        if ((ecf = BIO_new_file(outfile, "w")) == NULL
+        if ((ecf = bio_open_owner(outfile, FORMAT_PEM, 1)) == NULL
             || OSSL_ECHSTORE_new_config(es, ech_version, max_name_length,
                                         public_name, hpke_suite) != 1
             || OSSL_ECHSTORE_write_pem(es, 0, ecf) != 1) {
