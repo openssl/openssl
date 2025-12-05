@@ -8,7 +8,7 @@
  */
 
 /*
- * TODO: Add a the equivalent of the ech_tls12_with_ech_test
+ * TODO(ECH): Add a the equivalent of the ech_tls12_with_ech_test
  * here via a pre-cooked buffer so we no longer need the
  * OPENSSL_ECH_ALLOW_CUST_INJECT to be defined
  */
