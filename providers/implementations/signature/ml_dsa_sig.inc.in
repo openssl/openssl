@@ -17,6 +17,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                           ['OSSL_SIGNATURE_PARAM_DETERMINISTIC',    'det',    'int'],
                           ['OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING', 'msgenc', 'int'],
                           ['OSSL_SIGNATURE_PARAM_MU',               'mu',     'int'],
+                          ['OSSL_SIGNATURE_PARAM_MU_ONLY',          'muonly', 'int'],
                          )); -}
 
 {- produce_param_decoder('ml_dsa_verifymsg_set_ctx_params',
@@ -25,6 +26,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                           ['OSSL_SIGNATURE_PARAM_DETERMINISTIC',    'det',    'int'],
                           ['OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING', 'msgenc', 'int'],
                           ['OSSL_SIGNATURE_PARAM_MU',               'mu',     'int'],
+                          ['OSSL_SIGNATURE_PARAM_MU_ONLY',          'muonly', 'int'],
                           ['OSSL_SIGNATURE_PARAM_SIGNATURE',        'sig',    'octet_string'],
                          )); -}
 

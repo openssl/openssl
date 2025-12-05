@@ -118,7 +118,8 @@ __owur int ossl_ml_dsa_sign(const ML_DSA_KEY *priv, int msg_is_mu,
                             const uint8_t *msg, size_t msg_len,
                             const uint8_t *context, size_t context_len,
                             const uint8_t *rand, size_t rand_len, int encode,
-                            unsigned char *sig, size_t *siglen, size_t sigsize);
+                            unsigned char *sig, size_t *siglen, size_t sigsize,
+                            int sig_is_mu);
 __owur int ossl_ml_dsa_verify(const ML_DSA_KEY *pub, int msg_is_mu,
                               const uint8_t *msg, size_t msg_len,
                               const uint8_t *context, size_t context_len,
