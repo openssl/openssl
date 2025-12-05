@@ -575,6 +575,12 @@ static const ST_KAT_PARAM kbkdf_kmac_params[] = {
 };
 #endif /* OPENSSL_NO_KBKDF */
 
+static const self_test_id_t kbkdf_depends_on[] = {
+    ST_ID_KDF_KBKDF,
+    ST_ID_KDF_KBKDF_KMAC,
+    ST_ID_MAX
+};
+
 static const char tls13_kdf_digest[] = "SHA256";
 static int tls13_kdf_extract_mode = EVP_KDF_HKDF_MODE_EXTRACT_ONLY;
 static int tls13_kdf_expand_mode = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
@@ -628,10 +634,15 @@ static const ST_KAT_PARAM tls13_kdf_client_early_secret_params[] = {
 };
 
 /*
- * NOTES:
- * According to FIPS 140-3 10.3.A Note18: SSH KDF is not required, since it is
- * sufficient to self-test the underlying SHA hash functions.
+ * When calling the HKDF newctx function we do not necessarily know which of
+ * the variants will be used, so we just test them all at once
  */
+static const self_test_id_t hkdf_depends_on[] = {
+    ST_ID_KDF_KBKDF,
+    ST_ID_KDF_TLS13_EXTRACT,
+    ST_ID_KDF_TLS13_EXPAND,
+    ST_ID_MAX
+};
 
 /*-
  * DRBG test vectors are a small subset of
@@ -3558,29 +3569,31 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         OSSL_KDF_NAME_TLS1_3_KDF,
         OSSL_SELF_TEST_DESC_KDF_TLS13_EXTRACT,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(tls13_kdf_early_secret),
         .u.kdf = {
             tls13_kdf_early_secret_params,
         },
+        .depends_on = hkdf_depends_on,
     },
     {
         OSSL_KDF_NAME_TLS1_3_KDF,
         OSSL_SELF_TEST_DESC_KDF_TLS13_EXPAND,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(tls13_kdf_client_early_traffic_secret),
         .u.kdf = {
             tls13_kdf_client_early_secret_params,
         },
+        .depends_on = hkdf_depends_on,
     },
     {
         OSSL_KDF_NAME_TLS1_PRF,
         OSSL_SELF_TEST_DESC_KDF_TLS12_PRF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(tls12prf_expected),
         .u.kdf = {
@@ -3591,7 +3604,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         OSSL_KDF_NAME_PBKDF2,
         OSSL_SELF_TEST_DESC_KDF_PBKDF2,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(pbkdf2_expected),
         .u.kdf = {
@@ -3603,42 +3616,45 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         OSSL_KDF_NAME_KBKDF,
         OSSL_SELF_TEST_DESC_KDF_KBKDF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(kbkdf_expected),
         .u.kdf = {
             kbkdf_params,
         },
+        .depends_on = kbkdf_depends_on,
     },
     {
         OSSL_KDF_NAME_KBKDF,
         OSSL_SELF_TEST_DESC_KDF_KBKDF_KMAC,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(kbkdf_kmac_expected),
         .u.kdf = {
             kbkdf_kmac_params,
         },
+        .depends_on = kbkdf_depends_on,
     },
 #endif
     {
         OSSL_KDF_NAME_HKDF,
         OSSL_SELF_TEST_DESC_KDF_HKDF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(hkdf_expected),
         .u.kdf = {
             hkdf_params,
         },
+        .depends_on = hkdf_depends_on,
     },
 #ifndef OPENSSL_NO_SNMPKDF
     {
         OSSL_KDF_NAME_SNMPKDF,
         OSSL_SELF_TEST_DESC_KDF_SNMPKDF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(snmpkdf_expected),
         .u.kdf = {
@@ -3651,7 +3667,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         OSSL_KDF_NAME_SRTPKDF,
         OSSL_SELF_TEST_DESC_KDF_SRTPKDF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(srtpkdf_expected),
         .u.kdf = {
@@ -3664,12 +3680,10 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         OSSL_KDF_NAME_SSKDF,
         OSSL_SELF_TEST_DESC_KDF_SSKDF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(sskdf_expected),
-        .u.kdf = {
-            sskdf_params,
-        },
+        .u.kdf = { sskdf_params },
     },
 #endif
 #ifndef OPENSSL_NO_X963KDF
@@ -3677,12 +3691,10 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         OSSL_KDF_NAME_X963KDF,
         OSSL_SELF_TEST_DESC_KDF_X963KDF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(x963kdf_expected),
-        .u.kdf = {
-            x963kdf_params,
-        },
+        .u.kdf = { x963kdf_params },
     },
 #endif
 #ifndef OPENSSL_NO_X942KDF
@@ -3690,7 +3702,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         OSSL_KDF_NAME_X942KDF_ASN1,
         OSSL_SELF_TEST_DESC_KDF_X942KDF,
         SELF_TEST_KAT_KDF,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(x942kdf_expected),
         .u.kdf = {

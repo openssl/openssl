@@ -44,6 +44,7 @@
 #include <openssl/params.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
@@ -86,7 +87,9 @@ struct sskdf_all_set_ctx_params_st {
     int num_info;
 };
 
+static OSSL_FUNC_kdf_newctx_fn sskdf_common_new;
 static OSSL_FUNC_kdf_newctx_fn sskdf_new;
+static OSSL_FUNC_kdf_newctx_fn x963_new;
 static OSSL_FUNC_kdf_dupctx_fn sskdf_dup;
 static OSSL_FUNC_kdf_freectx_fn sskdf_free;
 static OSSL_FUNC_kdf_reset_fn sskdf_reset;
@@ -317,7 +320,7 @@ end:
 }
 #endif /* OPENSSL_NO_SSKDF */
 
-static void *sskdf_new(void *provctx)
+static void *sskdf_common_new(void *provctx)
 {
     KDF_SSKDF *ctx;
 
@@ -329,6 +332,28 @@ static void *sskdf_new(void *provctx)
         OSSL_FIPS_IND_INIT(ctx)
     }
     return ctx;
+}
+
+static void *sskdf_new(void *provctx)
+{
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KDF_SSKDF))
+        return NULL;
+#endif
+
+    return sskdf_common_new(provctx);
+}
+
+static void *x963_new(void *provctx)
+{
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KDF_X963KDF))
+        return NULL;
+#endif
+
+    return sskdf_common_new(provctx);
 }
 
 static void sskdf_reset(void *vctx)
@@ -360,7 +385,7 @@ static void *sskdf_dup(void *vctx)
     const KDF_SSKDF *src = (const KDF_SSKDF *)vctx;
     KDF_SSKDF *dest;
 
-    dest = sskdf_new(src->provctx);
+    dest = sskdf_common_new(src->provctx);
     if (dest != NULL) {
         if (src->macctx != NULL) {
             dest->macctx = EVP_MAC_CTX_dup(src->macctx);
@@ -759,7 +784,7 @@ const OSSL_DISPATCH ossl_kdf_sskdf_functions[] = {
 
 #ifndef OPENSSL_NO_X963KDF
 const OSSL_DISPATCH ossl_kdf_x963_kdf_functions[] = {
-    { OSSL_FUNC_KDF_NEWCTX, (void (*)(void))sskdf_new },
+    { OSSL_FUNC_KDF_NEWCTX, (void (*)(void))x963_new },
     { OSSL_FUNC_KDF_DUPCTX, (void (*)(void))sskdf_dup },
     { OSSL_FUNC_KDF_FREECTX, (void (*)(void))sskdf_free },
     { OSSL_FUNC_KDF_RESET, (void (*)(void))sskdf_reset },
