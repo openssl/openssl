@@ -6910,6 +6910,72 @@ end:
     return testresult;
 }
 
+/*
+ * Test that AEAD decrypt final without setting a tag fails and pushes an EVP error
+ */
+static int test_evp_aead_missing_tag_error(void)
+{
+    int ret = 0;
+    EVP_CIPHER_CTX *enc = NULL, *dec = NULL;
+    EVP_CIPHER *ciph = NULL;
+    unsigned char key[16] = {0};
+    unsigned char iv[12] = {0};
+    unsigned char pt[32] = { 'H', 'e', 'l', 'l', 'o', ' ', 'A', 'E', 'A', 'D' };
+    unsigned char ct[64];
+    int outl = 0, tmplen = 0;
+    unsigned long err = 0;
+
+    enc = EVP_CIPHER_CTX_new();
+    dec = EVP_CIPHER_CTX_new();
+    if (!TEST_ptr(enc) || !TEST_ptr(dec))
+        goto end;
+
+    ciph = EVP_CIPHER_fetch(testctx, "AES-128-GCM", testpropq);
+    if (!TEST_ptr(ciph))
+        goto end;
+
+    /* Encrypt to get ciphertext */
+    if (!TEST_true(EVP_EncryptInit_ex(enc, ciph, NULL, key, iv)))
+        goto end;
+    if (!TEST_true(EVP_EncryptUpdate(enc, ct, &outl, pt, (int)sizeof(pt))))
+        goto end;
+    if (!TEST_true(EVP_EncryptFinal_ex(enc, ct + outl, &tmplen)))
+        goto end;
+    outl += tmplen;
+
+    /* Now decrypt but DO NOT set the tag */
+    ERR_clear_error();
+    if (!TEST_true(EVP_DecryptInit_ex(dec, ciph, NULL, key, iv)))
+        goto end;
+
+    /* Supply ciphertext */
+    if (!TEST_true(EVP_DecryptUpdate(dec, pt, &tmplen, ct, outl)))
+        goto end;
+
+    /* Missing tag: expect failure and an EVP error on the stack */
+    ERR_set_mark();
+    if (!TEST_false(EVP_DecryptFinal_ex(dec, pt + tmplen, &outl))) {
+        ERR_clear_last_mark();
+        goto end;
+    }
+    err = ERR_peek_last_error();
+    if (!TEST_ulong_ne(err, 0)
+            || !TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_EVP)
+            || !TEST_int_eq(ERR_GET_REASON(err), EVP_R_FINAL_ERROR)) {
+        ERR_clear_last_mark();
+        goto end;
+    }
+    ERR_pop_to_mark();
+
+    ret = 1;
+
+ end:
+    EVP_CIPHER_CTX_free(enc);
+    EVP_CIPHER_CTX_free(dec);
+    EVP_CIPHER_free(ciph);
+    return ret;
+}
+
 int setup_tests(void)
 {
     char *config_file = NULL;
@@ -6971,6 +7037,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_EVP_PKEY_sign_with_app_method, 2);
 #endif
     ADD_ALL_TESTS(test_EVP_Enveloped, 2);
+    ADD_TEST(test_evp_aead_missing_tag_error);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey, OSSL_NELEM(keydata));
     ADD_TEST(test_privatekey_to_pkcs8);
     ADD_TEST(test_EVP_PKCS82PKEY_wrong_tag);
