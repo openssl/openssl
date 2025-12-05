@@ -87,13 +87,22 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
                 return 1;
             }
             break;
+            /*
+             * RFC 9147 Section 5.6 states DTLS1.3 should omit the
+             * End of Early Data Message
+             */
         } else if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
-            && !SSL_NO_EOED(s)) {
+            && !SSL_NO_EOED(s) && !SSL_CONNECTION_IS_DTLS13(s)) {
             if (mt == SSL3_MT_END_OF_EARLY_DATA) {
                 st->hand_state = TLS_ST_SR_END_OF_EARLY_DATA;
                 return 1;
             }
             break;
+        } else if (SSL_CONNECTION_IS_DTLS13(s)) {
+            /*
+             * Let DTLS1.3 failthrough to the Finished processing below
+             */
+            s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
         }
         /* Fall through */
 

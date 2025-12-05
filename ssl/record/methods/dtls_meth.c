@@ -715,7 +715,13 @@ again:
      * processed at this time.
      */
     if (is_next_epoch) {
-        if (rl->in_init) {
+        /*
+         * DTLS1.3 if we are are in Early Data (Epoch 1) and
+         * we get an Epoch 2 record, we need to end
+         * Early Data. The record needs to be buffered
+         * for the next record layer.
+         */
+        if (rl->in_init || (rl->version == DTLS1_3_VERSION && rr->epoch == 2 && rl->epoch == 1)) {
             if (dtls_rlayer_buffer_record(rl, &rl->unprocessed_rcds,
                     rr->seq_num)
                 < 0) {
@@ -985,6 +991,11 @@ static int dtls_set_curr_mtu(OSSL_RECORD_LAYER *rl, size_t mtu)
     return 1;
 }
 
+static int dtls_unprocessed_records(OSSL_RECORD_LAYER *rl)
+{
+    return pqueue_size(&rl->unprocessed_rcds);
+}
+
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     dtls_new_record_layer,
     dtls_free,
@@ -1013,6 +1024,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     dtls_set_sequence_number,
     dtls_get_epoch,
     dtls_set_curr_mtu,
+    dtls_unprocessed_records,
     tls_alloc_buffers,
     tls_free_buffers
 };

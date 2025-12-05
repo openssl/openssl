@@ -332,6 +332,11 @@ struct ossl_record_method_st {
     int (*set_curr_mtu)(OSSL_RECORD_LAYER *rl, size_t curr_mtu);
 
     /*
+     * Return number of records in the queue of unprocessed records
+     */
+    int (*unprocessed_records)(OSSL_RECORD_LAYER *rl);
+
+    /*
      * Allocate read or write buffers. Does nothing if already allocated.
      * Assumes default buffer length and 1 pipeline.
      */
