@@ -177,7 +177,7 @@ retry config value via SSL_ech_get1_retry_config().
 intended to discourage protocol ossification that can be used for ECH.
 
 SSL_ech_set1_grease_suite() allows a client to GREASE using a specific B
-<OSSL_HPKE_SUITE> (see L<OSSL_HPKE_get_grease_value,3>).
+<OSSL_HPKE_SUITE> (see L<OSSL_HPKE_get_grease_value(3)>).
 SSL_ech_set_grease_type() allows a client to add a GREASE'd ECH with the
 specified ClientHello extension number.
 
