@@ -191,6 +191,20 @@ static const OSSL_PARAM *kdf_snmpkdf_settable_ctx_params(ossl_unused void *ctx,
     return snmp_set_ctx_params_list;
 }
 
+static size_t kdf_snmpkdf_size(KDF_SNMPKDF *ctx)
+{
+    int len;
+    const EVP_MD *md = NULL;
+
+    md = ossl_prov_digest_md(&ctx->digest);
+    if (md == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
+        return 0;
+    }
+    len = EVP_MD_get_size(md);
+    return (len <= 0) ? 0 : (size_t)len;
+}
+
 static int kdf_snmpkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     struct snmp_get_ctx_params_st p;
@@ -199,8 +213,14 @@ static int kdf_snmpkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (ctx == NULL || !snmp_get_ctx_params_decoder(params, &p))
         return 0;
 
-    if (p.size != NULL && !OSSL_PARAM_set_size_t(p.size, SIZE_MAX))
-        return 0;
+    if (p.size != NULL) {
+        size_t sz = kdf_snmpkdf_size(ctx);
+
+	if (sz == 0)
+            return 0;
+        if (!OSSL_PARAM_set_size_t(p.size, sz))
+            return 0;
+    }
     return 1;
 }
 
@@ -274,7 +294,7 @@ static int SNMPKDF(const EVP_MD *evp_md,
         goto err;
     }
 
-    mdsize = EVP_MD_size(evp_md);
+    mdsize = EVP_MD_get_size(evp_md);
     if (mdsize <= 0 || mdsize < okeylen)
         goto err;
 
