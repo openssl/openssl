@@ -709,6 +709,9 @@ typedef struct digest_data_st {
     int xof;
     /* Size for variable output length but non-XOF */
     size_t digest_size;
+    /* Customization string (for CXOF) */
+    unsigned char *custom;
+    size_t custom_len;
 } DIGEST_DATA;
 
 static int digest_test_init(EVP_TEST *t, const char *alg)
@@ -746,6 +749,7 @@ static void digest_test_cleanup(EVP_TEST *t)
 
     sk_EVP_TEST_BUFFER_pop_free(mdat->input, evp_test_buffer_free);
     OPENSSL_free(mdat->output);
+    OPENSSL_free(mdat->custom);
     EVP_MD_free(mdat->fetched_digest);
 }
 
@@ -775,6 +779,8 @@ static int digest_test_parse(EVP_TEST *t,
         mdata->digest_size = sz;
         return 1;
     }
+    if (strcmp(keyword, "Custom") == 0)
+        return parse_bin(value, &mdata->custom, &mdata->custom_len);
     return 0;
 }
 
@@ -812,7 +818,7 @@ static int digest_test_run(EVP_TEST *t)
     unsigned int got_len;
     size_t size = 0;
     int xof = 0;
-    OSSL_PARAM params[4], *p = &params[0];
+    OSSL_PARAM params[5], *p = &params[0];
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
@@ -835,6 +841,10 @@ static int digest_test_run(EVP_TEST *t)
     if (expected->pad_type > 0)
         *p++ = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_PAD_TYPE,
                                         &expected->pad_type);
+    if (expected->custom != NULL)
+        *p++ = OSSL_PARAM_construct_octet_string("custom",
+                                                  expected->custom,
+                                                  expected->custom_len);
     *p++ = OSSL_PARAM_construct_end();
 
     if (!EVP_DigestInit_ex2(mctx, expected->digest, params)) {
