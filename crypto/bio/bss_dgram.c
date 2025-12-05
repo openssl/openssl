@@ -64,7 +64,12 @@
 #undef NO_RECVMSG
 #define NO_RECVMSG
 #endif
-#if (defined(__ANDROID_API__) && __ANDROID_API__ < 21) || defined(_AIX)
+#if (defined(__ANDROID_API__) && __ANDROID_API__ < 21)
+#undef NO_RECVMMSG
+#define NO_RECVMMSG
+#endif
+#if defined(_AIX) && !defined(_AIX72)
+/* AIX >= 7.2 provides sendmmsg() and recvmmsg(). */
 #undef NO_RECVMMSG
 #define NO_RECVMMSG
 #endif
@@ -130,7 +135,13 @@
     BIO_MAX(BIO_CMSG_ALLOC_LEN_1, \
         BIO_MAX(BIO_CMSG_ALLOC_LEN_2, BIO_CMSG_ALLOC_LEN_3))
 #endif
-#if (defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)) && defined(IPV6_RECVPKTINFO)
+/*
+ * Although AIX defines IP_RECVDSTADDR and IPV6_RECVPKTINFO, the
+ * implementation requires IP_PKTINFO to be available for AF_INET.
+ * For AF_INET6 there seem to be limitations how local addresses
+ * are handled on AIX. So, disable the support for now.
+ */
+#if (defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)) && defined(IPV6_RECVPKTINFO) && !defined(_AIX)
 #define SUPPORT_LOCAL_ADDR
 #endif
 #endif
