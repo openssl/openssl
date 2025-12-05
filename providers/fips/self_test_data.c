@@ -3690,7 +3690,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "DH",
         OSSL_SELF_TEST_DESC_KA_DH,
         SELF_TEST_KAT_KAS,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(dh_secret_expected),
         .u.kas = {
@@ -3705,7 +3705,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "EC",
         OSSL_SELF_TEST_DESC_KA_ECDH,
         SELF_TEST_KAT_KAS,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .expected = ITM_BUF(ecdh_secret_expected),
         .u.kas = {
