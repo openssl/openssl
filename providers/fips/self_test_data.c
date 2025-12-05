@@ -3826,7 +3826,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ML-KEM-512",
         OSSL_SELF_TEST_DESC_KEYGEN_ML_KEM,
         SELF_TEST_KAT_ASYM_KEYGEN,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .u.akgen = {
             ml_kem_keygen_params,
@@ -3839,7 +3839,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         "ML-DSA-65",
         OSSL_SELF_TEST_DESC_KEYGEN_ML_DSA,
         SELF_TEST_KAT_ASYM_KEYGEN,
-        SELF_TEST_ONLOAD,
+        SELF_TEST_DEFERRED,
         SELF_TEST_STATE_INIT,
         .u.akgen = {
             ml_dsa_keygen_params,
