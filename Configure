@@ -450,6 +450,8 @@ my @disablables = (
     "crypto-mdebug",
     "allocfail-tests",
     "ct",
+    "default-fallback-provider", # Don't make the default provider a fallback
+    "default-provider",          # Don't include the default provider at all
     "default-thread-pool",
     "demos",
     "h3demo",
@@ -711,7 +713,9 @@ my @disable_cascades = (
 
     "deprecated-3.0"    => [ "srp" ],
 
-    "http"              => [ "ocsp" ]
+    "http"              => [ "ocsp" ],
+
+    "default-provider"  => [ "default-fallback-provider" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
