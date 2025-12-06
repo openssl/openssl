@@ -466,8 +466,6 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
         /* use this one to start the connection */
         if (data->state != BIO_CONN_S_OK)
             ret = (long)conn_state(b, data);
-        else
-            ret = 1;
         break;
     case BIO_C_GET_CONNECT:
         if (ptr != NULL) {
@@ -655,6 +653,8 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_WPENDING:
         ret = 0;
         break;
+    case BIO_CTRL_PUSH:
+    case BIO_CTRL_POP:
     case BIO_CTRL_FLUSH:
         break;
     case BIO_CTRL_DUP:
@@ -713,7 +713,9 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
             BIO_set_ktls_zerocopy_sendfile_flag(b);
         break;
 # endif
+
     default:
+        ERR_raise_data(ERR_LIB_BIO, ERR_R_UNSUPPORTED, "cmd=%d", cmd);
         ret = 0;
         break;
     }
