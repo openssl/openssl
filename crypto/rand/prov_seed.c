@@ -45,7 +45,7 @@ size_t ossl_rand_get_user_entropy(OSSL_LIB_CTX *ctx,
                                   unsigned char **pout, int entropy,
                                   size_t min_len, size_t max_len)
 {
-    EVP_RAND_CTX *rng = ossl_rand_get0_seed_noncreating(ctx);
+    EVP_RAND_CTX *rng = ossl_rand_get0_seed_creating(ctx);
 
     if (rng != NULL && evp_rand_can_seed(rng))
         return evp_rand_get_seed(rng, pout, entropy, min_len, max_len,

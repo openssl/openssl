@@ -1353,7 +1353,8 @@ application.
 
 Instead of manually seeding, a different random generator can be set
 at runtime in openssl.cnf or configured at build time with
--DOPENSSL_DEFAULT_SEED_SRC.
+-DOPENSSL_DEFAULT_SEED_SRC. Optionally, OPENSSL_DEFAULT_SEED_PROPQ can
+also be set if needed.
 
 Please read the 'Note on random number generation' section in the
 INSTALL.md instructions and the RAND_DRBG(7) manual page for more

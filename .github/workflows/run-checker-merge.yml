@@ -78,8 +78,18 @@ jobs:
       run: make -C jitter/
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
-    - name: config
+    - name: config (with fips-jitter)
       run: ./config --with-rand-seed=none enable-jitter enable-fips-jitter --with-jitter-include=jitter/ --with-jitter-lib=jitter/ -DOPENSSL_DEFAULT_SEED_SRC=JITTER && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+    - name: config (without fips-jitter)
+      run: ./config --with-rand-seed=none enable-jitter enable-fips --with-jitter-include=jitter/ --with-jitter-lib=jitter/ -DOPENSSL_DEFAULT_SEED_SRC=JITTER -DOPENSSL_DEFAULT_SEED_PROPQ=-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info

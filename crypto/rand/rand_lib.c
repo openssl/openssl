@@ -25,6 +25,10 @@
 #include "internal/provider.h"
 #include "internal/common.h"
 
+/*
+ * Default fallback seed source.
+ * Also OPENSSL_DEFAULT_SEED_PROPQ is supported, if needed
+ */
 #ifndef OPENSSL_DEFAULT_SEED_SRC
 # define OPENSSL_DEFAULT_SEED_SRC SEED-SRC
 #endif
@@ -530,6 +534,12 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
     if (dgbl == NULL)
         return NULL;
     propq = dgbl->seed_propq;
+
+#  ifdef OPENSSL_DEFAULT_SEED_PROPQ
+    if (propq == NULL)
+        propq = OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_PROPQ);
+#  endif
+
     name = dgbl->seed_name != NULL ? dgbl->seed_name
                                    : OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC);
 # else /* !OPENSSL_NO_FIPS_JITTER */
@@ -572,6 +582,37 @@ EVP_RAND_CTX *ossl_rand_get0_seed_noncreating(OSSL_LIB_CTX *ctx)
         return NULL;
     ret = dgbl->seed;
     CRYPTO_THREAD_unlock(dgbl->lock);
+    return ret;
+}
+
+EVP_RAND_CTX *ossl_rand_get0_seed_creating(OSSL_LIB_CTX *ctx)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+    EVP_RAND_CTX *ret;
+
+    if (dgbl == NULL)
+        return NULL;
+
+    if (!CRYPTO_THREAD_read_lock(dgbl->lock))
+        return NULL;
+    ret = dgbl->seed;
+    CRYPTO_THREAD_unlock(dgbl->lock);
+
+    /* Seed exist, return it */
+    if (ret != NULL)
+        return ret;
+
+    /* Attempt to create new seed */
+    ERR_set_mark();
+    ret = rand_new_seed(ctx);
+    ERR_pop_to_mark();
+
+    /* Attempt to set new seed if one was created */
+    if (ret != NULL && CRYPTO_THREAD_write_lock(dgbl->lock)) {
+        dgbl->seed = ret;
+        CRYPTO_THREAD_unlock(dgbl->lock);
+    }
+
     return ret;
 }
 #endif  /* !FIPS_MODULE */
