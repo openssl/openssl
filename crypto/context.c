@@ -570,6 +570,13 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx)
     return NULL;
 }
 
+int OSSL_LIB_CTX_freeze(OSSL_LIB_CTX *ctx, const char *propq)
+{
+    if ((ctx = ossl_lib_ctx_get_concrete(ctx)) == NULL)
+        return 0;
+    return ossl_method_store_freeze(ctx->evp_method_store, propq);
+}
+
 void ossl_release_default_drbg_ctx(void)
 {
     /* early release of the DRBG in global default libctx */

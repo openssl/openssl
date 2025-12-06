@@ -21,6 +21,7 @@
 #include "crypto/sparse_array.h"
 #include "property_local.h"
 #include "crypto/context.h"
+#include "crypto/evp.h"
 
 /*
  * The shard count was determined through performance testing with the evp_fetch
@@ -72,6 +73,13 @@ typedef struct {
     LHASH_OF(QUERY) *cache;
 } ALGORITHM;
 
+struct ossl_frozen_method_store_st {
+    /* Property query associated with frozen state */
+    char *propq;
+
+    /* TODO: FREEZE */
+};
+
 typedef struct {
     SPARSE_ARRAY_OF(ALGORITHM) * algs;
 
@@ -102,8 +110,8 @@ struct ossl_method_store_st {
      */
     CRYPTO_RWLOCK *biglock;
 
-    /* Flag: 1 if method store is frozen */
-    int frozen;
+    /* Non-null if method store is frozen */
+    OSSL_FROZEN_METHOD_STORE *frozen_store;
 };
 
 typedef struct {
@@ -323,6 +331,9 @@ void ossl_method_store_free(OSSL_METHOD_STORE *store)
 
     stored_algs_free(store->algs);
     CRYPTO_THREAD_lock_free(store->biglock);
+    if (store->frozen_store != NULL)
+        OPENSSL_free(store->frozen_store->propq);
+    OPENSSL_free(store->frozen_store);
     OPENSSL_free(store);
 }
 
@@ -382,7 +393,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     int ret = 0;
     int i;
 
-    if (nid <= 0 || method == NULL || store == NULL || store->frozen == 1)
+    if (nid <= 0 || method == NULL || store == NULL || store->frozen_store != NULL)
         return 0;
 
     if (properties == NULL)
@@ -500,7 +511,7 @@ int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
     STORED_ALGORITHMS *sa;
     int i;
 
-    if (nid <= 0 || method == NULL || store == NULL || store->frozen == 1)
+    if (nid <= 0 || method == NULL || store == NULL || store->frozen_store != NULL)
         return 0;
 
     sa = stored_algs_shard(store, nid);
@@ -603,7 +614,7 @@ int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
 {
     struct alg_cleanup_by_provider_data_st data;
 
-    if (store == NULL || store->frozen == 1)
+    if (store == NULL || store->frozen_store != NULL)
         return 0;
 
     for (int k = 0; k < NUM_SHARDS; ++k) {
@@ -619,13 +630,38 @@ int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
     return 1;
 }
 
-int ossl_method_store_freeze(OSSL_METHOD_STORE *store)
+int ossl_method_store_freeze(OSSL_METHOD_STORE *store, const char *propq)
 {
-    if (store == NULL || store->frozen == 1)
+    if (store == NULL || store->frozen_store != NULL)
         return 0;
+    store->frozen_store = OPENSSL_zalloc(sizeof(*store->frozen_store));
+    if (store->frozen_store == NULL)
+        return 0;
+    if (propq != NULL) {
+        store->frozen_store->propq = OPENSSL_strdup(propq);
+        if (store->frozen_store->propq == NULL) {
+            OPENSSL_free(store->frozen_store);
+            store->frozen_store = NULL;
+            return 0;
+        }
+    }
     /* TODO: FREEZE: Create frozen caches */
-    store->frozen = 1;
     return 1;
+}
+
+int ossl_method_store_is_frozen(OSSL_METHOD_STORE *store)
+{
+    return store != NULL && store->frozen_store != NULL;
+}
+
+OSSL_FROZEN_METHOD_STORE *ossl_get_frozen_method_store(OSSL_METHOD_STORE *store)
+{
+    return store != NULL ? store->frozen_store : NULL;
+}
+
+const char *ossl_get_frozen_method_store_propq(OSSL_FROZEN_METHOD_STORE *store)
+{
+    return (store != NULL && store->propq != NULL) ? store->propq : "";
 }
 
 static void alg_do_one(ALGORITHM *alg, IMPLEMENTATION *impl,
@@ -865,7 +901,7 @@ static void ossl_method_cache_flush(STORED_ALGORITHMS *sa, int nid)
 
 int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 {
-    if (store == NULL || store->frozen == 1)
+    if (store == NULL || store->frozen_store != NULL)
         return 0;
 
     for (int i = 0; i < NUM_SHARDS; ++i) {
@@ -956,6 +992,11 @@ static void ossl_method_cache_flush_some(STORED_ALGORITHMS *sa)
         tsan_add(&global_seed, state.seed);
 }
 
+/* TODO: FREEZE: Remove these and replace with actual implementation */
+static int andrew_nid = -1;
+static EVP_MD andrew_md;
+static void *andrew_method;
+
 int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, void **method)
 {
@@ -981,11 +1022,38 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         goto err;
     if (ossl_method_up_ref(&r->method)) {
         *method = r->method.method;
+        /* TODO: FREEZE: Remove this */
+        if (nid != andrew_nid) {
+            memcpy(&andrew_md, r->method.method, sizeof(andrew_md));
+            andrew_md.origin = EVP_ORIG_FROZEN;
+            andrew_method = &andrew_md;
+            andrew_nid = nid;
+        }
         res = 1;
     }
 err:
     ossl_property_unlock(sa);
     return res;
+}
+
+int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
+    OSSL_PROVIDER *prov, int nid,
+    const char *prop_query, void **method)
+{
+    /*
+     * Query triplet (nid, prov, prop_query) from frozen store with no fallback.
+     */
+
+    /*
+     * TODO: FREEZE: Replace with actual implementation
+     * For now, just fetch from global variables
+     */
+    if (nid == andrew_nid && andrew_method != NULL) {
+        *method = andrew_method;
+        return 1;
+    }
+
+    return 0;
 }
 
 int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
@@ -999,7 +1067,7 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     size_t len;
     int res = 1;
 
-    if (nid <= 0 || store == NULL || prop_query == NULL || store->frozen == 1)
+    if (nid <= 0 || store == NULL || prop_query == NULL || store->frozen_store != NULL)
         return 0;
 
     if (!ossl_assert(prov != NULL))
@@ -1033,6 +1101,17 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         if (!ossl_method_up_ref(&p->method))
             goto err;
         memcpy((char *)p->query, prop_query, len + 1);
+
+        /* TODO: FREEZE: Remove this */
+        if (nid != andrew_nid) {
+            EVP_MD *md = (EVP_MD *)p->method.method;
+
+            memcpy(&andrew_md, md, sizeof(andrew_md));
+            andrew_md.origin = EVP_ORIG_FROZEN;
+            andrew_method = &andrew_md;
+            andrew_nid = nid;
+        }
+
         if ((old = lh_QUERY_insert(alg->cache, p)) != NULL) {
             impl_cache_free(old);
             goto end;
