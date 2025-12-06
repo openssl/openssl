@@ -107,7 +107,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     ASN1_INTEGER *serial = NULL;
     X509_EXTENSION *ext;
     X509 *issuer_cert;
-    int same_issuer, ss;
+    int self_signed = 0;
     AUTHORITY_KEYID *akeyid = AUTHORITY_KEYID_new();
 
     if (akeyid == NULL)
@@ -156,36 +156,31 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_ISSUER_CERTIFICATE);
         goto err;
     }
-    same_issuer = ctx->subject_cert == ctx->issuer_cert;
-    ERR_set_mark();
-    if (ctx->issuer_pkey != NULL)
-        ss = X509_check_private_key(ctx->subject_cert, ctx->issuer_pkey);
-    else
-        ss = same_issuer;
-    ERR_pop_to_mark();
+
+    if (ctx->subject_cert != NULL && ctx->issuer_pkey != NULL) {
+        ERR_set_mark();
+        self_signed = X509_check_private_key(ctx->subject_cert,
+                                             ctx->issuer_pkey);
+        ERR_pop_to_mark();
+    }
 
     /* unless forced with "always", AKID is suppressed for self-signed certs */
-    if (keyid == 2 || (keyid == 1 && !ss)) {
+    if (keyid == 2 || (keyid == 1 && !self_signed)) {
         /*
          * prefer any pre-existing subject key identifier of the issuer cert
-         * except issuer cert is same as subject cert and is not self-signed
+         * except issuer cert is same as subject cert and private key is given
          */
-        i = X509_get_ext_by_NID(issuer_cert, NID_subject_key_identifier, -1);
-        if (i >= 0 && (ext = X509_get_ext(issuer_cert, i)) != NULL
-            && !(same_issuer && !ss)) {
-            ikeyid = X509V3_EXT_d2i(ext);
-            if (ASN1_STRING_length(ikeyid) == 0) /* indicating "none" */ {
-                ASN1_OCTET_STRING_free(ikeyid);
-                ikeyid = NULL;
-            }
-        }
-        if (ikeyid == NULL && same_issuer && ctx->issuer_pkey != NULL) {
+        if (ctx->subject_cert == issuer_cert && ctx->issuer_pkey != NULL) {
             /* generate fallback AKID, emulating s2i_skey_id(..., "hash") */
             X509_PUBKEY *pubkey = NULL;
 
             if (X509_PUBKEY_set(&pubkey, ctx->issuer_pkey))
                 ikeyid = ossl_x509_pubkey_hash(pubkey);
             X509_PUBKEY_free(pubkey);
+        } else {
+            i = X509_get_ext_by_NID(issuer_cert, NID_subject_key_identifier, -1);
+            if (i >= 0 && (ext = X509_get_ext(issuer_cert, i)) != NULL)
+                ikeyid = X509V3_EXT_d2i(ext);
         }
         if (keyid == 2 && ikeyid == NULL) {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_UNABLE_TO_GET_ISSUER_KEYID);
@@ -193,16 +188,13 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         }
     }
 
-    if (issuer == 2 || (issuer == 1 && !ss && ikeyid == NULL)) {
+    if (issuer == 2 || (issuer == 1 && ikeyid == NULL && !self_signed)) {
         isname = X509_NAME_dup(X509_get_issuer_name(issuer_cert));
         serial = ASN1_INTEGER_dup(X509_get0_serialNumber(issuer_cert));
         if (isname == NULL || serial == NULL) {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS);
             goto err;
         }
-    }
-
-    if (isname != NULL) {
         if ((gens = sk_GENERAL_NAME_new_null()) == NULL
             || (gen = GENERAL_NAME_new()) == NULL) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
@@ -217,8 +209,6 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     }
 
     akeyid->issuer = gens;
-    gen = NULL;
-    gens = NULL;
     akeyid->serial = serial;
     akeyid->keyid = ikeyid;
 

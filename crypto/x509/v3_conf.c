@@ -340,11 +340,18 @@ int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx, const char *section,
                                         val->name, val->value)) == NULL)
             return 0;
         if (sk != NULL) {
-            if (ctx->flags == X509V3_CTX_REPLACE)
+            if ((ctx->flags & X509V3_CTX_REPLACE) != 0)
                 delete_ext(*sk, ext);
-            if (X509v3_add_ext(sk, ext, -1) == NULL) {
-                X509_EXTENSION_free(ext);
-                return 0;
+            if ((ctx->flags & X509V3_CTX_REPLACE) == 0
+                    || ctx->subject_req != NULL || (i != akid && i != skid)
+                    || ASN1_STRING_length(X509_EXTENSION_get_data(ext)) > 2) {
+                if (X509v3_add_ext(sk, ext, -1) == NULL) {
+                    X509_EXTENSION_free(ext);
+                    return 0;
+                }
+            } else if (*sk != NULL && sk_X509_EXTENSION_num(*sk) == 0) {
+                sk_X509_EXTENSION_free(*sk);
+                *sk = NULL;
             }
         }
         X509_EXTENSION_free(ext);

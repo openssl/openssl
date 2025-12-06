@@ -10,6 +10,7 @@
 #define OPENSSL_SUPPRESS_DEPRECATED /* EVP_PKEY_get1/set1_RSA */
 
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
@@ -282,6 +283,83 @@ err:
     return ret;
 }
 
+static int test_x509_old_abi_compat_mode_extension(void)
+{
+    static const unsigned char commonName[] = "test";
+    X509 *x = NULL;
+    X509_NAME *subject = NULL;
+    X509_NAME_ENTRY *name_entry = NULL;
+    X509_EXTENSION *ext = NULL;
+    X509V3_CTX ctx;
+    const STACK_OF(X509_EXTENSION) *exts;
+    ASN1_OCTET_STRING *encoded;
+    int ret = 0;
+
+    if (!TEST_ptr(x = X509_new())
+            || !TEST_int_eq(X509_set_version(x, X509_VERSION_3), 1)
+            || !TEST_int_eq(ASN1_INTEGER_set(X509_get_serialNumber(x), 1), 1)
+            || !TEST_ptr(subject = X509_NAME_new()))
+        goto err;
+
+    name_entry = X509_NAME_ENTRY_create_by_NID(NULL, NID_commonName,
+                                               MBSTRING_ASC, commonName, -1);
+    if (!TEST_ptr(name_entry)
+            || !TEST_int_eq(X509_NAME_add_entry(subject, name_entry, -1, 0), 1)
+            || !TEST_int_eq(X509_set_subject_name(x, subject), 1)
+            || !TEST_int_eq(X509_set_issuer_name(x, subject), 1)
+            || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(x), 0))
+            || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(x), 24 * 3600))
+            || !TEST_int_eq(X509_set_pubkey(x, pubkey), 1))
+        goto err;
+
+    X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
+    /*
+     * By not calling X509V3_set_issuer_pkey(&ctx, privkey);
+     * here, we are exempt from the 3.x convention, regarding
+     * the authorityKeyIdentifier=keyid,issuer which may return
+     * an empty extension for self signed certificates.
+     * Therefore an empty extension cannot be produced here.
+     */
+    if (!TEST_ptr(ext = X509V3_EXT_conf(NULL, &ctx, "subjectKeyIdentifier",
+                                        "hash"))
+            || !TEST_int_eq(X509_add_ext(x, ext, -1), 1))
+        goto err;
+
+    X509_EXTENSION_free(ext);
+    if (!TEST_ptr(ext = X509V3_EXT_conf(NULL, &ctx, "authorityKeyIdentifier",
+                                        "keyid,issuer"))
+            || !TEST_int_eq(X509_add_ext(x, ext, -1), 1))
+        goto err;
+
+    if (!TEST_int_gt(X509_sign(x, privkey, signmd), 0)
+            || !TEST_int_gt(X509_verify(x, pubkey), 0))
+        goto err;
+
+    exts = X509_get0_extensions(x);
+    if (!TEST_ptr(exts)
+            || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 2))
+        goto err;
+
+    encoded = X509_EXTENSION_get_data(X509v3_get_ext(exts, 0));
+    if (!TEST_ptr(encoded)
+            || !TEST_int_gt(ASN1_STRING_length(encoded), 2))
+        goto err;
+
+    encoded = X509_EXTENSION_get_data(X509v3_get_ext(exts, 1));
+    if (!TEST_ptr(encoded)
+            || !TEST_int_gt(ASN1_STRING_length(encoded), 2))
+        goto err;
+
+    ret = 1;
+
+err:
+    X509_NAME_ENTRY_free(name_entry);
+    X509_NAME_free(subject);
+    X509_EXTENSION_free(ext);
+    X509_free(x);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("<pss-self-signed-cert.pem>\n")
 
 int setup_tests(void)
@@ -319,6 +397,7 @@ int setup_tests(void)
     ADD_TEST(test_x509_delete_last_extension);
     ADD_TEST(test_x509_crl_delete_last_extension);
     ADD_TEST(test_x509_revoked_delete_last_extension);
+    ADD_TEST(test_x509_old_abi_compat_mode_extension);
     return 1;
 }
 
