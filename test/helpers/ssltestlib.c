@@ -162,9 +162,6 @@ static void dump_data(const char *data, int len)
         if (rem != len)
             printf("*\n");
         printf("*---- START OF RECORD ----\n");
-        /*
-         * TODO(DTLSv1.3): support variable length headers
-         */
         if (rem < rechdrlen) {
             printf("*---- RECORD TRUNCATED ----\n");
             break;
@@ -440,8 +437,10 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
             offset = 0;
 
             if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec)) {
-                /* rec[DTLS13_UNI_HDR_RECORD_SEQ_HI] = (seq >> 8) & 0xFF; */
-                /* rec[DTLS13_UNI_HDR_RECORD_SEQ_LO] = seq & 0xFF; */
+                /*
+                 * TODO(DTLSv1.3):
+                 * Sequence number is encrypted how do we retrieve it?
+                 */
             } else {
                 do {
                     rec[RECORD_SEQUENCE_END - offset] = seq & 0xFF;
