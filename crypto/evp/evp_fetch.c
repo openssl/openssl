@@ -388,6 +388,79 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
     return method;
 }
 
+/*
+ * Returns 1 if method store is frozen AND prop query is equal to frozen prop
+ * query. Only sets METHOD if found.
+ */
+int evp_generic_fetch_frozen(OSSL_LIB_CTX *libctx, int operation_id,
+    const char *name, const char *properties,
+    OSSL_PROVIDER *prov, void **method)
+{
+    OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
+    OSSL_FROZEN_METHOD_STORE *frozen_store;
+    const char *store_propq;
+    OSSL_NAMEMAP *namemap;
+    uint32_t meth_id;
+#ifdef FIPS_MODULE
+    /*
+     * The FIPS provider has its own internal library context where only it
+     * is loaded.  Consequently, property queries aren't relevant because
+     * there is only one fetchable algorithm and it is assumed that the
+     * FIPS-ness is handled by the using algorithm.
+     */
+    const char *const propq = "";
+#else
+    const char *const propq = properties != NULL ? properties : "";
+#endif /* FIPS_MODULE */
+
+    if (store == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    /*
+     * If there's ever an operation_id == 0 passed, we have an internal
+     * programming error.
+     */
+    if (!ossl_assert(operation_id > 0)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* Return 0 if not frozen or prop query is different than frozen prop query */
+    if (!ossl_method_store_is_frozen(store)
+        || (frozen_store = ossl_get_frozen_method_store(store)) == NULL)
+        return 0;
+
+    if (strlen(propq) != 0) {
+        store_propq = ossl_get_frozen_method_store_propq(frozen_store);
+        if (strcmp(propq, store_propq) != 0)
+            return 0;
+    }
+
+    /* If we haven't received a name id yet, try to get one for the name */
+    namemap = ossl_namemap_stored(libctx);
+    if (namemap == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    meth_id = name != NULL ? ossl_namemap_name2num(namemap, name) : 0;
+
+    /*
+     * If we have a name id, calculate a method id with evp_method_id().
+     *
+     * evp_method_id returns 0 if we have too many operations (more than
+     * about 2^8) or too many names (more than about 2^24).
+     * For all intents and purposes, this is an internal error.
+     */
+    if (meth_id != 0 && (meth_id = evp_method_id(meth_id, operation_id)) == 0) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return ossl_frozen_method_store_cache_get(store, prov, meth_id, propq, method);
+}
+
 void *evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
     const char *name, const char *properties,
     void *(*new_method)(int name_id,
