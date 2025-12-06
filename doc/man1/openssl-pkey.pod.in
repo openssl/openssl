@@ -22,6 +22,7 @@ B<openssl> B<pkey>
 [B<-pubin>]
 [B<-out> I<filename>]
 [B<-outform> B<DER>|B<PEM>]
+[B<-encopt> I<opt>:I<value>]
 [B<-I<cipher>>]
 [B<-passout> I<arg>]
 [B<-traditional>]
@@ -113,6 +114,17 @@ When password input is interrupted, the output file is not touched.
 
 The key output format; the default is B<PEM>.
 See L<openssl-format-options(1)> for details.
+
+=item B<-encopt> I<opt>:I<value>
+
+Set the private key encoder parameter I<opt> to I<value>.
+The precise set of supported parameters depends on the public key algorithm
+used and its implementation.
+This is primarily applicable to B<ML-DSA> and B<ML-KEM>, whose private key
+encoding to a B<PKCS#8> object can take a number of different forms.
+The C<output_formats> parameter can be used to select the preferred output
+forms.
+See L<EVP_PKEY-ML-DSA(7)> and L<EVP_PKEY-ML-KEM(7)> for details.
 
 =item B<-I<cipher>>
 
@@ -229,6 +241,13 @@ L<openssl-gendsa(1)>
 =head1 HISTORY
 
 The B<-engine> option was removed in OpenSSL 4.0.
+
+The B<-encopt> option was added in OpenSSL 4.0.
+
+As of OpenSSL 4.0 the B<-pass> and B<-I<cipher>> options apply when
+private keys are output in either B<DER> or B<PEM> form.
+Previously, these private key encryption options were rejected in combination
+with the B<DER> output form.
 
 =head1 COPYRIGHT
 

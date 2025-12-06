@@ -14,12 +14,13 @@
 #include "ec_common.h"
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#include <openssl/encoder.h>
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_INFORM, OPT_OUTFORM, OPT_PASSIN, OPT_PASSOUT,
+    OPT_INFORM, OPT_OUTFORM, OPT_ENCOPT, OPT_PASSIN, OPT_PASSOUT,
     OPT_IN, OPT_OUT, OPT_PUBIN, OPT_PUBOUT, OPT_TEXT_PUB,
     OPT_TEXT, OPT_NOOUT, OPT_CIPHER, OPT_TRADITIONAL, OPT_CHECK, OPT_PUB_CHECK,
     OPT_EC_PARAM_ENC, OPT_EC_CONV_FORM,
@@ -44,6 +45,7 @@ const OPTIONS pkey_options[] = {
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file for encoded and/or text output"},
     {"outform", OPT_OUTFORM, 'F', "Output encoding format (DER or PEM)"},
+    {"encopt", OPT_ENCOPT, 's', "Private key encoder parameter"},
     {"", OPT_CIPHER, '-', "Any supported cipher to be used for encryption"},
     {"passout", OPT_PASSOUT, 's', "Output PEM file pass phrase source"},
     {"traditional", OPT_TRADITIONAL, '-',
@@ -73,6 +75,7 @@ int pkey_main(int argc, char **argv)
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM;
     int pubin = 0, pubout = 0, text_pub = 0, text = 0, noout = 0, ret = 1;
     int private = 0, traditional = 0, check = 0, pub_check = 0;
+    STACK_OF(OPENSSL_STRING) *encopt = NULL;
 #ifndef OPENSSL_NO_EC
     char *asn1_encoding = NULL;
     char *point_format = NULL;
@@ -98,6 +101,12 @@ int pkey_main(int argc, char **argv)
         case OPT_OUTFORM:
             if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
                 goto opthelp;
+            break;
+        case OPT_ENCOPT:
+            if (encopt == NULL)
+                encopt = sk_OPENSSL_STRING_new_null();
+            if (!sk_OPENSSL_STRING_push(encopt, opt_arg()))
+                goto end;
             break;
         case OPT_PASSIN:
             passinarg = opt_arg();
@@ -189,10 +198,9 @@ int pkey_main(int argc, char **argv)
             BIO_printf(bio_err,
                        "Warning: The -passout option is ignored without a cipher option\n");
     } else {
-        if (noout || outformat != FORMAT_PEM) {
-            BIO_printf(bio_err,
-                       "Error: Cipher options are supported only for PEM output\n");
-            goto end;
+        if (noout) {
+            EVP_CIPHER_free(cipher);
+            cipher = NULL;
         }
     }
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
@@ -271,8 +279,7 @@ int pkey_main(int argc, char **argv)
                                                               passout))
                         goto end;
                 } else {
-                    if (!PEM_write_bio_PrivateKey(out, pkey, cipher,
-                                                  NULL, 0, NULL, passout))
+                    if (!encode_private_key(out, "PEM", pkey, encopt, cipher, passout))
                         goto end;
                 }
             }
@@ -291,8 +298,7 @@ int pkey_main(int argc, char **argv)
                     if (!i2d_PrivateKey_bio(out, pkey))
                         goto end;
                 } else {
-                    if (!i2d_PKCS8PrivateKey_bio(out, pkey, NULL, NULL, 0,
-                                                 NULL, NULL))
+                    if (!encode_private_key(out, "DER", pkey, encopt, cipher, passout))
                         goto end;
                 }
             }
@@ -316,6 +322,7 @@ int pkey_main(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
+    sk_OPENSSL_STRING_free(encopt);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     EVP_CIPHER_free(cipher);
