@@ -414,7 +414,6 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
             BIO_printf(trc_out, "Adding to method store "
                        "nid: %d\nproperties: %s\nprovider: %s\n",
                        nid, properties,
-                       ossl_provider_name(prov) == NULL ? "none" :
                        ossl_provider_name(prov));
         } OSSL_TRACE_END(QUERY);
 #endif
@@ -512,7 +511,6 @@ alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
                 BIO_printf(trc_out, "Removing implementation from "
                            "query cache\nproperties %s\nprovider %s\n",
                            size == 0 ? "none" : buf,
-                           ossl_provider_name(impl->provider) == NULL ? "none" :
                            ossl_provider_name(impl->provider));
             } OSSL_TRACE_END(QUERY);
 #endif

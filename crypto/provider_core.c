@@ -1689,6 +1689,8 @@ int OSSL_PROVIDER_available(OSSL_LIB_CTX *libctx, const char *name)
 /* Getters of Provider Object data */
 const char *ossl_provider_name(const OSSL_PROVIDER *prov)
 {
+    if (prov == NULL || prov->name == NULL)
+        return "none";
     return prov->name;
 }
 
