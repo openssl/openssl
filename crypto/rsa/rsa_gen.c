@@ -691,12 +691,12 @@ static int rsa_keygen(OSSL_LIB_CTX *libctx, RSA *rsa, int bits, int primes,
 static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg)
 {
     int ret = 0;
-    unsigned int plaintxt_len;
     unsigned char *plaintxt = NULL;
-    unsigned int ciphertxt_len;
     unsigned char *ciphertxt = NULL;
     unsigned char *decoded = NULL;
-    unsigned int decoded_len;
+    int plaintxt_len;
+    int ciphertxt_len;
+    int decoded_len;
     int padding = RSA_NO_PADDING;
     OSSL_SELF_TEST *st = NULL;
 
