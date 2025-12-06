@@ -1028,6 +1028,12 @@ int x509_main(int argc, char **argv)
             if (EVP_PKEY_is_a(pkey, "RSA") || EVP_PKEY_is_a(pkey, "RSA-PSS")) {
                 BIGNUM *n = NULL;
 
+                if (BN_is_negative(n))
+                    BIO_printf(out, "ERROR: Modulus is negative (must be positive)\n");
+
+                if (BN_is_zero(n))
+                    BIO_printf(out, "ERROR: Modulus is zero (invalid)\n");
+
                 /* Every RSA key has an 'n' */
                 EVP_PKEY_get_bn_param(pkey, "n", &n);
                 BN_print(out, n);

@@ -505,6 +505,18 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
             goto err;
     }
 
+    if (BN_is_negative(rsa_n)) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
+        BIO_printf(out, "Modulus is negative (must be positive)\n");
+        goto err;
+    }
+
+    if (BN_is_zero(rsa_n)) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
+        BIO_printf(out, "Modulus is zero (invalid)\n");
+        goto err;
+    }
+
     if (!ossl_bio_print_labeled_bignum(out, modulus_label, rsa_n))
         goto err;
     if (!ossl_bio_print_labeled_bignum(out, exponent_label, rsa_e))

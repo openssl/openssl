@@ -498,11 +498,49 @@ static int tests_X509_check_time(void)
                               / sizeof(CERT_TEST_DATA));
 }
 
+static const char *kModulusNeg[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIDiTCCAnGgAwIBAgIFAO3UVNIwDQYJKoZIhvcNAQELBQAwfTEWMBQGA1UEBhMN\n",
+    "VW5pdGVkTmF0aW9uczEQMA4GA1UECAwHTmV3WW9yazEQMA4GA1UEBwwHTmV3WW9y\n",
+    "azEcMBoGA1UECgwTU29mdHdhcmVFbmdpbmVlcmluZzEQMA4GA1UECwwHVGVzdGlu\n",
+    "ZzEPMA0GA1UEAwwGdW4ub3JnMCIYDzIwMTcwMTIzMDkzMDAwWhgPMjAxODEyMjMw\n",
+    "OTMwMDBaMGwxCzAJBgNVBAYTAlVOMRAwDgYDVQQIEwdOZXdZb3JrMRAwDgYDVQQH\n",
+    "EwdOZXdZb3JrMQ8wDQYDVQQKEwZzdWJPcmcxEzARBgNVBAsTCnN1Yk9yZ1VuaXQx\n",
+    "EzARBgNVBAMTCnN1Yi51bi5vcmcwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK\n",
+    "AoIBAQDBpo9Viz3OQa6vmsyULUFLgznPkB3OX5Yf5XFBnZWoAu2d9qNypidARWUs\n",
+    "DomjtevXKrQApnmuWlxqLV5Q4JGbggeq6UsAwnoXCnH7zhQqInczr0U7rzlUYsZq\n",
+    "H+5haEfV9OewOIFHStAVXyTOqJuEfZOQKZbhhx7TDYg9IpoQisvKB4HbPfi6a6BV\n",
+    "YPAqNFlSfnYsF7sHNztTJXxyRY/KjrBeKVWs3n2+QQaydI+seiDD1GKBhApHrrWo\n",
+    "XtaP4VFbSyPszlRnW0ICAVrMItmt1rJBJlARVRq+gpU0gifmMheNBTWt8js6Ms/i\n",
+    "XeSzBkrQtFsnbVE75qeTrybOxqTXAgMBAAGjHTAbMBkGA1UdHwEB/wQPMA2BCwBS\n",
+    "ZWFzb24uLi4AMA0GCSqGSIb3DQEBCwUAA4IBAQCzwoxTrHgICZeYE7owZxV39BZh\n",
+    "MAHYYzS16/EXdXPZvZFQkL+wMBGkPC82s/3D/4kjHUwDxmmu2jBR8k+vEiV5VMnw\n",
+    "ZcoS22KFNVskk+CBfP0G5/d+ZfFMuW1tE3B1sO7RvYT1MtYt+DryRZ7vvLv7MlQb\n",
+    "sE+le0VjCfZHAZ+D3GqhYNNy+qhKYaHQDg/tfA/J28yyYm1EMzUd//Bao9BbnRxi\n",
+    "p4x2WfCFGB/ZP9BV0VA2KH3qF5M1RAETch/YbWqOIn+LxKomhvQSwQ4DEmRHRu69\n",
+    "loi+aH8qoQ4hb91EeaNb3OCV3azSH8I8RGGZDM2I2fZmgFwZ+5w7rgFjKe6b\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static int tests_X509_check_modulus(void)
+{
+    X509 *cert = NULL;
+    int test = 0;
+
+    test = TEST_ptr((cert = X509_from_strings(kModulusNeg)));
+
+    X509_free(cert);
+    return test;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
     ADD_ALL_TESTS(test_a2i_ipaddress, OSSL_NELEM(a2i_ipaddress_tests));
     ADD_TEST(tests_X509_PURPOSE);
     ADD_TEST(tests_X509_check_time);
+    ADD_TEST(tests_X509_check_modulus);
+
     return 1;
 }
