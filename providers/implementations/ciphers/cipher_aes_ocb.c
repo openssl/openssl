@@ -450,7 +450,7 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     if (p.iv != NULL) {
-        if (ctx->base.ivlen > p.iv->data_size) {
+        if (p.iv->data != NULL && ctx->base.ivlen > p.iv->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
@@ -462,7 +462,7 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     if (p.upd_iv != NULL) {
-        if (ctx->base.ivlen > p.upd_iv->data_size) {
+        if (p.upd_iv->data != NULL && ctx->base.ivlen > p.upd_iv->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
@@ -474,15 +474,23 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     if (p.tag != NULL) {
-        if (p.tag->data_type != OSSL_PARAM_OCTET_STRING) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
-            return 0;
-        }
-        if (!ctx->base.enc || p.tag->data_size != ctx->taglen) {
+        size_t taglen = ctx->taglen;
+
+        if (p.tag->data != NULL && taglen > p.tag->data_size)
+            taglen = p.tag->data_size;
+
+        if (p.tag->data != NULL && taglen == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
             return 0;
         }
-        memcpy(p.tag->data, ctx->tag, ctx->taglen);
+        if (p.tag->data != NULL && !ctx->base.enc) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+        if (!OSSL_PARAM_set_octet_string_or_ptr(p.tag, ctx->tag, ctx->taglen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
     }
     return 1;
 }

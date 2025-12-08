@@ -170,22 +170,26 @@ int ossl_ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     if (p.iv != NULL) {
-        if (ccm_get_ivlen(ctx) > p.iv->data_size) {
+        size_t ivlen = ccm_get_ivlen(ctx);
+
+        if (p.iv->data != NULL && ivlen > p.iv->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
-        if (!OSSL_PARAM_set_octet_string_or_ptr(p.iv, ctx->iv, p.iv->data_size)) {
+        if (!OSSL_PARAM_set_octet_string_or_ptr(p.iv, ctx->iv, ivlen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
     }
 
     if (p.updiv != NULL) {
-        if (ccm_get_ivlen(ctx) > p.updiv->data_size) {
+        size_t ivlen = ccm_get_ivlen(ctx);
+
+        if (p.updiv->data != NULL && ivlen > p.updiv->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
-        if (!OSSL_PARAM_set_octet_string_or_ptr(p.updiv, ctx->iv, p.updiv->data_size)) {
+        if (!OSSL_PARAM_set_octet_string_or_ptr(p.updiv, ctx->iv, ivlen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
@@ -202,16 +206,26 @@ int ossl_ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     if (p.tag != NULL) {
-        if (!ctx->enc || !ctx->tag_set) {
+        size_t taglen = ctx->m;
+
+        if (p.tag->data != NULL && taglen > p.tag->data_size)
+            taglen = p.tag->data_size;
+
+        if (p.tag->data != NULL && (!ctx->enc || !ctx->tag_set)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
-        if (p.tag->data_type != OSSL_PARAM_OCTET_STRING) {
+        if (p.tag->data != NULL && taglen == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
+            return 0;
+        }
+        if ((p.tag->data == NULL && !OSSL_PARAM_set_octet_string_or_ptr(p.tag, ctx->buf, taglen))
+            || (p.tag->data != NULL && (p.tag->data_type != OSSL_PARAM_OCTET_STRING
+                                        || !ctx->hw->gettag(ctx, p.tag->data, taglen)))) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
-        if (!ctx->hw->gettag(ctx, p.tag->data, p.tag->data_size))
-            return 0;
+
         ctx->tag_set = 0;
         ctx->iv_set = 0;
         ctx->len_set = 0;

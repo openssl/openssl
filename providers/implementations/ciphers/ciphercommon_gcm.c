@@ -213,17 +213,17 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     if (p.tag != NULL) {
-        sz = p.tag->data_size;
-        if (!ctx->enc || ctx->taglen == UNINITIALISED_SIZET) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
-            return 0;
-        }
-        if (p.tag->data != NULL && (sz > EVP_GCM_TLS_TAG_LEN || sz == 0)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
-            return 0;
-        }
+        size_t taglen = (ctx->taglen != UNINITIALISED_SIZET) ? ctx->taglen :
+                        GCM_TAG_MAX_SIZE;
 
-        if (!OSSL_PARAM_set_octet_string(p.tag, ctx->buf, sz)) {
+        if (p.tag->data != NULL && taglen > p.tag->data_size)
+            taglen = p.tag->data_size;
+
+        if (p.tag->data != NULL && taglen == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
+            return 0;
+        }
+        if (!OSSL_PARAM_set_octet_string_or_ptr(p.tag, ctx->buf, taglen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
