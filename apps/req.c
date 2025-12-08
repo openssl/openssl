@@ -837,6 +837,9 @@ int req_main(int argc, char **argv)
             }
             X509V3_set_nconf(&ext_ctx, req_conf);
 
+            if (!keyid_defaults(new_x509, x509v1, issuer_key, &ext_ctx))
+                goto end;
+
             /* Add extensions */
             if (extsect != NULL
                 && !X509V3_EXT_add_nconf(req_conf, &ext_ctx, extsect, new_x509)) {
