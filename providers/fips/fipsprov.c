@@ -103,6 +103,9 @@ typedef struct fips_global_st {
 #include "fips_indicator_params.inc"
 #undef OSSL_FIPS_PARAM
 
+    /* Guards access to deferred self-test */
+    CRYPTO_RWLOCK *deferred_lock;
+
 } FIPS_GLOBAL;
 
 static void init_fips_option(FIPS_OPTION *opt, int enabled)
@@ -128,6 +131,8 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
 
 void ossl_fips_prov_ossl_ctx_free(void *fgbl)
 {
+    if (((FIPS_GLOBAL *)fgbl)->deferred_lock)
+        CRYPTO_THREAD_lock_free(((FIPS_GLOBAL *)fgbl)->deferred_lock);
     OPENSSL_free(fgbl);
 }
 
@@ -808,12 +813,9 @@ static const OSSL_ALGORITHM *fips_query_internal(void *provctx, int operation_id
     return fips_query(provctx, operation_id, no_cache);
 }
 
-static void deferred_deinit(void);
-
 static void fips_teardown(void *provctx)
 {
     /* Also free deferred variables when the FIPS Global context is killed */
-    deferred_deinit();
     OSSL_LIB_CTX_free(PROV_LIBCTX_OF(provctx));
     ossl_prov_ctx_free(provctx);
 }
@@ -1059,6 +1061,12 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
 
     ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
 
+    /* initialize deferred self-test infrastructure */
+    if ((fgbl->deferred_lock = CRYPTO_THREAD_lock_new()) == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_CREATE_LOCK);
+        goto err;
+    }
+
     if (!SELF_TEST_post(&fgbl->selftest_params, 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_POST_FAILURE);
         goto err;
@@ -1296,25 +1304,6 @@ void OSSL_INDICATOR_get_callback(OSSL_LIB_CTX *libctx,
     }
 }
 
-/* Deferred test infrastructure */
-
-/* Guards access to deferred self-test */
-static CRYPTO_RWLOCK *deferred_lock;
-
-static CRYPTO_ONCE deferred_once = CRYPTO_ONCE_STATIC_INIT;
-static void deferred_init(void)
-{
-    if ((deferred_lock = CRYPTO_THREAD_lock_new()) == NULL)
-        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_CREATE_LOCK);
-}
-static void deferred_deinit(void)
-{
-    if (deferred_lock) {
-        CRYPTO_THREAD_lock_free(deferred_lock);
-        deferred_lock = NULL;
-    }
-}
-
 static int FIPS_kat_deferred_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
     self_test_id_t id)
 {
@@ -1354,14 +1343,15 @@ static int FIPS_kat_deferred_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 
 static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, self_test_id_t id)
 {
+    FIPS_GLOBAL *fgbl = ossl_lib_ctx_get_data(libctx,
+        OSSL_LIB_CTX_FIPS_PROV_INDEX);
     int *rt = NULL;
     int ret = 0;
 
-    if (!CRYPTO_THREAD_run_once(&deferred_once, deferred_init))
+    if (fgbl == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_STATE);
         return 0;
-
-    if (deferred_lock == NULL)
-        return 0;
+    }
 
     /*
      * before we do anything, make sure a local test is not already in
@@ -1383,7 +1373,7 @@ static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, self_test_id_t id)
         return 1;
     }
 
-    if (CRYPTO_THREAD_write_lock(deferred_lock)) {
+    if (CRYPTO_THREAD_write_lock(fgbl->deferred_lock)) {
         OSSL_SELF_TEST *st = NULL;
         bool unset_key = false;
         OSSL_CALLBACK *cb = NULL;
@@ -1440,7 +1430,7 @@ static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, self_test_id_t id)
             CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_FIPS_DEFERRED_KEY,
                 libctx, NULL);
         OPENSSL_free(rt);
-        CRYPTO_THREAD_unlock(deferred_lock);
+        CRYPTO_THREAD_unlock(fgbl->deferred_lock);
     }
     return ret;
 }
