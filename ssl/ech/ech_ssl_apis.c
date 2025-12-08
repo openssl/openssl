@@ -384,7 +384,7 @@ int SSL_CTX_ech_raw_decrypt(SSL_CTX *ctx,
     if (ctx == NULL) {
         /*
          * TODO(ECH): decide whether to populate this or to
-         * punt on split-more 'till after the first ECH-enabled
+         * punt on split-mode 'till after the first ECH-enabled
          * release.
          */
         ERR_raise(ERR_LIB_SSL, SSL_R_ECH_REQUIRED);

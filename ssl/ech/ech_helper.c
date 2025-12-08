@@ -95,7 +95,7 @@ int ossl_ech_helper_get_ch_offsets(const unsigned char *ch, size_t ch_len,
     if (!PACKET_get_net_2(&pkt, &pi_tmp))
         return 0;
     /* if we're not TLSv1.2+ then we can bail, but it's not an error */
-    if (pi_tmp != TLS1_2_VERSION && pi_tmp != TLS1_3_VERSION)
+    if (pi_tmp != TLS1_2_VERSION)
         return 1;
     /* chew up the packet to extensions */
     if (!PACKET_get_bytes(&pkt, &pp_tmp, SSL3_RANDOM_SIZE)
@@ -146,96 +146,5 @@ int ossl_ech_helper_get_ch_offsets(const unsigned char *ch, size_t ch_len,
         if (etype == TLSEXT_TYPE_ech)
             *inner = pp_tmp[0];
     }
-    return 1;
-}
-
-/*!
- * Given a SH (or HRR) find the offsets of the ECH (if any)
- * @param: sh is the SH buffer
- * @paramL sh_len is the length of the SH
- * @param: exts points to offset of extensions
- * @param: echoffset points to offset of ECH
- * @param: echtype points to the ext type of the ECH
- * @return 1 for success, other otherwise
- *
- * Offsets are returned to the type or length field in question.
- * Offsets are set to zero if relevant thing not found.
- *
- * Note: input here is untrusted!
- */
-int ossl_ech_helper_get_sh_offsets(const unsigned char *sh, size_t sh_len,
-                                   size_t *exts, size_t *echoffset,
-                                   uint16_t *echtype)
-{
-    unsigned int elen = 0, etype = 0, pi_tmp = 0;
-    const unsigned char *pp_tmp = NULL, *shstart = NULL, *estart = NULL;
-    PACKET pkt;
-    size_t extlens = 0;
-    int done = 0;
-#ifdef OSSL_ECH_SUPERVERBOSE
-    size_t echlen = 0; /* length of ECH, including type & ECH-internal length */
-    size_t sessid_offset = 0;
-    size_t sessid_len = 0;
-#endif
-
-    if (sh == NULL || sh_len == 0 || exts == NULL || echoffset == NULL
-        || echtype == NULL)
-        return 0;
-    *exts = *echoffset = *echtype = 0;
-    if (!PACKET_buf_init(&pkt, sh, sh_len))
-        return 0;
-    shstart = PACKET_data(&pkt);
-    if (!PACKET_get_net_2(&pkt, &pi_tmp))
-        return 0;
-    /* if we're not TLSv1.2+ then we can bail, but it's not an error */
-    if (pi_tmp != TLS1_2_VERSION && pi_tmp != TLS1_3_VERSION)
-        return 1;
-    if (!PACKET_get_bytes(&pkt, &pp_tmp, SSL3_RANDOM_SIZE)
-#ifdef OSSL_ECH_SUPERVERBOSE
-        || (sessid_offset = PACKET_data(&pkt) - shstart) == 0
-#endif
-        || !PACKET_get_1(&pkt, &pi_tmp) /* sessid len */
-#ifdef OSSL_ECH_SUPERVERBOSE
-        || (sessid_len = (size_t)pi_tmp) == 0
-#endif
-        || !PACKET_get_bytes(&pkt, &pp_tmp, pi_tmp) /* sessid */
-        || !PACKET_get_net_2(&pkt, &pi_tmp) /* ciphersuite */
-        || !PACKET_get_1(&pkt, &pi_tmp) /* compression */
-        || (*exts = PACKET_data(&pkt) - shstart) == 0
-        || !PACKET_get_net_2(&pkt, &pi_tmp)) /* len(extensions) */
-        return 0;
-    extlens = (size_t)pi_tmp;
-    if (extlens == 0) /* not an error, in theory */
-        return 1;
-    estart = PACKET_data(&pkt);
-    while (PACKET_remaining(&pkt) > 0
-           && (size_t)(PACKET_data(&pkt) - estart) < extlens
-           && done < 1) {
-        if (!PACKET_get_net_2(&pkt, &etype)
-            || !PACKET_get_net_2(&pkt, &elen))
-            return 0;
-        if (etype == TLSEXT_TYPE_ech) {
-            if (elen == 0)
-                return 0;
-            *echoffset = PACKET_data(&pkt) - shstart - 4;
-            *echtype = etype;
-#ifdef OSSL_ECH_SUPERVERBOSE
-            echlen = elen + 4; /* type and length included */
-#endif
-            done++;
-        }
-        if (!PACKET_get_bytes(&pkt, &pp_tmp, elen))
-            return 0;
-    }
-#ifdef OSSL_ECH_SUPERVERBOSE
-    OSSL_TRACE_BEGIN(TLS) {
-        BIO_printf(trc_out, "orig SH/ECH type: %4x\n", *echtype);
-    } OSSL_TRACE_END(TLS);
-    ossl_ech_pbuf("orig SH", (unsigned char *)sh, sh_len);
-    ossl_ech_pbuf("orig SH session_id", (unsigned char *)sh + sessid_offset,
-                  sessid_len);
-    ossl_ech_pbuf("orig SH exts", (unsigned char *)sh + *exts, extlens);
-    ossl_ech_pbuf("orig SH/ECH ", (unsigned char *)sh + *echoffset, echlen);
-#endif
     return 1;
 }
