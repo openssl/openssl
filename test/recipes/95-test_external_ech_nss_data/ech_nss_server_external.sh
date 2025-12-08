@@ -52,8 +52,6 @@ echo "------------------------------------------------------------------"
 if [ ! -d $SRCTOP/nss ]; then
     mkdir -p $SRCTOP/nss
 fi
-# see comment below for why "git apply" was once needed
-#          && git apply ../../test/recipes/95-test_external_ech_nss_data/nsspatch \
 # clone our NSS and NSPR
 if [ ! -d $SRCTOP/nss/nss ]; then
     (
@@ -123,13 +121,7 @@ echo "   CWD:                $PWD"
 
 # Start an NSS server
 # We'll let the server generate the ECH key pair for now (see 
-# below for why). Note that as of 20240124 this requires a
-# (trivial) code change to get NSS's selfserve to work in this mode. 
-# I've reported that to moz folks but just in case it doesn't get
-# fixed soon the diff is in nsspatch (alongside this script).
-# NSS devs have said they'll land that patch at which point we won't
-# need nsspath any more.
-# That was fixed so is now (20251114) no longer needed.
+# below for why).
 
 # need to use ``stdbuf -o0`` so that we don't get buffering and
 # can grab echconfig immediately...

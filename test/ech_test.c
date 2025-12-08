@@ -1714,7 +1714,7 @@ static int ech_in_out_test(int idx)
     if ((expected_inner == NULL && sinner == NULL)
         || (expected_inner != NULL && sinner != NULL
             && strlen(expected_inner) == strlen(sinner)
-            && !strcmp(expected_inner, sinner)))
+            && strcmp(expected_inner, sinner) == 0))
         sres = 1;
     if (!TEST_int_eq(sres, 1))
         goto end;
@@ -1722,14 +1722,14 @@ static int ech_in_out_test(int idx)
     if ((expected_outer == NULL && couter == NULL)
         || (expected_outer != NULL && couter != NULL
             && strlen(expected_outer) == strlen(couter)
-            && !strcmp(expected_outer, couter)))
+            && strcmp(expected_outer, couter) == 0))
         cres = 1;
     if (!TEST_int_eq(cres, 1))
         goto end;
     if ((expected_outer == NULL && souter == NULL)
         || (expected_outer != NULL && souter != NULL
             && strlen(expected_outer) == strlen(souter)
-            && !strcmp(expected_outer, souter)))
+            && strcmp(expected_outer, souter) == 0))
         sres = 1;
     if (!TEST_int_eq(sres, 1))
         goto end;

@@ -74,6 +74,10 @@ IF[{- !$disabled{tests} -}]
           engine_stubs_test base64_simdutf_test bio_eof_test \
           ech_test ech_test ech_corrupt_test
 
+  IF[{- !$disabled{'ech'} -}]
+    PROGRAMS{noinst}=ech_corrupt_test
+  ENDIF
+
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
   ENDIF
