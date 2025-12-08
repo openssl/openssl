@@ -2648,9 +2648,26 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
     } OSSL_TRACE_END(TLS);
     config_id_to_use = ee->config_id; /* if requested, use a random config_id instead */
     if ((s->options & SSL_OP_ECH_IGNORE_CID) != 0) {
-        if (RAND_bytes_ex(sctx->libctx, &config_id_to_use, 1, 0) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
+        int max_iters = 1000, i = 0;
+
+        /* rejection sample to get a different but random config_id */
+        while (config_id_to_use == ee->config_id) {
+# ifdef OSSL_ECH_SUPERVERBOSE
+            if (i > 0) {
+                OSSL_TRACE_BEGIN(TLS) {
+                    BIO_printf(trc_out, "EAAE: rejected random-config %02x\n",
+                               config_id_to_use);
+                } OSSL_TRACE_END(TLS);
+            }
+# endif
+            if (RAND_bytes_ex(sctx->libctx, &config_id_to_use, 1, 0) <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+            if (i++ >= max_iters) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
         }
 # ifdef OSSL_ECH_SUPERVERBOSE
         ossl_ech_pbuf("EAAE: random config_id", &config_id_to_use, 1);
