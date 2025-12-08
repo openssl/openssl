@@ -141,7 +141,8 @@
  * For AF_INET6 there seem to be limitations how local addresses
  * are handled on AIX. So, disable the support for now.
  */
-#if (defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)) && defined(IPV6_RECVPKTINFO) && !defined(_AIX)
+#if (defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)) && defined(IPV6_RECVPKTINFO) \
+    && !defined(_AIX)
 #define SUPPORT_LOCAL_ADDR
 #endif
 #endif
