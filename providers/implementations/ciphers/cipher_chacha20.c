@@ -121,11 +121,37 @@ static int chacha20_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     if (p.upd_iv != NULL) {
+        size_t updivlen = CHACHA20_IVLEN;
+
         CHACHA_U32TOU8(ivbuf, ctx->counter[0]);
         CHACHA_U32TOU8(ivbuf + 4, ctx->counter[1]);
         CHACHA_U32TOU8(ivbuf + 8, ctx->counter[2]);
         CHACHA_U32TOU8(ivbuf + 12, ctx->counter[3]);
-        if (!OSSL_PARAM_set_octet_string(p.upd_iv, ivbuf, CHACHA20_IVLEN)) {
+
+        if (p.upd_iv->data != NULL && updivlen > p.upd_iv->data_size)
+            updivlen = p.upd_iv->data_size;
+
+        if (p.upd_iv->data != NULL && updivlen == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
+            return 0;
+        }
+        if (!OSSL_PARAM_set_octet_string_or_ptr(p.upd_iv, ivbuf, updivlen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+    }
+
+    if (p.iv != NULL) {
+        size_t ivlen = sizeof(ctx->base.oiv);
+
+        if (p.iv->data != NULL && ivlen > p.iv->data_size)
+            ivlen = p.iv->data_size;
+
+        if (p.iv->data != NULL && ivlen == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
+            return 0;
+        }
+        if (!OSSL_PARAM_set_octet_string_or_ptr(p.iv, ctx->base.oiv, ivlen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
