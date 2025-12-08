@@ -1181,6 +1181,7 @@ static int key2any_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         if (!OSSL_PARAM_get_utf8_string(p.output_formats, &val, 0))
             return 0;
         OPENSSL_free(ctx->output_formats);
+        ctx->output_formats = NULL;
         if (*val == '\0')
             OPENSSL_free(val);
         else
