@@ -1,0 +1,64 @@
+=pod
+
+=head1 NAME
+
+EVP_MD-ASCON-HASH256 - The Ascon-Hash256 EVP_MD implementation
+
+=head1 DESCRIPTION
+
+Support for computing Ascon-Hash256 digests through the B<EVP_MD> API.
+
+=head2 Algorithm Names
+
+The following algorithms are available in the default provider:
+
+=over 4
+=item "ASCON-HASH256"
+
+=item "ascon-hash256"
+
+=back
+
+=head2 Parameters
+
+This implementation supports the parameters described in L<EVP_DigestInit(3)/PARAMETERS>.
+
+=head1 NOTES
+
+Ascon-Hash256 is the NIST-standardized hash algorithm specified in NIST SP 800-232.
+It is based on the Ascon family of algorithms, suitable for lightweight and
+constrained environments.
+
+Ascon-Hash256 produces a fixed 256-bit (32-byte) output digest using the
+Ascon-p[12] permutation. The implementation processes data in 8-byte blocks.
+
+=head1 CONFORMING TO
+
+=over 4
+
+=item NIST SP 800-232
+
+=back
+
+=head1 SEE ALSO
+
+L<provider-digest(7)>, L<OSSL_PROVIDER-default(7)>
+
+=head1 HISTORY
+
+Ascon-Hash256 was added in OpenSSL 4.X
+
+This implementation conforms to the NIST SP 800-232 specification for
+Ascon-Hash256.
+
+=head1 COPYRIGHT
+
+Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
+

@@ -46,6 +46,14 @@ OpenSSL 4.0
 
    *Ryan Hooper*
 
+ * Added support for Ascon-Hash256, Ascon-XOF128, and Ascon-CXOF128 digest
+   algorithms as specified in NIST SP 800-232. Ascon-Hash256 produces a fixed
+   256-bit output, while Ascon-XOF128 and Ascon-CXOF128 are extendable output
+   functions that can produce output of any desired length. Ascon-CXOF128
+   additionally supports customization strings for domain separation.
+
+   *Dominic Cunningham, Billy Bob Brumley*
+
 OpenSSL 3.6
 -----------
 
