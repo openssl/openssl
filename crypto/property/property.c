@@ -951,7 +951,8 @@ int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
      * Query triplet (nid, prov, prop_query) from frozen store with no fallback.
      */
 
-    /* TODO: FREEZE: Replace with actual implementation
+    /*
+     * TODO: FREEZE: Replace with actual implementation
      * For now, just fetch from global variables
      */
     if (nid == andrew_nid && andrew_method != NULL) {
@@ -1009,6 +1010,7 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         /* TODO: FREEZE: Remove this */
         if (nid != andrew_nid) {
             EVP_MD *md = (EVP_MD *)p->method.method;
+
             memcpy(&andrew_md, md, sizeof(andrew_md));
             andrew_md.origin = EVP_ORIG_FROZEN;
             andrew_method = &andrew_md;
