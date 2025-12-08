@@ -531,11 +531,6 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
     return ret;
 }
 
-int BN_bin2be_validate(const unsigned char *s, int len)
-{
-    return !((len == 0) || (*s & 0x80));
-}
-
 BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 {
     return bin2bn(s, len, ret, BIG, UNSIGNED);

@@ -116,11 +116,8 @@ static int bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 {
     BIGNUM *bn;
 
-    /*
-     * When the template requires a positive value, reject encodings that imply
-     * a negative number.
-     */
-    if (!BN_bin2be_validate(cont, len)) {
+    /* Reject encodings that imply a negative number. */
+    if (len == 0 || (*cont & 0x80) != 0) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_VALUE);
         return 0;
     }

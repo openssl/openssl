@@ -514,12 +514,14 @@ static const char *kRSAModulusNeg[] = {
 static int tests_X509_check_crypto(void)
 {
     X509 *rsa_n_neg = NULL;
+    EVP_PKEY *pub = NULL;
     int test;
 
     test = TEST_ptr((rsa_n_neg = X509_from_strings(kRSAModulusNeg)))
-        && TEST_true(err_chk(ERR_LIB_ASN1, ASN1_R_INVALID_VALUE));
-        //&& TEST_true(err_chk(ERR_LIB_RSA, RSA_R_INVALID_MODULUS));
+        && TEST_ptr_null((pub = X509_get_pubkey(rsa_n_neg)))
+        && TEST_true(err_chk(ERR_LIB_EVP, EVP_R_DECODE_ERROR));
 
+    EVP_PKEY_free(pub);
     X509_free(rsa_n_neg);
     return test;
 }
