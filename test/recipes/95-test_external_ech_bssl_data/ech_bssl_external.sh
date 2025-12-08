@@ -80,7 +80,7 @@ then
     echo "No sign of s_server - exiting (before client)"
     exit 88
 fi
-# We want the binary ECHConfigList for bssl so extract tha
+# We want the binary ECHConfigList for bssl so extract that
 # from the PEM file
 bechfile=`mktemp`
 resfile=`mktemp`

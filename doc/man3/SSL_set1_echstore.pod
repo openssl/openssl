@@ -67,7 +67,7 @@ SSL_CTX_ech_set_callback,SSL_set1_ech_config_list
 
 =head1 DESCRIPTION
 
-TODO(ECH): Replace XXXX with issued RFC number.
+TODO(ECH): Replace XXXX and links to I-D when RFC issued.
 
 The Encrypted Client Hello (ECH) APIs described here are built around
 the concept of an B<OSSL_ECHSTORE> which contains ECH configuration
@@ -85,24 +85,33 @@ internal storage required.
 OSSL_ECHSTORE_new_config() allows the caller to create a new private key
 value and a related "singleton" ECHConfigList structure.
 ("Singleton" meaning the ECHConfigList only contains one public key.)
+The I<echversion> is the ECHConfig version to use, which is typically
+B<OSSL_ECH_CURRENT_VERSION> with a value of 0xfe0d. The I<max_name_length>
+specifies the maximum known DNS name length that will be present in an ECH
+extension (if known) and is used for ECH padding but should typically be zero,
+to indicate no known maximum. The I<public_name> is the DNS name to use in
+the ECHConfig I<public_name> field, and the I<suite> specifies the
+B<OSSL_HPKE_suite> to use (see L<OSSL_HPKE_CTX_new(3)> for details.)
 
 OSSL_ECHSTORE_write_pem() allows the caller to produce a "PEM" data structure
 (conforming to the ECH PEM file format) from the B<OSSL_ECHSTORE> entry
 identified by the I<index>. (An I<index> of B<OSSL_ECHSTORE_LAST> will select the
 last entry. An I<index> of B<OSSL_ECHSTORE_ALL> will output all public values,
-and no private values.) These two APIs will typically be used via the "openssl
+and no private values, otherwise the I<index> selects a specific entry with
+zero selecting the first entry.) These two APIs will typically be used via the "openssl
 ech" command line tool.
 
 OSSL_ECHSTORE_read_echconfiglist() reads from the I<in> B<BIO> and parses
 the "ech=" SvcParamKey value found in an SVCB or HTTPS RR retrieved from
-the DNS. The resulting set of ECHConfig values can then be associated with an
+the DNS. The resulting set of ECHConfig values, are associated with the
+I<es> store, and can then be associated with an
 B<SSL_CTX> or B<SSL> structure for TLS client connections.
 
 OSSL_ECHSTORE_get1_info() presents the caller with information about the
 content of the store for logging or for display, e.g. in a command line tool.
 The information is what is present in an ECHConfig as described in RFCXXXX,
 being the ECH version information, configuration-id, public-name, algorithms
-and the public key value.
+and the public key value. See L</String form of ECHConfig> for details.
 
 OSSL_ECHSTORE_downselect() gives the client a way to select one
 particular ECHConfig value from the set stored (discarding the rest).
@@ -113,6 +122,9 @@ B<OSSL_ECHSTORE> structure.  Those can be used (by servers) to enable ECH for
 an B<SSL_CTX> or B<SSL> connection. In addition to loading those values, the
 application can also indicate via I<for_retry> which ECHConfig values are to be
 included in the I<retry_configs> fallback scheme defined by the ECH protocol.
+The fallback scheme for ECH is as described at
+L<https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-25#section-6.1.6>.
+
 An ECH PEM file may contain a private key and an ECHConfigList with more than
 one ECHConfig, for example if different public keys, I<public_name> values, or
 AEAD/KDF settings are to be supported. In such cases the resulting
@@ -176,8 +188,8 @@ retry config value via SSL_ech_get1_retry_config().
 "GREASEing" (defined in RFC8701) is a mechanism
 intended to discourage protocol ossification that can be used for ECH.
 
-SSL_ech_set1_grease_suite() allows a client to GREASE using a specific B
-<OSSL_HPKE_SUITE> (see L<OSSL_HPKE_get_grease_value(3)>).
+SSL_ech_set1_grease_suite() allows a client to GREASE using a specific
+B<OSSL_HPKE_SUITE> (see L<OSSL_HPKE_get_grease_value(3)>).
 SSL_ech_set_grease_type() allows a client to add a GREASE'd ECH with the
 specified ClientHello extension number.
 
@@ -224,12 +236,14 @@ An example string I<str> as seen on a client might be:
  ech_backend=0
  ech_success=1
  2 ECHConfig values loaded
- cfg(0): [fe0d,5d,cover.defo.ie,0020,[0001,0001],190984309c1a24cb944c005eb79d9c72ca9a4a979194b553dfd0bffc6b5c152d,00,00]
- cfg(1): [fe0d,fd,cover.defo.ie,0020,[0001,0001],46dd4e2c81bb15ef9d194c99b86983844e2a1387e4fb7e7d3b8d368c8e1b4d2a,00,00]
+ cfg(0): [fe0d,5d,cover.defo.ie,[0020,0001,0001],190984309c1a24cb944c005eb79d9c72ca9a4a979194b553dfd0bffc6b5c152d,00,00]
+ cfg(1): [fe0d,fd,cover.defo.ie,[0020,0001,0001],46dd4e2c81bb15ef9d194c99b86983844e2a1387e4fb7e7d3b8d368c8e1b4d2a,00,00]
 
 =head2 ECH Split-Mode
 
 TODO(ECH) figure out what to do about SSL_CTX_ech_raw_decrypt().
+
+ECH split-mode is described at L<https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-25#section-3.1>.
 
 =head2 Constants
 
@@ -315,6 +329,19 @@ Indexing an OSSL_ECHSTORE
 
 =back
 
+=head2 String form of ECHConfig
+
+OSSL_ECHSTORE_get1_info() returns the string form of the ECH public name plus
+a string describing the content of the ECHConfig for example:
+
+ [fe0d,4d,example.com,[0020,0001,0002],c103d20dddce9b4445829bf01f5b533b728bfa0ebe3a97da33574bc096bb846e,00,00]
+
+In the order presented in the example above, the I<version> is 0xfe0d, the
+I<config_id> is 0x4d, the I<public_name> is "example.com", there is one
+ciphersuite with a I<kem-id> of 0x20, I<kdf-id> is 0x01 and I<aead-id> is 0x02;
+the I<public_key> is the hexadecimal string "c1...6e", the I<max-name-length>
+is 0x00 and the I<extensions> length is 0x00 as no ECHConfig extensions are
+present.
 
 =head1 RETURN VALUES
 

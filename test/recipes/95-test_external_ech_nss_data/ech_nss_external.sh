@@ -53,10 +53,6 @@ echo "------------------------------------------------------------------"
 if [ ! -d $SRCTOP/nss ]; then
     mkdir -p $SRCTOP/nss
 fi
-# see comment in ech_nss_server_external.sh  for why "git apply" is needed for now.
-# and now (20251114) that's no longer needed, the line used be:
-#          && git apply ../../test/recipes/95-test_external_ech_nss_data/nsspatch \
-# and was 2nd last in the list below
 
 # clone our NSS and NSPR
 if [ ! -d $SRCTOP/nss/nss ]; then
