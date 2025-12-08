@@ -18,16 +18,15 @@
 #include "testutil.h"
 #include <openssl/ech.h>
 #include <internal/ech_helpers.h>
+#include <internal/packet.h>
 
-#ifndef OPENSSL_NO_ECH
-
-# define OSSL_ECH_MAX_LINELEN 1000 /* for a sanity check */
-# define DEF_CERTS_DIR "test/certs"
+#define OSSL_ECH_MAX_LINELEN 1000 /* for a sanity check */
+#define DEF_CERTS_DIR "test/certs"
 
 /* the testcase numbers */
-# define TESTCASE_CH 1
-# define TESTCASE_SH 2
-# define TESTCASE_ECH 3
+#define TESTCASE_CH 1
+#define TESTCASE_SH 2
+#define TESTCASE_ECH 3
 
 static OSSL_LIB_CTX *libctx = NULL;
 static char *propq = NULL;
@@ -424,11 +423,11 @@ static TEST_ECHINNER test_inners[] = {
       borked_outer6, sizeof(borked_outer6),
       encoded_inner_post, sizeof(encoded_inner_post),
       0, /* expected result - error is different with -notls1_2 */
-# ifdef OPENSSL_NO_TLS1_2
+#ifdef OPENSSL_NO_TLS1_2
       SSL_R_VERSION_TOO_LOW
-# else
+#else
       SSL_R_UNSUPPORTED_PROTOCOL
-# endif
+#endif
     },
 
     /* 7. madly long ciphersuites in inner */
@@ -517,11 +516,11 @@ static TEST_ECHINNER test_inners[] = {
       borked_outer11, sizeof(borked_outer11),
       encoded_inner_post, sizeof(encoded_inner_post),
       0, /* expected result */
-# ifdef OPENSSL_NO_ML_KEM
+#ifdef OPENSSL_NO_ML_KEM
       SSL_R_BAD_EXTENSION
-# else
+#else
       ERR_R_INTERNAL_ERROR
-# endif
+#endif
     },
     /* 20. include psk key mode ext in outers as well as both inner and outer */
     { encoded_inner_pre, sizeof(encoded_inner_pre),
@@ -556,13 +555,13 @@ typedef struct {
     int err_expected; /* expected error */
 } TEST_SH;
 
-# define OSSL_ECH_BORK_NONE 0
-# define OSSL_ECH_BORK_FLIP 1
-# define OSSL_ECH_BORK_HRR (1 << 1)
-# define OSSL_ECH_BORK_SHORT_HRR_CONFIRM (1 << 2)
-# define OSSL_ECH_BORK_LONG_HRR_CONFIRM (1 << 3)
-# define OSSL_ECH_BORK_GREASE (1 << 4)
-# define OSSL_ECH_BORK_REPLACE (1 << 5)
+#define OSSL_ECH_BORK_NONE 0
+#define OSSL_ECH_BORK_FLIP 1
+#define OSSL_ECH_BORK_HRR (1 << 1)
+#define OSSL_ECH_BORK_SHORT_HRR_CONFIRM (1 << 2)
+#define OSSL_ECH_BORK_LONG_HRR_CONFIRM (1 << 3)
+#define OSSL_ECH_BORK_GREASE (1 << 4)
+#define OSSL_ECH_BORK_REPLACE (1 << 5)
 
 /* a truncated ECH, with another bogus ext to match overall length */
 static unsigned char shortech[] = {
@@ -604,7 +603,7 @@ static TEST_SH test_shs[] = {
 
 /*
  * Test vectors for badly encoded ECH extension values for
- * the outer ClientHelllo. We grab the outbund ClientHello
+ * the outer ClientHelllo. We grab the outbound ClientHello
  * and overwrite these values in the appropriate place. That
  * will always break the TLS connection, even with a correct
  * encoding, as we're breaking the transcript, but we expect
@@ -860,6 +859,97 @@ static TEST_ECHOUTER test_echs[] = {
       0, /* expected result */ SSL_R_BAD_EXTENSION},
 };
 
+/*
+ * Given a SH (or HRR) find the offsets of the ECH (if any)
+ * sh is the SH buffer
+ * sh_len is the length of the SH
+ * exts points to offset of extensions
+ * echoffset points to offset of ECH
+ * echtype points to the ext type of the ECH
+ * for success, other otherwise
+ *
+ * Offsets are returned to the type or length field in question.
+ * Offsets are set to zero if relevant thing not found.
+ *
+ * Note: input here is untrusted!
+ */
+static int ech_get_sh_offsets(const unsigned char *sh,
+                              size_t sh_len, size_t *exts,
+                              size_t *echoffset, uint16_t *echtype)
+{
+    unsigned int elen = 0, etype = 0, pi_tmp = 0;
+    const unsigned char *pp_tmp = NULL, *shstart = NULL, *estart = NULL;
+    PACKET pkt;
+    size_t extlens = 0;
+    int done = 0;
+#ifdef OSSL_ECH_SUPERVERBOSE
+    size_t echlen = 0; /* length of ECH, including type & ECH-internal length */
+    size_t sessid_offset = 0;
+    size_t sessid_len = 0;
+#endif
+
+    if (sh == NULL || sh_len == 0 || exts == NULL || echoffset == NULL
+        || echtype == NULL)
+        return 0;
+    *exts = *echoffset = *echtype = 0;
+    if (!PACKET_buf_init(&pkt, sh, sh_len))
+        return 0;
+    shstart = PACKET_data(&pkt);
+    if (!PACKET_get_net_2(&pkt, &pi_tmp))
+        return 0;
+    /* if we're not TLSv1.2+ then we can bail, but it's not an error */
+    if (pi_tmp != TLS1_2_VERSION && pi_tmp != TLS1_3_VERSION)
+        return 1;
+    if (!PACKET_get_bytes(&pkt, &pp_tmp, SSL3_RANDOM_SIZE)
+#ifdef OSSL_ECH_SUPERVERBOSE
+        || (sessid_offset = PACKET_data(&pkt) - shstart) == 0
+#endif
+        || !PACKET_get_1(&pkt, &pi_tmp) /* sessid len */
+#ifdef OSSL_ECH_SUPERVERBOSE
+        || (sessid_len = (size_t)pi_tmp) == 0
+#endif
+        || !PACKET_get_bytes(&pkt, &pp_tmp, pi_tmp) /* sessid */
+        || !PACKET_get_net_2(&pkt, &pi_tmp) /* ciphersuite */
+        || !PACKET_get_1(&pkt, &pi_tmp) /* compression */
+        || (*exts = PACKET_data(&pkt) - shstart) == 0
+        || !PACKET_get_net_2(&pkt, &pi_tmp)) /* len(extensions) */
+        return 0;
+    extlens = (size_t)pi_tmp;
+    if (extlens == 0) /* not an error, in theory */
+        return 1;
+    estart = PACKET_data(&pkt);
+    while (PACKET_remaining(&pkt) > 0
+           && (size_t)(PACKET_data(&pkt) - estart) < extlens
+           && done < 1) {
+        if (!PACKET_get_net_2(&pkt, &etype)
+            || !PACKET_get_net_2(&pkt, &elen))
+            return 0;
+        if (etype == TLSEXT_TYPE_ech) {
+            if (elen == 0)
+                return 0;
+            *echoffset = PACKET_data(&pkt) - shstart - 4;
+            *echtype = etype;
+#ifdef OSSL_ECH_SUPERVERBOSE
+            echlen = elen + 4; /* type and length included */
+#endif
+            done++;
+        }
+        if (!PACKET_get_bytes(&pkt, &pp_tmp, elen))
+            return 0;
+    }
+#ifdef OSSL_ECH_SUPERVERBOSE
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "orig SH/ECH type: %4x\n", *echtype);
+    } OSSL_TRACE_END(TLS);
+    ossl_ech_pbuf("orig SH", (unsigned char *)sh, sh_len);
+    ossl_ech_pbuf("orig SH session_id", (unsigned char *)sh + sessid_offset,
+                  sessid_len);
+    ossl_ech_pbuf("orig SH exts", (unsigned char *)sh + *exts, extlens);
+    ossl_ech_pbuf("orig SH/ECH ", (unsigned char *)sh + *echoffset, echlen);
+#endif
+    return 1;
+}
+
 /* Do a HPKE seal of a padded encoded inner */
 static int seal_encoded_inner(char **out, int *outlen,
                               unsigned char *ei, size_t eilen,
@@ -1062,14 +1152,14 @@ static int corrupt_or_copy(const char *msg, const int msglen,
             return 1;
         }
         /* flip bits in ECH confirmation */
-        if (ts->borkage & OSSL_ECH_BORK_FLIP) {
+        if ((ts->borkage & OSSL_ECH_BORK_FLIP) != 0) {
             if (!TEST_ptr(*msgout = OPENSSL_memdup(msg, msglen)))
                 return 0;
-            if (ts->borkage & OSSL_ECH_BORK_HRR) {
-                rv = ossl_ech_helper_get_sh_offsets((unsigned char *)msg + 9,
-                                                    msglen - 9,
-                                                    &exts, &echoffset,
-                                                    &echtype);
+            if ((ts->borkage & OSSL_ECH_BORK_HRR) != 0) {
+                rv = ech_get_sh_offsets((unsigned char *)msg + 9,
+                                        msglen - 9,
+                                        &exts, &echoffset,
+                                        &echtype);
                 if (!TEST_int_eq(rv, 1))
                     return 0;
                 if (echoffset > 0) {
@@ -1083,13 +1173,13 @@ static int corrupt_or_copy(const char *msg, const int msglen,
             *msgoutlen = msglen;
             return 1;
         }
-        if (ts->borkage & OSSL_ECH_BORK_REPLACE &&
-            ts->borkage & OSSL_ECH_BORK_HRR) {
+        if ((ts->borkage & OSSL_ECH_BORK_REPLACE) != 0 &&
+            (ts->borkage & OSSL_ECH_BORK_HRR) != 0) {
             if (!TEST_ptr(*msgout = OPENSSL_memdup(msg, msglen)))
                 return 0;
-            rv = ossl_ech_helper_get_sh_offsets((unsigned char *)msg + 9,
-                                                msglen - 9,
-                                                &exts, &echoffset, &echtype);
+            rv = ech_get_sh_offsets((unsigned char *)msg + 9,
+                                    msglen - 9,
+                                    &exts, &echoffset, &echtype);
             if (!TEST_int_eq(rv, 1))
                 return 0;
             if (echoffset > 0)
@@ -1195,8 +1285,8 @@ static int tls_noop_free(BIO *bio)
     return 1;
 }
 
-# define BIO_TYPE_CUSTOM_CORRUPT (0x80 | BIO_TYPE_FILTER)
-# define BIO_TYPE_CUSTOM_SPLIT (0x81 | BIO_TYPE_FILTER)
+#define BIO_TYPE_CUSTOM_CORRUPT (0x80 | BIO_TYPE_FILTER)
+#define BIO_TYPE_CUSTOM_SPLIT (0x81 | BIO_TYPE_FILTER)
 
 static BIO_METHOD *method_tls_corrupt = NULL;
 
@@ -1320,7 +1410,7 @@ static int test_sh_corrupt(int testidx)
     if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client,
                                       s_to_c_fbio, NULL)))
         goto end;
-    if (ts->borkage & OSSL_ECH_BORK_GREASE) {
+    if ((ts->borkage & OSSL_ECH_BORK_GREASE) != 0) {
         if (!TEST_true(SSL_set_options(client, SSL_OP_ECH_GREASE)))
             goto end;
     } else {
@@ -1458,11 +1548,9 @@ const OPTIONS *test_get_options(void)
     };
     return test_options;
 }
-#endif
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_ECH
     OPTION_CHOICE o;
     BIO *in = NULL;
 
@@ -1514,18 +1602,13 @@ int setup_tests(void)
 err:
     BIO_free_all(in);
     return 0;
-#else
-    return 1;
-#endif
 }
 
 void cleanup_tests(void)
 {
-#ifndef OPENSSL_NO_ECH
     bio_f_tls_corrupt_filter_free();
     OPENSSL_free(cert);
     OPENSSL_free(privkey);
     OPENSSL_free(hpke_info);
     OSSL_ECHSTORE_free(es);
-#endif
 }
