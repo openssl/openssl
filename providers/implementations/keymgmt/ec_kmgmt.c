@@ -981,7 +981,7 @@ static void *ec_gen_init(void *provctx, int selection,
         gctx->ecdh_mode = 0;
         OSSL_FIPS_IND_INIT(gctx)
         if (!ec_gen_set_params(gctx, params)) {
-            OPENSSL_free(gctx);
+            ec_gen_cleanup(gctx);
             gctx = NULL;
         }
     }
