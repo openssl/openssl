@@ -14,7 +14,6 @@ use TLSProxy::Alert;
 
 use constant DTLS_MESSAGE_HEADER_LENGTH => 12;
 use constant TLS_MESSAGE_HEADER_LENGTH => 4;
-use constant RECORD_HANDSHAKE_HEADER_LENGTH => 12;
 
 #Message types
 use constant {
@@ -236,14 +235,16 @@ sub get_messages
                     #We can complete the message with this record
                     $recoffset = $messlen - length($payload);
 
-                    # For fragmented messages to be parsed correctly we need to
-                    # skip the handshake header
-                    $payload .= substr($record->decrypt_data, RECORD_HANDSHAKE_HEADER_LENGTH, $recoffset);
-                    push @message_frag_lens, $recoffset;
+                    if ($isdtls) {
+                        # For fragmented messages to be parsed correctly we need to
+                        # skip the handshake header
+                        $payload .= substr($record->decrypt_data, DTLS_MESSAGE_HEADER_LENGTH, $recoffset);
+                        push @message_frag_lens, $recoffset;
+                    }
 
                     # We skipped the handshake header above and we need to
                     # update recoffset accordingly
-                    $recoffset += RECORD_HANDSHAKE_HEADER_LENGTH;
+                    $recoffset += DTLS_MESSAGE_HEADER_LENGTH;
                     $message = create_message($server, $mt,
                         $messseq, $messfraglen, $messfragoffs,
                         $payload, $startoffset, $isdtls);

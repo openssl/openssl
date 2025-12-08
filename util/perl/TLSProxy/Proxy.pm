@@ -621,6 +621,10 @@ sub clientstart
 sub construct_alert_message
 {
     my ($self) = @_;
+
+    die "construct_alert_message only valid for DTLSv1.3 tests\n"
+        if !$self->{isdtls} || !$self->is_tls13();
+
     my $epoch = $self->{server_epoch};
     my $sequence_number = $self->{server_sequence_number} + 1;
     my $seqhi = ($sequence_number >> 32) & 0xffff;
