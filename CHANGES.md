@@ -32,6 +32,11 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Support for SSLv3 was removed. SSLv3 has been deprecated since
+   2015, and OpenSSL had it disabled by default since 1.1.0 (2016).
+
+   *Kurt Roeckx*
+
  * Removed extra leading '00:' when printing key data such as an RSA modulus
    in hexadecimal format where the first (most significant) byte is >= 0x80.
    This had been added artificially to resemble ASN.1 DER encoding internals.

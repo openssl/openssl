@@ -585,7 +585,6 @@ void apps_ssl_info_callback(const SSL *s, int where, int ret)
 }
 
 static STRINT_PAIR ssl_versions[] = {
-    {"SSL 3.0", SSL3_VERSION},
     {"TLS 1.0", TLS1_VERSION},
     {"TLS 1.1", TLS1_1_VERSION},
     {"TLS 1.2", TLS1_2_VERSION},
@@ -668,8 +667,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
     const char *str_version, *str_content_type = "", *str_details1 = "", *str_details2 = "";
     const unsigned char* bp = buf;
 
-    if (version == SSL3_VERSION ||
-        version == TLS1_VERSION ||
+    if (version == TLS1_VERSION ||
         version == TLS1_1_VERSION ||
         version == TLS1_2_VERSION ||
         version == TLS1_3_VERSION ||

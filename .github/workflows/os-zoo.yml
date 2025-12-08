@@ -192,7 +192,7 @@ jobs:
       with:
         persist-credentials: false
     - name: config
-      run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -251,7 +251,7 @@ jobs:
       with:
         persist-credentials: false
     - name: config
-      run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -271,7 +271,7 @@ jobs:
       with:
         persist-credentials: false
     - name: config
-      run: ./config --strict-warnings enable-fips enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config --strict-warnings enable-fips enable-md2 enable-rc5 enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -291,7 +291,7 @@ jobs:
       with:
         persist-credentials: false
     - name: config
-      run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -318,7 +318,7 @@ jobs:
         shutdown_vm: false
         run: |
           sudo pkg install -y gcc perl5
-          ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+          ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       uses: cross-platform-actions/action@46e8d7fb25520a8d6c64fd2b7a1192611da98eda #v0.30.0
       with:

@@ -17,7 +17,7 @@ use OpenSSL::Test::Utils qw(alldisabled available_protocols);
 setup("test_servername");
 
 plan skip_all => "No TLS/SSL protocols are supported by this OpenSSL build"
-    if alldisabled(grep { $_ ne "ssl3" } available_protocols("tls"));
+    if alldisabled(available_protocols("tls"));
 
 plan tests => 1;
 

@@ -959,7 +959,7 @@ typedef enum OPTION_choice {
     OPT_PSK_SESS, OPT_SRPVFILE, OPT_SRPUSERSEED, OPT_REV, OPT_WWW,
     OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC, OPT_SSL_CONFIG,
     OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
-    OPT_SSL3, OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
+    OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN, OPT_STATELESS,
     OPT_ID_PREFIX, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN, OPT_SENDFILE,
@@ -1175,9 +1175,6 @@ const OPTIONS s_server_options[] = {
     {"no_ca_names", OPT_NOCANAMES, '-',
      "Disable TLS Extension CA Names"},
     {"stateless", OPT_STATELESS, '-', "Require TLSv1.3 cookies"},
-#ifndef OPENSSL_NO_SSL3
-    {"ssl3", OPT_SSL3, '-', "Just talk SSLv3"},
-#endif
 #ifndef OPENSSL_NO_TLS1
     {"tls1", OPT_TLS1, '-', "Just talk TLSv1"},
 #endif
@@ -1232,8 +1229,8 @@ const OPTIONS s_server_options[] = {
 };
 
 #define IS_PROT_FLAG(o) \
- (o == OPT_SSL3 || o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
-  || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2)
+    (o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
+     || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2)
 
 int s_server_main(int argc, char *argv[])
 {
@@ -1752,10 +1749,6 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_SSL_CONFIG:
             ssl_config = opt_arg();
-            break;
-        case OPT_SSL3:
-            min_version = SSL3_VERSION;
-            max_version = SSL3_VERSION;
             break;
         case OPT_TLS1_3:
             min_version = TLS1_3_VERSION;

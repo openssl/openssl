@@ -74,7 +74,7 @@ handshake.
   another alert.)
 
 * ExpectedProtocol - expected negotiated protocol. One of
-  SSLv3, TLSv1, TLSv1.1, TLSv1.2.
+  TLSv1, TLSv1.1, TLSv1.2.
 
 * SessionTicketExpected - whether or not a session ticket is expected
   - Ignore - do not check for a session ticket (default)
@@ -272,8 +272,8 @@ In the above examples, `default` is the provider to use.
 
 Note that the test expectations sometimes depend on the Configure settings. For
 example, the negotiated protocol depends on the set of available (enabled)
-protocols: a build with `enable-ssl3` has different test expectations than a
-build with `no-ssl3`.
+protocols: a build with `enable-tls1_3` has different test expectations than a
+build with `no-tls1_3`.
 
 The Perl test harness automatically generates expected outputs, so users who
 just run `make test` do not need any extra steps.

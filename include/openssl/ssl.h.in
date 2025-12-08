@@ -161,7 +161,6 @@ extern "C" {
 # define SSL_TXT_SHA256          "SHA256"
 # define SSL_TXT_SHA384          "SHA384"
 
-# define SSL_TXT_SSLV3           "SSLv3"
 # define SSL_TXT_TLSV1           "TLSv1"
 # define SSL_TXT_TLSV1_1         "TLSv1.1"
 # define SSL_TXT_TLSV1_2         "TLSv1.2"
