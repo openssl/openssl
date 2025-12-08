@@ -17,3 +17,12 @@ default_properties = "fips=yes"
 
 [provider_sect]
 fips = fips_sect
+# To support testing --with-rand-seed=none
+# -DOPENSSL_DEFAULT_SEED_SRC=JITTER -DOPENSSL_DEFAULT_SEED_PROPQ=-fips
+# As without a base provider, there will be no drbg seeds.  Also not
+# sure if it is realistic to use fips provider without either base or
+# default providers.
+base = base_sect
+
+[base_sect]
+activate = 1

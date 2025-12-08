@@ -43,7 +43,8 @@ The default DRBG is "CTR-DRBG" using the "AES-256-CTR" cipher.
 
 The default seed source can be configured when OpenSSL is compiled by
 setting B<-DOPENSSL_DEFAULT_SEED_SRC=SEED-SRC>. If not set then
-"SEED-SRC" is used.
+"SEED-SRC" is used. Optionally, B<-DDOPENSSL_DEFAULT_SEED_PROPQ=-fips>
+can be set if needed. If not set then NULL is used.
 
 =head1 EXAMPLES
 
