@@ -49,7 +49,7 @@ enum st_test_category {
     SELF_TEST_KAT_ASYM_KEYGEN,
     SELF_TEST_KAT_KEM,
     SELF_TEST_KAT_ASYM_CIPHER,
-    SELF_TEST_KAT_MAC, /* currently unused */
+    SELF_TEST_KAT_MAC,
 };
 
 enum st_test_state {
@@ -145,6 +145,10 @@ typedef struct st_kat_drbg_st {
     ST_BUFFER entropyaddin2;
 } ST_KAT_DRBG;
 
+typedef struct st_kat_mac_st {
+    const ST_KAT_PARAM *params;
+} ST_KAT_MAC;
+
 typedef struct self_test_st {
     const char *algorithm;
     const char *desc;
@@ -162,6 +166,7 @@ typedef struct self_test_st {
         ST_KAT_KDF kdf;
         ST_KAT_KAS kas;
         ST_KAT_DRBG drbg;
+        ST_KAT_MAC mac;
     } u;
     const self_test_id_t *depends_on;
 } ST_DEFINITION;
