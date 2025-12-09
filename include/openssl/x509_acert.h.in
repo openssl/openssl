@@ -9,9 +9,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_X509_ACERT_H
 # define OPENSSL_X509_ACERT_H
@@ -133,9 +135,11 @@ int OSSL_ISSUER_SERIAL_set1_issuerUID(OSSL_ISSUER_SERIAL *isss,
 
 typedef struct OSSL_IETF_ATTR_SYNTAX_VALUE_st OSSL_IETF_ATTR_SYNTAX_VALUE;
 typedef struct OSSL_IETF_ATTR_SYNTAX_st OSSL_IETF_ATTR_SYNTAX;
+/* clang-format off */
 {-
     generate_stack_macros("OSSL_IETF_ATTR_SYNTAX_VALUE");
 -}
+/* clang-format on */
 
 DECLARE_ASN1_ITEM(OSSL_IETF_ATTR_SYNTAX_VALUE)
 DECLARE_ASN1_ALLOC_FUNCTIONS(OSSL_IETF_ATTR_SYNTAX_VALUE)
@@ -177,13 +181,17 @@ typedef struct TARGET_st {
 typedef STACK_OF(OSSL_TARGET) OSSL_TARGETS;
 typedef STACK_OF(OSSL_TARGETS) OSSL_TARGETING_INFORMATION;
 
+/* clang-format off */
 {-
     generate_stack_macros("OSSL_TARGET");
 -}
+/* clang-format on */
 
+/* clang-format off */
 {-
     generate_stack_macros("OSSL_TARGETS");
 -}
+/* clang-format on */
 
 DECLARE_ASN1_FUNCTIONS(OSSL_TARGET)
 DECLARE_ASN1_FUNCTIONS(OSSL_TARGETS)

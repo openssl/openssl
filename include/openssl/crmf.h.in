@@ -13,9 +13,11 @@
  * CRMF (RFC 4211) implementation by M. Peylo, M. Viljanen, and D. von Oheimb.
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_CRMF_H
 # define OPENSSL_CRMF_H
@@ -50,15 +52,19 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_ENCRYPTEDVALUE)
 typedef struct ossl_crmf_msg_st OSSL_CRMF_MSG;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_MSG)
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_MSG)
+/* clang-format off */
 {-
     generate_stack_macros("OSSL_CRMF_MSG");
 -}
+/* clang-format on */
 typedef struct ossl_crmf_attributetypeandvalue_st OSSL_CRMF_ATTRIBUTETYPEANDVALUE;
 void OSSL_CRMF_ATTRIBUTETYPEANDVALUE_free(OSSL_CRMF_ATTRIBUTETYPEANDVALUE *v);
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
+/* clang-format off */
 {-
     generate_stack_macros("OSSL_CRMF_ATTRIBUTETYPEANDVALUE");
 -}
+/* clang-format on */
 
 typedef struct ossl_crmf_pbmparameter_st OSSL_CRMF_PBMPARAMETER;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_PBMPARAMETER)
@@ -67,9 +73,11 @@ typedef struct ossl_crmf_certrequest_st OSSL_CRMF_CERTREQUEST;
 typedef struct ossl_crmf_certid_st OSSL_CRMF_CERTID;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_CERTID)
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTID)
+/* clang-format off */
 {-
     generate_stack_macros("OSSL_CRMF_CERTID");
 -}
+/* clang-format on */
 
 typedef struct ossl_crmf_pkipublicationinfo_st OSSL_CRMF_PKIPUBLICATIONINFO;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_PKIPUBLICATIONINFO)
