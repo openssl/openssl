@@ -917,6 +917,8 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     size_t soutl, inl_ = (size_t)inl;
     int blocksize;
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     if (ossl_likely(outl != NULL)) {
         *outl = 0;
     } else {
@@ -978,6 +980,8 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     unsigned int i, b, bl;
     size_t soutl;
     int blocksize;
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     if (outl != NULL) {
         *outl = 0;
@@ -1065,6 +1069,8 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     unsigned int b;
     size_t soutl, inl_ = (size_t)inl;
     int blocksize;
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     if (ossl_likely(outl != NULL)) {
         *outl = 0;
@@ -1199,6 +1205,8 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     size_t soutl;
     int ret;
     int blocksize;
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     if (outl != NULL) {
         *outl = 0;
