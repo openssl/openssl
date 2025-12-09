@@ -56,7 +56,7 @@ int ossl_sha3_update(KECCAK1600_CTX *ctx, const void *_inp, size_t len)
         || ctx->xof_state == XOF_STATE_FINAL)
         return 0;
 
-    if ((num = ctx->bufsz) != 0) {      /* process intermediate buffer? */
+    if ((num = ctx->bufsz) != 0) { /* process intermediate buffer? */
         rem = bsz - num;
 
         if (len < rem) {

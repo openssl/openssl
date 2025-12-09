@@ -23,7 +23,7 @@ static int linebuffer_free(BIO *data);
 static long linebuffer_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 
 /* A 10k maximum should be enough for most purposes */
-#define DEFAULT_LINEBUFFER_SIZE 1024*10
+#define DEFAULT_LINEBUFFER_SIZE 1024 * 10
 
 /* #define DEBUG */
 
@@ -48,9 +48,9 @@ const BIO_METHOD *BIO_f_linebuffer(void)
 }
 
 typedef struct bio_linebuffer_ctx_struct {
-    char *obuf;                 /* the output char array */
-    int obuf_size;              /* how big is the output buffer */
-    int obuf_len;               /* how many bytes are in it */
+    char *obuf; /* the output char array */
+    int obuf_size; /* how big is the output buffer */
+    int obuf_len; /* how many bytes are in it */
 } BIO_LINEBUFFER_CTX;
 
 static int linebuffer_new(BIO *bi)
@@ -119,7 +119,8 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
         const char *p;
         char c;
 
-        for (p = in, c = '\0'; p < in + inl && (c = *p) != '\n'; p++) ;
+        for (p = in, c = '\0'; p < in + inl && (c = *p) != '\n'; p++)
+            ;
         if (c == '\n') {
             p++;
             foundnl = 1;
@@ -131,7 +132,7 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
          * concatenate them and write
          */
         while ((foundnl || p - in > ctx->obuf_size - ctx->obuf_len)
-               && ctx->obuf_len > 0) {
+            && ctx->obuf_len > 0) {
             int orig_olen = ctx->obuf_len;
 
             i = ctx->obuf_size - ctx->obuf_len;
@@ -182,8 +183,7 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
             in += i;
             inl -= i;
         }
-    }
-    while (foundnl && inl > 0);
+    } while (foundnl && inl > 0);
     /*
      * We've written as much as we can.  The rest of the input buffer, if
      * any, is text that doesn't and with a NL and therefore needs to be

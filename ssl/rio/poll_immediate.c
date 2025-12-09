@@ -18,37 +18,37 @@
  * accessing pollfd structures (see Github issue #24236). That interferes
  * with our use of these names here. We simply undef them.
  */
-# undef revents
-# undef events
+#undef revents
+#undef events
 #endif
 
 #define ITEM_N(items, stride, n) \
-    (*(SSL_POLL_ITEM *)((char *)(items) + (n)*(stride)))
+    (*(SSL_POLL_ITEM *)((char *)(items) + (n) * (stride)))
 
-#define FAIL_FROM(n)                                                        \
-    do {                                                                    \
-        size_t j;                                                           \
-                                                                            \
-        for (j = (n); j < num_items; ++j)                                   \
-            ITEM_N(items, stride, j).revents = 0;                           \
-                                                                            \
-        ok = 0;                                                             \
-        goto out;                                                           \
+#define FAIL_FROM(n)                              \
+    do {                                          \
+        size_t j;                                 \
+                                                  \
+        for (j = (n); j < num_items; ++j)         \
+            ITEM_N(items, stride, j).revents = 0; \
+                                                  \
+        ok = 0;                                   \
+        goto out;                                 \
     } while (0)
 
-#define FAIL_ITEM(i)                                                        \
-    do {                                                                    \
-        ITEM_N(items, stride, i).revents = SSL_POLL_EVENT_F;                \
-        ++result_count;                                                     \
-        FAIL_FROM(i + 1);                                                   \
+#define FAIL_ITEM(i)                                         \
+    do {                                                     \
+        ITEM_N(items, stride, i).revents = SSL_POLL_EVENT_F; \
+        ++result_count;                                      \
+        FAIL_FROM(i + 1);                                    \
     } while (0)
 
 int SSL_poll(SSL_POLL_ITEM *items,
-             size_t num_items,
-             size_t stride,
-             const struct timeval *timeout,
-             uint64_t flags,
-             size_t *p_result_count)
+    size_t num_items,
+    size_t stride,
+    const struct timeval *timeout,
+    uint64_t flags,
+    size_t *p_result_count)
 {
     int ok = 1;
     size_t i, result_count = 0;
@@ -59,7 +59,7 @@ int SSL_poll(SSL_POLL_ITEM *items,
     ossl_unused int do_tick = ((flags & SSL_POLL_FLAG_NO_HANDLE_EVENTS) == 0);
     int is_immediate
         = (timeout != NULL
-           && timeout->tv_sec == 0 && timeout->tv_usec == 0);
+            && timeout->tv_sec == 0 && timeout->tv_usec == 0);
 
     /*
      * Prevent calls which use SSL_poll functionality which is not currently
@@ -67,8 +67,8 @@ int SSL_poll(SSL_POLL_ITEM *items,
      */
     if (!is_immediate) {
         ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
-                       "SSL_poll does not currently support blocking "
-                       "operation");
+            "SSL_poll does not currently support blocking "
+            "operation");
         FAIL_FROM(0);
     }
 
@@ -78,8 +78,8 @@ int SSL_poll(SSL_POLL_ITEM *items,
 
     /* Poll current state of each item. */
     for (i = 0; i < num_items; ++i) {
-        item    = &ITEM_N(items, stride, i);
-        events  = item->events;
+        item = &ITEM_N(items, stride, i);
+        events = item->events;
         revents = 0;
 
         switch (item->desc.type) {
@@ -105,20 +105,21 @@ int SSL_poll(SSL_POLL_ITEM *items,
 
             default:
                 ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
-                               "SSL_poll currently only supports QUIC SSL "
-                               "objects");
+                    "SSL_poll currently only supports QUIC SSL "
+                    "objects");
                 FAIL_ITEM(i);
             }
             break;
         case BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD:
             ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
-                           "SSL_poll currently does not support polling "
-                           "sockets");
+                "SSL_poll currently does not support polling "
+                "sockets");
             FAIL_ITEM(i);
         default:
             ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
-                           "SSL_poll does not support unknown poll descriptor "
-                           "type %d", item->desc.type);
+                "SSL_poll does not support unknown poll descriptor "
+                "type %d",
+                item->desc.type);
             FAIL_ITEM(i);
         }
 
