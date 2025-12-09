@@ -21,7 +21,7 @@ static OSSL_LIB_CTX *libctx = NULL;
 
 /* Fetch SIGNATURE method using a libctx and propq */
 static int fetch_sig(OSSL_LIB_CTX *ctx, const char *alg, const char *propq,
-                     OSSL_PROVIDER *expected_prov)
+    OSSL_PROVIDER *expected_prov)
 {
     OSSL_PROVIDER *prov;
     EVP_SIGNATURE *sig = EVP_SIGNATURE_fetch(ctx, "RSA", propq);
@@ -35,8 +35,8 @@ static int fetch_sig(OSSL_LIB_CTX *ctx, const char *alg, const char *propq,
 
     if (!TEST_ptr_eq(prov, expected_prov)) {
         TEST_info("Fetched provider: %s, Expected provider: %s",
-                  OSSL_PROVIDER_get0_name(prov),
-                  OSSL_PROVIDER_get0_name(expected_prov));
+            OSSL_PROVIDER_get0_name(prov),
+            OSSL_PROVIDER_get0_name(expected_prov));
         goto end;
     }
 
@@ -45,7 +45,6 @@ end:
     EVP_SIGNATURE_free(sig);
     return ret;
 }
-
 
 static int test_pkey_sig(void)
 {
@@ -68,7 +67,7 @@ static int test_pkey_sig(void)
 
     /* Construct a pkey using precise propq to use our provider */
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA",
-                                                   "provider=fake-rsa"))
+                      "provider=fake-rsa"))
         || !TEST_true(EVP_PKEY_fromdata_init(ctx))
         || !TEST_true(EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, NULL))
         || !TEST_ptr(pkey))
@@ -87,7 +86,7 @@ static int test_pkey_sig(void)
          * fake-rsa as the key is not exportable.
          */
         if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey,
-                                                       "?provider=default")))
+                          "?provider=default")))
             goto end;
 
         /*
@@ -152,7 +151,7 @@ static int test_alternative_keygen_init(void)
         return 0;
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA",
-                                                   "?provider=fake-rsa")))
+                      "?provider=fake-rsa")))
         goto end;
 
     if (!TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0))
@@ -195,10 +194,10 @@ static int test_pkey_eq(void)
     /* Construct a public key for fake-rsa */
     if (!TEST_ptr(params = fake_rsa_key_params(0))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA",
-                                                      "provider=fake-rsa"))
+                         "provider=fake-rsa"))
         || !TEST_true(EVP_PKEY_fromdata_init(ctx))
         || !TEST_true(EVP_PKEY_fromdata(ctx, &pkey_fake, EVP_PKEY_PUBLIC_KEY,
-                                        params))
+            params))
         || !TEST_ptr(pkey_fake))
         goto end;
 
@@ -210,10 +209,10 @@ static int test_pkey_eq(void)
     /* Construct a public key for default */
     if (!TEST_ptr(params = fake_rsa_key_params(0))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA",
-                                                      "provider=default"))
+                         "provider=default"))
         || !TEST_true(EVP_PKEY_fromdata_init(ctx))
         || !TEST_true(EVP_PKEY_fromdata(ctx, &pkey_dflt, EVP_PKEY_PUBLIC_KEY,
-                                        params))
+            params))
         || !TEST_ptr(pkey_dflt))
         goto end;
 
@@ -257,10 +256,10 @@ static int test_pkey_can_sign(void)
 
     if (!TEST_ptr(params = fake_rsa_key_params(0))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA",
-                                                      "provider=fake-rsa"))
+                         "provider=fake-rsa"))
         || !TEST_true(EVP_PKEY_fromdata_init(ctx))
         || !TEST_true(EVP_PKEY_fromdata(ctx, &pkey_fake, EVP_PKEY_PUBLIC_KEY,
-                                        params))
+            params))
         || !TEST_true(EVP_PKEY_can_sign(pkey_fake))
         || !TEST_ptr(pkey_fake))
         goto end;
@@ -281,10 +280,10 @@ static int test_pkey_can_sign(void)
 
     if (!TEST_ptr(params = fake_rsa_key_params(0))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA",
-                                                      "provider=fake-rsa"))
+                         "provider=fake-rsa"))
         || !TEST_true(EVP_PKEY_fromdata_init(ctx))
         || !TEST_true(EVP_PKEY_fromdata(ctx, &pkey_fake, EVP_PKEY_PUBLIC_KEY,
-                                        params))
+            params))
         || !TEST_true(EVP_PKEY_can_sign(pkey_fake))
         || !TEST_ptr(pkey_fake))
         goto end;
@@ -328,18 +327,18 @@ static int test_pkey_store(int idx)
         goto end;
 
     if (!TEST_ptr(loader = OSSL_STORE_LOADER_fetch(libctx, "fake_rsa",
-                                                   propq)))
+                      propq)))
         goto end;
 
     OSSL_STORE_LOADER_free(loader);
 
     if (!TEST_ptr(ctx = OSSL_STORE_open_ex("fake_rsa:test", libctx, propq,
-                                           NULL, NULL, NULL, NULL, NULL)))
+                      NULL, NULL, NULL, NULL, NULL)))
         goto end;
 
     while (!OSSL_STORE_eof(ctx)
-           && (info = OSSL_STORE_load(ctx)) != NULL
-           && pkey == NULL) {
+        && (info = OSSL_STORE_load(ctx)) != NULL
+        && pkey == NULL) {
         if (OSSL_STORE_INFO_get_type(info) == OSSL_STORE_INFO_PKEY)
             pkey = OSSL_STORE_INFO_get1_PKEY(info);
         OSSL_STORE_INFO_free(info);
