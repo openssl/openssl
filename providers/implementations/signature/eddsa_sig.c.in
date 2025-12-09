@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
@@ -794,9 +796,11 @@ static const char **ed448_sigalg_query_key_types(void)
     return keytypes;
 }
 
+/* clang-format off */
 {- produce_param_decoder('eddsa_get_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID', 'id', 'octet_string'],
                          )); -}
+/* clang-format on */
 
 static int eddsa_get_ctx_params(void *vpeddsactx, OSSL_PARAM *params)
 {
@@ -821,10 +825,12 @@ static const OSSL_PARAM *eddsa_gettable_ctx_params(ossl_unused void *vpeddsactx,
     return eddsa_get_ctx_params_list;
 }
 
+/* clang-format off */
 {- produce_param_decoder('eddsa_set_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_INSTANCE',       'inst', 'utf8_string'],
                           ['OSSL_SIGNATURE_PARAM_CONTEXT_STRING', 'ctx',  'octet_string'],
                          )); -}
+/* clang-format on */
 
 static int eddsa_set_ctx_params_internal
         (PROV_EDDSA_CTX *peddsactx, const struct eddsa_set_ctx_params_st *p)
@@ -911,9 +917,11 @@ static int eddsa_set_ctx_params(void *vpeddsactx, const OSSL_PARAM params[])
 }
 
 #define eddsa_set_variant_ctx_params_st         eddsa_set_ctx_params_st
+/* clang-format off */
 {- produce_param_decoder('eddsa_set_variant_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_CONTEXT_STRING', 'ctx',  'octet_string'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *
 eddsa_settable_variant_ctx_params(ossl_unused void *vpeddsactx,

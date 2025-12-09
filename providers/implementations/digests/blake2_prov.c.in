@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <string.h>
 #include <openssl/crypto.h>
@@ -23,9 +25,11 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 static OSSL_FUNC_digest_gettable_ctx_params_fn blake_gettable_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn blake_settable_ctx_params;
 
+/* clang-format off */
 {- produce_param_decoder('blake_get_ctx_params',
                          (['OSSL_DIGEST_PARAM_SIZE',     'size',   'uint'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *blake_gettable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *pctx)
@@ -33,9 +37,11 @@ static const OSSL_PARAM *blake_gettable_ctx_params(ossl_unused void *ctx,
     return blake_get_ctx_params_list;
 }
 
+/* clang-format off */
 {- produce_param_decoder('blake_set_ctx_params',
                          (['OSSL_DIGEST_PARAM_SIZE',     'size',   'uint'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *blake_settable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *pctx)

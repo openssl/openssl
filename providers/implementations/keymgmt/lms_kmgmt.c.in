@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -67,9 +69,11 @@ static int lms_match(const void *keydata1, const void *keydata2, int selection)
     return ossl_lms_key_equal(key1, key2, selection);
 }
 
+/* clang-format off */
 {- produce_param_decoder('lms_import',
                          (['OSSL_PKEY_PARAM_PUB_KEY',           'pub',     'octet_string'],
                          )); -}
+/* clang-format on */
 
 static int lms_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
