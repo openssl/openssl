@@ -13,7 +13,7 @@
  * when the deprecated calls are not hidden
  */
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-# define OPENSSL_SUPPRESS_DEPRECATED
+#define OPENSSL_SUPPRESS_DEPRECATED
 #endif
 
 #include <string.h>
@@ -41,7 +41,7 @@ struct async_ctrs {
 static SSL_CTX *serverctx = NULL;
 static SSL_CTX *clientctx = NULL;
 
-#define MAX_ATTEMPTS    100
+#define MAX_ATTEMPTS 100
 
 static int checkbuffers(SSL *s, int isalloced)
 {
@@ -79,7 +79,7 @@ static int test_func(int test)
     char buf[sizeof(testdata)];
 
     if (!TEST_true(create_ssl_objects(serverctx, clientctx, &serverssl, &clientssl,
-                                      NULL, NULL))) {
+            NULL, NULL))) {
         TEST_error("Test %d failed: Create SSL objects failed\n", test);
         goto end;
     }
@@ -102,31 +102,26 @@ static int test_func(int test)
          * (the first one might be a retryable fail).
          */
         for (ret = -1, i = 0, len = 0; len != sizeof(testdata) && i < 2;
-             i++) {
+            i++) {
             /* test == 0 mean to free/allocate = control */
-            if (test >= 1 && (!TEST_true(SSL_free_buffers(clientssl))
-                              || !TEST_true(checkbuffers(clientssl, 0))))
+            if (test >= 1 && (!TEST_true(SSL_free_buffers(clientssl)) || !TEST_true(checkbuffers(clientssl, 0))))
                 goto end;
-            if (test >= 2 && (!TEST_true(SSL_alloc_buffers(clientssl))
-                              || !TEST_true(checkbuffers(clientssl, 1))))
+            if (test >= 2 && (!TEST_true(SSL_alloc_buffers(clientssl)) || !TEST_true(checkbuffers(clientssl, 1))))
                 goto end;
             /* allocate a second time */
-            if (test >= 3 && (!TEST_true(SSL_alloc_buffers(clientssl))
-                              || !TEST_true(checkbuffers(clientssl, 1))))
+            if (test >= 3 && (!TEST_true(SSL_alloc_buffers(clientssl)) || !TEST_true(checkbuffers(clientssl, 1))))
                 goto end;
-            if (test >= 4 && (!TEST_true(SSL_free_buffers(clientssl))
-                              || !TEST_true(checkbuffers(clientssl, 0))))
+            if (test >= 4 && (!TEST_true(SSL_free_buffers(clientssl)) || !TEST_true(checkbuffers(clientssl, 0))))
                 goto end;
 
             ret = SSL_write(clientssl, testdata + len,
-                            sizeof(testdata) - len);
+                sizeof(testdata) - len);
             if (ret > 0) {
                 len += ret;
             } else {
                 int ssl_error = SSL_get_error(clientssl, ret);
 
-                if (ssl_error == SSL_ERROR_SYSCALL ||
-                    ssl_error == SSL_ERROR_SSL) {
+                if (ssl_error == SSL_ERROR_SYSCALL || ssl_error == SSL_ERROR_SSL) {
                     TEST_error("Test %d failed: Failed to write app data\n", test);
                     goto end;
                 }
@@ -139,20 +134,15 @@ static int test_func(int test)
          * it could fail once for each byte read, including all overhead
          * bytes from the record header/padding etc.
          */
-        for (ret = -1, i = 0, len = 0; len != sizeof(testdata) &&
-                                       i < MAX_ATTEMPTS; i++) {
-            if (test >= 5 && (!TEST_true(SSL_free_buffers(serverssl))
-                              || !TEST_true(checkbuffers(serverssl, 0))))
+        for (ret = -1, i = 0, len = 0; len != sizeof(testdata) && i < MAX_ATTEMPTS; i++) {
+            if (test >= 5 && (!TEST_true(SSL_free_buffers(serverssl)) || !TEST_true(checkbuffers(serverssl, 0))))
                 goto end;
             /* free a second time */
-            if (test >= 6 && (!TEST_true(SSL_free_buffers(serverssl))
-                              || !TEST_true(checkbuffers(serverssl, 0))))
+            if (test >= 6 && (!TEST_true(SSL_free_buffers(serverssl)) || !TEST_true(checkbuffers(serverssl, 0))))
                 goto end;
-            if (test >= 7 && (!TEST_true(SSL_alloc_buffers(serverssl))
-                              || !TEST_true(checkbuffers(serverssl, 1))))
+            if (test >= 7 && (!TEST_true(SSL_alloc_buffers(serverssl)) || !TEST_true(checkbuffers(serverssl, 1))))
                 goto end;
-            if (test >= 8 && (!TEST_true(SSL_free_buffers(serverssl))
-                              || !TEST_true(checkbuffers(serverssl, 0))))
+            if (test >= 8 && (!TEST_true(SSL_free_buffers(serverssl)) || !TEST_true(checkbuffers(serverssl, 0))))
                 goto end;
 
             ret = SSL_read(serverssl, buf + len, sizeof(buf) - len);
@@ -161,8 +151,7 @@ static int test_func(int test)
             } else {
                 int ssl_error = SSL_get_error(serverssl, ret);
 
-                if (ssl_error == SSL_ERROR_SYSCALL ||
-                    ssl_error == SSL_ERROR_SSL) {
+                if (ssl_error == SSL_ERROR_SYSCALL || ssl_error == SSL_ERROR_SSL) {
                     TEST_error("Test %d failed: Failed to read app data\n", test);
                     goto end;
                 }
@@ -173,7 +162,7 @@ static int test_func(int test)
     }
 
     result = 1;
- end:
+end:
     if (!result)
         ERR_print_errors_fp(stderr);
 
@@ -214,19 +203,19 @@ static int test_free_buffers(int test)
     }
 
     if (!TEST_true(create_ssl_objects(serverctx, clientctx, &serverssl,
-                                      &clientssl, NULL, NULL)))
+            &clientssl, NULL, NULL)))
         goto end;
 
     if (pipeline) {
         if (!TEST_true(SSL_set_cipher_list(serverssl, "AES128-SHA"))
-                || !TEST_true(SSL_set_max_proto_version(serverssl,
-                                                        TLS1_2_VERSION))
-                || !TEST_true(SSL_set_max_pipelines(serverssl, 2)))
+            || !TEST_true(SSL_set_max_proto_version(serverssl,
+                TLS1_2_VERSION))
+            || !TEST_true(SSL_set_max_pipelines(serverssl, 2)))
             goto end;
     }
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                                         SSL_ERROR_NONE)))
+            SSL_ERROR_NONE)))
         goto end;
 
     /*
@@ -235,7 +224,7 @@ static int test_free_buffers(int test)
      */
     for (i = 0; i <= pipeline; i++) {
         if (!TEST_true(SSL_write_ex(clientssl, testdata, strlen(testdata),
-                                    &written)))
+                &written)))
             goto end;
     }
 
@@ -251,7 +240,7 @@ static int test_free_buffers(int test)
             readlen += strlen(testdata);
 
         if (!TEST_true(SSL_read_ex(serverssl, buf, readlen, &readbytes))
-                || !TEST_size_t_eq(readlen, readbytes))
+            || !TEST_size_t_eq(readlen, readbytes))
             goto end;
     } else {
         BIO *tmp;
@@ -260,11 +249,11 @@ static int test_free_buffers(int test)
         /* Remove all the data that is pending for read by the server */
         tmp = SSL_get_rbio(serverssl);
         if (!TEST_true(BIO_read_ex(tmp, buf, sizeof(buf), &readbytes))
-                || !TEST_size_t_lt(readbytes, sizeof(buf))
-                || !TEST_size_t_gt(readbytes, SSL3_RT_HEADER_LENGTH))
+            || !TEST_size_t_lt(readbytes, sizeof(buf))
+            || !TEST_size_t_gt(readbytes, SSL3_RT_HEADER_LENGTH))
             goto end;
 
-        switch(test) {
+        switch (test) {
         case 1:
             partial_len = SSL3_RT_HEADER_LENGTH - 1;
             break;
@@ -308,16 +297,16 @@ static int test_free_buffers(int test)
              * record.
              */
             if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf),
-                                        &readbytes))
-                    || !TEST_size_t_eq(readbytes, strlen(testdata)))
+                    &readbytes))
+                || !TEST_size_t_eq(readbytes, strlen(testdata)))
                 goto end;
         } else {
             /*
-            * Attempt a read. This should fail because only a partial record is
-            * available.
-            */
+             * Attempt a read. This should fail because only a partial record is
+             * available.
+             */
             if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf),
-                                        &readbytes)))
+                    &readbytes)))
                 goto end;
         }
     }
@@ -330,7 +319,7 @@ static int test_free_buffers(int test)
         goto end;
 
     result = 1;
- end:
+end:
     SSL_free(clientssl);
     SSL_free(serverssl);
 #ifndef OPENSSL_NO_DYNAMIC_ENGINE
@@ -355,12 +344,12 @@ int setup_tests(void)
     }
 
     if (!TEST_ptr(cert = test_get_argument(0))
-            || !TEST_ptr(pkey = test_get_argument(1)))
+        || !TEST_ptr(pkey = test_get_argument(1)))
         return 0;
 
     if (!create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
-                             TLS1_VERSION, 0,
-                             &serverctx, &clientctx, cert, pkey)) {
+            TLS1_VERSION, 0,
+            &serverctx, &clientctx, cert, pkey)) {
         TEST_error("Failed to create SSL_CTX pair\n");
         return 0;
     }

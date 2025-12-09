@@ -16,12 +16,12 @@
 
 /* Include the appropriate header file for SOCK_STREAM */
 #ifdef _WIN32 /* Windows */
-# include <stdarg.h>
-# include <winsock2.h>
+#include <stdarg.h>
+#include <winsock2.h>
 #else /* Linux/Unix */
-# include <err.h>
-# include <sys/socket.h>
-# include <sys/select.h>
+#include <err.h>
+#include <sys/socket.h>
+#include <sys/select.h>
 #endif
 
 #include <openssl/bio.h>
@@ -264,8 +264,7 @@ int main(int argc, char *argv[])
         }
 
         while (SSL_read_ex(ssl, buf, sizeof(buf), &nread) > 0) {
-            if (SSL_write_ex(ssl, buf, nread, &nwritten) > 0 &&
-                nwritten == nread) {
+            if (SSL_write_ex(ssl, buf, nread, &nwritten) > 0 && nwritten == nread) {
                 total += nwritten;
                 continue;
             }

@@ -18,9 +18,9 @@
 #include "crypto/riscv_arch.h"
 
 #ifdef OSSL_RISCV_HWPROBE
-# include <unistd.h>
-# include <sys/syscall.h>
-# include <asm/hwprobe.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <asm/hwprobe.h>
 #endif
 
 extern size_t riscv_vlen_asm(void);
@@ -71,16 +71,15 @@ static void parse_env(const char *envstr)
         BIO_snprintf(buf, BUFLEN, "_%s", RISCV_capabilities[i].name);
         if (strstr(envstrupper, buf) != NULL) {
             /* Match, set relevant bit in OPENSSL_riscvcap_P[] */
-            OPENSSL_riscvcap_P[RISCV_capabilities[i].index] |=
-                (1 << RISCV_capabilities[i].bit_offset);
+            OPENSSL_riscvcap_P[RISCV_capabilities[i].index] |= (1 << RISCV_capabilities[i].bit_offset);
         }
     }
 }
 
 #ifdef OSSL_RISCV_HWPROBE
 static long riscv_hwprobe(struct riscv_hwprobe *pairs, size_t pair_count,
-                          size_t cpu_count, unsigned long *cpus,
-                          unsigned int flags)
+    size_t cpu_count, unsigned long *cpus,
+    unsigned int flags)
 {
     return syscall(__NR_riscv_hwprobe, pairs, pair_count, cpu_count, cpus, flags);
 }
@@ -98,11 +97,10 @@ static void hwprobe_to_cap(void)
         for (size_t i = 0; i < kRISCVNumCaps; ++i) {
             for (size_t j = 0; j != OSSL_RISCV_HWPROBE_PAIR_COUNT; ++j) {
                 if (pairs[j].key == RISCV_capabilities[i].hwprobe_key
-                        && (pairs[j].value & RISCV_capabilities[i].hwprobe_value)
-                           != 0)
+                    && (pairs[j].value & RISCV_capabilities[i].hwprobe_value)
+                        != 0)
                     /* Match, set relevant bit in OPENSSL_riscvcap_P[] */
-                    OPENSSL_riscvcap_P[RISCV_capabilities[i].index] |=
-                        (1 << RISCV_capabilities[i].bit_offset);
+                    OPENSSL_riscvcap_P[RISCV_capabilities[i].index] |= (1 << RISCV_capabilities[i].bit_offset);
             }
         }
     }
@@ -114,9 +112,9 @@ size_t riscv_vlen(void)
     return vlen;
 }
 
-# if defined(__GNUC__) && __GNUC__>=2
-__attribute__ ((constructor))
-# endif
+#if defined(__GNUC__) && __GNUC__ >= 2
+__attribute__((constructor))
+#endif
 void OPENSSL_cpuid_setup(void)
 {
     char *e;

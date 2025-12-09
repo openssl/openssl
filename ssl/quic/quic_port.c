@@ -20,13 +20,13 @@
  * QUIC Port Structure
  * ===================
  */
-#define INIT_DCID_LEN                   8
+#define INIT_DCID_LEN 8
 
 static int port_init(QUIC_PORT *port);
 static void port_cleanup(QUIC_PORT *port);
 static OSSL_TIME get_time(void *arg);
 static void port_default_packet_handler(QUIC_URXE *e, void *arg,
-                                        const QUIC_CONN_ID *dcid);
+    const QUIC_CONN_ID *dcid);
 static void port_rx_pre(QUIC_PORT *port);
 
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
@@ -39,8 +39,8 @@ QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args)
     if ((port = OPENSSL_zalloc(sizeof(QUIC_PORT))) == NULL)
         return NULL;
 
-    port->engine        = args->engine;
-    port->channel_ctx   = args->channel_ctx;
+    port->engine = args->engine;
+    port->channel_ctx = args->channel_ctx;
     port->is_multi_conn = args->is_multi_conn;
 
     if (!port_init(port)) {
@@ -71,28 +71,31 @@ static int port_init(QUIC_PORT *port)
         goto err;
 
     if ((port->demux = ossl_quic_demux_new(/*BIO=*/NULL,
-                                           /*Short CID Len=*/rx_short_dcid_len,
-                                           get_time, port)) == NULL)
+             /*Short CID Len=*/rx_short_dcid_len,
+             get_time, port))
+        == NULL)
         goto err;
 
     ossl_quic_demux_set_default_handler(port->demux,
-                                        port_default_packet_handler,
-                                        port);
+        port_default_packet_handler,
+        port);
 
     if ((port->srtm = ossl_quic_srtm_new(port->engine->libctx,
-                                         port->engine->propq)) == NULL)
+             port->engine->propq))
+        == NULL)
         goto err;
 
     if ((port->lcidm = ossl_quic_lcidm_new(port->engine->libctx,
-                                           rx_short_dcid_len)) == NULL)
+             rx_short_dcid_len))
+        == NULL)
         goto err;
 
     port->rx_short_dcid_len = (unsigned char)rx_short_dcid_len;
-    port->tx_init_dcid_len  = INIT_DCID_LEN;
-    port->state             = QUIC_PORT_STATE_RUNNING;
+    port->tx_init_dcid_len = INIT_DCID_LEN;
+    port->state = QUIC_PORT_STATE_RUNNING;
 
     ossl_list_port_insert_tail(&port->engine->port_list, port);
-    port->on_engine_list    = 1;
+    port->on_engine_list = 1;
     return 1;
 
 err:
@@ -203,7 +206,7 @@ BIO *ossl_quic_port_get_net_wbio(QUIC_PORT *port)
 
 static int port_update_poll_desc(QUIC_PORT *port, BIO *net_bio, int for_write)
 {
-    BIO_POLL_DESCRIPTOR d = {0};
+    BIO_POLL_DESCRIPTOR d = { 0 };
 
     if (net_bio == NULL
         || (!for_write && !BIO_get_rpoll_descriptor(net_bio, &d))
@@ -274,7 +277,7 @@ int ossl_quic_port_set_net_wbio(QUIC_PORT *port, BIO *net_wbio)
         return 0;
 
     OSSL_LIST_FOREACH(ch, ch, &port->channel_list)
-        ossl_qtx_set_bio(ch->qtx, net_wbio);
+    ossl_qtx_set_bio(ch->qtx, net_wbio);
 
     port->net_wbio = net_wbio;
     return 1;
@@ -295,29 +298,29 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port)
         return NULL;
 
     /* Override the user_ssl of the inner connection. */
-    tls_conn->s3.flags      |= TLS1_FLAGS_QUIC;
+    tls_conn->s3.flags |= TLS1_FLAGS_QUIC;
 
     /* Restrict options derived from the SSL_CTX. */
-    tls_conn->options       &= OSSL_QUIC_PERMITTED_OPTIONS_CONN;
-    tls_conn->pha_enabled   = 0;
+    tls_conn->options &= OSSL_QUIC_PERMITTED_OPTIONS_CONN;
+    tls_conn->pha_enabled = 0;
     return tls;
 }
 
 static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, int is_server)
 {
-    QUIC_CHANNEL_ARGS args = {0};
+    QUIC_CHANNEL_ARGS args = { 0 };
     QUIC_CHANNEL *ch;
 
-    args.port       = port;
-    args.is_server  = is_server;
-    args.tls        = (tls != NULL ? tls : port_new_handshake_layer(port));
-    args.lcidm      = port->lcidm;
-    args.srtm       = port->srtm;
+    args.port = port;
+    args.is_server = is_server;
+    args.tls = (tls != NULL ? tls : port_new_handshake_layer(port));
+    args.lcidm = port->lcidm;
+    args.srtm = port->srtm;
     if (args.tls == NULL)
         return NULL;
 
 #ifndef OPENSSL_NO_QLOG
-    args.use_qlog   = 1; /* disabled if env not set */
+    args.use_qlog = 1; /* disabled if env not set */
     args.qlog_title = args.tls->ctx->qlog_title;
 #endif
 
@@ -345,7 +348,7 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
 
     ch = port_make_channel(port, tls, /*is_server=*/1);
     port->tserver_ch = ch;
-    port->is_server  = 1;
+    port->is_server = 1;
     return ch;
 }
 
@@ -359,13 +362,13 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
  * this port's network BIOs, and services child channels.
  */
 void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *res,
-                            uint32_t flags)
+    uint32_t flags)
 {
     QUIC_CHANNEL *ch;
 
-    res->net_read_desired   = 0;
-    res->net_write_desired  = 0;
-    res->tick_deadline      = ossl_time_infinite();
+    res->net_read_desired = 0;
+    res->net_write_desired = 0;
+    res->tick_deadline = ossl_time_infinite();
 
     if (!port->engine->inhibit_tick) {
         /* Handle any incoming data from network. */
@@ -373,8 +376,9 @@ void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *res,
             port_rx_pre(port);
 
         /* Iterate through all channels and service them. */
-        OSSL_LIST_FOREACH(ch, ch, &port->channel_list) {
-            QUIC_TICK_RESULT subr = {0};
+        OSSL_LIST_FOREACH(ch, ch, &port->channel_list)
+        {
+            QUIC_TICK_RESULT subr = { 0 };
 
             ossl_quic_channel_subtick(ch, &subr, flags);
             ossl_quic_tick_result_merge_into(res, &subr);
@@ -427,9 +431,9 @@ static void port_rx_pre(QUIC_PORT *port)
  * to *new_ch.
  */
 static void port_on_new_conn(QUIC_PORT *port, const BIO_ADDR *peer,
-                             const QUIC_CONN_ID *scid,
-                             const QUIC_CONN_ID *dcid,
-                             QUIC_CHANNEL **new_ch)
+    const QUIC_CONN_ID *scid,
+    const QUIC_CONN_ID *dcid,
+    QUIC_CHANNEL **new_ch)
 {
     if (port->tserver_ch != NULL) {
         /* Specially assign to existing channel */
@@ -476,9 +480,9 @@ static int port_try_handle_stateless_reset(QUIC_PORT *port, const QUIC_URXE *e)
 
     for (i = 0;; ++i) {
         if (!ossl_quic_srtm_lookup(port->srtm,
-                                   (QUIC_STATELESS_RESET_TOKEN *)(data + e->data_len
-                                   - sizeof(QUIC_STATELESS_RESET_TOKEN)),
-                                   i, &opaque, NULL))
+                (QUIC_STATELESS_RESET_TOKEN *)(data + e->data_len
+                    - sizeof(QUIC_STATELESS_RESET_TOKEN)),
+                i, &opaque, NULL))
             break;
 
         assert(opaque != NULL);
@@ -493,7 +497,7 @@ static int port_try_handle_stateless_reset(QUIC_PORT *port, const QUIC_URXE *e)
  * DCID.
  */
 static void port_default_packet_handler(QUIC_URXE *e, void *arg,
-                                        const QUIC_CONN_ID *dcid)
+    const QUIC_CONN_ID *dcid)
 {
     QUIC_PORT *port = arg;
     PACKET pkt;
@@ -509,7 +513,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
 
     if (dcid != NULL
         && ossl_quic_lcidm_lookup(port->lcidm, dcid, NULL,
-                                  (void **)&ch)) {
+            (void **)&ch)) {
         assert(ch != NULL);
         ossl_quic_channel_inject(ch, e);
         return;
@@ -546,14 +550,14 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
         goto undesirable;
 
     switch (hdr.version) {
-        case QUIC_VERSION_1:
-            break;
+    case QUIC_VERSION_1:
+        break;
 
-        case QUIC_VERSION_NONE:
-        default:
-            /* Unknown version or proactive version negotiation request, bail. */
-            /* TODO(QUIC SERVER): Handle version negotiation on server side */
-            goto undesirable;
+    case QUIC_VERSION_NONE:
+    default:
+        /* Unknown version or proactive version negotiation request, bail. */
+        /* TODO(QUIC SERVER): Handle version negotiation on server side */
+        goto undesirable;
     }
 
     /*
@@ -571,7 +575,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      * processing without going through the DEMUX again.
      */
     port_on_new_conn(port, &e->peer, &hdr.src_conn_id, &hdr.dst_conn_id,
-                     &new_ch);
+        &new_ch);
     if (new_ch != NULL)
         ossl_qrx_inject_urxe(new_ch->qrx, e);
 
@@ -582,7 +586,7 @@ undesirable:
 }
 
 void ossl_quic_port_raise_net_error(QUIC_PORT *port,
-                                    QUIC_CHANNEL *triggering_ch)
+    QUIC_CHANNEL *triggering_ch)
 {
     QUIC_CHANNEL *ch;
 
@@ -594,7 +598,7 @@ void ossl_quic_port_raise_net_error(QUIC_PORT *port,
      * cover error.
      */
     ERR_raise_data(ERR_LIB_SSL, SSL_R_QUIC_NETWORK_ERROR,
-                   "port failed due to network BIO I/O error");
+        "port failed due to network BIO I/O error");
     OSSL_ERR_STATE_save(port->err_state);
 
     port_transition_failed(port);
@@ -604,8 +608,8 @@ void ossl_quic_port_raise_net_error(QUIC_PORT *port,
         ossl_quic_channel_raise_net_error(triggering_ch);
 
     OSSL_LIST_FOREACH(ch, ch, &port->channel_list)
-        if (ch != triggering_ch)
-            ossl_quic_channel_raise_net_error(ch);
+    if (ch != triggering_ch)
+        ossl_quic_channel_raise_net_error(ch);
 }
 
 void ossl_quic_port_restore_err_state(const QUIC_PORT *port)
