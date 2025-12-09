@@ -16,11 +16,11 @@
  * tweak for Windows
  */
 #ifdef WIN32
-# define timezone _timezone
+#define timezone _timezone
 #endif
 
 #if defined(__FreeBSD__) || defined(__wasi__)
-# define USE_TIMEGM
+#define USE_TIMEGM
 #endif
 
 time_t test_asn1_string_to_time_t(const char *asn1_string)
@@ -35,10 +35,9 @@ time_t test_asn1_string_to_time_t(const char *asn1_string)
     time_t timestamp_utc;
 
     timestamp_asn1 = ASN1_TIME_new();
-    if(timestamp_asn1 == NULL)
+    if (timestamp_asn1 == NULL)
         return -1;
-    if (!ASN1_TIME_set_string(timestamp_asn1, asn1_string))
-    {
+    if (!ASN1_TIME_set_string(timestamp_asn1, asn1_string)) {
         ASN1_TIME_free(timestamp_asn1);
         return -1;
     }

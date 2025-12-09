@@ -15,16 +15,16 @@
 #include <openssl/params.h>
 #include <openssl/decoder.h>
 #include <openssl/proverr.h>
-#include <openssl/store.h>       /* The OSSL_STORE_INFO type numbers */
+#include <openssl/store.h> /* The OSSL_STORE_INFO type numbers */
 #include "internal/cryptlib.h"
 #include "internal/o_dir.h"
 #include "crypto/decoder.h"
-#include "crypto/ctype.h"        /* ossl_isdigit() */
+#include "crypto/ctype.h" /* ossl_isdigit() */
 #include "prov/implementations.h"
 #include "prov/bio.h"
 #include "file_store_local.h"
 #ifdef __CYGWIN__
-# include <windows.h>
+#include <windows.h>
 #endif
 #include <wincrypt.h>
 
@@ -35,16 +35,16 @@ enum {
 };
 
 struct winstore_ctx_st {
-    void                   *provctx;
-    char                   *propq;
-    unsigned char          *subject;
-    size_t                  subject_len;
+    void *provctx;
+    char *propq;
+    unsigned char *subject;
+    size_t subject_len;
 
-    HCERTSTORE              win_store;
-    const CERT_CONTEXT     *win_ctx;
-    int                     state;
+    HCERTSTORE win_store;
+    const CERT_CONTEXT *win_ctx;
+    int state;
 
-    OSSL_DECODER_CTX       *dctx;
+    OSSL_DECODER_CTX *dctx;
 };
 
 static void winstore_win_reset(struct winstore_ctx_st *ctx)
@@ -59,7 +59,7 @@ static void winstore_win_reset(struct winstore_ctx_st *ctx)
 
 static void winstore_win_advance(struct winstore_ctx_st *ctx)
 {
-    CERT_NAME_BLOB name = {0};
+    CERT_NAME_BLOB name = { 0 };
 
     if (ctx->state == STATE_EOF)
         return;
@@ -67,11 +67,7 @@ static void winstore_win_advance(struct winstore_ctx_st *ctx)
     name.cbData = ctx->subject_len;
     name.pbData = ctx->subject;
 
-    ctx->win_ctx = (name.cbData == 0 ? NULL :
-        CertFindCertificateInStore(ctx->win_store,
-                                   X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-                                   0, CERT_FIND_SUBJECT_NAME,
-                                   &name, ctx->win_ctx));
+    ctx->win_ctx = (name.cbData == 0 ? NULL : CertFindCertificateInStore(ctx->win_store, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, 0, CERT_FIND_SUBJECT_NAME, &name, ctx->win_ctx));
 
     ctx->state = (ctx->win_ctx == NULL) ? STATE_EOF : STATE_READ;
 }
@@ -87,8 +83,8 @@ static void *winstore_open(void *provctx, const char *uri)
     if (ctx == NULL)
         return NULL;
 
-    ctx->provctx    = provctx;
-    ctx->win_store  = CertOpenSystemStoreW(0, L"ROOT");
+    ctx->provctx = provctx;
+    ctx->win_store = CertOpenSystemStoreW(0, L"ROOT");
     if (ctx->win_store == NULL) {
         OPENSSL_free(ctx);
         return NULL;
@@ -162,12 +158,12 @@ static int winstore_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
 }
 
 struct load_data_st {
-    OSSL_CALLBACK  *object_cb;
-    void           *object_cbarg;
+    OSSL_CALLBACK *object_cb;
+    void *object_cbarg;
 };
 
 static int load_construct(OSSL_DECODER_INSTANCE *decoder_inst,
-                           const OSSL_PARAM *params, void *construct_data)
+    const OSSL_PARAM *params, void *construct_data)
 {
     struct load_data_st *data = construct_data;
     return data->object_cb(params, data->object_cbarg);
@@ -203,8 +199,8 @@ static int setup_decoder(struct winstore_ctx_st *ctx)
     }
 
     for (to_algo = ossl_any_to_obj_algorithm;
-         to_algo->algorithm_names != NULL;
-         to_algo++) {
+        to_algo->algorithm_names != NULL;
+        to_algo++) {
         OSSL_DECODER *to_obj = NULL;
         OSSL_DECODER_INSTANCE *to_obj_inst = NULL;
 
@@ -223,7 +219,7 @@ static int setup_decoder(struct winstore_ctx_st *ctx)
             goto err;
 
         if (!ossl_decoder_ctx_add_decoder_inst(ctx->dctx,
-                                               to_obj_inst)) {
+                to_obj_inst)) {
             ossl_decoder_instance_free(to_obj_inst);
             ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
             goto err;
@@ -254,9 +250,9 @@ err:
 }
 
 static int winstore_load_using(struct winstore_ctx_st *ctx,
-                               OSSL_CALLBACK *object_cb, void *object_cbarg,
-                               OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg,
-                               const void *der, size_t der_len)
+    OSSL_CALLBACK *object_cb, void *object_cbarg,
+    OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg,
+    const void *der, size_t der_len)
 {
     struct load_data_st data;
     const unsigned char *der_ = der;
@@ -265,8 +261,8 @@ static int winstore_load_using(struct winstore_ctx_st *ctx,
     if (setup_decoder(ctx) == 0)
         return 0;
 
-    data.object_cb      = object_cb;
-    data.object_cbarg   = object_cbarg;
+    data.object_cb = object_cb;
+    data.object_cbarg = object_cbarg;
 
     OSSL_DECODER_CTX_set_construct_data(ctx->dctx, &data);
     OSSL_DECODER_CTX_set_passphrase_cb(ctx->dctx, pw_cb, pw_cbarg);
@@ -278,8 +274,8 @@ static int winstore_load_using(struct winstore_ctx_st *ctx,
 }
 
 static int winstore_load(void *loaderctx,
-                         OSSL_CALLBACK *object_cb, void *object_cbarg,
-                         OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
+    OSSL_CALLBACK *object_cb, void *object_cbarg,
+    OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     int ret = 0;
     struct winstore_ctx_st *ctx = loaderctx;
@@ -288,8 +284,8 @@ static int winstore_load(void *loaderctx,
         return 0;
 
     ret = winstore_load_using(ctx, object_cb, object_cbarg, pw_cb, pw_cbarg,
-                              ctx->win_ctx->pbCertEncoded,
-                              ctx->win_ctx->cbCertEncoded);
+        ctx->win_ctx->pbCertEncoded,
+        ctx->win_ctx->cbCertEncoded);
 
     if (ret == 1)
         winstore_win_advance(ctx);

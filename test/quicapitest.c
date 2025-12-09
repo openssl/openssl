@@ -34,10 +34,10 @@ static char *datadir = NULL;
 static int is_fips = 0;
 
 /* The ssltrace test assumes some options are switched on/off */
-#if !defined(OPENSSL_NO_SSL_TRACE) \
+#if !defined(OPENSSL_NO_SSL_TRACE)                            \
     && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD) \
     && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH)
-# define DO_SSL_TRACE_TEST
+#define DO_SSL_TRACE_TEST
 #endif
 
 /*
@@ -66,14 +66,14 @@ static int test_quic_write_read(int idx)
 
     for (k = 0; k < 2; k++) {
         if (!TEST_ptr(cctx)
-                || !TEST_true(qtest_create_quic_objects(libctx, cctx, sctx,
-                                                        cert, privkey,
-                                                        idx >= 1
-                                                            ? QTEST_FLAG_BLOCK
-                                                            : 0,
-                                                        &qtserv, &clientquic,
-                                                        NULL, NULL))
-                || !TEST_true(SSL_set_tlsext_host_name(clientquic, "localhost")))
+            || !TEST_true(qtest_create_quic_objects(libctx, cctx, sctx,
+                cert, privkey,
+                idx >= 1
+                    ? QTEST_FLAG_BLOCK
+                    : 0,
+                &qtserv, &clientquic,
+                NULL, NULL))
+            || !TEST_true(SSL_set_tlsext_host_name(clientquic, "localhost")))
             goto end;
 
         if (sess != NULL && !TEST_true(SSL_set_session(clientquic, sess)))
@@ -84,7 +84,7 @@ static int test_quic_write_read(int idx)
 
         if (idx >= 1) {
             if (!TEST_true(BIO_get_fd(ossl_quic_tserver_get0_rbio(qtserv),
-                                      &ssock)))
+                    &ssock)))
                 goto end;
             if (!TEST_int_gt(csock = SSL_get_rfd(clientquic), 0))
                 goto end;
@@ -105,8 +105,8 @@ static int test_quic_write_read(int idx)
                     ossl_quic_tserver_tick(qtserv);
 
                     if (!TEST_true(ossl_quic_tserver_read(qtserv, sid, buf,
-                                                          sizeof(buf),
-                                                          &numbytes)))
+                            sizeof(buf),
+                            &numbytes)))
                         goto end;
                 } while (numbytes == 0);
 
@@ -120,43 +120,43 @@ static int test_quic_write_read(int idx)
 
             ossl_quic_tserver_tick(qtserv);
             if (!TEST_true(ossl_quic_tserver_write(qtserv, sid,
-                                                   (unsigned char *)msg,
-                                                   msglen, &numbytes)))
+                    (unsigned char *)msg,
+                    msglen, &numbytes)))
                 goto end;
             ossl_quic_tserver_tick(qtserv);
             SSL_handle_events(clientquic);
 
             if (idx >= 2 && j > 0) {
                 if (!TEST_false(SSL_read_ex(clientquic, buf, 1, &numbytes))
-                        || !TEST_int_eq(SSL_get_error(clientquic, 0),
-                                        SSL_ERROR_SYSCALL)
-                        || !TEST_false(SSL_write_ex(clientquic, msg, msglen,
-                                                    &numbytes))
-                        || !TEST_int_eq(SSL_get_error(clientquic, 0),
-                                        SSL_ERROR_SYSCALL))
+                    || !TEST_int_eq(SSL_get_error(clientquic, 0),
+                        SSL_ERROR_SYSCALL)
+                    || !TEST_false(SSL_write_ex(clientquic, msg, msglen,
+                        &numbytes))
+                    || !TEST_int_eq(SSL_get_error(clientquic, 0),
+                        SSL_ERROR_SYSCALL))
                     goto end;
                 break;
             }
 
             /*
-            * In blocking mode the SSL_read_ex call will block until the socket
-            * is readable and has our data. In non-blocking mode we're doing
-            * everything in memory, so it should be immediately available
-            */
+             * In blocking mode the SSL_read_ex call will block until the socket
+             * is readable and has our data. In non-blocking mode we're doing
+             * everything in memory, so it should be immediately available
+             */
             if (!TEST_true(SSL_read_ex(clientquic, buf, 1, &numbytes))
-                    || !TEST_size_t_eq(numbytes, 1)
-                    || !TEST_true(SSL_has_pending(clientquic))
-                    || !TEST_int_eq(SSL_pending(clientquic), msglen - 1)
-                    || !TEST_true(SSL_read_ex(clientquic, buf + 1,
-                                              sizeof(buf) - 1, &numbytes))
-                    || !TEST_mem_eq(buf, numbytes + 1, msg, msglen))
+                || !TEST_size_t_eq(numbytes, 1)
+                || !TEST_true(SSL_has_pending(clientquic))
+                || !TEST_int_eq(SSL_pending(clientquic), msglen - 1)
+                || !TEST_true(SSL_read_ex(clientquic, buf + 1,
+                    sizeof(buf) - 1, &numbytes))
+                || !TEST_mem_eq(buf, numbytes + 1, msg, msglen))
                 goto end;
         }
 
         /* Test that exporters work. */
         if (!TEST_true(SSL_export_keying_material(clientquic, scratch,
-                        sizeof(scratch), "test", 4, (unsigned char *)"ctx", 3,
-                        1)))
+                sizeof(scratch), "test", 4, (unsigned char *)"ctx", 3,
+                1)))
             goto end;
 
         if (sess == NULL) {
@@ -194,7 +194,7 @@ static int test_quic_write_read(int idx)
 
     ret = 1;
 
- end:
+end:
     SSL_SESSION_free(sess);
     ossl_quic_tserver_free(qtserv);
     SSL_free(clientquic);
@@ -225,29 +225,28 @@ static int test_fin_only_blocking(void)
         return TEST_skip("Blocking tests not supported in this build");
 
     if (!TEST_ptr(cctx)
-            || !TEST_true(qtest_create_quic_objects(libctx, cctx, sctx,
-                                                    cert, privkey,
-                                                    QTEST_FLAG_BLOCK,
-                                                    &qtserv, &clientquic,
-                                                    NULL, NULL))
-            || !TEST_true(SSL_set_tlsext_host_name(clientquic, "localhost")))
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, sctx,
+            cert, privkey,
+            QTEST_FLAG_BLOCK,
+            &qtserv, &clientquic,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientquic, "localhost")))
         goto end;
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto end;
 
     if (!TEST_true(ossl_quic_tserver_stream_new(qtserv, 0, &sid))
-            || !TEST_true(ossl_quic_tserver_write(qtserv, sid,
-                                                  (unsigned char *)msg,
-                                                  strlen(msg), &numbytes))
-            || !TEST_size_t_eq(strlen(msg), numbytes))
+        || !TEST_true(ossl_quic_tserver_write(qtserv, sid,
+            (unsigned char *)msg,
+            strlen(msg), &numbytes))
+        || !TEST_size_t_eq(strlen(msg), numbytes))
         goto end;
 
     ossl_quic_tserver_tick(qtserv);
 
     if (!TEST_true(SSL_read_ex(clientquic, buf, sizeof(buf), &numbytes))
-            || !TEST_mem_eq(msg, strlen(msg), buf, numbytes))
-
+        || !TEST_mem_eq(msg, strlen(msg), buf, numbytes))
 
         goto end;
 
@@ -260,11 +259,11 @@ static int test_fin_only_blocking(void)
     timediff = ossl_time_subtract(ossl_time_now(), timer);
 
     if (!TEST_int_eq(SSL_get_error(clientquic, 0), SSL_ERROR_ZERO_RETURN)
-               /*
-                * We expect the SSL_read_ex to not have blocked so this should
-                * be very fast. 40ms should be plenty.
-                */
-            || !TEST_uint64_t_le(ossl_time2ms(timediff), 40))
+        /*
+         * We expect the SSL_read_ex to not have blocked so this should
+         * be very fast. 40ms should be plenty.
+         */
+        || !TEST_uint64_t_le(ossl_time2ms(timediff), 40))
         goto end;
 
     if (!TEST_true(qtest_shutdown(qtserv, clientquic)))
@@ -272,7 +271,7 @@ static int test_fin_only_blocking(void)
 
     ret = 1;
 
- end:
+end:
     ossl_quic_tserver_free(qtserv);
     SSL_free(clientquic);
     SSL_CTX_free(cctx);
@@ -333,7 +332,7 @@ static int test_ciphersuites(void)
         goto err;
 
     testresult = 1;
- err:
+err:
     SSL_free(ssl);
     SSL_CTX_free(ctx);
 
@@ -347,7 +346,7 @@ static int test_cipher_find(void)
     struct {
         const unsigned char *cipherbytes;
         int ok;
-    } testciphers[]  = {
+    } testciphers[] = {
         { TLS13_AES_128_GCM_SHA256_BYTES, 1 },
         { TLS13_AES_256_GCM_SHA384_BYTES, 1 },
         { TLS13_CHACHA20_POLY1305_SHA256_BYTES, 1 },
@@ -371,16 +370,16 @@ static int test_cipher_find(void)
     for (i = 0; i < OSSL_NELEM(testciphers); i++)
         if (testciphers[i].ok) {
             if (!TEST_ptr(SSL_CIPHER_find(clientquic,
-                                          testciphers[i].cipherbytes)))
+                    testciphers[i].cipherbytes)))
                 goto err;
         } else {
             if (!TEST_ptr_null(SSL_CIPHER_find(clientquic,
-                                               testciphers[i].cipherbytes)))
+                    testciphers[i].cipherbytes)))
                 goto err;
         }
 
     testresult = 1;
- err:
+err:
     SSL_free(clientquic);
     SSL_CTX_free(cctx);
 
@@ -401,24 +400,23 @@ static int test_version(void)
     int testresult = 0;
 
     if (!TEST_ptr(cctx)
-            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
-                                                    privkey, 0, &qtserv,
-                                                    &clientquic, NULL, NULL))
-            || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+            privkey, 0, &qtserv,
+            &clientquic, NULL, NULL))
+        || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto err;
 
     if (!TEST_int_eq(SSL_version(clientquic), OSSL_QUIC1_VERSION)
-            || !TEST_str_eq(SSL_get_version(clientquic), "QUICv1"))
+        || !TEST_str_eq(SSL_get_version(clientquic), "QUICv1"))
         goto err;
 
     if (!TEST_true(SSL_is_quic(clientquic))
-            || !TEST_false(SSL_is_tls(clientquic))
-            || !TEST_false(SSL_is_dtls(clientquic)))
+        || !TEST_false(SSL_is_tls(clientquic))
+        || !TEST_false(SSL_is_dtls(clientquic)))
         goto err;
 
-
     testresult = 1;
- err:
+err:
     ossl_quic_tserver_free(qtserv);
     SSL_free(clientquic);
     SSL_CTX_free(cctx);
@@ -432,8 +430,9 @@ static void strip_line_ends(char *str)
     size_t i;
 
     for (i = strlen(str);
-         i > 0 && (str[i - 1] == '\n' || str[i - 1] == '\r');
-         i--);
+        i > 0 && (str[i - 1] == '\n' || str[i - 1] == '\r');
+        i--)
+        ;
 
     str[i] = '\0';
 }
@@ -482,7 +481,7 @@ static int compare_with_file(BIO *membio)
             TEST_error("Actual and ref line data length mismatch");
             TEST_info("%s", buf1);
             TEST_info("%s", buf2);
-           goto err;
+            goto err;
         }
         for (i = 0; i < strlen(buf1); i++) {
             /* '?' is a wild card character in the reference text */
@@ -493,11 +492,11 @@ static int compare_with_file(BIO *membio)
             goto err;
     }
     if (!TEST_true(BIO_eof(file))
-            || !TEST_true(BIO_eof(membio)))
+        || !TEST_true(BIO_eof(membio)))
         goto err;
 
     ret = 1;
- err:
+err:
     OPENSSL_free(reffile);
     BIO_free(file);
     BIO_free(newfile);
@@ -517,13 +516,13 @@ static int test_ssl_trace(void)
     BIO *bio = NULL;
 
     if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method()))
-            || !TEST_ptr(bio = BIO_new(BIO_s_mem()))
-            || !TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256"))
-            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
-                                                    privkey,
-                                                    QTEST_FLAG_FAKE_TIME,
-                                                    &qtserv,
-                                                    &clientquic, NULL, NULL)))
+        || !TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256"))
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+            privkey,
+            QTEST_FLAG_FAKE_TIME,
+            &qtserv,
+            &clientquic, NULL, NULL)))
         goto err;
 
     SSL_set_msg_callback(clientquic, SSL_trace);
@@ -543,7 +542,7 @@ static int test_ssl_trace(void)
     }
 
     testresult = 1;
- err:
+err:
     ossl_quic_tserver_free(qtserv);
     SSL_free(clientquic);
     SSL_CTX_free(cctx);
@@ -561,13 +560,13 @@ static int ensure_valid_ciphers(const STACK_OF(SSL_CIPHER) *ciphers)
     for (i = 0; i < (size_t)sk_SSL_CIPHER_num(ciphers); ++i) {
         const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(ciphers, i);
         switch (SSL_CIPHER_get_id(cipher)) {
-            case TLS1_3_CK_AES_128_GCM_SHA256:
-            case TLS1_3_CK_AES_256_GCM_SHA384:
-            case TLS1_3_CK_CHACHA20_POLY1305_SHA256:
-                break;
-            default:
-                TEST_error("forbidden cipher: %s", SSL_CIPHER_get_name(cipher));
-                return 0;
+        case TLS1_3_CK_AES_128_GCM_SHA256:
+        case TLS1_3_CK_AES_256_GCM_SHA384:
+        case TLS1_3_CK_CHACHA20_POLY1305_SHA256:
+            break;
+        default:
+            TEST_error("forbidden cipher: %s", SSL_CIPHER_get_name(cipher));
+            return 0;
         }
     }
 
@@ -594,22 +593,21 @@ static int test_quic_forbidden_apis_ctx(void)
     /*
      * List of ciphersuites we do and don't allow in QUIC.
      */
-#define QUIC_CIPHERSUITES \
-    "TLS_AES_128_GCM_SHA256:"           \
-    "TLS_AES_256_GCM_SHA384:"           \
+#define QUIC_CIPHERSUITES     \
+    "TLS_AES_128_GCM_SHA256:" \
+    "TLS_AES_256_GCM_SHA384:" \
     "TLS_CHACHA20_POLY1305_SHA256"
 
-#define NON_QUIC_CIPHERSUITES           \
-    "TLS_AES_128_CCM_SHA256:"           \
-    "TLS_AES_256_CCM_SHA384:"           \
-    "TLS_AES_128_CCM_8_SHA256:"         \
-    "TLS_SHA256_SHA256:"                \
+#define NON_QUIC_CIPHERSUITES   \
+    "TLS_AES_128_CCM_SHA256:"   \
+    "TLS_AES_256_CCM_SHA384:"   \
+    "TLS_AES_128_CCM_8_SHA256:" \
+    "TLS_SHA256_SHA256:"        \
     "TLS_SHA384_SHA384"
 
     /* Set TLSv1.3 ciphersuite list for the SSL_CTX. */
     if (!TEST_true(SSL_CTX_set_ciphersuites(ctx,
-                                            QUIC_CIPHERSUITES ":"
-                                            NON_QUIC_CIPHERSUITES)))
+            QUIC_CIPHERSUITES ":" NON_QUIC_CIPHERSUITES)))
         goto err;
 
     /*
@@ -645,8 +643,7 @@ static int test_quic_forbidden_apis(void)
 
     /* Set TLSv1.3 ciphersuite list for the SSL_CTX. */
     if (!TEST_true(SSL_set_ciphersuites(ssl,
-                                        QUIC_CIPHERSUITES ":"
-                                        NON_QUIC_CIPHERSUITES)))
+            QUIC_CIPHERSUITES ":" NON_QUIC_CIPHERSUITES)))
         goto err;
 
     /* Non-QUIC ciphersuites must not appear in supported ciphers list. */
@@ -745,7 +742,7 @@ static int test_quic_forbidden_options(void)
         goto err;
 
     /* HRR */
-    if  (!TEST_false(SSL_stateless(ssl)))
+    if (!TEST_false(SSL_stateless(ssl)))
         goto err;
 
     /* Quiet Shutdown */
@@ -823,7 +820,7 @@ err:
     return testresult;
 }
 
-#define MAXLOOPS    1000
+#define MAXLOOPS 1000
 
 static int test_bio_ssl(void)
 {
@@ -859,8 +856,8 @@ static int test_bio_ssl(void)
         goto err;
 
     if (!TEST_true(qtest_create_quic_objects(libctx, NULL, NULL, cert, privkey,
-                                             0, &qtserv, &clientquic, NULL,
-                                             NULL)))
+            0, &qtserv, &clientquic, NULL,
+            NULL)))
         goto err;
 
     msglen = strlen(msg);
@@ -905,17 +902,17 @@ static int test_bio_ssl(void)
      */
     for (i = 0, thisbio = cbio; i < 2; i++) {
         if (!TEST_true(ossl_quic_tserver_read(qtserv, sid, buf, sizeof(buf),
-                                              &readbytes))
-                || !TEST_mem_eq(msg, msglen, buf, readbytes))
+                &readbytes))
+            || !TEST_mem_eq(msg, msglen, buf, readbytes))
             goto err;
 
         if (!TEST_true(ossl_quic_tserver_write(qtserv, sid, (unsigned char *)msg,
-                                               msglen, &written)))
+                msglen, &written)))
             goto err;
         ossl_quic_tserver_tick(qtserv);
 
         if (!TEST_true(BIO_read_ex(thisbio, buf, sizeof(buf), &readbytes))
-                || !TEST_mem_eq(msg, msglen, buf, readbytes))
+            || !TEST_mem_eq(msg, msglen, buf, readbytes))
             goto err;
 
         if (i == 1)
@@ -953,7 +950,7 @@ static int test_bio_ssl(void)
     }
 
     testresult = 1;
- err:
+err:
     BIO_free_all(cbio);
     BIO_free_all(strbio);
     SSL_free(stream);
@@ -981,10 +978,10 @@ static int test_back_pressure(void)
     int i;
 
     if (!TEST_ptr(cctx)
-            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
-                                                    privkey, 0, &qtserv,
-                                                    &clientquic, NULL, NULL))
-            || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+            privkey, 0, &qtserv,
+            &clientquic, NULL, NULL))
+        || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto err;
 
     msg = OPENSSL_malloc(msglen);
@@ -1010,7 +1007,7 @@ static int test_back_pressure(void)
         /* Receive data at the server */
         ossl_quic_tserver_tick(qtserv);
         if (!TEST_true(ossl_quic_tserver_read(qtserv, 0, buf, sizeof(buf),
-                                              &readbytes)))
+                &readbytes)))
             goto err;
     }
 
@@ -1020,7 +1017,7 @@ static int test_back_pressure(void)
     }
 
     testresult = 1;
- err:
+err:
     SSL_free(clientquic);
     ossl_quic_tserver_free(qtserv);
     SSL_CTX_free(cctx);
@@ -1029,11 +1026,10 @@ static int test_back_pressure(void)
     return testresult;
 }
 
-
 static int dgram_ctr = 0;
 
 static void dgram_cb(int write_p, int version, int content_type,
-                     const void *buf, size_t msglen, SSL *ssl, void *arg)
+    const void *buf, size_t msglen, SSL *ssl, void *arg)
 {
     if (!write_p)
         return;
@@ -1058,23 +1054,23 @@ static int test_multiple_dgrams(void)
     buf = OPENSSL_zalloc(buflen);
 
     if (!TEST_ptr(cctx)
-            || !TEST_ptr(buf)
-            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
-                                                    privkey, 0, &qtserv,
-                                                    &clientquic, NULL, NULL))
-            || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        || !TEST_ptr(buf)
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+            privkey, 0, &qtserv,
+            &clientquic, NULL, NULL))
+        || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto err;
 
     dgram_ctr = 0;
     SSL_set_msg_callback(clientquic, dgram_cb);
     if (!TEST_true(SSL_write_ex(clientquic, buf, buflen, &written))
-            || !TEST_size_t_eq(written, buflen)
-               /* We wrote enough data for 2 datagrams */
-            || !TEST_int_eq(dgram_ctr, 2))
+        || !TEST_size_t_eq(written, buflen)
+        /* We wrote enough data for 2 datagrams */
+        || !TEST_int_eq(dgram_ctr, 2))
         goto err;
 
     testresult = 1;
- err:
+err:
     OPENSSL_free(buf);
     SSL_free(clientquic);
     ossl_quic_tserver_free(qtserv);
@@ -1125,11 +1121,11 @@ static int test_non_io_retry(int idx)
 
     flags = (idx >= 1) ? QTEST_FLAG_BLOCK : 0;
     if (!TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert, privkey,
-                                             flags, &qtserv, &clientquic, NULL,
-                                             NULL))
-            || !TEST_true(qtest_create_quic_connection_ex(qtserv, clientquic,
-                            SSL_ERROR_WANT_RETRY_VERIFY))
-            || !TEST_int_eq(SSL_want(clientquic), SSL_RETRY_VERIFY))
+            flags, &qtserv, &clientquic, NULL,
+            NULL))
+        || !TEST_true(qtest_create_quic_connection_ex(qtserv, clientquic,
+            SSL_ERROR_WANT_RETRY_VERIFY))
+        || !TEST_int_eq(SSL_want(clientquic), SSL_RETRY_VERIFY))
         goto err;
 
     allow = 1;
@@ -1137,7 +1133,7 @@ static int test_non_io_retry(int idx)
         goto err;
 
     testresult = 1;
- err:
+err:
     SSL_free(clientquic);
     ossl_quic_tserver_free(qtserv);
     SSL_CTX_free(cctx);
@@ -1151,7 +1147,7 @@ static const char *pskid = "Identity";
 static SSL_SESSION *serverpsk = NULL, *clientpsk = NULL;
 
 static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
-                          size_t *idlen, SSL_SESSION **sess)
+    size_t *idlen, SSL_SESSION **sess)
 {
     use_session_cb_cnt++;
 
@@ -1168,7 +1164,7 @@ static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
 }
 
 static int find_session_cb(SSL *ssl, const unsigned char *identity,
-                           size_t identity_len, SSL_SESSION **sess)
+    size_t identity_len, SSL_SESSION **sess)
 {
     find_session_cb_cnt++;
 
@@ -1177,7 +1173,7 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
 
     /* Identity should match that set by the client */
     if (strlen(pskid) != identity_len
-            || strncmp(pskid, (const char *)identity, identity_len) != 0)
+        || strncmp(pskid, (const char *)identity, identity_len) != 0)
         return 0;
 
     SSL_SESSION_up_ref(serverpsk);
@@ -1194,10 +1190,10 @@ static int test_quic_psk(void)
     int testresult = 0;
 
     if (!TEST_ptr(cctx)
-               /* No cert or private key for the server, i.e. PSK only */
-            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, NULL,
-                                                    NULL, 0, &qtserv,
-                                                    &clientquic, NULL, NULL)))
+        /* No cert or private key for the server, i.e. PSK only */
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, NULL,
+            NULL, 0, &qtserv,
+            &clientquic, NULL, NULL)))
         goto end;
 
     SSL_set_psk_use_session_callback(clientquic, use_session_cb);
@@ -1212,15 +1208,15 @@ static int test_quic_psk(void)
     SSL_SESSION_up_ref(clientpsk);
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic))
-            || !TEST_int_eq(1, find_session_cb_cnt)
-            || !TEST_int_eq(1, use_session_cb_cnt)
-               /* Check that we actually used the PSK */
-            || !TEST_true(SSL_session_reused(clientquic)))
+        || !TEST_int_eq(1, find_session_cb_cnt)
+        || !TEST_int_eq(1, use_session_cb_cnt)
+        /* Check that we actually used the PSK */
+        || !TEST_true(SSL_session_reused(clientquic)))
         goto end;
 
     testresult = 1;
 
- end:
+end:
     SSL_free(clientquic);
     ossl_quic_tserver_free(qtserv);
     SSL_CTX_free(cctx);
@@ -1246,8 +1242,7 @@ static int test_client_auth(int idx)
     if (!TEST_ptr(cctx) || !TEST_ptr(sctx))
         goto err;
 
-    SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT
-                             | SSL_VERIFY_CLIENT_ONCE, NULL);
+    SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT | SSL_VERIFY_CLIENT_ONCE, NULL);
 
     if (!TEST_true(SSL_CTX_load_verify_file(sctx, cauthca)))
         goto err;
@@ -1255,12 +1250,12 @@ static int test_client_auth(int idx)
     if (idx > 0
         && (!TEST_true(SSL_CTX_use_certificate_chain_file(cctx, ccert))
             || !TEST_true(SSL_CTX_use_PrivateKey_file(cctx, cprivkey,
-                                                      SSL_FILETYPE_PEM))))
-            goto err;
+                SSL_FILETYPE_PEM))))
+        goto err;
 
     if (!TEST_true(qtest_create_quic_objects(libctx, cctx, sctx, cert,
-                                             privkey, 0, &qtserv,
-                                             &clientquic, NULL, NULL)))
+            privkey, 0, &qtserv,
+            &clientquic, NULL, NULL)))
         goto err;
 
     if (idx > 1) {
@@ -1288,16 +1283,16 @@ static int test_client_auth(int idx)
 
     ossl_quic_tserver_tick(qtserv);
     if (!TEST_true(ossl_quic_tserver_write(qtserv, 0,
-                                           (unsigned char *)msg,
-                                           msglen, &numbytes)))
+            (unsigned char *)msg,
+            msglen, &numbytes)))
         goto err;
 
     ossl_quic_tserver_tick(qtserv);
     SSL_handle_events(clientquic);
 
     if (!TEST_true(SSL_read_ex(clientquic, buf, sizeof(buf), &numbytes))
-            || !TEST_size_t_eq(numbytes, msglen)
-            || !TEST_mem_eq(buf, numbytes, msg, msglen))
+        || !TEST_size_t_eq(numbytes, msglen)
+        || !TEST_mem_eq(buf, numbytes, msg, msglen))
         goto err;
 
     if (!TEST_true(qtest_shutdown(qtserv, clientquic)))
@@ -1305,7 +1300,7 @@ static int test_client_auth(int idx)
 
     testresult = 1;
 
- err:
+err:
     SSL_free(clientquic);
     ossl_quic_tserver_free(qtserv);
     SSL_CTX_free(sctx);
@@ -1335,18 +1330,18 @@ static int test_alpn(int idx)
         goto err;
 
     if (!TEST_ptr(cctx)
-            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
-                                                    privkey,
-                                                    QTEST_FLAG_FAKE_TIME,
-                                                    &qtserv,
-                                                    &clientquic, NULL, NULL)))
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+            privkey,
+            QTEST_FLAG_FAKE_TIME,
+            &qtserv,
+            &clientquic, NULL, NULL)))
         goto err;
 
     if (idx == 0) {
         /*
-        * Clear the ALPN we set in qtest_create_quic_objects. We use TEST_false
-        * because SSL_set_alpn_protos returns 0 for success.
-        */
+         * Clear the ALPN we set in qtest_create_quic_objects. We use TEST_false
+         * because SSL_set_alpn_protos returns 0 for success.
+         */
         if (!TEST_false(SSL_set_alpn_protos(clientquic, NULL, 0)))
             goto err;
     }
@@ -1361,12 +1356,12 @@ static int test_alpn(int idx)
     } else {
         /* ALPN was provided so we expect the connection to succeed */
         if (!TEST_int_eq(SSL_get_error(clientquic, ret), SSL_ERROR_WANT_READ)
-                || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+            || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
             goto err;
     }
 
     testresult = 1;
- err:
+err:
     ossl_quic_tserver_free(qtserv);
     SSL_free(clientquic);
     SSL_CTX_free(cctx);
@@ -1385,12 +1380,12 @@ static int test_get_shutdown(void)
     int testresult = 0;
 
     if (!TEST_ptr(cctx)
-            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
-                                                    privkey,
-                                                    QTEST_FLAG_FAKE_TIME,
-                                                    &qtserv, &clientquic,
-                                                    NULL, NULL))
-            || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+            privkey,
+            QTEST_FLAG_FAKE_TIME,
+            &qtserv, &clientquic,
+            NULL, NULL))
+        || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto err;
 
     if (!TEST_int_eq(SSL_get_shutdown(clientquic), 0))
@@ -1408,11 +1403,11 @@ static int test_get_shutdown(void)
     } while (SSL_shutdown(clientquic) == 0);
 
     if (!TEST_int_eq(SSL_get_shutdown(clientquic),
-                     SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN))
+            SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN))
         goto err;
 
     testresult = 1;
- err:
+err:
     ossl_quic_tserver_free(qtserv);
     SSL_free(clientquic);
     SSL_CTX_free(cctx);
@@ -1420,15 +1415,15 @@ static int test_get_shutdown(void)
     return testresult;
 }
 
-#define MAX_LOOPS   2000
+#define MAX_LOOPS 2000
 
 /*
  * Keep retrying SSL_read_ex until it succeeds or we give up. Accept a stream
  * if we don't already have one
  */
 static int unreliable_client_read(SSL *clientquic, SSL **stream, void *buf,
-                                  size_t buflen, size_t *readbytes,
-                                  QUIC_TSERVER *qtserv)
+    size_t buflen, size_t *readbytes,
+    QUIC_TSERVER *qtserv)
 {
     int abortctr;
 
@@ -1456,15 +1451,15 @@ static int unreliable_client_read(SSL *clientquic, SSL **stream, void *buf,
 
 /* Keep retrying ossl_quic_tserver_read until it succeeds or we give up */
 static int unreliable_server_read(QUIC_TSERVER *qtserv, uint64_t sid,
-                                  void *buf, size_t buflen, size_t *readbytes,
-                                  SSL *clientquic)
+    void *buf, size_t buflen, size_t *readbytes,
+    SSL *clientquic)
 {
     int abortctr;
 
     /* We just do this in a loop with a sleep for simplicity */
     for (abortctr = 0; abortctr < MAX_LOOPS; abortctr++) {
         if (ossl_quic_tserver_read(qtserv, sid, buf, buflen, readbytes)
-                && *readbytes > 1)
+            && *readbytes > 1)
             return 1;
         ossl_quic_tserver_tick(qtserv);
         SSL_handle_events(clientquic);
@@ -1501,20 +1496,20 @@ static int test_noisy_dgram(int idx)
         flags |= QTEST_FLAG_PACKET_SPLIT;
 
     if (!TEST_ptr(cctx)
-            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
-                                                    privkey, flags,
-                                                    &qtserv,
-                                                    &clientquic, &fault, NULL)))
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+            privkey, flags,
+            &qtserv,
+            &clientquic, &fault, NULL)))
         goto err;
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
-            goto err;
+        goto err;
 
     if (!TEST_true(SSL_set_incoming_stream_policy(clientquic,
-                                                  SSL_INCOMING_STREAM_POLICY_ACCEPT,
-                                                  0))
-            || !TEST_true(SSL_set_default_stream_mode(clientquic,
-                                                      SSL_DEFAULT_STREAM_MODE_NONE)))
+            SSL_INCOMING_STREAM_POLICY_ACCEPT,
+            0))
+        || !TEST_true(SSL_set_default_stream_mode(clientquic,
+            SSL_DEFAULT_STREAM_MODE_NONE)))
         goto err;
 
     for (j = 0; j < 2; j++) {
@@ -1530,9 +1525,9 @@ static int test_noisy_dgram(int idx)
          */
         for (i = 0; i < 20; i++) {
             if (!TEST_true(ossl_quic_tserver_write(qtserv, sid,
-                                                   (unsigned char *)msg, msglen,
-                                                   &written))
-                    || !TEST_size_t_eq(msglen, written))
+                    (unsigned char *)msg, msglen,
+                    &written))
+                || !TEST_size_t_eq(msglen, written))
                 goto err;
             ossl_quic_tserver_tick(qtserv);
             qtest_add_time(1);
@@ -1543,17 +1538,17 @@ static int test_noisy_dgram(int idx)
              * handle that
              */
             if (!TEST_true(unreliable_client_read(clientquic, &stream[j], buf,
-                                                  sizeof(buf), &readbytes,
-                                                  qtserv))
-                    || !TEST_mem_eq(msg, msglen, buf, readbytes))
+                    sizeof(buf), &readbytes,
+                    qtserv))
+                || !TEST_mem_eq(msg, msglen, buf, readbytes))
                 goto err;
         }
 
         /* Send data from the client to the server */
         for (i = 0; i < 20; i++) {
             if (!TEST_true(SSL_write_ex(stream[j], (unsigned char *)msg,
-                                        msglen, &written))
-                    || !TEST_size_t_eq(msglen, written))
+                    msglen, &written))
+                || !TEST_size_t_eq(msglen, written))
                 goto err;
 
             ossl_quic_tserver_tick(qtserv);
@@ -1565,14 +1560,14 @@ static int test_noisy_dgram(int idx)
              * handle that
              */
             if (!TEST_true(unreliable_server_read(qtserv, sid, buf, sizeof(buf),
-                                                  &readbytes, clientquic))
-                    || !TEST_mem_eq(msg, msglen, buf, readbytes))
+                    &readbytes, clientquic))
+                || !TEST_mem_eq(msg, msglen, buf, readbytes))
                 goto err;
         }
     }
 
     testresult = 1;
- err:
+err:
     ossl_quic_tserver_free(qtserv);
     SSL_free(stream[0]);
     SSL_free(stream[1]);
@@ -1587,9 +1582,9 @@ static int test_noisy_dgram(int idx)
  * Create a connection and send some big data using a transport with limited bandwidth.
  */
 
-#define TEST_TRANSFER_DATA_SIZE (2*1024*1024)    /* 2 MBytes */
-#define TEST_SINGLE_WRITE_SIZE (16*1024)        /* 16 kBytes */
-#define TEST_BW_LIMIT 1000                      /* 1000 Bytes/ms */
+#define TEST_TRANSFER_DATA_SIZE (2 * 1024 * 1024) /* 2 MBytes */
+#define TEST_SINGLE_WRITE_SIZE (16 * 1024) /* 16 kBytes */
+#define TEST_BW_LIMIT 1000 /* 1000 Bytes/ms */
 static int test_bw_limit(void)
 {
     SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
@@ -1605,10 +1600,10 @@ static int test_bw_limit(void)
     uint64_t real_bw;
 
     if (!TEST_ptr(cctx)
-            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
-                                                    privkey, flags,
-                                                    &qtserv,
-                                                    &clientquic, &fault, NULL)))
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+            privkey, flags,
+            &qtserv,
+            &clientquic, &fault, NULL)))
         goto err;
 
     if (!TEST_ptr(msg = OPENSSL_zalloc(TEST_SINGLE_WRITE_SIZE))
@@ -1620,7 +1615,7 @@ static int test_bw_limit(void)
         goto err;
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
-            goto err;
+        goto err;
 
     qtest_start_stopwatch();
 
@@ -1629,42 +1624,42 @@ static int test_bw_limit(void)
 
         if (sendlen > 0) {
             if (!SSL_write_ex(clientquic, msg,
-                              sendlen > TEST_SINGLE_WRITE_SIZE ? TEST_SINGLE_WRITE_SIZE
-                                                               : sendlen,
-                              &written)) {
-                TEST_info("Retrying to send: %llu", (unsigned long long) sendlen);
+                    sendlen > TEST_SINGLE_WRITE_SIZE ? TEST_SINGLE_WRITE_SIZE
+                                                     : sendlen,
+                    &written)) {
+                TEST_info("Retrying to send: %llu", (unsigned long long)sendlen);
                 if (!TEST_int_eq(SSL_get_error(clientquic, 0), SSL_ERROR_WANT_WRITE))
                     goto err;
             } else {
                 sendlen -= written;
-                TEST_info("Remaining to send: %llu", (unsigned long long) sendlen);
+                TEST_info("Remaining to send: %llu", (unsigned long long)sendlen);
             }
         } else {
             SSL_handle_events(clientquic);
         }
 
         if (ossl_quic_tserver_read(qtserv, 0, recvbuf,
-                                   recvlen > TEST_SINGLE_WRITE_SIZE ? TEST_SINGLE_WRITE_SIZE
-                                                                    : recvlen,
-                                   &readbytes)
+                recvlen > TEST_SINGLE_WRITE_SIZE ? TEST_SINGLE_WRITE_SIZE
+                                                 : recvlen,
+                &readbytes)
             && readbytes > 1) {
             recvlen -= readbytes;
-            TEST_info("Remaining to recv: %llu", (unsigned long long) recvlen);
+            TEST_info("Remaining to recv: %llu", (unsigned long long)recvlen);
         } else {
-            TEST_info("No progress on recv: %llu", (unsigned long long) recvlen);
+            TEST_info("No progress on recv: %llu", (unsigned long long)recvlen);
         }
         ossl_quic_tserver_tick(qtserv);
     }
     real_bw = TEST_TRANSFER_DATA_SIZE / qtest_get_stopwatch_time();
 
     TEST_info("BW limit: %d Bytes/ms Real bandwidth reached: %llu Bytes/ms",
-              TEST_BW_LIMIT, (unsigned long long)real_bw);
+        TEST_BW_LIMIT, (unsigned long long)real_bw);
 
     if (!TEST_uint64_t_lt(real_bw, TEST_BW_LIMIT))
         goto err;
 
     testresult = 1;
- err:
+err:
     OPENSSL_free(msg);
     OPENSSL_free(recvbuf);
     ossl_quic_tserver_free(qtserv);
@@ -1690,38 +1685,38 @@ enum {
 #define TPARAM_CHECK_DROP(name, reason) \
     { QUIC_TPARAM_##name, TPARAM_OP_DROP, (reason) },
 #define TPARAM_CHECK_INJECT(name, buf, buf_len, reason) \
-    { QUIC_TPARAM_##name, TPARAM_OP_INJECT, (reason), \
-      (buf), (buf_len) },
+    { QUIC_TPARAM_##name, TPARAM_OP_INJECT, (reason),   \
+        (buf), (buf_len) },
 #define TPARAM_CHECK_INJECT_A(name, buf, reason) \
     TPARAM_CHECK_INJECT(name, buf, sizeof(buf), reason)
 #define TPARAM_CHECK_DROP_INJECT(name, buf, buf_len, reason) \
-    { QUIC_TPARAM_##name, TPARAM_OP_DROP_INJECT, (reason), \
-      (buf), (buf_len) },
+    { QUIC_TPARAM_##name, TPARAM_OP_DROP_INJECT, (reason),   \
+        (buf), (buf_len) },
 #define TPARAM_CHECK_DROP_INJECT_A(name, buf, reason) \
     TPARAM_CHECK_DROP_INJECT(name, buf, sizeof(buf), reason)
 #define TPARAM_CHECK_INJECT_TWICE(name, buf, buf_len, reason) \
-    { QUIC_TPARAM_##name, TPARAM_OP_INJECT_TWICE, (reason), \
-      (buf), (buf_len) },
+    { QUIC_TPARAM_##name, TPARAM_OP_INJECT_TWICE, (reason),   \
+        (buf), (buf_len) },
 #define TPARAM_CHECK_INJECT_TWICE_A(name, buf, reason) \
     TPARAM_CHECK_INJECT_TWICE(name, buf, sizeof(buf), reason)
 #define TPARAM_CHECK_INJECT_RAW(buf, buf_len, reason) \
-    { 0, TPARAM_OP_INJECT_RAW, (reason), \
-      (buf), (buf_len) },
+    { 0, TPARAM_OP_INJECT_RAW, (reason),              \
+        (buf), (buf_len) },
 #define TPARAM_CHECK_INJECT_RAW_A(buf, reason) \
     TPARAM_CHECK_INJECT_RAW(buf, sizeof(buf), reason)
 #define TPARAM_CHECK_MUTATE(name, reason) \
     { QUIC_TPARAM_##name, TPARAM_OP_MUTATE, (reason) },
-#define TPARAM_CHECK_INT(name, reason) \
-    TPARAM_CHECK_DROP_INJECT(name, NULL, 0, reason) \
+#define TPARAM_CHECK_INT(name, reason)                  \
+    TPARAM_CHECK_DROP_INJECT(name, NULL, 0, reason)     \
     TPARAM_CHECK_DROP_INJECT_A(name, bogus_int, reason) \
     TPARAM_CHECK_DROP_INJECT_A(name, int_with_trailer, reason)
 
 struct tparam_test {
-    uint64_t    id;
-    int         op;
-    const char  *expect_fail; /* substring to expect in reason */
-    const void  *buf;
-    size_t      buf_len;
+    uint64_t id;
+    int op;
+    const char *expect_fail; /* substring to expect in reason */
+    const void *buf;
+    size_t buf_len;
 };
 
 static const unsigned char retry_scid_1[8] = { 0 };
@@ -1747,21 +1742,61 @@ static const unsigned char malformed_preferred_addr_1[] = {
 };
 
 static const unsigned char malformed_preferred_addr_2[42] = {
-    0x0d, 0x28, /* too short */
+    0x0d,
+    0x28, /* too short */
 };
 
 static const unsigned char malformed_preferred_addr_3[64] = {
-    0x0d, 0x3e, /* too long */
+    0x0d,
+    0x3e, /* too long */
 };
 
 static const unsigned char malformed_preferred_addr_4[] = {
     /* TPARAM too short for CID length indicated */
-    0x0d, 0x29, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x01, 0x55,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x0d,
+    0x29,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x01,
+    0x55,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
 };
 
 static const unsigned char malformed_unknown_1[] = {
@@ -1769,11 +1804,14 @@ static const unsigned char malformed_unknown_1[] = {
 };
 
 static const unsigned char malformed_unknown_2[] = {
-    0x55, 0x55,
+    0x55,
+    0x55,
 };
 
 static const unsigned char malformed_unknown_3[] = {
-    0x55, 0x55, 0x01,
+    0x55,
+    0x55,
+    0x01,
 };
 
 static const unsigned char ack_delay_exp[] = {
@@ -1783,14 +1821,49 @@ static const unsigned char ack_delay_exp[] = {
 static const unsigned char stateless_reset_token[16] = { 0x42 };
 
 static const unsigned char preferred_addr[] = {
-    0x44, 0x44, 0x44, 0x44,
-    0x55, 0x55,
-    0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
-    0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
-    0x77, 0x77,
-    0x02, 0xAA, 0xBB,
-    0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99,
-    0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99,
+    0x44,
+    0x44,
+    0x44,
+    0x44,
+    0x55,
+    0x55,
+    0x66,
+    0x66,
+    0x66,
+    0x66,
+    0x66,
+    0x66,
+    0x66,
+    0x66,
+    0x66,
+    0x66,
+    0x66,
+    0x66,
+    0x66,
+    0x66,
+    0x66,
+    0x66,
+    0x77,
+    0x77,
+    0x02,
+    0xAA,
+    0xBB,
+    0x99,
+    0x99,
+    0x99,
+    0x99,
+    0x99,
+    0x99,
+    0x99,
+    0x99,
+    0x99,
+    0x99,
+    0x99,
+    0x99,
+    0x99,
+    0x99,
+    0x99,
+    0x99,
 };
 
 static const unsigned char long_cid[21] = { 0x42 };
@@ -1800,148 +1873,176 @@ static const unsigned char excess_ack_delay_exp[] = {
 };
 
 static const unsigned char excess_max_ack_delay[] = {
-    0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00,
+    0xC0,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x40,
+    0x00,
 };
 
 static const unsigned char excess_initial_max_streams[] = {
-    0xD0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+    0xD0,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x01,
 };
 
 static const unsigned char undersize_udp_payload_size[] = {
-    0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xaf,
+    0xC0,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x04,
+    0xaf,
 };
 
 static const unsigned char undersize_active_conn_id_limit[] = {
-    0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+    0xC0,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x01,
 };
 
 static const unsigned char bogus_int[9] = { 0 };
 
 static const unsigned char int_with_trailer[2] = { 0x01 };
 
-#define QUIC_TPARAM_UNKNOWN_1   0xf1f1
+#define QUIC_TPARAM_UNKNOWN_1 0xf1f1
 
 static const struct tparam_test tparam_tests[] = {
     TPARAM_CHECK_DUP(ORIG_DCID,
-                     "ORIG_DCID appears multiple times")
-    TPARAM_CHECK_DUP(INITIAL_SCID,
-                     "INITIAL_SCID appears multiple times")
-    TPARAM_CHECK_DUP(INITIAL_MAX_DATA,
-                     "INITIAL_MAX_DATA appears multiple times")
-    TPARAM_CHECK_DUP(INITIAL_MAX_STREAM_DATA_BIDI_LOCAL,
-                     "INITIAL_MAX_STREAM_DATA_BIDI_LOCAL appears multiple times")
-    TPARAM_CHECK_DUP(INITIAL_MAX_STREAM_DATA_BIDI_REMOTE,
-                     "INITIAL_MAX_STREAM_DATA_BIDI_REMOTE appears multiple times")
-    TPARAM_CHECK_DUP(INITIAL_MAX_STREAM_DATA_UNI,
-                     "INITIAL_MAX_STREAM_DATA_UNI appears multiple times")
-    TPARAM_CHECK_DUP(INITIAL_MAX_STREAMS_BIDI,
-                     "INITIAL_MAX_STREAMS_BIDI appears multiple times")
-    TPARAM_CHECK_DUP(INITIAL_MAX_STREAMS_UNI,
-                     "INITIAL_MAX_STREAMS_UNI appears multiple times")
-    TPARAM_CHECK_DUP(MAX_IDLE_TIMEOUT,
-                     "MAX_IDLE_TIMEOUT appears multiple times")
-    TPARAM_CHECK_DUP(MAX_UDP_PAYLOAD_SIZE,
-                     "MAX_UDP_PAYLOAD_SIZE appears multiple times")
-    TPARAM_CHECK_DUP(ACTIVE_CONN_ID_LIMIT,
-                     "ACTIVE_CONN_ID_LIMIT appears multiple times")
-    TPARAM_CHECK_DUP(DISABLE_ACTIVE_MIGRATION,
-                     "DISABLE_ACTIVE_MIGRATION appears multiple times")
+        "ORIG_DCID appears multiple times")
+        TPARAM_CHECK_DUP(INITIAL_SCID,
+            "INITIAL_SCID appears multiple times")
+            TPARAM_CHECK_DUP(INITIAL_MAX_DATA,
+                "INITIAL_MAX_DATA appears multiple times")
+                TPARAM_CHECK_DUP(INITIAL_MAX_STREAM_DATA_BIDI_LOCAL,
+                    "INITIAL_MAX_STREAM_DATA_BIDI_LOCAL appears multiple times")
+                    TPARAM_CHECK_DUP(INITIAL_MAX_STREAM_DATA_BIDI_REMOTE,
+                        "INITIAL_MAX_STREAM_DATA_BIDI_REMOTE appears multiple times")
+                        TPARAM_CHECK_DUP(INITIAL_MAX_STREAM_DATA_UNI,
+                            "INITIAL_MAX_STREAM_DATA_UNI appears multiple times")
+                            TPARAM_CHECK_DUP(INITIAL_MAX_STREAMS_BIDI,
+                                "INITIAL_MAX_STREAMS_BIDI appears multiple times")
+                                TPARAM_CHECK_DUP(INITIAL_MAX_STREAMS_UNI,
+                                    "INITIAL_MAX_STREAMS_UNI appears multiple times")
+                                    TPARAM_CHECK_DUP(MAX_IDLE_TIMEOUT,
+                                        "MAX_IDLE_TIMEOUT appears multiple times")
+                                        TPARAM_CHECK_DUP(MAX_UDP_PAYLOAD_SIZE,
+                                            "MAX_UDP_PAYLOAD_SIZE appears multiple times")
+                                            TPARAM_CHECK_DUP(ACTIVE_CONN_ID_LIMIT,
+                                                "ACTIVE_CONN_ID_LIMIT appears multiple times")
+                                                TPARAM_CHECK_DUP(DISABLE_ACTIVE_MIGRATION,
+                                                    "DISABLE_ACTIVE_MIGRATION appears multiple times")
 
-    TPARAM_CHECK_DROP(INITIAL_SCID,
-                      "INITIAL_SCID was not sent but is required")
-    TPARAM_CHECK_DROP(ORIG_DCID,
-                      "ORIG_DCID was not sent but is required")
+                                                    TPARAM_CHECK_DROP(INITIAL_SCID,
+                                                        "INITIAL_SCID was not sent but is required")
+                                                        TPARAM_CHECK_DROP(ORIG_DCID,
+                                                            "ORIG_DCID was not sent but is required")
 
-    TPARAM_CHECK_INJECT_A(RETRY_SCID, retry_scid_1,
-                          "RETRY_SCID sent when not performing a retry")
-    TPARAM_CHECK_DROP_INJECT_A(DISABLE_ACTIVE_MIGRATION, disable_active_migration_1,
-                               "DISABLE_ACTIVE_MIGRATION is malformed")
-    TPARAM_CHECK_INJECT(UNKNOWN_1, NULL, 0,
-                        NULL)
-    TPARAM_CHECK_INJECT_RAW_A(malformed_stateless_reset_token_1,
-                              "STATELESS_RESET_TOKEN is malformed")
-    TPARAM_CHECK_INJECT_A(STATELESS_RESET_TOKEN,
-                          malformed_stateless_reset_token_2,
-                          "STATELESS_RESET_TOKEN is malformed")
-    TPARAM_CHECK_INJECT_A(STATELESS_RESET_TOKEN,
-                          malformed_stateless_reset_token_3,
-                          "STATELESS_RESET_TOKEN is malformed")
-    TPARAM_CHECK_INJECT_A(STATELESS_RESET_TOKEN,
-                          malformed_stateless_reset_token_4,
-                          "STATELESS_RESET_TOKEN is malformed")
-    TPARAM_CHECK_INJECT(STATELESS_RESET_TOKEN,
-                        NULL, 0,
-                        "STATELESS_RESET_TOKEN is malformed")
-    TPARAM_CHECK_INJECT_RAW_A(malformed_preferred_addr_1,
-                              "PREFERRED_ADDR is malformed")
-    TPARAM_CHECK_INJECT_RAW_A(malformed_preferred_addr_2,
-                              "PREFERRED_ADDR is malformed")
-    TPARAM_CHECK_INJECT_RAW_A(malformed_preferred_addr_3,
-                              "PREFERRED_ADDR is malformed")
-    TPARAM_CHECK_INJECT_RAW_A(malformed_preferred_addr_4,
-                              "PREFERRED_ADDR is malformed")
-    TPARAM_CHECK_INJECT_RAW_A(malformed_unknown_1,
-                              "bad transport parameter")
-    TPARAM_CHECK_INJECT_RAW_A(malformed_unknown_2,
-                              "bad transport parameter")
-    TPARAM_CHECK_INJECT_RAW_A(malformed_unknown_3,
-                              "bad transport parameter")
+                                                            TPARAM_CHECK_INJECT_A(RETRY_SCID, retry_scid_1,
+                                                                "RETRY_SCID sent when not performing a retry")
+                                                                TPARAM_CHECK_DROP_INJECT_A(DISABLE_ACTIVE_MIGRATION, disable_active_migration_1,
+                                                                    "DISABLE_ACTIVE_MIGRATION is malformed")
+                                                                    TPARAM_CHECK_INJECT(UNKNOWN_1, NULL, 0,
+                                                                        NULL)
+                                                                        TPARAM_CHECK_INJECT_RAW_A(malformed_stateless_reset_token_1,
+                                                                            "STATELESS_RESET_TOKEN is malformed")
+                                                                            TPARAM_CHECK_INJECT_A(STATELESS_RESET_TOKEN,
+                                                                                malformed_stateless_reset_token_2,
+                                                                                "STATELESS_RESET_TOKEN is malformed")
+                                                                                TPARAM_CHECK_INJECT_A(STATELESS_RESET_TOKEN,
+                                                                                    malformed_stateless_reset_token_3,
+                                                                                    "STATELESS_RESET_TOKEN is malformed")
+                                                                                    TPARAM_CHECK_INJECT_A(STATELESS_RESET_TOKEN,
+                                                                                        malformed_stateless_reset_token_4,
+                                                                                        "STATELESS_RESET_TOKEN is malformed")
+                                                                                        TPARAM_CHECK_INJECT(STATELESS_RESET_TOKEN,
+                                                                                            NULL, 0,
+                                                                                            "STATELESS_RESET_TOKEN is malformed")
+                                                                                            TPARAM_CHECK_INJECT_RAW_A(malformed_preferred_addr_1,
+                                                                                                "PREFERRED_ADDR is malformed")
+                                                                                                TPARAM_CHECK_INJECT_RAW_A(malformed_preferred_addr_2,
+                                                                                                    "PREFERRED_ADDR is malformed")
+                                                                                                    TPARAM_CHECK_INJECT_RAW_A(malformed_preferred_addr_3,
+                                                                                                        "PREFERRED_ADDR is malformed")
+                                                                                                        TPARAM_CHECK_INJECT_RAW_A(malformed_preferred_addr_4,
+                                                                                                            "PREFERRED_ADDR is malformed")
+                                                                                                            TPARAM_CHECK_INJECT_RAW_A(malformed_unknown_1,
+                                                                                                                "bad transport parameter")
+                                                                                                                TPARAM_CHECK_INJECT_RAW_A(malformed_unknown_2,
+                                                                                                                    "bad transport parameter")
+                                                                                                                    TPARAM_CHECK_INJECT_RAW_A(malformed_unknown_3,
+                                                                                                                        "bad transport parameter")
 
-    TPARAM_CHECK_INJECT_A(ACK_DELAY_EXP, excess_ack_delay_exp,
-                          "ACK_DELAY_EXP is malformed")
-    TPARAM_CHECK_INJECT_A(MAX_ACK_DELAY, excess_max_ack_delay,
-                          "MAX_ACK_DELAY is malformed")
-    TPARAM_CHECK_DROP_INJECT_A(INITIAL_MAX_STREAMS_BIDI, excess_initial_max_streams,
-                               "INITIAL_MAX_STREAMS_BIDI is malformed")
-    TPARAM_CHECK_DROP_INJECT_A(INITIAL_MAX_STREAMS_UNI, excess_initial_max_streams,
-                               "INITIAL_MAX_STREAMS_UNI is malformed")
+                                                                                                                        TPARAM_CHECK_INJECT_A(ACK_DELAY_EXP, excess_ack_delay_exp,
+                                                                                                                            "ACK_DELAY_EXP is malformed")
+                                                                                                                            TPARAM_CHECK_INJECT_A(MAX_ACK_DELAY, excess_max_ack_delay,
+                                                                                                                                "MAX_ACK_DELAY is malformed")
+                                                                                                                                TPARAM_CHECK_DROP_INJECT_A(INITIAL_MAX_STREAMS_BIDI, excess_initial_max_streams,
+                                                                                                                                    "INITIAL_MAX_STREAMS_BIDI is malformed")
+                                                                                                                                    TPARAM_CHECK_DROP_INJECT_A(INITIAL_MAX_STREAMS_UNI, excess_initial_max_streams,
+                                                                                                                                        "INITIAL_MAX_STREAMS_UNI is malformed")
 
-    TPARAM_CHECK_DROP_INJECT_A(MAX_UDP_PAYLOAD_SIZE, undersize_udp_payload_size,
-                               "MAX_UDP_PAYLOAD_SIZE is malformed")
-    TPARAM_CHECK_DROP_INJECT_A(ACTIVE_CONN_ID_LIMIT, undersize_active_conn_id_limit,
-                               "ACTIVE_CONN_ID_LIMIT is malformed")
+                                                                                                                                        TPARAM_CHECK_DROP_INJECT_A(MAX_UDP_PAYLOAD_SIZE, undersize_udp_payload_size,
+                                                                                                                                            "MAX_UDP_PAYLOAD_SIZE is malformed")
+                                                                                                                                            TPARAM_CHECK_DROP_INJECT_A(ACTIVE_CONN_ID_LIMIT, undersize_active_conn_id_limit,
+                                                                                                                                                "ACTIVE_CONN_ID_LIMIT is malformed")
 
-    TPARAM_CHECK_INJECT_TWICE_A(ACK_DELAY_EXP, ack_delay_exp,
-                                "ACK_DELAY_EXP appears multiple times")
-    TPARAM_CHECK_INJECT_TWICE_A(MAX_ACK_DELAY, ack_delay_exp,
-                                "MAX_ACK_DELAY appears multiple times")
-    TPARAM_CHECK_INJECT_TWICE_A(STATELESS_RESET_TOKEN, stateless_reset_token,
-                                "STATELESS_RESET_TOKEN appears multiple times")
-    TPARAM_CHECK_INJECT_TWICE_A(PREFERRED_ADDR, preferred_addr,
-                                "PREFERRED_ADDR appears multiple times")
+                                                                                                                                                TPARAM_CHECK_INJECT_TWICE_A(ACK_DELAY_EXP, ack_delay_exp,
+                                                                                                                                                    "ACK_DELAY_EXP appears multiple times")
+                                                                                                                                                    TPARAM_CHECK_INJECT_TWICE_A(MAX_ACK_DELAY, ack_delay_exp,
+                                                                                                                                                        "MAX_ACK_DELAY appears multiple times")
+                                                                                                                                                        TPARAM_CHECK_INJECT_TWICE_A(STATELESS_RESET_TOKEN, stateless_reset_token,
+                                                                                                                                                            "STATELESS_RESET_TOKEN appears multiple times")
+                                                                                                                                                            TPARAM_CHECK_INJECT_TWICE_A(PREFERRED_ADDR, preferred_addr,
+                                                                                                                                                                "PREFERRED_ADDR appears multiple times")
 
-    TPARAM_CHECK_MUTATE(ORIG_DCID,
-                        "ORIG_DCID does not match expected value")
-    TPARAM_CHECK_MUTATE(INITIAL_SCID,
-                        "INITIAL_SCID does not match expected value")
+                                                                                                                                                                TPARAM_CHECK_MUTATE(ORIG_DCID,
+                                                                                                                                                                    "ORIG_DCID does not match expected value")
+                                                                                                                                                                    TPARAM_CHECK_MUTATE(INITIAL_SCID,
+                                                                                                                                                                        "INITIAL_SCID does not match expected value")
 
-    TPARAM_CHECK_DROP_INJECT_A(ORIG_DCID, long_cid,
-                               "ORIG_DCID is malformed")
-    TPARAM_CHECK_DROP_INJECT_A(INITIAL_SCID, long_cid,
-                               "INITIAL_SCID is malformed")
+                                                                                                                                                                        TPARAM_CHECK_DROP_INJECT_A(ORIG_DCID, long_cid,
+                                                                                                                                                                            "ORIG_DCID is malformed")
+                                                                                                                                                                            TPARAM_CHECK_DROP_INJECT_A(INITIAL_SCID, long_cid,
+                                                                                                                                                                                "INITIAL_SCID is malformed")
 
-    TPARAM_CHECK_INT(INITIAL_MAX_DATA,
-                     "INITIAL_MAX_DATA is malformed")
-    TPARAM_CHECK_INT(INITIAL_MAX_STREAM_DATA_BIDI_LOCAL,
-                     "INITIAL_MAX_STREAM_DATA_BIDI_LOCAL is malformed")
-    TPARAM_CHECK_INT(INITIAL_MAX_STREAM_DATA_BIDI_REMOTE,
-                     "INITIAL_MAX_STREAM_DATA_BIDI_REMOTE is malformed")
-    TPARAM_CHECK_INT(INITIAL_MAX_STREAM_DATA_UNI,
-                     "INITIAL_MAX_STREAM_DATA_UNI is malformed")
-    TPARAM_CHECK_INT(ACK_DELAY_EXP,
-                     "ACK_DELAY_EXP is malformed")
-    TPARAM_CHECK_INT(MAX_ACK_DELAY,
-                     "MAX_ACK_DELAY is malformed")
-    TPARAM_CHECK_INT(INITIAL_MAX_STREAMS_BIDI,
-                     "INITIAL_MAX_STREAMS_BIDI is malformed")
-    TPARAM_CHECK_INT(INITIAL_MAX_STREAMS_UNI,
-                     "INITIAL_MAX_STREAMS_UNI is malformed")
-    TPARAM_CHECK_INT(MAX_IDLE_TIMEOUT,
-                     "MAX_IDLE_TIMEOUT is malformed")
-    TPARAM_CHECK_INT(MAX_UDP_PAYLOAD_SIZE,
-                     "MAX_UDP_PAYLOAD_SIZE is malformed")
-    TPARAM_CHECK_INT(ACTIVE_CONN_ID_LIMIT,
-                     "ACTIVE_CONN_ID_LIMIT is malformed")
+                                                                                                                                                                                TPARAM_CHECK_INT(INITIAL_MAX_DATA,
+                                                                                                                                                                                    "INITIAL_MAX_DATA is malformed")
+                                                                                                                                                                                    TPARAM_CHECK_INT(INITIAL_MAX_STREAM_DATA_BIDI_LOCAL,
+                                                                                                                                                                                        "INITIAL_MAX_STREAM_DATA_BIDI_LOCAL is malformed")
+                                                                                                                                                                                        TPARAM_CHECK_INT(INITIAL_MAX_STREAM_DATA_BIDI_REMOTE,
+                                                                                                                                                                                            "INITIAL_MAX_STREAM_DATA_BIDI_REMOTE is malformed")
+                                                                                                                                                                                            TPARAM_CHECK_INT(INITIAL_MAX_STREAM_DATA_UNI,
+                                                                                                                                                                                                "INITIAL_MAX_STREAM_DATA_UNI is malformed")
+                                                                                                                                                                                                TPARAM_CHECK_INT(ACK_DELAY_EXP,
+                                                                                                                                                                                                    "ACK_DELAY_EXP is malformed")
+                                                                                                                                                                                                    TPARAM_CHECK_INT(MAX_ACK_DELAY,
+                                                                                                                                                                                                        "MAX_ACK_DELAY is malformed")
+                                                                                                                                                                                                        TPARAM_CHECK_INT(INITIAL_MAX_STREAMS_BIDI,
+                                                                                                                                                                                                            "INITIAL_MAX_STREAMS_BIDI is malformed")
+                                                                                                                                                                                                            TPARAM_CHECK_INT(INITIAL_MAX_STREAMS_UNI,
+                                                                                                                                                                                                                "INITIAL_MAX_STREAMS_UNI is malformed")
+                                                                                                                                                                                                                TPARAM_CHECK_INT(MAX_IDLE_TIMEOUT,
+                                                                                                                                                                                                                    "MAX_IDLE_TIMEOUT is malformed")
+                                                                                                                                                                                                                    TPARAM_CHECK_INT(MAX_UDP_PAYLOAD_SIZE,
+                                                                                                                                                                                                                        "MAX_UDP_PAYLOAD_SIZE is malformed")
+                                                                                                                                                                                                                        TPARAM_CHECK_INT(ACTIVE_CONN_ID_LIMIT,
+                                                                                                                                                                                                                            "ACTIVE_CONN_ID_LIMIT is malformed")
 };
 
 struct tparam_ctx {
@@ -1949,16 +2050,16 @@ struct tparam_ctx {
 };
 
 static int tparam_handle(struct tparam_ctx *ctx,
-                         uint64_t id, unsigned char *data,
-                         size_t data_len,
-                         WPACKET *wpkt)
+    uint64_t id, unsigned char *data,
+    size_t data_len,
+    WPACKET *wpkt)
 {
     const struct tparam_test *t = ctx->t;
 
     switch (t->op) {
     case TPARAM_OP_DUP:
         if (!TEST_ptr(ossl_quic_wire_encode_transport_param_bytes(wpkt, id,
-                                                                  data, data_len)))
+                data, data_len)))
             return 0;
 
         /*
@@ -1966,7 +2067,7 @@ static int tparam_handle(struct tparam_ctx *ctx,
          */
         if (id == t->id
             && !TEST_ptr(ossl_quic_wire_encode_transport_param_bytes(wpkt, id,
-                                                                     data, data_len)))
+                data, data_len)))
             return 0;
 
         return 1;
@@ -1976,7 +2077,7 @@ static int tparam_handle(struct tparam_ctx *ctx,
         /* Pass through unless ID matches. */
         if (id != t->id
             && !TEST_ptr(ossl_quic_wire_encode_transport_param_bytes(wpkt, id,
-                                                                     data, data_len)))
+                data, data_len)))
             return 0;
 
         return 1;
@@ -1986,7 +2087,7 @@ static int tparam_handle(struct tparam_ctx *ctx,
     case TPARAM_OP_INJECT_RAW:
         /* Always pass through. */
         if (!TEST_ptr(ossl_quic_wire_encode_transport_param_bytes(wpkt, id,
-                                                                  data, data_len)))
+                data, data_len)))
             return 0;
 
         return 1;
@@ -2000,7 +2101,7 @@ static int tparam_handle(struct tparam_ctx *ctx,
         }
 
         if (!TEST_ptr(ossl_quic_wire_encode_transport_param_bytes(wpkt, id,
-                                                                  data, data_len)))
+                data, data_len)))
             return 0;
 
         if (id == t->id)
@@ -2014,11 +2115,11 @@ static int tparam_handle(struct tparam_ctx *ctx,
 }
 
 static int tparam_on_enc_ext(QTEST_FAULT *qtf, QTEST_ENCRYPTED_EXTENSIONS *ee,
-                             size_t ee_len, void *arg)
+    size_t ee_len, void *arg)
 {
     int rc = 0;
     struct tparam_ctx *ctx = arg;
-    PACKET pkt = {0};
+    PACKET pkt = { 0 };
     WPACKET wpkt;
     int have_wpkt = 0;
     BUF_MEM *old_bufm = NULL, *new_bufm = NULL;
@@ -2034,8 +2135,8 @@ static int tparam_on_enc_ext(QTEST_FAULT *qtf, QTEST_ENCRYPTED_EXTENSIONS *ee,
      * extension which was removed.
      */
     if (!TEST_true(qtest_fault_delete_extension(qtf, TLSEXT_TYPE_quic_transport_parameters,
-                                                ee->extensions, &ee->extensionslen,
-                                                old_bufm)))
+            ee->extensions, &ee->extensionslen,
+            old_bufm)))
         goto err;
 
     if (!TEST_true(PACKET_buf_init(&pkt, (unsigned char *)old_bufm->data, old_bufm->length))
@@ -2054,14 +2155,14 @@ static int tparam_on_enc_ext(QTEST_FAULT *qtf, QTEST_ENCRYPTED_EXTENSIONS *ee,
      *
      */
     if (!TEST_true(WPACKET_put_bytes_u16(&wpkt,
-                                         TLSEXT_TYPE_quic_transport_parameters))
+            TLSEXT_TYPE_quic_transport_parameters))
         || !TEST_true(WPACKET_start_sub_packet_u16(&wpkt)))
         goto err;
 
-    for (; PACKET_remaining(&pkt) > 0; ) {
+    for (; PACKET_remaining(&pkt) > 0;) {
         tp_p = (unsigned char *)ossl_quic_wire_decode_transport_param_bytes(&pkt,
-                                                                            &id,
-                                                                            &tp_len);
+            &id,
+            &tp_len);
         if (!TEST_ptr(tp_p)) {
             TEST_mem_eq(PACKET_data(&pkt), PACKET_remaining(&pkt), NULL, 0);
             goto err;
@@ -2074,14 +2175,14 @@ static int tparam_on_enc_ext(QTEST_FAULT *qtf, QTEST_ENCRYPTED_EXTENSIONS *ee,
     if (ctx->t->op == TPARAM_OP_INJECT || ctx->t->op == TPARAM_OP_DROP_INJECT
         || ctx->t->op == TPARAM_OP_INJECT_TWICE) {
         if (!TEST_ptr(ossl_quic_wire_encode_transport_param_bytes(&wpkt, ctx->t->id,
-                                                                  ctx->t->buf,
-                                                                  ctx->t->buf_len)))
+                ctx->t->buf,
+                ctx->t->buf_len)))
             goto err;
 
         if (ctx->t->op == TPARAM_OP_INJECT_TWICE
             && !TEST_ptr(ossl_quic_wire_encode_transport_param_bytes(&wpkt, ctx->t->id,
-                                                                     ctx->t->buf,
-                                                                     ctx->t->buf_len)))
+                ctx->t->buf,
+                ctx->t->buf_len)))
             goto err;
     } else if (ctx->t->op == TPARAM_OP_INJECT_RAW) {
         if (!TEST_true(WPACKET_memcpy(&wpkt, ctx->t->buf, ctx->t->buf_len)))
@@ -2111,7 +2212,7 @@ static int tparam_on_enc_ext(QTEST_FAULT *qtf, QTEST_ENCRYPTED_EXTENSIONS *ee,
     eb_len = (((uint16_t)ee->extensions[0]) << 8) + (uint16_t)ee->extensions[1];
     eb_len += written;
     ee->extensions[0] = (unsigned char)((eb_len >> 8) & 0xFF);
-    ee->extensions[1] = (unsigned char)( eb_len       & 0xFF);
+    ee->extensions[1] = (unsigned char)(eb_len & 0xFF);
 
     rc = 1;
 err:
@@ -2129,7 +2230,7 @@ static int test_tparam(int idx)
     SSL *c_ssl = NULL;
     QUIC_TSERVER *s = NULL;
     QTEST_FAULT *qtf = NULL;
-    struct tparam_ctx ctx = {0};
+    struct tparam_ctx ctx = { 0 };
 
     ctx.t = &tparam_tests[idx];
 
@@ -2137,20 +2238,20 @@ static int test_tparam(int idx)
         goto err;
 
     if (!TEST_true(qtest_create_quic_objects(libctx, c_ctx, NULL, cert,
-                                             privkey, 0, &s,
-                                             &c_ssl, &qtf, NULL)))
+            privkey, 0, &s,
+            &c_ssl, &qtf, NULL)))
         goto err;
 
     if (!TEST_true(qtest_fault_set_hand_enc_ext_listener(qtf, tparam_on_enc_ext,
-                                                         &ctx)))
+            &ctx)))
         goto err;
 
     if (!TEST_true(qtest_create_quic_connection_ex(s, c_ssl,
-                                                   ctx.t->expect_fail != NULL)))
+            ctx.t->expect_fail != NULL)))
         goto err;
 
     if (ctx.t->expect_fail != NULL) {
-        SSL_CONN_CLOSE_INFO info = {0};
+        SSL_CONN_CLOSE_INFO info = { 0 };
 
         if (!TEST_true(SSL_get_conn_close_info(c_ssl, &info, sizeof(info))))
             goto err;
@@ -2160,9 +2261,9 @@ static int test_tparam(int idx)
             || !TEST_ptr(strstr(info.reason, ctx.t->expect_fail))) {
             TEST_error("expected connection closure information mismatch"
                        " during TPARAM test: flags=%llu ec=%llu reason='%s'",
-                       (unsigned long long)info.flags,
-                       (unsigned long long)info.error_code,
-                       info.reason);
+                (unsigned long long)info.flags,
+                (unsigned long long)info.error_code,
+                info.reason);
             goto err;
         }
     }
@@ -2172,11 +2273,12 @@ err:
     if (!testresult) {
         if (ctx.t->expect_fail != NULL)
             TEST_info("failed during test for id=%llu, op=%d, bl=%zu, "
-                      "expected failure='%s'", (unsigned long long)ctx.t->id,
-                      ctx.t->op, ctx.t->buf_len, ctx.t->expect_fail);
+                      "expected failure='%s'",
+                (unsigned long long)ctx.t->id,
+                ctx.t->op, ctx.t->buf_len, ctx.t->expect_fail);
         else
             TEST_info("failed during test for id=%llu, op=%d, bl=%zu",
-                      (unsigned long long)ctx.t->id, ctx.t->op, ctx.t->buf_len);
+                (unsigned long long)ctx.t->id, ctx.t->op, ctx.t->buf_len);
     }
 
     ossl_quic_tserver_free(s);
@@ -2222,10 +2324,10 @@ static int test_session_cb(void)
     SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT);
 
     if (!TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
-                                             privkey,
-                                             QTEST_FLAG_FAKE_TIME,
-                                             &qtserv, &clientquic,
-                                             NULL, NULL)))
+            privkey,
+            QTEST_FLAG_FAKE_TIME,
+            &qtserv, &clientquic,
+            NULL, NULL)))
         goto err;
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
@@ -2243,11 +2345,11 @@ static int test_session_cb(void)
      * correct SSL reference
      */
     if (!TEST_int_eq(new_called, 2)
-            || !TEST_ptr_eq(clientquic, cbssl))
+        || !TEST_ptr_eq(clientquic, cbssl))
         goto err;
 
     testresult = 1;
- err:
+err:
     cbssl = NULL;
     ossl_quic_tserver_free(qtserv);
     SSL_free(clientquic);
@@ -2276,7 +2378,7 @@ int setup_tests(void)
      * available
      */
     if (!TEST_false(OSSL_PROVIDER_available(NULL, "default"))
-            || !TEST_false(OSSL_PROVIDER_available(NULL, "fips")))
+        || !TEST_false(OSSL_PROVIDER_available(NULL, "fips")))
         goto err;
 
     if (!test_skip_common_options()) {
@@ -2285,9 +2387,9 @@ int setup_tests(void)
     }
 
     if (!TEST_ptr(modulename = test_get_argument(0))
-            || !TEST_ptr(configfile = test_get_argument(1))
-            || !TEST_ptr(certsdir = test_get_argument(2))
-            || !TEST_ptr(datadir = test_get_argument(3)))
+        || !TEST_ptr(configfile = test_get_argument(1))
+        || !TEST_ptr(certsdir = test_get_argument(2))
+        || !TEST_ptr(datadir = test_get_argument(3)))
         goto err;
 
     if (!TEST_true(OSSL_LIB_CTX_load_config(libctx, configfile)))
@@ -2299,7 +2401,7 @@ int setup_tests(void)
 
     /* Check the default provider is not available */
     if (strcmp(modulename, "default") != 0
-            && !TEST_false(OSSL_PROVIDER_available(libctx, "default")))
+        && !TEST_false(OSSL_PROVIDER_available(libctx, "default")))
         goto err;
 
     if (strcmp(modulename, "fips") == 0)
@@ -2351,7 +2453,7 @@ int setup_tests(void)
     ADD_TEST(test_session_cb);
 
     return 1;
- err:
+err:
     cleanup_tests();
     return 0;
 }
