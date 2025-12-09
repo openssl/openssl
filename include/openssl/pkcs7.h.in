@@ -9,9 +9,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_PKCS7_H
 # define OPENSSL_PKCS7_H
@@ -64,9 +66,11 @@ typedef struct pkcs7_signer_info_st {
     EVP_PKEY *pkey;
     const PKCS7_CTX *ctx;
 } PKCS7_SIGNER_INFO;
+/* clang-format off */
 {-
     generate_stack_macros("PKCS7_SIGNER_INFO");
 -}
+/* clang-format on */
 
 typedef struct pkcs7_recip_info_st {
     ASN1_INTEGER *version;      /* version 0 */
@@ -76,9 +80,11 @@ typedef struct pkcs7_recip_info_st {
     X509 *cert;                 /* get the pub-key from this */
     const PKCS7_CTX *ctx;
 } PKCS7_RECIP_INFO;
+/* clang-format off */
 {-
     generate_stack_macros("PKCS7_RECIP_INFO");
 -}
+/* clang-format on */
 
 
 typedef struct pkcs7_signed_st {
@@ -167,9 +173,11 @@ typedef struct pkcs7_st {
     } d;
     PKCS7_CTX ctx;
 } PKCS7;
+/* clang-format off */
 {-
     generate_stack_macros("PKCS7");
 -}
+/* clang-format on */
 
 
 # define PKCS7_OP_SET_DETACHED_SIGNATURE 1
