@@ -11,9 +11,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_CMP_H
 # define OPENSSL_CMP_H
@@ -220,31 +222,41 @@ typedef struct ossl_cmp_msg_st OSSL_CMP_MSG;
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_MSG)
 DECLARE_ASN1_ENCODE_FUNCTIONS(OSSL_CMP_MSG, OSSL_CMP_MSG, OSSL_CMP_MSG)
 typedef struct ossl_cmp_certstatus_st OSSL_CMP_CERTSTATUS;
+/* clang-format off */
 {-
     generate_stack_macros("OSSL_CMP_CERTSTATUS");
 -}
+/* clang-format on */
 typedef struct ossl_cmp_itav_st OSSL_CMP_ITAV;
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_ITAV)
+/* clang-format off */
 {-
     generate_stack_macros("OSSL_CMP_ITAV");
 -}
+/* clang-format on */
 typedef struct ossl_cmp_revrepcontent_st OSSL_CMP_REVREPCONTENT;
 typedef struct ossl_cmp_pkisi_st OSSL_CMP_PKISI;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_PKISI)
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_PKISI)
+/* clang-format off */
 {-
     generate_stack_macros("OSSL_CMP_PKISI");
 -}
+/* clang-format on */
 typedef struct ossl_cmp_certrepmessage_st OSSL_CMP_CERTREPMESSAGE;
+/* clang-format off */
 {-
     generate_stack_macros("OSSL_CMP_CERTREPMESSAGE");
 -}
+/* clang-format on */
 typedef struct ossl_cmp_pollrep_st OSSL_CMP_POLLREP;
 typedef STACK_OF(OSSL_CMP_POLLREP) OSSL_CMP_POLLREPCONTENT;
 typedef struct ossl_cmp_certresponse_st OSSL_CMP_CERTRESPONSE;
+/* clang-format off */
 {-
     generate_stack_macros("OSSL_CMP_CERTRESPONSE");
 -}
+/* clang-format on */
 typedef STACK_OF(ASN1_UTF8STRING) OSSL_CMP_PKIFREETEXT;
 
 /*

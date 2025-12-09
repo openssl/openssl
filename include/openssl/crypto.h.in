@@ -10,9 +10,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_CRYPTO_H
 # define OPENSSL_CRYPTO_H
@@ -184,9 +186,11 @@ struct crypto_ex_data_st {
     STACK_OF(void) *sk;
 };
 
+/* clang-format off */
 {-
     generate_stack_macros("void");
 -}
+/* clang-format on */
 
 
 /*

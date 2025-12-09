@@ -10,9 +10,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_X509_H
 # define OPENSSL_X509_H
@@ -50,12 +52,14 @@ extern "C" {
 #endif
 
 /* Needed stacks for types defined in other headers */
+/* clang-format off */
 {-
     generate_stack_macros("X509_NAME")
     .generate_stack_macros("X509")
     .generate_stack_macros("X509_REVOKED")
     .generate_stack_macros("X509_CRL");
 -}
+/* clang-format on */
 
 /* Flags for X509_get_signature_info() */
 /* Signature info is valid */
@@ -94,21 +98,27 @@ typedef struct X509_sig_st X509_SIG;
 
 typedef struct X509_name_entry_st X509_NAME_ENTRY;
 
+/* clang-format off */
 {-
     generate_stack_macros("X509_NAME_ENTRY");
 -}
+/* clang-format on */
 
 # define X509_EX_V_NETSCAPE_HACK         0x8000
 # define X509_EX_V_INIT                  0x0001
 typedef struct X509_extension_st X509_EXTENSION;
+/* clang-format off */
 {-
     generate_stack_macros("X509_EXTENSION");
 -}
+/* clang-format on */
 typedef STACK_OF(X509_EXTENSION) X509_EXTENSIONS;
 typedef struct x509_attributes_st X509_ATTRIBUTE;
+/* clang-format off */
 {-
     generate_stack_macros("X509_ATTRIBUTE");
 -}
+/* clang-format on */
 typedef struct X509_req_info_st X509_REQ_INFO;
 typedef struct X509_req_st X509_REQ;
 typedef struct x509_cert_aux_st X509_CERT_AUX;
@@ -217,9 +227,11 @@ typedef struct X509_info_st {
     int enc_len;
     char *enc_data;
 } X509_INFO;
+/* clang-format off */
 {-
     generate_stack_macros("X509_INFO");
 -}
+/* clang-format on */
 
 /*
  * The next 2 structures and their 8 routines are used to manipulate Netscape's
