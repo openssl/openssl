@@ -11,8 +11,8 @@
  */
 
 #ifndef OSSL_CRYPTO_DSO_CONF_H
-# define OSSL_CRYPTO_DSO_CONF_H
-# pragma once
+#define OSSL_CRYPTO_DSO_CONF_H
+#pragma once
 
 /* clang-format off */
 {-  # The DSO code currently always implements all functions so that no

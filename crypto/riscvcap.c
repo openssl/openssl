@@ -65,8 +65,7 @@ static void parse_env(const char *envstr)
         BIO_snprintf(buf, BUFLEN, "_%s", RISCV_capabilities[i].name);
         if (strstr(envstrupper, buf) != NULL) {
             /* Match, set relevant bit in OPENSSL_riscvcap_P[] */
-            OPENSSL_riscvcap_P[RISCV_capabilities[i].index] |=
-                (1 << RISCV_capabilities[i].bit_offset);
+            OPENSSL_riscvcap_P[RISCV_capabilities[i].index] |= (1 << RISCV_capabilities[i].bit_offset);
         }
     }
 }
@@ -76,9 +75,9 @@ size_t riscv_vlen(void)
     return vlen;
 }
 
-# if defined(__GNUC__) && __GNUC__>=2
-__attribute__ ((constructor))
-# endif
+#if defined(__GNUC__) && __GNUC__ >= 2
+__attribute__((constructor))
+#endif
 void OPENSSL_cpuid_setup(void)
 {
     char *e;

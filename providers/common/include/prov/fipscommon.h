@@ -8,7 +8,7 @@
  */
 
 #ifdef FIPS_MODULE
-# include <openssl/types.h>
+#include <openssl/types.h>
 
 int FIPS_security_check_enabled(OSSL_LIB_CTX *libctx);
 int FIPS_tls_prf_ems_check(OSSL_LIB_CTX *libctx);

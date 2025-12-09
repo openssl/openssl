@@ -28,7 +28,7 @@ int X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x)
 }
 
 int X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x, int nid,
-                          int lastpos)
+    int lastpos)
 {
     ASN1_OBJECT *obj;
 
@@ -39,7 +39,7 @@ int X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x, int nid,
 }
 
 int X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk,
-                          const ASN1_OBJECT *obj, int lastpos)
+    const ASN1_OBJECT *obj, int lastpos)
 {
     int n;
     X509_EXTENSION *ex;
@@ -59,7 +59,7 @@ int X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk,
 }
 
 int X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int crit,
-                               int lastpos)
+    int lastpos)
 {
     int n;
     X509_EXTENSION *ex;
@@ -97,7 +97,7 @@ X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc)
 }
 
 STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
-                                         X509_EXTENSION *ex, int loc)
+    X509_EXTENSION *ex, int loc)
 {
     X509_EXTENSION *new_ex = NULL;
     int n;
@@ -133,7 +133,7 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
     if (*x == NULL)
         *x = sk;
     return sk;
- err:
+err:
     X509_EXTENSION_free(new_ex);
     if (x != NULL && *x == NULL)
         sk_X509_EXTENSION_free(sk);
@@ -141,8 +141,8 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
 }
 
 X509_EXTENSION *X509_EXTENSION_create_by_NID(X509_EXTENSION **ex, int nid,
-                                             int crit,
-                                             ASN1_OCTET_STRING *data)
+    int crit,
+    ASN1_OCTET_STRING *data)
 {
     ASN1_OBJECT *obj;
     X509_EXTENSION *ret;
@@ -159,8 +159,8 @@ X509_EXTENSION *X509_EXTENSION_create_by_NID(X509_EXTENSION **ex, int nid,
 }
 
 X509_EXTENSION *X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex,
-                                             const ASN1_OBJECT *obj, int crit,
-                                             ASN1_OCTET_STRING *data)
+    const ASN1_OBJECT *obj, int crit,
+    ASN1_OCTET_STRING *data)
 {
     X509_EXTENSION *ret;
 
@@ -182,7 +182,7 @@ X509_EXTENSION *X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex,
     if ((ex != NULL) && (*ex == NULL))
         *ex = ret;
     return ret;
- err:
+err:
     if ((ex == NULL) || (ret != *ex))
         X509_EXTENSION_free(ret);
     return NULL;

@@ -30,11 +30,11 @@ QUIC_ENGINE *ossl_quic_engine_new(const QUIC_ENGINE_ARGS *args)
     if ((qeng = OPENSSL_zalloc(sizeof(QUIC_ENGINE))) == NULL)
         return NULL;
 
-    qeng->libctx            = args->libctx;
-    qeng->propq             = args->propq;
-    qeng->mutex             = args->mutex;
-    qeng->now_cb            = args->now_cb;
-    qeng->now_cb_arg        = args->now_cb_arg;
+    qeng->libctx = args->libctx;
+    qeng->propq = args->propq;
+    qeng->mutex = args->mutex;
+    qeng->now_cb = args->now_cb;
+    qeng->now_cb_arg = args->now_cb_arg;
 
     if (!qeng_init(qeng)) {
         OPENSSL_free(qeng);
@@ -93,7 +93,7 @@ void ossl_quic_engine_set_inhibit_tick(QUIC_ENGINE *qeng, int inhibit)
  */
 
 QUIC_PORT *ossl_quic_engine_create_port(QUIC_ENGINE *qeng,
-                                        const QUIC_PORT_ARGS *args)
+    const QUIC_PORT_ARGS *args)
 {
     QUIC_PORT_ARGS largs = *args;
 
@@ -123,16 +123,17 @@ static void qeng_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
     QUIC_ENGINE *qeng = arg;
     QUIC_PORT *port;
 
-    res->net_read_desired   = 0;
-    res->net_write_desired  = 0;
-    res->tick_deadline      = ossl_time_infinite();
+    res->net_read_desired = 0;
+    res->net_write_desired = 0;
+    res->tick_deadline = ossl_time_infinite();
 
     if (qeng->inhibit_tick)
         return;
 
     /* Iterate through all ports and service them. */
-    OSSL_LIST_FOREACH(port, port, &qeng->port_list) {
-        QUIC_TICK_RESULT subr = {0};
+    OSSL_LIST_FOREACH(port, port, &qeng->port_list)
+    {
+        QUIC_TICK_RESULT subr = { 0 };
 
         ossl_quic_port_subtick(port, &subr, flags);
         ossl_quic_tick_result_merge_into(res, &subr);

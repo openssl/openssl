@@ -18,7 +18,7 @@ OSSL_TIME ossl_time_now(void)
     return cur_time;
 }
 
-#define PAYLOAD(s)  s, strlen(s) + 1
+#define PAYLOAD(s) s, strlen(s) + 1
 
 static int event_test(void)
 {
@@ -31,75 +31,74 @@ static int event_test(void)
 
     /* Create an event queue and add some events */
     if (!TEST_ptr(q = ossl_event_queue_new())
-            || !TEST_ptr(e1 = ossl_event_queue_add_new(q, 1, 10,
-                                                       ossl_ticks2time(1100),
-                                                       "ctx 1",
-                                                       PAYLOAD(payload)))
-            || !TEST_ptr(e2 = ossl_event_queue_add_new(q, 2, 5,
-                                                       ossl_ticks2time(1100),
-                                                       "ctx 2",
-                                                       PAYLOAD("data")))
-            || !TEST_true(ossl_event_queue_add(q, &e3, 3, 20,
-                                               ossl_ticks2time(1200), "ctx 3",
-                                               PAYLOAD("more data")))
-            || !TEST_ptr(e4 = ossl_event_queue_add_new(q, 2, 5,
-                                                       ossl_ticks2time(1150),
-                                                       "ctx 2",
-                                                       PAYLOAD("data")))
+        || !TEST_ptr(e1 = ossl_event_queue_add_new(q, 1, 10,
+                         ossl_ticks2time(1100),
+                         "ctx 1",
+                         PAYLOAD(payload)))
+        || !TEST_ptr(e2 = ossl_event_queue_add_new(q, 2, 5,
+                         ossl_ticks2time(1100),
+                         "ctx 2",
+                         PAYLOAD("data")))
+        || !TEST_true(ossl_event_queue_add(q, &e3, 3, 20,
+            ossl_ticks2time(1200), "ctx 3",
+            PAYLOAD("more data")))
+        || !TEST_ptr(e4 = ossl_event_queue_add_new(q, 2, 5,
+                         ossl_ticks2time(1150),
+                         "ctx 2",
+                         PAYLOAD("data")))
 
-            /* Verify some event details */
-            || !TEST_uint_eq(ossl_event_get_type(e1), 1)
-            || !TEST_uint_eq(ossl_event_get_priority(e1), 10)
-            || !TEST_uint64_t_eq(ossl_time2ticks(ossl_event_get_when(e1))
-                                 , 1100)
-            || !TEST_str_eq(ossl_event_get0_ctx(e1), "ctx 1")
-            || !TEST_ptr(p = ossl_event_get0_payload(e1, &len))
-            || !TEST_str_eq((char *)p, payload)
-            || !TEST_uint64_t_eq(ossl_time2ticks(ossl_event_time_until(&e3)),
-                                 1100)
-            || !TEST_uint64_t_eq(ossl_time2ticks(ossl_event_queue_time_until_next(q)),
-                                 1000)
+        /* Verify some event details */
+        || !TEST_uint_eq(ossl_event_get_type(e1), 1)
+        || !TEST_uint_eq(ossl_event_get_priority(e1), 10)
+        || !TEST_uint64_t_eq(ossl_time2ticks(ossl_event_get_when(e1)), 1100)
+        || !TEST_str_eq(ossl_event_get0_ctx(e1), "ctx 1")
+        || !TEST_ptr(p = ossl_event_get0_payload(e1, &len))
+        || !TEST_str_eq((char *)p, payload)
+        || !TEST_uint64_t_eq(ossl_time2ticks(ossl_event_time_until(&e3)),
+            1100)
+        || !TEST_uint64_t_eq(ossl_time2ticks(ossl_event_queue_time_until_next(q)),
+            1000)
 
-            /* Modify an event's time */
-            || !TEST_true(ossl_event_queue_postpone_until(q, e1,
-                                                          ossl_ticks2time(1200)))
-            || !TEST_uint64_t_eq(ossl_time2ticks(ossl_event_get_when(e1)), 1200)
-            || !TEST_true(ossl_event_queue_remove(q, e4)))
+        /* Modify an event's time */
+        || !TEST_true(ossl_event_queue_postpone_until(q, e1,
+            ossl_ticks2time(1200)))
+        || !TEST_uint64_t_eq(ossl_time2ticks(ossl_event_get_when(e1)), 1200)
+        || !TEST_true(ossl_event_queue_remove(q, e4)))
         goto err;
     ossl_event_free(e4);
 
     /* Execute the queue */
     cur_time = ossl_ticks2time(1000);
     if (!TEST_true(ossl_event_queue_get1_next_event(q, &ep))
-            || !TEST_ptr_null(ep))
+        || !TEST_ptr_null(ep))
         goto err;
     cur_time = ossl_ticks2time(1100);
     if (!TEST_true(ossl_event_queue_get1_next_event(q, &ep))
-            || !TEST_ptr_eq(ep, e2))
+        || !TEST_ptr_eq(ep, e2))
         goto err;
     ossl_event_free(ep);
     ep = e2 = NULL;
     if (!TEST_true(ossl_event_queue_get1_next_event(q, &ep))
-            || !TEST_ptr_null(ep))
+        || !TEST_ptr_null(ep))
         goto err;
 
     cur_time = ossl_ticks2time(1250);
     if (!TEST_true(ossl_event_queue_get1_next_event(q, &ep))
-            || !TEST_ptr_eq(ep, &e3))
+        || !TEST_ptr_eq(ep, &e3))
         goto err;
     ossl_event_free(ep);
     ep = NULL;
     if (!TEST_true(ossl_event_queue_get1_next_event(q, &ep))
-            || !TEST_ptr_eq(ep, e1))
+        || !TEST_ptr_eq(ep, e1))
         goto err;
     ossl_event_free(ep);
     ep = e1 = NULL;
     if (!TEST_true(ossl_event_queue_get1_next_event(q, &ep))
-            || !TEST_ptr_null(ep))
+        || !TEST_ptr_null(ep))
         goto err;
 
     res = 1;
- err:
+err:
     ossl_event_free(ep);
     ossl_event_queue_free(q);
     return res;
