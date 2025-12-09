@@ -23,7 +23,7 @@ PreHash (Hash-ML-DSA) is also supported and uses:
     M' = 0x01 || ctx_len || ctx || OID || HashedMessage
 
 The output C<mu> value can then be supplied as an input to L<EVP_SIGNATURE-ML-DSA(7)>
-using the ML-DSA Signature Parameter B<OSSL_SIGNATURE_PARAM_MU> C<mu>.
+using the ML-DSA Signature Parameter B<OSSL_SIGNATURE_PARAM_MU> (i.e. C<mu>).
 This allows larger messages to be hashed (or hidden) before they are passed to
 pure ML-DSA sign or verify operations.
 

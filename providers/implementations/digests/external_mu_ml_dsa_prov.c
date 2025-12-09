@@ -229,6 +229,9 @@ static int mu_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                                                  &ctx->digest_len);
         if (ret)
             ctx->remaining = ctx->digest_len;
+        else
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                "%s is not supported", p.digestname);
         return ret;
     }
     return 1;
