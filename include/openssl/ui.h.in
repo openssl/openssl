@@ -9,9 +9,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_UI_H
 # define OPENSSL_UI_H
@@ -291,9 +293,11 @@ const UI_METHOD *UI_null(void);
  */
 typedef struct ui_string_st UI_STRING;
 
+/* clang-format off */
 {-
     generate_stack_macros("UI_STRING");
 -}
+/* clang-format on */
 
 /*
  * The different types of strings that are currently supported. This is only
