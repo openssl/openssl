@@ -93,6 +93,7 @@ typedef enum {
     ST_ID_ASYM_CIPHER_RSA_ENC,
     ST_ID_ASYM_CIPHER_RSA_DEC,
     ST_ID_ASYM_CIPHER_RSA_DEC_CRT,
+    ST_ID_MAC_HMAC,
     ST_ID_MAX
 } self_test_id_t;
 
