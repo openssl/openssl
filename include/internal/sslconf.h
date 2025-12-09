@@ -8,8 +8,8 @@
  */
 
 #ifndef OSSL_INTERNAL_SSLCONF_H
-# define OSSL_INTERNAL_SSLCONF_H
-# pragma once
+#define OSSL_INTERNAL_SSLCONF_H
+#pragma once
 
 typedef struct ssl_conf_cmd_st SSL_CONF_CMD;
 
@@ -35,7 +35,7 @@ struct ssl_conf_cmd_st {
 };
 
 const SSL_CONF_CMD *conf_ssl_get(CONF_IMODULE *m, size_t idx, const char **name,
-                                 size_t *cnt);
+    size_t *cnt);
 int conf_ssl_name_find(CONF_IMODULE *m, const char *name, size_t *idx);
 void conf_ssl_get_cmd(const SSL_CONF_CMD *c, size_t idx, char **cmd, char **arg);
 

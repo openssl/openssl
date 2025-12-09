@@ -52,20 +52,22 @@ static int do_x509(int allow_failure)
     X509_get0_signature(&sig, &alg, x509);
 
     if (!TEST_int_gt(ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF),
-                                      (X509_ALGOR *)alg, (ASN1_BIT_STRING *)sig,
-                                      &x509->cert_info, pkey), 0))
+                         (X509_ALGOR *)alg, (ASN1_BIT_STRING *)sig,
+                         &x509->cert_info, pkey),
+            0))
         goto err;
 
     if (!TEST_int_lt(ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF),
-                                      (X509_ALGOR *)alg, (ASN1_BIT_STRING *)sig,
-                                      NULL, pkey), 0))
+                         (X509_ALGOR *)alg, (ASN1_BIT_STRING *)sig,
+                         NULL, pkey),
+            0))
         goto err;
 
     X509_issuer_name_hash(x509);
 
     ret = 1;
 
- err:
+err:
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     RSA_free(rsa);
 #endif

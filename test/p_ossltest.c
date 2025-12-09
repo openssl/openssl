@@ -169,7 +169,7 @@ static int ossltest_dgst_init(void *ctx)
  */
 
 static int ossltest_dgst_update(void *ctx, const void *data,
-                                size_t count)
+    size_t count)
 {
     return 1;
 }
@@ -272,23 +272,23 @@ extern const OSSL_DISPATCH ossl_testsha384_functions[];
 extern const OSSL_DISPATCH ossl_testsha512_functions[];
 
 IMPLEMENT_digest_functions(testmd5, MD5_CTX, MD5_CBLOCK, MD5_DIGEST_LENGTH, 0,
-                           ossltest_dgst_init, ossltest_dgst_update, ossltest_MD5_final)
+    ossltest_dgst_init, ossltest_dgst_update, ossltest_MD5_final)
 
 #define SHA2_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 IMPLEMENT_digest_functions(testsha1, SHA_CTX, SHA_CBLOCK, SHA_DIGEST_LENGTH, SHA2_FLAGS,
-                           ossltest_dgst_init, ossltest_dgst_update, ossltest_SHA1_final)
+    ossltest_dgst_init, ossltest_dgst_update, ossltest_SHA1_final)
 
 IMPLEMENT_digest_functions(testsha256, SHA256_CTX,
-                           SHA256_CBLOCK, SHA256_DIGEST_LENGTH, SHA2_FLAGS,
-                           ossltest_dgst_init, ossltest_dgst_update, ossltest_SHA256_final)
+    SHA256_CBLOCK, SHA256_DIGEST_LENGTH, SHA2_FLAGS,
+    ossltest_dgst_init, ossltest_dgst_update, ossltest_SHA256_final)
 
 IMPLEMENT_digest_functions(testsha384, SHA512_CTX,
-                           SHA512_CBLOCK, SHA512_DIGEST_LENGTH, SHA2_FLAGS,
-                           ossltest_dgst_init, ossltest_dgst_update, ossltest_SHA384_final)
+    SHA512_CBLOCK, SHA512_DIGEST_LENGTH, SHA2_FLAGS,
+    ossltest_dgst_init, ossltest_dgst_update, ossltest_SHA384_final)
 
 IMPLEMENT_digest_functions(testsha512, SHA512_CTX,
-                           SHA512_CBLOCK, SHA512_DIGEST_LENGTH, SHA2_FLAGS,
-                           ossltest_dgst_init, ossltest_dgst_update, ossltest_SHA512_final)
+    SHA512_CBLOCK, SHA512_DIGEST_LENGTH, SHA2_FLAGS,
+    ossltest_dgst_init, ossltest_dgst_update, ossltest_SHA512_final)
 
 #define ALG(NAMES, FUNC) \
     { NAMES, "provider=p_ossltest", FUNC }
@@ -299,7 +299,7 @@ static const OSSL_ALGORITHM ossltest_digests[] = {
     ALG(PROV_NAMES_SHA2_256, ossl_testsha256_functions),
     ALG(PROV_NAMES_SHA2_384, ossl_testsha384_functions),
     ALG(PROV_NAMES_SHA2_512, ossl_testsha512_functions),
-    {NULL, NULL, NULL}
+    { NULL, NULL, NULL }
 };
 
 typedef struct {
@@ -402,8 +402,8 @@ static void *ossl_test_aes128cbc_dupctx(void *vprovctx)
  */
 
 static int ossl_test_aes128cbc_einit(void *vprovctx, const unsigned char *key,
-                                     size_t keylen, const unsigned char *iv,
-                                     size_t ivlen, const OSSL_PARAM params[])
+    size_t keylen, const unsigned char *iv,
+    size_t ivlen, const OSSL_PARAM params[])
 {
     PROV_EVP_AES128_CBC_CTX *ctx = (PROV_EVP_AES128_CBC_CTX *)vprovctx;
 
@@ -423,8 +423,8 @@ static int ossl_test_aes128cbc_einit(void *vprovctx, const unsigned char *key,
  */
 
 static int ossl_test_aes128cbc_dinit(void *vprovctx, const unsigned char *key,
-                                     size_t keylen, const unsigned char *iv,
-                                     size_t ivlen, const OSSL_PARAM params[])
+    size_t keylen, const unsigned char *iv,
+    size_t ivlen, const OSSL_PARAM params[])
 {
     PROV_EVP_AES128_CBC_CTX *ctx = (PROV_EVP_AES128_CBC_CTX *)vprovctx;
 
@@ -445,8 +445,8 @@ static int ossl_test_aes128cbc_dinit(void *vprovctx, const unsigned char *key,
  */
 
 static int ossl_test_aes128cbc_update(void *vprovctx, char *out, size_t *outl,
-                                      size_t outsize, const unsigned char *in,
-                                      size_t inl)
+    size_t outsize, const unsigned char *in,
+    size_t inl)
 {
     PROV_EVP_AES128_CBC_CTX *ctx = (PROV_EVP_AES128_CBC_CTX *)vprovctx;
     int soutl;
@@ -543,7 +543,7 @@ err:
  */
 
 static int ossl_test_aes128cbc_final(void *vprovctx, unsigned char *out, size_t *outl,
-                                     size_t outsize)
+    size_t outsize)
 {
     PROV_EVP_AES128_CBC_CTX *ctx = (PROV_EVP_AES128_CBC_CTX *)vprovctx;
     int soutl;
@@ -570,11 +570,11 @@ static int ossl_test_aes128cbc_final(void *vprovctx, unsigned char *out, size_t 
  */
 
 static int ossl_test_aes128cbc_cipher(void *vprovctx, unsigned char *out, size_t *outl,
-                                      size_t outsize, const unsigned char *in, size_t inl)
+    size_t outsize, const unsigned char *in, size_t inl)
 {
     PROV_EVP_AES128_CBC_CTX *ctx = (PROV_EVP_AES128_CBC_CTX *)vprovctx;
 
-    return EVP_Cipher(ctx->sub_ctx, out, in, (int) inl);
+    return EVP_Cipher(ctx->sub_ctx, out, in, (int)inl);
 }
 
 /**
@@ -669,26 +669,26 @@ static const OSSL_PARAM *ossl_test_aes128cbc_settable_ctx_params(void *cctx, voi
 
 static const OSSL_DISPATCH ossl_testaes128_cbc_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX,
-      (void (*)(void)) ossl_testaes128_cbc_newctx },
-    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) ossl_test_aes128cbc_freectx },
-    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void)) ossl_test_aes128cbc_dupctx },
+        (void (*)(void))ossl_testaes128_cbc_newctx },
+    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))ossl_test_aes128cbc_freectx },
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))ossl_test_aes128cbc_dupctx },
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_test_aes128cbc_einit },
     { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ossl_test_aes128cbc_dinit },
     { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))ossl_test_aes128cbc_update },
     { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))ossl_test_aes128cbc_final },
     { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))ossl_test_aes128cbc_cipher },
     { OSSL_FUNC_CIPHER_GET_PARAMS,
-      (void (*)(void)) ossl_test_aes128cbc_get_params },
+        (void (*)(void))ossl_test_aes128cbc_get_params },
     { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,
-      (void (*)(void))ossl_test_aes128cbc_get_ctx_params },
+        (void (*)(void))ossl_test_aes128cbc_get_ctx_params },
     { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,
-      (void (*)(void))ossl_test_aes128cbc_set_ctx_params },
+        (void (*)(void))ossl_test_aes128cbc_set_ctx_params },
     { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,
-      (void (*)(void))ossl_test_aes128cbc_gettable_params },
+        (void (*)(void))ossl_test_aes128cbc_gettable_params },
     { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,
-      (void (*)(void))ossl_test_aes128cbc_gettable_ctx_params },
+        (void (*)(void))ossl_test_aes128cbc_gettable_ctx_params },
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,
-      (void (*)(void))ossl_test_aes128cbc_settable_ctx_params },
+        (void (*)(void))ossl_test_aes128cbc_settable_ctx_params },
     OSSL_DISPATCH_END
 };
 
@@ -738,7 +738,6 @@ err:
     EVP_CIPHER_CTX_free(new->sub_ctx);
     OPENSSL_free(new);
     return NULL;
-
 }
 
 /**
@@ -793,8 +792,8 @@ static void *ossl_test_aes128gcm_dupctx(void *vprovctx)
  */
 
 static int ossl_test_aes128gcm_einit(void *vprovctx, const unsigned char *key,
-                                     size_t keylen, const unsigned char *iv,
-                                     size_t ivlen, const OSSL_PARAM params[])
+    size_t keylen, const unsigned char *iv,
+    size_t ivlen, const OSSL_PARAM params[])
 {
     PROV_EVP_AES128_GCM_CTX *ctx = (PROV_EVP_AES128_GCM_CTX *)vprovctx;
 
@@ -814,8 +813,8 @@ static int ossl_test_aes128gcm_einit(void *vprovctx, const unsigned char *key,
  */
 
 static int ossl_test_aes128gcm_dinit(void *vprovctx, const unsigned char *key,
-                                     size_t keylen, const unsigned char *iv,
-                                     size_t ivlen, const OSSL_PARAM params[])
+    size_t keylen, const unsigned char *iv,
+    size_t ivlen, const OSSL_PARAM params[])
 {
     PROV_EVP_AES128_GCM_CTX *ctx = (PROV_EVP_AES128_GCM_CTX *)vprovctx;
 
@@ -835,8 +834,8 @@ static int ossl_test_aes128gcm_dinit(void *vprovctx, const unsigned char *key,
  */
 
 static int ossl_test_aes128gcm_update(void *vprovctx, char *out, size_t *outl,
-                                      size_t outsize, const unsigned char *in,
-                                      size_t inl)
+    size_t outsize, const unsigned char *in,
+    size_t inl)
 {
     PROV_EVP_AES128_GCM_CTX *ctx = (PROV_EVP_AES128_GCM_CTX *)vprovctx;
     int ret, soutl;
@@ -846,10 +845,10 @@ static int ossl_test_aes128gcm_update(void *vprovctx, char *out, size_t *outl,
 
     if (EVP_CIPHER_CTX_is_encrypting(ctx->sub_ctx))
         ret = EVP_EncryptUpdate(ctx->sub_ctx, (unsigned char *)out,
-                                &soutl, in, (int)inl);
+            &soutl, in, (int)inl);
     else
         ret = EVP_DecryptUpdate(ctx->sub_ctx, (unsigned char *)out,
-                                &soutl, in, (int)inl);
+            &soutl, in, (int)inl);
     *outl = soutl;
 
     /*
@@ -874,7 +873,7 @@ static int ossl_test_aes128gcm_update(void *vprovctx, char *out, size_t *outl,
  */
 
 static int ossl_test_aes128gcm_final(void *vprovctx, unsigned char *out, size_t *outl,
-                                     size_t outsize)
+    size_t outsize)
 {
     int ret;
 
@@ -896,11 +895,11 @@ static int ossl_test_aes128gcm_final(void *vprovctx, unsigned char *out, size_t 
  */
 
 static int ossl_test_aes128gcm_cipher(void *vprovctx, unsigned char *out, size_t *outl,
-                                      size_t outsize, const unsigned char *in, size_t inl)
+    size_t outsize, const unsigned char *in, size_t inl)
 {
     PROV_EVP_AES128_GCM_CTX *ctx = (PROV_EVP_AES128_GCM_CTX *)vprovctx;
 
-    return EVP_Cipher(ctx->sub_ctx, out, in, (int) inl);
+    return EVP_Cipher(ctx->sub_ctx, out, in, (int)inl);
 }
 
 #define AEAD_FLAGS (PROV_CIPHER_FLAG_AEAD | PROV_CIPHER_FLAG_CUSTOM_IV)
@@ -943,7 +942,6 @@ static int ossl_test_aes128gcm_get_ctx_params(void *vprovctx, OSSL_PARAM params[
     }
 
     return ret;
-
 }
 
 /**
@@ -1005,26 +1003,26 @@ static const OSSL_PARAM *ossl_test_aes128gcm_settable_ctx_params(void *cctx, voi
 
 static const OSSL_DISPATCH ossl_testaes128_gcm_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX,
-      (void (*)(void)) ossl_testaes128_gcm_newctx },
-    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) ossl_test_aes128gcm_freectx },
-    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void)) ossl_test_aes128gcm_dupctx },
+        (void (*)(void))ossl_testaes128_gcm_newctx },
+    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))ossl_test_aes128gcm_freectx },
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))ossl_test_aes128gcm_dupctx },
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_test_aes128gcm_einit },
     { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ossl_test_aes128gcm_dinit },
     { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))ossl_test_aes128gcm_update },
     { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))ossl_test_aes128gcm_final },
     { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))ossl_test_aes128gcm_cipher },
     { OSSL_FUNC_CIPHER_GET_PARAMS,
-      (void (*)(void)) ossl_test_aes128gcm_get_params },
+        (void (*)(void))ossl_test_aes128gcm_get_params },
     { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,
-      (void (*)(void))ossl_test_aes128gcm_get_ctx_params },
+        (void (*)(void))ossl_test_aes128gcm_get_ctx_params },
     { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,
-      (void (*)(void))ossl_test_aes128gcm_set_ctx_params },
+        (void (*)(void))ossl_test_aes128gcm_set_ctx_params },
     { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,
-      (void (*)(void))ossl_test_aes128gcm_gettable_params },
+        (void (*)(void))ossl_test_aes128gcm_gettable_params },
     { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,
-      (void (*)(void))ossl_test_aes128gcm_gettable_ctx_params },
+        (void (*)(void))ossl_test_aes128gcm_gettable_ctx_params },
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,
-      (void (*)(void))ossl_test_aes128gcm_settable_ctx_params },
+        (void (*)(void))ossl_test_aes128gcm_settable_ctx_params },
     OSSL_DISPATCH_END
 };
 
@@ -1104,8 +1102,8 @@ static void *ossl_test_aes128cbchmacsha1_dupctx(void *vprovctx)
  */
 
 static int ossl_test_aes128cbchmacsha1_einit(void *vprovctx, const unsigned char *key,
-                                             size_t keylen, const unsigned char *iv,
-                                             size_t ivlen, const OSSL_PARAM params[])
+    size_t keylen, const unsigned char *iv,
+    size_t ivlen, const OSSL_PARAM params[])
 {
     PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *ctx = (PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *)vprovctx;
 
@@ -1127,8 +1125,8 @@ static int ossl_test_aes128cbchmacsha1_einit(void *vprovctx, const unsigned char
  */
 
 static int ossl_test_aes128cbchmacsha1_dinit(void *vprovctx, const unsigned char *key,
-                                             size_t keylen, const unsigned char *iv,
-                                             size_t ivlen, const OSSL_PARAM params[])
+    size_t keylen, const unsigned char *iv,
+    size_t ivlen, const OSSL_PARAM params[])
 {
     PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *ctx = (PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *)vprovctx;
 
@@ -1150,8 +1148,8 @@ static int ossl_test_aes128cbchmacsha1_dinit(void *vprovctx, const unsigned char
  */
 
 static int ossl_test_aes128cbchmacsha1_update(void *vprovctx, unsigned char *out, size_t *outl,
-                                              size_t outsize, const unsigned char *in,
-                                              size_t inl)
+    size_t outsize, const unsigned char *in,
+    size_t inl)
 {
     PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *ctx = (PROV_EVP_AES128_CBC_HMAC_SHA1_CTX *)vprovctx;
     size_t l;
@@ -1162,14 +1160,12 @@ static int ossl_test_aes128cbchmacsha1_update(void *vprovctx, unsigned char *out
     if (ctx->encrypting) {
         if (plen == NO_PAYLOAD_LENGTH)
             plen = inl;
-        else if (inl !=
-                 ((plen + SHA_DIGEST_LENGTH +
-                   AES_BLOCK_SIZE) & (-AES_BLOCK_SIZE)))
+        else if (inl != ((plen + SHA_DIGEST_LENGTH + AES_BLOCK_SIZE) & (-AES_BLOCK_SIZE)))
             return 0;
 
         memmove(out, in, plen);
 
-        if (plen != inl) {      /* "TLS" mode of operation */
+        if (plen != inl) { /* "TLS" mode of operation */
             /* calculate HMAC and append it to payload */
             fill_known_data(out + plen, SHA_DIGEST_LENGTH);
 
@@ -1231,7 +1227,7 @@ static int ossl_test_aes128cbchmacsha1_update(void *vprovctx, unsigned char *out
  */
 
 static int ossl_test_aes128cbchmacsha1_final(void *vprovctx, unsigned char *out, size_t *outl,
-                                             size_t outsize)
+    size_t outsize)
 {
     /*
      * Since we don't do any real en/decryption in this alg, this is a no-op
@@ -1253,8 +1249,8 @@ static int ossl_test_aes128cbchmacsha1_final(void *vprovctx, unsigned char *out,
  */
 
 static int ossl_test_aes128cbchmacsha1_cipher(void *vprovctx,
-                                              unsigned char *out, size_t *outl,
-                                              size_t outsize, const unsigned char *in, size_t inl)
+    unsigned char *out, size_t *outl,
+    size_t outsize, const unsigned char *in, size_t inl)
 {
     return 1;
 }
@@ -1272,7 +1268,7 @@ static int ossl_test_aes128cbchmacsha1_get_params(OSSL_PARAM params[])
     int ret;
 
     ret = ossl_cipher_generic_get_params(params, EVP_CIPH_CBC_MODE,
-                                         AES_CBC_HMAC_SHA_FLAGS, 128, 128, 128);
+        AES_CBC_HMAC_SHA_FLAGS, 128, 128, 128);
 
     return ret;
 }
@@ -1372,7 +1368,7 @@ static int ossl_test_aes128cbchmacsha1_set_ctx_params(void *vprovctx, const OSSL
         if (OSSL_PARAM_get_octet_string_ptr(p, (const void **)&val, &vlen) != 1)
             return 0;
         len = val[EVP_AEAD_TLS1_AAD_LEN - 2] << 8 | val[EVP_AEAD_TLS1_AAD_LEN - 1];
-        ctx->tls_ver = val[EVP_AEAD_TLS1_AAD_LEN - 4] << 8 | val[EVP_AEAD_TLS1_AAD_LEN -3];
+        ctx->tls_ver = val[EVP_AEAD_TLS1_AAD_LEN - 4] << 8 | val[EVP_AEAD_TLS1_AAD_LEN - 3];
 
         if (ctx->encrypting) {
             ctx->payload_length = len;
@@ -1382,14 +1378,12 @@ static int ossl_test_aes128cbchmacsha1_set_ctx_params(void *vprovctx, const OSSL
                 len -= AES_BLOCK_SIZE;
                 val[EVP_AEAD_TLS1_AAD_LEN - 2] = len >> 8;
                 val[EVP_AEAD_TLS1_AAD_LEN - 1] = len;
-                ctx->pad_size = ((len + SHA_DIGEST_LENGTH +
-                                  AES_BLOCK_SIZE) & (-AES_BLOCK_SIZE)) - len;
+                ctx->pad_size = ((len + SHA_DIGEST_LENGTH + AES_BLOCK_SIZE) & (-AES_BLOCK_SIZE)) - len;
             }
         } else {
             ctx->payload_length = EVP_AEAD_TLS1_AAD_LEN;
             ctx->pad_size = SHA_DIGEST_LENGTH;
         }
-
     }
 
     return 1;
@@ -1435,26 +1429,26 @@ static const OSSL_PARAM *ossl_test_aes128cbchmacsha1_settable_ctx_params(void *c
 
 static const OSSL_DISPATCH ossl_testaes128cbchmacsha1_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX,
-      (void (*)(void)) ossl_testaes128cbchmacsha1_newctx },
-    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) ossl_test_aes128cbchmacsha1_freectx },
-    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void)) ossl_test_aes128cbchmacsha1_dupctx },
+        (void (*)(void))ossl_testaes128cbchmacsha1_newctx },
+    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))ossl_test_aes128cbchmacsha1_freectx },
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))ossl_test_aes128cbchmacsha1_dupctx },
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_test_aes128cbchmacsha1_einit },
     { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ossl_test_aes128cbchmacsha1_dinit },
     { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))ossl_test_aes128cbchmacsha1_update },
     { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))ossl_test_aes128cbchmacsha1_final },
     { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))ossl_test_aes128cbchmacsha1_cipher },
     { OSSL_FUNC_CIPHER_GET_PARAMS,
-      (void (*)(void)) ossl_test_aes128cbchmacsha1_get_params },
+        (void (*)(void))ossl_test_aes128cbchmacsha1_get_params },
     { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,
-      (void (*)(void))ossl_test_aes128cbchmacsha1_get_ctx_params },
+        (void (*)(void))ossl_test_aes128cbchmacsha1_get_ctx_params },
     { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,
-      (void (*)(void))ossl_test_aes128cbchmacsha1_set_ctx_params },
+        (void (*)(void))ossl_test_aes128cbchmacsha1_set_ctx_params },
     { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,
-      (void (*)(void))ossl_test_aes128cbchmacsha1_gettable_params },
+        (void (*)(void))ossl_test_aes128cbchmacsha1_gettable_params },
     { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,
-      (void (*)(void))ossl_test_aes128cbchmacsha1_gettable_ctx_params },
+        (void (*)(void))ossl_test_aes128cbchmacsha1_gettable_ctx_params },
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,
-      (void (*)(void))ossl_test_aes128cbchmacsha1_settable_ctx_params },
+        (void (*)(void))ossl_test_aes128cbchmacsha1_settable_ctx_params },
     OSSL_DISPATCH_END
 };
 
@@ -1462,7 +1456,7 @@ static const OSSL_ALGORITHM ossltest_ciphers[] = {
     ALG(PROV_NAMES_AES_128_CBC, ossl_testaes128_cbc_functions),
     ALG(PROV_NAMES_AES_128_GCM, ossl_testaes128_gcm_functions),
     ALG(PROV_NAMES_AES_128_CBC_HMAC_SHA1, ossl_testaes128cbchmacsha1_functions),
-    {NULL, NULL, NULL}
+    { NULL, NULL, NULL }
 };
 
 typedef struct ossl_test_rand_ctx {
@@ -1479,7 +1473,7 @@ typedef struct ossl_test_rand_ctx {
  */
 
 static void *drbg_ctr_new_wrapper(void *provctx, void *parent,
-                                  const OSSL_DISPATCH *parent_dispatch)
+    const OSSL_DISPATCH *parent_dispatch)
 {
     return OPENSSL_zalloc(sizeof(OSSL_TEST_RAND_CTX));
 }
@@ -1509,10 +1503,10 @@ static void drbg_ctr_free(void *vdrbg)
  */
 
 static int drbg_ctr_instantiate_wrapper(void *vdrbg, unsigned int strength,
-                                        int prediction_resistance,
-                                        const unsigned char *pstr,
-                                        size_t pstr_len,
-                                        const OSSL_PARAM params[])
+    int prediction_resistance,
+    const unsigned char *pstr,
+    size_t pstr_len,
+    const OSSL_PARAM params[])
 {
     return 1;
 }
@@ -1543,9 +1537,9 @@ static int drbg_ctr_uninstantiate_wrapper(void *vdrbg)
  */
 
 static int drbg_ctr_generate_wrapper(void *vdrbg, unsigned char *out,
-                                     size_t outlen, unsigned int strength,
-                                     int prediction_resistance,
-                                     const unsigned char *adin, size_t adin_len)
+    size_t outlen, unsigned int strength,
+    int prediction_resistance,
+    const unsigned char *adin, size_t adin_len)
 {
     unsigned char val = 1;
     size_t copylen = 0;
@@ -1571,8 +1565,8 @@ static int drbg_ctr_generate_wrapper(void *vdrbg, unsigned char *out,
  */
 
 static int drbg_ctr_reseed_wrapper(void *vdrbg, int prediction_resistance,
-                                   const unsigned char *ent, size_t ent_len,
-                                   const unsigned char *adin, size_t adin_len)
+    const unsigned char *ent, size_t ent_len,
+    const unsigned char *adin, size_t adin_len)
 {
     return 1;
 }
@@ -1622,7 +1616,7 @@ static void ossl_drbg_unlock(void *vctx)
  */
 
 static const OSSL_PARAM *drbg_ctr_settable_ctx_params(ossl_unused void *vctx,
-                                                      ossl_unused void *provctx)
+    ossl_unused void *provctx)
 {
     return NULL;
 }
@@ -1649,7 +1643,7 @@ static int drbg_ctr_set_ctx_params(void *vctx, const OSSL_PARAM params[])
  */
 
 static const OSSL_PARAM *drbg_ctr_gettable_ctx_params(ossl_unused void *vctx,
-                                                      ossl_unused void *provctx)
+    ossl_unused void *provctx)
 {
     return NULL;
 }
@@ -1701,9 +1695,9 @@ static int drbg_ctr_verify_zeroization(void *vdrbg)
  */
 
 static size_t ossl_drbg_get_seed(void *vdrbg, unsigned char **pout,
-                                 int entropy, size_t min_len,
-                                 size_t max_len, int prediction_resistance,
-                                 const unsigned char *adin, size_t adin_len)
+    int entropy, size_t min_len,
+    size_t max_len, int prediction_resistance,
+    const unsigned char *adin, size_t adin_len)
 {
     size_t needed = entropy;
 
@@ -1724,39 +1718,39 @@ static size_t ossl_drbg_get_seed(void *vdrbg, unsigned char **pout,
  */
 
 static void ossl_drbg_clear_seed(ossl_unused void *vdrbg,
-                                 unsigned char *out, size_t outlen)
+    unsigned char *out, size_t outlen)
 {
     return;
 }
 
 static const OSSL_DISPATCH ossl_test_drbg_ctr_functions[] = {
-    { OSSL_FUNC_RAND_NEWCTX, (void(*)(void))drbg_ctr_new_wrapper },
-    { OSSL_FUNC_RAND_FREECTX, (void(*)(void))drbg_ctr_free },
+    { OSSL_FUNC_RAND_NEWCTX, (void (*)(void))drbg_ctr_new_wrapper },
+    { OSSL_FUNC_RAND_FREECTX, (void (*)(void))drbg_ctr_free },
     { OSSL_FUNC_RAND_INSTANTIATE,
-      (void(*)(void))drbg_ctr_instantiate_wrapper },
+        (void (*)(void))drbg_ctr_instantiate_wrapper },
     { OSSL_FUNC_RAND_UNINSTANTIATE,
-      (void(*)(void))drbg_ctr_uninstantiate_wrapper },
-    { OSSL_FUNC_RAND_GENERATE, (void(*)(void))drbg_ctr_generate_wrapper },
-    { OSSL_FUNC_RAND_RESEED, (void(*)(void))drbg_ctr_reseed_wrapper },
-    { OSSL_FUNC_RAND_ENABLE_LOCKING, (void(*)(void))ossl_drbg_enable_locking },
-    { OSSL_FUNC_RAND_LOCK, (void(*)(void))ossl_drbg_lock },
-    { OSSL_FUNC_RAND_UNLOCK, (void(*)(void))ossl_drbg_unlock },
+        (void (*)(void))drbg_ctr_uninstantiate_wrapper },
+    { OSSL_FUNC_RAND_GENERATE, (void (*)(void))drbg_ctr_generate_wrapper },
+    { OSSL_FUNC_RAND_RESEED, (void (*)(void))drbg_ctr_reseed_wrapper },
+    { OSSL_FUNC_RAND_ENABLE_LOCKING, (void (*)(void))ossl_drbg_enable_locking },
+    { OSSL_FUNC_RAND_LOCK, (void (*)(void))ossl_drbg_lock },
+    { OSSL_FUNC_RAND_UNLOCK, (void (*)(void))ossl_drbg_unlock },
     { OSSL_FUNC_RAND_SETTABLE_CTX_PARAMS,
-      (void(*)(void))drbg_ctr_settable_ctx_params },
-    { OSSL_FUNC_RAND_SET_CTX_PARAMS, (void(*)(void))drbg_ctr_set_ctx_params },
+        (void (*)(void))drbg_ctr_settable_ctx_params },
+    { OSSL_FUNC_RAND_SET_CTX_PARAMS, (void (*)(void))drbg_ctr_set_ctx_params },
     { OSSL_FUNC_RAND_GETTABLE_CTX_PARAMS,
-      (void(*)(void))drbg_ctr_gettable_ctx_params },
-    { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void(*)(void))drbg_ctr_get_ctx_params },
+        (void (*)(void))drbg_ctr_gettable_ctx_params },
+    { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void (*)(void))drbg_ctr_get_ctx_params },
     { OSSL_FUNC_RAND_VERIFY_ZEROIZATION,
-      (void(*)(void))drbg_ctr_verify_zeroization },
-    { OSSL_FUNC_RAND_GET_SEED, (void(*)(void))ossl_drbg_get_seed },
-    { OSSL_FUNC_RAND_CLEAR_SEED, (void(*)(void))ossl_drbg_clear_seed },
+        (void (*)(void))drbg_ctr_verify_zeroization },
+    { OSSL_FUNC_RAND_GET_SEED, (void (*)(void))ossl_drbg_get_seed },
+    { OSSL_FUNC_RAND_CLEAR_SEED, (void (*)(void))ossl_drbg_clear_seed },
     OSSL_DISPATCH_END
 };
 
 static const OSSL_ALGORITHM ossltest_rands[] = {
     ALG(PROV_NAMES_CTR_DRBG, ossl_test_drbg_ctr_functions),
-    {NULL, NULL, NULL}
+    { NULL, NULL, NULL }
 };
 
 /**
@@ -1769,7 +1763,7 @@ static const OSSL_ALGORITHM ossltest_rands[] = {
  */
 
 static const OSSL_ALGORITHM *ossltest_query(void *provctx, int operation_id,
-                                            int *no_cache)
+    int *no_cache)
 {
     *no_cache = 0;
     switch (operation_id) {
@@ -1802,9 +1796,9 @@ OSSL_provider_init_fn OSSL_provider_init_int;
  * @return int.
  */
 int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
-                       const OSSL_DISPATCH *in,
-                       const OSSL_DISPATCH **out,
-                       void **provctx)
+    const OSSL_DISPATCH *in,
+    const OSSL_DISPATCH **out,
+    void **provctx)
 {
     OSSL_LIB_CTX *libctx = NULL;
 

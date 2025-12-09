@@ -21,7 +21,7 @@ static char *privkey = NULL;
  */
 static size_t ncid_injected;
 static int add_ncid_frame_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
-                             unsigned char *buf, size_t len, void *cbarg)
+    unsigned char *buf, size_t len, void *cbarg)
 {
     /*
      * We inject NEW_CONNECTION_ID frame to trigger change of the DCID.
@@ -29,10 +29,10 @@ static int add_ncid_frame_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
      * able to receive packets with this new id.
      */
     static unsigned char new_conn_id_frame[] = {
-        0x18,                           /* Type */
-        0x01,                           /* Sequence Number */
-        0x01,                           /* Retire Prior To */
-        0x08,                           /* Connection ID Length */
+        0x18, /* Type */
+        0x01, /* Sequence Number */
+        0x01, /* Retire Prior To */
+        0x08, /* Connection ID Length */
         0x33, 0x44, 0x55, 0x66, 0xde, 0xad, 0xbe, 0xef, /* Connection ID */
         0xab, 0xcd, 0xef, 0x01, 0x12, 0x32, 0x23, 0x45, /* Stateless Reset Token */
         0x56, 0x06, 0x08, 0x89, 0xa1, 0xb2, 0xc3, 0xd4
@@ -43,7 +43,7 @@ static int add_ncid_frame_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
         return 1;
 
     return qtest_fault_prepend_frame(fault, new_conn_id_frame,
-                                     sizeof(new_conn_id_frame));
+        sizeof(new_conn_id_frame));
 }
 
 static int test_ncid_frame(int fail)
@@ -60,7 +60,7 @@ static int test_ncid_frame(int fail)
     QTEST_FAULT *fault = NULL;
     static const QUIC_CONN_ID conn_id = {
         0x08,
-        {0x33, 0x44, 0x55, 0x66, 0xde, 0xad, 0xbe, 0xef}
+        { 0x33, 0x44, 0x55, 0x66, 0xde, 0xad, 0xbe, 0xef }
     };
 
     ncid_injected = 0;
@@ -68,7 +68,7 @@ static int test_ncid_frame(int fail)
         goto err;
 
     if (!TEST_true(qtest_create_quic_objects(NULL, cctx, NULL, cert, privkey, 0,
-                                             &qtserv, &cssl, &fault, NULL)))
+            &qtserv, &cssl, &fault, NULL)))
         goto err;
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, cssl)))
@@ -79,7 +79,7 @@ static int test_ncid_frame(int fail)
 
     ossl_quic_tserver_tick(qtserv);
     if (!TEST_true(ossl_quic_tserver_read(qtserv, 0, buf, sizeof(buf),
-                                          &bytesread)))
+            &bytesread)))
         goto err;
 
     /*
@@ -95,14 +95,14 @@ static int test_ncid_frame(int fail)
      * a NEW_CONNECTION_ID frame.
      */
     if (!TEST_true(qtest_fault_set_packet_plain_listener(fault,
-                                                         add_ncid_frame_cb,
-                                                         NULL)))
+            add_ncid_frame_cb,
+            NULL)))
         goto err;
     if (!fail && !TEST_true(ossl_quic_tserver_set_new_local_cid(qtserv, &conn_id)))
         goto err;
     if (!TEST_true(ossl_quic_tserver_write(qtserv, 0,
-                                           (unsigned char *)msg, msglen,
-                                           &byteswritten)))
+            (unsigned char *)msg, msglen,
+            &byteswritten)))
         goto err;
 
     if (!TEST_true(ncid_injected))
@@ -126,7 +126,7 @@ static int test_ncid_frame(int fail)
 
     ossl_quic_tserver_tick(qtserv);
     if (!TEST_true(ossl_quic_tserver_read(qtserv, 0, buf, sizeof(buf),
-                                          &bytesread)))
+            &bytesread)))
         goto err;
 
     if (fail) {
@@ -138,7 +138,7 @@ static int test_ncid_frame(int fail)
     }
 
     testresult = 1;
- err:
+err:
     qtest_fault_free(fault);
     SSL_free(cssl);
     ossl_quic_tserver_free(qtserv);
@@ -172,7 +172,7 @@ int setup_tests(void)
 
     return 1;
 
- err:
+err:
     OPENSSL_free(cert);
     OPENSSL_free(privkey);
     return 0;

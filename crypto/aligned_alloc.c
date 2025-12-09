@@ -14,7 +14,7 @@
 #include <stdlib.h>
 
 void *ossl_malloc_align(size_t num, size_t alignment, void **freeptr,
-                        const char *file, int line)
+    const char *file, int line)
 {
     size_t alloc_bytes;
     void *ret;
