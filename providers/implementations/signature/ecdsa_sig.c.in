@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 /*
  * ECDSA low level APIs are deprecated for public use, but still ok for
@@ -675,6 +677,7 @@ static void *ecdsa_dupctx(void *vctx)
     return NULL;
 }
 
+/* clang-format off */
 {- produce_param_decoder('ecdsa_get_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID',            'algid',  'octet_string'],
                           ['OSSL_SIGNATURE_PARAM_DIGEST_SIZE',             'size',   'size_t'],
@@ -683,6 +686,7 @@ static void *ecdsa_dupctx(void *vctx)
                           ['OSSL_SIGNATURE_PARAM_FIPS_VERIFY_MESSAGE',     'verify', 'uint', 'fips'],
                           ['OSSL_SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static int ecdsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
 {
@@ -768,6 +772,7 @@ static int ecdsa_common_set_ctx_params(PROV_ECDSA_CTX *ctx,
 
 #define ecdsa_set_ctx_params_st  ecdsa_all_set_ctx_params_st
 
+/* clang-format off */
 {- produce_param_decoder('ecdsa_set_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_DIGEST',            'digest',   'utf8_string'],
                           ['OSSL_SIGNATURE_PARAM_PROPERTIES',        'propq',    'utf8_string'],
@@ -778,6 +783,7 @@ static int ecdsa_common_set_ctx_params(PROV_ECDSA_CTX *ctx,
                           ['OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK',    'ind_k',    'int', 'fips'],
                           ['OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK', 'ind_d',    'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static int ecdsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
@@ -959,6 +965,7 @@ static const char **ecdsa_sigalg_query_key_types(void)
 
 #define ecdsa_sigalg_set_ctx_params_st  ecdsa_all_set_ctx_params_st
 
+/* clang-format off */
 {- produce_param_decoder('ecdsa_sigalg_set_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_SIGNATURE',         'sig',   'octet_string'],
                           ['OSSL_SIGNATURE_PARAM_KAT',               'kat',   'uint',
@@ -967,6 +974,7 @@ static const char **ecdsa_sigalg_query_key_types(void)
                           ['OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK',    'ind_k', 'int', 'fips'],
                           ['OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK', 'ind_d', 'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *ecdsa_sigalg_settable_ctx_params(void *vctx,
                                                         ossl_unused void *provctx)

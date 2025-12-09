@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 /*
  * RSA low level APIs are deprecated for public use, but still ok for
@@ -78,10 +80,12 @@ static void pem2der_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
+/* clang-format off */
 {- produce_param_decoder('pem2der_set_ctx_params',
                          (['OSSL_DECODER_PARAM_PROPERTIES',    'propq', 'utf8_string'],
                           ['OSSL_OBJECT_PARAM_DATA_STRUCTURE', 'ds',    'utf8_string'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *pem2der_settable_ctx_params(ossl_unused void *provctx)
 {

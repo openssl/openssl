@@ -10,9 +10,11 @@
 /*
  * Implementation of SP 800-90B section 4.4 Approved Continuous Health Tests.
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <string.h>
 #include <openssl/evp.h>
@@ -365,12 +367,14 @@ static void crng_test_unlock(ossl_unused void *vcrngt)
         CRYPTO_THREAD_unlock(crngt->lock);
 }
 
+/* clang-format off */
 {- produce_param_decoder('crng_test_get_ctx_params',
                          (['OSSL_RAND_PARAM_STATE',                   'state',  'int'],
                           ['OSSL_RAND_PARAM_STRENGTH',                'str',    'uint'],
                           ['OSSL_RAND_PARAM_MAX_REQUEST',             'maxreq', 'size_t'],
                           ['OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 static int crng_test_get_ctx_params(void *vcrngt, OSSL_PARAM params[])
 {

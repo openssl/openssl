@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <openssl/core_names.h>
 #include <openssl/err.h>
@@ -260,12 +262,14 @@ static int slh_dsa_digest_verify(void *vctx, const uint8_t *sig, size_t siglen,
     return slh_dsa_verify(vctx, sig, siglen, tbs, tbslen);
 }
 
+/* clang-format off */
 {- produce_param_decoder('slh_dsa_set_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_CONTEXT_STRING',   'context', 'octet_string'],
                           ['OSSL_SIGNATURE_PARAM_TEST_ENTROPY',     'entropy', 'octet_string'],
                           ['OSSL_SIGNATURE_PARAM_DETERMINISTIC',    'det',     'int'],
                           ['OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING', 'msgenc',  'int'],
                          )); -}
+/* clang-format on */
 
 static int slh_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
@@ -311,9 +315,11 @@ static const OSSL_PARAM *slh_dsa_settable_ctx_params(void *vctx,
     return slh_dsa_set_ctx_params_list;
 }
 
+/* clang-format off */
 {- produce_param_decoder('slh_dsa_get_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID', 'algid', 'octet_string'],
                          )); -}
+/* clang-format on */
 
 static const OSSL_PARAM *slh_dsa_gettable_ctx_params(ossl_unused void *vctx,
                                                      ossl_unused void *provctx)

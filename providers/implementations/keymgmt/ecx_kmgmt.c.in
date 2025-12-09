@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <assert.h>
 #include <string.h>
@@ -206,10 +208,12 @@ static int ecx_match(const void *keydata1, const void *keydata2, int selection)
     return ok;
 }
 
+/* clang-format off */
 {- produce_param_decoder('ecx_imexport_types',
                          (['OSSL_PKEY_PARAM_PUB_KEY',  'pub',  'octet_string'],
                           ['OSSL_PKEY_PARAM_PRIV_KEY', 'priv', 'octet_string'],
                          )); -}
+/* clang-format on */
 
 static int ecx_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
@@ -310,6 +314,7 @@ struct ecx_ed_common_get_params_st {
 
 #define ecx_get_params_st   ecx_ed_common_get_params_st
 
+/* clang-format off */
 {- produce_param_decoder('ecx_get_params',
                          (['OSSL_PKEY_PARAM_BITS',                    'bits',    'int'],
                           ['OSSL_PKEY_PARAM_SECURITY_BITS',           'secbits', 'int'],
@@ -320,9 +325,11 @@ struct ecx_ed_common_get_params_st {
                           ['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY',      'encpub',  'octet_string'],
                           ['OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR', 'ind',     'int', 'fips'],
                          )); -}
+/* clang-format on */
 
 #define ed_get_params_st   ecx_ed_common_get_params_st
 
+/* clang-format off */
 {- produce_param_decoder('ed_get_params',
                          (['OSSL_PKEY_PARAM_BITS',              'bits',    'int'],
                           ['OSSL_PKEY_PARAM_SECURITY_BITS',     'secbits', 'int'],
@@ -332,6 +339,7 @@ struct ecx_ed_common_get_params_st {
                           ['OSSL_PKEY_PARAM_PRIV_KEY',          'priv',    'octet_string'],
                           ['OSSL_PKEY_PARAM_MANDATORY_DIGEST',  'digest',  'utf8_string'],
                          )); -}
+/* clang-format on */
 
 /* This getter is shared by ED25519, ED448, X25519 and X448 */
 static int ecx_ed_common_get_params(void *key,
@@ -445,10 +453,12 @@ static int set_property_query(ECX_KEY *ecxkey, const char *propq)
     return 1;
 }
 
+/* clang-format off */
 {- produce_param_decoder('ecx_set_params',
                          (['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY',  'pub',   'octet_string'],
                           ['OSSL_PKEY_PARAM_PROPERTIES',          'propq', 'utf8_string'],
                          )); -}
+/* clang-format on */
 
 static int ecx_set_params(void *key, const OSSL_PARAM params[])
 {
@@ -579,11 +589,13 @@ static void *ed448_gen_init(void *provctx, int selection,
     return ecx_gen_init(provctx, selection, params, ECX_KEY_TYPE_ED448, NULL);
 }
 
+/* clang-format off */
 {- produce_param_decoder('ecx_gen_set_params',
                          (['OSSL_PKEY_PARAM_GROUP_NAME', 'group',    'utf8_string'],
                           ['OSSL_KDF_PARAM_PROPERTIES',  'kdfpropq', 'utf8_string'],
                           ['OSSL_PKEY_PARAM_DHKEM_IKM',  'ikm',      'octet_string'],
                          )); -}
+/* clang-format on */
 
 static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {

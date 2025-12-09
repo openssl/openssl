@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* clang-format off */
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
+/* clang-format on */
 
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
@@ -181,9 +183,11 @@ static void *ecx_dupctx(void *vecxctx)
 }
 
 #ifdef FIPS_MODULE
+/* clang-format off */
 {- produce_param_decoder('ecx_get_ctx_params',
                          (['OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR', 'ind', 'int', 'fips'],
                          )); -}
+/* clang-format on */
 #endif
 
 static const OSSL_PARAM *ecx_gettable_ctx_params(ossl_unused void *vctx,
