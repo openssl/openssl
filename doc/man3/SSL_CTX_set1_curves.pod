@@ -13,22 +13,22 @@ SSL_get1_curves, SSL_get_shared_curve, SSL_CTX_get0_implemented_groups
 
  #include <openssl/ssl.h>
 
- int SSL_CTX_set1_groups(SSL_CTX *ctx, int *glist, int glistlen);
- int SSL_CTX_set1_groups_list(SSL_CTX *ctx, char *list);
+ int SSL_CTX_set1_groups(SSL_CTX *ctx, const int *glist, int glistlen);
+ int SSL_CTX_set1_groups_list(SSL_CTX *ctx, const char *list);
 
- int SSL_set1_groups(SSL *ssl, int *glist, int glistlen);
- int SSL_set1_groups_list(SSL *ssl, char *list);
+ int SSL_set1_groups(SSL *ssl, const int *glist, int glistlen);
+ int SSL_set1_groups_list(SSL *ssl, const char *list);
 
  int SSL_get1_groups(SSL *ssl, int *groups);
  int SSL_get0_iana_groups(SSL *ssl, uint16_t **out);
  int SSL_get_shared_group(SSL *s, int n);
  int SSL_get_negotiated_group(SSL *s);
 
- int SSL_CTX_set1_curves(SSL_CTX *ctx, int *clist, int clistlen);
- int SSL_CTX_set1_curves_list(SSL_CTX *ctx, char *list);
+ int SSL_CTX_set1_curves(SSL_CTX *ctx, const int *clist, int clistlen);
+ int SSL_CTX_set1_curves_list(SSL_CTX *ctx, const char *list);
 
- int SSL_set1_curves(SSL *ssl, int *clist, int clistlen);
- int SSL_set1_curves_list(SSL *ssl, char *list);
+ int SSL_set1_curves(SSL *ssl, const int *clist, int clistlen);
+ int SSL_set1_curves_list(SSL *ssl, const char *list);
 
  int SSL_get1_curves(SSL *ssl, int *curves);
  int SSL_get_shared_curve(SSL *s, int n);
