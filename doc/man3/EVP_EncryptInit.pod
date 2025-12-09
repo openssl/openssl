@@ -395,9 +395,8 @@ specified.
 
 =item EVP_EncryptInit_ex()
 
-This legacy function is similar to EVP_EncryptInit_ex2() when I<impl> is NULL.
-The implementation of the I<type> from the I<impl> engine will be used if it
-exists.
+This legacy function is the same as EVP_EncryptInit_ex2() except B<params> will
+be NULL. I<impl> B<must> be NULL.
 
 =item EVP_EncryptUpdate()
 
@@ -850,7 +849,7 @@ See also EVP_CIPHER_CTX_get_key_length() and EVP_CIPHER_CTX_set_key_length().
 =item "tag" (B<OSSL_CIPHER_PARAM_AEAD_TAG>) <octet string>
 
 Gets or sets the AEAD tag for the associated cipher context I<ctx>.
-See L<EVP_EncryptInit(3)/AEAD Interface>.
+See L<EVP_EncryptInit(3)/AEAD INTERFACE>.
 
 =item "pipeline-tag" (B<OSSL_CIPHER_PARAM_PIPELINE_AEAD_TAG>) <octet ptr>
 

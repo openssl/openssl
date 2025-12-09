@@ -131,10 +131,6 @@ EC parameter manipulation and generation.
 
 Encryption, decryption, and encoding.
 
-=item B<engine>
-
-Engine (loadable module) information and manipulation.
-
 =item B<errstr>
 
 Error Number to Error String Conversion.
@@ -620,50 +616,6 @@ respectively.
 
 =back
 
-=head2 Engine Options
-
-=over 4
-
-=item B<-engine> I<id>
-
-Load the engine identified by I<id> and use all the methods it implements
-(algorithms, key storage, etc.), unless specified otherwise in the
-command-specific documentation or it is configured to do so, as described in
-L<config(5)/Engine Configuration>.
-
-The engine will be used for key ids specified with B<-key> and similar
-options when an option like B<-keyform engine> is given.
-
-A special case is the C<loader_attic> engine, which
-is meant just for internal OpenSSL testing purposes and
-supports loading keys, parameters, certificates, and CRLs from files.
-When this engine is used, files with such credentials are read via this engine.
-Using the C<file:> schema is optional; a plain file (path) name will do.
-
-=back
-
-Options specifying keys, like B<-key> and similar, can use the generic
-OpenSSL engine key loading URI scheme C<org.openssl.engine:> to retrieve
-private keys and public keys.  The URI syntax is as follows, in simplified
-form:
-
-    org.openssl.engine:{engineid}:{keyid}
-
-Where C<{engineid}> is the identity/name of the engine, and C<{keyid}> is a
-key identifier that's acceptable by that engine.  For example, when using an
-engine that interfaces against a PKCS#11 implementation, the generic key URI
-would be something like this (this happens to be an example for the PKCS#11
-engine that's part of OpenSC):
-
-    -key org.openssl.engine:pkcs11:label_some-private-key
-
-As a third possibility, for engines and providers that have implemented
-their own L<OSSL_STORE_LOADER(3)>, C<org.openssl.engine:> should not be
-necessary.  For a PKCS#11 implementation that has implemented such a loader,
-the PKCS#11 URI as defined in RFC 7512 should be possible to use directly:
-
-    -key pkcs11:object=some-private-key;pin-value=1234
-
 =head2 Provider Options
 
 =over 4
@@ -718,8 +670,8 @@ see L<openssl-env(7)>.
 For information about the use of environment variables in configuration,
 see L<config(5)/ENVIRONMENT>.
 
-For information about specific commands, see L<openssl-engine(1)>,
-L<openssl-rehash(1)>, and L<tsget(1)>.
+For information about specific commands, see L<openssl-rehash(1)>
+and L<tsget(1)>.
 
 For information about querying or specifying CPU architecture flags, see
 L<OPENSSL_ia32cap(3)>, L<OPENSSL_s390xcap(3)> and L<OPENSSL_riscvcap(3)>.
@@ -739,7 +691,6 @@ L<openssl-dsaparam(1)>,
 L<openssl-ec(1)>,
 L<openssl-ecparam(1)>,
 L<openssl-enc(1)>,
-L<openssl-engine(1)>,
 L<openssl-errstr(1)>,
 L<openssl-gendsa(1)>,
 L<openssl-genpkey(1)>,
@@ -797,6 +748,10 @@ are obsolete since OpenSSL 3.0 and have no effect.
 The interactive mode, which could be invoked by running C<openssl>
 with no further arguments, was removed in OpenSSL 3.0, and running
 that program with no arguments is now equivalent to C<openssl help>.
+
+The B<engine> command, the whole engine support together with the
+C<org.openssl.engine> URI scheme was removed in OpenSSL 4.0; use providers as
+a replacement.
 
 =head1 COPYRIGHT
 

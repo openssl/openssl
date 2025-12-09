@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -36,7 +36,6 @@ static int test_asn1_meths(void)
         if (pkey_id < prev)
             good = 0;
         prev = pkey_id;
-
     }
     if (!good) {
         TEST_error("EVP_PKEY_ASN1_METHOD table out of order");
@@ -70,7 +69,6 @@ static int test_pkey_meths(void)
         if (pkey_id < prev)
             good = 0;
         prev = pkey_id;
-
     }
     if (!good) {
         TEST_error("EVP_PKEY_METHOD table out of order");

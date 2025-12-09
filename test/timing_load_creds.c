@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,28 +13,28 @@
 #include <openssl/e_os2.h>
 
 #ifdef OPENSSL_SYS_UNIX
-# include <sys/stat.h>
-# include <sys/resource.h>
-# include <openssl/pem.h>
-# include <openssl/x509.h>
-# include <openssl/err.h>
-# include <openssl/bio.h>
-# include "internal/e_os.h"
-# if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
+#include <sys/stat.h>
+#include <sys/resource.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
+#include <openssl/err.h>
+#include <openssl/bio.h>
+#include "internal/e_os.h"
+#if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
 
-# ifndef timersub
+#ifndef timersub
 /* struct timeval * subtraction; a must be greater than or equal to b */
-#  define timersub(a, b, res)                                         \
-     do {                                                             \
-         (res)->tv_sec = (a)->tv_sec - (b)->tv_sec;                   \
-         if ((a)->tv_usec < (b)->tv_usec) {                           \
-             (res)->tv_usec = (a)->tv_usec + 1000000 - (b)->tv_usec;  \
-             --(res)->tv_sec;                                         \
-         } else {                                                     \
-             (res)->tv_usec = (a)->tv_usec - (b)->tv_usec;            \
-         }                                                            \
-     } while(0)
-# endif
+#define timersub(a, b, res)                                         \
+    do {                                                            \
+        (res)->tv_sec = (a)->tv_sec - (b)->tv_sec;                  \
+        if ((a)->tv_usec < (b)->tv_usec) {                          \
+            (res)->tv_usec = (a)->tv_usec + 1000000 - (b)->tv_usec; \
+            --(res)->tv_sec;                                        \
+        } else {                                                    \
+            (res)->tv_usec = (a)->tv_usec - (b)->tv_usec;           \
+        }                                                           \
+    } while (0)
+#endif
 
 static char *prog;
 
@@ -91,9 +91,12 @@ static void usage(void)
     fprintf(stderr, "          p for private key\n");
     exit(EXIT_FAILURE);
 }
-# endif
+#endif
 #endif
 
+#if !defined(RUSAGE_SELF) && defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
+#include <sys/times.h>
+#endif
 int main(int ac, char **av)
 {
 #if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
@@ -101,7 +104,13 @@ int main(int ac, char **av)
     struct stat sb;
     FILE *fp;
     char *contents;
+#if !defined(RUSAGE_SELF)
+    struct tms rus;
+    struct timeval u_start, u_end, u_elapsed;
+    struct timeval s_start, s_end, s_elapsed;
+#else
     struct rusage start, end, elapsed;
+#endif
     struct timeval e_start, e_end, e_elapsed;
 
     /* Parse JCL. */
@@ -177,11 +186,19 @@ int main(int ac, char **av)
         perror("elapsed start");
         exit(EXIT_FAILURE);
     }
+#if !defined(RUSAGE_SELF)
+    times(&rus);
+    u_start.tv_sec = rus.tms_utime / CLOCKS_PER_SEC;
+    u_start.tv_usec = (rus.tms_utime * 1000000) / CLOCKS_PER_SEC;
+    s_start.tv_sec = rus.tms_stime / CLOCKS_PER_SEC;
+    s_start.tv_usec = (rus.tms_stime * 1000000) / CLOCKS_PER_SEC;
+#else
     if (getrusage(RUSAGE_SELF, &start) < 0) {
         OPENSSL_free(contents);
         perror("start");
         exit(EXIT_FAILURE);
     }
+#endif
     for (i = count; i > 0; i--) {
         switch (what) {
         case 'c':
@@ -192,22 +209,40 @@ int main(int ac, char **av)
             break;
         }
     }
+#if !defined(RUSAGE_SELF)
+    times(&rus);
+    u_end.tv_sec = rus.tms_utime / CLOCKS_PER_SEC;
+    u_end.tv_usec = (rus.tms_utime * 1000000) / CLOCKS_PER_SEC;
+    s_end.tv_sec = rus.tms_stime / CLOCKS_PER_SEC;
+    s_end.tv_usec = (rus.tms_stime * 1000000) / CLOCKS_PER_SEC;
+#else
     if (getrusage(RUSAGE_SELF, &end) < 0) {
         OPENSSL_free(contents);
         perror("getrusage");
         exit(EXIT_FAILURE);
     }
+#endif
     if (gettimeofday(&e_end, NULL) < 0) {
         OPENSSL_free(contents);
         perror("gettimeofday");
         exit(EXIT_FAILURE);
     }
 
+#if !defined(RUSAGE_SELF)
+    timersub(&u_end, &u_start, &u_elapsed);
+    timersub(&s_end, &s_start, &s_elapsed);
+#else
     timersub(&end.ru_utime, &start.ru_stime, &elapsed.ru_stime);
     timersub(&end.ru_utime, &start.ru_utime, &elapsed.ru_utime);
+#endif
     timersub(&e_end, &e_start, &e_elapsed);
+#if !defined(RUSAGE_SELF)
+    print_timeval("user     ", &u_elapsed);
+    print_timeval("sys      ", &s_elapsed);
+#else
     print_timeval("user     ", &elapsed.ru_utime);
     print_timeval("sys      ", &elapsed.ru_stime);
+#endif
     if (debug)
         print_timeval("elapsed??", &e_elapsed);
 
@@ -215,7 +250,7 @@ int main(int ac, char **av)
     return EXIT_SUCCESS;
 #else
     fprintf(stderr,
-            "This tool is not supported on this platform for lack of POSIX1.2001 support\n");
+        "This tool is not supported on this platform for lack of POSIX1.2001 support\n");
     exit(EXIT_FAILURE);
 #endif
 }

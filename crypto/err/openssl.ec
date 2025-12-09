@@ -24,7 +24,6 @@ L X509V3        include/openssl/x509v3err.h     crypto/x509/v3err.c             
 L PKCS12        include/openssl/pkcs12err.h     crypto/pkcs12/pk12err.c                 include/crypto/pkcs12err.h
 L RAND          include/openssl/randerr.h       crypto/rand/rand_err.c                  include/crypto/randerr.h
 L DSO           NONE                            crypto/dso/dso_err.c                    include/internal/dsoerr.h
-L ENGINE        include/openssl/engineerr.h     crypto/engine/eng_err.c                 include/crypto/engineerr.h
 L OCSP          include/openssl/ocsperr.h       crypto/ocsp/ocsp_err.c                  include/crypto/ocsperr.h
 L UI            include/openssl/uierr.h         crypto/ui/ui_err.c                      include/crypto/uierr.h
 L COMP          include/openssl/comperr.h       crypto/comp/comp_err.c                  include/crypto/comperr.h

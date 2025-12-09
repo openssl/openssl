@@ -13,11 +13,11 @@ openssl-pkey - public or private key processing command
 
 B<openssl> B<pkey>
 [B<-help>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [B<-check>]
 [B<-pubcheck>]
 [B<-in> I<filename>|I<uri>]
-[B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-inform> B<DER>|B<PEM>|B<P12>]
 [B<-passin> I<arg>]
 [B<-pubin>]
 [B<-out> I<filename>]
@@ -47,8 +47,6 @@ converted between various forms and their components printed.
 
 Print out a usage message.
 
-{- $OpenSSL::safe::opt_engine_item -}
-
 {- $OpenSSL::safe::opt_provider_item -}
 
 =item B<-check>
@@ -75,7 +73,7 @@ or standard input if this option is not specified.
 If the key input is encrypted and B<-passin> is not given
 a pass phrase will be prompted for.
 
-=item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-inform> B<DER>|B<PEM>|B<P12>
 
 The key input format; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -230,7 +228,7 @@ L<openssl-gendsa(1)>
 
 =head1 HISTORY
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

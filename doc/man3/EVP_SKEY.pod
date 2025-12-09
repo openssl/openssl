@@ -2,11 +2,10 @@
 
 =head1 NAME
 
-EVP_SKEY, EVP_SKEY_generate,
-EVP_SKEY_import, EVP_SKEY_import_raw_key, EVP_SKEY_up_ref,
-EVP_SKEY_export, EVP_SKEY_get0_raw_key, EVP_SKEY_get0_key_id,
-EVP_SKEY_get0_skeymgmt_name, EVP_SKEY_get0_provider_name,
-EVP_SKEY_free, EVP_SKEY_is_a, EVP_SKEY_to_provider
+EVP_SKEY, EVP_SKEY_generate, EVP_SKEY_import, EVP_SKEY_import_raw_key,
+EVP_SKEY_import_SKEYMGMT, EVP_SKEY_up_ref, EVP_SKEY_export,
+EVP_SKEY_get0_raw_key, EVP_SKEY_get0_key_id, EVP_SKEY_get0_skeymgmt_name,
+EVP_SKEY_get0_provider_name, EVP_SKEY_free, EVP_SKEY_is_a, EVP_SKEY_to_provider
 - opaque symmetric key allocation and handling functions
 
 =head1 SYNOPSIS
@@ -23,6 +22,8 @@ EVP_SKEY_free, EVP_SKEY_is_a, EVP_SKEY_to_provider
  EVP_SKEY *EVP_SKEY_import_raw_key(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
                                    unsigned char *key, size_t *len,
                                    const char *propquery);
+ EVP_SKEY *EVP_SKEY_import_SKEYMGMT(OSSL_LIB_CTX *libctx, EVP_SKEYMGMT *skeymgmt,
+                                    int selection, const OSSL_PARAM *params);
  int EVP_SKEY_export(const EVP_SKEY *skey, int selection,
                      OSSL_CALLBACK *export_cb, void *export_cbarg);
  int EVP_SKEY_get0_raw_key(const EVP_SKEY *skey, const unsigned char **key,
@@ -58,6 +59,10 @@ the B<params> argument.
 
 The EVP_SKEY_import_raw_key() function is a helper that creates an B<EVP_SKEY> object
 containing the raw byte representation of the symmetric keys.
+
+The EVP_SKEY_import_SKEYMGMT() function is a helper that creates an B<EVP_SKEY>
+object containing the representation of the symmetric keys specific to the
+particular B<EVP_SKEYMGMT>.
 
 The EVP_SKEY_export() function extracts values from a key I<skey> using the
 I<selection>.  I<selection> is described below. It uses a callback I<export_cb>
@@ -119,8 +124,9 @@ key I<skey> cannot be exported from its provider.
 
 =head1 RETURN VALUES
 
-EVP_SKEY_generate(), EVP_SKEY_import() and EVP_SKEY_import_raw_key() return
-either the newly allocated B<EVP_SKEY> structure or NULL if an error occurred.
+EVP_SKEY_generate(), EVP_SKEY_import(), EVP_SKEY_import_raw_key(), and
+EVP_SKEY_import_SKEYMGMT() return either the newly allocated B<EVP_SKEY>
+structure or NULL if an error occurred.
 
 EVP_SKEY_get0_key_id() returns either a valid pointer or NULL.
 
@@ -129,7 +135,7 @@ EVP_SKEY_up_ref() returns 1 for success and 0 on failure.
 EVP_SKEY_export() and EVP_SKEY_get0_raw_key() return 1 for success and 0 on failure.
 
 EVP_SKEY_get0_skeymgmt_name() and EVP_SKEY_get0_provider_name() return the
-names of the associated EVP_SKEYMGMT object and its provider correspondigly.
+names of the associated EVP_SKEYMGMT object and its provider correspondingly.
 
 EVP_SKEY_is_a() returns 1 if I<skey> has the key type I<name>,
 otherwise 0.
@@ -149,6 +155,8 @@ EVP_SKEY_import_raw_key(), EVP_SKEY_up_ref(), EVP_SKEY_generate(),
 EVP_SKEY_get0_key_id(), EVP_SKEY_get0_provider_name(),
 EVP_SKEY_get0_skeymgmt_name(), EVP_SKEY_is_a(), EVP_SKEY_to_provider()
 were introduced in OpenSSL 3.5.
+
+The EVP_SKEY_import_SKEYMGMT() function was introduced in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

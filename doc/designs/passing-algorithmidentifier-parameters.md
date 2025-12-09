@@ -102,8 +102,8 @@ EVP_PKEY_CTX_get_algor_params(EVP_PKEY_CTX *ctx, X509_ALGOR *alg);
 EVP_PKEY_CTX_get_algor(EVP_PKEY_CTX *ctx, X509_ALGOR **alg);
 ```
 
-Note that all might not need to be added immediately, depending on if they
-are considered useful or not.  For future proofing, however, they should
+Note that not all may need to be added at this time, depending on whether or
+not they are considered useful.  For future-proofing, however, they should
 probably all be added.
 
 Requirements on the providers

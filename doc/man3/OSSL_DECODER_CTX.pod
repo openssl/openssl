@@ -135,6 +135,8 @@ OSSL_DECODER_CTX_add_extra() finds decoders that generate input for already
 added decoders, and adds them as well.  This is used to build decoder
 chains.
 
+OSSL_DECODER_CTX_set_selection() sets what the input is expected to contain.
+
 OSSL_DECODER_CTX_set_input_type() sets the starting input type.  This limits
 the decoder chains to be considered, as explained in the general description
 above.
@@ -221,9 +223,19 @@ OSSL_DECODER_CTX_set_params() returns 1 if all recognised parameters were
 valid, or 0 if one of them was invalid or caused some other failure in the
 implementation.
 
-OSSL_DECODER_CTX_add_decoder(), OSSL_DECODER_CTX_add_extra(),
-OSSL_DECODER_CTX_set_construct(), OSSL_DECODER_CTX_set_construct_data() and
-OSSL_DECODER_CTX_set_cleanup() return 1 on success, or 0 on failure.
+OSSL_DECODER_CTX_add_decoder(),
+OSSL_DECODER_CTX_add_extra(),
+OSSL_DECODER_CTX_set_cleanup(),
+OSSL_DECODER_CTX_set_construct(),
+OSSL_DECODER_CTX_set_construct_data(),
+OSSL_DECODER_CTX_set_input_structure(),
+OSSL_DECODER_CTX_set_input_type(),
+OSSL_DECODER_CTX_set_params(),
+and
+OSSL_DECODER_CTX_set_selection()
+return 1 on success, or 0 on failure.
+They always fail for decoder contexts created in a frozen state via
+L<OSSL_DECODER_CTX_new_for_pkey(3)>.
 
 OSSL_DECODER_CTX_get_construct(), OSSL_DECODER_CTX_get_construct_data() and
 OSSL_DECODER_CTX_get_cleanup() return the current pointers to the

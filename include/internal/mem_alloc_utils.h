@@ -12,19 +12,28 @@
  */
 
 #ifndef OSSL_INTERNAL_CHECK_SIZE_OVERFLOW_H
-# define OSSL_INTERNAL_CHECK_SIZE_OVERFLOW_H
+#define OSSL_INTERNAL_CHECK_SIZE_OVERFLOW_H
 
-# include <limits.h>
-# include <stdbool.h>
-# include <stdint.h>
+#include <limits.h>
+#include <stdbool.h>
+#include <stdint.h>
 
-# include "internal/common.h"
-# include "internal/safe_math.h"
+#include "internal/common.h"
+#include "internal/safe_math.h"
 
-# include <openssl/cryptoerr.h>
-# include <openssl/err.h>
+#include <openssl/cryptoerr.h>
+#include <openssl/err.h>
 
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
+
+/*
+ * A helper open-coded aligned alloc implementation around CRYPTO_malloc(),
+ * for use in cases where non-standard malloc implementation is (or may be,
+ * as it is the case of the FIPS module) used, or posix_memalign
+ * is not available.
+ */
+void *ossl_malloc_align(size_t num, size_t alignment, void **freeptr,
+    const char *file, int line);
 
 /*
  * A helper routine to report memory allocation errors.
@@ -33,8 +42,8 @@ OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
  * if both file set to NULL and line set to 0.
  */
 static ossl_inline ossl_unused void
-ossl_report_alloc_err_ex(const char * const file, const int line,
-                         const int reason)
+ossl_report_alloc_err_ex(const char *const file, const int line,
+    const int reason)
 {
     /*
      * ossl_err_get_state_int() in err.c uses CRYPTO_zalloc(num, NULL, 0) for
@@ -49,21 +58,21 @@ ossl_report_alloc_err_ex(const char * const file, const int line,
 
 /* Report a memory allocation failure. */
 static ossl_inline ossl_unused void
-ossl_report_alloc_err(const char * const file, const int line)
+ossl_report_alloc_err(const char *const file, const int line)
 {
     ossl_report_alloc_err_ex(file, line, ERR_R_MALLOC_FAILURE);
 }
 
 /* Report an integer overflow during allocation size calculation. */
 static ossl_inline ossl_unused void
-ossl_report_alloc_err_of(const char * const file, const int line)
+ossl_report_alloc_err_of(const char *const file, const int line)
 {
     ossl_report_alloc_err_ex(file, line, CRYPTO_R_INTEGER_OVERFLOW);
 }
 
 /* Report invalid memory allocation call arguments. */
 static ossl_inline ossl_unused void
-ossl_report_alloc_err_inv(const char * const file, const int line)
+ossl_report_alloc_err_inv(const char *const file, const int line)
 {
     ossl_report_alloc_err_ex(file, line, ERR_R_PASSED_INVALID_ARGUMENT);
 }
@@ -75,7 +84,7 @@ ossl_report_alloc_err_inv(const char * const file, const int line)
  */
 static ossl_inline ossl_unused bool
 ossl_size_mul(const size_t num, const size_t size, size_t *bytes,
-              const char * const file, const int line)
+    const char *const file, const int line)
 {
     int err = 0;
     *bytes = safe_mul_size_t(num, size, &err);
@@ -96,7 +105,7 @@ ossl_size_mul(const size_t num, const size_t size, size_t *bytes,
  */
 static ossl_inline ossl_unused bool
 ossl_size_add(const size_t size1, const size_t size2, size_t *bytes,
-              const char * const file, const int line)
+    const char *const file, const int line)
 {
     int err = 0;
     *bytes = safe_add_size_t(size1, size2, &err);

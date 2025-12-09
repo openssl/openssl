@@ -17,6 +17,26 @@ L<https://github.com/openssl/openssl/blob/master/CHANGES.md>.
 For an overview of some of the key concepts introduced in OpenSSL 3.0 see
 L<crypto(7)>.
 
+=head1 OPENSSL 4.0
+
+=head2 Main Changes from OpenSSL 3.6
+
+=head3 Major Release
+
+OpenSSL 4.0 is a major release and consequently any application that
+currently uses an older version of OpenSSL will at the very least need
+to be recompiled in order to work with the new version. It is the
+intention that many applications will work unchanged with OpenSSL
+4.0 if those applications previously worked with OpenSSL 3.6 and did
+not use deprecated API. However this is not guaranteed and some
+changes may be required in some cases. Changes may be required to
+applications using previously deprecated API. Changes may also be
+required if applications need to take advantage of some of the new
+features available in OpenSSL 4.0.
+
+Some functions have been removed that were deprecated in previous
+versions of OpenSSL. See L<ossl-removed-api(7)>.
+
 =head1 OPENSSL 3.6
 
 =head2 Main Changes from OpenSSL 3.5
@@ -191,9 +211,9 @@ For more information, see L<OpenSSL_version(3)>.
 
 =head3 Other major new features
 
-=head4 Certificate Management Protocol (CMP, RFC 4210)
+=head4 Certificate Management Protocol (CMP, RFC 9810)
 
-This also covers CRMF (RFC 4211) and HTTP transfer (RFC 6712)
+This also covers CRMF (RFC 4211) and HTTP transfer (RFC 9811)
 See L<openssl-cmp(1)> and L<OSSL_CMP_exec_certreq(3)> as starting points.
 
 =head4 HTTP(S) client

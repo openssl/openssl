@@ -63,7 +63,7 @@ B<EVP_PKEY> is a generic structure to hold diverse types of asymmetric keys
 (also known as "key pairs"), and can be used for diverse operations, like
 signing, verifying signatures, key derivation, etc.  The asymmetric keys
 themselves are often referred to as the "internal key", and are handled by
-backends, such as providers (through L<EVP_KEYMGMT(3)>) or B<ENGINE>s.
+providers through L<EVP_KEYMGMT(3)>.
 
 Conceptually, an B<EVP_PKEY> internal key may hold a private key, a public
 key, or both (a keypair), and along with those, key parameters if the key type
@@ -84,17 +84,17 @@ B<1>.
 
 EVP_PKEY_up_ref() increments the reference count of I<key>.
 
-EVP_PKEY_dup() duplicates the I<key>. The I<key> must not be ENGINE based or
-a raw key, otherwise the duplication will fail.
+EVP_PKEY_dup() duplicates the I<key>. The I<key> must not be a raw key,
+otherwise the duplication will fail.
 
 EVP_PKEY_free() decrements the reference count of I<key> and, if the reference
 count is zero, frees it up. If I<key> is NULL, nothing is done.
 
-EVP_PKEY_new_raw_private_key_ex() allocates a new B<EVP_PKEY>. Unless an
-engine should be used for the key type, a provider for the key is found using
-the library context I<libctx> and the property query string I<propq>. The
-I<keytype> argument indicates what kind of key this is. The value should be a
-string for a public key algorithm that supports raw private keys, e.g., one of:
+EVP_PKEY_new_raw_private_key_ex() allocates a new B<EVP_PKEY>. A provider for
+the key is found using the library context I<libctx> and the property query
+string I<propq>. The I<keytype> argument indicates what kind of key this is.
+The value should be a string for a public key algorithm that supports raw
+private keys, e.g., one of:
 C<ED25519>,
 C<ED448>,
 C<X25519>,
@@ -114,11 +114,10 @@ algorithm type).
 
 EVP_PKEY_new_raw_private_key() does the same as
 EVP_PKEY_new_raw_private_key_ex() except that the default library context and
-default property query are used instead. If I<e> is non-NULL then the new
-B<EVP_PKEY> structure is associated with the engine I<e>. The I<type> argument
-indicates what kind of key this is. The value should be a NID for a public key
-algorithm that supports raw private keys, i.e. one of B<EVP_PKEY_X25519>,
-B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>.
+default property query are used instead. I<e> B<must> be NULL. The I<type>
+argument indicates what kind of key this is. The value should be a NID for a
+public key algorithm that supports raw private keys, i.e. one of
+B<EVP_PKEY_X25519>, B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>.
 
 EVP_PKEY_new_raw_private_key_ex() and EVP_PKEY_new_raw_private_key() may also
 be used with most MACs implemented as public key algorithms, so key types such

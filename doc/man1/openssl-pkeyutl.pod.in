@@ -16,7 +16,7 @@ B<openssl> B<pkeyutl>
 [B<-secret> I<file>]
 [B<-sigfile> I<file>]
 [B<-inkey> I<filename>|I<uri>]
-[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>]
 [B<-passin> I<arg>]
 [B<-pubin>]
 [B<-certin>]
@@ -28,7 +28,7 @@ B<openssl> B<pkeyutl>
 [B<-decrypt>]
 [B<-derive>]
 [B<-peerkey> I<file>]
-[B<-peerform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-peerform> B<DER>|B<PEM>|B<P12>]
 [B<-encap>]
 [B<-decap>]
 [B<-kdf> I<algorithm>]
@@ -38,7 +38,6 @@ B<openssl> B<pkeyutl>
 [B<-pkeyopt_passin> I<opt>[:I<passarg>]]
 [B<-hexdump>]
 [B<-asn1parse>]
-{- $OpenSSL::safe::opt_engine_synopsis -}[B<-engine_impl>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 {- $OpenSSL::safe::opt_config_synopsis -}
@@ -113,7 +112,7 @@ Signature file, required and allowed for B<-verify> operations only.
 
 The input key, by default it should be a private key.
 
-=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>
 
 The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -191,7 +190,7 @@ File containing the peer public or private (EC)DH key
 to use with the key derivation (agreement) operation.
 Its type must match the type of the own private key given with B<-inkey>.
 
-=item B<-peerform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-peerform> B<DER>|B<PEM>|B<P12>
 
 The peer key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -283,15 +282,6 @@ Parse the ASN.1 output data to check its DER encoding and print any errors.
 When combined with the B<-verifyrecover> option, this may be useful in case
 an ASN.1 DER-encoded structure had been signed directly (without hashing it)
 and when checking a signature in PKCS#1 v1.5 format, which has a DER encoding.
-
-{- $OpenSSL::safe::opt_engine_item -}
-
-{- output_off() if $disabled{"deprecated-3.0"}; "" -}
-=item B<-engine_impl>
-
-When used with the B<-engine> option, it specifies to also use
-engine I<id> for crypto operations.
-{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 
 {- $OpenSSL::safe::opt_r_item -}
 
@@ -689,7 +679,7 @@ no longer required when signing or verifying with an Ed25519 or Ed448 key.
 Also since OpenSSL 3.5, the B<-kemop> option is no longer required for any of
 the supported algorithms, the only supported B<mode> is now the default.
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

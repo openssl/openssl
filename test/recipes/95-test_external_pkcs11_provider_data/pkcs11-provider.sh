@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -64,7 +64,7 @@ echo "Running tests"
 echo "------------------------------------------------------------------"
 
 # For maintenance reasons and simplicity we only run test with kryoptic token
-meson test -C $PKCS11_PROVIDER_BUILDDIR --suite=kryoptic
+SUPPORT_ML_DSA=0 meson test -C $PKCS11_PROVIDER_BUILDDIR --suite=kryoptic
 
 if [ $? -ne 0 ]; then
     cat $PKCS11_PROVIDER_BUILDDIR/meson-logs/testlog.txt

@@ -77,13 +77,6 @@ than 1, outputs information about every processed feature.
 
 This variable is not considered security-sensitive.
 
-=item B<OPENSSL_ENGINES>
-
-Specifies the directory from which dynamic engines are loaded.
-See L<openssl-engine(1)>.
-
-This variable is considered a security-sensitive environment variable.
-
 =item B<OPENSSL_MALLOC_FAILURES>, B<OPENSSL_MALLOC_FD>, B<OPENSSL_MALLOC_SEED>
 
 If built with debugging, this allows memory allocation to fail.
@@ -153,7 +146,7 @@ Traces CMP client and server activity.
 
 =item B<CONF>
 
-Show details about provider and engine configuration.
+Show details about provider configuration.
 
 =item B<DECODER>
 
@@ -162,17 +155,6 @@ Traces decoder operations.
 =item B<ENCODER>
 
 Traces encoder operations.
-
-=item B<ENGINE_REF_COUNT>
-
-Reference counts in the ENGINE structure will be monitored with a line
-of generated for each change.
-
-=item B<ENGINE_TABLE>
-
-The function that is used by RSA, DSA (etc) code to select registered
-ENGINEs, cache defaults and functional references (etc), will generate
-debugging summaries.
 
 =item B<HTTP>
 
@@ -331,11 +313,16 @@ under test output with the output for the TAP consumer.
 
 This variable was not considered security-sensitive.
 
+=item B<OPENSSL_ENGINES>
+
+This variable, support for which was removed in OpenSSL 4.0, specified the
+directory from which dynamic engines were loaded.
+
 =back
 
 =head1 COPYRIGHT
 
-Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

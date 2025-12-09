@@ -37,7 +37,7 @@ B<openssl> B<s_client>
 [B<-CRLform> B<DER>|B<PEM>]
 [B<-crl_download>]
 [B<-key> I<filename>|I<uri>]
-[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>]
 [B<-pass> I<arg>]
 [B<-chainCAfile> I<filename>]
 [B<-chainCApath> I<directory>]
@@ -119,7 +119,6 @@ B<openssl> B<s_client>
 {- $OpenSSL::safe::opt_s_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}[B<-ssl_client_engine> I<id>]
 {- $OpenSSL::safe::opt_v_synopsis -}
 [B<-enable_server_rpk>]
 [B<-enable_client_rpk>]
@@ -274,7 +273,7 @@ of CRL is limited by L<X509_CRL_load_http(3)> function.
 The client private key to use.
 If not specified then the certificate file will be used to read also the key.
 
-=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>
 
 The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -559,9 +558,8 @@ Send TLS_FALLBACK_SCSV in the ClientHello.
 =item B<-async>
 
 Switch on asynchronous mode. Cryptographic operations will be performed
-asynchronously. This will only have an effect if an asynchronous capable engine
-is also used via the B<-engine> option. For test purposes the dummy async engine
-(dasync) can be used (if available).
+asynchronously. This will only have an effect if an asynchronous capable
+provider is also used.
 
 =item B<-maxfraglen> I<len>
 
@@ -575,19 +573,15 @@ See L<SSL_CTX_set_max_send_fragment(3)> for further information.
 
 =item B<-split_send_frag> I<int>
 
-The size used to split data for encrypt pipelines. If more data is written in
-one go than this value then it will be split into multiple pipelines, up to the
-maximum number of pipelines defined by max_pipelines. This only has an effect if
-a suitable cipher suite has been negotiated, an engine that supports pipelining
-has been loaded, and max_pipelines is greater than 1. See
-L<SSL_CTX_set_split_send_fragment(3)> for further information.
+This is used for pipelines. There is currently B<no support> for cipher
+pipelining in libssl. See L<SSL_CTX_set_max_send_fragment(3)> for further
+information.
 
 =item B<-max_pipelines> I<int>
 
-The maximum number of encrypt/decrypt pipelines to be used. This will only have
-an effect if an engine has been loaded that supports pipelining (e.g. the dasync
-engine) and a suitable cipher suite has been negotiated. The default value is 1.
-See L<SSL_CTX_set_max_pipelines(3)> for further information.
+This is used for pipelines. There is currently B<no support> for cipher
+pipelining in libssl. See L<SSL_CTX_set_max_send_fragment(3)> for further
+information.
 
 =item B<-read_buf> I<int>
 
@@ -784,14 +778,6 @@ Enable creation of connections via TCP fast open (RFC7413).
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
-
-{- $OpenSSL::safe::opt_engine_item -}
-
-{- output_off() if $disabled{"deprecated-3.0"}; "" -}
-=item B<-ssl_client_engine> I<id>
-
-Specify engine to be used for client certificate operations.
-{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 
 {- $OpenSSL::safe::opt_v_item -}
 
@@ -1033,7 +1019,7 @@ The B<-name> option was added in OpenSSL 1.1.1.
 
 The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
+The B<-engine> option was removed in OpenSSL 4.0.
 
 The
 B<-enable_client_rpk>,

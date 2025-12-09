@@ -107,6 +107,7 @@ which may be due to normal successful end of the transaction or due to an error.
 OSSL_CMP_CTX_server_perform() is an interface to
 OSSL_CMP_SRV_process_request() that can be used by a CMP client
 in the same way as L<OSSL_CMP_MSG_http_perform(3)>.
+In particular, the first parameter I<client_ctx> is the B<OSSL_CMP_CTX> of the client.
 The B<OSSL_CMP_SRV_CTX> must be set as I<transfer_cb_arg> of I<client_ctx>.
 
 OSSL_CMP_SRV_CTX_new() creates and initializes an B<OSSL_CMP_SRV_CTX> structure
@@ -157,7 +158,7 @@ confirmation of newly enrolled certificates if requested.
 
 =head1 NOTES
 
-CMP is defined in RFC 4210 (and CRMF in RFC 4211).
+CMP is defined in RFC 9810 (and CRMF in RFC 4211).
 
 So far the CMP server implementation is limited to one request per CMP message
 (and consequently to at most one response component per CMP message).

@@ -1,5 +1,5 @@
 #
-# Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -442,7 +442,7 @@ PublicKeyRaw = EDDSA-TV-6-PUBLIC-Raw:ED25519:dfc9425e4f968f7f0c29f0259cf5f9aed68
 
 PrivPubKeyPair = EDDSA-TV-6-Raw:EDDSA-TV-6-PUBLIC-Raw
 
-FIPSversion = >=3.4.0
+Availablein = default
 Sign-Message = ED25519ctx:EDDSA-TV-6-Raw
 Input = f726936d19c800494e3fdaff20b276a8
 Ctrl = hexcontext-string:666f6f
@@ -456,7 +456,7 @@ PublicKeyRaw = EDDSA-TV-7-PUBLIC-Raw:ED25519:dfc9425e4f968f7f0c29f0259cf5f9aed68
 
 PrivPubKeyPair = EDDSA-TV-7-Raw:EDDSA-TV-7-PUBLIC-Raw
 
-FIPSversion = >=3.4.0
+Availablein = default
 Sign-Message = Ed25519ctx:EDDSA-TV-7-Raw
 Input = f726936d19c800494e3fdaff20b276a8
 Ctrl = hexcontext-string:626172
@@ -470,7 +470,7 @@ PublicKeyRaw = EDDSA-TV-8-PUBLIC-Raw:ED25519:dfc9425e4f968f7f0c29f0259cf5f9aed68
 
 PrivPubKeyPair = EDDSA-TV-8-Raw:EDDSA-TV-8-PUBLIC-Raw
 
-FIPSversion = >=3.4.0
+Availablein = default
 Sign-Message = Ed25519ctx:EDDSA-TV-8-Raw
 Input = 508e9e6882b979fea900f62adceaca35
 Ctrl = hexcontext-string:666f6f
@@ -484,7 +484,7 @@ PublicKeyRaw = EDDSA-TV-9-PUBLIC-Raw:ED25519:0f1d1274943b91415889152e893d80e9327
 
 PrivPubKeyPair = EDDSA-TV-9-Raw:EDDSA-TV-9-PUBLIC-Raw
 
-FIPSversion = >=3.4.0
+Availablein = default
 Sign-Message = Ed25519ctx:EDDSA-TV-9-Raw
 Input = f726936d19c800494e3fdaff20b276a8
 Ctrl = hexcontext-string:666f6f

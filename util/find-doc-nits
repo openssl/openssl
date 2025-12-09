@@ -13,6 +13,7 @@ use strict;
 
 use Carp qw(:DEFAULT cluck);
 use Pod::Checker;
+use Cwd qw(realpath);
 use File::Find;
 use File::Basename;
 use File::Spec::Functions;
@@ -57,7 +58,7 @@ Find small errors (nits) in documentation.  Options:
     -m Name(s) of manuals to focus on. Default: man1,man3,man5,man7
     -n Print nits in POD pages
     -o Causes -e/-v to count symbols added since 1.1.1 as new (implies -v)
-    -i Checks for history entries available for symbols added since 3.0.0 as new
+    -i Checks for history entries available for symbols added since 4.0.0 as new
     -u Count undocumented functions
     -v Count new undocumented functions
 EOF
@@ -112,6 +113,7 @@ my $ignored = qr/(?| ^i2d_
                  |   ^DEFINE_LHASH_OF_(INTERNAL|DEPRECATED)
                  |   ^OSSL_HTO[BL]E(16|32|64)   # undefed
                  |   ^OSSL_[BL]E(16|32|64)TOH   # undefed
+                 |   ^ENGINE_   # TODO(ENGINE REMOVAL): Fix docs
                  )/x;
 
 # There are macro functions added before version 1.1.1 we don't want to track
@@ -943,7 +945,7 @@ my %name_map = ();
 # Any of these values except 'public' may be prefixed with 'missing_'
 # to indicate that they are known to be missing.
 my %state;
-# history contains the same as state above for entries with version info != 3_0_0
+# history contains the same as state above for entries with version info != 4_0_0
 my %history;
 # %missing is affected by loading util/missing*.txt.  Values may be one of:
 # 'crypto' : belongs in libcrypto (loaded from libcrypto.num)
@@ -974,7 +976,7 @@ sub loadnum ($;$) {
         my @fields = split();
         if ($type && ($type eq "crypto" || $type eq "ssl")) {
             # 3rd field is version
-            if (not $fields[2] eq "3_0_0") {
+            if (not $fields[2] eq "4_0_0") {
                 $history{$fields[0].'(3)'} = $type.$fields[2];
             }
         }
@@ -1281,33 +1283,73 @@ sub check_env_vars {
     # initialized with the list of "untracable" variables
     my %env_list = ("SSL_CERT_FILE" => 1);
     my @env_files;
+    my @except_dirs = (
+        "$config{sourcedir}/demos",
+        "$config{sourcedir}/test",
+    );
     my @except_env_files = (
-        "$config{sourcedir}/providers/implementations/keymgmt/template_kmgmt.c",
         "$config{sourcedir}/providers/implementations/kem/template_kem.c",
-        "$config{sourcedir}/Makefile.in",
+        # The following files are generated, and are therefore found in the
+        # build directory rather than the source directory
+        "$config{builddir}/providers/implementations/keymgmt/template_kmgmt.c",
+        "$config{builddir}/Makefile.in",
     );
     my @env_headers;
     my @env_macro;
 
+    if (open my $gs_file, '<', "$config{sourcedir}/.gitmodules") {
+        while (<$gs_file>) {
+            s/\R$//; # better chomp
+            if ($_ =~ /\s*path\s*=\s*(.*)$/) {
+                print STDERR "DEBUG[check_env_vars]: adding "
+                             . "\"$config{sourcedir}/$1\" to except_dirs\n"
+                    if $debug;
+                push @except_dirs, "$config{sourcedir}/$1";
+            }
+        }
+    }
+
+    # Because we compare against them, make sure that all elements in
+    # @except_dirs and @except_env_files are real paths.  Otherwise,
+    # we may get false positives because relative paths to the same
+    # file could look different.
+    # For example, './foo.c' == '../dir/foo.c', but turning them into
+    # real paths will have them actually look the same.
+    @except_dirs = map { realpath($_) } @except_dirs;
+    @except_env_files = map { realpath($_) } @except_env_files;
+
     # look for source files
-    find(sub { push @env_files, $File::Find::name if /\.c$|\.in$/; },
-         $config{sourcedir});
+    my $git_ok = 0;
+    open my $glf_pipe, '-|', "git ls-files -- \"$config{sourcedir}\"";
+    while (<$glf_pipe>) {
+        $git_ok = 1;
+        s/\R$//; # better chomp
+        push @env_files, $_ if /\.c$|\.in$/;
+    }
+    close $glf_pipe;
+    # git call has failed, trying to find files manually
+    if (!$git_ok) {
+        find(sub { push @env_files, $File::Find::name if /\.c$|\.in$/; },
+             $config{sourcedir});
+    }
 
     foreach my $filename (@env_files) {
-        next if $filename =~ /test\/|demos\//
-                || grep { $_ eq $filename } @except_env_files;
+        my $realfilename = realpath($filename);
+        next if (grep { $realfilename =~ /^$_\// } @except_dirs)
+                || grep { $_ eq $realfilename } @except_env_files;
 
         open my $fh, '<', $filename or die "Can't open $filename: $!";
         while (my $line = <$fh>) {
             # for windows
             # for .in files
-            $env_list{$1} = 1 if ($line =~ /GetEnvironmentVariableW\([\s\S]*"([^"]+)",/
-                || $line =~ /\$ENV\{([^}"']+)\}/);
+            push @{$env_list{$1}}, "${filename}:$."
+                if ($line =~ /GetEnvironmentVariableW\([\s\S]*"([^"]+)",/
+                    || $line =~ /\$ENV\{([^}"']+)\}/);
             # this also handles ossl_safe_getenv
             if ($line =~ /getenv\(([^()\s]+)\)/) {
                 my $env1 = $1;
                 if ($env1 =~ /"([^"]+)"/) {
-                    $env_list{$1} = 1;
+                    push @{$env_list{$1}}, "${filename}:$.";
                 } elsif ($env1 =~ /([A-Z0-9_])/) {
                     push(@env_macro, $env1);
                 }
@@ -1318,12 +1360,12 @@ sub check_env_vars {
                 # if it's a string just add to the list
                 # otherwise look for the constant value later
                 if ($env1 =~ /"([^"]+)"/) {
-                    $env_list{$1} = 1;
+                    push @{$env_list{$1}}, "${filename}:$.";
                 } else {
                     push(@env_macro, $env1);
                 }
                 if ($env2 =~ /"([^"]+)"/) {
-                    $env_list{$1} = 1;
+                    push @{$env_list{$1}}, "${filename}:$.";
                 } else {
                     push(@env_macro, $env2);
                 }
@@ -1336,14 +1378,15 @@ sub check_env_vars {
     find(sub { push @env_headers, $File::Find::name if /\.h$/; },
          $config{sourcedir});
 
-     foreach my $filename (@env_headers) {
+    foreach my $filename (@env_headers) {
         open my $fh, '<', $filename or die "Can't open $filename: $!";
         while (my $line = <$fh>) {
             foreach my $em (@env_macro) {
-                $env_list{$1} = 1 if ($line =~ /define\s+\Q$em\E\s+"(\S+)"/);
+                push @{$env_list{$1}}, "${filename}:$."
+                    if ($line =~ /define\s+\Q$em\E\s+"(\S+)"/);
             }
         }
-     }
+    }
 
     # need to save the value before starting to delete from the hash
     my $number_of_env = scalar keys %env_list;
@@ -1370,7 +1413,12 @@ sub check_env_vars {
     $number_of_env = scalar keys %env_list;
     if ($number_of_env != 0) {
         print "Undocumented environment variables:\n";
-        print join("\n", sort keys %env_list)."\n";
+        foreach my $env_name (sort keys %env_list) {
+            print $env_name;
+            print " (found in '", join("', '", @{$env_list{$env_name}}), "')"
+                if ref $env_list{$env_name} eq 'ARRAY';
+            print "\n";
+        }
         err("Total:".$number_of_env."\n");
     }
 }

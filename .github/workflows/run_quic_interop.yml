@@ -1,13 +1,65 @@
 name: "Run openssl quic interop testing"
 
 on:
-  workflow_run:
-    workflows: ["Build openssl interop containers"]
-    types: [completed]
+  schedule:
+    - cron: '40 02 * * *'
   workflow_dispatch:
+    inputs:
+      only_interop:
+        type: boolean
+        required: false
+        default: false
+        description: "Run only interop jobs (skip building/pushing containers)"
+
+permissions: {}
 
 jobs:
+  update_quay_container:
+    if: ${{ github.repository == 'openssl/openssl' && !inputs.only_interop }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: "log in to quay.io"
+        run: |
+          docker login -u openssl-ci+machine -p ${{ secrets.QUAY_IO_PASSWORD }} quay.io
+      - name: "Build container"
+        run: |
+          cd test/quic-openssl-docker/
+          docker build -t quay.io/openssl-ci/openssl-quic-interop:latest .
+      - name: "Push to quay"
+        run: |
+          docker push quay.io/openssl-ci/openssl-quic-interop:latest
+
+  update_msquic_quay_container:
+    if: ${{ github.repository == 'openssl/openssl' && !inputs.only_interop }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: microsoft/msquic
+          ref: main
+          submodules: recursive
+          persist-credentials: false
+      - name: "log in to quay.io"
+        run: |
+          docker login -u openssl-ci+machine -p ${{ secrets.QUAY_IO_PASSWORD }} quay.io
+      - name: Patch qns.Dockerfile
+        run: |
+          sed -i 's/RUN     cmake -DQUIC_BUILD_TOOLS=on -DQUIC_ENABLE_LOGGING=on ../RUN     cmake -DQUIC_BUILD_TOOLS=on -DQUIC_ENABLE_LOGGING=on -DQUIC_TLS_LIB=openssl ../' ./scripts/qns.Dockerfile
+          if grep -q "RUN     cmake -DQUIC_BUILD_TOOLS=on -DQUIC_ENABLE_LOGGING=on -DQUIC_TLS_LIB=openssl .." ./scripts/qns.Dockerfile; then echo "Patched successfully"; else exit 1; fi
+      - name: "Build container"
+        run: |
+          docker build -f ./scripts/qns.Dockerfile -t quay.io/openssl-ci/msquic-openssl:latest .
+      - name: "Push to quay"
+        run: |
+          docker push quay.io/openssl-ci/msquic-openssl:latest
+
   run_quic_interop_openssl_client:
+    if: ${{ !inputs.only_interop }}
+    needs: [update_quay_container, update_msquic_quay_container]
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         tests: [http3, transfer, handshake, retry, chacha20, resumption, multiplexing, ipv6]
@@ -18,12 +70,12 @@ jobs:
           - servers: msquic-openssl
             tests: retry
       fail-fast: false
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    steps: &client_steps
+      - uses: actions/checkout@v5
         with:
-         repository: 'quic-interop/quic-interop-runner'
-         fetch-depth: 0
+          repository: 'quic-interop/quic-interop-runner'
+          fetch-depth: 0
+          persist-credentials: false
       - name: Install python requirements
         run: |
           for i in {1..3}; do pip install -r requirements.txt && break; sleep 10; done
@@ -48,17 +100,14 @@ jobs:
                               , role: "both"
                               }}' ./implementations.json > ./implementations.tmp
           mv ./implementations.tmp implementations.json
-      - name: "Update to docker-compose 2.36 and docker engine 28.1.1"
-        run: |
-          mkdir -p ~/.docker/cli-plugins/
-          curl -SL https://github.com/docker/compose/releases/download/v2.36.0/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
-          curl -SL "https://download.docker.com/linux/static/stable/x86_64/docker-28.1.1.tgz" -o ./docker-28.1.1.tgz
-          tar --strip-components=1 -xvzf docker-28.1.1.tgz
-          echo "$PWD" >> $GITHUB_PATH
-          chmod 755 ~/.docker/cli-plugins/docker-compose
-          chmod 755 ./docker
-          sudo mv ./dockerd $(which dockerd)
-          sudo systemctl restart docker
+      - name: Set up docker
+        uses: docker/setup-docker-action@efe9e3891a4f7307e689f2100b33a155b900a608 # v4.5.0
+        with:
+          version: "28.1.1"
+      - name: Set up docker compose
+        uses: docker/setup-compose-action@364cc21a5de5b1ee4a7f5f9d3fa374ce0ccde746 # v1.2.0
+        with:
+          version: "v2.36.2"
       - name: Check docker version
         run: |
           docker version
@@ -66,7 +115,11 @@ jobs:
       - name: "Run interop with openssl client"
         run: |
           python3 ./run.py -c openssl -t ${{ matrix.tests }} -s ${{ matrix.servers }} --log-dir ./logs-client -d
+
   run_quic_interop_openssl_server:
+    if: ${{ !inputs.only_interop }}
+    needs: [update_quay_container, update_msquic_quay_container]
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         tests: [http3, transfer, handshake, retry, chacha20, resumption, amplificationlimit, ipv6]
@@ -75,15 +128,15 @@ jobs:
           - clients: mvfst
             tests: amplificationlimit
       fail-fast: false
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    steps: &server_steps
+      - uses: actions/checkout@v5
         with:
-         repository: 'quic-interop/quic-interop-runner'
-         fetch-depth: 0
+          repository: 'quic-interop/quic-interop-runner'
+          fetch-depth: 0
+          persist-credentials: false
       - name: Install python requirements
         run: |
-          for i in {1..3}; do pip install -r requirements.txt && break; sleep 10; done
+          for i in {1..3}; do pip install -r requirements.txt && break; done
       - name: Add tshark repo
         run: |
           for i in {1..3}; do sudo add-apt-repository ppa:wireshark-dev/stable && break; done
@@ -105,21 +158,46 @@ jobs:
                               , role: "both"
                               }}' ./implementations.json > ./implementations.tmp
           mv ./implementations.tmp implementations.json
-      - name: "Update to docker-compose 2.36 and docker engine 28.1.1"
-        run: |
-          mkdir -p ~/.docker/cli-plugins/
-          curl -SL https://github.com/docker/compose/releases/download/v2.36.0/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
-          curl -SL "https://download.docker.com/linux/static/stable/x86_64/docker-28.1.1.tgz" -o ./docker-28.1.1.tgz
-          tar --strip-components=1 -xvzf docker-28.1.1.tgz
-          echo "$PWD" >> $GITHUB_PATH
-          chmod 755 ~/.docker/cli-plugins/docker-compose
-          chmod 755 ./docker
-          sudo mv ./dockerd $(which dockerd)
-          sudo systemctl restart docker
+      - name: Set up docker
+        uses: docker/setup-docker-action@efe9e3891a4f7307e689f2100b33a155b900a608 # v4.5.0
+        with:
+          version: "28.1.1"
+      - name: Set up docker compose
+        uses: docker/setup-compose-action@364cc21a5de5b1ee4a7f5f9d3fa374ce0ccde746 # v1.2.0
+        with:
+          version: "v2.36.2"
       - name: Check docker version
         run: |
           docker version
           docker compose version
       - name: "Run interop with openssl server"
         run: |
-          python3 ./run.py -s openssl -t ${{ matrix.tests }} -c ${{ matrix.clients }} --log-dir ./logs-server -d
+          python3 ./run.py -s openssl -t "${{ matrix.tests }}" -c "${{ matrix.clients }}" --log-dir ./logs-server -d
+
+  run_quic_interop_openssl_client_only:
+    if: ${{ inputs.only_interop }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tests: [http3, transfer, handshake, retry, chacha20, resumption, multiplexing, ipv6]
+        servers: [quic-go, ngtcp2, mvfst, quiche, nginx, msquic, haproxy, msquic-openssl]
+        exclude:
+          - servers: msquic
+            tests: retry
+          - servers: msquic-openssl
+            tests: retry
+      fail-fast: false
+    steps: *client_steps
+
+  run_quic_interop_openssl_server_only:
+    if: ${{ inputs.only_interop }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tests: [http3, transfer, handshake, retry, chacha20, resumption, amplificationlimit, ipv6]
+        clients: [quic-go, ngtcp2, mvfst, quiche, msquic, openssl, chrome, msquic-openssl]
+        exclude:
+          - clients: mvfst
+            tests: amplificationlimit
+      fail-fast: false
+    steps: *server_steps

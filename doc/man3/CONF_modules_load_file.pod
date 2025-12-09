@@ -33,11 +33,19 @@ If B<filename> is NULL the standard OpenSSL configuration file is used
 as determined by calling CONF_get1_default_config_file().
 If B<appname> is NULL the standard OpenSSL application name B<openssl_conf> is
 used.
-The behaviour can be customized using B<flags>. Note that, the error suppressing
-can be overridden by B<config_diagnostics> as described in L<config(5)>.
+The behaviour can be customized using B<flags>.
+Note that error handling can be customised via the configuration file's
+default section B<config_diagnostics> parameter as described in L<config(5)>.
 
 CONF_modules_load_file() is the same as CONF_modules_load_file_ex() but
 has a NULL library context.
+The global (NULL) library context is typically initialised just once at
+application startup.
+Library initialisation is typically implicit, but explicit initialisation is
+also supported by calling L<OPENSSL_init_crypto(3)> or L<OPENSSL_init_ssl(3)>,
+sufficiently early in the main program, before implicit OpenSSL library
+initialisation has taken place as a side-effect of other OpenSSL function
+calls.
 
 CONF_modules_load() is identical to CONF_modules_load_file() except it
 reads configuration information from B<cnf>.
@@ -145,6 +153,28 @@ Load and parse configuration file manually, custom error handling:
      fclose(fp);
      NCONF_free(cnf);
  }
+
+=head1 BUGS
+
+In OpenSSL 3.x the CONF_modules_load_file_ex() and CONF_modules_load_file()
+functions affect some shared global state other than the specified library
+context.
+Therefore, even if used with a freshly created library context, the function
+is not thread safe, and should not be used except as part of early application
+initialisation.
+Applications that want to use multiple library contexts may find that the most
+recently loaded configuration file perturbs prior settings in other library
+contexts.
+For example, B<ssl> module settings are not library context specific, and the
+last configuration file loaded that has an C<ssl_config> setting changes the
+SSL settings for all library contexts.
+The L<SSL_CTX_config(3)> and L<SSL_config(3)> functions can be used to perform
+late customisation of SSL contexts and connection handles.
+Here I<late> means that the chosen section's settings are applied in addition
+to any initial settings from the B<ssl> module's B<system_default> section that
+are used during initial construction of the SSL context.
+This sort of fine-tuning does not involve a separate configuration file or
+library context.
 
 =head1 SEE ALSO
 

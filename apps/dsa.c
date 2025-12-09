@@ -27,57 +27,64 @@
 #include <openssl/core_dispatch.h>
 
 #ifndef OPENSSL_NO_RC4
-# define DEFAULT_PVK_ENCR_STRENGTH      2
+#define DEFAULT_PVK_ENCR_STRENGTH 2
 #else
-# define DEFAULT_PVK_ENCR_STRENGTH      0
+#define DEFAULT_PVK_ENCR_STRENGTH 0
 #endif
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_ENGINE,
+    OPT_INFORM,
+    OPT_OUTFORM,
+    OPT_IN,
+    OPT_OUT,
     /* Do not change the order here; see case statements below */
-    OPT_PVK_NONE, OPT_PVK_WEAK, OPT_PVK_STRONG,
-    OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_PUBIN,
-    OPT_PUBOUT, OPT_CIPHER, OPT_PASSIN, OPT_PASSOUT,
+    OPT_PVK_NONE,
+    OPT_PVK_WEAK,
+    OPT_PVK_STRONG,
+    OPT_NOOUT,
+    OPT_TEXT,
+    OPT_MODULUS,
+    OPT_PUBIN,
+    OPT_PUBOUT,
+    OPT_CIPHER,
+    OPT_PASSIN,
+    OPT_PASSOUT,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS dsa_options[] = {
     OPT_SECTION("General"),
-    {"help", OPT_HELP, '-', "Display this summary"},
-    {"", OPT_CIPHER, '-', "Any supported cipher"},
+    { "help", OPT_HELP, '-', "Display this summary" },
+    { "", OPT_CIPHER, '-', "Any supported cipher" },
 #ifndef OPENSSL_NO_RC4
-    {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
-    {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
-    {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
-#endif
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
+    { "pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)" },
+    { "pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level" },
+    { "pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding" },
 #endif
 
     OPT_SECTION("Input"),
-    {"in", OPT_IN, 's', "Input key"},
-    {"inform", OPT_INFORM, 'f', "Input format (DER/PEM/PVK); has no effect"},
-    {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    { "in", OPT_IN, 's', "Input key" },
+    { "inform", OPT_INFORM, 'f', "Input format (DER/PEM/PVK); has no effect" },
+    { "pubin", OPT_PUBIN, '-', "Expect a public key in input file" },
+    { "passin", OPT_PASSIN, 's', "Input file pass phrase source" },
 
     OPT_SECTION("Output"),
-    {"out", OPT_OUT, '>', "Output file"},
-    {"outform", OPT_OUTFORM, 'f', "Output format, DER PEM PVK"},
-    {"noout", OPT_NOOUT, '-', "Don't print key out"},
-    {"text", OPT_TEXT, '-', "Print the key in text"},
-    {"modulus", OPT_MODULUS, '-', "Print the DSA public value"},
-    {"pubout", OPT_PUBOUT, '-', "Output public key, not private"},
-    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+    { "out", OPT_OUT, '>', "Output file" },
+    { "outform", OPT_OUTFORM, 'f', "Output format, DER PEM PVK" },
+    { "noout", OPT_NOOUT, '-', "Don't print key out" },
+    { "text", OPT_TEXT, '-', "Print the key in text" },
+    { "modulus", OPT_MODULUS, '-', "Print the DSA public value" },
+    { "pubout", OPT_PUBOUT, '-', "Output public key, not private" },
+    { "passout", OPT_PASSOUT, 's', "Output file pass phrase source" },
 
     OPT_PROV_OPTIONS,
-    {NULL}
+    { NULL }
 };
 
 int dsa_main(int argc, char **argv)
 {
     BIO *out = NULL;
-    ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_CIPHER *enc = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
@@ -98,7 +105,7 @@ int dsa_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
- opthelp:
+        opthelp:
             ret = 0;
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
@@ -120,18 +127,15 @@ int dsa_main(int argc, char **argv)
         case OPT_OUT:
             outfile = opt_arg();
             break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
-            break;
         case OPT_PASSIN:
             passinarg = opt_arg();
             break;
         case OPT_PASSOUT:
             passoutarg = opt_arg();
             break;
-        case OPT_PVK_STRONG:    /* pvk_encr:= 2 */
-        case OPT_PVK_WEAK:      /* pvk_encr:= 1 */
-        case OPT_PVK_NONE:      /* pvk_encr:= 0 */
+        case OPT_PVK_STRONG: /* pvk_encr:= 2 */
+        case OPT_PVK_WEAK: /* pvk_encr:= 1 */
+        case OPT_PVK_NONE: /* pvk_encr:= 0 */
 #ifndef OPENSSL_NO_RC4
             pvk_encr = (o - OPT_PVK_NONE);
 #endif
@@ -176,9 +180,9 @@ int dsa_main(int argc, char **argv)
 
     BIO_printf(bio_err, "read DSA key\n");
     if (pubin)
-        pkey = load_pubkey(infile, informat, 1, passin, e, "public key");
+        pkey = load_pubkey(infile, informat, 1, passin, "public key");
     else
-        pkey = load_key(infile, informat, 1, passin, e, "private key");
+        pkey = load_key(infile, informat, 1, passin, "private key");
 
     if (pkey == NULL) {
         BIO_printf(bio_err, "unable to load Key\n");
@@ -252,12 +256,12 @@ int dsa_main(int argc, char **argv)
     } else {
         assert(private);
         selection = (OSSL_KEYMGMT_SELECT_KEYPAIR
-                     | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+            | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
     }
 
     /* Perform the encoding */
     ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, selection, output_type,
-                                         output_structure, NULL);
+        output_structure, NULL);
     if (OSSL_ENCODER_CTX_get_num_encoders(ectx) == 0) {
         BIO_printf(bio_err, "%s format not supported\n", output_type);
         goto end;
@@ -273,8 +277,8 @@ int dsa_main(int argc, char **argv)
         if (passout != NULL)
             /* When passout given, override the passphrase prompter */
             OSSL_ENCODER_CTX_set_passphrase(ectx,
-                                            (const unsigned char *)passout,
-                                            strlen(passout));
+                (const unsigned char *)passout,
+                strlen(passout));
     }
 
     /* PVK requires a bit more */
@@ -293,14 +297,13 @@ int dsa_main(int argc, char **argv)
         goto end;
     }
     ret = 0;
- end:
+end:
     if (ret != 0)
         ERR_print_errors(bio_err);
     OSSL_ENCODER_CTX_free(ectx);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
     EVP_CIPHER_free(enc);
-    release_engine(e);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
     return ret;

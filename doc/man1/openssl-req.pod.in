@@ -27,9 +27,8 @@ B<openssl> B<req>
 [B<-noenc>]
 [B<-nodes>]
 [B<-key> I<filename>|I<uri>]
-[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>]
 [B<-keyout> I<filename>]
-[B<-keygen_engine> I<id>]
 [B<-I<digest>>]
 [B<-config> I<filename>]
 [B<-section> I<name>]
@@ -59,7 +58,7 @@ B<openssl> B<req>
 [B<-quiet>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -203,10 +202,11 @@ any necessary parameters should be specified via the B<-pkeyopt> option.
 
 B<dsa:>I<filename> generates a DSA key using the parameters
 in the file I<filename>. B<ec:>I<filename> generates EC key (usable both with
-ECDSA or ECDH algorithms), B<gost2001:>I<filename> generates GOST R
-34.10-2001 key (requires B<gost> engine configured in the configuration
-file). If just B<gost2001> is specified a parameter set should be
-specified by B<-pkeyopt> I<paramset:X>
+ECDSA or ECDH algorithms), B<gost2001:>I<filename>, B<gost2012_256:>I<filename>
+and B<gost2012_512:>I<filename> generate GOST R 34.10-2001 and GOST R 34.10-2012
+keys with a 256 and 512 bit modulus respectively (these require the B<gostprov>
+provider). If just B<gost2001> is specified, a parameter set should be specified
+by B<-pkeyopt> I<paramset:X>.
 
 =item B<-pkeyopt> I<opt>:I<value>
 
@@ -226,7 +226,7 @@ For certificate signing this option is overridden by the B<-CA> option.
 
 This option also accepts PKCS#8 format private keys for PEM format files.
 
-=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>
 
 The format of the private key; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -403,7 +403,7 @@ If an extension is added using this option that has the same OID as one
 defined in the extension section of the config file, it overrides that one.
 
 This option can be given multiple times.
-Doing so, the same key most not be given more than once.
+Doing so, the same key must not be given more than once.
 
 =item B<-precert>
 
@@ -449,16 +449,9 @@ Print fewer details about the operations being performed, which may be
 handy during batch scripts or pipelines (specifically "progress dots"
 during key generation are suppressed).
 
-=item B<-keygen_engine> I<id>
-
-Specifies an engine (by its unique I<id> string) which would be used
-for key generation operations.
-
 {- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
-
-{- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
 
@@ -842,8 +835,7 @@ The B<-section> option was added in OpenSSL 3.0.0.
 The B<-multivalue-rdn> option has become obsolete in OpenSSL 3.0.0 and
 has no effect.
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
-The <-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
+The <-nodes> option was deprecated in OpenSSL 3.0; use B<-noenc> instead.
 
 The B<-reqexts> option has been made an alias of B<-extensions> in OpenSSL 3.2.
 
@@ -852,6 +844,8 @@ generated certificates bear X.509 version 3 unless B<-x509v1> is given,
 and key identifier extensions are included by default.
 
 Since OpenSSL 3.3, the B<-verify> option will exit with 1 on failure.
+
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

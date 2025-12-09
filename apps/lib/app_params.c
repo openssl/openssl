@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -66,7 +66,7 @@ static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
         printed_len = BIO_snprintf(buf, bufsz, " (arbitrary size)");
     else
         printed_len = BIO_snprintf(buf, bufsz, " (max %zu bytes large)",
-                                   param->data_size);
+            param->data_size);
     if (printed_len > 0) {
         buf += printed_len;
         bufsz -= printed_len;
@@ -88,7 +88,7 @@ int print_param_types(const char *thing, const OSSL_PARAM *pdefs, int indent)
     } else {
         BIO_printf(bio_out, "%*s%s:\n", indent, "", thing);
         for (; pdefs->key != NULL; pdefs++) {
-            char buf[200];       /* This should be ample space */
+            char buf[200]; /* This should be ample space */
 
             describe_param_type(buf, sizeof(buf), pdefs);
             BIO_printf(bio_out, "%*s  %s\n", indent, "", buf);
@@ -180,8 +180,7 @@ void print_param_value(const OSSL_PARAM *p, int indent)
         break;
     default:
         BIO_printf(bio_out, "unknown type (%u) of %zu bytes\n",
-                   p->data_type, p->return_size);
+            p->data_type, p->return_size);
         break;
     }
 }
-

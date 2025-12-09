@@ -18,34 +18,33 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_IN, OPT_OUT, OPT_TEXT, OPT_NOOUT,
-    OPT_ENGINE, OPT_CHECK,
+    OPT_IN,
+    OPT_OUT,
+    OPT_TEXT,
+    OPT_NOOUT,
+    OPT_CHECK,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkeyparam_options[] = {
     OPT_SECTION("General"),
-    {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
-    {"check", OPT_CHECK, '-', "Check key param consistency"},
+    { "help", OPT_HELP, '-', "Display this summary" },
+    { "check", OPT_CHECK, '-', "Check key param consistency" },
 
     OPT_SECTION("Input"),
-    {"in", OPT_IN, '<', "Input file"},
+    { "in", OPT_IN, '<', "Input file" },
 
     OPT_SECTION("Output"),
-    {"out", OPT_OUT, '>', "Output file"},
-    {"text", OPT_TEXT, '-', "Print parameters as text"},
-    {"noout", OPT_NOOUT, '-', "Don't output encoded parameters"},
+    { "out", OPT_OUT, '>', "Output file" },
+    { "text", OPT_TEXT, '-', "Print parameters as text" },
+    { "noout", OPT_NOOUT, '-', "Don't output encoded parameters" },
 
     OPT_PROV_OPTIONS,
-    {NULL}
+    { NULL }
 };
 
 int pkeyparam_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -58,7 +57,7 @@ int pkeyparam_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
- opthelp:
+        opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         case OPT_HELP:
@@ -70,9 +69,6 @@ int pkeyparam_main(int argc, char **argv)
             break;
         case OPT_OUT:
             outfile = opt_arg();
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_TEXT:
             text = 1;
@@ -98,7 +94,7 @@ int pkeyparam_main(int argc, char **argv)
     if (in == NULL)
         goto end;
     pkey = PEM_read_bio_Parameters_ex(in, NULL, app_get0_libctx(),
-                                      app_get0_propq());
+        app_get0_propq());
     if (pkey == NULL) {
         BIO_printf(bio_err, "Error reading parameters\n");
         ERR_print_errors(bio_err);
@@ -109,11 +105,8 @@ int pkeyparam_main(int argc, char **argv)
         goto end;
 
     if (check) {
-        if (e == NULL)
-            ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(), pkey,
-                                             app_get0_propq());
-        else
-            ctx = EVP_PKEY_CTX_new(pkey, e);
+        ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(), pkey,
+            app_get0_propq());
         if (ctx == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -142,10 +135,9 @@ int pkeyparam_main(int argc, char **argv)
 
     ret = EXIT_SUCCESS;
 
- end:
+end:
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
-    release_engine(e);
     BIO_free_all(out);
     BIO_free(in);
 

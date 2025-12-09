@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,7 +23,7 @@
 /* Return BIO based on EncryptedContentInfo and key */
 
 BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
-                                        const CMS_CTX *cms_ctx)
+    const CMS_CTX *cms_ctx, int auth)
 {
     BIO *b;
     EVP_CIPHER_CTX *ctx;
@@ -64,7 +64,7 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     }
     if (cipher != NULL) {
         fetched_ciph = EVP_CIPHER_fetch(libctx, EVP_CIPHER_get0_name(cipher),
-                                        propq);
+            propq);
         if (fetched_ciph != NULL)
             cipher = fetched_ciph;
     }
@@ -104,10 +104,15 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
             goto err;
         }
         if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
+            if (!auth) {
+                ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_AEAD_IN_ENVELOPED_DATA);
+                goto err;
+            }
             piv = aparams.iv;
             if (ec->taglen > 0
-                    && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                           (int)ec->taglen, ec->tag) <= 0) {
+                && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                       (int)ec->taglen, ec->tag)
+                    <= 0) {
                 ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_AEAD_SET_TAG_ERROR);
                 goto err;
             }
@@ -135,7 +140,6 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
             keep_key = 1;
         else
             ERR_clear_error();
-
     }
 
     if (ec->keylen != tkeylen) {
@@ -173,12 +177,17 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
             memcpy(aparams.iv, piv, ivlen);
             aparams.iv_len = ivlen;
             aparams.tag_len = EVP_CIPHER_CTX_get_tag_length(ctx);
-            if (aparams.tag_len <= 0)
+            if (aparams.tag_len <= 0) {
+                ASN1_TYPE_free(calg->parameter);
+                calg->parameter = NULL;
                 goto err;
+            }
         }
 
         if (evp_cipher_param_to_asn1_ex(ctx, calg->parameter, &aparams) <= 0) {
             ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
+            ASN1_TYPE_free(calg->parameter);
+            calg->parameter = NULL;
             goto err;
         }
         /* If parameter type not set omit parameter */
@@ -189,7 +198,7 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     }
     ok = 1;
 
- err:
+err:
     EVP_CIPHER_free(fetched_ciph);
     if (!keep_key || !ok) {
         OPENSSL_clear_free(ec->key, ec->keylen);
@@ -203,9 +212,9 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
 }
 
 int ossl_cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
-                                   const EVP_CIPHER *cipher,
-                                   const unsigned char *key, size_t keylen,
-                                   const CMS_CTX *cms_ctx)
+    const EVP_CIPHER *cipher,
+    const unsigned char *key, size_t keylen,
+    const CMS_CTX *cms_ctx)
 {
     ec->cipher = cipher;
     if (key) {
@@ -220,7 +229,7 @@ int ossl_cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
 }
 
 int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
-                               const unsigned char *key, size_t keylen)
+    const unsigned char *key, size_t keylen)
 {
     CMS_EncryptedContentInfo *ec;
 
@@ -229,6 +238,14 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
         return 0;
     }
     if (ciph) {
+        if ((EVP_CIPHER_get_flags(ciph) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_CONTENT_ENCRYPTION_ALGORITHM);
+            return 0;
+        }
+        if (cms->d.encryptedData != NULL) {
+            M_ASN1_free_of(cms->d.encryptedData, CMS_EncryptedData);
+            cms->d.encryptedData = NULL;
+        }
         cms->d.encryptedData = M_ASN1_new_of(CMS_EncryptedData);
         if (!cms->d.encryptedData) {
             ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
@@ -242,14 +259,15 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
     }
     ec = cms->d.encryptedData->encryptedContentInfo;
     return ossl_cms_EncryptedContent_init(ec, ciph, key, keylen,
-                                          ossl_cms_get0_cmsctx(cms));
+        ossl_cms_get0_cmsctx(cms));
 }
 
 BIO *ossl_cms_EncryptedData_init_bio(const CMS_ContentInfo *cms)
 {
     CMS_EncryptedData *enc = cms->d.encryptedData;
+
     if (enc->encryptedContentInfo->cipher && enc->unprotectedAttrs)
         enc->version = 2;
     return ossl_cms_EncryptedContent_init_bio(enc->encryptedContentInfo,
-                                              ossl_cms_get0_cmsctx(cms));
+        ossl_cms_get0_cmsctx(cms), 0);
 }

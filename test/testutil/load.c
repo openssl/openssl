@@ -23,7 +23,7 @@ X509 *load_cert_pem(const char *file, OSSL_LIB_CTX *libctx)
     if (!TEST_ptr(file) || !TEST_ptr(bio = BIO_new(BIO_s_file())))
         return NULL;
     if (TEST_int_gt(BIO_read_filename(bio, file), 0)
-            && TEST_ptr(cert = X509_new_ex(libctx, NULL)))
+        && TEST_ptr(cert = X509_new_ex(libctx, NULL)))
         (void)TEST_ptr(cert = PEM_read_bio_X509(bio, &cert, NULL, NULL));
 
     BIO_free(bio);
@@ -77,7 +77,7 @@ EVP_PKEY *load_pkey_pem(const char *file, OSSL_LIB_CTX *libctx)
         unsigned long err = ERR_peek_error();
 
         if (TEST_ptr(key = PEM_read_bio_PrivateKey_ex(bio, NULL, NULL, NULL,
-                                                      libctx, NULL))
+                         libctx, NULL))
             && err != ERR_peek_error()) {
             TEST_info("Spurious error from reading PEM");
             EVP_PKEY_free(key);
@@ -102,4 +102,58 @@ X509_REQ *load_csr_der(const char *file, OSSL_LIB_CTX *libctx)
         (void)TEST_ptr(d2i_X509_REQ_bio(bio, &csr));
     BIO_free(bio);
     return csr;
+}
+
+/*
+ * Glue an array of strings together.  Return a BIO and put the string
+ * into |*out| so we can free it.
+ */
+BIO *glue2bio(const char **pem, char **out)
+{
+    size_t s = 0;
+
+    *out = glue_strings(pem, &s);
+    return BIO_new_mem_buf(*out, (int)s);
+}
+
+/*
+ * Create a CRL from an array of strings.
+ */
+X509_CRL *CRL_from_strings(const char **pem)
+{
+    X509_CRL *crl;
+    char *p;
+    BIO *b = glue2bio(pem, &p);
+
+    if (b == NULL) {
+        OPENSSL_free(p);
+        return NULL;
+    }
+
+    crl = PEM_read_bio_X509_CRL(b, NULL, NULL, NULL);
+
+    OPENSSL_free(p);
+    BIO_free(b);
+    return crl;
+}
+
+/*
+ * Create an X509 from an array of strings.
+ */
+X509 *X509_from_strings(const char **pem)
+{
+    X509 *x;
+    char *p;
+    BIO *b = glue2bio(pem, &p);
+
+    if (b == NULL) {
+        OPENSSL_free(p);
+        return NULL;
+    }
+
+    x = PEM_read_bio_X509(b, NULL, NULL, NULL);
+
+    OPENSSL_free(p);
+    BIO_free(b);
+    return x;
 }

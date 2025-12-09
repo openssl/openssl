@@ -60,8 +60,6 @@ The output length of the PRF is specified by the length parameter in the
 EVP_PKEY_derive() function. Since the output length is variable, setting
 the buffer to B<NULL> is not meaningful for the TLS PRF.
 
-Optimised versions of the TLS PRF can be implemented in an ENGINE.
-
 =head1 RETURN VALUES
 
 All these functions return 1 for success and 0 or a negative value for failure.
@@ -102,7 +100,7 @@ OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

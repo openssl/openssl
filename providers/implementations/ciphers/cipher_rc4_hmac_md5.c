@@ -19,9 +19,10 @@
 #include "cipher_rc4_hmac_md5.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/ciphers/cipher_rc4_hmac_md5.inc"
 
-#define RC4_HMAC_MD5_FLAGS (PROV_CIPHER_FLAG_VARIABLE_LENGTH                   \
-                            | PROV_CIPHER_FLAG_AEAD)
+#define RC4_HMAC_MD5_FLAGS (PROV_CIPHER_FLAG_VARIABLE_LENGTH \
+    | PROV_CIPHER_FLAG_AEAD)
 
 #define RC4_HMAC_MD5_KEY_BITS (16 * 8)
 #define RC4_HMAC_MD5_BLOCK_BITS (1 * 8)
@@ -55,13 +56,13 @@ static void *rc4_hmac_md5_newctx(void *provctx)
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         ossl_cipher_generic_initkey(ctx, RC4_HMAC_MD5_KEY_BITS,
-                                    RC4_HMAC_MD5_BLOCK_BITS,
-                                    RC4_HMAC_MD5_IV_BITS,
-                                    RC4_HMAC_MD5_MODE, RC4_HMAC_MD5_FLAGS,
-                                    ossl_prov_cipher_hw_rc4_hmac_md5(
-                                        RC4_HMAC_MD5_KEY_BITS
-                                    ), NULL);
-     return ctx;
+            RC4_HMAC_MD5_BLOCK_BITS,
+            RC4_HMAC_MD5_IV_BITS,
+            RC4_HMAC_MD5_MODE, RC4_HMAC_MD5_FLAGS,
+            ossl_prov_cipher_hw_rc4_hmac_md5(
+                RC4_HMAC_MD5_KEY_BITS),
+            NULL);
+    return ctx;
 }
 
 static void rc4_hmac_md5_freectx(void *vctx)
@@ -69,7 +70,7 @@ static void rc4_hmac_md5_freectx(void *vctx)
     PROV_RC4_HMAC_MD5_CTX *ctx = (PROV_RC4_HMAC_MD5_CTX *)vctx;
 
     ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
 static void *rc4_hmac_md5_dupctx(void *vctx)
@@ -82,8 +83,8 @@ static void *rc4_hmac_md5_dupctx(void *vctx)
 }
 
 static int rc4_hmac_md5_einit(void *ctx, const unsigned char *key,
-                              size_t keylen, const unsigned char *iv,
-                              size_t ivlen, const OSSL_PARAM params[])
+    size_t keylen, const unsigned char *iv,
+    size_t ivlen, const OSSL_PARAM params[])
 {
     if (!ossl_cipher_generic_einit(ctx, key, keylen, iv, ivlen, NULL))
         return 0;
@@ -91,74 +92,62 @@ static int rc4_hmac_md5_einit(void *ctx, const unsigned char *key,
 }
 
 static int rc4_hmac_md5_dinit(void *ctx, const unsigned char *key,
-                              size_t keylen, const unsigned char *iv,
-                              size_t ivlen, const OSSL_PARAM params[])
+    size_t keylen, const unsigned char *iv,
+    size_t ivlen, const OSSL_PARAM params[])
 {
     if (!ossl_cipher_generic_dinit(ctx, key, keylen, iv, ivlen, NULL))
         return 0;
     return rc4_hmac_md5_set_ctx_params(ctx, params);
 }
 
-static const OSSL_PARAM rc4_hmac_md5_known_gettable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
-    OSSL_PARAM_END
-};
-const OSSL_PARAM *rc4_hmac_md5_gettable_ctx_params(ossl_unused void *cctx,
-                                                   ossl_unused void *provctx)
+static const OSSL_PARAM *rc4_hmac_md5_gettable_ctx_params(ossl_unused void *cctx,
+    ossl_unused void *provctx)
 {
-    return rc4_hmac_md5_known_gettable_ctx_params;
+    return rc4_hmac_md5_get_ctx_params_list;
 }
 
 static int rc4_hmac_md5_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_RC4_HMAC_MD5_CTX *ctx = (PROV_RC4_HMAC_MD5_CTX *)vctx;
-    OSSL_PARAM *p;
+    struct rc4_hmac_md5_get_ctx_params_st p;
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->base.keylen)) {
+    if (ctx == NULL || !rc4_hmac_md5_get_ctx_params_decoder(params, &p))
+        return 0;
+
+    if (p.keylen != NULL && !OSSL_PARAM_set_size_t(p.keylen, ctx->base.keylen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->base.ivlen)) {
+    if (p.ivlen != NULL && !OSSL_PARAM_set_size_t(p.ivlen, ctx->base.ivlen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->tls_aad_pad_sz)) {
+
+    if (p.pad != NULL && !OSSL_PARAM_set_size_t(p.pad, ctx->tls_aad_pad_sz)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
     return 1;
 }
 
-static const OSSL_PARAM rc4_hmac_md5_known_settable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, NULL, 0),
-    OSSL_PARAM_END
-};
-const OSSL_PARAM *rc4_hmac_md5_settable_ctx_params(ossl_unused void *cctx,
-                                                   ossl_unused void *provctx)
+static const OSSL_PARAM *rc4_hmac_md5_settable_ctx_params(ossl_unused void *cctx,
+    ossl_unused void *provctx)
 {
-    return rc4_hmac_md5_known_settable_ctx_params;
+    return rc4_hmac_md5_set_ctx_params_list;
 }
 
 static int rc4_hmac_md5_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_RC4_HMAC_MD5_CTX *ctx = (PROV_RC4_HMAC_MD5_CTX *)vctx;
-    const OSSL_PARAM *p;
+    struct rc4_hmac_md5_set_ctx_params_st p;
     size_t sz;
 
-    if (ossl_param_is_empty(params))
-        return 1;
+    if (ctx == NULL || !rc4_hmac_md5_set_ctx_params_decoder(params, &p))
+        return 0;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
-    if (p != NULL) {
-        if (!OSSL_PARAM_get_size_t(p, &sz)) {
+    if (p.keylen != NULL) {
+        if (!OSSL_PARAM_get_size_t(p.keylen, &sz)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -168,9 +157,8 @@ static int rc4_hmac_md5_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         }
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_IVLEN);
-    if (p != NULL) {
-        if (!OSSL_PARAM_get_size_t(p, &sz)) {
+    if (p.ivlen != NULL) {
+        if (!OSSL_PARAM_get_size_t(p.ivlen, &sz)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -180,33 +168,32 @@ static int rc4_hmac_md5_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         }
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD);
-    if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_OCTET_STRING) {
+    if (p.aad != NULL) {
+        if (p.aad->data_type != OSSL_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
-        sz = GET_HW(ctx)->tls_init(&ctx->base, p->data, p->data_size);
+        sz = GET_HW(ctx)->tls_init(&ctx->base, p.aad->data, p.aad->data_size);
         if (sz == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
             return 0;
         }
         ctx->tls_aad_pad_sz = sz;
     }
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_MAC_KEY);
-    if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_OCTET_STRING) {
+
+    if (p.mackey != NULL) {
+        if (p.mackey->data_type != OSSL_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
-        GET_HW(ctx)->init_mackey(&ctx->base, p->data, p->data_size);
+        GET_HW(ctx)->init_mackey(&ctx->base, p.mackey->data,
+            p.mackey->data_size);
     }
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_TLS_VERSION);
-    if (p != NULL) {
-        if (!OSSL_PARAM_get_uint(p, &ctx->base.tlsversion)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
-            return 0;
-        }
+
+    if (p.tlsver != NULL
+        && !OSSL_PARAM_get_uint(p.tlsver, &ctx->base.tlsversion)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+        return 0;
     }
 
     return 1;
@@ -215,10 +202,10 @@ static int rc4_hmac_md5_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 static int rc4_hmac_md5_get_params(OSSL_PARAM params[])
 {
     return ossl_cipher_generic_get_params(params, RC4_HMAC_MD5_MODE,
-                                          RC4_HMAC_MD5_FLAGS,
-                                          RC4_HMAC_MD5_KEY_BITS,
-                                          RC4_HMAC_MD5_BLOCK_BITS,
-                                          RC4_HMAC_MD5_IV_BITS);
+        RC4_HMAC_MD5_FLAGS,
+        RC4_HMAC_MD5_KEY_BITS,
+        RC4_HMAC_MD5_BLOCK_BITS,
+        RC4_HMAC_MD5_IV_BITS);
 }
 
 const OSSL_DISPATCH ossl_rc4_hmac_ossl_md5_functions[] = {

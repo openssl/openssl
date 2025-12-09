@@ -28,7 +28,7 @@ from which an OpenSSL type can be retrieved.
 =head2 URI schemes and loaders
 
 Support for a URI scheme is called a STORE "loader", and can be added
-dynamically from the calling application or from a loadable engine.
+dynamically from the calling application or from a loadable provider.
 
 Support for the 'file' scheme is built into C<libcrypto>.
 See L<ossl_store-file(7)> for more information.

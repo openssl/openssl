@@ -16,22 +16,28 @@ PWD="$(pwd)"
 
 SRCTOP="$(cd $SRCTOP; pwd)"
 BLDTOP="$(cd $BLDTOP; pwd)"
+INSTALLTOP=$BLDTOP/oqs-provider/.local
 
-if [ "$SRCTOP" != "$BLDTOP" ] ; then
-    echo "Out of tree builds not supported with oqsprovider test!"
-    exit 1
-fi
+# Prepare minimal local OpenSSL "installation"
+mkdir -p $INSTALLTOP/bin
+mkdir -p $INSTALLTOP/include/openssl
+mkdir -p $INSTALLTOP/lib
+ln -sf $SRCTOP/include/openssl/*.h $INSTALLTOP/include/openssl/
+ln -sf $BLDTOP/include/openssl/*.h $INSTALLTOP/include/openssl/
+ln -sf $BLDTOP/libcrypto.so.$SHLIB_VERSION_NUMBER $INSTALLTOP/lib/
+ln -sf $BLDTOP/libssl.so.$SHLIB_VERSION_NUMBER $INSTALLTOP/lib/
+ln -sf libcrypto.so.$SHLIB_VERSION_NUMBER $INSTALLTOP/lib/libcrypto.so
+ln -sf libssl.so.$SHLIB_VERSION_NUMBER $INSTALLTOP/lib/libssl.so
+ln -sf $BLDTOP/apps/openssl $INSTALLTOP/bin/
 
-O_EXE="$BLDTOP/apps"
-O_BINC="$BLDTOP/include"
-O_SINC="$SRCTOP/include"
-O_LIB="$BLDTOP"
+O_EXE="$INSTALLTOP/bin"
+O_INC="$INSTALLTOP/include"
+O_LIB="$INSTALLTOP/lib"
 
 unset OPENSSL_CONF
 
 export PATH="$O_EXE:$PATH"
 export LD_LIBRARY_PATH="$O_LIB:$LD_LIBRARY_PATH"
-export OPENSSL_ROOT_DIR="$O_LIB"
 
 # Check/Set openssl version
 OPENSSL_VERSION=`openssl version | cut -f 2 -d ' '`
@@ -41,29 +47,30 @@ echo "Testing OpenSSL using oqsprovider:"
 echo "   CWD:                $PWD"
 echo "   SRCTOP:             $SRCTOP"
 echo "   BLDTOP:             $BLDTOP"
-echo "   OPENSSL_ROOT_DIR:   $OPENSSL_ROOT_DIR"
+echo "   INSTALLTOP:         $INSTALLTOP"
 echo "   OpenSSL version:    $OPENSSL_VERSION"
 echo "------------------------------------------------------------------"
 
-if [ ! -d $SRCTOP/oqs-provider/.local ]; then
+if [ ! -f $INSTALLTOP/lib/liboqs.a ]; then
 # this version of oqsprovider dependent on v0.11.0 of liboqs, so set this;
 # also be sure to use this openssl for liboqs-internal OpenSSL use;
 # see all libops config options listed at
 # https://github.com/open-quantum-safe/liboqs/wiki/Customizing-liboqs
 (
-       cd $SRCTOP/oqs-provider \
+        cd $SRCTOP/oqs-provider \
+           && rm -rf liboqs \
            && git clone --depth 1 --branch 0.11.0 https://github.com/open-quantum-safe/liboqs.git \
            && cd liboqs \
            && mkdir build \
            && cd build \
-           && cmake -DOPENSSL_ROOT_DIR=$OPENSSL_ROOT_DIR -DCMAKE_INSTALL_PREFIX=$SRCTOP/oqs-provider/.local .. \
+           && cmake -DOPENSSL_ROOT_DIR=$INSTALLTOP -DCMAKE_INSTALL_PREFIX=$INSTALLTOP .. \
            && make \
            && make install
    )
 fi
 
 echo "   CWD:                $PWD"
-liboqs_DIR=$SRCTOP/oqs-provider/.local cmake $SRCTOP/oqs-provider -DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR" -B _build && cmake --build _build
+liboqs_DIR=$INSTALLTOP cmake $SRCTOP/oqs-provider -DOPENSSL_ROOT_DIR="$INSTALLTOP" -B _build && cmake --build _build
 export CTEST_OUTPUT_ON_FAILURE=1
 export OPENSSL_APP="$O_EXE/openssl"
 export OPENSSL_MODULES=$PWD/_build/lib

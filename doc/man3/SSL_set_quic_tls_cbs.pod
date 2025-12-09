@@ -70,6 +70,11 @@ given SSL object I<s>, a set of callbacks are supplied in an B<OSSL_DISPATCH>
 table via I<qtdis>. The I<arg> parameter will be passed as an argument when the
 various callbacks are called.
 
+The above callbacks are invoked, as needed, by SSL_do_handshake() and SSL_read() (including
+SSL_read_ex, SSL_peek, SSL_peek_ex). Once the SSL handshake is complete, the QUIC
+stack must arrange to call one of the SSL_read() variants whenever a post-handshake CRYPTO
+frame is received. The number of bytes requested may be zero.
+
 An B<OSSL_DISPATCH> table should consist of an array of B<OSSL_DISPATCH> entries
 where each entry is a function id, and a function pointer. The array should be
 terminated with an empty entry (i.e. a 0 function id, and a NULL function

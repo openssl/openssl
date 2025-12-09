@@ -3,6 +3,8 @@
 ##
 ## {- join("\n## ", @autowarntext) -}
 {-
+     use Time::Piece;
+
      use OpenSSL::Util;
 
      our $makedep_scheme = $config{makedep_scheme};
@@ -74,6 +76,15 @@ FIPSKEY={- $config{FIPSKEY} -}
 
 VERSION={- "$config{full_version}" -}
 VERSION_NUMBER={- "$config{version}" -}
+RELEASE_DATE={- my $t = localtime;
+		if ($config{"release_date"}) {
+			# Provide the user with a more meaningful error message
+			# than the default internal parsing error from
+			# `Time::Piece->strptime(..)`.
+			eval { $t = Time::Piece->strptime($config{"release_date"}, "%d %b %Y"); } ||
+				die "Parsing \$config{release_date} ('$config{release_date}') failed: $@";
+		}
+		$t->strftime("%Y-%m-%d") -}
 MAJOR={- $config{major} -}
 MINOR={- $config{minor} -}
 SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
@@ -172,20 +183,11 @@ INSTALL_SHLIB_INFO={-
                         grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
                         @{$unified_info{libraries}}))
 -}
-INSTALL_ENGINES={-
-        join(" \\\n" . ' ' x 16,
-             fill_lines(" ", $COLUMNS - 16,
-                        map { platform->dso($_) }
-                        grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                               && $unified_info{attributes}->{modules}->{$_}->{engine} }
-                        @{$unified_info{modules}}))
--}
 INSTALL_MODULES={-
         join(" \\\n" . ' ' x 16,
              fill_lines(" ", $COLUMNS - 16,
                         map { platform->dso($_) }
                         grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                               && !$unified_info{attributes}->{modules}->{$_}->{engine}
                                && !$unified_info{attributes}->{modules}->{$_}->{fips} }
                         @{$unified_info{modules}}))
 -}
@@ -322,7 +324,6 @@ LIBDIR={- our $libdir = $config{libdir};
 # $(libdir) is chosen to be compatible with the GNU coding standards
 libdir={- file_name_is_absolute($libdir)
           ? $libdir : '$(INSTALLTOP)/$(LIBDIR)' -}
-ENGINESDIR=$(libdir)/engines-{- $sover_dirname -}
 MODULESDIR=$(libdir)/ossl-modules
 
 # Convenience variable for those who want to set the rpath in shared
@@ -439,7 +440,6 @@ LIB_CPPFLAGS={- our $lib_cppflags =
                 join(' ', $lib_cppflags,
                           (map { '-D'.$_ }
                                'OPENSSLDIR="\"$(OPENSSLDIR)\""',
-                               'ENGINESDIR="\"$(ENGINESDIR)\""',
                                'MODULESDIR="\"$(MODULESDIR)\""'),
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
 LIB_CFLAGS={- join(' ', $target{lib_cflags} || (),
@@ -530,7 +530,7 @@ LANG=C
 
 {- dependmagic('build_sw', 'Build all the software (default target)'); -}: build_libs_nodep build_modules_nodep build_programs_nodep link-utils
 {- dependmagic('build_libs', 'Build the libraries libssl and libcrypto'); -}: build_libs_nodep
-{- dependmagic('build_modules', 'Build the modules (i.e. providers and engines)'); -}: build_modules_nodep
+{- dependmagic('build_modules', 'Build the modules (i.e. providers)'); -}: build_modules_nodep
 {- dependmagic('build_programs', 'Build the openssl executables, scripts and all other programs as configured (e.g. tests or demos)'); -}: build_programs_nodep
 {- dependmagic('build_inst_sw', 'Build all the software to be installed'); -}: build_libs_nodep build_modules_nodep build_inst_programs_nodep link-utils
 {- dependmagic('build_inst_programs', 'Build only the installable openssl executables and scripts'); -}: build_inst_programs_nodep
@@ -664,9 +664,9 @@ install: Makefile ## Install software and documentation, create OpenSSL director
 
 uninstall: {- "uninstall_docs" if !$disabled{docs}; -} uninstall_sw {- $disabled{fips} ? "" : "uninstall_fips" -} ## Uninstall software and documentation
 
-install_sw: install_dev install_engines install_modules install_runtime ## Install just the software and libraries
+install_sw: install_dev install_modules install_runtime ## Install just the software and libraries
 
-uninstall_sw: uninstall_runtime uninstall_modules uninstall_engines uninstall_dev ## Uninstall the software and libraries
+uninstall_sw: uninstall_runtime uninstall_modules uninstall_dev ## Uninstall the software and libraries
 
 install_docs: install_man_docs install_html_docs ## Install manpages and HTML documentation
 
@@ -882,30 +882,6 @@ uninstall_dev: uninstall_runtime_libs
 	-$(RMDIR) "$(DESTDIR)$(libdir)"
 
 _install_modules_deps: install_runtime_libs build_modules
-
-install_engines: _install_modules_deps
-	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(ENGINESDIR)/"
-	@$(ECHO) "*** Installing engines"
-	@set -e; for e in dummy $(INSTALL_ENGINES); do \
-		if [ "$$e" = "dummy" ]; then continue; fi; \
-		fn=`basename $$e`; \
-		$(ECHO) "install $$e -> $(DESTDIR)$(ENGINESDIR)/$$fn"; \
-		cp $$e "$(DESTDIR)$(ENGINESDIR)/$$fn.new"; \
-		chmod 755 "$(DESTDIR)$(ENGINESDIR)/$$fn.new"; \
-		mv -f "$(DESTDIR)$(ENGINESDIR)/$$fn.new" \
-		      "$(DESTDIR)$(ENGINESDIR)/$$fn"; \
-	done
-
-uninstall_engines:
-	@$(ECHO) "*** Uninstalling engines"
-	@set -e; for e in dummy $(INSTALL_ENGINES); do \
-		if [ "$$e" = "dummy" ]; then continue; fi; \
-		fn=`basename $$e`; \
-		$(ECHO) "$(RM) $(DESTDIR)$(ENGINESDIR)/$$fn"; \
-		$(RM) "$(DESTDIR)$(ENGINESDIR)/$$fn"; \
-	done
-	-$(RMDIR) "$(DESTDIR)$(ENGINESDIR)"
 
 install_modules: _install_modules_deps
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
@@ -1319,13 +1295,6 @@ errors:
 	( b=`pwd`; set -e; cd $(SRCDIR); \
           $(PERL) util/ck_errf.pl -strict -internal; \
           $(PERL) -I$$b util/mkerr.pl $(ERROR_REBUILD) -internal )
-	( b=`pwd`; set -e; cd $(SRCDIR)/engines; \
-          for E in *.ec ; do \
-              $(PERL) ../util/ck_errf.pl -strict \
-                -conf $$E `basename $$E .ec`.c; \
-              $(PERL) -I$$b ../util/mkerr.pl $(ERROR_REBUILD) -static \
-                -conf $$E `basename $$E .ec`.c ; \
-          done )
 
 {- use File::Basename;
 
@@ -1350,6 +1319,7 @@ errors:
    my @cryptoskipheaders = ( @sslheaders_tmpl,
        qw( include/openssl/conf_api.h
            include/openssl/ebcdic.h
+           include/openssl/engine.h
            include/openssl/opensslconf.h
            include/openssl/symhacks.h ) );
    our %cryptoheaders = ();
@@ -1575,7 +1545,8 @@ EOF
           return <<"EOF";
 $args{src}: $pod
 	pod2man --name=$name --section=$section\$(MANSUFFIX) --center=OpenSSL \\
-		--release=\$(VERSION) $pod >\$\@
+		--date=\$(RELEASE_DATE) --release=\$(VERSION) \\
+		$pod >\$\@
 EOF
       } elsif (platform->isdef($args{src})) {
           #
@@ -1671,7 +1642,9 @@ EOF
 
           return <<"EOF";
 $args{src}: $gen0 $deps
+	if [ -r "\$@" ]; then chmod u+w \$@; fi
 	\$(PERL)$perlmodules "$dofile" "-o$target{build_file}" $gen0$gen_args > \$@
+	chmod a-w \$@
 EOF
       } elsif (grep { $_ eq $gen0 } @{$unified_info{programs}}) {
           #
@@ -2028,10 +2001,11 @@ EOF
                            rel2abs($config{builddir}));
       return <<"EOF";
 $script: $sources configdata.pm
+	if [ -r "$script" ]; then chmod u+w $script; fi
 	\$(RM) "$script"
 	\$(PERL) "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
 	    "-o$target{build_file}" $sources > "$script"
-	chmod a+x $script
+	chmod a+x,a-w $script
 EOF
   }
   sub generatedir {

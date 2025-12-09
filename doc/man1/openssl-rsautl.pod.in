@@ -14,7 +14,7 @@ B<openssl> B<rsautl>
 [B<-rev>]
 [B<-out> I<file>]
 [B<-inkey> I<filename>|I<uri>]
-[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>]
 [B<-pubin>]
 [B<-certin>]
 [B<-sign>]
@@ -27,7 +27,7 @@ B<openssl> B<rsautl>
 [B<-raw>]
 [B<-hexdump>]
 [B<-asn1parse>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
 =head1 DESCRIPTION
@@ -69,7 +69,7 @@ default.
 
 The input key, by default it should be an RSA private key.
 
-=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>
 
 The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -120,8 +120,6 @@ Hex dump the output data.
 
 Parse the ASN.1 output data, this is useful when combined with the
 B<-verify> option.
-
-{- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
 
@@ -235,7 +233,7 @@ L<openssl-genrsa(1)>
 
 This command was deprecated in OpenSSL 3.0.
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

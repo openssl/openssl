@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,13 +21,12 @@
  * Russian Federal Law 63 "Digital Sign" is available here:  http://www.consultant.ru/document/cons_doc_LAW_112701/
  */
 
-
 const X509V3_EXT_METHOD ossl_v3_utf8_list[1] = {
     EXT_UTF8STRING(NID_subjectSignTool),
 };
 
 char *i2s_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
-                          ASN1_UTF8STRING *utf8)
+    ASN1_UTF8STRING *utf8)
 {
     char *tmp;
 
@@ -43,7 +42,7 @@ char *i2s_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
 }
 
 ASN1_UTF8STRING *s2i_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
-                                     X509V3_CTX *ctx, const char *str)
+    X509V3_CTX *ctx, const char *str)
 {
     ASN1_UTF8STRING *utf8;
     if (str == NULL) {
@@ -61,6 +60,6 @@ ASN1_UTF8STRING *s2i_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
     }
 #ifdef CHARSET_EBCDIC
     ebcdic2ascii(utf8->data, utf8->data, utf8->length);
-#endif                          /* CHARSET_EBCDIC */
+#endif /* CHARSET_EBCDIC */
     return utf8;
 }

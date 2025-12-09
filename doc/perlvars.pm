@@ -115,19 +115,6 @@ $OpenSSL::safe::opt_config_item = ""
 . "\n"
 . "See L<openssl(1)/Configuration Option>.";
 
-# Engine option
-$OpenSSL::safe::opt_engine_synopsis = "";
-$OpenSSL::safe::opt_engine_item = "";
-if (!$disabled{"deprecated-3.0"}) {
-  $OpenSSL::safe::opt_engine_synopsis = ""
-  . "[B<-engine> I<id>]\n";
-  $OpenSSL::safe::opt_engine_item = ""
-  . "=item B<-engine> I<id>\n"
-  . "\n"
-  . "See L<openssl(1)/Engine Options>.\n"
-  . "This option is deprecated.";
-}
-
 # Trusted certs options
 $OpenSSL::safe::opt_trust_synopsis = ""
 . "[B<-CAfile> I<file>]\n"

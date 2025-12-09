@@ -67,6 +67,7 @@ of:
     I<ht_free_fn> The function to call to free a value, may be NULL.
     I<ht_hash_fn> The function to generate a hash value for a key, may be NULL.
     I<init_neighborhoods> The initial number of neighborhoods in the hash table.
+    I<no_rcu> Disables RCU locking.
 
 Note that init_bucket_len may be set to zero, which will use the default initial
 bucket size, which will be automatically expanded with the hash table load
@@ -83,6 +84,9 @@ Note that lockless_write operations are done at your own risk.  Lockless
     operation in a multithreaded environment will cause data corruption.  It
     is the callers responsibility in this mode of operation to provide thread
     synchronization.
+
+Note that if RCU locks are disabled, calls to ossl_ht_[read/write]_[lock/unlock]
+have no effect.
 
 =item *
 
@@ -110,7 +114,8 @@ called to release the element data.
 =item *
 
 ossl_ht_insert() inserts an B<HT_VALUE> element into the hash table, to be
-hashed using the corresponding B<HT_KEY> value.
+hashed using the corresponding B<HT_KEY> value. The returned pointer olddata must
+be freed only when RCU is disabled and insert performs a replacement.
 
 =item *
 

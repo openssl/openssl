@@ -22,11 +22,6 @@ format is no more needed and the openssl commands will automatically try all
 the possible formats. However if the B<DER> or B<PEM> input format is specified
 it will be enforced.
 
-In order to access a key via an engine the input format B<ENGINE> may be used;
-alternatively the key identifier in the <uri> argument of the respective key
-option may be preceded by C<org.openssl.engine:>.
-See L<openssl(1)/Engine Options> for an example usage of the latter.
-
 =head1 OPTIONS
 
 =head2 Format Options
@@ -64,12 +59,6 @@ is described in each command documentation.
 
 A binary format, encoded or parsed according to Distinguished Encoding Rules
 (DER) of the ASN.1 data language.
-
-=item B<ENGINE>
-
-Used to specify that the cryptographic material is in an OpenSSL B<engine>.
-An engine must be configured or specified using the B<-engine> option.
-A password or PIN may be supplied to the engine using the B<-passin> option.
 
 =item B<P12>
 

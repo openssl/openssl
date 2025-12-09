@@ -191,6 +191,6 @@ These functions were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 =cut

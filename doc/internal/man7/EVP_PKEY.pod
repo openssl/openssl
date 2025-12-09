@@ -30,15 +30,12 @@ and it can take one of the following forms:
 
 This is the form that an B<EVP_PKEY> in OpenSSL prior to 3.0 had.  The
 internal key in the B<EVP_PKEY> is a pointer to the low-level key
-types, such as B<RSA>, B<DSA> and B<EC>, or an engine driven
-structure, and is governed by an associated L<EVP_PKEY_METHOD(3)> and
-an L<EVP_PKEY_ASN1_METHOD(3)>.
+types, such as B<RSA>, B<DSA> and B<EC>, and is governed by an associated
+L<EVP_PKEY_METHOD(3)> and an L<EVP_PKEY_ASN1_METHOD(3)>.
 
 The functions available through those two method structures get full
 access to the B<EVP_PKEY> and therefore have a lot of freedom to
-modify whatever they want.  This also means that an B<EVP_PKEY> is a
-shared structure between libcrypto and any ENGINE that serves such
-methods.
+modify whatever they want.
 
 =item provider-native origin
 
@@ -135,8 +132,7 @@ the exported key data) must implement OSSL_FUNC_keymgmt_import().
 
 If such caching isn't supported, the operations that can be performed
 with that key are limited to the same backend as the origin key
-(ENGINE for legacy origin keys, provider for provider side origin
-keys).
+(only provider by now).
 
 =head3 Exporting implementation details
 

@@ -28,13 +28,13 @@ B<openssl> B<s_server>
 [B<-serverinfo> I<val>]
 [B<-key> I<filename>|I<uri>]
 [B<-key2> I<filename>|I<uri>]
-[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>]
 [B<-pass> I<val>]
 [B<-dcert> I<infile>]
 [B<-dcertform> B<DER>|B<PEM>|B<P12>]
 [B<-dcert_chain> I<infile>]
 [B<-dkey> I<filename>|I<uri>]
-[B<-dkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-dkeyform> B<DER>|B<PEM>|B<P12>]
 [B<-dpass> I<val>]
 [B<-nbio_test>]
 [B<-crlf>]
@@ -132,7 +132,7 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [B<-enable_server_rpk>]
 [B<-enable_client_rpk>]
 
@@ -243,7 +243,7 @@ be used.
 
 The private Key file to use for servername if not given via B<-cert2>.
 
-=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>
 
 The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -277,7 +277,7 @@ The input can be in PEM, DER, or PKCS#12 format.
 The format of the additional certificate file; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
-=item B<-dkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-dkeyform> B<DER>|B<PEM>|B<P12>
 
 The format of the additional private key; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -563,9 +563,8 @@ Cannot be used in conjunction with B<-early_data>.
 =item B<-async>
 
 Switch on asynchronous mode. Cryptographic operations will be performed
-asynchronously. This will only have an effect if an asynchronous capable engine
-is also used via the B<-engine> option. For test purposes the dummy async engine
-(dasync) can be used (if available).
+asynchronously. This will only have an effect if an asynchronous capable
+provider is also used via the B<-provider> option.
 
 =item B<-max_send_frag> I<+int>
 
@@ -574,19 +573,15 @@ See L<SSL_CTX_set_max_send_fragment(3)> for further information.
 
 =item B<-split_send_frag> I<+int>
 
-The size used to split data for encrypt pipelines. If more data is written in
-one go than this value then it will be split into multiple pipelines, up to the
-maximum number of pipelines defined by max_pipelines. This only has an effect if
-a suitable cipher suite has been negotiated, an engine that supports pipelining
-has been loaded, and max_pipelines is greater than 1. See
-L<SSL_CTX_set_split_send_fragment(3)> for further information.
+This is used for pipelines. There is currently B<no support> for cipher
+pipelining in libssl. See L<SSL_CTX_set_max_send_fragment(3)> for further
+information.
 
 =item B<-max_pipelines> I<+int>
 
-The maximum number of encrypt/decrypt pipelines to be used. This will only have
-an effect if an engine has been loaded that supports pipelining (e.g. the dasync
-engine) and a suitable cipher suite has been negotiated. The default value is 1.
-See L<SSL_CTX_set_max_pipelines(3)> for further information.
+This is used for pipelines. There is currently B<no support> for cipher
+pipelining in libssl. See L<SSL_CTX_set_max_send_fragment(3)> for further
+information.
 
 =item B<-naccept> I<+int>
 
@@ -794,8 +789,6 @@ Pre-compresses certificates (RFC8879) that will be sent during the handshake.
 
 {- $OpenSSL::safe::opt_r_item -}
 
-{- $OpenSSL::safe::opt_engine_item -}
-
 {- $OpenSSL::safe::opt_provider_item -}
 
 {- $OpenSSL::safe::opt_v_item -}
@@ -925,7 +918,7 @@ The -no_alt_chains option was added in OpenSSL 1.1.0.
 The
 -allow-no-dhe-kex and -prioritize_chacha options were added in OpenSSL 1.1.1.
 
-The B<-srpvfile>, B<-srpuserseed>, and B<-engine>
+The B<-srpvfile> and B<-srpuserseed>
 option were deprecated in OpenSSL 3.0.
 
 The
@@ -937,6 +930,8 @@ and B<-tfo>
 options were added in OpenSSL 3.2.
 
 The B<-status_all> option was added in OpenSSL 3.6.
+
+The B<engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

@@ -145,23 +145,7 @@ Traces the ciphers used by the TLS/SSL protocol.
 
 =item B<OSSL_TRACE_CATEGORY_CONF>
 
-Traces details about the provider and engine configuration.
-
-=item B<OSSL_TRACE_CATEGORY_ENGINE_TABLE>
-
-Traces the ENGINE algorithm table selection.
-
-More precisely, functions like ENGINE_get_pkey_asn1_meth_engine(),
-ENGINE_get_pkey_meth_engine(), ENGINE_get_cipher_engine(),
-ENGINE_get_digest_engine(), will generate trace summaries of the
-handling of internal tables.
-
-=item B<OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT>
-
-Traces the ENGINE reference counting.
-
-More precisely, both reference counts in the ENGINE structure will be
-monitored with a line of trace output generated for each change.
+Traces details about the provider configuration.
 
 =item B<OSSL_TRACE_CATEGORY_PKCS5V2>
 
@@ -333,6 +317,10 @@ L<atexit(3)>
 OSSL_trace_set_channel(), OSSL_trace_set_prefix(),
 OSSL_trace_set_suffix(), and OSSL_trace_set_callback() were all added
 in OpenSSL 3.0.
+
+The B<OSSL_TRACE_CATEGORY_ENGINE_TABLE> and
+B<OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT> tracing categories were removed in
+OpenSSL 4.0.  For details please see L<ossl-guide-migration(7)>
 
 =head1 COPYRIGHT
 

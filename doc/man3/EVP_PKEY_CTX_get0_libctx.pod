@@ -22,8 +22,7 @@ OSSL_LIB_CTX and property query string values respectively that were
 associated with the EVP_PKEY_CTX when it was constructed.
 
 EVP_PKEY_CTX_get0_provider() returns the provider associated with the
-ongoing B<EVP_PKEY_CTX> operation.  If the operation is performed by
-en B<ENGINE>, this function returns NULL.
+ongoing B<EVP_PKEY_CTX> operation.
 
 =head1 RETURN VALUES
 

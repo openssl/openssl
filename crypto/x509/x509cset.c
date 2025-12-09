@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -120,7 +120,7 @@ const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl)
     return crl->crl.extensions;
 }
 
-STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl)
+STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(const X509_CRL *crl)
 {
     return crl->crl.revoked;
 }
@@ -131,7 +131,7 @@ const X509_ALGOR *X509_CRL_get0_tbs_sigalg(const X509_CRL *crl)
 }
 
 void X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
-                             const X509_ALGOR **palg)
+    const X509_ALGOR **palg)
 {
     if (psig != NULL)
         *psig = &crl->signature;
@@ -173,8 +173,7 @@ int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial)
     return 1;
 }
 
-const STACK_OF(X509_EXTENSION) *X509_REVOKED_get0_extensions(const
-                                                             X509_REVOKED *r)
+const STACK_OF(X509_EXTENSION) *X509_REVOKED_get0_extensions(const X509_REVOKED *r)
 {
     return r->extensions;
 }

@@ -22,15 +22,15 @@
 #include <ctype.h>
 
 #undef BUFSIZE
-#define BUFSIZE 1024*8
+#define BUFSIZE 1024 * 8
 
 static int do_fp_oneshot_sign(BIO *out, EVP_MD_CTX *ctx, BIO *in, int sep, int binout,
-                              EVP_PKEY *key, unsigned char *sigin, int siglen,
-                              const char *sig_name, const char *file);
+    EVP_PKEY *key, unsigned char *sigin, int siglen,
+    const char *sig_name, const char *file);
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen,
-          EVP_PKEY *key, unsigned char *sigin, int siglen,
-          const char *sig_name, const char *md_name,
-          const char *file);
+    EVP_PKEY *key, unsigned char *sigin, int siglen,
+    const char *sig_name, const char *md_name,
+    const char *file);
 static void show_digests(const OBJ_NAME *name, void *bio_);
 
 struct doall_dgst_digests {
@@ -41,63 +41,76 @@ struct doall_dgst_digests {
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_LIST,
-    OPT_C, OPT_R, OPT_OUT, OPT_SIGN, OPT_PASSIN, OPT_VERIFY,
-    OPT_PRVERIFY, OPT_SIGNATURE, OPT_KEYFORM, OPT_ENGINE, OPT_ENGINE_IMPL,
-    OPT_HEX, OPT_BINARY, OPT_DEBUG, OPT_FIPS_FINGERPRINT,
-    OPT_HMAC, OPT_MAC, OPT_SIGOPT, OPT_MACOPT, OPT_XOFLEN,
+    OPT_C,
+    OPT_R,
+    OPT_OUT,
+    OPT_SIGN,
+    OPT_PASSIN,
+    OPT_VERIFY,
+    OPT_PRVERIFY,
+    OPT_SIGNATURE,
+    OPT_KEYFORM,
+    OPT_HEX,
+    OPT_BINARY,
+    OPT_DEBUG,
+    OPT_FIPS_FINGERPRINT,
+    OPT_HMAC,
+    OPT_HMAC_ENV,
+    OPT_HMAC_STDIN,
+    OPT_MAC,
+    OPT_SIGOPT,
+    OPT_MACOPT,
+    OPT_XOFLEN,
     OPT_DIGEST,
-    OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_R_ENUM,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS dgst_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [file...]\n"},
+    { OPT_HELP_STR, 1, '-', "Usage: %s [options] [file...]\n" },
 
     OPT_SECTION("General"),
-    {"help", OPT_HELP, '-', "Display this summary"},
-    {"list", OPT_LIST, '-', "List digests"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
-    {"engine_impl", OPT_ENGINE_IMPL, '-',
-     "Also use engine given by -engine for digest operations"},
-#endif
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    { "help", OPT_HELP, '-', "Display this summary" },
+    { "list", OPT_LIST, '-', "List digests" },
+    { "passin", OPT_PASSIN, 's', "Input file pass phrase source" },
 
     OPT_SECTION("Output"),
-    {"c", OPT_C, '-', "Print the digest with separating colons"},
-    {"r", OPT_R, '-', "Print the digest in coreutils format"},
-    {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
-    {"keyform", OPT_KEYFORM, 'f', "Key file format (ENGINE, other values ignored)"},
-    {"hex", OPT_HEX, '-', "Print as hex dump"},
-    {"binary", OPT_BINARY, '-', "Print in binary form"},
-    {"xoflen", OPT_XOFLEN, 'p', "Output length for XOF algorithms. To obtain the maximum security strength set this to 32 (or greater) for SHAKE128, and 64 (or greater) for SHAKE256"},
-    {"d", OPT_DEBUG, '-', "Print debug info"},
-    {"debug", OPT_DEBUG, '-', "Print debug info"},
+    { "c", OPT_C, '-', "Print the digest with separating colons" },
+    { "r", OPT_R, '-', "Print the digest in coreutils format" },
+    { "out", OPT_OUT, '>', "Output to filename rather than stdout" },
+    { "keyform", OPT_KEYFORM, 'f', "Key file format (DER/PEM)" },
+    { "hex", OPT_HEX, '-', "Print as hex dump" },
+    { "binary", OPT_BINARY, '-', "Print in binary form" },
+    { "xoflen", OPT_XOFLEN, 'p', "Output length for XOF algorithms. To obtain the maximum security strength set this to 32 (or greater) for SHAKE128, and 64 (or greater) for SHAKE256" },
+    { "d", OPT_DEBUG, '-', "Print debug info" },
+    { "debug", OPT_DEBUG, '-', "Print debug info" },
 
     OPT_SECTION("Signing"),
-    {"sign", OPT_SIGN, 's', "Sign digest using private key"},
-    {"verify", OPT_VERIFY, 's', "Verify a signature using public key"},
-    {"prverify", OPT_PRVERIFY, 's', "Verify a signature using private key"},
-    {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
-    {"signature", OPT_SIGNATURE, '<', "File with signature to verify"},
-    {"hmac", OPT_HMAC, 's', "Create hashed MAC with key"},
-    {"mac", OPT_MAC, 's', "Create MAC (not necessarily HMAC)"},
-    {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form or key"},
-    {"", OPT_DIGEST, '-', "Any supported digest"},
-    {"fips-fingerprint", OPT_FIPS_FINGERPRINT, '-',
-     "Compute HMAC with the key used in OpenSSL-FIPS fingerprint"},
+    { "sign", OPT_SIGN, 's', "Sign digest using private key" },
+    { "verify", OPT_VERIFY, 's', "Verify a signature using public key" },
+    { "prverify", OPT_PRVERIFY, 's', "Verify a signature using private key" },
+    { "sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form" },
+    { "signature", OPT_SIGNATURE, '<', "File with signature to verify" },
+    { "hmac", OPT_HMAC, 's', "Create hashed MAC with key" },
+    { "hmac-env", OPT_HMAC_ENV, 's', "Create hashed MAC with key from environment variable" },
+    { "hmac-stdin", OPT_HMAC_STDIN, '-', "Create hashed MAC with key from stdin" },
+    { "mac", OPT_MAC, 's', "Create MAC (not necessarily HMAC)" },
+    { "macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form or key" },
+    { "", OPT_DIGEST, '-', "Any supported digest" },
+    { "fips-fingerprint", OPT_FIPS_FINGERPRINT, '-',
+        "Compute HMAC with the key used in OpenSSL-FIPS fingerprint" },
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
-    {"file", 0, 0, "Files to digest (optional; default is stdin)"},
-    {NULL}
+    { "file", 0, 0, "Files to digest (optional; default is stdin)" },
+    { NULL }
 };
 
 int dgst_main(int argc, char **argv)
 {
     BIO *in = NULL, *inp = NULL, *bmd = NULL, *out = NULL;
-    ENGINE *e = NULL, *impl = NULL;
     EVP_PKEY *sigkey = NULL;
     STACK_OF(OPENSSL_STRING) *sigopts = NULL, *macopts = NULL;
     char *hmac_key = NULL;
@@ -107,12 +120,14 @@ int dgst_main(int argc, char **argv)
     const char *outfile = NULL, *keyfile = NULL, *prog = NULL;
     const char *sigfile = NULL;
     const char *md_name = NULL;
+    char *env_var = NULL;
+    char *new_opt = NULL;
+    char *key_from_stdin = NULL;
     OPTION_CHOICE o;
     int separator = 0, debug = 0, keyform = FORMAT_UNDEF, siglen = 0;
     int i, ret = EXIT_FAILURE, out_bin = -1, want_pub = 0, do_verify = 0;
     int xoflen = 0;
     unsigned char *buf = NULL, *sigbuf = NULL;
-    int engine_impl = 0;
     struct doall_dgst_digests dec;
     EVP_MD_CTX *signctx = NULL;
     int oneshot_sign = 0;
@@ -128,7 +143,7 @@ int dgst_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
- opthelp:
+        opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         case OPT_HELP:
@@ -140,7 +155,7 @@ int dgst_main(int argc, char **argv)
             dec.bio = bio_out;
             dec.n = 0;
             OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH,
-                                   show_digests, &dec);
+                show_digests, &dec);
             BIO_printf(bio_out, "\n");
             ret = EXIT_SUCCESS;
             goto end;
@@ -178,12 +193,6 @@ int dgst_main(int argc, char **argv)
             if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyform))
                 goto opthelp;
             break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
-            break;
-        case OPT_ENGINE_IMPL:
-            engine_impl = 1;
-            break;
         case OPT_HEX:
             out_bin = 0;
             break;
@@ -202,6 +211,29 @@ int dgst_main(int argc, char **argv)
         case OPT_HMAC:
             hmac_key = opt_arg();
             break;
+        case OPT_HMAC_ENV:
+            env_var = opt_arg();
+            hmac_key = getenv(env_var);
+            if (hmac_key == NULL) {
+                BIO_printf(bio_err, "No environment variable %s\n", env_var);
+                ret = EXIT_FAILURE;
+                goto end;
+            }
+            break;
+        case OPT_HMAC_STDIN:
+            if (key_from_stdin == NULL)
+                key_from_stdin = get_str_from_file(NULL);
+            if (key_from_stdin == NULL) {
+                ret = EXIT_FAILURE;
+                goto end;
+            }
+            if (strlen(key_from_stdin) == 0) {
+                BIO_printf(bio_err, "Empty key\n");
+                ret = EXIT_FAILURE;
+                goto end;
+            }
+            hmac_key = key_from_stdin;
+            break;
         case OPT_MAC:
             mac_name = opt_arg();
             break;
@@ -212,10 +244,17 @@ int dgst_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_MACOPT:
+            new_opt = process_additional_mac_key_arguments(opt_arg());
+            if (new_opt == NULL) {
+                ret = EXIT_FAILURE;
+                goto end;
+            }
             if (!macopts)
                 macopts = sk_OPENSSL_STRING_new_null();
-            if (!macopts || !sk_OPENSSL_STRING_push(macopts, opt_arg()))
+            if (!macopts || !sk_OPENSSL_STRING_push(macopts, new_opt)) {
+                clear_free(new_opt);
                 goto opthelp;
+            }
             break;
         case OPT_DIGEST:
             digestname = opt_unknown();
@@ -244,11 +283,9 @@ int dgst_main(int argc, char **argv)
 
     if (do_verify && sigfile == NULL) {
         BIO_printf(bio_err,
-                   "No signature to verify: use the -signature option\n");
+            "No signature to verify: use the -signature option\n");
         goto end;
     }
-    if (engine_impl)
-        impl = e;
 
     in = BIO_new(BIO_s_file());
     bmd = BIO_new(BIO_f_md());
@@ -284,9 +321,9 @@ int dgst_main(int argc, char **argv)
 
     if (keyfile != NULL) {
         if (want_pub)
-            sigkey = load_pubkey(keyfile, keyform, 0, NULL, e, "public key");
+            sigkey = load_pubkey(keyfile, keyform, 0, NULL, "public key");
         else
-            sigkey = load_key(keyfile, keyform, 0, passin, e, "private key");
+            sigkey = load_key(keyfile, keyform, 0, passin, "private key");
         if (sigkey == NULL) {
             /*
              * load_[pub]key() has already printed an appropriate message
@@ -297,8 +334,9 @@ int dgst_main(int argc, char **argv)
             char def_md[80];
 
             if (EVP_PKEY_get_default_digest_name(sigkey, def_md,
-                                                 sizeof(def_md)) == 2
-                    && strcmp(def_md, "UNDEF") == 0)
+                    sizeof(def_md))
+                    == 2
+                && strcmp(def_md, "UNDEF") == 0)
                 oneshot_sign = 1;
             signctx = EVP_MD_CTX_new();
             if (signctx == NULL)
@@ -309,7 +347,7 @@ int dgst_main(int argc, char **argv)
     if (mac_name != NULL) {
         EVP_PKEY_CTX *mac_ctx = NULL;
 
-        if (!init_gen_str(&mac_ctx, mac_name, impl, 0, NULL, NULL))
+        if (!init_gen_str(&mac_ctx, mac_name, 0, NULL, NULL))
             goto end;
         if (macopts != NULL) {
             for (i = 0; i < sk_OPENSSL_STRING_num(macopts); i++) {
@@ -324,7 +362,6 @@ int dgst_main(int argc, char **argv)
         }
 
         sigkey = app_keygen(mac_ctx, mac_name, 0, 0 /* not verbose */);
-        /* Verbose output would make external-tests gost-engine fail */
         EVP_PKEY_CTX_free(mac_ctx);
         if (sigkey == NULL)
             goto end;
@@ -335,9 +372,9 @@ int dgst_main(int argc, char **argv)
             md = (EVP_MD *)EVP_sha256();
             digestname = SN_sha256;
         }
-        sigkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, impl,
-                                              (unsigned char *)hmac_key,
-                                              strlen(hmac_key));
+        sigkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL,
+            (unsigned char *)hmac_key,
+            strlen(hmac_key));
         if (sigkey == NULL)
             goto end;
     }
@@ -354,19 +391,13 @@ int dgst_main(int argc, char **argv)
             goto end;
         }
         if (do_verify)
-            if (impl == NULL)
-                res = EVP_DigestVerifyInit_ex(mctx, &pctx, digestname,
-                                              app_get0_libctx(),
-                                              app_get0_propq(), sigkey, NULL);
-            else
-                res = EVP_DigestVerifyInit(mctx, &pctx, md, impl, sigkey);
+            res = EVP_DigestVerifyInit_ex(mctx, &pctx, digestname,
+                app_get0_libctx(),
+                app_get0_propq(), sigkey, NULL);
         else
-            if (impl == NULL)
-                res = EVP_DigestSignInit_ex(mctx, &pctx, digestname,
-                                            app_get0_libctx(),
-                                            app_get0_propq(), sigkey, NULL);
-            else
-                res = EVP_DigestSignInit(mctx, &pctx, md, impl, sigkey);
+            res = EVP_DigestSignInit_ex(mctx, &pctx, digestname,
+                app_get0_libctx(),
+                app_get0_propq(), sigkey, NULL);
         if (res == 0) {
             BIO_printf(bio_err, "Error setting context\n");
             goto end;
@@ -377,7 +408,7 @@ int dgst_main(int argc, char **argv)
 
                 if (pkey_ctrl_string(pctx, sigopt) <= 0) {
                     BIO_printf(bio_err, "Signature parameter error \"%s\"\n",
-                               sigopt);
+                        sigopt);
                     goto end;
                 }
             }
@@ -397,7 +428,7 @@ int dgst_main(int argc, char **argv)
         }
         if (md == NULL)
             md = (EVP_MD *)EVP_sha256();
-        if (!EVP_DigestInit_ex(mctx, md, impl)) {
+        if (!EVP_DigestInit_ex(mctx, md, NULL)) {
             BIO_printf(bio_err, "Error setting digest\n");
             goto end;
         }
@@ -451,10 +482,10 @@ int dgst_main(int argc, char **argv)
         BIO_set_fp(in, stdin, BIO_NOCLOSE);
         if (oneshot_sign)
             ret = do_fp_oneshot_sign(out, signctx, in, separator, out_bin,
-                                     sigkey, sigbuf, siglen, NULL, "stdin");
+                sigkey, sigbuf, siglen, NULL, "stdin");
         else
             ret = do_fp(out, buf, inp, separator, out_bin, xoflen,
-                        sigkey, sigbuf, siglen, NULL, md_name, "stdin");
+                sigkey, sigbuf, siglen, NULL, md_name, "stdin");
     } else {
         const char *sig_name = NULL;
 
@@ -471,22 +502,24 @@ int dgst_main(int argc, char **argv)
             } else {
                 if (oneshot_sign) {
                     if (do_fp_oneshot_sign(out, signctx, in, separator, out_bin,
-                                           sigkey, sigbuf, siglen, sig_name,
-                                           argv[i]))
+                            sigkey, sigbuf, siglen, sig_name,
+                            argv[i]))
                         ret = EXIT_FAILURE;
                 } else {
                     if (do_fp(out, buf, inp, separator, out_bin, xoflen,
-                              sigkey, sigbuf, siglen, sig_name, md_name, argv[i]))
+                            sigkey, sigbuf, siglen, sig_name, md_name, argv[i]))
                         ret = EXIT_FAILURE;
                 }
             }
             (void)BIO_reset(bmd);
         }
     }
- end:
+end:
     if (ret != EXIT_SUCCESS)
         ERR_print_errors(bio_err);
     OPENSSL_clear_free(buf, BUFSIZE);
+    if (key_from_stdin != NULL)
+        clear_free(key_from_stdin);
     BIO_free(in);
     OPENSSL_free(passin);
     BIO_free_all(out);
@@ -494,10 +527,9 @@ int dgst_main(int argc, char **argv)
     EVP_PKEY_free(sigkey);
     EVP_MD_CTX_free(signctx);
     sk_OPENSSL_STRING_free(sigopts);
-    sk_OPENSSL_STRING_free(macopts);
+    sk_OPENSSL_STRING_pop_free(macopts, clear_free);
     OPENSSL_free(sigbuf);
     BIO_free(bmd);
-    release_engine(e);
     return ret;
 }
 
@@ -566,12 +598,12 @@ static const char *newline_escape_filename(const char *file, int *backslash)
         e++;
     }
     file_cpy[i] = '\0';
-    return (const char*)file_cpy;
+    return (const char *)file_cpy;
 }
 
 static void print_out(BIO *out, unsigned char *buf, size_t len,
-                      int sep, int binout,
-                      const char *sig_name, const char *md_name, const char *file)
+    int sep, int binout,
+    const char *sig_name, const char *md_name, const char *file)
 {
     int i, backslash = 0;
 
@@ -619,9 +651,9 @@ static void print_verify_result(BIO *out, int i)
 }
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen,
-          EVP_PKEY *key, unsigned char *sigin, int siglen,
-          const char *sig_name, const char *md_name,
-          const char *file)
+    EVP_PKEY *key, unsigned char *sigin, int siglen,
+    const char *sig_name, const char *md_name,
+    const char *file)
 {
     size_t len = BUFSIZE;
     int i, ret = EXIT_FAILURE;
@@ -685,7 +717,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
     }
     print_out(out, buf, len, sep, binout, sig_name, md_name, file);
     ret = EXIT_SUCCESS;
- end:
+end:
     if (allocated_buf != NULL)
         OPENSSL_clear_free(allocated_buf, len);
 
@@ -699,8 +731,8 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
  * then used inside EVP_DigestVerify() and EVP_DigestSign().
  */
 static int do_fp_oneshot_sign(BIO *out, EVP_MD_CTX *ctx, BIO *in, int sep, int binout,
-                              EVP_PKEY *key, unsigned char *sigin, int siglen,
-                              const char *sig_name, const char *file)
+    EVP_PKEY *key, unsigned char *sigin, int siglen,
+    const char *sig_name, const char *file)
 {
     int res, ret = EXIT_FAILURE;
     size_t len = 0;
@@ -737,7 +769,7 @@ static int do_fp_oneshot_sign(BIO *out, EVP_MD_CTX *ctx, BIO *in, int sep, int b
         goto end;
     }
 
- end:
+end:
     OPENSSL_free(sig);
     OPENSSL_clear_free(buf, buflen);
 

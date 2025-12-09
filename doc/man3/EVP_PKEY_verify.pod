@@ -174,7 +174,7 @@ Verify signature using PKCS#1 padding and a SHA256 digest as input:
   * NB: assumes verify_key, sig, siglen md and mdlen are already set up
   * and that verify_key is an RSA public key
   */
- ctx = EVP_PKEY_CTX_new(verify_key, NULL /* no engine */);
+ ctx = EVP_PKEY_CTX_new(verify_key, NULL);
  if (ctx == NULL)
      /* Error occurred */
  if (EVP_PKEY_verify_init(ctx) <= 0)
@@ -212,7 +212,7 @@ input digest is assumed to have been computed using SHA256.
   * NB: assumes verify_key, sig, siglen, md and mdlen are already set up
   * and that verify_key is an RSA public key
   */
- ctx = EVP_PKEY_CTX_new(signing_key, NULL /* no engine */);
+ ctx = EVP_PKEY_CTX_new(signing_key, NULL);
  alg = EVP_SIGNATURE_fetch(NULL, "RSA-SHA256", NULL);
 
  if (ctx == NULL)
@@ -256,7 +256,7 @@ B<RSA_PKCS1_PADDING>.
   * in must point to data to be digested and signed, and
   * inlen must be the size of the data in bytes.
   */
- ctx = EVP_PKEY_CTX_new(signing_key, NULL /* no engine */);
+ ctx = EVP_PKEY_CTX_new(signing_key, NULL);
  alg = EVP_SIGNATURE_fetch(NULL, "RSA-SHA256", NULL);
 
  if (ctx == NULL || alg == NULL)
@@ -294,7 +294,7 @@ functionality.
   * in must point to data to be digested and signed, and
   * inlen must be the size of the data in bytes.
   */
- ctx = EVP_PKEY_CTX_new(signing_key, NULL /* no engine */);
+ ctx = EVP_PKEY_CTX_new(signing_key, NULL);
  alg = EVP_SIGNATURE_fetch(NULL, "RSA-SHA256", NULL);
 
  if (ctx == NULL || alg == NULL)
@@ -346,7 +346,7 @@ EVP_PKEY_CTX_set_signature() functions where added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 opensslcmd() {
-    LD_LIBRARY_PATH=../.. ../../apps/openssl $@
+    LD_LIBRARY_PATH=../.. ../../apps/openssl "$@"
 }
 
 # Example of running an querying OpenSSL test OCSP responder.
@@ -18,4 +18,4 @@ opensslcmd version
 PORT=8888
 
 opensslcmd ocsp -port $PORT -index index.txt -CA intca.pem \
-	-rsigner resp.pem -rkey respkey.pem -rother intca.pem $*
+	-rsigner resp.pem -rkey respkey.pem -rother intca.pem "$@"

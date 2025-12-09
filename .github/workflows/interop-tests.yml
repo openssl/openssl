@@ -3,14 +3,17 @@
 # filesystem for this job can be reached.  Please note that any changes made to
 # this job involving file system paths should be made prefixed with, or relative
 # to that directory
-name: Interoperability tests with GnuTLS and NSS
+name: Interoperability tests with GnuTLS, NSS and OpenSSH
 on:
   schedule:
     - cron: '55 02 * * *'
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   test:
+    if: github.repository == 'openssl/openssl'
     runs-on: ubuntu-22.04
     container:
       image: docker.io/fedora:40
@@ -23,7 +26,9 @@ jobs:
     env:
       COMPONENT: ${{ matrix.COMPONENT }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Display environment
         run: export
       - name : Install needed tools
@@ -39,13 +44,13 @@ jobs:
           mkdir -p /build/SPECS && cd /build && echo -e "%_topdir /build\n%_lto_cflags %{nil}" >~/.rpmmacros && rpmdev-setuptree
           cd /build && cp ${GITHUB_WORKSPACE}/interop/openssl/openssl.spec SPECS/ && \
           cd SPECS/ && source ${GITHUB_WORKSPACE}/VERSION.dat && \
-          sed -i "s/^Version: .*\$/Version: $MAJOR.$MINOR.$PATCH/" openssl.spec && \
+          sed -i "s/soversion 3/soversion $SHLIB_VERSION/;s/^Version: .*\$/Version: $MAJOR.$MINOR.$PATCH/" openssl.spec && \
           sed -i 's/^Release: .*$/Release: dev/' openssl.spec
           yum-builddep -y /build/SPECS/openssl.spec # just for sure nothing is missing
           mkdir -p /build/SOURCES
           tar --transform "s/^__w\/openssl\/openssl/openssl-$MAJOR.$MINOR.$PATCH/" -czf /build/SOURCES/openssl-$MAJOR.$MINOR.$PATCH.tar.gz /__w/openssl/openssl/
           rpmbuild -bb /build/SPECS/openssl.spec
-          dnf install -y /build/RPMS/x86_64/openssl-*
+          rpm -i --force /build/RPMS/x86_64/openssl-*
           cp ${GITHUB_WORKSPACE}/interop/openssl/openssl.cnf /etc/pki/tls/openssl.cnf
       - name: Run interop tests
         run: |
@@ -53,3 +58,49 @@ jobs:
           tmt run -av plans -n interop tests -f "tag: interop-openssl & tag: interop-$COMPONENT" provision -h local --feeling-safe execute -h tmt --interactive
           openssl version
           echo "Finished - important to prevent unwanted output truncating"
+  openssh_interop:
+    if: github.repository == 'openssl/openssl'
+    name: "openssh interop ${{ matrix.branch.openssl }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: [
+          { openssl: 'master', openssh: 'openssl-master', openssl_config: 'no-docs'},
+          { openssl: 'openssl-3.6', openssh: 'openssl-3.6', openssl_config: 'no-docs'},
+          { openssl: 'openssl-3.5', openssh: 'openssl-3.5', openssl_config: 'no-docs'},
+          { openssl: 'openssl-3.4', openssh: 'openssl-3.4', openssl_config: 'no-docs'},
+          { openssl: 'openssl-3.3', openssh: 'openssl-3.3', openssl_config: 'no-docs'},
+          { openssl: 'openssl-3.2', openssh: 'openssl-3.2', openssl_config: 'no-docs'},
+          { openssl: 'openssl-3.0', openssh: 'openssl-3.0', openssl_config: ''}
+        ]
+    runs-on: ubuntu-latest
+    env:
+      EPHEMERAL_VM: yes
+      TEST_SSH_UNSAFE_PERMISSIONS: 1
+      TEST_SSH_HOSTBASED_AUTH: yes
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+        ref: ${{ matrix.branch.openssl }}
+        fetch-depth: 1
+    - name: config
+      run: ./config --banner=Configured -fPIC --prefix=/opt/openssl ${{ matrix.openssl_config }} shared -Wl,-rpath,/opt/openssl/lib64 && perl configdata.pm --dump
+    - name: make
+      run: |
+        make -s -j4
+        make -s -j4 install_sw
+    - name: install dependencies of openssh
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq install autoconf zlib1g-dev
+    - name: run openssh
+      run: |
+        git clone --branch master --depth 1 https://github.com/openssh/openssh-portable.git
+        cd openssh-portable
+        sh ./.github/setup_ci.sh ${{ matrix.branch.openssh }} ubuntu-latest
+        autoreconf
+        sh ./.github/configure.sh ${{ matrix.branch.openssh }}
+        make clean
+        make -s -j4
+        sh ./.github/run_test.sh

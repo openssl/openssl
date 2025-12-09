@@ -26,7 +26,6 @@ B<openssl> B<genpkey>
 [B<-genparam>]
 [B<-text>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 {- $OpenSSL::safe::opt_config_synopsis -}
 
@@ -83,7 +82,7 @@ algorithm with a 128-bit key in CBC mode.
 
 Public key algorithm to use such as RSA, DSA, DH or DHX. If used this option must
 precede any B<-pkeyopt> options. The options B<-paramfile> and B<-algorithm>
-are mutually exclusive. Engines or providers may add algorithms in addition to
+are mutually exclusive. Providers may add algorithms in addition to
 the standard built-in ones.
 
 Valid built-in algorithm names for private key generation are RSA, RSA-PSS, EC,
@@ -124,8 +123,6 @@ Print an (unencrypted) text representation of private and public keys and
 parameters along with the PEM or DER structure.
 
 {- $OpenSSL::safe::opt_r_item -}
-
-{- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
 
@@ -441,7 +438,7 @@ L</EC Key Generation Options> above.
 =head1 NOTES
 
 The use of the genpkey program is encouraged over the algorithm specific
-utilities because additional algorithm options and ENGINE provided algorithms
+utilities because additional algorithm options and provider provided algorithms
 can be used.
 
 =head1 EXAMPLES
@@ -552,9 +549,9 @@ were added in OpenSSL 1.0.2.
 The ability to generate X25519 keys was added in OpenSSL 1.1.0.
 The ability to generate X448, ED25519 and ED448 keys was added in OpenSSL 1.1.1.
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
-
 Support for B<ML-DSA> and B<ML-KEM> was added in OpenSSL 3.5.
+
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

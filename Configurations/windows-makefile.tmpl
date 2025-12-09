@@ -101,29 +101,15 @@ INSTALL_SHLIBPDBS={-
                   grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
                   @{$unified_info{libraries}})
 -}
-INSTALL_ENGINES={-
-        join(" ", map { quotify1(platform->dso($_)) }
-                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                         && $unified_info{attributes}->{modules}->{$_}->{engine} }
-                  @{$unified_info{modules}})
--}
-INSTALL_ENGINEPDBS={-
-        join(" ", map { quotify1(platform->dsopdb($_)) }
-                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                         && $unified_info{attributes}->{modules}->{$_}->{engine} }
-                  @{$unified_info{modules}})
--}
 INSTALL_MODULES={-
         join(" ", map { quotify1(platform->dso($_)) }
                   grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                          && !$unified_info{attributes}->{modules}->{$_}->{engine}
                           && !$unified_info{attributes}->{modules}->{$_}->{fips} }
                   @{$unified_info{modules}})
 -}
 INSTALL_MODULEPDBS={-
         join(" ", map { quotify1(platform->dsopdb($_)) }
-                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                         && !$unified_info{attributes}->{modules}->{$_}->{engine} }
+                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst} }
                   @{$unified_info{modules}})
 -}
 INSTALL_FIPSMODULE={-
@@ -230,23 +216,15 @@ MODULESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath catpath);
                   our $modulesdir_dir =
                       catdir($modulesprefix_dir, "ossl-modules");
                   our $modulesdir = catpath($modulesdir_dev, $modulesdir_dir);
-                  our $enginesdir_dev = $modulesprefix_dev;
-                  our $enginesdir_dir =
-                      catdir($modulesprefix_dir, "engines-$sover_dirname");
-                  our $enginesdir = catpath($enginesdir_dev, $enginesdir_dir);
                   $modulesdir_dev -}
 MODULESDIR_dir={- canonpath($modulesdir_dir) -}
-ENGINESDIR_dev={- $enginesdir_dev -}
-ENGINESDIR_dir={- canonpath($enginesdir_dir) -}
 !IF "$(DESTDIR)" != ""
 INSTALLTOP=$(DESTDIR)$(INSTALLTOP_dir)
 OPENSSLDIR=$(DESTDIR)$(OPENSSLDIR_dir)
-ENGINESDIR=$(DESTDIR)$(ENGINESDIR_dir)
 MODULESDIR=$(DESTDIR)$(MODULESDIR_dir)
 !ELSE
 INSTALLTOP=$(INSTALLTOP_dev)$(INSTALLTOP_dir)
 OPENSSLDIR=$(OPENSSLDIR_dev)$(OPENSSLDIR_dir)
-ENGINESDIR=$(ENGINESDIR_dev)$(ENGINESDIR_dir)
 MODULESDIR=$(MODULESDIR_dev)$(MODULESDIR_dir)
 !ENDIF
 
@@ -344,7 +322,6 @@ LIB_CPPFLAGS={- our $lib_cppflags =
                 join(' ', $lib_cppflags,
                           (map { '-D'.quotify1($_) }
                                "OPENSSLDIR=\"$openssldir\"",
-                               "ENGINESDIR=\"$enginesdir\"",
                                "MODULESDIR=\"$modulesdir\""),
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
 LIB_CFLAGS={- join(' ', $target{lib_cflags} || (),
@@ -485,7 +462,6 @@ clean: libclean
 	{- join("\n\t", map { "-del /Q /F $_" } @GENERATED_MANDATORY) || "\@rem" -}
 	{- join("\n\t", map { "-del /Q /F $_" } @GENERATED) || "\@rem" -}
 	-del /Q /S /F *.d *.obj *.pdb *.ilk *.manifest
-	-del /Q /S /F engines\*.lib engines\*.exp
 	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res apps\*.exp
 	-del /Q /S /F test\*.exp
 	-rd /Q /S test\test-runs
@@ -502,9 +478,9 @@ depend: makefile
 
 # Install helper targets #############################################
 
-install_sw: install_dev install_engines install_modules install_runtime
+install_sw: install_dev install_modules install_runtime
 
-uninstall_sw: uninstall_runtime uninstall_modules uninstall_engines uninstall_dev
+uninstall_sw: uninstall_runtime uninstall_modules uninstall_dev
 
 install_docs: install_html_docs
 
@@ -576,17 +552,6 @@ install_dev: install_runtime_libs
 uninstall_dev:
 
 _install_modules_deps: install_runtime_libs build_modules
-
-install_engines: _install_modules_deps
-	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
-	@$(ECHO) "*** Installing engines"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(ENGINESDIR)"
-	@if not "$(INSTALL_ENGINES)"=="" \
-	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_ENGINES) "$(ENGINESDIR)"
-	@if not "$(INSTALL_ENGINES)"=="" \
-	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_ENGINEPDBS) "$(ENGINESDIR)"
-
-uninstall_engines:
 
 install_modules: _install_modules_deps
 	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
@@ -845,7 +810,9 @@ EOF
 
           return <<"EOF";
 $args{src}: "$gen0" $deps
+	if exist \$@ attrib -r \$@
 	"\$(PERL)"$perlmodules "$dofile" "-o$target{build_file}" "$gen0"$gen_args > \$@
+	attrib +r \$@
 EOF
       } elsif (grep { $_ eq $gen0 } @{$unified_info{programs}}) {
           #
@@ -1054,8 +1021,10 @@ EOF
                            rel2abs($config{builddir}));
       return <<"EOF";
 $script: $sources configdata.pm
+	if exist $script attrib -r $script
 	"\$(PERL)" "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
 	    "-o$target{build_file}" $sources > \$@
+	attrib +r $script
 EOF
   }
   sub generatedir {

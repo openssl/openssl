@@ -46,8 +46,6 @@ The supported parameters are:
 
 =item "properties" (B<OSSL_DRBG_PARAM_PROPERTIES>) <UTF8 string>
 
-=item "mac" (B<OSSL_DRBG_PARAM_MAC>) <UTF8 string>
-
 =item "digest" (B<OSSL_DRBG_PARAM_DIGEST>) <UTF8 string>
 
 These parameters work as described in L<EVP_RAND(3)/PARAMETERS>.
@@ -95,14 +93,13 @@ A context for HMAC DRBG can be obtained by calling:
  EVP_RAND *rand;
  EVP_RAND_CTX *rctx;
  unsigned char bytes[100];
- OSSL_PARAM params[3], *p = params;
+ OSSL_PARAM params[2], *p = params;
  unsigned int strength = 128;
 
  rand = EVP_RAND_fetch(NULL, "HMAC-DRBG", NULL);
  rctx = EVP_RAND_CTX_new(rand, NULL);
  EVP_RAND_free(rand);
 
- *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_MAC, SN_hmac, 0);
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_DIGEST, SN_sha256, 0);
  *p = OSSL_PARAM_construct_end();
  EVP_RAND_instantiate(rctx, strength, 0, NULL, 0, params);

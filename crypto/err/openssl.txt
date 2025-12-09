@@ -311,6 +311,7 @@ CMS_R_ATTRIBUTE_ERROR:161:attribute error
 CMS_R_CERTIFICATE_ALREADY_PRESENT:175:certificate already present
 CMS_R_CERTIFICATE_HAS_NO_KEYID:160:certificate has no keyid
 CMS_R_CERTIFICATE_VERIFY_ERROR:100:certificate verify error
+CMS_R_CIPHER_AEAD_IN_ENVELOPED_DATA:200:cipher aead in enveloped data
 CMS_R_CIPHER_AEAD_SET_TAG_ERROR:184:cipher aead set tag error
 CMS_R_CIPHER_GET_TAG:185:cipher get tag
 CMS_R_CIPHER_INITIALISATION_ERROR:101:cipher initialisation error
@@ -464,6 +465,7 @@ CRMF_R_ERROR_DECRYPTING_ENCRYPTEDKEY:124:error decrypting encryptedkey
 CRMF_R_ERROR_DECRYPTING_ENCRYPTEDVALUE:125:error decrypting encryptedvalue
 CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY:106:error decrypting symmetric key
 CRMF_R_ERROR_SETTING_PURPOSE:126:error setting purpose
+CRMF_R_ERROR_SIGNING_POPO:129:error signing popo
 CRMF_R_ERROR_VERIFYING_ENCRYPTEDKEY:127:error verifying encryptedkey
 CRMF_R_FAILURE_OBTAINING_RANDOM:107:failure obtaining random
 CRMF_R_ITERATIONCOUNT_BELOW_100:108:iterationcount below 100
@@ -674,41 +676,6 @@ EC_R_UNKNOWN_ORDER:114:unknown order
 EC_R_UNSUPPORTED_FIELD:131:unsupported field
 EC_R_WRONG_CURVE_PARAMETERS:145:wrong curve parameters
 EC_R_WRONG_ORDER:130:wrong order
-ENGINE_R_ALREADY_LOADED:100:already loaded
-ENGINE_R_ARGUMENT_IS_NOT_A_NUMBER:133:argument is not a number
-ENGINE_R_CMD_NOT_EXECUTABLE:134:cmd not executable
-ENGINE_R_COMMAND_TAKES_INPUT:135:command takes input
-ENGINE_R_COMMAND_TAKES_NO_INPUT:136:command takes no input
-ENGINE_R_CONFLICTING_ENGINE_ID:103:conflicting engine id
-ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED:119:ctrl command not implemented
-ENGINE_R_DSO_FAILURE:104:DSO failure
-ENGINE_R_DSO_NOT_FOUND:132:dso not found
-ENGINE_R_ENGINES_SECTION_ERROR:148:engines section error
-ENGINE_R_ENGINE_CONFIGURATION_ERROR:102:engine configuration error
-ENGINE_R_ENGINE_IS_NOT_IN_LIST:105:engine is not in the list
-ENGINE_R_ENGINE_SECTION_ERROR:149:engine section error
-ENGINE_R_FAILED_LOADING_PRIVATE_KEY:128:failed loading private key
-ENGINE_R_FAILED_LOADING_PUBLIC_KEY:129:failed loading public key
-ENGINE_R_FINISH_FAILED:106:finish failed
-ENGINE_R_ID_OR_NAME_MISSING:108:'id' or 'name' missing
-ENGINE_R_INIT_FAILED:109:init failed
-ENGINE_R_INTERNAL_LIST_ERROR:110:internal list error
-ENGINE_R_INVALID_ARGUMENT:143:invalid argument
-ENGINE_R_INVALID_CMD_NAME:137:invalid cmd name
-ENGINE_R_INVALID_CMD_NUMBER:138:invalid cmd number
-ENGINE_R_INVALID_INIT_VALUE:151:invalid init value
-ENGINE_R_INVALID_STRING:150:invalid string
-ENGINE_R_NOT_INITIALISED:117:not initialised
-ENGINE_R_NOT_LOADED:112:not loaded
-ENGINE_R_NO_CONTROL_FUNCTION:120:no control function
-ENGINE_R_NO_INDEX:144:no index
-ENGINE_R_NO_LOAD_FUNCTION:125:no load function
-ENGINE_R_NO_REFERENCE:130:no reference
-ENGINE_R_NO_SUCH_ENGINE:116:no such engine
-ENGINE_R_UNIMPLEMENTED_CIPHER:146:unimplemented cipher
-ENGINE_R_UNIMPLEMENTED_DIGEST:147:unimplemented digest
-ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD:101:unimplemented public key method
-ENGINE_R_VERSION_INCOMPATIBILITY:145:version incompatibility
 ESS_R_EMPTY_ESS_CERT_ID_LIST:107:empty ess cert id list
 ESS_R_ESS_CERT_DIGEST_ERROR:103:ess cert digest error
 ESS_R_ESS_CERT_ID_NOT_FOUND:104:ess cert id not found
@@ -808,6 +775,8 @@ EVP_R_PRIVATE_KEY_DECODE_ERROR:145:private key decode error
 EVP_R_PRIVATE_KEY_ENCODE_ERROR:146:private key encode error
 EVP_R_PROVIDER_ASYM_CIPHER_FAILURE:232:provider asym cipher failure
 EVP_R_PROVIDER_ASYM_CIPHER_NOT_SUPPORTED:235:provider asym cipher not supported
+EVP_R_PROVIDER_GET_CTX_PARAMS_NOT_SUPPORTED:238:\
+	provider get ctx params not supported
 EVP_R_PROVIDER_KEYMGMT_FAILURE:233:provider keymgmt failure
 EVP_R_PROVIDER_KEYMGMT_NOT_SUPPORTED:236:provider keymgmt not supported
 EVP_R_PROVIDER_SIGNATURE_FAILURE:234:provider signature failure
@@ -985,6 +954,7 @@ PKCS12_R_ENCRYPT_ERROR:103:encrypt error
 PKCS12_R_ERROR_SETTING_ENCRYPTED_DATA_TYPE:120:error setting encrypted data type
 PKCS12_R_INVALID_NULL_ARGUMENT:104:invalid null argument
 PKCS12_R_INVALID_NULL_PKCS12_POINTER:105:invalid null pkcs12 pointer
+PKCS12_R_INVALID_SALT_LENGTH:117:invalid salt length
 PKCS12_R_INVALID_TYPE:112:invalid type
 PKCS12_R_IV_GEN_ERROR:106:iv gen error
 PKCS12_R_KEY_GEN_ERROR:107:key gen error
@@ -1165,6 +1135,7 @@ PROV_R_PARENT_CANNOT_GENERATE_RANDOM_NUMBERS:228:\
 PROV_R_PARENT_CANNOT_SUPPLY_ENTROPY_SEED:187:parent cannot supply entropy seed
 PROV_R_PARENT_LOCKING_NOT_ENABLED:182:parent locking not enabled
 PROV_R_PARENT_STRENGTH_TOO_WEAK:194:parent strength too weak
+PROV_R_PASSWORD_STRENGTH_TOO_WEAK:254:password strength too weak
 PROV_R_PATH_MUST_BE_ABSOLUTE:219:path must be absolute
 PROV_R_PERSONALISATION_STRING_TOO_LONG:195:personalisation string too long
 PROV_R_PSS_SALTLEN_TOO_SMALL:172:pss saltlen too small

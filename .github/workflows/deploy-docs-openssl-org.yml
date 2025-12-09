@@ -8,6 +8,8 @@ on:
     paths:
       - "doc/man*/**"
 
+permissions: {}
+
 jobs:
   trigger:
     if: github.repository == 'openssl/openssl'
@@ -15,7 +17,7 @@ jobs:
     steps:
       - name: "Trigger deployment workflow"
         run: |
-          gh workflow run -f branch=${{ github.ref_name }} deploy-site.yaml
+          gh workflow run -f branch=${GITHUB_REF_NAME} deploy-site.yaml
           sleep 3
           RUN_ID=$(gh run list -w deploy-site.yaml -L 1 --json databaseId -q ".[0].databaseId")
           gh run watch ${RUN_ID} --exit-status

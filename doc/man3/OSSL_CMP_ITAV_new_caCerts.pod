@@ -173,7 +173,7 @@ B<algId> or B<rsaKeyLen> and assigns to I<*keySpec> a copy of the keySpec field.
 
 =head1 NOTES
 
-CMP is defined in RFC 4210.
+CMP is defined in RFC 9810.
 
 =head1 RETURN VALUES
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,7 +29,7 @@ static const BIO_METHOD null_method = {
     null_ctrl,
     NULL,
     NULL,
-    NULL,                     /* null_callback_ctrl */
+    NULL, /* null_callback_ctrl */
 };
 
 const BIO_METHOD *BIO_s_null(void)

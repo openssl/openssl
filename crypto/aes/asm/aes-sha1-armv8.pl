@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 
-# Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (C) Cavium networks Ltd. 2016.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -217,12 +217,14 @@ $code.=<<___;
 .global asm_aescbc_sha1_hmac
 .type	asm_aescbc_sha1_hmac,%function
 
+.rodata
 .align	4
 .Lrcon:
 	.word	0x5a827999, 0x5a827999, 0x5a827999, 0x5a827999
 	.word	0x6ed9eba1, 0x6ed9eba1, 0x6ed9eba1, 0x6ed9eba1
 	.word	0x8f1bbcdc, 0x8f1bbcdc, 0x8f1bbcdc, 0x8f1bbcdc
 	.word	0xca62c1d6, 0xca62c1d6, 0xca62c1d6, 0xca62c1d6
+.text
 
 asm_aescbc_sha1_hmac:
 	AARCH64_VALID_CALL_TARGET
@@ -276,7 +278,8 @@ asm_aescbc_sha1_hmac:
 	ldp		q10,q11,[x9],32		/* rk[2],rk[3] */
 	prfm		PLDL1KEEP,[x0,64]	/* pref next aes_ptr_in */
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	aese		v0.16b,v9.16b
 	aesmc		v0.16b,v0.16b
 	prfm		PLDL1KEEP,[x1,64]	/* pref next aes_ptr_out  */
@@ -413,7 +416,7 @@ $code.=<<___;
 
 	/* get outstanding bytes of the digest */
 	sub		x8,x5,x2
-	/* substract loaded bytes */
+	/* subtract loaded bytes */
 	sub		x5,x5,64
 	/*
 	 * main combined loop CBC
@@ -1524,7 +1527,8 @@ $code.=<<___;
  */
 .Lenc_short_cases:
 	ldp		q8,q9,[x9],32
-	adr		x8,.Lrcon			/* rcon */
+	adrp		x8,.Lrcon			/* rcon */
+	add		x8,x8,:lo12:.Lrcon
 	mov		w15,0x80			/* sha padding word */
 	ldp		q10,q11,[x9],32
 	lsl		x11,x10,4			/* len = aes_blocks*16 */
@@ -2426,7 +2430,8 @@ asm_sha1_hmac_aescbc_dec:
 	blt		.Ldec_short_cases	/* branch if < 12 */
 
 	/* base address for sha round consts */
-	adr		x8,.Lrcon
+	adrp		x8,.Lrcon
+	add		x8,x8,:lo12:.Lrcon
 	ldp		q4,q5,[x8],32		/* key0,key1 */
 	ldp		q6,q7,[x8],32		/* key2,key3 */
 
@@ -2443,7 +2448,7 @@ asm_sha1_hmac_aescbc_dec:
 	rev32		v28.16b,v28.16b		/* endian swap w2 */
 	rev32		v29.16b,v29.16b		/* endian swap w3 */
 
-	/* substract loaded bytes */
+	/* subtract loaded bytes */
 	sub		x5,x5,64
 	/*
 	 * now we can do the loop prolog, 1st sha1 block
@@ -2567,7 +2572,7 @@ asm_sha1_hmac_aescbc_dec:
 	ld1		{v29.16b},[x3],16	/* next w3 */
 	sha1p		q24,s22,v23.4s
 
-	/* substract loaded bytes */
+	/* subtract loaded bytes */
 	sub		x5,x5,64
 	/*
 	 * aes_blocks_left := number after the main (sha) block is done.
@@ -2812,7 +2817,7 @@ $code.=<<___;
 	add		v25.4s,v25.4s,v21.4s
 	/* save aes res, bump aes_out_ptr */
 	st1		{v3.16b},[x1],16
-	/* substract loaded bytes */
+	/* subtract loaded bytes */
 	sub		x5,x5,64
 	/* loop if more to do */
 	cbnz		x15,.Ldec_main_loop
@@ -3866,7 +3871,8 @@ $code.=<<___;
  */
 .Ldec_short_cases:
 	ldp		q8,q9,[x9],32
-	adr		x8,.Lrcon		/* rcon */
+	adrp		x8,.Lrcon		/* rcon */
+	add		x8,x8,:lo12:.Lrcon
 	ldp		q10,q11,[x9],32
 	lsl		x11,x10,4		/* len = aes_blocks*16 */
 

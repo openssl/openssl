@@ -89,7 +89,7 @@ static const OSSL_PARAM ec_all_types[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *ec_types[] = {
+static const OSSL_PARAM *const ec_types[] = {
     NULL,
     ec_private_key_types,
     ec_public_key_types,

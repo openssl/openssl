@@ -100,12 +100,6 @@ DEPEND[man/man1/openssl-enc.1]=man1/openssl-enc.pod
 GENERATE[man/man1/openssl-enc.1]=man1/openssl-enc.pod
 DEPEND[man1/openssl-enc.pod]{pod}=man1/openssl-enc.pod.in
 GENERATE[man1/openssl-enc.pod]=man1/openssl-enc.pod.in
-DEPEND[html/man1/openssl-engine.html]=man1/openssl-engine.pod
-GENERATE[html/man1/openssl-engine.html]=man1/openssl-engine.pod
-DEPEND[man/man1/openssl-engine.1]=man1/openssl-engine.pod
-GENERATE[man/man1/openssl-engine.1]=man1/openssl-engine.pod
-DEPEND[man1/openssl-engine.pod]{pod}=man1/openssl-engine.pod.in
-GENERATE[man1/openssl-engine.pod]=man1/openssl-engine.pod.in
 DEPEND[html/man1/openssl-errstr.html]=man1/openssl-errstr.pod
 GENERATE[html/man1/openssl-errstr.html]=man1/openssl-errstr.pod
 DEPEND[man/man1/openssl-errstr.1]=man1/openssl-errstr.pod
@@ -376,7 +370,6 @@ html/man1/openssl-dsaparam.html \
 html/man1/openssl-ec.html \
 html/man1/openssl-ecparam.html \
 html/man1/openssl-enc.html \
-html/man1/openssl-engine.html \
 html/man1/openssl-errstr.html \
 html/man1/openssl-fipsinstall.html \
 html/man1/openssl-format-options.html \
@@ -438,7 +431,6 @@ man/man1/openssl-dsaparam.1 \
 man/man1/openssl-ec.1 \
 man/man1/openssl-ecparam.1 \
 man/man1/openssl-enc.1 \
-man/man1/openssl-engine.1 \
 man/man1/openssl-errstr.1 \
 man/man1/openssl-fipsinstall.1 \
 man/man1/openssl-format-options.1 \
@@ -811,6 +803,10 @@ DEPEND[html/man3/CMS_EncryptedData_encrypt.html]=man3/CMS_EncryptedData_encrypt.
 GENERATE[html/man3/CMS_EncryptedData_encrypt.html]=man3/CMS_EncryptedData_encrypt.pod
 DEPEND[man/man3/CMS_EncryptedData_encrypt.3]=man3/CMS_EncryptedData_encrypt.pod
 GENERATE[man/man3/CMS_EncryptedData_encrypt.3]=man3/CMS_EncryptedData_encrypt.pod
+DEPEND[html/man3/CMS_EncryptedData_set1_key.html]=man3/CMS_EncryptedData_set1_key.pod
+GENERATE[html/man3/CMS_EncryptedData_set1_key.html]=man3/CMS_EncryptedData_set1_key.pod
+DEPEND[man/man3/CMS_EncryptedData_set1_key.3]=man3/CMS_EncryptedData_set1_key.pod
+GENERATE[man/man3/CMS_EncryptedData_set1_key.3]=man3/CMS_EncryptedData_set1_key.pod
 DEPEND[html/man3/CMS_EnvelopedData_create.html]=man3/CMS_EnvelopedData_create.pod
 GENERATE[html/man3/CMS_EnvelopedData_create.html]=man3/CMS_EnvelopedData_create.pod
 DEPEND[man/man3/CMS_EnvelopedData_create.3]=man3/CMS_EnvelopedData_create.pod
@@ -2659,6 +2655,10 @@ DEPEND[html/man3/SSL_get_handshake_rtt.html]=man3/SSL_get_handshake_rtt.pod
 GENERATE[html/man3/SSL_get_handshake_rtt.html]=man3/SSL_get_handshake_rtt.pod
 DEPEND[man/man3/SSL_get_handshake_rtt.3]=man3/SSL_get_handshake_rtt.pod
 GENERATE[man/man3/SSL_get_handshake_rtt.3]=man3/SSL_get_handshake_rtt.pod
+DEPEND[html/man3/SSL_get_peer_addr.html]=man3/SSL_get_peer_addr.pod
+GENERATE[html/man3/SSL_get_peer_addr.html]=man3/SSL_get_peer_addr.pod
+DEPEND[man/man3/SSL_get_peer_addr.3]=man3/SSL_get_peer_addr.pod
+GENERATE[man/man3/SSL_get_peer_addr.3]=man3/SSL_get_peer_addr.pod
 DEPEND[html/man3/SSL_get_peer_cert_chain.html]=man3/SSL_get_peer_cert_chain.pod
 GENERATE[html/man3/SSL_get_peer_cert_chain.html]=man3/SSL_get_peer_cert_chain.pod
 DEPEND[man/man3/SSL_get_peer_cert_chain.3]=man3/SSL_get_peer_cert_chain.pod
@@ -3254,6 +3254,7 @@ html/man3/BUF_MEM_new.html \
 html/man3/CMAC_CTX.html \
 html/man3/CMS_EncryptedData_decrypt.html \
 html/man3/CMS_EncryptedData_encrypt.html \
+html/man3/CMS_EncryptedData_set1_key.html \
 html/man3/CMS_EnvelopedData_create.html \
 html/man3/CMS_add0_cert.html \
 html/man3/CMS_add1_recipient_cert.html \
@@ -3716,6 +3717,7 @@ html/man3/SSL_get_event_timeout.html \
 html/man3/SSL_get_extms_support.html \
 html/man3/SSL_get_fd.html \
 html/man3/SSL_get_handshake_rtt.html \
+html/man3/SSL_get_peer_addr.html \
 html/man3/SSL_get_peer_cert_chain.html \
 html/man3/SSL_get_peer_certificate.html \
 html/man3/SSL_get_peer_signature_nid.html \
@@ -3926,6 +3928,7 @@ man/man3/BUF_MEM_new.3 \
 man/man3/CMAC_CTX.3 \
 man/man3/CMS_EncryptedData_decrypt.3 \
 man/man3/CMS_EncryptedData_encrypt.3 \
+man/man3/CMS_EncryptedData_set1_key.3 \
 man/man3/CMS_EnvelopedData_create.3 \
 man/man3/CMS_add0_cert.3 \
 man/man3/CMS_add1_recipient_cert.3 \
@@ -4388,6 +4391,7 @@ man/man3/SSL_get_event_timeout.3 \
 man/man3/SSL_get_extms_support.3 \
 man/man3/SSL_get_fd.3 \
 man/man3/SSL_get_handshake_rtt.3 \
+man/man3/SSL_get_peer_addr.3 \
 man/man3/SSL_get_peer_cert_chain.3 \
 man/man3/SSL_get_peer_certificate.3 \
 man/man3/SSL_get_peer_signature_nid.3 \
@@ -5081,6 +5085,10 @@ DEPEND[html/man7/ossl-guide-tls-server-block.html]=man7/ossl-guide-tls-server-bl
 GENERATE[html/man7/ossl-guide-tls-server-block.html]=man7/ossl-guide-tls-server-block.pod
 DEPEND[man/man7/ossl-guide-tls-server-block.7]=man7/ossl-guide-tls-server-block.pod
 GENERATE[man/man7/ossl-guide-tls-server-block.7]=man7/ossl-guide-tls-server-block.pod
+DEPEND[html/man7/ossl-removed-api.html]=man7/ossl-removed-api.pod
+GENERATE[html/man7/ossl-removed-api.html]=man7/ossl-removed-api.pod
+DEPEND[man/man7/ossl-removed-api.7]=man7/ossl-removed-api.pod
+GENERATE[man/man7/ossl-removed-api.7]=man7/ossl-removed-api.pod
 DEPEND[html/man7/ossl_store-file.html]=man7/ossl_store-file.pod
 GENERATE[html/man7/ossl_store-file.html]=man7/ossl_store-file.pod
 DEPEND[man/man7/ossl_store-file.7]=man7/ossl_store-file.pod
@@ -5315,6 +5323,7 @@ html/man7/ossl-guide-tls-client-block.html \
 html/man7/ossl-guide-tls-client-non-block.html \
 html/man7/ossl-guide-tls-introduction.html \
 html/man7/ossl-guide-tls-server-block.html \
+html/man7/ossl-removed-api.html \
 html/man7/ossl_store-file.html \
 html/man7/ossl_store.html \
 html/man7/passphrase-encoding.html \
@@ -5474,6 +5483,7 @@ man/man7/ossl-guide-tls-client-block.7 \
 man/man7/ossl-guide-tls-client-non-block.7 \
 man/man7/ossl-guide-tls-introduction.7 \
 man/man7/ossl-guide-tls-server-block.7 \
+man/man7/ossl-removed-api.7 \
 man/man7/ossl_store-file.7 \
 man/man7/ossl_store.7 \
 man/man7/passphrase-encoding.7 \

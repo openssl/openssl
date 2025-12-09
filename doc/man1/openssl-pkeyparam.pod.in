@@ -18,7 +18,7 @@ B<openssl> B<pkeyparam>
 [B<-text>]
 [B<-noout>]
 [B<-check>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -58,8 +58,6 @@ Do not output the encoded version of the parameters.
 
 This option checks the correctness of parameters.
 
-{- $OpenSSL::safe::opt_engine_item -}
-
 {- $OpenSSL::safe::opt_provider_item -}
 
 =back
@@ -87,7 +85,7 @@ L<openssl-gendsa(1)>
 
 =head1 HISTORY
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

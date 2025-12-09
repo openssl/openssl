@@ -18,7 +18,7 @@ B<openssl> B<x509>
 [B<-inform> B<DER>|B<PEM>]
 [B<-vfyopt> I<nm>:I<v>]
 [B<-key> I<filename>|I<uri>]
-[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>]
 [B<-signkey> I<filename>|I<uri>]
 [B<-out> I<filename>]
 [B<-outform> B<DER>|B<PEM>]
@@ -72,7 +72,7 @@ B<openssl> B<x509>
 [B<-CA> I<filename>|I<uri>]
 [B<-CAform> B<DER>|B<PEM>|B<P12>]
 [B<-CAkey> I<filename>|I<uri>]
-[B<-CAkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-CAkeyform> B<DER>|B<PEM>|B<P12>]
 [B<-CAserial> I<filename>]
 [B<-CAcreateserial>]
 [B<-trustout>]
@@ -82,7 +82,7 @@ B<openssl> B<x509>
 [B<-clrreject>]
 [B<-addreject> I<arg>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -193,7 +193,7 @@ B<-not_before> and B<-not_after>.
 
 This option is an alias of B<-key>.
 
-=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>
 
 The key input format; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -352,8 +352,12 @@ contained in the input.
 
 =item B<-checkend> I<arg>
 
-Checks if the certificate expires within the next I<arg> seconds and exits
-nonzero if yes it will expire or zero if not.
+Without B<-multi> checks if the certificate expires within the next
+I<arg> seconds and exits nonzero if it will expire or zero if not.
+
+With B<-multi> checks if any certificate in the input will expire
+within the next I<arg> seconds and exits nonzero if any will expire
+or zero if none will.
 
 =item B<-checkhost> I<host>
 
@@ -542,7 +546,7 @@ Sets the CA private key to sign a certificate with.
 The private key must match the public key of the certificate given with B<-CA>.
 If this option is not provided then the key must be present in the B<-CA> input.
 
-=item B<-CAkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-CAkeyform> B<DER>|B<PEM>|B<P12>
 
 The format for the CA key; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -640,8 +644,6 @@ It accepts the same values as the B<-addtrust> option.
 =over 4
 
 {- $OpenSSL::safe::opt_r_item -}
-
-{- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
 
@@ -792,6 +794,12 @@ Set a certificate to be trusted for SSL client use and change set its alias to
  openssl x509 -in cert.pem -addtrust clientAuth \
         -setalias "Steve's Class 1 CA" -out trust.pem
 
+Check if any certificates in a chain are due to expire within the next 30 days
+(returns zero if none will expire, nonzero if any will expire):
+
+ openssl x509 -in chain.pem -multi -checkend $[3600*24*30] \
+        && echo 'perform renewal' || echo 'renewal unnecessary'
+
 =head1 NOTES
 
 The conversion to UTF8 format used with the name options assumes that
@@ -833,16 +841,16 @@ form must have their links rebuilt using L<openssl-rehash(1)> or similar.
 The B<-signkey> option has been renamed to B<-key> in OpenSSL 3.0,
 keeping the old name as an alias.
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
-
 The B<-C> option was removed in OpenSSL 3.0.
 
 Since OpenSSL 3.2, generated certificates bear X.509 version 3,
 and key identifier extensions are included by default.
 
+The B<-engine> option was removed in OpenSSL 4.0.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

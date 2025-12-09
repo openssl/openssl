@@ -69,7 +69,7 @@ CMAC_CTX_copy() copies the state from one B<CMAC_CTX> structure to another.
 
 CMAC_Init() initializes the B<CMAC_CTX> structure for a new CMAC calculation
 with the specified key, key length, and cipher type.
-Optionally, an B<ENGINE> can be provided.
+I<impl> B<must> be NULL.
 
 CMAC_Update() processes data to be included in the CMAC calculation.
 This function can be called multiple times to update the context with

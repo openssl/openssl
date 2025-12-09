@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,12 +26,12 @@ static OSSL_FUNC_digest_set_ctx_params_fn md5_sha1_set_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn md5_sha1_settable_ctx_params;
 
 static const OSSL_PARAM known_md5_sha1_settable_ctx_params[] = {
-    {OSSL_DIGEST_PARAM_SSL3_MS, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
+    { OSSL_DIGEST_PARAM_SSL3_MS, OSSL_PARAM_OCTET_STRING, NULL, 0, 0 },
     OSSL_PARAM_END
 };
 
 static const OSSL_PARAM *md5_sha1_settable_ctx_params(ossl_unused void *ctx,
-                                                      ossl_unused void *provctx)
+    ossl_unused void *provctx)
 {
     return known_md5_sha1_settable_ctx_params;
 }
@@ -50,7 +50,7 @@ static int md5_sha1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_SSL3_MS);
     if (p != NULL && p->data_type == OSSL_PARAM_OCTET_STRING)
         return ossl_md5_sha1_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                                  (int)p->data_size, p->data);
+            (int)p->data_size, p->data);
     return 1;
 }
 

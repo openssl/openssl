@@ -203,7 +203,7 @@ return 1 on success or 0 on failure.
 
 X509 certificates may contain information about what purposes keys contained
 within them can be used for. For example "TLS WWW Server Authentication" or
-"Email Protection". This "key usage" information is held internally to the
+"Email Protection". This extended key usage information is held internally to the
 certificate itself. In addition the trust store containing trusted certificates
 can declare what purposes we trust different certificates for. This "trust"
 information is not held within the certificate itself but is "meta" information
@@ -238,18 +238,18 @@ the certificate and its chain are verified to be consistent with that purpose.
 For SSL client, SSL server, and S/MIME purposes, the EKU is checked also for the
 CA certificates along the chain, including any given trust anchor certificate.
 Potentially also further checks are done (depending on the purpose given).
-Every purpose also has an associated default trust value, which will also be set
+Every purpose also has an associated default trust id, which will also be set
 at the same time. During verification, this trust setting will be verified
 to check whether it is consistent with the trust set by the system administrator
 for certificates in the chain.
 
-X509_STORE_CTX_set_trust() sets the trust value for the target certificate
-being verified in the I<ctx>. Built-in available values for the I<trust>
+X509_STORE_CTX_set_trust() sets the trust id value for the target certificate
+being verified in the I<ctx>. Built-in available values for the I<trust> id
 argument are B<X509_TRUST_COMPAT>, B<X509_TRUST_SSL_CLIENT>,
 B<X509_TRUST_SSL_SERVER>, B<X509_TRUST_EMAIL>, B<X509_TRUST_OBJECT_SIGN>,
 B<X509_TRUST_OCSP_SIGN>, B<X509_TRUST_OCSP_REQUEST> and B<X509_TRUST_TSA>. It is
-also possible to create a custom trust value. Since X509_STORE_CTX_set_purpose()
-also sets the trust value it is normally sufficient to only call that function.
+also possible to create a custom trust id. Since X509_STORE_CTX_set_purpose()
+also sets the trust id it is normally sufficient to only call that function.
 If both are called then X509_STORE_CTX_set_trust() should be called after
 X509_STORE_CTX_set_purpose() since the trust setting of the last call will be
 used.
@@ -257,21 +257,21 @@ used.
 It should not normally be necessary for end user applications to call
 X509_STORE_CTX_purpose_inherit() directly. Typically applications should call
 X509_STORE_CTX_set_purpose() or X509_STORE_CTX_set_trust() instead. Using this
-function it is possible to set the purpose and trust values for the I<ctx> at
+function it is possible to set the purpose and trust id values for the I<ctx> at
 the same time.
 Both I<ctx> and its internal verification parameter pointer must not be NULL.
 The I<def_purpose> and I<purpose> arguments can have the same
 purpose values as described for X509_STORE_CTX_set_purpose() above. The I<trust>
-argument can have the same trust values as described in
+argument can have the same trust ids as described in
 X509_STORE_CTX_set_trust() above. Any of the I<def_purpose>, I<purpose> or
 I<trust> values may also have the value 0 to indicate that the supplied
 parameter should be ignored. After calling this function the purpose to be used
 for verification is set from the I<purpose> argument unless the purpose was
 already set in I<ctx> before, and the trust is set from the I<trust> argument
 unless the trust was already set in I<ctx> before.
-If I<trust> is 0 then the trust value will be set from
-the default trust value for I<purpose>. If the default trust value for the
-purpose is I<X509_TRUST_DEFAULT> and I<trust> is 0 then the default trust value
+If I<trust> is 0 then the trust id will be set from
+the default trust id for I<purpose>. If the default trust id for the
+purpose is I<X509_TRUST_DEFAULT> and I<trust> is 0 then the default trust id
 associated with the I<def_purpose> value is used for the trust setting instead.
 
 =head1 NOTES
@@ -328,7 +328,7 @@ There is no need to call X509_STORE_CTX_cleanup() explicitly since OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2009-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2009-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
