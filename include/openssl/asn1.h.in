@@ -9,9 +9,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
+/* clang-format on */
 
 #ifndef OPENSSL_ASN1_H
 # define OPENSSL_ASN1_H
@@ -130,9 +132,11 @@ extern "C" {
 # define SMIME_STREAM            0x1000
 
 /* Stacks for types not otherwise defined in this header */
+/* clang-format off */
 {-
     generate_stack_macros("X509_ALGOR");
 -}
+/* clang-format on */
 
 
 # define ASN1_STRING_FLAG_BITS_LEFT 0x08 /* Set if 0x07 has bits left value */
@@ -208,9 +212,11 @@ struct asn1_string_table_st {
     unsigned long flags;
 };
 
+/* clang-format off */
 {-
     generate_stack_macros("ASN1_STRING_TABLE");
 -}
+/* clang-format on */
 
 /* size limits: this stuff is taken straight from RFC2459 */
 
@@ -505,9 +511,11 @@ struct asn1_type_st {
     } value;
 };
 
+/* clang-format off */
 {-
     generate_stack_macros("ASN1_TYPE");
 -}
+/* clang-format on */
 
 typedef STACK_OF(ASN1_TYPE) ASN1_SEQUENCE_ANY;
 
@@ -561,9 +569,11 @@ int ASN1_TYPE_cmp(const ASN1_TYPE *a, const ASN1_TYPE *b);
 ASN1_TYPE *ASN1_TYPE_pack_sequence(const ASN1_ITEM *it, void *s, ASN1_TYPE **t);
 void *ASN1_TYPE_unpack_sequence(const ASN1_ITEM *it, const ASN1_TYPE *t);
 
+/* clang-format off */
 {-
     generate_stack_macros("ASN1_OBJECT");
 -}
+/* clang-format on */
 
 DECLARE_ASN1_FUNCTIONS(ASN1_OBJECT)
 
@@ -603,9 +613,11 @@ int ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl);
 int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
                             BIT_STRING_BITNAME *tbl);
 
+/* clang-format off */
 {-
     generate_stack_macros("ASN1_INTEGER");
 -}
+/* clang-format on */
 
 
 DECLARE_ASN1_FUNCTIONS(ASN1_INTEGER)
@@ -641,9 +653,11 @@ int ASN1_OCTET_STRING_cmp(const ASN1_OCTET_STRING *a,
 int ASN1_OCTET_STRING_set(ASN1_OCTET_STRING *str, const unsigned char *data,
                           int len);
 
+/* clang-format off */
 {-
     generate_stack_macros("ASN1_UTF8STRING");
 -}
+/* clang-format on */
 
 DECLARE_ASN1_FUNCTIONS(ASN1_VISIBLESTRING)
 DECLARE_ASN1_FUNCTIONS(ASN1_UNIVERSALSTRING)
@@ -654,9 +668,11 @@ DECLARE_ASN1_FUNCTIONS(ASN1_BMPSTRING)
 int UTF8_getc(const unsigned char *str, int len, unsigned long *val);
 int UTF8_putc(unsigned char *str, int len, unsigned long value);
 
+/* clang-format off */
 {-
     generate_stack_macros("ASN1_GENERALSTRING");
 -}
+/* clang-format on */
 
 DECLARE_ASN1_FUNCTIONS_name(ASN1_STRING, ASN1_PRINTABLE)
 
