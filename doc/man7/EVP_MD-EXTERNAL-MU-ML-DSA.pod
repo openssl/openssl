@@ -8,24 +8,24 @@ EVP_MD-EXTERNAL-MU-ML-DSA - The ExternalMu-ML-DSA.Prehash() EVP_MD implementatio
 
 Support for computing ExternalMu-ML-DSA.Prehash() through the B<EVP_MD> API.
 
-Normally the value of "mu" is calculated internally as part of a ML-DSA
+Normally the value of C<mu> is calculated internally as part of an ML-DSA
 sign or verify operation. Mu is defined as:
     mu = SHAKE256(tr || M', 64)
 
-Where tr is the hash of the encoded public key, and for Pure (ML-DSA)
-    M' = 00 || ctx_len || ctx || in (where in = message)
+Where B<tr> is the hash of the encoded public key, and, for Pure (ML-DSA):
+    M' = 0x00 || ctx_len || ctx || message
 
 In cases where prehashing the message is required, FIPS 204 allows
-the mu calculation to be done externally and then mu can be passed to
+the C<mu> calculation to be done externally and then C<mu> can be passed to
 ML-DSA sign or verify operations.
 
-PreHash (Hash-ML-DSA) is also supported and uses
-    M' = 01 || ctx_len || ctx || OID || in (where in = hashed(msg))
+PreHash (Hash-ML-DSA) is also supported and uses:
+    M' = 0x01 || ctx_len || ctx || OID || HashedMessage
 
-The output 'mu' value can then be supplied as an input to L<EVP_SIGNATURE-ML-DSA(7)>
-using the ML-DSA Signature Parameter "mu".
+The output C<mu> value can then be supplied as an input to L<EVP_SIGNATURE-ML-DSA(7)>
+using the ML-DSA Signature Parameter B<OSSL_SIGNATURE_PARAM_MU> C<mu>.
 This allows larger messages to be hashed (or hidden) before they are passed to
-"pure" ML-DSA sign or verify operations.
+pure ML-DSA sign or verify operations.
 
 =head2 Identities
 
@@ -52,14 +52,17 @@ An optional string of octets with length at most 255. By default it is the empty
 
 =item "digest" (B<OSSL_DIGEST_PARAM_MU_DIGEST>) <utf8 string>
 
-An optional parameter related to "Hash-ML-DSA" that is used to add an OID to M'.
+An optional parameter related to "Hash-ML-DSA" that is used to fetch a digest
+algorithm associated with an OID. (See the definition of PreHash M' above).
 By default it is not used.
 The HASH-ML-DSA variant is only supplied for interoperability purposes, since it
 is not used in protocols such as X509 & CMS (See RFC 9981 and 9982).
 
-OpenSSL accepts the following options "SHAKE-256", "SHAKE-128", "SHA-224",
+OpenSSL accepts the following digest names: "SHAKE-256", "SHAKE-128", "SHA-224",
 "SHA-256", "SHA-384", "SHA-512", "SHA3-224", "SHA3-256", "SHA3-384" and "SHA3-512".
-For SHAKE-128 and SHAKE-256 the expected XOF lengths are 32 and 64 respectively.
+The total size of the C<HashedMessage> passed to EVP_DigestUpdate() MUST match
+the size of the digest. For SHAKE-128 and SHAKE-256 the expected XOF digest
+lengths are 32 and 64 respectively.
 
 =item "properties" (B<OSSL_DIGEST_PARAM_MU_PROPERTIES>) <utf8 string>
 
@@ -77,7 +80,7 @@ in L<EVP_MD-common(7)>.
 FIPS 204 and
 https://csrc.nist.gov/csrc/media/Projects/post-quantum-cryptography/documents/faq/fips204-sec6-03192025.pdf
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 To generate external 'mu' given an existing ML-DSA key and a large message:
 
@@ -87,11 +90,11 @@ To generate external 'mu' given an existing ML-DSA key and a large message:
         unsigned char pub[2592], mu[64];
         size_t publen = 0, chunk;
         OSSL_PARAM params[4], *p = params;
-    
+
         /* Retrieve the ML-DSA encoded public key */
         EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
                                         pub, sizeof(pub), &publen);
- 
+
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_MU_PUB_KEY, pub, publen);
         /* This is an optional parameter */
         if (ctx != NULL && ctxlen != 0)
@@ -101,7 +104,7 @@ To generate external 'mu' given an existing ML-DSA key and a large message:
          * *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MU_DIGEST, "SHA-512", 0);
          */
         *p = OSSL_PARAM_construct_end();
-    
+
         mdctx = EVP_MD_CTX_new();
         md = EVP_MD_fetch(libctx, "ExternalMu-ML-DSA", NULL);
         EVP_DigestInit_ex2(mdctx, md, params);

@@ -2917,7 +2917,7 @@ static int pkey_calculate_mu(EVP_TEST *t, uint8_t *mu, size_t *mulen)
         else if (EVP_MD_is_a(md, "SHAKE256"))
             xoflen = 64;
         if (xoflen != 0) {
-            len = xoflen;
+            len = (unsigned int)xoflen;
             if (!EVP_DigestFinalXOF(mdctx, digest, xoflen))
                 goto err;
         } else {
