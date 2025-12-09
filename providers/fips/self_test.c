@@ -182,64 +182,6 @@ DEP_FINI_ATTRIBUTE void cleanup(void)
 
 #if !defined(OPENSSL_NO_FIPS_POST)
 /*
- * We need an explicit HMAC-SHA-256 KAT even though it is also
- * checked as part of the KDF KATs.  Refer IG 10.3.
- */
-static const unsigned char hmac_kat_pt[] = {
-    0xdd, 0x0c, 0x30, 0x33, 0x35, 0xf9, 0xe4, 0x2e,
-    0xc2, 0xef, 0xcc, 0xbf, 0x07, 0x95, 0xee, 0xa2
-};
-static const unsigned char hmac_kat_key[] = {
-    0xf4, 0x55, 0x66, 0x50, 0xac, 0x31, 0xd3, 0x54,
-    0x61, 0x61, 0x0b, 0xac, 0x4e, 0xd8, 0x1b, 0x1a,
-    0x18, 0x1b, 0x2d, 0x8a, 0x43, 0xea, 0x28, 0x54,
-    0xcb, 0xae, 0x22, 0xca, 0x74, 0x56, 0x08, 0x13
-};
-static const unsigned char hmac_kat_digest[] = {
-    0xf5, 0xf5, 0xe5, 0xf2, 0x66, 0x49, 0xe2, 0x40,
-    0xfc, 0x9e, 0x85, 0x7f, 0x2b, 0x9a, 0xbe, 0x28,
-    0x20, 0x12, 0x00, 0x92, 0x82, 0x21, 0x3e, 0x51,
-    0x44, 0x5d, 0xe3, 0x31, 0x04, 0x01, 0x72, 0x6b
-};
-
-static int integrity_self_test(OSSL_SELF_TEST *ev, OSSL_LIB_CTX *libctx)
-{
-    int ok = 0;
-    unsigned char out[EVP_MAX_MD_SIZE];
-    size_t out_len = 0;
-
-    OSSL_PARAM params[2];
-    EVP_MAC *mac = EVP_MAC_fetch(libctx, MAC_NAME, NULL);
-    EVP_MAC_CTX *ctx = EVP_MAC_CTX_new(mac);
-
-    OSSL_SELF_TEST_onbegin(ev, OSSL_SELF_TEST_TYPE_KAT_INTEGRITY,
-        OSSL_SELF_TEST_DESC_INTEGRITY_HMAC);
-
-    params[0] = OSSL_PARAM_construct_utf8_string("digest", DIGEST_NAME, 0);
-    params[1] = OSSL_PARAM_construct_end();
-
-    if (ctx == NULL
-        || mac == NULL
-        || !EVP_MAC_init(ctx, hmac_kat_key, sizeof(hmac_kat_key), params)
-        || !EVP_MAC_update(ctx, hmac_kat_pt, sizeof(hmac_kat_pt))
-        || !EVP_MAC_final(ctx, out, &out_len, MAX_MD_SIZE))
-        goto err;
-
-    /* Optional corruption */
-    OSSL_SELF_TEST_oncorrupt_byte(ev, out);
-
-    if (out_len != sizeof(hmac_kat_digest)
-        || memcmp(out, hmac_kat_digest, out_len) != 0)
-        goto err;
-    ok = 1;
-err:
-    OSSL_SELF_TEST_onend(ev, ok);
-    EVP_MAC_free(mac);
-    EVP_MAC_CTX_free(ctx);
-    return ok;
-}
-
-/*
  * Calculate the HMAC SHA256 of data read using a BIO and read_cb, and verify
  * the result matches the expected value.
  * Return 1 if verified, or 0 if it fails.
@@ -257,7 +199,7 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex
     EVP_MAC_CTX *ctx = NULL;
     OSSL_PARAM params[2], *p = params;
 
-    if (!integrity_self_test(ev, libctx))
+    if (!SELF_TEST_kats_single(ev, libctx, ST_ID_MAC_HMAC))
         goto err;
 
     OSSL_SELF_TEST_onbegin(ev, event_type, OSSL_SELF_TEST_DESC_INTEGRITY_HMAC);
@@ -382,6 +324,11 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         ERR_raise(ERR_LIB_PROV, PROV_R_MODULE_INTEGRITY_FAILURE);
         goto end;
     }
+
+    if (on_demand_test)
+        /* ensure all states are cleared so all tests are repeated */
+        for (int i = 0; i < ST_ID_MAX; i++)
+            st_all_tests[i].state = SELF_TEST_STATE_INIT;
 
     if (!SELF_TEST_kats(ev, st->libctx, on_demand_test)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);

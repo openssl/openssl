@@ -3298,6 +3298,33 @@ static const ST_KAT_PARAM ml_kem_key[] = {
 };
 #endif /* OPENSSL_NO_ML_KEM */
 
+/*
+ * We need an explicit HMAC-SHA-256 KAT even though it is also
+ * checked as part of the KDF KATs.  Refer IG 10.3.
+ */
+static const char hmac_kat_digest[] = "SHA256";
+static const unsigned char hmac_kat_pt[] = {
+    0xdd, 0x0c, 0x30, 0x33, 0x35, 0xf9, 0xe4, 0x2e,
+    0xc2, 0xef, 0xcc, 0xbf, 0x07, 0x95, 0xee, 0xa2
+};
+static const unsigned char hmac_kat_key[] = {
+    0xf4, 0x55, 0x66, 0x50, 0xac, 0x31, 0xd3, 0x54,
+    0x61, 0x61, 0x0b, 0xac, 0x4e, 0xd8, 0x1b, 0x1a,
+    0x18, 0x1b, 0x2d, 0x8a, 0x43, 0xea, 0x28, 0x54,
+    0xcb, 0xae, 0x22, 0xca, 0x74, 0x56, 0x08, 0x13
+};
+static const unsigned char hmac_kat_expected[] = {
+    0xf5, 0xf5, 0xe5, 0xf2, 0x66, 0x49, 0xe2, 0x40,
+    0xfc, 0x9e, 0x85, 0x7f, 0x2b, 0x9a, 0xbe, 0x28,
+    0x20, 0x12, 0x00, 0x92, 0x82, 0x21, 0x3e, 0x51,
+    0x44, 0x5d, 0xe3, 0x31, 0x04, 0x01, 0x72, 0x6b
+};
+static const ST_KAT_PARAM hmac_kat_params[] = {
+    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_DIGEST, hmac_kat_digest),
+    ST_KAT_PARAM_OCTET(OSSL_MAC_PARAM_KEY, hmac_kat_key),
+    ST_KAT_PARAM_END()
+};
+
 ST_DEFINITION st_all_tests[ST_ID_MAX] = {
     {
         "SHA1",
@@ -3920,5 +3947,17 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
             rsa_enc_params,
         },
         .depends_on = rsaenc_depends_on,
+    },
+    {
+        "HMAC",
+        OSSL_SELF_TEST_DESC_INTEGRITY_HMAC,
+        SELF_TEST_KAT_MAC,
+        SELF_TEST_DEFERRED,
+        SELF_TEST_STATE_INIT,
+        ITM_BUF(hmac_kat_pt),
+        ITM_BUF(hmac_kat_expected),
+        .u.mac = {
+            hmac_kat_params,
+        },
     },
 };

@@ -899,6 +899,55 @@ err:
     return ret;
 }
 
+/* Test MAC algorithms */
+static int self_test_mac(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
+    OSSL_LIB_CTX *libctx)
+{
+    int ret = 0;
+    unsigned char out[EVP_MAX_MD_SIZE];
+    size_t out_len = 0;
+    EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *ctx = NULL;
+    OSSL_PARAM *params = NULL;
+
+    /* Currently used for integrity */
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_MAC, t->desc);
+
+    mac = EVP_MAC_fetch(libctx, t->algorithm, "");
+    if (mac == NULL)
+        goto err;
+
+    ctx = EVP_MAC_CTX_new(mac);
+    if (ctx == NULL)
+        goto err;
+
+    params = kat_params_to_ossl_params(libctx, t->u.mac.params, NULL);
+    if (params == NULL)
+        goto err;
+
+    if (t->expected.len > sizeof(out))
+        goto err;
+
+    if (!EVP_MAC_init(ctx, NULL, 0, params)
+        || !EVP_MAC_update(ctx, t->pt.buf, t->pt.len)
+        || !EVP_MAC_final(ctx, out, &out_len, EVP_MAX_MD_SIZE))
+        goto err;
+
+    OSSL_SELF_TEST_oncorrupt_byte(st, out);
+
+    if ((out_len != t->expected.len)
+        || memcmp(out, t->expected.buf, t->expected.len) != 0)
+        goto err;
+
+    ret = 1;
+err:
+    EVP_MAC_free(mac);
+    EVP_MAC_CTX_free(ctx);
+    OSSL_PARAM_free(params);
+    OSSL_SELF_TEST_onend(st, ret);
+    return ret;
+}
+
 /*
  * Swap the library context DRBG for KAT testing
  *
@@ -1065,7 +1114,7 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int do_deferred)
     for (i = 0; i < ST_ID_MAX; i++) {
         int res;
 
-        if (!do_deferred && (st_all_tests[i].deferred == SELF_TEST_DEFERRED))
+        if (!do_deferred && (st_all_tests[i].deferred == SELF_TEST_DEFERRED) && (st_all_tests[i].state != SELF_TEST_STATE_PASSED))
             continue;
 
         switch (st_all_tests[i].category) {
@@ -1095,6 +1144,9 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int do_deferred)
             break;
         case SELF_TEST_KAT_ASYM_CIPHER:
             res = self_test_asym_cipher(&st_all_tests[i], st, libctx);
+            break;
+        case SELF_TEST_KAT_MAC:
+            res = self_test_mac(&st_all_tests[i], st, libctx);
             break;
         default:
             res = 0;
@@ -1168,6 +1220,9 @@ int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int id)
         break;
     case SELF_TEST_KAT_ASYM_CIPHER:
         ret = self_test_asym_cipher(&st_all_tests[id], st, libctx);
+        break;
+    case SELF_TEST_KAT_MAC:
+        ret = self_test_mac(&st_all_tests[id], st, libctx);
         break;
     default:
         ret = 0;
