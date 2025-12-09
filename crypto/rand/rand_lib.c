@@ -20,9 +20,11 @@
 #include "rand_local.h"
 #include "crypto/context.h"
 
+/* clang-format off */
 #ifndef OPENSSL_DEFAULT_SEED_SRC
-# define OPENSSL_DEFAULT_SEED_SRC SEED-SRC
+#define OPENSSL_DEFAULT_SEED_SRC SEED-SRC
 #endif
+/* clang-format on */
 
 #ifndef FIPS_MODULE
 # include <stdio.h>

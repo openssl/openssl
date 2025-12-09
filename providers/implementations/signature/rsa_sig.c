@@ -2127,6 +2127,7 @@ static int rsa_sigalg_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
         OSSL_DISPATCH_END                                               \
     }
 
+/* clang-format off */
 #if !defined(OPENSSL_NO_RMD160) && !defined(FIPS_MODULE)
 IMPL_RSA_SIGALG(ripemd160, RIPEMD160);
 #endif
@@ -2144,3 +2145,5 @@ IMPL_RSA_SIGALG(sha3_512, SHA3-512);
 #if !defined(OPENSSL_NO_SM3) && !defined(FIPS_MODULE)
 IMPL_RSA_SIGALG(sm3, SM3);
 #endif
+/* clang-format on */
+

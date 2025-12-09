@@ -1071,6 +1071,7 @@ static int dsa_sigalg_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
         OSSL_DISPATCH_END                                               \
     }
 
+/* clang-format off */
 IMPL_DSA_SIGALG(sha1, SHA1);
 IMPL_DSA_SIGALG(sha224, SHA2-224);
 IMPL_DSA_SIGALG(sha256, SHA2-256);
@@ -1080,3 +1081,4 @@ IMPL_DSA_SIGALG(sha3_224, SHA3-224);
 IMPL_DSA_SIGALG(sha3_256, SHA3-256);
 IMPL_DSA_SIGALG(sha3_384, SHA3-384);
 IMPL_DSA_SIGALG(sha3_512, SHA3-512);
+/* clang-format on */
