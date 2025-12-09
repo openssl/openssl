@@ -36,24 +36,28 @@ static int test_kdf_tls1_prf(int index)
         goto err;
     }
     if (EVP_PKEY_CTX_set1_tls1_prf_secret(pctx,
-                                          (unsigned char *)"secret", 6) <= 0) {
+            (unsigned char *)"secret", 6)
+        <= 0) {
         TEST_error("EVP_PKEY_CTX_set1_tls1_prf_secret");
         goto err;
     }
     if (index == 0) {
         if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx,
-                                            (unsigned char *)"seed", 4) <= 0) {
+                (unsigned char *)"seed", 4)
+            <= 0) {
             TEST_error("EVP_PKEY_CTX_add1_tls1_prf_seed");
             goto err;
         }
     } else {
         if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx,
-                                            (unsigned char *)"se", 2) <= 0) {
+                (unsigned char *)"se", 2)
+            <= 0) {
             TEST_error("EVP_PKEY_CTX_add1_tls1_prf_seed");
             goto err;
         }
         if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx,
-                                            (unsigned char *)"ed", 2) <= 0) {
+                (unsigned char *)"ed", 2)
+            <= 0) {
             TEST_error("EVP_PKEY_CTX_add1_tls1_prf_seed");
             goto err;
         }
@@ -98,12 +102,12 @@ static int test_kdf_hkdf(int index)
         goto err;
     }
     if (EVP_PKEY_CTX_set1_hkdf_salt(pctx, (const unsigned char *)"salt", 4)
-            <= 0) {
+        <= 0) {
         TEST_error("EVP_PKEY_CTX_set1_hkdf_salt");
         goto err;
     }
     if (EVP_PKEY_CTX_set1_hkdf_key(pctx, (const unsigned char *)"secret", 6)
-            <= 0) {
+        <= 0) {
         TEST_error("EVP_PKEY_CTX_set1_hkdf_key");
         goto err;
     }
@@ -203,7 +207,8 @@ static int test_kdf_scrypt(int index)
         size_t keysize = 0;
 
         if ((skey = EVP_PKEY_derive_SKEY(pctx, NULL, "GENERIC", NULL,
-                                         outlen, NULL)) == NULL) {
+                 outlen, NULL))
+            == NULL) {
             TEST_error("EVP_PKEY_derive_SKEY");
             goto err;
         }

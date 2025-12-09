@@ -25,4 +25,4 @@
 int ossl_DER_w_algorithmIdentifier_SM2(WPACKET *pkt, int cont, EC_KEY *ec);
 /* Signature */
 int ossl_DER_w_algorithmIdentifier_SM2_with_MD(WPACKET *pkt, int cont,
-                                               EC_KEY *ec, int mdnid);
+    EC_KEY *ec, int mdnid);
