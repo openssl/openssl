@@ -20,7 +20,9 @@ static int test_trace_categories(void)
         const char *expected_cat_name = NULL;
         int ret_cat_num;
 
-#define SET_EXPECTED_CAT_NAME(name) expected_cat_name = #name; break
+#define SET_EXPECTED_CAT_NAME(name) \
+    expected_cat_name = #name;      \
+    break
         switch (cat_num) {
         case OSSL_TRACE_CATEGORY_ALL:
             SET_EXPECTED_CAT_NAME(ALL);
@@ -73,8 +75,7 @@ static int test_trace_categories(void)
 
         if (!TEST_str_eq(cat_name, expected_cat_name))
             return 0;
-        ret_cat_num =
-            OSSL_trace_get_category_num(cat_name);
+        ret_cat_num = OSSL_trace_get_category_num(cat_name);
         if (cat_num < OSSL_TRACE_CATEGORY_NUM)
             if (!TEST_int_eq(cat_num, ret_cat_num))
                 return 0;
@@ -85,43 +86,42 @@ static int test_trace_categories(void)
 
 #ifndef OPENSSL_NO_TRACE
 
-# define OSSL_START "xyz-"
-# define OSSL_HELLO "Hello World\n"
+#define OSSL_START "xyz-"
+#define OSSL_HELLO "Hello World\n"
 /* OSSL_STR80 must have length OSSL_TRACE_STRING_MAX */
-# define OSSL_STR80 "1234567890123456789012345678901234567890123456789012345678901234567890123456789\n"
-# define OSSL_STR81 (OSSL_STR80"x")
-# define OSSL_CTRL "A\xfe\nB"
-# define OSSL_MASKED "A \nB"
-# define OSSL_BYE "Good Bye Universe\n"
-# define OSSL_END "-abc"
+#define OSSL_STR80 "1234567890123456789012345678901234567890123456789012345678901234567890123456789\n"
+#define OSSL_STR81 (OSSL_STR80 "x")
+#define OSSL_CTRL "A\xfe\nB"
+#define OSSL_MASKED "A \nB"
+#define OSSL_BYE "Good Bye Universe\n"
+#define OSSL_END "-abc"
 
-# define trace_string(text, full, str) \
+#define trace_string(text, full, str) \
     OSSL_trace_string(trc_out, text, full, (unsigned char *)(str), strlen(str))
 
 static int put_trace_output(void)
 {
     int res = 1;
 
-    OSSL_TRACE_BEGIN(HTTP) {
+    OSSL_TRACE_BEGIN(HTTP)
+    {
         res = TEST_int_eq(BIO_printf(trc_out, OSSL_HELLO), strlen(OSSL_HELLO));
         res += TEST_int_eq(trace_string(0, 0, OSSL_STR80), strlen(OSSL_STR80));
         res += TEST_int_eq(trace_string(0, 0, OSSL_STR81), strlen(OSSL_STR80));
         res += TEST_int_eq(trace_string(1, 1, OSSL_CTRL), strlen(OSSL_CTRL));
-        res += TEST_int_eq(trace_string(0, 1, OSSL_MASKED), strlen(OSSL_MASKED)
-                           + 1); /* newline added */
+        res += TEST_int_eq(trace_string(0, 1, OSSL_MASKED), strlen(OSSL_MASKED) + 1); /* newline added */
         res += TEST_int_eq(BIO_printf(trc_out, OSSL_BYE), strlen(OSSL_BYE));
         res = res == 6;
         /* not using '&&' but '+' to catch potentially multiple test failures */
-    } OSSL_TRACE_END(HTTP);
+    }
+    OSSL_TRACE_END(HTTP);
     return res;
 }
 
 static int test_trace_channel(void)
 {
-    static const char expected[] =
-        OSSL_START"\n" OSSL_HELLO
-        OSSL_STR80 "[len 81 limited to 80]: "OSSL_STR80
-        OSSL_CTRL OSSL_MASKED"\n" OSSL_BYE OSSL_END"\n";
+    static const char expected[] = OSSL_START "\n" OSSL_HELLO OSSL_STR80 "[len 81 limited to 80]: " OSSL_STR80
+        OSSL_CTRL OSSL_MASKED "\n" OSSL_BYE OSSL_END "\n";
     static const size_t expected_len = sizeof(expected) - 1;
     BIO *bio = NULL;
     char *p_buf = NULL;
@@ -141,10 +141,12 @@ static int test_trace_channel(void)
         goto end;
 
     if (!TEST_int_eq(OSSL_trace_set_prefix(OSSL_TRACE_CATEGORY_HTTP,
-                                           OSSL_START), 1))
+                         OSSL_START),
+            1))
         goto end;
     if (!TEST_int_eq(OSSL_trace_set_suffix(OSSL_TRACE_CATEGORY_HTTP,
-                                           OSSL_END), 1))
+                         OSSL_END),
+            1))
         goto end;
 
     ret = put_trace_output();
@@ -154,7 +156,7 @@ static int test_trace_channel(void)
     ret = TEST_int_eq(OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_HTTP, NULL), 1)
         && ret;
 
- end:
+end:
     return ret;
 }
 
@@ -162,7 +164,7 @@ static int trace_cb_failure;
 static int trace_cb_called;
 
 static size_t trace_cb(const char *buffer, size_t count,
-                       int category, int cmd, void *data)
+    int category, int cmd, void *data)
 {
     trace_cb_called = 1;
     if (!TEST_true(category == OSSL_TRACE_CATEGORY_TRACE))
@@ -175,7 +177,7 @@ static int test_trace_callback(void)
     int ret = 0;
 
     if (!TEST_true(OSSL_trace_set_callback(OSSL_TRACE_CATEGORY_TRACE, trace_cb,
-                                           NULL)))
+            NULL)))
         goto end;
 
     put_trace_output();
@@ -184,7 +186,7 @@ static int test_trace_callback(void)
         goto end;
 
     ret = 1;
- end:
+end:
     return ret;
 }
 #endif
