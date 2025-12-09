@@ -60,11 +60,13 @@ ASN1_SEQUENCE(BARE_ALGOR) = {
     ASN1_SIMPLE(BARE_ALGOR, oid, ASN1_OBJECT),
 } static_ASN1_SEQUENCE_END(BARE_ALGOR)
 
-    ASN1_SEQUENCE(BARE_PUBKEY)
-    = { ASN1_EMBED(BARE_PUBKEY, algor, BARE_ALGOR), ASN1_SIMPLE(BARE_PUBKEY, pubkey, ASN1_BIT_STRING) } static_ASN1_SEQUENCE_END(BARE_PUBKEY)
+ASN1_SEQUENCE(BARE_PUBKEY) = {
+    ASN1_EMBED(BARE_PUBKEY, algor, BARE_ALGOR),
+    ASN1_SIMPLE(BARE_PUBKEY, pubkey, ASN1_BIT_STRING)
+} static_ASN1_SEQUENCE_END(BARE_PUBKEY)
 #endif /* OPENSSL_NO_SLH_DSA */
 
-        struct der2key_ctx_st; /* Forward declaration */
+struct der2key_ctx_st; /* Forward declaration */
 typedef int check_key_fn(void *, struct der2key_ctx_st *ctx);
 typedef void adjust_key_fn(void *, struct der2key_ctx_st *ctx);
 typedef void free_key_fn(void *);
