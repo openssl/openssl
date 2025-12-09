@@ -52,7 +52,7 @@ BIO *new_conn(SSL_CTX *ctx, const char *hostname)
     SSL *ssl = NULL;
     const char *bare_hostname;
 #ifdef USE_QUIC
-    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+    static const unsigned char alpn[] = { 5, 'd', 'u', 'm', 'm', 'y' };
 #endif
 
     out = BIO_new_ssl_connect(ctx);
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
 
     snprintf(host_port, sizeof(host_port), "%s:%s", argv[1], argv[2]);
     mlen = snprintf(msg, sizeof(msg),
-                    "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
+        "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {

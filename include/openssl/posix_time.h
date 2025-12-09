@@ -8,13 +8,13 @@
  */
 
 #ifndef OPENSSL_HEADER_POSIX_TIME_H
-# define OPENSSL_HEADER_POSIX_TIME_H
-# include <stdint.h>
-# include <time.h>
+#define OPENSSL_HEADER_POSIX_TIME_H
+#include <stdint.h>
+#include <time.h>
 
-# if defined(__cplusplus)
+#if defined(__cplusplus)
 extern "C" {
-# endif
+#endif
 /*
  * OPENSSL_posix_to_tm converts a int64_t POSIX time value in |time|,
  * which must be in the range of year 0000 to 9999, to a broken out
@@ -39,8 +39,8 @@ int OPENSSL_tm_to_posix(const struct tm *tm, int64_t *out);
  */
 int OPENSSL_timegm(const struct tm *tm, time_t *out);
 
-# if defined(__cplusplus)
-}  /* extern C */
-# endif
+#if defined(__cplusplus)
+} /* extern C */
+#endif
 
-#endif  /* OPENSSL_HEADER_POSIX_TIME_H */
+#endif /* OPENSSL_HEADER_POSIX_TIME_H */

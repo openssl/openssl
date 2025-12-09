@@ -20,7 +20,7 @@ int test_asn1_string_to_time_t(const char *asn1_string, time_t *out_time_t)
     struct tm timestamp_tm;
 
     timestamp_asn1 = ASN1_TIME_new();
-    if(timestamp_asn1 == NULL)
+    if (timestamp_asn1 == NULL)
         goto err;
 
     if (!ASN1_TIME_set_string(timestamp_asn1, asn1_string))
