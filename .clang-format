@@ -243,6 +243,7 @@ StatementMacros:
   - "ASN1_SEQUENCE_END_enc"
   - "ASN1_SEQUENCE_END_name"
   - "ASN1_SEQUENCE_END_ref"
+  - "static_ASN1_SEQUENCE_END"
   # This isn't quite right, but it causes clang-format to do a slightly better
   # job formatting this macro.
   - "ASN1_EX_TEMPLATE_TYPE"
