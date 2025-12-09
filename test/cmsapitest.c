@@ -27,7 +27,7 @@ static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
     const char *msg = "Hello world";
     BIO *msgbio = BIO_new_mem_buf(msg, strlen(msg));
     BIO *outmsgbio = BIO_new(BIO_s_mem());
-    CMS_ContentInfo* content = NULL;
+    CMS_ContentInfo *content = NULL;
     char buf[80];
 
     if (!TEST_ptr(certstack) || !TEST_ptr(msgbio) || !TEST_ptr(outmsgbio))
@@ -41,16 +41,16 @@ static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
         goto end;
 
     if (!TEST_true(CMS_decrypt(content, privkey, cert, NULL, outmsgbio,
-                               CMS_TEXT)))
+            CMS_TEXT)))
         goto end;
 
     /* Check we got the message we first started with */
     if (!TEST_int_eq(BIO_gets(outmsgbio, buf, sizeof(buf)), strlen(msg))
-            || !TEST_int_eq(strcmp(buf, msg), 0))
+        || !TEST_int_eq(strcmp(buf, msg), 0))
         goto end;
 
     testresult = 1;
- end:
+end:
     sk_X509_free(certstack);
     BIO_free(msgbio);
     BIO_free(outmsgbio);
@@ -281,9 +281,9 @@ static int test_d2i_CMS_bio_NULL(void)
     };
 
     ret = TEST_ptr(bio = BIO_new_mem_buf(cms_data, sizeof(cms_data)))
-          && TEST_ptr(cms = d2i_CMS_bio(bio, NULL))
-          && TEST_true(CMS_verify(cms, NULL, NULL, NULL, NULL,
-                                  CMS_NO_SIGNER_CERT_VERIFY));
+        && TEST_ptr(cms = d2i_CMS_bio(bio, NULL))
+        && TEST_true(CMS_verify(cms, NULL, NULL, NULL, NULL,
+            CMS_NO_SIGNER_CERT_VERIFY));
     CMS_ContentInfo_free(cms);
     BIO_free(bio);
     return ret && TEST_int_eq(ERR_peek_error(), 0);
@@ -328,7 +328,7 @@ static int test_d2i_CMS_decode(const int idx)
     int ret = 0;
 
     if (!TEST_ptr(bio = BIO_new_file(derin, "r")))
-      goto end;
+        goto end;
 
     switch (idx) {
     case 0:
@@ -359,18 +359,18 @@ end:
 static int test_CMS_set1_key_mem_leak(void)
 {
     CMS_ContentInfo *cms;
-    unsigned char key[32] = {0};
+    unsigned char key[32] = { 0 };
     int ret = 0;
 
     if (!TEST_ptr(cms = CMS_ContentInfo_new()))
         return 0;
 
     if (!TEST_true(CMS_EncryptedData_set1_key(cms, EVP_aes_256_cbc(),
-                                              key, 32)))
+            key, 32)))
         goto end;
 
     if (!TEST_true(CMS_EncryptedData_set1_key(cms, EVP_aes_128_cbc(),
-                                              key, 16)))
+            key, 16)))
         goto end;
 
     ret = 1;
@@ -383,7 +383,7 @@ static int test_encrypted_data(void)
 {
     const char *msg = "Hello world";
     BIO *msgbio = BIO_new_mem_buf(msg, (int)strlen(msg));
-    uint8_t key[16] = {0};
+    uint8_t key[16] = { 0 };
     size_t keylen = 16;
     CMS_ContentInfo *cms;
     BIO *decryptbio = BIO_new(BIO_s_mem());
@@ -399,7 +399,7 @@ static int test_encrypted_data(void)
 
     /* Check we got the message we first started with */
     if (!TEST_int_eq(BIO_gets(decryptbio, buf, sizeof(buf)), (int)strlen(msg))
-            || !TEST_int_eq(strcmp(buf, msg), 0))
+        || !TEST_int_eq(strcmp(buf, msg), 0))
         goto end;
 
     ret = 1;
@@ -414,7 +414,7 @@ static int test_encrypted_data_aead(void)
 {
     const char *msg = "Hello world";
     BIO *msgbio = BIO_new_mem_buf(msg, (int)strlen(msg));
-    uint8_t key[16] = {0};
+    uint8_t key[16] = { 0 };
     size_t keylen = 16;
     CMS_ContentInfo *cms;
     BIO *decryptbio = BIO_new(BIO_s_mem());
@@ -464,8 +464,8 @@ int setup_tests(void)
     }
 
     if (!TEST_ptr(certin = test_get_argument(0))
-            || !TEST_ptr(privkeyin = test_get_argument(1))
-            || !TEST_ptr(derin = test_get_argument(2)))
+        || !TEST_ptr(privkeyin = test_get_argument(1))
+        || !TEST_ptr(derin = test_get_argument(2)))
         return 0;
 
     certbio = BIO_new_file(certin, "r");
