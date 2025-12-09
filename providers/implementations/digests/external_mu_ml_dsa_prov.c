@@ -221,15 +221,14 @@ static int mu_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
     if (p.digestname != NULL) {
         int ret;
-        EVP_MD *md = EVP_MD_fetch(ctx->libctx, p.digestname->data, ctx->propq);
 
-        if (md == NULL)
+        if (p.digestname->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        ret = ossl_der_oid_pq_dsa_prehash_digest(md, &ctx->oid, &ctx->oid_len,
+        ret = ossl_der_oid_pq_dsa_prehash_digest(p.digestname->data,
+                                                 &ctx->oid, &ctx->oid_len,
                                                  &ctx->digest_len);
         if (ret)
             ctx->remaining = ctx->digest_len;
-        EVP_MD_free(md);
         return ret;
     }
     return 1;
