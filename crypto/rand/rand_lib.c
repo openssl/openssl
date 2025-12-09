@@ -25,9 +25,11 @@
 #include "internal/provider.h"
 #include "internal/common.h"
 
+/* clang-format off */
 #ifndef OPENSSL_DEFAULT_SEED_SRC
-#define OPENSSL_DEFAULT_SEED_SRC SEED - SRC
+#define OPENSSL_DEFAULT_SEED_SRC SEED-SRC
 #endif
+/* clang-format on */
 
 typedef struct rand_global_st {
     /*
