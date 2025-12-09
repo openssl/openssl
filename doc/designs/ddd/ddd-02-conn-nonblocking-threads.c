@@ -65,7 +65,7 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
     SSL *ssl = NULL;
     const char *bare_hostname;
 #ifdef USE_QUIC
-    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+    static const unsigned char alpn[] = { 5, 'd', 'u', 'm', 'm', 'y' };
 #endif
 
     conn = calloc(1, sizeof(APP_CONN));
@@ -216,8 +216,8 @@ int get_conn_pending_tx(APP_CONN *conn)
 {
 #ifdef USE_QUIC
     return (SSL_net_read_desired(conn->ssl) ? POLLIN : 0)
-           | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
-           | POLLERR;
+        | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
+        | POLLERR;
 #else
     return (conn->tx_need_rx ? POLLIN : 0) | POLLOUT | POLLERR;
 #endif
@@ -273,7 +273,7 @@ int main(int argc, char **argv)
 
     snprintf(host_port, sizeof(host_port), "%s:%s", argv[1], argv[2]);
     tx_len = snprintf(tx_msg, sizeof(tx_msg),
-                      "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
+        "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {
@@ -296,7 +296,7 @@ int main(int argc, char **argv)
         } else if (l == -1) {
             fprintf(stderr, "tx error\n");
         } else if (l == -2) {
-            struct pollfd pfd = {0};
+            struct pollfd pfd = { 0 };
             pfd.fd = get_conn_fd(conn);
             pfd.events = get_conn_pending_tx(conn);
             if (poll(&pfd, 1, timeout) == 0) {
@@ -314,7 +314,7 @@ int main(int argc, char **argv)
         } else if (l == -1) {
             break;
         } else if (l == -2) {
-            struct pollfd pfd = {0};
+            struct pollfd pfd = { 0 };
             pfd.fd = get_conn_fd(conn);
             pfd.events = get_conn_pending_rx(conn);
             if (poll(&pfd, 1, timeout) == 0) {

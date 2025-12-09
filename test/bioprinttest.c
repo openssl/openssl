@@ -120,16 +120,14 @@ typedef struct z_data_st {
 } z_data;
 
 static z_data zu_data[] = {
-    { SIZE_MAX, "%zu", (sizeof(size_t) == 4 ? "4294967295"
-                        : sizeof(size_t) == 8 ? "18446744073709551615"
-                        : "") },
+    { SIZE_MAX, "%zu", (sizeof(size_t) == 4 ? "4294967295" : sizeof(size_t) == 8 ? "18446744073709551615"
+                                                                                 : "") },
     /*
      * in 2-complement, the unsigned number divided by two plus one becomes the
      * smallest possible negative signed number of the corresponding type
      */
-    { SIZE_MAX / 2 + 1, "%zi", (sizeof(size_t) == 4 ? "-2147483648"
-                                : sizeof(size_t) == 8 ? "-9223372036854775808"
-                                : "") },
+    { SIZE_MAX / 2 + 1, "%zi", (sizeof(size_t) == 4 ? "-2147483648" : sizeof(size_t) == 8 ? "-9223372036854775808"
+                                                                                          : "") },
     { 0, "%zu", "0" },
     { 0, "%zi", "0" },
 };
@@ -173,7 +171,6 @@ static int test_j(int i)
     return 1;
 }
 
-
 /* Precision and width. */
 typedef struct pw_st {
     int p;
@@ -203,7 +200,7 @@ static int dofptest(int test, int sub, double val, const char *width, int prec)
 
         if (prec >= 0)
             BIO_snprintf(format, sizeof(format), "%%%s.%d%s", width, prec,
-                         fspec);
+                fspec);
         else
             BIO_snprintf(format, sizeof(format), "%%%s%s", width, fspec);
         BIO_snprintf(result, sizeof(result), format, val);
@@ -215,7 +212,7 @@ static int dofptest(int test, int sub, double val, const char *width, int prec)
                 printf(", \"%s\"", result);
         } else if (!TEST_str_eq(fpexpected[test][sub][i], result)) {
             TEST_info("test %d format=|%s| exp=|%s|, ret=|%s|",
-                    test, format, fpexpected[test][sub][i], result);
+                test, format, fpexpected[test][sub][i], result);
             ret = 0;
         }
     }
@@ -254,7 +251,8 @@ static int test_big(void)
 
     /* Test excessively big number. Should fail */
     if (!TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
-                                  "%f\n", 2 * (double)ULONG_MAX), -1))
+                         "%f\n", 2 * (double)ULONG_MAX),
+            -1))
         return 0;
 
     return 1;
@@ -366,4 +364,3 @@ int test_flush_taperr(void)
 {
     return fflush(stderr);
 }
-
