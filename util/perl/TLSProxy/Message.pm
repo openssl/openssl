@@ -240,11 +240,16 @@ sub get_messages
                         # skip the handshake header
                         $payload .= substr($record->decrypt_data, DTLS_MESSAGE_HEADER_LENGTH, $recoffset);
                         push @message_frag_lens, $recoffset;
+
+                        # We skipped the handshake header above and we need to
+                        # update recoffset accordingly
+                        $recoffset += DTLS_MESSAGE_HEADER_LENGTH;
+                    } else {
+                        $payload .= substr($record->decrypt_data, 0, $recoffset);
+                        push @message_frag_lens, $recoffset;
                     }
 
-                    # We skipped the handshake header above and we need to
-                    # update recoffset accordingly
-                    $recoffset += DTLS_MESSAGE_HEADER_LENGTH;
+
                     $message = create_message($server, $mt,
                         $messseq, $messfraglen, $messfragoffs,
                         $payload, $startoffset, $isdtls);
