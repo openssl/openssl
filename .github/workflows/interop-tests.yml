@@ -8,6 +8,7 @@ on:
   schedule:
     - cron: '55 02 * * *'
   workflow_dispatch:
+  pull_request:
 
 permissions: {}
 
