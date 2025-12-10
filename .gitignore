@@ -108,6 +108,7 @@ providers/implementations/kdfs/pbkdf2.inc
 providers/implementations/kdfs/pkcs12kdf.inc
 providers/implementations/kdfs/pvkkdf.inc
 providers/implementations/kdfs/scrypt.inc
+providers/implementations/kdfs/snmpkdf.inc
 providers/implementations/kdfs/sshkdf.inc
 providers/implementations/kdfs/sskdf.inc
 providers/implementations/kdfs/tls1_prf.inc
