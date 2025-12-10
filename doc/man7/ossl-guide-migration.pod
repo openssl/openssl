@@ -160,7 +160,7 @@ more information about providers.
 
 The refactoring to support Providers conflicts internally with the APIs used to
 support engines, including the ENGINE API and any function that creates or
-modifies custom "METHODS" (for example L<EVP_MD_meth_new(3)>,
+modifies custom "METHODS" (for example EVP_MD_meth_new(),
 EVP_CIPHER_meth_new(), L<EVP_PKEY_meth_new(3)>, L<RSA_meth_new(3)>,
 L<EC_KEY_METHOD_new(3)>, etc.). These functions are being deprecated in
 OpenSSL 3.0, and users of these APIs should know that their use can likely
