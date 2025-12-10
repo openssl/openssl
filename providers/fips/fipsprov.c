@@ -1005,7 +1005,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
         && strcmp(fgbl->selftest_params.conditional_error_check, "0") == 0)
         SELF_TEST_disable_conditional_error_state();
 
-        /* Enable or disable FIPS provider options */
+    /* Enable or disable FIPS provider options */
 #define OSSL_FIPS_PARAM(structname, paramname, unused)             \
     if (fgbl->fips_##structname.option != NULL) {                  \
         if (strcmp(fgbl->fips_##structname.option, "1") == 0)      \
