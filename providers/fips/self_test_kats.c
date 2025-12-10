@@ -1245,6 +1245,8 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int do_deferred)
         /* Decrement saved_rand reference counter */
         EVP_RAND_CTX_free(saved_rand);
         EVP_RAND_CTX_free(main_rand);
+        /* Ensure this global variable does not reference freed memory */
+        main_rand = NULL;
         return 0;
     }
 
@@ -1281,6 +1283,8 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int do_deferred)
         ret = 0;
 
     RAND_set0_private(libctx, saved_rand);
+    /* The above call will cause main_rand to be freed */
+    main_rand = NULL;
     return ret;
 }
 
