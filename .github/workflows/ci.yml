@@ -178,7 +178,7 @@ jobs:
     - name: config
       run: |
         podman exec -t $CONTAINER_ID sh -c \
-          "./config --strict-warnings linux-x86 enable-demos enable-fips enable-lms enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace"
+          "./config --strict-warnings linux-x86 enable-demos enable-fips enable-lms enable-md2 enable-rc5 enable-trace"
     - name: config dump
       run: |
         podman exec -t $CONTAINER_ID sh -c \
