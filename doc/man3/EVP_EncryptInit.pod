@@ -1522,7 +1522,7 @@ B<EVP_CTRL_AEAD_SET_TAG>.
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag)
 
 When decrypting, this call sets the expected tag to C<taglen> bytes from C<tag>.
-C<taglen> must be between 1 and 16 inclusive.
+C<taglen> must be between 0 and 16 inclusive.
 The tag must be set prior to any call to EVP_DecryptFinal() or
 EVP_DecryptFinal_ex().
 
