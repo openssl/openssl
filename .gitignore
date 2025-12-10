@@ -28,7 +28,12 @@
 /apps/md4.c
 
 # Auto generated headers
+/crypto/asn1/charmap.h
+/crypto/bn/bn_prime.h
 /crypto/buildinf.h
+/crypto/conf/conf_def.h
+/crypto/objects/obj_dat.h
+/crypto/objects/obj_xref.h
 /include/crypto/*_conf.h
 /include/openssl/asn1.h
 /include/openssl/asn1t.h
@@ -58,6 +63,7 @@
 /include/openssl/x509_acert.h
 /include/openssl/x509_vfy.h
 /include/openssl/core_names.h
+/include/openssl/obj_mac.h
 
 # Auto generated parameter name files
 /crypto/params_idx.c
@@ -108,6 +114,7 @@ providers/implementations/kdfs/pbkdf2.inc
 providers/implementations/kdfs/pkcs12kdf.inc
 providers/implementations/kdfs/pvkkdf.inc
 providers/implementations/kdfs/scrypt.inc
+providers/implementations/kdfs/snmpkdf.inc
 providers/implementations/kdfs/sshkdf.inc
 providers/implementations/kdfs/sskdf.inc
 providers/implementations/kdfs/tls1_prf.inc
@@ -174,6 +181,9 @@ providers/implementations/rands/fips_crng_test.inc
 providers/implementations/rands/seed_src.inc
 providers/implementations/rands/seed_src_jitter.inc
 providers/implementations/rands/test_rng.inc
+
+# Auto generated num files
+/crypto/objects/obj_mac.num
 
 # error code files
 /crypto/err/openssl.txt.old
