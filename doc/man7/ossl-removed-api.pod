@@ -3,6 +3,24 @@
 =head1 NAME
 
 ASN1_STRING_data,
+EVP_CIPHER_meth_new,
+EVP_CIPHER_meth_dup,
+EVP_CIPHER_meth_free,
+EVP_CIPHER_meth_set_iv_length,
+EVP_CIPHER_meth_set_flags,
+EVP_CIPHER_meth_set_impl_ctx_size,
+EVP_CIPHER_meth_set_init,
+EVP_CIPHER_meth_set_do_cipher,
+EVP_CIPHER_meth_set_cleanup,
+EVP_CIPHER_meth_set_set_asn1_params,
+EVP_CIPHER_meth_set_get_asn1_params,
+EVP_CIPHER_meth_set_ctrl,
+EVP_CIPHER_meth_get_init,
+EVP_CIPHER_meth_get_do_cipher,
+EVP_CIPHER_meth_get_cleanup,
+EVP_CIPHER_meth_get_set_asn1_params,
+EVP_CIPHER_meth_get_get_asn1_params,
+EVP_CIPHER_meth_get_ctrl,
 ossl-removed-api - API that has been removed from OpenSSL
 
 =head1 SYNOPSIS
@@ -33,6 +51,42 @@ This includes consulting the L<ossl-guide-migration(7)> documentation.
 =over 4
 
 =item ASN1_STRING_data (Deprecated in 1.1.1) - see L<ASN1_STRING_get0_data(3)>
+
+=item EVP_CIPHER_meth_new (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_dup (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_free (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_set_iv_length (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_set_flags (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_set_impl_ctx_size (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_set_init (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_set_do_cipher (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_set_cleanup (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_set_set_asn1_params (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_set_get_asn1_params (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_set_ctrl (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_get_init (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_get_do_cipher (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_get_cleanup (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_get_set_asn1_params (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_get_get_asn1_params (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_CIPHER_meth_get_ctrl (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
 
 =back
 
