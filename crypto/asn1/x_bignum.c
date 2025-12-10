@@ -118,6 +118,7 @@ static int bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 
     /* Reject encodings that imply a negative number. */
     if (len == 0 || (*cont & 0x80) != 0) {
+        bn_free(pval, it);
         ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_VALUE);
         return 0;
     }
