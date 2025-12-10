@@ -2813,10 +2813,8 @@ err:
 
 /* Calculate ExternalMu-ML-DSA.prehash() */
 static int calculate_mu(const uint8_t *pub, size_t publen,
-                        const uint8_t *ctx, size_t ctxlen,
-                        const uint8_t *msg, size_t msglen,
-                        const char *digestname,
-                        uint8_t *out, size_t outlen)
+    const uint8_t *ctx, size_t ctxlen, const uint8_t *msg, size_t msglen,
+    const char *digestname, uint8_t *out, size_t outlen)
 {
     EVP_MD_CTX *mdctx = NULL;
     EVP_MD *md = NULL;
@@ -2975,16 +2973,12 @@ static int pkey_test_run(EVP_TEST *t)
         goto err;
     }
 
-    if (expected->keyop(expected->ctx, NULL, &got_len,
-            expected->input, expected->input_len)
-            <= 0
+    if (expected->keyop(expected->ctx, NULL, &got_len, in, inlen) <= 0
         || !TEST_ptr(got = OPENSSL_malloc(got_len))) {
         t->err = "KEYOP_LENGTH_ERROR";
         goto err;
     }
-    if (expected->keyop(expected->ctx, got, &got_len,
-            expected->input, expected->input_len)
-        <= 0) {
+    if (expected->keyop(expected->ctx, got, &got_len, in, inlen) <= 0) {
         t->err = "KEYOP_ERROR";
         goto err;
     }
@@ -2999,16 +2993,12 @@ static int pkey_test_run(EVP_TEST *t)
     got = NULL;
 
     /* Repeat the test on the EVP_PKEY context copy. */
-    if (expected->keyop(copy, NULL, &got_len, expected->input,
-            expected->input_len)
-            <= 0
+    if (expected->keyop(copy, NULL, &got_len, in, inlen) <= 0
         || !TEST_ptr(got = OPENSSL_malloc(got_len))) {
         t->err = "KEYOP_LENGTH_ERROR";
         goto err;
     }
-    if (expected->keyop(copy, got, &got_len, expected->input,
-            expected->input_len)
-        <= 0) {
+    if (expected->keyop(copy, got, &got_len, in, inlen) <= 0) {
         t->err = "KEYOP_ERROR";
         goto err;
     }

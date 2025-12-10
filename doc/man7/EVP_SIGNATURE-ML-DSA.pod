@@ -69,7 +69,7 @@ If set the size must be 32 bytes.
 The default value of 0 causes the per message randomness to be randomly
 generated using a DRBG. Setting this to a nonzero value causes the per message
 randomness to be set to 32 bytes of zeros. This value is ignored
-if "test-entropy" is nonzero.
+if "test-entropy" is provided.
 
 =item "mu" (B<OSSL_SIGNATURE_PARAM_MU>) <integer>
 
