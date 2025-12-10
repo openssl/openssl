@@ -495,11 +495,43 @@ static int tests_X509_check_time(void)
     return do_x509_time_tests(cert_test_data, sizeof(cert_test_data) / sizeof(CERT_TEST_DATA));
 }
 
+static const char *kRSAModulusNeg[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIByjCCAXSgAwIBAgIQBjdsAKoAZIoRz7jUqlw19DANBgkqhkiG9w0BAQQFADAW\n",
+    "MRQwEgYDVQQDEwtSb290IEFnZW5jeTAeFw05NjA1MjgyMjAyNTlaFw0zOTEyMzEy\n",
+    "MzU5NTlaMBYxFDASBgNVBAMTC1Jvb3QgQWdlbmN5MFswDQYJKoZIhvcNAQEBBQAD\n",
+    "SgAwRwJAgVUiuYqkb+3W59lmD1W8183VvE5AAiGisfeHMIVe0vJEudybdbb7Rl9C\n",
+    "tp0jNgveVA/NvR+ZKhBYEctAy7WnQQIDAQABo4GeMIGbMFAGA1UEAwRJE0dGb3Ig\n",
+    "VGVzdGluZyBQdXJwb3NlcyBPbmx5IFNhbXBsZSBTb2Z0d2FyZSBQdWJsaXNoaW5n\n",
+    "IENyZWRlbnRpYWxzIEFnZW5jeTBHBgNVHQEEQDA+gBAS5AktBh0dTwCNYSHcFmRj\n",
+    "oRgwFjEUMBIGA1UEAxMLUm9vdCBBZ2VuY3mCEAY3bACqAGSKEc+41KpcNfQwDQYJ\n",
+    "KoZIhvcNAQEEBQADQQAtLj57iUKJP6ghF/rw9cOV22JpW8ncwbP68MRvb2Savecb\n",
+    "JWhyg2e9VrCNAb0q98xLvYeluocgTEIRQa0QFzuM\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static int tests_X509_check_crypto(void)
+{
+    X509 *rsa_n_neg = NULL;
+    EVP_PKEY *pub = NULL;
+    int test;
+
+    test = TEST_ptr((rsa_n_neg = X509_from_strings(kRSAModulusNeg)))
+        && TEST_ptr_null((pub = X509_get_pubkey(rsa_n_neg)))
+        && TEST_true(err_chk(ERR_LIB_EVP, EVP_R_DECODE_ERROR));
+
+    EVP_PKEY_free(pub);
+    X509_free(rsa_n_neg);
+    return test;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
     ADD_ALL_TESTS(test_a2i_ipaddress, OSSL_NELEM(a2i_ipaddress_tests));
     ADD_TEST(tests_X509_PURPOSE);
     ADD_TEST(tests_X509_check_time);
+    ADD_TEST(tests_X509_check_crypto);
     return 1;
 }
