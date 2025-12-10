@@ -1183,10 +1183,6 @@ DEPEND[html/man3/EVP_MAC.html]=man3/EVP_MAC.pod
 GENERATE[html/man3/EVP_MAC.html]=man3/EVP_MAC.pod
 DEPEND[man/man3/EVP_MAC.3]=man3/EVP_MAC.pod
 GENERATE[man/man3/EVP_MAC.3]=man3/EVP_MAC.pod
-DEPEND[html/man3/EVP_MD_meth_new.html]=man3/EVP_MD_meth_new.pod
-GENERATE[html/man3/EVP_MD_meth_new.html]=man3/EVP_MD_meth_new.pod
-DEPEND[man/man3/EVP_MD_meth_new.3]=man3/EVP_MD_meth_new.pod
-GENERATE[man/man3/EVP_MD_meth_new.3]=man3/EVP_MD_meth_new.pod
 DEPEND[html/man3/EVP_OpenInit.html]=man3/EVP_OpenInit.pod
 GENERATE[html/man3/EVP_OpenInit.html]=man3/EVP_OpenInit.pod
 DEPEND[man/man3/EVP_OpenInit.3]=man3/EVP_OpenInit.pod
@@ -3353,7 +3349,6 @@ html/man3/EVP_KEM_free.html \
 html/man3/EVP_KEYEXCH_free.html \
 html/man3/EVP_KEYMGMT.html \
 html/man3/EVP_MAC.html \
-html/man3/EVP_MD_meth_new.html \
 html/man3/EVP_OpenInit.html \
 html/man3/EVP_PBE_CipherInit.html \
 html/man3/EVP_PKEY2PKCS8.html \
@@ -4028,7 +4023,6 @@ man/man3/EVP_KEM_free.3 \
 man/man3/EVP_KEYEXCH_free.3 \
 man/man3/EVP_KEYMGMT.3 \
 man/man3/EVP_MAC.3 \
-man/man3/EVP_MD_meth_new.3 \
 man/man3/EVP_OpenInit.3 \
 man/man3/EVP_PBE_CipherInit.3 \
 man/man3/EVP_PKEY2PKCS8.3 \
