@@ -19,52 +19,60 @@
 #include "prov/der_pq_dsa.h"
 #include "prov/der_digests.h"
 
-#define IS_DIGEST_NAME(algname, oidname, hashsz)                               \
-(OPENSSL_strcasecmp(oid_digest_name, algname) == 0) {                          \
-    *oid = ossl_der_oid_id_##oidname;                                          \
-    *oidlen = sizeof(ossl_der_oid_id_##oidname);                               \
-    *sz = hashsz;                                                              \
-}
+#define SET_OID(oid, oidlen, oidname)  \
+    (oid) = ossl_der_oid_id_##oidname; \
+    (oidlen) = sizeof(ossl_der_oid_id_##oidname)
+
+#define SET_DIGEST_OID(oidname, digestsz) \
+    SET_OID(*oid, *oidlen, oidname);      \
+    *sz = digestsz
 
 int ossl_DER_w_algorithmIdentifier_ML_DSA(WPACKET *pkt, int tag, ML_DSA_KEY *key)
 {
-    const uint8_t *alg;
-    size_t len;
+    const uint8_t *oid;
+    size_t oidlen;
     const char *name = ossl_ml_dsa_key_get_name(key);
 
     if (OPENSSL_strcasecmp(name, "ML-DSA-44") == 0) {
-        alg = ossl_der_oid_id_ml_dsa_44;
-        len = sizeof(ossl_der_oid_id_ml_dsa_44);
+        SET_OID(oid, oidlen, ml_dsa_44);
     } else if (OPENSSL_strcasecmp(name, "ML-DSA-65") == 0) {
-        alg = ossl_der_oid_id_ml_dsa_65;
-        len = sizeof(ossl_der_oid_id_ml_dsa_65);
+        SET_OID(oid, oidlen, ml_dsa_65);
     } else if (OPENSSL_strcasecmp(name, "ML-DSA-87") == 0) {
-        alg = ossl_der_oid_id_ml_dsa_87;
-        len = sizeof(ossl_der_oid_id_ml_dsa_87);
+        SET_OID(oid, oidlen, ml_dsa_87);
     } else {
         return 0;
     }
     return ossl_DER_w_begin_sequence(pkt, tag)
         /* No parameters */
-        && ossl_DER_w_precompiled(pkt, -1, alg, len)
+        && ossl_DER_w_precompiled(pkt, -1, oid, oidlen)
         && ossl_DER_w_end_sequence(pkt, tag);
 }
 
 int ossl_der_oid_pq_dsa_prehash_digest(const char *oid_digest_name,
-                                       const uint8_t **oid, size_t *oidlen,
-                                       size_t *sz)
+    const uint8_t **oid, size_t *oidlen, size_t *sz)
 {
-    if IS_DIGEST_NAME("SHAKE-256", shake256, 64)
-    else if IS_DIGEST_NAME("SHAKE-128", shake128, 32)
-    else if IS_DIGEST_NAME("SHA2-224", sha224, 28)
-    else if IS_DIGEST_NAME("SHA2-256", sha256, 32)
-    else if IS_DIGEST_NAME("SHA2-384", sha384, 48)
-    else if IS_DIGEST_NAME("SHA2-512", sha512, 64)
-    else if IS_DIGEST_NAME("SHA3-224", sha3_224, 28)
-    else if IS_DIGEST_NAME("SHA3-256", sha3_256, 32)
-    else if IS_DIGEST_NAME("SHA3-384", sha3_384, 48)
-    else if IS_DIGEST_NAME("SHA3-512", sha3_512, 64)
-    else
+    if (OPENSSL_strcasecmp(oid_digest_name, "SHAKE-256") == 0) {
+        SET_DIGEST_OID(shake256, 64);
+    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHAKE-128") == 0) {
+        SET_DIGEST_OID(shake128, 32);
+    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA-224") == 0) {
+        SET_DIGEST_OID(sha224, 28);
+    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA-256") == 0) {
+        SET_DIGEST_OID(sha256, 32);
+    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA-384") == 0) {
+        SET_DIGEST_OID(sha384, 48);
+    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA-512") == 0) {
+        SET_DIGEST_OID(sha512, 64);
+    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA3-224") == 0) {
+        SET_DIGEST_OID(sha3_224, 28);
+    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA3-224") == 0) {
+        SET_DIGEST_OID(sha3_256, 32);
+    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA3-224") == 0) {
+        SET_DIGEST_OID(sha3_384, 48);
+    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA3-224") == 0) {
+        SET_DIGEST_OID(sha3_512, 64);
+    } else {
         return 0;
+    }
     return 1;
 }

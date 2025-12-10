@@ -49,8 +49,10 @@ static OSSL_FUNC_provider_query_operation_fn fips_query;
 static OSSL_FUNC_provider_query_operation_fn fips_query_internal;
 static OSSL_FUNC_provider_random_bytes_fn fips_random_bytes;
 
-#define ALGC(NAMES, FUNC, CHECK) \
-    { { NAMES, FIPS_DEFAULT_PROPERTIES, FUNC }, CHECK }
+#define ALGC(NAMES, FUNC, CHECK)                        \
+    {                                                   \
+        { NAMES, FIPS_DEFAULT_PROPERTIES, FUNC }, CHECK \
+    }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
 
 extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
@@ -302,7 +304,7 @@ static const OSSL_ALGORITHM fips_digests[] = {
     FIPS_DIGESTS_COMMON(),
 #ifndef OPENSSL_NO_ML_DSA
     { PROV_NAMES_EXTERNAL_MU_ML_DSA, FIPS_DEFAULT_PROPERTIES,
-      ossl_external_mu_ml_dsa_functions },
+        ossl_external_mu_ml_dsa_functions },
 #endif
     { NULL, NULL, NULL }
 };
@@ -1003,7 +1005,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
         && strcmp(fgbl->selftest_params.conditional_error_check, "0") == 0)
         SELF_TEST_disable_conditional_error_state();
 
-    /* Enable or disable FIPS provider options */
+        /* Enable or disable FIPS provider options */
 #define OSSL_FIPS_PARAM(structname, paramname, unused)             \
     if (fgbl->fips_##structname.option != NULL) {                  \
         if (strcmp(fgbl->fips_##structname.option, "1") == 0)      \

@@ -2833,8 +2833,8 @@ static int calculate_mu(const uint8_t *pub, size_t publen,
     *p = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(mdctx = EVP_MD_CTX_new())
-            || !TEST_ptr(md = EVP_MD_fetch(libctx, "ExternalMu-ML-DSA", NULL))
-            || !TEST_true(EVP_DigestInit_ex2(mdctx, md, params)))
+        || !TEST_ptr(md = EVP_MD_fetch(libctx, "ExternalMu-ML-DSA", NULL))
+        || !TEST_true(EVP_DigestInit_ex2(mdctx, md, params)))
         goto err;
     /* stream the message */
     while (msglen > 0) {
@@ -2863,7 +2863,9 @@ static int pkey_calculate_mu(EVP_TEST *t, uint8_t *mu, size_t *mulen)
         OSSL_PARAM_END
     };
     OSSL_PARAM params[3] = {
-        OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END,
+        OSSL_PARAM_END,
+        OSSL_PARAM_END,
+        OSSL_PARAM_END,
     };
     size_t params_n = 0;
     uint8_t pub[3 * 1024];
@@ -2881,7 +2883,7 @@ static int pkey_calculate_mu(EVP_TEST *t, uint8_t *mu, size_t *mulen)
 
     if (sk_OPENSSL_STRING_num(kdata->mu_controls) > 0) {
         if (!ctrl2params(t, kdata->mu_controls, mu_digest_settable_ctx_params,
-                         params, OSSL_NELEM(params), &params_n))
+                params, OSSL_NELEM(params), &params_n))
             goto err;
     }
     p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_MU_CONTEXT_STRING);
@@ -2907,7 +2909,7 @@ static int pkey_calculate_mu(EVP_TEST *t, uint8_t *mu, size_t *mulen)
         if (md == NULL)
             goto err;
         if (!EVP_DigestInit_ex2(mdctx, md, xofparam)
-                || !EVP_DigestUpdate(mdctx, in, inlen))
+            || !EVP_DigestUpdate(mdctx, in, inlen))
             goto err;
         /* Deal with the SHAKE algorithm not setting a default xoflen */
         if (EVP_MD_is_a(md, "SHAKE128"))
@@ -2919,7 +2921,7 @@ static int pkey_calculate_mu(EVP_TEST *t, uint8_t *mu, size_t *mulen)
             if (!EVP_DigestFinalXOF(mdctx, digest, xoflen))
                 goto err;
         } else {
-             if (!EVP_DigestFinal(mdctx, digest, &len))
+            if (!EVP_DigestFinal(mdctx, digest, &len))
                 goto err;
         }
         in = digest;
@@ -2927,11 +2929,11 @@ static int pkey_calculate_mu(EVP_TEST *t, uint8_t *mu, size_t *mulen)
     }
 
     if (!TEST_true(EVP_PKEY_get_octet_string_param(key, OSSL_PKEY_PARAM_PUB_KEY,
-                                                   pub, sizeof(pub), &publen)))
+            pub, sizeof(pub), &publen)))
         goto err;
 
     if (!TEST_true(calculate_mu(pub, publen, ctx, ctxlen, in, inlen,
-                                digestname, mu, *mulen)))
+            digestname, mu, *mulen)))
         goto err;
     ret = 1;
 err:

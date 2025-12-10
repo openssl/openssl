@@ -8,5 +8,4 @@
  */
 
 int ossl_der_oid_pq_dsa_prehash_digest(const char *oid_digest_name,
-                                       const uint8_t **oid, size_t *oidlen,
-                                       size_t *sz);
+    const uint8_t **oid, size_t *oidlen, size_t *sz);

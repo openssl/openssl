@@ -111,7 +111,7 @@ EVP_MD_CTX *ossl_ml_dsa_mu_init(const ML_DSA_KEY *key, int encode,
     if (key == NULL)
         return NULL;
     return ossl_ml_dsa_mu_init_int(key->shake256_md, key->tr, sizeof(key->tr),
-                                   encode, 0, ctx, ctx_len);
+        encode, 0, ctx, ctx_len);
 }
 
 /*

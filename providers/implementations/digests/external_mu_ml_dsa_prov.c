@@ -44,7 +44,7 @@ typedef struct mu_ctx_st {
     EVP_MD *md;
     uint8_t context[ML_DSA_MAX_CONTEXT_STRING_LEN];
     size_t context_len;
-    uint8_t tr[SHAKE256_SIZE];   /* Pre-cached public key Hash */
+    uint8_t tr[SHAKE256_SIZE]; /* Pre-cached public key Hash */
     size_t keylen;
     const uint8_t *oid;
     size_t oid_len;
@@ -105,7 +105,7 @@ static void *mu_dupctx(void *ctx)
     if (src->mdctx != NULL) {
         dst->mdctx = EVP_MD_CTX_new();
         if (dst->mdctx == NULL
-                || !EVP_MD_CTX_copy_ex(dst->mdctx, src->mdctx))
+            || !EVP_MD_CTX_copy_ex(dst->mdctx, src->mdctx))
             goto err;
     }
     if (src->propq != NULL) {
@@ -135,11 +135,11 @@ static int mu_init(void *vctx, const OSSL_PARAM params[])
 static int mu_get_params(OSSL_PARAM params[])
 {
     return ossl_digest_default_get_params(params, SHA3_BLOCKSIZE(256),
-                                          SHAKE256_SIZE, SHAKE_FLAGS);
+        SHAKE256_SIZE, SHAKE_FLAGS);
 }
 
 static const OSSL_PARAM *mu_settable_ctx_params(ossl_unused void *ctx,
-                                                ossl_unused void *provctx)
+    ossl_unused void *provctx)
 {
     return external_mu_ml_dsa_set_ctx_params_list;
 }
@@ -170,8 +170,8 @@ static int digest_public_key(MU_CTX *ctx, const uint8_t *pub, size_t publen)
     EVP_MD_CTX *mdctx;
 
     if (publen != ML_DSA_44_PUB_LEN
-            && publen != ML_DSA_65_PUB_LEN
-            && publen != ML_DSA_87_PUB_LEN) {
+        && publen != ML_DSA_65_PUB_LEN
+        && publen != ML_DSA_87_PUB_LEN) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
@@ -202,7 +202,7 @@ static int mu_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         void *vp = ctx->context;
 
         if (!OSSL_PARAM_get_octet_string(p.ctx, &vp, sizeof(ctx->context),
-                                         &(ctx->context_len))) {
+                &(ctx->context_len))) {
             ctx->context_len = 0;
             return 0;
         }
@@ -225,8 +225,7 @@ static int mu_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         if (p.digestname->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
         ret = ossl_der_oid_pq_dsa_prehash_digest(p.digestname->data,
-                                                 &ctx->oid, &ctx->oid_len,
-                                                 &ctx->digest_len);
+            &ctx->oid, &ctx->oid_len, &ctx->digest_len);
         if (ret)
             ctx->remaining = ctx->digest_len;
         else
@@ -238,7 +237,7 @@ static int mu_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM *mu_gettable_ctx_params(ossl_unused void *ctx,
-                                                ossl_unused void *provctx)
+    ossl_unused void *provctx)
 {
     return external_mu_ml_dsa_get_ctx_params_list;
 }
@@ -278,10 +277,8 @@ static int check_init(MU_CTX *ctx)
             ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
             return 0;
         }
-        ctx->mdctx = ossl_ml_dsa_mu_init_int(md,
-                                             ctx->tr, sizeof(ctx->tr),
-                                             1, ctx->oid_len != 0,
-                                             ctx->context, ctx->context_len);
+        ctx->mdctx = ossl_ml_dsa_mu_init_int(md, ctx->tr, sizeof(ctx->tr), 1,
+            ctx->oid_len != 0, ctx->context, ctx->context_len);
         if (ctx->mdctx == NULL)
             return 0;
         if (!ossl_ml_dsa_mu_update(ctx->mdctx, ctx->oid, ctx->oid_len))
@@ -340,9 +337,9 @@ const OSSL_DISPATCH ossl_external_mu_ml_dsa_functions[] = {
     { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))mu_dupctx },
     { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))mu_set_ctx_params },
     { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,
-      (void (*)(void))mu_settable_ctx_params },
+        (void (*)(void))mu_settable_ctx_params },
     { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, (void (*)(void))mu_get_ctx_params },
     { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,
-      (void (*)(void))mu_gettable_ctx_params },
+        (void (*)(void))mu_gettable_ctx_params },
     PROV_DISPATCH_FUNC_DIGEST_GET_PARAMS(mu),
     PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
