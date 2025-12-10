@@ -150,7 +150,7 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct snmp_set_ctx_params_st p;
     KDF_SNMPKDF *ctx = vctx;
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    OSSL_LIB_CTX *libctx;
 #ifdef FIPS_MODULE
     const EVP_MD *md = NULL;
 #endif
@@ -160,6 +160,8 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (ctx == NULL || !snmp_set_ctx_params_decoder(params, &p))
         return 0;
+
+    libctx = PROV_LIBCTX_OF(ctx->provctx);
 
     if (p.digest != NULL) {
         if (!ossl_prov_digest_load(&ctx->digest, p.digest, p.propq, libctx))
