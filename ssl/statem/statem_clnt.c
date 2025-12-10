@@ -1897,6 +1897,7 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
         goto err;
     }
 
+    OPENSSL_free(extensions);
     return MSG_PROCESS_FINISHED_READING;
 err:
     OPENSSL_free(extensions);
