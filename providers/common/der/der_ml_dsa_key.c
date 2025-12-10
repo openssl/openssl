@@ -65,11 +65,11 @@ int ossl_der_oid_pq_dsa_prehash_digest(const char *oid_digest_name,
         SET_DIGEST_OID(sha512, 64);
     } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA3-224") == 0) {
         SET_DIGEST_OID(sha3_224, 28);
-    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA3-224") == 0) {
+    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA3-256") == 0) {
         SET_DIGEST_OID(sha3_256, 32);
-    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA3-224") == 0) {
+    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA3-384") == 0) {
         SET_DIGEST_OID(sha3_384, 48);
-    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA3-224") == 0) {
+    } else if (OPENSSL_strcasecmp(oid_digest_name, "SHA3-512") == 0) {
         SET_DIGEST_OID(sha3_512, 64);
     } else {
         return 0;
