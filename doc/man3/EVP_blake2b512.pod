@@ -44,8 +44,7 @@ but this is only available through L<EVP_MD-BLAKE2(7)>.
 =head1 RETURN VALUES
 
 These functions return a B<EVP_MD> structure that contains the
-implementation of the message digest. See L<EVP_MD_meth_new(3)> for
-details of the B<EVP_MD> structure.
+implementation of the message digest.
 
 =head1 CONFORMING TO
 
