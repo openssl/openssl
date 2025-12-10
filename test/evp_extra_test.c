@@ -5989,123 +5989,6 @@ err:
     custom_pmeth = NULL;
     return testresult;
 }
-
-static int test_evp_md_meth(void)
-{
-    EVP_MD *md = EVP_MD_meth_dup(EVP_sha256());
-    int testresult = 0;
-
-    if (!TEST_ptr(md))
-        goto err;
-
-    testresult = 1;
-
-err:
-    EVP_MD_meth_free(md);
-
-    return testresult;
-}
-
-typedef struct {
-    int data;
-} custom_dgst_ctx;
-
-static int custom_md_init_called = 0;
-static int custom_md_cleanup_called = 0;
-
-static int custom_md_init(EVP_MD_CTX *ctx)
-{
-    custom_dgst_ctx *p = EVP_MD_CTX_md_data(ctx);
-
-    if (p == NULL)
-        return 0;
-
-    custom_md_init_called++;
-    return 1;
-}
-
-static int custom_md_cleanup(EVP_MD_CTX *ctx)
-{
-    custom_dgst_ctx *p = EVP_MD_CTX_md_data(ctx);
-
-    if (p == NULL)
-        /* Nothing to do */
-        return 1;
-
-    custom_md_cleanup_called++;
-    return 1;
-}
-
-static int test_custom_md_meth(void)
-{
-    ASN1_OBJECT *o = NULL;
-    EVP_MD_CTX *mdctx = NULL;
-    EVP_MD *tmp = NULL;
-    char mess[] = "Test Message\n";
-    unsigned char md_value[EVP_MAX_MD_SIZE];
-    unsigned int md_len;
-    int testresult = 0;
-    int nid;
-
-    /*
-     * We are testing deprecated functions. We don't support a non-default
-     * library context in this test.
-     */
-    if (testctx != NULL)
-        return TEST_skip("Non-default libctx");
-
-    custom_md_init_called = custom_md_cleanup_called = 0;
-
-    nid = OBJ_create("1.3.6.1.4.1.16604.998866.1", "custom-md", "custom-md");
-    if (!TEST_int_ne(nid, NID_undef))
-        goto err;
-    if (!TEST_int_eq(OBJ_txt2nid("1.3.6.1.4.1.16604.998866.1"), nid))
-        goto err;
-    tmp = EVP_MD_meth_new(nid, NID_undef);
-    if (!TEST_ptr(tmp))
-        goto err;
-
-    if (!TEST_true(EVP_MD_meth_set_init(tmp, custom_md_init))
-        || !TEST_true(EVP_MD_meth_set_cleanup(tmp, custom_md_cleanup))
-        || !TEST_true(EVP_MD_meth_set_app_datasize(tmp,
-            sizeof(custom_dgst_ctx))))
-        goto err;
-
-    mdctx = EVP_MD_CTX_new();
-    if (!TEST_ptr(mdctx)
-        /*
-         * Initing our custom md and then initing another md should
-         * result in the init and cleanup functions of the custom md
-         * being called.
-         */
-        || !TEST_true(EVP_DigestInit_ex(mdctx, tmp, NULL))
-        || !TEST_true(EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL))
-        || !TEST_true(EVP_DigestUpdate(mdctx, mess, strlen(mess)))
-        || !TEST_true(EVP_DigestFinal_ex(mdctx, md_value, &md_len))
-        || !TEST_int_eq(custom_md_init_called, 1)
-        || !TEST_int_eq(custom_md_cleanup_called, 1))
-        goto err;
-
-    if (!TEST_int_eq(OBJ_create("1.3.6.1.4.1.16604.998866.1",
-                         "custom-md", "custom-md"),
-            NID_undef)
-        || !TEST_int_eq(ERR_GET_LIB(ERR_peek_error()), ERR_LIB_OBJ)
-        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()), OBJ_R_OID_EXISTS))
-        goto err;
-
-    o = ASN1_OBJECT_create(nid, (unsigned char *)"\53\6\1\4\1\201\201\134\274\373\122\1", 12,
-        "custom-md", "custom-md");
-    if (!TEST_int_eq(OBJ_add_object(o), nid))
-        goto err;
-
-    testresult = 1;
-err:
-    ASN1_OBJECT_free(o);
-    EVP_MD_CTX_free(mdctx);
-    EVP_MD_meth_free(tmp);
-    return testresult;
-}
-
 #endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
 #ifndef OPENSSL_NO_ECX
@@ -6928,8 +6811,6 @@ int setup_tests(void)
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_ALL_TESTS(test_custom_pmeth, 12);
-    ADD_TEST(test_evp_md_meth);
-    ADD_TEST(test_custom_md_meth);
 #endif
 
 #ifndef OPENSSL_NO_ECX
