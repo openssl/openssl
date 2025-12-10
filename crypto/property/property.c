@@ -993,9 +993,8 @@ static void ossl_method_cache_flush_some(STORED_ALGORITHMS *sa)
 }
 
 /* TODO: FREEZE: Remove these and replace with actual implementation */
-static int andrew_nid = -1;
 static EVP_MD andrew_md;
-static void *andrew_method;
+static void *andrew_method = NULL;
 
 int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, void **method)
@@ -1039,9 +1038,21 @@ int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
 
     /*
      * TODO: FREEZE: Replace with actual implementation
-     * For now, just fetch from global variables
+     * For now, just store & fetch from global variables
      */
-    if (nid == andrew_nid && andrew_method != NULL) {
+    EVP_MD *temp_method;
+
+    if (andrew_method == NULL) {
+        if (!ossl_method_store_cache_get(store, prov, nid, prop_query, (void **)&temp_method))
+            return 0;
+
+        memcpy(&andrew_md, temp_method, sizeof(andrew_md));
+        andrew_md.origin = EVP_ORIG_FROZEN;
+        andrew_method = &andrew_md;
+        EVP_MD_free(temp_method);
+    }
+
+    if (andrew_method != NULL) {
         *method = andrew_method;
         return 1;
     }
@@ -1094,15 +1105,6 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         if (!ossl_method_up_ref(&p->method))
             goto err;
         memcpy((char *)p->query, prop_query, len + 1);
-
-        /* TODO: FREEZE: Remove this */
-        if (nid == 26113) {
-            memcpy(&andrew_md, p->method.method, sizeof(andrew_md));
-            andrew_md.origin = EVP_ORIG_FROZEN;
-            andrew_method = &andrew_md;
-            andrew_nid = nid;
-        }
-
         if ((old = lh_QUERY_insert(alg->cache, p)) != NULL) {
             impl_cache_free(old);
             goto end;
