@@ -209,3 +209,12 @@ sub process_oid
 		}
 	return($oids);
 	}
+
+open (IN,"$ARGV[2]") || die "Can't open input file $ARGV[2]";
+while (<IN>)
+    {
+        # skip the license
+        next if 1 .. 8;
+        print $_;
+    }
+close IN;

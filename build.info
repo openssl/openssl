@@ -129,7 +129,14 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/rands/fips_crng_test.inc \
          providers/implementations/rands/seed_src.inc \
          providers/implementations/rands/seed_src_jitter.inc \
-         providers/implementations/rands/test_rng.inc
+         providers/implementations/rands/test_rng.inc \
+         crypto/asn1/charmap.h \
+         crypto/bn/bn_prime.h \
+         crypto/conf/conf_def.h \
+         crypto/objects/obj_mac.num \
+         crypto/objects/obj_dat.h \
+         crypto/objects/obj_xref.h \
+         include/openssl/obj_mac.h
 
 GENERATE[include/openssl/asn1.h]=include/openssl/asn1.h.in
 GENERATE[include/openssl/asn1t.h]=include/openssl/asn1t.h.in
@@ -420,6 +427,23 @@ GENERATE[providers/implementations/rands/seed_src_jitter.inc]=\
 GENERATE[providers/implementations/rands/test_rng.inc]=\
     providers/implementations/rands/test_rng.inc.in
 GENERATE[include/openssl/core_names.h]=include/openssl/core_names.h.in
+
+GENERATE[crypto/asn1/charmap.h]=crypto/asn1/charmap.pl
+GENERATE[crypto/bn/bn_prime.h]=crypto/bn/bn_prime.pl
+GENERATE[crypto/conf/conf_def.h]=crypto/conf/keysets.pl
+GENERATE[crypto/objects/obj_mac.num]=crypto/objects/objects.pl -n \
+    crypto/objects/objects.txt crypto/objects/obj_mac.num
+GENERATE[include/openssl/obj_mac.h]=crypto/objects/objects.pl \
+    crypto/objects/objects.txt crypto/objects/obj_mac.num \
+    crypto/objects/obj_compat.h
+GENERATE[crypto/objects/obj_dat.h]=crypto/objects/obj_dat.pl \
+    include/openssl/obj_mac.h
+GENERATE[crypto/objects/obj_xref.h]=crypto/objects/objxref.pl \
+    crypto/objects/obj_mac.num crypto/objects/obj_xref.txt
+
+DEPEND[crypto/objects/obj_xref.h include/openssl/obj_mac.h]=\
+    crypto/objects/obj_mac.num
+DEPEND[crypto/objects/obj_dat.h]=include/openssl/obj_mac.h
 
 IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld
