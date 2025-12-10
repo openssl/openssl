@@ -1081,10 +1081,7 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
     ossl_ech_pbuf("cx: result", acbuf, OSSL_ECH_SIGNAL_LEN);
 # endif
     /* put confirm value back into transcript */
-    if (s->ext.ech.hrrsignal_p == NULL)
-        memcpy(conf_loc, acbuf, OSSL_ECH_SIGNAL_LEN);
-    else
-        memcpy(conf_loc, s->ext.ech.hrrsignal, OSSL_ECH_SIGNAL_LEN);
+    memcpy(conf_loc, acbuf, OSSL_ECH_SIGNAL_LEN);
     /* on a server, we need to reset the hs buffer now */
     if (s->server && s->hello_retry_request == SSL_HRR_NONE)
         ossl_ech_reset_hs_buffer(s, s->ext.ech.innerch, s->ext.ech.innerch_len);
