@@ -127,51 +127,6 @@ int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable);
 #define EVP_PKEY_MO_DECRYPT 0x0008
 
 #ifndef EVP_MD
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type);
-OSSL_DEPRECATEDIN_3_0 EVP_MD *EVP_MD_meth_dup(const EVP_MD *md);
-OSSL_DEPRECATEDIN_3_0 void EVP_MD_meth_free(EVP_MD *md);
-OSSL_DEPRECATEDIN_3_0
-int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize);
-OSSL_DEPRECATEDIN_3_0
-int EVP_MD_meth_set_result_size(EVP_MD *md, int resultsize);
-OSSL_DEPRECATEDIN_3_0
-int EVP_MD_meth_set_app_datasize(EVP_MD *md, int datasize);
-OSSL_DEPRECATEDIN_3_0
-int EVP_MD_meth_set_flags(EVP_MD *md, unsigned long flags);
-OSSL_DEPRECATEDIN_3_0
-int EVP_MD_meth_set_init(EVP_MD *md, int (*init)(EVP_MD_CTX *ctx));
-OSSL_DEPRECATEDIN_3_0
-int EVP_MD_meth_set_update(EVP_MD *md, int (*update)(EVP_MD_CTX *ctx, const void *data, size_t count));
-OSSL_DEPRECATEDIN_3_0
-int EVP_MD_meth_set_final(EVP_MD *md, int (*final)(EVP_MD_CTX *ctx, unsigned char *md));
-OSSL_DEPRECATEDIN_3_0
-int EVP_MD_meth_set_copy(EVP_MD *md, int (*copy)(EVP_MD_CTX *to, const EVP_MD_CTX *from));
-OSSL_DEPRECATEDIN_3_0
-int EVP_MD_meth_set_cleanup(EVP_MD *md, int (*cleanup)(EVP_MD_CTX *ctx));
-OSSL_DEPRECATEDIN_3_0
-int EVP_MD_meth_set_ctrl(EVP_MD *md, int (*ctrl)(EVP_MD_CTX *ctx, int cmd, int p1, void *p2));
-OSSL_DEPRECATEDIN_3_0 int EVP_MD_meth_get_input_blocksize(const EVP_MD *md);
-OSSL_DEPRECATEDIN_3_0 int EVP_MD_meth_get_result_size(const EVP_MD *md);
-OSSL_DEPRECATEDIN_3_0 int EVP_MD_meth_get_app_datasize(const EVP_MD *md);
-OSSL_DEPRECATEDIN_3_0 unsigned long EVP_MD_meth_get_flags(const EVP_MD *md);
-OSSL_DEPRECATEDIN_3_0
-int (*EVP_MD_meth_get_init(const EVP_MD *md))(EVP_MD_CTX *ctx);
-OSSL_DEPRECATEDIN_3_0
-int (*EVP_MD_meth_get_update(const EVP_MD *md))(EVP_MD_CTX *ctx,
-    const void *data, size_t count);
-OSSL_DEPRECATEDIN_3_0
-int (*EVP_MD_meth_get_final(const EVP_MD *md))(EVP_MD_CTX *ctx,
-    unsigned char *md);
-OSSL_DEPRECATEDIN_3_0
-int (*EVP_MD_meth_get_copy(const EVP_MD *md))(EVP_MD_CTX *to,
-    const EVP_MD_CTX *from);
-OSSL_DEPRECATEDIN_3_0
-int (*EVP_MD_meth_get_cleanup(const EVP_MD *md))(EVP_MD_CTX *ctx);
-OSSL_DEPRECATEDIN_3_0
-int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
-    int p1, void *p2);
-#endif
 /* digest can only handle a single block */
 #define EVP_MD_FLAG_ONESHOT 0x0001
 

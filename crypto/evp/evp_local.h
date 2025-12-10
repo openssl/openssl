@@ -401,7 +401,6 @@ OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
 
 void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx);
 void evp_cipher_free_int(EVP_CIPHER *md);
-void evp_md_free_int(EVP_MD *md);
 
 /* OSSL_PROVIDER * is only used to get the library context */
 int evp_is_a(OSSL_PROVIDER *prov, int number,
