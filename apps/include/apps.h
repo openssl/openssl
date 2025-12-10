@@ -102,6 +102,10 @@ int wrap_password_callback(char *buf, int bufsiz, int verify, void *cb_data);
 int progress_cb(EVP_PKEY_CTX *ctx);
 
 void dump_cert_text(BIO *out, X509 *x);
+int encode_private_key(
+    BIO *out, const char *output_type, const EVP_PKEY *pkey,
+    const STACK_OF(OPENSSL_STRING) *encopt, const EVP_CIPHER *cipher,
+    const char *pass);
 void print_name(BIO *out, const char *title, const X509_NAME *nm);
 void print_bignum_var(BIO *, const BIGNUM *, const char *,
     int, unsigned char *);

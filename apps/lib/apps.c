@@ -39,6 +39,7 @@
 #include <openssl/bn.h>
 #include <openssl/ssl.h>
 #include <openssl/core_names.h>
+#include <openssl/encoder.h>
 #include "s_apps.h"
 #include "apps.h"
 
@@ -2080,6 +2081,65 @@ int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value)
 err:
     OPENSSL_free(stmp);
     return rv;
+}
+
+static int
+encoder_ctrl_string(OSSL_ENCODER_CTX *ctx, const char *value)
+{
+    int rv = 0;
+    char *stmp, *vtmp = NULL;
+
+    stmp = OPENSSL_strdup(value);
+    if (stmp == NULL)
+        return -1;
+    vtmp = strchr(stmp, ':');
+    if (vtmp == NULL) {
+        BIO_printf(bio_err,
+            "Missing encoder option value: %s\n", value);
+        goto end;
+    }
+
+    *vtmp = 0;
+    vtmp++;
+    rv = OSSL_ENCODER_CTX_ctrl_string(ctx, stmp, vtmp);
+
+end:
+    OPENSSL_free(stmp);
+    return rv;
+}
+
+int encode_private_key(BIO *out, const char *output_type, const EVP_PKEY *pkey,
+    const STACK_OF(OPENSSL_STRING) *encopt,
+    const EVP_CIPHER *cipher, const char *pass)
+{
+    int ret = 0;
+    OSSL_ENCODER_CTX *ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, EVP_PKEY_PRIVATE_KEY,
+        output_type, "PrivateKeyInfo", NULL);
+
+    if (ectx == NULL)
+        return 0;
+
+    if (cipher != NULL)
+        if (!OSSL_ENCODER_CTX_set_cipher(ectx, EVP_CIPHER_get0_name(cipher), NULL)
+            || !OSSL_ENCODER_CTX_set_passphrase(ectx, (const unsigned char *)pass,
+                strlen(pass)))
+            goto end;
+
+    if (encopt != NULL) {
+        int i, n = sk_OPENSSL_STRING_num(encopt);
+
+        for (i = 0; i < n; ++i) {
+            const char *opt = sk_OPENSSL_STRING_value(encopt, i);
+
+            if (encoder_ctrl_string(ectx, opt) <= 0)
+                goto end;
+        }
+    }
+
+    ret = OSSL_ENCODER_to_bio(ectx, out);
+end:
+    OSSL_ENCODER_CTX_free(ectx);
+    return ret;
 }
 
 static void nodes_print(const char *name, STACK_OF(X509_POLICY_NODE) *nodes)
