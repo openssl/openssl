@@ -5,7 +5,8 @@
 OSSL_LIB_CTX, OSSL_LIB_CTX_get_data, OSSL_LIB_CTX_new,
 OSSL_LIB_CTX_new_from_dispatch, OSSL_LIB_CTX_new_child,
 OSSL_LIB_CTX_free, OSSL_LIB_CTX_load_config,
-OSSL_LIB_CTX_get0_global_default, OSSL_LIB_CTX_set0_default
+OSSL_LIB_CTX_get0_global_default, OSSL_LIB_CTX_set0_default,
+OSSL_LIB_CTX_freeze
 - OpenSSL library context
 
 =head1 SYNOPSIS
@@ -24,6 +25,7 @@ OSSL_LIB_CTX_get0_global_default, OSSL_LIB_CTX_set0_default
  OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void);
  OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *ctx);
  void *OSSL_LIB_CTX_get_data(OSSL_LIB_CTX *ctx, int index);
+ void *OSSL_LIB_CTX_freeze(OSSL_LIB_CTX *ctx, const char* propq);
 
 =head1 DESCRIPTION
 
@@ -121,6 +123,19 @@ If ctx is NULL then the function operates on the default library context.
 OSSL_LIB_CTX_get_data() returns a memory address whose interpretation
 depends on the index.
 
+OSSL_LIB_CTX_freeze() freezes the method store associated with the library
+context. A frozen context will speed up ONLY isolated, uncached algorithm
+lookups. This is specifically designed to benefit legacy high-throughput
+applications with worker threads doing isolated computations, without requiring
+a code restructuring. Existing and new applications are generally recommended to
+not use this feature and instead structure the application to pre-initialize
+contexts where possible.
+
+If propq is NULL, it will only speed up method store operations with a NULL
+property query. If propq is not NULL, it will also speed up method store
+operations when given that exact property query. Other property queries will go
+through the normal, slower lookup method.
+
 =head1 RETURN VALUES
 
 OSSL_LIB_CTX_new(), OSSL_LIB_CTX_get0_global_default() and
@@ -134,15 +149,20 @@ OSSL_LIB_CTX_load_config() returns 1 on success, 0 on error.
 OSSL_LIB_CTX_get_data() returns a memory address whose interpretation
 depends on the index.
 
+OSSL_LIB_CTX_freeze() returns 1 on success, 0 on error. A frozen library context
+cannot be frozen again.
+
 =head1 HISTORY
 
 All of the functions described on this page were added in OpenSSL 3.0.
 
 OSSL_LIB_CTX_get_data() was introduced in OpenSSL 3.4.
 
+OSSL_LIB_CTX_freeze() was introduced in OpenSSL 4.0.
+
 =head1 COPYRIGHT
 
-Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

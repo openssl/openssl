@@ -1022,13 +1022,6 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         goto err;
     if (ossl_method_up_ref(&r->method)) {
         *method = r->method.method;
-        /* TODO: FREEZE: Remove this */
-        if (nid != andrew_nid) {
-            memcpy(&andrew_md, r->method.method, sizeof(andrew_md));
-            andrew_md.origin = EVP_ORIG_FROZEN;
-            andrew_method = &andrew_md;
-            andrew_nid = nid;
-        }
         res = 1;
     }
 err:
@@ -1103,10 +1096,8 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         memcpy((char *)p->query, prop_query, len + 1);
 
         /* TODO: FREEZE: Remove this */
-        if (nid != andrew_nid) {
-            EVP_MD *md = (EVP_MD *)p->method.method;
-
-            memcpy(&andrew_md, md, sizeof(andrew_md));
+        if (nid == 26113) {
+            memcpy(&andrew_md, p->method.method, sizeof(andrew_md));
             andrew_md.origin = EVP_ORIG_FROZEN;
             andrew_method = &andrew_md;
             andrew_nid = nid;
