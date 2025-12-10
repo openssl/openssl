@@ -20,6 +20,7 @@
 #include <openssl/provider.h>
 #include "internal/sizes.h"
 #include "testutil.h"
+#include "crypto/evp.h"
 
 static char *config_file = NULL;
 static char *alg = "digest";
@@ -219,6 +220,46 @@ static int test_explicit_EVP_MD_fetch(const char *id)
     return ret;
 }
 
+static int test_EVP_MD_fetch_freeze(void)
+{
+    EVP_MD *md = NULL;
+    int ret = 0;
+    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
+
+    if (!TEST_ptr(ctx)
+        || !TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", NULL))
+        || !TEST_true(test_md(md))
+        || !TEST_int_ne(md->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_MD_free(md);
+    md = NULL;
+
+    if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
+        || !TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", NULL))
+        || !TEST_true(test_md(md))
+        || !TEST_int_eq(md->origin, EVP_ORIG_FROZEN))
+        goto err;
+    /* Technically, frozen version doesn't need to be freed */
+    EVP_MD_free(md);
+
+    if (!TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", "?fips=true"))
+        || !TEST_true(test_md(md))
+        || !TEST_int_eq(md->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_MD_free(md);
+
+    if (!TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", "?provider=default"))
+        || !TEST_true(test_md(md))
+        || !TEST_int_ne(md->origin, EVP_ORIG_FROZEN))
+        goto err;
+
+    ret = 1;
+ err:
+    OSSL_LIB_CTX_free(ctx);
+    EVP_MD_free(md);
+    return ret;
+}
+
 static int test_explicit_EVP_MD_fetch_by_name(void)
 {
     return test_explicit_EVP_MD_fetch("SHA256");
@@ -402,6 +443,7 @@ int setup_tests(void)
     }
     ADD_TEST(test_legacy_provider_unloaded);
     if (strcmp(alg, "digest") == 0) {
+        ADD_TEST(test_EVP_MD_fetch_freeze);
         ADD_TEST(test_implicit_EVP_MD_fetch);
         ADD_TEST(test_explicit_EVP_MD_fetch_by_name);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_MD_fetch_by_X509_ALGOR, 2);
