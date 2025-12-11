@@ -515,6 +515,10 @@ DEPEND[html/man3/ASN1_STRING_new.html]=man3/ASN1_STRING_new.pod
 GENERATE[html/man3/ASN1_STRING_new.html]=man3/ASN1_STRING_new.pod
 DEPEND[man/man3/ASN1_STRING_new.3]=man3/ASN1_STRING_new.pod
 GENERATE[man/man3/ASN1_STRING_new.3]=man3/ASN1_STRING_new.pod
+DEPEND[html/man3/ASN1_BIT_STRING_get_length.html]=man3/ASN1_BIT_STRING_get_length.pod
+GENERATE[html/man3/ASN1_BIT_STRING_get_length.html]=man3/ASN1_BIT_STRING_get_length.pod
+DEPEND[man/man3/ASN1_BIT_STRING_get_length.3]=man3/ASN1_BIT_STRING_get_length.pod
+GENERATE[man/man3/ASN1_BIT_STRING_get_length.3]=man3/ASN1_BIT_STRING_get_length.pod
 DEPEND[html/man3/ASN1_STRING_print_ex.html]=man3/ASN1_STRING_print_ex.pod
 GENERATE[html/man3/ASN1_STRING_print_ex.html]=man3/ASN1_STRING_print_ex.pod
 DEPEND[man/man3/ASN1_STRING_print_ex.3]=man3/ASN1_STRING_print_ex.pod
@@ -3170,6 +3174,7 @@ html/man3/ASN1_OBJECT_new.html \
 html/man3/ASN1_STRING_TABLE_add.html \
 html/man3/ASN1_STRING_length.html \
 html/man3/ASN1_STRING_new.html \
+html/man3/ASN1_BIT_STRING_get_length.html \
 html/man3/ASN1_STRING_print_ex.html \
 html/man3/ASN1_TIME_set.html \
 html/man3/ASN1_TYPE_get.html \
@@ -3841,6 +3846,7 @@ man/man3/ASN1_OBJECT_new.3 \
 man/man3/ASN1_STRING_TABLE_add.3 \
 man/man3/ASN1_STRING_length.3 \
 man/man3/ASN1_STRING_new.3 \
+man/man3/ASN1_BIT_STRING_get_length.3 \
 man/man3/ASN1_STRING_print_ex.3 \
 man/man3/ASN1_TIME_set.3 \
 man/man3/ASN1_TYPE_get.3 \
