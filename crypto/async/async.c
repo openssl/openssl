@@ -255,7 +255,8 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
         if ((ctx->currjob = async_get_pool_job()) == NULL)
             return ASYNC_NO_JOBS;
 
-        if (args != NULL) {
+        /* Check for size > 0 to avoid malloc(0) */
+        if (args != NULL && size > 0) {
             ctx->currjob->funcargs = OPENSSL_malloc(size);
             if (ctx->currjob->funcargs == NULL) {
                 ERR_raise(ERR_LIB_ASYNC, ERR_R_MALLOC_FAILURE);
