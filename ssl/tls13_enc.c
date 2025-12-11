@@ -814,7 +814,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
 
     if (SSL_CONNECTION_IS_DTLS(s)) {
         /*
-         * For DTLS1.3 The compression certificate should still be sent in Epoch 2
+         * For DTLS1.3 The Compressed Certificate should still be sent in Epoch 2
          * not Epoch 3.
          */
         if (s->version != DTLS1_3_VERSION || (which & SSL3_CC_COMP_CERT) == 0)
