@@ -479,6 +479,10 @@ DEPEND[html/man3/ADMISSIONS.html]=man3/ADMISSIONS.pod
 GENERATE[html/man3/ADMISSIONS.html]=man3/ADMISSIONS.pod
 DEPEND[man/man3/ADMISSIONS.3]=man3/ADMISSIONS.pod
 GENERATE[man/man3/ADMISSIONS.3]=man3/ADMISSIONS.pod
+DEPEND[html/man3/ASN1_BIT_STRING_get_length.html]=man3/ASN1_BIT_STRING_get_length.pod
+GENERATE[html/man3/ASN1_BIT_STRING_get_length.html]=man3/ASN1_BIT_STRING_get_length.pod
+DEPEND[man/man3/ASN1_BIT_STRING_get_length.3]=man3/ASN1_BIT_STRING_get_length.pod
+GENERATE[man/man3/ASN1_BIT_STRING_get_length.3]=man3/ASN1_BIT_STRING_get_length.pod
 DEPEND[html/man3/ASN1_EXTERN_FUNCS.html]=man3/ASN1_EXTERN_FUNCS.pod
 GENERATE[html/man3/ASN1_EXTERN_FUNCS.html]=man3/ASN1_EXTERN_FUNCS.pod
 DEPEND[man/man3/ASN1_EXTERN_FUNCS.3]=man3/ASN1_EXTERN_FUNCS.pod
@@ -3177,6 +3181,7 @@ DEPEND[man/man3/s2i_ASN1_IA5STRING.3]=man3/s2i_ASN1_IA5STRING.pod
 GENERATE[man/man3/s2i_ASN1_IA5STRING.3]=man3/s2i_ASN1_IA5STRING.pod
 IMAGEDOCS[man3]=
 HTMLDOCS[man3]=html/man3/ADMISSIONS.html \
+html/man3/ASN1_BIT_STRING_get_length.html \
 html/man3/ASN1_EXTERN_FUNCS.html \
 html/man3/ASN1_INTEGER_get_int64.html \
 html/man3/ASN1_INTEGER_new.html \
@@ -3852,6 +3857,7 @@ html/man3/i2d_re_X509_tbs.html \
 html/man3/o2i_SCT_LIST.html \
 html/man3/s2i_ASN1_IA5STRING.html
 MANDOCS[man3]=man/man3/ADMISSIONS.3 \
+man/man3/ASN1_BIT_STRING_get_length.3 \
 man/man3/ASN1_EXTERN_FUNCS.3 \
 man/man3/ASN1_INTEGER_get_int64.3 \
 man/man3/ASN1_INTEGER_new.3 \
