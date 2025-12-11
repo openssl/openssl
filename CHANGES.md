@@ -32,6 +32,11 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * The crypto-mdebug-backtrace configuration option has been entirely removed.
+   The option has been a no-op since 1.0.2.
+
+   *Neil Horman*
+
  * Removed extra leading '00:' when printing key data such as an RSA modulus
    in hexadecimal format where the first (most significant) byte is >= 0x80.
    This had been added artificially to resemble ASN.1 DER encoding internals.

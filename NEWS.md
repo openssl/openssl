@@ -30,6 +30,8 @@ OpenSSL 4.0
   * ENGINE support was removed. The `no-engine` build option and the
    `OPENSSL_NO_ENGINE` macro is always present.
 
+  * The crypto-mdebug-backtrace configuration option has been entirely removed.
+
 OpenSSL 3.6
 -----------
 
