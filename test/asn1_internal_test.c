@@ -190,11 +190,28 @@ static int test_unicode_range(void)
     return ok;
 }
 
+static int test_mbstring_ncopy(void)
+{
+    ASN1_STRING *str = NULL;
+    const unsigned char in[] = { 0xFF, 0xFE, 0xFF, 0xFE };
+    int inlen = 4;
+    int inform = MBSTRING_UNIV;
+
+    if (!TEST_int_eq(ASN1_mbstring_ncopy(&str, in, inlen, inform, B_ASN1_GENERALSTRING, 0, 0), -1)
+        || !TEST_int_eq(ASN1_mbstring_ncopy(&str, in, inlen, inform, B_ASN1_VISIBLESTRING, 0, 0), -1)
+        || !TEST_int_eq(ASN1_mbstring_ncopy(&str, in, inlen, inform, B_ASN1_VIDEOTEXSTRING, 0, 0), -1)
+        || !TEST_int_eq(ASN1_mbstring_ncopy(&str, in, inlen, inform, B_ASN1_GENERALIZEDTIME, 0, 0), -1))
+        return 0;
+
+    return 1;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_tbl_standard);
     ADD_TEST(test_standard_methods);
     ADD_TEST(test_empty_nonoptional_content);
     ADD_TEST(test_unicode_range);
+    ADD_TEST(test_mbstring_ncopy);
     return 1;
 }
