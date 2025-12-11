@@ -381,24 +381,6 @@ int evp_do_md_ctx_setparams(const EVP_MD *md, void *provctx,
 
 OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
 
-#define M_check_autoarg(ctx, arg, arglen, err)                               \
-    if (ctx->pmeth->flags & EVP_PKEY_FLAG_AUTOARGLEN) {                      \
-        size_t pksize = (size_t)EVP_PKEY_get_size(ctx->pkey);                \
-                                                                             \
-        if (pksize == 0) {                                                   \
-            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY); /*ckerr_ignore*/      \
-            return 0;                                                        \
-        }                                                                    \
-        if (arg == NULL) {                                                   \
-            *arglen = pksize;                                                \
-            return 1;                                                        \
-        }                                                                    \
-        if (*arglen < pksize) {                                              \
-            ERR_raise(ERR_LIB_EVP, EVP_R_BUFFER_TOO_SMALL); /*ckerr_ignore*/ \
-            return 0;                                                        \
-        }                                                                    \
-    }
-
 void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx);
 void evp_cipher_free_int(EVP_CIPHER *md);
 
