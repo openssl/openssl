@@ -43,9 +43,6 @@ static void evp_pkey_ctx_free_cached_data(EVP_PKEY_CTX *ctx,
     int cmd, const char *name);
 static void evp_pkey_ctx_free_all_cached_data(EVP_PKEY_CTX *ctx);
 
-typedef const EVP_PKEY_METHOD *(*pmeth_fn)(void);
-typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
-
 #endif /* FIPS_MODULE */
 
 int evp_pkey_ctx_state(const EVP_PKEY_CTX *ctx)
@@ -71,7 +68,6 @@ int evp_pkey_ctx_state(const EVP_PKEY_CTX *ctx)
 static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx, EVP_PKEY *pkey,
     const char *keytype, const char *propquery,
     int id)
-
 {
     EVP_PKEY_CTX *ret = NULL;
     EVP_KEYMGMT *keymgmt = NULL;
@@ -107,10 +103,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx, EVP_PKEY *pkey,
 
     /* END legacy */
 #endif /* FIPS_MODULE */
-    /*
-     * If there's no app supplied pmeth and there's a name, we try
-     * fetching a provider implementation.
-     */
+    /* We try fetching a provider implementation. */
     if (keytype != NULL) {
         /*
          * If |pkey| is given and is provided, we take a reference to its
@@ -244,8 +237,6 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 {
     if (ctx == NULL)
         return;
-    if (ctx->pmeth && ctx->pmeth->cleanup)
-        ctx->pmeth->cleanup(ctx);
 
     evp_pkey_ctx_free_old_ops(ctx);
 #ifndef FIPS_MODULE
@@ -393,36 +384,29 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
         goto err;
     }
 
-    rctx->pmeth = pctx->pmeth;
-
     if (pctx->peerkey != NULL && !EVP_PKEY_up_ref(pctx->peerkey))
         goto err;
 
     rctx->peerkey = pctx->peerkey;
 
-    if (pctx->pmeth == NULL) {
-        if (rctx->operation == EVP_PKEY_OP_UNDEFINED) {
-            EVP_KEYMGMT *tmp_keymgmt = pctx->keymgmt;
-            void *provkey;
+    if (rctx->operation == EVP_PKEY_OP_UNDEFINED) {
+        EVP_KEYMGMT *tmp_keymgmt = pctx->keymgmt;
+        void *provkey;
 
-            if (pctx->pkey == NULL)
-                return rctx;
-
-            provkey = evp_pkey_export_to_provider(pctx->pkey, pctx->libctx,
-                &tmp_keymgmt, pctx->propquery);
-            if (provkey == NULL)
-                goto err;
-            if (!EVP_KEYMGMT_up_ref(tmp_keymgmt))
-                goto err;
-            EVP_KEYMGMT_free(rctx->keymgmt);
-            rctx->keymgmt = tmp_keymgmt;
+        if (pctx->pkey == NULL)
             return rctx;
-        }
-    } else if (pctx->pmeth->copy(rctx, pctx) > 0) {
+
+        provkey = evp_pkey_export_to_provider(pctx->pkey, pctx->libctx,
+            &tmp_keymgmt, pctx->propquery);
+        if (provkey == NULL)
+            goto err;
+        if (!EVP_KEYMGMT_up_ref(tmp_keymgmt))
+            goto err;
+        EVP_KEYMGMT_free(rctx->keymgmt);
+        rctx->keymgmt = tmp_keymgmt;
         return rctx;
     }
 err:
-    rctx->pmeth = NULL;
     EVP_PKEY_CTX_free(rctx);
     return NULL;
 }
@@ -432,7 +416,7 @@ int EVP_PKEY_CTX_is_a(EVP_PKEY_CTX *ctx, const char *keytype)
 {
 #ifndef FIPS_MODULE
     if (evp_pkey_ctx_is_legacy(ctx))
-        return (ctx->pmeth->pkey_id == evp_pkey_name2type(keytype));
+        return (ctx->legacy_keytype == evp_pkey_name2type(keytype));
 #endif
     return EVP_KEYMGMT_is_a(ctx->keymgmt, keytype);
 }
@@ -1064,21 +1048,14 @@ static int evp_pkey_ctx_ctrl_int(EVP_PKEY_CTX *ctx, int keytype, int optype,
 {
     int ret = 0;
 
-    /*
-     * If the method has a |digest_custom| function, we can relax the
-     * operation type check, since this can be called before the operation
-     * is initialized.
-     */
-    if (ctx->pmeth == NULL || ctx->pmeth->digest_custom == NULL) {
-        if (ctx->operation == EVP_PKEY_OP_UNDEFINED) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_NO_OPERATION_SET);
-            return -1;
-        }
+    if (ctx->operation == EVP_PKEY_OP_UNDEFINED) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_OPERATION_SET);
+        return -1;
+    }
 
-        if ((optype != -1) && !(ctx->operation & optype)) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
-            return -1;
-        }
+    if ((optype != -1) && !(ctx->operation & optype)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+        return -1;
     }
 
     switch (evp_pkey_ctx_state(ctx)) {
@@ -1086,18 +1063,8 @@ static int evp_pkey_ctx_ctrl_int(EVP_PKEY_CTX *ctx, int keytype, int optype,
         return evp_pkey_ctx_ctrl_to_param(ctx, keytype, optype, cmd, p1, p2);
     case EVP_PKEY_STATE_UNKNOWN:
     case EVP_PKEY_STATE_LEGACY:
-        if (ctx->pmeth == NULL || ctx->pmeth->ctrl == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-            return -2;
-        }
-        if ((keytype != -1) && (ctx->pmeth->pkey_id != keytype))
-            return -1;
-
-        ret = ctx->pmeth->ctrl(ctx, cmd, p1, p2);
-
-        if (ret == -2)
-            ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        break;
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        return -2;
     }
     return ret;
 }
@@ -1151,17 +1118,8 @@ static int evp_pkey_ctx_ctrl_str_int(EVP_PKEY_CTX *ctx,
         return evp_pkey_ctx_ctrl_str_to_param(ctx, name, value);
     case EVP_PKEY_STATE_UNKNOWN:
     case EVP_PKEY_STATE_LEGACY:
-        if (ctx == NULL || ctx->pmeth == NULL || ctx->pmeth->ctrl_str == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-            return -2;
-        }
-        if (strcmp(name, "digest") == 0)
-            ret = EVP_PKEY_CTX_md(ctx,
-                EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT,
-                EVP_PKEY_CTRL_MD, value);
-        else
-            ret = ctx->pmeth->ctrl_str(ctx, name, value);
-        break;
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        return -2;
     }
 
     return ret;
@@ -1241,15 +1199,8 @@ static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
             break;
         case EVP_PKEY_STATE_UNKNOWN:
         case EVP_PKEY_STATE_LEGACY:
-            if (ctx->pmeth == NULL) {
-                ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-                return -2;
-            }
-            if (EVP_PKEY_type(ctx->pmeth->pkey_id) != EVP_PKEY_type(keytype)) {
-                ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
-                return -1;
-            }
-            break;
+            ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+            return -2;
         }
     }
     if (optype != -1 && (ctx->operation & optype) == 0) {
@@ -1357,7 +1308,7 @@ int EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str)
     len = strlen(str);
     if (len > INT_MAX)
         return -1;
-    return ctx->pmeth->ctrl(ctx, cmd, (int)len, (void *)str);
+    return EVP_PKEY_CTX_ctrl(ctx, -1, -1, cmd, (int)len, (void *)str);
 }
 
 int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex)
@@ -1370,7 +1321,7 @@ int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex)
     if (bin == NULL)
         return 0;
     if (binlen <= INT_MAX)
-        rv = ctx->pmeth->ctrl(ctx, cmd, binlen, bin);
+        rv = EVP_PKEY_CTX_ctrl(ctx, -1, -1, cmd, binlen, bin);
     OPENSSL_free(bin);
     return rv;
 }

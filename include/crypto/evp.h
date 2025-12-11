@@ -119,16 +119,12 @@ struct evp_pkey_ctx_st {
 
     /* EVP_PKEY identity */
     int legacy_keytype;
-    /* Method associated with this operation */
-    const EVP_PKEY_METHOD *pmeth;
     /* Key: may be NULL */
     EVP_PKEY *pkey;
     /* Peer key for key agreement, may be NULL */
     EVP_PKEY *peerkey;
     /* Algorithm specific data */
     void *data;
-    /* Indicator if digest_custom needs to be called */
-    unsigned int flag_call_digest_custom : 1;
     /*
      * Used to support taking custody of memory in the case of a provider being
      * used with the deprecated EVP_PKEY_CTX_set_rsa_keygen_pubexp() API. This
