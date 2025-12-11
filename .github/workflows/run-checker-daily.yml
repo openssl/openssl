@@ -45,7 +45,6 @@ jobs:
           no-cmac,
           no-comp,
           enable-crypto-mdebug,
-          enable-crypto-mdebug-backtrace,
           no-ct,
           enable-demos,
           no-deprecated,

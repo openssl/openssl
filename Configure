@@ -576,7 +576,6 @@ my %deprecated_disablables = (
     "padlockeng" => undef,
     "ssl2" => undef,
     "buf-freelists" => undef,
-    "crypto-mdebug-backtrace" => undef,
     "hw" => undef,
     "hw-padlock" => undef,
     "ripemd" => "rmd160",
@@ -595,7 +594,6 @@ our %disabled = ( # "what"         => "comment"
                   "buildtest-c++"       => "default",
                   "crypto-mdebug"       => "default",
                   "allocfail-tests"     => "default",
-                  "crypto-mdebug-backtrace" => "default",
                   "demos"               => "default",
                   "h3demo"              => "default",
                   "hqinterop"           => "default",
@@ -669,7 +667,7 @@ my @disable_cascades = (
     "tls1_3"            => [ "quic" ],
     "quic"              => [ "unstable-qlog" ],
 
-    "crypto-mdebug"     => [ "crypto-mdebug-backtrace", "allocfail-tests" ],
+    "crypto-mdebug"     => [ "allocfail-tests" ],
 
     "module"            => [ "fips" ],
 

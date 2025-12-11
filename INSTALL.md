@@ -729,10 +729,6 @@ the zlib or `zlib-dynamic` options are also chosen.
 
 This now only enables the `failed-malloc` feature.
 
-### enable-crypto-mdebug-backtrace
-
-This is a no-op; the project uses the compiler's address/leak sanitizer instead.
-
 ### enable-allocfail-tests
 
 This option enables testing that leverages the use of the crypto-mdebug feature
