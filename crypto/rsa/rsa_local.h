@@ -144,9 +144,8 @@ struct rsa_meth_st {
         BIGNUM *e, BN_GENCB *cb);
 };
 
-/* Macros to test if a pkey or ctx is for a PSS key */
+/* Macro to test if a pkey is for a PSS key */
 #define pkey_is_pss(pkey) (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS)
-#define pkey_ctx_is_pss(ctx) (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS)
 int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
     BIGNUM *e_value,
     STACK_OF(BIGNUM) *factors, STACK_OF(BIGNUM) *exps,
