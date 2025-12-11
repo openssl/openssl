@@ -22,6 +22,7 @@ static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file,
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_OUTFORM,
+    OPT_ENCOPT,
     OPT_OUT,
     OPT_PASS,
     OPT_PARAMFILE,
@@ -53,6 +54,7 @@ const OPTIONS genpkey_options[] = {
     { "out", OPT_OUT, '>', "Output (private key) file" },
     { "outpubkey", OPT_OUTPUBKEY, '>', "Output public key file" },
     { "outform", OPT_OUTFORM, 'F', "output format (DER or PEM)" },
+    { "encopt", OPT_ENCOPT, 's', "Private key encoder parameter" },
     { "pass", OPT_PASS, 's', "Output file pass phrase source" },
     { "genparam", OPT_GENPARAM, '-', "Generate parameters, not key" },
     { "text", OPT_TEXT, '-', "Print the private key in text" },
@@ -130,6 +132,7 @@ int genpkey_main(int argc, char **argv)
     OPTION_CHOICE o;
     int outformat = FORMAT_PEM, text = 0, ret = 1, rv, do_param = 0;
     int private = 0, i;
+    STACK_OF(OPENSSL_STRING) *encopt = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
     STACK_OF(OPENSSL_STRING) *keyopt = NULL;
 
@@ -153,6 +156,12 @@ int genpkey_main(int argc, char **argv)
         case OPT_OUTFORM:
             if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
                 goto opthelp;
+            break;
+        case OPT_ENCOPT:
+            if (encopt == NULL)
+                encopt = sk_OPENSSL_STRING_new_null();
+            if (!sk_OPENSSL_STRING_push(encopt, opt_arg()))
+                goto end;
             break;
         case OPT_OUT:
             outfile = opt_arg();
@@ -272,12 +281,12 @@ int genpkey_main(int argc, char **argv)
         rv = PEM_write_bio_Parameters(mem_out, pkey);
     } else if (outformat == FORMAT_PEM) {
         assert(private);
-        rv = PEM_write_bio_PrivateKey(mem_out, pkey, cipher, NULL, 0, NULL, pass);
+        rv = encode_private_key(mem_out, "PEM", pkey, encopt, cipher, pass);
         if (rv > 0 && mem_outpubkey != NULL)
             rv = PEM_write_bio_PUBKEY(mem_outpubkey, pkey);
     } else if (outformat == FORMAT_ASN1) {
         assert(private);
-        rv = i2d_PrivateKey_bio(mem_out, pkey);
+        rv = encode_private_key(mem_out, "DER", pkey, encopt, cipher, pass);
         if (rv > 0 && mem_outpubkey != NULL)
             rv = i2d_PUBKEY_bio(mem_outpubkey, pkey);
     } else {
@@ -322,6 +331,7 @@ end:
                     outfile, strerror(errno));
         }
     }
+    sk_OPENSSL_STRING_free(encopt);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
     EVP_CIPHER_free(cipher);

@@ -59,7 +59,7 @@ foreach my $alg (@algs) {
         my $pem = sprintf("prv-%s-%s.%d.pem", $alg, $f, $i++);
         ok(run(app(['openssl', 'genpkey', '-out', $pem,
                     '-pkeyopt', "hexseed:$seed", '-algorithm', "ml-kem-$alg",
-                    '-provparam', "ml-kem.output_formats=$f"])));
+                    '-encopt', "output_formats:$f"])));
         ok(!compare_text($in, $pem),
             sprintf("prvkey PEM match: %s, %s", $alg, $f));
 
