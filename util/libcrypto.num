@@ -2614,6 +2614,7 @@ ASN1_BIT_STRING_set                     ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_set_bit                 ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_get_bit                 ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_check                   ?	4_0_0	EXIST::FUNCTION:
+ASN1_BIT_STRING_get_length              ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_name_print              ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_num_asc                 ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_set_asc                 ?	4_0_0	EXIST::FUNCTION:
