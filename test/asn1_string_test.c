@@ -238,7 +238,7 @@ abs_get_length_test(const struct abs_get_length_test *tbl, int idx)
     if (!test->valid)
         goto done;
 
-    if (!TEST_size_t_eq(length, test->length)
+    if (!TEST_int_eq((int)length, test->length)
         || !TEST_int_eq(unused_bits, test->unused_bits)) {
         TEST_info("%s: (idx=%d) %s: want (%zu, %d), got (%zu, %d)\n", __func__,
             idx, test->descr, test->length, test->unused_bits, length,
