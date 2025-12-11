@@ -1096,6 +1096,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[asn1_time_test]=../include ../apps/include
   DEPEND[asn1_time_test]=../libcrypto libtestutil.a
 
+  PROGRAMS{noinst}=asn1_string_test
+  SOURCE[asn1_string_test]=asn1_string_test.c
+  INCLUDE[asn1_string_test]=../include ../apps/include
+  DEPEND[asn1_string_test]=../libcrypto libtestutil.a
+
   # We disable this test completely in a shared build because it deliberately
   # redefines some internal libssl symbols. This doesn't work in a non-shared
   # build
