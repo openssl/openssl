@@ -13,7 +13,7 @@
 
 #include "testutil.h"
 
-#define MAXCOUNT 5
+#define MAXCOUNT 7
 static int my_param_count;
 static BIO *my_param_b[MAXCOUNT];
 static int my_param_oper[MAXCOUNT];
@@ -138,20 +138,20 @@ static int test_bio_callback_ex(void)
     my_param_count = 0;
     i = BIO_read(bio, buf, sizeof(buf));
     if (!TEST_int_eq(i, 0)
-        || !TEST_int_eq(my_param_count, 2)
+        || !TEST_int_eq(my_param_count, 6)
         || !TEST_ptr_eq(my_param_b[0], bio)
         || !TEST_int_eq(my_param_oper[0], BIO_CB_READ)
         || !TEST_ptr_eq(my_param_argp[0], buf)
         || !TEST_size_t_eq(my_param_len[0], sizeof(buf))
         || !TEST_long_eq(my_param_argl[0], 0L)
         || !TEST_int_eq((int)my_param_ret[0], 1)
-        || !TEST_ptr_eq(my_param_b[1], bio)
-        || !TEST_int_eq(my_param_oper[1], BIO_CB_READ | BIO_CB_RETURN)
-        || !TEST_ptr_eq(my_param_argp[1], buf)
-        || !TEST_size_t_eq(my_param_len[1], sizeof(buf))
-        || !TEST_long_eq(my_param_argl[1], 0L)
-        || !TEST_size_t_eq(my_param_processed[1], 0)
-        || !TEST_int_eq((int)my_param_ret[1], 0))
+        || !TEST_ptr_eq(my_param_b[5], bio)
+        || !TEST_int_eq(my_param_oper[5], BIO_CB_READ | BIO_CB_RETURN)
+        || !TEST_ptr_eq(my_param_argp[5], buf)
+        || !TEST_size_t_eq(my_param_len[5], sizeof(buf))
+        || !TEST_long_eq(my_param_argl[5], 0L)
+        || !TEST_size_t_eq(my_param_processed[5], 0)
+        || !TEST_int_eq((int)my_param_ret[5], 0))
         goto err;
 
     my_param_count = 0;
@@ -291,19 +291,19 @@ static int test_bio_callback(void)
     my_param_count = 0;
     i = BIO_read(bio, buf, sizeof(buf));
     if (!TEST_int_eq(i, 0)
-        || !TEST_int_eq(my_param_count, 2)
+        || !TEST_int_eq(my_param_count, 6)
         || !TEST_ptr_eq(my_param_b[0], bio)
         || !TEST_int_eq(my_param_oper[0], BIO_CB_READ)
         || !TEST_ptr_eq(my_param_argp[0], buf)
         || !TEST_int_eq(my_param_argi[0], sizeof(buf))
         || !TEST_long_eq(my_param_argl[0], 0L)
         || !TEST_long_eq(my_param_ret[0], 1L)
-        || !TEST_ptr_eq(my_param_b[1], bio)
-        || !TEST_int_eq(my_param_oper[1], BIO_CB_READ | BIO_CB_RETURN)
-        || !TEST_ptr_eq(my_param_argp[1], buf)
-        || !TEST_int_eq(my_param_argi[1], sizeof(buf))
-        || !TEST_long_eq(my_param_argl[1], 0L)
-        || !TEST_long_eq(my_param_ret[1], 0L))
+        || !TEST_ptr_eq(my_param_b[5], bio)
+        || !TEST_int_eq(my_param_oper[5], BIO_CB_READ | BIO_CB_RETURN)
+        || !TEST_ptr_eq(my_param_argp[5], buf)
+        || !TEST_int_eq(my_param_argi[5], sizeof(buf))
+        || !TEST_long_eq(my_param_argl[5], 0L)
+        || !TEST_long_eq(my_param_ret[5], 0L))
         goto err;
 
     my_param_count = 0;
