@@ -78,7 +78,7 @@
  * 64-bit processor with LP64 ABI
  */
 #ifdef SIXTY_FOUR_BIT_LONG
-#define BN_ULLONG unsigned long long
+typedef unsigned long long BN_ULLONG;
 #define BN_BITS4 32
 #define BN_MASK2 (0xffffffffffffffffL)
 #define BN_MASK2l (0xffffffffL)
@@ -110,9 +110,9 @@
 #ifdef THIRTY_TWO_BIT
 #ifdef BN_LLONG
 #if defined(_WIN32) && !defined(__GNUC__)
-#define BN_ULLONG unsigned __int64
+typedef unsigned __int64 BN_ULLONG;
 #else
-#define BN_ULLONG unsigned long long
+typedef unsigned long long BN_ULLONG;
 #endif
 #endif
 #define BN_BITS4 16
