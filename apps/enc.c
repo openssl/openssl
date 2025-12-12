@@ -142,15 +142,15 @@ const OPTIONS enc_options[] = {
 };
 
 static EVP_SKEY *skey_from_params(const EVP_CIPHER *cipher, const char *skeymgmt,
-                                  STACK_OF(OPENSSL_STRING) *opts)
+    STACK_OF(OPENSSL_STRING) *opts)
 {
     EVP_SKEY *skey = NULL;
     EVP_SKEYMGMT *mgmt = NULL;
     OSSL_PARAM *params = NULL;
 
     mgmt = EVP_SKEYMGMT_fetch(app_get0_libctx(),
-                              skeymgmt != NULL ? skeymgmt : EVP_CIPHER_name(cipher),
-                              app_get0_propq());
+        skeymgmt != NULL ? skeymgmt : EVP_CIPHER_name(cipher),
+        app_get0_propq());
     if (mgmt == NULL)
         return NULL;
 
@@ -161,7 +161,7 @@ static EVP_SKEY *skey_from_params(const EVP_CIPHER *cipher, const char *skeymgmt
     }
 
     skey = EVP_SKEY_import(app_get0_libctx(), EVP_SKEYMGMT_get0_name(mgmt),
-                           app_get0_propq(), OSSL_SKEYMGMT_SELECT_ALL, params);
+        app_get0_propq(), OSSL_SKEYMGMT_SELECT_ALL, params);
     OSSL_PARAM_free(params);
     EVP_SKEYMGMT_free(mgmt);
 
@@ -749,7 +749,7 @@ int enc_main(int argc, char **argv)
                 skey = skey_from_params(cipher, skeymgmt, skeyopts);
                 if (skey == NULL) {
                     BIO_printf(bio_err, "Error creating opaque key object for skeymgmt %s\n",
-                               skeymgmt ? skeymgmt : EVP_CIPHER_name(cipher));
+                        skeymgmt ? skeymgmt : EVP_CIPHER_name(cipher));
                     goto end;
                 }
             }
