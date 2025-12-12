@@ -25,7 +25,8 @@
 /*
  * The shard count was determined through performance testing with the evp_fetch
  * tool on an Intel Xeon Gold 6248R CPU @ 3.00GHz. Testing showed that 4 shards
- * combined with CACHE_SIZE delivered the best performance.
+ * combined with CACHE_SIZE delivered the best performance for 16 or
+ * more threads, and close to best performance at below 16 threads.
  */
 #ifndef NUM_SHARDS
 #define NUM_SHARDS 4
