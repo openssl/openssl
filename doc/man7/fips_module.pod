@@ -32,8 +32,7 @@ Low level cryptographic APIs (use the high level APIs, such as EVP, instead)
 =item *
 
 Any functions that create or modify custom "METHODS" (for example
-EVP_MD_meth_new(), EVP_PKEY_meth_new(), RSA_meth_new(), EC_KEY_METHOD_new(),
-etc.)
+EVP_PKEY_meth_new(), RSA_meth_new(), EC_KEY_METHOD_new(), etc.)
 
 =back
 

@@ -30,17 +30,48 @@ This value can also be retrieved with L<EVP_MD_get_size(3)>.
 =item "flags" (B<OSSL_DIGEST_PARAM_FLAGS>) <unsigned integer>
 
 Diverse flags that describe exceptional behaviour for the digest.
-These flags are described in L<EVP_MD_meth_set_flags(3)/DESCRIPTION>.
 
 The length of the "flags" parameter should equal that of an
 B<unsigned long int>.
 
-=begin comment
+Several flags can be or'd together.  The available flags are:
 
-The description of these flags should probably be moved.  Also,
-EVP_MD_FLAG_FIPS isn't relevant any more.
+=over 4
 
-=end comment
+=item EVP_MD_FLAG_ONESHOT
+
+This digest method can only handle one block of input.
+
+=item EVP_MD_FLAG_XOF
+
+This digest method is an extensible-output function (XOF) and supports
+the B<EVP_MD_CTRL_XOF_LEN> control.
+
+=item EVP_MD_FLAG_DIGALGID_NULL
+
+When setting up a DigestAlgorithmIdentifier, this flag will have the
+parameter set to NULL by default.  Use this for PKCS#1.  I<Note: if
+combined with EVP_MD_FLAG_DIGALGID_ABSENT, the latter will override.>
+
+=item EVP_MD_FLAG_DIGALGID_ABSENT
+
+When setting up a DigestAlgorithmIdentifier, this flag will have the
+parameter be left absent by default.  I<Note: if combined with
+EVP_MD_FLAG_DIGALGID_NULL, the latter will be overridden.>
+
+=item EVP_MD_FLAG_DIGALGID_CUSTOM
+
+Custom DigestAlgorithmIdentifier handling via ctrl, with
+B<EVP_MD_FLAG_DIGALGID_ABSENT> as default.  I<Note: if combined with
+EVP_MD_FLAG_DIGALGID_NULL, the latter will be overridden.>
+Currently unused.
+
+=item EVP_MD_FLAG_FIPS
+
+This digest method is suitable for use in FIPS mode.
+Currently unused.
+
+=back
 
 This value can also be retrieved with L<EVP_MD_get_flags(3)>.
 
