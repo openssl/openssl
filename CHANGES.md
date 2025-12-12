@@ -32,6 +32,12 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added LMS support for signature verification to `pkeyutl' command.
+   To enable this, LMS 'SubjectPublicKeyInfo' encoder and decoders were
+   added, and the LMS keymanager and signature code were updated.
+
+   *Shane Lontis*
+
  * New `SSL_get0_sigalg()` and `SSL_get0_shared_sigalg()` functions report the
    TLS signature algorithm name and codepoint for the peer advertised and shared
    algorithms respectively.  These supersede the existing `SSL_get_sigalgs()` and

@@ -27,6 +27,16 @@ is expected to be in XDR format.
 
 =back
 
+The following parameters is gettable using EVP_PKEY_get_utf8_string_param().
+
+=over 4
+
+=item "mandatory-digest" (B<OSSL_PKEY_PARAM_MANDATORY_DIGEST>) <UTF8 string>
+
+The empty string, signifying that no digest may be specified.
+
+=back
+
 =head1 CONFORMING TO
 
 =over 4
@@ -91,6 +101,8 @@ L<provider-keymgmt(7)>
 =head1 HISTORY
 
 This functionality was added in OpenSSL 3.6.
+The gettable "mandatory-digest" and support for loading LMS public keys in
+SubjectPublicKeyInfo format was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
