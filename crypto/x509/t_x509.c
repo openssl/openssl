@@ -381,31 +381,45 @@ int X509_aux_print(BIO *out, const X509 *x, int indent)
 int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
 {
     unsigned long flags = ASN1_STRFLGS_RFC2253 | ASN1_STRFLGS_ESC_QUOTE | XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_SN;
+    X509_VERIFY_PARAM *vpm = X509_VERIFY_PARAM_new();
+    int error, ret = 0;
 
-    if (cert == NULL)
-        return BIO_printf(bio, "    (no certificate)\n") > 0;
+    if (vpm == NULL) {
+        ret = BIO_printf(bio, "    (malloc failed)\n") > 0;
+        goto err;
+    }
+    if (cert == NULL) {
+        ret = BIO_printf(bio, "    (no certificate)\n") > 0;
+        goto err;
+    }
     if (BIO_printf(bio, "    certificate\n") <= 0
         || !X509_print_ex(bio, cert, flags, ~X509_FLAG_NO_SUBJECT))
-        return 0;
+        goto err;
     if (X509_check_issued((X509 *)cert, cert) == X509_V_OK) {
         if (BIO_printf(bio, "        self-issued\n") <= 0)
-            return 0;
+            goto err;
     } else {
         if (BIO_printf(bio, " ") <= 0
             || !X509_print_ex(bio, cert, flags, ~X509_FLAG_NO_ISSUER))
-            return 0;
+            goto err;
     }
     if (!X509_print_ex(bio, cert, flags,
             ~(X509_FLAG_NO_SERIAL | X509_FLAG_NO_VALIDITY)))
-        return 0;
-    if (X509_cmp_current_time(X509_get0_notBefore(cert)) > 0)
-        if (BIO_printf(bio, "        not yet valid\n") <= 0)
-            return 0;
-    if (X509_cmp_current_time(X509_get0_notAfter(cert)) < 0)
-        if (BIO_printf(bio, "        no more valid\n") <= 0)
-            return 0;
-    return X509_print_ex(bio, cert, flags,
+        goto err;
+
+    if (!X509_check_certificate_times(vpm, cert, &error)) {
+        char msg[128];
+
+        ERR_error_string_n(error, msg, sizeof(msg));
+        if (BIO_printf(bio, "        %s\n", msg) <= 0)
+            goto err;
+    }
+    ret = X509_print_ex(bio, cert, flags,
         ~neg_cflags & ~X509_FLAG_EXTENSIONS_ONLY_KID);
+
+err:
+    X509_VERIFY_PARAM_free(vpm);
+    return ret;
 }
 
 static int print_certs(BIO *bio, const STACK_OF(X509) *certs)

@@ -16,6 +16,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/ocsp.h>
+#include <openssl/posix_time.h>
 #include "ocsp_local.h"
 
 /*
@@ -288,6 +289,20 @@ int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
     return 1;
 }
 
+static int gentime_to_posix(ASN1_GENERALIZEDTIME *time, int64_t *out_time)
+{
+    struct tm ctm;
+
+    if (!ASN1_GENERALIZEDTIME_check(time))
+        return 0;
+    if (!ASN1_TIME_to_tm(time, &ctm))
+        return 0;
+    if (!OPENSSL_tm_to_posix(&ctm, out_time))
+        return 0;
+
+    return 1;
+}
+
 /*
  * Check validity of thisUpdate and nextUpdate fields. It is possible that
  * the request will take a few seconds to process and/or the time won't be
@@ -299,55 +314,52 @@ int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
 int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
     ASN1_GENERALIZEDTIME *nextupd, long nsec, long maxsec)
 {
-    int ret = 1;
-    time_t t_now, t_tmp;
+    int64_t t_now, this_time, next_time;
+    int ret = 0;
 
-    time(&t_now);
-    /* Check thisUpdate is valid and not more than nsec in the future */
-    if (!ASN1_GENERALIZEDTIME_check(thisupd)) {
+    if (nsec < 0)
+        nsec = 0;
+
+    t_now = (int64_t)time(NULL);
+    /* Check thisUpdate is valid */
+    if (!gentime_to_posix(thisupd, &this_time)) {
         ERR_raise(ERR_LIB_OCSP, OCSP_R_ERROR_IN_THISUPDATE_FIELD);
-        ret = 0;
-    } else {
-        t_tmp = t_now + nsec;
-        if (X509_cmp_time(thisupd, &t_tmp) > 0) {
+        goto err;
+    }
+    /* Check if thisUpdate is more than nsec in the future */
+    if (this_time > t_now + nsec) {
+        ERR_raise(ERR_LIB_OCSP, OCSP_R_STATUS_NOT_YET_VALID);
+        goto err;
+    }
+    /*
+     * If maxsec specified check thisUpdate is not more than maxsec in
+     * the past
+     */
+    if (maxsec >= 0 && this_time < t_now - maxsec) {
+        ERR_raise(ERR_LIB_OCSP, OCSP_R_STATUS_TOO_OLD);
+        goto err;
+    }
+    if (nextupd != NULL) {
+        /* Check nextUpdate is valid */
+        if (!gentime_to_posix(nextupd, &next_time)) {
+            ERR_raise(ERR_LIB_OCSP, OCSP_R_ERROR_IN_NEXTUPDATE_FIELD);
+            goto err;
+        }
+        /* Check nextUpdate is not more than nsec in the past */
+        if (next_time < t_now - nsec) {
             ERR_raise(ERR_LIB_OCSP, OCSP_R_STATUS_NOT_YET_VALID);
-            ret = 0;
+            goto err;
         }
-
-        /*
-         * If maxsec specified check thisUpdate is not more than maxsec in
-         * the past
-         */
-        if (maxsec >= 0) {
-            t_tmp = t_now - maxsec;
-            if (X509_cmp_time(thisupd, &t_tmp) < 0) {
-                ERR_raise(ERR_LIB_OCSP, OCSP_R_STATUS_TOO_OLD);
-                ret = 0;
-            }
+        /* Also don't allow nextUpdate to precede thisUpdate */
+        if (next_time < this_time) {
+            ERR_raise(ERR_LIB_OCSP, OCSP_R_NEXTUPDATE_BEFORE_THISUPDATE);
+            goto err;
         }
     }
 
-    if (nextupd == NULL)
-        return ret;
+    ret = 1;
 
-    /* Check nextUpdate is valid and not more than nsec in the past */
-    if (!ASN1_GENERALIZEDTIME_check(nextupd)) {
-        ERR_raise(ERR_LIB_OCSP, OCSP_R_ERROR_IN_NEXTUPDATE_FIELD);
-        ret = 0;
-    } else {
-        t_tmp = t_now - nsec;
-        if (X509_cmp_time(nextupd, &t_tmp) < 0) {
-            ERR_raise(ERR_LIB_OCSP, OCSP_R_STATUS_EXPIRED);
-            ret = 0;
-        }
-    }
-
-    /* Also don't allow nextUpdate to precede thisUpdate */
-    if (ASN1_STRING_cmp(nextupd, thisupd) < 0) {
-        ERR_raise(ERR_LIB_OCSP, OCSP_R_NEXTUPDATE_BEFORE_THISUPDATE);
-        ret = 0;
-    }
-
+err:
     return ret;
 }
 
