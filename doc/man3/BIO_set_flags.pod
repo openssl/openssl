@@ -112,12 +112,27 @@ Set if the last I/O operation on the B<BIO> should be retried at a later time.
 If this bit is not set then the condition is treated as an error.
 This flag is normally set by the B<BIO> implementation.
 
+=back
+
+The following flag can be used only with the B<base64 encoding BIO>.
+The result of using this flag with other BIOs is unpredictable.
+
+=over 4
+
 =item B<BIO_FLAGS_BASE64_NO_NL>
 
 When set on a base64 filter B<BIO> this flag disables the generation of
 newline characters in the encoded output and causes newlines to be ignored
 in the input.  See also L<BIO_f_base64(3)>.
 The flag has no effect on any other built-in B<BIO> types.
+
+=back
+
+The following flags can be used only with the B<memory buffer BIO> and
+B<secure memory buffer BIO>. The result of using these flags with other BIOs
+is unpredictable.
+
+=over 4
 
 =item B<BIO_FLAGS_MEM_RDONLY>
 
@@ -134,12 +149,8 @@ The flag has no effect on any other built-in B<BIO> types.
 
 =item B<BIO_FLAGS_IN_EOF>
 
-This flag may be used by a B<BIO> implementation to indicate that the end
-of the input stream has been reached.  However, B<BIO> types are not
-required to use this flag to signal end-of-file conditions; they may rely
-on other mechanisms such as system calls or by querying the next B<BIO> in a
-chain.  Applications must therefore not test this flag directly to
-determine whether EOF has been reached, and must use BIO_eof() instead.
+This flag is for internal use only. It should not be used outside BIO
+implementations.
 
 =back
 
