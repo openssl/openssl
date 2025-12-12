@@ -1,0 +1,12 @@
+lms-type: SHAKE-256-N24-H20 (0x17)
+lm-ots-type: SHAKE-256-N24-W2 (0xe)
+Id:
+    5a:b1:80:87:cb:8c:be:2c:78:84:85:3a:c5:fb:8e:6e
+LMS Public-Key:
+pub:
+    00:00:00:17:00:00:00:0e:5a:b1:80:87:cb:8c:be:2c:
+    78:84:85:3a:c5:fb:8e:6e:59:ea:a7:4e:7d:cd:41:8f:
+    c0:b4:54:5b:f1:2f:c8:94:b1:63:c4:38:c7:b9:93:d2
+K:
+    59:ea:a7:4e:7d:cd:41:8f:c0:b4:54:5b:f1:2f:c8:94:
+    b1:63:c4:38:c7:b9:93:d2

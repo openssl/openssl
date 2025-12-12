@@ -44,6 +44,7 @@
 #include "internal/nelem.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
+#include "prov/lms_codecs.h"
 #include "providers/implementations/encode_decode/decode_der2key.inc"
 
 #ifndef OPENSSL_NO_SLH_DSA
@@ -1001,6 +1002,25 @@ static ossl_inline void *ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
 
 /* ---------------------------------------------------------------------- */
 
+#ifndef OPENSSL_NO_LMS
+# define lms_evp_type EVP_PKEY_HSS_LMS
+# define lms_free (free_key_fn *)ossl_lms_key_free
+# define lms_check NULL
+# define lms_adjust NULL
+
+static ossl_inline void *lms_d2i_PUBKEY(const uint8_t **der, long der_len,
+    struct der2key_ctx_st *ctx)
+{
+    LMS_KEY *key;
+
+    key = ossl_lms_d2i_PUBKEY(*der, der_len, ctx->provctx);
+    if (key != NULL)
+        *der += der_len;
+    return key;
+}
+#endif
+/* ---------------------------------------------------------------------- */
+
 /*
  * The DO_ macros help define the selection mask and the method functions
  * for each kind of object we want to decode.
@@ -1302,4 +1322,8 @@ MAKE_DECODER("ML-DSA-65", ml_dsa_65, ml_dsa_65, PrivateKeyInfo);
 MAKE_DECODER("ML-DSA-65", ml_dsa_65, ml_dsa_65, SubjectPublicKeyInfo);
 MAKE_DECODER("ML-DSA-87", ml_dsa_87, ml_dsa_87, PrivateKeyInfo);
 MAKE_DECODER("ML-DSA-87", ml_dsa_87, ml_dsa_87, SubjectPublicKeyInfo);
+#endif
+
+#ifndef OPENSSL_NO_LMS
+MAKE_DECODER("LMS", lms, lms, SubjectPublicKeyInfo);
 #endif

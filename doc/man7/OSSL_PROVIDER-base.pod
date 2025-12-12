@@ -132,6 +132,10 @@ are also available in the default provider.
 
 =item SLH-DSA-SHAKE-256f
 
+=item LMS
+
+Private keys are not supported for LMS.
+
 =back
 
 In addition to this provider, all of these encoding algorithms are also
@@ -202,6 +206,10 @@ combination with the FIPS provider.
 
 =item SLH-DSA-SHAKE-256f
 
+=item LMS
+
+Private keys are not supported for LMS.
+
 =back
 
 In addition to this provider, all of these decoding algorithms are also
@@ -230,7 +238,8 @@ L<openssl-core_dispatch.h(7)>, L<provider(7)>
 
 This functionality was added in OpenSSL 3.0.
 
-Support for B<ML-DSA> and <ML-KEM> was added in OpenSSL 3.5.
+Support for B<LMS> Public Key (SubjectPublicKeyInfo) encoders and decoders
+was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
