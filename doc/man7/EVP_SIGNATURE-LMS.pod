@@ -24,6 +24,9 @@ that specify the digest name are not necessary.
 LMS support is disabled by default at compile-time.
 To enable, specify the B<enable-lms> build configuration option.
 
+For backwards compatibility reasons EVP_DigestVerifyInit_ex() and
+EVP_DigestVerify() may also be used, but the digest passed in I<mdname> must be NULL.
+
 LMS should only be used for older deployments.
 New deployments should use either L<EVP_SIGNATURE-ML-DSA(7)>
 or <L/EVP_SIGNATURE-SLH-DSA(7)>.
@@ -56,6 +59,8 @@ L<provider-signature(7)>,
 =head1 HISTORY
 
 This functionality was added in OpenSSL 3.6.
+Support for EVP_DigestVerifyInit_ex() and  EVP_DigestVerify() was added in
+OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
