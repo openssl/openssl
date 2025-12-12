@@ -31,11 +31,11 @@ ASN1_CHOICE(CMS_SignerIdentifier) = {
     ASN1_IMP(CMS_SignerIdentifier, d.subjectKeyIdentifier, ASN1_OCTET_STRING, 0)
 } static_ASN1_CHOICE_END(CMS_SignerIdentifier)
 
-    ASN1_NDEF_SEQUENCE(CMS_EncapsulatedContentInfo)
+ASN1_NDEF_SEQUENCE(CMS_EncapsulatedContentInfo)
     = { ASN1_SIMPLE(CMS_EncapsulatedContentInfo, eContentType, ASN1_OBJECT), ASN1_NDEF_EXP_OPT(CMS_EncapsulatedContentInfo, eContent, ASN1_OCTET_STRING_NDEF, 0) } static_ASN1_NDEF_SEQUENCE_END(CMS_EncapsulatedContentInfo)
 
-    /* Minor tweak to operation: free up signer key, cert */
-    static int cms_si_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
+/* Minor tweak to operation: free up signer key, cert */
+static int cms_si_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 {
     if (operation == ASN1_OP_FREE_POST) {
         CMS_SignerInfo *si = (CMS_SignerInfo *)*pval;
@@ -118,7 +118,7 @@ ASN1_CHOICE(CMS_KeyAgreeRecipientIdentifier) = {
     ASN1_IMP(CMS_KeyAgreeRecipientIdentifier, d.rKeyId, CMS_RecipientKeyIdentifier, 0)
 } static_ASN1_CHOICE_END(CMS_KeyAgreeRecipientIdentifier)
 
-    static int cms_rek_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
+static int cms_rek_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 {
     CMS_RecipientEncryptedKey *rek = (CMS_RecipientEncryptedKey *)*pval;
     if (operation == ASN1_OP_FREE_POST) {
@@ -143,7 +143,7 @@ ASN1_CHOICE(CMS_OriginatorIdentifierOrKey) = {
     ASN1_IMP(CMS_OriginatorIdentifierOrKey, d.originatorKey, CMS_OriginatorPublicKey, 1)
 } static_ASN1_CHOICE_END(CMS_OriginatorIdentifierOrKey)
 
-    static int cms_kari_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
+static int cms_kari_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 {
     CMS_KeyAgreeRecipientInfo *kari = (CMS_KeyAgreeRecipientInfo *)*pval;
     if (operation == ASN1_OP_NEW_POST) {
@@ -321,7 +321,7 @@ ASN1_NDEF_SEQUENCE(CMS_AuthenticatedData) = {
     ASN1_IMP_SET_OF_OPT(CMS_AuthenticatedData, unauthAttrs, X509_ALGOR, 3)
 } static_ASN1_NDEF_SEQUENCE_END(CMS_AuthenticatedData)
 
-    ASN1_NDEF_SEQUENCE(CMS_CompressedData)
+ASN1_NDEF_SEQUENCE(CMS_CompressedData)
     = {
           ASN1_EMBED(CMS_CompressedData, version, INT32),
           ASN1_SIMPLE(CMS_CompressedData, compressionAlgorithm, X509_ALGOR),
@@ -407,7 +407,7 @@ ASN1_CHOICE(CMS_ReceiptsFrom) = {
     ASN1_IMP_SEQUENCE_OF(CMS_ReceiptsFrom, d.receiptList, GENERAL_NAMES, 1)
 } static_ASN1_CHOICE_END(CMS_ReceiptsFrom)
 
-    ASN1_SEQUENCE(CMS_ReceiptRequest)
+ASN1_SEQUENCE(CMS_ReceiptRequest)
     = { ASN1_SIMPLE(CMS_ReceiptRequest, signedContentIdentifier, ASN1_OCTET_STRING), ASN1_SIMPLE(CMS_ReceiptRequest, receiptsFrom, CMS_ReceiptsFrom), ASN1_SEQUENCE_OF(CMS_ReceiptRequest, receiptsTo, GENERAL_NAMES) } ASN1_SEQUENCE_END(CMS_ReceiptRequest)
 
 ASN1_SEQUENCE(CMS_Receipt) = {
