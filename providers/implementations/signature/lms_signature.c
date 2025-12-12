@@ -136,7 +136,7 @@ static int lms_digest_verify_init(void *vctx, const char *mdname, void *vkey,
         return 0;
     }
     if (vkey == NULL && ctx->key != NULL)
-        return 1;   /* lms_set_ctx_params(ctx, params); */
+        return 1; /* lms_set_ctx_params(ctx, params); */
 
     return lms_verify_msg_init(vctx, vkey, params);
 }

@@ -293,7 +293,8 @@ static int lms_digest_verify_fail_test(void)
         expected = 0;
 
     if (!TEST_int_eq(EVP_DigestVerifyInit_ex(vctx, NULL, NULL, libctx, NULL,
-                        pub, NULL), expected))
+                         pub, NULL),
+            expected))
         goto err;
     ret = 1;
 err:
