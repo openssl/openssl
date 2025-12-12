@@ -607,12 +607,12 @@ EVP_PKEY *load_keyparams(const char *uri, int format, int maybe_stdin,
 }
 
 EVP_SKEY *load_skey(const char *uri, int format, int may_stdin,
-                    const char *pass, int quiet)
+    const char *pass, int quiet)
 {
     EVP_SKEY *skey = NULL;
 
     (void)load_key_certs_crls(uri, format, may_stdin, pass, NULL, 0,
-                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, &skey);
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL, &skey);
 
     return skey;
 }
