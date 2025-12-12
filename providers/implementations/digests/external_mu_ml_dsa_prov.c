@@ -126,7 +126,7 @@ static int mu_init(void *vctx, const OSSL_PARAM params[])
     if (ossl_unlikely(!ossl_prov_is_running()))
         return 0;
 
-    if (ctx->mdctx != NULL && !EVP_MD_CTX_init(ctx->mdctx))
+    if (ctx->mdctx != NULL && !EVP_MD_CTX_reset(ctx->mdctx))
         return 0;
     ctx->remaining = ctx->digest_len;
     return mu_set_ctx_params(vctx, params);

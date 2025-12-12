@@ -2897,7 +2897,6 @@ static int pkey_calculate_mu(EVP_TEST *t, uint8_t *mu, size_t *mulen)
          * If we are prehashing then calculate the hash of the kdata->input and
          * set this as the new input
          */
-        OSSL_PARAM xofparam[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
         size_t xoflen = 0;
         unsigned int len = 0;
 
@@ -2908,7 +2907,7 @@ static int pkey_calculate_mu(EVP_TEST *t, uint8_t *mu, size_t *mulen)
         md = EVP_MD_fetch(libctx, digestname, NULL);
         if (md == NULL)
             goto err;
-        if (!EVP_DigestInit_ex2(mdctx, md, xofparam)
+        if (!EVP_DigestInit(mdctx, md)
             || !EVP_DigestUpdate(mdctx, in, inlen))
             goto err;
         /* Deal with the SHAKE algorithm not setting a default xoflen */
