@@ -32,6 +32,12 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added LMS support for signature verification to `pkeyutl' command.
+   To enable this, LMS 'SubjectPublicKeyInfo' encoder and decoders were
+   added, and the LMS keymanager and signature code were updated.
+
+   *Shane Lontis*
+
  * Removed extra leading '00:' when printing key data such as an RSA modulus
    in hexadecimal format where the first (most significant) byte is >= 0x80.
    This had been added artificially to resemble ASN.1 DER encoding internals.

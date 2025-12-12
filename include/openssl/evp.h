@@ -98,6 +98,7 @@
 #define EVP_PKEY_SLH_DSA_SHAKE_192F NID_SLH_DSA_SHAKE_192f
 #define EVP_PKEY_SLH_DSA_SHAKE_256S NID_SLH_DSA_SHAKE_256s
 #define EVP_PKEY_SLH_DSA_SHAKE_256F NID_SLH_DSA_SHAKE_256f
+#define EVP_PKEY_HSS_LMS NID_id_alg_hss_lms_hashsig
 
 /* Special indicator that the object is uniquely provider side */
 #define EVP_PKEY_KEYMGMT -1
