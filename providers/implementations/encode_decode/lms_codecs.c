@@ -137,6 +137,8 @@ int ossl_lms_i2d_pubkey(const LMS_KEY *key, unsigned char **out)
 
 static const char *get_digest(const char *name)
 {
+    if (strcmp(name, "SHAKE-256") == 0)
+        return "SHAKE";
     return strcmp(name, "SHA256-192") == 0 ? "SHA256" : name;
 }
 
@@ -155,14 +157,14 @@ int ossl_lms_key_to_text(BIO *out, const LMS_KEY *key, int selection)
             "no %s key material available", "LMS");
         return 0;
     }
-    if (BIO_printf(out, "lms-type: %s-N%u-H%u (0x%x)\n",
+    if (BIO_printf(out, "lms-type: %s-N%d-H%d (0x%x)\n",
             get_digest(lms_params->digestname),
-            lms_params->n, lms_params->h, (int)lms_params->lms_type)
+            (int)lms_params->n, (int)lms_params->h, (int)lms_params->lms_type)
         <= 0)
         return 0;
-    if (BIO_printf(out, "lm-ots-type: %s-N%u-W%u (0x%x)\n",
+    if (BIO_printf(out, "lm-ots-type: %s-N%d-W%d (0x%x)\n",
             get_digest(ots_params->digestname),
-            ots_params->n, ots_params->w, (int)ots_params->lm_ots_type)
+            (int)ots_params->n, (int)ots_params->w, (int)ots_params->lm_ots_type)
         <= 0)
         return 0;
     if (!ossl_bio_print_labeled_buf(out, "Id:", key->Id, 16))
