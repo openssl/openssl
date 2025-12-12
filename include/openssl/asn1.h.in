@@ -160,8 +160,6 @@ extern "C" {
 #define ASN1_STRING_FLAG_MSTRING 0x040
 /* String is embedded and only content should be freed */
 #define ASN1_STRING_FLAG_EMBED 0x080
-/* String should be parsed in RFC 5280's time format */
-#define ASN1_STRING_FLAG_X509_TIME 0x100
 /* This is the base type that holds just about everything :-) */
 struct asn1_string_st {
     int length;
