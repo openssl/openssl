@@ -32,6 +32,12 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added LMS support for OpenSSL commandline signature verification using
+   pkeyutl. This required adding LMS 'SubjectPublicKeyInfo' encoder/decoder
+   support and changes to the LMS keymanager and signature code.
+
+  *Shane Lontis*
+
  * Removed configure options can now only be disabled. You may continue to use
    `disable-<feature>`, which will remain supported. Using `enable-<feature>`
    for a removed feature is no longer permitted.
