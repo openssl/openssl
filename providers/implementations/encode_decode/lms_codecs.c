@@ -40,15 +40,15 @@
  */
 
 #define LMS_SPKI_OVERHEAD 20
-#define HSS_HEADER         4
+#define HSS_HEADER 4
 #define HSS_LMS_SPKI_OVERHEAD (LMS_SPKI_OVERHEAD + HSS_HEADER)
-#define HSS_LMS_HEADER(n) { \
-    0x30, 0x2E + n, 0x30, 0x0d, \
-    0x06, 0x0b,\
+#define HSS_LMS_HEADER(n) {                                           \
+    0x30, 0x2E + n, 0x30, 0x0d,                                       \
+    0x06, 0x0b,                                                       \
     0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x10, 0x03, 0x11, \
-    0x03, 0x1D + n, \
-    0x00, \
-    0x00, 0x00, 0x00, 0x01 \
+    0x03, 0x1D + n,                                                   \
+    0x00,                                                             \
+    0x00, 0x00, 0x00, 0x01                                            \
 }
 
 typedef struct {
@@ -127,8 +127,7 @@ int ossl_lms_i2d_pubkey(const LMS_KEY *key, unsigned char **out)
         if (buf == NULL)
             return 0;
         /* Output HSS format which has a 4 byte value (L = 1) */
-        memcpy(buf, hss_lms_32_spkifmt.header
-            + sizeof(hss_lms_32_spkifmt.header) - HSS_HEADER, HSS_HEADER);
+        memcpy(buf, hss_lms_32_spkifmt.header + sizeof(hss_lms_32_spkifmt.header) - HSS_HEADER, HSS_HEADER);
         /* Output the LMS encoded public key */
         memcpy(buf + HSS_HEADER, key->pub.encoded, key->pub.encodedlen);
         *out = buf;
@@ -138,6 +137,8 @@ int ossl_lms_i2d_pubkey(const LMS_KEY *key, unsigned char **out)
 
 static const char *get_digest(const char *name)
 {
+    if (strcmp(name, "SHAKE-256") == 0)
+        return "SHAKE";
     return strcmp(name, "SHA256-192") == 0 ? "SHA256" : name;
 }
 
@@ -158,16 +159,18 @@ int ossl_lms_key_to_text(BIO *out, const LMS_KEY *key, int selection)
     }
     if (BIO_printf(out, "lms-type: %s-N%d-H%d (0x%x)\n",
             get_digest(lms_params->digestname),
-            lms_params->n, lms_params->h, lms_params->lms_type) <= 0)
+            (int)lms_params->n, (int)lms_params->h, (int)lms_params->lms_type)
+        <= 0)
         return 0;
     if (BIO_printf(out, "lm-ots-type: %s-N%d-W%d (0x%x)\n",
             get_digest(ots_params->digestname),
-            ots_params->n, ots_params->w, ots_params->lm_ots_type) <= 0)
+            (int)ots_params->n, (int)ots_params->w, (int)ots_params->lm_ots_type)
+        <= 0)
         return 0;
     if (!ossl_bio_print_labeled_buf(out, "Id:", key->Id, 16))
         return 0;
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
-       /* Private keys are not supported */
+        /* Private keys are not supported */
     } else if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         if (BIO_printf(out, "%s Public-Key:\n", "LMS") <= 0)
             return 0;

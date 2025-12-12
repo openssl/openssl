@@ -1,5 +1,5 @@
-lms-type: SHAKE-256-N32-H15 (0x11)
-lm-ots-type: SHAKE-256-N32-W1 (0x9)
+lms-type: SHAKE-N32-H15 (0x11)
+lm-ots-type: SHAKE-N32-W1 (0x9)
 Id:
     74:7b:be:12:a6:15:78:79:ff:4f:d2:2f:eb:cd:b5:57
 LMS Public-Key:

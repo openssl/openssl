@@ -1,5 +1,5 @@
-lms-type: SHAKE-256-N24-H25 (0x18)
-lm-ots-type: SHAKE-256-N24-W1 (0xd)
+lms-type: SHAKE-N24-H25 (0x18)
+lm-ots-type: SHAKE-N24-W1 (0xd)
 Id:
     e1:88:c1:6f:26:40:a3:61:22:7c:63:53:2b:10:03:e8
 LMS Public-Key:

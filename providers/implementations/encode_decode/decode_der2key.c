@@ -1003,10 +1003,10 @@ static ossl_inline void *ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
 /* ---------------------------------------------------------------------- */
 
 #ifndef OPENSSL_NO_LMS
-# define lms_evp_type EVP_PKEY_HSS_LMS
-# define lms_free (free_key_fn *)ossl_lms_key_free
-# define lms_check NULL
-# define lms_adjust NULL
+#define lms_evp_type EVP_PKEY_HSS_LMS
+#define lms_free (free_key_fn *)ossl_lms_key_free
+#define lms_check NULL
+#define lms_adjust NULL
 
 static ossl_inline void *lms_d2i_PUBKEY(const uint8_t **der, long der_len,
     struct der2key_ctx_st *ctx)
