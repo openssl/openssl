@@ -22,6 +22,10 @@ plan tests => 16;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
+if ($no_fips == 0) {
+    $ENV{OPENSSL_ATEXIT_CLEANUP}=1;
+}
+
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 ok(run(test(["ectest"])), "running ectest");

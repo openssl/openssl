@@ -56,6 +56,9 @@ ok(run(test(["endecode_test", "-rsa", $rsa_key,
                               "-context",
                               "-config", $conf,
                               "-provider", "default"])));
+if ($no_fips == 0) {
+    $ENV{OPENSSL_ATEXIT_CLEANUP}=1;
+}
 
 unless ($no_fips) {
     # Run with fips library context

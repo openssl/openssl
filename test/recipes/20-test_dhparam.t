@@ -188,6 +188,7 @@ SKIP: {
         "checks", 4 if (disabled("fips") || disabled("fips-securitychecks"));
 
     $ENV{OPENSSL_CONF} = $fipsconf;
+    $ENV{OPENSSL_ATEXIT_CLEANUP}=1;
 
     ok(!run(app(['openssl', 'dhparam', '-check', '512'])),
         "Generating 512 bit DH params should fail in FIPS mode");

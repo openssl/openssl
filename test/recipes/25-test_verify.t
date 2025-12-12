@@ -373,6 +373,9 @@ SKIP: {
         if disabled("ec") || $no_fips;
 
     $ENV{OPENSSL_CONF} = $provconf;
+    if ($no_fips == 0) {
+        $ENV{OPENSSL_ATEXIT_CLEANUP} = 1;
+    }
 
     ok(verify("ee-cert-ec-sha3-224", "", ["root-cert"], ["ca-cert-ec-named"], @prov),
         "accept cert generated with EC and SHA3-224 w/fips");

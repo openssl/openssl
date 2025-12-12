@@ -136,6 +136,7 @@ sub find_line_file {
     return 0;
 }
 
+$ENV{OPENSSL_ATEXIT_CLEANUP}=1;
 # fail if no module name
 ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module',
              '-provider_name', 'fips',
@@ -404,6 +405,7 @@ SKIP: {
 
 # 'local' ensures that this change is only done in this file.
 local $ENV{OPENSSL_CONF_INCLUDE} = abs2rel(curdir());
+local $ENV{OPENSSL_ATEXIT_CLEANUP}=1;
 
 ok(replace_parent_line_file('fips.cnf', 'fips_parent.cnf')
    && run(app(['openssl', 'fipsinstall', '-config', 'fips_parent.cnf'])),
