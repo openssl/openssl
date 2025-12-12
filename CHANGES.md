@@ -32,6 +32,11 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Allow deciphering AES-GCM without authentication tag by explicitely
+   providing a 0 length tag using the EVP_CIPHER_CTX_ctrl() API.
+
+   *Nicolas Coq*
+
  * Removed extra leading '00:' when printing key data such as an RSA modulus
    in hexadecimal format where the first (most significant) byte is >= 0x80.
    This had been added artificially to resemble ASN.1 DER encoding internals.

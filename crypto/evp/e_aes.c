@@ -1490,7 +1490,7 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
     case EVP_CTRL_AEAD_SET_TAG:
         buf = EVP_CIPHER_CTX_buf_noconst(c);
         enc = EVP_CIPHER_CTX_is_encrypting(c);
-        if (arg <= 0 || arg > 16 || enc)
+        if (arg < 0 || arg > 16 || enc)
             return 0;
 
         memcpy(buf, ptr, arg);
@@ -2687,7 +2687,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         return 1;
 
     case EVP_CTRL_AEAD_SET_TAG:
-        if (arg <= 0 || arg > 16 || c->encrypt)
+        if (arg < 0 || arg > 16 || c->encrypt)
             return 0;
         memcpy(c->buf, ptr, arg);
         gctx->taglen = arg;
