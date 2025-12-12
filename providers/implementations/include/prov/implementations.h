@@ -741,6 +741,10 @@ extern const OSSL_DISPATCH ossl_slh_dsa_shake_192f_to_text_encoder_functions[];
 extern const OSSL_DISPATCH ossl_slh_dsa_shake_256s_to_text_encoder_functions[];
 extern const OSSL_DISPATCH ossl_slh_dsa_shake_256f_to_text_encoder_functions[];
 
+extern const OSSL_DISPATCH ossl_lms_to_SubjectPublicKeyInfo_der_encoder_functions[];
+extern const OSSL_DISPATCH ossl_lms_to_SubjectPublicKeyInfo_pem_encoder_functions[];
+extern const OSSL_DISPATCH ossl_lms_to_text_encoder_functions[];
+
 /* Decoders */
 extern const OSSL_DISPATCH ossl_PrivateKeyInfo_der_to_dh_decoder_functions[];
 extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_dh_decoder_functions[];
@@ -857,6 +861,7 @@ extern const OSSL_DISPATCH ossl_file_store_functions[];
 extern const OSSL_DISPATCH ossl_winstore_store_functions[];
 
 extern const OSSL_DISPATCH ossl_xdr_to_lms_decoder_functions[];
+extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_lms_decoder_functions[];
 
 extern const OSSL_DISPATCH ossl_PrivateKeyInfo_der_to_ml_dsa_44_decoder_functions[];
 extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_ml_dsa_44_decoder_functions[];

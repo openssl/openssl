@@ -411,7 +411,7 @@
 #define PROV_DESCS_RSA_PSS "OpenSSL RSA-PSS implementation"
 #define PROV_NAMES_SM2 "SM2:1.2.156.10197.1.301"
 #define PROV_DESCS_SM2 "OpenSSL SM2 implementation"
-#define PROV_NAMES_LMS "LMS"
+#define PROV_NAMES_LMS "LMS:id-alg-hss-lms-hashsig:1.2.840.113549.1.9.16.3.17"
 #define PROV_DESCS_LMS "OpenSSL LMS implementation"
 #define PROV_NAMES_ML_DSA_44 "ML-DSA-44:MLDSA44:2.16.840.1.101.3.4.3.17:id-ml-dsa-44"
 #define PROV_DESCS_ML_DSA_44 "OpenSSL ML-DSA-44 implementation"
