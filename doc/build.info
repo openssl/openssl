@@ -1315,14 +1315,6 @@ DEPEND[html/man3/EVP_PKEY_keygen.html]=man3/EVP_PKEY_keygen.pod
 GENERATE[html/man3/EVP_PKEY_keygen.html]=man3/EVP_PKEY_keygen.pod
 DEPEND[man/man3/EVP_PKEY_keygen.3]=man3/EVP_PKEY_keygen.pod
 GENERATE[man/man3/EVP_PKEY_keygen.3]=man3/EVP_PKEY_keygen.pod
-DEPEND[html/man3/EVP_PKEY_meth_get_count.html]=man3/EVP_PKEY_meth_get_count.pod
-GENERATE[html/man3/EVP_PKEY_meth_get_count.html]=man3/EVP_PKEY_meth_get_count.pod
-DEPEND[man/man3/EVP_PKEY_meth_get_count.3]=man3/EVP_PKEY_meth_get_count.pod
-GENERATE[man/man3/EVP_PKEY_meth_get_count.3]=man3/EVP_PKEY_meth_get_count.pod
-DEPEND[html/man3/EVP_PKEY_meth_new.html]=man3/EVP_PKEY_meth_new.pod
-GENERATE[html/man3/EVP_PKEY_meth_new.html]=man3/EVP_PKEY_meth_new.pod
-DEPEND[man/man3/EVP_PKEY_meth_new.3]=man3/EVP_PKEY_meth_new.pod
-GENERATE[man/man3/EVP_PKEY_meth_new.3]=man3/EVP_PKEY_meth_new.pod
 DEPEND[html/man3/EVP_PKEY_new.html]=man3/EVP_PKEY_new.pod
 GENERATE[html/man3/EVP_PKEY_new.html]=man3/EVP_PKEY_new.pod
 DEPEND[man/man3/EVP_PKEY_new.3]=man3/EVP_PKEY_new.pod
@@ -3382,8 +3374,6 @@ html/man3/EVP_PKEY_get_size.html \
 html/man3/EVP_PKEY_gettable_params.html \
 html/man3/EVP_PKEY_is_a.html \
 html/man3/EVP_PKEY_keygen.html \
-html/man3/EVP_PKEY_meth_get_count.html \
-html/man3/EVP_PKEY_meth_new.html \
 html/man3/EVP_PKEY_new.html \
 html/man3/EVP_PKEY_print_private.html \
 html/man3/EVP_PKEY_set1_RSA.html \
@@ -4056,8 +4046,6 @@ man/man3/EVP_PKEY_get_size.3 \
 man/man3/EVP_PKEY_gettable_params.3 \
 man/man3/EVP_PKEY_is_a.3 \
 man/man3/EVP_PKEY_keygen.3 \
-man/man3/EVP_PKEY_meth_get_count.3 \
-man/man3/EVP_PKEY_meth_new.3 \
 man/man3/EVP_PKEY_new.3 \
 man/man3/EVP_PKEY_print_private.3 \
 man/man3/EVP_PKEY_set1_RSA.3 \
