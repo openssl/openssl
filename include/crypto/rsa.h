@@ -137,7 +137,7 @@ int ossl_rsa_acvp_test_get_params(RSA *r, OSSL_PARAM params[]);
 typedef struct rsa_acvp_test_st RSA_ACVP_TEST;
 void ossl_rsa_acvp_test_free(RSA_ACVP_TEST *t);
 #else
-#define RSA_ACVP_TEST void
+typedef void RSA_ACVP_TEST;
 #endif
 int ossl_rsa_check_factors(RSA *r);
 

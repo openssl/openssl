@@ -243,7 +243,7 @@ FILE *__iob_func(void);
 #include <sockLib.h>
 #include <taskLib.h>
 
-#define TTY_STRUCT int
+typedef int TTY_STRUCT;
 #define sleep(a) taskDelay((a) * sysClkRateGet())
 
 /*
@@ -339,7 +339,7 @@ inline int nssgetpid(void)
  * There is no locale_t on NONSTOP.
  */
 #if defined(OPENSSL_SYS_WINDOWS)
-#define locale_t _locale_t
+typedef _locale_t locale_t;
 #define freelocale _free_locale
 #define strcasecmp_l _stricmp_l
 #define strncasecmp_l _strnicmp_l
