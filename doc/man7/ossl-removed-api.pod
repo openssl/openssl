@@ -157,6 +157,102 @@ This includes consulting the L<ossl-guide-migration(7)> documentation.
 
 =item EVP_MD_meth_get_ctrl (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
 
+=item EVP_PKEY_meth_find (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_new (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get0_info (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_copy (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_free (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_add0 (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_remove (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_count (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get0 (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_init (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_copy (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_cleanup (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_paramgen (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_keygen (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_verify (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_verify_recover (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_signctx (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_verifyctx (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_encrypt (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_decrypt (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_derive (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_ctrl (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_digestsign (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_digestverify (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_check (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_public_check (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_param_check (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_set_digest_custom (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_init (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_copy (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_cleanup (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_paramgen (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_keygen (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_sign (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_verify (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_verify_recover (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_signctx (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_verifyctx (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_encrypt (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_decrypt (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_derive (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_ctrl (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_digestsign (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_digestverify (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_check (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_public_check (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_param_check (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_meth_get_digest_custom (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
 =back
 
 =head1 SEE ALSO
