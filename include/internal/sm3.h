@@ -20,7 +20,7 @@
 #endif
 
 #define SM3_DIGEST_LENGTH 32
-#define SM3_WORD unsigned int
+typedef unsigned int SM3_WORD;
 
 #define SM3_CBLOCK 64
 #define SM3_LBLOCK (SM3_CBLOCK / 4)
