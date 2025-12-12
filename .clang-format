@@ -244,7 +244,14 @@ StatementMacros:
   - "ASN1_SEQUENCE_END_enc"
   - "ASN1_SEQUENCE_END_name"
   - "ASN1_SEQUENCE_END_ref"
+  - "static_ASN1_CHOICE_END"
+  - "static_ASN1_CHOICE_END_name"
+  - "static_ASN1_CHOICE_END_selector"
+  - "static_ASN1_NDEF_SEQUENCE_END"
   - "static_ASN1_SEQUENCE_END"
+  - "static_ASN1_SEQUENCE_END_cb"
+  - "static_ASN1_SEQUENCE_END_name"
+  - "static_ASN1_SEQUENCE_END_ref"
   # This isn't quite right, but it causes clang-format to do a slightly better
   # job formatting this macro.
   - "ASN1_EX_TEMPLATE_TYPE"
