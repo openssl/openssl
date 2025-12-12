@@ -116,7 +116,7 @@ To generate external 'mu' given an existing ML-DSA key and a large message:
             msg += chunk;
             msglen -= chunk;
         }
-        EVP_DigestFinalXOF(mdctx, mu, mulen)
+        EVP_DigestFinalXOF(mdctx, mu, sizeof(mu))
     }
 
 =head1 SEE ALSO
