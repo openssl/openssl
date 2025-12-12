@@ -510,17 +510,21 @@ sub clientstart
     my $ctr = 0;
     local $SIG{PIPE} = "IGNORE";
     $self->{saw_session_ticket} = undef;
+    $self->{session_ticket_seq} = [];
+    $self->{saw_session_ticket_ack} = 0;
+    $self->{server_epoch} = 0;
+    $self->{server_sequence_number} = 0;
+
     while($fdset->count && $ctr < 10) {
         if (defined($self->{sessionfile})) {
             # s_client got -ign_eof and won't be exiting voluntarily, so we
             # look for data *and* session ticket...
             last if TLSProxy::Message->success()
-                    && $self->{saw_session_ticket};
+                    && $self->handshake_complete() == 1;
         }
         if (!(@ready = $fdset->can_read(1))) {
             last if TLSProxy::Message->success()
-                && $self->{saw_session_ticket};
-
+                && $self->handshake_complete() == 1;
             $ctr++;
             next;
         }
@@ -565,6 +569,14 @@ sub clientstart
         $self->{server_sock} = undef;
     }
     if($client_sock) {
+        # For DTLSv1.3 tests that are using sessionfile we need to send a close_notify
+        # this is because closing the socket does not result in a FIN being sent as in TCP.
+        if ($self->{isdtls} && $self->is_tls13() && defined($self->{sessionfile})) {
+            my $alert_message = $self->construct_alert_message();
+            $client_sock->syswrite($alert_message) or warn "Failed to send close_notify alert: $!\n";
+            sleep(1);
+        }
+
         #Closing this also kills the child process
         $client_sock->close();
     }
@@ -604,6 +616,43 @@ sub clientstart
     waitpid($pid, 0);
 
     return $success;
+}
+
+sub construct_alert_message
+{
+    my ($self) = @_;
+
+    die "construct_alert_message only valid for DTLSv1.3 tests\n"
+        if !$self->{isdtls} || !$self->is_tls13();
+
+    my $epoch = $self->{server_epoch};
+    my $sequence_number = $self->{server_sequence_number} + 1;
+    my $seqhi = ($sequence_number >> 32) & 0xffff;
+    my $seqmi = ($sequence_number >> 16) & 0xffff;
+    my $seqlo = ($sequence_number >> 0) & 0xffff;
+
+    # DTLS Record Layer Header
+    my $content_type = pack("C", 21);              # Alert (21)
+    my $legacy_version = pack("n", 0xFEFD);        # DTLS 1.2 (0xFEFD)
+    my $epoch_bytes = pack("n", $epoch);           # 2 bytes
+    my $sequence_bytes = pack('nnn', $seqhi, $seqmi, $seqlo);
+
+    my $length = pack("n", 2);                     # 2 bytes for alert payload
+
+    # Alert Message
+    my $alert_level = pack("C", 1);                # Warning (1)
+    my $alert_description = pack("C", 0);          # close_notify (0)
+
+    # Combine all parts
+    my $packet = $content_type.
+                 $legacy_version.
+                 $epoch_bytes.
+                 $sequence_bytes.
+                 $length.
+                 $alert_level.
+                 $alert_description;
+
+    return $packet;
 }
 
 sub process_packet
@@ -649,6 +698,20 @@ sub process_packet
     foreach my $message (reverse @{$self->{message_list}}) {
         if ($message->{mt} == TLSProxy::Message::MT_NEW_SESSION_TICKET) {
             $self->{saw_session_ticket} = 1;
+            # Obtain the most recent sequence number of the record
+            # that contained the NewSessionTicket message
+            if ($self->{isdtls} && $self->is_tls13()) {
+                foreach my $record (@{$message->{records}}) {
+                    if (@{$self->{session_ticket_seq}} == 0) {
+                        push @{$self->{session_ticket_seq}}, TLSProxy::RecordNumber->new($record->epoch, $record->seq);
+                    } elsif (scalar(@{$self->{session_ticket_seq}}) != 2) {
+                        my $match = $self->find_session_ticket_ack($record->epoch, $record->seq);
+                        if ($match == -1) {
+                            push @{$self->{session_ticket_seq}}, TLSProxy::RecordNumber->new($record->epoch, $record->seq);
+                        }
+                    }
+                }
+            }
             last;
         }
     }
@@ -657,11 +720,85 @@ sub process_packet
     $packet = "";
     foreach my $record (@{$self->record_list}) {
         $packet .= $record->reconstruct_record($serverissender);
+
+        # After we have set the saw_session_ticket flag, we can check if we have
+        # seen a session ticket ack. This is only relevant for DTLSv1.3
+        if ($self->{isdtls} && $self->is_tls13()) {
+            $self->seen_session_ticket_ack($record);
+
+            if ($record->epoch() > $self->{server_epoch}) {
+                $self->{server_epoch} = $record->epoch();
+                $self->{server_sequence_number} = $record->seq();
+            } elsif ($record->epoch() == $self->{server_epoch} &&
+                     $record->seq() > $self->{server_sequence_number}) {
+                $self->{server_sequence_number} = $record->seq();
+            }
+        }
     }
 
     print "Forwarded packet length = ".length($packet)."\n\n";
 
     return $packet;
+}
+
+sub seen_session_ticket_ack
+{
+    my $self = shift;
+    my $record = shift;
+
+    if ($self->{saw_session_ticket} && $self->{saw_session_ticket_ack} != 2) {
+        if ($record->content_type() == TLSProxy::Record::RT_ACK) {
+            my @record_numbers = ();
+
+            $record->get_actual_acked_record_numbers(\@record_numbers);
+            foreach(@record_numbers) {
+                my $record_number = $_;
+                my $match = $self->find_session_ticket_ack($record_number->epoch(), $record_number->seqnum());
+
+                if ($match != -1) {
+                    splice(@{$self->{session_ticket_seq}}, $match, 1);
+                    $self->{saw_session_ticket_ack} += 1;
+                }
+            }
+        }
+    }
+}
+
+sub find_session_ticket_ack
+{
+    my $self = shift;
+    my $record_number_epoch = shift;
+    my $record_number_seqnum = shift;
+    my $match = -1;
+
+    for (my $i = 0; $i < scalar(@{$self->{session_ticket_seq}}); $i++) {
+        if ($record_number_epoch == $self->{session_ticket_seq}->[$i]->epoch() &&
+            $record_number_seqnum == $self->{session_ticket_seq}->[$i]->seqnum()) {
+            $match = $i;
+            last;
+        }
+    }
+
+    return $match;
+}
+
+sub handshake_complete
+{
+    my $self = shift;
+    my $res = 0;
+
+    if ($self->{isdtls} && $self->is_tls13() && defined($self->{sessionfile})) {
+        # We need to wait for the second ack message for the handshake to be complete
+        if ($self->{saw_session_ticket_ack} == 2) {
+            $res = 1;
+        }
+    } else {
+        if ($self->{saw_session_ticket}) {
+            $res = 1;
+        }
+    }
+
+    return $res;
 }
 
 #Read accessors
