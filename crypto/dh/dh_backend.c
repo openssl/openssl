@@ -24,8 +24,8 @@
 
 /*
  * The intention with the "backend" source file is to offer backend functions
- * for legacy backends (EVP_PKEY_ASN1_METHOD and EVP_PKEY_METHOD) and provider
- * implementations alike.
+ * for legacy backends (EVP_PKEY_ASN1_METHOD) and provider implementations
+ * alike.
  */
 
 static int dh_ffc_params_fromdata(DH *dh, const OSSL_PARAM params[])

@@ -232,7 +232,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     ERR_set_mark();
 
     if (evp_pkey_ctx_is_legacy(ctx))
-        goto legacy;
+        goto err;
 
     /*
      * Some algorithms (e.g. legacy KDFs) don't have a pkey - so we create
@@ -307,8 +307,11 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
             tmp_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
             exchange = evp_keyexch_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
                 supported_exch, ctx->propquery);
-            if (exchange == NULL)
-                goto legacy;
+            if (exchange == NULL) {
+                ERR_pop_to_mark();
+                ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+                return -2;
+            }
             break;
         }
         if (exchange == NULL)
@@ -334,13 +337,13 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     }
 
     if (provkey == NULL) {
+        ERR_pop_to_mark();
         EVP_KEYEXCH_free(exchange);
-        goto legacy;
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
     }
 
     ERR_pop_to_mark();
-
-    /* No more legacy from here down to legacy: */
 
     /* A Coverity false positive with up_ref/down_ref and free */
     /* coverity[use_after_free] */
@@ -362,30 +365,6 @@ err:
     ctx->operation = EVP_PKEY_OP_UNDEFINED;
     EVP_KEYMGMT_free(tmp_keymgmt);
     return 0;
-
-legacy:
-    /*
-     * If we don't have the full support we need with provided methods,
-     * let's go see if legacy does.
-     */
-    ERR_pop_to_mark();
-
-#ifdef FIPS_MODULE
-    return 0;
-#else
-    if (ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-
-    if (ctx->pmeth->derive_init == NULL)
-        return 1;
-    ret = ctx->pmeth->derive_init(ctx);
-    if (ret <= 0)
-        ctx->operation = EVP_PKEY_OP_UNDEFINED;
-    EVP_KEYMGMT_free(tmp_keymgmt);
-    return ret;
-#endif
 }
 
 int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
@@ -401,8 +380,10 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
         return -1;
     }
 
-    if (!EVP_PKEY_CTX_IS_DERIVE_OP(ctx) || ctx->op.kex.algctx == NULL)
-        goto legacy;
+    if (!EVP_PKEY_CTX_IS_DERIVE_OP(ctx) || ctx->op.kex.algctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
 
     if (ctx->op.kex.exchange->set_peer == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -432,79 +413,24 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
                                                                        EVP_KEYEXCH_get0_provider(ctx->op.kex.exchange),
         EVP_KEYMGMT_get0_name(ctx->keymgmt),
         ctx->propquery);
-    if (tmp_keymgmt != NULL)
-        /* A Coverity issue with up_ref/down_ref and free */
-        /* coverity[pass_freed_arg] */
-        provkey = evp_pkey_export_to_provider(peer, ctx->libctx,
-            &tmp_keymgmt, ctx->propquery);
+    if (tmp_keymgmt == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEYMGMT_AVAILABLE);
+        return -1;
+    }
+    /* A Coverity issue with up_ref/down_ref and free */
+    /* coverity[pass_freed_arg] */
+    provkey = evp_pkey_export_to_provider(peer, ctx->libctx,
+        &tmp_keymgmt, ctx->propquery);
     EVP_KEYMGMT_free(tmp_keymgmt_tofree);
 
-    /*
-     * If making the key provided wasn't possible, legacy may be able to pick
-     * it up
-     */
-    if (provkey == NULL)
-        goto legacy;
+    if (provkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
     ret = ctx->op.kex.exchange->set_peer(ctx->op.kex.algctx, provkey);
     if (ret <= 0)
         return ret;
-    goto common;
 
-legacy:
-#ifdef FIPS_MODULE
-    return ret;
-#else
-    if (ctx->pmeth == NULL
-        || !(ctx->pmeth->derive != NULL
-            || ctx->pmeth->encrypt != NULL
-            || ctx->pmeth->decrypt != NULL)
-        || ctx->pmeth->ctrl == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-    if (ctx->operation != EVP_PKEY_OP_DERIVE
-        && ctx->operation != EVP_PKEY_OP_ENCRYPT
-        && ctx->operation != EVP_PKEY_OP_DECRYPT) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
-        return -1;
-    }
-
-    ret = ctx->pmeth->ctrl(ctx, EVP_PKEY_CTRL_PEER_KEY, 0, peer);
-
-    if (ret <= 0)
-        return ret;
-
-    if (ret == 2)
-        return 1;
-
-    if (ctx->pkey == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
-        return -1;
-    }
-
-    if (ctx->pkey->type != peer->type) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
-        return -1;
-    }
-
-    /*
-     * For clarity.  The error is if parameters in peer are
-     * present (!missing) but don't match.  EVP_PKEY_parameters_eq may return
-     * 1 (match), 0 (don't match) and -2 (comparison is not defined).  -1
-     * (different key types) is impossible here because it is checked earlier.
-     * -2 is OK for us here, as well as 1, so we can check for 0 only.
-     */
-    if (!EVP_PKEY_missing_parameters(peer) && !EVP_PKEY_parameters_eq(ctx->pkey, peer)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_PARAMETERS);
-        return -1;
-    }
-
-    ret = ctx->pmeth->ctrl(ctx, EVP_PKEY_CTRL_PEER_KEY, 1, peer);
-    if (ret <= 0)
-        return ret;
-#endif
-
-common:
     if (!EVP_PKEY_up_ref(peer))
         return -1;
 
@@ -533,20 +459,15 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
         return -1;
     }
 
-    if (ctx->op.kex.algctx == NULL)
-        goto legacy;
+    if (ctx->op.kex.algctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
 
     ret = ctx->op.kex.exchange->derive(ctx->op.kex.algctx, key, pkeylen,
         key != NULL ? *pkeylen : 0);
 
     return ret;
-legacy:
-    if (ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-
-    M_check_autoarg(ctx, key, pkeylen, EVP_F_EVP_PKEY_DERIVE) return ctx->pmeth->derive(ctx, key, pkeylen);
 }
 
 EVP_SKEY *EVP_PKEY_derive_SKEY(EVP_PKEY_CTX *ctx, EVP_SKEYMGMT *mgmt,

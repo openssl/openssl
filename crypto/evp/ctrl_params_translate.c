@@ -2718,11 +2718,6 @@ int evp_pkey_ctx_ctrl_to_param(EVP_PKEY_CTX *pctx,
         return -2;
     }
 
-    if (pctx->pmeth != NULL
-        && pctx->pmeth->pkey_id != translation->keytype1
-        && pctx->pmeth->pkey_id != translation->keytype2)
-        return -1;
-
     if (translation->fixup_args != NULL)
         fixup = translation->fixup_args;
     ctx.action_type = translation->action_type;

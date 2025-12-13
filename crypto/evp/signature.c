@@ -678,7 +678,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
         ERR_set_mark();
 
         if (evp_pkey_ctx_is_legacy(ctx))
-            goto legacy;
+            goto notsupported;
 
         if (ctx->pkey == NULL) {
             ERR_clear_last_mark();
@@ -743,7 +743,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
                 signature = evp_signature_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
                     supported_sig, ctx->propquery);
                 if (signature == NULL)
-                    goto legacy;
+                    goto notsupported;
                 break;
             }
             if (signature == NULL)
@@ -771,7 +771,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
 
         if (provkey == NULL) {
             EVP_SIGNATURE_free(signature);
-            goto legacy;
+            goto notsupported;
         }
 
         ERR_pop_to_mark();
@@ -847,7 +847,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
     }
     goto end;
 
-legacy:
+notsupported:
     /*
      * If we don't have the full support we need with provided methods,
      * let's go see if legacy does.
@@ -856,37 +856,9 @@ legacy:
     EVP_KEYMGMT_free(tmp_keymgmt);
     tmp_keymgmt = NULL;
 
-    if (ctx->pmeth == NULL
-        || (operation == EVP_PKEY_OP_SIGN && ctx->pmeth->sign == NULL)
-        || (operation == EVP_PKEY_OP_VERIFY && ctx->pmeth->verify == NULL)
-        || (operation == EVP_PKEY_OP_VERIFYRECOVER
-            && ctx->pmeth->verify_recover == NULL)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
+    ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    return -2;
 
-    switch (operation) {
-    case EVP_PKEY_OP_SIGN:
-        if (ctx->pmeth->sign_init == NULL)
-            return 1;
-        ret = ctx->pmeth->sign_init(ctx);
-        break;
-    case EVP_PKEY_OP_VERIFY:
-        if (ctx->pmeth->verify_init == NULL)
-            return 1;
-        ret = ctx->pmeth->verify_init(ctx);
-        break;
-    case EVP_PKEY_OP_VERIFYRECOVER:
-        if (ctx->pmeth->verify_recover_init == NULL)
-            return 1;
-        ret = ctx->pmeth->verify_recover_init(ctx);
-        break;
-    default:
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        goto err;
-    }
-    if (ret <= 0)
-        goto err;
 end:
 #ifndef FIPS_MODULE
     if (ret > 0)
@@ -1008,8 +980,10 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
         return -1;
     }
 
-    if (ctx->op.sig.algctx == NULL)
-        goto legacy;
+    if (ctx->op.sig.algctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
 
     signature = ctx->op.sig.signature;
     desc = signature->description != NULL ? signature->description : "";
@@ -1025,14 +999,6 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
             "%s sign:%s", signature->type_name, desc);
     return ret;
-legacy:
-
-    if (ctx->pmeth == NULL || ctx->pmeth->sign == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-
-    M_check_autoarg(ctx, sig, siglen, EVP_F_EVP_PKEY_SIGN) return ctx->pmeth->sign(ctx, sig, siglen, tbs, tbslen);
 }
 
 int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx)
@@ -1161,8 +1127,10 @@ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
         return -1;
     }
 
-    if (ctx->op.sig.algctx == NULL)
-        goto legacy;
+    if (ctx->op.sig.algctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
 
     signature = ctx->op.sig.signature;
     desc = signature->description != NULL ? signature->description : "";
@@ -1179,13 +1147,6 @@ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
             "%s verify:%s", signature->type_name, desc);
 
     return ret;
-legacy:
-    if (ctx->pmeth == NULL || ctx->pmeth->verify == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-
-    return ctx->pmeth->verify(ctx, sig, siglen, tbs, tbslen);
 }
 
 int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx)
@@ -1223,8 +1184,10 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
         return -1;
     }
 
-    if (ctx->op.sig.algctx == NULL)
-        goto legacy;
+    if (ctx->op.sig.algctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
 
     signature = ctx->op.sig.signature;
     desc = signature->description != NULL ? signature->description : "";
@@ -1240,10 +1203,4 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
             "%s verify_recover:%s", signature->type_name, desc);
     return ret;
-legacy:
-    if (ctx->pmeth == NULL || ctx->pmeth->verify_recover == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-    M_check_autoarg(ctx, rout, routlen, EVP_F_EVP_PKEY_VERIFY_RECOVER) return ctx->pmeth->verify_recover(ctx, rout, routlen, sig, siglen);
 }

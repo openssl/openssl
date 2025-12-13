@@ -50,7 +50,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
     ERR_set_mark();
 
     if (evp_pkey_ctx_is_legacy(ctx))
-        goto legacy;
+        goto err;
 
     if (ctx->pkey == NULL) {
         ERR_clear_last_mark();
@@ -116,7 +116,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
             cipher = evp_asym_cipher_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
                 supported_ciph, ctx->propquery);
             if (cipher == NULL)
-                goto legacy;
+                goto err;
             break;
         }
         if (cipher == NULL)
@@ -144,7 +144,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
 
     if (provkey == NULL) {
         EVP_ASYM_CIPHER_free(cipher);
-        goto legacy;
+        goto err;
     }
 
     ERR_pop_to_mark();
@@ -189,35 +189,6 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
     EVP_KEYMGMT_free(tmp_keymgmt);
     return 1;
 
-legacy:
-    /*
-     * If we don't have the full support we need with provided methods,
-     * let's go see if legacy does.
-     */
-    ERR_pop_to_mark();
-    EVP_KEYMGMT_free(tmp_keymgmt);
-    tmp_keymgmt = NULL;
-
-    if (ctx->pmeth == NULL || ctx->pmeth->encrypt == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-    switch (ctx->operation) {
-    case EVP_PKEY_OP_ENCRYPT:
-        if (ctx->pmeth->encrypt_init == NULL)
-            return 1;
-        ret = ctx->pmeth->encrypt_init(ctx);
-        break;
-    case EVP_PKEY_OP_DECRYPT:
-        if (ctx->pmeth->decrypt_init == NULL)
-            return 1;
-        ret = ctx->pmeth->decrypt_init(ctx);
-        break;
-    default:
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        ret = -1;
-    }
-
 err:
     if (ret <= 0) {
         evp_pkey_ctx_free_old_ops(ctx);
@@ -255,9 +226,10 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
         return -1;
     }
 
-    if (ctx->op.ciph.algctx == NULL)
-        goto legacy;
-
+    if (ctx->op.ciph.algctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
     cipher = ctx->op.ciph.cipher;
     desc = cipher->description != NULL ? cipher->description : "";
     ERR_set_mark();
@@ -267,13 +239,6 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
             "%s encrypt:%s", cipher->type_name, desc);
     ERR_clear_last_mark();
     return ret;
-
-legacy:
-    if (ctx->pmeth == NULL || ctx->pmeth->encrypt == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-    M_check_autoarg(ctx, out, outlen, EVP_F_EVP_PKEY_ENCRYPT) return ctx->pmeth->encrypt(ctx, out, outlen, in, inlen);
 }
 
 int EVP_PKEY_decrypt_init(EVP_PKEY_CTX *ctx)
@@ -304,8 +269,10 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
         return -1;
     }
 
-    if (ctx->op.ciph.algctx == NULL)
-        goto legacy;
+    if (ctx->op.ciph.algctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
 
     cipher = ctx->op.ciph.cipher;
     desc = cipher->description != NULL ? cipher->description : "";
@@ -317,13 +284,6 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
     ERR_clear_last_mark();
 
     return ret;
-
-legacy:
-    if (ctx->pmeth == NULL || ctx->pmeth->decrypt == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-    M_check_autoarg(ctx, out, outlen, EVP_F_EVP_PKEY_DECRYPT) return ctx->pmeth->decrypt(ctx, out, outlen, in, inlen);
 }
 
 /* decrypt to new buffer of dynamic size, checking any pre-determined size */
