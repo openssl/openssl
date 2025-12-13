@@ -111,16 +111,35 @@ BIO_meth_get_write_ex() and BIO_meth_set_write_ex() get and set the function
 used for writing arbitrary length data to the BIO respectively. This function
 will be called in response to the application calling BIO_write_ex() or
 BIO_write(). The parameters for the function have the same meaning as for
-BIO_write_ex(). Older code may call BIO_meth_get_write() and
-BIO_meth_set_write() instead. Applications should not call both
-BIO_meth_set_write_ex() and BIO_meth_set_write() or call BIO_meth_get_write()
+BIO_write_ex() and it must return values as described for BIO_write_ex().
+
+Older code may call BIO_meth_get_write() and BIO_meth_set_write() instead
+set an old-style write function. The parameters for the function have the same
+meaning as for BIO_write() and it must return values as described for
+BIO_write().
+
+Functions set by BIO_meth_set_write_ex() and BIO_meth_set_write() must call
+BIO_set_flags() to set the BIO_FLAGS_SHOULD_RETRY flag in relevant situations.
+
+Applications should not call both BIO_meth_set_write_ex() and
+BIO_meth_set_write() or call BIO_meth_get_write()
 when the function was set with BIO_meth_set_write_ex().
 
 BIO_meth_get_read_ex() and BIO_meth_set_read_ex() get and set the function used
 for reading arbitrary length data from the BIO respectively. This function will
 be called in response to the application calling BIO_read_ex() or BIO_read().
-The parameters for the function have the same meaning as for BIO_read_ex().
-Older code may call BIO_meth_get_read() and BIO_meth_set_read() instead.
+The parameters for the function have the same meaning as for BIO_read_ex()
+and it must return values as described for BIO_read_ex().
+The function must handle the end-of-file condition (if applicable) and call
+BIO_set_flags() to set the BIO_FLAGS_IN_EOF flag.
+
+Older code may call BIO_meth_get_read() and BIO_meth_set_read() instead to
+set an old-style read function. The parameters for the function have the same
+meaning as for BIO_read() and it must return values as described for BIO_read().
+
+Functions set by BIO_meth_set_read_ex() and BIO_meth_set_read() must call
+BIO_set_flags() to set the BIO_FLAGS_SHOULD_RETRY flag in relevant situations.
+
 Applications should not call both BIO_meth_set_read_ex() and BIO_meth_set_read()
 or call BIO_meth_get_read() when the function was set with
 BIO_meth_set_read_ex().
