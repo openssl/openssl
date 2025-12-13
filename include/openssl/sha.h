@@ -31,7 +31,7 @@ extern "C" {
  * ! SHA_LONG has to be at least 32 bits wide.                    !
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
-#define SHA_LONG unsigned int
+typedef unsigned int SHA_LONG;
 
 #define SHA_LBLOCK 16
 #define SHA_CBLOCK (SHA_LBLOCK * 4) /* SHA treats input data as a      \
@@ -100,11 +100,11 @@ unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md);
  */
 #define SHA512_CBLOCK (SHA_LBLOCK * 8)
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
-#define SHA_LONG64 unsigned __int64
+typedef unsigned __int64 SHA_LONG64;
 #elif defined(__arch64__)
-#define SHA_LONG64 unsigned long
+typedef unsigned long SHA_LONG64;
 #else
-#define SHA_LONG64 unsigned long long
+typedef unsigned long long SHA_LONG64;
 #endif
 
 typedef struct SHA512state_st {

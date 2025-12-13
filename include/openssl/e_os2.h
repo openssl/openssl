@@ -186,22 +186,22 @@ extern "C" {
 
 #ifdef _WIN32
 #ifdef _WIN64
-#define ossl_ssize_t __int64
+typedef __int64 ossl_ssize_t;
 #define OSSL_SSIZE_MAX _I64_MAX
 #else
-#define ossl_ssize_t int
+typedef int ossl_ssize_t;
 #define OSSL_SSIZE_MAX INT_MAX
 #endif
 #endif
 
 #if defined(OPENSSL_SYS_UEFI) && !defined(ossl_ssize_t)
-#define ossl_ssize_t INTN
+typedef INTN ossl_ssize_t;
 #define OSSL_SSIZE_MAX MAX_INTN
 #endif
 
-#ifndef ossl_ssize_t
+#ifndef OSSL_SSIZE_MAX
 #include <sys/types.h>
-#define ossl_ssize_t ssize_t
+typedef ssize_t ossl_ssize_t;
 #if defined(SSIZE_MAX)
 #define OSSL_SSIZE_MAX SSIZE_MAX
 #elif defined(_POSIX_SSIZE_MAX)

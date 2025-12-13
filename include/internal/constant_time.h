@@ -146,7 +146,7 @@ static ossl_inline uint64_t constant_time_lt_64(uint64_t a, uint64_t b)
     return constant_time_msb_64(a ^ ((a ^ b) | ((a - b) ^ b)));
 }
 
-#ifdef BN_ULONG
+#ifdef BN_BYTES
 static ossl_inline BN_ULONG value_barrier_bn(BN_ULONG a)
 {
 #if !defined(OPENSSL_NO_ASM) && defined(__GNUC__)
