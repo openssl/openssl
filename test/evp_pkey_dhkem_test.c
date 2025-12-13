@@ -394,8 +394,7 @@ err:
 }
 
 /*
- * ECX keys autogen the public key if a private key is loaded,
- * So this test passes for ECX, but fails for EC
+ * ECX and EC keys autogen the public key if a private key is loaded.
  */
 static int test_nopublic(int tstid)
 {
@@ -405,7 +404,6 @@ static int test_nopublic(int tstid)
     int encap = ((tstid & 1) == 0);
     int keytype = tstid >= TEST_KEM_ENCAP_DECAP;
     const TEST_ENCAPDATA *t = &ec_encapdata[keytype];
-    int expected = (keytype == TEST_KEYTYPE_X25519);
 
     TEST_note("%s %s", t->curve, encap ? "Encap" : "Decap");
     if (!TEST_ptr(priv = new_raw_private_key(t->curve, t->rpriv, t->rprivlen,
@@ -415,15 +413,12 @@ static int test_nopublic(int tstid)
         goto err;
 
     if (encap) {
-        if (!TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, opparam), expected))
+        if (!TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, opparam), 1))
             goto err;
     } else {
-        if (!TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, opparam), expected))
+        if (!TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, opparam), 1))
             goto err;
     }
-    if (expected == 0
-        && !TEST_int_eq(ERR_GET_REASON(ERR_get_error()), PROV_R_NOT_A_PUBLIC_KEY))
-        goto err;
     ret = 1;
 err:
     EVP_PKEY_free(priv);
@@ -431,7 +426,10 @@ err:
     return ret;
 }
 
-/* Test that not setting the auth public key fails the auth encap/decap init */
+/*
+ * Test that not setting the auth public key does not fail the auth
+ * encap/decap init
+ */
 static int test_noauthpublic(int tstid)
 {
     int ret = 0;
@@ -440,28 +438,23 @@ static int test_noauthpublic(int tstid)
     int keytype = tstid >= TEST_KEM_ENCAP_DECAP;
     const TEST_ENCAPDATA *t = &ec_encapdata[keytype];
     EVP_PKEY_CTX *ctx = rctx[keytype];
-    int expected = (keytype == TEST_KEYTYPE_X25519);
 
     TEST_note("%s %s", t->curve, encap ? "Encap" : "Decap");
     if (!TEST_ptr(auth = new_raw_private_key(t->curve, t->rpriv,
-                      t->rprivlen, NULL, expected)))
+                      t->rprivlen, NULL, 1)))
         goto err;
 
     if (encap) {
         if (!TEST_int_eq(EVP_PKEY_auth_encapsulate_init(ctx, auth,
                              opparam),
-                expected))
+                1))
             goto err;
     } else {
         if (!TEST_int_eq(EVP_PKEY_auth_decapsulate_init(ctx, auth,
                              opparam),
-                expected))
+                1))
             goto err;
     }
-    if (expected == 0
-        && !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
-            PROV_R_NOT_A_PUBLIC_KEY))
-        goto err;
     ret = 1;
 err:
     EVP_PKEY_free(auth);

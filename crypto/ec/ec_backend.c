@@ -483,6 +483,15 @@ int ossl_ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_priv
         && !EC_KEY_set_public_key(ec, pub_point))
         goto err;
 
+    /* Fallback computation of public key if not provided */
+    if (priv_key != NULL && pub_point == NULL) {
+        if ((pub_point = EC_POINT_new(ecg)) == NULL
+            || !EC_KEY_set_public_key(ec, pub_point))
+            goto err;
+        if (!ossl_ec_key_simple_generate_public_key(ec))
+            goto err;
+    }
+
     ok = 1;
 
 err:
