@@ -1199,7 +1199,8 @@ Build without support for the specified algorithm.
 
 The `ripemd` algorithm is deprecated and if used is synonymous with `rmd160`.
 
-### Compiler-specific options
+Compiler-specific options
+-------------------------
 
     -Dxxx, -Ixxx, -Wp, -lxxx, -Lxxx, -Wl, -rpath, -R, -framework, -static
 
@@ -1230,7 +1231,17 @@ encoding.
 Take note of the [Environment Variables](#environment-variables) documentation
 below and how these flags interact with those variables.
 
-### Environment Variables
+Miscellaneous options
+---------------------
+
+### --manpage-format
+
+Specify a specific output manpage format. The supported output types are mandoc
+and *roff. The *roff output format is the default for legacy and portability
+reasons.
+
+Environment Variables
+---------------------
 
     VAR=value
 
@@ -1307,10 +1318,18 @@ If `CC` is set, it is advisable to also set `CXX` to ensure both the C and C++
 compiler are in the same "family".  This becomes relevant with
 `enable-external-tests` and `enable-buildtest-c++`.
 
-### Reconfigure
+Reconfigure
+-----------
 
-    reconf
-    reconfigure
+### Make targets
+
+    `$ make reconf`
+
+or
+
+    `$ make reconfigure`
+
+### Description
 
 Reconfigure from earlier data.
 
