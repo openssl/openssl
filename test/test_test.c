@@ -278,6 +278,26 @@ err:
     return 0;
 }
 
+static int test_string_n(void)
+{
+    if (!TEST(1, TEST_strn_eq(NULL, NULL, 0))
+        || !TEST(1, TEST_strn_ne("abc", NULL, 3))
+        || !TEST(1, TEST_strn_eq("abc", "abcd", 3))
+        || !TEST(0, TEST_strn_ne("abc", "abcd", 3))
+        || !TEST(1, TEST_strn_eq("abc", "abc", 10))
+        || !TEST(0, TEST_strn_ne("abc", "abc", 10))
+        || !TEST(1, TEST_strn_ne("abc", "abx", 3))
+        || !TEST(0, TEST_strn_eq("abc", "abx", 3))
+        || !TEST(0, TEST_strn2_eq("abcdef", 3, "abcxyz", 6))
+        || !TEST(0, TEST_strn2_ne("abcdef", 3, "abcxyz", 6))
+        || !TEST(1, TEST_strn2_ne("abcdef", 3, "axyzef", 6)))
+        goto err;
+    return 1;
+
+err:
+    return 0;
+}
+
 static int test_memory(void)
 {
     static char buf[] = "xyz";
@@ -563,6 +583,7 @@ int setup_tests(void)
     ADD_TEST(test_pointer);
     ADD_TEST(test_bool);
     ADD_TEST(test_string);
+    ADD_TEST(test_string_n);
     ADD_TEST(test_memory);
     ADD_TEST(test_memory_overflow);
     ADD_TEST(test_bignum);
