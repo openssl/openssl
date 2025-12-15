@@ -184,7 +184,9 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 #endif
 
 #if GNU_PROPERTY_AARCH64_POINTER_AUTH != 0 || GNU_PROPERTY_AARCH64_BTI != 0
-.pushsection.note.gnu.property, "a";
+/* clang-format off */
+.pushsection .note.gnu.property, "a";
+/* clang-format on */
 .balign 8;
 .long 4;
 .long 0x10;
