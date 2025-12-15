@@ -41,10 +41,11 @@ OpenSSL 4.0
 
    *Norbert Pocs*
 
- * libcrypto no longer arms OPENSSL_cleanup() as atexit(3) handler by default.
-   Memory leak detectors now report there is allocated and reachable memory
-   at application exit. To avoid such leak detection the application must
-   call OPENSSL_cleanup() before main() exits.
+ * libcrypto no longer cleans up globally allocated data on process exit. This data
+   is cleaned up automatically by the OS instead. Some memory leak detectors
+   may report spurious allocated and reachable memory at application exit. To
+   avoid such spurious leak detection reports the application may call
+   OPENSSL_cleanup() before the process exits.
 
    *Alexandr Nedvedicky*
 
