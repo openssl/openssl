@@ -94,6 +94,32 @@ EVP_PKEY_meth_get_public_check,
 EVP_PKEY_meth_get_param_check,
 EVP_PKEY_meth_get_digest_custom,
 BIO_f_reliable,
+EVP_PKEY_asn1_add0,
+EVP_PKEY_asn1_add_alias,
+EVP_PKEY_asn1_get_count,
+EVP_PKEY_asn1_get0,
+EVP_PKEY_asn1_find,
+EVP_PKEY_asn1_find_str,
+EVP_PKEY_asn1_get0_info,
+EVP_PKEY_get0_asn1,
+EVP_PKEY_asn1_new,
+EVP_PKEY_asn1_copy,
+EVP_PKEY_asn1_free,
+EVP_PKEY_asn1_set_public,
+EVP_PKEY_asn1_set_private,
+EVP_PKEY_asn1_set_param,
+EVP_PKEY_asn1_set_free,
+EVP_PKEY_asn1_set_ctrl,
+EVP_PKEY_asn1_set_item,
+EVP_PKEY_asn1_set_siginf,
+EVP_PKEY_asn1_set_check,
+EVP_PKEY_asn1_set_public_check,
+EVP_PKEY_asn1_set_param_check,
+EVP_PKEY_asn1_set_set_priv_key,
+EVP_PKEY_asn1_set_set_pub_key,
+EVP_PKEY_asn1_set_get_priv_key,
+EVP_PKEY_asn1_set_get_pub_key,
+EVP_PKEY_asn1_set_security_bits,
 ossl-removed-api - API that has been removed from OpenSSL
 
 =head1 SYNOPSIS
@@ -306,6 +332,58 @@ This includes consulting the L<ossl-guide-migration(7)> documentation.
 =item EVP_PKEY_meth_get_digest_custom (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
 
 =item BIO_f_reliable (Broken since 3.0.0) - removed without replacement
+
+=item EVP_PKEY_asn1_add0 (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_add_alias (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_get_count (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_get0 (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_find (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_find_str (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_get0_info (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_get0_asn1 (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_new (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_copy (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_free (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_public (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_private (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_param (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_free (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_ctrl (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_item (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_siginf (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_check (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_public_check (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_param_check (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_set_priv_key (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_set_pub_key (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_get_priv_key (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_get_pub_key (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_PKEY_asn1_set_security_bits (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
 
 =back
 
