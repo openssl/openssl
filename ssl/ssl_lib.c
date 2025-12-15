@@ -4558,7 +4558,10 @@ void ssl_set_masks(SSL_CONNECTION *s)
 
     dh_tmp = (c->dh_tmp != NULL
         || c->dh_tmp_cb != NULL
-        || c->dh_tmp_auto);
+        || c->dh_tmp_auto
+        || tls1_shared_group(s, TLS1_GROUPS_RETURN_TMP_ID,
+               TLS1_GROUPS_FFDHE_GROUPS)
+            != 0);
 
     rsa_enc = pvalid[SSL_PKEY_RSA] & CERT_PKEY_VALID;
     rsa_sign = pvalid[SSL_PKEY_RSA] & CERT_PKEY_VALID;
